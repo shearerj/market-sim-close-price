@@ -3,16 +3,28 @@ package activity;
 import event.*;
 
 /**
- * Interface for any method that Entities may invoke. Based on the Command Pattern.
+ * Base class for any method that Entities may invoke. Includes abstract
+ * method execute and a timestamp. 
+ * 
+ * Based on the Command Pattern.
  * 
  * @author ewah
  */
-public interface Activity {
+public abstract class Activity {
+	
+	protected TimeStamp time;
 	
 	/**
 	 * Executes the activity on the given Entity.
-	 * @return		Event to be added to EventQueue. If no new event, returns null.
+	 * @return hash table of generated Activity vectors, hashed by TimeStamp
 	 */
-	public Event execute();
+	public abstract ActivityHashMap execute();
+	
+	/**
+	 * @return TimeStamp of time variable
+	 */
+	public TimeStamp getTime() {
+		return this.time;
+	}
 	
 }

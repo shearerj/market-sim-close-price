@@ -1,5 +1,6 @@
 package activity;
 
+
 import entity.Agent;
 import event.*;
 
@@ -8,15 +9,16 @@ import event.*;
  * 
  * @author ewah
  */
-public class AgentStrategy implements Activity {
+public class AgentStrategy extends Activity {
 
 	private Agent ag;
-	
-	public AgentStrategy(Agent ag) {
+
+	public AgentStrategy(Agent ag, TimeStamp t) {
 		this.ag = ag;
+		this.time = t;
 	}
 	
-	public Event execute() {
+	public ActivityHashMap execute() {
 		return this.ag.agentStrategy();
 	}
 }

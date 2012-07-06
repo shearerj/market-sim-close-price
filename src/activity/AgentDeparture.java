@@ -1,27 +1,26 @@
 package activity;
 
-
 import entity.*;
 import event.*;
 
 /**
- * Class for activity of agents arriving in a market or market(s).
+ * Class for activity of agents leaving a market or market(s).
  * 
  * @author ewah
  */
-public class AgentArrival extends Activity {
+public class AgentDeparture extends Activity {
 
 	private Agent ag;
 	private Market mkt;
 	
-	public AgentArrival(Agent ag, Market mkt, TimeStamp t) {
+	public AgentDeparture(Agent ag, Market mkt, TimeStamp t) {
 		this.ag = ag;
 		this.mkt = mkt;
 		this.time = t;
 	}
 	
 	public ActivityHashMap execute() {
-		return this.ag.agentArrival(this.mkt, this.time);
+		return this.ag.agentDeparture(this.mkt);
 	}
 	
 }

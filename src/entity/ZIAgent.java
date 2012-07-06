@@ -1,11 +1,12 @@
 package entity;
 
-import java.util.LinkedList;
-import java.util.Random;
-
-import event.Event;
-import event.TimeStamp;
+import event.*;
 import activity.*;
+import activity.market.*;
+import systemmanager.*;
+
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * Zero-intelligence agent.
@@ -14,45 +15,33 @@ import activity.*;
  */
 public class ZIAgent extends Agent {
 
-	Random rand;
+	public double privateValue;
+	public double arrivalRate;
 	
 	/**
 	 * Overloaded constructor.
 	 * @param agentID
 	 */
-	public ZIAgent(int agentID) {
-		this.entityID = agentID;
+	public ZIAgent(int agentID, SystemData d) {
+		super(agentID, d);
+		agentType = "ZI";
 	}
 	
-	/* (non-Javadoc)
-	 * @see entity.Agent#agentStrategy()
-	 */
-	public Event agentStrategy() {
+	public ActivityHashMap agentStrategy() {
 		
-		// dummy strategy is to submit a bid at a randomly generated time
-		rand = new Random();
-		int randBid = rand.nextInt(100);
-		System.out.println("random bid generated is: " + randBid);
+		System.out.println("ACTIVITY: ZIAgentStrategy");
 		
-		// now generate a new event to be added
-		Bid b = new Bid(10);
-		Activity subBid1 = new SubmitBid(this, b);
-		Activity subBid2 = new SubmitBid(this, b);
+		// generate activity hash map
+		ActivityHashMap actMap = new ActivityHashMap();
+		int ts = 0;
 		
-		// create event
-		TimeStamp t = new TimeStamp(40);
-		LinkedList<Activity> actToAdd = new LinkedList<Activity>();
-		actToAdd.add(subBid1);
-		Event e_test = new Event(t,actToAdd);
-		e_test.storeActivity(subBid2);
-		
-		// return event to be added
-		return e_test;
+		// now add activities to the activity map // TODO - try cycling through all market
+		for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
+			Market m = data.markets.get(i.next());
+			ts += 20;
+			actMap.insertActivity(new SubmitBid(this, new PQBid(), m, new TimeStamp(ts)));
+		}
+
+		return actMap;
 	}
-	
-	public Event agentArrival() {
-		// TODO
-		return null;
-	}
-	
 }

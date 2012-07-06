@@ -1,7 +1,6 @@
 package event;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
@@ -20,10 +19,9 @@ import activity.*;
 public class Event {
 
 	private TimeStamp eventTime; 						// time in microseconds (only positive)
-	private boolean eventCompletion = false;			// flag indicating whether or not the event has been executed?
+	private boolean eventCompletion = false;			// flag indicating whether or not the event has been executed
 	
 	private LinkedList<Activity> activities;			// activities in the event
-	
 	
 	/**
 	 * Empty constructor for Event object.
@@ -57,34 +55,35 @@ public class Event {
 	}
 	
 	/**
-	 * @param cmd	Activity to be stored in LinkedList for Event.
+	 * @param cmd	Activity to be added to LinkedList for Event.
 	 */
-	public void storeActivity(Activity cmd) {
-		//System.out.println("Storing an Activity in this Event");
+	public void addActivity(Activity cmd) {
 		this.activities.add(cmd);
 	}
-	
 
 	/**
-	 * Executes all activities stored in an event.
-	 * @return 		List of Events to be added to the EventQueue.
+	 * Executes all activities stored in an event. Note that newly
+	 * generated activities cannot be added to the current event, but may
+	 * have the same TimeStamp as the current event.
+	 * 
+	 * @return 		List of ActivityHashMaps to parse and add to Event Queue
 	 */
-	public List<Event> executeAll() {
-		List<Event> eventsGenerated = new ArrayList<Event>();
+	public ArrayList<ActivityHashMap> executeAll() {
+		ArrayList<ActivityHashMap> actList = new ArrayList<ActivityHashMap>();
 		
-		System.out.println("Executing event of time " + this.eventTime.toString() + "!: ");
+		System.out.println("Executing event of time " + this.eventTime.toString());
 		
 		ListIterator<Activity> itr = activities.listIterator();
 		while (itr.hasNext()) {
 			Activity cmd = itr.next();
-			Event e = cmd.execute();
-			if (e!=null) { 	// only add non-null Events
-				eventsGenerated.add(e);
+			
+			ActivityHashMap ahm = cmd.execute();
+			if (ahm != null) {
+				actList.add(ahm);
 			}
 		}
 		this.eventCompletion = true;
-		
-		return eventsGenerated;
+		return actList;
 	}
 	
 }

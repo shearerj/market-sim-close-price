@@ -2,27 +2,28 @@ package activity;
 
 import entity.*;
 import event.*;
+import activity.market.*;
 
 /**
- * Class for activity of submitting a Bid to a market.
+ * Class for Activity of submitting a Bid to a market.
  * 
  * @author ewah
  */
-public class SubmitBid extends BidActivity {
+public class SubmitBid extends Activity {
 	
 	private Bid bid;
 	private Agent ag;
+	private Market mkt;
 	
-	
-	public SubmitBid(Entity en, Bid b) {
-		this.ag = (Agent) en;
+	public SubmitBid(Agent ag, Bid b, Market mkt, TimeStamp t) {
+		this.ag = ag;
 		this.bid = b;
+		this.mkt = mkt;
+		this.time = t;
 	}
 	
-	/* (non-Javadoc)
-	 * @see activity.Activity#execute()
-	 */
-	public Event execute() {
-		return this.ag.submitBid(this.bid); // need to add the market ID
+	public ActivityHashMap execute() {
+		return this.ag.submitBid(this.bid, this.mkt);
 	}
+	
 }
