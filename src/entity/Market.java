@@ -1,11 +1,10 @@
 package entity;
 
-import java.util.HashMap;
 import java.util.ArrayList;
 
+import market.*;
 import event.*;
 import activity.*;
-import activity.market.*;
 import systemmanager.*;
 
 /**
@@ -30,14 +29,9 @@ public abstract class Market extends Entity {
 	public Price lastClearPrice;
 	public Price lastAskQuote;
 	public Price lastBidQuote;
-	public PQOrderBook orderbook;
-	
-	public MarketConfig config;
 	
 	public Market(int marketID, SystemData d) {
 		super(marketID, d);
-
-		orderbook = new PQOrderBook();
 		
 		agentIDs = new ArrayList<Integer>();
 		buyers = new ArrayList<Integer>();
@@ -49,8 +43,6 @@ public abstract class Market extends Entity {
 	    lastClearPrice = new Price(-1);
 	    lastAskQuote = new Price(0);
 	    lastBidQuote = new Price(0);
-	    
-	    // TODO log? config?
 	}
 
 	/**
@@ -63,11 +55,21 @@ public abstract class Market extends Entity {
 	}
 	
 	/**
+	 * @return bid (highest buy offer)
+	 */
+	public abstract Bid getBidQuote();
+	
+	/**
+	 * @return ask (lowest sell offer)
+	 */
+	public abstract Bid getAskQuote();
+	
+	/**
 	 * Publish quotes.
 	 * 
 	 * @param quoteTime
 	 */
-	public abstract void quote(TimeStamp quoteTime);
+	public abstract Quote quote(TimeStamp quoteTime);
 
 	/**
 	 * Clears the orderbook.
@@ -77,34 +79,19 @@ public abstract class Market extends Entity {
 	 */
 	public abstract ActivityHashMap clear(TimeStamp clearTime);
 	
+//	public abstract ActivityHashMap processBid(Bid b);
+	
 	/**
-	 * Process a submitted bid.
-	 * 
+	 * Add bid to the market.
 	 * @param b
-	 * @return
 	 */
-	public abstract ActivityHashMap processBid(Bid b);
-
+	public abstract void addBid(Bid b);
 	
-	
-	public ActivityHashMap addBid(double price, int quantity) {
-		// TODO
-		return null;
-	}
-	
-	public ActivityHashMap addBid(Bid b) {
-		return null;
-	}
-	
-	public ActivityHashMap removeBid(Bid b) {
-		return null;
-	}
-	
-	public ActivityHashMap publishQuotes() {
-		// TODO
-		return null;
-	}
-	
+	/**
+	 * Remove bid from the market.
+	 * @param b
+	 */
+	public abstract void removeBid(Bid b);
 	
 	/**
 	 * Returns true if agent can sell in this market.
@@ -125,34 +112,6 @@ public abstract class Market extends Entity {
 	public boolean canBuy(int agentID) {
 		return buyers.contains(agentID);
 	}
-	
-//	public void updateTransactions() {
-////return null;
-//}
-	
-//	public Event addOrUpdateBid() {
-//		// TODO
-//		return null;
-//	}
-	
-	protected Quote getLatestQuote() {
-		return null;
-	}
-//
-//	public abstract boolean processPredicate(Message m);
-//
-//	public abstract void subClassInit();
-	
-	
-	/**
-	 * Place bidInfo for a bid that is transacted
-	 * @return
-	 */
-//	public int putBid() {
-//		
-//		
-//	}
-	
 	
 	/**
 	 * @return number of agents active in the market
@@ -181,4 +140,43 @@ public abstract class Market extends Entity {
 	public ArrayList<Integer> getAgentIDs() {
 		return agentIDs;
 	}
+	
+
+	public Price getLastClearPrice() {
+		return lastClearPrice;
+	}
+
+	public TimeStamp getFinalClearTime() {
+		return finalClearTime;
+	}
+
+	public TimeStamp getNextClearTime() {
+		return nextClearTime;
+	}
+
+	public TimeStamp getLastClearTime() {
+		return lastClearTime;
+	}
+
+	public TimeStamp getNextQuoteTime() {
+		return nextQuoteTime;
+	}
+
+	public TimeStamp getLastQuoteTime() {
+		return lastQuoteTime;
+	}
+	
+	
+//	public void updateTransactions() {
+////return null;
+//}
+	
+//	public Event addOrUpdateBid() {
+//		return null;
+//	}
+	
+//	protected Quote getLatestQuote() {
+//		return null;
+//	}
+	
 }

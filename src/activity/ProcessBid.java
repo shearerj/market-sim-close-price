@@ -1,8 +1,8 @@
 package activity;
 
+import market.*;
 import entity.*;
 import event.TimeStamp;
-import activity.market.*;
 
 /**
  * Class for Activity of processing a market's bid.
@@ -21,6 +21,7 @@ public class ProcessBid extends Activity {
 	}
 	
 	public ActivityHashMap execute() {
-		return this.mkt.processBid(this.bid);
+//		return this.mkt.processBid(this.bid);
+		return null;
 	}
 }

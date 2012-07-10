@@ -71,7 +71,8 @@ public class Event {
 	public ArrayList<ActivityHashMap> executeAll() {
 		ArrayList<ActivityHashMap> actList = new ArrayList<ActivityHashMap>();
 		
-		System.out.println("Executing event of time " + this.eventTime.toString());
+//		System.out.println("");
+		System.out.print("" + this.eventTime.toString() + " |  ");
 		
 		ListIterator<Activity> itr = activities.listIterator();
 		while (itr.hasNext()) {

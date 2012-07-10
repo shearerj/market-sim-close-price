@@ -18,7 +18,7 @@ public class GetNBBO extends Activity {
 	}
 	
 	public ActivityHashMap execute() {
-		return this.ag.getNBBO();
+		return this.ag.getNBBO(this.time);
 	}
 	
 }

@@ -1,8 +1,8 @@
 package activity;
 
+import market.*;
 import entity.*;
 import event.TimeStamp;
-import activity.market.*;
 
 /**
  * Class for Activity of withdrawing a Bid from a market. Could be due to
@@ -24,6 +24,6 @@ public class WithdrawBid extends Activity {
 	}
 	
 	public ActivityHashMap execute() {
-		return this.ag.withdrawBid(this.bid, this.mkt);
+		return this.ag.withdrawBid(this.bid, this.mkt, this.time);
 	}
 }

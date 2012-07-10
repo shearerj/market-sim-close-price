@@ -17,12 +17,14 @@ import java.util.Map;
 public class EventManager {
 
 	private EventQueue eventQueue;
+	private TimeStamp duration;
 	
 	/**
 	 * Constructor
 	 */
-	public EventManager() {
+	public EventManager(TimeStamp ts) {
 		eventQueue = new EventQueue();
+		duration = ts;
 	}
 	
 	/**
@@ -61,9 +63,7 @@ public class EventManager {
 		// Check if event has completed execution
 		if (toExecute.isCompleted()) {
 			this.eventQueue.remove(toExecute);
-			System.out.println("Event at time " + toExecute.getTime().toString() + " has been executed");
 		} else {
-			// ERROR - TODO
 			System.out.println("Some error has occurred.");
 		}
 		if (!acts.isEmpty()) {
@@ -72,21 +72,6 @@ public class EventManager {
 			}
 		}
 	}
-
-	/**
-	 * Create event with specified TimeStamp and single activity, and inserts
-	 * into the EventQueue.
-	 * @param t
-	 * @param act
-	 * @return true if Event created successfully
-	 */
-//	public boolean createEvent(TimeStamp t, Activity act) {
-//		LinkedList<Activity> activities = new LinkedList<Activity>();
-//		Event e = new Event(t, activities);
-//		e.addActivity(act);
-//		this.eventQueue.add(e);
-//		return true;
-//	}
 	
 	/**
 	 * Creates event at TimeStamp matching Activity parameter.
@@ -97,7 +82,8 @@ public class EventManager {
 		LinkedList<Activity> activities = new LinkedList<Activity>();
 		Event e = new Event(act.getTime(), activities);
 		e.addActivity(act);
-		this.eventQueue.add(e);
+		// only add to queue if will occur within the duration of the simulation
+		if (!act.getTime().after(duration)) this.eventQueue.add(e);
 		return true;
 	}	
 	
@@ -110,8 +96,8 @@ public class EventManager {
 	 */
 	public boolean createEvent(TimeStamp t, LinkedList<Activity> acts) {
 		if (acts.isEmpty()) return false;
-
-		this.eventQueue.add(new Event(t, acts));
+		// only add to queue if will occur within the duration of the simulation
+		if (!t.after(duration))	this.eventQueue.add(new Event(t, acts));
 		return true;
 	}
 
@@ -126,7 +112,6 @@ public class EventManager {
 		if (!actMap.isEmpty()) {
 			for (Map.Entry<TimeStamp,LinkedList<Activity>> entry : actMap.entrySet()) {
 				createEvent(entry.getKey(), entry.getValue());
-				// TODO - do not append vectors, insert as new (separate) Event
 			}
 		}
 		

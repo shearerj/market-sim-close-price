@@ -19,6 +19,6 @@ public class AgentStrategy extends Activity {
 	}
 	
 	public ActivityHashMap execute() {
-		return this.ag.agentStrategy();
+		return this.ag.agentStrategy(this.time);
 	}
 }

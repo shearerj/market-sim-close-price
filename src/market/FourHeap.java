@@ -4,7 +4,7 @@
  * 
  * Edited 2012/06/08 by ewah
  */
-package activity.market;
+package market;
 
 import java.util.*;
 
@@ -43,16 +43,16 @@ public class FourHeap
 	private int matchBuySetSize;          // #buys  in the matchedBuySet
 	private int matchSellSetSize;         // #sells in the matchedSellSet
 
-	public FourHeap()
+	public FourHeap(int mktID)
 	{
 		/*Comparators to sort PQPoints in increasing/decreasing price, dectime
 		 *the "best" sell bid has the lowest price, earliest time
 		 *    "best" buy bid has highest price, earliest time, . . .
 		 */
-		bestFirstB = new PQPoint.PQP_Comp(-2,0,1);
-		bestFirstS = new PQPoint.PQP_Comp(2,0,1);
-		worstFirstB = new PQPoint.PQP_Comp(2,0,-1);
-		worstFirstS = new PQPoint.PQP_Comp(-2,0,-1);
+		bestFirstB = new PQPointComparator(-2,0,1);
+		bestFirstS = new PQPointComparator(2,0,1);
+		worstFirstB = new PQPointComparator(2,0,-1);
+		worstFirstS = new PQPointComparator(-2,0,-1);
 
 		//comparators just to make the code more readable
 		betterSell = worstFirstS;
@@ -68,6 +68,7 @@ public class FourHeap
 		matchSellSetSize = 0;
 		matchBuySetSize  = 0;
 
+		aucID = mktID;
 	}
 
 
@@ -85,18 +86,18 @@ public class FourHeap
 		if (matchSellSetSize == 0)
 			return 0;
 
-		if (((P.getquantity() > 0) && (betterBuy.compare(P,worstMatchingBuy()) > 0)) ||
-				((P.getquantity() < 0) && (betterSell.compare(P,worstMatchingSell()) > 0)))
+		if (((P.getQuantity() > 0) && (betterBuy.compare(P,worstMatchingBuy()) > 0)) ||
+				((P.getQuantity() < 0) && (betterSell.compare(P,worstMatchingSell()) > 0)))
 		{
-			return P.getquantity();
+			return P.getQuantity();
 		}
 		else if (P == worstMatchingBuy())
 		{
-			return P.getquantity() - Math.max(0,matchBuySetSize-matchSellSetSize);
+			return P.getQuantity() - Math.max(0,matchBuySetSize-matchSellSetSize);
 		}
 		else if (P == worstMatchingSell())
 		{
-			return P.getquantity()  + Math.max(0,matchSellSetSize-matchBuySetSize);
+			return P.getQuantity()  + Math.max(0,matchSellSetSize-matchBuySetSize);
 		}
 
 		return 0;
@@ -143,13 +144,13 @@ public class FourHeap
 
 		//determine the easiest non-matching buy to match
 		if (matchBuySetSize > matchSellSetSize)
-			buyToMatch =  worstMatchingBuy().getprice();
+			buyToMatch =  worstMatchingBuy().getPrice();
 		else if (bestBuy() != null)
-			buyToMatch = bestBuy().getprice();
+			buyToMatch = bestBuy().getPrice();
 
 		//determine if there is a matched sell to beat
 		if (worstMatchingSell() != null)
-			sellToBeat = worstMatchingSell().getprice();
+			sellToBeat = worstMatchingSell().getPrice();
 
 		//return the Higher of the two prices (easiest to match)
 		//null is returned only if both arguments are null
@@ -180,15 +181,13 @@ public class FourHeap
 		// match a non-matching sell
 		//compute the lowest non-winning sell price
 		if (matchSellSetSize > matchBuySetSize)
-			sellToMatch = worstMatchingSell().getprice();
+			sellToMatch = worstMatchingSell().getPrice();
 		else if (bestSell() != null)
-			sellToMatch = bestSell().getprice();
-
-
+			sellToMatch = bestSell().getPrice();
 
 		//compute the lowest winning buy bid
 		if (worstMatchingBuy() != null)
-			buyToBeat = worstMatchingBuy().getprice();
+			buyToBeat = worstMatchingBuy().getPrice();
 
 		//match the lower of the two (easiest buy to match)
 		//null is returned only if both arguments are null;
@@ -197,8 +196,6 @@ public class FourHeap
 		if (sellToMatch != null)
 			log(Log.DEBUG,"sellToMatch: "+sellToMatch);
 		ret =  Price.min(buyToBeat, sellToMatch);
-
-
 
 		if (ret == null)
 			ret = new Price(-1);
@@ -218,22 +215,20 @@ public class FourHeap
 	{
 
 		/*debugn("removeBid: "+P.toQPString());
-    debugn("matchsellsetSize: "+matchSellSetSize);
-    debugn("containment: ");
-    debugn("mss: "+matchSellSet.contains(P));
-    debugn("mbs: "+matchBuySet.contains(P));
-    debugn("ss: "+sellSet.contains(P));
-    debugn("bs: "+buySet.contains(P)); TODO*/
+	    debugn("matchsellsetSize: "+matchSellSetSize);
+	    debugn("containment: ");
+	    debugn("mss: "+matchSellSet.contains(P));
+	    debugn("mbs: "+matchBuySet.contains(P));
+	    debugn("ss: "+sellSet.contains(P));
+	    debugn("bs: "+buySet.contains(P)); TODO*/
 
-		if (P.getquantity() < 0)
+		if (P.getQuantity() < 0)
 		{
-
-
 			//if it's supposed to be in the matchSS & we remove it, reduce matchsellsetsize
 			if  ((!matchSellSet.isEmpty() && (betterSell.compare(P,worstMatchingSell()) >= 0))
 					&& (matchSellSet.remove(P)))
 			{
-				matchSellSetSize -= Math.abs(P.getquantity());
+				matchSellSetSize -= Math.abs(P.getQuantity());
 			}
 			// otherwise, if we can't remove it from the sell set, send a debug message
 			else if (sellSet.isEmpty() || (bestFirstS.compare(P,bestSell()) < 0)
@@ -245,9 +240,9 @@ public class FourHeap
 		else
 		{
 			if (!buySet.isEmpty())
-				debugn("bs compare: "+P.toQPString()+"<>"+bestBuy().toQPString()+"--> "+betterBuy.compare(P,bestBuy()));
+				debugn("bs compare: "+P.toString()+"<>"+bestBuy().toString()+"--> "+betterBuy.compare(P,bestBuy()));
 			if (worstMatchingBuy()!= null)
-				debugn("compare, "+P.toQPString()+","+worstMatchingBuy().toQPString()+betterBuy.compare(P,worstMatchingBuy()));
+				debugn("compare, "+P.toString()+","+worstMatchingBuy().toString()+betterBuy.compare(P,worstMatchingBuy()));
 			//if it's supposed to be in the matchBS & we remove it, reduce matchBuySetSize
 			debugn("mbss: "+matchBuySet.size());
 			debugn("bss: "+matchBuySet.size());
@@ -255,8 +250,8 @@ public class FourHeap
 			if ((!matchBuySet.isEmpty() && (betterBuy.compare(P,worstMatchingBuy()) >= 0))
 					&& (matchBuySet.remove(P)))
 			{
-				debugn("removed . . . size = "+matchBuySet.size()+" actual should be "+P.getquantity()+" less");
-				matchBuySetSize -= P.getquantity();
+				debugn("removed . . . size = "+matchBuySet.size()+" actual should be "+P.getQuantity()+" less");
+				matchBuySetSize -= P.getQuantity();
 			}
 			//otherwise, if we can't remove it from the buy set, send a debug message
 			else if (buySet.isEmpty() || (bestFirstB.compare(P,bestBuy()) < 0)
@@ -291,41 +286,27 @@ public class FourHeap
 	 */
 	public void insertBid(PQPoint P)
 	{
-		//logSets();
-
-
-
+//		logSets();
 		//determine whether P is a buy/sell
-		if (P.getquantity() < 0)
-		{
-			if ((worstMatchingSell()!=null) &&
-					( betterSell.compare(P,worstMatchingSell() ) > 0))
-			{
+		if (P.getQuantity() < 0) {
+			if ((worstMatchingSell()!=null) && (betterSell.compare(P, worstMatchingSell()) > 0)) {
 				matchSellSet.add(P);
-				matchSellSetSize += Math.abs(P.getquantity());
-			}
-			else
-			{
+				matchSellSetSize += Math.abs(P.getQuantity());
+			} else {
 				sellSet.add(P);
 			}
-		}
-		else if (P.getquantity() > 0)
-		{
-			if ((worstMatchingBuy()!=null ) &&
-					(betterBuy.compare(P,worstMatchingBuy() ) > 0))
-			{
-
+		} else if (P.getQuantity() > 0)	{
+			if ((worstMatchingBuy()!=null ) && (betterBuy.compare(P, worstMatchingBuy()) > 0)) {
 				matchBuySet.add(P);
-				matchBuySetSize += P.getquantity();
-			}
-			else
-			{
+				matchBuySetSize += P.getQuantity();
+			} else {
 				buySet.add(P);
 			}
 		}
-		//logSets();
+//		logSets();
 		equalizeSetSizes();
 		matchBids();
+//		logSets();
 		equalizeSetSizes();
 	}
 
@@ -337,7 +318,6 @@ public class FourHeap
 	 */
 	public void clear(ArrayList buys, ArrayList sells)
 	{
-
 		equalizeRealSetSizes();
 		buys.addAll(matchBuySet);
 		sells.addAll(matchSellSet);
@@ -346,9 +326,7 @@ public class FourHeap
 		matchSellSetSize = 0;
 		matchBuySetSize = 0;
 		if ((buys == null) || (sells == null)) debugn("error");
-
 	}
-
 
 
 	/**
@@ -473,7 +451,6 @@ public class FourHeap
 				promoteBuy();
 				promoteSell();
 			}
-
 			// break if no more matching to do
 			else
 			{
@@ -506,7 +483,7 @@ public class FourHeap
 
 			while ((matchBuySetSize > matchSellSetSize) &&
 					(matchBuySetSize - matchSellSetSize >=
-					worstMatchingBuy().getquantity() ))
+					worstMatchingBuy().getQuantity() ))
 			{
 				demoteBuy();
 			}
@@ -521,7 +498,7 @@ public class FourHeap
 		try {
 			while ((matchSellSetSize > matchBuySetSize) &&
 					(matchSellSetSize - matchBuySetSize >=
-					Math.abs(worstMatchingSell().getquantity() )))
+					Math.abs(worstMatchingSell().getQuantity() )))
 			{
 				demoteSell();
 				debug("mBSetSize/mSSetSize = " + matchBuySetSize + " " + matchSellSetSize);
@@ -549,7 +526,7 @@ public class FourHeap
 		{
 			buySet.remove(temp);
 			matchBuySet.add(temp);
-			matchBuySetSize += temp.getquantity();
+			matchBuySetSize += temp.getQuantity();
 		}
 	}
 	/**
@@ -562,7 +539,7 @@ public class FourHeap
 		{
 			matchBuySet.remove(temp);
 			buySet.add(temp);
-			matchBuySetSize -= temp.getquantity();
+			matchBuySetSize -= temp.getQuantity();
 		}
 	}
 	/**
@@ -575,7 +552,7 @@ public class FourHeap
 		{
 			sellSet.remove(temp);
 			matchSellSet.add(temp);
-			matchSellSetSize += Math.abs(temp.getquantity());
+			matchSellSetSize += Math.abs(temp.getQuantity());
 		}
 	}
 	/**
@@ -588,7 +565,7 @@ public class FourHeap
 		{
 			matchSellSet.remove(temp);
 			sellSet.add(temp);
-			matchSellSetSize -= Math.abs(temp.getquantity());
+			matchSellSetSize -= Math.abs(temp.getQuantity());
 		}
 	}
 	final void debug(String message)
@@ -613,15 +590,15 @@ public class FourHeap
 	public static final int P_MS = 3;
 	public void logSets()
 	{
-		String s = printSet(0) + printSet(1)+printSet(2)+printSet(3);
+		String s = printSet(0) + printSet(1) + printSet(2) + printSet(3);
 		if (shouldLog(Log.INFO)) {
 			log(Log.INFO,"FourHeap::logSets, "+s);
 		}
+		System.out.println("FourHeap::logSets::Market " + aucID + ": " + s);
 
 	}
 	private String printSet(int t)
 	{
-
 		SortedSet S = null;
 		String s = new String("");
 		if (P_BUY == t)
@@ -631,18 +608,18 @@ public class FourHeap
 		}
 		else if (P_SELL == t)
 		{
-			s = s+ "Sells: ";
+			s = s+ " Sells: ";
 			S = sellSet;
 		}
 		else if (P_MB == t)
 		{
-			s = s+"MB: ";
+			s = s+" MB: ";
 			s = s+"  size: "+matchBuySetSize+" ";
 			S = matchBuySet;
 		}
 		else if (P_MS == t)
 		{
-			s = s+"MS: ";
+			s = s+" MS: ";
 			s = s+"  size: "+matchSellSetSize+" ";
 			S = matchSellSet;
 		}
@@ -653,7 +630,7 @@ public class FourHeap
 		while(I.hasNext())
 		{
 			P = (PQPoint)I.next();
-			s = s+P.getAgentID()+":"+P.toQPString();
+			s = s+P.getAgentID()+":"+P.toString();
 		}
 		//s = s+'\n';
 		//System.out.println(s);

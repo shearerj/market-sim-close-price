@@ -90,6 +90,24 @@ public class ActivityHashMap {
 		return ret;
 	}
 	
+	
+	/**
+	 * Appends two ActivityHashMaps together. Modifies the calling Object's HashMap.
+	 * 
+	 * @param ahm
+	 * @return
+	 */
+	public boolean appendActivityHashMap(ActivityHashMap ahm) {
+		
+		boolean ret = true;
+		
+		for (Map.Entry<TimeStamp,LinkedList<Activity>> entry : ahm.acts.entrySet()) {
+			ret = ret && insertMultipleActivity(entry.getValue());
+		}
+		
+		return ret;
+	}
+	
 	/**
 	 * Verifies whether or not the Activity's TimeStamp matches the given one.
 	 * 

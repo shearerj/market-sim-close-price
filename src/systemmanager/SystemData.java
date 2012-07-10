@@ -3,10 +3,11 @@ package systemmanager;
 import event.*;
 import entity.*;
 import activity.*;
-import activity.market.*;
 import systemmanager.*;
 
 import java.util.*;
+
+import market.*;
 
 /**
  * Class that stores all simulation data (agents, markets, quotes, bid, etc.).
@@ -19,21 +20,21 @@ public class SystemData {
 	public HashMap<Integer,PQTransaction> transData;	// hashed by transaction ID
 	public HashMap<Integer,Quote> quoteData;			// hashed by market ID
 	public HashMap<Integer,ArrayList<Bid>> agentQuotes; 	// hashed by agentID
-//	public HashMap<Integer,Entity> entities;			// entities hashed by ID
 	public HashMap<Integer,Agent> agents;				// agents hashed by ID
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
 
+	public TimeStamp gameLength;
+	
 	private Log log; // TODO still need to deal with log
 
 	private Sequence transIDSequence;
 
-	// this is where all the logging will take place as well
+	// this is where logging will take place as well
 
 	public SystemData() {
 		bidData = new HashMap<Integer,PQBid>();
 		transData = new HashMap<Integer,PQTransaction>();
 		quoteData = new HashMap<Integer,Quote>();
-//		entities = new HashMap<Integer,Entity>();
 		agents = new HashMap<Integer,Agent>();
 		markets = new HashMap<Integer,Market>();
 		
@@ -60,10 +61,6 @@ public class SystemData {
 		return quoteData.get(mktID);
 	}
 
-//	public HashMap<Integer,Entity> getEntities() {
-//		return entities;
-//	}
-
 	public HashMap<Integer,Agent> getAgents() {
 		return agents;
 	}
@@ -79,10 +76,6 @@ public class SystemData {
 	public Market getMarket(int id) {
 		return markets.get(id);
 	}
-
-//	public Entity getEntity(int id) {
-//		return entities.get(id);
-//	}
 
 	public PQBid getBid(int id) {
 		return bidData.get(id);

@@ -1,9 +1,5 @@
 package entity;
 
-import java.util.LinkedList;
-
-import event.*;
-import activity.*;
 import systemmanager.*;
 
 /**
@@ -50,26 +46,4 @@ public abstract class Entity {
 	public final void setID(int ID) {
 		this.ID = ID;
 	}
-	
-	/**
-	 * Create Event with empty list of Activities.
-	 * @param t
-	 * @return Event
-	 */
-//	public Event createEvent(TimeStamp t) {
-//		LinkedList<Activity> activities = new LinkedList<Activity>();
-//		Event e = new Event(t, activities);
-//		return e;
-//	}
-	
-	/**
-	 * Create Event with a given list of Activities.
-	 * @param t
-	 * @param activities
-	 * @return
-	 */
-//	public Event createEvent(TimeStamp t, LinkedList<Activity> activities) {
-//		Event e = new Event(t, activities);
-//		return e;
-//	}
 }

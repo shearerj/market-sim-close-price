@@ -1,11 +1,11 @@
 package activity;
 
+import market.*;
 import entity.*;
 import event.*;
-import activity.market.*;
 
 /**
- * Class for Activity of adding a bid to a market.
+ * Class for Activity of adding a order to a market.
  * 
  * @author ewah
  */
@@ -21,6 +21,7 @@ public class AddBid extends Activity {
 	}
 	
 	public ActivityHashMap execute() {
-		return this.mkt.addBid(this.bid);
+//		return this.mkt.addBid(this.bid, this.time);
+		return null;
 	}
 }

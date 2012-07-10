@@ -1,8 +1,8 @@
 package entity;
 
+import market.*;
 import event.*;
 import activity.*;
-import activity.market.*;
 import systemmanager.*;
 
 /**
@@ -21,7 +21,7 @@ public class HFTAgent extends Agent {
 		agentType = "HFT";
 	}
 	
-	public ActivityHashMap agentStrategy() {
+	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		
 		System.out.println("HFTAgentStrategy...");
 		

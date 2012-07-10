@@ -1,8 +1,8 @@
 package activity;
 
+import market.*;
 import entity.*;
 import event.*;
-import activity.market.*;
 
 /**
  * Activity to remove a bid from a market.
@@ -21,7 +21,8 @@ public class RemoveBid extends Activity
 	}
 	
 	public ActivityHashMap execute() {
-		return this.mkt.removeBid(this.bid);
+//		return this.mkt.removeBid(this.bid, this.time);
+		return null;
 	}
 	
 }

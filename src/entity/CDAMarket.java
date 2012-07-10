@@ -2,12 +2,14 @@ package entity;
 
 import event.TimeStamp;
 import activity.*;
-import activity.market.*;
 import systemmanager.*;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.Map;
+
+import market.*;
 
 /**
  * Class for a continuous double auction.
@@ -16,34 +18,57 @@ import java.util.Iterator;
  */
 public class CDAMarket extends Market {
 
+	public PQOrderBook orderbook;
+	
 	/**
 	 * Overloaded constructor.
 	 * @param marketID
 	 */
 	public CDAMarket(int marketID, SystemData d) {
 		super(marketID, d);
+		orderbook = new PQOrderBook(this.ID);
 	}
 
-	public ActivityHashMap clear(TimeStamp clearTime) {
+	public Bid getBidQuote() {
+		return this.orderbook.getBidQuote();
+	}
+	
+	public Bid getAskQuote() {
+		return this.orderbook.getAskQuote();
+	}
+	
+	
+	public void addBid(Bid b) {
 		
-		ArrayList<Transaction> transactions = null;
+//		System.out.println("method: Add Bid to Market");
+		
+		orderbook.insertBid((PQBid) b);
+		this.data.addBid(b.getBidID(), (PQBid) b);
+	}
+	
+	
+	public void removeBid(Bid b) {
+		
+//		System.out.println("method: Remove Bid from Market");
+		orderbook.removeBid(b.getAgentID());
+		// create empty bid
+		PQBid emptyBid = new PQBid(b.getAgentID(), this.ID);
+		emptyBid.addPoint(0, new Price(0));	
+		this.data.bidData.put(b.getBidID(), emptyBid);
+	}
+	
+	
+	
+	public ActivityHashMap clear(TimeStamp clearTime) {
 
-		if (config.matching_fn.equals("earliest")) {
-//			log(Log.INFO, "ScriptedAuction::clear earliest " + getID());
-			transactions = orderbook.earliestPriceClear(clearTime);
-		} else if (config.matching_fn.equals("uniform")) {
-//			log(Log.INFO, "ScriptedAuction::clear uniform,  " + getID());
-			transactions = orderbook.uniformPriceClear(clearTime, config.pricing_k);
-//		} else if (config.matching_fn.equals("bbvickrey")) {
-////			log(Log.INFO, "ScriptedAuction::clear bbvickrey, " + getID());
-//			transactions = orderbook.BBVickreyPriceClear((clearTime)); // TODO - not implemented
-		} else {
-//			log(Log.INFO, "ScriptedAuction::clear, undefined matching function-->" + config.matching_fn + "<--");
-		}
-
+		System.out.print("Market " + this.ID + " ACTIVITY: Clear: ");
+		orderbook.logActiveBids();
+		
+		ArrayList<Transaction> transactions = orderbook.earliestPriceClear(clearTime);
 		if (transactions == null) {
-			this.lastClearTime = clearTime;  // replaces postClear
-			return null; // TODO
+			this.lastClearTime = clearTime; 
+			System.out.println("Nothing transacted.");
+			return null;
 		}
 		
 		// add transactions to SystemData
@@ -52,138 +77,41 @@ public class CDAMarket extends Market {
 			this.data.addTransaction(t);
 			lastClearPrice = t.price;
 		}
-
 		// add bids to SystemData
-		for (Enumeration e = orderbook.getClearedBids(); e != null && e.hasMoreElements();) {
-			PQBid b = (PQBid) e.nextElement();
-			TimeStamp closeTime;
-			if (!b.containsBuyOffers() && !b.containsSellOffers())
-				closeTime = clearTime;
-			else closeTime = new TimeStamp(0);
+		for (Iterator<Bid> i = orderbook.getClearedBids().values().iterator(); i.hasNext(); ) {
+			PQBid b = (PQBid) i.next();
+			TimeStamp closeTime = new TimeStamp(0);
+			if (!b.containsBuyOffers() && !b.containsSellOffers()) closeTime = clearTime;
 			this.data.addBid(b.getBidID(), b);
 		}
-		this.lastClearTime = clearTime;
+		lastClearTime = clearTime;
 
+		orderbook.logClearedBids();
 		return null;
 	}
 
 	
-	public void quote(TimeStamp quoteTime) {
-
-		PQBid b = (PQBid) orderbook.getBidQuote(0);
-		PQBid a = (PQBid) orderbook.getAskQuote(0);
+	
+	public Quote quote(TimeStamp quoteTime) {
+		Quote q = new Quote(this);
+		Price bp = q.lastBidPrice;
+		Price ap = q.lastAskPrice;
 		
-		PQPoint bq = null, aq = null;
-		if (b != null && a != null) {
-			bq = b.bidArray[0];
-			aq = a.bidArray[0];
-
-			if (bq.comparePrice(aq) == 1 && aq.getprice().getPrice() > 0) {
-				//log(Log.ERROR, "ScriptedAuction::quote bid > ask " + bq.getprice() + ">" + aq.getprice());
-				orderbook.logBids();
+		if (bp != null && ap != null) {
+			if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
+				System.out.println("ERROR bid > ask");
+				// TODO log
+			} else {
+				this.data.addQuote(this.ID, q);
 			}
 		}
-//		gameCache.putQuotes(orderbook.getQuoteString(config.bid_btq_delta),
-//                orderbook.getAgentQuoteStrings(),
-//                getLastClearPrice(),
-//                ts,
-//                getLastClearTime(),
-//                getStatus());
-
+		this.lastQuoteTime = quoteTime;
 		
-		this.data.addQuote(this.ID, null);
-		
-		this.lastQuoteTime = quoteTime; // replaces postQuote
-		
-		if (bq != null) lastBidQuote = bq.getprice();
-	    if (aq != null) lastAskQuote = aq.getprice();
+		if (bp != null) lastBidQuote = bp;
+	    if (ap != null) lastAskQuote = ap;
+	    
+	    return q;
 	}
-
-	public ActivityHashMap processBid(Bid b) {
-
-		PQBid bid = (PQBid) b;
-
-		/* does the bid have buy and sell offers? */
-		int agentid = bid.getAgentID();
-		
-		//SELL PERMISSIONS
-		if (bid.containsSellOffers() && !canSell(agentid)) {
-//			log(Log.DEBUG, "processBid, sell permission reject");
-			//notify system data? TODO
-			return null;
-		}
-
-		//BUY PERMISSIONS
-		if (bid.containsBuyOffers() && !canBuy(agentid)) {
-//			log(Log.DEBUG, "processBid, buy permission reject");
-			// notify system data
-			return null;
-		}
-
-		Bid priorBid = orderbook.getBid(agentid);
-		//REPLACE BID, check that bidID matches (not bidHash)
-		if (bid.bidID != null) {
-			if (priorBid == null) {
-//				log(Log.DEBUG, "trying to replace null prior bid");
-//				gameCache.notifyCacheBidRejected //NOT ACTIVE?
-//				(bid, "replace, not found", TACProtocol.RR_BID_NOT_FOUND);
-				return null;
-			} else if (!priorBid.bidID.equals(bid.bidID)) {
-//				log(Log.DEBUG, "processBid, bid changed, this // previous: "
-//				gameCache.notifyCacheBidRejected
-//				(bid, "replace, bid changed ", TACProtocol.RR_ACTIVE_BID_CHANGED);
-				return null;
-			}
-		}
-
-		if (priorBid != null) {
-//			log(Log.DEBUG, "ScriptedAuction::processBid, prior bid not null: ");
-
-			//BUY DOMINANCE
-			int b_dom = bid.bDominates(priorBid);
-			if ((config.bid_dominance_buy.equals("ascending") && b_dom < 1) ||
-					(config.bid_dominance_buy.equals("descending") && b_dom > -1)) {
-//				log(Log.DEBUG, "processBid, buy dominance reject");
-//				gameCache.notifyCacheBidRejected
-//				(bid, "buy dominance", TACProtocol.RR_BID_NOT_IMPROVED);
-				return null;
-			}
-			//SELL DOMINANCE
-			int s_dom = bid.sDominates(priorBid); // 1, 0, -1  (1 if true)
-			if ((config.bid_dominance_sell.equals("ascending") && s_dom < 1) ||
-					(config.bid_dominance_sell.equals("descending") && s_dom > -1)) {
-				// LOGGING / notify system data
-				return null;
-			}
-		}
-		
-		return null;
-	}
-
-	public Price getLastClearPrice() {
-		return lastClearPrice;
-	}
-
-	public TimeStamp getFinalClearTime() {
-		return finalClearTime;
-	}
-
-	public TimeStamp getNextClearTime() {
-		return nextClearTime;
-	}
-
-	public TimeStamp getLastClearTime() {
-		return lastClearTime;
-	}
-
-	public TimeStamp getNextQuoteTime() {
-		return nextQuoteTime;
-	}
-
-	public TimeStamp getLastQuoteTime() {
-		return lastQuoteTime;
-	}
-
 
 }
 

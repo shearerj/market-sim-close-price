@@ -1,7 +1,12 @@
-package activity.market;
+package market;
 
 import java.text.DecimalFormat;
 
+/**
+ * Price class is wrapper for double.
+ * 
+ * @author ewah
+ */
 public class Price implements Comparable<Object> {
 
 	protected double price;

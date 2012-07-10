@@ -1,4 +1,4 @@
-package activity.market;
+package market;
 
 import event.TimeStamp;
 
@@ -8,6 +8,8 @@ import event.TimeStamp;
  * @author ewah
  */
 public class Transaction {
+	
+	public Integer transID;
 
 	public Long quantity;
 	public Price price;
@@ -15,7 +17,5 @@ public class Transaction {
 	public Integer buyerID;
 	public Integer sellerID;
 	public Integer marketID;
-	public String type;			// TODO what is this???
-	public Integer transID;
-
+	
 }

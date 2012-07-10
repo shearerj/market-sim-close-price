@@ -1,4 +1,4 @@
-package activity.market;
+package market;
 
 import event.TimeStamp;
 
@@ -33,18 +33,17 @@ public class PQTransaction extends Transaction {
 	 * @param bID buyerID
 	 * @param sID sellerID
 	 * @param ts timestamp
-	 * @param aucID marketID
+	 * @param mktID marketID
 	 */
-	public PQTransaction(int q, Price p, int bID,int sID,TimeStamp ts, int aucID)
+	public PQTransaction(int q, Price p, int bID,int sID,TimeStamp ts, int mktID)
 	{
 		quantity = new Long(q);
 		price = p;
 		buyerID = new Integer(bID);
 		sellerID = new Integer(sID);
 		timestamp = ts;
-		marketID = new Integer(aucID);
+		marketID = new Integer(mktID);
 	}
-
 
 	public String toString() {
 		String result = "Transaction(quantity=" + this.quantity 
@@ -81,7 +80,6 @@ public class PQTransaction extends Transaction {
 		buyerID = null;
 		sellerID = null;
 		marketID = null;
-		type = null;
 	}
 
 }

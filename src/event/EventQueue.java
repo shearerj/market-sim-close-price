@@ -20,8 +20,6 @@ public class EventQueue {
 	public EventQueue() {
 		eventComparator = new EventComparator();
 		eventQueue = new PriorityQueue<Event>(1, eventComparator);
-		
-		// TODO - initialize the priority queue based on arguments in the config file
 	}
 	
 	/**
@@ -65,12 +63,15 @@ public class EventQueue {
 		return this.eventQueue.peek();
 	}
 	
+	/**
+	 * @return size of the event queue
+	 */
 	public int size() {
 		return this.eventQueue.size();
 	}
 	
 	/**
-	 * @return
+	 * @return boolean
 	 */
 	public boolean isEmpty() {
 		return this.eventQueue.isEmpty();
