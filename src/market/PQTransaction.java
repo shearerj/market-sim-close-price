@@ -19,7 +19,7 @@ public class PQTransaction extends Transaction {
 	 */
 	public PQTransaction(int q, Price p, int bID, int sID, TimeStamp ts)
 	{
-		quantity = new Long(q);
+		quantity = new Integer(q);
 		price = p;
 		buyerID = new Integer(bID);
 		sellerID = new Integer(sID);
@@ -37,7 +37,7 @@ public class PQTransaction extends Transaction {
 	 */
 	public PQTransaction(int q, Price p, int bID,int sID,TimeStamp ts, int mktID)
 	{
-		quantity = new Long(q);
+		quantity = new Integer(q);
 		price = p;
 		buyerID = new Integer(bID);
 		sellerID = new Integer(sID);

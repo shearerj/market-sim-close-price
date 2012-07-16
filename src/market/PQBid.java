@@ -27,6 +27,12 @@ public class PQBid extends Bid {
 		bidTreeSet = new TreeSet<PQPoint>(comp);
 	}
 
+	public PQBid(PQBid other) {
+		super(other);
+		this.comp = other.comp;
+		this.bidTreeSet = other.bidTreeSet;
+	}
+	
 	/**
 	 * Add point p to bidArray
 	 * 

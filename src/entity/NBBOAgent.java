@@ -1,11 +1,13 @@
 package entity;
 
-import java.util.Random;
-
 import event.*;
 import activity.*;
 import systemmanager.*;
 import market.*;
+
+import java.util.Random;
+import java.util.Vector;
+import java.util.Properties;
 
 /**
  * NBBOAgent
@@ -27,15 +29,21 @@ import market.*;
  * when the agent is initialized. The parameters determining the distribution from
  * which the expiration is drawn are given by the strategy configuration.
  *
+ * The NBBO agent is always only active in one market, and it is used in two-market
+ * scenarios (for latency arbitrage simulations).
+ *
  * @author ewah
  */
 public class NBBOAgent extends Agent {
 
-	public double privateValue;
+	public int privateValue;
 	private Random rand;
-
-	public Quote nbbo;
-
+	private double lambda;
+	private int meanPV;
+	private int tradeMarketID;		// assigned at initialization
+	private int altMarketID;
+	private ArrivalTime arrivalTimes;
+	
 	/**
 	 * Overloaded constructor.
 	 * @param agentID
@@ -47,97 +55,116 @@ public class NBBOAgent extends Agent {
 
 		// TODO for testing
 		rand = new Random();
-		privateValue = 10*rand.nextDouble()+50;
+		privateValue = 1000*rand.nextInt(25)+10000;
 	}
 	
-	public ActivityHashMap agentStrategy(TimeStamp ts) {
-		return null;
+	public void initializeParams(Properties p) {
+		meanPV = Integer.parseInt(p.getProperty("meanPV"));
+		lambda = Double.parseDouble(p.getProperty("arrivalRate"));
+		sleepTime = Integer.parseInt(p.getProperty("sleepTime"));
+		String str = p.getProperty("markets");
+		String[] strs = str.split(",");
+		tradeMarketID = Integer.parseInt(strs[0]);
+		altMarketID = Integer.parseInt(strs[1]);
+		
+		arrivalTimes = new ArrivalTime(new TimeStamp(0), lambda);
+	}
+	
+	public TimeStamp nextArrivalTime() {
+		return arrivalTimes.next();
+	}
+	
+	
+	@Override
+	public ActivityHashMap agentArrival(Market mkt, TimeStamp ts) {
+		System.out.println(agentType + "Agent " + this.ID + ": AgentArrival in Market " + mkt.ID);
+
+		// buyer/seller based on config file
+		mkt.agentIDs.add(this.ID);
+		mkt.buyers.add(this.ID);
+		mkt.sellers.add(this.ID);
+		marketIDs.add(mkt.ID);
+		quotes.put(mkt.ID, new Vector<Quote>());
+		arrivalTime = ts;
+		
+		// Initialize bid/ask containers
+		prevBid.put(mkt.ID, 0);
+		prevAsk.put(mkt.ID, 0);
+		initBid.put(mkt.ID, -1);
+		initAsk.put(mkt.ID, -1);
+		
+		ActivityHashMap actMap = new ActivityHashMap();
+		actMap.insertActivity(new UpdateAllQuotes(this, ts));
+		actMap.insertActivity(new UpdateNBBO(this, ts));
+		actMap.insertActivity(new AgentStrategy(this, ts));
+		return actMap;
 	}
 
-//	public ActivityHashMap agentStrategy(TimeStamp ts) {
-//
-//
-//		// get current NBBO quote
-//		BestQuote nbboQuote = findBestBuySell(getAssetID(nbboMarketID));
-//		// TODO - need to actually get the NBBO here
-//
-//		// identify best buy and sell (in mulitple markets)
-//		BestQuote bestQuote = findBestBuySell(tradeAssetId);
-//
-//		// for normal bidding: qty = U(0, 200)
-//		double p = 0;
-////		int q = quantityMin;
-//		int q = 1;
-//		// + with 0.50% chance of being either long or short
-//		double prob = 0.5;
-//
-//		if (rand.nextDouble() < prob) {
-//			q = -q;
+	
+	public ActivityHashMap agentStrategy(TimeStamp ts) {
+		System.out.println(agentType + "Agent " + this.ID + ": AgentStrategy");
+		
+		ActivityHashMap actMap = new ActivityHashMap();
+
+		// identify best buy and sell offers
+		BestQuote bestQuote = findBestBuySell();
+
+		int p = 0;
+		int q = 1;
+		if (rand.nextDouble() < 0.5) q = -q; // 0.50% chance of being either long or short
+		// basic ZI behavior - price is based on uniform dist 2 SDs away from PV
+		int bidSD = 5000; // arbitrary for now, TODO
+		if (q > 0) {
+			p = (this.privateValue - 2*bidSD) + rand.nextInt()*2*bidSD;
+		} else {
+			p = this.privateValue + rand.nextInt()*2*bidSD;
+		}
+		int ask = lastNBBOQuote.bestAsk;
+		int bid = lastNBBOQuote.bestBid;
+
+		// if NBBO better check other market for matching quote (exact match)
+		boolean nbboWorse = false;
+		if (q > 0) {
+			if (bestQuote.bestBuy > bid) nbboWorse = true;
+		} else {
+			if (bestQuote.bestSell < ask) nbboWorse = true;
+		}
+
+		if (nbboWorse) {
+			System.out.println("NBBO Worse");
+			System.out.println(agentType + "::agentStrategy: " + ": NBBO (" + lastNBBOQuote.bestAsk + 
+					", " + lastNBBOQuote.bestBid + " ) better than Market " + tradeMarketID + " (" + bestQuote.bestSell +
+					", " + bestQuote.bestBuy + ")");
+
+			// since NBBO is better, check other market for a matching quote
+			Quote altQuote = getLatestQuote(altMarketID);
+			if (altQuote.lastAskPrice.getPrice() == ask && altQuote.lastBidPrice.getPrice() == bid) {
+				// there is a match! so trade in the other market
+				actMap.appendActivityHashMap(addBid(data.markets.get(altMarketID), p, q, ts));
+				System.out.println("bid submitted! to Market " + altMarketID);
+//				addMessage(AGENTTYPE + "::agentStrategy: asset " + altAssetID +
+//					": bid (" + p + "," + q + ") submitted to market " + altMarketID);
+			} else {
+				// no match, so no trade!
+				System.out.println(agentType + "::agentStrategy: " + ": No bid submitted -- no match to NBBO (" +
+						lastNBBOQuote.bestAsk +	", " + lastNBBOQuote.bestBid + ") in Market " + altMarketID +
+						" (" + altQuote.lastAskPrice.getPrice() + ", " + altQuote.lastBidPrice.getPrice() + ")");
+			}
+
+		} else { // current market's quote is better
+			System.out.println(data.markets.get(tradeMarketID));
+			actMap.appendActivityHashMap(addBid(data.markets.get(tradeMarketID), p, q, ts));
+//			addMessage(AGENTTYPE + "::agentStrategy: asset " + tradeAssetId +
+//					": bid (" + p + "," + q + ") submitted to market " + tradeMarketID);
+		}
+		
+		// only submits one bid so this other part isn't called
+//		if (!marketIDs.isEmpty()) {
+//			TimeStamp tsNew = ts.sum(new TimeStamp(sleepTime));
+//			actMap.insertActivity(new UpdateAllQuotes(this,tsNew));
+//			actMap.insertActivity(new UpdateNBBO(this, tsNew));
+//			actMap.insertActivity(new AgentStrategy(this, tsNew));
 //		}
-//
-//		// basic ZI behavior - price is based on uniform dist 2 SDs away from PV
-//		double bidSD = 5; // arbirtary for now
-//		if (q > 0) {
-//			//p = rand.nextDouble()*bidLimit + (this.privateValue-bidLimit);
-//			// buy
-//			p = (this.privateValue - 2*bidSD) + rand.nextDouble()*2*bidSD;
-//		} else {
-//			p = this.privateValue + rand.nextDouble()*2*bidSD;
-//		}
-//
-//		p = (double) Math.round(p * 10) / 10;  // truncate to 2 decimals
-//
-//		double ask = nbboQuote.bestSell;
-//		double bid = nbboQuote.bestBuy;
-//
-//		// if NBBO better check other market for matching quote (exact match)
-//		boolean nbboWorse = false;
-//		if (q > 0) {
-//			if (bestQuote.bestBuy > bid) nbboWorse = true;
-//		} else {
-//			if (bestQuote.bestSell < ask) nbboWorse = true;
-//		}
-//
-//		if (nbboWorse)
-//		{
-////			addMessage(AGENTTYPE + "::agentStrategy: asset " + tradeAssetId +
-////					": NBBO (" + nbboQuote.bestSell + ", " + nbboQuote.bestBuy +
-////					" ) better than market " + tradeMarketID + " (" + bestQuote.bestSell +
-////					", " + bestQuote.bestBuy + ")");
-//
-//			// since NBBO is better, check other market for a matching quote
-//			// in this simulation, the other market ID = m_numMarket - tradeMarketID
-//			int altMarketID = 3 - tradeMarketID;
-//			int altAssetID = getAssetID(altMarketID);
-//
-//			// note here that the input param assetID is assumed to be same as marketID
-//			// also, this only works because there is only market trading this assetID
-//			// BestQuote altQuote = findBestBuySell(altAssetID);
-//			if (altQuote.bestBuy == ask && altQuote.bestSell == bid)
-//			{
-//			//  // there is a match! so trade in the other market
-//			limitOrder = addExpiringBid(altAssetID, altMarketID, p, q, expiration);
-//			bidSubmitted = true;
-//			//addBid(altAssetID, altMarketID, p, q);
-////			addMessage(AGENTTYPE + "::agentStrategy: asset " + altAssetID +
-////					": bid (" + p + "," + q + ") submitted to market " + altMarketID);
-//			} else {
-//			  // no match, so no trade!
-//			//  addMessage(AGENTTYPE + "::agentStrategy: asset " + altAssetID +
-//			//    ": No bid submitted -- no match to NBBO (" +
-//			//    nbboQuote.bestSell + ", " + nbboQuote.bestBuy + ") in market " + altMarketID +
-//			//    " (" + altQuote.bestSell + ", " + altQuote.bestBuy + ")");
-//			}
-//
-//		} else {
-//			// current market's quote is better
-//			limitOrder = addExpiringBid(tradeAssetId, tradeMarketID, p, q, expiration);
-//			// update flag so won't submit any more bids after this one
-//			bidSubmitted = true;
-////			addMessage(AGENTTYPE + "::agentStrategy: asset " + tradeAssetId +
-////					": bid (" + p + "," + q + ") submitted to market " + tradeMarketID);
-//		}
-//
-//		return null;
-//	}
+		return actMap;
+	}
 }

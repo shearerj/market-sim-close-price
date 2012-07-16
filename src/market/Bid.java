@@ -21,6 +21,13 @@ public abstract class Bid {
 		this.bidID = this.hashCode();
 	}
 
+	public Bid(Bid other) {
+		this.bidID = other.bidID;
+		this.agentID = other.agentID;
+		this.marketID = other.marketID;
+		this.timestamp = other.timestamp;
+	}
+	
 	/**
 	 * accessor function for agentID
 	 *

@@ -26,5 +26,4 @@ public abstract class Activity {
 	public TimeStamp getTime() {
 		return this.time;
 	}
-	
 }

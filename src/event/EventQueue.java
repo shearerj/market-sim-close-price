@@ -1,7 +1,9 @@
 package event;
 
+import java.util.ArrayList;
 import java.util.PriorityQueue;
 import java.util.Comparator;
+import java.util.Iterator;
 
 /**
  * @author ewah
@@ -77,4 +79,20 @@ public class EventQueue {
 		return this.eventQueue.isEmpty();
 	}
 	
+	/**
+	 * Checks if Q contains an Event with the specified TimeStamp already.
+	 * 
+	 * @param ts
+	 * @return Event that matches, otherwise return null 
+	 */
+	public Event contains(TimeStamp ts) {
+		ArrayList<Event> events = new ArrayList<Event>(eventQueue);
+		for (Iterator<Event> it = events.iterator(); it.hasNext(); ) {
+			Event e = it.next();
+			if (e.getTime().equals(ts)) {
+				return e;
+			}
+		}
+		return null;
+	}
 }

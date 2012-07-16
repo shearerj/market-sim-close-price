@@ -8,9 +8,9 @@ package market;
  */
 public class BestQuote {
 	public int bestBuyMarket = -1;
-	public double bestBuy = -1;
+	public int bestBuy = -1;
 	public int bestSellMarket = -1;
-	public double bestSell = -1;
+	public int bestSell = -1;
 
 	public String toString() {
 		return "BestQuote(BestBuy: " + bestBuy + ", BestSell: " + bestSell + ")";

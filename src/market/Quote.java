@@ -12,7 +12,6 @@ import java.util.HashMap;
  */
 public class Quote {
 
-//	public Integer hqw;	// hypothetical quantity won
 	public Price lastAskPrice;
 	public Price lastBidPrice;
 	public Price lastClearPrice;
@@ -24,6 +23,8 @@ public class Quote {
 	public Integer marketID;
 	public Integer lastAskQuantity;
 	public Integer lastBidQuantity;
+	
+	public int depth;
 	
 	/**
 	 * Constructor
@@ -46,6 +47,8 @@ public class Quote {
 		lastClearTime = mkt.getLastClearTime();
 		nextQuoteTime = mkt.getNextQuoteTime();
 		lastQuoteTime = mkt.getLastQuoteTime();
+		
+		depth = 1;
 	}
 	
 //	public int getQuantityAtBidPrice (double bidPrice) {

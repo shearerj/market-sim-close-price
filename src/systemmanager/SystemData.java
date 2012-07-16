@@ -2,12 +2,10 @@ package systemmanager;
 
 import event.*;
 import entity.*;
+import market.*;
 import activity.*;
-import systemmanager.*;
 
 import java.util.*;
-
-import market.*;
 
 /**
  * Class that stores all simulation data (agents, markets, quotes, bid, etc.).
@@ -23,11 +21,16 @@ public class SystemData {
 	public HashMap<Integer,Agent> agents;				// agents hashed by ID
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
 
-	public TimeStamp gameLength;
+	public HashMap<String,Integer> numMarketType;	// hashed by type, value is number of that type
+	public HashMap<String,Integer> numAgentType;
+	public int numMarkets;
+	public int numAgents;
 	
-	private Log log; // TODO still need to deal with log
-
+	public TimeStamp simLength;
+	
 	private Sequence transIDSequence;
+	private Log log; // TODO still need to deal with log
+	
 
 	// this is where logging will take place as well
 
@@ -37,10 +40,14 @@ public class SystemData {
 		quoteData = new HashMap<Integer,Quote>();
 		agents = new HashMap<Integer,Agent>();
 		markets = new HashMap<Integer,Market>();
+		numMarketType = new HashMap<String,Integer>();
+		numAgentType = new HashMap<String,Integer>();
 		
 		agentQuotes = new HashMap<Integer,ArrayList<Bid>>();
 
 		transIDSequence = new Sequence(0);
+		numAgents = 0;
+		numMarkets = 0;
 	}
 
 	// Access variables

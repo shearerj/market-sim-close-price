@@ -12,10 +12,10 @@ public class SubmitBid extends Activity {
 	
 	private Agent ag;
 	private Market mkt;
-	private double price;
+	private int price;
 	private int quantity;
 	
-	public SubmitBid(Agent ag, Market mkt, double p, int q, TimeStamp t) {
+	public SubmitBid(Agent ag, Market mkt, int p, int q, TimeStamp t) {
 		this.ag = ag;
 		this.mkt = mkt;
 		this.price = p;
@@ -25,5 +25,5 @@ public class SubmitBid extends Activity {
 	
 	public ActivityHashMap execute() {
 		return this.ag.submitBid(this.mkt, this.price, this.quantity, this.time);
-	}	
+	}
 }

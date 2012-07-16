@@ -3,13 +3,14 @@ package market;
 import java.text.DecimalFormat;
 
 /**
- * Price class is wrapper for double.
+ * Price class is wrapper for int; one unit represents one thousandth
+ * of a collar.
  * 
  * @author ewah
  */
 public class Price implements Comparable<Object> {
 
-	protected double price;
+	protected int price;
 	
 	/**
 	 * Constructor initializes price to zero.
@@ -17,49 +18,27 @@ public class Price implements Comparable<Object> {
 	public Price() {
 		price = 0;
 	}
-	
+
 	/**
-	 * Constructor taking in a float.
+	 * Constructor taking in a int.
 	 * @param p
 	 */
-	public Price(float p) {
-		price = (double) p;
-	}
-	
-	/**
-	 * Constructor taking in a double.
-	 * @param p
-	 */
-	public Price(double p) {
+	public Price(int p) {
 		price = p;
-	}
-	
-	/**
-	 * @return price as double
-	 */
-	public double getPrice() {
-		return new Double(price).doubleValue();
-	}
-	
-	/**
-	 * @return price as float
-	 */
-	public float floatValue() {
-		return new Double(price).floatValue();
 	}
 	
 	/**
 	 * @return price as int
 	 */
-	public int intValue() {
-		return new Double(price).intValue();
+	public int getPrice() {
+		return new Integer(price).intValue();
 	}
 	
 	/**
-	 * @return price as Double
+	 * @return price in dollars (3 decimal places)
 	 */
-	public Double toDouble() {
-		return new Double(price);
+	public double getDollarPrice() {
+		return price / 1000;
 	}
 	
 	/* 
@@ -69,25 +48,25 @@ public class Price implements Comparable<Object> {
 		return Double.compare(price, ((Price) o).getPrice());
 	}
 	
-	/**
-	 * @param numDecPlaces
-	 * @return string representation with the specified # of decimal places
-	 */
-	public String toString(int numDecPlaces)
-	{
-		String str = "#.";
-
-		for (int i = 0; i < numDecPlaces; i++)
-			str = str.concat("0");
-
-		return new DecimalFormat(str).format(price);
-	}
+//	/**
+//	 * @param numDecPlaces
+//	 * @return string representation with the specified # of decimal places
+//	 */
+//	public String toString(int numDecPlaces)
+//	{
+//		String str = "#.";
+//
+//		for (int i = 0; i < numDecPlaces; i++)
+//			str = str.concat("0");
+//
+//		return new DecimalFormat(str).format(price);
+//	}
 	
 	/* 
 	 * Converts price to String.
 	 */
 	public String toString() {
-		return new Double(price).toString();
+		return new Integer(price).toString();
 	}
 	
 	/**

@@ -30,6 +30,8 @@ public abstract class Market extends Entity {
 	public Price lastAskQuote;
 	public Price lastBidQuote;
 	
+	public String marketType;
+	
 	public Market(int marketID, SystemData d) {
 		super(marketID, d);
 		

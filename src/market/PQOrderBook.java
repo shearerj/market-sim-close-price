@@ -11,14 +11,6 @@ import systemmanager.*;
 /**
  * @author ewah
  */
-/**
- * @author elaine
- *
- */
-/**
- * @author elaine
- *
- */
 public class PQOrderBook extends OrderBook {
 
 	public FourHeap FH;
@@ -154,11 +146,9 @@ public class PQOrderBook extends OrderBook {
 
 		int numBuys = matchingBuys.size();
 		int numSells = matchingSells.size();
-
 		if (numBuys == 0) return null;
 
 		clearedBids = new HashMap<Integer,Bid>();
-
 		for (int i = 0, j = 0; i < numBuys || j < numSells;) {
 			buy = (PQPoint) matchingBuys.get(i);
 			sell = (PQPoint) matchingSells.get(j);
@@ -179,7 +169,7 @@ public class PQOrderBook extends OrderBook {
 				if (buy.getQuantity() == 0) i++;
 				if (sell.getQuantity() == 0) j++;
 			}
-			assert ((i < numBuys && j < numSells) || (i == numBuys && j == numSells)) : "uniform clear broken";
+			assert ((i < numBuys && j < numSells) || (i == numBuys && j == numSells)) : "earliest price clear broken";
 		}
 		return transactions;
 	}

@@ -40,11 +40,12 @@ public class ActivityHashMap {
 	 * @return true if inserted correctly, false otherwise
 	 */
 	public boolean insertActivity(Activity act) {
+		if (act == null) return false;
 		
 		boolean ret = false;
-		
 		TimeStamp ts = act.getTime();
-		if (!checkActivityTimeStamp(ts, act)) return false;
+		if (!ts.checkActivityTimeStamp(act))
+			return false;
 		
 		if (acts.containsKey(ts)) {
 			// append Activity to LinkedList
@@ -55,7 +56,6 @@ public class ActivityHashMap {
 			ret = vec.add(act);
 			acts.put(ts, vec);
 		}
-		
 		return ret;
 	}
 	
@@ -70,13 +70,13 @@ public class ActivityHashMap {
 	 * @return true if inserted correctly, false otherwise
 	 */
 	public boolean insertMultipleActivity(LinkedList<Activity> av) {
+		if (av == null) return false;
 		
 		boolean ret = false;
-		
 		TimeStamp ts = av.get(0).getTime();
-		Iterator<Activity> it = av.iterator();
-		while (it.hasNext()) {
-			if (!checkActivityTimeStamp(ts, it.next())) return false;
+		if (!ts.checkActivityTimeStamp(av)) {
+			System.out.println("timestamps do not match");
+			return false;
 		}
 		
 		if (acts.containsKey(ts)) {
@@ -86,10 +86,8 @@ public class ActivityHashMap {
 			// create new key-value mapping
 			acts.put(ts, av);
 		}
-		
 		return ret;
 	}
-	
 	
 	/**
 	 * Appends two ActivityHashMaps together. Modifies the calling Object's HashMap.
@@ -98,30 +96,11 @@ public class ActivityHashMap {
 	 * @return
 	 */
 	public boolean appendActivityHashMap(ActivityHashMap ahm) {
-		
 		boolean ret = true;
-		
 		for (Map.Entry<TimeStamp,LinkedList<Activity>> entry : ahm.acts.entrySet()) {
 			ret = ret && insertMultipleActivity(entry.getValue());
 		}
-		
 		return ret;
-	}
-	
-	/**
-	 * Verifies whether or not the Activity's TimeStamp matches the given one.
-	 * 
-	 * @param ts
-	 * @param act
-	 * @return true if matches, false otherwise.
-	 */
-	private boolean checkActivityTimeStamp(TimeStamp ts, Activity act) {
-		
-		if (act.time.equals(ts)) {
-			return true;
-		} else {
-			return false;
-		}
 	}
 	
 	/**
@@ -145,4 +124,5 @@ public class ActivityHashMap {
 		return acts.entrySet();
 	}
 	
+
 }

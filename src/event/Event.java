@@ -2,7 +2,7 @@ package event;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.ListIterator;
+import java.util.Iterator;
 
 import activity.*;
 
@@ -20,14 +20,22 @@ public class Event {
 
 	private TimeStamp eventTime; 						// time in microseconds (only positive)
 	private boolean eventCompletion = false;			// flag indicating whether or not the event has been executed
-	
 	private LinkedList<Activity> activities;			// activities in the event
 	
 	/**
-	 * Empty constructor for Event object.
+	 * Constructor for Event object.
 	 */
 	public Event() {
 		eventTime = new TimeStamp(-1);
+		activities = new LinkedList<Activity>();
+	}
+	
+	/**
+	 * Constructor that creates empty event for a given time.
+	 * @param time
+	 */
+	public Event(TimeStamp time) {
+		eventTime = time;
 		activities = new LinkedList<Activity>();
 	}
 	
@@ -62,6 +70,13 @@ public class Event {
 	}
 
 	/**
+	 * @param acts	LinkedList of Activities to be added
+	 */
+	public void addActivity(LinkedList<Activity> acts) {
+		this.activities.addAll(acts);
+	}
+	
+	/**
 	 * Executes all activities stored in an event. Note that newly
 	 * generated activities cannot be added to the current event, but may
 	 * have the same TimeStamp as the current event.
@@ -69,12 +84,10 @@ public class Event {
 	 * @return 		List of ActivityHashMaps to parse and add to Event Queue
 	 */
 	public ArrayList<ActivityHashMap> executeAll() {
-		ArrayList<ActivityHashMap> actList = new ArrayList<ActivityHashMap>();
-		
-//		System.out.println("");
 		System.out.print("" + this.eventTime.toString() + " |  ");
 		
-		ListIterator<Activity> itr = activities.listIterator();
+		ArrayList<ActivityHashMap> actList = new ArrayList<ActivityHashMap>();
+		Iterator<Activity> itr = activities.iterator();
 		while (itr.hasNext()) {
 			Activity cmd = itr.next();
 			
@@ -87,4 +100,14 @@ public class Event {
 		return actList;
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		String s = "" + eventTime.toString() + " |  ";
+		for (Iterator<Activity> it = activities.iterator(); it.hasNext(); ) {
+			s += it.next().getClass().getName() + "->";
+		}
+		return s;
+	}
 }

@@ -10,12 +10,11 @@ import event.TimeStamp;
 public class Transaction {
 	
 	public Integer transID;
-
-	public Long quantity;
-	public Price price;
-	public TimeStamp timestamp;
 	public Integer buyerID;
 	public Integer sellerID;
 	public Integer marketID;
 	
+	public Integer quantity;
+	public Price price;
+	public TimeStamp timestamp;
 }

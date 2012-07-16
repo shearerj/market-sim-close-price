@@ -7,6 +7,7 @@ import systemmanager.*;
 
 import java.util.Iterator;
 import java.util.Random;
+import java.util.Properties;
 
 /**
  * Zero-intelligence agent.
@@ -15,8 +16,7 @@ import java.util.Random;
  */
 public class ZIAgent extends Agent {
 
-	public double privateValue;
-	
+	public int privateValue;
 	private Random rand;
 	
 	/**
@@ -30,30 +30,30 @@ public class ZIAgent extends Agent {
 		
 		// TESTING
 		rand = new Random();
-		privateValue = 10*rand.nextDouble()+50;
-		sleepTime = 20;
+		privateValue = 1000*rand.nextInt(25)+10000;
 	}
 	
 	
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		
-		System.out.println("ZIAgent " + this.ID + " ACTIVITY: ZIAgentStrategy");
+		System.out.println(agentType + "Agent " + this.ID + ": AgentStrategy");
 		
 		ActivityHashMap actMap = new ActivityHashMap();
 		// Cycle through all markets & submit bids
 		for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
 			Market mkt = data.markets.get(i.next());
 
-			double p = privateValue + rand.nextDouble()*5;
-			p = (double) Math.round(p * 10) / 10;
+			int p = privateValue + rand.nextInt(25)*1000;
 			int q = 1;
-			if (rand.nextBoolean() == true) q = -1;
+			if (rand.nextBoolean() == true) q++;
+			if (rand.nextDouble() < 0.5) q = -q;
 			
 			actMap.appendActivityHashMap(addBid(mkt, p, q, ts));
 		}
 		if (!marketIDs.isEmpty()) {
-			actMap.insertActivity(new UpdateAllQuotes(this, ts.sum(new TimeStamp(sleepTime))));
-			actMap.insertActivity(new AgentStrategy(this, ts.sum(new TimeStamp(sleepTime))));
+			TimeStamp tsNew = ts.sum(new TimeStamp(sleepTime));
+			actMap.insertActivity(new UpdateAllQuotes(this, tsNew));
+			actMap.insertActivity(new AgentStrategy(this, tsNew));
 		}
 		return actMap;
 	}

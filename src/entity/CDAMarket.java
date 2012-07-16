@@ -27,6 +27,7 @@ public class CDAMarket extends Market {
 	public CDAMarket(int marketID, SystemData d) {
 		super(marketID, d);
 		orderbook = new PQOrderBook(this.ID);
+		marketType = "CDA";
 	}
 
 	public Bid getBidQuote() {
@@ -39,19 +40,14 @@ public class CDAMarket extends Market {
 	
 	
 	public void addBid(Bid b) {
-		
-//		System.out.println("method: Add Bid to Market");
-		
 		orderbook.insertBid((PQBid) b);
 		this.data.addBid(b.getBidID(), (PQBid) b);
 	}
 	
 	
 	public void removeBid(Bid b) {
-		
-//		System.out.println("method: Remove Bid from Market");
 		orderbook.removeBid(b.getAgentID());
-		// create empty bid
+		// replace with empty bid
 		PQBid emptyBid = new PQBid(b.getAgentID(), this.ID);
 		emptyBid.addPoint(0, new Price(0));	
 		this.data.bidData.put(b.getBidID(), emptyBid);
@@ -70,7 +66,6 @@ public class CDAMarket extends Market {
 			System.out.println("Nothing transacted.");
 			return null;
 		}
-		
 		// add transactions to SystemData
 		for (Iterator<Transaction> i = transactions.iterator(); i.hasNext();) {
 			PQTransaction t = (PQTransaction) i.next();
@@ -80,8 +75,8 @@ public class CDAMarket extends Market {
 		// add bids to SystemData
 		for (Iterator<Bid> i = orderbook.getClearedBids().values().iterator(); i.hasNext(); ) {
 			PQBid b = (PQBid) i.next();
-			TimeStamp closeTime = new TimeStamp(0);
-			if (!b.containsBuyOffers() && !b.containsSellOffers()) closeTime = clearTime;
+//			TimeStamp closeTime = new TimeStamp(0);
+//			if (!b.containsBuyOffers() && !b.containsSellOffers()) closeTime = clearTime;
 			this.data.addBid(b.getBidID(), b);
 		}
 		lastClearTime = clearTime;
