@@ -65,8 +65,9 @@ public class EventManager {
 	 */
 	public void executeCurrentEvent() {
 
+		System.out.println(this.eventQueue.toString());
+		
 		Event toExecute = this.eventQueue.peek();
-//		System.out.println(toExecute.toString());
 		ArrayList<ActivityHashMap> acts = toExecute.executeAll();
 		
 		// Check if event has completed execution
@@ -77,9 +78,12 @@ public class EventManager {
 		}
 		if (!acts.isEmpty()) {
 			for (Iterator<ActivityHashMap> i = acts.listIterator(); i.hasNext();) {
-				manageActivityMap(i.next());
+				ActivityHashMap act = i.next();
+//				System.out.println("manage: " + act.toString());
+				manageActivityMap(act);
 			}
 		}
+//		System.out.println("After mgmt:" + this.eventQueue.toString());
 	}
 	
 	/**
@@ -91,16 +95,14 @@ public class EventManager {
 		if (act == null) return false;
 		
 		Event e = this.eventQueue.contains(act.getTime());
-		if (e != null) {
-			// append at end of existing event
+		if (e != null) { 	// append at end of existing event
 			e.addActivity(act);
 			// TODO - logging
-		} else {
-			// create new Event
+		} else {	// create new Event
 			e = new Event(act.getTime());
 			e.addActivity(act);
 			// only add to queue if will occur within the duration of the simulation
-			if (!act.getTime().after(duration)) addEvent(e);
+			if (act.getTime().before(duration)) addEvent(e);
 			// TODO - add logging!!!
 		}
 		return true;
@@ -117,17 +119,17 @@ public class EventManager {
 		if (acts.isEmpty() || acts == null) return false;
 		
 		if (!ts.checkActivityTimeStamp(acts)) {
-			System.out.println("activities do not have same timestamp");
+			System.out.println("Activities do not have same timestamp");
 			return false;
 			// TODO - note that the activities in the list do not all have the same timestamp
 		}
+//		System.out.println("current EQ before event creation: " + this.eventQueue.toString());
 		Event e = this.eventQueue.contains(ts);
 		if (e != null) {
 			e.addActivity(acts);
 		} else {
 			// only add to queue if will occur within the duration of the simulation
-			if (!ts.after(duration))
-				this.eventQueue.add(new Event(ts, acts));
+			if (ts.before(duration)) this.eventQueue.add(new Event(ts, acts));
 		}
 		return true;
 	}
@@ -138,7 +140,7 @@ public class EventManager {
 	 * @param actMap
 	 */
 	public void manageActivityMap(ActivityHashMap actMap) {
-		
+		if (actMap == null) return;
 		if (!actMap.isEmpty()) {
 			for (Map.Entry<TimeStamp,LinkedList<Activity>> entry : actMap.entrySet()) {
 				createEvent(entry.getKey(), entry.getValue());

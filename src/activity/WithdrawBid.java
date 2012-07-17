@@ -26,4 +26,9 @@ public class WithdrawBid extends Activity {
 	public ActivityHashMap execute() {
 		return this.ag.withdrawBid(this.bid, this.mkt, this.time);
 	}
+	
+	public String toString() {
+		return new String("WithdrawBid(Agt " + this.ag.getID() + ", Mkt " +
+							this.mkt.getID() + ")");
+	}
 }

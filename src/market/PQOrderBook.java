@@ -37,6 +37,7 @@ public class PQOrderBook extends OrderBook {
 			for (Iterator<PQPoint> i = oldBid.bidTreeSet.iterator(); i.hasNext(); ) {
 				FH.removeBid(i.next());
 			}
+			activeBids.put(key, (PQBid) newBid);
 		}
 		PQBid pqBid = (PQBid) newBid;
 		//insert all new Points from this Bid into the 4Heap
@@ -80,7 +81,6 @@ public class PQOrderBook extends OrderBook {
 		b.addPoint(0, FH.getBidQuote());
 		return b;
 	}
-
 
 	/**
 	 * Print the active bids in the orderbook.
@@ -127,8 +127,8 @@ public class PQOrderBook extends OrderBook {
 		PQPoint buy, sell;
 		clearedBids = null;
 
-		ArrayList matchingBuys = new ArrayList();
-		ArrayList matchingSells = new ArrayList();
+		ArrayList<PQPoint> matchingBuys = new ArrayList<PQPoint>();
+		ArrayList<PQPoint> matchingSells = new ArrayList<PQPoint>();
 		ArrayList<Transaction> transactions = new ArrayList<Transaction>();
 
 		int buyAgentId = -1;
@@ -150,8 +150,8 @@ public class PQOrderBook extends OrderBook {
 
 		clearedBids = new HashMap<Integer,Bid>();
 		for (int i = 0, j = 0; i < numBuys || j < numSells;) {
-			buy = (PQPoint) matchingBuys.get(i);
-			sell = (PQPoint) matchingSells.get(j);
+			buy = matchingBuys.get(i);
+			sell = matchingSells.get(j);
 			int q = Math.min(buy.getQuantity(), Math.abs(sell.getQuantity()));
 			Price p = PQPoint.earliestPrice(buy, sell);
 
@@ -159,9 +159,15 @@ public class PQOrderBook extends OrderBook {
 				transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
 
 				Integer key = new Integer(buy.getAgentID());
-				if (!clearedBids.containsKey(key)) clearedBids.put(key, buy.Parent);
+				if (!clearedBids.containsKey(key)) {
+					clearedBids.put(key, buy.Parent);
+					activeBids.remove(key);
+				}
 				key = new Integer(sell.getAgentID());
-				if (!clearedBids.containsKey(key)) clearedBids.put(key, sell.Parent);
+				if (!clearedBids.containsKey(key)) {
+					clearedBids.put(key, sell.Parent);
+					activeBids.remove(key);
+				}
 
 				//System.out.println("transacted something");
 				buy.transact(q);

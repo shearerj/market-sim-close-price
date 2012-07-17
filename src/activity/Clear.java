@@ -20,4 +20,8 @@ public class Clear extends Activity {
 	public ActivityHashMap execute() {
 		return this.mkt.clear(this.time);
 	}
+	
+	public String toString() {
+		return new String("Clear(Mkt " + this.mkt.getID() + ")");
+	}
 }

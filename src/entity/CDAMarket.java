@@ -56,14 +56,13 @@ public class CDAMarket extends Market {
 	
 	
 	public ActivityHashMap clear(TimeStamp clearTime) {
-
-		System.out.print("Market " + this.ID + " ACTIVITY: Clear: ");
+//		System.out.print("Market " + this.ID + " ACTIVITY: Clear: ");
 		orderbook.logActiveBids();
 		
 		ArrayList<Transaction> transactions = orderbook.earliestPriceClear(clearTime);
 		if (transactions == null) {
 			this.lastClearTime = clearTime; 
-			System.out.println("Nothing transacted.");
+			System.out.println("-------------------Nothing transacted.");
 			return null;
 		}
 		// add transactions to SystemData

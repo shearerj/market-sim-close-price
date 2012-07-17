@@ -11,8 +11,6 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.TreeSet;
-import java.io.IOException;
-
 
 /**
  * Base class for all agents.
@@ -189,7 +187,7 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap agentArrival(Market mkt, TimeStamp ts) {
 
-		System.out.println("Agent " + this.ID + ": AgentArrival in Market " + mkt.ID);
+//		System.out.println("Agent " + this.ID + ": AgentArrival in Market " + mkt.ID);
 
 		// buyer/seller based on the config file -- TODO
 		mkt.agentIDs.add(this.ID);
@@ -241,7 +239,7 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap agentDeparture(Market mkt) {
 
-		System.out.println("Agent " + this.ID + ": AgentDeparture from Market " + mkt.ID);
+//		System.out.println("Agent " + this.ID + ": AgentDeparture from Market " + mkt.ID);
 
 		mkt.agentIDs.remove(mkt.agentIDs.indexOf(this.ID));
 		mkt.buyers.remove(mkt.buyers.indexOf(this.ID));
@@ -284,7 +282,7 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap addBid(Market mkt, int price, int quantity, TimeStamp ts) {
 
-		System.out.println("Agent " + this.ID + ": AddBid (" + price + ", " + quantity + ") to Market " + mkt.ID);
+//		System.out.println("Agent " + this.ID + ": AddBid (" + price + ", " + quantity + ") to Market " + mkt.ID);
 
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new SubmitBid(this, mkt, price, quantity, ts));
@@ -304,7 +302,7 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap addMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
 
-		System.out.println("Agent " + this.ID + ": AddMultipleBid to Market " + mkt.ID);
+//		System.out.println("Agent " + this.ID + ": AddMultipleBid to Market " + mkt.ID);
 
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new SubmitMultipleBid(this, mkt, price, quantity, ts));
@@ -322,7 +320,7 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public ActivityHashMap submitBid(Market mkt, int price, int quantity, TimeStamp ts) {
-		System.out.println("Agent " + this.ID + ": SubmitBid (" + price + ", " + quantity + ") to Market " + mkt.ID);
+//		System.out.println("Agent " + this.ID + ": SubmitBid (" + price + ", " + quantity + ") to Market " + mkt.ID);
 
 		if (quantity == 0) return null;
 
@@ -344,7 +342,7 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public ActivityHashMap submitMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
-		System.out.println("Agent " + this.ID + ": SubmitMultipleBid to Market " + mkt.ID);
+//		System.out.println("Agent " + this.ID + ": SubmitMultipleBid to Market " + mkt.ID);
 
 		if (price.length != quantity.length) {
 			System.out.println("Price and Quantity arrays are not the same length");
@@ -370,8 +368,8 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public ActivityHashMap withdrawBid(Bid b, Market mkt, TimeStamp ts) {
-		System.out.println("Agent " + this.ID + ": WithdrawBid " + " id=" + 
-							b.getBidID() + " from Market " + mkt.ID);
+//		System.out.println("Agent " + this.ID + ": WithdrawBid " + " id=" + 
+//							b.getBidID() + " from Market " + mkt.ID);
 		mkt.removeBid(b);
 		return null;
 	}
@@ -384,7 +382,7 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public ActivityHashMap updateNBBO(TimeStamp ts) {
-		System.out.println("Agent " + this.ID + ": UpdateNBBO");
+//		System.out.println("Agent " + this.ID + ": UpdateNBBO");
 		
 		lastNBBOQuote = findBestBidOffer();
 		System.out.println("NBBO: " + lastNBBOQuote);
@@ -415,7 +413,7 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public ActivityHashMap updateAllQuotes(TimeStamp ts) {
-		System.out.println("Agent " + this.ID + ": UpdateAllQuotes");
+//		System.out.println("Agent " + this.ID + ": UpdateAllQuotes");
 
 		for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
 			Market mkt = data.markets.get(i.next());

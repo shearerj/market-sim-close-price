@@ -1,8 +1,8 @@
 package activity;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.Map;
 
@@ -26,8 +26,6 @@ public class ActivityHashMap {
 	public void clear() {
 		acts.clear();
 	}
-	
-	// TODO error checking to throw an Exception when TimeStamp mismatch
 	
 	/**
 	 * Creates new entry hashed at the activity's TimeStamp, with a single
@@ -124,5 +122,18 @@ public class ActivityHashMap {
 		return acts.entrySet();
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		String s = "";
+		for (Map.Entry<TimeStamp,LinkedList<Activity>> entry : acts.entrySet()) {
+			s += entry.getKey().toString() + ": ";
+			for (Iterator<Activity> it = entry.getValue().iterator(); it.hasNext(); ) {
+				s += it.next().toString() + "...";
+			}
+		}
+		return s;
+	}
 
 }

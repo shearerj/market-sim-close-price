@@ -23,4 +23,8 @@ public class AgentDeparture extends Activity {
 		return this.ag.agentDeparture(this.mkt);
 	}
 	
+	public String toString() {
+		return new String("AgentDeparture(Agt " + this.ag.getID() + ", Mkt " +
+							this.mkt.getID() + ")");
+	}
 }

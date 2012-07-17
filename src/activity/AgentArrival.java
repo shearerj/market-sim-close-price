@@ -24,4 +24,8 @@ public class AgentArrival extends Activity {
 		return this.ag.agentArrival(this.mkt, this.time);
 	}
 	
+	public String toString() {
+		return new String("AgentArrival(Agt " + this.ag.getID() + ", Mkt " +
+							this.mkt.getID() + ")");
+	}
 }

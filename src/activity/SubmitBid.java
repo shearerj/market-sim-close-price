@@ -26,4 +26,10 @@ public class SubmitBid extends Activity {
 	public ActivityHashMap execute() {
 		return this.ag.submitBid(this.mkt, this.price, this.quantity, this.time);
 	}
+	
+	public String toString() {
+		return new String("SubmitBid(Agt " + this.ag.getID() + ", Mkt " +
+				this.mkt.getID() + ", " + this.price + ", " +
+				this.quantity + ")");
+	}
 }

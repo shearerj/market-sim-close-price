@@ -106,9 +106,6 @@ public class SystemManager {
 				createAgentActivity(agentID, str.split(","), agent.nextArrivalTime());
 			}
 		}
-		
-//		System.out.println(data.agents.size());
-//		System.out.println(data.markets.size());
 	}
 	
 	

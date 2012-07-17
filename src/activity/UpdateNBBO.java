@@ -21,4 +21,7 @@ public class UpdateNBBO extends Activity {
 		return this.ag.updateNBBO(this.time);
 	}
 	
+	public String toString() {
+		return new String("UpdateNBBO(Agt " + this.ag.getID() + ")");
+	}
 }

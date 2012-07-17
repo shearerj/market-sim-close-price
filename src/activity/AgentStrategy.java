@@ -21,4 +21,8 @@ public class AgentStrategy extends Activity {
 	public ActivityHashMap execute() {
 		return this.ag.agentStrategy(this.time);
 	}
+	
+	public String toString() {
+		return new String("AgentStrategy(Agt " + this.ag.getID() + ")");
+	}
 }

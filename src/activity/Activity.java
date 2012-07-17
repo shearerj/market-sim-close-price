@@ -26,4 +26,9 @@ public abstract class Activity {
 	public TimeStamp getTime() {
 		return this.time;
 	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public abstract String toString();
 }

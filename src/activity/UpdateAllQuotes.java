@@ -21,4 +21,8 @@ public class UpdateAllQuotes extends Activity {
 	public ActivityHashMap execute() {
 		return this.ag.updateAllQuotes(this.time);
 	}
+	
+	public String toString() {
+		return new String("UpdateAllQuotes(Agt " + this.ag.getID() + ")");
+	}
 }

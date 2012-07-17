@@ -84,14 +84,13 @@ public class Event {
 	 * @return 		List of ActivityHashMaps to parse and add to Event Queue
 	 */
 	public ArrayList<ActivityHashMap> executeAll() {
-		System.out.print("" + this.eventTime.toString() + " |  ");
+//		System.out.print("" + this.eventTime.toString() + " |  ");
+//		System.out.println("" + this.eventTime.toString() + " |  " + this.toString());
 		
 		ArrayList<ActivityHashMap> actList = new ArrayList<ActivityHashMap>();
 		Iterator<Activity> itr = activities.iterator();
 		while (itr.hasNext()) {
-			Activity cmd = itr.next();
-			
-			ActivityHashMap ahm = cmd.execute();
+			ActivityHashMap ahm = itr.next().execute();
 			if (ahm != null) {
 				actList.add(ahm);
 			}
@@ -104,9 +103,10 @@ public class Event {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		String s = "" + eventTime.toString() + " |  ";
+		String s = "" + eventTime.toString() + " | ";
 		for (Iterator<Activity> it = activities.iterator(); it.hasNext(); ) {
-			s += it.next().getClass().getName() + "->";
+//			s += it.next().getClass().getName() + "->";
+			s += it.next().toString() + " -> ";
 		}
 		return s;
 	}

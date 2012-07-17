@@ -36,7 +36,7 @@ public class ZIAgent extends Agent {
 	
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		
-		System.out.println(agentType + "Agent " + this.ID + ": AgentStrategy");
+//		System.out.println(agentType + "Agent " + this.ID + ": AgentStrategy");
 		
 		ActivityHashMap actMap = new ActivityHashMap();
 		// Cycle through all markets & submit bids

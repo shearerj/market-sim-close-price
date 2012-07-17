@@ -26,4 +26,10 @@ public class SubmitMultipleBid extends Activity {
 	public ActivityHashMap execute() {
 		return this.ag.submitMultipleBid(this.mkt, this.price, this.quantity, this.time);
 	}
+	
+	public String toString() {
+		return new String("SubmitMultipleBid(Agt " + this.ag.getID() + ", Mkt " +
+							this.mkt.getID() + ", " + this.price.toString() + ", " +
+							this.quantity.toString() + ")");
+	}
 }

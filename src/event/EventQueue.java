@@ -95,4 +95,18 @@ public class EventQueue {
 		}
 		return null;
 	}
+	
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		String s  = "Q: ";
+		PriorityQueue<Event> copy = new PriorityQueue<Event>(this.eventQueue);
+		int numEvents = copy.size();
+		for (int i = 0; i < numEvents; i++) {
+			s += copy.poll().toString() + "// ";
+		}
+		return s;
+	}
 }
