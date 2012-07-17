@@ -8,9 +8,9 @@ package market;
 public class BestBidAsk {
 
 	// initialize to -1
-	public int bestBidMarket = -1;
+	public int bestBidMarket = 1;
 	public int bestBid = -1;
-	public int bestAskMarket = -1;
+	public int bestAskMarket = 1;
 	public int bestAsk = -1;
 
 	public String toString() {

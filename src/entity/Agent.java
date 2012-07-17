@@ -283,7 +283,6 @@ public abstract class Agent extends Entity {
 	public ActivityHashMap addBid(Market mkt, int price, int quantity, TimeStamp ts) {
 
 //		System.out.println("Agent " + this.ID + ": AddBid (" + price + ", " + quantity + ") to Market " + mkt.ID);
-
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new SubmitBid(this, mkt, price, quantity, ts));
 		actMap.insertActivity(new Clear(mkt, ts));
@@ -303,7 +302,6 @@ public abstract class Agent extends Entity {
 	public ActivityHashMap addMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
 
 //		System.out.println("Agent " + this.ID + ": AddMultipleBid to Market " + mkt.ID);
-
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new SubmitMultipleBid(this, mkt, price, quantity, ts));
 		actMap.insertActivity(new Clear(mkt, ts));
@@ -775,7 +773,7 @@ public abstract class Agent extends Entity {
 	/**
 	 * @return agent's realized profit
 	 */
-	public double getRealizedProfit() {
+	public int getRealizedProfit() {
 		return realizedProfit;
 	}
 

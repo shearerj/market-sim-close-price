@@ -136,7 +136,7 @@ public class PQOrderBook extends OrderBook {
 
 		if (!FH.matchBuySet.isEmpty() && !FH.matchSellSet.isEmpty()) {
 			PQPoint b = (PQPoint) FH.matchBuySet.first();
-			buyAgentId = ((PQPoint) FH.matchBuySet.first()).getAgentID();
+			buyAgentId = ((PQPoint ) FH.matchBuySet.first()).getAgentID();
 			sellAgentId = ((PQPoint) FH.matchSellSet.first()).getAgentID();
 		}
 		/* crufty XXX hack to prevent same-bid execution */
@@ -149,6 +149,8 @@ public class PQOrderBook extends OrderBook {
 		if (numBuys == 0) return null;
 
 		clearedBids = new HashMap<Integer,Bid>();
+		// got rid of for loop because Clear is always called immediately after any bid submission
+		// but what if multi-point bid???
 		for (int i = 0, j = 0; i < numBuys || j < numSells;) {
 			buy = matchingBuys.get(i);
 			sell = matchingSells.get(j);
@@ -177,6 +179,17 @@ public class PQOrderBook extends OrderBook {
 			}
 			assert ((i < numBuys && j < numSells) || (i == numBuys && j == numSells)) : "earliest price clear broken";
 		}
+//		// Handling multi-unit clearing - move any non-zero quantity bids back into Active Bids
+//		for (Map.Entry<Integer,Bid> entry : clearedBids.entrySet()) {
+//			PQBid b = (PQBid) entry.getValue();
+//			for (Iterator<PQPoint> it = b.bidTreeSet.iterator(); it.hasNext(); ) {
+//				PQPoint pq = it.next();
+//				if (pq.getQuantity() != 0) {
+//					
+//				}
+//				activeBids.put(key, (PQBid) newBid);
+//			}
+//		}
 		return transactions;
 	}
 }

@@ -7,9 +7,9 @@ package market;
  * Time: 6:58:57 AM
  */
 public class BestQuote {
-	public int bestBuyMarket = -1;
+	public int bestBuyMarket = 1;
 	public int bestBuy = -1;
-	public int bestSellMarket = -1;
+	public int bestSellMarket = 1;
 	public int bestSell = -1;
 
 	public String toString() {
