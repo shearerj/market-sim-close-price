@@ -27,6 +27,8 @@ public class AgentFactory {
 			return new MarketMaker(agentID, data);
 		} else if (type.toLowerCase().equals("nbbo")) {
 			return new NBBOAgent(agentID, data);
+		} else if (type.toLowerCase().equals("test")) {
+			return new TestAgent(agentID, data);
 		} else {
 			return null;
 		}

@@ -1,8 +1,10 @@
 package market;
 
 import java.util.HashMap;
+import java.util.ArrayList;
 
 import systemmanager.*;
+import event.*;
 
 /**
  * Base class for orderbooks. Each orderbook is associated with a single market.
@@ -30,6 +32,11 @@ public abstract class OrderBook {
 	
 	public abstract void removeBid(int agentID);
 	
+	public abstract ArrayList<Transaction> earliestPriceClear(TimeStamp ts);
+	
+	public abstract ArrayList<Transaction> uniformPriceClear(TimeStamp ts);
+	
+	
 	public void insertBid(Bid newBid) {
 		Integer key = newBid.agentID;
 		activeBids.put(key, newBid);
@@ -46,5 +53,6 @@ public abstract class OrderBook {
 	public HashMap<Integer,Bid> getActiveBids() {
 		return activeBids;
 	}
+
 	
 }

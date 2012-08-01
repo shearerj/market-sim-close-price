@@ -34,7 +34,7 @@ public class PQBid extends Bid {
 	}
 	
 	/**
-	 * Add point p to bidArray
+	 * Add point p to bidTreeSet
 	 * 
 	 * @param p PQPoint to add to the bid
 	 */

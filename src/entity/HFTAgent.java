@@ -56,8 +56,7 @@ public class HFTAgent extends Agent {
 		
 		BestQuote bestQuote = findBestBuySell();
 		if ((bestQuote.bestSell > (1+alpha)*bestQuote.bestBuy) && (bestQuote.bestBuy >= 0) ) {
-//			log(Log.INFO, "found arb op!"); // TODO -log
-			System.out.println("found arb opp!");
+			System.out.println("found arb opp!");// TODO -log
 			
 			int buyMarketID = bestQuote.bestBuyMarket;
 			int sellMarketID = bestQuote.bestSellMarket;

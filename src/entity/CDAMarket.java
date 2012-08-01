@@ -12,7 +12,7 @@ import java.util.Map;
 import market.*;
 
 /**
- * Class for a continuous double auction.
+ * Class for a continuous double auction market.
  * 
  * @author ewah
  */
@@ -56,8 +56,8 @@ public class CDAMarket extends Market {
 	
 	
 	public ActivityHashMap clear(TimeStamp clearTime) {
-//		System.out.print("Market " + this.ID + " ACTIVITY: Clear: ");
 		orderbook.logActiveBids();
+		orderbook.logFourHeap();
 		
 		ArrayList<Transaction> transactions = orderbook.earliestPriceClear(clearTime);
 		if (transactions == null) {
@@ -80,7 +80,9 @@ public class CDAMarket extends Market {
 		}
 		lastClearTime = clearTime;
 
+		orderbook.logActiveBids();
 		orderbook.logClearedBids();
+		orderbook.logFourHeap();
 		return null;
 	}
 

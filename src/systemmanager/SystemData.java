@@ -3,7 +3,6 @@ package systemmanager;
 import event.*;
 import entity.*;
 import market.*;
-import activity.*;
 
 import java.util.*;
 
@@ -17,7 +16,7 @@ public class SystemData {
 	public HashMap<Integer,PQBid> bidData;				// hashed by bid ID???
 	public HashMap<Integer,PQTransaction> transData;	// hashed by transaction ID
 	public HashMap<Integer,Quote> quoteData;			// hashed by market ID
-	public HashMap<Integer,ArrayList<Bid>> agentQuotes; 	// hashed by agentID
+	public HashMap<Integer,ArrayList<Bid>> agentQuotes; // hashed by agentID
 	public HashMap<Integer,Agent> agents;				// agents hashed by ID
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
 
@@ -27,13 +26,13 @@ public class SystemData {
 	public int numAgents;
 	
 	public TimeStamp simLength;
-	
 	private Sequence transIDSequence;
-	private Log log; // TODO still need to deal with log
 	
-
-	// this is where logging will take place as well
-
+	private ArrivalTime arrivalTimes;
+	private PrivateValue privateValues;
+	
+	
+	
 	public SystemData() {
 		bidData = new HashMap<Integer,PQBid>();
 		transData = new HashMap<Integer,PQTransaction>();
@@ -87,7 +86,31 @@ public class SystemData {
 	public PQBid getBid(int id) {
 		return bidData.get(id);
 	}
-
+	
+	public void nbboArrivalTimes(double arrivalRate) {
+		arrivalTimes = new ArrivalTime(new TimeStamp(0), arrivalRate);
+	}
+	
+	public void nbboPrivateValues(double kappa, int meanPV, double shockVar) {
+		privateValues = new PrivateValue(kappa, meanPV, shockVar);	
+	}
+	
+	public TimeStamp nextArrival() {
+		if (arrivalTimes == null) {
+			return null;
+		}
+		return arrivalTimes.next();
+	}
+	
+	public int nextPrivateValue() {
+		if (privateValues == null) {
+			return 0;
+		}
+		return privateValues.next();
+	}
+	
+	
+	
 	// Gets agent's current bids (hashed on bid ID)
 //	public HashMap<Integer,PQBid> getAgentBids(int agentID) {
 //		HashMap<Integer,PQBid> bidMap = new HashMap<Integer,PQBid>();

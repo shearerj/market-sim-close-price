@@ -89,7 +89,7 @@ public class EventQueue {
 		ArrayList<Event> events = new ArrayList<Event>(eventQueue);
 		for (Iterator<Event> it = events.iterator(); it.hasNext(); ) {
 			Event e = it.next();
-			if (e.getTime().equals(ts)) {
+			if (e.getTime().getTimeStamp().equals(ts.getTimeStamp())) {
 				return e;
 			}
 		}

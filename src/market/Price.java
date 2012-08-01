@@ -3,8 +3,8 @@ package market;
 import java.text.DecimalFormat;
 
 /**
- * Price class is wrapper for int; one unit represents one thousandth
- * of a collar.
+ * Price class is wrapper for long; one unit represents one thousandth
+ * of a dollar.
  * 
  * @author ewah
  */

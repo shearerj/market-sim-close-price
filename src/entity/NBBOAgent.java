@@ -36,13 +36,17 @@ import java.util.Properties;
  */
 public class NBBOAgent extends Agent {
 
-	public int privateValue;
 	private Random rand;
-	private double lambda;
 	private int meanPV;
+//	private double arrivalRate;
+//	private double kappa;
+//	private double shockVar;
+	
+	public int privateValue;
+	
 	private int tradeMarketID;		// assigned at initialization
 	private int altMarketID;
-	private ArrivalTime arrivalTimes;
+	
 	
 	/**
 	 * Overloaded constructor.
@@ -53,31 +57,44 @@ public class NBBOAgent extends Agent {
 		super(agentID, d);
 		agentType = "NBBO";
 
-		// TODO for testing
 		rand = new Random();
-		privateValue = 1000*rand.nextInt(25)+10000;
 	}
 	
-	public void initializeParams(Properties p) {
-		meanPV = Integer.parseInt(p.getProperty("meanPV"));
-		lambda = Double.parseDouble(p.getProperty("arrivalRate"));
-		sleepTime = Integer.parseInt(p.getProperty("sleepTime"));
-		String str = p.getProperty("markets");
-		String[] strs = str.split(",");
-		tradeMarketID = Integer.parseInt(strs[0]);
-		altMarketID = Integer.parseInt(strs[1]);
+	/**
+	 * Sets private value based on random process. 
+	 * @param pv
+	 */
+	public void setPrivateValue(int pv) {
+		this.privateValue = pv;
+	}
+	
+	@Override
+	public void initializeParams(SystemProperties p) {
+		meanPV = Integer.parseInt(p.get(agentType).get("meanPV"));
+//		arrivalRate = Double.parseDouble(p.get(agentType).get("arrivalRate"));
+//		kappa = Double.parseDouble(p.get(agentType).get("kappa"));
+//		shockVar = Double.parseDouble(p.get(agentType).get("shockVar"));
 		
-		arrivalTimes = new ArrivalTime(new TimeStamp(0), lambda);
+		sleepTime = Integer.parseInt(p.get(agentType).get("sleepTime"));
+		
+		// Hard code the market indices
+		assert (this.data.numMarkets >= 2) : "NBBO agents need at least 2 markets!";
+		tradeMarketID = -1;
+		altMarketID = -2;
+		if (rand.nextDouble() >= 0.5) {
+			altMarketID = tradeMarketID;
+			tradeMarketID--;
+		}
 	}
 	
+	@Override
 	public TimeStamp nextArrivalTime() {
-		return arrivalTimes.next();
+		return this.data.nextArrival();
 	}
-	
 	
 	@Override
 	public ActivityHashMap agentArrival(Market mkt, TimeStamp ts) {
-		System.out.println(agentType + "Agent " + this.ID + ": AgentArrival in Market " + mkt.ID);
+//		System.out.println(agentType + "Agent " + this.ID + ": AgentArrival in Market " + mkt.ID);
 
 		// buyer/seller based on config file
 		mkt.agentIDs.add(this.ID);
@@ -102,7 +119,7 @@ public class NBBOAgent extends Agent {
 
 	
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
-		System.out.println(agentType + "Agent " + this.ID + ": AgentStrategy");
+//		System.out.println(agentType + "Agent " + this.ID + ": AgentStrategy");
 		
 		ActivityHashMap actMap = new ActivityHashMap();
 
