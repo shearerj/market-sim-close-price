@@ -3,7 +3,6 @@ package systemmanager;
 import event.*;
 import entity.*;
 import market.*;
-import activity.*;
 
 import java.util.*;
 
@@ -17,7 +16,7 @@ public class SystemData {
 	public HashMap<Integer,PQBid> bidData;				// hashed by bid ID???
 	public HashMap<Integer,PQTransaction> transData;	// hashed by transaction ID
 	public HashMap<Integer,Quote> quoteData;			// hashed by market ID
-	public HashMap<Integer,ArrayList<Bid>> agentQuotes; 	// hashed by agentID
+	public HashMap<Integer,ArrayList<Bid>> agentQuotes; // hashed by agentID
 	public HashMap<Integer,Agent> agents;				// agents hashed by ID
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
 
@@ -27,12 +26,8 @@ public class SystemData {
 	public int numAgents;
 	
 	public TimeStamp simLength;
-	
 	private Sequence transIDSequence;
-	private Log log; // TODO still need to deal with log
 	
-
-	// this is where logging will take place as well
 
 	public SystemData() {
 		bidData = new HashMap<Integer,PQBid>();

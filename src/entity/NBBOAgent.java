@@ -38,7 +38,7 @@ public class NBBOAgent extends Agent {
 
 	public int privateValue;
 	private Random rand;
-	private double lambda;
+	private double arrivalRate;
 	private int meanPV;
 	private int tradeMarketID;		// assigned at initialization
 	private int altMarketID;
@@ -56,20 +56,26 @@ public class NBBOAgent extends Agent {
 		// TODO for testing
 		rand = new Random();
 		privateValue = 1000*rand.nextInt(25)+10000;
+		
+		// set up parameters
+		arrivalTimes = new ArrivalTime(new TimeStamp(0), arrivalRate);
 	}
 	
-	public void initializeParams(Properties p) {
-		meanPV = Integer.parseInt(p.getProperty("meanPV"));
-		lambda = Double.parseDouble(p.getProperty("arrivalRate"));
-		sleepTime = Integer.parseInt(p.getProperty("sleepTime"));
-		String str = p.getProperty("markets");
+	@Override
+	public void initializeParams(SystemProperties p) {
+		meanPV = Integer.parseInt(p.get(agentType).get("meanPV"));
+		arrivalRate = Double.parseDouble(p.get(agentType).get("arrivalRate"));
+		sleepTime = Integer.parseInt(p.get(agentType).get("sleepTime"));
+		String str = p.get(agentType).get("markets");
 		String[] strs = str.split(",");
 		tradeMarketID = Integer.parseInt(strs[0]);
 		altMarketID = Integer.parseInt(strs[1]);
 		
-		arrivalTimes = new ArrivalTime(new TimeStamp(0), lambda);
+//		privateValue = 
+		
 	}
 	
+	@Override
 	public TimeStamp nextArrivalTime() {
 		return arrivalTimes.next();
 	}
@@ -77,7 +83,7 @@ public class NBBOAgent extends Agent {
 	
 	@Override
 	public ActivityHashMap agentArrival(Market mkt, TimeStamp ts) {
-		System.out.println(agentType + "Agent " + this.ID + ": AgentArrival in Market " + mkt.ID);
+//		System.out.println(agentType + "Agent " + this.ID + ": AgentArrival in Market " + mkt.ID);
 
 		// buyer/seller based on config file
 		mkt.agentIDs.add(this.ID);
@@ -102,7 +108,7 @@ public class NBBOAgent extends Agent {
 
 	
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
-		System.out.println(agentType + "Agent " + this.ID + ": AgentStrategy");
+//		System.out.println(agentType + "Agent " + this.ID + ": AgentStrategy");
 		
 		ActivityHashMap actMap = new ActivityHashMap();
 

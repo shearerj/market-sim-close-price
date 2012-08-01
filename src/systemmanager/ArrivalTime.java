@@ -5,7 +5,7 @@ import event.*;
 import java.util.Random;
 
 /**
- * Class to hold and compute agent arrival times.
+ * Class to store and compute agent arrival times.
  * 
  * @author ewah
  */

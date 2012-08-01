@@ -129,54 +129,187 @@ public class PQOrderBook extends OrderBook {
 
 		ArrayList<PQPoint> matchingBuys = new ArrayList<PQPoint>();
 		ArrayList<PQPoint> matchingSells = new ArrayList<PQPoint>();
-		ArrayList<Transaction> transactions = new ArrayList<Transaction>();
+		ArrayList<Transaction> transactions = null;
 
 		int buyAgentId = -1;
 		int sellAgentId = -2;
 
 		if (!FH.matchBuySet.isEmpty() && !FH.matchSellSet.isEmpty()) {
-			PQPoint b = (PQPoint) FH.matchBuySet.first();
+//			PQPoint b = (PQPoint) FH.matchBuySet.first();
 			buyAgentId = ((PQPoint) FH.matchBuySet.first()).getAgentID();
 			sellAgentId = ((PQPoint) FH.matchSellSet.first()).getAgentID();
 		}
-		/* crufty XXX hack to prevent same-bid execution */
+		if (buyAgentId != sellAgentId) {
+			FH.clear(matchingBuys, matchingSells);
+		}
+		
+		while (!matchingBuys.isEmpty() && !matchingSells.isEmpty()) {
+			int numBuys = matchingBuys.size();
+			int numSells = matchingSells.size();
+			
+			buy = null;
+			sell = null;
+			clearedBids = new HashMap<Integer,Bid>();
+			transactions = new ArrayList<Transaction>();
+			int i, j;	// i is index for buys, j is index for sells
+			
+			// More buys through sells, so go through sells first
+			if (numBuys != numSells)
+				i = 0;
+			if (numBuys >= numSells) {
+				sell = matchingSells.get(numSells-1);
+				j = numSells-1;
+				for (i = numBuys-1; i >= 0; i--) {
+					if (matchingBuys.get(i).getAgentID() != sell.getAgentID()) {
+						buy = matchingBuys.get(i);
+						break;
+					}
+				}
+			} else { // More sells than buys, so go through buys first
+				buy = matchingBuys.get(numBuys-1);
+				i = numBuys-1;
+				for (j = numSells-1; j >= 0; j--) {
+					if (matchingSells.get(j).getAgentID() != buy.getAgentID()) {
+						sell = matchingSells.get(j);
+						break;
+					}
+				}
+			}
+			if (buy == null || sell == null) {
+				// due to agentIDs being the same, exit while loop
+				break;
+			}
+			int q = Math.min(buy.getQuantity(), Math.abs(sell.getQuantity()));
+			Price p = PQPoint.earliestPrice(buy, sell);
+			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
+
+			Integer key = new Integer(buy.getAgentID());
+			if (!clearedBids.containsKey(key)) {
+				clearedBids.put(key, buy.Parent);
+				activeBids.remove(key);
+			}
+			key = new Integer(sell.getAgentID());
+			if (!clearedBids.containsKey(key)) {
+				clearedBids.put(key, sell.Parent);
+				activeBids.remove(key);
+			}
+			
+			buy.transact(q);
+			sell.transact(-1 * q);
+			// Update MB/MS lists
+			if (buy.getQuantity() == 0) matchingBuys.remove(i);
+			if (sell.getQuantity() == 0) matchingSells.remove(j);
+		}
+		return transactions;
+	}
+
+	/**
+	 * Clears at a uniform price. For call markets.
+	 * 
+	 * @return ArrayList of PQTransactions
+	 */
+	public ArrayList<Transaction> uniformPriceClear(TimeStamp ts) {
+		long init = new TimeStamp().longValue();
+
+		PQBid bid = (PQBid) getBidQuote();
+		PQBid ask = (PQBid) getAskQuote();
+//		log(Log.INFO, "clear, bid/ask" + bid.quoteString() + "/" + ask.quoteString());
+		Price p = bid.bidTreeSet.first().price; // highest bid price
+
+		PQPoint buy, sell;
+		clearedBids = null;
+
+		ArrayList<PQPoint> matchingBuys = new ArrayList<PQPoint>();
+		ArrayList<PQPoint> matchingSells = new ArrayList<PQPoint>();
+		ArrayList<Transaction> transactions = null;
+
+		int buyAgentId = -1;
+		int sellAgentId = -2;
+
+		if (!FH.matchBuySet.isEmpty() && !FH.matchSellSet.isEmpty()) {
+			buyAgentId = ((PQPoint) FH.matchBuySet.first()).getAgentID();
+			sellAgentId = ((PQPoint) FH.matchSellSet.first()).getAgentID();
+		}
 		if (buyAgentId != sellAgentId) {
 			FH.clear(matchingBuys, matchingSells);
 		}
 
-		int numBuys = matchingBuys.size();
-		int numSells = matchingSells.size();
-		if (numBuys == 0) return null;
-
-		clearedBids = new HashMap<Integer,Bid>();
-		for (int i = 0, j = 0; i < numBuys || j < numSells;) {
-			buy = matchingBuys.get(i);
-			sell = matchingSells.get(j);
-			int q = Math.min(buy.getQuantity(), Math.abs(sell.getQuantity()));
-			Price p = PQPoint.earliestPrice(buy, sell);
-
-			if (buy.getAgentID() != sell.getAgentID()) {
-				transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-
-				Integer key = new Integer(buy.getAgentID());
-				if (!clearedBids.containsKey(key)) {
-					clearedBids.put(key, buy.Parent);
-					activeBids.remove(key);
+		while (!matchingBuys.isEmpty() && !matchingSells.isEmpty()) {
+			int numBuys = matchingBuys.size();
+			int numSells = matchingSells.size();
+			
+			buy = null;
+			sell = null;
+			clearedBids = new HashMap<Integer,Bid>();
+			transactions = new ArrayList<Transaction>();
+			int i, j;	// i is index for buys, j is index for sells
+			
+			// More buys through sells, so go through sells first
+			if (numBuys != numSells)
+				i = 0;
+			if (numBuys >= numSells) {
+				sell = matchingSells.get(numSells-1);
+				j = numSells-1;
+				for (i = numBuys-1; i >= 0; i--) {
+					if (matchingBuys.get(i).getAgentID() != sell.getAgentID()) {
+						buy = matchingBuys.get(i);
+						break;
+					}
 				}
-				key = new Integer(sell.getAgentID());
-				if (!clearedBids.containsKey(key)) {
-					clearedBids.put(key, sell.Parent);
-					activeBids.remove(key);
+			} else { // More sells than buys, so go through buys first
+				buy = matchingBuys.get(numBuys-1);
+				i = numBuys-1;
+				for (j = numSells-1; j >= 0; j--) {
+					if (matchingSells.get(j).getAgentID() != buy.getAgentID()) {
+						sell = matchingSells.get(j);
+						break;
+					}
 				}
-
-				//System.out.println("transacted something");
-				buy.transact(q);
-				sell.transact(-1 * q);
-				if (buy.getQuantity() == 0) i++;
-				if (sell.getQuantity() == 0) j++;
 			}
-			assert ((i < numBuys && j < numSells) || (i == numBuys && j == numSells)) : "earliest price clear broken";
+			if (buy == null || sell == null) {
+				// due to agentIDs being the same, exit while loop
+				break;
+			}
+			int q = Math.min(buy.getQuantity(), Math.abs(sell.getQuantity()));
+			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
+
+			Integer key = new Integer(buy.getAgentID());
+			if (!clearedBids.containsKey(key)) {
+				clearedBids.put(key, buy.Parent);
+				activeBids.remove(key);
+			}
+			key = new Integer(sell.getAgentID());
+			if (!clearedBids.containsKey(key)) {
+				clearedBids.put(key, sell.Parent);
+				activeBids.remove(key);
+			}
+			
+			buy.transact(q);
+			sell.transact(-1 * q);
+			// Update MB/MS lists
+			if (buy.getQuantity() == 0) matchingBuys.remove(i);
+			if (sell.getQuantity() == 0) matchingSells.remove(j);
 		}
 		return transactions;
 	}
+
+	
+//	/**
+//	 * Fixes issue caused by multi-unit bids where a partially-transacted bid
+//	 * remains in the clearedBids lists. Moves bids with non-zero quantities
+//	 * in clearedBids back to activeBids.
+//	 */
+//	private void fixBidLists() {
+//		// cycle through the list of bids in cleared to check for ones with unit=1
+//		for (Map.Entry<Integer,Bid> entry : clearedBids.entrySet()) {
+//			PQBid b = (PQBid) entry.getValue();
+//			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
+//				PQPoint pq = i.next();
+//				if (pq.getQuantity() != 0) {
+//					
+//				}
+////				s += "(" + pq.getQuantity() + " " + pq.getPrice().toString() + ") ";
+//			}
+//		}
+//	}
 }

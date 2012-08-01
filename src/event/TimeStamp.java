@@ -31,7 +31,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * Get the timestamp.
 	 * @return the TimeStamp's receipt timestamp in microseconds
 	 */
-	public Long getTimestamp() {
+	public Long getTimeStamp() {
 		return ts;
 	}
 

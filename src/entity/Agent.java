@@ -27,7 +27,6 @@ public abstract class Agent extends Entity {
 	protected HashMap<Integer,Price> askPrice;
 	protected HashMap<Integer,Bid> currentBid;
 	protected HashMap<Integer,Vector<Quote>> quotes;
-//	protected HashMap<Integer,Quote> quotes;
 	protected HashMap<Integer,Integer> initBid;
 	protected HashMap<Integer,Integer> initAsk;
 	protected HashMap<Integer,Integer> prevBid;
@@ -68,7 +67,6 @@ public abstract class Agent extends Entity {
 		nextQuoteTime = new HashMap<Integer,TimeStamp>();
 		lastClearTime = new HashMap<Integer,TimeStamp>();
 		quotes = new HashMap<Integer,Vector<Quote>>();
-//		quotes = new HashMap<Integer,Quote>();
 		initBid = new HashMap<Integer,Integer>();
 		initAsk = new HashMap<Integer,Integer>();
 		prevBid = new HashMap<Integer,Integer>();
@@ -84,8 +82,8 @@ public abstract class Agent extends Entity {
 	 * 
 	 * @param p
 	 */
-	public void initializeParams(Properties p) {
-		sleepTime = Integer.parseInt(p.getProperty("sleepTime"));
+	public void initializeParams(SystemProperties p) {
+		sleepTime = Integer.parseInt(p.get(agentType).get("sleepTime"));
 	}
 	
 	/**
@@ -240,7 +238,6 @@ public abstract class Agent extends Entity {
 	public ActivityHashMap agentDeparture(Market mkt) {
 
 //		System.out.println("Agent " + this.ID + ": AgentDeparture from Market " + mkt.ID);
-
 		mkt.agentIDs.remove(mkt.agentIDs.indexOf(this.ID));
 		mkt.buyers.remove(mkt.buyers.indexOf(this.ID));
 		mkt.sellers.remove(mkt.sellers.indexOf(this.ID));
@@ -282,8 +279,7 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap addBid(Market mkt, int price, int quantity, TimeStamp ts) {
 
-//		System.out.println("Agent " + this.ID + ": AddBid (" + price + ", " + quantity + ") to Market " + mkt.ID);
-
+//		System.out.println(ts.toString() + "| ((" + this.ID + ")): +(" + price + ", " + quantity + ") to [[" + mkt.ID + "]]");
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new SubmitBid(this, mkt, price, quantity, ts));
 		actMap.insertActivity(new Clear(mkt, ts));
@@ -321,7 +317,8 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap submitBid(Market mkt, int price, int quantity, TimeStamp ts) {
 //		System.out.println("Agent " + this.ID + ": SubmitBid (" + price + ", " + quantity + ") to Market " + mkt.ID);
-
+		System.out.println(ts.toString() + "| ((" + this.ID + ")): +(" + price + ", " + quantity + ") to [[" + mkt.ID + "]]");
+		
 		if (quantity == 0) return null;
 
 		PQBid pqBid = new PQBid(this.ID, mkt.ID);
@@ -383,10 +380,10 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap updateNBBO(TimeStamp ts) {
 //		System.out.println("Agent " + this.ID + ": UpdateNBBO");
-		
-		lastNBBOQuote = findBestBidOffer();
-		System.out.println("NBBO: " + lastNBBOQuote);
+				
 		System.out.println("Global " + lastGlobalQuote);
+		System.out.println("NBBO: " + lastNBBOQuote);
+		lastNBBOQuote = findBestBidOffer();
 //		log(Log.INFO, "MMWorkerBee::agentStrategy: NBBO: " + bestQuoteNBBO);
 //		log(Log.INFO, "MMWorkerBee::agentStrategy: Global: " + lastGlobalQuote);
 		
@@ -525,7 +522,7 @@ public abstract class Agent extends Entity {
 	/**
 	 * Get new transactions. All obtained transactions are processed sequentially.
 	 * Whenever an incomplete transaction record is encountered, the function will stop
-	 * and update lastTransID according.
+	 * and update lastTransID accordingly.
 	 * 
 	 * @param ts TimeStamp of update
 	 */
@@ -616,8 +613,8 @@ public abstract class Agent extends Entity {
 	protected BestQuote findBestBuySell() {
 		int bestBuy = -1;
 		int bestSell = -1;
-		int bestBuyMkt = -1;
-		int bestSellMkt = -1;
+		int bestBuyMkt = 0;
+		int bestSellMkt = 0;
 
 		for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
 			Market mkt = data.markets.get(i.next());
@@ -659,9 +656,9 @@ public abstract class Agent extends Entity {
 	 */
 	protected BestBidAsk findBestBidOffer() {
 	    int bestBid = -1;
-	    int bestBidMkt = -1;
+	    int bestBidMkt = 0;
 	    int bestAsk = -1;
-	    int bestAskMkt = -1;
+	    int bestAskMkt = 0;
 	    
 	    for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
 			Market mkt = data.markets.get(i.next());

@@ -65,7 +65,8 @@ public class EventManager {
 	 */
 	public void executeCurrentEvent() {
 
-		System.out.println(this.eventQueue.toString());
+		// For logging - TODO
+//		System.out.println(this.eventQueue.toString());
 		
 		Event toExecute = this.eventQueue.peek();
 		ArrayList<ActivityHashMap> acts = toExecute.executeAll();

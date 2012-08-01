@@ -24,18 +24,18 @@ public class SystemManager {
 	
 	// Environment parameters (set by config file)
 	private Properties props;
-	private Properties agentProps;
-//	private Properties mktProps;
+	private SystemProperties params;
 
 	/**
 	 * Constructor
 	 */
 	public SystemManager() {
-		data = new SystemData();	
+		data = new SystemData();
 		entities = new HashMap<Integer,Entity>();
 		agentIDSequence = new Sequence(1);
 		marketIDSequence = new Sequence(-1);
 		props = new Properties();
+		params = new SystemProperties();
 	}
 	
 	public static void main(String[] args) {
@@ -97,13 +97,8 @@ public class SystemManager {
 				entities.put(agentID, AgentFactory.createAgent(ag.getKey(), agentID, data));
 				Agent agent = (Agent) entities.get(agentID);
 				data.addAgent(agent);
-				
-				agentProps = new Properties();
-				loadConfig(agentProps, SystemConsts.configDir + ag.getKey() + ".properties");
-				agent.initializeParams(agentProps);
-				
-				String str = agentProps.getProperty("markets");
-				createAgentActivity(agentID, str.split(","), agent.nextArrivalTime());
+				agent.initializeParams(params);
+				createAgentActivity(agentID, agent.nextArrivalTime());
 			}
 		}
 	}
@@ -126,12 +121,12 @@ public class SystemManager {
 	 * @param marketIDs
 	 * @param ts	arrival time
 	 */
-	public void createAgentActivity(int agentID, String[] marketStr, TimeStamp ts) {
-		for (int i = 0; i < Math.min(marketStr.length, data.numMarkets); i++) {
+	public void createAgentActivity(int agentID, TimeStamp ts) {
+		for (int i = 1; i <= data.numMarkets; i++) {
 			eventManager.createEvent(new AgentArrival(data.getAgent(agentID),
-									 data.getMarket(-Integer.parseInt(marketStr[i])), ts));
+									 data.getMarket(-i), ts));
 			eventManager.createEvent(new AgentDeparture(data.getAgent(agentID),
-									 data.getMarket(-Integer.parseInt(marketStr[i])), data.simLength));
+									 data.getMarket(-i), data.simLength));
 		}
 	}
 
