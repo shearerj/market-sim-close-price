@@ -19,12 +19,26 @@ public class AgentDeparture extends Activity {
 		this.time = t;
 	}
 	
+	public AgentDeparture(Agent ag, TimeStamp t) {
+		this.ag = ag;
+		this.time = t;
+		this.mkt = null;
+	}
+	
 	public ActivityHashMap execute() {
-		return this.ag.agentDeparture(this.mkt);
+		if (mkt == null) {
+			return ((MMAgent)ag).agentDeparture();
+		} else {
+			return ((SMAgent)ag).agentDeparture(mkt);
+		}
 	}
 	
 	public String toString() {
-		return new String("AgentDeparture(Agt " + this.ag.getID() + ", Mkt " +
-							this.mkt.getID() + ")");
+		if (mkt == null) {
+			return new String("AgentDeparture::" + this.ag.toString());
+		} else {
+			return new String("AgentDeparture::" + this.ag.toString() + "," +
+							this.mkt.toString());
+		}
 	}
 }

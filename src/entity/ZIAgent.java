@@ -1,60 +1,50 @@
 package entity;
 
 import event.*;
-import market.*;
 import activity.*;
 import systemmanager.*;
-
-import java.util.Iterator;
-import java.util.Random;
-import java.util.Properties;
 
 /**
  * Zero-intelligence agent.
  * 
  * @author ewah
  */
-public class ZIAgent extends Agent {
+public class ZIAgent extends SMAgent {
 
 	public int privateValue;
-	private Random rand;
 	
 	/**
 	 * Overloaded constructor.
 	 * @param agentID
 	 * @param d SystemData object
 	 */
-	public ZIAgent(int agentID, SystemData d) {
-		super(agentID, d);
+	public ZIAgent(int agentID, SystemData d, AgentProperties p, Log l) {
+		super(agentID, d, p, l);
 		agentType = "ZI";
-		
-		// TESTING
-		rand = new Random();
+		arrivalTime = new TimeStamp(0);
+		sleepTime = Integer.parseInt(p.get(agentType).get("sleepTime"));
+		sleepVar = Double.parseDouble(p.get(agentType).get("sleepVar"));
 		privateValue = 1000*rand.nextInt(25)+10000;
 	}
 	
 	
-	public ActivityHashMap agentStrategy(TimeStamp ts) {
+	public ActivityHashMap agentStrategy(Market mkt, TimeStamp ts) {
 		
-//		System.out.println(agentType + "Agent " + this.ID + ": AgentStrategy");
+		if (mkt == null) return null;
 		
 		ActivityHashMap actMap = new ActivityHashMap();
-		// Cycle through all markets & submit bids
-		for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
-			Market mkt = data.markets.get(i.next());
-
-			int p = privateValue + rand.nextInt(25)*1000;
-			int q = 1;
-			if (rand.nextBoolean() == true) q++;
-			if (rand.nextDouble() < 0.5) q = -q;
-			
-			actMap.appendActivityHashMap(addBid(mkt, p, q, ts));
-		}
-		if (!marketIDs.isEmpty()) {
-			TimeStamp tsNew = ts.sum(new TimeStamp(sleepTime));
-			actMap.insertActivity(new UpdateAllQuotes(this, tsNew));
-			actMap.insertActivity(new AgentStrategy(this, tsNew));
-		}
+		
+		int p = privateValue + rand.nextInt(25)*1000;
+		int q = 1;
+		if (rand.nextBoolean() == true) q++;
+		if (rand.nextDouble() < 0.5) q = -q;
+		actMap.appendActivityHashMap(addBid(mkt, p, q, ts));
+		
+		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime()));
+		actMap.insertActivity(new UpdateAllQuotes(this, tsNew));
+		actMap.insertActivity(new AgentStrategy(this, mkt, tsNew));
 		return actMap;
 	}
+	
+	
 }

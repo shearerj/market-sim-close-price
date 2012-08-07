@@ -1,7 +1,6 @@
 package activity;
 
-
-import entity.Agent;
+import entity.*;
 import event.*;
 
 /**
@@ -12,17 +11,34 @@ import event.*;
 public class AgentStrategy extends Activity {
 
 	private Agent ag;
+	private Market mkt;
 
 	public AgentStrategy(Agent ag, TimeStamp t) {
 		this.ag = ag;
 		this.time = t;
+		this.mkt = null;
+	}
+	
+	public AgentStrategy(Agent ag, Market mkt, TimeStamp t) {
+		this.ag = ag;
+		this.mkt = mkt;
+		this.time = t;
 	}
 	
 	public ActivityHashMap execute() {
-		return this.ag.agentStrategy(this.time);
+		if (mkt == null) {
+			return ((MMAgent)ag).agentStrategy(time);
+		} else {
+			return ((SMAgent)ag).agentStrategy(mkt, time);
+		}
 	}
 	
 	public String toString() {
-		return new String("AgentStrategy(Agt " + this.ag.getID() + ")");
+		if (mkt == null) {
+			return new String("AgentStrategy::" + this.ag.getID());
+		} else {
+			return new String("AgentStrategy::" + this.ag.toString() + "," + 
+					this.mkt.toString());
+		}
 	}
 }

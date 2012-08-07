@@ -1,11 +1,12 @@
 package entity;
 
-import java.util.ArrayList;
-
 import market.*;
 import event.*;
 import activity.*;
 import systemmanager.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Base class for all markets.
@@ -13,12 +14,12 @@ import systemmanager.*;
  * @author ewah
  */
 public abstract class Market extends Entity {
-	
+
 	// Agent information
 	protected ArrayList<Integer> buyers;
 	protected ArrayList<Integer> sellers;
 	protected ArrayList<Integer> agentIDs;
-	
+
 	// Market information
 	public TimeStamp finalClearTime;
 	public TimeStamp nextQuoteTime;
@@ -29,22 +30,22 @@ public abstract class Market extends Entity {
 	public Price lastClearPrice;
 	public Price lastAskQuote;
 	public Price lastBidQuote;
-	
+
 	public String marketType;
-	
-	public Market(int marketID, SystemData d) {
-		super(marketID, d);
-		
+
+	public Market(int marketID, SystemData d, Log l) {
+		super(marketID, d, l);
+
 		agentIDs = new ArrayList<Integer>();
 		buyers = new ArrayList<Integer>();
 		sellers = new ArrayList<Integer>();
-		
+
 		finalClearTime = new TimeStamp(-1);
-	    lastQuoteTime = new TimeStamp(-1);
-	    lastClearTime = new TimeStamp(-1);
-	    lastClearPrice = new Price(-1);
-	    lastAskQuote = new Price(0);
-	    lastBidQuote = new Price(0);
+		lastQuoteTime = new TimeStamp(-1);
+		lastClearTime = new TimeStamp(-1);
+		lastClearPrice = new Price(-1);
+		lastAskQuote = new Price(0);
+		lastBidQuote = new Price(0);
 	}
 
 	/**
@@ -55,17 +56,40 @@ public abstract class Market extends Entity {
 		sellers.clear();
 		agentIDs.clear();
 	}
-	
+
+	/**
+	 * Method to get the type of the market.
+	 * 
+	 * @return
+	 */
+	public String getType() {
+		return marketType;
+	}
+
+	public String toString() {
+		return new String("[[" + this.getID() + "]]");
+	}
+
 	/**
 	 * @return bid (highest buy offer)
 	 */
 	public abstract Bid getBidQuote();
-	
+
 	/**
 	 * @return ask (lowest sell offer)
 	 */
 	public abstract Bid getAskQuote();
-	
+
+	/**
+	 * @return bid price (highest)
+	 */
+	public abstract Price getBidPrice();
+
+	/**
+	 * @return ask price (lowest
+	 */
+	public abstract Price getAskPrice();
+
 	/**
 	 * Publish quotes.
 	 * 
@@ -80,21 +104,23 @@ public abstract class Market extends Entity {
 	 * @return
 	 */
 	public abstract ActivityHashMap clear(TimeStamp clearTime);
-	
-//	public abstract ActivityHashMap processBid(Bid b);
-	
+
+	public abstract HashMap<Integer, Bid> getBids();
+
 	/**
 	 * Add bid to the market.
+	 * 
 	 * @param b
 	 */
 	public abstract void addBid(Bid b);
-	
+
 	/**
-	 * Remove bid from the market.
-	 * @param b
+	 * Remove bid for given agent from the market.
+	 * 
+	 * @param agentID
 	 */
-	public abstract void removeBid(Bid b);
-	
+	public abstract void removeBid(int agentID);
+
 	/**
 	 * Returns true if agent can sell in this market.
 	 * 
@@ -104,7 +130,7 @@ public abstract class Market extends Entity {
 	public boolean canSell(int agentID) {
 		return sellers.contains(agentID);
 	}
-	
+
 	/**
 	 * Returns true if agent can buy in this market.
 	 * 
@@ -114,35 +140,34 @@ public abstract class Market extends Entity {
 	public boolean canBuy(int agentID) {
 		return buyers.contains(agentID);
 	}
-	
+
 	/**
 	 * @return number of agents active in the market
 	 */
 	public int getNumAgents() {
 		return agentIDs.size();
 	}
-	
+
 	/**
 	 * @return number of buyers in the market
 	 */
 	public int getNumBuyers() {
 		return buyers.size();
 	}
-	
+
 	/**
 	 * @return number of sellers in the market
 	 */
 	public int getNumSellers() {
 		return sellers.size();
 	}
-	
+
 	/**
 	 * @return array of agentIDs
 	 */
 	public ArrayList<Integer> getAgentIDs() {
 		return agentIDs;
 	}
-	
 
 	public Price getLastClearPrice() {
 		return lastClearPrice;
@@ -167,18 +192,17 @@ public abstract class Market extends Entity {
 	public TimeStamp getLastQuoteTime() {
 		return lastQuoteTime;
 	}
-	
-	
-//	public void updateTransactions() {
-////return null;
-//}
-	
-//	public Event addOrUpdateBid() {
-//		return null;
-//	}
-	
-//	protected Quote getLatestQuote() {
-//		return null;
-//	}
-	
+
+	// public void updateTransactions() {
+	// //return null;
+	// }
+
+	// public Event addOrUpdateBid() {
+	// return null;
+	// }
+
+	// protected Quote getLatestQuote() {
+	// return null;
+	// }
+
 }

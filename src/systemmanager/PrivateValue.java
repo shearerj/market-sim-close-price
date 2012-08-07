@@ -16,16 +16,19 @@ public class PrivateValue {
 	private double kappa;
 	private int meanPV;
 	private double shockVar;
+	private int tickSize;
 	private Random rand;
 	
 	/**
 	 * Constructor with defaults
 	 */
 	public PrivateValue() {
+		rand = new Random();
 		kappa = 0.1;
 		meanPV = 50000;
 		shockVar = 2;
-		rand = new Random();
+		tickSize = 1;
+		
 		privateValues = new ArrayList<Price>();
 	}
 	
@@ -35,20 +38,27 @@ public class PrivateValue {
 	 * @param meanValue
 	 * @param var
 	 */
-	public PrivateValue(double kap, int meanValue, double var) {
+	public PrivateValue(double kap, int meanValue, double var, int tick) {
 		kappa = kap;
 		meanPV = meanValue;
 		shockVar = var;
 		privateValues = new ArrayList<Price>();
+		tickSize = tick;
+		
+		rand = new Random();
 		
 		// stochastic initial conditions for random process
 		privateValues.add(new Price((int) getNormalRV(meanPV, shockVar)));
 	}
 	
+	/**
+	 * Compute the next private value based on the most recent value.
+	 * @return
+	 */
 	public int next() {
 		int nextPV = (int) ((meanPV * kappa) + ((1 - kappa) * 
 						privateValues.get(privateValues.size()-1).getPrice()) +
-	                    getNormalRV(0, shockVar));
+	                    getNormalRV(0, shockVar) * tickSize);
 	        privateValues.add(new Price(nextPV));
 	    return nextPV;
 	}

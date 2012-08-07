@@ -14,6 +14,12 @@ public class AgentArrival extends Activity {
 	private Agent ag;
 	private Market mkt;
 	
+	public AgentArrival(Agent ag, TimeStamp t) {
+		this.ag = ag;
+		this.time = t;
+		this.mkt = null;
+	}
+	
 	public AgentArrival(Agent ag, Market mkt, TimeStamp t) {
 		this.ag = ag;
 		this.mkt = mkt;
@@ -21,11 +27,19 @@ public class AgentArrival extends Activity {
 	}
 	
 	public ActivityHashMap execute() {
-		return this.ag.agentArrival(this.mkt, this.time);
+		if (mkt == null) {
+			return ((MMAgent)ag).agentArrival(time);
+		} else {
+			return ((SMAgent)ag).agentArrival(mkt, time);
+		}
 	}
 	
 	public String toString() {
-		return new String("AgentArrival(Agt " + this.ag.getID() + ", Mkt " +
-							this.mkt.getID() + ")");
+		if (mkt == null) {
+			return new String("AgentArrival::" + this.ag.toString());
+		} else {
+			return new String("AgentArrival::" + this.ag.toString() + "," +
+							this.mkt.toString());
+		}
 	}
 }

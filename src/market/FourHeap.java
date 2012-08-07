@@ -39,7 +39,7 @@ public class FourHeap
 	private Comparator betterSell;
 	private Comparator betterBuy;
 	private Log log;
-	private Integer aucID;
+	private Integer mktID;
 	private int matchBuySetSize;          // #buys  in the matchedBuySet
 	private int matchSellSetSize;         // #sells in the matchedSellSet
 
@@ -68,7 +68,7 @@ public class FourHeap
 		matchSellSetSize = 0;
 		matchBuySetSize  = 0;
 
-		aucID = mktID;
+		this.mktID = mktID;
 	}
 
 
@@ -109,7 +109,11 @@ public class FourHeap
 	 * @param l
 	 * @param aID
 	 */
-	public void setParams(Log l, int aID) { log = l; aucID = new Integer(aID);}
+	public void setParams(Log l, int aID) {
+		log = l; mktID = new Integer(aID);
+	}
+	
+	
 	public boolean shouldLog(int code) {
 		if (log == null) {
 			return false;
@@ -123,11 +127,11 @@ public class FourHeap
 			//System.out.println(code+"::"+msg);
 		} else
 		{
-			msg = aucID.toString() + "," + msg;
-//			log.log (code, AB3DConsts.AUCTION, msg); // TODO - handle AB3DConsts
+			msg = mktID.toString() + "," + msg;
 			log.log(code, msg);
 		}
 	}
+	
 	/**
 	 *what would an agent have to bid *under* to place winning *sell*
 	 *
@@ -192,9 +196,9 @@ public class FourHeap
 		//match the lower of the two (easiest buy to match)
 		//null is returned only if both arguments are null;
 		if (buyToBeat != null)
-			log(Log.DEBUG,"buyToBeat: "+buyToBeat);
+			log(Log.DEBUG, "buyToBeat: "+buyToBeat);
 		if (sellToMatch != null)
-			log(Log.DEBUG,"sellToMatch: "+sellToMatch);
+			log(Log.DEBUG, "sellToMatch: "+sellToMatch);
 		ret =  Price.min(buyToBeat, sellToMatch);
 
 		if (ret == null)
@@ -209,19 +213,10 @@ public class FourHeap
 	 * call to remove a PQPoint from the data structure
 	 *
 	 * @param P PQPoint to remove
-	 * must call matchbids() after this to restore 4Heap invariants
+	 * must call matchBids() after this to restore 4Heap invariants
 	 */
 	public void removeBid(PQPoint P)
 	{
-
-		/*debugn("removeBid: "+P.toQPString());
-	    debugn("matchsellsetSize: "+matchSellSetSize);
-	    debugn("containment: ");
-	    debugn("mss: "+matchSellSet.contains(P));
-	    debugn("mbs: "+matchBuySet.contains(P));
-	    debugn("ss: "+sellSet.contains(P));
-	    debugn("bs: "+buySet.contains(P)); TODO*/
-
 		if (P.getQuantity() < 0)
 		{
 			//if it's supposed to be in the matchSS & we remove it, reduce matchsellsetsize
@@ -487,7 +482,7 @@ public class FourHeap
 			{
 				demoteBuy();
 			}
-		}catch (java.lang.NullPointerException e)
+		} catch (java.lang.NullPointerException e)
 		{
 			logSets();
 			if (worstMatchingBuy() == null)
@@ -503,8 +498,7 @@ public class FourHeap
 				demoteSell();
 				debug("mBSetSize/mSSetSize = " + matchBuySetSize + " " + matchSellSetSize);
 			}
-		}
-		catch (java.lang.NullPointerException e)
+		} catch (java.lang.NullPointerException e)
 		{
 			logSets();
 			if (worstMatchingSell() == null)
@@ -591,11 +585,10 @@ public class FourHeap
 	public void logSets()
 	{
 		String s = printSet(0) + printSet(1) + printSet(2) + printSet(3);
-		if (shouldLog(Log.INFO)) {
-			log(Log.INFO,"FourHeap::logSets, "+s);
-		}
-		System.out.println("FourHeap::logSets::Market " + aucID + ": " + s);
-
+//		if (shouldLog(Log.INFO)) {
+//			log(Log.INFO,"FourHeap::logSets, "+s);
+//		}
+		log.log(Log.INFO, "    [[" + mktID + "]] " + "FourHeap::logSets::" + s);
 	}
 	private String printSet(int t)
 	{

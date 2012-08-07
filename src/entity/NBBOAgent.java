@@ -1,13 +1,12 @@
 package entity;
 
+import java.util.ArrayList;
+
 import event.*;
 import activity.*;
 import systemmanager.*;
 import market.*;
 
-import java.util.Random;
-import java.util.Vector;
-import java.util.Properties;
 
 /**
  * NBBOAgent
@@ -34,14 +33,11 @@ import java.util.Properties;
  *
  * @author ewah
  */
-public class NBBOAgent extends Agent {
+public class NBBOAgent extends MMAgent {
 
-	private Random rand;
 	private int meanPV;
-//	private double arrivalRate;
-//	private double kappa;
-//	private double shockVar;
-	
+	private double expireRate;
+	private int expiration;			// time until limit order expiration
 	public int privateValue;
 	
 	private int tradeMarketID;		// assigned at initialization
@@ -53,73 +49,36 @@ public class NBBOAgent extends Agent {
 	 * @param agentID
 	 * @param d SystemData object
 	 */
-	public NBBOAgent(int agentID, SystemData d) {
-		super(agentID, d);
+	public NBBOAgent(int agentID, SystemData d, AgentProperties p, Log l) {
+		super(agentID, d, p, l);
 		agentType = "NBBO";
-
-		rand = new Random();
-	}
-	
-	/**
-	 * Sets private value based on random process. 
-	 * @param pv
-	 */
-	public void setPrivateValue(int pv) {
-		this.privateValue = pv;
-	}
-	
-	@Override
-	public void initializeParams(SystemProperties p) {
-		meanPV = Integer.parseInt(p.get(agentType).get("meanPV"));
-//		arrivalRate = Double.parseDouble(p.get(agentType).get("arrivalRate"));
-//		kappa = Double.parseDouble(p.get(agentType).get("kappa"));
-//		shockVar = Double.parseDouble(p.get(agentType).get("shockVar"));
 		
 		sleepTime = Integer.parseInt(p.get(agentType).get("sleepTime"));
+		sleepVar = Double.parseDouble(p.get(agentType).get("sleepVar"));
+		meanPV = Integer.parseInt(p.get(agentType).get("meanPV"));
+		expireRate = Double.parseDouble(p.get(agentType).get("expireRate"));
 		
-		// Hard code the market indices
-		assert (this.data.numMarkets >= 2) : "NBBO agents need at least 2 markets!";
-		tradeMarketID = -1;
-		altMarketID = -2;
-		if (rand.nextDouble() >= 0.5) {
-			altMarketID = tradeMarketID;
-			tradeMarketID--;
+		expiration = (int) (100 * getExponentialRV(expireRate));
+		privateValue = this.data.nextPrivateValue();
+		arrivalTime = this.data.nextArrival();
+		
+		if (this.data.numMarkets != 2) {
+			log.log(Log.ERROR, "NBBOAgent: NBBO agents need 2 markets!");
+		}
+		
+		// Choose market indices based on whether agentID is even or odd
+		// Ensures close to 50% even distribution in each market
+		if (agentID % 2 == 0) {
+			tradeMarketID = -1;
+			altMarketID = -2;
+		} else {
+			tradeMarketID = -2;
+			altMarketID = -1;
 		}
 	}
 	
-	@Override
-	public TimeStamp nextArrivalTime() {
-		return this.data.nextArrival();
-	}
-	
-	@Override
-	public ActivityHashMap agentArrival(Market mkt, TimeStamp ts) {
-//		System.out.println(agentType + "Agent " + this.ID + ": AgentArrival in Market " + mkt.ID);
-
-		// buyer/seller based on config file
-		mkt.agentIDs.add(this.ID);
-		mkt.buyers.add(this.ID);
-		mkt.sellers.add(this.ID);
-		marketIDs.add(mkt.ID);
-		quotes.put(mkt.ID, new Vector<Quote>());
-		arrivalTime = ts;
-		
-		// Initialize bid/ask containers
-		prevBid.put(mkt.ID, 0);
-		prevAsk.put(mkt.ID, 0);
-		initBid.put(mkt.ID, -1);
-		initAsk.put(mkt.ID, -1);
-		
-		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(new UpdateAllQuotes(this, ts));
-		actMap.insertActivity(new UpdateNBBO(this, ts));
-		actMap.insertActivity(new AgentStrategy(this, ts));
-		return actMap;
-	}
-
 	
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
-//		System.out.println(agentType + "Agent " + this.ID + ": AgentStrategy");
 		
 		ActivityHashMap actMap = new ActivityHashMap();
 
@@ -129,13 +88,15 @@ public class NBBOAgent extends Agent {
 		int p = 0;
 		int q = 1;
 		if (rand.nextDouble() < 0.5) q = -q; // 0.50% chance of being either long or short
+
 		// basic ZI behavior - price is based on uniform dist 2 SDs away from PV
 		int bidSD = 5000; // arbitrary for now, TODO
 		if (q > 0) {
-			p = (this.privateValue - 2*bidSD) + rand.nextInt()*2*bidSD;
+			p = (int) ((this.privateValue - 2*bidSD) + rand.nextDouble()*2*bidSD);
 		} else {
-			p = this.privateValue + rand.nextInt()*2*bidSD;
+			p = (int) (this.privateValue + rand.nextDouble()*2*bidSD);
 		}
+		
 		int ask = lastNBBOQuote.bestAsk;
 		int bid = lastNBBOQuote.bestBid;
 
@@ -147,41 +108,59 @@ public class NBBOAgent extends Agent {
 			if (bestQuote.bestSell < ask) nbboWorse = true;
 		}
 
+		boolean bidSubmitted = false;
 		if (nbboWorse) {
-			System.out.println("NBBO Worse");
-			System.out.println(agentType + "::agentStrategy: " + ": NBBO (" + lastNBBOQuote.bestAsk + 
-					", " + lastNBBOQuote.bestBid + " ) better than Market " + tradeMarketID + " (" + bestQuote.bestSell +
+			log.log(Log.INFO, ts.toString() + " | " + agentType + "::agentStrategy: " + ": NBBO (" + lastNBBOQuote.bestAsk + 
+					", " + lastNBBOQuote.bestBid + " ) better than [[" + tradeMarketID + "]] (" + bestQuote.bestSell +
 					", " + bestQuote.bestBuy + ")");
 
 			// since NBBO is better, check other market for a matching quote
 			Quote altQuote = getLatestQuote(altMarketID);
-			if (altQuote.lastAskPrice.getPrice() == ask && altQuote.lastBidPrice.getPrice() == bid) {
-				// there is a match! so trade in the other market
-				actMap.appendActivityHashMap(addBid(data.markets.get(altMarketID), p, q, ts));
-				System.out.println("bid submitted! to Market " + altMarketID);
-//				addMessage(AGENTTYPE + "::agentStrategy: asset " + altAssetID +
-//					": bid (" + p + "," + q + ") submitted to market " + altMarketID);
-			} else {
-				// no match, so no trade!
-				System.out.println(agentType + "::agentStrategy: " + ": No bid submitted -- no match to NBBO (" +
-						lastNBBOQuote.bestAsk +	", " + lastNBBOQuote.bestBid + ") in Market " + altMarketID +
-						" (" + altQuote.lastAskPrice.getPrice() + ", " + altQuote.lastBidPrice.getPrice() + ")");
+			
+			if (altQuote != null) {
+				if (altQuote.lastAskPrice.getPrice() == ask && altQuote.lastBidPrice.getPrice() == bid) {	
+					// there is a match! so trade in the other market
+					actMap.appendActivityHashMap(addBid(data.markets.get(altMarketID), p, q, ts));
+					bidSubmitted = true;
+					log.log(Log.INFO, ts.toString() + " | " + agentType + "::agentStrategy: " +
+							"bid (" + p + "," + q + ") submitted to [[" + altMarketID + "]] expiring in "
+							+ expiration);
+
+				} else {
+					// no match, so no trade!
+					log.log(Log.INFO, ts.toString() + " | " + agentType + "::agentStrategy: " + "No bid submitted -- no match to NBBO (" +
+							lastNBBOQuote.bestAsk +	", " + lastNBBOQuote.bestBid + ") in Market " + altMarketID +
+							" (" + altQuote.lastAskPrice.getPrice() + ", " + altQuote.lastBidPrice.getPrice() + ")");
+				}
 			}
 
 		} else { // current market's quote is better
-			System.out.println(data.markets.get(tradeMarketID));
 			actMap.appendActivityHashMap(addBid(data.markets.get(tradeMarketID), p, q, ts));
-//			addMessage(AGENTTYPE + "::agentStrategy: asset " + tradeAssetId +
-//					": bid (" + p + "," + q + ") submitted to market " + tradeMarketID);
+			bidSubmitted = true;
+			log.log(Log.INFO, ts.toString() + " | " + agentType + "::agentStrategy: " +
+					"bid (" + p + "," + q + ") submitted to [[" + tradeMarketID + "]] expiring in "
+					+ expiration);
 		}
-		
-		// only submits one bid so this other part isn't called
-//		if (!marketIDs.isEmpty()) {
-//			TimeStamp tsNew = ts.sum(new TimeStamp(sleepTime));
-//			actMap.insertActivity(new UpdateAllQuotes(this,tsNew));
-//			actMap.insertActivity(new UpdateNBBO(this, tsNew));
-//			actMap.insertActivity(new AgentStrategy(this, tsNew));
-//		}
+		updateTransactions(ts);
+		logTransactions(ts);
+			    
+		// Bid expires after a given point
+		if (bidSubmitted) {
+			TimeStamp expireTime = ts.sum(new TimeStamp(expiration));
+			actMap.insertActivity(new WithdrawBid(this, data.markets.get(tradeMarketID), expireTime));
+		}
 		return actMap;
 	}
+	
+	
+	/**
+	 * Generate exponential random variate, with rate parameter.
+	 * @param rateParam
+	 * @return
+	 */
+	public double getExponentialRV(double rateParam) {
+		double r = rand.nextDouble();
+		return -Math.log(r) / rateParam;
+	}
+
 }

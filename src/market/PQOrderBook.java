@@ -119,7 +119,7 @@ public class PQOrderBook extends OrderBook {
 	 * Print the active bids in the orderbook.
 	 */
 	public void logActiveBids() {
-		String s = "Active bids: ";
+		String s = "    [[" + marketID + "]] Active bids: ";
 		for (Map.Entry<Integer,Bid> entry : activeBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
@@ -127,14 +127,14 @@ public class PQOrderBook extends OrderBook {
 				s += "(" + pq.getQuantity() + " " + pq.getPrice().toString() + ") ";
 			}
 		}
-		System.out.println(s);
+		log.log(Log.INFO, s);
 	}
 
 	/**
 	 * Print the cleared bids in the orderbook. 
 	 */
 	public void logClearedBids() {
-		String s = "Cleared bids: ";
+		String s = "    [[" + marketID + "]] Cleared bids: ";
 		for (Map.Entry<Integer,Bid> entry : clearedBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
@@ -142,9 +142,11 @@ public class PQOrderBook extends OrderBook {
 				s += "(" + pq.getQuantity() + " " + pq.getPrice().toString() + ") ";
 			}
 		}
-		System.out.println(s);
+		log.log(Log.INFO, s);
 	}
 
+	
+	
 	public ArrayList<Transaction> earliestPriceClear(TimeStamp ts) {
 		PQPoint buy, sell;
 		clearedBids = null;
@@ -175,28 +177,25 @@ public class PQOrderBook extends OrderBook {
 			sell = matchingSells.get(j);
 			int q = Math.min(buy.getQuantity(), Math.abs(sell.getQuantity()));
 			Price p = PQPoint.earliestPrice(buy, sell);
-			
-			if (buy.getAgentID() != sell.getAgentID()) {
-				transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
 
-				Integer key = new Integer(buy.getAgentID());
-				if (!clearedBids.containsKey(key)) {
-					clearedBids.put(key, buy.Parent);
-//					activeBids.remove(key);
-				}
-				key = new Integer(sell.getAgentID());
-				if (!clearedBids.containsKey(key)) {
-					clearedBids.put(key, sell.Parent);
-//					activeBids.remove(key);
-				}
+			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
 
-				buy.transact(q);
-				sell.transact(-1 * q);
-				// Update MB/MS lists
-				if (buy.getQuantity() == 0) i++;
-				if (sell.getQuantity() == 0) j++;
-			} else
-				System.out.println("matching agent IDs");
+			Integer key = new Integer(buy.getAgentID());
+			if (!clearedBids.containsKey(key)) {
+				clearedBids.put(key, buy.Parent);
+				// activeBids.remove(key);
+			}
+			key = new Integer(sell.getAgentID());
+			if (!clearedBids.containsKey(key)) {
+				clearedBids.put(key, sell.Parent);
+				// activeBids.remove(key);
+			}
+
+			buy.transact(q);
+			sell.transact(-1 * q);
+			// Update MB/MS lists
+			if (buy.getQuantity() == 0) i++;
+			if (sell.getQuantity() == 0) j++;
 		}
 		return transactions;
 	}
@@ -297,15 +296,19 @@ public class PQOrderBook extends OrderBook {
 	/**
 	 * Clears at a uniform price. For call markets.
 	 * 
+	 * @param ts
+	 * @param pricingPolicy between 0 and 1, default 0.5
 	 * @return ArrayList of PQTransactions
 	 */
-	public ArrayList<Transaction> uniformPriceClear(TimeStamp ts) {
+	public ArrayList<Transaction> uniformPriceClear(TimeStamp ts, float pricingPolicy) {
 		long init = new TimeStamp().longValue();
 
 		PQBid bid = (PQBid) getBidQuote();
 		PQBid ask = (PQBid) getAskQuote();
-		Price p = bid.bidTreeSet.first().price; // highest bid price
-
+		int b = bid.bidTreeSet.first().price.getPrice(); 	// highest bid price
+		int a = ask.bidTreeSet.last().price.getPrice(); 	// lowest ask price
+		Price p = new Price(Math.round((a - b)*pricingPolicy + b));
+		
 		PQPoint buy, sell;
 		clearedBids = null;
 

@@ -15,20 +15,23 @@ public class AgentFactory {
 	 * @param type
 	 * @param agentID
 	 * @param data
+	 * @param params
 	 * @return
 	 */
-	public static Agent createAgent(String type, Integer agentID, SystemData data) { 
+	public static Agent createAgent(String type,
+									Integer agentID,
+									SystemData data,
+									AgentProperties params,
+									Log l) {
 		
 		if (type.toLowerCase().equals("zi")) {
-			return new ZIAgent(agentID, data);
+			return new ZIAgent(agentID, data, params, l);
 		} else if (type.toLowerCase().equals("hft")) {
-			return new HFTAgent(agentID, data);
+			return new HFTAgent(agentID, data, params, l);
 		} else if (type.toLowerCase().equals("mm")) {
-			return new MarketMaker(agentID, data);
+			return new MarketMaker(agentID, data, params, l);
 		} else if (type.toLowerCase().equals("nbbo")) {
-			return new NBBOAgent(agentID, data);
-		} else if (type.toLowerCase().equals("test")) {
-			return new TestAgent(agentID, data);
+			return new NBBOAgent(agentID, data, params, l);
 		} else {
 			return null;
 		}

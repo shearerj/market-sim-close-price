@@ -23,6 +23,6 @@ public class UpdateAllQuotes extends Activity {
 	}
 	
 	public String toString() {
-		return new String("UpdateAllQuotes(Agt " + this.ag.getID() + ")");
+		return new String("UpdateAllQuotes::" + this.ag.toString());
 	}
 }

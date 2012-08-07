@@ -28,8 +28,8 @@ public class SubmitBid extends Activity {
 	}
 	
 	public String toString() {
-		return new String("SubmitBid(Agt " + this.ag.getID() + ", Mkt " +
-				this.mkt.getID() + ", " + this.price + ", " +
+		return new String("SubmitBid::" + this.ag.toString() + "," +
+				this.mkt.toString() + "+(" + this.price + ", " +
 				this.quantity + ")");
 	}
 }

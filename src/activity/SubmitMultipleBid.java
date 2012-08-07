@@ -28,8 +28,8 @@ public class SubmitMultipleBid extends Activity {
 	}
 	
 	public String toString() {
-		return new String("SubmitMultipleBid(Agt " + this.ag.getID() + ", Mkt " +
-							this.mkt.getID() + ", " + this.price.toString() + ", " +
+		return new String("SubmitMultipleBid::" + this.ag.toString() + "," +
+							this.mkt.toString() + "+(" + this.price.toString() + "," +
 							this.quantity.toString() + ")");
 	}
 }

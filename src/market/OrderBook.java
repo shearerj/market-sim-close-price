@@ -34,7 +34,7 @@ public abstract class OrderBook {
 	
 	public abstract ArrayList<Transaction> earliestPriceClear(TimeStamp ts);
 	
-	public abstract ArrayList<Transaction> uniformPriceClear(TimeStamp ts);
+	public abstract ArrayList<Transaction> uniformPriceClear(TimeStamp ts, float pricingPolicy);
 	
 	
 	public void insertBid(Bid newBid) {

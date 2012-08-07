@@ -26,9 +26,10 @@ public abstract class Entity {
 	 * @param l
 	 * @param d
 	 */
-	public Entity(int ID, SystemData d) {
+	public Entity(int ID, SystemData d, Log l) {
 		this.ID = ID;
 		this.data = d;
+		this.log = l;
 	}
 	
 	/**

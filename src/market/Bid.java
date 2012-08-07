@@ -9,8 +9,6 @@ public abstract class Bid {
 	protected Integer marketID;
 	public TimeStamp timestamp;
 
-	//	public Integer expireTime; // TODO
-
 	public Bid() {
 		this.bidID = this.hashCode();
 	}

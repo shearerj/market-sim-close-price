@@ -8,7 +8,7 @@ package systemmanager;
 public class SystemConsts {
 	
 	// Entity types
-	public final static String[] agentTypes = {"ZI", "MM", "HFT", "NBBO", "TEST"};
+	public final static String[] agentTypes = {"ZI", "MM", "HFT", "NBBO"};
 	public final static String[] marketTypes = {"CDA", "CALL"}; 
 
 	// Directories

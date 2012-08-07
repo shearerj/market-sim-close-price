@@ -147,7 +147,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	public boolean checkActivityTimeStamp(LinkedList<Activity> acts) {
 		for (Iterator<Activity> it = acts.iterator(); it.hasNext(); ) {
 			if (!checkActivityTimeStamp(it.next())) {
-				System.out.println("something happened??");
+				System.out.println("TimeStamp::checkActivityTimeStamp::ERROR: activities do not match the timestamp");
 				return false;
 			}
 		}

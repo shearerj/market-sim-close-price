@@ -22,6 +22,6 @@ public class Clear extends Activity {
 	}
 	
 	public String toString() {
-		return new String("Clear(Mkt " + this.mkt.getID() + ")");
+		return new String("Clear::" + this.mkt.toString());
 	}
 }

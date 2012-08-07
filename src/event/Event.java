@@ -63,18 +63,32 @@ public class Event {
 	}
 	
 	/**
-	 * @param cmd	Activity to be added to LinkedList for Event.
+	 * @param act	Activity to be added to LinkedList for Event.
 	 */
-	public void addActivity(Activity cmd) {
-		this.activities.add(cmd);
+	public void addActivity(Activity act) {
+		if (act != null) {
+			if (eventTime.checkActivityTimeStamp(act)) {
+				this.activities.add(act);
+			} else {
+				System.out.println("Event::addActivity::ERROR: activity does not match Event time.");
+			}
+		}
+			
 	}
 
 	/**
 	 * @param acts	LinkedList of Activities to be added
 	 */
 	public void addActivity(LinkedList<Activity> acts) {
-		this.activities.addAll(acts);
+		if (acts != null) {
+			if (eventTime.checkActivityTimeStamp(acts)) {
+				this.activities.addAll(acts);
+			} else {
+				System.out.println("Event::addActivity::ERROR: activity list does not match Event time.");
+			}
+		}
 	}
+	
 	
 	/**
 	 * Executes all activities stored in an event. Note that newly
@@ -98,6 +112,8 @@ public class Event {
 		this.eventCompletion = true;
 		return actList;
 	}
+	
+	
 	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()

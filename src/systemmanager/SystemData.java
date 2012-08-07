@@ -13,28 +13,28 @@ import java.util.*;
  */
 public class SystemData {
 
-	public HashMap<Integer,PQBid> bidData;				// hashed by bid ID???
 	public HashMap<Integer,PQTransaction> transData;	// hashed by transaction ID
 	public HashMap<Integer,Quote> quoteData;			// hashed by market ID
 	public HashMap<Integer,ArrayList<Bid>> agentQuotes; // hashed by agentID
 	public HashMap<Integer,Agent> agents;				// agents hashed by ID
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
-
+	public Quoter quoter;
+	
 	public HashMap<String,Integer> numMarketType;	// hashed by type, value is number of that type
 	public HashMap<String,Integer> numAgentType;
 	public int numMarkets;
 	public int numAgents;
 	
 	public TimeStamp simLength;
+	public TimeStamp nbboLatency;
+	public int tickSize;
 	private Sequence transIDSequence;
 	
 	private ArrivalTime arrivalTimes;
 	private PrivateValue privateValues;
 	
 	
-	
 	public SystemData() {
-		bidData = new HashMap<Integer,PQBid>();
 		transData = new HashMap<Integer,PQTransaction>();
 		quoteData = new HashMap<Integer,Quote>();
 		agents = new HashMap<Integer,Agent>();
@@ -51,8 +51,8 @@ public class SystemData {
 
 	// Access variables
 
-	public HashMap<Integer,PQBid> getBids() {
-		return bidData;
+	public HashMap<Integer,Bid> getBids(int marketID) {
+		return markets.get(marketID).getBids();
 	}
 
 	public HashMap<Integer,PQTransaction> getTrans() {
@@ -63,10 +63,23 @@ public class SystemData {
 		return quoteData;
 	}
 
+	/**
+	 * Get quote for a given market.
+	 * @param mktID
+	 * @return
+	 */
 	public Quote getQuote(int mktID) {
 		return quoteData.get(mktID);
 	}
-
+	
+	/**
+	 * Returns quoter entity.
+	 * @return
+	 */
+	public Quoter getQuoter() {
+		return quoter;
+	}
+	
 	public HashMap<Integer,Agent> getAgents() {
 		return agents;
 	}
@@ -83,18 +96,31 @@ public class SystemData {
 		return markets.get(id);
 	}
 
-	public PQBid getBid(int id) {
-		return bidData.get(id);
+	public PQTransaction getTransaction(int id) {
+		return transData.get(id);
 	}
 	
+	/**
+	 * Set up arrival times generation for NBBO agents.
+	 * @param arrivalRate
+	 */
 	public void nbboArrivalTimes(double arrivalRate) {
 		arrivalTimes = new ArrivalTime(new TimeStamp(0), arrivalRate);
 	}
 	
+	/**
+	 * Set up private value generation for NBBO agents.
+	 * @param kappa
+	 * @param meanPV
+	 * @param shockVar
+	 */
 	public void nbboPrivateValues(double kappa, int meanPV, double shockVar) {
-		privateValues = new PrivateValue(kappa, meanPV, shockVar);	
+		privateValues = new PrivateValue(kappa, meanPV, shockVar, tickSize);	
 	}
 	
+	/**
+	 * @return next generated arrival time
+	 */
 	public TimeStamp nextArrival() {
 		if (arrivalTimes == null) {
 			return null;
@@ -102,6 +128,9 @@ public class SystemData {
 		return arrivalTimes.next();
 	}
 	
+	/**
+	 * @return next generated private value
+	 */
 	public int nextPrivateValue() {
 		if (privateValues == null) {
 			return 0;
@@ -127,10 +156,6 @@ public class SystemData {
 //		return bidMap;
 //	}
 //
-//	public PQTransaction getTransaction(int id) {
-//		return transData.get(id);
-//	}
-
 //	/**
 //	 * Gets transaction IDs for all transaction after earliestTransID.
 //	 * 
@@ -284,15 +309,10 @@ public class SystemData {
 	public void addMarket(Market mkt) {
 		markets.put(mkt.getID(), mkt);
 	}
-	
-	public void addBid(int id, PQBid b) {
-		bidData.put(id, b);
-	}
 
 	public void addTransaction(PQTransaction tr) {
 		int id = transIDSequence.increment();
 		transData.put(id, tr);
-		// TODO add this to log???
 	}
 
 	public void addQuote(int mktID, Quote q) {

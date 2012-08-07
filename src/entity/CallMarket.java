@@ -1,12 +1,13 @@
 package entity;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 
 import market.*;
 import activity.ActivityHashMap;
 import event.TimeStamp;
-import systemmanager.SystemData;
+import systemmanager.*;
 
 /**
  * Class for a call market.
@@ -22,10 +23,11 @@ public class CallMarket extends Market {
 	 * Overloaded constructor.
 	 * @param marketID
 	 */
-	public CallMarket(int marketID, SystemData d) {
-		super(marketID, d);
-		orderbook = new PQOrderBook(this.ID);
+	public CallMarket(int marketID, SystemData d, Log l) {
+		super(marketID, d, l);
 		marketType = "CALL";
+		orderbook = new PQOrderBook(this.ID);
+		orderbook.setParams(l, this.ID);
 	}
 	
 	public Bid getBidQuote() {
@@ -36,26 +38,38 @@ public class CallMarket extends Market {
 		return this.orderbook.getAskQuote();
 	}
 	
+
+	public Price getBidPrice() {
+		return ((PQBid) getBidQuote()).bidTreeSet.first().getPrice();
+	}
 	
-	public void addBid(Bid b) {
-		orderbook.insertBid((PQBid) b);
-		this.data.addBid(b.getBidID(), (PQBid) b);
+	public Price getAskPrice() {
+		return ((PQBid) getAskQuote()).bidTreeSet.last().getPrice();
 	}
 	
 	
-	public void removeBid(Bid b) {
-		orderbook.removeBid(b.getAgentID());
-		// replace with empty bid
-		PQBid emptyBid = new PQBid(b.getAgentID(), this.ID);
-		emptyBid.addPoint(0, new Price(0));	
-		this.data.bidData.put(b.getBidID(), emptyBid);
+	public void addBid(Bid b) {
+		orderbook.insertBid((PQBid) b);
+	}
+	
+	
+	public void removeBid(int agentID) {
+		orderbook.removeBid(agentID);
+//		// replace with empty bid
+//		PQBid emptyBid = new PQBid(agentID, this.ID);
+//		emptyBid.addPoint(0, new Price(0));	
+//		this.data.bidData.put(agentID, emptyBid);
+	}
+	
+	public HashMap<Integer,Bid> getBids() {
+		return orderbook.getActiveBids();
 	}
 	
 	public ActivityHashMap clear(TimeStamp clearTime) {
 		orderbook.logActiveBids();
 		orderbook.logFourHeap();
 		
-		ArrayList<Transaction> transactions = orderbook.uniformPriceClear(clearTime);
+		ArrayList<Transaction> transactions = orderbook.uniformPriceClear(clearTime, (float) 0.5);
 		if (transactions == null) {
 			this.lastClearTime = clearTime; 
 			System.out.println("-------------------Nothing transacted.");
@@ -66,13 +80,6 @@ public class CallMarket extends Market {
 			PQTransaction t = (PQTransaction) i.next();
 			this.data.addTransaction(t);
 			lastClearPrice = t.price;
-		}
-		// add bids to SystemData
-		for (Iterator<Bid> i = orderbook.getClearedBids().values().iterator(); i.hasNext(); ) {
-			PQBid b = (PQBid) i.next();
-//			TimeStamp closeTime = new TimeStamp(0);
-//			if (!b.containsBuyOffers() && !b.containsSellOffers()) closeTime = clearTime;
-			this.data.addBid(b.getBidID(), b);
 		}
 		lastClearTime = clearTime;
 
@@ -90,8 +97,7 @@ public class CallMarket extends Market {
 		
 		if (bp != null && ap != null) {
 			if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
-				System.out.println("ERROR bid > ask");
-				// TODO log
+				log.log(Log.INFO, "ERROR bid > ask");
 			} else {
 				this.data.addQuote(this.ID, q);
 			}

@@ -27,6 +27,25 @@ public abstract class Activity {
 		return this.time;
 	}
 	
+	/**
+	 * Changes the time of the activity (used for infinitely fast activities).
+	 * @param ts
+	 * @return
+	 */
+	public Activity changeTime(TimeStamp ts) {
+		this.time = ts;
+		return this;
+	}
+	
+	/**
+	 * Sets the TimeStamp of the Activity. Used only for infinitely fast agents.
+	 * @param ts
+	 */
+	public void setTime(TimeStamp ts) {
+		this.time = ts;
+	}
+	
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */

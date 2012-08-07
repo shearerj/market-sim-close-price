@@ -10,18 +10,18 @@ import event.TimeStamp;
  */
 public class UpdateNBBO extends Activity {
 
-	private Agent ag;
+	private Quoter q;
 	
-	public UpdateNBBO(Agent ag, TimeStamp t) {
-		this.ag = ag;
+	public UpdateNBBO(Quoter q, TimeStamp t) {
+		this.q = q;
 		this.time = t;
 	}
 	
 	public ActivityHashMap execute() {
-		return this.ag.updateNBBO(this.time);
+		return this.q.updateNBBO(this.time);
 	}
 	
 	public String toString() {
-		return new String("UpdateNBBO(Agt " + this.ag.getID() + ")");
+		return new String("UpdateNBBO()");
 	}
 }
