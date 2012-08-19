@@ -8,6 +8,7 @@ import systemmanager.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.HashMap;
+import java.util.TreeSet;
 
 /**
  * Class for a continuous double auction market.
@@ -52,6 +53,9 @@ public class CDAMarket extends Market {
 	
 	public void removeBid(int agentID) {
 		orderbook.removeBid(agentID);
+		orderbook.logActiveBids();
+		orderbook.logFourHeap();
+		
 //		// replace with empty bid
 //		PQBid emptyBid = new PQBid(agentID, this.ID);
 //		emptyBid.addPoint(0, new Price(0));
@@ -68,23 +72,37 @@ public class CDAMarket extends Market {
 		orderbook.logActiveBids();
 		orderbook.logFourHeap();
 		
+		Quote q = new Quote(this);
 		ArrayList<Transaction> transactions = orderbook.earliestPriceClear(clearTime);
 		if (transactions == null) {
-			this.lastClearTime = clearTime; 
+			lastClearTime = clearTime;
 			log.log(Log.INFO, clearTime.toString() + " | STATUS: Nothing transacted.");
+			log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + ": Quote" + q);
 			return null;
 		}
+		TreeSet<Integer> transactingIDs = new TreeSet<Integer>();
 		// add transactions to SystemData
 		for (Iterator<Transaction> i = transactions.iterator(); i.hasNext();) {
 			PQTransaction t = (PQTransaction) i.next();
+			// track which agents were involved in the transactions
+			transactingIDs.add(t.buyerID);
+			transactingIDs.add(t.sellerID);
+			
 			this.data.addTransaction(t);
 			lastClearPrice = t.price;
 		}
 		lastClearTime = clearTime;
 
+		// update and log transactions
+		for (Iterator<Integer> it = transactingIDs.iterator(); it.hasNext(); ) {
+			int id = it.next();
+			data.getAgent(id).updateTransactions(clearTime);
+			data.getAgent(id).logTransactions(clearTime);
+		}
 		orderbook.logActiveBids();
 		orderbook.logClearedBids();
 		orderbook.logFourHeap();
+		log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + ": Quote" + q);
 		return null;
 	}
 
@@ -97,7 +115,7 @@ public class CDAMarket extends Market {
 		
 		if (bp != null && ap != null) {
 			if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
-				log.log(Log.ERROR, "ERROR bid > ask");
+				log.log(Log.ERROR, "CDAMArket::quote: ERROR bid > ask");
 			} else {
 				this.data.addQuote(this.ID, q);
 			}

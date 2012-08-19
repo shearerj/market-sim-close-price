@@ -1,5 +1,7 @@
 package entity;
 
+import java.util.HashMap;
+
 import event.*;
 import activity.*;
 import systemmanager.*;
@@ -22,12 +24,20 @@ public class ZIAgent extends SMAgent {
 		super(agentID, d, p, l);
 		agentType = "ZI";
 		arrivalTime = new TimeStamp(0);
-		sleepTime = Integer.parseInt(p.get(agentType).get("sleepTime"));
-		sleepVar = Double.parseDouble(p.get(agentType).get("sleepVar"));
+		params = p;
+		
+		
 		privateValue = 1000*rand.nextInt(25)+10000;
 	}
 	
 	
+	@Override
+	public HashMap<String, Object> getObservation() {
+		return null;
+	}
+	
+	
+	@Override
 	public ActivityHashMap agentStrategy(Market mkt, TimeStamp ts) {
 		
 		if (mkt == null) return null;
@@ -40,11 +50,12 @@ public class ZIAgent extends SMAgent {
 		if (rand.nextDouble() < 0.5) q = -q;
 		actMap.appendActivityHashMap(addBid(mkt, p, q, ts));
 		
-		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime()));
+		int sleepTime = Integer.parseInt(params.get("sleepTime"));
+		double sleepVar = Double.parseDouble(params.get("sleepVar"));
+		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
 		actMap.insertActivity(new UpdateAllQuotes(this, tsNew));
 		actMap.insertActivity(new AgentStrategy(this, mkt, tsNew));
 		return actMap;
 	}
-	
 	
 }

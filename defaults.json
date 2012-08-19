@@ -1,0 +1,9 @@
+{
+    "configuration": {
+        "sim_length": 50000,
+	"CDA": 2,
+	"CALL": 0,
+	"NBBO": 100,
+        "nbbo_latency": 50
+    }
+}

@@ -83,29 +83,35 @@ public class EventManager {
 	 * is complete. Adds new events to EventQ after event completion.
 	 */
 	public void executeCurrentEvent() {
-
+		
 		log.log(Log.DEBUG, "executeCurrentEvent: " + this.eventQueue.toString());
-		
+
 		Event toExecute = this.eventQueue.peek();
-		
-		// Update time of infinitely fast activities to current time
-		for (Iterator<Activity> it = fastActs.iterator(); it.hasNext(); ) {
-			it.next().changeTime(toExecute.getTime());
-		}
-		toExecute.addActivity(fastActs);
-		ArrayList<ActivityHashMap> acts = toExecute.executeAll();
-		
-		// Check if event has completed execution
-		if (toExecute.isCompleted()) {
-			removeEvent(toExecute);
-		} else {
-			log.log(Log.DEBUG, "ERROR: Event did not complete correctly.");
-		}
-		if (!acts.isEmpty()) {
-			for (Iterator<ActivityHashMap> i = acts.listIterator(); i.hasNext();) {
-				ActivityHashMap act = i.next();
-				manageActivityMap(act);
+
+		try {
+			if (fastActs != null) {
+				// Update time of infinitely fast activities to current time
+				for (Iterator<Activity> it = fastActs.iterator(); it.hasNext(); ) {
+					it.next().changeTime(toExecute.getTime());
+				}
+				toExecute.addActivity(fastActs);
 			}
+			ArrayList<ActivityHashMap> acts = toExecute.executeAll();
+
+			// Check if event has completed execution
+			if (toExecute.isCompleted()) {
+				removeEvent(toExecute);
+			} else {
+				log.log(Log.DEBUG, "ERROR: Event did not complete correctly.");
+			}
+			if (!acts.isEmpty()) {
+				for (Iterator<ActivityHashMap> i = acts.listIterator(); i.hasNext();) {
+					ActivityHashMap act = i.next();
+					manageActivityMap(act);
+				}
+			} 
+		} catch (Exception e) {
+			System.err.print("executeCurrentEvent at " + toExecute.getTime() + ": " + e);
 		}
 	}
 	

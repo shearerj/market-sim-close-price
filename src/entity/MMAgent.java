@@ -16,7 +16,7 @@ import systemmanager.*;
 public abstract class MMAgent extends Agent {
 
 	/**
-	 * Constructore for a multimarket agent.
+	 * Constructor for a multimarket agent.
 	 * @param agentID
 	 * @param d
 	 * @param p
@@ -45,12 +45,23 @@ public abstract class MMAgent extends Agent {
 	 */
 	public ActivityHashMap agentArrival(TimeStamp ts) {
 		
+		String s = "";
 		for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
 			Market mkt = data.markets.get(i.next());
 			this.enterMarket(mkt, ts);
-			log.log(Log.INFO, ts.toString() + " | " + this.toString() + "->" + mkt.toString());
+			s += mkt.toString() + ",";
 		}
-		if (sleepTime > 0) {
+		s = s.substring(0, s.length() - 1);
+		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "->" + s);
+		
+		boolean flag = false;
+		if (params.containsKey("sleepTime")) {
+			if (Integer.parseInt(params.get("sleepTime")) > 0) {
+				flag = true;
+			}
+		}
+		// Only insert agent strategy call if sleepTime is nonzero or if it's an NBBO agent
+		if (flag || this instanceof NBBOAgent) {
 			ActivityHashMap actMap = new ActivityHashMap();
 			actMap.insertActivity(new UpdateAllQuotes(this, ts));
 			actMap.insertActivity(new AgentStrategy(this, ts));

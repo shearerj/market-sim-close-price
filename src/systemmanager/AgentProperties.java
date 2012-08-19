@@ -4,77 +4,60 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This class stores the parameters that are not set in a
- * configuration file, but which may be changed at each runtime.
+ * This class stores the parameters for a specific agent. Each agent sets defaults
+ * for each of these parameters in their constructor, but they can be overridden
+ * by simulation specifications.
  * 
- * Allows setting all agent parameters from a single location.
- * 
- * Parameters:
- * 	- sleepTime		how long agent sleeps between each strategy call
- * 	- sleepVar		the variance of the sleep time (Normal RV)
+ * AgentProperties class is a wrapper for HashMap<String,String>.
  * 
  * @author ewah
  */
 public class AgentProperties {
 
-	private HashMap<String,HashMap<String,String>> properties;
-	public HashMap<String,Integer> sleepTimes;
+	private HashMap<String,String> properties;
 	
 	public AgentProperties() {
-		properties = new HashMap<String,HashMap<String,String>>();
-		HashMap<String,String> props;
-		
-		// ZI agent properties ------------------------------------
-		props = new HashMap<String,String>();
-		props.put("sleepTime","150");
-		props.put("sleepVar","100");
-		properties.put("ZI",props);
-		
-		// MM agent properties ------------------------------------
-		props = new HashMap<String,String>();
-		props.put("sleepTime","150");
-		props.put("sleepVar","100");
-		properties.put("M",props);
-
-		// HFT agent properties ------------------------------------
-		props = new HashMap<String,String>();
-		props.put("sleepTime","0");
-		props.put("sleepVar","100");
-		props.put("alpha","0.01");
-		props.put("delta","0.05");
-		props.put("orderSize","200");
-		props.put("timeLimit","30");
-//		props.put("lossLimit","0.05");
-		properties.put("HFT",props);
-		
-		// NBBO agent properties ----------------------------------
-		props = new HashMap<String,String>();
-		props.put("sleepTime","350");
-		props.put("sleepVar","100");
-		props.put("meanPV","50000");
-		props.put("arrivalRate","0.1");
-		props.put("kappa","0.2");
-		props.put("shockVar","2");
-		props.put("expireRate","0.5");
-		properties.put("NBBO",props);
-
+		properties = new HashMap<String,String>();
+	}
+	
+	public AgentProperties(AgentProperties ap) {
+		properties = (HashMap<String,String>) ap.properties.clone();
+	}
+	
+	public AgentProperties(HashMap<String,String> hm) {
+		properties = new HashMap<String,String>(hm);
+	}
+	
+	/**
+	 * Checks if properties contains a key.
+	 * 
+	 * @param key
+	 * @return
+	 */
+	public boolean containsKey(String key) {
+		return properties.containsKey(key);
+	}
+	
+	/**
+	 * Set a property.
+	 * @param key
+	 * @param val
+	 */
+	public void put(String key, String val) {
+		properties.put(key, val);
 	}
 	
 	/**
 	 * Get property's value.
 	 * @param key
-	 * @return
+	 * @return String
 	 */
-	public HashMap<String,String> get(String key) {
+	public String get(String key) {
 		return properties.get(key);
 	}
 
 	
 	public String toString() {
-		String s = "";
-		for (Map.Entry<String,HashMap<String,String>> entry : properties.entrySet()) {
-			s += entry.getKey() + ": " + entry.getValue().toString() + ", ";
-		}
-		return s;
+		return properties.toString();
 	}
 }

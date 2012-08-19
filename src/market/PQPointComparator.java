@@ -4,18 +4,18 @@ import java.util.Comparator;
 
 /**
  * Comparator class for PQPoints
- * <ul>
- * <li>Options are to sort on price/quantity/timestamp, in any order
+ * 
+ * Options are to sort on price/quantity/timestamp, in any order
  * and in any order of importance.  
- * <li>The constructor takes an integer for each of Price, Quantity, timestamp,
+ * The constructor takes an integer for each of Price, Quantity, timestamp,
  * the sign of each arguments indicates whether to sort that field in
  * ascending (+) descending (-) or non-ordered (0), and the relative
  * magnitudes of the three fields designate the order of importance of each,
  * where highest magnitude (abs value) will be the first fields on which to sort.
- * <li> eg:  parg = 3, qarg = 2, targ = -1 will sort
+ * eg:  parg = 3, qarg = 2, targ = -1 will sort
  * first in ascending price, breaking ties in ascending quantity, breaking
  * remaining ties in descending timestamps.
- * </ul>
+ * 
  */
 public class PQPointComparator implements Comparator
 {

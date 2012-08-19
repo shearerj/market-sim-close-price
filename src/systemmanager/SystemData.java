@@ -8,28 +8,39 @@ import java.util.*;
 
 /**
  * Class that stores all simulation data (agents, markets, quotes, bid, etc.).
+ * Also stores the parameters read from the environment configuration file.
  * 
  * @author ewah
  */
 public class SystemData {
 
+	// Market information
 	public HashMap<Integer,PQTransaction> transData;	// hashed by transaction ID
 	public HashMap<Integer,Quote> quoteData;			// hashed by market ID
-	public HashMap<Integer,ArrayList<Bid>> agentQuotes; // hashed by agentID
 	public HashMap<Integer,Agent> agents;				// agents hashed by ID
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
 	public Quoter quoter;
 	
-	public HashMap<String,Integer> numMarketType;	// hashed by type, value is number of that type
+	public ArrayList<String> marketTypes;
+	public ArrayList<String> agentTypes;
+	public HashMap<String,Integer> numMarketType;		// hashed by type, gives # of that type
 	public HashMap<String,Integer> numAgentType;
 	public int numMarkets;
 	public int numAgents;
 	
+	// Parameters set by config file
 	public TimeStamp simLength;
 	public TimeStamp nbboLatency;
 	public int tickSize;
-	private Sequence transIDSequence;
+	public double arrivalRate;
+	public int meanPV;
+	public double kappa;
+	public double shockVar;
+	public double expireRate;
+	public int bidSD;
 	
+	// Internal variables
+	private Sequence transIDSequence;
 	private ArrivalTime arrivalTimes;
 	private PrivateValue privateValues;
 	
@@ -41,12 +52,10 @@ public class SystemData {
 		markets = new HashMap<Integer,Market>();
 		numMarketType = new HashMap<String,Integer>();
 		numAgentType = new HashMap<String,Integer>();
-		
-		agentQuotes = new HashMap<Integer,ArrayList<Bid>>();
-
-		transIDSequence = new Sequence(0);
 		numAgents = 0;
 		numMarkets = 0;
+
+		transIDSequence = new Sequence(0);
 	}
 
 	// Access variables
@@ -102,19 +111,15 @@ public class SystemData {
 	
 	/**
 	 * Set up arrival times generation for NBBO agents.
-	 * @param arrivalRate
 	 */
-	public void nbboArrivalTimes(double arrivalRate) {
+	public void nbboArrivalTimes() {
 		arrivalTimes = new ArrivalTime(new TimeStamp(0), arrivalRate);
 	}
 	
 	/**
 	 * Set up private value generation for NBBO agents.
-	 * @param kappa
-	 * @param meanPV
-	 * @param shockVar
 	 */
-	public void nbboPrivateValues(double kappa, int meanPV, double shockVar) {
+	public void nbboPrivateValues() {
 		privateValues = new PrivateValue(kappa, meanPV, shockVar, tickSize);	
 	}
 	
@@ -139,23 +144,19 @@ public class SystemData {
 	}
 	
 	
+	public void readEnvProps(Properties p) {
+		simLength = new TimeStamp(Long.parseLong(p.getProperty("simLength")));
+		nbboLatency = new TimeStamp(Long.parseLong(p.getProperty("nbboLatency")));
+		tickSize = Integer.parseInt(p.getProperty("tickSize"));
+		arrivalRate = Double.parseDouble(p.getProperty("arrivalRate"));
+		meanPV = Integer.parseInt(p.getProperty("meanPV"));
+		shockVar = Double.parseDouble(p.getProperty("shockVar"));
+		expireRate = Double.parseDouble(p.getProperty("expireRate"));
+		bidSD = Integer.parseInt(p.getProperty("bidSD"));
+	}
 	
-	// Gets agent's current bids (hashed on bid ID)
-//	public HashMap<Integer,PQBid> getAgentBids(int agentID) {
-//		HashMap<Integer,PQBid> bidMap = new HashMap<Integer,PQBid>();
-//
-//		Set bd = bidData.entrySet();
-//		for (Iterator i = bd.iterator(); i.hasNext();) {
-//			Map.Entry me = (Map.Entry) i.next();
-//			PQBid bid = (PQBid) me.getValue();
-//
-//			if (bid.getAgentID() == agentID) {
-//				bidMap.put((Integer) me.getKey(), bid);
-//			}
-//		}
-//		return bidMap;
-//	}
-//
+	
+
 //	/**
 //	 * Gets transaction IDs for all transaction after earliestTransID.
 //	 * 
@@ -312,6 +313,7 @@ public class SystemData {
 
 	public void addTransaction(PQTransaction tr) {
 		int id = transIDSequence.increment();
+		tr.transID = id;
 		transData.put(id, tr);
 	}
 
@@ -345,10 +347,4 @@ public class SystemData {
 		return null;
 	}
 	
-	/**
-	 * Prints contents to log file.
-	 */
-	public void print() {
-		// TODO
-	}
 }

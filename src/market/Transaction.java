@@ -3,7 +3,8 @@ package market;
 import event.TimeStamp;
 
 /**
- * Base class for Transactions.
+ * Base class for Transactions. Contains information on buyer/seller, market,
+ * quantity, price, and time.
  * 
  * @author ewah
  */

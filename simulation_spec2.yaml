@@ -1,0 +1,8 @@
+---
+HFT:
+- alpha_0.01
+---
+sim_length: 50000
+nbbo_latency: 30
+ag_sleepTime: 250
+ag_sleepVar: 100

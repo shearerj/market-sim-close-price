@@ -26,6 +26,13 @@ public class Quote {
 	
 	public int depth;
 	
+	public Quote() {
+		lastAskPrice = new Price(-1);
+		lastBidPrice = new Price(-1);
+		lastAskQuantity = 0;
+		lastBidQuantity = 0;
+	}
+	
 	/**
 	 * Constructor
 	 * 
@@ -36,9 +43,9 @@ public class Quote {
 		
 		PQBid ask = (PQBid) mkt.getAskQuote();
 		PQBid bid = (PQBid) mkt.getBidQuote();
-		lastAskPrice = ask.bidTreeSet.first().price;
+		lastAskPrice = ask.bidTreeSet.last().price;
 		lastBidPrice = bid.bidTreeSet.first().price;
-		lastAskQuantity = ask.bidTreeSet.first().quantity;
+		lastAskQuantity = ask.bidTreeSet.last().quantity;
 		lastBidQuantity = bid.bidTreeSet.first().quantity;
 		
 		lastClearPrice = mkt.getLastClearPrice();
@@ -50,6 +57,13 @@ public class Quote {
 		
 		depth = 1;
 	}
+	
+	
+	public String toString() {
+		return "(Bid: " + lastBidPrice + ", Ask: " + lastAskPrice + ")";
+	}
+	
+	
 	
 //	public int getQuantityAtBidPrice (double bidPrice) {
 //		int totalQuantityAtPrice = 0;

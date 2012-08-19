@@ -55,6 +55,9 @@ public class CallMarket extends Market {
 	
 	public void removeBid(int agentID) {
 		orderbook.removeBid(agentID);
+		orderbook.logActiveBids();
+		orderbook.logFourHeap();
+		
 //		// replace with empty bid
 //		PQBid emptyBid = new PQBid(agentID, this.ID);
 //		emptyBid.addPoint(0, new Price(0));	

@@ -51,8 +51,7 @@ public abstract class Agent extends Entity {
 	// Agent parameters
 	protected int tickSize;
 	protected int positionLimit;
-	protected int sleepTime;			// how frequently agentStrategy is called
-	protected double sleepVar;				// variance of sleep time
+	protected AgentProperties params;		// stores all parameters
 	protected String agentType;
 	protected TimeStamp arrivalTime;
 	protected LinkedList<Activity> infiniteActs;	// infinitely fast activities
@@ -71,6 +70,7 @@ public abstract class Agent extends Entity {
 		super(agentID, d, l);
 		
 		rand = new Random();
+		
 		// initialize all containers
 		marketIDs = new ArrayList<Integer>();
 		bidPrice = new HashMap<Integer,Price>();
@@ -101,6 +101,36 @@ public abstract class Agent extends Entity {
 	
 	
 	/**
+	 * @return observation to include in the output file
+	 */
+	public abstract HashMap<String, Object> getObservation();
+	
+	
+	/**
+	 * Set AgentProperties for this agent.
+	 * @param p AgentProperties object
+	 */
+	public void setProperties(AgentProperties p) {
+		params = p;
+	}
+	
+	/**
+	 * Add property to AgentProperties container.
+	 * @param key
+	 * @param val
+	 */
+	public void addProperty(String key, String val) {
+		params.put(key, val);
+	}
+	
+	/**
+	 * @return AgentProperties of this agent.
+	 */
+	public AgentProperties getProperties() {
+		return params;
+	}
+	
+	/**
 	 * Method to get the arrival time for an agent.
 	 * @return
 	 */
@@ -120,13 +150,13 @@ public abstract class Agent extends Entity {
 		return new String("(" + this.getID() + ")");
 	}
 	
-	
 	/**
 	 * Computes a randomized sleep time based on sleepTime & sleepVar.
-	 * 
+	 * @param sleepTime
+	 * @param sleepVar
 	 * @return
 	 */
-	public int getRandSleepTime() {
+	public int getRandSleepTime(int sleepTime, double sleepVar) {
 		return (int) Math.round(getNormalRV(sleepTime, sleepVar));
 	}
 	
@@ -158,14 +188,17 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
+	 * Gets latest quote from a given market. If no quote available, returns 
+	 * a default Quote object.
+	 * 
 	 * @param mktID
 	 * @return most recent quote for the specified market
 	 */
 	public Quote getLatestQuote(int mktID) {
 		if (quotes.isEmpty()) {
-			return null;
+			return new Quote();
 		} else if (quotes.get(mktID).isEmpty()) {
-			return null;
+			return new Quote();
 		}
 		return quotes.get(mktID).lastElement();
 	}
@@ -310,7 +343,7 @@ public abstract class Agent extends Entity {
 		
 		if (quantity == 0) return null;
 
-		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "," + mkt.toString() + 
+		log.log(Log.INFO, ts.toString() + " | " + mkt.toString() + " " + this.toString() + 
 				": +(" + price + ", " + quantity + ")");
 		
 		int p = quantize(price, tickSize);
@@ -334,11 +367,11 @@ public abstract class Agent extends Entity {
 	public ActivityHashMap submitMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
 
 		if (price.length != quantity.length) {
-			log.log(Log.ERROR, "Agent::submitMultipleBid: Price and Quantity arrays are not the same length");
+			log.log(Log.ERROR, "Agent::submitMultipleBid: Price/Quantity arrays are not the same length");
 			return null;
 		}
 		
-		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "," + mkt.toString() + 
+		log.log(Log.INFO, ts.toString() + " | " + mkt.toString() + " " + this.toString() +  
 				": +(" + price.toString() +	", " + quantity.toString() + ")");
 		
 		PQBid pqBid = new PQBid(this.ID, mkt.ID);
@@ -362,7 +395,7 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public ActivityHashMap withdrawBid(Market mkt, TimeStamp ts) {
-		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "," + mkt.toString() +
+		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "-" + mkt.toString() +
 				": withdraw bid");
 		mkt.removeBid(this.ID);
 		return null;
@@ -382,7 +415,8 @@ public abstract class Agent extends Entity {
 		lastGlobalQuote = quoter.findBestBidOffer(marketIDs);
 		lastNBBOQuote = quoter.lastQuote;
 		
-		log.log(Log.INFO, ts.toString() + " | " + this.toString() + ": Global" + lastGlobalQuote + ", NBBO" + lastNBBOQuote);
+		log.log(Log.INFO, ts.toString() + " | " + this.toString() + ": Global" + lastGlobalQuote + 
+				", NBBO" + lastNBBOQuote);
 
 		return null;
 	}
@@ -426,19 +460,16 @@ public abstract class Agent extends Entity {
 	 */
 	public void logTransactions(TimeStamp ts) {
 		
-		double rp = getRealizedProfit();
-		double up = getUnrealizedProfit();
+		int rp = getRealizedProfit();
+		int up = getUnrealizedProfit();
 
 		String s = ts.toString() + " | " + this.toString() + ": Current Position=" + positionBalance +
 				", Realized Profit=" + rp + ", Unrealized Profit=" + up;
-		//			    s += ", Private Value=" + this.privateValue;
-		
-		ArrayList<PQTransaction> at = getTransactions(-1);
-		String atSt = at.toString();
-		String transactionData = "Transactions: " + atSt;
 		log.log(Log.INFO, s);
-		log.log(Log.INFO, transactionData);
-
+//		ArrayList<PQTransaction> at = getTransactions(-1);
+//		String atSt = at.toString();
+//		String transactionData = "Transactions: " + atSt;
+//		log.log(Log.INFO, transactionData);
 	}
 	
 	
@@ -446,10 +477,12 @@ public abstract class Agent extends Entity {
 	/**
 	 * Process a transaction received from the server.
 	 * 
-	 * @param t Transaction object to be processed.
-	 * @return True if the object is good and all necessary parameters are updated; false otherwise.
 	 * For calling function having a list of transactions, it should use the last good transaction id
 	 * to update lastTransID and then terminates, if a false return value is received.
+	 * 
+	 * @param t Transaction object to be processed.
+	 * @return True if the object is good and all necessary parameters are updated; false otherwise.
+	 * 
 	 */
 	public boolean processTransaction(Transaction t) {
 		boolean flag = true;
@@ -477,40 +510,47 @@ public abstract class Agent extends Entity {
 		if (!flag) {
 			return false;
 		} else {
+			// check whether seller, in which case negate the quantity
+			int quantity = t.quantity;
+			if (this.ID == t.sellerID) {
+				quantity = -quantity;
+			}
+			
 			// update cash flow and position
 			if (positionBalance == 0) {
 				averageCost = t.price.getPrice();
+				
 			} else if (positionBalance > 0) {
-				if (t.quantity > 0) {
-					int newCost = averageCost * positionBalance + t.price.getPrice() * t.quantity;
-					averageCost = newCost / (positionBalance + t.quantity);
+				if (quantity > 0) {
+					int newCost = averageCost * positionBalance + t.price.getPrice() * quantity;
+					averageCost = newCost / (positionBalance + quantity);
 					
-				} else if (-t.quantity < positionBalance) {
+				} else if (-quantity < positionBalance) {
 					// closing out partial long position
-					realizedProfit += (-t.quantity) * (t.price.getPrice() - averageCost);
+					realizedProfit += (-quantity) * (t.price.getPrice() - averageCost);
 					
-				} else if (-t.quantity >= positionBalance) {
+				} else if (-quantity >= positionBalance) {
 					// closing out all long position, remaining quantity will start new short position
 					realizedProfit += positionBalance * (t.price.getPrice() - averageCost);
 					averageCost = t.price.getPrice();
 				}
 				
 			} else if (positionBalance < 0) {
-				if (t.quantity < 0) {
-					int newCost = averageCost * (-positionBalance) + t.price.getPrice() * (-t.quantity);
-					averageCost = -newCost / (positionBalance + t.quantity);
+				if (quantity < 0) {
+					int newCost = averageCost * (-positionBalance) + t.price.getPrice() * (-quantity);
+					averageCost = -newCost / (positionBalance + quantity);
 					
-				} else if (t.quantity < -positionBalance) {
+				} else if (quantity < -positionBalance) {
 					// closing out partial short position
-					realizedProfit += t.quantity * (averageCost - t.price.getPrice());
+					realizedProfit += quantity * (averageCost - t.price.getPrice());
 					
-				} else if (t.quantity >= -positionBalance) {
+				} else if (quantity >= -positionBalance) {
 					// closing out all short position, remaining quantity will start new long position
 					realizedProfit += (-positionBalance) * (averageCost - t.price.getPrice());
 					averageCost = t.price.getPrice();
 				}
 			}
-			positionBalance += t.quantity;
+			positionBalance += quantity;
 		}
 		return true;
 	}
@@ -525,24 +565,35 @@ public abstract class Agent extends Entity {
 	 */
 	public void updateTransactions(TimeStamp ts) {
 		ArrayList<PQTransaction> list = getNewTransactions();
+		log.log(Log.DEBUG, ts.toString() + " | " + this.toString() + " " + "lastTransID=" + lastTransID);
 		if (list != null) {
 			Integer lastGoodTransID = null;
+			
+			transLoop:
 			for (Iterator<PQTransaction> it = list.iterator(); it.hasNext();) {
 				Transaction t = it.next();
-				boolean flag = processTransaction(t);
-				if (!flag) {
-					if (lastGoodTransID != null) {
-						lastTransID = lastGoodTransID;
-						log.log(Log.ERROR, "Agent::updateTransactions: Problem with transaction.");
-						break;
+				// Check that this agent is involved in the transaction
+				if (t.buyerID == this.ID || t.sellerID == this.ID){ 
+					boolean flag = processTransaction(t);
+					if (!flag) {
+						if (lastGoodTransID != null) {
+							lastTransID = lastGoodTransID;
+							log.log(Log.ERROR, ts.toString() + " | " + this.toString() + " " +
+									"Agent::updateTransactions: Problem with transaction.");
+							break transLoop;
+						}
 					}
-				} else {
-					lastGoodTransID = t.transID;
+					log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " +
+							"Agent::updateTransactions: New transaction received: (mktID=" + t.marketID +
+							", transID=" + t.transID + " buyer=" + t.buyerID + ", seller=" + t.sellerID +
+							", price=" + t.price.toString() + ", quantity=" + t.quantity + 
+							", timeStamp=" + t.timestamp + ")");
 				}
-				log.log(Log.INFO, "Agent::updateTransactions: New transaction received: (mktID=" + t.marketID +
-						", transID=" + t.transID + " buyer=" + t.buyerID + ", seller=" + t.sellerID +
-						", price=" + t.price.toString() + ", quantity=" + t.quantity + ", timeStamp=" + t.timestamp + ")");
+				// Update transaction ID
+				lastGoodTransID = t.transID;
 			}
+			lastTransID = lastGoodTransID;
+			log.log(Log.DEBUG, ts.toString() + " | " + this.toString() + " " + "NEW lastTransID=" + lastTransID);
 		}
 		lastTransTime = ts;
 	}
@@ -566,16 +617,15 @@ public abstract class Agent extends Entity {
 	 * @param lastID of the transaction we don't want
 	 * @return list of transactions later than lastID
 	 */
-	public ArrayList<PQTransaction> getTransactions(Integer lastID) {
+	public ArrayList<PQTransaction> getTransactions(int lastID) {
 		ArrayList<PQTransaction> transactions = new ArrayList<PQTransaction>();
 
 		TreeSet<Integer> t = getTransIDs(lastID);
 		if (t == null || t.size() == 0) return null;
 
 		for (Iterator<Integer> i = t.iterator(); i.hasNext();) {
-			Integer id = (Integer) i.next();
-			PQTransaction record = this.data.transData.get(id);
-			// transInfo replaced by this.dvata.transData.get()
+			Integer id = i.next();
+			PQTransaction record = this.data.getTransaction(id);
 			transactions.add(record);
 		}
 		return transactions;
@@ -585,7 +635,8 @@ public abstract class Agent extends Entity {
 	 * @return sorted set of all transaction IDs later than the last one
 	 */
 	public TreeSet<Integer> getTransIDs() {
-		if (lastTransID != null) return getTransIDs(lastTransID);
+		if (lastTransID != null)
+			return getTransIDs(lastTransID);
 		return null;
 	}
 
@@ -593,16 +644,62 @@ public abstract class Agent extends Entity {
 	 * @param lastID - last ID that don't want transIDs for
 	 * @return sorted set of transaction IDs later that lastID
 	 */
-	public TreeSet<Integer> getTransIDs(Integer lastID) {
+	public TreeSet<Integer> getTransIDs(int lastID) {
 		TreeSet<Integer> transIDs = new TreeSet<Integer>();
-		for (Iterator<Integer> i = this.data.transData.keySet().iterator(); i.hasNext();) {
-			transIDs.add(i.next());
+		for (Iterator<Integer> it = this.data.transData.keySet().iterator(); it.hasNext(); ) {
+			int id = it.next();
+			if (id > lastID) {
+				transIDs.add(id);
+			}
 		}
 		if (transIDs.size() == 0) return null;
 
 		return transIDs; 
 	}
 
+	/**
+	 * Computes any unrealized profit based on market bid/ask quotes.
+	 * Note: could probably do based on NBBO quote's bid ask.
+	 * 
+	 * @return agent's unrealized profit/gain
+	 */
+	public int getUnrealizedProfit() {
+		int up = 0;
+		int p = -1;
+
+		if (positionBalance > 0) {
+			// For long position, compare cost to bid quote (buys)
+			for (Iterator<Integer> it = marketIDs.iterator(); it.hasNext(); ) {
+				int mktID = it.next();
+				if (p == -1 || p < bidPrice.get(mktID).getPrice())
+					p = bidPrice.get(mktID).getPrice();
+			}
+		} else {
+			// For short position, compare cost to ask quote (sells)
+			for (Iterator<Integer> it = marketIDs.iterator(); it.hasNext(); ) {
+				int mktID = it.next();
+				if (p == -1 || p > askPrice.get(mktID).getPrice())
+					p = askPrice.get(mktID).getPrice();
+			}
+		}
+		if (positionBalance != 0) {
+			log.log(Log.DEBUG, "   " + this.toString() + " bal=" + positionBalance + 
+					", p=" + p + ", avgCost=" + averageCost);
+		}
+		if (p != -1) {
+			up += positionBalance * (p - averageCost);
+		}
+		return up;
+	}
+
+
+	/**
+	 * @return agent's realized profit
+	 */
+	public int getRealizedProfit() {
+		return realizedProfit;
+	}
+	
 
 	/**
 	 * Find best market to buy in (i.e. lowest ASK) and to sell in (i.e. highest BID)
@@ -625,7 +722,7 @@ public abstract class Agent extends Entity {
 			price.add(ask);
 
 			if (checkBidAsk(mkt.ID, price)) {
-				log.log(Log.ERROR, "Agent::findBestBuySell: issue with bid ask");
+				log.log(Log.DEBUG, "Agent::findBestBuySell: issue with bid ask");
 			}
 			// Best market to buy in is the one with the lowest ASK
 			if (bestBuy == -1 || bestBuy > ask.getPrice()) {
@@ -685,7 +782,8 @@ public abstract class Agent extends Entity {
 			double oldask = ask;
 			//			ask = (prevAsk[aucID]+prevBid[aucID])/2 + (randomSpread(countMissingAsk.get(aucID))+randomSpread(countMissingBid.get(aucID)))*tickSize/2;
 			//			bid = (prevAsk[aucID]+prevBid[aucID])/2 - (randomSpread(countMissingAsk.get(aucID))+randomSpread(countMissingBid.get(aucID)))*tickSize/2;
-			log.log(Log.DEBUG, "Agent::checkBidAsk: bid: " + oldbid + " to " + bid + ", ask: " + oldask + " to " + ask);
+			log.log(Log.DEBUG, "Agent::checkBidAsk: bid: " + oldbid + " to " + bid + 
+					", ask: " + oldask + " to " + ask);
 		}
 		bid = Math.max(bid, 1);
 		ask = Math.max(ask, 1);
@@ -696,48 +794,6 @@ public abstract class Agent extends Entity {
 		return flag;
 	}
 
-	
-	/**
-	 * @return agent's unrealized profit
-	 */
-	public int getUnrealizedProfit() {
-		int up = 0;
-		int p = -1;
-
-		if (positionBalance > 0) {
-			// For long position, compare cost to bid quote
-			for (Iterator<Integer> it = marketIDs.iterator(); it.hasNext(); ) {
-				int mktID = it.next();
-				if (p == -1 || p < bidPrice.get(mktID).getPrice())
-					p = bidPrice.get(mktID).getPrice();
-			}
-		} else {
-			// For short position, compare cost to ask quote
-			for (Iterator<Integer> it = marketIDs.iterator(); it.hasNext(); ) {
-				int mktID = it.next();
-				if (p == -1 || p > askPrice.get(mktID).getPrice())
-					p = askPrice.get(mktID).getPrice();
-			}
-		}
-		up += positionBalance * (p - averageCost);
-		return up;
-	}
-
-
-	/**
-	 * @return agent's realized profit
-	 */
-	public int getRealizedProfit() {
-		return realizedProfit;
-	}
-
-
-	public int getSurplus() {
-		// get surplus of agent. maybe should be an abstract function
-		// TODO
-		return 0;
-	}
-	
 	
 	
 	/**

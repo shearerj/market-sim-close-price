@@ -13,23 +13,25 @@ import java.text.DateFormat;
  * in that it instantiates the Activity objects and provides the methods
  * to execute them later.
  * 
+ * First input argument is folder name, second is sample #.
+ * 
  * @author ewah
  */
 public class SystemManager {
 
-	private HashMap<Integer,Entity> entities; 	// Entities hashed by their ID
 	private EventManager eventManager;
 	private SystemData data;
 	private Sequence agentIDSequence;
 	private Sequence marketIDSequence;
-
+	private Observations results;
+	private static int num;					// sample number used for labeling output files
+	private static String simFolder;			// simulation folder name
+	
 	// Environment parameters
 	private Properties envProps;
-	private AgentProperties params;
 	
 	private Log log;
 
-	
 	/**
 	 * Constructor
 	 */
@@ -38,19 +40,31 @@ public class SystemManager {
 		agentIDSequence = new Sequence(1);
 		marketIDSequence = new Sequence(-1);
 		envProps = new Properties();
-		params = new AgentProperties();	
+		results = new Observations(data);
 	}
 	
+	/**
+	 * Only one argument, which is the sample number, is processed
+	 * 
+	 * Two input arguments: first is simulation folder, second is sample number
+	 * 
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		
 		SystemManager manager = new SystemManager();
 
-		if (args.length == 1) {
-			manager.setup(args[0]);
+		if (args.length == 2) {
+			simFolder = args[0] + "/";
+			num = Integer.parseInt(args[1]);
 		} else {
-			manager.setup("config/env.properties");
+			simFolder = "";
+			num = 1;
 		}
+		
+		manager.setup();
 		manager.executeEvents();
+		manager.aggregateResults();
 	}
 	
 	
@@ -58,115 +72,101 @@ public class SystemManager {
 	 * Method to execute all events in the Event Queue.
 	 */
 	public void executeEvents() {
-		
-		while (!eventManager.isEventQueueEmpty()) {
-			eventManager.executeCurrentEvent();
+		try {
+			while (!eventManager.isEventQueueEmpty()) {
+				eventManager.executeCurrentEvent();
+			}
+			String s = "STATUS: Event queue is now empty.";
+			log.log(Log.INFO, s);
+		} catch (Exception e) {
+			System.err.print(e);
 		}
-		String s = "STATUS: Event queue is now empty.";
-		log.log(Log.DEBUG, s);
-		System.out.println(s);
 	}
-	
+
 	
 	/**
 	 * Initialize parameters based on configuration file.
-	 * 
-	 * @param configFile
 	 */
-	public void setup(String configFile) {
-		
-		// Read environment parameters
-		loadConfig(envProps, configFile);
-		data.simLength = new TimeStamp(Long.parseLong(envProps.getProperty("simLength")));
-		data.nbboLatency = new TimeStamp(Long.parseLong(envProps.getProperty("nbboLatency")));
-		data.tickSize = Integer.parseInt(envProps.getProperty("tickSize"));
-		
-		// Create log file
-		String logDir = envProps.getProperty("logDir");
-		int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
-		Date now = new Date();
-		String logFilename = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(now);
-		logFilename = logFilename.replace("/", "-");
-		logFilename = logFilename.replace(" ", "_");
-		logFilename = logFilename.replace(":", "");
+	public void setup() {
+
 		try {
-			log = new Log(logLevel, ".", logDir + logFilename + ".txt", true);
-		} catch (IOException e) {
+			// =================================================
+			// Load parameters
+
+			// Read environment parameters & set up environment
+			loadConfig(envProps, SystemConsts.configDir + SystemConsts.configFile);
+			data.readEnvProps(envProps);
+			data.nbboArrivalTimes();
+			data.nbboPrivateValues();
+
+			// Create log file
+			int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
+			Date now = new Date();
+			String logFilename = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(now);
+			logFilename = logFilename.replace("/", "-");
+			logFilename = logFilename.replace(" ", "_");
+			logFilename = logFilename.replace(":", "");
+			try {
+				// Check first if directory exists
+				File f = new File(simFolder + SystemConsts.logDir);
+				if (!f.exists()) {
+					// Create directory
+					new File(simFolder + SystemConsts.logDir).mkdir();
+				}
+				log = new Log(logLevel, ".", simFolder + SystemConsts.logDir + logFilename + ".txt", true);
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.err.print("setup(String): error creating log file");
+			}
+
+			// Read simulation spec file
+			SimulationSpec specs = new SimulationSpec(simFolder + SystemConsts.simSpecFile, log, data);
+			specs.configParams();
+
+			// Log properties
+			log.log(Log.DEBUG, envProps.toString());
+
+			// =================================================
+			// Create entities
+
+			eventManager = new EventManager(data.simLength, log);
+
+			// Create Quoter entity, which enters the system at time 0
+			Quoter iu = new Quoter(0, data, log);
+			data.quoter = iu;
+			eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(0)));
+
+			// Create markets first since agent creation references markets
+			for (Map.Entry<String, Integer> mkt: data.numMarketType.entrySet()) {
+				for (int i = 0; i < mkt.getValue(); i++) {
+					int marketID = marketIDSequence.decrement();
+					Market market = MarketFactory.createMarket(mkt.getKey(), marketID, data, log);
+					data.addMarket(market);
+				}
+				log.log(Log.INFO, "Markets: " + mkt.getValue() + " " + mkt.getKey());
+			}
+
+			// Create agents, initialize parameters, and compute arrival times (if needed)
+			for (Map.Entry<String, Integer> ag : data.numAgentType.entrySet()) {
+
+				for (int i = 0; i < ag.getValue(); i++) {
+
+					AgentProperties ap = specs.setStrategy(ag.getKey(), i);
+					int id = agentIDSequence.increment();
+
+					// create agent & events
+					setupAgent(id, ag.getKey(), ap);
+				}
+				log.log(Log.INFO, "Agents: " + ag.getValue() + " " + ag.getKey());
+			}
+			// Log agent information
+			logAgentInfo();
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
-		// Log properties
-		log.log(Log.DEBUG, envProps.toString());
-		log.log(Log.INFO, params.toString());
-		
-		// Create event manager
-		eventManager = new EventManager(data.simLength, log);
-		
-		// Check which types of agents to create
-		for (int i = 0; i < SystemConsts.agentTypes.length; i++) {
-			String num = envProps.getProperty(SystemConsts.agentTypes[i]);
-			if (num != null) {
-				int n = Integer.parseInt(num);
-				data.numAgents += n;
-				data.numAgentType.put(SystemConsts.agentTypes[i], n);
-			}
-		}
-		// Check which types of markets to create
-		for (int i = 0; i < SystemConsts.marketTypes.length; i++) {
-			String num = envProps.getProperty(SystemConsts.marketTypes[i]);
-			if (num != null) {
-				int n = Integer.parseInt(num);
-				data.numMarkets += n;
-				data.numMarketType.put(SystemConsts.marketTypes[i], n);
-			}
-		}
-		
-		// Create Quoter entity, which enters the system at time 0
-		Quoter iu = new Quoter(0, data, log);
-		data.quoter = iu;
-		eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(0)));
-		
-		// Create markets first since agent creation references markets
-		for (Map.Entry<String, Integer> mkt: data.numMarketType.entrySet()) {
-			for (int i = 0; i < mkt.getValue(); i++) {
-				int marketID = marketIDSequence.decrement();
-				Market market = MarketFactory.createMarket(mkt.getKey(), marketID, data, log);
-				data.addMarket(market);
-			}
-			log.log(Log.INFO, "Markets: " + mkt.getValue() + " " + mkt.getKey());
-		}
-		
-		// Create agents, initialize parameters, and compute arrival times (if needed)
-		for (Map.Entry<String, Integer> ag : data.numAgentType.entrySet()) {
-			setupSystemParams(ag.getKey());
-			
-			for (int i = 0; i < ag.getValue(); i++) {
-				setupAgent(agentIDSequence.increment(), ag.getKey());
-			}
-			log.log(Log.INFO, "Agents: " + ag.getValue() + " " + ag.getKey());
-		}
-		
-		// Log agent information
-		logAgentInfo();
 	}
 	
-	/**
-	 * Method for loading any needed system parameters from SystemProperties file.
-	 * 
-	 * @param key
-	 */
-	private void setupSystemParams(String key) {
-		if (key.equals("NBBO")) {
-			// set up arrival times/private values generator
-			HashMap<String,String> nbbo = params.get(key);
-			data.nbboArrivalTimes(Double.parseDouble(nbbo.get("arrivalRate")));
-			data.nbboPrivateValues(Double.parseDouble(nbbo.get("kappa")),
-					Integer.parseInt(nbbo.get("meanPV")),
-					Double.parseDouble(nbbo.get("shockVar")));	
-		}
-	}
-	
-	
+
 	/**
 	 * Creates agent and initializes all agent settings/parameters.
 	 * Inserts AgentArrival/Departure activities into the eventQueue.
@@ -174,9 +174,10 @@ public class SystemManager {
 	 * @param agentID
 	 * @param agentType
 	 */
-	public void setupAgent(int agentID, String agentType) {
-		Agent agent = AgentFactory.createAgent(agentType, agentID, data, params, log);
+	public void setupAgent(int agentID, String agentType, AgentProperties ap) {
+		Agent agent = AgentFactory.createAgent(agentType, agentID, data, ap, log);
 		data.addAgent(agent);
+		log.log(Log.DEBUG, agent.toString() + ": " + ap);
 		
 		TimeStamp ts = agent.getArrivalTime();
 		Activity arrival = null;
@@ -199,11 +200,14 @@ public class SystemManager {
 			eventManager.createEvent(departure);
 		}
 
-		// Check if agent is infinitely fast and updates event manager if needed
-		if (Integer.parseInt(params.get(agentType).get("sleepTime")) == 0) {
-			eventManager.setInfiniteFastActs(data.getAgent(agentID).getInfinitelyFastActs());
-		} 
+		if (ap.containsKey("sleepTime")) {
+			// Check if agent is infinitely fast and updates event manager if needed
+			if (Integer.parseInt(ap.get("sleepTime")) == 0) {
+				eventManager.setInfiniteFastActs(data.getAgent(agentID).getInfinitelyFastActs());
+			} 
+		}
 	}
+	
 	
 	
 	/**
@@ -219,7 +223,7 @@ public class SystemManager {
 			
 			// print private value if exists 
 			if (ag.getType().equals("NBBO")) {
-				s += ", pv=" + ((NBBOAgent) ag).privateValue;
+				s += ", pv=" + ((NBBOAgent) ag).getPrivateValue();
 			}
 			log.log(Log.INFO, s);
 		}
@@ -231,13 +235,15 @@ public class SystemManager {
 	 * @param p
 	 * @param config
 	 */
-	public void loadConfig(Properties p, InputStream config) {
+	public void loadInputStream(Properties p, InputStream config) {
 		try {
 			if (p == null)
 				return;
 			p.load(config);
 		} catch (IOException e) {
-			log.log(Log.INFO, "loadConfig(InputStream): error opening/processing config file: " + config + "/" + e);
+			String s = "loadConfig(InputStream): error opening/processing config file: " + config + "/" + e;
+			log.log(Log.ERROR, s);
+			System.err.print(s);
 			System.exit(0);
 		}
 	}
@@ -250,10 +256,35 @@ public class SystemManager {
 	 */
 	public void loadConfig(Properties p, String config) {
 		try {
-			loadConfig(p, new FileInputStream(config));
+			loadInputStream(p, new FileInputStream(config));
 		} catch (FileNotFoundException e) {
-			log.log(Log.INFO, "loadConfig(String): error opening/processing config file: " + config + "/" + e);
+			String s = "loadConfig(String): error opening/processing config file: " + config + "/" + e;
+			log.log(Log.ERROR, s);
+			System.err.print(s);
 			System.exit(0);
+		}
+	}
+	
+	
+	/**
+	 * Generate results report (payoff data, feature data logging)
+	 */
+	public void aggregateResults() {
+		try {
+			for (Iterator<Integer> it = data.getAgents().keySet().iterator(); it.hasNext(); ) {
+				int id = it.next();
+				results.addObservation(id);
+			}
+			
+			File file = new File(simFolder + SystemConsts.obsFilename + num + ".json");
+			FileWriter txt = new FileWriter(file);
+			txt.write(results.generateObservationFile());
+			txt.close();
+			
+		} catch (Exception e) {
+			String s = "aggregateResults(): error creating observation file";
+			e.printStackTrace();
+			System.err.print(s);
 		}
 	}
 	

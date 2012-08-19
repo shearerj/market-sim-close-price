@@ -45,7 +45,7 @@ public class Quoter extends Entity {
 		ActivityHashMap actMap = new ActivityHashMap();
 		
 		lastQuote = findBestBidOffer(new ArrayList<Integer>(data.getMarkets().keySet()));
-		String s = ts.toString() + " | NBBO" + lastQuote;
+		String s = ts.toString() + " | UpdateNBBO" + lastQuote;
 		
 		int bestBid = lastQuote.bestBid;
 		int bestAsk = lastQuote.bestAsk;
@@ -60,7 +60,7 @@ public class Quoter extends Entity {
 		}
 		lastQuote.bestBid = bestBid;
 		lastQuote.bestAsk = bestAsk;
-		log.log(Log.INFO, s + " -> NBBO" + lastQuote);
+		log.log(Log.INFO, s + " --> NBBO" + lastQuote);
 		
 		TimeStamp tsNew = ts.sum(latency);
 		actMap.insertActivity(new UpdateNBBO(this, tsNew));

@@ -5,6 +5,7 @@ import market.*;
 import activity.*;
 import systemmanager.*;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Properties;
 
@@ -21,11 +22,15 @@ public class MarketMaker extends SMAgent {
 		agentType = "M";
 		
 		arrivalTime = new TimeStamp(0);
-		sleepTime = Integer.parseInt(p.get(agentType).get("sleepTime"));
-		sleepVar = Double.parseDouble(p.get(agentType).get("sleepVar"));
+		params = p;
 	}
 	
-
+	@Override
+	public HashMap<String, Object> getObservation() {
+		return null;
+	}
+	
+	@Override
 	public ActivityHashMap agentStrategy(Market mkt, TimeStamp ts) {
 
 		ActivityHashMap actMap = new ActivityHashMap();
@@ -52,7 +57,9 @@ public class MarketMaker extends SMAgent {
 			//				System.out.print("(" + quantities[j] + ", " + prices[j] + ") | ");
 			actMap.appendActivityHashMap(addBid(mkt, prices[j], quantities[j], ts));
 		}
-		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime()));
+		int sleepTime = Integer.parseInt(params.get("sleepTime"));
+		double sleepVar = Double.parseDouble(params.get("sleepVar"));
+		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
 		actMap.insertActivity(new UpdateAllQuotes(this, tsNew));
 		actMap.insertActivity(new AgentStrategy(this, tsNew));
 		return actMap;

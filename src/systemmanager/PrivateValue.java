@@ -1,9 +1,9 @@
 package systemmanager;
 
-import market.Price;
-
 import java.util.Random;
 import java.util.ArrayList;
+
+import market.Price;
 
 /**
  * Class to store and compute private values for background agents.
