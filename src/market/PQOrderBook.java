@@ -27,7 +27,7 @@ public class PQOrderBook extends OrderBook {
 	}
 
 	/** 
-	 * inserts new bid into the orderbook
+	 * inserts new bid into the order book
 	 */
 	public void insertBid(Bid newBid) {
 		Integer key = newBid.agentID;
@@ -52,7 +52,7 @@ public class PQOrderBook extends OrderBook {
 	}
 
 	/**
-	 * inserts a pq point into the orderbook, but doesn't update FH.
+	 * inserts a pq point into the order book, but doesn't update FH.
 	 * For updating activeBids list in clear method.
 	 * @param newPoint
 	 */
@@ -119,7 +119,7 @@ public class PQOrderBook extends OrderBook {
 	 * Print the active bids in the orderbook.
 	 */
 	public void logActiveBids() {
-		String s = "    [[" + marketID + "]] Active bids: ";
+		String s = "    [" + marketID + "] Active bids: ";
 		for (Map.Entry<Integer,Bid> entry : activeBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
@@ -134,7 +134,7 @@ public class PQOrderBook extends OrderBook {
 	 * Print the cleared bids in the orderbook. 
 	 */
 	public void logClearedBids() {
-		String s = "    [[" + marketID + "]] Cleared bids: ";
+		String s = "    [" + marketID + "] Cleared bids: ";
 		for (Map.Entry<Integer,Bid> entry : clearedBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
@@ -149,8 +149,8 @@ public class PQOrderBook extends OrderBook {
 	
 	public ArrayList<Transaction> earliestPriceClear(TimeStamp ts) {
 		PQPoint buy, sell;
-		clearedBids = null;
-
+		clearedBids = new HashMap<Integer,Bid>();
+		
 		ArrayList<PQPoint> matchingBuys = new ArrayList<PQPoint>();
 		ArrayList<PQPoint> matchingSells = new ArrayList<PQPoint>();
 		ArrayList<Transaction> transactions = new ArrayList<Transaction>();
@@ -170,8 +170,6 @@ public class PQOrderBook extends OrderBook {
 		int numSells = matchingSells.size();
 		if (numBuys == 0) return null;
 
-		clearedBids = new HashMap<Integer,Bid>();
-		
 		for (int i = 0, j = 0; i < numBuys || j < numSells;) {
 			buy = matchingBuys.get(i);
 			sell = matchingSells.get(j);
@@ -179,6 +177,7 @@ public class PQOrderBook extends OrderBook {
 			Price p = PQPoint.earliestPrice(buy, sell);
 
 			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
+			log.log(Log.INFO, "        Quantity=" + q + " cleared at Price=" + p.getPrice());
 
 			Integer key = new Integer(buy.getAgentID());
 			if (!clearedBids.containsKey(key)) {
@@ -203,12 +202,98 @@ public class PQOrderBook extends OrderBook {
 
 
 	/**
-	 * Clear the orderbook. If there is tie between bids, choose the one with the
-	 * earlier price.
+	 * Clears at a uniform price. For call markets.
 	 * 
 	 * @param ts
-	 * @return
+	 * @param pricingPolicy between 0 and 1, default 0.5
+	 * @return ArrayList of PQTransactions
 	 */
+	public ArrayList<Transaction> uniformPriceClear(TimeStamp ts, float pricingPolicy) {
+
+		PQBid bid = (PQBid) getBidQuote();
+		PQBid ask = (PQBid) getAskQuote();
+		int b = bid.bidTreeSet.first().price.getPrice(); 	// highest bid price
+		int a = ask.bidTreeSet.last().price.getPrice(); 	// lowest ask price
+		Price p = new Price(Math.round((a - b)*pricingPolicy + b));
+		
+		PQPoint buy, sell;
+		clearedBids = new HashMap<Integer,Bid>();
+
+		ArrayList<PQPoint> matchingBuys = new ArrayList<PQPoint>();
+		ArrayList<PQPoint> matchingSells = new ArrayList<PQPoint>();
+		ArrayList<Transaction> transactions = new ArrayList<Transaction>();
+
+		int buyAgentId = -1;
+		int sellAgentId = -2;
+
+		if (!FH.matchBuySet.isEmpty() && !FH.matchSellSet.isEmpty()) {
+			buyAgentId = ((PQPoint) FH.matchBuySet.first()).getAgentID();
+			sellAgentId = ((PQPoint) FH.matchSellSet.first()).getAgentID();
+		}
+		if (buyAgentId != sellAgentId) {
+			FH.clear(matchingBuys, matchingSells);
+		}
+
+		int numBuys = matchingBuys.size();
+		int numSells = matchingSells.size();
+		if (numBuys == 0) return null;
+
+		for (int i = 0, j = 0; i < numBuys || j < numSells;) {
+			buy = (PQPoint) matchingBuys.get(i);
+			sell = (PQPoint) matchingSells.get(j);
+			int q = Math.min(buy.getQuantity(), Math.abs(sell.getQuantity()));
+
+			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
+			log.log(Log.INFO, "        Quantity=" + q + " cleared at Price=" + p.getPrice());
+			
+			Integer key = new Integer(buy.getAgentID());
+			if (!clearedBids.containsKey(key))
+				clearedBids.put(key, buy.Parent);
+			key = new Integer(sell.getAgentID());
+			if (!clearedBids.containsKey(key))
+				clearedBids.put(key, sell.Parent);
+
+			buy.transact(q);
+			sell.transact(-1 * q);
+			if (buy.getQuantity() == 0) i++;
+			if (sell.getQuantity() == 0) j++;
+
+			/*assert ((i < numBuys && j < numSells) ||
+	        (i == numBuys && j == numSells)) : "uniform clear broken";
+			 */
+		}
+		return transactions;
+	}
+
+	
+//	/**
+//	 * Fixes issue caused by multi-unit bids where a partially-transacted bid
+//	 * remains in the clearedBids lists. Copies bids with non-zero quantities
+//	 * in clearedBids back to activeBids.
+//	 */
+//	private void updateActiveBids() {
+//		// cycle through the list of bids in cleared to check for ones with unit=1
+//		for (Map.Entry<Integer,Bid> entry : clearedBids.entrySet()) {
+//			PQBid b = (PQBid) entry.getValue();
+//			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
+//				PQPoint pq = i.next();
+//				
+//				if (pq.getQuantity() != 0) {
+//					// need to add to active bids
+//					insertPoint(pq);
+//					// don't need to remove from cleared bids because that resets
+//				}	
+//			}
+//		}
+//	}
+//
+//	/**
+//	 * Clear the orderbook. If there is tie between bids, choose the one with the
+//	 * earlier price.
+//	 * 
+//	 * @param ts
+//	 * @return
+//	 */
 //	public ArrayList<Transaction> earliestPriceClear(TimeStamp ts) {
 //		PQPoint buy, sell;
 //		clearedBids = null;
@@ -292,89 +377,8 @@ public class PQOrderBook extends OrderBook {
 //		}
 //		return transactions;
 //	}
-
-	/**
-	 * Clears at a uniform price. For call markets.
-	 * 
-	 * @param ts
-	 * @param pricingPolicy between 0 and 1, default 0.5
-	 * @return ArrayList of PQTransactions
-	 */
-	public ArrayList<Transaction> uniformPriceClear(TimeStamp ts, float pricingPolicy) {
-		long init = new TimeStamp().longValue();
-
-		PQBid bid = (PQBid) getBidQuote();
-		PQBid ask = (PQBid) getAskQuote();
-		int b = bid.bidTreeSet.first().price.getPrice(); 	// highest bid price
-		int a = ask.bidTreeSet.last().price.getPrice(); 	// lowest ask price
-		Price p = new Price(Math.round((a - b)*pricingPolicy + b));
-		
-		PQPoint buy, sell;
-		clearedBids = null;
-
-		ArrayList<PQPoint> matchingBuys = new ArrayList<PQPoint>();
-		ArrayList<PQPoint> matchingSells = new ArrayList<PQPoint>();
-		ArrayList<Transaction> transactions = new ArrayList<Transaction>();
-
-		int buyAgentId = -1;
-		int sellAgentId = -2;
-
-		if (!FH.matchBuySet.isEmpty() && !FH.matchSellSet.isEmpty()) {
-			buyAgentId = ((PQPoint) FH.matchBuySet.first()).getAgentID();
-			sellAgentId = ((PQPoint) FH.matchSellSet.first()).getAgentID();
-		}
-		if (buyAgentId != sellAgentId) {
-			FH.clear(matchingBuys, matchingSells);
-		}
-
-		int numBuys = matchingBuys.size();
-		int numSells = matchingSells.size();
-		if (numBuys == 0) return null;
-
-		for (int i = 0, j = 0; i < numBuys || j < numSells;) {
-			buy = (PQPoint) matchingBuys.get(i);
-			sell = (PQPoint) matchingSells.get(j);
-			int q = Math.min(buy.getQuantity(), Math.abs(sell.getQuantity()));
-
-			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-			Integer key = new Integer(buy.getAgentID());
-			if (!clearedBids.containsKey(key))
-				clearedBids.put(key, buy.Parent);
-			key = new Integer(sell.getAgentID());
-			if (!clearedBids.containsKey(key))
-				clearedBids.put(key, sell.Parent);
-
-			buy.transact(q);
-			sell.transact(-1 * q);
-			if (buy.getQuantity() == 0) i++;
-			if (sell.getQuantity() == 0) j++;
-
-			/*assert ((i < numBuys && j < numSells) ||
-	        (i == numBuys && j == numSells)) : "uniform clear broken";
-			 */
-		}
-		return transactions;
-	}
-
 	
-//	/**
-//	 * Fixes issue caused by multi-unit bids where a partially-transacted bid
-//	 * remains in the clearedBids lists. Copies bids with non-zero quantities
-//	 * in clearedBids back to activeBids.
-//	 */
-//	private void updateActiveBids() {
-//		// cycle through the list of bids in cleared to check for ones with unit=1
-//		for (Map.Entry<Integer,Bid> entry : clearedBids.entrySet()) {
-//			PQBid b = (PQBid) entry.getValue();
-//			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
-//				PQPoint pq = i.next();
-//				
-//				if (pq.getQuantity() != 0) {
-//					// need to add to active bids
-//					insertPoint(pq);
-//					// don't need to remove from cleared bids because that resets
-//				}	
-//			}
-//		}
-//	}
+	
 }
+
+

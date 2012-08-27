@@ -55,11 +55,6 @@ public class CDAMarket extends Market {
 		orderbook.removeBid(agentID);
 		orderbook.logActiveBids();
 		orderbook.logFourHeap();
-		
-//		// replace with empty bid
-//		PQBid emptyBid = new PQBid(agentID, this.ID);
-//		emptyBid.addPoint(0, new Price(0));
-//		this.data.bidData.put(agentID, emptyBid);
 	}
 	
 	
@@ -68,16 +63,22 @@ public class CDAMarket extends Market {
 	}
 	
 	
+	public Activity getClearActivity(TimeStamp currentTime) {
+		return new Clear(this, currentTime);
+	}
+
+	
 	public ActivityHashMap clear(TimeStamp clearTime) {
 		orderbook.logActiveBids();
 		orderbook.logFourHeap();
 		
 		Quote q = new Quote(this);
+		log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + ": Quote" + q);
 		ArrayList<Transaction> transactions = orderbook.earliestPriceClear(clearTime);
 		if (transactions == null) {
 			lastClearTime = clearTime;
-			log.log(Log.INFO, clearTime.toString() + " | STATUS: Nothing transacted.");
-			log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + ": Quote" + q);
+			log.log(Log.INFO, clearTime.toString() + " | " + this.getClass().getSimpleName() +
+					"::clear: Nothing transacted.");
 			return null;
 		}
 		TreeSet<Integer> transactingIDs = new TreeSet<Integer>();
@@ -102,7 +103,8 @@ public class CDAMarket extends Market {
 		orderbook.logActiveBids();
 		orderbook.logClearedBids();
 		orderbook.logFourHeap();
-		log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + ": Quote" + q);
+		log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + " " +
+				this.getClass().getSimpleName() + " cleared: Quote" + q);
 		return null;
 	}
 

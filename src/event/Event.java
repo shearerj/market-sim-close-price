@@ -55,6 +55,14 @@ public class Event {
 		return this.eventTime;
 	}
 
+	
+	/**
+	 * @return linked list of activities.
+	 */
+	public LinkedList<Activity> getActivities() {
+		return this.activities;
+	}
+	
 	/**
 	 * @return	boolean of event completion status.
 	 */

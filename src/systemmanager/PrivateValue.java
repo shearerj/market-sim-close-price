@@ -28,7 +28,6 @@ public class PrivateValue {
 		meanPV = 50000;
 		shockVar = 2;
 		tickSize = 1;
-		
 		privateValues = new ArrayList<Price>();
 	}
 	
@@ -39,13 +38,12 @@ public class PrivateValue {
 	 * @param var
 	 */
 	public PrivateValue(double kap, int meanValue, double var, int tick) {
+		rand = new Random();
 		kappa = kap;
 		meanPV = meanValue;
 		shockVar = var;
 		privateValues = new ArrayList<Price>();
 		tickSize = tick;
-		
-		rand = new Random();
 		
 		// stochastic initial conditions for random process
 		privateValues.add(new Price((int) getNormalRV(meanPV, shockVar)));
@@ -59,7 +57,7 @@ public class PrivateValue {
 		int nextPV = (int) ((meanPV * kappa) + ((1 - kappa) * 
 						privateValues.get(privateValues.size()-1).getPrice()) +
 	                    getNormalRV(0, shockVar) * tickSize);
-	        privateValues.add(new Price(nextPV));
+	    privateValues.add(new Price(nextPV));
 	    return nextPV;
 	}
 	
@@ -74,5 +72,13 @@ public class PrivateValue {
 	    double r2 = rand.nextDouble();
 	    double z = Math.sqrt(-2*Math.log(r1))*Math.cos(2*Math.PI*r2);
 	    return mu + z * Math.sqrt(var);
+	}
+	
+	
+	/**
+	 * @return list of all private values
+	 */
+	public ArrayList<Price> getPrivateValues() {
+		return privateValues;
 	}
 }

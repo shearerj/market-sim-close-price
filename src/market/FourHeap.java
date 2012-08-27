@@ -588,7 +588,7 @@ public class FourHeap
 //		if (shouldLog(Log.INFO)) {
 //			log(Log.INFO,"FourHeap::logSets, "+s);
 //		}
-		log.log(Log.INFO, "    [[" + mktID + "]] " + "FourHeap::logSets::" + s);
+		log.log(Log.INFO, "    [" + mktID + "] " + "FourHeap::logSets::" + s);
 	}
 	private String printSet(int t)
 	{

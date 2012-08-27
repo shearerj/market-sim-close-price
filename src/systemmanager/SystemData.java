@@ -10,6 +10,8 @@ import java.util.*;
  * Class that stores all simulation data (agents, markets, quotes, bid, etc.).
  * Also stores the parameters read from the environment configuration file.
  * 
+ * Computes the surplus for all agents and aggregates other features for observations.
+ * 
  * @author ewah
  */
 public class SystemData {
@@ -30,21 +32,25 @@ public class SystemData {
 	
 	// Parameters set by config file
 	public TimeStamp simLength;
-	public TimeStamp nbboLatency;
 	public int tickSize;
+	public TimeStamp clearLatency;
+	public TimeStamp nbboLatency;
 	public double arrivalRate;
 	public int meanPV;
 	public double kappa;
 	public double shockVar;
 	public double expireRate;
-	public int bidSD;
+	public int bidRange;
 	
 	// Internal variables
 	private Sequence transIDSequence;
-	private ArrivalTime arrivalTimes;
-	private PrivateValue privateValues;
+	private ArrivalTime arrivalTimeGenerator;
+	private PrivateValue privateValueGenerator;
 	
 	
+	/**
+	 * Constructor
+	 */
 	public SystemData() {
 		transData = new HashMap<Integer,PQTransaction>();
 		quoteData = new HashMap<Integer,Quote>();
@@ -58,6 +64,7 @@ public class SystemData {
 		transIDSequence = new Sequence(0);
 	}
 
+	
 	// Access variables
 
 	public HashMap<Integer,Bid> getBids(int marketID) {
@@ -113,50 +120,117 @@ public class SystemData {
 	 * Set up arrival times generation for NBBO agents.
 	 */
 	public void nbboArrivalTimes() {
-		arrivalTimes = new ArrivalTime(new TimeStamp(0), arrivalRate);
+		arrivalTimeGenerator = new ArrivalTime(new TimeStamp(0), arrivalRate);
 	}
 	
 	/**
 	 * Set up private value generation for NBBO agents.
 	 */
 	public void nbboPrivateValues() {
-		privateValues = new PrivateValue(kappa, meanPV, shockVar, tickSize);	
+		privateValueGenerator = new PrivateValue(kappa, meanPV, shockVar, tickSize);	
 	}
 	
 	/**
 	 * @return next generated arrival time
 	 */
 	public TimeStamp nextArrival() {
-		if (arrivalTimes == null) {
+		if (arrivalTimeGenerator == null) {
 			return null;
 		}
-		return arrivalTimes.next();
+		return arrivalTimeGenerator.next();
 	}
 	
 	/**
 	 * @return next generated private value
 	 */
 	public int nextPrivateValue() {
-		if (privateValues == null) {
+		if (privateValueGenerator == null) {
 			return 0;
 		}
-		return privateValues.next();
+		return privateValueGenerator.next();
 	}
 	
+	/**
+	 * @return list of all arrival times
+	 */
+	public ArrayList<TimeStamp> getArrivalTimes() {
+		return arrivalTimeGenerator.getArrivalTimes();
+	}
 	
+	/**
+	 * @return list of all intervals
+	 */
+	public ArrayList<TimeStamp> getIntervals() {
+		return arrivalTimeGenerator.getIntervals();
+	}
+	
+	/**
+	 * @return list of all private values
+	 */
+	public ArrayList<Price> getPrivateValues() {
+		return privateValueGenerator.getPrivateValues();
+	}
+	
+	/**
+	 * Read in parameters from the env.properties configuration file.
+	 * 
+	 * @param p
+	 */
 	public void readEnvProps(Properties p) {
 		simLength = new TimeStamp(Long.parseLong(p.getProperty("simLength")));
 		nbboLatency = new TimeStamp(Long.parseLong(p.getProperty("nbboLatency")));
+		clearLatency = new TimeStamp(Long.parseLong(p.getProperty("clearLatency")));
 		tickSize = Integer.parseInt(p.getProperty("tickSize"));
 		arrivalRate = Double.parseDouble(p.getProperty("arrivalRate"));
 		meanPV = Integer.parseInt(p.getProperty("meanPV"));
 		shockVar = Double.parseDouble(p.getProperty("shockVar"));
 		expireRate = Double.parseDouble(p.getProperty("expireRate"));
-		bidSD = Integer.parseInt(p.getProperty("bidSD"));
+		bidRange = Integer.parseInt(p.getProperty("bidRange"));
+	}
+	
+	
+	/**
+	 * Iterates through all transactions and sums up surplus for all agents.
+	 * CS = PV - p, PS = p - PV
+	 * 
+	 * @return surplus hashmap, hashed by agent ID
+	 */
+	public HashMap<Integer,Integer> getAllSurplus() {
+		
+		HashMap<Integer,Integer> allSurplus = new HashMap<Integer,Integer>();
+		for (Map.Entry<Integer,PQTransaction> trans : transData.entrySet()) {
+			PQTransaction t = trans.getValue();
+			
+			Agent buyer = agents.get(t.buyerID);
+			Agent seller = agents.get(t.sellerID);
+			
+			if (buyer.getPrivateValue() != -1) {
+				int surplus = 0;
+				if (allSurplus.containsKey(buyer.getID())) {
+					surplus = allSurplus.get(buyer.getID());					
+				}
+				allSurplus.put(buyer.getID(), surplus + buyer.getPrivateValue() - t.price.getPrice());		
+			}
+			if (seller.getPrivateValue() != -1) {
+				int surplus = 0;
+				if (allSurplus.containsKey(seller.getID())) {
+					surplus = allSurplus.get(seller.getID());					
+				}
+				allSurplus.put(seller.getID(), surplus + t.price.getPrice() - seller.getPrivateValue());		
+			}
+		}
+		return allSurplus;
 	}
 	
 	
 
+	/**
+	 * @return list of all transaction ids
+	 */
+	public ArrayList<Integer> getTransactionIDs() {
+		return new ArrayList<Integer>(transData.keySet());
+	}
+	
 //	/**
 //	 * Gets transaction IDs for all transaction after earliestTransID.
 //	 * 
@@ -240,6 +314,8 @@ public class SystemData {
 //	}
 //
 //	/**
+//	 * Get transactions for a given agent.
+//	 * 
 //	 * @param agentID
 //	 * @param type		'b' if buyer, 's' if seller
 //	 * @return

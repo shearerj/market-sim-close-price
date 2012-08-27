@@ -23,6 +23,9 @@ public class ActivityHashMap {
 		acts = new HashMap<TimeStamp, LinkedList<Activity>>();
 	}
 	
+	/**
+	 * Clear the HashMap structure.
+	 */
 	public void clear() {
 		acts.clear();
 	}
@@ -38,7 +41,8 @@ public class ActivityHashMap {
 	 * @return true if inserted correctly, false otherwise
 	 */
 	public boolean insertActivity(Activity act) {
-		if (act == null) return false;
+		if (act == null)
+			return false;
 		
 		boolean ret = false;
 		TimeStamp ts = act.getTime();
@@ -120,6 +124,15 @@ public class ActivityHashMap {
 	 */
 	public Set<Map.Entry<TimeStamp,LinkedList<Activity>>> entrySet() {
 		return acts.entrySet();
+	}
+	
+	
+	/**
+	 * @param list
+	 * @return true if hashmap contains the list, otherwise false.
+	 */
+	public boolean contains(LinkedList<Activity> list) {
+		return acts.containsValue(list);
 	}
 	
 	/* (non-Javadoc)

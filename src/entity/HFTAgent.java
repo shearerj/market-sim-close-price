@@ -37,7 +37,7 @@ public class HFTAgent extends MMAgent {
 		infiniteActs.add(new AgentStrategy(this, new TimeStamp(-1)));
 		
 		if (this.data.numMarkets != 2) {
-			log.log(Log.ERROR, "HFTAgent: HFT agents need 2 markets!");
+			log.log(Log.ERROR, this.getClass().getSimpleName() + ": HFT agents need 2 markets!");
 		}
 	}
 	
@@ -46,7 +46,7 @@ public class HFTAgent extends MMAgent {
 	public HashMap<String, Object> getObservation() {
 		HashMap<String,Object> obs = new HashMap<String,Object>();
 		obs.put("role", agentType);
-		obs.put("payoff", Integer.toString(getRealizedProfit()));
+		obs.put("payoff", getRealizedProfit());
 		obs.put("strategy", params.get("strategy"));
 		
 //		HashMap<String,String> features = new HashMap<String,String>();
@@ -65,7 +65,7 @@ public class HFTAgent extends MMAgent {
 			BestQuote bestQuote = findBestBuySell();
 			if ((bestQuote.bestSell > (1+alpha)*bestQuote.bestBuy) && (bestQuote.bestBuy >= 0) ) {
 				
-				log.log(Log.INFO,"HFTAgent:: found possible arb opp!");
+				log.log(Log.INFO, this.getClass().getSimpleName() + ": Found possible arb opp!");
 
 				int buyMarketID = bestQuote.bestBuyMarket;
 				int sellMarketID = bestQuote.bestSellMarket;
@@ -87,14 +87,14 @@ public class HFTAgent extends MMAgent {
 							quantity, ts));
 					actMap.appendActivityHashMap(addBid(sellMarket, midPoint+tickSize, 
 							-quantity, ts));
-					log.log(Log.INFO, "HFTAgent:: Arb opportunity exists: " + bestQuote + 
+					log.log(Log.INFO, this.getClass().getSimpleName() + ": Arb opportunity exists: " + bestQuote + 
 							" in " + data.getMarket(bestQuote.bestBuyMarket) + " & " 
 							+ data.getMarket(bestQuote.bestSellMarket));
 				} else if (buyMarketID == sellMarketID) {
-					log.log(Log.INFO, "HFTAgent:: No arb opp since same market");
+					log.log(Log.INFO, this.getClass().getSimpleName() + ": No arb opp since same market");
 					// Note that this is due to a market not having both a bid & ask price
 				} else if (quantity == 0) {
-					log.log(Log.INFO, "HFTAgent:: No quantity available");
+					log.log(Log.INFO, this.getClass().getSimpleName() + ": No quantity available");
 				}
 			}
 			int sleepTime = Integer.parseInt(params.get("sleepTime"));

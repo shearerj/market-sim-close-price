@@ -23,7 +23,7 @@ public abstract class Market extends Entity {
 	// Market information
 	public TimeStamp finalClearTime;
 	public TimeStamp nextQuoteTime;
-	public TimeStamp nextClearTime;
+	public TimeStamp nextClearTime;		// Used for Call markets
 	public TimeStamp lastQuoteTime;
 	public TimeStamp lastClearTime;
 	public TimeStamp lastBidTime;
@@ -43,31 +43,11 @@ public abstract class Market extends Entity {
 		finalClearTime = new TimeStamp(-1);
 		lastQuoteTime = new TimeStamp(-1);
 		lastClearTime = new TimeStamp(-1);
+		nextQuoteTime = new TimeStamp(-1);
+		nextClearTime = new TimeStamp(-1);
 		lastClearPrice = new Price(-1);
 		lastAskQuote = new Price(0);
 		lastBidQuote = new Price(0);
-	}
-
-	/**
-	 * Clears all the market's data structures.
-	 */
-	protected void clearAll() {
-		buyers.clear();
-		sellers.clear();
-		agentIDs.clear();
-	}
-
-	/**
-	 * Method to get the type of the market.
-	 * 
-	 * @return
-	 */
-	public String getType() {
-		return marketType;
-	}
-
-	public String toString() {
-		return new String("[[" + this.getID() + "]]");
 	}
 
 	/**
@@ -98,13 +78,16 @@ public abstract class Market extends Entity {
 	public abstract Quote quote(TimeStamp quoteTime);
 
 	/**
-	 * Clears the orderbook.
+	 * Clears the order book.
 	 * 
 	 * @param clearTime
 	 * @return
 	 */
 	public abstract ActivityHashMap clear(TimeStamp clearTime);
 
+	/**
+	 * @return map of bids (hashed by agent ID)
+	 */
 	public abstract HashMap<Integer, Bid> getBids();
 
 	/**
@@ -121,6 +104,38 @@ public abstract class Market extends Entity {
 	 */
 	public abstract void removeBid(int agentID);
 
+	/**
+	 * Returns clearing activity; otherwise returns null (call market)
+	 * 
+	 * @param currentTime of bid submission
+	 * @return Activity for clearing (TimeStamps will vary)
+	 */
+	public abstract Activity getClearActivity(TimeStamp currentTime);
+	
+	
+	
+	/**
+	 * Clears all the market's data structures.
+	 */
+	protected void clearAll() {
+		buyers.clear();
+		sellers.clear();
+		agentIDs.clear();
+	}
+
+	/**
+	 * Method to get the type of the market.
+	 * 
+	 * @return
+	 */
+	public String getType() {
+		return marketType;
+	}
+
+	public String toString() {
+		return new String("[" + this.getID() + "]");
+	}
+	
 	/**
 	 * Returns true if agent can sell in this market.
 	 * 
@@ -192,17 +207,5 @@ public abstract class Market extends Entity {
 	public TimeStamp getLastQuoteTime() {
 		return lastQuoteTime;
 	}
-
-	// public void updateTransactions() {
-	// //return null;
-	// }
-
-	// public Event addOrUpdateBid() {
-	// return null;
-	// }
-
-	// protected Quote getLatestQuote() {
-	// return null;
-	// }
 
 }

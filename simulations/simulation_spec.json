@@ -10,12 +10,12 @@
 	"CDA": "0",
 	"CALL": "2",
 	"call_clear_freq": "30",
-	"NBBO": "500",
+	"NBBO": "100",
         "nbbo_latency": "50",
 	"arrival_rate": "0.75",
 	"mean_PV": "50000",
 	"kappa": "0.01",
-	"shock_var": "100",
+	"shock_var": "1000",
 	"expire_rate": "0.01",
 	"bid_range": "2000"
     }

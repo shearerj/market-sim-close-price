@@ -87,7 +87,8 @@ public class EventManager {
 		log.log(Log.DEBUG, "executeCurrentEvent: " + this.eventQueue.toString());
 
 		Event toExecute = this.eventQueue.peek();
-
+		LinkedList<Activity> list = toExecute.getActivities();
+		
 		try {
 			if (fastActs != null) {
 				// Update time of infinitely fast activities to current time
@@ -102,16 +103,24 @@ public class EventManager {
 			if (toExecute.isCompleted()) {
 				removeEvent(toExecute);
 			} else {
-				log.log(Log.DEBUG, "ERROR: Event did not complete correctly.");
+				log.log(Log.ERROR, this.getClass().getSimpleName() + "::executeCurrentEvent: Event did not complete correctly.");
 			}
+			
 			if (!acts.isEmpty()) {
 				for (Iterator<ActivityHashMap> i = acts.listIterator(); i.hasNext();) {
 					ActivityHashMap act = i.next();
-					manageActivityMap(act);
+					// Check if activity inserted is same as before
+					if (!act.contains(list)) {
+						manageActivityMap(act);
+					} else {
+						log.log(Log.INFO, this.getClass().getSimpleName() + 
+								"::executeCurrentEvent: Avoiding inserting duplicate event.");
+					}
 				}
 			} 
 		} catch (Exception e) {
-			System.err.print("executeCurrentEvent at " + toExecute.getTime() + ": " + e);
+//			System.err.print("executeCurrentEvent at " + toExecute.getTime() + ": " + e);
+			e.printStackTrace();
 		}
 	}
 	

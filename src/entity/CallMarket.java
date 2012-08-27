@@ -3,9 +3,10 @@ package entity;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.TreeSet;
 
 import market.*;
-import activity.ActivityHashMap;
+import activity.*;
 import event.TimeStamp;
 import systemmanager.*;
 
@@ -16,8 +17,9 @@ import systemmanager.*;
  */
 public class CallMarket extends Market {
 
-	public PQOrderBook orderbook;
 	public float pricingPolicy;
+	public PQOrderBook orderbook;
+	private TimeStamp clearLatency;
 	
 	/**
 	 * Overloaded constructor.
@@ -28,6 +30,8 @@ public class CallMarket extends Market {
 		marketType = "CALL";
 		orderbook = new PQOrderBook(this.ID);
 		orderbook.setParams(l, this.ID);
+		clearLatency = d.clearLatency;
+		nextClearTime = clearLatency;
 	}
 	
 	public Bid getBidQuote() {
@@ -37,7 +41,6 @@ public class CallMarket extends Market {
 	public Bid getAskQuote() {
 		return this.orderbook.getAskQuote();
 	}
-	
 
 	public Price getBidPrice() {
 		return ((PQBid) getBidQuote()).bidTreeSet.first().getPrice();
@@ -47,50 +50,75 @@ public class CallMarket extends Market {
 		return ((PQBid) getAskQuote()).bidTreeSet.last().getPrice();
 	}
 	
-	
 	public void addBid(Bid b) {
 		orderbook.insertBid((PQBid) b);
 	}
-	
 	
 	public void removeBid(int agentID) {
 		orderbook.removeBid(agentID);
 		orderbook.logActiveBids();
 		orderbook.logFourHeap();
-		
-//		// replace with empty bid
-//		PQBid emptyBid = new PQBid(agentID, this.ID);
-//		emptyBid.addPoint(0, new Price(0));	
-//		this.data.bidData.put(agentID, emptyBid);
 	}
+	
 	
 	public HashMap<Integer,Bid> getBids() {
 		return orderbook.getActiveBids();
 	}
 	
+	
+	public Activity getClearActivity(TimeStamp currentTime) {
+		return null;
+	}
+	
+	
 	public ActivityHashMap clear(TimeStamp clearTime) {
+		ActivityHashMap actMap = new ActivityHashMap();
+		nextClearTime = clearTime.sum(clearLatency);
+		
 		orderbook.logActiveBids();
 		orderbook.logFourHeap();
 		
+		Quote q = new Quote(this);
+		log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + ": Quote" + q);
 		ArrayList<Transaction> transactions = orderbook.uniformPriceClear(clearTime, (float) 0.5);
 		if (transactions == null) {
-			this.lastClearTime = clearTime; 
-			System.out.println("-------------------Nothing transacted.");
-			return null;
+			lastClearTime = clearTime; 
+			log.log(Log.INFO, clearTime.toString() + " | " + this.getClass().getSimpleName() + 
+					"::clear: Nothing transacted.");
+			actMap.insertActivity(new Clear(this, nextClearTime));
+			return actMap;
 		}
+		TreeSet<Integer> transactingIDs = new TreeSet<Integer>();
+		
 		// add transactions to SystemData
 		for (Iterator<Transaction> i = transactions.iterator(); i.hasNext();) {
 			PQTransaction t = (PQTransaction) i.next();
+			// track which agents were involved in the transactions
+			transactingIDs.add(t.buyerID);
+			transactingIDs.add(t.sellerID);
+			
 			this.data.addTransaction(t);
 			lastClearPrice = t.price;
 		}
 		lastClearTime = clearTime;
 
+		// update and log transactions
+		for (Iterator<Integer> it = transactingIDs.iterator(); it.hasNext(); ) {
+			int id = it.next();
+			data.getAgent(id).updateTransactions(clearTime);
+			data.getAgent(id).logTransactions(clearTime);
+		}
 		orderbook.logActiveBids();
 		orderbook.logClearedBids();
 		orderbook.logFourHeap();
-		return null;
+		log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + " " + 
+				this.getClass().getSimpleName() + " cleared: Quote" + q);
+		
+//		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, data.sleepVar)));
+		actMap.insertActivity(new Clear(this, nextClearTime));
+		return actMap;
 	}
+	
 	
 	
 	public Quote quote(TimeStamp quoteTime) {
@@ -100,7 +128,7 @@ public class CallMarket extends Market {
 		
 		if (bp != null && ap != null) {
 			if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
-				log.log(Log.INFO, "ERROR bid > ask");
+				log.log(Log.ERROR, "CallMarket::quote: ERROR bid > ask");
 			} else {
 				this.data.addQuote(this.ID, q);
 			}
@@ -112,4 +140,15 @@ public class CallMarket extends Market {
 	    
 	    return q;
 	}
+	
+
+//	/**
+//	 * Computes a randomized time based on time & variance.
+//	 * @param time
+//	 * @param var
+//	 * @return
+//	 */
+//	public int getRandClearTime(int time, double var) {
+//		return (int) Math.round(getNormalRV(time, var));
+//	}
 }

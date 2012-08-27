@@ -22,7 +22,6 @@ public class SimulationSpec {
 	private JSONObject params;
 	private JSONObject roleStrategies;
 	private JSONParser parser;
-	
 
 	/**
 	 * Constructor
@@ -35,7 +34,6 @@ public class SimulationSpec {
 		parser = new JSONParser();
 		loadFile(file);
 	}
-	
 	
 	/**
 	 * Load the simulation specification file.
@@ -62,10 +60,17 @@ public class SimulationSpec {
 	 * Parses the spec file for config parameters. Overrides settings in environment
 	 * properties file & agent properties config.
 	 */
-	public void configParams() {
+	public void setParams() {
 		
+		data.clearLatency = new TimeStamp(Integer.parseInt(getValue("call_clear_freq")));
 		data.simLength = new TimeStamp(Integer.parseInt(getValue("sim_length")));
 		data.nbboLatency = new TimeStamp(Integer.parseInt(getValue("nbbo_latency")));
+		data.tickSize = Integer.parseInt(getValue("tick_size"));
+		data.arrivalRate = Double.parseDouble(getValue("arrival_rate"));
+		data.meanPV = Integer.parseInt(getValue("mean_PV"));
+		data.shockVar = Double.parseDouble(getValue("shock_var"));
+		data.expireRate = Double.parseDouble(getValue("expire_rate"));
+		data.bidRange = Integer.parseInt(getValue("bid_range"));
 		
 		// Check which types of markets to create
 		for (int i = 0; i < SystemConsts.marketTypes.length; i++) {

@@ -44,12 +44,13 @@ public abstract class Agent extends Entity {
 	protected Integer lastTransID;		// ID of the last transaction fetched
 	protected BestBidAsk lastNBBOQuote;
 	protected BestBidAsk lastGlobalQuote;
-
+	protected int tickSize;
+	
 	// For quote generation
 	protected Quoter quoter;
 	
 	// Agent parameters
-	protected int tickSize;
+	protected int privateValue;
 	protected int positionLimit;
 	protected AgentProperties params;		// stores all parameters
 	protected String agentType;
@@ -90,6 +91,7 @@ public abstract class Agent extends Entity {
 		
 		infiniteActs = new LinkedList<Activity>();
 		
+		privateValue = -1;
 		cashBalance = 0;
 		positionBalance = 0;
 		averageCost = 0;
@@ -131,11 +133,18 @@ public abstract class Agent extends Entity {
 	}
 	
 	/**
-	 * Method to get the arrival time for an agent.
-	 * @return
+	 * @return arrival time for an agent.
 	 */
 	public TimeStamp getArrivalTime() {
 		return arrivalTime; 
+	}
+	
+	
+	/**
+	 * @return private value of agent.
+	 */
+	public int getPrivateValue() {
+		return privateValue;
 	}
 	
 	/**
@@ -145,6 +154,7 @@ public abstract class Agent extends Entity {
 	public String getType() {
 		return agentType;
 	}
+	
 	
 	public String toString() {
 		return new String("(" + this.getID() + ")");
@@ -159,7 +169,6 @@ public abstract class Agent extends Entity {
 	public int getRandSleepTime(int sleepTime, double sleepVar) {
 		return (int) Math.round(getNormalRV(sleepTime, sleepVar));
 	}
-	
 	
 	/**
 	 * Clears all the agent's data structures.
@@ -309,7 +318,8 @@ public abstract class Agent extends Entity {
 	public ActivityHashMap addBid(Market mkt, int price, int quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new SubmitBid(this, mkt, price, quantity, ts));
-		actMap.insertActivity(new Clear(mkt, ts));
+		actMap.insertActivity(mkt.getClearActivity(ts));
+//		actMap.insertActivity(new Clear(mkt, ts));
 		return actMap;
 	}
 
@@ -326,7 +336,8 @@ public abstract class Agent extends Entity {
 	public ActivityHashMap addMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new SubmitMultipleBid(this, mkt, price, quantity, ts));
-		actMap.insertActivity(new Clear(mkt, ts));
+		actMap.insertActivity(mkt.getClearActivity(ts));
+//		actMap.insertActivity(new Clear(mkt, ts));
 		return actMap;
 	}
 
@@ -466,10 +477,6 @@ public abstract class Agent extends Entity {
 		String s = ts.toString() + " | " + this.toString() + ": Current Position=" + positionBalance +
 				", Realized Profit=" + rp + ", Unrealized Profit=" + up;
 		log.log(Log.INFO, s);
-//		ArrayList<PQTransaction> at = getTransactions(-1);
-//		String atSt = at.toString();
-//		String transactionData = "Transactions: " + atSt;
-//		log.log(Log.INFO, transactionData);
 	}
 	
 	
@@ -646,7 +653,7 @@ public abstract class Agent extends Entity {
 	 */
 	public TreeSet<Integer> getTransIDs(int lastID) {
 		TreeSet<Integer> transIDs = new TreeSet<Integer>();
-		for (Iterator<Integer> it = this.data.transData.keySet().iterator(); it.hasNext(); ) {
+		for (Iterator<Integer> it = data.getTransactionIDs().iterator(); it.hasNext(); ) {
 			int id = it.next();
 			if (id > lastID) {
 				transIDs.add(id);

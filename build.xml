@@ -1,6 +1,6 @@
 <project name="hft" default="build-jar" basedir=".">
     <description>
-        simple example build file
+        hft build file
     </description>
   <!-- set global properties for this build -->
   <property name="src" location="src"/>
@@ -18,11 +18,10 @@
   	<!-- Create the build directory structure used by compile -->
     <mkdir dir="${build}"/>
   	<!-- Compile the java code from ${src} into ${build} -->
-    <javac srcdir="${src}" destdir="${build}" debug="off" deprecation="on" optimize="on">
+    <javac srcdir="${src}" destdir="${build}" debug="on" deprecation="on" optimize="on">
     	<classpath id="classpath" description="default classpath">
     	  <pathelement path="${classpath}"/>
     	  <fileset dir="lib">
-    	    <!--include name="jaxp.jar"/>-->
     	  	<include name="*.jar"/>
     	  </fileset>
     	</classpath>

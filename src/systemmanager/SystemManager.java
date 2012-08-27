@@ -121,7 +121,7 @@ public class SystemManager {
 
 			// Read simulation spec file
 			SimulationSpec specs = new SimulationSpec(simFolder + SystemConsts.simSpecFile, log, data);
-			specs.configParams();
+			specs.setParams();
 
 			// Log properties
 			log.log(Log.DEBUG, envProps.toString());
@@ -139,9 +139,9 @@ public class SystemManager {
 			// Create markets first since agent creation references markets
 			for (Map.Entry<String, Integer> mkt: data.numMarketType.entrySet()) {
 				for (int i = 0; i < mkt.getValue(); i++) {
-					int marketID = marketIDSequence.decrement();
-					Market market = MarketFactory.createMarket(mkt.getKey(), marketID, data, log);
-					data.addMarket(market);
+					int mID = marketIDSequence.decrement();
+					// create market
+					setupMarket(mID, mkt.getKey());
 				}
 				log.log(Log.INFO, "Markets: " + mkt.getValue() + " " + mkt.getKey());
 			}
@@ -152,10 +152,10 @@ public class SystemManager {
 				for (int i = 0; i < ag.getValue(); i++) {
 
 					AgentProperties ap = specs.setStrategy(ag.getKey(), i);
-					int id = agentIDSequence.increment();
+					int aID = agentIDSequence.increment();
 
 					// create agent & events
-					setupAgent(id, ag.getKey(), ap);
+					setupAgent(aID, ag.getKey(), ap);
 				}
 				log.log(Log.INFO, "Agents: " + ag.getValue() + " " + ag.getKey());
 			}
@@ -163,6 +163,26 @@ public class SystemManager {
 			logAgentInfo();
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+	}
+	
+	
+	/**
+	 * Creates market and initializes any Activities as necessary. For example,
+	 * for Call Markets, this method inserts the initial Clear activity into the 
+	 * eventQueue.
+	 * 
+	 * @param marketID
+	 * @param marketType
+	 */
+	public void setupMarket(int marketID, String marketType) {
+		Market market = MarketFactory.createMarket(marketType, marketID, data, log);
+		data.addMarket(market);
+		
+		// Check if is call market
+		if (market instanceof CallMarket) {
+			Activity clear = new Clear(market, market.getNextClearTime());
+			eventManager.createEvent(clear);
 		}
 	}
 	
@@ -184,18 +204,18 @@ public class SystemManager {
 		Activity departure = null;
 		
 		// Agent is in single market
-		if (data.getAgent(agentID) instanceof SMAgent) {
+		if (agent instanceof SMAgent) {
 			for (int i = 1; i <= data.numMarkets; i++) {
-				arrival = new AgentArrival(data.getAgent(agentID), data.getMarket(-i), ts);
-				departure = new AgentDeparture(data.getAgent(agentID), data.getMarket(-i), data.simLength);
+				arrival = new AgentArrival(agent, data.getMarket(-i), ts);
+				departure = new AgentDeparture(agent, data.getMarket(-i), data.simLength);
 				eventManager.createEvent(arrival);
 				eventManager.createEvent(departure);
 			}
 			
-		} else if (data.getAgent(agentID) instanceof MMAgent) {
+		} else if (agent instanceof MMAgent) {
 			// Agent is in multiple markets
-			arrival = new AgentArrival(data.getAgent(agentID), ts);
-			departure = new AgentDeparture(data.getAgent(agentID), data.simLength);
+			arrival = new AgentArrival(agent, ts);
+			departure = new AgentDeparture(agent, data.simLength);
 			eventManager.createEvent(arrival);
 			eventManager.createEvent(departure);
 		}
@@ -203,11 +223,10 @@ public class SystemManager {
 		if (ap.containsKey("sleepTime")) {
 			// Check if agent is infinitely fast and updates event manager if needed
 			if (Integer.parseInt(ap.get("sleepTime")) == 0) {
-				eventManager.setInfiniteFastActs(data.getAgent(agentID).getInfinitelyFastActs());
+				eventManager.setInfiniteFastActs(agent.getInfinitelyFastActs());
 			} 
 		}
 	}
-	
 	
 	
 	/**
@@ -267,7 +286,8 @@ public class SystemManager {
 	
 	
 	/**
-	 * Generate results report (payoff data, feature data logging)
+	 * Generate results report (payoff data, feature data logging). Iterators through all agents
+	 * and adds observation for each one.
 	 */
 	public void aggregateResults() {
 		try {
@@ -275,6 +295,13 @@ public class SystemManager {
 				int id = it.next();
 				results.addObservation(id);
 			}
+			
+			results.addFeature("nbbo_surplus", results.getSurplusFeatures(data.getAllSurplus()));
+			results.addFeature("interval", results.getTimeStampFeatures(data.getIntervals()));
+			results.addFeature("pv", results.getPriceFeatures(data.getPrivateValues()));
+			results.addFeature("nbbo_info", results.getNBBOInfo(data.getPrivateValues(),
+					data.getAgents()));
+			results.addFeature("transactions", results.getTransactionInfo());
 			
 			File file = new File(simFolder + SystemConsts.obsFilename + num + ".json");
 			FileWriter txt = new FileWriter(file);

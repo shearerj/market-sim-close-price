@@ -14,6 +14,16 @@ public class SystemConsts {
 	// Directories
 	public final static String configDir = "config/";
 	public final static String logDir = "logs/";
+	
+	// Track type of bid submission for background agents
+	// NOBID = no bid submitted yet
+	// CURRENT = bid submitted to current market
+	// ALTERNATE = bid submitted to alternate market, see extra info
+	public enum NBBOBidType {
+		NOBID,
+		CURRENT,
+		ALTERNATE
+	}
 
 	// ----- SIMULATION -----
 	
@@ -24,7 +34,6 @@ public class SystemConsts {
 
 	// EGTA roles (i.e. players in the game)
 	public final static String[] roles = {"HFT"};
-
 
 	/**
 	 * Get hard-coded default properties for a given agent type.

@@ -1,13 +1,11 @@
 package entity;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
 import event.*;
+import market.*;
 import activity.*;
 import systemmanager.*;
-import market.*;
 
+import java.util.HashMap;
 
 /**
  * NBBOAgent
@@ -32,22 +30,21 @@ import market.*;
  * The NBBO agent is always only active in one market, and it is used in two-market
  * scenarios (for latency arbitrage simulations).
  * 
- * NOTE: limit order price is based on uniform dist 2 std devs away from the PV.
- * The stdev is given as an input parameter.
+ * NOTE: limit order price is based on uniform distribution 2 times the range given.
+ * The range is supposed to represent the std dev, which is an input parameter.
  *
  * @author ewah
  */
 public class NBBOAgent extends MMAgent {
 
-	private int meanPV;
 	private double expireRate;
-	private int expiration;			// time until limit order expiration
-	private int privateValue;
-	private int bidSD;				// std dev for bids (above/below PV)
+	private int expiration;				// time until limit order expiration
+	private int bidRange;				// std dev for bids (above/below PV)
 	
-	private int tradeMarketID;		// assigned at initialization
+	private int tradeMarketID;			// assigned at initialization
 	private int altMarketID;
 	
+	public SystemConsts.NBBOBidType bidSubmittedType;
 	
 	/**
 	 * Overloaded constructor.
@@ -59,9 +56,8 @@ public class NBBOAgent extends MMAgent {
 		agentType = "NBBO";
 		params = p;
 		
-		meanPV = this.data.meanPV;
 		expireRate = this.data.expireRate;
-		bidSD = this.data.bidSD;
+		bidRange = this.data.bidRange;
 		expiration = (int) (100 * getExponentialRV(expireRate));
 		privateValue = this.data.nextPrivateValue();
 		arrivalTime = this.data.nextArrival();
@@ -79,6 +75,8 @@ public class NBBOAgent extends MMAgent {
 			tradeMarketID = -2;
 			altMarketID = -1;
 		}
+		
+		bidSubmittedType = SystemConsts.NBBOBidType.NOBID;
 	}
 	
 	
@@ -98,13 +96,14 @@ public class NBBOAgent extends MMAgent {
 
 		int p = 0;
 		int q = 1;
-		if (rand.nextDouble() < 0.5) q = -q; // 0.50% chance of being either long or short
+		// 0.50% chance of being either long or short
+		if (rand.nextDouble() < 0.5) q = -q; 
 
 		// basic ZI behavior
 		if (q > 0) {
-			p = (int) ((this.privateValue - 2*bidSD) + rand.nextDouble()*2*bidSD);
+			p = (int) ((this.privateValue - 2*bidRange) + rand.nextDouble()*2*bidRange);
 		} else {
-			p = (int) (this.privateValue + rand.nextDouble()*2*bidSD);
+			p = (int) (this.privateValue + rand.nextDouble()*2*bidRange);
 		}
 		
 		int ask = lastNBBOQuote.bestAsk;
@@ -151,7 +150,6 @@ public class NBBOAgent extends MMAgent {
 						bestPrice = altQuote.lastAskPrice.getPrice();
 					}
 				}
-				// track that trading in the original market
 				log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
 						"::agentStrategy: " + "Best market is " + data.getMarket(bestMarketID) +
 						" with order to submit: (" + q + ", " + bestPrice + ")");
@@ -160,23 +158,25 @@ public class NBBOAgent extends MMAgent {
 				bidSubmitted = true;
 				log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
 							"::agentStrategy: " + "+(" + p + "," + q + ") to " + altMarketID +
-							" expiration="	+ expiration);
-
-//					
+							", expiration="	+ expiration);
+				// track that trading in the other market
+				bidSubmittedType = SystemConsts.NBBOBidType.ALTERNATE;
 			}
 
 		} else {
-			// current market's quote is better
+			// current market's quote is better than NBBO
 			log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
 					"::agentStrategy: " + "NBBO (" + lastNBBOQuote.bestBid + ", " + 
 					lastNBBOQuote.bestAsk + ") worse than " + data.getMarket(tradeMarketID) + 
 					" (" + bestQuote.bestSell +	", " + bestQuote.bestBuy + ")");
 			
+			// potential arb opp when NBBO out of date and should be better
 			actMap.appendActivityHashMap(addBid(data.markets.get(tradeMarketID), p, q, ts));
 			bidSubmitted = true;
 			log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
 					"::agentStrategy: " + "+(" + p + "," + q + ") to " + data.getMarket(tradeMarketID) + 
-					" expiration="	+ expiration);
+					", expiration="	+ expiration);
+			bidSubmittedType = SystemConsts.NBBOBidType.CURRENT;
 		}
 			    
 		// Bid expires after a given point
@@ -186,15 +186,7 @@ public class NBBOAgent extends MMAgent {
 		}
 		return actMap;
 	}
-	
-	
-	/**
-	 * @return agent's private value
-	 */
-	public int getPrivateValue() {
-		return privateValue;
-	}
-	
+
 	
 	/**
 	 * Generate exponential random variate, with rate parameter.
