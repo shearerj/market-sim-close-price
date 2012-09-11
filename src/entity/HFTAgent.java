@@ -20,7 +20,6 @@ import java.util.Iterator;
 public class HFTAgent extends MMAgent {
 	
 	private double alpha;
-
 	
 	/**
 	 * Overloaded constructor
@@ -28,13 +27,9 @@ public class HFTAgent extends MMAgent {
 	 */
 	public HFTAgent(int agentID, SystemData d, AgentProperties p, Log l) {
 		super(agentID, d, p, l);
-		agentType = "HFT";
+		agentType = Consts.getAgentType(this.getClass().getSimpleName());
 		arrivalTime = new TimeStamp(0);
 		params = p;
-		
-		// Infinitely fast activities will be inserted (i.e. activities with negative time)
-		infiniteActs.add(new UpdateAllQuotes(this, new TimeStamp(-1)));
-		infiniteActs.add(new AgentStrategy(this, new TimeStamp(-1)));
 		
 		if (this.data.numMarkets != 2) {
 			log.log(Log.ERROR, this.getClass().getSimpleName() + ": HFT agents need 2 markets!");
@@ -71,9 +66,6 @@ public class HFTAgent extends MMAgent {
 				int sellMarketID = bestQuote.bestSellMarket;
 				Market buyMarket = data.getMarket(buyMarketID);
 				Market sellMarket = data.getMarket(sellMarketID);
-
-//				Quote q1 = getLatestQuote(buyMarketID);
-//				Quote q2 = getLatestQuote(sellMarketID);
 				
 				int midPoint = (bestQuote.bestBuy + bestQuote.bestSell) / 2;
 				int buySize = getBidQuantity(bestQuote.bestBuy, midPoint-tickSize, 
@@ -103,6 +95,11 @@ public class HFTAgent extends MMAgent {
 				TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
 				actMap.insertActivity(new UpdateAllQuotes(this, tsNew));
 				actMap.insertActivity(new AgentStrategy(this, tsNew));
+				
+			} else if (sleepTime == 0) {
+				// infinitely fast HFT agent, so negative TimeStamp
+				actMap.insertActivity(new UpdateAllQuotes(this, new TimeStamp(-1)));
+				actMap.insertActivity(new AgentStrategy(this, new TimeStamp(-1)));
 			}
 			return actMap;
 		}

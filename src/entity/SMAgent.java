@@ -58,7 +58,7 @@ public abstract class SMAgent extends Agent {
 		mkt.agentIDs.remove(mkt.agentIDs.indexOf(this.ID));
 		mkt.buyers.remove(mkt.buyers.indexOf(this.ID));
 		mkt.sellers.remove(mkt.sellers.indexOf(this.ID));
-		mkt.removeBid(this.ID);
+		mkt.removeBid(this.ID, null);
 		this.exitMarket(mkt.ID);
 		return null;
 	}

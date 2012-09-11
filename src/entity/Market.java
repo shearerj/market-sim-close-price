@@ -21,15 +21,16 @@ public abstract class Market extends Entity {
 	protected ArrayList<Integer> agentIDs;
 
 	// Market information
-	public TimeStamp finalClearTime;
 	public TimeStamp nextQuoteTime;
-	public TimeStamp nextClearTime;		// Used for Call markets
+	public TimeStamp nextClearTime;		// Most important for call markets
 	public TimeStamp lastQuoteTime;
 	public TimeStamp lastClearTime;
 	public TimeStamp lastBidTime;
 	public Price lastClearPrice;
-	public Price lastAskQuote;
-	public Price lastBidQuote;
+	public Price lastAskPrice;
+	public Price lastBidPrice;
+	public int lastAskQuantity;
+	public int lastBidQuantity;
 
 	public String marketType;
 
@@ -40,14 +41,14 @@ public abstract class Market extends Entity {
 		buyers = new ArrayList<Integer>();
 		sellers = new ArrayList<Integer>();
 
-		finalClearTime = new TimeStamp(-1);
 		lastQuoteTime = new TimeStamp(-1);
 		lastClearTime = new TimeStamp(-1);
 		nextQuoteTime = new TimeStamp(-1);
 		nextClearTime = new TimeStamp(-1);
+		
 		lastClearPrice = new Price(-1);
-		lastAskQuote = new Price(0);
-		lastBidQuote = new Price(0);
+		lastAskPrice = new Price(-1);
+		lastBidPrice = new Price(-1);
 	}
 
 	/**
@@ -70,6 +71,20 @@ public abstract class Market extends Entity {
 	 */
 	public abstract Price getAskPrice();
 
+	/**
+	 * @return last bid quantity
+	 */
+	public int getBidQuantity() {
+		return lastBidQuantity;
+	}
+
+	/**
+	 * @return last ask quantity
+	 */
+	public int getAskQuantity() {
+		return lastAskQuantity;
+	}
+	
 	/**
 	 * Publish quotes.
 	 * 
@@ -94,24 +109,19 @@ public abstract class Market extends Entity {
 	 * Add bid to the market.
 	 * 
 	 * @param b
+	 * @param ts TimeStamp of bid addition
+	 * @return ActivityHashMap of further activities to add, if any
 	 */
-	public abstract void addBid(Bid b);
+	public abstract ActivityHashMap addBid(Bid b, TimeStamp ts);
 
 	/**
 	 * Remove bid for given agent from the market.
 	 * 
 	 * @param agentID
+	 * @param ts TimeStamp of bid removal
+	 * @return ActivityHashMap (unused for now)
 	 */
-	public abstract void removeBid(int agentID);
-
-	/**
-	 * Returns clearing activity; otherwise returns null (call market)
-	 * 
-	 * @param currentTime of bid submission
-	 * @return Activity for clearing (TimeStamps will vary)
-	 */
-	public abstract Activity getClearActivity(TimeStamp currentTime);
-	
+	public abstract ActivityHashMap removeBid(int agentID, TimeStamp ts);
 	
 	
 	/**
@@ -132,6 +142,10 @@ public abstract class Market extends Entity {
 		return marketType;
 	}
 
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	public String toString() {
 		return new String("[" + this.getID() + "]");
 	}
@@ -188,10 +202,6 @@ public abstract class Market extends Entity {
 		return lastClearPrice;
 	}
 
-	public TimeStamp getFinalClearTime() {
-		return finalClearTime;
-	}
-
 	public TimeStamp getNextClearTime() {
 		return nextClearTime;
 	}
@@ -206,6 +216,20 @@ public abstract class Market extends Entity {
 
 	public TimeStamp getLastQuoteTime() {
 		return lastQuoteTime;
+	}
+
+	
+	/**
+	 * Quantizes the given integer based on the given granularity. Formula from
+	 * Wikipedia (http://en.wikipedia.org/wiki/Quantization_signal_processing)
+	 * 
+	 * @param num integer to quantize
+	 * @param n granularity (e.g. tick size)
+	 * @return
+	 */
+	public static int quantize(int num, int n) {
+		double tmp = 0.5 + Math.abs((double) num) / ((double) n);
+		return Integer.signum(num) * n * (int)Math.floor(tmp);
 	}
 
 }

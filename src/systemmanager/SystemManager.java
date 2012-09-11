@@ -24,12 +24,11 @@ public class SystemManager {
 	private Sequence agentIDSequence;
 	private Sequence marketIDSequence;
 	private Observations results;
-	private static int num;					// sample number used for labeling output files
+	
+	private static int num;						// sample number used for labeling output files
 	private static String simFolder;			// simulation folder name
 	
-	// Environment parameters
 	private Properties envProps;
-	
 	private Log log;
 
 	/**
@@ -94,10 +93,10 @@ public class SystemManager {
 			// Load parameters
 
 			// Read environment parameters & set up environment
-			loadConfig(envProps, SystemConsts.configDir + SystemConsts.configFile);
+			loadConfig(envProps, Consts.configDir + Consts.configFile);
 			data.readEnvProps(envProps);
-			data.nbboArrivalTimes();
-			data.nbboPrivateValues();
+			data.backgroundArrivalTimes();
+			data.backgroundPrivateValues();
 
 			// Create log file
 			int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
@@ -106,21 +105,22 @@ public class SystemManager {
 			logFilename = logFilename.replace("/", "-");
 			logFilename = logFilename.replace(" ", "_");
 			logFilename = logFilename.replace(":", "");
+			
 			try {
 				// Check first if directory exists
-				File f = new File(simFolder + SystemConsts.logDir);
+				File f = new File(simFolder + Consts.logDir);
 				if (!f.exists()) {
 					// Create directory
-					new File(simFolder + SystemConsts.logDir).mkdir();
+					new File(simFolder + Consts.logDir).mkdir();
 				}
-				log = new Log(logLevel, ".", simFolder + SystemConsts.logDir + logFilename + ".txt", true);
+				log = new Log(logLevel, ".", simFolder + Consts.logDir + logFilename + ".txt", true);
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.err.print("setup(String): error creating log file");
 			}
 
 			// Read simulation spec file
-			SimulationSpec specs = new SimulationSpec(simFolder + SystemConsts.simSpecFile, log, data);
+			SimulationSpec specs = new SimulationSpec(simFolder + Consts.simSpecFile, log, data);
 			specs.setParams();
 
 			// Log properties
@@ -161,6 +161,7 @@ public class SystemManager {
 			}
 			// Log agent information
 			logAgentInfo();
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -179,7 +180,7 @@ public class SystemManager {
 		Market market = MarketFactory.createMarket(marketType, marketID, data, log);
 		data.addMarket(market);
 		
-		// Check if is call market
+		// Check if is call market, then initialize clearing sequence
 		if (market instanceof CallMarket) {
 			Activity clear = new Clear(market, market.getNextClearTime());
 			eventManager.createEvent(clear);
@@ -193,6 +194,7 @@ public class SystemManager {
 	 * 
 	 * @param agentID
 	 * @param agentType
+	 * @param ap AgentProperties object
 	 */
 	public void setupAgent(int agentID, String agentType, AgentProperties ap) {
 		Agent agent = AgentFactory.createAgent(agentType, agentID, data, ap, log);
@@ -219,13 +221,6 @@ public class SystemManager {
 			eventManager.createEvent(arrival);
 			eventManager.createEvent(departure);
 		}
-
-		if (ap.containsKey("sleepTime")) {
-			// Check if agent is infinitely fast and updates event manager if needed
-			if (Integer.parseInt(ap.get("sleepTime")) == 0) {
-				eventManager.setInfiniteFastActs(agent.getInfinitelyFastActs());
-			} 
-		}
 	}
 	
 	
@@ -241,8 +236,8 @@ public class SystemManager {
 			s += "arrivalTime=" + ag.getArrivalTime().toString();
 			
 			// print private value if exists 
-			if (ag.getType().equals("NBBO")) {
-				s += ", pv=" + ((NBBOAgent) ag).getPrivateValue();
+			if (ag instanceof BackgroundAgent) {
+				s += ", pv=" + ((BackgroundAgent) ag).getPrivateValue();
 			}
 			log.log(Log.INFO, s);
 		}
@@ -303,7 +298,7 @@ public class SystemManager {
 					data.getAgents()));
 			results.addFeature("transactions", results.getTransactionInfo());
 			
-			File file = new File(simFolder + SystemConsts.obsFilename + num + ".json");
+			File file = new File(simFolder + Consts.obsFilename + num + ".json");
 			FileWriter txt = new FileWriter(file);
 			txt.write(results.generateObservationFile());
 			txt.close();

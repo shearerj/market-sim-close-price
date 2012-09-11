@@ -62,7 +62,7 @@ public class SimulationSpec {
 	 */
 	public void setParams() {
 		
-		data.clearLatency = new TimeStamp(Integer.parseInt(getValue("call_clear_freq")));
+		data.clearFreq = new TimeStamp(Integer.parseInt(getValue("call_clear_freq")));
 		data.simLength = new TimeStamp(Integer.parseInt(getValue("sim_length")));
 		data.nbboLatency = new TimeStamp(Integer.parseInt(getValue("nbbo_latency")));
 		data.tickSize = Integer.parseInt(getValue("tick_size"));
@@ -71,28 +71,29 @@ public class SimulationSpec {
 		data.shockVar = Double.parseDouble(getValue("shock_var"));
 		data.expireRate = Double.parseDouble(getValue("expire_rate"));
 		data.bidRange = Integer.parseInt(getValue("bid_range"));
+		data.valueVar = Double.parseDouble(getValue("value_var"));
 		
 		// Check which types of markets to create
-		for (int i = 0; i < SystemConsts.marketTypes.length; i++) {
-			String num = getValue(SystemConsts.marketTypes[i]);
+		for (int i = 0; i < Consts.marketTypeNames.length; i++) {
+			String num = getValue(Consts.marketTypeNames[i]);
 			if (num != null) {
 				int n = Integer.parseInt(num);
 				data.numMarkets += n;
-				data.numMarketType.put(SystemConsts.marketTypes[i], n);
+				data.numMarketType.put(Consts.marketTypeNames[i], n);
 			}
 		}
 		// Check which types of agents to create
-		for (int i = 0; i < SystemConsts.agentTypes.length; i++) {
-			String num = getValue(SystemConsts.agentTypes[i]);
+		for (int i = 0; i < Consts.agentTypeNames.length; i++) {
+			String num = getValue(Consts.agentTypeNames[i]);
 			if (num != null) {
 				int n = Integer.parseInt(num);
 				data.numAgents += n;
-				data.numAgentType.put(SystemConsts.agentTypes[i], n);
+				data.numAgentType.put(Consts.agentTypeNames[i], n);
 			}
 		}
 		// Check how many agents in a given role (from spec file)
-		for (int i = 0; i < SystemConsts.roles.length; i++) {
-			String role = SystemConsts.roles[i];
+		for (int i = 0; i < Consts.roles.length; i++) {
+			String role = Consts.roles[i];
 			data.numAgentType.put(role, getNumPlayers(role));
 		}
 	}
@@ -134,7 +135,7 @@ public class SimulationSpec {
 	 */
 	public AgentProperties setStrategy(String role, int idx) {
 		if (roleStrategies.containsKey(role)) {
-			AgentProperties ap = new AgentProperties(SystemConsts.getProperties(role));
+			AgentProperties ap = new AgentProperties(Consts.getProperties(role));
 			
 			ArrayList<String> players = (ArrayList<String>) roleStrategies.get(role);
 			String strategy = players.get(idx);
@@ -151,7 +152,7 @@ public class SimulationSpec {
 			log.log(Log.INFO, role + ": " + ap);
 			return ap;
 		} else {
-			return new AgentProperties(SystemConsts.getProperties(role));
+			return new AgentProperties(Consts.getProperties(role));
 		}
 	}
 	

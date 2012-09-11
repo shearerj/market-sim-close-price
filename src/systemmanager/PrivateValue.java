@@ -57,6 +57,8 @@ public class PrivateValue {
 		int nextPV = (int) ((meanPV * kappa) + ((1 - kappa) * 
 						privateValues.get(privateValues.size()-1).getPrice()) +
 	                    getNormalRV(0, shockVar) * tickSize);
+		// truncate at zero
+		nextPV = Math.max(nextPV, 0);
 	    privateValues.add(new Price(nextPV));
 	    return nextPV;
 	}

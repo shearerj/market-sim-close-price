@@ -9,14 +9,15 @@
 	"tick_size": "100",
 	"CDA": "0",
 	"CALL": "2",
-	"call_clear_freq": "30",
-	"NBBO": "100",
+	"call_clear_freq": "100",
+	"BKGRD": "500",
         "nbbo_latency": "50",
 	"arrival_rate": "0.75",
 	"mean_PV": "50000",
 	"kappa": "0.01",
-	"shock_var": "1000",
+	"shock_var": "100",
 	"expire_rate": "0.01",
-	"bid_range": "2000"
+	"bid_range": "2000",
+	"value_var": "100"
     }
 }

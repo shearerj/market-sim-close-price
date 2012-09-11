@@ -24,14 +24,14 @@ public class AgentFactory {
 									AgentProperties params,
 									Log l) {
 		
-		if (type.toLowerCase().equals("zi")) {
+		if (type.equals(Consts.getAgentType("ZIAgent"))) {
 			return new ZIAgent(agentID, data, params, l);
-		} else if (type.toLowerCase().equals("hft")) {
+		} else if (type.equals(Consts.getAgentType("HFTAgent"))) {
 			return new HFTAgent(agentID, data, params, l);
-		} else if (type.toLowerCase().equals("mm")) {
+		} else if (type.equals(Consts.getAgentType("MarketMaker"))) {
 			return new MarketMaker(agentID, data, params, l);
-		} else if (type.toLowerCase().equals("nbbo")) {
-			return new NBBOAgent(agentID, data, params, l);
+		} else if (type.equals(Consts.getAgentType("BackgroundAgent"))) {
+			return new BackgroundAgent(agentID, data, params, l);
 		} else {
 			return null;
 		}
@@ -52,7 +52,7 @@ public class AgentFactory {
 									SystemData data,
 									Log l) {
 		
-		AgentProperties params = SystemConsts.getProperties(type);
+		AgentProperties params = Consts.getProperties(type);
 		if (type.toLowerCase().equals("zi")) {
 			return new ZIAgent(agentID, data, params, l);
 		} else if (type.toLowerCase().equals("hft")) {
@@ -60,7 +60,7 @@ public class AgentFactory {
 		} else if (type.toLowerCase().equals("mm")) {
 			return new MarketMaker(agentID, data, params, l);
 		} else if (type.toLowerCase().equals("nbbo")) {
-			return new NBBOAgent(agentID, data, params, l);
+			return new BackgroundAgent(agentID, data, params, l);
 		} else {
 			return null;
 		}

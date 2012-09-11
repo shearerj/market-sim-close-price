@@ -55,7 +55,6 @@ public abstract class Agent extends Entity {
 	protected AgentProperties params;		// stores all parameters
 	protected String agentType;
 	protected TimeStamp arrivalTime;
-	protected LinkedList<Activity> infiniteActs;	// infinitely fast activities
 
 	// 	Tracking cash flow
 	protected int cashBalance;
@@ -88,8 +87,6 @@ public abstract class Agent extends Entity {
 		
 		lastGlobalQuote = new BestBidAsk();
 		lastNBBOQuote = new BestBidAsk();
-		
-		infiniteActs = new LinkedList<Activity>();
 		
 		privateValue = -1;
 		cashBalance = 0;
@@ -257,14 +254,6 @@ public abstract class Agent extends Entity {
 	public ArrayList<Integer> getMarketIDs() {
 		return marketIDs;
 	}
-
-	/**
-	 * @return linked list of infinitely fast activities
-	 */
-	public LinkedList<Activity> getInfinitelyFastActs() {
-		return infiniteActs;
-	}
-
 	
 	/**
 	 * Enters market by adding market to data structures.
@@ -318,8 +307,6 @@ public abstract class Agent extends Entity {
 	public ActivityHashMap addBid(Market mkt, int price, int quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new SubmitBid(this, mkt, price, quantity, ts));
-		actMap.insertActivity(mkt.getClearActivity(ts));
-//		actMap.insertActivity(new Clear(mkt, ts));
 		return actMap;
 	}
 
@@ -336,8 +323,6 @@ public abstract class Agent extends Entity {
 	public ActivityHashMap addMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new SubmitMultipleBid(this, mkt, price, quantity, ts));
-		actMap.insertActivity(mkt.getClearActivity(ts));
-//		actMap.insertActivity(new Clear(mkt, ts));
 		return actMap;
 	}
 
@@ -357,13 +342,12 @@ public abstract class Agent extends Entity {
 		log.log(Log.INFO, ts.toString() + " | " + mkt.toString() + " " + this.toString() + 
 				": +(" + price + ", " + quantity + ")");
 		
-		int p = quantize(price, tickSize);
+		int p = Market.quantize(price, tickSize);
 		PQBid pqBid = new PQBid(this.ID, mkt.ID);
 		pqBid.addPoint(quantity, new Price(p));
 		pqBid.timestamp = ts;
-		mkt.addBid(pqBid);
 		currentBid.put(mkt.ID, pqBid);
-		return null;
+		return mkt.addBid(pqBid, null);
 	}	
 
 	/**
@@ -389,13 +373,12 @@ public abstract class Agent extends Entity {
 		pqBid.timestamp = ts;
 		for (int i = 0; i < price.length; i++) {
 			if (quantity[i] != 0) {
-				int p = quantize(price[i], tickSize);
+				int p = Market.quantize(price[i], tickSize);
 				pqBid.addPoint(quantity[i], new Price(p));
 			}
 		}
-		mkt.addBid(pqBid);
-		currentBid.put(mkt.ID, pqBid);		
-		return null;
+		currentBid.put(mkt.ID, pqBid);	
+		return mkt.addBid(pqBid, ts);
 	}
 
 	/**
@@ -406,10 +389,8 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public ActivityHashMap withdrawBid(Market mkt, TimeStamp ts) {
-		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "-" + mkt.toString() +
-				": withdraw bid");
-		mkt.removeBid(this.ID);
-		return null;
+		log.log(Log.INFO, ts.toString() + " | " + this.toString() + " withdraw bid from " + mkt.toString());
+		return mkt.removeBid(this.ID, ts);
 	}
 
 	/**
@@ -441,7 +422,6 @@ public abstract class Agent extends Entity {
 	public void updateQuotes(Market mkt, TimeStamp ts) {
 		Quote q = mkt.quote(ts);
 		if (q != null) {
-			
 			if (q.lastAskPrice == null)
 				askPrice.put(mkt.ID, new Price(INF_PRICE));
 			else
@@ -752,7 +732,7 @@ public abstract class Agent extends Entity {
 	
 	
 	/**
-	 * Checks the bid/ask prices for errors. TODO - still need to finish
+	 * Checks the bid/ask prices for errors.
 	 *  
 	 * @param aucID
 	 * @param price
@@ -762,11 +742,6 @@ public abstract class Agent extends Entity {
 		int bid = price.get(0).getPrice();
 		int ask = price.get(1).getPrice();
 		boolean flag = true;
-
-		//		if (ask <= 0) countMissingAsk.get(aucID).addLast(1); else countMissingAsk.get(aucID).addLast(0);
-		//		if (bid <= 0) countMissingBid.get(aucID).addLast(1); else countMissingBid.get(aucID).addLast(0);
-		//		if (countMissingAsk.get(aucID).size() > windowSizeCount) countMissingAsk.get(aucID).removeLast();
-		//		if (countMissingBid.get(aucID).size() > windowSizeCount) countMissingBid.get(aucID).removeLast();
 
 		if (ask > 0 && bid > 0) {
 			prevAsk.put(mktID, ask);
@@ -787,33 +762,13 @@ public abstract class Agent extends Entity {
 		} else {
 			double oldbid = bid;
 			double oldask = ask;
-			//			ask = (prevAsk[aucID]+prevBid[aucID])/2 + (randomSpread(countMissingAsk.get(aucID))+randomSpread(countMissingBid.get(aucID)))*tickSize/2;
-			//			bid = (prevAsk[aucID]+prevBid[aucID])/2 - (randomSpread(countMissingAsk.get(aucID))+randomSpread(countMissingBid.get(aucID)))*tickSize/2;
 			log.log(Log.DEBUG, "Agent::checkBidAsk: bid: " + oldbid + " to " + bid + 
 					", ask: " + oldask + " to " + ask);
 		}
 		bid = Math.max(bid, 1);
 		ask = Math.max(ask, 1);
 
-		//		price[0] = Math.min(bid, ask);
-		//		price[1] = Math.max(bid, ask);
-
 		return flag;
-	}
-
-	
-	
-	/**
-	 * Quantizes the given integer based on the given granularity. Formula from
-	 * Wikipedia (http://en.wikipedia.org/wiki/Quantization_signal_processing)
-	 * 
-	 * @param num integer to quantize
-	 * @param n granularity (e.g. tick size)
-	 * @return
-	 */
-	public int quantize(int num, int n) {
-		double tmp = 0.5 + Math.abs((double) num) / ((double) n);
-		return Integer.signum(num) * n * (int)Math.floor(tmp);
 	}
 	
 	
@@ -823,7 +778,7 @@ public abstract class Agent extends Entity {
 	 * @param var	variance
 	 * @return
 	 */
-	private double getNormalRV(double mu, double var) {
+	protected double getNormalRV(double mu, double var) {
 	    double r1 = rand.nextDouble();
 	    double r2 = rand.nextDouble();
 	    double z = Math.sqrt(-2*Math.log(r1))*Math.cos(2*Math.PI*r2);

@@ -8,6 +8,9 @@ import event.*;
  * 
  * Based on the Command Pattern.
  * 
+ * NOTE: If Activity has a negative TimeStamp, then it an "infinitely fast"
+ * activity which has a variable TimeStamp.
+ * 
  * @author ewah
  */
 public abstract class Activity {
@@ -28,26 +31,34 @@ public abstract class Activity {
 	}
 	
 	/**
-	 * Changes the time of the activity (used for infinitely fast activities).
-	 * @param ts
-	 * @return
-	 */
-	public Activity changeTime(TimeStamp ts) {
-		this.time = ts;
-		return this;
-	}
-	
-	/**
-	 * Sets the TimeStamp of the Activity. Used only for infinitely fast agents.
+	 * Sets the TimeStamp of the Activity.
 	 * @param ts
 	 */
 	public void setTime(TimeStamp ts) {
 		this.time = ts;
 	}
 	
+	/**
+	 * @param obj Object
+	 * @return true if equal, false if not
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+	        return true;
+	    if (obj == null)
+	        return false;
+	    if (getClass() != obj.getClass())
+	        return false;
+	    final Activity other = (Activity) obj;
+	    if (!other.toString().equals(this.toString()))
+	        return false;
+	    return true;
+	}
 	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public abstract String toString();
 }

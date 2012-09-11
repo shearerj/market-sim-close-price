@@ -16,6 +16,7 @@ public abstract class OrderBook {
 
 	public int marketID;
 	public Log log;
+	public SystemData data;
 	
 	// hashed by agent ID
 	public HashMap<Integer,Bid> activeBids;

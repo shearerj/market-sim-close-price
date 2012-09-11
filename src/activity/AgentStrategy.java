@@ -35,7 +35,7 @@ public class AgentStrategy extends Activity {
 	
 	public String toString() {
 		if (mkt == null) {
-			return new String("AgentStrategy::" + this.ag.getID());
+			return new String("AgentStrategy::" + this.ag.toString());
 		} else {
 			return new String("AgentStrategy::" + this.ag.toString() + "," + 
 					this.mkt.toString());

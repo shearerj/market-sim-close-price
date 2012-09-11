@@ -7,10 +7,15 @@ import market.*;
 import java.util.*;
 
 /**
- * Class that stores all simulation data (agents, markets, quotes, bid, etc.).
- * Also stores the parameters read from the environment configuration file.
+ * SYSTEMDATA
  * 
- * Computes the surplus for all agents and aggregates other features for observations.
+ * This class stores all simulation data (agents, markets, quotes, bid, etc.) for
+ * access by other classes/objects. It also stores the parameters read from the 
+ * environment configuration file.
+ * 
+ * In addition, the SystemData class stores observation data to be written to the
+ * output file, e.g. it computes the surplus for all agents and aggregates other 
+ * features for observations.
  * 
  * @author ewah
  */
@@ -33,7 +38,7 @@ public class SystemData {
 	// Parameters set by config file
 	public TimeStamp simLength;
 	public int tickSize;
-	public TimeStamp clearLatency;
+	public TimeStamp clearFreq;
 	public TimeStamp nbboLatency;
 	public double arrivalRate;
 	public int meanPV;
@@ -41,12 +46,12 @@ public class SystemData {
 	public double shockVar;
 	public double expireRate;
 	public int bidRange;
+	public double valueVar;			// agent variance from PV random process
 	
 	// Internal variables
 	private Sequence transIDSequence;
 	private ArrivalTime arrivalTimeGenerator;
 	private PrivateValue privateValueGenerator;
-	
 	
 	/**
 	 * Constructor
@@ -60,7 +65,6 @@ public class SystemData {
 		numAgentType = new HashMap<String,Integer>();
 		numAgents = 0;
 		numMarkets = 0;
-
 		transIDSequence = new Sequence(0);
 	}
 
@@ -104,6 +108,14 @@ public class SystemData {
 		return markets;
 	}
 
+	public ArrayList<Integer> getAgentIDs() {
+		return new ArrayList<Integer>(agents.keySet());
+	}
+	
+	public ArrayList<Integer> getMarketIDs() {
+		return new ArrayList<Integer>(markets.keySet());
+	}
+	
 	public Agent getAgent(int id) {
 		return agents.get(id);
 	}
@@ -117,16 +129,16 @@ public class SystemData {
 	}
 	
 	/**
-	 * Set up arrival times generation for NBBO agents.
+	 * Set up arrival times generation for background agents.
 	 */
-	public void nbboArrivalTimes() {
+	public void backgroundArrivalTimes() {
 		arrivalTimeGenerator = new ArrivalTime(new TimeStamp(0), arrivalRate);
 	}
 	
 	/**
-	 * Set up private value generation for NBBO agents.
+	 * Set up private value generation for background agents.
 	 */
-	public void nbboPrivateValues() {
+	public void backgroundPrivateValues() {
 		privateValueGenerator = new PrivateValue(kappa, meanPV, shockVar, tickSize);	
 	}
 	
@@ -179,7 +191,7 @@ public class SystemData {
 	public void readEnvProps(Properties p) {
 		simLength = new TimeStamp(Long.parseLong(p.getProperty("simLength")));
 		nbboLatency = new TimeStamp(Long.parseLong(p.getProperty("nbboLatency")));
-		clearLatency = new TimeStamp(Long.parseLong(p.getProperty("clearLatency")));
+		clearFreq = new TimeStamp(Long.parseLong(p.getProperty("clearLatency")));
 		tickSize = Integer.parseInt(p.getProperty("tickSize"));
 		arrivalRate = Double.parseDouble(p.getProperty("arrivalRate"));
 		meanPV = Integer.parseInt(p.getProperty("meanPV"));
@@ -230,6 +242,9 @@ public class SystemData {
 	public ArrayList<Integer> getTransactionIDs() {
 		return new ArrayList<Integer>(transData.keySet());
 	}
+	
+	
+	
 	
 //	/**
 //	 * Gets transaction IDs for all transaction after earliestTransID.

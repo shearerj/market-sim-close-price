@@ -16,8 +16,7 @@ public class Quote {
 	public Price lastBidPrice;
 	public Price lastClearPrice;
 	public TimeStamp lastQuoteTime;
-	public TimeStamp nextQuoteTime;
-	public TimeStamp finalClearTime;
+	public TimeStamp nextQuoteTime;		// for now, unused
 	public TimeStamp nextClearTime;
 	public TimeStamp lastClearTime;
 	public Integer marketID;
@@ -49,7 +48,6 @@ public class Quote {
 		lastBidQuantity = bid.bidTreeSet.first().quantity;
 		
 		lastClearPrice = mkt.getLastClearPrice();
-		finalClearTime = mkt.getFinalClearTime();
 		nextClearTime = mkt.getNextClearTime();
 		lastClearTime = mkt.getLastClearTime();
 		nextQuoteTime = mkt.getNextQuoteTime();
@@ -88,6 +86,8 @@ public class Quote {
 //	public HashMap<Integer,QuotePoint> getPoints () {
 //		return points;
 //	}
+	
+	
 }
 
 

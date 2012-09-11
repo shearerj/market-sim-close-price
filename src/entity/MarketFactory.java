@@ -19,9 +19,9 @@ public class MarketFactory {
 	 */
 	public static Market createMarket(String type, Integer marketID, SystemData data, Log l) { 
 		
-		if (type.toLowerCase().equals("cda")) {
+		if (type.equals(Consts.getMarketType("CDAMarket"))) {
 			return new CDAMarket(marketID, data, l);
-		} else if (type.toLowerCase().equals("call")) {
+		} else if (type.equals(Consts.getMarketType("CallMarket"))) {
 			return new CallMarket(marketID, data, l);
 		} else {
 			return null;

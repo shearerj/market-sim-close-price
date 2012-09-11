@@ -20,11 +20,11 @@ import java.util.Map;
  */
 public class EventManager {
 
+	private Log log;
 	private EventQueue eventQueue;
 	private TimeStamp duration;
-	private LinkedList<Activity> fastActs;	// list of infinitely fast activities
-	private Log log;
-	
+	private LinkedList<Activity> infiniteFastActivities;
+
 	/**
 	 * Constructor
 	 */
@@ -32,20 +32,21 @@ public class EventManager {
 		eventQueue = new EventQueue();
 		duration = ts;
 		log = l;
+		infiniteFastActivities = new LinkedList<Activity>();
 	}
-	
-	/**
-	 * Sets the list of infinitely fast activities.
-	 * @param acts
-	 */
-	public void setInfiniteFastActs(LinkedList<Activity> acts) {
-		if (!acts.isEmpty()) {
-			fastActs = acts;
-		} else {
-			fastActs = null;
-		}
-	}	
-	
+
+	//	/**
+	//	 * Sets the list of infinitely fast activities.
+	//	 * @param acts
+	//	 */
+	//	public void setInfiniteFastActs(LinkedList<Activity> acts) {
+	//		if (!acts.isEmpty()) {
+	//			fastActs = acts;
+	//		} else {
+	//			fastActs = null;
+	//		}
+	//	}	
+
 	/**
 	 * Returns time (i.e. priority) of event at head of event queue
 	 * @return
@@ -53,7 +54,7 @@ public class EventManager {
 	public TimeStamp getCurrentTime() {
 		return this.eventQueue.peek().getTime();
 	}
-	
+
 	/**
 	 * Adds an event to the event queue.
 	 * @param e		Event to be added
@@ -61,7 +62,7 @@ public class EventManager {
 	public void addEvent(Event e) {
 		this.eventQueue.add(e);
 	}
-	
+
 	/**
 	 * Removes an event from the event queue.
 	 * @param e		Event to remove
@@ -69,7 +70,7 @@ public class EventManager {
 	public void removeEvent(Event e) {
 		this.eventQueue.remove(e);
 	}
-	
+
 	/**
 	 * Checks if event queue is empty
 	 * @return		boolean
@@ -77,53 +78,66 @@ public class EventManager {
 	public boolean isEventQueueEmpty() {
 		return this.eventQueue.isEmpty();
 	}
-	
+
 	/**
 	 * Executes event at head of Q. Removes from Q only when execution 
 	 * is complete. Adds new events to EventQ after event completion.
 	 */
 	public void executeCurrentEvent() {
-		
+
 		log.log(Log.DEBUG, "executeCurrentEvent: " + this.eventQueue.toString());
 
 		Event toExecute = this.eventQueue.peek();
-		LinkedList<Activity> list = toExecute.getActivities();
-		
+
 		try {
-			if (fastActs != null) {
-				// Update time of infinitely fast activities to current time
-				for (Iterator<Activity> it = fastActs.iterator(); it.hasNext(); ) {
-					it.next().changeTime(toExecute.getTime());
-				}
-				toExecute.addActivity(fastActs);
-			}
 			ArrayList<ActivityHashMap> acts = toExecute.executeAll();
 
 			// Check if event has completed execution
 			if (toExecute.isCompleted()) {
 				removeEvent(toExecute);
 			} else {
-				log.log(Log.ERROR, this.getClass().getSimpleName() + "::executeCurrentEvent: Event did not complete correctly.");
+				log.log(Log.ERROR, this.getClass().getSimpleName() + 
+						"::executeCurrentEvent: Event did not complete correctly.");
 			}
-			
+
 			if (!acts.isEmpty()) {
 				for (Iterator<ActivityHashMap> i = acts.listIterator(); i.hasNext();) {
-					ActivityHashMap act = i.next();
-					// Check if activity inserted is same as before
-					if (!act.contains(list)) {
-						manageActivityMap(act);
-					} else {
-						log.log(Log.INFO, this.getClass().getSimpleName() + 
-								"::executeCurrentEvent: Avoiding inserting duplicate event.");
+
+					ActivityHashMap actMap = i.next();
+					if (actMap != null) {
+						// Iterate through the returned ActivityHashMap
+						for (Map.Entry<TimeStamp,LinkedList<Activity>> entry : actMap.entrySet()) {
+
+							// Check if it's an "infinitely fast" list of activities, i.e. has TimeStamp of -1
+							if (entry.getKey().getTimeStamp() == -1) {
+								infiniteFastActivities = entry.getValue();
+							} else {
+								createEvent(entry.getKey(), entry.getValue());
+							}
+						}
 					}
 				}
-			} 
+			}
+
+			if (checkInfinitelyFastActivityInsertion(toExecute)) {
+				TimeStamp insertTime = toExecute.getTime();
+				for (Iterator<Activity> it = infiniteFastActivities.iterator(); it.hasNext(); ) {
+					it.next().setTime(insertTime);
+				}
+				
+				LinkedList<Activity> toInsert = new LinkedList<Activity>(infiniteFastActivities);
+				// create the event with the new TimeStamp
+				createEvent(insertTime, toInsert);
+
+				// clear the infinite fast activities list
+				infiniteFastActivities.clear();
+			}
+
 		} catch (Exception e) {
-//			System.err.print("executeCurrentEvent at " + toExecute.getTime() + ": " + e);
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Creates event at TimeStamp matching Activity parameter.
 	 * @param act
@@ -131,7 +145,7 @@ public class EventManager {
 	 */
 	public boolean createEvent(Activity act) {
 		if (act == null) return false;
-		
+
 		Event e = this.eventQueue.contains(act.getTime());
 		if (e != null) { 	
 			// append at end of existing event
@@ -141,7 +155,7 @@ public class EventManager {
 			// create new Event
 			e = new Event(act.getTime());
 			e.addActivity(act);
-			
+
 			// only add to queue if will occur within the duration of the simulation
 			if (act.getTime().before(duration)) { 
 				addEvent(e);
@@ -150,7 +164,7 @@ public class EventManager {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Create event with specified TimeStamp and activity list, and inserts
 	 * into the EventQueue.
@@ -161,7 +175,7 @@ public class EventManager {
 	 */
 	public boolean createEvent(TimeStamp ts, LinkedList<Activity> acts) {
 		if (acts.isEmpty() || acts == null) return false;
-		
+
 		if (!ts.checkActivityTimeStamp(acts)) {
 			log.log(Log.DEBUG, "ERROR: Activities do not have same timestamp");
 			return false;
@@ -181,17 +195,52 @@ public class EventManager {
 		return true;
 	}
 
+
 	/**
-	 * Takes the activities in an ActivityHashMap and inserts them into the
-	 * EventQueue as events.
-	 * @param actMap
+	 * Checks whether or not to insert the infinitely fast activities at the time of the
+	 * just executed Event.
+	 * 
+	 * Conditions to check for:
+	 * - happening after a certain type of other activity
+	 * - is the same as the just executed list of activities
+	 * - not happening after only a quote update
+	 * 
+	 * @param justExecuted
+	 * @return
 	 */
-	public void manageActivityMap(ActivityHashMap actMap) {
-		if (actMap == null) return;
-		if (!actMap.isEmpty()) {
-			for (Map.Entry<TimeStamp,LinkedList<Activity>> entry : actMap.entrySet()) {
-				createEvent(entry.getKey(), entry.getValue());
+	public boolean checkInfinitelyFastActivityInsertion(Event justExecuted) {
+
+		// only check if list of infinitely fast activities is non-empty
+		if (!infiniteFastActivities.isEmpty()) {
+			// get a copy of the activities (so won't modify them)
+			LinkedList<Activity> list = justExecuted.getActivities();
+
+			// Do not insert if last event was only an NBBO update
+			if (list.size() == 1 && list.get(0) instanceof UpdateNBBO) {
+				return false;
+			}
+			// Do not insert if just executed activities are same as the fast activities
+			if (list.equals(infiniteFastActivities)) {
+				return false;
+			}
+			// Check if the just executed list contains activities in the fast activities list
+			boolean found = true;
+			for (Iterator<Activity> it = infiniteFastActivities.iterator(); it.hasNext(); ) {
+				Activity a = it.next();
+				found = found && list.contains(a);
+			}
+			if (found) return false;
+
+			for (Iterator<Activity> it = list.iterator(); it.hasNext(); ) {
+				Activity act = it.next();
+
+				// Always insert if a clear just happened
+				if (act instanceof Clear) {
+					return true;
+				}
 			}
 		}
+		return false;
 	}
+
 }

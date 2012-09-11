@@ -8,6 +8,7 @@ package market;
 
 import java.util.*;
 
+import event.TimeStamp;
 import systemmanager.Log;
 
 /**
@@ -590,6 +591,13 @@ public class FourHeap
 //		}
 		log.log(Log.INFO, "    [" + mktID + "] " + "FourHeap::logSets::" + s);
 	}
+	
+	public void logSets(TimeStamp ts)
+	{
+		String s = printSet(0) + printSet(1) + printSet(2) + printSet(3);
+		log.log(Log.INFO, ts.toString() + " | [" + mktID + "] " + "FourHeap::logSets::" + s);
+	}
+	
 	private String printSet(int t)
 	{
 		SortedSet S = null;

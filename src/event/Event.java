@@ -57,10 +57,10 @@ public class Event {
 
 	
 	/**
-	 * @return linked list of activities.
+	 * @return deep copy of linked list of activities.
 	 */
 	public LinkedList<Activity> getActivities() {
-		return this.activities;
+		return new LinkedList<Activity>(this.activities);
 	}
 	
 	/**
@@ -78,7 +78,7 @@ public class Event {
 			if (eventTime.checkActivityTimeStamp(act)) {
 				this.activities.add(act);
 			} else {
-				System.out.println("Event::addActivity::ERROR: activity does not match Event time.");
+				System.err.println("Event::addActivity::ERROR: activity does not match Event time.");
 			}
 		}
 			
@@ -92,7 +92,7 @@ public class Event {
 			if (eventTime.checkActivityTimeStamp(acts)) {
 				this.activities.addAll(acts);
 			} else {
-				System.out.println("Event::addActivity::ERROR: activity list does not match Event time.");
+				System.err.println("Event::addActivity::ERROR: activity list does not match Event time.");
 			}
 		}
 	}

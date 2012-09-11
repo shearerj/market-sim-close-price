@@ -5,7 +5,7 @@
 	"CDA": 2,
 	"CALL": 0,
 	"call_clear_freq": 30,
-	"NBBO": 100,
+	"BKGRD": 100,
         "nbbo_latency": 50,
 	"arrival_rate": 0.75,
 	"mean_PV": 50000,

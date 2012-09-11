@@ -18,6 +18,7 @@ import event.TimeStamp;
 public class ActivityHashMap {
 
 	private HashMap<TimeStamp, LinkedList<Activity>> acts;
+
 	
 	public ActivityHashMap() {
 		acts = new HashMap<TimeStamp, LinkedList<Activity>>();
@@ -71,7 +72,7 @@ public class ActivityHashMap {
 	 * @param av
 	 * @return true if inserted correctly, false otherwise
 	 */
-	public boolean insertMultipleActivity(LinkedList<Activity> av) {
+	public boolean insertActivity(LinkedList<Activity> av) {
 		if (av == null) return false;
 		
 		boolean ret = false;
@@ -100,7 +101,7 @@ public class ActivityHashMap {
 	public boolean appendActivityHashMap(ActivityHashMap ahm) {
 		boolean ret = true;
 		for (Map.Entry<TimeStamp,LinkedList<Activity>> entry : ahm.acts.entrySet()) {
-			ret = ret && insertMultipleActivity(entry.getValue());
+			ret = ret && insertActivity(entry.getValue());
 		}
 		return ret;
 	}
@@ -132,7 +133,24 @@ public class ActivityHashMap {
 	 * @return true if hashmap contains the list, otherwise false.
 	 */
 	public boolean contains(LinkedList<Activity> list) {
-		return acts.containsValue(list);
+		
+		// Check if directly contained within the hashmap
+		boolean contained = acts.containsValue(list);
+		
+		// Check if is a sublist of any linked list within the hashmap
+		for (Map.Entry<TimeStamp,LinkedList<Activity>> entry : acts.entrySet()) {
+			LinkedList<Activity> test = entry.getValue();
+			if (test.equals(list)) {
+				contained = true;
+				break;
+			}
+			
+			if (list.hashCode() == test.hashCode()) {
+				contained = true;
+				break;
+			}
+		}
+		return contained;
 	}
 	
 	/* (non-Javadoc)

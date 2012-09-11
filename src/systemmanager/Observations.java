@@ -184,7 +184,7 @@ public class Observations {
 		for (Map.Entry<Integer,Agent> entry : agents.entrySet()) {
 			Agent a = entry.getValue();
 			if (a.getType().equals("NBBO")) {
-				SystemConsts.NBBOBidType x = ((NBBOAgent) a).bidSubmittedType;
+				Consts.SubmittedBidType x = ((BackgroundAgent) a).submittedBidType;
 				if (x == null)
 					System.err.print("ERROR");
 				switch (x) {

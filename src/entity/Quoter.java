@@ -33,7 +33,6 @@ public class Quoter extends Entity {
 		tickSize = d.tickSize;
 		lastQuote = new BestBidAsk();
 	}
-
 	
 	/**
 	 * Method to update the NBBO values across all markets.
@@ -42,16 +41,17 @@ public class Quoter extends Entity {
 	 * @return
 	 */
 	public ActivityHashMap updateNBBO(TimeStamp ts) {
+		
 		ActivityHashMap actMap = new ActivityHashMap();
 		
-		lastQuote = findBestBidOffer(new ArrayList<Integer>(data.getMarkets().keySet()));
+		lastQuote = findBestBidOffer(data.getMarketIDs());
 		String s = ts.toString() + " | UpdateNBBO" + lastQuote;
 		
 		int bestBid = lastQuote.bestBid;
 		int bestAsk = lastQuote.bestAsk;
 		if ((bestBid != -1) && (bestAsk != -1)) {
 			
-			// check for inconsistency in buy/sell prices
+			// check for inconsistency in buy/sell prices & fix if found
 			if (lastQuote.bestBid > lastQuote.bestAsk) {
 				int mid = (lastQuote.bestBid + lastQuote.bestAsk) / 2;
 				bestBid = mid - this.tickSize;
@@ -84,6 +84,7 @@ public class Quoter extends Entity {
 	    
 	    for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
 			Market mkt = data.markets.get(i.next());
+			
 			Price bid = mkt.getBidPrice();
 			Price ask = mkt.getAskPrice();
 

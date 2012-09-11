@@ -1,10 +1,12 @@
 package market;
 
+import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.TreeSet;
 
+import entity.Market;
 import event.TimeStamp;
 import systemmanager.*;
 
@@ -20,9 +22,10 @@ public class PQOrderBook extends OrderBook {
 		FH = new FourHeap(mktID);
 	}
 
-	public void setParams(Log l, int mktID) {
+	public void setParams(int mktID, Log l, SystemData data) {
 		log = l;
 		marketID = mktID;
+		this.data = data;
 		FH.setParams(l, mktID);
 	}
 
@@ -111,15 +114,15 @@ public class PQOrderBook extends OrderBook {
 	/**
 	 * Prints the FH contents.
 	 */
-	public void logFourHeap() {
-		FH.logSets();
+	public void logFourHeap(TimeStamp ts) {
+		FH.logSets(ts);
 	}
 	
 	/**
 	 * Print the active bids in the orderbook.
 	 */
-	public void logActiveBids() {
-		String s = "    [" + marketID + "] Active bids: ";
+	public void logActiveBids(TimeStamp ts) {
+		String s = ts.toString() + " | [" + marketID + "] Active bids: ";
 		for (Map.Entry<Integer,Bid> entry : activeBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
@@ -133,8 +136,8 @@ public class PQOrderBook extends OrderBook {
 	/**
 	 * Print the cleared bids in the orderbook. 
 	 */
-	public void logClearedBids() {
-		String s = "    [" + marketID + "] Cleared bids: ";
+	public void logClearedBids(TimeStamp ts) {
+		String s = ts.toString() + " | [" + marketID + "] Cleared bids: ";
 		for (Map.Entry<Integer,Bid> entry : clearedBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
@@ -210,12 +213,6 @@ public class PQOrderBook extends OrderBook {
 	 */
 	public ArrayList<Transaction> uniformPriceClear(TimeStamp ts, float pricingPolicy) {
 
-		PQBid bid = (PQBid) getBidQuote();
-		PQBid ask = (PQBid) getAskQuote();
-		int b = bid.bidTreeSet.first().price.getPrice(); 	// highest bid price
-		int a = ask.bidTreeSet.last().price.getPrice(); 	// lowest ask price
-		Price p = new Price(Math.round((a - b)*pricingPolicy + b));
-		
 		PQPoint buy, sell;
 		clearedBids = new HashMap<Integer,Bid>();
 
@@ -233,18 +230,32 @@ public class PQOrderBook extends OrderBook {
 		if (buyAgentId != sellAgentId) {
 			FH.clear(matchingBuys, matchingSells);
 		}
-
+		
 		int numBuys = matchingBuys.size();
 		int numSells = matchingSells.size();
 		if (numBuys == 0) return null;
-
+		
+		Price p = new Price(0);
 		for (int i = 0, j = 0; i < numBuys || j < numSells;) {
 			buy = (PQPoint) matchingBuys.get(i);
 			sell = (PQPoint) matchingSells.get(j);
 			int q = Math.min(buy.getQuantity(), Math.abs(sell.getQuantity()));
+			
+			// Assign price if not assigned yet
+			// Get price by taking first of the matching buys/sells
+			if (p.getPrice() == 0) {
+				TreeSet<PQPoint> b = new TreeSet<PQPoint>(matchingBuys);
+				TreeSet<PQPoint> a = new TreeSet<PQPoint>(matchingSells);
+				PQPoint bid = b.first();
+				PQPoint ask = a.last();
+				
+				p = new Price(Math.round((ask.getPrice().getPrice() - 
+						bid.getPrice().getPrice()) * pricingPolicy + bid.getPrice().getPrice()));
+//				p = new Price(Market.quantize(p.getPrice(), data.tickSize));
+			}
 
 			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-			log.log(Log.INFO, "        Quantity=" + q + " cleared at Price=" + p.getPrice());
+			log.log(Log.INFO, ts.toString() + " |      Quantity=" + q + " cleared at Price=" + p.getPrice());
 			
 			Integer key = new Integer(buy.getAgentID());
 			if (!clearedBids.containsKey(key))
