@@ -121,7 +121,10 @@ public class SimulationSpec {
 	 * @return
 	 */
 	public int getNumPlayers(String role) {
-		return ((ArrayList<String>) roleStrategies.get(role)).size();
+		if (roleStrategies.get(role) != null) {
+			return ((ArrayList<String>) roleStrategies.get(role)).size();
+		}
+		return 0;
 	}
 	
 	

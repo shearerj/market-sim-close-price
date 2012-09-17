@@ -6,11 +6,12 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.TreeSet;
 
-import entity.Market;
 import event.TimeStamp;
 import systemmanager.*;
 
 /**
+ * Price-quantity order book for a market.
+ * 
  * @author ewah
  */
 public class PQOrderBook extends OrderBook {
@@ -86,13 +87,18 @@ public class PQOrderBook extends OrderBook {
 
 		if (!activeBids.containsKey(key)) return;
 
-		//remove all the PQPoints from the fourheap
+		// remove all the PQPoints from the FourHeap
 		for (Iterator<PQPoint> i = oldBid.bidTreeSet.iterator(); i.hasNext(); ) {
 			FH.removeBid(i.next());
 		}
 		activeBids.remove(key);
 	}
 
+	@Override
+	public int getDepth() {
+		return this.FH.size();
+	}	
+	
 	/**
 	 * @return minimum price at which a winning buy could be placed
 	 */
@@ -122,7 +128,7 @@ public class PQOrderBook extends OrderBook {
 	 * Print the active bids in the orderbook.
 	 */
 	public void logActiveBids(TimeStamp ts) {
-		String s = ts.toString() + " | [" + marketID + "] Active bids: ";
+		String s = ts.toString() + " | []" + data.getMarket(marketID).toString() + " Active bids: ";
 		for (Map.Entry<Integer,Bid> entry : activeBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
@@ -137,7 +143,7 @@ public class PQOrderBook extends OrderBook {
 	 * Print the cleared bids in the orderbook. 
 	 */
 	public void logClearedBids(TimeStamp ts) {
-		String s = ts.toString() + " | [" + marketID + "] Cleared bids: ";
+		String s = ts.toString() + " | " + data.getMarket(marketID).toString() + " Cleared bids: ";
 		for (Map.Entry<Integer,Bid> entry : clearedBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
@@ -149,7 +155,30 @@ public class PQOrderBook extends OrderBook {
 	}
 
 	
+	/**
+	 * @return array of bid IDs of the cleared bids
+	 */
+	public ArrayList<Integer> getClearedBidIDs() {
+		if (!clearedBids.isEmpty()) {
+			ArrayList<Integer> IDs = new ArrayList<Integer>();
+			for (Map.Entry<Integer,Bid> entry : clearedBids.entrySet()) {
+				PQBid b = (PQBid) entry.getValue();
+				IDs.add(b.getBidID());
+			}
+			return IDs;
+		}
+		return null;
+	}
 	
+	
+	/**
+	 * Clears at the earliest price (given matching bids). For auction markets.
+	 * 
+	 * @param ts
+	 * @param pricingPolicy between 0 and 1, default 0.5
+	 * @return ArrayList of PQTransactions
+	 */
+	@Override
 	public ArrayList<Transaction> earliestPriceClear(TimeStamp ts) {
 		PQPoint buy, sell;
 		clearedBids = new HashMap<Integer,Bid>();
@@ -162,7 +191,7 @@ public class PQOrderBook extends OrderBook {
 		int sellAgentId = -2;
 
 		if (!FH.matchBuySet.isEmpty() && !FH.matchSellSet.isEmpty()) {
-			PQPoint b = (PQPoint) FH.matchBuySet.first();
+//			PQPoint b = (PQPoint) FH.matchBuySet.first();
 			buyAgentId = ((PQPoint ) FH.matchBuySet.first()).getAgentID();
 			sellAgentId = ((PQPoint) FH.matchSellSet.first()).getAgentID();
 		}
@@ -211,6 +240,7 @@ public class PQOrderBook extends OrderBook {
 	 * @param pricingPolicy between 0 and 1, default 0.5
 	 * @return ArrayList of PQTransactions
 	 */
+	@Override
 	public ArrayList<Transaction> uniformPriceClear(TimeStamp ts, float pricingPolicy) {
 
 		PQPoint buy, sell;
@@ -268,10 +298,6 @@ public class PQOrderBook extends OrderBook {
 			sell.transact(-1 * q);
 			if (buy.getQuantity() == 0) i++;
 			if (sell.getQuantity() == 0) j++;
-
-			/*assert ((i < numBuys && j < numSells) ||
-	        (i == numBuys && j == numSells)) : "uniform clear broken";
-			 */
 		}
 		return transactions;
 	}

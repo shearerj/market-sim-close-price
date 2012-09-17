@@ -56,6 +56,12 @@ public class Quoter extends Entity {
 				int mid = (lastQuote.bestBid + lastQuote.bestAsk) / 2;
 				bestBid = mid - this.tickSize;
 				bestAsk = mid + this.tickSize;
+				
+				// Add spread of 0 if inconsistent NBBO quote
+				this.data.addSpread(0, ts, 0);
+			} else {
+				// if bid-ask consistent, store the spread
+				this.data.addSpread(0, ts, lastQuote.getSpread());
 			}
 		}
 		lastQuote.bestBid = bestBid;

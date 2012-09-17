@@ -13,8 +13,24 @@ public class BestBidAsk {
 	public int bestAskMarket = 1;
 	public int bestAsk = -1;
 
+	/**
+	 * @return bid-ask spread of the quote (integer)
+	 */
+	public int getSpread() {
+		if (bestAsk >= bestBid) {
+			if (bestAsk == -1) {	// both -1
+				return 0;
+			}
+			if (bestBid == -1) {	// bid = -1
+				return bestAsk;		// return just the ask
+			}
+			return bestAsk - bestBid;
+		}
+		return 0;
+	}
+	
 	public String toString() {
-		return "(Bid: "+bestBid+", Ask: "+bestAsk+")";
+		return "(Bid: " + bestBid + ", Ask: " + bestAsk + ")";
 	}
 
 	@Override

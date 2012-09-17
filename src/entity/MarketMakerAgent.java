@@ -1,13 +1,10 @@
 package entity;
 
 import event.*;
-import market.*;
 import activity.*;
 import systemmanager.*;
 
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Properties;
 
 /**
  * Basic market maker. See description in 2011 EC paper.
@@ -15,9 +12,9 @@ import java.util.Properties;
  * 
  * @author ewah
  */
-public class MarketMaker extends SMAgent {
+public class MarketMakerAgent extends SMAgent {
 
-	public MarketMaker(int agentID, SystemData d, AgentProperties p, Log l) {
+	public MarketMakerAgent(int agentID, SystemData d, AgentProperties p, Log l) {
 		super(agentID, d, p, l);
 		agentType = Consts.getAgentType(this.getClass().getSimpleName());
 		

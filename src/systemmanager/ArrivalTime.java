@@ -5,8 +5,6 @@ import event.*;
 import java.util.Random;
 import java.util.ArrayList;
 
-import market.Price;
-
 /**
  * Class to store and compute agent arrival times.
  * 

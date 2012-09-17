@@ -17,7 +17,7 @@ import java.util.Iterator;
  * 
  * @author ewah
  */
-public class HFTAgent extends MMAgent {
+public class LAAgent extends MMAgent {
 	
 	private double alpha;
 	
@@ -25,14 +25,14 @@ public class HFTAgent extends MMAgent {
 	 * Overloaded constructor
 	 * @param agentID
 	 */
-	public HFTAgent(int agentID, SystemData d, AgentProperties p, Log l) {
+	public LAAgent(int agentID, SystemData d, AgentProperties p, Log l) {
 		super(agentID, d, p, l);
 		agentType = Consts.getAgentType(this.getClass().getSimpleName());
 		arrivalTime = new TimeStamp(0);
 		params = p;
 		
 		if (this.data.numMarkets != 2) {
-			log.log(Log.ERROR, this.getClass().getSimpleName() + ": HFT agents need 2 markets!");
+			log.log(Log.ERROR, this.getClass().getSimpleName() + ": Latency arb agents need 2 markets!");
 		}
 	}
 	

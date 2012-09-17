@@ -11,7 +11,6 @@ import java.util.Vector;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.TreeSet;
-import java.util.LinkedList;
 
 /**
  * Base class for all agents.
@@ -27,7 +26,7 @@ public abstract class Agent extends Entity {
 	public static final int INF_PRICE = 99999999;
 	protected Random rand;
 	
-	// Market information (hashed by market ID, as ID may be negative)
+	// Market information (all hashed by market ID, as ID may be negative)
 	protected ArrayList<Integer> marketIDs;
 	protected HashMap<Integer,Price> bidPrice;
 	protected HashMap<Integer,Price> askPrice;
@@ -347,7 +346,7 @@ public abstract class Agent extends Entity {
 		pqBid.addPoint(quantity, new Price(p));
 		pqBid.timestamp = ts;
 		currentBid.put(mkt.ID, pqBid);
-		return mkt.addBid(pqBid, null);
+		return mkt.addBid(pqBid, ts);
 	}	
 
 	/**

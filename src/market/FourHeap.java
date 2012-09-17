@@ -27,18 +27,18 @@ public class FourHeap
 
 	private static final boolean DEBUG = false;
 
-	private SortedSet sellSet;
-	private SortedSet buySet;
-	public SortedSet matchSellSet;
-	public SortedSet matchBuySet;
+	private SortedSet<PQPoint> sellSet;
+	private SortedSet<PQPoint> buySet;
+	public SortedSet<PQPoint> matchSellSet;
+	public SortedSet<PQPoint> matchBuySet;
 
-	private Comparator bestFirstB ;
-	private Comparator bestFirstS;
-	private Comparator worstFirstB;
-	private Comparator worstFirstS;
+	private Comparator<PQPoint> bestFirstB ;
+	private Comparator<PQPoint> bestFirstS;
+	private Comparator<PQPoint> worstFirstB;
+	private Comparator<PQPoint> worstFirstS;
 
-	private Comparator betterSell;
-	private Comparator betterBuy;
+	private Comparator<PQPoint> betterSell;
+	private Comparator<PQPoint> betterBuy;
 	private Log log;
 	private Integer mktID;
 	private int matchBuySetSize;          // #buys  in the matchedBuySet
@@ -60,10 +60,10 @@ public class FourHeap
 		betterBuy = worstFirstB;
 
 		//4 heaps
-		sellSet          = new TreeSet(bestFirstS);
-		buySet           = new TreeSet(bestFirstB);
-		matchSellSet     = new TreeSet(worstFirstS);
-		matchBuySet      = new TreeSet(worstFirstB);
+		sellSet          = new TreeSet<PQPoint>(bestFirstS);
+		buySet           = new TreeSet<PQPoint>(bestFirstB);
+		matchSellSet     = new TreeSet<PQPoint>(worstFirstS);
+		matchBuySet      = new TreeSet<PQPoint>(worstFirstB);
 
 		//maintain sizes for the matching heaps since PQPoints have variable quantity
 		matchSellSetSize = 0;
@@ -72,6 +72,29 @@ public class FourHeap
 		this.mktID = mktID;
 	}
 
+	
+	/**
+	 * @return number of buy & sell bids with positive quantity in the FourHeap
+	 */
+	public int size() {
+		int count = 0;
+		Iterator<PQPoint> it1 = sellSet.iterator();
+		while (it1.hasNext()) {
+		    // Get element
+		    if (it1.next().quantity < 0) {
+		    	count++;
+		    }
+		}
+		Iterator<PQPoint> it2 = buySet.iterator();
+		while (it2.hasNext()) {
+		    // Get element
+		    if (it2.next().quantity > 0) {
+		    	count++;
+		    }
+		}
+		return count;
+	}
+	
 
 	/**
 	 * what is the allocation to P given current state of FourHeap

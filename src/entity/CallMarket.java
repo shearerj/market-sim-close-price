@@ -58,8 +58,10 @@ public class CallMarket extends Market {
 	}
 	
 	public ActivityHashMap addBid(Bid b, TimeStamp ts) {
+		// Unlike continuous auction market, no Clear Activity inserted
 		orderbook.insertBid((PQBid) b);
-		// Unlike continuous auction market, no Clear Activity inserted here
+		this.data.addDepth(this.ID, ts, orderbook.getDepth());
+		this.data.addSubmissionTime(b.getBidID(), ts);
 		return null;
 	}
 	
@@ -67,6 +69,7 @@ public class CallMarket extends Market {
 		orderbook.removeBid(agentID);
 		orderbook.logActiveBids(ts);
 		orderbook.logFourHeap(ts);
+		this.data.addDepth(this.ID, ts, orderbook.getDepth());
 		return null;
 	}
 	
@@ -101,6 +104,12 @@ public class CallMarket extends Market {
 			return actMap;
 		}
 		
+		// Add bid execution times
+		ArrayList<Integer> IDs = orderbook.getClearedBidIDs();
+		for (Iterator<Integer> id = IDs.iterator(); id.hasNext(); ) {
+			data.addExecutionTime(id.next(), clearTime);
+		}
+		
 		// Add transactions to SystemData
 		TreeSet<Integer> transactingIDs = new TreeSet<Integer>();
 		for (Iterator<Transaction> i = transactions.iterator(); i.hasNext();) {
@@ -123,6 +132,7 @@ public class CallMarket extends Market {
 		orderbook.logActiveBids(clearTime);
 		orderbook.logClearedBids(clearTime);
 		orderbook.logFourHeap(clearTime);
+		this.data.addDepth(this.ID, clearTime, orderbook.getDepth());
 		log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + " " + 
 				this.getClass().getSimpleName() + " cleared: Post Quote" + this.quote(clearTime));
 
@@ -148,6 +158,7 @@ public class CallMarket extends Market {
 					log.log(Log.ERROR, "CallMarket::quote: ERROR bid > ask");
 				} else {
 					this.data.addQuote(this.ID, q);
+					this.data.addSpread(this.ID, quoteTime, q.getSpread());
 				}
 			}
 			this.lastQuoteTime = quoteTime;

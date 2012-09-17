@@ -50,7 +50,9 @@ public class CDAMarket extends Market {
 		orderbook.insertBid((PQBid) b);
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new Clear(this, ts));
-		return null;
+		this.data.addDepth(this.ID, ts, orderbook.getDepth());
+		this.data.addSubmissionTime(b.getBidID(), ts);
+		return actMap;
 	}
 	
 	
@@ -58,6 +60,7 @@ public class CDAMarket extends Market {
 		orderbook.removeBid(agentID);
 		orderbook.logActiveBids(ts);
 		orderbook.logFourHeap(ts);
+		this.data.addDepth(this.ID, ts, orderbook.getDepth());
 		return null;
 	}
 	
@@ -86,6 +89,12 @@ public class CDAMarket extends Market {
 			return null;
 		}
 		
+		// Add bid execution times
+		ArrayList<Integer> IDs = orderbook.getClearedBidIDs();
+		for (Iterator<Integer> id = IDs.iterator(); id.hasNext(); ) {
+			data.addExecutionTime(id.next(), clearTime);
+		}
+		
 		// Add transactions to SystemData
 		TreeSet<Integer> transactingIDs = new TreeSet<Integer>();
 		for (Iterator<Transaction> i = transactions.iterator(); i.hasNext();) {
@@ -108,6 +117,7 @@ public class CDAMarket extends Market {
 		orderbook.logActiveBids(clearTime);
 		orderbook.logClearedBids(clearTime);
 		orderbook.logFourHeap(clearTime);
+		this.data.addDepth(this.ID, clearTime, orderbook.getDepth());
 		log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + " " +
 				this.getClass().getSimpleName() + " cleared: Post Quote" + this.quote(clearTime));
 		return null;
@@ -124,6 +134,7 @@ public class CDAMarket extends Market {
 				log.log(Log.ERROR, "CDAMArket::quote: ERROR bid > ask");
 			} else {
 				this.data.addQuote(this.ID, q);
+				this.data.addSpread(this.ID, quoteTime, q.getSpread());
 			}
 		}
 		this.lastQuoteTime = quoteTime;

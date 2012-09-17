@@ -1,8 +1,5 @@
 package entity;
 
-import java.util.Vector;
-
-import market.Quote;
 import event.*;
 import activity.*;
 import systemmanager.*;

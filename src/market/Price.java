@@ -1,7 +1,5 @@
 package market;
 
-import java.text.DecimalFormat;
-
 /**
  * Price class is wrapper for long; one unit represents one thousandth
  * of a dollar.

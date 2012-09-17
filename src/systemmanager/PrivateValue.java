@@ -6,13 +6,14 @@ import java.util.ArrayList;
 import market.Price;
 
 /**
- * Class to store and compute private values for background agents.
+ * Class to store and compute a stochastic process used as a base to determine the
+ * private values of background agents.
  * 
  * @author ewah
  */
 public class PrivateValue {
 	
-	private ArrayList<Price> privateValues;
+	private ArrayList<Price> privateValueProcess;
 	private double kappa;
 	private int meanPV;
 	private double shockVar;
@@ -28,7 +29,7 @@ public class PrivateValue {
 		meanPV = 50000;
 		shockVar = 2;
 		tickSize = 1;
-		privateValues = new ArrayList<Price>();
+		privateValueProcess = new ArrayList<Price>();
 	}
 	
 	/**
@@ -42,11 +43,11 @@ public class PrivateValue {
 		kappa = kap;
 		meanPV = meanValue;
 		shockVar = var;
-		privateValues = new ArrayList<Price>();
+		privateValueProcess = new ArrayList<Price>();
 		tickSize = tick;
 		
 		// stochastic initial conditions for random process
-		privateValues.add(new Price((int) getNormalRV(meanPV, shockVar)));
+		privateValueProcess.add(new Price((int) getNormalRV(meanPV, shockVar)));
 	}
 	
 	/**
@@ -55,11 +56,11 @@ public class PrivateValue {
 	 */
 	public int next() {
 		int nextPV = (int) ((meanPV * kappa) + ((1 - kappa) * 
-						privateValues.get(privateValues.size()-1).getPrice()) +
+						privateValueProcess.get(privateValueProcess.size()-1).getPrice()) +
 	                    getNormalRV(0, shockVar) * tickSize);
 		// truncate at zero
 		nextPV = Math.max(nextPV, 0);
-	    privateValues.add(new Price(nextPV));
+	    privateValueProcess.add(new Price(nextPV));
 	    return nextPV;
 	}
 	
@@ -78,9 +79,9 @@ public class PrivateValue {
 	
 	
 	/**
-	 * @return list of all private values
+	 * @return list of all private values in the stochastic process
 	 */
-	public ArrayList<Price> getPrivateValues() {
-		return privateValues;
+	public ArrayList<Price> getPrivateValueProcess() {
+		return privateValueProcess;
 	}
 }

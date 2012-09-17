@@ -294,9 +294,11 @@ public class SystemManager {
 			results.addFeature("nbbo_surplus", results.getSurplusFeatures(data.getAllSurplus()));
 			results.addFeature("interval", results.getTimeStampFeatures(data.getIntervals()));
 			results.addFeature("pv", results.getPriceFeatures(data.getPrivateValues()));
-			results.addFeature("nbbo_info", results.getNBBOInfo(data.getPrivateValues(),
-					data.getAgents()));
+			results.addFeature("nbbo_info", results.getNBBOInfo(data.getAgents()));
 			results.addFeature("transactions", results.getTransactionInfo());
+			results.addFeature("depths", results.getDepthInfo());
+			results.addFeature("spreads", results.getSpreadInfo());
+			results.addFeature("exec_speed", results.getExecutionSpeed());
 			
 			File file = new File(simFolder + Consts.obsFilename + num + ".json");
 			FileWriter txt = new FileWriter(file);

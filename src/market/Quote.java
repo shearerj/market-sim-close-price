@@ -3,8 +3,6 @@ package market;
 import entity.Market;
 import event.TimeStamp;
 
-import java.util.HashMap;
-
 /**
  * Container for Quote data.
  * 
@@ -54,6 +52,22 @@ public class Quote {
 		lastQuoteTime = mkt.getLastQuoteTime();
 		
 		depth = 1;
+	}
+	
+	/**
+	 * @return bid-ask spread of the quote (integer)
+	 */
+	public int getSpread() {
+		if (lastAskPrice.compareTo(lastBidPrice) >= 0) {
+			if (lastAskPrice.getPrice() == -1) {	// both -1
+				return 0;
+			}
+			if (lastBidPrice.getPrice() == -1) {	// bid = -1
+				return lastAskPrice.getPrice();		// return just the ask
+			}
+			return lastAskPrice.getPrice() - lastBidPrice.getPrice();
+		}
+		return 0;
 	}
 	
 	

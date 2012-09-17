@@ -1,7 +1,6 @@
 package systemmanager;
 
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * This class stores the parameters for a specific agent. Each agent sets defaults

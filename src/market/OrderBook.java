@@ -27,6 +27,8 @@ public abstract class OrderBook {
 		activeBids = new HashMap<Integer,Bid>();
 	}
 	
+	public abstract int getDepth();
+	
 	public abstract Bid getBidQuote();
 	
 	public abstract Bid getAskQuote();

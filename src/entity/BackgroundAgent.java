@@ -174,7 +174,7 @@ public class BackgroundAgent extends MMAgent {
 					lastNBBOQuote.bestAsk + ") worse than " + data.getMarket(tradeMarketID) + 
 					" (" + bestQuote.bestSell +	", " + bestQuote.bestBuy + ")");
 			
-			// potential arb opp when NBBO out of date and should be better
+			// potential arbitrage opportunity when NBBO out of date and should be better
 			actMap.appendActivityHashMap(addBid(data.markets.get(tradeMarketID), p, q, ts));
 			bidSubmitted = true;
 			log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
