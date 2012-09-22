@@ -1,7 +1,8 @@
 package market;
 
 /**
- * BestQuote
+ * BestQuote is a container to store the best quote across all markets.
+ * 
  * User: Shih-Fen Cheng
  * Date: Oct 27, 2010
  * Time: 6:58:57 AM

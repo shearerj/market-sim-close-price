@@ -28,8 +28,16 @@ import java.util.HashMap;
  * when the agent is initialized. The parameters determining the distribution from
  * which the expiration is drawn are given by the strategy configuration.
  *
- * The background agent is always only active in one market, and it is used in two-market
- * scenarios (for latency arbitrage simulations).
+ * The background agent is always only active in one market, but it needs a minimum
+ * of two markets (for latency arbitrage scenarios).
+ * 
+ * BID SUBMISSION:
+ * 
+ * The agent will submit to the alternate market ONLY if both the NBBO quote is better
+ * than the main market's quote and the bid to submit will transact immediately 
+ * given the price in the alternate market. The only difference in outcome occurs
+ * when the NBBO is out-of-date and the agent submits a bid to the main market
+ * although the alternate market is actually better.
  * 
  * NOTE: The limit order price is uniformly distributed over a range that is twice the
  * size of bidRange in either a positive or negative direction from the agent's
@@ -44,10 +52,10 @@ public class BackgroundAgent extends MMAgent {
 	private int bidRange;				// range for limit order
 	private double valueVar;			// variance from private value random process
 	
-	private int tradeMarketID;			// assigned at initialization
+	private int mainMarketID;			// assigned at initialization
 	private int altMarketID;
 	
-	public Consts.SubmittedBidType submittedBidType;
+	public Consts.SubmittedBidMarket submittedBidType;
 	
 	/**
 	 * Overloaded constructor.
@@ -73,14 +81,14 @@ public class BackgroundAgent extends MMAgent {
 		// Choose market indices based on whether agentID is even or odd
 		// Ensures close to 50% even distribution in each market
 		if (agentID % 2 == 0) {
-			tradeMarketID = -1;
+			mainMarketID = -1;
 			altMarketID = -2;
 		} else {
-			tradeMarketID = -2;
+			mainMarketID = -2;
 			altMarketID = -1;
 		}
 		
-		submittedBidType = Consts.SubmittedBidType.NOBID;
+		submittedBidType = Consts.SubmittedBidMarket.NOBID;
 	}
 	
 	
@@ -95,13 +103,14 @@ public class BackgroundAgent extends MMAgent {
 		
 		ActivityHashMap actMap = new ActivityHashMap();
 
-		// identify best buy and sell offers
-		BestQuote bestQuote = findBestBuySell();
+		// identify best buy and sell offers (for all markets)
+		Quote mainMarketQuote = data.getMarket(mainMarketID).quote(ts);
 
 		int p = 0;
 		int q = 1;
 		// 0.50% chance of being either long or short
-		if (rand.nextDouble() < 0.5) q = -q; 
+		if (rand.nextDouble() < 0.5)
+			q = -q; 
 
 		// basic ZI behavior
 		if (q > 0) {
@@ -109,85 +118,81 @@ public class BackgroundAgent extends MMAgent {
 		} else {
 			p = (int) Math.max(0, (this.privateValue + rand.nextDouble()*2*bidRange));
 		}
-		
-		int ask = lastNBBOQuote.bestAsk;
-		int bid = lastNBBOQuote.bestBid;
-		int bestPrice = -1;
 
-		// if NBBO better check other market for matching quote (exact match)
+		// Check if NBBO indicates that other market better
+		// - Want to buy for as low a price as possible, so find market with the lowest ask
+		// - Want to sell for as high a price as possible, so find market with the highest bid
 		boolean nbboBetter = false;
 		if (q > 0) {
-			if (bestQuote.bestBuy > bid) {
+			if (lastNBBOQuote.bestAsk < mainMarketQuote.lastAskPrice.getPrice() &&
+					lastNBBOQuote.bestAsk != -1) { 
 				nbboBetter = true;
-				bestPrice = bestQuote.bestBuy;
 			}
 		} else {
-			if (bestQuote.bestSell < ask) { 
+			if (lastNBBOQuote.bestBid > mainMarketQuote.lastBidPrice.getPrice() &&
+					mainMarketQuote.lastBidPrice.getPrice() != -1) {
 				nbboBetter = true;
-				bestPrice = bestQuote.bestSell;
 			}
 		}
-
-		boolean bidSubmitted = false;
+		
+		submittedBidType = Consts.SubmittedBidMarket.MAIN;	// default is submitting to main market
 		if (nbboBetter) {
+			// nbboBetter = true indicates that the alternative market has a better quote
 			log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
-					"::agentStrategy: " + "NBBO (" + lastNBBOQuote.bestBid + ", " + 
-					lastNBBOQuote.bestAsk + ") better than " + data.getMarket(tradeMarketID) + 
-					" (" + bestQuote.bestSell +	", " + bestQuote.bestBuy + ")");
-
-			// since NBBO is better, check other market for a matching quote
-			Quote altQuote = getLatestQuote(altMarketID);
+					"::agentStrategy: " + "NBBO(" + lastNBBOQuote.bestBid + ", " + 
+					lastNBBOQuote.bestAsk + ") better than " + data.getMarket(mainMarketID) + 
+					" Quote(" + mainMarketQuote.lastBidPrice.getPrice() + 
+					", " + mainMarketQuote.lastAskPrice.getPrice() + ")");
 			
-			// submit bid to whichever market has the best quote
-			if (altQuote != null) {
-				
-				int bestMarketID = tradeMarketID;
-				
-				if (q > 0) {
-					if (altQuote.lastBidPrice.getPrice() > bid) {
-						bestMarketID = altMarketID;
-						bestPrice = altQuote.lastBidPrice.getPrice();
-					}
-				} else {
-					if (altQuote.lastAskPrice.getPrice() < ask) {
-						bestMarketID = altMarketID;
-						bestPrice = altQuote.lastAskPrice.getPrice();
-					}
+			int bestMarketID = mainMarketID;
+			int bestPrice = -1;
+			if (q > 0) {
+				if (p > lastNBBOQuote.bestAsk) {
+					bestMarketID = altMarketID;
+					bestPrice = lastNBBOQuote.bestAsk;
 				}
-				log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
-						"::agentStrategy: " + "Best market is " + data.getMarket(bestMarketID) +
-						" with order to submit: (" + q + ", " + bestPrice + ")");
-				
-				actMap.appendActivityHashMap(addBid(data.markets.get(bestMarketID), p, q, ts));
-				bidSubmitted = true;
-				log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
-							"::agentStrategy: " + "+(" + p + "," + q + ") to " + 
-							data.getMarket(bestMarketID) + ", duration="	+ expiration);
-				// track that trading in the other market
-				submittedBidType = Consts.SubmittedBidType.ALTERNATE;
+			} else {
+				if (p < lastNBBOQuote.bestBid) {
+					bestMarketID = altMarketID;
+					bestPrice = lastNBBOQuote.bestBid;
+				}
 			}
-
-		} else {
-			// current market's quote is better than NBBO
-			log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
-					"::agentStrategy: " + "NBBO (" + lastNBBOQuote.bestBid + ", " + 
-					lastNBBOQuote.bestAsk + ") worse than " + data.getMarket(tradeMarketID) + 
-					" (" + bestQuote.bestSell +	", " + bestQuote.bestBuy + ")");
 			
-			// potential arbitrage opportunity when NBBO out of date and should be better
-			actMap.appendActivityHashMap(addBid(data.markets.get(tradeMarketID), p, q, ts));
-			bidSubmitted = true;
+			if (bestMarketID == altMarketID) {
+				// specify that submitting to the alternate market
+				submittedBidType = Consts.SubmittedBidMarket.ALTERNATE;
+				
+				log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
+						"::agentStrategy: " + "Bid +(" + p + "," + q + ") will transact" +
+						" immediately in " + data.getMarket(altMarketID) +
+						" given best price " + bestPrice);
+			}
+			
+			// submit bid to the best market
+			actMap.appendActivityHashMap(addBid(data.markets.get(bestMarketID), p, q, ts));
 			log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
-					"::agentStrategy: " + "+(" + p + "," + q + ") to " + data.getMarket(tradeMarketID) + 
-					", duration="	+ expiration);
-			submittedBidType = Consts.SubmittedBidType.CURRENT;
+					"::agentStrategy: " + "+(" + p + "," + q + ") to " + 
+					data.getMarket(bestMarketID) + ", duration=" + expiration);
+			
+		} else {
+			// main market is better than the alternate market (according to NBBO)
+			log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
+					"::agentStrategy: " + "NBBO(" + lastNBBOQuote.bestBid + ", " + 
+					lastNBBOQuote.bestAsk + ") worse than/same as " + data.getMarket(mainMarketID) + 
+					" Quote(" + mainMarketQuote.lastBidPrice.getPrice() + 
+					", " + mainMarketQuote.lastAskPrice.getPrice() + ")");
+			
+			// submit bid to the main market
+			actMap.appendActivityHashMap(addBid(data.markets.get(mainMarketID), p, q, ts));
+			log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
+					"::agentStrategy: " + "+(" + p + "," + q + ") to " + 
+					data.getMarket(mainMarketID) + ", duration=" + expiration);
+			
 		}
 			    
-		// Bid expires after a given point
-		if (bidSubmitted) {
-			TimeStamp expireTime = ts.sum(new TimeStamp(expiration));
-			actMap.insertActivity(new WithdrawBid(this, data.markets.get(tradeMarketID), expireTime));
-		}
+		// Bid expires after a given duration
+		TimeStamp expireTime = ts.sum(new TimeStamp(expiration));
+		actMap.insertActivity(new WithdrawBid(this, data.markets.get(mainMarketID), expireTime));
 		return actMap;
 	}
 

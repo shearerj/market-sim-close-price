@@ -1,5 +1,6 @@
 package market;
 
+import systemmanager.Consts;
 import entity.Market;
 import event.TimeStamp;
 
@@ -59,11 +60,11 @@ public class Quote {
 	 */
 	public int getSpread() {
 		if (lastAskPrice.compareTo(lastBidPrice) >= 0) {
-			if (lastAskPrice.getPrice() == -1) {	// both -1
-				return 0;
+			if (lastAskPrice.getPrice() == -1) {	// ask undefined
+				return Consts.INF_PRICE;
 			}
-			if (lastBidPrice.getPrice() == -1) {	// bid = -1
-				return lastAskPrice.getPrice();		// return just the ask
+			if (lastBidPrice.getPrice() == -1) {	// bid undefined
+				return Consts.INF_PRICE;
 			}
 			return lastAskPrice.getPrice() - lastBidPrice.getPrice();
 		}

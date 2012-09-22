@@ -23,7 +23,6 @@ import java.util.TreeSet;
  */
 public abstract class Agent extends Entity {
 
-	public static final int INF_PRICE = 99999999;
 	protected Random rand;
 	
 	// Market information (all hashed by market ID, as ID may be negative)
@@ -406,7 +405,7 @@ public abstract class Agent extends Entity {
 		lastGlobalQuote = quoter.findBestBidOffer(marketIDs);
 		lastNBBOQuote = quoter.lastQuote;
 		
-		log.log(Log.INFO, ts.toString() + " | " + this.toString() + ": Global" + lastGlobalQuote + 
+		log.log(Log.INFO, ts.toString() + " | " + this.toString() + " Global" + lastGlobalQuote + 
 				", NBBO" + lastNBBOQuote);
 
 		return null;
@@ -422,7 +421,7 @@ public abstract class Agent extends Entity {
 		Quote q = mkt.quote(ts);
 		if (q != null) {
 			if (q.lastAskPrice == null)
-				askPrice.put(mkt.ID, new Price(INF_PRICE));
+				askPrice.put(mkt.ID, new Price(Consts.INF_PRICE));
 			else
 				askPrice.put(mkt.ID, q.lastAskPrice);
 			if (q.lastBidPrice == null)
@@ -688,7 +687,12 @@ public abstract class Agent extends Entity {
 	
 
 	/**
-	 * Find best market to buy in (i.e. lowest ASK) and to sell in (i.e. highest BID)
+	 * Find best market to buy in (i.e. lowest ask) and to sell in (i.e. highest bid).
+	 * This is a global operation so it checks all markets.
+	 * 
+	 * bestBuy = the best price an agent can buy at (the lowest sell bid).
+	 * bestSell = the best price an agent can sell at (the highest buy bid).
+	 *  
 	 * @return BestQuote
 	 */
 	protected BestQuote findBestBuySell() {

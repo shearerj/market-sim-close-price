@@ -72,6 +72,7 @@ public class SimulationSpec {
 		data.expireRate = Double.parseDouble(getValue("expire_rate"));
 		data.bidRange = Integer.parseInt(getValue("bid_range"));
 		data.valueVar = Double.parseDouble(getValue("value_var"));
+		data.controlMarket = Boolean.parseBoolean(getValue("control_mkt"));
 		
 		// Check which types of markets to create
 		for (int i = 0; i < Consts.marketTypeNames.length; i++) {

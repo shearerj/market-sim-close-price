@@ -1,5 +1,7 @@
 package market;
 
+import systemmanager.Consts;
+
 /**
  * Data structure for holding best bid/ask quote (for updating NBBO)
  * 
@@ -18,14 +20,15 @@ public class BestBidAsk {
 	 */
 	public int getSpread() {
 		if (bestAsk >= bestBid) {
-			if (bestAsk == -1) {	// both -1
-				return 0;
+			if (bestAsk == -1) {	// ask undefined
+				return Consts.INF_PRICE;
 			}
-			if (bestBid == -1) {	// bid = -1
-				return bestAsk;		// return just the ask
+			if (bestBid == -1) {	// bid undefined
+				return Consts.INF_PRICE;
 			}
 			return bestAsk - bestBid;
 		}
+		// if bid crosses the ask, return a spread of zero
 		return 0;
 	}
 	

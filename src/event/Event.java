@@ -129,7 +129,6 @@ public class Event {
 	public String toString() {
 		String s = "" + eventTime.toString() + " | ";
 		for (Iterator<Activity> it = activities.iterator(); it.hasNext(); ) {
-//			s += it.next().getClass().getName() + "->";
 			s += it.next().toString() + " -> ";
 		}
 		return s;

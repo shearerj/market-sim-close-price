@@ -38,7 +38,7 @@ public class SystemData {
 	public int numMarkets;
 	public int numAgents;
 	
-	// Parameters set by config file
+	// Parameters set by specification file
 	public TimeStamp simLength;
 	public int tickSize;
 	public TimeStamp clearFreq;
@@ -50,6 +50,7 @@ public class SystemData {
 	public double expireRate;
 	public int bidRange;
 	public double valueVar;				// agent variance from PV random process
+	public boolean controlMarket;		// yes if a control market is to be included
 	
 	// Internal variables
 	private Sequence transIDSequence;

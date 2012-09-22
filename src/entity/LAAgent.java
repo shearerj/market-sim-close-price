@@ -32,7 +32,8 @@ public class LAAgent extends MMAgent {
 		params = p;
 		
 		if (this.data.numMarkets != 2) {
-			log.log(Log.ERROR, this.getClass().getSimpleName() + ": Latency arb agents need 2 markets!");
+			log.log(Log.ERROR, this.toString() + " " + agentType + 
+					": Latency arbitrageurs need 2 markets!");
 		}
 	}
 	
@@ -60,7 +61,8 @@ public class LAAgent extends MMAgent {
 			BestQuote bestQuote = findBestBuySell();
 			if ((bestQuote.bestSell > (1+alpha)*bestQuote.bestBuy) && (bestQuote.bestBuy >= 0) ) {
 				
-				log.log(Log.INFO, this.getClass().getSimpleName() + ": Found possible arb opp!");
+				log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
+						"::agentStrategy: Found possible arb opp!");
 
 				int buyMarketID = bestQuote.bestBuyMarket;
 				int sellMarketID = bestQuote.bestSellMarket;
@@ -79,14 +81,18 @@ public class LAAgent extends MMAgent {
 							quantity, ts));
 					actMap.appendActivityHashMap(addBid(sellMarket, midPoint+tickSize, 
 							-quantity, ts));
-					log.log(Log.INFO, this.getClass().getSimpleName() + ": Arb opportunity exists: " + bestQuote + 
+					log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
+							"::agentStrategy: Arb opportunity exists: " + bestQuote + 
 							" in " + data.getMarket(bestQuote.bestBuyMarket) + " & " 
 							+ data.getMarket(bestQuote.bestSellMarket));
 				} else if (buyMarketID == sellMarketID) {
-					log.log(Log.INFO, this.getClass().getSimpleName() + ": No arb opp since same market");
-					// Note that this is due to a market not having both a bid & ask price
+					log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
+							"::agentStrategy: No arb opp since same market");
+					// Note that this is due to a market not having both a bid & ask price,
+					// causing the buy and sell market IDs to be identical
 				} else if (quantity == 0) {
-					log.log(Log.INFO, this.getClass().getSimpleName() + ": No quantity available");
+					log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
+							"::agentStrategy: No quantity available");
 				}
 			}
 			int sleepTime = Integer.parseInt(params.get("sleepTime"));

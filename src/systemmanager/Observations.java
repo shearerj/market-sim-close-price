@@ -41,7 +41,7 @@ public class Observations {
 	public void addObservation(int agentID) {
 		HashMap<String,Object> obs = data.getAgent(agentID).getObservation();
 		
-		// Don't add observation if agent is not a player in the game
+		// Don't add observation if agent is not a player in the game (i.e. not a role)
 		if (obs == null) return;
 		
 		if (!observations.containsKey("players")) {
@@ -158,42 +158,32 @@ public class Observations {
 	
 	
 	/**
-	 * Counts number of times NBBO agent sees quote of its alternate markets.
+	 * Counts number of times background agent submits bid to alternate market for
+	 * (hopefully) immediate transaction, which may not happen if the NBBO quote is
+	 * out of date.
 	 * 
 	 * @param agents
 	 * @return
 	 */
-	public HashMap<String,Object> getNBBOInfo(HashMap<Integer,Agent> agents) {
+	public HashMap<String,Object> getBackgroundInfo(HashMap<Integer,Agent> agents) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
-		
-//		Object[] prices = privateValues.toArray();
-//		double[] values = new double[prices.length];
-//		int cnt = 0;
-//	    for (int i = 0; i < values.length; i++) {
-//	    	Price tmp = (Price) prices[i];
-//	        values[i] = (double) tmp.getPrice();
-//	        if (values[i] <= 0) {
-//	        	cnt++;
-//	        }
-//	    }
-//		feat.put("num_neg_PV", cnt);
 		
 		int num = 0;
 		for (Map.Entry<Integer,Agent> entry : agents.entrySet()) {
 			Agent a = entry.getValue();
-			if (a.getType().equals("NBBO")) {
-				Consts.SubmittedBidType x = ((BackgroundAgent) a).submittedBidType;
+			if (a instanceof BackgroundAgent) {
+				Consts.SubmittedBidMarket x = ((BackgroundAgent) a).submittedBidType;
 				if (x == null)
 					System.err.print("ERROR");
 				switch (x) {
-				case CURRENT:
-					num++;
-				case ALTERNATE:
+				case MAIN:
 					// do nothing
+				case ALTERNATE:
+					num++;
 				}
 			}
 		}
-		feat.put("num_nbbo_worse", num);
+		feat.put("num_bids_alt", num);
 		return feat;
 	}
 
@@ -232,11 +222,11 @@ public class Observations {
 		feat.put("price_min", dp.getMin());
 		feat.put("price_var", dp.getVariance());
 		
-		DescriptiveStatistics dq = new DescriptiveStatistics(quantities);
-		feat.put("qty_mean", dq.getMean());
-		feat.put("qty_max", dq.getMax());
-		feat.put("qty_min", dq.getMin());
-		feat.put("qty_var", dq.getVariance());
+//		DescriptiveStatistics dq = new DescriptiveStatistics(quantities);
+//		feat.put("qty_mean", dq.getMean());
+//		feat.put("qty_max", dq.getMax());
+//		feat.put("qty_min", dq.getMin());
+//		feat.put("qty_var", dq.getVariance());
 		
 		return feat;
 	}
@@ -249,32 +239,29 @@ public class Observations {
 	public HashMap<String,Object> getSpreadInfo() {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-//		int length = (int) data.simLength.longValue();
-//		double[] allMarketSpreads = new double[(int) data.simLength.longValue()*data.numMarkets];
-//		ArrayList<Integer> allMarketSpreads = new ArrayList<Integer>(length*data.numMarkets);
-//		int count = 0; // to indicate where to insert the time series into the all spreads array
-		
 		for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
 			int mktID = it.next();
 			HashMap<TimeStamp,Integer> marketSpread = data.marketSpread.get(mktID);
 			double[] spreads = extractTimeSeries(marketSpread);
 			
 			DescriptiveStatistics dp = new DescriptiveStatistics(spreads);
+			Median med = new Median();
 			String prefix = "mkt" + (-mktID) + "_";
 			feat.put(prefix + "mean", dp.getMean());
-			feat.put(prefix + "max", dp.getMax());
-			feat.put(prefix + "min", dp.getMin());
-			feat.put(prefix + "var", dp.getVariance());
-			
-//			allMarketSpreads.subList(count, count+length) = new ArrayList<Integer>(spreads);
-//			count = count+length;
+//			feat.put(prefix + "max", dp.getMax());
+//			feat.put(prefix + "min", dp.getMin());
+//			feat.put(prefix + "var", dp.getVariance());
+			feat.put(prefix + "med", med.evaluate(spreads));
 		}
 
-		DescriptiveStatistics dp = new DescriptiveStatistics(extractTimeSeries(data.NBBOSpread));
+		double[] nbboSpreads = extractTimeSeries(data.NBBOSpread);
+		DescriptiveStatistics dp = new DescriptiveStatistics(nbboSpreads);
+		Median med = new Median();
 		feat.put("nbbo_mean", dp.getMean());
-		feat.put("nbbo_max", dp.getMax());
-		feat.put("nbbo_min", dp.getMin());
-		feat.put("nbbo_var", dp.getVariance());
+//		feat.put("nbbo_max", dp.getMax());
+//		feat.put("nbbo_min", dp.getMin());
+//		feat.put("nbbo_var", dp.getVariance());
+		feat.put("nbbo_med", med.evaluate(nbboSpreads));
 
 		return feat;
 	}
@@ -299,7 +286,6 @@ public class Observations {
 			feat.put(prefix + "min", dp.getMin());
 			feat.put(prefix + "var", dp.getVariance());
 		}
-		
 		return feat;
 	}
 	

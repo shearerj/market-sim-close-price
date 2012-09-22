@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.TreeSet;
 
+import entity.Market;
 import event.TimeStamp;
 import systemmanager.*;
 
@@ -128,7 +129,7 @@ public class PQOrderBook extends OrderBook {
 	 * Print the active bids in the orderbook.
 	 */
 	public void logActiveBids(TimeStamp ts) {
-		String s = ts.toString() + " | []" + data.getMarket(marketID).toString() + " Active bids: ";
+		String s = ts.toString() + " | " + data.getMarket(marketID).toString() + " Active bids: ";
 		for (Map.Entry<Integer,Bid> entry : activeBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
@@ -281,7 +282,7 @@ public class PQOrderBook extends OrderBook {
 				
 				p = new Price(Math.round((ask.getPrice().getPrice() - 
 						bid.getPrice().getPrice()) * pricingPolicy + bid.getPrice().getPrice()));
-//				p = new Price(Market.quantize(p.getPrice(), data.tickSize));
+				p = new Price(Market.quantize(p.getPrice(), data.tickSize));
 			}
 
 			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));

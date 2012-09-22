@@ -95,8 +95,6 @@ public class SystemManager {
 			// Read environment parameters & set up environment
 			loadConfig(envProps, Consts.configDir + Consts.configFile);
 			data.readEnvProps(envProps);
-			data.backgroundArrivalTimes();
-			data.backgroundPrivateValues();
 
 			// Create log file
 			int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
@@ -119,12 +117,15 @@ public class SystemManager {
 				System.err.print("setup(String): error creating log file");
 			}
 
+			// Log properties
+			log.log(Log.DEBUG, envProps.toString());
 			// Read simulation spec file
 			SimulationSpec specs = new SimulationSpec(simFolder + Consts.simSpecFile, log, data);
 			specs.setParams();
 
-			// Log properties
-			log.log(Log.DEBUG, envProps.toString());
+			data.backgroundArrivalTimes();
+			data.backgroundPrivateValues();
+			
 
 			// =================================================
 			// Create entities
@@ -291,10 +292,10 @@ public class SystemManager {
 				results.addObservation(id);
 			}
 			
-			results.addFeature("nbbo_surplus", results.getSurplusFeatures(data.getAllSurplus()));
+			results.addFeature("bkgrd_surplus", results.getSurplusFeatures(data.getAllSurplus()));
 			results.addFeature("interval", results.getTimeStampFeatures(data.getIntervals()));
 			results.addFeature("pv", results.getPriceFeatures(data.getPrivateValues()));
-			results.addFeature("nbbo_info", results.getNBBOInfo(data.getAgents()));
+			results.addFeature("bkgrd_info", results.getBackgroundInfo(data.getAgents()));
 			results.addFeature("transactions", results.getTransactionInfo());
 			results.addFeature("depths", results.getDepthInfo());
 			results.addFeature("spreads", results.getSpreadInfo());
