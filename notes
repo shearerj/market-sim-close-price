@@ -1,8 +1,0 @@
-javac -sourcepath src -d build src\systemmanager\SystemManager.java
-java -cp build systemmanager.SystemManager
-
-echo Main-Class: systemmanager.SystemManager>myManifest
-jar cfm dist/mss.jar myManifest -C build .
-java -jar dist/mss.jar
-
-
