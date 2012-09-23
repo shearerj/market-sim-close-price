@@ -292,8 +292,9 @@ public class SystemManager {
 				results.addObservation(id);
 			}
 			
-			results.addFeature("bkgrd_surplus", results.getSurplusFeatures(data.getAllSurplus()));
-			results.addFeature("interval", results.getTimeStampFeatures(data.getIntervals()));
+			results.addFeature("bkgrd_surplus", results.getIntegerFeatures(data.getAllSurplus()));
+			results.addFeature("bkgrd_profit", results.getIntegerFeatures(data.getAllProfit()));
+			results.addFeature("arrival_interval", results.getTimeStampFeatures(data.getIntervals()));
 			results.addFeature("pv", results.getPriceFeatures(data.getPrivateValues()));
 			results.addFeature("bkgrd_info", results.getBackgroundInfo(data.getAgents()));
 			results.addFeature("transactions", results.getTransactionInfo());

@@ -145,13 +145,16 @@ public class SimulationSpec {
 			String strategy = players.get(idx);
 			ap.put("strategy", strategy);
 			
-			String[] stratParams = strategy.split("[_]+");
-			if (stratParams.length % 2 != 0) {
-				log.log(Log.ERROR, "setStrategy: error with describing the strategy");
-				return null;
-			}
-			for (int j = 0; j < stratParams.length; j += 2) {
-				ap.put(stratParams[j], stratParams[j+1]);
+			// Check that strategy is not blank
+			if (!strategy.equals("")) {
+				String[] stratParams = strategy.split("[_]+");
+				if (stratParams.length % 2 != 0) {
+					log.log(Log.ERROR, "setStrategy: error with describing the strategy");
+					return null;
+				}
+				for (int j = 0; j < stratParams.length; j += 2) {
+					ap.put(stratParams[j], stratParams[j+1]);
+				}
 			}
 			log.log(Log.INFO, role + ": " + ap);
 			return ap;

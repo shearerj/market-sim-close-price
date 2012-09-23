@@ -70,15 +70,16 @@ public class Observations {
 	
 	
 	/**
-	 * Takes hashmap of agent surplus and extracts features for observation file.
+	 * Takes hashmap of agent information (integer values only) and extracts features for 
+	 * observation file.
 	 * 
 	 * @param surplus
 	 * @return
 	 */
-	public HashMap<String,Object> getSurplusFeatures(HashMap<Integer,Integer> allSurplus) {
+	public HashMap<String,Object> getIntegerFeatures(HashMap<Integer,Integer> allValues) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-		Object[] surplus = (new ArrayList<Integer>(allSurplus.values())).toArray();
+		Object[] surplus = (new ArrayList<Integer>(allValues.values())).toArray();
 	    double[] values = new double[surplus.length];  
 	    for (int i = 0; i < values.length; i++) {
 	    	Integer tmp = (Integer) surplus[i];
@@ -169,12 +170,14 @@ public class Observations {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
 		int num = 0;
+		int totBids = 0;
 		for (Map.Entry<Integer,Agent> entry : agents.entrySet()) {
 			Agent a = entry.getValue();
 			if (a instanceof BackgroundAgent) {
 				Consts.SubmittedBidMarket x = ((BackgroundAgent) a).submittedBidType;
 				if (x == null)
 					System.err.print("ERROR");
+				totBids++;
 				switch (x) {
 				case MAIN:
 					// do nothing
@@ -184,6 +187,7 @@ public class Observations {
 			}
 		}
 		feat.put("num_bids_alt", num);
+		feat.put("num_total_bids", totBids);
 		return feat;
 	}
 

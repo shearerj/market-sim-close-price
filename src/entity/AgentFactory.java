@@ -24,14 +24,16 @@ public class AgentFactory {
 									AgentProperties params,
 									Log l) {
 		
-		if (type.equals(Consts.getAgentType("ZIAgent"))) {
-			return new ZIAgent(agentID, data, params, l);
+		if (type.equals(Consts.getAgentType("DummyAgent"))) {
+			return new DummyAgent(agentID, data, params, l);
 		} else if (type.equals(Consts.getAgentType("LAAgent"))) {
 			return new LAAgent(agentID, data, params, l);
 		} else if (type.equals(Consts.getAgentType("MarketMakerAgent"))) {
 			return new MarketMakerAgent(agentID, data, params, l);
 		} else if (type.equals(Consts.getAgentType("BackgroundAgent"))) {
 			return new BackgroundAgent(agentID, data, params, l);
+		} else if (type.equals(Consts.getAgentType("ZIAgent"))) {
+			return new ZIAgent(agentID, data, params, l);
 		} else {
 			return null;
 		}

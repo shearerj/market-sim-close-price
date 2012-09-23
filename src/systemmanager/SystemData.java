@@ -235,10 +235,26 @@ public class SystemData {
 	
 	
 	/**
+	 * Gets the realized profit of all BackgroundAgent objects.
+	 * 
+	 * @return hashmap of background agent profits, hashed by agent ID
+	 */
+	public HashMap<Integer,Integer> getAllProfit() {
+		HashMap<Integer,Integer> allProfit = new HashMap<Integer,Integer>();
+		for (Iterator<Integer> it = this.getAgentIDs().iterator(); it.hasNext(); ) {
+			int id = it.next();
+			if (this.getAgent(id) instanceof BackgroundAgent) {
+				allProfit.put(id, this.getAgent(id).getRealizedProfit());
+			}
+		}
+		return allProfit;
+	}
+	
+	/**
 	 * Iterates through all transactions and sums up surplus for all agents.
 	 * CS = PV - p, PS = p - PV
 	 * 
-	 * @return surplus hashmap, hashed by agent ID
+	 * @return hashmap of background agent surplus, hashed by agent ID
 	 */
 	public HashMap<Integer,Integer> getAllSurplus() {
 		
@@ -249,14 +265,15 @@ public class SystemData {
 			Agent buyer = agents.get(t.buyerID);
 			Agent seller = agents.get(t.sellerID);
 			
-			if (buyer.getPrivateValue() != -1) {
+			// Check that PV is defined for the agent & that it's a background agent
+			if (buyer.getPrivateValue() != -1 && buyer instanceof BackgroundAgent) {
 				int surplus = 0;
 				if (allSurplus.containsKey(buyer.getID())) {
 					surplus = allSurplus.get(buyer.getID());					
 				}
 				allSurplus.put(buyer.getID(), surplus + buyer.getPrivateValue() - t.price.getPrice());		
 			}
-			if (seller.getPrivateValue() != -1) {
+			if (seller.getPrivateValue() != -1 && seller instanceof BackgroundAgent) {
 				int surplus = 0;
 				if (allSurplus.containsKey(seller.getID())) {
 					surplus = allSurplus.get(seller.getID());					
