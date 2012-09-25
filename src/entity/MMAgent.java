@@ -51,6 +51,7 @@ public abstract class MMAgent extends Agent {
 			this.enterMarket(mkt, ts);
 			s += mkt.toString() + ",";
 		}
+		
 		s = s.substring(0, s.length() - 1);
 		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "->" + s);
 		

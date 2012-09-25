@@ -59,7 +59,8 @@ public abstract class Agent extends Entity {
 	protected int positionBalance;
 	protected int averageCost;
 	protected int realizedProfit;
-
+	protected int centralProfit;			// profit in centralized market
+	
 	/**
 	 * Constructor
 	 * @param agentID
@@ -305,6 +306,8 @@ public abstract class Agent extends Entity {
 	public ActivityHashMap addBid(Market mkt, int price, int quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new SubmitBid(this, mkt, price, quantity, ts));
+		if (data.useCentralMarket() && !(this instanceof LAAgent))
+			actMap.insertActivity(new SubmitBid(this, data.centralMarket, price, quantity, ts));
 		return actMap;
 	}
 
@@ -321,6 +324,8 @@ public abstract class Agent extends Entity {
 	public ActivityHashMap addMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new SubmitMultipleBid(this, mkt, price, quantity, ts));
+		if (data.useCentralMarket() && !(this instanceof LAAgent))
+			actMap.insertActivity(new SubmitMultipleBid(this, data.centralMarket, price, quantity, ts));
 		return actMap;
 	}
 
@@ -344,6 +349,7 @@ public abstract class Agent extends Entity {
 		PQBid pqBid = new PQBid(this.ID, mkt.ID);
 		pqBid.addPoint(quantity, new Price(p));
 		pqBid.timestamp = ts;
+		data.bidData.put(pqBid.getBidID(), pqBid);
 		currentBid.put(mkt.ID, pqBid);
 		return mkt.addBid(pqBid, ts);
 	}	
@@ -375,6 +381,7 @@ public abstract class Agent extends Entity {
 				pqBid.addPoint(quantity[i], new Price(p));
 			}
 		}
+		data.addBid(pqBid);
 		currentBid.put(mkt.ID, pqBid);	
 		return mkt.addBid(pqBid, ts);
 	}
@@ -388,6 +395,7 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap withdrawBid(Market mkt, TimeStamp ts) {
 		log.log(Log.INFO, ts.toString() + " | " + this.toString() + " withdraw bid from " + mkt.toString());
+		if (data.useCentralMarket()) data.centralMarket.removeBid(this.ID, ts);
 		return mkt.removeBid(this.ID, ts);
 	}
 
@@ -495,47 +503,48 @@ public abstract class Agent extends Entity {
 		if (!flag) {
 			return false;
 		} else {
-			// check whether seller, in which case negate the quantity
-			int quantity = t.quantity;
-			if (this.ID == t.sellerID) {
-				quantity = -quantity;
-			}
-			
-			// update cash flow and position
-			if (positionBalance == 0) {
-				averageCost = t.price.getPrice();
-				
-			} else if (positionBalance > 0) {
-				if (quantity > 0) {
-					int newCost = averageCost * positionBalance + t.price.getPrice() * quantity;
-					averageCost = newCost / (positionBalance + quantity);
-					
-				} else if (-quantity < positionBalance) {
-					// closing out partial long position
-					realizedProfit += (-quantity) * (t.price.getPrice() - averageCost);
-					
-				} else if (-quantity >= positionBalance) {
-					// closing out all long position, remaining quantity will start new short position
-					realizedProfit += positionBalance * (t.price.getPrice() - averageCost);
-					averageCost = t.price.getPrice();
+			if (t.marketID != data.centralMarketID) {
+				// check whether seller, in which case negate the quantity
+				int quantity = t.quantity;
+				if (this.ID == t.sellerID) {
+					quantity = -quantity;
 				}
-				
-			} else if (positionBalance < 0) {
-				if (quantity < 0) {
-					int newCost = averageCost * (-positionBalance) + t.price.getPrice() * (-quantity);
-					averageCost = -newCost / (positionBalance + quantity);
-					
-				} else if (quantity < -positionBalance) {
-					// closing out partial short position
-					realizedProfit += quantity * (averageCost - t.price.getPrice());
-					
-				} else if (quantity >= -positionBalance) {
-					// closing out all short position, remaining quantity will start new long position
-					realizedProfit += (-positionBalance) * (averageCost - t.price.getPrice());
+				// update cash flow and position
+				if (positionBalance == 0) {
 					averageCost = t.price.getPrice();
+
+				} else if (positionBalance > 0) {
+					if (quantity > 0) {
+						int newCost = averageCost * positionBalance + t.price.getPrice() * quantity;
+						averageCost = newCost / (positionBalance + quantity);
+
+					} else if (-quantity < positionBalance) {
+						// closing out partial long position
+						realizedProfit += (-quantity) * (t.price.getPrice() - averageCost);
+
+					} else if (-quantity >= positionBalance) {
+						// closing out all long position, remaining quantity will start new short position
+						realizedProfit += positionBalance * (t.price.getPrice() - averageCost);
+						averageCost = t.price.getPrice();
+					}
+
+				} else if (positionBalance < 0) {
+					if (quantity < 0) {
+						int newCost = averageCost * (-positionBalance) + t.price.getPrice() * (-quantity);
+						averageCost = -newCost / (positionBalance + quantity);
+
+					} else if (quantity < -positionBalance) {
+						// closing out partial short position
+						realizedProfit += quantity * (averageCost - t.price.getPrice());
+
+					} else if (quantity >= -positionBalance) {
+						// closing out all short position, remaining quantity will start new long position
+						realizedProfit += (-positionBalance) * (averageCost - t.price.getPrice());
+						averageCost = t.price.getPrice();
+					}
 				}
+				positionBalance += quantity;
 			}
-			positionBalance += quantity;
 		}
 		return true;
 	}
@@ -560,13 +569,11 @@ public abstract class Agent extends Entity {
 				// Check that this agent is involved in the transaction
 				if (t.buyerID == this.ID || t.sellerID == this.ID){ 
 					boolean flag = processTransaction(t);
-					if (!flag) {
-						if (lastGoodTransID != null) {
-							lastTransID = lastGoodTransID;
-							log.log(Log.ERROR, ts.toString() + " | " + this.toString() + " " +
-									"Agent::updateTransactions: Problem with transaction.");
-							break transLoop;
-						}
+					if (!flag && lastGoodTransID != null) {
+						lastTransID = lastGoodTransID;
+						log.log(Log.ERROR, ts.toString() + " | " + this.toString() + " " +
+								"Agent::updateTransactions: Problem with transaction.");
+						break transLoop;
 					}
 					log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " +
 							"Agent::updateTransactions: New transaction received: (mktID=" + t.marketID +
@@ -685,6 +692,13 @@ public abstract class Agent extends Entity {
 		return realizedProfit;
 	}
 	
+	
+	/**
+	 * @return agent's realized profit in the centralized market
+	 */
+	public int getCentralizedMarketProfit() {
+		return centralProfit;
+	}
 
 	/**
 	 * Find best market to buy in (i.e. lowest ask) and to sell in (i.e. highest bid).
@@ -787,27 +801,5 @@ public abstract class Agent extends Entity {
 	    double z = Math.sqrt(-2*Math.log(r1))*Math.cos(2*Math.PI*r2);
 	    return mu + z * Math.sqrt(var);
 	}
-	
-	
-//	/**
-//	 * Specifies when the agent will call its agentStrategy method.
-//	 * Times will depend on the time of agent arrival into the market
-//	 * and the agent's latency.
-//	 * 
-//	 * Note: not used because may run out of memory
-//	 * 
-//	 * @param mkt
-//	 * @param ts
-//	 * @return ActivityHashMap
-//	 */
-//	public ActivityHashMap setupStrategyFrequency(Market mkt, TimeStamp ts) {
-//		ActivityHashMap actMap = new ActivityHashMap();
-//		for (long i = ts.longValue(); i < data.simLength.longValue(); i+=(long)sleepTime) {
-//			TimeStamp time = ts.sum(new TimeStamp(i));
-//			actMap.insertActivity(new UpdateAllQuotes(this, time));
-//			actMap.insertActivity(new AgentStrategy(this, time));
-//		}
-//		return actMap;
-//	}
 
 }

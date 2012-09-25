@@ -68,9 +68,14 @@ public class Quoter extends Entity {
 		lastQuote.bestAsk = bestAsk;
 		log.log(Log.INFO, s + " --> NBBO" + lastQuote);
 		
-		TimeStamp tsNew = ts.sum(latency);
-		actMap.insertActivity(new UpdateNBBO(this, tsNew));
-		
+		if (latency.getTimeStamp() > 0) {
+			TimeStamp tsNew = ts.sum(latency);
+			actMap.insertActivity(new UpdateNBBO(this, tsNew));
+		} else if (latency.getTimeStamp() == 0) {
+			// infinitely fast NBBO updates, occurs before every event
+			actMap.insertActivity(new UpdateNBBO(this, 
+					new TimeStamp(EventManager.FastActivityType.PRE)));
+		}
 		return actMap;
 	}
 	

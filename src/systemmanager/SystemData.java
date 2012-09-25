@@ -24,15 +24,21 @@ import java.util.*;
  * 
  * @author ewah
  */
+/**
+ * @author ewah
+ *
+ */
 public class SystemData {
 
 	// Market information
+	public HashMap<Integer,PQBid> bidData;				// all bids ever, hashed by bid ID
 	public HashMap<Integer,PQTransaction> transData;	// hashed by transaction ID
 	public HashMap<Integer,Quote> quoteData;			// hashed by market ID
 	public HashMap<Integer,Agent> agents;				// agents hashed by ID
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
 	public Quoter quoter;
 	
+	// Does not include the central market
 	public HashMap<String,Integer> numMarketType;		// hashed by type, gives # of that type
 	public HashMap<String,Integer> numAgentType;
 	public int numMarkets;
@@ -49,8 +55,12 @@ public class SystemData {
 	public double shockVar;
 	public double expireRate;
 	public int bidRange;
-	public double valueVar;				// agent variance from PV random process
-	public boolean controlMarket;		// yes if a control market is to be included
+	public double privateValueVar;				// agent variance from PV random process
+	
+	// market type of the central market; if invalid type, no central market will be created
+	public String centralMarketType;
+	public int centralMarketID;
+	public Market centralMarket;
 	
 	// Internal variables
 	private Sequence transIDSequence;
@@ -58,7 +68,7 @@ public class SystemData {
 	private PrivateValue processGenerator;
 	
 	// Variables of time series for observation file
-	public HashMap<Integer,HashMap<TimeStamp,Integer>> marketDepth;	// hashed by market ID
+	public HashMap<Integer,HashMap<TimeStamp,Integer>> marketDepth;		// hashed by market ID
 	public HashMap<Integer,HashMap<TimeStamp,Integer>> marketSpread;	// hashed by market ID
 	public HashMap<TimeStamp,Integer> NBBOSpread;				// time series of NBBO spreads
 	public HashMap<Integer,TimeStamp> executionTime;		 	// hashed by bid ID
@@ -68,6 +78,7 @@ public class SystemData {
 	 * Constructor
 	 */
 	public SystemData() {
+		bidData = new HashMap<Integer,PQBid>();
 		transData = new HashMap<Integer,PQTransaction>();
 		quoteData = new HashMap<Integer,Quote>();
 		agents = new HashMap<Integer,Agent>();
@@ -84,6 +95,9 @@ public class SystemData {
 		NBBOSpread = new HashMap<TimeStamp,Integer>();
 		executionTime = new HashMap<Integer,TimeStamp>();
 		submissionTime = new HashMap<Integer,TimeStamp>();
+		
+		// Default ID for central market
+		centralMarketID = 0;
 	}
 
 	
@@ -92,11 +106,7 @@ public class SystemData {
 	public HashMap<Integer,Bid> getBids(int marketID) {
 		return markets.get(marketID).getBids();
 	}
-
-	public HashMap<Integer,PQTransaction> getTrans() {
-		return transData;
-	}
-
+	
 	public HashMap<Integer,Quote> getQuotes() {
 		return quoteData;
 	}
@@ -139,11 +149,52 @@ public class SystemData {
 	}
 
 	public Market getMarket(int id) {
-		return markets.get(id);
+		if (id != centralMarketID) {
+			return markets.get(id);
+		} else {
+			return centralMarket;
+		}
 	}
 
 	public PQTransaction getTransaction(int id) {
 		return transData.get(id);
+	}
+	
+
+	public HashMap<Integer,PQTransaction> getAllTrans() {
+		return transData;
+	}
+	
+	/**
+	 * Get transactions for only the given market(s).
+	 * @param mktID
+	 * @return
+	 */
+	public HashMap<Integer,PQTransaction> getTrans(ArrayList<Integer> mktIDs) {
+		HashMap<Integer,PQTransaction> trans = new HashMap<Integer,PQTransaction>();
+		for (Map.Entry<Integer,PQTransaction> entry : transData.entrySet()) {
+			if (mktIDs.contains(entry.getValue().marketID))
+				trans.put(entry.getKey(), entry.getValue());
+		}
+		return trans;
+	}
+	
+	public PQBid getBid(int id) {
+		return bidData.get(id);
+	}
+	
+	/**
+	 * @return true if central market present, false otherwise
+	 */
+	public boolean useCentralMarket() {
+		if (centralMarketType != null) {
+			if (Arrays.asList(Consts.marketTypeNames).contains(centralMarketType.toUpperCase())) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return false;	
 	}
 	
 	/**
@@ -243,7 +294,7 @@ public class SystemData {
 		HashMap<Integer,Integer> allProfit = new HashMap<Integer,Integer>();
 		for (Iterator<Integer> it = this.getAgentIDs().iterator(); it.hasNext(); ) {
 			int id = it.next();
-			if (this.getAgent(id) instanceof BackgroundAgent) {
+			if (this.getAgent(id) instanceof ZIAgent) {
 				allProfit.put(id, this.getAgent(id).getRealizedProfit());
 			}
 		}
@@ -254,31 +305,36 @@ public class SystemData {
 	 * Iterates through all transactions and sums up surplus for all agents.
 	 * CS = PV - p, PS = p - PV
 	 * 
+	 * @param central 	true if getting for central market, false otherwise
 	 * @return hashmap of background agent surplus, hashed by agent ID
 	 */
-	public HashMap<Integer,Integer> getAllSurplus() {
+	public HashMap<Integer,Integer> getSurplus(boolean central) {
 		
 		HashMap<Integer,Integer> allSurplus = new HashMap<Integer,Integer>();
 		for (Map.Entry<Integer,PQTransaction> trans : transData.entrySet()) {
 			PQTransaction t = trans.getValue();
 			
-			Agent buyer = agents.get(t.buyerID);
-			Agent seller = agents.get(t.sellerID);
-			
-			// Check that PV is defined for the agent & that it's a background agent
-			if (buyer.getPrivateValue() != -1 && buyer instanceof BackgroundAgent) {
-				int surplus = 0;
-				if (allSurplus.containsKey(buyer.getID())) {
-					surplus = allSurplus.get(buyer.getID());					
+			// Check if getting for central market
+			if ((central && t.marketID == centralMarketID) || 
+					(!central && t.marketID != centralMarketID)) {
+				Agent buyer = agents.get(t.buyerID);
+				Agent seller = agents.get(t.sellerID);
+				
+				// Check that PV is defined for the agent & that it's a background agent
+				if (buyer.getPrivateValue() != -1 && buyer instanceof ZIAgent) {
+					int surplus = 0;
+					if (allSurplus.containsKey(buyer.getID())) {
+						surplus = allSurplus.get(buyer.getID());					
+					}
+					allSurplus.put(buyer.getID(), surplus + buyer.getPrivateValue() - t.price.getPrice());		
 				}
-				allSurplus.put(buyer.getID(), surplus + buyer.getPrivateValue() - t.price.getPrice());		
-			}
-			if (seller.getPrivateValue() != -1 && seller instanceof BackgroundAgent) {
-				int surplus = 0;
-				if (allSurplus.containsKey(seller.getID())) {
-					surplus = allSurplus.get(seller.getID());					
+				if (seller.getPrivateValue() != -1 && seller instanceof ZIAgent) {
+					int surplus = 0;
+					if (allSurplus.containsKey(seller.getID())) {
+						surplus = allSurplus.get(seller.getID());					
+					}
+					allSurplus.put(seller.getID(), surplus + t.price.getPrice() - seller.getPrivateValue());		
 				}
-				allSurplus.put(seller.getID(), surplus + t.price.getPrice() - seller.getPrivateValue());		
 			}
 		}
 		return allSurplus;
@@ -312,6 +368,10 @@ public class SystemData {
 		quoteData.put(mktID, q);
 	}
 	
+	public void addBid(PQBid b) {
+		bidData.put(b.getBidID(), b);
+	}
+	
 	/**
 	 * Add bid-ask spread value to the HashMap containers. If the mktID is 0, then
 	 * inserts as NBBO spread.
@@ -336,8 +396,7 @@ public class SystemData {
 	}	
 	
 	/**
-	 * Add depth (number of orders waiting to be fulfilled) to the the 
-	 * container.
+	 * Add depth (number of orders waiting to be fulfilled) to the the container.
 	 * 
 	 * @param mktID
 	 * @param ts

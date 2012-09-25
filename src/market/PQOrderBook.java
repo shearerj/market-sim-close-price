@@ -129,7 +129,7 @@ public class PQOrderBook extends OrderBook {
 	 * Print the active bids in the orderbook.
 	 */
 	public void logActiveBids(TimeStamp ts) {
-		String s = ts.toString() + " | " + data.getMarket(marketID).toString() + " Active bids: ";
+		String s = ts.toString() + " | " + data.getMarket(marketID) + " Active bids: ";
 		for (Map.Entry<Integer,Bid> entry : activeBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
@@ -144,7 +144,7 @@ public class PQOrderBook extends OrderBook {
 	 * Print the cleared bids in the orderbook. 
 	 */
 	public void logClearedBids(TimeStamp ts) {
-		String s = ts.toString() + " | " + data.getMarket(marketID).toString() + " Cleared bids: ";
+		String s = ts.toString() + " | " + data.getMarket(marketID) + " Cleared bids: ";
 		for (Map.Entry<Integer,Bid> entry : clearedBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {

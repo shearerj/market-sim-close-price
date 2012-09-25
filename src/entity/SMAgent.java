@@ -36,7 +36,7 @@ public abstract class SMAgent extends Agent {
 		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "->" + mkt.toString());
 		this.enterMarket(mkt, ts);
 		marketIDs.add(mkt.ID);
-
+		
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new UpdateAllQuotes(this, ts));
 		actMap.insertActivity(new AgentStrategy(this, mkt, ts));

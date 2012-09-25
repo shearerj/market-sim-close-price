@@ -18,7 +18,9 @@ public class TimeStamp implements Comparable<TimeStamp>
 {
 	/* should these be made private?  */
 	private Long ts;
-
+	private static long preTS = -1;		// TimeStamp assigned to PRE activities
+	private static long postTS = -2;	// TimeStamp assigned to POST activities
+	
 	public TimeStamp()          { ts = new Long(new Date().getTime());}
 	public TimeStamp(Date d)    { ts = new Long(d.getTime());}
 	public TimeStamp(Long l)    { ts = l;}
@@ -27,6 +29,42 @@ public class TimeStamp implements Comparable<TimeStamp>
 	public TimeStamp(int i)     { ts = new Long((new Integer(i)).longValue());}
 	public TimeStamp(String s)  { ts = new Long(s);}
 
+	/**
+	 * Constructor to handle infinitely fast activity times.
+	 * @param t
+	 */
+	public TimeStamp(EventManager.FastActivityType t) {
+		switch (t) {
+		case POST:
+			ts = new Long(postTS);
+			break;
+			
+		case PRE:
+			ts = new Long(preTS);
+			break;
+			
+		default:
+			ts = new Long(0);
+			break;
+		}
+	}
+	
+	/**
+	 * @return true if TimeStamp is a PRE activity.
+	 */
+	public boolean isFastPreActivity() {
+		if (ts.longValue() == preTS) return true;
+		return false;
+	}
+	
+	/**
+	 * @return true if TimeStamp is a POST activity.
+	 */
+	public boolean isFastPostActivity() {
+		if (ts.longValue() == postTS) return true;
+		return false;
+	}
+	
 	/**
 	 * Get the timestamp.
 	 * @return the TimeStamp's receipt timestamp in microseconds

@@ -21,7 +21,7 @@ if [ "$1" == "cda" ]; then
 if [ ! -d "$folder" ]; then
    mkdir "$folder"
 fi
-./create_spec_file.sh "${folder}/simulation_spec.json" LA ${strat} 2 0 10 $2
+./create_spec_file.sh "${folder}/simulation_spec.json" LA ${strat} 2 0 10 $1 $2
 ./run_hft.sh ${folder} $3
 ./parse_single.sh $4 ${folder} 1
 fi
@@ -36,7 +36,7 @@ newfolder="${folder}_clear_${clearFreq}"a
 if [ ! -d "$newfolder" ]; then
    mkdir "$newfolder"
 fi
-./create_spec_file.sh "${newfolder}/simulation_spec.json" LA ${strat} 0 2 ${clearFreq} $2
+./create_spec_file.sh "${newfolder}/simulation_spec.json" LA ${strat} 0 2 ${clearFreq} $1 $2
 ./run_hft.sh ${newfolder} $3
 ./parse_single.sh $4 ${folder} 2
 fi

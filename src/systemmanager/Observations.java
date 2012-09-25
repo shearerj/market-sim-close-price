@@ -70,13 +70,57 @@ public class Observations {
 	
 	
 	/**
+	 * Adds the mean, max, min, sum, var, & med to the feature.
+	 * 
+	 * @param feat
+	 * @param values
+	 */
+	private void addAllStatistics(HashMap<String,Object> feat, double[] values) {
+		DescriptiveStatistics ds = new DescriptiveStatistics(values);
+		Median med = new Median();
+		feat.put("mean", ds.getMean());
+		feat.put("max", ds.getMax());
+		feat.put("min", ds.getMin());
+		feat.put("sum", ds.getSum());
+		feat.put("var", ds.getVariance());
+		feat.put("med", med.evaluate(values));
+	}
+	
+	/**
+	 * Adds either {mean, max, min, & var} or {mean, med}, based on mid parameter.
+	 * 
+	 * @param feat
+	 * @param values
+	 * @param prefix to append to feature type
+	 * @param mid is true if only add middle-type metrics (e.g. mean/median), false otherwise
+	 */
+	private void addStatistics(HashMap<String,Object> feat, double[] values, String prefix, 
+			boolean mid) {
+		if (prefix != null && prefix != "") {
+			prefix = prefix + "_";
+		}
+		DescriptiveStatistics dp = new DescriptiveStatistics(values);
+		feat.put(prefix + "mean", dp.getMean());
+		if (mid) {
+			Median med = new Median();
+			feat.put(prefix + "med", med.evaluate(values));
+		}
+		if (!mid) {
+			feat.put(prefix + "max", dp.getMax());
+			feat.put(prefix + "min", dp.getMin());
+			feat.put(prefix + "var", dp.getVariance());
+		}
+	}
+	
+	
+	/**
 	 * Takes hashmap of agent information (integer values only) and extracts features for 
 	 * observation file.
 	 * 
 	 * @param surplus
 	 * @return
 	 */
-	public HashMap<String,Object> getIntegerFeatures(HashMap<Integer,Integer> allValues) {
+	public HashMap<String,Object> getIntFeatures(HashMap<Integer,Integer> allValues) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
 		Object[] surplus = (new ArrayList<Integer>(allValues.values())).toArray();
@@ -85,16 +129,7 @@ public class Observations {
 	    	Integer tmp = (Integer) surplus[i];
 	        values[i] = tmp.doubleValue();
 	    }
-		DescriptiveStatistics ds = new DescriptiveStatistics(values);
-		Median med = new Median();
-		
-		feat.put("mean", ds.getMean());
-		feat.put("max", ds.getMax());
-		feat.put("min", ds.getMin());
-		feat.put("sum", ds.getSum());
-		feat.put("var", ds.getVariance());
-		feat.put("med", med.evaluate(values));
-		
+		addAllStatistics(feat,values);
 		return feat;
 	}
 	
@@ -115,16 +150,7 @@ public class Observations {
 	    	TimeStamp tmp = (TimeStamp) times[i];
 	        values[i] = (double) tmp.longValue();
 	    }
-		DescriptiveStatistics ds = new DescriptiveStatistics(values);
-		Median med = new Median();
-		
-		feat.put("mean", ds.getMean());
-		feat.put("max", ds.getMax());
-		feat.put("min", ds.getMin());
-		feat.put("sum", ds.getSum());
-		feat.put("var", ds.getVariance());
-		feat.put("med", med.evaluate(values));
-		
+		addAllStatistics(feat,values);
 		return feat;
 	}
 	
@@ -144,16 +170,7 @@ public class Observations {
 	    	Price tmp = (Price) prices[i];
 	        values[i] = (double) tmp.getPrice();
 	    }
-	    DescriptiveStatistics ds = new DescriptiveStatistics(values);
-		Median med = new Median();
-		
-		feat.put("mean", ds.getMean());
-		feat.put("max", ds.getMax());
-		feat.put("min", ds.getMin());
-		feat.put("sum", ds.getSum());
-		feat.put("var", ds.getVariance());
-		feat.put("med", med.evaluate(values));
-		
+	    addAllStatistics(feat,values);
 		return feat;
 	}
 	
@@ -173,8 +190,8 @@ public class Observations {
 		int totBids = 0;
 		for (Map.Entry<Integer,Agent> entry : agents.entrySet()) {
 			Agent a = entry.getValue();
-			if (a instanceof BackgroundAgent) {
-				Consts.SubmittedBidMarket x = ((BackgroundAgent) a).submittedBidType;
+			if (a instanceof ZIAgent) {
+				Consts.SubmittedBidMarket x = ((ZIAgent) a).submittedBidType;
 				if (x == null)
 					System.err.print("ERROR");
 				totBids++;
@@ -193,12 +210,20 @@ public class Observations {
 
 	/**
 	 * Computes statistical values on the transaction data.
+	 * 
+	 * @param central true if on central market data only
 	 * @return
 	 */
-	public HashMap<String,Object> getTransactionInfo() {
+	public HashMap<String,Object> getTransactionInfo(boolean central) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-		HashMap<Integer,PQTransaction> transactions = data.getTrans();
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		if (central) {
+			ids.add(data.centralMarketID);
+		} else {
+			ids = data.getMarketIDs();
+		}
+		HashMap<Integer,PQTransaction> transactions = data.getTrans(ids);
 		feat.put("num_trans", transactions.size());
 		
 		int buys = 0;
@@ -219,76 +244,92 @@ public class Observations {
 		}
 		feat.put("hft_buys", buys);
 		feat.put("hft_sells", sells);
-		
-		DescriptiveStatistics dp = new DescriptiveStatistics(prices);
-		feat.put("price_mean", dp.getMean());
-		feat.put("price_max", dp.getMax());
-		feat.put("price_min", dp.getMin());
-		feat.put("price_var", dp.getVariance());
-		
-//		DescriptiveStatistics dq = new DescriptiveStatistics(quantities);
-//		feat.put("qty_mean", dq.getMean());
-//		feat.put("qty_max", dq.getMax());
-//		feat.put("qty_min", dq.getMin());
-//		feat.put("qty_var", dq.getVariance());
-		
+		addStatistics(feat,prices,"price",false);
+//		addSomeStatistics(feat,quantities,"qty",false);
 		return feat;
 	}
 	
 	
 	/**
-	 * Computes spread metrics all markets plus the NBBO.
+	 * Computes execution speed metrics.
+	 * 
+	 * @param central true if on central market data only
 	 * @return
 	 */
-	public HashMap<String,Object> getSpreadInfo() {
+	public HashMap<String,Object> getExecutionSpeed(boolean central) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-		for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
-			int mktID = it.next();
-			HashMap<TimeStamp,Integer> marketSpread = data.marketSpread.get(mktID);
-			double[] spreads = extractTimeSeries(marketSpread);
-			
-			DescriptiveStatistics dp = new DescriptiveStatistics(spreads);
-			Median med = new Median();
-			String prefix = "mkt" + (-mktID) + "_";
-			feat.put(prefix + "mean", dp.getMean());
-//			feat.put(prefix + "max", dp.getMax());
-//			feat.put(prefix + "min", dp.getMin());
-//			feat.put(prefix + "var", dp.getVariance());
-			feat.put(prefix + "med", med.evaluate(spreads));
+		// Initialize with maximum number of possible bids
+		double[] values = new double[data.executionTime.size()];
+		int cnt = 0;
+		for (Map.Entry<Integer, TimeStamp> entry : data.executionTime.entrySet()) {
+			int bidID = entry.getKey();
+			TimeStamp ts = entry.getValue();
+			PQBid b = data.getBid(bidID);
+			if ((central && data.centralMarketID == b.getMarketID()) ||
+					(!central && data.centralMarketID != b.getMarketID())) {
+				values[cnt] =  (double) ts.diff(data.submissionTime.get(bidID)).longValue();
+				cnt++;
+			}
 		}
+		// Reinitialize to get rid of unused portion of array
+		double[] speeds = new double[cnt];
+		for (int i = 0; i < cnt; i++) {
+			speeds[i] = values[i];
+		}
+		addStatistics(feat,values,"",false);
+		return feat;
+	}
+	
+	
+	/**
+	 * Computes spread metrics either on 1) all markets + NBBO, or 2) central market.
+	 * 
+	 * @param central true if on central market data only
+	 * @return
+	 */
+	public HashMap<String,Object> getSpreadInfo(boolean central) {
+		HashMap<String,Object> feat = new HashMap<String,Object>();
+		
+		if (!central) {
+			for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
+				int mktID = it.next();
+				HashMap<TimeStamp,Integer> marketSpread = data.marketSpread.get(mktID);
+				double[] spreads = extractTimeSeries(marketSpread);
+				addStatistics(feat,spreads,"mkt" + (-mktID),true);
+			}
 
-		double[] nbboSpreads = extractTimeSeries(data.NBBOSpread);
-		DescriptiveStatistics dp = new DescriptiveStatistics(nbboSpreads);
-		Median med = new Median();
-		feat.put("nbbo_mean", dp.getMean());
-//		feat.put("nbbo_max", dp.getMax());
-//		feat.put("nbbo_min", dp.getMin());
-//		feat.put("nbbo_var", dp.getVariance());
-		feat.put("nbbo_med", med.evaluate(nbboSpreads));
-
+			double[] nbboSpreads = extractTimeSeries(data.NBBOSpread);
+			addStatistics(feat,nbboSpreads,"nbbo",true);
+		} else {
+			HashMap<TimeStamp,Integer> marketSpread = data.marketSpread.get(data.centralMarketID);
+			double[] spreads = extractTimeSeries(marketSpread);
+			addStatistics(feat,spreads,"mkt_c",true);
+		}
 		return feat;
 	}
 	
 
 	/**
-	 * Compute depth metrics for the given market.
+	 * Computes spread metrics either on 1) all markets, or 2) central market only.
+	 * 
+	 * @param central true if on central market data only
 	 * @return
 	 */
-	public HashMap<String,Object> getDepthInfo() {
+	public HashMap<String,Object> getDepthInfo(boolean central) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-		for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
-			int mktID = it.next();
-			HashMap<TimeStamp,Integer> marketDepth = data.marketDepth.get(mktID);
+		if (!central) {
+			for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
+				int mktID = it.next();
+				HashMap<TimeStamp,Integer> marketDepth = data.marketDepth.get(mktID);
+				double[] depths = extractTimeSeries(marketDepth);
+				addStatistics(feat,depths,"mkt" + (-mktID),true);
+			}
+		} else {
+			HashMap<TimeStamp,Integer> marketDepth = data.marketDepth.get(data.centralMarketID);
 			double[] depths = extractTimeSeries(marketDepth);
-			
-			DescriptiveStatistics dp = new DescriptiveStatistics(depths);
-			String prefix = "mkt" + (-mktID) + "_";
-			feat.put(prefix + "mean", dp.getMean());
-			feat.put(prefix + "max", dp.getMax());
-			feat.put(prefix + "min", dp.getMin());
-			feat.put(prefix + "var", dp.getVariance());
+			addStatistics(feat,depths,"mkt_c",true);
 		}
 		return feat;
 	}
@@ -330,31 +371,6 @@ public class Observations {
 			}
 		}
 		return vals;
-	}
-	
-	
-	/**
-	 * Computes execution speed metrics.
-	 * @return
-	 */
-	public HashMap<String,Object> getExecutionSpeed() {
-		HashMap<String,Object> feat = new HashMap<String,Object>();
-		
-		double[] speeds = new double[data.executionTime.size()];
-		int i = 0;
-		for (Map.Entry<Integer, TimeStamp> entry : data.executionTime.entrySet()) {
-			int bidID = entry.getKey();
-			TimeStamp ts = entry.getValue();
-			speeds[i] =  (double) ts.diff(data.submissionTime.get(bidID)).longValue();
-			i++;
-		}
-		DescriptiveStatistics dp = new DescriptiveStatistics(speeds);
-		feat.put("mean", dp.getMean());
-		feat.put("max", dp.getMax());
-		feat.put("min", dp.getMin());
-		feat.put("var", dp.getVariance());
-		
-		return feat;
 	}
 	
 	

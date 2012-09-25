@@ -47,7 +47,7 @@ public class ArrivalTime {
 	 * @return next computed arrival time
 	 */
 	public TimeStamp next() {
-		double tmp = 100 * getExponentialRV(lambda);
+		double tmp = getExponentialRV(lambda);
 		TimeStamp interval = new TimeStamp((int) Math.ceil(tmp));
 		time = time.sum(interval);
 		intervals.add(interval);

@@ -76,16 +76,36 @@ public class Event {
 	public void addActivity(Activity act) {
 		if (act != null) {
 			if (eventTime.checkActivityTimeStamp(act)) {
-				this.activities.add(act);
+				this.activities.addLast(act);
 			} else {
 				System.err.println("Event::addActivity::ERROR: activity does not match Event time.");
 			}
-		}
-			
+		}	
+	}
+	
+	/**
+	 * @param act	Activity to be added to LinkedList for Event.
+	 * @param index Location in list in which to insert the Activity.
+	 */
+	public void addActivity(Activity act, int index) {
+		if (act != null) {
+			if (eventTime.checkActivityTimeStamp(act)) {
+				this.activities.add(index, act);
+			} else {
+				System.err.println("Event::addActivity::ERROR: activity does not match Event time.");
+			}
+		}	
+	}
+	
+	/**
+	 * @param act	Activity to be added to LinkedList for Event.
+	 */
+	public void addActivityAtBeginning(Activity act) {
+		addActivity(act, 0);
 	}
 
 	/**
-	 * @param acts	LinkedList of Activities to be added
+	 * @param acts	LinkedList of Activities to be added.
 	 */
 	public void addActivity(LinkedList<Activity> acts) {
 		if (acts != null) {
@@ -95,6 +115,27 @@ public class Event {
 				System.err.println("Event::addActivity::ERROR: activity list does not match Event time.");
 			}
 		}
+	}
+	
+	/**
+	 * @param acts	LinkedList of Activities to be added.
+	 * @param index Location in list in which to insert the Activity.
+	 */
+	public void addActivity(LinkedList<Activity> acts, int index) {
+		if (acts != null) {
+			if (eventTime.checkActivityTimeStamp(acts)) {
+				this.activities.addAll(index, acts);
+			} else {
+				System.err.println("Event::addActivity::ERROR: activity list does not match Event time.");
+			}
+		}
+	}
+	
+	/**
+	 * @param act	LinkedList of Activities to be added.
+	 */
+	public void addActivityAtBeginning(LinkedList<Activity> acts) {
+		addActivity(acts, 0);
 	}
 	
 	

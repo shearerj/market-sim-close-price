@@ -13,9 +13,10 @@ public class Consts {
 	public static final int INF_PRICE = 999999999;
 	
 	// Entity types
-	public final static String[] agentTypeNames = {"LA", "BACKGROUND", "DUMMY"};
+	public final static String[] agentTypeNames = {"LA", "ZI", "DUMMY"};
 	public final static String[] marketTypeNames = {"CDA", "CALL"};
-
+	public final static String CENTRAL = "CENTRAL";
+	
 	/**
 	 * Returns the market type based on the class name.
 	 * @param className

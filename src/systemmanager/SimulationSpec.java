@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.json.simple.*;
 import org.json.simple.parser.*;
 
@@ -71,8 +73,8 @@ public class SimulationSpec {
 		data.shockVar = Double.parseDouble(getValue("shock_var"));
 		data.expireRate = Double.parseDouble(getValue("expire_rate"));
 		data.bidRange = Integer.parseInt(getValue("bid_range"));
-		data.valueVar = Double.parseDouble(getValue("value_var"));
-		data.controlMarket = Boolean.parseBoolean(getValue("control_mkt"));
+		data.privateValueVar = Double.parseDouble(getValue("value_var"));
+		data.centralMarketType = getValue("central_mkt").toUpperCase();
 		
 		// Check which types of markets to create
 		for (int i = 0; i < Consts.marketTypeNames.length; i++) {
@@ -83,6 +85,12 @@ public class SimulationSpec {
 				data.numMarketType.put(Consts.marketTypeNames[i], n);
 			}
 		}
+		// Create the central market; check first if valid market type
+		if (data.useCentralMarket()) {
+			data.numMarketType.put(Consts.CENTRAL, 1);
+		}
+		
+		
 		// Check which types of agents to create
 		for (int i = 0; i < Consts.agentTypeNames.length; i++) {
 			String num = getValue(Consts.agentTypeNames[i]);

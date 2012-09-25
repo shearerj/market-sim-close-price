@@ -13,4 +13,4 @@ do
   CLASSPATH=${CLASSPATH}:${i}
 done
 
-java -cp $CLASSPATH parser.Parser $1 $2 $3
+java -cp $CLASSPATH parser.Parser $1 ${2%/} $3

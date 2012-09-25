@@ -13,7 +13,7 @@ import java.text.DateFormat;
  * in that it instantiates the Activity objects and provides the methods
  * to execute them later.
  * 
- * First input argument is folder name, second is sample #.
+ * Usage: java -jar hft.jar [simulation folder name] [sample #]
  * 
  * @author ewah
  */
@@ -99,10 +99,11 @@ public class SystemManager {
 			// Create log file
 			int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
 			Date now = new Date();
-			String logFilename = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(now);
+			String logFilename = simFolder + num;
+			logFilename += "_" + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(now);
 			logFilename = logFilename.replace("/", "-");
 			logFilename = logFilename.replace(" ", "_");
-			logFilename = logFilename.replace(":", "");
+			logFilename = logFilename.replace(":","");
 			
 			try {
 				// Check first if directory exists
@@ -136,15 +137,25 @@ public class SystemManager {
 			Quoter iu = new Quoter(0, data, log);
 			data.quoter = iu;
 			eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(0)));
+//			eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(EventManager.FastActivityType.PRE)));
 
 			// Create markets first since agent creation references markets
 			for (Map.Entry<String, Integer> mkt: data.numMarketType.entrySet()) {
-				for (int i = 0; i < mkt.getValue(); i++) {
+				
+				if (mkt.getKey().equals(Consts.CENTRAL)) {
 					int mID = marketIDSequence.decrement();
-					// create market
-					setupMarket(mID, mkt.getKey());
+					data.centralMarketID = mID;
+					setupMarket(mID, Consts.CENTRAL);
+					log.log(Log.INFO, "Central Market: " + data.getMarket(mID));
+					
+				} else {
+					for (int i = 0; i < mkt.getValue(); i++) {
+						int mID = marketIDSequence.decrement();
+						// create market
+						setupMarket(mID, mkt.getKey());	
+					}
+					log.log(Log.INFO, "Markets: " + mkt.getValue() + " " + mkt.getKey());
 				}
-				log.log(Log.INFO, "Markets: " + mkt.getValue() + " " + mkt.getKey());
 			}
 
 			// Create agents, initialize parameters, and compute arrival times (if needed)
@@ -178,8 +189,16 @@ public class SystemManager {
 	 * @param marketType
 	 */
 	public void setupMarket(int marketID, String marketType) {
-		Market market = MarketFactory.createMarket(marketType, marketID, data, log);
-		data.addMarket(market);
+		
+		Market market;
+		if (marketType.equals(Consts.CENTRAL)) {
+			market = MarketFactory.createMarket(data.centralMarketType, marketID, data, log);
+			data.centralMarket = market;
+		} else {
+			// Only add market to the general list if it's not the central market
+			market = MarketFactory.createMarket(marketType, marketID, data, log);
+			data.addMarket(market);
+		}
 		
 		// Check if is call market, then initialize clearing sequence
 		if (market instanceof CallMarket) {
@@ -203,24 +222,17 @@ public class SystemManager {
 		log.log(Log.DEBUG, agent.toString() + ": " + ap);
 		
 		TimeStamp ts = agent.getArrivalTime();
-		Activity arrival = null;
-		Activity departure = null;
-		
-		// Agent is in single market
 		if (agent instanceof SMAgent) {
+			// Agent is in single market
 			for (int i = 1; i <= data.numMarkets; i++) {
-				arrival = new AgentArrival(agent, data.getMarket(-i), ts);
-				departure = new AgentDeparture(agent, data.getMarket(-i), data.simLength);
-				eventManager.createEvent(arrival);
-				eventManager.createEvent(departure);
+				eventManager.createEvent(new AgentArrival(agent, data.getMarket(-i), ts));
+				eventManager.createEvent(new AgentDeparture(agent, data.getMarket(-i), data.simLength));
 			}
 			
 		} else if (agent instanceof MMAgent) {
 			// Agent is in multiple markets
-			arrival = new AgentArrival(agent, ts);
-			departure = new AgentDeparture(agent, data.simLength);
-			eventManager.createEvent(arrival);
-			eventManager.createEvent(departure);
+			eventManager.createEvent(new AgentArrival(agent, ts));
+			eventManager.createEvent(new AgentDeparture(agent, data.simLength));
 		}
 	}
 	
@@ -237,8 +249,8 @@ public class SystemManager {
 			s += "arrivalTime=" + ag.getArrivalTime().toString();
 			
 			// print private value if exists 
-			if (ag instanceof BackgroundAgent) {
-				s += ", pv=" + ((BackgroundAgent) ag).getPrivateValue();
+			if (ag instanceof ZIAgent) {
+				s += ", pv=" + ((ZIAgent) ag).getPrivateValue();
 			}
 			log.log(Log.INFO, s);
 		}
@@ -292,15 +304,16 @@ public class SystemManager {
 				results.addObservation(id);
 			}
 			
-			results.addFeature("bkgrd_surplus", results.getIntegerFeatures(data.getAllSurplus()));
-			results.addFeature("bkgrd_profit", results.getIntegerFeatures(data.getAllProfit()));
+			// Unaffected by central market
 			results.addFeature("arrival_interval", results.getTimeStampFeatures(data.getIntervals()));
 			results.addFeature("pv", results.getPriceFeatures(data.getPrivateValues()));
 			results.addFeature("bkgrd_info", results.getBackgroundInfo(data.getAgents()));
-			results.addFeature("transactions", results.getTransactionInfo());
-			results.addFeature("depths", results.getDepthInfo());
-			results.addFeature("spreads", results.getSpreadInfo());
-			results.addFeature("exec_speed", results.getExecutionSpeed());
+			
+			// All markets other than the centralized market
+			getMarketResults(false, "");
+			
+			// Results for the central market
+			getMarketResults(true, "cn");
 			
 			File file = new File(simFolder + Consts.obsFilename + num + ".json");
 			FileWriter txt = new FileWriter(file);
@@ -312,6 +325,23 @@ public class SystemManager {
 			e.printStackTrace();
 			System.err.print(s);
 		}
+	}
+	
+	/**
+	 * Gets central market results or results for all markets (excluding centralized).
+	 * @param central true if central market
+	 * @param prefix string to add to key name
+	 */
+	private void getMarketResults(boolean central, String prefix) {
+		if (prefix != null && prefix != "") {
+			prefix = prefix + "_";
+		}
+//		results.addFeature("bkgrd_profit", results.getIntFeatures(data.getAllProfit()));
+		results.addFeature(prefix + "bkgrd_surplus", results.getIntFeatures(data.getSurplus(central)));
+		results.addFeature(prefix + "transactions", results.getTransactionInfo(central));
+		results.addFeature(prefix + "depths", results.getDepthInfo(central));
+		results.addFeature(prefix + "spreads", results.getSpreadInfo(central));
+		results.addFeature(prefix + "exec_speed", results.getExecutionSpeed(central));
 	}
 	
 }

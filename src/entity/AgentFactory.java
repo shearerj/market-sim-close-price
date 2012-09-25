@@ -30,41 +30,41 @@ public class AgentFactory {
 			return new LAAgent(agentID, data, params, l);
 		} else if (type.equals(Consts.getAgentType("MarketMakerAgent"))) {
 			return new MarketMakerAgent(agentID, data, params, l);
-		} else if (type.equals(Consts.getAgentType("BackgroundAgent"))) {
-			return new BackgroundAgent(agentID, data, params, l);
 		} else if (type.equals(Consts.getAgentType("ZIAgent"))) {
 			return new ZIAgent(agentID, data, params, l);
+		} else if (type.equals(Consts.getAgentType("TestAgent"))) {
+			return new TestAgent(agentID, data, params, l);
 		} else {
 			return null;
 		}
 	}
 	
 	
-	/**
-	 * Creates a new agent based on type parameter. This constructor
-	 * uses the default AgentProperties setting.
-	 * 
-	 * @param type
-	 * @param agentID
-	 * @param data
-	 * @return
-	 */
-	public static Agent createAgent(String type,
-									Integer agentID,
-									SystemData data,
-									Log l) {
-		
-		AgentProperties params = Consts.getProperties(type);
-		if (type.toLowerCase().equals("zi")) {
-			return new ZIAgent(agentID, data, params, l);
-		} else if (type.toLowerCase().equals("hft")) {
-			return new LAAgent(agentID, data, params, l);
-		} else if (type.toLowerCase().equals("mm")) {
-			return new MarketMakerAgent(agentID, data, params, l);
-		} else if (type.toLowerCase().equals("nbbo")) {
-			return new BackgroundAgent(agentID, data, params, l);
-		} else {
-			return null;
-		}
-	}
+//	/**
+//	 * Creates a new agent based on type parameter. This constructor
+//	 * uses the default AgentProperties setting.
+//	 * 
+//	 * @param type
+//	 * @param agentID
+//	 * @param data
+//	 * @return
+//	 */
+//	public static Agent createAgent(String type,
+//									Integer agentID,
+//									SystemData data,
+//									Log l) {
+//		
+//		AgentProperties params = Consts.getProperties(type);
+//		if (type.toLowerCase().equals("zi")) {
+//			return new TestAgent(agentID, data, params, l);
+//		} else if (type.toLowerCase().equals("hft")) {
+//			return new LAAgent(agentID, data, params, l);
+//		} else if (type.toLowerCase().equals("mm")) {
+//			return new MarketMakerAgent(agentID, data, params, l);
+//		} else if (type.toLowerCase().equals("nbbo")) {
+//			return new ZIAgent(agentID, data, params, l);
+//		} else {
+//			return null;
+//		}
+//	}
 }
