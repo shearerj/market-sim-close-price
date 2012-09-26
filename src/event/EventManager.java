@@ -87,6 +87,7 @@ public class EventManager {
 		Event toExecute = this.eventQueue.peek();
 
 		try {
+			
 			if (!fastPreActivities.isEmpty()) {
 				TimeStamp insertTime = toExecute.getTime();
 				for (Iterator<Activity> it = fastPreActivities.iterator(); it.hasNext(); ) {
@@ -94,9 +95,20 @@ public class EventManager {
 				}
 				LinkedList<Activity> toInsert = new LinkedList<Activity>(fastPreActivities);
 				// insert the infinitely fast PRE activities list at the beginning of the event
-				insertInfinitelyFastPreActivity(toExecute, toInsert);
+				insertInfinitelyFastActivity(FastActivityType.PRE, toExecute, toInsert);
 				// clear the infinitely fast activities list
 				fastPreActivities.clear();
+			}
+			if (toInsertInfinitelyFastPostActivity(toExecute)) {
+				TimeStamp insertTime = toExecute.getTime();
+				for (Iterator<Activity> it = fastPostActivities.iterator(); it.hasNext(); ) {
+					it.next().setTime(insertTime);
+				}
+				LinkedList<Activity> toInsert = new LinkedList<Activity>(fastPostActivities);
+				// insert the infinitely fast POST activities list at the end of the event
+				insertInfinitelyFastActivity(FastActivityType.POST, toExecute, toInsert);
+				// clear the infinitely fast activities list
+				fastPostActivities.clear();
 			}
 			
 			ArrayList<ActivityHashMap> acts = toExecute.executeAll();
@@ -130,17 +142,17 @@ public class EventManager {
 				}
 			}
 			
-			if (toInsertInfinitelyFastPostActivity(toExecute)) {
-				TimeStamp insertTime = toExecute.getTime();
-				for (Iterator<Activity> it = fastPostActivities.iterator(); it.hasNext(); ) {
-					it.next().setTime(insertTime);
-				}
-				LinkedList<Activity> toInsert = new LinkedList<Activity>(fastPostActivities);
-				// create the event with the new TimeStamp
-				createEvent(insertTime, toInsert);
-				// clear the infinitely fast activities list
-				fastPostActivities.clear();
-			}
+//			if (toInsertInfinitelyFastPostActivity(toExecute)) {
+//				TimeStamp insertTime = toExecute.getTime();
+//				for (Iterator<Activity> it = fastPostActivities.iterator(); it.hasNext(); ) {
+//					it.next().setTime(insertTime);
+//				}
+//				LinkedList<Activity> toInsert = new LinkedList<Activity>(fastPostActivities);
+//				// create the event with the new TimeStamp
+//				createEvent(insertTime, toInsert);
+//				// clear the infinitely fast activities list
+//				fastPostActivities.clear();
+//			}
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -207,10 +219,12 @@ public class EventManager {
 	
 	/**
 	 * Inserts the linked list of PRE activities at the beginning of the current event.
+	 * @param t		FastActivityType
 	 * @param e		Event about to be executed
 	 * @return
 	 */
-	public boolean insertInfinitelyFastPreActivity(Event toExecute, LinkedList<Activity> acts) {
+	public boolean insertInfinitelyFastActivity(FastActivityType t, Event toExecute, 
+			LinkedList<Activity> acts) {
 
 		TimeStamp ts = toExecute.getTime();
 		
@@ -218,7 +232,11 @@ public class EventManager {
 			log.log(Log.DEBUG, "ERROR: Activities do not have same timestamp");
 			return false;
 		}
-		toExecute.addActivityAtBeginning(acts);
+		if (t.equals(FastActivityType.PRE)) {
+			toExecute.addActivityAtBeginning(acts);
+		} else if (t.equals(FastActivityType.POST)) {
+			toExecute.addActivity(acts);
+		}
 		log.log(Log.DEBUG, "Activities " + acts.toString() + "@" + ts.toString());
 		
 		return true;
@@ -227,7 +245,7 @@ public class EventManager {
 
 	/**
 	 * Checks whether or not to insert the infinitely fast activities at the time of the
-	 * just executed Event.
+	 * just executed Event (for type POST).
 	 * 
 	 * Conditions to check for:
 	 * - happening after a certain type of other activity

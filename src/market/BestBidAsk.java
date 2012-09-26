@@ -20,10 +20,10 @@ public class BestBidAsk {
 	 */
 	public int getSpread() {
 		if (bestAsk >= bestBid) {
-			if (bestAsk == -1) {	// ask undefined
-				return Consts.INF_PRICE;
+			if (bestAsk == -1 || bestAsk == Consts.INF_PRICE) {	// ask undefined
+				return -Consts.INF_PRICE;
 			}
-			if (bestBid == -1) {	// bid undefined
+			if (bestBid == -1 || bestBid == 0) {	// bid undefined
 				return Consts.INF_PRICE;
 			}
 			return bestAsk - bestBid;

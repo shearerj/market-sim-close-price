@@ -60,10 +60,11 @@ public class Quote {
 	 */
 	public int getSpread() {
 		if (lastAskPrice.compareTo(lastBidPrice) >= 0) {
-			if (lastAskPrice.getPrice() == -1) {	// ask undefined
+			if (lastAskPrice.getPrice() == -1 || lastAskPrice.getPrice() == 0) {
 				return Consts.INF_PRICE;
 			}
-			if (lastBidPrice.getPrice() == -1) {	// bid undefined
+			if (lastBidPrice.getPrice() == -1 || 
+					lastBidPrice.getPrice() == Consts.INF_PRICE) {
 				return Consts.INF_PRICE;
 			}
 			return lastAskPrice.getPrice() - lastBidPrice.getPrice();

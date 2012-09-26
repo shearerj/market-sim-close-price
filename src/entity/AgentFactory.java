@@ -32,8 +32,6 @@ public class AgentFactory {
 			return new MarketMakerAgent(agentID, data, params, l);
 		} else if (type.equals(Consts.getAgentType("ZIAgent"))) {
 			return new ZIAgent(agentID, data, params, l);
-		} else if (type.equals(Consts.getAgentType("TestAgent"))) {
-			return new TestAgent(agentID, data, params, l);
 		} else {
 			return null;
 		}

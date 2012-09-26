@@ -460,7 +460,7 @@ public abstract class Agent extends Entity {
 		int rp = getRealizedProfit();
 		int up = getUnrealizedProfit();
 
-		String s = ts.toString() + " | " + this.toString() + ": Current Position=" + positionBalance +
+		String s = ts.toString() + " | " + this.toString() + " Current Position=" + positionBalance +
 				", Realized Profit=" + rp + ", Unrealized Profit=" + up;
 		log.log(Log.INFO, s);
 	}
@@ -509,6 +509,10 @@ public abstract class Agent extends Entity {
 				if (this.ID == t.sellerID) {
 					quantity = -quantity;
 				}
+				if (this.ID == 1) {
+					System.out.println("there should NOT be a transaction for the LA with 0 latency");
+				}
+				
 				// update cash flow and position
 				if (positionBalance == 0) {
 					averageCost = t.price.getPrice();

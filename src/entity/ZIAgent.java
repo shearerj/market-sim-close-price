@@ -121,15 +121,18 @@ public class ZIAgent extends MMAgent {
 		// Check if NBBO indicates that other market better
 		// - Want to buy for as low a price as possible, so find market with the lowest ask
 		// - Want to sell for as high a price as possible, so find market with the highest bid
+		// - NBBO also better if the bid or ask in the current does not exist
 		boolean nbboBetter = false;
 		if (q > 0) {
 			if (lastNBBOQuote.bestAsk < mainMarketQuote.lastAskPrice.getPrice() &&
-					lastNBBOQuote.bestAsk != -1) { 
+					lastNBBOQuote.bestAsk != -1 ||
+					mainMarketQuote.lastAskPrice.getPrice() == -1) { 
 				nbboBetter = true;
 			}
 		} else {
-			if (lastNBBOQuote.bestBid > mainMarketQuote.lastBidPrice.getPrice() &&
-					mainMarketQuote.lastBidPrice.getPrice() != -1) {
+			if (lastNBBOQuote.bestBid > mainMarketQuote.lastBidPrice.getPrice() ||
+					mainMarketQuote.lastBidPrice.getPrice() == -1) {
+				// don't need lastNBBOQuote.bestBid != -1 due to first condition
 				nbboBetter = true;
 			}
 		}

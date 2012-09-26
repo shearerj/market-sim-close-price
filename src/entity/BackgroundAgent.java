@@ -69,7 +69,7 @@ public class BackgroundAgent extends MMAgent {
 		
 		expireRate = this.data.expireRate;
 		bidRange = this.data.bidRange;
-		valueVar = this.data.valueVar;
+		valueVar = this.data.privateValueVar;
 		expiration = (int) (100 * getExponentialRV(expireRate));
 		arrivalTime = this.data.nextArrival();
 		privateValue = Math.max(0, this.data.nextPrivateValue() + (int) Math.round(getNormalRV(0,valueVar)));

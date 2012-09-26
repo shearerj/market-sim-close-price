@@ -30,6 +30,8 @@ public class SystemManager {
 	
 	private Properties envProps;
 	private Log log;
+	private int logLevel;
+	private String logFilename;
 
 	/**
 	 * Constructor
@@ -64,6 +66,7 @@ public class SystemManager {
 		manager.setup();
 		manager.executeEvents();
 		manager.aggregateResults();
+		manager.close();
 	}
 	
 	
@@ -82,6 +85,16 @@ public class SystemManager {
 		}
 	}
 
+	/**
+	 * Shuts down simulation. Removes empty log file if log level is 0.
+	 */
+	public void close() {
+		File f = new File(simFolder + Consts.logDir);
+		if (f.exists() && logLevel == 0) {
+			// remove the empty log file
+			f.delete();
+		}
+	}
 	
 	/**
 	 * Initialize parameters based on configuration file.
@@ -97,9 +110,9 @@ public class SystemManager {
 			data.readEnvProps(envProps);
 
 			// Create log file
-			int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
+			logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
 			Date now = new Date();
-			String logFilename = simFolder + num;
+			logFilename = simFolder + num;
 			logFilename += "_" + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(now);
 			logFilename = logFilename.replace("/", "-");
 			logFilename = logFilename.replace(" ", "_");
