@@ -23,7 +23,7 @@ public class SystemManager {
 	private SystemData data;
 	private Sequence agentIDSequence;
 	private Sequence marketIDSequence;
-	private Observations results;
+	private Observations obs;
 	
 	private static int num;						// sample number used for labeling output files
 	private static String simFolder;			// simulation folder name
@@ -41,7 +41,7 @@ public class SystemManager {
 		agentIDSequence = new Sequence(1);
 		marketIDSequence = new Sequence(-1);
 		envProps = new Properties();
-		results = new Observations(data);
+		obs = new Observations(data);
 	}
 	
 	/**
@@ -108,6 +108,7 @@ public class SystemManager {
 			// Read environment parameters & set up environment
 			loadConfig(envProps, Consts.configDir + Consts.configFile);
 			data.readEnvProps(envProps);
+			data.obsNum = num;
 
 			// Create log file
 			logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
@@ -314,23 +315,20 @@ public class SystemManager {
 		try {
 			for (Iterator<Integer> it = data.getAgents().keySet().iterator(); it.hasNext(); ) {
 				int id = it.next();
-				results.addObservation(id);
+				obs.addObservation(id);
 			}
 			
-			// Unaffected by central market
-			results.addFeature("arrival_interval", results.getTimeStampFeatures(data.getIntervals()));
-			results.addFeature("pv", results.getPriceFeatures(data.getPrivateValues()));
-			results.addFeature("bkgrd_info", results.getBackgroundInfo(data.getAgents()));
-			
-			// All markets other than the centralized market
-			getMarketResults(false, "");
-			
-			// Results for the central market
-			getMarketResults(true, "cn");
+			obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
+			obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
+			obs.addFeature("bkgrd_info", obs.getBackgroundInfo(data.getAgents()));
+			getMarketResults(false, "");	// All markets other than the centralized market
+			getMarketResults(true, "cn");	// Results for the central market
+//			getMarketComparison("diff");			// Results comparing 2-market vs centralized mkt
+			obs.addFeature("", obs.getConfiguration());
 			
 			File file = new File(simFolder + Consts.obsFilename + num + ".json");
 			FileWriter txt = new FileWriter(file);
-			txt.write(results.generateObservationFile());
+			txt.write(obs.generateObservationFile());
 			txt.close();
 			
 		} catch (Exception e) {
@@ -350,11 +348,17 @@ public class SystemManager {
 			prefix = prefix + "_";
 		}
 //		results.addFeature("bkgrd_profit", results.getIntFeatures(data.getAllProfit()));
-		results.addFeature(prefix + "bkgrd_surplus", results.getIntFeatures(data.getSurplus(central)));
-		results.addFeature(prefix + "transactions", results.getTransactionInfo(central));
-		results.addFeature(prefix + "depths", results.getDepthInfo(central));
-		results.addFeature(prefix + "spreads", results.getSpreadInfo(central));
-		results.addFeature(prefix + "exec_speed", results.getExecutionSpeed(central));
+		obs.addFeature(prefix + "bkgrd_surplus", obs.getIntFeatures(data.getSurplus(central)));
+		obs.addFeature(prefix + "transactions", obs.getTransactionInfo(central));
+		obs.addFeature(prefix + "depths", obs.getDepthInfo(central));
+		obs.addFeature(prefix + "spreads", obs.getSpreadInfo(central));
+		obs.addFeature(prefix + "exec_speed", obs.getExecutionSpeed(central));
 	}
 	
+	
+//	private void getMarketComparison(String prefix) {
+//		
+//		
+//	}
+//	
 }

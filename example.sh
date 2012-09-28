@@ -3,7 +3,7 @@
 
 if [ $# -ne 4 ]
 then
-echo "Usage: .\example.sh [market type] [NBBO latency] [number of samples] [CSV output filename]"
+echo "Usage: .\example.sh [market type] [NBBO latency] [# samples] [CSV filename]"
 exit 1
 fi
 
@@ -23,7 +23,7 @@ if [ ! -d "$folder" ]; then
 fi
 ./create_spec_file.sh "${folder}/simulation_spec.json" LA ${strat} 2 0 10 $1 $2
 ./run_hft.sh ${folder} $3
-./parse_single.sh $4 ${folder} 1
+./parse_single.sh $4 ${folder}
 fi
 
 
@@ -38,7 +38,7 @@ if [ ! -d "$newfolder" ]; then
 fi
 ./create_spec_file.sh "${newfolder}/simulation_spec.json" LA ${strat} 0 2 ${clearFreq} $1 $2
 ./run_hft.sh ${newfolder} $3
-./parse_single.sh $4 ${folder} 2
+./parse_single.sh $4 ${folder}
 fi
 
 

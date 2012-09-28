@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import org.json.simple.*;
 import org.json.simple.parser.*;
@@ -89,7 +90,6 @@ public class SimulationSpec {
 		if (data.useCentralMarket()) {
 			data.numMarketType.put(Consts.CENTRAL, 1);
 		}
-		
 		
 		// Check which types of agents to create
 		for (int i = 0; i < Consts.agentTypeNames.length; i++) {

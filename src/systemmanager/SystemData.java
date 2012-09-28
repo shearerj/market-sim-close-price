@@ -30,6 +30,8 @@ import java.util.*;
  */
 public class SystemData {
 
+	public int obsNum;									// observation number
+	
 	// Market information
 	public HashMap<Integer,PQBid> bidData;				// all bids ever, hashed by bid ID
 	public HashMap<Integer,PQTransaction> transData;	// hashed by transaction ID
@@ -57,7 +59,7 @@ public class SystemData {
 	public int bidRange;
 	public double privateValueVar;				// agent variance from PV random process
 	
-	// market type of the central market; if invalid type, no central market will be created
+	// Central market type; if invalid type, no central market will be created
 	public String centralMarketType;
 	public int centralMarketID;
 	public Market centralMarket;
@@ -208,7 +210,7 @@ public class SystemData {
 	 * Set up private value generation for background agents.
 	 */
 	public void backgroundPrivateValues() {
-		processGenerator = new PrivateValue(kappa, meanPV, shockVar, tickSize);	
+		processGenerator = new PrivateValue(kappa, meanPV, shockVar);	
 	}
 	
 	/**

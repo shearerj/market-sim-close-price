@@ -78,12 +78,22 @@ public class Observations {
 	private void addAllStatistics(HashMap<String,Object> feat, double[] values) {
 		DescriptiveStatistics ds = new DescriptiveStatistics(values);
 		Median med = new Median();
-		feat.put("mean", ds.getMean());
-		feat.put("max", ds.getMax());
-		feat.put("min", ds.getMin());
-		feat.put("sum", ds.getSum());
-		feat.put("var", ds.getVariance());
-		feat.put("med", med.evaluate(values));
+		if (values.length > 0) {
+			feat.put("mean", ds.getMean());
+			feat.put("max", ds.getMax());
+			feat.put("min", ds.getMin());
+			feat.put("sum", ds.getSum());
+			feat.put("var", ds.getVariance());
+			feat.put("med", med.evaluate(values));
+		} else {
+			feat.put("mean", "NaN");
+			feat.put("max", "NaN");
+			feat.put("min", "NaN");
+			feat.put("sum", "NaN");
+			feat.put("var", "NaN");
+			feat.put("med", "NaN");
+		}
+		
 	}
 	
 	/**
@@ -91,24 +101,36 @@ public class Observations {
 	 * 
 	 * @param feat
 	 * @param values
-	 * @param prefix to append to feature type
+	 * @param suffix to append to feature type
 	 * @param mid is true if only add middle-type metrics (e.g. mean/median), false otherwise
 	 */
-	private void addStatistics(HashMap<String,Object> feat, double[] values, String prefix, 
+	private void addStatistics(HashMap<String,Object> feat, double[] values, String suffix, 
 			boolean mid) {
-		if (prefix != null && prefix != "") {
-			prefix = prefix + "_";
+		if (suffix != null && suffix != "") {
+			suffix = "_" + suffix;
 		}
-		DescriptiveStatistics dp = new DescriptiveStatistics(values);
-		feat.put(prefix + "mean", dp.getMean());
-		if (mid) {
-			Median med = new Median();
-			feat.put(prefix + "med", med.evaluate(values));
-		}
-		if (!mid) {
-			feat.put(prefix + "max", dp.getMax());
-			feat.put(prefix + "min", dp.getMin());
-			feat.put(prefix + "var", dp.getVariance());
+		if (values.length > 0) {
+			DescriptiveStatistics dp = new DescriptiveStatistics(values);
+			feat.put("mean" + suffix, dp.getMean());
+			if (mid) {
+				Median med = new Median();
+				feat.put("med" + suffix, med.evaluate(values));
+			}
+			if (!mid) {
+				feat.put("max" + suffix, dp.getMax());
+				feat.put("min" + suffix, dp.getMin());
+				feat.put("var" + suffix, dp.getVariance());
+			}
+		} else {
+			feat.put("med" + suffix, "NaN");
+			if (mid) {
+				feat.put("med" + suffix, "NaN");
+			}
+			if (!mid) {
+				feat.put("max" + suffix, "NaN");
+				feat.put("min" + suffix, "NaN");
+				feat.put("var" + suffix, "NaN");
+			}
 		}
 	}
 	
@@ -117,7 +139,7 @@ public class Observations {
 	 * Takes hashmap of agent information (integer values only) and extracts features for 
 	 * observation file.
 	 * 
-	 * @param surplus
+	 * @param allValues
 	 * @return
 	 */
 	public HashMap<String,Object> getIntFeatures(HashMap<Integer,Integer> allValues) {
@@ -138,7 +160,6 @@ public class Observations {
 	 * Extracts features of a list of times (e.g. intervals, arrival times).
 	 * 
 	 * @param allTimes ArrayList of TimeStamps
-	 * @param description is prefix to append to key in map
 	 * @return
 	 */
 	public HashMap<String,Object> getTimeStampFeatures(ArrayList<TimeStamp> allTimes) {
@@ -371,6 +392,26 @@ public class Observations {
 			}
 		}
 		return vals;
+	}
+	
+	
+	/**
+	 * @return HashMap of configuration parameters for inclusion in observation.
+	 */
+	public HashMap<String,Object> getConfiguration() {
+		HashMap<String,Object> config = new HashMap<String,Object>();
+		config.put("obs", data.obsNum);
+		config.put("call_freq", data.clearFreq);
+		config.put("latency", data.nbboLatency);
+		config.put("tick_size", data.tickSize);
+		config.put("kappa", data.kappa);
+		config.put("arrival_rate", data.arrivalRate);
+		config.put("mean_pv", data.meanPV);
+		config.put("shock_var", data.shockVar);
+		config.put("expire_rate", data.expireRate);
+		config.put("bid_range", data.bidRange);
+		config.put("pv_var", data.privateValueVar);
+		return config;
 	}
 	
 	

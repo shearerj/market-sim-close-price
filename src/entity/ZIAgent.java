@@ -149,12 +149,12 @@ public class ZIAgent extends MMAgent {
 			int bestMarketID = mainMarketID;
 			int bestPrice = -1;
 			if (q > 0) {
-				if (p > lastNBBOQuote.bestAsk) {
+				if (p >= lastNBBOQuote.bestAsk) {
 					bestMarketID = altMarketID;
 					bestPrice = lastNBBOQuote.bestAsk;
 				}
 			} else {
-				if (p < lastNBBOQuote.bestBid) {
+				if (p <= lastNBBOQuote.bestBid) {
 					bestMarketID = altMarketID;
 					bestPrice = lastNBBOQuote.bestBid;
 				}
