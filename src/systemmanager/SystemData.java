@@ -272,6 +272,7 @@ public class SystemData {
 		nbboLatency = new TimeStamp(Long.parseLong(p.getProperty("nbboLatency")));
 		clearFreq = new TimeStamp(Long.parseLong(p.getProperty("clearLatency")));
 		tickSize = Integer.parseInt(p.getProperty("tickSize"));
+		kappa = Double.parseDouble(p.getProperty("kappa"));
 		arrivalRate = Double.parseDouble(p.getProperty("arrivalRate"));
 		meanPV = Integer.parseInt(p.getProperty("meanPV"));
 		shockVar = Double.parseDouble(p.getProperty("shockVar"));

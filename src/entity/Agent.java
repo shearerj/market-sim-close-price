@@ -394,8 +394,12 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public ActivityHashMap withdrawBid(Market mkt, TimeStamp ts) {
-		log.log(Log.INFO, ts.toString() + " | " + this.toString() + " withdraw bid from " + mkt.toString());
-		if (data.useCentralMarket()) data.centralMarket.removeBid(this.ID, ts);
+		log.log(Log.INFO, ts + " | " + this.toString() + " withdraw bid from " + mkt);
+		if (data.useCentralMarket()) {
+			log.log(Log.INFO, ts + " | " + this.toString() + " withdraw bid from " + 
+					data.centralMarket);
+			data.centralMarket.removeBid(this.ID, ts);
+		}
 		return mkt.removeBid(this.ID, ts);
 	}
 
@@ -508,9 +512,6 @@ public abstract class Agent extends Entity {
 				int quantity = t.quantity;
 				if (this.ID == t.sellerID) {
 					quantity = -quantity;
-				}
-				if (this.ID == 1) {
-					System.out.println("there should NOT be a transaction for the LA with 0 latency");
 				}
 				
 				// update cash flow and position

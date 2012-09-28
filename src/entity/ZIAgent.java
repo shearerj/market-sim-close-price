@@ -118,25 +118,27 @@ public class ZIAgent extends MMAgent {
 			p = (int) Math.max(0, (this.privateValue + rand.nextDouble()*2*bidRange));
 		}
 
-		// Check if NBBO indicates that other market better
-		// - Want to buy for as low a price as possible, so find market with the lowest ask
-		// - Want to sell for as high a price as possible, so find market with the highest bid
-		// - NBBO also better if the bid or ask in the current does not exist
+		// Check if NBBO indicates that other market better:
+		// - Want to buy for as low a price as possible, so find market with the lowest ask.
+		// - Want to sell for as high a price as possible, so find market with the highest bid.
+		// - NBBO also better if the bid or ask in the current does not exist while NBBO does exist.
 		boolean nbboBetter = false;
 		if (q > 0) {
 			if (lastNBBOQuote.bestAsk < mainMarketQuote.lastAskPrice.getPrice() &&
 					lastNBBOQuote.bestAsk != -1 ||
-					mainMarketQuote.lastAskPrice.getPrice() == -1) { 
+					mainMarketQuote.lastAskPrice.getPrice() == -1 &&
+					lastNBBOQuote.bestAsk != -1) { 
 				nbboBetter = true;
 			}
 		} else {
 			if (lastNBBOQuote.bestBid > mainMarketQuote.lastBidPrice.getPrice() ||
 					mainMarketQuote.lastBidPrice.getPrice() == -1) {
-				// don't need lastNBBOQuote.bestBid != -1 due to first condition
+				// don't need lastNBBOQuote.bestBid != -1 due to first condition, will always > -1
 				nbboBetter = true;
 			}
 		}
 		
+		int bestMarketID = mainMarketID;
 		submittedBidType = Consts.SubmittedBidMarket.MAIN;	// default is submitting to main market
 		if (nbboBetter) {
 			// nbboBetter = true indicates that the alternative market has a better quote
@@ -146,10 +148,10 @@ public class ZIAgent extends MMAgent {
 					" Quote(" + mainMarketQuote.lastBidPrice.getPrice() + 
 					", " + mainMarketQuote.lastAskPrice.getPrice() + ")");
 			
-			int bestMarketID = mainMarketID;
 			int bestPrice = -1;
 			if (q > 0) {
-				if (p >= lastNBBOQuote.bestAsk) {
+				// Ensure that NBBO ask is defined, otherwise submit to current market
+				if (p >= lastNBBOQuote.bestAsk && lastNBBOQuote.bestAsk != -1) {
 					bestMarketID = altMarketID;
 					bestPrice = lastNBBOQuote.bestAsk;
 				}
@@ -194,7 +196,7 @@ public class ZIAgent extends MMAgent {
 			    
 		// Bid expires after a given duration
 		TimeStamp expireTime = ts.sum(new TimeStamp(expiration));
-		actMap.insertActivity(new WithdrawBid(this, data.markets.get(mainMarketID), expireTime));
+		actMap.insertActivity(new WithdrawBid(this, data.markets.get(bestMarketID), expireTime));
 		return actMap;
 	}
 
