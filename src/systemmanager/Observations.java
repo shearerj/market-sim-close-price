@@ -145,10 +145,10 @@ public class Observations {
 	public HashMap<String,Object> getIntFeatures(HashMap<Integer,Integer> allValues) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-		Object[] surplus = (new ArrayList<Integer>(allValues.values())).toArray();
-	    double[] values = new double[surplus.length];  
+		Object[] objs = (new ArrayList<Integer>(allValues.values())).toArray();
+	    double[] values = new double[objs.length];  
 	    for (int i = 0; i < values.length; i++) {
-	    	Integer tmp = (Integer) surplus[i];
+	    	Integer tmp = (Integer) objs[i];
 	        values[i] = tmp.doubleValue();
 	    }
 		addAllStatistics(feat,values);
@@ -238,35 +238,45 @@ public class Observations {
 	public HashMap<String,Object> getTransactionInfo(boolean central) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-		ArrayList<Integer> ids = new ArrayList<Integer>();
+		int num = 1;
 		if (central) {
-			ids.add(data.centralMarketID);
-		} else {
-			ids = data.getMarketIDs();
+			num = data.getCentralMarketIDs().size();
 		}
-		HashMap<Integer,PQTransaction> transactions = data.getTrans(ids);
-		feat.put("num_trans", transactions.size());
-		
-		int buys = 0;
-		int sells = 0;
-		double[] prices = new double[transactions.size()];
-		double[] quantities = new double[transactions.size()];
-		int i = 0;
-		for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
-			PQTransaction trans = entry.getValue();
-			prices[i] = trans.price.getPrice();
-			quantities[i] = trans.quantity;
-			i++;
-			if (trans.sellerID == 1) {
-				buys++;
-			} else if (trans.buyerID == 1) {
-				sells++;
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		for (int it = 0; it < num; it++ ) {
+			String suffix = "";
+			if (central) {
+				int mktID = data.getCentralMarketIDs().get(it);
+				ids.add(0, mktID);		// only set index 0
+				suffix = "_" + data.getCentralMarketType(mktID).toLowerCase();
+			} else {
+				ids = data.getMarketIDs();
 			}
+			HashMap<Integer,PQTransaction> transactions = data.getTrans(ids);
+			feat.put("num_trans" + suffix, transactions.size());
+
+			int buys = 0;
+			int sells = 0;
+			double[] prices = new double[transactions.size()];
+			double[] quantities = new double[transactions.size()];
+			int i = 0;
+			for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
+				PQTransaction trans = entry.getValue();
+				prices[i] = trans.price.getPrice();
+				quantities[i] = trans.quantity;
+				i++;
+				if (trans.sellerID == 1) {			// hard-coded check for HFT agent //TODO
+					buys++;
+				} else if (trans.buyerID == 1) {
+					sells++;
+				}
+			}
+			feat.put("hft_buys" + suffix, buys);
+			feat.put("hft_sells" + suffix, sells);
+			addStatistics(feat,prices,"price" + suffix,false);
+			//		addSomeStatistics(feat,quantities,"qty",false);
 		}
-		feat.put("hft_buys", buys);
-		feat.put("hft_sells", sells);
-		addStatistics(feat,prices,"price",false);
-//		addSomeStatistics(feat,quantities,"qty",false);
+		
 		return feat;
 	}
 	
@@ -283,22 +293,36 @@ public class Observations {
 		// Initialize with maximum number of possible bids
 		double[] values = new double[data.executionTime.size()];
 		int cnt = 0;
-		for (Map.Entry<Integer, TimeStamp> entry : data.executionTime.entrySet()) {
-			int bidID = entry.getKey();
-			TimeStamp ts = entry.getValue();
-			PQBid b = data.getBid(bidID);
-			if ((central && data.centralMarketID == b.getMarketID()) ||
-					(!central && data.centralMarketID != b.getMarketID())) {
-				values[cnt] =  (double) ts.diff(data.submissionTime.get(bidID)).longValue();
-				cnt++;
+		
+		int num = 1;
+		if (central) {
+			num = data.getCentralMarketIDs().size();
+		}
+		for (int it = 0; it < num; it++) {
+			int centralMktID = data.getCentralMarketIDs().get(it);
+			
+			String suffix = "";
+			if (central) {
+				suffix = "_" + data.getCentralMarketType(centralMktID).toLowerCase();
 			}
+			
+			for (Map.Entry<Integer, TimeStamp> entry : data.executionTime.entrySet()) {
+				int bidID = entry.getKey();
+				TimeStamp ts = entry.getValue();
+				PQBid b = data.getBid(bidID);
+				if ((central && centralMktID == b.getMarketID()) ||
+						(!central && centralMktID != b.getMarketID())) {
+					values[cnt] =  (double) ts.diff(data.submissionTime.get(bidID)).longValue();
+					cnt++;
+				}
+			}
+			// Reinitialize to get rid of unused portion of array
+			double[] speeds = new double[cnt];
+			for (int i = 0; i < cnt; i++) {
+				speeds[i] = values[i];
+			}
+			addStatistics(feat,values,suffix,false);
 		}
-		// Reinitialize to get rid of unused portion of array
-		double[] speeds = new double[cnt];
-		for (int i = 0; i < cnt; i++) {
-			speeds[i] = values[i];
-		}
-		addStatistics(feat,values,"",false);
 		return feat;
 	}
 	
@@ -319,13 +343,17 @@ public class Observations {
 				double[] spreads = extractTimeSeries(marketSpread);
 				addStatistics(feat,spreads,"mkt" + (-mktID),true);
 			}
-
 			double[] nbboSpreads = extractTimeSeries(data.NBBOSpread);
 			addStatistics(feat,nbboSpreads,"nbbo",true);
+			
 		} else {
-			HashMap<TimeStamp,Integer> marketSpread = data.marketSpread.get(data.centralMarketID);
-			double[] spreads = extractTimeSeries(marketSpread);
-			addStatistics(feat,spreads,"mkt_c",true);
+			for (Iterator<Integer> it = data.getCentralMarketIDs().iterator(); it.hasNext(); ) {
+				int mktID = it.next();
+				HashMap<TimeStamp,Integer> marketSpread = data.marketSpread.get(mktID);
+				double[] spreads = extractTimeSeries(marketSpread);
+				String mktType = data.getCentralMarketType(mktID).toLowerCase();
+				addStatistics(feat,spreads,"mkt_" + mktType,true);
+			}
 		}
 		return feat;
 	}
@@ -348,9 +376,13 @@ public class Observations {
 				addStatistics(feat,depths,"mkt" + (-mktID),true);
 			}
 		} else {
-			HashMap<TimeStamp,Integer> marketDepth = data.marketDepth.get(data.centralMarketID);
-			double[] depths = extractTimeSeries(marketDepth);
-			addStatistics(feat,depths,"mkt_c",true);
+			for (Iterator<Integer> it = data.getCentralMarketIDs().iterator(); it.hasNext(); ) {
+				int mktID = it.next();
+				HashMap<TimeStamp,Integer> marketDepth = data.marketDepth.get(mktID);
+				double[] depths = extractTimeSeries(marketDepth);
+				String mktType = data.getCentralMarketType(mktID).toLowerCase();
+				addStatistics(feat,depths,"mkt_" + mktType,true);
+			}
 		}
 		return feat;
 	}

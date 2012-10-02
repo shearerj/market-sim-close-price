@@ -20,6 +20,10 @@ public class WithdrawBid extends Activity {
 		this.time = t;
 	}
 	
+	public WithdrawBid deepCopy() {
+		return new WithdrawBid(this.ag, this.mkt, this.time);
+	}
+	
 	public ActivityHashMap execute() {
 		return this.ag.withdrawBid(this.mkt, this.time);
 	}

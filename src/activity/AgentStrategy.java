@@ -25,6 +25,14 @@ public class AgentStrategy extends Activity {
 		this.time = t;
 	}
 	
+	public AgentStrategy deepCopy() {
+		if (mkt == null) {
+			return new AgentStrategy(this.ag, this.time);
+		} else {
+			return new AgentStrategy(this.ag, this.mkt, this.time);
+		}
+	}
+	
 	public ActivityHashMap execute() {
 		if (mkt == null) {
 			return ((MMAgent)ag).agentStrategy(time);

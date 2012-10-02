@@ -156,11 +156,11 @@ public class SystemManager {
 			// Create markets first since agent creation references markets
 			for (Map.Entry<String, Integer> mkt: data.numMarketType.entrySet()) {
 				
-				if (mkt.getKey().equals(Consts.CENTRAL)) {
+//				if (mkt.getKey().equals(Consts.CENTRAL)) {
+				if (mkt.getKey().startsWith(Consts.CENTRAL)) {
 					int mID = marketIDSequence.decrement();
-					data.centralMarketID = mID;
-					setupMarket(mID, Consts.CENTRAL);
-					log.log(Log.INFO, "Central Market: " + data.getMarket(mID));
+					setupMarket(mID, mkt.getKey());
+					log.log(Log.INFO, mkt.getKey() + " Market: " + data.getMarket(mID));
 					
 				} else {
 					for (int i = 0; i < mkt.getValue(); i++) {
@@ -205,9 +205,10 @@ public class SystemManager {
 	public void setupMarket(int marketID, String marketType) {
 		
 		Market market;
-		if (marketType.equals(Consts.CENTRAL)) {
-			market = MarketFactory.createMarket(data.centralMarketType, marketID, data, log);
-			data.centralMarket = market;
+		if (marketType.startsWith(Consts.CENTRAL)) {
+			market = MarketFactory.createMarket(marketType.substring(Consts.CENTRAL.length() + 1), 
+					marketID, data, log);
+			data.centralMarkets.put(marketID, market);
 		} else {
 			// Only add market to the general list if it's not the central market
 			market = MarketFactory.createMarket(marketType, marketID, data, log);
@@ -348,7 +349,19 @@ public class SystemManager {
 			prefix = prefix + "_";
 		}
 //		results.addFeature("bkgrd_profit", results.getIntFeatures(data.getAllProfit()));
-		obs.addFeature(prefix + "bkgrd_surplus", obs.getIntFeatures(data.getSurplus(central)));
+		if (central) {
+			ArrayList<Integer> ids = data.getCentralMarketIDs();
+			for (Iterator<Integer> i = ids.iterator(); i.hasNext(); ) {
+				ArrayList<Integer> id = new ArrayList<Integer>();
+				int mktID = i.next();
+				id.add(mktID);
+				obs.addFeature(prefix + data.getCentralMarketType(mktID).toLowerCase() + 
+						"_bkgrd_surplus", obs.getIntFeatures(data.getSurplus(id)));
+			}
+		} else {
+			ArrayList<Integer> ids = data.getMarketIDs();
+			obs.addFeature(prefix + "bkgrd_surplus", obs.getIntFeatures(data.getSurplus(ids)));
+		}
 		obs.addFeature(prefix + "transactions", obs.getTransactionInfo(central));
 		obs.addFeature(prefix + "depths", obs.getDepthInfo(central));
 		obs.addFeature(prefix + "spreads", obs.getSpreadInfo(central));

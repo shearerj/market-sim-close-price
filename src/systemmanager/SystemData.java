@@ -60,9 +60,9 @@ public class SystemData {
 	public double privateValueVar;				// agent variance from PV random process
 	
 	// Central market type; if invalid type, no central market will be created
-	public String centralMarketType;
-	public int centralMarketID;
-	public Market centralMarket;
+	public String centralMarketFlag;
+//	public ArrayList<Integer> centralMarketIDs;
+	public HashMap<Integer,Market> centralMarkets;
 	
 	// Internal variables
 	private Sequence transIDSequence;
@@ -98,8 +98,9 @@ public class SystemData {
 		executionTime = new HashMap<Integer,TimeStamp>();
 		submissionTime = new HashMap<Integer,TimeStamp>();
 		
-		// Default ID for central market
-		centralMarketID = 0;
+		// Initialize containers for central markets
+//		centralMarketIDs = new ArrayList<Integer>();
+		centralMarkets = new HashMap<Integer,Market>();
 	}
 
 	
@@ -151,13 +152,17 @@ public class SystemData {
 	}
 
 	public Market getMarket(int id) {
-		if (id != centralMarketID) {
+		if (!centralMarkets.containsKey(id)) {
 			return markets.get(id);
 		} else {
-			return centralMarket;
+			return centralMarkets.get(id);
 		}
 	}
 
+	public ArrayList<Integer> getCentralMarketIDs() {
+		return new ArrayList<Integer>(centralMarkets.keySet());
+	}
+	
 	public PQTransaction getTransaction(int id) {
 		return transData.get(id);
 	}
@@ -186,17 +191,37 @@ public class SystemData {
 	}
 	
 	/**
-	 * @return true if central market present, false otherwise
+	 * @return true if central markets present, false otherwise
 	 */
 	public boolean useCentralMarket() {
-		if (centralMarketType != null) {
-			if (Arrays.asList(Consts.marketTypeNames).contains(centralMarketType.toUpperCase())) {
+		if (centralMarketFlag != null) {
+			if (centralMarketFlag.equals("on")) {
 				return true;
 			} else {
 				return false;
 			}
 		}
 		return false;	
+	}
+	
+	
+	/**
+	 * Returns the type of the central market with the given market ID.
+	 * 
+	 * @param mktID
+	 * @return
+	 */
+	public String getCentralMarketType(int mktID) {
+		if (!this.getCentralMarketIDs().contains(mktID))
+			return null;
+		
+		if (getMarket(mktID) instanceof CDAMarket) {
+			return new String("CDA");
+		}
+		if (getMarket(mktID) instanceof CallMarket) {
+			return new String("CALL");
+		}
+		return null;
 	}
 	
 	/**
@@ -311,15 +336,20 @@ public class SystemData {
 	 * @param central 	true if getting for central market, false otherwise
 	 * @return hashmap of background agent surplus, hashed by agent ID
 	 */
-	public HashMap<Integer,Integer> getSurplus(boolean central) {
+	public HashMap<Integer,Integer> getSurplus(ArrayList<Integer> ids) {
 		
 		HashMap<Integer,Integer> allSurplus = new HashMap<Integer,Integer>();
+		
 		for (Map.Entry<Integer,PQTransaction> trans : transData.entrySet()) {
 			PQTransaction t = trans.getValue();
 			
 			// Check if getting for central market
-			if ((central && t.marketID == centralMarketID) || 
-					(!central && t.marketID != centralMarketID)) {
+//			if ((central && t.marketID == centralMarketID) || 
+//					(!central && t.marketID != centralMarketID)) {
+//			if ((central && centralMarkets.containsKey(t.marketID)) || 
+//					(!central && !centralMarkets.containsKey(t.marketID))) {
+			
+			if (ids.contains(t.marketID)) {
 				Agent buyer = agents.get(t.buyerID);
 				Agent seller = agents.get(t.sellerID);
 				

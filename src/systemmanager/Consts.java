@@ -1,7 +1,5 @@
 package systemmanager;
 
-import java.util.HashMap;
-
 /**
  * System-wide constants and accessor methods. Sets default properties for each
  * type of entity.
@@ -10,7 +8,16 @@ import java.util.HashMap;
  */
 public class Consts {
 	
-	public static final int INF_PRICE = 999999999;
+	// ActivityList priority
+	public final static int DEFAULT_PRIORITY = 0;
+	public final static int NBBO_PRIORITY = 2;
+	public final static int HFT_PRIORITY = 1;
+	
+	// TimeStamp
+	public final static long INF_TIME = -1;
+	
+	// Price
+	public final static int INF_PRICE = 999999999;
 	
 	// Entity types
 	public final static String[] agentTypeNames = {"LA", "ZI", "DUMMY"};

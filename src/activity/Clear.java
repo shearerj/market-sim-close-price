@@ -17,6 +17,10 @@ public class Clear extends Activity {
 		this.time = t;
 	}
 	
+	public Clear deepCopy() {
+		return new Clear(this.mkt, this.time);
+	}
+	
 	public ActivityHashMap execute() {
 		return this.mkt.clear(this.time);
 	}

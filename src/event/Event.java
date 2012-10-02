@@ -1,7 +1,6 @@
 package event;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.Iterator;
 
 import activity.*;
@@ -20,32 +19,45 @@ public class Event {
 
 	private TimeStamp eventTime; 						// time in microseconds (only positive)
 	private boolean eventCompletion = false;			// flag indicating whether or not the event has been executed
-	private LinkedList<Activity> activities;			// activities in the event
+	private PriorityActivityList activities;
 	
 	/**
 	 * Constructor for Event object.
 	 */
 	public Event() {
 		eventTime = new TimeStamp(-1);
-		activities = new LinkedList<Activity>();
+		activities = new PriorityActivityList();
 	}
 	
 	/**
 	 * Constructor that creates empty event for a given time.
 	 * @param time
+	 * @param acts
 	 */
 	public Event(TimeStamp time) {
 		eventTime = time;
-		activities = new LinkedList<Activity>();
+		activities = new PriorityActivityList();
 	}
 	
 	/**
 	 * Constructor for an Event given TimeStamp time of occurrence
 	 * @param time
+	 * @param acts PriorityActivityList
 	 */
-	public Event(TimeStamp time, LinkedList<Activity> acts) {
+	public Event(TimeStamp time, PriorityActivityList acts) {
 		eventTime = time;
 		activities = acts;
+	}
+	
+	/**
+	 * Constructor for an Event given ActivityList.
+	 * @param time
+	 * @param acts ActivityList
+	 */
+	public Event(TimeStamp time, ActivityList acts) {
+		eventTime = time;
+		activities = new PriorityActivityList();
+		activities.add(acts);
 	}
 	
 	/**
@@ -54,13 +66,16 @@ public class Event {
 	public TimeStamp getTime() {
 		return this.eventTime;
 	}
-
 	
 	/**
-	 * @return deep copy of linked list of activities.
+	 * @return copy of the list of activities.
 	 */
-	public LinkedList<Activity> getActivities() {
-		return new LinkedList<Activity>(this.activities);
+	public PriorityActivityList getCopyOfActivities() {
+		return new PriorityActivityList(this.activities);
+	}
+	
+	public ActivityList getActivities() {
+		return this.activities.getActivities();
 	}
 	
 	/**
@@ -76,7 +91,8 @@ public class Event {
 	public void addActivity(Activity act) {
 		if (act != null) {
 			if (eventTime.checkActivityTimeStamp(act)) {
-				this.activities.addLast(act);
+//				this.activities.addLast(act);
+				this.activities.add(act);
 			} else {
 				System.err.println("Event::addActivity::ERROR: activity does not match Event time.");
 			}
@@ -84,33 +100,27 @@ public class Event {
 	}
 	
 	/**
-	 * @param act	Activity to be added to LinkedList for Event.
-	 * @param index Location in list in which to insert the Activity.
+	 * @param priority 	Priority of Activity to insert.
+	 * @param act		Activity to be added to LinkedList for Event.
 	 */
-	public void addActivity(Activity act, int index) {
+	public void addActivity(int priority, Activity act) {
 		if (act != null) {
 			if (eventTime.checkActivityTimeStamp(act)) {
-				this.activities.add(index, act);
+				this.activities.add(priority, act);
 			} else {
 				System.err.println("Event::addActivity::ERROR: activity does not match Event time.");
 			}
 		}	
 	}
 	
-	/**
-	 * @param act	Activity to be added to LinkedList for Event.
-	 */
-	public void addActivityAtBeginning(Activity act) {
-		addActivity(act, 0);
-	}
 
 	/**
-	 * @param acts	LinkedList of Activities to be added.
+	 * @param acts	List of Activities to be added.
 	 */
-	public void addActivity(LinkedList<Activity> acts) {
+	public void addActivity(ActivityList acts) {
 		if (acts != null) {
 			if (eventTime.checkActivityTimeStamp(acts)) {
-				this.activities.addAll(acts);
+				this.activities.add(acts);
 			} else {
 				System.err.println("Event::addActivity::ERROR: activity list does not match Event time.");
 			}
@@ -118,26 +128,30 @@ public class Event {
 	}
 	
 	/**
-	 * @param acts	LinkedList of Activities to be added.
-	 * @param index Location in list in which to insert the Activity.
+	 * Will convert the priority of the ActivityList to the given one.
+	 * @param priority 	Priority of Activity to insert.
+	 * @param acts		List of Activities to be added.
 	 */
-	public void addActivity(LinkedList<Activity> acts, int index) {
+	public void addActivity(int priority, ActivityList acts) {
 		if (acts != null) {
 			if (eventTime.checkActivityTimeStamp(acts)) {
-				this.activities.addAll(index, acts);
+				ActivityList tmp = new ActivityList(priority, acts);
+				this.activities.add(tmp);
 			} else {
 				System.err.println("Event::addActivity::ERROR: activity list does not match Event time.");
 			}
 		}
 	}
+
 	
 	/**
-	 * @param act	LinkedList of Activities to be added.
+	 * @param pal	PriorityActivityList to be added.
 	 */
-	public void addActivityAtBeginning(LinkedList<Activity> acts) {
-		addActivity(acts, 0);
+	public void addActivity(PriorityActivityList pal) {
+		if (pal != null) {
+			this.activities.add(pal);
+		}
 	}
-	
 	
 	/**
 	 * Executes all activities stored in an event. Note that newly

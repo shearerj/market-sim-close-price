@@ -75,7 +75,7 @@ public class SimulationSpec {
 		data.expireRate = Double.parseDouble(getValue("expire_rate"));
 		data.bidRange = Integer.parseInt(getValue("bid_range"));
 		data.privateValueVar = Double.parseDouble(getValue("value_var"));
-		data.centralMarketType = getValue("central_mkt").toUpperCase();
+		data.centralMarketFlag = getValue("central_mkt").toLowerCase();
 		
 		// Check which types of markets to create
 		for (int i = 0; i < Consts.marketTypeNames.length; i++) {
@@ -88,7 +88,9 @@ public class SimulationSpec {
 		}
 		// Create the central market; check first if valid market type
 		if (data.useCentralMarket()) {
-			data.numMarketType.put(Consts.CENTRAL, 1);
+			data.numMarketType.put(Consts.CENTRAL + "_CDA", 1);
+			data.numMarketType.put(Consts.CENTRAL + "_CALL", 1);
+			data.clearFreq = data.nbboLatency;
 		}
 		
 		// Check which types of agents to create

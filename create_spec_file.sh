@@ -2,7 +2,7 @@
 # Note: this is for single "player" (i.e. agent with a role)
 if [ $# -ne 8 ]
 then
-echo 'Usage: .\create_spec_file.sh [filename] [HFT type] [HFT strat] [# CDA] [# CALL] [call freq] [central mkt type] [nbbo_latency]'
+echo 'Usage: .\create_spec_file.sh [filename] [HFT type] [HFT strat] [# CDA] [# CALL] [call freq] [central mkt on/off] [nbbo_latency]'
 exit 1
 fi
 

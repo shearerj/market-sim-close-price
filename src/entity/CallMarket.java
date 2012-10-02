@@ -7,7 +7,7 @@ import java.util.TreeSet;
 
 import market.*;
 import activity.*;
-import event.TimeStamp;
+import event.*;
 import systemmanager.*;
 
 /**
@@ -58,10 +58,15 @@ public class CallMarket extends Market {
 	}
 	
 	public ActivityHashMap addBid(Bid b, TimeStamp ts) {
-		// Unlike continuous auction market, no Clear Activity inserted
+		// Unlike continuous auction market, no Clear Activity inserted unless clear freq = 0
 		orderbook.insertBid((PQBid) b);
 		this.data.addDepth(this.ID, ts, orderbook.getDepth());
 		this.data.addSubmissionTime(b.getBidID(), ts);
+		if (clearFreq.longValue() == 0) {
+			ActivityHashMap actMap = new ActivityHashMap();
+			actMap.insertActivity(new Clear(this, ts));
+			return actMap;
+		}
 		return null;
 	}
 	
@@ -100,7 +105,10 @@ public class CallMarket extends Market {
 			log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + " " + 
 					this.getClass().getSimpleName() + "::clear: Nothing transacted. Post Quote" 
 					+ this.quote(clearTime));
-			actMap.insertActivity(new Clear(this, nextClearTime));
+			
+			if (clearFreq.longValue() > 0) {
+				actMap.insertActivity(new Clear(this, nextClearTime));				
+			}
 			return actMap;
 		}
 		
@@ -137,7 +145,9 @@ public class CallMarket extends Market {
 				this.getClass().getSimpleName() + " cleared: Post Quote" + this.quote(clearTime));
 
 		// Insert next clear activity at some time in the future
-		actMap.insertActivity(new Clear(this, this.nextClearTime));
+		if (clearFreq.longValue() > 0) {
+			actMap.insertActivity(new Clear(this, nextClearTime));				
+		}
 		return actMap;
 	}
 	

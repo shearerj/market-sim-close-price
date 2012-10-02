@@ -72,9 +72,9 @@ public class Quoter extends Entity {
 			TimeStamp tsNew = ts.sum(latency);
 			actMap.insertActivity(new UpdateNBBO(this, tsNew));
 		} else if (latency.getTimeStamp() == 0) {
-			// infinitely fast NBBO updates, occurs before every event
-			actMap.insertActivity(new UpdateNBBO(this, 
-					new TimeStamp(EventManager.FastActivityType.PRE)));
+			// infinitely fast NBBO updates
+			TimeStamp tsNew = new TimeStamp(Consts.INF_TIME);
+			actMap.insertActivity(Consts.NBBO_PRIORITY,	new UpdateNBBO(this, tsNew));
 		}
 		return actMap;
 	}

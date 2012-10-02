@@ -103,11 +103,10 @@ public class LAAgent extends MMAgent {
 				actMap.insertActivity(new AgentStrategy(this, tsNew));
 				
 			} else if (sleepTime == 0) {
-				// infinitely fast HFT agent, occurs after every event
-				actMap.insertActivity(new UpdateAllQuotes(this, 
-						new TimeStamp(EventManager.FastActivityType.POST)));
-				actMap.insertActivity(new AgentStrategy(this, 
-						new TimeStamp(EventManager.FastActivityType.POST)));
+				// infinitely fast HFT agent
+				TimeStamp tsNew = new TimeStamp(Consts.INF_TIME);
+				actMap.insertActivity(Consts.HFT_PRIORITY, new UpdateAllQuotes(this, tsNew));
+				actMap.insertActivity(Consts.HFT_PRIORITY, new AgentStrategy(this, tsNew));
 			}
 			return actMap;
 		}

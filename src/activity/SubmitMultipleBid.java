@@ -23,6 +23,10 @@ public class SubmitMultipleBid extends Activity {
 		this.time = t;
 	}
 	
+	public SubmitMultipleBid deepCopy() {
+		return new SubmitMultipleBid(this.ag, this.mkt, this.price, this.quantity, this.time);
+	}
+	
 	public ActivityHashMap execute() {
 		return this.ag.submitMultipleBid(this.mkt, this.price, this.quantity, this.time);
 	}
