@@ -305,11 +305,14 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap addBid(Market mkt, int price, int quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(new SubmitBid(this, mkt, price, quantity, ts));
+		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
+				new SubmitBid(this, mkt, price, quantity, ts));
+		
 		if (data.useCentralMarket() && !(this instanceof LAAgent)) {
 			for (Iterator<Integer> id = data.getCentralMarketIDs().iterator(); id.hasNext(); ) {
 				Market centralMkt = data.centralMarkets.get(id.next());
-				actMap.insertActivity(new SubmitBid(this, centralMkt, price, quantity, ts));
+				actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
+						new SubmitBid(this, centralMkt, price, quantity, ts));
 			}
 		}
 		return actMap;
@@ -327,11 +330,14 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap addMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(new SubmitMultipleBid(this, mkt, price, quantity, ts));
+		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
+				new SubmitMultipleBid(this, mkt, price, quantity, ts));
+		
 		if (data.useCentralMarket() && !(this instanceof LAAgent)) {
 			for (Iterator<Integer> id = data.getCentralMarketIDs().iterator(); id.hasNext(); ) {
 				Market centralMkt = data.centralMarkets.get(id.next());
-				actMap.insertActivity(new SubmitMultipleBid(this, centralMkt, price, quantity, ts));
+				actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY,
+						new SubmitMultipleBid(this, centralMkt, price, quantity, ts));
 			}			
 		}
 		return actMap;

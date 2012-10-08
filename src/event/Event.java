@@ -74,6 +74,9 @@ public class Event {
 		return new PriorityActivityList(this.activities);
 	}
 	
+	/**
+	 * @return ActivityList
+	 */
 	public ActivityList getActivities() {
 		return this.activities.getActivities();
 	}
@@ -91,7 +94,6 @@ public class Event {
 	public void addActivity(Activity act) {
 		if (act != null) {
 			if (eventTime.checkActivityTimeStamp(act)) {
-//				this.activities.addLast(act);
 				this.activities.add(act);
 			} else {
 				System.err.println("Event::addActivity::ERROR: activity does not match Event time.");
@@ -176,6 +178,12 @@ public class Event {
 		return actList;
 	}
 	
+	/**
+	 * @return priority of last Activity in this Event.
+	 */
+	public int getLastPriority() {
+		return activities.getLastPriority();
+	}
 	
 	
 	/* (non-Javadoc)

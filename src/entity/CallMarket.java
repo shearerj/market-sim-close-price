@@ -48,12 +48,10 @@ public class CallMarket extends Market {
 	}
 
 	public Price getBidPrice() {
-//		return ((PQBid) getBidQuote()).bidTreeSet.first().getPrice();
 		return lastBidPrice;
 	}
 	
 	public Price getAskPrice() {
-//		return ((PQBid) getAskQuote()).bidTreeSet.last().getPrice();
 		return lastAskPrice;
 	}
 	
@@ -64,7 +62,7 @@ public class CallMarket extends Market {
 		this.data.addSubmissionTime(b.getBidID(), ts);
 		if (clearFreq.longValue() == 0) {
 			ActivityHashMap actMap = new ActivityHashMap();
-			actMap.insertActivity(new Clear(this, ts));
+			actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, ts));
 			return actMap;
 		}
 		return null;
@@ -107,7 +105,7 @@ public class CallMarket extends Market {
 					+ this.quote(clearTime));
 			
 			if (clearFreq.longValue() > 0) {
-				actMap.insertActivity(new Clear(this, nextClearTime));				
+				actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, nextClearTime));				
 			}
 			return actMap;
 		}
@@ -164,9 +162,16 @@ public class CallMarket extends Market {
 			Price ap = q.lastAskPrice;
 			
 			if (bp != null && ap != null) {
-				if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
-					log.log(Log.ERROR, "CallMarket::quote: ERROR bid > ask");
+				if (bp.getPrice() == -1 || ap.getPrice() == -1) {
+					// either bid or ask are undefined
+					this.data.addSpread(this.ID, quoteTime, Consts.INF_PRICE);
+					
+				} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
+					log.log(Log.ERROR, this.getClass().getSimpleName() + "::quote: ERROR bid > ask");
+					this.data.addSpread(this.ID, quoteTime, Consts.INF_PRICE);
+					
 				} else {
+					// valid bid-ask
 					this.data.addQuote(this.ID, q);
 					this.data.addSpread(this.ID, quoteTime, q.getSpread());
 				}

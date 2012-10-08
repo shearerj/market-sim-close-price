@@ -99,20 +99,35 @@ public class ActivityList {
 	}
 	
 	public boolean add(Activity act) {
-		return activityList.add(act);
+		if (time.checkActivityTimeStamp(act)) {
+			return activityList.add(act);
+		} else {
+			return false;
+		}
 	}
 	
 	public boolean addAll(ActivityList acts) {
-		return activityList.addAll(acts.activityList);
+		if (time.checkActivityTimeStamp(acts)) {
+			return activityList.addAll(acts.activityList);
+		} else {
+			return false;
+		}
 	}
 	
 	public boolean addAll(int index, ActivityList acts) {
-		return activityList.addAll(index, acts.activityList);		
+		if (time.checkActivityTimeStamp(acts)) {
+			return activityList.addAll(index, acts.activityList);
+		} else {
+			return false;
+		}
 	}
 	
 	public void addLast(Activity act) {
-		activityList.addLast(act);
+		if (time.checkActivityTimeStamp(act)) {
+			activityList.addLast(act);
+		}
 	}
+	
 	
 	public Iterator<Activity> iterator() {
 		return activityList.iterator();

@@ -45,6 +45,7 @@ public class SystemData {
 	public HashMap<String,Integer> numAgentType;
 	public int numMarkets;
 	public int numAgents;
+	public ArrayList<Integer> roleAgentIDs;				// IDs of agents in a role
 	
 	// Parameters set by specification file
 	public TimeStamp simLength;
@@ -61,7 +62,6 @@ public class SystemData {
 	
 	// Central market type; if invalid type, no central market will be created
 	public String centralMarketFlag;
-//	public ArrayList<Integer> centralMarketIDs;
 	public HashMap<Integer,Market> centralMarkets;
 	
 	// Internal variables
@@ -89,6 +89,7 @@ public class SystemData {
 		numAgentType = new HashMap<String,Integer>();
 		numAgents = 0;
 		numMarkets = 0;
+		roleAgentIDs = new ArrayList<Integer>();
 		transIDSequence = new Sequence(0);
 	
 		// Initialize containers for observations/features
@@ -99,7 +100,6 @@ public class SystemData {
 		submissionTime = new HashMap<Integer,TimeStamp>();
 		
 		// Initialize containers for central markets
-//		centralMarketIDs = new ArrayList<Integer>();
 		centralMarkets = new HashMap<Integer,Market>();
 	}
 
@@ -333,7 +333,7 @@ public class SystemData {
 	 * Iterates through all transactions and sums up surplus for all agents.
 	 * CS = PV - p, PS = p - PV
 	 * 
-	 * @param central 	true if getting for central market, false otherwise
+	 * @param ids 		market ids to check
 	 * @return hashmap of background agent surplus, hashed by agent ID
 	 */
 	public HashMap<Integer,Integer> getSurplus(ArrayList<Integer> ids) {
@@ -342,12 +342,6 @@ public class SystemData {
 		
 		for (Map.Entry<Integer,PQTransaction> trans : transData.entrySet()) {
 			PQTransaction t = trans.getValue();
-			
-			// Check if getting for central market
-//			if ((central && t.marketID == centralMarketID) || 
-//					(!central && t.marketID != centralMarketID)) {
-//			if ((central && centralMarkets.containsKey(t.marketID)) || 
-//					(!central && !centralMarkets.containsKey(t.marketID))) {
 			
 			if (ids.contains(t.marketID)) {
 				Agent buyer = agents.get(t.buyerID);
@@ -419,7 +413,7 @@ public class SystemData {
 			NBBOSpread.put(ts, spread);
 		} else {
 			if (marketSpread.get(mktID) != null) {
-			marketSpread.get(mktID).put(ts, spread);
+				marketSpread.get(mktID).put(ts, spread);
 			} else {
 				HashMap<TimeStamp,Integer> tmp = new HashMap<TimeStamp,Integer>();
 				tmp.put(ts, spread);

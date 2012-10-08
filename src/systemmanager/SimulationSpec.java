@@ -65,17 +65,19 @@ public class SimulationSpec {
 	 */
 	public void setParams() {
 		
-		data.clearFreq = new TimeStamp(Integer.parseInt(getValue("call_clear_freq")));
 		data.simLength = new TimeStamp(Integer.parseInt(getValue("sim_length")));
-		data.nbboLatency = new TimeStamp(Integer.parseInt(getValue("nbbo_latency")));
 		data.tickSize = Integer.parseInt(getValue("tick_size"));
+		data.clearFreq = new TimeStamp(Integer.parseInt(getValue("call_clear_freq")));
+		data.centralMarketFlag = getValue("central_mkt").toLowerCase();
+		
+		data.nbboLatency = new TimeStamp(Integer.parseInt(getValue("nbbo_latency")));
 		data.arrivalRate = Double.parseDouble(getValue("arrival_rate"));
 		data.meanPV = Integer.parseInt(getValue("mean_PV"));
+		data.kappa = Double.parseDouble(getValue("kappa"));
 		data.shockVar = Double.parseDouble(getValue("shock_var"));
 		data.expireRate = Double.parseDouble(getValue("expire_rate"));
 		data.bidRange = Integer.parseInt(getValue("bid_range"));
-		data.privateValueVar = Double.parseDouble(getValue("value_var"));
-		data.centralMarketFlag = getValue("central_mkt").toLowerCase();
+		data.privateValueVar = Double.parseDouble(getValue("private_value_var"));
 		
 		// Check which types of markets to create
 		for (int i = 0; i < Consts.marketTypeNames.length; i++) {
@@ -90,7 +92,7 @@ public class SimulationSpec {
 		if (data.useCentralMarket()) {
 			data.numMarketType.put(Consts.CENTRAL + "_CDA", 1);
 			data.numMarketType.put(Consts.CENTRAL + "_CALL", 1);
-			data.clearFreq = data.nbboLatency;
+//			data.clearFreq = data.nbboLatency;
 		}
 		
 		// Check which types of agents to create
@@ -102,11 +104,11 @@ public class SimulationSpec {
 				data.numAgentType.put(Consts.agentTypeNames[i], n);
 			}
 		}
-		// Check how many agents in a given role (from spec file)
-		for (int i = 0; i < Consts.roles.length; i++) {
-			String role = Consts.roles[i];
-			data.numAgentType.put(role, getNumPlayers(role));
-		}
+		// Check how many agents in a given role (from role part of spec file)
+        for (int i = 0; i < Consts.roles.length; i++) {
+        	String role = Consts.roles[i];
+        	data.numAgentType.put(role, getNumPlayers(role));
+        }
 	}
 	
 	
@@ -156,7 +158,7 @@ public class SimulationSpec {
 			ap.put("strategy", strategy);
 			
 			// Check that strategy is not blank
-			if (!strategy.equals("")) {
+			if (!strategy.equals("") && !role.equals("DUMMY")) {
 				String[] stratParams = strategy.split("[_]+");
 				if (stratParams.length % 2 != 0) {
 					log.log(Log.ERROR, "setStrategy: error with describing the strategy");

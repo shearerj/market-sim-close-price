@@ -3,7 +3,7 @@ package activity;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.TreeSet;
 
 import event.TimeStamp;
 
@@ -13,41 +13,43 @@ import event.TimeStamp;
  * class assumes that the ActivityList priority is fixed and will not update it
  * under any circumstances.
  * 
- * The combination of the priority queue and the hash map is a work-around to 
- * avoid the tie-breaking issue for PriorityQueues.
+ * The combination of the priority management and the hash map is a work-around to 
+ * avoid the tie-breaking issue for ActivityLists with identical priorities.
  * 
  * @author ewah
  */
 public class PriorityActivityList {
 
-	private TimeStamp time;
-	private PriorityQueue<Integer> priorityQueue;
+	private TreeSet<Integer> priorityQueue;
 	private HashMap<Integer, ActivityList> activityListMap;
 	
 	/**
-	 * Constructor, initialized at capacity 1.
+	 * Constructor.
 	 */
 	public PriorityActivityList() {
-		priorityQueue = new PriorityQueue<Integer>(1);
+		priorityQueue = new TreeSet<Integer>();
 		activityListMap = new HashMap<Integer, ActivityList>();
-		time = new TimeStamp(0);
 	}
 	
 	/**
-	 * Constructor with a given capacity.
-	 * @param capacity
+	 * Constructor.
+	 * @param al ActivityList
 	 */
-	public PriorityActivityList(int capacity) {
-		priorityQueue = new PriorityQueue<Integer>(capacity);
-		activityListMap = new HashMap<Integer, ActivityList>();
-		time = new TimeStamp(0);
-	}
-	
 	public PriorityActivityList(ActivityList al) {
-		priorityQueue = new PriorityQueue<Integer>(1);
+		priorityQueue = new TreeSet<Integer>();
 		activityListMap = new HashMap<Integer, ActivityList>();
 		activityListMap.put(al.getPriority(), al);
-		time = al.getTime();
+	}
+	
+	
+	/**
+	 * Private constructor.
+	 * @param pq
+	 * @param acts
+	 */
+	private PriorityActivityList(TreeSet<Integer> pq, HashMap<Integer, ActivityList> acts) {
+		priorityQueue = pq;
+		activityListMap = acts;
 	}
 	
 	/**
@@ -55,12 +57,11 @@ public class PriorityActivityList {
 	 * @param a
 	 */
 	public PriorityActivityList(PriorityActivityList pal) {
-		this.priorityQueue = new PriorityQueue<Integer>(pal.priorityQueue);
+		this.priorityQueue = new TreeSet<Integer>(pal.priorityQueue);
 		this.activityListMap = new HashMap<Integer, ActivityList>();
-		for(Map.Entry<Integer, ActivityList> entry : pal.activityListMap.entrySet()) {
+		for (Map.Entry<Integer, ActivityList> entry : pal.activityListMap.entrySet()) {
 			this.activityListMap.put(entry.getKey(), new ActivityList(entry.getValue()));
 		}
-		this.time = new TimeStamp(pal.time);
 	}
 	
 	/**
@@ -70,29 +71,38 @@ public class PriorityActivityList {
 	 * @param pal
 	 */
 	public PriorityActivityList(TimeStamp ts, PriorityActivityList pal) {
-		this.priorityQueue = new PriorityQueue<Integer>(pal.priorityQueue);
+		this.priorityQueue = new TreeSet<Integer>(pal.priorityQueue);
 		this.activityListMap = new HashMap<Integer, ActivityList>();
-		for(Map.Entry<Integer, ActivityList> entry : pal.activityListMap.entrySet()) {
+		for (Map.Entry<Integer, ActivityList> entry : pal.activityListMap.entrySet()) {
 			this.activityListMap.put(entry.getKey(), new ActivityList(ts, entry.getValue()));
 		}
-		this.time = ts;
 	}
 	
-	
+	/**
+	 * @return true if empty.
+	 */
 	public boolean isEmpty() {
 		return priorityQueue.isEmpty();
 	}
 	
+	/**
+	 * Clear all structures.
+	 */
 	public void clear() {
 		priorityQueue.clear();
 		activityListMap.clear();
-		time = null;
 	}
 	
-	public TimeStamp getTime() {
-		return time;
-	}
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return new String(activityListMap.toString());
+	}	
 	
+	/**
+	 * @param al ActivityList to add
+	 */
 	public void add(ActivityList al) {
 		if (!priorityQueue.contains(al.getPriority())) {
 			// insert new priority
@@ -104,23 +114,33 @@ public class PriorityActivityList {
 		}	
 	}
 	
+	/**
+	 * @param a	Activity to add
+	 */
 	public void add(Activity a) {
 		ActivityList al = new ActivityList(a);
 		this.add(al);
 	}
 
+	/**
+	 * @param priority
+	 * @param a			Activity to add
+	 */
 	public void add(int priority, Activity a) {
-		ActivityList al = new ActivityList(a);
+		ActivityList al = new ActivityList(priority, a);
 		this.add(al);
 	}
 	
+	/**
+	 * @param pal	PriorityActivityList to add
+	 */
 	public void add(PriorityActivityList pal) {
 		// iterate over all items in the object
-		PriorityQueue<Integer> copy = new PriorityQueue<Integer>(pal.priorityQueue);
+		TreeSet<Integer> copy = new TreeSet<Integer>(pal.priorityQueue);
 		
 		while (!copy.isEmpty()) {
 			// access the activity list queue by priority
-			Integer priority = copy.poll();
+			Integer priority = copy.pollFirst();
 			if (priority != null) {
 				this.add(pal.activityListMap.get(priority));
 			}
@@ -134,27 +154,82 @@ public class PriorityActivityList {
 		return this.getActivities().iterator();
 	}
 	
+	
+	/**
+	 * @return last priority
+	 */
+	public int getLastPriority() {
+		return priorityQueue.last();
+	}
+	
+	/**
+	 * @param priority
+	 * @return
+	 */
+	public ActivityList getActivityAtPriority(int priority) {
+		return activityListMap.get(priority);
+	}
+	
 	/**
 	 * Get all activities in the object, sorted by priority.
 	 * 
 	 * @return ActivityList linked list of activities in this object.
 	 */
 	public ActivityList getActivities() {
-		ActivityList acts = new ActivityList(time);
-		PriorityQueue<Integer> copy = new PriorityQueue<Integer>(priorityQueue);
-
-		while (!copy.isEmpty()) {
-			// access the activity list queue by priority
-			Integer priority = copy.poll();
-			if (priority != null) {
-				acts.addAll(activityListMap.get(priority));
+		if (!isEmpty()) {
+			ActivityList acts = new ActivityList(activityListMap.get(priorityQueue.first()).getTime());
+			TreeSet<Integer> copy = new TreeSet<Integer>(priorityQueue);
+	
+			while (!copy.isEmpty()) {
+				// access the activity list queue by priority
+				Integer priority = copy.pollFirst();
+				if (priority != null) {
+					acts.addAll(activityListMap.get(priority));
+				}
 			}
+			return acts;
+		} else {
+			return null;
 		}
-		return acts;
 	}
 	
-	public String toString() {
-		return new String(time + "|" + activityListMap);
+	/**
+	 * Returns the portion PriorityActivityList that only includes priority
+	 * ActivityLists above the given threshold (inclusive). Modifies the calling Object.
+	 * 
+	 * @param threshold
+	 * @return
+	 */
+	public PriorityActivityList getGreaterPriorityList(int threshold) {
+		TreeSet<Integer> copyPriorityQueue = new TreeSet<Integer>();
+		HashMap<Integer, ActivityList> copyActivityListMap = new HashMap<Integer, ActivityList>();
+		
+		while (!this.isEmpty() && priorityQueue.first() >= threshold) {
+			int priority = priorityQueue.pollFirst();
+			copyPriorityQueue.add(priority);
+			copyActivityListMap.put(priority, activityListMap.get(priority));
+			activityListMap.remove(priority);
+		}
+		return new PriorityActivityList(copyPriorityQueue, copyActivityListMap);
 	}
 	
+	/**
+	 * Returns the portion PriorityActivityList that only includes priority
+	 * ActivityLists below the given threshold (inclusive). Modifies the calling Object.
+	 * 
+	 * @param threshold
+	 * @return
+	 */
+	public PriorityActivityList getLesserPriorityList(int threshold) {
+		TreeSet<Integer> copyPriorityQueue = new TreeSet<Integer>();
+		HashMap<Integer, ActivityList> copyActivityListMap = new HashMap<Integer, ActivityList>();
+		
+		while (!this.isEmpty() && priorityQueue.first() <= threshold) {
+			int priority = priorityQueue.pollFirst();
+			copyPriorityQueue.add(priority);
+			copyActivityListMap.put(priority, this.activityListMap.get(priority));
+			activityListMap.remove(priority);
+		}
+		return new PriorityActivityList(copyPriorityQueue, copyActivityListMap);
+	}
 }

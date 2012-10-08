@@ -69,7 +69,7 @@ public class ActivityHashMap {
 		
 		if (acts.containsKey(ts)) {
 			// append Activity to ActivityList
-			acts.get(ts).add(act);
+			acts.get(ts).add(priority, act);
 		} else {
 			// create new key-value mapping
 			ActivityList al = new ActivityList(priority, act);
@@ -93,13 +93,7 @@ public class ActivityHashMap {
 	public boolean insertActivity(ActivityList al) {
 		if (al == null) return false;
 		
-		TimeStamp ts = al.getTime();
-		if (!ts.checkActivityTimeStamp(al)) {
-			System.err.println(this.getClass().getSimpleName() + 
-					"::insertActivity: TimeStamps do not match");
-			return false;
-		}
-		
+		TimeStamp ts = al.getTime();	
 		if (acts.containsKey(ts)) {
 			// append to end of the activity list with the same priority
 			acts.get(ts).add(al);
@@ -119,18 +113,12 @@ public class ActivityHashMap {
 	 * If key already exists, appends the given ActivityList at the end
 	 * of the existing list.
 	 * 
+	 * @param ts
 	 * @param pal
 	 * @return true if inserted correctly, false otherwise
 	 */
-	public boolean insertActivity(PriorityActivityList pal) {
+	public boolean insertActivity(TimeStamp ts, PriorityActivityList pal) {
 		if (pal == null) return false;
-		
-		TimeStamp ts = pal.getTime();
-		if (!ts.checkActivityTimeStamp(pal.getActivities())) {
-			System.err.println(this.getClass().getSimpleName() + 
-					"::insertActivity: TimeStamps do not match");
-			return false;
-		}
 		
 		if (acts.containsKey(ts)) {
 			// add to the priority activity list at that TimeStamp
@@ -149,7 +137,7 @@ public class ActivityHashMap {
 	 */
 	public void appendActivityHashMap(ActivityHashMap ahm) {
 		for (Map.Entry<TimeStamp,PriorityActivityList> entry : ahm.acts.entrySet()) {
-			insertActivity(entry.getValue());
+			insertActivity(entry.getKey(), entry.getValue());
 		}
 	}
 	

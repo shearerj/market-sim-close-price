@@ -3,7 +3,7 @@
 
 if [ $# -ne 4 ]
 then
-echo "Usage: .\example.sh [market type] [NBBO latency] [# samples] [CSV filename]"
+echo "Usage: .\example.sh [HFT type] [NBBO latency] [# samples] [CSV filename]"
 exit 1
 fi
 
@@ -15,31 +15,14 @@ folder="${baseDir}${1}_latency_${2}"
 # LOG START TIME
 echo "start time: $(date +"%c")"
 
-# CDA MARKET
-if [ "$1" == "cda" ]; then
-
 if [ ! -d "$folder" ]; then
    mkdir "$folder"
+else
+   rm -rf $folder/*
 fi
-./create_spec_file.sh "${folder}/simulation_spec.json" LA ${strat} 2 0 10 "on" $2
+./create_spec_file.sh "${folder}/simulation_spec.json" $1 ${strat} 2 0 $2 "on" $2
 ./run_hft.sh ${folder} $3
 ./parse_single.sh $4 ${folder}
-fi
-
-
-# CALL MARKET
-if [ "$1" == "call" ]; then
-
-clearFreq=50
-newfolder="${folder}_clear_${clearFreq}"a
-
-if [ ! -d "$newfolder" ]; then
-   mkdir "$newfolder"
-fi
-./create_spec_file.sh "${newfolder}/simulation_spec.json" LA ${strat} 0 2 ${clearFreq} "on" $2
-./run_hft.sh ${newfolder} $3
-./parse_single.sh $4 ${folder}
-fi
 
 
 # LOG END TIME

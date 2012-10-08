@@ -61,7 +61,7 @@ public class LAAgent extends MMAgent {
 			BestQuote bestQuote = findBestBuySell();
 			if ((bestQuote.bestSell > (1+alpha)*bestQuote.bestBuy) && (bestQuote.bestBuy >= 0) ) {
 				
-				log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
+				log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
 						"::agentStrategy: Found possible arb opp!");
 
 				int buyMarketID = bestQuote.bestBuyMarket;
@@ -81,26 +81,30 @@ public class LAAgent extends MMAgent {
 							quantity, ts));
 					actMap.appendActivityHashMap(addBid(sellMarket, midPoint+tickSize, 
 							-quantity, ts));
-					log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
+					log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
 							"::agentStrategy: Arb opportunity exists: " + bestQuote + 
 							" in " + data.getMarket(bestQuote.bestBuyMarket) + " & " 
 							+ data.getMarket(bestQuote.bestSellMarket));
+					
 				} else if (buyMarketID == sellMarketID) {
-					log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
+					log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
 							"::agentStrategy: No arb opp since same market");
 					// Note that this is due to a market not having both a bid & ask price,
 					// causing the buy and sell market IDs to be identical
+					
 				} else if (quantity == 0) {
-					log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
+					log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
 							"::agentStrategy: No quantity available");
+					// Note that if this message appears in a CDA market, then the HFT
+					// agent is beating the market's Clear activity, which is incorrect.
 				}
 			}
 			int sleepTime = Integer.parseInt(params.get("sleepTime"));
 			if (sleepTime > 0) {
 				double sleepVar = Double.parseDouble(params.get("sleepVar"));
 				TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
-				actMap.insertActivity(new UpdateAllQuotes(this, tsNew));
-				actMap.insertActivity(new AgentStrategy(this, tsNew));
+				actMap.insertActivity(Consts.HFT_PRIORITY, new UpdateAllQuotes(this, tsNew));
+				actMap.insertActivity(Consts.HFT_PRIORITY, new AgentStrategy(this, tsNew));
 				
 			} else if (sleepTime == 0) {
 				// infinitely fast HFT agent

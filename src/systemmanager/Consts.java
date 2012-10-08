@@ -8,18 +8,25 @@ package systemmanager;
  */
 public class Consts {
 	
-	// ActivityList priority
+	// ActivityList priorities
 	public final static int DEFAULT_PRIORITY = 0;
-	public final static int NBBO_PRIORITY = 2;
-	public final static int HFT_PRIORITY = 1;
+	public final static int SUBMIT_BID_PRIORITY = 1;
+	public final static int CDA_CLEAR_PRIORITY = 2;
+	public final static int CALL_CLEAR_PRIORITY = 2;
+	public final static int HFT_PRIORITY = 3;
+	public final static int WITHDRAW_BID_PRIORITY = 4;
+	public final static int UPDATE_NBBO_PRIORITY = 5;
 	
 	// TimeStamp
 	public final static long INF_TIME = -1;
 	
 	// Price
 	public final static int INF_PRICE = 999999999;
+	public final static int SCALING_FACTOR = 100;
 	
 	// Entity types
+//	public final static String[] agentTypeNames = {"LA", "DUMMY", "ZI"};
+
 	public final static String[] agentTypeNames = {"LA", "ZI", "DUMMY"};
 	public final static String[] marketTypeNames = {"CDA", "CALL"};
 	public final static String CENTRAL = "CENTRAL";
@@ -80,9 +87,6 @@ public class Consts {
 			ap.put("sleepTime", "0");
 			ap.put("sleepVar", "100");
 			ap.put("alpha", "0.001");
-		} else if (type.equals("BACKGROUND")) {
-			
-		} else if (type.equals("DUMMY")) {
 			
 		}
 		return ap;

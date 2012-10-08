@@ -1,6 +1,7 @@
 package event;
 
 import activity.*;
+import systemmanager.Consts;
 import systemmanager.Log;
 
 import java.util.ArrayList;
@@ -14,12 +15,8 @@ import java.util.Map;
  * This involves inserting new events as well as removing them when execution
  * is complete.
  * 
- * The event manager can also store lists of infinitely fast activities, of which 
- * there are two types, POST and PRE. The POST list is inserted after every Event
- * on the queue, whereas the PRE list is inserted before every Event.
- * 
- * Any activity submitted with a -1 TimeStamp is a POST activity. Any activity
- * submitted with a -2 TimeStamp is a PRE activity.
+ * The event manager can also store lists of infinitely fast activities, which are
+ * stored as PriorityActivityList.
  * 
  * @author ewah
  */
@@ -28,7 +25,7 @@ public class EventManager {
 	private Log log;
 	private EventQueue eventQueue;
 	private TimeStamp duration;							// simulation length
-	private PriorityActivityList fastPriorityActivityList;
+	private PriorityActivityList fastActivity;
 
 	/**
 	 * Constructor
@@ -37,7 +34,7 @@ public class EventManager {
 		eventQueue = new EventQueue();
 		duration = ts;
 		log = l;
-		fastPriorityActivityList = new PriorityActivityList();
+		fastActivity = new PriorityActivityList();
 	}
 	
 	/**
@@ -78,17 +75,18 @@ public class EventManager {
 	 */
 	public void executeCurrentEvent() {
 
-		log.log(Log.DEBUG, "executeCurrentEvent: " + this.eventQueue.toString());
-
-		Event toExecute = this.eventQueue.peek();
-
+		log.log(Log.DEBUG, "executeCurrentEvent: " + eventQueue);
+		
 		try {
-			if (!fastPriorityActivityList.isEmpty()) {
+			Event toExecute = eventQueue.peek();
+			
+			// Add activities with early priority
+			if (!fastActivity.isEmpty()) {
 				// Update ActivityList time to match current time
 				TimeStamp insertTime = toExecute.getTime();
-				PriorityActivityList copy = new PriorityActivityList(insertTime, fastPriorityActivityList);
-				toExecute.addActivity(copy);
-				fastPriorityActivityList.clear();
+				PriorityActivityList tmp = fastActivity.getLesserPriorityList(Consts.SUBMIT_BID_PRIORITY);
+				tmp = new PriorityActivityList(insertTime, tmp);
+				toExecute.addActivity(tmp);
 			}
 			
 			ArrayList<ActivityHashMap> acts = toExecute.executeAll();
@@ -107,9 +105,9 @@ public class EventManager {
 					ActivityHashMap actMap = i.next();
 					if (actMap != null) {
 						// Iterate through the returned ActivityHashMap
-						for (Map.Entry<TimeStamp, PriorityActivityList> entry : actMap.entrySet()) {
+						for (Map.Entry<TimeStamp,PriorityActivityList> entry : actMap.entrySet()) {
 							if (entry.getKey().isInfinitelyFast()) {
-								fastPriorityActivityList.add(entry.getValue());
+								fastActivity.add(entry.getValue());
 							} else {
 								createEvent(entry.getKey(), entry.getValue());
 							}
@@ -117,28 +115,50 @@ public class EventManager {
 					}
 				}
 			}
+			
+			// Add activities to current event with priority over 1
+			if (!fastActivity.isEmpty()) {
+				if (!eventQueue.isEmpty() && eventQueue.peek().getLastPriority() > Consts.SUBMIT_BID_PRIORITY) {
+					// Update ActivityList time to match current time
+					TimeStamp nextInsertTime = eventQueue.peek().getTime();
+					PriorityActivityList tmp = fastActivity.getGreaterPriorityList(Consts.SUBMIT_BID_PRIORITY+1);
+					tmp = new PriorityActivityList(nextInsertTime, tmp);
+					eventQueue.peek().addActivity(tmp);
+				}
+			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
 	/**
-	 * Creates event at TimeStamp matching Activity parameter.
+	 * Creates event at TimeStamp with the given Activity (default priority).
 	 * @param act
 	 * @return true if Event created successfully
 	 */
 	public boolean createEvent(Activity act) {
+		return createEvent(0, act);
+	}
+	
+	/**
+	 * Creates event at TimeStamp with the given Activity with specified priority.
+	 * @param priority
+	 * @param act
+	 * @return true if Event created successfully
+	 */
+	public boolean createEvent(int priority, Activity act) {
 		if (act == null) return false;
 
 		Event e = this.eventQueue.contains(act.getTime());
 		if (e != null) { 	
 			// append at end of existing event
-			e.addActivity(act);
+			e.addActivity(priority, act);
 			log.log(Log.DEBUG, "Activity " + act.toString() + "@" + act.getTime().toString());
 		} else {	
 			// create new Event
 			e = new Event(act.getTime());
-			e.addActivity(act);
+			e.addActivity(priority, act);
 
 			// only add to queue if will occur within the duration of the simulation
 			if (act.getTime().before(duration)) { 

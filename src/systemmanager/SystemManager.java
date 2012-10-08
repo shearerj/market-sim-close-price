@@ -151,12 +151,10 @@ public class SystemManager {
 			Quoter iu = new Quoter(0, data, log);
 			data.quoter = iu;
 			eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(0)));
-//			eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(EventManager.FastActivityType.PRE)));
 
 			// Create markets first since agent creation references markets
 			for (Map.Entry<String, Integer> mkt: data.numMarketType.entrySet()) {
 				
-//				if (mkt.getKey().equals(Consts.CENTRAL)) {
 				if (mkt.getKey().startsWith(Consts.CENTRAL)) {
 					int mID = marketIDSequence.decrement();
 					setupMarket(mID, mkt.getKey());
@@ -174,17 +172,22 @@ public class SystemManager {
 
 			// Create agents, initialize parameters, and compute arrival times (if needed)
 			for (Map.Entry<String, Integer> ag : data.numAgentType.entrySet()) {
-
 				for (int i = 0; i < ag.getValue(); i++) {
-
 					AgentProperties ap = specs.setStrategy(ag.getKey(), i);
 					int aID = agentIDSequence.increment();
 
 					// create agent & events
 					setupAgent(aID, ag.getKey(), ap);
+					
+					// check if in a role, keep track of role agent IDs
+					if (Arrays.asList(Consts.roles).contains(ag.getKey())) {
+						data.roleAgentIDs.add(aID);
+					}
 				}
 				log.log(Log.INFO, "Agents: " + ag.getValue() + " " + ag.getKey());
 			}
+			
+			
 			// Log agent information
 			logAgentInfo();
 			
@@ -206,7 +209,7 @@ public class SystemManager {
 		
 		Market market;
 		if (marketType.startsWith(Consts.CENTRAL)) {
-			market = MarketFactory.createMarket(marketType.substring(Consts.CENTRAL.length() + 1), 
+			market = MarketFactory.createMarket(marketType.substring(Consts.CENTRAL.length()+1), 
 					marketID, data, log);
 			data.centralMarkets.put(marketID, market);
 		} else {
@@ -218,7 +221,7 @@ public class SystemManager {
 		// Check if is call market, then initialize clearing sequence
 		if (market instanceof CallMarket) {
 			Activity clear = new Clear(market, market.getNextClearTime());
-			eventManager.createEvent(clear);
+			eventManager.createEvent(Consts.CALL_CLEAR_PRIORITY, clear);
 		}
 	}
 	
@@ -240,8 +243,9 @@ public class SystemManager {
 		if (agent instanceof SMAgent) {
 			// Agent is in single market
 			for (int i = 1; i <= data.numMarkets; i++) {
-				eventManager.createEvent(new AgentArrival(agent, data.getMarket(-i), ts));
-				eventManager.createEvent(new AgentDeparture(agent, data.getMarket(-i), data.simLength));
+				Market mkt = data.getMarket(-i);
+				eventManager.createEvent(new AgentArrival(agent, mkt, ts));
+				eventManager.createEvent(new AgentDeparture(agent, mkt, data.simLength));
 			}
 			
 		} else if (agent instanceof MMAgent) {
@@ -324,7 +328,6 @@ public class SystemManager {
 			obs.addFeature("bkgrd_info", obs.getBackgroundInfo(data.getAgents()));
 			getMarketResults(false, "");	// All markets other than the centralized market
 			getMarketResults(true, "cn");	// Results for the central market
-//			getMarketComparison("diff");			// Results comparing 2-market vs centralized mkt
 			obs.addFeature("", obs.getConfiguration());
 			
 			File file = new File(simFolder + Consts.obsFilename + num + ".json");
@@ -348,7 +351,6 @@ public class SystemManager {
 		if (prefix != null && prefix != "") {
 			prefix = prefix + "_";
 		}
-//		results.addFeature("bkgrd_profit", results.getIntFeatures(data.getAllProfit()));
 		if (central) {
 			ArrayList<Integer> ids = data.getCentralMarketIDs();
 			for (Iterator<Integer> i = ids.iterator(); i.hasNext(); ) {
@@ -356,22 +358,15 @@ public class SystemManager {
 				int mktID = i.next();
 				id.add(mktID);
 				obs.addFeature(prefix + data.getCentralMarketType(mktID).toLowerCase() + 
-						"_bkgrd_surplus", obs.getIntFeatures(data.getSurplus(id)));
+						"_bkgrd_surplus", obs.getSurplusFeatures(data.getSurplus(id), true));
 			}
 		} else {
 			ArrayList<Integer> ids = data.getMarketIDs();
-			obs.addFeature(prefix + "bkgrd_surplus", obs.getIntFeatures(data.getSurplus(ids)));
+			obs.addFeature(prefix + "bkgrd_surplus", obs.getSurplusFeatures(data.getSurplus(ids), false));
 		}
 		obs.addFeature(prefix + "transactions", obs.getTransactionInfo(central));
 		obs.addFeature(prefix + "depths", obs.getDepthInfo(central));
 		obs.addFeature(prefix + "spreads", obs.getSpreadInfo(central));
 		obs.addFeature(prefix + "exec_speed", obs.getExecutionSpeed(central));
 	}
-	
-	
-//	private void getMarketComparison(String prefix) {
-//		
-//		
-//	}
-//	
 }
