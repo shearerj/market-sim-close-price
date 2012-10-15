@@ -325,6 +325,7 @@ public class SystemManager {
 			
 			obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
 			obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
+			obs.addFeature("expire", obs.getTimeStampFeatures(data.getExpirations()));
 			obs.addFeature("bkgrd_info", obs.getBackgroundInfo(data.getAgents()));
 			getMarketResults(false, "");	// All markets other than the centralized market
 			getMarketResults(true, "cn");	// Results for the central market

@@ -70,7 +70,7 @@ public class ZIAgent extends MMAgent {
 		expireRate = this.data.expireRate;
 		bidRange = this.data.bidRange;
 		pvVar = this.data.privateValueVar;
-		expiration = (int) (100 * getExponentialRV(expireRate));
+		expiration = (int) getExponentialRV(expireRate);
 		arrivalTime = this.data.nextArrival();
 		privateValue = Math.max(0, this.data.nextPrivateValue() + 
 				(int) Math.round(getNormalRV(0, pvVar)) * Consts.SCALING_FACTOR);
@@ -202,6 +202,12 @@ public class ZIAgent extends MMAgent {
 		return actMap;
 	}
 
+	/**
+	 * @return expiration
+	 */
+	public int getExpiration() {
+		return expiration;
+	}
 	
 	/**
 	 * Generate exponential random variate, with rate parameter.

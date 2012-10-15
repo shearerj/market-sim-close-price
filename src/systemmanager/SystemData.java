@@ -272,6 +272,22 @@ public class SystemData {
 		return arrivalTimeGenerator.getIntervals();
 	}
 	
+	
+	/**
+	 * @return list of lifetime of all background trader bids
+	 */
+	public ArrayList<TimeStamp> getExpirations() {
+		ArrayList<TimeStamp> exps = new ArrayList<TimeStamp>();
+		for (Iterator<Integer> ag = getAgentIDs().iterator(); ag.hasNext(); ) {
+			int id = ag.next();
+			if (agents.get(id) instanceof ZIAgent) {
+				exps.add(new TimeStamp(((ZIAgent) agents.get(id)).getExpiration()));
+			}
+		}
+		return exps;
+	}
+	
+	
 	/**
 	 * @return list of actual private values of all agents
 	 */
