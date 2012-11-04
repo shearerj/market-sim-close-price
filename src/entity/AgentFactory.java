@@ -10,7 +10,7 @@ import systemmanager.*;
 public class AgentFactory {
 
 	/**
-	 * Creates a new agent based on type parameter.
+	 * Creates a new multimarket agent based on type parameter.
 	 * 
 	 * @param type
 	 * @param agentID
@@ -18,7 +18,7 @@ public class AgentFactory {
 	 * @param params
 	 * @return
 	 */
-	public static Agent createAgent(String type,
+	public static Agent createMMAgent(String type,
 									Integer agentID,
 									SystemData data,
 									AgentProperties params,
@@ -28,8 +28,6 @@ public class AgentFactory {
 			return new DummyAgent(agentID, data, params, l);
 		} else if (type.equals(Consts.getAgentType("LAAgent"))) {
 			return new LAAgent(agentID, data, params, l);
-		} else if (type.equals(Consts.getAgentType("MarketMakerAgent"))) {
-			return new MarketMakerAgent(agentID, data, params, l);
 		} else if (type.equals(Consts.getAgentType("ZIAgent"))) {
 			return new ZIAgent(agentID, data, params, l);
 		} else {
@@ -37,32 +35,26 @@ public class AgentFactory {
 		}
 	}
 	
-	
-//	/**
-//	 * Creates a new agent based on type parameter. This constructor
-//	 * uses the default AgentProperties setting.
-//	 * 
-//	 * @param type
-//	 * @param agentID
-//	 * @param data
-//	 * @return
-//	 */
-//	public static Agent createAgent(String type,
-//									Integer agentID,
-//									SystemData data,
-//									Log l) {
-//		
-//		AgentProperties params = Consts.getProperties(type);
-//		if (type.toLowerCase().equals("zi")) {
-//			return new TestAgent(agentID, data, params, l);
-//		} else if (type.toLowerCase().equals("hft")) {
-//			return new LAAgent(agentID, data, params, l);
-//		} else if (type.toLowerCase().equals("mm")) {
-//			return new MarketMakerAgent(agentID, data, params, l);
-//		} else if (type.toLowerCase().equals("nbbo")) {
-//			return new ZIAgent(agentID, data, params, l);
-//		} else {
-//			return null;
-//		}
-//	}
+	/**
+	 * Creates a new single market agent based on type parameter.
+	 * 
+	 * @param type
+	 * @param agentID
+	 * @param data
+	 * @param params
+	 * @return
+	 */
+	public static Agent createSMAgent(String type,
+									Integer agentID,
+									SystemData data,
+									AgentProperties params,
+									Log l,
+									Integer mktID) {
+		
+		if (type.equals(Consts.getAgentType("MarketMakerAgent"))) {
+			return new MarketMakerAgent(agentID, data, params, l, mktID);
+		} else {
+			return null;
+		}
+	}
 }

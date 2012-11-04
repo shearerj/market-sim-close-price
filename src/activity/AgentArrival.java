@@ -35,11 +35,7 @@ public class AgentArrival extends Activity {
 	}
 	
 	public ActivityHashMap execute() {
-		if (mkt == null) {
-			return ((MMAgent)ag).agentArrival(time);
-		} else {
-			return ((SMAgent)ag).agentArrival(mkt, time);
-		}
+		return ag.agentArrival(time); 
 	}
 	
 	public String toString() {

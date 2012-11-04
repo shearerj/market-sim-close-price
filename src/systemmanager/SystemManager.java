@@ -235,24 +235,62 @@ public class SystemManager {
 	 * @param ap AgentProperties object
 	 */
 	public void setupAgent(int agentID, String agentType, AgentProperties ap) {
-		Agent agent = AgentFactory.createAgent(agentType, agentID, data, ap, log);
-		data.addAgent(agent);
-		log.log(Log.DEBUG, agent.toString() + ": " + ap);
 		
-		TimeStamp ts = agent.getArrivalTime();
-		if (agent instanceof SMAgent) {
-			// Agent is in single market
-			for (int i = 1; i <= data.numMarkets; i++) {
-				Market mkt = data.getMarket(-i);
-				eventManager.createEvent(new AgentArrival(agent, mkt, ts));
-				eventManager.createEvent(new AgentDeparture(agent, mkt, data.simLength));
+		if (!Arrays.asList(Consts.SMAgentTypes).contains(agentType)) {
+			// Multimarket agent
+			Agent agent = AgentFactory.createMMAgent(agentType, agentID, data, ap, log);
+			data.addAgent(agent);
+			log.log(Log.DEBUG, agent.toString() + ": " + ap);
+			
+			TimeStamp ts = agent.getArrivalTime();
+			if (agent instanceof MMAgent) {
+				// Agent is in multiple markets
+				eventManager.createEvent(new AgentArrival(agent, ts));
+				eventManager.createEvent(new AgentDeparture(agent, data.simLength));
 			}
 			
-		} else if (agent instanceof MMAgent) {
-			// Agent is in multiple markets
-			eventManager.createEvent(new AgentArrival(agent, ts));
-			eventManager.createEvent(new AgentDeparture(agent, data.simLength));
+		} else {
+			// Single market agent - create for each market
+			int n = 0;
+			for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
+				
+				// Increment agent ID to create after first agent created
+				int id;
+				if (n == 0) {
+					id = agentID;
+				} else {
+					id = agentIDSequence.increment();
+				}
+				
+				int mktID = it.next();
+				Agent agent = AgentFactory.createSMAgent(agentType, id, data, ap, log, mktID);
+				data.addAgent(agent);
+				log.log(Log.DEBUG, agent.toString() + ": " + ap);
+				
+				TimeStamp ts = agent.getArrivalTime();
+				if (agent instanceof SMAgent) {
+					// Agent is in single market
+					Market mkt = ((SMAgent) agent).getMainMarket();
+					eventManager.createEvent(new AgentArrival(agent, mkt, ts));
+					eventManager.createEvent(new AgentDeparture(agent, mkt, data.simLength));		
+				}
+				
+				n++;
+			}
 		}
+		
+//		TimeStamp ts = agent.getArrivalTime();
+//		if (agent instanceof SMAgent) {
+//			// Agent is in single market
+//			Market mkt = ((SMAgent) agent).getMainMarket();
+//			eventManager.createEvent(new AgentArrival(agent, mkt, ts));
+//			eventManager.createEvent(new AgentDeparture(agent, mkt, data.simLength));
+//			
+//		} else if (agent instanceof MMAgent) {
+//			// Agent is in multiple markets
+//			eventManager.createEvent(new AgentArrival(agent, ts));
+//			eventManager.createEvent(new AgentDeparture(agent, data.simLength));
+//		}
 	}
 	
 	

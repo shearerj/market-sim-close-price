@@ -144,7 +144,7 @@ public class CallMarket extends Market {
 
 		// Insert next clear activity at some time in the future
 		if (clearFreq.longValue() > 0) {
-			actMap.insertActivity(new Clear(this, nextClearTime));				
+			actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, nextClearTime));				
 		}
 		return actMap;
 	}

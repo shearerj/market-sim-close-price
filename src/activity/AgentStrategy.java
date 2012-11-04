@@ -34,11 +34,7 @@ public class AgentStrategy extends Activity {
 	}
 	
 	public ActivityHashMap execute() {
-		if (mkt == null) {
-			return ((MMAgent)ag).agentStrategy(time);
-		} else {
-			return ((SMAgent)ag).agentStrategy(mkt, time);
-		}
+		return ag.agentStrategy(time);
 	}
 	
 	public String toString() {

@@ -15,6 +15,7 @@ echo '"CDA": "'$4'",' >> $filename
 echo '"CALL": "'$5'",' >> $filename
 echo '"call_clear_freq": "'$6'",' >> $filename
 echo '"central_mkt": "'$7'",' >> $filename
+echo '"MARKETMAKER": "1"', >> $filename
 echo '"ZI": "500",' >> $filename
 echo '"nbbo_latency": "'$8'",' >> $filename
 echo '"arrival_rate": "0.075",' >> $filename

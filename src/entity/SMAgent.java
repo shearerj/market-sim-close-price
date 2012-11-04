@@ -5,41 +5,54 @@ import activity.*;
 import systemmanager.*;
 
 /**
- * Single market (SM) agent, whose agent strategy is called once for each market.
+ * Single market (SM) agent, whose agent strategy is executed only within its market.
  * 
  * @author ewah
  */
 public abstract class SMAgent extends Agent {
 
-	public SMAgent(int agentID, SystemData d, AgentProperties p, Log l) {
+	protected Market market;
+	
+	/**
+	 * @param agentID
+	 * @param d
+	 * @param p
+	 * @param l
+	 * @param mktID		sets the main market for the SMAgent
+	 */
+	public SMAgent(int agentID, SystemData d, AgentProperties p, Log l, int mktID) {
 		super(agentID, d, p, l);
+		this.market = data.getMarket(mktID);
+	}
+
+	
+	public Market getMainMarket() {
+		return market;
 	}
 	
 	/**
-	 * Function specifying agent's strategy when it participates in a given market only.
-	 * @param m
-	 * @param ts
-	 * @return
+	 * @return main market ID for the single market agent.
 	 */
-	public abstract ActivityHashMap agentStrategy(Market m, TimeStamp ts);
-	
+	public int getMainMarketID() {
+		return market.getID();
+	}
 	
 	/**
 	 * Agent arrives in a single market.
 	 * 
-	 * @param marketID
-	 * @param arrivalTime
+	 * @param market
+	 * @param ts
 	 * @return ActivityHashMap
 	 */
-	public ActivityHashMap agentArrival(Market mkt, TimeStamp ts) {
+	public ActivityHashMap agentArrival(TimeStamp ts) {
 
-		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "->" + mkt.toString());
-		this.enterMarket(mkt, ts);
-		marketIDs.add(mkt.ID);
+		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "->" + market.toString());
+		this.enterMarket(market, ts);
+		marketIDs.add(market.ID);
 		
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new UpdateAllQuotes(this, ts));
-		actMap.insertActivity(new AgentStrategy(this, mkt, ts));
+		actMap.insertActivity(new AgentStrategy(this, market, ts));
 		return actMap;
 	}
 	
@@ -47,16 +60,16 @@ public abstract class SMAgent extends Agent {
 	/**
 	 * Agent departs a specified market, if it is active.
 	 * 
-	 * @param departureTime
+	 * @param market
 	 * @return ActivityHashMap
 	 */
-	public ActivityHashMap agentDeparture(Market mkt) {
+	public ActivityHashMap agentDeparture() {
 
-		mkt.agentIDs.remove(mkt.agentIDs.indexOf(this.ID));
-		mkt.buyers.remove(mkt.buyers.indexOf(this.ID));
-		mkt.sellers.remove(mkt.sellers.indexOf(this.ID));
-		mkt.removeBid(this.ID, null);
-		this.exitMarket(mkt.ID);
+		market.agentIDs.remove(market.agentIDs.indexOf(this.ID));
+		market.buyers.remove(market.buyers.indexOf(this.ID));
+		market.sellers.remove(market.sellers.indexOf(this.ID));
+		market.removeBid(this.ID, null);
+		this.exitMarket(market.ID);
 		return null;
 	}
 

@@ -98,6 +98,24 @@ public abstract class Agent extends Entity {
 	}
 	
 	
+	/** 
+	 * @param ts
+	 * @return
+	 */
+	public abstract ActivityHashMap agentStrategy(TimeStamp ts);
+	
+	/**
+	 * @param ts
+	 * @return
+	 */
+	public abstract ActivityHashMap agentArrival(TimeStamp ts);
+	
+	/**
+	 * @return
+	 */
+	public abstract ActivityHashMap agentDeparture();
+	
+	
 	/**
 	 * @return observation to include in the output file
 	 */
@@ -428,7 +446,8 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap updateAllQuotes(TimeStamp ts) {
 		for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
-			Market mkt = data.markets.get(i.next());
+			int id = i.next();
+			Market mkt = data.getMarket(id);
 			updateQuotes(mkt, ts);
 		}
 		lastGlobalQuote = quoter.findBestBidOffer(marketIDs);
@@ -778,6 +797,8 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	boolean checkBidAsk(int mktID, Vector<Price> price) {
+		if (price.size() < 2) return false;
+		
 		int bid = price.get(0).getPrice();
 		int ask = price.get(1).getPrice();
 		boolean flag = true;

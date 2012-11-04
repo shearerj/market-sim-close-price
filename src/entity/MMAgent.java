@@ -29,18 +29,9 @@ public abstract class MMAgent extends Agent {
 	}
 	
 	/**
-	 * Function specifying agent's strategy when it participates in all markets.
-	 * 
-	 * @param ts
-	 * @return
-	 */
-	public abstract ActivityHashMap agentStrategy(TimeStamp ts);
-	
-	/**
 	 * Agent arrives in a single market.
 	 * 
-	 * @param marketID
-	 * @param arrivalTime
+	 * @param ts
 	 * @return ActivityHashMap
 	 */
 	public ActivityHashMap agentArrival(TimeStamp ts) {
@@ -63,9 +54,8 @@ public abstract class MMAgent extends Agent {
 	}
 	
 	/**
-	 * Agent departs a specified market, if it is active.
+	 * Agent departs all markets, if it is active.
 	 * 
-	 * @param departureTime
 	 * @return ActivityHashMap
 	 */
 	public ActivityHashMap agentDeparture() {

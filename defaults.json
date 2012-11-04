@@ -6,6 +6,7 @@
 	"CALL": 0,
 	"call_clear_freq": 100,
 	"central_mkt": on,
+	"MARKETMAKER": 1,
 	"ZI": 500,
         "nbbo_latency": 100,
 	"arrival_rate": 0.075,
