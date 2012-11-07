@@ -10,9 +10,13 @@ import java.util.HashMap;
  * Basic market maker. See description in 2011 EC paper.
  * Participates in only a single market at a time.
  * 
- * @author ewah
+ * @author ewah, gshiva
  */
 public class MarketMakerAgent extends SMAgent {
+        private int bidRange;				// range for limit order
+        
+        private boolean DEBUG_ENB = true;
+        
 
 	public MarketMakerAgent(int agentID, SystemData d, AgentProperties p, Log l) {
 		super(agentID, d, p, l);
@@ -20,10 +24,23 @@ public class MarketMakerAgent extends SMAgent {
 		
 		arrivalTime = new TimeStamp(0);
 		params = p;
+                
+                bidRange = this.data.bidRange;  //Sets buy-sell spread for the Market Maker
+                
+                //Bids need to expire every tik and a new bid is put up
+                
+                if(DEBUG_ENB){
+                    //?? Where's the AgentProperties being used?
+                    System.out.println("MarketMaker Agent initialized at market "+params.get("Market"));
+                    System.out.println("Bid Range = "+bidRange);
+                }
 	}
 	
 	@Override
 	public HashMap<String, Object> getObservation() {
+                if(DEBUG_ENB){
+                    System.out.println("MarketMaker.getObservation() called, returning null");
+                }
 		return null;
 	}
 	
@@ -35,10 +52,11 @@ public class MarketMakerAgent extends SMAgent {
 		int bid = getBidPrice(mkt.ID).getPrice();
 		int ask = getAskPrice(mkt.ID).getPrice();
 
-		int numRungs = 10;
+		//int numRungs = 10;  //Size of the bid-ask spread
+		int numRungs = bidRange;  //Size of the bid-ask spread
 
 		int[] prices = new int[numRungs];
-		int[] quantities = new int[numRungs];
+		int[] quantities = new int[numRungs]; //Set to 1 for each bid/ask price
 
 		// This is a dummy market maker that simply submits lots and lots of bids
 		for(int j=0; j<numRungs; j++) {
@@ -50,11 +68,20 @@ public class MarketMakerAgent extends SMAgent {
 				quantities[j] = -1;
 				prices[j] = ask+(10*j);//Depth set at +/-.01*numRungs		}
 			}
+                        
+                        if(DEBUG_ENB){
+                            System.out.println("MarketMaker price :"+prices[j]);
+                            if(quantities[j] > 1)
+                                System.out.println("price is buying");
+                            else
+                                System.out.println("price is selling");
+                        }
+                        
 			log.log(Log.INFO,"MarketMaker::Price "+prices[j]+" @ Quantity "+quantities[j]);
 			//				System.out.print("(" + quantities[j] + ", " + prices[j] + ") | ");
 			actMap.appendActivityHashMap(addBid(mkt, prices[j], quantities[j], ts));
 		}
-		int sleepTime = Integer.parseInt(params.get("sleepTime"));
+		int sleepTime = Integer.parseInt(params.get("sleepTime")); //Does the Market Maker sleep? Shouldn't ti submit bids everytime it gets updates?
 		double sleepVar = Double.parseDouble(params.get("sleepVar"));
 		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
 		actMap.insertActivity(new UpdateAllQuotes(this, tsNew));
