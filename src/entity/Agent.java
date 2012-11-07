@@ -98,6 +98,24 @@ public abstract class Agent extends Entity {
 	}
 	
 	
+	/** 
+	 * @param ts
+	 * @return
+	 */
+	public abstract ActivityHashMap agentStrategy(TimeStamp ts);
+	
+	/**
+	 * @param ts
+	 * @return
+	 */
+	public abstract ActivityHashMap agentArrival(TimeStamp ts);
+	
+	/**
+	 * @return
+	 */
+	public abstract ActivityHashMap agentDeparture();
+	
+	
 	/**
 	 * @return observation to include in the output file
 	 */
@@ -305,9 +323,16 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap addBid(Market mkt, int price, int quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(new SubmitBid(this, mkt, price, quantity, ts));
-		if (data.useCentralMarket() && !(this instanceof LAAgent))
-			actMap.insertActivity(new SubmitBid(this, data.centralMarket, price, quantity, ts));
+		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
+				new SubmitBid(this, mkt, price, quantity, ts));
+		
+		if (data.useCentralMarket() && !(this instanceof LAAgent)) {
+			for (Iterator<Integer> id = data.getCentralMarketIDs().iterator(); id.hasNext(); ) {
+				Market centralMkt = data.centralMarkets.get(id.next());
+				actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
+						new SubmitBid(this, centralMkt, price, quantity, ts));
+			}
+		}
 		return actMap;
 	}
 
@@ -323,9 +348,16 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap addMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(new SubmitMultipleBid(this, mkt, price, quantity, ts));
-		if (data.useCentralMarket() && !(this instanceof LAAgent))
-			actMap.insertActivity(new SubmitMultipleBid(this, data.centralMarket, price, quantity, ts));
+		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
+				new SubmitMultipleBid(this, mkt, price, quantity, ts));
+		
+		if (data.useCentralMarket() && !(this instanceof LAAgent)) {
+			for (Iterator<Integer> id = data.getCentralMarketIDs().iterator(); id.hasNext(); ) {
+				Market centralMkt = data.centralMarkets.get(id.next());
+				actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY,
+						new SubmitMultipleBid(this, centralMkt, price, quantity, ts));
+			}			
+		}
 		return actMap;
 	}
 
@@ -396,9 +428,12 @@ public abstract class Agent extends Entity {
 	public ActivityHashMap withdrawBid(Market mkt, TimeStamp ts) {
 		log.log(Log.INFO, ts + " | " + this.toString() + " withdraw bid from " + mkt);
 		if (data.useCentralMarket()) {
-			log.log(Log.INFO, ts + " | " + this.toString() + " withdraw bid from " + 
-					data.centralMarket);
-			data.centralMarket.removeBid(this.ID, ts);
+			for (Iterator<Integer> id = data.getCentralMarketIDs().iterator(); id.hasNext(); ) {
+				Market centralMkt = data.centralMarkets.get(id.next());
+				log.log(Log.INFO, ts + " | " + this.toString() + " withdraw bid from " + 
+						centralMkt);
+				centralMkt.removeBid(this.ID, ts);
+			}
 		}
 		return mkt.removeBid(this.ID, ts);
 	}
@@ -411,7 +446,8 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap updateAllQuotes(TimeStamp ts) {
 		for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
-			Market mkt = data.markets.get(i.next());
+			int id = i.next();
+			Market mkt = data.getMarket(id);
 			updateQuotes(mkt, ts);
 		}
 		lastGlobalQuote = quoter.findBestBidOffer(marketIDs);
@@ -507,7 +543,7 @@ public abstract class Agent extends Entity {
 		if (!flag) {
 			return false;
 		} else {
-			if (t.marketID != data.centralMarketID) {
+			if (!data.centralMarkets.containsKey(t.marketID)) {
 				// check whether seller, in which case negate the quantity
 				int quantity = t.quantity;
 				if (this.ID == t.sellerID) {
@@ -761,6 +797,8 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	boolean checkBidAsk(int mktID, Vector<Price> price) {
+		if (price.size() < 2) return false;
+		
 		int bid = price.get(0).getPrice();
 		int ask = price.get(1).getPrice();
 		boolean flag = true;

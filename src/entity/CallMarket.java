@@ -7,7 +7,7 @@ import java.util.TreeSet;
 
 import market.*;
 import activity.*;
-import event.TimeStamp;
+import event.*;
 import systemmanager.*;
 
 /**
@@ -48,20 +48,23 @@ public class CallMarket extends Market {
 	}
 
 	public Price getBidPrice() {
-//		return ((PQBid) getBidQuote()).bidTreeSet.first().getPrice();
 		return lastBidPrice;
 	}
 	
 	public Price getAskPrice() {
-//		return ((PQBid) getAskQuote()).bidTreeSet.last().getPrice();
 		return lastAskPrice;
 	}
 	
 	public ActivityHashMap addBid(Bid b, TimeStamp ts) {
-		// Unlike continuous auction market, no Clear Activity inserted
+		// Unlike continuous auction market, no Clear Activity inserted unless clear freq = 0
 		orderbook.insertBid((PQBid) b);
 		this.data.addDepth(this.ID, ts, orderbook.getDepth());
 		this.data.addSubmissionTime(b.getBidID(), ts);
+		if (clearFreq.longValue() == 0) {
+			ActivityHashMap actMap = new ActivityHashMap();
+			actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, ts));
+			return actMap;
+		}
 		return null;
 	}
 	
@@ -100,7 +103,10 @@ public class CallMarket extends Market {
 			log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + " " + 
 					this.getClass().getSimpleName() + "::clear: Nothing transacted. Post Quote" 
 					+ this.quote(clearTime));
-			actMap.insertActivity(new Clear(this, nextClearTime));
+			
+			if (clearFreq.longValue() > 0) {
+				actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, nextClearTime));				
+			}
 			return actMap;
 		}
 		
@@ -137,7 +143,9 @@ public class CallMarket extends Market {
 				this.getClass().getSimpleName() + " cleared: Post Quote" + this.quote(clearTime));
 
 		// Insert next clear activity at some time in the future
-		actMap.insertActivity(new Clear(this, this.nextClearTime));
+		if (clearFreq.longValue() > 0) {
+			actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, nextClearTime));				
+		}
 		return actMap;
 	}
 	
@@ -154,9 +162,16 @@ public class CallMarket extends Market {
 			Price ap = q.lastAskPrice;
 			
 			if (bp != null && ap != null) {
-				if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
-					log.log(Log.ERROR, "CallMarket::quote: ERROR bid > ask");
+				if (bp.getPrice() == -1 || ap.getPrice() == -1) {
+					// either bid or ask are undefined
+					this.data.addSpread(this.ID, quoteTime, Consts.INF_PRICE);
+					
+				} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
+					log.log(Log.ERROR, this.getClass().getSimpleName() + "::quote: ERROR bid > ask");
+					this.data.addSpread(this.ID, quoteTime, Consts.INF_PRICE);
+					
 				} else {
+					// valid bid-ask
 					this.data.addQuote(this.ID, q);
 					this.data.addSpread(this.ID, quoteTime, q.getSpread());
 				}

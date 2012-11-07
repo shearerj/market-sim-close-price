@@ -50,7 +50,7 @@ public class ZIAgent extends MMAgent {
 	private double expireRate;
 	private int expiration;				// time until limit order expiration
 	private int bidRange;				// range for limit order
-	private double valueVar;			// variance from private value random process
+	private double pvVar;			// variance from private value random process
 	
 	private int mainMarketID;			// assigned at initialization
 	private int altMarketID;
@@ -69,10 +69,11 @@ public class ZIAgent extends MMAgent {
 		
 		expireRate = this.data.expireRate;
 		bidRange = this.data.bidRange;
-		valueVar = this.data.privateValueVar;
-		expiration = (int) (100 * getExponentialRV(expireRate));
+		pvVar = this.data.privateValueVar;
+		expiration = (int) getExponentialRV(expireRate);
 		arrivalTime = this.data.nextArrival();
-		privateValue = Math.max(0, this.data.nextPrivateValue() + (int) Math.round(getNormalRV(0,valueVar)));
+		privateValue = Math.max(0, this.data.nextPrivateValue() + 
+				(int) Math.round(getNormalRV(0, pvVar)) * Consts.SCALING_FACTOR);
 		
 		if (this.data.numMarkets != 2) {
 			log.log(Log.ERROR, "NBBOAgent: NBBO agents need 2 markets!");
@@ -196,10 +197,17 @@ public class ZIAgent extends MMAgent {
 			    
 		// Bid expires after a given duration
 		TimeStamp expireTime = ts.sum(new TimeStamp(expiration));
-		actMap.insertActivity(new WithdrawBid(this, data.markets.get(bestMarketID), expireTime));
+		actMap.insertActivity(Consts.WITHDRAW_BID_PRIORITY,
+				new WithdrawBid(this, data.markets.get(bestMarketID), expireTime));
 		return actMap;
 	}
 
+	/**
+	 * @return expiration
+	 */
+	public int getExpiration() {
+		return expiration;
+	}
 	
 	/**
 	 * Generate exponential random variate, with rate parameter.

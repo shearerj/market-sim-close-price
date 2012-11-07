@@ -1,10 +1,11 @@
 package activity;
 
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.Map;
+
+import systemmanager.Consts;
 
 import event.TimeStamp;
 
@@ -17,11 +18,10 @@ import event.TimeStamp;
  */
 public class ActivityHashMap {
 
-	private HashMap<TimeStamp, LinkedList<Activity>> acts;
-
+	private HashMap<TimeStamp, PriorityActivityList> acts;
 	
 	public ActivityHashMap() {
-		acts = new HashMap<TimeStamp, LinkedList<Activity>>();
+		acts = new HashMap<TimeStamp, PriorityActivityList>();
 	}
 	
 	/**
@@ -33,77 +33,112 @@ public class ActivityHashMap {
 	
 	/**
 	 * Creates new entry hashed at the activity's TimeStamp, with a single
-	 * element LinkedList containing the given Activity.
+	 * element ActivityList containing the given Activity. Modifies the Activity
+	 * TimeStamp to match what it is hashed at.
 	 * 
 	 * If key already exists, appends the given Activity at the end of the
-	 * Activity LinkedList.
+	 * ActivityList.
 	 * 
 	 * @param act
 	 * @return true if inserted correctly, false otherwise
 	 */
 	public boolean insertActivity(Activity act) {
+		return insertActivity(Consts.DEFAULT_PRIORITY, act);
+	}
+	
+	/**
+	 * Creates new entry hashed at the activity's TimeStamp, with a single
+	 * element ActivityList containing the given Activity. Modifies the Activity
+	 * TimeStamp to match what it is hashed at, and sets the ActivityList to have
+	 * the given priority.
+	 * 
+	 * If key already exists, appends the given Activity at the end of the
+	 * ActivityList.
+	 * 
+	 * @param priority
+	 * @param act
+	 * @return true if inserted correctly, false otherwise
+	 */
+	public boolean insertActivity(int priority, Activity act) {
 		if (act == null)
 			return false;
 		
-		boolean ret = false;
 		TimeStamp ts = act.getTime();
 		if (!ts.checkActivityTimeStamp(act))
 			return false;
 		
 		if (acts.containsKey(ts)) {
-			// append Activity to LinkedList
-			ret = acts.get(ts).add(act);
+			// append Activity to ActivityList
+			acts.get(ts).add(priority, act);
 		} else {
 			// create new key-value mapping
-			LinkedList<Activity> vec = new LinkedList<Activity>();
-			ret = vec.add(act);
-			acts.put(ts, vec);
+			ActivityList al = new ActivityList(priority, act);
+			PriorityActivityList pal = new PriorityActivityList(al);
+			pal.add(al);
+			acts.put(ts, pal);
 		}
-		return ret;
+		return true;
 	}
 	
 	/**
-	 * Creates new entry hashed at TimeStamp of activities, with a LinkedList
+	 * Creates new entry hashed at TimeStamp of activities, with an ActivityList
 	 * containing the specified list of activities.
 	 * 
-	 * If key already exists, appends the given Activity LinkedList at the end
-	 * of the existing LinkedList.
+	 * If key already exists, appends the given ActivityList at the end
+	 * of the existing list.
 	 * 
-	 * @param av
+	 * @param al
 	 * @return true if inserted correctly, false otherwise
 	 */
-	public boolean insertActivity(LinkedList<Activity> av) {
-		if (av == null) return false;
+	public boolean insertActivity(ActivityList al) {
+		if (al == null) return false;
 		
-		boolean ret = false;
-		TimeStamp ts = av.get(0).getTime();
-		if (!ts.checkActivityTimeStamp(av)) {
-			System.out.println("timestamps do not match");
-			return false;
-		}
-		
+		TimeStamp ts = al.getTime();	
 		if (acts.containsKey(ts)) {
-			// append Activity Vector to LinkedList
-			ret = acts.get(ts).addAll(av);
+			// append to end of the activity list with the same priority
+			acts.get(ts).add(al);
 		} else {
 			// create new key-value mapping
-			acts.put(ts, av);
+			PriorityActivityList pal = new PriorityActivityList(al);
+			pal.add(al);
+			acts.put(ts, pal);
 		}
-		return ret;
+		return true;
+	}
+	
+	/**
+	 * Creates new entry hashed at TimeStamp of activities, with an ActivityList
+	 * containing the specified list of activities.
+	 * 
+	 * If key already exists, appends the given ActivityList at the end
+	 * of the existing list.
+	 * 
+	 * @param ts
+	 * @param pal
+	 * @return true if inserted correctly, false otherwise
+	 */
+	public boolean insertActivity(TimeStamp ts, PriorityActivityList pal) {
+		if (pal == null) return false;
+		
+		if (acts.containsKey(ts)) {
+			// add to the priority activity list at that TimeStamp
+			acts.get(ts).add(pal);
+		} else {
+			// create new key-value mapping
+			acts.put(ts, pal);
+		}
+		return true;
 	}
 	
 	/**
 	 * Appends two ActivityHashMaps together. Modifies the calling Object's HashMap.
 	 * 
 	 * @param ahm
-	 * @return
 	 */
-	public boolean appendActivityHashMap(ActivityHashMap ahm) {
-		boolean ret = true;
-		for (Map.Entry<TimeStamp,LinkedList<Activity>> entry : ahm.acts.entrySet()) {
-			ret = ret && insertActivity(entry.getValue());
+	public void appendActivityHashMap(ActivityHashMap ahm) {
+		for (Map.Entry<TimeStamp,PriorityActivityList> entry : ahm.acts.entrySet()) {
+			insertActivity(entry.getKey(), entry.getValue());
 		}
-		return ret;
 	}
 	
 	/**
@@ -123,42 +158,42 @@ public class ActivityHashMap {
 	/**
 	 * @return Set view of mappings in this ActivityHashMap
 	 */
-	public Set<Map.Entry<TimeStamp,LinkedList<Activity>>> entrySet() {
+	public Set<Map.Entry<TimeStamp,PriorityActivityList>> entrySet() {
 		return acts.entrySet();
 	}
 	
 	
-	/**
-	 * @param list
-	 * @return true if hashmap contains the list, otherwise false.
-	 */
-	public boolean contains(LinkedList<Activity> list) {
-		
-		// Check if directly contained within the hashmap
-		boolean contained = acts.containsValue(list);
-		
-		// Check if is a sublist of any linked list within the hashmap
-		for (Map.Entry<TimeStamp,LinkedList<Activity>> entry : acts.entrySet()) {
-			LinkedList<Activity> test = entry.getValue();
-			if (test.equals(list)) {
-				contained = true;
-				break;
-			}
-			
-			if (list.hashCode() == test.hashCode()) {
-				contained = true;
-				break;
-			}
-		}
-		return contained;
-	}
+//	/**
+//	 * @param list
+//	 * @return true if hashmap contains the list, otherwise false.
+//	 */
+//	public boolean contains(PriorityActivityList list) {
+//		
+//		// Check if directly contained within the hashmap
+//		boolean contained = acts.containsValue(list);
+//		
+//		// Check if is a sublist of any linked list within the hashmap
+//		for (Map.Entry<TimeStamp,PriorityActivityList> entry : acts.entrySet()) {
+//			ActivityList test = entry.getValue();
+//			if (test.equals(list)) {
+//				contained = true;
+//				break;
+//			}
+//			
+//			if (list.hashCode() == test.hashCode()) {
+//				contained = true;
+//				break;
+//			}
+//		}
+//		return contained;
+//	}
 	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
 		String s = "";
-		for (Map.Entry<TimeStamp,LinkedList<Activity>> entry : acts.entrySet()) {
+		for (Map.Entry<TimeStamp, PriorityActivityList> entry : acts.entrySet()) {
 			s += entry.getKey().toString() + ": ";
 			for (Iterator<Activity> it = entry.getValue().iterator(); it.hasNext(); ) {
 				s += it.next().toString() + "...";

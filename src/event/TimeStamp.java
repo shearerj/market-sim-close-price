@@ -8,6 +8,8 @@ package event;
 
 import java.util.*;
 
+import systemmanager.Consts;
+
 import activity.*;
 
 /**
@@ -16,10 +18,7 @@ import activity.*;
  */
 public class TimeStamp implements Comparable<TimeStamp>
 {
-	/* should these be made private?  */
 	private Long ts;
-	private static long preTS = -1;		// TimeStamp assigned to PRE activities
-	private static long postTS = -2;	// TimeStamp assigned to POST activities
 	
 	public TimeStamp()          { ts = new Long(new Date().getTime());}
 	public TimeStamp(Date d)    { ts = new Long(d.getTime());}
@@ -29,39 +28,15 @@ public class TimeStamp implements Comparable<TimeStamp>
 	public TimeStamp(int i)     { ts = new Long((new Integer(i)).longValue());}
 	public TimeStamp(String s)  { ts = new Long(s);}
 
-	/**
-	 * Constructor to handle infinitely fast activity times.
-	 * @param t
-	 */
-	public TimeStamp(EventManager.FastActivityType t) {
-		switch (t) {
-		case POST:
-			ts = new Long(postTS);
-			break;
-			
-		case PRE:
-			ts = new Long(preTS);
-			break;
-			
-		default:
-			ts = new Long(0);
-			break;
-		}
+	public TimeStamp(TimeStamp ts) {
+		this.ts = new Long(ts.longValue());
 	}
 	
 	/**
-	 * @return true if TimeStamp is a PRE activity.
+	 * @return true if TimeStamp is infinitely fast.
 	 */
-	public boolean isFastPreActivity() {
-		if (ts.longValue() == preTS) return true;
-		return false;
-	}
-	
-	/**
-	 * @return true if TimeStamp is a POST activity.
-	 */
-	public boolean isFastPostActivity() {
-		if (ts.longValue() == postTS) return true;
+	public boolean isInfinitelyFast() {
+		if (ts.longValue() == Consts.INF_TIME) return true;
 		return false;
 	}
 	
@@ -208,10 +183,10 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @param acts
 	 * @return true if matches, false otherwise.
 	 */
-	public boolean checkActivityTimeStamp(LinkedList<Activity> acts) {
+	public boolean checkActivityTimeStamp(ActivityList acts) {
 		for (Iterator<Activity> it = acts.iterator(); it.hasNext(); ) {
 			if (!checkActivityTimeStamp(it.next())) {
-				System.out.println("TimeStamp::checkActivityTimeStamp::ERROR: activities do not match the timestamp");
+				System.err.println("TimeStamp::checkActivityTimeStamp::ERROR: activities do not match the timestamp");
 				return false;
 			}
 		}

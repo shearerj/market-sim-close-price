@@ -7,8 +7,7 @@ import systemmanager.*;
 import java.util.HashMap;
 
 /**
- * Dummy agent. Used for experiments (on EGTA) without any HFT agent or any
- * player in a "role."
+ * Dummy agent. Payoff is always 0. Strategy can be any string, as it is never parsed.
  * 
  * @author ewah
  */
@@ -28,7 +27,11 @@ public class DummyAgent extends MMAgent {
 	
 	@Override
 	public HashMap<String, Object> getObservation() {
-		return null;
+		HashMap<String,Object> obs = new HashMap<String,Object>();
+		obs.put("role", agentType);
+		obs.put("payoff", 0);
+		obs.put("strategy", params.get("strategy"));
+		return obs;
 	}
 	
 	

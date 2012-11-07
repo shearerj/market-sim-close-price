@@ -1,7 +1,5 @@
 package systemmanager;
 
-import java.util.HashMap;
-
 /**
  * System-wide constants and accessor methods. Sets default properties for each
  * type of entity.
@@ -10,10 +8,26 @@ import java.util.HashMap;
  */
 public class Consts {
 	
-	public static final int INF_PRICE = 999999999;
+	// ActivityList priorities
+	public final static int DEFAULT_PRIORITY = 0;
+	public final static int SUBMIT_BID_PRIORITY = 1;
+	public final static int CDA_CLEAR_PRIORITY = 2;
+	public final static int CALL_CLEAR_PRIORITY = 2;
+	public final static int HFT_PRIORITY = 3;
+	public final static int MARKETMAKER_PRIORITY = 4;
+	public final static int WITHDRAW_BID_PRIORITY = 5;
+	public final static int UPDATE_NBBO_PRIORITY = 6;
+	
+	// TimeStamp
+	public final static long INF_TIME = -1;
+	
+	// Price
+	public final static int INF_PRICE = 999999999;
+	public final static int SCALING_FACTOR = 100;
 	
 	// Entity types
-	public final static String[] agentTypeNames = {"LA", "ZI", "DUMMY"};
+	public final static String[] agentTypeNames = {"LA", "ZI", "DUMMY", "MARKETMAKER"};
+	public final static String[] SMAgentTypes = {"MARKETMAKER"};
 	public final static String[] marketTypeNames = {"CDA", "CALL"};
 	public final static String CENTRAL = "CENTRAL";
 	
@@ -73,10 +87,11 @@ public class Consts {
 			ap.put("sleepTime", "0");
 			ap.put("sleepVar", "100");
 			ap.put("alpha", "0.001");
-		} else if (type.equals("BACKGROUND")) {
-			
-		} else if (type.equals("DUMMY")) {
-			
+		}
+		
+		if (type.equals("MARKETMAKER")) {
+			ap.put("sleepTime", "50");
+			ap.put("sleepVar", "100");
 		}
 		return ap;
 	}

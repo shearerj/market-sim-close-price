@@ -28,8 +28,8 @@ public class BestBidAsk {
 			}
 			return bestAsk - bestBid;
 		}
-		// if bid crosses the ask, return a spread of zero
-		return 0;
+		// if bid crosses the ask, return a spread of INF
+		return Consts.INF_PRICE;
 	}
 	
 	public String toString() {

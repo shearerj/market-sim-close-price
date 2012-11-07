@@ -4,6 +4,9 @@ import entity.*;
 import event.TimeStamp;
 import market.*;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -139,19 +142,33 @@ public class Observations {
 	 * Takes hashmap of agent information (integer values only) and extracts features for 
 	 * observation file.
 	 * 
-	 * @param allValues
+	 * @param allSurplus
+	 * @param central
 	 * @return
 	 */
-	public HashMap<String,Object> getIntFeatures(HashMap<Integer,Integer> allValues) {
+	public HashMap<String,Object> getSurplusFeatures(HashMap<Integer,Integer> allSurplus,
+			boolean central) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-		Object[] surplus = (new ArrayList<Integer>(allValues.values())).toArray();
-	    double[] values = new double[surplus.length];  
+		Object[] objs = (new ArrayList<Integer>(allSurplus.values())).toArray();
+	    double[] values = new double[objs.length];  
 	    for (int i = 0; i < values.length; i++) {
-	    	Integer tmp = (Integer) surplus[i];
+	    	Integer tmp = (Integer) objs[i];
 	        values[i] = tmp.doubleValue();
 	    }
 		addAllStatistics(feat,values);
+		if (!central) {
+			for (Iterator<Integer> it = data.roleAgentIDs.iterator(); it.hasNext(); ) {
+				int id = it.next();
+				String type = data.getAgent(id).getType();
+				String suffix = "sum_plus_" + type.toLowerCase();
+				if (data.numAgentType.get(type) > 1) {
+					suffix += id;
+				}
+				DescriptiveStatistics ds = new DescriptiveStatistics(values);
+				feat.put(suffix, ds.getSum() + data.getAgent(id).getRealizedProfit());
+			}
+		}
 		return feat;
 	}
 	
@@ -238,35 +255,63 @@ public class Observations {
 	public HashMap<String,Object> getTransactionInfo(boolean central) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-		ArrayList<Integer> ids = new ArrayList<Integer>();
+		int num = 1;
 		if (central) {
-			ids.add(data.centralMarketID);
-		} else {
-			ids = data.getMarketIDs();
+			num = data.getCentralMarketIDs().size();
 		}
-		HashMap<Integer,PQTransaction> transactions = data.getTrans(ids);
-		feat.put("num_trans", transactions.size());
-		
-		int buys = 0;
-		int sells = 0;
-		double[] prices = new double[transactions.size()];
-		double[] quantities = new double[transactions.size()];
-		int i = 0;
-		for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
-			PQTransaction trans = entry.getValue();
-			prices[i] = trans.price.getPrice();
-			quantities[i] = trans.quantity;
-			i++;
-			if (trans.sellerID == 1) {
-				buys++;
-			} else if (trans.buyerID == 1) {
-				sells++;
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		for (int it = 0; it < num; it++ ) {
+			String suffix = "";
+			if (central) {
+				int mktID = data.getCentralMarketIDs().get(it);
+				if (ids.isEmpty()) {
+					ids.add(mktID);
+				} else {
+					ids.set(0, mktID);		// only set index 0
+				}
+				suffix = "_" + data.getCentralMarketType(mktID).toLowerCase();
+			} else {
+				ids = data.getMarketIDs();
+			}
+			HashMap<Integer,PQTransaction> transactions = data.getTrans(ids);
+			feat.put("num_trans" + suffix, transactions.size());
+	
+			double[] prices = new double[transactions.size()];
+			double[] quantities = new double[transactions.size()];
+			int i = 0;
+			for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
+				PQTransaction trans = entry.getValue();
+				prices[i] = trans.price.getPrice();
+				quantities[i] = trans.quantity;
+				i++;
+			}
+			addStatistics(feat,prices,"price" + suffix,false);
+			//		addSomeStatistics(feat,quantities,"qty",false);
+			
+			if (!central) {
+				for (Iterator<Integer> aid = data.roleAgentIDs.iterator(); aid.hasNext(); ) {
+					int id = aid.next();
+					suffix = suffix + "_" + data.getAgent(id).getType().toLowerCase();
+
+					int buys = 0;
+					int sells = 0;
+					for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
+						PQTransaction trans = entry.getValue();
+						if (trans.sellerID == id) {
+							buys++;
+						} else if (trans.buyerID == id) {
+							sells++;
+						}
+					}
+
+					if (data.numAgentType.get(data.getAgent(id).getType()) > 1) {
+						suffix += id;
+					}
+					feat.put("buys" + suffix , buys);
+					feat.put("sells" + suffix, sells);
+				}
 			}
 		}
-		feat.put("hft_buys", buys);
-		feat.put("hft_sells", sells);
-		addStatistics(feat,prices,"price",false);
-//		addSomeStatistics(feat,quantities,"qty",false);
 		return feat;
 	}
 	
@@ -283,22 +328,36 @@ public class Observations {
 		// Initialize with maximum number of possible bids
 		double[] values = new double[data.executionTime.size()];
 		int cnt = 0;
-		for (Map.Entry<Integer, TimeStamp> entry : data.executionTime.entrySet()) {
-			int bidID = entry.getKey();
-			TimeStamp ts = entry.getValue();
-			PQBid b = data.getBid(bidID);
-			if ((central && data.centralMarketID == b.getMarketID()) ||
-					(!central && data.centralMarketID != b.getMarketID())) {
-				values[cnt] =  (double) ts.diff(data.submissionTime.get(bidID)).longValue();
-				cnt++;
+		
+		int num = 1;
+		if (central) {
+			num = data.getCentralMarketIDs().size();
+		}
+		for (int it = 0; it < num; it++) {
+			int centralMktID = data.getCentralMarketIDs().get(it);
+			
+			String suffix = "";
+			if (central) {
+				suffix = data.getCentralMarketType(centralMktID).toLowerCase();
 			}
+			
+			for (Map.Entry<Integer, TimeStamp> entry : data.executionTime.entrySet()) {
+				int bidID = entry.getKey();
+				TimeStamp ts = entry.getValue();
+				PQBid b = data.getBid(bidID);
+				if ((central && centralMktID == b.getMarketID()) ||
+						(!central && centralMktID != b.getMarketID())) {
+					values[cnt] =  (double) ts.diff(data.submissionTime.get(bidID)).longValue();
+					cnt++;
+				}
+			}
+			// Reinitialize to get rid of unused portion of array
+			double[] speeds = new double[cnt];
+			for (int i = 0; i < cnt; i++) {
+				speeds[i] = values[i];
+			}
+			addStatistics(feat,values,suffix,false);
 		}
-		// Reinitialize to get rid of unused portion of array
-		double[] speeds = new double[cnt];
-		for (int i = 0; i < cnt; i++) {
-			speeds[i] = values[i];
-		}
-		addStatistics(feat,values,"",false);
 		return feat;
 	}
 	
@@ -318,14 +377,43 @@ public class Observations {
 				HashMap<TimeStamp,Integer> marketSpread = data.marketSpread.get(mktID);
 				double[] spreads = extractTimeSeries(marketSpread);
 				addStatistics(feat,spreads,"mkt" + (-mktID),true);
+				
+//				// JUST FOR DEBUGGING PURPOSES TODO
+//				TreeSet<TimeStamp> sortedTimes = new TreeSet<TimeStamp>(marketSpread.keySet());
+//				Median med = new Median();
+//				if (med.evaluate(spreads) > 200000 || med.evaluate(spreads) == 0) {					
+//					ArrayList<Integer> sortedSpreads = new ArrayList<Integer>();
+//					for (Iterator<TimeStamp> xt = sortedTimes.iterator(); xt.hasNext(); ) {
+//						sortedSpreads.add(marketSpread.get(xt.next()));
+//					}
+//					try {
+//						// Check first if directory exists
+//						File file = new File("spreads_mkt" + mktID + "_obs" + data.obsNum + ".txt");
+//						if (!file.exists()) {
+//							file.createNewFile();
+//							BufferedWriter f = new BufferedWriter(new FileWriter(file));
+//							f.write(sortedTimes.toString());
+//							f.newLine();
+//							f.write(sortedSpreads.toString());
+//							f.flush();
+//							f.close();
+//						}
+//					} catch (Exception e) {
+//						e.printStackTrace();
+//					}
+//				}				
 			}
-
 			double[] nbboSpreads = extractTimeSeries(data.NBBOSpread);
 			addStatistics(feat,nbboSpreads,"nbbo",true);
+			
 		} else {
-			HashMap<TimeStamp,Integer> marketSpread = data.marketSpread.get(data.centralMarketID);
-			double[] spreads = extractTimeSeries(marketSpread);
-			addStatistics(feat,spreads,"mkt_c",true);
+			for (Iterator<Integer> it = data.getCentralMarketIDs().iterator(); it.hasNext(); ) {
+				int mktID = it.next();
+				HashMap<TimeStamp,Integer> marketSpread = data.marketSpread.get(mktID);
+				double[] spreads = extractTimeSeries(marketSpread);
+				String mktType = data.getCentralMarketType(mktID).toLowerCase();
+				addStatistics(feat,spreads,"mkt_" + mktType,true);
+			}
 		}
 		return feat;
 	}
@@ -348,9 +436,13 @@ public class Observations {
 				addStatistics(feat,depths,"mkt" + (-mktID),true);
 			}
 		} else {
-			HashMap<TimeStamp,Integer> marketDepth = data.marketDepth.get(data.centralMarketID);
-			double[] depths = extractTimeSeries(marketDepth);
-			addStatistics(feat,depths,"mkt_c",true);
+			for (Iterator<Integer> it = data.getCentralMarketIDs().iterator(); it.hasNext(); ) {
+				int mktID = it.next();
+				HashMap<TimeStamp,Integer> marketDepth = data.marketDepth.get(mktID);
+				double[] depths = extractTimeSeries(marketDepth);
+				String mktType = data.getCentralMarketType(mktID).toLowerCase();
+				addStatistics(feat,depths,"mkt_" + mktType,true);
+			}
 		}
 		return feat;
 	}
@@ -373,25 +465,42 @@ public class Observations {
 				times.add(t);
 		}
 		
-		TimeStamp prevTime = new TimeStamp(0);
+		int cnt = 0;
+		TimeStamp prevTime = null;
 		double[] vals = new double[(int) data.simLength.longValue()];
 		for (Iterator<TimeStamp> it = times.iterator(); it.hasNext(); ) {
-			TimeStamp currTime = it.next();
-			// fill in the timeSeries array
-			for (int i = (int) prevTime.longValue(); i <= currTime.longValue(); i++) {
-				vals[i] = map.get(currTime);
+			if (prevTime == null) {
+				// if prevTime has not been defined yet, set as the first time where spread measured
+				prevTime = it.next();
+			} else {
+				// next Time is the next time at which to extend the time series
+				TimeStamp nextTime = it.next();
+				// fill in the timeSeries array, but only for segments where it is not undefined
+				if (!map.get(prevTime).equals(Consts.INF_PRICE)) {
+					for (int i = (int) prevTime.longValue(); i < nextTime.longValue(); i++) {
+						vals[cnt] = map.get(prevTime);
+						cnt++;
+					}
+				}
+				prevTime = nextTime;
 			}
-			// Increment previous time to one time step after the current time
-			prevTime = currTime.sum(new TimeStamp(1));
 		}
-		// if have not filled in the end of the array, fill in
+		// fill in to end of array
 		if (!prevTime.after(data.simLength)) {
-			for (int i = (int) prevTime.longValue(); i < data.simLength.longValue(); i++) {
-				// get last inserted value and insert
-				vals[i] = map.get(prevTime.diff(new TimeStamp(1)));
+			if (map.get(prevTime) != Consts.INF_PRICE) { 
+				for (int i = (int) prevTime.longValue(); i < data.simLength.longValue(); i++) {
+					// get last inserted value and insert
+					vals[cnt] = map.get(prevTime);
+					cnt++;
+				}
 			}
 		}
-		return vals;
+		// Must resize vals
+		double[] valsMod = new double[cnt];
+		for (int i = 0; i < valsMod.length; i++) {
+			valsMod[i] = vals[i];
+		}
+		return valsMod;
 	}
 	
 	

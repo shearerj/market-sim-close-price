@@ -24,6 +24,11 @@ public abstract class Activity {
 	public abstract ActivityHashMap execute();
 	
 	/**
+	 * @return deep copy of the Activity.
+	 */
+	public abstract Activity deepCopy();
+	
+	/**
 	 * @return TimeStamp of time variable
 	 */
 	public TimeStamp getTime() {

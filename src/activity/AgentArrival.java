@@ -26,12 +26,16 @@ public class AgentArrival extends Activity {
 		this.time = t;
 	}
 	
-	public ActivityHashMap execute() {
+	public AgentArrival deepCopy() {
 		if (mkt == null) {
-			return ((MMAgent)ag).agentArrival(time);
+			return new AgentArrival(this.ag, this.time);
 		} else {
-			return ((SMAgent)ag).agentArrival(mkt, time);
+			return new AgentArrival(this.ag, this.mkt, this.time);
 		}
+	}
+	
+	public ActivityHashMap execute() {
+		return ag.agentArrival(time); 
 	}
 	
 	public String toString() {

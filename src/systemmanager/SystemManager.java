@@ -151,16 +151,14 @@ public class SystemManager {
 			Quoter iu = new Quoter(0, data, log);
 			data.quoter = iu;
 			eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(0)));
-//			eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(EventManager.FastActivityType.PRE)));
 
 			// Create markets first since agent creation references markets
 			for (Map.Entry<String, Integer> mkt: data.numMarketType.entrySet()) {
 				
-				if (mkt.getKey().equals(Consts.CENTRAL)) {
+				if (mkt.getKey().startsWith(Consts.CENTRAL)) {
 					int mID = marketIDSequence.decrement();
-					data.centralMarketID = mID;
-					setupMarket(mID, Consts.CENTRAL);
-					log.log(Log.INFO, "Central Market: " + data.getMarket(mID));
+					setupMarket(mID, mkt.getKey());
+					log.log(Log.INFO, mkt.getKey() + " Market: " + data.getMarket(mID));
 					
 				} else {
 					for (int i = 0; i < mkt.getValue(); i++) {
@@ -174,17 +172,22 @@ public class SystemManager {
 
 			// Create agents, initialize parameters, and compute arrival times (if needed)
 			for (Map.Entry<String, Integer> ag : data.numAgentType.entrySet()) {
-
 				for (int i = 0; i < ag.getValue(); i++) {
-
 					AgentProperties ap = specs.setStrategy(ag.getKey(), i);
 					int aID = agentIDSequence.increment();
 
 					// create agent & events
 					setupAgent(aID, ag.getKey(), ap);
+					
+					// check if in a role, keep track of role agent IDs
+					if (Arrays.asList(Consts.roles).contains(ag.getKey())) {
+						data.roleAgentIDs.add(aID);
+					}
 				}
 				log.log(Log.INFO, "Agents: " + ag.getValue() + " " + ag.getKey());
 			}
+			
+			
 			// Log agent information
 			logAgentInfo();
 			
@@ -205,9 +208,10 @@ public class SystemManager {
 	public void setupMarket(int marketID, String marketType) {
 		
 		Market market;
-		if (marketType.equals(Consts.CENTRAL)) {
-			market = MarketFactory.createMarket(data.centralMarketType, marketID, data, log);
-			data.centralMarket = market;
+		if (marketType.startsWith(Consts.CENTRAL)) {
+			market = MarketFactory.createMarket(marketType.substring(Consts.CENTRAL.length()+1), 
+					marketID, data, log);
+			data.centralMarkets.put(marketID, market);
 		} else {
 			// Only add market to the general list if it's not the central market
 			market = MarketFactory.createMarket(marketType, marketID, data, log);
@@ -217,7 +221,7 @@ public class SystemManager {
 		// Check if is call market, then initialize clearing sequence
 		if (market instanceof CallMarket) {
 			Activity clear = new Clear(market, market.getNextClearTime());
-			eventManager.createEvent(clear);
+			eventManager.createEvent(Consts.CALL_CLEAR_PRIORITY, clear);
 		}
 	}
 	
@@ -231,23 +235,62 @@ public class SystemManager {
 	 * @param ap AgentProperties object
 	 */
 	public void setupAgent(int agentID, String agentType, AgentProperties ap) {
-		Agent agent = AgentFactory.createAgent(agentType, agentID, data, ap, log);
-		data.addAgent(agent);
-		log.log(Log.DEBUG, agent.toString() + ": " + ap);
 		
-		TimeStamp ts = agent.getArrivalTime();
-		if (agent instanceof SMAgent) {
-			// Agent is in single market
-			for (int i = 1; i <= data.numMarkets; i++) {
-				eventManager.createEvent(new AgentArrival(agent, data.getMarket(-i), ts));
-				eventManager.createEvent(new AgentDeparture(agent, data.getMarket(-i), data.simLength));
+		if (!Arrays.asList(Consts.SMAgentTypes).contains(agentType)) {
+			// Multimarket agent
+			Agent agent = AgentFactory.createMMAgent(agentType, agentID, data, ap, log);
+			data.addAgent(agent);
+			log.log(Log.DEBUG, agent.toString() + ": " + ap);
+			
+			TimeStamp ts = agent.getArrivalTime();
+			if (agent instanceof MMAgent) {
+				// Agent is in multiple markets
+				eventManager.createEvent(new AgentArrival(agent, ts));
+				eventManager.createEvent(new AgentDeparture(agent, data.simLength));
 			}
 			
-		} else if (agent instanceof MMAgent) {
-			// Agent is in multiple markets
-			eventManager.createEvent(new AgentArrival(agent, ts));
-			eventManager.createEvent(new AgentDeparture(agent, data.simLength));
+		} else {
+			// Single market agent - create for each market
+			int n = 0;
+			for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
+				
+				// Increment agent ID to create after first agent created
+				int id;
+				if (n == 0) {
+					id = agentID;
+				} else {
+					id = agentIDSequence.increment();
+				}
+				
+				int mktID = it.next();
+				Agent agent = AgentFactory.createSMAgent(agentType, id, data, ap, log, mktID);
+				data.addAgent(agent);
+				log.log(Log.DEBUG, agent.toString() + ": " + ap);
+				
+				TimeStamp ts = agent.getArrivalTime();
+				if (agent instanceof SMAgent) {
+					// Agent is in single market
+					Market mkt = ((SMAgent) agent).getMainMarket();
+					eventManager.createEvent(new AgentArrival(agent, mkt, ts));
+					eventManager.createEvent(new AgentDeparture(agent, mkt, data.simLength));		
+				}
+				
+				n++;
+			}
 		}
+		
+//		TimeStamp ts = agent.getArrivalTime();
+//		if (agent instanceof SMAgent) {
+//			// Agent is in single market
+//			Market mkt = ((SMAgent) agent).getMainMarket();
+//			eventManager.createEvent(new AgentArrival(agent, mkt, ts));
+//			eventManager.createEvent(new AgentDeparture(agent, mkt, data.simLength));
+//			
+//		} else if (agent instanceof MMAgent) {
+//			// Agent is in multiple markets
+//			eventManager.createEvent(new AgentArrival(agent, ts));
+//			eventManager.createEvent(new AgentDeparture(agent, data.simLength));
+//		}
 	}
 	
 	
@@ -320,10 +363,10 @@ public class SystemManager {
 			
 			obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
 			obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
+			obs.addFeature("expire", obs.getTimeStampFeatures(data.getExpirations()));
 			obs.addFeature("bkgrd_info", obs.getBackgroundInfo(data.getAgents()));
 			getMarketResults(false, "");	// All markets other than the centralized market
 			getMarketResults(true, "cn");	// Results for the central market
-//			getMarketComparison("diff");			// Results comparing 2-market vs centralized mkt
 			obs.addFeature("", obs.getConfiguration());
 			
 			File file = new File(simFolder + Consts.obsFilename + num + ".json");
@@ -347,18 +390,22 @@ public class SystemManager {
 		if (prefix != null && prefix != "") {
 			prefix = prefix + "_";
 		}
-//		results.addFeature("bkgrd_profit", results.getIntFeatures(data.getAllProfit()));
-		obs.addFeature(prefix + "bkgrd_surplus", obs.getIntFeatures(data.getSurplus(central)));
+		if (central) {
+			ArrayList<Integer> ids = data.getCentralMarketIDs();
+			for (Iterator<Integer> i = ids.iterator(); i.hasNext(); ) {
+				ArrayList<Integer> id = new ArrayList<Integer>();
+				int mktID = i.next();
+				id.add(mktID);
+				obs.addFeature(prefix + data.getCentralMarketType(mktID).toLowerCase() + 
+						"_bkgrd_surplus", obs.getSurplusFeatures(data.getSurplus(id), true));
+			}
+		} else {
+			ArrayList<Integer> ids = data.getMarketIDs();
+			obs.addFeature(prefix + "bkgrd_surplus", obs.getSurplusFeatures(data.getSurplus(ids), false));
+		}
 		obs.addFeature(prefix + "transactions", obs.getTransactionInfo(central));
 		obs.addFeature(prefix + "depths", obs.getDepthInfo(central));
 		obs.addFeature(prefix + "spreads", obs.getSpreadInfo(central));
 		obs.addFeature(prefix + "exec_speed", obs.getExecutionSpeed(central));
 	}
-	
-	
-//	private void getMarketComparison(String prefix) {
-//		
-//		
-//	}
-//	
 }

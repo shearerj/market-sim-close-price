@@ -25,12 +25,16 @@ public class AgentDeparture extends Activity {
 		this.mkt = null;
 	}
 	
-	public ActivityHashMap execute() {
+	public AgentDeparture deepCopy() {
 		if (mkt == null) {
-			return ((MMAgent)ag).agentDeparture();
+			return new AgentDeparture(this.ag, this.time);
 		} else {
-			return ((SMAgent)ag).agentDeparture(mkt);
+			return new AgentDeparture(this.ag, this.mkt, this.time);
 		}
+	}
+	
+	public ActivityHashMap execute() {
+		return ag.agentDeparture();
 	}
 	
 	public String toString() {

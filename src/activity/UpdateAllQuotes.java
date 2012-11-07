@@ -18,6 +18,10 @@ public class UpdateAllQuotes extends Activity {
 		this.time = t;
 	}
 	
+	public UpdateAllQuotes deepCopy() {
+		return new UpdateAllQuotes(this.ag, this.time);
+	}
+	
 	public ActivityHashMap execute() {
 		return this.ag.updateAllQuotes(this.time);
 	}

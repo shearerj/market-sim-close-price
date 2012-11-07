@@ -50,31 +50,35 @@ public class Quoter extends Entity {
 		int bestBid = lastQuote.bestBid;
 		int bestAsk = lastQuote.bestAsk;
 		if ((bestBid != -1) && (bestAsk != -1)) {
-			
 			// check for inconsistency in buy/sell prices & fix if found
 			if (lastQuote.bestBid > lastQuote.bestAsk) {
 				int mid = (lastQuote.bestBid + lastQuote.bestAsk) / 2;
 				bestBid = mid - this.tickSize;
 				bestAsk = mid + this.tickSize;
 				
-				// Add spread of 0 if inconsistent NBBO quote
-				this.data.addSpread(0, ts, 0);
+				// Add spread of INF if inconsistent NBBO quote
+				this.data.addSpread(0, ts, Consts.INF_PRICE);
 			} else {
 				// if bid-ask consistent, store the spread
 				this.data.addSpread(0, ts, lastQuote.getSpread());
 			}
+		} else {
+			// store spread of INF since no bid-ask spread
+			this.data.addSpread(0, ts, Consts.INF_PRICE);
 		}
+		
 		lastQuote.bestBid = bestBid;
 		lastQuote.bestAsk = bestAsk;
 		log.log(Log.INFO, s + " --> NBBO" + lastQuote);
 		
 		if (latency.getTimeStamp() > 0) {
 			TimeStamp tsNew = ts.sum(latency);
-			actMap.insertActivity(new UpdateNBBO(this, tsNew));
+			actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY,	new UpdateNBBO(this, tsNew));
+			
 		} else if (latency.getTimeStamp() == 0) {
-			// infinitely fast NBBO updates, occurs before every event
-			actMap.insertActivity(new UpdateNBBO(this, 
-					new TimeStamp(EventManager.FastActivityType.PRE)));
+			// infinitely fast NBBO updates
+			TimeStamp tsNew = new TimeStamp(Consts.INF_TIME);
+			actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY,	new UpdateNBBO(this, tsNew));
 		}
 		return actMap;
 	}

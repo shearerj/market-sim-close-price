@@ -17,6 +17,10 @@ public class UpdateNBBO extends Activity {
 		this.time = t;
 	}
 	
+	public UpdateNBBO deepCopy() {
+		return new UpdateNBBO(this.q, this.time);
+	}
+	
 	public ActivityHashMap execute() {
 		return this.q.updateNBBO(this.time);
 	}

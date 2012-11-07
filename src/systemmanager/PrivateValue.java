@@ -17,7 +17,6 @@ public class PrivateValue {
 	private double kappa;
 	private int meanPV;
 	private double shockVar;
-	private int scalingFactor;
 	private Random rand;
 	
 	/**
@@ -28,7 +27,6 @@ public class PrivateValue {
 		kappa = 0.1;
 		meanPV = 50000;
 		shockVar = 2;
-		scalingFactor = 1;
 		privateValueProcess = new ArrayList<Price>();
 	}
 	
@@ -44,8 +42,6 @@ public class PrivateValue {
 		meanPV = meanValue;
 		shockVar = var;
 		privateValueProcess = new ArrayList<Price>();
-		scalingFactor = 100;	// hard=coded, not dependent on tick size
-		
 		// stochastic initial conditions for random process
 		privateValueProcess.add(new Price((int) getNormalRV(meanPV, shockVar)));
 	}
@@ -57,7 +53,7 @@ public class PrivateValue {
 	public int next() {
 		int nextPV = (int) ((meanPV * kappa) + ((1 - kappa) * 
 						privateValueProcess.get(privateValueProcess.size()-1).getPrice()) +
-	                    getNormalRV(0, shockVar) * scalingFactor);
+	                    getNormalRV(0, shockVar) * Consts.SCALING_FACTOR);
 		// truncate at zero
 		nextPV = Math.max(nextPV, 0);
 	    privateValueProcess.add(new Price(nextPV));

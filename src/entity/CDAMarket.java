@@ -38,7 +38,7 @@ public class CDAMarket extends Market {
 		return this.orderbook.getAskQuote();
 	}
 	
-	public Price getBidPrice() {
+	public Price getBidPrice() {	
 		return ((PQBid) getBidQuote()).bidTreeSet.first().getPrice();
 	}
 	
@@ -49,7 +49,7 @@ public class CDAMarket extends Market {
 	public ActivityHashMap addBid(Bid b, TimeStamp ts) {
 		orderbook.insertBid((PQBid) b);
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(new Clear(this, ts));
+		actMap.insertActivity(Consts.CDA_CLEAR_PRIORITY, new Clear(this, ts));
 		this.data.addDepth(this.ID, ts, orderbook.getDepth());
 		this.data.addSubmissionTime(b.getBidID(), ts);
 		return actMap;
@@ -130,9 +130,16 @@ public class CDAMarket extends Market {
 		Price ap = q.lastAskPrice;
 		
 		if (bp != null && ap != null) {
-			if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
-				log.log(Log.ERROR, "CDAMArket::quote: ERROR bid > ask");
+			if (bp.getPrice() == -1 || ap.getPrice() == -1) {
+				// either bid or ask are undefined
+				this.data.addSpread(this.ID, quoteTime, Consts.INF_PRICE);
+				
+			} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
+				log.log(Log.ERROR, this.getClass().getSimpleName() + "::quote: ERROR bid > ask");
+				this.data.addSpread(this.ID, quoteTime, Consts.INF_PRICE);
+				
 			} else {
+				// valid bid-ask
 				this.data.addQuote(this.ID, q);
 				this.data.addSpread(this.ID, quoteTime, q.getSpread());
 			}
