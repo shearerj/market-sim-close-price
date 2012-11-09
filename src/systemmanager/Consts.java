@@ -26,7 +26,7 @@ public class Consts {
 	public final static int SCALING_FACTOR = 100;
 	
 	// Entity types
-	public final static String[] agentTypeNames = {"LA", "ZI", "DUMMY", "MARKETMAKER"};
+	public final static String[] agentTypeNames = {"LA", "ZI", "DUMMY", "MARKETMAKER", "ZIP"};
 	public final static String[] SMAgentTypes = {"MARKETMAKER"};
 	public final static String[] marketTypeNames = {"CDA", "CALL"};
 	public final static String CENTRAL = "CENTRAL";
