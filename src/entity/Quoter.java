@@ -28,7 +28,7 @@ public class Quoter extends Entity {
 	 * @param d
 	 */
 	public Quoter(int ID, SystemData d, Log l) {
-		super(ID, d, l);
+		super(ID, d, new EntityProperties(), l);
 		latency = d.nbboLatency;
 		tickSize = d.tickSize;
 		lastQuote = new BestBidAsk();

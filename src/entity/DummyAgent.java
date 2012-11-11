@@ -17,7 +17,7 @@ public class DummyAgent extends MMAgent {
 	 * Overloaded constructor
 	 * @param agentID
 	 */
-	public DummyAgent(int agentID, SystemData d, AgentProperties p, Log l) {
+	public DummyAgent(int agentID, SystemData d, EntityProperties p, Log l) {
 		super(agentID, d, p, l);
 		agentType = Consts.getAgentType(this.getClass().getSimpleName());
 		arrivalTime = new TimeStamp(0);

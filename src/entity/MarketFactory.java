@@ -17,12 +17,16 @@ public class MarketFactory {
 	 * @param data
 	 * @return
 	 */
-	public static Market createMarket(String type, Integer marketID, SystemData data, Log l) { 
+	public static Market createMarket(String type,
+									  Integer marketID,
+									  SystemData data,
+									  EntityProperties params,
+									  Log l) { 
 		
 		if (type.equals(Consts.getMarketType("CDAMarket"))) {
-			return new CDAMarket(marketID, data, l);
+			return new CDAMarket(marketID, data, params, l);
 		} else if (type.equals(Consts.getMarketType("CallMarket"))) {
-			return new CallMarket(marketID, data, l);
+			return new CallMarket(marketID, data, params, l);
 		} else {
 			return null;
 		}

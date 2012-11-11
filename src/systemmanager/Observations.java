@@ -448,6 +448,98 @@ public class Observations {
 	}
 	
 	
+	
+	/**
+	 * Computes volatility metrics either on 1) all markets, or 2) central market only.
+	 * Volatility is measured as the standard deviation of logarithmic returns.
+	 * TODO: try multiple periods for determining returns
+	 * 
+	 * @param central true if only central market data only
+	 * @return
+	 */
+	public HashMap<String, Object> getVolatilityInfo(boolean central) {
+		HashMap<String,Object> feat = new HashMap<String,Object>();
+		
+		if (!central) {
+			for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
+				int mktID = it.next();
+				
+				
+			}
+		} else {
+			
+		}
+		
+		return feat;
+	}
+	
+	
+	/**
+	 * Generate the distribution info on a certain dataset.
+	 * 
+	 * @param central
+	 * @return
+	 */
+	public HashMap<String, Object> getDistributionInfo(boolean central) {
+		HashMap<String,Object> feat = new HashMap<String,Object>();
+		
+		
+		
+		return feat;
+	}
+	
+	
+	
+	public HashMap<String, Object> getTransactionComparison() {
+		HashMap<String,Object> feat = new HashMap<String,Object>();
+		
+		// cycle through all the market combinations
+		// so iterate through the centralized markets
+		// and within that, iterate through the number of two-market models (here just 1)
+		
+		// determine the call market ID, because will use that as the baseline
+		for (Map.Entry<Integer, Market> entry : data.markets.entrySet()) {
+			
+		}
+			
+		// TODO - add an iterator here when add the second 2M model
+		
+		// Do for combinations with 2M model
+		ArrayList<Integer> ids = data.getMarketIDs();
+		
+		HashMap<Integer,PQTransaction> transactions = data.getTrans(ids);
+		
+		for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
+			PQTransaction trans = entry.getValue();
+//				if (trans.sellerID == id) {
+//					buys++;
+//				} else if (trans.buyerID == id) {
+//					sells++;
+//				}
+		}
+	
+//		ArrayList<Integer> ids = data.getCentralMarketIDs();
+//		// perform same analysis for comparing the two centralized markets
+//		
+//		for (Iterator<Integer> aid = data.roleAgentIDs.iterator(); aid.hasNext(); ) {
+//			int id = aid.next();
+//			suffix = suffix + "_" + data.getAgent(id).getType().toLowerCase();
+//
+//			int buys = 0;
+//			int sells = 0;
+//			
+//
+//			if (data.numAgentType.get(data.getAgent(id).getType()) > 1) {
+//				suffix += id;
+//			}
+//			feat.put("buys" + suffix , buys);
+//			feat.put("sells" + suffix, sells);
+//		}
+		return feat;
+		
+	}
+	
+	
 	/**
 	 * Construct a double array storing a time series from a HashMap of integers
 	 * hashed by TimeStamp.

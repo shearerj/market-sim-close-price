@@ -34,8 +34,8 @@ public abstract class Market extends Entity {
 
 	public String marketType;
 
-	public Market(int marketID, SystemData d, Log l) {
-		super(marketID, d, l);
+	public Market(int marketID, SystemData d, EntityProperties p, Log l) {
+		super(marketID, d, p, l);
 
 		agentIDs = new ArrayList<Integer>();
 		buyers = new ArrayList<Integer>();

@@ -24,10 +24,6 @@ import java.util.*;
  * 
  * @author ewah
  */
-/**
- * @author ewah
- *
- */
 public class SystemData {
 
 	public int obsNum;									// observation number
@@ -39,6 +35,10 @@ public class SystemData {
 	public HashMap<Integer,Agent> agents;				// agents hashed by ID
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
 	public Quoter quoter;
+	private Sequence transIDSequence;
+	
+	private ArrivalTime arrivalTimeGenerator;
+	private PrivateValue processGenerator;
 	
 	// Does not include the central market
 	public HashMap<String,Integer> numMarketType;		// hashed by type, gives # of that type
@@ -60,14 +60,12 @@ public class SystemData {
 	public int bidRange;
 	public double privateValueVar;				// agent variance from PV random process
 	
+	// Two-market model containers
+	public HashMap<Integer, ArrayList<Market>> twoMarketModels;	// hashed by 2M model ID
+	
 	// Central market type; if invalid type, no central market will be created
 	public String centralMarketFlag;
 	public HashMap<Integer,Market> centralMarkets;
-	
-	// Internal variables
-	private Sequence transIDSequence;
-	private ArrivalTime arrivalTimeGenerator;
-	private PrivateValue processGenerator;
 	
 	// Variables of time series for observation file
 	public HashMap<Integer,HashMap<TimeStamp,Integer>> marketDepth;		// hashed by market ID
@@ -99,12 +97,11 @@ public class SystemData {
 		executionTime = new HashMap<Integer,TimeStamp>();
 		submissionTime = new HashMap<Integer,TimeStamp>();
 		
-		// Initialize containers for central markets
+		// Initialize containers for market configurations
+		twoMarketModels = new HashMap<Integer,ArrayList<Market>>();
 		centralMarkets = new HashMap<Integer,Market>();
 	}
 
-	
-	// Access variables
 
 	public HashMap<Integer,Bid> getBids(int marketID) {
 		return markets.get(marketID).getBids();
@@ -224,54 +221,7 @@ public class SystemData {
 		return null;
 	}
 	
-	/**
-	 * Set up arrival times generation for background agents.
-	 */
-	public void backgroundArrivalTimes() {
-		arrivalTimeGenerator = new ArrivalTime(new TimeStamp(0), arrivalRate);
-	}
-	
-	/**
-	 * Set up private value generation for background agents.
-	 */
-	public void backgroundPrivateValues() {
-		processGenerator = new PrivateValue(kappa, meanPV, shockVar);	
-	}
-	
-	/**
-	 * @return next generated arrival time
-	 */
-	public TimeStamp nextArrival() {
-		if (arrivalTimeGenerator == null) {
-			return null;
-		}
-		return arrivalTimeGenerator.next();
-	}
-	
-	/**
-	 * @return next generated private value
-	 */
-	public int nextPrivateValue() {
-		if (processGenerator == null) {
-			return 0;
-		}
-		return processGenerator.next();
-	}
-	
-	/**
-	 * @return list of all arrival times
-	 */
-	public ArrayList<TimeStamp> getArrivalTimes() {
-		return arrivalTimeGenerator.getArrivalTimes();
-	}
-	
-	/**
-	 * @return list of all intervals
-	 */
-	public ArrayList<TimeStamp> getIntervals() {
-		return arrivalTimeGenerator.getIntervals();
-	}
-	
+
 	
 	/**
 	 * @return list of lifetime of all background trader bids
@@ -319,13 +269,6 @@ public class SystemData {
 		shockVar = Double.parseDouble(p.getProperty("shockVar"));
 		expireRate = Double.parseDouble(p.getProperty("expireRate"));
 		bidRange = Integer.parseInt(p.getProperty("bidRange"));
-	}
-	
-	/**
-	 * @return list of all private values generated in the stochastic process
-	 */
-	public ArrayList<Price> getPrivateValueProcess() {
-		return processGenerator.getPrivateValueProcess();
 	}
 	
 	
@@ -390,8 +333,7 @@ public class SystemData {
 		return new ArrayList<Integer>(transData.keySet());
 	}
 	
-
-	// Set variables
+	
 
 	public void addAgent(Agent ag) {
 		agents.put(ag.getID(), ag);
@@ -476,150 +418,60 @@ public class SystemData {
 	public void addExecutionTime(int bidID, TimeStamp ts) {
 		executionTime.put(bidID, ts);
 	}
+	
+	/**
+	 * Set up arrival times generation for background agents.
+	 */
+	public void backgroundArrivalTimes() {
+		arrivalTimeGenerator = new ArrivalTime(new TimeStamp(0), arrivalRate);
+	}
+	
+	/**
+	 * Set up private value generation for background agents.
+	 */
+	public void backgroundPrivateValues() {
+		processGenerator = new PrivateValue(kappa, meanPV, shockVar);	
+	}
+	
+	/**
+	 * @return next generated arrival time
+	 */
+	public TimeStamp nextArrival() {
+		if (arrivalTimeGenerator == null) {
+			return null;
+		}
+		return arrivalTimeGenerator.next();
+	}
+	
+	/**
+	 * @return next generated private value
+	 */
+	public int nextPrivateValue() {
+		if (processGenerator == null) {
+			return 0;
+		}
+		return processGenerator.next();
+	}
+	
+	/**
+	 * @return list of all arrival times
+	 */
+	public ArrayList<TimeStamp> getArrivalTimes() {
+		return arrivalTimeGenerator.getArrivalTimes();
+	}
+	
+	/**
+	 * @return list of all intervals
+	 */
+	public ArrayList<TimeStamp> getIntervals() {
+		return arrivalTimeGenerator.getIntervals();
+	}
+	
+	/**
+	 * @return list of all private values generated in the stochastic process
+	 */
+	public ArrayList<Price> getPrivateValueProcess() {
+		return processGenerator.getPrivateValueProcess();
+	}	
 }
 
-
-///**
-// * Gets transaction IDs for all transaction after earliestTransID.
-// * 
-// * @param earliestTransID
-// * @param agentID
-// * @return
-// */
-//public ArrayList<Integer> getTransactions(int earliestTransID, int agentID) {
-//	//"<transIDs>"
-//	ArrayList<Integer> transIDs = new ArrayList<Integer>();
-//	
-//	Map clone = (Map) transData.clone();
-//	Set td = clone.entrySet();
-//	for (Iterator i = td.iterator(); i.hasNext();) {
-//		Map.Entry me = (Map.Entry) i.next();
-//
-//		PQTransaction trans = (PQTransaction) me.getValue();
-//		int transID = (Integer) me.getKey();
-//		
-//		if (transID > earliestTransID) {
-//
-//			if (trans == null) {
-//				//getTransactions: transID value is null (transID): "
-//				return null;
-//			}
-//			if ((agentID == trans.buyerID) || (agentID == trans.sellerID)) {
-//				transIDs.add(transID);
-//			}
-//		}
-//	}
-//	return transIDs;
-//}
-
-///**
-// * Gets initial transaction ID for specified agent.
-// * @param agentID
-// * @return
-// */
-//public Integer getInitialTransaction(int agentID) {
-//	// "<initialLastTransID>";
-//	Set td = transData.entrySet();
-//
-//	// DO NOT change the -1 initial for minTransID.  It is used as a
-//	// return value in case transactions are not found.
-//	int minTransID = -1;
-//	int cnt = 0;
-//	for (Iterator i = td.iterator(); i.hasNext();) {
-//		Map.Entry me = (Map.Entry) i.next();
-//
-//		PQTransaction trans = (PQTransaction) me.getValue();
-//		int transID = (Integer) me.getKey();
-//
-//		// we only want transactions for the agent, no others.
-//		if (trans == null) {
-//			return null;
-//		}
-//
-//		if (trans.buyerID == null) {
-//			//"SystemCacheData::getTransactions: no buyerID tag");
-//			return null;
-//		}
-//		if (trans.sellerID == null) {
-//			//"SystemCacheData::getTransactions: no sellerID tag");
-//			return null;
-//		}
-//
-//		// Check if match our calling agent's ID
-//		if ((agentID == trans.buyerID) || (agentID == trans.sellerID)) {
-//			if (cnt == 0) {
-//				minTransID = transID;
-//				cnt++;
-//			}
-//			if (transID < minTransID)
-//				minTransID = transID;
-//		}
-//	}
-//	// At this point, we either found one, in which case transID is set to
-//	// the earliestTransID, or there are no transactions, so earliestTransID
-//	// is set to -1 (its initial value).
-//	return minTransID;
-//}
-//
-///**
-// * Get transactions for a given agent.
-// * 
-// * @param agentID
-// * @param type		'b' if buyer, 's' if seller
-// * @return
-// */
-//public ArrayList<Integer> getAgentTransactions(int agentID, char type) {
-//	//		HashMap<Integer,PQTransaction> transMap = new HashMap<Integer,PQTransaction>();
-//	ArrayList<Integer> transIDs = new ArrayList<Integer>();
-//
-//	Set td = transData.entrySet();
-//	for (Iterator i = td.iterator(); i.hasNext();) {
-//		Map.Entry me = (Map.Entry) i.next();
-//
-//		PQTransaction trans = (PQTransaction) me.getValue();
-//		int transID = (Integer) me.getKey();
-//
-//		if (trans == null) {
-//			//SystemCacheData::getTransactions: transID value is null
-//			return null;
-//		}
-//		if (trans.buyerID == null) {
-//			//"SystemCacheData::getAgentTrans: no buyerID tag");
-//			return null;
-//		}
-//		if (trans.sellerID == null) {
-//			//"SystemCacheData::getAgentTrans: no sellerID tag");
-//			return null;
-//		}
-//
-//		int id = 0;
-//		if (type == 'b') {
-//			id = trans.buyerID;
-//		} else if (type == 's') {
-//			id = trans.sellerID;
-//		}
-//
-//		if (agentID == id) {
-//			if (trans.price == null) {
-//				//"SystemCacheData::getAgentTrans: no price tag");
-//				return null;
-//			}
-//			if (trans.quantity == null) {
-//				//SystemCacheData::getTransactions: no quantity tag");
-//				return null;
-//			}
-//			if (trans.marketID == null) {
-//				//"SystemCacheData::getAgentTrans: no auction ID tag");
-//				return null;
-//			}
-//			if (trans.timestamp == null) {
-//				//SystemCacheData::getAgentTrans: no timestamp tag");
-//				return null;
-//			}
-//			//				transMap.put((Integer) me.getKey(), trans);
-//			transIDs.add((Integer) me.getKey());
-//		}
-//	}
-//	//		return transMap;
-//	return transIDs;
-//}

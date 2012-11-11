@@ -21,8 +21,6 @@ public class SystemManager {
 
 	private EventManager eventManager;
 	private SystemData data;
-	private Sequence agentIDSequence;
-	private Sequence marketIDSequence;
 	private Observations obs;
 	
 	private static int num;						// sample number used for labeling output files
@@ -38,8 +36,6 @@ public class SystemManager {
 	 */
 	public SystemManager() {
 		data = new SystemData();
-		agentIDSequence = new Sequence(1);
-		marketIDSequence = new Sequence(-1);
 		envProps = new Properties();
 		obs = new Observations(data);
 	}
@@ -134,144 +130,64 @@ public class SystemManager {
 
 			// Log properties
 			log.log(Log.DEBUG, envProps.toString());
-			// Read simulation spec file
-			SimulationSpec specs = new SimulationSpec(simFolder + Consts.simSpecFile, log, data);
-			specs.setParams();
-
-			data.backgroundArrivalTimes();
-			data.backgroundPrivateValues();
 			
+			// Read simulation specification file
+			SimulationSpec specs = new SimulationSpec(simFolder + Consts.simSpecFile, log, data);
 
-			// =================================================
-			// Create entities
-
+			// Create event manager
 			eventManager = new EventManager(data.simLength, log);
 
-			// Create Quoter entity, which enters the system at time 0
-			Quoter iu = new Quoter(0, data, log);
-			data.quoter = iu;
-			eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(0)));
-
-			// Create markets first since agent creation references markets
-			for (Map.Entry<String, Integer> mkt: data.numMarketType.entrySet()) {
-				
-				if (mkt.getKey().startsWith(Consts.CENTRAL)) {
-					int mID = marketIDSequence.decrement();
-					setupMarket(mID, mkt.getKey());
-					log.log(Log.INFO, mkt.getKey() + " Market: " + data.getMarket(mID));
-					
-				} else {
-					for (int i = 0; i < mkt.getValue(); i++) {
-						int mID = marketIDSequence.decrement();
-						// create market
-						setupMarket(mID, mkt.getKey());	
-					}
-					log.log(Log.INFO, "Markets: " + mkt.getValue() + " " + mkt.getKey());
-				}
-			}
-
-			// Create agents, initialize parameters, and compute arrival times (if needed)
-			for (Map.Entry<String, Integer> ag : data.numAgentType.entrySet()) {
-				for (int i = 0; i < ag.getValue(); i++) {
-					AgentProperties ap = specs.setStrategy(ag.getKey(), i);
-					int aID = agentIDSequence.increment();
-
-					// create agent & events
-					setupAgent(aID, ag.getKey(), ap);
-					
-					// check if in a role, keep track of role agent IDs
-					if (Arrays.asList(Consts.roles).contains(ag.getKey())) {
-						data.roleAgentIDs.add(aID);
-					}
-				}
-				log.log(Log.INFO, "Agents: " + ag.getValue() + " " + ag.getKey());
-			}
+			// Set up / create entities
+			SystemSetup s = new SystemSetup(specs, eventManager, data, log);
+			s.setupAll();
 			
-			
-			// Log agent information
-			logAgentInfo();
+//			// Create Quoter entity, which enters the system at time 0
+//			Quoter iu = new Quoter(0, data, log);
+//			data.quoter = iu;
+//			eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(0)));
+
+//			// Create markets first since agent creation references markets
+//			for (Map.Entry<String, Integer> mkt: data.numMarketType.entrySet()) {
+//				
+////				if (mkt.getKey().startsWith(Consts.CENTRAL)) {
+////					int mID = marketIDSequence.decrement();
+////					setupMarket(mID, mkt.getKey());
+////					log.log(Log.INFO, mkt.getKey() + " Market: " + data.getMarket(mID));
+////					
+////				} else {
+//					for (int i = 0; i < mkt.getValue(); i++) {
+//						EntityProperties mp = specs.setProperties(mkt.getKey(), i);
+//						int mID = marketIDSequence.decrement();
+//						// create market
+//						setupMarket(mID, mkt.getKey(), mp);	
+//					}
+//					log.log(Log.INFO, "Markets: " + mkt.getValue() + " " + mkt.getKey());
+////				}
+//			}
+
+//			// Create agents, initialize parameters, and compute arrival times (if needed)
+//			for (Map.Entry<String, Integer> ag : data.numAgentType.entrySet()) {
+//				for (int i = 0; i < ag.getValue(); i++) {
+//					EntityProperties ap = specs.setProperties(ag.getKey(), i);
+//					int aID = agentIDSequence.increment();
+//
+//					// create agent & events
+//					setupAgent(aID, ag.getKey(), ap);
+//					
+//					// check if in a role, keep track of role agent IDs
+//					if (Arrays.asList(Consts.roles).contains(ag.getKey())) {
+//						data.roleAgentIDs.add(aID);
+//					}
+//				}
+//				log.log(Log.INFO, "Agents: " + ag.getValue() + " " + ag.getKey());
+//			}
+//			
+//			
+//			// Log agent information
+//			logAgentInfo();
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
-	}
-	
-	
-	/**
-	 * Creates market and initializes any Activities as necessary. For example,
-	 * for Call Markets, this method inserts the initial Clear activity into the 
-	 * eventQueue.
-	 * 
-	 * @param marketID
-	 * @param marketType
-	 */
-	public void setupMarket(int marketID, String marketType) {
-		
-		Market market;
-		if (marketType.startsWith(Consts.CENTRAL)) {
-			market = MarketFactory.createMarket(marketType.substring(Consts.CENTRAL.length()+1), 
-					marketID, data, log);
-			data.centralMarkets.put(marketID, market);
-		} else {
-			// Only add market to the general list if it's not the central market
-			market = MarketFactory.createMarket(marketType, marketID, data, log);
-			data.addMarket(market);
-		}
-		
-		// Check if is call market, then initialize clearing sequence
-		if (market instanceof CallMarket) {
-			Activity clear = new Clear(market, market.getNextClearTime());
-			eventManager.createEvent(Consts.CALL_CLEAR_PRIORITY, clear);
-		}
-	}
-	
-
-	/**
-	 * Creates agent and initializes all agent settings/parameters.
-	 * Inserts AgentArrival/Departure activities into the eventQueue.
-	 * 
-	 * @param agentID
-	 * @param agentType
-	 * @param ap AgentProperties object
-	 */
-	public void setupAgent(int agentID, String agentType, AgentProperties ap) {
-		Agent agent = AgentFactory.createAgent(agentType, agentID, data, ap, log);
-		data.addAgent(agent);
-		log.log(Log.DEBUG, agent.toString() + ": " + ap);
-		
-		TimeStamp ts = agent.getArrivalTime();
-		if (agent instanceof SMAgent) {
-			// Agent is in single market
-			for (int i = 1; i <= data.numMarkets; i++) {
-				Market mkt = data.getMarket(-i);
-				eventManager.createEvent(new AgentArrival(agent, mkt, ts));
-				eventManager.createEvent(new AgentDeparture(agent, mkt, data.simLength));
-			}
-			
-		} else if (agent instanceof MMAgent) {
-			// Agent is in multiple markets
-			eventManager.createEvent(new AgentArrival(agent, ts));
-			eventManager.createEvent(new AgentDeparture(agent, data.simLength));
-		}
-	}
-	
-	
-	/**
-	 * Logs agent information.
-	 */
-	public void logAgentInfo() {
-		for (Map.Entry<Integer,Agent> entry : data.agents.entrySet()) {
-			Agent ag = entry.getValue();
-			
-			// print arrival times
-			String s = ag.toString() + "::" + ag.getType() + "::";
-			s += "arrivalTime=" + ag.getArrivalTime().toString();
-			
-			// print private value if exists 
-			if (ag instanceof ZIAgent) {
-				s += ", pv=" + ((ZIAgent) ag).getPrivateValue();
-			}
-			log.log(Log.INFO, s);
 		}
 	}
 	
@@ -342,6 +258,7 @@ public class SystemManager {
 			System.err.print(s);
 		}
 	}
+	
 	
 	/**
 	 * Gets central market results or results for all markets (excluding centralized).

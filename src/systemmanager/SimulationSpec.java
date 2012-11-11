@@ -36,6 +36,7 @@ public class SimulationSpec {
 		data = d;
 		parser = new JSONParser();
 		loadFile(file);
+		readParams();
 	}
 	
 	/**
@@ -63,7 +64,7 @@ public class SimulationSpec {
 	 * Parses the spec file for config parameters. Overrides settings in environment
 	 * properties file & agent properties config.
 	 */
-	public void setParams() {
+	public void readParams() {
 		
 		data.simLength = new TimeStamp(Integer.parseInt(getValue("sim_length")));
 		data.tickSize = Integer.parseInt(getValue("tick_size"));
@@ -109,6 +110,10 @@ public class SimulationSpec {
         	String role = Consts.roles[i];
         	data.numAgentType.put(role, getNumPlayers(role));
         }
+        
+        
+        // Parse roles & strategies
+        
 	}
 	
 	
@@ -138,41 +143,6 @@ public class SimulationSpec {
 			return ((ArrayList<String>) roleStrategies.get(role)).size();
 		}
 		return 0;
-	}
-	
-	
-	/**
-	 * Set strategy for one player in a given role. Overwrites the default
-	 * AgentProperties set in SystemConsts class.
-	 *
-	 * @param role	agent who is a player
-	 * @param idx	index of the strategy (of the specific role) to set
-	 * @return ap	AgentProperties customized based on the player
-	 */
-	public AgentProperties setStrategy(String role, int idx) {
-		if (roleStrategies.containsKey(role)) {
-			AgentProperties ap = new AgentProperties(Consts.getProperties(role));
-			
-			ArrayList<String> players = (ArrayList<String>) roleStrategies.get(role);
-			String strategy = players.get(idx);
-			ap.put("strategy", strategy);
-			
-			// Check that strategy is not blank
-			if (!strategy.equals("") && !role.equals("DUMMY")) {
-				String[] stratParams = strategy.split("[_]+");
-				if (stratParams.length % 2 != 0) {
-					log.log(Log.ERROR, "setStrategy: error with describing the strategy");
-					return null;
-				}
-				for (int j = 0; j < stratParams.length; j += 2) {
-					ap.put(stratParams[j], stratParams[j+1]);
-				}
-			}
-			log.log(Log.INFO, role + ": " + ap);
-			return ap;
-		} else {
-			return new AgentProperties(Consts.getProperties(role));
-		}
 	}
 	
 	

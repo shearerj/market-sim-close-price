@@ -23,8 +23,8 @@ public class CDAMarket extends Market {
 	 * Overloaded constructor.
 	 * @param marketID
 	 */
-	public CDAMarket(int marketID, SystemData d, Log l) {
-		super(marketID, d, l);
+	public CDAMarket(int marketID, SystemData d, EntityProperties p, Log l) {
+		super(marketID, d, p, l);
 		marketType = Consts.getMarketType(this.getClass().getSimpleName());
 		orderbook = new PQOrderBook(this.ID);
 		orderbook.setParams(this.ID, l, d);

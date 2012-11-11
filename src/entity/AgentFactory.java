@@ -21,7 +21,7 @@ public class AgentFactory {
 	public static Agent createAgent(String type,
 									Integer agentID,
 									SystemData data,
-									AgentProperties params,
+									EntityProperties params,
 									Log l) {
 		
 		if (type.equals(Consts.getAgentType("DummyAgent"))) {
@@ -36,33 +36,4 @@ public class AgentFactory {
 			return null;
 		}
 	}
-	
-	
-//	/**
-//	 * Creates a new agent based on type parameter. This constructor
-//	 * uses the default AgentProperties setting.
-//	 * 
-//	 * @param type
-//	 * @param agentID
-//	 * @param data
-//	 * @return
-//	 */
-//	public static Agent createAgent(String type,
-//									Integer agentID,
-//									SystemData data,
-//									Log l) {
-//		
-//		AgentProperties params = Consts.getProperties(type);
-//		if (type.toLowerCase().equals("zi")) {
-//			return new TestAgent(agentID, data, params, l);
-//		} else if (type.toLowerCase().equals("hft")) {
-//			return new LAAgent(agentID, data, params, l);
-//		} else if (type.toLowerCase().equals("mm")) {
-//			return new MarketMakerAgent(agentID, data, params, l);
-//		} else if (type.toLowerCase().equals("nbbo")) {
-//			return new ZIAgent(agentID, data, params, l);
-//		} else {
-//			return null;
-//		}
-//	}
 }

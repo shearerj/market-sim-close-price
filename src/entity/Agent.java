@@ -50,7 +50,6 @@ public abstract class Agent extends Entity {
 	// Agent parameters
 	protected int privateValue;
 	protected int positionLimit;
-	protected AgentProperties params;		// stores all parameters
 	protected String agentType;
 	protected TimeStamp arrivalTime;
 
@@ -65,8 +64,8 @@ public abstract class Agent extends Entity {
 	 * Constructor
 	 * @param agentID
 	 */
-	public Agent(int agentID, SystemData d, AgentProperties p, Log l) {
-		super(agentID, d, l);
+	public Agent(int agentID, SystemData d, EntityProperties p, Log l) {
+		super(agentID, d, p, l);
 		
 		rand = new Random();
 		
@@ -105,15 +104,15 @@ public abstract class Agent extends Entity {
 	
 	
 	/**
-	 * Set AgentProperties for this agent.
-	 * @param p AgentProperties object
+	 * Set EntityProperties for this agent.
+	 * @param p EntityProperties object
 	 */
-	public void setProperties(AgentProperties p) {
+	public void setProperties(EntityProperties p) {
 		params = p;
 	}
 	
 	/**
-	 * Add property to AgentProperties container.
+	 * Add property to EntityProperties container.
 	 * @param key
 	 * @param val
 	 */
@@ -122,9 +121,9 @@ public abstract class Agent extends Entity {
 	}
 	
 	/**
-	 * @return AgentProperties of this agent.
+	 * @return EntityProperties of this agent.
 	 */
-	public AgentProperties getProperties() {
+	public EntityProperties getProperties() {
 		return params;
 	}
 	

@@ -50,7 +50,7 @@ public class ZIAgent extends MMAgent {
 	private double expireRate;
 	private int expiration;				// time until limit order expiration
 	private int bidRange;				// range for limit order
-	private double pvVar;			// variance from private value random process
+	private double pvVar;				// variance from private value random process
 	
 	private int mainMarketID;			// assigned at initialization
 	private int altMarketID;
@@ -62,10 +62,9 @@ public class ZIAgent extends MMAgent {
 	 * @param agentID
 	 * @param d SystemData object
 	 */
-	public ZIAgent(int agentID, SystemData d, AgentProperties p, Log l) {
+	public ZIAgent(int agentID, SystemData d, EntityProperties p, Log l) {
 		super(agentID, d, p, l);
 		agentType = Consts.getAgentType(this.getClass().getSimpleName());
-		params = p;
 		
 		expireRate = this.data.expireRate;
 		bidRange = this.data.bidRange;

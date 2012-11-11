@@ -11,7 +11,7 @@ import systemmanager.*;
  */
 public abstract class SMAgent extends Agent {
 
-	public SMAgent(int agentID, SystemData d, AgentProperties p, Log l) {
+	public SMAgent(int agentID, SystemData d, EntityProperties p, Log l) {
 		super(agentID, d, p, l);
 	}
 	

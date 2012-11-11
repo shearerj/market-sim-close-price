@@ -75,21 +75,25 @@ public class Consts {
 	public final static String[] roles = {"LA", "DUMMY"};
 
 	/**
-	 * Get hard-coded default properties for a given agent type.
+	 * Get hard-coded default properties for a given entity type.
 	 * 
 	 * @param type
 	 */
-	public final static AgentProperties getProperties(String type) {
+	public final static EntityProperties getProperties(String type) {
 		
-		AgentProperties ap = new AgentProperties();
+		EntityProperties ep = new EntityProperties();
 		
 		if (type.equals("LA")) {
-			ap.put("sleepTime", "0");
-			ap.put("sleepVar", "100");
-			ap.put("alpha", "0.001");
-			
+			ep.put("sleepTime", "0");
+			ep.put("sleepVar", "100");
+			ep.put("alpha", "0.001");	
 		}
-		return ap;
+		if (type.equals("CALL")) {
+			ep.put("pricingPolicy", "0.5");
+			ep.put("clearFreq", "100");
+		}
+		
+		return ep;
 	}
 	
 	

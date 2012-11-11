@@ -45,6 +45,40 @@ public class PQTransaction extends Transaction {
 		marketID = new Integer(mktID);
 	}
 
+	
+	/**
+	 * Determines whether two PQTransactions are equal, without comparing TimeStamps.
+	 * 
+	 * @param pq
+	 * @return
+	 */
+	public boolean equalsWithoutTime(PQTransaction pq) {
+		if (pq.price.price == this.price.price &&
+			pq.quantity == this.quantity &&
+			pq.buyerID.equals(this.buyerID) &&
+			pq.sellerID.equals(this.sellerID))
+			return true;
+		else
+			return false;
+	}
+	
+	
+	/**
+	 * @param pq
+	 * @return
+	 */
+	public boolean equals(PQTransaction pq) {
+		if (pq.price.price == this.price.price &&
+			pq.quantity == this.quantity &&
+			pq.buyerID.equals(this.buyerID) &&
+			pq.sellerID.equals(this.sellerID) &&
+			pq.timestamp.equals(this.timestamp))
+			return true;
+		else
+			return false;
+	}
+	
+	@Override
 	public String toString() {
 		String result = "Transaction(quantity=" + this.quantity 
 				+ ", price=" + price    

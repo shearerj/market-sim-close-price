@@ -22,7 +22,7 @@ public abstract class MMAgent extends Agent {
 	 * @param p
 	 * @param l
 	 */
-	public MMAgent(int agentID, SystemData d, AgentProperties p, Log l) {
+	public MMAgent(int agentID, SystemData d, EntityProperties p, Log l) {
 		super(agentID, d, p, l);
 		
 		marketIDs = new ArrayList<Integer>(d.markets.keySet());

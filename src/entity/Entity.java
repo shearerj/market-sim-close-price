@@ -12,9 +12,10 @@ import systemmanager.*;
  */
 public abstract class Entity {
 
-	protected int ID;
 	public Log log;
 	public SystemData data;
+	protected int ID;
+	protected EntityProperties params;		// stores all parameters
 	
 	public Entity() {
 		// empty constructor
@@ -26,9 +27,10 @@ public abstract class Entity {
 	 * @param l
 	 * @param d
 	 */
-	public Entity(int ID, SystemData d, Log l) {
+	public Entity(int ID, SystemData d, EntityProperties ep, Log l) {
 		this.ID = ID;
 		this.data = d;
+		this.params = ep;
 		this.log = l;
 	}
 	

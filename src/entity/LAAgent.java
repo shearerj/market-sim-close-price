@@ -25,11 +25,10 @@ public class LAAgent extends MMAgent {
 	 * Overloaded constructor
 	 * @param agentID
 	 */
-	public LAAgent(int agentID, SystemData d, AgentProperties p, Log l) {
+	public LAAgent(int agentID, SystemData d, EntityProperties p, Log l) {
 		super(agentID, d, p, l);
 		agentType = Consts.getAgentType(this.getClass().getSimpleName());
 		arrivalTime = new TimeStamp(0);
-		params = p;
 		
 		if (this.data.numMarkets != 2) {
 			log.log(Log.ERROR, this.toString() + " " + agentType + 
