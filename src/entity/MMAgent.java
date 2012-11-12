@@ -29,18 +29,9 @@ public abstract class MMAgent extends Agent {
 	}
 	
 	/**
-	 * Function specifying agent's strategy when it participates in all markets.
-	 * 
-	 * @param ts
-	 * @return
-	 */
-	public abstract ActivityHashMap agentStrategy(TimeStamp ts);
-	
-	/**
 	 * Agent arrives in a single market.
 	 * 
-	 * @param marketID
-	 * @param arrivalTime
+	 * @param ts
 	 * @return ActivityHashMap
 	 */
 	public ActivityHashMap agentArrival(TimeStamp ts) {
@@ -54,7 +45,7 @@ public abstract class MMAgent extends Agent {
 		
 		s = s.substring(0, s.length() - 1);
 		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "->" + s);
-		
+			
 		// Always insert agent strategy call once it's arrived in the market
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new UpdateAllQuotes(this, ts));
@@ -63,9 +54,8 @@ public abstract class MMAgent extends Agent {
 	}
 	
 	/**
-	 * Agent departs a specified market, if it is active.
+	 * Agent departs all markets, if it is active.
 	 * 
-	 * @param departureTime
 	 * @return ActivityHashMap
 	 */
 	public ActivityHashMap agentDeparture() {

@@ -129,6 +129,9 @@ public class SystemData {
 		return agents;
 	}
 
+	/**
+	 * @return HashMap of uncentralized markets
+	 */
 	public HashMap<Integer,Market> getMarkets() {
 		return markets;
 	}
@@ -141,6 +144,9 @@ public class SystemData {
 		return new ArrayList<Integer>(agents.keySet());
 	}
 	
+	/**
+	 * @return ArrayList of uncentralized market IDs
+	 */
 	public ArrayList<Integer> getMarketIDs() {
 		return new ArrayList<Integer>(markets.keySet());
 	}

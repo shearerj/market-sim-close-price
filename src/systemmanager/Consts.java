@@ -13,7 +13,7 @@ public class Consts {
 	// (must edit this whenever add a new agent, market, or model
 	
 	public final static String[] agentTypeNames = 
-		{ "LA", "ZI", "DUMMY" };
+		{ "LA", "ZI", "DUMMY", "MARKETMAKER", "ZIP" };
 	public final static String[] marketTypeNames = 
 		{ "CDA", "CALL"};
 	public final static String[] modelTypeNames = 
@@ -29,8 +29,9 @@ public class Consts {
 	public final static int CDA_CLEAR_PRIORITY = 2;
 	public final static int CALL_CLEAR_PRIORITY = 2;
 	public final static int HFT_PRIORITY = 3;
-	public final static int WITHDRAW_BID_PRIORITY = 4;
-	public final static int UPDATE_NBBO_PRIORITY = 5;
+	public final static int MARKETMAKER_PRIORITY = 4;
+	public final static int WITHDRAW_BID_PRIORITY = 5;
+	public final static int UPDATE_NBBO_PRIORITY = 6;
 	
 	// TimeStamp
 	public final static long INF_TIME = -1;
@@ -38,7 +39,6 @@ public class Consts {
 	// Price
 	public final static int INF_PRICE = 999999999;
 	public final static int SCALING_FACTOR = 100;
-	
 	
 	/**
 	 * Returns the market type based on the class name.
@@ -87,19 +87,23 @@ public class Consts {
 	 */
 	public final static ObjectProperties getProperties(String type) {
 		
-		ObjectProperties ep = new ObjectProperties();
+		ObjectProperties p = new ObjectProperties();
 		
 		if (type.equals("LA")) {
-			ep.put("sleepTime", "0");
-			ep.put("sleepVar", "100");
-			ep.put("alpha", "0.001");	
+			p.put("sleepTime", "0");
+			p.put("sleepVar", "100");
+			p.put("alpha", "0.001");	
+		}
+		if (type.equals("MARKETMAKER")) {
+			p.put("sleepTime", "50");
+			p.put("sleepVar", "100");
 		}
 		if (type.equals("CALL")) {
-			ep.put("pricingPolicy", "0.5");
-			ep.put("clearFreq", "100");
+			p.put("pricingPolicy", "0.5");
+			p.put("clearFreq", "100");
 		}
 		
-		return ep;
+		return p;
 	}
 	
 }

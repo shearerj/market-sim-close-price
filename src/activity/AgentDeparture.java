@@ -34,11 +34,7 @@ public class AgentDeparture extends Activity {
 	}
 	
 	public ActivityHashMap execute() {
-		if (mkt == null) {
-			return ((MMAgent)ag).agentDeparture();
-		} else {
-			return ((SMAgent)ag).agentDeparture(mkt);
-		}
+		return ag.agentDeparture();
 	}
 	
 	public String toString() {
