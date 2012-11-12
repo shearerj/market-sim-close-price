@@ -21,7 +21,7 @@ public class AgentFactory {
 	public static Agent createAgent(String type,
 									Integer agentID,
 									SystemData data,
-									EntityProperties params,
+									ObjectProperties params,
 									Log l) {
 		
 		if (type.equals(Consts.getAgentType("DummyAgent"))) {

@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 
-import market.*;
 import activity.*;
 import entity.*;
 import event.*;
+import models.*;
 
 /**
  * Class to create agents & markets. Sets up and assigns strategies (assumed to follow
@@ -42,15 +42,18 @@ public class SystemSetup {
 		data.backgroundArrivalTimes();
 		data.backgroundPrivateValues();
 		
-		// Create entities
 		createQuoter();
-		createMarkets();
+		createMarketModels();
 		createAgents();
 		
 		// Log agent information
 		logAgentInfo();
 	}
 	
+	
+	public int nextMarketID() {
+		return marketIDSequence.decrement();
+	}
 	
 	/**
 	 * Create Quoter entity, which enters the system at time 0
@@ -61,6 +64,85 @@ public class SystemSetup {
 		eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(0)));
 	}
 	
+	public void createMarketModels() {
+		for (Map.Entry<String, Integer> mdl : data.numModelType.entrySet()) {
+			// TODO
+			// parse a more advanced settings string
+			String[] settings = null;
+			String models = specs.getValue(mdl.getKey());
+			if (models != null) {
+				if (models.endsWith(",")) {
+					// remove any extra appended commas
+					models = models.substring(0, models.length() - 1);
+				}
+				settings = models.split("[,]+");
+			}
+			
+			for (int i = 0; i < mdl.getValue(); i++) {
+				ObjectProperties p = getEntityProperties(mdl.getKey(), i);
+				
+				p.put("type", settings[i]);
+				// create market model
+				MarketModel model = ModelFactory.createModel(mdl.getKey(), p);
+				data.addModel(model);
+				log.log(Log.DEBUG, model.toString() + ": " + p);
+				// create markets in the model
+				model.createMarkets(this, data);
+			}
+			log.log(Log.INFO, "Models: " + mdl.getValue() + " " + mdl.getKey());
+		}
+	}
+	
+	public void createAgents() {
+		for (Map.Entry<String, Integer> ag : data.numAgentType.entrySet()) {
+			for (int i = 0; i < ag.getValue(); i++) {
+				ObjectProperties ap = getEntityProperties(ag.getKey(), i);
+				int aID = agentIDSequence.increment();
+
+				// create agent & events
+				setupAgent(aID, ag.getKey(), ap);
+				
+				// check if in a role, keep track of role agent IDs
+				if (Arrays.asList(Consts.roles).contains(ag.getKey())) {
+					data.roleAgentIDs.add(aID);
+				}
+			}
+			log.log(Log.INFO, "Agents: " + ag.getValue() + " " + ag.getKey());
+		}
+	}
+//	for (Map.Entry<String, Integer> mkt: data.numMarketType.entrySet()) {
+//	
+////	if (mkt.getKey().startsWith(Consts.CENTRAL)) {
+////		int mID = marketIDSequence.decrement();
+////		setupMarket(mID, mkt.getKey());
+////		log.log(Log.INFO, mkt.getKey() + " Market: " + data.getMarket(mID));
+////		
+////	} else {
+//		for (int i = 0; i < mkt.getValue(); i++) {
+//			EntityProperties mp = specs.setProperties(mkt.getKey(), i);
+//			int mID = marketIDSequence.decrement();
+//			// create market
+//			setupMarket(mID, mkt.getKey(), mp);	
+//		}
+//		log.log(Log.INFO, "Markets: " + mkt.getValue() + " " + mkt.getKey());
+////	}
+//}
+	
+//	public void createMarketsForModel(MarketModel model,
+//			HashMap<String,Integer> numMarketType) {
+//		for (Map.Entry<String, Integer> mkt: numMarketType.entrySet()) {
+//			for (int i = 0; i < mkt.getValue(); i++) {
+//				
+//				
+//				ObjectProperties mp = getEntityProperties(mkt.getKey(), i);
+//				int mID = marketIDSequence.decrement();
+//				// create market
+//				setupMarket(mID, mkt.getKey(), mp);	
+//			}
+//			log.log(Log.INFO, "Markets: " + mkt.getValue() + " " + mkt.getKey());
+//		}
+//	}
+	
 	/**
 	 * Creates market and initializes any Activities as necessary. For example,
 	 * for Call Markets, this method inserts the initial Clear activity into the 
@@ -69,26 +151,20 @@ public class SystemSetup {
 	 * @param marketID
 	 * @param marketType
 	 * @param mp EntityProperties object
+	 * @param modelID
 	 */
-	public void setupMarket(int marketID, String marketType, EntityProperties mp) {
-		
-		Market market;
-//		if (marketType.startsWith(Consts.CENTRAL)) {
-//			market = MarketFactory.createMarket(marketType.substring(Consts.CENTRAL.length()+1),
-//					marketID, data, mp, log);
-//			data.centralMarkets.put(marketID, market);
-//		} else {
-			// Only add market to the general list if it's not the central market
-			market = MarketFactory.createMarket(marketType, marketID, data, mp, log);
-			data.addMarket(market);
-			log.log(Log.DEBUG, market.toString() + ": " + mp);
-//		}
+	public void setupMarket(int marketID, String marketType, ObjectProperties mp, int modelID) {
+		Market market = MarketFactory.createMarket(marketType, marketID, data, mp, log);
+		market.linkModel(modelID);
+		data.addMarket(market);
+		log.log(Log.DEBUG, market.toString() + ": " + mp);
 		
 		// Check if is call market, then initialize clearing sequence
 		if (market instanceof CallMarket) {
 			Activity clear = new Clear(market, market.getNextClearTime());
 			eventManager.createEvent(Consts.CALL_CLEAR_PRIORITY, clear);
 		}
+		log.log(Log.INFO, "Markets: " + market.getType() + ", ID=" + market.getID());
 	}
 	
 
@@ -100,7 +176,7 @@ public class SystemSetup {
 	 * @param agentType
 	 * @param ap EntityProperties object
 	 */
-	public void setupAgent(int agentID, String agentType, EntityProperties ap) {
+	public void setupAgent(int agentID, String agentType, ObjectProperties ap) {
 		Agent agent = AgentFactory.createAgent(agentType, agentID, data, ap, log);
 		data.addAgent(agent);
 		log.log(Log.DEBUG, agent.toString() + ": " + ap);
@@ -119,46 +195,6 @@ public class SystemSetup {
 			// Agent is in multiple markets
 			eventManager.createEvent(new AgentArrival(agent, ts));
 			eventManager.createEvent(new AgentDeparture(agent, data.simLength));
-		}
-	}
-	
-	
-	
-	public void createMarkets() {
-		for (Map.Entry<String, Integer> mkt: data.numMarketType.entrySet()) {
-			
-//			if (mkt.getKey().startsWith(Consts.CENTRAL)) {
-//				int mID = marketIDSequence.decrement();
-//				setupMarket(mID, mkt.getKey());
-//				log.log(Log.INFO, mkt.getKey() + " Market: " + data.getMarket(mID));
-//				
-//			} else {
-				for (int i = 0; i < mkt.getValue(); i++) {
-					EntityProperties mp = getEntityProperties(mkt.getKey(), i);
-					int mID = marketIDSequence.decrement();
-					// create market
-					setupMarket(mID, mkt.getKey(), mp);	
-				}
-				log.log(Log.INFO, "Markets: " + mkt.getValue() + " " + mkt.getKey());
-//			}
-		}
-	}
-	
-	public void createAgents() {
-		for (Map.Entry<String, Integer> ag : data.numAgentType.entrySet()) {
-			for (int i = 0; i < ag.getValue(); i++) {
-				EntityProperties ap = getEntityProperties(ag.getKey(), i);
-				int aID = agentIDSequence.increment();
-
-				// create agent & events
-				setupAgent(aID, ag.getKey(), ap);
-				
-				// check if in a role, keep track of role agent IDs
-				if (Arrays.asList(Consts.roles).contains(ag.getKey())) {
-					data.roleAgentIDs.add(aID);
-				}
-			}
-			log.log(Log.INFO, "Agents: " + ag.getValue() + " " + ag.getKey());
 		}
 	}
 	
@@ -190,9 +226,9 @@ public class SystemSetup {
 	 * @param idx	index of the role for which to set the strategy, -1 otherwise
 	 * @return EntityProperties
 	 */
-	public EntityProperties getEntityProperties(String type, int idx) {
+	public ObjectProperties getEntityProperties(String type, int idx) {
 		if (specs.getRoleStrategies().containsKey(type) && idx >= 0) {
-			EntityProperties p = new EntityProperties(Consts.getProperties(type));
+			ObjectProperties p = new ObjectProperties(Consts.getProperties(type));
 			
 			ArrayList<String> players = (ArrayList<String>) specs.getRoleStrategies().get(type);
 			String strategy = players.get(idx);
@@ -212,7 +248,7 @@ public class SystemSetup {
 			log.log(Log.INFO, type + ": " + p);
 			return p;
 		} else {
-			return new EntityProperties(Consts.getProperties(type));
+			return new ObjectProperties(Consts.getProperties(type));
 		}
 	}
 

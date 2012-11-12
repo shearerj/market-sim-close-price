@@ -8,6 +8,21 @@ package systemmanager;
  */
 public class Consts {
 	
+	// **********************************************************
+	// Agent, market, and model types
+	// (must edit this whenever add a new agent, market, or model
+	
+	public final static String[] agentTypeNames = 
+		{ "LA", "ZI", "DUMMY" };
+	public final static String[] marketTypeNames = 
+		{ "CDA", "CALL"};
+	public final static String[] modelTypeNames = 
+		{ "TWOMARKET", "CENTRALCDA", "CENTRALCALL" };
+		
+	// EGTA roles (i.e. players in the game)
+	public final static String[] roles = {"LA", "DUMMY"};
+	// **********************************************************
+	
 	// ActivityList priorities
 	public final static int DEFAULT_PRIORITY = 0;
 	public final static int SUBMIT_BID_PRIORITY = 1;
@@ -24,12 +39,6 @@ public class Consts {
 	public final static int INF_PRICE = 999999999;
 	public final static int SCALING_FACTOR = 100;
 	
-	// Entity types
-//	public final static String[] agentTypeNames = {"LA", "DUMMY", "ZI"};
-
-	public final static String[] agentTypeNames = {"LA", "ZI", "DUMMY"};
-	public final static String[] marketTypeNames = {"CDA", "CALL"};
-	public final static String CENTRAL = "CENTRAL";
 	
 	/**
 	 * Returns the market type based on the class name.
@@ -49,6 +58,9 @@ public class Consts {
 		return className.replace("Agent","").toUpperCase();
 	}
 	
+	public static String getModelType(String className) {
+		return className.toUpperCase();
+	}
 	
 	// Directories
 	public final static String configDir = "config/";
@@ -58,11 +70,7 @@ public class Consts {
 	// NOBID = no bid submitted yet
 	// MAIN = bid submitted to main market
 	// ALTERNATE = bid submitted to alternate market, see extra info
-	public enum SubmittedBidMarket {
-		NOBID,
-		MAIN,
-		ALTERNATE
-	}
+	public enum SubmittedBidMarket { NOBID,	MAIN, ALTERNATE	}
 
 	// ----- SIMULATION -----
 	
@@ -71,17 +79,15 @@ public class Consts {
 	public final static String configFile = "env.properties";
 	public final static String obsFilename = "observation";
 
-	// EGTA roles (i.e. players in the game)
-	public final static String[] roles = {"LA", "DUMMY"};
 
 	/**
 	 * Get hard-coded default properties for a given entity type.
 	 * 
 	 * @param type
 	 */
-	public final static EntityProperties getProperties(String type) {
+	public final static ObjectProperties getProperties(String type) {
 		
-		EntityProperties ep = new EntityProperties();
+		ObjectProperties ep = new ObjectProperties();
 		
 		if (type.equals("LA")) {
 			ep.put("sleepTime", "0");
@@ -95,6 +101,5 @@ public class Consts {
 		
 		return ep;
 	}
-	
 	
 }

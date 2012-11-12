@@ -15,6 +15,9 @@ import java.util.HashMap;
  */
 public abstract class Market extends Entity {
 
+	// Model information
+	protected int modelID;				// ID of associated model
+	
 	// Agent information
 	protected ArrayList<Integer> buyers;
 	protected ArrayList<Integer> sellers;
@@ -31,10 +34,16 @@ public abstract class Market extends Entity {
 	public Price lastBidPrice;
 	public int lastAskQuantity;
 	public int lastBidQuantity;
-
 	public String marketType;
+	
 
-	public Market(int marketID, SystemData d, EntityProperties p, Log l) {
+	/**
+	 * @param marketID
+	 * @param d
+	 * @param p
+	 * @param l
+	 */
+	public Market(int marketID, SystemData d, ObjectProperties p, Log l) {
 		super(marketID, d, p, l);
 
 		agentIDs = new ArrayList<Integer>();
@@ -51,6 +60,22 @@ public abstract class Market extends Entity {
 		lastBidPrice = new Price(-1);
 	}
 
+	/**
+	 * Set the model ID for the market.
+	 * 
+	 * @param id
+	 */
+	public void linkModel(int id) {
+		this.modelID = id;
+	}
+	
+	/**
+	 * @return model ID
+	 */
+	public int getModelID() {
+		return this.modelID;
+	}
+	
 	/**
 	 * @return bid (highest buy offer)
 	 */

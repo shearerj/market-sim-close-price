@@ -2,9 +2,12 @@ package entity;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 import event.*;
+import models.*;
 import market.*;
 import activity.*;
 import systemmanager.*;
@@ -20,7 +23,8 @@ public class Quoter extends Entity {
 
 	private int tickSize;
 	private TimeStamp latency;
-	public BestBidAsk lastQuote;
+//	public BestBidAsk lastQuote;
+	public HashMap<Integer, BestBidAsk> lastQuotes;		// hashed by model ID
 	
 	/**
 	 * Constructor
@@ -28,14 +32,25 @@ public class Quoter extends Entity {
 	 * @param d
 	 */
 	public Quoter(int ID, SystemData d, Log l) {
-		super(ID, d, new EntityProperties(), l);
+		super(ID, d, new ObjectProperties(), l);
 		latency = d.nbboLatency;
 		tickSize = d.tickSize;
-		lastQuote = new BestBidAsk();
+//		lastQuote = new BestBidAsk();
+		lastQuotes = new HashMap<Integer,BestBidAsk>();
 	}
 	
 	/**
-	 * Method to update the NBBO values across all markets.
+	 * Get BestBidAsk quote for the given model.
+	 * 
+	 * @param modelID
+	 * @return
+	 */
+	public BestBidAsk getNBBOQuote(int modelID) {
+		return lastQuotes.get(modelID);
+	}
+	
+	/**
+	 * Method to update the NBBO values.
 	 * 
 	 * @param ts
 	 * @return
@@ -44,32 +59,67 @@ public class Quoter extends Entity {
 		
 		ActivityHashMap actMap = new ActivityHashMap();
 		
-		lastQuote = findBestBidOffer(data.getMarketIDs());
-		String s = ts.toString() + " | UpdateNBBO" + lastQuote;
+		for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
+			int modelID = entry.getKey();
+			MarketModel model = entry.getValue();
+			ArrayList<Integer> ids = model.getMarketIDs();
 		
-		int bestBid = lastQuote.bestBid;
-		int bestAsk = lastQuote.bestAsk;
-		if ((bestBid != -1) && (bestAsk != -1)) {
-			// check for inconsistency in buy/sell prices & fix if found
-			if (lastQuote.bestBid > lastQuote.bestAsk) {
-				int mid = (lastQuote.bestBid + lastQuote.bestAsk) / 2;
-				bestBid = mid - this.tickSize;
-				bestAsk = mid + this.tickSize;
-				
-				// Add spread of INF if inconsistent NBBO quote
-				this.data.addSpread(0, ts, Consts.INF_PRICE);
+			BestBidAsk lastQuote = findBestBidOffer(ids);
+			String s = ts + " | " + ids + " UpdateNBBO" + lastQuote;
+			
+			int bestBid = lastQuote.bestBid;
+			int bestAsk = lastQuote.bestAsk;
+			if ((bestBid != -1) && (bestAsk != -1)) {
+				// check for inconsistency in buy/sell prices & fix if found
+				if (lastQuote.bestBid > lastQuote.bestAsk) {
+					int mid = (lastQuote.bestBid + lastQuote.bestAsk) / 2;
+					bestBid = mid - this.tickSize;
+					bestAsk = mid + this.tickSize;
+					
+					// Add spread of INF if inconsistent NBBO quote
+					this.data.addNBBOSpread(modelID, ts, Consts.INF_PRICE);
+				} else {
+					// if bid-ask consistent, store the spread
+					this.data.addNBBOSpread(modelID, ts, lastQuote.getSpread());
+				}
 			} else {
-				// if bid-ask consistent, store the spread
-				this.data.addSpread(0, ts, lastQuote.getSpread());
+				// store spread of INF since no bid-ask spread
+				this.data.addSpread(0, ts, Consts.INF_PRICE);
 			}
-		} else {
-			// store spread of INF since no bid-ask spread
-			this.data.addSpread(0, ts, Consts.INF_PRICE);
+			
+			lastQuote.bestBid = bestBid;
+			lastQuote.bestAsk = bestAsk;
+			log.log(Log.INFO, s + " --> NBBO" + lastQuote);
+			
+			
 		}
 		
-		lastQuote.bestBid = bestBid;
-		lastQuote.bestAsk = bestAsk;
-		log.log(Log.INFO, s + " --> NBBO" + lastQuote);
+//		lastQuote = findBestBidOffer(data.getMarketIDs());
+//		String s = ts.toString() + " | UpdateNBBO" + lastQuote;
+//		
+//		int bestBid = lastQuote.bestBid;
+//		int bestAsk = lastQuote.bestAsk;
+//		if ((bestBid != -1) && (bestAsk != -1)) {
+//			// check for inconsistency in buy/sell prices & fix if found
+//			if (lastQuote.bestBid > lastQuote.bestAsk) {
+//				int mid = (lastQuote.bestBid + lastQuote.bestAsk) / 2;
+//				bestBid = mid - this.tickSize;
+//				bestAsk = mid + this.tickSize;
+//				
+//				// Add spread of INF if inconsistent NBBO quote
+//				this.data.addSpread(0, ts, Consts.INF_PRICE);
+//			} else {
+//				// if bid-ask consistent, store the spread
+//				this.data.addSpread(0, ts, lastQuote.getSpread());
+//			}
+//		} else {
+//			// store spread of INF since no bid-ask spread
+//			this.data.addSpread(0, ts, Consts.INF_PRICE);
+//		}
+//		
+//		lastQuote.bestBid = bestBid;
+//		lastQuote.bestAsk = bestAsk;
+//		log.log(Log.INFO, s + " --> NBBO" + lastQuote);
 		
 		if (latency.getTimeStamp() > 0) {
 			TimeStamp tsNew = ts.sum(latency);

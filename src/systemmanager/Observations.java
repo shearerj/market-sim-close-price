@@ -38,7 +38,7 @@ public class Observations {
 	}
 	
 	/**
-	 * Gets the agent's observation and adds to the hashmap container.
+	 * Gets the agent's observation and adds to the HashMap container.
 	 * @param agentID
 	 */
 	public void addObservation(int agentID) {
@@ -249,68 +249,49 @@ public class Observations {
 	/**
 	 * Computes statistical values on the transaction data.
 	 * 
-	 * @param central true if on central market data only
+	 * @param ids
 	 * @return
 	 */
-	public HashMap<String,Object> getTransactionInfo(boolean central) {
+	public HashMap<String,Object> getTransactionInfo(ArrayList<Integer> ids) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-		int num = 1;
-		if (central) {
-			num = data.getCentralMarketIDs().size();
+		String suffix = "";
+
+		HashMap<Integer,PQTransaction> transactions = data.getTrans(ids);
+		feat.put("num_trans" + suffix, transactions.size());
+
+		double[] prices = new double[transactions.size()];
+		double[] quantities = new double[transactions.size()];
+		int i = 0;
+		for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
+			PQTransaction trans = entry.getValue();
+			prices[i] = trans.price.getPrice();
+			quantities[i] = trans.quantity;
+			i++;
 		}
-		ArrayList<Integer> ids = new ArrayList<Integer>();
-		for (int it = 0; it < num; it++ ) {
-			String suffix = "";
-			if (central) {
-				int mktID = data.getCentralMarketIDs().get(it);
-				if (ids.isEmpty()) {
-					ids.add(mktID);
-				} else {
-					ids.set(0, mktID);		// only set index 0
-				}
-				suffix = "_" + data.getCentralMarketType(mktID).toLowerCase();
-			} else {
-				ids = data.getMarketIDs();
-			}
-			HashMap<Integer,PQTransaction> transactions = data.getTrans(ids);
-			feat.put("num_trans" + suffix, transactions.size());
-	
-			double[] prices = new double[transactions.size()];
-			double[] quantities = new double[transactions.size()];
-			int i = 0;
+		addStatistics(feat,prices,"price" + suffix,false);
+		//		addSomeStatistics(feat,quantities,"qty",false);
+		
+		for (Iterator<Integer> aid = data.roleAgentIDs.iterator(); aid.hasNext(); ) {
+			int id = aid.next();
+			suffix = suffix + "_" + data.getAgent(id).getType().toLowerCase();
+
+			int buys = 0;
+			int sells = 0;
 			for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
 				PQTransaction trans = entry.getValue();
-				prices[i] = trans.price.getPrice();
-				quantities[i] = trans.quantity;
-				i++;
-			}
-			addStatistics(feat,prices,"price" + suffix,false);
-			//		addSomeStatistics(feat,quantities,"qty",false);
-			
-			if (!central) {
-				for (Iterator<Integer> aid = data.roleAgentIDs.iterator(); aid.hasNext(); ) {
-					int id = aid.next();
-					suffix = suffix + "_" + data.getAgent(id).getType().toLowerCase();
-
-					int buys = 0;
-					int sells = 0;
-					for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
-						PQTransaction trans = entry.getValue();
-						if (trans.sellerID == id) {
-							buys++;
-						} else if (trans.buyerID == id) {
-							sells++;
-						}
-					}
-
-					if (data.numAgentType.get(data.getAgent(id).getType()) > 1) {
-						suffix += id;
-					}
-					feat.put("buys" + suffix , buys);
-					feat.put("sells" + suffix, sells);
+				if (trans.sellerID == id) {
+					buys++;
+				} else if (trans.buyerID == id) {
+					sells++;
 				}
 			}
+
+			if (data.numAgentType.get(data.getAgent(id).getType()) > 1) {
+				suffix += id;
+			}
+			feat.put("buys" + suffix , buys);
+			feat.put("sells" + suffix, sells);
 		}
 		return feat;
 	}
@@ -319,34 +300,23 @@ public class Observations {
 	/**
 	 * Computes execution speed metrics.
 	 * 
-	 * @param central true if on central market data only
+	 * @param ids
 	 * @return
 	 */
-	public HashMap<String,Object> getExecutionSpeed(boolean central) {
+	public HashMap<String,Object> getExecutionSpeed(ArrayList<Integer> ids) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
 		// Initialize with maximum number of possible bids
 		double[] values = new double[data.executionTime.size()];
 		int cnt = 0;
-		
-		int num = 1;
-		if (central) {
-			num = data.getCentralMarketIDs().size();
-		}
-		for (int it = 0; it < num; it++) {
-			int centralMktID = data.getCentralMarketIDs().get(it);
-			
-			String suffix = "";
-			if (central) {
-				suffix = data.getCentralMarketType(centralMktID).toLowerCase();
-			}
+		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
+			int mktID = it.next();
 			
 			for (Map.Entry<Integer, TimeStamp> entry : data.executionTime.entrySet()) {
 				int bidID = entry.getKey();
 				TimeStamp ts = entry.getValue();
 				PQBid b = data.getBid(bidID);
-				if ((central && centralMktID == b.getMarketID()) ||
-						(!central && centralMktID != b.getMarketID())) {
+				if (mktID != b.getMarketID()) {
 					values[cnt] =  (double) ts.diff(data.submissionTime.get(bidID)).longValue();
 					cnt++;
 				}
@@ -356,28 +326,27 @@ public class Observations {
 			for (int i = 0; i < cnt; i++) {
 				speeds[i] = values[i];
 			}
-			addStatistics(feat,values,suffix,false);
+			addStatistics(feat,values,"mkt" + (-mktID),false);
 		}
 		return feat;
 	}
 	
 	
 	/**
-	 * Computes spread metrics either on 1) all markets + NBBO, or 2) central market.
+	 * Computes spread metrics.
 	 * 
-	 * @param central true if on central market data only
+	 * @param ids
 	 * @return
 	 */
-	public HashMap<String,Object> getSpreadInfo(boolean central) {
+	public HashMap<String,Object> getSpreadInfo(ArrayList<Integer> ids) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-		if (!central) {
-			for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
-				int mktID = it.next();
-				HashMap<TimeStamp,Integer> marketSpread = data.marketSpread.get(mktID);
-				double[] spreads = extractTimeSeries(marketSpread);
-				addStatistics(feat,spreads,"mkt" + (-mktID),true);
-				
+		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
+			int mktID = it.next();
+			HashMap<TimeStamp,Integer> marketSpread = data.marketSpread.get(mktID);
+			double[] spreads = extractTimeSeries(marketSpread);
+			addStatistics(feat,spreads,"mkt" + (-mktID),true);
+			
 //				// JUST FOR DEBUGGING PURPOSES TODO
 //				TreeSet<TimeStamp> sortedTimes = new TreeSet<TimeStamp>(marketSpread.keySet());
 //				Median med = new Median();
@@ -402,72 +371,52 @@ public class Observations {
 //						e.printStackTrace();
 //					}
 //				}				
-			}
-			double[] nbboSpreads = extractTimeSeries(data.NBBOSpread);
-			addStatistics(feat,nbboSpreads,"nbbo",true);
-			
-		} else {
-			for (Iterator<Integer> it = data.getCentralMarketIDs().iterator(); it.hasNext(); ) {
-				int mktID = it.next();
-				HashMap<TimeStamp,Integer> marketSpread = data.marketSpread.get(mktID);
-				double[] spreads = extractTimeSeries(marketSpread);
-				String mktType = data.getCentralMarketType(mktID).toLowerCase();
-				addStatistics(feat,spreads,"mkt_" + mktType,true);
-			}
 		}
+		
+//		// TODO
+//		double[] nbboSpreads = extractTimeSeries(data.NBBOSpread);
+//		addStatistics(feat,nbboSpreads,"nbbo",true);
+		
 		return feat;
 	}
 	
 
 	/**
-	 * Computes spread metrics either on 1) all markets, or 2) central market only.
+	 * Computes spread metrics the given market IDs.
 	 * 
-	 * @param central true if on central market data only
+	 * @param ids
 	 * @return
 	 */
-	public HashMap<String,Object> getDepthInfo(boolean central) {
+	public HashMap<String,Object> getDepthInfo(ArrayList<Integer> ids) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-		if (!central) {
-			for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
-				int mktID = it.next();
-				HashMap<TimeStamp,Integer> marketDepth = data.marketDepth.get(mktID);
-				double[] depths = extractTimeSeries(marketDepth);
-				addStatistics(feat,depths,"mkt" + (-mktID),true);
-			}
-		} else {
-			for (Iterator<Integer> it = data.getCentralMarketIDs().iterator(); it.hasNext(); ) {
-				int mktID = it.next();
-				HashMap<TimeStamp,Integer> marketDepth = data.marketDepth.get(mktID);
-				double[] depths = extractTimeSeries(marketDepth);
-				String mktType = data.getCentralMarketType(mktID).toLowerCase();
-				addStatistics(feat,depths,"mkt_" + mktType,true);
-			}
-		}
+		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
+			int mktID = it.next();
+			HashMap<TimeStamp,Integer> marketDepth = data.marketDepth.get(mktID);
+			double[] depths = extractTimeSeries(marketDepth);
+			addStatistics(feat,depths,"mkt" + (-mktID),true);
+		}	
 		return feat;
 	}
 	
 	
 	
 	/**
-	 * Computes volatility metrics either on 1) all markets, or 2) central market only.
+	 * Computes volatility metrics.
+	 * 
 	 * Volatility is measured as the standard deviation of logarithmic returns.
 	 * TODO: try multiple periods for determining returns
 	 * 
-	 * @param central true if only central market data only
+	 * @param ids
 	 * @return
 	 */
-	public HashMap<String, Object> getVolatilityInfo(boolean central) {
+	public HashMap<String, Object> getVolatilityInfo(ArrayList<Integer> ids) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-		if (!central) {
-			for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
-				int mktID = it.next();
+		for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
+			int mktID = it.next();
 				
 				
-			}
-		} else {
-			
 		}
 		
 		return feat;
@@ -477,12 +426,11 @@ public class Observations {
 	/**
 	 * Generate the distribution info on a certain dataset.
 	 * 
-	 * @param central
+	 * @param ids
 	 * @return
 	 */
-	public HashMap<String, Object> getDistributionInfo(boolean central) {
+	public HashMap<String, Object> getDistributionInfo(ArrayList<Integer> ids) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
-		
 		
 		
 		return feat;
@@ -493,7 +441,7 @@ public class Observations {
 	public HashMap<String, Object> getTransactionComparison() {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-		// cycle through all the market combinations
+		// cycle through all the market models 
 		// so iterate through the centralized markets
 		// and within that, iterate through the number of two-market models (here just 1)
 		
@@ -602,7 +550,7 @@ public class Observations {
 	public HashMap<String,Object> getConfiguration() {
 		HashMap<String,Object> config = new HashMap<String,Object>();
 		config.put("obs", data.obsNum);
-		config.put("call_freq", data.clearFreq);
+		config.put("call_freq", data.centralCallClearFreq);
 		config.put("latency", data.nbboLatency);
 		config.put("tick_size", data.tickSize);
 		config.put("kappa", data.kappa);

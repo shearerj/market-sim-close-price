@@ -30,12 +30,12 @@ public class CallMarket extends Market {
 	 * Overloaded constructor.
 	 * @param marketID
 	 */
-	public CallMarket(int marketID, SystemData d, EntityProperties p, Log l) {
+	public CallMarket(int marketID, SystemData d, ObjectProperties p, Log l) {
 		super(marketID, d, p, l);
 		marketType = Consts.getMarketType(this.getClass().getSimpleName());
 		orderbook = new PQOrderBook(this.ID);
 		orderbook.setParams(this.ID, l, d);
-		clearFreq = d.clearFreq;
+		clearFreq = d.centralCallClearFreq;
 		nextClearTime = clearFreq;
 		pricingPolicy = (float) Double.parseDouble(p.get("pricingPolicy"));
 	}

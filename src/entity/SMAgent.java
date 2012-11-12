@@ -11,7 +11,14 @@ import systemmanager.*;
  */
 public abstract class SMAgent extends Agent {
 
-	public SMAgent(int agentID, SystemData d, EntityProperties p, Log l) {
+	/**
+	 * Constructor for a single market agent.
+	 * @param agentID
+	 * @param d
+	 * @param p
+	 * @param l
+	 */
+	public SMAgent(int agentID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, d, p, l);
 	}
 	

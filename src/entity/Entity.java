@@ -15,7 +15,7 @@ public abstract class Entity {
 	public Log log;
 	public SystemData data;
 	protected int ID;
-	protected EntityProperties params;		// stores all parameters
+	protected ObjectProperties params;		// stores all parameters
 	
 	public Entity() {
 		// empty constructor
@@ -27,7 +27,7 @@ public abstract class Entity {
 	 * @param l
 	 * @param d
 	 */
-	public Entity(int ID, SystemData d, EntityProperties ep, Log l) {
+	public Entity(int ID, SystemData d, ObjectProperties ep, Log l) {
 		this.ID = ID;
 		this.data = d;
 		this.params = ep;

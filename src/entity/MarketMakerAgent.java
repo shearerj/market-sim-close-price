@@ -14,7 +14,7 @@ import java.util.HashMap;
  */
 public class MarketMakerAgent extends SMAgent {
 
-	public MarketMakerAgent(int agentID, SystemData d, EntityProperties p, Log l) {
+	public MarketMakerAgent(int agentID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, d, p, l);
 		agentType = Consts.getAgentType(this.getClass().getSimpleName());
 		

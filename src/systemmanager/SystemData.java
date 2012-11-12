@@ -3,6 +3,7 @@ package systemmanager;
 import event.*;
 import entity.*;
 import market.*;
+import models.*;
 
 import java.util.*;
 
@@ -34,23 +35,27 @@ public class SystemData {
 	public HashMap<Integer,Quote> quoteData;			// hashed by market ID
 	public HashMap<Integer,Agent> agents;				// agents hashed by ID
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
+	public HashMap<Integer,MarketModel> models;			// market models
 	public Quoter quoter;
 	private Sequence transIDSequence;
 	
 	private ArrivalTime arrivalTimeGenerator;
 	private PrivateValue processGenerator;
 	
-	// Does not include the central market
-	public HashMap<String,Integer> numMarketType;		// hashed by type, gives # of that type
+	// hashed by type, gives # of that type
+	public HashMap<String,Integer> numModelType;
+	public HashMap<String,Integer> numMarketType;
 	public HashMap<String,Integer> numAgentType;
+	
 	public int numMarkets;
 	public int numAgents;
 	public ArrayList<Integer> roleAgentIDs;				// IDs of agents in a role
+	public ArrayList<Integer> modelIDs;
 	
 	// Parameters set by specification file
 	public TimeStamp simLength;
 	public int tickSize;
-	public TimeStamp clearFreq;
+	public TimeStamp centralCallClearFreq;
 	public TimeStamp nbboLatency;
 	public double arrivalRate;
 	public int meanPV;
@@ -60,17 +65,10 @@ public class SystemData {
 	public int bidRange;
 	public double privateValueVar;				// agent variance from PV random process
 	
-	// Two-market model containers
-	public HashMap<Integer, ArrayList<Market>> twoMarketModels;	// hashed by 2M model ID
-	
-	// Central market type; if invalid type, no central market will be created
-	public String centralMarketFlag;
-	public HashMap<Integer,Market> centralMarkets;
-	
 	// Variables of time series for observation file
 	public HashMap<Integer,HashMap<TimeStamp,Integer>> marketDepth;		// hashed by market ID
 	public HashMap<Integer,HashMap<TimeStamp,Integer>> marketSpread;	// hashed by market ID
-	public HashMap<TimeStamp,Integer> NBBOSpread;				// time series of NBBO spreads
+	public HashMap<Integer,HashMap<TimeStamp,Integer>> NBBOSpread;		// hashed by model ID, time series
 	public HashMap<Integer,TimeStamp> executionTime;		 	// hashed by bid ID
 	public HashMap<Integer,TimeStamp> submissionTime;			// hashed by bid ID
 	
@@ -83,23 +81,22 @@ public class SystemData {
 		quoteData = new HashMap<Integer,Quote>();
 		agents = new HashMap<Integer,Agent>();
 		markets = new HashMap<Integer,Market>();
-		numMarketType = new HashMap<String,Integer>();
+		models = new HashMap<Integer,MarketModel>();
 		numAgentType = new HashMap<String,Integer>();
+		numMarketType = new HashMap<String,Integer>();
+		numModelType = new HashMap<String,Integer>();
 		numAgents = 0;
 		numMarkets = 0;
 		roleAgentIDs = new ArrayList<Integer>();
+		modelIDs = new ArrayList<Integer>();
 		transIDSequence = new Sequence(0);
 	
 		// Initialize containers for observations/features
 		marketDepth = new HashMap<Integer,HashMap<TimeStamp,Integer>>();
 		marketSpread = new HashMap<Integer,HashMap<TimeStamp,Integer>>();
-		NBBOSpread = new HashMap<TimeStamp,Integer>();
+		NBBOSpread = new HashMap<Integer,HashMap<TimeStamp,Integer>>();
 		executionTime = new HashMap<Integer,TimeStamp>();
 		submissionTime = new HashMap<Integer,TimeStamp>();
-		
-		// Initialize containers for market configurations
-		twoMarketModels = new HashMap<Integer,ArrayList<Market>>();
-		centralMarkets = new HashMap<Integer,Market>();
 	}
 
 
@@ -136,6 +133,10 @@ public class SystemData {
 		return markets;
 	}
 
+	public HashMap<Integer,MarketModel> getModels() {
+		return models;
+	}
+	
 	public ArrayList<Integer> getAgentIDs() {
 		return new ArrayList<Integer>(agents.keySet());
 	}
@@ -149,16 +150,16 @@ public class SystemData {
 	}
 
 	public Market getMarket(int id) {
-		if (!centralMarkets.containsKey(id)) {
-			return markets.get(id);
-		} else {
-			return centralMarkets.get(id);
-		}
+		return markets.get(id);
 	}
 
-	public ArrayList<Integer> getCentralMarketIDs() {
-		return new ArrayList<Integer>(centralMarkets.keySet());
+	public MarketModel getMarketModel(int id) {
+		return models.get(id);
 	}
+	
+//	public ArrayList<Integer> getCentralMarketIDs() {
+//		return new ArrayList<Integer>(centralMarkets.keySet());
+//	}
 	
 	public PQTransaction getTransaction(int id) {
 		return transData.get(id);
@@ -187,40 +188,40 @@ public class SystemData {
 		return bidData.get(id);
 	}
 	
-	/**
-	 * @return true if central markets present, false otherwise
-	 */
-	public boolean useCentralMarket() {
-		if (centralMarketFlag != null) {
-			if (centralMarketFlag.equals("on")) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-		return false;	
-	}
-	
-	
-	/**
-	 * Returns the type of the central market with the given market ID.
-	 * 
-	 * @param mktID
-	 * @return
-	 */
-	public String getCentralMarketType(int mktID) {
-		if (!this.getCentralMarketIDs().contains(mktID))
-			return null;
-		
-		if (getMarket(mktID) instanceof CDAMarket) {
-			return new String("CDA");
-		}
-		if (getMarket(mktID) instanceof CallMarket) {
-			return new String("CALL");
-		}
-		return null;
-	}
-	
+//	/**
+//	 * @return true if central markets present, false otherwise
+//	 */
+//	public boolean useCentralMarket() {
+//		if (centralMarketFlag != null) {
+//			if (centralMarketFlag.equals("on")) {
+//				return true;
+//			} else {
+//				return false;
+//			}
+//		}
+//		return false;	
+//	}
+//	
+//	
+//	/**
+//	 * Returns the type of the central market with the given market ID.
+//	 * 
+//	 * @param mktID
+//	 * @return
+//	 */
+//	public String getCentralMarketType(int mktID) {
+//		if (!this.getCentralMarketIDs().contains(mktID))
+//			return null;
+//		
+//		if (getMarket(mktID) instanceof CDAMarket) {
+//			return new String("CDA");
+//		}
+//		if (getMarket(mktID) instanceof CallMarket) {
+//			return new String("CALL");
+//		}
+//		return null;
+//	}
+//	
 
 	
 	/**
@@ -261,7 +262,7 @@ public class SystemData {
 	public void readEnvProps(Properties p) {
 		simLength = new TimeStamp(Long.parseLong(p.getProperty("simLength")));
 		nbboLatency = new TimeStamp(Long.parseLong(p.getProperty("nbboLatency")));
-		clearFreq = new TimeStamp(Long.parseLong(p.getProperty("clearLatency")));
+		centralCallClearFreq = new TimeStamp(Long.parseLong(p.getProperty("clearLatency")));
 		tickSize = Integer.parseInt(p.getProperty("tickSize"));
 		kappa = Double.parseDouble(p.getProperty("kappa"));
 		arrivalRate = Double.parseDouble(p.getProperty("arrivalRate"));
@@ -343,6 +344,11 @@ public class SystemData {
 		markets.put(mkt.getID(), mkt);
 	}
 
+	public void addModel(MarketModel mdl) {
+		models.put(mdl.hashCode(), mdl);
+		modelIDs.add(mdl.hashCode());
+	}
+	
 	public void addTransaction(PQTransaction tr) {
 		int id = transIDSequence.increment();
 		tr.transID = id;
@@ -358,27 +364,39 @@ public class SystemData {
 	}
 	
 	/**
-	 * Add bid-ask spread value to the HashMap containers. If the mktID is 0, then
-	 * inserts as NBBO spread.
+	 * Add bid-ask spread value to the HashMap containers.
 	 * 
 	 * @param mktID
 	 * @param ts 
 	 * @param spread
 	 */
 	public void addSpread(int mktID, TimeStamp ts, int spread) {
-		// mktID 0 indicates NBBO spread information
-		if (mktID == 0) {
-			NBBOSpread.put(ts, spread);
+		if (marketSpread.get(mktID) != null) {
+			marketSpread.get(mktID).put(ts, spread);
 		} else {
-			if (marketSpread.get(mktID) != null) {
-				marketSpread.get(mktID).put(ts, spread);
-			} else {
-				HashMap<TimeStamp,Integer> tmp = new HashMap<TimeStamp,Integer>();
-				tmp.put(ts, spread);
-				marketSpread.put(mktID, tmp);
-			}
+			HashMap<TimeStamp,Integer> tmp = new HashMap<TimeStamp,Integer>();
+			tmp.put(ts, spread);
+			marketSpread.put(mktID, tmp);
 		}
 	}	
+	
+	/**
+	 * Add NBBO bid-ask spread value to the HashMap containers.
+	 * 
+	 * @param modelID
+	 * @param ts 
+	 * @param spread
+	 */
+	public void addNBBOSpread(int modelID, TimeStamp ts, int spread) {
+		if (NBBOSpread.get(modelID) != null) {
+			NBBOSpread.get(modelID).put(ts, spread);
+		} else {
+			HashMap<TimeStamp,Integer> tmp = new HashMap<TimeStamp,Integer>();
+			tmp.put(ts, spread);
+			NBBOSpread.put(modelID, tmp);
+		}
+	}	
+	
 	
 	/**
 	 * Add depth (number of orders waiting to be fulfilled) to the the container.

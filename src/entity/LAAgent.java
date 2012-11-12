@@ -25,7 +25,7 @@ public class LAAgent extends MMAgent {
 	 * Overloaded constructor
 	 * @param agentID
 	 */
-	public LAAgent(int agentID, SystemData d, EntityProperties p, Log l) {
+	public LAAgent(int agentID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, d, p, l);
 		agentType = Consts.getAgentType(this.getClass().getSimpleName());
 		arrivalTime = new TimeStamp(0);

@@ -1,11 +1,13 @@
 package entity;
 
 import event.*;
+import models.*;
 import market.*;
 import activity.*;
 import systemmanager.*;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 import java.util.HashMap;
@@ -64,7 +66,7 @@ public abstract class Agent extends Entity {
 	 * Constructor
 	 * @param agentID
 	 */
-	public Agent(int agentID, SystemData d, EntityProperties p, Log l) {
+	public Agent(int agentID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, d, p, l);
 		
 		rand = new Random();
@@ -107,7 +109,7 @@ public abstract class Agent extends Entity {
 	 * Set EntityProperties for this agent.
 	 * @param p EntityProperties object
 	 */
-	public void setProperties(EntityProperties p) {
+	public void setProperties(ObjectProperties p) {
 		params = p;
 	}
 	
@@ -123,7 +125,7 @@ public abstract class Agent extends Entity {
 	/**
 	 * @return EntityProperties of this agent.
 	 */
-	public EntityProperties getProperties() {
+	public ObjectProperties getProperties() {
 		return params;
 	}
 	
@@ -307,11 +309,18 @@ public abstract class Agent extends Entity {
 		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
 				new SubmitBid(this, mkt, price, quantity, ts));
 		
-		if (data.useCentralMarket() && !(this instanceof LAAgent)) {
-			for (Iterator<Integer> id = data.getCentralMarketIDs().iterator(); id.hasNext(); ) {
-				Market centralMkt = data.centralMarkets.get(id.next());
-				actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
-						new SubmitBid(this, centralMkt, price, quantity, ts));
+		// insert for all other markets (in different models)
+		for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
+			MarketModel model = entry.getValue();
+			// only insert bids for other models
+			if (model.hashCode() != mkt.getModelID()) {
+				for (Iterator<Integer> id = model.getMarketIDs().iterator(); id.hasNext(); ) {
+					Market otherMkt = data.getMarket(id.next());
+					if (otherMkt.getID() != mkt.getID()) {
+						actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
+								new SubmitBid(this, otherMkt, price, quantity, ts));
+					}
+				}
 			}
 		}
 		return actMap;
@@ -332,12 +341,19 @@ public abstract class Agent extends Entity {
 		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
 				new SubmitMultipleBid(this, mkt, price, quantity, ts));
 		
-		if (data.useCentralMarket() && !(this instanceof LAAgent)) {
-			for (Iterator<Integer> id = data.getCentralMarketIDs().iterator(); id.hasNext(); ) {
-				Market centralMkt = data.centralMarkets.get(id.next());
-				actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY,
-						new SubmitMultipleBid(this, centralMkt, price, quantity, ts));
-			}			
+		// insert for all other markets (in different models)
+		for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
+			MarketModel model = entry.getValue();
+			// only insert bids for other models
+			if (model.hashCode() != mkt.getModelID()) {
+				for (Iterator<Integer> id = model.getMarketIDs().iterator(); id.hasNext(); ) {
+					Market otherMkt = data.getMarket(id.next());
+					if (otherMkt.getID() != mkt.getID()) {
+						actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY,
+								new SubmitMultipleBid(this, otherMkt, price, quantity, ts));
+					}
+				}
+			}
 		}
 		return actMap;
 	}
@@ -408,12 +424,20 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap withdrawBid(Market mkt, TimeStamp ts) {
 		log.log(Log.INFO, ts + " | " + this.toString() + " withdraw bid from " + mkt);
-		if (data.useCentralMarket()) {
-			for (Iterator<Integer> id = data.getCentralMarketIDs().iterator(); id.hasNext(); ) {
-				Market centralMkt = data.centralMarkets.get(id.next());
-				log.log(Log.INFO, ts + " | " + this.toString() + " withdraw bid from " + 
-						centralMkt);
-				centralMkt.removeBid(this.ID, ts);
+		
+		// withdraw for all other markets (in different models)
+		for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
+			MarketModel model = entry.getValue();
+			// only withdraw bids for other models
+			if (model.hashCode() != mkt.getModelID()) {
+				for (Iterator<Integer> id = model.getMarketIDs().iterator(); id.hasNext(); ) {
+					Market otherMkt = data.getMarket(id.next());
+					if (otherMkt.getID() != mkt.getID()) {
+						log.log(Log.INFO, ts + " | " + this.toString() + " withdraw bid from " + 
+								otherMkt);
+						otherMkt.removeBid(this.ID, ts);
+					}
+				}
 			}
 		}
 		return mkt.removeBid(this.ID, ts);

@@ -3,6 +3,7 @@ package systemmanager;
 import event.*;
 import entity.*;
 import activity.*;
+import models.*;
 
 import java.util.*;
 import java.io.*;
@@ -141,51 +142,6 @@ public class SystemManager {
 			SystemSetup s = new SystemSetup(specs, eventManager, data, log);
 			s.setupAll();
 			
-//			// Create Quoter entity, which enters the system at time 0
-//			Quoter iu = new Quoter(0, data, log);
-//			data.quoter = iu;
-//			eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(0)));
-
-//			// Create markets first since agent creation references markets
-//			for (Map.Entry<String, Integer> mkt: data.numMarketType.entrySet()) {
-//				
-////				if (mkt.getKey().startsWith(Consts.CENTRAL)) {
-////					int mID = marketIDSequence.decrement();
-////					setupMarket(mID, mkt.getKey());
-////					log.log(Log.INFO, mkt.getKey() + " Market: " + data.getMarket(mID));
-////					
-////				} else {
-//					for (int i = 0; i < mkt.getValue(); i++) {
-//						EntityProperties mp = specs.setProperties(mkt.getKey(), i);
-//						int mID = marketIDSequence.decrement();
-//						// create market
-//						setupMarket(mID, mkt.getKey(), mp);	
-//					}
-//					log.log(Log.INFO, "Markets: " + mkt.getValue() + " " + mkt.getKey());
-////				}
-//			}
-
-//			// Create agents, initialize parameters, and compute arrival times (if needed)
-//			for (Map.Entry<String, Integer> ag : data.numAgentType.entrySet()) {
-//				for (int i = 0; i < ag.getValue(); i++) {
-//					EntityProperties ap = specs.setProperties(ag.getKey(), i);
-//					int aID = agentIDSequence.increment();
-//
-//					// create agent & events
-//					setupAgent(aID, ag.getKey(), ap);
-//					
-//					// check if in a role, keep track of role agent IDs
-//					if (Arrays.asList(Consts.roles).contains(ag.getKey())) {
-//						data.roleAgentIDs.add(aID);
-//					}
-//				}
-//				log.log(Log.INFO, "Agents: " + ag.getValue() + " " + ag.getKey());
-//			}
-//			
-//			
-//			// Log agent information
-//			logAgentInfo();
-			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -243,8 +199,7 @@ public class SystemManager {
 			obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
 			obs.addFeature("expire", obs.getTimeStampFeatures(data.getExpirations()));
 			obs.addFeature("bkgrd_info", obs.getBackgroundInfo(data.getAgents()));
-			getMarketResults(false, "");	// All markets other than the centralized market
-			getMarketResults(true, "cn");	// Results for the central market
+			getMarketResults();
 			obs.addFeature("", obs.getConfiguration());
 			
 			File file = new File(simFolder + Consts.obsFilename + num + ".json");
@@ -259,32 +214,52 @@ public class SystemManager {
 		}
 	}
 	
-	
 	/**
-	 * Gets central market results or results for all markets (excluding centralized).
-	 * @param central true if central market
-	 * @param prefix string to add to key name
+	 * Gets market results by model
 	 */
-	private void getMarketResults(boolean central, String prefix) {
-		if (prefix != null && prefix != "") {
-			prefix = prefix + "_";
-		}
-		if (central) {
-			ArrayList<Integer> ids = data.getCentralMarketIDs();
-			for (Iterator<Integer> i = ids.iterator(); i.hasNext(); ) {
-				ArrayList<Integer> id = new ArrayList<Integer>();
-				int mktID = i.next();
-				id.add(mktID);
-				obs.addFeature(prefix + data.getCentralMarketType(mktID).toLowerCase() + 
-						"_bkgrd_surplus", obs.getSurplusFeatures(data.getSurplus(id), true));
-			}
-		} else {
-			ArrayList<Integer> ids = data.getMarketIDs();
+	private void getMarketResults() {
+		// TODO create the prefix
+		for (Map.Entry<Integer, MarketModel> entry : data.getModels().entrySet()) {
+			MarketModel model = entry.getValue();
+			ArrayList<Integer> ids = model.getMarketIDs();
+			
+			String prefix = model.getClass().getSimpleName().toLowerCase() + "_";
 			obs.addFeature(prefix + "bkgrd_surplus", obs.getSurplusFeatures(data.getSurplus(ids), false));
+			obs.addFeature("depths", obs.getDepthInfo(ids));
+			obs.addFeature("transactions", obs.getTransactionInfo(ids));
+			obs.addFeature("spreads", obs.getSpreadInfo(ids));
+			obs.addFeature("exec_speed", obs.getExecutionSpeed(ids));
 		}
-		obs.addFeature(prefix + "transactions", obs.getTransactionInfo(central));
-		obs.addFeature(prefix + "depths", obs.getDepthInfo(central));
-		obs.addFeature(prefix + "spreads", obs.getSpreadInfo(central));
-		obs.addFeature(prefix + "exec_speed", obs.getExecutionSpeed(central));
 	}
+	
+//	/**
+//	 * Gets central market results or results for all markets (excluding centralized).
+//	 * @param central true if central market
+//	 * @param prefix string to add to key name
+//	 */
+//	private void getMarketResults(boolean central, String prefix) {
+//		if (prefix != null && prefix != "") {
+//			prefix = prefix + "_";
+//		}
+//		
+//		if (central) {
+//			ArrayList<Integer> ids = data.getCentralMarketIDs();
+//			for (Iterator<Integer> i = ids.iterator(); i.hasNext(); ) {
+//				ArrayList<Integer> id = new ArrayList<Integer>();
+//				int mktID = i.next();
+//				id.add(mktID);
+//				obs.addFeature(prefix + data.getCentralMarketType(mktID).toLowerCase() + 
+//						"_bkgrd_surplus", obs.getSurplusFeatures(data.getSurplus(id), true));
+//			}
+//		} else {
+//			ArrayList<Integer> ids = data.getMarketIDs();
+//			obs.addFeature(prefix + "bkgrd_surplus", obs.getSurplusFeatures(data.getSurplus(ids), false));
+//		}
+//		obs.addFeature(prefix + "transactions", obs.getTransactionInfo(central));
+//		obs.addFeature(prefix + "depths", obs.getDepthInfo(central));
+//		obs.addFeature(prefix + "spreads", obs.getSpreadInfo(central));
+//		obs.addFeature(prefix + "exec_speed", obs.getExecutionSpeed(central));
+//	}
+	
+	
 }

@@ -62,7 +62,7 @@ public class ZIAgent extends MMAgent {
 	 * @param agentID
 	 * @param d SystemData object
 	 */
-	public ZIAgent(int agentID, SystemData d, EntityProperties p, Log l) {
+	public ZIAgent(int agentID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, d, p, l);
 		agentType = Consts.getAgentType(this.getClass().getSimpleName());
 		

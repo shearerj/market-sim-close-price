@@ -3,27 +3,27 @@ package systemmanager;
 import java.util.HashMap;
 
 /**
- * This class stores the parameters for a specific agent. Each agent sets defaults
- * for each of these parameters in their constructor, but they can be overridden
- * by simulation specifications.
+ * This class stores the parameters for a specific agent, market, or market model.
+ * Each sets defaults for its properties in its constructor or in the Consts class, 
+ * but the default settings can be overridden by simulation specifications.
  * 
- * EntityProperties class is a wrapper for HashMap<String,String>.
+ * ObjectProperties class is a wrapper for HashMap<String,String>.
  * 
  * @author ewah
  */
-public class EntityProperties {
+public class ObjectProperties {
 
 	private HashMap<String,String> properties;
 	
-	public EntityProperties() {
+	public ObjectProperties() {
 		properties = new HashMap<String,String>();
 	}
 	
-	public EntityProperties(EntityProperties ep) {
-		properties = (HashMap<String,String>) ep.properties.clone();
+	public ObjectProperties(ObjectProperties p) {
+		properties = (HashMap<String,String>) p.properties.clone();
 	}
 	
-	public EntityProperties(HashMap<String,String> hm) {
+	public ObjectProperties(HashMap<String,String> hm) {
 		properties = new HashMap<String,String>(hm);
 	}
 	

@@ -1,6 +1,5 @@
 package models;
 
-import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -22,17 +21,18 @@ import systemmanager.*;
  */
 public abstract class MarketModel {
 
-	protected SystemManager manager;
+	private ObjectProperties modelProperties;
 	
 	// Specify configuration of market type & properties
-	protected ArrayList<MarketObjectPair> modelProperties;
+	protected ArrayList<MarketObjectPair> modelConfig;
 	
 	// Store information on market IDs for each market specified in modelProperties
 	protected ArrayList<Integer> marketIDs;
 	
-	public MarketModel() {
-		modelProperties = new ArrayList<MarketObjectPair>();
+	public MarketModel(ObjectProperties p) {
+		modelConfig = new ArrayList<MarketObjectPair>();
 		marketIDs = new ArrayList<Integer>();
+		modelProperties = p;
 	}
 	
 	/**
@@ -41,9 +41,9 @@ public abstract class MarketModel {
 	 * @param mktType
 	 * @param mktProperties
 	 */
-	public void addMarketPropertyPair(String mktType, EntityProperties mktProperties) {
+	public void addMarketPropertyPair(String mktType, ObjectProperties mktProperties) {
 		MarketObjectPair mpp = new MarketObjectPair(mktType, mktProperties);
-		modelProperties.add(mpp);
+		modelConfig.add(mpp);
 	}
 	
 	/**
@@ -52,44 +52,22 @@ public abstract class MarketModel {
 	 * @param mktType
 	 */
 	public void addMarketPropertyPair(String mktType) {
-		EntityProperties mktProperties = Consts.getProperties(mktType);
+		ObjectProperties mktProperties = Consts.getProperties(mktType);
 		MarketObjectPair mpp = new MarketObjectPair(mktType, mktProperties);
-		modelProperties.add(mpp);
+		modelConfig.add(mpp);
 	}
 	
 	/**
-	 * Initializes the market stored in the MarketObjectPair and adds its ID to the
-	 * marketIDs array.
-	 * 
-	 * @param mop
+	 * @param setup
+	 * @param data
 	 */
-	public void createMarket(MarketObjectPair mop) {
-		// parse the MarketObjectPair & create it
-		
-//		int id = manager.setupMarket(
-//		marketIDs.add(id);
-	}
-	
-	/**
-	 * Returns the number of each market type in this market model.
-	 * 
-	 * @return
-	 */
-	public HashMap<String,Integer> getNumMarketType() {
-		HashMap<String,Integer> num = new HashMap<String,Integer>();
-		if (modelProperties.size() == 0) return num;
-		
-		for (Iterator<MarketObjectPair> it = modelProperties.iterator(); it.hasNext(); ) {
-			MarketObjectPair mpp = it.next();
-			if (num.get(mpp.getMarketType()) == null) {
-				// no mapping yet
-				num.put(mpp.getMarketType(), 1);
-			} else {
-				int tmp = num.get(mpp.getMarketType());
-				num.put(mpp.getMarketType(), tmp++);
-			}
+	public void createMarkets(SystemSetup setup, SystemData data) {
+		for(Iterator<MarketObjectPair> it = modelConfig.iterator(); it.hasNext(); ) {
+			MarketObjectPair mop = it.next();
+			int mID = setup.nextMarketID();
+			setup.setupMarket(mID, mop.getMarketType(), (ObjectProperties) mop.getObject(), this.hashCode());
+			marketIDs.add(mID);
 		}
-		return num;
 	}
 	
 	/**
@@ -98,4 +76,26 @@ public abstract class MarketModel {
 	public ArrayList<Integer> getMarketIDs() {
 		return marketIDs;
 	}
+	
+//	/**
+//	 * Returns the number of each market type in this market model.
+//	 * 
+//	 * @return HashMap hashed by market type & number of this market in this model
+//	 */
+//	public HashMap<String,Integer> getNumMarketType() {
+//		HashMap<String,Integer> num = new HashMap<String,Integer>();
+//		if (modelConfig.size() == 0) return num;
+//		
+//		for (Iterator<MarketObjectPair> it = modelConfig.iterator(); it.hasNext(); ) {
+//			MarketObjectPair mpp = it.next();
+//			if (num.get(mpp.getMarketType()) == null) {
+//				// no mapping yet
+//				num.put(mpp.getMarketType(), 1);
+//			} else {
+//				int tmp = num.get(mpp.getMarketType());
+//				num.put(mpp.getMarketType(), tmp++);
+//			}
+//		}
+//		return num;
+//	}
 }

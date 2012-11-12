@@ -1,5 +1,7 @@
 package models;
 
+import systemmanager.*;
+
 /**
  * CENTRALCDA
  * 
@@ -9,8 +11,8 @@ package models;
  */
 public class CentralCDA extends MarketModel {
 
-	public CentralCDA() {
-		super();
+	public CentralCDA(ObjectProperties p) {
+		super(p);
 		this.addMarketPropertyPair("CDA");
 	}
 }

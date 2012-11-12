@@ -1,5 +1,7 @@
 package models;
 
+import systemmanager.*;
+
 /**
  * TWOMARKET
  * 
@@ -9,8 +11,9 @@ package models;
  */
 public class TwoMarket extends MarketModel {
 
-	public TwoMarket() {
-		super();
+	public TwoMarket(ObjectProperties p) {
+		super(p);
+		// Add two CDA markets with default settings
 		this.addMarketPropertyPair("CDA");
 		this.addMarketPropertyPair("CDA");
 	}

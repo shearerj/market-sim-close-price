@@ -16,13 +16,13 @@ import systemmanager.*;
 public abstract class MMAgent extends Agent {
 
 	/**
-	 * Constructor for a multimarket agent.
+	 * Constructor for a multi-market agent.
 	 * @param agentID
 	 * @param d
 	 * @param p
 	 * @param l
 	 */
-	public MMAgent(int agentID, SystemData d, EntityProperties p, Log l) {
+	public MMAgent(int agentID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, d, p, l);
 		
 		marketIDs = new ArrayList<Integer>(d.markets.keySet());

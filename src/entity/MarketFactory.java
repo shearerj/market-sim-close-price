@@ -20,7 +20,7 @@ public class MarketFactory {
 	public static Market createMarket(String type,
 									  Integer marketID,
 									  SystemData data,
-									  EntityProperties params,
+									  ObjectProperties params,
 									  Log l) { 
 		
 		if (type.equals(Consts.getMarketType("CDAMarket"))) {

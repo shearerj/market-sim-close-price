@@ -9,23 +9,18 @@ import systemmanager.*;
  * the clearing frequency is set to the NBBO update latency, unless otherwise
  * specified.
  * 
+ * Parameters:
+ * 	- clearFreq		clearing frequency of the centralized call market
+ * 
  * @author ewah
  */
 public class CentralCall extends MarketModel {
 
-	public CentralCall() {
-		super();
+	public CentralCall(ObjectProperties p) {
+		super(p);
 		this.addMarketPropertyPair("CALL");
-	}
-	
-	/**
-	 * Create centralized call market model with given clearing frequency.
-	 * @param clearFreq
-	 */
-	public CentralCall(int clearFreq) {
-		super();
-		EntityProperties mktProperties = Consts.getProperties("CALL");
-		mktProperties.put("clearFreq", ((Integer) clearFreq).toString());
+		ObjectProperties mktProperties = Consts.getProperties("CALL");
+		mktProperties.put("clearFreq", p.get("clearFreq"));
 		this.addMarketPropertyPair("CALL", mktProperties);
 	}
 }
