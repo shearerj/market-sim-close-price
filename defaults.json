@@ -8,6 +8,7 @@
 	"central_mkt": on,
 	"MARKETMAKER": 1,
 	"ZI": 500,
+	"ZIP": 2,
         "nbbo_latency": 100,
 	"arrival_rate": 0.075,
 	"mean_PV": 100000,
