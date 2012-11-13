@@ -49,8 +49,51 @@ public class ZIPAgent extends MMAgent {
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
 
-		
-		/* TO FILL IN */
+		// gets best buy and sell offers (for all markets)
+		Quote mainMarketQuote = data.getMarket(mainMarketID).quote(ts);
+                
+                //Find the transaction mode- is our agent buying or selling?
+                int p = 0; //Price
+		int q = 1; //Buy/sell variable
+                // 0.50% chance of either buying or selling
+		if (rand.nextDouble() < 0.5)
+			q = -q; 
+                
+                //Find the best market for transaction
+                
+                //Given best buy/sell price, determine the margin
+                    //Buying:- We buy from (0 , \lambda]
+                    /*
+                     * Is the best bid above our private valuation?
+                     *  Yes - Do we quote our private valuation? Something less than our PV?
+                     *  
+                     *  No - Calculate margin:
+                     *      \mu = c*(q_{t-1} - p_{t-1})
+                     *      p_t = \mu + p_{t-1} 
+                     *       
+                     */
+                    
+                    //Selling:- We sell from [\lambda, +\infinity)
+                    /*
+                     * Is the best bid below our private valuation?
+                     *  Yes - Do we quote our private valuation? Something less than our PV?
+                     *  
+                     *  No - Calculate margin:
+                     *      \mu = c*(q_{t-1} - p_{t-1})
+                     *      p_t = \mu + p_{t-1} 
+                     *       
+                     */
+                
+                //Set the best buy/sell price subject to constraints and sleep
+                
+		// basic ZIP behavior
+		if (q > 0) {
+			//p = (int) Math.max(0, ((this.privateValue - 2*bidRange) + rand.nextDouble()*2*bidRange));
+                        //Set p as 
+		} else {
+			//p = (int) Math.max(0, (this.privateValue + rand.nextDouble()*2*bidRange));
+		}
+                
 		
 		
 		// Insert events for the agent to sleep, then wake up again at timestamp tsNew
