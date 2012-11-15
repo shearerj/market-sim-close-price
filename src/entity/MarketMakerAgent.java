@@ -10,6 +10,8 @@ import java.util.HashMap;
  * Basic market maker. See description in 2011 EC paper.
  * Participates in only a single market at a time.
  * 
+ * TODO - print the profit of the MMA everytime we submit a bid
+ * 
  * @author ewah, gshiva
  */
 public class MarketMakerAgent extends SMAgent {
