@@ -17,7 +17,7 @@ import java.util.HashMap;
 public class MarketMakerAgent extends SMAgent {
         private int bidRange;				// range for limit order
         
-        private boolean DEBUG_ENB = true;
+        private boolean DEBUG_ENB = false;
         
         private int mainMarketID;			// assigned at initialization
 

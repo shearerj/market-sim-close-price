@@ -11,6 +11,12 @@ import market.Quote;
 /**
  * Use kappa to set 'c' for the ZIP agent
  * 
+ * Use \mu from Cliff's paper
+ * 
+ * Ensure that transaction price != \lambda
+ * 
+ * 
+ * 
  * @author ewah, sgchako, kunshao, marzuq, gshiva
  *
  */
@@ -58,7 +64,7 @@ public class ZIPAgent extends MMAgent {
 	
 	@Override
 	public HashMap<String, Object> getObservation() {
-                
+                //Return prfit here as System.out.println();
 		return null;
 	}
 	
@@ -118,7 +124,7 @@ public class ZIPAgent extends MMAgent {
                                     submittedBidType = Consts.SubmittedBidMarket.ALTERNATE;
                                 
                         } else {
-                                bestPrice = mainMarketQuote.lastAskPrice.getPrice();;
+                                bestPrice = mainMarketQuote.lastAskPrice.getPrice();
                         }
                     } else {//In case the market have not been initialized, use a random price.
                         p_old = (int) Math.max(0, (this.privateValue + rand.nextDouble()*2*bidRange));
@@ -140,40 +146,48 @@ public class ZIPAgent extends MMAgent {
                  * Note:-   variable 'bestPrice' <=> q_{t-1}
                  *          variable 'p_old' <=> p_{t-1}
                  *          variable 'privateValue' <=> \lambda
+                 *          variable 'p_new' <=> p_{t}
                  * 
                  * 'q>0' implies we're buying and 'q<0' means we're selling
                  * 
                  * 'c' has been defined, be sure to use in calculating mu
                  */
                 
-                int mu;//margin for the ZIP agent                
                 
-
                 //Given best buy/sell price, determine the margin (\mu)
                 if (q > 0) {
                     //Buying:- We buy from (0 , \lambda)
                     /*
                      * Is the best bid above our private valuation?
                      *  Yes - Quote our private valuation
-                     *      p_t = \lambda
-                     *  
+                     *      p_t = \lambda - 1
                      *  No - Calculate margin:
-                     *      \mu = c*(q_{t-1} - p_{t-1})
-                     *      p_t = \mu + p_{t-1} 
+                     *      
+                     *      p_t = getMu() + \lambda
                      *       
                      */
-                } else {
+                    if(q > privateValue)
+                        p_new = privateValue - 1;                    
+                    else
+                        p_new = privateValue + getMu(privateValue, p_old, q);
+                    
+                    } else {
                     //Selling:- We sell from (\lambda, +\infinity)
                     /*
                      * Is the best bid below our private valuation?
                      *  Yes - Quote our private valuation
-                     *      p_t = \lambda
+                     *      p_t = \lambda + 1
                      *  
                      *  No - Calculate margin:
-                     *      \mu = c*(q_{t-1} - p_{t-1})
-                     *      p_t = \mu + p_{t-1} 
+                     *      
+                     *      p_t = getMu() + \lambda 
                      *       
                      */
+                    if(q < privateValue)
+                        p_new = privateValue + 1;
+                    else
+                        p_new = privateValue + getMu(privateValue, p_old, q);
+                    
 
                 //Set the best buy/sell price subject to constraints and sleep
 
@@ -217,4 +231,17 @@ public class ZIPAgent extends MMAgent {
 		actMap.insertActivity(Consts.MARKETMAKER_PRIORITY, new AgentStrategy(this, tsNew));
 		return actMap;
 	}
+        
+        /*
+         * TODO - Calculate Mu here
+         * 
+         * p = \lambda + \mu
+         * 
+         * TEMP:
+         * \mu = c*(q_{t-1} - p_{t-1})
+         *  c = 1
+         */
+        private int getMu(int lambda, int p_old, int q){
+            return (int) 1;
+        }
 }
