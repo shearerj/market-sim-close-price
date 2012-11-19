@@ -194,6 +194,10 @@ public class ZIPAgent extends MMAgent {
                         
                 }
                 
+                assert p_new !=privateValue : "ERROR: Agent is trying to "
+                        + "transact at its private value : PV = "+privateValue+ 
+                        " transaction value = "+p_new;
+                
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 
                 //Submit bid to the correct market
@@ -242,6 +246,8 @@ public class ZIPAgent extends MMAgent {
          *  c = 1
          */
         private int getMu(int lambda, int p_old, int q){
-            return (int) 1;
+            double step = (double) (q - p_old); //Performing operations in double
+            step = c*step;
+            return (int) step; //Type casting back to int to return appropriate values
         }
 }

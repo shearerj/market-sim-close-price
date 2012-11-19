@@ -17,7 +17,7 @@ import java.util.HashMap;
 public class MarketMakerAgent extends SMAgent {
         private int bidRange;				// range for limit order
         
-        private boolean DEBUG_ENB = false;
+        private boolean DEBUG_ENB = true;
         
         private int mainMarketID;			// assigned at initialization
 
@@ -49,6 +49,7 @@ public class MarketMakerAgent extends SMAgent {
 	public HashMap<String, Object> getObservation() {
                 if(DEBUG_ENB){
                     System.out.println("MarketMaker.getObservation() called, returning null");
+                    System.out.println("Net Profit = "+getRealizedProfit());                    
                 }
 		return null;
 	}
@@ -60,6 +61,9 @@ public class MarketMakerAgent extends SMAgent {
 
 		int bid = getBidPrice(mainMarketID).getPrice();
 		int ask = getAskPrice(mainMarketID).getPrice();
+                
+                if(bid == -1 || ask == -1)//Markets haven't been initialized
+                    return actMap;
 
 		//int numRungs = 10;  //Size of the bid-ask spread
 		int numRungs = bidRange;  //Size of the bid-ask spread
@@ -79,11 +83,11 @@ public class MarketMakerAgent extends SMAgent {
 			}
                         
                         if(DEBUG_ENB){
-                            System.out.println("MarketMaker price :"+prices[j]);
+                            System.out.print("MarketMaker price :"+prices[j]);
                             if(quantities[j] > 1)
-                                System.out.println("price is buying");
+                                System.out.println(" [ask]");
                             else
-                                System.out.println("price is selling");
+                                System.out.println(" [bid]");
                         }
                         
 			log.log(Log.INFO,"MarketMaker::Price "+prices[j]+" @ Quantity "+quantities[j]);
