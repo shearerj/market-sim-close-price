@@ -93,6 +93,11 @@ public class Consts {
 			ap.put("sleepTime", "50");
 			ap.put("sleepVar", "100");
 		}
+                
+                if (type.equals("ZIP")) {
+			ap.put("sleepTime", "50");
+			ap.put("sleepVar", "100");
+		}
 		return ap;
 	}
 	

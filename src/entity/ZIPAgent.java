@@ -65,6 +65,7 @@ public class ZIPAgent extends MMAgent {
 	@Override
 	public HashMap<String, Object> getObservation() {
                 //Return prfit here as System.out.println();
+                System.out.println("ZIP Agent Profit = "+this.getRealizedProfit());
 		return null;
 	}
 	

@@ -17,9 +17,12 @@ import java.util.HashMap;
 public class MarketMakerAgent extends SMAgent {
         private int bidRange;				// range for limit order
         
-        private boolean DEBUG_ENB = true;
+        private boolean DEBUG_ENB = false;
+        private boolean DEBUG_ADVANCED_ENB = true;
         
         private int mainMarketID;			// assigned at initialization
+        
+        private int iterations;
 
 	public MarketMakerAgent(int agentID, SystemData d, AgentProperties p, Log l, int mktID) {
 		super(agentID, d, p, l, mktID);
@@ -30,7 +33,7 @@ public class MarketMakerAgent extends SMAgent {
                 
                 //Bids need to expire every tik and a new bid is put up
                 
-                if(DEBUG_ENB){
+                if(DEBUG_ADVANCED_ENB){
                     //?? Where's the AgentProperties being used?
                     System.out.println("MarketMaker Agent initialized at market "+params.get("Market"));
                     System.out.println("Bid Range = "+bidRange);
@@ -42,28 +45,39 @@ public class MarketMakerAgent extends SMAgent {
 		} else {
 			mainMarketID = data.getMarketIDs().get(1);
 		}
+                
+                iterations = -1;
 
 	}
 	
 	@Override
 	public HashMap<String, Object> getObservation() {
-                if(DEBUG_ENB){
+                if(DEBUG_ADVANCED_ENB){
                     System.out.println("MarketMaker.getObservation() called, returning null");
-                    System.out.println("Net Profit = "+getRealizedProfit());                    
+                    System.out.println("Realized Profit = "+this.getRealizedProfit());                    
                 }
 		return null;
 	}
 	
 	@Override
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
+                iterations++;
+                if( iterations%2 == 0){
+                    System.out.print("At Iteration #"+iterations+", ");
+                    System.out.println("Realized Profit = "+this.getRealizedProfit());                    
+                }
 
 		ActivityHashMap actMap = new ActivityHashMap();
 
 		int bid = getBidPrice(mainMarketID).getPrice();
 		int ask = getAskPrice(mainMarketID).getPrice();
                 
-                if(bid == -1 || ask == -1)//Markets haven't been initialized
-                    return actMap;
+                if(bid == -1 && ask == -1){//Markets haven't been initialized
+                    System.out.println("WARNING: Markets have not been initialized, MMA sending no bids");
+                    System.out.println("Bid = "+bid);
+                    System.out.println("Ask = "+ask);
+                    return setSleepTime(actMap, ts);
+                }
 
 		//int numRungs = 10;  //Size of the bid-ask spread
 		int numRungs = bidRange;  //Size of the bid-ask spread
@@ -72,56 +86,55 @@ public class MarketMakerAgent extends SMAgent {
 		int[] quantities = new int[numRungs]; //Set to 1 for each bid/ask price
 
 		// This is a dummy market maker that simply submits lots and lots of bids
+                boolean validTransaction;
 		for(int j=0; j<numRungs; j++) {
-			if(j<numRungs/2) {//First half of array are buys
+                    validTransaction = false;
+			if((j<numRungs/2) && (bid>0)) {//First half of array are buys
+                                validTransaction = true;
 				quantities[j] = 1;
 				prices[j] = bid-(10*j);//Depth set at +/-.01*numRungs		}
+                                if(prices[j] < 0)
+                                    prices[j] = 0;
 			}
 			else { //Second half of array are sells
-				quantities[j] = -1;
-				prices[j] = ask+(10*j);//Depth set at +/-.01*numRungs		}
+                                if(ask > 0){
+                                    validTransaction = true;
+                                    quantities[j] = -1;
+                                    prices[j] = ask+(10*j);//Depth set at +/-.01*numRungs		}
+                                }
 			}
                         
                         if(DEBUG_ENB){
                             System.out.print("MarketMaker price :"+prices[j]);
-                            if(quantities[j] > 1)
-                                System.out.println(" [ask]");
-                            else
+                            if(quantities[j] >= 1)
                                 System.out.println(" [bid]");
+                            else
+                                System.out.println(" [ask]");
                         }
-                        
-			log.log(Log.INFO,"MarketMaker::Price "+prices[j]+" @ Quantity "+quantities[j]);
+                        if(validTransaction){
+                            log.log(Log.INFO,"MarketMaker::Price "+prices[j]+" @ Quantity "+quantities[j]);
 			//				System.out.print("(" + quantities[j] + ", " + prices[j] + ") | ");
-			actMap.appendActivityHashMap(addBid(data.markets.get(mainMarketID), prices[j], quantities[j], ts));
+                            actMap.appendActivityHashMap(addBid(data.markets.get(mainMarketID), prices[j], quantities[j], ts));
+                        }
 		}
-		int sleepTime = Integer.parseInt(params.get("sleepTime")); //Does the Market Maker sleep? Shouldn't ti submit bids everytime it gets updates?
-//		int bid = getBidPrice(mkt.ID).getPrice();
-//		int ask = getAskPrice(mkt.ID).getPrice();
-//
-//		int numRungs = 10;
-//
-//		int[] prices = new int[numRungs];
-//		int[] quantities = new int[numRungs];
-//
-//		// This is a dummy market maker that simply submits lots and lots of bids
-//		for(int j=0; j<numRungs; j++) {
-//			if(j<numRungs/2) {//First half of array are buys
-//				quantities[j] = 1;
-//				prices[j] = bid-(10*j);//Depth set at +/-.01*numRungs		}
-//			}
-//			else { //Second half of array are sells
-//				quantities[j] = -1;
-//				prices[j] = ask+(10*j);//Depth set at +/-.01*numRungs		}
-//			}
-//			log.log(Log.INFO,"MarketMaker::Price "+prices[j]+" @ Quantity "+quantities[j]);
-//			//				System.out.print("(" + quantities[j] + ", " + prices[j] + ") | ");
-//			actMap.appendActivityHashMap(addBid(mkt, prices[j], quantities[j], ts));
-//		}
-		
+		/*
+                int sleepTime = Integer.parseInt(params.get("sleepTime")); 
 		double sleepVar = Double.parseDouble(params.get("sleepVar"));
 		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
 		actMap.insertActivity(Consts.MARKETMAKER_PRIORITY, new UpdateAllQuotes(this, tsNew));
 		actMap.insertActivity(Consts.MARKETMAKER_PRIORITY, new AgentStrategy(this, market, tsNew));
 		return actMap;
+                 * 
+                 */
+                return setSleepTime(actMap, ts);
 	}
+        
+        private ActivityHashMap setSleepTime(ActivityHashMap actMap, TimeStamp ts){
+            int sleepTime = Integer.parseInt(params.get("sleepTime")); 
+            double sleepVar = Double.parseDouble(params.get("sleepVar"));
+            TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
+            actMap.insertActivity(Consts.MARKETMAKER_PRIORITY, new UpdateAllQuotes(this, tsNew));
+            actMap.insertActivity(Consts.MARKETMAKER_PRIORITY, new AgentStrategy(this, market, tsNew));
+            return actMap;
+        }
 }
