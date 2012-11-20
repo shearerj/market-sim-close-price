@@ -47,9 +47,9 @@ public class CDAMarket extends Market {
 	}
 	
 	public ActivityHashMap addBid(Bid b, TimeStamp ts) {
-		orderbook.insertBid((PQBid) b);
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(Consts.CDA_CLEAR_PRIORITY, new Clear(this, ts));
+		orderbook.insertBid((PQBid) b);
 		this.data.addDepth(this.ID, ts, orderbook.getDepth());
 		this.data.addSubmissionTime(b.getBidID(), ts);
 		return actMap;
@@ -57,11 +57,12 @@ public class CDAMarket extends Market {
 	
 	
 	public ActivityHashMap removeBid(int agentID, TimeStamp ts) {
+		ActivityHashMap actMap = new ActivityHashMap();
 		orderbook.removeBid(agentID);
 		orderbook.logActiveBids(ts);
 		orderbook.logFourHeap(ts);
 		this.data.addDepth(this.ID, ts, orderbook.getDepth());
-		return null;
+		return actMap;
 	}
 	
 	

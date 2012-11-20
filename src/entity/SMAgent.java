@@ -5,7 +5,9 @@ import activity.*;
 import systemmanager.*;
 
 /**
- * Single market (SM) agent, whose agent strategy is executed only within its market.
+ * Single market (SM) agent, whose agent strategy is executed only within one market.
+ * This does not mean that it can only trade with its specified market; however, it is
+ * only capable of looking at price quotes from the NBBO and its market.
  * 
  * @author ewah
  */
@@ -23,18 +25,20 @@ public abstract class SMAgent extends Agent {
 	 */
 	public SMAgent(int agentID, SystemData d, ObjectProperties p, Log l, int mktID) {
 		super(agentID, d, p, l);
-		this.market = data.getMarket(mktID);
+		market = data.getMarket(mktID);
 	}
 
-	
-	public Market getMainMarket() {
+	/**
+	 * @return market
+	 */
+	public Market getMarket() {
 		return market;
 	}
 	
 	/**
 	 * @return main market ID for the single market agent.
 	 */
-	public int getMainMarketID() {
+	public int getMarketID() {
 		return market.getID();
 	}
 	
@@ -57,7 +61,6 @@ public abstract class SMAgent extends Agent {
 		return actMap;
 	}
 	
-
 	/**
 	 * Agent departs a specified market, if it is active.
 	 * 
@@ -65,13 +68,14 @@ public abstract class SMAgent extends Agent {
 	 * @return ActivityHashMap
 	 */
 	public ActivityHashMap agentDeparture() {
-
+		
 		market.agentIDs.remove(market.agentIDs.indexOf(this.ID));
 		market.buyers.remove(market.buyers.indexOf(this.ID));
 		market.sellers.remove(market.sellers.indexOf(this.ID));
 		market.removeBid(this.ID, null);
 		this.exitMarket(market.ID);
-		return null;
+		ActivityHashMap actMap = new ActivityHashMap();
+		return actMap;
 	}
 
 }

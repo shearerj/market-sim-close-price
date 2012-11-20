@@ -35,7 +35,7 @@ public class CallMarket extends Market {
 		marketType = Consts.getMarketType(this.getClass().getSimpleName());
 		orderbook = new PQOrderBook(this.ID);
 		orderbook.setParams(this.ID, l, d);
-		clearFreq = d.centralCallClearFreq;
+		clearFreq = new TimeStamp(Integer.parseInt(p.get("clearFreq")));
 		nextClearTime = clearFreq;
 		pricingPolicy = (float) Double.parseDouble(p.get("pricingPolicy"));
 	}
@@ -58,23 +58,24 @@ public class CallMarket extends Market {
 	
 	public ActivityHashMap addBid(Bid b, TimeStamp ts) {
 		// Unlike continuous auction market, no Clear Activity inserted unless clear freq = 0
+		ActivityHashMap actMap = new ActivityHashMap();
 		orderbook.insertBid((PQBid) b);
 		this.data.addDepth(this.ID, ts, orderbook.getDepth());
 		this.data.addSubmissionTime(b.getBidID(), ts);
 		if (clearFreq.longValue() == 0) {
-			ActivityHashMap actMap = new ActivityHashMap();
 			actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, ts));
 			return actMap;
 		}
-		return null;
+		return actMap;
 	}
 	
 	public ActivityHashMap removeBid(int agentID, TimeStamp ts) {
+		ActivityHashMap actMap = new ActivityHashMap();
 		orderbook.removeBid(agentID);
 		orderbook.logActiveBids(ts);
 		orderbook.logFourHeap(ts);
 		this.data.addDepth(this.ID, ts, orderbook.getDepth());
-		return null;
+		return actMap;
 	}
 	
 	

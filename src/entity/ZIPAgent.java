@@ -14,30 +14,20 @@ import market.Quote;
  * @author ewah
  *
  */
-public class ZIPAgent extends MMAgent {
+public class ZIPAgent extends SMAgent {
 
 	private int margin;				// margin for limit order
-	private int mainMarketID;		// ID of ZIP agent's primary market
 	
 	private double pvVar;			// variance from private value random process
 	
-	public ZIPAgent(int agentID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, d, p, l);
+	public ZIPAgent(int agentID, SystemData d, ObjectProperties p, Log l, int mktID) {
+		super(agentID, d, p, l, mktID);
 		agentType = Consts.getAgentType(this.getClass().getSimpleName());
 		params = p;
 		arrivalTime = new TimeStamp(0);
 		pvVar = this.data.privateValueVar;
 		privateValue = Math.max(0, this.data.nextPrivateValue() + 
 				(int) Math.round(getNormalRV(0, pvVar)) * Consts.SCALING_FACTOR);
-		
-		// Choose market ID based on whether agentID is even or odd
-		if (agentID % 2 == 0) {
-			mainMarketID = data.getMarketIDs().get(0);
-//			altMarketID = data.getMarketIDs().get(1);
-		} else {
-			mainMarketID = data.getMarketIDs().get(1);
-//			altMarketID = data.getMarketIDs().get(0);
-		}
 	}
 	
 	@Override

@@ -9,7 +9,8 @@ import systemmanager.*;
 
 
 /**
- * Multi-market (MM) agent, whose agent strategy is called once for all markets.
+ * Multi-market (MM) agent. It arrives in all markets in the primary market model,
+ * and its agent strategy is executed across all markets.
  * 
  * @author ewah
  */
@@ -24,8 +25,7 @@ public abstract class MMAgent extends Agent {
 	 */
 	public MMAgent(int agentID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, d, p, l);
-		
-		marketIDs = new ArrayList<Integer>(d.markets.keySet());
+		marketIDs = data.getPrimaryMarketIDs();
 	}
 	
 	/**
@@ -40,13 +40,15 @@ public abstract class MMAgent extends Agent {
 		for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
 			Market mkt = data.markets.get(i.next());
 			this.enterMarket(mkt, ts);
-			s += mkt.toString() + ",";
+			s += mkt.toString();
+			if (i.hasNext()) {
+				s += ",";
+			}
 		}
 		
-		s = s.substring(0, s.length() - 1);
 		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "->" + s);
 			
-		// Always insert agent strategy call once it's arrived in the market
+		// Always insert agent strategy call once it has arrived in the market
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new UpdateAllQuotes(this, ts));
 		actMap.insertActivity(new AgentStrategy(this, ts));
@@ -69,6 +71,7 @@ public abstract class MMAgent extends Agent {
 			mkt.removeBid(this.ID, null);
 			this.exitMarket(mkt.ID);
 		}
-		return null;
+		ActivityHashMap actMap = new ActivityHashMap();
+		return actMap;
 	}
 }

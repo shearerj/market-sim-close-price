@@ -12,16 +12,22 @@ public class Consts {
 	// Agent, market, and model types
 	// (must edit this whenever add a new agent, market, or model
 	
+	public final static String[] SMAgentTypes = 
+		{ "MARKETMAKER", "ZI", "ZIP" };
 	public final static String[] agentTypeNames = 
-		{ "LA", "ZI", "DUMMY", "MARKETMAKER", "ZIP" };
+		{ "LA", "DUMMY", "MARKETMAKER", "ZI", "ZIP" };
 	public final static String[] marketTypeNames = 
 		{ "CDA", "CALL"};
 	public final static String[] modelTypeNames = 
 		{ "TWOMARKET", "CENTRALCDA", "CENTRALCALL" };
 		
 	// EGTA roles (i.e. players in the game)
-	public final static String[] roles = {"LA", "DUMMY"};
+	public final static String[] roles =
+		{"LA", "DUMMY"};
 	// **********************************************************
+	
+	public final static String MODEL_TYPE_KEY = "type";
+	public final static String MODEL_TYPE_NONE = "NONE";
 	
 	// ActivityList priorities
 	public final static int DEFAULT_PRIORITY = 0;
@@ -92,7 +98,7 @@ public class Consts {
 		if (type.equals("LA")) {
 			p.put("sleepTime", "0");
 			p.put("sleepVar", "100");
-			p.put("alpha", "0.001");	
+			p.put("alpha", "0.001");
 		}
 		if (type.equals("MARKETMAKER")) {
 			p.put("sleepTime", "50");

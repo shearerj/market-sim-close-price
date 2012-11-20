@@ -30,9 +30,9 @@ public class LAAgent extends MMAgent {
 		agentType = Consts.getAgentType(this.getClass().getSimpleName());
 		arrivalTime = new TimeStamp(0);
 		
-		if (this.data.numMarkets != 2) {
+		if (data.getPrimaryModel().getNumMarkets() != 2) {
 			log.log(Log.ERROR, this.toString() + " " + agentType + 
-					": Latency arbitrageurs need 2 markets!");
+					": Need two markets in the primary model!");
 		}
 	}
 	

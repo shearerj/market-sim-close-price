@@ -35,7 +35,6 @@ public class Quoter extends Entity {
 		super(ID, d, new ObjectProperties(), l);
 		latency = d.nbboLatency;
 		tickSize = d.tickSize;
-//		lastQuote = new BestBidAsk();
 		lastQuotes = new HashMap<Integer,BestBidAsk>();
 	}
 	
@@ -46,7 +45,13 @@ public class Quoter extends Entity {
 	 * @return
 	 */
 	public BestBidAsk getNBBOQuote(int modelID) {
-		return lastQuotes.get(modelID);
+		if (!lastQuotes.containsKey(modelID)) {
+			BestBidAsk b = new BestBidAsk();
+			lastQuotes.put(modelID, b);
+			return b;
+		} else {
+			return lastQuotes.get(modelID);
+		}
 	}
 	
 	/**
@@ -91,35 +96,8 @@ public class Quoter extends Entity {
 			lastQuote.bestAsk = bestAsk;
 			log.log(Log.INFO, s + " --> NBBO" + lastQuote);
 			
-			
+			lastQuotes.put(modelID, lastQuote);
 		}
-		
-//		lastQuote = findBestBidOffer(data.getMarketIDs());
-//		String s = ts.toString() + " | UpdateNBBO" + lastQuote;
-//		
-//		int bestBid = lastQuote.bestBid;
-//		int bestAsk = lastQuote.bestAsk;
-//		if ((bestBid != -1) && (bestAsk != -1)) {
-//			// check for inconsistency in buy/sell prices & fix if found
-//			if (lastQuote.bestBid > lastQuote.bestAsk) {
-//				int mid = (lastQuote.bestBid + lastQuote.bestAsk) / 2;
-//				bestBid = mid - this.tickSize;
-//				bestAsk = mid + this.tickSize;
-//				
-//				// Add spread of INF if inconsistent NBBO quote
-//				this.data.addSpread(0, ts, Consts.INF_PRICE);
-//			} else {
-//				// if bid-ask consistent, store the spread
-//				this.data.addSpread(0, ts, lastQuote.getSpread());
-//			}
-//		} else {
-//			// store spread of INF since no bid-ask spread
-//			this.data.addSpread(0, ts, Consts.INF_PRICE);
-//		}
-//		
-//		lastQuote.bestBid = bestBid;
-//		lastQuote.bestAsk = bestAsk;
-//		log.log(Log.INFO, s + " --> NBBO" + lastQuote);
 		
 		if (latency.getTimeStamp() > 0) {
 			TimeStamp tsNew = ts.sum(latency);

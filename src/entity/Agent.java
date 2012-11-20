@@ -1,18 +1,11 @@
 package entity;
 
 import event.*;
-import models.*;
 import market.*;
 import activity.*;
 import systemmanager.*;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Random;
-import java.util.Vector;
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Base class for all agents.
@@ -324,23 +317,22 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap addBid(Market mkt, int price, int quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
-				new SubmitBid(this, mkt, price, quantity, ts));
+		if (data.getModelByMarket(mkt.getID()).checkAgentPermissions(this.ID)) {
+			actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
+					new SubmitBid(this, mkt, price, quantity, ts));
+		}
 		
-		// insert for all other markets (in different models)
-		for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
-			MarketModel model = entry.getValue();
-			// only insert bids for other models
-			if (model.hashCode() != mkt.getModelID()) {
-				for (Iterator<Integer> id = model.getMarketIDs().iterator(); id.hasNext(); ) {
-					Market otherMkt = data.getMarket(id.next());
-					if (otherMkt.getID() != mkt.getID()) {
-						actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
-								new SubmitBid(this, otherMkt, price, quantity, ts));
-					}
+		for (Iterator<Integer> id = data.getLinkedMarkets(mkt.getID()).iterator(); id.hasNext(); ) {
+			Market otherMkt = data.getMarket(id.next());
+			if (otherMkt.getID() != mkt.getID()) {
+				// only submit if the agent is allowed to do so in this other market model
+				if (data.getModelByMarket(otherMkt.getID()).checkAgentPermissions(this.ID)) {
+					actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
+							new SubmitBid(this, otherMkt, price, quantity, ts));
 				}
 			}
 		}
+
 		return actMap;
 	}
 
@@ -356,20 +348,17 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap addMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
-				new SubmitMultipleBid(this, mkt, price, quantity, ts));
+		if (data.getModelByMarket(mkt.getID()).checkAgentPermissions(this.ID)) {
+			actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
+					new SubmitMultipleBid(this, mkt, price, quantity, ts));
+		}
 		
-		// insert for all other markets (in different models)
-		for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
-			MarketModel model = entry.getValue();
-			// only insert bids for other models
-			if (model.hashCode() != mkt.getModelID()) {
-				for (Iterator<Integer> id = model.getMarketIDs().iterator(); id.hasNext(); ) {
-					Market otherMkt = data.getMarket(id.next());
-					if (otherMkt.getID() != mkt.getID()) {
-						actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY,
-								new SubmitMultipleBid(this, otherMkt, price, quantity, ts));
-					}
+		for (Iterator<Integer> id = data.getLinkedMarkets(mkt.getID()).iterator(); id.hasNext(); ) {
+			Market otherMkt = data.getMarket(id.next());
+			if (otherMkt.getID() != mkt.getID()) {
+				if (data.getModelByMarket(mkt.getID()).checkAgentPermissions(this.ID)) {
+					actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY,
+							new SubmitMultipleBid(this, otherMkt, price, quantity, ts));
 				}
 			}
 		}
@@ -411,7 +400,6 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public ActivityHashMap submitMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
-
 		if (price.length != quantity.length) {
 			log.log(Log.ERROR, "Agent::submitMultipleBid: Price/Quantity arrays are not the same length");
 			return null;
@@ -441,24 +429,24 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public ActivityHashMap withdrawBid(Market mkt, TimeStamp ts) {
+		ActivityHashMap actMap = new ActivityHashMap();
 		log.log(Log.INFO, ts + " | " + this.toString() + " withdraw bid from " + mkt);
 		
 		// withdraw for all other markets (in different models)
-		for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
-			MarketModel model = entry.getValue();
-			// only withdraw bids for other models
-			if (model.hashCode() != mkt.getModelID()) {
-				for (Iterator<Integer> id = model.getMarketIDs().iterator(); id.hasNext(); ) {
-					Market otherMkt = data.getMarket(id.next());
-					if (otherMkt.getID() != mkt.getID()) {
-						log.log(Log.INFO, ts + " | " + this.toString() + " withdraw bid from " + 
-								otherMkt);
-						otherMkt.removeBid(this.ID, ts);
-					}
+		for (Iterator<Integer> id = data.getLinkedMarkets(mkt.getID()).iterator(); id.hasNext(); ) {
+			Market otherMkt = data.getMarket(id.next());
+			if (otherMkt.getID() != mkt.getID()) {
+				if (data.getModelByMarket(mkt.getID()).checkAgentPermissions(this.ID)) {
+					log.log(Log.INFO, ts + " | " + this.toString() + " withdraw bid from " + 
+							otherMkt);
+					actMap.appendActivityHashMap(otherMkt.removeBid(this.ID, ts));
 				}
 			}
 		}
-		return mkt.removeBid(this.ID, ts);
+		if (data.getModelByMarket(mkt.getID()).checkAgentPermissions(this.ID)) {
+			actMap.appendActivityHashMap(mkt.removeBid(this.ID, ts));
+		}
+		return actMap;
 	}
 
 	/**
@@ -474,7 +462,7 @@ public abstract class Agent extends Entity {
 			updateQuotes(mkt, ts);
 		}
 		lastGlobalQuote = quoter.findBestBidOffer(marketIDs);
-		lastNBBOQuote = quoter.lastQuote;
+		lastNBBOQuote = quoter.getNBBOQuote(data.getPrimaryModel().hashCode());
 		
 		log.log(Log.INFO, ts.toString() + " | " + this.toString() + " Global" + lastGlobalQuote + 
 				", NBBO" + lastNBBOQuote);
@@ -566,7 +554,7 @@ public abstract class Agent extends Entity {
 		if (!flag) {
 			return false;
 		} else {
-			if (!data.centralMarkets.containsKey(t.marketID)) {
+//			if (!data.centralMarkets.containsKey(t.marketID)) { 
 				// check whether seller, in which case negate the quantity
 				int quantity = t.quantity;
 				if (this.ID == t.sellerID) {
@@ -608,7 +596,7 @@ public abstract class Agent extends Entity {
 					}
 				}
 				positionBalance += quantity;
-			}
+//			}
 		}
 		return true;
 	}
@@ -727,15 +715,25 @@ public abstract class Agent extends Entity {
 			// For long position, compare cost to bid quote (buys)
 			for (Iterator<Integer> it = marketIDs.iterator(); it.hasNext(); ) {
 				int mktID = it.next();
-				if (p == -1 || p < bidPrice.get(mktID).getPrice())
-					p = bidPrice.get(mktID).getPrice();
+				if (p == -1 || p < bidPrice.get(mktID).getPrice()) {
+					try {
+						p = bidPrice.get(mktID).getPrice();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
 			}
 		} else {
 			// For short position, compare cost to ask quote (sells)
 			for (Iterator<Integer> it = marketIDs.iterator(); it.hasNext(); ) {
 				int mktID = it.next();
-				if (p == -1 || p > askPrice.get(mktID).getPrice())
-					p = askPrice.get(mktID).getPrice();
+				if (p == -1 || p > askPrice.get(mktID).getPrice()) {
+					try {
+						p = askPrice.get(mktID).getPrice();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}	
 			}
 		}
 		if (positionBalance != 0) {

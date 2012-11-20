@@ -104,7 +104,7 @@ public class SystemManager {
 
 			// Read environment parameters & set up environment
 			loadConfig(envProps, Consts.configDir + Consts.configFile);
-			data.readEnvProps(envProps);
+//			data.readEnvProps(envProps);
 			data.obsNum = num;
 
 			// Create log file
@@ -147,125 +147,6 @@ public class SystemManager {
 		}
 	}
 	
-	
-//	/**
-//<<<<<<< HEAD
-//=======
-//	 * Creates market and initializes any Activities as necessary. For example,
-//	 * for Call Markets, this method inserts the initial Clear activity into the 
-//	 * eventQueue.
-//	 * 
-//	 * @param marketID
-//	 * @param marketType
-//	 */
-//	public void setupMarket(int marketID, String marketType) {
-//		
-//		Market market;
-//		if (marketType.startsWith(Consts.CENTRAL)) {
-//			market = MarketFactory.createMarket(marketType.substring(Consts.CENTRAL.length()+1), 
-//					marketID, data, log);
-//			data.centralMarkets.put(marketID, market);
-//		} else {
-//			// Only add market to the general list if it's not the central market
-//			market = MarketFactory.createMarket(marketType, marketID, data, log);
-//			data.addMarket(market);
-//		}
-//		
-//		// Check if is call market, then initialize clearing sequence
-//		if (market instanceof CallMarket) {
-//			Activity clear = new Clear(market, market.getNextClearTime());
-//			eventManager.createEvent(Consts.CALL_CLEAR_PRIORITY, clear);
-//		}
-//	}
-//	
-//
-//	/**
-//	 * Creates agent and initializes all agent settings/parameters.
-//	 * Inserts AgentArrival/Departure activities into the eventQueue.
-//	 * 
-//	 * @param agentID
-//	 * @param agentType
-//	 * @param ap AgentProperties object
-//	 */
-//	public void setupAgent(int agentID, String agentType, AgentProperties ap) {
-//		
-//		if (!Arrays.asList(Consts.SMAgentTypes).contains(agentType)) {
-//			// Multimarket agent
-//			Agent agent = AgentFactory.createMMAgent(agentType, agentID, data, ap, log);
-//			data.addAgent(agent);
-//			log.log(Log.DEBUG, agent.toString() + ": " + ap);
-//			
-//			TimeStamp ts = agent.getArrivalTime();
-//			if (agent instanceof MMAgent) {
-//				// Agent is in multiple markets
-//				eventManager.createEvent(new AgentArrival(agent, ts));
-//				eventManager.createEvent(new AgentDeparture(agent, data.simLength));
-//			}
-//			
-//		} else {
-//			// Single market agent - create for each market
-//			int n = 0;
-//			for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
-//				
-//				// Increment agent ID to create after first agent created
-//				int id;
-//				if (n == 0) {
-//					id = agentID;
-//				} else {
-//					id = agentIDSequence.increment();
-//				}
-//				
-//				int mktID = it.next();
-//				Agent agent = AgentFactory.createSMAgent(agentType, id, data, ap, log, mktID);
-//				data.addAgent(agent);
-//				log.log(Log.DEBUG, agent.toString() + ": " + ap);
-//				
-//				TimeStamp ts = agent.getArrivalTime();
-//				if (agent instanceof SMAgent) {
-//					// Agent is in single market
-//					Market mkt = ((SMAgent) agent).getMainMarket();
-//					eventManager.createEvent(new AgentArrival(agent, mkt, ts));
-//					eventManager.createEvent(new AgentDeparture(agent, mkt, data.simLength));		
-//				}
-//				
-//				n++;
-//			}
-//		}
-//		
-////		TimeStamp ts = agent.getArrivalTime();
-////		if (agent instanceof SMAgent) {
-////			// Agent is in single market
-////			Market mkt = ((SMAgent) agent).getMainMarket();
-////			eventManager.createEvent(new AgentArrival(agent, mkt, ts));
-////			eventManager.createEvent(new AgentDeparture(agent, mkt, data.simLength));
-////			
-////		} else if (agent instanceof MMAgent) {
-////			// Agent is in multiple markets
-////			eventManager.createEvent(new AgentArrival(agent, ts));
-////			eventManager.createEvent(new AgentDeparture(agent, data.simLength));
-////		}
-//	}
-//	
-//	
-//	/**
-//	 * Logs agent information.
-//	 */
-//	public void logAgentInfo() {
-//		for (Map.Entry<Integer,Agent> entry : data.agents.entrySet()) {
-//			Agent ag = entry.getValue();
-//			
-//			// print arrival times
-//			String s = ag.toString() + "::" + ag.getType() + "::";
-//			s += "arrivalTime=" + ag.getArrivalTime().toString();
-//			
-//			// print private value if exists 
-//			if (ag instanceof ZIAgent) {
-//				s += ", pv=" + ((ZIAgent) ag).getPrivateValue();
-//			}
-//			log.log(Log.INFO, s);
-//		}
-//	}
-//	
 	
 	/**
 	 * Load a configuration file InputStream into a Properties object.
@@ -318,7 +199,7 @@ public class SystemManager {
 			obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
 			obs.addFeature("expire", obs.getTimeStampFeatures(data.getExpirations()));
 			obs.addFeature("bkgrd_info", obs.getBackgroundInfo(data.getAgents()));
-			getMarketResults();
+			getModelResults();
 			obs.addFeature("", obs.getConfiguration());
 			
 			File file = new File(simFolder + Consts.obsFilename + num + ".json");
@@ -334,20 +215,19 @@ public class SystemManager {
 	}
 	
 	/**
-	 * Gets market results by model
+	 * Gets market results by model.
 	 */
-	private void getMarketResults() {
-		// TODO create the prefix
+	private void getModelResults() {
 		for (Map.Entry<Integer, MarketModel> entry : data.getModels().entrySet()) {
 			MarketModel model = entry.getValue();
 			ArrayList<Integer> ids = model.getMarketIDs();
 			
 			String prefix = model.getClass().getSimpleName().toLowerCase() + "_";
 			obs.addFeature(prefix + "bkgrd_surplus", obs.getSurplusFeatures(data.getSurplus(ids), false));
-			obs.addFeature("depths", obs.getDepthInfo(ids));
-			obs.addFeature("transactions", obs.getTransactionInfo(ids));
-			obs.addFeature("spreads", obs.getSpreadInfo(ids));
-			obs.addFeature("exec_speed", obs.getExecutionSpeed(ids));
+			obs.addFeature(prefix + "depths", obs.getDepthInfo(ids));
+			obs.addFeature(prefix + "transactions", obs.getTransactionInfo(ids));
+			obs.addFeature(prefix + "spreads", obs.getSpreadInfo(ids));
+//			obs.addFeature(prefix + "exec_speed", obs.getExecutionSpeed(ids));
 		}
 	}
 	

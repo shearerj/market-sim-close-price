@@ -2,6 +2,7 @@ package entity;
 
 import event.*;
 import market.*;
+import models.*;
 import activity.*;
 import systemmanager.*;
 
@@ -45,7 +46,7 @@ import java.util.HashMap;
  *
  * @author ewah
  */
-public class ZIAgent extends MMAgent {
+public class ZIAgent extends SMAgent {
 
 	private double expireRate;
 	private int expiration;				// time until limit order expiration
@@ -62,8 +63,8 @@ public class ZIAgent extends MMAgent {
 	 * @param agentID
 	 * @param d SystemData object
 	 */
-	public ZIAgent(int agentID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, d, p, l);
+	public ZIAgent(int agentID, SystemData d, ObjectProperties p, Log l, int mktID) {
+		super(agentID, d, p, l, mktID);
 		agentType = Consts.getAgentType(this.getClass().getSimpleName());
 		
 		expireRate = this.data.expireRate;
@@ -74,19 +75,19 @@ public class ZIAgent extends MMAgent {
 		privateValue = Math.max(0, this.data.nextPrivateValue() + 
 				(int) Math.round(getNormalRV(0, pvVar)) * Consts.SCALING_FACTOR);
 		
-		if (this.data.numMarkets != 2) {
-			log.log(Log.ERROR, "NBBOAgent: NBBO agents need 2 markets!");
+		if (data.getPrimaryModel().getNumMarkets() != 2) {
+			log.log(Log.ERROR, this.getClass().getSimpleName() + 
+					": Need two markets in the primary model!");
 		}
 		
-		// Choose market indices based on whether agentID is even or odd
-		// Ensures close to 50% even distribution in each market
-		if (agentID % 2 == 0) {
-			mainMarketID = data.getMarketIDs().get(0);
-			altMarketID = data.getMarketIDs().get(1);
+		// set the alternate ID if the primary model is a two-market model
+		mainMarketID = mktID;
+		if (data.getPrimaryModel() instanceof TwoMarket) {
+			altMarketID = ((TwoMarket) data.getPrimaryModel()).getAlternateMarket(mktID);
 		} else {
-			mainMarketID = data.getMarketIDs().get(1);
-			altMarketID = data.getMarketIDs().get(0);
+			altMarketID = mainMarketID;
 		}
+		
 		submittedBidType = Consts.SubmittedBidMarket.NOBID;
 	}
 	
@@ -197,7 +198,7 @@ public class ZIAgent extends MMAgent {
 		// Bid expires after a given duration
 		TimeStamp expireTime = ts.sum(new TimeStamp(expiration));
 		actMap.insertActivity(Consts.WITHDRAW_BID_PRIORITY,
-				new WithdrawBid(this, data.markets.get(bestMarketID), expireTime));
+				new WithdrawBid(this, data.getMarket(bestMarketID), expireTime));
 		return actMap;
 	}
 

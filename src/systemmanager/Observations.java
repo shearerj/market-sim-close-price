@@ -344,8 +344,10 @@ public class Observations {
 		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
 			int mktID = it.next();
 			HashMap<TimeStamp,Integer> marketSpread = data.marketSpread.get(mktID);
-			double[] spreads = extractTimeSeries(marketSpread);
-			addStatistics(feat,spreads,"mkt" + (-mktID),true);
+			if (marketSpread != null) {
+				double[] spreads = extractTimeSeries(marketSpread);
+				addStatistics(feat,spreads,"mkt" + (-mktID),true);
+			}
 			
 //				// JUST FOR DEBUGGING PURPOSES TODO
 //				TreeSet<TimeStamp> sortedTimes = new TreeSet<TimeStamp>(marketSpread.keySet());
@@ -393,8 +395,10 @@ public class Observations {
 		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
 			int mktID = it.next();
 			HashMap<TimeStamp,Integer> marketDepth = data.marketDepth.get(mktID);
-			double[] depths = extractTimeSeries(marketDepth);
-			addStatistics(feat,depths,"mkt" + (-mktID),true);
+			if (marketDepth != null) {
+				double[] depths = extractTimeSeries(marketDepth);
+				addStatistics(feat,depths,"mkt" + (-mktID),true);
+			}
 		}	
 		return feat;
 	}
@@ -498,7 +502,7 @@ public class Observations {
 		
 		// Have to sort the TimeStamps since not necessarily sorted in HashMap
 		TreeSet<TimeStamp> times = new TreeSet<TimeStamp>();
-		ArrayList<TimeStamp> keys = new ArrayList<TimeStamp>(map.keySet());
+		ArrayList<TimeStamp> keys = new ArrayList<TimeStamp>( map.keySet());
 		for (Iterator<TimeStamp> i = keys.iterator(); i.hasNext(); ) {
 			TimeStamp t = i.next();
 			if (t != null) 
@@ -550,7 +554,6 @@ public class Observations {
 	public HashMap<String,Object> getConfiguration() {
 		HashMap<String,Object> config = new HashMap<String,Object>();
 		config.put("obs", data.obsNum);
-		config.put("call_freq", data.centralCallClearFreq);
 		config.put("latency", data.nbboLatency);
 		config.put("tick_size", data.tickSize);
 		config.put("kappa", data.kappa);

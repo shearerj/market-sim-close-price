@@ -17,6 +17,10 @@ import java.util.*;
  * In addition, the SystemData class stores observation data to be written to the
  * output file, e.g. it computes the surplus for all agents and aggregates other 
  * features for observations.
+ * 
+ * The primary market model is the one in which agents primarily interact. Bids
+ * are then duplicated in the other market models, based on those submitted in the
+ * primary model.
  *
  * Note: For the lists containing time series, a new value is added to each list
  * when the value has a chance to change (generally after a clear event in a market).
@@ -29,13 +33,19 @@ public class SystemData {
 
 	public int obsNum;									// observation number
 	
+	// Model information
+	public HashMap<Integer,MarketModel> models;			// market models
+	public HashMap<Integer,ArrayList<Integer>> modelToMarketList;	// hashed by model ID hash code
+	public HashMap<Integer,Integer> marketToModel;		// hashed by market ID
+	public MarketModel primaryModel;
+	public String primaryModelDesc;						// description of primary model
+	
 	// Market information
 	public HashMap<Integer,PQBid> bidData;				// all bids ever, hashed by bid ID
 	public HashMap<Integer,PQTransaction> transData;	// hashed by transaction ID
 	public HashMap<Integer,Quote> quoteData;			// hashed by market ID
 	public HashMap<Integer,Agent> agents;				// agents hashed by ID
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
-	public HashMap<Integer,MarketModel> models;			// market models
 	public Quoter quoter;
 	private Sequence transIDSequence;
 	
@@ -90,6 +100,9 @@ public class SystemData {
 		roleAgentIDs = new ArrayList<Integer>();
 		modelIDs = new ArrayList<Integer>();
 		transIDSequence = new Sequence(0);
+		modelToMarketList = new HashMap<Integer,ArrayList<Integer>>();
+		primaryModel = null;
+		marketToModel = new HashMap<Integer,Integer>();
 	
 		// Initialize containers for observations/features
 		marketDepth = new HashMap<Integer,HashMap<TimeStamp,Integer>>();
@@ -99,11 +112,33 @@ public class SystemData {
 		submissionTime = new HashMap<Integer,TimeStamp>();
 	}
 
+	
+	/**
+	 * @return
+	 */
+	public MarketModel getPrimaryModel() {
+		return primaryModel;
+	}
+	
 
+	/**
+	 * @return marketIDs of primary model
+	 */
+	public ArrayList<Integer> getPrimaryMarketIDs() {
+		return primaryModel.getMarketIDs();
+	}
+	
+	/**
+	 * @param marketID
+	 * @return
+	 */
 	public HashMap<Integer,Bid> getBids(int marketID) {
 		return markets.get(marketID).getBids();
 	}
 	
+	/**
+	 * @return
+	 */
 	public HashMap<Integer,Quote> getQuotes() {
 		return quoteData;
 	}
@@ -125,6 +160,9 @@ public class SystemData {
 		return quoter;
 	}
 	
+	/**
+	 * @return
+	 */
 	public HashMap<Integer,Agent> getAgents() {
 		return agents;
 	}
@@ -136,10 +174,16 @@ public class SystemData {
 		return markets;
 	}
 
+	/**
+	 * @return
+	 */
 	public HashMap<Integer,MarketModel> getModels() {
 		return models;
 	}
 	
+	/**
+	 * @return
+	 */
 	public ArrayList<Integer> getAgentIDs() {
 		return new ArrayList<Integer>(agents.keySet());
 	}
@@ -163,9 +207,57 @@ public class SystemData {
 		return models.get(id);
 	}
 	
-//	public ArrayList<Integer> getCentralMarketIDs() {
-//		return new ArrayList<Integer>(centralMarkets.keySet());
-//	}
+	public MarketModel getModelByMarket(int mktID) {
+		return models.get(marketToModel.get(mktID));
+	}
+	
+	/**
+	 * Given a market ID, find the markets in other markets that are linked.
+	 * Results includes the current market ID.
+	 * 
+	 * @param id
+	 * @return
+	 */
+	public ArrayList<Integer> getLinkedMarkets(int mktID) {
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		int idx = modelToMarketList.get(primaryModel.hashCode()).indexOf(mktID);
+		
+		// need to cycle through all models to determine the correct index?
+		for (Map.Entry<Integer,ArrayList<Integer>> entry : modelToMarketList.entrySet()) {
+			ArrayList<Integer> mktIDs = entry.getValue();
+			
+			if (idx < mktIDs.size()) {
+				// add the ID at the given index
+				ids.add(mktIDs.get(idx));
+			} else if (mktIDs.size() == 1) {
+				// always add the centralized market
+				ids.add(mktIDs.get(0));
+			}
+		}
+		return ids;
+	}
+	
+	
+	public ArrayList<Integer> getAgentIDsOfType(String type) {
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		for (Map.Entry<Integer,Agent> entry : agents.entrySet()) {
+			if (entry.getValue().getType().equals(type)) {
+				ids.add(entry.getKey());
+			}
+		}
+		return ids;
+	}
+	
+	public ArrayList<Integer> getMarketIDsOfType(String type) {
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		for (Map.Entry<Integer,Market> entry : markets.entrySet()) {
+			if (entry.getValue().getType().equals(type)) {
+				ids.add(entry.getKey());
+			}
+		}
+		return ids;
+	}
+	
 	
 	public PQTransaction getTransaction(int id) {
 		return transData.get(id);
@@ -190,44 +282,13 @@ public class SystemData {
 		return trans;
 	}
 	
+	/**
+	 * @param id
+	 * @return
+	 */
 	public PQBid getBid(int id) {
 		return bidData.get(id);
 	}
-	
-//	/**
-//	 * @return true if central markets present, false otherwise
-//	 */
-//	public boolean useCentralMarket() {
-//		if (centralMarketFlag != null) {
-//			if (centralMarketFlag.equals("on")) {
-//				return true;
-//			} else {
-//				return false;
-//			}
-//		}
-//		return false;	
-//	}
-//	
-//	
-//	/**
-//	 * Returns the type of the central market with the given market ID.
-//	 * 
-//	 * @param mktID
-//	 * @return
-//	 */
-//	public String getCentralMarketType(int mktID) {
-//		if (!this.getCentralMarketIDs().contains(mktID))
-//			return null;
-//		
-//		if (getMarket(mktID) instanceof CDAMarket) {
-//			return new String("CDA");
-//		}
-//		if (getMarket(mktID) instanceof CallMarket) {
-//			return new String("CALL");
-//		}
-//		return null;
-//	}
-//	
 
 	
 	/**
@@ -260,23 +321,23 @@ public class SystemData {
 		return pvs;
 	}
 	
-	/**
-	 * Read in parameters from the env.properties configuration file.
-	 * 
-	 * @param p
-	 */
-	public void readEnvProps(Properties p) {
-		simLength = new TimeStamp(Long.parseLong(p.getProperty("simLength")));
-		nbboLatency = new TimeStamp(Long.parseLong(p.getProperty("nbboLatency")));
-		centralCallClearFreq = new TimeStamp(Long.parseLong(p.getProperty("clearLatency")));
-		tickSize = Integer.parseInt(p.getProperty("tickSize"));
-		kappa = Double.parseDouble(p.getProperty("kappa"));
-		arrivalRate = Double.parseDouble(p.getProperty("arrivalRate"));
-		meanPV = Integer.parseInt(p.getProperty("meanPV"));
-		shockVar = Double.parseDouble(p.getProperty("shockVar"));
-		expireRate = Double.parseDouble(p.getProperty("expireRate"));
-		bidRange = Integer.parseInt(p.getProperty("bidRange"));
-	}
+//	/**
+//	 * Read in parameters from the env.properties configuration file.
+//	 * 
+//	 * @param p
+//	 */
+//	public void readEnvProps(Properties p) {
+//		simLength = new TimeStamp(Long.parseLong(p.getProperty("simLength")));
+//		nbboLatency = new TimeStamp(Long.parseLong(p.getProperty("nbboLatency")));
+//		centralCallClearFreq = new TimeStamp(Long.parseLong(p.getProperty("clearLatency")));
+//		tickSize = Integer.parseInt(p.getProperty("tickSize"));
+//		kappa = Double.parseDouble(p.getProperty("kappa"));
+//		arrivalRate = Double.parseDouble(p.getProperty("arrivalRate"));
+//		meanPV = Integer.parseInt(p.getProperty("meanPV"));
+//		shockVar = Double.parseDouble(p.getProperty("shockVar"));
+//		expireRate = Double.parseDouble(p.getProperty("expireRate"));
+//		bidRange = Integer.parseInt(p.getProperty("bidRange"));
+//	}
 	
 	
 	/**
@@ -339,8 +400,6 @@ public class SystemData {
 	public ArrayList<Integer> getTransactionIDs() {
 		return new ArrayList<Integer>(transData.keySet());
 	}
-	
-	
 
 	public void addAgent(Agent ag) {
 		agents.put(ag.getID(), ag);

@@ -14,16 +14,18 @@ public class ModelFactory {
 	 * 
 	 * @param type
 	 * @param props
+	 * @param data
 	 * @return
 	 */
-	public static MarketModel createModel(String type, ObjectProperties props) { 
+	public static MarketModel createModel(String type, ObjectProperties props,
+										  SystemData data) { 
 		
 		if (type.equals(Consts.getModelType("TwoMarket"))) {
-			return new TwoMarket(props);
+			return new TwoMarket(props, data);
 		} else if (type.equals(Consts.getModelType("CentralCDA"))) {
-			return new CentralCDA(props);
+			return new CentralCDA(props, data);
 		} else if (type.equals(Consts.getModelType("CentralCall"))) {
-			return new CentralCall(props);
+			return new CentralCall(props, data);
 		} else {
 			return null;
 		}

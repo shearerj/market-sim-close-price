@@ -80,8 +80,7 @@ public class SimulationSpec {
 		data.privateValueVar = Double.parseDouble(getValue("private_value_var"));
 		
 		// Model-specific parameters
-		data.centralCallClearFreq = new TimeStamp(Integer.parseInt(getValue("CENTRALCALL_clear_freq")));
-		data.centralCallClearFreq = data.nbboLatency;
+		data.primaryModelDesc = getValue("primary_model");
 		
 		// Check which types of market models to create
 		for (int i = 0; i < Consts.modelTypeNames.length; i++) {
@@ -92,28 +91,20 @@ public class SimulationSpec {
 					// remove any extra appended commas
 					models = models.substring(0, models.length() - 1);
 				}
-				String[] settings = models.split("[,]+");
-				// number of that model type is the number of items in the list
-				data.numModelType.put(Consts.modelTypeNames[i], settings.length);
+				String[] types = models.split("[,]+");
+				
+				if (types.length > 1) {
+					// if > 1, number of that model type is the number of items in the list
+					// also must check that not indicating that there are NONE or 0 of this model
+					data.numModelType.put(Consts.modelTypeNames[i], types.length);
+				} else if (!models.equals(Consts.MODEL_TYPE_NONE) && !models.equals("0")) {
+					data.numModelType.put(Consts.modelTypeNames[i], types.length);
+				} else {
+					data.numModelType.put(Consts.modelTypeNames[i], 0);
+				}
 			}
 		}
-		
-//		// Check which types of markets to create
-//		for (int i = 0; i < Consts.marketTypeNames.length; i++) {
-//			String num = getValue(Consts.marketTypeNames[i]);
-//			if (num != null) {
-//				int n = Integer.parseInt(num);
-//				data.numMarkets += n;
-//				data.numMarketType.put(Consts.marketTypeNames[i], n);
-//			}
-//		}
-//		// Create the central market; check first if valid market type
-//		if (data.useCentralMarket()) {
-//			data.numMarketType.put(Consts.CENTRAL + "_CDA", 1);
-//			data.numMarketType.put(Consts.CENTRAL + "_CALL", 1);
-////			data.clearFreq = data.nbboLatency;
-//		}
-		
+			
 		// Check which types of agents to create
 		for (int i = 0; i < Consts.agentTypeNames.length; i++) {
 			String num = getValue(Consts.agentTypeNames[i]);
