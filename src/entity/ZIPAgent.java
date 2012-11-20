@@ -170,7 +170,7 @@ public class ZIPAgent extends MMAgent {
                     if(q > privateValue)
                         p_new = privateValue - 1;                    
                     else
-                        p_new = privateValue + getMu(privateValue, p_old, q);
+                        p_new = privateValue + getMu(p_old, bestPrice);
                     
                     } else {
                     //Selling:- We sell from (\lambda, +\infinity)
@@ -187,7 +187,7 @@ public class ZIPAgent extends MMAgent {
                     if(q < privateValue)
                         p_new = privateValue + 1;
                     else
-                        p_new = privateValue + getMu(privateValue, p_old, q);
+                        p_new = privateValue + getMu(p_old, bestPrice);
                     
 
                 //Set the best buy/sell price subject to constraints and sleep
@@ -246,8 +246,8 @@ public class ZIPAgent extends MMAgent {
          * \mu = c*(q_{t-1} - p_{t-1})
          *  c = 1
          */
-        private int getMu(int lambda, int p_old, int q){
-            double step = (double) (q - p_old); //Performing operations in double
+        private int getMu(int p_old, int bestPrice){
+            double step = (double) (bestPrice - p_old); //Performing operations in double
             step = c*step;
             return (int) step; //Type casting back to int to return appropriate values
         }
