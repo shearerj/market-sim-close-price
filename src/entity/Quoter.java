@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Vector;
 
 import event.*;
-import models.*;
+import model.*;
 import market.*;
 import activity.*;
 import systemmanager.*;

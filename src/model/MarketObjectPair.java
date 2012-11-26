@@ -1,4 +1,4 @@
-package models;
+package model;
 
 /**
  * Pair of (market type, object). Used to specify configuration in MarketModel

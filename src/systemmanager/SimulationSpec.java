@@ -91,35 +91,48 @@ public class SimulationSpec {
 					// remove any extra appended commas
 					models = models.substring(0, models.length() - 1);
 				}
-				String[] types = models.split("[,]+");
+				String[] configs = models.split("[,]+");
 				
-				if (types.length > 1) {
+				if (configs.length > 1) {
 					// if > 1, number of that model type is the number of items in the list
 					// also must check that not indicating that there are NONE or 0 of this model
-					data.numModelType.put(Consts.modelTypeNames[i], types.length);
-				} else if (!models.equals(Consts.MODEL_TYPE_NONE) && !models.equals("0")) {
-					data.numModelType.put(Consts.modelTypeNames[i], types.length);
+					data.numModelType.put(Consts.modelTypeNames[i], configs.length);
+				} else if (!models.equals(Consts.MODEL_CONFIG_NONE) && !models.equals("0")) {
+					data.numModelType.put(Consts.modelTypeNames[i], configs.length);
 				} else {
 					data.numModelType.put(Consts.modelTypeNames[i], 0);
 				}
 			}
 		}
 			
-		// Check which types of agents to create
-		for (int i = 0; i < Consts.agentTypeNames.length; i++) {
-			String num = getValue(Consts.agentTypeNames[i]);
+		// Check which types of single-market agents to create
+		// (from configuration section of spec file)
+		for (int i = 0; i < Consts.SMAgentTypes.length; i++) {
+			String agentType = Consts.SMAgentTypes[i];
+			String num = getValue(agentType);
 			if (num != null) {
 				int n = Integer.parseInt(num);
 				data.numAgents += n;
-				data.numAgentType.put(Consts.agentTypeNames[i], n);
+				data.numAgentType.put(agentType, n);
 			}
 		}
-		// Check how many agents in a given role (from role part of spec file)
-        for (int i = 0; i < Consts.roles.length; i++) {
-        	String role = Consts.roles[i];
-        	data.numAgentType.put(role, getNumPlayers(role));
-        }
-        
+		// Check which types of multi-market agents to create
+		// (from configuration section of spec file)
+		for (int i = 0; i < Consts.MMAgentTypes.length; i++) {
+			String agentType = Consts.MMAgentTypes[i];
+			String num = getValue(agentType);
+			if (num != null) {
+				int n = Integer.parseInt(num);
+				data.numAgents += n;
+				data.numAgentType.put(agentType, n);
+			}
+		}
+		// Check how many agents in a given role 
+		// (from role part of spec file)
+	        for (int i = 0; i < Consts.roles.length; i++) {
+        		String role = Consts.roles[i];
+        		data.numAgentType.put(role, getNumPlayers(role));
+	        }
 	}
 	
 	
@@ -145,8 +158,9 @@ public class SimulationSpec {
 	 * @return
 	 */
 	public int getNumPlayers(String role) {
-		if (roleStrategies.get(role) != null) {
-			return ((ArrayList<String>) roleStrategies.get(role)).size();
+		Object strats = roleStrategies.get(role);
+		if (strats != null) {
+			return ((ArrayList<String>) strats).size();
 		}
 		return 0;
 	}

@@ -91,9 +91,9 @@ public class CallMarket extends Market {
 		this.nextClearTime = clearTime.sum(clearFreq);
 
 		// Return prior quote (works b/c lastClearTime has not been updated yet)
-		log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + " Prior Quote" + 
+		log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + " Prior-clear Quote" + 
 				this.quote(clearTime));
-		ArrayList<Transaction> transactions = orderbook.uniformPriceClear(clearTime, (float) 0.5);
+		ArrayList<Transaction> transactions = orderbook.uniformPriceClear(clearTime, pricingPolicy);
 		
 		if (transactions == null) {
 			lastClearTime = clearTime;
@@ -102,8 +102,8 @@ public class CallMarket extends Market {
 			orderbook.logFourHeap(clearTime);
 			
 			// Now update the quote
-			log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + " " + 
-					this.getClass().getSimpleName() + "::clear: Nothing transacted. Post Quote" 
+			log.log(Log.INFO, clearTime.toString() + " | ....." + this.toString() + " " + 
+					this.getClass().getSimpleName() + "::clear: No change. Post-clear Quote" 
 					+ this.quote(clearTime));
 			
 			if (clearFreq.longValue() > 0) {
@@ -141,8 +141,9 @@ public class CallMarket extends Market {
 		orderbook.logClearedBids(clearTime);
 		orderbook.logFourHeap(clearTime);
 		this.data.addDepth(this.ID, clearTime, orderbook.getDepth());
-		log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + " " + 
-				this.getClass().getSimpleName() + " cleared: Post Quote" + this.quote(clearTime));
+		log.log(Log.INFO, clearTime.toString() + " | ....." + this.toString() + " " + 
+				this.getClass().getSimpleName() + "::clear: Order book cleared: Post-clear Quote" 
+				+ this.quote(clearTime));
 
 		// Insert next clear activity at some time in the future
 		if (clearFreq.longValue() > 0) {

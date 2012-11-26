@@ -14,10 +14,10 @@ public class Consts {
 	
 	public final static String[] SMAgentTypes = 
 		{ "MARKETMAKER", "ZI", "ZIP" };
-	public final static String[] agentTypeNames = 
-		{ "LA", "DUMMY", "MARKETMAKER", "ZI", "ZIP" };
+	public final static String[] MMAgentTypes = 
+		{ "LA", "DUMMY" };
 	public final static String[] marketTypeNames = 
-		{ "CDA", "CALL"};
+		{ "CDA", "CALL" };
 	public final static String[] modelTypeNames = 
 		{ "TWOMARKET", "CENTRALCDA", "CENTRALCALL" };
 		
@@ -26,8 +26,8 @@ public class Consts {
 		{"LA", "DUMMY"};
 	// **********************************************************
 	
-	public final static String MODEL_TYPE_KEY = "type";
-	public final static String MODEL_TYPE_NONE = "NONE";
+	public final static String MODEL_CONFIG_KEY = "config";
+	public final static String MODEL_CONFIG_NONE = "NONE";
 	
 	// ActivityList priorities
 	public final static int DEFAULT_PRIORITY = 0;

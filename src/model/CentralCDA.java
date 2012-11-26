@@ -1,4 +1,4 @@
-package models;
+package model;
 
 import java.util.Iterator;
 
@@ -17,10 +17,15 @@ public class CentralCDA extends MarketModel {
 	public CentralCDA(ObjectProperties p, SystemData d) {
 		super(p, d);
 		
-		String type = p.get(Consts.MODEL_TYPE_KEY);
-		if (!type.equals(Consts.MODEL_TYPE_NONE) && !type.equals("0")) {
+		config = p.get(Consts.MODEL_CONFIG_KEY);
+		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
 			addMarketPropertyPair("CDA");
 		}
+	}
+	
+	@Override
+	public String getConfig() {
+		return "";
 	}
 	
 	@Override

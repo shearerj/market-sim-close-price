@@ -3,7 +3,7 @@ package systemmanager;
 import event.*;
 import entity.*;
 import activity.*;
-import models.*;
+import model.*;
 
 import java.util.*;
 import java.io.*;
@@ -104,7 +104,6 @@ public class SystemManager {
 
 			// Read environment parameters & set up environment
 			loadConfig(envProps, Consts.configDir + Consts.configFile);
-//			data.readEnvProps(envProps);
 			data.obsNum = num;
 
 			// Create log file
@@ -185,20 +184,26 @@ public class SystemManager {
 	
 	
 	/**
-	 * Generate results report (payoff data, feature data logging). Iterators through all agents
-	 * and adds observation for each one.
+	 * Generate results report (payoff data, feature data logging). Only adds observations
+	 * from agents in the primary model (the primary game).
 	 */
 	public void aggregateResults() {
 		try {
-			for (Iterator<Integer> it = data.getAgents().keySet().iterator(); it.hasNext(); ) {
+			for (Iterator<Integer> it = data.getAgentIDs().iterator(); it.hasNext(); ) {
 				int id = it.next();
-				obs.addObservation(id);
+				if (data.getPrimaryAgentIDs().contains(id)) {
+					// only add observations for players in primary model
+					obs.addObservation(id);
+				} else {
+					// add as a feature observations for players in other market models
+					obs.addObservationAsFeature(id);
+				}
 			}
 			
 			obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
 			obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
 			obs.addFeature("expire", obs.getTimeStampFeatures(data.getExpirations()));
-			obs.addFeature("bkgrd_info", obs.getBackgroundInfo(data.getAgents()));
+			//obs.addFeature("bkgrd_info", obs.getBackgroundInfo(data.getAgents()));
 			getModelResults();
 			obs.addFeature("", obs.getConfiguration());
 			
@@ -210,7 +215,7 @@ public class SystemManager {
 		} catch (Exception e) {
 			String s = "aggregateResults(): error creating observation file";
 			e.printStackTrace();
-			System.err.print(s);
+			System.err.println(s);
 		}
 	}
 	
@@ -220,45 +225,15 @@ public class SystemManager {
 	private void getModelResults() {
 		for (Map.Entry<Integer, MarketModel> entry : data.getModels().entrySet()) {
 			MarketModel model = entry.getValue();
-			ArrayList<Integer> ids = model.getMarketIDs();
 			
-			String prefix = model.getClass().getSimpleName().toLowerCase() + "_";
-			obs.addFeature(prefix + "bkgrd_surplus", obs.getSurplusFeatures(data.getSurplus(ids), false));
-			obs.addFeature(prefix + "depths", obs.getDepthInfo(ids));
-			obs.addFeature(prefix + "transactions", obs.getTransactionInfo(ids));
-			obs.addFeature(prefix + "spreads", obs.getSpreadInfo(ids));
+			String prefix = model.getClass().getSimpleName().toLowerCase() + 
+					model.getConfig() + "_";
+
+			obs.addFeature(prefix + "spreads", obs.getSpreadInfo(model));
+			obs.addFeature(prefix + "surplus", obs.getSurplusFeatures(model));
+			obs.addFeature(prefix + "transactions", obs.getTransactionInfo(model));
+			// obs.addFeature(prefix + "depths", obs.getDepthInfo(ids));
 //			obs.addFeature(prefix + "exec_speed", obs.getExecutionSpeed(ids));
 		}
 	}
-	
-//	/**
-//	 * Gets central market results or results for all markets (excluding centralized).
-//	 * @param central true if central market
-//	 * @param prefix string to add to key name
-//	 */
-//	private void getMarketResults(boolean central, String prefix) {
-//		if (prefix != null && prefix != "") {
-//			prefix = prefix + "_";
-//		}
-//		
-//		if (central) {
-//			ArrayList<Integer> ids = data.getCentralMarketIDs();
-//			for (Iterator<Integer> i = ids.iterator(); i.hasNext(); ) {
-//				ArrayList<Integer> id = new ArrayList<Integer>();
-//				int mktID = i.next();
-//				id.add(mktID);
-//				obs.addFeature(prefix + data.getCentralMarketType(mktID).toLowerCase() + 
-//						"_bkgrd_surplus", obs.getSurplusFeatures(data.getSurplus(id), true));
-//			}
-//		} else {
-//			ArrayList<Integer> ids = data.getMarketIDs();
-//			obs.addFeature(prefix + "bkgrd_surplus", obs.getSurplusFeatures(data.getSurplus(ids), false));
-//		}
-//		obs.addFeature(prefix + "transactions", obs.getTransactionInfo(central));
-//		obs.addFeature(prefix + "depths", obs.getDepthInfo(central));
-//		obs.addFeature(prefix + "spreads", obs.getSpreadInfo(central));
-//		obs.addFeature(prefix + "exec_speed", obs.getExecutionSpeed(central));
-//	}
-	
-	
 }

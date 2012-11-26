@@ -2,7 +2,7 @@ package entity;
 
 import event.*;
 import market.*;
-import models.*;
+import model.*;
 import activity.*;
 import systemmanager.*;
 

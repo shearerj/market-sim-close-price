@@ -1,12 +1,13 @@
 package systemmanager;
 
+import event.*;
+import model.*;
 import entity.*;
-import event.TimeStamp;
 import market.*;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+// import java.io.BufferedWriter;
+// import java.io.File;
+// import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -57,8 +58,18 @@ public class Observations {
 	}
 
 	/**
+	 * Used to put observation as feature in the case
+	 * @param agentID
+	 * @return
+	 */
+	public void addObservationAsFeature(int agentID) {
+		Agent ag = data.getAgent(agentID);
+		addFeature("agent" + agentID, ag.getObservation());
+	}
+	
+	/**
 	 * Adds a feature (for entire simulation, not just one player).
-	 * 
+	 * @param description
 	 * @param ft
 	 */
 	public void addFeature(String description, HashMap<String,Object> ft) {
@@ -139,34 +150,38 @@ public class Observations {
 	
 	
 	/**
-	 * Takes hashmap of agent information (integer values only) and extracts features for 
-	 * observation file.
+	 * Extracts surplus features from a given model.
 	 * 
-	 * @param allSurplus
-	 * @param central
+	 * @param model
 	 * @return
 	 */
-	public HashMap<String,Object> getSurplusFeatures(HashMap<Integer,Integer> allSurplus,
-			boolean central) {
+	public HashMap<String,Object> getSurplusFeatures(MarketModel model) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
+		ArrayList<Integer> ids = model.getMarketIDs();
+		HashMap<Integer,Integer> allSurplus = data.getSurplus(ids);
 		Object[] objs = (new ArrayList<Integer>(allSurplus.values())).toArray();
-	    double[] values = new double[objs.length];  
-	    for (int i = 0; i < values.length; i++) {
-	    	Integer tmp = (Integer) objs[i];
-	        values[i] = tmp.doubleValue();
-	    }
+		double[] values = new double[objs.length];  
+		for (int i = 0; i < values.length; i++) {
+	    		Integer tmp = (Integer) objs[i];
+			values[i] = tmp.doubleValue();
+		}
 		addAllStatistics(feat,values);
-		if (!central) {
-			for (Iterator<Integer> it = data.roleAgentIDs.iterator(); it.hasNext(); ) {
-				int id = it.next();
-				String type = data.getAgent(id).getType();
-				String suffix = "sum_plus_" + type.toLowerCase();
+
+		for (Iterator<Integer> it = model.getAgentIDs().iterator(); it.hasNext(); ) {
+			int aid = it.next();
+			// check if agent is a player in a role
+			if (!data.isBackgroundAgent(aid)) {
+				String type = data.getAgent(aid).getType();
+				String label = "with_" + type.toLowerCase();
+				
+				// must append the agentID if there is more than one of this type
+				// in all models
 				if (data.numAgentType.get(type) > 1) {
-					suffix += id;
+					label += aid;
 				}
 				DescriptiveStatistics ds = new DescriptiveStatistics(values);
-				feat.put(suffix, ds.getSum() + data.getAgent(id).getRealizedProfit());
+				feat.put(label, ds.getSum() + data.getAgent(aid).getRealizedProfit());
 			}
 		}
 		return feat;
@@ -247,18 +262,18 @@ public class Observations {
 	}
 
 	/**
-	 * Computes statistical values on the transaction data.
+	 * Computes statistical values on the transaction data.for a given model.
 	 * 
-	 * @param ids
+	 * @param model
 	 * @return
 	 */
-	public HashMap<String,Object> getTransactionInfo(ArrayList<Integer> ids) {
+	public HashMap<String,Object> getTransactionInfo(MarketModel model) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
-		
-		String suffix = "";
+	
+		ArrayList<Integer> ids = model.getMarketIDs();
 
 		HashMap<Integer,PQTransaction> transactions = data.getTrans(ids);
-		feat.put("num_trans" + suffix, transactions.size());
+		feat.put("num", transactions.size());
 
 		double[] prices = new double[transactions.size()];
 		double[] quantities = new double[transactions.size()];
@@ -269,29 +284,33 @@ public class Observations {
 			quantities[i] = trans.quantity;
 			i++;
 		}
-		addStatistics(feat,prices,"price" + suffix,false);
+		addStatistics(feat,prices,"price",false);
 		//		addSomeStatistics(feat,quantities,"qty",false);
-		
-		for (Iterator<Integer> aid = data.roleAgentIDs.iterator(); aid.hasNext(); ) {
-			int id = aid.next();
-			suffix = suffix + "_" + data.getAgent(id).getType().toLowerCase();
-
-			int buys = 0;
-			int sells = 0;
-			for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
-				PQTransaction trans = entry.getValue();
-				if (trans.sellerID == id) {
-					buys++;
-				} else if (trans.buyerID == id) {
-					sells++;
+		for (Iterator<Integer> it = model.getAgentIDs().iterator(); it.hasNext(); ) {
+			int aid = it.next();
+			// check if agent is player in role
+			if (!data.isBackgroundAgent(aid)) {
+				String type = data.getAgent(aid).getType();
+				
+				// count buys/sells
+				int buys = 0;
+				int sells = 0;
+				for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
+					PQTransaction trans = entry.getValue();
+					if (trans.sellerID == aid) {
+						buys++;
+					} else if (trans.buyerID == aid) {
+						sells++;
+					}
 				}
+				// must append the agentID if there is more than one of this type
+				String suffix = "_" + type.toLowerCase();
+				if (data.numAgentType.get(type) > 1) {
+					suffix += aid;
+				}
+				feat.put("buys" + suffix, buys);
+				feat.put("sells" + suffix, sells);
 			}
-
-			if (data.numAgentType.get(data.getAgent(id).getType()) > 1) {
-				suffix += id;
-			}
-			feat.put("buys" + suffix , buys);
-			feat.put("sells" + suffix, sells);
 		}
 		return feat;
 	}
@@ -333,14 +352,15 @@ public class Observations {
 	
 	
 	/**
-	 * Computes spread metrics.
+	 * Computes spread metrics for the given model..
 	 * 
-	 * @param ids
+	 * @param model
 	 * @return
 	 */
-	public HashMap<String,Object> getSpreadInfo(ArrayList<Integer> ids) {
+	public HashMap<String,Object> getSpreadInfo(MarketModel model) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
-		
+	
+		ArrayList<Integer> ids = model.getMarketIDs();
 		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
 			int mktID = it.next();
 			HashMap<TimeStamp,Integer> marketSpread = data.marketSpread.get(mktID);
@@ -375,9 +395,8 @@ public class Observations {
 //				}				
 		}
 		
-//		// TODO
-//		double[] nbboSpreads = extractTimeSeries(data.NBBOSpread);
-//		addStatistics(feat,nbboSpreads,"nbbo",true);
+		double[] nbboSpreads = extractTimeSeries(data.NBBOSpread.get(model.getID()));
+		addStatistics(feat,nbboSpreads,"nbbo",true);
 		
 		return feat;
 	}
@@ -564,6 +583,23 @@ public class Observations {
 		config.put("bid_range", data.bidRange);
 		config.put("pv_var", data.privateValueVar);
 		return config;
+	}
+	
+	
+	/**
+	 * @return HashMap of models/types in the simulation.
+	 */
+	public HashMap<String,Object> getModelInfo() {
+		return null;
+	}
+	
+	/**
+	 * @return HashMap of number of agents of each type in the simulation.
+	 */
+	public HashMap<String,Object> getAgentInfo() {
+		HashMap<String,Object> info = new HashMap<String,Object>();
+		return null;
+		
 	}
 	
 	

@@ -422,7 +422,7 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * Withdraws a bid by replacing it with an empty bid.
+	 * Withdraws a bid from the given market in the primary MarketModel.
 	 * 
 	 * @param b
 	 * @param mkt
@@ -436,7 +436,7 @@ public abstract class Agent extends Entity {
 		for (Iterator<Integer> id = data.getLinkedMarkets(mkt.getID()).iterator(); id.hasNext(); ) {
 			Market otherMkt = data.getMarket(id.next());
 			if (otherMkt.getID() != mkt.getID()) {
-				if (data.getModelByMarket(mkt.getID()).checkAgentPermissions(this.ID)) {
+				if (data.getModelByMarket(otherMkt.getID()).checkAgentPermissions(this.ID)) {
 					log.log(Log.INFO, ts + " | " + this.toString() + " withdraw bid from " + 
 							otherMkt);
 					actMap.appendActivityHashMap(otherMkt.removeBid(this.ID, ts));
@@ -637,7 +637,8 @@ public abstract class Agent extends Entity {
 				lastGoodTransID = t.transID;
 			}
 			lastTransID = lastGoodTransID;
-			log.log(Log.DEBUG, ts.toString() + " | " + this.toString() + " " + "NEW lastTransID=" + lastTransID);
+			log.log(Log.DEBUG, ts.toString() + " | " + this.toString() + " " + 
+					"NEW lastTransID=" + lastTransID);
 		}
 		lastTransTime = ts;
 	}
@@ -711,37 +712,33 @@ public abstract class Agent extends Entity {
 		int up = 0;
 		int p = -1;
 
-		if (positionBalance > 0) {
-			// For long position, compare cost to bid quote (buys)
-			for (Iterator<Integer> it = marketIDs.iterator(); it.hasNext(); ) {
-				int mktID = it.next();
-				if (p == -1 || p < bidPrice.get(mktID).getPrice()) {
-					try {
+		try {
+			if (positionBalance > 0) {
+				// For long position, compare cost to bid quote (buys)
+				for (Iterator<Integer> it = marketIDs.iterator(); it.hasNext(); ) {
+					int mktID = it.next();
+					if (p == -1 || p < bidPrice.get(mktID).getPrice()) {
 						p = bidPrice.get(mktID).getPrice();
-					} catch (Exception e) {
-						e.printStackTrace();
 					}
 				}
-			}
-		} else {
-			// For short position, compare cost to ask quote (sells)
-			for (Iterator<Integer> it = marketIDs.iterator(); it.hasNext(); ) {
-				int mktID = it.next();
-				if (p == -1 || p > askPrice.get(mktID).getPrice()) {
-					try {
+			} else {
+				// For short position, compare cost to ask quote (sells)
+				for (Iterator<Integer> it = marketIDs.iterator(); it.hasNext(); ) {
+					int mktID = it.next();
+					if (p == -1 || p > askPrice.get(mktID).getPrice()) {
 						p = askPrice.get(mktID).getPrice();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}	
+					}	
+				}
 			}
-		}
-		if (positionBalance != 0) {
-			log.log(Log.DEBUG, "   " + this.toString() + " bal=" + positionBalance + 
-					", p=" + p + ", avgCost=" + averageCost);
-		}
-		if (p != -1) {
-			up += positionBalance * (p - averageCost);
+			if (positionBalance != 0) {
+				log.log(Log.DEBUG, "   " + this.toString() + " bal=" + positionBalance + 
+						", p=" + p + ", avgCost=" + averageCost);
+			}
+			if (p != -1) {
+				up += positionBalance * (p - averageCost);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		return up;
 	}

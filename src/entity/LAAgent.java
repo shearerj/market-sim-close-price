@@ -87,7 +87,8 @@ public class LAAgent extends MMAgent {
 					
 				} else if (buyMarketID == sellMarketID) {
 					log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
-							"::agentStrategy: No arb opp since same market");
+							"::agentStrategy: No arb opp since at least 1 market does not " +
+							"have both a bid and an ask");
 					// Note that this is due to a market not having both a bid & ask price,
 					// causing the buy and sell market IDs to be identical
 					

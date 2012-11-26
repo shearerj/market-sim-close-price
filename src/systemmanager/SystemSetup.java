@@ -8,15 +8,30 @@ import java.util.Iterator;
 import activity.*;
 import entity.*;
 import event.*;
-import models.*;
+import model.*;
 
 /**
- * Class to create agents & markets. Sets up and assigns strategies (assumed to follow
- * format of parameter-value pairs separated by underscores: [param]_[value]_...
+ * Class to create agents & markets.
+ * 
+ * Strategies: Sets up and assigns strategies (assumed to follow format of parameter-
+ * value pairs separated by underscores: [param]_[value]_...
+ * 
+ * Sequence of initialization:
+ * - generate background arrival times
+ * - generate background private valuations
+ * - create market models
+ *   - create the markets
+ * 	 - setup the markets
+ *   - add Clear activities, if needed
+ *   - create the primary model
+ * - create the agents
+ *   - setup the agents (different if MM vs SM)
+ *   - add AgentArrival activities
+ * - set agent permission for each model's markets
  * 
  * NOTE: Usage of the "primary_model" setting in the spec file:
- *  1) MODELNAME-TYPE
- *  2) MODELNAME (will first type in that model's list to determine primary model type)
+ *  1) MODELNAME-CONFIG
+ *  2) MODELNAME (will use first config in that model's list to specify primary model)
  * 
  * @author ewah
  */
@@ -61,13 +76,9 @@ public class SystemSetup {
 				mm.setAgentPermissions();
 			}
 		} catch (Exception e) {
-			System.err.print(e);
+			System.err.println(this.getClass().getSimpleName() + "::setupAll: error");
+			System.err.println(e);
 		}
-	}
-	
-	
-	public int nextMarketID() {
-		return marketIDSequence.decrement();
 	}
 	
 	/**
@@ -81,63 +92,91 @@ public class SystemSetup {
 	
 	
 	public void createMarketModels() {
-		
 		// get information on the primary market model - two possible usages:
-		// 1) MODELNAME-TYPE
-		// 2) MODELNAME (use first type in that model's list to determine type for primary)
+		// 1) MODELNAME-CONFIG
+		// 2) MODELNAME (use first config in that model's list to specify primary model)
 		String[] desc = data.primaryModelDesc.split("[-]+");
 		String primaryModel = data.primaryModelDesc;
-		String primaryModelType;
+		String primaryModelConfig;
 		if (desc.length > 1) {
 			// hard-coded to only take in first two words separated by hyphen, ignore rest
 			primaryModel = desc[0];
-			primaryModelType = desc[1];
+			primaryModelConfig = desc[1];
 		} else {
-			// second usage; use first type found in the list
-			primaryModelType = specs.getValue(primaryModel);
+			// second usage; use first configuration found in the list
+			primaryModelConfig = specs.getValue(primaryModel);
+			String[] parsed = parseModelConfigList(primaryModelConfig);
+			if (parsed.length > 1) {
+				// more than one of this model type in the simulation, so pick the first one
+				primaryModelConfig = parsed[0];
+			}
 		}
 		
 		for (Map.Entry<String, Integer> mdl : data.numModelType.entrySet()) {
 			
+			int numModelsOfThisType = mdl.getValue();
+			String modelType = mdl.getKey();
+			
 			// log before the markets are created
-			log.log(Log.INFO, "Models: " + mdl.getValue() + " " + mdl.getKey());
+			log.log(Log.INFO, "Models: " + numModelsOfThisType + " " + modelType);
 			
 			// Parse the comma separated types of agents
-			String[] types = parseModelTypes(specs.getValue(mdl.getKey()));
+			String[] configs = parseModelConfigList(specs.getValue(modelType));
 			
-			for (int i = 0; i < mdl.getValue(); i++) {
-				ObjectProperties p = getEntityProperties(mdl.getKey(), i);
+			for (int i = 0; i < numModelsOfThisType; i++) {
+				ObjectProperties p = getEntityProperties(modelType, i);
 				
-				// create market model & set its type
-				p.put(Consts.MODEL_TYPE_KEY, types[i]);
-				MarketModel model = ModelFactory.createModel(mdl.getKey(), p, data);		
+				// create market model & determine its configuration
+				p.put(Consts.MODEL_CONFIG_KEY, configs[i]);
+				MarketModel model = ModelFactory.createModel(modelType, p, data);		
 				data.addModel(model);
 				log.log(Log.DEBUG, model + ": " + p);
+				
 				// create markets in the model
-				model.createMarkets(this, data);
+				for (Iterator<MarketObjectPair> it = model.getModelMarketConfig().iterator(); it.hasNext(); ) {
+					MarketObjectPair mop = it.next();
+					int mID = marketIDSequence.decrement();
+					
+					ObjectProperties mp = (ObjectProperties) mop.getObject();
+					String mtype = mop.getMarketType();
+					Market market = MarketFactory.createMarket(mtype, mID, data, mp, log);
+					market.linkModel(model.getID());
+					data.addMarket(market);
+					model.getMarketIDs().add(mID);
+					log.log(Log.DEBUG, market.toString() + ": " + mp);
+					
+					// Check if is call market, then initialize clearing sequence
+					if (market instanceof CallMarket) {
+						Activity clear = new Clear(market, market.getNextClearTime());
+						eventManager.createEvent(Consts.CALL_CLEAR_PRIORITY, clear);
+					}
+					log.log(Log.INFO, "Markets: " + market.getType() + ", " + market);
+					
+					data.marketToModel.put(mID, model.getID());
+				}
 				
 				// set up primary model
 				if (mdl.getKey().equals(primaryModel)) {
-					// check if primary model type is contained in the specs file
-					if (Arrays.asList(types).contains(primaryModelType)) {
+					// check if primary model configuration is contained in the specs file
+					if (Arrays.asList(configs).contains(primaryModelConfig)) {
 						// check that the current model type matches
-						if (types[i].equals(primaryModelType)) {
+						if (configs[i].equals(primaryModelConfig)) {
 							if (data.primaryModel == null) {
 								// only initialize primary model once
 								data.primaryModel = model;
 							}
 						}
 					} else {
-						System.err.println(this.getClass().getSimpleName() + ":" + 
+						System.err.println(this.getClass().getSimpleName() + "::" + 
 								"createMarketModels: " + "primary model type not found in " +
-								"types list for " + mdl.getKey());
+								"configuration list for " + modelType);
 					}
 				}
 			}
 		}
 		
 		// log primary model
-		log.log(Log.INFO, "Primary model: " + primaryModel + "-" + primaryModelType);
+		log.log(Log.INFO, "Primary model: " + primaryModel + "-" + primaryModelConfig);
 		
 		// set the model to market list
 		for (Map.Entry<Integer,MarketModel> mdl : data.models.entrySet()) {
@@ -146,47 +185,22 @@ public class SystemSetup {
 	}
 	
 	/**
-	 * Parse list of model types from simulation specifications file.
+	 * Parse list of model configruations from simulation specifications file.
 	 * 
-	 * @param modelTypeList
+	 * @param modelConfigList
 	 * @return
 	 */
-	private String[] parseModelTypes(String modelTypeList) {
-		String[] types = null;
-		if (modelTypeList != null) {
-			if (modelTypeList.endsWith(",")) {
+	private String[] parseModelConfigList(String modelConfigList) {
+		String[] configs = null;
+		if (modelConfigList != null) {
+			if (modelConfigList.endsWith(",")) {
 				// remove any extra appended commas
-				modelTypeList = modelTypeList.substring(0, modelTypeList.length() - 1);
+				modelConfigList = modelConfigList.substring(0, modelConfigList.length() - 1);
 			}
-			types = modelTypeList.split("[,]+");
+			configs = modelConfigList.split("[,]+");
 		}
-		return types;
+		return configs;
 	}
-	
-	/**
-	 * Creates market and initializes any Activities as necessary. For example,
-	 * for Call Markets, this method inserts the initial Clear activity into the 
-	 * eventQueue.
-	 * 
-	 * @param marketID
-	 * @param marketType
-	 * @param mp EntityProperties object
-	 * @param modelID
-	 */
-	public void setupMarket(int marketID, String marketType, ObjectProperties mp, int modelID) {
-		Market market = MarketFactory.createMarket(marketType, marketID, data, mp, log);
-		market.linkModel(modelID);
-		data.addMarket(market);
-		log.log(Log.DEBUG, market.toString() + ": " + mp);
-		
-		// Check if is call market, then initialize clearing sequence
-		if (market instanceof CallMarket) {
-			Activity clear = new Clear(market, market.getNextClearTime());
-			eventManager.createEvent(Consts.CALL_CLEAR_PRIORITY, clear);
-		}
-		log.log(Log.INFO, "Markets: " + market.getType() + ", " + market);
-	}
-	
 	
 	
 	/**
@@ -198,81 +212,57 @@ public class SystemSetup {
 				ObjectProperties ap = getEntityProperties(ag.getKey(), i);
 				
 				// create agent & events
-				setupAgent(ag.getKey(), ap);
+				String agentType = ag.getKey();
+				if (!Arrays.asList(Consts.SMAgentTypes).contains(agentType)) {
+					// Multi-market agent
+					int agentID = agentIDSequence.increment();
+					Agent agent = AgentFactory.createMMAgent(agentType, agentID, data, ap, log);
+					data.addAgent(agent);
+					log.log(Log.DEBUG, agent.toString() + ": " + ap);
+					
+					TimeStamp ts = agent.getArrivalTime();
+					if (agent instanceof MMAgent) {
+						// Agent is in multiple markets (an extra check)
+						eventManager.createEvent(new AgentArrival(agent, ts));
+						eventManager.createEvent(new AgentDeparture(agent, data.simLength));
+					}
+					// check if in a role, keep track of role agent IDs
+					if (Arrays.asList(Consts.roles).contains(agentType)) {
+						data.roleAgentIDs.add(agentID);
+					}
+					
+				} else {
+					// Single market agent - create one for each market in primary model
+					for (Iterator<Integer> it = data.getPrimaryMarketIDs().iterator(); it.hasNext(); ) {
+						int mktID = it.next();
+						int agentID = agentIDSequence.increment();
+						Agent agent = AgentFactory.createSMAgent(agentType, agentID, data, ap, log, mktID);
+						data.addAgent(agent);
+						log.log(Log.DEBUG, agent.toString() + ": " + ap);
+					
+						// link the SM agent to all the other market models (other than the primary one)
+						for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
+							if (!entry.getKey().equals(data.getPrimaryModel().getID())) {
+								// if not the primary market model, link the agent
+								entry.getValue().linkAgent(agentID);
+							}
+						}
+						
+						TimeStamp ts = agent.getArrivalTime();
+						if (agent instanceof SMAgent) {
+							// Agent is in single market (an extra check)
+							Market mkt = ((SMAgent) agent).getMarket();
+							eventManager.createEvent(new AgentArrival(agent, mkt, ts));
+							eventManager.createEvent(new AgentDeparture(agent, mkt, data.simLength));		
+						}
+						// check if in a role, keep track of role agent IDs
+						if (Arrays.asList(Consts.roles).contains(agentType)) {
+							data.roleAgentIDs.add(agentID);
+						}
+					}
+				}
 			}
 			log.log(Log.INFO, "Agents: " + ag.getValue() + " " + ag.getKey());
-		}
-	}
-	
-
-	/**
-	 * Creates agent and initializes all agent settings/parameters.
-	 * Inserts AgentArrival/Departure activities into the eventQueue.
-	 * 
-	 * @param agentType
-	 * @param ap EntityProperties object
-	 */
-	public void setupAgent(String agentType, ObjectProperties ap) {
-		
-		if (!Arrays.asList(Consts.SMAgentTypes).contains(agentType)) {
-			// Multi-market agent
-			int agentID = agentIDSequence.increment();
-			Agent agent = AgentFactory.createMMAgent(agentType, agentID, data, ap, log);
-			data.addAgent(agent);
-			log.log(Log.DEBUG, agent.toString() + ": " + ap);
-			
-			TimeStamp ts = agent.getArrivalTime();
-			if (agent instanceof MMAgent) {
-				// Agent is in multiple markets (an extra check)
-				eventManager.createEvent(new AgentArrival(agent, ts));
-				eventManager.createEvent(new AgentDeparture(agent, data.simLength));
-			}
-			// check if in a role, keep track of role agent IDs
-			if (Arrays.asList(Consts.roles).contains(agentType)) {
-				data.roleAgentIDs.add(agentID);
-			}
-			
-		} else {
-			// Single market agent - create one for each market in primary model
-			for (Iterator<Integer> it = data.getPrimaryMarketIDs().iterator(); it.hasNext(); ) {
-				int mktID = it.next();
-				int agentID = agentIDSequence.increment();
-				Agent agent = AgentFactory.createSMAgent(agentType, agentID, data, ap, log, mktID);
-				data.addAgent(agent);
-				log.log(Log.DEBUG, agent.toString() + ": " + ap);
-			
-				// add the agent to all the other market models (other than the primary one)
-				linkAgentToModels(agentID);
-				
-				TimeStamp ts = agent.getArrivalTime();
-				if (agent instanceof SMAgent) {
-					// Agent is in single market (an extra check)
-					Market mkt = ((SMAgent) agent).getMarket();
-					eventManager.createEvent(new AgentArrival(agent, mkt, ts));
-					eventManager.createEvent(new AgentDeparture(agent, mkt, data.simLength));		
-				}
-				// check if in a role, keep track of role agent IDs
-				if (Arrays.asList(Consts.roles).contains(agentType)) {
-					data.roleAgentIDs.add(agentID);
-				}
-			}
-		}
-		
-		
-	}
-	
-	
-	/**
-	 * Link a given SM agent to all models other than the primary model.
-	 * 
-	 * @param agentID
-	 */
-	public void linkAgentToModels(int agentID) {
-		for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
-			if (!entry.getKey().equals(data.getPrimaryModel().hashCode())) {
-				// if not the primary market model, link the agent
-				entry.getValue().linkAgent(agentID);
-			}
 		}
 	}
 	

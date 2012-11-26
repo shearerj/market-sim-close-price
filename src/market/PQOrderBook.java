@@ -210,7 +210,8 @@ public class PQOrderBook extends OrderBook {
 			Price p = PQPoint.earliestPrice(buy, sell);
 
 			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-			log.log(Log.INFO, "        Quantity=" + q + " cleared at Price=" + p.getPrice());
+			log.log(Log.INFO, ts + " | " + data.getMarket(marketID) + 
+					" Quantity=" + q + " cleared at Price=" + p.getPrice());
 
 			Integer key = new Integer(buy.getAgentID());
 			if (!clearedBids.containsKey(key)) {
@@ -286,7 +287,8 @@ public class PQOrderBook extends OrderBook {
 			}
 
 			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-			log.log(Log.INFO, ts.toString() + " |      Quantity=" + q + " cleared at Price=" + p.getPrice());
+			log.log(Log.INFO, ts + " | " + data.getMarket(marketID) + 
+					" Quantity=" + q + " cleared at Price=" + p.getPrice());
 			
 			Integer key = new Integer(buy.getAgentID());
 			if (!clearedBids.containsKey(key))

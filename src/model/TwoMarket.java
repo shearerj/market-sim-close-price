@@ -1,4 +1,4 @@
-package models;
+package model;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -10,8 +10,8 @@ import systemmanager.*;
  * 
  * Class implementing the two-market model of latency arbitrage.
  * 
- * Type in the Two-Market model specifies what non-SM agent is allowed. Possible
- * values for the model type include: "LA", "DUMMY".
+ * Configurations in the Two-Market Model specify what types of player agents 
+ * are allowed. Possible values for the configuration include: "LA", "DUMMY".
  * 
  * @author ewah
  */
@@ -22,16 +22,21 @@ public class TwoMarket extends MarketModel {
 	public TwoMarket(ObjectProperties p, SystemData d) {
 		super(p, d);
 		
-		String type = p.get(Consts.MODEL_TYPE_KEY);
-		if (!type.equals(Consts.MODEL_TYPE_NONE) && !type.equals("0")) {
+		config = p.get(Consts.MODEL_CONFIG_KEY);
+		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
 			// Add two CDA markets with default settings
 			addMarketPropertyPair("CDA");
 			addMarketPropertyPair("CDA");
 			
 			permittedMMAgentTypes = new ArrayList<String>();
-			permittedMMAgentTypes.add(p.get(Consts.MODEL_TYPE_KEY));
+			permittedMMAgentTypes.add(p.get(Consts.MODEL_CONFIG_KEY));
 			
 		}
+	}
+	
+	@Override
+	public String getConfig() {
+		return config;
 	}
 	
 	@Override
