@@ -24,8 +24,7 @@ public abstract class MMAgent extends Agent {
 	 * @param l
 	 */
 	public MMAgent(int agentID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, d, p, l);
-		marketIDs = data.getPrimaryMarketIDs();
+		super(agentID, d, p, l);;
 	}
 	
 	/**
@@ -37,7 +36,7 @@ public abstract class MMAgent extends Agent {
 	public ActivityHashMap agentArrival(TimeStamp ts) {
 		
 		String s = "";
-		for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
+		for (Iterator<Integer> i = data.getMarketIDs().iterator(); i.hasNext(); ) {
 			Market mkt = data.markets.get(i.next());
 			this.enterMarket(mkt, ts);
 			s += mkt.toString();
@@ -62,7 +61,7 @@ public abstract class MMAgent extends Agent {
 	 */
 	public ActivityHashMap agentDeparture() {
 
-		for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
+		for (Iterator<Integer> i = data.getMarketIDs().iterator(); i.hasNext(); ) {
 			Market mkt = data.markets.get(i.next());
 			
 			mkt.agentIDs.remove(mkt.agentIDs.indexOf(this.ID));

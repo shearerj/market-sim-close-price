@@ -150,7 +150,7 @@ public class Observations {
 	
 	
 	/**
-	 * Extracts surplus features from a given model.
+	 * Extracts surplus features for background agents in a given model.
 	 * 
 	 * @param model
 	 * @return
@@ -175,13 +175,13 @@ public class Observations {
 				String type = data.getAgent(aid).getType();
 				String label = "with_" + type.toLowerCase();
 				
-				// must append the agentID if there is more than one of this type
-				// in all models
+				// Append the agentID if there is 1+ of this type in the simulation
 				if (data.numAgentType.get(type) > 1) {
 					label += aid;
 				}
+				Agent a = data.getAgent(aid);
 				DescriptiveStatistics ds = new DescriptiveStatistics(values);
-				feat.put(label, ds.getSum() + data.getAgent(aid).getRealizedProfit());
+				feat.put(label, ds.getSum() + a.getRealizedProfit().get(model.getID()));
 			}
 		}
 		return feat;
@@ -473,21 +473,23 @@ public class Observations {
 			
 		}
 			
-		// TODO - add an iterator here when add the second 2M model
-		
-		// Do for combinations with 2M model
-		ArrayList<Integer> ids = data.getMarketIDs();
-		
-		HashMap<Integer,PQTransaction> transactions = data.getTrans(ids);
-		
-		for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
-			PQTransaction trans = entry.getValue();
-//				if (trans.sellerID == id) {
-//					buys++;
-//				} else if (trans.buyerID == id) {
-//					sells++;
-//				}
+		for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
+			// Do for combinations with 2M model
+			MarketModel model = entry.getValue();
+			ArrayList<Integer> ids = model.getMarketIDs();
+			
+			HashMap<Integer,PQTransaction> transactions = data.getTrans(ids);
+			
+			for (Map.Entry<Integer,PQTransaction> tr : transactions.entrySet()) {
+				PQTransaction trans = tr.getValue();
+//					if (trans.sellerID == id) {
+//						buys++;
+//					} else if (trans.buyerID == id) {
+//						sells++;
+//					}
+			}
 		}
+		
 	
 //		ArrayList<Integer> ids = data.getCentralMarketIDs();
 //		// perform same analysis for comparing the two centralized markets

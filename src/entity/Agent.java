@@ -1,6 +1,7 @@
 package entity;
 
 import event.*;
+import model.*;
 import market.*;
 import activity.*;
 import systemmanager.*;
@@ -21,11 +22,10 @@ public abstract class Agent extends Entity {
 	protected Random rand;
 	
 	// Market information (all hashed by market ID, as ID may be negative)
-	protected ArrayList<Integer> marketIDs;
 	protected HashMap<Integer,Price> bidPrice;
 	protected HashMap<Integer,Price> askPrice;
 	protected HashMap<Integer,Bid> currentBid;
-	protected HashMap<Integer,Vector<Quote>> quotes;
+	protected HashMap<Integer,ArrayList<Quote>> quotes;
 	protected HashMap<Integer,Integer> initBid;
 	protected HashMap<Integer,Integer> initAsk;
 	protected HashMap<Integer,Integer> prevBid;
@@ -48,12 +48,11 @@ public abstract class Agent extends Entity {
 	protected String agentType;
 	protected TimeStamp arrivalTime;
 
-	// 	Tracking cash flow
-	protected int cashBalance;
-	protected int positionBalance;
-	protected int averageCost;
-	protected int realizedProfit;
-	protected int centralProfit;			// profit in centralized market
+	// Tracking cash flow (hashed by model ID)
+	protected HashMap<Integer,Integer> cashBalance;
+	protected HashMap<Integer,Integer> positionBalance;
+	protected HashMap<Integer,Integer> averageCost;
+	protected HashMap<Integer,Integer> realizedProfit;
 	
 	/**
 	 * Constructor
@@ -65,14 +64,13 @@ public abstract class Agent extends Entity {
 		rand = new Random();
 		
 		// initialize all containers
-		marketIDs = new ArrayList<Integer>();
 		bidPrice = new HashMap<Integer,Price>();
 		askPrice = new HashMap<Integer,Price>();
 		currentBid = new HashMap<Integer,Bid>();
 		lastQuoteTime = new HashMap<Integer,TimeStamp>();
 		nextQuoteTime = new HashMap<Integer,TimeStamp>();
 		lastClearTime = new HashMap<Integer,TimeStamp>();
-		quotes = new HashMap<Integer,Vector<Quote>>();
+		quotes = new HashMap<Integer,ArrayList<Quote>>();
 		initBid = new HashMap<Integer,Integer>();
 		initAsk = new HashMap<Integer,Integer>();
 		prevBid = new HashMap<Integer,Integer>();
@@ -82,13 +80,15 @@ public abstract class Agent extends Entity {
 		lastNBBOQuote = new BestBidAsk();
 		
 		privateValue = -1;
-		cashBalance = 0;
-		positionBalance = 0;
-		averageCost = 0;
-		realizedProfit = 0;
 		
-		tickSize = d.tickSize;
-		quoter = d.getQuoter();
+		cashBalance = new HashMap<Integer,Integer>();
+		positionBalance = new HashMap<Integer,Integer>();
+		averageCost = new HashMap<Integer,Integer>();
+		realizedProfit = new HashMap<Integer,Integer>();
+		initializeToValue(0);
+		
+		tickSize = data.tickSize;
+		quoter = data.getQuoter();
 	}
 	
 	
@@ -115,6 +115,21 @@ public abstract class Agent extends Entity {
 	 */
 	public abstract HashMap<String, Object> getObservation();
 	
+	
+	/**
+	 * Initialize cash/position balance, average cost, realized profit to given value.
+	 * @param val
+	 */
+	protected void initializeToValue(int val) {
+		// iterate through models and initialize containers to be input value
+		for (Iterator<Integer> it = data.getModelIDs().iterator(); it.hasNext(); ) {
+			int id = it.next();
+			cashBalance.put(id, val);
+			positionBalance.put(id, val);
+			averageCost.put(id, val);
+			realizedProfit.put(id, val);
+		}
+	}
 	
 	/**
 	 * Set EntityProperties for this agent.
@@ -147,7 +162,6 @@ public abstract class Agent extends Entity {
 		return arrivalTime; 
 	}
 	
-	
 	/**
 	 * @return private value of agent.
 	 */
@@ -163,7 +177,7 @@ public abstract class Agent extends Entity {
 		return agentType;
 	}
 	
-	
+	@Override
 	public String toString() {
 		return new String("(" + this.getID() + ")");
 	}
@@ -182,7 +196,6 @@ public abstract class Agent extends Entity {
 	 * Clears all the agent's data structures.
 	 */
 	protected void clearAll() {
-		marketIDs.clear();
 		bidPrice.clear();
 		askPrice.clear();
 		currentBid.clear();
@@ -201,9 +214,37 @@ public abstract class Agent extends Entity {
 	 * @return number of quotes
 	 */
 	public int getQuoteSize(int mktID) {
-		return quotes.get(mktID).size();
+		return getQuote(mktID).size();
 	}
 
+	/**
+	 * If quotes contains list for that market, return it; otherwise return 
+	 * empty list.
+	 * 
+	 * @param mktID
+	 * @return
+	 */
+	public ArrayList<Quote> getQuote(int mktID) {
+		if (quotes.get(mktID) != null) {
+			return quotes.get(mktID);
+		} else {
+			return new ArrayList<Quote>();
+		}
+	}
+	
+	/**
+	 * Add given quote to the market. Initializes empty list if doesn't exist yet.
+	 * @param mktID
+	 * @param q
+	 */
+	public void addQuote(int mktID, Quote q) {
+		if (quotes.get(mktID) == null) {
+			// create for that market
+			quotes.put(mktID, new ArrayList<Quote>());
+		} 
+		quotes.get(mktID).add(q);
+	}
+	
 	/**
 	 * Gets latest quote from a given market. If no quote available, returns 
 	 * a default Quote object.
@@ -212,21 +253,27 @@ public abstract class Agent extends Entity {
 	 * @return most recent quote for the specified market
 	 */
 	public Quote getLatestQuote(int mktID) {
-		if (quotes.isEmpty()) {
+		if (quotes.isEmpty() || getQuote(mktID) == null) {
 			return new Quote();
-		} else if (quotes.get(mktID).isEmpty()) {
+		} else if (getQuote(mktID).isEmpty()) {
 			return new Quote();
 		}
-		return quotes.get(mktID).lastElement();
+		// return last element in the list
+		return quotes.get(mktID).get(quotes.size()-1);
 	}
-
+	
 	/**
 	 * @param mktID
 	 * @param idx
 	 * @return quote at a specified index
 	 */
 	public Quote getQuoteAt(int mktID, int idx) {
-		return quotes.get(mktID).get(idx);
+		if (!getQuote(mktID).isEmpty()) {
+			// return new empty quote
+			return new Quote();
+		} else {
+			return getQuote(mktID).get(idx);
+		}
 	}
 
 	/**
@@ -245,26 +292,26 @@ public abstract class Agent extends Entity {
 		return askPrice.get(mktID);
 	}
 
-	/**
-	 * @return number of markets that agent is active in
-	 */
-	public int getNumMarkets() {
-		return marketIDs.size();
-	}
+//	/**
+//	 * @return number of markets that agent is active in
+//	 */
+//	public int getNumMarkets() {
+//		return marketIDs.size();
+//	}
 
 	/**
 	 * @return current cash balance
 	 */
-	public int getCashBalance() {
+	public HashMap<Integer,Integer> getCashBalance() {
 		return cashBalance;
 	}
 
-	/**
-	 * @return array of marketIDs
-	 */
-	public ArrayList<Integer> getMarketIDs() {
-		return marketIDs;
-	}
+//	/**
+//	 * @return array of marketIDs
+//	 */
+//	public ArrayList<Integer> getMarketIDs() {
+//		return marketIDs;
+//	}
 	
 	/**
 	 * Enters market by adding market to data structures.
@@ -275,7 +322,7 @@ public abstract class Agent extends Entity {
 		mkt.agentIDs.add(this.ID);
 		mkt.buyers.add(this.ID);
 		mkt.sellers.add(this.ID);
-		quotes.put(mkt.ID, new Vector<Quote>());
+		quotes.put(mkt.ID, new ArrayList<Quote>());
 		arrivalTime = ts;
 
 		// Initialize bid/ask containers
@@ -291,7 +338,7 @@ public abstract class Agent extends Entity {
 	 * @param mktID
 	 */
 	protected void exitMarket(int mktID) {
-		marketIDs.remove(marketIDs.indexOf(mktID));
+//		marketIDs.remove(marketIDs.indexOf(mktID));
 		bidPrice.remove(mktID);
 		askPrice.remove(mktID);
 		currentBid.remove(mktID);
@@ -450,21 +497,22 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * Update quotes from all markets that the agent is active in.
+	 * Update quotes for all models (& their respective markets) that the agent is active in.
 	 * 
 	 * @param ts
 	 * @return
 	 */
 	public ActivityHashMap updateAllQuotes(TimeStamp ts) {
-		for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
-			int id = i.next();
-			Market mkt = data.getMarket(id);
+		
+		for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
+			Market mkt = data.getMarket(it.next());
 			updateQuotes(mkt, ts);
 		}
-		lastGlobalQuote = quoter.findBestBidOffer(marketIDs);
-		lastNBBOQuote = quoter.getNBBOQuote(data.getPrimaryModel().hashCode());
 		
-		log.log(Log.INFO, ts.toString() + " | " + this.toString() + " Global" + lastGlobalQuote + 
+		lastGlobalQuote = quoter.findBestBidOffer(data.getPrimaryMarketIDs());
+		lastNBBOQuote = quoter.getNBBOQuote(data.getPrimaryModel().getID());
+		
+		log.log(Log.INFO, ts.toString() + " | " + this + " Global" + lastGlobalQuote + 
 				", NBBO" + lastNBBOQuote);
 
 		return null;
@@ -497,22 +545,25 @@ public abstract class Agent extends Entity {
 		} else {
 			log.log(Log.ERROR, "Agent::updateQuotes: Quote is null.");
 		}
-		quotes.get(mkt.ID).add(q);
+		addQuote(mkt.ID, q);
 	}
 
 	
 	/**
-	 * Logs transactions and prints a summary of performance so far.
+	 * Logs transactions for the given model and prints a summary of performance so far.
 	 * 
 	 * @param ts
+	 * @param modelID
 	 */
-	public void logTransactions(TimeStamp ts) {
+	public void logTransactions(TimeStamp ts, int modelID) {
 		
-		int rp = getRealizedProfit();
-		int up = getUnrealizedProfit();
+		HashMap<Integer,Integer> rp = getRealizedProfit();
+		HashMap<Integer,Integer> up = getUnrealizedProfit();
 
-		String s = ts.toString() + " | " + this.toString() + " Current Position=" + positionBalance +
-				", Realized Profit=" + rp + ", Unrealized Profit=" + up;
+		String s = ts.toString() + " | " + this +  " Agent::logTransactions: " + 
+				data.getModel(modelID).getModelName() + ": Current Position=" + 
+				positionBalance.get(modelID) + ", Realized Profit=" + rp.get(modelID) + 
+				", Unrealized Profit=" + up.get(modelID);
 		log.log(Log.INFO, s);
 	}
 	
@@ -554,49 +605,61 @@ public abstract class Agent extends Entity {
 		if (!flag) {
 			return false;
 		} else {
-//			if (!data.centralMarkets.containsKey(t.marketID)) { 
-				// check whether seller, in which case negate the quantity
-				int quantity = t.quantity;
-				if (this.ID == t.sellerID) {
-					quantity = -quantity;
+			// Check only the model that the transaction belongs to (by market to model ID)
+			int modelID = data.getModelByMarket(t.marketID).getID();
+
+			// check whether seller, in which case negate the quantity
+			int quantity = t.quantity;
+			if (this.ID == t.sellerID) {
+				quantity = -quantity;
+			}
+			// update cash flow and position
+			if (positionBalance.get(modelID) == 0) {
+				averageCost.put(modelID, t.price.getPrice());
+
+			} else if (positionBalance.get(modelID) > 0) {
+				if (quantity > 0) {
+					int newCost = averageCost.get(modelID) * positionBalance.get(modelID) + 
+							t.price.getPrice() * quantity;
+					averageCost.put(modelID, newCost / (positionBalance.get(modelID) + quantity));
+
+				} else if (-quantity < positionBalance.get(modelID)) {
+					// closing out partial long position
+					int rprofit = realizedProfit.get(modelID);
+					rprofit += (-quantity) * (t.price.getPrice() - averageCost.get(modelID));
+					realizedProfit.put(modelID, rprofit);
+
+				} else if (-quantity >= positionBalance.get(modelID)) {
+					// closing out all long position, remaining quantity will start new short position
+					int rprofit = realizedProfit.get(modelID);
+					rprofit += positionBalance.get(modelID) * (t.price.getPrice() - averageCost.get(modelID));
+					realizedProfit.put(modelID, rprofit);
+					averageCost.put(modelID, t.price.getPrice());
 				}
-				
-				// update cash flow and position
-				if (positionBalance == 0) {
-					averageCost = t.price.getPrice();
 
-				} else if (positionBalance > 0) {
-					if (quantity > 0) {
-						int newCost = averageCost * positionBalance + t.price.getPrice() * quantity;
-						averageCost = newCost / (positionBalance + quantity);
+			} else if (positionBalance.get(modelID) < 0) {
+				if (quantity < 0) {
+					int newCost = averageCost.get(modelID) * (-positionBalance.get(modelID)) + 
+							t.price.getPrice() * (-quantity);
+					averageCost.put(modelID, -newCost / (positionBalance.get(modelID) + quantity));
 
-					} else if (-quantity < positionBalance) {
-						// closing out partial long position
-						realizedProfit += (-quantity) * (t.price.getPrice() - averageCost);
+				} else if (quantity < -positionBalance.get(modelID)) {
+					// closing out partial short position
+					int rprofit = realizedProfit.get(modelID);
+					rprofit += quantity * (averageCost.get(modelID) - t.price.getPrice());
+					realizedProfit.put(modelID, rprofit);
 
-					} else if (-quantity >= positionBalance) {
-						// closing out all long position, remaining quantity will start new short position
-						realizedProfit += positionBalance * (t.price.getPrice() - averageCost);
-						averageCost = t.price.getPrice();
-					}
-
-				} else if (positionBalance < 0) {
-					if (quantity < 0) {
-						int newCost = averageCost * (-positionBalance) + t.price.getPrice() * (-quantity);
-						averageCost = -newCost / (positionBalance + quantity);
-
-					} else if (quantity < -positionBalance) {
-						// closing out partial short position
-						realizedProfit += quantity * (averageCost - t.price.getPrice());
-
-					} else if (quantity >= -positionBalance) {
-						// closing out all short position, remaining quantity will start new long position
-						realizedProfit += (-positionBalance) * (averageCost - t.price.getPrice());
-						averageCost = t.price.getPrice();
-					}
+				} else if (quantity >= -positionBalance.get(modelID)) {
+					// closing out all short position, remaining quantity will start new long position
+					int rprofit = realizedProfit.get(modelID);
+					rprofit += (-positionBalance.get(modelID)) * (averageCost.get(modelID) - t.price.getPrice());
+					realizedProfit.put(modelID, rprofit);
+					averageCost.put(modelID, t.price.getPrice());
 				}
-				positionBalance += quantity;
-//			}
+			}
+			int pb = positionBalance.get(modelID);
+			pb += quantity;
+			positionBalance.put(modelID, pb);
 		}
 		return true;
 	}
@@ -632,6 +695,26 @@ public abstract class Agent extends Entity {
 							", transID=" + t.transID + " buyer=" + t.buyerID + ", seller=" + t.sellerID +
 							", price=" + t.price.toString() + ", quantity=" + t.quantity + 
 							", timeStamp=" + t.timestamp + ")");
+					
+					// TODO for logging of surplus, remove later
+					int bsurplus = data.getAgent(t.buyerID).getPrivateValue() - t.price.getPrice();
+					int ssurplus = t.price.getPrice() - data.getAgent(t.sellerID).getPrivateValue();
+					String s = ts.toString() + " | " + this.toString() + " " +
+							"Agent::updateTransactions: BUYER surplus: " + data.getAgent(t.buyerID).getPrivateValue()
+							+ "-" + t.price.getPrice() + "=" + bsurplus + ", "
+							+ "SELLER surplus: " + t.price.getPrice() + "-" + 
+							data.getAgent(t.sellerID).getPrivateValue() + "=" + ssurplus;
+					log.log(Log.INFO, s);
+					log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " +
+							"Agent::updateTransactions: TOTAL SURPLUS: " + (bsurplus + ssurplus));
+					
+//					log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " +
+//							"Agent::updateTransactions: BUYER surplus: " + data.getAgent(t.buyerID).getPrivateValue()
+//							+ "-" + t.price.getPrice() + "=" + bsurplus);
+//					log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " +
+//							"Agent::updateTransactions: SELLER surplus: " + t.price.getPrice() + "-" + 
+//							data.getAgent(t.sellerID).getPrivateValue() + "=" + ssurplus);
+					
 				}
 				// Update transaction ID
 				lastGoodTransID = t.transID;
@@ -704,68 +787,80 @@ public abstract class Agent extends Entity {
 
 	/**
 	 * Computes any unrealized profit based on market bid/ask quotes.
-	 * Note: could probably do based on NBBO quote's bid ask.
+	 * Performs this computation on the model level, so iterates through markets 
+	 * belonging to a certain model.
+	 * 
+	 * TODO: could probably do based on NBBO quote's bid ask.
 	 * 
 	 * @return agent's unrealized profit/gain
 	 */
-	public int getUnrealizedProfit() {
-		int up = 0;
-		int p = -1;
+	public HashMap<Integer,Integer> getUnrealizedProfit() {
+		HashMap<Integer,Integer> uprofit = new HashMap<Integer,Integer>();
 
 		try {
-			if (positionBalance > 0) {
-				// For long position, compare cost to bid quote (buys)
-				for (Iterator<Integer> it = marketIDs.iterator(); it.hasNext(); ) {
-					int mktID = it.next();
-					if (p == -1 || p < bidPrice.get(mktID).getPrice()) {
-						p = bidPrice.get(mktID).getPrice();
+			// Iterate through all models
+			for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
+				int up = 0;
+				int p = -1;
+				
+				int modelID = entry.getKey();
+				MarketModel model = entry.getValue();
+				ArrayList<Integer> mIDs = model.getMarketIDs();
+				
+				if (positionBalance.get(modelID) > 0) {
+					// For long position, compare cost to bid quote (buys)
+					for (Iterator<Integer> it = mIDs.iterator(); it.hasNext(); ) {
+						int mktID = it.next();
+						if (p == -1 || p < bidPrice.get(mktID).getPrice()) {
+							p = bidPrice.get(mktID).getPrice();
+						}
+					}
+				} else {
+					// For short position, compare cost to ask quote (sells)
+					for (Iterator<Integer> it = mIDs.iterator(); it.hasNext(); ) {
+						int mktID = it.next();
+						if (p == -1 || p > askPrice.get(mktID).getPrice()) {
+							p = askPrice.get(mktID).getPrice();
+						}	
 					}
 				}
-			} else {
-				// For short position, compare cost to ask quote (sells)
-				for (Iterator<Integer> it = marketIDs.iterator(); it.hasNext(); ) {
-					int mktID = it.next();
-					if (p == -1 || p > askPrice.get(mktID).getPrice()) {
-						p = askPrice.get(mktID).getPrice();
-					}	
+				if (positionBalance.get(modelID) != 0) {
+					log.log(Log.DEBUG, model.getModelName() + ": " + this.toString() + 
+							" bal=" + positionBalance.get(modelID) + 
+							", p=" + p + ", avgCost=" + averageCost.get(modelID));
 				}
+				if (p != -1) {
+					up += positionBalance.get(modelID) * (p - averageCost.get(modelID));
+				}
+				
+				// Update container
+				uprofit.put(modelID, up);
 			}
-			if (positionBalance != 0) {
-				log.log(Log.DEBUG, "   " + this.toString() + " bal=" + positionBalance + 
-						", p=" + p + ", avgCost=" + averageCost);
-			}
-			if (p != -1) {
-				up += positionBalance * (p - averageCost);
-			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return up;
+		return uprofit;
 	}
 
 
 	/**
 	 * @return agent's realized profit
 	 */
-	public int getRealizedProfit() {
+	public HashMap<Integer,Integer> getRealizedProfit() {
 		return realizedProfit;
 	}
 	
-	
-	/**
-	 * @return agent's realized profit in the centralized market
-	 */
-	public int getCentralizedMarketProfit() {
-		return centralProfit;
-	}
-
 	/**
 	 * Find best market to buy in (i.e. lowest ask) and to sell in (i.e. highest bid).
-	 * This is a global operation so it checks all markets.
+	 * This is a global operation so it checks all markets in marketIDs.
 	 * 
 	 * bestBuy = the best price an agent can buy at (the lowest sell bid).
 	 * bestSell = the best price an agent can sell at (the highest buy bid).
 	 *  
+	 * NOTE: This uses only those markets belonging to the primary model, as strategies
+	 * can only be selected based on information on those markets.
+	 * 
 	 * @return BestQuote
 	 */
 	protected BestQuote findBestBuySell() {
@@ -774,7 +869,7 @@ public abstract class Agent extends Entity {
 		int bestBuyMkt = 0;
 		int bestSellMkt = 0;
 
-		for (Iterator<Integer> it = marketIDs.iterator(); it.hasNext(); ) {
+		for (Iterator<Integer> it = data.getPrimaryMarketIDs().iterator(); it.hasNext(); ) {
 			Market mkt = data.markets.get(it.next());
 			Price bid = getBidPrice(mkt.ID);
 			Price ask = getAskPrice(mkt.ID);

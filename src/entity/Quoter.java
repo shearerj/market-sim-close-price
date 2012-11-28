@@ -23,7 +23,6 @@ public class Quoter extends Entity {
 
 	private int tickSize;
 	private TimeStamp latency;
-//	public BestBidAsk lastQuote;
 	public HashMap<Integer, BestBidAsk> lastQuotes;		// hashed by model ID
 	
 	/**
@@ -101,16 +100,16 @@ public class Quoter extends Entity {
 		
 		if (latency.getTimeStamp() > 0) {
 			TimeStamp tsNew = ts.sum(latency);
-			actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY,	new UpdateNBBO(this, tsNew));
+			actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(this, tsNew));
 			
 		} else if (latency.getTimeStamp() == 0) {
 			// infinitely fast NBBO updates
 			TimeStamp tsNew = new TimeStamp(Consts.INF_TIME);
-			actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY,	new UpdateNBBO(this, tsNew));
+			actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(this, tsNew));
 		}
 		return actMap;
 	}
-	
+
 	
 	/**
 	 * Find best quote across given markets (lowest ask & highest bid).

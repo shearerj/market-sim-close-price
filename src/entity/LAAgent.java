@@ -27,7 +27,7 @@ public class LAAgent extends MMAgent {
 	 */
 	public LAAgent(int agentID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, d, p, l);
-		agentType = Consts.getAgentType(this.getClass().getSimpleName());
+		agentType = Consts.getAgentType(this.getName());
 		arrivalTime = new TimeStamp(0);
 		
 		if (data.getPrimaryModel().getNumMarkets() != 2) {

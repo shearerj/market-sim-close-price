@@ -51,9 +51,8 @@ public abstract class SMAgent extends Agent {
 	 */
 	public ActivityHashMap agentArrival(TimeStamp ts) {
 
-		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "->" + market.toString());
+		log.log(Log.INFO, ts.toString() + " | " + this + "->" + market.toString());
 		this.enterMarket(market, ts);
-		marketIDs.add(market.ID);
 		
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new UpdateAllQuotes(this, ts));

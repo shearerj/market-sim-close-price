@@ -79,6 +79,14 @@ public abstract class MarketModel {
 	 */
 	public abstract String getConfig();
 	
+	
+	/**
+	 * @return model name (format "MODELTYPE-CONFIG")
+	 */
+	public String getModelName() {
+		return this.getClass().getSimpleName().toUpperCase() + "-" + config;
+	}
+	
 	/**
 	 * @param id
 	 * @return true if agent with the given id is permitted in this model.
@@ -146,7 +154,7 @@ public abstract class MarketModel {
 	/**
 	 * @return modelMarketConfig
 	 */
-	public ArrayList<MarketObjectPair> getModelMarketConfig() {
+	public ArrayList<MarketObjectPair> getMarketConfig() {
 		return modelMarketConfig;
 	}
 	

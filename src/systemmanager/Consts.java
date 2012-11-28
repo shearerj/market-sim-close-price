@@ -26,17 +26,18 @@ public class Consts {
 		{"LA", "DUMMY"};
 	// **********************************************************
 	
+	// Setting up models
 	public final static String MODEL_CONFIG_KEY = "config";
 	public final static String MODEL_CONFIG_NONE = "NONE";
 	
 	// ActivityList priorities
 	public final static int DEFAULT_PRIORITY = 0;
 	public final static int SUBMIT_BID_PRIORITY = 1;
-	public final static int CDA_CLEAR_PRIORITY = 2;
-	public final static int CALL_CLEAR_PRIORITY = 2;
-	public final static int HFT_PRIORITY = 3;
-	public final static int MARKETMAKER_PRIORITY = 4;
-	public final static int WITHDRAW_BID_PRIORITY = 5;
+	public final static int WITHDRAW_BID_PRIORITY = 2;
+	public final static int CDA_CLEAR_PRIORITY = 3;
+	public final static int CALL_CLEAR_PRIORITY = 3;
+	public final static int HFT_PRIORITY = 4;
+	public final static int MARKETMAKER_PRIORITY = 5;
 	public final static int UPDATE_NBBO_PRIORITY = 6;
 	
 	// TimeStamp

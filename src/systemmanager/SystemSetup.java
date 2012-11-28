@@ -130,10 +130,10 @@ public class SystemSetup {
 				p.put(Consts.MODEL_CONFIG_KEY, configs[i]);
 				MarketModel model = ModelFactory.createModel(modelType, p, data);		
 				data.addModel(model);
-				log.log(Log.DEBUG, model + ": " + p);
+				log.log(Log.INFO, model.getModelName() + ": ");
 				
 				// create markets in the model
-				for (Iterator<MarketObjectPair> it = model.getModelMarketConfig().iterator(); it.hasNext(); ) {
+				for (Iterator<MarketObjectPair> it = model.getMarketConfig().iterator(); it.hasNext(); ) {
 					MarketObjectPair mop = it.next();
 					int mID = marketIDSequence.decrement();
 					
@@ -167,9 +167,11 @@ public class SystemSetup {
 							}
 						}
 					} else {
-						System.err.println(this.getClass().getSimpleName() + "::" + 
+						String s = this.getClass().getSimpleName() + "::" + 
 								"createMarketModels: " + "primary model type not found in " +
-								"configuration list for " + modelType);
+								"configuration list for " + modelType;
+						log.log(Log.ERROR, s);
+						System.err.println(s);
 					}
 				}
 			}

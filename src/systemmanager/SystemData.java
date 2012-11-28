@@ -166,37 +166,18 @@ public class SystemData {
 		return quoter;
 	}
 	
-	/**
-	 * @return
-	 */
 	public HashMap<Integer,Agent> getAgents() {
 		return agents;
 	}
 
-	/**
-	 * @return HashMap of uncentralized markets
-	 */
-	public HashMap<Integer,Market> getMarkets() {
-		return markets;
-	}
-
-	/**
-	 * @return
-	 */
-	public HashMap<Integer,MarketModel> getModels() {
-		return models;
-	}
-	
-	/**
-	 * @return
-	 */
 	public ArrayList<Integer> getAgentIDs() {
 		return new ArrayList<Integer>(agents.keySet());
 	}
 	
-	/**
-	 * @return ArrayList of uncentralized market IDs
-	 */
+	public HashMap<Integer,Market> getMarkets() {
+		return markets;
+	}
+	
 	public ArrayList<Integer> getMarketIDs() {
 		return new ArrayList<Integer>(markets.keySet());
 	}
@@ -204,17 +185,29 @@ public class SystemData {
 	public Agent getAgent(int id) {
 		return agents.get(id);
 	}
-
+	
 	public Market getMarket(int id) {
 		return markets.get(id);
 	}
+	
+	public HashMap<Integer,MarketModel> getModels() {
+		return models;
+	}
+	
+	public ArrayList<Integer> getModelIDs() {
+		return new ArrayList<Integer>(models.keySet());
+	}
 
-	public MarketModel getMarketModel(int id) {
+	public MarketModel getModel(int id) {
 		return models.get(id);
 	}
 	
 	public MarketModel getModelByMarket(int mktID) {
 		return models.get(marketToModel.get(mktID));
+	}
+	
+	public int getModelIDByMarket(int mktID) {
+		return getModelByMarket(mktID).getID();
 	}
 	
 	/**
@@ -347,21 +340,21 @@ public class SystemData {
 		return pvs;
 	}
 	
-	/**
-	 * Gets the realized profit of all background agents.
-	 * 
-	 * @return hash map of background agent profits, hashed by agent ID
-	 */
-	public HashMap<Integer,Integer> getAllProfit() {
-		HashMap<Integer,Integer> allProfit = new HashMap<Integer,Integer>();
-		for (Iterator<Integer> it = getAgentIDs().iterator(); it.hasNext(); ) {
-			int id = it.next();
-			if (isBackgroundAgent(id)) {
-				allProfit.put(id, getAgent(id).getRealizedProfit());
-			}
-		}
-		return allProfit;
-	}
+//	/**
+//	 * Gets the realized profit of all background agents.
+//	 * 
+//	 * @return hash map of background agent profits, hashed by agent ID
+//	 */
+//	public HashMap<Integer,Integer> getAllProfit() {
+//		HashMap<Integer,Integer> allProfit = new HashMap<Integer,Integer>();
+//		for (Iterator<Integer> it = getAgentIDs().iterator(); it.hasNext(); ) {
+//			int id = it.next();
+//			if (isBackgroundAgent(id)) {
+//				allProfit.put(id, getAgent(id).getRealizedProfit());
+//			}
+//		}
+//		return allProfit;
+//	}
 	
 	/**
 	 * Iterates through all transactions and sums up surplus for all agents.
@@ -385,10 +378,10 @@ public class SystemData {
 				if (buyer.getPrivateValue() != -1 && isBackgroundAgent(buyer.getID())) {
 					int surplus = 0;
 					if (allSurplus.containsKey(buyer.getID())) {
-						surplus = allSurplus.get(buyer.getID());					
+						surplus = allSurplus.get(buyer.getID());
 					}
 					allSurplus.put(buyer.getID(),
-							surplus + buyer.getPrivateValue() - t.price.getPrice());		
+							surplus + (buyer.getPrivateValue() - t.price.getPrice()));		
 				}
 				if (seller.getPrivateValue() != -1 && isBackgroundAgent(seller.getID())) {
 					int surplus = 0;
@@ -396,7 +389,7 @@ public class SystemData {
 						surplus = allSurplus.get(seller.getID());
 					}
 					allSurplus.put(seller.getID(),
-							surplus + t.price.getPrice() - seller.getPrivateValue());		
+							surplus + (t.price.getPrice() - seller.getPrivateValue()));		
 				}
 			}
 		}

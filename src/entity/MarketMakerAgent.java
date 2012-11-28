@@ -16,7 +16,7 @@ public class MarketMakerAgent extends SMAgent {
 
 	public MarketMakerAgent(int agentID, SystemData d, ObjectProperties p, Log l, int mktID) {
 		super(agentID, d, p, l, mktID);
-		agentType = Consts.getAgentType(this.getClass().getSimpleName());
+		agentType = Consts.getAgentType(this.getName());
 		
 		arrivalTime = new TimeStamp(0);
 	}

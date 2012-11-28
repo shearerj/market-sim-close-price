@@ -49,4 +49,11 @@ public abstract class Entity {
 	public final void setID(int ID) {
 		this.ID = ID;
 	}
+	
+	/**
+	 * @return simple class name
+	 */
+	public String getName() {
+		return this.getClass().getSimpleName();
+	}
 }

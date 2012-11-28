@@ -65,7 +65,7 @@ public class ZIAgent extends SMAgent {
 	 */
 	public ZIAgent(int agentID, SystemData d, ObjectProperties p, Log l, int mktID) {
 		super(agentID, d, p, l, mktID);
-		agentType = Consts.getAgentType(this.getClass().getSimpleName());
+		agentType = Consts.getAgentType(this.getName());
 		
 		expireRate = this.data.expireRate;
 		bidRange = this.data.bidRange;
@@ -76,7 +76,7 @@ public class ZIAgent extends SMAgent {
 				(int) Math.round(getNormalRV(0, pvVar)) * Consts.SCALING_FACTOR);
 		
 		if (data.getPrimaryModel().getNumMarkets() != 2) {
-			log.log(Log.ERROR, this.getClass().getSimpleName() + 
+			log.log(Log.ERROR, this.getName() + 
 					": Need two markets in the primary model!");
 		}
 		
