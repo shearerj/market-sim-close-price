@@ -35,10 +35,12 @@ public class ZIPAgent extends MMAgent {
         
         private double c; //Correction step size for the ZIP agent
         
+        private boolean DEBUG_BASIC_ENB = true;
+        private boolean DEBUG_ADVANCED_ENB = true;
+        
         public Consts.SubmittedBidMarket submittedBidType;
-	
-                
-	public ZIPAgent(int agentID, SystemData d, AgentProperties p, Log l) {
+        
+        public ZIPAgent(int agentID, SystemData d, AgentProperties p, Log l) {
 		super(agentID, d, p, l);
 		agentType = Consts.getAgentType(this.getClass().getSimpleName());
 		params = p;
@@ -57,23 +59,30 @@ public class ZIPAgent extends MMAgent {
 			altMarketID = data.getMarketIDs().get(0);
 		}
                 
-                c = this.data.kappa;
+                c = Double.parseDouble(params.get("c_StepSize"));
                 
                 p_old = -1;
+                
+                if(DEBUG_BASIC_ENB || DEBUG_ADVANCED_ENB){
+                    System.out.println("ZIP Agent ["+this.getID()+"] init. in Market "+mainMarketID);
+                    System.out.println("Private Value = "+privateValue);
+                    System.out.println("C = "+c);
+                }
 	}
 	
 	@Override
 	public HashMap<String, Object> getObservation() {
                 //Return prfit here as System.out.println();
-                System.out.println("ZIP Agent Profit = "+this.getRealizedProfit());
-		return null;
+            if(DEBUG_ADVANCED_ENB || DEBUG_BASIC_ENB)
+                System.out.println("ZIP Agent ["+this.getID()+"] Final Profit = "+this.getRealizedProfit());
+            return null;
 	}
 	
 	@Override
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-
-		// gets best buy and sell offers (for all markets)
+		
+                // gets best buy and sell offers (for all markets)
 		Quote mainMarketQuote = data.getMarket(mainMarketID).quote(ts);
                 
                 //Find the transaction mode- is our agent buying or selling?
@@ -81,42 +90,70 @@ public class ZIPAgent extends MMAgent {
 		int q = 1; //Buy/sell variable
                 // 0.50% chance of either buying or selling
 		if (rand.nextDouble() < 0.5)
-			q = -q; 
-                //TODO - figure out p_{t=0} - I'm guessing random init, subject to private valuation
+			q = -q;
+                if(DEBUG_ADVANCED_ENB || DEBUG_BASIC_ENB)
+                    System.out.println("\n");
+                if(DEBUG_BASIC_ENB){
+                    System.out.println("ZIP Agent ["+this.getID()+"] is in ("+q+") mode");
+                    System.out.println("Private Value = "+privateValue);
+                }
+                /*
+                 * if q = +1 - We want to set our ask price (sell)
+                 * if q = -1 - We want to set out bid price (buy)
+                 */
+                
                 
                 //Find the best market for transaction adn the corresponding best price
                 boolean nbboBetter = false;
-                int bestMarketID = mainMarketID;
-                submittedBidType = Consts.SubmittedBidMarket.MAIN;	// default is submitting to main market
+                int bestMarketID = mainMarketID; //Submit to the Main Mrkt by default
+                submittedBidType = Consts.SubmittedBidMarket.MAIN;// default is submitting to main market
                 int bestPrice = -1;
                 if (q > 0) {
                     //Check if valid markets have been initialized
                     if( lastNBBOQuote.bestAsk != -1 ||
                         mainMarketQuote.lastAskPrice.getPrice() == -1 &&
                         lastNBBOQuote.bestAsk != -1) {
-                            if (lastNBBOQuote.bestAsk < mainMarketQuote.lastAskPrice.getPrice()){
+                            if(DEBUG_BASIC_ENB){
+                                System.out.println("lastNBBOQuote.bestAsk = "+lastNBBOQuote.bestAsk);
+                                System.out.println("mainMarketQuote.lastAskPrice = "+mainMarketQuote.lastAskPrice.getPrice());
+                            }
+                            if (lastNBBOQuote.bestAsk > mainMarketQuote.lastAskPrice.getPrice()){
                                 //^Do other markets have better asking prices according to the NBBO
+                                if(DEBUG_BASIC_ENB)
+                                    System.out.println("Alt. Market has a higher asking price");
                                 nbboBetter = true;
                                 bestPrice = lastNBBOQuote.bestAsk;
                                 bestMarketID = lastNBBOQuote.bestAskMarket;    
-                                
                                 if(bestMarketID == altMarketID)
                                     submittedBidType = Consts.SubmittedBidMarket.ALTERNATE;
-                                
                             }
                             else{
+                                if(DEBUG_BASIC_ENB)
+                                    System.out.println("Main Market has a higher asking price");
+                                
                                 bestPrice = mainMarketQuote.lastAskPrice.getPrice();
                             }
-                    } else {//In case the market have not been initialized, use a random price.
-                        p_old = (int) Math.max(0, ((this.privateValue - 2*bidRange) + rand.nextDouble()*2*bidRange));
-                        bestPrice = p_old;                    
+                    } else {//In case the market have not been initialized, use a random price.                        
+                        //p_old = (int) Math.max(0, ((this.privateValue - 2*bidRange) + rand.nextDouble()*2*bidRange));
+                        p_old = (int) Math.max(0, (this.privateValue + rand.nextDouble()*2*bidRange));
+                        bestPrice = p_old;
+                        if(DEBUG_BASIC_ENB){
+                            System.out.println("Markets have not been initialized");
+                            System.out.println("p_old and bestPrice = "+p_old);
+                        }
                     }
                 } else {
                     if( lastNBBOQuote.bestBid != -1 ||
                         mainMarketQuote.lastBidPrice.getPrice() == -1 &&
                         lastNBBOQuote.bestBid != -1) {
-                            if (lastNBBOQuote.bestBid > mainMarketQuote.lastBidPrice.getPrice()) {
+                            if(DEBUG_BASIC_ENB){
+                                System.out.println("lastNBBOQuote.bestBid = "+lastNBBOQuote.bestBid);
+                                System.out.println("mainMarketQuote.lastBidPrice = "+mainMarketQuote.lastBidPrice.getPrice());
+                            }
+                            if (lastNBBOQuote.bestBid < mainMarketQuote.lastBidPrice.getPrice()) {
                                 // don't need lastNBBOQuote.bestBid != -1 due to first condition, will always > -1
+                                if(DEBUG_BASIC_ENB)
+                                    System.out.println("Alt. Market has a lower bid price");
                                 nbboBetter = true;
                                 bestPrice = lastNBBOQuote.bestAsk;
                                 bestMarketID = lastNBBOQuote.bestAskMarket;
@@ -125,11 +162,18 @@ public class ZIPAgent extends MMAgent {
                                     submittedBidType = Consts.SubmittedBidMarket.ALTERNATE;
                                 
                         } else {
+                                if(DEBUG_BASIC_ENB)
+                                    System.out.println("Main Market has a lower bid price");
                                 bestPrice = mainMarketQuote.lastAskPrice.getPrice();
                         }
                     } else {//In case the market have not been initialized, use a random price.
-                        p_old = (int) Math.max(0, (this.privateValue + rand.nextDouble()*2*bidRange));
-                        bestPrice = p_old;                        
+                        //p_old = (int) Math.max(0, (this.privateValue + rand.nextDouble()*2*bidRange));
+                        p_old = (int) Math.max(0, ((this.privateValue - 2*bidRange) + rand.nextDouble()*2*bidRange));
+                        bestPrice = p_old;       
+                        if(DEBUG_BASIC_ENB){
+                            System.out.println("Markets have not been initialized");
+                            System.out.println("p_old and bestPrice = "+p_old);
+                        }
                     }
                 }
                 
@@ -157,7 +201,7 @@ public class ZIPAgent extends MMAgent {
                 
                 //Given best buy/sell price, determine the margin (\mu)
                 if (q > 0) {
-                    //Buying:- We buy from (0 , \lambda)
+                    //We set our Ask price here
                     /*
                      * Is the best bid above our private valuation?
                      *  Yes - Quote our private valuation
@@ -167,13 +211,12 @@ public class ZIPAgent extends MMAgent {
                      *      p_t = getMu() + \lambda
                      *       
                      */
-                    if(q > privateValue)
-                        p_new = privateValue - 1;                    
+                    if(bestPrice <= privateValue)
+                        p_new = privateValue + 1;                    
                     else
-                        p_new = privateValue + getMu(p_old, bestPrice);
-                    
+                        p_new = p_old + getMu(p_old, bestPrice);                                        
                     } else {
-                    //Selling:- We sell from (\lambda, +\infinity)
+                    //We set our bid price here
                     /*
                      * Is the best bid below our private valuation?
                      *  Yes - Quote our private valuation
@@ -184,10 +227,10 @@ public class ZIPAgent extends MMAgent {
                      *      p_t = getMu() + \lambda 
                      *       
                      */
-                    if(q < privateValue)
-                        p_new = privateValue + 1;
+                    if(bestPrice >= privateValue)
+                        p_new = privateValue - 1;
                     else
-                        p_new = privateValue + getMu(p_old, bestPrice);
+                        p_new = p_old + getMu(p_old, bestPrice);
                     
 
                 //Set the best buy/sell price subject to constraints and sleep
@@ -195,11 +238,17 @@ public class ZIPAgent extends MMAgent {
                         
                 }
                 
+                
                 assert p_new !=privateValue : "ERROR: Agent is trying to "
                         + "transact at its private value : PV = "+privateValue+ 
                         " transaction value = "+p_new;
                 
                 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                
+                if(DEBUG_BASIC_ENB){
+                    System.out.println("Mu = "+getMu(p_old, bestPrice));
+                    System.out.println("P_new = "+p_new);
+                }
                 
                 //Submit bid to the correct market
                 if (nbboBetter) {
@@ -220,21 +269,25 @@ public class ZIPAgent extends MMAgent {
                 
                 p_old = p_new;
                 
-                actMap.appendActivityHashMap(addBid(data.markets.get(bestMarketID), p_new, q, ts));
+                actMap.appendActivityHashMap(addBid(data.markets.get(bestMarketID), p_new, -q, ts));
                 
                 log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
                         "::agentStrategy: " + "+(" + p_new + "," + q + ") to " + 
                         data.getMarket(bestMarketID));
-		
-                //QUESTION - Does the bid need an expiration time?
-		
-		// Insert events for the agent to sleep, then wake up again at timestamp tsNew
+                
+		if(DEBUG_ADVANCED_ENB || DEBUG_BASIC_ENB){
+                    System.out.println("Current Profit = "+this.getRealizedProfit());
+                    System.out.println("\n");
+                }
+                
+                // Insert events for the agent to sleep, then wake up again at timestamp tsNew
 		int sleepTime = Integer.parseInt(params.get("sleepTime"));
 		double sleepVar = Double.parseDouble(params.get("sleepVar"));
 		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
 		actMap.insertActivity(Consts.MARKETMAKER_PRIORITY, new UpdateAllQuotes(this, tsNew));
 		actMap.insertActivity(Consts.MARKETMAKER_PRIORITY, new AgentStrategy(this, tsNew));
 		return actMap;
+                
 	}
         
         /*

@@ -97,6 +97,7 @@ public class Consts {
                 if (type.equals("ZIP")) {
 			ap.put("sleepTime", "50");
 			ap.put("sleepVar", "100");
+                        ap.put("c_StepSize","1.0");
 		}
 		return ap;
 	}

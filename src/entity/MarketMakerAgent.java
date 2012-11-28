@@ -17,7 +17,7 @@ import java.util.HashMap;
 public class MarketMakerAgent extends SMAgent {
         private int bidRange;				// range for limit order
         
-        private boolean DEBUG_ENB = false;
+        private boolean DEBUG_BASIC_ENB = false;
         private boolean DEBUG_ADVANCED_ENB = true;
         
         private int mainMarketID;			// assigned at initialization
@@ -35,7 +35,7 @@ public class MarketMakerAgent extends SMAgent {
                 
                 if(DEBUG_ADVANCED_ENB){
                     //?? Where's the AgentProperties being used?
-                    System.out.println("MarketMaker Agent initialized at market "+params.get("Market"));
+                    System.out.println("MarketMaker Agent ["+this.getID()+"] initialized at market "+params.get("Market"));
                     System.out.println("Bid Range = "+bidRange);
                 }
 		arrivalTime = new TimeStamp(0);
@@ -53,7 +53,7 @@ public class MarketMakerAgent extends SMAgent {
 	@Override
 	public HashMap<String, Object> getObservation() {
                 if(DEBUG_ADVANCED_ENB){
-                    System.out.println("MarketMaker.getObservation() called, returning null");
+                    System.out.print("MarketMaker Agent ["+this.getID()+"] ");
                     System.out.println("Realized Profit = "+this.getRealizedProfit());                    
                 }
 		return null;
@@ -63,7 +63,8 @@ public class MarketMakerAgent extends SMAgent {
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
                 iterations++;
                 if( iterations%2 == 0){
-                    System.out.print("At Iteration #"+iterations+", ");
+                    System.out.print("MarketMaker Agent ["+this.getID()+"] ");
+                    System.out.print("Iteration #"+iterations+", ");                    
                     System.out.println("Realized Profit = "+this.getRealizedProfit());                    
                 }
 
@@ -104,7 +105,7 @@ public class MarketMakerAgent extends SMAgent {
                                 }
 			}
                         
-                        if(DEBUG_ENB){
+                        if(DEBUG_BASIC_ENB){
                             System.out.print("MarketMaker price :"+prices[j]);
                             if(quantities[j] >= 1)
                                 System.out.println(" [bid]");
