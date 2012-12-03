@@ -10,7 +10,7 @@ import java.util.HashMap;
  * Basic market maker. See description in 2011 EC paper.
  * Participates in only a single market at a time.
  * 
- * TODO - print the profit of the MMA everytime we submit a bid
+ * TODO - 
  * 
  * @author ewah, gshiva
  */
@@ -23,6 +23,8 @@ public class MarketMakerAgent extends SMAgent {
         private int mainMarketID;			// assigned at initialization
         
         private int iterations;
+        
+        private int ladderStepSize;
 
 	public MarketMakerAgent(int agentID, SystemData d, AgentProperties p, Log l, int mktID) {
 		super(agentID, d, p, l, mktID);
@@ -45,6 +47,10 @@ public class MarketMakerAgent extends SMAgent {
 		} else {
 			mainMarketID = data.getMarketIDs().get(1);
 		}
+                
+                int ladderStepScaleFactor = 10;  //TODO - Read this in from spec file
+                
+                ladderStepSize = data.tickSize * ladderStepScaleFactor;
                 
                 iterations = -1;
 
@@ -88,20 +94,27 @@ public class MarketMakerAgent extends SMAgent {
 
 		// This is a dummy market maker that simply submits lots and lots of bids
                 boolean validTransaction;
+                boolean askStart = false;
 		for(int j=0; j<numRungs; j++) {
                     validTransaction = false;
 			if((j<numRungs/2) && (bid>0)) {//First half of array are buys
                                 validTransaction = true;
 				quantities[j] = 1;
-				prices[j] = bid-(10*j);//Depth set at +/-.01*numRungs		}
+                                if(j == 0)
+                                    prices[j] = bid-(ladderStepSize);//Depth set at +/-.01*numRungs		}
+                                else
+                                    prices[j] = prices[j-1]-(ladderStepSize);//Depth set at +/-.01*numRungs
                                 if(prices[j] < 0)
                                     prices[j] = 0;
 			}
-			else { //Second half of array are sells
+			else { //Second half of array are sells                                
                                 if(ask > 0){
                                     validTransaction = true;
-                                    quantities[j] = -1;
-                                    prices[j] = ask+(10*j);//Depth set at +/-.01*numRungs		}
+                                    if(!askStart)
+                                        prices[j] = ask+(ladderStepSize);
+                                    else
+                                        prices[j] = prices[j-1]+(ladderStepSize);
+                                    quantities[j] = -1;                                    
                                 }
 			}
                         
