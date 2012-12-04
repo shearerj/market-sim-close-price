@@ -59,6 +59,8 @@ public class SystemData {
 	public double expireRate;
 	public int bidRange;
 	public double privateValueVar;				// agent variance from PV random process
+	public int mmSleepTime;						// market maker sleep time
+	public int mmScaleFactor;					// market maker scale factor
 	
 	// Central market type; if invalid type, no central market will be created
 	public String centralMarketFlag;

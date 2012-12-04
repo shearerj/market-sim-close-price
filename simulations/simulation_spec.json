@@ -6,6 +6,8 @@
 "call_clear_freq": "100",
 "central_mkt": "on",
 "MARKETMAKER": "1",
+"scale_factor": "10",
+"sleep_time": "100",
 "ZIP": "2",
 "ZI": "500",
 "nbbo_latency": "0",

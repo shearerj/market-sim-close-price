@@ -79,6 +79,10 @@ public class SimulationSpec {
 		data.bidRange = Integer.parseInt(getValue("bid_range"));
 		data.privateValueVar = Double.parseDouble(getValue("private_value_var"));
 		
+		// Market maker variables
+		data.mmScaleFactor = Integer.parseInt(getValue("scale_factor"));
+		data.mmSleepTime = Integer.parseInt(getValue("sleep_time"));
+		
 		// Check which types of markets to create
 		for (int i = 0; i < Consts.marketTypeNames.length; i++) {
 			String num = getValue(Consts.marketTypeNames[i]);
