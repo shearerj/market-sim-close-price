@@ -292,13 +292,6 @@ public abstract class Agent extends Entity {
 		return askPrice.get(mktID);
 	}
 
-//	/**
-//	 * @return number of markets that agent is active in
-//	 */
-//	public int getNumMarkets() {
-//		return marketIDs.size();
-//	}
-
 	/**
 	 * @return current cash balance
 	 */
@@ -306,13 +299,6 @@ public abstract class Agent extends Entity {
 		return cashBalance;
 	}
 
-//	/**
-//	 * @return array of marketIDs
-//	 */
-//	public ArrayList<Integer> getMarketIDs() {
-//		return marketIDs;
-//	}
-	
 	/**
 	 * Enters market by adding market to data structures.
 	 * @param mkt
@@ -338,7 +324,6 @@ public abstract class Agent extends Entity {
 	 * @param mktID
 	 */
 	protected void exitMarket(int mktID) {
-//		marketIDs.remove(marketIDs.indexOf(mktID));
 		bidPrice.remove(mktID);
 		askPrice.remove(mktID);
 		currentBid.remove(mktID);
@@ -561,7 +546,7 @@ public abstract class Agent extends Entity {
 		HashMap<Integer,Integer> up = getUnrealizedProfit();
 
 		String s = ts.toString() + " | " + this +  " Agent::logTransactions: " + 
-				data.getModel(modelID).getModelName() + ": Current Position=" + 
+				data.getModel(modelID).getFullName() + ": Current Position=" + 
 				positionBalance.get(modelID) + ", Realized Profit=" + rp.get(modelID) + 
 				", Unrealized Profit=" + up.get(modelID);
 		log.log(Log.INFO, s);
@@ -825,7 +810,7 @@ public abstract class Agent extends Entity {
 					}
 				}
 				if (positionBalance.get(modelID) != 0) {
-					log.log(Log.DEBUG, model.getModelName() + ": " + this.toString() + 
+					log.log(Log.DEBUG, model.getFullName() + ": " + this.toString() + 
 							" bal=" + positionBalance.get(modelID) + 
 							", p=" + p + ", avgCost=" + averageCost.get(modelID));
 				}

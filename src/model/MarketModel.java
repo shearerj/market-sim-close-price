@@ -83,7 +83,7 @@ public abstract class MarketModel {
 	/**
 	 * @return model name (format "MODELTYPE-CONFIG")
 	 */
-	public String getModelName() {
+	public String getFullName() {
 		return this.getClass().getSimpleName().toUpperCase() + "-" + config;
 	}
 	

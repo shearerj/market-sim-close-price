@@ -130,7 +130,7 @@ public class SystemSetup {
 				p.put(Consts.MODEL_CONFIG_KEY, configs[i]);
 				MarketModel model = ModelFactory.createModel(modelType, p, data);		
 				data.addModel(model);
-				log.log(Log.INFO, model.getModelName() + ": ");
+				log.log(Log.INFO, model.getFullName() + ": ");
 				
 				// create markets in the model
 				for (Iterator<MarketObjectPair> it = model.getMarketConfig().iterator(); it.hasNext(); ) {

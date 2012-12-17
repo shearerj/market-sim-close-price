@@ -229,21 +229,22 @@ public class Observations {
 	
 	
 	/**
-	 * Counts number of times background agent submits bid to alternate market for
-	 * (hopefully) immediate transaction, which may not happen if the NBBO quote is
-	 * out of date.
+	 * Gets general bid information, such as number executed, number expired, 
+	 * number left unexpired, total number of bids submitted by 1) background agents,
+	 * 2) role agents, 3) all agents
 	 * 
-	 * @param agents
 	 * @return
 	 */
-	public HashMap<String,Object> getBackgroundInfo(HashMap<Integer,Agent> agents) {
+	public HashMap<String,Object> getBidInfo() {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
 		int num = 0;
 		int totBids = 0;
 		for (Map.Entry<Integer,Agent> entry : agents.entrySet()) {
 			Agent a = entry.getValue();
-			if (a instanceof ZIAgent) {
+			if (data.isBackgroundAgent(a.getID())) {
+				
+				// MORE TODO here
 				Consts.SubmittedBidMarket x = ((ZIAgent) a).submittedBidType;
 				if (x == null)
 					System.err.print("ERROR");
@@ -261,8 +262,47 @@ public class Observations {
 		return feat;
 	}
 
+
 	/**
-	 * Computes statistical values on the transaction data.for a given model.
+	 * Computes execution speed metrics for a given model.
+	 * 
+	 * @param model
+	 * @return
+	 */
+	public HashMap<String,Object> getExecutionSpeed(MarketModel model) {
+		HashMap<String,Object> feat = new HashMap<String,Object>();
+		
+		ArrayList<Integer> ids = model.getMarketIDs();
+		
+		// Initialize with maximum number of possible bids
+		double[] values = new double[data.executionTime.size()];
+		int cnt = 0;
+		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
+			int mktID = it.next();
+			
+			for (Map.Entry<Integer, TimeStamp> entry : data.executionTime.entrySet()) {
+				int bidID = entry.getKey();
+				TimeStamp ts = entry.getValue();
+				PQBid b = data.getBid(bidID);
+				if (mktID != b.getMarketID()) {
+					System.out.println("bidID=" + bidID + ", submit=" + data.submissionTime.get(bidID) + ", execute=" + ts);	// TODO debug only
+					values[cnt] =  (double) ts.diff(data.submissionTime.get(bidID)).longValue();
+					cnt++;
+				}
+			}
+			// Reinitialize to get rid of unused portion of array
+			double[] speeds = new double[cnt];
+			for (int i = 0; i < cnt; i++) {
+				speeds[i] = values[i];
+			}
+			addStatistics(feat,values,"mkt" + (-mktID),false);
+		}
+		return feat;
+	}
+	
+	
+	/**
+	 * Computes statistical values on the transaction data for a given model.
 	 * 
 	 * @param model
 	 * @return
@@ -311,41 +351,6 @@ public class Observations {
 				feat.put("buys" + suffix, buys);
 				feat.put("sells" + suffix, sells);
 			}
-		}
-		return feat;
-	}
-	
-	
-	/**
-	 * Computes execution speed metrics.
-	 * 
-	 * @param ids
-	 * @return
-	 */
-	public HashMap<String,Object> getExecutionSpeed(ArrayList<Integer> ids) {
-		HashMap<String,Object> feat = new HashMap<String,Object>();
-		
-		// Initialize with maximum number of possible bids
-		double[] values = new double[data.executionTime.size()];
-		int cnt = 0;
-		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
-			int mktID = it.next();
-			
-			for (Map.Entry<Integer, TimeStamp> entry : data.executionTime.entrySet()) {
-				int bidID = entry.getKey();
-				TimeStamp ts = entry.getValue();
-				PQBid b = data.getBid(bidID);
-				if (mktID != b.getMarketID()) {
-					values[cnt] =  (double) ts.diff(data.submissionTime.get(bidID)).longValue();
-					cnt++;
-				}
-			}
-			// Reinitialize to get rid of unused portion of array
-			double[] speeds = new double[cnt];
-			for (int i = 0; i < cnt; i++) {
-				speeds[i] = values[i];
-			}
-			addStatistics(feat,values,"mkt" + (-mktID),false);
 		}
 		return feat;
 	}
