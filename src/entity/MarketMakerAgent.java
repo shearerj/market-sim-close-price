@@ -15,10 +15,10 @@ import java.util.HashMap;
  * @author ewah, gshiva
  */
 public class MarketMakerAgent extends SMAgent {
-        private int bidRange;				// range for limit order
+        private int bidRange;// # of Ladder rungs
         
         private boolean DEBUG_BASIC_ENB = false;
-        private boolean DEBUG_ADVANCED_ENB = true;
+        private boolean DEBUG_ADVANCED_ENB = true;        
         
         private int mainMarketID;			// assigned at initialization
         
@@ -31,14 +31,15 @@ public class MarketMakerAgent extends SMAgent {
 		agentType = Consts.getAgentType(this.getClass().getSimpleName());
 		params = p;
               
-                bidRange = this.data.bidRange;  //Sets buy-sell spread for the Market Maker
+                bidRange = this.data.bidRange;  //Along with the ladderStepSize, 
+                                        //this sets the buy-sell spread for the MM 
                 
                 //Bids need to expire every tik and a new bid is put up
                 
                 if(DEBUG_ADVANCED_ENB){
                     //?? Where's the AgentProperties being used?
                     System.out.println("MarketMaker Agent ["+this.getID()+"] initialized at market "+params.get("Market"));
-                    System.out.println("Bid Range = "+bidRange);
+                    System.out.println("#Ladder Rungs = "+bidRange);
                 }
 		arrivalTime = new TimeStamp(0);
                 
@@ -48,12 +49,15 @@ public class MarketMakerAgent extends SMAgent {
 			mainMarketID = data.getMarketIDs().get(1);
 		}
                 
-                int ladderStepScaleFactor = 10;  //TODO - Read this in from spec file
+                int ladderStepScaleFactor = 10;  //TODO - Read this in from spec file                
                 
                 ladderStepSize = data.tickSize * ladderStepScaleFactor;
                 
+                if(DEBUG_ADVANCED_ENB){
+                    System.out.println("Ladder step size = "+ ladderStepSize);
+                }
+                
                 iterations = -1;
-
 	}
 	
 	@Override
@@ -65,14 +69,22 @@ public class MarketMakerAgent extends SMAgent {
 		return null;
 	}
 	
-	@Override
+	
+        public ActivityHashMap agentStrategy_renameBack(TimeStamp ts) {
+            ActivityHashMap actMap = new ActivityHashMap();
+            return setSleepTime(actMap, ts);
+        }
+        @Override
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
                 iterations++;
-                if( iterations%2 == 0){
-                    System.out.print("MarketMaker Agent ["+this.getID()+"] ");
-                    System.out.print("Iteration #"+iterations+", ");                    
-                    System.out.println("Realized Profit = "+this.getRealizedProfit());                    
-                }
+                //if( iterations%2 == 0){
+                    if(DEBUG_ADVANCED_ENB){
+                        System.out.println("\n");
+                        System.out.print("MarketMaker Agent ["+this.getID()+"] ");
+                        System.out.print("Iteration #"+iterations+", ");                    
+                        System.out.println("Realized Profit = "+this.getRealizedProfit());                    
+                    }
+                //}
 
 		ActivityHashMap actMap = new ActivityHashMap();
 
@@ -80,14 +92,17 @@ public class MarketMakerAgent extends SMAgent {
 		int ask = getAskPrice(mainMarketID).getPrice();
                 
                 if(bid == -1 && ask == -1){//Markets haven't been initialized
-                    System.out.println("WARNING: Markets have not been initialized, MMA sending no bids");
-                    System.out.println("Bid = "+bid);
-                    System.out.println("Ask = "+ask);
+                    if(DEBUG_ADVANCED_ENB){
+                        System.out.println("WARNING: Markets have not been" +
+                                " initialized, no quotes being sent");
+                        System.out.println("Bid = "+bid);
+                        System.out.println("Ask = "+ask);
+                    }
                     return setSleepTime(actMap, ts);
                 }
 
 		//int numRungs = 10;  //Size of the bid-ask spread
-		int numRungs = bidRange;  //Size of the bid-ask spread
+		int numRungs = bidRange;  //Size of the bid-ask spread                
 
 		int[] prices = new int[numRungs];
 		int[] quantities = new int[numRungs]; //Set to 1 for each bid/ask price
@@ -101,7 +116,7 @@ public class MarketMakerAgent extends SMAgent {
                                 validTransaction = true;
 				quantities[j] = 1;
                                 if(j == 0)
-                                    prices[j] = bid-(ladderStepSize);//Depth set at +/-.01*numRungs		}
+                                    prices[j] = bid-(ladderStepSize);//X_t
                                 else
                                     prices[j] = prices[j-1]-(ladderStepSize);//Depth set at +/-.01*numRungs
                                 if(prices[j] < 0)
@@ -111,7 +126,7 @@ public class MarketMakerAgent extends SMAgent {
                                 if(ask > 0){
                                     validTransaction = true;
                                     if(!askStart)
-                                        prices[j] = ask+(ladderStepSize);
+                                        prices[j] = ask+(ladderStepSize);//Y_t
                                     else
                                         prices[j] = prices[j-1]+(ladderStepSize);
                                     quantities[j] = -1;                                    
@@ -131,15 +146,16 @@ public class MarketMakerAgent extends SMAgent {
                             actMap.appendActivityHashMap(addBid(data.markets.get(mainMarketID), prices[j], quantities[j], ts));
                         }
 		}
-		/*
-                int sleepTime = Integer.parseInt(params.get("sleepTime")); 
-		double sleepVar = Double.parseDouble(params.get("sleepVar"));
-		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
-		actMap.insertActivity(Consts.MARKETMAKER_PRIORITY, new UpdateAllQuotes(this, tsNew));
-		actMap.insertActivity(Consts.MARKETMAKER_PRIORITY, new AgentStrategy(this, market, tsNew));
-		return actMap;
-                 * 
-                 */
+                if(DEBUG_ADVANCED_ENB){
+                    System.out.println("Delta = "+ladderStepSize);
+                    System.out.println("Ladder length = "+numRungs);
+                    System.out.println("X_t = "+prices[0]);
+                    System.out.println("Highest asking price: "+prices[numRungs/2]);
+                    System.out.println("Y_t ="+prices[(numRungs/2) + 1]);
+                    System.out.println("Lowest bid price: "+prices[numRungs-1]);
+                }
+                
+		
                 return setSleepTime(actMap, ts);
 	}
         
@@ -149,6 +165,9 @@ public class MarketMakerAgent extends SMAgent {
             TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
             actMap.insertActivity(Consts.MARKETMAKER_PRIORITY, new UpdateAllQuotes(this, tsNew));
             actMap.insertActivity(Consts.MARKETMAKER_PRIORITY, new AgentStrategy(this, market, tsNew));
+            if(DEBUG_ADVANCED_ENB){
+                System.out.println("Sleeping for:"+tsNew.toString());
+            }
             return actMap;
         }
 }

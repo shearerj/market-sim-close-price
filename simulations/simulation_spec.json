@@ -8,7 +8,7 @@
 "MARKETMAKER": "1",
 "ZIP": "2",
 "ZI": "500",
-"nbbo_latency": "0",
+"nbbo_latency": "1",
 "arrival_rate": "0.075",
 "mean_PV": "100000",
 "kappa": "0.05",
