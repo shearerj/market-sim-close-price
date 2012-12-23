@@ -110,13 +110,16 @@ public class MarketMakerAgent extends SMAgent {
 		// This is a dummy market maker that simply submits lots and lots of bids
                 boolean validTransaction;
                 boolean askStart = false;
+                int x_t = -1, y_t = -1, x_min = -1, y_max = -1;
 		for(int j=0; j<numRungs; j++) {
                     validTransaction = false;
-			if((j<numRungs/2) && (bid>0)) {//First half of array are buys
+			if((j < numRungs/2) && (bid>0)) {//First half of array are buys
                                 validTransaction = true;
 				quantities[j] = 1;
-                                if(j == 0)
+                                if(j == 0){
                                     prices[j] = bid-(ladderStepSize);//X_t
+                                    x_t = prices[j];
+                                }
                                 else
                                     prices[j] = prices[j-1]-(ladderStepSize);//Depth set at +/-.01*numRungs
                                 if(prices[j] < 0)
@@ -125,11 +128,16 @@ public class MarketMakerAgent extends SMAgent {
 			else { //Second half of array are sells                                
                                 if(ask > 0){
                                     validTransaction = true;
-                                    if(!askStart)
+                                    if(!askStart){
                                         prices[j] = ask+(ladderStepSize);//Y_t
+                                        if(j>0)
+                                            x_min = prices[j-1];
+                                        y_t = prices[j];
+                                        askStart = true;
+                                    }
                                     else
                                         prices[j] = prices[j-1]+(ladderStepSize);
-                                    quantities[j] = -1;                                    
+                                    quantities[j] = -1;
                                 }
 			}
                         
@@ -146,13 +154,17 @@ public class MarketMakerAgent extends SMAgent {
                             actMap.appendActivityHashMap(addBid(data.markets.get(mainMarketID), prices[j], quantities[j], ts));
                         }
 		}
-                if(DEBUG_ADVANCED_ENB){
+                y_max = prices[numRungs-1];
+                if(DEBUG_ADVANCED_ENB){                    
                     System.out.println("Delta = "+ladderStepSize);
                     System.out.println("Ladder length = "+numRungs);
-                    System.out.println("X_t = "+prices[0]);
-                    System.out.println("Highest asking price: "+prices[numRungs/2]);
-                    System.out.println("Y_t ="+prices[(numRungs/2) + 1]);
-                    System.out.println("Lowest bid price: "+prices[numRungs-1]);
+                    System.out.println("Market Bid Price = "+bid);
+                    System.out.println("X_t = "+x_t);
+                    System.out.println("Lowest bid price: "+x_min);
+                    System.out.println("Market Ask Price = "+ask);
+                    System.out.println("Y_t ="+y_t);
+                    System.out.println("Highest asking price: "+y_max);
+                    
                 }
                 
 		

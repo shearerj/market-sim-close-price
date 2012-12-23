@@ -101,7 +101,7 @@ public class Consts {
                         ap.put("c_A","0.05");
                         ap.put("beta","0.03");
                         ap.put("betaVar", "0.005");
-                        ap.put("gamma","0");
+                        ap.put("gamma","0.5");
 		}
 		return ap;
 	}

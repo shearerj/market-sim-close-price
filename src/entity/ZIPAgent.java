@@ -94,8 +94,8 @@ public class ZIPAgent extends MMAgent {
             System.out.println("gamma = "+gamma);
         }
         
-        zipBuyer = new ZIP_algorithm(gamma, learningRate, c_A, c_R, true, privateValue, privateValue);
-        zipSeller = new ZIP_algorithm(gamma, learningRate, c_A, c_R, false, privateValue, privateValue);
+        zipBuyer = new ZIP_algorithm(gamma, learningRate, c_A, c_R, true, privateValue, 0.0);
+        zipSeller = new ZIP_algorithm(gamma, learningRate, c_A, c_R, false, privateValue, 0.0);        
     }
 
     @Override
@@ -244,12 +244,14 @@ public class ZIPAgent extends MMAgent {
         int temp = bestSellPrice;
         
         double mu_buy = zipBuyer.update(buyPrice_old, bestBuyPrice);
-        p_new_buy =  privateValue*((int)(1.0+mu_buy));
+        double temp_p = (double)privateValue*(1.0+mu_buy);
+        p_new_buy =  (int) temp_p;
         if(p_new_buy == privateValue)
             p_new_buy -= tickSize; 
         
         double mu_sell = zipSeller.update(sellPrice_old, bestSellPrice);
-        p_new_sell =  privateValue*((int)(1.0+mu_sell));
+        temp_p = (double)privateValue*((1.0+mu_sell));
+        p_new_sell =  (int) temp_p;
         if(p_new_sell == privateValue)
             p_new_sell += tickSize;
         
@@ -289,10 +291,10 @@ public class ZIPAgent extends MMAgent {
                                 ", " + mainMarketQuote.lastAskPrice.getPrice() + ")");
             }
 
-            actMap.appendActivityHashMap(addBid(data.markets.get(bestSellMarketID), p_new_sell, -q, ts));
+            actMap.appendActivityHashMap(addBid(data.markets.get(bestSellMarketID), p_new_sell, q, ts));
 
             log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
-                    "::agentStrategy: " + "+(" + p_new_sell + "," + (-q) + ") to " + 
+                    "::agentStrategy: " + "+(" + p_new_sell + "," + (q) + ") to " + 
                     data.getMarket(bestSellMarketID));
         }
         else{
@@ -312,10 +314,10 @@ public class ZIPAgent extends MMAgent {
                                 ", " + mainMarketQuote.lastAskPrice.getPrice() + ")");
             }
 
-            actMap.appendActivityHashMap(addBid(data.markets.get(bestBuyMarketID), p_new_buy, -q, ts));
+            actMap.appendActivityHashMap(addBid(data.markets.get(bestBuyMarketID), p_new_buy, q, ts));
 
             log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
-                    "::agentStrategy: " + "+(" + p_new_buy + "," + (-q) + ") to " + 
+                    "::agentStrategy: " + "+(" + p_new_buy + "," + (q) + ") to " + 
                     data.getMarket(bestBuyMarketID));
         }
 
