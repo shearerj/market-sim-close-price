@@ -240,23 +240,23 @@ public class Observations {
 		
 		int num = 0;
 		int totBids = 0;
-		for (Map.Entry<Integer,Agent> entry : agents.entrySet()) {
-			Agent a = entry.getValue();
-			if (data.isBackgroundAgent(a.getID())) {
-				
-				// MORE TODO here
-				Consts.SubmittedBidMarket x = ((ZIAgent) a).submittedBidType;
-				if (x == null)
-					System.err.print("ERROR");
-				totBids++;
-				switch (x) {
-				case MAIN:
-					// do nothing
-				case ALTERNATE:
-					num++;
-				}
-			}
-		}
+//		for (Map.Entry<Integer,Agent> entry : agents.entrySet()) {
+//			Agent a = entry.getValue();
+//			if (data.isBackgroundAgent(a.getID())) {
+//				
+//				// MORE TODO here
+//				Consts.SubmittedBidMarket x = ((ZIAgent) a).submittedBidType;
+//				if (x == null)
+//					System.err.print("ERROR");
+//				totBids++;
+//				switch (x) {
+//				case MAIN:
+//					// do nothing
+//				case ALTERNATE:
+//					num++;
+//				}
+//			}
+//		}
 		feat.put("num_bids_alt", num);
 		feat.put("num_total_bids", totBids);
 		return feat;
@@ -275,18 +275,29 @@ public class Observations {
 		ArrayList<Integer> ids = model.getMarketIDs();
 		
 		// Initialize with maximum number of possible bids
-		double[] values = new double[data.executionTime.size()];
+//		double[] values = new double[data.executionTime.size()];
+		double[] values = new double[data.executionSpeed.size()];
 		int cnt = 0;
 		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
 			int mktID = it.next();
 			
-			for (Map.Entry<Integer, TimeStamp> entry : data.executionTime.entrySet()) {
+//			for (Map.Entry<Integer, TimeStamp> entry : data.executionTime.entrySet()) {
+//				int bidID = entry.getKey();
+//				TimeStamp ts = entry.getValue();
+//				PQBid b = data.getBid(bidID);
+//				if (mktID != b.getMarketID()) {  // should be ==?
+//					System.out.println("bidID=" + bidID + ", submit=" + data.submissionTime.get(bidID) + ", execute=" + ts);	// TODO debug only
+//					values[cnt] =  (double) ts.diff(data.submissionTime.get(bidID)).longValue();
+//					cnt++;
+//				}
+//			}
+			for (Map.Entry<Integer, TimeStamp> entry : data.executionSpeed.entrySet()) {
 				int bidID = entry.getKey();
-				TimeStamp ts = entry.getValue();
 				PQBid b = data.getBid(bidID);
-				if (mktID != b.getMarketID()) {
-					System.out.println("bidID=" + bidID + ", submit=" + data.submissionTime.get(bidID) + ", execute=" + ts);	// TODO debug only
-					values[cnt] =  (double) ts.diff(data.submissionTime.get(bidID)).longValue();
+				if (mktID == b.getMarketID()) {
+					// bid in the market currently being checked
+//					System.out.println("bidID=" + bidID + ", submit=" + data.submissionTime.get(bidID) + ", speed=" + entry.getValue());
+					values[cnt] = (double) entry.getValue().longValue();
 					cnt++;
 				}
 			}

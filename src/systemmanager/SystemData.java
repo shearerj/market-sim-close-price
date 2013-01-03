@@ -79,7 +79,7 @@ public class SystemData {
 	public HashMap<Integer,HashMap<TimeStamp,Integer>> marketDepth;		// hashed by market ID
 	public HashMap<Integer,HashMap<TimeStamp,Integer>> marketSpread;	// hashed by market ID
 	public HashMap<Integer,HashMap<TimeStamp,Integer>> NBBOSpread;		// hashed by model ID, time series
-	public HashMap<Integer,TimeStamp> executionTime;		 	// hashed by bid ID
+	public HashMap<Integer,TimeStamp> executionSpeed;		 	// hashed by bid ID
 	public HashMap<Integer,TimeStamp> submissionTime;			// hashed by bid ID
 	
 	/**
@@ -108,7 +108,7 @@ public class SystemData {
 		marketDepth = new HashMap<Integer,HashMap<TimeStamp,Integer>>();
 		marketSpread = new HashMap<Integer,HashMap<TimeStamp,Integer>>();
 		NBBOSpread = new HashMap<Integer,HashMap<TimeStamp,Integer>>();
-		executionTime = new HashMap<Integer,TimeStamp>();
+		executionSpeed = new HashMap<Integer,TimeStamp>();
 		submissionTime = new HashMap<Integer,TimeStamp>();
 	}
 
@@ -496,15 +496,29 @@ public class SystemData {
 		submissionTime.put(bidID, ts);
 	}
 	
-	/**
-	 * Add bid execution time to the hashmap container.
-	 * @param bidID
-	 * @param ts
-	 */
-	public void addExecutionTime(int bidID, TimeStamp ts) {
-		executionTime.put(bidID, ts);
+//	/**
+//	 * Add bid execution time to the hashmap container.
+//	 * @param bidID
+//	 * @param ts
+//	 */
+//	public void addExecutionTime(int bidID, TimeStamp ts) {
+//		executionTime.put(bidID, ts);
+//	}
+
+        /**
+         * Add bid execution speed (difference between execution and submission times).
+         * @param bidID
+         * @param ts
+         */
+	public void addExecutionSpeed(int bidID, TimeStamp ts) {
+		// check if submission time contains it (if not, there is an error)
+		if (submissionTime.containsKey(bidID)) {
+			executionSpeed.put(bidID, ts.diff(submissionTime.get(bidID)));
+		} else {
+			System.err.print("ERROR: submission time does not contain bidID " + bidID);
+		}
 	}
-	
+
 	/**
 	 * Set up arrival times generation for background agents.
 	 */

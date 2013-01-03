@@ -93,10 +93,10 @@ public class CDAMarket extends Market {
 			return null;
 		}
 		
-		// Add bid execution times
+		// Add bid execution speed
 		ArrayList<Integer> IDs = orderbook.getClearedBidIDs();
 		for (Iterator<Integer> id = IDs.iterator(); id.hasNext(); ) {
-			data.addExecutionTime(id.next(), clearTime);
+			data.addExecutionSpeed(id.next(), clearTime);
 		}
 		
 		// Add transactions to SystemData

@@ -203,7 +203,6 @@ public class SystemManager {
 			obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
 			obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
 			obs.addFeature("expire", obs.getTimeStampFeatures(data.getExpirations()));
-			//obs.addFeature("bkgrd_info", obs.getBackgroundInfo(data.getAgents()));
 			getModelResults();
 			obs.addFeature("", obs.getConfiguration());
 			
