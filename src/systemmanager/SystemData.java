@@ -31,7 +31,7 @@ import java.util.*;
  */
 public class SystemData {
 
-	public int obsNum;									// observation number
+	public int obsNum;						// observation number
 	
 	// Model information
 	public HashMap<Integer,MarketModel> models;			// models hashed by ID

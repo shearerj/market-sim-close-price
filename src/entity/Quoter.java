@@ -16,15 +16,16 @@ import systemmanager.*;
 /**
  * Class that updates pertinent information for the system. 
  * Generally used for creating NBBO update events. Always has ID = 0.
+ * Serves the purpose of the Security Information Processor in Regulation NMS.
  * 
  * @author ewah
  */
 public class Quoter extends Entity {
 
 	private int tickSize;
-	private TimeStamp latency;
-	public HashMap<Integer, BestBidAsk> lastQuotes;		// hashed by model ID
-	
+	private HashMap<Integer, BestBidAsk> lastQuotes;		// hashed by model ID
+	private HashMap<Integer, BestBidAsk> marketQuotes;		// hashed by market ID
+
 	/**
 	 * Constructor
 	 * @param ID
@@ -32,16 +33,16 @@ public class Quoter extends Entity {
 	 */
 	public Quoter(int ID, SystemData d, Log l) {
 		super(ID, d, new ObjectProperties(), l);
-		latency = d.nbboLatency;
 		tickSize = d.tickSize;
 		lastQuotes = new HashMap<Integer,BestBidAsk>();
+		marketQuotes = new HashMap<Integer,BestBidAsk>();
 	}
 	
 	/**
 	 * Get BestBidAsk quote for the given model.
 	 * 
 	 * @param modelID
-	 * @return
+	 * @return BestBidAsk
 	 */
 	public BestBidAsk getNBBOQuote(int modelID) {
 		if (!lastQuotes.containsKey(modelID)) {
@@ -52,61 +53,87 @@ public class Quoter extends Entity {
 			return lastQuotes.get(modelID);
 		}
 	}
+
+	/**
+ 	 * Get global BestBidAsk quote for the given model.
+ 	 * TODO - may need to fix given new compute method
+ 	 *
+ 	 * @param modelID
+ 	 * @return BestBidAsk
+ 	 */
+	public BestBidAsk getGlobalQuote(int modelID) {
+		return this.findBestBidOffer(data.getModel(modelID).getMarketIDs());
+	}
+
+	/**
+ 	 * Store market's best bid/ask & insert Activity to UpdateNBBO at some amount of time 
+ 	 *
+ 	 * @param mkt
+ 	 * @param bid
+ 	 * @param ask
+ 	 * @param ts
+ 	 * @return ActivityHashMap
+ 	 */
+	public ActivityHashMap processQuote(Market mkt, int bid, int ask, TimeStamp ts) {
+		int mktID = mkt.getID();
+		BestBidAsk q = new BestBidAsk();
+		q.bestBid = bid;
+		q.bestAsk = ask;
+		q.bestBidMarket = mktID;
+		q.bestAskMarket = mktID;
+		marketQuotes.put(mktID, q);
+		log.log(Log.INFO, ts + " | " + data.getMarket(mktID) + " " + 
+				"ProcessQuote: " + q);
+
+		ActivityHashMap actMap = new ActivityHashMap();
+		//MarketModel model = data.getModelByMarket(mktID);
+		//actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(this, model, ts));
+		return actMap;
+	}
 	
 	/**
 	 * Method to update the NBBO values.
 	 * 
+	 * @param model
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap updateNBBO(TimeStamp ts) {
+	public ActivityHashMap updateNBBO(MarketModel model, TimeStamp ts) {
 		
 		ActivityHashMap actMap = new ActivityHashMap();
 		
-		for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
-			int modelID = entry.getKey();
-			MarketModel model = entry.getValue();
-			ArrayList<Integer> ids = model.getMarketIDs();
-		
-			BestBidAsk lastQuote = findBestBidOffer(ids);
-			String s = ts + " | " + ids + " UpdateNBBO" + lastQuote;
+		int modelID = model.getID();
+		ArrayList<Integer> ids = model.getMarketIDs();
+		String s = ts + " | " + ids + " UpdateNBBO" + getNBBOQuote(modelID);
+	
+		//BestBidAsk lastQuote = findBestBidOffer(ids);
+		BestBidAsk lastQuote = computeBestBidOffer(ids);
+//		String s = ts + " | " + ids + " UpdateNBBO" + lastQuote;
 			
-			int bestBid = lastQuote.bestBid;
-			int bestAsk = lastQuote.bestAsk;
-			if ((bestBid != -1) && (bestAsk != -1)) {
-				// check for inconsistency in buy/sell prices & fix if found
-				if (lastQuote.bestBid > lastQuote.bestAsk) {
-					int mid = (lastQuote.bestBid + lastQuote.bestAsk) / 2;
-					bestBid = mid - this.tickSize;
-					bestAsk = mid + this.tickSize;
-					
-					// Add spread of INF if inconsistent NBBO quote
-					this.data.addNBBOSpread(modelID, ts, Consts.INF_PRICE);
-				} else {
-					// if bid-ask consistent, store the spread
-					this.data.addNBBOSpread(modelID, ts, lastQuote.getSpread());
-				}
+		int bestBid = lastQuote.bestBid;
+		int bestAsk = lastQuote.bestAsk;
+		if ((bestBid != -1) && (bestAsk != -1)) {
+			// check for inconsistency in buy/sell prices & fix if found
+			if (lastQuote.bestBid > lastQuote.bestAsk) {
+				int mid = (lastQuote.bestBid + lastQuote.bestAsk) / 2;
+				bestBid = mid - this.tickSize;
+				bestAsk = mid + this.tickSize;
+				
+				// Add spread of INF if inconsistent NBBO quote
+				this.data.addNBBOSpread(modelID, ts, Consts.INF_PRICE);
 			} else {
-				// store spread of INF since no bid-ask spread
-				this.data.addSpread(0, ts, Consts.INF_PRICE);
+				// if bid-ask consistent, store the spread
+				this.data.addNBBOSpread(modelID, ts, lastQuote.getSpread());
 			}
-			
-			lastQuote.bestBid = bestBid;
-			lastQuote.bestAsk = bestAsk;
-			log.log(Log.INFO, s + " --> NBBO" + lastQuote);
-			
-			lastQuotes.put(modelID, lastQuote);
+		} else {
+			// store spread of INF since no bid-ask spread
+			this.data.addSpread(modelID, ts, Consts.INF_PRICE);
 		}
 		
-		if (latency.getTimeStamp() > 0) {
-			TimeStamp tsNew = ts.sum(latency);
-			actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(this, tsNew));
-			
-		} else if (latency.getTimeStamp() == 0) {
-			// infinitely fast NBBO updates
-			TimeStamp tsNew = new TimeStamp(Consts.INF_TIME);
-			actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(this, tsNew));
-		}
+		lastQuote.bestBid = bestBid;
+		lastQuote.bestAsk = bestAsk;
+		lastQuotes.put(modelID, lastQuote);
+		log.log(Log.INFO, s + " --> NBBO" + lastQuote);
 		return actMap;
 	}
 
@@ -117,7 +144,7 @@ public class Quoter extends Entity {
 	 * @param marketIDs
 	 * @return
 	 */
-	protected BestBidAsk findBestBidOffer(ArrayList<Integer> marketIDs) {
+	private BestBidAsk findBestBidOffer(ArrayList<Integer> marketIDs) {
 		
 	    int bestBid = -1;
 	    int bestBidMkt = 0;
@@ -152,5 +179,42 @@ public class Quoter extends Entity {
 	    q.bestAskMarket = bestAskMkt;
 	    q.bestAsk = bestAsk;
 	    return q;
+	}
+
+	/**
+ 	 * Compute best bid-ask given stored quotes.
+ 	 */
+	private BestBidAsk computeBestBidOffer(ArrayList<Integer> marketIDs) {
+		
+	    int bestBid = -1;
+	    int bestBidMkt = 0;
+	    int bestAsk = -1;
+	    int bestAskMkt = 0;
+	    
+	    for (Iterator<Integer> it = marketIDs.iterator(); it.hasNext(); ) {
+			int mktID = it.next();
+			
+			BestBidAsk q = new BestBidAsk();
+			if (marketQuotes.containsKey(mktID)) {
+				q  = marketQuotes.get(mktID);
+			}
+
+			// Best bid quote is highest BID
+			if (bestBid == -1 || bestBid < q.bestBid) {
+				if (q.bestBid != -1) bestBid = q.bestBid;
+				bestBidMkt = mktID;
+			}
+			// Best ask quote is lowest ASK
+			if (bestAsk == -1 || bestAsk > q.bestAsk) {
+				if (q.bestAsk != -1) bestAsk = q.bestAsk;
+				bestAskMkt = mktID;
+			}
+	    }
+	    BestBidAsk ba = new BestBidAsk();
+	    ba.bestBidMarket = bestBidMkt;
+	    ba.bestBid = bestBid;
+	    ba.bestAskMarket = bestAskMkt;
+	    ba.bestAsk = bestAsk;
+	    return ba;
 	}
 }

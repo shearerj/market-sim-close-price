@@ -32,8 +32,7 @@ public class SubmitBid extends Activity {
 	}
 	
 	public String toString() {
-		return new String("SubmitBid::" + this.ag.toString() + "," +
-				this.mkt.toString() + "+(" + this.price + ", " +
+		return new String("SubmitBid::" + this.ag + "," + this.mkt + "+(" + this.price + ", " +
 				this.quantity + ")");
 	}
 }

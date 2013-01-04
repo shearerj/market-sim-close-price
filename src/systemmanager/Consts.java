@@ -36,9 +36,10 @@ public class Consts {
 	public final static int WITHDRAW_BID_PRIORITY = 2;
 	public final static int CDA_CLEAR_PRIORITY = 3;
 	public final static int CALL_CLEAR_PRIORITY = 3;
-	public final static int HFT_PRIORITY = 4;
-	public final static int MARKETMAKER_PRIORITY = 5;
-	public final static int UPDATE_NBBO_PRIORITY = 6;
+	public final static int HFT_PRIORITY = 5;
+	public final static int MARKETMAKER_PRIORITY = 6;
+	public final static int SEND_TO_SIP_PRIORITY = 0;
+	public final static int UPDATE_NBBO_PRIORITY = 0;
 	
 	// TimeStamp
 	public final static long INF_TIME = -1;
@@ -53,7 +54,10 @@ public class Consts {
 	 * @return String of market type
 	 */
 	public static String getMarketType(String className) {
-		return className.replace("Market","").toUpperCase();
+		if (className.contains("Market"))
+			return className.replace("Market","").toUpperCase();
+		else
+			return className.toUpperCase();
 	}
 	
 	/**
@@ -62,7 +66,10 @@ public class Consts {
 	 * @return
 	 */
 	public static String getAgentType(String className) {
-		return className.replace("Agent","").toUpperCase();
+		if (className.contains("Agent"))
+			return className.replace("Agent","").toUpperCase();
+		else
+			return className.toUpperCase();
 	}
 	
 	public static String getModelType(String className) {

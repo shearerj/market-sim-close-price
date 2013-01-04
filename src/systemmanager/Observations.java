@@ -539,7 +539,7 @@ public class Observations {
 		
 		// Have to sort the TimeStamps since not necessarily sorted in HashMap
 		TreeSet<TimeStamp> times = new TreeSet<TimeStamp>();
-		ArrayList<TimeStamp> keys = new ArrayList<TimeStamp>( map.keySet());
+		ArrayList<TimeStamp> keys = new ArrayList<TimeStamp>(map.keySet());
 		for (Iterator<TimeStamp> i = keys.iterator(); i.hasNext(); ) {
 			TimeStamp t = i.next();
 			if (t != null) 

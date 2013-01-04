@@ -1,7 +1,8 @@
 package entity;
 
-import market.*;
 import event.*;
+import model.*;
+import market.*;
 import activity.*;
 import systemmanager.*;
 
@@ -167,6 +168,26 @@ public abstract class Market extends Entity {
 		return marketType;
 	}
 
+	/**
+ 	 * Send market's bid/ask to the Security Information Processor to be processed at some time
+ 	 * (determined by latency) in the future.
+ 	 *
+ 	 * @param ts
+ 	 * @return
+ 	 */
+	public ActivityHashMap sendToSIP(TimeStamp ts) {
+                int bid = this.getBidPrice().getPrice();
+                int ask = this.getAskPrice().getPrice();
+		log.log(Log.INFO, ts + " | " + this + " SendToSIP(" + bid + ", " + ask + ")");
+
+		ActivityHashMap actMap = new ActivityHashMap();
+		MarketModel model = data.getModelByMarket(this.getID());
+		Quoter sip = data.getQuoter();
+		TimeStamp tsNew = ts.sum(data.nbboLatency);
+		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new ProcessQuote(sip, this, bid, ask, tsNew));
+		actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(sip, model, tsNew));
+		return actMap;
+	}
 	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()

@@ -494,7 +494,8 @@ public abstract class Agent extends Entity {
 			updateQuotes(mkt, ts);
 		}
 		
-		lastGlobalQuote = quoter.findBestBidOffer(data.getPrimaryMarketIDs());
+//		lastGlobalQuote = quoter.findBestBidOffer(data.getPrimaryMarketIDs());
+		lastGlobalQuote = quoter.getGlobalQuote(data.getPrimaryModel().getID());
 		lastNBBOQuote = quoter.getNBBOQuote(data.getPrimaryModel().getID());
 		
 		log.log(Log.INFO, ts.toString() + " | " + this + " Global" + lastGlobalQuote + 

@@ -16,7 +16,7 @@ import systemmanager.*;
  * after the clear, i.e. they will be able to see the best available buy and sell
  * prices for the bids left in the order book after each market clear.
  * 
- * NOTE: First clear Activity is initialized in the SystemManager.
+ * NOTE: First Clear Activity is initialized in the SystemManager.
  * 
  * @author ewah
  */
@@ -109,7 +109,8 @@ public class CallMarket extends Market {
 			log.log(Log.INFO, clearTime + " | ....." + this + " " + 
 					this.getName() + "::clear: No change. Post-clear Quote" 
 					+ this.quote(clearTime));
-			
+			actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new SendToSIP(this, clearTime));
+
 			if (clearFreq.longValue() > 0) {
 				actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, nextClearTime));				
 			}
@@ -148,6 +149,7 @@ public class CallMarket extends Market {
 		log.log(Log.INFO, clearTime.toString() + " | ....." + this + " " + 
 				this.getName() + "::clear: Order book cleared: Post-clear Quote" 
 				+ this.quote(clearTime));
+		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new SendToSIP(this, clearTime));
 
 		// Insert next clear activity at some time in the future
 		if (clearFreq.longValue() > 0) {

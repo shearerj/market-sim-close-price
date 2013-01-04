@@ -75,6 +75,12 @@ public class SystemSetup {
 				MarketModel mm = entry.getValue();
 				mm.setAgentPermissions();
 			}
+
+			// Initial SendToSIP Activity for all markets
+			for (Map.Entry<Integer,Market> entry : data.getMarkets().entrySet()) {
+				eventManager.createEvent(Consts.DEFAULT_PRIORITY,
+							new SendToSIP(entry.getValue(), new TimeStamp(0)));
+			}
 		} catch (Exception e) {
 			System.err.println(this.getClass().getSimpleName() + "::setupAll: error");
 			System.err.println(e);
@@ -87,7 +93,7 @@ public class SystemSetup {
 	public void createQuoter() {
 		Quoter iu = new Quoter(0, data, log);
 		data.quoter = iu;
-		eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(0)));
+		//eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(0)));
 	}
 	
 	

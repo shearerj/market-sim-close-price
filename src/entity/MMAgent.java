@@ -9,8 +9,8 @@ import systemmanager.*;
 
 
 /**
- * Multi-market (MM) agent. It arrives in all markets in the primary market model,
- * and its agent strategy is executed across all markets.
+ * Multi-market (MM) agent. It arrives in all markets, not just those in the primary 
+ * market model, and its agent strategy is executed across all markets.
  * 
  * @author ewah
  */

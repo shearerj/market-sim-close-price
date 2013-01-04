@@ -73,11 +73,12 @@ public class CDAMarket extends Market {
 
 	
 	public ActivityHashMap clear(TimeStamp clearTime) {
+		ActivityHashMap actMap = new ActivityHashMap();
 		orderbook.logActiveBids(clearTime);
 		orderbook.logFourHeap(clearTime);
 		
 		log.log(Log.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
-				this.quote(clearTime));	
+				this.quote(clearTime));
 		ArrayList<Transaction> transactions = orderbook.earliestPriceClear(clearTime);
 		
 		if (transactions == null) {
@@ -90,7 +91,8 @@ public class CDAMarket extends Market {
 			log.log(Log.INFO, clearTime + " | ....." + this + " " + 
 					this.getName() + "::clear: No change. Post-clear Quote" +  
 					this.quote(clearTime));
-			return null;
+			actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new SendToSIP(this, clearTime));
+			return actMap;
 		}
 		
 		// Add bid execution speed
@@ -125,7 +127,8 @@ public class CDAMarket extends Market {
 		log.log(Log.INFO, clearTime + " | ....." + toString() + " " + 
 				this.getName() + "::clear: Order book cleared: " +
 				"Post-clear Quote" + this.quote(clearTime));
-		return null;
+		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new SendToSIP(this, clearTime));
+		return actMap;
 	}
 	
 	
