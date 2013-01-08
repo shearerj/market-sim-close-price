@@ -6,7 +6,7 @@
 "CENTRALCDA": "1",
 "CENTRALCALL": "NBBO",
 "MARKETMAKER": "0",
-"ZI": "250",
+"ZI": "5",
 "ZIP": "0",
 "nbbo_latency": "0",
 "arrival_rate": "0.075",
