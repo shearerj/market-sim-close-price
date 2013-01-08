@@ -18,13 +18,14 @@ public abstract class SMAgent extends Agent {
 	/**
 	 * Constructor for a single market agent.
 	 * @param agentID
+	 * @param modelID
 	 * @param d
 	 * @param p
 	 * @param l
 	 * @param mktID		sets the main market for the SMAgent
 	 */
-	public SMAgent(int agentID, SystemData d, ObjectProperties p, Log l, int mktID) {
-		super(agentID, d, p, l);
+	public SMAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l, int mktID) {
+		super(agentID, modelID, d, p, l);
 		market = data.getMarket(mktID);
 	}
 

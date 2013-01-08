@@ -46,7 +46,8 @@ public class Observations {
 		HashMap<String,Object> obs = data.getAgent(agentID).getObservation();
 		
 		// Don't add observation if agent is not a player in the game (i.e. not a role)
-		if (obs == null) return;
+		// or if observations are empty
+		if (obs == null || obs.isEmpty()) return;
 		
 		if (!observations.containsKey("players")) {
 			ArrayList<Object> array = new ArrayList<Object>();
@@ -63,8 +64,10 @@ public class Observations {
 	 * @return
 	 */
 	public void addObservationAsFeature(int agentID) {
-		Agent ag = data.getAgent(agentID);
-		addFeature("agent" + agentID, ag.getObservation());
+		HashMap<String,Object> obs = data.getAgent(agentID).getObservation();
+		
+		if (obs == null || obs.isEmpty()) return;
+		else addFeature("agent" + agentID, obs);
 	}
 	
 	/**
@@ -136,7 +139,7 @@ public class Observations {
 				feat.put("var" + suffix, dp.getVariance());
 			}
 		} else {
-			feat.put("med" + suffix, "NaN");
+			feat.put("mean" + suffix, "NaN");
 			if (mid) {
 				feat.put("med" + suffix, "NaN");
 			}
@@ -158,8 +161,7 @@ public class Observations {
 	public HashMap<String,Object> getSurplusFeatures(MarketModel model) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-		ArrayList<Integer> ids = model.getMarketIDs();
-		HashMap<Integer,Integer> allSurplus = data.getSurplus(ids);
+		HashMap<Integer,Integer> allSurplus = data.getSurplus(model.getID());
 		Object[] objs = (new ArrayList<Integer>(allSurplus.values())).toArray();
 		double[] values = new double[objs.length];  
 		for (int i = 0; i < values.length; i++) {
@@ -168,7 +170,7 @@ public class Observations {
 		}
 		addAllStatistics(feat,values);
 
-		for (Iterator<Integer> it = model.getAgentIDs().iterator(); it.hasNext(); ) {
+		for (Iterator<Integer> it = model.getPermittedAgentIDs().iterator(); it.hasNext(); ) {
 			int aid = it.next();
 			// check if agent is a player in a role
 			if (!data.isBackgroundAgent(aid)) {
@@ -181,7 +183,7 @@ public class Observations {
 				}
 				Agent a = data.getAgent(aid);
 				DescriptiveStatistics ds = new DescriptiveStatistics(values);
-				feat.put(label, ds.getSum() + a.getRealizedProfit().get(model.getID()));
+				feat.put(label, ds.getSum() + a.getRealizedProfit());
 			}
 		}
 		return feat;
@@ -321,9 +323,7 @@ public class Observations {
 	public HashMap<String,Object> getTransactionInfo(MarketModel model) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 	
-		ArrayList<Integer> ids = model.getMarketIDs();
-
-		HashMap<Integer,PQTransaction> transactions = data.getTrans(ids);
+		HashMap<Integer,PQTransaction> transactions = data.getTrans(model.getID());
 		feat.put("num", transactions.size());
 
 		double[] prices = new double[transactions.size()];
@@ -337,7 +337,7 @@ public class Observations {
 		}
 		addStatistics(feat,prices,"price",false);
 		//		addSomeStatistics(feat,quantities,"qty",false);
-		for (Iterator<Integer> it = model.getAgentIDs().iterator(); it.hasNext(); ) {
+		for (Iterator<Integer> it = model.getPermittedAgentIDs().iterator(); it.hasNext(); ) {
 			int aid = it.next();
 			// check if agent is player in role
 			if (!data.isBackgroundAgent(aid)) {
@@ -410,7 +410,7 @@ public class Observations {
 //					}
 //				}				
 		}
-		
+		// System.out.println(model.getID());
 		double[] nbboSpreads = extractTimeSeries(data.NBBOSpread.get(model.getID()));
 		addStatistics(feat,nbboSpreads,"nbbo",true);
 		
@@ -492,9 +492,8 @@ public class Observations {
 		for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
 			// Do for combinations with 2M model
 			MarketModel model = entry.getValue();
-			ArrayList<Integer> ids = model.getMarketIDs();
-			
-			HashMap<Integer,PQTransaction> transactions = data.getTrans(ids);
+			int modelID = entry.getKey();
+			HashMap<Integer,PQTransaction> transactions = data.getTrans(modelID);
 			
 			for (Map.Entry<Integer,PQTransaction> tr : transactions.entrySet()) {
 				PQTransaction trans = tr.getValue();

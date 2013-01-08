@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Iterator;
+import java.util.Random;
 
 import activity.*;
 import entity.*;
@@ -11,7 +12,7 @@ import event.*;
 import model.*;
 
 /**
- * Class to create agents & markets.
+ * Class to create agent, models, and markets.
  * 
  * Strategies: Sets up and assigns strategies (assumed to follow format of parameter-
  * value pairs separated by underscores: [param]_[value]_...
@@ -25,7 +26,8 @@ import model.*;
  *   - add Clear activities, if needed
  *   - create the primary model
  * - create the agents
- *   - setup the agents (different if MM vs SM)
+ *   - duplicate agents for each model
+ *   - set up the agents (different if MM vs SM)
  *   - add AgentArrival activities
  * - set agent permission for each model's markets
  * 
@@ -44,6 +46,7 @@ public class SystemSetup {
 	
 	private Sequence agentIDSequence;
 	private Sequence marketIDSequence;
+	private Sequence modelIDSequence;
 	
 	public SystemSetup(SimulationSpec s, EventManager em, SystemData d, Log l) {
 		specs = s;
@@ -52,6 +55,7 @@ public class SystemSetup {
 		log = l;
 		agentIDSequence = new Sequence(1);
 		marketIDSequence = new Sequence(-1);
+		modelIDSequence = new Sequence(1);
 	}
 	
 	
@@ -83,7 +87,7 @@ public class SystemSetup {
 			}
 		} catch (Exception e) {
 			System.err.println(this.getClass().getSimpleName() + "::setupAll: error");
-			System.err.println(e);
+			e.printStackTrace();
 		}
 	}
 	
@@ -92,7 +96,7 @@ public class SystemSetup {
 	 */
 	public void createQuoter() {
 		Quoter iu = new Quoter(0, data, log);
-		data.quoter = iu;
+		data.setSIP(iu);
 		//eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(0)));
 	}
 	
@@ -133,10 +137,11 @@ public class SystemSetup {
 				ObjectProperties p = getEntityProperties(modelType, i);
 				
 				// create market model & determine its configuration
+				int modelID = modelIDSequence.increment();
 				p.put(Consts.MODEL_CONFIG_KEY, configs[i]);
-				MarketModel model = ModelFactory.createModel(modelType, p, data);		
+				MarketModel model = ModelFactory.createModel(modelType, modelID, p, data);		
 				data.addModel(model);
-				log.log(Log.INFO, model.getFullName() + ": ");
+				log.log(Log.INFO, model.getFullName() + ": " + model + " " + p);
 				
 				// create markets in the model
 				for (Iterator<MarketObjectPair> it = model.getMarketConfig().iterator(); it.hasNext(); ) {
@@ -212,50 +217,71 @@ public class SystemSetup {
 	
 	
 	/**
-	 * Creates the agents.
+	 * Creates the agents for each model. Each model has the same number of each agent type (which is
+	 * specified in the simulation spec file).
 	 */
 	private void createAgents() {
-		for (Map.Entry<String, Integer> ag : data.numAgentType.entrySet()) {
-			for (int i = 0; i < ag.getValue(); i++) {
-				ObjectProperties ap = getEntityProperties(ag.getKey(), i);
-				
-				// create agent & events
+		boolean initSMValues = false;
+		ArrayList<TimeStamp> arrivals = new ArrayList<TimeStamp>();
+		ArrayList<Integer> values = new ArrayList<Integer>();
+
+		boolean initValues = false;
+		ArrayList<Long> seeds = new ArrayList<Long>();	
+		Random rand = new Random();
+
+		for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
+			int modelID = entry.getKey();
+			MarketModel model = entry.getValue();
+
+			// reset logID to 0 to increment through all created agents
+			int logID = 0;
+
+			for (Map.Entry<String, Integer> ag : data.numAgentType.entrySet()) {
+	
 				String agentType = ag.getKey();
-				if (!Arrays.asList(Consts.SMAgentTypes).contains(agentType)) {
-					// Multi-market agent
+				int numAgents = ag.getValue();
+				ArrayList<Integer> assignment = assignAgentsToMarkets(numAgents, model.getMarketIDs());
+	
+				for (int i = 0; i < numAgents; i++) {
+					ObjectProperties ap = getEntityProperties(agentType, i);
+					// Set initialization values for all agents
+					if (!initValues) {
+						long seed = rand.nextLong();
+						seeds.add(seed);
+					}	
+					ap.put("seed", seeds.get(logID).toString());
 					int agentID = agentIDSequence.increment();
-					Agent agent = AgentFactory.createMMAgent(agentType, agentID, data, ap, log);
-					data.addAgent(agent);
-					log.log(Log.DEBUG, agent.toString() + ": " + ap);
-					
-					TimeStamp ts = agent.getArrivalTime();
-					if (agent instanceof MMAgent) {
-						// Agent is in multiple markets (an extra check)
-						eventManager.createEvent(new AgentArrival(agent, ts));
-						eventManager.createEvent(new AgentDeparture(agent, data.simLength));
-					}
-					// check if in a role, keep track of role agent IDs
-					if (Arrays.asList(Consts.roles).contains(agentType)) {
-						data.roleAgentIDs.add(agentID);
-					}
-					
-				} else {
-					// Single market agent - create one for each market in primary model
-					for (Iterator<Integer> it = data.getPrimaryMarketIDs().iterator(); it.hasNext(); ) {
-						int mktID = it.next();
-						int agentID = agentIDSequence.increment();
-						Agent agent = AgentFactory.createSMAgent(agentType, agentID, data, ap, log, mktID);
-						data.addAgent(agent);
-						log.log(Log.DEBUG, agent.toString() + ": " + ap);
-					
-						// link the SM agent to all the other market models (other than the primary one)
-						for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
-							if (!entry.getKey().equals(data.getPrimaryModel().getID())) {
-								// if not the primary market model, link the agent
-								entry.getValue().linkAgent(agentID);
-							}
-						}
+					Agent agent;
+
+					// create agent & events
+					if (!Arrays.asList(Consts.SMAgentTypes).contains(agentType)) {
+						// Multi-market agent
+						agent = AgentFactory.createMMAgent(agentType, agentID, modelID, data, ap, log);
 						
+						TimeStamp ts = agent.getArrivalTime();
+						if (agent instanceof MMAgent) {
+							// Agent is in multiple markets (an extra check)
+							eventManager.createEvent(new AgentArrival(agent, ts));
+							eventManager.createEvent(new AgentDeparture(agent, data.simLength));
+						}
+					} else {
+						// Single market agent
+						int mktID = assignment.get(i);
+
+						if (!initSMValues) {
+							// set up arrival time/fundamental for background agents
+							TimeStamp t = data.nextArrival();
+							int pv = data.nextPrivateValue();
+							ap.put("arrivalTime", t.toString());
+							ap.put("fundamental", (new Integer(pv)).toString());
+							arrivals.add(t);
+							values.add(pv);
+						} else {
+							ap.put("arrivalTime", arrivals.get(i).toString());
+							ap.put("fundamental", values.get(i).toString());
+						}
+						agent = AgentFactory.createSMAgent(agentType, agentID, modelID, data, ap, log, mktID);
+
 						TimeStamp ts = agent.getArrivalTime();
 						if (agent instanceof SMAgent) {
 							// Agent is in single market (an extra check)
@@ -263,23 +289,56 @@ public class SystemSetup {
 							eventManager.createEvent(new AgentArrival(agent, mkt, ts));
 							eventManager.createEvent(new AgentDeparture(agent, mkt, data.simLength));		
 						}
-						// check if in a role, keep track of role agent IDs
-						if (Arrays.asList(Consts.roles).contains(agentType)) {
-							data.roleAgentIDs.add(agentID);
-						}
 					}
+					data.addAgent(agent);
+					agent.setLogID(logID++);
+					model.linkAgent(agentID);
+					// check if in a role, if so keep track of role agent IDs
+					if (Arrays.asList(Consts.roles).contains(agentType)) {
+						data.roleAgentIDs.add(agentID);
+					}
+					log.log(Log.DEBUG, agent.toString() + ": " + ap);
 				}
+				log.log(Log.INFO, "Agents: " + numAgents + " " + agentType);
 			}
-			log.log(Log.INFO, "Agents: " + ag.getValue() + " " + ag.getKey());
+			// values will be initialized after first model has been created
+			initSMValues = true;
+			initValues = true;
 		}
 	}
-	
+
 	/**
-	 * Logs agent information.
+	 * Given a number of agents and a number of market IDs, splits them as evenly as possible. Returns an
+	 * array of length numAgents, each element being one of the valid marketIDs. The distribution is
+	 * as even as possible.
+	 *
+	 * @param numAgents
+	 * @param mktIDs
+	 */
+	private ArrayList<Integer> assignAgentsToMarkets(int numAgents, ArrayList<Integer> mktIDs) {
+		ArrayList<Integer> assignment = new ArrayList<Integer>();
+		
+		int remain = numAgents % mktIDs.size();
+		int num = (numAgents - remain) / mktIDs.size();
+		for (int i = 0; i < num; i++) {
+			for (Iterator<Integer> it = mktIDs.iterator(); it.hasNext(); ) {
+				assignment.add(it.next());
+			}
+		}
+		for (int i = 0; i < remain; i++) {
+			assignment.add(mktIDs.get(i));
+		}		
+
+		return assignment;
+	}
+
+	/**
+	 * Logs agent information (only for primary model to avoid redundancy).
 	 */
 	public void logAgentInfo() {
-		for (Map.Entry<Integer,Agent> entry : data.agents.entrySet()) {
-			Agent ag = entry.getValue();
+		ArrayList<Integer> ids = data.getAgentIDs(); // or data.getPrimaryModel().getAgentIDs()
+		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
+			Agent ag = data.getAgent(it.next());
 			
 			// print arrival times
 			String s = ag.toString() + "::" + ag.getType() + "::";
@@ -296,10 +355,11 @@ public class SystemSetup {
 	/**
 	 * Gets properties for an entity. May overwrite default EntityProperties set in
 	 * Consts. If the entity type indicates that the entity is a player in a role, 
-	 * this method parses the strategy, if any, in the simulation spec file. 
+	 * this method parses the strategy, if any, in the simulation spec file.
+	 * The index is used to select the player from the list in the spec file.
 	 *
 	 * @param type	Entity type
-	 * @param idx	index of the role for which to set the strategy, -1 otherwise
+	 * @param idx	index of the role, -1 otherwise
 	 * @return EntityProperties
 	 */
 	public ObjectProperties getEntityProperties(String type, int idx) {

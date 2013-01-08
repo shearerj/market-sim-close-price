@@ -16,8 +16,8 @@ import systemmanager.*;
  */
 public class CentralCall extends MarketModel {
 
-	public CentralCall(ObjectProperties p, SystemData d) {
-		super(p, d);
+	public CentralCall(int modelID, ObjectProperties p, SystemData d) {
+		super(modelID, p, d);
 		
 		config = p.get(Consts.MODEL_CONFIG_KEY);
 		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {

@@ -20,20 +20,20 @@ import java.util.Iterator;
 public class LAAgent extends MMAgent {
 	
 	private double alpha;
+	private int sleepTime;
+	private double sleepVar;
 	
 	/**
 	 * Overloaded constructor
 	 * @param agentID
 	 */
-	public LAAgent(int agentID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, d, p, l);
+	public LAAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
+		super(agentID, modelID, d, p, l);
 		agentType = Consts.getAgentType(this.getName());
 		arrivalTime = new TimeStamp(0);
-		
-		if (data.getPrimaryModel().getNumMarkets() != 2) {
-			log.log(Log.ERROR, this.toString() + " " + agentType + 
-					": Need two markets in the primary model!");
-		}
+
+		sleepTime = Integer.parseInt(params.get("sleepTime"));
+		sleepVar = Double.parseDouble(params.get("sleepVar"));
 	}
 	
 	
@@ -99,9 +99,7 @@ public class LAAgent extends MMAgent {
 					// agent is beating the market's Clear activity, which is incorrect.
 				}
 			}
-			int sleepTime = Integer.parseInt(params.get("sleepTime"));
 			if (sleepTime > 0) {
-				double sleepVar = Double.parseDouble(params.get("sleepVar"));
 				TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
 				actMap.insertActivity(Consts.HFT_PRIORITY, new UpdateAllQuotes(this, tsNew));
 				actMap.insertActivity(Consts.HFT_PRIORITY, new AgentStrategy(this, tsNew));

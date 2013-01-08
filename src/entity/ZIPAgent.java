@@ -20,8 +20,8 @@ public class ZIPAgent extends SMAgent {
 	
 	private double pvVar;			// variance from private value random process
 	
-	public ZIPAgent(int agentID, SystemData d, ObjectProperties p, Log l, int mktID) {
-		super(agentID, d, p, l, mktID);
+	public ZIPAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l, int mktID) {
+		super(agentID, modelID, d, p, l, mktID);
 		agentType = Consts.getAgentType(this.getName());
 		params = p;
 		arrivalTime = new TimeStamp(0);

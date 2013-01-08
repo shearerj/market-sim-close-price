@@ -7,6 +7,7 @@ import activity.*;
 import systemmanager.*;
 
 import java.util.HashMap;
+import java.util.Random;
 
 /**
  * ZIAgent
@@ -60,30 +61,25 @@ public class ZIAgent extends SMAgent {
 	
 	/**
 	 * Overloaded constructor.
-	 * @param agentID
-	 * @param d SystemData object
 	 */
-	public ZIAgent(int agentID, SystemData d, ObjectProperties p, Log l, int mktID) {
-		super(agentID, d, p, l, mktID);
+	public ZIAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l, int mktID) {
+		super(agentID, modelID, d, p, l, mktID);
 		agentType = Consts.getAgentType(this.getName());
-		
+
+		rand = new Random(Long.parseLong(params.get("seed")));
 		expireRate = this.data.expireRate;
 		bidRange = this.data.bidRange;
 		pvVar = this.data.privateValueVar;
 		expiration = (int) getExponentialRV(expireRate);
-		arrivalTime = this.data.nextArrival();
-		privateValue = Math.max(0, this.data.nextPrivateValue() + 
-				(int) Math.round(getNormalRV(0, pvVar)) * Consts.SCALING_FACTOR);
 		
-		if (data.getPrimaryModel().getNumMarkets() != 2) {
-			log.log(Log.ERROR, this.getName() + 
-					": Need two markets in the primary model!");
-		}
+		arrivalTime = new TimeStamp(Long.parseLong(params.get("arrivalTime")));
+		int pv = Integer.parseInt(params.get("fundamental"));
+		privateValue = Math.max(0, pv + (int) Math.round(getNormalRV(0, pvVar)) * Consts.SCALING_FACTOR);
 		
 		// set the alternate ID if the primary model is a two-market model
 		mainMarketID = mktID;
-		if (data.getPrimaryModel() instanceof TwoMarket) {
-			altMarketID = ((TwoMarket) data.getPrimaryModel()).getAlternateMarket(mktID);
+		if (data.getModel(modelID) instanceof TwoMarket) {
+			altMarketID = ((TwoMarket) data.getModel(modelID)).getAlternateMarket(mktID);
 		} else {
 			altMarketID = mainMarketID;
 		}

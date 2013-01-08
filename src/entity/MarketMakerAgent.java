@@ -14,8 +14,8 @@ import java.util.HashMap;
  */
 public class MarketMakerAgent extends SMAgent {
 
-	public MarketMakerAgent(int agentID, SystemData d, ObjectProperties p, Log l, int mktID) {
-		super(agentID, d, p, l, mktID);
+	public MarketMakerAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l, int mktID) {
+		super(agentID, modelID, d, p, l, mktID);
 		agentType = Consts.getAgentType(this.getName());
 		
 		arrivalTime = new TimeStamp(0);

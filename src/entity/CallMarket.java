@@ -140,7 +140,7 @@ public class CallMarket extends Market {
 		for (Iterator<Integer> it = transactingIDs.iterator(); it.hasNext(); ) {
 			int id = it.next();
 			data.getAgent(id).updateTransactions(clearTime);
-			data.getAgent(id).logTransactions(clearTime, data.getModelIDByMarket(ID));
+			data.getAgent(id).logTransactions(clearTime); 
 		}
 		orderbook.logActiveBids(clearTime);
 		orderbook.logClearedBids(clearTime);

@@ -18,9 +18,8 @@ import java.util.*;
  * output file, e.g. it computes the surplus for all agents and aggregates other 
  * features for observations.
  * 
- * The primary market model is the one in which agents primarily interact. Bids
- * are then duplicated in the other market models, based on those submitted in the
- * primary model.
+ * The primary market model is the one whose payoff is stored in the observation
+ * file.
  *
  * Note: For the lists containing time series, a new value is added to each list
  * when the value has a chance to change (generally after a clear event in a market).
@@ -36,19 +35,21 @@ public class SystemData {
 	// Model information
 	public HashMap<Integer,MarketModel> models;			// models hashed by ID
 	public HashMap<Integer,ArrayList<Integer>> modelToMarketList;	// hashed by model ID
-	public HashMap<Integer,Integer> marketToModel;		// hashed by market ID
+	public HashMap<Integer,Integer> marketToModel;			// hashed by market ID
 	public MarketModel primaryModel;
-	public String primaryModelDesc;						// description of primary model
+	public String primaryModelDesc;					// description of primary model
 	
 	// Market information
 	public HashMap<Integer,PQBid> bidData;				// all bids ever, hashed by bid ID
-	public HashMap<Integer,PQTransaction> transData;	// hashed by transaction ID
+	public HashMap<Integer,PQTransaction> transData;		// hashed by transaction ID
 	public HashMap<Integer,Quote> quoteData;			// hashed by market ID
 	public HashMap<Integer,Agent> agents;				// agents hashed by ID
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
-	public Quoter quoter;
-	private Sequence transIDSequence;
-	
+	public ArrayList<Integer> roleAgentIDs;				// IDs of agents in a role
+	public ArrayList<Integer> modelIDs;
+
+	private Quoter quoter;
+	private Sequence transIDSequence;	
 	private ArrivalTime arrivalTimeGenerator;
 	private PrivateValue processGenerator;
 	
@@ -59,8 +60,6 @@ public class SystemData {
 	
 	public int numMarkets;
 	public int numAgents;
-	public ArrayList<Integer> roleAgentIDs;				// IDs of agents in a role
-	public ArrayList<Integer> modelIDs;
 	
 	// Parameters set by specification file
 	public TimeStamp simLength;
@@ -230,31 +229,31 @@ public class SystemData {
 		return !roleAgentIDs.contains(id);
 	}
 	
-	/**
-	 * Given a market ID, find the markets in other markets that are linked.
-	 * Results includes the current market ID.
-	 * 
-	 * @param id
-	 * @return
-	 */
-	public ArrayList<Integer> getLinkedMarkets(int mktID) {
-		ArrayList<Integer> ids = new ArrayList<Integer>();
-		int idx = modelToMarketList.get(primaryModel.getID()).indexOf(mktID);
-		
-		// need to cycle through all models to determine the correct index?
-		for (Map.Entry<Integer,ArrayList<Integer>> entry : modelToMarketList.entrySet()) {
-			ArrayList<Integer> mktIDs = entry.getValue();
-			
-			if (idx < mktIDs.size()) {
-				// add the ID at the given index
-				ids.add(mktIDs.get(idx));
-			} else if (mktIDs.size() == 1) {
-				// always add the centralized market
-				ids.add(mktIDs.get(0));
-			}
-		}
-		return ids;
-	}
+	///**
+	// * Given a market ID, find the markets in other markets that are linked.
+	// * Results includes the current market ID.
+	// * 
+	// * @param id
+	// * @return
+	// */
+	//public ArrayList<Integer> getLinkedMarkets(int mktID) {
+	//	ArrayList<Integer> ids = new ArrayList<Integer>();
+	//	int idx = modelToMarketList.get(primaryModel.getID()).indexOf(mktID);
+	//	
+	//	// need to cycle through all models to determine the correct index?
+	//	for (Map.Entry<Integer,ArrayList<Integer>> entry : modelToMarketList.entrySet()) {
+	//		ArrayList<Integer> mktIDs = entry.getValue();
+	//		
+	//		if (idx < mktIDs.size()) {
+	//			// add the ID at the given index
+	//			ids.add(mktIDs.get(idx));
+	//		} else if (mktIDs.size() == 1) {
+	//			// always add the centralized market
+	//			ids.add(mktIDs.get(0));
+	//		}
+	//	}
+	//	return ids;
+	//}  TODO - remove later
 	
 	
 	public ArrayList<Integer> getAgentIDsOfType(String type) {
@@ -278,21 +277,19 @@ public class SystemData {
 	}
 	
 	
-	public PQTransaction getTransaction(int id) {
-		return transData.get(id);
+	public PQTransaction getTransaction(int modelID, int id) {
+		return getTrans(modelID).get(id);
 	}
 	
 
-	public HashMap<Integer,PQTransaction> getAllTrans() {
-		return transData;
-	}
 	
 	/**
-	 * Get transactions for only the given market(s).
-	 * @param mktID
+	 * Get transactions for only the given model
+	 * @param modelID 
 	 * @return
 	 */
-	public HashMap<Integer,PQTransaction> getTrans(ArrayList<Integer> mktIDs) {
+	public HashMap<Integer,PQTransaction> getTrans(int modelID) {
+		ArrayList<Integer> mktIDs = getModel(modelID).getMarketIDs();
 		HashMap<Integer,PQTransaction> trans = new HashMap<Integer,PQTransaction>();
 		for (Map.Entry<Integer,PQTransaction> entry : transData.entrySet()) {
 			if (mktIDs.contains(entry.getValue().marketID))
@@ -360,14 +357,15 @@ public class SystemData {
 	 * Iterates through all transactions and sums up surplus for all agents.
 	 * CS = PV - p, PS = p - PV
 	 * 
-	 * @param ids 		market ids to check
+	 * @param modelID 		model id to check
 	 * @return hash map of background agent surplus, hashed by agent ID
 	 */
-	public HashMap<Integer,Integer> getSurplus(ArrayList<Integer> ids) {
-		
+	public HashMap<Integer,Integer> getSurplus(int modelID) {
+
+		ArrayList<Integer> ids = getModel(modelID).getMarketIDs();
 		HashMap<Integer,Integer> allSurplus = new HashMap<Integer,Integer>();
 		
-		for (Map.Entry<Integer,PQTransaction> trans : transData.entrySet()) {
+		for (Map.Entry<Integer,PQTransaction> trans : getTrans(modelID).entrySet()) {
 			PQTransaction t = trans.getValue();
 			
 			if (ids.contains(t.marketID)) {
@@ -399,8 +397,12 @@ public class SystemData {
 	/**
 	 * @return list of all transaction IDs
 	 */
-	public ArrayList<Integer> getTransactionIDs() {
-		return new ArrayList<Integer>(transData.keySet());
+	public ArrayList<Integer> getTransactionIDs(int modelID) {
+		return new ArrayList<Integer>(getTrans(modelID).keySet());
+	}
+
+	public void setSIP(Quoter sip) {
+		quoter = sip;
 	}
 
 	public void addAgent(Agent ag) {
@@ -475,7 +477,7 @@ public class SystemData {
 	 */
 	public void addDepth(int mktID, TimeStamp ts, int depth) {
 		if (mktID >= 0) {
-			System.err.print("ERROR: mktID must be < 0");
+			System.err.println("ERROR: mktID must be < 0");
 		} else {
 			if (marketDepth.get(mktID) != null) {
 				marketDepth.get(mktID).put(ts, depth);

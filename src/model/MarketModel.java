@@ -15,11 +15,16 @@ import systemmanager.*;
  * 
  * Multiple types of market models can be included in a single simulation
  * trial. Agents present in the simulation will reside in a primary market 
- * model and submit identical bids to each additional model.
+ * model (for payoff output purposes in the observation files), but agents
+ * behave independently within each model.
  * 
  * If the market model has only one market, then it is assumed to be a
- * "centralized" model. Note that only market properties can be set here,
- * as there is only one copy of each agent in the simulation.
+ * "centralized" model. Note that not only can market properties be set here,
+ * but also the assignments of agents to markets. The number of agents of each
+ * type is fixed globally, but all or a subset of these agents can be assigned
+ * to be in any of the available markets (single-market agents). If not
+ * specified, all background agents are assumed to be enter all available
+ * markets in the model.
  * 
  * Note:
  * 
@@ -35,15 +40,17 @@ import systemmanager.*;
  *  would indicate that for the given model, there is one instance of 
  *  configuration A and one instance of configuration B. The system, in this 
  *  case, would also determine that it needs to create two instances of this 
- *  model. 
+ *  model.
  * 
  * @author ewah
  */
 public abstract class MarketModel {
 
+	protected int modelID;
 	protected String config;
 	protected SystemData data;
-	protected ArrayList<Integer> agentIDs;		// IDs of permitted agents
+	protected ArrayList<Integer> agentIDs;		// IDs of associated agents
+	protected ArrayList<Integer> permittedAgentIDs;
 	protected ObjectProperties modelProperties;
 	
 	// Specify market configuration & properties for the model
@@ -56,14 +63,18 @@ public abstract class MarketModel {
 	/**
 	 * Constructor
 	 * 
+	 * @param modelID
 	 * @param p
+	 * @param d
 	 */
-	public MarketModel(ObjectProperties p, SystemData d) {
+	public MarketModel(int modelID, ObjectProperties p, SystemData d) {
+		this.modelID = modelID;
 		data = d;
 		modelMarketConfig = new ArrayList<MarketObjectPair>();
 		marketIDs = new ArrayList<Integer>();
 		modelProperties = p;
 		agentIDs = new ArrayList<Integer>();
+		permittedAgentIDs = new ArrayList<Integer>();
 	}
 	
 	/**
@@ -92,7 +103,7 @@ public abstract class MarketModel {
 	 * @return true if agent with the given id is permitted in this model.
 	 */
 	public boolean checkAgentPermissions(int id) {
-		return agentIDs.contains(id);
+		return permittedAgentIDs.contains(id);
 	}
 	
 	/**
@@ -103,13 +114,13 @@ public abstract class MarketModel {
 			Agent ag = data.getAgent(it.next());
 			// Check if the agent is a single market agent
 			if (Arrays.asList(Consts.SMAgentTypes).contains(ag.getType())) {
-				agentIDs.add(ag.getID());
+				permittedAgentIDs.add(ag.getID());
 			}
 		}
 	}
 	
 	/**
-	 * Link an agent with the model.
+	 * Adds an agent to the list of agents for the model.
 	 * @param id
 	 */
 	public void linkAgent(int id) {
@@ -166,6 +177,13 @@ public abstract class MarketModel {
 	}
 	
 	/**
+	 * @return agentIDs
+	 */
+	public ArrayList<Integer> getPermittedAgentIDs() {
+		return permittedAgentIDs;
+	}
+
+	/**
 	 * @return marketIDs
 	 */
 	public ArrayList<Integer> getMarketIDs() {
@@ -183,7 +201,7 @@ public abstract class MarketModel {
 	 * @return modelID
 	 */
 	public int getID() {
-		return this.hashCode();
+		return modelID;
 	}
 	
 	/* (non-Javadoc)

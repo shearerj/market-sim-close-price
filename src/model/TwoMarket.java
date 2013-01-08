@@ -19,8 +19,8 @@ public class TwoMarket extends MarketModel {
 
 	private ArrayList<String> permittedMMAgentTypes;
 	
-	public TwoMarket(ObjectProperties p, SystemData d) {
-		super(p, d);
+	public TwoMarket(int modelID, ObjectProperties p, SystemData d) {
+		super(modelID,p, d);
 		
 		config = p.get(Consts.MODEL_CONFIG_KEY);
 		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
@@ -46,7 +46,7 @@ public class TwoMarket extends MarketModel {
 		
 		// Add agent types specified in the spec file
 		for (Iterator<String> it = permittedMMAgentTypes.iterator(); it.hasNext(); ) {
-			agentIDs.addAll(data.getAgentIDsOfType(it.next()));
+			permittedAgentIDs.addAll(data.getAgentIDsOfType(it.next()));
 		}
 	}
 	

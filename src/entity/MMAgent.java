@@ -9,8 +9,8 @@ import systemmanager.*;
 
 
 /**
- * Multi-market (MM) agent. It arrives in all markets, not just those in the primary 
- * market model, and its agent strategy is executed across all markets.
+ * Multi-market (MM) agent. It arrives in all markets in a model, and its strategy is
+ * executed across multiple markets.
  * 
  * @author ewah
  */
@@ -19,12 +19,13 @@ public abstract class MMAgent extends Agent {
 	/**
 	 * Constructor for a multi-market agent.
 	 * @param agentID
+	 * @param modelID
 	 * @param d
 	 * @param p
 	 * @param l
 	 */
-	public MMAgent(int agentID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, d, p, l);;
+	public MMAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
+		super(agentID, modelID, d, p, l);
 	}
 	
 	/**
@@ -36,11 +37,11 @@ public abstract class MMAgent extends Agent {
 	public ActivityHashMap agentArrival(TimeStamp ts) {
 		
 		String s = "";
-		for (Iterator<Integer> i = data.getMarketIDs().iterator(); i.hasNext(); ) {
-			Market mkt = data.markets.get(i.next());
+		for (Iterator<Integer> it = data.getModel(modelID).getMarketIDs().iterator(); it.hasNext(); ) {
+			Market mkt = data.markets.get(it.next());
 			this.enterMarket(mkt, ts);
 			s += mkt.toString();
-			if (i.hasNext()) {
+			if (it.hasNext()) {
 				s += ",";
 			}
 		}
