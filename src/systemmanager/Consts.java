@@ -116,7 +116,15 @@ public class Consts {
 			p.put("pricingPolicy", "0.5");
 			p.put("clearFreq", "100");
 		}
-		
+                if (type.equals("ZIP")) {
+			p.put("sleepTime", "50");
+			p.put("sleepVar", "100");
+			p.put("c_R","0.05");
+			p.put("c_A","0.05");
+			p.put("beta","0.03");
+			p.put("betaVar", "0.005");
+			p.put("gamma","0.5");
+		}
 		return p;
 	}
 	
