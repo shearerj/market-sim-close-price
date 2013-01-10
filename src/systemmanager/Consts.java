@@ -14,7 +14,7 @@ public class Consts {
 	
 	public final static String[] SMAgentTypes = 
 		{ "MARKETMAKER", "ZI", "ZIP" };
-	public final static String[] MMAgentTypes = 
+	public final static String[] HFTAgentTypes = 
 		{ "LA", "DUMMY" };
 	public final static String[] marketTypeNames = 
 		{ "CDA", "CALL" };
@@ -80,11 +80,11 @@ public class Consts {
 	public final static String configDir = "config/";
 	public final static String logDir = "logs/";
 	
-	// Track type of bid submission for background agents
-	// NOBID = no bid submitted yet
-	// MAIN = bid submitted to main market
-	// ALTERNATE = bid submitted to alternate market, see extra info
-	public enum SubmittedBidMarket { NOBID,	MAIN, ALTERNATE	}
+//	// Track type of bid submission for background agents
+//	// NOBID = no bid submitted yet
+//	// MAIN = bid submitted to main market
+//	// ALTERNATE = bid submitted to alternate market, see extra info
+//	public enum SubmittedBidMarket { NOBID,	MAIN, ALTERNATE	}
 
 	// ----- SIMULATION -----
 	
@@ -116,7 +116,7 @@ public class Consts {
 			p.put("pricingPolicy", "0.5");
 			p.put("clearFreq", "100");
 		}
-                if (type.equals("ZIP")) {
+		if (type.equals("ZIP")) {
 			p.put("sleepTime", "50");
 			p.put("sleepVar", "100");
 			p.put("c_R","0.05");

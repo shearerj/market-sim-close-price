@@ -67,7 +67,7 @@ public class SystemSetup {
 
 			// Must create market models before agents, so can add the agents
 			// then to the appropriate/corresponding markets.
-			createQuoter();
+			createSIP();
 			createMarketModels();
 			createAgents();
 
@@ -92,10 +92,10 @@ public class SystemSetup {
 	}
 	
 	/**
-	 * Create Quoter entity, which enters the system at time 0.
+	 * Create SIP entity, which enters the system at time 0.
 	 */
-	public void createQuoter() {
-		Quoter iu = new Quoter(0, data, log);
+	public void createSIP() {
+		SIP iu = new SIP(0, data, log);
 		data.setSIP(iu);
 		//eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(0)));
 	}
@@ -163,7 +163,7 @@ public class SystemSetup {
 					}
 					log.log(Log.INFO, "Markets: " + market.getType() + ", " + market);
 					
-					data.marketToModel.put(mID, model.getID());
+					data.marketIDModelIDMap.put(mID, model.getID());
 				}
 				
 				// set up primary model
@@ -256,10 +256,10 @@ public class SystemSetup {
 					// create agent & events
 					if (!Arrays.asList(Consts.SMAgentTypes).contains(agentType)) {
 						// Multi-market agent
-						agent = AgentFactory.createMMAgent(agentType, agentID, modelID, data, ap, log);
+						agent = AgentFactory.createHFTAgent(agentType, agentID, modelID, data, ap, log);
 						
 						TimeStamp ts = agent.getArrivalTime();
-						if (agent instanceof MMAgent) {
+						if (agent instanceof HFTAgent) {
 							// Agent is in multiple markets (an extra check)
 							eventManager.createEvent(new AgentArrival(agent, ts));
 							eventManager.createEvent(new AgentDeparture(agent, data.simLength));

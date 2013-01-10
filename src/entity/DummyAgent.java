@@ -11,7 +11,7 @@ import java.util.HashMap;
  * 
  * @author ewah
  */
-public class DummyAgent extends MMAgent {
+public class DummyAgent extends HFTAgent {
 	
 	/**
 	 * Overloaded constructor

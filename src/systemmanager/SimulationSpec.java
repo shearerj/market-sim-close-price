@@ -118,8 +118,8 @@ public class SimulationSpec {
 		}
 		// Check which types of multi-market agents to create
 		// (from configuration section of spec file)
-		for (int i = 0; i < Consts.MMAgentTypes.length; i++) {
-			String agentType = Consts.MMAgentTypes[i];
+		for (int i = 0; i < Consts.HFTAgentTypes.length; i++) {
+			String agentType = Consts.HFTAgentTypes[i];
 			String num = getValue(agentType);
 			if (num != null) {
 				int n = Integer.parseInt(num);

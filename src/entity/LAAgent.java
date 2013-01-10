@@ -17,7 +17,7 @@ import java.util.Iterator;
  * 
  * @author ewah
  */
-public class LAAgent extends MMAgent {
+public class LAAgent extends HFTAgent {
 	
 	private double alpha;
 	private int sleepTime;
@@ -76,9 +76,9 @@ public class LAAgent extends MMAgent {
 				int quantity = Math.min(buySize, sellSize);
 
 				if (quantity > 0 && (buyMarketID != sellMarketID)) {
-					actMap.appendActivityHashMap(addBid(buyMarket, midPoint-tickSize, 
+					actMap.appendActivityHashMap(submitBid(buyMarket, midPoint-tickSize, 
 							quantity, ts));
-					actMap.appendActivityHashMap(addBid(sellMarket, midPoint+tickSize, 
+					actMap.appendActivityHashMap(submitBid(sellMarket, midPoint+tickSize, 
 							-quantity, ts));
 					log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
 							"::agentStrategy: Arb opportunity exists: " + bestQuote + 

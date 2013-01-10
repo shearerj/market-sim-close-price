@@ -35,7 +35,7 @@ public class SystemData {
 	// Model information
 	public HashMap<Integer,MarketModel> models;			// models hashed by ID
 	public HashMap<Integer,ArrayList<Integer>> modelToMarketList;	// hashed by model ID
-	public HashMap<Integer,Integer> marketToModel;			// hashed by market ID
+	public HashMap<Integer,Integer> marketIDModelIDMap;			// hashed by market ID
 	public MarketModel primaryModel;
 	public String primaryModelDesc;					// description of primary model
 	
@@ -48,7 +48,7 @@ public class SystemData {
 	public ArrayList<Integer> roleAgentIDs;				// IDs of agents in a role
 	public ArrayList<Integer> modelIDs;
 
-	private Quoter quoter;
+	private SIP sip;
 	private Sequence transIDSequence;	
 	private ArrivalTime arrivalTimeGenerator;
 	private PrivateValue processGenerator;
@@ -101,7 +101,7 @@ public class SystemData {
 		transIDSequence = new Sequence(0);
 		modelToMarketList = new HashMap<Integer,ArrayList<Integer>>();
 		primaryModel = null;
-		marketToModel = new HashMap<Integer,Integer>();
+		marketIDModelIDMap = new HashMap<Integer,Integer>();
 	
 		// Initialize containers for observations/features
 		marketDepth = new HashMap<Integer,HashMap<TimeStamp,Integer>>();
@@ -157,12 +157,8 @@ public class SystemData {
 		return quoteData.get(mktID);
 	}
 	
-	/**
-	 * Returns quoter entity.
-	 * @return
-	 */
-	public Quoter getQuoter() {
-		return quoter;
+	public SIP getSIP() {
+		return sip;
 	}
 	
 	public HashMap<Integer,Agent> getAgents() {
@@ -176,6 +172,22 @@ public class SystemData {
 	public HashMap<Integer,Market> getMarkets() {
 		return markets;
 	}
+	
+	/**
+	 * Given array of market IDs, returns ArrayList of associated Markets.
+	 * @param IDs
+	 * @return
+	 */
+	public ArrayList<Market> getMarketsByIDs(int[] IDs) {
+		ArrayList<Market> mkts = new ArrayList<Market>();
+		for (int i = 0; i < IDs.length; i++) {
+			if (markets.keySet().contains(IDs[i])) {
+				mkts.add(markets.get(IDs[i]));
+			}
+		}
+		return mkts;
+	}
+	
 	
 	public ArrayList<Integer> getMarketIDs() {
 		return new ArrayList<Integer>(markets.keySet());
@@ -201,12 +213,12 @@ public class SystemData {
 		return models.get(id);
 	}
 	
-	public MarketModel getModelByMarket(int mktID) {
-		return models.get(marketToModel.get(mktID));
+	public MarketModel getModelByMarketID(int mktID) {
+		return models.get(marketIDModelIDMap.get(mktID));
 	}
 	
-	public int getModelIDByMarket(int mktID) {
-		return getModelByMarket(mktID).getID();
+	public int getModelIDByMarketID(int mktID) {
+		return getModelByMarketID(mktID).getID();
 	}
 	
 	/**
@@ -228,33 +240,6 @@ public class SystemData {
 	public boolean isBackgroundAgent(int id) {
 		return !roleAgentIDs.contains(id);
 	}
-	
-	///**
-	// * Given a market ID, find the markets in other markets that are linked.
-	// * Results includes the current market ID.
-	// * 
-	// * @param id
-	// * @return
-	// */
-	//public ArrayList<Integer> getLinkedMarkets(int mktID) {
-	//	ArrayList<Integer> ids = new ArrayList<Integer>();
-	//	int idx = modelToMarketList.get(primaryModel.getID()).indexOf(mktID);
-	//	
-	//	// need to cycle through all models to determine the correct index?
-	//	for (Map.Entry<Integer,ArrayList<Integer>> entry : modelToMarketList.entrySet()) {
-	//		ArrayList<Integer> mktIDs = entry.getValue();
-	//		
-	//		if (idx < mktIDs.size()) {
-	//			// add the ID at the given index
-	//			ids.add(mktIDs.get(idx));
-	//		} else if (mktIDs.size() == 1) {
-	//			// always add the centralized market
-	//			ids.add(mktIDs.get(0));
-	//		}
-	//	}
-	//	return ids;
-	//}  TODO - remove later
-	
 	
 	public ArrayList<Integer> getAgentIDsOfType(String type) {
 		ArrayList<Integer> ids = new ArrayList<Integer>();
@@ -401,8 +386,8 @@ public class SystemData {
 		return new ArrayList<Integer>(getTrans(modelID).keySet());
 	}
 
-	public void setSIP(Quoter sip) {
-		quoter = sip;
+	public void setSIP(SIP sip) {
+		this.sip = sip;
 	}
 
 	public void addAgent(Agent ag) {

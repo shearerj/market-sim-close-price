@@ -146,7 +146,7 @@ public class MarketMakerAgent extends SMAgent {
                         if(validTransaction){
                             log.log(Log.INFO,"MarketMaker::Price "+prices[j]+" @ Quantity "+quantities[j]);
 			//				System.out.print("(" + quantities[j] + ", " + prices[j] + ") | ");
-                            actMap.appendActivityHashMap(addBid(data.markets.get(mainMarketID), prices[j], quantities[j], ts));
+                            actMap.appendActivityHashMap(submitBid(data.markets.get(mainMarketID), prices[j], quantities[j], ts));
                         }
 		}
                 y_max = prices[numRungs-1];

@@ -17,7 +17,7 @@ import systemmanager.*;
  */
 public class TwoMarket extends MarketModel {
 
-	private ArrayList<String> permittedMMAgentTypes;
+	private ArrayList<String> permittedHFTAgentTypes;
 	
 	public TwoMarket(int modelID, ObjectProperties p, SystemData d) {
 		super(modelID,p, d);
@@ -28,9 +28,8 @@ public class TwoMarket extends MarketModel {
 			addMarketPropertyPair("CDA");
 			addMarketPropertyPair("CDA");
 			
-			permittedMMAgentTypes = new ArrayList<String>();
-			permittedMMAgentTypes.add(p.get(Consts.MODEL_CONFIG_KEY));
-			
+			permittedHFTAgentTypes = new ArrayList<String>();
+			permittedHFTAgentTypes.add(p.get(Consts.MODEL_CONFIG_KEY));	
 		}
 	}
 	
@@ -45,7 +44,7 @@ public class TwoMarket extends MarketModel {
 		permitAllSMAgents();
 		
 		// Add agent types specified in the spec file
-		for (Iterator<String> it = permittedMMAgentTypes.iterator(); it.hasNext(); ) {
+		for (Iterator<String> it = permittedHFTAgentTypes.iterator(); it.hasNext(); ) {
 			permittedAgentIDs.addAll(data.getAgentIDsOfType(it.next()));
 		}
 	}

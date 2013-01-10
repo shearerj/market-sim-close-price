@@ -25,7 +25,7 @@ public class WithdrawBid extends Activity {
 	}
 	
 	public ActivityHashMap execute() {
-		return this.ag.withdrawBid(this.mkt, this.time);
+		return this.ag.executeWithdrawBid(this.mkt, this.time);
 	}
 	
 	public String toString() {

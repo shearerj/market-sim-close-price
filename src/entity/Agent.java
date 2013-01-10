@@ -38,7 +38,7 @@ public abstract class Agent extends Entity {
 	protected int tickSize;
 	
 	// For quote generation
-	protected Quoter quoter;
+	protected SIP sip;
 	
 	// Agent parameters
 	protected int privateValue;
@@ -86,7 +86,7 @@ public abstract class Agent extends Entity {
 		arrivalTime = new TimeStamp(0);
 		
 		tickSize = data.tickSize;
-		quoter = data.getQuoter();
+		sip = data.getSIP();
 	}
 	
 	/** 
@@ -335,8 +335,7 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * Wrapper method to group activities of 1) submitting bid to market,
-	 * 2) processing/clearing bid.
+	 * Wrapper method to submit bid to market after checking permissions.
 	 * 
 	 * @param mkt
 	 * @param price
@@ -344,30 +343,17 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap addBid(Market mkt, int price, int quantity, TimeStamp ts) {
+	public ActivityHashMap submitBid(Market mkt, int price, int quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		if (data.getModelByMarket(mkt.getID()).checkAgentPermissions(this.ID)) {
+		if (data.getModelByMarketID(mkt.getID()).checkAgentPermissions(this.ID)) {
 			actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
 					new SubmitBid(this, mkt, price, quantity, ts));
 		}
-		
-//		for (Iterator<Integer> id = data.getLinkedMarkets(mkt.getID()).iterator(); id.hasNext(); ) {
-//			Market otherMkt = data.getMarket(id.next());
-//			if (otherMkt.getID() != mkt.getID()) {
-//				// only submit if the agent is allowed to do so in this other market model
-//				if (data.getModelByMarket(otherMkt.getID()).checkAgentPermissions(this.ID)) {
-//					actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
-//							new SubmitBid(this, otherMkt, price, quantity, ts));
-//				}
-//			}
-//		}
-
 		return actMap;
 	}
 
 	/**
-	 * Wrapper method to group activities of 1) submitting multiple-offer bid to a market,
-	 * 2) process/clear bid.
+	 * Wrapper method to submit multiple-point bid to market after checking permissions.
 	 * 
 	 * @param mkt
 	 * @param price
@@ -375,25 +361,50 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap addMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
+	public ActivityHashMap submitMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		if (data.getModelByMarket(mkt.getID()).checkAgentPermissions(this.ID)) {
+		if (data.getModelByMarketID(mkt.getID()).checkAgentPermissions(this.ID)) {
 			actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
 					new SubmitMultipleBid(this, mkt, price, quantity, ts));
 		}
-		
-//		for (Iterator<Integer> id = data.getLinkedMarkets(mkt.getID()).iterator(); id.hasNext(); ) {
-//			Market otherMkt = data.getMarket(id.next());
-//			if (otherMkt.getID() != mkt.getID()) {
-//				if (data.getModelByMarket(mkt.getID()).checkAgentPermissions(this.ID)) {
-//					actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY,
-//						new SubmitMultipleBid(this, otherMkt, price, quantity, ts));
-//				}
-//			}
-//		}
 		return actMap;
 	}
-
+	
+	/**
+	 * Wrapper method to withdraw the agent's bid from a market after a specified duration.
+	 * 
+	 * @param mkt
+	 * @param duration
+	 * @param ts
+	 * @return
+	 */
+	public ActivityHashMap withdrawBid(Market mkt, int duration, TimeStamp ts) {
+		ActivityHashMap actMap = new ActivityHashMap();
+		if (data.getModelByMarketID(mkt.getID()).checkAgentPermissions(this.ID)) {
+			TimeStamp withdrawTime = ts.sum(new TimeStamp(duration));
+			actMap.insertActivity(Consts.WITHDRAW_BID_PRIORITY,
+					new WithdrawBid(this, mkt, withdrawTime));
+			log.log(Log.INFO, ts + " | " + mkt + " " + this + ": bid duration=" + duration); 
+		}
+		return actMap;
+	}
+	
+	/**
+	 * Withdraws a bid from the given market.
+	 * 
+	 * @param b
+	 * @param mkt
+	 * @return
+	 */
+	public ActivityHashMap executeWithdrawBid(Market mkt, TimeStamp ts) {
+		log.log(Log.INFO, ts + " | " + this + " withdraw bid from " + mkt);
+		
+		if (data.getModelByMarketID(mkt.getID()).checkAgentPermissions(this.ID)) {
+			return mkt.removeBid(this.ID, ts);
+		}
+		return null;
+	}
+	
 	/**
 	 * Submit a bid to the specified market.
 	 * 
@@ -403,12 +414,11 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap submitBid(Market mkt, int price, int quantity, TimeStamp ts) {
+	public ActivityHashMap executeSubmitBid(Market mkt, int price, int quantity, TimeStamp ts) {
 		
 		if (quantity == 0) return null;
 
-		log.log(Log.INFO, ts.toString() + " | " + mkt.toString() + " " + this.toString() + 
-				": +(" + price + ", " + quantity + ")");
+		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price + ", " + quantity + ")");
 		
 		int p = Market.quantize(price, tickSize);
 		PQBid pqBid = new PQBid(this.ID, mkt.ID);
@@ -428,14 +438,13 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap submitMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
+	public ActivityHashMap executeSubmitMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
 		if (price.length != quantity.length) {
-			log.log(Log.ERROR, "Agent::submitMultipleBid: Price/Quantity arrays are not the same length");
+			log.log(Log.ERROR, "Agent::submitMultipleBid: Price/Quantity are not the same length");
 			return null;
 		}
 		
-		log.log(Log.INFO, ts.toString() + " | " + mkt.toString() + " " + this.toString() +  
-				": +(" + price.toString() +	", " + quantity.toString() + ")");
+		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price +	", " + quantity + ")");
 		
 		PQBid pqBid = new PQBid(this.ID, mkt.ID);
 		pqBid.timestamp = ts;
@@ -451,34 +460,6 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * Withdraws a bid from the given market in the primary MarketModel.
-	 * 
-	 * @param b
-	 * @param mkt
-	 * @return
-	 */
-	public ActivityHashMap withdrawBid(Market mkt, TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
-		log.log(Log.INFO, ts + " | " + this.toString() + " withdraw bid from " + mkt);
-		
-//		// withdraw for all other markets (in different models)
-//		for (Iterator<Integer> id = data.getLinkedMarkets(mkt.getID()).iterator(); id.hasNext(); ) {
-//			Market otherMkt = data.getMarket(id.next());
-//			if (otherMkt.getID() != mkt.getID()) {
-//				if (data.getModelByMarket(otherMkt.getID()).checkAgentPermissions(this.ID)) {
-//					log.log(Log.INFO, ts + " | " + this.toString() + " withdraw bid from " + 
-//							otherMkt);
-//					actMap.appendActivityHashMap(otherMkt.removeBid(this.ID, ts));
-//				}
-//			}
-//		}
-		if (data.getModelByMarket(mkt.getID()).checkAgentPermissions(this.ID)) {
-			actMap.appendActivityHashMap(mkt.removeBid(this.ID, ts));
-		}
-		return actMap;
-	}
-
-	/**
 	 * Update global and NBBO quotes for the agent's model.
 	 * 
 	 * @param ts
@@ -490,19 +471,14 @@ public abstract class Agent extends Entity {
 			Market mkt = data.getMarket(it.next());
 			updateQuotes(mkt, ts);
 		}
+		lastGlobalQuote = sip.getGlobalQuote(modelID);
+		lastNBBOQuote = sip.getNBBOQuote(modelID);
 		
-//		lastGlobalQuote = quoter.findBestBidOffer(data.getPrimaryMarketIDs());
-//		lastGlobalQuote = quoter.getGlobalQuote(data.getPrimaryModel().getID());
-//		lastNBBOQuote = quoter.getNBBOQuote(data.getPrimaryModel().getID());
-		lastGlobalQuote = quoter.getGlobalQuote(modelID);
-		lastNBBOQuote = quoter.getNBBOQuote(modelID);
-		
-		log.log(Log.INFO, ts.toString() + " | " + this + " Global" + lastGlobalQuote + 
+		log.log(Log.INFO, ts + " | " + this + " Global" + lastGlobalQuote + 
 				", NBBO" + lastNBBOQuote);
-
 		return null;
 	}
-
+	
 	/**
 	 * Updates quotes for the given market.
 	 * 
@@ -551,8 +527,6 @@ public abstract class Agent extends Entity {
 		log.log(Log.INFO, s);
 	}
 	
-	
-	
 	/**
 	 * Process a transaction received from the server.
 	 * 
@@ -589,9 +563,6 @@ public abstract class Agent extends Entity {
 		if (!flag) {
 			return false;
 		} else {
-//			// Check only the model that the transaction belongs to (by market to model ID)
-//			int modelID = data.getModelByMarket(t.marketID).getID();
-
 			// check whether seller, in which case negate the quantity
 			int quantity = t.quantity;
 			if (this.ID == t.sellerID) {

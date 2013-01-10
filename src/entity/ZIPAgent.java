@@ -44,7 +44,7 @@ public class ZIPAgent extends SMAgent {
     private double learningRate;
     private double gamma;
 
-	public Consts.SubmittedBidMarket submittedBidType;
+	//public Consts.SubmittedBidMarket submittedBidType;
 
     public ZIPAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l, int mktID) {
         super(agentID, modelID, d, p, l, mktID);
@@ -139,7 +139,7 @@ public class ZIPAgent extends SMAgent {
         int bestSellMarketID = mainMarketID;
         bestSellPrice = -1;                
         bestBuyPrice = -1;                                                
-        submittedBidType = Consts.SubmittedBidMarket.MAIN;// default is submitting to main market
+        //submittedBidType = Consts.SubmittedBidMarket.MAIN;// default is submitting to main market
 
         if(DEBUG_BASIC_ENB){
             System.out.println("lastNBBOQuote.bestAsk = "+lastNBBOQuote.bestAsk);
@@ -157,8 +157,8 @@ public class ZIPAgent extends SMAgent {
                 nbboBetter_sell = true;
                 bestSellPrice = lastNBBOQuote.bestAsk;
                 bestSellMarketID = lastNBBOQuote.bestAskMarket;//Highest selling price
-                if(bestSellMarketID == altMarketID)
-                    submittedBidType = Consts.SubmittedBidMarket.ALTERNATE;
+//                if(bestSellMarketID == altMarketID)
+//                    submittedBidType = Consts.SubmittedBidMarket.ALTERNATE;
             } else {
                 if(DEBUG_BASIC_ENB)
                     System.out.println("Main Market has a higher asking price");
@@ -177,8 +177,8 @@ public class ZIPAgent extends SMAgent {
             nbboBetter_sell = true;
             bestSellPrice = lastNBBOQuote.bestAsk;
             bestSellMarketID = lastNBBOQuote.bestAskMarket;//Highest selling price
-            if(bestSellMarketID == altMarketID)
-                submittedBidType = Consts.SubmittedBidMarket.ALTERNATE;
+//            if(bestSellMarketID == altMarketID)
+//                submittedBidType = Consts.SubmittedBidMarket.ALTERNATE;
             
         } else {//In case the market have not been initialized, use a random price.
             bestSellPrice = (int) Math.max(0, ((this.privateValue) + rand.nextDouble()*bidRange));
@@ -200,8 +200,8 @@ public class ZIPAgent extends SMAgent {
                 nbboBetter_buy = true;
                 bestBuyPrice = lastNBBOQuote.bestBid;
                 bestBuyMarketID = lastNBBOQuote.bestBidMarket;//Lowest buying price                                
-                if(bestBuyMarketID == altMarketID)
-                    submittedBidType = Consts.SubmittedBidMarket.ALTERNATE;
+//                if(bestBuyMarketID == altMarketID)
+//                    submittedBidType = Consts.SubmittedBidMarket.ALTERNATE;
 
             } else {
                 if(DEBUG_BASIC_ENB)
@@ -218,8 +218,8 @@ public class ZIPAgent extends SMAgent {
                 nbboBetter_buy = true;
                 bestBuyPrice = lastNBBOQuote.bestBid;
                 bestBuyMarketID = lastNBBOQuote.bestBidMarket;//Lowest buying price                                
-                if(bestBuyMarketID == altMarketID)
-                    submittedBidType = Consts.SubmittedBidMarket.ALTERNATE;
+//                if(bestBuyMarketID == altMarketID)
+//                    submittedBidType = Consts.SubmittedBidMarket.ALTERNATE;
         }
         else {//In case both markets have not been initialized, use a random price.                        
             bestBuyPrice = (int) Math.max(0, ((this.privateValue - 2*bidRange) + rand.nextDouble()*2*bidRange)); 
@@ -284,7 +284,7 @@ public class ZIPAgent extends SMAgent {
                                 ", " + mainMarketQuote.lastAskPrice.getPrice() + ")");
             }
 
-            actMap.appendActivityHashMap(addBid(data.markets.get(bestSellMarketID), p_new_sell, q, ts));
+            actMap.appendActivityHashMap(submitBid(data.markets.get(bestSellMarketID), p_new_sell, q, ts));
 
             log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
                     "::agentStrategy: " + "+(" + p_new_sell + "," + (q) + ") to " + 
@@ -307,7 +307,7 @@ public class ZIPAgent extends SMAgent {
                                 ", " + mainMarketQuote.lastAskPrice.getPrice() + ")");
             }
 
-            actMap.appendActivityHashMap(addBid(data.markets.get(bestBuyMarketID), p_new_buy, q, ts));
+            actMap.appendActivityHashMap(submitBid(data.markets.get(bestBuyMarketID), p_new_buy, q, ts));
 
             log.log(Log.INFO, ts.toString() + " | " + this.toString() + " " + agentType + 
                     "::agentStrategy: " + "+(" + p_new_buy + "," + (q) + ") to " + 

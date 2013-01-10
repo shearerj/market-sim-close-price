@@ -19,7 +19,7 @@ public class AgentFactory {
 	 * @param params
 	 * @return
 	 */
-	public static Agent createMMAgent(String type,
+	public static Agent createHFTAgent(String type,
 									Integer agentID,
 									Integer modelID,
 									SystemData data,

@@ -181,8 +181,8 @@ public abstract class Market extends Entity {
 		log.log(Log.INFO, ts + " | " + this + " SendToSIP(" + bid + ", " + ask + ")");
 
 		ActivityHashMap actMap = new ActivityHashMap();
-		MarketModel model = data.getModelByMarket(this.getID());
-		Quoter sip = data.getQuoter();
+		MarketModel model = data.getModelByMarketID(this.getID());
+		SIP sip = data.getSIP();
 		TimeStamp tsNew = ts.sum(data.nbboLatency);
 		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new ProcessQuote(sip, this, bid, ask, tsNew));
 		actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(sip, model, tsNew));
