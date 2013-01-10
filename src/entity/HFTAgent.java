@@ -41,7 +41,7 @@ public abstract class HFTAgent extends Agent {
 	public ActivityHashMap agentArrival(TimeStamp ts) {
 		
 		String s = "";
-		for (Iterator<Integer> it = data.getModel(modelID).getMarketIDs().iterator(); it.hasNext(); ) {
+		for (Iterator<Integer> it = this.getModel().getMarketIDs().iterator(); it.hasNext(); ) {
 			Market mkt = data.markets.get(it.next());
 			this.enterMarket(mkt, ts);
 			s += mkt.toString();

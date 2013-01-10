@@ -78,10 +78,10 @@ public abstract class MarketModel {
 	}
 	
 	/**
-	 * Executed after agents are created; sets which MM agents can submit bids to markets
+	 * Executed after agents are created; sets which HFTAgents can submit bids to markets
 	 * in this model.
 	 *
-	 * Note that all SM agents are, by default, permitted in all markets.
+	 * Note that all SMAgents are, by default, permitted in all markets.
 	 */
 	public abstract void setAgentPermissions();
 	

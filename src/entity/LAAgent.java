@@ -81,7 +81,7 @@ public class LAAgent extends HFTAgent {
 					actMap.appendActivityHashMap(submitBid(sellMarket, midPoint+tickSize, 
 							-quantity, ts));
 					log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
-							"::agentStrategy: Arb opportunity exists: " + bestQuote + 
+							"::agentStrategy: An arb opportunity exists: " + bestQuote + 
 							" in " + data.getMarket(bestQuote.bestBuyMarket) + " & " 
 							+ data.getMarket(bestQuote.bestSellMarket));
 					

@@ -160,6 +160,13 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
+	 * @return MarketModel of the agent.
+	 */
+	public MarketModel getModel() {
+		return data.getModel(modelID);
+	}
+	
+	/**
 	 * Method to get the type of the agent.
 	 * @return
 	 */
@@ -177,7 +184,7 @@ public abstract class Agent extends Entity {
 	
 	@Override
 	public String toString() {
-		return new String("(" + this.logID + "," + data.getModel(modelID) + ")");
+		return new String("(" + this.logID + "," + this.getModel() + ")");
 	}
 	
 	/**
@@ -345,7 +352,7 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap submitBid(Market mkt, int price, int quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		if (data.getModelByMarketID(mkt.getID()).checkAgentPermissions(this.ID)) {
+		if (this.getModel().checkAgentPermissions(this.ID)) {
 			actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
 					new SubmitBid(this, mkt, price, quantity, ts));
 		}
@@ -363,7 +370,7 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap submitMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		if (data.getModelByMarketID(mkt.getID()).checkAgentPermissions(this.ID)) {
+		if (this.getModel().checkAgentPermissions(this.ID)) {
 			actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
 					new SubmitMultipleBid(this, mkt, price, quantity, ts));
 		}
@@ -371,16 +378,16 @@ public abstract class Agent extends Entity {
 	}
 	
 	/**
-	 * Wrapper method to withdraw the agent's bid from a market after a specified duration.
+	 * Wrapper method to expire the agent's bid from a market after a specified duration.
 	 * 
 	 * @param mkt
 	 * @param duration
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap withdrawBid(Market mkt, int duration, TimeStamp ts) {
+	public ActivityHashMap expireBid(Market mkt, long duration, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		if (data.getModelByMarketID(mkt.getID()).checkAgentPermissions(this.ID)) {
+		if (this.getModel().checkAgentPermissions(this.ID)) {
 			TimeStamp withdrawTime = ts.sum(new TimeStamp(duration));
 			actMap.insertActivity(Consts.WITHDRAW_BID_PRIORITY,
 					new WithdrawBid(this, mkt, withdrawTime));
@@ -399,7 +406,7 @@ public abstract class Agent extends Entity {
 	public ActivityHashMap executeWithdrawBid(Market mkt, TimeStamp ts) {
 		log.log(Log.INFO, ts + " | " + this + " withdraw bid from " + mkt);
 		
-		if (data.getModelByMarketID(mkt.getID()).checkAgentPermissions(this.ID)) {
+		if (this.getModel().checkAgentPermissions(this.ID)) {
 			return mkt.removeBid(this.ID, ts);
 		}
 		return null;
@@ -521,7 +528,7 @@ public abstract class Agent extends Entity {
 		int up = getUnrealizedProfit();
 
 		String s = ts.toString() + " | " + this +  " Agent::logTransactions: " + 
-				data.getModel(modelID).getFullName() + ": Current Position=" + 
+				this.getModel().getFullName() + ": Current Position=" + 
 				positionBalance + ", Realized Profit=" + rp + 
 				", Unrealized Profit=" + up;
 		log.log(Log.INFO, s);
@@ -750,7 +757,7 @@ public abstract class Agent extends Entity {
 		int p = -1;
 
 		try {			
-			ArrayList<Integer> mIDs = data.getModel(modelID).getMarketIDs();
+			ArrayList<Integer> mIDs = this.getModel().getMarketIDs();
 			
 			if (positionBalance > 0) {
 				// For long position, compare cost to bid quote (buys)
@@ -770,7 +777,7 @@ public abstract class Agent extends Entity {
 				}
 			}
 			if (positionBalance != 0) {
-				log.log(Log.DEBUG, data.getModel(modelID).getFullName() + ": " + this + 
+				log.log(Log.DEBUG, this.getModel().getFullName() + ": " + this + 
 						" bal=" + positionBalance + 
 						", p=" + p + ", avgCost=" + averageCost);
 			}
@@ -794,13 +801,14 @@ public abstract class Agent extends Entity {
 	
 	/**
 	 * Find best market to buy in (i.e. lowest ask) and to sell in (i.e. highest bid).
-	 * This is a global operation so it checks all markets in marketIDs.
+	 * This is a global operation so it checks all markets in marketIDs and it gets
+	 * the up-to-date market quote with zero delays.
 	 * 
 	 * bestBuy = the best price an agent can buy at (the lowest sell bid).
 	 * bestSell = the best price an agent can sell at (the highest buy bid).
 	 *  
-	 * NOTE: This uses only those markets belonging to the agent's model, as strategies
-	 * can only be selected based on information on those markets.
+	 * NOTE: This uses only those markets belonging to the agent's model, as
+	 * strategies can only be selected based on information on those markets.
 	 * 
 	 * @return BestQuote
 	 */
@@ -810,7 +818,7 @@ public abstract class Agent extends Entity {
 		int bestBuyMkt = 0;
 		int bestSellMkt = 0;
 
-		for (Iterator<Integer> it = data.getModel(modelID).getMarketIDs().iterator(); it.hasNext(); ) {
+		for (Iterator<Integer> it = this.getModel().getMarketIDs().iterator(); it.hasNext(); ) {
 			Market mkt = data.markets.get(it.next());
 			Price bid = getBidPrice(mkt.ID);
 			Price ask = getAskPrice(mkt.ID);

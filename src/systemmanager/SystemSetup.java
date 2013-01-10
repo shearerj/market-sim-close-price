@@ -97,7 +97,6 @@ public class SystemSetup {
 	public void createSIP() {
 		SIP iu = new SIP(0, data, log);
 		data.setSIP(iu);
-		//eventManager.createEvent(new UpdateNBBO(iu, new TimeStamp(0)));
 	}
 	
 	
@@ -166,7 +165,7 @@ public class SystemSetup {
 					data.marketIDModelIDMap.put(mID, model.getID());
 				}
 				
-				// set up primary model
+				// set up primary model (necessary because of the primary model is specified separately)
 				if (mdl.getKey().equals(primaryModel)) {
 					// check if primary model configuration is contained in the specs file
 					if (Arrays.asList(configs).contains(primaryModelConfig)) {
@@ -198,7 +197,7 @@ public class SystemSetup {
 	}
 	
 	/**
-	 * Parse list of model configruations from simulation specifications file.
+	 * Parse list of model configurations from simulation specifications file.
 	 * 
 	 * @param modelConfigList
 	 * @return

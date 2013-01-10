@@ -43,7 +43,7 @@ import java.util.Random;
 public class ZIAgent extends SMAgent {
 
 	private double expireRate;
-	private int expiration;				// time until limit order expiration
+	private long expiration;			// time until limit order expiration
 	private int bidRange;				// range for limit order
 	private double pvVar;				// variance from private value random process
 	
@@ -61,7 +61,7 @@ public class ZIAgent extends SMAgent {
 		expireRate = this.data.expireRate;
 		bidRange = this.data.bidRange;
 		pvVar = this.data.privateValueVar;
-		expiration = (int) getExponentialRV(expireRate);
+		expiration = (long) getExponentialRV(expireRate);
 		
 		arrivalTime = new TimeStamp(Long.parseLong(params.get("arrivalTime")));
 		int pv = Integer.parseInt(params.get("fundamental"));
@@ -69,8 +69,8 @@ public class ZIAgent extends SMAgent {
 		
 //		// set the alternate ID if the primary model is a two-market model
 //		mainMarketID = mktID;
-//		if (data.getModel(modelID) instanceof TwoMarket) {
-//			altMarketID = ((TwoMarket) data.getModel(modelID)).getAlternateMarket(mktID);
+//		if (this.getModel() instanceof TwoMarket) {
+//			altMarketID = ((TwoMarket) this.getModel().getAlternateMarket(mktID);
 //		} else {
 //			altMarketID = mainMarketID;
 //		}
@@ -101,8 +101,7 @@ public class ZIAgent extends SMAgent {
 			p = (int) Math.max(0, (this.privateValue + rand.nextDouble()*2*bidRange));
 		}
 
-		actMap.appendActivityHashMap(submitNMSBid(p, q, ts));
-		actMap.appendActivityHashMap(withdrawBid(marketSubmittedBid, expiration, ts));
+		actMap.appendActivityHashMap(submitNMSBid(p, q, expiration, ts));
 		return actMap;
 		
 //		// identify best buy and sell offers (for all markets)
@@ -194,7 +193,7 @@ public class ZIAgent extends SMAgent {
 	/**
 	 * @return expiration
 	 */
-	public int getExpiration() {
+	public long getExpiration() {
 		return expiration;
 	}
 	

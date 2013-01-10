@@ -277,22 +277,11 @@ public class Observations {
 		ArrayList<Integer> ids = model.getMarketIDs();
 		
 		// Initialize with maximum number of possible bids
-//		double[] values = new double[data.executionTime.size()];
 		double[] values = new double[data.executionSpeed.size()];
 		int cnt = 0;
 		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
 			int mktID = it.next();
 			
-//			for (Map.Entry<Integer, TimeStamp> entry : data.executionTime.entrySet()) {
-//				int bidID = entry.getKey();
-//				TimeStamp ts = entry.getValue();
-//				PQBid b = data.getBid(bidID);
-//				if (mktID != b.getMarketID()) {  // should be ==?
-//					System.out.println("bidID=" + bidID + ", submit=" + data.submissionTime.get(bidID) + ", execute=" + ts);	// TODO debug only
-//					values[cnt] =  (double) ts.diff(data.submissionTime.get(bidID)).longValue();
-//					cnt++;
-//				}
-//			}
 			for (Map.Entry<Integer, TimeStamp> entry : data.executionSpeed.entrySet()) {
 				int bidID = entry.getKey();
 				PQBid b = data.getBid(bidID);

@@ -83,8 +83,8 @@ public abstract class SMAgent extends Agent {
 	 * @return 
 	 */
 	public ArrayList<Integer> getAltMarketIDs() {
-		ArrayList<Integer> altIDs = new ArrayList<Integer>(data.getModel(modelID).getMarketIDs());
-		altIDs.remove(market.getID());
+		ArrayList<Integer> altIDs = new ArrayList<Integer>(this.getModel().getMarketIDs());
+		altIDs.remove(new Integer(market.getID()));
 		return altIDs;
 	}
 	
@@ -94,20 +94,22 @@ public abstract class SMAgent extends Agent {
 	 * @param mkt
 	 * @param price
 	 * @param quantity
+	 * @param duration
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap submitNMSBid(int price, int quantity, TimeStamp ts) {
+	public ActivityHashMap submitNMSBid(int price, int quantity, long duration, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
 		if (data.getModelByMarketID(market.getID()).checkAgentPermissions(this.ID)) {
 			actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
-					new SubmitNMSBid(this, price, quantity, ts));
+					new SubmitNMSBid(this, price, quantity, duration, ts));
 		}
 		return actMap;
 	}
 
 	/**
 	 * Wrapper method to submit multiple-point bid to market after checking permissions.
+	 * TODO - still need to finish
 	 * 
 	 * @param mkt
 	 * @param price
@@ -165,10 +167,11 @@ public abstract class SMAgent extends Agent {
 	 * 
 	 * @param p
 	 * @param q
+	 * @param duration
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap executeSubmitNMSBid(int p, int q, TimeStamp ts) {
+	public ActivityHashMap executeSubmitNMSBid(int p, int q, long duration, TimeStamp ts) {
 		
 		ActivityHashMap actMap = new ActivityHashMap();
 		
@@ -219,14 +222,12 @@ public abstract class SMAgent extends Agent {
 			if (q > 0) {
 				// Ensure that NBBO ask is defined, otherwise submit to current market
 				if (p >= lastNBBOQuote.bestAsk && lastNBBOQuote.bestAsk != -1) {
-//					bestMarketID = altMarketID;
-					marketSubmittedBid = data.getMarket(altMarketID);
+					bestMarketID = altMarketID;
 					bestPrice = lastNBBOQuote.bestAsk;
 				}
 			} else {
 				if (p <= lastNBBOQuote.bestBid) {
-//					bestMarketID = altMarketID;
-					marketSubmittedBid = data.getMarket(altMarketID);
+					bestMarketID = altMarketID;
 					bestPrice = lastNBBOQuote.bestBid;
 				}
 			}
@@ -243,7 +244,7 @@ public abstract class SMAgent extends Agent {
 			actMap.appendActivityHashMap(submitBid(marketSubmittedBid, p, q, ts));
 			log.log(Log.INFO, ts + " | " + this + " " + agentType + 
 					"::submitNMSBid: " + "+(" + p + "," + q + ") to " + 
-					marketSubmittedBid); // + ", duration=" + expiration);
+					marketSubmittedBid + ", duration=" + duration);
 			
 		} else {
 			// main market is better than the alternate market (according to NBBO)
@@ -254,14 +255,16 @@ public abstract class SMAgent extends Agent {
 					", " + mainMarketQuote.lastAskPrice.getPrice() + ")");
 			
 			// submit bid to the main market
+			marketSubmittedBid = market;
 			actMap.appendActivityHashMap(submitBid(market, p, q, ts));
 			log.log(Log.INFO, ts + " | " + this + " " + agentType + 
 					"::submitNMSBid: " + "+(" + p + "," + q + ") to " + 
-					market); // + ", duration=" + expiration);
+					market + ", duration=" + duration);
 			
 		}
-		//actMap.appendActivityHashMap(submitBid(mkt, p, q, ts));  // don't need this
 		
+		// Bid expires after a given duration
+		actMap.appendActivityHashMap(expireBid(marketSubmittedBid, duration, ts));
 		return actMap;
 	}
 	
@@ -269,6 +272,8 @@ public abstract class SMAgent extends Agent {
 	 * Submits a multiple-point/offer bid to one of the possible markets, as following 
 	 * the National Market System (NMS) regulations. The market selected will be that 
 	 * with the best available price, according the NBBO.
+	 * 
+	 * TODO - postponed...
 	 * 
 	 * @param price
 	 * @param quantity
@@ -279,18 +284,16 @@ public abstract class SMAgent extends Agent {
 		
 		ActivityHashMap actMap = new ActivityHashMap();
 		ArrayList<Integer> altMarketIDs = getAltMarketIDs();
-		int altMarketID;
-		
+		int altMarketID = market.getID();	// initialize as main market ID
+
 		// TODO - enable for more than two markets total (including main)
 		if (altMarketIDs.size() > 1) {
 			System.err.println("Agent::executeSubmitNMSBid: 2 markets permitted currently.");
-		} else {
-			// get first alternate market
+		} else if (altMarketIDs.size() == 1) {
+			// get first alternate market since there are two markets total
 			altMarketID = altMarketIDs.get(0);
 		}
 		
-		//Market mkt = bestMarket;
-		//return submitMultipleBid(mkt, price, quantity, ts);
 		return actMap;
 	}
 
