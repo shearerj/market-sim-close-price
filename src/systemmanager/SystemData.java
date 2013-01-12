@@ -307,7 +307,7 @@ public class SystemData {
 	public ArrayList<PQTransaction> getComparableTrans(int modelID) {
 		ArrayList<Integer> mktIDs = getModel(modelID).getMarketIDs();
 		
-		System.out.println(this.getModel(modelID).getFullName() + " comparable transactions:"); // TODO remove
+//		System.out.println(this.getModel(modelID).getFullName() + " comparable transactions:"); // TODO remove
 		
 		ArrayList<PQTransaction> trans = new ArrayList<PQTransaction>();
 		for (Map.Entry<Integer,PQTransaction> entry : transData.entrySet()) {
@@ -328,7 +328,7 @@ public class SystemData {
 				
 				PQTransaction trNew = new PQTransaction(tr.quantity, p, bID, sID, ts, mktID);
 				trans.add(trNew);
-				System.out.println(trNew.toString()); // TODO remove, debugging only
+//				System.out.println(trNew.toString()); // TODO remove
 			}
 		}
 		return trans;
