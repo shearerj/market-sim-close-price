@@ -292,10 +292,10 @@ public class SystemSetup {
 					data.addAgent(agent);
 					agent.setLogID(logID++);
 					model.linkAgent(agentID);
-					// check if in a role, if so keep track of role agent IDs
-					if (Arrays.asList(Consts.roles).contains(agentType)) {
-						data.roleAgentIDs.add(agentID);
-					}
+//					// check if in a role, if so keep track of role agent IDs
+//					if (Arrays.asList(Consts.roles).contains(agentType)) {
+//						data.roleAgentIDs.add(agentID);
+//					}
 					log.log(Log.DEBUG, agent.toString() + ": " + ap);
 				}
 				log.log(Log.INFO, "Agents: " + numAgents + " " + agentType);
@@ -335,12 +335,12 @@ public class SystemSetup {
 	 * Logs agent information (only for primary model to avoid redundancy).
 	 */
 	public void logAgentInfo() {
-		ArrayList<Integer> ids = data.getAgentIDs(); // or data.getPrimaryModel().getAgentIDs()
+		ArrayList<Integer> ids = data.getAgentIDs();
 		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
 			Agent ag = data.getAgent(it.next());
 			
 			// print arrival times
-			String s = ag.toString() + "::" + ag.getType() + "::";
+			String s = " " + ag.getID() + ": " + ag.toString() + "::" + ag.getType() + "::";
 			s += "arrivalTime=" + ag.getArrivalTime().toString();
 			
 			// print private value if exists 

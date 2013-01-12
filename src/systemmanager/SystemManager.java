@@ -200,11 +200,12 @@ public class SystemManager {
 				}
 			}
 			
+			obs.addFeature("", obs.getConfiguration());
 			obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
 			obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
 			obs.addFeature("expire", obs.getTimeStampFeatures(data.getExpirations()));
+			obs.addTransactionComparison();
 			getModelResults();
-			obs.addFeature("", obs.getConfiguration());
 			
 			File file = new File(simFolder + Consts.obsFilename + num + ".json");
 			FileWriter txt = new FileWriter(file);
@@ -225,8 +226,7 @@ public class SystemManager {
 		for (Map.Entry<Integer, MarketModel> entry : data.getModels().entrySet()) {
 			MarketModel model = entry.getValue();
 			
-			String prefix = model.getClass().getSimpleName().toLowerCase() + 
-					model.getConfig() + "_";
+			String prefix = model.getLogName() + "_";
 
 			obs.addFeature(prefix + "spreads", obs.getSpreadInfo(model));
 			obs.addFeature(prefix + "surplus", obs.getSurplusFeatures(model));

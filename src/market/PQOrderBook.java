@@ -284,6 +284,10 @@ public class PQOrderBook extends OrderBook {
 				p = new Price(Math.round((ask.getPrice().getPrice() - 
 						bid.getPrice().getPrice()) * pricingPolicy + bid.getPrice().getPrice()));
 				p = new Price(Market.quantize(p.getPrice(), data.tickSize));
+				log.log(Log.INFO, ts + " | " + data.getMarket(marketID) + 
+						" clearing price based on (BID: " + 
+						bid.getPrice().getPrice() + ", ASK:" + ask.getPrice().getPrice() + 
+						") & pricingPolicy=" + pricingPolicy + " => price " + p.getPrice());
 			}
 
 			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));

@@ -45,7 +45,7 @@ public class TwoMarket extends MarketModel {
 		
 		// Add agent types specified in the spec file
 		for (Iterator<String> it = permittedHFTAgentTypes.iterator(); it.hasNext(); ) {
-			permittedAgentIDs.addAll(data.getAgentIDsOfType(it.next()));
+			permitAgents(data.getAgentIDsOfType(it.next()));
 		}
 	}
 	

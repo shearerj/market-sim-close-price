@@ -182,6 +182,13 @@ public abstract class Agent extends Entity {
 		this.logID = logID;
 	}
 	
+	/**
+	 * @return logID
+	 */
+	public int getLogID() {
+		return this.logID;
+	}
+	
 	@Override
 	public String toString() {
 		return new String("(" + this.logID + "," + this.getModel() + ")");
@@ -652,11 +659,12 @@ public abstract class Agent extends Entity {
 					}
 					log.log(Log.INFO, ts + " | " + this + " " +
 							"Agent::updateTransactions: New transaction received: (mktID=" + t.marketID +
-							", transID=" + t.transID + " buyer=" + t.buyerID + ", seller=" + t.sellerID +
+							", transID=" + t.transID + " buyer=" + data.getAgentLogID(t.buyerID) + 
+							", seller=" + data.getAgentLogID(t.sellerID) +
 							", price=" + t.price + ", quantity=" + t.quantity + 
 							", timeStamp=" + t.timestamp + ")");
 					
-					// TODO for logging of surplus, remove later
+					// Log surplus
 					int bsurplus = data.getAgent(t.buyerID).getPrivateValue() - t.price.getPrice();
 					int ssurplus = t.price.getPrice() - data.getAgent(t.sellerID).getPrivateValue();
 					String s = ts + " | " + this + " " +
@@ -666,7 +674,7 @@ public abstract class Agent extends Entity {
 							data.getAgent(t.sellerID).getPrivateValue() + "=" + ssurplus;
 					log.log(Log.INFO, s);
 					log.log(Log.INFO, ts + " | " + this + " " +
-							"Agent::updateTransactions: TOTAL SURPLUS: " + (bsurplus + ssurplus));
+							"Agent::updateTransactions: SURPLUS: " + (bsurplus + ssurplus));
 					
 //					log.log(Log.INFO, ts + " | " + this + " " +
 //							"Agent::updateTransactions: BUYER surplus: " + data.getAgent(t.buyerID).getPrivateValue()

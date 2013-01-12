@@ -67,7 +67,11 @@ public class Observations {
 		HashMap<String,Object> obs = data.getAgent(agentID).getObservation();
 		
 		if (obs == null || obs.isEmpty()) return;
-		else addFeature("agent" + agentID, obs);
+		else {
+			Agent ag = data.getAgent(agentID);
+			String s = ag.getModel().getLogName() + "_" + ag.getType() + ag.getLogID();
+			addFeature(s, obs);
+		}
 	}
 	
 	/**
@@ -78,10 +82,10 @@ public class Observations {
 	public void addFeature(String description, HashMap<String,Object> ft) {
 		if (!observations.containsKey("features")) {
 			HashMap<String,Object> feats = new HashMap<String,Object>();
-			feats.put(description, ft);
+			feats.put(description.toLowerCase(), ft);
 			observations.put("features", feats);
 		} else {
-			((HashMap<String,Object>) observations.get("features")).put(description, ft);
+			((HashMap<String,Object>) observations.get("features")).put(description.toLowerCase(), ft);
 		}
 	}
 	
@@ -110,7 +114,6 @@ public class Observations {
 			feat.put("var", "NaN");
 			feat.put("med", "NaN");
 		}
-		
 	}
 	
 	/**
@@ -151,6 +154,38 @@ public class Observations {
 		}
 	}
 	
+	/**
+	 * Adds mean.
+	 * 
+	 * @param feat
+	 * @param values
+	 * @param prefix to append to feature type
+	 */
+	private void addMean(HashMap<String,Object> feat, double[] values, String prefix) {
+		if (prefix != null && prefix != "") {
+			prefix = prefix + "_";
+		}
+		if (values.length > 0) {
+			DescriptiveStatistics dp = new DescriptiveStatistics(values);
+			feat.put(prefix + "mean", dp.getMean());
+		} else {
+			feat.put(prefix + "mean", "NaN");
+		}
+	}
+	
+	/**
+	 * Computes the median. If it doesn't exist, returns -1.
+	 * 
+	 * @param values
+	 */
+	private double computeMedian(double[] values) {
+		if (values.length > 0) {
+			Median med = new Median();
+			return med.evaluate(values);
+		} else {
+			return -1;
+		}
+	}
 	
 	/**
 	 * Extracts surplus features for background agents in a given model.
@@ -161,11 +196,11 @@ public class Observations {
 	public HashMap<String,Object> getSurplusFeatures(MarketModel model) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-		HashMap<Integer,Integer> allSurplus = data.getSurplus(model.getID());
-		Object[] objs = (new ArrayList<Integer>(allSurplus.values())).toArray();
+		HashMap<Integer,Integer> bkgrdSurplus = data.getBackgroundSurplus(model.getID());
+		Object[] objs = (new ArrayList<Integer>(bkgrdSurplus.values())).toArray();
 		double[] values = new double[objs.length];  
 		for (int i = 0; i < values.length; i++) {
-	    		Integer tmp = (Integer) objs[i];
+	    	Integer tmp = (Integer) objs[i];
 			values[i] = tmp.doubleValue();
 		}
 		addAllStatistics(feat,values);
@@ -185,7 +220,7 @@ public class Observations {
 				DescriptiveStatistics ds = new DescriptiveStatistics(values);
 				feat.put(label, ds.getSum() + a.getRealizedProfit());
 			}
-		}
+		} 
 		return feat;
 	}
 	
@@ -245,18 +280,7 @@ public class Observations {
 //		for (Map.Entry<Integer,Agent> entry : agents.entrySet()) {
 //			Agent a = entry.getValue();
 //			if (data.isBackgroundAgent(a.getID())) {
-//				
-//				// MORE TODO here
-//				Consts.SubmittedBidMarket x = ((ZIAgent) a).submittedBidType;
-//				if (x == null)
-//					System.err.print("ERROR");
-//				totBids++;
-//				switch (x) {
-//				case MAIN:
-//					// do nothing
-//				case ALTERNATE:
-//					num++;
-//				}
+//			
 //			}
 //		}
 		feat.put("num_bids_alt", num);
@@ -279,26 +303,21 @@ public class Observations {
 		// Initialize with maximum number of possible bids
 		double[] values = new double[data.executionSpeed.size()];
 		int cnt = 0;
-		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
-			int mktID = it.next();
-			
-			for (Map.Entry<Integer, TimeStamp> entry : data.executionSpeed.entrySet()) {
-				int bidID = entry.getKey();
-				PQBid b = data.getBid(bidID);
-				if (mktID == b.getMarketID()) {
-					// bid in the market currently being checked
-//					System.out.println("bidID=" + bidID + ", submit=" + data.submissionTime.get(bidID) + ", speed=" + entry.getValue());
-					values[cnt] = (double) entry.getValue().longValue();
-					cnt++;
-				}
+		for (Map.Entry<Integer, TimeStamp> entry : data.executionSpeed.entrySet()) {
+			int bidID = entry.getKey();
+			PQBid b = data.getBid(bidID);
+			if (ids.contains(new Integer(b.getMarketID()))) {
+				values[cnt] = (double) entry.getValue().longValue();
+				cnt++;
 			}
-			// Reinitialize to get rid of unused portion of array
-			double[] speeds = new double[cnt];
-			for (int i = 0; i < cnt; i++) {
-				speeds[i] = values[i];
-			}
-			addStatistics(feat,values,"mkt" + (-mktID),false);
 		}
+		// Reinitialize to get rid of unused portion of array
+		double[] speeds = new double[cnt];
+		for (int i = 0; i < cnt; i++) {
+			speeds[i] = values[i];
+		}
+		addStatistics(feat,speeds,"",false);
+		
 		return feat;
 	}
 	
@@ -357,7 +376,7 @@ public class Observations {
 	
 	
 	/**
-	 * Computes spread metrics for the given model..
+	 * Computes spread metrics for the given model.
 	 * 
 	 * @param model
 	 * @return
@@ -366,41 +385,36 @@ public class Observations {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 	
 		ArrayList<Integer> ids = model.getMarketIDs();
+		double[] meds = new double[ids.size()];	// store medians to be averaged
+		int cnt = 0;
 		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
 			int mktID = it.next();
 			HashMap<TimeStamp,Integer> marketSpread = data.marketSpread.get(mktID);
 			if (marketSpread != null) {
 				double[] spreads = extractTimeSeries(marketSpread);
 				addStatistics(feat,spreads,"mkt" + (-mktID),true);
+				
+				// add model-level statistics
+				double med = computeMedian(spreads);
+				if (med != -1) {
+					meds[cnt] = med;
+					cnt++;
+				}
 			}
-			
-//				// JUST FOR DEBUGGING PURPOSES TODO
-//				TreeSet<TimeStamp> sortedTimes = new TreeSet<TimeStamp>(marketSpread.keySet());
-//				Median med = new Median();
-//				if (med.evaluate(spreads) > 200000 || med.evaluate(spreads) == 0) {					
-//					ArrayList<Integer> sortedSpreads = new ArrayList<Integer>();
-//					for (Iterator<TimeStamp> xt = sortedTimes.iterator(); xt.hasNext(); ) {
-//						sortedSpreads.add(marketSpread.get(xt.next()));
-//					}
-//					try {
-//						// Check first if directory exists
-//						File file = new File("spreads_mkt" + mktID + "_obs" + data.obsNum + ".txt");
-//						if (!file.exists()) {
-//							file.createNewFile();
-//							BufferedWriter f = new BufferedWriter(new FileWriter(file));
-//							f.write(sortedTimes.toString());
-//							f.newLine();
-//							f.write(sortedSpreads.toString());
-//							f.flush();
-//							f.close();
-//						}
-//					} catch (Exception e) {
-//						e.printStackTrace();
-//					}
-//				}				
 		}
-		// System.out.println(model.getID());
-		double[] nbboSpreads = extractTimeSeries(data.NBBOSpread.get(model.getID()));
+		// Reinitialize to get rid of unused portion of array
+		double[] medians = new double[cnt];
+		for (int i = 0; i < cnt; i++) {
+			medians[i] = meds[i];
+		}
+		// store mean median spread (across all markets in the model)
+		addMean(feat,medians,"med");
+		
+		HashMap<TimeStamp,Integer> nbboSpread = data.NBBOSpread.get(model.getID());
+		double[] nbboSpreads = {};
+		if (nbboSpread != null) {
+			nbboSpreads = extractTimeSeries(nbboSpread);
+		}
 		addStatistics(feat,nbboSpreads,"nbbo",true);
 		
 		return feat;
@@ -408,13 +422,15 @@ public class Observations {
 	
 
 	/**
-	 * Computes spread metrics the given market IDs.
+	 * Computes depth metrics the given market IDs. // TODO - remove depth measures?
 	 * 
-	 * @param ids
+	 * @param model
 	 * @return
 	 */
-	public HashMap<String,Object> getDepthInfo(ArrayList<Integer> ids) {
+	public HashMap<String,Object> getDepthInfo(MarketModel model) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
+		
+		ArrayList<Integer> ids = model.getMarketIDs();
 		
 		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
 			int mktID = it.next();
@@ -428,92 +444,89 @@ public class Observations {
 	}
 	
 	
-	
 	/**
-	 * Computes volatility metrics.
+	 * Computes volatility metrics. // TODO to finish
 	 * 
 	 * Volatility is measured as the standard deviation of logarithmic returns.
-	 * TODO: try multiple periods for determining returns
 	 * 
-	 * @param ids
+	 * @param model
 	 * @return
 	 */
-	public HashMap<String, Object> getVolatilityInfo(ArrayList<Integer> ids) {
+	public HashMap<String, Object> getVolatilityInfo(MarketModel model) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
-		for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
-			int mktID = it.next();
-				
-				
-		}
+		ArrayList<Integer> ids = model.getMarketIDs();
 		
+		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
+			int mktID = it.next();
+			// TODO: vol measures. also try multiple periods for determining returns
+		}
 		return feat;
 	}
 	
 	
 	/**
-	 * Generate the distribution info on a certain dataset.
+	 * Buckets based on comparison with the performance in the centralized call market
+	 * model. For each non-CentralCall model, checks if a transaction occurred in that model
+	 * and whether or not it occurred in the CentralCall model.
 	 * 
-	 * @param ids
-	 * @return
+	 * Adds features directly to the Observations object.
 	 */
-	public HashMap<String, Object> getDistributionInfo(ArrayList<Integer> ids) {
-		HashMap<String,Object> feat = new HashMap<String,Object>();
+	public void addTransactionComparison() {
+				
+		// set as baseline the centralized call market model
+		int baseID = 0;
 		
-		
-		return feat;
-	}
-	
-	
-	
-	public HashMap<String, Object> getTransactionComparison() {
-		HashMap<String,Object> feat = new HashMap<String,Object>();
-		
-		// cycle through all the market models 
-		// so iterate through the centralized markets
-		// and within that, iterate through the number of two-market models (here just 1)
-		
-		// determine the call market ID, because will use that as the baseline
-		for (Map.Entry<Integer, Market> entry : data.markets.entrySet()) {
-			
-		}
-			
+		// hashed by modelID
+		HashMap<Integer, ModelComparison> bucketMap = new HashMap<Integer, ModelComparison>();
+		HashMap<Integer, ArrayList<PQTransaction>> transMap = new HashMap<Integer, ArrayList<PQTransaction>>();		
 		for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
-			// Do for combinations with 2M model
 			MarketModel model = entry.getValue();
 			int modelID = entry.getKey();
-			HashMap<Integer,PQTransaction> transactions = data.getTrans(modelID);
-			
-			for (Map.Entry<Integer,PQTransaction> tr : transactions.entrySet()) {
-				PQTransaction trans = tr.getValue();
-//					if (trans.sellerID == id) {
-//						buys++;
-//					} else if (trans.buyerID == id) {
-//						sells++;
-//					}
-			}
+			// Set base (centralized call market) model ID
+			if (model instanceof CentralCall) {
+				baseID = modelID;
+			}	
+			transMap.put(modelID, data.getComparableTrans(model.getID()));
+			bucketMap.put(modelID, new ModelComparison());
 		}
-		
-	
-//		ArrayList<Integer> ids = data.getCentralMarketIDs();
-//		// perform same analysis for comparing the two centralized markets
-//		
-//		for (Iterator<Integer> aid = data.roleAgentIDs.iterator(); aid.hasNext(); ) {
-//			int id = aid.next();
-//			suffix = suffix + "_" + data.getAgent(id).getType().toLowerCase();
-//
-//			int buys = 0;
-//			int sells = 0;
-//			
-//
-//			if (data.numAgentType.get(data.getAgent(id).getType()) > 1) {
-//				suffix += id;
-//			}
-//			feat.put("buys" + suffix , buys);
-//			feat.put("sells" + suffix, sells);
-//		}
-		return feat;
-		
+
+		// iterate through all transactions, and identify the model
+		ArrayList<PQTransaction> uniqueTrans = data.getUniqueComparableTrans();
+		for (Iterator<PQTransaction> it = uniqueTrans.iterator(); it.hasNext(); ) {
+			PQTransaction trans = it.next();
+			
+			for (Iterator<Integer> id = data.getModelIDs().iterator(); id.hasNext(); ) {
+				int modelID = id.next();
+				
+				ArrayList<PQTransaction> baseTrans = transMap.get(baseID);
+				ArrayList<PQTransaction> modelTrans = transMap.get(modelID);
+				
+				if (modelTrans.contains(trans) && baseTrans.contains(trans)) {
+					bucketMap.get(modelID).YY++;
+				} else if (!modelTrans.contains(trans) && baseTrans.contains(trans)) {
+					bucketMap.get(modelID).NY++;
+				} else if (modelTrans.contains(trans) && !baseTrans.contains(trans)) {
+					bucketMap.get(modelID).YN++;
+				} else if (!modelTrans.contains(trans) && !baseTrans.contains(trans)) {
+					bucketMap.get(modelID).NN++;
+				}
+			}
+			
+		}
+		// add as feature
+		for (Iterator<Integer> id = data.getModelIDs().iterator(); id.hasNext(); ) {
+			int modelID = id.next();
+			String prefix = data.getModel(modelID).getLogName() + "_";
+			HashMap<String,Object> feat = new HashMap<String,Object>();
+
+			ModelComparison mc = bucketMap.get(modelID);
+			feat.put("YY", mc.YY);
+			feat.put("YN", mc.YN);
+			feat.put("NY", mc.NY);
+			feat.put("NN", mc.NN);
+			this.addFeature(prefix + "compare", feat);
+		}
 	}
 	
 	
@@ -544,7 +557,7 @@ public class Observations {
 			} else {
 				// next Time is the next time at which to extend the time series
 				TimeStamp nextTime = it.next();
-				// fill in the timeSeries array, but only for segments where it is not undefined
+				// fill in the vals array, but only for segments where it is not undefined
 				if (!map.get(prevTime).equals(Consts.INF_PRICE)) {
 					for (int i = (int) prevTime.longValue(); i < nextTime.longValue(); i++) {
 						vals[cnt] = map.get(prevTime);
@@ -562,7 +575,7 @@ public class Observations {
 					vals[cnt] = map.get(prevTime);
 					cnt++;
 				}
-			}
+			}	
 		}
 		// Must resize vals
 		double[] valsMod = new double[cnt];
@@ -607,7 +620,6 @@ public class Observations {
 		return null;
 		
 	}
-	
 	
 	/**
 	 * Writes observations to the JSON file.

@@ -117,7 +117,7 @@ public class SimulationSpec {
 			}
 		}
 		// Check which types of multi-market agents to create
-		// (from configuration section of spec file)
+		// (from configuration section of spec file)		// TODO - to remove
 		for (int i = 0; i < Consts.HFTAgentTypes.length; i++) {
 			String agentType = Consts.HFTAgentTypes[i];
 			String num = getValue(agentType);

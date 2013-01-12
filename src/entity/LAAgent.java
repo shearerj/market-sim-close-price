@@ -10,10 +10,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 /**
+ * LAAGENT
+ * 
  * High-frequency trader employing latency arbitrage strategy.
  * 
- * Can act infinitely fast (i.e. sleep time = 0). Note that all Activities
- * with negative TimeStamps are considered to be infinitely fast.
+ * This agent can act infinitely fast (i.e. sleep time = 0).
  * 
  * @author ewah
  */

@@ -99,6 +99,13 @@ public abstract class MarketModel {
 	}
 	
 	/**
+	 * @return model name for observation file (format "modeltypeconfig")
+	 */
+	public String getLogName() {
+		return this.getClass().getSimpleName().toLowerCase() + config.toLowerCase();
+	}
+	
+	/**
 	 * @param id
 	 * @return true if agent with the given id is permitted in this model.
 	 */
@@ -107,16 +114,31 @@ public abstract class MarketModel {
 	}
 	
 	/**
-	 * Add all SM agent IDs to the permissions list.
+	 * Add all SM agent IDs in this model to the permissions list.
 	 */
 	public void permitAllSMAgents() {
 		for (Iterator<Integer> it = data.getAgentIDs().iterator(); it.hasNext(); ) {
 			Agent ag = data.getAgent(it.next());
 			// Check if the agent is a single market agent
-			if (Arrays.asList(Consts.SMAgentTypes).contains(ag.getType())) {
+			if (ag instanceof SMAgent && ag.getModelID() == this.getID()) {
 				permittedAgentIDs.add(ag.getID());
 			}
 		}
+	}
+	
+	/**
+	 * Adds all specified agents to the permissions list. Will check that the modelID matches.
+	 * 
+	 * @param agentIDs
+	 */
+	public void permitAgents(ArrayList<Integer> agentIDs) {
+		for (Iterator<Integer> it = agentIDs.iterator(); it.hasNext(); ) {
+			Agent ag = data.getAgent(it.next());
+			if (ag.getModelID() == this.getID()) {
+				permittedAgentIDs.add(ag.getID());
+			}
+		}
+//		permittedAgentIDs.addAll(agentIDs);
 	}
 	
 	/**

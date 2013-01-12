@@ -127,9 +127,8 @@ public class SIP extends Entity {
 			}
 		} else {
 			// store spread of INF since no bid-ask spread
-			this.data.addSpread(modelID, ts, Consts.INF_PRICE);
+			this.data.addNBBOSpread(modelID, ts, Consts.INF_PRICE);
 		}
-		
 		lastQuote.bestBid = bestBid;
 		lastQuote.bestAsk = bestAsk;
 		lastQuotes.put(modelID, lastQuote);

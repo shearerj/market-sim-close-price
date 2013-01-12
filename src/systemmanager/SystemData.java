@@ -45,7 +45,7 @@ public class SystemData {
 	public HashMap<Integer,Quote> quoteData;			// hashed by market ID
 	public HashMap<Integer,Agent> agents;				// agents hashed by ID
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
-	public ArrayList<Integer> roleAgentIDs;				// IDs of agents in a role
+//	public ArrayList<Integer> roleAgentIDs;				// IDs of agents in a role
 	public ArrayList<Integer> modelIDs;
 
 	private SIP sip;
@@ -96,7 +96,7 @@ public class SystemData {
 		numModelType = new HashMap<String,Integer>();
 		numAgents = 0;
 		numMarkets = 0;
-		roleAgentIDs = new ArrayList<Integer>();
+//		roleAgentIDs = new ArrayList<Integer>();
 		modelIDs = new ArrayList<Integer>();
 		transIDSequence = new Sequence(0);
 		modelToMarketList = new HashMap<Integer,ArrayList<Integer>>();
@@ -169,6 +169,10 @@ public class SystemData {
 		return new ArrayList<Integer>(agents.keySet());
 	}
 	
+	public int getAgentLogID(int agentID) {
+		return agents.get(agentID).getLogID();
+	}
+	
 	public HashMap<Integer,Market> getMarkets() {
 		return markets;
 	}
@@ -238,7 +242,8 @@ public class SystemData {
 	 * @return
 	 */
 	public boolean isBackgroundAgent(int id) {
-		return !roleAgentIDs.contains(id);
+//		return !roleAgentIDs.contains(id);
+		return !(agents.get(id) instanceof HFTAgent);
 	}
 	
 	public ArrayList<Integer> getAgentIDsOfType(String type) {
@@ -262,26 +267,104 @@ public class SystemData {
 	}
 	
 	
+	/**
+	 * Get a specific transaction within a given model.
+	 * @param modelID
+	 * @param id
+	 * @return
+	 */
 	public PQTransaction getTransaction(int modelID, int id) {
 		return getTrans(modelID).get(id);
 	}
 	
-
-	
 	/**
-	 * Get transactions for only the given model
+	 * Get transactions for only the given model.
+	 * 
 	 * @param modelID 
 	 * @return
 	 */
 	public HashMap<Integer,PQTransaction> getTrans(int modelID) {
 		ArrayList<Integer> mktIDs = getModel(modelID).getMarketIDs();
+		
 		HashMap<Integer,PQTransaction> trans = new HashMap<Integer,PQTransaction>();
 		for (Map.Entry<Integer,PQTransaction> entry : transData.entrySet()) {
-			if (mktIDs.contains(entry.getValue().marketID))
+			if (mktIDs.contains(entry.getValue().marketID)) {
 				trans.put(entry.getKey(), entry.getValue());
+			}
 		}
 		return trans;
 	}
+	
+	
+	/**
+	 * Modifies transactions for the given model by setting TimeStamp to be constant, 
+	 * and using agent log IDs rather than agent IDs for indicating buyer or seller.
+	 * Also sets constant price (because surplus will be same regardless of price).
+	 * 
+	 * @param modelID
+	 * @return
+	 */
+	public ArrayList<PQTransaction> getComparableTrans(int modelID) {
+		ArrayList<Integer> mktIDs = getModel(modelID).getMarketIDs();
+		
+		System.out.println(this.getModel(modelID).getFullName() + " comparable transactions:"); // TODO remove
+		
+		ArrayList<PQTransaction> trans = new ArrayList<PQTransaction>();
+		for (Map.Entry<Integer,PQTransaction> entry : transData.entrySet()) {
+			if (mktIDs.contains(entry.getValue().marketID)) {
+				PQTransaction tr = entry.getValue();
+				
+				// Modify values to be comparable between models
+				// - Use logID rather than agentID
+				// - Set constant TimeStamp
+				// - Set constant marketID
+				// - Set constant price
+				// TODO - for now, ignore quantity
+				int bID = getAgent(tr.buyerID).getLogID();
+				int sID = getAgent(tr.sellerID).getLogID();
+				Price p = new Price(0);
+				TimeStamp ts = new TimeStamp(-1);
+				int mktID = 0;
+				
+				PQTransaction trNew = new PQTransaction(tr.quantity, p, bID, sID, ts, mktID);
+				trans.add(trNew);
+				System.out.println(trNew.toString()); // TODO remove, debugging only
+			}
+		}
+		return trans;
+	}
+	
+	/**
+	 * Modifies all transactions in transData to be comparable between models.
+	 * 
+	 * @return
+	 */
+	public ArrayList<PQTransaction> getUniqueComparableTrans() {
+		Set<PQTransaction> trans = new HashSet<PQTransaction>();
+		
+		for (Map.Entry<Integer,PQTransaction> entry : transData.entrySet()) {
+			PQTransaction tr = entry.getValue();
+			
+			// Modify values to be comparable between models
+			// - Use logID rather than agentID
+			// - Set constant TimeStamp
+			// - Set constant marketID
+			// - Set constant price
+			// TODO - for now, ignore quantity
+			int bID = getAgent(tr.buyerID).getLogID();
+			int sID = getAgent(tr.sellerID).getLogID();
+			Price p = new Price(0);
+			TimeStamp ts = new TimeStamp(-1);
+			int mktID = 0;
+
+			PQTransaction trNew = new PQTransaction(tr.quantity, p, bID, sID, ts, mktID);
+			trans.add(trNew);
+		}
+		ArrayList<PQTransaction> uniqueTrans = new ArrayList<PQTransaction>();
+		uniqueTrans.addAll(trans);
+		return uniqueTrans;
+	}
+	
 	
 	/**
 	 * @param id
@@ -322,30 +405,14 @@ public class SystemData {
 		return pvs;
 	}
 	
-//	/**
-//	 * Gets the realized profit of all background agents.
-//	 * 
-//	 * @return hash map of background agent profits, hashed by agent ID
-//	 */
-//	public HashMap<Integer,Integer> getAllProfit() {
-//		HashMap<Integer,Integer> allProfit = new HashMap<Integer,Integer>();
-//		for (Iterator<Integer> it = getAgentIDs().iterator(); it.hasNext(); ) {
-//			int id = it.next();
-//			if (isBackgroundAgent(id)) {
-//				allProfit.put(id, getAgent(id).getRealizedProfit());
-//			}
-//		}
-//		return allProfit;
-//	}
-	
 	/**
-	 * Iterates through all transactions and sums up surplus for all agents.
+	 * Iterates through all transactions and sums up surplus for all background agents.
 	 * CS = PV - p, PS = p - PV
 	 * 
 	 * @param modelID 		model id to check
 	 * @return hash map of background agent surplus, hashed by agent ID
 	 */
-	public HashMap<Integer,Integer> getSurplus(int modelID) {
+	public HashMap<Integer,Integer> getBackgroundSurplus(int modelID) {
 
 		ArrayList<Integer> ids = getModel(modelID).getMarketIDs();
 		HashMap<Integer,Integer> allSurplus = new HashMap<Integer,Integer>();
@@ -426,12 +493,19 @@ public class SystemData {
 	 * @param spread
 	 */
 	public void addSpread(int mktID, TimeStamp ts, int spread) {
+		
+//		System.out.println("PRE marketSpread: " + marketSpread.get(mktID));
+//		Market mkt = markets.get(mktID);
 		if (marketSpread.get(mktID) != null) {
 			marketSpread.get(mktID).put(ts, spread);
+//			System.out.println(ts + " " + mkt.toString() + ": " + spread + " added.");
+//			System.out.println("POST marketSpread: " + marketSpread.get(mktID));
 		} else {
 			HashMap<TimeStamp,Integer> tmp = new HashMap<TimeStamp,Integer>();
 			tmp.put(ts, spread);
 			marketSpread.put(mktID, tmp);
+//			System.out.println(ts + " " + mkt.toString() + ": " + spread + " added.");
+//			System.out.println("POST marketSpread: " + marketSpread.get(mktID));
 		}
 	}	
 	
@@ -461,16 +535,12 @@ public class SystemData {
 	 * @param depth
 	 */
 	public void addDepth(int mktID, TimeStamp ts, int depth) {
-		if (mktID >= 0) {
-			System.err.println("ERROR: mktID must be < 0");
+		if (marketDepth.get(mktID) != null) {
+			marketDepth.get(mktID).put(ts, depth);
 		} else {
-			if (marketDepth.get(mktID) != null) {
-				marketDepth.get(mktID).put(ts, depth);
-			} else {
-				HashMap<TimeStamp,Integer> tmp = new HashMap<TimeStamp,Integer>();
-				tmp.put(ts, depth);
-				marketDepth.put(mktID, tmp);
-			}
+			HashMap<TimeStamp,Integer> tmp = new HashMap<TimeStamp,Integer>();
+			tmp.put(ts, depth);
+			marketDepth.put(mktID, tmp);
 		}
 	}
 	
@@ -482,21 +552,12 @@ public class SystemData {
 	public void addSubmissionTime(int bidID, TimeStamp ts) {
 		submissionTime.put(bidID, ts);
 	}
-	
-//	/**
-//	 * Add bid execution time to the hashmap container.
-//	 * @param bidID
-//	 * @param ts
-//	 */
-//	public void addExecutionTime(int bidID, TimeStamp ts) {
-//		executionTime.put(bidID, ts);
-//	}
 
-        /**
-         * Add bid execution speed (difference between execution and submission times).
-         * @param bidID
-         * @param ts
-         */
+	/**
+	 * Add bid execution speed (difference between execution and submission times).
+	 * @param bidID
+	 * @param ts
+	 */
 	public void addExecutionSpeed(int bidID, TimeStamp ts) {
 		// check if submission time contains it (if not, there is an error)
 		if (submissionTime.containsKey(bidID)) {
