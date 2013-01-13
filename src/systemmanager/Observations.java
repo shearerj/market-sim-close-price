@@ -210,7 +210,7 @@ public class Observations {
 			// check if agent is a player in a role
 			if (!data.isBackgroundAgent(aid)) {
 				String type = data.getAgent(aid).getType();
-				String label = "with_" + type.toLowerCase();
+				String label = "sum_with_" + type.toLowerCase();
 				
 				// Append the agentID if there is 1+ of this type in the simulation
 				if (data.numAgentType.get(type) > 1) {
