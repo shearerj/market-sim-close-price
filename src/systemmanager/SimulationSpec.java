@@ -80,8 +80,8 @@ public class SimulationSpec {
 		data.privateValueVar = Double.parseDouble(getValue("private_value_var"));
 		
 		// Market maker variables
-		data.mmScaleFactor = Integer.parseInt(getValue("scale_factor"));
-		data.mmSleepTime = Integer.parseInt(getValue("sleep_time"));
+//		data.mmScaleFactor = Integer.parseInt(getValue("scale_factor"));
+//		data.mmSleepTime = Integer.parseInt(getValue("sleep_time"));
 		
 		// Model-specific parameters
 		data.primaryModelDesc = getValue("primary_model");
