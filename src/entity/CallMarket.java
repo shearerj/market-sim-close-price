@@ -16,7 +16,7 @@ import systemmanager.*;
  * after the clear, i.e. they will be able to see the best available buy and sell
  * prices for the bids left in the order book after each market clear.
  * 
- * NOTE: First clear Activity is initialized in the SystemManager.
+ * NOTE: First Clear Activity is initialized in the SystemManager.
  * 
  * @author ewah
  */
@@ -30,13 +30,14 @@ public class CallMarket extends Market {
 	 * Overloaded constructor.
 	 * @param marketID
 	 */
-	public CallMarket(int marketID, SystemData d, Log l) {
-		super(marketID, d, l);
-		marketType = Consts.getMarketType(this.getClass().getSimpleName());
-		orderbook = new PQOrderBook(this.ID);
-		orderbook.setParams(this.ID, l, d);
-		clearFreq = d.clearFreq;
+	public CallMarket(int marketID, SystemData d, ObjectProperties p, Log l) {
+		super(marketID, d, p, l);
+		marketType = Consts.getMarketType(this.getName());
+		orderbook = new PQOrderBook(ID);
+		orderbook.setParams(ID, l, d);
+		clearFreq = new TimeStamp(Integer.parseInt(p.get("clearFreq")));
 		nextClearTime = clearFreq;
+		pricingPolicy = (float) Double.parseDouble(p.get("pricingPolicy"));
 	}
 	
 	public Bid getBidQuote() {
@@ -56,24 +57,28 @@ public class CallMarket extends Market {
 	}
 	
 	public ActivityHashMap addBid(Bid b, TimeStamp ts) {
-		// Unlike continuous auction market, no Clear Activity inserted unless clear freq = 0
+		// Unlike continuous auction market, no Clear inserted unless clear freq = 0
+		ActivityHashMap actMap = new ActivityHashMap();
 		orderbook.insertBid((PQBid) b);
-		this.data.addDepth(this.ID, ts, orderbook.getDepth());
-		this.data.addSubmissionTime(b.getBidID(), ts);
+		data.addDepth(ID, ts, orderbook.getDepth());
+		data.addSubmissionTime(b.getBidID(), ts);
 		if (clearFreq.longValue() == 0) {
-			ActivityHashMap actMap = new ActivityHashMap();
 			actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, ts));
-			return actMap;
 		}
-		return null;
+		return actMap;
 	}
 	
 	public ActivityHashMap removeBid(int agentID, TimeStamp ts) {
+		// Unlike continuous auction market, no Clear inserted unless clear freq = 0
+		ActivityHashMap actMap = new ActivityHashMap();
 		orderbook.removeBid(agentID);
 		orderbook.logActiveBids(ts);
 		orderbook.logFourHeap(ts);
-		this.data.addDepth(this.ID, ts, orderbook.getDepth());
-		return null;
+		data.addDepth(ID, ts, orderbook.getDepth());
+		if (clearFreq.longValue() == 0) {
+			actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, ts));
+		}
+		return actMap;
 	}
 	
 	
@@ -86,34 +91,36 @@ public class CallMarket extends Market {
 		ActivityHashMap actMap = new ActivityHashMap();
 		
 		// Update the next clear time
-		this.nextClearTime = clearTime.sum(clearFreq);
+		nextClearTime = clearTime.sum(clearFreq);
 
 		// Return prior quote (works b/c lastClearTime has not been updated yet)
-		log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + " Prior Quote" + 
+		log.log(Log.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
 				this.quote(clearTime));
-		ArrayList<Transaction> transactions = orderbook.uniformPriceClear(clearTime, (float) 0.5);
+		ArrayList<Transaction> transactions = orderbook.uniformPriceClear(clearTime, pricingPolicy);
 		
 		if (transactions == null) {
 			lastClearTime = clearTime;
 			
 			orderbook.logActiveBids(clearTime);
 			orderbook.logFourHeap(clearTime);
+			data.addDepth(ID, clearTime, orderbook.getDepth());
 			
 			// Now update the quote
-			log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + " " + 
-					this.getClass().getSimpleName() + "::clear: Nothing transacted. Post Quote" 
+			log.log(Log.INFO, clearTime + " | ....." + this + " " + 
+					this.getName() + "::clear: No change. Post-clear Quote" 
 					+ this.quote(clearTime));
-			
+			actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new SendToSIP(this, clearTime));
+
 			if (clearFreq.longValue() > 0) {
 				actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, nextClearTime));				
 			}
 			return actMap;
 		}
 		
-		// Add bid execution times
+		// Add bid execution speed
 		ArrayList<Integer> IDs = orderbook.getClearedBidIDs();
 		for (Iterator<Integer> id = IDs.iterator(); id.hasNext(); ) {
-			data.addExecutionTime(id.next(), clearTime);
+			data.addExecutionSpeed(id.next(), clearTime);
 		}
 		
 		// Add transactions to SystemData
@@ -124,23 +131,25 @@ public class CallMarket extends Market {
 			transactingIDs.add(t.buyerID);
 			transactingIDs.add(t.sellerID);
 
-			this.data.addTransaction(t);
+			data.addTransaction(t);
 			lastClearPrice = t.price;
 		}
-		this.lastClearTime = clearTime;
+		lastClearTime = clearTime;
 
 		// update and log transactions
 		for (Iterator<Integer> it = transactingIDs.iterator(); it.hasNext(); ) {
 			int id = it.next();
 			data.getAgent(id).updateTransactions(clearTime);
-			data.getAgent(id).logTransactions(clearTime);
+			data.getAgent(id).logTransactions(clearTime); 
 		}
 		orderbook.logActiveBids(clearTime);
 		orderbook.logClearedBids(clearTime);
 		orderbook.logFourHeap(clearTime);
-		this.data.addDepth(this.ID, clearTime, orderbook.getDepth());
-		log.log(Log.INFO, clearTime.toString() + " | " + this.toString() + " " + 
-				this.getClass().getSimpleName() + " cleared: Post Quote" + this.quote(clearTime));
+		data.addDepth(ID, clearTime, orderbook.getDepth());
+		log.log(Log.INFO, clearTime.toString() + " | ....." + this + " " + 
+				this.getName() + "::clear: Order book cleared: Post-clear Quote" 
+				+ this.quote(clearTime));
+		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new SendToSIP(this, clearTime));
 
 		// Insert next clear activity at some time in the future
 		if (clearFreq.longValue() > 0) {
@@ -164,20 +173,20 @@ public class CallMarket extends Market {
 			if (bp != null && ap != null) {
 				if (bp.getPrice() == -1 || ap.getPrice() == -1) {
 					// either bid or ask are undefined
-					this.data.addSpread(this.ID, quoteTime, Consts.INF_PRICE);
+					data.addSpread(ID, quoteTime, Consts.INF_PRICE);
 					
 				} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
-					log.log(Log.ERROR, this.getClass().getSimpleName() + "::quote: ERROR bid > ask");
-					this.data.addSpread(this.ID, quoteTime, Consts.INF_PRICE);
+					log.log(Log.ERROR, this.getName() + "::quote: ERROR bid > ask");
+					data.addSpread(ID, quoteTime, Consts.INF_PRICE);
 					
 				} else {
 					// valid bid-ask
-					this.data.addQuote(this.ID, q);
-					this.data.addSpread(this.ID, quoteTime, q.getSpread());
+					data.addQuote(ID, q);
+					data.addSpread(ID, quoteTime, q.getSpread());
 				}
 			}
-			this.lastQuoteTime = quoteTime;
-			this.nextQuoteTime = quoteTime.sum(clearFreq);
+			lastQuoteTime = quoteTime;
+			nextQuoteTime = quoteTime.sum(clearFreq);
 			
 			if (bp != null) {
 				lastBidPrice = bp;

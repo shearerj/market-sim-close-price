@@ -10,31 +10,31 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 /**
+ * LAAGENT
+ * 
  * High-frequency trader employing latency arbitrage strategy.
  * 
- * Can act infinitely fast (i.e. sleep time = 0). Note that all Activities
- * with negative TimeStamps are considered to be infinitely fast.
+ * This agent can act infinitely fast (i.e. sleep time = 0).
  * 
  * @author ewah
  */
-public class LAAgent extends MMAgent {
+public class LAAgent extends HFTAgent {
 	
 	private double alpha;
+	private int sleepTime;
+	private double sleepVar;
 	
 	/**
 	 * Overloaded constructor
 	 * @param agentID
 	 */
-	public LAAgent(int agentID, SystemData d, AgentProperties p, Log l) {
-		super(agentID, d, p, l);
-		agentType = Consts.getAgentType(this.getClass().getSimpleName());
+	public LAAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
+		super(agentID, modelID, d, p, l);
+		agentType = Consts.getAgentType(this.getName());
 		arrivalTime = new TimeStamp(0);
-		params = p;
-		
-		if (this.data.numMarkets != 2) {
-			log.log(Log.ERROR, this.toString() + " " + agentType + 
-					": Latency arbitrageurs need 2 markets!");
-		}
+
+		sleepTime = Integer.parseInt(params.get("sleepTime"));
+		sleepVar = Double.parseDouble(params.get("sleepVar"));
 	}
 	
 	
@@ -77,18 +77,19 @@ public class LAAgent extends MMAgent {
 				int quantity = Math.min(buySize, sellSize);
 
 				if (quantity > 0 && (buyMarketID != sellMarketID)) {
-					actMap.appendActivityHashMap(addBid(buyMarket, midPoint-tickSize, 
+					actMap.appendActivityHashMap(submitBid(buyMarket, midPoint-tickSize, 
 							quantity, ts));
-					actMap.appendActivityHashMap(addBid(sellMarket, midPoint+tickSize, 
+					actMap.appendActivityHashMap(submitBid(sellMarket, midPoint+tickSize, 
 							-quantity, ts));
 					log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
-							"::agentStrategy: Arb opportunity exists: " + bestQuote + 
+							"::agentStrategy: An arb opportunity exists: " + bestQuote + 
 							" in " + data.getMarket(bestQuote.bestBuyMarket) + " & " 
 							+ data.getMarket(bestQuote.bestSellMarket));
 					
 				} else if (buyMarketID == sellMarketID) {
 					log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
-							"::agentStrategy: No arb opp since same market");
+							"::agentStrategy: No arb opp since at least 1 market does not " +
+							"have both a bid and an ask");
 					// Note that this is due to a market not having both a bid & ask price,
 					// causing the buy and sell market IDs to be identical
 					
@@ -99,9 +100,7 @@ public class LAAgent extends MMAgent {
 					// agent is beating the market's Clear activity, which is incorrect.
 				}
 			}
-			int sleepTime = Integer.parseInt(params.get("sleepTime"));
 			if (sleepTime > 0) {
-				double sleepVar = Double.parseDouble(params.get("sleepVar"));
 				TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
 				actMap.insertActivity(Consts.HFT_PRIORITY, new UpdateAllQuotes(this, tsNew));
 				actMap.insertActivity(Consts.HFT_PRIORITY, new AgentStrategy(this, tsNew));

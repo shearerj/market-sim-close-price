@@ -9,23 +9,27 @@ import systemmanager.*;
 
 
 /**
- * Multi-market (MM) agent, whose agent strategy is called once for all markets.
+ * High-frequency trader (HFT) or multi-market (MM) agent. An HFTAgent arrives in 
+ * all markets in a model, and its strategy is executed across multiple markets.
+ * 
+ * An HFTAgent is capable of seeing the quotes in multiple markets with zero delay.
+ * These agents also bypass Regulation NMS restrictions as they have access to 
+ * private data feeds, enabling them to compute their own version of the NBBO.
  * 
  * @author ewah
  */
-public abstract class MMAgent extends Agent {
+public abstract class HFTAgent extends Agent {
 
 	/**
-	 * Constructor for a multimarket agent.
+	 * Constructor for an HFT or multi-market agent.
 	 * @param agentID
+	 * @param modelID
 	 * @param d
 	 * @param p
 	 * @param l
 	 */
-	public MMAgent(int agentID, SystemData d, AgentProperties p, Log l) {
-		super(agentID, d, p, l);
-		
-		marketIDs = new ArrayList<Integer>(d.markets.keySet());
+	public HFTAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
+		super(agentID, modelID, d, p, l);
 	}
 	
 	/**
@@ -37,16 +41,18 @@ public abstract class MMAgent extends Agent {
 	public ActivityHashMap agentArrival(TimeStamp ts) {
 		
 		String s = "";
-		for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
-			Market mkt = data.markets.get(i.next());
+		for (Iterator<Integer> it = this.getModel().getMarketIDs().iterator(); it.hasNext(); ) {
+			Market mkt = data.markets.get(it.next());
 			this.enterMarket(mkt, ts);
-			s += mkt.toString() + ",";
+			s += mkt.toString();
+			if (it.hasNext()) {
+				s += ",";
+			}
 		}
 		
-		s = s.substring(0, s.length() - 1);
 		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "->" + s);
-		
-		// Always insert agent strategy call once it's arrived in the market
+			
+		// Always insert agent strategy call once it has arrived in the market
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(new UpdateAllQuotes(this, ts));
 		actMap.insertActivity(new AgentStrategy(this, ts));
@@ -60,7 +66,7 @@ public abstract class MMAgent extends Agent {
 	 */
 	public ActivityHashMap agentDeparture() {
 
-		for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
+		for (Iterator<Integer> i = data.getMarketIDs().iterator(); i.hasNext(); ) {
 			Market mkt = data.markets.get(i.next());
 			
 			mkt.agentIDs.remove(mkt.agentIDs.indexOf(this.ID));
@@ -69,6 +75,7 @@ public abstract class MMAgent extends Agent {
 			mkt.removeBid(this.ID, null);
 			this.exitMarket(mkt.ID);
 		}
-		return null;
+		ActivityHashMap actMap = new ActivityHashMap();
+		return actMap;
 	}
 }

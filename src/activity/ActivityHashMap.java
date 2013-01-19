@@ -136,8 +136,10 @@ public class ActivityHashMap {
 	 * @param ahm
 	 */
 	public void appendActivityHashMap(ActivityHashMap ahm) {
-		for (Map.Entry<TimeStamp,PriorityActivityList> entry : ahm.acts.entrySet()) {
-			insertActivity(entry.getKey(), entry.getValue());
+		if (ahm != null) {
+			for (Map.Entry<TimeStamp,PriorityActivityList> entry : ahm.acts.entrySet()) {
+				insertActivity(entry.getKey(), entry.getValue());
+			}
 		}
 	}
 	

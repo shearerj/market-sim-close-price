@@ -28,12 +28,11 @@ public class SubmitBid extends Activity {
 	}
 	
 	public ActivityHashMap execute() {
-		return this.ag.submitBid(this.mkt, this.price, this.quantity, this.time);
+		return this.ag.executeSubmitBid(this.mkt, this.price, this.quantity, this.time);
 	}
 	
 	public String toString() {
-		return new String("SubmitBid::" + this.ag.toString() + "," +
-				this.mkt.toString() + "+(" + this.price + ", " +
+		return new String("SubmitBid::" + this.ag + "," + this.mkt + "+(" + this.price + ", " +
 				this.quantity + ")");
 	}
 }

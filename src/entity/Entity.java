@@ -12,9 +12,10 @@ import systemmanager.*;
  */
 public abstract class Entity {
 
-	protected int ID;
 	public Log log;
 	public SystemData data;
+	protected int ID;
+	protected ObjectProperties params;		// stores all parameters
 	
 	public Entity() {
 		// empty constructor
@@ -26,9 +27,10 @@ public abstract class Entity {
 	 * @param l
 	 * @param d
 	 */
-	public Entity(int ID, SystemData d, Log l) {
+	public Entity(int ID, SystemData d, ObjectProperties ep, Log l) {
 		this.ID = ID;
 		this.data = d;
+		this.params = ep;
 		this.log = l;
 	}
 	
@@ -46,5 +48,12 @@ public abstract class Entity {
 	 */
 	public final void setID(int ID) {
 		this.ID = ID;
+	}
+	
+	/**
+	 * @return simple class name
+	 */
+	public String getName() {
+		return this.getClass().getSimpleName();
 	}
 }

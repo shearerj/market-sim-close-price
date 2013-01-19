@@ -1,31 +1,34 @@
 package activity;
 
 import entity.*;
+import model.*;
 import event.TimeStamp;
 
 /**
- * Class for Activity of getting the National Best Bid and Offer (NBBO).
+ * Class for Activity of computing the National Best Bid and Offer (NBBO) for a given MarketModel.
  * 
  * @author ewah
  */
 public class UpdateNBBO extends Activity {
 
-	private Quoter q;
+	private SIP sip;
+	private MarketModel mdl;
 	
-	public UpdateNBBO(Quoter q, TimeStamp t) {
-		this.q = q;
+	public UpdateNBBO(SIP sip, MarketModel mdl, TimeStamp t) {
+		this.sip = sip;
+		this.mdl = mdl;
 		this.time = t;
 	}
 	
 	public UpdateNBBO deepCopy() {
-		return new UpdateNBBO(this.q, this.time);
+		return new UpdateNBBO(this.sip, this.mdl, this.time);
 	}
 	
 	public ActivityHashMap execute() {
-		return this.q.updateNBBO(this.time);
+		return this.sip.updateNBBO(this.mdl, this.time);
 	}
 	
 	public String toString() {
-		return new String("UpdateNBBO()");
+		return new String("UpdateNBBO::" + mdl.getFullName());
 	}
 }

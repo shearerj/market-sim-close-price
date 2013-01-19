@@ -13,7 +13,7 @@ import event.TimeStamp;
  * class assumes that the ActivityList priority is fixed and will not update it
  * under any circumstances.
  * 
- * The combination of the priority management and the hash map is a work-around to 
+ * The combination of the priority management and the HashMap is a work-around to 
  * avoid the tie-breaking issue for ActivityLists with identical priorities.
  * 
  * @author ewah

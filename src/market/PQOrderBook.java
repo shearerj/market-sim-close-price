@@ -210,7 +210,8 @@ public class PQOrderBook extends OrderBook {
 			Price p = PQPoint.earliestPrice(buy, sell);
 
 			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-			log.log(Log.INFO, "        Quantity=" + q + " cleared at Price=" + p.getPrice());
+			log.log(Log.INFO, ts + " | " + data.getMarket(marketID) + 
+					" Quantity=" + q + " cleared at Price=" + p.getPrice());
 
 			Integer key = new Integer(buy.getAgentID());
 			if (!clearedBids.containsKey(key)) {
@@ -283,10 +284,15 @@ public class PQOrderBook extends OrderBook {
 				p = new Price(Math.round((ask.getPrice().getPrice() - 
 						bid.getPrice().getPrice()) * pricingPolicy + bid.getPrice().getPrice()));
 				p = new Price(Market.quantize(p.getPrice(), data.tickSize));
+				log.log(Log.INFO, ts + " | " + data.getMarket(marketID) + 
+						" clearing price based on (BID: " + 
+						bid.getPrice().getPrice() + ", ASK:" + ask.getPrice().getPrice() + 
+						") & pricingPolicy=" + pricingPolicy + " => price " + p.getPrice());
 			}
 
 			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-			log.log(Log.INFO, ts.toString() + " |      Quantity=" + q + " cleared at Price=" + p.getPrice());
+			log.log(Log.INFO, ts + " | " + data.getMarket(marketID) + 
+					" Quantity=" + q + " cleared at Price=" + p.getPrice());
 			
 			Integer key = new Integer(buy.getAgentID());
 			if (!clearedBids.containsKey(key))

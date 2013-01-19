@@ -11,15 +11,15 @@ import java.util.HashMap;
  * 
  * @author ewah
  */
-public class DummyAgent extends MMAgent {
+public class DummyAgent extends HFTAgent {
 	
 	/**
 	 * Overloaded constructor
 	 * @param agentID
 	 */
-	public DummyAgent(int agentID, SystemData d, AgentProperties p, Log l) {
-		super(agentID, d, p, l);
-		agentType = Consts.getAgentType(this.getClass().getSimpleName());
+	public DummyAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
+		super(agentID, modelID, d, p, l);
+		agentType = Consts.getAgentType(this.getName());
 		arrivalTime = new TimeStamp(0);
 		params = p;
 	}
@@ -28,9 +28,9 @@ public class DummyAgent extends MMAgent {
 	@Override
 	public HashMap<String, Object> getObservation() {
 		HashMap<String,Object> obs = new HashMap<String,Object>();
-		obs.put("role", agentType);
-		obs.put("payoff", 0);
-		obs.put("strategy", params.get("strategy"));
+//		obs.put("role", agentType);
+//		obs.put("payoff", 0);
+//		obs.put("strategy", params.get("strategy"));
 		return obs;
 	}
 	

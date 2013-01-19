@@ -16,6 +16,8 @@ import event.TimeStamp;
 /**
  * Stores list of web parameters used in EGTAOnline.
  * 
+ * NOTE: All MarketModel types in the spec file must match the corresponding class name.
+ * 
  * @author ewah
  */
 public class SimulationSpec {
@@ -36,6 +38,7 @@ public class SimulationSpec {
 		data = d;
 		parser = new JSONParser();
 		loadFile(file);
+		readParams();
 	}
 	
 	/**
@@ -51,7 +54,7 @@ public class SimulationSpec {
 			roleStrategies = (JSONObject) array.get("assignment");
 			params = (JSONObject) array.get("configuration");
 		} catch (IOException e) {
-			log.log(Log.ERROR, "loadFile(String): error opening/processing simulation spec file: " +
+			log.log(Log.ERROR, "loadFile(String): error opening/processing spec file: " +
 					specFile + "/" + e);
 		} catch (ParseException e) {
 			log.log(Log.ERROR, "loadFile(String): JSON parsing error: " + e);
@@ -63,13 +66,10 @@ public class SimulationSpec {
 	 * Parses the spec file for config parameters. Overrides settings in environment
 	 * properties file & agent properties config.
 	 */
-	public void setParams() {
+	public void readParams() {
 		
 		data.simLength = new TimeStamp(Integer.parseInt(getValue("sim_length")));
-		data.tickSize = Integer.parseInt(getValue("tick_size"));
-		data.clearFreq = new TimeStamp(Integer.parseInt(getValue("call_clear_freq")));
-		data.centralMarketFlag = getValue("central_mkt").toLowerCase();
-		
+		data.tickSize = Integer.parseInt(getValue("tick_size"));	
 		data.nbboLatency = new TimeStamp(Integer.parseInt(getValue("nbbo_latency")));
 		data.arrivalRate = Double.parseDouble(getValue("arrival_rate"));
 		data.meanPV = Integer.parseInt(getValue("mean_PV"));
@@ -83,36 +83,60 @@ public class SimulationSpec {
 		data.mmScaleFactor = Integer.parseInt(getValue("scale_factor"));
 		data.mmSleepTime = Integer.parseInt(getValue("sleep_time"));
 		
-		// Check which types of markets to create
-		for (int i = 0; i < Consts.marketTypeNames.length; i++) {
-			String num = getValue(Consts.marketTypeNames[i]);
-			if (num != null) {
-				int n = Integer.parseInt(num);
-				data.numMarkets += n;
-				data.numMarketType.put(Consts.marketTypeNames[i], n);
+		// Model-specific parameters
+		data.primaryModelDesc = getValue("primary_model");
+		
+		// Check which types of market models to create
+		for (int i = 0; i < Consts.modelTypeNames.length; i++) {
+			// models here is a comma-separated list
+			String models = getValue(Consts.modelTypeNames[i]);
+			if (models != null) {
+				if (models.endsWith(",")) {
+					// remove any extra appended commas
+					models = models.substring(0, models.length() - 1);
+				}
+				String[] configs = models.split("[,]+");
+				
+				if (configs.length > 1) {
+					// if > 1, number of that model type is the number of items in the list
+					// also must check that not indicating that there are NONE or 0 of this model
+					data.numModelType.put(Consts.modelTypeNames[i], configs.length);
+				} else if (!models.equals(Consts.MODEL_CONFIG_NONE) && !models.equals("0")) {
+					data.numModelType.put(Consts.modelTypeNames[i], configs.length);
+				} else {
+					data.numModelType.put(Consts.modelTypeNames[i], 0);
+				}
 			}
 		}
-		// Create the central market; check first if valid market type
-		if (data.useCentralMarket()) {
-			data.numMarketType.put(Consts.CENTRAL + "_CDA", 1);
-			data.numMarketType.put(Consts.CENTRAL + "_CALL", 1);
-//			data.clearFreq = data.nbboLatency;
-		}
-		
-		// Check which types of agents to create
-		for (int i = 0; i < Consts.agentTypeNames.length; i++) {
-			String num = getValue(Consts.agentTypeNames[i]);
+			
+		// Check which types of single-market agents to create
+		// (from configuration section of spec file)
+		for (int i = 0; i < Consts.SMAgentTypes.length; i++) {
+			String agentType = Consts.SMAgentTypes[i];
+			String num = getValue(agentType);
 			if (num != null) {
 				int n = Integer.parseInt(num);
 				data.numAgents += n;
-				data.numAgentType.put(Consts.agentTypeNames[i], n);
+				data.numAgentType.put(agentType, n);
 			}
 		}
-		// Check how many agents in a given role (from role part of spec file)
-        for (int i = 0; i < Consts.roles.length; i++) {
-        	String role = Consts.roles[i];
-        	data.numAgentType.put(role, getNumPlayers(role));
-        }
+		// Check which types of multi-market agents to create
+		// (from configuration section of spec file)		// TODO - to remove
+		for (int i = 0; i < Consts.HFTAgentTypes.length; i++) {
+			String agentType = Consts.HFTAgentTypes[i];
+			String num = getValue(agentType);
+			if (num != null) {
+				int n = Integer.parseInt(num);
+				data.numAgents += n;
+				data.numAgentType.put(agentType, n);
+			}
+		}
+		// Check how many agents in a given role 
+		// (from role part of spec file)
+	        for (int i = 0; i < Consts.roles.length; i++) {
+        		String role = Consts.roles[i];
+        		data.numAgentType.put(role, getNumPlayers(role));
+	        }
 	}
 	
 	
@@ -138,45 +162,11 @@ public class SimulationSpec {
 	 * @return
 	 */
 	public int getNumPlayers(String role) {
-		if (roleStrategies.get(role) != null) {
-			return ((ArrayList<String>) roleStrategies.get(role)).size();
+		Object strats = roleStrategies.get(role);
+		if (strats != null) {
+			return ((ArrayList<String>) strats).size();
 		}
 		return 0;
-	}
-	
-	
-	/**
-	 * Set strategy for one player in a given role. Overwrites the default
-	 * AgentProperties set in SystemConsts class.
-	 *
-	 * @param role	agent who is a player
-	 * @param idx	index of the strategy (of the specific role) to set
-	 * @return ap	AgentProperties customized based on the player
-	 */
-	public AgentProperties setStrategy(String role, int idx) {
-		if (roleStrategies.containsKey(role)) {
-			AgentProperties ap = new AgentProperties(Consts.getProperties(role));
-			
-			ArrayList<String> players = (ArrayList<String>) roleStrategies.get(role);
-			String strategy = players.get(idx);
-			ap.put("strategy", strategy);
-			
-			// Check that strategy is not blank
-			if (!strategy.equals("") && !role.equals("DUMMY")) {
-				String[] stratParams = strategy.split("[_]+");
-				if (stratParams.length % 2 != 0) {
-					log.log(Log.ERROR, "setStrategy: error with describing the strategy");
-					return null;
-				}
-				for (int j = 0; j < stratParams.length; j += 2) {
-					ap.put(stratParams[j], stratParams[j+1]);
-				}
-			}
-			log.log(Log.INFO, role + ": " + ap);
-			return ap;
-		} else {
-			return new AgentProperties(Consts.getProperties(role));
-		}
 	}
 	
 	
