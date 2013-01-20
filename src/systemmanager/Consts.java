@@ -49,7 +49,7 @@ public class Consts {
 	
 	// Price
 	public final static int INF_PRICE = 999999999;
-	public final static int SCALING_FACTOR = 100;
+//	public final static int SCALING_FACTOR = 100;
 	
 	/**
 	 * Returns the market type based on the class name.

@@ -15,3 +15,7 @@
 .classpath
 .metadata
 .project
+
+# Directories #
+###############
+build/*

@@ -53,7 +53,7 @@ public class PrivateValue {
 	public int next() {
 		int nextPV = (int) ((meanPV * kappa) + ((1 - kappa) * 
 						privateValueProcess.get(privateValueProcess.size()-1).getPrice()) +
-	                    getNormalRV(0, shockVar) * Consts.SCALING_FACTOR);
+	                    getNormalRV(0, shockVar));
 		// truncate at zero
 		nextPV = Math.max(nextPV, 0);
 	    privateValueProcess.add(new Price(nextPV));

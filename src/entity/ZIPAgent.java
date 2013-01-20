@@ -52,8 +52,7 @@ public class ZIPAgent extends SMAgent {
         arrivalTime = new TimeStamp(0);
         pvVar = this.data.privateValueVar;
         bidRange = this.data.bidRange;                               
-        privateValue = Math.max(0, this.data.nextPrivateValue() + 
-                        (int) Math.round(getNormalRV(0, pvVar)) * Consts.SCALING_FACTOR);
+        privateValue = Math.max(0, this.data.nextPrivateValue() + (int) Math.round(getNormalRV(0, pvVar)));
 
 	// set the alternate ID if the primary model is a two-market model
 	mainMarketID = mktID;

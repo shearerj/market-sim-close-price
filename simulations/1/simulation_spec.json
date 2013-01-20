@@ -6,14 +6,14 @@
 "CENTRALCDA": "1",
 "CENTRALCALL": "NBBO",
 "MARKETMAKER": "0",
-"ZI": "5",
+"ZI": "25",
 "ZIP": "0",
 "nbbo_latency": "0",
 "arrival_rate": "0.075",
 "mean_PV": "100000",
 "kappa": "0.05",
-"shock_var": "15000",
+"shock_var": "150000000",
 "expire_rate": "0.0005",
 "bid_range": "2000",
-"private_value_var": "10000"
+"private_value_var": "100000000"
 } }

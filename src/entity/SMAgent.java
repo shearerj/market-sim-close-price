@@ -107,6 +107,21 @@ public abstract class SMAgent extends Agent {
 	}
 
 	/**
+	 * Wrapper method to submit bid that never expires to market after checking permissions.
+	 * 
+	 * @param mkt
+	 * @param price
+	 * @param quantity
+	 * @param ts
+	 * @return
+	 */
+	public ActivityHashMap submitNMSBid(int price, int quantity, TimeStamp ts) {
+		ActivityHashMap actMap = new ActivityHashMap();
+		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, new SubmitNMSBid(this, price, quantity, Consts.INF_TIME, ts));
+		return actMap;
+	}
+	
+	/**
 	 * Wrapper method to submit multiple-point bid to market after checking permissions.
 	 * TODO - still need to finish
 	 * 
@@ -185,6 +200,12 @@ public abstract class SMAgent extends Agent {
 			altMarketID = altMarketIDs.get(0);
 		}
 		
+		// Set additional string to log bid's duration
+		String logDuration = "";
+		if (duration != Consts.INF_TIME && duration > 0) {
+			logDuration = ", duration=" + duration;
+		}
+		
 		// Identify best market, as based on the NBBO.
 		Quote mainMarketQuote = market.quote(ts);
 		
@@ -243,7 +264,7 @@ public abstract class SMAgent extends Agent {
 			actMap.appendActivityHashMap(submitBid(marketSubmittedBid, p, q, ts));
 			log.log(Log.INFO, ts + " | " + this + " " + agentType + 
 					"::submitNMSBid: " + "+(" + p + "," + q + ") to " + 
-					marketSubmittedBid + ", duration=" + duration);
+					marketSubmittedBid + logDuration);
 			
 		} else {
 			// main market is better than the alternate market (according to NBBO)
@@ -258,12 +279,13 @@ public abstract class SMAgent extends Agent {
 			actMap.appendActivityHashMap(submitBid(market, p, q, ts));
 			log.log(Log.INFO, ts + " | " + this + " " + agentType + 
 					"::submitNMSBid: " + "+(" + p + "," + q + ") to " + 
-					market + ", duration=" + duration);
-			
+					market + logDuration);
 		}
 		
-		// Bid expires after a given duration
-		actMap.appendActivityHashMap(expireBid(marketSubmittedBid, duration, ts));
+		if (duration != Consts.INF_TIME && duration > 0) {
+			// Bid expires after a given duration
+			actMap.appendActivityHashMap(expireBid(marketSubmittedBid, duration, ts));
+		}
 		return actMap;
 	}
 	

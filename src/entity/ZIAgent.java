@@ -47,8 +47,6 @@ public class ZIAgent extends SMAgent {
 	private int bidRange;				// range for limit order
 	private double pvVar;				// variance from private value random process
 	
-//	private int mainMarketID;			// assigned at initialization
-//	private int altMarketID;
 	
 	/**
 	 * Overloaded constructor.
@@ -58,22 +56,14 @@ public class ZIAgent extends SMAgent {
 		agentType = Consts.getAgentType(this.getName());
 
 		rand = new Random(Long.parseLong(params.get("seed")));
-		expireRate = this.data.expireRate;
 		bidRange = this.data.bidRange;
 		pvVar = this.data.privateValueVar;
+		expireRate = this.data.expireRate;
 		expiration = (long) getExponentialRV(expireRate);
 		
 		arrivalTime = new TimeStamp(Long.parseLong(params.get("arrivalTime")));
 		int pv = Integer.parseInt(params.get("fundamental"));
-		privateValue = Math.max(0, pv + (int) Math.round(getNormalRV(0, pvVar)) * Consts.SCALING_FACTOR);
-		
-//		// set the alternate ID if the primary model is a two-market model
-//		mainMarketID = mktID;
-//		if (this.getModel() instanceof TwoMarket) {
-//			altMarketID = ((TwoMarket) this.getModel().getAlternateMarket(mktID);
-//		} else {
-//			altMarketID = mainMarketID;
-//		}
+		privateValue = Math.max(0, pv + (int) Math.round(getNormalRV(0, pvVar)));
 	}
 	
 	
@@ -101,7 +91,8 @@ public class ZIAgent extends SMAgent {
 			p = (int) Math.max(0, (this.privateValue + rand.nextDouble()*2*bidRange));
 		}
 
-		actMap.appendActivityHashMap(submitNMSBid(p, q, expiration, ts));
+//		actMap.appendActivityHashMap(submitNMSBid(p, q, expiration, ts));
+		actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
 		return actMap;
 		
 //		// identify best buy and sell offers (for all markets)

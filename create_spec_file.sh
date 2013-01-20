@@ -23,8 +23,8 @@ echo '"nbbo_latency": "'$4'",' >> $filename
 echo '"arrival_rate": "0.075",' >> $filename
 echo '"mean_PV": "100000",' >> $filename
 echo '"kappa": "0.05",' >> $filename
-echo '"shock_var": "15000",' >> $filename
+echo '"shock_var": "150000000",' >> $filename
 echo '"expire_rate": "0.0005",' >> $filename
 echo '"bid_range": "2000",' >> $filename
-echo '"private_value_var": "10000"' >> $filename
+echo '"private_value_var": "100000000"' >> $filename
 echo '} }' >> $filename
