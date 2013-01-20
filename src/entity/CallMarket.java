@@ -63,8 +63,9 @@ public class CallMarket extends Market {
 		data.addDepth(ID, ts, orderbook.getDepth());
 		data.addSubmissionTime(b.getBidID(), ts);
 		if (clearFreq.longValue() == 0) {
-			actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, ts));
-		}
+//			actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, ts));
+			return clear(ts);
+		} // else, Clear activities are chained and continue that way
 		return actMap;
 	}
 	
@@ -72,12 +73,13 @@ public class CallMarket extends Market {
 		// Unlike continuous auction market, no Clear inserted unless clear freq = 0
 		ActivityHashMap actMap = new ActivityHashMap();
 		orderbook.removeBid(agentID);
-		orderbook.logActiveBids(ts);
-		orderbook.logFourHeap(ts);
+//		orderbook.logActiveBids(ts);
+//		orderbook.logFourHeap(ts);
 		data.addDepth(ID, ts, orderbook.getDepth());
 		if (clearFreq.longValue() == 0) {
-			actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, ts));
-		}
+//			actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, ts));
+			return clear(ts);
+		} // else, Clear activities are chained and continue that way
 		return actMap;
 	}
 	

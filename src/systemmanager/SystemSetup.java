@@ -285,7 +285,7 @@ public class SystemSetup {
 						if (agent instanceof SMAgent) {
 							// Agent is in single market (an extra check)
 							Market mkt = ((SMAgent) agent).getMarket();
-							eventManager.createEvent(new AgentArrival(agent, mkt, ts));
+							eventManager.createEvent(Consts.SM_AGENT_PRIORITY, new AgentArrival(agent, mkt, ts));
 							eventManager.createEvent(new AgentDeparture(agent, mkt, data.simLength));		
 						}
 					}

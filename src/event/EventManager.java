@@ -84,7 +84,7 @@ public class EventManager {
 			if (!fastActivity.isEmpty()) {
 				// Update ActivityList time to match current time
 				TimeStamp insertTime = toExecute.getTime();
-				PriorityActivityList tmp = fastActivity.getLesserPriorityList(Consts.SUBMIT_BID_PRIORITY);
+				PriorityActivityList tmp = fastActivity.getPriorityListLessThan(Consts.SUBMIT_BID_PRIORITY);
 				tmp = new PriorityActivityList(insertTime, tmp);
 				toExecute.addActivity(tmp);
 			}
@@ -116,12 +116,14 @@ public class EventManager {
 				}
 			}
 			
-			// Add activities to current event with priority over 1
+			// Add infinitely fast activities to current event with priority over the threshold
+			int threshold = Consts.CDA_CLEAR_PRIORITY;
 			if (!fastActivity.isEmpty()) {
-				if (!eventQueue.isEmpty() && eventQueue.peek().getLastPriority() > Consts.SUBMIT_BID_PRIORITY) {
+				if (!eventQueue.isEmpty() && eventQueue.peek().getLastPriority() > threshold) {
 					// Update ActivityList time to match current time
 					TimeStamp nextInsertTime = eventQueue.peek().getTime();
-					PriorityActivityList tmp = fastActivity.getGreaterPriorityList(Consts.SUBMIT_BID_PRIORITY+1);
+					PriorityActivityList tmp = fastActivity.getPriorityListGreaterThan(threshold+1);
+					// copy & change insertion time
 					tmp = new PriorityActivityList(nextInsertTime, tmp);
 					eventQueue.peek().addActivity(tmp);
 				}
@@ -138,7 +140,7 @@ public class EventManager {
 	 * @return true if Event created successfully
 	 */
 	public boolean createEvent(Activity act) {
-		return createEvent(0, act);
+		return createEvent(Consts.DEFAULT_PRIORITY, act);
 	}
 	
 	/**

@@ -16,6 +16,9 @@ import event.TimeStamp;
  * The combination of the priority management and the HashMap is a work-around to 
  * avoid the tie-breaking issue for ActivityLists with identical priorities.
  * 
+ * NOTE: Priorities are ordered LOW to HIGH via a TreeSet, which ensures that
+ * there are no duplicate priorities stored in the PriorityActivityList.
+ * 
  * @author ewah
  */
 public class PriorityActivityList {
@@ -200,7 +203,7 @@ public class PriorityActivityList {
 	 * @param threshold
 	 * @return
 	 */
-	public PriorityActivityList getGreaterPriorityList(int threshold) {
+	public PriorityActivityList getPriorityListGreaterThan(int threshold) {
 		TreeSet<Integer> copyPriorityQueue = new TreeSet<Integer>();
 		HashMap<Integer, ActivityList> copyActivityListMap = new HashMap<Integer, ActivityList>();
 		
@@ -220,7 +223,7 @@ public class PriorityActivityList {
 	 * @param threshold
 	 * @return
 	 */
-	public PriorityActivityList getLesserPriorityList(int threshold) {
+	public PriorityActivityList getPriorityListLessThan(int threshold) {
 		TreeSet<Integer> copyPriorityQueue = new TreeSet<Integer>();
 		HashMap<Integer, ActivityList> copyActivityListMap = new HashMap<Integer, ActivityList>();
 		

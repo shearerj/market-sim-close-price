@@ -102,14 +102,14 @@ public class LAAgent extends HFTAgent {
 			}
 			if (sleepTime > 0) {
 				TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
-				actMap.insertActivity(Consts.HFT_PRIORITY, new UpdateAllQuotes(this, tsNew));
-				actMap.insertActivity(Consts.HFT_PRIORITY, new AgentStrategy(this, tsNew));
+				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
+				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
 				
 			} else if (sleepTime == 0) {
 				// infinitely fast HFT agent
 				TimeStamp tsNew = new TimeStamp(Consts.INF_TIME);
-				actMap.insertActivity(Consts.HFT_PRIORITY, new UpdateAllQuotes(this, tsNew));
-				actMap.insertActivity(Consts.HFT_PRIORITY, new AgentStrategy(this, tsNew));
+				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
+				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
 			}
 			return actMap;
 		}

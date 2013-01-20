@@ -101,8 +101,7 @@ public abstract class SMAgent extends Agent {
 	public ActivityHashMap submitNMSBid(int price, int quantity, long duration, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
 		if (data.getModelByMarketID(market.getID()).checkAgentPermissions(this.ID)) {
-			actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
-					new SubmitNMSBid(this, price, quantity, duration, ts));
+			actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, new SubmitNMSBid(this, price, quantity, duration, ts));
 		}
 		return actMap;
 	}
