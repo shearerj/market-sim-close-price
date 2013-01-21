@@ -152,8 +152,8 @@ public abstract class SMAgent extends Agent {
 		this.enterMarket(market, ts);
 		
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(new UpdateAllQuotes(this, ts));
-		actMap.insertActivity(new AgentStrategy(this, market, ts));
+		actMap.insertActivity(Consts.SM_AGENT_PRIORITY, new UpdateAllQuotes(this, ts));
+		actMap.insertActivity(Consts.SM_AGENT_PRIORITY, new AgentStrategy(this, market, ts));
 		return actMap;
 	}
 	

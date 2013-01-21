@@ -52,10 +52,11 @@ public abstract class HFTAgent extends Agent {
 		
 		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "->" + s);
 			
-		// Always insert agent strategy call once it has arrived in the market
+		// Always insert agent strategy call once it has arrived in the market;
+		// inserted at earliest priority in case there are orders already present at the beginning
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(new UpdateAllQuotes(this, ts));
-		actMap.insertActivity(new AgentStrategy(this, ts));
+		actMap.insertActivity(Consts.DEFAULT_PRIORITY, new UpdateAllQuotes(this, ts));
+		actMap.insertActivity(Consts.DEFAULT_PRIORITY, new AgentStrategy(this, ts));
 		return actMap;
 	}
 	

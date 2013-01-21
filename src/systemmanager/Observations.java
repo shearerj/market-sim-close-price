@@ -445,9 +445,11 @@ public class Observations {
 	
 	
 	/**
-	 * Computes volatility metrics. // TODO to finish
-	 * 
-	 * Volatility is measured as the standard deviation of logarithmic returns.
+	 * Computes volatility metrics. Volatility is measured as:
+	 * - std dev of price series (midquote prices of global, NBBO quotes)
+	 * - std dev of log returns (compute over a window over multiple window sizes)
+	 * the standard deviation of logarithmic returns.
+	 * TODO - finish
 	 * 
 	 * @param model
 	 * @return
@@ -456,6 +458,9 @@ public class Observations {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
 		ArrayList<Integer> ids = model.getMarketIDs();
+		
+		// get volatility for all prices in a market model (NBBOs)
+		
 		
 		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
 			int mktID = it.next();

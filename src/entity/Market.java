@@ -183,9 +183,14 @@ public abstract class Market extends Entity {
 		ActivityHashMap actMap = new ActivityHashMap();
 		MarketModel model = data.getModelByMarketID(this.getID());
 		SIP sip = data.getSIP();
-		TimeStamp tsNew = ts.sum(data.nbboLatency);
-		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new ProcessQuote(sip, this, bid, ask, tsNew));
-		actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(sip, model, tsNew));
+		if (data.nbboLatency.longValue() == 0) {
+			sip.processQuote(this, bid, ask, ts);
+			sip.updateNBBO(model, ts);
+		} else {
+			TimeStamp tsNew = ts.sum(data.nbboLatency);
+			actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new ProcessQuote(sip, this, bid, ask, tsNew));
+			actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(sip, model, tsNew));
+		}
 		return actMap;
 	}
 	
