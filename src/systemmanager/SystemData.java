@@ -30,14 +30,14 @@ import java.util.*;
  */
 public class SystemData {
 
-	public int obsNum;						// observation number
+	public int obsNum;									// observation number
 	
 	// Model information
-	public HashMap<Integer,MarketModel> models;			// models hashed by ID
+	public HashMap<Integer,MarketModel> models;					// models hashed by ID
 	public HashMap<Integer,ArrayList<Integer>> modelToMarketList;	// hashed by model ID
 	public HashMap<Integer,Integer> marketIDModelIDMap;			// hashed by market ID
 	public MarketModel primaryModel;
-	public String primaryModelDesc;					// description of primary model
+	public String primaryModelDesc;						// description of primary model
 	
 	// Market information
 	public HashMap<Integer,PQBid> bidData;				// all bids ever, hashed by bid ID
@@ -301,16 +301,15 @@ public class SystemData {
 	/**
 	 * Modifies transactions for the given model by setting TimeStamp to be constant, 
 	 * and using agent log IDs rather than agent IDs for indicating buyer or seller.
-	 * Also sets constant price (because surplus will be same regardless of price).
+	 * Also sets constant price (because surplus will be same regardless of price), as
+	 * well as constant bid IDs since different bids are submitted to each model.
 	 * 
 	 * @param modelID
 	 * @return
 	 */
 	public ArrayList<PQTransaction> getComparableTrans(int modelID) {
 		ArrayList<Integer> mktIDs = getModel(modelID).getMarketIDs();
-		
-//		System.out.println(this.getModel(modelID).getFullName() + " comparable transactions:"); // TODO remove
-		
+				
 		ArrayList<PQTransaction> trans = new ArrayList<PQTransaction>();
 		for (Map.Entry<Integer,PQTransaction> entry : transData.entrySet()) {
 			if (mktIDs.contains(entry.getValue().marketID)) {
@@ -321,16 +320,18 @@ public class SystemData {
 				// - Set constant TimeStamp
 				// - Set constant marketID
 				// - Set constant price
+				// - Set constant bid IDs
 				// TODO - for now, ignore quantity
 				int bID = getAgent(tr.buyerID).getLogID();
 				int sID = getAgent(tr.sellerID).getLogID();
 				Price p = new Price(0);
 				TimeStamp ts = new TimeStamp(-1);
 				int mktID = 0;
+				int bBidID = 0;
+				int sBidID = 0;
 				
-				PQTransaction trNew = new PQTransaction(tr.quantity, p, bID, sID, ts, mktID);
+				PQTransaction trNew = new PQTransaction(tr.quantity, p, bID, sID, bBidID, sBidID, ts, mktID);
 				trans.add(trNew);
-//				System.out.println(trNew.toString()); // TODO remove
 			}
 		}
 		return trans;
@@ -352,14 +353,17 @@ public class SystemData {
 			// - Set constant TimeStamp
 			// - Set constant marketID
 			// - Set constant price
+			// - Set constant bid IDs
 			// TODO - for now, ignore quantity
 			int bID = getAgent(tr.buyerID).getLogID();
 			int sID = getAgent(tr.sellerID).getLogID();
 			Price p = new Price(0);
 			TimeStamp ts = new TimeStamp(-1);
 			int mktID = 0;
-
-			PQTransaction trNew = new PQTransaction(tr.quantity, p, bID, sID, ts, mktID);
+			int bBidID = 0;
+			int sBidID = 0;
+			
+			PQTransaction trNew = new PQTransaction(tr.quantity, p, bID, sID, bBidID, sBidID, ts, mktID);
 			trans.add(trNew);
 		}
 		ArrayList<PQTransaction> uniqueTrans = new ArrayList<PQTransaction>();
@@ -449,6 +453,57 @@ public class SystemData {
 	}
 	
 	/**
+	 * Iterates through all transactions and sums up discounted surplus for all
+	 * background agents. (Note that HFT agent transactions will naturally execute
+	 * with zero transaction time, so they do not need to be discounted).
+	 * 
+	 * Each transaction's surplus is discounted by exp{-rho * T}, where T is the 
+	 * execution speed of that transaction.
+	 * 
+	 * TODO - should this be hashed by transaction ID instead?
+	 * 
+	 * CS = PV - p, PS = p - PV
+	 * 
+	 * @param modelID 		model id to check
+	 * @param rho			discount factor
+	 * @return discounted surplus, hashed by (background) agent ID
+	 */
+	public HashMap<Integer,Double> getDiscountedSurplus(int modelID, double rho) {
+		ArrayList<Integer> ids = getModel(modelID).getMarketIDs();
+		HashMap<Integer,Double> discSurplus = new HashMap<Integer,Double>();
+		
+		for (Map.Entry<Integer,PQTransaction> trans : getTrans(modelID).entrySet()) {
+			PQTransaction t = trans.getValue();
+			
+			if (ids.contains(t.marketID)) {
+				Agent buyer = agents.get(t.buyerID);
+				Agent seller = agents.get(t.sellerID);
+				TimeStamp buySpeed = executionSpeed.get(t.buyBidID);
+				TimeStamp sellSpeed = executionSpeed.get(t.sellBidID);
+				
+				// Check that PV is defined & that it is a background agent
+				if (buyer.getPrivateValue() != -1 && isBackgroundAgent(buyer.getID())) {
+					double surplus = 0;
+					if (discSurplus.containsKey(buyer.getID())) {
+						surplus = discSurplus.get(buyer.getID());
+					}
+					double cs = (buyer.getPrivateValue() - t.price.getPrice());
+					discSurplus.put(buyer.getID(), surplus + Math.exp(-rho * buySpeed.longValue()) * cs);		
+				}
+				if (seller.getPrivateValue() != -1 && isBackgroundAgent(seller.getID())) {
+					double surplus = 0;
+					if (discSurplus.containsKey(seller.getID())) {
+						surplus = discSurplus.get(seller.getID());
+					}
+					double ps = (t.price.getPrice() - seller.getPrivateValue());
+					discSurplus.put(seller.getID(), surplus + Math.exp(-rho * sellSpeed.longValue()) * ps);		
+				}
+			}
+		}
+		return discSurplus;
+	}
+	
+	/**
 	 * @return list of all transaction IDs
 	 */
 	public ArrayList<Integer> getTransactionIDs(int modelID) {
@@ -527,6 +582,19 @@ public class SystemData {
 			NBBOSpread.put(modelID, tmp);
 		}
 	}	
+	
+	
+	/**
+	 * Add the midquote price (midpoint of BID-ASK quote). For computing
+	 * price volatility & returns.
+	 * 
+	 * @param modelID
+	 * @param ts
+	 * @param price
+	 */
+	public void addMidQuotePrice(int modelID, TimeStamp ts, int price) {
+		
+	}
 	
 	
 	/**

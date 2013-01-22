@@ -14,6 +14,8 @@ public class Transaction {
 	public Integer buyerID;
 	public Integer sellerID;
 	public Integer marketID;
+	public Integer buyBidID;
+	public Integer sellBidID;
 	
 	public Integer quantity;
 	public Price price;

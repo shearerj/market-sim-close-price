@@ -664,7 +664,7 @@ public abstract class Agent extends Entity {
 							", price=" + t.price + ", quantity=" + t.quantity + 
 							", timeStamp=" + t.timestamp + ")");
 					
-					// Log surplus
+					// Log surplus for all agents
 					int bsurplus = data.getAgent(t.buyerID).getPrivateValue() - t.price.getPrice();
 					int ssurplus = t.price.getPrice() - data.getAgent(t.sellerID).getPrivateValue();
 					String s = ts + " | " + this + " " +

@@ -18,7 +18,6 @@ import org.json.simple.*;
 import org.apache.commons.math3.stat.descriptive.*;
 import org.apache.commons.math3.stat.descriptive.rank.*;
 
-
 /**
  * Contains payoff data and features for all players in the simulation.
  * Computes metrics to output to the observation file.
@@ -189,14 +188,16 @@ public class Observations {
 	
 	/**
 	 * Extracts surplus features for background agents in a given model.
+	 * Also extracts discounted surplus, based on a range of discount factors.
 	 * 
 	 * @param model
 	 * @return
 	 */
 	public HashMap<String,Object> getSurplusFeatures(MarketModel model) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
+		int modelID = model.getID();
 		
-		HashMap<Integer,Integer> bkgrdSurplus = data.getBackgroundSurplus(model.getID());
+		HashMap<Integer,Integer> bkgrdSurplus = data.getBackgroundSurplus(modelID);
 		Object[] objs = (new ArrayList<Integer>(bkgrdSurplus.values())).toArray();
 		double[] values = new double[objs.length];  
 		for (int i = 0; i < values.length; i++) {
@@ -205,6 +206,7 @@ public class Observations {
 		}
 		addAllStatistics(feat,values);
 
+		// add role agent surplus/payoff
 		for (Iterator<Integer> it = model.getPermittedAgentIDs().iterator(); it.hasNext(); ) {
 			int aid = it.next();
 			// check if agent is a player in a role
@@ -220,7 +222,21 @@ public class Observations {
 				DescriptiveStatistics ds = new DescriptiveStatistics(values);
 				feat.put(label, ds.getSum() + a.getRealizedProfit());
 			}
-		} 
+		}
+		
+		// total discounted surplus for varying values of rho
+		for (int i = 0; i < Consts.rhos.length; i++) {
+			double rho = Consts.rhos[i];
+			HashMap<Integer,Double> discSurplus = data.getDiscountedSurplus(modelID, rho);
+			Object[] o = (new ArrayList<Double>(discSurplus.values())).toArray();
+			double[] vals = new double[o.length];  
+			for (int j = 0; j < vals.length; j++) {
+		    	vals[j] = (Double) o[j];
+			}
+			DescriptiveStatistics ds = new DescriptiveStatistics(vals);
+			feat.put("disc_" +  (new Double(rho)).toString(), ds.getSum());
+		}
+		
 		return feat;
 	}
 	
@@ -261,30 +277,6 @@ public class Observations {
 	        values[i] = (double) tmp.getPrice();
 	    }
 	    addAllStatistics(feat,values);
-		return feat;
-	}
-	
-	
-	/**
-	 * Gets general bid information, such as number executed, number expired, 
-	 * number left unexpired, total number of bids submitted by 1) background agents,
-	 * 2) role agents, 3) all agents
-	 * 
-	 * @return
-	 */
-	public HashMap<String,Object> getBidInfo() {
-		HashMap<String,Object> feat = new HashMap<String,Object>();
-		
-		int num = 0;
-		int totBids = 0;
-//		for (Map.Entry<Integer,Agent> entry : agents.entrySet()) {
-//			Agent a = entry.getValue();
-//			if (data.isBackgroundAgent(a.getID())) {
-//			
-//			}
-//		}
-		feat.put("num_bids_alt", num);
-		feat.put("num_total_bids", totBids);
 		return feat;
 	}
 
@@ -459,7 +451,7 @@ public class Observations {
 		
 		ArrayList<Integer> ids = model.getMarketIDs();
 		
-		// get volatility for all prices in a market model (NBBOs)
+		// get volatility for all prices in a market model (based on global quote)
 		
 		
 		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
