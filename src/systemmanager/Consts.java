@@ -116,8 +116,10 @@ public class Consts {
 			p.put("alpha", "0.001");
 		}
 		if (type.equals("MARKETMAKER")) {
-			p.put("sleepTime", "50");
+			p.put("sleepTime", "200");
 			p.put("sleepVar", "100");
+			p.put("numRungs", "10");
+			p.put("rungSize", "1000");
 		}
 		if (type.equals("CALL")) {
 			p.put("pricingPolicy", "0.5");

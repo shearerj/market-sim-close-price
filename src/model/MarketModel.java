@@ -1,11 +1,11 @@
 package model;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-
 import entity.*;
 import systemmanager.*;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.HashMap;
 
 /**
  * MARKETMODEL
@@ -23,7 +23,7 @@ import systemmanager.*;
  * but also the assignments of agents to markets. The number of agents of each
  * type is fixed globally, but all or a subset of these agents can be assigned
  * to be in any of the available markets (single-market agents). If not
- * specified, all background agents are assumed to be enter all available
+ * specified, all background agents are assumed to trade in all available
  * markets in the model.
  * 
  * Note:
@@ -50,8 +50,10 @@ public abstract class MarketModel {
 	protected String config;
 	protected SystemData data;
 	protected ArrayList<Integer> agentIDs;		// IDs of associated agents
-	protected ArrayList<Integer> permittedAgentIDs;
 	protected ObjectProperties modelProperties;
+	
+	protected HashMap<String,Integer> numAgentType;
+//	protected ArrayList<Integer> permittedAgentIDs;
 	
 	// Specify market configuration & properties for the model
 	protected ArrayList<MarketObjectPair> modelMarketConfig;
@@ -70,20 +72,15 @@ public abstract class MarketModel {
 	public MarketModel(int modelID, ObjectProperties p, SystemData d) {
 		this.modelID = modelID;
 		data = d;
-		modelMarketConfig = new ArrayList<MarketObjectPair>();
-		marketIDs = new ArrayList<Integer>();
 		modelProperties = p;
+		
 		agentIDs = new ArrayList<Integer>();
-		permittedAgentIDs = new ArrayList<Integer>();
+		marketIDs = new ArrayList<Integer>();
+		modelMarketConfig = new ArrayList<MarketObjectPair>();
+		
+		numAgentType = new HashMap<String,Integer>();
+		initializeNumAgentType();
 	}
-	
-	/**
-	 * Executed after agents are created; sets which HFTAgents can submit bids to markets
-	 * in this model.
-	 *
-	 * Note that all SMAgents are, by default, permitted in all markets.
-	 */
-	public abstract void setAgentPermissions();
 	
 	/**
 	 * @return configuration string for this model.
@@ -106,42 +103,6 @@ public abstract class MarketModel {
 	}
 	
 	/**
-	 * @param id
-	 * @return true if agent with the given id is permitted in this model.
-	 */
-	public boolean checkAgentPermissions(int id) {
-		return permittedAgentIDs.contains(id);
-	}
-	
-	/**
-	 * Add all SM agent IDs in this model to the permissions list.
-	 */
-	public void permitAllSMAgents() {
-		for (Iterator<Integer> it = data.getAgentIDs().iterator(); it.hasNext(); ) {
-			Agent ag = data.getAgent(it.next());
-			// Check if the agent is a single market agent
-			if (ag instanceof SMAgent && ag.getModelID() == this.getID()) {
-				permittedAgentIDs.add(ag.getID());
-			}
-		}
-	}
-	
-	/**
-	 * Adds all specified agents to the permissions list. Will check that the modelID matches.
-	 * 
-	 * @param agentIDs
-	 */
-	public void permitAgents(ArrayList<Integer> agentIDs) {
-		for (Iterator<Integer> it = agentIDs.iterator(); it.hasNext(); ) {
-			Agent ag = data.getAgent(it.next());
-			if (ag.getModelID() == this.getID()) {
-				permittedAgentIDs.add(ag.getID());
-			}
-		}
-//		permittedAgentIDs.addAll(agentIDs);
-	}
-	
-	/**
 	 * Adds an agent to the list of agents for the model.
 	 * @param id
 	 */
@@ -149,6 +110,42 @@ public abstract class MarketModel {
 		if (!agentIDs.contains(id)) agentIDs.add(id);
 	}
 	
+	
+	public int getNumAgentType(String type) {
+		return this.numAgentType.get(type);
+	}
+	
+	/**
+	 * Initialize container of all number of agent types to be zero.
+	 */
+	public void initializeNumAgentType() {
+		for (int i = 0; i < Consts.SMAgentTypes.length; i++) {
+			this.numAgentType.put(Consts.SMAgentTypes[i], 0);
+		}
+		for (int i = 0; i < Consts.HFTAgentTypes.length; i++) {
+			this.numAgentType.put(Consts.HFTAgentTypes[i], 0);
+		}
+	}
+	
+	/**
+	 * Adds the same number of each agent type as in the global container.
+	 */
+	public void addAllSMAgents() {
+		for (int i = 0; i < Consts.SMAgentTypes.length; i++) {
+			String agentType = Consts.SMAgentTypes[i];
+			this.numAgentType.put(agentType, data.numAgentType.get(agentType));
+		}
+	}
+	
+	/**
+	 * If number of this agent type (globally) is 1+, set it to be one in the calling
+	 * model's list.
+	 */
+	public void setSingleAgentType(String agentType) {
+		if (data.numAgentType.get(agentType) > 0) {
+			this.numAgentType.put(agentType, 1);
+		}
+	}
 	
 	/**
 	 * Add a market-property pair to the MarketModel.
@@ -196,13 +193,6 @@ public abstract class MarketModel {
 	 */
 	public ArrayList<Integer> getAgentIDs() {
 		return agentIDs;
-	}
-	
-	/**
-	 * @return agentIDs
-	 */
-	public ArrayList<Integer> getPermittedAgentIDs() {
-		return permittedAgentIDs;
 	}
 
 	/**

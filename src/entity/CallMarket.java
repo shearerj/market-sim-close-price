@@ -35,9 +35,9 @@ public class CallMarket extends Market {
 		marketType = Consts.getMarketType(this.getName());
 		orderbook = new PQOrderBook(ID);
 		orderbook.setParams(ID, l, d);
-		clearFreq = new TimeStamp(Integer.parseInt(p.get("clearFreq")));
+		clearFreq = new TimeStamp(Integer.parseInt(params.get("clearFreq")));
 		nextClearTime = clearFreq;
-		pricingPolicy = (float) Double.parseDouble(p.get("pricingPolicy"));
+		pricingPolicy = (float) Double.parseDouble(params.get("pricingPolicy"));
 	}
 	
 	public Bid getBidQuote() {

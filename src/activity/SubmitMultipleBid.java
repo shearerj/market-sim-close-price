@@ -3,6 +3,8 @@ package activity;
 import entity.*;
 import event.*;
 
+import java.util.ArrayList;
+
 /**
  * Class for Activity of submitting a multiple-offer bid to a given market.
  * 
@@ -12,10 +14,10 @@ public class SubmitMultipleBid extends Activity {
 
 	private Agent ag;
 	private Market mkt;
-	private int[] price;
-	private int[] quantity;
+	private ArrayList<Integer> price;
+	private ArrayList<Integer> quantity;
 	
-	public SubmitMultipleBid(Agent ag, Market mkt, int[] p, int[] q, TimeStamp t) {
+	public SubmitMultipleBid(Agent ag, Market mkt, ArrayList<Integer> p, ArrayList<Integer> q, TimeStamp t) {
 		this.ag = ag;
 		this.mkt = mkt;
 		this.price = p;

@@ -68,17 +68,17 @@ public class SystemSetup {
 			// Must create market models before agents, so can add the agents
 			// then to the appropriate/corresponding markets.
 			createSIP();
+			log.log(Log.INFO, "------------------------------------------------");
+			log.log(Log.INFO, "    Creating MARKET MODELS");
 			createMarketModels();
+			log.log(Log.INFO, "------------------------------------------------");
+			log.log(Log.INFO, "    Creating AGENTS");
 			createAgents();
 
 			// Log agent information
 			logAgentInfo();
-
-			// Set all agent permissions
-			for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
-				MarketModel mm = entry.getValue();
-				mm.setAgentPermissions();
-			}
+			log.log(Log.INFO, "    SETUP COMPLETE");
+			log.log(Log.INFO, "------------------------------------------------");
 
 			// Initial SendToSIP Activity for all markets
 			for (Map.Entry<Integer,Market> entry : data.getMarkets().entrySet()) {
@@ -220,14 +220,21 @@ public class SystemSetup {
 	 * specified in the simulation spec file).
 	 */
 	private void createAgents() {
+		
 		boolean initSMValues = false;
 		ArrayList<TimeStamp> arrivals = new ArrayList<TimeStamp>();
 		ArrayList<Integer> values = new ArrayList<Integer>();
 
-		boolean initValues = false;
-		ArrayList<Long> seeds = new ArrayList<Long>();	
+		// Set initialization values for all agents
 		Random rand = new Random();
-
+		ArrayList<Long> seeds = new ArrayList<Long>();
+		for (Map.Entry<String, Integer> ag : data.numAgentType.entrySet()) {
+			for (int i = 0; i < ag.getValue(); i++) {
+				seeds.add(rand.nextLong());
+			}
+		}
+		
+		// Create agents for each model
 		for (Map.Entry<Integer,MarketModel> entry : data.getModels().entrySet()) {
 			int modelID = entry.getKey();
 			MarketModel model = entry.getValue();
@@ -235,19 +242,17 @@ public class SystemSetup {
 			// reset logID to 0 to increment through all created agents
 			int logID = 0;
 
+			// iterate for the global list of number of each agent type to ensure logIDs consistent
+			log.log(Log.INFO, "MODEL: " + model.getFullName() + " agent types:");
 			for (Map.Entry<String, Integer> ag : data.numAgentType.entrySet()) {
-	
+				
 				String agentType = ag.getKey();
-				int numAgents = ag.getValue();
-				ArrayList<Integer> assignment = assignAgentsToMarkets(numAgents, model.getMarketIDs());
-	
-				for (int i = 0; i < numAgents; i++) {
+				int numAgentsInModel = model.getNumAgentType(agentType);
+				
+				ArrayList<Integer> assignment = assignAgentsToMarkets(numAgentsInModel, model.getMarketIDs());
+				
+				for (int i = 0; i < numAgentsInModel; i++) {
 					ObjectProperties ap = getEntityProperties(agentType, i);
-					// Set initialization values for all agents
-					if (!initValues) {
-						long seed = rand.nextLong();
-						seeds.add(seed);
-					}	
 					ap.put("seed", seeds.get(logID).toString());
 					int agentID = agentIDSequence.increment();
 					Agent agent;
@@ -279,6 +284,14 @@ public class SystemSetup {
 							ap.put("arrivalTime", arrivals.get(i).toString());
 							ap.put("fundamental", values.get(i).toString());
 						}
+						
+						// set MarketMakerAgent params
+						if (agentType.equals("MARKETMAKER")) {
+							ap.put("numRungs", Integer.toString(data.marketmaker_numRungs));
+							ap.put("sleepTime", Integer.toString(data.marketmaker_sleepTime));
+							ap.put("rungSize", Integer.toString(data.marketmaker_rungSize));
+						}
+						
 						agent = AgentFactory.createSMAgent(agentType, agentID, modelID, data, ap, log, mktID);
 
 						TimeStamp ts = agent.getArrivalTime();
@@ -292,17 +305,16 @@ public class SystemSetup {
 					data.addAgent(agent);
 					agent.setLogID(logID++);
 					model.linkAgent(agentID);
-//					// check if in a role, if so keep track of role agent IDs
-//					if (Arrays.asList(Consts.roles).contains(agentType)) {
-//						data.roleAgentIDs.add(agentID);
-//					}
 					log.log(Log.DEBUG, agent.toString() + ": " + ap);
 				}
-				log.log(Log.INFO, "Agents: " + numAgents + " " + agentType);
+				
+				// increment logID to ensure correctly set for all market models
+				logID += (ag.getValue() - numAgentsInModel);
+				
+				log.log(Log.INFO, "Agents: " + numAgentsInModel + " " + agentType);
 			}
 			// values will be initialized after first model has been created
 			initSMValues = true;
-			initValues = true;
 		}
 	}
 

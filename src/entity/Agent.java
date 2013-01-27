@@ -65,7 +65,8 @@ public abstract class Agent extends Entity {
 		
 		rand = new Random();
 		this.modelID = modelID;
-	
+		agentType = Consts.getAgentType(this.getName());
+		
 		// initialize all containers
 		bidPrice = new HashMap<Integer,Price>();
 		askPrice = new HashMap<Integer,Price>();
@@ -359,10 +360,7 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap submitBid(Market mkt, int price, int quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		if (this.getModel().checkAgentPermissions(this.ID)) {
-			actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
-					new SubmitBid(this, mkt, price, quantity, ts));
-		}
+		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, new SubmitBid(this, mkt, price, quantity, ts));
 		return actMap;
 	}
 
@@ -375,12 +373,9 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap submitMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
+	public ActivityHashMap submitMultipleBid(Market mkt, ArrayList<Integer> price, ArrayList<Integer> quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		if (this.getModel().checkAgentPermissions(this.ID)) {
-			actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
-					new SubmitMultipleBid(this, mkt, price, quantity, ts));
-		}
+		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, new SubmitMultipleBid(this, mkt, price, quantity, ts));
 		return actMap;
 	}
 	
@@ -394,12 +389,9 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap expireBid(Market mkt, long duration, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		if (this.getModel().checkAgentPermissions(this.ID)) {
-			TimeStamp withdrawTime = ts.sum(new TimeStamp(duration));
-			actMap.insertActivity(Consts.WITHDRAW_BID_PRIORITY,
-					new WithdrawBid(this, mkt, withdrawTime));
-			log.log(Log.INFO, ts + " | " + mkt + " " + this + ": bid duration=" + duration); 
-		}
+		TimeStamp withdrawTime = ts.sum(new TimeStamp(duration));
+		actMap.insertActivity(Consts.WITHDRAW_BID_PRIORITY, new WithdrawBid(this, mkt, withdrawTime));
+		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": bid duration=" + duration); 
 		return actMap;
 	}
 	
@@ -412,11 +404,7 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap executeWithdrawBid(Market mkt, TimeStamp ts) {
 		log.log(Log.INFO, ts + " | " + this + " withdraw bid from " + mkt);
-		
-		if (this.getModel().checkAgentPermissions(this.ID)) {
-			return mkt.removeBid(this.ID, ts);
-		}
-		return null;
+		return mkt.removeBid(this.ID, ts);
 	}
 	
 	/**
@@ -429,7 +417,6 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public ActivityHashMap executeSubmitBid(Market mkt, int price, int quantity, TimeStamp ts) {
-		
 		if (quantity == 0) return null;
 
 		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price + ", " + quantity + ")");
@@ -452,8 +439,8 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap executeSubmitMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
-		if (price.length != quantity.length) {
+	public ActivityHashMap executeSubmitMultipleBid(Market mkt, ArrayList<Integer> price, ArrayList<Integer> quantity, TimeStamp ts) {
+		if (price.size() != quantity.size()) {
 			log.log(Log.ERROR, "Agent::submitMultipleBid: Price/Quantity are not the same length");
 			return null;
 		}
@@ -462,10 +449,10 @@ public abstract class Agent extends Entity {
 		
 		PQBid pqBid = new PQBid(this.ID, mkt.ID);
 		pqBid.timestamp = ts;
-		for (int i = 0; i < price.length; i++) {
-			if (quantity[i] != 0) {
-				int p = Market.quantize(price[i], tickSize);
-				pqBid.addPoint(quantity[i], new Price(p));
+		for (int i = 0; i < price.size(); i++) {
+			if (quantity.get(i) != 0) {
+				int p = Market.quantize(price.get(i), tickSize);
+				pqBid.addPoint(quantity.get(i), new Price(p));
 			}
 		}
 		data.addBid(pqBid);
@@ -488,8 +475,7 @@ public abstract class Agent extends Entity {
 		lastGlobalQuote = sip.getGlobalQuote(modelID);
 		lastNBBOQuote = sip.getNBBOQuote(modelID);
 		
-		log.log(Log.INFO, ts + " | " + this + " Global" + lastGlobalQuote + 
-				", NBBO" + lastNBBOQuote);
+		log.log(Log.INFO, ts + " | " + this + " Global" + lastGlobalQuote + ", NBBO" + lastNBBOQuote);
 		return null;
 	}
 	

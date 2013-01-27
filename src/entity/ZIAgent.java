@@ -53,8 +53,7 @@ public class ZIAgent extends SMAgent {
 	 */
 	public ZIAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l, int mktID) {
 		super(agentID, modelID, d, p, l, mktID);
-		agentType = Consts.getAgentType(this.getName());
-
+		
 		rand = new Random(Long.parseLong(params.get("seed")));
 		bidRange = this.data.bidRange;
 		pvVar = this.data.privateValueVar;

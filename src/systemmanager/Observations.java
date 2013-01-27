@@ -58,7 +58,8 @@ public class Observations {
 	}
 
 	/**
-	 * Used to put observation as feature in the case
+	 * Used to put observation as feature in the case of players not in the primary model.
+	 * 
 	 * @param agentID
 	 * @return
 	 */
@@ -186,9 +187,27 @@ public class Observations {
 		}
 	}
 	
+	private double[] convertIntsToArray(HashMap<Integer,Integer> map) {
+		Object[] objs = (new ArrayList<Integer>(map.values())).toArray();
+		double[] values = new double[objs.length];
+		for (int i = 0; i < values.length; i++) {
+	    	Integer tmp = (Integer) objs[i];
+			values[i] = tmp.doubleValue();
+		}
+		return values;
+	}
+	
+	private double[] convertDoublesToArray(HashMap<Integer,Double> map) {
+		Object[] objs = (new ArrayList<Double>(map.values())).toArray();
+		double[] values = new double[objs.length];
+		for (int i = 0; i < values.length; i++) {
+			values[i] = (Double) objs[i];
+		}
+		return values;
+	}
+	
 	/**
-	 * Extracts surplus features for background agents in a given model.
-	 * Also extracts discounted surplus, based on a range of discount factors.
+	 * Extracts surplus features for all agents in a given model.
 	 * 
 	 * @param model
 	 * @return
@@ -197,46 +216,63 @@ public class Observations {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		int modelID = model.getID();
 		
+		int totalSurplus = 0;
+		
+		// get background surplus for all agents with a private value
 		HashMap<Integer,Integer> bkgrdSurplus = data.getBackgroundSurplus(modelID);
-		Object[] objs = (new ArrayList<Integer>(bkgrdSurplus.values())).toArray();
-		double[] values = new double[objs.length];  
-		for (int i = 0; i < values.length; i++) {
-	    	Integer tmp = (Integer) objs[i];
-			values[i] = tmp.doubleValue();
-		}
+		double[] values = convertIntsToArray(bkgrdSurplus);
 		addAllStatistics(feat,values);
-
-		// add role agent surplus/payoff
-		for (Iterator<Integer> it = model.getPermittedAgentIDs().iterator(); it.hasNext(); ) {
+		DescriptiveStatistics ds = new DescriptiveStatistics(values);
+		totalSurplus += ds.getSum();
+		
+		// add role (HFT) agent surplus/payoff
+		for (Iterator<Integer> it = model.getAgentIDs().iterator(); it.hasNext(); ) {
 			int aid = it.next();
-			// check if agent is a player in a role
-			if (!data.isBackgroundAgent(aid)) {
-				String type = data.getAgent(aid).getType();
-				String label = "sum_with_" + type.toLowerCase();
-				
-				// Append the agentID if there is 1+ of this type in the simulation
-				if (data.numAgentType.get(type) > 1) {
-					label += aid;
-				}
-				Agent a = data.getAgent(aid);
-				DescriptiveStatistics ds = new DescriptiveStatistics(values);
-				feat.put(label, ds.getSum() + a.getRealizedProfit());
+			Agent a = data.getAgent(aid);
+			String type = a.getType();
+			String label = "sum_with_" + type.toLowerCase();
+			
+			// Append the agentID if there is 1+ of this type in the simulation
+			if (model.getNumAgentType(type) > 1) {
+				label += a.getLogID();
 			}
+			
+			int surplus = 0;
+			if (!data.isBackgroundAgent(aid)) {
+				// HFT agent
+				surplus = a.getRealizedProfit();
+				feat.put(label, ds.getSum() + surplus);
+				totalSurplus += surplus;
+			} else if (data.isBackgroundAgent(aid) && data.getAgent(aid).getPrivateValue() == -1) {
+				// background agent with undefined private value (e.g. MarketMaker)
+				surplus = data.getSurplusForAgent(modelID, aid);
+				feat.put(label, ds.getSum() + surplus);
+				feat.put("profit_" + type.toLowerCase() + a.getLogID(), surplus);
+				totalSurplus += surplus;
+			} // otherwise already included in background surplus	
 		}
+		feat.put("sum_total", totalSurplus);
+		return feat;
+	}
+	
+	/**
+	 * Extracts discounted surplus values.
+	 * 
+	 * @param model
+	 * @return
+	 */
+	public HashMap<String,Object> getDiscountedSurplusFeatures(MarketModel model) {
+		HashMap<String,Object> feat = new HashMap<String,Object>();
+		int modelID = model.getID();
 		
 		// total discounted surplus for varying values of rho
 		for (int i = 0; i < Consts.rhos.length; i++) {
 			double rho = Consts.rhos[i];
 			HashMap<Integer,Double> discSurplus = data.getDiscountedSurplus(modelID, rho);
-			Object[] o = (new ArrayList<Double>(discSurplus.values())).toArray();
-			double[] vals = new double[o.length];  
-			for (int j = 0; j < vals.length; j++) {
-		    	vals[j] = (Double) o[j];
-			}
+			double[] vals = convertDoublesToArray(discSurplus);
 			DescriptiveStatistics ds = new DescriptiveStatistics(vals);
 			feat.put("disc_" +  (new Double(rho)).toString(), ds.getSum());
 		}
-		
 		return feat;
 	}
 	
@@ -337,7 +373,7 @@ public class Observations {
 		}
 		addStatistics(feat,prices,"price",false);
 		//		addSomeStatistics(feat,quantities,"qty",false);
-		for (Iterator<Integer> it = model.getPermittedAgentIDs().iterator(); it.hasNext(); ) {
+		for (Iterator<Integer> it = model.getAgentIDs().iterator(); it.hasNext(); ) {
 			int aid = it.next();
 			// check if agent is player in role
 			if (!data.isBackgroundAgent(aid)) {
@@ -356,7 +392,7 @@ public class Observations {
 				}
 				// must append the agentID if there is more than one of this type
 				String suffix = "_" + type.toLowerCase();
-				if (data.numAgentType.get(type) > 1) {
+				if (model.getNumAgentType(type) > 1) {
 					suffix += aid;
 				}
 				feat.put("buys" + suffix, buys);
@@ -598,6 +634,12 @@ public class Observations {
 		config.put("expire_rate", data.expireRate);
 		config.put("bid_range", data.bidRange);
 		config.put("pv_var", data.privateValueVar);
+		
+		// market maker params
+		config.put("mm_sleep_time", data.marketmaker_sleepTime);
+		config.put("mm_num_rungs", data.marketmaker_numRungs);
+		config.put("mm_rung_size", data.marketmaker_rungSize);
+		
 		return config;
 	}
 	
