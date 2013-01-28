@@ -20,7 +20,7 @@ if [ ! -d "$folder" ]; then
 else
    rm -rf $folder/*
 fi
-./create_spec_file.sh "${folder}/simulation_spec.json" $1 ${strat} 2 0 $2 "on" $2
+./create_spec_file.sh "${folder}/simulation_spec.json" $1 ${strat} $2
 ./run_hft.sh ${folder} $3
 ./parse_single.sh $4 ${folder}
 

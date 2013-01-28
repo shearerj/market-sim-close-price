@@ -26,5 +26,8 @@ echo '"kappa": "0.05",' >> $filename
 echo '"shock_var": "150000000",' >> $filename
 echo '"expire_rate": "0.0005",' >> $filename
 echo '"bid_range": "2000",' >> $filename
-echo '"private_value_var": "100000000"' >> $filename
+echo '"private_value_var": "100000000",' >> $filename
+echo '"marketmaker_sleep_time": "200",' >> $filename
+echo '"marketmaker_num_rungs": "10",' >> $filename
+echo '"marketmaker_rung_size": "1000"' >> $filename
 echo '} }' >> $filename
