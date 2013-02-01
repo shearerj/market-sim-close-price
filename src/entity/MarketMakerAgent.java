@@ -17,7 +17,11 @@ import java.util.ArrayList;
  * buy orders:  [Y_t - C_t, ..., Y_t - 1, Y_t]
  * sell orders: [X_t, X_t + 1, ..., X_t + C_t]
  * 
- * NOTE: The MarketMakerAgent will truncate the ladder when the price will cross
+ * The market maker liquidates its position at the price dictated by the
+ * global fundamental at the end of the simulation (event is inserted in 
+ * SystemSetup).
+ * 
+ * NOTE: The MarketMakerAgent will truncate the ladder when the price crosses
  * the NBBO, i.e., whenever one of the points in the bid would be routed to
  * the alternate market otherwise. This happens when:
  * 

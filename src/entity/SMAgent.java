@@ -153,16 +153,16 @@ public abstract class SMAgent extends Agent {
 	}
 	
 	/**
-	 * Agent departs a specified market, if it is active.
+	 * Agent departs a specified market, if it is active. //TODO need to fix this
 	 * 
 	 * @param market
 	 * @return ActivityHashMap
 	 */
-	public ActivityHashMap agentDeparture() {
+	public ActivityHashMap agentDeparture(TimeStamp ts) {
 		market.agentIDs.remove(market.agentIDs.indexOf(this.ID));
 		market.buyers.remove(market.buyers.indexOf(this.ID));
 		market.sellers.remove(market.sellers.indexOf(this.ID));
-		market.removeBid(this.ID, null);
+		market.removeBid(this.ID, ts);
 		this.exitMarket(market.ID);
 		ActivityHashMap actMap = new ActivityHashMap();
 		return actMap;

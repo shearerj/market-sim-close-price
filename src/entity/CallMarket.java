@@ -73,8 +73,6 @@ public class CallMarket extends Market {
 		// Unlike continuous auction market, no Clear inserted unless clear freq = 0
 		ActivityHashMap actMap = new ActivityHashMap();
 		orderbook.removeBid(agentID);
-//		orderbook.logActiveBids(ts);
-//		orderbook.logFourHeap(ts);
 		data.addDepth(ID, ts, orderbook.getDepth());
 		if (clearFreq.longValue() == 0) {
 //			actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, ts));

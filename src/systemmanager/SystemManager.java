@@ -230,7 +230,8 @@ public class SystemManager {
 
 			obs.addFeature(prefix + "spreads", obs.getSpreadInfo(model));
 			obs.addFeature(prefix + "surplus", obs.getSurplusFeatures(model));
-			obs.addFeature(prefix + "surplus", obs.getDiscountedSurplusFeatures(model));
+			obs.addFeature(prefix + "surplus_disc", obs.getDiscountedSurplusFeatures(model));
+			obs.addFeature(prefix + "marketmaker", obs.getMarketMakerInfo(model));
 			obs.addFeature(prefix + "transactions", obs.getTransactionInfo(model));
 			obs.addFeature(prefix + "exec_speed", obs.getExecutionSpeed(model));
 			

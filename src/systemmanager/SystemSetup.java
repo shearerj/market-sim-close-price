@@ -3,12 +3,14 @@ package systemmanager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
 
 import activity.*;
 import entity.*;
 import event.*;
+import market.Price;
 import model.*;
 
 /**
@@ -62,8 +64,8 @@ public class SystemSetup {
 	public void setupAll() {
 		try {
 			// Generate arrival times & private values
-			data.backgroundArrivalTimes();
-			data.backgroundPrivateValues();
+			data.arrivalTimes();
+			data.globalFundamentalValues();
 
 			// Must create market models before agents, so can add the agents
 			// then to the appropriate/corresponding markets.
@@ -223,14 +225,21 @@ public class SystemSetup {
 		
 		boolean initSMValues = false;
 		ArrayList<TimeStamp> arrivals = new ArrayList<TimeStamp>();
-		ArrayList<Integer> values = new ArrayList<Integer>();
-
+		ArrayList<Price> values = new ArrayList<Price>();
+		// hash map of the first log ID for each agent type
+		HashMap<String, Integer> startingLogIDs = new HashMap<String,Integer>();
+		
 		// Set initialization values for all agents
 		Random rand = new Random();
 		ArrayList<Long> seeds = new ArrayList<Long>();
+		int startLogID = 1;	// start logID at 1
 		for (Map.Entry<String, Integer> ag : data.numAgentType.entrySet()) {
+			if (ag.getValue() > 0) {
+				startingLogIDs.put(ag.getKey(), startLogID);
+			}
 			for (int i = 0; i < ag.getValue(); i++) {
 				seeds.add(rand.nextLong());
+				startLogID++;
 			}
 		}
 		
@@ -239,9 +248,6 @@ public class SystemSetup {
 			int modelID = entry.getKey();
 			MarketModel model = entry.getValue();
 
-			// reset logID to 0 to increment through all created agents
-			int logID = 0;
-
 			// iterate for the global list of number of each agent type to ensure logIDs consistent
 			log.log(Log.INFO, "MODEL: " + model.getFullName() + " agent types:");
 			for (Map.Entry<String, Integer> ag : data.numAgentType.entrySet()) {
@@ -249,11 +255,15 @@ public class SystemSetup {
 				String agentType = ag.getKey();
 				int numAgentsInModel = model.getNumAgentType(agentType);
 				
+				int logID = 0;
+				if (numAgentsInModel > 0) {
+					logID = startingLogIDs.get(agentType);
+				}
 				ArrayList<Integer> assignment = assignAgentsToMarkets(numAgentsInModel, model.getMarketIDs());
 				
 				for (int i = 0; i < numAgentsInModel; i++) {
 					ObjectProperties ap = getEntityProperties(agentType, i);
-					ap.put("seed", seeds.get(logID).toString());
+					ap.put("seed", seeds.get(logID-1).toString());	// since start logID at 1, not 0
 					int agentID = agentIDSequence.increment();
 					Agent agent;
 
@@ -266,7 +276,7 @@ public class SystemSetup {
 						if (agent instanceof HFTAgent) {
 							// Agent is in multiple markets (an extra check)
 							eventManager.createEvent(new AgentArrival(agent, ts));
-							eventManager.createEvent(new AgentDeparture(agent, data.simLength));
+//							eventManager.createEvent(new AgentDeparture(agent, data.simLength));
 						}
 					} else {
 						// Single market agent
@@ -275,9 +285,9 @@ public class SystemSetup {
 						if (!initSMValues) {
 							// set up arrival time/fundamental for background agents
 							TimeStamp t = data.nextArrival();
-							int pv = data.nextPrivateValue();
+							Price pv = data.getFundamentalAt(t);
 							ap.put("arrivalTime", t.toString());
-							ap.put("fundamental", (new Integer(pv)).toString());
+							ap.put("fundamental", pv.toString());
 							arrivals.add(t);
 							values.add(pv);
 						} else {
@@ -294,12 +304,22 @@ public class SystemSetup {
 						
 						agent = AgentFactory.createSMAgent(agentType, agentID, modelID, data, ap, log, mktID);
 
+						/**
+						 * Insert needed events after agent has been created
+						 */
 						TimeStamp ts = agent.getArrivalTime();
 						if (agent instanceof SMAgent) {
 							// Agent is in single market (an extra check)
 							Market mkt = ((SMAgent) agent).getMarket();
 							eventManager.createEvent(Consts.SM_AGENT_PRIORITY, new AgentArrival(agent, mkt, ts));
-							eventManager.createEvent(new AgentDeparture(agent, mkt, data.simLength));		
+//							eventManager.createEvent(new AgentDeparture(agent, mkt, data.simLength));
+						}
+						
+						// set liquidation at the end of the simulation for MarketMakerAgents
+						if (agent instanceof MarketMakerAgent) {
+							eventManager.createEvent(Consts.LOWEST_PRIORITY, 
+									new Liquidate(agent, data.getFundamentalAt(data.simLength), 
+									data.simLength));
 						}
 					}
 					data.addAgent(agent);
@@ -307,10 +327,6 @@ public class SystemSetup {
 					model.linkAgent(agentID);
 					log.log(Log.DEBUG, agent.toString() + ": " + ap);
 				}
-				
-				// increment logID to ensure correctly set for all market models
-				logID += (ag.getValue() - numAgentsInModel);
-				
 				log.log(Log.INFO, "Agents: " + numAgentsInModel + " " + agentType);
 			}
 			// values will be initialized after first model has been created
@@ -329,6 +345,8 @@ public class SystemSetup {
 	private ArrayList<Integer> assignAgentsToMarkets(int numAgents, ArrayList<Integer> mktIDs) {
 		ArrayList<Integer> assignment = new ArrayList<Integer>();
 		
+		if (numAgents == 0) return assignment;
+		
 		int remain = numAgents % mktIDs.size();
 		int num = (numAgents - remain) / mktIDs.size();
 		for (int i = 0; i < num; i++) {
@@ -339,7 +357,6 @@ public class SystemSetup {
 		for (int i = 0; i < remain; i++) {
 			assignment.add(mktIDs.get(i));
 		}		
-
 		return assignment;
 	}
 

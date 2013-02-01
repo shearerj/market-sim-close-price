@@ -162,8 +162,8 @@ public class EventManager {
 			e = new Event(act.getTime());
 			e.addActivity(priority, act);
 
-			// only add to queue if will occur within the duration of the simulation
-			if (act.getTime().before(duration)) { 
+			// only add to queue if will occur within the duration (inclusive) of the simulation
+			if (act.getTime().before(duration.sum(new TimeStamp(1)))) { 
 				addEvent(e);
 				log.log(Log.DEBUG, "Event " + e.toString() + "@" + act.getTime().toString());
 			}

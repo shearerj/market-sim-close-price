@@ -21,7 +21,7 @@ echo '"ZI": "250",' >> $filename
 echo '"ZIP": "0",' >> $filename
 echo '"nbbo_latency": "'$4'",' >> $filename
 echo '"arrival_rate": "0.075",' >> $filename
-echo '"mean_PV": "100000",' >> $filename
+echo '"mean_value": "100000",' >> $filename
 echo '"kappa": "0.05",' >> $filename
 echo '"shock_var": "150000000",' >> $filename
 echo '"expire_rate": "0.0005",' >> $filename

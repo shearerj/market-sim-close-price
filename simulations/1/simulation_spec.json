@@ -10,7 +10,7 @@
 "ZIP": "0",
 "nbbo_latency": "0",
 "arrival_rate": "0.075",
-"mean_PV": "100000",
+"mean_value": "100000",
 "kappa": "0.05",
 "shock_var": "150000000",
 "expire_rate": "0.0005",

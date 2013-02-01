@@ -9,7 +9,7 @@ package systemmanager;
 public class Consts {
 	
 	public final static double[] rhos = 
-		{0, 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009, 0.01};
+		{0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009, 0.001};
 	
 	// **********************************************************
 	// Agent, market, and model types
@@ -44,6 +44,7 @@ public class Consts {
 	public final static int HFT_AGENT_PRIORITY = 5;
 	public final static int MARKETMAKER_PRIORITY = 6;
 	public final static int SM_AGENT_PRIORITY = 7;
+	public final static int LOWEST_PRIORITY = 999;
 	// AgentArrival/Departure inserted with default priority
 	// AgentStrategy inserted with agent-specific priority
 	

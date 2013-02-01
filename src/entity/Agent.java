@@ -42,7 +42,6 @@ public abstract class Agent extends Entity {
 	
 	// Agent parameters
 	protected int privateValue;
-	protected int positionLimit;
 	protected String agentType;
 	protected TimeStamp arrivalTime;
 
@@ -51,6 +50,10 @@ public abstract class Agent extends Entity {
 	protected int positionBalance;
 	protected int averageCost;
 	protected int realizedProfit;
+	// for liquidation
+	protected int preLiqPosition;
+	protected int preLiqRealizedProfit;
+	
 	
 	/**
 	 * Constructor
@@ -105,7 +108,7 @@ public abstract class Agent extends Entity {
 	/**
 	 * @return
 	 */
-	public abstract ActivityHashMap agentDeparture();
+	public abstract ActivityHashMap agentDeparture(TimeStamp ts);
 	
 	
 	/**
@@ -460,6 +463,56 @@ public abstract class Agent extends Entity {
 		return mkt.addBid(pqBid, ts);
 	}
 
+	
+	/**
+	 * Liquidate agent's position at the the value of the global fundamental 
+	 * at the specified time. Price is determined by the fundamental at the time
+	 * of liquidation.
+	 * 
+	 * @param ts
+	 * @return
+	 */
+	public ActivityHashMap liquidateAtFundamental(TimeStamp ts) {
+		ActivityHashMap actMap = new ActivityHashMap();
+		actMap.insertActivity(new Liquidate(this, data.getFundamentalAt(ts), ts));
+		log.log(Log.INFO, ts + " | " + this + " liquidating..."); 
+		return actMap;
+	}
+
+	
+	/**
+	 * Liquidates an agent's position at the specified price.
+	 *  
+	 * @param price
+	 * @param ts
+	 * @return
+	 */
+	public ActivityHashMap executeLiquidate(Price price, TimeStamp ts) {
+		
+		log.log(Log.INFO, ts + " | " + this + " pre-liquidation: position=" + positionBalance
+				+ ", profit=" + realizedProfit);
+		
+		// If no net position, no need to liquidate
+		if (positionBalance == 0) return null;
+		
+		preLiqPosition = positionBalance;
+		preLiqRealizedProfit = getRealizedProfit();
+		if (positionBalance > 0) {
+			// need to sell
+			realizedProfit += positionBalance * price.getPrice();
+		} else {
+			// need to buy
+			realizedProfit -= positionBalance * price.getPrice();
+		}
+		positionBalance = 0;
+		
+		log.log(Log.INFO, ts + " | " + this + " post-liquidation: position=" + positionBalance
+				+ ", profit=" + realizedProfit + ", price=" + price);
+		return null;
+	}
+	
+	
+	
 	/**
 	 * Update global and NBBO quotes for the agent's model.
 	 * 
@@ -785,13 +838,22 @@ public abstract class Agent extends Entity {
 		return up;
 	}
 
-
-	/**
-	 * @return agent's realized profit
-	 */
 	public int getRealizedProfit() {
 		return realizedProfit;
 	}
+	
+	public int getPreLiquidationPosition() {
+		return preLiqPosition;
+	}
+	
+	public int getPreLiquidationProfit() {
+		return preLiqRealizedProfit;
+	}
+	
+	public int getPositionBalance() {
+		return positionBalance;
+	}
+	
 	
 	/**
 	 * Find best market to buy in (i.e. lowest ask) and to sell in (i.e. highest bid).

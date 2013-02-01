@@ -271,7 +271,7 @@ public class Observations {
 			HashMap<Integer,Double> discSurplus = data.getDiscountedSurplus(modelID, rho);
 			double[] vals = convertDoublesToArray(discSurplus);
 			DescriptiveStatistics ds = new DescriptiveStatistics(vals);
-			feat.put("disc_" +  (new Double(rho)).toString(), ds.getSum());
+			feat.put((new Double(rho)).toString(), ds.getSum());
 		}
 		return feat;
 	}
@@ -477,6 +477,7 @@ public class Observations {
 	 * - std dev of price series (midquote prices of global, NBBO quotes)
 	 * - std dev of log returns (compute over a window over multiple window sizes)
 	 * the standard deviation of logarithmic returns.
+	 * 
 	 * TODO - finish
 	 * 
 	 * @param model
@@ -491,11 +492,50 @@ public class Observations {
 		
 		
 		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
-			int mktID = it.next();
+//			int mktID = it.next();
 			// TODO: vol measures. also try multiple periods for determining returns
+			
+			
+			
+			
+			
 		}
 		return feat;
 	}
+	
+	
+	/**
+	 * Track liquidation-related features & profit for market makers.
+	 * 
+	 * @param model
+	 * @return
+	 */
+	public HashMap<String, Object> getMarketMakerInfo(MarketModel model) {
+		HashMap<String,Object> feat = new HashMap<String,Object>();
+		
+		ArrayList<Integer> ids = model.getAgentIDs();
+		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
+			int agentID = it.next();
+			
+			if (data.getAgent(agentID) instanceof MarketMakerAgent) {
+				Agent ag = data.getAgent(agentID);
+				
+				// must append the agentID if there is more than one of this type
+				String suffix = "";
+				if (model.getNumAgentType(ag.getType()) > 1) {
+					suffix += agentID;
+				}
+				
+				feat.put("position_pre_liq" + suffix, ag.getPreLiquidationPosition());
+				feat.put("position_post_liq" + suffix, ag.getPositionBalance());	// just to double-check
+				feat.put("profit_pre_liq" + suffix, ag.getPreLiquidationProfit());
+				feat.put("profit_post_liq" + suffix, ag.getRealizedProfit());
+			}
+		}
+		
+		return feat;
+	}
+
 	
 	
 	/**
@@ -561,7 +601,7 @@ public class Observations {
 			this.addFeature(prefix + "compare", feat);
 		}
 	}
-	
+		
 	
 	/**
 	 * Construct a double array storing a time series from a HashMap of integers
@@ -629,7 +669,7 @@ public class Observations {
 		config.put("tick_size", data.tickSize);
 		config.put("kappa", data.kappa);
 		config.put("arrival_rate", data.arrivalRate);
-		config.put("mean_pv", data.meanPV);
+		config.put("mean_value", data.meanValue);
 		config.put("shock_var", data.shockVar);
 		config.put("expire_rate", data.expireRate);
 		config.put("bid_range", data.bidRange);
@@ -648,6 +688,8 @@ public class Observations {
 	 * @return HashMap of models/types in the simulation.
 	 */
 	public HashMap<String,Object> getModelInfo() {
+		
+		// TODO 
 		return null;
 	}
 	
@@ -656,6 +698,8 @@ public class Observations {
 	 */
 	public HashMap<String,Object> getAgentInfo() {
 		HashMap<String,Object> info = new HashMap<String,Object>();
+		
+		// TODO
 		return null;
 		
 	}

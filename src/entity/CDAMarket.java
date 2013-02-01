@@ -61,8 +61,6 @@ public class CDAMarket extends Market {
 //		ActivityHashMAP ACTMAP = NEW ACTIVITYHASHMAP();
 //		ACTMAP.INSERTActivity(Consts.CDA_CLEAR_PRIORITY, new Clear(this, ts));
 		orderbook.removeBid(agentID);
-//		orderbook.logActiveBids(ts); 
-//		orderbook.logFourHeap(ts);
 		data.addDepth(this.ID, ts, orderbook.getDepth());
 //		return actMap;
 		return clear(ts);

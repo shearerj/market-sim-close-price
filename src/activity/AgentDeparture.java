@@ -34,7 +34,7 @@ public class AgentDeparture extends Activity {
 	}
 	
 	public ActivityHashMap execute() {
-		return ag.agentDeparture();
+		return ag.agentDeparture(this.time);
 	}
 	
 	public String toString() {

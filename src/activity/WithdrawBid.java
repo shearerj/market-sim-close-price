@@ -4,8 +4,8 @@ import entity.*;
 import event.TimeStamp;
 
 /**
- * Class for Activity of withdrawing an agent's bid in a given market. Could be due to
- * being replaced or because of expiration.
+ * Class for Activity of withdrawing an agent's bid in a given market. Used when
+ * bids expire as well.
  * 
  * @author ewah
  */

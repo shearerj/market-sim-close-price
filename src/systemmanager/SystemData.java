@@ -50,7 +50,7 @@ public class SystemData {
 	private SIP sip;
 	private Sequence transIDSequence;	
 	private ArrivalTime arrivalTimeGenerator;
-	private PrivateValue processGenerator;
+	private FundamentalValue fundamentalGenerator;
 	
 	// hashed by type, gives # of that type
 	public HashMap<String,Integer> numModelType;
@@ -66,7 +66,7 @@ public class SystemData {
 	public TimeStamp centralCallClearFreq;
 	public TimeStamp nbboLatency;
 	public double arrivalRate;
-	public int meanPV;
+	public int meanValue;
 	public double kappa;
 	public double shockVar;
 	public double expireRate;
@@ -112,6 +112,11 @@ public class SystemData {
 		submissionTime = new HashMap<Integer,TimeStamp>();
 	}
 
+	
+	/***********************************
+	 * Accessor methods
+	 *
+	 **********************************/
 	
 	/**
 	 * @return
@@ -193,7 +198,6 @@ public class SystemData {
 		return mkts;
 	}
 	
-	
 	public ArrayList<Integer> getMarketIDs() {
 		return new ArrayList<Integer>(markets.keySet());
 	}
@@ -272,6 +276,9 @@ public class SystemData {
 		return ids;
 	}
 	
+	public PQBid getBid(int id) {
+		return bidData.get(id);
+	}
 	
 	/**
 	 * Get a specific transaction within a given model.
@@ -375,16 +382,6 @@ public class SystemData {
 		return uniqueTrans;
 	}
 	
-	
-	/**
-	 * @param id
-	 * @return
-	 */
-	public PQBid getBid(int id) {
-		return bidData.get(id);
-	}
-
-	
 	/**
 	 * @return list of expirations for all ZI agent bids (only ZIAgent limit orders expire).
 	 */
@@ -414,6 +411,12 @@ public class SystemData {
 		}
 		return pvs;
 	}
+	
+	
+	/***********************************
+	 * Surplus computations
+	 *
+	 **********************************/
 	
 	/**
 	 * Iterates through all transactions and sums up surplus for all agents of a 
@@ -552,8 +555,6 @@ public class SystemData {
 		return allSurplus;
 	}
 	
-	
-	
 	/**
 	 * Iterates through all transactions and sums up discounted surplus for all
 	 * background agents. (Note that HFT agent transactions will naturally execute
@@ -611,11 +612,12 @@ public class SystemData {
 	public ArrayList<Integer> getTransactionIDs(int modelID) {
 		return new ArrayList<Integer>(getTrans(modelID).keySet());
 	}
-
-	public void setSIP(SIP sip) {
-		this.sip = sip;
-	}
-
+	
+	/***********************************
+	 * Add agent, market, model, spread, etc.
+	 *
+	 **********************************/
+	
 	public void addAgent(Agent ag) {
 		agents.put(ag.getID(), ag);
 	}
@@ -630,6 +632,10 @@ public class SystemData {
 		modelIDs.add(id);
 	}
 	
+	public void setSIP(SIP sip) {
+		this.sip = sip;
+	}
+
 	public void addTransaction(PQTransaction tr) {
 		int id = transIDSequence.increment();
 		tr.transID = id;
@@ -684,21 +690,7 @@ public class SystemData {
 			NBBOSpread.put(modelID, tmp);
 		}
 	}	
-	
-	
-	/**
-	 * Add the midquote price (midpoint of BID-ASK quote). For computing
-	 * price volatility & returns.
-	 * 
-	 * @param modelID
-	 * @param ts
-	 * @param price
-	 */
-	public void addMidQuotePrice(int modelID, TimeStamp ts, int price) {
 		
-	}
-	
-	
 	/**
 	 * Add depth (number of orders waiting to be fulfilled) to the the container.
 	 * 
@@ -717,7 +709,7 @@ public class SystemData {
 	}
 	
 	/**
-	 * Add bid submission time to the hashmap container.
+	 * Add bid submission time to the hash map container.
 	 * @param bidID
 	 * @param ts
 	 */
@@ -738,20 +730,36 @@ public class SystemData {
 			System.err.print("ERROR: submission time does not contain bidID " + bidID);
 		}
 	}
-
+	
+	/**
+	 * Add the midquote price (midpoint of BID-ASK quote). For computing
+	 * price volatility & returns.
+	 * 
+	 * @param modelID
+	 * @param ts
+	 * @param price
+	 */
+	public void addMidQuotePrice(int modelID, TimeStamp ts, int price) {
+		// TODO 
+		
+		
+		
+	}
+	
+	
+	
+	
+	/***********************************
+	 * Arrival times & global fundamental generation
+	 *
+	 **********************************/
+	
 	/**
 	 * Set up arrival times generation for background agents.
 	 */
-	public void backgroundArrivalTimes() {
+	public void arrivalTimes() {
 		arrivalTimeGenerator = new ArrivalTime(new TimeStamp(0), arrivalRate);
-	}
-	
-	/**
-	 * Set up private value generation for background agents.
-	 */
-	public void backgroundPrivateValues() {
-		processGenerator = new PrivateValue(kappa, meanPV, shockVar);	
-	}
+	}	
 	
 	/**
 	 * @return next generated arrival time
@@ -764,13 +772,23 @@ public class SystemData {
 	}
 	
 	/**
-	 * @return next generated private value
+	 * Set up global fundamental generation.
 	 */
-	public int nextPrivateValue() {
-		if (processGenerator == null) {
-			return 0;
+	public void globalFundamentalValues() {
+		fundamentalGenerator = new FundamentalValue(kappa, meanValue, shockVar, (int) simLength.longValue());	
+	}
+	
+	/**
+	 * Return generated fundamental value at time ts.
+	 * 
+	 * @param ts
+	 * @return
+	 */
+	public Price getFundamentalAt(TimeStamp ts) {
+		if (fundamentalGenerator == null) {
+			return new Price(0);
 		}
-		return processGenerator.next();
+		return fundamentalGenerator.getValueAt((int) ts.longValue());
 	}
 	
 	/**
@@ -788,10 +806,10 @@ public class SystemData {
 	}
 	
 	/**
-	 * @return list of all private values generated in the stochastic process
+	 * @return time series of the global fundamental generated by the stochastic process
 	 */
-	public ArrayList<Price> getPrivateValueProcess() {
-		return processGenerator.getPrivateValueProcess();
-	}	
+	public ArrayList<Price> getFundamentalValueProcess() {
+		return fundamentalGenerator.getProcess();
+	}
 }
 
