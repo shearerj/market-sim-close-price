@@ -3,7 +3,9 @@
 
 if [ $# -ne 4 ]
 then
-echo "Usage: .\example.sh [HFT type] [NBBO latency] [# samples] [CSV filename]"
+echo "REMINDER: Compile with ant before running!"
+echo "Usage: ./example.sh [HFT type] [NBBO latency] [# samples] [CSV filename]"
+echo "Example: ./example.sh LA 0 10 test.csv"
 exit 1
 fi
 
@@ -20,7 +22,7 @@ if [ ! -d "$folder" ]; then
 else
    rm -rf $folder/*
 fi
-./create_spec_file.sh "${folder}/simulation_spec.json" $1 ${strat} 2 0 $2 "on" $2
+./create_spec_file.sh "${folder}/simulation_spec.json" $1 ${strat} $2
 ./run_hft.sh ${folder} $3
 ./parse_single.sh $4 ${folder}
 
