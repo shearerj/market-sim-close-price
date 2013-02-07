@@ -77,10 +77,11 @@ public class SystemData {
 	public int marketmaker_sleepTime;			// market maker sleep time
 	
 	// Variables of time series for observation file
-	public HashMap<Integer,HashMap<TimeStamp,Integer>> marketDepth;		// hashed by market ID
-	public HashMap<Integer,HashMap<TimeStamp,Integer>> marketSpread;	// hashed by market ID
-	public HashMap<Integer,HashMap<TimeStamp,Integer>> NBBOSpread;		// hashed by model ID, time series
-	public HashMap<Integer,TimeStamp> executionSpeed;		 	// hashed by bid ID
+	public HashMap<Integer,HashMap<TimeStamp,Double>> marketDepth;		// hashed by market ID
+	public HashMap<Integer,HashMap<TimeStamp,Double>> marketSpread;		// hashed by market ID
+	public HashMap<Integer,HashMap<TimeStamp,Double>> NBBOSpread;		// hashed by model ID, time series
+	public HashMap<Integer,HashMap<TimeStamp,Double>> marketMidQuote;	// hashed by market ID
+	public HashMap<Integer,TimeStamp> timeToExecution;		 	// hashed by bid ID
 	public HashMap<Integer,TimeStamp> submissionTime;			// hashed by bid ID
 	
 	/**
@@ -105,13 +106,14 @@ public class SystemData {
 		marketIDModelIDMap = new HashMap<Integer,Integer>();
 	
 		// Initialize containers for observations/features
-		marketDepth = new HashMap<Integer,HashMap<TimeStamp,Integer>>();
-		marketSpread = new HashMap<Integer,HashMap<TimeStamp,Integer>>();
-		NBBOSpread = new HashMap<Integer,HashMap<TimeStamp,Integer>>();
-		executionSpeed = new HashMap<Integer,TimeStamp>();
+		marketDepth = new HashMap<Integer,HashMap<TimeStamp,Double>>();
+		marketSpread = new HashMap<Integer,HashMap<TimeStamp,Double>>();
+		NBBOSpread = new HashMap<Integer,HashMap<TimeStamp,Double>>();
+		marketMidQuote = new HashMap<Integer,HashMap<TimeStamp,Double>>();
+		timeToExecution = new HashMap<Integer,TimeStamp>();
 		submissionTime = new HashMap<Integer,TimeStamp>();
 	}
-
+	
 	
 	/***********************************
 	 * Accessor methods
@@ -516,6 +518,7 @@ public class SystemData {
 	 * @return hash map of background agent surplus, hashed by agent ID
 	 */
 	public HashMap<Integer,Integer> getBackgroundSurplus(int modelID) {
+		// basically the same as discounted surplus, but with discount 0.0
 
 		ArrayList<Integer> ids = getModel(modelID).getMarketIDs();
 		HashMap<Integer,Integer> allSurplus = new HashMap<Integer,Integer>();
@@ -581,25 +584,35 @@ public class SystemData {
 			if (ids.contains(t.marketID)) {
 				Agent buyer = agents.get(t.buyerID);
 				Agent seller = agents.get(t.sellerID);
-				TimeStamp buySpeed = executionSpeed.get(t.buyBidID);
-				TimeStamp sellSpeed = executionSpeed.get(t.sellBidID);
+				TimeStamp buyTime = timeToExecution.get(t.buyBidID);
+				TimeStamp sellTime = timeToExecution.get(t.sellBidID);
 				
 				// Check that PV is defined & that it is a background agent
-				if (buyer.getPrivateValue() != -1 && isBackgroundAgent(buyer.getID())) {
+				if (isBackgroundAgent(buyer.getID())) {
 					double surplus = 0;
 					if (discSurplus.containsKey(buyer.getID())) {
 						surplus = discSurplus.get(buyer.getID());
 					}
-					double cs = (buyer.getPrivateValue() - t.price.getPrice());
-					discSurplus.put(buyer.getID(), surplus + Math.exp(-rho * buySpeed.longValue()) * cs);		
+					if (buyer.getPrivateValue() != -1) {
+						double cs = (buyer.getPrivateValue() - t.price.getPrice());
+//						System.out.println(modelID + ": " + t + " cs=" + cs + ", buyTime=" + buyTime);
+						discSurplus.put(buyer.getID(), surplus + Math.exp(-rho * buyTime.longValue()) * cs);
+					} else {
+						discSurplus.put(buyer.getID(), Math.exp(-rho * buyTime.longValue()) * buyer.getRealizedProfit());
+					}
 				}
-				if (seller.getPrivateValue() != -1 && isBackgroundAgent(seller.getID())) {
+				if (isBackgroundAgent(seller.getID())) {
 					double surplus = 0;
 					if (discSurplus.containsKey(seller.getID())) {
 						surplus = discSurplus.get(seller.getID());
 					}
-					double ps = (t.price.getPrice() - seller.getPrivateValue());
-					discSurplus.put(seller.getID(), surplus + Math.exp(-rho * sellSpeed.longValue()) * ps);		
+					if (seller.getPrivateValue() != -1) {
+						double ps = (t.price.getPrice() - seller.getPrivateValue());
+//						System.out.println(modelID + ": " + t + " ps=" + ps + ", sellTime=" + sellTime);
+						discSurplus.put(seller.getID(), surplus + Math.exp(-rho * sellTime.longValue()) * ps);
+					} else {
+						discSurplus.put(seller.getID(), Math.exp(-rho * sellTime.longValue()) * seller.getRealizedProfit());
+					}
 				}
 			}
 		}
@@ -662,17 +675,39 @@ public class SystemData {
 //		System.out.println("PRE marketSpread: " + marketSpread.get(mktID));
 //		Market mkt = markets.get(mktID);
 		if (marketSpread.get(mktID) != null) {
-			marketSpread.get(mktID).put(ts, spread);
+			marketSpread.get(mktID).put(ts, (double) spread);
 //			System.out.println(ts + " " + mkt.toString() + ": " + spread + " added.");
 //			System.out.println("POST marketSpread: " + marketSpread.get(mktID));
 		} else {
-			HashMap<TimeStamp,Integer> tmp = new HashMap<TimeStamp,Integer>();
-			tmp.put(ts, spread);
+			HashMap<TimeStamp,Double> tmp = new HashMap<TimeStamp,Double>();
+			tmp.put(ts, (double) spread);
 			marketSpread.put(mktID, tmp);
 //			System.out.println(ts + " " + mkt.toString() + ": " + spread + " added.");
 //			System.out.println("POST marketSpread: " + marketSpread.get(mktID));
 		}
 	}	
+	
+	/**
+	 * Add the mid-quote price (midpoint of BID-ASK quote). For computing
+	 * price volatility & returns.
+	 * 
+	 * @param mktID
+	 * @param ts
+	 * @param bid
+	 * @param ask
+	 */
+	public void addMidQuotePrice(int mktID, TimeStamp ts, int bid, int ask) {
+		double midQuote = (bid + ask) / 2;
+		
+		if (marketMidQuote.get(mktID) != null) {
+			marketMidQuote.get(mktID).put(ts,  midQuote);
+		} else {
+			HashMap<TimeStamp,Double> tmp = new HashMap<TimeStamp,Double>();
+			tmp.put(ts, midQuote);
+			marketMidQuote.put(mktID, tmp);
+		}
+	}
+	
 	
 	/**
 	 * Add NBBO bid-ask spread value to the HashMap containers.
@@ -683,10 +718,10 @@ public class SystemData {
 	 */
 	public void addNBBOSpread(int modelID, TimeStamp ts, int spread) {
 		if (NBBOSpread.get(modelID) != null) {
-			NBBOSpread.get(modelID).put(ts, spread);
+			NBBOSpread.get(modelID).put(ts, (double)spread);
 		} else {
-			HashMap<TimeStamp,Integer> tmp = new HashMap<TimeStamp,Integer>();
-			tmp.put(ts, spread);
+			HashMap<TimeStamp,Double> tmp = new HashMap<TimeStamp,Double>();
+			tmp.put(ts, (double) spread);
 			NBBOSpread.put(modelID, tmp);
 		}
 	}	
@@ -700,10 +735,10 @@ public class SystemData {
 	 */
 	public void addDepth(int mktID, TimeStamp ts, int depth) {
 		if (marketDepth.get(mktID) != null) {
-			marketDepth.get(mktID).put(ts, depth);
+			marketDepth.get(mktID).put(ts, (double) depth);
 		} else {
-			HashMap<TimeStamp,Integer> tmp = new HashMap<TimeStamp,Integer>();
-			tmp.put(ts, depth);
+			HashMap<TimeStamp,Double> tmp = new HashMap<TimeStamp,Double>();
+			tmp.put(ts, (double) depth);
 			marketDepth.put(mktID, tmp);
 		}
 	}
@@ -718,32 +753,17 @@ public class SystemData {
 	}
 
 	/**
-	 * Add bid execution speed (difference between execution and submission times).
+	 * Add bid time to execution (difference between transaction and submission times).
 	 * @param bidID
 	 * @param ts
 	 */
-	public void addExecutionSpeed(int bidID, TimeStamp ts) {
+	public void addTimeToExecution(int bidID, TimeStamp ts) {
 		// check if submission time contains it (if not, there is an error)
 		if (submissionTime.containsKey(bidID)) {
-			executionSpeed.put(bidID, ts.diff(submissionTime.get(bidID)));
+			timeToExecution.put(bidID, ts.diff(submissionTime.get(bidID)));
 		} else {
 			System.err.print("ERROR: submission time does not contain bidID " + bidID);
 		}
-	}
-	
-	/**
-	 * Add the midquote price (midpoint of BID-ASK quote). For computing
-	 * price volatility & returns.
-	 * 
-	 * @param modelID
-	 * @param ts
-	 * @param price
-	 */
-	public void addMidQuotePrice(int modelID, TimeStamp ts, int price) {
-		// TODO 
-		
-		
-		
 	}
 	
 	

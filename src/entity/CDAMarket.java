@@ -47,22 +47,16 @@ public class CDAMarket extends Market {
 	}
 	
 	public ActivityHashMap addBid(Bid b, TimeStamp ts) {
-//		ActivityHashMap actMap = new ActivityHashMap();
-//		actMap.insertActivity(Consts.CDA_CLEAR_PRIORITY, new Clear(this, ts));
 		orderbook.insertBid((PQBid) b);
 		data.addDepth(ID, ts, orderbook.getDepth());
 		data.addSubmissionTime(b.getBidID(), ts);
-//		return actMap;
 		return clear(ts);
 	}
 	
 	
 	public ActivityHashMap removeBid(int agentID, TimeStamp ts) {
-//		ActivityHashMAP ACTMAP = NEW ACTIVITYHASHMAP();
-//		ACTMAP.INSERTActivity(Consts.CDA_CLEAR_PRIORITY, new Clear(this, ts));
 		orderbook.removeBid(agentID);
 		data.addDepth(this.ID, ts, orderbook.getDepth());
-//		return actMap;
 		return clear(ts);
 	}
 	
@@ -98,7 +92,7 @@ public class CDAMarket extends Market {
 		// Add bid execution speed
 		ArrayList<Integer> IDs = orderbook.getClearedBidIDs();
 		for (Iterator<Integer> id = IDs.iterator(); id.hasNext(); ) {
-			data.addExecutionSpeed(id.next(), clearTime);
+			data.addTimeToExecution(id.next(), clearTime);
 		}
 		
 		// Add transactions to SystemData
@@ -141,15 +135,18 @@ public class CDAMarket extends Market {
 			if (bp.getPrice() == -1 || ap.getPrice() == -1) {
 				// either bid or ask are undefined
 				data.addSpread(ID, quoteTime, Consts.INF_PRICE);
+				data.addMidQuotePrice(ID, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
 				
 			} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
 				log.log(Log.ERROR, this.getName() + "::quote: ERROR bid > ask");
 				data.addSpread(ID, quoteTime, Consts.INF_PRICE);
+				data.addMidQuotePrice(ID, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
 				
 			} else {
 				// valid bid-ask
 				data.addQuote(ID, q);
 				data.addSpread(ID, quoteTime, q.getSpread());
+				data.addMidQuotePrice(ID, quoteTime, bp.getPrice(), ap.getPrice());
 			}
 		}
 		lastQuoteTime = quoteTime;

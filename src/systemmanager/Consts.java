@@ -9,7 +9,9 @@ package systemmanager;
 public class Consts {
 	
 	public final static double[] rhos = 
-		{0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009, 0.001};
+		{0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009};
+//	public final static double[] rhos = {0, 0.0001};
+	public final static int[] windows = {250, 500, 750, 1000};
 	
 	// **********************************************************
 	// Agent, market, and model types

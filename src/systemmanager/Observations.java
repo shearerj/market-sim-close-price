@@ -16,6 +16,8 @@ import java.util.TreeSet;
 
 import org.json.simple.*;
 import org.apache.commons.math3.stat.descriptive.*;
+import org.apache.commons.math3.stat.descriptive.moment.Mean;
+import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.stat.descriptive.rank.*;
 
 /**
@@ -95,24 +97,28 @@ public class Observations {
 	 * 
 	 * @param feat
 	 * @param values
+	 * @param suffix
 	 */
-	private void addAllStatistics(HashMap<String,Object> feat, double[] values) {
+	private void addAllStatistics(HashMap<String,Object> feat, double[] values, String suffix) {
+		if (suffix != null && suffix != "") {
+			suffix = "_" + suffix;
+		}
 		DescriptiveStatistics ds = new DescriptiveStatistics(values);
 		Median med = new Median();
 		if (values.length > 0) {
-			feat.put("mean", ds.getMean());
-			feat.put("max", ds.getMax());
-			feat.put("min", ds.getMin());
-			feat.put("sum", ds.getSum());
-			feat.put("var", ds.getVariance());
-			feat.put("med", med.evaluate(values));
+			feat.put("mean" + suffix, ds.getMean());
+			feat.put("max" + suffix, ds.getMax());
+			feat.put("min" + suffix, ds.getMin());
+			feat.put("sum" + suffix, ds.getSum());
+			feat.put("var" + suffix, ds.getVariance());
+			feat.put("med" + suffix, med.evaluate(values));
 		} else {
-			feat.put("mean", "NaN");
-			feat.put("max", "NaN");
-			feat.put("min", "NaN");
-			feat.put("sum", "NaN");
-			feat.put("var", "NaN");
-			feat.put("med", "NaN");
+			feat.put("mean" + suffix, "NaN");
+			feat.put("max" + suffix, "NaN");
+			feat.put("min" + suffix, "NaN");
+			feat.put("sum" + suffix, "NaN");
+			feat.put("var" + suffix, "NaN");
+			feat.put("med" + suffix, "NaN");
 		}
 	}
 	
@@ -155,13 +161,13 @@ public class Observations {
 	}
 	
 	/**
-	 * Adds mean.
+	 * Adds mean to the feature hash map.
 	 * 
+	 * @param prefix
 	 * @param feat
 	 * @param values
-	 * @param prefix to append to feature type
 	 */
-	private void addMean(HashMap<String,Object> feat, double[] values, String prefix) {
+	private void addMean(String prefix, HashMap<String,Object> feat, double[] values) {
 		if (prefix != null && prefix != "") {
 			prefix = prefix + "_";
 		}
@@ -173,15 +179,81 @@ public class Observations {
 		}
 	}
 	
+	
 	/**
-	 * Computes the median. If it doesn't exist, returns -1.
+	 * Adds standard deviation to the feature hash map.
 	 * 
+	 * @param prefix
+	 * @param feat
 	 * @param values
 	 */
-	private double computeMedian(double[] values) {
+	private void addStdDev(String prefix, HashMap<String,Object> feat, double[] values) {
+		if (prefix != null && prefix != "") {
+			prefix = prefix + "_";
+		}
+		if (values.length > 0) {
+			StandardDeviation sd = new StandardDeviation();
+			feat.put(prefix + "stddev", sd.evaluate(values));
+		} else {
+			feat.put(prefix + "stddev", "NaN");
+		}
+	}
+	
+	/**
+	 * Computes the mean up to numTimeSteps (i.e. from index 0 to numTimeSteps-1).
+	 * If it doesn't exist, returns -1.
+	 * 
+	 * @param values
+	 * @param numTimeSteps	
+	 */
+	private double computeMean(double[] values, int numTimeSteps) {
+		if (values.length > 0) {
+			Mean mn = new Mean();
+			if (numTimeSteps < values.length) {
+				return mn.evaluate(values, 0, numTimeSteps);
+			} else {
+				return mn.evaluate();
+			}
+		} else {
+			return -1;
+		}
+	}
+	
+	/**
+	 * Computes the median up to numTimeSteps (i.e. from index 0 to numTimeSteps-1).
+	 * If it doesn't exist, returns -1.
+	 * 
+	 * @param values
+	 * @param numTimeSteps
+	 */
+	private double computeMedian(double[] values, int numTimeSteps) {
 		if (values.length > 0) {
 			Median med = new Median();
-			return med.evaluate(values);
+			if (numTimeSteps < values.length) {
+				return med.evaluate(values, 0, numTimeSteps);
+			} else {
+				return med.evaluate(values);
+			}
+		} else {
+			return -1;
+		}
+	}
+	
+	/**
+	 * Computes the standard deviation up to numTimeSteps (i.e. from index 0 to numTimeSteps-1).
+	 * If it doesn't exist, returns -1.
+	 * 
+	 * @param values
+	 * @param numTimeSteps
+	 */
+	private double computeStdDev(double[] values, int numTimeSteps) {
+		if (values.length > 0) {
+			StandardDeviation sd = new StandardDeviation();
+			if (numTimeSteps < values.length) {
+				return sd.evaluate(values, 0, numTimeSteps);
+			} else {
+				return sd.evaluate(values);
+			}
 		} else {
 			return -1;
 		}
@@ -218,10 +290,16 @@ public class Observations {
 		
 		int totalSurplus = 0;
 		
+//		// TODO: have it call discounted surplus with rho=0
+//		HashMap<Integer,Double> discSurplus = data.getDiscountedSurplus(modelID, rho);
+//		double[] vals = convertDoublesToArray(discSurplus);
+//		DescriptiveStatistics ds = new DescriptiveStatistics(vals);
+//		feat.put((new Double(rho)).toString(), ds.getSum());
+		
 		// get background surplus for all agents with a private value
 		HashMap<Integer,Integer> bkgrdSurplus = data.getBackgroundSurplus(modelID);
 		double[] values = convertIntsToArray(bkgrdSurplus);
-		addAllStatistics(feat,values);
+		addAllStatistics(feat,values,"bkgrd");
 		DescriptiveStatistics ds = new DescriptiveStatistics(values);
 		totalSurplus += ds.getSum();
 		
@@ -256,7 +334,7 @@ public class Observations {
 	}
 	
 	/**
-	 * Extracts discounted surplus values.
+	 * Extracts discounted surplus values (only for background agents)
 	 * 
 	 * @param model
 	 * @return
@@ -292,7 +370,7 @@ public class Observations {
 	    	TimeStamp tmp = (TimeStamp) times[i];
 	        values[i] = (double) tmp.longValue();
 	    }
-		addAllStatistics(feat,values);
+		addAllStatistics(feat,values,"");
 		return feat;
 	}
 	
@@ -312,7 +390,7 @@ public class Observations {
 	    	Price tmp = (Price) prices[i];
 	        values[i] = (double) tmp.getPrice();
 	    }
-	    addAllStatistics(feat,values);
+	    addAllStatistics(feat,values,"");
 		return feat;
 	}
 
@@ -323,15 +401,15 @@ public class Observations {
 	 * @param model
 	 * @return
 	 */
-	public HashMap<String,Object> getExecutionSpeed(MarketModel model) {
+	public HashMap<String,Object> getTimeToExecution(MarketModel model) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
 		ArrayList<Integer> ids = model.getMarketIDs();
 		
 		// Initialize with maximum number of possible bids
-		double[] values = new double[data.executionSpeed.size()];
+		double[] values = new double[data.timeToExecution.size()];
 		int cnt = 0;
-		for (Map.Entry<Integer, TimeStamp> entry : data.executionSpeed.entrySet()) {
+		for (Map.Entry<Integer, TimeStamp> entry : data.timeToExecution.entrySet()) {
 			int bidID = entry.getKey();
 			PQBid b = data.getBid(bidID);
 			if (ids.contains(new Integer(b.getMarketID()))) {
@@ -404,12 +482,13 @@ public class Observations {
 	
 	
 	/**
-	 * Computes spread metrics for the given model.
+	 * Computes spread metrics for the given model, for time 0 to maxTime.
 	 * 
 	 * @param model
+	 * @param maxTime
 	 * @return
 	 */
-	public HashMap<String,Object> getSpreadInfo(MarketModel model) {
+	public HashMap<String,Object> getSpreadInfo(MarketModel model, long maxTime) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 	
 		ArrayList<Integer> ids = model.getMarketIDs();
@@ -417,16 +496,16 @@ public class Observations {
 		int cnt = 0;
 		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
 			int mktID = it.next();
-			HashMap<TimeStamp,Integer> marketSpread = data.marketSpread.get(mktID);
+			HashMap<TimeStamp,Double> marketSpread = data.marketSpread.get(mktID);
 			if (marketSpread != null) {
-				double[] spreads = extractTimeSeries(marketSpread);
+				double[] spreads = truncateTimeSeries(marketSpread, maxTime);
 				addStatistics(feat,spreads,"mkt" + (-mktID),true);
 				
-				// add model-level statistics
-				double med = computeMedian(spreads);
+				// add model-level statistics (average the median spreads)
+				double med = computeMedian(spreads, spreads.length);
 				if (med != -1) {
 					meds[cnt] = med;
-					cnt++;
+					cnt++;	// at most is the number of markets in the model
 				}
 			}
 		}
@@ -436,12 +515,12 @@ public class Observations {
 			medians[i] = meds[i];
 		}
 		// store mean median spread (across all markets in the model)
-		addMean(feat,medians,"med");
+		addMean("med", feat, medians);
 		
-		HashMap<TimeStamp,Integer> nbboSpread = data.NBBOSpread.get(model.getID());
+		HashMap<TimeStamp,Double> nbboSpread = data.NBBOSpread.get(model.getID());
 		double[] nbboSpreads = {};
 		if (nbboSpread != null) {
-			nbboSpreads = extractTimeSeries(nbboSpread);
+			nbboSpreads = truncateTimeSeries(nbboSpread, maxTime);
 		}
 		addStatistics(feat,nbboSpreads,"nbbo",true);
 		
@@ -462,7 +541,7 @@ public class Observations {
 		
 		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
 			int mktID = it.next();
-			HashMap<TimeStamp,Integer> marketDepth = data.marketDepth.get(mktID);
+			HashMap<TimeStamp,Double> marketDepth = data.marketDepth.get(mktID);
 			if (marketDepth != null) {
 				double[] depths = extractTimeSeries(marketDepth);
 				addStatistics(feat,depths,"mkt" + (-mktID),true);
@@ -473,34 +552,103 @@ public class Observations {
 	
 	
 	/**
-	 * Computes volatility metrics. Volatility is measured as:
-	 * - std dev of price series (midquote prices of global, NBBO quotes)
+	 * Computes volatility metrics, for time 0 to maxTime. Volatility is measured as:
+	 * - log of std dev of price series (midquote prices of global quotes)
 	 * - std dev of log returns (compute over a window over multiple window sizes)
 	 * the standard deviation of logarithmic returns.
 	 * 
-	 * TODO - finish
-	 * 
 	 * @param model
+	 * @param maxTime
 	 * @return
 	 */
-	public HashMap<String, Object> getVolatilityInfo(MarketModel model) {
+	public HashMap<String, Object> getVolatilityInfo(MarketModel model, long maxTime) {
 		HashMap<String,Object> feat = new HashMap<String,Object>();
 		
 		ArrayList<Integer> ids = model.getMarketIDs();
 		
 		// get volatility for all prices in a market model (based on global quote)
-		
-		
+		double[] vol = new double[ids.size()];	// store std dev of prices in multiple markets
+		int cnt = 0;
 		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
-//			int mktID = it.next();
-			// TODO: vol measures. also try multiple periods for determining returns
+			int mktID = it.next();
+			HashMap<TimeStamp,Double> marketMidQuote = data.marketMidQuote.get(mktID);
+			if (marketMidQuote != null) {
+				// truncated time series does not include any undefined prices at beginning
+				// and will cut off at maxTime into the simulation
+				double[] prices = truncateTimeSeries(marketMidQuote, maxTime);
+				addStdDev("mkt" + (-mktID), feat, prices);
+				
+				// add model-level statistics (average the log of std devs of prices)
+				double std = computeStdDev(prices, (int) maxTime);
+				if (std != -1) {
+					if (std != 0) {
+						vol[cnt++] = Math.log(std);	// log of price volatility
+					} else {
+						vol[cnt++] = std;		// volatility is 0 (no price change)
+					}
+				}
+			}
+		}
+		// store price volatility (averaged across all markets in the model)
+		addMean("log", feat, vol);
+		
+		
+		// change sampling frequency of prices
+		for (int i = 0; i < Consts.windows.length; i++) {
+			String prefix = "window" + Consts.windows[i] + "_";
 			
-			
-			
-			
-			
+			double[] logstddevs = new double[ids.size()];	// store std dev of prices in multiple markets
+			cnt = 0;
+			for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
+				int mktID = it.next();
+				HashMap<TimeStamp,Double> marketMidQuote = data.marketMidQuote.get(mktID);
+				if (marketMidQuote != null) {
+					// extract all
+					double[] allPrices = extractTimeSeries(marketMidQuote);
+					double stddev = computeWindowStdDev(allPrices, Consts.windows[i], maxTime);
+					if (stddev != -1) {
+						if (stddev != 0) {
+							logstddevs[cnt++] = Math.log(stddev);	// log of sampled price volatility
+						} else {
+							logstddevs[cnt++] = stddev; 	// volatility is 0 (no price change)
+						}
+					}
+				}
+			}
+			// store price volatility (averaged across all markets in the model)
+			addMean(prefix + "log", feat, logstddevs);
 		}
 		return feat;
+	}
+	
+	
+	/**
+	 * Computes the standard deviation by sampling the price every window time steps, then
+	 * calculating the standard deviation on this sampled time series.
+	 * 
+	 * @param allPrices
+	 * @param window
+	 * @param maxTime
+	 * @return
+	 */
+	public double computeWindowStdDev(double[] allPrices, int window, long maxTime) {
+		int newSize = (int) Math.floor(allPrices.length / window);
+		double[] sample = new double[newSize-1];
+		int cnt = 0;
+		for (int i = 1; i < newSize; i++) { // sample at the end of the window, not the beginning
+			if (allPrices[i*window-1] != Consts.INF_PRICE) {
+				sample[cnt++] = allPrices[i*window-1];
+			}
+		}
+		// Reinitialize to get rid of unused portion of array (if any values undefined)
+		if (cnt != sample.length){ 
+			double[] samplePrices = new double[cnt];
+			for (int i = 0; i < cnt; i++) {
+				samplePrices[i] = sample[i];
+			}
+			return computeStdDev(samplePrices, (int) maxTime);
+		}
+		return computeStdDev(sample, (int) maxTime);
 	}
 	
 	
@@ -605,11 +753,13 @@ public class Observations {
 	
 	/**
 	 * Construct a double array storing a time series from a HashMap of integers
-	 * hashed by TimeStamp.
+	 * hashed by TimeStamp. Starts recording at first time step, even if value undefined.
+	 * The double array returned will have size same as the simulation length.
+	 * 
 	 * @param map
 	 * @return
 	 */
-	private double[] extractTimeSeries(HashMap<TimeStamp,Integer> map) {
+	private double[] extractTimeSeries(HashMap<TimeStamp,Double> map) {
 		
 		// Have to sort the TimeStamps since not necessarily sorted in HashMap
 		TreeSet<TimeStamp> times = new TreeSet<TimeStamp>();
@@ -627,13 +777,63 @@ public class Observations {
 			if (prevTime == null) {
 				// if prevTime has not been defined yet, set as the first time where spread measured
 				prevTime = it.next();
+				for (int i = 0; i < prevTime.longValue(); i++) {
+					vals[cnt++] = map.get(prevTime);
+				}
+			} else {
+				// next Time is the next time at which to extend the time series
+				TimeStamp nextTime = it.next();
+				// fill in the vals array, even if not undefined
+				for (int i = (int) prevTime.longValue(); i < nextTime.longValue(); i++) {
+					vals[cnt++] = map.get(prevTime);
+				}
+				prevTime = nextTime;
+			}
+		}
+		// fill in to end of array
+		if (!prevTime.after(data.simLength)) {
+			for (int i = (int) prevTime.longValue(); i < data.simLength.longValue(); i++) {
+				// get last inserted value and insert
+				vals[cnt++] = map.get(prevTime);
+			}
+		}
+		return vals;
+	}
+	
+	
+	/**
+	 * Same as extractTimeSeries, but will remove any undefined values from the beginning 
+	 * of the array and cut it off at maxTime.
+	 * 
+	 * @param map
+	 * @param maxTime
+	 * @return
+	 */
+	public double[] truncateTimeSeries(HashMap<TimeStamp,Double> map, long maxTime) {
+		
+		// Have to sort the TimeStamps since not necessarily sorted in HashMap
+		TreeSet<TimeStamp> times = new TreeSet<TimeStamp>();
+		ArrayList<TimeStamp> keys = new ArrayList<TimeStamp>(map.keySet());
+		for (Iterator<TimeStamp> i = keys.iterator(); i.hasNext(); ) {
+			TimeStamp t = i.next();
+			if (t != null) 
+				times.add(t);
+		}
+
+		int cnt = 0;
+		TimeStamp prevTime = null;
+		double[] vals = new double[(int) maxTime];
+		for (Iterator<TimeStamp> it = times.iterator(); it.hasNext(); ) {
+			if (prevTime == null) {
+				// if prevTime has not been defined yet, set as the first time where value measured
+				prevTime = it.next();
 			} else {
 				// next Time is the next time at which to extend the time series
 				TimeStamp nextTime = it.next();
 				// fill in the vals array, but only for segments where it is not undefined
-				if (!map.get(prevTime).equals(Consts.INF_PRICE)) {
-					for (int i = (int) prevTime.longValue(); i < nextTime.longValue(); i++) {
-						vals[cnt] = map.get(prevTime);
+				if (map.get(prevTime).intValue() != Consts.INF_PRICE) {
+					for (int i = (int) prevTime.longValue(); i < nextTime.longValue() && i < maxTime; i++) {
+						vals[cnt] = map.get(prevTime);	// fill in with prior value, up to maxTime
 						cnt++;
 					}
 				}
@@ -641,14 +841,14 @@ public class Observations {
 			}
 		}
 		// fill in to end of array
-		if (!prevTime.after(data.simLength)) {
-			if (map.get(prevTime) != Consts.INF_PRICE) { 
-				for (int i = (int) prevTime.longValue(); i < data.simLength.longValue(); i++) {
+		if (!prevTime.after(new TimeStamp(maxTime))) {
+			if (map.get(prevTime).intValue() != Consts.INF_PRICE) {
+				for (int i = (int) prevTime.longValue(); i < maxTime; i++) {
 					// get last inserted value and insert
 					vals[cnt] = map.get(prevTime);
 					cnt++;
 				}
-			}	
+			}
 		}
 		// Must resize vals
 		double[] valsMod = new double[cnt];
@@ -657,6 +857,7 @@ public class Observations {
 		}
 		return valsMod;
 	}
+	
 	
 	
 	/**

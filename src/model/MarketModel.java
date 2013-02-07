@@ -53,7 +53,6 @@ public abstract class MarketModel {
 	protected ObjectProperties modelProperties;
 	
 	protected HashMap<String,Integer> numAgentType;
-//	protected ArrayList<Integer> permittedAgentIDs;
 	
 	// Specify market configuration & properties for the model
 	protected ArrayList<MarketObjectPair> modelMarketConfig;
