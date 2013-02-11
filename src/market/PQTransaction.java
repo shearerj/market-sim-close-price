@@ -11,7 +11,7 @@ import org.apache.commons.lang3.builder.*;
  */
 public class PQTransaction extends Transaction {
 	
-//    /**
+//	/**
 //	 * generate PQTransaction with given price, quantity, buyerID, sellerID, timestamp
 //	 * @param q quantity
 //	 * @param p price
@@ -29,20 +29,26 @@ public class PQTransaction extends Transaction {
 //	}
 	
 	/**
-	 * generate PQTransaction with given price, quantity, buyerID, sellerID, timestamp, marketID
+	 * Generate PQTransaction with given price, quantity, buyerID, sellerID, buyBidID,
+	 * sellBidID, TimeStamp, marketID.
+	 * 
 	 * @param q quantity
 	 * @param p price
 	 * @param bID buyerID
 	 * @param sID sellerID
-	 * @param ts timestamp
+	 * @param bBidID buyBidID
+	 * @param sBidID sellBidID
+	 * @param ts TimeStamp
 	 * @param mktID marketID
 	 */
-	public PQTransaction(int q, Price p, int bID,int sID,TimeStamp ts, int mktID)
+	public PQTransaction(int q, Price p, int bID, int sID, int bBidID, int sBidID, TimeStamp ts, int mktID)
 	{
 		quantity = new Integer(q);
 		price = p;
 		buyerID = new Integer(bID);
 		sellerID = new Integer(sID);
+		buyBidID = new Integer(bBidID);
+		sellBidID = new Integer(sBidID);
 		timestamp = ts;
 		marketID = new Integer(mktID);
 	}
@@ -76,6 +82,8 @@ public class PQTransaction extends Transaction {
 				append(quantity.intValue(), other.quantity.intValue()).
 				append(buyerID.intValue(), other.buyerID.intValue()).
 				append(sellerID.intValue(), other.sellerID.intValue()).
+				append(buyBidID.intValue(), other.buyBidID.intValue()).
+				append(sellBidID.intValue(), other.sellBidID.intValue()).
 				append(marketID.intValue(), other.marketID.intValue()).
 				append(timestamp.longValue(), other.timestamp.longValue()).
 				isEquals();
@@ -88,6 +96,8 @@ public class PQTransaction extends Transaction {
 				append(quantity.intValue()).
 				append(buyerID.intValue()).
 				append(sellerID.intValue()).
+				append(buyBidID.intValue()).
+				append(sellBidID.intValue()).
 				append(marketID.intValue()).
 				append(timestamp.longValue()).
 				toHashCode();
@@ -99,6 +109,8 @@ public class PQTransaction extends Transaction {
 				+ ", price=" + price    
 				+ ", buyerID=" + buyerID.toString()  
 				+ ", sellerID=" + sellerID.toString() 
+				+ ", buyBidID=" + buyBidID.toString()  
+				+ ", sellBidID=" + sellBidID.toString() 
 				+ ", timestamp=" + timestamp.toString()
 				+ ", marketID=" + marketID.toString()
 				+ ")";
@@ -114,21 +126,25 @@ public class PQTransaction extends Transaction {
 				price    			+" "+
 				buyerID.toString()  +" "+
 				sellerID.toString() +" "+ 
+				buyBidID.toString()  +" "+
+				sellBidID.toString() +" "+ 
 				timestamp.toString()+" "+
 				marketID.toString()+"\n");
 	}
 	
-	/**
-	 * set all class members to null
-	 */
-	private void setMembersNull()
-	{
-		quantity = null;
-		price = null;
-		timestamp = null;
-		buyerID = null;
-		sellerID = null;
-		marketID = null;
-	}
+//	/**
+//	 * set all class members to null
+//	 */
+//	private void setMembersNull()
+//	{
+//		quantity = null;
+//		price = null;
+//		timestamp = null;
+//		buyerID = null;
+//		sellerID = null;
+//		buyBidID = null;
+//		sellBidID = null;
+//		marketID = null;
+//	}
 
 }

@@ -30,16 +30,14 @@ public class CentralCall extends MarketModel {
 				mktProperties.put("clearFreq", config.substring(5));
 			}
 			addMarketPropertyPair("CALL", mktProperties);
+			
+			addAllSMAgents();
+			setSingleAgentType("MARKETMAKER");
 		}
 	}
 	
 	@Override
 	public String getConfig() {
 		return config;
-	}
-	
-	@Override
-	public void setAgentPermissions() {
-		permitAllSMAgents();
 	}
 }

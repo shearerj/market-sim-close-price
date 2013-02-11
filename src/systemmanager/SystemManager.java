@@ -203,7 +203,7 @@ public class SystemManager {
 			obs.addFeature("", obs.getConfiguration());
 			obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
 			obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
-			obs.addFeature("expire", obs.getTimeStampFeatures(data.getExpirations()));
+//			obs.addFeature("expire", obs.getTimeStampFeatures(data.getExpirations()));
 //			obs.addTransactionComparison();
 			getModelResults();
 			
@@ -228,10 +228,22 @@ public class SystemManager {
 			
 			String prefix = model.getLogName() + "_";
 
-			obs.addFeature(prefix + "spreads", obs.getSpreadInfo(model));
+			// Spread info
+			long maxTime = Math.round(data.numAgents / data.arrivalRate);
+			for (long i = Market.quantize((int) maxTime, 500) - 1000; i <= maxTime + 1000; i += 500) {
+				obs.addFeature(prefix + "spreads_" + i, obs.getSpreadInfo(model, i));
+				obs.addFeature(prefix + "price_vol_" + i, obs.getVolatilityInfo(model, i));
+			}
+			
+			// Surplus features
 			obs.addFeature(prefix + "surplus", obs.getSurplusFeatures(model));
+			obs.addFeature(prefix + "surplus_disc", obs.getDiscountedSurplusFeatures(model));
+			
+			// Other features
+//			obs.addFeature(prefix + "marketmaker", obs.getMarketMakerInfo(model));
 			obs.addFeature(prefix + "transactions", obs.getTransactionInfo(model));
-			obs.addFeature(prefix + "exec_speed", obs.getExecutionSpeed(model));
+			obs.addFeature(prefix + "exec_speed", obs.getTimeToExecution(model));
+			
 			// obs.addFeature(prefix + "depths", obs.getDepthInfo(ids));
 		}
 	}

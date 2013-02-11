@@ -8,6 +8,11 @@ package systemmanager;
  */
 public class Consts {
 	
+	public final static double[] rhos = 
+		{0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009};
+//	public final static double[] rhos = {0, 0.0001};
+	public final static int[] windows = {250, 500, 750, 1000};
+	
 	// **********************************************************
 	// Agent, market, and model types
 	// (must edit this whenever add a new agent, market, or model
@@ -41,6 +46,7 @@ public class Consts {
 	public final static int HFT_AGENT_PRIORITY = 5;
 	public final static int MARKETMAKER_PRIORITY = 6;
 	public final static int SM_AGENT_PRIORITY = 7;
+	public final static int LOWEST_PRIORITY = 999;
 	// AgentArrival/Departure inserted with default priority
 	// AgentStrategy inserted with agent-specific priority
 	
@@ -112,8 +118,10 @@ public class Consts {
 			p.put("alpha", "0.001");
 		}
 		if (type.equals("MARKETMAKER")) {
-			p.put("sleepTime", "50");
+			p.put("sleepTime", "200");
 			p.put("sleepVar", "100");
+			p.put("numRungs", "10");
+			p.put("rungSize", "1000");
 		}
 		if (type.equals("CALL")) {
 			p.put("pricingPolicy", "0.5");

@@ -56,13 +56,12 @@ public class SIP extends Entity {
 
 	/**
  	 * Get global BestBidAsk quote for the given model.
- 	 * TODO - may need to fix given new compute method
  	 *
  	 * @param modelID
  	 * @return BestBidAsk
  	 */
 	public BestBidAsk getGlobalQuote(int modelID) {
-		return this.findBestBidOffer(data.getModel(modelID).getMarketIDs());
+		return this.computeBestBidOffer(data.getModel(modelID).getMarketIDs(), false);
 	}
 
 	/**
@@ -84,11 +83,7 @@ public class SIP extends Entity {
 		marketQuotes.put(mktID, q);
 		log.log(Log.INFO, ts + " | " + data.getMarket(mktID) + " " + 
 				"ProcessQuote: " + q);
-
-		ActivityHashMap actMap = new ActivityHashMap();
-		//MarketModel model = data.getModelByMarket(mktID);
-		//actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(this, model, ts));
-		return actMap;
+		return null;
 	}
 	
 	/**
@@ -106,9 +101,7 @@ public class SIP extends Entity {
 		ArrayList<Integer> ids = model.getMarketIDs();
 		String s = ts + " | " + ids + " UpdateNBBO" + getNBBOQuote(modelID);
 	
-		//BestBidAsk lastQuote = findBestBidOffer(ids);
-		BestBidAsk lastQuote = computeBestBidOffer(ids);
-//		String s = ts + " | " + ids + " UpdateNBBO" + lastQuote;
+		BestBidAsk lastQuote = computeBestBidOffer(ids, true);
 			
 		int bestBid = lastQuote.bestBid;
 		int bestAsk = lastQuote.bestAsk;
@@ -136,54 +129,14 @@ public class SIP extends Entity {
 		return actMap;
 	}
 
-	
 	/**
 	 * Find best quote across given markets (lowest ask & highest bid).
 	 * 
 	 * @param marketIDs
+	 * @param nbbo		true if getting NBBO, false if getting global quote
 	 * @return
 	 */
-	private BestBidAsk findBestBidOffer(ArrayList<Integer> marketIDs) {
-		
-	    int bestBid = -1;
-	    int bestBidMkt = 0;
-	    int bestAsk = -1;
-	    int bestAskMkt = 0;
-	    
-	    for (Iterator<Integer> i = marketIDs.iterator(); i.hasNext(); ) {
-			Market mkt = data.markets.get(i.next());
-			
-			Price bid = mkt.getBidPrice();
-			Price ask = mkt.getAskPrice();
-
-			// in case the bid/ask disappears
-			Vector<Price> price = new Vector<Price>();
-			price.add(bid);
-			price.add(ask);
-
-			// Best bid quote is highest BID
-			if (bestBid == -1 || bestBid < bid.getPrice()) {
-				if (bid.getPrice() != -1) bestBid = bid.getPrice();
-				bestBidMkt = mkt.ID;
-			}
-			// Best ask quote is lowest ASK
-			if (bestAsk == -1 || bestAsk > ask.getPrice()) {
-				if (ask.getPrice() != -1) bestAsk = ask.getPrice();
-				bestAskMkt = mkt.ID;
-			}
-	    }
-	    BestBidAsk q = new BestBidAsk();
-	    q.bestBidMarket = bestBidMkt;
-	    q.bestBid = bestBid;
-	    q.bestAskMarket = bestAskMkt;
-	    q.bestAsk = bestAsk;
-	    return q;
-	}
-
-	/**
- 	 * Compute best bid-ask given stored quotes.
- 	 */
-	private BestBidAsk computeBestBidOffer(ArrayList<Integer> marketIDs) {
+	private BestBidAsk computeBestBidOffer(ArrayList<Integer> marketIDs, boolean nbbo) {
 		
 	    int bestBid = -1;
 	    int bestBidMkt = 0;
@@ -192,28 +145,38 @@ public class SIP extends Entity {
 	    
 	    for (Iterator<Integer> it = marketIDs.iterator(); it.hasNext(); ) {
 			int mktID = it.next();
+			int bid = -1, ask = -1;
 			
-			BestBidAsk q = new BestBidAsk();
-			if (marketQuotes.containsKey(mktID)) {
-				q  = marketQuotes.get(mktID);
+			if (nbbo) {
+				// NBBO quote (may be delayed)
+				BestBidAsk ba = new BestBidAsk();
+				if (marketQuotes.containsKey(mktID)) {
+					ba  = marketQuotes.get(mktID);
+				}
+				bid = ba.bestBid;
+				ask = ba.bestAsk;
+			} else {
+				// global quote
+				bid = data.getMarket(mktID).getBidPrice().getPrice();
+				ask = data.getMarket(mktID).getAskPrice().getPrice();
 			}
 
 			// Best bid quote is highest BID
-			if (bestBid == -1 || bestBid < q.bestBid) {
-				if (q.bestBid != -1) bestBid = q.bestBid;
+			if (bestBid == -1 || bestBid < bid) {
+				if (bid != -1) bestBid = bid;
 				bestBidMkt = mktID;
 			}
 			// Best ask quote is lowest ASK
-			if (bestAsk == -1 || bestAsk > q.bestAsk) {
-				if (q.bestAsk != -1) bestAsk = q.bestAsk;
+			if (bestAsk == -1 || bestAsk > ask) {
+				if (ask != -1) bestAsk = ask;
 				bestAskMkt = mktID;
 			}
 	    }
-	    BestBidAsk ba = new BestBidAsk();
-	    ba.bestBidMarket = bestBidMkt;
-	    ba.bestBid = bestBid;
-	    ba.bestAskMarket = bestAskMkt;
-	    ba.bestAsk = bestAsk;
-	    return ba;
+	    BestBidAsk q = new BestBidAsk();
+	    q.bestBidMarket = bestBidMkt;
+	    q.bestBid = bestBid;
+	    q.bestAskMarket = bestAskMkt;
+	    q.bestAsk = bestAsk;
+	    return q;
 	}
 }

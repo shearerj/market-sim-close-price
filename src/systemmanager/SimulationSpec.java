@@ -72,16 +72,16 @@ public class SimulationSpec {
 		data.tickSize = Integer.parseInt(getValue("tick_size"));	
 		data.nbboLatency = new TimeStamp(Integer.parseInt(getValue("nbbo_latency")));
 		data.arrivalRate = Double.parseDouble(getValue("arrival_rate"));
-		data.meanPV = Integer.parseInt(getValue("mean_PV"));
+		data.meanValue = Integer.parseInt(getValue("mean_value"));
 		data.kappa = Double.parseDouble(getValue("kappa"));
 		data.shockVar = Double.parseDouble(getValue("shock_var"));
-		data.expireRate = Double.parseDouble(getValue("expire_rate"));
 		data.bidRange = Integer.parseInt(getValue("bid_range"));
 		data.privateValueVar = Double.parseDouble(getValue("private_value_var"));
 		
 		// Market maker variables
-//		data.mmScaleFactor = Integer.parseInt(getValue("scale_factor"));
-//		data.mmSleepTime = Integer.parseInt(getValue("sleep_time"));
+		data.marketmaker_sleepTime = Integer.parseInt(getValue("marketmaker_sleep_time"));
+		data.marketmaker_numRungs = Integer.parseInt(getValue("marketmaker_num_rungs"));
+		data.marketmaker_rungSize = Integer.parseInt(getValue("marketmaker_rung_size"));
 		
 		// Model-specific parameters
 		data.primaryModelDesc = getValue("primary_model");
@@ -120,23 +120,23 @@ public class SimulationSpec {
 				data.numAgentType.put(agentType, n);
 			}
 		}
-		// Check which types of multi-market agents to create
-		// (from configuration section of spec file)		// TODO - to remove
-		for (int i = 0; i < Consts.HFTAgentTypes.length; i++) {
-			String agentType = Consts.HFTAgentTypes[i];
-			String num = getValue(agentType);
-			if (num != null) {
-				int n = Integer.parseInt(num);
-				data.numAgents += n;
-				data.numAgentType.put(agentType, n);
-			}
-		}
+//		// Check which types of multi-market agents to create
+//		// (from configuration section of spec file)
+//		for (int i = 0; i < Consts.HFTAgentTypes.length; i++) {
+//			String agentType = Consts.HFTAgentTypes[i];
+//			String num = getValue(agentType);
+//			if (num != null) {
+//				int n = Integer.parseInt(num);
+//				data.numAgents += n;
+//				data.numAgentType.put(agentType, n);
+//			}
+//		}
 		// Check how many agents in a given role 
 		// (from role part of spec file)
-	        for (int i = 0; i < Consts.roles.length; i++) {
-        		String role = Consts.roles[i];
-        		data.numAgentType.put(role, getNumPlayers(role));
-	        }
+		for (int i = 0; i < Consts.roles.length; i++) {
+			String role = Consts.roles[i];
+			data.numAgentType.put(role, getNumPlayers(role));
+		}
 	}
 	
 	

@@ -16,8 +16,6 @@ import systemmanager.*;
  * @author ewah
  */
 public class TwoMarket extends MarketModel {
-
-	private ArrayList<String> permittedHFTAgentTypes;
 	
 	public TwoMarket(int modelID, ObjectProperties p, SystemData d) {
 		super(modelID,p, d);
@@ -28,8 +26,11 @@ public class TwoMarket extends MarketModel {
 			addMarketPropertyPair("CDA");
 			addMarketPropertyPair("CDA");
 			
-			permittedHFTAgentTypes = new ArrayList<String>();
-			permittedHFTAgentTypes.add(p.get(Consts.MODEL_CONFIG_KEY));	
+			// set the permitted HFT agent type, set all other ones to 0
+			String type = p.get(Consts.MODEL_CONFIG_KEY);
+			numAgentType.put(type, data.getNumAgentType(type));
+			
+			addAllSMAgents();
 		}
 	}
 	
@@ -37,17 +38,7 @@ public class TwoMarket extends MarketModel {
 	public String getConfig() {
 		return config;
 	}
-	
-	@Override
-	public void setAgentPermissions() {
-		// Add all single market agents
-		permitAllSMAgents();
-		
-		// Add agent types specified in the spec file
-		for (Iterator<String> it = permittedHFTAgentTypes.iterator(); it.hasNext(); ) {
-			permitAgents(data.getAgentIDsOfType(it.next()));
-		}
-	}
+
 	
 	public int getAlternateMarket(int mainMarketID) {
 		if (marketIDs.contains(mainMarketID)) {

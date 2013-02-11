@@ -61,11 +61,11 @@ public abstract class HFTAgent extends Agent {
 	}
 	
 	/**
-	 * Agent departs all markets, if it is active.
+	 * Agent departs all markets, if it is active.  //TODO need to fix this
 	 * 
 	 * @return ActivityHashMap
 	 */
-	public ActivityHashMap agentDeparture() {
+	public ActivityHashMap agentDeparture(TimeStamp ts) {
 
 		for (Iterator<Integer> i = data.getMarketIDs().iterator(); i.hasNext(); ) {
 			Market mkt = data.markets.get(i.next());
@@ -73,7 +73,7 @@ public abstract class HFTAgent extends Agent {
 			mkt.agentIDs.remove(mkt.agentIDs.indexOf(this.ID));
 			mkt.buyers.remove(mkt.buyers.indexOf(this.ID));
 			mkt.sellers.remove(mkt.sellers.indexOf(this.ID));
-			mkt.removeBid(this.ID, null);
+			mkt.removeBid(this.ID, ts);
 			this.exitMarket(mkt.ID);
 		}
 		ActivityHashMap actMap = new ActivityHashMap();

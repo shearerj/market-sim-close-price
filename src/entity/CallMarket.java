@@ -35,9 +35,9 @@ public class CallMarket extends Market {
 		marketType = Consts.getMarketType(this.getName());
 		orderbook = new PQOrderBook(ID);
 		orderbook.setParams(ID, l, d);
-		clearFreq = new TimeStamp(Integer.parseInt(p.get("clearFreq")));
+		clearFreq = new TimeStamp(Integer.parseInt(params.get("clearFreq")));
 		nextClearTime = clearFreq;
-		pricingPolicy = (float) Double.parseDouble(p.get("pricingPolicy"));
+		pricingPolicy = (float) Double.parseDouble(params.get("pricingPolicy"));
 	}
 	
 	public Bid getBidQuote() {
@@ -63,7 +63,6 @@ public class CallMarket extends Market {
 		data.addDepth(ID, ts, orderbook.getDepth());
 		data.addSubmissionTime(b.getBidID(), ts);
 		if (clearFreq.longValue() == 0) {
-//			actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, ts));
 			return clear(ts);
 		} // else, Clear activities are chained and continue that way
 		return actMap;
@@ -73,11 +72,8 @@ public class CallMarket extends Market {
 		// Unlike continuous auction market, no Clear inserted unless clear freq = 0
 		ActivityHashMap actMap = new ActivityHashMap();
 		orderbook.removeBid(agentID);
-//		orderbook.logActiveBids(ts);
-//		orderbook.logFourHeap(ts);
 		data.addDepth(ID, ts, orderbook.getDepth());
 		if (clearFreq.longValue() == 0) {
-//			actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, ts));
 			return clear(ts);
 		} // else, Clear activities are chained and continue that way
 		return actMap;
@@ -122,7 +118,7 @@ public class CallMarket extends Market {
 		// Add bid execution speed
 		ArrayList<Integer> IDs = orderbook.getClearedBidIDs();
 		for (Iterator<Integer> id = IDs.iterator(); id.hasNext(); ) {
-			data.addExecutionSpeed(id.next(), clearTime);
+			data.addTimeToExecution(id.next(), clearTime);
 		}
 		
 		// Add transactions to SystemData
@@ -176,15 +172,18 @@ public class CallMarket extends Market {
 				if (bp.getPrice() == -1 || ap.getPrice() == -1) {
 					// either bid or ask are undefined
 					data.addSpread(ID, quoteTime, Consts.INF_PRICE);
+					data.addMidQuotePrice(ID, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);	
 					
 				} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
 					log.log(Log.ERROR, this.getName() + "::quote: ERROR bid > ask");
 					data.addSpread(ID, quoteTime, Consts.INF_PRICE);
+					data.addMidQuotePrice(ID, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
 					
 				} else {
 					// valid bid-ask
 					data.addQuote(ID, q);
 					data.addSpread(ID, quoteTime, q.getSpread());
+					data.addMidQuotePrice(ID, quoteTime, bp.getPrice(), ap.getPrice());
 				}
 			}
 			lastQuoteTime = quoteTime;

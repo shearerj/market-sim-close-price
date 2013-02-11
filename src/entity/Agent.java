@@ -42,7 +42,6 @@ public abstract class Agent extends Entity {
 	
 	// Agent parameters
 	protected int privateValue;
-	protected int positionLimit;
 	protected String agentType;
 	protected TimeStamp arrivalTime;
 
@@ -51,6 +50,10 @@ public abstract class Agent extends Entity {
 	protected int positionBalance;
 	protected int averageCost;
 	protected int realizedProfit;
+	// for liquidation
+	protected int preLiqPosition;
+	protected int preLiqRealizedProfit;
+	
 	
 	/**
 	 * Constructor
@@ -65,7 +68,8 @@ public abstract class Agent extends Entity {
 		
 		rand = new Random();
 		this.modelID = modelID;
-	
+		agentType = Consts.getAgentType(this.getName());
+		
 		// initialize all containers
 		bidPrice = new HashMap<Integer,Price>();
 		askPrice = new HashMap<Integer,Price>();
@@ -104,7 +108,7 @@ public abstract class Agent extends Entity {
 	/**
 	 * @return
 	 */
-	public abstract ActivityHashMap agentDeparture();
+	public abstract ActivityHashMap agentDeparture(TimeStamp ts);
 	
 	
 	/**
@@ -359,10 +363,7 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap submitBid(Market mkt, int price, int quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		if (this.getModel().checkAgentPermissions(this.ID)) {
-			actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
-					new SubmitBid(this, mkt, price, quantity, ts));
-		}
+		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, new SubmitBid(this, mkt, price, quantity, ts));
 		return actMap;
 	}
 
@@ -375,12 +376,9 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap submitMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
+	public ActivityHashMap submitMultipleBid(Market mkt, ArrayList<Integer> price, ArrayList<Integer> quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		if (this.getModel().checkAgentPermissions(this.ID)) {
-			actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
-					new SubmitMultipleBid(this, mkt, price, quantity, ts));
-		}
+		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, new SubmitMultipleBid(this, mkt, price, quantity, ts));
 		return actMap;
 	}
 	
@@ -394,12 +392,9 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap expireBid(Market mkt, long duration, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		if (this.getModel().checkAgentPermissions(this.ID)) {
-			TimeStamp withdrawTime = ts.sum(new TimeStamp(duration));
-			actMap.insertActivity(Consts.WITHDRAW_BID_PRIORITY,
-					new WithdrawBid(this, mkt, withdrawTime));
-			log.log(Log.INFO, ts + " | " + mkt + " " + this + ": bid duration=" + duration); 
-		}
+		TimeStamp withdrawTime = ts.sum(new TimeStamp(duration));
+		actMap.insertActivity(Consts.WITHDRAW_BID_PRIORITY, new WithdrawBid(this, mkt, withdrawTime));
+		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": bid duration=" + duration); 
 		return actMap;
 	}
 	
@@ -412,11 +407,7 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap executeWithdrawBid(Market mkt, TimeStamp ts) {
 		log.log(Log.INFO, ts + " | " + this + " withdraw bid from " + mkt);
-		
-		if (this.getModel().checkAgentPermissions(this.ID)) {
-			return mkt.removeBid(this.ID, ts);
-		}
-		return null;
+		return mkt.removeBid(this.ID, ts);
 	}
 	
 	/**
@@ -429,7 +420,6 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public ActivityHashMap executeSubmitBid(Market mkt, int price, int quantity, TimeStamp ts) {
-		
 		if (quantity == 0) return null;
 
 		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price + ", " + quantity + ")");
@@ -452,8 +442,8 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap executeSubmitMultipleBid(Market mkt, int[] price, int[] quantity, TimeStamp ts) {
-		if (price.length != quantity.length) {
+	public ActivityHashMap executeSubmitMultipleBid(Market mkt, ArrayList<Integer> price, ArrayList<Integer> quantity, TimeStamp ts) {
+		if (price.size() != quantity.size()) {
 			log.log(Log.ERROR, "Agent::submitMultipleBid: Price/Quantity are not the same length");
 			return null;
 		}
@@ -462,10 +452,10 @@ public abstract class Agent extends Entity {
 		
 		PQBid pqBid = new PQBid(this.ID, mkt.ID);
 		pqBid.timestamp = ts;
-		for (int i = 0; i < price.length; i++) {
-			if (quantity[i] != 0) {
-				int p = Market.quantize(price[i], tickSize);
-				pqBid.addPoint(quantity[i], new Price(p));
+		for (int i = 0; i < price.size(); i++) {
+			if (quantity.get(i) != 0) {
+				int p = Market.quantize(price.get(i), tickSize);
+				pqBid.addPoint(quantity.get(i), new Price(p));
 			}
 		}
 		data.addBid(pqBid);
@@ -473,6 +463,56 @@ public abstract class Agent extends Entity {
 		return mkt.addBid(pqBid, ts);
 	}
 
+	
+	/**
+	 * Liquidate agent's position at the the value of the global fundamental 
+	 * at the specified time. Price is determined by the fundamental at the time
+	 * of liquidation.
+	 * 
+	 * @param ts
+	 * @return
+	 */
+	public ActivityHashMap liquidateAtFundamental(TimeStamp ts) {
+		ActivityHashMap actMap = new ActivityHashMap();
+		actMap.insertActivity(new Liquidate(this, data.getFundamentalAt(ts), ts));
+		log.log(Log.INFO, ts + " | " + this + " liquidating..."); 
+		return actMap;
+	}
+
+	
+	/**
+	 * Liquidates an agent's position at the specified price.
+	 *  
+	 * @param price
+	 * @param ts
+	 * @return
+	 */
+	public ActivityHashMap executeLiquidate(Price price, TimeStamp ts) {
+		
+		log.log(Log.INFO, ts + " | " + this + " pre-liquidation: position=" + positionBalance
+				+ ", profit=" + realizedProfit);
+		
+		// If no net position, no need to liquidate
+		if (positionBalance == 0) return null;
+		
+		preLiqPosition = positionBalance;
+		preLiqRealizedProfit = getRealizedProfit();
+		if (positionBalance > 0) {
+			// need to sell
+			realizedProfit += positionBalance * price.getPrice();
+		} else {
+			// need to buy
+			realizedProfit -= positionBalance * price.getPrice();
+		}
+		positionBalance = 0;
+		
+		log.log(Log.INFO, ts + " | " + this + " post-liquidation: position=" + positionBalance
+				+ ", profit=" + realizedProfit + ", price=" + price);
+		return null;
+	}
+	
+	
+	
 	/**
 	 * Update global and NBBO quotes for the agent's model.
 	 * 
@@ -488,8 +528,7 @@ public abstract class Agent extends Entity {
 		lastGlobalQuote = sip.getGlobalQuote(modelID);
 		lastNBBOQuote = sip.getNBBOQuote(modelID);
 		
-		log.log(Log.INFO, ts + " | " + this + " Global" + lastGlobalQuote + 
-				", NBBO" + lastNBBOQuote);
+		log.log(Log.INFO, ts + " | " + this + " Global" + lastGlobalQuote + ", NBBO" + lastNBBOQuote);
 		return null;
 	}
 	
@@ -664,7 +703,7 @@ public abstract class Agent extends Entity {
 							", price=" + t.price + ", quantity=" + t.quantity + 
 							", timeStamp=" + t.timestamp + ")");
 					
-					// Log surplus
+					// Log surplus for all agents
 					int bsurplus = data.getAgent(t.buyerID).getPrivateValue() - t.price.getPrice();
 					int ssurplus = t.price.getPrice() - data.getAgent(t.sellerID).getPrivateValue();
 					String s = ts + " | " + this + " " +
@@ -799,13 +838,22 @@ public abstract class Agent extends Entity {
 		return up;
 	}
 
-
-	/**
-	 * @return agent's realized profit
-	 */
 	public int getRealizedProfit() {
 		return realizedProfit;
 	}
+	
+	public int getPreLiquidationPosition() {
+		return preLiqPosition;
+	}
+	
+	public int getPreLiquidationProfit() {
+		return preLiqRealizedProfit;
+	}
+	
+	public int getPositionBalance() {
+		return positionBalance;
+	}
+	
 	
 	/**
 	 * Find best market to buy in (i.e. lowest ask) and to sell in (i.e. highest bid).

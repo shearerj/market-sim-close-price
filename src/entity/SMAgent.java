@@ -100,9 +100,7 @@ public abstract class SMAgent extends Agent {
 	 */
 	public ActivityHashMap submitNMSBid(int price, int quantity, long duration, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		if (data.getModelByMarketID(market.getID()).checkAgentPermissions(this.ID)) {
-			actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, new SubmitNMSBid(this, price, quantity, duration, ts));
-		}
+		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, new SubmitNMSBid(this, price, quantity, duration, ts));
 		return actMap;
 	}
 
@@ -133,10 +131,7 @@ public abstract class SMAgent extends Agent {
 	 */
 	public ActivityHashMap submitNMSMultipleBid(int[] price, int[] quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		if (data.getModelByMarketID(market.getID()).checkAgentPermissions(this.ID)) {
-			actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
-					new SubmitNMSMultipleBid(this, price, quantity, ts));
-		}
+		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, new SubmitNMSMultipleBid(this, price, quantity, ts));
 		return actMap;
 	}
 	
@@ -158,17 +153,16 @@ public abstract class SMAgent extends Agent {
 	}
 	
 	/**
-	 * Agent departs a specified market, if it is active.
+	 * Agent departs a specified market, if it is active. //TODO need to fix this
 	 * 
 	 * @param market
 	 * @return ActivityHashMap
 	 */
-	public ActivityHashMap agentDeparture() {
-		
+	public ActivityHashMap agentDeparture(TimeStamp ts) {
 		market.agentIDs.remove(market.agentIDs.indexOf(this.ID));
 		market.buyers.remove(market.buyers.indexOf(this.ID));
 		market.sellers.remove(market.sellers.indexOf(this.ID));
-		market.removeBid(this.ID, null);
+		market.removeBid(this.ID, ts);
 		this.exitMarket(market.ID);
 		ActivityHashMap actMap = new ActivityHashMap();
 		return actMap;
