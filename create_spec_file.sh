@@ -24,7 +24,6 @@ echo '"arrival_rate": "0.075",' >> $filename
 echo '"mean_value": "100000",' >> $filename
 echo '"kappa": "0.05",' >> $filename
 echo '"shock_var": "150000000",' >> $filename
-echo '"expire_rate": "0.0005",' >> $filename
 echo '"bid_range": "2000",' >> $filename
 echo '"private_value_var": "100000000",' >> $filename
 echo '"marketmaker_sleep_time": "200",' >> $filename

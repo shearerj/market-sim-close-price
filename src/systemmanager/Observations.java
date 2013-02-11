@@ -872,7 +872,6 @@ public class Observations {
 		config.put("arrival_rate", data.arrivalRate);
 		config.put("mean_value", data.meanValue);
 		config.put("shock_var", data.shockVar);
-		config.put("expire_rate", data.expireRate);
 		config.put("bid_range", data.bidRange);
 		config.put("pv_var", data.privateValueVar);
 		

@@ -75,7 +75,6 @@ public class SimulationSpec {
 		data.meanValue = Integer.parseInt(getValue("mean_value"));
 		data.kappa = Double.parseDouble(getValue("kappa"));
 		data.shockVar = Double.parseDouble(getValue("shock_var"));
-		data.expireRate = Double.parseDouble(getValue("expire_rate"));
 		data.bidRange = Integer.parseInt(getValue("bid_range"));
 		data.privateValueVar = Double.parseDouble(getValue("private_value_var"));
 		

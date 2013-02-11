@@ -69,7 +69,6 @@ public class SystemData {
 	public int meanValue;
 	public double kappa;
 	public double shockVar;
-	public double expireRate;
 	public int bidRange;
 	public double privateValueVar;				// agent variance from PV random process
 	public int marketmaker_numRungs;			// market maker number of rungs (per side)
@@ -384,19 +383,19 @@ public class SystemData {
 		return uniqueTrans;
 	}
 	
-	/**
-	 * @return list of expirations for all ZI agent bids (only ZIAgent limit orders expire).
-	 */
-	public ArrayList<TimeStamp> getExpirations() {
-		ArrayList<TimeStamp> exps = new ArrayList<TimeStamp>();
-		for (Iterator<Integer> ag = getAgentIDs().iterator(); ag.hasNext(); ) {
-			int id = ag.next();
-			if (agents.get(id) instanceof ZIAgent) {
-				exps.add(new TimeStamp(((ZIAgent) agents.get(id)).getExpiration()));
-			}
-		}
-		return exps;
-	}
+//	/**
+//	 * @return list of expirations for all ZI agent bids (only ZIAgent limit orders expire).
+//	 */
+//	public ArrayList<TimeStamp> getExpirations() {
+//		ArrayList<TimeStamp> exps = new ArrayList<TimeStamp>();
+//		for (Iterator<Integer> ag = getAgentIDs().iterator(); ag.hasNext(); ) {
+//			int id = ag.next();
+//			if (agents.get(id) instanceof ZIAgent) {
+//				exps.add(new TimeStamp(((ZIAgent) agents.get(id)).getExpiration()));
+//			}
+//		}
+//		return exps;
+//	}
 	
 	
 	/**
