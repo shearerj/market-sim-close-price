@@ -109,11 +109,10 @@ public class SystemManager {
 			// Create log file
 			logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
 			Date now = new Date();
-			logFilename = simFolder + num;
-			logFilename += "_" + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(now);
-			logFilename = logFilename.replace("/", "-");
-			logFilename = logFilename.replace(" ", "_");
-			logFilename = logFilename.replace(":","");
+			logFilename = simFolder.substring(0, simFolder.length()-1).replace("/", "-") + "_" + num;
+			logFilename += "_" + DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.UK).format(now);
+			logFilename += "_" + DateFormat.getTimeInstance(DateFormat.MEDIUM, Locale.UK).format(now);
+			logFilename = logFilename.replace(":",".");
 			
 			try {
 				// Check first if directory exists
@@ -230,7 +229,8 @@ public class SystemManager {
 
 			// Spread info
 			long maxTime = Math.round(data.numAgents / data.arrivalRate);
-			for (long i = Market.quantize((int) maxTime, 500) - 1000; i <= maxTime + 1000; i += 500) {
+			long begTime = Market.quantize((int) maxTime, 500) - 1000;
+			for (long i = Math.max(begTime, 500); i <= maxTime + 1000; i += 500) {
 				obs.addFeature(prefix + "spreads_" + i, obs.getSpreadInfo(model, i));
 				obs.addFeature(prefix + "price_vol_" + i, obs.getVolatilityInfo(model, i));
 			}
