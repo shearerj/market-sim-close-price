@@ -4,5 +4,5 @@ trialName = 'example';
 eval(['load ',trialName])
 
 close all
-graphHeaders(trialName, sort(getHeaders(headers,[model{:},'_surplus_sum_total'])), ...
+graphHeaders(trialName, sort(getHeaders(headers,'_surplus_sum_total')), ...
         'total undiscounted surplus', true);
