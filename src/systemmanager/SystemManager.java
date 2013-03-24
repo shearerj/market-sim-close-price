@@ -54,6 +54,7 @@ public class SystemManager {
 
 		if (args.length == 2) {
 			simFolder = args[0] + "/";
+			if (simFolder.charAt(0) == '/') simFolder = simFolder.substring(1);
 			num = Integer.parseInt(args[1]);
 		} else {
 			simFolder = "";
