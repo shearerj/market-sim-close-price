@@ -78,7 +78,7 @@ public class SimulationSpec {
 		data.bidRange = Integer.parseInt(getValue("bid_range"));
 		data.privateValueVar = Double.parseDouble(getValue("private_value_var"));
 		
-		// Market maker variables
+		// Market maker variables TODO - later remove?
 		data.marketmaker_sleepTime = Integer.parseInt(getValue("marketmaker_sleep_time"));
 		data.marketmaker_numRungs = Integer.parseInt(getValue("marketmaker_num_rungs"));
 		data.marketmaker_rungSize = Integer.parseInt(getValue("marketmaker_rung_size"));

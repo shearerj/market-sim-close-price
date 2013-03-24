@@ -26,9 +26,9 @@ public class Consts {
 	public final static String[] modelTypeNames = 
 		{ "TWOMARKET", "CENTRALCDA", "CENTRALCALL" };
 		
-	// EGTA roles (i.e. players in the game)
+	// EGTA roles
 	public final static String[] roles =
-		{"LA", "DUMMY"};
+		{"LA", "DUMMY", "MARKETMAKER", "BACKGROUND"};
 	// **********************************************************
 	
 	// Setting up models

@@ -10,7 +10,7 @@ import systemmanager.*;
  * 
  * Class implementing the two-market model of latency arbitrage.
  * 
- * Configurations in the Two-Market Model specify what types of player agents 
+ * Configurations in the Two-Market Model specify what types of strategies
  * are allowed. Possible values for the configuration include: "LA", "DUMMY".
  * 
  * @author ewah
