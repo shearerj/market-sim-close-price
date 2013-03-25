@@ -58,7 +58,8 @@ public class SystemData {
 	public HashMap<String,Integer> numAgentType;
 	
 	public int numMarkets;
-	public int numAgents;
+	// number of omnipresent agents (in every model), e.g. all background
+	public int numEnvironmentAgents;		
 	
 	// Parameters set by specification file
 	public TimeStamp simLength;
@@ -96,7 +97,7 @@ public class SystemData {
 		numAgentType = new HashMap<String,Integer>();
 		numMarketType = new HashMap<String,Integer>();
 		numModelType = new HashMap<String,Integer>();
-		numAgents = 0;
+		numEnvironmentAgents = 0;
 		numMarkets = 0;
 		modelIDs = new ArrayList<Integer>();
 		transIDSequence = new Sequence(0);
@@ -402,7 +403,7 @@ public class SystemData {
 	 * @return list of actual private values of all agents
 	 */
 	public ArrayList<Price> getPrivateValues() {
-		ArrayList<Price> pvs = new ArrayList<Price>(numAgents);
+		ArrayList<Price> pvs = new ArrayList<Price>(numEnvironmentAgents);
 		for (Iterator<Integer> ag = getAgentIDs().iterator(); ag.hasNext(); ) {
 			int val = agents.get(ag.next()).getPrivateValue();
 			// PV will be negative if it doesn't exist for the agent; only add positive PVs

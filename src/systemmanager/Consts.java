@@ -77,6 +77,8 @@ public class Consts {
 	public static String getAgentType(String className) {
 		if (className.contains("Agent"))
 			return className.replace("Agent","").toUpperCase();
+		else if (className.contains("MarketMaker"))
+			return className.replace("MarketMaker","MM").toUpperCase();
 		else
 			return className.toUpperCase();
 	}
@@ -119,13 +121,16 @@ public class Consts {
 		}
 		if (type.equals("MARKETMAKER")) {
 			p.put("sleepTime", "200");
-			p.put("sleepVar", "100");
+			// p.put("sleepVar", "100");
 			p.put("numRungs", "10");
 			p.put("rungSize", "1000");
 		}
 		if (type.equals("CALL")) {
 			p.put("pricingPolicy", "0.5");
 			p.put("clearFreq", "100");
+		}
+		if (type.equals("ZI")) {
+			p.put("bidRange", "150");
 		}
 		if (type.equals("ZIP")) {
 			p.put("sleepTime", "50");

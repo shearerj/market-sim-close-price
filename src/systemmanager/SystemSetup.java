@@ -102,6 +102,9 @@ public class SystemSetup {
 	}
 	
 	
+	/**
+	 * Creates all market models
+	 */
 	public void createMarketModels() {
 		// get information on the primary market model - two possible usages:
 		// 1) MODELNAME-CONFIG
@@ -135,7 +138,8 @@ public class SystemSetup {
 			String[] configs = parseModelConfigList(specs.getValue(modelType));
 			
 			for (int i = 0; i < numModelsOfThisType; i++) {
-				ObjectProperties p = getEntityProperties(modelType, i);
+				// ObjectProperties p = getEntityProperties(modelType, i);
+				ObjectProperties p = new ObjectProperties(Consts.getProperties(modelType));
 				
 				// create market model & determine its configuration
 				int modelID = modelIDSequence.increment();
@@ -263,6 +267,7 @@ public class SystemSetup {
 				
 				for (int i = 0; i < numAgentsInModel; i++) {
 					ObjectProperties ap = getEntityProperties(agentType, i);
+					
 					ap.put("seed", seeds.get(logID-1).toString());	// since start logID at 1, not 0
 					int agentID = agentIDSequence.increment();
 					Agent agent;
@@ -272,6 +277,9 @@ public class SystemSetup {
 						// Multi-market agent
 						agent = AgentFactory.createHFTAgent(agentType, agentID, modelID, data, ap, log);
 						
+						/**
+						 * Insert events after agent has been created
+						 */
 						TimeStamp ts = agent.getArrivalTime();
 						if (agent instanceof HFTAgent) {
 							// Agent is in multiple markets (an extra check)
@@ -295,17 +303,17 @@ public class SystemSetup {
 							ap.put("fundamental", values.get(i).toString());
 						}
 						
-						// set MarketMakerAgent params
-						if (agentType.equals("MARKETMAKER")) {
-							ap.put("numRungs", Integer.toString(data.marketmaker_numRungs));
-							ap.put("sleepTime", Integer.toString(data.marketmaker_sleepTime));
-							ap.put("rungSize", Integer.toString(data.marketmaker_rungSize));
-						}
+//						// set MarketMakerAgent params
+//						if (agentType.equals("MARKETMAKER")) {
+//							ap.put("numRungs", Integer.toString(data.marketmaker_numRungs));
+//							ap.put("sleepTime", Integer.toString(data.marketmaker_sleepTime));
+//							ap.put("rungSize", Integer.toString(data.marketmaker_rungSize));
+//						}
 						
 						agent = AgentFactory.createSMAgent(agentType, agentID, modelID, data, ap, log, mktID);
 
 						/**
-						 * Insert needed events after agent has been created
+						 * Insert events after agent has been created
 						 */
 						TimeStamp ts = agent.getArrivalTime();
 						if (agent instanceof SMAgent) {
@@ -316,7 +324,7 @@ public class SystemSetup {
 						}
 						
 						// set liquidation at the end of the simulation for MarketMakerAgents
-						if (agent instanceof MarketMakerAgent) {
+						if (agent instanceof BasicMarketMaker) {
 							eventManager.createEvent(Consts.LOWEST_PRIORITY, 
 									new Liquidate(agent, data.getFundamentalAt(data.simLength), 
 									data.simLength));
@@ -380,8 +388,9 @@ public class SystemSetup {
 		}
 	}
 	
+	
 	/**
-	 * Gets properties for an entity. May overwrite default EntityProperties set in
+	 * Gets properties for an entity. Will overwrite default EntityProperties set in
 	 * Consts. If the entity type indicates that the entity is a player in a role, 
 	 * this method parses the strategy, if any, in the simulation spec file.
 	 * The index is used to select the player from the list in the spec file.
@@ -394,7 +403,7 @@ public class SystemSetup {
 		if (specs.getRoleStrategies().containsKey(type) && idx >= 0) {
 			ObjectProperties p = new ObjectProperties(Consts.getProperties(type));
 			
-			ArrayList<String> players = (ArrayList<String>) specs.getRoleStrategies().get(type);
+			ArrayList<String> players = specs.getRoleStrategies().get(type);
 			String strategy = players.get(idx);
 			p.put("strategy", strategy);
 			
@@ -402,7 +411,7 @@ public class SystemSetup {
 			if (!strategy.equals("") && !type.equals("DUMMY")) {
 				String[] stratParams = strategy.split("[_]+");
 				if (stratParams.length % 2 != 0) {
-					log.log(Log.ERROR, "getEntityProperties: error parsing strategy " + stratParams);
+					log.log(Log.ERROR, "SystemSetup::getEntityProperties: error parsing strategy " + stratParams);
 					return null;
 				}
 				for (int j = 0; j < stratParams.length; j += 2) {

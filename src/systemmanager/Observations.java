@@ -665,7 +665,7 @@ public class Observations {
 		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
 			int agentID = it.next();
 			
-			if (data.getAgent(agentID) instanceof MarketMakerAgent) {
+			if (data.getAgent(agentID) instanceof BasicMarketMaker) {
 				Agent ag = data.getAgent(agentID);
 				
 				// must append the agentID if there is more than one of this type

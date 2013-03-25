@@ -55,7 +55,8 @@ public class ZIAgent extends SMAgent {
 		super(agentID, modelID, d, p, l, mktID);
 		
 		rand = new Random(Long.parseLong(params.get("seed")));
-		bidRange = this.data.bidRange;
+		// bidRange = this.data.bidRange;
+		bidRange = Integer.parseInt(params.get("bidRange"));
 		pvVar = this.data.privateValueVar;
 //		expireRate = this.data.expireRate;
 //		expiration = (long) getExponentialRV(expireRate);
