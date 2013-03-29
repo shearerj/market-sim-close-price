@@ -104,6 +104,8 @@ public class Consts {
 	public final static String configFile = "env.properties";
 	public final static String obsFilename = "observation";
 
+	// Constants in simulation_spec file
+	public final static String setupSuffix = "_setup";
 
 	/**
 	 * Get hard-coded default properties for a given entity type.

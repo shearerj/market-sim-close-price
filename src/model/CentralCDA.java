@@ -21,8 +21,8 @@ public class CentralCDA extends MarketModel {
 		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
 			addMarketPropertyPair("CDA");
 			
-			addAllSMAgents();
-			setSingleAgentType("MARKETMAKER");
+			addAllEnvironmentAgents();
+			//setSingleAgentType("MARKETMAKER");
 		}
 	}
 	

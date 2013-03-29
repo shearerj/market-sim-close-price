@@ -2,6 +2,8 @@ package systemmanager;
 
 import java.util.HashMap;
 
+import event.TimeStamp;
+
 /**
  * This class stores the parameters for a specific agent, market, or market model.
  * Each sets defaults for its properties in its constructor or in the Consts class, 
@@ -58,5 +60,22 @@ public class ObjectProperties {
 	
 	public String toString() {
 		return properties.toString();
+	}
+	
+	@Override
+	public int hashCode() {
+		return properties.hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+	        return true;
+	    if (obj == null)
+	        return false;
+	    if (getClass() != obj.getClass())
+	        return false;
+	    final ObjectProperties other = (ObjectProperties) obj;
+	    return this.properties.equals(other.properties);
 	}
 }

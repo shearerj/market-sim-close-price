@@ -42,8 +42,6 @@ import java.util.Random;
  */
 public class ZIAgent extends SMAgent {
 
-//	private double expireRate;
-//	private long expiration;			// time until limit order expiration
 	private int bidRange;				// range for limit order
 	private double pvVar;				// variance from private value random process
 	
@@ -58,8 +56,6 @@ public class ZIAgent extends SMAgent {
 		// bidRange = this.data.bidRange;
 		bidRange = Integer.parseInt(params.get("bidRange"));
 		pvVar = this.data.privateValueVar;
-//		expireRate = this.data.expireRate;
-//		expiration = (long) getExponentialRV(expireRate);
 		
 		arrivalTime = new TimeStamp(Long.parseLong(params.get("arrivalTime")));
 		int pv = Integer.parseInt(params.get("fundamental"));

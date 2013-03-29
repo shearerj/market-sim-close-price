@@ -229,7 +229,8 @@ public class SystemManager {
 			String prefix = model.getLogName() + "_";
 
 			// Spread info
-			long maxTime = Math.round(data.numEnvironmentAgents / data.arrivalRate);
+			int numEnvAgents = data.agents.size() - data.players.size();
+			long maxTime = Math.round(numEnvAgents / data.arrivalRate);
 			long begTime = Market.quantize((int) maxTime, 500) - 1000;
 			for (long i = Math.max(begTime, 500); i <= maxTime + 1000; i += 500) {
 				obs.addFeature(prefix + "spreads_" + i, obs.getSpreadInfo(model, i));

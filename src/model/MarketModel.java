@@ -52,7 +52,8 @@ public abstract class MarketModel {
 	protected ArrayList<Integer> agentIDs;		// IDs of associated agents
 	protected ObjectProperties modelProperties;
 	
-	protected HashMap<String,Integer> numAgentType;
+	//protected HashMap<String,Integer> numAgentType;
+	protected ArrayList<AgentPropertiesPair> agents;
 	
 	// Specify market configuration & properties for the model
 	protected ArrayList<MarketObjectPair> modelMarketConfig;
@@ -77,7 +78,8 @@ public abstract class MarketModel {
 		marketIDs = new ArrayList<Integer>();
 		modelMarketConfig = new ArrayList<MarketObjectPair>();
 		
-		numAgentType = new HashMap<String,Integer>();
+		//numAgentType = new HashMap<String,Integer>();
+		agents = new ArrayList<AgentPropertiesPair>();
 		initializeNumAgentType();
 	}
 	
@@ -129,22 +131,22 @@ public abstract class MarketModel {
 	/**
 	 * Adds the same number of each agent type as in the global container.
 	 */
-	public void addAllSMAgents() {
+	public void addAllEnvironmentAgents() {
 		for (int i = 0; i < Consts.SMAgentTypes.length; i++) {
 			String agentType = Consts.SMAgentTypes[i];
 			this.numAgentType.put(agentType, data.numAgentType.get(agentType));
 		}
 	}
 	
-	/**
-	 * If number of this agent type (globally) is 1+, set it to be one in the calling
-	 * model's list.
-	 */
-	public void setSingleAgentType(String agentType) {
-		if (data.numAgentType.get(agentType) > 0) {
-			this.numAgentType.put(agentType, 1);
-		}
-	}
+//	/**
+//	 * If the number of agents of this type (globally, in entire system) is more than 1, 
+//	 * set it to be one in the calling model's list.
+//	 */
+//	public void setSingleAgentType(String agentType) {
+//		if (data.numAgentType.get(agentType) > 0) {
+//			this.numAgentType.put(agentType, 1);
+//		}
+//	}
 	
 	/**
 	 * Add a market-property pair to the MarketModel.

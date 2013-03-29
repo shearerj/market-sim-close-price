@@ -29,9 +29,6 @@ public class SimulationSpec {
 	private JSONObject assignments;
 	private JSONParser parser;
 	
-	private HashMap<String, ArrayList<AgentObjectPair>> roleStrategies;
-	private ArrayList<AgentObjectPair> agents;
-
 	/**
 	 * Constructor
 	 * @param file
@@ -41,7 +38,6 @@ public class SimulationSpec {
 		log = l;
 		data = d;
 		parser = new JSONParser();
-		roleStrategies = new HashMap<String, ArrayList<AgentObjectPair>>();
 		loadFile(file);
 		readParams();
 	}
@@ -80,14 +76,8 @@ public class SimulationSpec {
 		data.meanValue = Integer.parseInt(getValue("mean_value"));
 		data.kappa = Double.parseDouble(getValue("kappa"));
 		data.shockVar = Double.parseDouble(getValue("shock_var"));
-		// data.bidRange = Integer.parseInt(getValue("bid_range")); // for ZI set outside roles
 		data.privateValueVar = Double.parseDouble(getValue("private_value_var"));
-		
-		// Market maker variables TODO - later remove?
-		//data.marketmaker_sleepTime = Integer.parseInt(getValue("marketmaker_sleep_time"));
-		//data.marketmaker_numRungs = Integer.parseInt(getValue("marketmaker_num_rungs"));
-		//data.marketmaker_rungSize = Integer.parseInt(getValue("marketmaker_rung_size"));
-		
+				
 		// Model-specific parameters
 		data.primaryModelDesc = getValue("primary_model");
 		
@@ -119,13 +109,12 @@ public class SimulationSpec {
 		for (int i = 0; i < Consts.SMAgentTypes.length; i++) {
 			String agentType = Consts.SMAgentTypes[i];
 			String num = getValue(agentType);
-			String setup = getValue(agentType + "_setup"); // setup string for this agent type
+			String setup = getValue(agentType + Consts.setupSuffix);
 			if (num != null) {
 				int n = Integer.parseInt(num);
-				data.numEnvironmentAgents += n;
-				data.numAgentType.put(agentType, n);
+				//agentSetupMap.put(agentType + ":" + setup, n);
 				ObjectProperties op = getEntityProperties(agentType, setup);
-				agents.add(new AgentObjectPair(agentType, op));
+				data.getEnvAgentMap().put(new AgentPropertiesPair(agentType, op), n);
 			}
 		}
 
@@ -141,11 +130,12 @@ public class SimulationSpec {
 						// split on semicolon
 						String[] as = strat.split("[:]+");
 						if (as.length != 2) {
-							log.log(Log.ERROR, "SimulationSpec::setRolePlayers: incorrect strategy string");
+							log.log(Log.ERROR, "SimulationSpec::setRolePlayers: " +
+											   "incorrect strategy string");
 						} else if (as[0] != null) {
 							// first elt is agent type, second elt is strategy
 							ObjectProperties op = getEntityProperties(as[0], as[1]);
-							agents.add(new AgentObjectPair(as[0], op));
+							data.addPlayerStrategyType(new AgentPropertiesPair(as[0], op));
 						}
 					}
 				}
@@ -166,33 +156,7 @@ public class SimulationSpec {
 			return null;
 		}
 	}
-	
-	
-	/**
-	 * @return agents
-	 */
-	public ArrayList<AgentObjectPair> getAgentList() {
-		return agents;
-	}
-	
-	
-	/**
-	 * Add to count of number of each agent type in SystemData object.
-	 * 
-	 * @param type
-	 */
-	private void addAgentType(String type) {
-		// add to existing if exists (in data.numAgentType)
-		// otherwise insert new value
-		if (data.numAgentType.containsKey(type)) {
-			int cnt = data.numAgentType.get(type);
-			data.numAgentType.put(type, ++cnt);
-		} else {
-			data.numAgentType.put(type, 1);
-		}
-	}
 
-	
 	/**
 	 * Gets properties for an entity. Will overwrite default EntityProperties set in
 	 * Consts. If the entity type indicates that the entity is a player in a role, 
@@ -212,7 +176,8 @@ public class SimulationSpec {
 		if (!strategy.equals("") && !type.equals("DUMMY")) {
 			String[] stratParams = strategy.split("[_]+");
 			if (stratParams.length % 2 != 0) {
-				log.log(Log.ERROR, "SimulationSpec::getEntityProperties: error parsing strategy " + stratParams);
+				log.log(Log.ERROR, "SimulationSpec::getEntityProperties: error parsing strategy " 
+									+ stratParams);
 				return null;
 			}
 			for (int j = 0; j < stratParams.length; j += 2) {

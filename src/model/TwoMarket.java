@@ -30,7 +30,7 @@ public class TwoMarket extends MarketModel {
 			String type = p.get(Consts.MODEL_CONFIG_KEY);
 			numAgentType.put(type, data.getNumAgentType(type));
 			
-			addAllSMAgents();
+			addAllEnvironmentAgents();
 		}
 	}
 	

@@ -33,20 +33,24 @@ public class SystemData {
 	public int obsNum;									// observation number
 	
 	// Model information
-	public HashMap<Integer,MarketModel> models;					// models hashed by ID
-	public HashMap<Integer,ArrayList<Integer>> modelToMarketList;	// hashed by model ID
-	public HashMap<Integer,Integer> marketIDModelIDMap;			// hashed by market ID
 	public MarketModel primaryModel;
 	public String primaryModelDesc;						// description of primary model
+	public HashMap<Integer,MarketModel> models;					// models hashed by ID
+	public HashMap<Integer,Integer> marketIDModelIDMap;			// hashed by market ID
+	public HashMap<Integer,ArrayList<Integer>> modelToMarketList;	// hashed by model ID
 	
 	// Market information
 	public HashMap<Integer,PQBid> bidData;				// all bids ever, hashed by bid ID
 	public HashMap<Integer,PQTransaction> transData;		// hashed by transaction ID
 	public HashMap<Integer,Quote> quoteData;			// hashed by market ID
-	public HashMap<Integer,Agent> agents;				// agents hashed by ID
+	public HashMap<Integer,Agent> agents;				// (all) agents hashed by ID
+	public HashMap<Integer,Agent> players;				// players (for EGTA)
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
 	public ArrayList<Integer> modelIDs;
 
+	public HashMap<AgentPropertiesPair, Integer> agentSetupMap;	// maps to number
+	public HashMap<AgentPropertiesPair, Integer> playerStrategyMap;
+	
 	private SIP sip;
 	private Sequence transIDSequence;	
 	private ArrivalTime arrivalTimeGenerator;
@@ -54,12 +58,7 @@ public class SystemData {
 	
 	// hashed by type, gives # of that type
 	public HashMap<String,Integer> numModelType;
-	public HashMap<String,Integer> numMarketType;
 	public HashMap<String,Integer> numAgentType;
-	
-	public int numMarkets;
-	// number of omnipresent agents (in every model), e.g. all background
-	public int numEnvironmentAgents;		
 	
 	// Parameters set by specification file
 	public TimeStamp simLength;
@@ -95,15 +94,15 @@ public class SystemData {
 		markets = new HashMap<Integer,Market>();
 		models = new HashMap<Integer,MarketModel>();
 		numAgentType = new HashMap<String,Integer>();
-		numMarketType = new HashMap<String,Integer>();
 		numModelType = new HashMap<String,Integer>();
-		numEnvironmentAgents = 0;
-		numMarkets = 0;
 		modelIDs = new ArrayList<Integer>();
 		transIDSequence = new Sequence(0);
 		modelToMarketList = new HashMap<Integer,ArrayList<Integer>>();
 		primaryModel = null;
 		marketIDModelIDMap = new HashMap<Integer,Integer>();
+		
+		agentSetupMap = new HashMap<AgentPropertiesPair, Integer>();
+		playerStrategyMap = new HashMap<AgentPropertiesPair, Integer>();
 	
 		// Initialize containers for observations/features
 		marketDepth = new HashMap<Integer,HashMap<TimeStamp,Double>>();
@@ -241,20 +240,53 @@ public class SystemData {
 		return models.get(id).getConfig();
 	}
 	
+//	// TODO TO REMOVE
+//	public int getNumAgentType(String type) {
+//		return numAgentType.get(type);
+//	}
 	
-	public int getNumAgentType(String type) {
-		return numAgentType.get(type);
+	/**
+	 * @return agentSetupMap
+	 */
+	public HashMap<AgentPropertiesPair,Integer> getEnvAgentMap() {
+		return agentSetupMap;
 	}
 	
 	/**
-	 * Returns true if agent with the specified ID is a background agent, i.e.
+	 * @return playerStrategyMap
+	 */
+	public HashMap<AgentPropertiesPair,Integer> getPlayerAgentMap() {
+		return playerStrategyMap;
+	}
+	
+	public int getNumEnvAgents() {
+		return agentSetupMap.size();
+	}
+	
+	public int getNumPlayers() {
+		return playerStrategyMap.size();
+	}
+	
+	/**
+	 * Returns true if agent with the specified ID is an environment agent, i.e.
 	 * not a player in one of the market models.
 	 * 
 	 * @param id
 	 * @return
 	 */
-	public boolean isBackgroundAgent(int id) {
-		return !(agents.get(id) instanceof HFTAgent);
+	public boolean isEnvironmentAgent(int id) {
+		//return !(agents.get(id) instanceof HFTAgent);
+		return !(players.containsKey(id));
+	}
+	
+	/**
+	 * Return true if that agent type is a single-market agent (SMAgent).
+	 * 
+	 * @param agentType
+	 * @return
+	 */
+	public boolean isSMAgent(String agentType) {
+		return Arrays.asList(Consts.SMAgentTypes).contains(agentType);
 	}
 	
 	
@@ -384,26 +416,12 @@ public class SystemData {
 		return uniqueTrans;
 	}
 	
-//	/**
-//	 * @return list of expirations for all ZI agent bids (only ZIAgent limit orders expire).
-//	 */
-//	public ArrayList<TimeStamp> getExpirations() {
-//		ArrayList<TimeStamp> exps = new ArrayList<TimeStamp>();
-//		for (Iterator<Integer> ag = getAgentIDs().iterator(); ag.hasNext(); ) {
-//			int id = ag.next();
-//			if (agents.get(id) instanceof ZIAgent) {
-//				exps.add(new TimeStamp(((ZIAgent) agents.get(id)).getExpiration()));
-//			}
-//		}
-//		return exps;
-//	}
-	
 	
 	/**
-	 * @return list of actual private values of all agents
+	 * @return list of actual private values of all agents TODO - used to initialize with numBackgroundAgents
 	 */
 	public ArrayList<Price> getPrivateValues() {
-		ArrayList<Price> pvs = new ArrayList<Price>(numEnvironmentAgents);
+		ArrayList<Price> pvs = new ArrayList<Price>();
 		for (Iterator<Integer> ag = getAgentIDs().iterator(); ag.hasNext(); ) {
 			int val = agents.get(ag.next()).getPrivateValue();
 			// PV will be negative if it doesn't exist for the agent; only add positive PVs
@@ -531,7 +549,7 @@ public class SystemData {
 				Agent seller = agents.get(t.sellerID);
 				
 				// Check that PV is defined & that it is a background agent
-				if (isBackgroundAgent(buyer.getID())) {
+				if (isEnvironmentAgent(buyer.getID())) {
 					int surplus = 0;
 					if (allSurplus.containsKey(buyer.getID())) {
 						surplus = allSurplus.get(buyer.getID());
@@ -542,7 +560,7 @@ public class SystemData {
 						allSurplus.put(buyer.getID(), buyer.getRealizedProfit());	// already summed
 					}
 				}
-				if (isBackgroundAgent(seller.getID())) {
+				if (isEnvironmentAgent(seller.getID())) {
 					int surplus = 0;
 					if (allSurplus.containsKey(seller.getID())) {
 						surplus = allSurplus.get(seller.getID());
@@ -588,7 +606,7 @@ public class SystemData {
 				TimeStamp sellTime = timeToExecution.get(t.sellBidID);
 				
 				// Check that PV is defined & that it is a background agent
-				if (isBackgroundAgent(buyer.getID())) {
+				if (isEnvironmentAgent(buyer.getID())) {
 					double surplus = 0;
 					if (discSurplus.containsKey(buyer.getID())) {
 						surplus = discSurplus.get(buyer.getID());
@@ -601,7 +619,7 @@ public class SystemData {
 						discSurplus.put(buyer.getID(), Math.exp(-rho * buyTime.longValue()) * buyer.getRealizedProfit());
 					}
 				}
-				if (isBackgroundAgent(seller.getID())) {
+				if (isEnvironmentAgent(seller.getID())) {
 					double surplus = 0;
 					if (discSurplus.containsKey(seller.getID())) {
 						surplus = discSurplus.get(seller.getID());
@@ -766,7 +784,20 @@ public class SystemData {
 		}
 	}
 	
-	
+	/**
+	 * Add to count of number of each player-strategy type.
+	 * 
+	 * @param type
+	 */
+	public void addPlayerStrategyType(AgentPropertiesPair type) {
+		// add to existing if exists, otherwise insert new value
+		if (playerStrategyMap.containsKey(type)) {
+			int cnt = playerStrategyMap.get(type);
+			playerStrategyMap.put(type, ++cnt);
+		} else {
+			playerStrategyMap.put(type, 1);
+		}
+	}
 	
 	
 	/***********************************

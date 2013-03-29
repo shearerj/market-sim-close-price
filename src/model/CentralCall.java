@@ -31,8 +31,8 @@ public class CentralCall extends MarketModel {
 			}
 			addMarketPropertyPair("CALL", mktProperties);
 			
-			addAllSMAgents();
-			setSingleAgentType("MARKETMAKER");
+			addAllEnvironmentAgents();
+			//setSingleAgentType("MARKETMAKER");
 		}
 	}
 	

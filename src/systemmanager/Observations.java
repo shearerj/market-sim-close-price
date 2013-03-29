@@ -316,12 +316,12 @@ public class Observations {
 			}
 			
 			int surplus = 0;
-			if (!data.isBackgroundAgent(aid)) {
+			if (!data.isEnvironmentAgent(aid)) {
 				// HFT agent
 				surplus = a.getRealizedProfit();
 				feat.put(label, ds.getSum() + surplus);
 				totalSurplus += surplus;
-			} else if (data.isBackgroundAgent(aid) && data.getAgent(aid).getPrivateValue() == -1) {
+			} else if (data.isEnvironmentAgent(aid) && data.getAgent(aid).getPrivateValue() == -1) {
 				// background agent with undefined private value (e.g. MarketMaker)
 				surplus = data.getSurplusForAgent(modelID, aid);
 				feat.put(label, ds.getSum() + surplus);
@@ -454,7 +454,7 @@ public class Observations {
 		for (Iterator<Integer> it = model.getAgentIDs().iterator(); it.hasNext(); ) {
 			int aid = it.next();
 			// check if agent is player in role
-			if (!data.isBackgroundAgent(aid)) {
+			if (!data.isEnvironmentAgent(aid)) {
 				String type = data.getAgent(aid).getType();
 				
 				// count buys/sells

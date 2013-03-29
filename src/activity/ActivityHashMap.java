@@ -164,32 +164,6 @@ public class ActivityHashMap {
 		return acts.entrySet();
 	}
 	
-	
-//	/**
-//	 * @param list
-//	 * @return true if hashmap contains the list, otherwise false.
-//	 */
-//	public boolean contains(PriorityActivityList list) {
-//		
-//		// Check if directly contained within the hashmap
-//		boolean contained = acts.containsValue(list);
-//		
-//		// Check if is a sublist of any linked list within the hashmap
-//		for (Map.Entry<TimeStamp,PriorityActivityList> entry : acts.entrySet()) {
-//			ActivityList test = entry.getValue();
-//			if (test.equals(list)) {
-//				contained = true;
-//				break;
-//			}
-//			
-//			if (list.hashCode() == test.hashCode()) {
-//				contained = true;
-//				break;
-//			}
-//		}
-//		return contained;
-//	}
-	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
