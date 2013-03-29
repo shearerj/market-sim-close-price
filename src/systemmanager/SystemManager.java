@@ -116,7 +116,14 @@ public class SystemManager {
 			
 			try {
 				// Check first if directory exists
-				File f = new File(simFolder + Consts.logDir);
+				File f = new File(simFolder);
+				if (!f.exists()) {
+					// Simulations directory not found
+					System.err.println("SystemManager::setup(String): simulation folder not found");
+					System.exit(1);
+				}
+				// Check for logs directory
+				f = new File(simFolder + Consts.logDir);
 				if (!f.exists()) {
 					// Create directory
 					new File(simFolder + Consts.logDir).mkdir();
@@ -124,13 +131,26 @@ public class SystemManager {
 				log = new Log(logLevel, ".", simFolder + Consts.logDir + logFilename + ".txt", true);
 			} catch (Exception e) {
 				e.printStackTrace();
-				System.err.print("setup(String): error creating log file");
+				System.err.println("SystemManager::setup(String): error creating log file");
 			}
 
 			// Log properties
 			log.log(Log.DEBUG, envProps.toString());
 			
 			// Read simulation specification file
+			try {
+				// Check first if simulation spec file exists
+				File f = new File(simFolder + Consts.simSpecFile);
+				if (!f.exists()) {
+					// Spec file is not found
+					System.err.println("SystemManager::setup(String): simulation_spec.json file not found");
+					System.exit(1);
+				}
+				log = new Log(logLevel, ".", simFolder + Consts.logDir + logFilename + ".txt", true);
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.err.println("SystemManager::setup(String): error accessing spec file");
+			}
 			SimulationSpec specs = new SimulationSpec(simFolder + Consts.simSpecFile, log, data);
 
 			// Create event manager
@@ -157,7 +177,8 @@ public class SystemManager {
 				return;
 			p.load(config);
 		} catch (IOException e) {
-			String s = "loadConfig(InputStream): error opening/processing config file: " + config + "/" + e;
+			String s = "SystemManager::loadConfig(InputStream): error opening/processing config file: " 
+						+ config + "/" + e;
 			log.log(Log.ERROR, s);
 			System.err.print(s);
 			System.exit(0);
@@ -174,7 +195,8 @@ public class SystemManager {
 		try {
 			loadInputStream(p, new FileInputStream(config));
 		} catch (FileNotFoundException e) {
-			String s = "loadConfig(String): error opening/processing config file: " + config + "/" + e;
+			String s = "SystemManager::loadConfig(String): error opening/processing config file: " 
+						+ config + "/" + e;
 			log.log(Log.ERROR, s);
 			System.err.print(s);
 			System.exit(0);
@@ -202,7 +224,6 @@ public class SystemManager {
 			obs.addFeature("", obs.getConfiguration());
 			obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
 			obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
-//			obs.addFeature("expire", obs.getTimeStampFeatures(data.getExpirations()));
 //			obs.addTransactionComparison();
 			getModelResults();
 			
