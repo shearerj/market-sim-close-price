@@ -137,8 +137,8 @@ public class SystemSetup {
 				
 				// Create single primary model
 				MarketModel primary = createModel(primaryModelType, primaryModelConfig);
+				data.primaryModel = primary;
 				log.log(Log.INFO, "Primary model: " + primaryModelType + "-" + primaryModelConfig);
-				data.modelToMarketList.put(primary.getID(), primary.getMarketIDs());
 				
 			} else {
 				System.err.println(this.getClass().getSimpleName() + "::createMarketModels: " +
@@ -147,7 +147,7 @@ public class SystemSetup {
 			}
 			
 		} else {
-			// Parallel model simulation; no primary model
+			// Parallel model simulation; no primary model (will be null)
 			data.primaryModel = null;
 			
 			// Create by model type
@@ -164,11 +164,6 @@ public class SystemSetup {
 					createModel(modelType, configs[i]);
 				}
 			}
-			
-			// set the model to market list
-			for (Map.Entry<Integer,MarketModel> mdl : data.models.entrySet()) {
-				data.modelToMarketList.put(mdl.getKey(), mdl.getValue().getMarketIDs());
-			}
 		}
 	}
 	
@@ -184,7 +179,7 @@ public class SystemSetup {
 		if (modelConfigList != null) {
 			if (modelConfigList.endsWith(",")) {
 				// remove any extra appended commas
-				modelConfigList = modelConfigList.substring(0, modelConfigList.length() - 1);
+				modelConfigList = modelConfigList.substring(0, modelConfigList.length()-1);
 			}
 			configs = modelConfigList.split("[,]+");
 		}
@@ -245,9 +240,10 @@ public class SystemSetup {
 	
 	
 	/**
-	 * Method to initialize all values.
+	 * Creates the agents for each model. Each model has the same number of each 
+	 * agent type (which is specified in the simulation spec file).
 	 */
-	private void initializeValues() {
+	private void createAgents() {
 		
 		// Set initialization logIDs & seeds for all agents (environment + players)
 		Random rand = new Random();
@@ -259,16 +255,6 @@ public class SystemSetup {
 			logIDs.add(id++);
 			seeds.add(rand.nextLong());
 		}
-	}
-	
-	
-	/**
-	 * Creates the agents for each model. Each model has the same number of each agent type (which is
-	 * specified in the simulation spec file).
-	 */
-	private void createAgents() {
-		
-		initializeValues();
 
 		if (data.getNumPlayers() > 0) {
 			/*******************
@@ -299,18 +285,16 @@ public class SystemSetup {
 	
 	
 	private void createEnvironmentAgents(MarketModel model) {
-		int index = 1;		// index into logIDs list
-		
+		int i = 1;		// index into logIDs list
 		for (Map.Entry<AgentPropertiesPair,Integer> ag : data.getEnvAgentMap().entrySet()) {			
-			createAgentInModel(model, ag.getKey(), ag.getValue(), index++);
+			createAgentInModel(model, ag.getKey(), ag.getValue(), i++);
 		}
 	}
 
 	private void createPlayerAgents() {
-		int index = 1;	
-		// Create players; IDs are incremented from logIDs
-		for (Map.Entry<AgentPropertiesPair,Integer> player : data.getPlayerAgentMap().entrySet()) {
-			createAgentInModel(data.getPrimaryModel(), player.getKey(), player.getValue(), index++);	
+		int i = data.getNumEnvAgents()+1;	// index into logIDs list
+		for (Map.Entry<AgentPropertiesPair,Integer> p : data.getPlayerMap().entrySet()) {
+			createAgentInModel(data.getPrimaryModel(), p.getKey(), p.getValue(), i++);	
 		}
 	}
 	
@@ -322,16 +306,15 @@ public class SystemSetup {
 	 * @param numAgents
 	 * @param index
 	 */
-	private void createAgentInModel(MarketModel model, AgentPropertiesPair ap, int numAgents, int index) {
-		ArrayList<Integer> assignment = assignAgentsToMarkets(numAgents, model.getMarketIDs());
+	private void createAgentInModel(MarketModel model, AgentPropertiesPair ap, 
+			int numAgents, int index) {
+		ArrayList<Integer> assignmt = assignAgentsToMarkets(numAgents, model.getMarketIDs());
 		
 		String agentType = ap.getAgentType();
 		ObjectProperties p = ap.getProperties();
 		
 		for (int i = 0; i < numAgents; i++) {
-			// since start logID index at 1, not 0
-			p.put("seed", seeds.get(index-1).toString());
-			
+			p.put("seed", seeds.get(index-1).toString());	// logID index start at 1, not 0
 			int agentID = agentIDSequence.increment();
 			Agent agent;
 			
@@ -342,13 +325,13 @@ public class SystemSetup {
 				// Single market agent
 				p.put("arrivalTime", arrivals.get(i).toString());
 				p.put("fundamental", fundamentalValues.get(i).toString());
-				int mktID = assignment.get(i);
+				int mktID = assignmt.get(i);
 				agent = AgentFactory.createSMAgent(agentType, agentID, model.getID(), data, p, log, mktID);						
 			}
 			createInitialAgentEvents(agent);
 			
 			data.addAgent(agent);
-			agent.setLogID(index);
+			agent.setLogID(logIDs.get(index));
 			model.linkAgent(agentID);
 			log.log(Log.DEBUG, agent.toString() + ": " + p);
 		}
@@ -412,6 +395,7 @@ public class SystemSetup {
 		return assignment;
 	}
 
+	
 	/**
 	 * Logs agent information (only for primary model to avoid redundancy).
 	 */
@@ -425,8 +409,8 @@ public class SystemSetup {
 			s += "arrivalTime=" + ag.getArrivalTime().toString();
 			
 			// print private value if exists 
-			if (ag instanceof ZIAgent) {
-				s += ", pv=" + ((ZIAgent) ag).getPrivateValue();
+			if (ag.getPrivateValue() >= 0) {
+				s += ", pv=" + ag.getPrivateValue();
 			}
 			log.log(Log.INFO, s);
 		}

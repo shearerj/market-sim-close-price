@@ -11,7 +11,10 @@ import systemmanager.*;
  * Class implementing the two-market model of latency arbitrage.
  * 
  * Configurations in the Two-Market Model specify what types of strategies
- * are allowed. Possible values for the configuration include: "LA", "DUMMY".
+ * are allowed. Possible values for the configuration include:
+ * 
+ * 		"LA:<strategy_string>"
+ * 		"DUMMY"
  * 
  * @author ewah
  */
@@ -26,13 +29,23 @@ public class TwoMarket extends MarketModel {
 			addMarketPropertyPair("CDA");
 			addMarketPropertyPair("CDA");
 			
-			// set the permitted HFT agent type, set all other ones to 0
-			String type = p.get(Consts.MODEL_CONFIG_KEY);
-			numAgentType.put(type, data.getNumAgentType(type));
-			
-			addAllEnvironmentAgents();
+			if (!config.equals("")) { 	// Check that config is not blank
+				// split on colon
+				String[] as = config.split("[:]+");
+				if (as.length == 2) {
+					String agType = as[0];
+					ObjectProperties op = SimulationSpec.getEntityProperties(agType, as[1]);
+					addAgentPropertyPair(agType, op);
+					
+				} else {
+					System.err.println(this.getClass().getSimpleName() + "::parseConfigs: " +
+									"model configuration " + config + " incorrect");
+					System.exit(1);
+				}
+			}
 		}
 	}
+	
 	
 	@Override
 	public String getConfig() {

@@ -31,7 +31,7 @@ import java.util.HashMap;
  * Configuration:
  *  - Each model may have various configurations, e.g. specifying the players 
  *    allowed in that instance of the model.
- *  - Each configuration is a string, and they are separated commas in the spec
+ *  - Each configuration is a string, and they are separated by commas.
  *  
  *  For example, in the spec file:
  *  
@@ -51,11 +51,7 @@ public abstract class MarketModel {
 	protected SystemData data;
 	protected ArrayList<Integer> agentIDs;		// IDs of associated agents
 	protected ObjectProperties modelProperties;
-	
-	//protected HashMap<String,Integer> numAgentType;
-	protected ArrayList<AgentPropertiesPair> agents;
-	
-	// Specify market configuration & properties for the model
+	protected ArrayList<AgentPropertiesPair> agentConfig;
 	protected ArrayList<MarketObjectPair> modelMarketConfig;
 	
 	// Store information on market IDs for each market specified in modelProperties
@@ -77,10 +73,7 @@ public abstract class MarketModel {
 		agentIDs = new ArrayList<Integer>();
 		marketIDs = new ArrayList<Integer>();
 		modelMarketConfig = new ArrayList<MarketObjectPair>();
-		
-		//numAgentType = new HashMap<String,Integer>();
-		agents = new ArrayList<AgentPropertiesPair>();
-		initializeNumAgentType();
+		agentConfig = new ArrayList<AgentPropertiesPair>();
 	}
 	
 	/**
@@ -90,17 +83,20 @@ public abstract class MarketModel {
 	
 	
 	/**
-	 * @return model name (format "MODELTYPE-CONFIG")
+	 * Format "MODELTYPE-CONFIG" unless config string is empty, then "MODELTYPE"
+	 * @return model name
 	 */
 	public String getFullName() {
-		return this.getClass().getSimpleName().toUpperCase() + "-" + config;
+		String configStr = this.getConfig();
+		if (!this.getConfig().equals("")) configStr = "-" + configStr;
+		return this.getClass().getSimpleName().toUpperCase() + configStr;
 	}
 	
 	/**
 	 * @return model name for observation file (format "modeltypeconfig")
 	 */
 	public String getLogName() {
-		return this.getClass().getSimpleName().toLowerCase() + config.toLowerCase();
+		return this.getClass().getSimpleName().toLowerCase() + this.getConfig().toLowerCase();
 	}
 	
 	/**
@@ -111,42 +107,35 @@ public abstract class MarketModel {
 		if (!agentIDs.contains(id)) agentIDs.add(id);
 	}
 	
-	
-	public int getNumAgentType(String type) {
-		return this.numAgentType.get(type);
+	/**
+	 * Add an agent-property pair to the MarketModel.
+	 * 
+	 * @param agType
+	 * @param agProperties
+	 */
+	public void addAgentPropertyPair(String agType, ObjectProperties agProperties) {
+		AgentPropertiesPair app = new AgentPropertiesPair(agType, agProperties);
+		agentConfig.add(app);
 	}
 	
 	/**
-	 * Initialize container of all number of agent types to be zero.
+	 * Add an agent with default property settings to the MarketModel.
+	 * 
+	 * @param agType
 	 */
-	public void initializeNumAgentType() {
-		for (int i = 0; i < Consts.SMAgentTypes.length; i++) {
-			this.numAgentType.put(Consts.SMAgentTypes[i], 0);
-		}
-		for (int i = 0; i < Consts.HFTAgentTypes.length; i++) {
-			this.numAgentType.put(Consts.HFTAgentTypes[i], 0);
-		}
+	public void addAgentPropertyPair(String agType) {
+		ObjectProperties agProperties = Consts.getProperties(agType);
+		AgentPropertiesPair mpp = new AgentPropertiesPair(agType, agProperties);
+		agentConfig.add(mpp);
 	}
 	
 	/**
-	 * Adds the same number of each agent type as in the global container.
+	 * @return agentConfig
 	 */
-	public void addAllEnvironmentAgents() {
-		for (int i = 0; i < Consts.SMAgentTypes.length; i++) {
-			String agentType = Consts.SMAgentTypes[i];
-			this.numAgentType.put(agentType, data.numAgentType.get(agentType));
-		}
+	public ArrayList<AgentPropertiesPair> getAgentConfig() {
+		return agentConfig;
 	}
 	
-//	/**
-//	 * If the number of agents of this type (globally, in entire system) is more than 1, 
-//	 * set it to be one in the calling model's list.
-//	 */
-//	public void setSingleAgentType(String agentType) {
-//		if (data.numAgentType.get(agentType) > 0) {
-//			this.numAgentType.put(agentType, 1);
-//		}
-//	}
 	
 	/**
 	 * Add a market-property pair to the MarketModel.

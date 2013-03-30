@@ -55,10 +55,12 @@ public class SimulationSpec {
 			assignments = (JSONObject) array.get("assignment");
 			params = (JSONObject) array.get("configuration");
 		} catch (IOException e) {
-			log.log(Log.ERROR, "loadFile(String): error opening/processing spec file: " +
+			log.log(Log.ERROR, this.getClass().getSimpleName() + 
+					"::loadFile(String): error opening/processing spec file: " +
 					specFile + "/" + e);
 		} catch (ParseException e) {
-			log.log(Log.ERROR, "loadFile(String): JSON parsing error: " + e);
+			log.log(Log.ERROR, this.getClass().getSimpleName() + 
+					"::loadFile(String): JSON parsing error: " + e);
 		}
 	}
 	
@@ -104,7 +106,7 @@ public class SimulationSpec {
 			}
 		}
 			
-		// Check which types of single-market agents to create (configuration part of spec file)
+		// Check which types of single-market agents to create (configuration)
 		// These agents are NOT considered players in the game.
 		for (int i = 0; i < Consts.SMAgentTypes.length; i++) {
 			String agentType = Consts.SMAgentTypes[i];
@@ -113,12 +115,12 @@ public class SimulationSpec {
 			if (num != null) {
 				int n = Integer.parseInt(num);
 				//agentSetupMap.put(agentType + ":" + setup, n);
-				ObjectProperties op = getEntityProperties(agentType, setup);
+				ObjectProperties op = getStrategyParameters(agentType, setup);
 				data.getEnvAgentMap().put(new AgentPropertiesPair(agentType, op), n);
 			}
 		}
 
-		// Check how many players in a given role (from role part of spec file)
+		// Check how many players in a given role (assignment)
 		// Strategies for each player will be set in SystemSetup.
 		for (int i = 0; i < Consts.roles.length; i++) {
 			Object strats = assignments.get(Consts.roles[i]);
@@ -127,14 +129,13 @@ public class SimulationSpec {
 				for (Iterator<String> it = strategies.iterator(); it.hasNext(); ) {
 					String strat = it.next();
 					if (!strat.equals("")) {
-						// split on semicolon
-						String[] as = strat.split("[:]+");
+						String[] as = strat.split("[:]+");	// split on colon
 						if (as.length != 2) {
-							log.log(Log.ERROR, "SimulationSpec::setRolePlayers: " +
-											   "incorrect strategy string");
-						} else if (as[0] != null) {
+							log.log(Log.ERROR, this.getClass().getSimpleName() + 
+									"::setRolePlayers: " + "incorrect strategy string");
+						} else {
 							// first elt is agent type, second elt is strategy
-							ObjectProperties op = getEntityProperties(as[0], as[1]);
+							ObjectProperties op = getStrategyParameters(as[0], as[1]);
 							data.addPlayerStrategyType(new AgentPropertiesPair(as[0], op));
 						}
 					}
@@ -158,33 +159,48 @@ public class SimulationSpec {
 	}
 
 	/**
-	 * Gets properties for an entity. Will overwrite default EntityProperties set in
+	 * Wrapper method because log is not static.
+	 * 
+	 * @param type
+	 * @param strategy
+	 * @return
+	 */
+	private ObjectProperties getStrategyParameters(String type, String strategy) {
+		ObjectProperties op = SimulationSpec.getEntityProperties(type, strategy);
+		
+		if (op == null) {
+			log.log(Log.ERROR, this.getClass().getSimpleName() + 
+					"::getStrategyParameters: error parsing " + strategy.split("[_]+"));
+		} else {
+			log.log(Log.INFO, type + ": " + op);
+		}
+		return op;
+	}
+	
+	
+	/**
+	 * Gets properties for an entity. Will overwrite default ObjectProperties set in
 	 * Consts. If the entity type indicates that the entity is a player in a role, 
 	 * this method parses the strategy, if any, in the simulation spec file.
-	 * The index is used to select the player from the list in the spec file.
 	 *
 	 * @param type
 	 * @param strategy
 	 * @return ObjectProperties
 	 */
-	public ObjectProperties getEntityProperties(String type, String strategy) {
+	public static ObjectProperties getEntityProperties(String type, String strategy) {
 		ObjectProperties p = new ObjectProperties(Consts.getProperties(type));
-			
 		p.put("strategy", strategy);
 		
 		// Check that strategy is not blank
 		if (!strategy.equals("") && !type.equals("DUMMY")) {
 			String[] stratParams = strategy.split("[_]+");
 			if (stratParams.length % 2 != 0) {
-				log.log(Log.ERROR, "SimulationSpec::getEntityProperties: error parsing strategy " 
-									+ stratParams);
 				return null;
 			}
 			for (int j = 0; j < stratParams.length; j += 2) {
 				p.put(stratParams[j], stratParams[j+1]);
 			}
 		}
-		log.log(Log.INFO, type + ": " + p);
 		return p;
 	}
 }

@@ -37,7 +37,6 @@ public class SystemData {
 	public String primaryModelDesc;						// description of primary model
 	public HashMap<Integer,MarketModel> models;					// models hashed by ID
 	public HashMap<Integer,Integer> marketIDModelIDMap;			// hashed by market ID
-	public HashMap<Integer,ArrayList<Integer>> modelToMarketList;	// hashed by model ID
 	
 	// Market information
 	public HashMap<Integer,PQBid> bidData;				// all bids ever, hashed by bid ID
@@ -50,6 +49,7 @@ public class SystemData {
 
 	public HashMap<AgentPropertiesPair, Integer> agentSetupMap;	// maps to number
 	public HashMap<AgentPropertiesPair, Integer> playerStrategyMap;
+	public HashMap<Integer, AgentPropertiesPair> modelAgentMap;
 	
 	private SIP sip;
 	private Sequence transIDSequence;	
@@ -97,7 +97,6 @@ public class SystemData {
 		numModelType = new HashMap<String,Integer>();
 		modelIDs = new ArrayList<Integer>();
 		transIDSequence = new Sequence(0);
-		modelToMarketList = new HashMap<Integer,ArrayList<Integer>>();
 		primaryModel = null;
 		marketIDModelIDMap = new HashMap<Integer,Integer>();
 		
@@ -240,11 +239,6 @@ public class SystemData {
 		return models.get(id).getConfig();
 	}
 	
-//	// TODO TO REMOVE
-//	public int getNumAgentType(String type) {
-//		return numAgentType.get(type);
-//	}
-	
 	/**
 	 * @return agentSetupMap
 	 */
@@ -255,7 +249,7 @@ public class SystemData {
 	/**
 	 * @return playerStrategyMap
 	 */
-	public HashMap<AgentPropertiesPair,Integer> getPlayerAgentMap() {
+	public HashMap<AgentPropertiesPair,Integer> getPlayerMap() {
 		return playerStrategyMap;
 	}
 	
@@ -264,6 +258,7 @@ public class SystemData {
 	}
 	
 	public int getNumPlayers() {
+		
 		return playerStrategyMap.size();
 	}
 	

@@ -91,13 +91,6 @@ public class ZIAgent extends SMAgent {
 	}
 
 	
-//	/**
-//	 * @return expiration
-//	 */
-//	public long getExpiration() {
-//		return expiration;
-//	}
-	
 	/**
 	 * Generate exponential random variate, with rate parameter.
 	 * @param rateParam
