@@ -2,7 +2,6 @@ package systemmanager;
 
 import event.*;
 import entity.*;
-import activity.*;
 import model.*;
 
 import java.util.*;
@@ -120,7 +119,7 @@ public class SystemManager {
 				File f = new File(simFolder);
 				if (!f.exists()) {
 					// Simulations directory not found
-					System.err.println("SystemManager::setup(String): simulation folder not found");
+					System.err.println(this.getClass().getSimpleName() + "::setup(String): simulation folder not found");
 					System.exit(1);
 				}
 				// Check for logs directory
@@ -132,7 +131,7 @@ public class SystemManager {
 				log = new Log(logLevel, ".", simFolder + Consts.logDir + logFilename + ".txt", true);
 			} catch (Exception e) {
 				e.printStackTrace();
-				System.err.println("SystemManager::setup(String): error creating log file");
+				System.err.println(this.getClass().getSimpleName() + "::setup(String): error creating log file");
 			}
 
 			// Log properties
@@ -144,13 +143,13 @@ public class SystemManager {
 				File f = new File(simFolder + Consts.simSpecFile);
 				if (!f.exists()) {
 					// Spec file is not found
-					System.err.println("SystemManager::setup(String): simulation_spec.json file not found");
+					System.err.println(this.getClass().getSimpleName() + "::setup(String): simulation_spec.json file not found");
 					System.exit(1);
 				}
 				log = new Log(logLevel, ".", simFolder + Consts.logDir + logFilename + ".txt", true);
 			} catch (Exception e) {
 				e.printStackTrace();
-				System.err.println("SystemManager::setup(String): error accessing spec file");
+				System.err.println(this.getClass().getSimpleName() + "::setup(String): error accessing spec file");
 			}
 			SimulationSpec specs = new SimulationSpec(simFolder + Consts.simSpecFile, log, data);
 
@@ -178,7 +177,7 @@ public class SystemManager {
 				return;
 			p.load(config);
 		} catch (IOException e) {
-			String s = "SystemManager::loadConfig(InputStream): error opening/processing config file: " 
+			String s = this.getClass().getSimpleName() + "::loadConfig(InputStream): error opening/processing config file: " 
 						+ config + "/" + e;
 			log.log(Log.ERROR, s);
 			System.err.print(s);
@@ -196,7 +195,7 @@ public class SystemManager {
 		try {
 			loadInputStream(p, new FileInputStream(config));
 		} catch (FileNotFoundException e) {
-			String s = "SystemManager::loadConfig(String): error opening/processing config file: " 
+			String s = this.getClass().getSimpleName() + "::loadConfig(String): error opening/processing config file: " 
 						+ config + "/" + e;
 			log.log(Log.ERROR, s);
 			System.err.print(s);
@@ -234,7 +233,7 @@ public class SystemManager {
 			txt.close();
 			
 		} catch (Exception e) {
-			String s = "aggregateResults(): error creating observation file";
+			String s = this.getClass().getSimpleName() + "aggregateResults(): error creating observation file";
 			e.printStackTrace();
 			System.err.println(s);
 		}
