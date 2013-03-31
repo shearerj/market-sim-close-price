@@ -83,7 +83,9 @@ public class SimulationSpec {
 		// Model-specific parameters
 		data.primaryModelDesc = getValue("primary_model");
 		
-		// Check which types of market models to create
+		/*******************
+		 * MARKET MODELS
+		 *******************/
 		for (int i = 0; i < Consts.modelTypeNames.length; i++) {
 			// models here is a comma-separated list
 			String models = getValue(Consts.modelTypeNames[i]);
@@ -106,22 +108,29 @@ public class SimulationSpec {
 			}
 		}
 			
-		// Check which types of single-market agents to create (configuration)
-		// These agents are NOT considered players in the game.
+		/*******************
+		 * CONFIGURATION - add environment agents
+		 *******************/
 		for (int i = 0; i < Consts.SMAgentTypes.length; i++) {
 			String agentType = Consts.SMAgentTypes[i];
 			String num = getValue(agentType);
 			String setup = getValue(agentType + Consts.setupSuffix);
 			if (num != null) {
 				int n = Integer.parseInt(num);
-				//agentSetupMap.put(agentType + ":" + setup, n);
 				ObjectProperties op = getStrategyParameters(agentType, setup);
-				data.getEnvAgentMap().put(new AgentPropertiesPair(agentType, op), n);
+				AgentPropertiesPair a = new AgentPropertiesPair(agentType, op);
+				data.envAgentNumberMap.put(a, n);
+				
+				// add n agents to environment agent list
+				for (int j = 0; j < n; j++) {
+					data.addEnvAgentToList(new AgentPropertiesPair(agentType, op));
+				}
 			}
 		}
 
-		// Check how many players in a given role (assignment)
-		// Strategies for each player will be set in SystemSetup.
+		/*******************
+		 * ASSIGNMENT - add players
+		 *******************/
 		for (int i = 0; i < Consts.roles.length; i++) {
 			Object strats = assignments.get(Consts.roles[i]);
 			if (strats != null) {			
@@ -136,7 +145,7 @@ public class SimulationSpec {
 						} else {
 							// first elt is agent type, second elt is strategy
 							ObjectProperties op = getStrategyParameters(as[0], as[1]);
-							data.addPlayerStrategyType(new AgentPropertiesPair(as[0], op));
+							data.addPlayerToList(new AgentPropertiesPair(as[0], op));
 						}
 					}
 				}

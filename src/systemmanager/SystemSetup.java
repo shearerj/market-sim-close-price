@@ -200,11 +200,9 @@ public class SystemSetup {
 		int modelID = modelIDSequence.increment();
 		p.put(Consts.MODEL_CONFIG_KEY, configuration);
 		MarketModel model = ModelFactory.createModel(modelType, modelID, p, data);		
-		
 		data.addModel(model);
 		log.log(Log.INFO, model.getFullName() + ": " + model + " " + p);
 		createMarketsInModel(model);
-		
 		return model;
 	}
 	
@@ -255,6 +253,12 @@ public class SystemSetup {
 			logIDs.add(id++);
 			seeds.add(rand.nextLong());
 		}
+		
+		// TODO - model agents?
+		
+		
+		
+		
 
 		if (data.getNumPlayers() > 0) {
 			/*******************
@@ -285,16 +289,25 @@ public class SystemSetup {
 	
 	
 	private void createEnvironmentAgents(MarketModel model) {
-		int i = 1;		// index into logIDs list
-		for (Map.Entry<AgentPropertiesPair,Integer> ag : data.getEnvAgentMap().entrySet()) {			
-			createAgentInModel(model, ag.getKey(), ag.getValue(), i++);
+		
+		int i = 0;
+		for (Iterator<AgentPropertiesPair> it = data.getEnvAgentList().iterator(); it.hasNext(); ) {
+			AgentPropertiesPair a = it.next();
+			ArrayList<Integer> assignmt = assignAgentsToMarkets(data.envAgentNumberMap.get(a), model.getMarketIDs());
+			// TODO - not the right place for this! 
+			createAgentInModel(model, it.next(), i++);
+			i++;
 		}
+		
+//		for (Map.Entry<AgentPropertiesPair,Integer> ag : data.getEnvAgentList().entrySet()) {			
+//			createAgentInModel(model, ag.getKey(), ag.getValue(), i++);
+//		}
 	}
 
 	private void createPlayerAgents() {
-		int i = data.getNumEnvAgents()+1;	// index into logIDs list
-		for (Map.Entry<AgentPropertiesPair,Integer> p : data.getPlayerMap().entrySet()) {
-			createAgentInModel(data.getPrimaryModel(), p.getKey(), p.getValue(), i++);	
+		int i = data.getNumEnvAgents();
+		for (Iterator<AgentPropertiesPair> it = data.getPlayerList().iterator(); it.hasNext(); ) {
+			createAgentInModel(data.getPrimaryModel(), it.next(), i++);
 		}
 	}
 	
@@ -306,38 +319,35 @@ public class SystemSetup {
 	 * @param numAgents
 	 * @param index
 	 */
-	private void createAgentInModel(MarketModel model, AgentPropertiesPair ap, 
-			int numAgents, int index) {
-		ArrayList<Integer> assignmt = assignAgentsToMarkets(numAgents, model.getMarketIDs());
+	private void createAgentInModel(MarketModel model, AgentPropertiesPair ap, int idx) { 
+			//Long seed, int logID, TimeStamp arrival, Price value, int assignedMkt) {	
 		
 		String agentType = ap.getAgentType();
 		ObjectProperties p = ap.getProperties();
 		
-		for (int i = 0; i < numAgents; i++) {
-			p.put("seed", seeds.get(index-1).toString());	// logID index start at 1, not 0
-			int agentID = agentIDSequence.increment();
-			Agent agent;
+		p.put("seed", seeds.get(idx).toString());
+		int agentID = agentIDSequence.increment();
+		Agent agent;
+		
+		if (!data.isSMAgent(agentType)) {
+			// Multi-market agent
+			agent = AgentFactory.createHFTAgent(agentType, agentID, model.getID(), data, p, log);
+		} else {
+			// Single market agent
+			p.put("arrivalTime", arrivals.get(idx).toString());
+			p.put("fundamental", fundamentalValues.get(idx).toString());
+			int mktID = assignedMkt;
 			
-			if (!data.isSMAgent(agentType)) {
-				// Multi-market agent
-				agent = AgentFactory.createHFTAgent(agentType, agentID, model.getID(), data, p, log);
-			} else {
-				// Single market agent
-				p.put("arrivalTime", arrivals.get(i).toString());
-				p.put("fundamental", fundamentalValues.get(i).toString());
-				int mktID = assignmt.get(i);
-				agent = AgentFactory.createSMAgent(agentType, agentID, model.getID(), data, p, log, mktID);						
-			}
-			createInitialAgentEvents(agent);
-			
-			data.addAgent(agent);
-			agent.setLogID(logIDs.get(index));
-			model.linkAgent(agentID);
-			log.log(Log.DEBUG, agent.toString() + ": " + p);
+			agent = AgentFactory.createSMAgent(agentType, agentID, model.getID(), data, p, log, mktID);						
 		}
-		log.log(Log.INFO, "Agents: " + numAgents + " " + agentType);
+		createInitialAgentEvents(agent);
+		
+		data.addAgent(agent);
+		agent.setLogID(logIDs);
+		model.linkAgent(agentID);
+		log.log(Log.DEBUG, agent.toString() + ": " + p);
+//		log.log(Log.INFO, "Agents: " + numAgents + " " + agentType);
 	}
-	
 	
 	
 	/**

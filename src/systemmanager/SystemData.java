@@ -47,9 +47,11 @@ public class SystemData {
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
 	public ArrayList<Integer> modelIDs;
 
-	public HashMap<AgentPropertiesPair, Integer> agentSetupMap;	// maps to number
-	public HashMap<AgentPropertiesPair, Integer> playerStrategyMap;
-	public HashMap<Integer, AgentPropertiesPair> modelAgentMap;
+	public HashMap<AgentPropertiesPair, Integer> envAgentNumberMap;
+	public ArrayList<AgentPropertiesPair> agentList;
+	public ArrayList<AgentPropertiesPair> playerList;
+	// hashed by model ID
+	public HashMap<Integer, ArrayList<AgentPropertiesPair>> modelAgentMap;
 	
 	private SIP sip;
 	private Sequence transIDSequence;	
@@ -100,8 +102,10 @@ public class SystemData {
 		primaryModel = null;
 		marketIDModelIDMap = new HashMap<Integer,Integer>();
 		
-		agentSetupMap = new HashMap<AgentPropertiesPair, Integer>();
-		playerStrategyMap = new HashMap<AgentPropertiesPair, Integer>();
+		agentList = new ArrayList<AgentPropertiesPair>();
+		playerList = new ArrayList<AgentPropertiesPair>();
+		modelAgentMap = new HashMap<Integer, ArrayList<AgentPropertiesPair>>();
+		envAgentNumberMap = new HashMap<AgentPropertiesPair, Integer>(); 
 	
 		// Initialize containers for observations/features
 		marketDepth = new HashMap<Integer,HashMap<TimeStamp,Double>>();
@@ -242,25 +246,47 @@ public class SystemData {
 	/**
 	 * @return agentSetupMap
 	 */
-	public HashMap<AgentPropertiesPair,Integer> getEnvAgentMap() {
-		return agentSetupMap;
+	public ArrayList<AgentPropertiesPair> getEnvAgentList() {
+		return agentList;
 	}
 	
 	/**
 	 * @return playerStrategyMap
 	 */
-	public HashMap<AgentPropertiesPair,Integer> getPlayerMap() {
-		return playerStrategyMap;
+	public ArrayList<AgentPropertiesPair> getPlayerList() {
+		return playerList;
 	}
 	
+	/**
+	 * @param modelID
+	 * @return agent list for the given model
+	 */
+	public ArrayList<AgentPropertiesPair> getModelAgentList(int modelID) {
+		return modelAgentMap.get(modelID);
+	}
+	
+	/**
+	 * @return number of environment agents
+	 */
 	public int getNumEnvAgents() {
-		return agentSetupMap.size();
+		return agentList.size();
 	}
 	
-	public int getNumPlayers() {
-		
-		return playerStrategyMap.size();
+	/**
+	 * @return number of players
+	 */
+	public int getNumPlayers() {	
+		return playerList.size();
 	}
+	
+	/**
+	 * @param modelID
+	 * @return number of agents specified for the given model
+	 */
+	public int getNumModelAgents(int modelID) {
+		return modelAgentMap.get(modelID).size();
+	}
+	
 	
 	/**
 	 * Returns true if agent with the specified ID is an environment agent, i.e.
@@ -779,19 +805,12 @@ public class SystemData {
 		}
 	}
 	
-	/**
-	 * Add to count of number of each player-strategy type.
-	 * 
-	 * @param type
-	 */
-	public void addPlayerStrategyType(AgentPropertiesPair type) {
-		// add to existing if exists, otherwise insert new value
-		if (playerStrategyMap.containsKey(type)) {
-			int cnt = playerStrategyMap.get(type);
-			playerStrategyMap.put(type, ++cnt);
-		} else {
-			playerStrategyMap.put(type, 1);
-		}
+	public void addEnvAgentToList(AgentPropertiesPair a) {
+		agentList.add(a);
+	}
+	
+	public void addPlayerToList(AgentPropertiesPair p) {
+		playerList.add(p);
 	}
 	
 	
