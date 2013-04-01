@@ -23,9 +23,9 @@ public class MarketFactory {
 									  ObjectProperties params,
 									  Log l) { 
 		
-		if (type.equals(Consts.getMarketType("CDAMarket"))) {
+		if (type.equals(Consts.CDA)) {
 			return new CDAMarket(marketID, data, params, l);
-		} else if (type.equals(Consts.getMarketType("CallMarket"))) {
+		} else if (type.equals(Consts.CALL)) {
 			return new CallMarket(marketID, data, params, l);
 		} else {
 			return null;

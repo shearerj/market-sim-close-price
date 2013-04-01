@@ -1,11 +1,8 @@
 package model;
 
-import entity.*;
 import systemmanager.*;
 
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.HashMap;
 
 /**
  * MARKETMODEL
@@ -136,6 +133,12 @@ public abstract class MarketModel {
 		return agentConfig;
 	}
 	
+	/**
+	 * @return number of (additional, non-environment) agents specified by config
+	 */
+	public int getNumModelAgents() {
+		return agentConfig.size();
+	}
 	
 	/**
 	 * Add a market-property pair to the MarketModel.

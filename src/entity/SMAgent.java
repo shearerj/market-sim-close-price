@@ -3,11 +3,10 @@ package entity;
 import event.*;
 import activity.*;
 import systemmanager.*;
+import market.Quote;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
-import market.Quote;
 
 /**
  * Single market (SM) agent, whose agent strategy is executed only within one market.
@@ -31,8 +30,10 @@ import market.Quote;
 public abstract class SMAgent extends Agent {
 
 	protected Market market;
-	protected Market marketSubmittedBid;		// market to which its bid has been submitted
-
+	protected Market marketSubmittedBid;		// market to which bid has been submitted
+	
+	public final static String MARKETID_KEY = "marketID";
+	
 	/**
 	 * Constructor for a single market agent.
 	 * @param agentID
@@ -40,10 +41,10 @@ public abstract class SMAgent extends Agent {
 	 * @param d
 	 * @param p
 	 * @param l
-	 * @param mktID		sets the main market for the SMAgent
 	 */
-	public SMAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l, int mktID) {
+	public SMAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, modelID, d, p, l);
+		int mktID = Integer.parseInt(params.get(SMAgent.MARKETID_KEY));
 		market = data.getMarket(mktID);
 	}
 

@@ -19,7 +19,6 @@ public class DummyAgent extends HFTAgent {
 	 */
 	public DummyAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, modelID, d, p, l);
-		agentType = Consts.getAgentType(this.getName());
 		arrivalTime = new TimeStamp(0);
 		params = p;
 	}

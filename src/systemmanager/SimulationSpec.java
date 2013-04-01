@@ -5,13 +5,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 
 import org.json.simple.*;
 import org.json.simple.parser.*;
 
+import entity.Agent;
 import event.TimeStamp;
 
 /**
@@ -119,7 +118,7 @@ public class SimulationSpec {
 				int n = Integer.parseInt(num);
 				ObjectProperties op = getStrategyParameters(agentType, setup);
 				AgentPropertiesPair a = new AgentPropertiesPair(agentType, op);
-				data.envAgentNumberMap.put(a, n);
+				data.addEnvAgentNumber(a, n);
 				
 				// add n agents to environment agent list
 				for (int j = 0; j < n; j++) {
@@ -175,7 +174,7 @@ public class SimulationSpec {
 	 * @return
 	 */
 	private ObjectProperties getStrategyParameters(String type, String strategy) {
-		ObjectProperties op = SimulationSpec.getEntityProperties(type, strategy);
+		ObjectProperties op = SimulationSpec.getAgentProperties(type, strategy);
 		
 		if (op == null) {
 			log.log(Log.ERROR, this.getClass().getSimpleName() + 
@@ -196,12 +195,12 @@ public class SimulationSpec {
 	 * @param strategy
 	 * @return ObjectProperties
 	 */
-	public static ObjectProperties getEntityProperties(String type, String strategy) {
+	public static ObjectProperties getAgentProperties(String type, String strategy) {
 		ObjectProperties p = new ObjectProperties(Consts.getProperties(type));
-		p.put("strategy", strategy);
+		p.put(Agent.STRATEGY_KEY, strategy);
 		
 		// Check that strategy is not blank
-		if (!strategy.equals("") && !type.equals("DUMMY")) {
+		if (!strategy.equals("") && !type.equals(Consts.DUMMY)) {
 			String[] stratParams = strategy.split("[_]+");
 			if (stratParams.length % 2 != 0) {
 				return null;

@@ -1,16 +1,14 @@
 package entity;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Vector;
-
 import event.*;
 import model.*;
 import market.*;
 import activity.*;
 import systemmanager.*;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.HashMap;
 
 
 /**

@@ -1,8 +1,6 @@
 package entity;
 
 import event.*;
-import market.*;
-import model.*;
 import activity.*;
 import systemmanager.*;
 
@@ -49,17 +47,16 @@ public class ZIAgent extends SMAgent {
 	/**
 	 * Overloaded constructor.
 	 */
-	public ZIAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l, int mktID) {
-		super(agentID, modelID, d, p, l, mktID);
+	public ZIAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
+		super(agentID, modelID, d, p, l);
 		
-		rand = new Random(Long.parseLong(params.get("seed")));
-		// bidRange = this.data.bidRange;
-		bidRange = Integer.parseInt(params.get("bidRange"));
+		rand = new Random(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
+		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
+		bidRange = Integer.parseInt(params.get(ZIAgent.BIDRANGE_KEY));
+		
 		pvVar = this.data.privateValueVar;
-		
-		arrivalTime = new TimeStamp(Long.parseLong(params.get("arrivalTime")));
-		int pv = Integer.parseInt(params.get("fundamental"));
-		privateValue = Math.max(0, pv + (int) Math.round(getNormalRV(0, pvVar)));
+		int fund = Integer.parseInt(params.get(Agent.FUNDAMENTAL_KEY));
+		privateValue = Math.max(0, fund + (int) Math.round(getNormalRV(0, pvVar)));
 	}
 	
 	
@@ -88,17 +85,6 @@ public class ZIAgent extends SMAgent {
 //		actMap.appendActivityHashMap(submitNMSBid(p, q, expiration, ts));
 		actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
 		return actMap;
-	}
-
-	
-	/**
-	 * Generate exponential random variate, with rate parameter.
-	 * @param rateParam
-	 * @return
-	 */
-	private double getExponentialRV(double rateParam) {
-		double r = rand.nextDouble();
-		return -Math.log(r) / rateParam;
 	}
 
 }

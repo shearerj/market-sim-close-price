@@ -54,6 +54,13 @@ public abstract class Agent extends Entity {
 	protected int preLiqPosition;
 	protected int preLiqRealizedProfit;
 	
+	// keys for accessing ObjectProperties object
+	public final static String FUNDAMENTAL_KEY = "fundamental";
+	public final static String ARRIVAL_KEY = "arrivalTime";
+	public final static String RANDSEED_KEY = "seed";
+	public final static String STRATEGY_KEY = "strategy";
+	public final static String BIDRANGE_KEY = "bidRange";
+	
 	
 	/**
 	 * Constructor
@@ -963,4 +970,13 @@ public abstract class Agent extends Entity {
 	    return mu + z * Math.sqrt(var);
 	}
 
+	/**
+	 * Generate exponential random variate, with rate parameter.
+	 * @param rateParam
+	 * @return
+	 */
+	private double getExponentialRV(double rateParam) {
+		double r = rand.nextDouble();
+		return -Math.log(r) / rateParam;
+	}
 }

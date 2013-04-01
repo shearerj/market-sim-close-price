@@ -40,8 +40,8 @@ public class BasicMarketMaker extends SMAgent {
 	private int sleepTime;
 //	private double sleepVar;
 	
-	public BasicMarketMaker(int agentID, int modelID, SystemData d, ObjectProperties p, Log l, int mktID) {
-		super(agentID, modelID, d, p, l, mktID);
+	public BasicMarketMaker(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
+		super(agentID, modelID, d, p, l);
 		arrivalTime = new TimeStamp(0);
 		sleepTime = Integer.parseInt(params.get("sleepTime"));
 //		sleepVar = Double.parseDouble(params.get("sleepVar"));

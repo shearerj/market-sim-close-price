@@ -31,6 +31,10 @@ public class Observations {
 	private HashMap<String,Object> observations;
 	private SystemData data;
 	
+	// Constants in observation file
+	public final static String PLAYERS_KEY = "players";
+	public final static String FEATURES_KEY = "features";
+	
 	/**
 	 * Constructor
 	 */
@@ -50,12 +54,12 @@ public class Observations {
 		// or if observations are empty
 		if (obs == null || obs.isEmpty()) return;
 		
-		if (!observations.containsKey("players")) {
+		if (!observations.containsKey(PLAYERS_KEY)) {
 			ArrayList<Object> array = new ArrayList<Object>();
 			array.add(obs);
-			observations.put("players", array);
+			observations.put(PLAYERS_KEY, array);
 		} else {
-			((ArrayList<Object>) observations.get("players")).add(obs);
+			((ArrayList<Object>) observations.get(PLAYERS_KEY)).add(obs);
 		}
 	}
 
@@ -82,12 +86,12 @@ public class Observations {
 	 * @param ft
 	 */
 	public void addFeature(String description, HashMap<String,Object> ft) {
-		if (!observations.containsKey("features")) {
+		if (!observations.containsKey(FEATURES_KEY)) {
 			HashMap<String,Object> feats = new HashMap<String,Object>();
 			feats.put(description.toLowerCase(), ft);
-			observations.put("features", feats);
+			observations.put(FEATURES_KEY, feats);
 		} else {
-			((HashMap<String,Object>) observations.get("features")).put(description.toLowerCase(), ft);
+			((HashMap<String,Object>) observations.get(FEATURES_KEY)).put(description.toLowerCase(), ft);
 		}
 	}
 	
@@ -311,17 +315,17 @@ public class Observations {
 			String label = "sum_with_" + type.toLowerCase();
 			
 			// Append the agentID if there is 1+ of this type in the simulation
-			if (model.getNumAgentType(type) > 1) {
+//			if (model.getNumAgentType(type) > 1) {
 				label += a.getLogID();
-			}
+//			}
 			
 			int surplus = 0;
-			if (!data.isEnvironmentAgent(aid)) {
+			if (!data.isNonPlayer(aid)) {
 				// HFT agent
 				surplus = a.getRealizedProfit();
 				feat.put(label, ds.getSum() + surplus);
 				totalSurplus += surplus;
-			} else if (data.isEnvironmentAgent(aid) && data.getAgent(aid).getPrivateValue() == -1) {
+			} else if (data.isNonPlayer(aid) && data.getAgent(aid).getPrivateValue() == -1) {
 				// background agent with undefined private value (e.g. MarketMaker)
 				surplus = data.getSurplusForAgent(modelID, aid);
 				feat.put(label, ds.getSum() + surplus);
@@ -454,7 +458,7 @@ public class Observations {
 		for (Iterator<Integer> it = model.getAgentIDs().iterator(); it.hasNext(); ) {
 			int aid = it.next();
 			// check if agent is player in role
-			if (!data.isEnvironmentAgent(aid)) {
+			if (!data.isNonPlayer(aid)) {
 				String type = data.getAgent(aid).getType();
 				
 				// count buys/sells
@@ -470,9 +474,9 @@ public class Observations {
 				}
 				// must append the agentID if there is more than one of this type
 				String suffix = "_" + type.toLowerCase();
-				if (model.getNumAgentType(type) > 1) {
+//				if (model.getNumAgentType(type) > 1) {
 					suffix += aid;
-				}
+//				}
 				feat.put("buys" + suffix, buys);
 				feat.put("sells" + suffix, sells);
 			}
@@ -670,9 +674,9 @@ public class Observations {
 				
 				// must append the agentID if there is more than one of this type
 				String suffix = "";
-				if (model.getNumAgentType(ag.getType()) > 1) {
+//				if (model.getNumAgentType(ag.getType()) > 1) {
 					suffix += agentID;
-				}
+//				}
 				
 				feat.put("position_pre_liq" + suffix, ag.getPreLiquidationPosition());
 				feat.put("position_post_liq" + suffix, ag.getPositionBalance());	// just to double-check
@@ -872,13 +876,7 @@ public class Observations {
 		config.put("arrival_rate", data.arrivalRate);
 		config.put("mean_value", data.meanValue);
 		config.put("shock_var", data.shockVar);
-		config.put("bid_range", data.bidRange);
 		config.put("pv_var", data.privateValueVar);
-		
-		// market maker params
-		config.put("mm_sleep_time", data.marketmaker_sleepTime);
-		config.put("mm_num_rungs", data.marketmaker_numRungs);
-		config.put("mm_rung_size", data.marketmaker_rungSize);
 		
 		return config;
 	}

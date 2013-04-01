@@ -1,5 +1,8 @@
 package systemmanager;
 
+import entity.CallMarket;
+import entity.ZIAgent;
+
 /**
  * System-wide constants and accessor methods. Sets default properties for each
  * type of entity.
@@ -17,18 +20,30 @@ public class Consts {
 	// Agent, market, and model types
 	// (must edit this whenever add a new agent, market, or model
 	
+	public final static String ZI = "ZI";
+	public final static String ZIP = "ZIP";
+	public final static String BASICMARKETMAKER = "BASICMM";
+	public final static String LA = "LA";
+	public final static String DUMMY = "DUMMY";
+	public final static String CALL = "CALL";
+	public final static String CDA = "CDA";
+	public final static String TWOMARKET = "TWOMARKET";
+	public final static String CENTRALCDA = "CENTRALCDA";
+	public final static String CENTRALCALL = "CENTRALCALL";
+	
 	public final static String[] SMAgentTypes = 
-		{ "MARKETMAKER", "ZI", "ZIP" };
+		{ ZI, ZIP, BASICMARKETMAKER };
 	public final static String[] HFTAgentTypes = 
-		{ "LA", "DUMMY" };
+		{ LA, DUMMY };
 	public final static String[] marketTypeNames = 
-		{ "CDA", "CALL" };
+		{ CDA, CALL };
 	public final static String[] modelTypeNames = 
-		{ "TWOMARKET", "CENTRALCDA", "CENTRALCALL" };
+		{ TWOMARKET, CENTRALCDA, CENTRALCALL };
 		
 	// EGTA roles
 	public final static String[] roles =
-		{"LA", "DUMMY", "MARKETMAKER", "BACKGROUND"};
+		{"HFT", "MARKETMAKER", "BACKGROUND"};
+	
 	// **********************************************************
 	
 	// Setting up models
@@ -106,7 +121,7 @@ public class Consts {
 
 	// Constants in simulation_spec file
 	public final static String setupSuffix = "_setup";
-
+	
 	/**
 	 * Get hard-coded default properties for a given entity type.
 	 * 
@@ -116,25 +131,25 @@ public class Consts {
 		
 		ObjectProperties p = new ObjectProperties();
 		
-		if (type.equals("LA")) {
+		if (type.equals(LA)) {
 			p.put("sleepTime", "0");
-			p.put("sleepVar", "100");
+//			p.put("sleepVar", "100");
 			p.put("alpha", "0.001");
 		}
-		if (type.equals("MARKETMAKER")) {
+		if (type.equals(BASICMARKETMAKER)) {
 			p.put("sleepTime", "200");
 			// p.put("sleepVar", "100");
 			p.put("numRungs", "10");
 			p.put("rungSize", "1000");
 		}
-		if (type.equals("CALL")) {
-			p.put("pricingPolicy", "0.5");
-			p.put("clearFreq", "100");
+		if (type.equals(CALL)) {
+			p.put(CallMarket.PRICING_POLICY_KEY, "0.5");
+			p.put(CallMarket.CLEAR_FREQ_KEY, "100");
 		}
-		if (type.equals("ZI")) {
-			p.put("bidRange", "150");
+		if (type.equals(ZI)) {
+			p.put(ZIAgent.BIDRANGE_KEY, "200");
 		}
-		if (type.equals("ZIP")) {
+		if (type.equals(ZIP)) {
 			p.put("sleepTime", "50");
 			p.put("sleepVar", "100");
 			p.put("c_R","0.05");

@@ -1,8 +1,5 @@
 package model;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
 import systemmanager.*;
 
 /**
@@ -26,15 +23,15 @@ public class TwoMarket extends MarketModel {
 		config = p.get(Consts.MODEL_CONFIG_KEY);
 		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
 			// Add two CDA markets with default settings
-			addMarketPropertyPair("CDA");
-			addMarketPropertyPair("CDA");
+			addMarketPropertyPair(Consts.CDA);
+			addMarketPropertyPair(Consts.CDA);
 			
 			if (!config.equals("")) { 	// Check that config is not blank
 				// split on colon
 				String[] as = config.split("[:]+");
 				if (as.length == 2) {
 					String agType = as[0];
-					ObjectProperties op = SimulationSpec.getEntityProperties(agType, as[1]);
+					ObjectProperties op = SimulationSpec.getAgentProperties(agType, as[1]);
 					addAgentPropertyPair(agType, op);
 					
 				} else {

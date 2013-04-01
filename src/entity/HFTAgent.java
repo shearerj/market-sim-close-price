@@ -1,15 +1,14 @@
 package entity;
 
-import java.util.Iterator;
-import java.util.ArrayList;
-
 import activity.*;
 import event.TimeStamp;
 import systemmanager.*;
 
+import java.util.Iterator;
+
 
 /**
- * High-frequency trader (HFT) or multi-market (MM) agent. An HFTAgent arrives in 
+ * High-frequency trader (HFT) or multi-market agent. An HFTAgent arrives in 
  * all markets in a model, and its strategy is executed across multiple markets.
  * 
  * An HFTAgent is capable of seeing the quotes in multiple markets with zero delay.

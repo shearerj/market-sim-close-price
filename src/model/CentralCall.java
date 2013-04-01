@@ -1,5 +1,6 @@
 package model;
 
+import entity.CallMarket;
 import systemmanager.*;
 
 /**
@@ -21,16 +22,19 @@ public class CentralCall extends MarketModel {
 		
 		config = p.get(Consts.MODEL_CONFIG_KEY);
 		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
-			ObjectProperties mktProperties = Consts.getProperties("CALL");
+			
+			ObjectProperties mktProperties = Consts.getProperties(Consts.CALL);
+			
 			// Set clearing frequency to be NBBO latency or a constant
 			if (config.equals("NBBO")) {
-				mktProperties.put("clearFreq", data.nbboLatency.toString());
+				mktProperties.put(CallMarket.CLEAR_FREQ_KEY, data.nbboLatency.toString());
+				
 			} else if (config.contains("CONST")){
 				// Add substring immediately after "CONST"
-				mktProperties.put("clearFreq", config.substring(5));
+				mktProperties.put(CallMarket.CLEAR_FREQ_KEY, config.substring(5));
 			}
-			addMarketPropertyPair("CALL", mktProperties);
 			
+			addMarketPropertyPair(Consts.CALL, mktProperties);
 		}
 	}
 	

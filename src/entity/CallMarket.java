@@ -26,6 +26,9 @@ public class CallMarket extends Market {
 	public PQOrderBook orderbook;
 	private TimeStamp clearFreq;
 	
+	public final static String CLEAR_FREQ_KEY = "clearFreq";
+	public final static String PRICING_POLICY_KEY = "pricingPolicy";
+	
 	/**
 	 * Overloaded constructor.
 	 * @param marketID
@@ -35,9 +38,9 @@ public class CallMarket extends Market {
 		marketType = Consts.getMarketType(this.getName());
 		orderbook = new PQOrderBook(ID);
 		orderbook.setParams(ID, l, d);
-		clearFreq = new TimeStamp(Integer.parseInt(params.get("clearFreq")));
+		pricingPolicy = (float) Double.parseDouble(params.get(CallMarket.PRICING_POLICY_KEY));
+		clearFreq = new TimeStamp(Integer.parseInt(params.get(CallMarket.CLEAR_FREQ_KEY)));
 		nextClearTime = clearFreq;
-		pricingPolicy = (float) Double.parseDouble(params.get("pricingPolicy"));
 	}
 	
 	public Bid getBidQuote() {
@@ -94,9 +97,9 @@ public class CallMarket extends Market {
 		// Return prior quote (works b/c lastClearTime has not been updated yet)
 		log.log(Log.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
 				this.quote(clearTime));
-		ArrayList<Transaction> transactions = orderbook.uniformPriceClear(clearTime, pricingPolicy);
+		ArrayList<Transaction> trans = orderbook.uniformPriceClear(clearTime, pricingPolicy);
 		
-		if (transactions == null) {
+		if (trans == null) {
 			lastClearTime = clearTime;
 			
 			orderbook.logActiveBids(clearTime);
@@ -123,7 +126,7 @@ public class CallMarket extends Market {
 		
 		// Add transactions to SystemData
 		TreeSet<Integer> transactingIDs = new TreeSet<Integer>();
-		for (Iterator<Transaction> i = transactions.iterator(); i.hasNext();) {
+		for (Iterator<Transaction> i = trans.iterator(); i.hasNext();) {
 			PQTransaction t = (PQTransaction) i.next();
 			// track which agents were involved in the transactions
 			transactingIDs.add(t.buyerID);

@@ -2,8 +2,6 @@ package systemmanager;
 
 import java.util.HashMap;
 
-import event.TimeStamp;
-
 /**
  * This class stores the parameters for a specific agent, market, or market model.
  * Each sets defaults for its properties in its constructor or in the Consts class, 

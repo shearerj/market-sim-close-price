@@ -35,21 +35,21 @@ public class SystemData {
 	// Model information
 	public MarketModel primaryModel;
 	public String primaryModelDesc;						// description of primary model
-	public HashMap<Integer,MarketModel> models;					// models hashed by ID
-	public HashMap<Integer,Integer> marketIDModelIDMap;			// hashed by market ID
+	public HashMap<Integer,MarketModel> models;			// models hashed by ID
+	public HashMap<Integer,Integer> marketIDModelIDMap;	// hashed by market ID
 	
 	// Market information
 	public HashMap<Integer,PQBid> bidData;				// all bids ever, hashed by bid ID
-	public HashMap<Integer,PQTransaction> transData;		// hashed by transaction ID
+	public HashMap<Integer,PQTransaction> transData;	// hashed by transaction ID
 	public HashMap<Integer,Quote> quoteData;			// hashed by market ID
 	public HashMap<Integer,Agent> agents;				// (all) agents hashed by ID
 	public HashMap<Integer,Agent> players;				// players (for EGTA)
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
 	public ArrayList<Integer> modelIDs;
 
-	public HashMap<AgentPropertiesPair, Integer> envAgentNumberMap;
 	public ArrayList<AgentPropertiesPair> agentList;
 	public ArrayList<AgentPropertiesPair> playerList;
+	public HashMap<AgentPropertiesPair, Integer> envAgentNumberMap;
 	// hashed by model ID
 	public HashMap<Integer, ArrayList<AgentPropertiesPair>> modelAgentMap;
 	
@@ -60,7 +60,6 @@ public class SystemData {
 	
 	// hashed by type, gives # of that type
 	public HashMap<String,Integer> numModelType;
-	public HashMap<String,Integer> numAgentType;
 	
 	// Parameters set by specification file
 	public TimeStamp simLength;
@@ -71,11 +70,7 @@ public class SystemData {
 	public int meanValue;
 	public double kappa;
 	public double shockVar;
-	public int bidRange;
 	public double privateValueVar;				// agent variance from PV random process
-	public int marketmaker_numRungs;			// market maker number of rungs (per side)
-	public int marketmaker_rungSize;			// market maker rung size
-	public int marketmaker_sleepTime;			// market maker sleep time
 	
 	// Variables of time series for observation file
 	public HashMap<Integer,HashMap<TimeStamp,Double>> marketDepth;		// hashed by market ID
@@ -95,7 +90,6 @@ public class SystemData {
 		agents = new HashMap<Integer,Agent>();
 		markets = new HashMap<Integer,Market>();
 		models = new HashMap<Integer,MarketModel>();
-		numAgentType = new HashMap<String,Integer>();
 		numModelType = new HashMap<String,Integer>();
 		modelIDs = new ArrayList<Integer>();
 		transIDSequence = new Sequence(0);
@@ -258,14 +252,6 @@ public class SystemData {
 	}
 	
 	/**
-	 * @param modelID
-	 * @return agent list for the given model
-	 */
-	public ArrayList<AgentPropertiesPair> getModelAgentList(int modelID) {
-		return modelAgentMap.get(modelID);
-	}
-	
-	/**
 	 * @return number of environment agents
 	 */
 	public int getNumEnvAgents() {
@@ -280,23 +266,96 @@ public class SystemData {
 	}
 	
 	/**
-	 * @param modelID
-	 * @return number of agents specified for the given model
+	 * Forms HashMap hashed by unique AgentPropertiesPairs and with the number of each type.
+	 * @return HashMap hashed by AgentPropertiesPair
 	 */
-	public int getNumModelAgents(int modelID) {
-		return modelAgentMap.get(modelID).size();
+	public HashMap<AgentPropertiesPair, Integer> getPlayerNumberMap() {
+		HashMap<AgentPropertiesPair,Integer> map = new HashMap<AgentPropertiesPair,Integer>();
+		
+		for (Iterator<AgentPropertiesPair> it = playerList.iterator(); it.hasNext(); ) {
+			AgentPropertiesPair app = it.next();
+			if (map.containsKey(app)) {
+				map.put(app, map.get(app)+1);
+			} else {
+				map.put(app, 1);
+			}
+		}
+		return map;
 	}
 	
+//	TODO - eventually remove this?
+//	/**
+//	 * @param modelID
+//	 * @return agent list for the given model
+//	 */
+//	public ArrayList<AgentPropertiesPair> getModelAgentList(int modelID) {
+//		return modelAgentMap.get(modelID);
+//	}
+//	
+//	/**
+//	 * @param modelID
+//	 * @return number of agents specified for the given model
+//	 */
+//	public int getNumModelAgents(int modelID) {
+//		return modelAgentMap.get(modelID).size();
+//	}
+//	
+//	/**
+//	 * @return total number of model-level agents
+//	 */
+//	public int getNumModelAgents() {
+//		int tot = 0;
+//		for (ArrayList<AgentPropertiesPair> list : modelAgentMap.values()) {
+//			tot += list.size();
+//		}
+//		return tot;
+//	}
 	
 	/**
-	 * Returns true if agent with the specified ID is an environment agent, i.e.
-	 * not a player in one of the market models.
+	 * Iterates through all models. Forms HashMap hashed by unique AgentPropertiesPairs
+	 * and with the number of each type, across all models.
+	 * 
+	 * @return HashMap hashed by AgentPropertiesPair
+	 */
+	public HashMap<AgentPropertiesPair, Integer> getModelAgentNumberMap() {
+		HashMap<AgentPropertiesPair,Integer> map = new HashMap<AgentPropertiesPair,Integer>();
+		
+		for (ArrayList<AgentPropertiesPair> list : modelAgentMap.values()) {		
+			for (Iterator<AgentPropertiesPair> it = list.iterator(); it.hasNext(); ) {
+				AgentPropertiesPair app = it.next();
+				if (map.containsKey(app)) {
+					int n = map.get(app);
+					map.put(app, ++n);
+				} else {
+					map.put(app, 1);
+				}
+			}
+		}
+		return map;
+	}
+	
+	/**
+	 * @return envAgentNumberMap
+	 */
+	public HashMap<AgentPropertiesPair, Integer> getEnvAgentNumberMap() {
+		return envAgentNumberMap;
+	}
+	
+	/**
+	 * @param a AgentPropertiesPair
+	 * @param n number of agents
+	 */
+	public void addEnvAgentNumber(AgentPropertiesPair a, int n) {
+		envAgentNumberMap.put(a, n);
+	}
+	
+	/**
+	 * Returns true if agent with the specified ID is  not a player.
 	 * 
 	 * @param id
 	 * @return
 	 */
-	public boolean isEnvironmentAgent(int id) {
-		//return !(agents.get(id) instanceof HFTAgent);
+	public boolean isNonPlayer(int id) {
 		return !(players.containsKey(id));
 	}
 	
@@ -570,7 +629,7 @@ public class SystemData {
 				Agent seller = agents.get(t.sellerID);
 				
 				// Check that PV is defined & that it is a background agent
-				if (isEnvironmentAgent(buyer.getID())) {
+				if (isNonPlayer(buyer.getID())) {
 					int surplus = 0;
 					if (allSurplus.containsKey(buyer.getID())) {
 						surplus = allSurplus.get(buyer.getID());
@@ -581,7 +640,7 @@ public class SystemData {
 						allSurplus.put(buyer.getID(), buyer.getRealizedProfit());	// already summed
 					}
 				}
-				if (isEnvironmentAgent(seller.getID())) {
+				if (isNonPlayer(seller.getID())) {
 					int surplus = 0;
 					if (allSurplus.containsKey(seller.getID())) {
 						surplus = allSurplus.get(seller.getID());
@@ -627,7 +686,7 @@ public class SystemData {
 				TimeStamp sellTime = timeToExecution.get(t.sellBidID);
 				
 				// Check that PV is defined & that it is a background agent
-				if (isEnvironmentAgent(buyer.getID())) {
+				if (isNonPlayer(buyer.getID())) {
 					double surplus = 0;
 					if (discSurplus.containsKey(buyer.getID())) {
 						surplus = discSurplus.get(buyer.getID());
@@ -640,7 +699,7 @@ public class SystemData {
 						discSurplus.put(buyer.getID(), Math.exp(-rho * buyTime.longValue()) * buyer.getRealizedProfit());
 					}
 				}
-				if (isEnvironmentAgent(seller.getID())) {
+				if (isNonPlayer(seller.getID())) {
 					double surplus = 0;
 					if (discSurplus.containsKey(seller.getID())) {
 						surplus = discSurplus.get(seller.getID());
@@ -682,6 +741,23 @@ public class SystemData {
 		int id = mdl.getID();
 		models.put(id, mdl);
 		modelIDs.add(id);
+		addModelAgentsToMap(id, mdl.getAgentConfig());
+	}
+	
+	public void addEnvAgentToList(AgentPropertiesPair a) {
+		agentList.add(a);
+	}
+	
+	public void addPlayerToList(AgentPropertiesPair p) {
+		playerList.add(p);
+	}
+	
+	public void addModelAgentsToMap(int modelID, ArrayList<AgentPropertiesPair> list) {
+		if (modelAgentMap.containsKey(modelID)) {
+			modelAgentMap.get(modelID).addAll(list);
+		} else {
+			modelAgentMap.put(modelID, list);
+		}
 	}
 	
 	public void setSIP(SIP sip) {
@@ -804,14 +880,7 @@ public class SystemData {
 			System.err.print("ERROR: submission time does not contain bidID " + bidID);
 		}
 	}
-	
-	public void addEnvAgentToList(AgentPropertiesPair a) {
-		agentList.add(a);
-	}
-	
-	public void addPlayerToList(AgentPropertiesPair p) {
-		playerList.add(p);
-	}
+
 	
 	
 	/***********************************
@@ -824,7 +893,7 @@ public class SystemData {
 	 */
 	public void arrivalTimes() {
 		arrivalTimeGenerator = new ArrivalTime(new TimeStamp(0), arrivalRate);
-	}	
+	}
 	
 	/**
 	 * @return next generated arrival time
@@ -835,6 +904,21 @@ public class SystemData {
 		}
 		return arrivalTimeGenerator.next();
 	}
+	
+	/**
+	 * @return list of all arrival times
+	 */
+	public ArrayList<TimeStamp> getArrivalTimes() {
+		return arrivalTimeGenerator.getArrivalTimes();
+	}
+	
+	/**
+	 * @return list of all intervals
+	 */
+	public ArrayList<TimeStamp> getIntervals() {
+		return arrivalTimeGenerator.getIntervals();
+	}
+	
 	
 	/**
 	 * Set up global fundamental generation.
@@ -854,20 +938,6 @@ public class SystemData {
 			return new Price(0);
 		}
 		return fundamentalGenerator.getValueAt((int) ts.longValue());
-	}
-	
-	/**
-	 * @return list of all arrival times
-	 */
-	public ArrayList<TimeStamp> getArrivalTimes() {
-		return arrivalTimeGenerator.getArrivalTimes();
-	}
-	
-	/**
-	 * @return list of all intervals
-	 */
-	public ArrayList<TimeStamp> getIntervals() {
-		return arrivalTimeGenerator.getIntervals();
 	}
 	
 	/**
