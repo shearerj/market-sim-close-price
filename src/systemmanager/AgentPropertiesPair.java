@@ -1,5 +1,7 @@
 package systemmanager;
 
+import entity.Agent;
+
 /**
  * Pair of (agent type, object string). Used to store assignments from specification
  * file.
@@ -36,5 +38,10 @@ public class AgentPropertiesPair {
 		  final AgentPropertiesPair apo = (AgentPropertiesPair) o;
 		  return this.left.equals(apo.getAgentType()) &&
 		       this.right.equals(apo.getProperties());
+	  }
+	  
+	  @Override
+	  public String toString() {
+		  return "<" + this.left + "," + this.right + ">";
 	  }
 }

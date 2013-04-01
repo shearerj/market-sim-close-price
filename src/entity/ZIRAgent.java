@@ -6,12 +6,17 @@ import systemmanager.*;
 
 import java.util.HashMap;
 import java.util.Random;
+import java.util.ArrayList;
 
 /**
- * ZIAGENT
+ * ZIRAGENT
  *
- * A zero-intelligence (ZI) agent.
+ * A zero-intelligence agent with resubmission (ZIR).
  *
+ * The ZIR agent trades with primarily one market.
+ *
+ * TODO - more here........
+ * 
  * This agent bases its private value on a stochastic process, the parameters
  * of which are specified at the beginning of the simulation by the spec file.
  * The agent's private valuation is determined by value of the random process at
@@ -19,29 +24,39 @@ import java.util.Random;
  * variance parameter. The private value is used to calculate the agent's surplus 
  * (and thus the market's allocative efficiency).
  *
- * This agent submits only ONE limit order during its lifetime.
+ * This agent submits only ONE limit order at a time. It will modify its private
+ * value if its bid has transacted by the time it wakes up.
  * 
- * NOTE: The limit order price is uniformly distributed over a range that is twice
+ * NOTE: Each limit order price is uniformly distributed over a range that is twice
  * the size of bidRange in either a positive or negative direction from the agent's
  * private value.
  *
+ *
+ * TODO - need to know how many arrival times to store? or just compute dynamically
+ *
+ *
  * @author ewah
  */
-public class ZIAgent extends SMAgent {
+public class ZIRAgent extends SMAgent {
 
 	private int bidRange;				// range for limit order
 	private double pvVar;				// variance from private value random process
 	
+	// private rate_param for wake up
+	// private rate_param for in-between sleep times
+	
+	private ArrayList<TimeStamp> submissionTimes;
+	
 	/**
 	 * Overloaded constructor.
 	 */
-	public ZIAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
+	public ZIRAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, modelID, d, p, l);
 		
 		rand = new Random(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
 		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
-		bidRange = Integer.parseInt(params.get(ZIAgent.BIDRANGE_KEY));
-
+		bidRange = Integer.parseInt(params.get(ZIRAgent.BIDRANGE_KEY));
+		
 		pvVar = this.data.privateValueVar;
 		int fund = Integer.parseInt(params.get(Agent.FUNDAMENTAL_KEY));
 		privateValue = Math.max(0, fund + (int) Math.round(getNormalRV(0, pvVar)));
@@ -74,4 +89,9 @@ public class ZIAgent extends SMAgent {
 		actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
 		return actMap;
 	}
+
+//	public TimeStamp nextArrivalTime; somehow compute the next arrival time in this sequence
+	
+	
+	
 }

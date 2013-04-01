@@ -88,6 +88,7 @@ public class SystemData {
 		transData = new HashMap<Integer,PQTransaction>();
 		quoteData = new HashMap<Integer,Quote>();
 		agents = new HashMap<Integer,Agent>();
+		players = new HashMap<Integer,Agent>();
 		markets = new HashMap<Integer,Market>();
 		models = new HashMap<Integer,MarketModel>();
 		numModelType = new HashMap<String,Integer>();
@@ -498,7 +499,7 @@ public class SystemData {
 	
 	
 	/**
-	 * @return list of actual private values of all agents TODO - used to initialize with numBackgroundAgents
+	 * @return list of actual private values of all agents
 	 */
 	public ArrayList<Price> getPrivateValues() {
 		ArrayList<Price> pvs = new ArrayList<Price>();

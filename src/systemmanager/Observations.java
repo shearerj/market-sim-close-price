@@ -54,6 +54,10 @@ public class Observations {
 		// or if observations are empty
 		if (obs == null || obs.isEmpty()) return;
 		
+		// if not a player, then don't add? will aggregate? aggregate only if not player 
+		// TODO
+		
+		// check if list of players has already been inserted in observations file
 		if (!observations.containsKey(PLAYERS_KEY)) {
 			ArrayList<Object> array = new ArrayList<Object>();
 			array.add(obs);

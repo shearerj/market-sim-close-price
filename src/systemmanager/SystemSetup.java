@@ -56,10 +56,6 @@ import model.*;
  * 
  * @author ewah
  */
-/**
- * @author ewah
- *
- */
 public class SystemSetup {
 
 	private Log log;
@@ -75,6 +71,7 @@ public class SystemSetup {
 	private HashMap<AgentPropertiesPair, ArrayList<Long>> seeds;
 	private HashMap<Integer, MarketModel> modelMap;
 	private HashMap<AgentPropertiesPair, Integer> allAgents;
+	private HashMap<AgentPropertiesPair, Boolean> isPlayer;
 	
 	public SystemSetup(SimulationSpec s, EventManager em, SystemData d, Log l) {
 		specs = s;
@@ -89,6 +86,7 @@ public class SystemSetup {
 		seeds = new HashMap<AgentPropertiesPair, ArrayList<Long>>();
 		modelMap = new HashMap<Integer, MarketModel>();
 		allAgents = new HashMap<AgentPropertiesPair, Integer>();
+		isPlayer = new HashMap<AgentPropertiesPair, Boolean>();
 	}
 	
 	
@@ -102,15 +100,15 @@ public class SystemSetup {
 			// then to the appropriate/corresponding markets.
 			createSIP();
 			log.log(Log.INFO, "------------------------------------------------");
-			log.log(Log.INFO, "    Creating MARKET MODELS");
+			log.log(Log.INFO, "            Creating MARKET MODELS");
 			createMarketModels();
 			log.log(Log.INFO, "------------------------------------------------");
-			log.log(Log.INFO, "    Creating AGENTS");
+			log.log(Log.INFO, "            Creating AGENTS");
 			createAllAgents();
 
 			// Log agent information
 			logAgentInfo();
-			log.log(Log.INFO, "    SETUP COMPLETE");
+			log.log(Log.INFO, "------------------------------------------------");
 			log.log(Log.INFO, "------------------------------------------------");
 
 			// Initial SendToSIP Activity for all markets
@@ -138,8 +136,8 @@ public class SystemSetup {
 	 */
 	public void createMarketModels() {
 		
-		// Only create multiple market models if not an EGTA analysis (i.e. zero players)
-		if (data.getNumPlayers() != 0) {
+		// If players have been specified, then configure only the primary model
+		if (data.getNumPlayers() > 0) {
 			
 			// get information on the primary market model: (format MODELNAME-CONFIG)
 			String[] desc = data.primaryModelDesc.split("[-]+");
@@ -155,7 +153,14 @@ public class SystemSetup {
 				data.primaryModel = primary;
 				log.log(Log.INFO, "Primary model: " + primaryModelType + "-" + primaryModelConfig);
 				
-			} else if (desc.length != 1) {
+			} else if (desc.length == 1) {
+				// use default configuration of this market model
+				primaryModelType = desc[0];
+				MarketModel primary = createModel(primaryModelType, "");
+				data.primaryModel = primary;
+				log.log(Log.INFO, "Primary model: " + primaryModelType + "-(default)");
+				
+			} else {
 				// if pattern is not a valid configuration string
 				System.err.println(this.getClass().getSimpleName() + "::createMarketModels: " +
 									"primary market model config not specified");
@@ -163,7 +168,7 @@ public class SystemSetup {
 			}
 			
 		} else {
-			// Parallel model simulation; no primary model (set as null)
+			// No players means parallel model simulation; no primary model (set as null)
 			data.primaryModel = null;
 			
 			// Create by model type
@@ -291,7 +296,7 @@ public class SystemSetup {
 				}
 			}
 			//allAgents.putAll(data.getPlayerNumberMap()); // this may overwrite, so cannot use this
-			
+			// TODO - or create separately so can then deal with adequately?
 			
 		} else {
 			/*******************
@@ -308,8 +313,8 @@ public class SystemSetup {
 		
 		// generate logIDs and pseudorandom number generator seeds
 		Random rand = new Random();
+		int id = 1;
 		for (Map.Entry<AgentPropertiesPair, Integer> entry : allAgents.entrySet()) {
-			int id = 1;
 			ArrayList<Integer> ids = new ArrayList<Integer>();
 			ArrayList<Long> sd = new ArrayList<Long>();
 			for (int i = 0; i < entry.getValue(); i++) {
@@ -323,28 +328,18 @@ public class SystemSetup {
 		// create agents
 		for (MarketModel model : modelMap.values()) {
 			log.log(Log.INFO, "MODEL: " + model.getFullName() + " agent types:");
-			
-//			createAllAgents(model)
-			
+			createAgentsForModel(model);
 		}
 	}
 	
 
-	
 	/**
 	 * Creates environment agents in the specified model.
+	 *
+	 * @param model
 	 */
-	private void createAllAgents(MarketModel model, ArrayList<TimeStamp> arrivals) {
-		
-		// first create environment agents from simulation spec file
+	private void createAgentsForModel(MarketModel model) {
 		for (Map.Entry<AgentPropertiesPair,Integer> a : allAgents.entrySet()) {
-			
-			// Note that for environment agents, each agent type is associated with
-			// only one ObjectProperties object! (b/c only one "setup" line)
-			
-			// TODO - initialize the arrivals for this agent type separately????
-			// to do this, will have to pre-initialize the arrivals for each APP type...
-			
 			AgentPropertiesPair ap = a.getKey();
 			int numAgents = a.getValue();
 			ArrayList<Integer> assignMktIDs = assignAgToMkts(numAgents, model.getMarketIDs());
@@ -353,10 +348,13 @@ public class SystemSetup {
 				// create copy of ObjectProperties in case modify it
 				ObjectProperties op = new ObjectProperties(ap.getProperties());
 				if (data.isSMAgent(ap.getAgentType())) {
+					// must assign market if single-market agent
 					op.put(SMAgent.MARKETID_KEY, assignMktIDs.get(i).toString());
 				}
 				Agent ag = createAgent(model, new AgentPropertiesPair(ap.getAgentType(), op),
-										seeds.get(ap).get(i), arrivals.get(i));
+										seeds.get(ap).get(i), new TimeStamp(0));
+									//	seeds.get(ap).get(i), arrivals.get(i));
+				// TODO FIX THIS - arrivals!
 				ag.setLogID(logIDs.get(ap).get(i));
 			}
 			log.log(Log.INFO, "Agents: " + numAgents + " " + ap.getAgentType() + " " +
@@ -367,15 +365,21 @@ public class SystemSetup {
 	
 	/**
 	 * Create an agent with the specified properties & type in the given market model.
+	 *
+	 * @param model
+	 * @param ap
+	 * @param seed
+	 * @param arr
+	 * @return
 	 */
 	private Agent createAgent(MarketModel model, AgentPropertiesPair ap, Long seed, TimeStamp arr) { 
 		String agType = ap.getAgentType();
 		ObjectProperties p = ap.getProperties();
 		
 		p.put(Agent.RANDSEED_KEY, seed.toString());
-		int agID = agentIDSequence.increment();		
+		int agID = agentIDSequence.increment();
 		if (data.isSMAgent(agType)) {
-			// Single market agent
+			// must assign market if single-market agent
 			p.put(Agent.ARRIVAL_KEY, arr.toString());
 			p.put(Agent.FUNDAMENTAL_KEY, data.getFundamentalAt(arr).toString());				
 		}
@@ -446,7 +450,7 @@ public class SystemSetup {
 
 	
 	/**
-	 * Logs agent information (only for primary model to avoid redundancy).
+	 * 2Logs agent information.
 	 */
 	public void logAgentInfo() {
 		ArrayList<Integer> ids = data.getAgentIDs();

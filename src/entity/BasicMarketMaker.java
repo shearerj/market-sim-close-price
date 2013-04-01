@@ -57,7 +57,6 @@ public class BasicMarketMaker extends SMAgent {
 	public HashMap<String, Object> getObservation() {
 		return null;
 	}
-
 	
 	@Override
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
@@ -67,7 +66,7 @@ public class BasicMarketMaker extends SMAgent {
 		int ask = getAskPrice(getMarketID()).getPrice();
 
 		// TODO - what if just one of the bid and ask is -1? just submit one side?
-		if (bid == -1 || ask == -1) {
+		if (bid <=0  || ask <= 0) {
 			log.log(Log.INFO, ts + " | " + this + " " + agentType +
 					"::agentStrategy: undefined quote in market " + getMarket());
 			

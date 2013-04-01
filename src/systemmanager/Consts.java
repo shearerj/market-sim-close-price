@@ -25,24 +25,34 @@ public class Consts {
 	public final static String BASICMARKETMAKER = "BASICMM";
 	public final static String LA = "LA";
 	public final static String DUMMY = "DUMMY";
+	
 	public final static String CALL = "CALL";
 	public final static String CDA = "CDA";
+	
 	public final static String TWOMARKET = "TWOMARKET";
 	public final static String CENTRALCDA = "CENTRALCDA";
 	public final static String CENTRALCALL = "CENTRALCALL";
 	
+	public final static String ROLE_HFT = "HFT";
+	public final static String ROLE_MARKETMAKER = "MARKETMAKER";
+	public final static String ROLE_BACKGROUND = "BACKGROUND";
+	
 	public final static String[] SMAgentTypes = 
 		{ ZI, ZIP, BASICMARKETMAKER };
-	public final static String[] HFTAgentTypes = 
-		{ LA, DUMMY };
-	public final static String[] marketTypeNames = 
-		{ CDA, CALL };
+//	public final static String[] marketTypeNames = 
+//		{ CDA, CALL };
 	public final static String[] modelTypeNames = 
 		{ TWOMARKET, CENTRALCDA, CENTRALCALL };
-		
+	
 	// EGTA roles
 	public final static String[] roles =
-		{"HFT", "MARKETMAKER", "BACKGROUND"};
+		{ ROLE_HFT, ROLE_MARKETMAKER, ROLE_BACKGROUND };
+	public final static String[] HFT_AGENT_TYPES = 
+		{ LA, DUMMY };
+	public final static String[] MARKETMAKER_AGENT_TYPES = 
+		{ BASICMARKETMAKER };
+	public final static String[] BACKGROUND_AGENT_TYPES =
+		{ ZI, ZIP };
 	
 	// **********************************************************
 	

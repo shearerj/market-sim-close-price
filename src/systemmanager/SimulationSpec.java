@@ -106,7 +106,10 @@ public class SimulationSpec {
 				}
 			}
 		}
-			
+		
+//		log.log(Log.INFO, "------------------------------------------------");
+//		log.log(Log.INFO, "    Reading SIMULATION SPECIFICATIONS");
+		
 		/*******************
 		 * CONFIGURATION - add environment agents
 		 *******************/
@@ -179,8 +182,6 @@ public class SimulationSpec {
 		if (op == null) {
 			log.log(Log.ERROR, this.getClass().getSimpleName() + 
 					"::getStrategyParameters: error parsing " + strategy.split("[_]+"));
-		} else {
-			log.log(Log.INFO, type + ": " + op);
 		}
 		return op;
 	}

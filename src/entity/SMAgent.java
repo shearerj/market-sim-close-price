@@ -9,6 +9,8 @@ import java.util.ArrayList;
 
 
 /**
+ * SMAGENT
+ * 
  * Single market (SM) agent, whose agent strategy is executed only within one market.
  * This does not mean that it can only trade with its specified market; however, it is
  * only capable of looking at price quotes from the NBBO and its market.
@@ -300,14 +302,14 @@ public abstract class SMAgent extends Agent {
 		
 		ActivityHashMap actMap = new ActivityHashMap();
 		ArrayList<Integer> altMarketIDs = getAltMarketIDs();
-		int altMarketID = market.getID();	// initialize as main market ID
+//		int altMarketID = market.getID();	// initialize as main market ID
 
 		// TODO - enable for more than two markets total (including main)
 		if (altMarketIDs.size() > 1) {
 			System.err.println("Agent::executeSubmitNMSBid: 2 markets permitted currently.");
 		} else if (altMarketIDs.size() == 1) {
 			// get first alternate market since there are two markets total
-			altMarketID = altMarketIDs.get(0);
+//			altMarketID = altMarketIDs.get(0);
 		}
 		
 		return actMap;

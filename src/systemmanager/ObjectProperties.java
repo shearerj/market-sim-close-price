@@ -2,6 +2,8 @@ package systemmanager;
 
 import java.util.HashMap;
 
+import entity.Agent;
+
 /**
  * This class stores the parameters for a specific agent, market, or market model.
  * Each sets defaults for its properties in its constructor or in the Consts class, 
@@ -47,6 +49,13 @@ public class ObjectProperties {
 	}
 	
 	/**
+	 * @param key
+	 */
+	public void remove(String key) {
+		properties.remove(key);
+	}
+	
+	/**
 	 * Get property's value.
 	 * @param key
 	 * @return String
@@ -55,9 +64,14 @@ public class ObjectProperties {
 		return properties.get(key);
 	}
 
-	
+	@Override
 	public String toString() {
-		return properties.toString();
+		// remove strategy to make easier to read in log (will be parsed already)
+		ObjectProperties tmp = new ObjectProperties(this);
+		if (tmp.containsKey(Agent.STRATEGY_KEY)) {
+			tmp.remove(Agent.STRATEGY_KEY);
+		}
+		return tmp.properties.toString();
 	}
 	
 	@Override
