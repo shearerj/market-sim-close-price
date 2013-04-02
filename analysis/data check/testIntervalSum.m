@@ -1,10 +1,10 @@
 function testResult=testIntervalSum(filename)
-% testResult=testLAtransaction(filename)
+% testResult=testIntervalSum(filename)
 %
-% Testing whether transactions_num value for latency=0 for each model in the same
+% Testing whether transactions_num value for each model in the same
 %       line is the same.
 %
-% Example: testLAtransaction('example.mat');
+% Example: testIntervalSum('example.mat');
 %          (where the data is saved in example.mat)
 
 load(filename);
@@ -14,7 +14,6 @@ testResult = '';
 epsilon = 15000;
 
 intervalSumIndex = getIndex(headers, 'interval_sum');
-assert(~isempty(intervalSumIndex), 'Interval sum column does not exist!');
 
 [transr, transc] = size(intervalSumIndex);
 

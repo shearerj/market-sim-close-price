@@ -31,7 +31,34 @@ end
 
 % test for interval sum 
 fprintf(fileID, 'Testing interval sum: ');
-result = testdiscSurplus('example.mat');
+result = testIntervalSum('example.mat');
+if(~strcmp(result, ''))
+     fprintf(fileID, 'FAILED\n');
+     fprintf(fileID, result);
+else fprintf(fileID, 'PASSED\n');
+end
+
+% test for execution speed at 0 latency
+fprintf(fileID, 'Testing execution speed at latency 0: ');
+result = testZeroLaExecSpeed('example.mat');
+if(~strcmp(result, ''))
+     fprintf(fileID, 'FAILED\n');
+     fprintf(fileID, result);
+else fprintf(fileID, 'PASSED\n');
+end
+
+% test for spreads of med nbbo at 0 latency
+fprintf(fileID, 'Testing spreads of med nbbo at latency 0: ');
+result = testSpreadsMedNbbo('example.mat');
+if(~strcmp(result, ''))
+     fprintf(fileID, 'FAILED\n');
+     fprintf(fileID, result);
+else fprintf(fileID, 'PASSED\n');
+end
+
+% test for price vol at 0 latency
+fprintf(fileID, 'Testing price vol at latency 0: ');
+result = testZeroLaPriceVol('example.mat');
 if(~strcmp(result, ''))
      fprintf(fileID, 'FAILED\n');
      fprintf(fileID, result);
