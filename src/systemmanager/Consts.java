@@ -18,7 +18,7 @@ public class Consts {
 	// (must edit this whenever add a new agent, market, or model
 	
 	public final static String[] SMAgentTypes = 
-		{ "MARKETMAKER", "ZI", "ZIP" };
+		{ "MARKETMAKER", "ZI", "ZIP", "AA" };
 	public final static String[] HFTAgentTypes = 
 		{ "LA", "DUMMY" };
 	public final static String[] marketTypeNames = 

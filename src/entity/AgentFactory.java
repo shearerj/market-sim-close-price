@@ -60,6 +60,8 @@ public class AgentFactory {
 			return new ZIAgent(agentID, modelID, data, params, l, mktID);
 		} else if (type.equals(Consts.getAgentType("ZIPAgent"))) {
 			return new ZIPAgent(agentID, modelID, data, params, l, mktID);
+		} else if (type.equals(Consts.getAgentType("AAAgent"))) {
+			return new AAAgent(agentID, modelID, data, params, l, mktID);
 		} else {
 			return null;
 		}
