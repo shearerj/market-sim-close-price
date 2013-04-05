@@ -47,9 +47,12 @@ public class SystemData {
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
 	public ArrayList<Integer> modelIDs;
 
-	public ArrayList<AgentPropertiesPair> agentList;
-	public ArrayList<AgentPropertiesPair> playerList;
+//	public ArrayList<AgentPropertiesPair> agentList;
+//	public ArrayList<AgentPropertiesPair> playerList;
+	public int numEnvAgents;
+	public int numPlayers;
 	public HashMap<AgentPropertiesPair, Integer> envAgentNumberMap;
+	public HashMap<AgentPropertiesPair, Integer> playerNumberMap;
 	// hashed by model ID
 	public HashMap<Integer, ArrayList<AgentPropertiesPair>> modelAgentMap;
 	
@@ -97,9 +100,10 @@ public class SystemData {
 		primaryModel = null;
 		marketIDModelIDMap = new HashMap<Integer,Integer>();
 		
-		agentList = new ArrayList<AgentPropertiesPair>();
-		playerList = new ArrayList<AgentPropertiesPair>();
+//		agentList = new ArrayList<AgentPropertiesPair>();
+//		playerList = new ArrayList<AgentPropertiesPair>();
 		modelAgentMap = new HashMap<Integer, ArrayList<AgentPropertiesPair>>();
+		playerNumberMap = new HashMap<AgentPropertiesPair, Integer>();
 		envAgentNumberMap = new HashMap<AgentPropertiesPair, Integer>(); 
 	
 		// Initialize containers for observations/features
@@ -239,79 +243,40 @@ public class SystemData {
 	}
 	
 	/**
-	 * @return agentSetupMap
-	 */
-	public ArrayList<AgentPropertiesPair> getEnvAgentList() {
-		return agentList;
-	}
-	
-	/**
-	 * @return playerStrategyMap
-	 */
-	public ArrayList<AgentPropertiesPair> getPlayerList() {
-		return playerList;
-	}
-	
-	/**
 	 * @return number of environment agents
 	 */
 	public int getNumEnvAgents() {
-		return agentList.size();
+		return numEnvAgents;
 	}
 	
 	/**
 	 * @return number of players
 	 */
-	public int getNumPlayers() {	
-		return playerList.size();
-	}
+	public int getNumPlayers() {
+		return numPlayers;
+	}	
 	
 	/**
 	 * Forms HashMap hashed by unique AgentPropertiesPairs and with the number of each type.
 	 * @return HashMap hashed by AgentPropertiesPair
 	 */
 	public HashMap<AgentPropertiesPair, Integer> getPlayerNumberMap() {
-		HashMap<AgentPropertiesPair,Integer> map = new HashMap<AgentPropertiesPair,Integer>();
-		
-		for (Iterator<AgentPropertiesPair> it = playerList.iterator(); it.hasNext(); ) {
-			AgentPropertiesPair app = it.next();
-			if (map.containsKey(app)) {
-				map.put(app, map.get(app)+1);
-			} else {
-				map.put(app, 1);
-			}
-		}
-		return map;
+//		HashMap<AgentPropertiesPair,Integer> map = new HashMap<AgentPropertiesPair,Integer>();
+//		
+//		for (Iterator<AgentPropertiesPair> it = playerList.iterator(); it.hasNext(); ) {
+//			AgentPropertiesPair app = it.next();
+//			if (map.containsKey(app)) {
+//				map.put(app, map.get(app)+1);
+//			} else {
+//				map.put(app, 1);
+//			}
+//		}
+//		return map;
+		// TODO - remove later
+		return playerNumberMap;
 	}
 	
-//	TODO - eventually remove this?
-//	/**
-//	 * @param modelID
-//	 * @return agent list for the given model
-//	 */
-//	public ArrayList<AgentPropertiesPair> getModelAgentList(int modelID) {
-//		return modelAgentMap.get(modelID);
-//	}
-//	
-//	/**
-//	 * @param modelID
-//	 * @return number of agents specified for the given model
-//	 */
-//	public int getNumModelAgents(int modelID) {
-//		return modelAgentMap.get(modelID).size();
-//	}
-//	
-//	/**
-//	 * @return total number of model-level agents
-//	 */
-//	public int getNumModelAgents() {
-//		int tot = 0;
-//		for (ArrayList<AgentPropertiesPair> list : modelAgentMap.values()) {
-//			tot += list.size();
-//		}
-//		return tot;
-//	}
-	
+
 	/**
 	 * Iterates through all models. Forms HashMap hashed by unique AgentPropertiesPairs
 	 * and with the number of each type, across all models.
@@ -341,14 +306,7 @@ public class SystemData {
 	public HashMap<AgentPropertiesPair, Integer> getEnvAgentNumberMap() {
 		return envAgentNumberMap;
 	}
-	
-	/**
-	 * @param a AgentPropertiesPair
-	 * @param n number of agents
-	 */
-	public void addEnvAgentNumber(AgentPropertiesPair a, int n) {
-		envAgentNumberMap.put(a, n);
-	}
+
 	
 	/**
 	 * Returns true if agent with the specified ID is  not a player.
@@ -745,13 +703,14 @@ public class SystemData {
 		addModelAgentsToMap(id, mdl.getAgentConfig());
 	}
 	
-	public void addEnvAgentToList(AgentPropertiesPair a) {
-		agentList.add(a);
-	}
-	
-	public void addPlayerToList(AgentPropertiesPair p) {
-		playerList.add(p);
-	}
+// TODO - remove eventually
+//	public void addEnvAgentToList(AgentPropertiesPair a) {
+//		agentList.add(a);
+//	}
+//	
+//	public void addPlayerToList(AgentPropertiesPair p) {
+//		playerList.add(p);
+//	}
 	
 	public void addModelAgentsToMap(int modelID, ArrayList<AgentPropertiesPair> list) {
 		if (modelAgentMap.containsKey(modelID)) {
@@ -759,6 +718,27 @@ public class SystemData {
 		} else {
 			modelAgentMap.put(modelID, list);
 		}
+	}
+	
+	/**
+	 * @param a AgentPropertiesPair
+	 */
+	public void addPlayer(AgentPropertiesPair a) {
+		if (playerNumberMap.containsKey(a)) {
+			playerNumberMap.put(a, playerNumberMap.get(a)+1);
+		} else {
+			playerNumberMap.put(a, 1);
+		}
+		numPlayers++;
+	}
+	
+	/**
+	 * @param a AgentPropertiesPair
+	 * @param n number of agents
+	 */
+	public void addEnvAgentNumber(AgentPropertiesPair a, int n) {
+		envAgentNumberMap.put(a, n);
+		numEnvAgents += n;
 	}
 	
 	public void setSIP(SIP sip) {

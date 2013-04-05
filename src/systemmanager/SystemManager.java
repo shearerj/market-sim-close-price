@@ -264,7 +264,7 @@ public class SystemManager {
 			// Other features
 //			obs.addFeature(prefix + "marketmaker", obs.getMarketMakerInfo(model));
 			obs.addFeature(prefix + "transactions", obs.getTransactionInfo(model));
-			obs.addFeature(prefix + "exec_speed", obs.getTimeToExecution(model));
+			obs.addFeature(prefix + "exec_time", obs.getTimeToExecution(model));
 			
 			// obs.addFeature(prefix + "depths", obs.getDepthInfo(ids));
 		}

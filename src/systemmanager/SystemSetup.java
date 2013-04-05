@@ -71,6 +71,7 @@ public class SystemSetup {
 	private HashMap<AgentPropertiesPair, ArrayList<Long>> seeds;
 	private HashMap<Integer, MarketModel> modelMap;
 	private HashMap<AgentPropertiesPair, Integer> allAgents;
+	
 	private HashMap<AgentPropertiesPair, Boolean> isPlayer;
 	
 	public SystemSetup(SimulationSpec s, EventManager em, SystemData d, Log l) {
@@ -270,6 +271,12 @@ public class SystemSetup {
 //		}
 //	}
 
+	private void initializeArrivals(arrivals) {
+		// will create a data structure along the same lines as the agentNumberMaps, but with arrays
+		HashMap<AgentPropertiesPair, Integer> envAgentArrivals
+		
+	}
+	
 	
 	/**
 	 * Creates the agents for each model. Each model has the same number of each 

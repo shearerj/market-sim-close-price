@@ -123,10 +123,10 @@ public class SimulationSpec {
 				AgentPropertiesPair a = new AgentPropertiesPair(agentType, op);
 				data.addEnvAgentNumber(a, n);
 				
-				// add n agents to environment agent list
-				for (int j = 0; j < n; j++) {
-					data.addEnvAgentToList(new AgentPropertiesPair(agentType, op));
-				}
+//				// add n agents to environment agent list
+//				for (int j = 0; j < n; j++) {
+//					data.addEnvAgentToList(new AgentPropertiesPair(agentType, op));
+//				}
 			}
 		}
 
@@ -147,7 +147,7 @@ public class SimulationSpec {
 						} else {
 							// first elt is agent type, second elt is strategy
 							ObjectProperties op = getStrategyParameters(as[0], as[1]);
-							data.addPlayerToList(new AgentPropertiesPair(as[0], op));
+							data.addPlayer(new AgentPropertiesPair(as[0], op));
 						}
 					}
 				}
