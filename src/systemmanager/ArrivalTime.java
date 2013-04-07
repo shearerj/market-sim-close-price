@@ -74,6 +74,14 @@ public class ArrivalTime {
 	}
 	
 	/**
+	 * @param idx
+	 * @return arrival time at index idx
+	 */
+	public TimeStamp getArrivalTime(int idx) {
+		return arrivalTimes.get(idx);
+	}
+	
+	/**
 	 * @return list of all intervals (1 for each arrival)
 	 */
 	public ArrayList<TimeStamp> getIntervals() {

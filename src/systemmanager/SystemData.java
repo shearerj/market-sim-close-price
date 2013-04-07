@@ -47,8 +47,6 @@ public class SystemData {
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
 	public ArrayList<Integer> modelIDs;
 
-//	public ArrayList<AgentPropertiesPair> agentList;
-//	public ArrayList<AgentPropertiesPair> playerList;
 	public int numEnvAgents;
 	public int numPlayers;
 	public HashMap<AgentPropertiesPair, Integer> envAgentNumberMap;
@@ -58,7 +56,6 @@ public class SystemData {
 	
 	private SIP sip;
 	private Sequence transIDSequence;	
-	private ArrivalTime arrivalTimeGenerator;
 	private FundamentalValue fundamentalGenerator;
 	
 	// hashed by type, gives # of that type
@@ -100,8 +97,6 @@ public class SystemData {
 		primaryModel = null;
 		marketIDModelIDMap = new HashMap<Integer,Integer>();
 		
-//		agentList = new ArrayList<AgentPropertiesPair>();
-//		playerList = new ArrayList<AgentPropertiesPair>();
 		modelAgentMap = new HashMap<Integer, ArrayList<AgentPropertiesPair>>();
 		playerNumberMap = new HashMap<AgentPropertiesPair, Integer>();
 		envAgentNumberMap = new HashMap<AgentPropertiesPair, Integer>(); 
@@ -261,18 +256,6 @@ public class SystemData {
 	 * @return HashMap hashed by AgentPropertiesPair
 	 */
 	public HashMap<AgentPropertiesPair, Integer> getPlayerNumberMap() {
-//		HashMap<AgentPropertiesPair,Integer> map = new HashMap<AgentPropertiesPair,Integer>();
-//		
-//		for (Iterator<AgentPropertiesPair> it = playerList.iterator(); it.hasNext(); ) {
-//			AgentPropertiesPair app = it.next();
-//			if (map.containsKey(app)) {
-//				map.put(app, map.get(app)+1);
-//			} else {
-//				map.put(app, 1);
-//			}
-//		}
-//		return map;
-		// TODO - remove later
 		return playerNumberMap;
 	}
 	
@@ -691,6 +674,10 @@ public class SystemData {
 	public void addAgent(Agent ag) {
 		agents.put(ag.getID(), ag);
 	}
+
+	public void addPlayer(Agent ag) {
+		players.put(ag.getID(), ag);
+	}
 	
 	public void addMarket(Market mkt) {
 		markets.put(mkt.getID(), mkt);
@@ -702,15 +689,6 @@ public class SystemData {
 		modelIDs.add(id);
 		addModelAgentsToMap(id, mdl.getAgentConfig());
 	}
-	
-// TODO - remove eventually
-//	public void addEnvAgentToList(AgentPropertiesPair a) {
-//		agentList.add(a);
-//	}
-//	
-//	public void addPlayerToList(AgentPropertiesPair p) {
-//		playerList.add(p);
-//	}
 	
 	public void addModelAgentsToMap(int modelID, ArrayList<AgentPropertiesPair> list) {
 		if (modelAgentMap.containsKey(modelID)) {
@@ -865,41 +843,9 @@ public class SystemData {
 	
 	
 	/***********************************
-	 * Arrival times & global fundamental generation
+	 * Global fundamental generation
 	 *
 	 **********************************/
-	
-	/**
-	 * Set up arrival times generation for background agents.
-	 */
-	public void arrivalTimes() {
-		arrivalTimeGenerator = new ArrivalTime(new TimeStamp(0), arrivalRate);
-	}
-	
-	/**
-	 * @return next generated arrival time
-	 */
-	public TimeStamp nextArrival() {
-		if (arrivalTimeGenerator == null) {
-			return null;
-		}
-		return arrivalTimeGenerator.next();
-	}
-	
-	/**
-	 * @return list of all arrival times
-	 */
-	public ArrayList<TimeStamp> getArrivalTimes() {
-		return arrivalTimeGenerator.getArrivalTimes();
-	}
-	
-	/**
-	 * @return list of all intervals
-	 */
-	public ArrayList<TimeStamp> getIntervals() {
-		return arrivalTimeGenerator.getIntervals();
-	}
-	
 	
 	/**
 	 * Set up global fundamental generation.

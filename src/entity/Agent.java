@@ -60,6 +60,7 @@ public abstract class Agent extends Entity {
 	public final static String RANDSEED_KEY = "seed";
 	public final static String STRATEGY_KEY = "strategy";
 	public final static String BIDRANGE_KEY = "bidRange";
+	public final static String ARRIVALRATE_KEY = "arrivalRate";
 	
 	
 	/**

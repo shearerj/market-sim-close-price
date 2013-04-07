@@ -222,7 +222,7 @@ public class SystemManager {
 			}
 			
 			obs.addFeature("", obs.getConfiguration());
-			obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
+//			obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
 			obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
 //			obs.addTransactionComparison();
 			getModelResults();

@@ -50,7 +50,11 @@ public class ZIAgent extends SMAgent {
 	
 	@Override
 	public HashMap<String, Object> getObservation() {
-		return null;
+		HashMap<String,Object> obs = new HashMap<String,Object>();
+		obs.put("role", agentType);
+		obs.put("payoff", getRealizedProfit());
+		obs.put("strategy", params.get("strategy"));
+		return obs;
 	}
 	
 	
