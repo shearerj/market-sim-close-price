@@ -34,6 +34,9 @@ public class Observations {
 	// Constants in observation file
 	public final static String PLAYERS_KEY = "players";
 	public final static String FEATURES_KEY = "features";
+	public final static String ROLES_KEY = "roles";
+	public final static String PAYOFF_KEY = "payoff";
+	public final static String STRATEGY_KEY = "strategy";
 	
 	/**
 	 * Constructor

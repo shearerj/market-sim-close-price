@@ -38,15 +38,23 @@ public class BasicMarketMaker extends SMAgent {
 	private int xt, yt;		// stores the ask/bid, respectively
 
 	private int sleepTime;
-//	private double sleepVar;
-	
+
+	/**
+	 * Constructor
+	 * 
+	 * @param agentID
+	 * @param modelID
+	 * @param d
+	 * @param p
+	 * @param l
+	 */
 	public BasicMarketMaker(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, modelID, d, p, l);
 		arrivalTime = new TimeStamp(0);
-		sleepTime = Integer.parseInt(params.get("sleepTime"));
-//		sleepVar = Double.parseDouble(params.get("sleepVar"));
-		numRungs = Integer.parseInt(params.get("numRungs"));
-		rungSize = Integer.parseInt(params.get("rungSize"));
+		sleepTime = Integer.parseInt(params.get(SLEEPTIME_KEY));
+//		sleepVar = Double.parseDouble(params.get(Agent.SLEEPVAR_KEY));
+		numRungs = Integer.parseInt(params.get(NUMRUNGS_KEY));
+		rungSize = Integer.parseInt(params.get(RUNGSIZE_KEY));
 		stepSize = Market.quantize(rungSize, data.tickSize);
 		
 		xt = -1;	// ask
@@ -56,9 +64,9 @@ public class BasicMarketMaker extends SMAgent {
 	@Override
 	public HashMap<String, Object> getObservation() {
 		HashMap<String,Object> obs = new HashMap<String,Object>();
-		obs.put("role", agentType);
-		obs.put("payoff", getRealizedProfit());
-		obs.put("strategy", params.get("strategy"));
+		obs.put(Observations.ROLES_KEY, agentType);
+		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
+		obs.put(Observations.STRATEGY_KEY, params.get(STRATEGY_KEY));
 		return obs;
 	}
 	

@@ -212,17 +212,17 @@ public class SystemManager {
 		try {
 			for (Iterator<Integer> it = data.getAgentIDs().iterator(); it.hasNext(); ) {
 				int id = it.next();
-				if (data.getPrimaryAgentIDs().contains(id)) {
-					// only add observations for players in primary model
+				if (data.isEGTAUseCase()) {
 					obs.addObservation(id);
 				} else {
-					// add as a feature observations for players in other market models
+					// add observations as features for nonplayers
 					obs.addObservationAsFeature(id);
 				}
 			}
+
+//			obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
 			
 			obs.addFeature("", obs.getConfiguration());
-//			obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
 			obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
 //			obs.addTransactionComparison();
 			getModelResults();

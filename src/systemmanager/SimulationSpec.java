@@ -28,6 +28,9 @@ public class SimulationSpec {
 	private JSONObject assignments;
 	private JSONParser parser;
 	
+	public final static String ASSIGN_KEY = "assignment";
+	public final static String CONFIG_KEY = "configuration";
+	
 	/**
 	 * Constructor
 	 * @param file
@@ -51,8 +54,8 @@ public class SimulationSpec {
 			InputStreamReader isr = new InputStreamReader(is);
 			Object obj = parser.parse(isr);
 			JSONObject array = (JSONObject) obj;
-			assignments = (JSONObject) array.get("assignment");
-			params = (JSONObject) array.get("configuration");
+			assignments = (JSONObject) array.get(ASSIGN_KEY);
+			params = (JSONObject) array.get(CONFIG_KEY);
 		} catch (IOException e) {
 			log.log(Log.ERROR, this.getClass().getSimpleName() + 
 					"::loadFile(String): error opening/processing spec file: " +
@@ -85,9 +88,9 @@ public class SimulationSpec {
 		/*******************
 		 * MARKET MODELS
 		 *******************/
-		for (int i = 0; i < Consts.modelTypeNames.length; i++) {
+		for (int i = 0; i < Consts.MARKETMODEL_TYPES.length; i++) {
 			// models here is a comma-separated list
-			String models = getValue(Consts.modelTypeNames[i]);
+			String models = getValue(Consts.MARKETMODEL_TYPES[i]);
 			if (models != null) {
 				if (models.endsWith(",")) {
 					// remove any extra appended commas
@@ -98,23 +101,20 @@ public class SimulationSpec {
 				if (configs.length > 1) {
 					// if > 1, number of that model type is the number of items in the list
 					// also must check that not indicating that there are NONE or 0 of this model
-					data.numModelType.put(Consts.modelTypeNames[i], configs.length);
+					data.numModelType.put(Consts.MARKETMODEL_TYPES[i], configs.length);
 				} else if (!models.equals(Consts.MODEL_CONFIG_NONE) && !models.equals("0")) {
-					data.numModelType.put(Consts.modelTypeNames[i], configs.length);
+					data.numModelType.put(Consts.MARKETMODEL_TYPES[i], configs.length);
 				} else {
-					data.numModelType.put(Consts.modelTypeNames[i], 0);
+					data.numModelType.put(Consts.MARKETMODEL_TYPES[i], 0);
 				}
 			}
 		}
 		
-//		log.log(Log.INFO, "------------------------------------------------");
-//		log.log(Log.INFO, "    Reading SIMULATION SPECIFICATIONS");
-		
 		/*******************
 		 * CONFIGURATION - add environment agents
 		 *******************/
-		for (int i = 0; i < Consts.SMAgentTypes.length; i++) {
-			String agentType = Consts.SMAgentTypes[i];
+		for (int i = 0; i < Consts.SM_AGENT_TYPES.length; i++) {
+			String agentType = Consts.SM_AGENT_TYPES[i];
 			String num = getValue(agentType);
 			String setup = getValue(agentType + Consts.setupSuffix);
 			if (num != null) {
@@ -122,11 +122,6 @@ public class SimulationSpec {
 				ObjectProperties op = getStrategyParameters(agentType, setup);
 				AgentPropertiesPair a = new AgentPropertiesPair(agentType, op);
 				data.addEnvAgentNumber(a, n);
-				
-//				// add n agents to environment agent list
-//				for (int j = 0; j < n; j++) {
-//					data.addEnvAgentToList(new AgentPropertiesPair(agentType, op));
-//				}
 			}
 		}
 
@@ -147,7 +142,7 @@ public class SimulationSpec {
 						} else {
 							// first elt is agent type, second elt is strategy
 							ObjectProperties op = getStrategyParameters(as[0], as[1]);
-							data.addPlayer(new AgentPropertiesPair(as[0], op));
+							data.addPlayerProperties(new AgentPropertiesPair(as[0], op));
 						}
 					}
 				}

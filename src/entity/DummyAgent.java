@@ -27,9 +27,9 @@ public class DummyAgent extends HFTAgent {
 	@Override
 	public HashMap<String, Object> getObservation() {
 		HashMap<String,Object> obs = new HashMap<String,Object>();
-//		obs.put("role", agentType);
-//		obs.put("payoff", 0);
-//		obs.put("strategy", params.get("strategy"));
+//		obs.put(Observations.ROLES_KEY, agentType);
+//		obs.put(Observations.PAYOFF_KEY, 0);
+//		obs.put(Observations.STRATEGY_KEY, params.get(Agent.STRATEGY_KEY));
 		return obs;
 	}
 	

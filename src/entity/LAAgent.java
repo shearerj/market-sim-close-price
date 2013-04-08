@@ -24,6 +24,7 @@ public class LAAgent extends HFTAgent {
 	private int sleepTime;
 	private double sleepVar;
 	
+	
 	/**
 	 * Overloaded constructor
 	 * @param agentID
@@ -32,20 +33,21 @@ public class LAAgent extends HFTAgent {
 		super(agentID, modelID, d, p, l);
 		arrivalTime = new TimeStamp(0);
 
-		sleepTime = Integer.parseInt(params.get("sleepTime"));
-		sleepVar = Double.parseDouble(params.get("sleepVar"));
+		alpha = Double.parseDouble(params.get(LAAgent.ALPHA_KEY));
+		sleepTime = Integer.parseInt(params.get(Agent.SLEEPTIME_KEY));
+		sleepVar = Double.parseDouble(params.get(Agent.SLEEPVAR_KEY));
 	}
 	
 	
 	@Override
 	public HashMap<String, Object> getObservation() {
 		HashMap<String,Object> obs = new HashMap<String,Object>();
-		obs.put("role", agentType);
-		obs.put("payoff", getRealizedProfit());
-		obs.put("strategy", params.get("strategy"));
+		obs.put(Observations.ROLES_KEY, agentType);
+		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
+		obs.put(Observations.STRATEGY_KEY, params.get(Agent.STRATEGY_KEY));
 		
 //		HashMap<String,String> features = new HashMap<String,String>();
-//		obs.put("features", features);
+//		obs.put(Observations.FEATURES_KEY, features);
 		
 		return obs;
 	}

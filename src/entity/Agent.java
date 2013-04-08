@@ -61,7 +61,12 @@ public abstract class Agent extends Entity {
 	public final static String STRATEGY_KEY = "strategy";
 	public final static String BIDRANGE_KEY = "bidRange";
 	public final static String ARRIVALRATE_KEY = "arrivalRate";
-	
+	public final static String SLEEPTIME_KEY = "sleepTime";
+	public final static String SLEEPVAR_KEY = "sleepVar";
+	public final static String SLEEPRATE_KEY = "sleepRate";
+	public final static String NUMRUNGS_KEY = "numRungs";
+	public final static String RUNGSIZE_KEY = "rungSize";
+	public final static String ALPHA_KEY = "alpha";
 	
 	/**
 	 * Constructor

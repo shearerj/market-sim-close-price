@@ -1,5 +1,7 @@
 package model;
 
+import java.util.Arrays;
+
 import systemmanager.*;
 
 /**
@@ -29,15 +31,15 @@ public class TwoMarket extends MarketModel {
 			if (!config.equals("")) { 	// Check that config is not blank
 				// split on colon
 				String[] as = config.split("[:]+");
-				if (as.length == 2) {
-					String agType = as[0];
-					ObjectProperties op = SimulationSpec.getAgentProperties(agType, as[1]);
-					addAgentPropertyPair(agType, op);
-					
-				} else {
+				String agType = as[0];
+				if (!Arrays.asList(Consts.HFT_AGENT_TYPES).contains(agType)) {
 					System.err.println(this.getClass().getSimpleName() + "::parseConfigs: " +
 									"model configuration " + config + " incorrect");
 					System.exit(1);
+				}
+				if (as.length == 2) {
+					ObjectProperties op = SimulationSpec.getAgentProperties(agType, as[1]);
+					addAgentPropertyPair(agType, op);
 				}
 			}
 		}

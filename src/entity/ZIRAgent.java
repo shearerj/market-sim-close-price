@@ -42,11 +42,14 @@ public class ZIRAgent extends SMAgent {
 	private int bidRange;				// range for limit order
 	private double pvVar;				// variance from private value random process
 	
-	// private rate_param for wake up
+	// use a general arrivalRate? or have a more specific one
 	// private rate_param for in-between sleep times
+	private double sleepRate;
 	
+	// have to keep track of submission times for tracking discounted surplus
 	private ArrayList<TimeStamp> submissionTimes;
 	
+
 	/**
 	 * Overloaded constructor.
 	 */
@@ -65,7 +68,11 @@ public class ZIRAgent extends SMAgent {
 	
 	@Override
 	public HashMap<String, Object> getObservation() {
-		return null;
+		HashMap<String,Object> obs = new HashMap<String,Object>();
+		obs.put(Observations.ROLES_KEY, agentType);
+		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
+		obs.put(Observations.STRATEGY_KEY, params.get(Agent.STRATEGY_KEY));
+		return obs;
 	}
 	
 	

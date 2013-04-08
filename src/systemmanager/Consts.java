@@ -1,6 +1,9 @@
 package systemmanager;
 
+import entity.Agent;
+import entity.BasicMarketMaker;
 import entity.CallMarket;
+import entity.LAAgent;
 import entity.ZIAgent;
 
 /**
@@ -37,11 +40,11 @@ public class Consts {
 	public final static String ROLE_MARKETMAKER = "MARKETMAKER";
 	public final static String ROLE_BACKGROUND = "BACKGROUND";
 	
-	public final static String[] SMAgentTypes = 
+	public final static String[] SM_AGENT_TYPES = 
 		{ ZI, ZIP, BASICMARKETMAKER };
 //	public final static String[] marketTypeNames = 
 //		{ CDA, CALL };
-	public final static String[] modelTypeNames = 
+	public final static String[] MARKETMODEL_TYPES = 
 		{ TWOMARKET, CENTRALCDA, CENTRALCALL };
 	
 	// EGTA roles
@@ -80,7 +83,7 @@ public class Consts {
 	
 	// Price
 	public final static int INF_PRICE = 999999999;
-//	public final static int SCALING_FACTOR = 100;
+	
 	
 	/**
 	 * Returns the market type based on the class name.
@@ -142,15 +145,15 @@ public class Consts {
 		ObjectProperties p = new ObjectProperties();
 		
 		if (type.equals(LA)) {
-			p.put("sleepTime", "0");
-//			p.put("sleepVar", "100");
-			p.put("alpha", "0.001");
+			p.put(Agent.SLEEPTIME_KEY, "0");
+			p.put(Agent.SLEEPVAR_KEY, "100");
+			p.put(LAAgent.ALPHA_KEY, "0.001");
 		}
 		if (type.equals(BASICMARKETMAKER)) {
-			p.put("sleepTime", "200");
-			// p.put("sleepVar", "100");
-			p.put("numRungs", "10");
-			p.put("rungSize", "1000");
+			p.put(Agent.SLEEPTIME_KEY, "200");
+			p.put(Agent.SLEEPVAR_KEY, "100");
+			p.put(BasicMarketMaker.NUMRUNGS_KEY, "10");
+			p.put(BasicMarketMaker.RUNGSIZE_KEY, "1000");
 		}
 		if (type.equals(CALL)) {
 			p.put(CallMarket.PRICING_POLICY_KEY, "0.5");
@@ -160,8 +163,8 @@ public class Consts {
 			p.put(ZIAgent.BIDRANGE_KEY, "200");
 		}
 		if (type.equals(ZIP)) {
-			p.put("sleepTime", "50");
-			p.put("sleepVar", "100");
+			p.put(Agent.SLEEPTIME_KEY, "50");
+			p.put(Agent.SLEEPVAR_KEY, "100");
 			p.put("c_R","0.05");
 			p.put("c_A","0.05");
 			p.put("beta","0.03");

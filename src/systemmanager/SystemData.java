@@ -31,6 +31,7 @@ import java.util.*;
 public class SystemData {
 
 	public int obsNum;									// observation number
+	public boolean EGTA;								// true if EGTA use case
 	
 	// Model information
 	public MarketModel primaryModel;
@@ -115,6 +116,13 @@ public class SystemData {
 	 * Accessor methods
 	 *
 	 **********************************/
+	
+	/**
+	 * @return true if EGTA use case
+	 */
+	public boolean isEGTAUseCase() {
+		return EGTA;
+	}
 	
 	/**
 	 * @return
@@ -308,7 +316,7 @@ public class SystemData {
 	 * @return
 	 */
 	public boolean isSMAgent(String agentType) {
-		return Arrays.asList(Consts.SMAgentTypes).contains(agentType);
+		return Arrays.asList(Consts.SM_AGENT_TYPES).contains(agentType);
 	}
 	
 	
@@ -701,7 +709,7 @@ public class SystemData {
 	/**
 	 * @param a AgentPropertiesPair
 	 */
-	public void addPlayer(AgentPropertiesPair a) {
+	public void addPlayerProperties(AgentPropertiesPair a) {
 		if (playerNumberMap.containsKey(a)) {
 			playerNumberMap.put(a, playerNumberMap.get(a)+1);
 		} else {
