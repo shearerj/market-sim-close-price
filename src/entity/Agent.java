@@ -192,6 +192,13 @@ public abstract class Agent extends Entity {
 	}
 	
 	/**
+	 * @return strategy for observation file in format TYPE:STRATEGY
+	 */
+	public String getFullStrategy() {
+		return this.getType() + ":" + params.get(Agent.STRATEGY_KEY);
+	}
+	
+	/**
 	 * Sets logID of the agent.
 	 * @param logID
 	 */
@@ -523,8 +530,7 @@ public abstract class Agent extends Entity {
 				+ ", profit=" + realizedProfit + ", price=" + price);
 		return null;
 	}
-	
-	
+
 	
 	/**
 	 * Update global and NBBO quotes for the agent's model.

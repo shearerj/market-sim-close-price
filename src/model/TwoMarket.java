@@ -28,7 +28,8 @@ public class TwoMarket extends MarketModel {
 			addMarketPropertyPair(Consts.CDA);
 			addMarketPropertyPair(Consts.CDA);
 			
-			if (!config.equals("")) { 	// Check that config is not blank
+			// Check that config is not blank
+			if (!config.equals("")) {
 				// split on colon
 				String[] as = config.split("[:]+");
 				String agType = as[0];
@@ -39,6 +40,9 @@ public class TwoMarket extends MarketModel {
 				}
 				if (as.length == 2) {
 					ObjectProperties op = SimulationSpec.getAgentProperties(agType, as[1]);
+					addAgentPropertyPair(agType, op);
+				} else if (as.length == 1) {
+					ObjectProperties op = SimulationSpec.getAgentProperties(agType, "");
 					addAgentPropertyPair(agType, op);
 				}
 			}

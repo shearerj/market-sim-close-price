@@ -48,7 +48,7 @@ public abstract class MarketModel {
 	protected SystemData data;
 	protected ArrayList<Integer> agentIDs;		// IDs of associated agents
 	protected ObjectProperties modelProperties;
-	protected ArrayList<AgentPropertiesPair> agentConfig;
+	protected ArrayList<AgentPropsPair> agentConfig;
 	protected ArrayList<MarketObjectPair> modelMarketConfig;
 	
 	// Store information on market IDs for each market specified in modelProperties
@@ -70,7 +70,7 @@ public abstract class MarketModel {
 		agentIDs = new ArrayList<Integer>();
 		marketIDs = new ArrayList<Integer>();
 		modelMarketConfig = new ArrayList<MarketObjectPair>();
-		agentConfig = new ArrayList<AgentPropertiesPair>();
+		agentConfig = new ArrayList<AgentPropsPair>();
 	}
 	
 	/**
@@ -81,12 +81,16 @@ public abstract class MarketModel {
 	
 	/**
 	 * Format "MODELTYPE-CONFIG" unless config string is empty, then "MODELTYPE"
+	 * If configuration string has a colon, i.e. CONFIG:PARAMS, then only includ
+	 * the CONFIG portion.
+	 * 
 	 * @return model name
 	 */
 	public String getFullName() {
 		String configStr = this.getConfig();
 		if (!this.getConfig().equals("")) configStr = "-" + configStr;
-		return this.getClass().getSimpleName().toUpperCase() + configStr;
+		String [] configs = configStr.split("[:]+");
+		return this.getClass().getSimpleName().toUpperCase() + configs[0];
 	}
 	
 	/**
@@ -111,7 +115,7 @@ public abstract class MarketModel {
 	 * @param agProperties
 	 */
 	public void addAgentPropertyPair(String agType, ObjectProperties agProperties) {
-		AgentPropertiesPair app = new AgentPropertiesPair(agType, agProperties);
+		AgentPropsPair app = new AgentPropsPair(agType, agProperties);
 		agentConfig.add(app);
 	}
 	
@@ -122,14 +126,14 @@ public abstract class MarketModel {
 	 */
 	public void addAgentPropertyPair(String agType) {
 		ObjectProperties agProperties = Consts.getProperties(agType);
-		AgentPropertiesPair mpp = new AgentPropertiesPair(agType, agProperties);
+		AgentPropsPair mpp = new AgentPropsPair(agType, agProperties);
 		agentConfig.add(mpp);
 	}
 	
 	/**
 	 * @return agentConfig
 	 */
-	public ArrayList<AgentPropertiesPair> getAgentConfig() {
+	public ArrayList<AgentPropsPair> getAgentConfig() {
 		return agentConfig;
 	}
 	

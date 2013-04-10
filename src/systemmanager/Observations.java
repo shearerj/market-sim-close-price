@@ -34,7 +34,7 @@ public class Observations {
 	// Constants in observation file
 	public final static String PLAYERS_KEY = "players";
 	public final static String FEATURES_KEY = "features";
-	public final static String ROLES_KEY = "roles";
+	public final static String ROLE_KEY = "role";
 	public final static String PAYOFF_KEY = "payoff";
 	public final static String STRATEGY_KEY = "strategy";
 	
@@ -680,13 +680,10 @@ public class Observations {
 				Agent ag = data.getAgent(agentID);
 				
 				// must append the agentID if there is more than one of this type
-				String suffix = "";
-//				if (model.getNumAgentType(ag.getType()) > 1) {
-					suffix += agentID;
-//				}
-				
+				String suffix = Integer.toString(agentID);				
 				feat.put("position_pre_liq" + suffix, ag.getPreLiquidationPosition());
-				feat.put("position_post_liq" + suffix, ag.getPositionBalance());	// just to double-check
+				// just to double-check, should be 0 position after liquidation
+				feat.put("position_post_liq" + suffix, ag.getPositionBalance());
 				feat.put("profit_pre_liq" + suffix, ag.getPreLiquidationProfit());
 				feat.put("profit_post_liq" + suffix, ag.getRealizedProfit());
 			}
@@ -877,6 +874,7 @@ public class Observations {
 	public HashMap<String,Object> getConfiguration() {
 		HashMap<String,Object> config = new HashMap<String,Object>();
 		config.put("obs", data.obsNum);
+		config.put("sim_length", data.simLength);
 		config.put("latency", data.nbboLatency);
 		config.put("tick_size", data.tickSize);
 		config.put("kappa", data.kappa);
@@ -884,6 +882,12 @@ public class Observations {
 		config.put("mean_value", data.meanValue);
 		config.put("shock_var", data.shockVar);
 		config.put("pv_var", data.privateValueVar);
+		
+		for (Map.Entry<AgentPropsPair, Integer> entry : data.getEnvAgentMap().entrySet()) {
+			String agType = entry.getKey().getAgentType();
+			config.put(agType + "_num", entry.getValue());
+			config.put(agType + "_setup", entry.getKey().getProperties().toStrategyString());
+		}
 		
 		return config;
 	}

@@ -1,6 +1,7 @@
 package systemmanager;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import entity.Agent;
 
@@ -64,6 +65,17 @@ public class ObjectProperties {
 		return properties.get(key);
 	}
 
+	/**
+	 * @return String with <param>_<value> format
+	 */
+	public String toStrategyString() {
+		String str = "";
+		for (Map.Entry<String, String> entry : properties.entrySet()) {
+			str += entry.getKey() + "_" + entry.getValue() + "_";
+		}
+		return str.substring(0, str.length()-1);	// trim last "_"
+	}
+	
 	@Override
 	public String toString() {
 		// remove strategy to make easier to read in log (will be parsed already)

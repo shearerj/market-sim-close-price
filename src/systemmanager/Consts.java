@@ -42,8 +42,6 @@ public class Consts {
 	
 	public final static String[] SM_AGENT_TYPES = 
 		{ ZI, ZIP, BASICMARKETMAKER };
-//	public final static String[] marketTypeNames = 
-//		{ CDA, CALL };
 	public final static String[] MARKETMODEL_TYPES = 
 		{ TWOMARKET, CENTRALCDA, CENTRALCALL };
 	

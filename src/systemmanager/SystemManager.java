@@ -205,23 +205,15 @@ public class SystemManager {
 	
 	
 	/**
-	 * Generate results report (payoff data, feature data logging). Only adds observations
-	 * from agents in the primary model (the primary game).
+	 * Generate results report (payoff data, feature data logging).
 	 */
 	public void aggregateResults() {
 		try {
-			for (Iterator<Integer> it = data.getAgentIDs().iterator(); it.hasNext(); ) {
-				int id = it.next();
-				if (data.isEGTAUseCase()) {
-					obs.addObservation(id);
-				} else {
-					// add observations as features for nonplayers
-					obs.addObservationAsFeature(id);
-				}
+			// log observations for players
+			for (Iterator<Integer> it = data.getPlayerIDs().iterator(); it.hasNext(); ) {
+				obs.addObservation(it.next());
 			}
-
 //			obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
-			
 			obs.addFeature("", obs.getConfiguration());
 			obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
 //			obs.addTransactionComparison();

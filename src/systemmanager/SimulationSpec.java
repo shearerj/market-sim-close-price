@@ -120,7 +120,7 @@ public class SimulationSpec {
 			if (num != null) {
 				int n = Integer.parseInt(num);
 				ObjectProperties op = getStrategyParameters(agentType, setup);
-				AgentPropertiesPair a = new AgentPropertiesPair(agentType, op);
+				AgentPropsPair a = new AgentPropsPair(agentType, op);
 				data.addEnvAgentNumber(a, n);
 			}
 		}
@@ -142,7 +142,7 @@ public class SimulationSpec {
 						} else {
 							// first elt is agent type, second elt is strategy
 							ObjectProperties op = getStrategyParameters(as[0], as[1]);
-							data.addPlayerProperties(new AgentPropertiesPair(as[0], op));
+							data.addPlayerProperties(new AgentPropsPair(as[0], op));
 						}
 					}
 				}
@@ -194,6 +194,8 @@ public class SimulationSpec {
 	public static ObjectProperties getAgentProperties(String type, String strategy) {
 		ObjectProperties p = new ObjectProperties(Consts.getProperties(type));
 		p.put(Agent.STRATEGY_KEY, strategy);
+		
+		if (strategy == null) return p;
 		
 		// Check that strategy is not blank
 		if (!strategy.equals("") && !type.equals(Consts.DUMMY)) {
