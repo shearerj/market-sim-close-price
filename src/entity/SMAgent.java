@@ -1,13 +1,12 @@
 package entity;
 
 import event.*;
+import market.Quote;
 import activity.*;
 import systemmanager.*;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
-import market.Quote;
 
 /**
  * Single market (SM) agent, whose agent strategy is executed only within one market.
@@ -31,7 +30,9 @@ import market.Quote;
 public abstract class SMAgent extends Agent {
 
 	protected Market market;
-	protected Market marketSubmittedBid;		// market to which its bid has been submitted
+	
+	// market to which its bid has been submitted (set if order is routed)
+	protected Market marketSubmittedBid;
 
 	/**
 	 * Constructor for a single market agent.
@@ -71,7 +72,7 @@ public abstract class SMAgent extends Agent {
 	/**
 	 * @return main market ID for the single market agent.
 	 */
-	public int getMarketSubmittedBidID() {
+	public int getMarketIDSubmittedBid() {
 		return marketSubmittedBid.getID();
 	}
 	
@@ -92,15 +93,16 @@ public abstract class SMAgent extends Agent {
 	 * Wrapper method to submit bid to market after checking permissions.
 	 * 
 	 * @param mkt
-	 * @param price
-	 * @param quantity
+	 * @param p
+	 * @param q
 	 * @param duration
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap submitNMSBid(int price, int quantity, long duration, TimeStamp ts) {
+	public ActivityHashMap submitNMSBid(int p, int q, long duration, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, new SubmitNMSBid(this, price, quantity, duration, ts));
+		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
+				new SubmitNMSBid(this, p, q, duration, ts));
 		return actMap;
 	}
 
@@ -108,14 +110,15 @@ public abstract class SMAgent extends Agent {
 	 * Wrapper method to submit bid that never expires to market after checking permissions.
 	 * 
 	 * @param mkt
-	 * @param price
-	 * @param quantity
+	 * @param p
+	 * @param q
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap submitNMSBid(int price, int quantity, TimeStamp ts) {
+	public ActivityHashMap submitNMSBid(int p, int q, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, new SubmitNMSBid(this, price, quantity, Consts.INF_TIME, ts));
+		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
+				new SubmitNMSBid(this, p, q, Consts.INF_TIME, ts));
 		return actMap;
 	}
 	
@@ -124,14 +127,15 @@ public abstract class SMAgent extends Agent {
 	 * TODO - still need to finish
 	 * 
 	 * @param mkt
-	 * @param price
-	 * @param quantity
+	 * @param p
+	 * @param q
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap submitNMSMultipleBid(int[] price, int[] quantity, TimeStamp ts) {
+	public ActivityHashMap submitNMSMultipleBid(int[] p, int[] q, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, new SubmitNMSMultipleBid(this, price, quantity, ts));
+		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
+				new SubmitNMSMultipleBid(this, p, q, ts));
 		return actMap;
 	}
 	
@@ -189,6 +193,7 @@ public abstract class SMAgent extends Agent {
 		// TODO - enable for more than two markets total (including main)
 		if (altMarketIDs.size() > 1) {
 			System.err.println("Agent::executeSubmitNMSBid: 2 markets permitted currently.");
+			System.exit(1);
 		} else if (altMarketIDs.size() == 1) {
 			// get first alternate market since there are two markets total
 			altMarketID = altMarketIDs.get(0);
