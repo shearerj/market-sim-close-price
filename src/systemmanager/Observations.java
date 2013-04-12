@@ -957,7 +957,7 @@ public class Observations {
 				if (sm.getMarketID() != sm.getMarketIDSubmittedBid()) {
 					// order routed to alternate market
 					numAlt++;
-					// hack to determine if its bid transacted or not
+					// TODO hack to determine if its bid transacted or not
 					if (sm.getPositionBalance() == 0)
 						numAltTrans++;
 					else

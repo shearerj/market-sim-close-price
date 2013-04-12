@@ -3,7 +3,7 @@
 # Primary model is the 2M with LA.
 if [ $# -ne 4 ]
 then
-echo 'Usage: .\create_spec_file.sh [filename] [HFT type] [HFT strat] [NBBO update latency]'
+echo 'Usage: ./create_spec_file.sh [filename] [HFT type] [HFT strat] [NBBO update latency]'
 exit 1
 fi
 
