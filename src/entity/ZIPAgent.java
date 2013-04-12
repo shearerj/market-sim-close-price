@@ -21,7 +21,7 @@ import java.util.HashMap;
  * @author ewah, sgchako, kunshao, marzuq, gshiva
  *
  */
-public class ZIPAgent extends SMAgent {
+public class ZIPAgent extends BackgroundAgent {
 
 	//private int margin;				// margin for limit order
 	private int mainMarketID;	// ID of ZIP agent's primary market

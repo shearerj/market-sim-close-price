@@ -37,7 +37,7 @@ import java.util.ArrayList;
  *
  * @author ewah
  */
-public class ZIRAgent extends SMAgent {
+public class ZIRAgent extends BackgroundAgent {
 
 	private int bidRange;				// range for limit order
 	private double pvVar;				// variance from private value random process

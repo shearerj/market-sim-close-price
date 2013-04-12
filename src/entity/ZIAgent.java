@@ -27,7 +27,7 @@ import java.util.Random;
  *
  * @author ewah
  */
-public class ZIAgent extends SMAgent {
+public class ZIAgent extends BackgroundAgent {
 
 	private int bidRange;				// range for limit order
 	private double pvVar;				// variance from private value random process

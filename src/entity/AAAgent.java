@@ -38,7 +38,7 @@ import java.util.Random;
  *
  * @author ewah
  */
-public class AAAgent extends SMAgent {
+public class AAAgent extends BackgroundAgent {
 
 //	private double expireRate;
 //	private long expiration;			// time until limit order expiration
