@@ -30,7 +30,7 @@ import java.util.ArrayList;
  * 
  * @author ewah, gshiva
  */
-public class BasicMarketMaker extends SMAgent {     
+public class BasicMarketMaker extends MarketMaker {     
 
 	private int stepSize;
 	private int rungSize;

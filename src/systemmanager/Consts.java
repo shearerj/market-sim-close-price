@@ -22,7 +22,6 @@ public class Consts {
 	// **********************************************************
 	// Agent, market, and model types
 	// (must edit this whenever add a new agent, market, or model
-	
 	public final static String ZI = "ZI";
 	public final static String ZIP = "ZIP";
 	public final static String BASICMARKETMAKER = "BASICMM";

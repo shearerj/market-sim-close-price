@@ -254,10 +254,12 @@ public class SystemManager {
 			obs.addFeature(prefix + "surplus_disc", obs.getDiscountedSurplusFeatures(model));
 			
 			// Other features
-//			obs.addFeature(prefix + "marketmaker", obs.getMarketMakerInfo(model));
+//			if (model.getNumAgentType("MARKETMAKER") >= 1) {
+			obs.addFeature(prefix + "marketmaker", obs.getMarketMakerInfo(model));
+//			}
 			obs.addFeature(prefix + "transactions", obs.getTransactionInfo(model));
 			obs.addFeature(prefix + "exec_time", obs.getTimeToExecution(model));
-			
+			obs.addFeature(prefix + "routing", obs.getRegNMSRoutingInfo(model));
 			// obs.addFeature(prefix + "depths", obs.getDepthInfo(ids));
 		}
 	}

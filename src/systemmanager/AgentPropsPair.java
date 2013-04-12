@@ -1,7 +1,5 @@
 package systemmanager;
 
-import entity.Agent;
-
 /**
  * Pair of (agent type, object string). Used to store assignments from specification
  * file.
