@@ -959,17 +959,17 @@ public class Observations {
 					numAlt++;
 					// TODO hack to determine if its bid transacted or not
 					if (sm.getPositionBalance() == 0)
-						numAltTrans++;
-					else
 						numAltNoTrans++;
+					else
+						numAltTrans++;
 				} else {
 					// order was not routed
 					numMain++;
 					// hack to determine if its bid transacted or not
 					if (sm.getPositionBalance() == 0)
-						numMainTrans++;
-					else
 						numMainNoTrans++;
+					else
+						numMainTrans++;
 				}
 			}
 		}
