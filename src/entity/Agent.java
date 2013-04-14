@@ -190,6 +190,24 @@ public abstract class Agent extends Entity {
 	public String getType() {
 		return agentType;
 	}
+
+	/**
+	 * @return role of agent
+	 */
+	public String getRole() {
+		if (this instanceof HFTAgent) {
+			return Consts.ROLE_HFT;
+		} else if (this instanceof BackgroundAgent) {
+			return Consts.ROLE_BACKGROUND;
+		} else if (this instanceof MarketMaker) {
+			return (Consts.ROLE_MARKETMAKER);
+		} else {
+			System.err.println(this.getClass().getSimpleName() + "::getRole(): " +
+					"invalid agent!");
+			System.exit(1);
+		}
+		return "";
+	}
 	
 	/**
 	 * @return strategy for observation file in format TYPE:STRATEGY

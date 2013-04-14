@@ -51,7 +51,7 @@ public class ZIAgent extends BackgroundAgent {
 	@Override
 	public HashMap<String, Object> getObservation() {
 		HashMap<String,Object> obs = new HashMap<String,Object>();
-		obs.put(Observations.ROLE_KEY, agentType);
+		obs.put(Observations.ROLE_KEY, getRole());
 		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
 		obs.put(Observations.STRATEGY_KEY, getFullStrategy());
 		return obs;

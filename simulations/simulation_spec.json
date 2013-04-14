@@ -1,22 +1,27 @@
-{ "assignment": { "LA": ["sleepTime_0_alpha_0.001"], "DUMMY": [""] },
-"configuration": { "sim_length": "15000",
+{"assignment": {
+"MARKETMAKER" ["BASICMM:sleepTime_200_numRungs_10_rungSize_1000"],
+"BACKGROUND": [
+  "ZI:bidRange_170",
+  "ZI:bidRange_150",
+  "ZI:bidRange_190"
+]},
+"configuration": {
+"sim_length": "15000",
 "tick_size": "1",
-"primary_model": "TWOMARKET-LA",
-"TWOMARKET": "LA",
+"primary_model": "CENTRALCDA",
+"TWOMARKET": "LA:sleepTime_0_alpha_0.001,DUMMY",
 "CENTRALCDA": "0",
 "CENTRALCALL": "0",
-"MARKETMAKER": "0",
-"ZI": "10",
+"BASICMM": "0",
+"BASICMM_setup": "sleepTime_200_numRungs_10_rungSize_1000",
+"ZI": "3",
+"ZI_setup": "bidRange_200",
 "ZIP": "0",
-"AA": "0",
+"ZIP_setup": "",
 "nbbo_latency": "0",
 "arrival_rate": "0.075",
 "mean_value": "100000",
 "kappa": "0.05",
 "shock_var": "150000000",
-"bid_range": "2000",
 "private_value_var": "100000000",
-"marketmaker_sleep_time": "200",
-"marketmaker_num_rungs": "10",
-"marketmaker_rung_size": "1000"
 } }
