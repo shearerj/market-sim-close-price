@@ -704,24 +704,19 @@ public abstract class Agent extends Entity {
 							", timeStamp=" + t.timestamp + ")");
 					
 					// Log surplus for all agents
-					int bsurplus = data.getAgent(t.buyerID).getPrivateValue() - t.price.getPrice();
-					int ssurplus = t.price.getPrice() - data.getAgent(t.sellerID).getPrivateValue();
+					Agent buyer = data.getAgent(t.buyerID);
+					Agent seller = data.getAgent(t.sellerID);
+					int rt = data.getFundamentalAt(ts).getPrice();	// fundamental at time ts
+					int bsurplus = (buyer.getPrivateValue() + rt) - t.price.getPrice();
+					int ssurplus = t.price.getPrice() - (seller.getPrivateValue() + rt);
 					String s = ts + " | " + this + " " +
-							"Agent::updateTransactions: BUYER surplus: " + data.getAgent(t.buyerID).getPrivateValue()
-							+ "-" + t.price.getPrice() + "=" + bsurplus + ", "
-							+ "SELLER surplus: " + t.price.getPrice() + "-" + 
-							data.getAgent(t.sellerID).getPrivateValue() + "=" + ssurplus;
+							"Agent::updateTransactions: BUYER surplus: (" + buyer.getPrivateValue()
+							+ "+" + rt + ")-" + t.price.getPrice() + "=" + bsurplus + ", "
+							+ "SELLER surplus: " + t.price.getPrice() + "-(" + 
+							seller.getPrivateValue() + "+" + rt + ")=" + ssurplus;
 					log.log(Log.INFO, s);
 					log.log(Log.INFO, ts + " | " + this + " " +
 							"Agent::updateTransactions: SURPLUS: " + (bsurplus + ssurplus));
-					
-//					log.log(Log.INFO, ts + " | " + this + " " +
-//							"Agent::updateTransactions: BUYER surplus: " + data.getAgent(t.buyerID).getPrivateValue()
-//							+ "-" + t.price.getPrice() + "=" + bsurplus);
-//					log.log(Log.INFO, ts + " | " + this + " " +
-//							"Agent::updateTransactions: SELLER surplus: " + t.price.getPrice() + "-" + 
-//							data.getAgent(t.sellerID).getPrivateValue() + "=" + ssurplus);
-					
 				}
 				// Update transaction ID
 				lastGoodTransID = t.transID;

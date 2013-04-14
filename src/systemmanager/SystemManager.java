@@ -250,11 +250,12 @@ public class SystemManager {
 
 			// Spread info
 			long maxTime = Math.round(data.numAgents / data.arrivalRate);
-			long begTime = Market.quantize((int) maxTime, 500) - 1000;
-			for (long i = Math.max(begTime, 500); i <= maxTime + 1000; i += 500) {
+//			long begTime = Market.quantize((int) maxTime, 500) - 1000;
+//			for (long i = Math.max(begTime, 500); i <= maxTime + 1000; i += 500) {
+			long i = 3000;
 				obs.addFeature(prefix + "spreads_" + i, obs.getSpreadInfo(model, i));
 				obs.addFeature(prefix + "price_vol_" + i, obs.getVolatilityInfo(model, i));
-			}
+//			}
 			
 			// Surplus features
 			obs.addFeature(prefix + "surplus", obs.getSurplusFeatures(model));
