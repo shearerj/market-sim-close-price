@@ -11,7 +11,7 @@ import java.util.ArrayList;
 /**
  * ZIRAGENT
  *
- * A zero-intelligence agent with resubmission (ZIR).
+ * A zero-intelligence agent with re-submission (ZIR).
  *
  * The ZIR agent trades with primarily one market.
  *
@@ -40,7 +40,7 @@ import java.util.ArrayList;
 public class ZIRAgent extends BackgroundAgent {
 
 	private int bidRange;				// range for limit order
-	private double pvVar;				// variance from private value random process
+//	private double pvVar;				// variance from private value random process
 	
 	// use a general arrivalRate? or have a more specific one
 	// private rate_param for in-between sleep times
@@ -60,16 +60,17 @@ public class ZIRAgent extends BackgroundAgent {
 		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
 		bidRange = Integer.parseInt(params.get(ZIRAgent.BIDRANGE_KEY));
 		
-		pvVar = this.data.privateValueVar;
-		int fund = Integer.parseInt(params.get(Agent.FUNDAMENTAL_KEY));
-		privateValue = Math.max(0, fund + (int) Math.round(getNormalRV(0, pvVar)));
+//		pvVar = this.data.privateValueVar;
+//		int fund = Integer.parseInt(params.get(Agent.FUNDAMENTAL_KEY));
+//		privateValue = Math.max(0, fund + (int) Math.round(getNormalRV(0, pvVar)));
+		privateValue = (int) Math.round(getNormalRV(0, this.data.privateValueVar));
 	}
 	
 	
 	@Override
 	public HashMap<String, Object> getObservation() {
 		HashMap<String,Object> obs = new HashMap<String,Object>();
-		obs.put(Observations.ROLE_KEY, agentType);
+		obs.put(Observations.ROLE_KEY, getRole());
 		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
 		obs.put(Observations.STRATEGY_KEY, getFullStrategy());
 		return obs;
@@ -79,7 +80,8 @@ public class ZIRAgent extends BackgroundAgent {
 	@Override
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-
+		int val = Math.max(0, data.getFundamentalAt(ts).getPrice() + privateValue);
+		
 		int p = 0;
 		int q = 1;
 		// 0.50% chance of being either long or short
@@ -87,9 +89,9 @@ public class ZIRAgent extends BackgroundAgent {
 
 		// basic ZI behavior
 		if (q > 0) {
-			p = (int) Math.max(0, ((this.privateValue - 2*bidRange) + rand.nextDouble()*2*bidRange));
+			p = (int) Math.max(0, ((val - 2*bidRange) + rand.nextDouble()*2*bidRange));
 		} else {
-			p = (int) Math.max(0, (this.privateValue + rand.nextDouble()*2*bidRange));
+			p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
 		}
 
 //		actMap.appendActivityHashMap(submitNMSBid(p, q, expiration, ts));

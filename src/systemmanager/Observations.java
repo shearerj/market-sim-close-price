@@ -321,8 +321,7 @@ public class Observations {
 		// feat.put((new Double(rho)).toString(), ds.getSum());
 
 		// get background surplus for all agents with a private value
-		HashMap<Integer, Integer> bkgrdSurplus = data
-				.getBackgroundSurplus(modelID);
+		HashMap<Integer, Integer> bkgrdSurplus = data.getBackgroundSurplus(modelID);
 		double[] values = convertIntsToArray(bkgrdSurplus);
 		addAllStatistics(feat, values, "bkgrd");
 		DescriptiveStatistics ds = new DescriptiveStatistics(values);
