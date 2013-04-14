@@ -23,3 +23,5 @@ hft.jar
 ###############
 build/*
 simulations/*
+logs/*
+.settings/*
