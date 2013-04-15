@@ -1,6 +1,7 @@
 package entity;
 
 import event.*;
+import market.*;
 import activity.*;
 import systemmanager.*;
 
@@ -8,7 +9,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 /**
- * ZIAgent
+ * AAAgent
  *
  * A zero-intelligence (ZI) agent operating in two-market setting with an NBBO market.
  *
@@ -41,8 +42,7 @@ import java.util.Random;
 public class AAAgent extends BackgroundAgent {
 
 	private int bidRange;				// range for limit order
-	private double pvVar;				// variance from private value random process
-	
+
 	
 	/**
 	 * Overloaded constructor.
@@ -70,7 +70,7 @@ public class AAAgent extends BackgroundAgent {
 	@Override
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		int val = Math.max(0, data.getFundamentalAt(ts).getPrice() + privateValue.getPrice());
+		int val = Math.max(0, data.getFundamentalAt(ts).sum(privateValue).getPrice());
 
 		int p = 0;
 		int q = 1;

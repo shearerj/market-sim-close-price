@@ -1,6 +1,7 @@
 package entity;
 
 import event.*;
+import market.*;
 import activity.*;
 import systemmanager.*;
 
@@ -59,11 +60,7 @@ public class ZIRAgent extends BackgroundAgent {
 		rand = new Random(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
 		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
 		bidRange = Integer.parseInt(params.get(ZIRAgent.BIDRANGE_KEY));
-		
-//		pvVar = this.data.privateValueVar;
-//		int fund = Integer.parseInt(params.get(Agent.FUNDAMENTAL_KEY));
-//		privateValue = Math.max(0, fund + (int) Math.round(getNormalRV(0, pvVar)));
-		privateValue = (int) Math.round(getNormalRV(0, this.data.privateValueVar));
+		privateValue = new Price((int) Math.round(getNormalRV(0, this.data.privateValueVar)));
 	}
 	
 	
@@ -80,8 +77,8 @@ public class ZIRAgent extends BackgroundAgent {
 	@Override
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		int val = Math.max(0, data.getFundamentalAt(ts).getPrice() + privateValue);
-		
+		int val = Math.max(0, data.getFundamentalAt(ts).sum(privateValue).getPrice());
+
 		int p = 0;
 		int q = 1;
 		// 0.50% chance of being either long or short

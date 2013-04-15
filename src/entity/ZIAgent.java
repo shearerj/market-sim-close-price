@@ -1,11 +1,13 @@
 package entity;
 
 import event.*;
+import market.*;
 import activity.*;
 import systemmanager.*;
 
 import java.util.HashMap;
 import java.util.Random;
+
 
 /**
  * ZIAGENT
@@ -57,7 +59,7 @@ public class ZIAgent extends BackgroundAgent {
 	@Override
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		int val = Math.max(0, data.getFundamentalAt(ts).getPrice() + privateValue.getPrice());
+		int val = Math.max(0, data.getFundamentalAt(ts).sum(privateValue).getPrice());
 
 		int p = 0;
 		int q = 1;

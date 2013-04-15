@@ -510,7 +510,7 @@ public class SystemSetup {
 			s += Agent.ARRIVAL_KEY + "=" + ag.getArrivalTime().toString();
 			
 			// print private value if exists 
-			if (ag.getPrivateValue() >= 0) {
+			if (ag.hasPrivateValue()) {
 				s += ", pv=" + ag.getPrivateValue();
 			}
 			s += " ... params=" + ag.getProperties().toString();
