@@ -52,7 +52,7 @@ public class ZIPAgent extends SMAgent {
         arrivalTime = new TimeStamp(0);
         pvVar = this.data.privateValueVar;
         bidRange = this.data.bidRange;                               
-//        privateValue = Math.max(0, this.data.nextFundamentalValue() + (int) Math.round(getNormalRV(0, pvVar)));
+//        privateValue.getPrice() = Math.max(0, this.data.nextFundamentalValue() + (int) Math.round(getNormalRV(0, pvVar)));
 
 	// set the alternate ID if the primary model is a two-market model
 	mainMarketID = mktID;
@@ -73,21 +73,21 @@ public class ZIPAgent extends SMAgent {
                
         gamma = Double.parseDouble(params.get("gamma"));
 
-        buyPrice_old = privateValue;
-        sellPrice_old = privateValue;                
+        buyPrice_old = privateValue.getPrice();
+        sellPrice_old = privateValue.getPrice();                
         
         
         if(DEBUG_BASIC_ENB || DEBUG_ADVANCED_ENB){
             System.out.println("ZIP Agent ["+this.getID()+"] init. in Market "+mainMarketID);
-            System.out.println("Private Value = "+privateValue);
+            System.out.println("Private Value = "+privateValue.getPrice());
             System.out.println("c_R = "+c_R);
             System.out.println("c_A = "+c_A);
             System.out.println("beta = "+learningRate);
             System.out.println("gamma = "+gamma);
         }
         
-        zipBuyer = new ZIP_algorithm(gamma, learningRate, c_A, c_R, true, privateValue, 0.0);
-        zipSeller = new ZIP_algorithm(gamma, learningRate, c_A, c_R, false, privateValue, 0.0);        
+        zipBuyer = new ZIP_algorithm(gamma, learningRate, c_A, c_R, true, privateValue.getPrice(), 0.0);
+        zipSeller = new ZIP_algorithm(gamma, learningRate, c_A, c_R, false, privateValue.getPrice(), 0.0);        
     }
 
     @Override
@@ -119,7 +119,7 @@ public class ZIPAgent extends SMAgent {
             if(q < 0)
                 ZIP_mode = "BUY";
             System.out.println("ZIP Agent ["+this.getID()+"] is in "+ZIP_mode+" mode");
-            System.out.println("Private Value = "+privateValue);
+            System.out.println("Private Value = "+privateValue.getPrice());
         }
         /*
          * if q = +1 - We want to set our ask price (sell)
@@ -180,7 +180,7 @@ public class ZIPAgent extends SMAgent {
 //                submittedBidType = Consts.SubmittedBidMarket.ALTERNATE;
             
         } else {//In case the market have not been initialized, use a random price.
-            bestSellPrice = (int) Math.max(0, ((this.privateValue) + rand.nextDouble()*bidRange));
+            bestSellPrice = (int) Math.max(0, ((privateValue.getPrice()) + rand.nextDouble()*bidRange));
             if(DEBUG_BASIC_ENB){
                 System.out.println("Both markets have not been initialized");    
                 System.out.println("Random Best Sell Price = "+bestSellPrice);
@@ -221,7 +221,7 @@ public class ZIPAgent extends SMAgent {
 //                    submittedBidType = Consts.SubmittedBidMarket.ALTERNATE;
         }
         else {//In case both markets have not been initialized, use a random price.                        
-            bestBuyPrice = (int) Math.max(0, ((this.privateValue - 2*bidRange) + rand.nextDouble()*2*bidRange)); 
+            bestBuyPrice = (int) Math.max(0, ((this.privateValue.getPrice() - 2*bidRange) + rand.nextDouble()*2*bidRange)); 
             if(DEBUG_BASIC_ENB){
                 System.out.println("Both markets have not been initialized");
                 System.out.println("Random Best Buy Price = "+bestBuyPrice);
@@ -236,26 +236,26 @@ public class ZIPAgent extends SMAgent {
         int temp = bestSellPrice;
         
         double mu_buy = zipBuyer.update(buyPrice_old, bestBuyPrice);
-        double temp_p = (double)privateValue*(1.0+mu_buy);
+        double temp_p = (double)privateValue.getPrice()*(1.0+mu_buy);
         p_new_buy =  (int) temp_p;
-        if(p_new_buy == privateValue)
+        if(p_new_buy == privateValue.getPrice())
             p_new_buy -= tickSize; 
         
         double mu_sell = zipSeller.update(sellPrice_old, bestSellPrice);
-        temp_p = (double)privateValue*((1.0+mu_sell));
+        temp_p = (double)privateValue.getPrice()*((1.0+mu_sell));
         p_new_sell =  (int) temp_p;
-        if(p_new_sell == privateValue)
+        if(p_new_sell == privateValue.getPrice())
             p_new_sell += tickSize;
         
            
         
         
-        assert p_new_buy !=privateValue : "ERROR: Agent is trying to "
-                + "transact at its private value : PV = "+privateValue+ 
+        assert p_new_buy !=privateValue.getPrice() : "ERROR: Agent is trying to "
+                + "transact at its private value : PV = "+privateValue.getPrice()+ 
                 " bid transaction value = "+p_new_buy;
 
-        assert p_new_sell !=privateValue : "ERROR: Agent is trying to "
-                + "transact at its private value : PV = "+privateValue+ 
+        assert p_new_sell !=privateValue.getPrice() : "ERROR: Agent is trying to "
+                + "transact at its private value : PV = "+privateValue.getPrice()+ 
                 " bid transaction value = "+p_new_sell;
 
 

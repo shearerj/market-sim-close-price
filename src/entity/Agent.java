@@ -41,7 +41,7 @@ public abstract class Agent extends Entity {
 	protected SIP sip;
 	
 	// Agent parameters
-	protected int privateValue;
+	protected Price privateValue;
 	protected String agentType;
 	protected TimeStamp arrivalTime;
 
@@ -86,7 +86,7 @@ public abstract class Agent extends Entity {
 		lastGlobalQuote = new BestBidAsk();
 		lastNBBOQuote = new BestBidAsk();
 		
-		privateValue = -1;
+		privateValue = null;		// if no PV, this will always be null
 		arrivalTime = new TimeStamp(0);
 		
 		tickSize = data.tickSize;
@@ -152,7 +152,7 @@ public abstract class Agent extends Entity {
 	/**
 	 * @return private value of agent.
 	 */
-	public int getPrivateValue() {
+	public Price getPrivateValue() {
 		return privateValue;
 	}
 	
@@ -315,6 +315,13 @@ public abstract class Agent extends Entity {
 		return cashBalance;
 	}
 
+	/**
+	 * @return true if has non-null private value.
+	 */
+	public boolean hasPrivateValue() {
+		return this.privateValue != null;
+	}
+	
 	/**
 	 * Enters market by adding market to data structures.
 	 * @param mkt
@@ -703,17 +710,24 @@ public abstract class Agent extends Entity {
 							", price=" + t.price + ", quantity=" + t.quantity + 
 							", timeStamp=" + t.timestamp + ")");
 					
-					// Log surplus for all agents
+					// Log surplus for background agents with private values
 					Agent buyer = data.getAgent(t.buyerID);
 					Agent seller = data.getAgent(t.sellerID);
-					int rt = data.getFundamentalAt(ts).getPrice();	// fundamental at time ts
-					int bsurplus = (buyer.getPrivateValue() + rt) - t.price.getPrice();
-					int ssurplus = t.price.getPrice() - (seller.getPrivateValue() + rt);
+					Price rt = data.getFundamentalAt(ts);	// fundamental at time ts
+					int bsurplus = 0;
+					int ssurplus = 0;
+					if (buyer.hasPrivateValue()) {
+						bsurplus = (buyer.getPrivateValue().sum(rt)).diff(t.price).getPrice();
+					}
+					if (seller.hasPrivateValue()) {
+						ssurplus = t.price.diff(seller.getPrivateValue().sum(rt)).getPrice();
+					}
 					String s = ts + " | " + this + " " +
 							"Agent::updateTransactions: BUYER surplus: (" + buyer.getPrivateValue()
 							+ "+" + rt + ")-" + t.price.getPrice() + "=" + bsurplus + ", "
 							+ "SELLER surplus: " + t.price.getPrice() + "-(" + 
 							seller.getPrivateValue() + "+" + rt + ")=" + ssurplus;
+					
 					log.log(Log.INFO, s);
 					log.log(Log.INFO, ts + " | " + this + " " +
 							"Agent::updateTransactions: SURPLUS: " + (bsurplus + ssurplus));

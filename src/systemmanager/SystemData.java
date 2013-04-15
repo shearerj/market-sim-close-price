@@ -256,6 +256,14 @@ public class SystemData {
 		return !(agents.get(id) instanceof HFTAgent);
 	}
 	
+	/**
+	 * @param id
+	 * @return true if agent with given ID has a non-null private value.
+	 */
+	public boolean hasPrivateValue(int id) {
+		 return (getAgent(id).getPrivateValue() != null);
+	}
+	
 	
 	public ArrayList<Integer> getAgentIDsOfType(String type) {
 		ArrayList<Integer> ids = new ArrayList<Integer>();
@@ -383,20 +391,6 @@ public class SystemData {
 		return uniqueTrans;
 	}
 	
-//	/**
-//	 * @return list of expirations for all ZI agent bids (only ZIAgent limit orders expire).
-//	 */
-//	public ArrayList<TimeStamp> getExpirations() {
-//		ArrayList<TimeStamp> exps = new ArrayList<TimeStamp>();
-//		for (Iterator<Integer> ag = getAgentIDs().iterator(); ag.hasNext(); ) {
-//			int id = ag.next();
-//			if (agents.get(id) instanceof ZIAgent) {
-//				exps.add(new TimeStamp(((ZIAgent) agents.get(id)).getExpiration()));
-//			}
-//		}
-//		return exps;
-//	}
-	
 	
 	/**
 	 * @return list of actual private values of all agents
@@ -404,10 +398,10 @@ public class SystemData {
 	public ArrayList<Price> getPrivateValues() {
 		ArrayList<Price> pvs = new ArrayList<Price>(numAgents);
 		for (Iterator<Integer> ag = getAgentIDs().iterator(); ag.hasNext(); ) {
-			int val = agents.get(ag.next()).getPrivateValue();
-			// PV will be negative if it doesn't exist for the agent; only add positive PVs
-			if (val >= 0) {
-				pvs.add(new Price(val));
+			Price val = agents.get(ag.next()).getPrivateValue();
+			// PV will be null if it doesn't exist for the agent
+			if (val != null) {
+				pvs.add(val);
 			}
 		}
 		return pvs;
@@ -447,9 +441,9 @@ public class SystemData {
 					if (allSurplus.containsKey(buyer.getID())) {
 						surplus = allSurplus.get(buyer.getID());
 					}
-					if (buyer.getPrivateValue() != -1) {
-						int rt = getFundamentalAt(t.timestamp).getPrice();
-						int val = (buyer.getPrivateValue() + rt) - t.price.getPrice();
+					if (buyer.getPrivateValue() != null) {
+						Price rt = getFundamentalAt(t.timestamp);
+						int val = (buyer.getPrivateValue().sum(rt)).diff(t.price).getPrice();
 						allSurplus.put(buyer.getID(), surplus + val);
 					} else {
 						allSurplus.put(buyer.getID(), buyer.getRealizedProfit());
@@ -460,9 +454,9 @@ public class SystemData {
 					if (allSurplus.containsKey(seller.getID())) {
 						surplus = allSurplus.get(seller.getID());
 					}
-					if (seller.getPrivateValue() != -1) {
-						int rt = getFundamentalAt(t.timestamp).getPrice();
-						int val = t.price.getPrice() - (seller.getPrivateValue() + rt);
+					if (seller.getPrivateValue() != null) {
+						Price rt = getFundamentalAt(t.timestamp);
+						int val = t.price.diff(seller.getPrivateValue().sum(rt)).getPrice();
 						allSurplus.put(seller.getID(), surplus + val);
 					} else {
 						allSurplus.put(seller.getID(), seller.getRealizedProfit());
@@ -492,17 +486,17 @@ public class SystemData {
 				Agent seller = agents.get(t.sellerID);
 				
 				if (buyer.getID() == agentID) {
-					if (buyer.getPrivateValue() != -1) {
-						int rt = getFundamentalAt(t.timestamp).getPrice();
-						surplus += (buyer.getPrivateValue() + rt) - t.price.getPrice();
+					if (buyer.getPrivateValue() != null) {
+						Price rt = getFundamentalAt(t.timestamp);
+						surplus += (buyer.getPrivateValue().sum(rt)).diff(t.price).getPrice();
 					} else {
 						surplus = buyer.getRealizedProfit(); // already summed
 					}
 				}
 				if (seller.getID() == agentID) {
-					if (seller.getPrivateValue() != -1) {
-						int rt = getFundamentalAt(t.timestamp).getPrice();
-						surplus += t.price.getPrice() - (seller.getPrivateValue() + rt);
+					if (seller.getPrivateValue() != null) {
+						Price rt = getFundamentalAt(t.timestamp);
+						surplus += t.price.diff(seller.getPrivateValue().sum(rt)).getPrice();
 					} else {
 						surplus = seller.getRealizedProfit(); // already summed
 					}
@@ -541,9 +535,9 @@ public class SystemData {
 					if (allSurplus.containsKey(buyer.getID())) {
 						surplus = allSurplus.get(buyer.getID());
 					}
-					if (buyer.getPrivateValue() != -1) {
-						int rt = getFundamentalAt(t.timestamp).getPrice();
-						int val = (buyer.getPrivateValue() + rt) - t.price.getPrice();
+					if (buyer.getPrivateValue() != null) {
+						Price rt = getFundamentalAt(t.timestamp);
+						int val = (buyer.getPrivateValue().sum(rt)).diff(t.price).getPrice();
 						allSurplus.put(buyer.getID(), surplus + val);	
 					} else {
 						allSurplus.put(buyer.getID(), buyer.getRealizedProfit());	// already summed
@@ -554,9 +548,9 @@ public class SystemData {
 					if (allSurplus.containsKey(seller.getID())) {
 						surplus = allSurplus.get(seller.getID());
 					}
-					if (seller.getPrivateValue() != -1) {
-						int rt = getFundamentalAt(t.timestamp).getPrice();
-						int val = t.price.getPrice() - (seller.getPrivateValue() + rt);
+					if (seller.getPrivateValue() != null) {
+						Price rt = getFundamentalAt(t.timestamp);
+						int val = t.price.diff(seller.getPrivateValue().sum(rt)).getPrice();
 						allSurplus.put(seller.getID(), surplus + val);
 					} else {
 						allSurplus.put(seller.getID(), seller.getRealizedProfit());	// already summed
@@ -602,9 +596,9 @@ public class SystemData {
 					if (discSurplus.containsKey(buyer.getID())) {
 						surplus = discSurplus.get(buyer.getID());
 					}
-					if (buyer.getPrivateValue() != -1) {
-						int rt = getFundamentalAt(t.timestamp).getPrice();
-						double cs = (buyer.getPrivateValue() + rt) - t.price.getPrice();
+					if (buyer.getPrivateValue() != null) {
+						Price rt = getFundamentalAt(t.timestamp);
+						double cs = (buyer.getPrivateValue().sum(rt)).diff(t.price).getPrice();
 //						System.out.println(modelID + ": " + t + " cs=" + cs + ", buyTime=" + buyTime);
 						discSurplus.put(buyer.getID(), surplus + Math.exp(-rho * buyTime.longValue()) * cs);
 					} else {
@@ -616,9 +610,9 @@ public class SystemData {
 					if (discSurplus.containsKey(seller.getID())) {
 						surplus = discSurplus.get(seller.getID());
 					}
-					if (seller.getPrivateValue() != -1) {
-						int rt = getFundamentalAt(t.timestamp).getPrice();
-						double ps = t.price.getPrice() - (seller.getPrivateValue() + rt);
+					if (seller.getPrivateValue() != null) {
+						Price rt = getFundamentalAt(t.timestamp);
+						double ps = t.price.diff(seller.getPrivateValue().sum(rt)).getPrice();
 //						System.out.println(modelID + ": " + t + " ps=" + ps + ", sellTime=" + sellTime);
 						discSurplus.put(seller.getID(), surplus + Math.exp(-rho * sellTime.longValue()) * ps);
 					} else {

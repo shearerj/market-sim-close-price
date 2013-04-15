@@ -57,9 +57,7 @@ public class ZIAgent extends SMAgent {
 		pvVar = this.data.privateValueVar;
 		
 		arrivalTime = new TimeStamp(Long.parseLong(params.get("arrivalTime")));
-		privateValue = (int) Math.round(getNormalRV(0, pvVar));
-		//int val = Integer.parseInt(params.get("fundamental"));
-		//privateValue = Math.max(0, val + (int) Math.round(getNormalRV(0, pvVar)));
+		privateValue = new Price((int) Math.round(getNormalRV(0, pvVar)));
 	}
 	
 	
@@ -72,7 +70,7 @@ public class ZIAgent extends SMAgent {
 	@Override
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		int val = Math.max(0, data.getFundamentalAt(ts).getPrice() + privateValue);
+		int val = Math.max(0, data.getFundamentalAt(ts).getPrice() + privateValue.getPrice());
 
 		int p = 0;
 		int q = 1;

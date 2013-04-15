@@ -39,9 +39,28 @@ public class Price implements Comparable<Object> {
 		return price / 1000;
 	}
 	
-	/* 
-	 * Compares price to another object's price.
+	/**
+	 * Add price to this object.
+	 * @param p
+	 * @return
 	 */
+	public Price sum(Price p) {
+		return new Price(this.price + p.price);
+	}
+	
+	/**
+	 * Subtract price from this object.
+	 * @param p
+	 * @return
+	 */
+	public Price diff(Price p) {
+		return new Price(this.price - p.price);
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
+	@Override
 	public int compareTo(Object o) {
 		return Double.compare(price, ((Price) o).getPrice());
 	}
@@ -60,9 +79,11 @@ public class Price implements Comparable<Object> {
 //		return new DecimalFormat(str).format(price);
 //	}
 	
-	/* 
-	 * Converts price to String.
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
 	 */
+	@Override
 	public String toString() {
 		return new Integer(price).toString();
 	}
