@@ -77,10 +77,11 @@ public class SimulationSpec {
 		data.tickSize = Integer.parseInt(getValue("tick_size"));	
 		data.nbboLatency = new TimeStamp(Integer.parseInt(getValue("nbbo_latency")));
 		data.arrivalRate = Double.parseDouble(getValue("arrival_rate"));
+		data.reentryRate = Double.parseDouble(getValue("reentry_rate"));
 		data.meanValue = Integer.parseInt(getValue("mean_value"));
 		data.kappa = Double.parseDouble(getValue("kappa"));
 		data.shockVar = Double.parseDouble(getValue("shock_var"));
-		data.privateValueVar = Double.parseDouble(getValue("private_value_var"));
+		data.pvVar = Double.parseDouble(getValue("private_value_var"));
 				
 		// Model-specific parameters
 		data.primaryModelDesc = getValue("primary_model");

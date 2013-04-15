@@ -34,6 +34,8 @@ public class AgentFactory {
 			return new BasicMarketMaker(agentID, modelID, data, params, l);
 		} else if (type.equals(Consts.ZI)) {
 			return new ZIAgent(agentID, modelID, data, params, l);
+		} else if (type.equals(Consts.ZIR)) {
+			return new ZIRAgent(agentID, modelID, data, params, l);
 		} else if (type.equals(Consts.ZIP)) {
 			return new ZIPAgent(agentID, modelID, data, params, l);
 		} else {

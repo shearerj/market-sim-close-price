@@ -53,7 +53,7 @@ public class AAAgent extends BackgroundAgent {
 		rand = new Random(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
 		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
 		bidRange = Integer.parseInt(params.get(AAAgent.BIDRANGE_KEY));
-		privateValue = new Price((int) Math.round(getNormalRV(0, this.data.privateValueVar)));
+		privateValue = new Price((int) Math.round(getNormalRV(0, this.data.pvVar)));
 	}
 	
 	

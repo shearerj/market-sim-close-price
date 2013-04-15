@@ -40,16 +40,12 @@ import java.util.ArrayList;
  */
 public class ZIRAgent extends BackgroundAgent {
 
-	private int bidRange;				// range for limit order
-//	private double pvVar;				// variance from private value random process
+	private int bidRange;					// range for limit order
+	private ArrivalTime reentry;			// reentry times
 	
-	// use a general arrivalRate? or have a more specific one
-	// private rate_param for in-between sleep times
-	private double sleepRate;
-	
-	// have to keep track of submission times for tracking discounted surplus
+	// have to keep track of submission times for each order
+	// for tracking discounted surplus
 	private ArrayList<TimeStamp> submissionTimes;
-	
 
 	/**
 	 * Overloaded constructor.
@@ -60,7 +56,8 @@ public class ZIRAgent extends BackgroundAgent {
 		rand = new Random(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
 		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
 		bidRange = Integer.parseInt(params.get(ZIRAgent.BIDRANGE_KEY));
-		privateValue = new Price((int) Math.round(getNormalRV(0, this.data.privateValueVar)));
+		privateValue = new Price((int) Math.round(getNormalRV(0, this.data.pvVar)));
+		reentry = new ArrivalTime(arrivalTime, this.data.reentryRate);
 	}
 	
 	
@@ -90,14 +87,18 @@ public class ZIRAgent extends BackgroundAgent {
 		} else {
 			p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
 		}
-
-//		actMap.appendActivityHashMap(submitNMSBid(p, q, expiration, ts));
 		actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
+		
+		TimeStamp tsNew = reentry.next();	// compute next reentry time
+		actMap.insertActivity(Consts.SM_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
+		actMap.insertActivity(Consts.SM_AGENT_PRIORITY, new AgentStrategy(this, market, tsNew));
 		return actMap;
 	}
 
-//	public TimeStamp nextArrivalTime; somehow compute the next arrival time in this sequence
-	
-	
-	
+	/**
+	 * @return ArrivalTime object holding reentries into market
+	 */
+	public ArrivalTime getReentryTimes() {
+		return reentry;
+	}
 }

@@ -313,7 +313,7 @@ public class SystemSetup {
 
 		// generate logIDs, pseudorandom number generator seeds, & arrivals for non-players
 		Random rand = new Random();
-		int id = 1;
+		int id = data.getNumPlayers() + 1;
 		for (Map.Entry<AgentPropsPair, Integer> entry : allNonPlayers.entrySet()) {
 			ArrayList<Integer> ids = new ArrayList<Integer>();
 			ArrayList<Long> sd = new ArrayList<Long>();
@@ -336,7 +336,6 @@ public class SystemSetup {
 			}
 			createNonPlayersForModel(model);
 		}
-		
 	}
 
 

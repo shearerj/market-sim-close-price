@@ -929,7 +929,7 @@ public class Observations {
 		config.put("arrival_rate", data.arrivalRate);
 		config.put("mean_value", data.meanValue);
 		config.put("shock_var", data.shockVar);
-		config.put("pv_var", data.privateValueVar);
+		config.put("pv_var", data.pvVar);
 
 		for (Map.Entry<AgentPropsPair, Integer> entry : data.getEnvAgentMap().entrySet()) {
 			String agType = entry.getKey().getAgentType();
