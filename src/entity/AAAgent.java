@@ -40,8 +40,6 @@ import java.util.Random;
  */
 public class AAAgent extends BackgroundAgent {
 
-//	private double expireRate;
-//	private long expiration;			// time until limit order expiration
 	private int bidRange;				// range for limit order
 	private double pvVar;				// variance from private value random process
 	
@@ -55,10 +53,7 @@ public class AAAgent extends BackgroundAgent {
 		rand = new Random(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
 		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
 		bidRange = Integer.parseInt(params.get(AAAgent.BIDRANGE_KEY));
-
-		pvVar = this.data.privateValueVar;
-		int fund = Integer.parseInt(params.get(Agent.FUNDAMENTAL_KEY));
-		privateValue = Math.max(0, fund + (int) Math.round(getNormalRV(0, pvVar)));
+		privateValue = new Price((int) Math.round(getNormalRV(0, this.data.privateValueVar)));
 	}
 	
 	
@@ -75,6 +70,7 @@ public class AAAgent extends BackgroundAgent {
 	@Override
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
+		int val = Math.max(0, data.getFundamentalAt(ts).getPrice() + privateValue.getPrice());
 
 		int p = 0;
 		int q = 1;
@@ -83,12 +79,11 @@ public class AAAgent extends BackgroundAgent {
 
 		// basic ZI behavior
 		if (q > 0) {
-			p = (int) Math.max(0, ((this.privateValue - 2*bidRange) + rand.nextDouble()*2*bidRange));
+			p = (int) Math.max(0, ((val - 2*bidRange) + rand.nextDouble()*2*bidRange));
 		} else {
-			p = (int) Math.max(0, (this.privateValue + rand.nextDouble()*2*bidRange));
+			p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
 		}
 
-//		actMap.appendActivityHashMap(submitNMSBid(p, q, expiration, ts));
 		actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
 		return actMap;
 	}

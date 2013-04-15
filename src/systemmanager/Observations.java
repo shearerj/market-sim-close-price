@@ -347,8 +347,8 @@ public class Observations {
 				surplus = a.getRealizedProfit();
 				feat.put(label, ds.getSum() + surplus);
 				totalSurplus += surplus;
-			} else if (data.isNonPlayer(aid) && data.getAgent(aid).getPrivateValue() == -1) {
-				// background agent with undefined private value (e.g. MarketMaker)
+			} else if (data.isNonPlayer(aid) && !data.hasPrivateValue(aid)) {
+				// non-player background agent with undefined private value (e.g. MarketMaker)
 				surplus = data.getSurplusForAgent(modelID, aid);
 				feat.put(label, ds.getSum() + surplus);
 				feat.put("profit_" + type.toLowerCase() + a.getLogID(), surplus);
@@ -373,8 +373,7 @@ public class Observations {
 		// total discounted surplus for varying values of rho
 		for (int i = 0; i < Consts.rhos.length; i++) {
 			double rho = Consts.rhos[i];
-			HashMap<Integer, Double> discSurplus = data.getDiscountedSurplus(
-					modelID, rho);
+			HashMap<Integer, Double> discSurplus = data.getDiscountedSurplus(modelID, rho);
 			double[] vals = convertDoublesToArray(discSurplus);
 			DescriptiveStatistics ds = new DescriptiveStatistics(vals);
 			feat.put((new Double(rho)).toString(), ds.getSum());
