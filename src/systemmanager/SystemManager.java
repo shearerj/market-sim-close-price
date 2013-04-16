@@ -213,10 +213,11 @@ public class SystemManager {
 			for (Iterator<Integer> it = data.getPlayerIDs().iterator(); it.hasNext(); ) {
 				obs.addObservation(it.next());
 			}
-//			obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
+			// obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
 			obs.addFeature("", obs.getConfiguration());
-			obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
-//			obs.addTransactionComparison();
+			// obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
+			// obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
+			// obs.addTransactionComparison();
 			getModelResults();
 			
 			File file = new File(simFolder + Consts.obsFilename + num + ".json");

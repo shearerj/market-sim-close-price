@@ -26,15 +26,16 @@ public class ZIPAgent extends BackgroundAgent {
 
 	private int bidRange;				// range for limit order        
 
-
-
+	
 	public ZIPAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, modelID, d, p, l);
 		
 		rand = new Random(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
 		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
 		bidRange = Integer.parseInt(params.get(ZIAgent.BIDRANGE_KEY));
-		privateValue = new Price((int) Math.round(getNormalRV(0, this.data.pvVar)));
+		int alpha1 = (int) Math.round(getNormalRV(0, this.data.pvVar));
+		int alpha2 = (int) Math.round(getNormalRV(0, this.data.pvVar));
+		alpha = new PrivateValue(alpha1, alpha2);
 	}
 
 	@Override
@@ -49,8 +50,10 @@ public class ZIPAgent extends BackgroundAgent {
 	@Override
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		int val = Math.max(0, data.getFundamentalAt(ts).sum(privateValue).getPrice());
-
+		int q = 1;
+		// 0.50% chance of being either long or short
+		if (rand.nextDouble() < 0.5) q = -q;
+		int val = Math.max(0, data.getFundamentalAt(ts).sum(alpha.getValueAt(q)).getPrice());
 
 		// Insert events for the agent to sleep, then wake up again at timestamp tsNew
 		int sleepTime = Integer.parseInt(params.get(SLEEPTIME_KEY));
@@ -59,6 +62,5 @@ public class ZIPAgent extends BackgroundAgent {
 		actMap.insertActivity(Consts.SM_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
 		actMap.insertActivity(Consts.SM_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
 		return actMap;
-
 	}
 }

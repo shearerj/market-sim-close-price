@@ -53,7 +53,9 @@ public class AAAgent extends BackgroundAgent {
 		rand = new Random(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
 		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
 		bidRange = Integer.parseInt(params.get(AAAgent.BIDRANGE_KEY));
-		privateValue = new Price((int) Math.round(getNormalRV(0, this.data.pvVar)));
+		int alpha1 = (int) Math.round(getNormalRV(0, this.data.pvVar));
+		int alpha2 = (int) Math.round(getNormalRV(0, this.data.pvVar));
+		alpha = new PrivateValue(alpha1, alpha2);
 	}
 	
 	
@@ -70,16 +72,16 @@ public class AAAgent extends BackgroundAgent {
 	@Override
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		int val = Math.max(0, data.getFundamentalAt(ts).sum(privateValue).getPrice());
 
 		int p = 0;
 		int q = 1;
 		// 0.50% chance of being either long or short
 		if (rand.nextDouble() < 0.5) q = -q;
+		int val = Math.max(0, data.getFundamentalAt(ts).sum(alpha.getValueAt(q)).getPrice());
 
 		// basic ZI behavior
 		if (q > 0) {
-			p = (int) Math.max(0, ((val - 2*bidRange) + rand.nextDouble()*2*bidRange));
+			p = (int) Math.max(0, ((val-2*bidRange) + rand.nextDouble()*2*bidRange));
 		} else {
 			p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
 		}
@@ -87,16 +89,4 @@ public class AAAgent extends BackgroundAgent {
 		actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
 		return actMap;
 	}
-
-	
-	/**
-	 * Generate exponential random variate, with rate parameter.
-	 * @param rateParam
-	 * @return
-	 */
-	private double getExponentialRV(double rateParam) {
-		double r = rand.nextDouble();
-		return -Math.log(r) / rateParam;
-	}
-
 }

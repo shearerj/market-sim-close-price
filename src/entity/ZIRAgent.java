@@ -58,9 +58,13 @@ public class ZIRAgent extends BackgroundAgent {
 		rand = new Random(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
 		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
 		bidRange = Integer.parseInt(params.get(ZIRAgent.BIDRANGE_KEY));
-		privateValue = new Price((int) Math.round(getNormalRV(0, this.data.pvVar)));
 		reentry = new ArrivalTime(arrivalTime, this.data.reentryRate);
-
+		
+		// TODO - should be multi-quantity; a setting?
+		int alpha1 = (int) Math.round(getNormalRV(0, this.data.pvVar));
+		int alpha2 = (int) Math.round(getNormalRV(0, this.data.pvVar));
+		alpha = new PrivateValue(alpha1, alpha2);
+		
 		lastPositionBalance = positionBalance;
 	}
 	
@@ -78,12 +82,12 @@ public class ZIRAgent extends BackgroundAgent {
 	@Override
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		int val = Math.max(0, data.getFundamentalAt(ts).sum(privateValue).getPrice());
-
+		
 		int p = 0;
-		int q = 1;
+		int q = 1; // TODO change quantity & randomize
 		// 0.50% chance of being either long or short
 		if (rand.nextDouble() < 0.5) q = -q;
+		int val = Math.max(0, data.getFundamentalAt(ts).sum(alpha.getValueAt(q)).getPrice());
 
 		if (positionBalance != lastPositionBalance || ts.equals(arrivalTime)) {
 			// If either first arrival or if last order has transacted then should 
