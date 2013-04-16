@@ -42,10 +42,12 @@ public class ZIRAgent extends BackgroundAgent {
 
 	private int bidRange;					// range for limit order
 	private ArrivalTime reentry;			// reentry times
+	private int lastPositionBalance;		// last position balance
 	
 	// have to keep track of submission times for each order
 	// for tracking discounted surplus
 	private ArrayList<TimeStamp> submissionTimes;
+	
 
 	/**
 	 * Overloaded constructor.
@@ -58,6 +60,8 @@ public class ZIRAgent extends BackgroundAgent {
 		bidRange = Integer.parseInt(params.get(ZIRAgent.BIDRANGE_KEY));
 		privateValue = new Price((int) Math.round(getNormalRV(0, this.data.pvVar)));
 		reentry = new ArrivalTime(arrivalTime, this.data.reentryRate);
+
+		lastPositionBalance = positionBalance;
 	}
 	
 	
@@ -81,13 +85,19 @@ public class ZIRAgent extends BackgroundAgent {
 		// 0.50% chance of being either long or short
 		if (rand.nextDouble() < 0.5) q = -q;
 
-		// basic ZI behavior
-		if (q > 0) {
-			p = (int) Math.max(0, ((val - 2*bidRange) + rand.nextDouble()*2*bidRange));
-		} else {
-			p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
+		if (positionBalance != lastPositionBalance || ts.equals(arrivalTime)) {
+			// If either first arrival or if last order has transacted then should 
+			// submit a new order. Otherwise, do nothing (or have option to cancel?)
+			
+			if (q > 0) {
+				p = (int) Math.max(0, ((val - 2*bidRange) + rand.nextDouble()*2*bidRange));
+			} else {
+				p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
+			}
+			actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
+			
+			lastPositionBalance = positionBalance;	// update position balance
 		}
-		actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
 		
 		TimeStamp tsNew = reentry.next();	// compute next reentry time
 		actMap.insertActivity(Consts.SM_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
