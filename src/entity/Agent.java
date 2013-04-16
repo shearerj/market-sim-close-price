@@ -41,7 +41,7 @@ public abstract class Agent extends Entity {
 	protected SIP sip;
 	
 	// Agent parameters
-	protected Price privateValue;
+	protected PrivateValue alpha;
 	protected String agentType;
 	protected TimeStamp arrivalTime;
 
@@ -86,7 +86,7 @@ public abstract class Agent extends Entity {
 		lastGlobalQuote = new BestBidAsk();
 		lastNBBOQuote = new BestBidAsk();
 		
-		privateValue = null;		// if no PV, this will always be null
+		alpha = null;		// if no PV, this will always be null
 		arrivalTime = new TimeStamp(0);
 		
 		tickSize = data.tickSize;
@@ -150,10 +150,18 @@ public abstract class Agent extends Entity {
 	}
 	
 	/**
-	 * @return private value of agent.
+	 * @return private value vector.
 	 */
-	public Price getPrivateValue() {
-		return privateValue;
+	public PrivateValue getPrivateValue() {
+		return alpha;
+	}
+	
+	/**
+	 * @param q
+	 * @return private value for given quantity.
+	 */
+	public Price getPrivateValueAt(int q) {
+		return alpha.getValueAt(q);
 	}
 	
 	/**
@@ -319,7 +327,7 @@ public abstract class Agent extends Entity {
 	 * @return true if has non-null private value.
 	 */
 	public boolean hasPrivateValue() {
-		return this.privateValue != null;
+		return this.alpha != null;
 	}
 	
 	/**
@@ -717,10 +725,10 @@ public abstract class Agent extends Entity {
 					int bsurplus = 0;
 					int ssurplus = 0;
 					if (buyer.hasPrivateValue()) {
-						bsurplus = (buyer.getPrivateValue().sum(rt)).diff(t.price).getPrice();
+						bsurplus = (buyer.getPrivateValueAt(t.quantity).sum(rt)).diff(t.price).getPrice();
 					}
 					if (seller.hasPrivateValue()) {
-						ssurplus = t.price.diff(seller.getPrivateValue().sum(rt)).getPrice();
+						ssurplus = t.price.diff(seller.getPrivateValueAt(-t.quantity).sum(rt)).getPrice();
 					}
 					String s = ts + " | " + this + " " +
 							"Agent::updateTransactions: BUYER surplus: (" + buyer.getPrivateValue()
@@ -972,4 +980,13 @@ public abstract class Agent extends Entity {
 	    return mu + z * Math.sqrt(var);
 	}
 
+	/**
+	 * Generate exponential random variate, with rate parameter.
+	 * @param rateParam
+	 * @return
+	 */
+	private double getExponentialRV(double rateParam) {
+		double r = rand.nextDouble();
+		return -Math.log(r) / rateParam;
+	}
 }
