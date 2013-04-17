@@ -43,12 +43,8 @@ import java.util.Random;
 public class ZIAgent extends SMAgent {
 
 	private int bidRange;				// range for limit order
-	private double pvVar;				// variance from private value random process
 	
 	
-	/**
-	 * Overloaded constructor.
-	 */
 	public ZIAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l, int mktID) {
 		super(agentID, modelID, d, p, l, mktID);
 		
