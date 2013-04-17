@@ -76,6 +76,13 @@ public class PrivateValue {
 	}
 	
 	/**
+	 * Reverses the alpha values.
+	 */
+	public void reverseValues() {
+		Collections.reverse(values);
+	}
+	
+	/**
 	 * Creates vector of (-qSell, -qSell+1, ..., -1, 1, ..., qBuy-1, qBuy)
 	 * 
 	 * @param qBuy

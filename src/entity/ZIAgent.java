@@ -54,6 +54,7 @@ public class ZIAgent extends SMAgent {
 		int alpha1 = (int) Math.round(getNormalRV(0, this.data.privateValueVar));
 		int alpha2 = (int) Math.round(getNormalRV(0, this.data.privateValueVar));
 		alpha = new PrivateValue(alpha1, alpha2);
+		if (rand.nextBoolean()) alpha.reverseValues();
 	}
 	
 	
@@ -69,8 +70,7 @@ public class ZIAgent extends SMAgent {
 
 		int p = 0;
 		int q = 1;
-		// 0.50% chance of being either long or short
-		if (rand.nextDouble() < 0.5) q = -q;
+		if (rand.nextBoolean()) q = -q;	 // 50% chance of being either long or short
 		int val = Math.max(0, data.getFundamentalAt(ts).sum(alpha.getValueAt(q)).getPrice());
 
 		// basic ZI behavior
