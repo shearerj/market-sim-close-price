@@ -14,7 +14,7 @@ import java.util.ArrayList;
  *
  * A zero-intelligence agent with re-submission (ZIR).
  *
- * The ZIR agent trades with primarily one market.
+ * The ZIR agent is primarily associated with a single market.
  *
  * TODO - more here........
  * 
@@ -33,7 +33,7 @@ import java.util.ArrayList;
  * private value.
  *
  *
- * TODO - need to know how many arrival times to store? or just compute dynamically
+ * TODO - need to know how many arrival times to store? or just compute dynamically?
  *
  *
  * @author ewah
@@ -41,12 +41,14 @@ import java.util.ArrayList;
 public class ZIRAgent extends BackgroundAgent {
 
 	private int bidRange;					// range for limit order
-	private ArrivalTime reentry;			// reentry times
+	private ArrivalTime reentry;			// re-entry times
 	private int lastPositionBalance;		// last position balance
+	private int maxAbsPosition;				// max quantity for position
 	
 	// have to keep track of submission times for each order
 	// for tracking discounted surplus
 	private ArrayList<TimeStamp> submissionTimes;
+	
 	
 
 	/**
@@ -59,13 +61,14 @@ public class ZIRAgent extends BackgroundAgent {
 		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
 		bidRange = Integer.parseInt(params.get(ZIRAgent.BIDRANGE_KEY));
 		reentry = new ArrivalTime(arrivalTime, this.data.reentryRate);
-		
-		// TODO - should be multi-quantity; a setting?
-		int alpha1 = (int) Math.round(getNormalRV(0, this.data.pvVar));
-		int alpha2 = (int) Math.round(getNormalRV(0, this.data.pvVar));
-		alpha = new PrivateValue(alpha1, alpha2);
-		
+		maxAbsPosition = Integer.parseInt(params.get(ZIRAgent.MAXQUANTITY_KEY));
 		lastPositionBalance = positionBalance;
+		
+		ArrayList<Integer> alphas = new ArrayList<Integer>();
+		for (int i = 0; i < maxAbsPosition*2 - 1; i++) {
+			alphas.add((int) Math.round(getNormalRV(0, this.data.pvVar)));
+		}
+		alpha = new PrivateValue(alphas);
 	}
 	
 	

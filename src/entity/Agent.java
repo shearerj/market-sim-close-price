@@ -67,6 +67,8 @@ public abstract class Agent extends Entity {
 	public final static String NUMRUNGS_KEY = "numRungs";
 	public final static String RUNGSIZE_KEY = "rungSize";
 	public final static String ALPHA_KEY = "alpha";
+	public final static String MAXQUANTITY_KEY = "maxqty";
+	
 	
 	/**
 	 * Constructor

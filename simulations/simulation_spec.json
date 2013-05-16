@@ -7,7 +7,6 @@
 ]},
 "configuration": {
 "sim_length": "15000",
-"tick_size": "1",
 "primary_model": "CENTRALCDA",
 "TWOMARKET": "LA:sleepTime_0_alpha_0.001,DUMMY",
 "CENTRALCDA": "0",
@@ -17,9 +16,10 @@
 "ZI": "3",
 "ZI_setup": "bidRange_2000",
 "ZIR": "0",
-"ZIR_setup": "bidRange_2000",
+"ZIR_setup": "bidRange_2000_maxqty_5"
 "ZIP": "0",
 "ZIP_setup": "",
+"tick_size": "1",
 "nbbo_latency": "0",
 "arrival_rate": "0.075",
 "reentry_rate": "0.005",

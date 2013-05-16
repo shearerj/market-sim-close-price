@@ -77,7 +77,7 @@ public class BasicMarketMaker extends MarketMaker {
 		int bid = getBidPrice(getMarketID()).getPrice();
 		int ask = getAskPrice(getMarketID()).getPrice();
 
-		// TODO - what if just one of the bid and ask is -1? just submit one side?
+		// check that bid or ask is defined
 		if (bid <=0  || ask <= 0) {
 			log.log(Log.INFO, ts + " | " + this + " " + agentType +
 					"::agentStrategy: undefined quote in market " + getMarket());
@@ -102,17 +102,22 @@ public class BasicMarketMaker extends MarketMaker {
 					sellMaxPrice = lastNBBOQuote.bestBid;
 				}
 				
-				// build descending list of buy orders (yt, ..., yt - ct) or stops at NBBO ask
-				for (int p = bid; p >= buyMinPrice; p -= stepSize) {
-					if (p > 0) {
-						prices.add(p);
-						quantities.add(1);
+				// submits only one side if either bid or ask is undefined
+				if (bid > 0) {
+					// build descending list of buy orders (yt, ..., yt - ct) or stops at NBBO ask
+					for (int p = bid; p >= buyMinPrice; p -= stepSize) {
+						if (p > 0) {
+							prices.add(p);
+							quantities.add(1);
+						}
 					}
 				}
-				// build ascending list of sell orders (xt, ..., xt + ct) or stops at NBBO bid
-				for (int p = ask; p <= sellMaxPrice; p += stepSize) {
-					prices.add(p);
-					quantities.add(-1);
+				if (ask > 0) {
+					// build ascending list of sell orders (xt, ..., xt + ct) or stops at NBBO bid
+					for (int p = ask; p <= sellMaxPrice; p += stepSize) {
+						prices.add(p);
+						quantities.add(-1);
+					}
 				}
 				
 				log.log(Log.INFO, ts + " | " + getMarket() + " " + this + " " + agentType + 

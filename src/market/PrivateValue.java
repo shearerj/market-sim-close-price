@@ -44,6 +44,17 @@ public class PrivateValue {
 		createQuantities(alphas.length);
 	}
 	
+	public PrivateValue(ArrayList<Integer> alphas) {
+		values = new ArrayList<Price>();
+		for (int i = 0; i < alphas.size(); i++) {
+			values.add(new Price(alphas.get(i)));
+		}
+		// sort in descending order
+        Collections.sort(values, Collections.reverseOrder());
+		quantities = new ArrayList<Integer>();
+		createQuantities(alphas.size());
+	}
+	
 	public PrivateValue(int alpha1, int alpha2) {
 		values = new ArrayList<Price>();
 		values.add(new Price(alpha1));
