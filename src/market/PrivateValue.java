@@ -49,7 +49,7 @@ public class PrivateValue {
 		values.add(new Price(alpha1));
 		values.add(new Price(alpha2));
 		// sort in descending order
-        Collections.sort(values, Collections.reverseOrder());
+		Collections.sort(values, Collections.reverseOrder());
 		quantities = new ArrayList<Integer>();
 		createQuantities(-1, 1);
 	}
@@ -59,7 +59,7 @@ public class PrivateValue {
 		values.add(alpha1);
 		values.add(alpha2);
 		// sort in descending order
-        Collections.sort(values, Collections.reverseOrder());
+		Collections.sort(values, Collections.reverseOrder());
 		quantities = new ArrayList<Integer>();
 		createQuantities(-1, 1);
 	}
