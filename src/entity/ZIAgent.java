@@ -49,12 +49,12 @@ public class ZIAgent extends SMAgent {
 		super(agentID, modelID, d, p, l, mktID);
 		
 		rand = new Random(Long.parseLong(params.get("seed")));
-		bidRange = this.data.bidRange;	
+		bidRange = this.data.bidRange;
 		arrivalTime = new TimeStamp(Long.parseLong(params.get("arrivalTime")));
 		int alpha1 = (int) Math.round(getNormalRV(0, this.data.privateValueVar));
 		int alpha2 = (int) Math.round(getNormalRV(0, this.data.privateValueVar));
 		alpha = new PrivateValue(alpha1, alpha2);
-		if (rand.nextBoolean()) alpha.reverseValues();
+		//if (rand.nextBoolean()) alpha.reverseValues();
 	}
 	
 	
