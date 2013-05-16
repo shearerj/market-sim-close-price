@@ -93,7 +93,8 @@ public class CallMarket extends Market {
 		
 		// Update the next clear time
 		nextClearTime = clearTime.sum(clearFreq);
-
+		orderbook.logFourHeap(clearTime);
+		
 		// Return prior quote (works b/c lastClearTime has not been updated yet)
 		log.log(Log.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
 				this.quote(clearTime));
