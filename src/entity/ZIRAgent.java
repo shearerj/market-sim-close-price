@@ -64,6 +64,8 @@ public class ZIRAgent extends BackgroundAgent {
 		maxAbsPosition = Integer.parseInt(params.get(ZIRAgent.MAXQUANTITY_KEY));
 		lastPositionBalance = positionBalance;
 		
+		submissionTimes = new ArrayList<TimeStamp>();
+		
 		ArrayList<Integer> alphas = new ArrayList<Integer>();
 		for (int i = 0; i < maxAbsPosition*2 - 1; i++) {
 			alphas.add((int) Math.round(getNormalRV(0, this.data.pvVar)));
@@ -85,16 +87,18 @@ public class ZIRAgent extends BackgroundAgent {
 	@Override
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		
-		int p = 0;
-		int q = 1; // TODO change quantity & randomize
-		// 0.50% chance of being either long or short
-		if (rand.nextDouble() < 0.5) q = -q;
-		int val = Math.max(0, data.getFundamentalAt(ts).sum(alpha.getValueAt(q)).getPrice());
 
 		if (positionBalance != lastPositionBalance || ts.equals(arrivalTime)) {
-			// If either first arrival or if last order has transacted then should 
-			// submit a new order. Otherwise, do nothing (or have option to cancel?)
+			// If either first arrival or if last order has already transacted then should 
+			// submit a new order. Otherwise, do nothing.
+			// TODO should it be able to cancel orders?
+			
+			int p = 0;
+			int q = 1;
+			// 0.50% chance of being either long or short
+			if (rand.nextDouble() < 0.5) q = -q;
+			int val = Math.max(0, data.getFundamentalAt(ts).sum(alpha.getValueAt(q + 
+					positionBalance)).getPrice());
 			
 			if (q > 0) {
 				p = (int) Math.max(0, ((val - 2*bidRange) + rand.nextDouble()*2*bidRange));
@@ -102,18 +106,19 @@ public class ZIRAgent extends BackgroundAgent {
 				p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
 			}
 			actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
+			submissionTimes.add(ts);
 			
 			lastPositionBalance = positionBalance;	// update position balance
 		}
 		
-		TimeStamp tsNew = reentry.next();	// compute next reentry time
+		TimeStamp tsNew = reentry.next();	// compute next re-entry time
 		actMap.insertActivity(Consts.SM_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
 		actMap.insertActivity(Consts.SM_AGENT_PRIORITY, new AgentStrategy(this, market, tsNew));
 		return actMap;
 	}
 
 	/**
-	 * @return ArrivalTime object holding reentries into market
+	 * @return ArrivalTime object holding re-entries into market
 	 */
 	public ArrivalTime getReentryTimes() {
 		return reentry;

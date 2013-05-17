@@ -68,6 +68,7 @@ public abstract class Agent extends Entity {
 	public final static String RUNGSIZE_KEY = "rungSize";
 	public final static String ALPHA_KEY = "alpha";
 	public final static String MAXQUANTITY_KEY = "maxqty";
+	public final static String MARKETID_KEY = "marketID";
 	
 	
 	/**
@@ -431,9 +432,11 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap submitMultipleBid(Market mkt, ArrayList<Integer> price, ArrayList<Integer> quantity, TimeStamp ts) {
+	public ActivityHashMap submitMultipleBid(Market mkt, ArrayList<Integer> price, 
+			ArrayList<Integer> quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, new SubmitMultipleBid(this, mkt, price, quantity, ts));
+		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
+				new SubmitMultipleBid(this, mkt, price, quantity, ts));
 		return actMap;
 	}
 	
@@ -448,7 +451,8 @@ public abstract class Agent extends Entity {
 	public ActivityHashMap expireBid(Market mkt, long duration, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
 		TimeStamp withdrawTime = ts.sum(new TimeStamp(duration));
-		actMap.insertActivity(Consts.WITHDRAW_BID_PRIORITY, new WithdrawBid(this, mkt, withdrawTime));
+		actMap.insertActivity(Consts.WITHDRAW_BID_PRIORITY, 
+				new WithdrawBid(this, mkt, withdrawTime));
 		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": bid duration=" + duration); 
 		return actMap;
 	}
@@ -474,22 +478,27 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap executeSubmitBid(Market mkt, int price, int quantity, TimeStamp ts) {
+	public ActivityHashMap executeSubmitBid(Market mkt, int price, int quantity, 
+			TimeStamp ts) {
 		if (quantity == 0) return null;
 
-		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price + ", " + quantity + ")");
+		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price + ", " 
+				+ quantity + ")");
 		
 		int p = Market.quantize(price, tickSize);
 		PQBid pqBid = new PQBid(this.ID, mkt.ID);
 		pqBid.addPoint(quantity, new Price(p));
 		pqBid.timestamp = ts;
-		data.bidData.put(pqBid.getBidID(), pqBid);
+		data.addBid(pqBid);
+		// quantity can be +/-
+		data.addPrivateValue(pqBid.getBidID(), 
+				this.getPrivateValueAt(quantity + positionBalance));
 		currentBid.put(mkt.ID, pqBid);
 		return mkt.addBid(pqBid, ts);
 	}	
 
 	/**
-	 * Submits a multiple-point/offer bid to the specified market.
+	 * Submits a multiple-point bid to the specified market.
 	 * 
 	 * @param mkt
 	 * @param price
@@ -497,13 +506,16 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap executeSubmitMultipleBid(Market mkt, ArrayList<Integer> price, ArrayList<Integer> quantity, TimeStamp ts) {
+	public ActivityHashMap executeSubmitMultipleBid(Market mkt, ArrayList<Integer> price, 
+			ArrayList<Integer> quantity, TimeStamp ts) {
 		if (price.size() != quantity.size()) {
-			log.log(Log.ERROR, "Agent::submitMultipleBid: Price/Quantity are not the same length");
+			log.log(Log.ERROR, "Agent::submitMultipleBid: " 
+					+ "Price/Quantity are not the same length");
 			return null;
 		}
 		
-		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price +	", " + quantity + ")");
+		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price +	", " 
+				+ quantity + ")");
 		
 		PQBid pqBid = new PQBid(this.ID, mkt.ID);
 		pqBid.timestamp = ts;
@@ -514,6 +526,7 @@ public abstract class Agent extends Entity {
 			}
 		}
 		data.addBid(pqBid);
+		// TODO multi-point private values?
 		currentBid.put(mkt.ID, pqBid);	
 		return mkt.addBid(pqBid, ts);
 	}
@@ -544,8 +557,8 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap executeLiquidate(Price price, TimeStamp ts) {
 		
-		log.log(Log.INFO, ts + " | " + this + " pre-liquidation: position=" + positionBalance
-				+ ", profit=" + realizedProfit);
+		log.log(Log.INFO, ts + " | " + this + " pre-liquidation: position=" 
+				+ positionBalance + ", profit=" + realizedProfit);
 		
 		// If no net position, no need to liquidate
 		if (positionBalance == 0) return null;
@@ -561,8 +574,8 @@ public abstract class Agent extends Entity {
 		}
 		positionBalance = 0;
 		
-		log.log(Log.INFO, ts + " | " + this + " post-liquidation: position=" + positionBalance
-				+ ", profit=" + realizedProfit + ", price=" + price);
+		log.log(Log.INFO, ts + " | " + this + " post-liquidation: position=" 
+				+ positionBalance + ", profit=" + realizedProfit + ", price=" + price);
 		return null;
 	}
 
@@ -582,7 +595,8 @@ public abstract class Agent extends Entity {
 		lastGlobalQuote = sip.getGlobalQuote(modelID);
 		lastNBBOQuote = sip.getNBBOQuote(modelID);
 		
-		log.log(Log.INFO, ts + " | " + this + " Global" + lastGlobalQuote + ", NBBO" + lastNBBOQuote);
+		log.log(Log.INFO, ts + " | " + this + " Global" + lastGlobalQuote 
+				+ ", NBBO" + lastNBBOQuote);
 		return null;
 	}
 	
@@ -692,7 +706,8 @@ public abstract class Agent extends Entity {
 					realizedProfit = rprofit;
 
 				} else if (-quantity >= positionBalance) {
-					// closing out all long position, remaining quantity will start new short position
+					// closing out all long position
+					// remaining quantity will start new short position
 					int rprofit = realizedProfit;
 					rprofit += positionBalance * (t.price.getPrice() - averageCost);
 					realizedProfit = rprofit;
@@ -712,7 +727,8 @@ public abstract class Agent extends Entity {
 					realizedProfit = rprofit;
 
 				} else if (quantity >= -positionBalance) {
-					// closing out all short position, remaining quantity will start new long position
+					// closing out all short position
+					// remaining quantity will start new long position
 					int rprofit = realizedProfit;
 					rprofit += (-positionBalance) * (averageCost - t.price.getPrice());
 					realizedProfit = rprofit;
@@ -836,7 +852,7 @@ public abstract class Agent extends Entity {
 	 */
 	public TreeSet<Integer> getTransIDs(int lastID) {
 		TreeSet<Integer> transIDs = new TreeSet<Integer>();
-		for (Iterator<Integer> it = data.getTransactionIDs(modelID).iterator(); it.hasNext(); ) {
+		for (Iterator<Integer> it = data.getTransIDs(modelID).iterator(); it.hasNext(); ) {
 			int id = it.next();
 			if (id > lastID) {
 				transIDs.add(id);

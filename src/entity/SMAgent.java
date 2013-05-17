@@ -34,7 +34,6 @@ public abstract class SMAgent extends Agent {
 	protected Market market;
 	protected Market marketSubmittedBid;		// market to which bid has been submitted
 	
-	public final static String MARKETID_KEY = "marketID";
 	
 	/**
 	 * Constructor for a single market agent.
@@ -201,7 +200,7 @@ public abstract class SMAgent extends Agent {
 			altMarketID = altMarketIDs.get(0);
 		}
 		
-		// Set additional string to log bid's duration
+		// Set additional string to log bid's duration, if it expires
 		String logDuration = "";
 		if (duration != Consts.INF_TIME && duration > 0) {
 			logDuration = ", duration=" + duration;

@@ -17,9 +17,8 @@ import java.util.Collections;
  * 
  * There is no alpha associated with quantity 0.
  * 
- * For multi-quantity private values:
- * (a1,   a2, ..., ax, ax+1, ..., an) corresponds to
- * (-q, -q+1, ..., -1,    1, ..., qn)
+ * For multi-quantity private valuation vectors of max position q:
+ * (a(-q),  a(-q+1), ..., a(-1), a(1), ..., a(q-1), a(n))
  * 
  * @author ewah
  */

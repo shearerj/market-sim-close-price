@@ -40,9 +40,10 @@ public class SystemData {
 	public HashMap<Integer,Integer> marketIDModelIDMap;	// hashed by market ID
 	
 	// Market information
-	public HashMap<Integer,PQBid> bidData;				// all bids ever, hashed by bid ID
-	public HashMap<Integer,PQTransaction> transData;	// hashed by transaction ID
-	public HashMap<Integer,Quote> quoteData;			// hashed by market ID
+	public HashMap<Integer,PQBid> bids;					// all bids ever, hashed by bid ID
+	public HashMap<Integer,Price> privateValues;		// private values hashed by bid ID
+	public HashMap<Integer,PQTransaction> transactions;	// hashed by transaction ID
+	public HashMap<Integer,Quote> quotes;				// hashed by market ID
 	public HashMap<Integer,Agent> agents;				// (all) agents hashed by ID
 	public HashMap<Integer,Agent> players;				// players (for EGTA)
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
@@ -86,9 +87,10 @@ public class SystemData {
 	 * Constructor
 	 */
 	public SystemData() {
-		bidData = new HashMap<Integer,PQBid>();
-		transData = new HashMap<Integer,PQTransaction>();
-		quoteData = new HashMap<Integer,Quote>();
+		bids = new HashMap<Integer,PQBid>();
+		privateValues = new HashMap<Integer,Price>();
+		transactions = new HashMap<Integer,PQTransaction>();
+		quotes = new HashMap<Integer,Quote>();
 		agents = new HashMap<Integer,Agent>();
 		players = new HashMap<Integer,Agent>();
 		markets = new HashMap<Integer,Market>();
@@ -158,7 +160,7 @@ public class SystemData {
 	 * @return
 	 */
 	public HashMap<Integer,Quote> getQuotes() {
-		return quoteData;
+		return quotes;
 	}
 
 	/**
@@ -167,7 +169,7 @@ public class SystemData {
 	 * @return
 	 */
 	public Quote getQuote(int mktID) {
-		return quoteData.get(mktID);
+		return quotes.get(mktID);
 	}
 	
 	public SIP getSIP() {
@@ -368,7 +370,11 @@ public class SystemData {
 	}
 	
 	public PQBid getBid(int id) {
-		return bidData.get(id);
+		return bids.get(id);
+	}
+
+	public Price getPrivateValue(int bidID) {
+		return privateValues.get(bidID);
 	}
 	
 	/**
@@ -391,7 +397,7 @@ public class SystemData {
 		ArrayList<Integer> mktIDs = getModel(modelID).getMarketIDs();
 		
 		HashMap<Integer,PQTransaction> trans = new HashMap<Integer,PQTransaction>();
-		for (Map.Entry<Integer,PQTransaction> entry : transData.entrySet()) {
+		for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
 			if (mktIDs.contains(entry.getValue().marketID)) {
 				trans.put(entry.getKey(), entry.getValue());
 			}
@@ -413,7 +419,7 @@ public class SystemData {
 		ArrayList<Integer> mktIDs = getModel(modelID).getMarketIDs();
 				
 		ArrayList<PQTransaction> trans = new ArrayList<PQTransaction>();
-		for (Map.Entry<Integer,PQTransaction> entry : transData.entrySet()) {
+		for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
 			if (mktIDs.contains(entry.getValue().marketID)) {
 				PQTransaction tr = entry.getValue();
 				
@@ -447,7 +453,7 @@ public class SystemData {
 	public ArrayList<PQTransaction> getUniqueComparableTrans() {
 		Set<PQTransaction> trans = new HashSet<PQTransaction>();
 		
-		for (Map.Entry<Integer,PQTransaction> entry : transData.entrySet()) {
+		for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
 			PQTransaction tr = entry.getValue();
 			
 			// Modify values to be comparable between models
@@ -494,59 +500,62 @@ public class SystemData {
 	 *
 	 **********************************/
 	
-	/**
-	 * Iterates through all transactions and sums up surplus for all agents of a 
-	 * specified type. For agents that do not have a private valuation, use their
-	 * realized profit instead.
-	 * 
-	 * CS = PV - p, PS = p - PV
-	 * 
-	 * @param modelID 		model id to check
-	 * @param agentType
-	 * @return hash map of agent surplus, hashed by agent ID
-	 */
-	public HashMap<Integer,Integer> getSurplusForType(int modelID, String agentType) {
-
-		ArrayList<Integer> ids = getModel(modelID).getMarketIDs();
-		HashMap<Integer,Integer> allSurplus = new HashMap<Integer,Integer>();
-		
-		for (Map.Entry<Integer,PQTransaction> trans : getTrans(modelID).entrySet()) {
-			PQTransaction t = trans.getValue();
-			
-			if (ids.contains(t.marketID)) {
-				Agent buyer = agents.get(t.buyerID);
-				Agent seller = agents.get(t.sellerID);
-				
-				if (agentType.equals(buyer.getType())) {
-					int surplus = 0;
-					if (allSurplus.containsKey(buyer.getID())) {
-						surplus = allSurplus.get(buyer.getID());
-					}
-					if (buyer.getPrivateValue() != null) {
-						Price rt = getFundamentalAt(t.timestamp);
-						int val = (buyer.getPrivateValueAt(t.quantity).sum(rt)).diff(t.price).getPrice();
-						allSurplus.put(buyer.getID(), surplus + val);
-					} else {
-						allSurplus.put(buyer.getID(), buyer.getRealizedProfit());
-					}
-				}
-				if (agentType.equals(seller.getType())) {
-					int surplus = 0;
-					if (allSurplus.containsKey(seller.getID())) {
-						surplus = allSurplus.get(seller.getID());
-					}
-					if (seller.getPrivateValue() != null) {
-						Price rt = getFundamentalAt(t.timestamp);
-						int val = t.price.diff(seller.getPrivateValueAt(-t.quantity).sum(rt)).getPrice();
-						allSurplus.put(seller.getID(), surplus + val);
-					} else {
-						allSurplus.put(seller.getID(), seller.getRealizedProfit());
-					}
-				}
-			}
-		}
-		return allSurplus;
-	}
+//	/**
+//	 * Iterates through all transactions and sums up surplus for all agents of a 
+//	 * specified type. For agents that do not have a private valuation, use their
+//	 * realized profit instead.
+//	 * 
+//	 * Note that private values are a deviation from the fundamental (v).
+//	 * 
+//	 * CS = (PV + v) - p, PS = p - (PV + v)
+//	 * 
+//	 * @param modelID 		model id to check
+//	 * @param agentType
+//	 * @return hash map of agent surplus, hashed by agent ID
+//	 */
+//	public HashMap<Integer,Integer> getSurplusForType(int modelID, String agentType) {
+//
+//		ArrayList<Integer> ids = getModel(modelID).getMarketIDs();
+//		HashMap<Integer,Integer> allSurplus = new HashMap<Integer,Integer>();
+//		
+//		for (Map.Entry<Integer,PQTransaction> trans : getTrans(modelID).entrySet()) {
+//			PQTransaction t = trans.getValue();
+//			
+//			if (ids.contains(t.marketID)) {
+//				Agent buyer = agents.get(t.buyerID);
+//				Agent seller = agents.get(t.sellerID);
+//				
+//				if (agentType.equals(buyer.getType())) {
+//					int surplus = 0;
+//					if (allSurplus.containsKey(buyer.getID())) {
+//						surplus = allSurplus.get(buyer.getID());
+//					}
+//					if (buyer.getPrivateValue() != null) {
+//						Price rt = getFundamentalAt(t.timestamp);
+//						int val = (buyer.getPrivateValueAt(t.quantity).sum(rt)).diff(t.price).getPrice();
+//						allSurplus.put(buyer.getID(), surplus + val);
+//					} else {
+//						allSurplus.put(buyer.getID(), buyer.getRealizedProfit());
+//					}
+//				}
+//				if (agentType.equals(seller.getType())) {
+//					int surplus = 0;
+//					if (allSurplus.containsKey(seller.getID())) {
+//						surplus = allSurplus.get(seller.getID());
+//					}
+//					if (seller.getPrivateValue() != null) {
+//						Price rt = getFundamentalAt(t.timestamp);
+//						int val = t.price.diff(seller.getPrivateValueAt(-t.quantity).sum(rt)).getPrice();
+//						allSurplus.put(seller.getID(), surplus + val);
+//					} else {
+//						allSurplus.put(seller.getID(), seller.getRealizedProfit());
+//					}
+//				}
+//			}
+//		}
+//		return allSurplus;
+//	}
+	
 	
 	/**
 	 * Get total surplus for a specific agent within a model.
@@ -569,7 +578,8 @@ public class SystemData {
 				if (buyer.getID() == agentID) {
 					if (buyer.getPrivateValue() != null) {
 						Price rt = getFundamentalAt(t.timestamp);
-						surplus += (buyer.getPrivateValueAt(t.quantity).sum(rt)).diff(t.price).getPrice();
+						//surplus += (buyer.getPrivateValueAt(t.quantity).sum(rt)).diff(t.price).getPrice();
+						surplus += getPrivateValue(t.buyBidID).sum(rt).diff(t.price).getPrice();
 					} else {
 						surplus = buyer.getRealizedProfit(); // already summed
 					}
@@ -577,7 +587,8 @@ public class SystemData {
 				if (seller.getID() == agentID) {
 					if (seller.getPrivateValue() != null) {
 						Price rt = getFundamentalAt(t.timestamp);
-						surplus += t.price.diff(seller.getPrivateValueAt(-t.quantity).sum(rt)).getPrice();
+						//surplus += t.price.diff(seller.getPrivateValueAt(-t.quantity).sum(rt)).getPrice();
+						surplus += t.price.diff(getPrivateValue(t.sellBidID).sum(rt)).getPrice();
 					} else {
 						surplus = seller.getRealizedProfit(); // already summed
 					}
@@ -592,13 +603,16 @@ public class SystemData {
 	 * Iterates through all transactions and sums up surplus for all background agents
 	 * that have a private valuation.
 	 * 
-	 * CS = PV - p, PS = p - PV
+	 * Note that private values are a deviation from the fundamental (v).
+	 * 
+	 * CS = (PV + v) - p, PS = p - (PV + v)
 	 * 
 	 * @param modelID 		model id to check
 	 * @return hash map of background agent surplus, hashed by agent ID
 	 */
 	public HashMap<Integer,Integer> getBackgroundSurplus(int modelID) {
 		// basically the same as discounted surplus, but with discount 0.0
+		// also Integers instead of Doubles
 
 		ArrayList<Integer> ids = getModel(modelID).getMarketIDs();
 		HashMap<Integer,Integer> allSurplus = new HashMap<Integer,Integer>();
@@ -618,7 +632,8 @@ public class SystemData {
 					}
 					if (buyer.getPrivateValue() != null) {
 						Price rt = getFundamentalAt(t.timestamp);
-						int val = (buyer.getPrivateValueAt(t.quantity).sum(rt)).diff(t.price).getPrice();
+						//int val = (buyer.getPrivateValueAt(t.quantity).sum(rt)).diff(t.price).getPrice();
+						int val = getPrivateValue(t.buyBidID).sum(rt).diff(t.price).getPrice();
 						allSurplus.put(buyer.getID(), surplus + val);	
 					} else {
 						allSurplus.put(buyer.getID(), buyer.getRealizedProfit());	// already summed
@@ -631,7 +646,8 @@ public class SystemData {
 					}
 					if (seller.getPrivateValue() != null) {
 						Price rt = getFundamentalAt(t.timestamp);
-						int val = t.price.diff(seller.getPrivateValueAt(-t.quantity).sum(rt)).getPrice();
+						//int val = t.price.diff(seller.getPrivateValueAt(-t.quantity).sum(rt)).getPrice();
+						int val = t.price.diff(getPrivateValue(t.sellBidID).sum(rt)).getPrice();
 						allSurplus.put(seller.getID(), surplus + val);
 					} else {
 						allSurplus.put(seller.getID(), seller.getRealizedProfit());	// already summed
@@ -652,7 +668,7 @@ public class SystemData {
 	 * 
 	 * TODO - should the returned hashmap be hashed by transaction ID instead?
 	 * 
-	 * CS = PV - p, PS = p - PV
+	 * CS = (PV + v) - p, PS = p - (PV + v)
 	 * 
 	 * @param modelID 		model id to check
 	 * @param rho			discount factor
@@ -679,7 +695,8 @@ public class SystemData {
 					}
 					if (buyer.getPrivateValue() != null) {
 						Price rt = getFundamentalAt(t.timestamp);
-						double cs = (buyer.getPrivateValueAt(t.quantity).sum(rt)).diff(t.price).getPrice();
+						//double cs = (buyer.getPrivateValueAt(t.quantity).sum(rt)).diff(t.price).getPrice();
+						double cs = getPrivateValue(t.buyBidID).sum(rt).diff(t.price).getPrice();
 //						System.out.println(modelID + ": " + t + " cs=" + cs + ", buyTime=" + buyTime);
 						discSurplus.put(buyer.getID(), surplus + Math.exp(-rho * buyTime.longValue()) * cs);
 					} else {
@@ -693,7 +710,8 @@ public class SystemData {
 					}
 					if (seller.getPrivateValue() != null) {
 						Price rt = getFundamentalAt(t.timestamp);
-						double ps = t.price.diff(seller.getPrivateValueAt(-t.quantity).sum(rt)).getPrice();
+						// double ps = t.price.diff(seller.getPrivateValueAt(-t.quantity).sum(rt)).getPrice();
+						double ps = t.price.diff(getPrivateValue(t.sellBidID).sum(rt)).getPrice();
 //						System.out.println(modelID + ": " + t + " ps=" + ps + ", sellTime=" + sellTime);
 						discSurplus.put(seller.getID(), surplus + Math.exp(-rho * sellTime.longValue()) * ps);
 					} else {
@@ -708,7 +726,7 @@ public class SystemData {
 	/**
 	 * @return list of all transaction IDs
 	 */
-	public ArrayList<Integer> getTransactionIDs(int modelID) {
+	public ArrayList<Integer> getTransIDs(int modelID) {
 		return new ArrayList<Integer>(getTrans(modelID).keySet());
 	}
 	
@@ -772,15 +790,19 @@ public class SystemData {
 	public void addTransaction(PQTransaction tr) {
 		int id = transIDSequence.increment();
 		tr.transID = id;
-		transData.put(id, tr);
+		transactions.put(id, tr);
 	}
 
 	public void addQuote(int mktID, Quote q) {
-		quoteData.put(mktID, q);
+		quotes.put(mktID, q);
 	}
 	
 	public void addBid(PQBid b) {
-		bidData.put(b.getBidID(), b);
+		bids.put(b.getBidID(), b);
+	}
+	
+	public void addPrivateValue(int bidID, Price pv) {
+		privateValues.put(bidID, pv);
 	}
 	
 	/**
