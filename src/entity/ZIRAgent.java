@@ -14,9 +14,9 @@ import java.util.ArrayList;
  *
  * A zero-intelligence agent with re-submission (ZIR).
  *
- * The ZIR agent is primarily associated with a single market.
- *
- * TODO - more here........
+ * The ZIR agent is primarily associated with a single market. It wakes up
+ * periodically to submit a new bid (if its previous bid has transacted) or it
+ * does nothing.
  * 
  * This agent bases its private value on a stochastic process, the parameters
  * of which are specified at the beginning of the simulation by the spec file.
@@ -25,7 +25,7 @@ import java.util.ArrayList;
  * variance parameter. The private value is used to calculate the agent's surplus 
  * (and thus the market's allocative efficiency).
  *
- * This agent submits only ONE limit order at a time. It will modify its private
+ * This agent submits a single limit order at a time. It will modify its private
  * value if its bid has transacted by the time it wakes up.
  * 
  * NOTE: Each limit order price is uniformly distributed over a range that is twice
@@ -48,7 +48,6 @@ public class ZIRAgent extends BackgroundAgent {
 	// have to keep track of submission times for each order
 	// for tracking discounted surplus
 	private ArrayList<TimeStamp> submissionTimes;
-	
 	
 
 	/**
@@ -91,24 +90,35 @@ public class ZIRAgent extends BackgroundAgent {
 		if (positionBalance != lastPositionBalance || ts.equals(arrivalTime)) {
 			// If either first arrival or if last order has already transacted then should 
 			// submit a new order. Otherwise, do nothing.
-			// TODO should it be able to cancel orders?
+			// TODO ZIR: should it be able to cancel orders?
 			
 			int p = 0;
 			int q = 1;
 			// 0.50% chance of being either long or short
 			if (rand.nextDouble() < 0.5) q = -q;
-			int val = Math.max(0, data.getFundamentalAt(ts).sum(alpha.getValueAt(q + 
-					positionBalance)).getPrice());
 			
-			if (q > 0) {
-				p = (int) Math.max(0, ((val - 2*bidRange) + rand.nextDouble()*2*bidRange));
-			} else {
-				p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
+			int val = 0;
+			int newPosition = q + positionBalance;
+			// check that will not exceed max absolute position
+			if (newPosition <= maxAbsPosition && newPosition >= -maxAbsPosition) {
+				val = Math.max(0, data.getFundamentalAt(ts).sum(getPrivateValueAt(q)).getPrice());
+				
+				if (q > 0) {
+					p = (int) Math.max(0, ((val - 2*bidRange) + rand.nextDouble()*2*bidRange));
+				} else {
+					p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
+				}
+				actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
+				submissionTimes.add(ts);
+				
+				lastPositionBalance = positionBalance;	// update position balance
 			}
-			actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
-			submissionTimes.add(ts);
 			
-			lastPositionBalance = positionBalance;	// update position balance
+			// if exceed max position, then don't submit a new bid
+			// TODO - stay the same for now (position balance)
+			
+//			int val = Math.max(0, data.getFundamentalAt(ts).sum(alpha.getValueAt(q + 
+//					positionBalance)).getPrice());
 		}
 		
 		TimeStamp tsNew = reentry.next();	// compute next re-entry time

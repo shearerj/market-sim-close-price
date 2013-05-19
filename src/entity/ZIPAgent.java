@@ -53,7 +53,7 @@ public class ZIPAgent extends BackgroundAgent {
 		int q = 1;
 		// 0.50% chance of being either long or short
 		if (rand.nextDouble() < 0.5) q = -q;
-		int val = Math.max(0, data.getFundamentalAt(ts).sum(alpha.getValueAt(q)).getPrice());
+		int val = Math.max(0, data.getFundamentalAt(ts).sum(getPrivateValueAt(q)).getPrice());
 
 		// Insert events for the agent to sleep, then wake up again at timestamp tsNew
 		int sleepTime = Integer.parseInt(params.get(SLEEPTIME_KEY));

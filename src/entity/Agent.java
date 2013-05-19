@@ -55,7 +55,7 @@ public abstract class Agent extends Entity {
 	protected int preLiqRealizedProfit;
 	
 	// keys for accessing ObjectProperties object
-	public final static String FUNDAMENTAL_KEY = "fundamental";
+	public final static String FUNDAMENTAL_KEY = "fundamentalAtArrival";
 	public final static String ARRIVAL_KEY = "arrivalTime";
 	public final static String RANDSEED_KEY = "seed";
 	public final static String STRATEGY_KEY = "strategy";
@@ -173,11 +173,46 @@ public abstract class Agent extends Entity {
 	}
 	
 	/**
-	 * @param q
-	 * @return private value for given quantity.
+	 * @return true if has non-null private value.
+	 */
+	public boolean hasPrivateValue() {
+		return alpha != null;
+	}
+	
+	/**
+	 * Given additional quantity to buy/sell, return associated private 
+	 * valuation (requires looking at current position balance).
+	 * 
+	 * Required because of indexing of quantities vector in PrivateValue.
+	 *  
+	 * @param q		additional units to buy or sell
+	 * @return
 	 */
 	public Price getPrivateValueAt(int q) {
-		return alpha.getValueAt(q);
+		if (q > 0) {
+			// if buying
+			if (positionBalance >= 0) {
+				// if nonnegative current position, look at next position (+q)
+				return alpha.getValueFromQuantity(positionBalance + q);
+			} else {
+				// if negative current position, look at current position
+				return alpha.getValueFromQuantity(positionBalance);
+			}
+			
+		} else if (q < 0){
+			// if selling
+			if (positionBalance > 0) {
+				// if positive current position, look at current position
+				return alpha.getValueFromQuantity(positionBalance);
+			} else {
+				// if non-positive current position, look at next position (-|q|)
+				return alpha.getValueFromQuantity(positionBalance + q);
+			}
+			
+		} else {
+			// not selling or buying
+			return new Price(0);
+		}
 	}
 	
 	/**
@@ -365,13 +400,6 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * @return true if has non-null private value.
-	 */
-	public boolean hasPrivateValue() {
-		return this.alpha != null;
-	}
-	
-	/**
 	 * Enters market by adding market to data structures.
 	 * @param mkt
 	 * @param ts
@@ -491,8 +519,7 @@ public abstract class Agent extends Entity {
 		pqBid.timestamp = ts;
 		data.addBid(pqBid);
 		// quantity can be +/-
-		data.addPrivateValue(pqBid.getBidID(), 
-				this.getPrivateValueAt(quantity + positionBalance));
+		data.addPrivateValue(pqBid.getBidID(), getPrivateValueAt(quantity));
 		currentBid.put(mkt.ID, pqBid);
 		return mkt.addBid(pqBid, ts);
 	}	
@@ -780,10 +807,10 @@ public abstract class Agent extends Entity {
 					int bsurplus = 0;
 					int ssurplus = 0;
 					if (buyer.hasPrivateValue()) {
-						bsurplus = (buyer.getPrivateValueAt(t.quantity).sum(rt)).diff(t.price).getPrice();
+						bsurplus = (data.getPrivateValueByBid(t.buyBidID).sum(rt)).diff(t.price).getPrice();
 					}
 					if (seller.hasPrivateValue()) {
-						ssurplus = t.price.diff(seller.getPrivateValueAt(-t.quantity).sum(rt)).getPrice();
+						ssurplus = t.price.diff(data.getPrivateValueByBid(t.sellBidID).sum(rt)).getPrice();
 					}
 					String s = ts + " | " + this + " " +
 							"Agent::updateTransactions: BUYER surplus: (" + buyer.getPrivateValue()

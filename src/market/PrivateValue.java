@@ -5,20 +5,26 @@ import java.util.Arrays;
 import java.util.Collections;
 
 /**
- * PrivateValue
+ * PRIVATEVALUE
  * 
- * Stores Prices in a vector of sorted private values.
- * Also stores the transition points (buy/sell)
+ * Stores Prices in a vector of private values, sorted in descending order.
  * 
- * If (alpha, beta) is the vector of private values, this means that
- * a trader will have private value of alpha if selling 1 more unit, and 
- * private value of beta if buying 1 unit. So the corresponding quantities
- * vector is (-1, 1).
+ * If (A, B) is the vector of private values, a trader with initial
+ * net position = 0 has private valuation of A if selling 1 unit, and 
+ * private value of B if buying 1 unit.
  * 
- * There is no alpha associated with quantity 0.
+ * For a private valuation vector for maximum position q:
+ * 	  ( a(-q),  a(-q+1), ..., a(-1), a(1), ..., a(q-1), a(q) )
+ * Going from quantity -q to -q+1 is associated with value a(-q).
+ * Going from quantity q to q-1 is associated with value a(q).
  * 
- * For multi-quantity private valuation vectors of max position q:
- * (a(-q),  a(-q+1), ..., a(-1), a(1), ..., a(q-1), a(n))
+ * Private values are associated with changes in position. For example,
+ * a trader with current balance of 1 who intends to buy 1 additional unit 
+ * of the good will have private value a(2) for the additional unit.
+ * 
+ * As such, the getValueAt method in the Agent class is necessary to 
+ * correctly determine the private value for a new order (as it is
+ * based on both current position and the limit order quantity).
  * 
  * @author ewah
  */
@@ -78,10 +84,10 @@ public class PrivateValue {
 	 * Given a quantity to buy or sell (+/-), return the associated private
 	 * value.
 	 * 
-	 * @param q
+	 * @param q		quantity to buy or sell
 	 * @return
 	 */
-	public Price getValueAt(int q) {
+	public Price getValueFromQuantity(int q) {
 		if (quantities.contains(q))
 			return values.get(quantities.indexOf(q));
 		else

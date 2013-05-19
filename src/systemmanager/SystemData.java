@@ -373,7 +373,7 @@ public class SystemData {
 		return bids.get(id);
 	}
 
-	public Price getPrivateValue(int bidID) {
+	public Price getPrivateValueByBid(int bidID) {
 		return privateValues.get(bidID);
 	}
 	
@@ -579,7 +579,7 @@ public class SystemData {
 					if (buyer.getPrivateValue() != null) {
 						Price rt = getFundamentalAt(t.timestamp);
 						//surplus += (buyer.getPrivateValueAt(t.quantity).sum(rt)).diff(t.price).getPrice();
-						surplus += getPrivateValue(t.buyBidID).sum(rt).diff(t.price).getPrice();
+						surplus += getPrivateValueByBid(t.buyBidID).sum(rt).diff(t.price).getPrice();
 					} else {
 						surplus = buyer.getRealizedProfit(); // already summed
 					}
@@ -588,7 +588,7 @@ public class SystemData {
 					if (seller.getPrivateValue() != null) {
 						Price rt = getFundamentalAt(t.timestamp);
 						//surplus += t.price.diff(seller.getPrivateValueAt(-t.quantity).sum(rt)).getPrice();
-						surplus += t.price.diff(getPrivateValue(t.sellBidID).sum(rt)).getPrice();
+						surplus += t.price.diff(getPrivateValueByBid(t.sellBidID).sum(rt)).getPrice();
 					} else {
 						surplus = seller.getRealizedProfit(); // already summed
 					}
@@ -633,7 +633,7 @@ public class SystemData {
 					if (buyer.getPrivateValue() != null) {
 						Price rt = getFundamentalAt(t.timestamp);
 						//int val = (buyer.getPrivateValueAt(t.quantity).sum(rt)).diff(t.price).getPrice();
-						int val = getPrivateValue(t.buyBidID).sum(rt).diff(t.price).getPrice();
+						int val = getPrivateValueByBid(t.buyBidID).sum(rt).diff(t.price).getPrice();
 						allSurplus.put(buyer.getID(), surplus + val);	
 					} else {
 						allSurplus.put(buyer.getID(), buyer.getRealizedProfit());	// already summed
@@ -647,7 +647,7 @@ public class SystemData {
 					if (seller.getPrivateValue() != null) {
 						Price rt = getFundamentalAt(t.timestamp);
 						//int val = t.price.diff(seller.getPrivateValueAt(-t.quantity).sum(rt)).getPrice();
-						int val = t.price.diff(getPrivateValue(t.sellBidID).sum(rt)).getPrice();
+						int val = t.price.diff(getPrivateValueByBid(t.sellBidID).sum(rt)).getPrice();
 						allSurplus.put(seller.getID(), surplus + val);
 					} else {
 						allSurplus.put(seller.getID(), seller.getRealizedProfit());	// already summed
@@ -695,8 +695,7 @@ public class SystemData {
 					}
 					if (buyer.getPrivateValue() != null) {
 						Price rt = getFundamentalAt(t.timestamp);
-						//double cs = (buyer.getPrivateValueAt(t.quantity).sum(rt)).diff(t.price).getPrice();
-						double cs = getPrivateValue(t.buyBidID).sum(rt).diff(t.price).getPrice();
+						double cs = getPrivateValueByBid(t.buyBidID).sum(rt).diff(t.price).getPrice();
 //						System.out.println(modelID + ": " + t + " cs=" + cs + ", buyTime=" + buyTime);
 						discSurplus.put(buyer.getID(), surplus + Math.exp(-rho * buyTime.longValue()) * cs);
 					} else {
@@ -710,8 +709,7 @@ public class SystemData {
 					}
 					if (seller.getPrivateValue() != null) {
 						Price rt = getFundamentalAt(t.timestamp);
-						// double ps = t.price.diff(seller.getPrivateValueAt(-t.quantity).sum(rt)).getPrice();
-						double ps = t.price.diff(getPrivateValue(t.sellBidID).sum(rt)).getPrice();
+						double ps = t.price.diff(getPrivateValueByBid(t.sellBidID).sum(rt)).getPrice();
 //						System.out.println(modelID + ": " + t + " ps=" + ps + ", sellTime=" + sellTime);
 						discSurplus.put(seller.getID(), surplus + Math.exp(-rho * sellTime.longValue()) * ps);
 					} else {
