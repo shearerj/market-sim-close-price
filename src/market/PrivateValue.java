@@ -118,14 +118,13 @@ public class PrivateValue {
 	}
 	
 	/**
-	 * Creates vector of (-qMax, ..., -1, 1, ..., qMax)
+	 * Creates vector of (-qMax, ..., -1, 1, ..., qMax) given the length of the
+	 * alpha vector (equal to 2*qMax).
 	 * 
-	 * @param qMax
+	 * @param legnth
 	 */
-	private void createQuantities(int qMax) {
-		// error checking 
-		if (qMax < 0) qMax = -qMax;
-
+	private void createQuantities(int length) {
+		int qMax = length / 2;
 		for (int i = -qMax; i <= qMax; i++) {
 			if (i != 0) quantities.add(i);
 		}

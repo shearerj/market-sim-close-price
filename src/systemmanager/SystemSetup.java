@@ -318,6 +318,7 @@ public class SystemSetup {
 			ArrayList<Integer> ids = new ArrayList<Integer>();
 			ArrayList<Long> sd = new ArrayList<Long>();
 			ArrayList<TimeStamp> arr = new ArrayList<TimeStamp>();
+			// iterate through # of agents specified by this AgentPropsPair
 			for (int i = 0; i < entry.getValue(); i++) {
 				ids.add(id++);
 				sd.add(rand.nextLong());

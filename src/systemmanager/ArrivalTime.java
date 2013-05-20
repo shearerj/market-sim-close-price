@@ -20,17 +20,6 @@ public class ArrivalTime {
 	
 	
 	/**
-	 * Constructor (will start at 0)
-	 */
-	public ArrivalTime() {
-		time = new TimeStamp(0);
-		lambda = 0.1;
-		rand = new Random();
-		intervals = new ArrayList<TimeStamp>();
-		arrivalTimes = new ArrayList<TimeStamp>();
-	}
-	
-	/**
 	 * Constructor
 	 * @param ts TimeStamp with which to start arrivals
 	 * @param lambda arrival rate
@@ -39,6 +28,20 @@ public class ArrivalTime {
 		time = ts;
 		this.lambda = lambda;
 		rand = new Random();
+		intervals = new ArrayList<TimeStamp>();
+		arrivalTimes = new ArrayList<TimeStamp>();
+	}
+	
+	/**
+	 * Constructor using given random seed.
+	 * @param ts TimeStamp with which to start arrivals
+	 * @param lambda arrival rate
+	 * @param rand
+	 */
+	public ArrivalTime(TimeStamp ts, double lambda, Random rand) {
+		time = ts;
+		this.lambda = lambda;
+		this.rand = rand;
 		intervals = new ArrayList<TimeStamp>();
 		arrivalTimes = new ArrayList<TimeStamp>();
 	}

@@ -59,15 +59,15 @@ public class ZIRAgent extends BackgroundAgent {
 		rand = new Random(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
 		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
 		bidRange = Integer.parseInt(params.get(ZIRAgent.BIDRANGE_KEY));
-		reentry = new ArrivalTime(arrivalTime, this.data.reentryRate);
+		reentry = new ArrivalTime(arrivalTime, this.data.reentryRate, rand);
 		maxAbsPosition = Integer.parseInt(params.get(ZIRAgent.MAXQUANTITY_KEY));
 		lastPositionBalance = positionBalance;
 		
 		submissionTimes = new ArrayList<TimeStamp>();
 		
 		ArrayList<Integer> alphas = new ArrayList<Integer>();
-		for (int i = 0; i < maxAbsPosition*2 - 1; i++) {
-			alphas.add((int) Math.round(getNormalRV(0, this.data.pvVar)));
+		for (int i = -maxAbsPosition; i <= maxAbsPosition; i++) {
+			if (i != 0)	alphas.add((int) Math.round(getNormalRV(0, this.data.pvVar)));
 		}
 		alpha = new PrivateValue(alphas);
 	}
@@ -87,6 +87,13 @@ public class ZIRAgent extends BackgroundAgent {
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
 
+		String s = "";
+		if (!ts.equals(arrivalTime)) {
+			s += ts + " | " + this + " wake up. ";
+			if (positionBalance == lastPositionBalance) {
+				s += "last order has not transacted, go back to sleep";
+			}
+		}
 		if (positionBalance != lastPositionBalance || ts.equals(arrivalTime)) {
 			// If either first arrival or if last order has already transacted then should 
 			// submit a new order. Otherwise, do nothing.
@@ -102,6 +109,8 @@ public class ZIRAgent extends BackgroundAgent {
 			// check that will not exceed max absolute position
 			if (newPosition <= maxAbsPosition && newPosition >= -maxAbsPosition) {
 				val = Math.max(0, data.getFundamentalAt(ts).sum(getPrivateValueAt(q)).getPrice());
+				s += "position=" + positionBalance + ", for q=" + q + ", value=" + 
+						data.getFundamentalAt(ts) + " + " + getPrivateValueAt(q) + "=" + val;
 				
 				if (q > 0) {
 					p = (int) Math.max(0, ((val - 2*bidRange) + rand.nextDouble()*2*bidRange));
@@ -112,14 +121,21 @@ public class ZIRAgent extends BackgroundAgent {
 				submissionTimes.add(ts);
 				
 				lastPositionBalance = positionBalance;	// update position balance
+				
+//				System.out.println(ts + " | " + this + " positionBalance=" + positionBalance + 
+//						", " + data.getFundamentalAt(ts) + "+" + getPrivateValueAt(q) + "=" + val + ", q=" + q);
+
+			} else {
+//				log.log(Log.INFO, ts + " | " + this + " new order would exceed " +
+//						"max position " + maxAbsPosition);
+				s += "new order would exceed max position " + maxAbsPosition 
+						+ "; no submission";
 			}
 			
 			// if exceed max position, then don't submit a new bid
 			// TODO - stay the same for now (position balance)
-			
-//			int val = Math.max(0, data.getFundamentalAt(ts).sum(alpha.getValueAt(q + 
-//					positionBalance)).getPrice());
 		}
+		log.log(Log.INFO, s);
 		
 		TimeStamp tsNew = reentry.next();	// compute next re-entry time
 		actMap.insertActivity(Consts.SM_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
