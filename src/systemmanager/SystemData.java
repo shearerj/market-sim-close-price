@@ -73,7 +73,7 @@ public class SystemData {
 	public int meanValue;
 	public double kappa;
 	public double shockVar;
-	public double pvVar;				// agent variance from PV random process
+	public double pvVar;								// agent variance from PV random process
 	
 	// Variables of time series for observation file
 	public HashMap<Integer,HashMap<TimeStamp,Double>> marketDepth;		// hashed by market ID

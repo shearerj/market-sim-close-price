@@ -87,11 +87,11 @@ public class ZIRAgent extends BackgroundAgent {
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
 
-		String s = "";
+		String s = ts + " | " + this;
 		if (!ts.equals(arrivalTime)) {
-			s += ts + " | " + this + " wake up. ";
+			s += " wake up.";
 			if (positionBalance == lastPositionBalance) {
-				s += "last order has not transacted, go back to sleep";
+				s += " last order has not transacted, go back to sleep";
 			}
 		}
 		if (positionBalance != lastPositionBalance || ts.equals(arrivalTime)) {
@@ -109,7 +109,7 @@ public class ZIRAgent extends BackgroundAgent {
 			// check that will not exceed max absolute position
 			if (newPosition <= maxAbsPosition && newPosition >= -maxAbsPosition) {
 				val = Math.max(0, data.getFundamentalAt(ts).sum(getPrivateValueAt(q)).getPrice());
-				s += "position=" + positionBalance + ", for q=" + q + ", value=" + 
+				s += " position=" + positionBalance + ", for q=" + q + ", value=" + 
 						data.getFundamentalAt(ts) + " + " + getPrivateValueAt(q) + "=" + val;
 				
 				if (q > 0) {

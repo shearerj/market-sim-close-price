@@ -67,37 +67,51 @@ public class LAAgent extends HFTAgent {
 				int sellMarketID = bestQuote.bestSellMarket;
 				Market buyMarket = data.getMarket(buyMarketID);
 				Market sellMarket = data.getMarket(sellMarketID);
-				
-				int midPoint = (bestQuote.bestBuy + bestQuote.bestSell) / 2;
-				int buySize = getBidQuantity(bestQuote.bestBuy, midPoint-tickSize, 
-						buyMarketID, true);
-				int sellSize = getBidQuantity(midPoint+tickSize, bestQuote.bestSell, 
-						sellMarketID, false);
-				int quantity = Math.min(buySize, sellSize);
 
-				if (quantity > 0 && (buyMarketID != sellMarketID)) {
-					actMap.appendActivityHashMap(submitBid(buyMarket, midPoint-tickSize, 
-							quantity, ts));
-					actMap.appendActivityHashMap(submitBid(sellMarket, midPoint+tickSize, 
-							-quantity, ts));
-					log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
-							"::agentStrategy: An arb opportunity exists: " + bestQuote + 
-							" in " + data.getMarket(bestQuote.bestBuyMarket) + " & " 
-							+ data.getMarket(bestQuote.bestSellMarket));
+				// check that BID/ASK defined for both markets
+				if (buyMarket.defined() && sellMarket.defined()) {
+					if (buyMarket.lastAskPrice.getPrice() == -1 ||
+							buyMarket.lastBidPrice.getPrice() == -1 ||
+							sellMarket.lastBidPrice.getPrice() == -1 ||
+							sellMarket.lastAskPrice.getPrice() == -1 )
+						System.out.println("BLAH");
 					
-				} else if (buyMarketID == sellMarketID) {
-					log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
-							"::agentStrategy: No arb opp since at least 1 market does not " +
-							"have both a bid and an ask");
-					// Note that this is due to a market not having both a bid & ask price,
-					// causing the buy and sell market IDs to be identical
+					int midPoint = (bestQuote.bestBuy + bestQuote.bestSell) / 2;
+					int buySize = getBidQuantity(bestQuote.bestBuy, midPoint-tickSize, 
+							buyMarketID, true);
+					int sellSize = getBidQuantity(midPoint+tickSize, bestQuote.bestSell, 
+							sellMarketID, false);
+					int quantity = Math.min(buySize, sellSize);
+
+					if (quantity > 0 && (buyMarketID != sellMarketID)) {
+						actMap.appendActivityHashMap(submitBid(buyMarket, midPoint-tickSize, 
+								quantity, ts));
+						actMap.appendActivityHashMap(submitBid(sellMarket, midPoint+tickSize, 
+								-quantity, ts));
+						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
+								"::agentStrategy: Exploit existing arb opp: " + bestQuote + 
+								" in " + data.getMarket(bestQuote.bestBuyMarket) + " & " 
+								+ data.getMarket(bestQuote.bestSellMarket));
+
+					} else if (buyMarketID == sellMarketID) {
+						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
+								"::agentStrategy: No arb opp since at least 1 market does not " +
+								"have both a bid and an ask");
+						// Note that this is due to a market not having both a bid & ask price,
+						// causing the buy and sell market IDs to be identical
+
+					} else if (quantity == 0) {
+						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
+								"::agentStrategy: No quantity available");
+						// Note that if this message appears in a CDA market, then the HFT
+						// agent is beating the market's Clear activity, which is incorrect.
+					}
 					
-				} else if (quantity == 0) {
+				} else {
 					log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
-							"::agentStrategy: No quantity available");
-					// Note that if this message appears in a CDA market, then the HFT
-					// agent is beating the market's Clear activity, which is incorrect.
+							"::agentStrategy: Market quote(s) undefined. No bid submitted.");
 				}
+				
 			}
 			if (sleepTime > 0) {
 				TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));

@@ -64,9 +64,9 @@ public class Consts {
 	
 	// ActivityList priorities
 	public final static int DEFAULT_PRIORITY = 0;
-	public final static int SEND_TO_SIP_PRIORITY = 0;
-	public final static int UPDATE_NBBO_PRIORITY = 0;
-	public final static int SUBMIT_BID_PRIORITY = 1;
+	public final static int SEND_TO_SIP_PRIORITY = 1;
+	public final static int UPDATE_NBBO_PRIORITY = 1;
+	public final static int SUBMIT_BID_PRIORITY = 0;
 	public final static int WITHDRAW_BID_PRIORITY = 2; // always happen after the bid is submitted
 	public final static int CDA_CLEAR_PRIORITY = 3;
 	public final static int CALL_CLEAR_PRIORITY = 3;

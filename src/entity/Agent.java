@@ -510,8 +510,11 @@ public abstract class Agent extends Entity {
 			TimeStamp ts) {
 		if (quantity == 0) return null;
 
-		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price + ", " 
-				+ quantity + ")");
+//		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price + ", " 
+//				+ quantity + ")");
+		log.log(Log.INFO, ts + " | " + this + " " + agentType + 
+				"::submitBid: +(" + price + ", " 
+				+ quantity + ") to " + mkt);
 		
 		int p = Market.quantize(price, tickSize);
 		PQBid pqBid = new PQBid(this.ID, mkt.ID);
@@ -519,7 +522,11 @@ public abstract class Agent extends Entity {
 		pqBid.timestamp = ts;
 		data.addBid(pqBid);
 		// quantity can be +/-
-		data.addPrivateValue(pqBid.getBidID(), getPrivateValueAt(quantity));
+		if (hasPrivateValue()) {
+			data.addPrivateValue(pqBid.getBidID(), getPrivateValueAt(quantity));
+		} else {
+			data.addPrivateValue(pqBid.getBidID(), null);
+		}
 		currentBid.put(mkt.ID, pqBid);
 		return mkt.addBid(pqBid, ts);
 	}	
@@ -670,8 +677,8 @@ public abstract class Agent extends Entity {
 
 		String s = ts.toString() + " | " + this +  " Agent::logTransactions: " + 
 				this.getModel().getFullName() + ": Current Position=" + 
-				positionBalance + ", Realized Profit=" + rp + 
-				", Unrealized Profit=" + up;
+				positionBalance + ", Realized Profit=" + rp; 
+				//+ ", Unrealized Profit=" + up;
 		log.log(Log.INFO, s);
 	}
 	
@@ -806,18 +813,30 @@ public abstract class Agent extends Entity {
 					Price rt = data.getFundamentalAt(ts);	// fundamental at time ts
 					int bsurplus = 0;
 					int ssurplus = 0;
+					String s = ts + " | " + this + " " + "Agent::updateTransactions: BUYER surplus: ";
 					if (buyer.hasPrivateValue()) {
 						bsurplus = (data.getPrivateValueByBid(t.buyBidID).sum(rt)).diff(t.price).getPrice();
+						s += "(" + buyer.getPrivateValue() + "+" + rt + ")-" + t.price.getPrice() + 
+								"=" + bsurplus + ", ";
+					} else {
+						bsurplus = t.quantity * t.price.getPrice();
+						s += "-" + bsurplus + ", ";
 					}
+					s += "SELLER surplus: ";
 					if (seller.hasPrivateValue()) {
 						ssurplus = t.price.diff(data.getPrivateValueByBid(t.sellBidID).sum(rt)).getPrice();
+						s += t.price.getPrice() + "-(" + seller.getPrivateValue() + "+" + rt + 
+								")=" + ssurplus;
+					} else {
+						ssurplus = t.quantity * t.price.getPrice(); 
+						s += ssurplus;
 					}
-					String s = ts + " | " + this + " " +
-							"Agent::updateTransactions: BUYER surplus: (" + buyer.getPrivateValue()
-							+ "+" + rt + ")-" + t.price.getPrice() + "=" + bsurplus + ", "
-							+ "SELLER surplus: " + t.price.getPrice() + "-(" + 
-							seller.getPrivateValue() + "+" + rt + ")=" + ssurplus;
-					
+//					String s = ts + " | " + this + " " +
+//							"Agent::updateTransactions: BUYER surplus: (" + buyer.getPrivateValue()
+//							+ "+" + rt + ")-" + t.price.getPrice() + "=" + bsurplus + ", "
+//							+ "SELLER surplus: " + t.price.getPrice() + "-(" + 
+//							seller.getPrivateValue() + "+" + rt + ")=" + ssurplus;
+
 					log.log(Log.INFO, s);
 					log.log(Log.INFO, ts + " | " + this + " " +
 							"Agent::updateTransactions: SURPLUS: " + (bsurplus + ssurplus));
