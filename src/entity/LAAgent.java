@@ -26,7 +26,6 @@ public class LAAgent extends HFTAgent {
 	
 	
 	/**
-	 * Overloaded constructor
 	 * @param agentID
 	 */
 	public LAAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
@@ -70,11 +69,6 @@ public class LAAgent extends HFTAgent {
 
 				// check that BID/ASK defined for both markets
 				if (buyMarket.defined() && sellMarket.defined()) {
-					if (buyMarket.lastAskPrice.getPrice() == -1 ||
-							buyMarket.lastBidPrice.getPrice() == -1 ||
-							sellMarket.lastBidPrice.getPrice() == -1 ||
-							sellMarket.lastAskPrice.getPrice() == -1 )
-						System.out.println("BLAH");
 					
 					int midPoint = (bestQuote.bestBuy + bestQuote.bestSell) / 2;
 					int buySize = getBidQuantity(bestQuote.bestBuy, midPoint-tickSize, 
@@ -113,14 +107,19 @@ public class LAAgent extends HFTAgent {
 				}
 				
 			}
+			TimeStamp tsNew = new TimeStamp();
 			if (sleepTime > 0) {
-				TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
-				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
-				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
+				tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
+				actMap.insertActivity(Consts.HFT_ARRIVAL_PRIORITY, 
+						new AgentReentry(this, Consts.HFT_AGENT_PRIORITY, tsNew));
+//				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
+//				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
 				
 			} else if (sleepTime == 0) {
 				// infinitely fast HFT agent
-				TimeStamp tsNew = new TimeStamp(Consts.INF_TIME);
+				tsNew = new TimeStamp(Consts.INF_TIME);
+//				actMap.insertActivity(Consts.DEFAULT_PRIORITY, 
+//						new AgentReentry(this, Consts.HFT_ARRIVAL_PRIORITY, tsNew));
 				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
 				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
 			}

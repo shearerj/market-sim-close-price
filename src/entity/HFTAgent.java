@@ -54,13 +54,26 @@ public abstract class HFTAgent extends Agent {
 		// Always insert agent strategy call once it has arrived in the market;
 		// inserted at earliest priority in case there are orders already present at the beginning
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.DEFAULT_PRIORITY, new UpdateAllQuotes(this, ts));
-		actMap.insertActivity(Consts.DEFAULT_PRIORITY, new AgentStrategy(this, ts));
+		actMap.insertActivity(Consts.HFT_ARRIVAL_PRIORITY, new UpdateAllQuotes(this, ts));
+		actMap.insertActivity(Consts.HFT_ARRIVAL_PRIORITY, new AgentStrategy(this, ts));
 		return actMap;
 	}
 	
 	/**
-	 * Agent departs all markets, if it is active.  //TODO need to fix this
+	 * Agent re-enters/wakes up to execute its strategy.
+	 * 
+	 * @param priority
+	 * @param ts
+	 */
+	public ActivityHashMap agentReentry(int priority, TimeStamp ts) {
+		ActivityHashMap actMap = new ActivityHashMap();
+		actMap.insertActivity(priority, new UpdateAllQuotes(this, ts));
+		actMap.insertActivity(priority, new AgentStrategy(this, ts));
+		return actMap;
+	}
+	
+	/**
+	 * Agent departs all markets, if it is active.  //TODO fix later
 	 * 
 	 * @return ActivityHashMap
 	 */

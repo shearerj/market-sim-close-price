@@ -62,20 +62,25 @@ public class Consts {
 	public final static String MODEL_CONFIG_KEY = "config";
 	public final static String MODEL_CONFIG_NONE = "NONE";
 	
-	// ActivityList priorities
+	// ActivityList priorities (lower the number, higher the priority)
+	public final static int HIGHEST_PRIORITY = -999;
+	public final static int ARRIVAL_PRIORITY = -10; 	// inserted with high priority
+	public final static int HFT_ARRIVAL_PRIORITY = -10;
 	public final static int DEFAULT_PRIORITY = 0;
-	public final static int SEND_TO_SIP_PRIORITY = 1;
-	public final static int UPDATE_NBBO_PRIORITY = 1;
 	public final static int SUBMIT_BID_PRIORITY = 0;
+	public final static int CDA_CLEAR_PRIORITY = 1;
 	public final static int WITHDRAW_BID_PRIORITY = 2; // always happen after the bid is submitted
-	public final static int CDA_CLEAR_PRIORITY = 3;
-	public final static int CALL_CLEAR_PRIORITY = 3;
-	public final static int HFT_AGENT_PRIORITY = 5;
-	public final static int MARKETMAKER_PRIORITY = 6;
-	public final static int SM_AGENT_PRIORITY = 7;
+	public final static int THRESHOLD_PRE_PRIORITY = 2;
+	public final static int SEND_TO_SIP_PRIORITY = 3;
+	public final static int UPDATE_NBBO_PRIORITY = 3;
+	public final static int CALL_CLEAR_PRIORITY = 4;
+	public final static int THRESHOLD_POST_PRIORITY = 5;
+	public final static int HFT_AGENT_PRIORITY = 7;
+	public final static int MARKETMAKER_PRIORITY = 8;
+	public final static int BACKGROUND_ARRIVAL_PRIORITY = 9;
+	// public final static int BACKGROUND_REENTRY_PRIORITY = 10;
+	public final static int BACKGROUND_AGENT_PRIORITY = 12;
 	public final static int LOWEST_PRIORITY = 999;
-	// AgentArrival/Departure inserted with default priority
-	// AgentStrategy inserted with agent-specific priority
 	
 	// TimeStamp
 	public final static long INF_TIME = -1;
@@ -117,12 +122,6 @@ public class Consts {
 	// Directories
 	public final static String configDir = "config/";
 	public final static String logDir = "logs/";
-	
-//	// Track type of bid submission for background agents
-//	// NOBID = no bid submitted yet
-//	// MAIN = bid submitted to main market
-//	// ALTERNATE = bid submitted to alternate market, see extra info
-//	public enum SubmittedBidMarket { NOBID,	MAIN, ALTERNATE	}
 
 	// ----- SIMULATION -----
 	

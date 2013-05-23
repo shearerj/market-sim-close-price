@@ -33,7 +33,7 @@ public class SubmitNMSBid extends Activity {
 	}
 	
 	public String toString() {
-		return new String("SubmitNMSBid::" + this.ag + "," + ag.getMarketSubmittedBid() + 
-				"+(" + this.price + ", " + this.quantity + "), duration=" + duration);
+		return new String("SubmitNMSBid::" + this.ag + "," + "+(" + 
+				this.price + ", " + this.quantity + "), duration=" + duration);
 	}
 }

@@ -18,13 +18,13 @@ import model.*;
  * 
  * Class to create agent, models, and markets.
  * 
- * There are two use cases: EGTA analysis and Parallel simluation.
+ * There are two use cases: EGTA analysis and Market models simulation.
  * 	I) EGTA analysis
  * 		- In this use case, only ONE market model will be created. This is specified
  * 		  by the primary market model in the spec file.
  * 		- Model-level agents are not created. Both environment agents & players will
  * 		  be created.
- * 	II) Parallel simulation
+ * 	II) Market models simulation
  * 		- In this case, multiple market models can be specified.
  * 		- Anything in the "assignment" section of the spec file will be ignored.
  * 		- No players will be created. Both environment and model-level agents will be
@@ -45,7 +45,7 @@ import model.*;
  *   - create the primary model
  * - create the agents
  * 	 - environment agents, model-level agents, or players 
- *   - duplicate agents for each model (if parallel simulations)
+ *   - common random numbers for agents in each market model
  *   - agent-specific parameters are added to ObjectProperties
  *   - add AgentArrival activities
  * - set agent permission for each model's markets
@@ -129,7 +129,7 @@ public class SystemSetup {
 
 			// Initial SendToSIP Activity for all markets
 			for (Map.Entry<Integer,Market> entry : data.getMarkets().entrySet()) {
-				eventManager.createEvent(Consts.DEFAULT_PRIORITY,
+				eventManager.createEvent(Consts.HIGHEST_PRIORITY,
 							new SendToSIP(entry.getValue(), new TimeStamp(0)));
 			}
 		} catch (Exception e) {
@@ -173,7 +173,7 @@ public class SystemSetup {
 			}
 			
 		} else {
-			// No players means parallel model simulation; no primary model (set as null)
+			// No players means market models simulation; no primary model (set as null)
 			data.primaryModel = null;
 			
 			// Create by model type
@@ -292,7 +292,7 @@ public class SystemSetup {
 			}
 			
 		} else {
-			// PARALLEL SIMULATION - create environment & model agents
+			// MARKET MODELS SIMULATION - create environment & model agents
 			// Environment agents are present in EVERY market model
 			modelMap.putAll(data.getModels());
 			allNonPlayers.putAll(data.getModelAgentMap());
@@ -450,16 +450,11 @@ public class SystemSetup {
 	private void createInitialAgentEvents(Agent agent) {
 		TimeStamp ts = agent.getArrivalTime();
 		
+		int arrivalPriority = Consts.BACKGROUND_AGENT_PRIORITY;
 		if (agent instanceof HFTAgent) {
-			eventManager.createEvent(new AgentArrival(agent, ts));
-//			eventManager.createEvent(new AgentDeparture(agent, data.simLength));
+			arrivalPriority = Consts.HIGHEST_PRIORITY;
 		}
-		
-		if (agent instanceof SMAgent) {
-			Market mkt = ((SMAgent) agent).getMarket();
-			eventManager.createEvent(Consts.SM_AGENT_PRIORITY, new AgentArrival(agent, mkt, ts));
-//			eventManager.createEvent(new AgentDeparture(agent, mkt, data.simLength));
-		}
+		eventManager.createEvent(arrivalPriority, new AgentArrival(agent, ts));
 		
 		// set liquidation at the end of the simulation for market makers
 		if (agent instanceof BasicMarketMaker) {

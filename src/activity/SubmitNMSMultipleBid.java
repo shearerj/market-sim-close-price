@@ -31,7 +31,7 @@ public class SubmitNMSMultipleBid extends Activity {
 	}
 	
 	public String toString() {
-		return new String("SubmitNMSMultipleBid::" + this.ag + "," + ag.getMarketSubmittedBid() + 
+		return new String("SubmitNMSMultipleBid::" + this.ag + "," + 
 				"+(" + this.price + "," + this.quantity + ")");
 	}
 }

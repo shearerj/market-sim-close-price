@@ -313,7 +313,7 @@ public class Observations {
 
 		int totalSurplus = 0;
 
-		// // TODO: have it call discounted surplus with rho=0
+		// // TODO: instead, call discounted surplus with rho=0
 		// HashMap<Integer,Double> discSurplus =
 		// data.getDiscountedSurplus(modelID, rho);
 		// double[] vals = convertDoublesToArray(discSurplus);
@@ -339,7 +339,6 @@ public class Observations {
 //			if (model.getNumAgentType(type) > 1) {
 				label += a.getLogID();
 //			}
-			
 
 			int surplus = 0;
 			if (!data.isNonPlayer(aid)) {
@@ -959,8 +958,8 @@ public class Observations {
 			int agentID = it.next();
 			Agent ag = data.getAgent(agentID);
 			// must check that not market maker (since not affected by routing)
-			if (ag instanceof SMAgent && !(ag instanceof MarketMaker)) {
-				SMAgent sm = (SMAgent) ag;
+			if (ag instanceof BackgroundAgent && !(ag instanceof MarketMaker)) {
+				BackgroundAgent sm = (BackgroundAgent) ag;
 				if (sm.getMarketID() != sm.getMarketIDSubmittedBid()) {
 					// order routed to alternate market
 					numAlt++;

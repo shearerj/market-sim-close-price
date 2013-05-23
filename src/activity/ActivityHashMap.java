@@ -31,20 +31,20 @@ public class ActivityHashMap {
 		acts.clear();
 	}
 	
-	/**
-	 * Creates new entry hashed at the activity's TimeStamp, with a single
-	 * element ActivityList containing the given Activity. Modifies the Activity
-	 * TimeStamp to match what it is hashed at.
-	 * 
-	 * If key already exists, appends the given Activity at the end of the
-	 * ActivityList.
-	 * 
-	 * @param act
-	 * @return true if inserted correctly, false otherwise
-	 */
-	public boolean insertActivity(Activity act) {
-		return insertActivity(Consts.DEFAULT_PRIORITY, act);
-	}
+//	/**
+//	 * Creates new entry hashed at the activity's TimeStamp, with a single
+//	 * element ActivityList containing the given Activity. Modifies the Activity
+//	 * TimeStamp to match what it is hashed at.
+//	 * 
+//	 * If key already exists, appends the given Activity at the end of the
+//	 * ActivityList.
+//	 * 
+//	 * @param act
+//	 * @return true if inserted correctly, false otherwise
+//	 */
+//	public boolean insertActivity(Activity act) {
+//		return insertActivity(Consts.DEFAULT_PRIORITY, act);
+//	}
 	
 	/**
 	 * Creates new entry hashed at the activity's TimeStamp, with a single
@@ -144,6 +144,22 @@ public class ActivityHashMap {
 	}
 	
 	/**
+	 * @param ts
+	 * @return
+	 */
+	public PriorityActivityList get(TimeStamp ts) {
+		return acts.get(ts);
+	}
+	
+	/**
+	 * @param ts
+	 * @return PAL associated with ts
+	 */
+	public PriorityActivityList remove(TimeStamp ts) {
+		return acts.remove(ts);
+	}
+	
+	/**
 	 * @return true if contains no key-value pairings
 	 */
 	public boolean isEmpty() {
@@ -155,6 +171,14 @@ public class ActivityHashMap {
 	 */
 	public Set<TimeStamp> keys() {
 		return acts.keySet();
+	}
+	
+	/**
+	 * @param ts
+	 * @return
+	 */
+	public boolean containsKey(TimeStamp ts) {
+		return acts.containsKey(ts);
 	}
 	
 	/**

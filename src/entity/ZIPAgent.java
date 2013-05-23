@@ -59,8 +59,8 @@ public class ZIPAgent extends BackgroundAgent {
 		int sleepTime = Integer.parseInt(params.get(SLEEPTIME_KEY));
 		double sleepVar = Double.parseDouble(params.get(SLEEPVAR_KEY));
 		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
-		actMap.insertActivity(Consts.SM_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
-		actMap.insertActivity(Consts.SM_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
+		actMap.insertActivity(Consts.BACKGROUND_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
+		actMap.insertActivity(Consts.BACKGROUND_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
 		return actMap;
 	}
 }

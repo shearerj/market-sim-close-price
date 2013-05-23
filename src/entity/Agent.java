@@ -13,6 +13,10 @@ import java.util.*;
  * 
  * @author ewah
  */
+/**
+ * @author ewah
+ *
+ */
 public abstract class Agent extends Entity {
 
 	protected int logID;			// ID for logging purposes (same across models)
@@ -122,16 +126,22 @@ public abstract class Agent extends Entity {
 	public abstract ActivityHashMap agentArrival(TimeStamp ts);
 	
 	/**
+	 * @param ts
 	 * @return
 	 */
 	public abstract ActivityHashMap agentDeparture(TimeStamp ts);
 	
+	/**
+	 * @param priority
+	 * @param ts
+	 * @return
+	 */
+	public abstract ActivityHashMap agentReentry(int priority, TimeStamp ts);
 	
 	/**
 	 * @return observation to include in the output file
 	 */
 	public abstract HashMap<String, Object> getObservation();
-	
 	
 	
 	/**
@@ -510,8 +520,6 @@ public abstract class Agent extends Entity {
 			TimeStamp ts) {
 		if (quantity == 0) return null;
 
-//		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price + ", " 
-//				+ quantity + ")");
 		log.log(Log.INFO, ts + " | " + this + " " + agentType + 
 				"::submitBid: +(" + price + ", " 
 				+ quantity + ") to " + mkt);
@@ -560,7 +568,7 @@ public abstract class Agent extends Entity {
 			}
 		}
 		data.addBid(pqBid);
-		// TODO multi-point private values?
+		// TODO incorporate multi-point PVs?
 		currentBid.put(mkt.ID, pqBid);	
 		return mkt.addBid(pqBid, ts);
 	}
@@ -576,7 +584,8 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap liquidateAtFundamental(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(new Liquidate(this, data.getFundamentalAt(ts), ts));
+		actMap.insertActivity(Consts.LOWEST_PRIORITY, 
+				new Liquidate(this, data.getFundamentalAt(ts), ts));
 		log.log(Log.INFO, ts + " | " + this + " liquidating..."); 
 		return actMap;
 	}

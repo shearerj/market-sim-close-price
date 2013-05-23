@@ -12,20 +12,20 @@ import java.util.ArrayList;
  * SMAGENT
  * 
  * Single market (SM) agent, whose agent strategy is executed only within one market.
- * This does not mean that it can only trade with its specified market; however, it is
- * only capable of looking at price quotes from the NBBO and its market.
+ * This does not mean that it can only trade with its specified market; it means that
+ * it only checks price quotes from its primary market.
  * 
- * An SMAgent is only capable of seeing the quote from its own market with zero delay.
+ * An SMAgent is capable of seeing the quote from its own market with zero delay.
  * It also tracks to which market it has most recently submitted a bid, as it is only
  * permitted to submit to one market at a time.
  *  
- * BID SUBMISSION:
+ * ORDER ROUTING (REGULATION NMS):
  * 
- * The agent will submit to the alternate market ONLY if both the NBBO quote is better
- * than the main market's quote and the bid to submit will transact immediately 
- * given the price in the alternate market. The only difference in outcome occurs
- * when the NBBO is out-of-date and the agent submits a bid to the main market
- * although the alternate market is actually better.
+ * The agent's order will be routed to the alternate market ONLY if both the NBBO 
+ * quote is better than the primary market's quote and the submitted bid will transact 
+ * immediately given the price in the alternate market. The only difference in outcome 
+ * occurs when the NBBO is out-of-date and the agent's order is routed to the main market
+ * when the alternate market is actually better.
  * 
  * @author ewah
  */
@@ -141,7 +141,8 @@ public abstract class SMAgent extends Agent {
 	}
 	
 	/**
-	 * Agent arrives in a single market.
+	 * Agent arrives in a single market. To ensure deterministic insertion, use
+	 * AgentReentry activity.
 	 * 
 	 * @param market
 	 * @param ts
@@ -152,13 +153,30 @@ public abstract class SMAgent extends Agent {
 		this.enterMarket(market, ts);
 		
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.SM_AGENT_PRIORITY, new UpdateAllQuotes(this, ts));
-		actMap.insertActivity(Consts.SM_AGENT_PRIORITY, new AgentStrategy(this, market, ts));
+		actMap.insertActivity(Consts.ARRIVAL_PRIORITY, 
+				new AgentReentry(this, Consts.BACKGROUND_ARRIVAL_PRIORITY, ts));
+		// NOTE: Reentry must be inserted as priority > THRESHOLD_POST_PRIORITY
+		// otherwise the infinitely fast activities will not be inserted correctly
+//		actMap.insertActivity(Consts.BACKGROUND_AGENT_PRIORITY, new UpdateAllQuotes(this, ts));
+//		actMap.insertActivity(Consts.BACKGROUND_AGENT_PRIORITY, new AgentStrategy(this, market, ts));
 		return actMap;
 	}
 	
 	/**
-	 * Agent departs a specified market, if it is active. //TODO need to fix this
+	 * Agent re-enters a market/wakes up.
+	 * 
+	 * @param priority
+	 * @param ts
+	 */
+	public ActivityHashMap agentReentry(int priority, TimeStamp ts) {
+		ActivityHashMap actMap = new ActivityHashMap();
+		actMap.insertActivity(priority, new UpdateAllQuotes(this, ts));
+		actMap.insertActivity(priority, new AgentStrategy(this, market, ts));
+		return actMap;
+	}
+	
+	/**
+	 * Agent departs a specified market, if it is active. //TODO fix later
 	 * 
 	 * @param market
 	 * @return ActivityHashMap
@@ -173,6 +191,22 @@ public abstract class SMAgent extends Agent {
 		return actMap;
 	}
 
+	/**
+	 * Submit a bid to one of the possible markets, as following the National Market
+	 * System (NMS) regulations. The market selected will be that with the best available
+	 * price, according the NBBO.
+	 * 
+	 * Bid submitted never expires.
+	 * 
+	 * @param p
+	 * @param q
+	 * @param ts
+	 * @return
+	 */
+	public ActivityHashMap executeSubmitNMSBid(int p, int q, TimeStamp ts) {
+		return executeSubmitNMSBid(p, q, Consts.INF_TIME, ts);
+	}
+	
 	/**
 	 * Submit a bid to one of the possible markets, as following the National Market
 	 * System (NMS) regulations. The market selected will be that with the best available

@@ -32,10 +32,6 @@ import java.util.ArrayList;
  * the size of bidRange in either a positive or negative direction from the agent's
  * private value.
  *
- *
- * TODO - need to know how many arrival times to store? or just compute dynamically?
- *
- *
  * @author ewah
  */
 public class ZIRAgent extends BackgroundAgent {
@@ -45,13 +41,15 @@ public class ZIRAgent extends BackgroundAgent {
 	private int lastPositionBalance;		// last position balance
 	private int maxAbsPosition;				// max quantity for position
 	
-	// have to keep track of submission times for each order
-	// for tracking discounted surplus
+	// for computing discounted surplus
 	private ArrayList<TimeStamp> submissionTimes;
-	
 
 	/**
-	 * Overloaded constructor.
+	 * @param agentID
+	 * @param modelID
+	 * @param d
+	 * @param p
+	 * @param l
 	 */
 	public ZIRAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, modelID, d, p, l);
@@ -96,8 +94,7 @@ public class ZIRAgent extends BackgroundAgent {
 		}
 		if (positionBalance != lastPositionBalance || ts.equals(arrivalTime)) {
 			// If either first arrival or if last order has already transacted then should 
-			// submit a new order. Otherwise, do nothing.
-			// TODO ZIR: should it be able to cancel orders?
+			// submit a new order. Otherwise, do nothing (does not cancel orders).
 			
 			int p = 0;
 			int q = 1;
@@ -122,24 +119,19 @@ public class ZIRAgent extends BackgroundAgent {
 				
 				lastPositionBalance = positionBalance;	// update position balance
 				
-//				System.out.println(ts + " | " + this + " positionBalance=" + positionBalance + 
-//						", " + data.getFundamentalAt(ts) + "+" + getPrivateValueAt(q) + "=" + val + ", q=" + q);
-
 			} else {
-//				log.log(Log.INFO, ts + " | " + this + " new order would exceed " +
-//						"max position " + maxAbsPosition);
 				s += "new order would exceed max position " + maxAbsPosition 
 						+ "; no submission";
 			}
-			
 			// if exceed max position, then don't submit a new bid
 			// TODO - stay the same for now (position balance)
 		}
 		log.log(Log.INFO, s);
 		
 		TimeStamp tsNew = reentry.next();	// compute next re-entry time
-		actMap.insertActivity(Consts.SM_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
-		actMap.insertActivity(Consts.SM_AGENT_PRIORITY, new AgentStrategy(this, market, tsNew));
+		// NOTE: reentry priority must be <= SubmitBid priority
+		actMap.insertActivity(Consts.DEFAULT_PRIORITY, 
+				new AgentReentry(this, Consts.BACKGROUND_AGENT_PRIORITY, tsNew));
 		return actMap;
 	}
 
