@@ -85,7 +85,7 @@ public class ZIRAgent extends BackgroundAgent {
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
 
-		String s = ts + " | " + this;
+		String s = ts + " | " + this + " " + agentType + ":";
 		if (!ts.equals(arrivalTime)) {
 			s += " wake up.";
 			if (positionBalance == lastPositionBalance) {
@@ -114,7 +114,9 @@ public class ZIRAgent extends BackgroundAgent {
 				} else {
 					p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
 				}
-				actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
+				log.log(Log.INFO, s);
+				//actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
+				actMap.appendActivityHashMap(executeSubmitNMSBid(p, q, ts));
 				submissionTimes.add(ts);
 				
 				lastPositionBalance = positionBalance;	// update position balance
@@ -122,11 +124,13 @@ public class ZIRAgent extends BackgroundAgent {
 			} else {
 				s += "new order would exceed max position " + maxAbsPosition 
 						+ "; no submission";
+				log.log(Log.INFO, s);
 			}
 			// if exceed max position, then don't submit a new bid
 			// TODO - stay the same for now (position balance)
+		} else {
+			log.log(Log.INFO, s);
 		}
-		log.log(Log.INFO, s);
 		
 		TimeStamp tsNew = reentry.next();	// compute next re-entry time
 		// NOTE: reentry priority must be <= SubmitBid priority

@@ -295,7 +295,8 @@ public abstract class SMAgent extends Agent {
 			
 			// submit bid to the best market
 			marketSubmittedBid = data.getMarket(bestMarketID);
-			actMap.appendActivityHashMap(submitBid(marketSubmittedBid, p, q, ts));
+			//actMap.appendActivityHashMap(submitBid(marketSubmittedBid, p, q, ts));
+			actMap.appendActivityHashMap(executeSubmitBid(marketSubmittedBid, p, q, ts));
 			log.log(Log.INFO, ts + " | " + this + " " + agentType + 
 					"::submitNMSBid: " + "+(" + p + "," + q + ") to " + 
 					marketSubmittedBid + logDuration);
@@ -310,7 +311,8 @@ public abstract class SMAgent extends Agent {
 			
 			// submit bid to the main market
 			marketSubmittedBid = market;
-			actMap.appendActivityHashMap(submitBid(market, p, q, ts));
+			//actMap.appendActivityHashMap(submitBid(market, p, q, ts));
+			actMap.appendActivityHashMap(executeSubmitBid(marketSubmittedBid, p, q, ts));
 			log.log(Log.INFO, ts + " | " + this + " " + agentType + 
 					"::submitNMSBid: " + "+(" + p + "," + q + ") to " + 
 					market + logDuration);
