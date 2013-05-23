@@ -13,6 +13,10 @@ import java.util.*;
  * 
  * @author ewah
  */
+/**
+ * @author ewah
+ *
+ */
 public abstract class Agent extends Entity {
 
 	protected int logID;			// ID for logging purposes (same across models)
@@ -41,7 +45,7 @@ public abstract class Agent extends Entity {
 	protected SIP sip;
 	
 	// Agent parameters
-	protected int privateValue;
+	protected PrivateValue alpha;
 	protected String agentType;
 	protected TimeStamp arrivalTime;
 
@@ -53,6 +57,22 @@ public abstract class Agent extends Entity {
 	// for liquidation
 	protected int preLiqPosition;
 	protected int preLiqRealizedProfit;
+	
+	// keys for accessing ObjectProperties object
+	public final static String FUNDAMENTAL_KEY = "fundamentalAtArrival";
+	public final static String ARRIVAL_KEY = "arrivalTime";
+	public final static String RANDSEED_KEY = "seed";
+	public final static String STRATEGY_KEY = "strategy";
+	public final static String BIDRANGE_KEY = "bidRange";
+	public final static String ARRIVALRATE_KEY = "arrivalRate";
+	public final static String SLEEPTIME_KEY = "sleepTime";
+	public final static String SLEEPVAR_KEY = "sleepVar";
+	public final static String SLEEPRATE_KEY = "sleepRate";
+	public final static String NUMRUNGS_KEY = "numRungs";
+	public final static String RUNGSIZE_KEY = "rungSize";
+	public final static String ALPHA_KEY = "alpha";
+	public final static String MAXQUANTITY_KEY = "maxqty";
+	public final static String MARKETID_KEY = "marketID";
 	
 	
 	/**
@@ -86,7 +106,7 @@ public abstract class Agent extends Entity {
 		lastGlobalQuote = new BestBidAsk();
 		lastNBBOQuote = new BestBidAsk();
 		
-		privateValue = -1;
+		alpha = null;		// if no PV, this will always be null
 		arrivalTime = new TimeStamp(0);
 		
 		tickSize = data.tickSize;
@@ -106,16 +126,22 @@ public abstract class Agent extends Entity {
 	public abstract ActivityHashMap agentArrival(TimeStamp ts);
 	
 	/**
+	 * @param ts
 	 * @return
 	 */
 	public abstract ActivityHashMap agentDeparture(TimeStamp ts);
 	
+	/**
+	 * @param priority
+	 * @param ts
+	 * @return
+	 */
+	public abstract ActivityHashMap agentReentry(int priority, TimeStamp ts);
 	
 	/**
 	 * @return observation to include in the output file
 	 */
 	public abstract HashMap<String, Object> getObservation();
-	
 	
 	
 	/**
@@ -150,10 +176,53 @@ public abstract class Agent extends Entity {
 	}
 	
 	/**
-	 * @return private value of agent.
+	 * @return private value vector.
 	 */
-	public int getPrivateValue() {
-		return privateValue;
+	public PrivateValue getPrivateValue() {
+		return alpha;
+	}
+	
+	/**
+	 * @return true if has non-null private value.
+	 */
+	public boolean hasPrivateValue() {
+		return alpha != null;
+	}
+	
+	/**
+	 * Given additional quantity to buy/sell, return associated private 
+	 * valuation (requires looking at current position balance).
+	 * 
+	 * Required because of indexing of quantities vector in PrivateValue.
+	 *  
+	 * @param q		additional units to buy or sell
+	 * @return
+	 */
+	public Price getPrivateValueAt(int q) {
+		if (q > 0) {
+			// if buying
+			if (positionBalance >= 0) {
+				// if nonnegative current position, look at next position (+q)
+				return alpha.getValueFromQuantity(positionBalance + q);
+			} else {
+				// if negative current position, look at current position
+				return alpha.getValueFromQuantity(positionBalance);
+			}
+			
+		} else if (q < 0){
+			// if selling
+			if (positionBalance > 0) {
+				// if positive current position, look at current position
+				return alpha.getValueFromQuantity(positionBalance);
+			} else {
+				// if non-positive current position, look at next position (-|q|)
+				return alpha.getValueFromQuantity(positionBalance + q);
+			}
+			
+		} else {
+			// not selling or buying
+			return new Price(0);
+		}
 	}
 	
 	/**
@@ -176,6 +245,31 @@ public abstract class Agent extends Entity {
 	 */
 	public String getType() {
 		return agentType;
+	}
+
+	/**
+	 * @return role of agent
+	 */
+	public String getRole() {
+		if (this instanceof HFTAgent) {
+			return Consts.ROLE_HFT;
+		} else if (this instanceof BackgroundAgent) {
+			return Consts.ROLE_BACKGROUND;
+		} else if (this instanceof MarketMaker) {
+			return (Consts.ROLE_MARKETMAKER);
+		} else {
+			System.err.println(this.getClass().getSimpleName() + "::getRole(): " +
+					"invalid agent!");
+			System.exit(1);
+		}
+		return "";
+	}
+	
+	/**
+	 * @return strategy for observation file in format TYPE:STRATEGY
+	 */
+	public String getFullStrategy() {
+		return this.getType() + ":" + params.get(Agent.STRATEGY_KEY);
 	}
 	
 	/**
@@ -376,9 +470,11 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap submitMultipleBid(Market mkt, ArrayList<Integer> price, ArrayList<Integer> quantity, TimeStamp ts) {
+	public ActivityHashMap submitMultipleBid(Market mkt, ArrayList<Integer> price, 
+			ArrayList<Integer> quantity, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, new SubmitMultipleBid(this, mkt, price, quantity, ts));
+		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
+				new SubmitMultipleBid(this, mkt, price, quantity, ts));
 		return actMap;
 	}
 	
@@ -393,7 +489,8 @@ public abstract class Agent extends Entity {
 	public ActivityHashMap expireBid(Market mkt, long duration, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
 		TimeStamp withdrawTime = ts.sum(new TimeStamp(duration));
-		actMap.insertActivity(Consts.WITHDRAW_BID_PRIORITY, new WithdrawBid(this, mkt, withdrawTime));
+		actMap.insertActivity(Consts.WITHDRAW_BID_PRIORITY, 
+				new WithdrawBid(this, mkt, withdrawTime));
 		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": bid duration=" + duration); 
 		return actMap;
 	}
@@ -419,22 +516,31 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap executeSubmitBid(Market mkt, int price, int quantity, TimeStamp ts) {
+	public ActivityHashMap executeSubmitBid(Market mkt, int price, int quantity, 
+			TimeStamp ts) {
 		if (quantity == 0) return null;
 
-		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price + ", " + quantity + ")");
+		log.log(Log.INFO, ts + " | " + this + " " + agentType + 
+				"::submitBid: +(" + price + ", " 
+				+ quantity + ") to " + mkt);
 		
 		int p = Market.quantize(price, tickSize);
 		PQBid pqBid = new PQBid(this.ID, mkt.ID);
 		pqBid.addPoint(quantity, new Price(p));
 		pqBid.timestamp = ts;
-		data.bidData.put(pqBid.getBidID(), pqBid);
+		data.addBid(pqBid);
+		// quantity can be +/-
+		if (hasPrivateValue()) {
+			data.addPrivateValue(pqBid.getBidID(), getPrivateValueAt(quantity));
+		} else {
+			data.addPrivateValue(pqBid.getBidID(), null);
+		}
 		currentBid.put(mkt.ID, pqBid);
 		return mkt.addBid(pqBid, ts);
 	}	
 
 	/**
-	 * Submits a multiple-point/offer bid to the specified market.
+	 * Submits a multiple-point bid to the specified market.
 	 * 
 	 * @param mkt
 	 * @param price
@@ -442,13 +548,16 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap executeSubmitMultipleBid(Market mkt, ArrayList<Integer> price, ArrayList<Integer> quantity, TimeStamp ts) {
+	public ActivityHashMap executeSubmitMultipleBid(Market mkt, ArrayList<Integer> price, 
+			ArrayList<Integer> quantity, TimeStamp ts) {
 		if (price.size() != quantity.size()) {
-			log.log(Log.ERROR, "Agent::submitMultipleBid: Price/Quantity are not the same length");
+			log.log(Log.ERROR, "Agent::submitMultipleBid: " 
+					+ "Price/Quantity are not the same length");
 			return null;
 		}
 		
-		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price +	", " + quantity + ")");
+		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price +	", " 
+				+ quantity + ")");
 		
 		PQBid pqBid = new PQBid(this.ID, mkt.ID);
 		pqBid.timestamp = ts;
@@ -459,6 +568,7 @@ public abstract class Agent extends Entity {
 			}
 		}
 		data.addBid(pqBid);
+		// TODO incorporate multi-point PVs?
 		currentBid.put(mkt.ID, pqBid);	
 		return mkt.addBid(pqBid, ts);
 	}
@@ -474,7 +584,8 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap liquidateAtFundamental(TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(new Liquidate(this, data.getFundamentalAt(ts), ts));
+		actMap.insertActivity(Consts.LOWEST_PRIORITY, 
+				new Liquidate(this, data.getFundamentalAt(ts), ts));
 		log.log(Log.INFO, ts + " | " + this + " liquidating..."); 
 		return actMap;
 	}
@@ -489,8 +600,8 @@ public abstract class Agent extends Entity {
 	 */
 	public ActivityHashMap executeLiquidate(Price price, TimeStamp ts) {
 		
-		log.log(Log.INFO, ts + " | " + this + " pre-liquidation: position=" + positionBalance
-				+ ", profit=" + realizedProfit);
+		log.log(Log.INFO, ts + " | " + this + " pre-liquidation: position=" 
+				+ positionBalance + ", profit=" + realizedProfit);
 		
 		// If no net position, no need to liquidate
 		if (positionBalance == 0) return null;
@@ -506,12 +617,11 @@ public abstract class Agent extends Entity {
 		}
 		positionBalance = 0;
 		
-		log.log(Log.INFO, ts + " | " + this + " post-liquidation: position=" + positionBalance
-				+ ", profit=" + realizedProfit + ", price=" + price);
+		log.log(Log.INFO, ts + " | " + this + " post-liquidation: position=" 
+				+ positionBalance + ", profit=" + realizedProfit + ", price=" + price);
 		return null;
 	}
-	
-	
+
 	
 	/**
 	 * Update global and NBBO quotes for the agent's model.
@@ -528,7 +638,8 @@ public abstract class Agent extends Entity {
 		lastGlobalQuote = sip.getGlobalQuote(modelID);
 		lastNBBOQuote = sip.getNBBOQuote(modelID);
 		
-		log.log(Log.INFO, ts + " | " + this + " Global" + lastGlobalQuote + ", NBBO" + lastNBBOQuote);
+		log.log(Log.INFO, ts + " | " + this + " Global" + lastGlobalQuote 
+				+ ", NBBO" + lastNBBOQuote);
 		return null;
 	}
 	
@@ -575,8 +686,8 @@ public abstract class Agent extends Entity {
 
 		String s = ts.toString() + " | " + this +  " Agent::logTransactions: " + 
 				this.getModel().getFullName() + ": Current Position=" + 
-				positionBalance + ", Realized Profit=" + rp + 
-				", Unrealized Profit=" + up;
+				positionBalance + ", Realized Profit=" + rp; 
+				//+ ", Unrealized Profit=" + up;
 		log.log(Log.INFO, s);
 	}
 	
@@ -638,7 +749,8 @@ public abstract class Agent extends Entity {
 					realizedProfit = rprofit;
 
 				} else if (-quantity >= positionBalance) {
-					// closing out all long position, remaining quantity will start new short position
+					// closing out all long position
+					// remaining quantity will start new short position
 					int rprofit = realizedProfit;
 					rprofit += positionBalance * (t.price.getPrice() - averageCost);
 					realizedProfit = rprofit;
@@ -658,7 +770,8 @@ public abstract class Agent extends Entity {
 					realizedProfit = rprofit;
 
 				} else if (quantity >= -positionBalance) {
-					// closing out all short position, remaining quantity will start new long position
+					// closing out all short position
+					// remaining quantity will start new long position
 					int rprofit = realizedProfit;
 					rprofit += (-positionBalance) * (averageCost - t.price.getPrice());
 					realizedProfit = rprofit;
@@ -703,25 +816,39 @@ public abstract class Agent extends Entity {
 							", price=" + t.price + ", quantity=" + t.quantity + 
 							", timeStamp=" + t.timestamp + ")");
 					
-					// Log surplus for all agents
-					int bsurplus = data.getAgent(t.buyerID).getPrivateValue() - t.price.getPrice();
-					int ssurplus = t.price.getPrice() - data.getAgent(t.sellerID).getPrivateValue();
-					String s = ts + " | " + this + " " +
-							"Agent::updateTransactions: BUYER surplus: " + data.getAgent(t.buyerID).getPrivateValue()
-							+ "-" + t.price.getPrice() + "=" + bsurplus + ", "
-							+ "SELLER surplus: " + t.price.getPrice() + "-" + 
-							data.getAgent(t.sellerID).getPrivateValue() + "=" + ssurplus;
+					// Log surplus for background agents with private values
+					Agent buyer = data.getAgent(t.buyerID);
+					Agent seller = data.getAgent(t.sellerID);
+					Price rt = data.getFundamentalAt(ts);	// fundamental at time ts
+					int bsurplus = 0;
+					int ssurplus = 0;
+					String s = ts + " | " + this + " " + "Agent::updateTransactions: BUYER surplus: ";
+					if (buyer.hasPrivateValue()) {
+						bsurplus = (data.getPrivateValueByBid(t.buyBidID).sum(rt)).diff(t.price).getPrice();
+						s += "(" + buyer.getPrivateValue() + "+" + rt + ")-" + t.price.getPrice() + 
+								"=" + bsurplus + ", ";
+					} else {
+						bsurplus = t.quantity * t.price.getPrice();
+						s += "-" + bsurplus + ", ";
+					}
+					s += "SELLER surplus: ";
+					if (seller.hasPrivateValue()) {
+						ssurplus = t.price.diff(data.getPrivateValueByBid(t.sellBidID).sum(rt)).getPrice();
+						s += t.price.getPrice() + "-(" + seller.getPrivateValue() + "+" + rt + 
+								")=" + ssurplus;
+					} else {
+						ssurplus = t.quantity * t.price.getPrice(); 
+						s += ssurplus;
+					}
+//					String s = ts + " | " + this + " " +
+//							"Agent::updateTransactions: BUYER surplus: (" + buyer.getPrivateValue()
+//							+ "+" + rt + ")-" + t.price.getPrice() + "=" + bsurplus + ", "
+//							+ "SELLER surplus: " + t.price.getPrice() + "-(" + 
+//							seller.getPrivateValue() + "+" + rt + ")=" + ssurplus;
+
 					log.log(Log.INFO, s);
 					log.log(Log.INFO, ts + " | " + this + " " +
 							"Agent::updateTransactions: SURPLUS: " + (bsurplus + ssurplus));
-					
-//					log.log(Log.INFO, ts + " | " + this + " " +
-//							"Agent::updateTransactions: BUYER surplus: " + data.getAgent(t.buyerID).getPrivateValue()
-//							+ "-" + t.price.getPrice() + "=" + bsurplus);
-//					log.log(Log.INFO, ts + " | " + this + " " +
-//							"Agent::updateTransactions: SELLER surplus: " + t.price.getPrice() + "-" + 
-//							data.getAgent(t.sellerID).getPrivateValue() + "=" + ssurplus);
-					
 				}
 				// Update transaction ID
 				lastGoodTransID = t.transID;
@@ -780,7 +907,7 @@ public abstract class Agent extends Entity {
 	 */
 	public TreeSet<Integer> getTransIDs(int lastID) {
 		TreeSet<Integer> transIDs = new TreeSet<Integer>();
-		for (Iterator<Integer> it = data.getTransactionIDs(modelID).iterator(); it.hasNext(); ) {
+		for (Iterator<Integer> it = data.getTransIDs(modelID).iterator(); it.hasNext(); ) {
 			int id = it.next();
 			if (id > lastID) {
 				transIDs.add(id);
@@ -963,4 +1090,13 @@ public abstract class Agent extends Entity {
 	    return mu + z * Math.sqrt(var);
 	}
 
+	/**
+	 * Generate exponential random variate, with rate parameter.
+	 * @param rateParam
+	 * @return
+	 */
+	private double getExponentialRV(double rateParam) {
+		double r = rand.nextDouble();
+		return -Math.log(r) / rateParam;
+	}
 }

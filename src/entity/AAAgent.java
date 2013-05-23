@@ -2,7 +2,6 @@ package entity;
 
 import event.*;
 import market.*;
-import model.*;
 import activity.*;
 import systemmanager.*;
 
@@ -10,7 +9,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 /**
- * ZIAgent
+ * AAAgent
  *
  * A zero-intelligence (ZI) agent operating in two-market setting with an NBBO market.
  *
@@ -40,35 +39,33 @@ import java.util.Random;
  *
  * @author ewah
  */
-public class AAAgent extends SMAgent {
+public class AAAgent extends BackgroundAgent {
 
-//	private double expireRate;
-//	private long expiration;			// time until limit order expiration
 	private int bidRange;				// range for limit order
-	private double pvVar;				// variance from private value random process
-	
+
 	
 	/**
 	 * Overloaded constructor.
 	 */
-	public AAAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l, int mktID) {
-		super(agentID, modelID, d, p, l, mktID);
+	public AAAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
+		super(agentID, modelID, d, p, l);
 		
-		rand = new Random(Long.parseLong(params.get("seed")));
-		bidRange = this.data.bidRange;
-		pvVar = this.data.privateValueVar;
-//		expireRate = this.data.expireRate;
-//		expiration = (long) getExponentialRV(expireRate);
-		
-		arrivalTime = new TimeStamp(Long.parseLong(params.get("arrivalTime")));
-		int pv = Integer.parseInt(params.get("fundamental"));
-		privateValue = Math.max(0, pv + (int) Math.round(getNormalRV(0, pvVar)));
+		rand = new Random(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
+		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
+		bidRange = Integer.parseInt(params.get(AAAgent.BIDRANGE_KEY));
+		int alpha1 = (int) Math.round(getNormalRV(0, this.data.pvVar));
+		int alpha2 = (int) Math.round(getNormalRV(0, this.data.pvVar));
+		alpha = new PrivateValue(alpha1, alpha2);
 	}
 	
 	
 	@Override
 	public HashMap<String, Object> getObservation() {
-		return null;
+		HashMap<String,Object> obs = new HashMap<String,Object>();
+		obs.put(Observations.ROLE_KEY, getRole());
+		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
+		obs.put(Observations.STRATEGY_KEY, getFullStrategy());
+		return obs;
 	}
 	
 	
@@ -80,35 +77,16 @@ public class AAAgent extends SMAgent {
 		int q = 1;
 		// 0.50% chance of being either long or short
 		if (rand.nextDouble() < 0.5) q = -q;
+		int val = Math.max(0, data.getFundamentalAt(ts).sum(getPrivateValueAt(q)).getPrice());
 
 		// basic ZI behavior
 		if (q > 0) {
-			p = (int) Math.max(0, ((this.privateValue - 2*bidRange) + rand.nextDouble()*2*bidRange));
+			p = (int) Math.max(0, ((val-2*bidRange) + rand.nextDouble()*2*bidRange));
 		} else {
-			p = (int) Math.max(0, (this.privateValue + rand.nextDouble()*2*bidRange));
+			p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
 		}
 
-//		actMap.appendActivityHashMap(submitNMSBid(p, q, expiration, ts));
 		actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
 		return actMap;
 	}
-
-	
-//	/**
-//	 * @return expiration
-//	 */
-//	public long getExpiration() {
-//		return expiration;
-//	}
-	
-	/**
-	 * Generate exponential random variate, with rate parameter.
-	 * @param rateParam
-	 * @return
-	 */
-	private double getExponentialRV(double rateParam) {
-		double r = rand.nextDouble();
-		return -Math.log(r) / rateParam;
-	}
-
 }

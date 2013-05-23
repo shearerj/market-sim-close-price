@@ -18,8 +18,11 @@ hft.jar
 .classpath
 .metadata
 .project
+.settings
 
 # Directories #
 ###############
 build/*
 simulations/*
+logs/*
+.settings/*

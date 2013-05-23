@@ -16,15 +16,21 @@ import event.TimeStamp;
  * The combination of the priority management and the HashMap is a work-around to 
  * avoid the tie-breaking issue for ActivityLists with identical priorities.
  * 
- * NOTE: Priorities are ordered LOW to HIGH via a TreeSet, which ensures that
+ * TimeStamps are assumed the same throughout for all ActivityLists within a
+ * PriorityActivityList. (There is no check for this during the addition of
+ * ActivityLists to the PAL, but there is a copy constructor to change
+ * all the times within the PAL to be consistent.)
+ * 
+ * NOTE: Priorities are sorted in ascending order via a TreeSet, which ensures
  * there are no duplicate priorities stored in the PriorityActivityList.
+ * The "highest" priority is therefore the most negative one.
  * 
  * @author ewah
  */
 public class PriorityActivityList {
 
-	private TreeSet<Integer> priorityQueue;
-	private HashMap<Integer, ActivityList> activityListMap;
+	private TreeSet<Integer> priorityQueue;					// sorted priorities
+	private HashMap<Integer, ActivityList> activityListMap;	// hashed by priority
 	
 	/**
 	 * Constructor.
@@ -157,6 +163,12 @@ public class PriorityActivityList {
 		return this.getActivities().iterator();
 	}
 	
+	/**
+	 * @return first priority
+	 */
+	public int getFirstPriority() {
+		return priorityQueue.first();
+	}
 	
 	/**
 	 * @return last priority
@@ -197,13 +209,13 @@ public class PriorityActivityList {
 	}
 	
 	/**
-	 * Returns the portion PriorityActivityList that only includes priority
+	 * Removes & returns the portion of PriorityActivityList that includes priority
 	 * ActivityLists above the given threshold (inclusive). Modifies the calling Object.
 	 * 
 	 * @param threshold
 	 * @return
 	 */
-	public PriorityActivityList getPriorityListGreaterThan(int threshold) {
+	public PriorityActivityList getActsPriorityGreaterThan(int threshold) {
 		TreeSet<Integer> copyPriorityQueue = new TreeSet<Integer>();
 		HashMap<Integer, ActivityList> copyActivityListMap = new HashMap<Integer, ActivityList>();
 		
@@ -217,13 +229,13 @@ public class PriorityActivityList {
 	}
 	
 	/**
-	 * Returns the portion PriorityActivityList that only includes priority
+	 * Removes & returns the portion of PriorityActivityList that includes priority
 	 * ActivityLists below the given threshold (inclusive). Modifies the calling Object.
 	 * 
 	 * @param threshold
 	 * @return
 	 */
-	public PriorityActivityList getPriorityListLessThan(int threshold) {
+	public PriorityActivityList getActsPriorityLessThan(int threshold) {
 		TreeSet<Integer> copyPriorityQueue = new TreeSet<Integer>();
 		HashMap<Integer, ActivityList> copyActivityListMap = new HashMap<Integer, ActivityList>();
 		

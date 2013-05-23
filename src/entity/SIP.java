@@ -1,16 +1,14 @@
 package entity;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Vector;
-
 import event.*;
 import model.*;
 import market.*;
 import activity.*;
 import systemmanager.*;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.HashMap;
 
 
 /**
@@ -99,7 +97,8 @@ public class SIP extends Entity {
 		
 		int modelID = model.getID();
 		ArrayList<Integer> ids = model.getMarketIDs();
-		String s = ts + " | " + ids + " UpdateNBBO" + getNBBOQuote(modelID);
+		String s = ts + " | " + ids + " UpdateNBBO: current " + getNBBOQuote(modelID)
+				+ " --> ";
 	
 		BestBidAsk lastQuote = computeBestBidOffer(ids, true);
 			
@@ -111,6 +110,7 @@ public class SIP extends Entity {
 				int mid = (lastQuote.bestBid + lastQuote.bestAsk) / 2;
 				bestBid = mid - this.tickSize;
 				bestAsk = mid + this.tickSize;
+				s += " (before fix) " + lastQuote + " --> ";
 				
 				// Add spread of INF if inconsistent NBBO quote
 				this.data.addNBBOSpread(modelID, ts, Consts.INF_PRICE);
@@ -125,7 +125,7 @@ public class SIP extends Entity {
 		lastQuote.bestBid = bestBid;
 		lastQuote.bestAsk = bestAsk;
 		lastQuotes.put(modelID, lastQuote);
-		log.log(Log.INFO, s + " --> NBBO" + lastQuote);
+		log.log(Log.INFO, s + "updated " + lastQuote);
 		return actMap;
 	}
 

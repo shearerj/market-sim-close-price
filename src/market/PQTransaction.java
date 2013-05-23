@@ -7,6 +7,8 @@ import org.apache.commons.lang3.builder.*;
 /**
  * Price/quantity transaction class.
  * 
+ * Note that transaction quantities are always positive.
+ * 
  * @author ewah
  */
 public class PQTransaction extends Transaction {

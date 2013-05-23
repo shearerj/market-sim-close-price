@@ -2,7 +2,6 @@ package systemmanager;
 
 import event.*;
 import entity.*;
-import activity.*;
 import model.*;
 
 import java.util.*;
@@ -54,6 +53,7 @@ public class SystemManager {
 
 		if (args.length == 2) {
 			simFolder = args[0] + "/";
+			if (simFolder.charAt(0) == '/') simFolder = simFolder.substring(1);
 			num = Integer.parseInt(args[1]);
 		} else {
 			simFolder = "";
@@ -119,7 +119,7 @@ public class SystemManager {
 				File f = new File(simFolder);
 				if (!f.exists()) {
 					// Simulations directory not found
-					System.err.println("SystemManager::setup(String): simulation folder not found");
+					System.err.println(this.getClass().getSimpleName() + "::setup(String): simulation folder not found");
 					System.exit(1);
 				}
 				// Check for logs directory
@@ -131,7 +131,7 @@ public class SystemManager {
 				log = new Log(logLevel, ".", simFolder + Consts.logDir + logFilename + ".txt", true);
 			} catch (Exception e) {
 				e.printStackTrace();
-				System.err.println("SystemManager::setup(String): error creating log file");
+				System.err.println(this.getClass().getSimpleName() + "::setup(String): error creating log file");
 			}
 
 			// Log properties
@@ -143,13 +143,13 @@ public class SystemManager {
 				File f = new File(simFolder + Consts.simSpecFile);
 				if (!f.exists()) {
 					// Spec file is not found
-					System.err.println("SystemManager::setup(String): simulation_spec.json file not found");
+					System.err.println(this.getClass().getSimpleName() + "::setup(String): simulation_spec.json file not found");
 					System.exit(1);
 				}
 				log = new Log(logLevel, ".", simFolder + Consts.logDir + logFilename + ".txt", true);
 			} catch (Exception e) {
 				e.printStackTrace();
-				System.err.println("SystemManager::setup(String): error accessing spec file");
+				System.err.println(this.getClass().getSimpleName() + "::setup(String): error accessing spec file");
 			}
 			SimulationSpec specs = new SimulationSpec(simFolder + Consts.simSpecFile, log, data);
 
@@ -177,7 +177,7 @@ public class SystemManager {
 				return;
 			p.load(config);
 		} catch (IOException e) {
-			String s = "SystemManager::loadConfig(InputStream): error opening/processing config file: " 
+			String s = this.getClass().getSimpleName() + "::loadConfig(InputStream): error opening/processing config file: " 
 						+ config + "/" + e;
 			log.log(Log.ERROR, s);
 			System.err.print(s);
@@ -195,7 +195,7 @@ public class SystemManager {
 		try {
 			loadInputStream(p, new FileInputStream(config));
 		} catch (FileNotFoundException e) {
-			String s = "SystemManager::loadConfig(String): error opening/processing config file: " 
+			String s = this.getClass().getSimpleName() + "::loadConfig(String): error opening/processing config file: " 
 						+ config + "/" + e;
 			log.log(Log.ERROR, s);
 			System.err.print(s);
@@ -205,26 +205,19 @@ public class SystemManager {
 	
 	
 	/**
-	 * Generate results report (payoff data, feature data logging). Only adds observations
-	 * from agents in the primary model (the primary game).
+	 * Generate results report (payoff data, feature data logging).
 	 */
 	public void aggregateResults() {
 		try {
-			for (Iterator<Integer> it = data.getAgentIDs().iterator(); it.hasNext(); ) {
-				int id = it.next();
-				if (data.getPrimaryAgentIDs().contains(id)) {
-					// only add observations for players in primary model
-					obs.addObservation(id);
-				} else {
-					// add as a feature observations for players in other market models
-					obs.addObservationAsFeature(id);
-				}
+			// log observations for players
+			for (Iterator<Integer> it = data.getPlayerIDs().iterator(); it.hasNext(); ) {
+				obs.addObservation(it.next());
 			}
-			
+			// obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
 			obs.addFeature("", obs.getConfiguration());
-			obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
-			obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
-//			obs.addTransactionComparison();
+			// obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
+			// obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
+			// obs.addTransactionComparison();
 			getModelResults();
 			
 			File file = new File(simFolder + Consts.obsFilename + num + ".json");
@@ -233,7 +226,8 @@ public class SystemManager {
 			txt.close();
 			
 		} catch (Exception e) {
-			String s = "aggregateResults(): error creating observation file";
+			String s = this.getClass().getSimpleName() + "::aggregateResults(): " + 
+						"error creating observation file";
 			e.printStackTrace();
 			System.err.println(s);
 		}
@@ -249,9 +243,10 @@ public class SystemManager {
 			String prefix = model.getLogName() + "_";
 
 			// Spread info
-			long maxTime = Math.round(data.numAgents / data.arrivalRate);
+			long maxTime = Math.round(data.getNumEnvAgents() / data.arrivalRate);
 			long begTime = Market.quantize((int) maxTime, 500) - 1000;
 			for (long i = Math.max(begTime, 500); i <= maxTime + 1000; i += 500) {
+//			long i = 3000;
 				obs.addFeature(prefix + "spreads_" + i, obs.getSpreadInfo(model, i));
 				obs.addFeature(prefix + "price_vol_" + i, obs.getVolatilityInfo(model, i));
 			}
@@ -261,11 +256,11 @@ public class SystemManager {
 			obs.addFeature(prefix + "surplus_disc", obs.getDiscountedSurplusFeatures(model));
 			
 			// Other features
-			if (model.getNumAgentType("MARKETMAKER") >= 1) {
-				obs.addFeature(prefix + "marketmaker", obs.getMarketMakerInfo(model));
-			}
+//			if (model.getNumAgentType("MARKETMAKER") >= 1) {
+			obs.addFeature(prefix + "marketmaker", obs.getMarketMakerInfo(model));
+//			}
 			obs.addFeature(prefix + "transactions", obs.getTransactionInfo(model));
-			obs.addFeature(prefix + "exec_speed", obs.getTimeToExecution(model));
+			obs.addFeature(prefix + "exec_time", obs.getTimeToExecution(model));
 			obs.addFeature(prefix + "routing", obs.getRegNMSRoutingInfo(model));
 			// obs.addFeature(prefix + "depths", obs.getDepthInfo(ids));
 		}

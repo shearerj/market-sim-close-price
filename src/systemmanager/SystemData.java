@@ -31,34 +31,37 @@ import java.util.*;
 public class SystemData {
 
 	public int obsNum;									// observation number
+	public boolean EGTA;								// true if EGTA use case
 	
 	// Model information
-	public HashMap<Integer,MarketModel> models;					// models hashed by ID
-	public HashMap<Integer,ArrayList<Integer>> modelToMarketList;	// hashed by model ID
-	public HashMap<Integer,Integer> marketIDModelIDMap;			// hashed by market ID
 	public MarketModel primaryModel;
 	public String primaryModelDesc;						// description of primary model
+	public HashMap<Integer,MarketModel> models;			// models hashed by ID
+	public HashMap<Integer,Integer> marketIDModelIDMap;	// hashed by market ID
 	
 	// Market information
-	public HashMap<Integer,PQBid> bidData;				// all bids ever, hashed by bid ID
-	public HashMap<Integer,PQTransaction> transData;		// hashed by transaction ID
-	public HashMap<Integer,Quote> quoteData;			// hashed by market ID
-	public HashMap<Integer,Agent> agents;				// agents hashed by ID
+	public HashMap<Integer,PQBid> bids;					// all bids ever, hashed by bid ID
+	public HashMap<Integer,Price> privateValues;		// private values hashed by bid ID
+	public HashMap<Integer,PQTransaction> transactions;	// hashed by transaction ID
+	public HashMap<Integer,Quote> quotes;				// hashed by market ID
+	public HashMap<Integer,Agent> agents;				// (all) agents hashed by ID
+	public HashMap<Integer,Agent> players;				// players (for EGTA)
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
 	public ArrayList<Integer> modelIDs;
 
+	public int numEnvAgents;
+	public int numPlayers;
+	public HashMap<AgentPropsPair, Integer> envAgentMap;
+	public HashMap<AgentPropsPair, Integer> playerMap;
+	// hashed by model ID
+	public HashMap<Integer, ArrayList<AgentPropsPair>> modelAgentMap;
+	
 	private SIP sip;
 	private Sequence transIDSequence;	
-	private ArrivalTime arrivalTimeGenerator;
 	private FundamentalValue fundamentalGenerator;
 	
 	// hashed by type, gives # of that type
 	public HashMap<String,Integer> numModelType;
-	public HashMap<String,Integer> numMarketType;
-	public HashMap<String,Integer> numAgentType;
-	
-	public int numMarkets;
-	public int numAgents;
 	
 	// Parameters set by specification file
 	public TimeStamp simLength;
@@ -66,14 +69,11 @@ public class SystemData {
 	public TimeStamp centralCallClearFreq;
 	public TimeStamp nbboLatency;
 	public double arrivalRate;
+	public double reentryRate;
 	public int meanValue;
 	public double kappa;
 	public double shockVar;
-	public int bidRange;
-	public double privateValueVar;				// agent variance from PV random process
-	public int marketmaker_numRungs;			// market maker number of rungs (per side)
-	public int marketmaker_rungSize;			// market maker rung size
-	public int marketmaker_sleepTime;			// market maker sleep time
+	public double pvVar;								// agent variance from PV random process
 	
 	// Variables of time series for observation file
 	public HashMap<Integer,HashMap<TimeStamp,Double>> marketDepth;		// hashed by market ID
@@ -87,22 +87,23 @@ public class SystemData {
 	 * Constructor
 	 */
 	public SystemData() {
-		bidData = new HashMap<Integer,PQBid>();
-		transData = new HashMap<Integer,PQTransaction>();
-		quoteData = new HashMap<Integer,Quote>();
+		bids = new HashMap<Integer,PQBid>();
+		privateValues = new HashMap<Integer,Price>();
+		transactions = new HashMap<Integer,PQTransaction>();
+		quotes = new HashMap<Integer,Quote>();
 		agents = new HashMap<Integer,Agent>();
+		players = new HashMap<Integer,Agent>();
 		markets = new HashMap<Integer,Market>();
 		models = new HashMap<Integer,MarketModel>();
-		numAgentType = new HashMap<String,Integer>();
-		numMarketType = new HashMap<String,Integer>();
 		numModelType = new HashMap<String,Integer>();
-		numAgents = 0;
-		numMarkets = 0;
 		modelIDs = new ArrayList<Integer>();
 		transIDSequence = new Sequence(0);
-		modelToMarketList = new HashMap<Integer,ArrayList<Integer>>();
 		primaryModel = null;
 		marketIDModelIDMap = new HashMap<Integer,Integer>();
+		
+		modelAgentMap = new HashMap<Integer, ArrayList<AgentPropsPair>>();
+		playerMap = new HashMap<AgentPropsPair, Integer>();
+		envAgentMap = new HashMap<AgentPropsPair, Integer>(); 
 	
 		// Initialize containers for observations/features
 		marketDepth = new HashMap<Integer,HashMap<TimeStamp,Double>>();
@@ -118,6 +119,13 @@ public class SystemData {
 	 * Accessor methods
 	 *
 	 **********************************/
+	
+	/**
+	 * @return true if EGTA use case
+	 */
+	public boolean isEGTAUseCase() {
+		return EGTA;
+	}
 	
 	/**
 	 * @return
@@ -152,7 +160,7 @@ public class SystemData {
 	 * @return
 	 */
 	public HashMap<Integer,Quote> getQuotes() {
-		return quoteData;
+		return quotes;
 	}
 
 	/**
@@ -161,7 +169,7 @@ public class SystemData {
 	 * @return
 	 */
 	public Quote getQuote(int mktID) {
-		return quoteData.get(mktID);
+		return quotes.get(mktID);
 	}
 	
 	public SIP getSIP() {
@@ -178,6 +186,10 @@ public class SystemData {
 	
 	public int getAgentLogID(int agentID) {
 		return agents.get(agentID).getLogID();
+	}
+	
+	public ArrayList<Integer> getPlayerIDs() {
+		return new ArrayList<Integer>(players.keySet());
 	}
 	
 	public HashMap<Integer,Market> getMarkets() {
@@ -240,20 +252,100 @@ public class SystemData {
 		return models.get(id).getConfig();
 	}
 	
-	
-	public int getNumAgentType(String type) {
-		return numAgentType.get(type);
+	/**
+	 * @return number of environment agents
+	 */
+	public int getNumEnvAgents() {
+		return numEnvAgents;
 	}
 	
 	/**
-	 * Returns true if agent with the specified ID is a background agent, i.e.
-	 * not a player in one of the market models.
+	 * @return number of players
+	 */
+	public int getNumPlayers() {
+		return numPlayers;
+	}	
+	
+	/**
+	 * @return playerMap
+	 */
+	public HashMap<AgentPropsPair, Integer> getPlayerMap() {
+		return playerMap;
+	}
+	
+//	/**
+//	 * @return modelAgentMap
+//	 */
+//	public HashMap<Integer, ArrayList<AgentPropsPair>> getModelAgentMap() {
+//		return modelAgentMap;
+//	}
+	
+	/**
+	 * @param modelID
+	 * @return list of AgentPropertiesPairs for model agents within the specified model
+	 */
+	public ArrayList<AgentPropsPair> getModelAgentByModel(int modelID) {
+		return modelAgentMap.get(modelID);
+	}
+	
+	
+	/**
+	 * Iterates through all models. Forms HashMap hashed by unique AgentPropertiesPairs
+	 * and with the number of each type, across all models.
+	 * 
+	 * @return HashMap hashed by AgentPropertiesPair
+	 */
+	public HashMap<AgentPropsPair, Integer> getModelAgentMap() {
+		HashMap<AgentPropsPair,Integer> map = new HashMap<AgentPropsPair,Integer>();
+		
+		for (ArrayList<AgentPropsPair> list : modelAgentMap.values()) {		
+			for (Iterator<AgentPropsPair> it = list.iterator(); it.hasNext(); ) {
+				AgentPropsPair app = it.next();
+				if (map.containsKey(app)) {
+					int n = map.get(app);
+					map.put(app, ++n);
+				} else {
+					map.put(app, 1);
+				}
+			}
+		}
+		return map;
+	}
+	
+	/**
+	 * @return envAgentMap
+	 */
+	public HashMap<AgentPropsPair, Integer> getEnvAgentMap() {
+		return envAgentMap;
+	}
+
+	
+	/**
+	 * Returns true if agent with the specified ID is  not a player.
 	 * 
 	 * @param id
 	 * @return
 	 */
-	public boolean isBackgroundAgent(int id) {
-		return !(agents.get(id) instanceof HFTAgent);
+	public boolean isNonPlayer(int id) {
+		return !(players.containsKey(id));
+	}
+	
+	/**
+	 * Return true if that agent type is a single-market agent (SMAgent).
+	 * 
+	 * @param agentType
+	 * @return
+	 */
+	public boolean isSMAgent(String agentType) {
+		return Arrays.asList(Consts.SM_AGENT_TYPES).contains(agentType);
+	}
+	
+	/**
+	 * @param id
+	 * @return true if agent with given ID has a non-null private value.
+	 */
+	public boolean hasPrivateValue(int id) {
+		 return (getAgent(id).getPrivateValue() != null);
 	}
 	
 	
@@ -278,7 +370,11 @@ public class SystemData {
 	}
 	
 	public PQBid getBid(int id) {
-		return bidData.get(id);
+		return bids.get(id);
+	}
+
+	public Price getPrivateValueByBid(int bidID) {
+		return privateValues.get(bidID);
 	}
 	
 	/**
@@ -301,7 +397,7 @@ public class SystemData {
 		ArrayList<Integer> mktIDs = getModel(modelID).getMarketIDs();
 		
 		HashMap<Integer,PQTransaction> trans = new HashMap<Integer,PQTransaction>();
-		for (Map.Entry<Integer,PQTransaction> entry : transData.entrySet()) {
+		for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
 			if (mktIDs.contains(entry.getValue().marketID)) {
 				trans.put(entry.getKey(), entry.getValue());
 			}
@@ -323,7 +419,7 @@ public class SystemData {
 		ArrayList<Integer> mktIDs = getModel(modelID).getMarketIDs();
 				
 		ArrayList<PQTransaction> trans = new ArrayList<PQTransaction>();
-		for (Map.Entry<Integer,PQTransaction> entry : transData.entrySet()) {
+		for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
 			if (mktIDs.contains(entry.getValue().marketID)) {
 				PQTransaction tr = entry.getValue();
 				
@@ -357,7 +453,7 @@ public class SystemData {
 	public ArrayList<PQTransaction> getUniqueComparableTrans() {
 		Set<PQTransaction> trans = new HashSet<PQTransaction>();
 		
-		for (Map.Entry<Integer,PQTransaction> entry : transData.entrySet()) {
+		for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
 			PQTransaction tr = entry.getValue();
 			
 			// Modify values to be comparable between models
@@ -384,34 +480,19 @@ public class SystemData {
 	}
 	
 //	/**
-//	 * @return list of expirations for all ZI agent bids (only ZIAgent limit orders expire).
+//	 * @return list of actual private values of all agents
 //	 */
-//	public ArrayList<TimeStamp> getExpirations() {
-//		ArrayList<TimeStamp> exps = new ArrayList<TimeStamp>();
+//	public ArrayList<Price> getPrivateValues() {
+//		ArrayList<Price> pvs = new ArrayList<Price>(numAgents);
 //		for (Iterator<Integer> ag = getAgentIDs().iterator(); ag.hasNext(); ) {
-//			int id = ag.next();
-//			if (agents.get(id) instanceof ZIAgent) {
-//				exps.add(new TimeStamp(((ZIAgent) agents.get(id)).getExpiration()));
+//			Price val = agents.get(ag.next()).getPrivateValue();
+//			// PV will be null if it doesn't exist for the agent
+//			if (val != null) {
+//				pvs.add(val);
 //			}
 //		}
-//		return exps;
+//		return pvs;
 //	}
-	
-	
-	/**
-	 * @return list of actual private values of all agents
-	 */
-	public ArrayList<Price> getPrivateValues() {
-		ArrayList<Price> pvs = new ArrayList<Price>(numAgents);
-		for (Iterator<Integer> ag = getAgentIDs().iterator(); ag.hasNext(); ) {
-			int val = agents.get(ag.next()).getPrivateValue();
-			// PV will be negative if it doesn't exist for the agent; only add positive PVs
-			if (val >= 0) {
-				pvs.add(new Price(val));
-			}
-		}
-		return pvs;
-	}
 	
 	
 	/***********************************
@@ -419,55 +500,62 @@ public class SystemData {
 	 *
 	 **********************************/
 	
-	/**
-	 * Iterates through all transactions and sums up surplus for all agents of a 
-	 * specified type. For agents that do not have a private valuation, use their
-	 * realized profit instead.
-	 * 
-	 * CS = PV - p, PS = p - PV
-	 * 
-	 * @param modelID 		model id to check
-	 * @param agentType
-	 * @return hash map of agent surplus, hashed by agent ID
-	 */
-	public HashMap<Integer,Integer> getSurplusForType(int modelID, String agentType) {
-
-		ArrayList<Integer> ids = getModel(modelID).getMarketIDs();
-		HashMap<Integer,Integer> allSurplus = new HashMap<Integer,Integer>();
-		
-		for (Map.Entry<Integer,PQTransaction> trans : getTrans(modelID).entrySet()) {
-			PQTransaction t = trans.getValue();
-			
-			if (ids.contains(t.marketID)) {
-				Agent buyer = agents.get(t.buyerID);
-				Agent seller = agents.get(t.sellerID);
-				
-				if (agentType.equals(buyer.getType())) {
-					int surplus = 0;
-					if (allSurplus.containsKey(buyer.getID())) {
-						surplus = allSurplus.get(buyer.getID());
-					}
-					if (buyer.getPrivateValue() != -1) {
-						allSurplus.put(buyer.getID(), surplus + (buyer.getPrivateValue() - t.price.getPrice()));	
-					} else {
-						allSurplus.put(buyer.getID(), buyer.getRealizedProfit());
-					}
-				}
-				if (agentType.equals(seller.getType())) {
-					int surplus = 0;
-					if (allSurplus.containsKey(seller.getID())) {
-						surplus = allSurplus.get(seller.getID());
-					}
-					if (seller.getPrivateValue() != -1) {
-						allSurplus.put(seller.getID(), surplus + (t.price.getPrice() - seller.getPrivateValue()));
-					} else {
-						allSurplus.put(seller.getID(), seller.getRealizedProfit());
-					}
-				}
-			}
-		}
-		return allSurplus;
-	}
+//	/**
+//	 * Iterates through all transactions and sums up surplus for all agents of a 
+//	 * specified type. For agents that do not have a private valuation, use their
+//	 * realized profit instead.
+//	 * 
+//	 * Note that private values are a deviation from the fundamental (v).
+//	 * 
+//	 * CS = (PV + v) - p, PS = p - (PV + v)
+//	 * 
+//	 * @param modelID 		model id to check
+//	 * @param agentType
+//	 * @return hash map of agent surplus, hashed by agent ID
+//	 */
+//	public HashMap<Integer,Integer> getSurplusForType(int modelID, String agentType) {
+//
+//		ArrayList<Integer> ids = getModel(modelID).getMarketIDs();
+//		HashMap<Integer,Integer> allSurplus = new HashMap<Integer,Integer>();
+//		
+//		for (Map.Entry<Integer,PQTransaction> trans : getTrans(modelID).entrySet()) {
+//			PQTransaction t = trans.getValue();
+//			
+//			if (ids.contains(t.marketID)) {
+//				Agent buyer = agents.get(t.buyerID);
+//				Agent seller = agents.get(t.sellerID);
+//				
+//				if (agentType.equals(buyer.getType())) {
+//					int surplus = 0;
+//					if (allSurplus.containsKey(buyer.getID())) {
+//						surplus = allSurplus.get(buyer.getID());
+//					}
+//					if (buyer.getPrivateValue() != null) {
+//						Price rt = getFundamentalAt(t.timestamp);
+//						int val = (buyer.getPrivateValueAt(t.quantity).sum(rt)).diff(t.price).getPrice();
+//						allSurplus.put(buyer.getID(), surplus + val);
+//					} else {
+//						allSurplus.put(buyer.getID(), buyer.getRealizedProfit());
+//					}
+//				}
+//				if (agentType.equals(seller.getType())) {
+//					int surplus = 0;
+//					if (allSurplus.containsKey(seller.getID())) {
+//						surplus = allSurplus.get(seller.getID());
+//					}
+//					if (seller.getPrivateValue() != null) {
+//						Price rt = getFundamentalAt(t.timestamp);
+//						int val = t.price.diff(seller.getPrivateValueAt(-t.quantity).sum(rt)).getPrice();
+//						allSurplus.put(seller.getID(), surplus + val);
+//					} else {
+//						allSurplus.put(seller.getID(), seller.getRealizedProfit());
+//					}
+//				}
+//			}
+//		}
+//		return allSurplus;
+//	}
+	
 	
 	/**
 	 * Get total surplus for a specific agent within a model.
@@ -488,15 +576,19 @@ public class SystemData {
 				Agent seller = agents.get(t.sellerID);
 				
 				if (buyer.getID() == agentID) {
-					if (buyer.getPrivateValue() != -1) {
-						surplus += (buyer.getPrivateValue() - t.price.getPrice());	
+					if (buyer.getPrivateValue() != null) {
+						Price rt = getFundamentalAt(t.timestamp);
+						//surplus += (buyer.getPrivateValueAt(t.quantity).sum(rt)).diff(t.price).getPrice();
+						surplus += getPrivateValueByBid(t.buyBidID).sum(rt).diff(t.price).getPrice();
 					} else {
 						surplus = buyer.getRealizedProfit(); // already summed
 					}
 				}
 				if (seller.getID() == agentID) {
-					if (seller.getPrivateValue() != -1) {
-						surplus += (t.price.getPrice() - seller.getPrivateValue());
+					if (seller.getPrivateValue() != null) {
+						Price rt = getFundamentalAt(t.timestamp);
+						//surplus += t.price.diff(seller.getPrivateValueAt(-t.quantity).sum(rt)).getPrice();
+						surplus += t.price.diff(getPrivateValueByBid(t.sellBidID).sum(rt)).getPrice();
 					} else {
 						surplus = seller.getRealizedProfit(); // already summed
 					}
@@ -511,13 +603,16 @@ public class SystemData {
 	 * Iterates through all transactions and sums up surplus for all background agents
 	 * that have a private valuation.
 	 * 
-	 * CS = PV - p, PS = p - PV
+	 * Note that private values are a deviation from the fundamental (v).
+	 * 
+	 * CS = (PV + v) - p, PS = p - (PV + v)
 	 * 
 	 * @param modelID 		model id to check
 	 * @return hash map of background agent surplus, hashed by agent ID
 	 */
 	public HashMap<Integer,Integer> getBackgroundSurplus(int modelID) {
 		// basically the same as discounted surplus, but with discount 0.0
+		// also Integers instead of Doubles
 
 		ArrayList<Integer> ids = getModel(modelID).getMarketIDs();
 		HashMap<Integer,Integer> allSurplus = new HashMap<Integer,Integer>();
@@ -526,28 +621,34 @@ public class SystemData {
 			PQTransaction t = trans.getValue();
 			
 			if (ids.contains(t.marketID)) {
-				Agent buyer = agents.get(t.buyerID);
-				Agent seller = agents.get(t.sellerID);
+				Agent buyer = getAgent(t.buyerID);
+				Agent seller = getAgent(t.sellerID);
 				
 				// Check that PV is defined & that it is a background agent
-				if (isBackgroundAgent(buyer.getID())) {
+				if (isNonPlayer(buyer.getID())) {
 					int surplus = 0;
 					if (allSurplus.containsKey(buyer.getID())) {
 						surplus = allSurplus.get(buyer.getID());
 					}
-					if (buyer.getPrivateValue() != -1) {
-						allSurplus.put(buyer.getID(), surplus + (buyer.getPrivateValue() - t.price.getPrice()));	
+					if (buyer.getPrivateValue() != null) {
+						Price rt = getFundamentalAt(t.timestamp);
+						//int val = (buyer.getPrivateValueAt(t.quantity).sum(rt)).diff(t.price).getPrice();
+						int val = getPrivateValueByBid(t.buyBidID).sum(rt).diff(t.price).getPrice();
+						allSurplus.put(buyer.getID(), surplus + val);	
 					} else {
 						allSurplus.put(buyer.getID(), buyer.getRealizedProfit());	// already summed
 					}
 				}
-				if (isBackgroundAgent(seller.getID())) {
+				if (isNonPlayer(seller.getID())) {
 					int surplus = 0;
 					if (allSurplus.containsKey(seller.getID())) {
 						surplus = allSurplus.get(seller.getID());
 					}
-					if (seller.getPrivateValue() != -1) {
-						allSurplus.put(seller.getID(), surplus + (t.price.getPrice() - seller.getPrivateValue()));
+					if (seller.getPrivateValue() != null) {
+						Price rt = getFundamentalAt(t.timestamp);
+						//int val = t.price.diff(seller.getPrivateValueAt(-t.quantity).sum(rt)).getPrice();
+						int val = t.price.diff(getPrivateValueByBid(t.sellBidID).sum(rt)).getPrice();
+						allSurplus.put(seller.getID(), surplus + val);
 					} else {
 						allSurplus.put(seller.getID(), seller.getRealizedProfit());	// already summed
 					}
@@ -567,7 +668,7 @@ public class SystemData {
 	 * 
 	 * TODO - should the returned hashmap be hashed by transaction ID instead?
 	 * 
-	 * CS = PV - p, PS = p - PV
+	 * CS = (PV + v) - p, PS = p - (PV + v)
 	 * 
 	 * @param modelID 		model id to check
 	 * @param rho			discount factor
@@ -587,26 +688,28 @@ public class SystemData {
 				TimeStamp sellTime = timeToExecution.get(t.sellBidID);
 				
 				// Check that PV is defined & that it is a background agent
-				if (isBackgroundAgent(buyer.getID())) {
+				if (isNonPlayer(buyer.getID())) {
 					double surplus = 0;
 					if (discSurplus.containsKey(buyer.getID())) {
 						surplus = discSurplus.get(buyer.getID());
 					}
-					if (buyer.getPrivateValue() != -1) {
-						double cs = (buyer.getPrivateValue() - t.price.getPrice());
+					if (buyer.getPrivateValue() != null) {
+						Price rt = getFundamentalAt(t.timestamp);
+						double cs = getPrivateValueByBid(t.buyBidID).sum(rt).diff(t.price).getPrice();
 //						System.out.println(modelID + ": " + t + " cs=" + cs + ", buyTime=" + buyTime);
 						discSurplus.put(buyer.getID(), surplus + Math.exp(-rho * buyTime.longValue()) * cs);
 					} else {
 						discSurplus.put(buyer.getID(), Math.exp(-rho * buyTime.longValue()) * buyer.getRealizedProfit());
 					}
 				}
-				if (isBackgroundAgent(seller.getID())) {
+				if (isNonPlayer(seller.getID())) {
 					double surplus = 0;
 					if (discSurplus.containsKey(seller.getID())) {
 						surplus = discSurplus.get(seller.getID());
 					}
-					if (seller.getPrivateValue() != -1) {
-						double ps = (t.price.getPrice() - seller.getPrivateValue());
+					if (seller.getPrivateValue() != null) {
+						Price rt = getFundamentalAt(t.timestamp);
+						double ps = t.price.diff(getPrivateValueByBid(t.sellBidID).sum(rt)).getPrice();
 //						System.out.println(modelID + ": " + t + " ps=" + ps + ", sellTime=" + sellTime);
 						discSurplus.put(seller.getID(), surplus + Math.exp(-rho * sellTime.longValue()) * ps);
 					} else {
@@ -621,7 +724,7 @@ public class SystemData {
 	/**
 	 * @return list of all transaction IDs
 	 */
-	public ArrayList<Integer> getTransactionIDs(int modelID) {
+	public ArrayList<Integer> getTransIDs(int modelID) {
 		return new ArrayList<Integer>(getTrans(modelID).keySet());
 	}
 	
@@ -633,6 +736,10 @@ public class SystemData {
 	public void addAgent(Agent ag) {
 		agents.put(ag.getID(), ag);
 	}
+
+	public void addPlayer(Agent ag) {
+		players.put(ag.getID(), ag);
+	}
 	
 	public void addMarket(Market mkt) {
 		markets.put(mkt.getID(), mkt);
@@ -642,6 +749,36 @@ public class SystemData {
 		int id = mdl.getID();
 		models.put(id, mdl);
 		modelIDs.add(id);
+		addModelAgentsToMap(id, mdl.getAgentConfig());
+	}
+	
+	public void addModelAgentsToMap(int modelID, ArrayList<AgentPropsPair> list) {
+		if (modelAgentMap.containsKey(modelID)) {
+			modelAgentMap.get(modelID).addAll(list);
+		} else {
+			modelAgentMap.put(modelID, list);
+		}
+	}
+	
+	/**
+	 * @param a AgentPropertiesPair
+	 */
+	public void addPlayerProperties(AgentPropsPair a) {
+		if (playerMap.containsKey(a)) {
+			playerMap.put(a, playerMap.get(a)+1);
+		} else {
+			playerMap.put(a, 1);
+		}
+		numPlayers++;
+	}
+	
+	/**
+	 * @param a AgentPropertiesPair
+	 * @param n number of agents
+	 */
+	public void addEnvAgentNumber(AgentPropsPair a, int n) {
+		envAgentMap.put(a, n);
+		numEnvAgents += n;
 	}
 	
 	public void setSIP(SIP sip) {
@@ -651,15 +788,19 @@ public class SystemData {
 	public void addTransaction(PQTransaction tr) {
 		int id = transIDSequence.increment();
 		tr.transID = id;
-		transData.put(id, tr);
+		transactions.put(id, tr);
 	}
 
 	public void addQuote(int mktID, Quote q) {
-		quoteData.put(mktID, q);
+		quotes.put(mktID, q);
 	}
 	
 	public void addBid(PQBid b) {
-		bidData.put(b.getBidID(), b);
+		bids.put(b.getBidID(), b);
+	}
+	
+	public void addPrivateValue(int bidID, Price pv) {
+		privateValues.put(bidID, pv);
 	}
 	
 	/**
@@ -764,31 +905,13 @@ public class SystemData {
 			System.err.print("ERROR: submission time does not contain bidID " + bidID);
 		}
 	}
-	
-	
+
 	
 	
 	/***********************************
-	 * Arrival times & global fundamental generation
+	 * Global fundamental generation
 	 *
 	 **********************************/
-	
-	/**
-	 * Set up arrival times generation for background agents.
-	 */
-	public void arrivalTimes() {
-		arrivalTimeGenerator = new ArrivalTime(new TimeStamp(0), arrivalRate);
-	}	
-	
-	/**
-	 * @return next generated arrival time
-	 */
-	public TimeStamp nextArrival() {
-		if (arrivalTimeGenerator == null) {
-			return null;
-		}
-		return arrivalTimeGenerator.next();
-	}
 	
 	/**
 	 * Set up global fundamental generation.
@@ -808,20 +931,6 @@ public class SystemData {
 			return new Price(0);
 		}
 		return fundamentalGenerator.getValueAt((int) ts.longValue());
-	}
-	
-	/**
-	 * @return list of all arrival times
-	 */
-	public ArrayList<TimeStamp> getArrivalTimes() {
-		return arrivalTimeGenerator.getArrivalTimes();
-	}
-	
-	/**
-	 * @return list of all intervals
-	 */
-	public ArrayList<TimeStamp> getIntervals() {
-		return arrivalTimeGenerator.getIntervals();
 	}
 	
 	/**

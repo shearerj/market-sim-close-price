@@ -1,6 +1,9 @@
 package systemmanager;
 
 import java.util.HashMap;
+import java.util.Map;
+
+import entity.Agent;
 
 /**
  * This class stores the parameters for a specific agent, market, or market model.
@@ -47,6 +50,13 @@ public class ObjectProperties {
 	}
 	
 	/**
+	 * @param key
+	 */
+	public void remove(String key) {
+		properties.remove(key);
+	}
+	
+	/**
 	 * Get property's value.
 	 * @param key
 	 * @return String
@@ -55,8 +65,41 @@ public class ObjectProperties {
 		return properties.get(key);
 	}
 
+	/**
+	 * @return String with <param>_<value> format
+	 */
+	public String toStrategyString() {
+		String str = "";
+		for (Map.Entry<String, String> entry : properties.entrySet()) {
+			str += entry.getKey() + "_" + entry.getValue() + "_";
+		}
+		return str.substring(0, str.length()-1);	// trim last "_"
+	}
 	
+	@Override
 	public String toString() {
-		return properties.toString();
+		// remove strategy to make easier to read in log (will be parsed already)
+		ObjectProperties tmp = new ObjectProperties(this);
+		if (tmp.containsKey(Agent.STRATEGY_KEY)) {
+			tmp.remove(Agent.STRATEGY_KEY);
+		}
+		return tmp.properties.toString();
+	}
+	
+	@Override
+	public int hashCode() {
+		return properties.hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+	        return true;
+	    if (obj == null)
+	        return false;
+	    if (getClass() != obj.getClass())
+	        return false;
+	    final ObjectProperties other = (ObjectProperties) obj;
+	    return this.properties.equals(other.properties);
 	}
 }

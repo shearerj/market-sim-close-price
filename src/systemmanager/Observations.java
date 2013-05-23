@@ -31,6 +31,13 @@ public class Observations {
 	private HashMap<String, Object> observations;
 	private SystemData data;
 
+	// Constants in observation file
+	public final static String PLAYERS_KEY = "players";
+	public final static String FEATURES_KEY = "features";
+	public final static String ROLE_KEY = "role";
+	public final static String PAYOFF_KEY = "payoff";
+	public final static String STRATEGY_KEY = "strategy";
+	
 	/**
 	 * Constructor
 	 */
@@ -50,15 +57,18 @@ public class Observations {
 		// Don't add observation if agent is not a player in the game (i.e. not
 		// a role)
 		// or if observations are empty
-		if (obs == null || obs.isEmpty())
-			return;
-
-		if (!observations.containsKey("players")) {
+		if (obs == null || obs.isEmpty()) return;
+		
+		// if not a player, then don't add? will aggregate? aggregate only if not player 
+		// TODO
+		
+		// check if list of players has already been inserted in observations file
+		if (!observations.containsKey(PLAYERS_KEY)) {
 			ArrayList<Object> array = new ArrayList<Object>();
 			array.add(obs);
-			observations.put("players", array);
+			observations.put(PLAYERS_KEY, array);
 		} else {
-			((ArrayList<Object>) observations.get("players")).add(obs);
+			((ArrayList<Object>) observations.get(PLAYERS_KEY)).add(obs);
 		}
 	}
 
@@ -88,13 +98,13 @@ public class Observations {
 	 * @param description
 	 * @param ft
 	 */
-	public void addFeature(String description, HashMap<String, Object> ft) {
-		if (!observations.containsKey("features")) {
-			HashMap<String, Object> feats = new HashMap<String, Object>();
+	public void addFeature(String description, HashMap<String,Object> ft) {
+		if (!observations.containsKey(FEATURES_KEY)) {
+			HashMap<String,Object> feats = new HashMap<String,Object>();
 			feats.put(description.toLowerCase(), ft);
-			observations.put("features", feats);
+			observations.put(FEATURES_KEY, feats);
 		} else {
-			((HashMap<String, Object>) observations.get("features")).put(
+			((HashMap<String,Object>) observations.get(FEATURES_KEY)).put(
 					description.toLowerCase(), ft);
 		}
 	}
@@ -303,7 +313,7 @@ public class Observations {
 
 		int totalSurplus = 0;
 
-		// // TODO: have it call discounted surplus with rho=0
+		// // TODO: instead, call discounted surplus with rho=0
 		// HashMap<Integer,Double> discSurplus =
 		// data.getDiscountedSurplus(modelID, rho);
 		// double[] vals = convertDoublesToArray(discSurplus);
@@ -311,8 +321,7 @@ public class Observations {
 		// feat.put((new Double(rho)).toString(), ds.getSum());
 
 		// get background surplus for all agents with a private value
-		HashMap<Integer, Integer> bkgrdSurplus = data
-				.getBackgroundSurplus(modelID);
+		HashMap<Integer, Integer> bkgrdSurplus = data.getBackgroundSurplus(modelID);
 		double[] values = convertIntsToArray(bkgrdSurplus);
 		addAllStatistics(feat, values, "bkgrd");
 		DescriptiveStatistics ds = new DescriptiveStatistics(values);
@@ -327,20 +336,18 @@ public class Observations {
 			String label = "sum_with_" + type.toLowerCase();
 
 			// Append the agentID if there is 1+ of this type in the simulation
-			if (model.getNumAgentType(type) > 1) {
+//			if (model.getNumAgentType(type) > 1) {
 				label += a.getLogID();
-			}
+//			}
 
 			int surplus = 0;
-			if (!data.isBackgroundAgent(aid)) {
+			if (!data.isNonPlayer(aid)) {
 				// HFT agent
 				surplus = a.getRealizedProfit();
 				feat.put(label, ds.getSum() + surplus);
 				totalSurplus += surplus;
-			} else if (data.isBackgroundAgent(aid)
-					&& data.getAgent(aid).getPrivateValue() == -1) {
-				// background agent with undefined private value (e.g.
-				// MarketMaker)
+			} else if (data.isNonPlayer(aid) && !data.hasPrivateValue(aid)) {
+				// non-player background agent with undefined private value (e.g. MarketMaker)
 				surplus = data.getSurplusForAgent(modelID, aid);
 				feat.put(label, ds.getSum() + surplus);
 				feat.put("profit_" + type.toLowerCase() + a.getLogID(), surplus);
@@ -365,8 +372,7 @@ public class Observations {
 		// total discounted surplus for varying values of rho
 		for (int i = 0; i < Consts.rhos.length; i++) {
 			double rho = Consts.rhos[i];
-			HashMap<Integer, Double> discSurplus = data.getDiscountedSurplus(
-					modelID, rho);
+			HashMap<Integer, Double> discSurplus = data.getDiscountedSurplus(modelID, rho);
 			double[] vals = convertDoublesToArray(discSurplus);
 			DescriptiveStatistics ds = new DescriptiveStatistics(vals);
 			feat.put((new Double(rho)).toString(), ds.getSum());
@@ -481,7 +487,7 @@ public class Observations {
 		for (Iterator<Integer> it = model.getAgentIDs().iterator(); it.hasNext();) {
 			int aid = it.next();
 			// check if agent is player in role
-			if (!data.isBackgroundAgent(aid)) {
+			if (!data.isNonPlayer(aid)) {
 				String type = data.getAgent(aid).getType();
 
 				// count buys/sells
@@ -497,9 +503,9 @@ public class Observations {
 				// must append the agentID if there is more than one of this
 				// type
 				String suffix = "_" + type.toLowerCase();
-				if (model.getNumAgentType(type) > 1) {
+//				if (model.getNumAgentType(type) > 1) {
 					suffix += aid;
-				}
+//				}
 				feat.put("buys" + suffix, buys);
 				feat.put("sells" + suffix, sells);
 			}
@@ -707,8 +713,8 @@ public class Observations {
 		ArrayList<Integer> ids = model.getAgentIDs();
 		for (Iterator<Integer> it = ids.iterator(); it.hasNext();) {
 			int agentID = it.next();
-
-			if (data.getAgent(agentID) instanceof MarketMakerAgent) {
+			
+			if (data.getAgent(agentID) instanceof MarketMaker) {
 				Agent ag = data.getAgent(agentID);
 
 				// must append the agentID if there is more than one of this type
@@ -922,14 +928,14 @@ public class Observations {
 		config.put("arrival_rate", data.arrivalRate);
 		config.put("mean_value", data.meanValue);
 		config.put("shock_var", data.shockVar);
-		config.put("bid_range", data.bidRange);
-		config.put("pv_var", data.privateValueVar);
+		config.put("pv_var", data.pvVar);
 
-		// market maker params
-		config.put("mm_sleep_time", data.marketmaker_sleepTime);
-		config.put("mm_num_rungs", data.marketmaker_numRungs);
-		config.put("mm_rung_size", data.marketmaker_rungSize);
-
+		for (Map.Entry<AgentPropsPair, Integer> entry : data.getEnvAgentMap().entrySet()) {
+			String agType = entry.getKey().getAgentType();
+			config.put(agType + "_num", entry.getValue());
+			config.put(agType + "_setup", entry.getKey().getProperties().toStrategyString());
+		}
+		
 		return config;
 	}
 
@@ -952,8 +958,8 @@ public class Observations {
 			int agentID = it.next();
 			Agent ag = data.getAgent(agentID);
 			// must check that not market maker (since not affected by routing)
-			if (ag instanceof SMAgent && !(ag instanceof MarketMaker)) {
-				SMAgent sm = (SMAgent) ag;
+			if (ag instanceof BackgroundAgent && !(ag instanceof MarketMaker)) {
+				BackgroundAgent sm = (BackgroundAgent) ag;
 				if (sm.getMarketID() != sm.getMarketIDSubmittedBid()) {
 					// order routed to alternate market
 					numAlt++;

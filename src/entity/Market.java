@@ -194,6 +194,16 @@ public abstract class Market extends Entity {
 		return actMap;
 	}
 	
+	/**
+	 * @return true if both BID & ASK are defined (!= -1)
+	 */
+	public boolean defined() {
+		if (lastAskPrice.getPrice() == -1 || lastBidPrice.getPrice() == -1) {
+			return false;
+		}
+		return true;
+	}
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */

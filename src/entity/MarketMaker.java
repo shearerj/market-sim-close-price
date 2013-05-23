@@ -11,8 +11,8 @@ import systemmanager.*;
 public abstract class MarketMaker extends SMAgent {
 
 	public MarketMaker(int agentID, int modelID, SystemData d, 
-			ObjectProperties p, Log l, int mktID) {
-		super(agentID, modelID, d, p, l, mktID);
+			ObjectProperties p, Log l) {
+		super(agentID, modelID, d, p, l);
 	}
 	
 }

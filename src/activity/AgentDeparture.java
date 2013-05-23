@@ -11,26 +11,14 @@ import event.*;
 public class AgentDeparture extends Activity {
 
 	private Agent ag;
-	private Market mkt;
-	
-	public AgentDeparture(Agent ag, Market mkt, TimeStamp t) {
-		this.ag = ag;
-		this.mkt = mkt;
-		this.time = t;
-	}
 	
 	public AgentDeparture(Agent ag, TimeStamp t) {
 		this.ag = ag;
 		this.time = t;
-		this.mkt = null;
 	}
 	
 	public AgentDeparture deepCopy() {
-		if (mkt == null) {
-			return new AgentDeparture(this.ag, this.time);
-		} else {
-			return new AgentDeparture(this.ag, this.mkt, this.time);
-		}
+		return new AgentDeparture(this.ag, this.time);
 	}
 	
 	public ActivityHashMap execute() {
@@ -38,11 +26,6 @@ public class AgentDeparture extends Activity {
 	}
 	
 	public String toString() {
-		if (mkt == null) {
-			return new String("AgentDeparture::" + this.ag.toString());
-		} else {
-			return new String("AgentDeparture::" + this.ag.toString() + "," +
-							this.mkt.toString());
-		}
+		return new String("AgentDeparture::" + this.ag.toString());
 	}
 }
