@@ -1,25 +1,17 @@
 {"assignment": {
-"MARKETMAKER" [
-   "BASICMM:sleepTime_200_numRungs_10_rungSize_1000"
-],
-"BACKGROUND": [
-   "ZIR:bidRange_2000_maxqty_5",
-   "ZIR:bidRange_3000_maxqty_5",
-   "ZIR:bidRange_1500_maxqty_5"
-]
 },
 "configuration": {
 "sim_length": "15000",
 "primary_model": "CENTRALCDA",
-"TWOMARKET": "LA:sleepTime_0_alpha_0.001",
-"CENTRALCDA": "0",
-"CENTRALCALL": "0",
+"TWOMARKET": "LA:sleepTime_0_alpha_0.001,DUMMY",
+"CENTRALCDA": "1",
+"CENTRALCALL": "CDA",
 "BASICMM": "0",
 "BASICMM_setup": "sleepTime_200_numRungs_10_rungSize_1000",
-"ZI": "10",
+"ZI": "3",
 "ZI_setup": "bidRange_2000",
 "ZIR": "0",
-"ZIR_setup": "bidRange_2000_maxqty_5",
+"ZIR_setup": "bidRange_2000_maxqty_5"
 "ZIP": "0",
 "ZIP_setup": "",
 "tick_size": "1",
