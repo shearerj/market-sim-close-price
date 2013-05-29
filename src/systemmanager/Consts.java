@@ -23,6 +23,7 @@ public class Consts {
 	// **********************************************************
 	// Agent, market, and model types
 	// (must edit this whenever add a new agent, market, or model
+	public final static String AA = "AA";
 	public final static String ZI = "ZI";
 	public final static String ZIP = "ZIP";
 	public final static String ZIR = "ZIR";
@@ -42,7 +43,7 @@ public class Consts {
 	public final static String ROLE_BACKGROUND = "BACKGROUND";
 	
 	public final static String[] SM_AGENT_TYPES = 
-		{ ZI, ZIR,  ZIP, BASICMARKETMAKER };
+		{ ZI, ZIR,  ZIP, BASICMARKETMAKER, AA };
 	public final static String[] MARKETMODEL_TYPES = 
 		{ TWOMARKET, CENTRALCDA, CENTRALCALL };
 	

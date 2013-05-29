@@ -4,6 +4,7 @@ import event.*;
 import model.*;
 import entity.*;
 import market.*;
+import data.*;
 
 // import java.io.BufferedWriter;
 // import java.io.File;
@@ -29,6 +30,7 @@ import org.apache.commons.math3.stat.descriptive.rank.*;
 public class Observations {
 
 	private HashMap<String, Object> observations;
+	private ArrayList<TransactionObject> transactionObjects;
 	private SystemData data;
 
 	// Constants in observation file
@@ -44,6 +46,12 @@ public class Observations {
 	public Observations(SystemData d) {
 		observations = new HashMap<String, Object>();
 		data = d;
+		
+		//Creating the list of observation Objects
+		transactionObjects = new ArrayList<TransactionObject>();
+		transactionObjects.add(new TransactionData() );		//mean, min, max, variance
+		transactionObjects.add(new RMSD(data));
+		
 	}
 
 	/**
@@ -109,6 +117,7 @@ public class Observations {
 		}
 	}
 
+	
 	/**
 	 * Adds the mean, max, min, sum, var, & med to the feature.
 	 * 
@@ -300,7 +309,7 @@ public class Observations {
 		}
 		return values;
 	}
-
+	
 	/**
 	 * Extracts surplus features for all agents in a given model.
 	 * 
@@ -1046,4 +1055,34 @@ public class Observations {
 		}
 		return null;
 	}
+
+	public void addTransactionData(MarketModel model, long maxTime) {
+		//Market Specific Data
+		//For each market in the model
+		for(int mktID : model.getMarketIDs()) {
+			//Compute each observation object
+			for(TransactionObject statistic : transactionObjects) {
+				ArrayList<DataPoint> dataPoints = statistic.compute(data.transactionLists.get(mktID));
+				//Add each datapoint to observations
+				for(DataPoint point : dataPoints) {
+					String key = model.getLogName() + "_mkt_" + mktID + "_" + point.key;
+					observations.put(key, point.value);
+				}
+			}
+		}
+		//Market Aggregate Data
+		//Market specific data from above must be previously computed
+		for(TransactionObject statistic : transactionObjects) {
+			//Find the multimarket data for each observation
+			ArrayList<DataPoint> dataPoints = statistic.multiMarketData();
+			if(dataPoints == null) continue; //exception catching
+			//Add the dataPoints the statistic generates to observations
+			for(DataPoint point : dataPoints) {
+				String key = model.getLogName() + "_" + point.key;
+				observations.put(key, point.value);
+			}
+		}
+		
+	}
+
 }
