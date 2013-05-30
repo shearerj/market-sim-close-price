@@ -1,5 +1,6 @@
 package systemmanager;
 
+import entity.AAAgent;
 import entity.Agent;
 import entity.BasicMarketMaker;
 import entity.CallMarket;
@@ -22,13 +23,15 @@ public class Consts {
 	
 	// **********************************************************
 	// Agent, market, and model types
-	// (must edit this whenever add a new agent, market, or model
+	
+	/// UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL
 	public final static String ZI = "ZI";
 	public final static String ZIP = "ZIP";
 	public final static String ZIR = "ZIR";
 	public final static String BASICMARKETMAKER = "BASICMM";
 	public final static String LA = "LA";
 	public final static String DUMMY = "DUMMY";
+	public final static String AA = "AA";
 	
 	public final static String CALL = "CALL";
 	public final static String CDA = "CDA";
@@ -41,20 +44,36 @@ public class Consts {
 	public final static String ROLE_MARKETMAKER = "MARKETMAKER";
 	public final static String ROLE_BACKGROUND = "BACKGROUND";
 	
+	// UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL
 	public final static String[] SM_AGENT_TYPES = 
-		{ ZI, ZIR,  ZIP, BASICMARKETMAKER };
+		// background agents & market makers
+		{ ZI,
+		  ZIR,
+		  ZIP,
+		  AA,
+		  BASICMARKETMAKER };
 	public final static String[] MARKETMODEL_TYPES = 
-		{ TWOMARKET, CENTRALCDA, CENTRALCALL };
+		{ TWOMARKET, 
+		  CENTRALCDA, 
+		  CENTRALCALL };
 	
 	// EGTA roles
 	public final static String[] roles =
-		{ ROLE_HFT, ROLE_MARKETMAKER, ROLE_BACKGROUND };
+		{ ROLE_HFT, 
+		  ROLE_MARKETMAKER, 
+		  ROLE_BACKGROUND };
+	
+	// UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL
 	public final static String[] HFT_AGENT_TYPES = 
-		{ LA, DUMMY };
+		{ LA, 
+		  DUMMY };
 	public final static String[] MARKETMAKER_AGENT_TYPES = 
 		{ BASICMARKETMAKER };
 	public final static String[] BACKGROUND_AGENT_TYPES =
-		{ ZI, ZIR, ZIP };
+		{ ZI, 
+		  ZIR, 
+		  ZIP,
+		  AA};
 	
 	// **********************************************************
 	
@@ -140,6 +159,7 @@ public class Consts {
 	 */
 	public final static ObjectProperties getProperties(String type) {
 		
+		// UPDATE WHEN ADD NEW AGENT OR MARKET
 		ObjectProperties p = new ObjectProperties();
 		
 		if (type.equals(LA)) {
@@ -168,6 +188,10 @@ public class Consts {
 			p.put("beta","0.03");
 			p.put("betaVar", "0.005");
 			p.put("gamma","0.5");
+		}
+		if (type.equals(AA)) {
+			// FILL IN
+			p.put(AAAgent.BIDRANGE_KEY, "200"); // example only
 		}
 		return p;
 	}

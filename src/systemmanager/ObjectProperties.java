@@ -62,6 +62,10 @@ public class ObjectProperties {
 	 * @return String
 	 */
 	public String get(String key) {
+		if (!properties.containsKey(key)) {
+			System.err.println(this.getClass().getSimpleName() + "::get: " +
+					"property " + key + " not found!");
+		}
 		return properties.get(key);
 	}
 

@@ -38,6 +38,8 @@ public class AgentFactory {
 			return new ZIRAgent(agentID, modelID, data, params, l);
 		} else if (type.equals(Consts.ZIP)) {
 			return new ZIPAgent(agentID, modelID, data, params, l);
+		} else if (type.equals(Consts.AA)) {
+			return new AAAgent(agentID, modelID, data, params, l);
 		} else {
 			return null;
 		}
