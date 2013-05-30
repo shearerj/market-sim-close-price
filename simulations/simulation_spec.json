@@ -5,7 +5,7 @@
 "primary_model": "CENTRALCDA",
 "TWOMARKET": "LA:sleepTime_0_alpha_0.001,DUMMY",
 "CENTRALCDA": "1",
-"CENTRALCALL": "CDA",
+"CENTRALCALL": "NBBO",
 "BASICMM": "0",
 "BASICMM_setup": "sleepTime_200_numRungs_10_rungSize_1000",
 "ZI": "3",
