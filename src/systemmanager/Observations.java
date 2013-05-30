@@ -205,6 +205,18 @@ public class Observations {
 			feat.put(prefix + "mean", "NaN");
 		}
 	}
+	//Overloaded function
+	private void addMean(String prefix, HashMap<String, Object> feat, ArrayList<Double> values) {
+		if(prefix != null && prefix != "") prefix += "_";
+		if(values.size() > 0) {
+			double[] temp = new double[values.size()];
+			int i = 0;
+			for(Double cur : values) temp[i++] = cur;
+			DescriptiveStatistics dp = new DescriptiveStatistics(temp);
+			feat.put(prefix + "mean", dp.getMean());
+		}
+		else feat.put(prefix + "mean", "Nan");
+	}
 
 	/**
 	 * Adds standard deviation to the feature hash map.
@@ -332,9 +344,7 @@ public class Observations {
 		totalSurplus += ds.getSum();
 
 		// add role (HFT) agent surplus/payoff
-		for (Iterator<Integer> it = model.getAgentIDs().iterator(); it
-				.hasNext();) {
-			int aid = it.next();
+		for (Integer aid : model.getAgentIDs()) {
 			Agent a = data.getAgent(aid);
 			String type = a.getType();
 			String label = "sum_with_" + type.toLowerCase();
@@ -488,8 +498,7 @@ public class Observations {
 		// add root mean square deviation measure
 		feat.put("rmsd", computeRMSD(prices, fundamentalVals));
 		
-		for (Iterator<Integer> it = model.getAgentIDs().iterator(); it.hasNext();) {
-			int aid = it.next();
+		for (Integer aid : model.getAgentIDs()) {
 			// check if agent is player in role
 			if (!data.isNonPlayer(aid)) {
 				String type = data.getAgent(aid).getType();
@@ -527,39 +536,24 @@ public class Observations {
 	public HashMap<String, Object> getSpreadInfo(MarketModel model, long maxTime) {
 		HashMap<String, Object> feat = new HashMap<String, Object>();
 
-		ArrayList<Integer> ids = model.getMarketIDs();
-		double[] meds = new double[ids.size()]; // store medians to be averaged
-		int cnt = 0;
-		for (Iterator<Integer> it = ids.iterator(); it.hasNext();) {
-			int mktID = it.next();
-			HashMap<TimeStamp, Double> marketSpread = data.marketSpread
-					.get(mktID);
+		ArrayList<Double> meds = new ArrayList<Double>();
+		for (Integer mktID : model.getMarketIDs()) {
+			HashMap<TimeStamp, Double> marketSpread = data.marketSpread.get(mktID);
 			if (marketSpread != null) {
 				double[] spreads = truncateTimeSeries(marketSpread, maxTime);
 				addStatistics(feat, spreads, "mkt" + (-mktID), true);
 
 				// add model-level statistics (average the median spreads)
 				double med = computeMedian(spreads, spreads.length);
-				if (med != -1) {
-					meds[cnt] = med;
-					cnt++; // at most is the number of markets in the model
-				}
+				if (med != -1) meds.add(med);
 			}
 		}
-		// Reinitialize to get rid of unused portion of array
-		double[] medians = new double[cnt];
-		for (int i = 0; i < cnt; i++) {
-			medians[i] = meds[i];
-		}
 		// store mean median spread (across all markets in the model)
-		addMean("med", feat, medians);
+		addMean("nbbo", feat, meds);
 
-		HashMap<TimeStamp, Double> nbboSpread = data.NBBOSpread.get(model
-				.getID());
-		double[] nbboSpreads = {};
-		if (nbboSpread != null) {
-			nbboSpreads = truncateTimeSeries(nbboSpread, maxTime);
-		}
+		//NBBO Spread Statistics
+		HashMap<TimeStamp, Double> nbboSpread = data.NBBOSpread.get(model.getID());
+		double[] nbboSpreads = transformData(nbboSpread, maxTime);
 		addStatistics(feat, nbboSpreads, "nbbo", true);
 
 		return feat;
@@ -575,12 +569,8 @@ public class Observations {
 	public HashMap<String, Object> getDepthInfo(MarketModel model) {
 		HashMap<String, Object> feat = new HashMap<String, Object>();
 
-		ArrayList<Integer> ids = model.getMarketIDs();
-
-		for (Iterator<Integer> it = ids.iterator(); it.hasNext();) {
-			int mktID = it.next();
-			HashMap<TimeStamp, Double> marketDepth = data.marketDepth
-					.get(mktID);
+		for (Integer mktID : model.getMarketIDs()) {
+			HashMap<TimeStamp, Double> marketDepth = data.marketDepth.get(mktID);
 			if (marketDepth != null) {
 				double[] depths = extractTimeSeries(marketDepth);
 				addStatistics(feat, depths, "mkt" + (-mktID), true);
@@ -1051,6 +1041,11 @@ public class Observations {
 		return null;
 	}
 
+	
+	///
+	///Dylan's Space
+	///
+	
 	public void addTransactionData(MarketModel model, long maxTime) {
 		//Market Specific Data
 		//For each market in the model
@@ -1058,25 +1053,42 @@ public class Observations {
 			//Getting the transaction data
 			ArrayList<PQTransaction> transactions = data.transactionLists.get(mktID);
 			//Truncating the time
+			DescriptiveStatistics stat = new DescriptiveStatistics(transformData(transactions, maxTime));
 		}
 	}
 	
-	public void addSpreadData(MarketModel model, long maxTime) {
-		//Market Specific Data
-		for(int mktID : model.getMarketIDs()) {
-			//Getting the transaction data
-			ArrayList<Double> spreads = data.marketSpreadLists.get(mktID);
+	/**
+	 * Function that takes in an data set and returns a double[] truncated by maxTime
+	 * Currently takes ArrayList<PQTransaction> and HashMap<TimeStamp,Double>
+	 * @param series
+	 * @param maxTime
+	 * @return
+	 */
+	private double[] transformData(ArrayList<PQTransaction> series, long maxTime) {
+		int num;
+		for(num=0; num < series.size(); ++num) {
+			if(series.get(num).timestamp.getLongValue() > maxTime) break;
+			++num;
 		}
+		double[] ret = new double[num];
+		for(int i=0; i < num; ++i) {
+			ret[i] = series.get(i).price.getPrice();
+		}
+		
+		return ret;
 	}
-	
-	private List<PQTransaction> truncateTimeSeries(ArrayList<PQTransaction> transactions, long maxTime) {
-		ArrayList<PQTransaction> ret;
-		for(PQTransaction transaction : transactions) {
-			if(transaction.timestamp.getLongValue() > maxTime) {
-				
-			}
+	private double[] transformData(HashMap<TimeStamp,Double> series, long maxTime) {
+		int num = 0;
+		for(TimeStamp ts : series.keySet()) {
+			if(ts.getLongValue() > maxTime) break;
+			num++;
 		}
-		return null;
+		double[] ret = new double[num];
+		int i = 0;
+		for(TimeStamp ts : series.keySet()) {
+			ret[i++] = series.get(ts);
+		}
+		return ret;
 	}
 
 }
