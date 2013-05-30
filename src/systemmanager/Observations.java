@@ -1041,11 +1041,11 @@ public class Observations {
 		return null;
 	}
 
-	
-	///
-	///Dylan's Space
-	///
-	
+	/** For now, a junk function - but meant to replace getTransactionInfo and getVolatilityInfo
+	 * 
+	 * @param model
+	 * @param maxTime
+	 */
 	public void addTransactionData(MarketModel model, long maxTime) {
 		//Market Specific Data
 		//For each market in the model
