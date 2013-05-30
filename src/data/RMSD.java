@@ -8,7 +8,7 @@ import systemmanager.*;
 
 import java.util.ArrayList;
 
-public class RMSD implements ObservationObject, TransactionObject {
+public class RMSD implements ObservationObject {
 	SystemData data;
 	
 	public RMSD(SystemData _data) {
@@ -43,10 +43,15 @@ public class RMSD implements ObservationObject, TransactionObject {
 
 	@Override
 	public ArrayList<DataPoint> multiMarketData() {
-		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList<DataPoint>();
 	}
-
+	
+	@Override
+	public ArrayList<DataPoint> compute(ArrayList<Double> spreads,
+			ArrayList<TimeStamp> times) {
+		return new ArrayList<DataPoint>();
+	}
+	
 	//
 	//Private Methods
 	//

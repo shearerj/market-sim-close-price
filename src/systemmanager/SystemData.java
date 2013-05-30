@@ -7,6 +7,8 @@ import model.*;
 
 import java.util.*;
 
+import org.apache.commons.lang3.tuple.MutablePair;
+
 /**
  * SYSTEMDATA
  * 
@@ -79,6 +81,8 @@ public class SystemData {
 	// Variables of time series for observation file
 	public HashMap<Integer,HashMap<TimeStamp,Double>> marketDepth;		// hashed by market ID
 	public HashMap<Integer,HashMap<TimeStamp,Double>> marketSpread;		// hashed by market ID
+	public HashMap<Integer,ArrayList<Double>> marketSpreadLists; //hashed by market ID, in time order
+	public HashMap<Integer,ArrayList<TimeStamp>> marketSpreadTimeLists; //hashed by market ID, index corresponds to spread in marketSpreadLists
 	public HashMap<Integer,HashMap<TimeStamp,Double>> NBBOSpread;		// hashed by model ID, time series
 	public HashMap<Integer,HashMap<TimeStamp,Double>> marketMidQuote;	// hashed by market ID
 	public HashMap<Integer,TimeStamp> timeToExecution;		 	// hashed by bid ID
@@ -109,6 +113,8 @@ public class SystemData {
 		// Initialize containers for observations/features
 		marketDepth = new HashMap<Integer,HashMap<TimeStamp,Double>>();
 		marketSpread = new HashMap<Integer,HashMap<TimeStamp,Double>>();
+		marketSpreadLists = new HashMap<Integer,ArrayList<Double>>();
+		marketSpreadTimeLists = new HashMap<Integer,ArrayList<TimeStamp>>();
 		NBBOSpread = new HashMap<Integer,HashMap<TimeStamp,Double>>();
 		marketMidQuote = new HashMap<Integer,HashMap<TimeStamp,Double>>();
 		timeToExecution = new HashMap<Integer,TimeStamp>();
@@ -790,6 +796,9 @@ public class SystemData {
 		int id = transIDSequence.increment();
 		tr.transID = id;
 		transactions.put(id, tr);
+		
+		//Adding to transactionList
+		if(!transactionLists.containsKey(tr.marketID)) transactionLists.put(tr.marketID, new ArrayList<PQTransaction>());
 		transactionLists.get(tr.marketID).add(tr);
 	}
 
@@ -827,6 +836,19 @@ public class SystemData {
 //			System.out.println(ts + " " + mkt.toString() + ": " + spread + " added.");
 //			System.out.println("POST marketSpread: " + marketSpread.get(mktID));
 		}
+		
+		//Adding to marketSpreadLists
+		//If the market has not been added, create the ArrayList
+		if(!marketSpreadLists.containsKey(mktID)) marketSpreadLists.put(mktID, new ArrayList<Double>());
+		//Add spread to corresponding ArrayList
+		marketSpreadLists.get(mktID).add((double) spread);
+
+		//Adding to marketSpreadTimeLists
+		//If market has not already been added, create the ArrayList
+		if(!marketSpreadTimeLists.containsKey(mktID)) marketSpreadTimeLists.put(mktID, new ArrayList<TimeStamp>());
+		//Add timestamp to the corresponding ArrayList
+		marketSpreadTimeLists.get(mktID).add(ts);
+		
 	}	
 	
 	/**

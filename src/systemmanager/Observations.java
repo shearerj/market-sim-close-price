@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.TreeSet;
 
 import org.json.simple.*;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.math3.stat.descriptive.*;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
@@ -28,10 +29,9 @@ import org.apache.commons.math3.stat.descriptive.rank.*;
  * @author ewah
  */
 public class Observations {
-
-	private HashMap<String, Object> observations;
-	private ArrayList<TransactionObject> transactionObjects;
+	
 	private SystemData data;
+	private HashMap<String, Object> observations;
 
 	// Constants in observation file
 	public final static String PLAYERS_KEY = "players";
@@ -47,10 +47,8 @@ public class Observations {
 		observations = new HashMap<String, Object>();
 		data = d;
 		
-		//Creating the list of observation Objects
-		transactionObjects = new ArrayList<TransactionObject>();
-		transactionObjects.add(new TransactionData() );		//mean, min, max, variance
-		transactionObjects.add(new RMSD(data));
+		
+		
 		
 	}
 
@@ -1060,29 +1058,17 @@ public class Observations {
 		//Market Specific Data
 		//For each market in the model
 		for(int mktID : model.getMarketIDs()) {
-			//Compute each observation object
-			for(TransactionObject statistic : transactionObjects) {
-				ArrayList<DataPoint> dataPoints = statistic.compute(data.transactionLists.get(mktID));
-				//Add each datapoint to observations
-				for(DataPoint point : dataPoints) {
-					String key = model.getLogName() + "_mkt_" + mktID + "_" + point.key;
-					observations.put(key, point.value);
-				}
-			}
+			//Getting the transaction data
+			ArrayList<PQTransaction> transactions = data.transactionLists.get(mktID);			
 		}
-		//Market Aggregate Data
-		//Market specific data from above must be previously computed
-		for(TransactionObject statistic : transactionObjects) {
-			//Find the multimarket data for each observation
-			ArrayList<DataPoint> dataPoints = statistic.multiMarketData();
-			if(dataPoints == null) continue; //exception catching
-			//Add the dataPoints the statistic generates to observations
-			for(DataPoint point : dataPoints) {
-				String key = model.getLogName() + "_" + point.key;
-				observations.put(key, point.value);
-			}
+	}
+	
+	public void addSpreadData(MarketModel model, long maxTime) {
+		//Market Specific Data
+		for(int mktID : model.getMarketIDs()) {
+			//Getting the transaction data
+			ArrayList<Double> spreads = data.marketSpreadLists.get(mktID);
 		}
-		
 	}
 
 }

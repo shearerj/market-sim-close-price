@@ -7,10 +7,12 @@ import activity.*;
 import systemmanager.*;
 
 import java.util.ArrayList;
+
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.math3.stat.descriptive.*;
 
 
-public class TransactionData implements TransactionObject{
+public class DescriptiveStats implements ObservationObject {
 	//Private variables for multiMarketData
 	double sum;
 	double num;
@@ -23,7 +25,7 @@ public class TransactionData implements TransactionObject{
 	//Public Methods
 	//
 	//Constructor
-	public TransactionData() {
+	public DescriptiveStats() {
 		sum = 0;
 		num = 0;
 		maxset = false;
@@ -41,6 +43,21 @@ public class TransactionData implements TransactionObject{
 			values[i] = transactions.get(i).price.getPrice();
 		}
 		
+		return compute(values);
+	}
+	
+	public ArrayList<DataPoint> multiMarketData(){
+		ArrayList<DataPoint> stats = new ArrayList<DataPoint>();
+		if(num == 0) return stats;	//error checking
+		
+		stats.add(new DataPoint("mean", sum/num));
+		stats.add(new DataPoint("max", max));
+		stats.add(new DataPoint("min", min));
+		return stats;
+	}
+	
+	public ArrayList<DataPoint> compute(double[] values) {
+		ArrayList<DataPoint> stats = new ArrayList<DataPoint>();
 		//Adding the array to the new descriptive statistics class
 		DescriptiveStatistics dp = new DescriptiveStatistics(values);
 		
@@ -58,15 +75,18 @@ public class TransactionData implements TransactionObject{
 		
 		return stats;
 	}
-	
-	public ArrayList<DataPoint> multiMarketData(){
-		ArrayList<DataPoint> stats = new ArrayList<DataPoint>();
-		if(num == 0) return stats;	//error checking
-		
-		stats.add(new DataPoint("mean", sum/num));
-		stats.add(new DataPoint("max", max));
-		stats.add(new DataPoint("min", min));
-		return stats;
+
+	@Override
+	public ArrayList<DataPoint> compute() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
+	@Override
+	public ArrayList<DataPoint> compute(ArrayList<Double> spreads,
+			ArrayList<TimeStamp> times) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
 }
