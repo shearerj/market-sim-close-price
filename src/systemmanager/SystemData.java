@@ -45,7 +45,7 @@ public class SystemData {
 	public HashMap<Integer,PQBid> bids;					// all bids ever, hashed by bid ID
 	public HashMap<Integer,Price> privateValues;		// private values hashed by bid ID
 	public HashMap<Integer,PQTransaction> transactions;	// hashed by transaction ID
-	public HashMap<Integer, ArrayList<PQTransaction> > transactionLists; //hashmap of in order market transactions
+	public HashMap<Integer, List<PQTransaction> > transactionLists; //hashmap of in order market transactions
 	public HashMap<Integer,Quote> quotes;				// hashed by market ID
 	public HashMap<Integer,Agent> agents;				// (all) agents hashed by ID
 	public HashMap<Integer,Agent> players;				// players (for EGTA)

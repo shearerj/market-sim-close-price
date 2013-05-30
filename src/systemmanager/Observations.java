@@ -11,6 +11,7 @@ import data.*;
 // import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeSet;
@@ -46,10 +47,6 @@ public class Observations {
 	public Observations(SystemData d) {
 		observations = new HashMap<String, Object>();
 		data = d;
-		
-		
-		
-		
 	}
 
 	/**
@@ -1059,7 +1056,8 @@ public class Observations {
 		//For each market in the model
 		for(int mktID : model.getMarketIDs()) {
 			//Getting the transaction data
-			ArrayList<PQTransaction> transactions = data.transactionLists.get(mktID);			
+			ArrayList<PQTransaction> transactions = data.transactionLists.get(mktID);
+			//Truncating the time
 		}
 	}
 	
@@ -1069,6 +1067,16 @@ public class Observations {
 			//Getting the transaction data
 			ArrayList<Double> spreads = data.marketSpreadLists.get(mktID);
 		}
+	}
+	
+	private List<PQTransaction> truncateTimeSeries(ArrayList<PQTransaction> transactions, long maxTime) {
+		ArrayList<PQTransaction> ret;
+		for(PQTransaction transaction : transactions) {
+			if(transaction.timestamp.getLongValue() > maxTime) {
+				
+			}
+		}
+		return null;
 	}
 
 }

@@ -7,6 +7,8 @@ import activity.*;
 import systemmanager.*;
 
 import java.util.ArrayList; 
+
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.math3.stat.descriptive.*;
 
 
@@ -25,8 +27,11 @@ public interface ObservationObject {
 	 * Should also update any multimarket statistics (returned by multimarketdata)
 	 * @return
 	 */
-	public abstract ArrayList<DataPoint> compute();
+	public ArrayList<DataPoint> compute();
+	public ArrayList<DataPoint> compute(ArrayList<PQTransaction> transactions);
+	public ArrayList<DataPoint> compute(ArrayList<Double> spreads, ArrayList<TimeStamp> times);
 	
+
 	/**
 	 * Returns statistics that are aggregated across multiple markets 
 	 * @return
