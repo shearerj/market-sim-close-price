@@ -7,6 +7,8 @@ import model.*;
 
 import java.util.*;
 
+import org.apache.commons.lang3.tuple.MutablePair;
+
 /**
  * SYSTEMDATA
  * 
@@ -44,6 +46,7 @@ public class SystemData {
 	public HashMap<Integer,PQBid> bids;					// all bids ever, hashed by bid ID
 	public HashMap<Integer,Price> privateValues;		// private values hashed by bid ID
 	public HashMap<Integer,PQTransaction> transactions;	// hashed by transaction ID
+	public HashMap<Integer, ArrayList<PQTransaction> > transactionLists; //hashmap of in order market transactions
 	public HashMap<Integer,Quote> quotes;				// hashed by market ID
 	public HashMap<Integer,Agent> agents;				// (all) agents hashed by ID
 	public HashMap<Integer,Agent> players;				// players (for EGTA)
@@ -77,10 +80,10 @@ public class SystemData {
 	public double pvVar;								// agent variance from PV random process
 	
 	// Variables of time series for observation file
-	public HashMap<Integer,HashMap<TimeStamp,Double>> marketDepth;		// hashed by market ID
-	public HashMap<Integer,HashMap<TimeStamp,Double>> marketSpread;		// hashed by market ID
-	public HashMap<Integer,HashMap<TimeStamp,Double>> NBBOSpread;		// hashed by model ID, time series
-	public HashMap<Integer,HashMap<TimeStamp,Double>> marketMidQuote;	// hashed by market ID
+	public HashMap<Integer,HashMap<TimeStamp,Double>> marketDepth;		//hashed by market ID, then TimeStamp	
+	public HashMap<Integer,HashMap<TimeStamp,Double>> marketSpread;		//hashed by market ID, then TimeStamp
+	public HashMap<Integer,HashMap<TimeStamp,Double>> NBBOSpread;		//hashed by model ID, then TimeStamp
+	public HashMap<Integer,HashMap<TimeStamp,Double>> marketMidQuote;	//hashed by market ID, then TimeStamp
 	public HashMap<Integer,TimeStamp> timeToExecution;		 	// hashed by bid ID
 	public HashMap<Integer,TimeStamp> submissionTime;			// hashed by bid ID
 	public HashMap<Double,HashMap<Integer,Double>> allSurplus;	// hashed by rho & agent ID
@@ -108,6 +111,8 @@ public class SystemData {
 		playerMap = new HashMap<AgentPropsPair, Integer>();
 		envAgentMap = new HashMap<AgentPropsPair, Integer>(); 
 	
+		transactionLists = new HashMap<Integer, ArrayList<PQTransaction>>();
+		
 		// Initialize containers for observations/features
 		marketDepth = new HashMap<Integer,HashMap<TimeStamp,Double>>();
 		marketSpread = new HashMap<Integer,HashMap<TimeStamp,Double>>();
@@ -522,6 +527,13 @@ public class SystemData {
 		addSurplus(tr);
 		// insert based on model ID
 		addModelTransID(getModelByMarketID(tr.marketID).getID(), tr.transID);
+		
+		//Adding to transactionList
+		//If the market has not been added, create the ArrayList
+		if(!transactionLists.containsKey(tr.marketID)) {
+			transactionLists.put(tr.marketID, new ArrayList<PQTransaction>());
+		}
+		transactionLists.get(tr.marketID).add(tr);
 	}
 	
 	public void addQuote(int mktID, Quote q) {
@@ -544,20 +556,13 @@ public class SystemData {
 	 * @param spread
 	 */
 	public void addSpread(int mktID, TimeStamp ts, int spread) {
-		
-//		System.out.println("PRE marketSpread: " + marketSpread.get(mktID));
-//		Market mkt = markets.get(mktID);
-		if (marketSpread.get(mktID) != null) {
-			marketSpread.get(mktID).put(ts, (double) spread);
-//			System.out.println(ts + " " + mkt.toString() + ": " + spread + " added.");
-//			System.out.println("POST marketSpread: " + marketSpread.get(mktID));
-		} else {
-			HashMap<TimeStamp,Double> tmp = new HashMap<TimeStamp,Double>();
-			tmp.put(ts, (double) spread);
-			marketSpread.put(mktID, tmp);
-//			System.out.println(ts + " " + mkt.toString() + ": " + spread + " added.");
-//			System.out.println("POST marketSpread: " + marketSpread.get(mktID));
+		//If the market has not been added, create the HashMap
+		if(!marketSpread.containsKey(mktID)) {
+			marketSpread.put(mktID, new HashMap<TimeStamp,Double>());
 		}
+		//Add the spread to the corresponding market
+		marketSpread.get(mktID).put(ts, (double) spread);
+		
 	}	
 	
 	/**
@@ -590,13 +595,12 @@ public class SystemData {
 	 * @param spread
 	 */
 	public void addNBBOSpread(int modelID, TimeStamp ts, int spread) {
-		if (NBBOSpread.get(modelID) != null) {
-			NBBOSpread.get(modelID).put(ts, (double)spread);
-		} else {
-			HashMap<TimeStamp,Double> tmp = new HashMap<TimeStamp,Double>();
-			tmp.put(ts, (double) spread);
-			NBBOSpread.put(modelID, tmp);
+		//If the model has not been addressed, create the HashMap
+		if(!NBBOSpread.containsKey(modelID)) {
+			NBBOSpread.put(modelID, new HashMap<TimeStamp,Double>());
 		}
+		//Add the spread to the corresponding model
+		NBBOSpread.get(modelID).put(ts, (double) spread);
 	}	
 		
 	/**
@@ -607,13 +611,12 @@ public class SystemData {
 	 * @param depth
 	 */
 	public void addDepth(int mktID, TimeStamp ts, int depth) {
-		if (marketDepth.get(mktID) != null) {
-			marketDepth.get(mktID).put(ts, (double) depth);
-		} else {
-			HashMap<TimeStamp,Double> tmp = new HashMap<TimeStamp,Double>();
-			tmp.put(ts, (double) depth);
-			marketDepth.put(mktID, tmp);
+		//If the market has not been addressed, add the HashMap
+		if(!marketDepth.containsKey(mktID)) {
+			marketDepth.put(mktID, new HashMap<TimeStamp,Double>());
 		}
+		//Add the depth to the corresponding market
+		marketDepth.get(mktID).put(ts, (double) depth);
 	}
 	
 	/**

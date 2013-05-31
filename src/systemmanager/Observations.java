@@ -4,12 +4,14 @@ import event.*;
 import model.*;
 import entity.*;
 import market.*;
+import data.*;
 
 // import java.io.BufferedWriter;
 // import java.io.File;
 // import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.ArrayList;
+
 import org.json.simple.*;
 import org.apache.commons.math3.stat.descriptive.*;
 import org.apache.commons.lang3.ArrayUtils;
@@ -18,12 +20,12 @@ import org.apache.commons.lang3.ArrayUtils;
  * Contains payoff data and features for all players in the simulation. Computes
  * metrics to output to the observation file.
  * 
- * @author ewah
+ * @author ewah, drhurd
  */
 public class Observations {
-
-	private HashMap<String, Object> observations;
+	
 	private SystemData data;
+	private HashMap<String, Object> observations;
 
 	// Constants in observation file
 	public final static String PLAYERS_KEY = "players";
@@ -180,6 +182,133 @@ public class Observations {
 					description.toLowerCase(), ft.get());
 		}
 	}
+
+	
+//	/**
+//	 * Adds the mean, max, min, sum, var, & med to the feature.
+//	 * 
+//	 * @param feat
+//	 * @param values
+//	 * @param suffix
+//	 */
+//	private void addAllStatistics(HashMap<String, Object> feat,
+//			double[] values, String suffix) {
+//		if (suffix != null && suffix != "") {
+//			suffix = "_" + suffix;
+//		}
+//		DescriptiveStatistics ds = new DescriptiveStatistics(values);
+//		Median med = new Median();
+//		if (values.length > 0) {
+//			feat.put("mean" + suffix, ds.getMean());
+//			feat.put("max" + suffix, ds.getMax());
+//			feat.put("min" + suffix, ds.getMin());
+//			feat.put("sum" + suffix, ds.getSum());
+//			feat.put("var" + suffix, ds.getVariance());
+//			feat.put("med" + suffix, med.evaluate(values));
+//		} else {
+//			feat.put("mean" + suffix, "NaN");
+//			feat.put("max" + suffix, "NaN");
+//			feat.put("min" + suffix, "NaN");
+//			feat.put("sum" + suffix, "NaN");
+//			feat.put("var" + suffix, "NaN");
+//			feat.put("med" + suffix, "NaN");
+//		}
+//	}
+
+//	/**
+//	 * Adds either {mean, max, min, & var} or {mean, med}, based on mid
+//	 * parameter.
+//	 * 
+//	 * @param feat
+//	 * @param values
+//	 * @param suffix
+//	 *            to append to feature type
+//	 * @param mid
+//	 *            is true if only add middle-type metrics (e.g. mean/median),
+//	 *            false otherwise
+//	 */
+//	private void addStatistics(HashMap<String, Object> feat, double[] values,
+//			String suffix, boolean mid) {
+//		if (suffix != null && suffix != "") {
+//			suffix = "_" + suffix;
+//		}
+//		if (values.length > 0) {
+//			DescriptiveStatistics dp = new DescriptiveStatistics(values);
+//			feat.put("mean" + suffix, dp.getMean());
+//			if (mid) {
+//				Median med = new Median();
+//				feat.put("med" + suffix, med.evaluate(values));
+//			}
+//			if (!mid) {
+//				feat.put("max" + suffix, dp.getMax());
+//				feat.put("min" + suffix, dp.getMin());
+//				feat.put("var" + suffix, dp.getVariance());
+//			}
+//		} else {
+//			feat.put("mean" + suffix, "NaN");
+//			if (mid) {
+//				feat.put("med" + suffix, "NaN");
+//			}
+//			if (!mid) {
+//				feat.put("max" + suffix, "NaN");
+//				feat.put("min" + suffix, "NaN");
+//				feat.put("var" + suffix, "NaN");
+//			}
+//		}
+//	}
+
+//	/**
+//	 * Adds mean to the feature hash map.
+//	 * 
+//	 * @param prefix
+//	 * @param feat
+//	 * @param values
+//	 */
+//	private void addMean(String prefix, HashMap<String, Object> feat,
+//			double[] values) {
+//		if (prefix != null && prefix != "") {
+//			prefix = prefix + "_";
+//		}
+//		if (values.length > 0) {
+//			DescriptiveStatistics dp = new DescriptiveStatistics(values);
+//			feat.put(prefix + "mean", dp.getMean());
+//		} else {
+//			feat.put(prefix + "mean", "NaN");
+//		}
+//	}
+//	//Overloaded function
+//	private void addMean(String prefix, HashMap<String, Object> feat, ArrayList<Double> values) {
+//		if(prefix != null && prefix != "") prefix += "_";
+//		if(values.size() > 0) {
+//			double[] temp = new double[values.size()];
+//			int i = 0;
+//			for(Double cur : values) temp[i++] = cur;
+//			DescriptiveStatistics dp = new DescriptiveStatistics(temp);
+//			feat.put(prefix + "mean", dp.getMean());
+//		}
+//		else feat.put(prefix + "mean", "Nan");
+//	}
+//
+//	/**
+//	 * Adds standard deviation to the feature hash map.
+//	 * 
+//	 * @param prefix
+//	 * @param feat
+//	 * @param values
+//	 */
+//	private void addStdDev(String prefix, HashMap<String, Object> feat,
+//			double[] values) {
+//		if (prefix != null && prefix != "") {
+//			prefix = prefix + "_";
+//		}
+//		if (values.length > 0) {
+//			StandardDeviation sd = new StandardDeviation();
+//			feat.put(prefix + "stddev", sd.evaluate(values));
+//		} else {
+//			feat.put(prefix + "stddev", "NaN");
+//>>>>>>> origin/dataOpt
+//		}
+//	}
 	
 	
 
@@ -188,6 +317,108 @@ public class Observations {
 	 * Data aggregation
 	 *******************************************/
 	
+//	/**
+//	 * Computes the mean up to numTimeSteps (i.e. from index 0 to
+//	 * numTimeSteps-1). If it doesn't exist, returns -1.
+//	 * 
+//	 * @param values
+//	 * @param numTimeSteps
+//	 */
+//	private double computeMean(double[] values, int numTimeSteps) {
+//		if (values.length > 0) {
+//			Mean mn = new Mean();
+//			if (numTimeSteps < values.length) {
+//				return mn.evaluate(values, 0, numTimeSteps);
+//			} else {
+//				return mn.evaluate();
+//			}
+//		} else {
+//			return -1;
+//		}
+//	}
+
+//	/**
+//	 * Computes the median up to numTimeSteps (i.e. from index 0 to
+//	 * numTimeSteps-1). If it doesn't exist, returns -1.
+//	 * 
+//	 * @param values
+//	 * @param numTimeSteps
+//	 */
+//	private double computeMedian(double[] values, int numTimeSteps) {
+//		if (values.length > 0) {
+//			Median med = new Median();
+//			if (numTimeSteps < values.length) {
+//				return med.evaluate(values, 0, numTimeSteps);
+//			} else {
+//				return med.evaluate(values);
+//			}
+//		} else {
+//			return -1;
+//		}
+//	}
+
+//	/**
+//	 * Computes the standard deviation up to numTimeSteps (i.e. from index 0 to
+//	 * numTimeSteps-1). If it doesn't exist, returns -1.
+//	 * 
+//	 * @param values
+//	 * @param numTimeSteps
+//	 */
+//	private double computeStdDev(double[] values, int numTimeSteps) {
+//		if (values.length > 0) {
+//			StandardDeviation sd = new StandardDeviation();
+//			if (numTimeSteps < values.length) {
+//				return sd.evaluate(values, 0, numTimeSteps);
+//			} else {
+//				return sd.evaluate(values);
+//			}
+//		} else {
+//			return -1;
+//		}
+//	}
+//
+//	private double[] convertIntsToArray(HashMap<Integer, Integer> map) {
+//		Object[] objs = (new ArrayList<Integer>(map.values())).toArray();
+//		double[] values = new double[objs.length];
+//		for (int i = 0; i < values.length; i++) {
+//			Integer tmp = (Integer) objs[i];
+//			values[i] = tmp.doubleValue();
+//		}
+//		return values;
+//	}
+//
+//	private double[] convertDoublesToArray(HashMap<Integer, Double> map) {
+//		Object[] objs = (new ArrayList<Double>(map.values())).toArray();
+//		double[] values = new double[objs.length];
+//		for (int i = 0; i < values.length; i++) {
+//			values[i] = (Double) objs[i];
+//		}
+//		return values;
+//	}
+	
+
+//	/**
+//	 * Extracts features of a list of times (e.g. intervals, arrival times).
+//	 * 
+//	 * @param allTimes
+//	 *            ArrayList of TimeStamps
+//	 * @return
+//	 */
+//	public HashMap<String, Object> getTimeStampFeatures(
+//			ArrayList<TimeStamp> allTimes) {
+//		HashMap<String, Object> feat = new HashMap<String, Object>();
+//
+//		Object[] times = allTimes.toArray();
+//		double[] values = new double[times.length];
+//		for (int i = 0; i < values.length; i++) {
+//			TimeStamp tmp = (TimeStamp) times[i];
+//			values[i] = (double) tmp.longValue();
+//		}
+//		addAllStatistics(feat, values, "");
+//		return feat;
+//	}
+
+
 	/**
 	 * @return HashMap of configuration parameters.
 	 */
@@ -329,7 +560,6 @@ public class Observations {
 		feat.put("main_transact", numMainTrans);
 		// number of orders that are not routed that do not transact
 		feat.put("main_notrans", numMainNoTrans);
-		
 		return feat;
 	}
 	
@@ -717,4 +947,54 @@ public class Observations {
 //		}
 //	}
 
+
+	/** For now, a junk function - but meant to replace getTransactionInfo and getVolatilityInfo
+	 * 
+	 * @param model
+	 * @param maxTime
+	 */
+	public void addTransactionData(MarketModel model, long maxTime) {
+		//Market Specific Data
+		//For each market in the model
+		for(int mktID : model.getMarketIDs()) {
+			//Getting the transaction data
+			ArrayList<PQTransaction> transactions = data.transactionLists.get(mktID);
+			//Truncating the time
+			DescriptiveStatistics stat = new DescriptiveStatistics(transformData(transactions, maxTime));
+		}
+	}
+	
+	/**
+	 * Function that takes in an data set and returns a double[] truncated by maxTime
+	 * Currently takes ArrayList<PQTransaction> and HashMap<TimeStamp,Double>
+	 * @param series
+	 * @param maxTime
+	 * @return
+	 */
+	private double[] transformData(ArrayList<PQTransaction> series, long maxTime) {
+		int num;
+		for(num=0; num < series.size(); ++num) {
+			if(series.get(num).timestamp.getLongValue() > maxTime) break;
+			++num;
+		}
+		double[] ret = new double[num];
+		for(int i=0; i < num; ++i) {
+			ret[i] = series.get(i).price.getPrice();
+		}
+		
+		return ret;
+	}
+	private double[] transformData(HashMap<TimeStamp,Double> series, long maxTime) {
+		int num = 0;
+		for(TimeStamp ts : series.keySet()) {
+			if(ts.getLongValue() > maxTime) break;
+			num++;
+		}
+		double[] ret = new double[num];
+		int i = 0;
+		for(TimeStamp ts : series.keySet()) {
+			ret[i++] = series.get(ts);
+		}
+		return ret;
+	}
 }
