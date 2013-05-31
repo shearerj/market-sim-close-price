@@ -1,5 +1,9 @@
 package systemmanager;
 
+import data.*;
+import entity.Agent;
+import event.TimeStamp;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -10,12 +14,6 @@ import java.util.Iterator;
 import org.json.simple.*;
 import org.json.simple.parser.*;
 
-import data.AgentPropsPair;
-import data.ObjectProperties;
-import data.SystemData;
-
-import entity.Agent;
-import event.TimeStamp;
 
 /**
  * Stores list of parameters used in the simulation_spec.json file.
@@ -104,9 +102,9 @@ public class SimulationSpec {
 		/*******************
 		 * MARKET MODELS
 		 *******************/
-		for (int i = 0; i < Consts.MARKETMODEL_TYPES.length; i++) {
+		for (String modelType : Consts.MARKETMODEL_TYPES) {
 			// models here is a comma-separated list
-			String models = getValue(Consts.MARKETMODEL_TYPES[i]);
+			String models = getValue(modelType);
 			if (models != null) {
 				if (models.endsWith(",")) {
 					// remove any extra appended commas
@@ -117,12 +115,12 @@ public class SimulationSpec {
 				if (configs.length > 1) {
 					// if > 1, # model type = # of items in the list
 					// check if there are NONE or 0 of this model
-					data.numModelType.put(Consts.MARKETMODEL_TYPES[i], configs.length);
+					data.numModelType.put(modelType, configs.length);
 				} else if (!models.equals(Consts.MODEL_CONFIG_NONE) && 
 						!models.equals("0")) {
-					data.numModelType.put(Consts.MARKETMODEL_TYPES[i], configs.length);
+					data.numModelType.put(modelType, configs.length);
 				} else {
-					data.numModelType.put(Consts.MARKETMODEL_TYPES[i], 0);
+					data.numModelType.put(modelType, 0);
 				}
 			}
 		}
@@ -130,8 +128,7 @@ public class SimulationSpec {
 		/*******************
 		 * CONFIGURATION - add environment agents
 		 *******************/
-		for (int i = 0; i < Consts.SM_AGENT_TYPES.length; i++) {
-			String agentType = Consts.SM_AGENT_TYPES[i];
+		for (String agentType : Consts.SM_AGENT_TYPES) {
 			String num = getValue(agentType);
 			String setup = getValue(agentType + Consts.setupSuffix);
 			if (num != null) {
@@ -145,9 +142,10 @@ public class SimulationSpec {
 		/*******************
 		 * ASSIGNMENT - add players
 		 *******************/
-		for (int i = 0; i < Consts.roles.length; i++) {
-			Object strats = assignments.get(Consts.roles[i]);
+		for (String role : Consts.roles) {
+			Object strats = assignments.get(role);
 			if (strats != null) {			
+				@SuppressWarnings("unchecked")
 				ArrayList<String> strategies = (ArrayList<String>) strats;
 				for (Iterator<String> it = strategies.iterator(); it.hasNext(); ) {
 					String strat = it.next();

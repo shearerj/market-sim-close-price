@@ -22,8 +22,15 @@ public class ObjectProperties {
 		properties = new HashMap<String,String>();
 	}
 	
+	/**
+	 * deep copy constructor
+	 * @param p
+	 */
 	public ObjectProperties(ObjectProperties p) {
-		properties = (HashMap<String,String>) p.properties.clone();
+//		properties = (HashMap<String,String>) p.properties.clone();
+		for (Map.Entry<String, String> entry : p.properties.entrySet()) {
+			properties.put(entry.getKey(), entry.getValue());
+		}
 	}
 	
 	public ObjectProperties(HashMap<String,String> hm) {

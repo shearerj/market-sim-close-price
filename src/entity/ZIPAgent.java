@@ -1,10 +1,7 @@
 package entity;
 
-import data.ObjectProperties;
-import data.Observations;
-import data.SystemData;
+import data.*;
 import event.*;
-import model.*;
 import market.*;
 import activity.*;
 import systemmanager.*;

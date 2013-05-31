@@ -43,7 +43,7 @@ public class Log {
   private int day_opened = 0;
   private String original_input_path;
   private String root_path;
-  private SimpleDateFormat sdf;
+//  private SimpleDateFormat sdf;
   private Calendar cal;
   private StringBuffer sb;
   private boolean prepend_date = true;  // Default to datestamping
@@ -80,7 +80,7 @@ public class Log {
    * called by the constructor
    */
   private synchronized void init() throws IOException {
-    sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+//    sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
     cal = Calendar.getInstance();
     sb = new StringBuffer();
 

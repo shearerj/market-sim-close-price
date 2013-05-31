@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.Map;
 
-import systemmanager.Consts;
-
 import event.TimeStamp;
 
 /**

@@ -4,7 +4,7 @@ import event.*;
 import model.*;
 import entity.*;
 import market.*;
-import data.*;
+import systemmanager.*;
 
 // import java.io.BufferedWriter;
 // import java.io.File;
@@ -16,8 +16,6 @@ import org.json.simple.*;
 import org.apache.commons.math3.stat.descriptive.*;
 import org.apache.commons.lang3.ArrayUtils;
 
-import systemmanager.Consts;
-import systemmanager.SimulationSpec;
 
 /**
  * Contains payoff data and features for all players in the simulation. Computes
@@ -779,6 +777,58 @@ public class Observations {
 		}
 	}
 
+
+
+	/** For now, a junk function - but meant to replace getTransactionInfo and getVolatilityInfo
+	 * 
+	 * @param model
+	 * @param maxTime
+	 */
+	public void addTransactionData(MarketModel model, long maxTime) {
+		//Market Specific Data
+		//For each market in the model
+		for(int mktID : model.getMarketIDs()) {
+			//Getting the transaction data
+			ArrayList<PQTransaction> transactions = data.transactionLists.get(mktID);
+			//Truncating the time
+			DescriptiveStatistics stat = new DescriptiveStatistics(transformData(transactions, maxTime));
+		}
+	}
+	
+	/**
+	 * Function that takes in an data set and returns a double[] truncated by maxTime
+	 * Currently takes ArrayList<PQTransaction> and HashMap<TimeStamp,Double>
+	 * @param series
+	 * @param maxTime
+	 * @return
+	 */
+	private double[] transformData(ArrayList<PQTransaction> series, long maxTime) {
+		int num;
+		for(num=0; num < series.size(); ++num) {
+			if(series.get(num).timestamp.getLongValue() > maxTime) break;
+			++num;
+		}
+		double[] ret = new double[num];
+		for(int i=0; i < num; ++i) {
+			ret[i] = series.get(i).price.getPrice();
+		}
+		
+		return ret;
+	}
+	private double[] transformData(HashMap<TimeStamp,Double> series, long maxTime) {
+		int num = 0;
+		for(TimeStamp ts : series.keySet()) {
+			if(ts.getLongValue() > maxTime) break;
+			num++;
+		}
+		double[] ret = new double[num];
+		int i = 0;
+		for(TimeStamp ts : series.keySet()) {
+			ret[i++] = series.get(ts);
+		}
+		return ret;
+	}
+	
 //	/**
 //	 * Computes the standard deviation by sampling the price every window time
 //	 * steps, then calculating the standard deviation on this sampled time
@@ -950,54 +1000,5 @@ public class Observations {
 //		}
 //	}
 
-
-	/** For now, a junk function - but meant to replace getTransactionInfo and getVolatilityInfo
-	 * 
-	 * @param model
-	 * @param maxTime
-	 */
-	public void addTransactionData(MarketModel model, long maxTime) {
-		//Market Specific Data
-		//For each market in the model
-		for(int mktID : model.getMarketIDs()) {
-			//Getting the transaction data
-			ArrayList<PQTransaction> transactions = data.transactionLists.get(mktID);
-			//Truncating the time
-			DescriptiveStatistics stat = new DescriptiveStatistics(transformData(transactions, maxTime));
-		}
-	}
 	
-	/**
-	 * Function that takes in an data set and returns a double[] truncated by maxTime
-	 * Currently takes ArrayList<PQTransaction> and HashMap<TimeStamp,Double>
-	 * @param series
-	 * @param maxTime
-	 * @return
-	 */
-	private double[] transformData(ArrayList<PQTransaction> series, long maxTime) {
-		int num;
-		for(num=0; num < series.size(); ++num) {
-			if(series.get(num).timestamp.getLongValue() > maxTime) break;
-			++num;
-		}
-		double[] ret = new double[num];
-		for(int i=0; i < num; ++i) {
-			ret[i] = series.get(i).price.getPrice();
-		}
-		
-		return ret;
-	}
-	private double[] transformData(HashMap<TimeStamp,Double> series, long maxTime) {
-		int num = 0;
-		for(TimeStamp ts : series.keySet()) {
-			if(ts.getLongValue() > maxTime) break;
-			num++;
-		}
-		double[] ret = new double[num];
-		int i = 0;
-		for(TimeStamp ts : series.keySet()) {
-			ret[i++] = series.get(ts);
-		}
-		return ret;
-	}
 }

@@ -1,10 +1,7 @@
 package systemmanager;
 
-import data.Observations;
-import data.SystemData;
+import data.*;
 import event.*;
-import entity.*;
-import model.*;
 
 import java.util.*;
 import java.io.*;
@@ -25,8 +22,8 @@ public class SystemManager {
 	private SystemData data;
 	private Observations obs;
 	
-	private static int num;						// sample number used for labeling output files
-	private static String simFolder;			// simulation folder name
+	private static int num;				// sample number for labeling output files
+	private static String simFolder;	// simulation folder name
 	
 	private Properties envProps;
 	private Log log;
@@ -111,9 +108,12 @@ public class SystemManager {
 			// Create log file
 			logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
 			Date now = new Date();
-			logFilename = simFolder.substring(0, simFolder.length()-1).replace("/", "-") + "_" + num;
-			logFilename += "_" + DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.UK).format(now);
-			logFilename += "_" + DateFormat.getTimeInstance(DateFormat.MEDIUM, Locale.UK).format(now);
+			logFilename = simFolder.substring(0, simFolder.length()-1).replace("/", "-") + 
+					"_" + num;
+			logFilename += "_" + DateFormat.getDateInstance(DateFormat.MEDIUM, 
+					Locale.UK).format(now);
+			logFilename += "_" + DateFormat.getTimeInstance(DateFormat.MEDIUM, 
+					Locale.UK).format(now);
 			logFilename = logFilename.replace(":",".");
 			
 			try {
@@ -121,7 +121,8 @@ public class SystemManager {
 				File f = new File(simFolder);
 				if (!f.exists()) {
 					// Simulations directory not found
-					System.err.println(this.getClass().getSimpleName() + "::setup(String): simulation folder not found");
+					System.err.println(this.getClass().getSimpleName() + 
+							"::setup(String): simulation folder not found");
 					System.exit(1);
 				}
 				// Check for logs directory
@@ -130,10 +131,12 @@ public class SystemManager {
 					// Create directory
 					new File(simFolder + Consts.logDir).mkdir();
 				}
-				log = new Log(logLevel, ".", simFolder + Consts.logDir + logFilename + ".txt", true);
+				log = new Log(logLevel, ".", simFolder + Consts.logDir + logFilename + 
+						".txt", true);
 			} catch (Exception e) {
 				e.printStackTrace();
-				System.err.println(this.getClass().getSimpleName() + "::setup(String): error creating log file");
+				System.err.println(this.getClass().getSimpleName() + 
+						"::setup(String): error creating log file");
 			}
 
 			// Log properties
@@ -145,15 +148,19 @@ public class SystemManager {
 				File f = new File(simFolder + Consts.simSpecFile);
 				if (!f.exists()) {
 					// Spec file is not found
-					System.err.println(this.getClass().getSimpleName() + "::setup(String): simulation_spec.json file not found");
+					System.err.println(this.getClass().getSimpleName() + 
+							"::setup(String): simulation_spec.json file not found");
 					System.exit(1);
 				}
-				log = new Log(logLevel, ".", simFolder + Consts.logDir + logFilename + ".txt", true);
+				log = new Log(logLevel, ".", simFolder + Consts.logDir + logFilename + 
+						".txt", true);
 			} catch (Exception e) {
 				e.printStackTrace();
-				System.err.println(this.getClass().getSimpleName() + "::setup(String): error accessing spec file");
+				System.err.println(this.getClass().getSimpleName() + 
+						"::setup(String): error accessing spec file");
 			}
-			SimulationSpec specs = new SimulationSpec(simFolder + Consts.simSpecFile, log, data);
+			SimulationSpec specs = new SimulationSpec(simFolder + Consts.simSpecFile, 
+					log, data);
 
 			// Create event manager
 			eventManager = new EventManager(data.simLength, log);
@@ -179,7 +186,8 @@ public class SystemManager {
 				return;
 			p.load(config);
 		} catch (IOException e) {
-			String s = this.getClass().getSimpleName() + "::loadConfig(InputStream): error opening/processing config file: " 
+			String s = this.getClass().getSimpleName() + "::loadConfig(InputStream): " + 
+					"error opening/processing config file: " 
 						+ config + "/" + e;
 			log.log(Log.ERROR, s);
 			System.err.print(s);
@@ -197,7 +205,8 @@ public class SystemManager {
 		try {
 			loadInputStream(p, new FileInputStream(config));
 		} catch (FileNotFoundException e) {
-			String s = this.getClass().getSimpleName() + "::loadConfig(String): error opening/processing config file: " 
+			String s = this.getClass().getSimpleName() + "::loadConfig(String): " + 
+					"error opening/processing config file: " 
 						+ config + "/" + e;
 			log.log(Log.ERROR, s);
 			System.err.print(s);

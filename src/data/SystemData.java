@@ -344,7 +344,7 @@ public class SystemData {
 	 * @return
 	 */
 	public boolean isSMAgent(String agentType) {
-		return Arrays.asList(Consts.SM_AGENT_TYPES).contains(agentType);
+		return Consts.SM_AGENT_TYPES.contains(agentType);
 	}
 	
 	/**

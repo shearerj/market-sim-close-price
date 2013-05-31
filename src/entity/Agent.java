@@ -684,7 +684,7 @@ public abstract class Agent extends Entity {
 	public void logTransactions(TimeStamp ts) {
 		
 		int rp = getRealizedProfit();
-		int up = getUnrealizedProfit();
+		// int up = getUnrealizedProfit();
 
 		String s = ts.toString() + " | " + this +  " Agent::logTransactions: " + 
 				this.getModel().getFullName() + ": Current Position=" + 

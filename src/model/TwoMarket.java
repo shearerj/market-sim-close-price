@@ -36,7 +36,7 @@ public class TwoMarket extends MarketModel {
 				// split on colon
 				String[] as = config.split("[:]+");
 				String agType = as[0];
-				if (!Arrays.asList(Consts.HFT_AGENT_TYPES).contains(agType)) {
+				if (!Consts.HFT_AGENT_TYPES.contains(agType)) {
 					System.err.println(this.getClass().getSimpleName() + "::parseConfigs: " +
 									"model configuration " + config + " incorrect");
 					System.exit(1);

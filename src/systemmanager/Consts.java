@@ -3,6 +3,9 @@ package systemmanager;
 import data.ObjectProperties;
 import entity.*;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * System-wide constants and accessor methods. Sets default properties for each
  * type of entity.
@@ -19,7 +22,7 @@ public class Consts {
 	
 	// **********************************************************
 	// Agent, market, and model types
-	// (must edit this whenever add a new agent, market, or model
+	// UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL
 	public final static String AA = "AA";
 	public final static String ZI = "ZI";
 	public final static String ZIP = "ZIP";
@@ -39,20 +42,23 @@ public class Consts {
 	public final static String ROLE_MARKETMAKER = "MARKETMAKER";
 	public final static String ROLE_BACKGROUND = "BACKGROUND";
 	
-	public final static String[] SM_AGENT_TYPES = 
-		{ ZI, ZIR,  ZIP, BASICMARKETMAKER, AA };
-	public final static String[] MARKETMODEL_TYPES = 
-		{ TWOMARKET, CENTRALCDA, CENTRALCALL };
+	// **********************************************************
+	// Lists
+	// UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL
+	public final static List<String> roles = 
+			Arrays.asList(ROLE_HFT, ROLE_MARKETMAKER, ROLE_BACKGROUND);
 	
-	// EGTA roles
-	public final static String[] roles =
-		{ ROLE_HFT, ROLE_MARKETMAKER, ROLE_BACKGROUND };
-	public final static String[] HFT_AGENT_TYPES = 
-		{ LA, DUMMY };
-	public final static String[] MARKETMAKER_AGENT_TYPES = 
-		{ BASICMARKETMAKER };
-	public final static String[] BACKGROUND_AGENT_TYPES =
-		{ ZI, ZIR, ZIP };
+	public final static List<String> MARKETMODEL_TYPES =
+			Arrays.asList(TWOMARKET, CENTRALCDA, CENTRALCALL);
+	
+	public final static List<String> SM_AGENT_TYPES = 
+			Arrays.asList(ZI, ZIR,  ZIP, BASICMARKETMAKER, AA);
+	public final static List<String> HFT_AGENT_TYPES =
+			Arrays.asList(LA, DUMMY);
+	public final static List<String> MARKETMAKER_AGENT_TYPES = 
+			Arrays.asList(BASICMARKETMAKER);
+	public final static List<String> BACKGROUND_AGENT_TYPES =
+			Arrays.asList(ZI, ZIR, ZIP);
 	
 	// **********************************************************
 	
