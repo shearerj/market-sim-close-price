@@ -1,5 +1,7 @@
 package entity;
 
+import data.ObjectProperties;
+import data.SystemData;
 import event.*;
 import market.Quote;
 import activity.*;

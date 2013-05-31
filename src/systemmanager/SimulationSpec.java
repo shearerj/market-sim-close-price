@@ -10,6 +10,10 @@ import java.util.Iterator;
 import org.json.simple.*;
 import org.json.simple.parser.*;
 
+import data.AgentPropsPair;
+import data.ObjectProperties;
+import data.SystemData;
+
 import entity.Agent;
 import event.TimeStamp;
 

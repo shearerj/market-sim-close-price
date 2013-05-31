@@ -1,4 +1,6 @@
-package systemmanager;
+package data;
+
+import systemmanager.Consts;
 
 import java.text.DecimalFormat;
 import java.util.HashMap;
@@ -6,6 +8,7 @@ import java.util.HashMap;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
+
 
 /**
  * Wrapper method to handle writing of features to the observation file.

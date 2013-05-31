@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeSet;
 
+import data.ObjectProperties;
+import data.SystemData;
+
 import market.*;
 import activity.*;
 import event.*;

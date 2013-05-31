@@ -1,5 +1,7 @@
 package systemmanager;
 
+import data.Observations;
+import data.SystemData;
 import event.*;
 import entity.*;
 import model.*;

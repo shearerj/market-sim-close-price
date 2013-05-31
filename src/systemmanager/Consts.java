@@ -1,10 +1,7 @@
 package systemmanager;
 
-import entity.Agent;
-import entity.BasicMarketMaker;
-import entity.CallMarket;
-import entity.LAAgent;
-import entity.ZIAgent;
+import data.ObjectProperties;
+import entity.*;
 
 /**
  * System-wide constants and accessor methods. Sets default properties for each

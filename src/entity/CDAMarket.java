@@ -1,6 +1,8 @@
 package entity;
 
 import market.*;
+import data.ObjectProperties;
+import data.SystemData;
 import event.TimeStamp;
 import activity.*;
 import systemmanager.*;

@@ -1,13 +1,12 @@
-package systemmanager;
+package data;
 
 import event.*;
 import entity.*;
 import market.*;
 import model.*;
+import systemmanager.*;
 
 import java.util.*;
-
-import org.apache.commons.lang3.tuple.MutablePair;
 
 /**
  * SYSTEMDATA

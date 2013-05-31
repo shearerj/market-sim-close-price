@@ -2,6 +2,9 @@ package model;
 
 import java.util.Arrays;
 
+import data.ObjectProperties;
+import data.SystemData;
+
 import systemmanager.*;
 
 /**

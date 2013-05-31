@@ -8,6 +8,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
 
+import data.AgentPropsPair;
+import data.ArrivalTime;
+import data.ObjectProperties;
+import data.Sequence;
+import data.SystemData;
+
 import activity.*;
 import entity.*;
 import event.*;

@@ -1,5 +1,9 @@
 package entity;
 
+import data.ArrivalTime;
+import data.ObjectProperties;
+import data.Observations;
+import data.SystemData;
 import event.*;
 import market.*;
 import activity.*;

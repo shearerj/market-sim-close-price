@@ -4,6 +4,10 @@ import systemmanager.*;
 
 import java.util.ArrayList;
 
+import data.AgentPropsPair;
+import data.ObjectProperties;
+import data.SystemData;
+
 /**
  * MARKETMODEL
  * 

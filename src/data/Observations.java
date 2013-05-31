@@ -1,4 +1,4 @@
-package systemmanager;
+package data;
 
 import event.*;
 import model.*;
@@ -15,6 +15,9 @@ import java.util.ArrayList;
 import org.json.simple.*;
 import org.apache.commons.math3.stat.descriptive.*;
 import org.apache.commons.lang3.ArrayUtils;
+
+import systemmanager.Consts;
+import systemmanager.SimulationSpec;
 
 /**
  * Contains payoff data and features for all players in the simulation. Computes
