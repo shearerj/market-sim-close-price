@@ -1,14 +1,11 @@
 package entity;
 
-import data.ObjectProperties;
-import data.Observations;
-import data.SystemData;
+import data.*;
 import event.*;
 import market.*;
 import activity.*;
 import systemmanager.*;
 
-import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -145,8 +142,8 @@ public class LAAgent extends HFTAgent {
 		
 		int quantity = 0;
 		
-		for (Map.Entry<Integer,Bid> entry : data.getMarket(marketID).getBids().entrySet()) {
-			PQBid b = (PQBid) entry.getValue();
+		for (Bid bid : data.getMarket(marketID).getBids().values()) {
+			PQBid b = (PQBid) bid;
 			
 			for (Iterator<PQPoint> it = b.bidTreeSet.iterator(); it.hasNext(); ) {
 				PQPoint pq = it.next();

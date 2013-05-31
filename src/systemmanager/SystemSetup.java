@@ -129,9 +129,9 @@ public class SystemSetup {
 			log.log(Log.INFO, " ");
 
 			// Initial SendToSIP Activity for all markets
-			for (Map.Entry<Integer,Market> entry : data.getMarkets().entrySet()) {
+			for (Market mkt : data.getMarkets().values()) {
 				eventManager.createEvent(Consts.HIGHEST_PRIORITY,
-							new SendToSIP(entry.getValue(), new TimeStamp(0)));
+							new SendToSIP(mkt, new TimeStamp(0)));
 			}
 		} catch (Exception e) {
 			System.err.println(this.getClass().getSimpleName() + "::setupAll: error");
@@ -276,19 +276,21 @@ public class SystemSetup {
 			modelMap.put(data.getPrimaryModel().getID(), data.getPrimaryModel());
 			
 			// set up their players & their arrivals
-			for (Map.Entry<AgentPropsPair, Integer> entry : data.getPlayerMap().entrySet()) {
-				String type = entry.getKey().getAgentType();
-				ObjectProperties o = entry.getKey().getProperties();
-				int n = entry.getValue();
+			for (AgentPropsPair app : data.getPlayerMap().keySet()) {
+				String type = app.getAgentType();
+				ObjectProperties o = app.getProperties();
+				int n = data.getPlayerMap().get(app);
 				
 				if (playerNumbers.containsKey(type)) {
 					playerNumbers.put(type, playerNumbers.get(type) + n);
 					playerStrategies.get(type).addAll(Collections.nCopies(n, o));
 					
 				} else {
-					playerNumbers.put(type, entry.getValue());
-					playerArrivalGenerators.put(type, new ArrivalTime(new TimeStamp(0), data.arrivalRate));
-					playerStrategies.put(type, new ArrayList<ObjectProperties>(Collections.nCopies(n, o)));
+					playerNumbers.put(type, n);
+					playerArrivalGenerators.put(type, 
+							new ArrivalTime(new TimeStamp(0), data.arrivalRate));
+					playerStrategies.put(type, new ArrayList<ObjectProperties>(
+							Collections.nCopies(n, o)));
 				}
 			}
 			
