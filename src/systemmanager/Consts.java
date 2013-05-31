@@ -88,6 +88,11 @@ public class Consts {
 	// Price
 	public final static int INF_PRICE = 999999999;
 	
+	// Other
+	public final static String NAN = "NaN";
+	public final static double NAN_VALUE = -999999999;
+	
+	
 	
 	/**
 	 * Returns the market type based on the class name.

@@ -14,9 +14,10 @@ import entity.Agent;
 import event.TimeStamp;
 
 /**
- * Stores list of web parameters used in EGTAOnline.
+ * Stores list of parameters used in the simulation_spec.json file.
  * 
- * NOTE: All MarketModel types in the spec file must match the corresponding class name.
+ * NOTE: All MarketModel types in the spec file must match the 
+ * corresponding class name.
  * 
  * @author ewah
  */
@@ -30,6 +31,18 @@ public class SimulationSpec {
 	
 	public final static String ASSIGN_KEY = "assignment";
 	public final static String CONFIG_KEY = "configuration";
+	
+	// Parameters in spec file
+	public final static String SIMULATION_LENGTH = "sim_length";
+	public final static String TICK_SIZE = "tick_size";
+	public final static String LATENCY = "nbbo_latency";
+	public final static String ARRIVAL_RATE = "arrival_rate";
+	public final static String REENTRY_RATE = "reentry_rate";
+	public final static String FUNDAMENTAL_MEAN = "mean_value";
+	public final static String FUNDAMENTAL_KAPPA = "kappa";
+	public final static String FUNDAMENTAL_SHOCK_VAR = "shock_var";
+	public final static String PRIVATE_VALUE_VAR = "private_value_var";
+	public final static String PRIMARY_MODEL = "primary_model";
 	
 	/**
 	 * Constructor
@@ -68,23 +81,21 @@ public class SimulationSpec {
 	
 	
 	/**
-	 * Parses the spec file for config parameters. Overrides settings in environment
-	 * properties file & agent properties config.
+	 * Parses the spec file for config parameters. Overrides settings 
+	 * in environment properties file & agent properties config.
 	 */
 	public void readParams() {
 		
-		data.simLength = new TimeStamp(Integer.parseInt(getValue("sim_length")));
-		data.tickSize = Integer.parseInt(getValue("tick_size"));	
-		data.nbboLatency = new TimeStamp(Integer.parseInt(getValue("nbbo_latency")));
-		data.arrivalRate = Double.parseDouble(getValue("arrival_rate"));
-		data.reentryRate = Double.parseDouble(getValue("reentry_rate"));
-		data.meanValue = Integer.parseInt(getValue("mean_value"));
-		data.kappa = Double.parseDouble(getValue("kappa"));
-		data.shockVar = Double.parseDouble(getValue("shock_var"));
-		data.pvVar = Double.parseDouble(getValue("private_value_var"));
-				
-		// Model-specific parameters
-		data.primaryModelDesc = getValue("primary_model");
+		data.simLength = new TimeStamp(Integer.parseInt(getValue(SIMULATION_LENGTH)));
+		data.tickSize = Integer.parseInt(getValue(TICK_SIZE));	
+		data.nbboLatency = new TimeStamp(Integer.parseInt(getValue(LATENCY)));
+		data.arrivalRate = Double.parseDouble(getValue(ARRIVAL_RATE));
+		data.reentryRate = Double.parseDouble(getValue(REENTRY_RATE));
+		data.meanValue = Integer.parseInt(getValue(FUNDAMENTAL_MEAN));
+		data.kappa = Double.parseDouble(getValue(FUNDAMENTAL_KAPPA));
+		data.shockVar = Double.parseDouble(getValue(FUNDAMENTAL_SHOCK_VAR));
+		data.pvVar = Double.parseDouble(getValue(PRIVATE_VALUE_VAR));
+		data.primaryModelDesc = getValue(PRIMARY_MODEL);
 		
 		/*******************
 		 * MARKET MODELS
@@ -100,10 +111,11 @@ public class SimulationSpec {
 				String[] configs = models.split("[,]+");
 				
 				if (configs.length > 1) {
-					// if > 1, number of that model type is the number of items in the list
-					// also must check that not indicating that there are NONE or 0 of this model
+					// if > 1, # model type = # of items in the list
+					// check if there are NONE or 0 of this model
 					data.numModelType.put(Consts.MARKETMODEL_TYPES[i], configs.length);
-				} else if (!models.equals(Consts.MODEL_CONFIG_NONE) && !models.equals("0")) {
+				} else if (!models.equals(Consts.MODEL_CONFIG_NONE) && 
+						!models.equals("0")) {
 					data.numModelType.put(Consts.MARKETMODEL_TYPES[i], configs.length);
 				} else {
 					data.numModelType.put(Consts.MARKETMODEL_TYPES[i], 0);

@@ -208,61 +208,16 @@ public class SystemManager {
 	 * Generate results report (payoff data, feature data logging).
 	 */
 	public void aggregateResults() {
-		try {
-			// log observations for players
-			for (Iterator<Integer> it = data.getPlayerIDs().iterator(); it.hasNext(); ) {
-				obs.addObservation(it.next());
-			}
-			// obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
-			obs.addFeature("", obs.getConfiguration());
-			// obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
-			// obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
-			// obs.addTransactionComparison();
-			getModelResults();
-			
+		try {			
 			File file = new File(simFolder + Consts.obsFilename + num + ".json");
 			FileWriter txt = new FileWriter(file);
 			txt.write(obs.generateObservationFile());
 			txt.close();
-			
 		} catch (Exception e) {
 			String s = this.getClass().getSimpleName() + "::aggregateResults(): " + 
 						"error creating observation file";
 			e.printStackTrace();
 			System.err.println(s);
-		}
-	}
-	
-	/**
-	 * Gets market results by model.
-	 */
-	private void getModelResults() {
-		for (Map.Entry<Integer, MarketModel> entry : data.getModels().entrySet()) {
-			MarketModel model = entry.getValue();
-			
-			String prefix = model.getLogName() + "_";
-
-			// Spread info
-			long maxTime = Math.round(data.getNumEnvAgents() / data.arrivalRate);
-			long begTime = Market.quantize((int) maxTime, 500) - 1000;
-			for (long i = Math.max(begTime, 500); i <= maxTime + 1000; i += 500) {
-//			long i = 3000;
-				obs.addFeature(prefix + "spreads_" + i, obs.getSpreadInfo(model, i));
-				obs.addFeature(prefix + "price_vol_" + i, obs.getVolatilityInfo(model, i));
-			}
-			
-			// Surplus features
-			obs.addFeature(prefix + "surplus", obs.getSurplusFeatures(model));
-			obs.addFeature(prefix + "surplus_disc", obs.getDiscountedSurplusFeatures(model));
-			
-			// Other features
-//			if (model.getNumAgentType("MARKETMAKER") >= 1) {
-			obs.addFeature(prefix + "marketmaker", obs.getMarketMakerInfo(model));
-//			}
-			obs.addFeature(prefix + "transactions", obs.getTransactionInfo(model));
-			obs.addFeature(prefix + "exec_time", obs.getTimeToExecution(model));
-			obs.addFeature(prefix + "routing", obs.getRegNMSRoutingInfo(model));
-			// obs.addFeature(prefix + "depths", obs.getDepthInfo(ids));
 		}
 	}
 }

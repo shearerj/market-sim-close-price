@@ -50,7 +50,7 @@ import model.*;
  *   - add AgentArrival activities
  * - set agent permission for each model's markets
  * 
- * NOTE: Usage of the "primary_model" setting in the spec file:
+ * NOTE: Usage of the primary model setting in the spec file:
  *  1) MODELNAME-CONFIG
  *  2) MODELNAME (will use first config in that model's list to specify primary model)
  * 
