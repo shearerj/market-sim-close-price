@@ -27,10 +27,7 @@ public class ObjectProperties {
 	 * @param p
 	 */
 	public ObjectProperties(ObjectProperties p) {
-//		properties = (HashMap<String,String>) p.properties.clone();
-		for (Map.Entry<String, String> entry : p.properties.entrySet()) {
-			properties.put(entry.getKey(), entry.getValue());
-		}
+		properties = (HashMap<String,String>) p.properties.clone();
 	}
 	
 	public ObjectProperties(HashMap<String,String> hm) {

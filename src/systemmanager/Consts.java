@@ -18,7 +18,7 @@ public class Consts {
 //		{0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009};
 	public final static double[] rhos = {0, 0.0006};
 //	public final static int[] windows = {250, 500, 750, 1000};
-	public final static int[] windows = {250};
+	public final static int[] windows = {0, 250};	// 0 means sample every data point
 	
 	// **********************************************************
 	// Agent, market, and model types
@@ -90,11 +90,11 @@ public class Consts {
 	public final static long INF_TIME = -1;
 	
 	// Price
-	public final static int INF_PRICE = 999999999;
+	public final static int INF_PRICE = Integer.MAX_VALUE;
 	
 	// Other
 	public final static String NAN = "NaN";
-	public final static double NAN_VALUE = -999999999;
+	public final static double DOUBLE_NAN = Double.NaN;
 	
 	
 	

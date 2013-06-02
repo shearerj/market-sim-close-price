@@ -11,6 +11,10 @@ import systemmanager.*;
 // import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.json.simple.*;
 import org.apache.commons.math3.stat.descriptive.*;
@@ -45,6 +49,7 @@ public class Observations {
 	public final static String SPREADS = "spreads";
 	public final static String PRICEVOL = "pricevol";
 	public final static String PRIVATEVALUES = "pv";
+	public final static String LOG = "log";
 	public final static String NUM = "num";
 	public final static String MARKET = "mkt";
 	public final static String BUYS = "buys";
@@ -64,6 +69,10 @@ public class Observations {
 	public final static String QUANTITY = "quantity";
 	public final static String PRE = "pre";
 	public final static String POST = "post";
+	public final static String MAIN = "main";
+	public final static String ALTERNATE = "alt";
+	public final static String TRANSACT = "transact";
+	public final static String NO_TRANSACT = "notrans";
 	
 	// Suffixes
 	public final static String AGENTSETUP = "setup";
@@ -103,49 +112,44 @@ public class Observations {
 		// log observations for players
 		for (Integer id : data.getPlayerIDs()) {
 			addObservation(id); // TODO
-			// aggregate for roles???
+			// aggregate for roles??? Store separately for roles!
 		}
 		addFeature("", getConfiguration());
+		
+		// set up max time (where most agents have arrived)
+		long time = Math.round(data.getNumEnvAgents() / data.arrivalRate);
+		long maxTime = Market.quantize((int) time, 1000);
 		
 		// iterate through all models
 		for (MarketModel model : data.getModels().values()) {
 			String modelName = model.getLogName() + "_";
-			
-			// TODO truncation/extraction not working yet
-			long maxTime = Math.round(data.getNumEnvAgents() / data.arrivalRate);
-			long begTime = Market.quantize((int) maxTime, 500) - 1000;
-			for (long i = Math.max(begTime, 500); i <= maxTime + 1000; i += 500) {
-				addFeature(modelName + SPREADS + "_" + i, getSpread(model, i));
-				addFeature(modelName + PRICEVOL + "_" + i, getVolatility(model, i));
-			}
-			
-			// TODO - how to check that a market maker agent exists?
-//			if (model.getNumAgentType("MARKETMAKER") >= 1) {
-//			addFeature(prefix + "marketmaker", getMarketMakerInfo(model));
-//			}
-			
-			// DONE
+
 			addFeature(modelName + EXECTIME, getTimeToExecution(model));
 			addFeature(modelName + TRANSACTIONS, getTransactionInfo(model));
-
-			// Surplus features (for all values of rho)
 			addFeature(modelName + SURPLUS, getSurplus(model));
+			addFeature(modelName + SPREADS, getSpread(model, maxTime));
+			for (int win : Consts.windows) {
+				addFeature(modelName + PRICEVOL, getVolatility(model, win, maxTime));
+			}
+			addFeature(modelName + MARKETMAKER, getMarketMakerInfo(model));
 		
+			
 			// TODO - need to remove the position balance hack
 			// addFeature(modelName + ROUTING, getRegNMSRoutingInfo(model));
-			
 		}
 		
 	}
 	
 	/**
-	 * Adds a feature to the observation file.
+	 * Adds a feature to the observation file. Only add if ft is non-empty.
 	 * 
 	 * @param description 	key for list of features to insert
 	 * @param ft
 	 */
 	@SuppressWarnings("unchecked")
 	public void addFeature(String description, Feature ft) {
+		if (ft.isEmpty()) return;
+		
 		if (!observations.containsKey(FEATURES_KEY)) {
 			HashMap<String,Object> feats = new HashMap<String,Object>();
 			feats.put(description.toLowerCase(), ft.get());
@@ -169,8 +173,9 @@ public class Observations {
 		// (i.e. not a role) or if observations are empty
 		if (obs == null || obs.isEmpty()) return;
 		
-		// if not a player, then don't add? will aggregate? aggregate only if not player 
-		// TODO
+		// if not a player, then don't add? will aggregate? aggregate only if not player
+		
+		
 		
 		// check if list of players has already been inserted in observations file
 		if (!observations.containsKey(PLAYERS_KEY)) {
@@ -235,242 +240,6 @@ public class Observations {
 		return feat;
 	}
 	
-	
-	/**
-	 * Transaction statistics. // TODO depends on how store transaction info
-	 * 
-	 * @param model
-	 * @return
-	 */
-	public Feature getTransactionInfo(MarketModel model) {
-		Feature feat = new Feature();
-
-		HashMap<Integer, PQTransaction> trans = data.getTrans(model.getID());
-		feat.put(NUM, trans.size());
-
-		DescriptiveStatistics prices = new DescriptiveStatistics();
-		DescriptiveStatistics quantity = new DescriptiveStatistics();
-		DescriptiveStatistics fundamental = new DescriptiveStatistics();
-		for (PQTransaction tr : trans.values()) {
-			prices.addValue(tr.price.getPrice());
-			quantity.addValue(tr.quantity);
-			fundamental.addValue(data.getFundamentalAt(tr.timestamp).getPrice());
-		}
-		feat.addMean(PRICE, "", prices);
-		feat.addStdDev(PRICE, "", prices);
-		feat.addRMSD(prices, fundamental);
-		
-		for (Integer aid : model.getAgentIDs()) {
-			// check if agent is player in role
-			if (!data.isNonPlayer(aid)) {
-				String type = data.getAgent(aid).getType();
-
-				// count buys/sells
-				int buys = 0;
-				int sells = 0;
-				for (PQTransaction tr : trans.values()) {
-					if (tr.sellerID == aid) 	buys++;
-					else if (tr.buyerID == aid) sells++;
-				}
-				// add agentID in case there is >1 of this type
-				String suffix = "_" + type.toLowerCase() + aid;
-				feat.put(BUYS + suffix, buys);
-				feat.put(SELLS + suffix, sells);
-				feat.put(TRANSACTIONS + suffix, buys+sells);
-			}
-		}
-		return feat;
-	}
-	
-	
-	/**
-	 * @return HashMap of order routing info
-	 */
-	public Feature getRegNMSRoutingInfo(MarketModel model) {
-		Feature feat = new Feature();
-		
-		int numAlt = 0;
-		int numMain = 0;
-		int numAltTrans = 0;
-		int numAltNoTrans = 0;
-		int numMainTrans = 0;
-		int numMainNoTrans = 0;
-		
-		for (Integer agentID : model.getAgentIDs()) {
-			Agent ag = data.getAgent(agentID);
-			// must check that background agent (affected by routing)
-			if (ag instanceof BackgroundAgent) {
-				BackgroundAgent b = (BackgroundAgent) ag;
-				if (b.getMarketID() != b.getMarketIDSubmittedBid()) {
-					// order routed to alternate market
-					numAlt++;
-					// TODO hack to determine if its bid transacted or not
-					if (b.getPositionBalance() == 0) numAltNoTrans++;
-					else numAltTrans++;
-				} else {
-					// order was not routed
-					numMain++;
-					// TODO hack to determine if its bid transacted or not
-					if (b.getPositionBalance() == 0) numMainNoTrans++;
-					else numMainTrans++;
-				}
-			}
-		}
-		
-		feat.put("main", numMain);
-		// number of orders routed to alternate market
-		feat.put("alt", numAlt);
-		// number of orders that are routed that transact
-		feat.put("alt_transact", numAltTrans);
-		// number of orders that are routed that do not transact
-		feat.put("alt_notrans", numAltNoTrans);
-		// number of orders that are not routed that transact
-		feat.put("main_transact", numMainTrans);
-		// number of orders that are not routed that do not transact
-		feat.put("main_notrans", numMainNoTrans);
-		return feat;
-	}
-	
-	
-	/**
-	 * Computes spread metrics for the given model, for time 0 to maxTime.
-	 * 
-	 * @param model
-	 * @param maxTime
-	 * @return
-	 */
-	public Feature getSpread(MarketModel model, long maxTime) {
-		Feature feat = new Feature();
-
-		DescriptiveStatistics medians = new DescriptiveStatistics();
-		for (int mktID : model.getMarketIDs()) {
-			HashMap<TimeStamp, Double> s = data.marketSpread.get(mktID);
-			if (s != null) {
-				DescriptiveStatistics spreads = new DescriptiveStatistics(
-							ArrayUtils.toPrimitive(s.values().toArray(new Double[s.size()])));
-				double med = feat.addMedianUpToTime("", MARKET + (-mktID), 
-													spreads, maxTime);
-				medians.addValue(med);
-			}	
-		}
-		feat.addMean(medians);
-		
-		HashMap<TimeStamp, Double> nbbo = data.NBBOSpread.get(model.getID());
-		if (nbbo != null) {
-			DescriptiveStatistics spreads = new DescriptiveStatistics(
-					ArrayUtils.toPrimitive(nbbo.values().toArray(new Double[nbbo.size()])));
-			feat.addMedianUpToTime("", NBBO, spreads, maxTime);
-		}
-		return feat;
-	}
-	
-	
-	/**
-	 * Computes volatility metrics, for time 0 to maxTime. Volatility is
-	 * measured as:
-	 * 
-	 * - log of std dev of price series (midquote prices of global quotes)
-	 * - std dev of log returns (compute over a window over multiple
-	 * 	 window sizes) the standard deviation of logarithmic returns.
-	 * 
-	 * @param model
-	 * @param maxTime
-	 * @return
-	 */
-	public Feature getVolatility(MarketModel model,	long maxTime) {
-		Feature feat = new Feature();
-
-		DescriptiveStatistics stddev = new DescriptiveStatistics();
-		DescriptiveStatistics logpvol = new DescriptiveStatistics();
-		for (int mktID : model.getMarketIDs()) {
-			HashMap<TimeStamp, Double> mq = data.marketMidQuote.get(mktID);
-			
-			if (mq != null) {
-				DescriptiveStatistics p = new DescriptiveStatistics(
-						ArrayUtils.toPrimitive(mq.values().toArray(new Double[mq.size()])));
-				double s = feat.addStdDevUpToTime("", MARKET + (-mktID), 
-												  p, maxTime);
-				stddev.addValue(s);
-				double logstddev = s; 
-				if (s != 0) {
-					logstddev = Math.log(s);
-				}
-				logpvol.addValue(logstddev);
-			}
-		}
-		// average log price volatility across all markets
-		feat.addMean("", "log", logpvol);
-
-		
-		// TODO
-//		// change sampling frequency of prices
-		
-		// for windowing, can cycle through & add to DS object as needed
-//		for (int i = 0; i < Consts.windows.length; i++) {
-//			String prefix = "window" + Consts.windows[i] + "_";
-//
-//			// TODO
-//			
-//			double[] logstddevs = new double[ids.size()]; // store std dev of
-//															// prices in
-//															// multiple markets
-//			cnt = 0;
-//			for (Iterator<Integer> it = ids.iterator(); it.hasNext();) {
-//				int mktID = it.next();
-//				HashMap<TimeStamp, Double> marketMidQuote = data.marketMidQuote
-//						.get(mktID);
-//				if (marketMidQuote != null) {
-//					// extract all
-//					double[] allPrices = extractTimeSeries(marketMidQuote);
-//					double stddev = computeWindowStdDev(allPrices,
-//							Consts.windows[i], maxTime);
-//					if (stddev != -1) {
-//						if (stddev != 0) {
-//							logstddevs[cnt++] = Math.log(stddev); // log of
-//																	// sampled
-//																	// price
-//																	// volatility
-//						} else {
-//							logstddevs[cnt++] = stddev; // volatility is 0 (no
-//														// price change)
-//						}
-//					}
-//				}
-//			}
-//			// store price volatility (averaged across all markets in the model)
-//			addMean(prefix + "log", feat, logstddevs);
-//		}
-		return feat;
-	}
-	
-	/**
-	 * Track liquidation-related features & profit for market makers.
-	 * 
-	 * @param model
-	 * @return
-	 */
-	public Feature getMarketMakerInfo(MarketModel model) {
-		Feature feat = new Feature();
-		for (Integer agentID : model.getAgentIDs()) {
-			if (data.getAgent(agentID) instanceof MarketMaker) {
-				Agent ag = data.getAgent(agentID);
-				// append the agentID in case more than one of this type
-				String suffix = Integer.toString(agentID);				
-				feat.put(POSITION + "_" + PRE + "_" + LIQUIDATION + suffix, 
-						ag.getPreLiquidationPosition());
-				// just to double-check, should be 0 position after liquidation
-				feat.put(POSITION + "_" + POST + "_" + LIQUIDATION + suffix, 
-						ag.getPositionBalance());
-				feat.put(PROFIT + "_" + PRE + "_" + LIQUIDATION + suffix, 
-						ag.getPreLiquidationProfit());
-				feat.put(PROFIT + "_" + POST + "_" + LIQUIDATION + suffix,
-						ag.getRealizedProfit());
-			}
-		}
-		return feat;
-	}
-
-
 	/**
 	 * Extract discounted surplus for background agents, including those
 	 * that are players (in the EGTA use case).
@@ -504,7 +273,8 @@ public class Observations {
 		
 		HashMap<Integer,Double> surplus = data.getSurplusByRho(rho);
 		DescriptiveStatistics total = new DescriptiveStatistics(
-				ArrayUtils.toPrimitive(surplus.values().toArray(new Double[surplus.size()])));
+				ArrayUtils.toPrimitive(surplus.values().toArray(new 
+				Double[surplus.size()])));
 		feat.addSum("", TOTAL + suffix, total);
 		
 		// sub-categories for surplus
@@ -544,91 +314,290 @@ public class Observations {
 		}
 	}
 
+	
+	/**
+	 * Transaction statistics.
+	 * 
+	 * @param model
+	 * @return
+	 */
+	public Feature getTransactionInfo(MarketModel model) {
+		Feature feat = new Feature();
 
+		List<PQTransaction> trans = new ArrayList<PQTransaction>();
+		for (int mktID : model.getMarketIDs()) {
+			//Getting the transaction data for each market in the model
+			trans.addAll(data.transactionLists.get(mktID));
+		}
+		feat.put(NUM, trans.size());
+		
+		DescriptiveStatistics prices = new DescriptiveStatistics();
+		DescriptiveStatistics quantity = new DescriptiveStatistics();
+		DescriptiveStatistics fundamental = new DescriptiveStatistics();
+		for (PQTransaction tr : trans) {
+			prices.addValue(tr.price.getPrice());
+			quantity.addValue(tr.quantity);
+			fundamental.addValue(data.getFundamentalAt(tr.timestamp).getPrice());
+		}
+		feat.addMean(PRICE, "", prices);
+		feat.addStdDev(PRICE, "", prices);
+		feat.addRMSD(prices, fundamental);
+		
+		for (Integer aid : model.getAgentIDs()) {
+			// check if agent is player
+			if (!data.isNonPlayer(aid)) {
+				String type = data.getAgent(aid).getType();
 
-	/** For now, a junk function - but meant to replace getTransactionInfo and getVolatilityInfo
+				// count buys/sells
+				int buys = 0;
+				int sells = 0;
+				for (PQTransaction tr : trans) {
+					if (tr.sellerID == aid) 	buys++;
+					else if (tr.buyerID == aid) sells++;
+				}
+				// add agentID in case there is more than 1 of this type
+				String suffix = "_" + type.toLowerCase() + aid;
+				feat.put(BUYS + suffix, buys);
+				feat.put(SELLS + suffix, sells);
+				feat.put(TRANSACTIONS + suffix, buys+sells);
+			}
+		}
+		return feat;
+	}
+	
+	
+	/**
+	 * Computes spread metrics for the given model.
 	 * 
 	 * @param model
 	 * @param maxTime
+	 * @return
 	 */
-	public void addTransactionData(MarketModel model, long maxTime) {
-		//Market Specific Data
-		//For each market in the model
-		for(int mktID : model.getMarketIDs()) {
-			//Getting the transaction data
-			ArrayList<PQTransaction> transactions = data.transactionLists.get(mktID);
-			//Truncating the time
-			DescriptiveStatistics stat = new DescriptiveStatistics(transformData(transactions, maxTime));
+	public Feature getSpread(MarketModel model, long maxTime) {
+		Feature feat = new Feature();
+		
+		DescriptiveStatistics medians = new DescriptiveStatistics();
+		for (int mktID : model.getMarketIDs()) {
+			TimeSeries s = data.marketSpread.get(mktID);
+			if (s != null) {
+				double[] array = s.getArray();
+				DescriptiveStatistics spreads = new DescriptiveStatistics(array);
+				double med = feat.addMedianUpToTime("", MARKET + (-mktID), 
+						spreads, maxTime);
+				medians.addValue(med);
+			}
 		}
+		// average of median market spreads (for all markets in this model)
+		feat.addMean(medians);
+		
+		TimeSeries nbbo = data.NBBOSpread.get(model.getID());
+		if (nbbo != null) {
+			double[] array = nbbo.getArray();
+			DescriptiveStatistics spreads = new DescriptiveStatistics(array);
+			feat.addMedianUpToTime("", NBBO, spreads, maxTime);
+		}
+		return feat;
 	}
 	
+	
 	/**
-	 * Function that takes in an data set and returns a double[] truncated by maxTime
-	 * Currently takes ArrayList<PQTransaction> and HashMap<TimeStamp,Double>
-	 * @param series
+	 * Computes volatility metrics, for time 0 to maxTime. Volatility is
+	 * measured as:
+	 * 
+	 * - log of std dev of price series (midquote prices of global quotes)
+	 * - std dev of log returns (compute over a window over multiple
+	 * 	 window sizes) the standard deviation of logarithmic returns. (DLYAN'S CODE) TODO
+	 * 
+	 * @param model
+	 * @param window
 	 * @param maxTime
 	 * @return
 	 */
-	private double[] transformData(ArrayList<PQTransaction> series, long maxTime) {
-		int num;
-		for(num=0; num < series.size(); ++num) {
-			if(series.get(num).timestamp.getLongValue() > maxTime) break;
-			++num;
-		}
-		double[] ret = new double[num];
-		for(int i=0; i < num; ++i) {
-			ret[i] = series.get(i).price.getPrice();
+	public Feature getVolatility(MarketModel model, int window, long maxTime) {
+		Feature feat = new Feature();
+		String prefix = "";
+		if (window > 0) {
+			prefix += "win" + window;
 		}
 		
-		return ret;
-	}
-	private double[] transformData(HashMap<TimeStamp,Double> series, long maxTime) {
-		int num = 0;
-		for(TimeStamp ts : series.keySet()) {
-			if(ts.getLongValue() > maxTime) break;
-			num++;
+		DescriptiveStatistics stddev = new DescriptiveStatistics();
+		DescriptiveStatistics logpvol = new DescriptiveStatistics();
+		for (int mktID : model.getMarketIDs()) {
+			TimeSeries mq = data.marketMidQuote.get(mktID);
+			if (mq != null) {
+				double[] array = mq.getSampleArray(window, maxTime);
+				DescriptiveStatistics prices = new DescriptiveStatistics(array);
+				
+				double s = feat.addStdDev(prefix, MARKET + (-mktID), prices);
+				stddev.addValue(s);
+				
+				double logstddev = s; 
+				if (s != 0) {
+					logstddev = Math.log(s);
+					logpvol.addValue(logstddev);
+				}
+			}
 		}
-		double[] ret = new double[num];
-		int i = 0;
-		for(TimeStamp ts : series.keySet()) {
-			ret[i++] = series.get(ts);
-		}
-		return ret;
+		// average measures across all markets in this model 
+		feat.addMean(prefix, LOG, logpvol);
+		feat.addMean(prefix, LOG, stddev);
+		
+		return feat;
 	}
 	
-//	/**
-//	 * Computes the standard deviation by sampling the price every window time
-//	 * steps, then calculating the standard deviation on this sampled time
-//	 * series.
+	/**
+	 * @return HashMap of order routing info
+	 */
+	public Feature getRegNMSRoutingInfo(MarketModel model) {
+		Feature feat = new Feature();
+		
+		int numAlt = 0;
+		int numMain = 0;
+		int numAltTrans = 0;
+		int numAltNoTrans = 0;
+		int numMainTrans = 0;
+		int numMainNoTrans = 0;
+		
+		for (Integer agentID : model.getAgentIDs()) {
+			Agent ag = data.getAgent(agentID);
+			// must check that background agent (affected by routing)
+			if (ag instanceof BackgroundAgent) {
+				BackgroundAgent b = (BackgroundAgent) ag;
+				if (b.getMarketID() != b.getMarketIDSubmittedBid()) {
+					// order routed to alternate market
+					numAlt++;
+					// TODO hack to determine if its bid transacted or not
+					if (b.getPositionBalance() == 0) numAltNoTrans++;
+					else numAltTrans++;
+				} else {
+					// order was not routed
+					numMain++;
+					// TODO hack to determine if its bid transacted or not
+					if (b.getPositionBalance() == 0) numMainNoTrans++;
+					else numMainTrans++;
+				}
+			}
+		}
+		feat.put(MAIN, numMain);	
+		feat.put(ALTERNATE, numAlt);	
+		feat.put(ALTERNATE + "_" + TRANSACT, numAltTrans);
+		feat.put(ALTERNATE + "_" + NO_TRANSACT, numAltNoTrans);
+		feat.put(MAIN + "_" + TRANSACT, numMainTrans);
+		feat.put(MAIN + "_" + NO_TRANSACT, numMainNoTrans);
+		return feat;
+	}
+	
+	
+	/**
+	 * Track liquidation-related features & profit for market makers.
+	 * 
+	 * @param model
+	 * @return
+	 */
+	public Feature getMarketMakerInfo(MarketModel model) {
+		Feature feat = new Feature();
+		for (Integer agentID : model.getAgentIDs()) {
+			if (data.getAgent(agentID) instanceof MarketMaker) {
+				Agent ag = data.getAgent(agentID);
+				// append the agentID in case more than one of this type
+				String suffix = Integer.toString(agentID);				
+				
+				feat.put(POSITION + "_" + PRE + "_" + LIQUIDATION + suffix, 
+						ag.getPreLiquidationPosition());
+				// just to double-check, should be 0 position after liquidation
+				feat.put(POSITION + "_" + POST + "_" + LIQUIDATION + suffix, 
+						ag.getPositionBalance());
+				feat.put(PROFIT + "_" + PRE + "_" + LIQUIDATION + suffix, 
+						ag.getPreLiquidationProfit());
+				feat.put(PROFIT + "_" + POST + "_" + LIQUIDATION + suffix,
+						ag.getRealizedProfit());
+			}
+		}
+		return feat;
+	}
+
+
+
+//	/** For now, a junk function - but meant to replace getTransactionInfo and getVolatilityInfo
+//	 * TODO
 //	 * 
-//	 * @param allPrices
-//	 * @param window
+//	 * @param model
+//	 * @param maxTime
+//	 */
+//	public void addTransactionData(MarketModel model, long maxTime) {
+//		//Market Specific Data
+//		//For each market in the model
+//		for(int mktID : model.getMarketIDs()) {
+//			//Getting the transaction data
+//			List<PQTransaction> transactions = data.transactionLists.get(mktID);
+//			//Truncating the time
+//			DescriptiveStatistics stat = new DescriptiveStatistics(transformData(transactions, maxTime));
+//		}
+//	}
+//	
+//	/**
+//	 * Function that takes in an data set and returns a double[] truncated by maxTime
+//	 * Currently takes List<PQTransaction> and HashMap<TimeStamp,Double>
+//	 * 
+//	 * @param series
 //	 * @param maxTime
 //	 * @return
 //	 */
-//	public double computeWindowStdDev(double[] allPrices, int window,
-//			long maxTime) {
-//		int newSize = (int) Math.floor(allPrices.length / window);
-//		double[] sample = new double[newSize - 1];
-//		int cnt = 0;
-//		for (int i = 1; i < newSize; i++) { // sample at the end of the window,
-//											// not the beginning
-//			if (allPrices[i * window - 1] != Consts.INF_PRICE) {
-//				sample[cnt++] = allPrices[i * window - 1];
-//			}
+//	private double[] transformData(List<PQTransaction> series, long maxTime) {
+//		int num;
+//		for(num=0; num < series.size(); ++num) {
+//			if(series.get(num).timestamp.getLongValue() > maxTime) break;
+//			++num;
 //		}
-//		// Reinitialize to get rid of unused portion of array (if any values
-//		// undefined)
-//		if (cnt != sample.length) {
-//			double[] samplePrices = new double[cnt];
-//			for (int i = 0; i < cnt; i++) {
-//				samplePrices[i] = sample[i];
-//			}
-//			return computeStdDev(samplePrices, (int) maxTime);
+//		double[] ret = new double[num];
+//		for(int i=0; i < num; ++i) {
+//			ret[i] = series.get(i).price.getPrice();
 //		}
-//		return computeStdDev(sample, (int) maxTime);
+//		return ret;
 //	}
-
+	
+//	/**
+//	 * Construct a double array storing a time series from a HashMap of integers
+//	 * hashed by TimeStamp. Starts recording at first time step, even if value
+//	 * undefined. Will remove any undefined values from the beginning of the 
+//	 * array and cut it off at maxTime.
+//	 * 
+//	 * @param series
+//	 * @param maxTime	-1 if not truncating time series
+//	 * @return
+//	 */
+//	private DescriptiveStatistics transformSeries(HashMap<TimeStamp,Double> series, 
+//			long maxTime) {
+//		// sort TimeStamps first (not necessarily sorted in HashMap)
+//		Set<TimeStamp> times = new TreeSet<TimeStamp>(series.keySet());
+//		
+//		DescriptiveStatistics ds = new DescriptiveStatistics();
+//		TimeStamp prevTime = null;
+//		for (Iterator<TimeStamp> it = times.iterator(); it.hasNext();) {
+//			if (prevTime == null)
+//				prevTime = it.next();
+//			else {
+//				TimeStamp nextTime = it.next();
+//				// fill up to nextTime as long as defined
+//				if (series.get(prevTime).intValue() != Consts.INF_PRICE) {
+//					for (long i = prevTime.longValue();	i < nextTime.longValue(); i++) {
+//						if (i >= maxTime && maxTime > 0) break;
+//						ds.addValue(series.get(prevTime));
+//					}
+//				}
+//				prevTime = nextTime;
+//			}
+//		}
+//		// fill up to maxTime
+//		if (prevTime.longValue() <= maxTime && maxTime > 0) {
+//			if (series.get(prevTime).intValue() != Consts.INF_PRICE) {
+//				for (long i = prevTime.longValue(); i < maxTime; i++) {
+//					ds.addValue(series.get(prevTime));
+//				}
+//			}
+//		}
+//		return ds;
+//	}
 	
 //	/**
 //	 * Computes depth metrics the given market IDs.
