@@ -8,6 +8,8 @@ import java.util.HashMap;
  * Internal HashMap surplus is hashed by agentID, values are surplus
  * for each agent.
  * 
+ * The value of rho here is only for reference later.
+ * 
  * @author ewah
  *
  */

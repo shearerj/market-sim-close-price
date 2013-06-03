@@ -2,8 +2,11 @@ package data;
 
 import event.*;
 
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.TreeSet;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -132,4 +135,69 @@ public class TimeSeries {
 	
 	
 	// TODO how to output the time series so can do unit-testing/verification?
+	
+	
+//	/**
+//	 * Same as extractTimeSeries, but will remove any undefined values from the
+//	 * beginning of the array and cut it off at maxTime.
+//	 * 
+//	 * @param map
+//	 * @param maxTime
+//	 * @return
+//	 */
+//	public double[] truncateTimeSeries(HashMap<TimeStamp, Double> map,
+//			long maxTime) {
+//
+//		// Have to sort the TimeStamps since not necessarily sorted in HashMap
+//		TreeSet<TimeStamp> times = new TreeSet<TimeStamp>();
+//		ArrayList<TimeStamp> keys = new ArrayList<TimeStamp>(map.keySet());
+//		for (Iterator<TimeStamp> i = keys.iterator(); i.hasNext();) {
+//			TimeStamp t = i.next();
+//			if (t != null)
+//				times.add(t);
+//		}
+//
+//		int cnt = 0;
+//		TimeStamp prevTime = null;
+//		double[] vals = new double[(int) maxTime];
+//		for (Iterator<TimeStamp> it = times.iterator(); it.hasNext();) {
+//			if (prevTime == null) {
+//				// if prevTime has not been defined yet, set as the first time
+//				// where value measured
+//				prevTime = it.next();
+//			} else {
+//				// next Time is the next time at which to extend the time series
+//				TimeStamp nextTime = it.next();
+//				// fill in the vals array, but only for segments where it is not
+//				// undefined
+//				if (map.get(prevTime).intValue() != Consts.INF_PRICE) {
+//					for (int i = (int) prevTime.longValue(); i < nextTime
+//							.longValue() && i < maxTime; i++) {
+//						vals[cnt] = map.get(prevTime); // fill in with prior
+//														// value, up to maxTime
+//						cnt++;
+//					}
+//				}
+//				prevTime = nextTime;
+//			}
+//		}
+//		// fill in to end of array
+//		if (!prevTime.after(new TimeStamp(maxTime))) {
+//			if (map.get(prevTime).intValue() != Consts.INF_PRICE) {
+//				for (int i = (int) prevTime.longValue(); i < maxTime; i++) {
+//					// get last inserted value and insert
+//					vals[cnt] = map.get(prevTime);
+//					cnt++;
+//				}
+//			}
+//		}
+//		// Must resize vals
+//		double[] valsMod = new double[cnt];
+//		for (int i = 0; i < valsMod.length; i++) {
+//			valsMod[i] = vals[i];
+//		}
+//		return valsMod;
+//	}
+
+	
 }

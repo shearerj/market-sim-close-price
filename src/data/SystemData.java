@@ -626,17 +626,15 @@ public class SystemData {
 		int id = transIDSequence.increment();
 		tr.transID = id;
 		transactions.put(id, tr);
-		
-		MarketModel model = getModelByMarketID(tr.marketID);
-		addSurplus(model.getID(), tr);
-		addModelTransID(model.getID(), tr.transID);
-		
-		//Adding to transactionList
-		//If the market has not been added, create the ArrayList
-		if(!transactionLists.containsKey(tr.marketID)) {
+		if (!transactionLists.containsKey(tr.marketID)) {
 			transactionLists.put(tr.marketID, new ArrayList<PQTransaction>());
 		}
 		transactionLists.get(tr.marketID).add(tr);
+				
+				
+		MarketModel model = getModelByMarketID(tr.marketID);
+		addSurplus(model.getID(), tr);
+		addModelTransID(model.getID(), tr.transID);
 	}
 	
 	/**
@@ -675,7 +673,6 @@ public class SystemData {
 				modelSurplus.get(modelID).put(rho, new Surplus(rho));
 			}
 			Surplus s = getSurplus(modelID, rho);
-			
 			Price rt = getFundamentalAt(t.timestamp);
 			
 			// Compute buyer surplus

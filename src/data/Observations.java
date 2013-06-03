@@ -8,6 +8,7 @@ import systemmanager.*;
 // import java.io.BufferedWriter;
 // import java.io.File;
 // import java.io.FileWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.List;
@@ -130,7 +131,7 @@ public class Observations {
 			addFeature(modelName + MARKETMAKER, getMarketMakerInfo(model));
 			
 			// TODO - need to remove the position balance hack
-			// addFeature(modelName + ROUTING, getRegNMSRoutingInfo(model));
+			addFeature(modelName + ROUTING, getRegNMSRoutingInfo(model));
 		}
 		
 	}
@@ -311,39 +312,57 @@ public class Observations {
 		DescriptiveStatistics prices = new DescriptiveStatistics();
 		DescriptiveStatistics quantity = new DescriptiveStatistics();
 		DescriptiveStatistics fundamental = new DescriptiveStatistics();
+		// number of transactions, hashed by agent ID
+		HashMap<Integer,Integer> numTrans = new HashMap<Integer,Integer>();
 		for (PQTransaction tr : trans) {
 			prices.addValue(tr.price.getPrice());
 			quantity.addValue(tr.quantity);
 			fundamental.addValue(data.getFundamentalAt(tr.timestamp).getPrice());
+			
+			// update number of transactions (only for agents in this model)
+			for (int id : Arrays.asList(tr.buyerID, tr.sellerID)) {
+				if (model.getAgentIDs().contains(id) && data.getAgent(id) instanceof HFTAgent) {
+					int num = 0;
+					if (numTrans.containsKey(id)) {
+						num += numTrans.get(id);
+					}
+					numTrans.put(id, ++num);
+				}
+			}
 		}
 		feat.addMean(PRICE, "", prices);
 		feat.addStdDev(PRICE, "", prices);
 		feat.addRMSD(prices, fundamental);
 		
-		for (Integer aid : model.getAgentIDs()) {
-			// check if agent is an HFT agent or a player
-			if (data.getAgent(aid) instanceof HFTAgent || 
-					!data.isEnvironmentAgent(aid)) {
-				String type = data.getAgent(aid).getType();
-
-				// count buys/sells
-				int buys = 0;
-				int sells = 0;
-				for (PQTransaction tr : trans) {
-					if (tr.sellerID == aid) {
-						++sells;
-					}
-					else if (tr.buyerID == aid) {
-						++buys;
-					}
-				}
-				// add agentID in case there is more than 1 of this type
-				String suffix = "_" + type.toLowerCase() + aid;
-				feat.put(BUYS + suffix, buys);
-				feat.put(SELLS + suffix, sells);
-				feat.put(TRANSACTIONS + suffix, buys+sells);
-			}
+		for (int id : numTrans.keySet()) {
+			feat.put(data.getAgent(id).getType().toLowerCase() + id + "_" + NUM, 
+					numTrans.get(id));
 		}
+		
+//		for (Integer aid : model.getAgentIDs()) {
+//			// check if agent is an HFT agent or a player
+//			if (data.getAgent(aid) instanceof HFTAgent || 
+//					!data.isEnvironmentAgent(aid)) {
+//				String type = data.getAgent(aid).getType();
+//
+//				// count buys/sells
+//				int buys = 0;
+//				int sells = 0;
+//				for (PQTransaction tr : trans) {
+//					if (tr.sellerID == aid) {
+//						++sells;
+//					}
+//					else if (tr.buyerID == aid) {
+//						++buys;
+//					}
+//				}
+//				// add agentID in case there is more than 1 of this type
+//				String suffix = "_" + type.toLowerCase() + aid;
+//				feat.put(BUYS + suffix, buys);
+//				feat.put(SELLS + suffix, sells);
+//				feat.put(TRANSACTIONS + suffix, buys+sells);
+//			}
+//		}
 		return feat;
 	}
 	
