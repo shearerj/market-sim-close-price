@@ -1,6 +1,5 @@
 package data;
 
-import event.*;
 import model.*;
 import entity.*;
 import market.*;
@@ -11,10 +10,7 @@ import systemmanager.*;
 // import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 import org.json.simple.*;
 import org.apache.commons.math3.stat.descriptive.*;
@@ -39,7 +35,6 @@ public class Observations {
 	public final static String PAYOFF_KEY = "payoff";
 	public final static String STRATEGY_KEY = "strategy";
 	public final static String OBS_KEY = "obs";
-	
 	
 	// Descriptors
 	public final static String SURPLUS = "surplus";
@@ -77,6 +72,7 @@ public class Observations {
 	// Suffixes
 	public final static String AGENTSETUP = "setup";
 	public final static String DISCOUNTED = "disc";
+	public final static String UNDISCOUNTED = "no" + DISCOUNTED;
 	public final static String TOTAL = "total";
 	public final static String NBBO = "nbbo";
 	
@@ -109,10 +105,10 @@ public class Observations {
 	 * Compute all features for observation file.
 	 */
 	public void computeAll() {
+		
 		// log observations for players
 		for (Integer id : data.getPlayerIDs()) {
-			addObservation(id); // TODO
-			// aggregate for roles??? Store separately for roles!
+			addObservation(id);
 		}
 		addFeature("", getConfiguration());
 		
@@ -124,15 +120,14 @@ public class Observations {
 		for (MarketModel model : data.getModels().values()) {
 			String modelName = model.getLogName() + "_";
 
+			addFeature(modelName + SURPLUS, getSurplus(model));
 			addFeature(modelName + EXECTIME, getTimeToExecution(model));
 			addFeature(modelName + TRANSACTIONS, getTransactionInfo(model));
-			addFeature(modelName + SURPLUS, getSurplus(model));
 			addFeature(modelName + SPREADS, getSpread(model, maxTime));
 			for (int win : Consts.windows) {
 				addFeature(modelName + PRICEVOL, getVolatility(model, win, maxTime));
 			}
 			addFeature(modelName + MARKETMAKER, getMarketMakerInfo(model));
-		
 			
 			// TODO - need to remove the position balance hack
 			// addFeature(modelName + ROUTING, getRegNMSRoutingInfo(model));
@@ -144,7 +139,7 @@ public class Observations {
 	 * Adds a feature to the observation file. Only add if ft is non-empty.
 	 * 
 	 * @param description 	key for list of features to insert
-	 * @param ft
+	 * @param ft			Feature to add
 	 */
 	@SuppressWarnings("unchecked")
 	public void addFeature(String description, Feature ft) {
@@ -161,23 +156,20 @@ public class Observations {
 	}
 	
 	/**
-	 * Gets the agent's observation and adds to the HashMap container.
+	 * Adds the player's observation.
 	 * 
 	 * @param agentID
 	 */
 	@SuppressWarnings("unchecked")
 	public void addObservation(int agentID) {
-		HashMap<String, Object> obs = data.getAgent(agentID).getObservation();
-
+		
 		// Don't add observation if agent is not a player in the game
-		// (i.e. not a role) or if observations are empty
+		if (!data.isPlayer(agentID)) return;
+		
+		HashMap<String, Object> obs = data.getAgent(agentID).getObservation();
 		if (obs == null || obs.isEmpty()) return;
 		
-		// if not a player, then don't add? will aggregate? aggregate only if not player
-		
-		
-		
-		// check if list of players has already been inserted in observations file
+		// Add agent to list of player observations
 		if (!observations.containsKey(PLAYERS_KEY)) {
 			ArrayList<Object> array = new ArrayList<Object>();
 			array.add(obs);
@@ -244,76 +236,61 @@ public class Observations {
 	 * Extract discounted surplus for background agents, including those
 	 * that are players (in the EGTA use case).
 	 * 
+	 * TODO update for more specific agent surplus?
+	 * 
 	 * @param model
 	 * @return
 	 */
 	public Feature getSurplus(MarketModel model) {
 		Feature feat = new Feature();
 		
-		double rho = 0;
-		processSurplus(feat, rho);
-		for (int i = 0; i < Consts.rhos.length; i++) {
-			rho = Consts.rhos[i];
+		for (double rho : Consts.rhos) {
+			String suffix = "";
 			if (rho != 0) {
-				processSurplus(feat, rho);
+				suffix += "_" + DISCOUNTED + rho;
+			} else {
+				suffix += "_" + UNDISCOUNTED;
+			}
+			
+			Surplus surplus = data.getSurplus(model.getID(), rho);
+			DescriptiveStatistics total = new DescriptiveStatistics(
+					ArrayUtils.toPrimitive(surplus.values().toArray(new 
+					Double[surplus.size()])));
+			feat.addSum("", TOTAL + suffix, total);
+			
+			// sub-categories for surplus
+			DescriptiveStatistics bkgrd = new DescriptiveStatistics();
+			DescriptiveStatistics hft = new DescriptiveStatistics();
+			DescriptiveStatistics mm = new DescriptiveStatistics();
+			DescriptiveStatistics env = new DescriptiveStatistics();
+			
+			// go through all agents & update for each agent type
+			for (Integer agentID : surplus.agents()) {
+				Agent ag = data.getAgent(agentID);
+				double val = surplus.get(agentID);
+				
+				if (ag instanceof BackgroundAgent) {
+					bkgrd.addValue(val);
+				} else if (ag instanceof HFTAgent) {
+					val = ag.getRealizedProfit();
+					hft.addValue(val);
+				} else if (ag instanceof MarketMaker) {
+					mm.addValue(val);
+				}
+				if (data.isEnvironmentAgent(agentID)) {
+					env.addValue(val);
+				}
+			}
+			feat.addSum("", BACKGROUND + suffix, bkgrd);
+			feat.addSum("", MARKETMAKER + suffix, mm);
+			feat.addSum("", HFT, hft);
+			if (data.isEGTAUseCase()) {	// only add if EGTA use case
+				feat.addSum("", ENVIRONMENT, env);
 			}
 		}
 		return feat;
 	}
 	
-	/**
-	 * @param feat
-	 * @param rho
-	 */
-	public void processSurplus(Feature feat, double rho) {
-		String suffix = "";
-		if (rho != 0) {
-			suffix += "_" + DISCOUNTED + rho;
-		}
-		
-		HashMap<Integer,Double> surplus = data.getSurplusByRho(rho);
-		DescriptiveStatistics total = new DescriptiveStatistics(
-				ArrayUtils.toPrimitive(surplus.values().toArray(new 
-				Double[surplus.size()])));
-		feat.addSum("", TOTAL + suffix, total);
-		
-		// sub-categories for surplus
-		DescriptiveStatistics bkgrd = new DescriptiveStatistics();
-		DescriptiveStatistics hft = new DescriptiveStatistics();
-		DescriptiveStatistics mm = new DescriptiveStatistics();
-		DescriptiveStatistics env = new DescriptiveStatistics();
-		
-		// go through all agents & update for each agent type
-		for (Integer agentID : surplus.keySet()) {
-			Agent ag = data.getAgent(agentID);
-			double val = surplus.get(agentID);
-			if (ag instanceof BackgroundAgent) {
-				bkgrd.addValue(val);
-			} else if (ag instanceof HFTAgent) {
-				val = ag.getRealizedProfit();
-				hft.addValue(val);
-				// TODO will probably have to change if HFT w/ latency
-			} else if (ag instanceof MarketMaker) {
-				mm.addValue(val);
-			}
-			
-			// Add for environment agents
-			if (data.isNonPlayer(agentID)) {
-				env.addValue(val);
-			}
-		}
-		
-		// Compute statistics
-		feat.addSum("", BACKGROUND + suffix, bkgrd);
-		feat.addSum("", MARKETMAKER + suffix, mm);
-		feat.addSum("", HFT, hft);
-		
-		// only add if EGTA use case
-		if (data.isEGTAUseCase()) {
-			feat.addSum("", ENVIRONMENT, env);
-		}
-	}
-
 	
 	/**
 	 * Transaction statistics.
@@ -344,16 +321,21 @@ public class Observations {
 		feat.addRMSD(prices, fundamental);
 		
 		for (Integer aid : model.getAgentIDs()) {
-			// check if agent is player
-			if (!data.isNonPlayer(aid)) {
+			// check if agent is an HFT agent or a player
+			if (data.getAgent(aid) instanceof HFTAgent || 
+					!data.isEnvironmentAgent(aid)) {
 				String type = data.getAgent(aid).getType();
 
 				// count buys/sells
 				int buys = 0;
 				int sells = 0;
 				for (PQTransaction tr : trans) {
-					if (tr.sellerID == aid) 	buys++;
-					else if (tr.buyerID == aid) sells++;
+					if (tr.sellerID == aid) {
+						++sells;
+					}
+					else if (tr.buyerID == aid) {
+						++buys;
+					}
 				}
 				// add agentID in case there is more than 1 of this type
 				String suffix = "_" + type.toLowerCase() + aid;
@@ -446,6 +428,8 @@ public class Observations {
 	}
 	
 	/**
+	 * TODO remove hack to determine if its bid transacted or not
+	 * 
 	 * @return HashMap of order routing info
 	 */
 	public Feature getRegNMSRoutingInfo(MarketModel model) {
@@ -466,13 +450,11 @@ public class Observations {
 				if (b.getMarketID() != b.getMarketIDSubmittedBid()) {
 					// order routed to alternate market
 					numAlt++;
-					// TODO hack to determine if its bid transacted or not
 					if (b.getPositionBalance() == 0) numAltNoTrans++;
 					else numAltTrans++;
 				} else {
 					// order was not routed
 					numMain++;
-					// TODO hack to determine if its bid transacted or not
 					if (b.getPositionBalance() == 0) numMainNoTrans++;
 					else numMainTrans++;
 				}
@@ -736,5 +718,94 @@ public class Observations {
 //		}
 //	}
 
+	
+	
+//	/**
+//	 * Modifies transactions for the given model by setting TimeStamp to be constant, 
+//	 * and using agent log IDs rather than agent IDs for indicating buyer or seller.
+//	 * Also sets constant price (because surplus will be same regardless of price), as
+//	 * well as constant bid IDs since different bids are submitted to each model.
+//	 * 
+//	 * @param modelID
+//	 * @return
+//	 */
+//	public ArrayList<PQTransaction> getComparableTrans(int modelID) {
+//		ArrayList<Integer> mktIDs = getModel(modelID).getMarketIDs();
+//				
+//		ArrayList<PQTransaction> trans = new ArrayList<PQTransaction>();
+//		for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
+//			if (mktIDs.contains(entry.getValue().marketID)) {
+//				PQTransaction tr = entry.getValue();
+//				
+//				// Modify values to be comparable between models
+//				// - Use logID rather than agentID
+//				// - Set constant TimeStamp
+//				// - Set constant marketID
+//				// - Set constant price
+//				// - Set constant bid IDs
+//				// todo for now, ignore quantity
+//				int bID = getAgent(tr.buyerID).getLogID();
+//				int sID = getAgent(tr.sellerID).getLogID();
+//				Price p = new Price(0);
+//				TimeStamp ts = new TimeStamp(-1);
+//				int mktID = 0;
+//				int bBidID = 0;
+//				int sBidID = 0;
+//				
+//				PQTransaction trNew = new PQTransaction(tr.quantity, p, bID, sID, bBidID, sBidID, ts, mktID);
+//				trans.add(trNew);
+//			}
+//		}
+//		return trans;
+//	}
+	
+//	/**
+//	 * Modifies all transactions in transData to be comparable between models.
+//	 * 
+//	 * @return
+//	 */
+//	public ArrayList<PQTransaction> getUniqueComparableTrans() {
+//		Set<PQTransaction> trans = new HashSet<PQTransaction>();
+//		
+//		for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
+//			PQTransaction tr = entry.getValue();
+//			
+//			// Modify values to be comparable between models
+//			// - Use logID rather than agentID
+//			// - Set constant TimeStamp
+//			// - Set constant marketID
+//			// - Set constant price
+//			// - Set constant bid IDs
+//			// - for now, ignore quantity
+//			int bID = getAgent(tr.buyerID).getLogID();
+//			int sID = getAgent(tr.sellerID).getLogID();
+//			Price p = new Price(0);
+//			TimeStamp ts = new TimeStamp(-1);
+//			int mktID = 0;
+//			int bBidID = 0;
+//			int sBidID = 0;
+//			
+//			PQTransaction trNew = new PQTransaction(tr.quantity, p, bID, sID, bBidID, sBidID, ts, mktID);
+//			trans.add(trNew);
+//		}
+//		ArrayList<PQTransaction> uniqueTrans = new ArrayList<PQTransaction>();
+//		uniqueTrans.addAll(trans);
+//		return uniqueTrans;
+//	}
+	
+//	/**
+//	 * @return list of actual private values of all agents
+//	 */
+//	public ArrayList<Price> getPrivateValues() {
+//		ArrayList<Price> pvs = new ArrayList<Price>(numAgents);
+//		for (Iterator<Integer> ag = getAgentIDs().iterator(); ag.hasNext(); ) {
+//			Price val = agents.get(ag.next()).getPrivateValue();
+//			// PV will be null if it doesn't exist for the agent
+//			if (val != null) {
+//				pvs.add(val);
+//			}
+//		}
+//		return pvs;
+//	}
 	
 }

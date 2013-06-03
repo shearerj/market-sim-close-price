@@ -17,7 +17,7 @@ import systemmanager.Consts;
  * (with an element for each time).
  * 
  * When filling in values, each new point is when the time series changes
- * (it is a step function).
+ * (it is a step function).	
  * 
  * @author ewah
  *
@@ -129,4 +129,7 @@ public class TimeSeries {
 	public TimeStamp lastTime() {
 		return times.get(size()-1);
 	}
+	
+	
+	// TODO how to output the time series so can do unit-testing/verification?
 }

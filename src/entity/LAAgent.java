@@ -42,8 +42,8 @@ public class LAAgent extends HFTAgent {
 	public HashMap<String, Object> getObservation() {
 		HashMap<String,Object> obs = new HashMap<String,Object>();
 		obs.put(Observations.ROLE_KEY, getRole());
-		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
 		obs.put(Observations.STRATEGY_KEY, getFullStrategy());
+		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
 //		HashMap<String,String> features = new HashMap<String,String>();
 //		obs.put(Observations.FEATURES_KEY, features);
 		return obs;
