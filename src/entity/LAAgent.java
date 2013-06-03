@@ -7,7 +7,6 @@ import systemmanager.*;
 
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Iterator;
 
 /**
  * LAAGENT
@@ -20,7 +19,7 @@ import java.util.Iterator;
  */
 public class LAAgent extends HFTAgent {
 	
-	private double alpha;
+	private double alpha; // LA profit gap
 	private int sleepTime;
 	private double sleepVar;
 	
@@ -145,8 +144,7 @@ public class LAAgent extends HFTAgent {
 		for (Map.Entry<Integer,Bid> entry : data.getMarket(marketID).getBids().entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			
-			for (Iterator<PQPoint> it = b.bidTreeSet.iterator(); it.hasNext(); ) {
-				PQPoint pq = it.next();
+			for (PQPoint pq : b.bidTreeSet) {
 				int pqPrice = pq.getPrice().getPrice();
 				
 				if (pqPrice >= beginPrice && pqPrice <= endPrice) {
