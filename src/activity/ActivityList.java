@@ -13,7 +13,7 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-public class ActivityList {
+public class ActivityList implements Iterable<Activity> {
 
 	private int priority;
 	private TimeStamp time;

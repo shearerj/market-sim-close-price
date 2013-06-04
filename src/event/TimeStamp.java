@@ -18,15 +18,14 @@ import activity.*;
  */
 public class TimeStamp implements Comparable<TimeStamp>
 {
-	private Long ts;
+	private long ts;
 	
-	public TimeStamp()          { ts = new Long(new Date().getTime());}
-	public TimeStamp(Date d)    { ts = new Long(d.getTime());}
+	public TimeStamp(Date d)    { ts = d.getTime();}
 	public TimeStamp(Long l)    { ts = l;}
-	public TimeStamp(Integer i) { ts = new Long(i.longValue());}
-	public TimeStamp(long l)    { ts = new Long(l);}
-	public TimeStamp(int i)     { ts = new Long((new Integer(i)).longValue());}
-	public TimeStamp(String s)  { ts = new Long(s);}
+	public TimeStamp(Integer i) { ts = (long) i;}
+	public TimeStamp(long l)    { ts = l;}
+	public TimeStamp(int i)     { ts = (long) i;}
+	public TimeStamp(String s)  { ts = Long.parseLong(s);}
 
 	public TimeStamp(TimeStamp ts) {
 		this.ts = new Long(ts.longValue());
@@ -36,8 +35,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @return true if TimeStamp is infinitely fast.
 	 */
 	public boolean isInfinitelyFast() {
-		if (ts.longValue() == Consts.INF_TIME) return true;
-		return false;
+		return ts == Consts.INF_TIME;
 	}
 	
 	/**
@@ -53,7 +51,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @return the TimeStamp's receipt timestamp in seconds
 	 */
 	public long getTimeStampInSecs() {
-		return ts.longValue()/1000000;
+		return ts/1000000;
 	}
 
 	/**
@@ -62,7 +60,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @return the difference
 	 */
 	public TimeStamp diff(TimeStamp other) {
-		return new TimeStamp(ts.longValue() - other.longValue());
+		return diff(this, other);
 	}
 
 	/**
@@ -72,7 +70,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @return the difference
 	 */
 	public static TimeStamp diff(TimeStamp t1, TimeStamp t2) {
-		return new TimeStamp(t1.longValue() - t2.longValue());
+		return new TimeStamp(t1.ts - t2.ts);
 	}
 
 	/**
@@ -82,7 +80,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @return the sum
 	 */
 	public static TimeStamp sum(TimeStamp t1, TimeStamp t2) {
-		return new TimeStamp(t1.longValue() + t2.longValue());
+		return new TimeStamp(t1.ts + t2.ts);
 	}
 
 	/**
@@ -91,7 +89,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @return the sum
 	 */
 	public TimeStamp sum(TimeStamp other) {
-		return new TimeStamp(ts.longValue() + other.longValue());
+		return sum(this, other);
 	}
 
 	/**
@@ -99,7 +97,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @return the converted timestamp
 	 */
 	public long longValue() {
-		return ts.longValue();
+		return ts;
 	}
 
 	/**
@@ -107,7 +105,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @return the converted timestamp
 	 */
 	public String toString() {
-		return ts.toString();
+		return Long.toString(ts);
 	}
 
 	/**
@@ -116,7 +114,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @return true if other is before, otherwise false
 	 */
 	public boolean before(TimeStamp other) {
-		return (ts.compareTo(other.ts) < 0);
+		return ts < other.ts;
 	}
 
 	/**
@@ -125,7 +123,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @return true if other is after, otherwise false
 	 */
 	public boolean after(TimeStamp other) {
-		return (ts.compareTo(other.ts) > 0);
+		return ts > other.ts;
 	}
 
 	/**
@@ -134,7 +132,8 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @return 0 if equal, <0 if invoking timestamp is less, >0 if greater
 	 */
 	public int compareTo(TimeStamp other) {
-		return ts.compareTo(other.ts);
+		long diff = ts - other.ts;
+		return diff > 0 ? 1 : diff < 0 ? -1 : 0; 
 	}
 	
 	/* (non-Javadoc)
@@ -149,9 +148,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	    if (getClass() != obj.getClass())
 	        return false;
 	    final TimeStamp other = (TimeStamp) obj;
-	    if (ts.compareTo(other.ts) != 0)
-	        return false;
-	    return true;
+	    return ts == other.ts;
 	}
 	
 	
@@ -160,7 +157,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 */
 	@Override
 	public int hashCode() {
-		return ts.intValue();
+		return (int) ts;
 	}
 	
 	/**
@@ -170,11 +167,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @return true if matches, false otherwise.
 	 */
 	public boolean checkActivityTimeStamp(Activity act) {
-		if (act.getTime().compareTo(this) == 0) {
-			return true;
-		} else {
-			return false;
-		}
+		return equals(act.getTime());
 	}
 
 	/**
@@ -184,8 +177,8 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @return true if matches, false otherwise.
 	 */
 	public boolean checkActivityTimeStamp(ActivityList acts) {
-		for (Iterator<Activity> it = acts.iterator(); it.hasNext(); ) {
-			if (!checkActivityTimeStamp(it.next())) {
+		for (Activity act : acts) {
+			if (!checkActivityTimeStamp(act)) {
 				System.err.println("TimeStamp::checkActivityTimeStamp::ERROR: activities do not match the timestamp");
 				return false;
 			}

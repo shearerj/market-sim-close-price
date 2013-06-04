@@ -64,7 +64,7 @@ public class ActivityHashMap {
 			return false;
 		
 		TimeStamp ts = act.getTime();
-		if (!ts.checkActivityTimeStamp(act))
+		if (!ts.checkActivityTimeStamp(act)) // FIXME unnecessary?
 			return false;
 		
 		if (acts.containsKey(ts)) {
