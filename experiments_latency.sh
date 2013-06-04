@@ -10,7 +10,6 @@ echo "Example: ./experiments_latency.sh MY_EXPERIMENT 100 ewah@umich.edu"
 exit 1
 fi
 
-strat="sleepTime_0_alpha_0.001"
 output="$1_output.log"
 csv="$1.csv"
 
@@ -26,7 +25,7 @@ if [ ! -d "$FOLDER" ]; then
 else
    rm -rf $FOLDER/*
 fi
-./create_spec_file.sh "${FOLDER}/simulation_spec.json" LA ${strat} $i
+./create_spec_file.sh "${FOLDER}/simulation_spec.json" $i
 echo "Samples for ${FOLDER}" >> $output
 ./run_hft.sh "${FOLDER}" $2 >> $output
 echo "Parsing" >> $output
