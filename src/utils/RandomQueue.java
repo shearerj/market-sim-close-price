@@ -16,8 +16,8 @@ import java.util.Random;
  */
 public class RandomQueue<E> implements Queue<E> {
 
-	Random rand;
-	ArrayList<E> elements;
+	private Random rand;
+	private ArrayList<E> elements;
 	
 	public RandomQueue() {
 		elements = new ArrayList<E>();
@@ -151,6 +151,18 @@ public class RandomQueue<E> implements Queue<E> {
 			throw new NoSuchElementException("RandomQueue is empty");
 		else
 			return poll();
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+	    if (obj == null || ! (obj instanceof RandomQueue))
+	        return false;
+	    return elements.equals(((RandomQueue<?>) obj).elements);
+	}
+	
+	@Override
+	public int hashCode() {
+		return elements.hashCode();
 	}
 
 }
