@@ -100,7 +100,7 @@ public abstract class SMAgent extends Agent {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap submitNMSBid(int p, int q, long duration, TimeStamp ts) {
+	public ActivityHashMap submitNMSBid(int p, int q, TimeStamp duration, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
 		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
 				new SubmitNMSBid(this, p, q, duration, ts));
@@ -218,7 +218,7 @@ public abstract class SMAgent extends Agent {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap executeSubmitNMSBid(int p, int q, long duration, TimeStamp ts) {
+	public ActivityHashMap executeSubmitNMSBid(int p, int q, TimeStamp duration, TimeStamp ts) {
 		
 		ActivityHashMap actMap = new ActivityHashMap();
 		
@@ -236,7 +236,7 @@ public abstract class SMAgent extends Agent {
 		
 		// Set additional string to log bid's duration, if it expires
 		String logDuration = "";
-		if (duration != Consts.INF_TIME && duration > 0) {
+		if (duration != Consts.INF_TIME && duration.longValue() > 0) {
 			logDuration = ", duration=" + duration;
 		}
 		
@@ -318,7 +318,7 @@ public abstract class SMAgent extends Agent {
 					market + logDuration);
 		}
 		
-		if (duration != Consts.INF_TIME && duration > 0) {
+		if (duration != Consts.INF_TIME && duration.longValue() > 0) {
 			// Bid expires after a given duration
 			actMap.appendActivityHashMap(expireBid(marketSubmittedBid, duration, ts));
 		}

@@ -2,6 +2,7 @@ package activity;
 
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 import systemmanager.Consts;
 
@@ -128,7 +129,7 @@ public class ActivityList implements Iterable<Activity> {
 		}
 	}
 	
-	
+	@Override
 	public Iterator<Activity> iterator() {
 		return activityList.iterator();
 	}
@@ -169,10 +170,13 @@ public class ActivityList implements Iterable<Activity> {
 		return time;
 	}
 	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
+	@Override
 	public String toString() {
 		return new String(time + "|" + "{" + priority + "}" +  activityList);
 	}
+	
+	public List<Activity> getList() {
+		return activityList;
+	}
+	
 }

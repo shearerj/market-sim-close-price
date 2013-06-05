@@ -18,7 +18,7 @@ import activity.*;
  */
 public class TimeStamp implements Comparable<TimeStamp>
 {
-	private long ts;
+	private final long ts;
 	
 	public TimeStamp(Date d)    { ts = d.getTime();}
 	public TimeStamp(Long l)    { ts = l;}
@@ -35,7 +35,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @return true if TimeStamp is infinitely fast.
 	 */
 	public boolean isInfinitelyFast() {
-		return ts == Consts.INF_TIME;
+		return this.equals(Consts.INF_TIME); // TODO change to reference check?
 	}
 	
 	/**
@@ -136,9 +136,6 @@ public class TimeStamp implements Comparable<TimeStamp>
 		return diff > 0 ? 1 : diff < 0 ? -1 : 0; 
 	}
 	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -151,10 +148,6 @@ public class TimeStamp implements Comparable<TimeStamp>
 	    return ts == other.ts;
 	}
 	
-	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		return (int) ts;

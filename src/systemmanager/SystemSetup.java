@@ -129,8 +129,7 @@ public class SystemSetup {
 
 			// Initial SendToSIP Activity for all markets
 			for (Map.Entry<Integer,Market> entry : data.getMarkets().entrySet()) {
-				eventManager.createEvent(Consts.HIGHEST_PRIORITY,
-							new SendToSIP(entry.getValue(), new TimeStamp(0)));
+				eventManager.addActivity(new SendToSIP(entry.getValue(), new TimeStamp(0)));
 			}
 		} catch (Exception e) {
 			System.err.println(this.getClass().getSimpleName() + "::setupAll: error");
@@ -254,7 +253,7 @@ public class SystemSetup {
 			// Check if is call market, then initialize clearing sequence
 			if (market instanceof CallMarket) {
 				Activity clear = new Clear(market, market.getNextClearTime());
-				eventManager.createEvent(Consts.CALL_CLEAR_PRIORITY, clear);
+				eventManager.addActivity(clear);
 			}
 			log.log(Log.INFO, "Markets: " + market.getType() + ", " + market);
 			
@@ -455,12 +454,11 @@ public class SystemSetup {
 		if (agent instanceof HFTAgent) {
 			arrivalPriority = Consts.HIGHEST_PRIORITY;
 		}
-		eventManager.createEvent(arrivalPriority, new AgentArrival(agent, ts));
+		eventManager.addActivity(new AgentArrival(agent, ts));
 		
 		// set liquidation at the end of the simulation for market makers
 		if (agent instanceof BasicMarketMaker) {
-			eventManager.createEvent(Consts.LOWEST_PRIORITY, 
-					new Liquidate(agent, data.getFundamentalAt(data.simLength), 
+			eventManager.addActivity(new Liquidate(agent, data.getFundamentalAt(data.simLength), 
 					data.simLength));
 		}
 	}

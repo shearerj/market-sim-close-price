@@ -6,6 +6,7 @@ import entity.BasicMarketMaker;
 import entity.CallMarket;
 import entity.LAAgent;
 import entity.ZIAgent;
+import event.TimeStamp;
 
 /**
  * System-wide constants and accessor methods. Sets default properties for each
@@ -102,7 +103,7 @@ public class Consts {
 	public final static int LOWEST_PRIORITY = 999;
 	
 	// TimeStamp
-	public final static long INF_TIME = -1;
+	public final static TimeStamp INF_TIME = new TimeStamp(-1);
 	
 	// Price
 	public final static int INF_PRICE = 999999999;

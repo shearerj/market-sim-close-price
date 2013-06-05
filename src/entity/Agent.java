@@ -486,7 +486,7 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap expireBid(Market mkt, long duration, TimeStamp ts) {
+	public ActivityHashMap expireBid(Market mkt, TimeStamp duration, TimeStamp ts) {
 		ActivityHashMap actMap = new ActivityHashMap();
 		TimeStamp withdrawTime = ts.sum(new TimeStamp(duration));
 		actMap.insertActivity(Consts.WITHDRAW_BID_PRIORITY, 

@@ -12,28 +12,32 @@ import java.util.Random;
 
 /**
  * @author erik
- *
+ * 
+ *         Randomly ordered queue. Elements will come out in a random order
+ *         independent of when they were inserted. Given a collection of
+ *         elements in the queue at a given time. The probability that any
+ *         specific element will be removed next is uniform.
  */
 public class RandomQueue<E> implements Queue<E> {
 
-	private Random rand;
-	private ArrayList<E> elements;
-	
+	protected Random rand;
+	protected ArrayList<E> elements;
+
 	public RandomQueue() {
 		elements = new ArrayList<E>();
 		rand = new Random();
 	}
-	
+
 	public RandomQueue(long randomSeed) {
 		elements = new ArrayList<E>();
 		rand = new Random(randomSeed);
 	}
-	
+
 	public RandomQueue(Collection<? extends E> initialElements) {
 		this();
 		addAll(initialElements);
 	}
-	
+
 	public RandomQueue(Collection<? extends E> initialElements, long randomSeed) {
 		this(randomSeed);
 		addAll(initialElements);
@@ -119,50 +123,50 @@ public class RandomQueue<E> implements Queue<E> {
 	public E element() {
 		if (isEmpty())
 			throw new NoSuchElementException("RandomQueue is empty");
-		else
-			return peek();
+		return peek();
 	}
 
 	@Override
 	public boolean offer(E e) {
-		add(e);
-		return true;
+		return add(e);
 	}
 
 	@Override
 	public E peek() {
 		if (isEmpty())
 			return null;
-		else
-			return elements.get(size() - 1);
+		return elements.get(size() - 1);
 	}
 
 	@Override
 	public E poll() {
 		if (isEmpty())
 			return null;
-		else
-			return elements.remove(size() - 1);
+		return elements.remove(size() - 1);
 	}
 
 	@Override
 	public E remove() {
 		if (isEmpty())
 			throw new NoSuchElementException("RandomQueue is empty");
-		else
-			return poll();
+		return poll();
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
-	    if (obj == null || ! (obj instanceof RandomQueue))
-	        return false;
-	    return elements.equals(((RandomQueue<?>) obj).elements);
+		if (obj == null || !(obj instanceof RandomQueue))
+			return false;
+		return elements.equals(((RandomQueue<?>) obj).elements);
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return elements.hashCode();
+	}
+
+	@Override
+	public String toString() {
+		return elements.toString();
 	}
 
 }

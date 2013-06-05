@@ -2,7 +2,6 @@ package event;
 
 import java.util.ArrayList;
 import java.util.PriorityQueue;
-import java.util.Comparator;
 import java.util.Iterator;
 
 /**
@@ -14,14 +13,12 @@ import java.util.Iterator;
 public class EventQueue {
 
 	private PriorityQueue<Event> eventQueue;
-	private Comparator<Event> eventComparator;
 	
 	/**
-	 * Constructor for the EventQueue, initialized at capacity 1.
+	 * Constructor for the EventQueue
 	 */
 	public EventQueue() {
-		eventComparator = new EventComparator();
-		eventQueue = new PriorityQueue<Event>(1, eventComparator);
+		eventQueue = new PriorityQueue<Event>();
 	}
 	
 	/**
@@ -29,8 +26,7 @@ public class EventQueue {
 	 * @param capacity
 	 */
 	public EventQueue(int capacity) {
-		eventComparator = new EventComparator();
-		eventQueue = new PriorityQueue<Event>(capacity, eventComparator);
+		eventQueue = new PriorityQueue<Event>(capacity);
 	}
 
 	/**

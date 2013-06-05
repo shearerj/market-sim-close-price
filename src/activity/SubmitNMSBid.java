@@ -14,9 +14,9 @@ public class SubmitNMSBid extends Activity {
 	private SMAgent ag;
 	private int price;
 	private int quantity;
-	private long duration;
+	private TimeStamp duration;
 	
-	public SubmitNMSBid(SMAgent ag, int p, int q, long d, TimeStamp t) {
+	public SubmitNMSBid(SMAgent ag, int p, int q, TimeStamp d, TimeStamp t) {
 		this.ag = ag;
 		this.price = p;
 		this.quantity = q;
