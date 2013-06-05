@@ -38,15 +38,15 @@ public class RandomQueueTest {
 	public void randomSeedTest() {
 		long seed = rand.nextLong();
 		Collection<Integer> numbers = randomNumbers(10);
-		RandomQueue<Integer> a = new RandomQueue<Integer>(numbers, seed);
-		RandomQueue<Integer> b = new RandomQueue<Integer>(numbers, seed);
+		RandomQueue<Integer> a = new RandomQueue<Integer>(numbers, new Random(seed));
+		RandomQueue<Integer> b = new RandomQueue<Integer>(numbers, new Random(seed));
 		
 		Iterator<Integer> ita = a.iterator();
 		Iterator<Integer> itb = b.iterator();
 		while (ita.hasNext())
 			assertTrue(ita.next().equals(itb.next()));
 		
-		RandomQueue<Integer> c = new RandomQueue<Integer>(seed);
+		RandomQueue<Integer> c = new RandomQueue<Integer>(new Random(seed));
 		c.addAll(numbers);
 		
 		itb = b.iterator();

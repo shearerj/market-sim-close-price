@@ -1,4 +1,4 @@
-package event;
+package activity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,7 +11,9 @@ import java.util.NoSuchElementException;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
-import activity.Activity;
+import event.Event;
+import event.TimeStamp;
+
 
 /**
  * @author ewah
@@ -61,6 +63,7 @@ public class ActivityQueue implements Queue<Activity> {
 
 	@Override
 	public String toString() {
+		// This is super slow!
 		StringBuilder sb = new StringBuilder("Q: ");
 		List<Event> copy = new ArrayList<Event>(eventQueue);
 		Collections.sort(copy);
@@ -224,9 +227,9 @@ public class ActivityQueue implements Queue<Activity> {
 	public Activity poll() {
 		if (isEmpty())
 			return null;
-		Activity act = eventQueue.peek().poll();
-		if (eventQueue.peek().isEmpty()) {
-			eventIndex.remove(eventQueue.peek().poll().getTime());
+		Activity act = eventQueue.element().remove();
+		if (eventQueue.element().isEmpty()) {
+			eventIndex.remove(eventQueue.remove().getTime());
 		}
 		size--;
 		return act;

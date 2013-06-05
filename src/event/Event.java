@@ -20,7 +20,7 @@ public class Event extends RandomQueue<Activity> implements Comparable<Event> {
 	private final TimeStamp eventTime; // time in microseconds (only positive)
 
 	// TODO Add Random Constructors
-	
+
 	/**
 	 * Constructor that creates empty event for a given time.
 	 * 
@@ -95,8 +95,13 @@ public class Event extends RandomQueue<Activity> implements Comparable<Event> {
 	@Override
 	public int compareTo(Event e) {
 		if (e == null)
-			; // FIXME Handle Appropriately
+			throw new NullPointerException("Can't compare to a null event");
 		return getTime().compareTo(e.getTime());
 	}
-	
+
+	@Override
+	public boolean offer(Activity e) {
+		return add(e);
+	}
+
 }

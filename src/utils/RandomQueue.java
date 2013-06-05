@@ -28,9 +28,9 @@ public class RandomQueue<E> implements Queue<E> {
 		rand = new Random();
 	}
 
-	public RandomQueue(long randomSeed) {
+	public RandomQueue(Random seed) {
 		elements = new ArrayList<E>();
-		rand = new Random(randomSeed);
+		rand = seed;
 	}
 
 	public RandomQueue(Collection<? extends E> initialElements) {
@@ -38,8 +38,8 @@ public class RandomQueue<E> implements Queue<E> {
 		addAll(initialElements);
 	}
 
-	public RandomQueue(Collection<? extends E> initialElements, long randomSeed) {
-		this(randomSeed);
+	public RandomQueue(Collection<? extends E> initialElements, Random seed) {
+		this(seed);
 		addAll(initialElements);
 	}
 
