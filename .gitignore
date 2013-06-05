@@ -12,6 +12,12 @@ hft.jar
 ########
 *.log
 
+# Documentation #
+#################
+.synctex.gz
+.out
+.aux
+
 # Other #
 #########
 *.swp
