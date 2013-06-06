@@ -18,7 +18,7 @@ import java.util.HashMap;
  * 
  * @author ewah
  */
-public class SipSuper extends Entity {
+public class Sip_Prime extends Entity {
 
 	private int tickSize;
 	//old private HashMap<Integer, BestBidAsk> lastQuotes;		// hashed by model ID
@@ -30,7 +30,7 @@ public class SipSuper extends Entity {
 	 * @param ID
 	 * @param d
 	 */
-	public SipSuper(int ID, SystemData d, Log l) {
+	public Sip_Prime(int ID, SystemData d, Log l) {
 		super(ID, d, new ObjectProperties(), l);
 		tickSize = d.tickSize;
 		//old lastQuotes = new HashMap<Integer,BestBidAsk>();
