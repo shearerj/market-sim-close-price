@@ -1,7 +1,9 @@
 package entity;
 
 import event.*;
-import activity.*;
+import activity.Activity;
+import activity.AgentStrategy;
+import activity.UpdateAllQuotes;
 import systemmanager.*;
 
 import java.util.Collection;

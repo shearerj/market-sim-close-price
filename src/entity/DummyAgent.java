@@ -1,7 +1,7 @@
 package entity;
 
 import event.*;
-import activity.*;
+import activity.Activity;
 import systemmanager.*;
 
 import java.util.Collection;

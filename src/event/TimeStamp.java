@@ -8,9 +8,11 @@ package event;
 
 import java.util.*;
 
+import event.*;
+
 import systemmanager.Consts;
 
-import activity.*;
+import activity.Activity;
 
 /**
  * The TimeStamp class is just a wrapper around java.lang.Long.

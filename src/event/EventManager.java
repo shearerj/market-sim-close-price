@@ -5,7 +5,6 @@ import java.util.Map.Entry;
 
 import systemmanager.Log;
 import activity.Activity;
-import activity.ActivityQueue;
 
 /**
  * EVENTMANAGER
@@ -22,14 +21,14 @@ import activity.ActivityQueue;
 public class EventManager {
 
 	protected Log log;
-	protected ActivityQueue activityQueue;
+	protected EventQueue activityQueue;
 	// private TimeStamp duration; // simulation length
 
 	/**
 	 * Constructor
 	 */
 	public EventManager(TimeStamp ts, Log l) {
-		activityQueue = new ActivityQueue();
+		activityQueue = new EventQueue();
 		// duration = ts;
 		log = l;
 	}
@@ -51,7 +50,7 @@ public class EventManager {
 	 * Executes event at head of Q. Removes from Q only when execution is
 	 * complete. Adds new events to EventQ after event completion.
 	 */
-	public void executeCurrentEvent() {
+	public void executeCurrentEvent() { // TODO rename
 
 		// FIXME This toString is slow, and probably shouldn't be called if the
 		// logs aren't being used at debug level

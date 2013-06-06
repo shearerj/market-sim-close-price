@@ -7,7 +7,9 @@ import java.util.Iterator;
 import java.util.TreeSet;
 
 import market.*;
-import activity.*;
+import activity.Activity;
+import activity.Clear;
+import activity.SendToSIP;
 import event.*;
 import systemmanager.*;
 
@@ -37,8 +39,8 @@ public class CallMarket extends Market {
 	public CallMarket(int marketID, SystemData d, ObjectProperties p, Log l) {
 		super(marketID, d, p, l);
 		marketType = Consts.getMarketType(this.getName());
-		orderbook = new PQOrderBook(ID);
-		orderbook.setParams(ID, l, d);
+		orderbook = new PQOrderBook(id);
+		orderbook.setParams(id, l, d);
 		pricingPolicy = (float) Double.parseDouble(params.get(CallMarket.PRICING_POLICY_KEY));
 		clearFreq = new TimeStamp(Integer.parseInt(params.get(CallMarket.CLEAR_FREQ_KEY)));
 		nextClearTime = clearFreq;
@@ -64,7 +66,7 @@ public class CallMarket extends Market {
 		// Unlike continuous auction market, no Clear inserted unless clear freq = 0
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		orderbook.insertBid((PQBid) b);
-		data.addDepth(ID, ts, orderbook.getDepth());
+		data.addDepth(id, ts, orderbook.getDepth());
 		data.addSubmissionTime(b.getBidID(), ts);
 		if (clearFreq.longValue() == 0) {
 			return clear(ts);
@@ -76,7 +78,7 @@ public class CallMarket extends Market {
 		// Unlike continuous auction market, no Clear inserted unless clear freq = 0
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		orderbook.removeBid(agentID);
-		data.addDepth(ID, ts, orderbook.getDepth());
+		data.addDepth(id, ts, orderbook.getDepth());
 		if (clearFreq.longValue() == 0) {
 			return clear(ts);
 		} // else, Clear activities are chained and continue that way
@@ -106,7 +108,7 @@ public class CallMarket extends Market {
 			
 			orderbook.logActiveBids(clearTime);
 			orderbook.logFourHeap(clearTime);
-			data.addDepth(ID, clearTime, orderbook.getDepth());
+			data.addDepth(id, clearTime, orderbook.getDepth());
 			
 			// Now update the quote
 			log.log(Log.INFO, clearTime + " | ....." + this + " " + 
@@ -148,7 +150,7 @@ public class CallMarket extends Market {
 		orderbook.logActiveBids(clearTime);
 		orderbook.logClearedBids(clearTime);
 		orderbook.logFourHeap(clearTime);
-		data.addDepth(ID, clearTime, orderbook.getDepth());
+		data.addDepth(id, clearTime, orderbook.getDepth());
 		log.log(Log.INFO, clearTime.toString() + " | ....." + this + " " + 
 				this.getName() + "::clear: Order book cleared: Post-clear Quote" 
 				+ this.quote(clearTime));
@@ -176,19 +178,19 @@ public class CallMarket extends Market {
 			if (bp != null && ap != null) {
 				if (bp.getPrice() == -1 || ap.getPrice() == -1) {
 					// either bid or ask are undefined
-					data.addSpread(ID, quoteTime, Consts.INF_PRICE);
-					data.addMidQuotePrice(ID, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);	
+					data.addSpread(id, quoteTime, Consts.INF_PRICE);
+					data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);	
 					
 				} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
 					log.log(Log.ERROR, this.getName() + "::quote: ERROR bid > ask");
-					data.addSpread(ID, quoteTime, Consts.INF_PRICE);
-					data.addMidQuotePrice(ID, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
+					data.addSpread(id, quoteTime, Consts.INF_PRICE);
+					data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
 					
 				} else {
 					// valid bid-ask
-					data.addQuote(ID, q);
-					data.addSpread(ID, quoteTime, q.getSpread());
-					data.addMidQuotePrice(ID, quoteTime, bp.getPrice(), ap.getPrice());
+					data.addQuote(id, q);
+					data.addSpread(id, quoteTime, q.getSpread());
+					data.addMidQuotePrice(id, quoteTime, bp.getPrice(), ap.getPrice());
 				}
 			}
 			lastQuoteTime = quoteTime;

@@ -3,7 +3,11 @@ package entity;
 import event.*;
 import model.*;
 import market.*;
-import activity.*;
+import activity.Activity;
+import activity.Liquidate;
+import activity.SubmitBid;
+import activity.SubmitMultipleBid;
+import activity.WithdrawBid;
 import systemmanager.*;
 
 import java.util.*;
@@ -415,16 +419,16 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 */
 	protected void enterMarket(Market mkt, TimeStamp ts) {
-		mkt.agentIDs.add(this.ID);
-		mkt.buyers.add(this.ID);
-		mkt.sellers.add(this.ID);
-		quotes.put(mkt.ID, new ArrayList<Quote>());
+		mkt.agentIDs.add(this.id);
+		mkt.buyers.add(this.id);
+		mkt.sellers.add(this.id);
+		quotes.put(mkt.id, new ArrayList<Quote>());
 
 		// Initialize bid/ask containers
-		prevBid.put(mkt.ID, 0);
-		prevAsk.put(mkt.ID, 0);
-		initBid.put(mkt.ID, -1);
-		initAsk.put(mkt.ID, -1);
+		prevBid.put(mkt.id, 0);
+		prevAsk.put(mkt.id, 0);
+		initBid.put(mkt.id, -1);
+		initAsk.put(mkt.id, -1);
 	}
 	
 	/**
@@ -502,7 +506,7 @@ public abstract class Agent extends Entity {
 	 */
 	public Collection<Activity> executeWithdrawBid(Market mkt, TimeStamp ts) {
 		log.log(Log.INFO, ts + " | " + this + " withdraw bid from " + mkt);
-		return mkt.removeBid(this.ID, ts);
+		return mkt.removeBid(this.id, ts);
 	}
 	
 	/**
@@ -523,7 +527,7 @@ public abstract class Agent extends Entity {
 				+ quantity + ") to " + mkt);
 		
 		int p = Market.quantize(price, tickSize);
-		PQBid pqBid = new PQBid(this.ID, mkt.ID);
+		PQBid pqBid = new PQBid(this.id, mkt.id);
 		pqBid.addPoint(quantity, new Price(p));
 		pqBid.timestamp = ts;
 		data.addBid(pqBid);
@@ -533,7 +537,7 @@ public abstract class Agent extends Entity {
 		} else {
 			data.addPrivateValue(pqBid.getBidID(), null);
 		}
-		currentBid.put(mkt.ID, pqBid);
+		currentBid.put(mkt.id, pqBid);
 		return mkt.addBid(pqBid, ts);
 	}	
 
@@ -557,7 +561,7 @@ public abstract class Agent extends Entity {
 		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price +	", " 
 				+ quantity + ")");
 		
-		PQBid pqBid = new PQBid(this.ID, mkt.ID);
+		PQBid pqBid = new PQBid(this.id, mkt.id);
 		pqBid.timestamp = ts;
 		for (int i = 0; i < price.size(); i++) {
 			if (quantity.get(i) != 0) {
@@ -567,7 +571,7 @@ public abstract class Agent extends Entity {
 		}
 		data.addBid(pqBid);
 		// TODO incorporate multi-point PVs?
-		currentBid.put(mkt.ID, pqBid);	
+		currentBid.put(mkt.id, pqBid);	
 		return mkt.addBid(pqBid, ts);
 	}
 
@@ -650,24 +654,24 @@ public abstract class Agent extends Entity {
 		Quote q = mkt.quote(ts);
 		if (q != null) {
 			if (q.lastAskPrice == null)
-				askPrice.put(mkt.ID, new Price(Consts.INF_PRICE));
+				askPrice.put(mkt.id, new Price(Consts.INF_PRICE));
 			else
-				askPrice.put(mkt.ID, q.lastAskPrice);
+				askPrice.put(mkt.id, q.lastAskPrice);
 			if (q.lastBidPrice == null)
-				bidPrice.put(mkt.ID, new Price(0));
+				bidPrice.put(mkt.id, new Price(0));
 			else
-				bidPrice.put(mkt.ID, q.lastBidPrice);
+				bidPrice.put(mkt.id, q.lastBidPrice);
 
 			if (q.lastQuoteTime != null)
-				lastQuoteTime.put(mkt.ID, q.lastQuoteTime);
+				lastQuoteTime.put(mkt.id, q.lastQuoteTime);
 
-			if (q.lastClearTime != null && lastClearTime.get(mkt.ID) != q.lastClearTime) {
-				lastClearTime.put(mkt.ID, q.lastClearTime);
+			if (q.lastClearTime != null && lastClearTime.get(mkt.id) != q.lastClearTime) {
+				lastClearTime.put(mkt.id, q.lastClearTime);
 			}
 		} else {
 			log.log(Log.ERROR, "Agent::updateQuotes: Quote is null.");
 		}
-		addQuote(mkt.ID, q);
+		addQuote(mkt.id, q);
 	}
 
 	
@@ -726,7 +730,7 @@ public abstract class Agent extends Entity {
 		} else {
 			// check whether seller, in which case negate the quantity
 			int quantity = t.quantity;
-			if (this.ID == t.sellerID) {
+			if (this.id == t.sellerID) {
 				quantity = -quantity;
 			}
 			// update cash flow and position
@@ -798,7 +802,7 @@ public abstract class Agent extends Entity {
 			for (Iterator<PQTransaction> it = list.iterator(); it.hasNext();) {
 				Transaction t = it.next();
 				// Check that this agent is involved in the transaction
-				if (t.buyerID == this.ID || t.sellerID == this.ID){ 
+				if (t.buyerID == this.id || t.sellerID == this.id){ 
 					boolean flag = processTransaction(t);
 					if (!flag && lastGoodTransID != null) {
 						lastTransID = lastGoodTransID;
@@ -1000,26 +1004,26 @@ public abstract class Agent extends Entity {
 
 		for (Iterator<Integer> it = this.getModel().getMarketIDs().iterator(); it.hasNext(); ) {
 			Market mkt = data.markets.get(it.next());
-			Price bid = getBidPrice(mkt.ID);
-			Price ask = getAskPrice(mkt.ID);
+			Price bid = getBidPrice(mkt.id);
+			Price ask = getAskPrice(mkt.id);
 
 			// in case the bid/ask disappears
 			ArrayList<Price> price = new ArrayList<Price>();
 			price.add(bid);
 			price.add(ask);
 
-			if (checkBidAsk(mkt.ID, price)) {
+			if (checkBidAsk(mkt.id, price)) {
 				log.log(Log.DEBUG, "Agent::findBestBuySell: issue with bid ask");
 			}
 			// Best market to buy in is the one with the lowest ASK
 			if (bestBuy == -1 || bestBuy > ask.getPrice()) {
 				if (ask.getPrice() != -1) bestBuy = ask.getPrice();
-				bestBuyMkt = mkt.ID;
+				bestBuyMkt = mkt.id;
 			}
 			// Best market to sell in is the one with the highest BID
 			if (bestSell == -1 || bestSell < bid.getPrice()) {
 				if (bid.getPrice() != -1) bestSell = bid.getPrice();
-				bestSellMkt = mkt.ID;
+				bestSellMkt = mkt.id;
 			}
 		}
 		BestQuote q = new BestQuote();

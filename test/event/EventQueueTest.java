@@ -1,4 +1,4 @@
-package activity;
+package event;
 
 import static org.junit.Assert.*;
 
@@ -13,15 +13,18 @@ import java.util.Random;
 
 import org.junit.Test;
 
+import activity.Activity;
+
 import systemmanager.Consts;
 
+import event.EventQueue;
 import event.TimeStamp;
 
-public class ActivityQueueTest {
+public class EventQueueTest {
 	
 	@Test
 	public void basicUsageTest() {
-		ActivityQueue q = new ActivityQueue();
+		EventQueue q = new EventQueue();
 		assertTrue(q.isEmpty());
 		assertEquals(0, q.size());
 		
@@ -69,27 +72,27 @@ public class ActivityQueueTest {
 	
 	@Test
 	public void emptyPeekTest() {
-		assertEquals(null, new ActivityQueue().peek());
+		assertEquals(null, new EventQueue().peek());
 	}
 	
 	@Test
 	public void emptyPollTest() {
-		assertEquals(null, new ActivityQueue().poll());
+		assertEquals(null, new EventQueue().poll());
 	}
 	
 	@Test (expected = NoSuchElementException.class)
 	public void emptyElementTest() {
-		new ActivityQueue().element();
+		new EventQueue().element();
 	}
 	
 	@Test (expected = NoSuchElementException.class)
 	public void emptyRemoveTest() {
-		new ActivityQueue().remove();
+		new EventQueue().remove();
 	}
 	
 	@Test
 	public void clearTest() {
-		ActivityQueue q = new ActivityQueue();
+		EventQueue q = new EventQueue();
 		q.addAll(Arrays.asList(new Activity[] { new DummyActivity(0),
 				new DummyActivity(1), new DummyActivity(2) }));
 		assertFalse(q.isEmpty());
@@ -99,7 +102,7 @@ public class ActivityQueueTest {
 	
 	@Test
 	public void removeTest() {
-		ActivityQueue q = new ActivityQueue();
+		EventQueue q = new EventQueue();
 
 		Activity first = new DummyActivity(0);
 		Activity second = new DummyActivity(1);
@@ -114,7 +117,7 @@ public class ActivityQueueTest {
 	
 	@Test
 	public void removeAllTest() {
-		ActivityQueue q = new ActivityQueue();
+		EventQueue q = new EventQueue();
 
 		Activity first = new DummyActivity(0);
 		Activity second = new DummyActivity(1);
@@ -128,7 +131,7 @@ public class ActivityQueueTest {
 	
 	@Test
 	public void retainAllTest() {
-		ActivityQueue q = new ActivityQueue();
+		EventQueue q = new EventQueue();
 
 		Activity first = new DummyActivity(0);
 		Activity second = new DummyActivity(1);
@@ -142,7 +145,7 @@ public class ActivityQueueTest {
 	
 	@Test
 	public void toArrayTest() {
-		ActivityQueue q = new ActivityQueue();
+		EventQueue q = new EventQueue();
 
 		List<Activity> acts = Arrays.asList(new Activity[] { new DummyActivity(0),
 				new DummyActivity(1), new DummyActivity(2) });
@@ -160,7 +163,7 @@ public class ActivityQueueTest {
 	
 	@Test
 	public void iteratorTest() {
-		ActivityQueue q = new ActivityQueue();
+		EventQueue q = new EventQueue();
 
 		Activity first = new DummyActivity(0);
 		Activity second = new DummyActivity(1);
@@ -192,8 +195,8 @@ public class ActivityQueueTest {
 	public void randomDeterminismTest() {
 		Random rand = new Random();
 		long seed = rand.nextLong();
-		ActivityQueue q1 = new ActivityQueue(seed);
-		ActivityQueue q2 = new ActivityQueue(seed);
+		EventQueue q1 = new EventQueue(seed);
+		EventQueue q2 = new EventQueue(seed);
 		
 		List<Activity> acts = new ArrayList<Activity>();
 		for (int i = 0; i < 1000; i++) {

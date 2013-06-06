@@ -3,7 +3,9 @@ package entity;
 import event.*;
 import model.*;
 import market.*;
-import activity.*;
+import activity.Activity;
+import activity.ProcessQuote;
+import activity.UpdateNBBO;
 import systemmanager.*;
 
 import java.util.ArrayList;
@@ -18,6 +20,7 @@ import java.util.HashMap;
 public abstract class Market extends Entity {
 
 	// Model information
+	// TODO Reference to MarketModel instead of just id?
 	protected int modelID;				// ID of associated model
 	
 	// Agent information

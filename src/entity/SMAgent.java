@@ -2,7 +2,12 @@ package entity;
 
 import event.*;
 import market.Quote;
-import activity.*;
+import activity.Activity;
+import activity.AgentReentry;
+import activity.AgentStrategy;
+import activity.SubmitNMSBid;
+import activity.SubmitNMSMultipleBid;
+import activity.UpdateAllQuotes;
 import systemmanager.*;
 
 import java.util.ArrayList;
@@ -179,11 +184,11 @@ public abstract class SMAgent extends Agent {
 	 * @return Collection<Activity>
 	 */
 	public Collection<Activity> agentDeparture(TimeStamp ts) {
-		market.agentIDs.remove(market.agentIDs.indexOf(this.ID));
-		market.buyers.remove(market.buyers.indexOf(this.ID));
-		market.sellers.remove(market.sellers.indexOf(this.ID));
-		market.removeBid(this.ID, ts);
-		this.exitMarket(market.ID);
+		market.agentIDs.remove(market.agentIDs.indexOf(this.id));
+		market.buyers.remove(market.buyers.indexOf(this.id));
+		market.sellers.remove(market.sellers.indexOf(this.id));
+		market.removeBid(this.id, ts);
+		this.exitMarket(market.id);
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		return actMap;
 	}

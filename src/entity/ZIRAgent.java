@@ -2,7 +2,8 @@ package entity;
 
 import event.*;
 import market.*;
-import activity.*;
+import activity.Activity;
+import activity.AgentReentry;
 import systemmanager.*;
 
 import java.util.Collection;

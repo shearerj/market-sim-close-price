@@ -2,7 +2,7 @@ package entity;
 
 import event.*;
 import market.*;
-import activity.*;
+import activity.Activity;
 import systemmanager.*;
 
 import java.util.ArrayList;

@@ -53,15 +53,15 @@ public class Event extends RandomQueue<Activity> implements Comparable<Event> {
 		eventTime = time;
 	}
 
-	/**
-	 * Copy constructor
-	 * 
-	 * @param e
-	 */
-	public Event(Event e) {
-		this(e.eventTime, e.elements);
-		// FIXME This will re-randomize the activities. Maybe not a good thing?
-	}
+//	/**
+//	 * Copy constructor
+//	 * 
+//	 * @param e
+//	 */
+//	public Event(Event e) {
+//		this(e.eventTime, e.elements);
+//		// FIXME This will re-randomize the activities. Maybe not a good thing?
+//	}
 
 	/**
 	 * @return TimeStamp of the event's time.

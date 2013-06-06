@@ -2,7 +2,10 @@ package entity;
 
 import event.*;
 import market.*;
-import activity.*;
+import activity.Activity;
+import activity.AgentReentry;
+import activity.AgentStrategy;
+import activity.UpdateAllQuotes;
 import systemmanager.*;
 
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package activity;
+package event;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,8 +12,8 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Random;
 
-import event.Event;
-import event.TimeStamp;
+import activity.Activity;
+
 
 /**
  * @author ewah
@@ -21,7 +21,7 @@ import event.TimeStamp;
  *         This is essentially a wrapper class for PriorityQueue, where priority
  *         is the TimeStamp at which an event occurs.
  */
-public class ActivityQueue implements Queue<Activity> {
+public class EventQueue implements Queue<Activity> {
 
 	// TODO Don't allow null activities
 	// TODO Don't allow time stamps below current time unless = inf time
@@ -47,15 +47,15 @@ public class ActivityQueue implements Queue<Activity> {
 	/**
 	 * Constructor for the EventQueue
 	 */
-	public ActivityQueue() {
+	public EventQueue() {
 		this(new Random().nextLong());
 	}
 
-	public ActivityQueue(long seed) {
+	public EventQueue(long seed) {
 		this(8, seed);
 	}
 
-	public ActivityQueue(int capacity) {
+	public EventQueue(int capacity) {
 		this(capacity, new Random().nextLong());
 	}
 
@@ -65,7 +65,7 @@ public class ActivityQueue implements Queue<Activity> {
 	 * 
 	 * @param capacity
 	 */
-	public ActivityQueue(int capacity, long rand) {
+	public EventQueue(int capacity, long rand) {
 		eventQueue = new PriorityQueue<Event>(capacity);
 		eventIndex = new HashMap<TimeStamp, Event>(capacity);
 		size = 0;

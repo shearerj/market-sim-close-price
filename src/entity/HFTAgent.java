@@ -1,7 +1,9 @@
 package entity;
 
-import activity.*;
-import event.TimeStamp;
+import activity.Activity;
+import activity.AgentStrategy;
+import activity.UpdateAllQuotes;
+import event.*;
 import systemmanager.*;
 
 import java.util.ArrayList;
@@ -84,11 +86,11 @@ public abstract class HFTAgent extends Agent {
 		for (Iterator<Integer> i = data.getMarketIDs().iterator(); i.hasNext(); ) {
 			Market mkt = data.markets.get(i.next());
 			
-			mkt.agentIDs.remove(mkt.agentIDs.indexOf(this.ID));
-			mkt.buyers.remove(mkt.buyers.indexOf(this.ID));
-			mkt.sellers.remove(mkt.sellers.indexOf(this.ID));
-			mkt.removeBid(this.ID, ts);
-			this.exitMarket(mkt.ID);
+			mkt.agentIDs.remove(mkt.agentIDs.indexOf(this.id));
+			mkt.buyers.remove(mkt.buyers.indexOf(this.id));
+			mkt.sellers.remove(mkt.sellers.indexOf(this.id));
+			mkt.removeBid(this.id, ts);
+			this.exitMarket(mkt.id);
 		}
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		return actMap;
