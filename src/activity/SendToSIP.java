@@ -1,5 +1,7 @@
 package activity;
 
+import java.util.Collection;
+
 import entity.*;
 import event.TimeStamp;
 
@@ -21,7 +23,7 @@ public class SendToSIP extends Activity {
 		return new SendToSIP(this.mkt, this.time);
 	}
 	
-	public ActivityHashMap execute() {
+	public Collection<Activity> execute() {
 		return this.mkt.sendToSIP(this.time);
 	}
 	

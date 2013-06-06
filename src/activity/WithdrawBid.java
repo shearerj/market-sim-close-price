@@ -1,5 +1,7 @@
 package activity;
 
+import java.util.Collection;
+
 import entity.*;
 import event.TimeStamp;
 
@@ -24,7 +26,7 @@ public class WithdrawBid extends Activity {
 		return new WithdrawBid(this.ag, this.mkt, this.time);
 	}
 	
-	public ActivityHashMap execute() {
+	public Collection<Activity> execute() {
 		return this.ag.executeWithdrawBid(this.mkt, this.time);
 	}
 	

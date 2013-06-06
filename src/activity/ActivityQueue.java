@@ -14,7 +14,6 @@ import java.util.Queue;
 import event.Event;
 import event.TimeStamp;
 
-
 /**
  * @author ewah
  * 

@@ -330,7 +330,7 @@ public class FourHeap
 	}
 
 	/**
-	 * clear the 4Heap, returning Vectors of matched buys/sells
+	 * clear the 4Heap, returning ArrayLists of matched buys/sells
 	 *
 	 * @param buys buys will be inserted here
 	 * @param sells sells will be inserted here

@@ -4,6 +4,8 @@ import activity.*;
 import event.TimeStamp;
 import systemmanager.*;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 
 
@@ -35,9 +37,9 @@ public abstract class HFTAgent extends Agent {
 	 * Agent arrives in a single market.
 	 * 
 	 * @param ts
-	 * @return ActivityHashMap
+	 * @return Collection<Activity>
 	 */
-	public ActivityHashMap agentArrival(TimeStamp ts) {
+	public Collection<Activity> agentArrival(TimeStamp ts) {
 		
 		String s = "";
 		for (Iterator<Integer> it = this.getModel().getMarketIDs().iterator(); it.hasNext(); ) {
@@ -53,9 +55,9 @@ public abstract class HFTAgent extends Agent {
 			
 		// Always insert agent strategy call once it has arrived in the market;
 		// inserted at earliest priority in case there are orders already present at the beginning
-		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.HFT_ARRIVAL_PRIORITY, new UpdateAllQuotes(this, ts));
-		actMap.insertActivity(Consts.HFT_ARRIVAL_PRIORITY, new AgentStrategy(this, ts));
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		actMap.add(new UpdateAllQuotes(this, ts));
+		actMap.add(new AgentStrategy(this, ts));
 		return actMap;
 	}
 	
@@ -65,19 +67,19 @@ public abstract class HFTAgent extends Agent {
 	 * @param priority
 	 * @param ts
 	 */
-	public ActivityHashMap agentReentry(int priority, TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(priority, new UpdateAllQuotes(this, ts));
-		actMap.insertActivity(priority, new AgentStrategy(this, ts));
+	public Collection<Activity> agentReentry(int priority, TimeStamp ts) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		actMap.add(new UpdateAllQuotes(this, ts));
+		actMap.add(new AgentStrategy(this, ts));
 		return actMap;
 	}
 	
 	/**
 	 * Agent departs all markets, if it is active.  //TODO fix later
 	 * 
-	 * @return ActivityHashMap
+	 * @return Collection<Activity>
 	 */
-	public ActivityHashMap agentDeparture(TimeStamp ts) {
+	public Collection<Activity> agentDeparture(TimeStamp ts) {
 
 		for (Iterator<Integer> i = data.getMarketIDs().iterator(); i.hasNext(); ) {
 			Market mkt = data.markets.get(i.next());
@@ -88,7 +90,7 @@ public abstract class HFTAgent extends Agent {
 			mkt.removeBid(this.ID, ts);
 			this.exitMarket(mkt.ID);
 		}
-		ActivityHashMap actMap = new ActivityHashMap();
+		Collection<Activity> actMap = new ArrayList<Activity>();
 		return actMap;
 	}
 }

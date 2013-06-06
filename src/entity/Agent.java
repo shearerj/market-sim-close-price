@@ -117,26 +117,26 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public abstract ActivityHashMap agentStrategy(TimeStamp ts);
+	public abstract Collection<Activity> agentStrategy(TimeStamp ts);
 	
 	/**
 	 * @param ts
 	 * @return
 	 */
-	public abstract ActivityHashMap agentArrival(TimeStamp ts);
+	public abstract Collection<Activity> agentArrival(TimeStamp ts);
 	
 	/**
 	 * @param ts
 	 * @return
 	 */
-	public abstract ActivityHashMap agentDeparture(TimeStamp ts);
+	public abstract Collection<Activity> agentDeparture(TimeStamp ts);
 	
 	/**
 	 * @param priority
 	 * @param ts
 	 * @return
 	 */
-	public abstract ActivityHashMap agentReentry(int priority, TimeStamp ts);
+	public abstract Collection<Activity> agentReentry(int priority, TimeStamp ts);
 	
 	/**
 	 * @return observation to include in the output file
@@ -455,9 +455,9 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap submitBid(Market mkt, int price, int quantity, TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, new SubmitBid(this, mkt, price, quantity, ts));
+	public Collection<Activity> submitBid(Market mkt, int price, int quantity, TimeStamp ts) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		actMap.add(new SubmitBid(this, mkt, price, quantity, ts));
 		return actMap;
 	}
 
@@ -470,11 +470,10 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap submitMultipleBid(Market mkt, ArrayList<Integer> price, 
+	public Collection<Activity> submitMultipleBid(Market mkt, ArrayList<Integer> price, 
 			ArrayList<Integer> quantity, TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
-				new SubmitMultipleBid(this, mkt, price, quantity, ts));
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		actMap.add(new SubmitMultipleBid(this, mkt, price, quantity, ts));
 		return actMap;
 	}
 	
@@ -486,11 +485,10 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap expireBid(Market mkt, TimeStamp duration, TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
+	public Collection<Activity> expireBid(Market mkt, TimeStamp duration, TimeStamp ts) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
 		TimeStamp withdrawTime = ts.sum(new TimeStamp(duration));
-		actMap.insertActivity(Consts.WITHDRAW_BID_PRIORITY, 
-				new WithdrawBid(this, mkt, withdrawTime));
+		actMap.add(new WithdrawBid(this, mkt, withdrawTime));
 		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": bid duration=" + duration); 
 		return actMap;
 	}
@@ -502,7 +500,7 @@ public abstract class Agent extends Entity {
 	 * @param mkt
 	 * @return
 	 */
-	public ActivityHashMap executeWithdrawBid(Market mkt, TimeStamp ts) {
+	public Collection<Activity> executeWithdrawBid(Market mkt, TimeStamp ts) {
 		log.log(Log.INFO, ts + " | " + this + " withdraw bid from " + mkt);
 		return mkt.removeBid(this.ID, ts);
 	}
@@ -516,9 +514,9 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap executeSubmitBid(Market mkt, int price, int quantity, 
+	public Collection<Activity> executeSubmitBid(Market mkt, int price, int quantity, 
 			TimeStamp ts) {
-		if (quantity == 0) return null;
+		if (quantity == 0) return Collections.emptyList();
 
 		log.log(Log.INFO, ts + " | " + this + " " + agentType + 
 				"::submitBid: +(" + price + ", " 
@@ -548,12 +546,12 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap executeSubmitMultipleBid(Market mkt, ArrayList<Integer> price, 
+	public Collection<Activity> executeSubmitMultipleBid(Market mkt, ArrayList<Integer> price, 
 			ArrayList<Integer> quantity, TimeStamp ts) {
 		if (price.size() != quantity.size()) {
 			log.log(Log.ERROR, "Agent::submitMultipleBid: " 
 					+ "Price/Quantity are not the same length");
-			return null;
+			return Collections.emptyList();
 		}
 		
 		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price +	", " 
@@ -582,10 +580,9 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap liquidateAtFundamental(TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.LOWEST_PRIORITY, 
-				new Liquidate(this, data.getFundamentalAt(ts), ts));
+	public Collection<Activity> liquidateAtFundamental(TimeStamp ts) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		actMap.add(new Liquidate(this, data.getFundamentalAt(ts), ts));
 		log.log(Log.INFO, ts + " | " + this + " liquidating..."); 
 		return actMap;
 	}
@@ -598,13 +595,13 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap executeLiquidate(Price price, TimeStamp ts) {
+	public Collection<Activity> executeLiquidate(Price price, TimeStamp ts) {
 		
 		log.log(Log.INFO, ts + " | " + this + " pre-liquidation: position=" 
 				+ positionBalance + ", profit=" + realizedProfit);
 		
 		// If no net position, no need to liquidate
-		if (positionBalance == 0) return null;
+		if (positionBalance == 0) return Collections.emptyList();
 		
 		preLiqPosition = positionBalance;
 		preLiqRealizedProfit = getRealizedProfit();
@@ -619,7 +616,7 @@ public abstract class Agent extends Entity {
 		
 		log.log(Log.INFO, ts + " | " + this + " post-liquidation: position=" 
 				+ positionBalance + ", profit=" + realizedProfit + ", price=" + price);
-		return null;
+		return Collections.emptyList();
 	}
 
 	
@@ -629,7 +626,7 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap updateAllQuotes(TimeStamp ts) {
+	public Collection<Activity> updateAllQuotes(TimeStamp ts) {
 		
 		for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
 			Market mkt = data.getMarket(it.next());
@@ -640,7 +637,7 @@ public abstract class Agent extends Entity {
 		
 		log.log(Log.INFO, ts + " | " + this + " Global" + lastGlobalQuote 
 				+ ", NBBO" + lastNBBOQuote);
-		return null;
+		return Collections.emptyList();
 	}
 	
 	/**
@@ -1007,7 +1004,7 @@ public abstract class Agent extends Entity {
 			Price ask = getAskPrice(mkt.ID);
 
 			// in case the bid/ask disappears
-			Vector<Price> price = new Vector<Price>();
+			ArrayList<Price> price = new ArrayList<Price>();
 			price.add(bid);
 			price.add(ask);
 
@@ -1041,7 +1038,7 @@ public abstract class Agent extends Entity {
 	 * @param price
 	 * @return
 	 */
-	boolean checkBidAsk(int mktID, Vector<Price> price) {
+	boolean checkBidAsk(int mktID, ArrayList<Price> price) {
 		if (price.size() < 2) return false;
 		
 		int bid = price.get(0).getPrice();

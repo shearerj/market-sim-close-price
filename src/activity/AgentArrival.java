@@ -1,6 +1,8 @@
 package activity;
 
 
+import java.util.Collection;
+
 import entity.*;
 import event.*;
 
@@ -22,7 +24,7 @@ public class AgentArrival extends Activity {
 		return new AgentArrival(this.ag, this.time);
 	}
 	
-	public ActivityHashMap execute() {
+	public Collection<Activity> execute() {
 		return ag.agentArrival(time); 
 	}
 	

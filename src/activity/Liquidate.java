@@ -1,5 +1,7 @@
 package activity;
 
+import java.util.Collection;
+
 import entity.*;
 import market.*;
 import event.TimeStamp;
@@ -25,7 +27,7 @@ public class Liquidate extends Activity {
 		return new Liquidate(this.ag, this.p, this.time);
 	}
 	
-	public ActivityHashMap execute() {
+	public Collection<Activity> execute() {
 		return this.ag.executeLiquidate(this.p, this.time);
 	}
 	

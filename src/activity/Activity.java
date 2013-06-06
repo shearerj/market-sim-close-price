@@ -1,5 +1,7 @@
 package activity;
 
+import java.util.Collection;
+
 import event.*;
 
 /**
@@ -21,7 +23,7 @@ public abstract class Activity {
 	 * Executes the activity on the given Entity.
 	 * @return hash table of generated Activity vectors, hashed by TimeStamp
 	 */
-	public abstract ActivityHashMap execute();
+	public abstract Collection<Activity> execute();
 	
 	/**
 	 * @return deep copy of the Activity.

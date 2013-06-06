@@ -1,5 +1,7 @@
 package activity;
 
+import java.util.Collection;
+
 import entity.*;
 import model.*;
 import event.TimeStamp;
@@ -24,7 +26,7 @@ public class UpdateNBBO extends Activity {
 		return new UpdateNBBO(this.sip, this.mdl, this.time);
 	}
 	
-	public ActivityHashMap execute() {
+	public Collection<Activity> execute() {
 		return this.sip.updateNBBO(this.mdl, this.time);
 	}
 	

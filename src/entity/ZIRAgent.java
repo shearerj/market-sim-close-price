@@ -5,6 +5,7 @@ import market.*;
 import activity.*;
 import systemmanager.*;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.ArrayList;
@@ -82,8 +83,8 @@ public class ZIRAgent extends BackgroundAgent {
 	
 	
 	@Override
-	public ActivityHashMap agentStrategy(TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
+	public Collection<Activity> agentStrategy(TimeStamp ts) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
 
 		String s = ts + " | " + this + " " + agentType + ":";
 		if (!ts.equals(arrivalTime)) {
@@ -115,8 +116,8 @@ public class ZIRAgent extends BackgroundAgent {
 					p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
 				}
 				log.log(Log.INFO, s);
-				//actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
-				actMap.appendActivityHashMap(executeSubmitNMSBid(p, q, ts));
+				//actMap.appendCollection<Activity>(submitNMSBid(p, q, ts));	// bid does not expire
+				actMap.addAll(executeSubmitNMSBid(p, q, ts));
 				submissionTimes.add(ts);
 				
 				lastPositionBalance = positionBalance;	// update position balance
@@ -134,8 +135,7 @@ public class ZIRAgent extends BackgroundAgent {
 		
 		TimeStamp tsNew = reentry.next();	// compute next re-entry time
 		// NOTE: reentry priority must be <= SubmitBid priority
-		actMap.insertActivity(Consts.DEFAULT_PRIORITY, 
-				new AgentReentry(this, Consts.BACKGROUND_AGENT_PRIORITY, tsNew));
+		actMap.add(new AgentReentry(this, Consts.BACKGROUND_AGENT_PRIORITY, tsNew));
 		return actMap;
 	}
 

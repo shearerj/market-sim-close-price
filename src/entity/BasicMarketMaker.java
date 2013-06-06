@@ -4,6 +4,7 @@ import event.*;
 import activity.*;
 import systemmanager.*;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.ArrayList;
 
@@ -71,8 +72,8 @@ public class BasicMarketMaker extends MarketMaker {
 	}
 	
 	@Override
-	public ActivityHashMap agentStrategy(TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
+	public Collection<Activity> agentStrategy(TimeStamp ts) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
 
 		int bid = getBidPrice(getMarketID()).getPrice();
 		int ask = getAskPrice(getMarketID()).getPrice();
@@ -124,7 +125,7 @@ public class BasicMarketMaker extends MarketMaker {
 						"::agentStrategy: ladder numRungs=" + numRungs + ", stepSize=" + stepSize + 
 						": buys [" + buyMinPrice + ", " + bid + "] &" + 
 						" sells [" + ask + ", " + sellMaxPrice + "]");
-				actMap.appendActivityHashMap(submitMultipleBid(getMarket(), prices, quantities, ts));
+				actMap.addAll(submitMultipleBid(getMarket(), prices, quantities, ts));
 			} else {
 				log.log(Log.INFO, ts + " | " + getMarket() + " " + this + " " + agentType + 
 						"::agentStrategy: no change in submitted ladder.");
@@ -137,8 +138,8 @@ public class BasicMarketMaker extends MarketMaker {
 		// insert activities for next time the agent wakes up
 //		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
 		TimeStamp tsNew = ts.sum(new TimeStamp(sleepTime));
-		actMap.insertActivity(Consts.MARKETMAKER_PRIORITY, new UpdateAllQuotes(this, tsNew));
-		actMap.insertActivity(Consts.MARKETMAKER_PRIORITY, new AgentStrategy(this, market, tsNew));
+		actMap.add(new UpdateAllQuotes(this, tsNew));
+		actMap.add(new AgentStrategy(this, market, tsNew));
 		return actMap;
 	}
 	

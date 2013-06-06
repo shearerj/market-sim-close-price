@@ -1,5 +1,7 @@
 package activity;
 
+import java.util.Collection;
+
 import entity.*;
 import event.*;
 
@@ -33,7 +35,7 @@ public class AgentStrategy extends Activity {
 		}
 	}
 	
-	public ActivityHashMap execute() {
+	public Collection<Activity> execute() {
 		return ag.agentStrategy(time);
 	}
 	

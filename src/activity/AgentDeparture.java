@@ -1,5 +1,7 @@
 package activity;
 
+import java.util.Collection;
+
 import entity.*;
 import event.*;
 
@@ -21,7 +23,7 @@ public class AgentDeparture extends Activity {
 		return new AgentDeparture(this.ag, this.time);
 	}
 	
-	public ActivityHashMap execute() {
+	public Collection<Activity> execute() {
 		return ag.agentDeparture(this.time);
 	}
 	

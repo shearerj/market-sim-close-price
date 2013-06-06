@@ -1,6 +1,7 @@
 package entity;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeSet;
@@ -59,9 +60,9 @@ public class CallMarket extends Market {
 		return lastAskPrice;
 	}
 	
-	public ActivityHashMap addBid(Bid b, TimeStamp ts) {
+	public Collection<Activity> addBid(Bid b, TimeStamp ts) {
 		// Unlike continuous auction market, no Clear inserted unless clear freq = 0
-		ActivityHashMap actMap = new ActivityHashMap();
+		Collection<Activity> actMap = new ArrayList<Activity>();
 		orderbook.insertBid((PQBid) b);
 		data.addDepth(ID, ts, orderbook.getDepth());
 		data.addSubmissionTime(b.getBidID(), ts);
@@ -71,9 +72,9 @@ public class CallMarket extends Market {
 		return actMap;
 	}
 	
-	public ActivityHashMap removeBid(int agentID, TimeStamp ts) {
+	public Collection<Activity> removeBid(int agentID, TimeStamp ts) {
 		// Unlike continuous auction market, no Clear inserted unless clear freq = 0
-		ActivityHashMap actMap = new ActivityHashMap();
+		Collection<Activity> actMap = new ArrayList<Activity>();
 		orderbook.removeBid(agentID);
 		data.addDepth(ID, ts, orderbook.getDepth());
 		if (clearFreq.longValue() == 0) {
@@ -88,8 +89,8 @@ public class CallMarket extends Market {
 	}
 	
 
-	public ActivityHashMap clear(TimeStamp clearTime) {
-		ActivityHashMap actMap = new ActivityHashMap();
+	public Collection<Activity> clear(TimeStamp clearTime) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
 		
 		// Update the next clear time
 		nextClearTime = clearTime.sum(clearFreq);
@@ -111,10 +112,10 @@ public class CallMarket extends Market {
 			log.log(Log.INFO, clearTime + " | ....." + this + " " + 
 					this.getName() + "::clear: No change. Post-clear Quote" 
 					+ this.quote(clearTime));
-			actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new SendToSIP(this, clearTime));
+			actMap.add(new SendToSIP(this, clearTime));
 
 			if (clearFreq.longValue() > 0) {
-				actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, nextClearTime));				
+				actMap.add(new Clear(this, nextClearTime));				
 			}
 			return actMap;
 		}
@@ -151,11 +152,11 @@ public class CallMarket extends Market {
 		log.log(Log.INFO, clearTime.toString() + " | ....." + this + " " + 
 				this.getName() + "::clear: Order book cleared: Post-clear Quote" 
 				+ this.quote(clearTime));
-		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new SendToSIP(this, clearTime));
+		actMap.add(new SendToSIP(this, clearTime));
 
 		// Insert next clear activity at some time in the future
 		if (clearFreq.longValue() > 0) {
-			actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, nextClearTime));				
+			actMap.add(new Clear(this, nextClearTime));				
 		}
 		return actMap;
 	}

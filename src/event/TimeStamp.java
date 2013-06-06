@@ -169,13 +169,13 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @param acts
 	 * @return true if matches, false otherwise.
 	 */
-	public boolean checkActivityTimeStamp(ActivityList acts) {
-		for (Activity act : acts) {
-			if (!checkActivityTimeStamp(act)) {
-				System.err.println("TimeStamp::checkActivityTimeStamp::ERROR: activities do not match the timestamp");
-				return false;
-			}
-		}
-		return true;
-	}
+//	public boolean checkActivityTimeStamp(Collection<Activity> acts) {
+//		for (Activity act : acts) {
+//			if (!checkActivityTimeStamp(act)) {
+//				System.err.println("TimeStamp::checkActivityTimeStamp::ERROR: activities do not match the timestamp");
+//				return false;
+//			}
+//		}
+//		return true;
+//	}
 }

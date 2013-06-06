@@ -1,12 +1,11 @@
 package event;
 
+import java.util.Collection;
 import java.util.Map.Entry;
 
 import systemmanager.Log;
 import activity.Activity;
-import activity.ActivityHashMap;
 import activity.ActivityQueue;
-import activity.PriorityActivityList;
 
 /**
  * EVENTMANAGER
@@ -59,14 +58,7 @@ public class EventManager {
 		log.log(Log.DEBUG, "executeCurrentEvent: " + activityQueue);
 
 		try {
-			ActivityHashMap acts = activityQueue.remove().execute();
-			if (acts == null)
-				// FIXME This should be reported, and not happening...
-				return;
-
-			for (Entry<TimeStamp, PriorityActivityList> e : acts.entrySet())
-				activityQueue.addAll(e.getValue().getActivities().getList());
-
+			activityQueue.addAll(activityQueue.remove().execute());
 		} catch (Exception e) {
 			// TODO This should be logged at the least.
 			e.printStackTrace();

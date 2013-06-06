@@ -6,6 +6,7 @@ import activity.*;
 import systemmanager.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.HashMap;
 import java.util.TreeSet;
@@ -46,7 +47,7 @@ public class CDAMarket extends Market {
 		return ((PQBid) getAskQuote()).bidTreeSet.last().getPrice();
 	}
 	
-	public ActivityHashMap addBid(Bid b, TimeStamp ts) {
+	public Collection<Activity> addBid(Bid b, TimeStamp ts) {
 		orderbook.insertBid((PQBid) b);
 		data.addDepth(ID, ts, orderbook.getDepth());
 		data.addSubmissionTime(b.getBidID(), ts);
@@ -54,7 +55,7 @@ public class CDAMarket extends Market {
 	}
 	
 	
-	public ActivityHashMap removeBid(int agentID, TimeStamp ts) {
+	public Collection<Activity> removeBid(int agentID, TimeStamp ts) {
 		orderbook.removeBid(agentID);
 		data.addDepth(this.ID, ts, orderbook.getDepth());
 		return clear(ts);
@@ -66,8 +67,8 @@ public class CDAMarket extends Market {
 	}
 
 	
-	public ActivityHashMap clear(TimeStamp clearTime) {
-		ActivityHashMap actMap = new ActivityHashMap();
+	public Collection<Activity> clear(TimeStamp clearTime) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
 		orderbook.logActiveBids(clearTime);
 		orderbook.logFourHeap(clearTime);
 		
@@ -85,7 +86,7 @@ public class CDAMarket extends Market {
 			log.log(Log.INFO, clearTime + " | ....." + this + " " + 
 					this.getName() + "::clear: No change. Post-clear Quote" +  
 					this.quote(clearTime));
-			actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new SendToSIP(this, clearTime));
+			actMap.add(new SendToSIP(this, clearTime));
 			return actMap;
 		}
 		
@@ -121,7 +122,7 @@ public class CDAMarket extends Market {
 		log.log(Log.INFO, clearTime + " | ....." + toString() + " " + 
 				this.getName() + "::clear: Order book cleared: " +
 				"Post-clear Quote" + this.quote(clearTime));
-		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new SendToSIP(this, clearTime));
+		actMap.add(new SendToSIP(this, clearTime));
 		return actMap;
 	}
 	

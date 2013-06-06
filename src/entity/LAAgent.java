@@ -5,6 +5,9 @@ import market.*;
 import activity.*;
 import systemmanager.*;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -49,11 +52,11 @@ public class LAAgent extends HFTAgent {
 	}
 	
 	@Override
-	public ActivityHashMap agentStrategy(TimeStamp ts) {
+	public Collection<Activity> agentStrategy(TimeStamp ts) {
 
 		// Ensure that agent has arrived in the market
 		if (ts.compareTo(arrivalTime) >= 0) {
-			ActivityHashMap actMap = new ActivityHashMap();
+			Collection<Activity> actMap = new ArrayList<Activity>();
 
 			BestQuote bestQuote = findBestBuySell();
 			if ((bestQuote.bestSell > (1+alpha)*bestQuote.bestBuy) && (bestQuote.bestBuy >= 0) ) {
@@ -77,9 +80,9 @@ public class LAAgent extends HFTAgent {
 					int quantity = Math.min(buySize, sellSize);
 
 					if (quantity > 0 && (buyMarketID != sellMarketID)) {
-						actMap.appendActivityHashMap(submitBid(buyMarket, midPoint-tickSize, 
+						actMap.addAll(submitBid(buyMarket, midPoint-tickSize, 
 								quantity, ts));
-						actMap.appendActivityHashMap(submitBid(sellMarket, midPoint+tickSize, 
+						actMap.addAll(submitBid(sellMarket, midPoint+tickSize, 
 								-quantity, ts));
 						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
 								"::agentStrategy: Exploit existing arb opp: " + bestQuote + 
@@ -108,8 +111,7 @@ public class LAAgent extends HFTAgent {
 			}
 			if (sleepTime > 0) {
 				TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
-				actMap.insertActivity(Consts.HFT_ARRIVAL_PRIORITY, 
-						new AgentReentry(this, Consts.HFT_AGENT_PRIORITY, tsNew));
+				actMap.add(new AgentReentry(this, Consts.HFT_AGENT_PRIORITY, tsNew));
 //				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
 //				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
 				
@@ -118,12 +120,12 @@ public class LAAgent extends HFTAgent {
 				TimeStamp tsNew = new TimeStamp(Consts.INF_TIME);
 //				actMap.insertActivity(Consts.DEFAULT_PRIORITY, 
 //						new AgentReentry(this, Consts.HFT_ARRIVAL_PRIORITY, tsNew));
-				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
-				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
+				actMap.add(new UpdateAllQuotes(this, tsNew));
+				actMap.add(new AgentStrategy(this, tsNew));
 			}
 			return actMap;
 		}
-		return null;
+		return Collections.emptyList();
 	}
 	
 	

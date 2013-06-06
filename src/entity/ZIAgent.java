@@ -5,6 +5,8 @@ import market.*;
 import activity.*;
 import systemmanager.*;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -60,8 +62,8 @@ public class ZIAgent extends BackgroundAgent {
 	
 	
 	@Override
-	public ActivityHashMap agentStrategy(TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
+	public Collection<Activity> agentStrategy(TimeStamp ts) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
 
 		int p = 0;
 		int q = 1;
@@ -75,8 +77,8 @@ public class ZIAgent extends BackgroundAgent {
 			p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
 		}
 
-//		actMap.appendActivityHashMap(submitNMSBid(p, q, expiration, ts));
-		actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
+//		actMap.appendCollection<Activity>(submitNMSBid(p, q, expiration, ts));
+		actMap.addAll(submitNMSBid(p, q, ts));	// bid does not expire
 		return actMap;
 	}
 }

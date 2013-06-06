@@ -1,5 +1,7 @@
 package activity;
 
+import java.util.Collection;
+
 import entity.*;
 import event.TimeStamp;
 
@@ -27,7 +29,7 @@ public class ProcessQuote extends Activity {
 		return new ProcessQuote(this.sip, this.mkt, this.bid, this.ask, this.time);
 	}
 	
-	public ActivityHashMap execute() {
+	public Collection<Activity> execute() {
 		return this.sip.processQuote(this.mkt, this.bid, this.ask, this.time);
 	}
 	

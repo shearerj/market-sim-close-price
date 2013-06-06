@@ -1,5 +1,7 @@
 package activity;
 
+import java.util.Collection;
+
 import entity.*;
 import event.*;
 
@@ -26,7 +28,7 @@ public class SubmitNMSMultipleBid extends Activity {
 		return new SubmitNMSMultipleBid(this.ag, this.price, this.quantity, this.time);
 	}
 	
-	public ActivityHashMap execute() {
+	public Collection<Activity> execute() {
 		return this.ag.executeSubmitNMSMultipleBid(this.price, this.quantity, this.time);
 	}
 	

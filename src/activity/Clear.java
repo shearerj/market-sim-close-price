@@ -1,5 +1,7 @@
 package activity;
 
+import java.util.Collection;
+
 import entity.*;
 import event.TimeStamp;
 
@@ -21,7 +23,7 @@ public class Clear extends Activity {
 		return new Clear(this.mkt, this.time);
 	}
 	
-	public ActivityHashMap execute() {
+	public Collection<Activity> execute() {
 		return this.mkt.clear(this.time);
 	}
 	

@@ -4,6 +4,7 @@ import entity.*;
 import event.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * Class for Activity of submitting a multiple-offer bid to a given market.
@@ -29,7 +30,7 @@ public class SubmitMultipleBid extends Activity {
 		return new SubmitMultipleBid(this.ag, this.mkt, this.price, this.quantity, this.time);
 	}
 	
-	public ActivityHashMap execute() {
+	public Collection<Activity> execute() {
 		return this.ag.executeSubmitMultipleBid(this.mkt, this.price, this.quantity, this.time);
 	}
 	

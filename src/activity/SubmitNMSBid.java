@@ -1,5 +1,7 @@
 package activity;
 
+import java.util.Collection;
+
 import entity.*;
 import event.*;
 
@@ -28,7 +30,7 @@ public class SubmitNMSBid extends Activity {
 		return new SubmitNMSBid(this.ag, this.price, this.quantity, this.duration, this.time);
 	}
 	
-	public ActivityHashMap execute() {
+	public Collection<Activity> execute() {
 		return this.ag.executeSubmitNMSBid(this.price, this.quantity, this.duration, this.time);
 	}
 	

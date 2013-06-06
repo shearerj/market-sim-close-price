@@ -7,6 +7,8 @@ import activity.*;
 import systemmanager.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.HashMap;
 
@@ -69,9 +71,9 @@ public class SIP extends Entity {
  	 * @param bid
  	 * @param ask
  	 * @param ts
- 	 * @return ActivityHashMap
+ 	 * @return Collection<Activity>
  	 */
-	public ActivityHashMap processQuote(Market mkt, int bid, int ask, TimeStamp ts) {
+	public Collection<Activity> processQuote(Market mkt, int bid, int ask, TimeStamp ts) {
 		int mktID = mkt.getID();
 		BestBidAsk q = new BestBidAsk();
 		q.bestBid = bid;
@@ -81,7 +83,7 @@ public class SIP extends Entity {
 		marketQuotes.put(mktID, q);
 		log.log(Log.INFO, ts + " | " + data.getMarket(mktID) + " " + 
 				"ProcessQuote: " + q);
-		return null;
+		return Collections.emptyList();
 	}
 	
 	/**
@@ -91,9 +93,9 @@ public class SIP extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap updateNBBO(MarketModel model, TimeStamp ts) {
+	public Collection<Activity> updateNBBO(MarketModel model, TimeStamp ts) {
 		
-		ActivityHashMap actMap = new ActivityHashMap();
+		Collection<Activity> actMap = new ArrayList<Activity>();
 		
 		int modelID = model.getID();
 		ArrayList<Integer> ids = model.getMarketIDs();

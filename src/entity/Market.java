@@ -7,6 +7,7 @@ import activity.*;
 import systemmanager.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 
 /**
@@ -124,7 +125,7 @@ public abstract class Market extends Entity {
 	 * @param clearTime
 	 * @return
 	 */
-	public abstract ActivityHashMap clear(TimeStamp clearTime);
+	public abstract Collection<Activity> clear(TimeStamp clearTime);
 
 	/**
 	 * @return map of bids (hashed by agent ID)
@@ -136,18 +137,18 @@ public abstract class Market extends Entity {
 	 * 
 	 * @param b
 	 * @param ts TimeStamp of bid addition
-	 * @return ActivityHashMap of further activities to add, if any
+	 * @return Collection<Activity> of further activities to add, if any
 	 */
-	public abstract ActivityHashMap addBid(Bid b, TimeStamp ts);
+	public abstract Collection<Activity> addBid(Bid b, TimeStamp ts);
 
 	/**
 	 * Remove bid for given agent from the market.
 	 * 
 	 * @param agentID
 	 * @param ts TimeStamp of bid removal
-	 * @return ActivityHashMap (unused for now)
+	 * @return Collection<Activity> (unused for now)
 	 */
-	public abstract ActivityHashMap removeBid(int agentID, TimeStamp ts);
+	public abstract Collection<Activity> removeBid(int agentID, TimeStamp ts);
 	
 	
 	/**
@@ -175,12 +176,12 @@ public abstract class Market extends Entity {
  	 * @param ts
  	 * @return
  	 */
-	public ActivityHashMap sendToSIP(TimeStamp ts) {
+	public Collection<Activity> sendToSIP(TimeStamp ts) {
                 int bid = this.getBidPrice().getPrice();
                 int ask = this.getAskPrice().getPrice();
 		log.log(Log.INFO, ts + " | " + this + " SendToSIP(" + bid + ", " + ask + ")");
 
-		ActivityHashMap actMap = new ActivityHashMap();
+		Collection<Activity> actMap = new ArrayList<Activity>();
 		MarketModel model = data.getModelByMarketID(this.getID());
 		SIP sip = data.getSIP();
 		if (data.nbboLatency.longValue() == 0) {
@@ -188,8 +189,8 @@ public abstract class Market extends Entity {
 			sip.updateNBBO(model, ts);
 		} else {
 			TimeStamp tsNew = ts.sum(data.nbboLatency);
-			actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new ProcessQuote(sip, this, bid, ask, tsNew));
-			actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(sip, model, tsNew));
+			actMap.add(new ProcessQuote(sip, this, bid, ask, tsNew));
+			actMap.add(new UpdateNBBO(sip, model, tsNew));
 		}
 		return actMap;
 	}
