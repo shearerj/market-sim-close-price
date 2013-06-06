@@ -44,6 +44,9 @@ public class Consts {
 	public final static String ROLE_MARKETMAKER = "MARKETMAKER";
 	public final static String ROLE_BACKGROUND = "BACKGROUND";
 	
+	public final static String TYPE_ENVIRONMENT = "ENV";
+	public final static String TYPE_PLAYER = "PLAYER";
+	
 	// **********************************************************
 	// Lists
 	// UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL
