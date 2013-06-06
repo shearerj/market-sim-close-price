@@ -4,15 +4,17 @@
   </description>
   <!-- set global properties for this build -->
   <property name="src" location="src"/>
+  <property name="test" location="test"/>
   <property name="build" location="build"/>
   <property name="dist"  location="dist"/>
   <property name="lib"	location="lib"/>
   <property name="name" value="HFT Simulation System"/>
   <property name="main-class" value="systemmanager/SystemManager"/>
   
-  <target name="check-for-changes">
+  <target name="check-for-changes" unless="force">
     <uptodate property="no-changes">
       <srcfiles dir="${src}" includes="**/*.java"/>
+      <srcfiles dir="${test}" includes="**/*.java"/>
       <mapper type="merge" to="${dist}/hft.jar"/>
     </uptodate>
   </target>
@@ -25,10 +27,10 @@
     <!-- Create the build directory structure used by compile -->
     <mkdir dir="${build}"/>
     <!-- Compile the java code from ${src} into ${build} -->
-    <javac srcdir="${src}" destdir="${build}" debug="on" deprecation="on" optimize="on">
+    <javac srcdir="${src}" destdir="${build}" debug="on" deprecation="on" optimize="on" includeantruntime="false">
       <classpath id="classpath" description="default classpath">
 	<pathelement path="${classpath}"/>
-	<fileset dir="lib">
+	<fileset dir="${lib}">
 	  <include name="*.jar"/>
 	</fileset>
       </classpath>
@@ -52,11 +54,16 @@
       </manifest>
     </jar>
   </target>
-  
+
+  <target name="force">
+    <property name="force" value="forced"/>
+  </target>
+
   <target name="clean"
 	  description="clean up" >
     <!-- Delete the ${build} and ${dist} directory trees -->
     <delete dir="${build}"/>
     <delete dir="${dist}"/>
   </target>
+
 </project>
