@@ -18,11 +18,11 @@ public class SubmitBid extends Activity {
 	private int quantity;
 	
 	public SubmitBid(Agent ag, Market mkt, int p, int q, TimeStamp t) {
+		super(t);
 		this.ag = ag;
 		this.mkt = mkt;
 		this.price = p;
 		this.quantity = q;
-		this.time = t;
 	}
 	
 	public SubmitBid deepCopy() {

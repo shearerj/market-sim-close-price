@@ -19,11 +19,11 @@ public class SubmitNMSBid extends Activity {
 	private TimeStamp duration;
 	
 	public SubmitNMSBid(SMAgent ag, int p, int q, TimeStamp d, TimeStamp t) {
+		super(t);
 		this.ag = ag;
 		this.price = p;
 		this.quantity = q;
 		this.duration = d;
-		this.time = t;
 	}
 	
 	public SubmitNMSBid deepCopy() {

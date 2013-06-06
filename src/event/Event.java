@@ -1,6 +1,7 @@
 package event;
 
 import java.util.Collection;
+import java.util.Random;
 
 import utils.RandomQueue;
 import activity.Activity;
@@ -19,8 +20,6 @@ public class Event extends RandomQueue<Activity> implements Comparable<Event> {
 
 	private final TimeStamp eventTime; // time in microseconds (only positive)
 
-	// TODO Add Random Constructors
-
 	/**
 	 * Constructor that creates empty event for a given time.
 	 * 
@@ -29,6 +28,11 @@ public class Event extends RandomQueue<Activity> implements Comparable<Event> {
 	 */
 	public Event(TimeStamp time) {
 		super();
+		eventTime = time;
+	}
+	
+	public Event(TimeStamp time, Random seed) {
+		super(seed);
 		eventTime = time;
 	}
 
@@ -41,6 +45,11 @@ public class Event extends RandomQueue<Activity> implements Comparable<Event> {
 	 */
 	public Event(TimeStamp time, Collection<? extends Activity> acts) {
 		super(acts);
+		eventTime = time;
+	}
+	
+	public Event(TimeStamp time, Collection<? extends Activity> acts, Random seed) {
+		super(acts, seed);
 		eventTime = time;
 	}
 

@@ -16,9 +16,9 @@ public class AgentReentry extends Activity {
 	private Agent ag;
 	
 	public AgentReentry(Agent ag, int priority, TimeStamp t) {
+		super(t);
 		this.ag = ag;
 		this.priority = priority;
-		this.time = t;
 	}
 	
 	public AgentReentry deepCopy() {

@@ -16,35 +16,30 @@ public class AgentStrategy extends Activity {
 	private Market mkt;
 
 	public AgentStrategy(Agent ag, TimeStamp t) {
-		this.ag = ag;
-		this.time = t;
-		this.mkt = null;
+		this(ag, null, t);
 	}
-	
+
 	public AgentStrategy(Agent ag, Market mkt, TimeStamp t) {
+		super(t);
 		this.ag = ag;
 		this.mkt = mkt;
-		this.time = t;
 	}
-	
+
 	public AgentStrategy deepCopy() {
-		if (mkt == null) {
-			return new AgentStrategy(this.ag, this.time);
-		} else {
-			return new AgentStrategy(this.ag, this.mkt, this.time);
-		}
+		return new AgentStrategy(this.ag, this.mkt, this.time);
 	}
-	
+
 	public Collection<Activity> execute() {
 		return ag.agentStrategy(time);
 	}
-	
+
+	@Override
 	public String toString() {
 		if (mkt == null) {
 			return new String("AgentStrategy::" + this.ag.toString());
 		} else {
-			return new String("AgentStrategy::" + this.ag.toString() + "," + 
-					this.mkt.toString());
+			return new String("AgentStrategy::" + this.ag.toString() + ","
+					+ this.mkt.toString());
 		}
 	}
 }

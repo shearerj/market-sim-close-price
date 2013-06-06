@@ -89,12 +89,23 @@ public class RandomQueueTest {
 	
 	@Test
 	public void offerPermutationTest() {
-		// Note, this test could fail due to inconceivably small random chance as well.
+		// Note, this test could fail due to inconceivably small random chance as well. 1/1000^1000
 		for (int i = 0; i < 1000; i++) {
-			Collection<Integer> numbers = new ArrayList<Integer>(1000);
-			RandomQueue<Integer> a = new RandomQueue<Integer>(numbers);
+			RandomQueue<Integer> a = new RandomQueue<Integer>(randomNumbers(1000));
 			a.add(0);
 			if (a.peek() == 0)
+				return;
+		}
+		fail();
+	}
+	
+	@Test
+	public void offerNonpermutationTest() {
+		// Note, this test could fail due to inconceivably small random chance as well. 1/2^10000 ~ 1/1000^1000
+		for (int i = 0; i < 10000; i++) {
+			RandomQueue<Integer> a = new RandomQueue<Integer>(randomNumbers(1));
+			a.add(0);
+			if (a.peek() != 0)
 				return;
 		}
 		fail();

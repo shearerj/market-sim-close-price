@@ -17,9 +17,9 @@ public class WithdrawBid extends Activity {
 	private Market mkt;
 	
 	public WithdrawBid(Agent ag, Market mkt, TimeStamp t) {
+		super(t);
 		this.ag = ag;
 		this.mkt = mkt;
-		this.time = t;
 	}
 	
 	public WithdrawBid deepCopy() {

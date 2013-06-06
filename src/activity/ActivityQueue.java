@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Random;
 
 import event.Event;
 import event.TimeStamp;
@@ -22,25 +23,40 @@ import event.TimeStamp;
  */
 public class ActivityQueue implements Queue<Activity> {
 
-	// TODO Add Random Number Handler
 	// TODO Don't allow null activities
 	// TODO Don't allow time stamps below current time unless = inf time
-	// TODO Switch PriorityQueue to HashPriorityQueue so we get constant time removal...
+	// TODO Switch PriorityQueue to HashPriorityQueue so we get constant time
+	// removal...
 
 	// Invariant that no event is ever empty at the end of execution.
+	//
 	// Note: Current implementation means instantTime stuff gets executed in a
 	// random order as well... May not be what we want, but if it is it provides
 	// a much simpler implementation.
+	//
+	// In general the rule should be, if one activity comes logically after
+	// another activity it should be scheduled by the activity that always
+	// proceeds it. Activities scheduled at the same time (even infinitely fast)
+	// may occur in any order.
 
 	protected PriorityQueue<Event> eventQueue;
 	protected HashMap<TimeStamp, Event> eventIndex;
 	protected int size;
+	protected long seed;
 
 	/**
 	 * Constructor for the EventQueue
 	 */
 	public ActivityQueue() {
-		this(8);
+		this(new Random().nextLong());
+	}
+
+	public ActivityQueue(long seed) {
+		this(8, seed);
+	}
+
+	public ActivityQueue(int capacity) {
+		this(capacity, new Random().nextLong());
 	}
 
 	/**
@@ -49,10 +65,11 @@ public class ActivityQueue implements Queue<Activity> {
 	 * 
 	 * @param capacity
 	 */
-	public ActivityQueue(int capacity) {
+	public ActivityQueue(int capacity, long rand) {
 		eventQueue = new PriorityQueue<Event>(capacity);
 		eventIndex = new HashMap<TimeStamp, Event>(capacity);
 		size = 0;
+		seed = rand;
 	}
 
 	@Override
@@ -103,12 +120,13 @@ public class ActivityQueue implements Queue<Activity> {
 
 	@Override
 	public Iterator<Activity> iterator() {
+		// Not sorted by time, but will show the random order for a time
 		return new ActivityQueueIterator(eventQueue.iterator());
 	}
 
 	@Override
 	public boolean remove(Object o) {
-		// Super slow
+		// Super inefficient
 		if (o == null || !(o instanceof Activity))
 			return false;
 		Activity act = (Activity) o;
@@ -153,7 +171,7 @@ public class ActivityQueue implements Queue<Activity> {
 
 	@Override
 	public Object[] toArray() {
-		// Not sorted, maybe not an issue...
+		// Not sorted
 		Object[] array = new Object[size];
 		int start = 0;
 		for (Event e : eventQueue) {
@@ -182,7 +200,10 @@ public class ActivityQueue implements Queue<Activity> {
 		TimeStamp t = act.getTime();
 		Event e = eventIndex.get(t);
 		if (e == null) {
-			e = new Event(t);
+			// This makes sure that a given event at a given time has the same
+			// random number generator regardless of when it was added to the
+			// queue.
+			e = new Event(t, new Random(seed ^ t.longValue()));
 			eventIndex.put(t, e);
 			eventQueue.add(e);
 		}
@@ -233,34 +254,51 @@ public class ActivityQueue implements Queue<Activity> {
 		size--;
 		return act;
 	}
-	
-	protected static class ActivityQueueIterator implements Iterator<Activity> {
+
+	protected class ActivityQueueIterator implements Iterator<Activity> {
 
 		protected Iterator<Event> eventIterator;
 		protected Iterator<Activity> activityIterator;
-		
+		// These two booleans keep track of whether every activity found in the
+		// event so far has been removed. If that's the case, and you remove an
+		// activity when there are no more activities left in the event, then it
+		// also removed the event. Thus preserving the invariant that there are
+		// no empty events in the eventQueue.
+		protected boolean removedEveryActivity;
+		protected boolean removedCurrentActivity;
+
 		protected ActivityQueueIterator(Iterator<Event> events) {
 			eventIterator = events;
 			activityIterator = Collections.emptyIterator();
+			removedEveryActivity = true;
+			removedCurrentActivity = false;
 		}
-		
+
 		@Override
 		public boolean hasNext() {
-			return eventIterator.hasNext() || activityIterator.hasNext(); 
+			return eventIterator.hasNext() || activityIterator.hasNext();
 		}
 
 		@Override
 		public Activity next() {
-			if (!activityIterator.hasNext())
+			removedEveryActivity &= removedCurrentActivity;
+			removedCurrentActivity = false;
+			if (!activityIterator.hasNext()) {
 				activityIterator = eventIterator.next().iterator();
+				removedEveryActivity = true;
+			}
 			return activityIterator.next();
 		}
 
 		@Override
 		public void remove() {
 			activityIterator.remove();
+			size--;
+			removedCurrentActivity = true;
+			if (removedEveryActivity && !activityIterator.hasNext())
+				eventIterator.remove();
 		}
-		
+
 	}
 
 }

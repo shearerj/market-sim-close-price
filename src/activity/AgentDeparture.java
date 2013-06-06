@@ -15,8 +15,8 @@ public class AgentDeparture extends Activity {
 	private Agent ag;
 	
 	public AgentDeparture(Agent ag, TimeStamp t) {
+		super(t);
 		this.ag = ag;
-		this.time = t;
 	}
 	
 	public AgentDeparture deepCopy() {

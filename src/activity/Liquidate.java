@@ -18,9 +18,9 @@ public class Liquidate extends Activity {
 	private Price p;
 	
 	public Liquidate(Agent ag, Price p, TimeStamp t) {
+		super(t);
 		this.ag = ag;
 		this.p = p;
-		this.time = t;
 	}
 	
 	public Liquidate deepCopy() {

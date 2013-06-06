@@ -19,11 +19,11 @@ public class SubmitMultipleBid extends Activity {
 	private ArrayList<Integer> quantity;
 	
 	public SubmitMultipleBid(Agent ag, Market mkt, ArrayList<Integer> p, ArrayList<Integer> q, TimeStamp t) {
+		super(t);
 		this.ag = ag;
 		this.mkt = mkt;
 		this.price = p;
 		this.quantity = q;
-		this.time = t;
 	}
 	
 	public SubmitMultipleBid deepCopy() {

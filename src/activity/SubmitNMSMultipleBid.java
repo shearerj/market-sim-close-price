@@ -18,10 +18,10 @@ public class SubmitNMSMultipleBid extends Activity {
 	private int[] quantity;
 	
 	public SubmitNMSMultipleBid(SMAgent ag, int[] p, int[] q, TimeStamp t) {
+		super(t);
 		this.ag = ag;
 		this.price = p;
 		this.quantity = q;
-		this.time = t;
 	}
 	
 	public SubmitNMSMultipleBid deepCopy() {

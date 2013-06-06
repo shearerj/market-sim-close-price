@@ -18,11 +18,11 @@ public class ProcessQuote extends Activity {
 	private int ask;
 	
 	public ProcessQuote(SIP sip, Market mkt, int bid, int ask, TimeStamp t) {
+		super(t);
 		this.sip = sip;
 		this.mkt = mkt;
 		this.bid = bid;
 		this.ask = ask;
-		this.time = t;
 	}
 	
 	public ProcessQuote deepCopy() {

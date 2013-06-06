@@ -17,9 +17,9 @@ public class UpdateNBBO extends Activity {
 	private MarketModel mdl;
 	
 	public UpdateNBBO(SIP sip, MarketModel mdl, TimeStamp t) {
+		super(t);
 		this.sip = sip;
 		this.mdl = mdl;
-		this.time = t;
 	}
 	
 	public UpdateNBBO deepCopy() {

@@ -16,8 +16,8 @@ public class AgentArrival extends Activity {
 	private Agent ag;
 	
 	public AgentArrival(Agent ag, TimeStamp t) {
+		super(t);
 		this.ag = ag;
-		this.time = t;
 	}
 	
 	public AgentArrival deepCopy() {

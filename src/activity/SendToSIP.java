@@ -15,8 +15,8 @@ public class SendToSIP extends Activity {
 	private Market mkt;
 	
 	public SendToSIP(Market mkt, TimeStamp t) {
+		super(t);
 		this.mkt = mkt;
-		this.time = t;
 	}
 	
 	public SendToSIP deepCopy() {
