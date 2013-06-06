@@ -14,6 +14,8 @@
 "ZIR_setup": "bidRange_2000_maxqty_5",
 "ZIP": "0",
 "ZIP_setup": "",
+"AA": "0",
+"AA_setup": "",
 "tick_size": "1",
 "nbbo_latency": "0",
 "arrival_rate": "0.075",

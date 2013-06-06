@@ -29,6 +29,7 @@ import event.TimeStamp;
  */
 public class PriorityActivityList {
 
+	// FIXME TreeMap instead of TreeSet and HashMap?
 	private TreeSet<Integer> priorityQueue;					// sorted priorities
 	private HashMap<Integer, ActivityList> activityListMap;	// hashed by priority
 	

@@ -151,6 +151,7 @@ public class Consts {
 	 */
 	public final static ObjectProperties getProperties(String type) {
 		
+		// UPDATE WHEN ADD NEW AGENT OR MARKET
 		ObjectProperties p = new ObjectProperties();
 		
 		if (type.equals(LA)) {
@@ -179,6 +180,10 @@ public class Consts {
 			p.put("beta","0.03");
 			p.put("betaVar", "0.005");
 			p.put("gamma","0.5");
+		}
+		if (type.equals(AA)) {
+			// FILL IN
+			p.put(AAAgent.BIDRANGE_KEY, "200"); // example only
 		}
 		return p;
 	}

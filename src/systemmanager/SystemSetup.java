@@ -376,6 +376,7 @@ public class SystemSetup {
 		} catch (Exception e) {
 			System.err.println(this.getClass().getSimpleName() + "::createNonPlayersForModel: error");
 			e.printStackTrace();
+			System.exit(1);
 		}
 	}
 
