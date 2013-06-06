@@ -8,8 +8,6 @@ package event;
 
 import java.util.*;
 
-import event.*;
-
 import systemmanager.Consts;
 
 import activity.Activity;

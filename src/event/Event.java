@@ -7,86 +7,61 @@ import utils.RandomQueue;
 import activity.Activity;
 
 /**
- * Class for an Event object. Each Event has a TimeStamp indicating when it is
- * to occur.
+ * Class representing an event in time. Each Event is a randomly ordered queue
+ * of activities and a TimeStamp indicating when it is to occur.
  * 
- * This class serves as the invoker in the Command pattern, so Event objects are
- * responsible for proving the information to call the Activity methods at a
- * later time.
+ * Null activitites may not be added to an Event
  * 
- * @author ewah
+ * @author ebrink
  */
 public class Event extends RandomQueue<Activity> implements Comparable<Event> {
 
 	private final TimeStamp eventTime; // time in microseconds (only positive)
 
-	/**
-	 * Constructor that creates empty event for a given time.
-	 * 
-	 * @param time
-	 * @param acts
-	 */
 	public Event(TimeStamp time) {
 		super();
 		eventTime = time;
 	}
-	
+
 	public Event(TimeStamp time, Random seed) {
 		super(seed);
 		eventTime = time;
 	}
 
-	/**
-	 * Constructor for an Event given TimeStamp time of occurrence
-	 * 
-	 * @param time
-	 * @param acts
-	 *            PriorityActivityList
-	 */
 	public Event(TimeStamp time, Collection<? extends Activity> acts) {
 		super(acts);
 		eventTime = time;
 	}
-	
-	public Event(TimeStamp time, Collection<? extends Activity> acts, Random seed) {
+
+	public Event(TimeStamp time, Collection<? extends Activity> acts,
+			Random seed) {
 		super(acts, seed);
 		eventTime = time;
 	}
 
-//	/**
-//	 * Copy constructor
-//	 * 
-//	 * @param e
-//	 */
-//	public Event(Event e) {
-//		this(e.eventTime, e.elements);
-//		// FIXME This will re-randomize the activities. Maybe not a good thing?
-//	}
-
-	/**
-	 * @return TimeStamp of the event's time.
-	 */
 	public TimeStamp getTime() {
 		return eventTime;
 	}
 
 	@Override
 	public boolean add(Activity act) {
-		if (act == null)
+		if (act == null) {
+			System.err.println("Tried to add null Activity to Event");
 			return false; // FIXME Handle Appropriately
-		else if (!eventTime.equals(act.getTime()))
-			return false; // FIXME Handle Appropriately
-		else
+		} else if (!eventTime.equals(act.getTime())) {
+			throw new IllegalArgumentException("Can't add an activity that doesn't share the time of the event");
+		} else {
 			return super.add(act);
+		}
 	}
 
-	/**
-	 * @param acts
-	 *            List of Activities to be added.
-	 */
+
+	@Override
 	public boolean addAll(Collection<? extends Activity> acts) {
-		if (acts == null)
+		if (acts == null) {
+			System.err.println("Tried to add null Activity to Event");
 			return false; // FIXME Handle Appropriately
+		}
 		boolean modified = false;
 		for (Activity act : acts)
 			modified |= add(act);
@@ -95,7 +70,8 @@ public class Event extends RandomQueue<Activity> implements Comparable<Event> {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder(eventTime.toString()).append(" | ");
+		StringBuilder sb = new StringBuilder(eventTime.toString())
+				.append(" | ");
 		for (Activity act : elements)
 			sb.append(act).append(" -> ");
 		return sb.substring(0, sb.length() - 4);

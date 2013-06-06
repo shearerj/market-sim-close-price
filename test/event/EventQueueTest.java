@@ -195,8 +195,8 @@ public class EventQueueTest {
 	public void randomDeterminismTest() {
 		Random rand = new Random();
 		long seed = rand.nextLong();
-		EventQueue q1 = new EventQueue(seed);
-		EventQueue q2 = new EventQueue(seed);
+		EventQueue q1 = new EventQueue(new Random(seed));
+		EventQueue q2 = new EventQueue(new Random(seed));
 		
 		List<Activity> acts = new ArrayList<Activity>();
 		for (int i = 0; i < 1000; i++) {

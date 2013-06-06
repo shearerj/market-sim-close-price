@@ -1,8 +1,5 @@
 package event;
 
-import java.util.Collection;
-import java.util.Map.Entry;
-
 import systemmanager.Log;
 import activity.Activity;
 

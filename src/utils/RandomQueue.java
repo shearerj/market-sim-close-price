@@ -11,12 +11,13 @@ import java.util.Queue;
 import java.util.Random;
 
 /**
- * @author erik
+ * Randomly ordered queue. Elements will come out in a random order independent
+ * of when they were inserted. Given a collection of elements in the queue at a
+ * given time. The probability that any specific element will be removed next is
+ * uniform.
  * 
- *         Randomly ordered queue. Elements will come out in a random order
- *         independent of when they were inserted. Given a collection of
- *         elements in the queue at a given time. The probability that any
- *         specific element will be removed next is uniform.
+ * @author ebrink
+ * 
  */
 public class RandomQueue<E> implements Queue<E> {
 

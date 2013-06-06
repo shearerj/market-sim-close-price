@@ -1,7 +1,6 @@
 package entity;
 
 import event.*;
-import model.*;
 import market.*;
 import activity.Activity;
 import activity.AgentStrategy;
@@ -28,6 +27,7 @@ import java.util.Random;
  */
 public class ZIPAgent extends BackgroundAgent {
 
+	@SuppressWarnings("unused")
 	private int bidRange;				// range for limit order
 	
 	public ZIPAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
@@ -56,6 +56,7 @@ public class ZIPAgent extends BackgroundAgent {
 		int q = 1;
 		// 0.50% chance of being either long or short
 		if (rand.nextDouble() < 0.5) q = -q;
+		@SuppressWarnings("unused")
 		int val = Math.max(0, data.getFundamentalAt(ts).sum(getPrivateValueAt(q)).getPrice());
 
 		// Insert events for the agent to sleep, then wake up again at timestamp tsNew

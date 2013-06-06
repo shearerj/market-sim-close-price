@@ -14,16 +14,27 @@ import java.util.Random;
 
 import activity.Activity;
 
-
 /**
- * @author ewah
+ * The EventQueue is a a queue of upcoming events which are composed of
+ * activities to be executed. The actual events are abstracted in this
+ * implementation, so this functions as a queue of activities. The main methods
+ * that should be used are "add," which adds a single activity to the queue,
+ * "addAll," which adds a collection of activities to the queue, and "remove,"
+ * which removes the activity at the head of the queue. Events that are added at
+ * the same TimeStamp will be dequed in a uniform random order. To make an event
+ * occur instantaneously give it a time of Consts.INF_TIME.
  * 
- *         This is essentially a wrapper class for PriorityQueue, where priority
- *         is the TimeStamp at which an event occurs.
+ * Note that because of the dequing mechanism, if Activity A is supposed to
+ * happen after Activity B, Activity A should queue up Activity B. Anything else
+ * may not guarentee that A always happens before B.
+ * 
+ * @author ebrink
+ * 
+ * 
  */
 public class EventQueue implements Queue<Activity> {
 
-	// TODO Don't allow null activities
+	// TODO Don't allow null activities / Handled kind of by Event...
 	// TODO Don't allow time stamps below current time unless = inf time
 	// TODO Switch PriorityQueue to HashPriorityQueue so we get constant time
 	// removal...
@@ -42,34 +53,25 @@ public class EventQueue implements Queue<Activity> {
 	protected PriorityQueue<Event> eventQueue;
 	protected HashMap<TimeStamp, Event> eventIndex;
 	protected int size;
-	protected long seed;
+	protected Random rand;
 
-	/**
-	 * Constructor for the EventQueue
-	 */
 	public EventQueue() {
-		this(new Random().nextLong());
+		this(new Random());
 	}
 
-	public EventQueue(long seed) {
+	public EventQueue(Random seed) {
 		this(8, seed);
 	}
 
 	public EventQueue(int capacity) {
-		this(capacity, new Random().nextLong());
+		this(capacity, new Random());
 	}
 
-	/**
-	 * Constructor for the EventQueue where capacity is specified by a
-	 * parameter.
-	 * 
-	 * @param capacity
-	 */
-	public EventQueue(int capacity, long rand) {
+	public EventQueue(int capacity, Random seed) {
 		eventQueue = new PriorityQueue<Event>(capacity);
 		eventIndex = new HashMap<TimeStamp, Event>(capacity);
 		size = 0;
-		seed = rand;
+		rand = seed;
 	}
 
 	@Override
@@ -77,9 +79,12 @@ public class EventQueue implements Queue<Activity> {
 		return eventQueue.isEmpty();
 	}
 
+	/**
+	 * This method can be very inefficient, and shouldn't be used if it can be
+	 * helped.
+	 */
 	@Override
 	public String toString() {
-		// This is super slow!
 		StringBuilder sb = new StringBuilder("Q: ");
 		List<Event> copy = new ArrayList<Event>(eventQueue);
 		Collections.sort(copy);
@@ -118,15 +123,21 @@ public class EventQueue implements Queue<Activity> {
 		return true;
 	}
 
+	/**
+	 * This iterator is not sorted by time, but within a given time, the
+	 * activities are in the random order they will be drawn from.
+	 */
 	@Override
 	public Iterator<Activity> iterator() {
-		// Not sorted by time, but will show the random order for a time
 		return new ActivityQueueIterator(eventQueue.iterator());
 	}
 
+	/**
+	 * This method can be very inefficient, and shouldn't be used if it can be
+	 * helped.
+	 */
 	@Override
 	public boolean remove(Object o) {
-		// Super inefficient
 		if (o == null || !(o instanceof Activity))
 			return false;
 		Activity act = (Activity) o;
@@ -143,18 +154,24 @@ public class EventQueue implements Queue<Activity> {
 		return modified;
 	}
 
+	/**
+	 * This method can be very inefficient, and shouldn't be used if it can be
+	 * helped.
+	 */
 	@Override
 	public boolean removeAll(Collection<?> c) {
-		// Super inefficient
 		boolean modified = false;
 		for (Object o : c)
 			modified |= remove(o);
 		return modified;
 	}
 
+	/**
+	 * This method can be very inefficient, and shouldn't be used if it can be
+	 * helped.
+	 */
 	@Override
 	public boolean retainAll(Collection<?> c) {
-		// Super inefficient
 		boolean modified = false;
 		for (Iterator<Event> it = eventQueue.iterator(); it.hasNext();) {
 			Event e = it.next();
@@ -169,9 +186,11 @@ public class EventQueue implements Queue<Activity> {
 		return modified;
 	}
 
+	/**
+	 * The elements in this array are not sorted.
+	 */
 	@Override
 	public Object[] toArray() {
-		// Not sorted
 		Object[] array = new Object[size];
 		int start = 0;
 		for (Event e : eventQueue) {
@@ -181,6 +200,9 @@ public class EventQueue implements Queue<Activity> {
 		return array;
 	}
 
+	/**
+	 * The elements in this array are not sorted.
+	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T[] toArray(T[] a) {
@@ -200,10 +222,10 @@ public class EventQueue implements Queue<Activity> {
 		TimeStamp t = act.getTime();
 		Event e = eventIndex.get(t);
 		if (e == null) {
-			// This makes sure that a given event at a given time has the same
-			// random number generator regardless of when it was added to the
-			// queue.
-			e = new Event(t, new Random(seed ^ t.longValue()));
+			// This makes all event's use the same random number generator. This
+			// may a little chaotic, but at the moment I can't think of a way
+			// around it.
+			e = new Event(t, rand);
 			eventIndex.put(t, e);
 			eventQueue.add(e);
 		}

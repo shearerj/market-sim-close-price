@@ -93,7 +93,7 @@ public class RandomQueueTest {
 		for (int i = 0; i < 1000; i++) {
 			RandomQueue<Integer> a = new RandomQueue<Integer>(randomNumbers(1000));
 			a.add(0);
-			if (a.peek() == 0)
+			if (a.peek() != 0)
 				return;
 		}
 		fail();
@@ -105,7 +105,7 @@ public class RandomQueueTest {
 		for (int i = 0; i < 10000; i++) {
 			RandomQueue<Integer> a = new RandomQueue<Integer>(randomNumbers(1));
 			a.add(0);
-			if (a.peek() != 0)
+			if (a.peek() == 0)
 				return;
 		}
 		fail();

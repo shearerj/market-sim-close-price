@@ -683,6 +683,7 @@ public abstract class Agent extends Entity {
 	public void logTransactions(TimeStamp ts) {
 		
 		int rp = getRealizedProfit();
+		@SuppressWarnings("unused")
 		int up = getUnrealizedProfit();
 
 		String s = ts.toString() + " | " + this +  " Agent::logTransactions: " + 
@@ -1093,6 +1094,7 @@ public abstract class Agent extends Entity {
 	 * @param rateParam
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private double getExponentialRV(double rateParam) {
 		double r = rand.nextDouble();
 		return -Math.log(r) / rateParam;

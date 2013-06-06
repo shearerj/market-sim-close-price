@@ -131,7 +131,8 @@ public class SimulationSpec {
 		 *******************/
 		for (int i = 0; i < Consts.roles.length; i++) {
 			Object strats = assignments.get(Consts.roles[i]);
-			if (strats != null) {			
+			if (strats != null) {
+				@SuppressWarnings("unchecked")
 				ArrayList<String> strategies = (ArrayList<String>) strats;
 				for (Iterator<String> it = strategies.iterator(); it.hasNext(); ) {
 					String strat = it.next();
