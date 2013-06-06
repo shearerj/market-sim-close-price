@@ -32,7 +32,7 @@ public abstract class HFTAgent extends Agent {
 	}
 	
 	/**
-	 * Agent arrives in a single market.
+	 * Agent arrives in all markets.
 	 * 
 	 * @param ts
 	 * @return ActivityHashMap

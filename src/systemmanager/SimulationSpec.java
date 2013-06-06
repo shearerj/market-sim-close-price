@@ -76,6 +76,7 @@ public class SimulationSpec {
 		data.simLength = new TimeStamp(Integer.parseInt(getValue("sim_length")));
 		data.tickSize = Integer.parseInt(getValue("tick_size"));	
 		data.nbboLatency = new TimeStamp(Integer.parseInt(getValue("nbbo_latency")));
+		data.hftLatency = new TimeStamp(Integer.parseInt(getValue("hft_latency"))); // added chris
 		data.arrivalRate = Double.parseDouble(getValue("arrival_rate"));
 		data.reentryRate = Double.parseDouble(getValue("reentry_rate"));
 		data.meanValue = Integer.parseInt(getValue("mean_value"));
