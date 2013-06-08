@@ -15,12 +15,11 @@ import java.util.List;
 public class Consts {
 	
 	// 0 indicates no surplus discounting
-//	public final static double[] rhos = 
-//		{0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009};
 	public final static double[] rhos = {0, 0.0006};
+//	{0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009};
 	
-	// 0 means sampling every timestep
-	public final static int[] windows = {0, 250};	
+	// 0 means sampling every time step
+	public final static int[] periods = {0, 250};	
 	
 	// **********************************************************
 	// Agent, market, and model types
@@ -66,7 +65,6 @@ public class Consts {
 			Arrays.asList(ZI, ZIR, ZIP);
 	
 	// **********************************************************
-	
 	// Setting up models
 	public final static String MODEL_CONFIG_KEY = "config";
 	public final static String MODEL_CONFIG_NONE = "NONE";
@@ -101,7 +99,24 @@ public class Consts {
 	public final static String NAN = "NaN";
 	public final static double DOUBLE_NAN = Double.NaN;
 	
+	// **********************************************************
+	// FILENAMES
+	// Directories
+	public final static String configDir = "config/";
+	public final static String logDir = "logs/";
 	
+	// Config/spec file names
+	public final static String simSpecFile = "simulation_spec.json";
+	public final static String configFile = "env.properties";
+	public final static String obsFile = "observation";
+
+	// Constants in simulation_spec file
+	public final static String setupSuffix = "_setup";
+	
+	
+
+	// **********************************************************
+	// METHODS
 	
 	/**
 	 * Returns the market type based on the class name.
@@ -132,21 +147,7 @@ public class Consts {
 	public static String getModelType(String className) {
 		return className.toUpperCase();
 	}
-	
-	// Directories
-	public final static String configDir = "config/";
-	public final static String logDir = "logs/";
 
-	// ----- SIMULATION -----
-	
-	// Config/spec file names
-	public final static String simSpecFile = "simulation_spec.json";
-	public final static String configFile = "env.properties";
-	public final static String obsFilename = "observation";
-
-	// Constants in simulation_spec file
-	public final static String setupSuffix = "_setup";
-	
 	/**
 	 * Get hard-coded default properties for a given entity type.
 	 * 

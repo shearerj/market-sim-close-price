@@ -18,17 +18,11 @@ import java.text.DateFormat;
  */
 public class SystemManager {
 
-	private EventManager eventManager;
-	private SystemData data;
-	private Observations obs;
-	
-	private static int num;				// sample number for labeling output files
-	private static String simFolder;	// simulation folder name
-	
-	private Properties envProps;
-	private Log log;
-	private int logLevel;
-	private String logFilename;
+	private static EventManager eventManager;
+	private static SystemData data;
+	private static Observations obs;
+	private static Properties envProps;
+	private static Log log;
 
 	/**
 	 * Constructor
@@ -51,12 +45,13 @@ public class SystemManager {
 		SystemManager manager = new SystemManager();
 
 		if (args.length == 2) {
-			simFolder = args[0] + "/";
-			if (simFolder.charAt(0) == '/') simFolder = simFolder.substring(1);
-			num = Integer.parseInt(args[1]);
+			data.simDir = args[0] + "/";
+			if (data.simDir.charAt(0) == '/') 
+				data.simDir = data.simDir.substring(1);
+			data.num = Integer.parseInt(args[1]);
 		} else {
-			simFolder = "";
-			num = 1;
+			data.simDir = "";
+			data.num = 1;
 		}
 		
 		manager.setup();
@@ -64,34 +59,7 @@ public class SystemManager {
 		manager.aggregateResults();
 		manager.close();
 	}
-	
-	
-	/**
-	 * Method to execute all events in the Event Queue.
-	 */
-	public void executeEvents() {
-		try {
-			while (!eventManager.isEventQueueEmpty()) {
-				eventManager.executeCurrentEvent();
-			}
-			String s = "STATUS: Event queue is now empty.";
-			log.log(Log.INFO, s);
-		} catch (Exception e) {
-			System.err.print(e);
-		}
-	}
 
-	/**
-	 * Shuts down simulation. Removes empty log file if log level is 0.
-	 */
-	public void close() {
-		File f = new File(simFolder + Consts.logDir);
-		if (f.exists() && logLevel == 0) {
-			// remove the empty log file
-			f.delete();
-		}
-	}
-	
 	/**
 	 * Initialize parameters based on configuration file.
 	 */
@@ -103,13 +71,12 @@ public class SystemManager {
 
 			// Read environment parameters & set up environment
 			loadConfig(envProps, Consts.configDir + Consts.configFile);
-			data.obsNum = num;
-
+			
 			// Create log file
-			logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
+			int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
 			Date now = new Date();
-			logFilename = simFolder.substring(0, simFolder.length()-1).replace("/", "-") + 
-					"_" + num;
+			String logFilename = data.simDir.substring(0, 
+					data.simDir.length()-1).replace("/", "-") + "_" + data.num;
 			logFilename += "_" + DateFormat.getDateInstance(DateFormat.MEDIUM, 
 					Locale.UK).format(now);
 			logFilename += "_" + DateFormat.getTimeInstance(DateFormat.MEDIUM, 
@@ -118,7 +85,7 @@ public class SystemManager {
 			
 			try {
 				// Check first if directory exists
-				File f = new File(simFolder);
+				File f = new File(data.simDir);
 				if (!f.exists()) {
 					// Simulations directory not found
 					System.err.println(this.getClass().getSimpleName() + 
@@ -126,17 +93,18 @@ public class SystemManager {
 					System.exit(1);
 				}
 				// Check for logs directory
-				f = new File(simFolder + Consts.logDir);
+				String logPath = data.simDir + Consts.logDir;
+				f = new File(logPath);
 				if (!f.exists()) {
 					// Create directory
-					new File(simFolder + Consts.logDir).mkdir();
+					new File(logPath).mkdir();
 				}
-				log = new Log(logLevel, ".", simFolder + Consts.logDir + logFilename + 
-						".txt", true);
+				// Create log file
+				log = new Log(logLevel, ".", logPath + logFilename + ".txt", true);
 			} catch (Exception e) {
-				e.printStackTrace();
 				System.err.println(this.getClass().getSimpleName() + 
 						"::setup(String): error creating log file");
+				e.printStackTrace();
 			}
 
 			// Log properties
@@ -145,22 +113,21 @@ public class SystemManager {
 			// Read simulation specification file
 			try {
 				// Check first if simulation spec file exists
-				File f = new File(simFolder + Consts.simSpecFile);
+				File f = new File(data.simDir + Consts.simSpecFile);
 				if (!f.exists()) {
 					// Spec file is not found
 					System.err.println(this.getClass().getSimpleName() + 
 							"::setup(String): simulation_spec.json file not found");
 					System.exit(1);
 				}
-				log = new Log(logLevel, ".", simFolder + Consts.logDir + logFilename + 
-						".txt", true);
 			} catch (Exception e) {
-				e.printStackTrace();
 				System.err.println(this.getClass().getSimpleName() + 
 						"::setup(String): error accessing spec file");
+				e.printStackTrace();
 			}
-			SimulationSpec specs = new SimulationSpec(simFolder + Consts.simSpecFile, 
-					log, data);
+			// Read simulation_spec.json file
+			SimulationSpec specs = new SimulationSpec(data.simDir + 
+					Consts.simSpecFile,	log, data);
 
 			// Create event manager
 			eventManager = new EventManager(data.simLength, log);
@@ -174,6 +141,31 @@ public class SystemManager {
 		}
 	}
 	
+	/**
+	 * Method to execute all events in the Event Queue.
+	 */
+	public void executeEvents() {
+		try {
+			while (!eventManager.isEventQueueEmpty()) {
+				eventManager.executeCurrentEvent();
+			}
+			String s = "STATUS: Event queue is now empty.";
+			log.log(Log.INFO, s);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Shuts down simulation. Removes empty log file if log level is 0.
+	 */
+	public void close() {
+		File f = new File(data.simDir + Consts.logDir);
+		if (f.exists() && log.getLevel() == Log.NO_LOGGING) {
+			// remove the empty log file
+			f.delete();
+		}
+	}
 	
 	/**
 	 * Load a configuration file InputStream into a Properties object.
@@ -187,10 +179,9 @@ public class SystemManager {
 			p.load(config);
 		} catch (IOException e) {
 			String s = this.getClass().getSimpleName() + "::loadConfig(InputStream): " + 
-					"error opening/processing config file: " 
-						+ config + "/" + e;
+					"error opening/processing config file: " + config + "/" + e;
 			log.log(Log.ERROR, s);
-			System.err.print(s);
+			System.err.println(s);
 			System.exit(0);
 		}
 	}
@@ -206,10 +197,9 @@ public class SystemManager {
 			loadInputStream(p, new FileInputStream(config));
 		} catch (FileNotFoundException e) {
 			String s = this.getClass().getSimpleName() + "::loadConfig(String): " + 
-					"error opening/processing config file: " 
-						+ config + "/" + e;
+					"error opening/processing config file: " + config + "/" + e;
 			log.log(Log.ERROR, s);
-			System.err.print(s);
+			System.err.println(s);
 			System.exit(0);
 		}
 	}
@@ -220,15 +210,15 @@ public class SystemManager {
 	 */
 	public void aggregateResults() {
 		try {			
-			File file = new File(simFolder + Consts.obsFilename + num + ".json");
+			File file = new File(data.simDir + Consts.obsFile + data.num + ".json");
 			FileWriter txt = new FileWriter(file);
 			txt.write(obs.generateObservationFile());
 			txt.close();
 		} catch (Exception e) {
 			String s = this.getClass().getSimpleName() + "::aggregateResults(): " + 
 						"error creating observation file";
-			e.printStackTrace();
 			System.err.println(s);
+			e.printStackTrace();
 		}
 	}
 }

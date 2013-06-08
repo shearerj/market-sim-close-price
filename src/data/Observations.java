@@ -65,7 +65,7 @@ public class Observations {
 	public final static String ALTERNATE = "alt";
 	public final static String TRANSACT = "transact";
 	public final static String NO_TRANSACT = "notrans";
-	public final static String WINDOW = "win";
+	public final static String PERIODICITY = "win";
 	
 	// Suffixes
 	public final static String AGENTSETUP = "setup";
@@ -74,6 +74,9 @@ public class Observations {
 	public final static String TOTAL = "total";
 	public final static String NBBO = "nbbo";
 	
+	public final static String TIMESERIES_MAXTIME = "maxtime";
+	
+	private long maxTime;
 
 	/**
 	 * Constructor
@@ -108,11 +111,12 @@ public class Observations {
 		for (Integer id : data.getPlayerIDs()) {
 			addObservation(id);
 		}
-		addFeature("", getConfiguration());
 		
 		// set up max time (where most agents have arrived)
 		long time = Math.round(data.getNumEnvAgents() / data.arrivalRate);
-		long maxTime = Market.quantize((int) time, 1000);
+		maxTime = Market.quantize((int) time, 1000);
+		
+		addFeature("", getConfiguration());
 		
 		// iterate through all models
 		for (MarketModel model : data.getModels().values()) {
@@ -122,8 +126,8 @@ public class Observations {
 			addFeature(modelName + EXECTIME, getTimeToExecution(model));
 			addFeature(modelName + TRANSACTIONS, getTransactionInfo(model));
 			addFeature(modelName + SPREADS, getSpread(model, maxTime));
-			for (int win : Consts.windows) {
-				addFeature(modelName + PRICE + VOL, getVolatility(model, win, maxTime));
+			for (int period : Consts.periods) {
+				addFeature(modelName + PRICE + VOL, getVolatility(model, period, maxTime));
 			}
 			addFeature(modelName + Consts.ROLE_MARKETMAKER.toLowerCase(), 
 					getMarketMakerInfo(model));
@@ -177,7 +181,23 @@ public class Observations {
 			((ArrayList<Object>) observations.get(PLAYERS_KEY)).add(obs);
 		}
 	}
+	
+	
+	public void outputSeries(TimeSeries s, String type) {
+		s.writePointsToCSFile(data.simDir + Consts.logDir + type + ".csv");
+		s.writeSeriesToFile(data.simDir + Consts.logDir + type + ".txt");
+	}
 
+	public void outputSampledSeries(TimeSeries s, String type) {
+		long time = Math.round(data.getNumEnvAgents() / data.arrivalRate);
+		long maxTime = Market.quantize((int) time, 1000);
+		
+		s.writePointsToCSFile(data.simDir + Consts.logDir + type + ".csv");
+		for (int period : Consts.periods) {
+			s.writeSampledSeriesToFile(period, maxTime,
+					data.simDir + Consts.logDir + type + "_" + period + ".csv");
+		}
+	}
 	
 	/********************************************
 	 * Data aggregation
@@ -188,7 +208,7 @@ public class Observations {
 	 */
 	public Feature getConfiguration() {
 		Feature config = new Feature();
-		config.put(OBS_KEY, data.obsNum);
+		config.put(OBS_KEY, data.num);
 		config.put(SimulationSpec.SIMULATION_LENGTH, data.simLength);
 		config.put(SimulationSpec.TICK_SIZE, data.tickSize);
 		config.put(SimulationSpec.LATENCY, data.nbboLatency);
@@ -199,6 +219,8 @@ public class Observations {
 		config.put(SimulationSpec.FUNDAMENTAL_SHOCK_VAR, data.shockVar);
 		config.put(SimulationSpec.PRIVATE_VALUE_VAR, data.pvVar);
 
+		config.put(TIMESERIES_MAXTIME, maxTime);
+		
 		for (AgentPropsPair app : data.getEnvAgentMap().keySet()) {
 			String agType = app.getAgentType();
 			config.put(agType + "_" + NUM, data.getEnvAgentMap().get(app));
@@ -341,13 +363,13 @@ public class Observations {
 		}
 		
 		// compute RMSD (for price discovery) at different sampling frequencies
-		for (int window : Consts.windows) {
+		for (int window : Consts.periods) {
 			String prefix = "";
 			if (window > 0) {
-				prefix += WINDOW + window;
+				prefix += PERIODICITY + window;
 			}
-			double[] pr = transPrices.getSampleArray(window, data.simLength.longValue());
-			double[] fund = fundPrices.getSampleArray(window, data.simLength.longValue());
+			double[] pr = transPrices.getSampledArray(window, data.simLength.longValue());
+			double[] fund = fundPrices.getSampledArray(window, data.simLength.longValue());
 			feat.addRMSD(prefix, "", new DescriptiveStatistics(pr), 
 					new DescriptiveStatistics(fund));
 		}
@@ -374,6 +396,7 @@ public class Observations {
 				double med = feat.addMedianUpToTime("", MARKET + (-mktID), 
 						spreads, maxTime);
 				medians.addValue(med);
+				this.outputSeries(s, SPREADS);
 			}
 		}
 		// average of median market spreads (for all markets in this model)
@@ -398,15 +421,15 @@ public class Observations {
 	 * 	 window sizes) the standard deviation of logarithmic returns.
 	 * 
 	 * @param model
-	 * @param window
+	 * @param period
 	 * @param maxTime
 	 * @return
 	 */
-	public Feature getVolatility(MarketModel model, int window, long maxTime) {
+	public Feature getVolatility(MarketModel model, int period, long maxTime) {
 		Feature feat = new Feature();
 		String prefix = "";
-		if (window > 0) {
-			prefix += WINDOW + window;
+		if (period > 0) {
+			prefix += PERIODICITY + period;
 		}
 		
 		DescriptiveStatistics stddev = new DescriptiveStatistics();
@@ -415,7 +438,7 @@ public class Observations {
 		for (int mktID : model.getMarketIDs()) {
 			TimeSeries mq = data.marketMidQuote.get(mktID);
 			if (mq != null) {
-				double[] midquote = mq.getSampleArray(window, maxTime);
+				double[] midquote = mq.getSampledArray(period, maxTime);
 				
 				// compute log price volatility for this market
 				DescriptiveStatistics prices = new DescriptiveStatistics(midquote);
@@ -518,48 +541,6 @@ public class Observations {
 
 
 	
-//	/**
-//	 * Construct a double array storing a time series from a HashMap of integers
-//	 * hashed by TimeStamp. Starts recording at first time step, even if value
-//	 * undefined. Will remove any undefined values from the beginning of the 
-//	 * array and cut it off at maxTime.
-//	 * 
-//	 * @param series
-//	 * @param maxTime	-1 if not truncating time series
-//	 * @return
-//	 */
-//	private DescriptiveStatistics transformSeries(HashMap<TimeStamp,Double> series, 
-//			long maxTime) {
-//		// sort TimeStamps first (not necessarily sorted in HashMap)
-//		Set<TimeStamp> times = new TreeSet<TimeStamp>(series.keySet());
-//		
-//		DescriptiveStatistics ds = new DescriptiveStatistics();
-//		TimeStamp prevTime = null;
-//		for (Iterator<TimeStamp> it = times.iterator(); it.hasNext();) {
-//			if (prevTime == null)
-//				prevTime = it.next();
-//			else {
-//				TimeStamp nextTime = it.next();
-//				// fill up to nextTime as long as defined
-//				if (series.get(prevTime).intValue() != Consts.INF_PRICE) {
-//					for (long i = prevTime.longValue();	i < nextTime.longValue(); i++) {
-//						if (i >= maxTime && maxTime > 0) break;
-//						ds.addValue(series.get(prevTime));
-//					}
-//				}
-//				prevTime = nextTime;
-//			}
-//		}
-//		// fill up to maxTime
-//		if (prevTime.longValue() <= maxTime && maxTime > 0) {
-//			if (series.get(prevTime).intValue() != Consts.INF_PRICE) {
-//				for (long i = prevTime.longValue(); i < maxTime; i++) {
-//					ds.addValue(series.get(prevTime));
-//				}
-//			}
-//		}
-//		return ds;
-//	}
 	
 //	/**
 //	 * Computes depth metrics the given market IDs.
@@ -604,29 +585,6 @@ public class Observations {
 //		addAllStatistics(feat, values, "");
 //		return feat;
 //	}
-	
-//	/**
-//	 * Extracts features of a list of prices
-//	 * 
-//	 * @param allPrices
-//	 *            ArrayList of Prices
-//	 * @param description
-//	 *            is prefix to append to key in map
-//	 * @return
-//	 */
-//	public HashMap<String, Object> getPriceFeatures(ArrayList<Price> allPrices) {
-//		HashMap<String, Object> feat = new HashMap<String, Object>();
-//
-//		Object[] prices = allPrices.toArray();
-//		double[] values = new double[prices.length];
-//		for (int i = 0; i < values.length; i++) {
-//			Price tmp = (Price) prices[i];
-//			values[i] = (double) tmp.getPrice();
-//		}
-//		addAllStatistics(feat, values, "");
-//		return feat;
-//	}
-//
 //	
 //	/**
 //	 * Buckets based on comparison with the performance in the centralized call

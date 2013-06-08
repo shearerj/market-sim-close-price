@@ -68,6 +68,13 @@ public class Surplus {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return surplus.values().toString();
+	}
+	
 	
 //	/**
 //	 * Iterates through all transactions and sums up surplus for all agents of a 

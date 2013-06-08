@@ -31,7 +31,8 @@ import java.util.*;
  */
 public class SystemData {
 
-	public int obsNum;									// observation number
+	public int num;										// observation number
+	public String simDir;							// simulations directory
 	public boolean EGTA;								// true if EGTA use case
 	
 	// Model information
@@ -45,7 +46,7 @@ public class SystemData {
 	public HashMap<Integer,PQBid> bids;					// all bids ever, hashed by bid ID
 	public HashMap<Integer,Price> privateValues;		// private values hashed by bid ID
 	public HashMap<Integer,PQTransaction> transactions;	// hashed by transaction ID
-	public HashMap<Integer,List<PQTransaction> > transactionLists; //hashed by market ID
+	public HashMap<Integer,List<PQTransaction> > transactionLists; // hashed by market ID
 	public HashMap<Integer,Quote> quotes;				// hashed by market ID
 	public HashMap<Integer,Agent> agents;				// (all) agents hashed by ID
 	public HashMap<Integer,Agent> players;				// players (for EGTA)
@@ -638,7 +639,8 @@ public class SystemData {
 		if (submissionTime.containsKey(bidID)) {
 			timeToExecution.put(bidID, ts.diff(submissionTime.get(bidID)));
 		} else {
-			System.err.print("ERROR: submission time does not contain bidID " + bidID);
+			System.err.println(this.getClass().getSimpleName() + 
+					":: submission time does not contain bidID " + bidID);
 		}
 	}
 
