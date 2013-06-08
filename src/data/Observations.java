@@ -129,7 +129,7 @@ public class Observations {
 					getMarketMakerInfo(model));
 			
 			// TODO - need to remove the position balance hack
-			addFeature(modelName + ROUTING, getRegNMSRoutingInfo(model));
+			// addFeature(modelName + ROUTING, getRegNMSRoutingInfo(model));
 		}
 		
 	}

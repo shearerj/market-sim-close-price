@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 
 /**
- * Stores surplus for a given value of rho (discount factor).
+ * Wrapper class for storing surplus for a given rho (discount factor).
  * Internal HashMap surplus is hashed by agentID, values are surplus
  * for each agent.
  * 

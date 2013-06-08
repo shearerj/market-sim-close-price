@@ -71,13 +71,16 @@ public class SimulationSpec {
 			JSONObject array = (JSONObject) obj;
 			assignments = (JSONObject) array.get(ASSIGN_KEY);
 			params = (JSONObject) array.get(CONFIG_KEY);
+			isr.close();
+			is.close();
 		} catch (IOException e) {
-			log.log(Log.ERROR, this.getClass().getSimpleName() + 
+			System.err.println(this.getClass().getSimpleName() + 
 					"::loadFile(String): error opening/processing spec file: " +
-					specFile + "/" + e);
+					specFile);
+			e.printStackTrace();
 		} catch (ParseException e) {
-			log.log(Log.ERROR, this.getClass().getSimpleName() + 
-					"::loadFile(String): JSON parsing error: " + e);
+			System.err.println(this.getClass().getSimpleName() + 
+					"::loadFile(String): JSON parsing error");
 		}
 	}
 	

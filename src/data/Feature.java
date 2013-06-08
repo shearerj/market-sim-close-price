@@ -71,6 +71,14 @@ public class Feature {
 	}
 	
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return ft.toString();
+	}
+	
+	
 	/********************************************
 	 * Statistics
 	 *******************************************/

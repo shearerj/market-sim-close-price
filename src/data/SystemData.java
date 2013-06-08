@@ -81,12 +81,12 @@ public class SystemData {
 	public HashMap<Integer,TimeSeries> marketSpread;			// hashed by market ID
 	public HashMap<Integer,TimeSeries> NBBOSpread;				// hashed by model ID
 	public HashMap<Integer,TimeSeries> marketMidQuote;			// hashed by market ID
+	public HashMap<Integer,TimeSeries> marketDepth;				// hashed by market ID
+	
 	public HashMap<Integer,TimeStamp> timeToExecution;		 	// hashed by bid ID
 	public HashMap<Integer,TimeStamp> submissionTime;			// hashed by bid ID
-	public HashMap<Integer,TimeSeries> marketDepth;				// hashed by market ID
-//	public HashMap<Double,HashMap<Integer,Double>> allSurplus;
 	public HashMap<Integer,HashMap<Double,Surplus>> modelSurplus; // hashed by model ID
-																  // & then by rho
+																  // then by rho
 	
 	/**
 	 * Constructor
@@ -121,7 +121,6 @@ public class SystemData {
 		timeToExecution = new HashMap<Integer,TimeStamp>();
 		submissionTime = new HashMap<Integer,TimeStamp>();
 		modelSurplus = new HashMap<Integer,HashMap<Double,Surplus>>();
-//		allSurplus = new HashMap<Double,HashMap<Integer,Double>>();
 		
 	}
 	
@@ -280,13 +279,6 @@ public class SystemData {
 	public HashMap<AgentPropsPair, Integer> getPlayerMap() {
 		return playerMap;
 	}
-	
-//	/**
-//	 * @return modelAgentMap
-//	 */
-//	public HashMap<Integer, ArrayList<AgentPropsPair>> getModelAgentMap() {
-//		return modelAgentMap;
-//	}
 	
 	/**
 	 * @param modelID
@@ -544,7 +536,6 @@ public class SystemData {
 			marketSpread.put(mktID, new TimeSeries());
 		}
 		marketSpread.get(mktID).add(ts, (double) spread);
-		
 	}	
 	
 	/**
