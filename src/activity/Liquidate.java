@@ -27,8 +27,8 @@ public class Liquidate extends Activity {
 		return new Liquidate(this.ag, this.p, this.time);
 	}
 	
-	public Collection<Activity> execute() {
-		return this.ag.executeLiquidate(this.p, this.time);
+	public Collection<Activity> execute(TimeStamp currentTime) {
+		return this.ag.executeLiquidate(this.p, currentTime);
 	}
 	
 	public String toString() {

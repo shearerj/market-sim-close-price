@@ -28,7 +28,7 @@ public abstract class Activity {
 	 * 
 	 * @return hash table of generated Activity vectors, hashed by TimeStamp
 	 */
-	public abstract Collection<Activity> execute();
+	public abstract Collection<Activity> execute(TimeStamp currentTime);
 
 	/**
 	 * @return deep copy of the Activity.

@@ -29,8 +29,8 @@ public class AgentStrategy extends Activity {
 		return new AgentStrategy(this.ag, this.mkt, this.time);
 	}
 
-	public Collection<Activity> execute() {
-		return ag.agentStrategy(time);
+	public Collection<Activity> execute(TimeStamp currentTime) {
+		return ag.agentStrategy(currentTime);
 	}
 
 	@Override

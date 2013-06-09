@@ -26,8 +26,8 @@ public class UpdateNBBO extends Activity {
 		return new UpdateNBBO(this.sip, this.mdl, this.time);
 	}
 	
-	public Collection<Activity> execute() {
-		return this.sip.updateNBBO(this.mdl, this.time);
+	public Collection<Activity> execute(TimeStamp time) {
+		return this.sip.updateNBBO(this.mdl, time);
 	}
 	
 	public String toString() {

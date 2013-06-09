@@ -220,7 +220,7 @@ public class EventQueueTest {
 		}
 
 		@Override
-		public Collection<Activity> execute() {
+		public Collection<Activity> execute(TimeStamp time) {
 			return Collections.emptyList();
 		}
 

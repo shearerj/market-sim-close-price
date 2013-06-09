@@ -25,8 +25,8 @@ public class AgentReentry extends Activity {
 		return new AgentReentry(this.ag, this.priority, this.time);
 	}
 	
-	public Collection<Activity> execute() {
-		return ag.agentReentry(priority, time); 
+	public Collection<Activity> execute(TimeStamp currentTime) {
+		return ag.agentReentry(priority, currentTime); 
 	}
 	
 	public String toString() {

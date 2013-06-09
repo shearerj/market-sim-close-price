@@ -26,8 +26,8 @@ public class WithdrawBid extends Activity {
 		return new WithdrawBid(this.ag, this.mkt, this.time);
 	}
 	
-	public Collection<Activity> execute() {
-		return this.ag.executeWithdrawBid(this.mkt, this.time);
+	public Collection<Activity> execute(TimeStamp time) {
+		return this.ag.executeWithdrawBid(this.mkt, time);
 	}
 	
 	public String toString() {

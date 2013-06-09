@@ -23,8 +23,8 @@ public class AgentDeparture extends Activity {
 		return new AgentDeparture(this.ag, this.time);
 	}
 	
-	public Collection<Activity> execute() {
-		return ag.agentDeparture(this.time);
+	public Collection<Activity> execute(TimeStamp currentTime) {
+		return ag.agentDeparture(currentTime);
 	}
 	
 	public String toString() {

@@ -23,8 +23,8 @@ public class SendToSIP extends Activity {
 		return new SendToSIP(this.mkt, this.time);
 	}
 	
-	public Collection<Activity> execute() {
-		return this.mkt.sendToSIP(this.time);
+	public Collection<Activity> execute(TimeStamp time) {
+		return this.mkt.sendToSIP(time);
 	}
 	
 	public String toString() {

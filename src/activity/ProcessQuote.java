@@ -29,8 +29,8 @@ public class ProcessQuote extends Activity {
 		return new ProcessQuote(this.sip, this.mkt, this.bid, this.ask, this.time);
 	}
 	
-	public Collection<Activity> execute() {
-		return this.sip.processQuote(this.mkt, this.bid, this.ask, this.time);
+	public Collection<Activity> execute(TimeStamp time) {
+		return this.sip.processQuote(this.mkt, this.bid, this.ask, time);
 	}
 	
 	public String toString() {

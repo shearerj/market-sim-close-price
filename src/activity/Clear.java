@@ -23,8 +23,8 @@ public class Clear extends Activity {
 		return new Clear(this.mkt, this.time);
 	}
 	
-	public Collection<Activity> execute() {
-		return this.mkt.clear(this.time);
+	public Collection<Activity> execute(TimeStamp currentTime) {
+		return this.mkt.clear(currentTime);
 	}
 	
 	public String toString() {

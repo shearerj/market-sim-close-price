@@ -19,6 +19,8 @@ public class EventManager {
 
 	protected Log log;
 	protected EventQueue activityQueue;
+	protected TimeStamp currentTime;
+
 	// private TimeStamp duration; // simulation length
 
 	/**
@@ -26,10 +28,10 @@ public class EventManager {
 	 */
 	public EventManager(TimeStamp ts, Log l) {
 		activityQueue = new EventQueue();
-		// duration = ts;
 		log = l;
+		currentTime = new TimeStamp(0);
 	}
-	
+
 	public boolean isEmpty() {
 		return activityQueue.isEmpty();
 	}
@@ -54,13 +56,18 @@ public class EventManager {
 		log.log(Log.DEBUG, "executeCurrentEvent: " + activityQueue);
 
 		try {
-			activityQueue.addAll(activityQueue.remove().execute());
+			// This way infinitely fast activities can still schedule events x
+			// time in the future.
+			Activity act = activityQueue.remove();
+			if (act.getTime().after(currentTime))
+				currentTime = act.getTime();
+			activityQueue.addAll(act.execute(currentTime));
 		} catch (Exception e) {
 			// TODO This should be logged at the least.
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void addActivity(Activity act) {
 		activityQueue.add(act);
 	}

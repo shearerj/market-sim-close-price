@@ -28,8 +28,8 @@ public class SubmitNMSMultipleBid extends Activity {
 		return new SubmitNMSMultipleBid(this.ag, this.price, this.quantity, this.time);
 	}
 	
-	public Collection<Activity> execute() {
-		return this.ag.executeSubmitNMSMultipleBid(this.price, this.quantity, this.time);
+	public Collection<Activity> execute(TimeStamp time) {
+		return this.ag.executeSubmitNMSMultipleBid(this.price, this.quantity, time);
 	}
 	
 	public String toString() {

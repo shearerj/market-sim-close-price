@@ -30,8 +30,8 @@ public class SubmitMultipleBid extends Activity {
 		return new SubmitMultipleBid(this.ag, this.mkt, this.price, this.quantity, this.time);
 	}
 	
-	public Collection<Activity> execute() {
-		return this.ag.executeSubmitMultipleBid(this.mkt, this.price, this.quantity, this.time);
+	public Collection<Activity> execute(TimeStamp time) {
+		return this.ag.executeSubmitMultipleBid(this.mkt, this.price, this.quantity, time);
 	}
 	
 	public String toString() {

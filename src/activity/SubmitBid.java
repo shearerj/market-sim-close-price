@@ -29,8 +29,8 @@ public class SubmitBid extends Activity {
 		return new SubmitBid(this.ag, this.mkt, this.price, this.quantity, this.time);
 	}
 	
-	public Collection<Activity> execute() {
-		return this.ag.executeSubmitBid(this.mkt, this.price, this.quantity, this.time);
+	public Collection<Activity> execute(TimeStamp time) {
+		return this.ag.executeSubmitBid(this.mkt, this.price, this.quantity, time);
 	}
 	
 	public String toString() {
