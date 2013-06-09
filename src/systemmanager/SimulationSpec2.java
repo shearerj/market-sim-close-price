@@ -35,6 +35,10 @@ public class SimulationSpec2 {
 		log = l;
 		gson = new Gson();
 	}
+	
+	public void loadFile(String specFileName, SystemData data) throws JsonSyntaxException, JsonIOException, FileNotFoundException {
+		loadFile(new File(specFileName), data);
+	}
 
 	public void loadFile(File specFile, SystemData data)
 			throws JsonSyntaxException, JsonIOException, FileNotFoundException {
