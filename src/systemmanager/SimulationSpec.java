@@ -109,21 +109,23 @@ public class SimulationSpec {
 			// models here is a comma-separated list
 			String models = getValue(modelType);
 			if (models != null) {
-				if (models.endsWith(",")) {
-					// remove any extra appended commas
-					models = models.substring(0, models.length() - 1);
-				}
-				String[] configs = models.split("[,]+");
-				
-				if (configs.length > 1) {
-					// if > 1, # model type = # of items in the list
-					// check if there are NONE or 0 of this model
-					data.numModelType.put(modelType, configs.length);
-				} else if (!models.equals(Consts.MODEL_CONFIG_NONE) && 
-						!models.equals("0")) {
-					data.numModelType.put(modelType, configs.length);
-				} else {
-					data.numModelType.put(modelType, 0);
+				if (!models.isEmpty()) {
+					if (models.endsWith(",")) {
+						// remove any extra appended commas
+						models = models.substring(0, models.length() - 1);
+					}
+					String[] configs = models.split("[,]+");
+					
+					if (configs.length > 1) {
+						// if > 1, # model type = # of items in the list
+						// check if there are NONE or 0 of this model
+						data.numModelType.put(modelType, configs.length);
+					} else if (!models.equals(Consts.MODEL_CONFIG_NONE) && 
+							!models.equals("0")) {
+						data.numModelType.put(modelType, configs.length);
+					} else {
+						data.numModelType.put(modelType, 0);
+					}
 				}
 			}
 		}

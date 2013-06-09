@@ -183,11 +183,23 @@ public class Observations {
 	}
 	
 	
+	/**
+	 * For testing: output a TimeSeries object.
+	 * 
+	 * @param s
+	 * @param type
+	 */
 	public void outputSeries(TimeSeries s, String type) {
 		s.writePointsToCSFile(data.simDir + Consts.logDir + type + ".csv");
 		s.writeSeriesToFile(data.simDir + Consts.logDir + type + ".txt");
 	}
 
+	/**
+	 * For testing: output a sampled TimeSeries object.
+	 * 
+	 * @param s
+	 * @param type
+	 */
 	public void outputSampledSeries(TimeSeries s, String type) {
 		long time = Math.round(data.getNumEnvAgents() / data.arrivalRate);
 		long maxTime = Market.quantize((int) time, 1000);
@@ -198,6 +210,7 @@ public class Observations {
 					data.simDir + Consts.logDir + type + "_" + period + ".csv");
 		}
 	}
+	
 	
 	/********************************************
 	 * Data aggregation
@@ -331,6 +344,7 @@ public class Observations {
 		DescriptiveStatistics fundamental = new DescriptiveStatistics();
 		TimeSeries transPrices = new TimeSeries();
 		TimeSeries fundPrices = new TimeSeries();
+		
 		// number of transactions, hashed by agent type
 		HashMap<String,Integer> numTrans = new HashMap<String,Integer>();
 		
@@ -356,6 +370,12 @@ public class Observations {
 		}
 		feat.addMean(PRICE, "", prices);
 		feat.addStdDev(PRICE, "", prices);
+		
+		// TESTING FIXME
+		outputSeries(transPrices, "transprices");
+		outputSeries(fundPrices, "fundprices");
+		outputSampledSeries(transPrices, "transprices");
+		outputSampledSeries(fundPrices, "fundprices");
 		
 		// number of transactions for each agent type
 		for (String type : numTrans.keySet()) {

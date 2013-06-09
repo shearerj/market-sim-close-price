@@ -387,24 +387,8 @@ public class SystemData {
 	 * @return
 	 */
 	public PQTransaction getTransaction(int modelID, int id) {
-		ArrayList<Integer> mktIDs = getModel(modelID).getMarketIDs();
 		// TODO need to get rid of this
 		return getTrans(modelID).get(id);
-	}
-	
-	public PQTransaction getTransaction(int id) {
-		return transactions.get(id);
-	}
-	
-	public List<Integer> getTransIDByModel(int modelID) {
-		return modelTransID.get(modelID);
-	}
-	
-	/**
-	 * @return all transactions, across all models
-	 */
-	public HashMap<Integer, PQTransaction> getTransactions() {
-		return transactions;
 	}
 	
 	/**
@@ -431,6 +415,21 @@ public class SystemData {
 	public ArrayList<Integer> getTransIDs(int modelID) {
 		return new ArrayList<Integer>(getTrans(modelID).keySet());
 	}
+	
+//	public PQTransaction getTransaction(int id) {
+//		return transactions.get(id);
+//	}
+//	
+//	public List<Integer> getTransIDByModel(int modelID) {
+//		return modelTransID.get(modelID);
+//	}
+//	
+//	/**
+//	 * @return all transactions, across all models
+//	 */
+//	public HashMap<Integer, PQTransaction> getTransactions() {
+//		return transactions;
+//	}
 	
 	/**
 	 * @param bidID
