@@ -135,7 +135,6 @@ public class Observations {
 			// TODO - need to remove the position balance hack
 			// addFeature(modelName + ROUTING, getRegNMSRoutingInfo(model));
 		}
-		
 	}
 	
 	/**
@@ -190,7 +189,7 @@ public class Observations {
 	 * @param type
 	 */
 	public void outputSeries(TimeSeries s, String type) {
-		s.writePointsToCSFile(data.simDir + Consts.logDir + type + ".csv");
+//		s.writePointsToCSFile(data.simDir + Consts.logDir + type + ".csv");
 		s.writeSeriesToFile(data.simDir + Consts.logDir + type + ".txt");
 	}
 
@@ -201,12 +200,12 @@ public class Observations {
 	 * @param type
 	 */
 	public void outputSampledSeries(TimeSeries s, String type) {
-		long time = Math.round(data.getNumEnvAgents() / data.arrivalRate);
-		long maxTime = Market.quantize((int) time, 1000);
+//		long time = Math.round(data.getNumEnvAgents() / data.arrivalRate);
+//		long maxTime = Market.quantize((int) time, 1000);
 		
 		s.writePointsToCSFile(data.simDir + Consts.logDir + type + ".csv");
 		for (int period : Consts.periods) {
-			s.writeSampledSeriesToFile(period, maxTime,
+			s.writeSampledSeriesToFile(period, data.simLength.longValue(),
 					data.simDir + Consts.logDir + type + "_" + period + ".csv");
 		}
 	}
@@ -334,10 +333,7 @@ public class Observations {
 		Feature feat = new Feature();
 
 		List<PQTransaction> trans = new ArrayList<PQTransaction>();
-		for (int mktID : model.getMarketIDs()) {
-			//Getting the transaction data for each market in the model
-			trans.addAll(data.transactionLists.get(mktID));
-		}
+		trans.addAll(data.transactions.get(model.getID()));
 		
 		DescriptiveStatistics prices = new DescriptiveStatistics();
 		DescriptiveStatistics quantity = new DescriptiveStatistics();
@@ -371,7 +367,7 @@ public class Observations {
 		feat.addMean(PRICE, "", prices);
 		feat.addStdDev(PRICE, "", prices);
 		
-		// TESTING FIXME
+		// TESTING
 		outputSeries(transPrices, "transprices");
 		outputSeries(fundPrices, "fundprices");
 		outputSampledSeries(transPrices, "transprices");
@@ -413,20 +409,21 @@ public class Observations {
 			if (s != null) {
 				double[] array = s.getArray();
 				DescriptiveStatistics spreads = new DescriptiveStatistics(array);
-				double med = feat.addMedianUpToTime("", MARKET + (-mktID), 
-						spreads, maxTime);
+				double med = feat.addMedianUpToTime("", MARKET + (-mktID) + 
+						"_" + TIMESERIES_MAXTIME, spreads, maxTime);
 				medians.addValue(med);
 				this.outputSeries(s, SPREADS);
 			}
 		}
 		// average of median market spreads (for all markets in this model)
-		feat.addMean(medians);
+		feat.addMean("", TIMESERIES_MAXTIME, medians);
 		
 		TimeSeries nbbo = data.NBBOSpread.get(model.getID());
 		if (nbbo != null) {
 			double[] array = nbbo.getArray();
 			DescriptiveStatistics spreads = new DescriptiveStatistics(array);
-			feat.addMedianUpToTime("", NBBO, spreads, maxTime);
+			feat.addMedianUpToTime("", NBBO + "_" + TIMESERIES_MAXTIME, 
+					spreads, maxTime);
 		}
 		return feat;
 	}

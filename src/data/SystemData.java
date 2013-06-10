@@ -45,8 +45,7 @@ public class SystemData {
 	// Market information
 	public HashMap<Integer,PQBid> bids;					// all bids ever, hashed by bid ID
 	public HashMap<Integer,Price> privateValues;		// private values hashed by bid ID
-	public HashMap<Integer,PQTransaction> transactions;	// hashed by transaction ID
-	public HashMap<Integer,List<PQTransaction> > transactionLists; // hashed by market ID
+	public HashMap<Integer,List<PQTransaction>> transactions; // hashed by model ID
 	public HashMap<Integer,Quote> quotes;				// hashed by market ID
 	public HashMap<Integer,Agent> agents;				// (all) agents hashed by ID
 	public HashMap<Integer,Agent> players;				// players (for EGTA)
@@ -95,7 +94,6 @@ public class SystemData {
 	public SystemData() {
 		bids = new HashMap<Integer,PQBid>();
 		privateValues = new HashMap<Integer,Price>();
-		transactions = new HashMap<Integer,PQTransaction>();
 		quotes = new HashMap<Integer,Quote>();
 		agents = new HashMap<Integer,Agent>();
 		players = new HashMap<Integer,Agent>();
@@ -112,7 +110,7 @@ public class SystemData {
 		playerMap = new HashMap<AgentPropsPair, Integer>();
 		envAgentMap = new HashMap<AgentPropsPair, Integer>(); 
 	
-		transactionLists = new HashMap<Integer,List<PQTransaction>>();
+		transactions = new HashMap<Integer,List<PQTransaction>>();
 		
 		// Initialize containers for observations/features
 		marketDepth = new HashMap<Integer,TimeSeries>();
@@ -392,19 +390,15 @@ public class SystemData {
 	}
 	
 	/**
-	 * Get transactions for only the given model.
+	 * Get transactions for only the given model (hashed by transaction ID).
 	 * 
 	 * @param modelID 
 	 * @return
 	 */
-	public HashMap<Integer,PQTransaction> getTrans(int modelID) {
-		ArrayList<Integer> mktIDs = getModel(modelID).getMarketIDs();
-		
+	public HashMap<Integer,PQTransaction> getTrans(int modelID) {		
 		HashMap<Integer,PQTransaction> trans = new HashMap<Integer,PQTransaction>();
-		for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
-			if (mktIDs.contains(entry.getValue().marketID)) {
-				trans.put(entry.getKey(), entry.getValue());
-			}
+		for (PQTransaction tr : transactions.get(modelID)) {
+			trans.put(tr.transID, tr);
 		}
 		return trans;
 	}
@@ -616,16 +610,16 @@ public class SystemData {
 	public void addTransaction(PQTransaction tr) {
 		int id = transIDSequence.increment();
 		tr.transID = id;
-		transactions.put(id, tr);
-		if (!transactionLists.containsKey(tr.marketID)) {
-			transactionLists.put(tr.marketID, new ArrayList<PQTransaction>());
-		}
-		transactionLists.get(tr.marketID).add(tr);
-				
-				
+		
 		MarketModel model = getModelByMarketID(tr.marketID);
-		addSurplus(model.getID(), tr);
-		addModelTransID(model.getID(), tr.transID);
+		int modelID = model.getID();
+		addSurplus(modelID, tr);
+		addModelTransID(modelID, tr.transID);
+
+		if (!transactions.containsKey(modelID)) {
+			transactions.put(modelID, new ArrayList<PQTransaction>());
+		}
+		transactions.get(modelID).add(tr);
 	}
 	
 	/**

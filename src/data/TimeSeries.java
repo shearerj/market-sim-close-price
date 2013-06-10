@@ -68,23 +68,41 @@ public class TimeSeries {
 	
 	/**
 	 * Returns subarray of values from 0 to maxTime, inclusive.
-	 * @param maxTime
+	 * Fills in the end with the last available value, so the 
+	 * returned array is always of length maxTime.
+	 * 
+	 * @param maxTime (inclusive)
 	 * @return
 	 */
 	public double[] getArrayUpTo(long maxTime) {
-		if (maxTime >= lastTime().longValue()) {
-			return getArray();
-		} else {
+		if (maxTime <= lastTime().longValue()) {
+			// truncate at maxTime
 			int time = (int) maxTime;
 			return ArrayUtils.toPrimitive(series.subList(0, time+1).
-					toArray(new Double[time+1]));
+					toArray(new Double[time+1]));			
+		} else {
+			// fill in up to maxTime
+			int maxIndex = (int) lastTime().longValue();
+			int time = (int) maxTime;
+			double[] array = new double[time];
+			for (int i = 0; i < maxIndex; i++) {
+				array[i] = series.get(i);
+			}
+			for (int i = maxIndex; i < time; i++) {
+				array[i] = series.get(maxIndex-1);
+			}
+			return array;
 		}
 	}
 	
 	/**
 	 * Sample values according to specified period & return array.
+	 * Returns value at the END of each period. Example: For sampling
+	 * interval of 100, the first item in the sampled array would be the
+	 * 100th element.
+	 * 
 	 * @param period
-	 * @param maxTime
+	 * @param maxTime (inclusive)
 	 * @return
 	 */
 	public double[] getSampledArray(int period, long maxTime) {
@@ -96,12 +114,20 @@ public class TimeSeries {
 			endIndex = lastTime().longValue();
 		}
 		// add 1 to endIndex because start at time 0
-		int newSize = (int) Math.floor((endIndex + 1) / period);
+		int maxIndex = (int) Math.floor((endIndex + 1) / period);
+		int newSize = (int) Math.floor((maxTime + 1) / period);
 		double[] array = new double[newSize];
 		
 		// sample at end of window, not at beginning
-		for (int i = 0; i < newSize; i++) {
+		for (int i = 0; i < maxIndex; i++) {
 			array[i] = series.get((i+1) * period - 1); 
+		}
+		
+		// if endIndex is before maxTime, fill in up to maxTime
+		if (maxTime > endIndex) {
+			for (int i = maxIndex; i < newSize; i++) {
+				array[i] = series.get(maxIndex-1);
+			}
 		}
 		return array;
 	}
@@ -212,7 +238,7 @@ public class TimeSeries {
 			bw.write("time,point");
 			bw.newLine();
 			for (int i = 0; i < times.size(); i++) {
-				String s = times.get(i) + "," + points.size();
+				String s = times.get(i) + "," + points.get(i);
 				bw.write(s);
 				bw.newLine();
 			}

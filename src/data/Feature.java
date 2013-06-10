@@ -34,7 +34,6 @@ public class Feature {
 	public final static String RMSD = "rmsd";
 	
 	
-	
 	public Feature() {
 		ft = new HashMap<String, Object>();
 		df = new DecimalFormat("#.###");
@@ -271,10 +270,14 @@ public class Feature {
 	 */
 	private double computeRMSD(double [] x1, double [] x2) {
 		double rmsd = 0;
-		int n = Math.min(x1.length, x2.length);
-		// iterate through as many in shorter array
-		for (int i = 0; i < n; i++) {
-			rmsd += Math.pow(x1[i] - x2[i], 2);	// sum of squared differences
+		int len = Math.min(x1.length, x2.length);
+		int n = 0;		// count number of non-NaN values
+		// iterate through number of elements in shorter array
+		for (int i = 0; i < len; i++) {
+			if (!Double.isNaN(x1[i]) && !Double.isNaN(x2[i])) {
+				rmsd += Math.pow(x1[i] - x2[i], 2);	// sum of squared differences
+				n++;
+			}
 		}
 		return Math.sqrt(rmsd / n);
 	}

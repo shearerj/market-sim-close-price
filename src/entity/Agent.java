@@ -1,7 +1,6 @@
 package entity;
 
-import data.ObjectProperties;
-import data.SystemData;
+import data.*;
 import event.*;
 import model.*;
 import market.*;
@@ -14,10 +13,6 @@ import java.util.*;
  * Base class for all agents.
  * 
  * @author ewah
- */
-/**
- * @author ewah
- *
  */
 public abstract class Agent extends Entity {
 
