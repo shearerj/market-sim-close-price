@@ -14,5 +14,4 @@ public abstract class BackgroundAgent extends SMAgent {
 			ObjectProperties p, Log l) {
 		super(agentID, modelID, d, p, l);
 	}
-	
 }
