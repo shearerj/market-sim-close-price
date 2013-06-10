@@ -1,0 +1,118 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1.2in]{geometry}
+\usepackage{color,soul,hyperref,url}
+\usepackage{graphicx,amstext}
+\usepackage{subfigure}
+\usepackage{amsmath}
+\usepackage{enumerate}
+\def\newblock{}
+
+\newcommand{\bid}{\ensuremath{\mathit BID}}
+\newcommand{\ask}{\ensuremath{\mathit ASK}}
+\newcommand{\PV}{\ensuremath{\mathit PV}}
+\providecommand{\floor}[1]{\lfloor#1\rfloor}
+\providecommand{\ceil}[1]{\lceil#1\rceil}
+
+\begin{document}
+	
+\title{HFT Simulation System: \\
+Connection and Setup}
+%\numberofauthors{1}
+\author{
+%\alignauthor
+Elaine Wah\\
+\href{mailto:ewah@umich.edu}{ewah@umich.edu}
+}
+\date{Updated: June 2013}
+\maketitle
+
+
+% ---------------------
+\section{Connecting to the repository}
+
+The repository for the HFT simulation system is hosted on \verb|hft.eecs.umich.edu|. If you need an account on this machine in order to run simulations, please email me.
+
+To access the repository, you will need to generate a public RSA key (you may need to install OpenSSH first):
+\begin{enumerate}
+\item \verb|cd| into the (hidden) \verb|.ssh| directory in your home folder (e.g., \verb|\home\ewah\.ssh|)
+\item Run the following command:
+
+\verb|ssh-keygen -t rsa -C "<youremailhere>"|
+\item Press enter when prompted for the name to save under. Do not change the name from \verb|id_rsa.pub|, and do not change the location where it is saved.
+\item Enter a non-empty passphrase when prompted.
+\item Email me the \verb|id_rsa.pub| file.
+\item Once your key is authorized by me, you will be able to connect.
+\end{enumerate}
+
+Before you can access the repository, I will need to authorize your RSA key. Once I've let you know that this is done, you will be able to access the repository.
+%
+To clone the repository, first \verb|cd| into whichever directory in which you'd like the repository to be copied. Then enter the following command to create a folder \verb|hft| with the repository contents:
+\begin{verbatim}
+git clone git@hft.eecs.umich.edu:hft.git
+\end{verbatim}
+
+% To add later: Enter to save it in the current directory
+% Don't need to change the name of the file
+
+% ---------------------
+\section{Setting up Eclipse}
+
+It will be easiest to debug any new code added to the simulation system using an IDE. The following instructions are for Eclipse, but any other IDE for Java will suffice. Note that instructions are based on the Eclipse for Linux, and may differ depending on your OS.
+
+\begin{enumerate}
+\item Download and unzip ``Eclipse for Java Developers'' (\path{http://www.eclipse.org/downloads/})
+
+\item Start up Eclipse. For your workspace, select the directory that contains the \verb|hft| folder cloned from the repository.
+
+For example, if the source code is located within \verb|\home\ewah\projects\hft\|, then the Eclipse workspace should be \verb|\home\ewah\projects|.
+
+\item From the File menu, select New Project. Select ``Java Project from Existing Ant Buildfile.''
+
+\item Browse for the Ant buildfile; select the \verb|build.xml| file in the top level directory of the repository. Leave the project name unchanged and click Finish.
+
+\item At this point, the project will be imported automatically. Remove the JRE System Library from the build path (via the right-click menu). Delete \verb|${classpath}|.
+
+\item Right-click the project in the Project Explorer View and select Properties. To set up libraries correctly:
+
+\begin{enumerate}
+\item Click \emph{Java Build Path} in the left panel, then select Libraries (at the top). Remove the JRE System Library and \verb|${classpath}|.
+
+Click ``Add Library'' and add a JRE System Library (the workspace default one will be fine).
+
+\item Still within \emph{Java Build Path}, select Source. At the very bottom, change the default output folder to \verb|hft/build|.
+
+\end{enumerate}
+
+\item In the Properties window, to set up run/debug configurations:
+
+\begin{enumerate}
+\item Select \emph{Run/Debug Settings} in the left panel. Add a new launch configuration (Java Application).
+
+\item At the top, change the name of the launch if you'd like. To select the correct main class, click ``Search...'' and select \verb|SystemManager|.
+
+\item Select the \emph{Arguments} tab. To keep the repository organized, run simulations within the \verb|simulations| directory.
+
+\fbox{
+\begin{minipage}{0.85\textwidth}
+The HFT simulator takes in two input arguments.
+
+\textbf{Argument 1} is the location of the configuration file (named \path{simulation_spec.json}).
+
+\textbf{Argument 2} is an arbitrary number. For debugging purposes this can be set to whatever you'd like; it is the number appended to the name of generated observation files to tell the simulation run it is associated with.
+\end{minipage}
+}
+
+\item Within the ``Program Arguments'' window, type the input arguments.
+
+Example: \path{simulations\test} \path{2} indicates that the configuration file is stored within the subfolder \path{test} within \path{simulations}.
+
+\emph{Note}: Prior to this you will need to create a subfolder within \path{simulations} and copy the appropriate \path{simulation_spec.json} file into the subfolder. There is an example configuration file in \path{simulations} which you can copy into your subfolder (in this example, the subfolder is named \path{test}).
+
+\end{enumerate}
+
+\item Save your settings and you should now be able to run the simulator in Eclipse!
+
+\end{enumerate}
+
+
+\end{document}

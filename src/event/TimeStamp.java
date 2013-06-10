@@ -132,8 +132,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @return 0 if equal, <0 if invoking timestamp is less, >0 if greater
 	 */
 	public int compareTo(TimeStamp other) {
-		long diff = ts - other.ts;
-		return diff > 0 ? 1 : diff < 0 ? -1 : 0; 
+		return (int) Long.signum(ts - other.ts);
 	}
 	
 	@Override
