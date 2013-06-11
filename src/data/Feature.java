@@ -36,7 +36,7 @@ public class Feature {
 	
 	public Feature() {
 		ft = new HashMap<String, Object>();
-		df = new DecimalFormat("#.###");
+		df = new DecimalFormat("#.####");
 	}
 	
 	public HashMap<String, Object> get() {
@@ -179,26 +179,26 @@ public class Feature {
 		return val;
 	}
 	
-	/**
-	 * @param pre
-	 * @param suf
-	 * @param ds
-	 * @param idx	cut off time series at this index
-	 */
-	public double addMedianUpToTime(String pre, String suf, 
-			DescriptiveStatistics ds, long idx) {
-		double val = Consts.DOUBLE_NAN;
-		if (ds.getN() > 0) {
-			Median med = new Median();
-			if (idx < ds.getN()) {
-				val = med.evaluate(ds.getValues(), 0, (int) idx);
-			} else {
-				val = med.evaluate(ds.getValues());
-			}
-		}
-		add(pre, MEDIAN, suf, val);
-		return val;
-	}
+//	/**
+//	 * @param pre
+//	 * @param suf
+//	 * @param ds
+//	 * @param idx	cut off time series at this index
+//	 */
+//	public double addMedianUpToTime(String pre, String suf, 
+//			DescriptiveStatistics ds, long idx) {
+//		double val = Consts.DOUBLE_NAN;
+//		if (ds.getN() > 0) {
+//			Median med = new Median();
+//			if (idx < ds.getN()) {
+//				val = med.evaluate(ds.getValues(), 0, (int) idx+1);
+//			} else {
+//				val = med.evaluate(ds.getValues());
+//			}
+//		}
+//		add(pre, MEDIAN, suf, val);
+//		return val;
+//	}
 	
 	public double addStdDev(DescriptiveStatistics ds) {
 		return addStdDev("", "", ds);
@@ -214,26 +214,26 @@ public class Feature {
 		return val;
 	}
 	
-	/**
-	 * @param pre
-	 * @param suf
-	 * @param ds
-	 * @param idx	cut off time series at this index
-	 */
-	public double addStdDevUpToTime(String pre, String suf, 
-			DescriptiveStatistics ds, long idx) {
-		double val = Consts.DOUBLE_NAN;
-		if (ds.getN() > 0) {
-			StandardDeviation std = new StandardDeviation();
-			if (idx < ds.getN()) {
-				val = std.evaluate(ds.getValues(), 0, (int) idx);
-			} else {
-				val = std.evaluate(ds.getValues());
-			}
-		}
-		add(pre, STDDEV, suf, val);
-		return val;
-	}
+//	/**
+//	 * @param pre
+//	 * @param suf
+//	 * @param ds
+//	 * @param idx	cut off time series at this index
+//	 */
+//	public double addStdDevUpToTime(String pre, String suf, 
+//			DescriptiveStatistics ds, long idx) {
+//		double val = Consts.DOUBLE_NAN;
+//		if (ds.getN() > 0) {
+//			StandardDeviation std = new StandardDeviation();
+//			if (idx < ds.getN()) {
+//				val = std.evaluate(ds.getValues(), 0, (int) idx+1);
+//			} else {
+//				val = std.evaluate(ds.getValues());
+//			}
+//		}
+//		add(pre, STDDEV, suf, val);
+//		return val;
+//	}
 	
 	/**
 	 * @param ds1

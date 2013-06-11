@@ -28,7 +28,11 @@ public class Observations {
 	
 	private SystemData data;
 	private HashMap<String, Object> observations;
-
+	private long maxTime;
+	
+	// for truncated series
+	public final static String TIMESERIES_MAXTIME = "up_to_maxtime";
+	
 	// Constants in observation file
 	public final static String PLAYERS_KEY = "players";
 	public final static String FEATURES_KEY = "features";
@@ -74,10 +78,7 @@ public class Observations {
 	public final static String TOTAL = "total";
 	public final static String NBBO = "nbbo";
 	
-	public final static String TIMESERIES_MAXTIME = "maxtime";
 	
-	private long maxTime;
-
 	/**
 	 * Constructor
 	 */
@@ -127,7 +128,7 @@ public class Observations {
 			addFeature(modelName + TRANSACTIONS, getTransactionInfo(model));
 			addFeature(modelName + SPREADS, getSpread(model, maxTime));
 			for (int period : Consts.periods) {
-				addFeature(modelName + PRICE + VOL, getVolatility(model, period, maxTime));
+				addFeature(modelName + VOL, getVolatility(model, period, maxTime));
 			}
 			addFeature(modelName + Consts.ROLE_MARKETMAKER.toLowerCase(), 
 					getMarketMakerInfo(model));
@@ -183,31 +184,33 @@ public class Observations {
 	
 	
 	/**
-	 * For testing: output a TimeSeries object.
+	 * For testing: output a TimeSeries object's generated series.
 	 * 
 	 * @param s
 	 * @param type
 	 */
 	public void outputSeries(TimeSeries s, String type) {
-//		s.writePointsToCSFile(data.simDir + Consts.logDir + type + ".csv");
-		s.writeSeriesToFile(data.simDir + Consts.logDir + type + ".txt");
+		s.writeSeriesToFile(SystemData.simDir + Consts.logDir + type + ".txt");
 	}
 
 	/**
-	 * For testing: output a sampled TimeSeries object.
+	 * For testing: output a sampled TimeSeries object: points, and sampled arrays.
 	 * 
 	 * @param s
 	 * @param type
 	 */
 	public void outputSampledSeries(TimeSeries s, String type) {
-//		long time = Math.round(data.getNumEnvAgents() / data.arrivalRate);
-//		long maxTime = Market.quantize((int) time, 1000);
 		
-		s.writePointsToCSFile(data.simDir + Consts.logDir + type + ".csv");
+		s.writePointsToCSFile(SystemData.simDir + Consts.logDir + type + "points.csv");
 		for (int period : Consts.periods) {
 			s.writeSampledSeriesToFile(period, data.simLength.longValue(),
-					data.simDir + Consts.logDir + type + "_" + period + ".csv");
+					SystemData.simDir + Consts.logDir + type + "_" + period + ".csv");
 		}
+	}
+	
+	public void outputSampledSeries(int period, long maxTime, TimeSeries s, String type) {
+		s.writeSampledSeriesToFile(period, maxTime,
+				SystemData.simDir + Consts.logDir + type + "_period" + period + ".csv");
 	}
 	
 	
@@ -259,8 +262,8 @@ public class Observations {
 				speeds.addValue((double) data.timeToExecution.get(bidID).longValue());
 			}
 		}
-		feat.addMax(speeds);
-		feat.addMin(speeds);
+//		feat.addMax(speeds);
+//		feat.addMin(speeds);
 		feat.addMean(speeds);
 		return feat;
 	}
@@ -312,6 +315,9 @@ public class Observations {
 					env.addValue(val);
 				}
 			}
+			
+			SystemData.writeToFile(bkgrd.getValues(), SURPLUS +"_ds.csv");
+			
 			feat.addSum("", Consts.ROLE_BACKGROUND.toLowerCase() + suffix, bkgrd);
 			feat.addSum("", Consts.ROLE_MARKETMAKER.toLowerCase() + suffix, mm);
 			feat.addSum("", Consts.ROLE_HFT.toLowerCase(), hft);
@@ -325,6 +331,11 @@ public class Observations {
 	
 	/**
 	 * Transaction statistics.
+	 * 
+	 * Note that the DescriptiveStatistics prices object is NOT comparable
+	 * to the TimeSeries transPrices; the latter does not allow more than one
+	 * value for each TimeStamp and thus it only gives the most recent transaction
+	 * at any given time.
 	 * 
 	 * @param model
 	 * @return
@@ -349,8 +360,8 @@ public class Observations {
 			quantity.addValue(tr.quantity);
 			fundamental.addValue(data.getFundamentalAt(tr.timestamp).getPrice());
 			
-			transPrices.add(tr.timestamp, tr.price.getPrice());
-			fundPrices.add(tr.timestamp, data.getFundamentalAt(tr.timestamp).getPrice());
+			transPrices.add(tr.timestamp, new Double(tr.price.getPrice()));
+			fundPrices.add(tr.timestamp, new Double(data.getFundamentalAt(tr.timestamp).getPrice()));
 			
 			// update number of transactions
 			for (int id : Arrays.asList(tr.buyerID, tr.sellerID)) {
@@ -366,13 +377,7 @@ public class Observations {
 		}
 		feat.addMean(PRICE, "", prices);
 		feat.addStdDev(PRICE, "", prices);
-		
-		// TESTING
-		outputSeries(transPrices, "transprices");
-		outputSeries(fundPrices, "fundprices");
-		outputSampledSeries(transPrices, "transprices");
-		outputSampledSeries(fundPrices, "fundprices");
-		
+
 		// number of transactions for each agent type
 		for (String type : numTrans.keySet()) {
 			feat.put(type.toLowerCase() + "_" + NUM, numTrans.get(type));
@@ -396,6 +401,8 @@ public class Observations {
 	/**
 	 * Computes spread metrics for the given model.
 	 * 
+	 * NOTE: The computed median will include NaNs in the list of numbers.
+	 * 
 	 * @param model
 	 * @param maxTime
 	 * @return
@@ -407,80 +414,79 @@ public class Observations {
 		for (int mktID : model.getMarketIDs()) {
 			TimeSeries s = data.marketSpread.get(mktID);
 			if (s != null) {
-				double[] array = s.getArray();
+				double[] array = s.getSampledArray(0, maxTime);
 				DescriptiveStatistics spreads = new DescriptiveStatistics(array);
-				double med = feat.addMedianUpToTime("", MARKET + (-mktID) + 
-						"_" + TIMESERIES_MAXTIME, spreads, maxTime);
+				double med = feat.addMedian("", MARKET + (-mktID) + 
+						"_" + TIMESERIES_MAXTIME, spreads);
 				medians.addValue(med);
-				this.outputSeries(s, SPREADS);
 			}
 		}
 		// average of median market spreads (for all markets in this model)
-		feat.addMean("", TIMESERIES_MAXTIME, medians);
+		feat.addMean("", MARKET + "_" + TIMESERIES_MAXTIME, medians);
 		
 		TimeSeries nbbo = data.NBBOSpread.get(model.getID());
 		if (nbbo != null) {
-			double[] array = nbbo.getArray();
+			double[] array = nbbo.getSampledArray(0, maxTime);
 			DescriptiveStatistics spreads = new DescriptiveStatistics(array);
-			feat.addMedianUpToTime("", NBBO + "_" + TIMESERIES_MAXTIME, 
-					spreads, maxTime);
+			feat.addMedian("", NBBO + "_" + TIMESERIES_MAXTIME, spreads);
 		}
 		return feat;
 	}
 	
 	
 	/**
-	 * Computes volatility metrics, for time 0 to maxTime. Volatility is
-	 * measured as:
+	 * Computes volatility metrics for time 0 to maxTime, sampled at interval
+	 * specified by period. Volatility is measured as:
 	 * 
-	 * - log of std dev of price series (midquote prices of global quotes)
-	 * - std dev of log returns (compute over a window over multiple
-	 * 	 window sizes) the standard deviation of logarithmic returns.
+	 * - log of standard deviation of time series of mid-quote prices
+	 * - standard deviation of log returns
 	 * 
 	 * @param model
 	 * @param period
-	 * @param maxTime
+	 * @param maxTime (inclusive)
 	 * @return
 	 */
 	public Feature getVolatility(MarketModel model, int period, long maxTime) {
 		Feature feat = new Feature();
 		String prefix = "";
-		if (period > 0) {
-			prefix += PERIODICITY + period;
-		}
+		if (period > 0) prefix += PERIODICITY + period;
 		
 		DescriptiveStatistics stddev = new DescriptiveStatistics();
 		DescriptiveStatistics logPriceVol = new DescriptiveStatistics();
 		DescriptiveStatistics logRetVol = new DescriptiveStatistics();
 		for (int mktID : model.getMarketIDs()) {
+			String suffix = "_" + MARKET + (-mktID);
+			
 			TimeSeries mq = data.marketMidQuote.get(mktID);
 			if (mq != null) {
-				double[] midquote = mq.getSampledArray(period, maxTime);
+				double[] mid = mq.getSampledArrayWithoutNaNs(period, maxTime);
 				
 				// compute log price volatility for this market
-				DescriptiveStatistics prices = new DescriptiveStatistics(midquote);
-				double s = feat.addStdDev(prefix, PRICE + "_" + MARKET + (-mktID), 
-						prices);
+				DescriptiveStatistics mktPrices = new DescriptiveStatistics(mid);
+				double s = feat.addStdDev(prefix, PRICE + suffix, mktPrices);
 				stddev.addValue(s);
 				if (s != 0) {
 					logPriceVol.addValue(Math.log(s));
-				} else {
-					logPriceVol.addValue(Consts.DOUBLE_NAN);
-				}
+				} // don't add if stddev is 0
 				
 				// compute log-return volatility for this market
-				DescriptiveStatistics logreturns = new DescriptiveStatistics();
+				double[] midquote = mq.getSampledArray(period, maxTime);
+				double[] logReturns = new double[midquote.length-1];
+				DescriptiveStatistics mktLogReturns = new DescriptiveStatistics();
 				for (int i = 1; i < midquote.length; i++) {
-					logreturns.addValue(Math.log(midquote[i]/midquote[i-1]));
+					logReturns[i-1] = Math.log(midquote[i] / midquote[i-1]);
+					if (!Double.isNaN(logReturns[i-1])) {
+						mktLogReturns.addValue(logReturns[i-1]);
+					}
 				}
-				logRetVol.addValue(feat.addStdDev(prefix, RETURN + "_" + MARKET + 
-						(-mktID), logreturns));
+				logRetVol.addValue(feat.addStdDev(prefix, LOG + RETURN + suffix, 
+						mktLogReturns));
 			}
 		}
-		// average measures across all markets in this model 
-		feat.addMean(prefix, LOG + PRICE + VOL, logPriceVol);
-		feat.addMean(prefix, PRICE + VOL, stddev);
-		feat.addMean(prefix, LOG + RETURN + VOL, logRetVol);
+		// average measures across all markets in this model
+		feat.addMean(prefix, PRICE, stddev);
+		feat.addMean(prefix, LOG + PRICE, logPriceVol);
+		feat.addMean(prefix, LOG + RETURN, logRetVol);
 		return feat;
 	}
 	

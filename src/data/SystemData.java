@@ -6,7 +6,12 @@ import market.*;
 import model.*;
 import systemmanager.*;
 
+import java.text.DecimalFormat;
 import java.util.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 
 /**
  * SYSTEMDATA
@@ -31,9 +36,9 @@ import java.util.*;
  */
 public class SystemData {
 
-	public int num;										// observation number
-	public String simDir;							// simulations directory
-	public boolean EGTA;								// true if EGTA use case
+	public int num;								// observation number
+	public static String simDir;						// simulations directory
+	public boolean EGTA;							// true if EGTA use case
 	
 	// Model information
 	public MarketModel primaryModel;
@@ -526,15 +531,18 @@ public class SystemData {
 	 * @param spread
 	 */
 	public void addSpread(int mktID, TimeStamp ts, int spread) {
+		double s = Consts.DOUBLE_NAN;
+		if (spread != Consts.INF_PRICE) s = spread;
+			
 		if(!marketSpread.containsKey(mktID)) {
 			marketSpread.put(mktID, new TimeSeries());
 		}
-		marketSpread.get(mktID).add(ts, (double) spread);
+		marketSpread.get(mktID).add(ts, s);
 	}	
 	
 	/**
-	 * Add the mid-quote price (midpoint of BID-ASK quote). For computing
-	 * price volatility & returns.
+	 * Add the mid-quote price (midpoint of BID-ASK quote).
+	 * For computing price volatility & returns.
 	 * 
 	 * @param mktID
 	 * @param ts
@@ -542,8 +550,10 @@ public class SystemData {
 	 * @param ask
 	 */
 	public void addMidQuotePrice(int mktID, TimeStamp ts, int bid, int ask) {
-		double midQuote = (bid + ask) / 2;
-		
+		double midQuote = Consts.DOUBLE_NAN;
+		if (bid != Consts.INF_PRICE && ask != Consts.INF_PRICE) {
+			midQuote = (bid + ask) / 2;
+		}
 		if (!marketMidQuote.containsKey(mktID)) {
 			marketMidQuote.put(mktID, new TimeSeries());
 		}
@@ -565,7 +575,7 @@ public class SystemData {
 	}	
 		
 	/**
-	 * Add depth (number of orders waiting to be fulfilled).
+	 * Add depth (number of orders in the orderbook).
 	 * 
 	 * @param mktID
 	 * @param ts
@@ -586,7 +596,6 @@ public class SystemData {
 	public void addSubmissionTime(int bidID, TimeStamp ts) {
 		submissionTime.put(bidID, ts);
 	}
-
 
 	/**
 	 * Add transaction ID to modelTransID container.
@@ -721,5 +730,38 @@ public class SystemData {
 	public ArrayList<Price> getFundamentalValueProcess() {
 		return fundamentalGenerator.getProcess();
 	}
+	
+	
+	/***********************************
+	 * Outputting (for testing)
+	 *
+	 **********************************/
+	
+	/**
+	 * Write a double array to a file that's stored in the logs directory.
+	 * 
+	 * @param values
+	 * @param filename
+	 */
+	public static void writeToFile(double[] values, String filename) {
+		try {
+			DecimalFormat df = new DecimalFormat("#.#######");
+			File f = new File(simDir + Consts.logDir + filename);
+			if (!f.isFile()) f.createNewFile();
+			FileOutputStream os = new FileOutputStream(f);
+			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
+			BufferedWriter bw = new BufferedWriter(osw);
+			for (int i = 0; i < values.length; i++) {
+				bw.write(df.format(values[i]));
+				bw.newLine();
+			}
+			bw.close();
+			osw.close();
+			os.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 }
 

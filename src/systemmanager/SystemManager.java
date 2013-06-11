@@ -45,12 +45,12 @@ public class SystemManager {
 		SystemManager manager = new SystemManager();
 
 		if (args.length == 2) {
-			data.simDir = args[0] + "/";
-			if (data.simDir.charAt(0) == '/') 
-				data.simDir = data.simDir.substring(1);
+			SystemData.simDir = args[0] + "/";
+			if (SystemData.simDir.charAt(0) == '/') 
+				SystemData.simDir = SystemData.simDir.substring(1);
 			data.num = Integer.parseInt(args[1]);
 		} else {
-			data.simDir = "";
+			SystemData.simDir = "";
 			data.num = 1;
 		}
 		
@@ -75,8 +75,8 @@ public class SystemManager {
 			// Create log file
 			int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
 			Date now = new Date();
-			String logFilename = data.simDir.substring(0, 
-					data.simDir.length()-1).replace("/", "-") + "_" + data.num;
+			String logFilename = SystemData.simDir.substring(0, 
+					SystemData.simDir.length()-1).replace("/", "-") + "_" + data.num;
 			logFilename += "_" + DateFormat.getDateInstance(DateFormat.MEDIUM, 
 					Locale.UK).format(now);
 			logFilename += "_" + DateFormat.getTimeInstance(DateFormat.MEDIUM, 
@@ -85,7 +85,7 @@ public class SystemManager {
 			
 			try {
 				// Check first if directory exists
-				File f = new File(data.simDir);
+				File f = new File(SystemData.simDir);
 				if (!f.exists()) {
 					// Simulations directory not found
 					System.err.println(this.getClass().getSimpleName() + 
@@ -93,7 +93,7 @@ public class SystemManager {
 					System.exit(1);
 				}
 				// Check for logs directory
-				String logPath = data.simDir + Consts.logDir;
+				String logPath = SystemData.simDir + Consts.logDir;
 				f = new File(logPath);
 				if (!f.exists()) {
 					// Create directory
@@ -113,7 +113,7 @@ public class SystemManager {
 			// Read simulation specification file
 			try {
 				// Check first if simulation spec file exists
-				File f = new File(data.simDir + Consts.simSpecFile);
+				File f = new File(SystemData.simDir + Consts.simSpecFile);
 				if (!f.exists()) {
 					// Spec file is not found
 					System.err.println(this.getClass().getSimpleName() + 
@@ -126,7 +126,7 @@ public class SystemManager {
 				e.printStackTrace();
 			}
 			// Read simulation_spec.json file
-			SimulationSpec specs = new SimulationSpec(data.simDir + 
+			SimulationSpec specs = new SimulationSpec(SystemData.simDir + 
 					Consts.simSpecFile,	log, data);
 
 			// Create event manager
@@ -160,7 +160,7 @@ public class SystemManager {
 	 * Shuts down simulation. Removes empty log file if log level is 0.
 	 */
 	public void close() {
-		File f = new File(data.simDir + Consts.logDir);
+		File f = new File(SystemData.simDir + Consts.logDir);
 		if (f.exists() && log.getLevel() == Log.NO_LOGGING) {
 			// remove the empty log file
 			f.delete();
@@ -210,7 +210,7 @@ public class SystemManager {
 	 */
 	public void aggregateResults() {
 		try {			
-			File file = new File(data.simDir + Consts.obsFile + data.num + ".json");
+			File file = new File(SystemData.simDir + Consts.obsFile + data.num + ".json");
 			FileWriter txt = new FileWriter(file);
 			txt.write(obs.generateObservationFile());
 			txt.close();

@@ -66,72 +66,6 @@ public class TimeSeries {
 		return series.toString();
 	}
 	
-	/**
-	 * Returns subarray of values from 0 to maxTime, inclusive.
-	 * Fills in the end with the last available value, so the 
-	 * returned array is always of length maxTime.
-	 * 
-	 * @param maxTime (inclusive)
-	 * @return
-	 */
-	public double[] getArrayUpTo(long maxTime) {
-		if (maxTime <= lastTime().longValue()) {
-			// truncate at maxTime
-			int time = (int) maxTime;
-			return ArrayUtils.toPrimitive(series.subList(0, time+1).
-					toArray(new Double[time+1]));			
-		} else {
-			// fill in up to maxTime
-			int maxIndex = (int) lastTime().longValue();
-			int time = (int) maxTime;
-			double[] array = new double[time];
-			for (int i = 0; i < maxIndex; i++) {
-				array[i] = series.get(i);
-			}
-			for (int i = maxIndex; i < time; i++) {
-				array[i] = series.get(maxIndex-1);
-			}
-			return array;
-		}
-	}
-	
-	/**
-	 * Sample values according to specified period & return array.
-	 * Returns value at the END of each period. Example: For sampling
-	 * interval of 100, the first item in the sampled array would be the
-	 * 100th element.
-	 * 
-	 * @param period
-	 * @param maxTime (inclusive)
-	 * @return
-	 */
-	public double[] getSampledArray(int period, long maxTime) {
-		if (period <= 0) {
-			return getArrayUpTo(maxTime);
-		}
-		long endIndex = maxTime; 
-		if (maxTime > lastTime().longValue()) {
-			endIndex = lastTime().longValue();
-		}
-		// add 1 to endIndex because start at time 0
-		int maxIndex = (int) Math.floor((endIndex + 1) / period);
-		int newSize = (int) Math.floor((maxTime + 1) / period);
-		double[] array = new double[newSize];
-		
-		// sample at end of window, not at beginning
-		for (int i = 0; i < maxIndex; i++) {
-			array[i] = series.get((i+1) * period - 1); 
-		}
-		
-		// if endIndex is before maxTime, fill in up to maxTime
-		if (maxTime > endIndex) {
-			for (int i = maxIndex; i < newSize; i++) {
-				array[i] = series.get(maxIndex-1);
-			}
-		}
-		return array;
-	}
-	
 	
 	/**
 	 * Add a data point (TimeStamp, Double) to containers.
@@ -139,7 +73,7 @@ public class TimeSeries {
 	 * @param ts
 	 * @param point
 	 */
-	public void add(TimeStamp ts, double point) {
+	public void add(TimeStamp ts, Double point) {
 
 		// most recent time with associated point
 		TimeStamp startTime = times.get(indexOfLastPoint());
@@ -174,6 +108,122 @@ public class TimeSeries {
 		return times.get(indexOfLastPoint());
 	}
 	
+	/********************************************
+	 * Extracting arrays
+	 *******************************************/
+	
+	/**
+	 * Returns subarray of values from 0 to maxTime, inclusive.
+	 * Fills in the end with the last available value, so the 
+	 * returned array is always of length maxTime.
+	 * 
+	 * @param maxTime (inclusive)
+	 * @return
+	 */
+	public double[] getArrayUpTo(long maxTime) {
+		if (maxTime <= lastTime().longValue()) {
+			// truncate at maxTime
+			int maxSize = (int) maxTime;
+			return ArrayUtils.toPrimitive(series.subList(0, maxSize+1).
+					toArray(new Double[maxSize+1]));
+		} else {
+			// add 1 to lastIndex because start at time 0
+			int lastIndex = (int) lastTime().longValue() + 1;
+			int maxSize = (int) maxTime + 1;
+			double[] array = new double[maxSize];	// since first time is 0
+			for (int i = 0; i < lastIndex; i++) {
+				array[i] = series.get(i);
+			}
+			for (int i = lastIndex; i < maxSize; i++) {
+				array[i] = series.get(lastIndex-1);
+			}
+			return array;
+		}
+	}
+	
+	/**
+	 * Sample values according to specified period & return array.
+	 * Returns value at the END of each period. Example: For sampling
+	 * interval of 100, the first item in the sampled array would be the
+	 * 100th element.
+	 * 
+	 * Will also fill in values up to maxTime, if the last time stored
+	 * is before maxTime.
+	 * 
+	 * If period == 0, then will include every time stamp.
+	 * 
+	 * @param period
+	 * @param maxTime (inclusive)
+	 * @return
+	 */
+	public double[] getSampledArray(int period, long maxTime) {
+		if (period <= 0) {
+			return getArrayUpTo(maxTime);
+		}
+		long lastIndex = maxTime; 
+		if (maxTime > lastTime().longValue()) {
+			lastIndex = lastTime().longValue();
+		}
+		// add 1 to lastIndex because start at time 0
+		int size = (int) Math.floor((lastIndex + 1) / period);
+		int maxSize = (int) Math.floor((maxTime + 1) / period);
+		double[] array = new double[maxSize];
+		
+		// sample at end of window, not at beginning
+		for (int i = 0; i < size; i++) {
+			array[i] = series.get((i+1)*period - 1); 
+		}
+		
+		// if lastIndex is before maxTime, fill in up to maxTime
+		if (lastIndex < maxTime) {
+			for (int i = size; i < maxSize; i++) {
+				array[i] = series.get(size-1);
+			}
+		}
+		return array;
+	}
+	
+	
+	/**
+	 * For use with DescriptiveStatistics objects, which cannot ignore NaNs.
+	 * 
+	 * @param period
+	 * @param maxTime
+	 * @return
+	 */
+	public double[] getSampledArrayWithoutNaNs(int period, long maxTime) {
+		int freq = period;
+		if (period <= 0) freq = 1;
+		long lastIndex = maxTime; 
+		if (maxTime > lastTime().longValue()) {
+			lastIndex = lastTime().longValue();
+		}
+		// add 1 to lastIndex because start at time 0
+		int size = (int) Math.round((lastIndex + 1) / freq);
+		int maxSize = (int) Math.round((maxTime + 1) / freq);
+		
+		List<Double> arr = new ArrayList<Double>();
+		// sample at end of window, not at beginning
+		for (int i = freq-1; i <= (int) lastIndex; i += freq) {
+			Double x = series.get(i);
+			if (!x.isNaN())	arr.add(x);
+		}
+		
+		// if lastIndex is before maxTime, fill in up to maxTime
+		if (lastIndex < maxTime) {
+			for (int i = size; i < maxSize; i++) {
+				Double x = series.get(size - 1);
+				if (!x.isNaN())	arr.add(x);
+			}
+		}
+		return ArrayUtils.toPrimitive(arr.toArray(new Double[arr.size()]));
+	}
+	
+	
+	
+	/********************************************
+	 * Writing to output files
+	 *******************************************/
 	
 	/**
 	 * Writes entire time series to file. First element is time 0.
@@ -183,6 +233,7 @@ public class TimeSeries {
 	public void writeSeriesToFile(String filename) {
 		try {
 			File f = new File(filename);
+			if (!f.isFile()) f.createNewFile();
 			FileOutputStream os = new FileOutputStream(f);
 			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
 			BufferedWriter bw = new BufferedWriter(osw);
@@ -207,6 +258,7 @@ public class TimeSeries {
 	public void writeSampledSeriesToFile(int period, long maxTime, String filename) {
 		try {
 			File f = new File(filename);
+			if (!f.isFile()) f.createNewFile();
 			FileOutputStream os = new FileOutputStream(f);
 			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
 			BufferedWriter bw = new BufferedWriter(osw);
@@ -231,6 +283,7 @@ public class TimeSeries {
 	public void writePointsToCSFile(String filename) {
 		try {
 			File f = new File(filename);
+			if (!f.isFile()) f.createNewFile();
 			FileOutputStream os = new FileOutputStream(f);
 			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
 			BufferedWriter bw = new BufferedWriter(osw);
