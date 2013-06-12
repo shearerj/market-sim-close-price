@@ -1,5 +1,6 @@
 package entity;
 
+import data.*;
 import event.*;
 import model.*;
 import market.*;
@@ -12,10 +13,6 @@ import java.util.*;
  * Base class for all agents.
  * 
  * @author ewah
- */
-/**
- * @author ewah
- *
  */
 public abstract class Agent extends Entity {
 
@@ -682,7 +679,7 @@ public abstract class Agent extends Entity {
 	public void logTransactions(TimeStamp ts) {
 		
 		int rp = getRealizedProfit();
-		int up = getUnrealizedProfit();
+		// int up = getUnrealizedProfit();
 
 		String s = ts.toString() + " | " + this +  " Agent::logTransactions: " + 
 				this.getModel().getFullName() + ": Current Position=" + 

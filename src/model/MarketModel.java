@@ -4,6 +4,10 @@ import systemmanager.*;
 
 import java.util.ArrayList;
 
+import data.AgentPropsPair;
+import data.ObjectProperties;
+import data.SystemData;
+
 /**
  * MARKETMODEL
  * 
@@ -81,7 +85,7 @@ public abstract class MarketModel {
 	
 	/**
 	 * Format "MODELTYPE-CONFIG" unless config string is empty, then "MODELTYPE"
-	 * If configuration string has a colon, i.e. CONFIG:PARAMS, then only includ
+	 * If configuration string has a colon, i.e. CONFIG:PARAMS, then only include
 	 * the CONFIG portion.
 	 * 
 	 * @return model name
@@ -97,7 +101,8 @@ public abstract class MarketModel {
 	 * @return model name for observation file (format "modeltypeconfig")
 	 */
 	public String getLogName() {
-		return this.getClass().getSimpleName().toLowerCase() + this.getConfig().toLowerCase();
+		//return this.getClass().getSimpleName().toLower Case() + this.getConfig().toLowerCase();
+		return getFullName().toLowerCase().replace("-", "");
 	}
 	
 	/**

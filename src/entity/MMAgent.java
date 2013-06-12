@@ -1,5 +1,6 @@
 package entity;
 
+import data.*;
 import activity.*;
 import event.TimeStamp;
 import systemmanager.*;

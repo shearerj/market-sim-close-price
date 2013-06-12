@@ -13,23 +13,6 @@ import org.apache.commons.lang3.builder.*;
  */
 public class PQTransaction extends Transaction {
 	
-//	/**
-//	 * generate PQTransaction with given price, quantity, buyerID, sellerID, timestamp
-//	 * @param q quantity
-//	 * @param p price
-//	 * @param bID buyerID
-//	 * @param sID sellerID
-//	 * @param ts TimeStamp
-//	 */
-//	public PQTransaction(int q, Price p, int bID, int sID, TimeStamp ts)
-//	{
-//		quantity = new Integer(q);
-//		price = p;
-//		buyerID = new Integer(bID);
-//		sellerID = new Integer(sID);
-//		timestamp = ts;
-//	}
-	
 	/**
 	 * Generate PQTransaction with given price, quantity, buyerID, sellerID, buyBidID,
 	 * sellBidID, TimeStamp, marketID.
@@ -133,20 +116,5 @@ public class PQTransaction extends Transaction {
 				timestamp.toString()+" "+
 				marketID.toString()+"\n");
 	}
-	
-//	/**
-//	 * set all class members to null
-//	 */
-//	private void setMembersNull()
-//	{
-//		quantity = null;
-//		price = null;
-//		timestamp = null;
-//		buyerID = null;
-//		sellerID = null;
-//		buyBidID = null;
-//		sellBidID = null;
-//		marketID = null;
-//	}
 
 }

@@ -21,13 +21,13 @@ public class Event {
 	private boolean eventCompletion = false;			// flag indicating whether or not the event has been executed
 	private PriorityActivityList activities;
 	
-	/**
-	 * Constructor for Event object.
-	 */
-	public Event() {
-		eventTime = new TimeStamp(-1);
-		activities = new PriorityActivityList();
-	}
+//	/**
+//	 * Constructor for Event object.
+//	 */
+//	public Event() {
+//		eventTime = new TimeStamp(-1);
+//		activities = new PriorityActivityList();
+//	}
 	
 	/**
 	 * Constructor that creates empty event for a given time.

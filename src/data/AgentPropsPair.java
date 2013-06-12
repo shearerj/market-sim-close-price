@@ -1,4 +1,5 @@
-package systemmanager;
+package data;
+
 
 /**
  * Pair of (agent type, object string). Used to store assignments from specification

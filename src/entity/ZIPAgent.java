@@ -1,7 +1,7 @@
 package entity;
 
+import data.*;
 import event.*;
-import model.*;
 import market.*;
 import activity.*;
 import systemmanager.*;
