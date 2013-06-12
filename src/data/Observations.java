@@ -292,6 +292,8 @@ public class Observations {
 					Double[surplus.size()])));
 			feat.addSum("", TOTAL + suffix, total);
 			
+			SystemData.writeToFile(total.getValues(), SURPLUS + TOTAL +"_ds.csv");
+			
 			// sub-categories for surplus (roles)
 			DescriptiveStatistics bkgrd = new DescriptiveStatistics();
 			DescriptiveStatistics hft = new DescriptiveStatistics();
@@ -316,7 +318,8 @@ public class Observations {
 				}
 			}
 			
-			SystemData.writeToFile(bkgrd.getValues(), SURPLUS +"_ds.csv");
+			SystemData.writeToFile(bkgrd.getValues(), SURPLUS + TOTAL +"bck_ds.csv");
+			SystemData.writeToFile(hft.getValues(), SURPLUS + TOTAL +"hft_ds.csv");
 			
 			feat.addSum("", Consts.ROLE_BACKGROUND.toLowerCase() + suffix, bkgrd);
 			feat.addSum("", Consts.ROLE_MARKETMAKER.toLowerCase() + suffix, mm);
@@ -471,7 +474,10 @@ public class Observations {
 				
 				// compute log-return volatility for this market
 				double[] midquote = mq.getSampledArray(period, maxTime);
-				double[] logReturns = new double[midquote.length-1];
+				int size = midquote.length;
+				if (midquote.length > 0) size = midquote.length - 1;
+				
+				double[] logReturns = new double[size];
 				DescriptiveStatistics mktLogReturns = new DescriptiveStatistics();
 				for (int i = 1; i < midquote.length; i++) {
 					logReturns[i-1] = Math.log(midquote[i] / midquote[i-1]);

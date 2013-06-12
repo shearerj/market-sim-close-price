@@ -175,7 +175,8 @@ public class TimeSeries {
 		}
 		
 		// if lastIndex is before maxTime, fill in up to maxTime
-		if (lastIndex < maxTime) {
+		// only fill in if size > 0, i.e. if a value to fill across exists
+		if (lastIndex < maxTime && size > 0) {
 			for (int i = size; i < maxSize; i++) {
 				array[i] = series.get(size-1);
 			}
@@ -210,7 +211,7 @@ public class TimeSeries {
 		}
 		
 		// if lastIndex is before maxTime, fill in up to maxTime
-		if (lastIndex < maxTime) {
+		if (lastIndex < maxTime && size > 0) {
 			for (int i = size; i < maxSize; i++) {
 				Double x = series.get(size - 1);
 				if (!x.isNaN())	arr.add(x);
