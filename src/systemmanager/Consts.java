@@ -19,7 +19,9 @@ public class Consts {
 //	{0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009};
 	
 	// 0 means sampling every time step
-	public final static int[] periods = {0, 1, 250};	
+	public final static int[] periods = {0, 1, 250};
+	
+	public final static long upToTime = 3000;	// compute statistics up to this time
 	
 	// **********************************************************
 	// Agent, market, and model types
@@ -174,7 +176,11 @@ public class Consts {
 			p.put(CallMarket.CLEAR_FREQ_KEY, "100");
 		}
 		if (type.equals(ZI)) {
-			p.put(ZIAgent.BIDRANGE_KEY, "200");
+			p.put(Agent.BIDRANGE_KEY, "2000");
+		}
+		if (type.equals(ZIR)) {
+			p.put(Agent.BIDRANGE_KEY, "5000");
+			p.put(Agent.MAXQUANTITY_KEY, "10");
 		}
 		if (type.equals(ZIP)) {
 			p.put(Agent.SLEEPTIME_KEY, "50");

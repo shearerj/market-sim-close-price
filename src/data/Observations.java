@@ -69,7 +69,7 @@ public class Observations {
 	public final static String ALTERNATE = "alt";
 	public final static String TRANSACT = "transact";
 	public final static String NO_TRANSACT = "notrans";
-	public final static String PERIODICITY = "win";
+	public final static String PERIODICITY = "freq";
 	
 	// Suffixes
 	public final static String AGENTSETUP = "setup";
@@ -115,7 +115,7 @@ public class Observations {
 		
 		// set up max time (where most agents have arrived)
 		long time = Math.round(data.getNumEnvAgents() / data.arrivalRate);
-		maxTime = Market.quantize((int) time, 1000);
+		maxTime = Math.max(Consts.upToTime, Market.quantize((int) time, 1000));
 		
 		addFeature("", getConfiguration());
 		
@@ -124,7 +124,7 @@ public class Observations {
 			String modelName = model.getLogName() + "_";
 
 			addFeature(modelName + SURPLUS, getSurplus(model));
-			addFeature(modelName + EXECTIME, getTimeToExecution(model));
+			addFeature(modelName + EXECTIME, getExecutionTime(model));
 			addFeature(modelName + TRANSACTIONS, getTransactionInfo(model));
 			addFeature(modelName + SPREADS, getSpread(model, maxTime));
 			for (int period : Consts.periods) {
@@ -252,14 +252,14 @@ public class Observations {
 	 * @param model
 	 * @return
 	 */
-	public Feature getTimeToExecution(MarketModel model) {
+	public Feature getExecutionTime(MarketModel model) {
 		Feature feat = new Feature();
 		ArrayList<Integer> ids = model.getMarketIDs();
 		DescriptiveStatistics speeds = new DescriptiveStatistics();
-		for (Integer bidID : data.timeToExecution.keySet()) {
+		for (Integer bidID : data.executionTime.keySet()) {
 			PQBid b = data.getBid(bidID);
 			if (ids.contains(b.getMarketID())) {
-				speeds.addValue((double) data.timeToExecution.get(bidID).longValue());
+				speeds.addValue((double) data.executionTime.get(bidID).longValue());
 			}
 		}
 //		feat.addMax(speeds);
@@ -292,8 +292,6 @@ public class Observations {
 					Double[surplus.size()])));
 			feat.addSum("", TOTAL + suffix, total);
 			
-			SystemData.writeToFile(total.getValues(), SURPLUS + TOTAL +"_ds.csv");
-			
 			// sub-categories for surplus (roles)
 			DescriptiveStatistics bkgrd = new DescriptiveStatistics();
 			DescriptiveStatistics hft = new DescriptiveStatistics();
@@ -317,9 +315,6 @@ public class Observations {
 					env.addValue(val);
 				}
 			}
-			
-			SystemData.writeToFile(bkgrd.getValues(), SURPLUS + TOTAL +"bck_ds.csv");
-			SystemData.writeToFile(hft.getValues(), SURPLUS + TOTAL +"hft_ds.csv");
 			
 			feat.addSum("", Consts.ROLE_BACKGROUND.toLowerCase() + suffix, bkgrd);
 			feat.addSum("", Consts.ROLE_MARKETMAKER.toLowerCase() + suffix, mm);
@@ -387,13 +382,13 @@ public class Observations {
 		}
 		
 		// compute RMSD (for price discovery) at different sampling frequencies
-		for (int window : Consts.periods) {
+		for (int period : Consts.periods) {
 			String prefix = "";
-			if (window > 0) {
-				prefix += PERIODICITY + window;
+			if (period > 1) {
+				prefix += PERIODICITY + period;
 			}
-			double[] pr = transPrices.getSampledArray(window, data.simLength.longValue());
-			double[] fund = fundPrices.getSampledArray(window, data.simLength.longValue());
+			double[] pr = transPrices.getSampledArray(period, data.simLength.longValue());
+			double[] fund = fundPrices.getSampledArray(period, data.simLength.longValue());
 			feat.addRMSD(prefix, "", new DescriptiveStatistics(pr), 
 					new DescriptiveStatistics(fund));
 		}
@@ -452,7 +447,7 @@ public class Observations {
 	public Feature getVolatility(MarketModel model, int period, long maxTime) {
 		Feature feat = new Feature();
 		String prefix = "";
-		if (period > 0) prefix += PERIODICITY + period;
+		if (period > 1) prefix += PERIODICITY + period;
 		
 		DescriptiveStatistics stddev = new DescriptiveStatistics();
 		DescriptiveStatistics logPriceVol = new DescriptiveStatistics();
@@ -490,7 +485,7 @@ public class Observations {
 			}
 		}
 		// average measures across all markets in this model
-		feat.addMean(prefix, PRICE, stddev);
+		feat.addMean(prefix, Feature.STDDEV + PRICE, stddev);
 		feat.addMean(prefix, LOG + PRICE, logPriceVol);
 		feat.addMean(prefix, LOG + RETURN, logRetVol);
 		return feat;

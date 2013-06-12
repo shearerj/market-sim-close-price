@@ -401,7 +401,7 @@ public class SystemSetup {
 						op.put(SMAgent.MARKETID_KEY, assignMktIDs.get(i).toString());
 					}
 					Agent ag = createAgent(model, new AgentPropsPair(type, op),
-											rand.nextLong(), playerArrivalGenerators.get(type).next());
+							rand.nextLong(), playerArrivalGenerators.get(type).next());
 					ag.setLogID(ag.getID()); 	// set player ID = log ID
 					data.addPlayer(ag);			// add player to SystemData
 				}

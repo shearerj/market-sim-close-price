@@ -88,7 +88,7 @@ public class SystemData {
 	public HashMap<Integer,TimeSeries> marketMidQuote;			// hashed by market ID
 	public HashMap<Integer,TimeSeries> marketDepth;				// hashed by market ID
 	
-	public HashMap<Integer,TimeStamp> timeToExecution;		 	// hashed by bid ID
+	public HashMap<Integer,TimeStamp> executionTime;		 	// hashed by bid ID
 	public HashMap<Integer,TimeStamp> submissionTime;			// hashed by bid ID
 	public HashMap<Integer,HashMap<Double,Surplus>> modelSurplus; // hashed by model ID
 																  // then by rho
@@ -122,7 +122,7 @@ public class SystemData {
 		marketSpread = new HashMap<Integer,TimeSeries>();
 		NBBOSpread = new HashMap<Integer,TimeSeries>();
 		marketMidQuote = new HashMap<Integer,TimeSeries>();
-		timeToExecution = new HashMap<Integer,TimeStamp>();
+		executionTime = new HashMap<Integer,TimeStamp>();
 		submissionTime = new HashMap<Integer,TimeStamp>();
 		modelSurplus = new HashMap<Integer,HashMap<Double,Surplus>>();
 		
@@ -435,7 +435,7 @@ public class SystemData {
 	 * @return
 	 */
 	public TimeStamp getTimeToExecution(int bidID) {
-		return timeToExecution.get(bidID);
+		return executionTime.get(bidID);
 	}
 	
 	public HashMap<Double,Surplus> getSurplus(int modelID) {
@@ -636,10 +636,10 @@ public class SystemData {
 	 * @param bidID
 	 * @param ts
 	 */
-	public void addTimeToExecution(int bidID, TimeStamp ts) {
+	public void addExecutionTime(int bidID, TimeStamp ts) {
 		// check if submission time contains it (if not, there is an error)
 		if (submissionTime.containsKey(bidID)) {
-			timeToExecution.put(bidID, ts.diff(submissionTime.get(bidID)));
+			executionTime.put(bidID, ts.diff(submissionTime.get(bidID)));
 		} else {
 			System.err.println(this.getClass().getSimpleName() + 
 					":: submission time does not contain bidID " + bidID);
@@ -681,7 +681,6 @@ public class SystemData {
 				s.addCumulative(t.buyerID, Math.exp(-rho * buyTime.longValue()) * cs);
 				
 			} else {
-//				double cs = rt.diff(t.price).getPrice();
 				double cs = -t.price.getPrice();
 				// System.out.println(modelID + "," + t.buyerID + "," + "," +getPrivateValueByBid(t.buyBidID)
 				//		+ "," + rt + "," + t.price + "," + cs + "," + buyTime + "," + rho);
@@ -698,7 +697,6 @@ public class SystemData {
 				s.addCumulative(t.sellerID, Math.exp(-rho * sellTime.longValue()) * ps);
 				
 			} else {
-//				double ps = t.price.diff(rt).getPrice();
 				double ps = t.price.getPrice();
 				// System.out.println(modelID + "," + "," + t.sellerID + "," + getPrivateValueByBid(t.sellBidID)
 				//		+ "," + rt + "," + t.price + "," + ps + "," + sellTime + "," + rho);
