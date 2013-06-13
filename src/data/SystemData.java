@@ -394,47 +394,17 @@ public class SystemData {
 		return transactions.get(modelID);
 	}
 	
+	/**
+	 * Get all transactions in specified model with ID after 
+	 * Transaction t's ID (not inclusive).
+	 * 
+	 * @param modelID
+	 * @param t
+	 * @return
+	 */
 	public Set<Transaction> getTransTailSet(int modelID, Transaction t) {
 		return transactions.get(modelID).tailSet(t, false);
 	}
-	
-//	/**
-//	 * Get a specific transaction within a given model.
-//	 * @param modelID
-//	 * @param id
-//	 * @return
-//	 */
-//	public PQTransaction getTransaction(int modelID, int id) {
-//		return getTrans(modelID).get(id);
-//	}
-	
-//	/**
-//	 * Get transactions for only the given model (hashed by transaction ID).
-//	 * 
-//	 * @param modelID 
-//	 * @return
-//	 */
-//	public HashMap<Integer,PQTransaction> getTrans(int modelID) {
-//		HashMap<Integer,PQTransaction> trans = new HashMap<Integer,PQTransaction>();
-//		for (PQTransaction tr : transactions.get(modelID)) {
-//			trans.put(tr.transID, tr);
-//		}
-//		return trans;
-//	}
-//
-//	
-//	public List<Transaction> getTrans(int modelID) {
-//		return transactions.get(modelID);
-//	}
-	
-//	/**
-//	 * @return list of all transaction IDs
-//	 */
-//	public ArrayList<Integer> getTransIDs(int modelID) {
-////		return new ArrayList<Integer>(getTrans(modelID).keySet());
-//		return new ArrayList<Integer>(transIDs.get(modelID));
-//	}
-
 	
 	/**
 	 * @param bidID
@@ -454,10 +424,6 @@ public class SystemData {
 		else 
 			return null;
 	}
-	
-//	public HashMap<Integer,Double> getSurplusByRho(double rho) {
-//		return allSurplus.get(rho);
-//	}
 	
 
 	/***********************************

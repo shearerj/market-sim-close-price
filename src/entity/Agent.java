@@ -869,7 +869,7 @@ public abstract class Agent extends Entity {
 					log.log(Log.INFO, ts + " | " + this + " " +
 							"Agent::updateTransactions: SURPLUS for this transaction: " + (cs + ps));
 				}
-				// Update transaction ID
+				// Update transactions
 				lastGoodTrans = t;
 				transactions.add(t);
 			}
@@ -879,7 +879,6 @@ public abstract class Agent extends Entity {
 		lastTransTime = ts;
 	}
 
-	
 	/**
 	 * Gets all transactions that have not been processed yet.
 	 * 
@@ -897,91 +896,6 @@ public abstract class Agent extends Entity {
 		}
 		return new ArrayList<Transaction>(tmp);
 	}
-	
-//	/**
-//	 * @return list of all transactions that have not been processed yet.
-//	 */
-//	public ArrayList<PQTransaction> getNewTransactions() {
-//		ArrayList<PQTransaction> temp = null;
-//		if (lastTransID == null)
-//			temp = getTransactions(new Integer(-1));
-//		else
-//			temp = getTransactions(lastTransID);
-//		return temp;
-//	}
-
-//	public TreeSet<Integer> getNewTransIDs() {
-//		if (lastTransID != null) {
-//			return new TreeSet<Integer>(transIDs.tailSet(lastTransID));			
-//		}
-//		return null;
-//	}
-	
-//	/**
-//	 * @return 
-//	 */
-//	public ArrayList<PQTransaction> getTrans() {
-//		ArrayList<PQTransaction> trans = new ArrayList<PQTransaction>();
-//		TreeSet<Integer> ids = getNewTransIDs();
-//			
-//		if (ids == null || ids.size() == 0) return null;
-//		
-//		// all transactions are stored by 
-//		List<Transaction> tr = data.getTrans(modelID);
-//		List<Transaction> subTrans = tr.subList(lastTransID, trans.size());
-//		
-//		for (Integer id : ids) {
-////			trans.add(tr.get(index))
-//		}
-//	
-//		return trans;
-//	}
-	
-//	/**
-//	 * Return list of transactions generated after the given ID.
-//	 * 
-//	 * @param lastID of the transaction we don't want
-//	 * @return list of transactions later than lastID
-//	 */
-//	public ArrayList<PQTransaction> getTransactions(int lastID) {
-//		ArrayList<PQTransaction> transactions = new ArrayList<PQTransaction>();
-//
-//		TreeSet<Integer> t = getTransIDs(lastID);
-//		if (t == null || t.size() == 0) return null;
-//
-//		for (Iterator<Integer> i = t.iterator(); i.hasNext();) {
-//			Integer id = i.next();
-//			PQTransaction record = this.data.getTransaction(modelID, id);
-//			transactions.add(record);
-//		}
-//		return transactions;
-//	}
-
-//	/**
-//	 * @return sorted set of all transaction IDs later than the last one
-//	 */
-//	public TreeSet<Integer> getTransIDs() {
-//		if (lastTransID != null)
-//			return getTransIDs(lastTransID);
-//		return null;
-//	}
-
-	
-//	/**
-//	 * @param lastID - last ID that don't want transIDs for
-//	 * @return sorted set of transaction IDs later that lastID
-//	 */
-//	public TreeSet<Integer> getTransIDs(int lastID) {
-//		TreeSet<Integer> transIDs = new TreeSet<Integer>();
-//		for (Integer id : data.getTransIDs(modelID)) {
-//			if (id > lastID) {
-//				transIDs.add(id);
-//			}
-//		}
-//		if (transIDs.size() == 0) return null;
-//
-//		return transIDs; 
-//	}
 
 	
 	/***********************************
