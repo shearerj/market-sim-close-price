@@ -141,11 +141,10 @@ public abstract class Agent extends Entity {
 	public abstract Collection<Activity> agentDeparture(TimeStamp ts);
 	
 	/**
-	 * @param priority
 	 * @param ts
 	 * @return
 	 */
-	public abstract Collection<Activity> agentReentry(int priority, TimeStamp ts);
+	public abstract Collection<Activity> agentReentry(TimeStamp ts);
 	
 	/**
 	 * @return observation to include in the output file
@@ -699,8 +698,7 @@ public abstract class Agent extends Entity {
 		
 		int rp = getRealizedProfit();
 
-		@SuppressWarnings("unused")
-		int up = getUnrealizedProfit();
+		// int up = getUnrealizedProfit();
 
 		String s = ts.toString() + " | " + this +  " Agent::logTransactions: " + 
 				this.getModel().getFullName() + ": Current Position=" + 

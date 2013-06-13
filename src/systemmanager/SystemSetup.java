@@ -248,7 +248,6 @@ public class SystemSetup {
 			market.linkModel(model.getID());
 			data.addMarket(market);
 			model.getMarketIDs().add(mID);
-			log.log(Log.DEBUG, market.toString() + ": " + mp);
 			
 			// Check if is call market, then initialize clearing sequence
 			if (market instanceof CallMarket) {
@@ -437,7 +436,6 @@ public class SystemSetup {
 		createInitialAgentEvents(agent);
 		data.addAgent(agent);
 		model.linkAgent(agID);
-		log.log(Log.DEBUG, agent.toString() + ": " + p);
 		return agent;
 	}
 	
@@ -450,10 +448,6 @@ public class SystemSetup {
 	private void createInitialAgentEvents(Agent agent) {
 		TimeStamp ts = agent.getArrivalTime();
 		
-		int arrivalPriority = Consts.BACKGROUND_AGENT_PRIORITY;
-		if (agent instanceof HFTAgent) {
-			arrivalPriority = Consts.HIGHEST_PRIORITY;
-		}
 		eventManager.addActivity(new AgentArrival(agent, ts));
 		
 		// set liquidation at the end of the simulation for market makers
@@ -492,7 +486,7 @@ public class SystemSetup {
 
 	
 	/**
-	 * 2Logs agent information.
+	 * Logs agent information.
 	 */
 	public void logAgentInfo() {
 		ArrayList<Integer> ids = data.getAgentIDs();

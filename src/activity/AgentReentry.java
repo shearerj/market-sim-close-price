@@ -12,25 +12,22 @@ import entity.*;
  */
 public class AgentReentry extends Activity {
 	
-	private int priority;
 	private Agent ag;
 	
-	public AgentReentry(Agent ag, int priority, TimeStamp t) {
+	public AgentReentry(Agent ag, TimeStamp t) {
 		super(t);
 		this.ag = ag;
-		this.priority = priority;
 	}
 	
 	public AgentReentry deepCopy() {
-		return new AgentReentry(this.ag, this.priority, this.time);
+		return new AgentReentry(this.ag, this.time);
 	}
 	
 	public Collection<Activity> execute(TimeStamp currentTime) {
-		return ag.agentReentry(priority, currentTime); 
+		return ag.agentReentry(currentTime); 
 	}
 	
 	public String toString() {
-		return new String("AgentReentry::" + this.ag.toString() +
-							" {" + priority + "}");
+		return new String("AgentReentry::" + this.ag.toString());
 	}
 }

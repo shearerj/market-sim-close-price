@@ -89,8 +89,8 @@ public class EventQueue implements Queue<Activity> {
 		List<Event> copy = new ArrayList<Event>(eventQueue);
 		Collections.sort(copy);
 		for (Event e : copy)
-			sb.append(e).append("// ");
-		return sb.substring(0, sb.length() - 3);
+			sb.append(e).append(" ...");
+		return sb.substring(0, sb.length() - 4);
 	}
 
 	@Override

@@ -67,12 +67,10 @@ public abstract class MMAgent extends Agent {
 	/**
 	 * Agent re-enters/wakes up to execute its strategy.
 	 * 
-	 * @param priority
 	 * @param ts
 	 */
-	public Collection<Activity> agentReentry(int priority, TimeStamp ts) {
+	public Collection<Activity> agentReentry(TimeStamp ts) {
 		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new UpdateAllQuotes(this, ts));
 		actMap.add(new AgentStrategy(this, ts));
 		return actMap;
 	}

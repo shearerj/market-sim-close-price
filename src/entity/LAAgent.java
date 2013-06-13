@@ -3,10 +3,7 @@ package entity;
 import data.*;
 import event.*;
 import market.*;
-import activity.Activity;
-import activity.AgentReentry;
-import activity.AgentStrategy;
-import activity.UpdateAllQuotes;
+import activity.*;
 import systemmanager.*;
 
 import java.util.ArrayList;
@@ -60,6 +57,8 @@ public class LAAgent extends HFTAgent {
 		// Ensure that agent has arrived in the market
 		if (ts.compareTo(arrivalTime) >= 0) {
 			Collection<Activity> actMap = new ArrayList<Activity>();
+			
+			this.updateAllQuotes(ts);
 
 			BestQuote bestQuote = findBestBuySell();
 			if ((bestQuote.bestSell > (1+alpha)*bestQuote.bestBuy) && (bestQuote.bestBuy >= 0) ) {
@@ -114,17 +113,11 @@ public class LAAgent extends HFTAgent {
 			}
 			if (sleepTime > 0) {
 				TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
-				actMap.add(new AgentReentry(this, Consts.HFT_AGENT_PRIORITY, tsNew));
-//				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
-//				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
+				actMap.add(new AgentReentry(this, tsNew));
 				
 			} else if (sleepTime == 0) {
 				// infinitely fast HFT agent
-				TimeStamp tsNew = new TimeStamp(Consts.INF_TIME);
-//				actMap.insertActivity(Consts.DEFAULT_PRIORITY, 
-//						new AgentReentry(this, Consts.HFT_ARRIVAL_PRIORITY, tsNew));
-				actMap.add(new UpdateAllQuotes(this, tsNew));
-				actMap.add(new AgentStrategy(this, tsNew));
+				actMap.add(new AgentStrategy(this, new TimeStamp(Consts.INF_TIME)));
 			}
 			return actMap;
 		}

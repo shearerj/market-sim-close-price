@@ -19,7 +19,7 @@ import activity.Activity;
 public class EventManager {
 
 	protected Log log;
-	protected EventQueue activityQueue;
+	protected EventQueue eventQueue;
 	protected TimeStamp currentTime;
 
 	// private TimeStamp duration; // simulation length
@@ -28,13 +28,13 @@ public class EventManager {
 	 * Constructor
 	 */
 	public EventManager(TimeStamp ts, Log l) {
-		activityQueue = new EventQueue();
+		eventQueue = new EventQueue();
 		log = l;
 		currentTime = new TimeStamp(0);
 	}
 
 	public boolean isEmpty() {
-		return activityQueue.isEmpty();
+		return eventQueue.isEmpty();
 	}
 
 	/**
@@ -43,7 +43,7 @@ public class EventManager {
 	 * @return
 	 */
 	public TimeStamp getCurrentTime() {
-		return activityQueue.element().getTime();
+		return eventQueue.element().getTime();
 	}
 
 	/**
@@ -54,15 +54,15 @@ public class EventManager {
 
 		// FIXME This toString is slow, and probably shouldn't be called if the
 		// logs aren't being used at debug level
-		log.log(Log.DEBUG, "executeCurrentEvent: " + activityQueue);
+		log.log(Log.DEBUG, "executeCurrentEvent: " + eventQueue);
 
 		try {
 			// This way infinitely fast activities can still schedule events x
 			// time in the future.
-			Activity act = activityQueue.remove();
+			Activity act = eventQueue.remove();
 			if (act.getTime().after(currentTime))
 				currentTime = act.getTime();
-			activityQueue.addAll(act.execute(currentTime));
+			eventQueue.addAll(act.execute(currentTime));
 		} catch (Exception e) {
 			// TODO This should be logged at the least.
 			e.printStackTrace();
@@ -70,7 +70,7 @@ public class EventManager {
 	}
 
 	public void addActivity(Activity act) {
-		activityQueue.add(act);
+		eventQueue.add(act);
 	}
 
 }

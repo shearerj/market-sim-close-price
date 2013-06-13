@@ -1,6 +1,5 @@
 package activity;
 
-
 import java.util.Collection;
 
 import entity.*;

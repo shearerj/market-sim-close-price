@@ -68,6 +68,10 @@ public class ZIAgent extends BackgroundAgent {
 	public Collection<Activity> agentStrategy(TimeStamp ts) {
 		Collection<Activity> actMap = new ArrayList<Activity>();
 
+		// update quotes
+		this.updateAllQuotes(ts);
+		this.updateQuotes(market, ts);
+		
 		int p = 0;
 		int q = 1;
 		if (rand.nextBoolean()) q = -q;	 // 50% chance of being either long or short

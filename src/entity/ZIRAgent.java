@@ -138,9 +138,8 @@ public class ZIRAgent extends BackgroundAgent {
 			log.log(Log.INFO, s);
 		}
 		
-		TimeStamp tsNew = reentry.next();	// compute next re-entry time
 		// NOTE: reentry priority must be <= SubmitBid priority
-		actMap.add(new AgentReentry(this, Consts.BACKGROUND_AGENT_PRIORITY, tsNew));
+		actMap.add(new AgentReentry(this, reentry.next()));
 		return actMap;
 	}
 
