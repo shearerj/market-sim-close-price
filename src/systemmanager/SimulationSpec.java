@@ -1,5 +1,9 @@
 package systemmanager;
 
+import data.*;
+import entity.Agent;
+import event.TimeStamp;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -10,13 +14,12 @@ import java.util.Iterator;
 import org.json.simple.*;
 import org.json.simple.parser.*;
 
-import entity.Agent;
-import event.TimeStamp;
 
 /**
- * Stores list of web parameters used in EGTAOnline.
+ * Stores list of parameters used in the simulation_spec.json file.
  * 
- * NOTE: All MarketModel types in the spec file must match the corresponding class name.
+ * NOTE: All MarketModel types in the spec file must match the 
+ * corresponding class name.
  * 
  * @author ewah
  */
@@ -30,6 +33,18 @@ public class SimulationSpec {
 	
 	public final static String ASSIGN_KEY = "assignment";
 	public final static String CONFIG_KEY = "configuration";
+	
+	// Parameters in spec file
+	public final static String SIMULATION_LENGTH = "sim_length";
+	public final static String TICK_SIZE = "tick_size";
+	public final static String LATENCY = "nbbo_latency";
+	public final static String ARRIVAL_RATE = "arrival_rate";
+	public final static String REENTRY_RATE = "reentry_rate";
+	public final static String FUNDAMENTAL_MEAN = "mean_value";
+	public final static String FUNDAMENTAL_KAPPA = "kappa";
+	public final static String FUNDAMENTAL_SHOCK_VAR = "shock_var";
+	public final static String PRIVATE_VALUE_VAR = "private_value_var";
+	public final static String PRIMARY_MODEL = "primary_model";
 	
 	/**
 	 * Constructor
@@ -56,57 +71,61 @@ public class SimulationSpec {
 			JSONObject array = (JSONObject) obj;
 			assignments = (JSONObject) array.get(ASSIGN_KEY);
 			params = (JSONObject) array.get(CONFIG_KEY);
+			isr.close();
+			is.close();
 		} catch (IOException e) {
-			log.log(Log.ERROR, this.getClass().getSimpleName() + 
+			System.err.println(this.getClass().getSimpleName() + 
 					"::loadFile(String): error opening/processing spec file: " +
-					specFile + "/" + e);
+					specFile);
+			e.printStackTrace();
 		} catch (ParseException e) {
-			log.log(Log.ERROR, this.getClass().getSimpleName() + 
-					"::loadFile(String): JSON parsing error: " + e);
+			System.err.println(this.getClass().getSimpleName() + 
+					"::loadFile(String): JSON parsing error");
 		}
 	}
 	
 	
 	/**
-	 * Parses the spec file for config parameters. Overrides settings in environment
-	 * properties file & agent properties config.
+	 * Parses the spec file for config parameters. Overrides settings 
+	 * in environment properties file & agent properties config.
 	 */
 	public void readParams() {
 		
-		data.simLength = new TimeStamp(Integer.parseInt(getValue("sim_length")));
-		data.tickSize = Integer.parseInt(getValue("tick_size"));	
-		data.nbboLatency = new TimeStamp(Integer.parseInt(getValue("nbbo_latency")));
-		data.arrivalRate = Double.parseDouble(getValue("arrival_rate"));
-		data.reentryRate = Double.parseDouble(getValue("reentry_rate"));
-		data.meanValue = Integer.parseInt(getValue("mean_value"));
-		data.kappa = Double.parseDouble(getValue("kappa"));
-		data.shockVar = Double.parseDouble(getValue("shock_var"));
-		data.pvVar = Double.parseDouble(getValue("private_value_var"));
-				
-		// Model-specific parameters
-		data.primaryModelDesc = getValue("primary_model");
+		data.simLength = new TimeStamp(Integer.parseInt(getValue(SIMULATION_LENGTH)));
+		data.tickSize = Integer.parseInt(getValue(TICK_SIZE));	
+		data.nbboLatency = new TimeStamp(Integer.parseInt(getValue(LATENCY)));
+		data.arrivalRate = Double.parseDouble(getValue(ARRIVAL_RATE));
+		data.reentryRate = Double.parseDouble(getValue(REENTRY_RATE));
+		data.meanValue = Integer.parseInt(getValue(FUNDAMENTAL_MEAN));
+		data.kappa = Double.parseDouble(getValue(FUNDAMENTAL_KAPPA));
+		data.shockVar = Double.parseDouble(getValue(FUNDAMENTAL_SHOCK_VAR));
+		data.pvVar = Double.parseDouble(getValue(PRIVATE_VALUE_VAR));
+		data.primaryModelDesc = getValue(PRIMARY_MODEL);
 		
 		/*******************
 		 * MARKET MODELS
 		 *******************/
-		for (int i = 0; i < Consts.MARKETMODEL_TYPES.length; i++) {
+		for (String modelType : Consts.MARKETMODEL_TYPES) {
 			// models here is a comma-separated list
-			String models = getValue(Consts.MARKETMODEL_TYPES[i]);
+			String models = getValue(modelType);
 			if (models != null) {
-				if (models.endsWith(",")) {
-					// remove any extra appended commas
-					models = models.substring(0, models.length() - 1);
-				}
-				String[] configs = models.split("[,]+");
-				
-				if (configs.length > 1) {
-					// if > 1, number of that model type is the number of items in the list
-					// also must check that not indicating that there are NONE or 0 of this model
-					data.numModelType.put(Consts.MARKETMODEL_TYPES[i], configs.length);
-				} else if (!models.equals(Consts.MODEL_CONFIG_NONE) && !models.equals("0")) {
-					data.numModelType.put(Consts.MARKETMODEL_TYPES[i], configs.length);
-				} else {
-					data.numModelType.put(Consts.MARKETMODEL_TYPES[i], 0);
+				if (!models.isEmpty()) {
+					if (models.endsWith(",")) {
+						// remove any extra appended commas
+						models = models.substring(0, models.length() - 1);
+					}
+					String[] configs = models.split("[,]+");
+					
+					if (configs.length > 1) {
+						// if > 1, # model type = # of items in the list
+						// check if there are NONE or 0 of this model
+						data.numModelType.put(modelType, configs.length);
+					} else if (!models.equals(Consts.MODEL_CONFIG_NONE) && 
+							!models.equals("0")) {
+						data.numModelType.put(modelType, configs.length);
+					} else {
+						data.numModelType.put(modelType, 0);
+					}
 				}
 			}
 		}
@@ -114,8 +133,7 @@ public class SimulationSpec {
 		/*******************
 		 * CONFIGURATION - add environment agents
 		 *******************/
-		for (int i = 0; i < Consts.SM_AGENT_TYPES.length; i++) {
-			String agentType = Consts.SM_AGENT_TYPES[i];
+		for (String agentType : Consts.SM_AGENT_TYPES) {
 			String num = getValue(agentType);
 			String setup = getValue(agentType + Consts.setupSuffix);
 			if (num != null) {
@@ -129,9 +147,9 @@ public class SimulationSpec {
 		/*******************
 		 * ASSIGNMENT - add players
 		 *******************/
-		for (int i = 0; i < Consts.roles.length; i++) {
-			Object strats = assignments.get(Consts.roles[i]);
-			if (strats != null) {
+		for (String role : Consts.roles) {
+			Object strats = assignments.get(role);
+			if (strats != null) {			
 				@SuppressWarnings("unchecked")
 				ArrayList<String> strategies = (ArrayList<String>) strats;
 				for (Iterator<String> it = strategies.iterator(); it.hasNext(); ) {

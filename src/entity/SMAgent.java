@@ -1,5 +1,7 @@
 package entity;
 
+import data.ObjectProperties;
+import data.SystemData;
 import event.*;
 import market.Quote;
 import activity.Activity;
@@ -172,7 +174,7 @@ public abstract class SMAgent extends Agent {
 	 */
 	public Collection<Activity> agentReentry(int priority, TimeStamp ts) {
 		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new UpdateAllQuotes(this, ts));
+		actMap.add(new UpdateAllQuotes(this, ts)); //FIXME - combine in agent strategy call
 		actMap.add(new AgentStrategy(this, market, ts));
 		return actMap;
 	}

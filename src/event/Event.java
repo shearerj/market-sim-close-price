@@ -10,7 +10,7 @@ import activity.Activity;
  * Class representing an event in time. Each Event is a randomly ordered queue
  * of activities and a TimeStamp indicating when it is to occur.
  * 
- * Null activitites may not be added to an Event
+ * Null activities may not be added to an Event
  * 
  * @author ebrink
  */

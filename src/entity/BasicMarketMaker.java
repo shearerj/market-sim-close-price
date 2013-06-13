@@ -1,5 +1,8 @@
 package entity;
 
+import data.ObjectProperties;
+import data.Observations;
+import data.SystemData;
 import event.*;
 import activity.Activity;
 import activity.AgentStrategy;

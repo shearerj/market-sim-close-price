@@ -21,12 +21,12 @@ import activity.Activity;
  * that should be used are "add," which adds a single activity to the queue,
  * "addAll," which adds a collection of activities to the queue, and "remove,"
  * which removes the activity at the head of the queue. Events that are added at
- * the same TimeStamp will be dequed in a uniform random order. To make an event
+ * the same TimeStamp will be dequeued in a uniform random order. To make an event
  * occur instantaneously give it a time of Consts.INF_TIME.
  * 
- * Note that because of the dequing mechanism, if Activity A is supposed to
+ * Note that because of the dequeuing mechanism, if Activity A is supposed to
  * happen after Activity B, Activity A should queue up Activity B. Anything else
- * may not guarentee that A always happens before B.
+ * may not guarantee that A always happens before B.
  * 
  * @author ebrink
  * 

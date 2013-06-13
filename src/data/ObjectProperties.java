@@ -1,4 +1,4 @@
-package systemmanager;
+package data;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +22,10 @@ public class ObjectProperties {
 		properties = new HashMap<String,String>();
 	}
 	
+	/**
+	 * deep copy constructor
+	 * @param p
+	 */
 	public ObjectProperties(ObjectProperties p) {
 		properties = new HashMap<String, String>(p.properties);
 		
@@ -76,7 +80,10 @@ public class ObjectProperties {
 	public String toStrategyString() {
 		String str = "";
 		for (Map.Entry<String, String> entry : properties.entrySet()) {
-			str += entry.getKey() + "_" + entry.getValue() + "_";
+			// ignore input strategy string, in case stored params changed
+			if (!entry.getKey().equals(Agent.STRATEGY_KEY)) {
+				str += entry.getKey() + "_" + entry.getValue() + "_";
+			}
 		}
 		return str.substring(0, str.length()-1);	// trim last "_"
 	}

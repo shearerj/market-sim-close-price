@@ -6,6 +6,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeSet;
 
+import data.ObjectProperties;
+import data.SystemData;
+
 import market.*;
 import activity.Activity;
 import activity.Clear;
@@ -125,7 +128,7 @@ public class CallMarket extends Market {
 		// Add bid execution speed
 		ArrayList<Integer> IDs = orderbook.getClearedBidIDs();
 		for (Iterator<Integer> id = IDs.iterator(); id.hasNext(); ) {
-			data.addTimeToExecution(id.next(), clearTime);
+			data.addExecutionTime(id.next(), clearTime);
 		}
 		
 		// Add transactions to SystemData
