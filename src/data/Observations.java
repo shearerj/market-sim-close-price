@@ -341,8 +341,8 @@ public class Observations {
 	public Feature getTransactionInfo(MarketModel model) {
 		Feature feat = new Feature();
 
-		List<PQTransaction> trans = new ArrayList<PQTransaction>();
-		trans.addAll(data.transactions.get(model.getID()));
+		List<Transaction> trans = new ArrayList<Transaction>();
+		trans.addAll(data.getTrans(model.getID()));
 		
 		DescriptiveStatistics prices = new DescriptiveStatistics();
 		DescriptiveStatistics quantity = new DescriptiveStatistics();
@@ -353,7 +353,8 @@ public class Observations {
 		// number of transactions, hashed by agent type
 		HashMap<String,Integer> numTrans = new HashMap<String,Integer>();
 		
-		for (PQTransaction tr : trans) {
+		for (Transaction t : trans) {
+			PQTransaction tr = (PQTransaction) t;
 			prices.addValue(tr.price.getPrice());
 			quantity.addValue(tr.quantity);
 			fundamental.addValue(data.getFundamentalAt(tr.timestamp).getPrice());

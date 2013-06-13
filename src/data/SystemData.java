@@ -50,13 +50,18 @@ public class SystemData {
 	// Market information
 	public HashMap<Integer,PQBid> bids;					// all bids ever, hashed by bid ID
 	public HashMap<Integer,Price> privateValues;		// private values hashed by bid ID
-	public HashMap<Integer,List<PQTransaction>> transactions; // hashed by model ID
 	public HashMap<Integer,Quote> quotes;				// hashed by market ID
 	public HashMap<Integer,Agent> agents;				// (all) agents hashed by ID
 	public HashMap<Integer,Agent> players;				// players (for EGTA)
 	public HashMap<Integer,Market> markets;				// markets hashed by ID
 	public List<Integer> modelIDs;
 
+	// Transaction information
+//	public HashMap<Integer,List<Transaction>> transactions; // hashed by model ID
+//	public HashMap<Integer,List<Integer>> transIDs;		// hashed by model ID
+	public HashMap<Integer,TreeSet<Transaction>> transactions; // hashed by model ID
+	
+	// Agent information
 	public int numEnvAgents;
 	public int numPlayers;
 	public HashMap<AgentPropsPair, Integer> envAgentMap;
@@ -115,7 +120,9 @@ public class SystemData {
 		playerMap = new HashMap<AgentPropsPair, Integer>();
 		envAgentMap = new HashMap<AgentPropsPair, Integer>(); 
 	
-		transactions = new HashMap<Integer,List<PQTransaction>>();
+//		transactions = new HashMap<Integer,List<Transaction>>();
+//		transIDs = new HashMap<Integer,List<Integer>>();
+		transactions = new HashMap<Integer,TreeSet<Transaction>>();
 		
 		// Initialize containers for observations/features
 		marketDepth = new HashMap<Integer,TimeSeries>();
@@ -383,52 +390,51 @@ public class SystemData {
 		return privateValues.get(bidID);
 	}
 	
-	/**
-	 * Get a specific transaction within a given model.
-	 * @param modelID
-	 * @param id
-	 * @return
-	 */
-	public PQTransaction getTransaction(int modelID, int id) {
-		// TODO need to get rid of this
-		return getTrans(modelID).get(id);
+	public TreeSet<Transaction> getTrans(int modelID) {
+		return transactions.get(modelID);
 	}
 	
-	/**
-	 * Get transactions for only the given model (hashed by transaction ID).
-	 * 
-	 * @param modelID 
-	 * @return
-	 */
-	public HashMap<Integer,PQTransaction> getTrans(int modelID) {		
-		HashMap<Integer,PQTransaction> trans = new HashMap<Integer,PQTransaction>();
-		for (PQTransaction tr : transactions.get(modelID)) {
-			trans.put(tr.transID, tr);
-		}
-		return trans;
+	public Set<Transaction> getTransTailSet(int modelID, Transaction t) {
+		return transactions.get(modelID).tailSet(t, false);
 	}
 	
-	/**
-	 * @return list of all transaction IDs
-	 */
-	public ArrayList<Integer> getTransIDs(int modelID) {
-		return new ArrayList<Integer>(getTrans(modelID).keySet());
-	}
-	
-//	public PQTransaction getTransaction(int id) {
-//		return transactions.get(id);
-//	}
-//	
-//	public List<Integer> getTransIDByModel(int modelID) {
-//		return modelTransID.get(modelID);
-//	}
-//	
 //	/**
-//	 * @return all transactions, across all models
+//	 * Get a specific transaction within a given model.
+//	 * @param modelID
+//	 * @param id
+//	 * @return
 //	 */
-//	public HashMap<Integer, PQTransaction> getTransactions() {
-//		return transactions;
+//	public PQTransaction getTransaction(int modelID, int id) {
+//		return getTrans(modelID).get(id);
 //	}
+	
+//	/**
+//	 * Get transactions for only the given model (hashed by transaction ID).
+//	 * 
+//	 * @param modelID 
+//	 * @return
+//	 */
+//	public HashMap<Integer,PQTransaction> getTrans(int modelID) {
+//		HashMap<Integer,PQTransaction> trans = new HashMap<Integer,PQTransaction>();
+//		for (PQTransaction tr : transactions.get(modelID)) {
+//			trans.put(tr.transID, tr);
+//		}
+//		return trans;
+//	}
+//
+//	
+//	public List<Transaction> getTrans(int modelID) {
+//		return transactions.get(modelID);
+//	}
+	
+//	/**
+//	 * @return list of all transaction IDs
+//	 */
+//	public ArrayList<Integer> getTransIDs(int modelID) {
+////		return new ArrayList<Integer>(getTrans(modelID).keySet());
+//		return new ArrayList<Integer>(transIDs.get(modelID));
+//	}
+
 	
 	/**
 	 * @param bidID
@@ -625,8 +631,16 @@ public class SystemData {
 		addSurplus(modelID, tr);
 		addModelTransID(modelID, tr.transID);
 
+//		if (!transactions.containsKey(modelID)) {
+//			transactions.put(modelID, new ArrayList<Transaction>());
+//		}
+//		transactions.get(modelID).add(tr);
+//		if (!transIDs.containsKey(modelID)) {
+//			transIDs.put(modelID, new ArrayList<Integer>());
+//		}
+//		transIDs.get(modelID).add(tr.transID);
 		if (!transactions.containsKey(modelID)) {
-			transactions.put(modelID, new ArrayList<PQTransaction>());
+			transactions.put(modelID, new TreeSet<Transaction>(new TransactionIDComparator()));
 		}
 		transactions.get(modelID).add(tr);
 	}
