@@ -1,5 +1,6 @@
 package event;
 
+
 import systemmanager.Log;
 import activity.Activity;
 
@@ -22,7 +23,7 @@ public class EventManager {
 	protected EventQueue eventQueue;
 	protected TimeStamp currentTime;
 
-	// private TimeStamp duration; // simulation length
+	private TimeStamp simulationLength; // simulation length
 
 	/**
 	 * Constructor
@@ -31,6 +32,7 @@ public class EventManager {
 		eventQueue = new EventQueue();
 		log = l;
 		currentTime = new TimeStamp(0);
+		simulationLength = ts;
 	}
 
 	public boolean isEmpty() {
@@ -47,24 +49,29 @@ public class EventManager {
 	}
 
 	/**
-	 * Executes event at head of Q. Removes from Q only when execution is
+	 * Executes next activity at head of Q. Removes from Q only when execution is
 	 * complete. Adds new events to EventQ after event completion.
 	 */
-	public void executeCurrentEvent() { // TODO rename
+	public void executeNext() {
 
 		// FIXME This toString is slow, and probably shouldn't be called if the
 		// logs aren't being used at debug level
-		log.log(Log.DEBUG, "executeCurrentEvent: " + eventQueue);
+		log.log(Log.DEBUG, "executeNext: " + eventQueue);
 
 		try {
 			// This way infinitely fast activities can still schedule events x
 			// time in the future.
 			Activity act = eventQueue.remove();
-			if (act.getTime().after(currentTime))
+			if (act.getTime().after(currentTime)) {
 				currentTime = act.getTime();
-			eventQueue.addAll(act.execute(currentTime));
+			}
+			if (currentTime.compareTo(simulationLength) <= 0) {
+				// only execute if current time is within simulation length
+				eventQueue.addAll(act.execute(currentTime));
+			}
 		} catch (Exception e) {
-			// TODO This should be logged at the least.
+			System.err.println(this.getClass().getSimpleName() + "::executeNext:"
+					+ "error executing activity.");
 			e.printStackTrace();
 		}
 	}

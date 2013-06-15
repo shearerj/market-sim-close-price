@@ -70,7 +70,6 @@ public class ZIAgent extends BackgroundAgent {
 
 		// update quotes
 		this.updateAllQuotes(ts);
-		this.updateQuotes(market, ts);
 		
 		int p = 0;
 		int q = 1;

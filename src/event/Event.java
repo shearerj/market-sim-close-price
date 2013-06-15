@@ -1,6 +1,8 @@
 package event;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Random;
 
 import utils.RandomQueue;
@@ -72,7 +74,10 @@ public class Event extends RandomQueue<Activity> implements Comparable<Event> {
 	public String toString() {
 		StringBuilder sb = new StringBuilder(eventTime.toString())
 				.append(" | ");
-		for (Activity act : elements)
+		// stored in reverse order to how removed from Q
+		ArrayList<Activity> tmp = new ArrayList<Activity>(elements);
+		Collections.reverse(tmp);
+		for (Activity act : tmp)
 			sb.append(act).append(" -> ");
 		return sb.substring(0, sb.length() - 4);
 	}

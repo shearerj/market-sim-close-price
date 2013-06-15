@@ -9,6 +9,8 @@ import systemmanager.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -134,7 +136,8 @@ public abstract class SMAgent extends Agent {
 	 * @param ts
 	 * @return
 	 */
-	public Collection<Activity> submitNMSMultipleBid(int[] p, int[] q, TimeStamp ts) {
+	public Collection<Activity> submitNMSMultipleBid(List<Integer> p, List<Integer> q, 
+			TimeStamp ts) {
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		actMap.add(new SubmitNMSMultipleBid(this, p, q, ts));
 		return actMap;
@@ -183,10 +186,20 @@ public abstract class SMAgent extends Agent {
 		market.sellers.remove(market.sellers.indexOf(this.id));
 		market.removeBid(this.id, ts);
 		this.exitMarket(market.id);
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		return actMap;
+		return Collections.emptyList();
 	}
 
+	/**
+	 * Updates quote for agent's primary market.
+	 * 
+	 * @param ts
+	 * @return
+	 */
+	public Collection<Activity> updateAllQuotes(TimeStamp ts) {
+		updateQuotes(market, ts);
+		return this.executeUpdateAllQuotes(ts);
+	}
+	
 	/**
 	 * Submit a bid to one of the possible markets, as following the National Market
 	 * System (NMS) regulations. The market selected will be that with the best available
@@ -215,7 +228,6 @@ public abstract class SMAgent extends Agent {
 	 * @return
 	 */
 	public Collection<Activity> executeSubmitNMSBid(int p, int q, TimeStamp duration, TimeStamp ts) {
-		
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		
 		ArrayList<Integer> altMarketIDs = getAltMarketIDs();
@@ -333,7 +345,8 @@ public abstract class SMAgent extends Agent {
 	 * @param ts
 	 * @return
 	 */
-	public Collection<Activity> executeSubmitNMSMultipleBid(int[] price, int[] quantity, TimeStamp ts) {
+	public Collection<Activity> executeSubmitNMSMultipleBid(List<Integer> price, 
+			List<Integer> quantity, TimeStamp ts) {
 		
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		ArrayList<Integer> altMarketIDs = getAltMarketIDs();

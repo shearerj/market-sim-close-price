@@ -58,9 +58,10 @@ public class LAAgent extends HFTAgent {
 		if (ts.compareTo(arrivalTime) >= 0) {
 			Collection<Activity> actMap = new ArrayList<Activity>();
 			
+			// update quotes
 			this.updateAllQuotes(ts);
-
 			BestQuote bestQuote = findBestBuySell();
+			
 			if ((bestQuote.bestSell > (1+alpha)*bestQuote.bestBuy) && (bestQuote.bestBuy >= 0) ) {
 				
 				log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 

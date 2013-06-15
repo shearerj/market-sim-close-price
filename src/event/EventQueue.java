@@ -89,8 +89,8 @@ public class EventQueue implements Queue<Activity> {
 		List<Event> copy = new ArrayList<Event>(eventQueue);
 		Collections.sort(copy);
 		for (Event e : copy)
-			sb.append(e).append(" ...");
-		return sb.substring(0, sb.length() - 4);
+			sb.append(e).append(".  ");
+		return sb.substring(0, sb.length() - 3);
 	}
 
 	@Override
@@ -129,7 +129,7 @@ public class EventQueue implements Queue<Activity> {
 	 */
 	@Override
 	public Iterator<Activity> iterator() {
-		return new ActivityQueueIterator(eventQueue.iterator());
+		return new EventQueueIterator(eventQueue.iterator());
 	}
 
 	/**
@@ -249,7 +249,8 @@ public class EventQueue implements Queue<Activity> {
 	@Override
 	public Activity remove() {
 		if (isEmpty())
-			throw new NoSuchElementException("ActivityQueue is empty");
+			throw new NoSuchElementException(this.getClass().getSimpleName() +
+					" is empty");
 		return poll();
 	}
 
@@ -277,7 +278,7 @@ public class EventQueue implements Queue<Activity> {
 		return act;
 	}
 
-	protected class ActivityQueueIterator implements Iterator<Activity> {
+	protected class EventQueueIterator implements Iterator<Activity> {
 
 		protected Iterator<Event> eventIterator;
 		protected Iterator<Activity> activityIterator;
@@ -289,7 +290,7 @@ public class EventQueue implements Queue<Activity> {
 		protected boolean removedEveryActivity;
 		protected boolean removedCurrentActivity;
 
-		protected ActivityQueueIterator(Iterator<Event> events) {
+		protected EventQueueIterator(Iterator<Event> events) {
 			eventIterator = events;
 			activityIterator = Collections.emptyIterator();
 			removedEveryActivity = true;

@@ -220,10 +220,10 @@ public class FourHeap
 
 		//match the lower of the two (easiest buy to match)
 		//null is returned only if both arguments are null;
-		if (buyToBeat != null)
-			log(Log.DEBUG, "buyToBeat: "+buyToBeat);
-		if (sellToMatch != null)
-			log(Log.DEBUG, "sellToMatch: "+sellToMatch);
+//		if (buyToBeat != null)
+//			log(Log.DEBUG, "buyToBeat: "+buyToBeat);
+//		if (sellToMatch != null)
+//			log(Log.DEBUG, "sellToMatch: "+sellToMatch);
 		ret =  Price.min(buyToBeat, sellToMatch);
 
 		if (ret == null)
@@ -591,13 +591,13 @@ public class FourHeap
 	{
 		if (!DEBUG)  return;
 
-		log(4,message);
+//		log(4,message);
 
 	}
 	final void debugn(String message)
 	{
 		if (!DEBUG) return;
-		log(4,message);
+//		log(4,message);
 
 
 	}

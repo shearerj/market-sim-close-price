@@ -146,6 +146,13 @@ public abstract class Agent extends Entity {
 	 */
 	public abstract Collection<Activity> agentReentry(TimeStamp ts);
 	
+	
+	/**
+	 * @param ts
+	 * @return
+	 */
+	public abstract Collection<Activity> updateAllQuotes(TimeStamp ts);
+	
 	/**
 	 * @return observation to include in the output file
 	 */
@@ -559,8 +566,8 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public Collection<Activity> executeSubmitMultipleBid(Market mkt, ArrayList<Integer> price, 
-			ArrayList<Integer> quantity, TimeStamp ts) {
+	public Collection<Activity> executeSubmitMultipleBid(Market mkt, List<Integer> price, 
+			List<Integer> quantity, TimeStamp ts) {
 		if (price.size() != quantity.size()) {
 			log.log(Log.ERROR, "Agent::submitMultipleBid: " 
 					+ "Price/Quantity are not the same length");
@@ -639,12 +646,7 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public Collection<Activity> updateAllQuotes(TimeStamp ts) {
-		
-		for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
-			Market mkt = data.getMarket(it.next());
-			updateQuotes(mkt, ts);
-		}
+	public Collection<Activity> executeUpdateAllQuotes(TimeStamp ts) {
 		lastGlobalQuote = sip.getGlobalQuote(modelID);
 		lastNBBOQuote = sip.getNBBOQuote(modelID);
 		
@@ -652,6 +654,7 @@ public abstract class Agent extends Entity {
 				+ ", NBBO" + lastNBBOQuote);
 		return Collections.emptyList();
 	}
+
 	
 	/**
 	 * Updates quotes for the given market.

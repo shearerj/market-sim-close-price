@@ -65,9 +65,9 @@ public class SystemManager {
 	 */
 	public void executeEvents() {
 		while (!eventManager.isEmpty()) {
-			eventManager.executeCurrentEvent();
+			eventManager.executeNext();
 		}
-		log.log(Log.INFO, "STATUS: Event queue is now empty.");
+		log.log(Log.INFO, "STATUS: Simulation has ended.");
 	}
 
 
@@ -83,7 +83,6 @@ public class SystemManager {
 	}
 
 	/**
->>>>>>> 608ea0aaeac95c70548f5e06f210d69e2061c355
 	 * Initialize parameters based on configuration file.
 	 */
 	public void setup() {

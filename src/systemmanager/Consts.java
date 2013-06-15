@@ -85,11 +85,11 @@ public class Consts {
 //	public final static int UPDATE_NBBO_PRIORITY = 3;
 //	public final static int CALL_CLEAR_PRIORITY = 4;
 //	public final static int THRESHOLD_POST_PRIORITY = 5;
-	public final static int HFT_AGENT_PRIORITY = 7;
+//	public final static int HFT_AGENT_PRIORITY = 7;
 //	public final static int MARKETMAKER_PRIORITY = 8;
-	public final static int BACKGROUND_ARRIVAL_PRIORITY = 9;
+//	public final static int BACKGROUND_ARRIVAL_PRIORITY = 9;
 	// public final static int BACKGROUND_REENTRY_PRIORITY = 10;
-	public final static int BACKGROUND_AGENT_PRIORITY = 12;
+//	public final static int BACKGROUND_AGENT_PRIORITY = 12;
 //	public final static int LOWEST_PRIORITY = 999;
 	
 	// TimeStamp

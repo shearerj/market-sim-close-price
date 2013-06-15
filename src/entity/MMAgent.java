@@ -7,6 +7,7 @@ import systemmanager.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 
 /**
@@ -59,7 +60,6 @@ public abstract class MMAgent extends Agent {
 		// Always insert agent strategy call once it has arrived in the market;
 		// inserted at earliest priority in case there are orders already present at the beginning
 		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new UpdateAllQuotes(this, ts));
 		actMap.add(new AgentStrategy(this, ts));
 		return actMap;
 	}
@@ -81,17 +81,29 @@ public abstract class MMAgent extends Agent {
 	 * @return Collection<Activity>
 	 */
 	public Collection<Activity> agentDeparture(TimeStamp ts) {
-
-		for (Iterator<Integer> i = data.getMarketIDs().iterator(); i.hasNext(); ) {
-			Market mkt = data.markets.get(i.next());
+		for (Integer id : data.getMarketIDs()) {
+			Market mkt = data.markets.get(id);
 			
 			mkt.agentIDs.remove(mkt.agentIDs.indexOf(this.id));
 			mkt.buyers.remove(mkt.buyers.indexOf(this.id));
 			mkt.sellers.remove(mkt.sellers.indexOf(this.id));
 			mkt.removeBid(this.id, ts);
-			this.exitMarket(mkt.id);
+			this.exitMarket(id);
 		}
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		return actMap;
+		return Collections.emptyList();
+	}
+	
+	/**
+	 * Updates quotes for all markets.
+	 * 
+	 * @param ts
+	 * @return
+	 */
+	public Collection<Activity> updateAllQuotes(TimeStamp ts) {
+		for (Integer id : data.getModel(modelID).getMarketIDs()) {
+			Market mkt = data.getMarket(id);
+			updateQuotes(mkt, ts);
+		}
+		return this.executeUpdateAllQuotes(ts);
 	}
 }

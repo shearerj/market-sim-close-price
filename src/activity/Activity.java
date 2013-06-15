@@ -41,26 +41,9 @@ public abstract class Activity {
 	public TimeStamp getTime() {
 		return this.time;
 	}
-	
-	/**
-	 * @param obj
-	 *            Object
-	 * @return true if equal, false if not
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		// FIXME It's probably better to have every activity implement its own
-		// instead of using twoString
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		final Activity other = (Activity) obj;
-		if (!other.toString().equals(this.toString()))
-			return false;
-		return true;
+
+	public String getName() {
+		return this.getClass().getSimpleName();
 	}
 	
 }

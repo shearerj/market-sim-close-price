@@ -91,6 +91,8 @@ public class ZIRAgent extends BackgroundAgent {
 	public Collection<Activity> agentStrategy(TimeStamp ts) {
 		Collection<Activity> actMap = new ArrayList<Activity>();
 
+		this.updateAllQuotes(ts);
+		
 		String s = ts + " | " + this + " " + agentType + ":";
 		if (!ts.equals(arrivalTime)) {
 			s += " wake up.";
@@ -121,7 +123,6 @@ public class ZIRAgent extends BackgroundAgent {
 					p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
 				}
 				log.log(Log.INFO, s);
-				//actMap.appendCollection<Activity>(submitNMSBid(p, q, ts));	// bid does not expire
 				actMap.addAll(executeSubmitNMSBid(p, q, ts));
 				submissionTimes.add(ts);
 				
