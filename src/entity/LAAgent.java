@@ -114,11 +114,11 @@ public class LAAgent extends HFTAgent {
 			}
 			if (sleepTime > 0) {
 				TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
-				actMap.add(new AgentReentry(this, tsNew));
+				actMap.add(new AgentStrategy(this, tsNew));
 				
 			} else if (sleepTime == 0) {
 				// infinitely fast HFT agent
-				actMap.add(new AgentStrategy(this, new TimeStamp(Consts.INF_TIME)));
+				actMap.add(new AgentStrategy(this, Consts.INF_TIME));
 			}
 			return actMap;
 		}

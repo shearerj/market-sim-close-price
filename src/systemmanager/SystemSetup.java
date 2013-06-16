@@ -452,8 +452,8 @@ public class SystemSetup {
 		
 		// set liquidation at the end of the simulation for market makers
 		if (agent instanceof BasicMarketMaker) {
-			eventManager.addActivity(new Liquidate(agent, data.getFundamentalAt(data.simLength), 
-					data.simLength));
+			eventManager.addActivity(new Liquidate(agent, 
+					data.getFundamentalAt(data.simLength), data.simLength));
 		}
 	}
 	

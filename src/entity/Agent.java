@@ -140,11 +140,11 @@ public abstract class Agent extends Entity {
 	 */
 	public abstract Collection<Activity> agentDeparture(TimeStamp ts);
 	
-	/**
-	 * @param ts
-	 * @return
-	 */
-	public abstract Collection<Activity> agentReentry(TimeStamp ts);
+//	/**
+//	 * @param ts
+//	 * @return
+//	 */	TODO remove
+//	public abstract Collection<Activity> agentReentry(TimeStamp ts);
 	
 	
 	/**

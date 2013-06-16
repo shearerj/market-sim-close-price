@@ -3,9 +3,7 @@ package entity;
 import data.*;
 import event.*;
 import market.*;
-import activity.Activity;
-import activity.AgentStrategy;
-import activity.UpdateAllQuotes;
+import activity.*;
 import systemmanager.*;
 
 import java.util.ArrayList;
@@ -64,7 +62,6 @@ public class ZIPAgent extends BackgroundAgent {
 		int sleepTime = Integer.parseInt(params.get(SLEEPTIME_KEY));
 		double sleepVar = Double.parseDouble(params.get(SLEEPVAR_KEY));
 		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
-		actMap.add(new UpdateAllQuotes(this, tsNew));
 		actMap.add(new AgentStrategy(this, tsNew));
 		return actMap;
 	}

@@ -1,9 +1,10 @@
 package event;
 
+import java.util.Collection;
 
+import systemmanager.Consts;
 import systemmanager.Log;
-import activity.Activity;
-
+import activity.*;
 
 /**
  * EVENTMANAGER
@@ -51,6 +52,10 @@ public class EventManager {
 	/**
 	 * Executes next activity at head of Q. Removes from Q only when execution is
 	 * complete. Adds new events to EventQ after event completion.
+	 * 
+	 * Infinitely fast activities (time -1) execute & re-generate an identical
+	 * activity, which will be inserted at the next event time in the Q.
+	 * Currently, only infinitely fast AgentStrategy calls are supported.
 	 */
 	public void executeNext() {
 
@@ -65,10 +70,40 @@ public class EventManager {
 			if (act.getTime().after(currentTime)) {
 				currentTime = act.getTime();
 			}
+			// only execute if current time is within simulation length
 			if (currentTime.compareTo(simulationLength) <= 0) {
-				// only execute if current time is within simulation length
-				eventQueue.addAll(act.execute(currentTime));
+				Collection<Activity> acts = act.execute(currentTime);
+
+				if (acts.contains(act) && act.getTime().equals(Consts.INF_TIME)) {
+					acts.remove(act);
+					// insert new act at a different time
+					if (!eventQueue.isEmpty()) {
+						TimeStamp nextTime = eventQueue.peek().getTime();
+						if (act instanceof AgentStrategy) {
+							acts.add(((AgentStrategy) act).deepCopyModifyTime(nextTime));
+						}
+					}
+				} 
+				eventQueue.addAll(acts);
 			}
+
+//			// only execute if current time is within simulation length
+//			if (currentTime.compareTo(simulationLength) <= 0) {
+//				Collection<Activity> acts = act.execute(currentTime);
+//	
+//				if (acts.contains(act) && act.getTime().equals(Consts.INF_TIME)) {
+//					acts.remove(act);
+//					// insert new act at a different time
+//					if (!eventQueue.isEmpty()) {
+//						TimeStamp nextTime = eventQueue.peek().getTime();
+//						if (act instanceof AgentStrategy) {
+//							acts.add(((AgentStrategy) act).deepCopyModifyTime(nextTime));
+//						}
+//					}
+//				} 
+//				eventQueue.addAll(acts);
+////				eventQueue.addAll(act.execute(currentTime));
+//			}
 		} catch (Exception e) {
 			System.err.println(this.getClass().getSimpleName() + "::executeNext:"
 					+ "error executing activity.");

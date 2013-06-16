@@ -144,8 +144,7 @@ public abstract class SMAgent extends Agent {
 	}
 	
 	/**
-	 * Agent arrives in a single market. To ensure deterministic insertion, use
-	 * AgentReentry activity.
+	 * Agent arrives in a single market.
 	 * 
 	 * @param market
 	 * @param ts
@@ -156,23 +155,23 @@ public abstract class SMAgent extends Agent {
 		this.enterMarket(market, ts);
 		
 		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new AgentReentry(this, ts));
+		actMap.add(new AgentStrategy(this, market, ts));
 		
 		// NOTE: Reentry must be inserted as priority > THRESHOLD_POST_PRIORITY
 		// otherwise the infinitely fast activities will not be inserted correctly
 		return actMap;
 	}
 	
-	/**
-	 * Agent re-enters a market/wakes up.
-	 * 
-	 * @param ts
-	 */
-	public Collection<Activity> agentReentry(TimeStamp ts) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new AgentStrategy(this, market, ts));
-		return actMap;
-	}
+//	/**
+//	 * Agent re-enters a market/wakes up.
+//	 * 
+//	 * @param ts
+//	 */
+//	public Collection<Activity> agentReentry(TimeStamp ts) {
+//		Collection<Activity> actMap = new ArrayList<Activity>();
+//		actMap.add(new AgentStrategy(this, market, ts));
+//		return actMap;
+//	}
 	
 	/**
 	 * Agent departs a specified market, if it is active. //TODO fix later

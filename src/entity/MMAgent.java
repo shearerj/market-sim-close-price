@@ -54,26 +54,24 @@ public abstract class MMAgent extends Agent {
 				s += ",";
 			}
 		}
-		
 		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "->" + s);
 			
-		// Always insert agent strategy call once it has arrived in the market;
-		// inserted at earliest priority in case there are orders already present at the beginning
+		// Insert agent strategy call once it has arrived in the market
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		actMap.add(new AgentStrategy(this, ts));
 		return actMap;
 	}
 	
-	/**
-	 * Agent re-enters/wakes up to execute its strategy.
-	 * 
-	 * @param ts
-	 */
-	public Collection<Activity> agentReentry(TimeStamp ts) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new AgentStrategy(this, ts));
-		return actMap;
-	}
+//	/**
+//	 * Agent re-enters/wakes up to execute its strategy.
+//	 * 
+//	 * @param ts
+//	 */ TODO remove
+//	public Collection<Activity> agentReentry(TimeStamp ts) {
+//		Collection<Activity> actMap = new ArrayList<Activity>();
+//		actMap.add(new AgentStrategy(this, ts));
+//		return actMap;
+//	}
 	
 	/**
 	 * Agent departs all markets, if it is active.  //TODO fix later

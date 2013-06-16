@@ -29,6 +29,10 @@ public class AgentStrategy extends Activity {
 	public AgentStrategy deepCopy() {
 		return new AgentStrategy(this.ag, this.mkt, this.time);
 	}
+	
+	public AgentStrategy deepCopyModifyTime(TimeStamp t) {
+		return new AgentStrategy(this.ag, this.mkt, t);
+	}
 
 	public Collection<Activity> execute(TimeStamp currentTime) {
 		return ag.agentStrategy(currentTime);

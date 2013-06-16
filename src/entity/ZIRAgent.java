@@ -1,13 +1,9 @@
 package entity;
 
-import data.ArrivalTime;
-import data.ObjectProperties;
-import data.Observations;
-import data.SystemData;
+import data.*;
 import event.*;
 import market.*;
-import activity.Activity;
-import activity.AgentReentry;
+import activity.*;
 import systemmanager.*;
 
 import java.util.Collection;
@@ -140,7 +136,7 @@ public class ZIRAgent extends BackgroundAgent {
 		}
 		
 		// NOTE: reentry priority must be <= SubmitBid priority
-		actMap.add(new AgentReentry(this, reentry.next()));
+		actMap.add(new AgentStrategy(this, reentry.next()));
 		return actMap;
 	}
 
