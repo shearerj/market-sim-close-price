@@ -64,12 +64,7 @@ public class ZIRAgent extends BackgroundAgent {
 		lastPositionBalance = positionBalance;
 		
 		submissionTimes = new ArrayList<TimeStamp>();
-		
-		ArrayList<Integer> alphas = new ArrayList<Integer>();
-		for (int i = -maxAbsPosition; i <= maxAbsPosition; i++) {
-			if (i != 0)	alphas.add((int) Math.round(getNormalRV(0, this.data.pvVar)));
-		}
-		alpha = new PrivateValue(alphas);
+		alpha = new PrivateValue(initPrivateValues(maxAbsPosition));
 	}
 	
 	
@@ -135,7 +130,6 @@ public class ZIRAgent extends BackgroundAgent {
 			log.log(Log.INFO, s);
 		}
 		
-		// NOTE: reentry priority must be <= SubmitBid priority
 		actMap.add(new AgentStrategy(this, reentry.next()));
 		return actMap;
 	}

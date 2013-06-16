@@ -83,14 +83,15 @@ public class LAAgent extends HFTAgent {
 					int quantity = Math.min(buySize, sellSize);
 
 					if (quantity > 0 && (buyMarketID != sellMarketID)) {
-						actMap.addAll(submitBid(buyMarket, midPoint-tickSize, 
-								quantity, ts));
-						actMap.addAll(submitBid(sellMarket, midPoint+tickSize, 
-								-quantity, ts));
 						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
 								"::agentStrategy: Exploit existing arb opp: " + bestQuote + 
 								" in " + data.getMarket(bestQuote.bestBuyMarket) + " & " 
 								+ data.getMarket(bestQuote.bestSellMarket));
+						
+						actMap.addAll(executeSubmitBid(buyMarket, midPoint-tickSize, 
+								quantity, ts));
+						actMap.addAll(executeSubmitBid(sellMarket, midPoint+tickSize, 
+								-quantity, ts));
 
 					} else if (buyMarketID == sellMarketID) {
 						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 

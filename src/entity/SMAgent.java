@@ -156,22 +156,8 @@ public abstract class SMAgent extends Agent {
 		
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		actMap.add(new AgentStrategy(this, market, ts));
-		
-		// NOTE: Reentry must be inserted as priority > THRESHOLD_POST_PRIORITY
-		// otherwise the infinitely fast activities will not be inserted correctly
 		return actMap;
 	}
-	
-//	/**
-//	 * Agent re-enters a market/wakes up.
-//	 * 
-//	 * @param ts
-//	 */
-//	public Collection<Activity> agentReentry(TimeStamp ts) {
-//		Collection<Activity> actMap = new ArrayList<Activity>();
-//		actMap.add(new AgentStrategy(this, market, ts));
-//		return actMap;
-//	}
 	
 	/**
 	 * Agent departs a specified market, if it is active. //TODO fix later
@@ -234,7 +220,8 @@ public abstract class SMAgent extends Agent {
 		
 		// TODO - enable for more than two markets total (including main)
 		if (altMarketIDs.size() > 1) {
-			System.err.println("SMAgent::executeSubmitNMSBid: 2 markets permitted currently.");
+			System.err.println(this.getClass().getSimpleName() + 
+					"::executeSubmitNMSBid: 2 markets permitted currently.");
 			System.exit(1);
 		} else if (altMarketIDs.size() == 1) {
 			// get first alternate market since there are two markets total
@@ -353,7 +340,8 @@ public abstract class SMAgent extends Agent {
 
 		// TODO - enable for more than two markets total (including main)
 		if (altMarketIDs.size() > 1) {
-			System.err.println("SMAgent::executeSubmitNMSBid: 2 markets permitted currently.");
+			System.err.println(this.getClass().getSimpleName() + 
+					"::executeSubmitNMSBid: 2 markets permitted currently.");
 		} else if (altMarketIDs.size() == 1) {
 			// get first alternate market since there are two markets total
 //			altMarketID = altMarketIDs.get(0);

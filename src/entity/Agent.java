@@ -139,14 +139,7 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public abstract Collection<Activity> agentDeparture(TimeStamp ts);
-	
-//	/**
-//	 * @param ts
-//	 * @return
-//	 */	TODO remove
-//	public abstract Collection<Activity> agentReentry(TimeStamp ts);
-	
-	
+
 	/**
 	 * @param ts
 	 * @return
@@ -238,6 +231,20 @@ public abstract class Agent extends Entity {
 			// not selling or buying
 			return new Price(0);
 		}
+	}
+	
+	
+	/**
+	 * Initialize list of private values given max quantity.
+	 * @param q		max position
+	 * @return
+	 */
+	public ArrayList<Integer> initPrivateValues(int q) {
+		ArrayList<Integer> alphas = new ArrayList<Integer>();
+		for (int i = -q; i <= q; i++) {
+			if (i != 0)	alphas.add((int) Math.round(getNormalRV(0, data.pvVar)));
+		}
+		return alphas;
 	}
 	
 	/**
@@ -1089,4 +1096,5 @@ public abstract class Agent extends Entity {
 		double r = rand.nextDouble();
 		return -Math.log(r) / rateParam;
 	}
+	
 }
