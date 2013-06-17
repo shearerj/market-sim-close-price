@@ -107,7 +107,7 @@ public class SystemSetup {
 		try {
 			// Generate private values
 			data.globalFundamentalValues();
-			data.EGTA = (data.getNumPlayers() > 0);
+			data.EGTA = (data.getNumPlayers() > 0); // TODO Should have one flag for EGTA
 			
 			// Must create market models before agents, so can add the agents
 			// then to the appropriate/corresponding markets.
