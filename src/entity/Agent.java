@@ -4,11 +4,7 @@ import data.*;
 import event.*;
 import model.*;
 import market.*;
-import activity.Activity;
-import activity.Liquidate;
-import activity.SubmitBid;
-import activity.SubmitMultipleBid;
-import activity.WithdrawBid;
+import activity.*;
 import systemmanager.*;
 
 import java.util.*;
@@ -931,16 +927,14 @@ public abstract class Agent extends Entity {
 			
 			if (positionBalance > 0) {
 				// For long position, compare cost to bid quote (buys)
-				for (Iterator<Integer> it = mIDs.iterator(); it.hasNext(); ) {
-					int mktID = it.next();
+				for (int mktID : mIDs) {
 					if (p == -1 || p < bidPrice.get(mktID).getPrice()) {
 						p = bidPrice.get(mktID).getPrice();
 					}
 				}
 			} else {
 				// For short position, compare cost to ask quote (sells)
-				for (Iterator<Integer> it = mIDs.iterator(); it.hasNext(); ) {
-					int mktID = it.next();
+				for (int mktID : mIDs) {
 					if (p == -1 || p > askPrice.get(mktID).getPrice()) {
 						p = askPrice.get(mktID).getPrice();
 					}	

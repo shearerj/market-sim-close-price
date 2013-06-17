@@ -8,8 +8,6 @@ import systemmanager.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
-
 /**
  * MMAGENT
  * 
@@ -45,17 +43,15 @@ public abstract class MMAgent extends Agent {
 	 */
 	public Collection<Activity> agentArrival(TimeStamp ts) {
 		
-		String s = "";
-		for (Iterator<Integer> it = this.getModel().getMarketIDs().iterator(); it.hasNext(); ) {
-			Market mkt = data.markets.get(it.next());
+		StringBuilder sb = new StringBuilder();
+		for (Integer id : this.getModel().getMarketIDs()) {
+			Market mkt = data.markets.get(id);
 			this.enterMarket(mkt, ts);
-			s += mkt.toString();
-			if (it.hasNext()) {
-				s += ",";
-			}
+			sb.append(mkt).append(",");
 		}
-		log.log(Log.INFO, ts.toString() + " | " + this.toString() + "->" + s);
-			
+		log.log(Log.INFO, ts.toString() + " | " + this + "->" + 
+				sb.substring(0, sb.length() - 1));
+		
 		// Insert agent strategy call once it has arrived in the market
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		actMap.add(new AgentStrategy(this, ts));

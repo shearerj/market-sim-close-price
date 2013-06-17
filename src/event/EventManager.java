@@ -14,9 +14,6 @@ import activity.*;
  * This involves inserting new events as well as removing them when execution is
  * complete.
  * 
- * The event manager can also store lists of infinitely fast activities, which
- * are stored as PriorityActivityList.
- * 
  * @author ewah
  */
 public class EventManager {
@@ -66,7 +63,8 @@ public class EventManager {
 
 		// FIXME This toString is slow, and probably shouldn't be called if the
 		// logs aren't being used at debug level
-		log.log(Log.DEBUG, this.getClass().getSimpleName() + "::executeNext: " + eventQueue);
+		log.log(Log.DEBUG, this.getClass().getSimpleName() + "::executeNext: " + 
+				eventQueue);
 
 		try {
 			// Add to set of infinitely fast activities. Only execute

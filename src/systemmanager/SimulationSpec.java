@@ -9,7 +9,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import org.json.simple.*;
 import org.json.simple.parser.*;
@@ -152,8 +151,7 @@ public class SimulationSpec {
 			if (strats != null) {			
 				@SuppressWarnings("unchecked")
 				ArrayList<String> strategies = (ArrayList<String>) strats;
-				for (Iterator<String> it = strategies.iterator(); it.hasNext(); ) {
-					String strat = it.next();
+				for (String strat : strategies) {
 					if (!strat.equals("")) {
 						String[] as = strat.split("[:]+");	// split on colon
 						if (as.length != 2) {

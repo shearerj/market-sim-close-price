@@ -91,7 +91,7 @@ public class AAAgent extends BackgroundAgent {
 			p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
 		}
 
-		actMap.addAll(submitNMSBid(p, q, ts));	// bid does not expire
+		actMap.addAll(executeSubmitNMSBid(p, q, ts));	// bid does not expire
 		return actMap;
 	}
 }

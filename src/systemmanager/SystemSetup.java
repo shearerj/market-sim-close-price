@@ -8,9 +8,7 @@ import activity.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Map;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Random;
 
 /**
@@ -42,7 +40,6 @@ import java.util.Random;
  *   - create the markets
  * 	 - setup the markets
  *   - add Clear activities, if needed
- *   - create the primary model
  * - create the agents
  * 	 - environment agents, model-level agents, or players 
  *   - common random numbers for agents in each market model
@@ -70,7 +67,7 @@ public class SystemSetup {
 	private HashMap<AgentPropsPair, ArrayList<Integer>> logIDs;
 	private HashMap<AgentPropsPair, ArrayList<Long>> seeds;
 	private HashMap<AgentPropsPair, ArrayList<TimeStamp>> arrivals;
-	private HashMap<Integer, MarketModel> modelMap;					// hashed by model ID
+	private HashMap<Integer, MarketModel> modelMap;		// hashed by model ID
 	private HashMap<AgentPropsPair, Integer> allNonPlayers;
 	private HashMap<AgentPropsPair, ArrivalTime> arrivalGenerators;
 	
@@ -128,8 +125,8 @@ public class SystemSetup {
 			log.log(Log.INFO, " ");
 
 			// Initial SendToSIP Activity for all markets
-			for (Map.Entry<Integer,Market> entry : data.getMarkets().entrySet()) {
-				eventManager.addActivity(new SendToSIP(entry.getValue(), new TimeStamp(0)));
+			for (Market mkt : data.getMarkets().values()) {
+				eventManager.addActivity(new SendToSIP(mkt, new TimeStamp(0)));
 			}
 		} catch (Exception e) {
 			System.err.println(this.getClass().getSimpleName() + "::setupAll: error");
@@ -176,10 +173,9 @@ public class SystemSetup {
 			data.primaryModel = null;
 			
 			// Create by model type
-			for (Map.Entry<String, Integer> mdl : data.numModelType.entrySet()) {
+			for (String modelType : data.numModelType.keySet()) {
 				
-				int numModelsOfThisType = mdl.getValue();
-				String modelType = mdl.getKey();
+				int numModelsOfThisType = data.numModelType.get(modelType);
 				log.log(Log.INFO, "Models: " + numModelsOfThisType + " " + modelType);
 				
 				// Parse the comma separated types of agents (list of configuration strings)
@@ -238,8 +234,7 @@ public class SystemSetup {
 	 */
 	private void createMarketsInModel(MarketModel model) {
 		// create markets in the model
-		for (Iterator<MarketObjectPair> it = model.getMarketConfig().iterator(); it.hasNext(); ) {
-			MarketObjectPair mop = it.next();
+		for (MarketObjectPair mop : model.getMarketConfig()) {
 			int mID = marketIDSequence.decrement();
 			
 			ObjectProperties mp = (ObjectProperties) mop.getObject();
@@ -251,8 +246,7 @@ public class SystemSetup {
 			
 			// Check if is call market, then initialize clearing sequence
 			if (market instanceof CallMarket) {
-				Activity clear = new Clear(market, market.getNextClearTime());
-				eventManager.addActivity(clear);
+				eventManager.addActivity(new Clear(market, market.getNextClearTime()));
 			}
 			log.log(Log.INFO, "Markets: " + market.getType() + ", " + market);
 			
@@ -314,19 +308,20 @@ public class SystemSetup {
 		// generate logIDs, random number generator seeds, & arrivals for non-players
 		Random rand = new Random();
 		int id = data.getNumPlayers() + 1;
-		for (Map.Entry<AgentPropsPair, Integer> entry : allNonPlayers.entrySet()) {
+		for (AgentPropsPair prop: allNonPlayers.keySet()) {
 			ArrayList<Integer> ids = new ArrayList<Integer>();
 			ArrayList<Long> sd = new ArrayList<Long>();
 			ArrayList<TimeStamp> arr = new ArrayList<TimeStamp>();
+			
 			// iterate through # of agents specified by this AgentPropsPair
-			for (int i = 0; i < entry.getValue(); i++) {
+			for (int i = 0; i < allNonPlayers.get(prop); i++) {
 				ids.add(id++);
 				sd.add(rand.nextLong());
-				arr.add(arrivalGenerators.get(entry.getKey()).next());
+				arr.add(arrivalGenerators.get(prop).next());
 			}
-			logIDs.put(entry.getKey(), ids);
-			seeds.put(entry.getKey(), sd);
-			arrivals.put(entry.getKey(), arr);
+			logIDs.put(prop, ids);
+			seeds.put(prop, sd);
+			arrivals.put(prop, arr);
 		}
 		
 		// create all agents
@@ -347,15 +342,15 @@ public class SystemSetup {
 	private void createNonPlayersForModel(MarketModel model) {
 		try {
 			for (AgentPropsPair ap : allNonPlayers.keySet()) {
-				int numAgents = allNonPlayers.get(ap);
-				ArrayList<Integer> assignMktIDs = assignAgToMkts(numAgents, model.getMarketIDs());
+				int numAg = allNonPlayers.get(ap);
+				ArrayList<Integer> assignMktIDs = assignAgToMkts(numAg, model.getMarketIDs());
 
 				// check if (1) is model agent, (2) present in this model OR if environment agent
 				if ((data.getModelAgentMap().containsKey(ap) && 
 						data.getModelAgentByModel(model.getID()).contains(ap)) ||
 						data.getEnvAgentMap().containsKey(ap)) {
 					
-					for (int i = 0; i < numAgents; i++) {
+					for (int i = 0; i < numAg; i++) {
 						// create copy of ObjectProperties in case modify it
 						ObjectProperties op = new ObjectProperties(ap.getProperties());
 						if (data.isSMAgent(ap.getAgentType())) {
@@ -366,12 +361,13 @@ public class SystemSetup {
 								seeds.get(ap).get(i), arrivals.get(ap).get(i));
 						ag.setLogID(logIDs.get(ap).get(i));
 					}
-					log.log(Log.INFO, "Agents: " + numAgents + " " + ap.getAgentType() + " " +
+					log.log(Log.INFO, "Agents: " + numAg + " " + ap.getAgentType() + " " +
 							ap.getProperties());
 				}
 			}
 		} catch (Exception e) {
-			System.err.println(this.getClass().getSimpleName() + "::createNonPlayersForModel: error");
+			System.err.println(this.getClass().getSimpleName() + 
+					"::createNonPlayersForModel: error");
 			e.printStackTrace();
 			System.exit(1);
 		}
@@ -386,11 +382,11 @@ public class SystemSetup {
 		// only creates players in primary model
 		try {
 			for (String type : playerNumbers.keySet()) {
-				int numAgents = playerNumbers.get(type);
-				ArrayList<Integer> assignMktIDs = assignAgToMkts(numAgents, model.getMarketIDs());
+				int numAg = playerNumbers.get(type);
+				ArrayList<Integer> assignMktIDs = assignAgToMkts(numAg, model.getMarketIDs());
 				
 				Random rand = new Random();
-				for (int i = 0; i < numAgents; i++) {	
+				for (int i = 0; i < numAg; i++) {	
 					// create copy of ObjectProperties in case modify it
 					ObjectProperties op = new ObjectProperties(playerStrategies.get(type).get(i));
 					if (data.isSMAgent(type)) {
@@ -402,10 +398,11 @@ public class SystemSetup {
 					ag.setLogID(ag.getID()); 	// set player ID = log ID
 					data.addPlayer(ag);			// add player to SystemData
 				}
-				log.log(Log.INFO, "Players: " + numAgents + " " + type);
+				log.log(Log.INFO, "Players: " + numAg + " " + type);
 			}
 		} catch (Exception e) {
-			System.err.println(this.getClass().getSimpleName() + "::createPlayersForModel: error");
+			System.err.println(this.getClass().getSimpleName() + 
+					"::createPlayersForModel: error");
 			e.printStackTrace();
 		}
 	}
@@ -474,8 +471,8 @@ public class SystemSetup {
 		int remain = numAgents % mktIDs.size();
 		int num = (numAgents - remain) / mktIDs.size();
 		for (int i = 0; i < num; i++) {
-			for (Iterator<Integer> it = mktIDs.iterator(); it.hasNext(); ) {
-				assignment.add(it.next());
+			for (Integer id : mktIDs) {
+				assignment.add(id);
 			}
 		}
 		for (int i = 0; i < remain; i++) {
@@ -490,11 +487,12 @@ public class SystemSetup {
 	 */
 	public void logAgentInfo() {
 		ArrayList<Integer> ids = data.getAgentIDs();
-		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
-			Agent ag = data.getAgent(it.next());
+		for (Integer id : ids) {
+			Agent ag = data.getAgent(id);
 			
 			// print arrival times
-			String s = " " + ag.getID() + ": " + ag.toString() + "::" + ag.getType() + "::";
+			String s = " " + ag.getID() + ": " + ag.toString() + "::" + 
+					ag.getType() + "::";
 			s += Agent.ARRIVAL_KEY + "=" + ag.getArrivalTime().toString();
 			
 			// print private value if exists 
