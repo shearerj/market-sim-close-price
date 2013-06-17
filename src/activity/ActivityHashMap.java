@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.Map;
 
-import systemmanager.Consts;
-
 import event.TimeStamp;
 
 /**
@@ -31,20 +29,20 @@ public class ActivityHashMap {
 		acts.clear();
 	}
 	
-	/**
-	 * Creates new entry hashed at the activity's TimeStamp, with a single
-	 * element ActivityList containing the given Activity. Modifies the Activity
-	 * TimeStamp to match what it is hashed at.
-	 * 
-	 * If key already exists, appends the given Activity at the end of the
-	 * ActivityList.
-	 * 
-	 * @param act
-	 * @return true if inserted correctly, false otherwise
-	 */
-	public boolean insertActivity(Activity act) {
-		return insertActivity(Consts.DEFAULT_PRIORITY, act);
-	}
+//	/**
+//	 * Creates new entry hashed at the activity's TimeStamp, with a single
+//	 * element ActivityList containing the given Activity. Modifies the Activity
+//	 * TimeStamp to match what it is hashed at.
+//	 * 
+//	 * If key already exists, appends the given Activity at the end of the
+//	 * ActivityList.
+//	 * 
+//	 * @param act
+//	 * @return true if inserted correctly, false otherwise
+//	 */
+//	public boolean insertActivity(Activity act) {
+//		return insertActivity(Consts.DEFAULT_PRIORITY, act);
+//	}
 	
 	/**
 	 * Creates new entry hashed at the activity's TimeStamp, with a single
@@ -64,7 +62,7 @@ public class ActivityHashMap {
 			return false;
 		
 		TimeStamp ts = act.getTime();
-		if (!ts.checkActivityTimeStamp(act))
+		if (!ts.checkActivityTimeStamp(act)) // FIXME unnecessary?
 			return false;
 		
 		if (acts.containsKey(ts)) {
@@ -144,6 +142,22 @@ public class ActivityHashMap {
 	}
 	
 	/**
+	 * @param ts
+	 * @return
+	 */
+	public PriorityActivityList get(TimeStamp ts) {
+		return acts.get(ts);
+	}
+	
+	/**
+	 * @param ts
+	 * @return PAL associated with ts
+	 */
+	public PriorityActivityList remove(TimeStamp ts) {
+		return acts.remove(ts);
+	}
+	
+	/**
 	 * @return true if contains no key-value pairings
 	 */
 	public boolean isEmpty() {
@@ -158,37 +172,19 @@ public class ActivityHashMap {
 	}
 	
 	/**
+	 * @param ts
+	 * @return
+	 */
+	public boolean containsKey(TimeStamp ts) {
+		return acts.containsKey(ts);
+	}
+	
+	/**
 	 * @return Set view of mappings in this ActivityHashMap
 	 */
 	public Set<Map.Entry<TimeStamp,PriorityActivityList>> entrySet() {
 		return acts.entrySet();
 	}
-	
-	
-//	/**
-//	 * @param list
-//	 * @return true if hashmap contains the list, otherwise false.
-//	 */
-//	public boolean contains(PriorityActivityList list) {
-//		
-//		// Check if directly contained within the hashmap
-//		boolean contained = acts.containsValue(list);
-//		
-//		// Check if is a sublist of any linked list within the hashmap
-//		for (Map.Entry<TimeStamp,PriorityActivityList> entry : acts.entrySet()) {
-//			ActivityList test = entry.getValue();
-//			if (test.equals(list)) {
-//				contained = true;
-//				break;
-//			}
-//			
-//			if (list.hashCode() == test.hashCode()) {
-//				contained = true;
-//				break;
-//			}
-//		}
-//		return contained;
-//	}
 	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()

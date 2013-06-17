@@ -1,5 +1,7 @@
 package model;
 
+import data.ObjectProperties;
+import data.SystemData;
 import systemmanager.*;
 
 /**
@@ -21,11 +23,11 @@ public class ModelFactory {
 	public static MarketModel createModel(String type, int modelID, ObjectProperties props,
 										  SystemData data) { 
 		
-		if (type.equals(Consts.getModelType("TwoMarket"))) {
+		if (type.equals(Consts.TWOMARKET)) {
 			return new TwoMarket(modelID, props, data);
-		} else if (type.equals(Consts.getModelType("CentralCDA"))) {
+		} else if (type.equals(Consts.CENTRALCDA)) {
 			return new CentralCDA(modelID, props, data);
-		} else if (type.equals(Consts.getModelType("CentralCall"))) {
+		} else if (type.equals(Consts.CENTRALCALL)) {
 			return new CentralCall(modelID, props, data);
 		} else {
 			return null;

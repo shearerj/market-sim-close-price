@@ -1,13 +1,12 @@
 package entity;
 
+import data.*;
 import event.*;
 import market.*;
 import activity.*;
 import systemmanager.*;
 
-import java.util.Map;
 import java.util.HashMap;
-import java.util.Iterator;
 
 /**
  * LAAGENT
@@ -20,33 +19,32 @@ import java.util.Iterator;
  */
 public class LAAgent extends HFTAgent {
 	
-	private double alpha;
+	private double alpha; // LA profit gap
 	private int sleepTime;
 	private double sleepVar;
 	
+	
 	/**
-	 * Overloaded constructor
 	 * @param agentID
 	 */
 	public LAAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, modelID, d, p, l);
 		arrivalTime = new TimeStamp(0);
 
-		sleepTime = Integer.parseInt(params.get("sleepTime"));
-		sleepVar = Double.parseDouble(params.get("sleepVar"));
+		alpha = Double.parseDouble(params.get(LAAgent.ALPHA_KEY));
+		sleepTime = Integer.parseInt(params.get(Agent.SLEEPTIME_KEY));
+		sleepVar = Double.parseDouble(params.get(Agent.SLEEPVAR_KEY));
 	}
 	
 	
 	@Override
 	public HashMap<String, Object> getObservation() {
 		HashMap<String,Object> obs = new HashMap<String,Object>();
-		obs.put("role", agentType);
-		obs.put("payoff", getRealizedProfit());
-		obs.put("strategy", params.get("strategy"));
-		
+		obs.put(Observations.ROLE_KEY, getRole());
+		obs.put(Observations.STRATEGY_KEY, getFullStrategy());
+		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
 //		HashMap<String,String> features = new HashMap<String,String>();
-//		obs.put("features", features);
-		
+//		obs.put(Observations.FEATURES_KEY, features);
 		return obs;
 	}
 	
@@ -67,46 +65,59 @@ public class LAAgent extends HFTAgent {
 				int sellMarketID = bestQuote.bestSellMarket;
 				Market buyMarket = data.getMarket(buyMarketID);
 				Market sellMarket = data.getMarket(sellMarketID);
-				
-				int midPoint = (bestQuote.bestBuy + bestQuote.bestSell) / 2;
-				int buySize = getBidQuantity(bestQuote.bestBuy, midPoint-tickSize, 
-						buyMarketID, true);
-				int sellSize = getBidQuantity(midPoint+tickSize, bestQuote.bestSell, 
-						sellMarketID, false);
-				int quantity = Math.min(buySize, sellSize);
 
-				if (quantity > 0 && (buyMarketID != sellMarketID)) {
-					actMap.appendActivityHashMap(submitBid(buyMarket, midPoint-tickSize, 
-							quantity, ts));
-					actMap.appendActivityHashMap(submitBid(sellMarket, midPoint+tickSize, 
-							-quantity, ts));
-					log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
-							"::agentStrategy: An arb opportunity exists: " + bestQuote + 
-							" in " + data.getMarket(bestQuote.bestBuyMarket) + " & " 
-							+ data.getMarket(bestQuote.bestSellMarket));
+				// check that BID/ASK defined for both markets
+				if (buyMarket.defined() && sellMarket.defined()) {
 					
-				} else if (buyMarketID == sellMarketID) {
-					log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
-							"::agentStrategy: No arb opp since at least 1 market does not " +
-							"have both a bid and an ask");
-					// Note that this is due to a market not having both a bid & ask price,
-					// causing the buy and sell market IDs to be identical
+					int midPoint = (bestQuote.bestBuy + bestQuote.bestSell) / 2;
+					int buySize = getBidQuantity(bestQuote.bestBuy, midPoint-tickSize, 
+							buyMarketID, true);
+					int sellSize = getBidQuantity(midPoint+tickSize, bestQuote.bestSell, 
+							sellMarketID, false);
+					int quantity = Math.min(buySize, sellSize);
+
+					if (quantity > 0 && (buyMarketID != sellMarketID)) {
+						actMap.appendActivityHashMap(submitBid(buyMarket, midPoint-tickSize, 
+								quantity, ts));
+						actMap.appendActivityHashMap(submitBid(sellMarket, midPoint+tickSize, 
+								-quantity, ts));
+						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
+								"::agentStrategy: Exploit existing arb opp: " + bestQuote + 
+								" in " + data.getMarket(bestQuote.bestBuyMarket) + " & " 
+								+ data.getMarket(bestQuote.bestSellMarket));
+
+					} else if (buyMarketID == sellMarketID) {
+						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
+								"::agentStrategy: No arb opp since at least 1 market does not " +
+								"have both a bid and an ask");
+						// Note that this is due to a market not having both a bid & ask price,
+						// causing the buy and sell market IDs to be identical
+
+					} else if (quantity == 0) {
+						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
+								"::agentStrategy: No quantity available");
+						// Note that if this message appears in a CDA market, then the HFT
+						// agent is beating the market's Clear activity, which is incorrect.
+					}
 					
-				} else if (quantity == 0) {
+				} else {
 					log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
-							"::agentStrategy: No quantity available");
-					// Note that if this message appears in a CDA market, then the HFT
-					// agent is beating the market's Clear activity, which is incorrect.
+							"::agentStrategy: Market quote(s) undefined. No bid submitted.");
 				}
+				
 			}
 			if (sleepTime > 0) {
 				TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
-				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
-				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
+				actMap.insertActivity(Consts.HFT_ARRIVAL_PRIORITY, 
+						new AgentReentry(this, Consts.HFT_AGENT_PRIORITY, tsNew));
+//				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
+//				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
 				
 			} else if (sleepTime == 0) {
 				// infinitely fast HFT agent
 				TimeStamp tsNew = new TimeStamp(Consts.INF_TIME);
+//				actMap.insertActivity(Consts.DEFAULT_PRIORITY, 
+//						new AgentReentry(this, Consts.HFT_ARRIVAL_PRIORITY, tsNew));
 				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
 				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
 			}
@@ -129,11 +140,10 @@ public class LAAgent extends HFTAgent {
 		
 		int quantity = 0;
 		
-		for (Map.Entry<Integer,Bid> entry : data.getMarket(marketID).getBids().entrySet()) {
-			PQBid b = (PQBid) entry.getValue();
+		for (Bid bid : data.getMarket(marketID).getBids().values()) {
+			PQBid b = (PQBid) bid;
 			
-			for (Iterator<PQPoint> it = b.bidTreeSet.iterator(); it.hasNext(); ) {
-				PQPoint pq = it.next();
+			for (PQPoint pq : b.bidTreeSet) {
 				int pqPrice = pq.getPrice().getPrice();
 				
 				if (pqPrice >= beginPrice && pqPrice <= endPrice) {

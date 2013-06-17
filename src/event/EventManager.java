@@ -6,7 +6,6 @@ import systemmanager.Log;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
 
 /**
  * EVENTMANAGER
@@ -79,24 +78,30 @@ public class EventManager {
 		
 		try {
 			Event toExecute = eventQueue.peek();
+			// Event justExecuted = new Event(toExecute);
 			
-			// Add activities with early priority
+			// Add activities with early priority to the event to execute
 			if (!fastActivity.isEmpty()) {
-				// Update ActivityList time to match current time
 				TimeStamp insertTime = toExecute.getTime();
-				PriorityActivityList tmp = fastActivity.getPriorityListLessThan(Consts.SUBMIT_BID_PRIORITY);
+				PriorityActivityList tmp = 
+						fastActivity.getActsPriorityLessThan(Consts.THRESHOLD_PRE_PRIORITY);
+				// Update PriorityActivityList time to match current time
 				tmp = new PriorityActivityList(insertTime, tmp);
+				// Add these infinitely fast activities to the current Event
 				toExecute.addActivity(tmp);
 			}
 			
-			ArrayList<ActivityHashMap> acts = toExecute.executeAll();
+			//ArrayList<ActivityHashMap> acts = toExecute.executeAll();
+			ArrayList<ActivityHashMap> acts = toExecute.executeOneByOne();
 
 			// Check if event has completed execution
 			if (toExecute.isCompleted()) {
 				removeEvent(toExecute);
 			} else {
-				log.log(Log.ERROR, this.getClass().getSimpleName() + 
-						"::executeCurrentEvent: Event did not complete correctly.");
+				String s = this.getClass().getSimpleName() + 
+						"::executeCurrentEvent: Event did not complete correctly.";
+				log.log(Log.ERROR, s);
+				System.err.println(s);
 			}
 
 			if (!acts.isEmpty()) {
@@ -105,11 +110,11 @@ public class EventManager {
 					ActivityHashMap actMap = i.next();
 					if (actMap != null) {
 						// Iterate through the returned ActivityHashMap
-						for (Map.Entry<TimeStamp,PriorityActivityList> entry : actMap.entrySet()) {
-							if (entry.getKey().isInfinitelyFast()) {
-								fastActivity.add(entry.getValue());
+						for (TimeStamp ts : actMap.keys()) {
+							if (ts.isInfinitelyFast()) {
+								fastActivity.add(actMap.get(ts));
 							} else {
-								createEvent(entry.getKey(), entry.getValue());
+								createEvent(ts, actMap.get(ts));
 							}
 						}
 					}
@@ -117,13 +122,12 @@ public class EventManager {
 			}
 			
 			// Add infinitely fast activities to current event with priority over the threshold
-			int threshold = Consts.CDA_CLEAR_PRIORITY;
+			int threshold = Consts.THRESHOLD_POST_PRIORITY;
 			if (!fastActivity.isEmpty()) {
-				if (!eventQueue.isEmpty() && eventQueue.peek().getLastPriority() > threshold) {
-					// Update ActivityList time to match current time
+				if (!eventQueue.isEmpty() && eventQueue.peek().getLastActivityPriority() > threshold) {
 					TimeStamp nextInsertTime = eventQueue.peek().getTime();
-					PriorityActivityList tmp = fastActivity.getPriorityListGreaterThan(threshold+1);
-					// copy & change insertion time
+					PriorityActivityList tmp = fastActivity.getActsPriorityGreaterThan(threshold+1);
+					// Update PriorityActivityList time to match current time
 					tmp = new PriorityActivityList(nextInsertTime, tmp);
 					eventQueue.peek().addActivity(tmp);
 				}

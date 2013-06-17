@@ -3,8 +3,6 @@ package activity;
 import entity.*;
 import event.*;
 
-import java.util.ArrayList;
-
 /**
  * Class for Activity of submitting a National Market System (NMS) bid (price +
  * quantity) to a market. Will submit the bid to the best market of those available.
@@ -35,7 +33,7 @@ public class SubmitNMSBid extends Activity {
 	}
 	
 	public String toString() {
-		return new String("SubmitNMSBid::" + this.ag + "," + ag.getMarketSubmittedBid() + 
-				"+(" + this.price + ", " + this.quantity + "), duration=" + duration);
+		return new String("SubmitNMSBid::" + this.ag + "," + "+(" + 
+				this.price + ", " + this.quantity + "), duration=" + duration);
 	}
 }

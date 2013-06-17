@@ -29,6 +29,6 @@ public class MarketObjectPair {
 		  if (!(o instanceof MarketObjectPair)) return false;
 		  MarketObjectPair mpo = (MarketObjectPair) o;
 		  return this.left.equals(mpo.getMarketType()) &&
-		       this.right.equals(o);
+		       this.right.equals(mpo.getObject());
 	  }
 }

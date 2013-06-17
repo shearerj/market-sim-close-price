@@ -21,13 +21,13 @@ public class Event {
 	private boolean eventCompletion = false;			// flag indicating whether or not the event has been executed
 	private PriorityActivityList activities;
 	
-	/**
-	 * Constructor for Event object.
-	 */
-	public Event() {
-		eventTime = new TimeStamp(-1);
-		activities = new PriorityActivityList();
-	}
+//	/**
+//	 * Constructor for Event object.
+//	 */
+//	public Event() {
+//		eventTime = new TimeStamp(-1);
+//		activities = new PriorityActivityList();
+//	}
 	
 	/**
 	 * Constructor that creates empty event for a given time.
@@ -58,6 +58,15 @@ public class Event {
 		eventTime = time;
 		activities = new PriorityActivityList();
 		activities.add(acts);
+	}
+	
+	/**
+	 * Copy constructor
+	 * @param e
+	 */
+	public Event(Event e) {
+		eventTime = new TimeStamp(e.eventTime);
+		activities = new PriorityActivityList(e.activities);
 	}
 	
 	/**
@@ -140,7 +149,8 @@ public class Event {
 				ActivityList tmp = new ActivityList(priority, acts);
 				this.activities.add(tmp);
 			} else {
-				System.err.println("Event::addActivity::ERROR: activity list does not match Event time.");
+				System.err.println("Event::addActivity::" + 
+						"ERROR: activity list does not match Event time.");
 			}
 		}
 	}
@@ -155,23 +165,50 @@ public class Event {
 		}
 	}
 	
+//	/**
+//	 * Executes all activities stored in an event. Note that newly
+//	 * generated activities cannot be added to the current event, but may
+//	 * have the same TimeStamp as the current event.
+//	 * 
+//	 * @return 		List of ActivityHashMaps to parse and add to Event Queue
+//	 */
+//	public ArrayList<ActivityHashMap> executeAll() {
+//		
+//		ArrayList<ActivityHashMap> actList = new ArrayList<ActivityHashMap>();
+//		Iterator<Activity> itr = activities.iterator();
+//		while (itr.hasNext()) {
+//			ActivityHashMap ahm = itr.next().execute();
+//			if (ahm != null) {
+//				actList.add(ahm);
+//			}
+//		}
+//		this.eventCompletion = true;
+//		return actList;
+//	}
+	
 	/**
-	 * Executes all activities stored in an event. Note that newly
-	 * generated activities cannot be added to the current event, but may
-	 * have the same TimeStamp as the current event.
+	 * Executes all activities stored in an event. Newly generated 
+	 * activities with the same TimeStamp are inserted into the current event.
+	 * Any activities with different TimeStamps are returned in the
+	 * ActivityHashMap.
 	 * 
 	 * @return 		List of ActivityHashMaps to parse and add to Event Queue
 	 */
-	public ArrayList<ActivityHashMap> executeAll() {
-//		System.out.print("" + this.eventTime.toString() + " |  ");
-//		System.out.println("" + this.eventTime.toString() + " |  " + this.toString());
+	public ArrayList<ActivityHashMap> executeOneByOne() {
+//		System.out.println(this);
 		
 		ArrayList<ActivityHashMap> actList = new ArrayList<ActivityHashMap>();
-		Iterator<Activity> itr = activities.iterator();
-		while (itr.hasNext()) {
-			ActivityHashMap ahm = itr.next().execute();
-			if (ahm != null) {
-				actList.add(ahm);
+		
+		while (!activities.isEmpty()) {
+			// execute one activity, then find elts in returned AHM w/ same TimeStamp
+			ArrayList<ActivityHashMap> acts = this.executeHighPriority();
+			for (Iterator<ActivityHashMap> it = acts.iterator(); it.hasNext();) {
+				ActivityHashMap tmp = it.next();
+				if (tmp.containsKey(eventTime)) {
+					// remove the associated PAL & insert into this event's activities
+					activities.add(tmp.remove(eventTime));
+				}
+				actList.add(tmp);
 			}
 		}
 		this.eventCompletion = true;
@@ -179,9 +216,32 @@ public class Event {
 	}
 	
 	/**
+	 * Executes activities with the highest priority in the event.
+	 * 
+	 * @return
+	 */
+	private ArrayList<ActivityHashMap> executeHighPriority() {
+		ArrayList<ActivityHashMap> actList = new ArrayList<ActivityHashMap>();
+		
+		int priority = activities.getFirstPriority();
+		PriorityActivityList pal = activities.getActsPriorityLessThan(priority);
+//		System.out.println("" + this.eventTime.toString() + " |  " + pal.toString());
+		
+		Iterator<Activity> it = pal.iterator();
+		while (it.hasNext()) {
+			ActivityHashMap ahm = it.next().execute();
+			if (ahm != null) {
+				actList.add(ahm);
+			}
+		}
+		return actList;
+	}
+	
+	
+	/**
 	 * @return priority of last Activity in this Event.
 	 */
-	public int getLastPriority() {
+	public int getLastActivityPriority() {
 		return activities.getLastPriority();
 	}
 	

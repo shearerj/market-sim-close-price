@@ -3,8 +3,6 @@ package activity;
 import entity.*;
 import event.*;
 
-import java.util.ArrayList;
-
 /**
  * Class for Activity of submitting a National Market System (NMS) multiple-point bid
  * to a market. Note that the SMAgent can see the main market's best quote with zero delay.
@@ -33,7 +31,7 @@ public class SubmitNMSMultipleBid extends Activity {
 	}
 	
 	public String toString() {
-		return new String("SubmitNMSMultipleBid::" + this.ag + "," + ag.getMarketSubmittedBid() + 
+		return new String("SubmitNMSMultipleBid::" + this.ag + "," + 
 				"+(" + this.price + "," + this.quantity + ")");
 	}
 }

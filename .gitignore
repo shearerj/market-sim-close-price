@@ -12,13 +12,27 @@ hft.jar
 ########
 *.log
 
+# Documentation #
+#################
+.synctex.gz
+.out
+.aux
+
 # Other #
 #########
 *.swp
 .classpath
 .metadata
 .project
+.settings
 
 # Directories #
 ###############
 build/*
+simulations/*
+logs/*
+.settings/*
+
+# Emacs #
+#########
+*~

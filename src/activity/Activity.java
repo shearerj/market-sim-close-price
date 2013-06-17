@@ -4,7 +4,7 @@ import event.*;
 
 /**
  * Base class for any method that Entities may invoke. Includes abstract
- * method execute and a timestamp. 
+ * method execute and a timestamp.
  * 
  * Based on the Command Pattern.
  * 
