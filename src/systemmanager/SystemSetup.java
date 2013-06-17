@@ -1,21 +1,15 @@
 package systemmanager;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Random;
-
-import activity.Activity;
-import activity.AgentArrival;
-import activity.Clear;
-import activity.Liquidate;
-import activity.SendToSIP;
-import entity.*;
+import data.*;
 import event.*;
 import model.*;
+import entity.*;
+import activity.*;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Random;
 
 /**
  * SYSTEMSETUP
@@ -46,7 +40,6 @@ import model.*;
  *   - create the markets
  * 	 - setup the markets
  *   - add Clear activities, if needed
- *   - create the primary model
  * - create the agents
  * 	 - environment agents, model-level agents, or players 
  *   - common random numbers for agents in each market model
@@ -54,7 +47,7 @@ import model.*;
  *   - add AgentArrival activities
  * - set agent permission for each model's markets
  * 
- * NOTE: Usage of the "primary_model" setting in the spec file:
+ * NOTE: Usage of the primary model setting in the spec file:
  *  1) MODELNAME-CONFIG
  *  2) MODELNAME (will use first config in that model's list to specify primary model)
  * 
@@ -74,7 +67,7 @@ public class SystemSetup {
 	private HashMap<AgentPropsPair, ArrayList<Integer>> logIDs;
 	private HashMap<AgentPropsPair, ArrayList<Long>> seeds;
 	private HashMap<AgentPropsPair, ArrayList<TimeStamp>> arrivals;
-	private HashMap<Integer, MarketModel> modelMap;					// hashed by model ID
+	private HashMap<Integer, MarketModel> modelMap;		// hashed by model ID
 	private HashMap<AgentPropsPair, Integer> allNonPlayers;
 	private HashMap<AgentPropsPair, ArrivalTime> arrivalGenerators;
 	
@@ -132,8 +125,8 @@ public class SystemSetup {
 			log.log(Log.INFO, " ");
 
 			// Initial SendToSIP Activity for all markets
-			for (Map.Entry<Integer,Market> entry : data.getMarkets().entrySet()) {
-				eventManager.addActivity(new SendToSIP(entry.getValue(), new TimeStamp(0)));
+			for (Market mkt : data.getMarkets().values()) {
+				eventManager.addActivity(new SendToSIP(mkt, new TimeStamp(0)));
 			}
 		} catch (Exception e) {
 			System.err.println(this.getClass().getSimpleName() + "::setupAll: error");
@@ -168,9 +161,9 @@ public class SystemSetup {
 				log.log(Log.INFO, "Primary model: " + primaryModelType + "-(default)");
 				
 			} catch (Exception e) {
-				if (!Arrays.asList(Consts.MARKETMODEL_TYPES).contains(primaryModelType)) {
-					System.err.println(this.getClass().getSimpleName() + "::createMarketModels: " +
-										"invalid primary market model type");
+				if (!Consts.MARKETMODEL_TYPES.contains(primaryModelType)) {
+					System.err.println(this.getClass().getSimpleName() + 
+							"::createMarketModels: invalid primary market model type");
 				}
 				System.err.println(e.toString());
 			}
@@ -180,10 +173,9 @@ public class SystemSetup {
 			data.primaryModel = null;
 			
 			// Create by model type
-			for (Map.Entry<String, Integer> mdl : data.numModelType.entrySet()) {
+			for (String modelType : data.numModelType.keySet()) {
 				
-				int numModelsOfThisType = mdl.getValue();
-				String modelType = mdl.getKey();
+				int numModelsOfThisType = data.numModelType.get(modelType);
 				log.log(Log.INFO, "Models: " + numModelsOfThisType + " " + modelType);
 				
 				// Parse the comma separated types of agents (list of configuration strings)
@@ -242,8 +234,7 @@ public class SystemSetup {
 	 */
 	private void createMarketsInModel(MarketModel model) {
 		// create markets in the model
-		for (Iterator<MarketObjectPair> it = model.getMarketConfig().iterator(); it.hasNext(); ) {
-			MarketObjectPair mop = it.next();
+		for (MarketObjectPair mop : model.getMarketConfig()) {
 			int mID = marketIDSequence.decrement();
 			
 			ObjectProperties mp = (ObjectProperties) mop.getObject();
@@ -252,12 +243,10 @@ public class SystemSetup {
 			market.linkModel(model.getID());
 			data.addMarket(market);
 			model.getMarketIDs().add(mID);
-			log.log(Log.DEBUG, market.toString() + ": " + mp);
 			
 			// Check if is call market, then initialize clearing sequence
 			if (market instanceof CallMarket) {
-				Activity clear = new Clear(market, market.getNextClearTime());
-				eventManager.addActivity(clear);
+				eventManager.addActivity(new Clear(market, market.getNextClearTime()));
 			}
 			log.log(Log.INFO, "Markets: " + market.getType() + ", " + market);
 			
@@ -278,19 +267,21 @@ public class SystemSetup {
 			modelMap.put(data.getPrimaryModel().getID(), data.getPrimaryModel());
 			
 			// set up their players & their arrivals
-			for (Map.Entry<AgentPropsPair, Integer> entry : data.getPlayerMap().entrySet()) {
-				String type = entry.getKey().getAgentType();
-				ObjectProperties o = entry.getKey().getProperties();
-				int n = entry.getValue();
+			for (AgentPropsPair app : data.getPlayerMap().keySet()) {
+				String type = app.getAgentType();
+				ObjectProperties o = app.getProperties();
+				int n = data.getPlayerMap().get(app);
 				
 				if (playerNumbers.containsKey(type)) {
 					playerNumbers.put(type, playerNumbers.get(type) + n);
 					playerStrategies.get(type).addAll(Collections.nCopies(n, o));
 					
 				} else {
-					playerNumbers.put(type, entry.getValue());
-					playerArrivalGenerators.put(type, new ArrivalTime(new TimeStamp(0), data.arrivalRate));
-					playerStrategies.put(type, new ArrayList<ObjectProperties>(Collections.nCopies(n, o)));
+					playerNumbers.put(type, n);
+					playerArrivalGenerators.put(type, 
+							new ArrivalTime(new TimeStamp(0), data.arrivalRate));
+					playerStrategies.put(type, new ArrayList<ObjectProperties>(
+							Collections.nCopies(n, o)));
 				}
 			}
 			
@@ -317,19 +308,20 @@ public class SystemSetup {
 		// generate logIDs, random number generator seeds, & arrivals for non-players
 		Random rand = new Random();
 		int id = data.getNumPlayers() + 1;
-		for (Map.Entry<AgentPropsPair, Integer> entry : allNonPlayers.entrySet()) {
+		for (AgentPropsPair prop: allNonPlayers.keySet()) {
 			ArrayList<Integer> ids = new ArrayList<Integer>();
 			ArrayList<Long> sd = new ArrayList<Long>();
 			ArrayList<TimeStamp> arr = new ArrayList<TimeStamp>();
+			
 			// iterate through # of agents specified by this AgentPropsPair
-			for (int i = 0; i < entry.getValue(); i++) {
+			for (int i = 0; i < allNonPlayers.get(prop); i++) {
 				ids.add(id++);
 				sd.add(rand.nextLong());
-				arr.add(arrivalGenerators.get(entry.getKey()).next());
+				arr.add(arrivalGenerators.get(prop).next());
 			}
-			logIDs.put(entry.getKey(), ids);
-			seeds.put(entry.getKey(), sd);
-			arrivals.put(entry.getKey(), arr);
+			logIDs.put(prop, ids);
+			seeds.put(prop, sd);
+			arrivals.put(prop, arr);
 		}
 		
 		// create all agents
@@ -349,17 +341,16 @@ public class SystemSetup {
 	 */
 	private void createNonPlayersForModel(MarketModel model) {
 		try {
-			for (Map.Entry<AgentPropsPair,Integer> a : allNonPlayers.entrySet()) {
-				AgentPropsPair ap = a.getKey();
-				int numAgents = a.getValue();
-				ArrayList<Integer> assignMktIDs = assignAgToMkts(numAgents, model.getMarketIDs());
+			for (AgentPropsPair ap : allNonPlayers.keySet()) {
+				int numAg = allNonPlayers.get(ap);
+				ArrayList<Integer> assignMktIDs = assignAgToMkts(numAg, model.getMarketIDs());
 
 				// check if (1) is model agent, (2) present in this model OR if environment agent
 				if ((data.getModelAgentMap().containsKey(ap) && 
 						data.getModelAgentByModel(model.getID()).contains(ap)) ||
 						data.getEnvAgentMap().containsKey(ap)) {
 					
-					for (int i = 0; i < numAgents; i++) {
+					for (int i = 0; i < numAg; i++) {
 						// create copy of ObjectProperties in case modify it
 						ObjectProperties op = new ObjectProperties(ap.getProperties());
 						if (data.isSMAgent(ap.getAgentType())) {
@@ -370,12 +361,13 @@ public class SystemSetup {
 								seeds.get(ap).get(i), arrivals.get(ap).get(i));
 						ag.setLogID(logIDs.get(ap).get(i));
 					}
-					log.log(Log.INFO, "Agents: " + numAgents + " " + ap.getAgentType() + " " +
+					log.log(Log.INFO, "Agents: " + numAg + " " + ap.getAgentType() + " " +
 							ap.getProperties());
 				}
 			}
 		} catch (Exception e) {
-			System.err.println(this.getClass().getSimpleName() + "::createNonPlayersForModel: error");
+			System.err.println(this.getClass().getSimpleName() + 
+					"::createNonPlayersForModel: error");
 			e.printStackTrace();
 			System.exit(1);
 		}
@@ -389,28 +381,28 @@ public class SystemSetup {
 	private void createPlayersForModel(MarketModel model) {
 		// only creates players in primary model
 		try {
-			for (Map.Entry<String, Integer> entry : playerNumbers.entrySet()) {
-				String type = entry.getKey();
-				int numAgents = entry.getValue();
-				ArrayList<Integer> assignMktIDs = assignAgToMkts(numAgents, model.getMarketIDs());
+			for (String type : playerNumbers.keySet()) {
+				int numAg = playerNumbers.get(type);
+				ArrayList<Integer> assignMktIDs = assignAgToMkts(numAg, model.getMarketIDs());
 				
 				Random rand = new Random();
-				for (int i = 0; i < numAgents; i++) {	
+				for (int i = 0; i < numAg; i++) {	
 					// create copy of ObjectProperties in case modify it
 					ObjectProperties op = new ObjectProperties(playerStrategies.get(type).get(i));
-					if (data.isSMAgent(entry.getKey())) {
+					if (data.isSMAgent(type)) {
 						// must assign market if single-market agent
 						op.put(SMAgent.MARKETID_KEY, assignMktIDs.get(i).toString());
 					}
 					Agent ag = createAgent(model, new AgentPropsPair(type, op),
-											rand.nextLong(), playerArrivalGenerators.get(type).next());
+							rand.nextLong(), playerArrivalGenerators.get(type).next());
 					ag.setLogID(ag.getID()); 	// set player ID = log ID
 					data.addPlayer(ag);			// add player to SystemData
 				}
-				log.log(Log.INFO, "Players: " + numAgents + " " + type);
+				log.log(Log.INFO, "Players: " + numAg + " " + type);
 			}
 		} catch (Exception e) {
-			System.err.println(this.getClass().getSimpleName() + "::createPlayersForModel: error");
+			System.err.println(this.getClass().getSimpleName() + 
+					"::createPlayersForModel: error");
 			e.printStackTrace();
 		}
 	}
@@ -441,7 +433,6 @@ public class SystemSetup {
 		createInitialAgentEvents(agent);
 		data.addAgent(agent);
 		model.linkAgent(agID);
-		log.log(Log.DEBUG, agent.toString() + ": " + p);
 		return agent;
 	}
 	
@@ -454,16 +445,12 @@ public class SystemSetup {
 	private void createInitialAgentEvents(Agent agent) {
 		TimeStamp ts = agent.getArrivalTime();
 		
-		int arrivalPriority = Consts.BACKGROUND_AGENT_PRIORITY;
-		if (agent instanceof HFTAgent) {
-			arrivalPriority = Consts.HIGHEST_PRIORITY;
-		}
 		eventManager.addActivity(new AgentArrival(agent, ts));
 		
 		// set liquidation at the end of the simulation for market makers
 		if (agent instanceof BasicMarketMaker) {
-			eventManager.addActivity(new Liquidate(agent, data.getFundamentalAt(data.simLength), 
-					data.simLength));
+			eventManager.addActivity(new Liquidate(agent, 
+					data.getFundamentalAt(data.simLength), data.simLength));
 		}
 	}
 	
@@ -484,8 +471,8 @@ public class SystemSetup {
 		int remain = numAgents % mktIDs.size();
 		int num = (numAgents - remain) / mktIDs.size();
 		for (int i = 0; i < num; i++) {
-			for (Iterator<Integer> it = mktIDs.iterator(); it.hasNext(); ) {
-				assignment.add(it.next());
+			for (Integer id : mktIDs) {
+				assignment.add(id);
 			}
 		}
 		for (int i = 0; i < remain; i++) {
@@ -496,15 +483,16 @@ public class SystemSetup {
 
 	
 	/**
-	 * 2Logs agent information.
+	 * Logs agent information.
 	 */
 	public void logAgentInfo() {
 		ArrayList<Integer> ids = data.getAgentIDs();
-		for (Iterator<Integer> it = ids.iterator(); it.hasNext(); ) {
-			Agent ag = data.getAgent(it.next());
+		for (Integer id : ids) {
+			Agent ag = data.getAgent(id);
 			
 			// print arrival times
-			String s = " " + ag.getID() + ": " + ag.toString() + "::" + ag.getType() + "::";
+			String s = " " + ag.getID() + ": " + ag.toString() + "::" + 
+					ag.getType() + "::";
 			s += Agent.ARRIVAL_KEY + "=" + ag.getArrivalTime().toString();
 			
 			// print private value if exists 

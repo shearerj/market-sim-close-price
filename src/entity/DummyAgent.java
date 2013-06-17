@@ -1,5 +1,7 @@
 package entity;
 
+import data.ObjectProperties;
+import data.SystemData;
 import event.*;
 import activity.Activity;
 import systemmanager.*;
@@ -9,7 +11,11 @@ import java.util.Collections;
 import java.util.HashMap;
 
 /**
- * Dummy agent. Payoff is always 0. Strategy can be any string, as it is never parsed.
+ * DUMMYAGENT
+ * 
+ * Dummy high-frequency trader.
+ * 
+ * Payoff is always 0. Strategy can be any string, as it is never parsed.
  * 
  * @author ewah
  */

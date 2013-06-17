@@ -1,17 +1,14 @@
 package entity;
 
+import data.*;
 import event.*;
 import market.*;
-import activity.Activity;
-import activity.AgentReentry;
-import activity.AgentStrategy;
-import activity.UpdateAllQuotes;
+import activity.*;
 import systemmanager.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 import java.util.HashMap;
 
 /**
@@ -47,8 +44,8 @@ public class LAAgent extends HFTAgent {
 	public HashMap<String, Object> getObservation() {
 		HashMap<String,Object> obs = new HashMap<String,Object>();
 		obs.put(Observations.ROLE_KEY, getRole());
-		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
 		obs.put(Observations.STRATEGY_KEY, getFullStrategy());
+		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
 //		HashMap<String,String> features = new HashMap<String,String>();
 //		obs.put(Observations.FEATURES_KEY, features);
 		return obs;
@@ -60,8 +57,11 @@ public class LAAgent extends HFTAgent {
 		// Ensure that agent has arrived in the market
 		if (ts.compareTo(arrivalTime) >= 0) {
 			Collection<Activity> actMap = new ArrayList<Activity>();
-
+			
+			// update quotes
+			this.updateAllQuotes(ts);
 			BestQuote bestQuote = findBestBuySell();
+			
 			if ((bestQuote.bestSell > (1+alpha)*bestQuote.bestBuy) && (bestQuote.bestBuy >= 0) ) {
 				
 				log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
@@ -83,14 +83,15 @@ public class LAAgent extends HFTAgent {
 					int quantity = Math.min(buySize, sellSize);
 
 					if (quantity > 0 && (buyMarketID != sellMarketID)) {
-						actMap.addAll(submitBid(buyMarket, midPoint-tickSize, 
-								quantity, ts));
-						actMap.addAll(submitBid(sellMarket, midPoint+tickSize, 
-								-quantity, ts));
 						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
 								"::agentStrategy: Exploit existing arb opp: " + bestQuote + 
 								" in " + data.getMarket(bestQuote.bestBuyMarket) + " & " 
 								+ data.getMarket(bestQuote.bestSellMarket));
+						
+						actMap.addAll(executeSubmitBid(buyMarket, midPoint-tickSize, 
+								quantity, ts));
+						actMap.addAll(executeSubmitBid(sellMarket, midPoint+tickSize, 
+								-quantity, ts));
 
 					} else if (buyMarketID == sellMarketID) {
 						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
@@ -114,17 +115,11 @@ public class LAAgent extends HFTAgent {
 			}
 			if (sleepTime > 0) {
 				TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
-				actMap.add(new AgentReentry(this, Consts.HFT_AGENT_PRIORITY, tsNew));
-//				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
-//				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
+				actMap.add(new AgentStrategy(this, tsNew));
 				
 			} else if (sleepTime == 0) {
 				// infinitely fast HFT agent
-				TimeStamp tsNew = new TimeStamp(Consts.INF_TIME);
-//				actMap.insertActivity(Consts.DEFAULT_PRIORITY, 
-//						new AgentReentry(this, Consts.HFT_ARRIVAL_PRIORITY, tsNew));
-				actMap.add(new UpdateAllQuotes(this, tsNew));
-				actMap.add(new AgentStrategy(this, tsNew));
+				actMap.add(new AgentStrategy(this, Consts.INF_TIME));
 			}
 			return actMap;
 		}
@@ -145,8 +140,8 @@ public class LAAgent extends HFTAgent {
 		
 		int quantity = 0;
 		
-		for (Map.Entry<Integer,Bid> entry : data.getMarket(marketID).getBids().entrySet()) {
-			PQBid b = (PQBid) entry.getValue();
+		for (Bid bid : data.getMarket(marketID).getBids().values()) {
+			PQBid b = (PQBid) bid;
 			
 			for (PQPoint pq : b.bidTreeSet) {
 				int pqPrice = pq.getPrice().getPrice();

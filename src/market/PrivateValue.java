@@ -1,7 +1,7 @@
 package market;
 
+import java.util.List;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -30,8 +30,8 @@ import java.util.Collections;
  */
 public class PrivateValue {
 
-	private ArrayList<Price> values;
-	private ArrayList<Integer> quantities;
+	private List<Price> values;
+	private List<Integer> quantities;
 	
 	public PrivateValue() {
 		values = new ArrayList<Price>();
@@ -135,6 +135,6 @@ public class PrivateValue {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return Arrays.asList(values).toString();
+		return values.toString();
 	}
 }

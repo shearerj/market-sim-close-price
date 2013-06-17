@@ -120,6 +120,10 @@ public class Log {
 		log_level = (newlev < NO_LOGGING) ? NO_LOGGING : newlev;
 	}
 
+	public synchronized int getLevel() {
+		return log_level;
+	}
+	
 	public synchronized boolean shouldLog(int lev) {
 		return (lev <= log_level);
 	}

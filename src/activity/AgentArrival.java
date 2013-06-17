@@ -1,7 +1,7 @@
 package activity;
 
-
 import java.util.Collection;
+import org.apache.commons.lang3.builder.*;
 
 import entity.*;
 import event.*;
@@ -29,6 +29,29 @@ public class AgentArrival extends Activity {
 	}
 	
 	public String toString() {
-		return new String("AgentArrival::" + this.ag.toString());
+		return new String(getName() + "::" + ag);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass()) 
+			return false;
+		AgentArrival other = (AgentArrival) obj;
+		return new EqualsBuilder().
+			append(ag.getID(), other.ag.getID()).
+			append(time.longValue(), other.time.longValue()).
+			isEquals();
+	}
+	
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder(19, 37).
+				append(ag.getID()).
+				append(time.longValue()).
+				toHashCode();
 	}
 }

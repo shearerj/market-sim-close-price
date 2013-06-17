@@ -1,5 +1,8 @@
 package entity;
 
+import data.ObjectProperties;
+import data.Observations;
+import data.SystemData;
 import event.*;
 import market.*;
 import activity.Activity;
@@ -65,6 +68,9 @@ public class ZIAgent extends BackgroundAgent {
 	public Collection<Activity> agentStrategy(TimeStamp ts) {
 		Collection<Activity> actMap = new ArrayList<Activity>();
 
+		// update quotes
+		this.updateAllQuotes(ts);
+		
 		int p = 0;
 		int q = 1;
 		if (rand.nextBoolean()) q = -q;	 // 50% chance of being either long or short
@@ -77,8 +83,7 @@ public class ZIAgent extends BackgroundAgent {
 			p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
 		}
 
-//		actMap.appendCollection<Activity>(submitNMSBid(p, q, expiration, ts));
-		actMap.addAll(submitNMSBid(p, q, ts));	// bid does not expire
+		actMap.addAll(executeSubmitNMSBid(p, q, ts));	// bid does not expire
 		return actMap;
 	}
 }

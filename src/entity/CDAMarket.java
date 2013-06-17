@@ -1,9 +1,10 @@
 package entity;
 
 import market.*;
-import event.*;
-import activity.Activity;
-import activity.SendToSIP;
+import data.ObjectProperties;
+import data.SystemData;
+import event.TimeStamp;
+import activity.*;
 import systemmanager.*;
 
 import java.util.ArrayList;
@@ -94,7 +95,7 @@ public class CDAMarket extends Market {
 		// Add bid execution speed
 		ArrayList<Integer> IDs = orderbook.getClearedBidIDs();
 		for (Iterator<Integer> id = IDs.iterator(); id.hasNext(); ) {
-			data.addTimeToExecution(id.next(), clearTime);
+			data.addExecutionTime(id.next(), clearTime);
 		}
 		
 		// Add transactions to SystemData

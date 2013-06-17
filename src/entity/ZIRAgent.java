@@ -1,9 +1,9 @@
 package entity;
 
+import data.*;
 import event.*;
 import market.*;
-import activity.Activity;
-import activity.AgentReentry;
+import activity.*;
 import systemmanager.*;
 
 import java.util.Collection;
@@ -64,12 +64,7 @@ public class ZIRAgent extends BackgroundAgent {
 		lastPositionBalance = positionBalance;
 		
 		submissionTimes = new ArrayList<TimeStamp>();
-		
-		ArrayList<Integer> alphas = new ArrayList<Integer>();
-		for (int i = -maxAbsPosition; i <= maxAbsPosition; i++) {
-			if (i != 0)	alphas.add((int) Math.round(getNormalRV(0, this.data.pvVar)));
-		}
-		alpha = new PrivateValue(alphas);
+		alpha = new PrivateValue(initPrivateValues(maxAbsPosition));
 	}
 	
 	
@@ -87,6 +82,8 @@ public class ZIRAgent extends BackgroundAgent {
 	public Collection<Activity> agentStrategy(TimeStamp ts) {
 		Collection<Activity> actMap = new ArrayList<Activity>();
 
+		this.updateAllQuotes(ts);
+		
 		String s = ts + " | " + this + " " + agentType + ":";
 		if (!ts.equals(arrivalTime)) {
 			s += " wake up.";
@@ -117,7 +114,6 @@ public class ZIRAgent extends BackgroundAgent {
 					p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
 				}
 				log.log(Log.INFO, s);
-				//actMap.appendCollection<Activity>(submitNMSBid(p, q, ts));	// bid does not expire
 				actMap.addAll(executeSubmitNMSBid(p, q, ts));
 				submissionTimes.add(ts);
 				
@@ -134,9 +130,7 @@ public class ZIRAgent extends BackgroundAgent {
 			log.log(Log.INFO, s);
 		}
 		
-		TimeStamp tsNew = reentry.next();	// compute next re-entry time
-		// NOTE: reentry priority must be <= SubmitBid priority
-		actMap.add(new AgentReentry(this, Consts.BACKGROUND_AGENT_PRIORITY, tsNew));
+		actMap.add(new AgentStrategy(this, reentry.next()));
 		return actMap;
 	}
 

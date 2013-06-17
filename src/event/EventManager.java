@@ -1,7 +1,11 @@
 package event;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import systemmanager.Consts;
 import systemmanager.Log;
-import activity.Activity;
+import activity.*;
 
 /**
  * EVENTMANAGER
@@ -10,30 +14,32 @@ import activity.Activity;
  * This involves inserting new events as well as removing them when execution is
  * complete.
  * 
- * The event manager can also store lists of infinitely fast activities, which
- * are stored as PriorityActivityList.
- * 
  * @author ewah
  */
 public class EventManager {
 
 	protected Log log;
-	protected EventQueue activityQueue;
+	protected EventQueue eventQueue;
 	protected TimeStamp currentTime;
-
-	// private TimeStamp duration; // simulation length
+	protected TimeStamp simulationLength;
+	
+	protected Set<Activity> fastActivitySet;	// infinitely fast activities
+	protected boolean alreadyExecutedFast;	// true if fast activities already executed
 
 	/**
 	 * Constructor
 	 */
 	public EventManager(TimeStamp ts, Log l) {
-		activityQueue = new EventQueue();
+		eventQueue = new EventQueue();
 		log = l;
 		currentTime = new TimeStamp(0);
+		simulationLength = ts;
+		fastActivitySet = new HashSet<Activity>();
+		alreadyExecutedFast = false;
 	}
 
 	public boolean isEmpty() {
-		return activityQueue.isEmpty();
+		return eventQueue.isEmpty();
 	}
 
 	/**
@@ -42,34 +48,58 @@ public class EventManager {
 	 * @return
 	 */
 	public TimeStamp getCurrentTime() {
-		return activityQueue.element().getTime();
+		return eventQueue.element().getTime();
 	}
 
 	/**
-	 * Executes event at head of Q. Removes from Q only when execution is
+	 * Executes next activity at head of Q. Removes from Q only when execution is
 	 * complete. Adds new events to EventQ after event completion.
+	 * 
+	 * Infinitely fast activities (time -1) execute & re-generate an identical
+	 * activity, which will be inserted at the next event time in the Q.
+	 * Currently, only infinitely fast AgentStrategy calls are supported.
 	 */
-	public void executeCurrentEvent() { // TODO rename
+	public void executeNext() {
 
 		// FIXME This toString is slow, and probably shouldn't be called if the
 		// logs aren't being used at debug level
-		log.log(Log.DEBUG, "executeCurrentEvent: " + activityQueue);
+		log.log(Log.DEBUG, this.getClass().getSimpleName() + "::executeNext: " + 
+				eventQueue);
 
 		try {
-			// This way infinitely fast activities can still schedule events x
-			// time in the future.
-			Activity act = activityQueue.remove();
-			if (act.getTime().after(currentTime))
+			// Add to set of infinitely fast activities. Only execute
+			// the activity if it's not infinitely fast. Execute all the
+			// infinitely fast activities after executing a "slow" activity.
+			Activity act = eventQueue.remove();
+			if (act.getTime().after(currentTime)) {
 				currentTime = act.getTime();
-			activityQueue.addAll(act.execute(currentTime));
+			}
+			if (act.getTime().equals(Consts.INF_TIME)) {
+				fastActivitySet.add(act); // don't execute it
+			} else if (currentTime.compareTo(simulationLength) <= 0) {
+				eventQueue.addAll(act.execute(currentTime));
+				alreadyExecutedFast = false;
+			}
+			
+			// Execute all the infinitely fast activities if haven't done so yet
+			if (!alreadyExecutedFast) {
+				log.log(Log.DEBUG, this.getClass().getSimpleName() + 
+						"::executeNext: INFINITELY FAST: " + fastActivitySet);
+				for (Activity a : fastActivitySet) {
+					eventQueue.addAll(a.execute(currentTime));
+				}
+				alreadyExecutedFast = true;
+			}
+
 		} catch (Exception e) {
-			// TODO This should be logged at the least.
+			System.err.println(this.getClass().getSimpleName() + "::executeNext:"
+					+ "error executing activity.");
 			e.printStackTrace();
 		}
 	}
 
 	public void addActivity(Activity act) {
-		activityQueue.add(act);
+		eventQueue.add(act);
 	}
 
 }

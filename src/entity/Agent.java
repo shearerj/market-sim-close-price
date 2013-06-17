@@ -1,13 +1,10 @@
 package entity;
 
+import data.*;
 import event.*;
 import model.*;
 import market.*;
-import activity.Activity;
-import activity.Liquidate;
-import activity.SubmitBid;
-import activity.SubmitMultipleBid;
-import activity.WithdrawBid;
+import activity.*;
 import systemmanager.*;
 
 import java.util.*;
@@ -16,10 +13,6 @@ import java.util.*;
  * Base class for all agents.
  * 
  * @author ewah
- */
-/**
- * @author ewah
- *
  */
 public abstract class Agent extends Entity {
 
@@ -39,8 +32,6 @@ public abstract class Agent extends Entity {
 	protected HashMap<Integer,TimeStamp> lastQuoteTime;
 	protected HashMap<Integer,TimeStamp> nextQuoteTime;
 	protected HashMap<Integer,TimeStamp> lastClearTime;
-	protected TimeStamp lastTransTime;
-	protected Integer lastTransID;		// ID of the last transaction fetched
 	protected BestBidAsk lastNBBOQuote;
 	protected BestBidAsk lastGlobalQuote;
 	protected int tickSize;
@@ -53,6 +44,12 @@ public abstract class Agent extends Entity {
 	protected String agentType;
 	protected TimeStamp arrivalTime;
 
+	// Transaction information
+	protected TimeStamp lastTransTime;
+	protected Transaction lastTransaction;	// last transaction seen
+	protected TransactionIDComparator idComparator;
+	protected List<Transaction> transactions;
+	
 	// Tracking cash flow
 	protected int cashBalance;
 	protected int positionBalance;
@@ -107,6 +104,10 @@ public abstract class Agent extends Entity {
 		prevBid = new HashMap<Integer,Integer>();
 		prevAsk = new HashMap<Integer,Integer>();
 		
+		lastTransaction = null;
+		idComparator = new TransactionIDComparator();
+		transactions = new ArrayList<Transaction>();
+		
 		lastGlobalQuote = new BestBidAsk();
 		lastNBBOQuote = new BestBidAsk();
 		
@@ -134,13 +135,12 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public abstract Collection<Activity> agentDeparture(TimeStamp ts);
-	
+
 	/**
-	 * @param priority
 	 * @param ts
 	 * @return
 	 */
-	public abstract Collection<Activity> agentReentry(int priority, TimeStamp ts);
+	public abstract Collection<Activity> updateAllQuotes(TimeStamp ts);
 	
 	/**
 	 * @return observation to include in the output file
@@ -227,6 +227,20 @@ public abstract class Agent extends Entity {
 			// not selling or buying
 			return new Price(0);
 		}
+	}
+	
+	
+	/**
+	 * Initialize list of private values given max quantity.
+	 * @param q		max position
+	 * @return
+	 */
+	public ArrayList<Integer> initPrivateValues(int q) {
+		ArrayList<Integer> alphas = new ArrayList<Integer>();
+		for (int i = -q; i <= q; i++) {
+			if (i != 0)	alphas.add((int) Math.round(getNormalRV(0, data.pvVar)));
+		}
+		return alphas;
 	}
 	
 	/**
@@ -413,6 +427,11 @@ public abstract class Agent extends Entity {
 		return cashBalance;
 	}
 
+	/***********************************
+	 * Methods for Activities
+	 * 
+	 **********************************/
+	
 	/**
 	 * Enters market by adding market to data structures.
 	 * @param mkt
@@ -550,8 +569,8 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public Collection<Activity> executeSubmitMultipleBid(Market mkt, ArrayList<Integer> price, 
-			ArrayList<Integer> quantity, TimeStamp ts) {
+	public Collection<Activity> executeSubmitMultipleBid(Market mkt, List<Integer> price, 
+			List<Integer> quantity, TimeStamp ts) {
 		if (price.size() != quantity.size()) {
 			log.log(Log.ERROR, "Agent::submitMultipleBid: " 
 					+ "Price/Quantity are not the same length");
@@ -630,12 +649,7 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public Collection<Activity> updateAllQuotes(TimeStamp ts) {
-		
-		for (Iterator<Integer> it = data.getMarketIDs().iterator(); it.hasNext(); ) {
-			Market mkt = data.getMarket(it.next());
-			updateQuotes(mkt, ts);
-		}
+	public Collection<Activity> executeUpdateAllQuotes(TimeStamp ts) {
 		lastGlobalQuote = sip.getGlobalQuote(modelID);
 		lastNBBOQuote = sip.getNBBOQuote(modelID);
 		
@@ -643,6 +657,7 @@ public abstract class Agent extends Entity {
 				+ ", NBBO" + lastNBBOQuote);
 		return Collections.emptyList();
 	}
+
 	
 	/**
 	 * Updates quotes for the given market.
@@ -675,6 +690,11 @@ public abstract class Agent extends Entity {
 	}
 
 	
+	/***********************************
+	 * Transaction-related methods
+	 *
+	 **********************************/
+	
 	/**
 	 * Logs transactions for the agent and prints a summary of performance so far.
 	 * 
@@ -683,8 +703,8 @@ public abstract class Agent extends Entity {
 	public void logTransactions(TimeStamp ts) {
 		
 		int rp = getRealizedProfit();
-		@SuppressWarnings("unused")
-		int up = getUnrealizedProfit();
+
+		// int up = getUnrealizedProfit();
 
 		String s = ts.toString() + " | " + this +  " Agent::logTransactions: " + 
 				this.getModel().getFullName() + ": Current Position=" + 
@@ -794,26 +814,29 @@ public abstract class Agent extends Entity {
 	 * @param ts TimeStamp of update
 	 */
 	public void updateTransactions(TimeStamp ts) {
-		ArrayList<PQTransaction> list = getNewTransactions();
-		log.log(Log.DEBUG, ts + " | " + this + " " + "lastTransID=" + lastTransID);
+		ArrayList<Transaction> list = getNewTransactions();
+		
+		log.log(Log.DEBUG, ts + " | " + this + " " + "lastTrans=" + lastTransaction);
+		
 		if (list != null) {
-			Integer lastGoodTransID = null;
+			Transaction lastGoodTrans = null;
 			
 			transLoop:
-			for (Iterator<PQTransaction> it = list.iterator(); it.hasNext();) {
-				Transaction t = it.next();
+			for (Transaction t : list) {
 				// Check that this agent is involved in the transaction
 				if (t.buyerID == this.id || t.sellerID == this.id){ 
 					boolean flag = processTransaction(t);
-					if (!flag && lastGoodTransID != null) {
-						lastTransID = lastGoodTransID;
+					if (!flag && lastGoodTrans != null) {
+						lastTransaction = lastGoodTrans;
 						log.log(Log.ERROR, ts + " | " + this + " " +
 								"Agent::updateTransactions: Problem with transaction.");
 						break transLoop;
 					}
+					
 					log.log(Log.INFO, ts + " | " + this + " " +
-							"Agent::updateTransactions: New transaction received: (mktID=" + t.marketID +
-							", transID=" + t.transID + " buyer=" + data.getAgentLogID(t.buyerID) + 
+							"Agent::updateTransactions: New transaction received: (" +
+							"transID=" + t.transID +", mktID=" + t.marketID +
+							", buyer=" + data.getAgentLogID(t.buyerID) + 
 							", seller=" + data.getAgentLogID(t.sellerID) +
 							", price=" + t.price + ", quantity=" + t.quantity + 
 							", timeStamp=" + t.timestamp + ")");
@@ -821,26 +844,27 @@ public abstract class Agent extends Entity {
 					// Log surplus for background agents with private values
 					Agent buyer = data.getAgent(t.buyerID);
 					Agent seller = data.getAgent(t.sellerID);
-					Price rt = data.getFundamentalAt(ts);	// fundamental at time ts
-					int bsurplus = 0;
-					int ssurplus = 0;
+					Price rt = data.getFundamentalAt(ts);
+					int cs = 0;		// consumer surplus
+					int ps = 0;		// producer surplus
+					
 					String s = ts + " | " + this + " " + "Agent::updateTransactions: BUYER surplus: ";
 					if (buyer.hasPrivateValue()) {
-						bsurplus = (data.getPrivateValueByBid(t.buyBidID).sum(rt)).diff(t.price).getPrice();
+						cs = (data.getPrivateValueByBid(t.buyBidID).sum(rt)).diff(t.price).getPrice();
 						s += "(" + buyer.getPrivateValue() + "+" + rt + ")-" + t.price.getPrice() + 
-								"=" + bsurplus + ", ";
+								"=" + cs + ", ";
 					} else {
-						bsurplus = t.quantity * t.price.getPrice();
-						s += "-" + bsurplus + ", ";
+						cs = t.quantity * t.price.getPrice();
+						s += "-" + cs + ", ";
 					}
 					s += "SELLER surplus: ";
 					if (seller.hasPrivateValue()) {
-						ssurplus = t.price.diff(data.getPrivateValueByBid(t.sellBidID).sum(rt)).getPrice();
+						ps = t.price.diff(data.getPrivateValueByBid(t.sellBidID).sum(rt)).getPrice();
 						s += t.price.getPrice() + "-(" + seller.getPrivateValue() + "+" + rt + 
-								")=" + ssurplus;
+								")=" + ps;
 					} else {
-						ssurplus = t.quantity * t.price.getPrice(); 
-						s += ssurplus;
+						ps = t.quantity * t.price.getPrice(); 
+						s += ps;
 					}
 //					String s = ts + " | " + this + " " +
 //							"Agent::updateTransactions: BUYER surplus: (" + buyer.getPrivateValue()
@@ -850,76 +874,42 @@ public abstract class Agent extends Entity {
 
 					log.log(Log.INFO, s);
 					log.log(Log.INFO, ts + " | " + this + " " +
-							"Agent::updateTransactions: SURPLUS: " + (bsurplus + ssurplus));
+							"Agent::updateTransactions: SURPLUS for this transaction: " + (cs + ps));
 				}
-				// Update transaction ID
-				lastGoodTransID = t.transID;
+				// Update transactions
+				lastGoodTrans = t;
+				transactions.add(t);
 			}
-			lastTransID = lastGoodTransID;
-			log.log(Log.DEBUG, ts + " | " + this + " " + "NEW lastTransID=" + lastTransID);
+			lastTransaction = lastGoodTrans;
+			log.log(Log.DEBUG, ts + " | " + this + " " + "NEW lastTrans=" + lastGoodTrans);
 		}
 		lastTransTime = ts;
 	}
 
-	
 	/**
-	 * @return list of all transactions that have not been processed yet.
-	 */
-	public ArrayList<PQTransaction> getNewTransactions() {
-		ArrayList<PQTransaction> temp = null;
-		if (lastTransID == null)
-			temp = getTransactions(new Integer(-1));
-		else
-			temp = getTransactions(lastTransID);
-		return temp;
-	}
-
-	/**
-	 * Return list of transactions generated after the given ID.
+	 * Gets all transactions that have not been processed yet.
 	 * 
-	 * @param lastID of the transaction we don't want
-	 * @return list of transactions later than lastID
+	 * @return
 	 */
-	public ArrayList<PQTransaction> getTransactions(int lastID) {
-		ArrayList<PQTransaction> transactions = new ArrayList<PQTransaction>();
-
-		TreeSet<Integer> t = getTransIDs(lastID);
-		if (t == null || t.size() == 0) return null;
-
-		for (Iterator<Integer> i = t.iterator(); i.hasNext();) {
-			Integer id = i.next();
-			PQTransaction record = this.data.getTransaction(modelID, id);
-			transactions.add(record);
+	public ArrayList<Transaction> getNewTransactions() {
+		Set<Transaction> tmp = new TreeSet<Transaction>(idComparator);
+		
+		if (lastTransaction == null) {
+			// get all transactions for this model
+			tmp = data.getTrans(modelID);
+		} else {
+			// get all transactions after the last seen transaction (not inclusive)
+			tmp = data.getTransTailSet(modelID, lastTransaction);
 		}
-		return transactions;
+		return new ArrayList<Transaction>(tmp);
 	}
 
-	/**
-	 * @return sorted set of all transaction IDs later than the last one
-	 */
-	public TreeSet<Integer> getTransIDs() {
-		if (lastTransID != null)
-			return getTransIDs(lastTransID);
-		return null;
-	}
-
-	/**
-	 * @param lastID - last ID that don't want transIDs for
-	 * @return sorted set of transaction IDs later that lastID
-	 */
-	public TreeSet<Integer> getTransIDs(int lastID) {
-		TreeSet<Integer> transIDs = new TreeSet<Integer>();
-		for (Iterator<Integer> it = data.getTransIDs(modelID).iterator(); it.hasNext(); ) {
-			int id = it.next();
-			if (id > lastID) {
-				transIDs.add(id);
-			}
-		}
-		if (transIDs.size() == 0) return null;
-
-		return transIDs; 
-	}
-
+	
+	/***********************************
+	 * Determining position & profit
+	 *
+	 **********************************/
+	
 	/**
 	 * Computes any unrealized profit based on market bid/ask quotes.
 	 * Checks the markets belonging to the Agent's model.
@@ -937,16 +927,14 @@ public abstract class Agent extends Entity {
 			
 			if (positionBalance > 0) {
 				// For long position, compare cost to bid quote (buys)
-				for (Iterator<Integer> it = mIDs.iterator(); it.hasNext(); ) {
-					int mktID = it.next();
+				for (int mktID : mIDs) {
 					if (p == -1 || p < bidPrice.get(mktID).getPrice()) {
 						p = bidPrice.get(mktID).getPrice();
 					}
 				}
 			} else {
 				// For short position, compare cost to ask quote (sells)
-				for (Iterator<Integer> it = mIDs.iterator(); it.hasNext(); ) {
-					int mktID = it.next();
+				for (int mktID : mIDs) {
 					if (p == -1 || p > askPrice.get(mktID).getPrice()) {
 						p = askPrice.get(mktID).getPrice();
 					}	
@@ -983,6 +971,11 @@ public abstract class Agent extends Entity {
 		return positionBalance;
 	}
 	
+	
+	/***********************************
+	 * Methods for agent strategies
+	 *
+	 **********************************/
 	
 	/**
 	 * Find best market to buy in (i.e. lowest ask) and to sell in (i.e. highest bid).
@@ -1056,13 +1049,11 @@ public abstract class Agent extends Entity {
 			flag = false;
 		} else if (ask <= 0 && bid > 0) {
 			double oldask = ask;
-			//			ask = bid + randomSpread(countMissingAsk.get(aucID))*tickSize;
 			log.log(Log.DEBUG, "Agent::checkBidAsk: ask: " + oldask + " to " + ask);
 			prevAsk.put(mktID, ask);
 			prevBid.put(mktID, bid);
 		} else if (bid <= 0 && ask > 0) {
 			double oldbid = bid;
-			//			bid = ask - randomSpread(countMissingBid.get(aucID))*tickSize;
 			log.log(Log.DEBUG, "Agent::checkBidAsk: bid: " + oldbid + " to " + bid);
 			prevAsk.put(mktID, ask);
 			prevBid.put(mktID, bid);
@@ -1099,4 +1090,5 @@ public abstract class Agent extends Entity {
 		double r = rand.nextDouble();
 		return -Math.log(r) / rateParam;
 	}
+	
 }

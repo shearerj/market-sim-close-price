@@ -21,12 +21,12 @@ import activity.Activity;
  * that should be used are "add," which adds a single activity to the queue,
  * "addAll," which adds a collection of activities to the queue, and "remove,"
  * which removes the activity at the head of the queue. Events that are added at
- * the same TimeStamp will be dequed in a uniform random order. To make an event
+ * the same TimeStamp will be dequeued in a uniform random order. To make an event
  * occur instantaneously give it a time of Consts.INF_TIME.
  * 
- * Note that because of the dequing mechanism, if Activity A is supposed to
+ * Note that because of the dequeuing mechanism, if Activity A is supposed to
  * happen after Activity B, Activity A should queue up Activity B. Anything else
- * may not guarentee that A always happens before B.
+ * may not guarantee that A always happens before B.
  * 
  * @author ebrink
  * 
@@ -89,7 +89,7 @@ public class EventQueue implements Queue<Activity> {
 		List<Event> copy = new ArrayList<Event>(eventQueue);
 		Collections.sort(copy);
 		for (Event e : copy)
-			sb.append(e).append("// ");
+			sb.append(e).append(".  ");
 		return sb.substring(0, sb.length() - 3);
 	}
 
@@ -129,7 +129,7 @@ public class EventQueue implements Queue<Activity> {
 	 */
 	@Override
 	public Iterator<Activity> iterator() {
-		return new ActivityQueueIterator(eventQueue.iterator());
+		return new EventQueueIterator(eventQueue.iterator());
 	}
 
 	/**
@@ -249,7 +249,8 @@ public class EventQueue implements Queue<Activity> {
 	@Override
 	public Activity remove() {
 		if (isEmpty())
-			throw new NoSuchElementException("ActivityQueue is empty");
+			throw new NoSuchElementException(this.getClass().getSimpleName() +
+					" is empty");
 		return poll();
 	}
 
@@ -277,7 +278,7 @@ public class EventQueue implements Queue<Activity> {
 		return act;
 	}
 
-	protected class ActivityQueueIterator implements Iterator<Activity> {
+	protected class EventQueueIterator implements Iterator<Activity> {
 
 		protected Iterator<Event> eventIterator;
 		protected Iterator<Activity> activityIterator;
@@ -289,7 +290,7 @@ public class EventQueue implements Queue<Activity> {
 		protected boolean removedEveryActivity;
 		protected boolean removedCurrentActivity;
 
-		protected ActivityQueueIterator(Iterator<Event> events) {
+		protected EventQueueIterator(Iterator<Event> events) {
 			eventIterator = events;
 			activityIterator = Collections.emptyIterator();
 			removedEveryActivity = true;

@@ -1,5 +1,8 @@
 package entity;
 
+import data.ObjectProperties;
+import data.Observations;
+import data.SystemData;
 import event.*;
 import activity.Activity;
 import activity.AgentStrategy;
@@ -76,6 +79,9 @@ public class BasicMarketMaker extends MarketMaker {
 	@Override
 	public Collection<Activity> agentStrategy(TimeStamp ts) {
 		Collection<Activity> actMap = new ArrayList<Activity>();
+		
+		// update all quotes
+		this.updateAllQuotes(ts);
 
 		int bid = getBidPrice(getMarketID()).getPrice();
 		int ask = getAskPrice(getMarketID()).getPrice();

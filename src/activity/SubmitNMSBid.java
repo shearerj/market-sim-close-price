@@ -1,6 +1,7 @@
 package activity;
 
 import java.util.Collection;
+import org.apache.commons.lang3.builder.*;
 
 import entity.*;
 import event.*;
@@ -12,12 +13,12 @@ import event.*;
  * @author ewah
  */
 public class SubmitNMSBid extends Activity {
-	
+
 	private SMAgent ag;
 	private int price;
 	private int quantity;
 	private TimeStamp duration;
-	
+
 	public SubmitNMSBid(SMAgent ag, int p, int q, TimeStamp d, TimeStamp t) {
 		super(t);
 		this.ag = ag;
@@ -25,17 +26,45 @@ public class SubmitNMSBid extends Activity {
 		this.quantity = q;
 		this.duration = d;
 	}
-	
+
 	public SubmitNMSBid deepCopy() {
 		return new SubmitNMSBid(this.ag, this.price, this.quantity, this.duration, this.time);
 	}
-	
+
 	public Collection<Activity> execute(TimeStamp time) {
 		return this.ag.executeSubmitNMSBid(this.price, this.quantity, this.duration, time);
 	}
-	
+
 	public String toString() {
-		return new String("SubmitNMSBid::" + this.ag + "," + "+(" + 
-				this.price + ", " + this.quantity + "), duration=" + duration);
+		return new String(getName() + "::" + ag + "," + "+(" + 
+				price + ", " + quantity + "), duration=" + duration);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SubmitNMSBid other = (SubmitNMSBid) obj;
+		return new EqualsBuilder().
+				append(ag.getID(), other.ag.getID()).
+				append(price, other.price).
+				append(quantity, other.quantity).
+				append(duration.longValue(), other.duration.longValue()).
+				append(time.longValue(), other.time.longValue()).
+				isEquals();
+	}
+	
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder(19, 37).
+				append(ag.getID()).
+				append(price).
+				append(quantity).
+				append(time.longValue()).
+				toHashCode();
 	}
 }

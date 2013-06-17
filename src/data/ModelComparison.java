@@ -1,4 +1,4 @@
-package systemmanager;
+package data;
 
 public class ModelComparison {
 

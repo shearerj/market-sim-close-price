@@ -13,26 +13,9 @@ import org.apache.commons.lang3.builder.*;
  */
 public class PQTransaction extends Transaction {
 	
-//	/**
-//	 * generate PQTransaction with given price, quantity, buyerID, sellerID, timestamp
-//	 * @param q quantity
-//	 * @param p price
-//	 * @param bID buyerID
-//	 * @param sID sellerID
-//	 * @param ts TimeStamp
-//	 */
-//	public PQTransaction(int q, Price p, int bID, int sID, TimeStamp ts)
-//	{
-//		quantity = new Integer(q);
-//		price = p;
-//		buyerID = new Integer(bID);
-//		sellerID = new Integer(sID);
-//		timestamp = ts;
-//	}
-	
 	/**
-	 * Generate PQTransaction with given price, quantity, buyerID, sellerID, buyBidID,
-	 * sellBidID, TimeStamp, marketID.
+	 * Generate PQTransaction with given price, quantity, buyerID, sellerID, 
+	 * buyBidID, sellBidID, TimeStamp, marketID.
 	 * 
 	 * @param q quantity
 	 * @param p price
@@ -43,7 +26,8 @@ public class PQTransaction extends Transaction {
 	 * @param ts TimeStamp
 	 * @param mktID marketID
 	 */
-	public PQTransaction(int q, Price p, int bID, int sID, int bBidID, int sBidID, TimeStamp ts, int mktID)
+	public PQTransaction(int q, Price p, int bID, int sID, int bBidID, 
+			int sBidID, TimeStamp ts, int mktID)
 	{
 		quantity = new Integer(q);
 		price = p;
@@ -54,22 +38,11 @@ public class PQTransaction extends Transaction {
 		timestamp = ts;
 		marketID = new Integer(mktID);
 	}
+
 	
-//	/**
-//	 * @param pq
-//	 * @return
-//	 */
-//	public boolean equals(PQTransaction pq) {
-//		if (pq.price.price == this.price.price &&
-//			pq.quantity == this.quantity &&
-//			pq.buyerID.equals(this.buyerID) &&
-//			pq.sellerID.equals(this.sellerID) &&
-//			pq.timestamp.equals(this.timestamp))
-//			return true;
-//		else
-//			return false;
-//	}
-	
+	/**
+	 * NOTE: does not compare transaction IDs
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == this)
@@ -107,7 +80,8 @@ public class PQTransaction extends Transaction {
 	
 	@Override
 	public String toString() {
-		String result = "Transaction(quantity=" + quantity.toString()
+		String result = "Transaction(ID=" + transID.toString() 
+				+ ", quantity=" + quantity.toString()
 				+ ", price=" + price    
 				+ ", buyerID=" + buyerID.toString()  
 				+ ", sellerID=" + sellerID.toString() 
@@ -124,29 +98,15 @@ public class PQTransaction extends Transaction {
 	 */
 	public void print()
 	{
-		System.out.print(quantity 	+" "+ 
+		System.out.println(
+				quantity 			+" "+ 
 				price    			+" "+
 				buyerID.toString()  +" "+
 				sellerID.toString() +" "+ 
-				buyBidID.toString()  +" "+
-				sellBidID.toString() +" "+ 
+				buyBidID.toString() +" "+
+				sellBidID.toString()+" "+ 
 				timestamp.toString()+" "+
-				marketID.toString()+"\n");
+				marketID.toString());
 	}
-	
-//	/**
-//	 * set all class members to null
-//	 */
-//	private void setMembersNull()
-//	{
-//		quantity = null;
-//		price = null;
-//		timestamp = null;
-//		buyerID = null;
-//		sellerID = null;
-//		buyBidID = null;
-//		sellBidID = null;
-//		marketID = null;
-//	}
 
 }
