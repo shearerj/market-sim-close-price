@@ -19,22 +19,24 @@ import java.text.DateFormat;
  */
 public class SystemManager {
 
-	private EventManager eventManager;
-	private SystemData data;
-	private Observations obs;
+	protected EventManager eventManager;
+	protected final SystemData data;
+	protected final Observations obs;
 
-	private static int num; // sample number used for labeling output files
-	private static String simFolder; // simulation folder name
+	protected final int num; // sample number used for labeling output files
+	protected final File simFolder; // simulation folder name
 
-	private Properties envProps;
-	private Log log;
-	private int logLevel;
-	private String logFilename;
+	protected final Properties envProps;
+	protected Log log;
+	protected int logLevel;
+	protected String logFilename;
 
 	/**
 	 * Constructor
 	 */
-	public SystemManager() {
+	public SystemManager(File simFolder, int simNumber) {
+		this.simFolder = simFolder;
+		this.num = simNumber;
 		data = new SystemData();
 		envProps = new Properties();
 		obs = new Observations(data);
@@ -47,20 +49,19 @@ public class SystemManager {
 	 * 
 	 * @param args
 	 */
-	public static void main(String[] args) {
+	public static void main(String... args) {
 
-		SystemManager manager = new SystemManager();
-
-		if (args.length == 2) {
-			simFolder = args[0] + "/";
-			if (simFolder.charAt(0) == '/')
-				simFolder = simFolder.substring(1);
-			num = Integer.parseInt(args[1]);
-		} else {
-			simFolder = "";
-			num = 1;
+		File simFolder = new File(".");
+		int simNumber = 1;
+		switch (args.length) {
+		default:
+			simNumber = Integer.parseInt(args[1]);
+		case 1:
+			simFolder = new File(args[0]);
+		case 0:
 		}
 
+		SystemManager manager = new SystemManager(simFolder, simNumber);
 		manager.setup();
 		manager.executeEvents();
 		manager.aggregateResults();
@@ -104,7 +105,7 @@ public class SystemManager {
 			// Create log file
 			logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
 			Date now = new Date();
-			logFilename = simFolder.substring(0, simFolder.length() - 1)
+			logFilename = simFolder.getPath()
 					.replace("/", "-") + "_" + num;
 			logFilename += "_"
 					+ DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.UK)
@@ -116,18 +117,17 @@ public class SystemManager {
 
 			try {
 				// Check first if directory exists
-				File f = new File(simFolder);
-				if (!f.exists()) {
+				if (!simFolder.exists()) {
 					// Simulations directory not found
 					System.err.println(this.getClass().getSimpleName()
 							+ "::setup(String): simulation folder not found");
 					System.exit(1);
 				}
 				// Check for logs directory
-				f = new File(simFolder + Consts.logDir);
+				File f = new File(simFolder, Consts.logDir);
 				if (!f.exists()) {
 					// Create directory
-					new File(simFolder + Consts.logDir).mkdir();
+					f.mkdir();
 				}
 				log = new Log(logLevel, ".", simFolder + Consts.logDir
 						+ logFilename + ".txt", true);
