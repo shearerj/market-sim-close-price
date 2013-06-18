@@ -1,5 +1,8 @@
 package entity;
 
+import data.ObjectProperties;
+import data.Observations;
+import data.SystemData;
 import event.*;
 import activity.*;
 import systemmanager.*;
@@ -8,7 +11,7 @@ import java.util.HashMap;
 import java.util.ArrayList;
 
 /**
- * MarketMakerAgent
+ * BasicMarketMaker
  * 
  * Basic market maker. See description in (Chakraborty & Kearns, 2011).
  * Participates in only a single market at a time. Submits a ladder of bids
@@ -30,7 +33,7 @@ import java.util.ArrayList;
  * 
  * @author ewah, gshiva
  */
-public class MarketMakerAgent extends SMAgent {     
+public class BasicMarketMaker extends MarketMaker {     
 
 	private int stepSize;
 	private int rungSize;
@@ -38,15 +41,23 @@ public class MarketMakerAgent extends SMAgent {
 	private int xt, yt;		// stores the ask/bid, respectively
 
 	private int sleepTime;
-//	private double sleepVar;
-	
-	public MarketMakerAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l, int mktID) {
-		super(agentID, modelID, d, p, l, mktID);
+
+	/**
+	 * Constructor
+	 * 
+	 * @param agentID
+	 * @param modelID
+	 * @param d
+	 * @param p
+	 * @param l
+	 */
+	public BasicMarketMaker(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
+		super(agentID, modelID, d, p, l);
 		arrivalTime = new TimeStamp(0);
-		sleepTime = Integer.parseInt(params.get("sleepTime"));
-//		sleepVar = Double.parseDouble(params.get("sleepVar"));
-		numRungs = Integer.parseInt(params.get("numRungs"));
-		rungSize = Integer.parseInt(params.get("rungSize"));
+		sleepTime = Integer.parseInt(params.get(SLEEPTIME_KEY));
+//		sleepVar = Double.parseDouble(params.get(Agent.SLEEPVAR_KEY));
+		numRungs = Integer.parseInt(params.get(NUMRUNGS_KEY));
+		rungSize = Integer.parseInt(params.get(RUNGSIZE_KEY));
 		stepSize = Market.quantize(rungSize, data.tickSize);
 		
 		xt = -1;	// ask
@@ -55,9 +66,12 @@ public class MarketMakerAgent extends SMAgent {
 
 	@Override
 	public HashMap<String, Object> getObservation() {
-		return null;
+		HashMap<String,Object> obs = new HashMap<String,Object>();
+		obs.put(Observations.ROLE_KEY, getRole());
+		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
+		obs.put(Observations.STRATEGY_KEY, getFullStrategy());
+		return obs;
 	}
-
 	
 	@Override
 	public ActivityHashMap agentStrategy(TimeStamp ts) {
@@ -66,8 +80,8 @@ public class MarketMakerAgent extends SMAgent {
 		int bid = getBidPrice(getMarketID()).getPrice();
 		int ask = getAskPrice(getMarketID()).getPrice();
 
-		// TODO - what if just one of the bid and ask is -1? just submit one side?
-		if (bid == -1 || ask == -1) {
+		// check that bid or ask is defined
+		if (bid <=0  || ask <= 0) {
 			log.log(Log.INFO, ts + " | " + this + " " + agentType +
 					"::agentStrategy: undefined quote in market " + getMarket());
 			
@@ -91,17 +105,22 @@ public class MarketMakerAgent extends SMAgent {
 					sellMaxPrice = lastNBBOQuote.bestBid;
 				}
 				
-				// build descending list of buy orders (yt, ..., yt - ct) or stops at NBBO ask
-				for (int p = bid; p >= buyMinPrice; p -= stepSize) {
-					if (p > 0) {
-						prices.add(p);
-						quantities.add(1);
+				// submits only one side if either bid or ask is undefined
+				if (bid > 0) {
+					// build descending list of buy orders (yt, ..., yt - ct) or stops at NBBO ask
+					for (int p = bid; p >= buyMinPrice; p -= stepSize) {
+						if (p > 0) {
+							prices.add(p);
+							quantities.add(1);
+						}
 					}
 				}
-				// build ascending list of sell orders (xt, ..., xt + ct) or stops at NBBO bid
-				for (int p = ask; p <= sellMaxPrice; p += stepSize) {
-					prices.add(p);
-					quantities.add(-1);
+				if (ask > 0) {
+					// build ascending list of sell orders (xt, ..., xt + ct) or stops at NBBO bid
+					for (int p = ask; p <= sellMaxPrice; p += stepSize) {
+						prices.add(p);
+						quantities.add(-1);
+					}
 				}
 				
 				log.log(Log.INFO, ts + " | " + getMarket() + " " + this + " " + agentType + 

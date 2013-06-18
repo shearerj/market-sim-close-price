@@ -1,5 +1,7 @@
 package entity;
 
+import data.ObjectProperties;
+import data.SystemData;
 import event.*;
 import model.*;
 import market.*;
@@ -192,6 +194,16 @@ public abstract class Market extends Entity {
 			actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(sip, model, tsNew));
 		}
 		return actMap;
+	}
+	
+	/**
+	 * @return true if both BID & ASK are defined (!= -1)
+	 */
+	public boolean defined() {
+		if (lastAskPrice.getPrice() == -1 || lastBidPrice.getPrice() == -1) {
+			return false;
+		}
+		return true;
 	}
 	
 	/* (non-Javadoc)

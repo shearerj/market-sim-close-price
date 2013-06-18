@@ -1,9 +1,7 @@
 package systemmanager;
 
+import data.*;
 import event.*;
-import entity.*;
-import activity.*;
-import model.*;
 
 import java.util.*;
 import java.io.*;
@@ -20,17 +18,11 @@ import java.text.DateFormat;
  */
 public class SystemManager {
 
-	private EventManager eventManager;
-	private SystemData data;
-	private Observations obs;
-	
-	private static int num;						// sample number used for labeling output files
-	private static String simFolder;			// simulation folder name
-	
-	private Properties envProps;
-	private Log log;
-	private int logLevel;
-	private String logFilename;
+	private static EventManager eventManager;
+	private static SystemData data;
+	private static Observations obs;
+	private static Properties envProps;
+	private static Log log;
 
 	/**
 	 * Constructor
@@ -53,11 +45,13 @@ public class SystemManager {
 		SystemManager manager = new SystemManager();
 
 		if (args.length == 2) {
-			simFolder = args[0] + "/";
-			num = Integer.parseInt(args[1]);
+			SystemData.simDir = args[0] + "/";
+			if (SystemData.simDir.charAt(0) == '/') 
+				SystemData.simDir = SystemData.simDir.substring(1);
+			data.num = Integer.parseInt(args[1]);
 		} else {
-			simFolder = "";
-			num = 1;
+			SystemData.simDir = "";
+			data.num = 1;
 		}
 		
 		manager.setup();
@@ -65,34 +59,7 @@ public class SystemManager {
 		manager.aggregateResults();
 		manager.close();
 	}
-	
-	
-	/**
-	 * Method to execute all events in the Event Queue.
-	 */
-	public void executeEvents() {
-		try {
-			while (!eventManager.isEventQueueEmpty()) {
-				eventManager.executeCurrentEvent();
-			}
-			String s = "STATUS: Event queue is now empty.";
-			log.log(Log.INFO, s);
-		} catch (Exception e) {
-			System.err.print(e);
-		}
-	}
 
-	/**
-	 * Shuts down simulation. Removes empty log file if log level is 0.
-	 */
-	public void close() {
-		File f = new File(simFolder + Consts.logDir);
-		if (f.exists() && logLevel == 0) {
-			// remove the empty log file
-			f.delete();
-		}
-	}
-	
 	/**
 	 * Initialize parameters based on configuration file.
 	 */
@@ -104,34 +71,63 @@ public class SystemManager {
 
 			// Read environment parameters & set up environment
 			loadConfig(envProps, Consts.configDir + Consts.configFile);
-			data.obsNum = num;
-
+			
 			// Create log file
-			logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
+			int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
 			Date now = new Date();
-			logFilename = simFolder.substring(0, simFolder.length()-1).replace("/", "-") + "_" + num;
-			logFilename += "_" + DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.UK).format(now);
-			logFilename += "_" + DateFormat.getTimeInstance(DateFormat.MEDIUM, Locale.UK).format(now);
+			String logFilename = SystemData.simDir.substring(0, 
+					SystemData.simDir.length()-1).replace("/", "-") + "_" + data.num;
+			logFilename += "_" + DateFormat.getDateInstance(DateFormat.MEDIUM, 
+					Locale.UK).format(now);
+			logFilename += "_" + DateFormat.getTimeInstance(DateFormat.MEDIUM, 
+					Locale.UK).format(now);
 			logFilename = logFilename.replace(":",".");
 			
 			try {
 				// Check first if directory exists
-				File f = new File(simFolder + Consts.logDir);
+				File f = new File(SystemData.simDir);
+				if (!f.exists()) {
+					// Simulations directory not found
+					System.err.println(this.getClass().getSimpleName() + 
+							"::setup(String): simulation folder not found");
+					System.exit(1);
+				}
+				// Check for logs directory
+				String logPath = SystemData.simDir + Consts.logDir;
+				f = new File(logPath);
 				if (!f.exists()) {
 					// Create directory
-					new File(simFolder + Consts.logDir).mkdir();
+					new File(logPath).mkdir();
 				}
-				log = new Log(logLevel, ".", simFolder + Consts.logDir + logFilename + ".txt", true);
+				// Create log file
+				log = new Log(logLevel, ".", logPath + logFilename + ".txt", true);
 			} catch (Exception e) {
+				System.err.println(this.getClass().getSimpleName() + 
+						"::setup(String): error creating log file");
 				e.printStackTrace();
-				System.err.print("setup(String): error creating log file");
 			}
 
 			// Log properties
 			log.log(Log.DEBUG, envProps.toString());
 			
 			// Read simulation specification file
-			SimulationSpec specs = new SimulationSpec(simFolder + Consts.simSpecFile, log, data);
+			try {
+				// Check first if simulation spec file exists
+				File f = new File(SystemData.simDir + Consts.simSpecFile);
+				if (!f.exists()) {
+					// Spec file is not found
+					System.err.println(this.getClass().getSimpleName() + 
+							"::setup(String): simulation_spec.json file not found");
+					System.exit(1);
+				}
+			} catch (Exception e) {
+				System.err.println(this.getClass().getSimpleName() + 
+						"::setup(String): error accessing spec file");
+				e.printStackTrace();
+			}
+			// Read simulation_spec.json file
+			SimulationSpec specs = new SimulationSpec(SystemData.simDir + 
+					Consts.simSpecFile,	log, data);
 
 			// Create event manager
 			eventManager = new EventManager(data.simLength, log);
@@ -145,6 +141,31 @@ public class SystemManager {
 		}
 	}
 	
+	/**
+	 * Method to execute all events in the Event Queue.
+	 */
+	public void executeEvents() {
+		try {
+			while (!eventManager.isEventQueueEmpty()) {
+				eventManager.executeCurrentEvent();
+			}
+			String s = "STATUS: Event queue is now empty.";
+			log.log(Log.INFO, s);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Shuts down simulation. Removes empty log file if log level is 0.
+	 */
+	public void close() {
+		File f = new File(SystemData.simDir + Consts.logDir);
+		if (f.exists() && log.getLevel() == Log.NO_LOGGING) {
+			// remove the empty log file
+			f.delete();
+		}
+	}
 	
 	/**
 	 * Load a configuration file InputStream into a Properties object.
@@ -157,9 +178,10 @@ public class SystemManager {
 				return;
 			p.load(config);
 		} catch (IOException e) {
-			String s = "loadConfig(InputStream): error opening/processing config file: " + config + "/" + e;
+			String s = this.getClass().getSimpleName() + "::loadConfig(InputStream): " + 
+					"error opening/processing config file: " + config + "/" + e;
 			log.log(Log.ERROR, s);
-			System.err.print(s);
+			System.err.println(s);
 			System.exit(0);
 		}
 	}
@@ -174,77 +196,29 @@ public class SystemManager {
 		try {
 			loadInputStream(p, new FileInputStream(config));
 		} catch (FileNotFoundException e) {
-			String s = "loadConfig(String): error opening/processing config file: " + config + "/" + e;
+			String s = this.getClass().getSimpleName() + "::loadConfig(String): " + 
+					"error opening/processing config file: " + config + "/" + e;
 			log.log(Log.ERROR, s);
-			System.err.print(s);
+			System.err.println(s);
 			System.exit(0);
 		}
 	}
 	
 	
 	/**
-	 * Generate results report (payoff data, feature data logging). Only adds observations
-	 * from agents in the primary model (the primary game).
+	 * Generate results report (payoff data, feature data logging).
 	 */
 	public void aggregateResults() {
-		try {
-			for (Iterator<Integer> it = data.getAgentIDs().iterator(); it.hasNext(); ) {
-				int id = it.next();
-				if (data.getPrimaryAgentIDs().contains(id)) {
-					// only add observations for players in primary model
-					obs.addObservation(id);
-				} else {
-					// add as a feature observations for players in other market models
-					obs.addObservationAsFeature(id);
-				}
-			}
-			
-			obs.addFeature("", obs.getConfiguration());
-			obs.addFeature("interval", obs.getTimeStampFeatures(data.getIntervals()));
-			obs.addFeature("pv", obs.getPriceFeatures(data.getPrivateValues()));
-//			obs.addFeature("expire", obs.getTimeStampFeatures(data.getExpirations()));
-//			obs.addTransactionComparison();
-			getModelResults();
-			
-			File file = new File(simFolder + Consts.obsFilename + num + ".json");
+		try {			
+			File file = new File(SystemData.simDir + Consts.obsFile + data.num + ".json");
 			FileWriter txt = new FileWriter(file);
 			txt.write(obs.generateObservationFile());
 			txt.close();
-			
 		} catch (Exception e) {
-			String s = "aggregateResults(): error creating observation file";
-			e.printStackTrace();
+			String s = this.getClass().getSimpleName() + "::aggregateResults(): " + 
+						"error creating observation file";
 			System.err.println(s);
-		}
-	}
-	
-	/**
-	 * Gets market results by model.
-	 */
-	private void getModelResults() {
-		for (Map.Entry<Integer, MarketModel> entry : data.getModels().entrySet()) {
-			MarketModel model = entry.getValue();
-			
-			String prefix = model.getLogName() + "_";
-
-			// Spread info
-			long maxTime = Math.round(data.numAgents / data.arrivalRate);
-			long begTime = Market.quantize((int) maxTime, 500) - 1000;
-			for (long i = Math.max(begTime, 500); i <= maxTime + 1000; i += 500) {
-				obs.addFeature(prefix + "spreads_" + i, obs.getSpreadInfo(model, i));
-				obs.addFeature(prefix + "price_vol_" + i, obs.getVolatilityInfo(model, i));
-			}
-			
-			// Surplus features
-			obs.addFeature(prefix + "surplus", obs.getSurplusFeatures(model));
-			obs.addFeature(prefix + "surplus_disc", obs.getDiscountedSurplusFeatures(model));
-			
-			// Other features
-//			obs.addFeature(prefix + "marketmaker", obs.getMarketMakerInfo(model));
-			obs.addFeature(prefix + "transactions", obs.getTransactionInfo(model));
-			obs.addFeature(prefix + "exec_speed", obs.getTimeToExecution(model));
-			
-			// obs.addFeature(prefix + "depths", obs.getDepthInfo(ids));
+			e.printStackTrace();
 		}
 	}
 }

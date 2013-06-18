@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.TreeSet;
 
+import data.SystemData;
+
 import entity.Market;
 import event.TimeStamp;
 import systemmanager.*;
@@ -282,10 +284,12 @@ public class PQOrderBook extends OrderBook {
 			// Assign price if not assigned yet
 			// Get price by taking first of the matching buys/sells
 			if (p.getPrice() == 0) {
-				TreeSet<PQPoint> b = new TreeSet<PQPoint>(matchingBuys);
-				TreeSet<PQPoint> a = new TreeSet<PQPoint>(matchingSells);
-				PQPoint bid = b.first();
-				PQPoint ask = a.last();
+//				TreeSet<PQPoint> b = new TreeSet<PQPoint>(matchingBuys);
+//				TreeSet<PQPoint> a = new TreeSet<PQPoint>(matchingSells);
+//				PQPoint bid = b.first();
+//				PQPoint ask = a.last();
+				PQPoint bid = ((PQBid) getBidQuote()).bidTreeSet.first();
+				PQPoint ask = ((PQBid) getAskQuote()).bidTreeSet.first();
 				
 				p = new Price(Math.round((ask.getPrice().getPrice() - 
 						bid.getPrice().getPrice()) * pricingPolicy + bid.getPrice().getPrice()));

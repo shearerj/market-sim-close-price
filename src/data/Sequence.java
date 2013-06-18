@@ -3,7 +3,7 @@
  *  Copyright (c) 2002 University of Michigan. All rights reserved.
  */
 
-package systemmanager;
+package data;
 
 /**
  * The Sequence class is used to hold sequences of unique values.

@@ -1,5 +1,7 @@
 package entity;
 
+import data.ObjectProperties;
+import data.SystemData;
 import event.*;
 import activity.*;
 import systemmanager.*;
@@ -7,7 +9,11 @@ import systemmanager.*;
 import java.util.HashMap;
 
 /**
- * Dummy agent. Payoff is always 0. Strategy can be any string, as it is never parsed.
+ * DUMMYAGENT
+ * 
+ * Dummy high-frequency trader.
+ * 
+ * Payoff is always 0. Strategy can be any string, as it is never parsed.
  * 
  * @author ewah
  */
@@ -19,7 +25,6 @@ public class DummyAgent extends HFTAgent {
 	 */
 	public DummyAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, modelID, d, p, l);
-		agentType = Consts.getAgentType(this.getName());
 		arrivalTime = new TimeStamp(0);
 		params = p;
 	}
@@ -28,9 +33,9 @@ public class DummyAgent extends HFTAgent {
 	@Override
 	public HashMap<String, Object> getObservation() {
 		HashMap<String,Object> obs = new HashMap<String,Object>();
-//		obs.put("role", agentType);
-//		obs.put("payoff", 0);
-//		obs.put("strategy", params.get("strategy"));
+//		obs.put(Observations.ROLES_KEY, getRole());
+//		obs.put(Observations.PAYOFF_KEY, 0);
+//		obs.put(Observations.STRATEGY_KEY, params.get(Agent.STRATEGY_KEY));
 		return obs;
 	}
 	
