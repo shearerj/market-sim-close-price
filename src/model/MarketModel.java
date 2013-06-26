@@ -4,7 +4,10 @@ import systemmanager.*;
 
 import java.util.ArrayList;
 
-import entity.SIP_Prime;
+import entity.Sip_Prime;
+import data.AgentPropsPair;
+import data.ObjectProperties;
+import data.SystemData;
 
 /**
  * MARKETMODEL
@@ -57,7 +60,7 @@ public abstract class MarketModel {
 	protected ArrayList<Integer> marketIDs;
 	
 	public int sipID;
-	public SIP_Prime sip;
+	public Sip_Prime sip;
 	
 	
 	/**
@@ -77,13 +80,13 @@ public abstract class MarketModel {
 		modelMarketConfig = new ArrayList<MarketObjectPair>();
 		agentConfig = new ArrayList<AgentPropsPair>();
 		this.sipID = sipID;
-		sip = new SIP_Prime(sipID, d, l, modelID);
+		sip = new Sip_Prime(sipID, d, l, modelID);
 	}
 	
 	/**
 	 * @return SIP
 	 */
-	public SIP_Prime getSip() {
+	public Sip_Prime getSip() {
 		return this.sip;
 	}
 	
@@ -95,7 +98,7 @@ public abstract class MarketModel {
 	
 	/**
 	 * Format "MODELTYPE-CONFIG" unless config string is empty, then "MODELTYPE"
-	 * If configuration string has a colon, i.e. CONFIG:PARAMS, then only includ
+	 * If configuration string has a colon, i.e. CONFIG:PARAMS, then only include
 	 * the CONFIG portion.
 	 * 
 	 * @return model name
@@ -111,7 +114,8 @@ public abstract class MarketModel {
 	 * @return model name for observation file (format "modeltypeconfig")
 	 */
 	public String getLogName() {
-		return this.getClass().getSimpleName().toLowerCase() + this.getConfig().toLowerCase();
+		//return this.getClass().getSimpleName().toLower Case() + this.getConfig().toLowerCase();
+		return getFullName().toLowerCase().replace("-", "");
 	}
 	
 	/**

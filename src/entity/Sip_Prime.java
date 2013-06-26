@@ -4,6 +4,7 @@ import event.*;
 import market.*;
 import model.MarketModel;
 import systemmanager.*;
+import data.SystemData;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +21,7 @@ import activity.ActivityHashMap;
  * 
  * @author ewah
  */
-public class SIP_Prime extends IP_Super {
+public class Sip_Prime extends IP_Super {
 	
 	private int modelID;
 	
@@ -29,7 +30,7 @@ public class SIP_Prime extends IP_Super {
 	 * @param ID
 	 * @param d
 	 */
-	public SIP_Prime(int ID, SystemData d, Log l, int modelID) {
+	public Sip_Prime(int ID, SystemData d, Log l, int modelID) {
 		super(ID, d, l);
 		this.modelID = modelID;
 	}

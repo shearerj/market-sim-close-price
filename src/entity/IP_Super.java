@@ -8,8 +8,8 @@ import market.BestBidAsk;
 import model.MarketModel;
 import systemmanager.Consts;
 import systemmanager.Log;
-import systemmanager.ObjectProperties;
-import systemmanager.SystemData;
+import data.ObjectProperties;
+import data.SystemData;
 import activity.ActivityHashMap;
 import event.TimeStamp;
 

@@ -1,5 +1,7 @@
 package entity;
 
+import data.ObjectProperties;
+import data.SystemData;
 import systemmanager.*;
 
 /**
@@ -14,5 +16,4 @@ public abstract class BackgroundAgent extends SMAgent {
 			ObjectProperties p, Log l) {
 		super(agentID, modelID, d, p, l);
 	}
-	
 }

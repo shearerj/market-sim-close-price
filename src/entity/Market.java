@@ -1,5 +1,7 @@
 package entity;
 
+import data.ObjectProperties;
+import data.SystemData;
 import event.*;
 import model.*;
 import market.*;
@@ -208,7 +210,7 @@ public abstract class Market extends Entity {
 
 		ActivityHashMap actMap = new ActivityHashMap();
 		MarketModel model = data.getModelByMarketID(this.getID());
-		SIP_Prime sip = model.sip;
+		Sip_Prime sip = model.sip;
 		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new ProcessQuote(sip, this, bid, ask, ts.sum(data.nbboLatency)));
 		actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(sip, model, ts.sum(data.nbboLatency)));
 		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new ProcessQuote(ip_LA, this, bid, ask, ts.sum(data.hftLatency)));

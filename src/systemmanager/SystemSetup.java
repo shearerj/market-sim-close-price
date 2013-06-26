@@ -1,17 +1,18 @@
 package systemmanager;
 
+import data.*;
+import event.*;
+import model.*;
+import entity.*;
+import activity.*;
+
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
 
-import activity.*;
-import entity.*;
-import event.*;
-import model.*;
 
 /**
  * SYSTEMSETUP
@@ -50,7 +51,7 @@ import model.*;
  *   - add AgentArrival activities
  * - set agent permission for each model's markets
  * 
- * NOTE: Usage of the "primary_model" setting in the spec file:
+ * NOTE: Usage of the primary model setting in the spec file:
  *  1) MODELNAME-CONFIG
  *  2) MODELNAME (will use first config in that model's list to specify primary model)
  * 
@@ -130,9 +131,9 @@ public class SystemSetup {
 			log.log(Log.INFO, " ");
 
 			// Initial SendToSIP Activity for all markets
-			for (Map.Entry<Integer,Market> entry : data.getMarkets().entrySet()) {
+			for (Market mkt : data.getMarkets().values()) {
 				eventManager.createEvent(Consts.HIGHEST_PRIORITY,
-							new SendToSIP(entry.getValue(), new TimeStamp(0)));
+							new SendToSIP(mkt, new TimeStamp(0)));
 			}
 		} catch (Exception e) {
 			System.err.println(this.getClass().getSimpleName() + "::setupAll: error");
@@ -166,9 +167,9 @@ public class SystemSetup {
 				log.log(Log.INFO, "Primary model: " + primaryModelType + "-(default)");
 				
 			} catch (Exception e) {
-				if (!Arrays.asList(Consts.MARKETMODEL_TYPES).contains(primaryModelType)) {
-					System.err.println(this.getClass().getSimpleName() + "::createMarketModels: " +
-										"invalid primary market model type");
+				if (!Consts.MARKETMODEL_TYPES.contains(primaryModelType)) {
+					System.err.println(this.getClass().getSimpleName() + 
+							"::createMarketModels: invalid primary market model type");
 				}
 				System.err.println(e.toString());
 			}
@@ -277,19 +278,21 @@ public class SystemSetup {
 			modelMap.put(data.getPrimaryModel().getID(), data.getPrimaryModel());
 			
 			// set up their players & their arrivals
-			for (Map.Entry<AgentPropsPair, Integer> entry : data.getPlayerMap().entrySet()) {
-				String type = entry.getKey().getAgentType();
-				ObjectProperties o = entry.getKey().getProperties();
-				int n = entry.getValue();
+			for (AgentPropsPair app : data.getPlayerMap().keySet()) {
+				String type = app.getAgentType();
+				ObjectProperties o = app.getProperties();
+				int n = data.getPlayerMap().get(app);
 				
 				if (playerNumbers.containsKey(type)) {
 					playerNumbers.put(type, playerNumbers.get(type) + n);
 					playerStrategies.get(type).addAll(Collections.nCopies(n, o));
 					
 				} else {
-					playerNumbers.put(type, entry.getValue());
-					playerArrivalGenerators.put(type, new ArrivalTime(new TimeStamp(0), data.arrivalRate));
-					playerStrategies.put(type, new ArrayList<ObjectProperties>(Collections.nCopies(n, o)));
+					playerNumbers.put(type, n);
+					playerArrivalGenerators.put(type, 
+							new ArrivalTime(new TimeStamp(0), data.arrivalRate));
+					playerStrategies.put(type, new ArrayList<ObjectProperties>(
+							Collections.nCopies(n, o)));
 				}
 			}
 			
@@ -348,9 +351,8 @@ public class SystemSetup {
 	 */
 	private void createNonPlayersForModel(MarketModel model) {
 		try {
-			for (Map.Entry<AgentPropsPair,Integer> a : allNonPlayers.entrySet()) {
-				AgentPropsPair ap = a.getKey();
-				int numAgents = a.getValue();
+			for (AgentPropsPair ap : allNonPlayers.keySet()) {
+				int numAgents = allNonPlayers.get(ap);
 				ArrayList<Integer> assignMktIDs = assignAgToMkts(numAgents, model.getMarketIDs());
 
 				// check if (1) is model agent, (2) present in this model OR if environment agent
@@ -388,21 +390,20 @@ public class SystemSetup {
 	private void createPlayersForModel(MarketModel model) {
 		// only creates players in primary model
 		try {
-			for (Map.Entry<String, Integer> entry : playerNumbers.entrySet()) {
-				String type = entry.getKey();
-				int numAgents = entry.getValue();
+			for (String type : playerNumbers.keySet()) {
+				int numAgents = playerNumbers.get(type);
 				ArrayList<Integer> assignMktIDs = assignAgToMkts(numAgents, model.getMarketIDs());
 				
 				Random rand = new Random();
 				for (int i = 0; i < numAgents; i++) {	
 					// create copy of ObjectProperties in case modify it
 					ObjectProperties op = new ObjectProperties(playerStrategies.get(type).get(i));
-					if (data.isSMAgent(entry.getKey())) {
+					if (data.isSMAgent(type)) {
 						// must assign market if single-market agent
 						op.put(SMAgent.MARKETID_KEY, assignMktIDs.get(i).toString());
 					}
 					Agent ag = createAgent(model, new AgentPropsPair(type, op),
-											rand.nextLong(), playerArrivalGenerators.get(type).next());
+							rand.nextLong(), playerArrivalGenerators.get(type).next());
 					ag.setLogID(ag.getID()); 	// set player ID = log ID
 					data.addPlayer(ag);			// add player to SystemData
 				}

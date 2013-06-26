@@ -1,11 +1,12 @@
 package entity;
 
+import data.*;
+import data.SystemData;
 import event.*;
 import market.*;
 import activity.*;
 import systemmanager.*;
 
-import java.util.Map;
 import java.util.HashMap;
 
 /**
@@ -41,8 +42,8 @@ public class LAAgent extends HFTAgent {
 	public HashMap<String, Object> getObservation() {
 		HashMap<String,Object> obs = new HashMap<String,Object>();
 		obs.put(Observations.ROLE_KEY, getRole());
-		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
 		obs.put(Observations.STRATEGY_KEY, getFullStrategy());
+		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
 //		HashMap<String,String> features = new HashMap<String,String>();
 //		obs.put(Observations.FEATURES_KEY, features);
 		return obs;
@@ -140,8 +141,8 @@ public class LAAgent extends HFTAgent {
 		
 		int quantity = 0;
 		
-		for (Map.Entry<Integer,Bid> entry : data.getMarket(marketID).getBids().entrySet()) {
-			PQBid b = (PQBid) entry.getValue();
+		for (Bid bid : data.getMarket(marketID).getBids().values()) {
+			PQBid b = (PQBid) bid;
 			
 			for (PQPoint pq : b.bidTreeSet) {
 				int pqPrice = pq.getPrice().getPrice();
