@@ -1,6 +1,7 @@
 package entity;
 
 import event.*;
+import market.BestBidAsk;
 import market.Quote;
 import activity.*;
 import systemmanager.*;
@@ -240,8 +241,10 @@ public abstract class SMAgent extends Agent {
 			logDuration = ", duration=" + duration;
 		}
 		
-		// Identify best market, as based on the NBBO.
-		Quote mainMarketQuote = market.quote(ts);
+		// Identify best market, as based on the NBBO & SM IP
+		BestBidAsk bestbidask = market.ip_SM.getGlobalQuote();
+		int marketmodelID = data.getModelByMarketID(market.getID()).getID();
+		BestBidAsk NBBO = data.getModelByMarketID(market.getID()).sip.getGlobalQuote(marketmodelID);
 		
 		// Check if NBBO indicates that other market better:
 		// - Want to buy for as low a price as possible, so find market with the lowest ask.
@@ -249,16 +252,16 @@ public abstract class SMAgent extends Agent {
 		// - NBBO also better if the bid or ask in the current does not exist while NBBO does exist.
 		boolean nbboBetter = false;
 		if (q > 0) {
-			if (lastNBBOQuote.bestAsk < mainMarketQuote.lastAskPrice.getPrice() &&
-					lastNBBOQuote.bestAsk != -1 ||
-					mainMarketQuote.lastAskPrice.getPrice() == -1 &&
-					lastNBBOQuote.bestAsk != -1) { 
+			if (NBBO.bestAsk < bestbidask.bestAsk &&
+					NBBO.bestAsk != -1 ||
+							bestbidask.bestAsk == -1 &&
+					NBBO.bestAsk != -1) { 
 				nbboBetter = true;
 			}
 		} else {
-			if (lastNBBOQuote.bestBid > mainMarketQuote.lastBidPrice.getPrice() ||
-					mainMarketQuote.lastBidPrice.getPrice() == -1) {
-				// don't need lastNBBOQuote.bestBid != -1 due to first condition, will always > -1
+			if (NBBO.bestBid > bestbidask.bestBid ||
+					bestbidask.bestBid == -1) {
+				// don't need NBBO.bestBid != -1 due to first condition, will always > -1
 				nbboBetter = true;
 			}
 		}
@@ -267,22 +270,22 @@ public abstract class SMAgent extends Agent {
 		if (nbboBetter) {
 			// nbboBetter = true indicates that the alternative market has a better quote
 			log.log(Log.INFO, ts + " | " + this + " " + agentType + 
-					"::submitNMSBid: " + "NBBO(" + lastNBBOQuote.bestBid + ", " + 
-					lastNBBOQuote.bestAsk + ") better than " + market + 
-					" Quote(" + mainMarketQuote.lastBidPrice.getPrice() + 
-					", " + mainMarketQuote.lastAskPrice.getPrice() + ")");
+					"::submitNMSBid: " + "NBBO(" + NBBO.bestBid + ", " + 
+					NBBO.bestAsk + ") better than " + market + 
+					" Quote(" + bestbidask.bestBid + 
+					", " + bestbidask.bestAsk + ")");
 			
 			int bestPrice = -1;
 			if (q > 0) {
 				// Ensure that NBBO ask is defined, otherwise submit to current market
-				if (p >= lastNBBOQuote.bestAsk && lastNBBOQuote.bestAsk != -1) {
+				if (p >= NBBO.bestAsk && NBBO.bestAsk != -1) {
 					bestMarketID = altMarketID;
-					bestPrice = lastNBBOQuote.bestAsk;
+					bestPrice = NBBO.bestAsk;
 				}
 			} else {
-				if (p <= lastNBBOQuote.bestBid) {
+				if (p <= NBBO.bestBid) {
 					bestMarketID = altMarketID;
-					bestPrice = lastNBBOQuote.bestBid;
+					bestPrice = NBBO.bestBid;
 				}
 			}
 			
@@ -304,10 +307,10 @@ public abstract class SMAgent extends Agent {
 		} else {
 			// main market is better than the alternate market (according to NBBO)
 			log.log(Log.INFO, ts + " | " + this + " " + agentType + 
-					"::submitNMSBid: " + "NBBO(" + lastNBBOQuote.bestBid + ", " + 
-					lastNBBOQuote.bestAsk + ") worse than/same as " + market + 
-					" Quote(" + mainMarketQuote.lastBidPrice.getPrice() + 
-					", " + mainMarketQuote.lastAskPrice.getPrice() + ")");
+					"::submitNMSBid: " + "NBBO(" + NBBO.bestBid + ", " + 
+					NBBO.bestAsk + ") worse than/same as " + market + 
+					" Quote(" + bestbidask.bestBid + 
+					", " + bestbidask.bestBid + ")");
 			
 			// submit bid to the main market
 			marketSubmittedBid = market;

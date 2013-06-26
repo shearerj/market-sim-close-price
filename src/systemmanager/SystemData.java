@@ -68,7 +68,8 @@ public class SystemData {
 	public int tickSize;
 	public TimeStamp centralCallClearFreq;
 	public TimeStamp nbboLatency;
-	public TimeStamp hftLatency; // added by chris
+	public TimeStamp smLatency;
+	public TimeStamp hftLatency;
 	public double arrivalRate;
 	public double reentryRate;
 	public int meanValue;

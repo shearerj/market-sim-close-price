@@ -19,8 +19,8 @@ import systemmanager.*;
  */
 public class TwoMarket extends MarketModel {
 	
-	public TwoMarket(int modelID, ObjectProperties p, SystemData d) {
-		super(modelID,p, d);
+	public TwoMarket(int modelID, ObjectProperties p, SystemData d, int sipID, Log l) {
+		super(modelID,p, d, sipID, l);
 		
 		config = p.get(Consts.MODEL_CONFIG_KEY);
 		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {

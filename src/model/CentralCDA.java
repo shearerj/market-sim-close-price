@@ -12,8 +12,8 @@ import systemmanager.*;
  */
 public class CentralCDA extends MarketModel {
 
-	public CentralCDA(int modelID, ObjectProperties p, SystemData d) {
-		super(modelID, p, d);
+	public CentralCDA(int modelID, ObjectProperties p, SystemData d, int sipID, Log l) {
+		super(modelID, p, d, sipID, l);
 		
 		config = p.get(Consts.MODEL_CONFIG_KEY);
 		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {

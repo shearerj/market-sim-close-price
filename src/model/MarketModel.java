@@ -4,6 +4,8 @@ import systemmanager.*;
 
 import java.util.ArrayList;
 
+import entity.SIP_Prime;
+
 /**
  * MARKETMODEL
  * 
@@ -54,6 +56,9 @@ public abstract class MarketModel {
 	// Store information on market IDs for each market specified in modelProperties
 	protected ArrayList<Integer> marketIDs;
 	
+	public int sipID;
+	public SIP_Prime sip;
+	
 	
 	/**
 	 * Constructor
@@ -62,7 +67,7 @@ public abstract class MarketModel {
 	 * @param p
 	 * @param d
 	 */
-	public MarketModel(int modelID, ObjectProperties p, SystemData d) {
+	public MarketModel(int modelID, ObjectProperties p, SystemData d, int sipID, Log l) {
 		this.modelID = modelID;
 		data = d;
 		modelProperties = p;
@@ -71,6 +76,15 @@ public abstract class MarketModel {
 		marketIDs = new ArrayList<Integer>();
 		modelMarketConfig = new ArrayList<MarketObjectPair>();
 		agentConfig = new ArrayList<AgentPropsPair>();
+		this.sipID = sipID;
+		sip = new SIP_Prime(sipID, d, l, modelID);
+	}
+	
+	/**
+	 * @return SIP
+	 */
+	public SIP_Prime getSip() {
+		return this.sip;
 	}
 	
 	/**

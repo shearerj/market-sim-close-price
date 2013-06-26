@@ -66,6 +66,7 @@ public class SystemSetup {
 	private Sequence agentIDSequence;
 	private Sequence marketIDSequence;
 	private Sequence modelIDSequence;
+	private Sequence ipIDSequence;
 	
 	private HashMap<AgentPropsPair, ArrayList<Integer>> logIDs;
 	private HashMap<AgentPropsPair, ArrayList<Long>> seeds;
@@ -93,6 +94,7 @@ public class SystemSetup {
 		agentIDSequence = new Sequence(1);
 		marketIDSequence = new Sequence(-1);
 		modelIDSequence = new Sequence(1);
+		ipIDSequence = new Sequence(0);
 		
 		logIDs = new HashMap<AgentPropsPair, ArrayList<Integer>>();
 		seeds = new HashMap<AgentPropsPair, ArrayList<Long>>();
@@ -114,7 +116,7 @@ public class SystemSetup {
 			
 			// Must create market models before agents, so can add the agents
 			// then to the appropriate/corresponding markets.
-			createSIP();
+			//createSIP();
 			log.log(Log.INFO, "------------------------------------------------");
 			log.log(Log.INFO, "            Creating MARKET MODELS");
 			createMarketModels();
@@ -145,7 +147,6 @@ public class SystemSetup {
 		SIP iu = new SIP(0, data, log);
 		data.setSIP(iu);
 	}
-	
 	
 	/**
 	 * Creates all market models
@@ -225,7 +226,7 @@ public class SystemSetup {
 		// create market model & determine its configuration
 		int modelID = modelIDSequence.increment();
 		p.put(Consts.MODEL_CONFIG_KEY, configuration);
-		MarketModel model = ModelFactory.createModel(modelType, modelID, p, data);		
+		MarketModel model = ModelFactory.createModel(modelType, modelID, p, data, ipIDSequence.increment(), log);		
 		data.addModel(model);
 		log.log(Log.INFO, model.getFullName() + ": " + model + " " + p);
 		createMarketsInModel(model);
@@ -245,7 +246,8 @@ public class SystemSetup {
 			
 			ObjectProperties mp = (ObjectProperties) mop.getObject();
 			String mtype = mop.getMarketType();
-			Market market = MarketFactory.createMarket(mtype, mID, data, mp, log);
+			Market market = MarketFactory.createMarket(mtype, mID, data, mp, log, ipIDSequence.increment());
+			ipIDSequence.increment(); // must increment again as there are 2 IP's created
 			market.linkModel(model.getID());
 			data.addMarket(market);
 			model.getMarketIDs().add(mID);

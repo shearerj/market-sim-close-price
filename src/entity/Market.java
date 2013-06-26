@@ -36,6 +36,10 @@ public abstract class Market extends Entity {
 	public int lastAskQuantity;
 	public int lastBidQuantity;
 	public String marketType;
+	public int ip_LA_ID; // ID for LA & SM ip's
+	public int ip_SM_ID;
+	public IP_LA ip_LA;
+	public IP_SM ip_SM;
 	
 
 	/**
@@ -43,8 +47,9 @@ public abstract class Market extends Entity {
 	 * @param d
 	 * @param p
 	 * @param l
+	 * @param ipID
 	 */
-	public Market(int marketID, SystemData d, ObjectProperties p, Log l) {
+	public Market(int marketID, SystemData d, ObjectProperties p, Log l, int ipID) {
 		super(marketID, d, p, l);
 
 		agentIDs = new ArrayList<Integer>();
@@ -59,6 +64,26 @@ public abstract class Market extends Entity {
 		lastClearPrice = new Price(-1);
 		lastAskPrice = new Price(-1);
 		lastBidPrice = new Price(-1);
+		
+		ip_LA_ID = ipID;
+		ip_SM_ID = ipID + 1;
+		
+		ip_LA = new IP_LA(ipID, d, l, marketID);
+		ip_SM = new IP_SM(ipID + 1, d, l, marketID);
+	}
+	
+	/**
+	 * @return IP_LA
+	 */
+	public IP_LA getIPLA() {
+		return this.ip_LA;
+	}
+	
+	/**
+	 * @return IP_SM
+	 */
+	public IP_SM getIPSM() {
+		return this.ip_SM;
 	}
 
 	/**
@@ -169,7 +194,8 @@ public abstract class Market extends Entity {
 	}
 
 	/**
- 	 * Send market's bid/ask to the Security Information Processor to be processed at some time
+ 	 * Send market's bid/ask to the Security Information Processor and other IP's
+ 	 *  to be processed at some time
  	 * (determined by latency) in the future.
  	 *
  	 * @param ts
@@ -182,18 +208,13 @@ public abstract class Market extends Entity {
 
 		ActivityHashMap actMap = new ActivityHashMap();
 		MarketModel model = data.getModelByMarketID(this.getID());
-		SIP sip = data.getSIP();
-		//if (data.nbboLatency.longValue() == 0) { --no need for the 0 latency case
-		//	sip.processQuote(this, bid, ask, ts);
-		//	sip.updateNBBO(model, ts);
-		//} else {
-			// old TimeStamp tsNew = ts.sum(data.nbboLatency);
-			// actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new ProcessQuote(sip, this, bid, ask, tsNew));
-			// actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(sip, model, tsNew));
-			// no delay here
-			actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new ProcessQuote(sip, this, bid, ask, ts));
-			actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(sip, model, ts));
-		//}
+		SIP_Prime sip = model.sip;
+		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new ProcessQuote(sip, this, bid, ask, ts.sum(data.nbboLatency)));
+		actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(sip, model, ts.sum(data.nbboLatency)));
+		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new ProcessQuote(ip_LA, this, bid, ask, ts.sum(data.hftLatency)));
+		actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(ip_LA, model, ts.sum(data.hftLatency)));
+		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new ProcessQuote(ip_SM, this, bid, ask, ts.sum(data.smLatency)));
+		actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(ip_SM, model, ts.sum(data.smLatency)));
 		return actMap;
 	}
 	

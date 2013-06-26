@@ -21,12 +21,12 @@ public class MarketFactory {
 									  Integer marketID,
 									  SystemData data,
 									  ObjectProperties params,
-									  Log l) { 
+									  Log l, int ipID) { 
 		
 		if (type.equals(Consts.CDA)) {
-			return new CDAMarket(marketID, data, params, l);
+			return new CDAMarket(marketID, data, params, l, ipID);
 		} else if (type.equals(Consts.CALL)) {
-			return new CallMarket(marketID, data, params, l);
+			return new CallMarket(marketID, data, params, l, ipID);
 		} else {
 			return null;
 		}

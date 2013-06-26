@@ -1,52 +1,54 @@
 package entity;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+
+import activity.ActivityHashMap;
 import event.*;
 import market.*;
 import model.MarketModel;
 import systemmanager.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-
-import activity.ActivityHashMap;
-
 
 /**
  * Class that updates pertinent information for the system. 
- * Generally used for creating NBBO update events.
- * Serves the purpose of the Security Information Processor in Regulation NMS.
- * Is the NBBO for one market model
+ * Generally used for creating NBBO update events. 
+ * Serves the purpose of the Information Processor for a single market
  * 
  * @author ewah
  */
-public class SIP_Prime extends IP_Super {
-	
-	private int modelID;
+public abstract class IP_Single_Market extends IP_Super {
+
+	protected int marketID;
 	
 	/**
 	 * Constructor
 	 * @param ID
 	 * @param d
 	 */
-	public SIP_Prime(int ID, SystemData d, Log l, int modelID) {
+	public IP_Single_Market(int ID, SystemData d, Log l, int marketID) {
 		super(ID, d, l);
-		this.modelID = modelID;
+		this.marketID = marketID;
+	}
+	
+	public int getMarketID() {
+		return marketID;
 	}
 
 	/**
- 	 * Get global BestBidAsk quote for the given model.
+ 	 * Get global BestBidAsk quote for the given MARKET
  	 *
  	 * @param modelID
  	 * @return BestBidAsk
  	 */
-	public BestBidAsk getGlobalQuote(int modelID) {
-		return this.computeBestBidOffer(data.getModel(modelID).getMarketIDs(), false);
+	public BestBidAsk getGlobalQuote() {
+		Integer[] array = {marketID};
+		return this.computeBestBidOffer(new ArrayList<Integer>(Arrays.asList(array)), false);
 	}
 	
-	
 	/**
-	 * Method to update the NBBO values.
+	 * Method to update the NBBO values, in this case for only ONE market
 	 * 
 	 * @param model
 	 * @param ts
@@ -61,7 +63,8 @@ public class SIP_Prime extends IP_Super {
 		String s = ts + " | " + ids + " UpdateNBBO: current " + getNBBOQuote(modelID)
 				+ " --> ";
 	
-		BestBidAsk lastQuote = computeBestBidOffer(ids, true);
+		Integer[] array = {marketID};
+		BestBidAsk lastQuote = computeBestBidOffer(new ArrayList<Integer>(Arrays.asList(array)), true);
 			
 		int bestBid = lastQuote.bestBid;
 		int bestAsk = lastQuote.bestAsk;
@@ -93,8 +96,5 @@ public class SIP_Prime extends IP_Super {
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
-	public String toString() {
-		return new String("SIP number " + this.getID() + ", model number " 
-				+ modelID);
-	}
+	public abstract String toString();
 }

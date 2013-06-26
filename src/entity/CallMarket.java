@@ -33,8 +33,8 @@ public class CallMarket extends Market {
 	 * Overloaded constructor.
 	 * @param marketID
 	 */
-	public CallMarket(int marketID, SystemData d, ObjectProperties p, Log l) {
-		super(marketID, d, p, l);
+	public CallMarket(int marketID, SystemData d, ObjectProperties p, Log l, int ipID) {
+		super(marketID, d, p, l, ipID);
 		marketType = Consts.getMarketType(this.getName());
 		orderbook = new PQOrderBook(ID);
 		orderbook.setParams(ID, l, d);

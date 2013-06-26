@@ -42,7 +42,9 @@ public abstract class Agent extends Entity {
 	protected int tickSize;
 	
 	// For quote generation
-	protected SIP sip;
+	protected SIP_Prime sip;
+	//protected IP_LA ip_LA;
+	//protected IP_SM ip_SM;
 	
 	// Agent parameters
 	protected PrivateValue alpha;
@@ -110,7 +112,9 @@ public abstract class Agent extends Entity {
 		arrivalTime = new TimeStamp(0);
 		
 		tickSize = data.tickSize;
-		sip = data.getSIP();
+		sip = getModel().getSip();
+		//ip_LA = mkt.getIPLA();
+		//ip_SM = mkt.getIPSM();
 	}
 	
 	/** 
@@ -1003,8 +1007,11 @@ public abstract class Agent extends Entity {
 
 		for (Iterator<Integer> it = this.getModel().getMarketIDs().iterator(); it.hasNext(); ) {
 			Market mkt = data.markets.get(it.next());
-			Price bid = getBidPrice(mkt.ID);
-			Price ask = getAskPrice(mkt.ID);
+			
+			BestBidAsk bestbidask = mkt.ip_LA.getGlobalQuote();
+			
+			Price bid = new Price(bestbidask.bestBid); // how will it know which SIP to call?
+			Price ask = new Price(bestbidask.bestAsk);
 
 			// in case the bid/ask disappears
 			Vector<Price> price = new Vector<Price>();

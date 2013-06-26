@@ -10,12 +10,12 @@ import event.TimeStamp;
  */
 public class ProcessQuote extends Activity {
 
-	private SIP sip;
+	private IP_Super sip;
 	private Market mkt;
 	private int bid;
 	private int ask;
 	
-	public ProcessQuote(SIP sip, Market mkt, int bid, int ask, TimeStamp t) {
+	public ProcessQuote(IP_Super sip, Market mkt, int bid, int ask, TimeStamp t) {
 		this.sip = sip;
 		this.mkt = mkt;
 		this.bid = bid;
