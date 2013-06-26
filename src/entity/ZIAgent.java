@@ -8,7 +8,6 @@ import market.*;
 import activity.Activity;
 import systemmanager.*;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Random;
@@ -43,14 +42,12 @@ public class ZIAgent extends BackgroundAgent {
 	 */
 	public ZIAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, modelID, d, p, l);
-	
-		rand = new Random(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
-		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
+		
 		bidRange = Integer.parseInt(params.get(ZIAgent.BIDRANGE_KEY));
+		
 		int alpha1 = (int) Math.round(getNormalRV(0, this.data.pvVar));
 		int alpha2 = (int) Math.round(getNormalRV(0, this.data.pvVar));
 		alpha = new PrivateValue(alpha1, alpha2);
-		// if (rand.nextBoolean()) alpha.reverseValues();
 	}
 	
 	
@@ -66,24 +63,19 @@ public class ZIAgent extends BackgroundAgent {
 	
 	@Override
 	public Collection<Activity> agentStrategy(TimeStamp ts) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
-
 		// update quotes
 		this.updateAllQuotes(ts);
 		
-		int p = 0;
-		int q = 1;
-		if (rand.nextBoolean()) q = -q;	 // 50% chance of being either long or short
-		int val = Math.max(0, data.getFundamentalAt(ts).sum(getPrivateValueAt(q)).getPrice());
+		int p, q;
+		q = rand.nextBoolean() ? 1 : -1;	// 50% chance of being either long or short
+		int val = Math.max(0, model.getFundamentalAt(ts).sum(getPrivateValueAt(q)).getPrice());
 
 		// basic ZI behavior
-		if (q > 0) {
+		if (q > 0)
 			p = (int) Math.max(0, ((val-2*bidRange) + rand.nextDouble()*2*bidRange));
-		} else {
+		else
 			p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
-		}
 
-		actMap.addAll(executeSubmitNMSBid(p, q, ts));	// bid does not expire
-		return actMap;
+		return executeSubmitNMSBid(p, q, ts);	// bid does not expire
 	}
 }

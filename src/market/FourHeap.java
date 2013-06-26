@@ -10,6 +10,7 @@ import java.util.*;
 
 import event.TimeStamp;
 import systemmanager.Log;
+import utils.Compare;
 
 /**
  *
@@ -187,7 +188,7 @@ public class FourHeap
 			log(Log.DEBUG,"buyToMatch: "+buyToMatch);
 		if ((sellToBeat != null) && (DEBUG))
 			log(Log.DEBUG,"selltoBeat: "+sellToBeat);
-		ret =  Price.max(buyToMatch,sellToBeat);
+		ret =  Compare.max(buyToMatch,sellToBeat);
 		if (ret == null)
 			ret = new Price(-1);
 
@@ -224,7 +225,7 @@ public class FourHeap
 //			log(Log.DEBUG, "buyToBeat: "+buyToBeat);
 //		if (sellToMatch != null)
 //			log(Log.DEBUG, "sellToMatch: "+sellToMatch);
-		ret =  Price.min(buyToBeat, sellToMatch);
+		ret =  Compare.min(buyToBeat, sellToMatch);
 
 		if (ret == null)
 			ret = new Price(-1);

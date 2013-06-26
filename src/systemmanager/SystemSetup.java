@@ -179,6 +179,7 @@ public class SystemSetup {
 				log.log(Log.INFO, "Models: " + numModelsOfThisType + " " + modelType);
 				
 				// Parse the comma separated types of agents (list of configuration strings)
+				// TODO Put this in config
 				String[] configs = parseModelConfigList(specs.getValue(modelType));
 				
 				for (int i = 0; i < numModelsOfThisType; i++) {

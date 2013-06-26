@@ -4,9 +4,13 @@ import systemmanager.*;
 
 import java.util.ArrayList;
 
+import market.Price;
+
 import data.AgentPropsPair;
+import data.FundamentalValue;
 import data.ObjectProperties;
 import data.SystemData;
+import event.TimeStamp;
 
 /**
  * MARKETMODEL
@@ -46,6 +50,12 @@ import data.SystemData;
  * @author ewah
  */
 public abstract class MarketModel {
+	
+	// -- begin reorg --
+	
+	protected FundamentalValue fundamentalGenerator;
+	
+	// -- end reorg --
 
 	protected final int modelID;
 	protected String config; // TODO Does this need to be saved? or just used at construction?
@@ -67,6 +77,10 @@ public abstract class MarketModel {
 	 * @param d
 	 */
 	public MarketModel(int modelID, ObjectProperties p, SystemData d) {
+		// reorg
+		fundamentalGenerator = d.getFundamenalValue();
+		// reorg
+		
 		this.modelID = modelID;
 		data = d;
 		modelProperties = p;
@@ -181,6 +195,13 @@ public abstract class MarketModel {
 	public void editMarketPropertyPair(int idx, ObjectProperties mktProperties) {
 		MarketObjectPair mpp = modelMarketConfig.get(idx);
 		modelMarketConfig.set(idx, new MarketObjectPair(mpp.getMarketType(), mktProperties));
+	}
+	
+	public Price getFundamentalAt(TimeStamp ts) {
+		if (fundamentalGenerator == null)
+			// return new Price(0);
+			throw new IllegalStateException("No Fundamental Value...");
+		return fundamentalGenerator.getValueAt((int) ts.longValue());
 	}
 
 	/**

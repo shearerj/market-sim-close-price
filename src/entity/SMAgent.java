@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 
 /**
@@ -50,6 +51,7 @@ public abstract class SMAgent extends Agent {
 	 */
 	public SMAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, modelID, d, p, l);
+		
 		int mktID = Integer.parseInt(params.get(SMAgent.MARKETID_KEY));
 		market = data.getMarket(mktID);
 	}

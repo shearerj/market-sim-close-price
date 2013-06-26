@@ -15,8 +15,15 @@ import java.util.*;
  * @author ewah
  */
 public abstract class Agent extends Entity {
-
-	protected int logID;			// ID for logging purposes (same across models)
+	
+	protected int logID;			// ID for logging purposes (should same across models)
+	
+	// -- begin reorg -- stuff above line existed before and is still relevant...
+	
+	protected MarketModel model;
+	
+	// -- end reorg --
+	
 	protected int modelID;			// ID of associated model
 	protected Random rand;
 	
@@ -86,6 +93,12 @@ public abstract class Agent extends Entity {
 	 */
 	public Agent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, d, p, l);
+		
+		// -- Begin Reorg --
+		model = d.models.get(modelID);
+		
+		// -- End Reorg --
+		
 		
 		rand = new Random();
 		this.modelID = modelID;

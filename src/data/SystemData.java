@@ -720,6 +720,10 @@ public class SystemData {
 		return fundamentalGenerator.getProcess();
 	}
 	
+	public FundamentalValue getFundamenalValue() {
+		return fundamentalGenerator;
+	}
+	
 	
 	/***********************************
 	 * Outputting (for testing)

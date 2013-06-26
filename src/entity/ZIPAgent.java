@@ -32,8 +32,6 @@ public class ZIPAgent extends BackgroundAgent {
 	public ZIPAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, modelID, d, p, l);
 		
-		rand = new Random(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
-		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
 		bidRange = Integer.parseInt(params.get(ZIAgent.BIDRANGE_KEY));
 		int alpha1 = (int) Math.round(getNormalRV(0, this.data.pvVar));
 		int alpha2 = (int) Math.round(getNormalRV(0, this.data.pvVar));

@@ -82,9 +82,6 @@ public class FundamentalValue {
 	 * @return
 	 */
 	private double getNormalRV(double mu, double var) {
-	    double r1 = rand.nextDouble();
-	    double r2 = rand.nextDouble();
-	    double z = Math.sqrt(-2*Math.log(r1))*Math.cos(2*Math.PI*r2);
-	    return mu + z * Math.sqrt(var);
+	    return mu + rand.nextGaussian() * Math.sqrt(var);
 	}
 }
