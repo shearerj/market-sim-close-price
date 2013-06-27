@@ -4,7 +4,6 @@ import data.ObjectProperties;
 import data.SystemData;
 import event.*;
 import market.BestBidAsk;
-import market.Quote;
 import activity.*;
 import systemmanager.*;
 

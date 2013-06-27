@@ -6,7 +6,6 @@ import java.util.Iterator;
 
 import market.BestBidAsk;
 import model.MarketModel;
-import systemmanager.Consts;
 import systemmanager.Log;
 import data.ObjectProperties;
 import data.SystemData;

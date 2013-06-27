@@ -7,8 +7,6 @@ import systemmanager.*;
 import data.SystemData;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 
 import activity.ActivityHashMap;
 
