@@ -87,8 +87,7 @@ public class SystemManager {
 
 	protected Properties getProperties() throws IOException {
 		Properties props = new Properties();
-		props.load(new FileInputStream(new File(new File(simFolder,
-				Consts.configDir), Consts.configFile)));
+		props.load(new FileInputStream(new File(Consts.configDir, Consts.configFile)));
 		return props;
 	}
 
