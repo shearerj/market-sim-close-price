@@ -7,6 +7,8 @@ import java.util.*;
 import java.io.*;
 import java.text.DateFormat;
 
+import logger.Logger;
+
 /**
  * This class serves the purpose of the Client in the Command pattern, in that
  * it instantiates the Activity objects and provides the methods to execute them
@@ -28,7 +30,6 @@ public class SystemManager {
 	protected final Observations obs;
 	protected final Properties envProps;
 	protected final SimulationSpec spec;
-	protected final Log log;
 
 	protected final int num; // sample number used for labeling output files
 	protected final File simFolder; // simulation folder name
@@ -59,9 +60,9 @@ public class SystemManager {
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
-		} catch (IllegalArgumentException e){
+		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
-			System.exit(1);		
+			System.exit(1);
 		}
 	}
 
@@ -75,25 +76,25 @@ public class SystemManager {
 		this.num = simNumber;
 
 		envProps = getProperties();
-		log = getLog(); // Must be called after "envProps"
-		data = new SystemData();
+		getLog(); // Must be called after "envProps"
+		data = new SystemData(simNumber, simFolder);
 		spec = getSimulationSpec(); // Must be after "log" and "data"
 		obs = new Observations(data);
-		eventManager = new EventManager(data.simLength, log);
+		eventManager = new EventManager(data.simLength);
 
-		new SystemSetup(spec, eventManager, data, log).setupAll();
+		new SystemSetup(spec, eventManager, data).setupAll();
 	}
 
 	protected Properties getProperties() throws IOException {
 		Properties props = new Properties();
-		props.load(new FileInputStream(new File(new File(simFolder, Consts.configDir), Consts.configFile)));
+		props.load(new FileInputStream(new File(Consts.configDir, Consts.configFile)));
 		return props;
 	}
 
 	/**
 	 * Must be done after "envProps" exists
 	 */
-	protected Log getLog() throws IOException {
+	protected void getLog() throws IOException {
 		// Create log file
 		int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
 
@@ -111,7 +112,7 @@ public class SystemManager {
 		logDir.mkdirs();
 
 		File logFile = new File(logDir, logFileName.toString());
-		if (logLevel == Log.NO_LOGGING)
+		if (logLevel == Logger.NO_LOGGING)
 			logFile.deleteOnExit();
 
 		// Create log file
@@ -119,12 +120,10 @@ public class SystemManager {
 		// have to do with base directory and then logFileName. In this case
 		// "getPath" will probably do the right thing given the current
 		// setup, but isn't guaranteed to.
-		Log log = new Log(logLevel, ".", logFile.getPath(), true);
+		Logger.setup(logLevel, ".", logFile.getPath(), true);
 
 		// Log properties
-		log.log(Log.DEBUG, envProps.toString());
-
-		return log;
+		Logger.log(Logger.DEBUG, envProps.toString());
 	}
 
 	/**
@@ -140,8 +139,7 @@ public class SystemManager {
 					+ simulationSpecFile.getAbsolutePath() + ") doesn't exist");
 
 		// Read simulation_spec.json file
-		return new SimulationSpec(simulationSpecFile.getAbsolutePath(), log,
-				data);
+		return new SimulationSpec(simulationSpecFile.getAbsolutePath(), data);
 	}
 
 	/**
@@ -151,7 +149,7 @@ public class SystemManager {
 		while (!eventManager.isEmpty()) {
 			eventManager.executeNext();
 		}
-		log.log(Log.INFO, "STATUS: Simulation has ended.");
+		Logger.log(Logger.INFO, "STATUS: Simulation has ended.");
 	}
 
 	/**

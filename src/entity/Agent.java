@@ -2,6 +2,7 @@ package entity;
 
 import data.*;
 import event.*;
+import logger.Logger;
 import model.*;
 import market.*;
 import activity.*;
@@ -91,8 +92,8 @@ public abstract class Agent extends Entity {
 	 * @param p
 	 * @param l
 	 */
-	public Agent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, d, p, l);
+	public Agent(int agentID, int modelID, SystemData d, ObjectProperties p) {
+		super(agentID, d, p);
 		
 		// -- Begin Reorg --
 		model = d.models.get(modelID);
@@ -525,7 +526,7 @@ public abstract class Agent extends Entity {
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		TimeStamp withdrawTime = ts.sum(new TimeStamp(duration));
 		actMap.add(new WithdrawBid(this, mkt, withdrawTime));
-		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": bid duration=" + duration); 
+		Logger.log(Logger.INFO, ts + " | " + mkt + " " + this + ": bid duration=" + duration); 
 		return actMap;
 	}
 	
@@ -537,7 +538,7 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public Collection<Activity> executeWithdrawBid(Market mkt, TimeStamp ts) {
-		log.log(Log.INFO, ts + " | " + this + " withdraw bid from " + mkt);
+		Logger.log(Logger.INFO, ts + " | " + this + " withdraw bid from " + mkt);
 		return mkt.removeBid(this.id, ts);
 	}
 	
@@ -554,7 +555,7 @@ public abstract class Agent extends Entity {
 			TimeStamp ts) {
 		if (quantity == 0) return Collections.emptyList();
 
-		log.log(Log.INFO, ts + " | " + this + " " + agentType + 
+		Logger.log(Logger.INFO, ts + " | " + this + " " + agentType + 
 				"::submitBid: +(" + price + ", " 
 				+ quantity + ") to " + mkt);
 		
@@ -585,12 +586,12 @@ public abstract class Agent extends Entity {
 	public Collection<Activity> executeSubmitMultipleBid(Market mkt, List<Integer> price, 
 			List<Integer> quantity, TimeStamp ts) {
 		if (price.size() != quantity.size()) {
-			log.log(Log.ERROR, "Agent::submitMultipleBid: " 
+			Logger.log(Logger.ERROR, "Agent::submitMultipleBid: " 
 					+ "Price/Quantity are not the same length");
 			return Collections.emptyList();
 		}
 		
-		log.log(Log.INFO, ts + " | " + mkt + " " + this + ": +(" + price +	", " 
+		Logger.log(Logger.INFO, ts + " | " + mkt + " " + this + ": +(" + price +	", " 
 				+ quantity + ")");
 		
 		PQBid pqBid = new PQBid(this, mkt);
@@ -619,7 +620,7 @@ public abstract class Agent extends Entity {
 	public Collection<Activity> liquidateAtFundamental(TimeStamp ts) {
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		actMap.add(new Liquidate(this, data.getFundamentalAt(ts), ts));
-		log.log(Log.INFO, ts + " | " + this + " liquidating..."); 
+		Logger.log(Logger.INFO, ts + " | " + this + " liquidating..."); 
 		return actMap;
 	}
 
@@ -633,7 +634,7 @@ public abstract class Agent extends Entity {
 	 */
 	public Collection<Activity> executeLiquidate(Price price, TimeStamp ts) {
 		
-		log.log(Log.INFO, ts + " | " + this + " pre-liquidation: position=" 
+		Logger.log(Logger.INFO, ts + " | " + this + " pre-liquidation: position=" 
 				+ positionBalance + ", profit=" + realizedProfit);
 		
 		// If no net position, no need to liquidate
@@ -650,7 +651,7 @@ public abstract class Agent extends Entity {
 		}
 		positionBalance = 0;
 		
-		log.log(Log.INFO, ts + " | " + this + " post-liquidation: position=" 
+		Logger.log(Logger.INFO, ts + " | " + this + " post-liquidation: position=" 
 				+ positionBalance + ", profit=" + realizedProfit + ", price=" + price);
 		return Collections.emptyList();
 	}
@@ -666,7 +667,7 @@ public abstract class Agent extends Entity {
 		lastGlobalQuote = sip.getGlobalQuote(modelID);
 		lastNBBOQuote = sip.getNBBOQuote(modelID);
 		
-		log.log(Log.INFO, ts + " | " + this + " Global" + lastGlobalQuote 
+		Logger.log(Logger.INFO, ts + " | " + this + " Global" + lastGlobalQuote 
 				+ ", NBBO" + lastNBBOQuote);
 		return Collections.emptyList();
 	}
@@ -697,7 +698,7 @@ public abstract class Agent extends Entity {
 				lastClearTime.put(mkt.id, q.lastClearTime);
 			}
 		} else {
-			log.log(Log.ERROR, "Agent::updateQuotes: Quote is null.");
+			Logger.log(Logger.ERROR, "Agent::updateQuotes: Quote is null.");
 		}
 		addQuote(mkt.id, q);
 	}
@@ -723,7 +724,7 @@ public abstract class Agent extends Entity {
 				this.getModel().getFullName() + ": Current Position=" + 
 				positionBalance + ", Realized Profit=" + rp; 
 				//+ ", Unrealized Profit=" + up;
-		log.log(Log.INFO, s);
+		Logger.log(Logger.INFO, s);
 	}
 	
 	/**
@@ -739,23 +740,23 @@ public abstract class Agent extends Entity {
 	public boolean processTransaction(Transaction t) {
 		boolean flag = true;
 		if (t == null) {
-			log.log(Log.ERROR, "Agent::processTransaction: Corrupted (null) transaction record.");
+			Logger.log(Logger.ERROR, "Agent::processTransaction: Corrupted (null) transaction record.");
 			flag = false;
 		} else {
 			if (t.market == null) {
-				log.log(Log.ERROR, "Agent::processTransaction: t.market is null");
+				Logger.log(Logger.ERROR, "Agent::processTransaction: t.market is null");
 				flag = false;
 			}
 			if (t.price == null) {
-				log.log(Log.ERROR, "Agent::processTransaction: t.price is null");
+				Logger.log(Logger.ERROR, "Agent::processTransaction: t.price is null");
 				flag = false;
 			}
 			if (t.quantity == null) {
-				log.log(Log.ERROR, "Agent::processTransaction: t.quantity is null");
+				Logger.log(Logger.ERROR, "Agent::processTransaction: t.quantity is null");
 				flag = false;
 			}
 			if (t.timestamp == null) {
-				log.log(Log.ERROR, "Agent::processTransaction: t.timestamp is null");
+				Logger.log(Logger.ERROR, "Agent::processTransaction: t.timestamp is null");
 				flag = false;
 			}
 		}
@@ -829,7 +830,7 @@ public abstract class Agent extends Entity {
 	public void updateTransactions(TimeStamp ts) {
 		ArrayList<Transaction> list = getNewTransactions();
 		
-		log.log(Log.DEBUG, ts + " | " + this + " " + "lastTrans=" + lastTransaction);
+		Logger.log(Logger.DEBUG, ts + " | " + this + " " + "lastTrans=" + lastTransaction);
 		
 		if (list != null) {
 			Transaction lastGoodTrans = null;
@@ -841,12 +842,12 @@ public abstract class Agent extends Entity {
 					boolean flag = processTransaction(t);
 					if (!flag && lastGoodTrans != null) {
 						lastTransaction = lastGoodTrans;
-						log.log(Log.ERROR, ts + " | " + this + " " +
+						Logger.log(Logger.ERROR, ts + " | " + this + " " +
 								"Agent::updateTransactions: Problem with transaction.");
 						break transLoop;
 					}
 					
-					log.log(Log.INFO, ts + " | " + this + " " +
+					Logger.log(Logger.INFO, ts + " | " + this + " " +
 							"Agent::updateTransactions: New transaction received: (" +
 							"transID=" + t.transID +", mktID=" + t.market.getID() +
 							", buyer=" + data.getAgentLogID(t.buyer.getID()) + 
@@ -885,8 +886,8 @@ public abstract class Agent extends Entity {
 //							+ "SELLER surplus: " + t.price.getPrice() + "-(" + 
 //							seller.getPrivateValue() + "+" + rt + ")=" + ssurplus;
 
-					log.log(Log.INFO, s);
-					log.log(Log.INFO, ts + " | " + this + " " +
+					Logger.log(Logger.INFO, s);
+					Logger.log(Logger.INFO, ts + " | " + this + " " +
 							"Agent::updateTransactions: SURPLUS for this transaction: " + (cs + ps));
 				}
 				// Update transactions
@@ -894,7 +895,7 @@ public abstract class Agent extends Entity {
 				transactions.add(t);
 			}
 			lastTransaction = lastGoodTrans;
-			log.log(Log.DEBUG, ts + " | " + this + " " + "NEW lastTrans=" + lastGoodTrans);
+			Logger.log(Logger.DEBUG, ts + " | " + this + " " + "NEW lastTrans=" + lastGoodTrans);
 		}
 		lastTransTime = ts;
 	}
@@ -954,7 +955,7 @@ public abstract class Agent extends Entity {
 				}
 			}
 			if (positionBalance != 0) {
-				log.log(Log.DEBUG, this.getModel().getFullName() + ": " + this + 
+				Logger.log(Logger.DEBUG, this.getModel().getFullName() + ": " + this + 
 						" bal=" + positionBalance + 
 						", p=" + p + ", avgCost=" + averageCost);
 			}
@@ -1020,7 +1021,7 @@ public abstract class Agent extends Entity {
 			price.add(ask);
 
 			if (checkBidAsk(mkt.id, price)) {
-				log.log(Log.DEBUG, "Agent::findBestBuySell: issue with bid ask");
+				Logger.log(Logger.DEBUG, "Agent::findBestBuySell: issue with bid ask");
 			}
 			// Best market to buy in is the one with the lowest ASK
 			if (bestBuy == -1 || bestBuy > ask.getPrice()) {
@@ -1062,18 +1063,18 @@ public abstract class Agent extends Entity {
 			flag = false;
 		} else if (ask <= 0 && bid > 0) {
 			double oldask = ask;
-			log.log(Log.DEBUG, "Agent::checkBidAsk: ask: " + oldask + " to " + ask);
+			Logger.log(Logger.DEBUG, "Agent::checkBidAsk: ask: " + oldask + " to " + ask);
 			prevAsk.put(mktID, ask);
 			prevBid.put(mktID, bid);
 		} else if (bid <= 0 && ask > 0) {
 			double oldbid = bid;
-			log.log(Log.DEBUG, "Agent::checkBidAsk: bid: " + oldbid + " to " + bid);
+			Logger.log(Logger.DEBUG, "Agent::checkBidAsk: bid: " + oldbid + " to " + bid);
 			prevAsk.put(mktID, ask);
 			prevBid.put(mktID, bid);
 		} else {
 			double oldbid = bid;
 			double oldask = ask;
-			log.log(Log.DEBUG, "Agent::checkBidAsk: bid: " + oldbid + " to " + bid + 
+			Logger.log(Logger.DEBUG, "Agent::checkBidAsk: bid: " + oldbid + " to " + bid + 
 					", ask: " + oldask + " to " + ask);
 		}
 		bid = Math.max(bid, 1);

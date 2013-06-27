@@ -9,6 +9,7 @@ import java.util.TreeSet;
 import data.ObjectProperties;
 import data.SystemData;
 
+import logger.Logger;
 import market.*;
 import activity.Activity;
 import activity.Clear;
@@ -39,11 +40,11 @@ public class CallMarket extends Market {
 	 * Overloaded constructor.
 	 * @param marketID
 	 */
-	public CallMarket(int marketID, SystemData d, ObjectProperties p, Log l) {
-		super(marketID, d, p, l);
+	public CallMarket(int marketID, SystemData d, ObjectProperties p) {
+		super(marketID, d, p);
 		marketType = Consts.getMarketType(this.getName());
 		orderbook = new PQOrderBook(id);
-		orderbook.setParams(id, l, d);
+		orderbook.setParams(id, d);
 		pricingPolicy = (float) Double.parseDouble(params.get(CallMarket.PRICING_POLICY_KEY));
 		clearFreq = new TimeStamp(Integer.parseInt(params.get(CallMarket.CLEAR_FREQ_KEY)));
 		nextClearTime = clearFreq;
@@ -102,7 +103,7 @@ public class CallMarket extends Market {
 		orderbook.logFourHeap(clearTime);
 		
 		// Return prior quote (works b/c lastClearTime has not been updated yet)
-		log.log(Log.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
+		Logger.log(Logger.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
 				this.quote(clearTime));
 		ArrayList<Transaction> trans = orderbook.uniformPriceClear(clearTime, pricingPolicy);
 		
@@ -114,7 +115,7 @@ public class CallMarket extends Market {
 			data.addDepth(id, clearTime, orderbook.getDepth());
 			
 			// Now update the quote
-			log.log(Log.INFO, clearTime + " | ....." + this + " " + 
+			Logger.log(Logger.INFO, clearTime + " | ....." + this + " " + 
 					this.getName() + "::clear: No change. Post-clear Quote" 
 					+ this.quote(clearTime));
 			actMap.add(new SendToSIP(this, clearTime));
@@ -154,7 +155,7 @@ public class CallMarket extends Market {
 		orderbook.logClearedBids(clearTime);
 		orderbook.logFourHeap(clearTime);
 		data.addDepth(id, clearTime, orderbook.getDepth());
-		log.log(Log.INFO, clearTime.toString() + " | ....." + this + " " + 
+		Logger.log(Logger.INFO, clearTime.toString() + " | ....." + this + " " + 
 				this.getName() + "::clear: Order book cleared: Post-clear Quote" 
 				+ this.quote(clearTime));
 		actMap.add(new SendToSIP(this, clearTime));
@@ -185,7 +186,7 @@ public class CallMarket extends Market {
 					data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);	
 					
 				} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
-					log.log(Log.ERROR, this.getName() + "::quote: ERROR bid > ask");
+					Logger.log(Logger.ERROR, this.getName() + "::quote: ERROR bid > ask");
 					data.addSpread(id, quoteTime, Consts.INF_PRICE);
 					data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
 					

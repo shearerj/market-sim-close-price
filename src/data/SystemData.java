@@ -37,7 +37,7 @@ import java.io.OutputStreamWriter;
 public class SystemData {
 
 	public int num;								// observation number
-	public static String simDir;						// simulations directory
+	public File simDir;						// simulations directory
 	public boolean EGTA;							// true if EGTA use case
 	
 	// Model information
@@ -101,7 +101,10 @@ public class SystemData {
 	/**
 	 * Constructor
 	 */
-	public SystemData() {
+	public SystemData(int num, File simDir) {
+		this.num = num;
+		this.simDir = simDir;
+		
 		bids = new HashMap<Integer,PQBid>();
 		privateValues = new HashMap<Integer,Price>();
 		quotes = new HashMap<Integer,Quote>();
@@ -736,10 +739,10 @@ public class SystemData {
 	 * @param values
 	 * @param filename
 	 */
-	public static void writeToFile(double[] values, String filename) {
+	public void writeToFile(double[] values, String filename) {
 		try {
 			DecimalFormat df = new DecimalFormat("#.#######");
-			File f = new File(simDir + Consts.logDir + filename);
+			File f = new File(new File(simDir, Consts.logDir), filename);
 			if (!f.isFile()) f.createNewFile();
 			FileOutputStream os = new FileOutputStream(f);
 			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");

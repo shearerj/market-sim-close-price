@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
+import logger.Logger;
+
 import org.json.simple.*;
 import org.json.simple.parser.*;
 
@@ -24,7 +26,6 @@ import org.json.simple.parser.*;
  */
 public class SimulationSpec {
 
-	private Log log;
 	private SystemData data;
 	private JSONObject params;
 	private JSONObject assignments;
@@ -50,8 +51,7 @@ public class SimulationSpec {
 	 * @param file
 	 * @param l
 	 */
-	public SimulationSpec(String file, Log l, SystemData d) {
-		log = l;
+	public SimulationSpec(String file, SystemData d) {
 		data = d;
 		parser = new JSONParser();
 		loadFile(file);
@@ -155,7 +155,7 @@ public class SimulationSpec {
 					if (!strat.equals("")) {
 						String[] as = strat.split("[:]+");	// split on colon
 						if (as.length != 2) {
-							log.log(Log.ERROR, this.getClass().getSimpleName() + 
+							Logger.log(Logger.ERROR, this.getClass().getSimpleName() + 
 									"::setRolePlayers: " + "incorrect strategy string");
 						} else {
 							// first elt is agent type, second elt is strategy
@@ -193,7 +193,7 @@ public class SimulationSpec {
 		ObjectProperties op = SimulationSpec.getAgentProperties(type, strategy);
 		
 		if (op == null) {
-			log.log(Log.ERROR, this.getClass().getSimpleName() + 
+			Logger.log(Logger.ERROR, this.getClass().getSimpleName() + 
 					"::getStrategyParameters: error parsing " + strategy.split("[_]+"));
 		}
 		return op;

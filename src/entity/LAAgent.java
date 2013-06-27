@@ -2,6 +2,7 @@ package entity;
 
 import data.*;
 import event.*;
+import logger.Logger;
 import market.*;
 import activity.*;
 import systemmanager.*;
@@ -30,8 +31,8 @@ public class LAAgent extends HFTAgent {
 	/**
 	 * @param agentID
 	 */
-	public LAAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, modelID, d, p, l);
+	public LAAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
+		super(agentID, modelID, d, p);
 		arrivalTime = new TimeStamp(0);
 
 		alpha = Double.parseDouble(params.get(LAAgent.ALPHA_KEY));
@@ -64,7 +65,7 @@ public class LAAgent extends HFTAgent {
 			
 			if ((bestQuote.bestSell > (1+alpha)*bestQuote.bestBuy) && (bestQuote.bestBuy >= 0) ) {
 				
-				log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
+				Logger.log(Logger.INFO, ts.toString() + " | " + this + " " + agentType + 
 						"::agentStrategy: Found possible arb opp!");
 
 				int buyMarketID = bestQuote.bestBuyMarket;
@@ -83,7 +84,7 @@ public class LAAgent extends HFTAgent {
 					int quantity = Math.min(buySize, sellSize);
 
 					if (quantity > 0 && (buyMarketID != sellMarketID)) {
-						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
+						Logger.log(Logger.INFO, ts.toString() + " | " + this + " " + agentType + 
 								"::agentStrategy: Exploit existing arb opp: " + bestQuote + 
 								" in " + data.getMarket(bestQuote.bestBuyMarket) + " & " 
 								+ data.getMarket(bestQuote.bestSellMarket));
@@ -94,21 +95,21 @@ public class LAAgent extends HFTAgent {
 								-quantity, ts));
 
 					} else if (buyMarketID == sellMarketID) {
-						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
+						Logger.log(Logger.INFO, ts.toString() + " | " + this + " " + agentType + 
 								"::agentStrategy: No arb opp since at least 1 market does not " +
 								"have both a bid and an ask");
 						// Note that this is due to a market not having both a bid & ask price,
 						// causing the buy and sell market IDs to be identical
 
 					} else if (quantity == 0) {
-						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
+						Logger.log(Logger.INFO, ts.toString() + " | " + this + " " + agentType + 
 								"::agentStrategy: No quantity available");
 						// Note that if this message appears in a CDA market, then the HFT
 						// agent is beating the market's Clear activity, which is incorrect.
 					}
 					
 				} else {
-					log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
+					Logger.log(Logger.INFO, ts.toString() + " | " + this + " " + agentType + 
 							"::agentStrategy: Market quote(s) undefined. No bid submitted.");
 				}
 				

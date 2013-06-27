@@ -2,13 +2,12 @@ package entity;
 
 import data.*;
 import event.*;
+import logger.Logger;
 import market.*;
 import activity.*;
-import systemmanager.*;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Random;
 import java.util.ArrayList;
 
 /**
@@ -53,8 +52,8 @@ public class ZIRAgent extends BackgroundAgent {
 	 * @param p
 	 * @param l
 	 */
-	public ZIRAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, modelID, d, p, l);
+	public ZIRAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
+		super(agentID, modelID, d, p);
 		
 		bidRange = Integer.parseInt(params.get(ZIRAgent.BIDRANGE_KEY));
 		reentry = new ArrivalTime(arrivalTime, this.data.reentryRate, rand);
@@ -111,7 +110,7 @@ public class ZIRAgent extends BackgroundAgent {
 				} else {
 					p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
 				}
-				log.log(Log.INFO, s);
+				Logger.log(Logger.INFO, s);
 				actMap.addAll(executeSubmitNMSBid(p, q, ts));
 				submissionTimes.add(ts);
 				
@@ -120,12 +119,12 @@ public class ZIRAgent extends BackgroundAgent {
 			} else {
 				s += "new order would exceed max position " + maxAbsPosition 
 						+ "; no submission";
-				log.log(Log.INFO, s);
+				Logger.log(Logger.INFO, s);
 			}
 			// if exceed max position, then don't submit a new bid
 			// TODO - stay the same for now (position balance)
 		} else {
-			log.log(Log.INFO, s);
+			Logger.log(Logger.INFO, s);
 		}
 		
 		actMap.add(new AgentStrategy(this, reentry.next()));

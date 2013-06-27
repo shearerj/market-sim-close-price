@@ -3,6 +3,7 @@ package entity;
 import data.ObjectProperties;
 import data.SystemData;
 import event.*;
+import logger.Logger;
 import model.*;
 import market.*;
 import activity.Activity;
@@ -32,8 +33,8 @@ public class SIP extends Entity {
 	 * @param ID
 	 * @param d
 	 */
-	public SIP(int ID, SystemData d, Log l) {
-		super(ID, d, new ObjectProperties(), l);
+	public SIP(int ID, SystemData d) {
+		super(ID, d, new ObjectProperties());
 		tickSize = d.tickSize;
 		lastQuotes = new HashMap<Integer,BestBidAsk>();
 		marketQuotes = new HashMap<Integer,BestBidAsk>();
@@ -77,7 +78,7 @@ public class SIP extends Entity {
 	public Collection<Activity> processQuote(Market mkt, int bid, int ask, TimeStamp ts) {
 		BestBidAsk q = new BestBidAsk(mkt, new Price(bid), mkt, new Price(ask));
 		marketQuotes.put(mkt.getID(), q);
-		log.log(Log.INFO, ts + " | " + mkt + " " + 
+		Logger.log(Logger.INFO, ts + " | " + mkt + " " + 
 				"ProcessQuote: " + q);
 		return Collections.emptyList();
 	}
@@ -122,7 +123,7 @@ public class SIP extends Entity {
 		}
 		lastQuote = new BestBidAsk(lastQuote.bestBidMarket, bestBid, lastQuote.bestAskMarket, bestAsk);
 		lastQuotes.put(modelID, lastQuote);
-		log.log(Log.INFO, s + "updated " + lastQuote);
+		Logger.log(Logger.INFO, s + "updated " + lastQuote);
 		return actMap;
 	}
 
@@ -148,10 +149,8 @@ public class SIP extends Entity {
 	 * @return
 	 */
 	private BestBidAsk computeBestBidOffer(Collection<Market> markets, boolean nbbo) {
-	    Price bestBid = null;
-	    Market bestBidMkt = null;
-	    Price bestAsk = null;
-	    Market bestAskMkt = null;
+	    Price bestBid = null, bestAsk = null;
+	    Market bestBidMkt = null, bestAskMkt = null;
 	    
 	    for (Market mkt : markets) {
 			Price bid, ask;

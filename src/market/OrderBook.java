@@ -5,7 +5,6 @@ import java.util.ArrayList;
 
 import data.SystemData;
 
-import systemmanager.*;
 import event.*;
 
 /**
@@ -17,7 +16,6 @@ import event.*;
 public abstract class OrderBook {
 
 	public int marketID;
-	public Log log;
 	public SystemData data;
 	
 	// hashed by agent ID

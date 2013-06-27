@@ -2,6 +2,7 @@ package systemmanager;
 
 import data.*;
 import event.*;
+import logger.Logger;
 import model.*;
 import entity.*;
 import activity.*;
@@ -55,7 +56,6 @@ import java.util.Random;
  */
 public class SystemSetup {
 
-	private Log log;
 	private SystemData data;
 	private EventManager eventManager;
 	private SimulationSpec specs;
@@ -82,11 +82,10 @@ public class SystemSetup {
 	 * @param d
 	 * @param l
 	 */
-	public SystemSetup(SimulationSpec s, EventManager em, SystemData d, Log l) {
+	public SystemSetup(SimulationSpec s, EventManager em, SystemData d) {
 		specs = s;
 		eventManager = em;
 		data = d;
-		log = l;
 		agentIDSequence = new Sequence(1);
 		marketIDSequence = new Sequence(-1);
 		modelIDSequence = new Sequence(1);
@@ -111,21 +110,21 @@ public class SystemSetup {
 			
 			// Must create market models before agents, so can add the agents
 			// then to the appropriate/corresponding markets.
-			createSIP();
-			log.log(Log.INFO, "------------------------------------------------");
-			log.log(Log.INFO, "            Creating MARKET MODELS");
+			createSIP(); // TODO Move to each market model...
+			Logger.log(Logger.INFO, "------------------------------------------------");
+			Logger.log(Logger.INFO, "            Creating MARKET MODELS");
 			createMarketModels();
-			log.log(Log.INFO, "------------------------------------------------");
-			log.log(Log.INFO, "            Creating AGENTS");
-			createAllAgents();
+			Logger.log(Logger.INFO, "------------------------------------------------");
+			Logger.log(Logger.INFO, "            Creating AGENTS");
+			createAllAgents(); // TODO Move to market Models
 
 			// Log agent information
-			logAgentInfo();
-			log.log(Log.INFO, "------------------------------------------------");
-			log.log(Log.INFO, " ");
+			logAgentInfo(); // TODO move to agent creation...
+			Logger.log(Logger.INFO, "------------------------------------------------");
+			Logger.log(Logger.INFO, " ");
 
 			// Initial SendToSIP Activity for all markets
-			for (Market mkt : data.getMarkets().values()) {
+			for (Market mkt : data.getMarkets().values()) { // Move to market Models
 				eventManager.addActivity(new SendToSIP(mkt, new TimeStamp(0)));
 			}
 		} catch (Exception e) {
@@ -138,7 +137,7 @@ public class SystemSetup {
 	 * Create SIP entity, which enters the system at time 0.
 	 */
 	public void createSIP() {
-		SIP iu = new SIP(0, data, log);
+		SIP iu = new SIP(0, data);
 		data.setSIP(iu);
 	}
 	
@@ -158,7 +157,7 @@ public class SystemSetup {
 				// always use default configuration of this market model
 				MarketModel primary = createModel(primaryModelType, "");
 				data.primaryModel = primary;
-				log.log(Log.INFO, "Primary model: " + primaryModelType + "-(default)");
+				Logger.log(Logger.INFO, "Primary model: " + primaryModelType + "-(default)");
 				
 			} catch (Exception e) {
 				if (!Consts.MARKETMODEL_TYPES.contains(primaryModelType)) {
@@ -176,7 +175,7 @@ public class SystemSetup {
 			for (String modelType : data.numModelType.keySet()) {
 				
 				int numModelsOfThisType = data.numModelType.get(modelType);
-				log.log(Log.INFO, "Models: " + numModelsOfThisType + " " + modelType);
+				Logger.log(Logger.INFO, "Models: " + numModelsOfThisType + " " + modelType);
 				
 				// Parse the comma separated types of agents (list of configuration strings)
 				// TODO Put this in config
@@ -223,7 +222,7 @@ public class SystemSetup {
 		p.put(Consts.MODEL_CONFIG_KEY, configuration);
 		MarketModel model = ModelFactory.createModel(modelType, modelID, p, data);		
 		data.addModel(model);
-		log.log(Log.INFO, model.getFullName() + ": " + model + " " + p);
+		Logger.log(Logger.INFO, model.getFullName() + ": " + model + " " + p);
 		createMarketsInModel(model);
 		return model;
 	}
@@ -240,7 +239,7 @@ public class SystemSetup {
 			
 			ObjectProperties mp = (ObjectProperties) mop.getObject();
 			String mtype = mop.getMarketType();
-			Market market = MarketFactory.createMarket(mtype, mID, data, mp, log);
+			Market market = MarketFactory.createMarket(mtype, mID, data, mp);
 			market.linkModel(model.getID());
 			data.addMarket(market);
 			model.getMarketIDs().add(mID);
@@ -249,7 +248,7 @@ public class SystemSetup {
 			if (market instanceof CallMarket) {
 				eventManager.addActivity(new Clear(market, market.getNextClearTime()));
 			}
-			log.log(Log.INFO, "Markets: " + market.getType() + ", " + market);
+			Logger.log(Logger.INFO, "Markets: " + market.getType() + ", " + market);
 			
 			data.marketIDModelIDMap.put(mID, model.getID());
 		}
@@ -327,7 +326,7 @@ public class SystemSetup {
 		
 		// create all agents
 		for (MarketModel model : modelMap.values()) {
-			log.log(Log.INFO, "MODEL: " + model.getFullName() + " agent types:");
+			Logger.log(Logger.INFO, "MODEL: " + model.getFullName() + " agent types:");
 			if (data.isEGTAUseCase()) {
 				createPlayersForModel(model);
 			}
@@ -362,7 +361,7 @@ public class SystemSetup {
 								seeds.get(ap).get(i), arrivals.get(ap).get(i));
 						ag.setLogID(logIDs.get(ap).get(i));
 					}
-					log.log(Log.INFO, "Agents: " + numAg + " " + ap.getAgentType() + " " +
+					Logger.log(Logger.INFO, "Agents: " + numAg + " " + ap.getAgentType() + " " +
 							ap.getProperties());
 				}
 			}
@@ -399,7 +398,7 @@ public class SystemSetup {
 					ag.setLogID(ag.getID()); 	// set player ID = log ID
 					data.addPlayer(ag);			// add player to SystemData
 				}
-				log.log(Log.INFO, "Players: " + numAg + " " + type);
+				Logger.log(Logger.INFO, "Players: " + numAg + " " + type);
 			}
 		} catch (Exception e) {
 			System.err.println(this.getClass().getSimpleName() + 
@@ -429,7 +428,7 @@ public class SystemSetup {
 			p.put(Agent.ARRIVAL_KEY, arr.toString());
 			p.put(Agent.FUNDAMENTAL_KEY, data.getFundamentalAt(arr).toString());				
 		}
-		Agent agent = AgentFactory.createAgent(agType, agID, model.getID(), data, p, log);
+		Agent agent = AgentFactory.createAgent(agType, agID, model.getID(), data, p);
 		
 		createInitialAgentEvents(agent);
 		data.addAgent(agent);
@@ -501,7 +500,7 @@ public class SystemSetup {
 				s += ", pv=" + ag.getPrivateValue();
 			}
 			s += " ... params=" + ag.getProperties().toString();
-			log.log(Log.INFO, s);
+			Logger.log(Logger.INFO, s);
 		}
 	}
 

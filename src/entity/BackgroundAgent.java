@@ -16,8 +16,8 @@ import systemmanager.*;
 public abstract class BackgroundAgent extends SMAgent {
 
 	public BackgroundAgent(int agentID, int modelID, SystemData d, 
-			ObjectProperties p, Log l) {
-		super(agentID, modelID, d, p, l);
+			ObjectProperties p) {
+		super(agentID, modelID, d, p);
 		
 		// -- reorg --
 		rand = new Random(Long.parseLong(params.get(Agent.RANDSEED_KEY)));

@@ -3,11 +3,13 @@ package entity;
 import data.*;
 import activity.*;
 import event.TimeStamp;
-import systemmanager.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+
+import logger.Logger;
+
 /**
  * MMAGENT
  * 
@@ -31,8 +33,8 @@ public abstract class MMAgent extends Agent {
 	 * @param p
 	 * @param l
 	 */
-	public MMAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, modelID, d, p, l);
+	public MMAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
+		super(agentID, modelID, d, p);
 	}
 	
 	/**
@@ -49,7 +51,7 @@ public abstract class MMAgent extends Agent {
 			this.enterMarket(mkt, ts);
 			sb.append(mkt).append(",");
 		}
-		log.log(Log.INFO, ts.toString() + " | " + this + "->" + 
+		Logger.log(Logger.INFO, ts.toString() + " | " + this + "->" + 
 				sb.substring(0, sb.length() - 1));
 		
 		// Insert agent strategy call once it has arrived in the market

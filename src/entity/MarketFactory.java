@@ -10,7 +10,7 @@ import systemmanager.*;
  * @author ewah
  */
 public class MarketFactory {
-	
+
 	/**
 	 * Create a new Market based on type parameter.
 	 * 
@@ -19,17 +19,15 @@ public class MarketFactory {
 	 * @param data
 	 * @return
 	 */
-	public static Market createMarket(String type,
-									  Integer marketID,
-									  SystemData data,
-									  ObjectProperties params,
-									  Log l) { 
-		
-		if (type.equals(Consts.CDA)) {
-			return new CDAMarket(marketID, data, params, l);
-		} else if (type.equals(Consts.CALL)) {
-			return new CallMarket(marketID, data, params, l);
-		} else {
+	public static Market createMarket(String type, Integer marketID,
+			SystemData data, ObjectProperties params) {
+
+		switch (type) {
+		case Consts.CDA:
+			return new CDAMarket(marketID, data, params);
+		case Consts.CALL:
+			return new CallMarket(marketID, data, params);
+		default:
 			return null;
 		}
 	}

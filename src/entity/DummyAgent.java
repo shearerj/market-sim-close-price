@@ -25,8 +25,8 @@ public class DummyAgent extends HFTAgent {
 	 * Overloaded constructor
 	 * @param agentID
 	 */
-	public DummyAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, modelID, d, p, l);
+	public DummyAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
+		super(agentID, modelID, d, p);
 		arrivalTime = new TimeStamp(0);
 		params = p;
 	}
