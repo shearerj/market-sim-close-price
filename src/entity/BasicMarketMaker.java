@@ -83,8 +83,8 @@ public class BasicMarketMaker extends MarketMaker {
 		// update all quotes
 		this.updateAllQuotes(ts);
 
-		int bid = getBidPrice(getMarketID()).getPrice();
-		int ask = getAskPrice(getMarketID()).getPrice();
+		int bid = getBidPrice(market.getID()).getPrice();
+		int ask = getAskPrice(market.getID()).getPrice();
 
 		// check that bid or ask is defined
 		if (bid <=0  || ask <= 0) {
@@ -102,13 +102,13 @@ public class BasicMarketMaker extends MarketMaker {
 				int sellMaxPrice = ask + ct;	// max price for sell order in the ladder
 				
 				// check if the bid or ask crosses the NBBO 
-				if (lastNBBOQuote.bestAsk < ask) {
+				if (lastNBBOQuote.bestAsk.getPrice() < ask) {
 					// buy orders:  If ASK_N < X_t, then [ASK_N, ..., Y_t]
-					buyMinPrice = lastNBBOQuote.bestAsk;
+					buyMinPrice = lastNBBOQuote.bestAsk.getPrice();
 				}
-				if (lastNBBOQuote.bestBid > bid) {
+				if (lastNBBOQuote.bestBid.getPrice() > bid) {
 					// sell orders: If BID_N > Y_t, then [X_t, ..., BID_N]
-					sellMaxPrice = lastNBBOQuote.bestBid;
+					sellMaxPrice = lastNBBOQuote.bestBid.getPrice();
 				}
 				
 				// submits only one side if either bid or ask is undefined

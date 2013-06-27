@@ -3,6 +3,8 @@ package entity;
 import data.ObjectProperties;
 import data.SystemData;
 import event.*;
+import market.BestBidAsk;
+import market.Price;
 import market.Quote;
 import activity.*;
 import systemmanager.*;
@@ -11,47 +13,48 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
-
 
 /**
  * SMAGENT
  * 
- * Single market (SM) agent, whose agent strategy is executed only within one market.
- * This does not mean that it can only trade with its specified market; it means that
- * it only checks price quotes from its primary market.
+ * Single market (SM) agent, whose agent strategy is executed only within one
+ * market. This does not mean that it can only trade with its specified market;
+ * it means that it only checks price quotes from its primary market.
  * 
- * An SMAgent is capable of seeing the quote from its own market with zero delay.
- * It also tracks to which market it has most recently submitted a bid, as it is only
- * permitted to submit to one market at a time.
- *  
+ * An SMAgent is capable of seeing the quote from its own market with zero
+ * delay. It also tracks to which market it has most recently submitted a bid,
+ * as it is only permitted to submit to one market at a time.
+ * 
  * ORDER ROUTING (REGULATION NMS):
  * 
- * The agent's order will be routed to the alternate market ONLY if both the NBBO 
- * quote is better than the primary market's quote and the submitted bid will transact 
- * immediately given the price in the alternate market. The only difference in outcome 
- * occurs when the NBBO is out-of-date and the agent's order is routed to the main market
- * when the alternate market is actually better.
+ * The agent's order will be routed to the alternate market ONLY if both the
+ * NBBO quote is better than the primary market's quote and the submitted bid
+ * will transact immediately given the price in the alternate market. The only
+ * difference in outcome occurs when the NBBO is out-of-date and the agent's
+ * order is routed to the main market when the alternate market is actually
+ * better.
  * 
  * @author ewah
  */
 public abstract class SMAgent extends Agent {
 
-	protected Market market;
-	protected Market marketSubmittedBid;		// market to which bid has been submitted
-	
-	
+	protected final Market market;
+	protected Market marketSubmittedBid; // market to which bid has been
+											// submitted
+
 	/**
 	 * Constructor for a single market agent.
+	 * 
 	 * @param agentID
 	 * @param modelID
 	 * @param d
 	 * @param p
 	 * @param l
 	 */
-	public SMAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
+	public SMAgent(int agentID, int modelID, SystemData d, ObjectProperties p,
+			Log l) {
 		super(agentID, modelID, d, p, l);
-		
+
 		int mktID = Integer.parseInt(params.get(SMAgent.MARKETID_KEY));
 		market = data.getMarket(mktID);
 	}
@@ -62,41 +65,14 @@ public abstract class SMAgent extends Agent {
 	public Market getMarket() {
 		return market;
 	}
-	
-	/**
-	 * @return main market ID for the single market agent.
-	 */
-	public int getMarketID() {
-		return market.getID();
-	}
-	
+
 	/**
 	 * @return market
 	 */
 	public Market getMarketSubmittedBid() {
 		return marketSubmittedBid;
 	}
-	
-	/**
-	 * @return main market ID for the single market agent.
-	 */
-	public int getMarketIDSubmittedBid() {
-		return marketSubmittedBid.getID();
-	}
-	
-	/**
-	 * Returns list of alternate market IDs (i.e. excluding the main market ID).
-	 * Does so by copying the list of all marketIDs in the agent's model, then removing
-	 * the main market's ID.
-	 * 
-	 * @return 
-	 */
-	public ArrayList<Integer> getAltMarketIDs() {
-		ArrayList<Integer> altIDs = new ArrayList<Integer>(this.getModel().getMarketIDs());
-		altIDs.remove(new Integer(market.getID()));
-		return altIDs;
-	}
-	
+
 	/**
 	 * Wrapper method to submit bid to market after checking permissions.
 	 * 
@@ -107,44 +83,32 @@ public abstract class SMAgent extends Agent {
 	 * @param ts
 	 * @return
 	 */
-	public Collection<Activity> submitNMSBid(int p, int q, TimeStamp duration, TimeStamp ts) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new SubmitNMSBid(this, p, q, duration, ts));
-		return actMap;
+	public Collection<? extends Activity> submitNMSBid(int p, int q,
+			TimeStamp duration, TimeStamp ts) {
+		return Collections
+				.singleton(new SubmitNMSBid(this, p, q, duration, ts));
 	}
 
 	/**
-	 * Wrapper method to submit bid that never expires to market after checking permissions.
-	 * 
-	 * @param mkt
-	 * @param p
-	 * @param q
-	 * @param ts
-	 * @return
+	 * Wrapper method to submit bid that never expires to market after checking
+	 * permissions.
 	 */
-	public Collection<Activity> submitNMSBid(int p, int q, TimeStamp ts) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new SubmitNMSBid(this, p, q, Consts.INF_TIME, ts));
-		return actMap;
-	}
-	
-	/**
-	 * Wrapper method to submit multiple-point bid to market after checking permissions.
-	 * TODO - still need to finish
-	 * 
-	 * @param mkt
-	 * @param p
-	 * @param q
-	 * @param ts
-	 * @return
-	 */
-	public Collection<Activity> submitNMSMultipleBid(List<Integer> p, List<Integer> q, 
+	@Deprecated
+	public Collection<? extends Activity> submitNMSBid(int p, int q,
 			TimeStamp ts) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new SubmitNMSMultipleBid(this, p, q, ts));
-		return actMap;
+		return Collections.singleton(new SubmitNMSBid(this, p, q,
+				Consts.INF_TIME, ts));
 	}
-	
+
+	/**
+	 * Wrapper method to submit multiple-point bid to market after checking
+	 * permissions. TODO - still need to finish
+	 */
+	public Collection<? extends Activity> submitNMSMultipleBid(List<Integer> p,
+			List<Integer> q, TimeStamp ts) {
+		return Collections.singleton(new SubmitNMSMultipleBid(this, p, q, ts));
+	}
+
 	/**
 	 * Agent arrives in a single market.
 	 * 
@@ -152,15 +116,15 @@ public abstract class SMAgent extends Agent {
 	 * @param ts
 	 * @return Collection<Activity>
 	 */
-	public Collection<Activity> agentArrival(TimeStamp ts) {
-		log.log(Log.INFO, ts.toString() + " | " + this + "->" + market.toString());
+	public Collection<? extends Activity> agentArrival(TimeStamp ts) {
+		log.log(Log.INFO,
+				ts.toString() + " | " + this + "->" + market.toString());
 		this.enterMarket(market, ts);
-		
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new AgentStrategy(this, market, ts));
-		return actMap;
+		// FIXME I think with the new event queue, this should be instantaneous
+		// not at the same time
+		return Collections.singleton(new AgentStrategy(this, market, ts));
 	}
-	
+
 	/**
 	 * Agent departs a specified market, if it is active. //TODO fix later
 	 * 
@@ -182,15 +146,18 @@ public abstract class SMAgent extends Agent {
 	 * @param ts
 	 * @return
 	 */
+	@Deprecated
+	// I don't think this needs so / should be called anymore. The agent should
+	// just update information at strategy time and go from there
 	public Collection<Activity> updateAllQuotes(TimeStamp ts) {
 		updateQuotes(market, ts);
 		return this.executeUpdateAllQuotes(ts);
 	}
-	
+
 	/**
-	 * Submit a bid to one of the possible markets, as following the National Market
-	 * System (NMS) regulations. The market selected will be that with the best available
-	 * price, according the NBBO.
+	 * Submit a bid to one of the possible markets, as following the National
+	 * Market System (NMS) regulations. The market selected will be that with
+	 * the best available price, according the NBBO.
 	 * 
 	 * Bid submitted never expires.
 	 * 
@@ -199,132 +166,120 @@ public abstract class SMAgent extends Agent {
 	 * @param ts
 	 * @return
 	 */
+	@Deprecated
 	public Collection<Activity> executeSubmitNMSBid(int p, int q, TimeStamp ts) {
-		return executeSubmitNMSBid(p, q, Consts.INF_TIME, ts);
+		return executeSubmitNMSBid(new Price(p), q, ts);
 	}
-	
+
 	/**
-	 * Submit a bid to one of the possible markets, as following the National Market
-	 * System (NMS) regulations. The market selected will be that with the best available
-	 * price, according the NBBO.
+	 * Submit a bid to one of the possible markets, as following the National
+	 * Market System (NMS) regulations. The market selected will be that with
+	 * the best available price, according the NBBO.
 	 * 
-	 * @param p
-	 * @param q
+	 * @param price
+	 * @param quantity
 	 * @param duration
 	 * @param ts
 	 * @return
 	 */
-	public Collection<Activity> executeSubmitNMSBid(int p, int q, TimeStamp duration, TimeStamp ts) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		
-		ArrayList<Integer> altMarketIDs = getAltMarketIDs();
-		int altMarketID = market.getID();	// initialize as main market ID
-		
-		// TODO - enable for more than two markets total (including main)
-		if (altMarketIDs.size() > 1) {
-			System.err.println(this.getClass().getSimpleName() + 
-					"::executeSubmitNMSBid: 2 markets permitted currently.");
-			System.exit(1);
-		} else if (altMarketIDs.size() == 1) {
-			// get first alternate market since there are two markets total
-			altMarketID = altMarketIDs.get(0);
-		}
-		
-		// Set additional string to log bid's duration, if it expires
-		String logDuration = "";
-		if (duration != Consts.INF_TIME && duration.longValue() > 0) {
-			logDuration = ", duration=" + duration;
-		}
-		
+	@Deprecated
+	public Collection<Activity> executeSubmitNMSBid(int price, int quantity,
+			TimeStamp duration, TimeStamp ts) {
+		return executeSubmitNMSBid(new Price(price), quantity, duration, ts);
+	}
+
+	/**
+	 * Submit a bid to one of the possible markets, as following the National
+	 * Market System (NMS) regulations. The market selected will be that with
+	 * the best available price, according the NBBO.
+	 */
+	public Collection<Activity> executeSubmitNMSBid(Price price, int quantity,
+			TimeStamp duration, TimeStamp ts) {
+		if (quantity == 0)
+			return Collections.emptySet();
+
+		BestBidAsk lastNBBOQuote = sip.getNBBOQuote(model.getID());
+
 		// Identify best market, as based on the NBBO.
 		Quote mainMarketQuote = market.quote(ts);
-		
+
 		// Check if NBBO indicates that other market better:
-		// - Want to buy for as low a price as possible, so find market with the lowest ask.
-		// - Want to sell for as high a price as possible, so find market with the highest bid.
-		// - NBBO also better if the bid or ask in the current does not exist while NBBO does exist.
-		boolean nbboBetter = false;
-		if (q > 0) {
-			if (lastNBBOQuote.bestAsk < mainMarketQuote.lastAskPrice.getPrice() &&
-					lastNBBOQuote.bestAsk != -1 ||
-					mainMarketQuote.lastAskPrice.getPrice() == -1 &&
-					lastNBBOQuote.bestAsk != -1) { 
-				nbboBetter = true;
+		// - Want to buy for as low a price as possible, so find market with the
+		// lowest ask.
+		// - Want to sell for as high a price as possible, so find market with
+		// the highest bid.
+		// - NBBO also better if the bid or ask in the current does not exist
+		// while NBBO does exist.
+
+		boolean nbboBetter, willTransact;
+		Market bestMarket;
+		Price bestPrice;
+
+		if (quantity > 0) { // buy
+			nbboBetter = lastNBBOQuote.bestAsk != null
+					&& lastNBBOQuote.bestAsk
+							.lessThan(mainMarketQuote.lastAskPrice);
+			willTransact = nbboBetter
+					&& price.greaterThan(lastNBBOQuote.bestAsk);
+			if (willTransact) {
+				bestMarket = lastNBBOQuote.bestAskMarket;
+				bestPrice = lastNBBOQuote.bestAsk;
+			} else {
+				bestMarket = market;
+				bestPrice = mainMarketQuote.lastAskPrice;
 			}
-		} else {
-			if (lastNBBOQuote.bestBid > mainMarketQuote.lastBidPrice.getPrice() ||
-					mainMarketQuote.lastBidPrice.getPrice() == -1) {
-				// don't need lastNBBOQuote.bestBid != -1 due to first condition, will always > -1
-				nbboBetter = true;
+		} else { // sell
+			nbboBetter = lastNBBOQuote.bestBid != null
+					&& lastNBBOQuote.bestBid
+							.greaterThan(mainMarketQuote.lastBidPrice);
+			willTransact = nbboBetter && price.lessThan(lastNBBOQuote.bestBid);
+			if (willTransact) {
+				bestMarket = lastNBBOQuote.bestBidMarket;
+				bestPrice = lastNBBOQuote.bestBid;
+			} else {
+				bestMarket = market;
+				bestPrice = mainMarketQuote.lastBidPrice;
 			}
 		}
 
-		int bestMarketID = market.getID();
-		if (nbboBetter) {
-			// nbboBetter = true indicates that the alternative market has a better quote
-			log.log(Log.INFO, ts + " | " + this + " " + agentType + 
-					"::submitNMSBid: " + "NBBO(" + lastNBBOQuote.bestBid + ", " + 
-					lastNBBOQuote.bestAsk + ") better than " + market + 
-					" Quote(" + mainMarketQuote.lastBidPrice.getPrice() + 
-					", " + mainMarketQuote.lastAskPrice.getPrice() + ")");
-			
-			int bestPrice = -1;
-			if (q > 0) {
-				// Ensure that NBBO ask is defined, otherwise submit to current market
-				if (p >= lastNBBOQuote.bestAsk && lastNBBOQuote.bestAsk != -1) {
-					bestMarketID = altMarketID;
-					bestPrice = lastNBBOQuote.bestAsk;
-				}
-			} else {
-				if (p <= lastNBBOQuote.bestBid) {
-					bestMarketID = altMarketID;
-					bestPrice = lastNBBOQuote.bestBid;
-				}
-			}
-			
-			if (bestMarketID == altMarketID) {				
-				log.log(Log.INFO, ts + " | " + this + " " + agentType + 
-						"::submitNMSBid: " + "Bid +(" + p + "," + q + ") will transact" +
-						" immediately in " + data.getMarket(altMarketID) +
-						" given best price " + bestPrice);
-			}
-			
-			// submit bid to the best market
-			marketSubmittedBid = data.getMarket(bestMarketID);
-			//actMap.appendCollection<Activity>(submitBid(marketSubmittedBid, p, q, ts));
-			actMap.addAll(executeSubmitBid(marketSubmittedBid, p, q, ts));
-			log.log(Log.INFO, ts + " | " + this + " " + agentType + 
-					"::submitNMSBid: " + "+(" + p + "," + q + ") to " + 
-					marketSubmittedBid + logDuration);
-			
-		} else {
-			// main market is better than the alternate market (according to NBBO)
-			log.log(Log.INFO, ts + " | " + this + " " + agentType + 
-					"::submitNMSBid: " + "NBBO(" + lastNBBOQuote.bestBid + ", " + 
-					lastNBBOQuote.bestAsk + ") worse than/same as " + market + 
-					" Quote(" + mainMarketQuote.lastBidPrice.getPrice() + 
-					", " + mainMarketQuote.lastAskPrice.getPrice() + ")");
-			
-			// submit bid to the main market
-			log.log(Log.INFO, ts + " | " + this + " " + agentType + 
-					"::submitNMSBid: " + "+(" + p + "," + q + ") to " + 
-					market + logDuration);
-			marketSubmittedBid = market;
-			//actMap.appendCollection<Activity>(submitBid(market, p, q, ts));
-			actMap.addAll(executeSubmitBid(marketSubmittedBid, p, q, ts));
-		}
-		
+		if (nbboBetter)
+			log.log(Log.INFO, ts + " | " + this + " " + agentType
+					+ "::submitNMSBid: " + "NBBO(" + lastNBBOQuote.bestBid
+					+ ", " + lastNBBOQuote.bestAsk + ") better than " + market
+					+ " Quote(" + mainMarketQuote.lastBidPrice + ", "
+					+ mainMarketQuote.lastAskPrice + ")");
+		if (willTransact)
+			log.log(Log.INFO, ts + " | " + this + " " + agentType
+					+ "::submitNMSBid: " + "Bid +(" + price + "," + quantity
+					+ ") will transact" + " immediately in " + bestMarket
+					+ " given best price " + bestPrice);
+
+		// submit bid to the best market
+		marketSubmittedBid = bestMarket;
+		Collection<Activity> actMap = executeSubmitBid(bestMarket,
+				price.getPrice(), quantity, ts);
+
+		String durationLog = duration != Consts.INF_TIME
+				&& duration.longValue() > 0 ? ", duration=" + duration : "";
+		log.log(Log.INFO, ts + " | " + this + " " + agentType
+				+ "::submitNMSBid: " + "+(" + price + "," + quantity + ") to "
+				+ bestMarket + durationLog);
+
 		if (duration != Consts.INF_TIME && duration.longValue() > 0) {
 			// Bid expires after a given duration
-			actMap.addAll(expireBid(marketSubmittedBid, duration, ts));
+			actMap.addAll(expireBid(bestMarket, duration, ts));
 		}
 		return actMap;
 	}
 	
+	public Collection<Activity> executeSubmitNMSBid(Price p, int q, TimeStamp ts) {
+		return executeSubmitNMSBid(p, q, Consts.INF_TIME, ts);
+	}
+
 	/**
-	 * Submits a multiple-point/offer bid to one of the possible markets, as following 
-	 * the National Market System (NMS) regulations. The market selected will be that 
-	 * with the best available price, according the NBBO.
+	 * Submits a multiple-point/offer bid to one of the possible markets, as
+	 * following the National Market System (NMS) regulations. The market
+	 * selected will be that with the best available price, according the NBBO.
 	 * 
 	 * TODO - postponed...
 	 * 
@@ -333,24 +288,23 @@ public abstract class SMAgent extends Agent {
 	 * @param ts
 	 * @return
 	 */
-	public Collection<Activity> executeSubmitNMSMultipleBid(List<Integer> price, 
-			List<Integer> quantity, TimeStamp ts) {
-		
+	public Collection<Activity> executeSubmitNMSMultipleBid(
+			List<Integer> price, List<Integer> quantity, TimeStamp ts) {
+
 		Collection<Activity> actMap = new ArrayList<Activity>();
-		ArrayList<Integer> altMarketIDs = getAltMarketIDs();
-//		int altMarketID = market.getID();	// initialize as main market ID
+		// ArrayList<Integer> altMarketIDs = getAltMarketIDs();
+		// int altMarketID = market.getID(); // initialize as main market ID
 
 		// TODO - enable for more than two markets total (including main)
-		if (altMarketIDs.size() > 1) {
-			System.err.println(this.getClass().getSimpleName() + 
-					"::executeSubmitNMSBid: 2 markets permitted currently.");
-		} else if (altMarketIDs.size() == 1) {
-			// get first alternate market since there are two markets total
-//			altMarketID = altMarketIDs.get(0);
-		}
-		
+		// if (altMarketIDs.size() > 1) {
+		// System.err.println(this.getClass().getSimpleName()
+		// + "::executeSubmitNMSBid: 2 markets permitted currently.");
+		// } else if (altMarketIDs.size() == 1) {
+		// // get first alternate market since there are two markets total
+		// // altMarketID = altMarketIDs.get(0);
+		// }
+
 		return actMap;
 	}
 
-	
 }

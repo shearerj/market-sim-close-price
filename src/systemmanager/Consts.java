@@ -7,6 +7,7 @@ import data.ObjectProperties;
 import java.util.Arrays;
 import java.util.List;
 
+
 /**
  * System-wide constants and accessor methods. Sets default properties for each
  * type of entity.

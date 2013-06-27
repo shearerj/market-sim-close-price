@@ -24,7 +24,7 @@ public class AgentArrival extends Activity {
 		return new AgentArrival(this.ag, this.time);
 	}
 	
-	public Collection<Activity> execute(TimeStamp currentTime) {
+	public Collection<? extends Activity> execute(TimeStamp currentTime) {
 		return ag.agentArrival(currentTime); 
 	}
 	

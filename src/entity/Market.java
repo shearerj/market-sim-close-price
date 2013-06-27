@@ -23,6 +23,7 @@ public abstract class Market extends Entity {
 
 	// Model information
 	// TODO Reference to MarketModel instead of just id?
+	// TODO equals method...
 	protected int modelID;				// ID of associated model
 	
 	// Agent information

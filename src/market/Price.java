@@ -57,12 +57,41 @@ public class Price implements Comparable<Price> {
 
 	@Override
 	public int compareTo(Price o) {
+		if (o == null) return 1;
 		return this.price - o.price;
 	}
 
 	@Override
 	public String toString() {
 		return Integer.toString(price);
+	}
+	
+	/**
+	 * True if p is null or this price is strictly greater
+	 */
+	public boolean greaterThan(Price p) {
+		return p == null || compareTo(p) > 0;
+	}
+	
+	/**
+	 * True if p is null or this price is strictly less
+	 */
+	public boolean lessThan(Price p) {
+		return p == null || compareTo(p) < 0;
+	}
+	
+	/**
+	 * True if p is null or this price is greater or equal
+	 */
+	public boolean greaterThanEquals(Price p) {
+		return p == null || compareTo(p) >= 0;
+	}
+	
+	/**
+	 * True if p is null or this price is less or equal
+	 */
+	public boolean lessThanEqual(Price p) {
+		return p == null || compareTo(p) <= 0;
 	}
 
 }

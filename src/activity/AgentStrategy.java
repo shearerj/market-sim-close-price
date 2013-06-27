@@ -30,7 +30,7 @@ public class AgentStrategy extends Activity {
 		return new AgentStrategy(this.ag, this.mkt, this.time);
 	}
 
-	public Collection<Activity> execute(TimeStamp currentTime) {
+	public Collection<? extends Activity> execute(TimeStamp currentTime) {
 		return ag.agentStrategy(currentTime);
 	}
 

@@ -511,7 +511,7 @@ public class Observations {
 			// must check that background agent (affected by routing)
 			if (ag instanceof BackgroundAgent) {
 				BackgroundAgent b = (BackgroundAgent) ag;
-				if (b.getMarketID() != b.getMarketIDSubmittedBid()) {
+				if (b.getMarket().getID() != b.getMarketSubmittedBid().getID()) {
 					// order routed to alternate market
 					numAlt++;
 					if (b.getPositionBalance() == 0) numAltNoTrans++;

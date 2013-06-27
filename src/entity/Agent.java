@@ -135,25 +135,25 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public abstract Collection<Activity> agentStrategy(TimeStamp ts);
+	public abstract Collection<? extends Activity> agentStrategy(TimeStamp ts);
 	
 	/**
 	 * @param ts
 	 * @return
 	 */
-	public abstract Collection<Activity> agentArrival(TimeStamp ts);
+	public abstract Collection<? extends Activity> agentArrival(TimeStamp ts);
 	
 	/**
 	 * @param ts
 	 * @return
 	 */
-	public abstract Collection<Activity> agentDeparture(TimeStamp ts);
+	public abstract Collection<? extends Activity> agentDeparture(TimeStamp ts);
 
 	/**
 	 * @param ts
 	 * @return
 	 */
-	public abstract Collection<Activity> updateAllQuotes(TimeStamp ts);
+	public abstract Collection<? extends Activity> updateAllQuotes(TimeStamp ts);
 	
 	/**
 	 * @return observation to include in the output file
