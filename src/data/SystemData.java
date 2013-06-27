@@ -5,6 +5,8 @@ import entity.*;
 import market.*;
 import model.*;
 import systemmanager.*;
+import systemmanager.Consts.AgentType;
+import systemmanager.Consts.ModelType;
 
 import java.text.DecimalFormat;
 import java.util.*;
@@ -74,7 +76,7 @@ public class SystemData {
 	private FundamentalValue fundamentalGenerator;
 	
 	// hashed by type, gives # of that type
-	public HashMap<String,Integer> numModelType;
+	public HashMap<ModelType,Integer> numModelType;
 	
 	// Parameters set by specification file
 	public TimeStamp simLength;
@@ -112,7 +114,7 @@ public class SystemData {
 		players = new HashMap<Integer,Agent>();
 		markets = new HashMap<Integer,Market>();
 		models = new HashMap<Integer,MarketModel>();
-		numModelType = new HashMap<String,Integer>();
+		numModelType = new HashMap<ModelType,Integer>();
 		modelIDs = new ArrayList<Integer>();
 		transIDSequence = new Sequence(0);
 		primaryModel = null;
@@ -352,8 +354,8 @@ public class SystemData {
 	 * @param agentType
 	 * @return
 	 */
-	public boolean isSMAgent(String agentType) {
-		return Consts.SM_AGENT_TYPES.contains(agentType);
+	public boolean isSMAgent(AgentType agentType) {
+		return Consts.SM_AGENT.contains(agentType);
 	}
 	
 	/**

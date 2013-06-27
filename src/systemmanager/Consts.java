@@ -5,6 +5,7 @@ import event.TimeStamp;
 import data.ObjectProperties;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 
 
@@ -28,20 +29,40 @@ public class Consts {
 	// **********************************************************
 	// Agent, market, and model types
 	// UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL
-	public final static String AA = "AA";
-	public final static String ZI = "ZI";
-	public final static String ZIP = "ZIP";
-	public final static String ZIR = "ZIR";
-	public final static String BASICMARKETMAKER = "BASICMM";
-	public final static String LA = "LA";
-	public final static String DUMMY = "DUMMY";
+	public static enum AgentType {
+		AA, ZI, ZIP, ZIR, BASICMM, LA, DUMMY;
+		
+		public static boolean contains(String s) {
+			for (AgentType a : values())
+				if (a.toString().equals(s))
+					return true;
+			return false;
+		}
+	};
+	public static enum ModelType {
+		TWOMARKET, CENTRALCDA, CENTRALCALL;
+		
+		public static boolean contains(String s) {
+			for (ModelType a : values())
+				if (a.toString().equals(s))
+					return true;
+			return false;
+		}
+	};
+	public static enum MarketType {
+		CDA, CALL;
 	
-	public final static String CALL = "CALL";
-	public final static String CDA = "CDA";
-	
-	public final static String TWOMARKET = "TWOMARKET";
-	public final static String CENTRALCDA = "CENTRALCDA";
-	public final static String CENTRALCALL = "CENTRALCALL";
+		public static boolean contains(String s) {
+			for (MarketType a : values())
+				if (a.toString().equals(s))
+					return true;
+			return false;
+		}
+	}
+	public static final EnumSet<AgentType> BACKGROUND_AGENT = EnumSet.of(AgentType.ZI, AgentType.ZIR, AgentType.ZIP, AgentType.AA);
+	public static final EnumSet<AgentType> MARKETMAKER_AGENT = EnumSet.of(AgentType.BASICMM);
+	public static final EnumSet<AgentType> MM_AGENT = EnumSet.of(AgentType.LA, AgentType.DUMMY);
+	public static final EnumSet<AgentType> SM_AGENT = EnumSet.complementOf(MM_AGENT);
 	
 	public final static String ROLE_HFT = "HFT";
 	public final static String ROLE_MARKETMAKER = "MARKETMAKER";
@@ -55,18 +76,6 @@ public class Consts {
 	// UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL
 	public final static List<String> roles = 
 			Arrays.asList(ROLE_HFT, ROLE_MARKETMAKER, ROLE_BACKGROUND);
-	
-	public final static List<String> MARKETMODEL_TYPES =
-			Arrays.asList(TWOMARKET, CENTRALCDA, CENTRALCALL);
-	
-	public final static List<String> SM_AGENT_TYPES = 
-			Arrays.asList(ZI, ZIR,  ZIP, BASICMARKETMAKER, AA);
-	public final static List<String> HFT_AGENT_TYPES =
-			Arrays.asList(LA, DUMMY);
-	public final static List<String> MARKETMAKER_AGENT_TYPES = 
-			Arrays.asList(BASICMARKETMAKER);
-	public final static List<String> BACKGROUND_AGENT_TYPES =
-			Arrays.asList(ZI, ZIR, ZIP);
 	
 	// **********************************************************
 	// Setting up models
@@ -137,46 +146,79 @@ public class Consts {
 	 * @param type
 	 */
 	public final static ObjectProperties getProperties(String type) {
-		
-		// UPDATE WHEN ADD NEW AGENT OR MARKET
+		if (MarketType.contains(type))
+			return getProperties(MarketType.valueOf(type));
+		else if (AgentType.contains(type))
+			return getProperties(AgentType.valueOf(type));
+		else if (ModelType.contains(type))
+			return getProperties(ModelType.valueOf(type));
+		else
+			// Log?
+			return new ObjectProperties();
+	}
+	
+	public final static ObjectProperties getProperties(ModelType type) {
+		// UPDATE WHEN ADD NEW MODEL
 		ObjectProperties p = new ObjectProperties();
-		
-		if (type.equals(LA)) {
+		switch (type) {
+		default:
+			return p;
+		}
+	}
+
+	public final static ObjectProperties getProperties(MarketType type) {
+		// UPDATE WHEN ADD NEW MARKET
+		ObjectProperties p = new ObjectProperties();
+		switch (type) {
+		case CALL:
+			p.put(CallMarket.PRICING_POLICY_KEY, "0.5");
+			p.put(CallMarket.CLEAR_FREQ_KEY, "100");
+			return p;
+		case CDA:
+			return p;
+		default:
+			return p;
+		}
+	}
+
+	public final static ObjectProperties getProperties(AgentType type) {
+		// UPDATE WHEN ADD NEW AGENT
+		ObjectProperties p = new ObjectProperties();
+		switch (type) {
+		case LA:
 			p.put(Agent.SLEEPTIME_KEY, "0");
 			p.put(Agent.SLEEPVAR_KEY, "100");
 			p.put(LAAgent.ALPHA_KEY, "0.001");
-		}
-		if (type.equals(BASICMARKETMAKER)) {
+			return p;
+		case BASICMM:
 			p.put(Agent.SLEEPTIME_KEY, "200");
 			p.put(Agent.SLEEPVAR_KEY, "100");
 			p.put(BasicMarketMaker.NUMRUNGS_KEY, "10");
 			p.put(BasicMarketMaker.RUNGSIZE_KEY, "1000");
-		}
-		if (type.equals(CALL)) {
-			p.put(CallMarket.PRICING_POLICY_KEY, "0.5");
-			p.put(CallMarket.CLEAR_FREQ_KEY, "100");
-		}
-		if (type.equals(ZI)) {
+			return p;
+		case ZI:
 			p.put(Agent.BIDRANGE_KEY, "2000");
-		}
-		if (type.equals(ZIR)) {
+			return p;
+		case ZIR:
 			p.put(Agent.BIDRANGE_KEY, "5000");
 			p.put(Agent.MAXQUANTITY_KEY, "10");
-		}
-		if (type.equals(ZIP)) {
+			return p;
+		case ZIP:
 			p.put(Agent.SLEEPTIME_KEY, "50");
 			p.put(Agent.SLEEPVAR_KEY, "100");
-			p.put("c_R","0.05");
-			p.put("c_A","0.05");
-			p.put("beta","0.03");
+			p.put("c_R", "0.05");
+			p.put("c_A", "0.05");
+			p.put("beta", "0.03");
 			p.put("betaVar", "0.005");
-			p.put("gamma","0.5");
-		}
-		if (type.equals(AA)) {
-			// FILL IN
+			p.put("gamma", "0.5");
+			return p;
+		case AA:
+			// TODO Fill in
 			p.put(AAAgent.BIDRANGE_KEY, "200"); // example only
+			return p;
+		default:
+			return p;
 		}
-		return p;
 	}
-	
+
 }

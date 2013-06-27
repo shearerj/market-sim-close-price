@@ -22,10 +22,10 @@ public class MarketFactory {
 	public static Market createMarket(String type, Integer marketID,
 			SystemData data, ObjectProperties params) {
 
-		switch (type) {
-		case Consts.CDA:
+		switch (Consts.MarketType.valueOf(type)) {
+		case CDA:
 			return new CDAMarket(marketID, data, params);
-		case Consts.CALL:
+		case CALL:
 			return new CallMarket(marketID, data, params);
 		default:
 			return null;

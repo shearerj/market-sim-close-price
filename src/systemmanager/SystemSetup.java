@@ -12,6 +12,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Random;
 
+import systemmanager.Consts.AgentType;
+import systemmanager.Consts.ModelType;
+
 /**
  * SYSTEMSETUP
  * 
@@ -152,15 +155,15 @@ public class SystemSetup {
 			
 			// get information on the primary market model: (MODELNAME)
 			String[] desc = data.primaryModelDesc.split("[-]+");
-			String primaryModelType = desc[0];
 			try {
+				ModelType primaryModelType = ModelType.valueOf(desc[0]);
 				// always use default configuration of this market model
 				MarketModel primary = createModel(primaryModelType, "");
 				data.primaryModel = primary;
 				Logger.log(Logger.INFO, "Primary model: " + primaryModelType + "-(default)");
 				
 			} catch (Exception e) {
-				if (!Consts.MARKETMODEL_TYPES.contains(primaryModelType)) {
+				if (! Consts.ModelType.contains(desc[0])) {
 					System.err.println(this.getClass().getSimpleName() + 
 							"::createMarketModels: invalid primary market model type");
 				}
@@ -172,7 +175,7 @@ public class SystemSetup {
 			data.primaryModel = null;
 			
 			// Create by model type
-			for (String modelType : data.numModelType.keySet()) {
+			for (ModelType modelType : data.numModelType.keySet()) {
 				
 				int numModelsOfThisType = data.numModelType.get(modelType);
 				Logger.log(Logger.INFO, "Models: " + numModelsOfThisType + " " + modelType);
@@ -214,7 +217,7 @@ public class SystemSetup {
 	 * @param configuration
 	 * @return model
 	 */
-	private MarketModel createModel(String modelType, String configuration) {
+	private MarketModel createModel(ModelType modelType, String configuration) {
 		ObjectProperties p = new ObjectProperties(Consts.getProperties(modelType));
 		
 		// create market model & determine its configuration
@@ -268,7 +271,7 @@ public class SystemSetup {
 			
 			// set up their players & their arrivals
 			for (AgentPropsPair app : data.getPlayerMap().keySet()) {
-				String type = app.getAgentType();
+				String type = app.getAgentType().toString();
 				ObjectProperties o = app.getProperties();
 				int n = data.getPlayerMap().get(app);
 				
@@ -388,12 +391,13 @@ public class SystemSetup {
 				Random rand = new Random();
 				for (int i = 0; i < numAg; i++) {	
 					// create copy of ObjectProperties in case modify it
+					AgentType agType = AgentType.valueOf(type);
 					ObjectProperties op = new ObjectProperties(playerStrategies.get(type).get(i));
-					if (data.isSMAgent(type)) {
+					if (data.isSMAgent(agType)) {
 						// must assign market if single-market agent
 						op.put(SMAgent.MARKETID_KEY, assignMktIDs.get(i).toString());
 					}
-					Agent ag = createAgent(model, new AgentPropsPair(type, op),
+					Agent ag = createAgent(model, new AgentPropsPair(agType, op),
 							rand.nextLong(), playerArrivalGenerators.get(type).next());
 					ag.setLogID(ag.getID()); 	// set player ID = log ID
 					data.addPlayer(ag);			// add player to SystemData
@@ -418,7 +422,7 @@ public class SystemSetup {
 	 * @return
 	 */
 	private Agent createAgent(MarketModel model, AgentPropsPair ap, Long seed, TimeStamp arr) { 
-		String agType = ap.getAgentType();
+		AgentType agType = ap.getAgentType();
 		ObjectProperties p = ap.getProperties();
 		
 		p.put(Agent.RANDSEED_KEY, seed.toString());

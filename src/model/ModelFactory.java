@@ -2,7 +2,7 @@ package model;
 
 import data.ObjectProperties;
 import data.SystemData;
-import systemmanager.*;
+import systemmanager.Consts.ModelType;
 
 /**
  * Factory class for creating MarketModels.
@@ -20,17 +20,17 @@ public class ModelFactory {
 	 * @param data
 	 * @return
 	 */
-	public static MarketModel createModel(String type, int modelID, ObjectProperties props,
-										  SystemData data) { 
-		
-		if (type.equals(Consts.TWOMARKET)) {
+	public static MarketModel createModel(ModelType type, int modelID, ObjectProperties props,
+										  SystemData data) {		
+		switch (type) {
+		case TWOMARKET:
 			return new TwoMarket(modelID, props, data);
-		} else if (type.equals(Consts.CENTRALCDA)) {
+		case CENTRALCDA:
 			return new CentralCDA(modelID, props, data);
-		} else if (type.equals(Consts.CENTRALCALL)) {
+		case CENTRALCALL:
 			return new CentralCall(modelID, props, data);
-		} else {
-			return null;
+		default:
+			return null; // Maybe not appropriate?
 		}
 	}
 }

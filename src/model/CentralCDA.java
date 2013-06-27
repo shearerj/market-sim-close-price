@@ -19,7 +19,7 @@ public class CentralCDA extends MarketModel {
 		
 		config = p.get(Consts.MODEL_CONFIG_KEY);
 		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
-			addMarketPropertyPair(Consts.CDA);
+			addMarketPropertyPair(Consts.MarketType.CDA);
 		}
 	}
 	

@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 
+import systemmanager.Consts.AgentType;
+import systemmanager.Consts.ModelType;
+
 import logger.Logger;
 
 import com.google.gson.Gson;
@@ -91,9 +94,9 @@ public class SimulationSpec2 {
 	protected void marketModels(SystemData data) {
 		JsonObject config = spec.getAsJsonObject(CONFIG_KEY);
 
-		for (String type : Consts.MARKETMODEL_TYPES) {
+		for (ModelType type : ModelType.values()) {
 			// models here is a comma-separated list
-			JsonPrimitive modelsTest = config.getAsJsonPrimitive(type);
+			JsonPrimitive modelsTest = config.getAsJsonPrimitive(type.toString());
 			if (modelsTest == null)
 				continue;
 			String models = modelsTest.getAsString();
@@ -116,8 +119,8 @@ public class SimulationSpec2 {
 	protected void backgroundAgents(SystemData data) {
 		JsonObject config = spec.getAsJsonObject(CONFIG_KEY);
 
-		for (String agentType : Consts.SM_AGENT_TYPES) {
-			JsonPrimitive numJson = config.getAsJsonPrimitive(agentType);
+		for (AgentType agentType : Consts.SM_AGENT) {
+			JsonPrimitive numJson = config.getAsJsonPrimitive(agentType.toString());
 			JsonPrimitive setupJson = config.getAsJsonPrimitive(agentType
 					+ Consts.setupSuffix);
 			if (numJson == null)
@@ -149,8 +152,9 @@ public class SimulationSpec2 {
 							+ "incorrect strategy string");
 				} else {
 					// first elt is agent type, second elt is strategy
-					ObjectProperties op = getStrategyParameters(as[0], as[1]);
-					data.addPlayerProperties(new AgentPropsPair(as[0], op));
+					AgentType type = AgentType.valueOf(as[0]);
+					ObjectProperties op = getStrategyParameters(type, as[1]);
+					data.addPlayerProperties(new AgentPropsPair(type, op));
 				}
 
 			}
@@ -164,13 +168,13 @@ public class SimulationSpec2 {
 	 * @param strategy
 	 * @return
 	 */
-	protected ObjectProperties getStrategyParameters(String type,
+	protected ObjectProperties getStrategyParameters(AgentType type,
 			String strategy) {
 		ObjectProperties op = new ObjectProperties(Consts.getProperties(type));
 		op.put(Agent.STRATEGY_KEY, strategy);
 
 		// Check that strategy is not blank
-		if (!strategy.equals("") && !type.equals(Consts.DUMMY)) {
+		if (!strategy.equals("") && !type.equals(Consts.AgentType.DUMMY)) {
 			String[] stratParams = strategy.split("[_]+");
 			if (stratParams.length % 2 != 0) {
 				return null;

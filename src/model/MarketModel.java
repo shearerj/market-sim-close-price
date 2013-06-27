@@ -1,6 +1,8 @@
 package model;
 
 import systemmanager.*;
+import systemmanager.Consts.AgentType;
+import systemmanager.Consts.MarketType;
 
 import java.util.ArrayList;
 
@@ -133,7 +135,7 @@ public abstract class MarketModel {
 	 * @param agType
 	 * @param agProperties
 	 */
-	public void addAgentPropertyPair(String agType, ObjectProperties agProperties) {
+	public void addAgentPropertyPair(AgentType agType, ObjectProperties agProperties) {
 		AgentPropsPair app = new AgentPropsPair(agType, agProperties);
 		agentConfig.add(app);
 	}
@@ -143,7 +145,7 @@ public abstract class MarketModel {
 	 * 
 	 * @param agType
 	 */
-	public void addAgentPropertyPair(String agType) {
+	public void addAgentPropertyPair(AgentType agType) {
 		ObjectProperties agProperties = Consts.getProperties(agType);
 		AgentPropsPair mpp = new AgentPropsPair(agType, agProperties);
 		agentConfig.add(mpp);
@@ -169,8 +171,8 @@ public abstract class MarketModel {
 	 * @param mktType
 	 * @param mktProperties
 	 */
-	public void addMarketPropertyPair(String mktType, ObjectProperties mktProperties) {
-		MarketObjectPair mpp = new MarketObjectPair(mktType, mktProperties);
+	public void addMarketPropertyPair(MarketType mktType, ObjectProperties mktProperties) {
+		MarketObjectPair mpp = new MarketObjectPair(mktType.toString(), mktProperties);
 		modelMarketConfig.add(mpp);
 	}
 	
@@ -179,9 +181,9 @@ public abstract class MarketModel {
 	 * 
 	 * @param mktType
 	 */
-	public void addMarketPropertyPair(String mktType) {
+	public void addMarketPropertyPair(MarketType mktType) {
 		ObjectProperties mktProperties = Consts.getProperties(mktType);
-		MarketObjectPair mpp = new MarketObjectPair(mktType, mktProperties);
+		MarketObjectPair mpp = new MarketObjectPair(mktType.toString(), mktProperties);
 		modelMarketConfig.add(mpp);
 	}
 	

@@ -2,6 +2,7 @@ package model;
 
 import data.*;
 import systemmanager.*;
+import systemmanager.Consts.AgentType;
 
 /**
  * TWOMARKET
@@ -24,15 +25,15 @@ public class TwoMarket extends MarketModel {
 		config = p.get(Consts.MODEL_CONFIG_KEY);
 		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
 			// Add two CDA markets with default settings
-			addMarketPropertyPair(Consts.CDA);
-			addMarketPropertyPair(Consts.CDA);
+			addMarketPropertyPair(Consts.MarketType.CDA);
+			addMarketPropertyPair(Consts.MarketType.CDA);
 			
 			// Check that config is not blank
 			if (!config.equals("")) {
 				// split on colon
 				String[] as = config.split("[:]+");
-				String agType = as[0];
-				if (!Consts.HFT_AGENT_TYPES.contains(agType)) {
+				AgentType agType = AgentType.valueOf(as[0]);
+				if (!Consts.MM_AGENT.contains(agType)) {
 					System.err.println(this.getClass().getSimpleName() + "::parseConfigs: " +
 									"model configuration " + config + " incorrect");
 					System.exit(1);

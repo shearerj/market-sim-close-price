@@ -25,7 +25,7 @@ public class CentralCall extends MarketModel {
 		config = p.get(Consts.MODEL_CONFIG_KEY);
 		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
 			
-			ObjectProperties mktProperties = Consts.getProperties(Consts.CALL);
+			ObjectProperties mktProperties = Consts.getProperties(Consts.MarketType.CALL);
 			
 			// Set clearing frequency to be NBBO latency or a constant
 			if (config.equals("NBBO")) {
@@ -36,7 +36,7 @@ public class CentralCall extends MarketModel {
 				mktProperties.put(CallMarket.CLEAR_FREQ_KEY, config.substring(5));
 			}
 			
-			addMarketPropertyPair(Consts.CALL, mktProperties);
+			addMarketPropertyPair(Consts.MarketType.CALL, mktProperties);
 		}
 	}
 	

@@ -2,7 +2,7 @@ package entity;
 
 import data.ObjectProperties;
 import data.SystemData;
-import systemmanager.*;
+import systemmanager.Consts.AgentType;
 
 /**
  * Factory class for creating Agents.
@@ -21,23 +21,22 @@ public class AgentFactory {
 	 * @param params
 	 * @return
 	 */
-	public static Agent createAgent(String type, Integer agentID,
+	public static Agent createAgent(AgentType type, Integer agentID,
 			Integer modelID, SystemData data, ObjectProperties params) {
-		
 		switch (type) {
-		case Consts.DUMMY:
+		case DUMMY:
 			return new DummyAgent(agentID, modelID, data, params);
-		case Consts.LA:
+		case LA:
 			return new LAAgent(agentID, modelID, data, params);
-		case Consts.BASICMARKETMAKER:
+		case BASICMM:
 			return new BasicMarketMaker(agentID, modelID, data, params);
-		case Consts.ZI:
+		case ZI:
 			return new ZIAgent(agentID, modelID, data, params);
-		case Consts.ZIR:
+		case ZIR:
 			return new ZIRAgent(agentID, modelID, data, params);
-		case Consts.ZIP:
+		case ZIP:
 			return new ZIPAgent(agentID, modelID, data, params);
-		case Consts.AA:
+		case AA:
 			return new AAAgent(agentID, modelID, data, params);
 		default:
 			return null;

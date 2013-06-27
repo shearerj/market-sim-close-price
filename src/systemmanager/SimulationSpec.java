@@ -15,6 +15,9 @@ import logger.Logger;
 import org.json.simple.*;
 import org.json.simple.parser.*;
 
+import systemmanager.Consts.AgentType;
+import systemmanager.Consts.ModelType;
+
 
 /**
  * Stores list of parameters used in the simulation_spec.json file.
@@ -104,7 +107,7 @@ public class SimulationSpec {
 		/*******************
 		 * MARKET MODELS
 		 *******************/
-		for (String modelType : Consts.MARKETMODEL_TYPES) {
+		for (ModelType modelType : ModelType.values()) {
 			// models here is a comma-separated list
 			String models = getValue(modelType);
 			if (models != null) {
@@ -132,7 +135,7 @@ public class SimulationSpec {
 		/*******************
 		 * CONFIGURATION - add environment agents
 		 *******************/
-		for (String agentType : Consts.SM_AGENT_TYPES) {
+		for (AgentType agentType : Consts.SM_AGENT) {
 			String num = getValue(agentType);
 			String setup = getValue(agentType + Consts.setupSuffix);
 			if (num != null) {
@@ -159,8 +162,9 @@ public class SimulationSpec {
 									"::setRolePlayers: " + "incorrect strategy string");
 						} else {
 							// first elt is agent type, second elt is strategy
-							ObjectProperties op = getStrategyParameters(as[0], as[1]);
-							data.addPlayerProperties(new AgentPropsPair(as[0], op));
+							AgentType type = AgentType.valueOf(as[0]);
+							ObjectProperties op = getStrategyParameters(type, as[1]);
+							data.addPlayerProperties(new AgentPropsPair(type, op));
 						}
 					}
 				}
@@ -181,6 +185,14 @@ public class SimulationSpec {
 			return null;
 		}
 	}
+	
+	public String getValue(ModelType key) {
+		return getValue(key.toString());
+	}
+	
+	public String getValue(AgentType key) {
+		return getValue(key.toString());
+	}
 
 	/**
 	 * Wrapper method because log is not static.
@@ -189,7 +201,7 @@ public class SimulationSpec {
 	 * @param strategy
 	 * @return
 	 */
-	private ObjectProperties getStrategyParameters(String type, String strategy) {
+	private ObjectProperties getStrategyParameters(AgentType type, String strategy) {
 		ObjectProperties op = SimulationSpec.getAgentProperties(type, strategy);
 		
 		if (op == null) {
@@ -209,14 +221,14 @@ public class SimulationSpec {
 	 * @param strategy
 	 * @return ObjectProperties
 	 */
-	public static ObjectProperties getAgentProperties(String type, String strategy) {
+	public static ObjectProperties getAgentProperties(AgentType type, String strategy) {
 		ObjectProperties p = new ObjectProperties(Consts.getProperties(type));
 		p.put(Agent.STRATEGY_KEY, strategy);
 		
 		if (strategy == null) return p;
 		
 		// Check that strategy is not blank
-		if (!strategy.equals("") && !type.equals(Consts.DUMMY)) {
+		if (!strategy.equals("") && !type.equals(Consts.AgentType.DUMMY)) {
 			String[] stratParams = strategy.split("[_]+");
 			if (stratParams.length % 2 != 0) {
 				return null;
@@ -226,5 +238,9 @@ public class SimulationSpec {
 			}
 		}
 		return p;
+	}
+	
+	public static ObjectProperties getAgentProperties(String type, String strategy) {
+		return getAgentProperties(AgentType.valueOf(type), strategy);
 	}
 }
