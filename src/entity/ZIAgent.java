@@ -43,8 +43,8 @@ public class ZIAgent extends BackgroundAgent {
 		
 		bidRange = Integer.parseInt(params.get(ZIAgent.BIDRANGE_KEY));
 		
-		int alpha1 = (int) Math.round(getNormalRV(0, this.data.pvVar));
-		int alpha2 = (int) Math.round(getNormalRV(0, this.data.pvVar));
+		int alpha1 = (int) Math.round(rand.nextGaussian(0, this.data.pvVar));
+		int alpha2 = (int) Math.round(rand.nextGaussian(0, this.data.pvVar));
 		alpha = new PrivateValue(alpha1, alpha2);
 	}
 	
