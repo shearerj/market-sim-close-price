@@ -1,5 +1,7 @@
 package market;
 
+import entity.Agent;
+import entity.Market;
 import event.TimeStamp;
 
 import org.apache.commons.lang3.builder.*;
@@ -19,24 +21,25 @@ public class PQTransaction extends Transaction {
 	 * 
 	 * @param q quantity
 	 * @param p price
-	 * @param bID buyerID
-	 * @param sID sellerID
-	 * @param bBidID buyBidID
-	 * @param sBidID sellBidID
+	 * @param buyer
+	 * @param seller
+	 * @param buyBid
+	 * @param sellBid
 	 * @param ts TimeStamp
 	 * @param mktID marketID
 	 */
-	public PQTransaction(int q, Price p, int bID, int sID, int bBidID, 
-			int sBidID, TimeStamp ts, int mktID)
+	public PQTransaction(int q, Price p, Agent buyer, Agent seller, Bid buyBid, 
+			Bid sellBid, TimeStamp ts, Market market)
 	{
 		quantity = new Integer(q);
 		price = p;
-		buyerID = new Integer(bID);
-		sellerID = new Integer(sID);
-		buyBidID = new Integer(bBidID);
-		sellBidID = new Integer(sBidID);
 		timestamp = ts;
-		marketID = new Integer(mktID);
+		
+		this.buyer = buyer;
+		this.seller = seller;
+		this.buyBid = buyBid;
+		this.sellBid = sellBid;
+		this.market = market;
 	}
 
 	
@@ -55,11 +58,11 @@ public class PQTransaction extends Transaction {
 	    return new EqualsBuilder().
 	    		append(price.price, other.price.price).
 				append(quantity.intValue(), other.quantity.intValue()).
-				append(buyerID.intValue(), other.buyerID.intValue()).
-				append(sellerID.intValue(), other.sellerID.intValue()).
-				append(buyBidID.intValue(), other.buyBidID.intValue()).
-				append(sellBidID.intValue(), other.sellBidID.intValue()).
-				append(marketID.intValue(), other.marketID.intValue()).
+				append(buyer.getID(), other.buyer.getID()).
+				append(seller.getID(), other.seller.getID()).
+				append(buyBid.getBidID(), other.buyBid.getBidID()).
+				append(sellBid.getBidID(), other.sellBid.getBidID()).
+				append(market.getID(), other.market.getID()).
 				append(timestamp.longValue(), other.timestamp.longValue()).
 				isEquals();
 	}
@@ -69,11 +72,11 @@ public class PQTransaction extends Transaction {
 		return new HashCodeBuilder(17, 31).
 				append(price.price).
 				append(quantity.intValue()).
-				append(buyerID.intValue()).
-				append(sellerID.intValue()).
-				append(buyBidID.intValue()).
-				append(sellBidID.intValue()).
-				append(marketID.intValue()).
+				append(buyer.getID()).
+				append(seller.getID()).
+				append(buyBid.getBidID()).
+				append(sellBid.getBidID()).
+				append(market.getID()).
 				append(timestamp.longValue()).
 				toHashCode();
 	}
@@ -83,12 +86,12 @@ public class PQTransaction extends Transaction {
 		String result = "Transaction(ID=" + transID.toString() 
 				+ ", quantity=" + quantity.toString()
 				+ ", price=" + price    
-				+ ", buyerID=" + buyerID.toString()  
-				+ ", sellerID=" + sellerID.toString() 
-				+ ", buyBidID=" + buyBidID.toString()  
-				+ ", sellBidID=" + sellBidID.toString() 
+				+ ", buyerID=" + buyer.getID()  
+				+ ", sellerID=" + seller.getID() 
+				+ ", buyBidID=" + buyBid.getBidID().toString()
+				+ ", sellBidID=" + sellBid.getBidID().toString() 
 				+ ", timestamp=" + timestamp.toString()
-				+ ", marketID=" + marketID.toString()
+				+ ", marketID=" + market.getID()
 				+ ")";
 		return result;
 	}
@@ -101,12 +104,12 @@ public class PQTransaction extends Transaction {
 		System.out.println(
 				quantity 			+" "+ 
 				price    			+" "+
-				buyerID.toString()  +" "+
-				sellerID.toString() +" "+ 
-				buyBidID.toString() +" "+
-				sellBidID.toString()+" "+ 
+				buyer.getID()		+" "+
+				seller.getID() 		+" "+ 
+				buyBid.getBidID()	+" "+
+				sellBid.getBidID()	+" "+ 
 				timestamp.toString()+" "+
-				marketID.toString());
+				market.getID());
 	}
 
 }

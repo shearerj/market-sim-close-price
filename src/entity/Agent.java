@@ -131,7 +131,7 @@ public abstract class Agent extends Entity {
 		tickSize = data.tickSize;
 		sip = data.getSIP();
 	}
-	
+		
 	/** 
 	 * @param ts
 	 * @return
@@ -268,7 +268,7 @@ public abstract class Agent extends Entity {
 	 * @return MarketModel of the agent.
 	 */
 	public MarketModel getModel() {
-		return data.getModel(modelID);
+		return model;
 	}
 	
 	/**
@@ -560,7 +560,7 @@ public abstract class Agent extends Entity {
 				+ quantity + ") to " + mkt);
 		
 		int p = Market.quantize(price, tickSize);
-		PQBid pqBid = new PQBid(this.id, mkt.id);
+		PQBid pqBid = new PQBid(this, mkt);
 		pqBid.addPoint(quantity, new Price(p));
 		pqBid.timestamp = ts;
 		data.addBid(pqBid);
@@ -594,7 +594,7 @@ public abstract class Agent extends Entity {
 		Logger.log(Logger.INFO, ts + " | " + mkt + " " + this + ": +(" + price +	", " 
 				+ quantity + ")");
 		
-		PQBid pqBid = new PQBid(this.id, mkt.id);
+		PQBid pqBid = new PQBid(this, mkt);
 		pqBid.timestamp = ts;
 		for (int i = 0; i < price.size(); i++) {
 			if (quantity.get(i) != 0) {
@@ -743,8 +743,8 @@ public abstract class Agent extends Entity {
 			Logger.log(Logger.ERROR, "Agent::processTransaction: Corrupted (null) transaction record.");
 			flag = false;
 		} else {
-			if (t.marketID == null) {
-				Logger.log(Logger.ERROR, "Agent::processTransaction: t.marketID is null");
+			if (t.getMarket() == null) {
+				Logger.log(Logger.ERROR, "Agent::processTransaction: t.market is null");
 				flag = false;
 			}
 			if (t.price == null) {
@@ -765,7 +765,7 @@ public abstract class Agent extends Entity {
 		} else {
 			// check whether seller, in which case negate the quantity
 			int quantity = t.quantity;
-			if (this.id == t.sellerID) {
+			if (this.id == t.getSeller().getID()) {
 				quantity = -quantity;
 			}
 			// update cash flow and position
@@ -838,7 +838,7 @@ public abstract class Agent extends Entity {
 			transLoop:
 			for (Transaction t : list) {
 				// Check that this agent is involved in the transaction
-				if (t.buyerID == this.id || t.sellerID == this.id){ 
+				if (t.getBuyer().getID() == this.id || t.getSeller().getID() == this.id){ 
 					boolean flag = processTransaction(t);
 					if (!flag && lastGoodTrans != null) {
 						lastTransaction = lastGoodTrans;
@@ -849,22 +849,22 @@ public abstract class Agent extends Entity {
 					
 					Logger.log(Logger.INFO, ts + " | " + this + " " +
 							"Agent::updateTransactions: New transaction received: (" +
-							"transID=" + t.transID +", mktID=" + t.marketID +
-							", buyer=" + data.getAgentLogID(t.buyerID) + 
-							", seller=" + data.getAgentLogID(t.sellerID) +
+							"transID=" + t.transID +", mktID=" + t.getMarket().getID() +
+							", buyer=" + data.getAgentLogID(t.getBuyer().getID()) + 
+							", seller=" + data.getAgentLogID(t.getSeller().getID()) +
 							", price=" + t.price + ", quantity=" + t.quantity + 
 							", timeStamp=" + t.timestamp + ")");
 					
 					// Log surplus for background agents with private values
-					Agent buyer = data.getAgent(t.buyerID);
-					Agent seller = data.getAgent(t.sellerID);
+					Agent buyer = data.getAgent(t.getBuyer().getID());
+					Agent seller = data.getAgent(t.getSeller().getID());
 					Price rt = data.getFundamentalAt(ts);
 					int cs = 0;		// consumer surplus
 					int ps = 0;		// producer surplus
 					
 					String s = ts + " | " + this + " " + "Agent::updateTransactions: BUYER surplus: ";
 					if (buyer.hasPrivateValue()) {
-						cs = (data.getPrivateValueByBid(t.buyBidID).sum(rt)).diff(t.price).getPrice();
+						cs = (data.getPrivateValueByBid(t.getBuyBid().getBidID()).sum(rt)).diff(t.price).getPrice();
 						s += "(" + buyer.getPrivateValue() + "+" + rt + ")-" + t.price.getPrice() + 
 								"=" + cs + ", ";
 					} else {
@@ -873,7 +873,7 @@ public abstract class Agent extends Entity {
 					}
 					s += "SELLER surplus: ";
 					if (seller.hasPrivateValue()) {
-						ps = t.price.diff(data.getPrivateValueByBid(t.sellBidID).sum(rt)).getPrice();
+						ps = t.price.diff(data.getPrivateValueByBid(t.getSellBid().getBidID()).sum(rt)).getPrice();
 						s += t.price.getPrice() + "-(" + seller.getPrivateValue() + "+" + rt + 
 								")=" + ps;
 					} else {
@@ -906,16 +906,17 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public ArrayList<Transaction> getNewTransactions() {
-		Set<Transaction> tmp = new TreeSet<Transaction>(idComparator);
+
 		
 		if (lastTransaction == null) {
 			// get all transactions for this model
-			tmp = data.getTrans(modelID);
+			return model.getTrans();
 		} else {
+			TreeSet<Transaction> tmp = new TreeSet<Transaction>(idComparator);
+			tmp.addAll(model.getTrans());
 			// get all transactions after the last seen transaction (not inclusive)
-			tmp = data.getTransTailSet(modelID, lastTransaction);
+			return new ArrayList<Transaction>(tmp.tailSet(lastTransaction, false));
 		}
-		return new ArrayList<Transaction>(tmp);
 	}
 
 	

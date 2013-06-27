@@ -11,6 +11,7 @@ import data.SystemData;
 
 import logger.Logger;
 import market.*;
+import model.MarketModel;
 import activity.Activity;
 import activity.Clear;
 import activity.SendToSIP;
@@ -40,8 +41,8 @@ public class CallMarket extends Market {
 	 * Overloaded constructor.
 	 * @param marketID
 	 */
-	public CallMarket(int marketID, SystemData d, ObjectProperties p) {
-		super(marketID, d, p);
+	public CallMarket(int marketID, SystemData d, ObjectProperties p, MarketModel model) {
+		super(marketID, d, p, model);
 		marketType = Consts.getMarketType(this.getName());
 		orderbook = new PQOrderBook(id);
 		orderbook.setParams(id, d);
@@ -137,10 +138,9 @@ public class CallMarket extends Market {
 		for (Iterator<Transaction> i = trans.iterator(); i.hasNext();) {
 			PQTransaction t = (PQTransaction) i.next();
 			// track which agents were involved in the transactions
-			transactingIDs.add(t.buyerID);
-			transactingIDs.add(t.sellerID);
-
-			data.addTransaction(t);
+			transactingIDs.add(t.getBuyer().getID());
+			transactingIDs.add(t.getSeller().getID());
+			model.addTrans(t);
 			lastClearPrice = t.price;
 		}
 		lastClearTime = clearTime;
