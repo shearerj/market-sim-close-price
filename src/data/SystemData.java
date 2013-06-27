@@ -59,7 +59,7 @@ public class SystemData {
 	// Transaction information
 //	public HashMap<Integer,List<Transaction>> transactions; // hashed by model ID
 //	public HashMap<Integer,List<Integer>> transIDs;		// hashed by model ID
-	public HashMap<Integer,TreeSet<Transaction>> transactions; // hashed by model ID
+//	public HashMap<Integer,TreeSet<Transaction>> transactions; // hashed by model ID
 	
 	// Agent information
 	public int numEnvAgents;
@@ -123,10 +123,6 @@ public class SystemData {
 		playerMap = new HashMap<AgentPropsPair, Integer>();
 		envAgentMap = new HashMap<AgentPropsPair, Integer>(); 
 	
-//		transactions = new HashMap<Integer,List<Transaction>>();
-//		transIDs = new HashMap<Integer,List<Integer>>();
-		transactions = new HashMap<Integer,TreeSet<Transaction>>();
-		
 		// Initialize containers for observations/features
 		marketDepth = new HashMap<Integer,TimeSeries>();
 		marketSpread = new HashMap<Integer,TimeSeries>();
@@ -393,22 +389,6 @@ public class SystemData {
 		return privateValues.get(bidID);
 	}
 	
-	public TreeSet<Transaction> getTrans(int modelID) {
-		return transactions.get(modelID);
-	}
-	
-	/**
-	 * Get all transactions in specified model with ID after 
-	 * Transaction t's ID (not inclusive).
-	 * 
-	 * @param modelID
-	 * @param t
-	 * @return
-	 */
-	public Set<Transaction> getTransTailSet(int modelID, Transaction t) {
-		return transactions.get(modelID).tailSet(t, false);
-	}
-	
 	/**
 	 * @param bidID
 	 * @return
@@ -585,33 +565,6 @@ public class SystemData {
 			tmp.add(transID);
 			modelTransID.put(modelID, tmp);
 		}
-	}
-	
-	/**
-	 * Add transaction.
-	 * @param tr
-	 */
-	public void addTransaction(PQTransaction tr) {
-		int id = transIDSequence.increment();
-		tr.transID = id;
-		
-		MarketModel model = getModelByMarketID(tr.getMarket().getID());
-		int modelID = model.getID();
-		addSurplus(modelID, tr);
-		addModelTransID(modelID, tr.transID);
-
-//		if (!transactions.containsKey(modelID)) {
-//			transactions.put(modelID, new ArrayList<Transaction>());
-//		}
-//		transactions.get(modelID).add(tr);
-//		if (!transIDs.containsKey(modelID)) {
-//			transIDs.put(modelID, new ArrayList<Integer>());
-//		}
-//		transIDs.get(modelID).add(tr.transID);
-		if (!transactions.containsKey(modelID)) {
-			transactions.put(modelID, new TreeSet<Transaction>(new TransactionIDComparator()));
-		}
-		transactions.get(modelID).add(tr);
 	}
 	
 	/**

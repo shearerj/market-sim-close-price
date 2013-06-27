@@ -342,7 +342,7 @@ public class Observations {
 	public Feature getTransactionInfo(MarketModel model) {
 		Feature feat = new Feature();
 
-		List<Transaction> trans = new ArrayList<Transaction>(data.getTrans(model.getID()));
+		List<Transaction> trans = new ArrayList<Transaction>(model.getTrans());
 		
 		DescriptiveStatistics prices = new DescriptiveStatistics();
 		DescriptiveStatistics quantity = new DescriptiveStatistics();

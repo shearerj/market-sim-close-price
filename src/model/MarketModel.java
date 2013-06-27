@@ -5,11 +5,13 @@ import systemmanager.*;
 import java.util.ArrayList;
 
 import market.Price;
+import market.Transaction;
 
 import data.AgentPropsPair;
 import data.FundamentalValue;
 import data.ObjectProperties;
 import data.SystemData;
+import entity.Market;
 import event.TimeStamp;
 
 /**
@@ -54,6 +56,8 @@ public abstract class MarketModel {
 	// -- begin reorg --
 	
 	protected FundamentalValue fundamentalGenerator;
+	protected ArrayList<Market> markets;
+	protected ArrayList<Transaction> trans;
 	
 	// -- end reorg --
 
@@ -79,6 +83,8 @@ public abstract class MarketModel {
 	public MarketModel(int modelID, ObjectProperties p, SystemData d) {
 		// reorg
 		fundamentalGenerator = d.getFundamenalValue();
+		markets = new ArrayList<Market>();
+		trans = new ArrayList<Transaction>();
 		// reorg
 		
 		this.modelID = modelID;
@@ -89,6 +95,7 @@ public abstract class MarketModel {
 		marketIDs = new ArrayList<Integer>();
 		modelMarketConfig = new ArrayList<MarketObjectPair>();
 		agentConfig = new ArrayList<AgentPropsPair>();
+		
 	}
 	
 	/**
@@ -238,6 +245,15 @@ public abstract class MarketModel {
 	public int getID() {
 		return modelID;
 	}
+	
+	public ArrayList<Transaction> getTrans() {
+		return trans;
+	}
+
+	public void addTrans(Transaction tr) {
+		this.trans.add(tr);
+	}
+
 	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()

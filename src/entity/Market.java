@@ -1,5 +1,6 @@
 package entity;
 
+import data.FundamentalValue;
 import data.ObjectProperties;
 import data.SystemData;
 import event.*;
@@ -25,6 +26,7 @@ public abstract class Market extends Entity {
 	// TODO Reference to MarketModel instead of just id?
 	// TODO equals method...
 	protected int modelID;				// ID of associated model
+	protected MarketModel model;
 	
 	// Agent information
 	protected ArrayList<Integer> buyers;
@@ -43,7 +45,6 @@ public abstract class Market extends Entity {
 	public int lastAskQuantity;
 	public int lastBidQuantity;
 	public String marketType;
-	
 
 	/**
 	 * @param marketID
@@ -51,7 +52,7 @@ public abstract class Market extends Entity {
 	 * @param p
 	 * @param l
 	 */
-	public Market(int marketID, SystemData d, ObjectProperties p) {
+	public Market(int marketID, SystemData d, ObjectProperties p, MarketModel model) {
 		super(marketID, d, p);
 
 		agentIDs = new ArrayList<Integer>();
@@ -66,7 +67,10 @@ public abstract class Market extends Entity {
 		lastClearPrice = new Price(-1);
 		lastAskPrice = new Price(-1);
 		lastBidPrice = new Price(-1);
-	}
+		
+		//reorg
+		this.model = model;
+		}
 
 	/**
 	 * Set the model ID for the market.
@@ -284,6 +288,10 @@ public abstract class Market extends Entity {
 
 	public TimeStamp getLastQuoteTime() {
 		return lastQuoteTime;
+	}
+	
+	public ArrayList<Transaction> getModelTrans() {
+		return model.getTrans();
 	}
 
 	

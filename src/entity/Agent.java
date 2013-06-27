@@ -906,16 +906,17 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public ArrayList<Transaction> getNewTransactions() {
-		Set<Transaction> tmp = new TreeSet<Transaction>(idComparator);
+
 		
 		if (lastTransaction == null) {
 			// get all transactions for this model
-			tmp = data.getTrans(modelID);
+			return model.getTrans();
 		} else {
+			TreeSet<Transaction> tmp = new TreeSet<Transaction>(idComparator);
+			tmp.addAll(model.getTrans());
 			// get all transactions after the last seen transaction (not inclusive)
-			tmp = data.getTransTailSet(modelID, lastTransaction);
+			return new ArrayList<Transaction>(tmp.tailSet(lastTransaction, false));
 		}
-		return new ArrayList<Transaction>(tmp);
 	}
 
 	

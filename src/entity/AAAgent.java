@@ -476,7 +476,7 @@ public class AAAgent extends BackgroundAgent {
     	int movingAverage = -1;
     	int mvgAvgNum = 0;
 		// EW: changed to get transactions for the model, not just a specific market
-		ArrayList<Transaction> trans = new ArrayList<Transaction>(data.getTrans(modelID));
+		ArrayList<Transaction> trans = new ArrayList<Transaction>(model.getTrans());
     	strat.findMovingAverage(movingAverage, mvgAvgNum, trans); 	
 		
     	//Determining Quantity

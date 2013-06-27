@@ -2,6 +2,7 @@ package entity;
 
 import logger.Logger;
 import market.*;
+import model.MarketModel;
 import data.ObjectProperties;
 import data.SystemData;
 import event.TimeStamp;
@@ -27,8 +28,8 @@ public class CDAMarket extends Market {
 	 * Overloaded constructor.
 	 * @param marketID
 	 */
-	public CDAMarket(int marketID, SystemData d, ObjectProperties p) {
-		super(marketID, d, p);
+	public CDAMarket(int marketID, SystemData d, ObjectProperties p, MarketModel model) {
+		super(marketID, d, p, model);
 		marketType = Consts.getMarketType(this.getName());
 		orderbook = new PQOrderBook(id);
 		orderbook.setParams(id, d);
@@ -106,8 +107,7 @@ public class CDAMarket extends Market {
 			// track which agents were involved in the transactions
 			transactingIDs.add(t.getBuyer().getID());
 			transactingIDs.add(t.getSeller().getID());
-			
-			data.addTransaction(t);
+			model.addTrans(t);
 			lastClearPrice = t.price;
 		}
 		lastClearTime = clearTime;
