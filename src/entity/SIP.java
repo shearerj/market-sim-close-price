@@ -148,10 +148,8 @@ public class SIP extends Entity {
 	 * @return
 	 */
 	private BestBidAsk computeBestBidOffer(Collection<Market> markets, boolean nbbo) {
-	    Price bestBid = null;
-	    Market bestBidMkt = null;
-	    Price bestAsk = null;
-	    Market bestAskMkt = null;
+	    Price bestBid = null, bestAsk = null;
+	    Market bestBidMkt = null, bestAskMkt = null;
 	    
 	    for (Market mkt : markets) {
 			Price bid, ask;
