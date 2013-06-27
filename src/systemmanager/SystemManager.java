@@ -56,9 +56,12 @@ public class SystemManager {
 			SystemManager manager = new SystemManager(simFolder, simNumber);
 			manager.executeEvents();
 			manager.aggregateResults();
-		} catch (IOException | IllegalArgumentException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
+		} catch (IllegalArgumentException e){
+			e.printStackTrace();
+			System.exit(1);		
 		}
 	}
 

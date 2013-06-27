@@ -12,6 +12,8 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Random;
 
+import utils.EmptyIterator;
+
 import activity.Activity;
 
 /**
@@ -292,7 +294,7 @@ public class EventQueue implements Queue<Activity> {
 
 		protected EventQueueIterator(Iterator<Event> events) {
 			eventIterator = events;
-			activityIterator = Collections.emptyIterator();
+			activityIterator = new EmptyIterator<Activity>();
 			removedEveryActivity = true;
 			removedCurrentActivity = false;
 		}
