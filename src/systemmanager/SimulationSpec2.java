@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 
+import logger.Logger;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -43,18 +45,16 @@ public class SimulationSpec2 {
 	public final static String PRIVATE_VALUE_VAR = "private_value_var";
 	public final static String PRIMARY_MODEL = "primary_model";
 
-	protected final Log log;
 	protected final JsonObject spec;
 
-	public SimulationSpec2(Log l, File specFile) throws JsonSyntaxException,
+	public SimulationSpec2(File specFile) throws JsonSyntaxException,
 			JsonIOException, FileNotFoundException {
-		log = l;
 		spec = new Gson().fromJson(new FileReader(specFile), JsonObject.class);
 	}
 
-	public SimulationSpec2(Log l, String specFileName)
+	public SimulationSpec2(String specFileName)
 			throws JsonSyntaxException, JsonIOException, FileNotFoundException {
-		this(l, new File(specFileName));
+		this(new File(specFileName));
 	}
 
 	public void writeData(SystemData data) {
@@ -144,7 +144,7 @@ public class SimulationSpec2 {
 					continue;
 				String[] as = strat.split(":+"); // split on colon
 				if (as.length != 2) {
-					log.log(Log.ERROR, this.getClass().getSimpleName()
+					Logger.log(Logger.ERROR, this.getClass().getSimpleName()
 							+ "::setRolePlayers: "
 							+ "incorrect strategy string");
 				} else {

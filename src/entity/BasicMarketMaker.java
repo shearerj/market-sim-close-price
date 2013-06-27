@@ -13,6 +13,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.ArrayList;
 
+import logger.Logger;
+
 /**
  * BasicMarketMaker
  * 
@@ -54,8 +56,8 @@ public class BasicMarketMaker extends MarketMaker {
 	 * @param p
 	 * @param l
 	 */
-	public BasicMarketMaker(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, modelID, d, p, l);
+	public BasicMarketMaker(int agentID, int modelID, SystemData d, ObjectProperties p) {
+		super(agentID, modelID, d, p);
 		arrivalTime = new TimeStamp(0);
 		sleepTime = Integer.parseInt(params.get(SLEEPTIME_KEY));
 //		sleepVar = Double.parseDouble(params.get(Agent.SLEEPVAR_KEY));
@@ -88,7 +90,7 @@ public class BasicMarketMaker extends MarketMaker {
 
 		// check that bid or ask is defined
 		if (bid <=0  || ask <= 0) {
-			log.log(Log.INFO, ts + " | " + this + " " + agentType +
+			Logger.log(Logger.INFO, ts + " | " + this + " " + agentType +
 					"::agentStrategy: undefined quote in market " + getMarket());
 			
 		} else {
@@ -129,13 +131,13 @@ public class BasicMarketMaker extends MarketMaker {
 					}
 				}
 				
-				log.log(Log.INFO, ts + " | " + getMarket() + " " + this + " " + agentType + 
+				Logger.log(Logger.INFO, ts + " | " + getMarket() + " " + this + " " + agentType + 
 						"::agentStrategy: ladder numRungs=" + numRungs + ", stepSize=" + stepSize + 
 						": buys [" + buyMinPrice + ", " + bid + "] &" + 
 						" sells [" + ask + ", " + sellMaxPrice + "]");
 				actMap.addAll(submitMultipleBid(getMarket(), prices, quantities, ts));
 			} else {
-				log.log(Log.INFO, ts + " | " + getMarket() + " " + this + " " + agentType + 
+				Logger.log(Logger.INFO, ts + " | " + getMarket() + " " + this + " " + agentType + 
 						"::agentStrategy: no change in submitted ladder.");
 			}
 		}

@@ -21,28 +21,25 @@ public class AgentFactory {
 	 * @param params
 	 * @return
 	 */
-	public static Agent createAgent(String type,
-									Integer agentID,
-									Integer modelID,
-									SystemData data,
-									ObjectProperties params,
-									Log l) {
+	public static Agent createAgent(String type, Integer agentID,
+			Integer modelID, SystemData data, ObjectProperties params) {
 		
-		if (type.equals(Consts.DUMMY)) {
-			return new DummyAgent(agentID, modelID, data, params, l);
-		} else if (type.equals(Consts.LA)) {
-			return new LAAgent(agentID, modelID, data, params, l);
-		} else if (type.equals(Consts.BASICMARKETMAKER)) {
-			return new BasicMarketMaker(agentID, modelID, data, params, l);
-		} else if (type.equals(Consts.ZI)) {
-			return new ZIAgent(agentID, modelID, data, params, l);
-		} else if (type.equals(Consts.ZIR)) {
-			return new ZIRAgent(agentID, modelID, data, params, l);
-		} else if (type.equals(Consts.ZIP)) {
-			return new ZIPAgent(agentID, modelID, data, params, l);
-		} else if (type.equals(Consts.AA)) {
-			return new AAAgent(agentID, modelID, data, params, l);
-		} else {
+		switch (type) {
+		case Consts.DUMMY:
+			return new DummyAgent(agentID, modelID, data, params);
+		case Consts.LA:
+			return new LAAgent(agentID, modelID, data, params);
+		case Consts.BASICMARKETMAKER:
+			return new BasicMarketMaker(agentID, modelID, data, params);
+		case Consts.ZI:
+			return new ZIAgent(agentID, modelID, data, params);
+		case Consts.ZIR:
+			return new ZIRAgent(agentID, modelID, data, params);
+		case Consts.ZIP:
+			return new ZIPAgent(agentID, modelID, data, params);
+		case Consts.AA:
+			return new AAAgent(agentID, modelID, data, params);
+		default:
 			return null;
 		}
 	}

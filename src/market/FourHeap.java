@@ -8,8 +8,9 @@ package market;
 
 import java.util.*;
 
+import logger.Logger;
+
 import event.TimeStamp;
-import systemmanager.Log;
 import utils.Compare;
 
 /**
@@ -40,7 +41,6 @@ public class FourHeap
 
 	private Comparator<PQPoint> betterSell;
 	private Comparator<PQPoint> betterBuy;
-	private Log log;
 	private Integer mktID;
 	private int matchBuySetSize;          // #buys  in the matchedBuySet
 	private int matchSellSetSize;         // #sells in the matchedSellSet
@@ -134,27 +134,18 @@ public class FourHeap
 	 * @param l
 	 * @param aID
 	 */
-	public void setParams(Log l, int aID) {
-		log = l; mktID = new Integer(aID);
+	public void setParams(int aID) {
+		mktID = new Integer(aID);
 	}
 	
 	
 	public boolean shouldLog(int code) {
-		if (log == null) {
-			return false;
-		} else {
-			return log.shouldLog(code);
-		}
+		return Logger.shouldLog(code);
 	}
 	public void log(int code, String msg)
 	{
-		if (log == null) {
-			//System.out.println(code+"::"+msg);
-		} else
-		{
 			msg = mktID.toString() + "," + msg;
-			log.log(code, msg);
-		}
+			Logger.log(code, msg);
 	}
 	
 	/**
@@ -185,9 +176,9 @@ public class FourHeap
 		//return the Higher of the two prices (easiest to match)
 		//null is returned only if both arguments are null
 		if ((buyToMatch != null) && (DEBUG))
-			log(Log.DEBUG,"buyToMatch: "+buyToMatch);
+			log(Logger.DEBUG,"buyToMatch: "+buyToMatch);
 		if ((sellToBeat != null) && (DEBUG))
-			log(Log.DEBUG,"selltoBeat: "+sellToBeat);
+			log(Logger.DEBUG,"selltoBeat: "+sellToBeat);
 		ret =  Compare.max(buyToMatch,sellToBeat);
 		if (ret == null)
 			ret = new Price(-1);
@@ -512,7 +503,7 @@ public class FourHeap
 		{
 			logSets();
 			if (worstMatchingBuy() == null)
-				log(Log.ERROR,"FourHeap::equalizeSetSizes, wmb==null");
+				log(Logger.ERROR,"FourHeap::equalizeSetSizes, wmb==null");
 			throw(e);
 		}
 
@@ -528,7 +519,7 @@ public class FourHeap
 		{
 			logSets();
 			if (worstMatchingSell() == null)
-				log(Log.ERROR,"FourHeap::equalizeSetSizes, wms==null");
+				log(Logger.ERROR,"FourHeap::equalizeSetSizes, wms==null");
 
 			throw(e);
 		}
@@ -614,13 +605,13 @@ public class FourHeap
 //		if (shouldLog(Log.INFO)) {
 //			log(Log.INFO,"FourHeap::logSets, "+s);
 //		}
-		log.log(Log.INFO, "    [" + mktID + "] " + "FourHeap::logSets::" + s);
+		Logger.log(Logger.INFO, "    [" + mktID + "] " + "FourHeap::logSets::" + s);
 	}
 	
 	public void logSets(TimeStamp ts)
 	{
 		String s = printSet(0) + printSet(1) + printSet(2) + printSet(3);
-		log.log(Log.INFO, ts.toString() + " | [" + mktID + "] " + "FourHeap::logSets::" + s);
+		Logger.log(Logger.INFO, ts.toString() + " | [" + mktID + "] " + "FourHeap::logSets::" + s);
 	}
 	
 	private String printSet(int t)

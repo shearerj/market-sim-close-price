@@ -1,5 +1,6 @@
 package entity;
 
+import logger.Logger;
 import market.*;
 import data.ObjectProperties;
 import data.SystemData;
@@ -26,11 +27,11 @@ public class CDAMarket extends Market {
 	 * Overloaded constructor.
 	 * @param marketID
 	 */
-	public CDAMarket(int marketID, SystemData d, ObjectProperties p, Log l) {
-		super(marketID, d, p, l);
+	public CDAMarket(int marketID, SystemData d, ObjectProperties p) {
+		super(marketID, d, p);
 		marketType = Consts.getMarketType(this.getName());
 		orderbook = new PQOrderBook(id);
-		orderbook.setParams(id, l, d);
+		orderbook.setParams(id, d);
 	}
 
 	public Bid getBidQuote() {
@@ -74,7 +75,7 @@ public class CDAMarket extends Market {
 		orderbook.logActiveBids(clearTime);
 		orderbook.logFourHeap(clearTime);
 		
-		log.log(Log.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
+		Logger.log(Logger.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
 				this.quote(clearTime));
 		ArrayList<Transaction> transactions = orderbook.earliestPriceClear(clearTime);
 		
@@ -85,7 +86,7 @@ public class CDAMarket extends Market {
 			orderbook.logFourHeap(clearTime);
 			data.addDepth(id, clearTime, orderbook.getDepth());
 			
-			log.log(Log.INFO, clearTime + " | ....." + this + " " + 
+			Logger.log(Logger.INFO, clearTime + " | ....." + this + " " + 
 					this.getName() + "::clear: No change. Post-clear Quote" +  
 					this.quote(clearTime));
 			actMap.add(new SendToSIP(this, clearTime));
@@ -121,7 +122,7 @@ public class CDAMarket extends Market {
 		orderbook.logClearedBids(clearTime);
 		orderbook.logFourHeap(clearTime);
 		data.addDepth(this.id, clearTime, orderbook.getDepth());
-		log.log(Log.INFO, clearTime + " | ....." + toString() + " " + 
+		Logger.log(Logger.INFO, clearTime + " | ....." + toString() + " " + 
 				this.getName() + "::clear: Order book cleared: " +
 				"Post-clear Quote" + this.quote(clearTime));
 		actMap.add(new SendToSIP(this, clearTime));
@@ -141,7 +142,7 @@ public class CDAMarket extends Market {
 				data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
 				
 			} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
-				log.log(Log.ERROR, this.getName() + "::quote: ERROR bid > ask");
+				Logger.log(Logger.ERROR, this.getName() + "::quote: ERROR bid > ask");
 				data.addSpread(id, quoteTime, Consts.INF_PRICE);
 				data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
 				

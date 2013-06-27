@@ -4,6 +4,7 @@ import data.ObjectProperties;
 import data.Observations;
 import data.SystemData;
 import event.*;
+import logger.Logger;
 import market.*;
 import activity.Activity;
 import systemmanager.*;
@@ -52,8 +53,8 @@ public class AAAgent extends BackgroundAgent {
 	/**
 	 * Overloaded constructor.
 	 */
-	public AAAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, modelID, d, p, l);
+	public AAAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
+		super(agentID, modelID, d, p);
 		
 		bidRange = Integer.parseInt(params.get(AAAgent.BIDRANGE_KEY));
 		int alpha1 = (int) Math.round(getNormalRV(0, this.data.pvVar));

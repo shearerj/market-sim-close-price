@@ -3,12 +3,12 @@ package entity;
 import data.ObjectProperties;
 import data.SystemData;
 import event.*;
+import logger.Logger;
 import model.*;
 import market.*;
 import activity.Activity;
 import activity.ProcessQuote;
 import activity.UpdateNBBO;
-import systemmanager.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -51,8 +51,8 @@ public abstract class Market extends Entity {
 	 * @param p
 	 * @param l
 	 */
-	public Market(int marketID, SystemData d, ObjectProperties p, Log l) {
-		super(marketID, d, p, l);
+	public Market(int marketID, SystemData d, ObjectProperties p) {
+		super(marketID, d, p);
 
 		agentIDs = new ArrayList<Integer>();
 		buyers = new ArrayList<Integer>();
@@ -185,7 +185,7 @@ public abstract class Market extends Entity {
 	public Collection<Activity> sendToSIP(TimeStamp ts) {
                 int bid = this.getBidPrice().getPrice();
                 int ask = this.getAskPrice().getPrice();
-		log.log(Log.INFO, ts + " | " + this + " SendToSIP(" + bid + ", " + ask + ")");
+		Logger.log(Logger.INFO, ts + " | " + this + " SendToSIP(" + bid + ", " + ask + ")");
 
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		MarketModel model = data.getModelByMarketID(this.getID());

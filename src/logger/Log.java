@@ -15,7 +15,7 @@
  *
  *  $Id: Log.java,v 1.17 2004/09/27 18:11:55 chengsf Exp $
  */
-package systemmanager;
+package logger;
 
 import java.io.*;
 import java.util.*;
@@ -35,7 +35,7 @@ import java.io.PrintWriter;
  * new file. An example log_path is the string &quot;logs/loco1-%.log&quot;. The
  * standard log of the Loco is of this type, as is the Loco EventLog.
  */
-public class Log {
+class Log {
 	private String error_string;
 	private RandomAccessFile raf;
 	private boolean isopen = false;

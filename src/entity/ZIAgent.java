@@ -6,11 +6,9 @@ import data.SystemData;
 import event.*;
 import market.*;
 import activity.Activity;
-import systemmanager.*;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Random;
 
 
 /**
@@ -40,8 +38,8 @@ public class ZIAgent extends BackgroundAgent {
 	/**
 	 * Overloaded constructor.
 	 */
-	public ZIAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, modelID, d, p, l);
+	public ZIAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
+		super(agentID, modelID, d, p);
 		
 		bidRange = Integer.parseInt(params.get(ZIAgent.BIDRANGE_KEY));
 		

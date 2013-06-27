@@ -4,12 +4,10 @@ import data.*;
 import event.*;
 import market.*;
 import activity.*;
-import systemmanager.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Random;
 
 
 /**
@@ -29,8 +27,8 @@ public class ZIPAgent extends BackgroundAgent {
 	@SuppressWarnings("unused")
 	private int bidRange;				// range for limit order
 	
-	public ZIPAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, modelID, d, p, l);
+	public ZIPAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
+		super(agentID, modelID, d, p);
 		
 		bidRange = Integer.parseInt(params.get(ZIAgent.BIDRANGE_KEY));
 		int alpha1 = (int) Math.round(getNormalRV(0, this.data.pvVar));

@@ -3,8 +3,9 @@ package event;
 import java.util.HashSet;
 import java.util.Set;
 
+import logger.Logger;
+
 import systemmanager.Consts;
-import systemmanager.Log;
 import activity.*;
 
 /**
@@ -18,7 +19,6 @@ import activity.*;
  */
 public class EventManager {
 
-	protected Log log;
 	protected EventQueue eventQueue;
 	protected TimeStamp currentTime;
 	protected TimeStamp simulationLength;
@@ -29,9 +29,8 @@ public class EventManager {
 	/**
 	 * Constructor
 	 */
-	public EventManager(TimeStamp ts, Log l) {
+	public EventManager(TimeStamp ts) {
 		eventQueue = new EventQueue();
-		log = l;
 		currentTime = new TimeStamp(0);
 		simulationLength = ts;
 		fastActivitySet = new HashSet<Activity>();
@@ -63,7 +62,7 @@ public class EventManager {
 
 		// FIXME This toString is slow, and probably shouldn't be called if the
 		// logs aren't being used at debug level
-		log.log(Log.DEBUG, this.getClass().getSimpleName() + "::executeNext: " + 
+		Logger.log(Logger.DEBUG, this.getClass().getSimpleName() + "::executeNext: " + 
 				eventQueue);
 
 		try {
@@ -83,7 +82,7 @@ public class EventManager {
 			
 			// Execute all the infinitely fast activities if haven't done so yet
 			if (!alreadyExecutedFast) {
-				log.log(Log.DEBUG, this.getClass().getSimpleName() + 
+				Logger.log(Logger.DEBUG, this.getClass().getSimpleName() + 
 						"::executeNext: INFINITELY FAST: " + fastActivitySet);
 				for (Activity a : fastActivitySet) {
 					eventQueue.addAll(a.execute(currentTime));

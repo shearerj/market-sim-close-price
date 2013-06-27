@@ -3,6 +3,7 @@ package entity;
 import data.ObjectProperties;
 import data.SystemData;
 import event.*;
+import logger.Logger;
 import market.BestBidAsk;
 import market.Price;
 import market.Quote;
@@ -51,9 +52,8 @@ public abstract class SMAgent extends Agent {
 	 * @param p
 	 * @param l
 	 */
-	public SMAgent(int agentID, int modelID, SystemData d, ObjectProperties p,
-			Log l) {
-		super(agentID, modelID, d, p, l);
+	public SMAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
+		super(agentID, modelID, d, p);
 
 		int mktID = Integer.parseInt(params.get(SMAgent.MARKETID_KEY));
 		market = data.getMarket(mktID);
@@ -117,7 +117,7 @@ public abstract class SMAgent extends Agent {
 	 * @return Collection<Activity>
 	 */
 	public Collection<? extends Activity> agentArrival(TimeStamp ts) {
-		log.log(Log.INFO,
+		Logger.log(Logger.INFO,
 				ts.toString() + " | " + this + "->" + market.toString());
 		this.enterMarket(market, ts);
 		// FIXME I think with the new event queue, this should be instantaneous
@@ -243,13 +243,13 @@ public abstract class SMAgent extends Agent {
 		}
 
 		if (nbboBetter)
-			log.log(Log.INFO, ts + " | " + this + " " + agentType
+			Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
 					+ "::submitNMSBid: " + "NBBO(" + lastNBBOQuote.bestBid
 					+ ", " + lastNBBOQuote.bestAsk + ") better than " + market
 					+ " Quote(" + mainMarketQuote.lastBidPrice + ", "
 					+ mainMarketQuote.lastAskPrice + ")");
 		if (willTransact)
-			log.log(Log.INFO, ts + " | " + this + " " + agentType
+			Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
 					+ "::submitNMSBid: " + "Bid +(" + price + "," + quantity
 					+ ") will transact" + " immediately in " + bestMarket
 					+ " given best price " + bestPrice);
@@ -261,7 +261,7 @@ public abstract class SMAgent extends Agent {
 
 		String durationLog = duration != Consts.INF_TIME
 				&& duration.longValue() > 0 ? ", duration=" + duration : "";
-		log.log(Log.INFO, ts + " | " + this + " " + agentType
+		Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
 				+ "::submitNMSBid: " + "+(" + price + "," + quantity + ") to "
 				+ bestMarket + durationLog);
 
