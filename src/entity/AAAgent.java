@@ -57,10 +57,7 @@ public class AAAgent extends BackgroundAgent {
 		private double beta_t; 		//learning coefficient for theta (long term)
 	
 		//Agent strategy variables
-		private ArrayList<Transaction> trans;
 		private int mostRecentPrice;
-		private double movingAverage;	
-		private double mvgAvgNum;		//number of terms used for current movingAverage
 		private double aggression;		//short term learning variable
 		private double theta;			//long term learning variable
 		private double thetaMax;		//max possible value for theta
@@ -70,7 +67,6 @@ public class AAAgent extends BackgroundAgent {
 
 		public AAStrategy(int test) {
 			testing = test; //for unit tests
-			movingAverage = -1;
 			//Agent Parameters
 			//Private Value
 	        ArrayList<Integer> alphas = new ArrayList<Integer>();
@@ -101,11 +97,11 @@ public class AAAgent extends BackgroundAgent {
 		 * Updates the short term learning variable
 		 * @param ts, tau
 		 */
-		private void updateAggression(TimeStamp ts, int tau) {
-			if(trans.size() == 0) return;	//If no transactions yet, cannot update
+		private void updateAggression(TimeStamp ts, int tau, double movingAverage) {
+			if(movingAverage == -1) return;	//If no transactions yet, cannot update
 			
 			//Determining r_shout
-			double r_shout = determineAggression(mostRecentPrice);
+			double r_shout = determineAggression(mostRecentPrice, movingAverage);
 			
 			//Determining whether agent must be more or less aggressive
 			//See the Vytelingum paper (sec 4.3)
@@ -136,7 +132,8 @@ public class AAAgent extends BackgroundAgent {
 	     * Update the long term learning variable
 	     * @param ts Current TimeStamp
 	     */
-	    private void updateAdaptiveness(TimeStamp ts){
+	    private void updateAdaptiveness(TimeStamp ts, double movingAverage, 
+	    		double mvgAvgNum, ArrayList<Transaction> trans){
 	    	//If number of transactions < historical, do not update
 	    	if(mvgAvgNum < historical) return;
 			
@@ -170,10 +167,8 @@ public class AAAgent extends BackgroundAgent {
 			return;
 	    }
 	    
-		private void findMovingAverage() { 
-			//Getting the Past quotes
-			// EW: changed to get transactions for the model, not just a specific market
-			trans = new ArrayList<Transaction>(data.getTrans(modelID));
+		private void findMovingAverage(double movingAverage, double mvgAvgNum, 
+				ArrayList<Transaction> trans) { 
 			if(trans.size() == 0) return; //Error checking
 			mostRecentPrice = trans.get(trans.size() - 1).price.getPrice();
 			double total = 0;
@@ -183,7 +178,10 @@ public class AAAgent extends BackgroundAgent {
 				total += (double) trans.get(i).price.getPrice();
 				num += 1;
 			}
-			if(num == 0) return;
+			if(num == 0) {
+				movingAverage = -1;
+				return;
+			}
 			movingAverage = total / num;
 			mvgAvgNum = num;
 			//System.out.println(movingAverage);
@@ -200,7 +198,7 @@ public class AAAgent extends BackgroundAgent {
 		 * 
 		 * @return price target according to the AA Strategy
 		 */
-		private double determinePriceTarget() {
+		private double determinePriceTarget(double movingAverage) {
 			double tau;
 			//Buyers
 			if(isBuyer) {
@@ -256,7 +254,7 @@ public class AAAgent extends BackgroundAgent {
 		 * @param mostRecentPrice
 		 * @return
 		 */
-		private double determineAggression(int mostRecentPrice) {
+		private double determineAggression(int mostRecentPrice, double movingAverage) {
 			double tau = mostRecentPrice;
 			double r_shout = 0;
 			//Buyers
@@ -469,16 +467,17 @@ public class AAAgent extends BackgroundAgent {
     public Collection<Activity> agentStrategy(TimeStamp ts) {
     	String s = ts + " | " + this + " " + agentType + ":";
     	Collection<Activity> actMap = new ArrayList<Activity>();
-    	//Randomizing buyer or seller
-    	//isBuyer = rand.nextBoolean();
-    	
-    	
+
     	//Updating market info
     	updateAllQuotes(ts);
     	updateTransactions(ts);
 
 		//Update the moving average
-    	strat.findMovingAverage(); 	
+    	int movingAverage = -1;
+    	int mvgAvgNum = 0;
+		// EW: changed to get transactions for the model, not just a specific market
+		ArrayList<Transaction> trans = new ArrayList<Transaction>(data.getTrans(modelID));
+    	strat.findMovingAverage(movingAverage, mvgAvgNum, trans); 	
 		
     	//Determining Quantity
     	int quantity = isBuyer ? 1 : -1;
@@ -488,9 +487,9 @@ public class AAAgent extends BackgroundAgent {
     	
 		//Determine the Target Price
 		int targetPrice;
-		if(strat.movingAverage == -1) targetPrice = -1;
+		if(movingAverage == -1) targetPrice = -1;
 		//Can only compute target price if movingAverage is valid
-		else targetPrice = (int) Math.round(strat.determinePriceTarget());
+		else targetPrice = (int) Math.round(strat.determinePriceTarget(movingAverage));
 		
 		
 		//Bidding Layer - only if at least one ask and one bid have been submitted
@@ -498,10 +497,10 @@ public class AAAgent extends BackgroundAgent {
 		actMap.addAll(strat.biddingLayer(targetPrice, quantity, ts));
 		
 		//Update the short term learning variable
-		if(strat.movingAverage != -1) strat.updateAggression(ts, targetPrice);
+		if(movingAverage != -1) strat.updateAggression(ts, targetPrice, movingAverage);
 		
 		//Update long term learning variable
-		if(strat.movingAverage != -1) strat.updateAdaptiveness(ts);
+		if(movingAverage != -1) strat.updateAdaptiveness(ts, movingAverage, mvgAvgNum, trans);
 
 		//Market Reentry
 		TimeStamp tsNew = reentry.next();
