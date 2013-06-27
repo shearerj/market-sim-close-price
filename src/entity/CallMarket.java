@@ -136,8 +136,8 @@ public class CallMarket extends Market {
 		for (Iterator<Transaction> i = trans.iterator(); i.hasNext();) {
 			PQTransaction t = (PQTransaction) i.next();
 			// track which agents were involved in the transactions
-			transactingIDs.add(t.buyerID);
-			transactingIDs.add(t.sellerID);
+			transactingIDs.add(t.buyer.getID());
+			transactingIDs.add(t.seller.getID());
 
 			data.addTransaction(t);
 			lastClearPrice = t.price;

@@ -592,7 +592,7 @@ public class SystemData {
 		int id = transIDSequence.increment();
 		tr.transID = id;
 		
-		MarketModel model = getModelByMarketID(tr.marketID);
+		MarketModel model = getModelByMarketID(tr.market.getID());
 		int modelID = model.getID();
 		addSurplus(modelID, tr);
 		addModelTransID(modelID, tr.transID);
@@ -651,36 +651,36 @@ public class SystemData {
 			Price rt = getFundamentalAt(t.timestamp);
 			
 			// Compute buyer surplus
-			Agent buyer = getAgent(t.buyerID);
-			TimeStamp buyTime = getTimeToExecution(t.buyBidID);
+			Agent buyer = t.getBuyer();
+			TimeStamp buyTime = getTimeToExecution(t.buyBid.getBidID());
 			if (buyer.getPrivateValue() != null) {
-				double cs = getPrivateValueByBid(t.buyBidID).sum(rt).diff(t.price).getPrice();				
+				double cs = getPrivateValueByBid(t.buyBid.getBidID()).sum(rt).diff(t.price).getPrice();				
 				// print model ID, buyerID, seller ID, private value, fundamental, trans price, surplus, time, rho
 				// System.out.println(modelID + "," + t.buyerID + "," + "," +getPrivateValueByBid(t.buyBidID)
 				//		+ "," + rt + "," + t.price + "," + cs + "," + buyTime + "," + rho);
-				s.addCumulative(t.buyerID, Math.exp(-rho * buyTime.longValue()) * cs);
+				s.addCumulative(t.buyer.getID(), Math.exp(-rho * buyTime.longValue()) * cs);
 				
 			} else {
 				double cs = -t.price.getPrice();
 				// System.out.println(modelID + "," + t.buyerID + "," + "," +getPrivateValueByBid(t.buyBidID)
 				//		+ "," + rt + "," + t.price + "," + cs + "," + buyTime + "," + rho);
-				s.addCumulative(t.buyerID, Math.exp(-rho * buyTime.longValue()) * cs);
+				s.addCumulative(t.buyer.getID(), Math.exp(-rho * buyTime.longValue()) * cs);
 			}
 			
 			// Compute seller surplus
-			Agent seller = getAgent(t.sellerID);
-			TimeStamp sellTime = getTimeToExecution(t.sellBidID);
+			Agent seller = getAgent(t.seller.getID());
+			TimeStamp sellTime = getTimeToExecution(t.sellBid.getBidID());
 			if (seller.getPrivateValue() != null) {
-				double ps = t.price.diff(getPrivateValueByBid(t.sellBidID).sum(rt)).getPrice();
+				double ps = t.price.diff(getPrivateValueByBid(t.sellBid.getBidID()).sum(rt)).getPrice();
 				// System.out.println(modelID + "," + "," + t.sellerID + "," + getPrivateValueByBid(t.sellBidID)
 				//		+ "," + rt + "," + t.price + "," + ps + "," + sellTime + "," + rho);
-				s.addCumulative(t.sellerID, Math.exp(-rho * sellTime.longValue()) * ps);
+				s.addCumulative(t.seller.getID(), Math.exp(-rho * sellTime.longValue()) * ps);
 				
 			} else {
 				double ps = t.price.getPrice();
 				// System.out.println(modelID + "," + "," + t.sellerID + "," + getPrivateValueByBid(t.sellBidID)
 				//		+ "," + rt + "," + t.price + "," + ps + "," + sellTime + "," + rho);
-				s.addCumulative(t.sellerID, Math.exp(-rho * sellTime.longValue()) * ps);
+				s.addCumulative(t.seller.getID(), Math.exp(-rho * sellTime.longValue()) * ps);
 			}
 		}
 	}

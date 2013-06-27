@@ -72,8 +72,7 @@ public class PQPointComparator implements Comparator<PQPoint>
 		{
 			T = (pq1.Parent.timestamp.compareTo(pq2.Parent.timestamp));
 
-			if (T == 0)
-				T = pq1.Parent.bidID.compareTo(pq2.Parent.bidID);
+			if (T == 0) T = pq1.Parent.getBidID().compareTo(pq2.Parent.getBidID());
 		}
 		else
 		{

@@ -258,7 +258,7 @@ public class Observations {
 		DescriptiveStatistics speeds = new DescriptiveStatistics();
 		for (Integer bidID : data.executionTime.keySet()) {
 			PQBid b = data.getBid(bidID);
-			if (ids.contains(b.getMarketID())) {
+			if (ids.contains(b.getMarket().getID())) {
 				speeds.addValue((double) data.executionTime.get(bidID).longValue());
 			}
 		}
@@ -362,7 +362,7 @@ public class Observations {
 			fundPrices.add(tr.timestamp, new Double(data.getFundamentalAt(tr.timestamp).getPrice()));
 			
 			// update number of transactions
-			for (int id : Arrays.asList(tr.buyerID, tr.sellerID)) {
+			for (int id : Arrays.asList(tr.getBuyer().getID(), tr.getSeller().getID())) {
 				if (model.getAgentIDs().contains(id)) {
 					String type = data.getAgent(id).getType();
 					int num = 0;

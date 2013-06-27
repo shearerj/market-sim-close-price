@@ -103,8 +103,8 @@ public class CDAMarket extends Market {
 		for (Iterator<Transaction> i = transactions.iterator(); i.hasNext();) {
 			PQTransaction t = (PQTransaction) i.next();
 			// track which agents were involved in the transactions
-			transactingIDs.add(t.buyerID);
-			transactingIDs.add(t.sellerID);
+			transactingIDs.add(t.getBuyer().getID());
+			transactingIDs.add(t.getSeller().getID());
 			
 			data.addTransaction(t);
 			lastClearPrice = t.price;

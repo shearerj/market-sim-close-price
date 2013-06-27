@@ -163,24 +163,24 @@ public class FourHeap
 	 *@return current bid or -1 if there are no buy bids in the heap
 	 */
 	@SuppressWarnings("unused")
-	public Price getBidQuote()
+	public PQPoint getBidQuote()
 	{
 		// new sell either has to beat a matching sell, or
 		// match a non-matching buy
 		if (DEBUG)  logSets();
-		Price buyToMatch = null;
-		Price sellToBeat = null;
-		Price ret;
+		PQPoint buyToMatch = null;
+		PQPoint sellToBeat = null;
+		PQPoint ret;
 
 		//determine the easiest non-matching buy to match
 		if (matchBuySetSize > matchSellSetSize)
-			buyToMatch =  worstMatchingBuy().getPrice();
+			buyToMatch =  worstMatchingBuy();
 		else if (bestBuy() != null)
-			buyToMatch = bestBuy().getPrice();
+			buyToMatch = bestBuy();
 
 		//determine if there is a matched sell to beat
 		if (worstMatchingSell() != null)
-			sellToBeat = worstMatchingSell().getPrice();
+			sellToBeat = worstMatchingSell();
 
 		//return the Higher of the two prices (easiest to match)
 		//null is returned only if both arguments are null
@@ -190,7 +190,7 @@ public class FourHeap
 			log(Log.DEBUG,"selltoBeat: "+sellToBeat);
 		ret =  Compare.max(buyToMatch,sellToBeat);
 		if (ret == null)
-			ret = new Price(-1);
+			ret = new PQPoint(0, new Price(-1));
 
 		return ret;
 	}
@@ -201,23 +201,23 @@ public class FourHeap
 	 *
 	 *@return current ask or -1 if there are no sell bids in the heap
 	 */
-	public Price getAskQuote()
+	public PQPoint getAskQuote()
 	{
-		Price sellToMatch = null;
-		Price buyToBeat = null;
-		Price ret = null;
+		PQPoint sellToMatch = null;
+		PQPoint buyToBeat = null;
+		PQPoint ret = null;
 		if (DEBUG) logSets();
 		//new buy either has to beat a matching buy, or
 		// match a non-matching sell
 		//compute the lowest non-winning sell price
 		if (matchSellSetSize > matchBuySetSize)
-			sellToMatch = worstMatchingSell().getPrice();
+			sellToMatch = worstMatchingSell();
 		else if (bestSell() != null)
-			sellToMatch = bestSell().getPrice();
+			sellToMatch = bestSell();
 
 		//compute the lowest winning buy bid
 		if (worstMatchingBuy() != null)
-			buyToBeat = worstMatchingBuy().getPrice();
+			buyToBeat = worstMatchingBuy();
 
 		//match the lower of the two (easiest buy to match)
 		//null is returned only if both arguments are null;
@@ -228,7 +228,7 @@ public class FourHeap
 		ret =  Compare.min(buyToBeat, sellToMatch);
 
 		if (ret == null)
-			ret = new Price(-1);
+			ret = new PQPoint(0, new Price(-1));
 
 		return ret;
 

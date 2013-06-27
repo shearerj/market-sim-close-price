@@ -6,6 +6,9 @@ package market;
 
 import java.util.*;
 
+import entity.Agent;
+import entity.Market;
+
 /**
  * a single price-quantity bid point
  */
@@ -96,10 +99,18 @@ public class PQPoint extends Point implements Comparable<PQPoint> {
 	 *
 	 * @return the agentID of the parent Bid
 	 */
-	public  int getAgentID()
+	public int getAgentID()
 	{
 		if (Parent == null) return 0;
-		else return Parent.agentID.intValue();
+		else return Parent.getAgent().getID();
+	}
+	
+	public Agent getAgent() {
+		return Parent.getAgent();
+	}
+	
+	public Market getMarket() {
+		return Parent.getMarket();
 	}
 
 	/**

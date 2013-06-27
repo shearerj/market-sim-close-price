@@ -43,7 +43,7 @@ public abstract class OrderBook {
 	
 	
 	public void insertBid(Bid newBid) {
-		Integer key = newBid.agentID;
+		Integer key = newBid.getAgent().getID();
 		activeBids.put(key, newBid);
 	}
 	
