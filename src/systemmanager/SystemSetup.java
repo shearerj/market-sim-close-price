@@ -111,21 +111,21 @@ public class SystemSetup {
 			
 			// Must create market models before agents, so can add the agents
 			// then to the appropriate/corresponding markets.
-			createSIP();
+			createSIP(); // TODO Move to each market model...
 			log.log(Log.INFO, "------------------------------------------------");
 			log.log(Log.INFO, "            Creating MARKET MODELS");
 			createMarketModels();
 			log.log(Log.INFO, "------------------------------------------------");
 			log.log(Log.INFO, "            Creating AGENTS");
-			createAllAgents();
+			createAllAgents(); // TODO Move to market Models
 
 			// Log agent information
-			logAgentInfo();
+			logAgentInfo(); // TODO move to agent creation...
 			log.log(Log.INFO, "------------------------------------------------");
 			log.log(Log.INFO, " ");
 
 			// Initial SendToSIP Activity for all markets
-			for (Market mkt : data.getMarkets().values()) {
+			for (Market mkt : data.getMarkets().values()) { // Move to market Models
 				eventManager.addActivity(new SendToSIP(mkt, new TimeStamp(0)));
 			}
 		} catch (Exception e) {

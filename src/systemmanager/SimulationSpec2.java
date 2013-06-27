@@ -29,35 +29,44 @@ import event.TimeStamp;
  */
 public class SimulationSpec2 {
 
-	protected Log log;
-	protected Gson gson;
-
 	public final static String ASSIGN_KEY = "assignment";
 	public final static String CONFIG_KEY = "configuration";
 
-	public SimulationSpec2(Log l) {
+	public final static String SIMULATION_LENGTH = "sim_length";
+	public final static String TICK_SIZE = "tick_size";
+	public final static String LATENCY = "nbbo_latency";
+	public final static String ARRIVAL_RATE = "arrival_rate";
+	public final static String REENTRY_RATE = "reentry_rate";
+	public final static String FUNDAMENTAL_MEAN = "mean_value";
+	public final static String FUNDAMENTAL_KAPPA = "kappa";
+	public final static String FUNDAMENTAL_SHOCK_VAR = "shock_var";
+	public final static String PRIVATE_VALUE_VAR = "private_value_var";
+	public final static String PRIMARY_MODEL = "primary_model";
+
+	protected final Log log;
+	protected final JsonObject spec;
+
+	public SimulationSpec2(Log l, File specFile) throws JsonSyntaxException,
+			JsonIOException, FileNotFoundException {
 		log = l;
-		gson = new Gson();
-	}
-	
-	public void loadFile(String specFileName, SystemData data) throws JsonSyntaxException, JsonIOException, FileNotFoundException {
-		loadFile(new File(specFileName), data);
+		spec = new Gson().fromJson(new FileReader(specFile), JsonObject.class);
 	}
 
-	public void loadFile(File specFile, SystemData data)
+	public SimulationSpec2(Log l, String specFileName)
 			throws JsonSyntaxException, JsonIOException, FileNotFoundException {
-		JsonObject root = gson.fromJson(new FileReader(specFile),
-				JsonObject.class);
-		JsonObject assignments = root.getAsJsonObject(ASSIGN_KEY);
-		JsonObject config = root.getAsJsonObject(CONFIG_KEY);
-
-		params(config, data);
-		marketModels(config, data);
-		backgroundAgents(config, data);
-		players(assignments, data);
+		this(l, new File(specFileName));
 	}
 
-	protected void params(JsonObject config, SystemData data) {
+	public void writeData(SystemData data) {
+		params(data);
+		marketModels(data);
+		backgroundAgents(data);
+		players(data);
+	}
+
+	protected void params(SystemData data) {
+		JsonObject config = spec.getAsJsonObject(CONFIG_KEY);
+
 		data.simLength = new TimeStamp(config.getAsJsonPrimitive("sim_length")
 				.getAsLong());
 		data.tickSize = config.getAsJsonPrimitive("tick_size").getAsInt();
@@ -79,7 +88,9 @@ public class SimulationSpec2 {
 				.getAsString();
 	}
 
-	protected void marketModels(JsonObject config, SystemData data) {
+	protected void marketModels(SystemData data) {
+		JsonObject config = spec.getAsJsonObject(CONFIG_KEY);
+
 		for (String type : Consts.MARKETMODEL_TYPES) {
 			// models here is a comma-separated list
 			JsonPrimitive modelsTest = config.getAsJsonPrimitive(type);
@@ -102,7 +113,9 @@ public class SimulationSpec2 {
 		}
 	}
 
-	protected void backgroundAgents(JsonObject config, SystemData data) {
+	protected void backgroundAgents(SystemData data) {
+		JsonObject config = spec.getAsJsonObject(CONFIG_KEY);
+
 		for (String agentType : Consts.SM_AGENT_TYPES) {
 			JsonPrimitive numJson = config.getAsJsonPrimitive(agentType);
 			JsonPrimitive setupJson = config.getAsJsonPrimitive(agentType
@@ -117,7 +130,9 @@ public class SimulationSpec2 {
 		}
 	}
 
-	protected void players(JsonObject assignments, SystemData data) {
+	protected void players(SystemData data) {
+		JsonObject assignments = spec.getAsJsonObject(ASSIGN_KEY);
+
 		for (String role : Consts.roles) {
 			JsonArray strats = assignments.getAsJsonArray(role);
 			if (strats == null)
