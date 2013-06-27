@@ -765,7 +765,7 @@ public abstract class Agent extends Entity {
 		} else {
 			// check whether seller, in which case negate the quantity
 			int quantity = t.quantity;
-			if (this.id == t.seller.getID()) {
+			if (this.id == t.getSeller().getID()) {
 				quantity = -quantity;
 			}
 			// update cash flow and position
@@ -850,14 +850,14 @@ public abstract class Agent extends Entity {
 					Logger.log(Logger.INFO, ts + " | " + this + " " +
 							"Agent::updateTransactions: New transaction received: (" +
 							"transID=" + t.transID +", mktID=" + t.market.getID() +
-							", buyer=" + data.getAgentLogID(t.buyer.getID()) + 
-							", seller=" + data.getAgentLogID(t.seller.getID()) +
+							", buyer=" + data.getAgentLogID(t.getBuyer().getID()) + 
+							", seller=" + data.getAgentLogID(t.getSeller().getID()) +
 							", price=" + t.price + ", quantity=" + t.quantity + 
 							", timeStamp=" + t.timestamp + ")");
 					
 					// Log surplus for background agents with private values
-					Agent buyer = data.getAgent(t.buyer.getID());
-					Agent seller = data.getAgent(t.seller.getID());
+					Agent buyer = data.getAgent(t.getBuyer().getID());
+					Agent seller = data.getAgent(t.getSeller().getID());
 					Price rt = data.getFundamentalAt(ts);
 					int cs = 0;		// consumer surplus
 					int ps = 0;		// producer surplus

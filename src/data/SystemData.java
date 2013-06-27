@@ -661,29 +661,29 @@ public class SystemData {
 				// print model ID, buyerID, seller ID, private value, fundamental, trans price, surplus, time, rho
 				// System.out.println(modelID + "," + t.buyerID + "," + "," +getPrivateValueByBid(t.buyBidID)
 				//		+ "," + rt + "," + t.price + "," + cs + "," + buyTime + "," + rho);
-				s.addCumulative(t.buyer.getID(), Math.exp(-rho * buyTime.longValue()) * cs);
+				s.addCumulative(t.getBuyer().getID(), Math.exp(-rho * buyTime.longValue()) * cs);
 				
 			} else {
 				double cs = -t.price.getPrice();
 				// System.out.println(modelID + "," + t.buyerID + "," + "," +getPrivateValueByBid(t.buyBidID)
 				//		+ "," + rt + "," + t.price + "," + cs + "," + buyTime + "," + rho);
-				s.addCumulative(t.buyer.getID(), Math.exp(-rho * buyTime.longValue()) * cs);
+				s.addCumulative(t.getBuyer().getID(), Math.exp(-rho * buyTime.longValue()) * cs);
 			}
 			
 			// Compute seller surplus
-			Agent seller = getAgent(t.seller.getID());
+			Agent seller = getAgent(t.getSeller().getID());
 			TimeStamp sellTime = getTimeToExecution(t.sellBid.getBidID());
 			if (seller.getPrivateValue() != null) {
 				double ps = t.price.diff(getPrivateValueByBid(t.sellBid.getBidID()).sum(rt)).getPrice();
 				// System.out.println(modelID + "," + "," + t.sellerID + "," + getPrivateValueByBid(t.sellBidID)
 				//		+ "," + rt + "," + t.price + "," + ps + "," + sellTime + "," + rho);
-				s.addCumulative(t.seller.getID(), Math.exp(-rho * sellTime.longValue()) * ps);
+				s.addCumulative(t.getSeller().getID(), Math.exp(-rho * sellTime.longValue()) * ps);
 				
 			} else {
 				double ps = t.price.getPrice();
 				// System.out.println(modelID + "," + "," + t.sellerID + "," + getPrivateValueByBid(t.sellBidID)
 				//		+ "," + rt + "," + t.price + "," + ps + "," + sellTime + "," + rho);
-				s.addCumulative(t.seller.getID(), Math.exp(-rho * sellTime.longValue()) * ps);
+				s.addCumulative(t.getSeller().getID(), Math.exp(-rho * sellTime.longValue()) * ps);
 			}
 		}
 	}

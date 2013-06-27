@@ -14,8 +14,8 @@ import event.TimeStamp;
 public class Transaction {
 	
 	public Integer transID;
-	public Agent buyer;
-	public Agent seller;
+	protected Agent buyer;
+	protected Agent seller;
 	public Market market;
 	public Bid buyBid;
 	public Bid sellBid;
