@@ -6,6 +6,7 @@ import data.ObjectProperties;
 import data.SystemData;
 import event.TimeStamp;
 import systemmanager.*;
+import utils.RandPlus;
 
 /**
  * Abstract class for background traders. Makes it easier to test when 
@@ -20,7 +21,7 @@ public abstract class BackgroundAgent extends SMAgent {
 		super(agentID, modelID, d, p);
 		
 		// -- reorg --
-		rand = new Random(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
+		rand = new RandPlus(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
 		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
 		// -- reorg --
 	}

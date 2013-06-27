@@ -1,7 +1,8 @@
 package data;
 
-import java.util.Random;
 import java.util.ArrayList;
+
+import utils.RandPlus;
 
 import market.Price;
 
@@ -18,7 +19,7 @@ public class FundamentalValue {
 	private int meanValue;
 	private double shockVar;
 	private int length;			// length of random process (in time-steps)
-	private Random rand;
+	private RandPlus rand;
 	
 	/**
 	 * Constructor
@@ -27,7 +28,7 @@ public class FundamentalValue {
 	 * @param k
 	 */
 	public FundamentalValue(double kap, int meanVal, double var, int l) {
-		rand = new Random();
+		rand = new RandPlus();
 		kappa = kap;
 		meanValue = meanVal;
 		shockVar = var;
@@ -35,7 +36,7 @@ public class FundamentalValue {
 		
 		// stochastic initial conditions for random process
 		meanRevertProcess = new ArrayList<Price>();
-		meanRevertProcess.add(new Price((int) getNormalRV(meanValue, shockVar)));
+		meanRevertProcess.add(new Price((int) rand.nextGaussian(meanValue, shockVar)));
 		computeAllFundamentalValues();
 	}
 	
@@ -46,7 +47,7 @@ public class FundamentalValue {
 		// iterate through all the time steps & generate
 		for (int i = 1; i <= length; i++) {
 			int prevValue = meanRevertProcess.get(i-1).getPrice();
-			int nextValue = (int) (getNormalRV(0, shockVar) + (meanValue * kappa) +
+			int nextValue = (int) (rand.nextGaussian(0, shockVar) + (meanValue * kappa) +
 					((1 - kappa) *	prevValue));
 			// truncate at zero
 			nextValue = Math.max(nextValue, 0);
@@ -75,13 +76,4 @@ public class FundamentalValue {
 		return new Price(0);
 	}
 	
-	/** 
-	 * Generate normal random variable
-	 * @param mu
-	 * @param var
-	 * @return
-	 */
-	private double getNormalRV(double mu, double var) {
-	    return mu + rand.nextGaussian() * Math.sqrt(var);
-	}
 }

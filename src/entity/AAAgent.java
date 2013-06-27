@@ -71,7 +71,7 @@ public class AAAgent extends BackgroundAgent {
 			//Private Value
 	        ArrayList<Integer> alphas = new ArrayList<Integer>();
 	        for(int i= -maxAbsPosition; i < maxAbsPosition; i++) {
-	        	alphas.add((int) Math.round(getNormalRV(0, pvVar))); 
+	        	alphas.add((int) Math.round(rand.nextGaussian(0, pvVar))); 
 	        }
 	        alpha = new PrivateValue(alphas);
 	        limit = alpha.getValueFromQuantity(0).getPrice();

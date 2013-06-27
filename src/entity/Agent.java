@@ -7,6 +7,7 @@ import model.*;
 import market.*;
 import activity.*;
 import systemmanager.*;
+import utils.RandPlus;
 
 import java.util.*;
 
@@ -26,7 +27,7 @@ public abstract class Agent extends Entity {
 	// -- end reorg --
 	
 	protected int modelID;			// ID of associated model
-	protected Random rand;
+	protected RandPlus rand;
 	
 	// Market information (all hashed by market ID, as ID may be negative)
 	protected HashMap<Integer,Price> bidPrice;
@@ -101,7 +102,7 @@ public abstract class Agent extends Entity {
 		// -- End Reorg --
 		
 		
-		rand = new Random();
+		rand = new RandPlus();
 		this.modelID = modelID;
 		agentType = Consts.getAgentType(this.getName());
 		
@@ -252,7 +253,7 @@ public abstract class Agent extends Entity {
 	public ArrayList<Integer> initPrivateValues(int q) {
 		ArrayList<Integer> alphas = new ArrayList<Integer>();
 		for (int i = -q; i <= q; i++) {
-			if (i != 0)	alphas.add((int) Math.round(getNormalRV(0, data.pvVar)));
+			if (i != 0)	alphas.add((int) Math.round(rand.nextGaussian(0, data.pvVar)));
 		}
 		return alphas;
 	}
@@ -331,7 +332,7 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public int getRandSleepTime(int sleepTime, double sleepVar) {
-		return (int) Math.round(getNormalRV(sleepTime, sleepVar));
+		return (int) Math.round(rand.nextGaussian(sleepTime, sleepVar));
 	}
 	
 	/**
@@ -1080,28 +1081,6 @@ public abstract class Agent extends Entity {
 		ask = Math.max(ask, 1);
 
 		return flag;
-	}
-	
-	
-	/** 
-	 * Generate normal random variable
-	 * @param mu	mean
-	 * @param var	variance
-	 * @return
-	 */
-	protected double getNormalRV(double mu, double var) {
-	    return mu + rand.nextGaussian() * Math.sqrt(var);
-	}
-
-	/**
-	 * Generate exponential random variate, with rate parameter.
-	 * @param rateParam
-	 * @return
-	 */
-	@SuppressWarnings("unused")
-	private double getExponentialRV(double rateParam) {
-		double r = rand.nextDouble();
-		return -Math.log(r) / rateParam;
 	}
 	
 }

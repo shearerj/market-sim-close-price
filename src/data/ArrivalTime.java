@@ -2,8 +2,9 @@ package data;
 
 import event.*;
 
-import java.util.Random;
 import java.util.ArrayList;
+
+import utils.RandPlus;
 
 /**
  * Class to store and compute agent arrival times.
@@ -14,7 +15,7 @@ public class ArrivalTime {
 
 	private TimeStamp time;
 	private double lambda;
-	private Random rand;
+	private RandPlus rand;
 	private ArrayList<TimeStamp> intervals;		// intervals between arrivals
 	private ArrayList<TimeStamp> arrivalTimes;	// arrival times
 	
@@ -27,7 +28,7 @@ public class ArrivalTime {
 	public ArrivalTime(TimeStamp ts, double lambda) {
 		time = ts;
 		this.lambda = lambda;
-		rand = new Random();
+		rand = new RandPlus();
 		intervals = new ArrayList<TimeStamp>();
 		arrivalTimes = new ArrayList<TimeStamp>();
 	}
@@ -38,7 +39,7 @@ public class ArrivalTime {
 	 * @param lambda arrival rate
 	 * @param rand
 	 */
-	public ArrivalTime(TimeStamp ts, double lambda, Random rand) {
+	public ArrivalTime(TimeStamp ts, double lambda, RandPlus rand) {
 		time = ts;
 		this.lambda = lambda;
 		this.rand = rand;
@@ -50,24 +51,13 @@ public class ArrivalTime {
 	 * @return next computed arrival time
 	 */
 	public TimeStamp next() {
-		double tmp = getExponentialRV(lambda);
+		double tmp = rand.nextExponential(lambda);
 		TimeStamp interval = new TimeStamp((int) Math.ceil(tmp));
 		time = time.sum(interval);
 		intervals.add(interval);
 		arrivalTimes.add(time);
 		return time;
 	}
-	
-	/**
-	 * Generate exponential random variate with rate parameter.
-	 * @param rateParam
-	 * @return
-	 */
-	private double getExponentialRV(double rateParam) {
-		double r = rand.nextDouble();
-		return -Math.log(r) / rateParam;
-	}
-	
 	
 	/**
 	 * @return list of all arrival times
