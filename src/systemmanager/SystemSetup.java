@@ -242,7 +242,7 @@ public class SystemSetup {
 			
 			ObjectProperties mp = (ObjectProperties) mop.getObject();
 			String mtype = mop.getMarketType();
-			Market market = MarketFactory.createMarket(mtype, mID, data, mp);
+			Market market = MarketFactory.createMarket(mtype, mID, data, mp, model);
 			market.linkModel(model.getID());
 			data.addMarket(market);
 			model.getMarketIDs().add(mID);

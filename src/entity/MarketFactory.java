@@ -1,5 +1,6 @@
 package entity;
 
+import model.MarketModel;
 import data.ObjectProperties;
 import data.SystemData;
 import systemmanager.*;
@@ -20,13 +21,13 @@ public class MarketFactory {
 	 * @return
 	 */
 	public static Market createMarket(String type, Integer marketID,
-			SystemData data, ObjectProperties params) {
+			SystemData data, ObjectProperties params, MarketModel model) {
 
 		switch (Consts.MarketType.valueOf(type)) {
 		case CDA:
-			return new CDAMarket(marketID, data, params);
+			return new CDAMarket(marketID, data, params, model);
 		case CALL:
-			return new CallMarket(marketID, data, params);
+			return new CallMarket(marketID, data, params, model);
 		default:
 			return null;
 		}
