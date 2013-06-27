@@ -743,7 +743,7 @@ public abstract class Agent extends Entity {
 			Logger.log(Logger.ERROR, "Agent::processTransaction: Corrupted (null) transaction record.");
 			flag = false;
 		} else {
-			if (t.market == null) {
+			if (t.getMarket() == null) {
 				Logger.log(Logger.ERROR, "Agent::processTransaction: t.market is null");
 				flag = false;
 			}
@@ -849,7 +849,7 @@ public abstract class Agent extends Entity {
 					
 					Logger.log(Logger.INFO, ts + " | " + this + " " +
 							"Agent::updateTransactions: New transaction received: (" +
-							"transID=" + t.transID +", mktID=" + t.market.getID() +
+							"transID=" + t.transID +", mktID=" + t.getMarket().getID() +
 							", buyer=" + data.getAgentLogID(t.getBuyer().getID()) + 
 							", seller=" + data.getAgentLogID(t.getSeller().getID()) +
 							", price=" + t.price + ", quantity=" + t.quantity + 
@@ -864,7 +864,7 @@ public abstract class Agent extends Entity {
 					
 					String s = ts + " | " + this + " " + "Agent::updateTransactions: BUYER surplus: ";
 					if (buyer.hasPrivateValue()) {
-						cs = (data.getPrivateValueByBid(t.buyBid.getBidID()).sum(rt)).diff(t.price).getPrice();
+						cs = (data.getPrivateValueByBid(t.getBuyBid().getBidID()).sum(rt)).diff(t.price).getPrice();
 						s += "(" + buyer.getPrivateValue() + "+" + rt + ")-" + t.price.getPrice() + 
 								"=" + cs + ", ";
 					} else {
@@ -873,7 +873,7 @@ public abstract class Agent extends Entity {
 					}
 					s += "SELLER surplus: ";
 					if (seller.hasPrivateValue()) {
-						ps = t.price.diff(data.getPrivateValueByBid(t.sellBid.getBidID()).sum(rt)).getPrice();
+						ps = t.price.diff(data.getPrivateValueByBid(t.getSellBid().getBidID()).sum(rt)).getPrice();
 						s += t.price.getPrice() + "-(" + seller.getPrivateValue() + "+" + rt + 
 								")=" + ps;
 					} else {

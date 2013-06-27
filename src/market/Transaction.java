@@ -16,9 +16,9 @@ public class Transaction {
 	public Integer transID;
 	protected Agent buyer;
 	protected Agent seller;
-	public Market market;
-	public Bid buyBid;
-	public Bid sellBid;
+	protected Market market;
+	protected Bid buyBid;
+	protected Bid sellBid;
 	
 	//Transaction Info
 	public Integer quantity;

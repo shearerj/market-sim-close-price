@@ -595,7 +595,7 @@ public class SystemData {
 		int id = transIDSequence.increment();
 		tr.transID = id;
 		
-		MarketModel model = getModelByMarketID(tr.market.getID());
+		MarketModel model = getModelByMarketID(tr.getMarket().getID());
 		int modelID = model.getID();
 		addSurplus(modelID, tr);
 		addModelTransID(modelID, tr.transID);
@@ -655,9 +655,9 @@ public class SystemData {
 			
 			// Compute buyer surplus
 			Agent buyer = t.getBuyer();
-			TimeStamp buyTime = getTimeToExecution(t.buyBid.getBidID());
+			TimeStamp buyTime = getTimeToExecution(t.getBuyBid().getBidID());
 			if (buyer.getPrivateValue() != null) {
-				double cs = getPrivateValueByBid(t.buyBid.getBidID()).sum(rt).diff(t.price).getPrice();				
+				double cs = getPrivateValueByBid(t.getBuyBid().getBidID()).sum(rt).diff(t.price).getPrice();				
 				// print model ID, buyerID, seller ID, private value, fundamental, trans price, surplus, time, rho
 				// System.out.println(modelID + "," + t.buyerID + "," + "," +getPrivateValueByBid(t.buyBidID)
 				//		+ "," + rt + "," + t.price + "," + cs + "," + buyTime + "," + rho);
@@ -672,9 +672,9 @@ public class SystemData {
 			
 			// Compute seller surplus
 			Agent seller = getAgent(t.getSeller().getID());
-			TimeStamp sellTime = getTimeToExecution(t.sellBid.getBidID());
+			TimeStamp sellTime = getTimeToExecution(t.getSellBid().getBidID());
 			if (seller.getPrivateValue() != null) {
-				double ps = t.price.diff(getPrivateValueByBid(t.sellBid.getBidID()).sum(rt)).getPrice();
+				double ps = t.price.diff(getPrivateValueByBid(t.getSellBid().getBidID()).sum(rt)).getPrice();
 				// System.out.println(modelID + "," + "," + t.sellerID + "," + getPrivateValueByBid(t.sellBidID)
 				//		+ "," + rt + "," + t.price + "," + ps + "," + sellTime + "," + rho);
 				s.addCumulative(t.getSeller().getID(), Math.exp(-rho * sellTime.longValue()) * ps);
