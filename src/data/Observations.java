@@ -5,6 +5,7 @@ import entity.*;
 import market.*;
 import systemmanager.*;
 
+import java.io.File;
 // import java.io.BufferedWriter;
 // import java.io.File;
 // import java.io.FileWriter;
@@ -190,7 +191,7 @@ public class Observations {
 	 * @param type
 	 */
 	public void outputSeries(TimeSeries s, String type) {
-		s.writeSeriesToFile(SystemData.simDir + Consts.logDir + type + ".txt");
+		s.writeSeriesToFile(new File(new File(data.simDir, Consts.logDir), type + ".txt"));
 	}
 
 	/**
@@ -201,16 +202,16 @@ public class Observations {
 	 */
 	public void outputSampledSeries(TimeSeries s, String type) {
 		
-		s.writePointsToCSFile(SystemData.simDir + Consts.logDir + type + "points.csv");
+		s.writePointsToCSFile(data.simDir + Consts.logDir + type + "points.csv");
 		for (int period : Consts.periods) {
 			s.writeSampledSeriesToFile(period, data.simLength.longValue(),
-					SystemData.simDir + Consts.logDir + type + "_" + period + ".csv");
+					data.simDir + Consts.logDir + type + "_" + period + ".csv");
 		}
 	}
 	
 	public void outputSampledSeries(int period, long maxTime, TimeSeries s, String type) {
 		s.writeSampledSeriesToFile(period, maxTime,
-				SystemData.simDir + Consts.logDir + type + "_period" + period + ".csv");
+				data.simDir + Consts.logDir + type + "_period" + period + ".csv");
 	}
 	
 	

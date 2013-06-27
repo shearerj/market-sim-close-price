@@ -77,7 +77,7 @@ public class SystemManager {
 
 		envProps = getProperties();
 		getLog(); // Must be called after "envProps"
-		data = new SystemData();
+		data = new SystemData(simNumber, simFolder);
 		spec = getSimulationSpec(); // Must be after "log" and "data"
 		obs = new Observations(data);
 		eventManager = new EventManager(data.simLength);

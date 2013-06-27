@@ -231,11 +231,10 @@ public class TimeSeries {
 	 * 
 	 * @param filename
 	 */
-	public void writeSeriesToFile(String filename) {
+	public void writeSeriesToFile(File file) {
 		try {
-			File f = new File(filename);
-			if (!f.isFile()) f.createNewFile();
-			FileOutputStream os = new FileOutputStream(f);
+			if (!file.isFile()) file.createNewFile();
+			FileOutputStream os = new FileOutputStream(file);
 			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
 			BufferedWriter bw = new BufferedWriter(osw);
 			for (Double d : series) {
