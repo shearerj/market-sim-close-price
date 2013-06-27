@@ -50,7 +50,6 @@ public class SystemData {
 	public HashMap<Integer,List<Integer>> modelTransID; // hashed by model ID	
 	
 	// Market information
-	public HashMap<Integer,PQBid> bids;					// all bids ever, hashed by bid ID
 	public HashMap<Integer,Price> privateValues;		// private values hashed by bid ID
 	public HashMap<Integer,Quote> quotes;				// hashed by market ID
 	public HashMap<Integer,Agent> agents;				// (all) agents hashed by ID
@@ -107,7 +106,6 @@ public class SystemData {
 		this.num = num;
 		this.simDir = simDir;
 		
-		bids = new HashMap<Integer,PQBid>();
 		privateValues = new HashMap<Integer,Price>();
 		quotes = new HashMap<Integer,Quote>();
 		agents = new HashMap<Integer,Agent>();
@@ -382,10 +380,6 @@ public class SystemData {
 		}
 		return ids;
 	}
-	
-	public PQBid getBid(int id) {
-		return bids.get(id);
-	}
 
 	public Price getPrivateValueByBid(int bidID) {
 		return privateValues.get(bidID);
@@ -470,10 +464,6 @@ public class SystemData {
 	
 	public void addQuote(int mktID, Quote q) {
 		quotes.put(mktID, q);
-	}
-	
-	public void addBid(PQBid b) {
-		bids.put(b.getBidID(), b);
 	}
 	
 	public void addPrivateValue(int bidID, Price pv) {

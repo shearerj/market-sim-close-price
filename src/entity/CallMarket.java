@@ -71,6 +71,7 @@ public class CallMarket extends Market {
 		// Unlike continuous auction market, no Clear inserted unless clear freq = 0
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		orderbook.insertBid((PQBid) b);
+		bids.add(b);
 		data.addDepth(id, ts, orderbook.getDepth());
 		data.addSubmissionTime(b.getBidID(), ts);
 		if (clearFreq.longValue() == 0) {

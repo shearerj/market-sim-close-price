@@ -22,11 +22,15 @@ import java.util.HashMap;
  */
 public abstract class Market extends Entity {
 
+	//reorg
+	protected MarketModel model;
+	protected ArrayList<Bid> bids;
+	//end reorg
+	
 	// Model information
 	// TODO Reference to MarketModel instead of just id?
 	// TODO equals method...
 	protected int modelID;				// ID of associated model
-	protected MarketModel model;
 	
 	// Agent information
 	protected ArrayList<Integer> buyers;
@@ -140,8 +144,16 @@ public abstract class Market extends Entity {
 	/**
 	 * @return map of bids (hashed by agent ID)
 	 */
-	public abstract HashMap<Integer, Bid> getBids();
+	public abstract HashMap<Integer,Bid> getBids();
 
+	/**
+	 * Returns all bids submitted to this market
+	 * @return bids
+	 */
+	public ArrayList<Bid> getAllBids() {
+		return this.bids;
+	}
+	
 	/**
 	 * Add bid to the market.
 	 * 
