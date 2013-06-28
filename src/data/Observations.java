@@ -255,13 +255,9 @@ public class Observations {
 	 */
 	public Feature getExecutionTime(MarketModel model) {
 		Feature feat = new Feature();
-		ArrayList<Integer> ids = model.getMarketIDs();
 		DescriptiveStatistics speeds = new DescriptiveStatistics();
-		for (Integer bidID : data.executionTime.keySet()) {
-			PQBid b = data.getBid(bidID);
-			if (ids.contains(b.getMarket().getID())) {
-				speeds.addValue((double) data.executionTime.get(bidID).longValue());
-			}
+		for(Bid bid : model.getAllBids()) {
+			speeds.addValue((double) data.executionTime.get(bid.getBidID()).longValue());
 		}
 //		feat.addMax(speeds);
 //		feat.addMin(speeds);

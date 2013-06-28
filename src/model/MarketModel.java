@@ -6,6 +6,7 @@ import systemmanager.Consts.MarketType;
 
 import java.util.ArrayList;
 
+import market.Bid;
 import market.Price;
 import market.Transaction;
 
@@ -254,6 +255,14 @@ public abstract class MarketModel {
 
 	public void addTrans(Transaction tr) {
 		this.trans.add(tr);
+	}
+	
+	public ArrayList<Bid> getAllBids() {
+		ArrayList<Bid> modelBids = new ArrayList<Bid>();
+		for(Market mkt : markets) {
+			modelBids.addAll(mkt.getAllBids());
+		}
+		return modelBids;
 	}
 
 	

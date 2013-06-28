@@ -53,6 +53,7 @@ public class CDAMarket extends Market {
 	
 	public Collection<Activity> addBid(Bid b, TimeStamp ts) {
 		orderbook.insertBid((PQBid) b);
+		bids.add(b);
 		data.addDepth(id, ts, orderbook.getDepth());
 		data.addSubmissionTime(b.getBidID(), ts);
 		return clear(ts);

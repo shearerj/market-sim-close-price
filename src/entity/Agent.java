@@ -564,7 +564,6 @@ public abstract class Agent extends Entity {
 		PQBid pqBid = new PQBid(this, mkt);
 		pqBid.addPoint(quantity, new Price(p));
 		pqBid.timestamp = ts;
-		data.addBid(pqBid);
 		// quantity can be +/-
 		if (hasPrivateValue()) {
 			data.addPrivateValue(pqBid.getBidID(), getPrivateValueAt(quantity));
@@ -603,7 +602,6 @@ public abstract class Agent extends Entity {
 				pqBid.addPoint(quantity.get(i), new Price(p));
 			}
 		}
-		data.addBid(pqBid);
 		// TODO incorporate multi-point PVs?
 		currentBid.put(mkt.id, pqBid);	
 		return mkt.addBid(pqBid, ts);
