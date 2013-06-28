@@ -17,9 +17,9 @@ public abstract class Entity {
 	protected final int id;
 	protected ObjectProperties params;		// stores all parameters
 	
-//	public Entity(int agentID) {
-//		id = agentID;
-//	}
+	public Entity(int agentID) {
+		id = agentID;
+	}
 
 	/**
 	 * Constructor

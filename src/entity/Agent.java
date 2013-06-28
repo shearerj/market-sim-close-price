@@ -84,6 +84,13 @@ public abstract class Agent extends Entity {
 	public final static String MAXQUANTITY_KEY = "maxqty";
 	public final static String MARKETID_KEY = "marketID";
 	
+	// FIXME Agent probably needs more than this...
+	public Agent(int agentID, TimeStamp arrivalTime, MarketModel model, RandPlus rand) {
+		super(agentID);
+		this.model = model;
+		this.rand = rand;
+		this.arrivalTime = arrivalTime;
+	}
 	
 	/**
 	 * Constructor

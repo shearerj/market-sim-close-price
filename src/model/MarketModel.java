@@ -5,6 +5,8 @@ import systemmanager.Consts.AgentType;
 import systemmanager.Consts.MarketType;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import market.Bid;
 import market.Price;
@@ -264,11 +266,11 @@ public abstract class MarketModel {
 		}
 		return modelBids;
 	}
-
 	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
+	public List<Market> getMarkets() {
+		return Collections.unmodifiableList(markets);
+	}
+
 	@Override
 	public String toString() {
 		return new String("{" + getID() + "}");

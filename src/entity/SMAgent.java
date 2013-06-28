@@ -7,8 +7,10 @@ import logger.Logger;
 import market.BestBidAsk;
 import market.Price;
 import market.Quote;
+import model.MarketModel;
 import activity.*;
 import systemmanager.*;
+import utils.RandPlus;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,6 +45,11 @@ public abstract class SMAgent extends Agent {
 	protected Market marketSubmittedBid; // market to which bid has been
 											// submitted
 
+	public SMAgent(int agentID, TimeStamp arrivalTime, MarketModel model, Market market, RandPlus rand) {
+		super(agentID, arrivalTime, model, rand);
+		this.market = market;
+	}
+	
 	/**
 	 * Constructor for a single market agent.
 	 * 

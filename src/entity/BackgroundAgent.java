@@ -1,11 +1,9 @@
 package entity;
 
-import java.util.Random;
-
+import model.MarketModel;
 import data.ObjectProperties;
 import data.SystemData;
 import event.TimeStamp;
-import systemmanager.*;
 import utils.RandPlus;
 
 /**
@@ -15,6 +13,10 @@ import utils.RandPlus;
  * @author ewah
  */
 public abstract class BackgroundAgent extends SMAgent {
+	
+	public BackgroundAgent(int agentID, TimeStamp arrivalTime, MarketModel model, Market market, RandPlus rand) {
+		super(agentID, arrivalTime, model, market, rand);
+	}
 
 	public BackgroundAgent(int agentID, int modelID, SystemData d, 
 			ObjectProperties p) {
