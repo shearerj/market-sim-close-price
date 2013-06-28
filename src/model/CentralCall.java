@@ -22,7 +22,7 @@ public class CentralCall extends MarketModel {
 	public CentralCall(int modelID, ObjectProperties p, SystemData d) {
 		super(modelID, p, d);
 		
-		config = p.get(Consts.MODEL_CONFIG_KEY);
+		config = p.getAsString(Consts.MODEL_CONFIG_KEY);
 		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
 			
 			ObjectProperties mktProperties = Consts.getProperties(Consts.MarketType.CALL);

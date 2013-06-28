@@ -38,15 +38,15 @@ public class ZIAgent extends BackgroundAgent {
 	protected final int bidRange; // range for limit order
 
 	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, int bidRange, RandPlus rand) {
+			Market market, RandPlus rand, ObjectProperties props) {
 		super(agentID, arrivalTime, model, market, rand);
-		this.bidRange = bidRange;
+		this.bidRange = props.getAsInt(BIDRANGE_KEY, 2000);
 	}
 
 	public ZIAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
 		super(agentID, modelID, d, p);
 
-		bidRange = Integer.parseInt(params.get(ZIAgent.BIDRANGE_KEY));
+		bidRange = params.getAsInt(ZIAgent.BIDRANGE_KEY);
 
 		int alpha1 = (int) Math.round(rand.nextGaussian(0, this.data.pvVar));
 		int alpha2 = (int) Math.round(rand.nextGaussian(0, this.data.pvVar));

@@ -241,7 +241,7 @@ public class Observations {
 			String agType = app.getAgentType().toString();
 			config.put(agType + "_" + NUM, data.getEnvAgentMap().get(app));
 			config.put(agType + "_" + AGENTSETUP, 
-					app.getProperties().toStrategyString());
+					app.getProperties().toConfigString());
 		}
 		return config;
 	}

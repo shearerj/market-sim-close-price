@@ -1,6 +1,5 @@
 package market;
 
-import data.Sequence;
 import entity.Agent;
 import entity.Market;
 import event.TimeStamp;

@@ -30,7 +30,7 @@ public class ZIPAgent extends BackgroundAgent {
 	public ZIPAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
 		super(agentID, modelID, d, p);
 		
-		bidRange = Integer.parseInt(params.get(ZIAgent.BIDRANGE_KEY));
+		bidRange = params.getAsInt(ZIAgent.BIDRANGE_KEY);
 		int alpha1 = (int) Math.round(rand.nextGaussian(0, this.data.pvVar));
 		int alpha2 = (int) Math.round(rand.nextGaussian(0, this.data.pvVar));
 		alpha = new PrivateValue(alpha1, alpha2);
@@ -55,8 +55,8 @@ public class ZIPAgent extends BackgroundAgent {
 		int val = Math.max(0, data.getFundamentalAt(ts).sum(getPrivateValueAt(q)).getPrice());
 
 		// Insert events for the agent to sleep, then wake up again at timestamp tsNew
-		int sleepTime = Integer.parseInt(params.get(SLEEPTIME_KEY));
-		double sleepVar = Double.parseDouble(params.get(SLEEPVAR_KEY));
+		int sleepTime = params.getAsInt(SLEEPTIME_KEY);
+		double sleepVar = params.getAsDouble(SLEEPVAR_KEY);
 		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
 		actMap.add(new AgentStrategy(this, tsNew));
 		return actMap;

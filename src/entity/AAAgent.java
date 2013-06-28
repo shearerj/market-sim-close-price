@@ -3,7 +3,6 @@ package entity;
 import data.*;
 import event.*;
 import logger.Logger;
-import model.*;
 import market.*;
 import activity.*;
 import systemmanager.*;
@@ -77,19 +76,19 @@ public class AAAgent extends BackgroundAgent {
 	        limit = alpha.getValueFromQuantity(0).getPrice();
 			
 	        //Parameters are currently taken from Vytelingum paper
-			historical = Integer.parseInt(params.get(AAAgent.HISTORICAL_KEY));
+			historical = params.getAsInt(AAAgent.HISTORICAL_KEY);
 			lambda_r = 0.01;
 			lambda_a = 0.01;
-			eta = Integer.parseInt(params.get(AAAgent.ETA_KEY));
+			eta = params.getAsInt(AAAgent.ETA_KEY);
 			gamma = 2;
 			beta_r = (rand.nextDouble() * 0.4) + 0.2;
 			beta_t = (rand.nextDouble() * 0.4) + 0.2;
 			//Initial aggression and theta
-			theta = Double.parseDouble(params.get(AAAgent.THETA_KEY));
-			aggression = Double.parseDouble(params.get(AAAgent.AGGRESSION_KEY));
+			theta = params.getAsDouble(AAAgent.THETA_KEY);
+			aggression = params.getAsDouble(AAAgent.AGGRESSION_KEY);
 			//Long term learning ranges
-			thetaMax = Double.parseDouble(params.get(AAAgent.THETAMAX_KEY));
-			thetaMin = Double.parseDouble(params.get(AAAgent.THETAMIN_KEY));
+			thetaMax = params.getAsDouble(AAAgent.THETAMAX_KEY);
+			thetaMin = params.getAsDouble(AAAgent.THETAMIN_KEY);
 			alphaMax = alphaMin = -1;
 		}
 		
@@ -341,7 +340,7 @@ public class AAAgent extends BackgroundAgent {
 			}
 			
 	    	//Pricing
-	    	int sign = isBuyer ? 1 : -1;
+//	    	int sign = isBuyer ? 1 : -1;
 	    	int price;
 			targetPrice = isBuyer ? Math.min(limit, targetPrice) : Math.max(limit, targetPrice);
 			
@@ -429,22 +428,18 @@ public class AAAgent extends BackgroundAgent {
 		agentType = Consts.getAgentType(this.getName());
 		
 		//Agent market variables
-		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
+		arrivalTime = new TimeStamp(params.getAsLong(Agent.ARRIVAL_KEY));
 		reentry = new ArrivalTime(arrivalTime, this.data.reentryRate, rand);
-		maxAbsPosition = Integer.parseInt(params.get(AAAgent.MAXQUANTITY_KEY));
+		maxAbsPosition = params.getAsInt(AAAgent.MAXQUANTITY_KEY);
 	
 		//Agent Strategy variables
-		int testing;
-		if( params.containsKey(AAAgent.TEST_KEY) ) {
-			testing = Integer.parseInt(params.get(AAAgent.TEST_KEY));
-		}
-		else testing = -1;
+		int testing = params.getAsInt(AAAgent.TEST_KEY, -1);
 		strat = new AAStrategy(testing);
 		//Randomly assigning agent as a buyer or seller
 		isBuyer = rand.nextBoolean();
 		
 		//Debugging Output
-		debugging = Boolean.parseBoolean(params.get(AAAgent.DEBUG_KEY));
+		debugging = params.getAsBoolean(AAAgent.DEBUG_KEY);
 		if(debugging) printInitDebugInfo();
     }
 
@@ -503,7 +498,7 @@ public class AAAgent extends BackgroundAgent {
 		if(movingAverage != -1) strat.updateAdaptiveness(ts, movingAverage, mvgAvgNum, trans);
 
 		//Market Reentry
-		TimeStamp tsNew = reentry.next();
+//		TimeStamp tsNew = reentry.next();
 		actMap.add(new AgentStrategy(this, reentry.next()));
 		
 		

@@ -2,100 +2,128 @@ package data;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
-import entity.Agent;
+import com.google.gson.Gson;
 
-/**
- * This class stores the parameters for a specific agent, market, or market model.
- * Each sets defaults for its properties in its constructor or in the Consts class, 
- * but the default settings can be overridden by simulation specifications.
- * 
- * ObjectProperties class is a wrapper for HashMap<String,String>.
- * 
- * @author ewah
- */
 public class ObjectProperties {
+	
+	protected static final transient Gson gson = new Gson();
+	protected Map<String, String> properties;
 
-	private HashMap<String,String> properties;
-	
 	public ObjectProperties() {
-		properties = new HashMap<String,String>();
+		properties = new HashMap<String, String>();
 	}
 	
-	/**
-	 * deep copy constructor
-	 * @param p
-	 */
-	public ObjectProperties(ObjectProperties p) {
-		properties = new HashMap<String, String>(p.properties);
-		
+	public ObjectProperties(ObjectProperties copy) {
+		properties = new HashMap<String, String>(copy.properties);
 	}
 	
-	public ObjectProperties(HashMap<String,String> hm) {
-		properties = new HashMap<String,String>(hm);
+	public ObjectProperties(String config) {
+		this();
+		String[] args = config.split("_");
+		for (int i = 0; i < (args.length/2)*2; i = i + 2) {
+			properties.put(args[i], args[i+1]);
+		}
 	}
 	
-	/**
-	 * Checks if properties contains a key.
-	 * 
-	 * @param key
-	 * @return
-	 */
-	public boolean containsKey(String key) {
+	public Set<String> keys() {
+		return properties.keySet();
+	}
+	
+	public boolean hasKey(String key) {
 		return properties.containsKey(key);
 	}
 	
-	/**
-	 * Set a property.
-	 * @param key
-	 * @param val
-	 */
-	public void put(String key, String val) {
-		properties.put(key, val);
+	public boolean remove(String key) {
+		return properties.remove(key) != null;
 	}
 	
-	/**
-	 * @param key
-	 */
-	public void remove(String key) {
-		properties.remove(key);
-	}
-	
-	/**
-	 * Get property's value.
-	 * @param key
-	 * @return String
-	 */
-	public String get(String key) {
-		if (!properties.containsKey(key)) {
-			System.err.println(this.getClass().getSimpleName() + "::get: " +
-					"property " + key + " not found!");
-		}
+	public String getAsString(String key) {
 		return properties.get(key);
 	}
+	
+	public String getAsString(String key, String def) {
+		String val = properties.get(key);
+		return val != null ? val : def;
+	}
+	
+	public int getAsInt(String key) {
+		return Integer.parseInt(properties.get(key));
+	}
+	
+	public int getAsInt(String key, int def) {
+		String val = properties.get(key);
+		return val != null ? Integer.parseInt(val) : def;
+	}
+	
+	public double getAsDouble(String key) {
+		return Double.parseDouble(properties.get(key));
+	}
+	
+	public double getAsDouble(String key, double def) {
+		String val = properties.get(key);
+		return val != null ? Double.parseDouble(val) : def;
+	}
+	
+	public float getAsFloat(String key) {
+		return Float.parseFloat(properties.get(key));
+	}
+	
+	public float getAsFloat(String key, float def) {
+		String val = properties.get(key);
+		return val != null ? Float.parseFloat(val) : def;
+	}
+	
+	public long getAsLong(String key) {
+		return Long.parseLong(properties.get(key));
+	}
+	
+	public long getAsLong(String key, long def) {
+		String val = properties.get(key);
+		return val != null ? Long.parseLong(val) : def;
+	}
+	
+	public boolean getAsBoolean(String key) {
+		return Boolean.parseBoolean(properties.get(key));
+	}
+	
+	public boolean getAsBoolean(String key, boolean def) {
+		String val = properties.get(key);
+		return val != null ? Boolean.parseBoolean(val) : def;
+	}
+	
+	public void put(String key, String value) {
+		properties.put(key, value);
+	}
+	
+	public void put(String key, int value) {
+		properties.put(key, Integer.toString(value));
+	}
+	
+	public void put(String key, double value) {
+		properties.put(key, Double.toString(value));
+	}
 
-	/**
-	 * @return String with <param>_<value> format
-	 */
-	public String toStrategyString() {
-		String str = "";
-		for (Map.Entry<String, String> entry : properties.entrySet()) {
-			// ignore input strategy string, in case stored params changed
-			if (!entry.getKey().equals(Agent.STRATEGY_KEY)) {
-				str += entry.getKey() + "_" + entry.getValue() + "_";
-			}
-		}
-		return str.substring(0, str.length()-1);	// trim last "_"
+	public void put(String key, float value) {
+		properties.put(key, Float.toString(value));
+	}
+	
+	public void put(String key, long value) {
+		properties.put(key, Long.toString(value));
+	}
+	
+	public void put(String key, boolean value) {
+		properties.put(key, Boolean.toString(value));
 	}
 	
 	@Override
-	public String toString() {
-		// remove strategy to make easier to read in log (will be parsed already)
-		ObjectProperties tmp = new ObjectProperties(this);
-		if (tmp.containsKey(Agent.STRATEGY_KEY)) {
-			tmp.remove(Agent.STRATEGY_KEY);
-		}
-		return tmp.properties.toString();
+	public boolean equals(Object o) {
+	    if (o == null || !(o instanceof ObjectProperties))
+	        return false;
+	    final ObjectProperties e = (ObjectProperties) o;
+	    return properties.equals(e.properties);
 	}
 	
 	@Override
@@ -103,15 +131,23 @@ public class ObjectProperties {
 		return properties.hashCode();
 	}
 	
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-	        return true;
-	    if (obj == null)
-	        return false;
-	    if (getClass() != obj.getClass())
-	        return false;
-	    final ObjectProperties other = (ObjectProperties) obj;
-	    return this.properties.equals(other.properties);
+	public String toConfigString() {
+		if (properties.isEmpty()) return "";
+		StringBuilder sb = new StringBuilder();
+		for (Entry<String, String> e : properties.entrySet())
+			sb.append('_').append(e.getKey()).append('_').append(e.getValue());
+		return sb.substring(1);
 	}
+	
+	@Override
+	public String toString() {
+		return properties.toString();
+	}
+	
+	public static void main(String... args) {
+		ObjectProperties e = new ObjectProperties("blah_1_hello_hft_key_6.7");
+		System.out.println(e);
+		System.out.println(e.toConfigString());
+	}
+
 }

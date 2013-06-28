@@ -2,7 +2,6 @@ package entity;
 
 import data.ObjectProperties;
 import data.SystemData;
-import systemmanager.*;
 
 /**
  * Abstract class for MarketMakers. Makes it easier to test when 

@@ -7,7 +7,6 @@ import event.*;
 import activity.Activity;
 import activity.AgentStrategy;
 import activity.UpdateAllQuotes;
-import systemmanager.*;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -59,10 +58,10 @@ public class BasicMarketMaker extends MarketMaker {
 	public BasicMarketMaker(int agentID, int modelID, SystemData d, ObjectProperties p) {
 		super(agentID, modelID, d, p);
 		arrivalTime = new TimeStamp(0);
-		sleepTime = Integer.parseInt(params.get(SLEEPTIME_KEY));
-//		sleepVar = Double.parseDouble(params.get(Agent.SLEEPVAR_KEY));
-		numRungs = Integer.parseInt(params.get(NUMRUNGS_KEY));
-		rungSize = Integer.parseInt(params.get(RUNGSIZE_KEY));
+		sleepTime = params.getAsInt(SLEEPTIME_KEY);
+//		sleepVar = params.getAsDouble(Agent.SLEEPVAR_KEY);
+		numRungs = params.getAsInt(NUMRUNGS_KEY);
+		rungSize = params.getAsInt(RUNGSIZE_KEY);
 		stepSize = Market.quantize(rungSize, data.tickSize);
 		
 		xt = -1;	// ask

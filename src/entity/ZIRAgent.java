@@ -55,9 +55,9 @@ public class ZIRAgent extends BackgroundAgent {
 	public ZIRAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
 		super(agentID, modelID, d, p);
 		
-		bidRange = Integer.parseInt(params.get(ZIRAgent.BIDRANGE_KEY));
+		bidRange = params.getAsInt(ZIRAgent.BIDRANGE_KEY);
 		reentry = new ArrivalTime(arrivalTime, this.data.reentryRate, rand);
-		maxAbsPosition = Integer.parseInt(params.get(ZIRAgent.MAXQUANTITY_KEY));
+		maxAbsPosition = params.getAsInt(ZIRAgent.MAXQUANTITY_KEY);
 		lastPositionBalance = positionBalance;
 		
 		submissionTimes = new ArrayList<TimeStamp>();

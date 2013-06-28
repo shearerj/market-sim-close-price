@@ -1,7 +1,6 @@
 package data;
 
 import event.*;
-import systemmanager.Consts;
 
 import java.io.BufferedWriter;
 import java.io.File;

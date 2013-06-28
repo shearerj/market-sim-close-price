@@ -62,7 +62,7 @@ public abstract class SMAgent extends Agent {
 	public SMAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
 		super(agentID, modelID, d, p);
 
-		int mktID = Integer.parseInt(params.get(SMAgent.MARKETID_KEY));
+		int mktID = params.getAsInt(SMAgent.MARKETID_KEY);
 		market = data.getMarket(mktID);
 	}
 

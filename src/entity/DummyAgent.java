@@ -1,14 +1,13 @@
 package entity;
 
-import data.ObjectProperties;
-import data.SystemData;
-import event.*;
-import activity.Activity;
-import systemmanager.*;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+
+import activity.Activity;
+import data.ObjectProperties;
+import data.SystemData;
+import event.TimeStamp;
 
 /**
  * DUMMYAGENT

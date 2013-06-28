@@ -1,7 +1,7 @@
 package entity;
 
-import data.*;
-import systemmanager.*;
+import data.ObjectProperties;
+import data.SystemData;
 
 /**
  * Abstract class for high-frequency traders.

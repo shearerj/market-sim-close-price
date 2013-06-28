@@ -309,7 +309,7 @@ public abstract class Agent extends Entity {
 	 * @return strategy for observation file in format TYPE:STRATEGY
 	 */
 	public String getFullStrategy() {
-		return this.getType() + ":" + params.get(Agent.STRATEGY_KEY);
+		return this.getType() + ":" + params.getAsString(Agent.STRATEGY_KEY);
 	}
 	
 	/**

@@ -22,7 +22,7 @@ public class TwoMarket extends MarketModel {
 	public TwoMarket(int modelID, ObjectProperties p, SystemData d) {
 		super(modelID,p, d);
 		
-		config = p.get(Consts.MODEL_CONFIG_KEY);
+		config = p.getAsString(Consts.MODEL_CONFIG_KEY);
 		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
 			// Add two CDA markets with default settings
 			addMarketPropertyPair(Consts.MarketType.CDA);

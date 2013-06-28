@@ -299,10 +299,7 @@ public class SystemSetup {
 		allNonPlayers.putAll(data.getEnvAgentMap());
 		for (AgentPropsPair app : allNonPlayers.keySet()) {
 			// check if arrival rate already described for this AgentPropertiesPair
-			double rate = data.arrivalRate;
-			if (app.getProperties().containsKey(Agent.ARRIVALRATE_KEY)) {
-				rate = Double.parseDouble(app.getProperties().get(Agent.ARRIVALRATE_KEY));
-			}
+			double rate = app.getProperties().getAsDouble(Agent.ARRIVALRATE_KEY, data.arrivalRate);
 			arrivalGenerators.put(app, new ArrivalTime(new TimeStamp(0), rate));
 		}
 

@@ -35,9 +35,9 @@ public class LAAgent extends HFTAgent {
 		super(agentID, modelID, d, p);
 		arrivalTime = new TimeStamp(0);
 
-		alpha = Double.parseDouble(params.get(LAAgent.ALPHA_KEY));
-		sleepTime = Integer.parseInt(params.get(Agent.SLEEPTIME_KEY));
-		sleepVar = Double.parseDouble(params.get(Agent.SLEEPVAR_KEY));
+		alpha = params.getAsDouble(LAAgent.ALPHA_KEY);
+		sleepTime = params.getAsInt(Agent.SLEEPTIME_KEY);
+		sleepVar = params.getAsDouble(Agent.SLEEPVAR_KEY);
 	}
 	
 	

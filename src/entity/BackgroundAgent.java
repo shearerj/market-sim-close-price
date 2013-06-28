@@ -23,8 +23,8 @@ public abstract class BackgroundAgent extends SMAgent {
 		super(agentID, modelID, d, p);
 		
 		// -- reorg --
-		rand = new RandPlus(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
-		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
+		rand = new RandPlus(params.getAsLong(Agent.RANDSEED_KEY));
+		arrivalTime = new TimeStamp(params.getAsLong(Agent.ARRIVAL_KEY));
 		// -- reorg --
 	}
 }

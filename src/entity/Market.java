@@ -1,19 +1,21 @@
 package entity;
 
-import data.FundamentalValue;
-import data.ObjectProperties;
-import data.SystemData;
-import event.*;
-import logger.Logger;
-import model.*;
-import market.*;
-import activity.Activity;
-import activity.ProcessQuote;
-import activity.UpdateNBBO;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+
+import logger.Logger;
+import market.Bid;
+import market.Price;
+import market.Quote;
+import market.Transaction;
+import model.MarketModel;
+import activity.Activity;
+import activity.ProcessQuote;
+import activity.UpdateNBBO;
+import data.ObjectProperties;
+import data.SystemData;
+import event.TimeStamp;
 
 /**
  * Base class for all markets.
