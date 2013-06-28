@@ -39,8 +39,8 @@ public class TimeSeries {
 		
 		// initialized
 		times.add(new TimeStamp(0));
-		points.add(Consts.DOUBLE_NAN);
-		series.add(Consts.DOUBLE_NAN);
+		points.add(Double.NaN);
+		series.add(Double.NaN);
 	}
 	
 	public List<TimeStamp> getTimes() {

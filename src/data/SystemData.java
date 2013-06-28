@@ -72,7 +72,6 @@ public class SystemData {
 	public HashMap<Integer,List<AgentPropsPair>> modelAgentMap;
 	
 	private SIP sip;
-	private Sequence transIDSequence;	
 	private FundamentalValue fundamentalGenerator;
 	
 	// hashed by type, gives # of that type
@@ -116,7 +115,6 @@ public class SystemData {
 		models = new HashMap<Integer,MarketModel>();
 		numModelType = new HashMap<ModelType,Integer>();
 		modelIDs = new ArrayList<Integer>();
-		transIDSequence = new Sequence(0);
 		primaryModel = null;
 		marketIDModelIDMap = new HashMap<Integer,Integer>();
 		modelTransID = new HashMap<Integer, List<Integer>>();
@@ -488,7 +486,7 @@ public class SystemData {
 	 * @param spread
 	 */
 	public void addSpread(int mktID, TimeStamp ts, int spread) {
-		double s = Consts.DOUBLE_NAN;
+		double s = Double.NaN;
 		if (spread != Consts.INF_PRICE) s = spread;
 			
 		if(!marketSpread.containsKey(mktID)) {
@@ -507,7 +505,7 @@ public class SystemData {
 	 * @param ask
 	 */
 	public void addMidQuotePrice(int mktID, TimeStamp ts, int bid, int ask) {
-		double midQuote = Consts.DOUBLE_NAN;
+		double midQuote = Double.NaN;
 		if (bid != Consts.INF_PRICE && ask != Consts.INF_PRICE) {
 			midQuote = (bid + ask) / 2;
 		}

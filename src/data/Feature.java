@@ -57,7 +57,7 @@ public class Feature {
 		if (val instanceof String) {
 			ft.put(key, val);
 		} else {
-			if (((Double) val).equals(Consts.DOUBLE_NAN)) {
+			if (((Double) val).equals(Double.NaN)) {
 				ft.put(key, Consts.NAN);
 			} else {
 				ft.put(key, Double.parseDouble(df.format((Double) val)));
@@ -87,7 +87,7 @@ public class Feature {
 	}
 	
 	public double addMean(String pre, String suf, DescriptiveStatistics ds) {
-		double val = Consts.DOUBLE_NAN;
+		double val = Double.NaN;
 		if (ds.getN() > 0) {
 			val = ds.getMean();
 		}
@@ -103,7 +103,7 @@ public class Feature {
 	 */
 	public double addWindowMean(String pre, String suf,
 			DescriptiveStatistics ds, int windowSize) {
-		double val = Consts.DOUBLE_NAN;
+		double val = Double.NaN;
 		if (ds.getN() > 0) {
 			DescriptiveStatistics copy = new DescriptiveStatistics(ds);
 			copy.setWindowSize(Math.max((int) ds.getN(), windowSize));
@@ -118,7 +118,7 @@ public class Feature {
 	}
 	
 	public double addMax(String pre, String suf, DescriptiveStatistics ds) {
-		double val = Consts.DOUBLE_NAN;
+		double val = Double.NaN;
 		if (ds.getN() > 0) {
 			val = ds.getMax();
 		}
@@ -131,7 +131,7 @@ public class Feature {
 	}
 	
 	public double addMin(String pre, String suf, DescriptiveStatistics ds) {
-		double val = Consts.DOUBLE_NAN;
+		double val = Double.NaN;
 		if (ds.getN() > 0) {
 			val = ds.getMin();
 		}
@@ -144,7 +144,7 @@ public class Feature {
 	}
 	
 	public double addSum(String pre, String suf, DescriptiveStatistics ds) {
-		double val = Consts.DOUBLE_NAN;
+		double val = Double.NaN;
 		if (ds.getN() > 0) {
 			val = ds.getSum();
 		}
@@ -157,7 +157,7 @@ public class Feature {
 	}
 	
 	public double addVariance(String pre, String suf, DescriptiveStatistics ds) {
-		double val = Consts.DOUBLE_NAN;
+		double val = Double.NaN;
 		if (ds.getN() > 0) {
 			val = ds.getVariance();
 		}
@@ -170,7 +170,7 @@ public class Feature {
 	}
 	
 	public double addMedian(String pre, String suf, DescriptiveStatistics ds) {
-		double val = Consts.DOUBLE_NAN;
+		double val = Double.NaN;
 		if (ds.getN() > 0) {
 			Median med = new Median();
 			val = med.evaluate(ds.getValues());
@@ -187,7 +187,7 @@ public class Feature {
 //	 */
 //	public double addMedianUpToTime(String pre, String suf, 
 //			DescriptiveStatistics ds, long idx) {
-//		double val = Consts.DOUBLE_NAN;
+//		double val = Double.NaN;
 //		if (ds.getN() > 0) {
 //			Median med = new Median();
 //			if (idx < ds.getN()) {
@@ -205,7 +205,7 @@ public class Feature {
 	}
 	
 	public double addStdDev(String pre, String suf, DescriptiveStatistics ds) {
-		double val = Consts.DOUBLE_NAN;
+		double val = Double.NaN;
 		if (ds.getN() > 0) {
 			StandardDeviation std = new StandardDeviation();
 			val = std.evaluate(ds.getValues());
@@ -222,7 +222,7 @@ public class Feature {
 //	 */
 //	public double addStdDevUpToTime(String pre, String suf, 
 //			DescriptiveStatistics ds, long idx) {
-//		double val = Consts.DOUBLE_NAN;
+//		double val = Double.NaN;
 //		if (ds.getN() > 0) {
 //			StandardDeviation std = new StandardDeviation();
 //			if (idx < ds.getN()) {
@@ -253,7 +253,7 @@ public class Feature {
 	 */
 	public double addRMSD(String pre, String suf,
 			DescriptiveStatistics ds1, DescriptiveStatistics ds2) {
-		double val = Consts.DOUBLE_NAN;
+		double val = Double.NaN;
 		if (ds1.getN() > 0 && ds2.getN() > 0) {
 			val = computeRMSD(ds1.getValues(), ds2.getValues());
 		}

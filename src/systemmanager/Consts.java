@@ -90,7 +90,6 @@ public class Consts {
 	
 	// Other
 	public final static String NAN = "NaN";
-	public final static double DOUBLE_NAN = Double.NaN;
 	
 	// **********************************************************
 	// FILENAMES
