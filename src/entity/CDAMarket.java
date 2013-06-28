@@ -55,7 +55,7 @@ public class CDAMarket extends Market {
 		orderbook.insertBid((PQBid) b);
 		bids.add(b);
 		data.addDepth(id, ts, orderbook.getDepth());
-		data.addSubmissionTime(b.getBidID(), ts);
+		submissionTimes.put(b.getBidID(), ts);
 		return clear(ts);
 	}
 	
@@ -98,7 +98,7 @@ public class CDAMarket extends Market {
 		// Add bid execution speed
 		ArrayList<Integer> IDs = orderbook.getClearedBidIDs();
 		for (Iterator<Integer> id = IDs.iterator(); id.hasNext(); ) {
-			data.addExecutionTime(id.next(), clearTime);
+			addExecutionTime(id.next(), clearTime);
 		}
 		
 		// Add transactions to SystemData

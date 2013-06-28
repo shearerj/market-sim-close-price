@@ -3,6 +3,8 @@ package entity;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import logger.Logger;
 import market.Bid;
@@ -27,10 +29,11 @@ public abstract class Market extends Entity {
 	//reorg
 	protected MarketModel model;
 	protected ArrayList<Bid> bids;
+	protected TreeMap<Integer,TimeStamp> executionTimes;	//Hashed by bidID
+	protected TreeMap<Integer,TimeStamp> submissionTimes;	//Hashed by bidID
 	//end reorg
 	
 	// Model information
-	// TODO Reference to MarketModel instead of just id?
 	// TODO equals method...
 	protected int modelID;				// ID of associated model
 	
@@ -76,7 +79,7 @@ public abstract class Market extends Entity {
 		
 		//reorg
 		this.model = model;
-		}
+	}
 
 	/**
 	 * Set the model ID for the market.
@@ -220,6 +223,21 @@ public abstract class Market extends Entity {
 	}
 	
 	/**
+	 * Add bid time to execution (difference between transaction and submission times).
+	 * @param bidID
+	 * @param ts
+	 */
+	public void addExecutionTime(int bidID, TimeStamp ts) {
+		// check if submission time contains it (if not, there is an error)
+		if (submissionTimes.containsKey(bidID)) {
+			executionTimes.put(bidID, ts.diff(submissionTimes.get(bidID)));
+		} else {
+			System.err.println(this.getClass().getSimpleName() + 
+					":: submission time does not contain bidID " + bidID);
+		}
+	}
+	
+	/**
 	 * @return true if both BID & ASK are defined (!= -1)
 	 */
 	public boolean defined() {
@@ -320,6 +338,14 @@ public abstract class Market extends Entity {
 	public static int quantize(int num, int n) {
 		double tmp = 0.5 + Math.abs((double) num) / ((double) n);
 		return Integer.signum(num) * n * (int)Math.floor(tmp);
+	}
+
+	public TreeMap<Integer, TimeStamp> getExecutionTimes() {
+		return executionTimes;
+	}
+
+	public TreeMap<Integer, TimeStamp> getSubmissionTimes() {
+		return submissionTimes;
 	}
 
 }

@@ -2,6 +2,7 @@ package data;
 
 import model.*;
 import entity.*;
+import event.TimeStamp;
 import market.*;
 import systemmanager.*;
 
@@ -256,8 +257,8 @@ public class Observations {
 	public Feature getExecutionTime(MarketModel model) {
 		Feature feat = new Feature();
 		DescriptiveStatistics speeds = new DescriptiveStatistics();
-		for(Bid bid : model.getAllBids()) {
-			speeds.addValue((double) data.executionTime.get(bid.getBidID()).longValue());
+		for(Integer key : model.getExecutionTimes().keySet()) {
+			speeds.addValue((double) model.getExecutionTimes().get(key).getLongValue());
 		}
 //		feat.addMax(speeds);
 //		feat.addMin(speeds);

@@ -73,7 +73,7 @@ public class CallMarket extends Market {
 		orderbook.insertBid((PQBid) b);
 		bids.add(b);
 		data.addDepth(id, ts, orderbook.getDepth());
-		data.addSubmissionTime(b.getBidID(), ts);
+		submissionTimes.put(b.getBidID(), ts);
 		if (clearFreq.longValue() == 0) {
 			return clear(ts);
 		} // else, Clear activities are chained and continue that way
@@ -131,7 +131,7 @@ public class CallMarket extends Market {
 		// Add bid execution speed
 		ArrayList<Integer> IDs = orderbook.getClearedBidIDs();
 		for (Iterator<Integer> id = IDs.iterator(); id.hasNext(); ) {
-			data.addExecutionTime(id.next(), clearTime);
+			addExecutionTime(id.next(), clearTime);
 		}
 		
 		// Add transactions to SystemData
