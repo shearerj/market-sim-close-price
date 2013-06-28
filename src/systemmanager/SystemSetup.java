@@ -304,7 +304,7 @@ public class SystemSetup {
 		}
 
 		// TODO pull out arrivals for future reference
-
+		
 		// generate logIDs, random number generator seeds, & arrivals for non-players
 		Random rand = new Random();
 		int id = data.getNumPlayers() + 1;
