@@ -19,6 +19,7 @@ import java.util.*;
 public abstract class Agent extends Entity {
 	
 	protected int logID;			// ID for logging purposes (should same across models)
+	protected final RandPlus rand;
 	
 	// -- begin reorg -- stuff above line existed before and is still relevant...
 	
@@ -27,7 +28,7 @@ public abstract class Agent extends Entity {
 	// -- end reorg --
 	
 	protected int modelID;			// ID of associated model
-	protected RandPlus rand;
+
 	
 	// Market information (all hashed by market ID, as ID may be negative)
 	protected HashMap<Integer,Price> bidPrice;
