@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import market.Bid;
 import market.Price;
@@ -17,6 +18,7 @@ import data.AgentPropsPair;
 import data.FundamentalValue;
 import data.ObjectProperties;
 import data.SystemData;
+import entity.Agent;
 import entity.Market;
 import event.TimeStamp;
 
@@ -64,6 +66,7 @@ public abstract class MarketModel {
 	protected FundamentalValue fundamentalGenerator;
 	protected ArrayList<Market> markets;
 	protected ArrayList<Transaction> trans;
+	protected TreeSet<Agent> agents;
 	
 	// -- end reorg --
 
@@ -283,5 +286,17 @@ public abstract class MarketModel {
 	@Override
 	public String toString() {
 		return new String("{" + getID() + "}");
+	}
+
+	public TreeSet<Agent> getAgents() {
+		return agents;
+	}
+	
+//	public Agent getAgent(int id) {
+//		return this.agents.
+//	}
+
+	public void addAgent(Agent agent) {
+		this.agents.add(agent);
 	}
 }

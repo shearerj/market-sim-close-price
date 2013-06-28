@@ -135,23 +135,18 @@ public class CallMarket extends Market {
 		}
 		
 		// Add transactions to SystemData
-		TreeSet<Integer> transactingIDs = new TreeSet<Integer>();
 		for (Iterator<Transaction> i = trans.iterator(); i.hasNext();) {
 			PQTransaction t = (PQTransaction) i.next();
-			// track which agents were involved in the transactions
-			transactingIDs.add(t.getBuyer().getID());
-			transactingIDs.add(t.getSeller().getID());
 			model.addTrans(t);
 			lastClearPrice = t.price;
+			//update and log transactions
+			t.getBuyer().updateTransactions(clearTime);
+			t.getBuyer().logTransactions(clearTime);
+			t.getSeller().updateTransactions(clearTime);
+			t.getSeller().logTransactions(clearTime);
 		}
 		lastClearTime = clearTime;
 
-		// update and log transactions
-		for (Iterator<Integer> it = transactingIDs.iterator(); it.hasNext(); ) {
-			int id = it.next();
-			data.getAgent(id).updateTransactions(clearTime);
-			data.getAgent(id).logTransactions(clearTime); 
-		}
 		orderbook.logActiveBids(clearTime);
 		orderbook.logClearedBids(clearTime);
 		orderbook.logFourHeap(clearTime);

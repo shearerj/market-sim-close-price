@@ -548,6 +548,7 @@ public class SystemData {
 	 * @param modelID
 	 * @param t
 	 */
+	@Deprecated
 	public void addSurplus(int modelID, PQTransaction t) {
 		if(!modelSurplus.containsKey(modelID)) {
 			modelSurplus.put(modelID, new HashMap<Double,Surplus>());
@@ -563,14 +564,13 @@ public class SystemData {
 			// Compute buyer surplus
 			Agent buyer = t.getBuyer();
 			int bidID = t.getBuyBid().getBidID();
-			TimeStamp buyTime = buyer.getModel().getExecutionTimes().get(bidID);//getTimeToExecution(t.getBuyBid().getBidID());
+			TimeStamp buyTime = buyer.getModel().getExecutionTimes().get(bidID);
 			if (buyer.getPrivateValue() != null) {
 				double cs = getPrivateValueByBid(t.getBuyBid().getBidID()).sum(rt).diff(t.price).getPrice();				
 				// print model ID, buyerID, seller ID, private value, fundamental, trans price, surplus, time, rho
 				// System.out.println(modelID + "," + t.buyerID + "," + "," +getPrivateValueByBid(t.buyBidID)
 				//		+ "," + rt + "," + t.price + "," + cs + "," + buyTime + "," + rho);
 				s.addCumulative(t.getBuyer().getID(), Math.exp(-rho * buyTime.longValue()) * cs);
-				
 			} else {
 				double cs = -t.price.getPrice();
 				// System.out.println(modelID + "," + t.buyerID + "," + "," +getPrivateValueByBid(t.buyBidID)
@@ -579,7 +579,7 @@ public class SystemData {
 			}
 			
 			// Compute seller surplus
-			Agent seller = getAgent(t.getSeller().getID());
+			Agent seller = t.getSeller();
 			bidID = t.getSellBid().getBidID();
 			TimeStamp sellTime = seller.getModel().getExecutionTimes().get(bidID);
 			if (seller.getPrivateValue() != null) {
@@ -597,6 +597,36 @@ public class SystemData {
 		}
 	}
 	
+	
+	public void addSurplus(PQTransaction tr) {
+		Price rt = getFundamentalAt(tr.getTimestamp());
+		for(double rho : Consts.rhos) {
+			//Updating buyer surplus
+			Agent buyer = tr.getBuyer();
+			int bidID = tr.getBuyBid().getBidID();
+			TimeStamp buyTime = buyer.getModel().getExecutionTimes().get(bidID);
+			if(buyer.getPrivateValue() != null) {
+				double surplus = getPrivateValueByBid(bidID).sum(rt).diff(tr.price).getPrice();
+				buyer.addSurplus(rho, surplus);
+			}
+			else {
+				double surplus = -tr.price.getPrice();
+				buyer.addSurplus(rho, surplus);
+			}
+			//Updating seller surplus
+			Agent seller = tr.getSeller();
+			int sellID = tr.getSellBid().getBidID();
+			TimeStamp sellTime = seller.getModel().getExecutionTimes().get(bidID);
+			if(seller.getPrivateValue() != null) {
+				double surplus = tr.price.diff(getPrivateValueByBid(tr.getSellBid().getBidID()).sum(rt)).getPrice();
+				seller.addSurplus(rho, surplus);
+			}
+			else {
+				double surplus = tr.price.getPrice();
+				seller.addSurplus(rho, surplus);
+			}
+		}
+	}
 	
 	/***********************************
 	 * Global fundamental generation

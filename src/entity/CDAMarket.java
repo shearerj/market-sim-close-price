@@ -101,24 +101,18 @@ public class CDAMarket extends Market {
 			addExecutionTime(id.next(), clearTime);
 		}
 		
-		// Add transactions to SystemData
-		TreeSet<Integer> transactingIDs = new TreeSet<Integer>();
-		for (Iterator<Transaction> i = transactions.iterator(); i.hasNext();) {
-			PQTransaction t = (PQTransaction) i.next();
-			// track which agents were involved in the transactions
-			transactingIDs.add(t.getBuyer().getID());
-			transactingIDs.add(t.getSeller().getID());
-			model.addTrans(t);
-			lastClearPrice = t.price;
+		// Add transactions to MarketModel
+		for(Transaction tr : transactions) {
+			model.addTrans(tr);
+			//update and log transactions
+			tr.getBuyer().updateTransactions(clearTime);
+			tr.getBuyer().logTransactions(clearTime);
+			tr.getSeller().updateTransactions(clearTime);
+			tr.getSeller().logTransactions(clearTime);
+			lastClearPrice = tr.price;
 		}
 		lastClearTime = clearTime;
 
-		// update and log transactions
-		for (Iterator<Integer> it = transactingIDs.iterator(); it.hasNext(); ) {
-			int id = it.next();
-			data.getAgent(id).updateTransactions(clearTime);
-			data.getAgent(id).logTransactions(clearTime); 
-		}
 		orderbook.logActiveBids(clearTime);
 		orderbook.logClearedBids(clearTime);
 		orderbook.logFourHeap(clearTime);

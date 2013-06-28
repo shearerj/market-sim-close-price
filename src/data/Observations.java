@@ -360,16 +360,14 @@ public class Observations {
 			fundPrices.add(tr.timestamp, new Double(data.getFundamentalAt(tr.timestamp).getPrice()));
 			
 			// update number of transactions
-			for (int id : Arrays.asList(tr.getBuyer().getID(), tr.getSeller().getID())) {
-				if (model.getAgentIDs().contains(id)) {
-					String type = data.getAgent(id).getType();
-					int num = 0;
-					if (numTrans.containsKey(type)) {
-						num += numTrans.get(type);
-					}
-					numTrans.put(type, ++num);
-				}
-			}
+			//buyer
+			String type = t.getBuyer().getType();
+			if(!numTrans.containsKey(type)) numTrans.put(type, 0);
+			numTrans.put(type, numTrans.get(type) + 1);
+			//seller
+			type = t.getSeller().getType();
+			if(!numTrans.containsKey(type)) numTrans.put(type, 0);
+			numTrans.put(type, numTrans.get(type) + 1);
 		}
 		feat.addMean(PRICE, "", prices);
 		feat.addStdDev(PRICE, "", prices);
@@ -504,8 +502,7 @@ public class Observations {
 		int numMainTrans = 0;
 		int numMainNoTrans = 0;
 		
-		for (Integer agentID : model.getAgentIDs()) {
-			Agent ag = data.getAgent(agentID);
+		for (Agent ag : model.getAgents()) {
 			// must check that background agent (affected by routing)
 			if (ag instanceof BackgroundAgent) {
 				BackgroundAgent b = (BackgroundAgent) ag;
@@ -540,12 +537,10 @@ public class Observations {
 	 */
 	public Feature getMarketMakerInfo(MarketModel model) {
 		Feature feat = new Feature();
-		for (Integer agentID : model.getAgentIDs()) {
-			if (data.getAgent(agentID) instanceof MarketMaker) {
-				Agent ag = data.getAgent(agentID);
+		for (Agent ag : model.getAgents()) {
+			if (ag instanceof MarketMaker) {
 				// append the agentID in case more than one of this type
-				String suffix = Integer.toString(agentID);				
-				
+				String suffix = Integer.toString(ag.getID());
 				feat.put(POSITION + "_" + PRE + "_" + LIQUIDATION + suffix, 
 						ag.getPreLiquidationPosition());
 				// just to double-check, should be 0 position after liquidation
