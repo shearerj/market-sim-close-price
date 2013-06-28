@@ -41,6 +41,7 @@ public class BackgroundAgentFactory implements Iterator<BackgroundAgent> {
 
 	protected BackgroundAgent createAgent(AgentType type, ObjectProperties props) {
 		switch (type) {
+		// TODO Other agent types
 		case ZI:
 			return new ZIAgent(nextID++, arrivalProcess.next(), model, marketAssignment.next(),
 					new RandPlus(rand.nextLong()), props);

@@ -4,11 +4,14 @@ import data.*;
 import event.*;
 import logger.Logger;
 import market.*;
+import model.MarketModel;
 import activity.*;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.ArrayList;
+
+import utils.RandPlus;
 
 /**
  * ZIRAGENT
@@ -37,21 +40,26 @@ import java.util.ArrayList;
  */
 public class ZIRAgent extends BackgroundAgent {
 
-	private int bidRange;					// range for limit order
-	private ArrivalTime reentry;			// re-entry times
-	private int lastPositionBalance;		// last position balance
-	private int maxAbsPosition;				// max quantity for position
+	protected int bidRange;					// range for limit order
+	protected ArrivalTime reentry;			// re-entry times
+	protected int lastPositionBalance;		// last position balance
+	protected int maxAbsPosition;				// max quantity for position
 	
 	// for computing discounted surplus
 	private ArrayList<TimeStamp> submissionTimes;
 
-	/**
-	 * @param agentID
-	 * @param modelID
-	 * @param d
-	 * @param p
-	 * @param l
-	 */
+	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
+			Market market, RandPlus rand, ObjectProperties props) {
+		super(agentID, arrivalTime, model, market, rand);
+		bidRange = params.getAsInt(BIDRANGE_KEY, 5000);
+		maxAbsPosition = params.getAsInt(MAXQUANTITY_KEY, 10);
+		reentry = new ArrivalTime(arrivalTime, this.data.reentryRate, rand);
+		lastPositionBalance = positionBalance;
+		
+		submissionTimes = new ArrayList<TimeStamp>();
+		alpha = new PrivateValue(initPrivateValues(maxAbsPosition));
+	}
+	
 	public ZIRAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
 		super(agentID, modelID, d, p);
 		

@@ -4,8 +4,10 @@ import data.*;
 import event.*;
 import logger.Logger;
 import market.*;
+import model.MarketModel;
 import activity.*;
 import systemmanager.*;
+import utils.RandPlus;
 
 import java.util.*;
 
@@ -408,20 +410,26 @@ public class AAAgent extends BackgroundAgent {
 	    }
 	}
 	
+	public AAAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
+			Market market, RandPlus rand, ObjectProperties props) {
+		super(agentID, arrivalTime, model, market, rand);
+		// FIXME This constructor generally doesn't work, but should make sense
+		
+		// FIXME Reference to data won't work
+		reentry = new ArrivalTime(arrivalTime, this.data.reentryRate, rand);
+		
+		maxAbsPosition = params.getAsInt(AAAgent.MAXQUANTITY_KEY);
+		strat = new AAStrategy(params.getAsInt(AAAgent.TEST_KEY, -1));
+		isBuyer = rand.nextBoolean();
+		
+		//Debugging Output
+		debugging = params.getAsBoolean(AAAgent.DEBUG_KEY, false);
+		if(debugging) printInitDebugInfo();
+	}
 	
-	//
-	//Public Methods
-	//
-	/** Constructor
-	 * @param agentID
-	 * @param modelID
-	 * @param d
-	 * @param p
-	 * @param l
-	 */
     public AAAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
 		//Call constructor for SMAgent
-		super(agentID, modelID, d, p);
+    	super(agentID, modelID, d, p);
 		marketSubmittedBid = market;
 		
 		//System variables
