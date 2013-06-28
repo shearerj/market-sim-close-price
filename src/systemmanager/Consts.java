@@ -185,35 +185,15 @@ public class Consts {
 		ObjectProperties p = new ObjectProperties();
 		switch (type) {
 		case LA:
-			p.put(Agent.SLEEPTIME_KEY, "0");
-			p.put(Agent.SLEEPVAR_KEY, "100");
-			p.put(LAAgent.ALPHA_KEY, "0.001");
+			p.put(Agent.SLEEPTIME_KEY, 0);
+			p.put(Agent.SLEEPVAR_KEY, 100);
+			p.put(LAAgent.ALPHA_KEY, 0.001);
 			return p;
 		case BASICMM:
-			p.put(Agent.SLEEPTIME_KEY, "200");
-			p.put(Agent.SLEEPVAR_KEY, "100");
-			p.put(BasicMarketMaker.NUMRUNGS_KEY, "10");
-			p.put(BasicMarketMaker.RUNGSIZE_KEY, "1000");
-			return p;
-		case ZI:
-			p.put(Agent.BIDRANGE_KEY, "2000");
-			return p;
-		case ZIR:
-			p.put(Agent.BIDRANGE_KEY, "5000");
-			p.put(Agent.MAXQUANTITY_KEY, "10");
-			return p;
-		case ZIP:
-			p.put(Agent.SLEEPTIME_KEY, "50");
-			p.put(Agent.SLEEPVAR_KEY, "100");
-			p.put("c_R", "0.05");
-			p.put("c_A", "0.05");
-			p.put("beta", "0.03");
-			p.put("betaVar", "0.005");
-			p.put("gamma", "0.5");
-			return p;
-		case AA:
-			// TODO Fill in
-			p.put(AAAgent.BIDRANGE_KEY, "200"); // example only
+			p.put(Agent.SLEEPTIME_KEY, 200);
+			p.put(Agent.SLEEPVAR_KEY, 100);
+			p.put(BasicMarketMaker.NUMRUNGS_KEY, 10);
+			p.put(BasicMarketMaker.RUNGSIZE_KEY, 1000);
 			return p;
 		default:
 			return p;

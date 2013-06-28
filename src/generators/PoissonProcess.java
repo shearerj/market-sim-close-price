@@ -1,11 +1,11 @@
-package utils;
+package generators;
 
-import java.util.Iterator;
+import utils.RandPlus;
 
 /**
  * Poisson Process
  */
-public class PoissonProcess implements Iterator<Double> {
+public class PoissonProcess extends Generator<Double> {
 
 	protected final double rate;
 	protected final RandPlus rand;
@@ -18,20 +18,10 @@ public class PoissonProcess implements Iterator<Double> {
 	}
 
 	@Override
-	public boolean hasNext() {
-		return true;
-	}
-
-	@Override
 	public Double next() {
 		double interval = rand.nextExponential(rate);
 		lastValue += interval;
 		return lastValue;
-	}
-
-	@Override
-	public void remove() {
-		throw new UnsupportedOperationException("Can't remove from a process");
 	}
 
 }

@@ -1,12 +1,9 @@
-package data;
+package generators;
 
-import java.util.Iterator;
-
-import utils.PoissonProcess;
 import utils.RandPlus;
 import event.TimeStamp;
 
-public class PoissonArrival implements Iterator<TimeStamp> {
+public class PoissonArrival extends Generator<TimeStamp> {
 	
 	PoissonProcess proc;
 
@@ -15,19 +12,9 @@ public class PoissonArrival implements Iterator<TimeStamp> {
 	}
 
 	@Override
-	public boolean hasNext() {
-		return true;
-	}
-
-	@Override
 	public TimeStamp next() {
 		// TODO Is ceil appropraite here?
 		return new TimeStamp((long) Math.ceil(proc.next()));
-	}
-
-	@Override
-	public void remove() {
-		proc.remove();
 	}
 
 }

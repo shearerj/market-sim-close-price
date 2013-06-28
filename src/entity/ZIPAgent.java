@@ -3,11 +3,14 @@ package entity;
 import data.*;
 import event.*;
 import market.*;
+import model.MarketModel;
 import activity.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+
+import utils.RandPlus;
 
 
 /**
@@ -24,8 +27,22 @@ import java.util.HashMap;
  */
 public class ZIPAgent extends BackgroundAgent {
 
-	@SuppressWarnings("unused")
-	private int bidRange;				// range for limit order
+	protected int bidRange;				// range for limit order
+	protected int sleepTime, sleepVar;
+	protected double c_R, c_A, beta, betaVar, gamma;
+	
+	public ZIPAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
+			Market market, RandPlus rand, ObjectProperties props) {
+		super(agentID, arrivalTime, model, market, rand);
+		this.bidRange = props.getAsInt(BIDRANGE_KEY, 2000);
+		this.sleepTime = props.getAsInt(SLEEPTIME_KEY, 50);
+		this.sleepVar = props.getAsInt(SLEEPVAR_KEY, 100);
+		this.c_R = props.getAsDouble("c_R", .05);
+		this.c_A = props.getAsDouble("c_A", .05);
+		this.beta = props.getAsDouble("beta", .03);
+		this.betaVar = props.getAsDouble("betaVar", .005);
+		this.gamma = props.getAsDouble("gamma", .5);
+	}
 	
 	public ZIPAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
 		super(agentID, modelID, d, p);
