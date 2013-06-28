@@ -93,8 +93,6 @@ public class SystemData {
 	public HashMap<Integer,TimeSeries> marketMidQuote;			// hashed by market ID
 	public HashMap<Integer,TimeSeries> marketDepth;				// hashed by market ID
 	
-	public HashMap<Integer,TimeStamp> executionTime;		 	// hashed by bid ID
-	public HashMap<Integer,TimeStamp> submissionTime;			// hashed by bid ID
 	public HashMap<Integer,HashMap<Double,Surplus>> modelSurplus; // hashed by model ID
 																  // then by rho
 	
@@ -126,8 +124,6 @@ public class SystemData {
 		marketSpread = new HashMap<Integer,TimeSeries>();
 		NBBOSpread = new HashMap<Integer,TimeSeries>();
 		marketMidQuote = new HashMap<Integer,TimeSeries>();
-		executionTime = new HashMap<Integer,TimeStamp>();
-		submissionTime = new HashMap<Integer,TimeStamp>();
 		modelSurplus = new HashMap<Integer,HashMap<Double,Surplus>>();
 		
 	}
@@ -383,14 +379,6 @@ public class SystemData {
 		return privateValues.get(bidID);
 	}
 	
-	/**
-	 * @param bidID
-	 * @return
-	 */
-	public TimeStamp getTimeToExecution(int bidID) {
-		return executionTime.get(bidID);
-	}
-	
 	public HashMap<Double,Surplus> getSurplus(int modelID) {
 		return modelSurplus.get(modelID);
 	}
@@ -532,15 +520,6 @@ public class SystemData {
 		}
 		marketDepth.get(mktID).add(ts, (double) depth);
 	}
-	
-	/**
-	 * Add bid submission time to the hash map container.
-	 * @param bidID
-	 * @param ts
-	 */
-	public void addSubmissionTime(int bidID, TimeStamp ts) {
-		submissionTime.put(bidID, ts);
-	}
 
 	/**
 	 * Add transaction ID to modelTransID container.
@@ -557,21 +536,6 @@ public class SystemData {
 		}
 	}
 	
-	/**
-	 * Add bid time to execution (difference between transaction and submission times).
-	 * @param bidID
-	 * @param ts
-	 */
-	public void addExecutionTime(int bidID, TimeStamp ts) {
-		// check if submission time contains it (if not, there is an error)
-		if (submissionTime.containsKey(bidID)) {
-			executionTime.put(bidID, ts.diff(submissionTime.get(bidID)));
-		} else {
-			System.err.println(this.getClass().getSimpleName() + 
-					":: submission time does not contain bidID " + bidID);
-		}
-	}
-
 	/***********************************
 	 * Surplus computations
 	 *
@@ -598,7 +562,8 @@ public class SystemData {
 			
 			// Compute buyer surplus
 			Agent buyer = t.getBuyer();
-			TimeStamp buyTime = getTimeToExecution(t.getBuyBid().getBidID());
+			int bidID = t.getBuyBid().getBidID();
+			TimeStamp buyTime = buyer.getModel().getExecutionTimes().get(bidID);//getTimeToExecution(t.getBuyBid().getBidID());
 			if (buyer.getPrivateValue() != null) {
 				double cs = getPrivateValueByBid(t.getBuyBid().getBidID()).sum(rt).diff(t.price).getPrice();				
 				// print model ID, buyerID, seller ID, private value, fundamental, trans price, surplus, time, rho
@@ -615,7 +580,8 @@ public class SystemData {
 			
 			// Compute seller surplus
 			Agent seller = getAgent(t.getSeller().getID());
-			TimeStamp sellTime = getTimeToExecution(t.getSellBid().getBidID());
+			bidID = t.getSellBid().getBidID();
+			TimeStamp sellTime = seller.getModel().getExecutionTimes().get(bidID);
 			if (seller.getPrivateValue() != null) {
 				double ps = t.price.diff(getPrivateValueByBid(t.getSellBid().getBidID()).sum(rt)).getPrice();
 				// System.out.println(modelID + "," + "," + t.sellerID + "," + getPrivateValueByBid(t.sellBidID)

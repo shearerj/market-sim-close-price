@@ -7,6 +7,7 @@ import systemmanager.Consts.MarketType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.TreeMap;
 
 import market.Bid;
 import market.Price;
@@ -269,6 +270,14 @@ public abstract class MarketModel {
 	
 	public List<Market> getMarkets() {
 		return Collections.unmodifiableList(markets);
+	}
+	
+	public TreeMap<Integer,TimeStamp> getExecutionTimes() {
+		TreeMap<Integer,TimeStamp> executionTimes = new TreeMap<Integer,TimeStamp>();
+		for(Market market : markets) {
+			executionTimes.putAll(market.getExecutionTimes());
+		}
+		return executionTimes;
 	}
 
 	@Override
