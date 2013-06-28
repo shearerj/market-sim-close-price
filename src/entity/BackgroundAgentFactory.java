@@ -15,25 +15,33 @@ import utils.RandPlus;
 public class BackgroundAgentFactory implements Iterator<BackgroundAgent> {
 
 	protected final RandPlus rand;
+	protected final AgentType type;
 	protected final List<Market> markets;
 	protected final MarketModel model;
-	protected int id;
+	protected final ObjectProperties props;
+	protected int nextID;
+	protected final int finalID;
+	protected final Iterator<TimeStamp> arrivalProcess;
 
-	public BackgroundAgentFactory(MarketModel model, int initialID, RandPlus rand) {
+	public BackgroundAgentFactory(AgentType type, MarketModel model, ObjectProperties props, int initialID, int num, Iterator<TimeStamp> arrivalProcess, RandPlus rand) {
 		this.rand = rand;
+		this.type = type;
+		this.props = props;
 		this.model = model;
-		this.id = initialID;
+		this.nextID = initialID;
+		this.finalID = initialID + num;
+		this.arrivalProcess = arrivalProcess;
 		this.markets = model.getMarkets();
 	}
 	
-	public BackgroundAgentFactory(MarketModel model, RandPlus rand) {
-		this(model, 0, rand);
+	public BackgroundAgentFactory(AgentType type, MarketModel model, ObjectProperties props, Iterator<TimeStamp> arrivalProcess, RandPlus rand) {
+		this(type, model, props, 0, 0, arrivalProcess, rand);
 	}
 
 	protected BackgroundAgent createAgent(AgentType type, ObjectProperties props) {
 		switch (type) {
 		case ZI:
-			return new ZIAgent(id++, new TimeStamp(0), model, randomMarket(),
+			return new ZIAgent(nextID++, arrivalProcess.next(), model, randomMarket(),
 					new RandPlus(rand.nextLong()), props);
 		default:
 			return null;
@@ -45,24 +53,35 @@ public class BackgroundAgentFactory implements Iterator<BackgroundAgent> {
 	}
 	
 	public final int nextID() {
-		return id;
+		return nextID;
 	}
 
 	@Override
 	public boolean hasNext() {
-		// TODO Auto-generated method stub
-		return true;
+		return nextID < finalID;
 	}
 
 	@Override
 	public BackgroundAgent next() {
-		// TODO Auto-generated method stub
-		return null;
+		return createAgent(type, props);
 	}
 
 	@Override
 	public void remove() {
 		throw new UnsupportedOperationException("Remove not supported");
+	}
+	
+	/**
+	 * Returns an Iterable object fur use with the for : each syntax
+	 */
+	public Iterable<BackgroundAgent> iterable() {
+		final Iterator<BackgroundAgent> it = this;
+		return new Iterable<BackgroundAgent>() {
+			@Override
+			public Iterator<BackgroundAgent> iterator() {
+				return it;
+			}
+		};
 	}
 
 }
