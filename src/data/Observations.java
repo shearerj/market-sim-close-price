@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeSet;
 
 import org.json.simple.*;
 import org.apache.commons.math3.stat.descriptive.*;
@@ -287,40 +288,45 @@ public class Observations {
 			}
 			
 			Surplus surplus = data.getSurplus(model.getID(), rho);
-			DescriptiveStatistics total = new DescriptiveStatistics(
-					ArrayUtils.toPrimitive(surplus.values().toArray(new 
-					Double[surplus.size()])));
-			feat.addSum("", TOTAL + suffix, total);
-			
-			// sub-categories for surplus (roles)
-			DescriptiveStatistics bkgrd = new DescriptiveStatistics();
-			DescriptiveStatistics hft = new DescriptiveStatistics();
-			DescriptiveStatistics mm = new DescriptiveStatistics();
-			DescriptiveStatistics env = new DescriptiveStatistics();
-			
-			// go through all agents & update for each agent type
-			for (Integer agentID : surplus.agents()) {
-				Agent ag = data.getAgent(agentID);
-				double val = surplus.get(agentID);
-				
-				if (ag instanceof BackgroundAgent) {
-					bkgrd.addValue(val);
-				} else if (ag instanceof HFTAgent) {
-					val = ag.getRealizedProfit();
-					hft.addValue(val);
-				} else if (ag instanceof MarketMaker) {
-					mm.addValue(val);
+			if (surplus != null) {
+				DescriptiveStatistics total = new DescriptiveStatistics(
+						ArrayUtils.toPrimitive(surplus.values().toArray(new 
+								Double[surplus.size()])));
+				feat.addSum("", TOTAL + suffix, total);
+
+				// sub-categories for surplus (roles)
+				DescriptiveStatistics bkgrd = new DescriptiveStatistics();
+				DescriptiveStatistics hft = new DescriptiveStatistics();
+				DescriptiveStatistics mm = new DescriptiveStatistics();
+				DescriptiveStatistics env = new DescriptiveStatistics();
+
+				// go through all agents & update for each agent type
+				for (Integer agentID : surplus.agents()) {
+					Agent ag = data.getAgent(agentID);
+					double val = surplus.get(agentID);
+
+					if (ag instanceof BackgroundAgent) {
+						bkgrd.addValue(val);
+					} else if (ag instanceof HFTAgent) {
+						val = ag.getRealizedProfit();
+						hft.addValue(val);
+					} else if (ag instanceof MarketMaker) {
+						mm.addValue(val);
+					}
+					if (data.isEnvironmentAgent(agentID)) {
+						env.addValue(val);
+					}
 				}
-				if (data.isEnvironmentAgent(agentID)) {
-					env.addValue(val);
+
+				feat.addSum("", Consts.ROLE_BACKGROUND.toLowerCase() + suffix, bkgrd);
+				feat.addSum("", Consts.ROLE_MARKETMAKER.toLowerCase() + suffix, mm);
+				feat.addSum("", Consts.ROLE_HFT.toLowerCase(), hft);
+				if (data.isEGTAUseCase()) {	// only add if EGTA use case
+					feat.addSum("", Consts.TYPE_ENVIRONMENT.toLowerCase(), env);
 				}
-			}
-			
-			feat.addSum("", Consts.ROLE_BACKGROUND.toLowerCase() + suffix, bkgrd);
-			feat.addSum("", Consts.ROLE_MARKETMAKER.toLowerCase() + suffix, mm);
-			feat.addSum("", Consts.ROLE_HFT.toLowerCase(), hft);
-			if (data.isEGTAUseCase()) {	// only add if EGTA use case
-				feat.addSum("", Consts.TYPE_ENVIRONMENT.toLowerCase(), env);
+			} else {
+				System.err.println(this.getClass().getSimpleName() + "::getSurplus: " +
+						"no surplus records found for rho=" + rho);
 			}
 		}
 		return feat;
@@ -341,56 +347,63 @@ public class Observations {
 	public Feature getTransactionInfo(MarketModel model) {
 		Feature feat = new Feature();
 
-		List<Transaction> trans = new ArrayList<Transaction>(data.getTrans(model.getID()));
+		TreeSet<Transaction> tset = data.getTrans(model.getID());
 		
-		DescriptiveStatistics prices = new DescriptiveStatistics();
-		DescriptiveStatistics quantity = new DescriptiveStatistics();
-		DescriptiveStatistics fundamental = new DescriptiveStatistics();
-		TimeSeries transPrices = new TimeSeries();
-		TimeSeries fundPrices = new TimeSeries();
-		
-		// number of transactions, hashed by agent type
-		HashMap<String,Integer> numTrans = new HashMap<String,Integer>();
-		
-		for (Transaction t : trans) {
-			PQTransaction tr = (PQTransaction) t;
-			prices.addValue(tr.price.getPrice());
-			quantity.addValue(tr.quantity);
-			fundamental.addValue(data.getFundamentalAt(tr.timestamp).getPrice());
-			
-			transPrices.add(tr.timestamp, new Double(tr.price.getPrice()));
-			fundPrices.add(tr.timestamp, new Double(data.getFundamentalAt(tr.timestamp).getPrice()));
-			
-			// update number of transactions
-			for (int id : Arrays.asList(tr.buyerID, tr.sellerID)) {
-				if (model.getAgentIDs().contains(id)) {
-					String type = data.getAgent(id).getType();
-					int num = 0;
-					if (numTrans.containsKey(type)) {
-						num += numTrans.get(type);
+		if (tset != null && !tset.isEmpty()) {
+			List<Transaction> trans = new ArrayList<Transaction>(tset);
+
+			DescriptiveStatistics prices = new DescriptiveStatistics();
+			DescriptiveStatistics quantity = new DescriptiveStatistics();
+			DescriptiveStatistics fundamental = new DescriptiveStatistics();
+			TimeSeries transPrices = new TimeSeries();
+			TimeSeries fundPrices = new TimeSeries();
+
+			// number of transactions, hashed by agent type
+			HashMap<String,Integer> numTrans = new HashMap<String,Integer>();
+
+			for (Transaction t : trans) {
+				PQTransaction tr = (PQTransaction) t;
+				prices.addValue(tr.price.getPrice());
+				quantity.addValue(tr.quantity);
+				fundamental.addValue(data.getFundamentalAt(tr.timestamp).getPrice());
+
+				transPrices.add(tr.timestamp, new Double(tr.price.getPrice()));
+				fundPrices.add(tr.timestamp, new Double(data.getFundamentalAt(tr.timestamp).getPrice()));
+
+				// update number of transactions
+				for (int id : Arrays.asList(tr.buyerID, tr.sellerID)) {
+					if (model.getAgentIDs().contains(id)) {
+						String type = data.getAgent(id).getType();
+						int num = 0;
+						if (numTrans.containsKey(type)) {
+							num += numTrans.get(type);
+						}
+						numTrans.put(type, ++num);
 					}
-					numTrans.put(type, ++num);
 				}
 			}
-		}
-		feat.addMean(PRICE, "", prices);
-		feat.addStdDev(PRICE, "", prices);
+			feat.addMean(PRICE, "", prices);
+			feat.addStdDev(PRICE, "", prices);
 
-		// number of transactions for each agent type
-		for (String type : numTrans.keySet()) {
-			feat.put(type.toLowerCase() + "_" + NUM, numTrans.get(type));
-		}
-		
-		// compute RMSD (for price discovery) at different sampling frequencies
-		for (int period : Consts.periods) {
-			String prefix = "";
-			if (period > 1) {
-				prefix += PERIODICITY + period;
+			// number of transactions for each agent type
+			for (String type : numTrans.keySet()) {
+				feat.put(type.toLowerCase() + "_" + NUM, numTrans.get(type));
 			}
-			double[] pr = transPrices.getSampledArray(period, data.simLength.longValue());
-			double[] fund = fundPrices.getSampledArray(period, data.simLength.longValue());
-			feat.addRMSD(prefix, "", new DescriptiveStatistics(pr), 
-					new DescriptiveStatistics(fund));
+
+			// compute RMSD (for price discovery) at different sampling frequencies
+			for (int period : Consts.periods) {
+				String prefix = "";
+				if (period > 1) {
+					prefix += PERIODICITY + period;
+				}
+				double[] pr = transPrices.getSampledArray(period, data.simLength.longValue());
+				double[] fund = fundPrices.getSampledArray(period, data.simLength.longValue());
+				feat.addRMSD(prefix, "", new DescriptiveStatistics(pr), 
+						new DescriptiveStatistics(fund));
+			}
+		} else {
+			System.err.println(this.getClass().getSimpleName() + "::getTransactionInfo: " +
+					"no transactions found");
 		}
 		return feat;
 	}

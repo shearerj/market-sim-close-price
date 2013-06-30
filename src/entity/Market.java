@@ -1,13 +1,9 @@
 package entity;
 
-import data.ObjectProperties;
-import data.SystemData;
+import data.*;
 import event.*;
-import model.*;
 import market.*;
-import activity.Activity;
-import activity.ProcessQuote;
-import activity.UpdateNBBO;
+import activity.*;
 import systemmanager.*;
 
 import java.util.ArrayList;
@@ -182,20 +178,16 @@ public abstract class Market extends Entity {
  	 * @return
  	 */
 	public Collection<Activity> sendToSIP(TimeStamp ts) {
-                int bid = this.getBidPrice().getPrice();
-                int ask = this.getAskPrice().getPrice();
+        int bid = this.getBidPrice().getPrice();
+        int ask = this.getAskPrice().getPrice();
 		log.log(Log.INFO, ts + " | " + this + " SendToSIP(" + bid + ", " + ask + ")");
 
 		Collection<Activity> actMap = new ArrayList<Activity>();
-		MarketModel model = data.getModelByMarketID(this.getID());
 		SIP sip = data.getSIP();
 		if (data.nbboLatency.longValue() == 0) {
-			sip.processQuote(this, bid, ask, ts);
-			sip.updateNBBO(model, ts);
+			actMap.add(new ProcessQuote(sip, this, bid, ask, Consts.INF_TIME));
 		} else {
-			TimeStamp tsNew = ts.sum(data.nbboLatency);
-			actMap.add(new ProcessQuote(sip, this, bid, ask, tsNew));
-			actMap.add(new UpdateNBBO(sip, model, tsNew));
+			actMap.add(new ProcessQuote(sip, this, bid, ask, ts.sum(data.nbboLatency)));
 		}
 		return actMap;
 	}

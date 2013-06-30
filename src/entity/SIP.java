@@ -67,7 +67,7 @@ public class SIP extends Entity {
 	}
 
 	/**
- 	 * Store market's best bid/ask & insert Activity to UpdateNBBO at some amount of time 
+ 	 * Process and store new quotes for the given market.
  	 *
  	 * @param mkt
  	 * @param bid
@@ -85,7 +85,7 @@ public class SIP extends Entity {
 		marketQuotes.put(mktID, q);
 		log.log(Log.INFO, ts + " | " + data.getMarket(mktID) + " " + 
 				"ProcessQuote: " + q);
-		return Collections.emptyList();
+		return updateNBBO(data.getModelByMarketID(mktID), ts);
 	}
 	
 	/**
@@ -96,9 +96,6 @@ public class SIP extends Entity {
 	 * @return
 	 */
 	public Collection<Activity> updateNBBO(MarketModel model, TimeStamp ts) {
-		
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		
 		int modelID = model.getID();
 		ArrayList<Integer> ids = model.getMarketIDs();
 		String s = ts + " | " + ids + " UpdateNBBO: current " + getNBBOQuote(modelID)
@@ -130,7 +127,7 @@ public class SIP extends Entity {
 		lastQuote.bestAsk = bestAsk;
 		lastQuotes.put(modelID, lastQuote);
 		log.log(Log.INFO, s + "updated " + lastQuote);
-		return actMap;
+		return Collections.emptyList();
 	}
 
 	/**

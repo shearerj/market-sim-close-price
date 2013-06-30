@@ -53,14 +53,20 @@ public class CDAMarket extends Market {
 		orderbook.insertBid((PQBid) b);
 		data.addDepth(id, ts, orderbook.getDepth());
 		data.addSubmissionTime(b.getBidID(), ts);
-		return clear(ts);
+		// return clear(ts);
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		actMap.add(new Clear(this, Consts.INF_TIME));
+		return actMap;
 	}
 	
 	
 	public Collection<Activity> removeBid(int agentID, TimeStamp ts) {
 		orderbook.removeBid(agentID);
 		data.addDepth(this.id, ts, orderbook.getDepth());
-		return clear(ts);
+		// return clear(ts);
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		actMap.add(new Clear(this, Consts.INF_TIME));
+		return actMap;
 	}
 	
 	
