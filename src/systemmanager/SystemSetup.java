@@ -427,7 +427,7 @@ public class SystemSetup {
 		if (data.isSMAgent(agType)) {
 			// must assign market if single-market agent
 			p.put(Agent.ARRIVAL_KEY, arr.toString());
-			p.put(Agent.FUNDAMENTAL_KEY, data.getFundamentalAt(arr).toString());				
+			p.put(Agent.FUNDAMENTAL_KEY, model.getFundamentalAt(arr).toString());				
 		}
 		Agent agent = AgentFactory.createAgent(agType, agID, model.getID(), data, p);
 		
@@ -452,7 +452,7 @@ public class SystemSetup {
 		// set liquidation at the end of the simulation for market makers
 		if (agent instanceof BasicMarketMaker) {
 			eventManager.addActivity(new Liquidate(agent, 
-					data.getFundamentalAt(data.simLength), data.simLength));
+					agent.getModel().getFundamentalAt(data.simLength), data.simLength));
 		}
 	}
 	

@@ -627,7 +627,7 @@ public abstract class Agent extends Entity {
 	 */
 	public Collection<Activity> liquidateAtFundamental(TimeStamp ts) {
 		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new Liquidate(this, data.getFundamentalAt(ts), ts));
+		actMap.add(new Liquidate(this, model.getFundamentalAt(ts), ts));
 		Logger.log(Logger.INFO, ts + " | " + this + " liquidating..."); 
 		return actMap;
 	}

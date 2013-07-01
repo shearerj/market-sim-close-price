@@ -366,10 +366,10 @@ public class Observations {
 			PQTransaction tr = (PQTransaction) t;
 			prices.addValue(tr.price.getPrice());
 			quantity.addValue(tr.quantity);
-			fundamental.addValue(data.getFundamentalAt(tr.timestamp).getPrice());
+			fundamental.addValue(model.getFundamentalAt(tr.timestamp).getPrice());
 
 			transPrices.add(tr.timestamp, new Double(tr.price.getPrice()));
-			fundPrices.add(tr.timestamp, new Double(data.getFundamentalAt(
+			fundPrices.add(tr.timestamp, new Double(model.getFundamentalAt(
 					tr.timestamp).getPrice()));
 
 			// update number of transactions

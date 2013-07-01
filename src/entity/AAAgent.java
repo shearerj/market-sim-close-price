@@ -189,7 +189,7 @@ public class AAAgent extends BackgroundAgent {
 		}
 		
 		private void determinePriceLimit(int quantity, TimeStamp ts) {
-			int fundPrice = data.getFundamentalAt(ts).getPrice();
+			int fundPrice = model.getFundamentalAt(ts).getPrice();
 			int deviation = getPrivateValueAt(positionBalance + quantity).getPrice();
 			limit = fundPrice + deviation;
 			if(testing != -1) limit = testing;
@@ -470,10 +470,6 @@ public class AAAgent extends BackgroundAgent {
     public Collection<Activity> agentStrategy(TimeStamp ts) {
     	String s = ts + " | " + this + " " + agentType + ":";
     	Collection<Activity> actMap = new ArrayList<Activity>();
-
-    	//Updating market info
-    	updateAllQuotes(ts);
-    	updateTransactions(ts);
 
 		//Update the moving average
     	int movingAverage = -1;
