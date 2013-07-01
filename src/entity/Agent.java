@@ -862,41 +862,6 @@ public abstract class Agent extends Entity {
 							", seller=" + data.getAgentLogID(t.getSeller().getID()) +
 							", price=" + t.price + ", quantity=" + t.quantity + 
 							", timeStamp=" + t.timestamp + ")");
-					
-					// Log surplus for background agents with private values
-					Agent buyer = t.getBuyer();
-					Agent seller = t.getSeller();
-					Price rt = data.getFundamentalAt(ts);
-					int cs = 0;		// consumer surplus
-					int ps = 0;		// producer surplus
-					
-					String s = ts + " | " + this + " " + "Agent::updateTransactions: BUYER surplus: ";
-					if (buyer.hasPrivateValue()) {
-						cs = (data.getPrivateValueByBid(t.getBuyBid().getBidID()).sum(rt)).diff(t.price).getPrice();
-						s += "(" + buyer.getPrivateValue() + "+" + rt + ")-" + t.price.getPrice() + 
-								"=" + cs + ", ";
-					} else {
-						cs = t.quantity * t.price.getPrice();
-						s += "-" + cs + ", ";
-					}
-					s += "SELLER surplus: ";
-					if (seller.hasPrivateValue()) {
-						ps = t.price.diff(data.getPrivateValueByBid(t.getSellBid().getBidID()).sum(rt)).getPrice();
-						s += t.price.getPrice() + "-(" + seller.getPrivateValue() + "+" + rt + 
-								")=" + ps;
-					} else {
-						ps = t.quantity * t.price.getPrice(); 
-						s += ps;
-					}
-//					String s = ts + " | " + this + " " +
-//							"Agent::updateTransactions: BUYER surplus: (" + buyer.getPrivateValue()
-//							+ "+" + rt + ")-" + t.price.getPrice() + "=" + bsurplus + ", "
-//							+ "SELLER surplus: " + t.price.getPrice() + "-(" + 
-//							seller.getPrivateValue() + "+" + rt + ")=" + ssurplus;
-
-					Logger.log(Logger.INFO, s);
-					Logger.log(Logger.INFO, ts + " | " + this + " " +
-							"Agent::updateTransactions: SURPLUS for this transaction: " + (cs + ps));
 				}
 				// Update transactions
 				lastGoodTrans = t;
