@@ -183,8 +183,7 @@ public class EventQueueTest {
 		assertFalse(q.contains(second));
 		
 		int bruteSize = 0;
-		for (@SuppressWarnings("unused") Activity a : q)
-			bruteSize++;
+		for (Activity a : q) bruteSize++;
 		assertEquals(2, bruteSize);
 		
 		assertFalse(second == q.poll());
