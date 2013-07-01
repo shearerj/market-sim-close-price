@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import data.SystemData;
 
+import entity.Market;
 import event.*;
 
 /**
@@ -15,15 +16,28 @@ import event.*;
  */
 public abstract class OrderBook {
 
+	// reorg
+	protected final Market market;
+	// reorg
+	
 	public int marketID;
 	public SystemData data;
 	
-	// hashed by agent ID
+	// hashed by agent ID FIXME Can only store one bid for each agent including HFT
 	public HashMap<Integer,Bid> activeBids;
 	public HashMap<Integer,Bid> clearedBids;
 	
-	public OrderBook(int id) {
+	public OrderBook(Market market) {
+		this.market = market;
+		this.marketID = market.getID();
+		this.activeBids = new HashMap<Integer,Bid>();
+		this.clearedBids = new HashMap<Integer,Bid>();
+	}
+	
+	@Deprecated
+	public OrderBook(int id, SystemData data) {
 		this.marketID = id;
+		this.market = data.getMarket(id);
 		activeBids = new HashMap<Integer,Bid>();
 	}
 	

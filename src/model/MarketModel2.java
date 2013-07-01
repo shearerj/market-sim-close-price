@@ -88,7 +88,7 @@ public abstract class MarketModel2 {
 		this.trans = new ArrayList<Transaction>();
 
 		for (Entry<AgentProperties, Integer> type : agentProps.entrySet()) {
-			// FIXME Replace null with this for true MarketModelm and 0 with
+			// FIXME Replace null with this for true MarketModel2 and 0 with
 			// default arrival rate
 			AgentProperties agProps = type.getKey();
 			int number = type.getValue();

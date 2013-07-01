@@ -6,14 +6,15 @@ import event.TimeStamp;
 
 public abstract class Bid {
 
-	private final Integer bidID;
-	private final Agent agent;
-	private final Market market;
-	public TimeStamp timestamp;
+	protected final int bidID;
+	protected final Agent agent;
+	protected final Market market;
+	protected final TimeStamp submissionTime;
 	
-	public Bid(Agent agent, Market market) {
+	public Bid(Agent agent, Market market, TimeStamp submissionTime) {
 		this.agent = agent;
 		this.market = market;
+		this.submissionTime = submissionTime;
 		this.bidID = this.hashCode();
 	}
 
@@ -21,7 +22,7 @@ public abstract class Bid {
 		this.bidID = other.bidID;
 		this.agent = other.agent;
 		this.market = other.market;
-		this.timestamp = other.timestamp;
+		this.submissionTime = other.submissionTime;
 	}
 	
 	public Agent getAgent() {
@@ -32,24 +33,22 @@ public abstract class Bid {
 		return market;
 	}
 	
-	/**
-	 * accessor function for agentID
-	 *
-	 * @return the agentID of the bid
-	 */
-	public int getAgentID() {
-		return -1;
+	public TimeStamp getSubmissionTime() {
+		return submissionTime;
 	}
-
-
+	
+	@Deprecated // TODO Call getAgent instead
+	public int getAgentID() {
+		return agent.getID();
+	}
 
 	/**
 	 * accessor function for bidID
 	 *
 	 * @return bidID
 	 */
-	public Integer getBidID() {
-		return bidID.intValue();
+	public int getBidID() {
+		return bidID;
 	}
 
 

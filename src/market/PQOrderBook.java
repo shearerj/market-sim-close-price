@@ -20,16 +20,15 @@ import event.TimeStamp;
 public class PQOrderBook extends OrderBook {
 
 	public FourHeap FH;
-
-	public PQOrderBook(int mktID) {
-		super(mktID);
-		FH = new FourHeap(mktID);
+	
+	public PQOrderBook(Market market) {
+		super(market);
 	}
 
-	public void setParams(int mktID, SystemData data) {
-		marketID = mktID;
-		this.data = data;
-		FH.setParams(mktID);
+	@Deprecated
+	public PQOrderBook(int mktID, SystemData data) {
+		super(mktID, data);
+		FH = new FourHeap(data.getMarket(mktID));
 	}
 
 	/** 
@@ -68,7 +67,7 @@ public class PQOrderBook extends OrderBook {
 		
 		// create entry if non-existent, or add as existing multi-point bid
 		if (!activeBids.containsKey(key)) {
-			PQBid newBid = new PQBid(pq.getAgent(), pq.getMarket());
+			PQBid newBid = new PQBid(pq.getAgent(), pq.getMarket(), null);
 			newBid.addPoint(pq);
 			activeBids.put(key, newBid);
 		} else {
@@ -106,7 +105,7 @@ public class PQOrderBook extends OrderBook {
 	 */
 	public Bid getAskQuote() {
 		PQPoint pq = FH.getAskQuote();
-		PQBid b = new PQBid(pq.getAgent(), pq.getMarket());
+		PQBid b = new PQBid(pq.getAgent(), pq.getMarket(), null);
 		b.addPoint(pq);
 		return b;
 	}
@@ -116,7 +115,7 @@ public class PQOrderBook extends OrderBook {
 	 */
 	public Bid getBidQuote() {
 		PQPoint pq = FH.getBidQuote();
-		PQBid b = new PQBid(pq.getAgent(), pq.getMarket());
+		PQBid b = new PQBid(pq.getAgent(), pq.getMarket(), null);
 		b.addPoint(pq);
 		return b;
 	}

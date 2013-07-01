@@ -26,17 +26,17 @@ import event.TimeStamp;
  */
 public abstract class Market extends Entity {
 
-	//reorg
-	protected MarketModel model;
+	// reorg
+	protected final MarketModel model;
 	protected ArrayList<Bid> bids;
-	protected TreeMap<Integer,TimeStamp> executionTimes;	//Hashed by bidID
-	protected TreeMap<Integer,TimeStamp> submissionTimes;	//Hashed by bidID
-	//end reorg
-	
+	// XXX There should probably be more model specific stuff here...
+	protected TreeMap<Integer, TimeStamp> executionTimes; // Hashed by bidID
+	// end reorg
+
 	// Model information
 	// TODO equals method...
-	protected int modelID;				// ID of associated model
-	
+	protected int modelID; // ID of associated model
+
 	// Agent information
 	protected ArrayList<Integer> buyers;
 	protected ArrayList<Integer> sellers;
@@ -44,7 +44,7 @@ public abstract class Market extends Entity {
 
 	// Market information
 	public TimeStamp nextQuoteTime;
-	public TimeStamp nextClearTime;		// Most important for call markets
+	public TimeStamp nextClearTime; // Most important for call markets
 	public TimeStamp lastQuoteTime;
 	public TimeStamp lastClearTime;
 	public TimeStamp lastBidTime;
@@ -55,13 +55,13 @@ public abstract class Market extends Entity {
 	public int lastBidQuantity;
 	public String marketType;
 
-	/**
-	 * @param marketID
-	 * @param d
-	 * @param p
-	 * @param l
-	 */
-	public Market(int marketID, SystemData d, ObjectProperties p, MarketModel model) {
+	public Market(int marketID, MarketModel model) {
+		super(marketID);
+		this.model = model;
+	}
+
+	public Market(int marketID, SystemData d, ObjectProperties p,
+			MarketModel model) {
 		super(marketID, d, p);
 
 		agentIDs = new ArrayList<Integer>();
@@ -72,12 +72,12 @@ public abstract class Market extends Entity {
 		lastClearTime = new TimeStamp(-1);
 		nextQuoteTime = new TimeStamp(-1);
 		nextClearTime = new TimeStamp(-1);
-		
+
 		lastClearPrice = new Price(-1);
 		lastAskPrice = new Price(-1);
 		lastBidPrice = new Price(-1);
-		
-		//reorg
+
+		// reorg
 		this.model = model;
 	}
 
@@ -89,14 +89,14 @@ public abstract class Market extends Entity {
 	public void linkModel(int id) {
 		this.modelID = id;
 	}
-	
+
 	/**
 	 * @return model ID
 	 */
 	public int getModelID() {
 		return this.modelID;
 	}
-	
+
 	/**
 	 * @return bid (highest buy offer)
 	 */
@@ -130,7 +130,7 @@ public abstract class Market extends Entity {
 	public int getAskQuantity() {
 		return lastAskQuantity;
 	}
-	
+
 	/**
 	 * Publish quotes.
 	 * 
@@ -149,21 +149,23 @@ public abstract class Market extends Entity {
 	/**
 	 * @return map of bids (hashed by agent ID)
 	 */
-	public abstract HashMap<Integer,Bid> getBids();
+	public abstract HashMap<Integer, Bid> getBids();
 
 	/**
 	 * Returns all bids submitted to this market
+	 * 
 	 * @return bids
 	 */
 	public ArrayList<Bid> getAllBids() {
 		return this.bids;
 	}
-	
+
 	/**
 	 * Add bid to the market.
 	 * 
 	 * @param b
-	 * @param ts TimeStamp of bid addition
+	 * @param ts
+	 *            TimeStamp of bid addition
 	 * @return Collection<Activity> of further activities to add, if any
 	 */
 	public abstract Collection<? extends Activity> addBid(Bid b, TimeStamp ts);
@@ -172,12 +174,13 @@ public abstract class Market extends Entity {
 	 * Remove bid for given agent from the market.
 	 * 
 	 * @param agentID
-	 * @param ts TimeStamp of bid removal
+	 * @param ts
+	 *            TimeStamp of bid removal
 	 * @return Collection<Activity> (unused for now)
 	 */
-	public abstract Collection<? extends Activity> removeBid(int agentID, TimeStamp ts);
-	
-	
+	public abstract Collection<? extends Activity> removeBid(int agentID,
+			TimeStamp ts);
+
 	/**
 	 * Clears all the market's data structures.
 	 */
@@ -197,42 +200,42 @@ public abstract class Market extends Entity {
 	}
 
 	/**
- 	 * Send market's bid/ask to the Security Information Processor to be processed at some time
- 	 * (determined by latency) in the future.
- 	 *
- 	 * @param ts
- 	 * @return
- 	 */
+	 * Send market's bid/ask to the Security Information Processor to be
+	 * processed at some time (determined by latency) in the future.
+	 * 
+	 * @param ts
+	 * @return
+	 */
 	public Collection<Activity> sendToSIP(TimeStamp ts) {
-        int bid = this.getBidPrice().getPrice();
-        int ask = this.getAskPrice().getPrice();
-		Logger.log(Logger.INFO, ts + " | " + this + " SendToSIP(" + bid + ", " + ask + ")");
+		int bid = this.getBidPrice().getPrice();
+		int ask = this.getAskPrice().getPrice();
+		Logger.log(Logger.INFO, ts + " | " + this + " SendToSIP(" + bid + ", "
+				+ ask + ")");
 
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		SIP sip = data.getSIP();
 		if (data.nbboLatency.longValue() == 0) {
 			actMap.add(new ProcessQuote(sip, this, bid, ask, Consts.INF_TIME));
 		} else {
-			actMap.add(new ProcessQuote(sip, this, bid, ask, ts.sum(data.nbboLatency)));
+			actMap.add(new ProcessQuote(sip, this, bid, ask,
+					ts.sum(data.nbboLatency)));
 		}
 		return actMap;
 	}
-	
-	/**
-	 * Add bid time to execution (difference between transaction and submission times).
-	 * @param bidID
-	 * @param ts
-	 */
+
+	@Deprecated
 	public void addExecutionTime(int bidID, TimeStamp ts) {
 		// check if submission time contains it (if not, there is an error)
-		if (submissionTimes.containsKey(bidID)) {
-			executionTimes.put(bidID, ts.diff(submissionTimes.get(bidID)));
-		} else {
-			System.err.println(this.getClass().getSimpleName() + 
-					":: submission time does not contain bidID " + bidID);
+		for (Bid b : bids) {
+			if (b.getBidID() == bidID) {
+				executionTimes.put(bidID, ts.diff(b.getSubmissionTime()));
+				return;
+			}
 		}
+		System.err.println(this.getClass().getSimpleName()
+				+ ":: submission time does not contain bidID " + bidID);
 	}
-	
+
 	/**
 	 * @return true if both BID & ASK are defined (!= -1)
 	 */
@@ -242,14 +245,16 @@ public abstract class Market extends Entity {
 		}
 		return true;
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
 		return new String("[" + this.getID() + "]");
 	}
-	
+
 	/**
 	 * Returns true if agent can sell in this market.
 	 * 
@@ -317,35 +322,40 @@ public abstract class Market extends Entity {
 	public TimeStamp getLastQuoteTime() {
 		return lastQuoteTime;
 	}
-	
+
 	public ArrayList<Transaction> getModelTrans() {
 		return model.getTrans();
 	}
-	
+
 	public MarketModel getMarketModel() {
 		return model;
 	}
 
-	
 	/**
 	 * Quantizes the given integer based on the given granularity. Formula from
 	 * Wikipedia (http://en.wikipedia.org/wiki/Quantization_signal_processing)
 	 * 
-	 * @param num integer to quantize
-	 * @param n granularity (e.g. tick size)
+	 * @param num
+	 *            integer to quantize
+	 * @param n
+	 *            granularity (e.g. tick size)
 	 * @return
 	 */
 	public static int quantize(int num, int n) {
 		double tmp = 0.5 + Math.abs((double) num) / ((double) n);
-		return Integer.signum(num) * n * (int)Math.floor(tmp);
+		return Integer.signum(num) * n * (int) Math.floor(tmp);
 	}
 
 	public TreeMap<Integer, TimeStamp> getExecutionTimes() {
 		return executionTimes;
 	}
 
+	@Deprecated
 	public TreeMap<Integer, TimeStamp> getSubmissionTimes() {
-		return submissionTimes;
+		TreeMap<Integer, TimeStamp> map = new TreeMap<Integer, TimeStamp>();
+		for (Bid b : this.bids)
+			map.put(b.getBidID(), b.getSubmissionTime());
+		return map;
 	}
 
 }

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.TreeSet;
 
 import logger.Logger;
 import market.Bid;
@@ -35,22 +34,27 @@ import event.TimeStamp;
  */
 public class CallMarket extends Market {
 
-	public float pricingPolicy;
-	public PQOrderBook orderbook;
-	private TimeStamp clearFreq;
-	
 	public final static String CLEAR_FREQ_KEY = "clearFreq";
 	public final static String PRICING_POLICY_KEY = "pricingPolicy";
 	
-	/**
-	 * Overloaded constructor.
-	 * @param marketID
-	 */
+	public float pricingPolicy;
+	public PQOrderBook orderbook;
+	protected final TimeStamp clearFreq;
+	protected TimeStamp nextClearTime;
+	
+	public CallMarket(int marketID, MarketModel model, float pricingPolicy, TimeStamp clearFreq) {
+		super(marketID, model);
+		this.pricingPolicy = pricingPolicy;
+		this.clearFreq = clearFreq;
+		this.orderbook = new PQOrderBook(this);
+//		orderbook.setParams(id, d); // FIXME
+		this.nextClearTime = clearFreq;
+	}
+	
 	public CallMarket(int marketID, SystemData d, ObjectProperties p, MarketModel model) {
 		super(marketID, d, p, model);
 		marketType = Consts.getMarketType(this.getName());
-		orderbook = new PQOrderBook(id);
-		orderbook.setParams(id, d);
+		orderbook = new PQOrderBook(id, d);
 		pricingPolicy = params.getAsFloat(CallMarket.PRICING_POLICY_KEY);
 		clearFreq = new TimeStamp(params.getAsInt(CallMarket.CLEAR_FREQ_KEY));
 		nextClearTime = clearFreq;
@@ -78,7 +82,6 @@ public class CallMarket extends Market {
 		orderbook.insertBid((PQBid) b);
 		bids.add(b);
 		data.addDepth(id, ts, orderbook.getDepth());
-		submissionTimes.put(b.getBidID(), ts);
 		if (clearFreq.longValue() == 0) {
 			// return clear(ts);
 			actMap.add(new Clear(this, Consts.INF_TIME));

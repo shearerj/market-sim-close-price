@@ -570,9 +570,8 @@ public abstract class Agent extends Entity {
 				+ quantity + ") to " + mkt);
 		
 		int p = Market.quantize(price, tickSize);
-		PQBid pqBid = new PQBid(this, mkt);
+		PQBid pqBid = new PQBid(this, mkt, ts);
 		pqBid.addPoint(quantity, new Price(p));
-		pqBid.timestamp = ts;
 		// quantity can be +/-
 		if (hasPrivateValue()) {
 			data.addPrivateValue(pqBid.getBidID(), getPrivateValueAt(quantity));
@@ -603,8 +602,7 @@ public abstract class Agent extends Entity {
 		Logger.log(Logger.INFO, ts + " | " + mkt + " " + this + ": +(" + price +	", " 
 				+ quantity + ")");
 		
-		PQBid pqBid = new PQBid(this, mkt);
-		pqBid.timestamp = ts;
+		PQBid pqBid = new PQBid(this, mkt, ts);
 		for (int i = 0; i < price.size(); i++) {
 			if (quantity.get(i) != 0) {
 				int p = Market.quantize(price.get(i), tickSize);
