@@ -62,7 +62,7 @@ public class ZIAgent extends BackgroundAgent {
 	}
 
 	@Override
-	public Collection<Activity> agentStrategy(TimeStamp ts) {
+	public Collection<? extends Activity> agentStrategy(TimeStamp ts) {
 		// update quotes
 		this.updateAllQuotes(ts);
 

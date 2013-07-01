@@ -24,9 +24,6 @@ import java.util.HashMap;
 public class LAAgent extends HFTAgent {
 	
 	private double alpha; // LA profit gap
-	private int sleepTime;
-	private double sleepVar;
-	
 	
 	/**
 	 * @param agentID
@@ -120,7 +117,7 @@ public class LAAgent extends HFTAgent {
 				
 			} else if (sleepTime == 0) {
 				// infinitely fast HFT agent
-				actMap.add(new AgentStrategy(this, Consts.INF_TIME));
+//				actMap.add(new AgentStrategy(this, Consts.INF_TIME));
 			}
 			return actMap;
 		}

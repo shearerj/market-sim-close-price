@@ -31,7 +31,7 @@ public class SubmitNMSBid extends Activity {
 		return new SubmitNMSBid(this.ag, this.price, this.quantity, this.duration, this.time);
 	}
 
-	public Collection<Activity> execute(TimeStamp time) {
+	public Collection<? extends Activity> execute(TimeStamp time) {
 		return this.ag.executeSubmitNMSBid(this.price, this.quantity, this.duration, time);
 	}
 

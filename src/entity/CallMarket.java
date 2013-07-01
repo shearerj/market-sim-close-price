@@ -80,7 +80,8 @@ public class CallMarket extends Market {
 		data.addDepth(id, ts, orderbook.getDepth());
 		submissionTimes.put(b.getBidID(), ts);
 		if (clearFreq.longValue() == 0) {
-			return clear(ts);
+			// return clear(ts);
+			actMap.add(new Clear(this, Consts.INF_TIME));
 		} // else, Clear activities are chained and continue that way
 		return actMap;
 	}
@@ -91,7 +92,8 @@ public class CallMarket extends Market {
 		orderbook.removeBid(agentID);
 		data.addDepth(id, ts, orderbook.getDepth());
 		if (clearFreq.longValue() == 0) {
-			return clear(ts);
+			// return clear(ts);
+			actMap.add(new Clear(this, Consts.INF_TIME));
 		} // else, Clear activities are chained and continue that way
 		return actMap;
 	}

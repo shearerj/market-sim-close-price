@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import systemmanager.Consts;
+
 import logger.Logger;
 
 /**
@@ -24,6 +26,9 @@ import logger.Logger;
  */
 public abstract class MMAgent extends Agent {
 
+	protected int sleepTime;
+	protected double sleepVar;
+	
 	/**
 	 * Constructor for a multi-market agent.
 	 * 
@@ -56,7 +61,11 @@ public abstract class MMAgent extends Agent {
 		
 		// Insert agent strategy call once it has arrived in the market
 		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new AgentStrategy(this, ts));
+		if (sleepTime == 0) {
+			actMap.add(new AgentStrategy(this, Consts.INF_TIME));
+		} else {
+			actMap.add(new AgentStrategy(this, ts));
+		}
 		return actMap;
 	}
 	

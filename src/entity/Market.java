@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.TreeMap;
 
+import systemmanager.Consts;
+
 import logger.Logger;
 import market.Bid;
 import market.Price;
@@ -13,7 +15,6 @@ import market.Transaction;
 import model.MarketModel;
 import activity.Activity;
 import activity.ProcessQuote;
-import activity.UpdateNBBO;
 import data.ObjectProperties;
 import data.SystemData;
 import event.TimeStamp;
@@ -165,7 +166,7 @@ public abstract class Market extends Entity {
 	 * @param ts TimeStamp of bid addition
 	 * @return Collection<Activity> of further activities to add, if any
 	 */
-	public abstract Collection<Activity> addBid(Bid b, TimeStamp ts);
+	public abstract Collection<? extends Activity> addBid(Bid b, TimeStamp ts);
 
 	/**
 	 * Remove bid for given agent from the market.
@@ -174,7 +175,7 @@ public abstract class Market extends Entity {
 	 * @param ts TimeStamp of bid removal
 	 * @return Collection<Activity> (unused for now)
 	 */
-	public abstract Collection<Activity> removeBid(int agentID, TimeStamp ts);
+	public abstract Collection<? extends Activity> removeBid(int agentID, TimeStamp ts);
 	
 	
 	/**
@@ -203,20 +204,16 @@ public abstract class Market extends Entity {
  	 * @return
  	 */
 	public Collection<Activity> sendToSIP(TimeStamp ts) {
-                int bid = this.getBidPrice().getPrice();
-                int ask = this.getAskPrice().getPrice();
+        int bid = this.getBidPrice().getPrice();
+        int ask = this.getAskPrice().getPrice();
 		Logger.log(Logger.INFO, ts + " | " + this + " SendToSIP(" + bid + ", " + ask + ")");
 
 		Collection<Activity> actMap = new ArrayList<Activity>();
-		MarketModel model = data.getModelByMarketID(this.getID());
 		SIP sip = data.getSIP();
 		if (data.nbboLatency.longValue() == 0) {
-			sip.processQuote(this, bid, ask, ts);
-			sip.updateNBBO(model, ts);
+			actMap.add(new ProcessQuote(sip, this, bid, ask, Consts.INF_TIME));
 		} else {
-			TimeStamp tsNew = ts.sum(data.nbboLatency);
-			actMap.add(new ProcessQuote(sip, this, bid, ask, tsNew));
-			actMap.add(new UpdateNBBO(sip, model, tsNew));
+			actMap.add(new ProcessQuote(sip, this, bid, ask, ts.sum(data.nbboLatency)));
 		}
 		return actMap;
 	}
@@ -323,6 +320,10 @@ public abstract class Market extends Entity {
 	
 	public ArrayList<Transaction> getModelTrans() {
 		return model.getTrans();
+	}
+	
+	public MarketModel getMarketModel() {
+		return model;
 	}
 
 	
