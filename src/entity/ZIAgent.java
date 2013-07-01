@@ -1,17 +1,16 @@
 package entity;
 
-import data.ObjectProperties;
-import data.Observations;
-import data.SystemData;
-import event.*;
-import market.*;
-import model.MarketModel;
-import activity.Activity;
-
 import java.util.Collection;
 import java.util.HashMap;
 
+import market.PrivateValue;
+import model.MarketModel;
 import utils.RandPlus;
+import activity.Activity;
+import data.ObjectProperties;
+import data.Observations;
+import data.SystemData;
+import event.TimeStamp;
 
 /**
  * ZIAGENT
@@ -63,7 +62,7 @@ public class ZIAgent extends BackgroundAgent {
 	}
 
 	@Override
-	public Collection<Activity> agentStrategy(TimeStamp ts) {
+	public Collection<? extends Activity> agentStrategy(TimeStamp ts) {
 		// update quotes
 		this.updateAllQuotes(ts);
 

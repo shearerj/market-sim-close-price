@@ -1,19 +1,26 @@
 package entity;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+
 import logger.Logger;
-import market.*;
+import market.Bid;
+import market.PQBid;
+import market.PQOrderBook;
+import market.Price;
+import market.Quote;
+import market.Transaction;
 import model.MarketModel;
+import systemmanager.Consts;
+import activity.Activity;
+import activity.Clear;
+import activity.SendToSIP;
 import data.ObjectProperties;
 import data.SystemData;
 import event.TimeStamp;
-import activity.*;
-import systemmanager.*;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.HashMap;
-import java.util.TreeSet;
 
 /**
  * Class for a continuous double auction market.
@@ -51,19 +58,22 @@ public class CDAMarket extends Market {
 		return ((PQBid) getAskQuote()).bidTreeSet.last().getPrice();
 	}
 	
-	public Collection<Activity> addBid(Bid b, TimeStamp ts) {
+	public Collection<? extends Activity> addBid(Bid b, TimeStamp ts) {
 		orderbook.insertBid((PQBid) b);
 		bids.add(b);
 		data.addDepth(id, ts, orderbook.getDepth());
 		submissionTimes.put(b.getBidID(), ts);
-		return clear(ts);
+		return Collections.singleton(new Clear(this, Consts.INF_TIME));
 	}
 	
 	
 	public Collection<Activity> removeBid(int agentID, TimeStamp ts) {
 		orderbook.removeBid(agentID);
 		data.addDepth(this.id, ts, orderbook.getDepth());
-		return clear(ts);
+		// return clear(ts);
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		actMap.add(new Clear(this, Consts.INF_TIME));
+		return actMap;
 	}
 	
 	

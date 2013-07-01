@@ -55,8 +55,8 @@ public class SimulationSpec2 {
 		spec = new Gson().fromJson(new FileReader(specFile), JsonObject.class);
 	}
 
-	public SimulationSpec2(String specFileName)
-			throws JsonSyntaxException, JsonIOException, FileNotFoundException {
+	public SimulationSpec2(String specFileName) throws JsonSyntaxException,
+			JsonIOException, FileNotFoundException {
 		this(new File(specFileName));
 	}
 
@@ -70,25 +70,22 @@ public class SimulationSpec2 {
 	protected void params(SystemData data) {
 		JsonObject config = spec.getAsJsonObject(CONFIG_KEY);
 
-		data.simLength = new TimeStamp(config.getAsJsonPrimitive("sim_length")
-				.getAsLong());
+		data.simLength = new TimeStamp(
+				config.getAsJsonPrimitive("sim_length").getAsLong());
 		data.tickSize = config.getAsJsonPrimitive("tick_size").getAsInt();
 		data.nbboLatency = new TimeStamp(config.getAsJsonPrimitive(
 				"nbbo_latency").getAsLong());
-		data.arrivalRate = config.getAsJsonPrimitive("arrival_rate")
-				.getAsDouble();
-		data.reentryRate = config.getAsJsonPrimitive("reentry_rate")
-				.getAsDouble();
+		data.arrivalRate = config.getAsJsonPrimitive("arrival_rate").getAsDouble();
+		data.reentryRate = config.getAsJsonPrimitive("reentry_rate").getAsDouble();
 		data.meanValue = config.getAsJsonPrimitive("mean_value").getAsInt();
 		data.kappa = config.getAsJsonPrimitive("kappa").getAsDouble();
 		data.shockVar = config.getAsJsonPrimitive("shock_var").getAsDouble();
-		data.pvVar = config.getAsJsonPrimitive("private_value_var")
-				.getAsDouble();
+		data.pvVar = config.getAsJsonPrimitive("private_value_var").getAsDouble();
 
 		// Model-specific parameters
 		JsonPrimitive primaryModel = config.getAsJsonPrimitive("primary_model");
-		data.primaryModelDesc = primaryModel == null ? null : primaryModel
-				.getAsString();
+		data.primaryModelDesc = primaryModel == null ? null
+				: primaryModel.getAsString();
 	}
 
 	protected void marketModels(SystemData data) {

@@ -6,17 +6,22 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeSet;
 
-import data.ObjectProperties;
-import data.SystemData;
-
 import logger.Logger;
-import market.*;
+import market.Bid;
+import market.PQBid;
+import market.PQOrderBook;
+import market.PQTransaction;
+import market.Price;
+import market.Quote;
+import market.Transaction;
 import model.MarketModel;
+import systemmanager.Consts;
 import activity.Activity;
 import activity.Clear;
 import activity.SendToSIP;
-import event.*;
-import systemmanager.*;
+import data.ObjectProperties;
+import data.SystemData;
+import event.TimeStamp;
 
 /**
  * Class for a call market. The order book is closed, therefore agents will only
@@ -75,7 +80,8 @@ public class CallMarket extends Market {
 		data.addDepth(id, ts, orderbook.getDepth());
 		submissionTimes.put(b.getBidID(), ts);
 		if (clearFreq.longValue() == 0) {
-			return clear(ts);
+			// return clear(ts);
+			actMap.add(new Clear(this, Consts.INF_TIME));
 		} // else, Clear activities are chained and continue that way
 		return actMap;
 	}
@@ -86,7 +92,8 @@ public class CallMarket extends Market {
 		orderbook.removeBid(agentID);
 		data.addDepth(id, ts, orderbook.getDepth());
 		if (clearFreq.longValue() == 0) {
-			return clear(ts);
+			// return clear(ts);
+			actMap.add(new Clear(this, Consts.INF_TIME));
 		} // else, Clear activities are chained and continue that way
 		return actMap;
 	}

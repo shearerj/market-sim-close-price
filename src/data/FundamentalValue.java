@@ -2,8 +2,11 @@ package data;
 
 import java.util.ArrayList;
 
+import event.TimeStamp;
+
 import utils.RandPlus;
 
+import logger.Logger;
 import market.Price;
 
 /**
@@ -14,12 +17,12 @@ import market.Price;
  */
 public class FundamentalValue {
 	
-	private ArrayList<Price> meanRevertProcess;
-	private double kappa;
-	private int meanValue;
-	private double shockVar;
-	private int length;			// length of random process (in time-steps)
-	private RandPlus rand;
+	protected ArrayList<Price> meanRevertProcess;
+	protected double kappa;
+	protected int meanValue;
+	protected double shockVar;
+	protected int length;			// length of random process (in time-steps)
+	protected RandPlus rand;
 	
 	/**
 	 * Constructor
@@ -68,11 +71,11 @@ public class FundamentalValue {
 	 * @param ts
 	 * @return
 	 */
-	public Price getValueAt(int t) {
-		// for positive time stamp that is a valid index
-		if (meanRevertProcess.size() >= t && t > 0) {
-			return meanRevertProcess.get(t);
+	public Price getValueAt(TimeStamp t) {
+		if (meanRevertProcess.size() >= t.longValue() && t.after(TimeStamp.startTime)) {
+			return meanRevertProcess.get((int) t.longValue());
 		}
+		Logger.log(Logger.ERROR, "Tried to access out of bounds TimeStamp: " + t);
 		return new Price(0);
 	}
 	

@@ -1,9 +1,9 @@
 package entity;
 
 import model.MarketModel;
+import systemmanager.Consts;
 import data.ObjectProperties;
 import data.SystemData;
-import systemmanager.*;
 
 /**
  * Factory class for creating Markets.

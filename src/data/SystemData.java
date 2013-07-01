@@ -543,7 +543,7 @@ public class SystemData {
 		if (fundamentalGenerator == null) {
 			return new Price(0);
 		}
-		return fundamentalGenerator.getValueAt((int) ts.longValue());
+		return fundamentalGenerator.getValueAt(ts);
 	}
 	
 	/**

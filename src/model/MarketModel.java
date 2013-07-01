@@ -220,7 +220,7 @@ public abstract class MarketModel {
 		if (fundamentalGenerator == null)
 			// return new Price(0);
 			throw new IllegalStateException("No Fundamental Value...");
-		return fundamentalGenerator.getValueAt((int) ts.longValue());
+		return fundamentalGenerator.getValueAt(ts);
 	}
 
 	/**

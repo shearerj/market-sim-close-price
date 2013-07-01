@@ -532,7 +532,7 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public Collection<Activity> expireBid(Market mkt, TimeStamp duration, TimeStamp ts) {
+	public Collection<? extends Activity> expireBid(Market mkt, TimeStamp duration, TimeStamp ts) {
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		TimeStamp withdrawTime = ts.sum(new TimeStamp(duration));
 		actMap.add(new WithdrawBid(this, mkt, withdrawTime));
@@ -547,7 +547,7 @@ public abstract class Agent extends Entity {
 	 * @param mkt
 	 * @return
 	 */
-	public Collection<Activity> executeWithdrawBid(Market mkt, TimeStamp ts) {
+	public Collection<? extends Activity> executeWithdrawBid(Market mkt, TimeStamp ts) {
 		Logger.log(Logger.INFO, ts + " | " + this + " withdraw bid from " + mkt);
 		return mkt.removeBid(this.id, ts);
 	}
@@ -561,7 +561,7 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public Collection<Activity> executeSubmitBid(Market mkt, int price, int quantity, 
+	public Collection<? extends Activity> executeSubmitBid(Market mkt, int price, int quantity, 
 			TimeStamp ts) {
 		if (quantity == 0) return Collections.emptyList();
 
@@ -592,7 +592,7 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public Collection<Activity> executeSubmitMultipleBid(Market mkt, List<Integer> price, 
+	public Collection<? extends Activity> executeSubmitMultipleBid(Market mkt, List<Integer> price, 
 			List<Integer> quantity, TimeStamp ts) {
 		if (price.size() != quantity.size()) {
 			Logger.log(Logger.ERROR, "Agent::submitMultipleBid: " 
