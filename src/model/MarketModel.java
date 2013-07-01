@@ -6,11 +6,13 @@ import systemmanager.Consts.MarketType;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
 import market.Bid;
+import market.PQTransaction;
 import market.Price;
 import market.Transaction;
 
@@ -67,6 +69,7 @@ public abstract class MarketModel {
 	protected ArrayList<Market> markets;
 	protected ArrayList<Transaction> trans;
 	protected TreeSet<Agent> agents;
+	protected HashMap<Double,Double> modelSurplus;		//hashed by rho value
 	
 	// -- end reorg --
 
@@ -261,6 +264,7 @@ public abstract class MarketModel {
 
 	public void addTrans(Transaction tr) {
 		this.trans.add(tr);
+		this.addSurplus(tr);
 	}
 	
 	public ArrayList<Bid> getAllBids() {
@@ -298,5 +302,46 @@ public abstract class MarketModel {
 
 	public void addAgent(Agent agent) {
 		this.agents.add(agent);
+	}
+	
+	/**
+	 * 
+	 * @param rho
+	 * @return Surplus for this model for the given value of rho
+	 */
+	public double getModelSurplus(double rho) {
+		return this.modelSurplus.get(rho);
+	}
+	
+	/**
+	 * Update surplus for this and the agents involved in the transactions
+	 * 
+	 * @param tr
+	 */
+	public void addSurplus(Transaction tr) {
+		double fund = this.getFundamentalAt(tr.getTimestamp()).getPrice();
+		for(double rho : Consts.rhos) {
+			if(!this.modelSurplus.containsKey(rho)) this.modelSurplus.put(rho, 0.0);
+			//Updating buyer surplus
+			Agent buyer = tr.getBuyer();
+			if(buyer.getPrivateValue() != null) {
+				double surplus = buyer.addSurplus(rho, fund, tr, true);
+				this.modelSurplus.put(rho, this.modelSurplus.get(rho) + surplus);
+			}
+			else {
+				double surplus = buyer.addSurplus(rho, fund, tr, true);
+				this.modelSurplus.put(rho, this.modelSurplus.get(rho) + surplus);
+			}
+			//Updating seller surplus
+			Agent seller = tr.getSeller();
+			if(seller.getPrivateValue() != null) {
+				double surplus = seller.addSurplus(rho, fund, tr, false);
+				this.modelSurplus.put(rho, this.modelSurplus.get(rho) + surplus);
+			}
+			else {
+				double surplus = seller.addSurplus(rho, fund, tr, false);
+				this.modelSurplus.put(rho, this.modelSurplus.get(rho) + surplus);
+			}
+		}
 	}
 }

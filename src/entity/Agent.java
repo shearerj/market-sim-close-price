@@ -1101,9 +1101,48 @@ public abstract class Agent extends Entity {
 	public HashMap<Double, Double> getSurplus() {
 		return surplus;
 	}
-
-	public void addSurplus(double rho, double surplus) {
+	
+	public double getSurplus(double rho) {
+		return this.surplus.get(rho);
+	}
+	
+	public double addSurplus(double rho, double fund, Transaction tr, boolean isBuyer) {
 		if(!this.surplus.containsKey(rho)) this.surplus.put(rho, 0.0);
-		this.surplus.put(rho, this.surplus.get(rho) + surplus);
+		double s=0;
+		double newSurplus=0;
+		//Updating surplus if this agent was a buyer
+		if(isBuyer) {
+			if(this.getPrivateValue() != null) {
+				for(int q=0; q < tr.getQuantity(); q++) {
+					int dev = this.getPrivateValueAt(q).getPrice();
+					s = dev + fund - tr.getPrice().getPrice();
+					newSurplus = s + this.surplus.get(rho);
+					this.surplus.put(rho, newSurplus);
+				}
+			}
+			else {
+				s = -tr.price.getPrice();
+				newSurplus = s + this.surplus.get(rho);
+				this.surplus.put(rho, newSurplus);
+			}
+		}
+		//Updating surplus if this agent was a seller
+		else {
+			if(this.getPrivateValue() != null) {
+				for(int q=0; q < tr.getQuantity(); q++) {
+					int dev = this.getPrivateValueAt(q).getPrice();
+					s = dev + fund - tr.getPrice().getPrice();
+					newSurplus = s + this.surplus.get(rho);
+					this.surplus.put(rho, newSurplus);				
+				}
+			}
+			else {
+				s = tr.price.getPrice();
+				newSurplus = s + this.surplus.get(rho);
+				this.surplus.put(rho, newSurplus);			}
+		}
+		Logger.log(Logger.INFO, tr.getTimestamp() + " | " + this + 
+				" Agent::updateTransactions: SURPLUS for this transaction: " + s);
+		return s;
 	}
 }

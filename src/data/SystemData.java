@@ -93,9 +93,6 @@ public class SystemData {
 	public HashMap<Integer,TimeSeries> marketMidQuote;			// hashed by market ID
 	public HashMap<Integer,TimeSeries> marketDepth;				// hashed by market ID
 	
-	public HashMap<Integer,HashMap<Double,Surplus>> modelSurplus; // hashed by model ID
-																  // then by rho
-	
 	/**
 	 * Constructor
 	 */
@@ -123,9 +120,7 @@ public class SystemData {
 		marketDepth = new HashMap<Integer,TimeSeries>();
 		marketSpread = new HashMap<Integer,TimeSeries>();
 		NBBOSpread = new HashMap<Integer,TimeSeries>();
-		marketMidQuote = new HashMap<Integer,TimeSeries>();
-		modelSurplus = new HashMap<Integer,HashMap<Double,Surplus>>();
-		
+		marketMidQuote = new HashMap<Integer,TimeSeries>();		
 	}
 	
 	
@@ -379,17 +374,6 @@ public class SystemData {
 		return privateValues.get(bidID);
 	}
 	
-	public HashMap<Double,Surplus> getSurplus(int modelID) {
-		return modelSurplus.get(modelID);
-	}
-	
-	public Surplus getSurplus(int modelID, double rho) {
-		if (modelSurplus.containsKey(modelID))
-			return modelSurplus.get(modelID).get(rho);
-		else 
-			return null;
-	}
-	
 
 	/***********************************
 	 * Add agent, market, model, spread, etc.
@@ -533,98 +517,6 @@ public class SystemData {
 			ArrayList<Integer> tmp = new ArrayList<Integer>();
 			tmp.add(transID);
 			modelTransID.put(modelID, tmp);
-		}
-	}
-	
-	/***********************************
-	 * Surplus computations
-	 *
-	 **********************************/
-	
-	/**
-	 * Add surplus. Update surplus for given model, given value of rho, 
-	 * and given a new transaction to process.
-	 * 
-	 * @param modelID
-	 * @param t
-	 */
-	@Deprecated
-	public void addSurplus(int modelID, PQTransaction t) {
-		if(!modelSurplus.containsKey(modelID)) {
-			modelSurplus.put(modelID, new HashMap<Double,Surplus>());
-		}
-		// compute surplus for all values of rho
-		for (double rho : Consts.rhos) {
-			if (!modelSurplus.get(modelID).containsKey(rho)) {
-				modelSurplus.get(modelID).put(rho, new Surplus(rho));
-			}
-			Surplus s = getSurplus(modelID, rho);
-			Price rt = getFundamentalAt(t.timestamp);
-			
-			// Compute buyer surplus
-			Agent buyer = t.getBuyer();
-			int bidID = t.getBuyBid().getBidID();
-			TimeStamp buyTime = buyer.getModel().getExecutionTimes().get(bidID);
-			if (buyer.getPrivateValue() != null) {
-				double cs = getPrivateValueByBid(t.getBuyBid().getBidID()).sum(rt).diff(t.price).getPrice();				
-				// print model ID, buyerID, seller ID, private value, fundamental, trans price, surplus, time, rho
-				// System.out.println(modelID + "," + t.buyerID + "," + "," +getPrivateValueByBid(t.buyBidID)
-				//		+ "," + rt + "," + t.price + "," + cs + "," + buyTime + "," + rho);
-				s.addCumulative(t.getBuyer().getID(), Math.exp(-rho * buyTime.longValue()) * cs);
-			} else {
-				double cs = -t.price.getPrice();
-				// System.out.println(modelID + "," + t.buyerID + "," + "," +getPrivateValueByBid(t.buyBidID)
-				//		+ "," + rt + "," + t.price + "," + cs + "," + buyTime + "," + rho);
-				s.addCumulative(t.getBuyer().getID(), Math.exp(-rho * buyTime.longValue()) * cs);
-			}
-			
-			// Compute seller surplus
-			Agent seller = t.getSeller();
-			bidID = t.getSellBid().getBidID();
-			TimeStamp sellTime = seller.getModel().getExecutionTimes().get(bidID);
-			if (seller.getPrivateValue() != null) {
-				double ps = t.price.diff(getPrivateValueByBid(t.getSellBid().getBidID()).sum(rt)).getPrice();
-				// System.out.println(modelID + "," + "," + t.sellerID + "," + getPrivateValueByBid(t.sellBidID)
-				//		+ "," + rt + "," + t.price + "," + ps + "," + sellTime + "," + rho);
-				s.addCumulative(t.getSeller().getID(), Math.exp(-rho * sellTime.longValue()) * ps);
-				
-			} else {
-				double ps = t.price.getPrice();
-				// System.out.println(modelID + "," + "," + t.sellerID + "," + getPrivateValueByBid(t.sellBidID)
-				//		+ "," + rt + "," + t.price + "," + ps + "," + sellTime + "," + rho);
-				s.addCumulative(t.getSeller().getID(), Math.exp(-rho * sellTime.longValue()) * ps);
-			}
-		}
-	}
-	
-	
-	public void addSurplus(PQTransaction tr) {
-		Price rt = getFundamentalAt(tr.getTimestamp());
-		for(double rho : Consts.rhos) {
-			//Updating buyer surplus
-			Agent buyer = tr.getBuyer();
-			int bidID = tr.getBuyBid().getBidID();
-			TimeStamp buyTime = buyer.getModel().getExecutionTimes().get(bidID);
-			if(buyer.getPrivateValue() != null) {
-				double surplus = getPrivateValueByBid(bidID).sum(rt).diff(tr.price).getPrice();
-				buyer.addSurplus(rho, surplus);
-			}
-			else {
-				double surplus = -tr.price.getPrice();
-				buyer.addSurplus(rho, surplus);
-			}
-			//Updating seller surplus
-			Agent seller = tr.getSeller();
-			int sellID = tr.getSellBid().getBidID();
-			TimeStamp sellTime = seller.getModel().getExecutionTimes().get(bidID);
-			if(seller.getPrivateValue() != null) {
-				double surplus = tr.price.diff(getPrivateValueByBid(tr.getSellBid().getBidID()).sum(rt)).getPrice();
-				seller.addSurplus(rho, surplus);
-			}
-			else {
-				double surplus = tr.price.getPrice();
-				seller.addSurplus(rho, surplus);
-			}
 		}
 	}
 	

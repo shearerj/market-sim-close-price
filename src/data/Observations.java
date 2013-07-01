@@ -284,11 +284,10 @@ public class Observations {
 				suffix += "_" + UNDISCOUNTED;
 			}
 			
-			Surplus surplus = data.getSurplus(model.getID(), rho);
-			DescriptiveStatistics total = new DescriptiveStatistics(
-					ArrayUtils.toPrimitive(surplus.values().toArray(new 
-					Double[surplus.size()])));
-			feat.addSum("", TOTAL + suffix, total);
+			DescriptiveStatistics modelSurplus = new DescriptiveStatistics();
+			modelSurplus.addValue(model.getModelSurplus(rho));
+			
+			feat.addSum("", TOTAL + suffix, modelSurplus);
 			
 			// sub-categories for surplus (roles)
 			DescriptiveStatistics bkgrd = new DescriptiveStatistics();
@@ -297,9 +296,8 @@ public class Observations {
 			DescriptiveStatistics env = new DescriptiveStatistics();
 			
 			// go through all agents & update for each agent type
-			for (Integer agentID : surplus.agents()) {
-				Agent ag = data.getAgent(agentID);
-				double val = surplus.get(agentID);
+			for (Agent ag : model.getAgents()) {
+				double val = ag.getSurplus(rho);
 				
 				if (ag instanceof BackgroundAgent) {
 					bkgrd.addValue(val);
@@ -309,7 +307,7 @@ public class Observations {
 				} else if (ag instanceof MarketMaker) {
 					mm.addValue(val);
 				}
-				if (data.isEnvironmentAgent(agentID)) {
+				if (data.isEnvironmentAgent(ag.getID())) {
 					env.addValue(val);
 				}
 			}
