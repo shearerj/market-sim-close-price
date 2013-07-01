@@ -24,6 +24,7 @@ public abstract class Agent extends Entity {
 	// -- begin reorg -- stuff above line existed before and is still relevant...
 	
 	protected MarketModel model;
+	protected HashMap<Double,Double> surplus; //hashed by rho value
 	
 	// -- end reorg --
 	
@@ -863,8 +864,8 @@ public abstract class Agent extends Entity {
 							", timeStamp=" + t.timestamp + ")");
 					
 					// Log surplus for background agents with private values
-					Agent buyer = data.getAgent(t.getBuyer().getID());
-					Agent seller = data.getAgent(t.getSeller().getID());
+					Agent buyer = t.getBuyer();
+					Agent seller = t.getSeller();
 					Price rt = data.getFundamentalAt(ts);
 					int cs = 0;		// consumer surplus
 					int ps = 0;		// producer surplus
@@ -1091,4 +1092,18 @@ public abstract class Agent extends Entity {
 		return flag;
 	}
 	
+	int compare(Agent other) {
+		if(this.id < other.getID()) return -1;
+		else if(this.id == other.getID()) return 0;
+		else return 1;
+	}
+
+	public HashMap<Double, Double> getSurplus() {
+		return surplus;
+	}
+
+	public void addSurplus(double rho, double surplus) {
+		if(!this.surplus.containsKey(rho)) this.surplus.put(rho, 0.0);
+		this.surplus.put(rho, this.surplus.get(rho) + surplus);
+	}
 }
