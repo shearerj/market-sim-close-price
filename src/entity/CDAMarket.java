@@ -1,19 +1,26 @@
 package entity;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.TreeSet;
+
 import logger.Logger;
-import market.*;
+import market.Bid;
+import market.PQBid;
+import market.PQOrderBook;
+import market.PQTransaction;
+import market.Price;
+import market.Quote;
+import market.Transaction;
 import model.MarketModel;
+import systemmanager.Consts;
+import activity.Activity;
+import activity.SendToSIP;
 import data.ObjectProperties;
 import data.SystemData;
 import event.TimeStamp;
-import activity.*;
-import systemmanager.*;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.HashMap;
-import java.util.TreeSet;
 
 /**
  * Class for a continuous double auction market.

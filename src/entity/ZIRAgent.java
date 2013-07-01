@@ -1,17 +1,20 @@
 package entity;
 
-import data.*;
-import event.*;
-import logger.Logger;
-import market.*;
-import model.MarketModel;
-import activity.*;
-
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.ArrayList;
 
+import logger.Logger;
+import market.PrivateValue;
+import model.MarketModel;
 import utils.RandPlus;
+import activity.Activity;
+import activity.AgentStrategy;
+import data.ArrivalTime;
+import data.ObjectProperties;
+import data.Observations;
+import data.SystemData;
+import event.TimeStamp;
 
 /**
  * ZIRAGENT

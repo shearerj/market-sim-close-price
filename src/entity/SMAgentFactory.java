@@ -1,32 +1,27 @@
 package entity;
 
-import java.util.Iterator;
+import generators.Generator;
 
-import data.ObjectProperties;
+import java.util.Iterator;
 
 import model.MarketModel;
 
-
-import event.TimeStamp;
-import generators.Generator;
-
-import systemmanager.Consts.AgentType;
 import utils.RandPlus;
+import data.AgentProperties;
+import event.TimeStamp;
 
-public class BackgroundAgentFactory implements Iterator<BackgroundAgent> {
+public class SMAgentFactory implements Iterator<SMAgent> {
 
 	protected final RandPlus rand;
-	protected final AgentType type;
 	protected final MarketModel model;
-	protected final ObjectProperties props;
+	protected final AgentProperties props;
 	protected int nextID;
 	protected final int finalID;
 	protected final Generator<TimeStamp> arrivalProcess;
 	protected final Generator<Market> marketAssignment;
 
-	public BackgroundAgentFactory(AgentType type, MarketModel model, ObjectProperties props, int initialID, int num, Generator<TimeStamp> arrivalProcess, Generator<Market> marketProcess, RandPlus rand) {
+	public SMAgentFactory(MarketModel model, AgentProperties props, int initialID, int num, Generator<TimeStamp> arrivalProcess, Generator<Market> marketProcess, RandPlus rand) {
 		this.rand = rand;
-		this.type = type;
 		this.props = props;
 		this.model = model;
 		this.nextID = initialID;
@@ -35,12 +30,12 @@ public class BackgroundAgentFactory implements Iterator<BackgroundAgent> {
 		this.marketAssignment = marketProcess;
 	}
 	
-	public BackgroundAgentFactory(AgentType type, MarketModel model, ObjectProperties props, Generator<TimeStamp> arrivalProcess, Generator<Market> marketProcess, RandPlus rand) {
-		this(type, model, props, 0, 0, arrivalProcess, marketProcess, rand);
+	public SMAgentFactory(MarketModel model, AgentProperties props, Generator<TimeStamp> arrivalProcess, Generator<Market> marketProcess, RandPlus rand) {
+		this(model, props, 0, 0, arrivalProcess, marketProcess, rand);
 	}
 
-	protected BackgroundAgent createAgent(AgentType type, ObjectProperties props) {
-		switch (type) {
+	protected SMAgent createAgent(AgentProperties props) {
+		switch (props.getAgentType()) {
 		// TODO Other agent types
 		case ZI:
 			return new ZIAgent(nextID++, arrivalProcess.next(), model, marketAssignment.next(),
@@ -60,8 +55,8 @@ public class BackgroundAgentFactory implements Iterator<BackgroundAgent> {
 	}
 
 	@Override
-	public BackgroundAgent next() {
-		return createAgent(type, props);
+	public SMAgent next() {
+		return createAgent(props);
 	}
 
 	@Override
@@ -72,11 +67,11 @@ public class BackgroundAgentFactory implements Iterator<BackgroundAgent> {
 	/**
 	 * Returns an Iterable object fur use with the for : each syntax
 	 */
-	public Iterable<BackgroundAgent> iterable() {
-		final Iterator<BackgroundAgent> it = this;
-		return new Iterable<BackgroundAgent>() {
+	public Iterable<SMAgent> iterable() {
+		final Iterator<SMAgent> it = this;
+		return new Iterable<SMAgent>() {
 			@Override
-			public Iterator<BackgroundAgent> iterator() {
+			public Iterator<SMAgent> iterator() {
 				return it;
 			}
 		};
