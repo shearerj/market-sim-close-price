@@ -37,7 +37,7 @@ public class CallMarket extends Market {
 	public final static String CLEAR_FREQ_KEY = "clearFreq";
 	public final static String PRICING_POLICY_KEY = "pricingPolicy";
 	
-	public float pricingPolicy;
+	public float pricingPolicy; // XXX Unused?
 	public PQOrderBook orderbook;
 	protected final TimeStamp clearFreq;
 	protected TimeStamp nextClearTime;

@@ -1,8 +1,12 @@
 package model;
 
+import java.util.Map;
+
 import data.*;
+import entity.CDAMarket;
 import systemmanager.*;
 import systemmanager.Consts.AgentType;
+import utils.RandPlus;
 
 /**
  * TWOMARKET
@@ -18,6 +22,12 @@ import systemmanager.Consts.AgentType;
  * @author ewah
  */
 public class TwoMarket extends MarketModel {
+	
+	public TwoMarket(int modelID, FundamentalValue fundamental,
+			Map<AgentProperties, Integer> agentProps,
+			ObjectProperties modelProps, RandPlus rand) {
+		super(modelID, fundamental, agentProps, modelProps, rand);
+	}
 	
 	public TwoMarket(int modelID, ObjectProperties p, SystemData d) {
 		super(modelID,p, d);
@@ -65,5 +75,18 @@ public class TwoMarket extends MarketModel {
 			}
 		}
 		return 0;
+	}
+
+
+	@Override
+	protected void setupMarkets(ObjectProperties modelProps) {
+		markets.add(new CDAMarket(1, this));
+		markets.add(new CDAMarket(2, this));
+	}
+
+
+	@Override
+	protected void setupModelAgents(ObjectProperties modelProps) {
+		// TODO check for LA and if so add it with proper properties
 	}
 }

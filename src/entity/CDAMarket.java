@@ -31,6 +31,11 @@ public class CDAMarket extends Market {
 
 	public PQOrderBook orderbook;
 	
+	public CDAMarket(int marketID, MarketModel model) {
+		super(marketID, model);
+		orderbook = new PQOrderBook(this);
+	}
+	
 	/**
 	 * Overloaded constructor.
 	 * @param marketID

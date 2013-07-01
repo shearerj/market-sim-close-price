@@ -323,7 +323,7 @@ public abstract class Market extends Entity {
 		return lastQuoteTime;
 	}
 
-	public ArrayList<Transaction> getModelTrans() {
+	public Collection<Transaction> getModelTrans() {
 		return model.getTrans();
 	}
 

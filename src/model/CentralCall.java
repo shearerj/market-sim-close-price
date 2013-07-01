@@ -1,9 +1,15 @@
 package model;
 
+import java.util.Map;
+
+import data.AgentProperties;
+import data.FundamentalValue;
 import data.ObjectProperties;
 import data.SystemData;
 import entity.CallMarket;
+import event.TimeStamp;
 import systemmanager.*;
+import utils.RandPlus;
 
 /**
  * CENTRALCALL
@@ -19,6 +25,12 @@ import systemmanager.*;
  */
 public class CentralCall extends MarketModel {
 
+	public CentralCall(int modelID, FundamentalValue fundamental,
+			Map<AgentProperties, Integer> agentProps,
+			ObjectProperties modelProps, RandPlus rand) {
+		super(modelID, fundamental, agentProps, modelProps, rand);
+	}
+	
 	public CentralCall(int modelID, ObjectProperties p, SystemData d) {
 		super(modelID, p, d);
 		
@@ -43,5 +55,18 @@ public class CentralCall extends MarketModel {
 	@Override
 	public String getConfig() {
 		return config;
+	}
+
+	@Override
+	protected void setupMarkets(ObjectProperties modelProps) {
+		// FIXME These values are probably not correct.
+		float pricingPolicy = modelProps.getAsFloat(CallMarket.PRICING_POLICY_KEY, 0);
+		TimeStamp clearFreq = new TimeStamp(modelProps.getAsLong(CallMarket.CLEAR_FREQ_KEY, 1000));
+		markets.add(new CallMarket(1, this, pricingPolicy, clearFreq));
+	}
+
+	@Override
+	protected void setupModelAgents(ObjectProperties modelProps) {
+		// Do nothing
 	}
 }

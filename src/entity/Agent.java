@@ -834,14 +834,13 @@ public abstract class Agent extends Entity {
 	 * @param ts TimeStamp of update
 	 */
 	public void updateTransactions(TimeStamp ts) {
-		ArrayList<Transaction> list = getNewTransactions();
+		Collection<Transaction> list = getNewTransactions();
 		
 		Logger.log(Logger.DEBUG, ts + " | " + this + " " + "lastTrans=" + lastTransaction);
 		
 		if (list != null) {
 			Transaction lastGoodTrans = null;
-			
-			transLoop:
+			 
 			for (Transaction t : list) {
 				// Check that this agent is involved in the transaction
 				if (t.getBuyer().getID() == this.id || t.getSeller().getID() == this.id){ 
@@ -850,7 +849,7 @@ public abstract class Agent extends Entity {
 						lastTransaction = lastGoodTrans;
 						Logger.log(Logger.ERROR, ts + " | " + this + " " +
 								"Agent::updateTransactions: Problem with transaction.");
-						break transLoop;
+						break;
 					}
 					
 					Logger.log(Logger.INFO, ts + " | " + this + " " +
@@ -876,7 +875,7 @@ public abstract class Agent extends Entity {
 	 * 
 	 * @return
 	 */
-	public ArrayList<Transaction> getNewTransactions() {
+	public Collection<Transaction> getNewTransactions() {
 
 		
 		if (lastTransaction == null) {
