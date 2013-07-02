@@ -38,7 +38,6 @@ public class CallMarket extends Market {
 	public final static String PRICING_POLICY_KEY = "pricingPolicy";
 	
 	public float pricingPolicy; // XXX Unused?
-	public PQOrderBook orderbook;
 	protected final TimeStamp clearFreq;
 	protected TimeStamp nextClearTime;
 	
@@ -46,15 +45,12 @@ public class CallMarket extends Market {
 		super(marketID, model);
 		this.pricingPolicy = pricingPolicy;
 		this.clearFreq = clearFreq;
-		this.orderbook = new PQOrderBook(this);
-//		orderbook.setParams(id, d); // FIXME
 		this.nextClearTime = clearFreq;
 	}
 	
 	public CallMarket(int marketID, SystemData d, ObjectProperties p, MarketModel model) {
 		super(marketID, d, p, model);
 		marketType = Consts.getMarketType(this.getName());
-		orderbook = new PQOrderBook(id, d);
 		pricingPolicy = params.getAsFloat(CallMarket.PRICING_POLICY_KEY);
 		clearFreq = new TimeStamp(params.getAsInt(CallMarket.CLEAR_FREQ_KEY));
 		nextClearTime = clearFreq;
@@ -108,69 +104,15 @@ public class CallMarket extends Market {
 	
 
 	public Collection<Activity> clear(TimeStamp clearTime) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		
 		// Update the next clear time
 		nextClearTime = clearTime.sum(clearFreq);
-		orderbook.logFourHeap(clearTime);
+		Collection<Activity> actList = super.clear(clearTime);
 		
-		// Return prior quote (works b/c lastClearTime has not been updated yet)
-		Logger.log(Logger.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
-				this.quote(clearTime));
-		ArrayList<Transaction> trans = orderbook.uniformPriceClear(clearTime, pricingPolicy);
-		
-		if (trans == null) {
-			lastClearTime = clearTime;
-			
-			orderbook.logActiveBids(clearTime);
-			orderbook.logFourHeap(clearTime);
-			data.addDepth(id, clearTime, orderbook.getDepth());
-			
-			// Now update the quote
-			Logger.log(Logger.INFO, clearTime + " | ....." + this + " " + 
-					this.getName() + "::clear: No change. Post-clear Quote" 
-					+ this.quote(clearTime));
-			actMap.add(new SendToSIP(this, clearTime));
-
-			if (clearFreq.longValue() > 0) {
-				actMap.add(new Clear(this, nextClearTime));				
-			}
-			return actMap;
-		}
-		
-		// Add bid execution speed
-		ArrayList<Integer> IDs = orderbook.getClearedBidIDs();
-		for (Iterator<Integer> id = IDs.iterator(); id.hasNext(); ) {
-			addExecutionTime(id.next(), clearTime);
-		}
-		
-		// Add transactions to SystemData
-		for (Iterator<Transaction> i = trans.iterator(); i.hasNext();) {
-			PQTransaction t = (PQTransaction) i.next();
-			model.addTrans(t);
-			lastClearPrice = t.price;
-			//update and log transactions
-			t.getBuyer().updateTransactions(clearTime);
-			t.getBuyer().logTransactions(clearTime);
-			t.getSeller().updateTransactions(clearTime);
-			t.getSeller().logTransactions(clearTime);
-		}
-		lastClearTime = clearTime;
-
-		orderbook.logActiveBids(clearTime);
-		orderbook.logClearedBids(clearTime);
-		orderbook.logFourHeap(clearTime);
-		data.addDepth(id, clearTime, orderbook.getDepth());
-		Logger.log(Logger.INFO, clearTime.toString() + " | ....." + this + " " + 
-				this.getName() + "::clear: Order book cleared: Post-clear Quote" 
-				+ this.quote(clearTime));
-		actMap.add(new SendToSIP(this, clearTime));
-
 		// Insert next clear activity at some time in the future
 		if (clearFreq.longValue() > 0) {
-			actMap.add(new Clear(this, nextClearTime));				
+			actList.add(new Clear(this, nextClearTime));				
 		}
-		return actMap;
+		return actList;
 	}
 	
 	

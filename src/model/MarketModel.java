@@ -357,14 +357,6 @@ public abstract class MarketModel {
 		return Collections.unmodifiableCollection(markets);
 	}
 
-	public TreeMap<Integer, TimeStamp> getExecutionTimes() {
-		TreeMap<Integer, TimeStamp> executionTimes = new TreeMap<Integer, TimeStamp>();
-		for (Market market : markets) {
-			executionTimes.putAll(market.getExecutionTimes());
-		}
-		return executionTimes;
-	}
-
 	@Override
 	public String toString() {
 		return new String("{" + getID() + "}");

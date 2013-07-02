@@ -202,7 +202,7 @@ public class PQPoint extends Point implements Comparable<PQPoint> {
 	 */
 	static Price earliestPrice(PQPoint P1, PQPoint P2)
 	{
-		if (P1.Parent.submissionTime.compareTo(P2.Parent.submissionTime) < 0)
+		if (P1.Parent.submitTime.compareTo(P2.Parent.submitTime) < 0)
 			return P1.getPrice();
 		else
 			return P2.getPrice();

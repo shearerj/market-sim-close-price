@@ -761,7 +761,7 @@ public abstract class Agent extends Entity {
 				Logger.log(Logger.ERROR, "Agent::processTransaction: t.quantity is null");
 				flag = false;
 			}
-			if (t.timestamp == null) {
+			if (t.execTime == null) {
 				Logger.log(Logger.ERROR, "Agent::processTransaction: t.timestamp is null");
 				flag = false;
 			}
@@ -858,7 +858,7 @@ public abstract class Agent extends Entity {
 							", buyer=" + data.getAgentLogID(t.getBuyer().getID()) + 
 							", seller=" + data.getAgentLogID(t.getSeller().getID()) +
 							", price=" + t.price + ", quantity=" + t.quantity + 
-							", timeStamp=" + t.timestamp + ")");
+							", timeStamp=" + t.execTime + ")");
 				}
 				// Update transactions
 				lastGoodTrans = t;
@@ -1073,8 +1073,8 @@ public abstract class Agent extends Entity {
 		
 		//Determining Execution Time
 		double submissionTime;
-		if(isBuyer) submissionTime = tr.getBuyBid().getSubmissionTime().getLongValue();
-		else submissionTime = tr.getSellBid().getSubmissionTime().getLongValue();
+		if(isBuyer) submissionTime = tr.getBuyBid().getSubmitTime().getLongValue();
+		else submissionTime = tr.getSellBid().getSubmitTime().getLongValue();
 		double timeToExecution = tr.getTimestamp().getLongValue() - submissionTime;
 		
 		//Updating surplus

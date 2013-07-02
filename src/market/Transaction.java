@@ -22,7 +22,7 @@ public class Transaction {
 	//Transaction Info
 	public Integer quantity;
 	public Price price;
-	public TimeStamp timestamp;
+	public TimeStamp execTime;
 
 	public Transaction() {
 	}
@@ -60,6 +60,6 @@ public class Transaction {
 	}
 
 	public TimeStamp getTimestamp() {
-		return timestamp;
+		return execTime;
 	}
 }
