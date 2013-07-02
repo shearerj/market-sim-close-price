@@ -570,9 +570,8 @@ public abstract class Agent extends Entity {
 				+ quantity + ") to " + mkt);
 		
 		int p = Market.quantize(price, tickSize);
-		PQBid pqBid = new PQBid(this, mkt);
+		PQBid pqBid = new PQBid(this, mkt, ts);
 		pqBid.addPoint(quantity, new Price(p));
-		pqBid.timestamp = ts;
 		// quantity can be +/-
 		if (hasPrivateValue()) {
 			data.addPrivateValue(pqBid.getBidID(), getPrivateValueAt(quantity));
@@ -603,8 +602,7 @@ public abstract class Agent extends Entity {
 		Logger.log(Logger.INFO, ts + " | " + mkt + " " + this + ": +(" + price +	", " 
 				+ quantity + ")");
 		
-		PQBid pqBid = new PQBid(this, mkt);
-		pqBid.timestamp = ts;
+		PQBid pqBid = new PQBid(this, mkt, ts);
 		for (int i = 0; i < price.size(); i++) {
 			if (quantity.get(i) != 0) {
 				int p = Market.quantize(price.get(i), tickSize);
@@ -836,14 +834,13 @@ public abstract class Agent extends Entity {
 	 * @param ts TimeStamp of update
 	 */
 	public void updateTransactions(TimeStamp ts) {
-		ArrayList<Transaction> list = getNewTransactions();
+		Collection<Transaction> list = getNewTransactions();
 		
 		Logger.log(Logger.DEBUG, ts + " | " + this + " " + "lastTrans=" + lastTransaction);
 		
 		if (list != null) {
 			Transaction lastGoodTrans = null;
-			
-			transLoop:
+			 
 			for (Transaction t : list) {
 				// Check that this agent is involved in the transaction
 				if (t.getBuyer().getID() == this.id || t.getSeller().getID() == this.id){ 
@@ -852,7 +849,7 @@ public abstract class Agent extends Entity {
 						lastTransaction = lastGoodTrans;
 						Logger.log(Logger.ERROR, ts + " | " + this + " " +
 								"Agent::updateTransactions: Problem with transaction.");
-						break transLoop;
+						break;
 					}
 					
 					Logger.log(Logger.INFO, ts + " | " + this + " " +
@@ -878,7 +875,7 @@ public abstract class Agent extends Entity {
 	 * 
 	 * @return
 	 */
-	public ArrayList<Transaction> getNewTransactions() {
+	public Collection<Transaction> getNewTransactions() {
 
 		
 		if (lastTransaction == null) {

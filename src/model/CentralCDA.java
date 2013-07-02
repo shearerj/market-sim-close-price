@@ -1,8 +1,14 @@
 package model;
 
+import java.util.Map;
+
+import systemmanager.Consts;
+import utils.RandPlus;
+import data.AgentProperties;
+import data.FundamentalValue;
 import data.ObjectProperties;
 import data.SystemData;
-import systemmanager.*;
+import entity.CDAMarket;
 
 /**
  * CENTRALCDA
@@ -13,6 +19,12 @@ import systemmanager.*;
  * @author ewah
  */
 public class CentralCDA extends MarketModel {
+	
+	public CentralCDA(int modelID, FundamentalValue fundamental,
+			Map<AgentProperties, Integer> agentProps,
+			ObjectProperties modelProps, RandPlus rand) {
+		super(modelID, fundamental, agentProps, modelProps, rand);
+	}
 
 	public CentralCDA(int modelID, ObjectProperties p, SystemData d) {
 		super(modelID, p, d);
@@ -26,5 +38,15 @@ public class CentralCDA extends MarketModel {
 	@Override
 	public String getConfig() {
 		return "";
+	}
+
+	@Override
+	protected void setupMarkets(ObjectProperties modelProps) {
+		markets.add(new CDAMarket(1, this));
+	}
+
+	@Override
+	protected void setupModelAgents(ObjectProperties modelProps) {
+		// Do nothing
 	}
 }

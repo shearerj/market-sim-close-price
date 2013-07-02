@@ -31,6 +31,11 @@ public class CDAMarket extends Market {
 
 	public PQOrderBook orderbook;
 	
+	public CDAMarket(int marketID, MarketModel model) {
+		super(marketID, model);
+		orderbook = new PQOrderBook(this);
+	}
+	
 	/**
 	 * Overloaded constructor.
 	 * @param marketID
@@ -38,8 +43,7 @@ public class CDAMarket extends Market {
 	public CDAMarket(int marketID, SystemData d, ObjectProperties p, MarketModel model) {
 		super(marketID, d, p, model);
 		marketType = Consts.getMarketType(this.getName());
-		orderbook = new PQOrderBook(id);
-		orderbook.setParams(id, d);
+		orderbook = new PQOrderBook(id, d);
 	}
 
 	public Bid getBidQuote() {
@@ -62,7 +66,6 @@ public class CDAMarket extends Market {
 		orderbook.insertBid((PQBid) b);
 		bids.add(b);
 		data.addDepth(id, ts, orderbook.getDepth());
-		submissionTimes.put(b.getBidID(), ts);
 		return Collections.singleton(new Clear(this, Consts.INF_TIME));
 	}
 	

@@ -9,7 +9,7 @@ public class RoundRobinGenerator<E> extends Generator<E> {
 	List<E> items;
 	int position;
 	
-	public RoundRobinGenerator(Collection<E> items) {
+	public RoundRobinGenerator(Collection<? extends E> items) {
 		this.position = 0;
 		this.items = new ArrayList<E>(items);
 	}

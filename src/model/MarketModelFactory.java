@@ -12,15 +12,20 @@ public class MarketModelFactory {
 	protected final Map<AgentProperties, Integer> props;
 	protected int nextID;
 
-	public MarketModelFactory(MarketModel2 model, Map<AgentProperties, Integer> props, int initialID, RandPlus rand) {
+	public MarketModelFactory(MarketModel model, Map<AgentProperties, Integer> props, int initialID, RandPlus rand) {
 		this.rand = rand;
 		this.props = props;
 		this.nextID = initialID;
 	}
 
-	protected MarketModel2 createModel(ModelProperties props) {
+	protected MarketModel createModel(ModelProperties props) {
 		switch (props.getModelType()) {
-		// TODO Other model types
+		case CENTRALCDA:
+			return null; // FIXME change
+		case CENTRALCALL:
+			return null; // FIXME change
+		case TWOMARKET:
+			return null; // FIXME change
 		default:
 			return null;
 		}

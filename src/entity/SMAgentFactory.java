@@ -37,9 +37,17 @@ public class SMAgentFactory implements Iterator<SMAgent> {
 	protected SMAgent createAgent(AgentProperties props) {
 		switch (props.getAgentType()) {
 		// TODO Other agent types
+		case AA:
+			return null; // FIXME change
+		case ZIP:
+			return null; // FIXME change
+		case ZIR:
+			return null; // FIXME change
 		case ZI:
 			return new ZIAgent(nextID++, arrivalProcess.next(), model, marketAssignment.next(),
 					new RandPlus(rand.nextLong()), props);
+		case BASICMM:
+			return null; // FIXME implement / figure out how to handle this properly
 		default:
 			return null;
 		}

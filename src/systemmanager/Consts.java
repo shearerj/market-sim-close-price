@@ -31,31 +31,24 @@ public class Consts {
 	// UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL
 	public static enum AgentType {
 		AA, ZI, ZIP, ZIR, BASICMM, LA, DUMMY;
-		
 		public static boolean contains(String s) {
-			for (AgentType a : values())
-				if (a.toString().equals(s))
-					return true;
+			for (AgentType a : values()) if (a.toString().equals(s)) return true;
 			return false;
 		}
 	};
+	
 	public static enum ModelType {
 		TWOMARKET, CENTRALCDA, CENTRALCALL;
-		
 		public static boolean contains(String s) {
-			for (ModelType a : values())
-				if (a.toString().equals(s))
-					return true;
+			for (ModelType a : values()) if (a.toString().equals(s)) return true;
 			return false;
 		}
 	};
+	
 	public static enum MarketType {
 		CDA, CALL;
-	
 		public static boolean contains(String s) {
-			for (MarketType a : values())
-				if (a.toString().equals(s))
-					return true;
+			for (MarketType a : values()) if (a.toString().equals(s)) return true;
 			return false;
 		}
 	}
