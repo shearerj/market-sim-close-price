@@ -40,6 +40,7 @@ public class CDAMarket extends Market {
 	 * Overloaded constructor.
 	 * @param marketID
 	 */
+	@Deprecated
 	public CDAMarket(int marketID, SystemData d, ObjectProperties p, MarketModel model) {
 		super(marketID, d, p, model);
 		marketType = Consts.getMarketType(this.getName());

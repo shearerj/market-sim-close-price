@@ -17,6 +17,7 @@ import market.Price;
  */
 public class FundamentalValue {
 	
+	// TODO Add random to constructor
 	protected ArrayList<Price> meanRevertProcess;
 	protected double kappa;
 	protected int meanValue;

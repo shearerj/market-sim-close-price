@@ -22,6 +22,15 @@ public class ObjectProperties {
 	
 	public ObjectProperties(String config) {
 		this();
+		addConfig(config);
+	}
+	
+	public ObjectProperties(ObjectProperties def, String config) {
+		this(def);
+		addConfig(config);
+	}
+	
+	public void addConfig(String config) {
 		String[] args = config.split("_");
 		for (int i = 0; i < (args.length/2)*2; i = i + 2) {
 			properties.put(args[i], args[i+1]);

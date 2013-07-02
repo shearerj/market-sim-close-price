@@ -37,11 +37,18 @@ public class ZIAgent extends BackgroundAgent {
 	protected final int bidRange; // range for limit order
 
 	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, ObjectProperties props) {
+			Market market, RandPlus rand, int bidRange) {
 		super(agentID, arrivalTime, model, market, rand);
-		this.bidRange = props.getAsInt(BIDRANGE_KEY, 2000);
+		this.bidRange = bidRange;
 	}
 
+	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
+			Market market, RandPlus rand, ObjectProperties props) {
+		this(agentID, arrivalTime, model, market, rand, props.getAsInt(
+				BIDRANGE_KEY, 2000));
+	}
+
+	@Deprecated
 	public ZIAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
 		super(agentID, modelID, d, p);
 
@@ -69,9 +76,8 @@ public class ZIAgent extends BackgroundAgent {
 		int p, q;
 		q = rand.nextBoolean() ? 1 : -1; // 50% chance of being either long or
 											// short
-		int val = Math
-				.max(0, model.getFundamentalAt(ts).sum(getPrivateValueAt(q))
-						.getPrice());
+		int val = Math.max(0,
+				model.getFundamentalAt(ts).sum(getPrivateValueAt(q)).getPrice());
 
 		// basic ZI behavior
 		if (q > 0)

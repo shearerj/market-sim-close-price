@@ -25,8 +25,10 @@ import entity.Agent;
 import entity.Market;
 import entity.SMAgent;
 import entity.SMAgentFactory;
+import event.EventManager;
 import event.TimeStamp;
 import generators.Generator;
+import generators.IDGenerator;
 import generators.PoissonArrivalGenerator;
 import generators.RoundRobinGenerator;
 
@@ -71,16 +73,16 @@ public abstract class MarketModel {
 	// -- begin reorg --
 
 	protected final int modelID;
-	protected final FundamentalValue fundamentalGenerator;
+	protected final FundamentalValue fundamental;
 	protected final Collection<Market> markets;
 	protected final Collection<Transaction> trans;
 
-	private final Collection<Agent> agents;
+	protected final Collection<Agent> agents;
 
 	protected HashMap<Double, Double> modelSurplus; // hashed by rho value
 
 	protected final RandPlus rand;
-	protected int nextAgentID;
+	protected final Generator<Integer> agentIDgen;
 
 	// -- end reorg --
 
@@ -102,14 +104,15 @@ public abstract class MarketModel {
 
 		this.modelID = modelID;
 		this.rand = rand;
-		this.fundamentalGenerator = fundamental;
+		this.fundamental = fundamental;
 		// XXX Perhaps HashSets instead of ArrayLists?
 		this.markets = new ArrayList<Market>();
 		this.agents = new ArrayList<Agent>();
 		this.trans = new ArrayList<Transaction>();
-		this.nextAgentID = 1;
+		this.agentIDgen = new IDGenerator();
 
 		// Setup
+		// FIXME I don't think this is how I want to do it. Also have to create SIPS...
 		setupMarkets(modelProps);
 		setupBackgroundAgents(modelProps, agentProps);
 		setupModelAgents(modelProps);
@@ -137,35 +140,34 @@ public abstract class MarketModel {
 					markets);
 
 			SMAgentFactory factory = new SMAgentFactory(this, agProps,
-					nextAgentID, number, arrivals, marketRate, new RandPlus(
+					agentIDgen, arrivals, marketRate, new RandPlus(
 							rand.nextLong()));
 
-			for (SMAgent agent : CollectionUtils.toIterable(factory)) {
+			for (SMAgent agent : CollectionUtils.toIterable(factory, number))
 				agents.add(agent);
-				// TODO schedule agent arrival
-			}
-			nextAgentID += number;
 		}
+	}
+	
+	public void scheduleActivities(EventManager manager) {
+		// TODO schedule agent arrival
+		// TODO schedule sendToSIP
+		// TODO Schedule initial market clear
 	}
 	
 	// TODO change to protected. External things shouldn't be able to add agents
 	public void addAgent(Agent agent) {
 		agents.add(agent);
-		nextAgentID++;
-	}
-	
-	protected void addAgents(Collection<Agent> agents) {
-		agents.addAll(agents);
-		nextAgentID += agents.size();
 	}
 
+	@Deprecated
 	public MarketModel(int modelID, ObjectProperties p, SystemData d) {
 		// reorg
-		fundamentalGenerator = d.getFundamenalValue();
+		fundamental = d.getFundamenalValue();
 		markets = new ArrayList<Market>();
 		trans = new ArrayList<Transaction>();
 		rand = new RandPlus();
 		agents = new ArrayList<Agent>();
+		agentIDgen = new IDGenerator();
 		// reorg
 
 		this.modelID = modelID;
@@ -295,10 +297,10 @@ public abstract class MarketModel {
 	}
 
 	public Price getFundamentalAt(TimeStamp ts) {
-		if (fundamentalGenerator == null)
+		if (fundamental == null)
 			// return new Price(0);
 			throw new IllegalStateException("No Fundamental Value...");
-		return fundamentalGenerator.getValueAt(ts);
+		return fundamental.getValueAt(ts);
 	}
 
 	/**
