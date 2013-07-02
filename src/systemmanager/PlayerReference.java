@@ -27,7 +27,7 @@ import systemmanager.Consts.ModelType;
  * 
  * @author ewah
  */
-public class SimulationSpec {
+public class PlayerReference {
 
 	private SystemData data;
 	private JSONObject params;
@@ -54,7 +54,7 @@ public class SimulationSpec {
 	 * @param file
 	 * @param l
 	 */
-	public SimulationSpec(String file, SystemData d) {
+	public PlayerReference(String file, SystemData d) {
 		data = d;
 		parser = new JSONParser();
 		loadFile(file);
@@ -202,7 +202,7 @@ public class SimulationSpec {
 	 * @return
 	 */
 	private ObjectProperties getStrategyParameters(AgentType type, String strategy) {
-		ObjectProperties op = SimulationSpec.getAgentProperties(type, strategy);
+		ObjectProperties op = PlayerReference.getAgentProperties(type, strategy);
 		
 		if (op == null) {
 			Logger.log(Logger.ERROR, this.getClass().getSimpleName() + 
@@ -222,7 +222,7 @@ public class SimulationSpec {
 	 * @return ObjectProperties
 	 */
 	public static ObjectProperties getAgentProperties(AgentType type, String strategy) {
-		ObjectProperties p = new ObjectProperties(Consts.getProperties(type));
+		ObjectProperties p = null; // new ObjectProperties(Consts.getProperties(type));
 		p.put(Agent.STRATEGY_KEY, strategy);
 		
 		if (strategy == null) return p;

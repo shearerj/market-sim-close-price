@@ -2,11 +2,11 @@ package model;
 
 import java.util.Map;
 
-import data.*;
-import entity.CDAMarket;
-import systemmanager.*;
-import systemmanager.Consts.AgentType;
 import utils.RandPlus;
+import data.AgentProperties;
+import data.FundamentalValue;
+import data.ObjectProperties;
+import entity.CDAMarket;
 
 /**
  * TWOMARKET
@@ -29,43 +29,13 @@ public class TwoMarket extends MarketModel {
 		super(modelID, fundamental, agentProps, modelProps, rand);
 	}
 	
-	public TwoMarket(int modelID, ObjectProperties p, SystemData d) {
-		super(modelID,p, d);
-		
-		config = p.getAsString(Consts.MODEL_CONFIG_KEY);
-		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
-			// Add two CDA markets with default settings
-			addMarketPropertyPair(Consts.MarketType.CDA);
-			addMarketPropertyPair(Consts.MarketType.CDA);
-			
-			// Check that config is not blank
-			if (!config.equals("")) {
-				// split on colon
-				String[] as = config.split("[:]+");
-				AgentType agType = AgentType.valueOf(as[0]);
-				if (!Consts.MM_AGENT.contains(agType)) {
-					System.err.println(this.getClass().getSimpleName() + "::parseConfigs: " +
-									"model configuration " + config + " incorrect");
-					System.exit(1);
-				}
-				if (as.length == 2) {
-					ObjectProperties op = SimulationSpec.getAgentProperties(agType, as[1]);
-					addAgentPropertyPair(agType, op);
-				} else if (as.length == 1) {
-					ObjectProperties op = SimulationSpec.getAgentProperties(agType, "");
-					addAgentPropertyPair(agType, op);
-				}
-			}
-		}
-	}
-	
-	
 	@Override
+	@Deprecated
 	public String getConfig() {
 		return config;
 	}
-
 	
+	@Deprecated
 	public int getAlternateMarket(int mainMarketID) {
 		if (marketIDs.contains(mainMarketID)) {
 			if (marketIDs.get(0) == mainMarketID) {

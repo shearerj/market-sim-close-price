@@ -4,14 +4,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
-import market.PrivateValue;
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
 import data.ObjectProperties;
 import data.Observations;
-import data.SystemData;
 import event.TimeStamp;
 
 
@@ -44,15 +42,6 @@ public class ZIPAgent extends BackgroundAgent {
 		this.beta = props.getAsDouble("beta", .03);
 		this.betaVar = props.getAsDouble("betaVar", .005);
 		this.gamma = props.getAsDouble("gamma", .5);
-	}
-	
-	public ZIPAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
-		super(agentID, modelID, d, p);
-		
-		bidRange = params.getAsInt(ZIAgent.BIDRANGE_KEY);
-		int alpha1 = (int) Math.round(rand.nextGaussian(0, this.data.pvVar));
-		int alpha2 = (int) Math.round(rand.nextGaussian(0, this.data.pvVar));
-		alpha = new PrivateValue(alpha1, alpha2);
 	}
 
 	@Override

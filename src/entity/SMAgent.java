@@ -1,21 +1,22 @@
 package entity;
 
-import data.ObjectProperties;
-import data.SystemData;
-import event.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 import logger.Logger;
 import market.BestBidAsk;
 import market.Price;
 import market.Quote;
 import model.MarketModel;
-import activity.*;
-import systemmanager.*;
+import systemmanager.Consts;
 import utils.RandPlus;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import activity.Activity;
+import activity.AgentStrategy;
+import activity.SubmitNMSBid;
+import activity.SubmitNMSMultipleBid;
+import event.TimeStamp;
 
 /**
  * SMAGENT
@@ -52,22 +53,6 @@ public abstract class SMAgent extends Agent {
 	}
 
 	/**
-	 * Constructor for a single market agent.
-	 * 
-	 * @param agentID
-	 * @param modelID
-	 * @param d
-	 * @param p
-	 * @param l
-	 */
-	public SMAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
-		super(agentID, modelID, d, p);
-
-		int mktID = params.getAsInt(SMAgent.MARKETID_KEY);
-		market = data.getMarket(mktID);
-	}
-
-	/**
 	 * @return market
 	 */
 	public Market getMarket() {
@@ -83,28 +68,11 @@ public abstract class SMAgent extends Agent {
 
 	/**
 	 * Wrapper method to submit bid to market after checking permissions.
-	 * 
-	 * @param mkt
-	 * @param p
-	 * @param q
-	 * @param duration
-	 * @param ts
-	 * @return
 	 */
-	public Collection<? extends Activity> submitNMSBid(int p, int q,
-			TimeStamp duration, TimeStamp ts) {
-		return Collections.singleton(new SubmitNMSBid(this, p, q, duration, ts));
-	}
-
-	/**
-	 * Wrapper method to submit bid that never expires to market after checking
-	 * permissions.
-	 */
-	@Deprecated
-	public Collection<? extends Activity> submitNMSBid(int p, int q,
-			TimeStamp ts) {
-		return Collections.singleton(new SubmitNMSBid(this, p, q,
-				Consts.INF_TIME, ts));
+	public Collection<? extends Activity> submitNMSBid(Price price,
+			int quantity, TimeStamp duration, TimeStamp ts) {
+		return Collections.singleton(new SubmitNMSBid(this, price, quantity,
+				duration, ts));
 	}
 
 	/**
@@ -124,8 +92,8 @@ public abstract class SMAgent extends Agent {
 	 * @return Collection<Activity>
 	 */
 	public Collection<? extends Activity> agentArrival(TimeStamp ts) {
-		Logger.log(Logger.INFO, ts.toString() + " | " + this + "->"
-				+ market.toString());
+		Logger.log(Logger.INFO,
+				ts.toString() + " | " + this + "->" + market.toString());
 		this.enterMarket(market, ts);
 		// FIXME I think with the new event queue, this should be instantaneous
 		// not at the same time
@@ -156,7 +124,7 @@ public abstract class SMAgent extends Agent {
 	@Deprecated
 	// I don't think this needs so / should be called anymore. The agent should
 	// just update information at strategy time and go from there
-	public Collection<Activity> updateAllQuotes(TimeStamp ts) {
+	public Collection<? extends Activity> updateAllQuotes(TimeStamp ts) {
 		updateQuotes(market, ts);
 		return this.executeUpdateAllQuotes(ts);
 	}
@@ -174,7 +142,8 @@ public abstract class SMAgent extends Agent {
 	 * @return
 	 */
 	@Deprecated
-	public Collection<? extends Activity> executeSubmitNMSBid(int p, int q, TimeStamp ts) {
+	public Collection<? extends Activity> executeSubmitNMSBid(int p, int q,
+			TimeStamp ts) {
 		return executeSubmitNMSBid(new Price(p), q, ts);
 	}
 
@@ -261,8 +230,8 @@ public abstract class SMAgent extends Agent {
 
 		// submit bid to the best market
 		marketSubmittedBid = bestMarket;
-		Collection<Activity> actMap = new ArrayList<Activity>(executeSubmitBid(bestMarket,
-				price.getPrice(), quantity, ts));
+		Collection<Activity> actMap = new ArrayList<Activity>(executeSubmitBid(
+				bestMarket, price.getPrice(), quantity, ts));
 
 		String durationLog = duration != Consts.INF_TIME
 				&& duration.longValue() > 0 ? ", duration=" + duration : "";
@@ -277,7 +246,8 @@ public abstract class SMAgent extends Agent {
 		return actMap;
 	}
 
-	public Collection<? extends Activity> executeSubmitNMSBid(Price p, int q, TimeStamp ts) {
+	public Collection<? extends Activity> executeSubmitNMSBid(Price p, int q,
+			TimeStamp ts) {
 		return executeSubmitNMSBid(p, q, Consts.INF_TIME, ts);
 	}
 

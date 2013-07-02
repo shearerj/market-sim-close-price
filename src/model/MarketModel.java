@@ -163,28 +163,6 @@ public abstract class MarketModel {
 		agents.add(agent);
 	}
 
-	@Deprecated
-	public MarketModel(int modelID, ObjectProperties p, SystemData d) {
-		// reorg
-		fundamental = d.getFundamenalValue();
-		markets = new ArrayList<Market>();
-		trans = new ArrayList<Transaction>();
-		rand = new RandPlus();
-		agents = new ArrayList<Agent>();
-		agentIDgen = new IDGenerator();
-		// reorg
-
-		this.modelID = modelID;
-		data = d;
-		modelProperties = p;
-
-		agentIDs = new ArrayList<Integer>();
-		marketIDs = new ArrayList<Integer>();
-		modelMarketConfig = new ArrayList<MarketObjectPair>();
-		agentConfig = new ArrayList<AgentPropsPair>();
-
-	}
-
 	/**
 	 * @return configuration string for this model.
 	 */
@@ -237,17 +215,6 @@ public abstract class MarketModel {
 	}
 
 	/**
-	 * Add an agent with default property settings to the MarketModel.
-	 * 
-	 * @param agType
-	 */
-	public void addAgentPropertyPair(AgentType agType) {
-		ObjectProperties agProperties = Consts.getProperties(agType);
-		AgentPropsPair mpp = new AgentPropsPair(agType, agProperties);
-		agentConfig.add(mpp);
-	}
-
-	/**
 	 * @return agentConfig
 	 */
 	public ArrayList<AgentPropsPair> getAgentConfig() {
@@ -270,18 +237,6 @@ public abstract class MarketModel {
 	 */
 	public void addMarketPropertyPair(MarketType mktType,
 			ObjectProperties mktProperties) {
-		MarketObjectPair mpp = new MarketObjectPair(mktType.toString(),
-				mktProperties);
-		modelMarketConfig.add(mpp);
-	}
-
-	/**
-	 * Add a market with default property settings to the MarketModel.
-	 * 
-	 * @param mktType
-	 */
-	public void addMarketPropertyPair(MarketType mktType) {
-		ObjectProperties mktProperties = Consts.getProperties(mktType);
 		MarketObjectPair mpp = new MarketObjectPair(mktType.toString(),
 				mktProperties);
 		modelMarketConfig.add(mpp);

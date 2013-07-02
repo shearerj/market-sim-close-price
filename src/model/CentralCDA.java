@@ -2,12 +2,10 @@ package model;
 
 import java.util.Map;
 
-import systemmanager.Consts;
 import utils.RandPlus;
 import data.AgentProperties;
 import data.FundamentalValue;
 import data.ObjectProperties;
-import data.SystemData;
 import entity.CDAMarket;
 
 /**
@@ -24,15 +22,6 @@ public class CentralCDA extends MarketModel {
 			Map<AgentProperties, Integer> agentProps,
 			ObjectProperties modelProps, RandPlus rand) {
 		super(modelID, fundamental, agentProps, modelProps, rand);
-	}
-
-	public CentralCDA(int modelID, ObjectProperties p, SystemData d) {
-		super(modelID, p, d);
-		
-		config = p.getAsString(Consts.MODEL_CONFIG_KEY);
-		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
-			addMarketPropertyPair(Consts.MarketType.CDA);
-		}
 	}
 	
 	@Override

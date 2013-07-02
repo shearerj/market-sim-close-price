@@ -10,12 +10,11 @@ import market.PQTransaction;
 import market.Transaction;
 import model.MarketModel;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.json.simple.JSONObject;
 
 import systemmanager.Consts;
-import systemmanager.SimulationSpec;
+import systemmanager.SimulationSpec2;
 import entity.Agent;
 import entity.BackgroundAgent;
 import entity.HFTAgent;
@@ -237,15 +236,15 @@ public class Observations {
 	public Feature getConfiguration() {
 		Feature config = new Feature();
 		config.put(OBS_KEY, data.num);
-		config.put(SimulationSpec.SIMULATION_LENGTH, data.simLength);
-		config.put(SimulationSpec.TICK_SIZE, data.tickSize);
-		config.put(SimulationSpec.LATENCY, data.nbboLatency);
-		config.put(SimulationSpec.ARRIVAL_RATE, data.arrivalRate);
-		config.put(SimulationSpec.REENTRY_RATE, data.reentryRate);
-		config.put(SimulationSpec.FUNDAMENTAL_KAPPA, data.kappa);
-		config.put(SimulationSpec.FUNDAMENTAL_MEAN, data.meanValue);
-		config.put(SimulationSpec.FUNDAMENTAL_SHOCK_VAR, data.shockVar);
-		config.put(SimulationSpec.PRIVATE_VALUE_VAR, data.pvVar);
+		config.put(SimulationSpec2.SIMULATION_LENGTH, data.simLength);
+		config.put(SimulationSpec2.TICK_SIZE, data.tickSize);
+		config.put(SimulationSpec2.LATENCY, data.nbboLatency);
+		config.put(SimulationSpec2.ARRIVAL_RATE, data.arrivalRate);
+		config.put(SimulationSpec2.REENTRY_RATE, data.reentryRate);
+		config.put(SimulationSpec2.FUNDAMENTAL_KAPPA, data.kappa);
+		config.put(SimulationSpec2.FUNDAMENTAL_MEAN, data.meanValue);
+		config.put(SimulationSpec2.FUNDAMENTAL_SHOCK_VAR, data.shockVar);
+		config.put(SimulationSpec2.PRIVATE_VALUE_VAR, data.pvVar);
 
 		config.put(TIMESERIES_MAXTIME, maxTime);
 

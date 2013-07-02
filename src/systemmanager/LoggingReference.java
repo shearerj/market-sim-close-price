@@ -57,11 +57,11 @@ import systemmanager.Consts.ModelType;
  * 
  * @author ewah
  */
-public class SystemSetup {
+public class LoggingReference {
 
 	private SystemData data;
 	private EventManager eventManager;
-	private SimulationSpec specs;
+	private PlayerReference specs;
 	
 	private Sequence agentIDSequence;
 	private Sequence marketIDSequence;
@@ -85,7 +85,7 @@ public class SystemSetup {
 	 * @param d
 	 * @param l
 	 */
-	public SystemSetup(SimulationSpec s, EventManager em, SystemData d) {
+	public LoggingReference(PlayerReference s, EventManager em, SystemData d) {
 		specs = s;
 		eventManager = em;
 		data = d;
@@ -218,12 +218,12 @@ public class SystemSetup {
 	 * @return model
 	 */
 	private MarketModel createModel(ModelType modelType, String configuration) {
-		ObjectProperties p = new ObjectProperties(Consts.getProperties(modelType));
+		ObjectProperties p = null; //new ObjectProperties(Consts.getProperties(modelType));
 		
 		// create market model & determine its configuration
 		int modelID = modelIDSequence.increment();
 		p.put(Consts.MODEL_CONFIG_KEY, configuration);
-		MarketModel model = ModelFactory.createModel(modelType, modelID, p, data);		
+		MarketModel model = null; //ModelFactory.createModel(modelType, modelID, p, data);		
 		data.addModel(model);
 		Logger.log(Logger.INFO, model.getFullName() + ": " + model + " " + p);
 		createMarketsInModel(model);
@@ -429,7 +429,7 @@ public class SystemSetup {
 			p.put(Agent.ARRIVAL_KEY, arr.toString());
 			p.put(Agent.FUNDAMENTAL_KEY, model.getFundamentalAt(arr).toString());				
 		}
-		Agent agent = AgentFactory.createAgent(agType, agID, model.getID(), data, p);
+		Agent agent = null; //AgentFactory.createAgent(agType, agID, model.getID(), data, p);
 		
 		createInitialAgentEvents(agent);
 		data.addAgent(agent);
@@ -501,7 +501,7 @@ public class SystemSetup {
 			if (ag.hasPrivateValue()) {
 				s += ", pv=" + ag.getPrivateValue();
 			}
-			s += " ... params=" + ag.getProperties().toString();
+//			s += " ... params=" + ag.getProperties().toString();
 			Logger.log(Logger.INFO, s);
 		}
 	}

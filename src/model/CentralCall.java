@@ -2,14 +2,12 @@ package model;
 
 import java.util.Map;
 
+import utils.RandPlus;
 import data.AgentProperties;
 import data.FundamentalValue;
 import data.ObjectProperties;
-import data.SystemData;
 import entity.CallMarket;
 import event.TimeStamp;
-import systemmanager.*;
-import utils.RandPlus;
 
 /**
  * CENTRALCALL
@@ -31,27 +29,6 @@ public class CentralCall extends MarketModel {
 		super(modelID, fundamental, agentProps, modelProps, rand);
 	}
 	
-	public CentralCall(int modelID, ObjectProperties p, SystemData d) {
-		super(modelID, p, d);
-		
-		config = p.getAsString(Consts.MODEL_CONFIG_KEY);
-		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
-			
-			ObjectProperties mktProperties = Consts.getProperties(Consts.MarketType.CALL);
-			
-			// Set clearing frequency to be NBBO latency or a constant
-			if (config.equals("NBBO")) {
-				mktProperties.put(CallMarket.CLEAR_FREQ_KEY, data.nbboLatency.toString());
-				
-			} else if (config.contains("CONST")){
-				// Add substring immediately after "CONST"
-				mktProperties.put(CallMarket.CLEAR_FREQ_KEY, config.substring(5));
-			}
-			
-			addMarketPropertyPair(Consts.MarketType.CALL, mktProperties);
-		}
-	}
-	
 	@Override
 	public String getConfig() {
 		return config;
@@ -60,8 +37,8 @@ public class CentralCall extends MarketModel {
 	@Override
 	protected void setupMarkets(ObjectProperties modelProps) {
 		// FIXME These default values are probably not correct.
-		float pricingPolicy = modelProps.getAsFloat(CallMarket.PRICING_POLICY_KEY, 0);
-		TimeStamp clearFreq = new TimeStamp(modelProps.getAsLong(CallMarket.CLEAR_FREQ_KEY, 1000));
+		float pricingPolicy = modelProps.getAsFloat(CallMarket.PRICING_POLICY_KEY, 0.5f);
+		TimeStamp clearFreq = new TimeStamp(modelProps.getAsLong(CallMarket.CLEAR_FREQ_KEY, 100));
 		markets.add(new CallMarket(1, this, pricingPolicy, clearFreq));
 	}
 

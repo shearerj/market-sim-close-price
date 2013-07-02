@@ -7,7 +7,14 @@ import java.util.*;
 import java.io.*;
 import java.text.DateFormat;
 
+import utils.RandPlus;
+
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
+
 import logger.Logger;
+import model.MarketModel;
+import model.MarketModelFactory;
 
 /**
  * This class serves the purpose of the Client in the Command pattern, in that
@@ -26,10 +33,7 @@ public class SystemManager {
 			DateFormat.MEDIUM, Locale.UK);
 
 	protected final EventManager eventManager;
-	protected final SystemData data;
-	protected final Observations obs;
-	protected final Properties envProps;
-	protected final SimulationSpec spec;
+	protected final Collection<MarketModel> models;
 
 	protected final int num; // sample number used for labeling output files
 	protected final File simFolder; // simulation folder name
@@ -75,32 +79,61 @@ public class SystemManager {
 		this.simFolder = simFolder;
 		this.num = simNumber;
 
-		envProps = getProperties();
-		getLog(); // Must be called after "envProps"
-		data = new SystemData(simNumber, simFolder);
-		spec = getSimulationSpec(); // Must be after "log" and "data"
-		obs = new Observations(data);
-		eventManager = new EventManager(data.simLength);
+		// TODO move props to SimSpec?
+		initializeLogger(getProperties(), simFolder, simNumber);
 
-		new SystemSetup(spec, eventManager, data).setupAll();
+		SimulationSpec2 spec = getSimulationSpec(simFolder);
+		ObjectProperties simProps = spec.getSimulationProperties();
+		long seed = simProps.getAsLong(SimulationSpec2.RAND_SEED,
+				System.currentTimeMillis());
+		Logger.log(Logger.INFO, "RandomSeed: " + seed);
+		RandPlus rand = new RandPlus(seed);
+
+		TimeStamp simLength = new TimeStamp(
+				simProps.getAsLong(SimulationSpec2.SIMULATION_LENGTH));
+		eventManager = new EventManager(simLength,
+				new RandPlus(rand.nextLong()));
+
+		FundamentalValue fundamental = new FundamentalValue(
+				simProps.getAsDouble(SimulationSpec2.FUNDAMENTAL_KAPPA),
+				simProps.getAsInt(SimulationSpec2.FUNDAMENTAL_MEAN),
+				simProps.getAsDouble(SimulationSpec2.FUNDAMENTAL_SHOCK_VAR),
+				new RandPlus(rand.nextLong()));
+
+		MarketModelFactory modelFactory = new MarketModelFactory(
+				spec.getBackgroundAgents(), fundamental, new RandPlus(
+						rand.nextLong()));
+
+		Logger.log(Logger.INFO, "------------------------------------------------");
+		Logger.log(Logger.INFO, "            Creating MARKET MODELS");
+		models = new ArrayList<MarketModel>();
+		for (ModelProperties props : spec.getModels()) {
+			MarketModel model = modelFactory.createModel(props);
+			models.add(model);
+			// TODO Log markets?
+			Logger.log(Logger.INFO, props.getModelType() + ": " + model);
+		}
+		Logger.log(Logger.INFO, "------------------------------------------------");
 	}
 
 	protected Properties getProperties() throws IOException {
 		Properties props = new Properties();
-		props.load(new FileInputStream(new File(Consts.configDir, Consts.configFile)));
+		props.load(new FileInputStream(new File(Consts.configDir,
+				Consts.configFile)));
 		return props;
 	}
 
 	/**
 	 * Must be done after "envProps" exists
 	 */
-	protected void getLog() throws IOException {
+	protected static void initializeLogger(Properties envProps, File simFolder,
+			int num) throws IOException {
 		// Create log file
 		int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
 
 		Date now = new Date();
-		StringBuilder logFileName = new StringBuilder(simFolder.getPath()
-				.replace('/', '_'));
+		StringBuilder logFileName = new StringBuilder(
+				simFolder.getPath().replace('/', '_'));
 		logFileName.append('_').append(num).append('_');
 		logFileName.append(DATE_FORMAT.format(now)).append('_');
 		// TODO This replace should could be done by modifying the date
@@ -126,12 +159,8 @@ public class SystemManager {
 		Logger.log(Logger.DEBUG, envProps.toString());
 	}
 
-	/**
-	 * Must be done after "log" and "data" exist
-	 * 
-	 * @return
-	 */
-	protected SimulationSpec getSimulationSpec() {
+	protected static SimulationSpec2 getSimulationSpec(File simFolder)
+			throws JsonSyntaxException, JsonIOException, FileNotFoundException {
 		// Read simulation specification file
 		File simulationSpecFile = new File(simFolder, Consts.simSpecFile);
 		if (!simulationSpecFile.exists())
@@ -139,28 +168,25 @@ public class SystemManager {
 					+ simulationSpecFile.getAbsolutePath() + ") doesn't exist");
 
 		// Read simulation_spec.json file
-		return new SimulationSpec(simulationSpecFile.getAbsolutePath(), data);
+		return new SimulationSpec2(simulationSpecFile);
 	}
 
 	/**
 	 * Method to execute all events in the Event Queue.
 	 */
 	public void executeEvents() {
-		while (!eventManager.isEmpty()) {
-			eventManager.executeNext();
-		}
+		for (MarketModel model : models)
+			model.scheduleActivities(eventManager);
+		// TODO Get rid of event manager and move to system manager.
+		eventManager.execute();
 		Logger.log(Logger.INFO, "STATUS: Simulation has ended.");
 	}
 
-	/**
-	 * Generate results report (payoff data, feature data logging).
-	 * 
-	 * @throws IOException
-	 */
 	public void aggregateResults() throws IOException {
-		File results = new File(simFolder, Consts.obsFile + data.num + ".json");
+		File results = new File(simFolder, Consts.obsFile + num + ".json");
 		FileWriter writer = new FileWriter(results);
-		writer.write(obs.generateObservationFile());
+		// TODO Actually generate observations
+		// writer.write(obs.generateObservationFile());
 		writer.close();
 	}
 
