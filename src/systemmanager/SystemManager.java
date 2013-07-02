@@ -83,7 +83,7 @@ public class SystemManager {
 		initializeLogger(getProperties(), simFolder, simNumber);
 
 		SimulationSpec2 spec = getSimulationSpec(simFolder);
-		ObjectProperties simProps = spec.getSimulationProperties();
+		EntityProperties simProps = spec.getSimulationProperties();
 		long seed = simProps.getAsLong(SimulationSpec2.RAND_SEED,
 				System.currentTimeMillis());
 		Logger.log(Logger.INFO, "RandomSeed: " + seed);

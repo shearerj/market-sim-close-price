@@ -510,7 +510,7 @@ public class AAAgent extends BackgroundAgent {
 	}
 
 	public AAAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, ObjectProperties params) {
+			Market market, RandPlus rand, EntityProperties params) {
 		this(agentID, arrivalTime, model, market,
 				params.getAsInt(REENTRY_RATE),
 				params.getAsInt(AAAgent.MAXQUANTITY_KEY), params.getAsInt(

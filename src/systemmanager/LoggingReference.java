@@ -76,7 +76,7 @@ public class LoggingReference {
 	
 	private HashMap<String, Integer> playerNumbers;
 	private HashMap<String, ArrivalTime> playerArrivalGenerators;
-	private HashMap<String, ArrayList<ObjectProperties>> playerStrategies;
+	private HashMap<String, ArrayList<EntityProperties>> playerStrategies;
 	
 	/**
 	 * Constructor
@@ -101,7 +101,7 @@ public class LoggingReference {
 		arrivalGenerators = new HashMap<AgentPropsPair, ArrivalTime>();
 		playerNumbers = new HashMap<String, Integer>();
 		playerArrivalGenerators = new HashMap<String, ArrivalTime>();
-		playerStrategies = new HashMap<String, ArrayList<ObjectProperties>>();
+		playerStrategies = new HashMap<String, ArrayList<EntityProperties>>();
 	}
 	
 	
@@ -218,7 +218,7 @@ public class LoggingReference {
 	 * @return model
 	 */
 	private MarketModel createModel(ModelType modelType, String configuration) {
-		ObjectProperties p = null; //new ObjectProperties(Consts.getProperties(modelType));
+		EntityProperties p = null; //new ObjectProperties(Consts.getProperties(modelType));
 		
 		// create market model & determine its configuration
 		int modelID = modelIDSequence.increment();
@@ -240,7 +240,7 @@ public class LoggingReference {
 		for (MarketObjectPair mop : model.getMarketConfig()) {
 			int mID = marketIDSequence.decrement();
 			
-			ObjectProperties mp = (ObjectProperties) mop.getObject();
+			EntityProperties mp = (EntityProperties) mop.getObject();
 			String mtype = mop.getMarketType();
 			Market market = null; // MarketFactory.createMarket(mtype, mID, data, mp, model);
 			market.linkModel(model.getID());
@@ -272,7 +272,7 @@ public class LoggingReference {
 			// set up their players & their arrivals
 			for (AgentPropsPair app : data.getPlayerMap().keySet()) {
 				String type = app.getAgentType().toString();
-				ObjectProperties o = app.getProperties();
+				EntityProperties o = app.getProperties();
 				int n = data.getPlayerMap().get(app);
 				
 				if (playerNumbers.containsKey(type)) {
@@ -283,7 +283,7 @@ public class LoggingReference {
 					playerNumbers.put(type, n);
 					playerArrivalGenerators.put(type, 
 							new ArrivalTime(new TimeStamp(0), data.arrivalRate));
-					playerStrategies.put(type, new ArrayList<ObjectProperties>(
+					playerStrategies.put(type, new ArrayList<EntityProperties>(
 							Collections.nCopies(n, o)));
 				}
 			}
@@ -352,7 +352,7 @@ public class LoggingReference {
 					
 					for (int i = 0; i < numAg; i++) {
 						// create copy of ObjectProperties in case modify it
-						ObjectProperties op = new ObjectProperties(ap.getProperties());
+						EntityProperties op = new EntityProperties(ap.getProperties());
 						if (data.isSMAgent(ap.getAgentType())) {
 							// must assign market if single-market agent
 							op.put(SMAgent.MARKETID_KEY, assignMktIDs.get(i).toString());
@@ -389,7 +389,7 @@ public class LoggingReference {
 				for (int i = 0; i < numAg; i++) {	
 					// create copy of ObjectProperties in case modify it
 					AgentType agType = AgentType.valueOf(type);
-					ObjectProperties op = new ObjectProperties(playerStrategies.get(type).get(i));
+					EntityProperties op = new EntityProperties(playerStrategies.get(type).get(i));
 					if (data.isSMAgent(agType)) {
 						// must assign market if single-market agent
 						op.put(SMAgent.MARKETID_KEY, assignMktIDs.get(i).toString());
@@ -420,7 +420,7 @@ public class LoggingReference {
 	 */
 	private Agent createAgent(MarketModel model, AgentPropsPair ap, Long seed, TimeStamp arr) { 
 		AgentType agType = ap.getAgentType();
-		ObjectProperties p = ap.getProperties();
+		EntityProperties p = ap.getProperties();
 		
 		p.put(Agent.RANDSEED_KEY, seed.toString());
 		int agID = agentIDSequence.increment();

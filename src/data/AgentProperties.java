@@ -2,7 +2,7 @@ package data;
 
 import systemmanager.Consts.AgentType;
 
-public class AgentProperties extends ObjectProperties {
+public class AgentProperties extends EntityProperties {
 
 	protected final AgentType type;
 	
@@ -21,7 +21,7 @@ public class AgentProperties extends ObjectProperties {
 		this.type = type;
 	}
 	
-	public AgentProperties(AgentType type, ObjectProperties def, String config) {
+	public AgentProperties(AgentType type, EntityProperties def, String config) {
 		super(def, config);
 		this.type = type;
 	}

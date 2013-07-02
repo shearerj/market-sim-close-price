@@ -8,7 +8,7 @@ import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
-import data.ObjectProperties;
+import data.EntityProperties;
 import data.Observations;
 import event.TimeStamp;
 
@@ -32,7 +32,7 @@ public class ZIPAgent extends BackgroundAgent {
 	protected double c_R, c_A, beta, betaVar, gamma;
 	
 	public ZIPAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, ObjectProperties props) {
+			Market market, RandPlus rand, EntityProperties props) {
 		super(agentID, arrivalTime, model, market, rand);
 		this.bidRange = props.getAsInt(BIDRANGE_KEY, 2000);
 		this.sleepTime = props.getAsInt(SLEEPTIME_KEY, 50);

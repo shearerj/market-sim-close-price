@@ -15,7 +15,7 @@ import systemmanager.Consts;
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
-import data.ObjectProperties;
+import data.EntityProperties;
 import data.Observations;
 import event.TimeStamp;
 
@@ -41,7 +41,7 @@ public class LAAgent extends HFTAgent {
 	}
 
 	public LAAgent(int agentID, MarketModel model,
-			RandPlus rand, ObjectProperties props) {
+			RandPlus rand, EntityProperties props) {
 		this(agentID, model, props.getAsInt(SLEEPTIME_KEY, 0),
 				props.getAsDouble(SLEEPVAR_KEY, 100), props.getAsDouble(
 						ALPHA_KEY, 0.001), rand);

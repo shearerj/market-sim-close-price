@@ -21,7 +21,7 @@ import utils.RandPlus;
 import data.AgentProperties;
 import data.AgentPropsPair;
 import data.FundamentalValue;
-import data.ObjectProperties;
+import data.EntityProperties;
 import data.SystemData;
 import entity.Agent;
 import entity.Market;
@@ -90,7 +90,7 @@ public abstract class MarketModel {
 								// construction?
 	protected SystemData data;
 	protected ArrayList<Integer> agentIDs; // IDs of associated agents
-	protected ObjectProperties modelProperties;
+	protected EntityProperties modelProperties;
 	protected ArrayList<AgentPropsPair> agentConfig;
 	protected ArrayList<MarketObjectPair> modelMarketConfig;
 
@@ -100,7 +100,7 @@ public abstract class MarketModel {
 
 	public MarketModel(int modelID, FundamentalValue fundamental,
 			Map<AgentProperties, Integer> agentProps,
-			ObjectProperties modelProps, RandPlus rand) {
+			EntityProperties modelProps, RandPlus rand) {
 
 		this.modelID = modelID;
 		this.rand = rand;
@@ -117,13 +117,13 @@ public abstract class MarketModel {
 		setupAgents(modelProps, agentProps);
 	}
 
-	protected abstract void setupMarkets(ObjectProperties modelProps);
+	protected abstract void setupMarkets(EntityProperties modelProps);
 	
-	protected void setupInformationProcessors(ObjectProperties modelProps) {
+	protected void setupInformationProcessors(EntityProperties modelProps) {
 		// TODO create general sip
 	}
 
-	protected void setupAgents(ObjectProperties modelProps,
+	protected void setupAgents(EntityProperties modelProps,
 			Map<AgentProperties, Integer> agentProps) {
 		for (Entry<AgentProperties, Integer> type : agentProps.entrySet()) {
 			// FIXME Replace 0 with default arrival rate
@@ -209,7 +209,7 @@ public abstract class MarketModel {
 	 * @param agProperties
 	 */
 	public void addAgentPropertyPair(AgentType agType,
-			ObjectProperties agProperties) {
+			EntityProperties agProperties) {
 		AgentPropsPair app = new AgentPropsPair(agType, agProperties);
 		agentConfig.add(app);
 	}
@@ -236,7 +236,7 @@ public abstract class MarketModel {
 	 * @param mktProperties
 	 */
 	public void addMarketPropertyPair(MarketType mktType,
-			ObjectProperties mktProperties) {
+			EntityProperties mktProperties) {
 		MarketObjectPair mpp = new MarketObjectPair(mktType.toString(),
 				mktProperties);
 		modelMarketConfig.add(mpp);
@@ -249,7 +249,7 @@ public abstract class MarketModel {
 	 * @param idx
 	 * @param mktProperties
 	 */
-	public void editMarketPropertyPair(int idx, ObjectProperties mktProperties) {
+	public void editMarketPropertyPair(int idx, EntityProperties mktProperties) {
 		MarketObjectPair mpp = modelMarketConfig.get(idx);
 		modelMarketConfig.set(idx, new MarketObjectPair(mpp.getMarketType(),
 				mktProperties));

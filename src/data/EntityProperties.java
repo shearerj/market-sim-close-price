@@ -7,25 +7,25 @@ import java.util.Set;
 
 import com.google.gson.Gson;
 
-public class ObjectProperties {
+public class EntityProperties {
 	
 	protected static final transient Gson gson = new Gson();
 	protected Map<String, String> properties;
 
-	public ObjectProperties() {
+	public EntityProperties() {
 		properties = new HashMap<String, String>();
 	}
 	
-	public ObjectProperties(ObjectProperties copy) {
+	public EntityProperties(EntityProperties copy) {
 		properties = new HashMap<String, String>(copy.properties);
 	}
 	
-	public ObjectProperties(String config) {
+	public EntityProperties(String config) {
 		this();
 		addConfig(config);
 	}
 	
-	public ObjectProperties(ObjectProperties def, String config) {
+	public EntityProperties(EntityProperties def, String config) {
 		this(def);
 		addConfig(config);
 	}
@@ -129,9 +129,9 @@ public class ObjectProperties {
 	
 	@Override
 	public boolean equals(Object o) {
-	    if (o == null || !(o instanceof ObjectProperties))
+	    if (o == null || !(o instanceof EntityProperties))
 	        return false;
-	    final ObjectProperties e = (ObjectProperties) o;
+	    final EntityProperties e = (EntityProperties) o;
 	    return properties.equals(e.properties);
 	}
 	
@@ -151,12 +151,6 @@ public class ObjectProperties {
 	@Override
 	public String toString() {
 		return properties.toString();
-	}
-	
-	public static void main(String... args) {
-		ObjectProperties e = new ObjectProperties("blah_1_hello_hft_key_6.7");
-		System.out.println(e);
-		System.out.println(e.toConfigString());
 	}
 
 }

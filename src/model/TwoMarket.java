@@ -5,7 +5,7 @@ import java.util.Map;
 import utils.RandPlus;
 import data.AgentProperties;
 import data.FundamentalValue;
-import data.ObjectProperties;
+import data.EntityProperties;
 import entity.CDAMarket;
 
 /**
@@ -25,7 +25,7 @@ public class TwoMarket extends MarketModel {
 	
 	public TwoMarket(int modelID, FundamentalValue fundamental,
 			Map<AgentProperties, Integer> agentProps,
-			ObjectProperties modelProps, RandPlus rand) {
+			EntityProperties modelProps, RandPlus rand) {
 		super(modelID, fundamental, agentProps, modelProps, rand);
 	}
 	
@@ -49,13 +49,13 @@ public class TwoMarket extends MarketModel {
 
 
 	@Override
-	protected void setupMarkets(ObjectProperties modelProps) {
+	protected void setupMarkets(EntityProperties modelProps) {
 		markets.add(new CDAMarket(1, this));
 		markets.add(new CDAMarket(2, this));
 	}
 
 	@Override
-	protected void setupAgents(ObjectProperties modelProps,
+	protected void setupAgents(EntityProperties modelProps,
 			Map<AgentProperties, Integer> agentProps) {
 		super.setupAgents(modelProps, agentProps);
 		// Look at model parameters and set up LA

@@ -12,7 +12,7 @@ import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
 import data.ArrivalTime;
-import data.ObjectProperties;
+import data.EntityProperties;
 import data.Observations;
 import event.TimeStamp;
 
@@ -52,7 +52,7 @@ public class ZIRAgent extends BackgroundAgent {
 	private ArrayList<TimeStamp> submissionTimes;
 
 	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, ObjectProperties props) {
+			Market market, RandPlus rand, EntityProperties props) {
 		super(agentID, arrivalTime, model, market, rand);
 		bidRange = params.getAsInt(BIDRANGE_KEY, 5000);
 		maxAbsPosition = params.getAsInt(MAXQUANTITY_KEY, 10);

@@ -7,7 +7,7 @@ import market.Price;
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
-import data.ObjectProperties;
+import data.EntityProperties;
 import data.Observations;
 import event.TimeStamp;
 
@@ -42,7 +42,7 @@ public class ZIAgent extends BackgroundAgent {
 	}
 
 	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, ObjectProperties props) {
+			Market market, RandPlus rand, EntityProperties props) {
 		this(agentID, arrivalTime, model, market, rand, props.getAsInt(
 				BIDRANGE_KEY, 2000));
 	}

@@ -10,7 +10,7 @@ import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
 import activity.UpdateAllQuotes;
-import data.ObjectProperties;
+import data.EntityProperties;
 import data.Observations;
 import event.TimeStamp;
 
@@ -61,7 +61,7 @@ public class BasicMarketMaker extends MarketMaker {
 	}
 
 	public BasicMarketMaker(int agentID, MarketModel model, Market market,
-			RandPlus rand, ObjectProperties params) {
+			RandPlus rand, EntityProperties params) {
 		this(agentID, model, market, new TimeStamp(
 				params.getAsLong(SLEEPTIME_KEY, 200)),
 				params.getAsInt(NUMRUNGS_KEY, 10), params.getAsInt(RUNGSIZE_KEY, 1000),

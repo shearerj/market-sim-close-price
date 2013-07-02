@@ -285,23 +285,6 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * Clears all the agent's data structures.
-	 */
-	protected void clearAll() {
-		bidPrice.clear();
-		askPrice.clear();
-		currentBid.clear();
-		lastQuoteTime.clear();
-		nextQuoteTime.clear();
-		lastClearTime.clear();
-		quotes.clear();
-		initBid.clear();
-		initAsk.clear();
-		prevBid.clear();
-		prevAsk.clear();
-	}
-
-	/**
 	 * @param mktID
 	 * @return number of quotes
 	 */
