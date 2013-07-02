@@ -9,12 +9,14 @@ import systemmanager.Consts;
 
 import logger.Logger;
 import market.Bid;
+import market.PQOrderBook;
 import market.Price;
 import market.Quote;
 import market.Transaction;
 import model.MarketModel;
 import activity.Activity;
 import activity.ProcessQuote;
+import activity.SendToSIP;
 import data.ObjectProperties;
 import data.SystemData;
 import event.TimeStamp;
@@ -30,7 +32,7 @@ public abstract class Market extends Entity {
 	protected final MarketModel model;
 	protected ArrayList<Bid> bids;
 	// XXX There should probably be more model specific stuff here...
-	protected TreeMap<Integer, TimeStamp> executionTimes; // Hashed by bidID
+	protected PQOrderBook orderbook;
 	// end reorg
 
 	// Model information
@@ -79,6 +81,7 @@ public abstract class Market extends Entity {
 
 		// reorg
 		this.model = model;
+		this.orderbook = new PQOrderBook(this);
 	}
 
 	/**
@@ -144,7 +147,54 @@ public abstract class Market extends Entity {
 	 * @param clearTime
 	 * @return
 	 */
-	public abstract Collection<Activity> clear(TimeStamp clearTime);
+	public Collection<Activity> clear(TimeStamp clearTime) {
+		Collection<Activity> actList = new ArrayList<Activity>();
+		
+		//Log prior quote
+		Logger.log(Logger.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
+				this.quote(clearTime));
+		
+		//Update the orderbook
+		orderbook.logActiveBids(clearTime);
+		orderbook.logFourHeap(clearTime);
+		
+		ArrayList<Transaction> trans = orderbook.earliestPriceClear(clearTime);
+		lastClearTime = clearTime;
+		
+		//If there are no new transactions
+		if(trans == null) {
+			data.addDepth(id, clearTime, orderbook.getDepth());
+			
+			Logger.log(Logger.INFO, clearTime + " | ....." + this + " " + 
+					this.getName() + "::clear: No change. Post-clear Quote" +  
+					this.quote(clearTime));
+			
+			actList.add(new SendToSIP(this, clearTime));
+			return actList;
+		}
+		//Otherwise, update and log Transactions
+		for(Transaction tr : trans) {
+			model.addTrans(tr);
+			//update and log transactions
+			tr.getBuyer().updateTransactions(clearTime);
+			tr.getBuyer().logTransactions(clearTime);
+			tr.getSeller().updateTransactions(clearTime);
+			tr.getSeller().logTransactions(clearTime);
+			lastClearPrice = tr.price;			
+		}
+		
+		//Orderbook logging
+		orderbook.logActiveBids(clearTime);
+		orderbook.logClearedBids(clearTime);
+		orderbook.logFourHeap(clearTime);
+		//Updating Depth
+		data.addDepth(this.id, clearTime, orderbook.getDepth());
+		Logger.log(Logger.INFO, clearTime + " | ....." + toString() + " " + 
+				this.getName() + "::clear: Order book cleared: " +
+				"Post-clear Quote" + this.quote(clearTime));
+		actList.add(new SendToSIP(this, clearTime));
+		return actList;
+	}
 
 	/**
 	 * @return map of bids (hashed by agent ID)
@@ -221,19 +271,6 @@ public abstract class Market extends Entity {
 					ts.sum(data.nbboLatency)));
 		}
 		return actMap;
-	}
-
-	@Deprecated
-	public void addExecutionTime(int bidID, TimeStamp ts) {
-		// check if submission time contains it (if not, there is an error)
-		for (Bid b : bids) {
-			if (b.getBidID() == bidID) {
-				executionTimes.put(bidID, ts.diff(b.getSubmissionTime()));
-				return;
-			}
-		}
-		System.err.println(this.getClass().getSimpleName()
-				+ ":: submission time does not contain bidID " + bidID);
 	}
 
 	/**
@@ -346,15 +383,11 @@ public abstract class Market extends Entity {
 		return Integer.signum(num) * n * (int) Math.floor(tmp);
 	}
 
-	public TreeMap<Integer, TimeStamp> getExecutionTimes() {
-		return executionTimes;
-	}
-
 	@Deprecated
 	public TreeMap<Integer, TimeStamp> getSubmissionTimes() {
 		TreeMap<Integer, TimeStamp> map = new TreeMap<Integer, TimeStamp>();
 		for (Bid b : this.bids)
-			map.put(b.getBidID(), b.getSubmissionTime());
+			map.put(b.getBidID(), b.getSubmitTime());
 		return map;
 	}
 

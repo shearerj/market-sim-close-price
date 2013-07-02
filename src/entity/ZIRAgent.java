@@ -90,7 +90,7 @@ public class ZIRAgent extends BackgroundAgent {
 	public Collection<Activity> agentStrategy(TimeStamp ts) {
 		Collection<Activity> actMap = new ArrayList<Activity>();
 
-		this.updateAllQuotes(ts);
+		this.updateQuotes(market, ts);
 		
 		String s = ts + " | " + this + " " + agentType + ":";
 		if (!ts.equals(arrivalTime)) {

@@ -68,9 +68,9 @@ public class PQPointComparator implements Comparator<PQPoint> {
 		Q = (new Integer(pq1.getQuantity())).compareTo(new Integer(
 				pq2.getQuantity()));
 
-		if ((pq1.Parent != null) && (pq1.Parent.submissionTime != null)
-				&& (pq2.Parent != null) && (pq2.Parent.submissionTime != null)) {
-			T = (pq1.Parent.submissionTime.compareTo(pq2.Parent.submissionTime));
+		if ((pq1.Parent != null) && (pq1.Parent.submitTime != null)
+				&& (pq2.Parent != null) && (pq2.Parent.submitTime != null)) {
+			T = (pq1.Parent.submitTime.compareTo(pq2.Parent.submitTime));
 
 			if (T == 0)
 				T = pq1.Parent.getBidID() - pq2.Parent.getBidID();

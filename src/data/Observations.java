@@ -21,6 +21,7 @@ import entity.BackgroundAgent;
 import entity.HFTAgent;
 import entity.Market;
 import entity.MarketMaker;
+import event.TimeStamp;
 // import java.io.BufferedWriter;
 // import java.io.File;
 // import java.io.FileWriter;
@@ -266,8 +267,14 @@ public class Observations {
 	public Feature getExecutionTime(MarketModel model) {
 		Feature feat = new Feature();
 		DescriptiveStatistics speeds = new DescriptiveStatistics();
-		for (Integer key : model.getExecutionTimes().keySet()) {
-			speeds.addValue((double) model.getExecutionTimes().get(key).getLongValue());
+		for(Transaction tr : model.getTrans()) {
+			TimeStamp execTime = tr.getTimestamp();
+			TimeStamp buyerExecTime = execTime.diff(tr.getBuyBid().getSubmitTime());
+			TimeStamp sellerExecTime = execTime.diff(tr.getSellBid().getSubmitTime());
+			for(int q=0; q < tr.getQuantity(); q++) {
+				speeds.addValue((double) buyerExecTime.getLongValue());
+				speeds.addValue((double) sellerExecTime.getLongValue());
+			}
 		}
 		// feat.addMax(speeds);
 		// feat.addMin(speeds);
@@ -366,11 +373,11 @@ public class Observations {
 			PQTransaction tr = (PQTransaction) t;
 			prices.addValue(tr.price.getPrice());
 			quantity.addValue(tr.quantity);
-			fundamental.addValue(model.getFundamentalAt(tr.timestamp).getPrice());
+			fundamental.addValue(model.getFundamentalAt(tr.execTime).getPrice());
 
-			transPrices.add(tr.timestamp, new Double(tr.price.getPrice()));
-			fundPrices.add(tr.timestamp, new Double(model.getFundamentalAt(
-					tr.timestamp).getPrice()));
+			transPrices.add(tr.execTime, new Double(tr.price.getPrice()));
+			fundPrices.add(tr.execTime, new Double(model.getFundamentalAt(
+					tr.execTime).getPrice()));
 
 			// update number of transactions
 			// buyer

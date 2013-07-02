@@ -9,12 +9,12 @@ public abstract class Bid {
 	protected final int bidID;
 	protected final Agent agent;
 	protected final Market market;
-	protected final TimeStamp submissionTime;
+	protected final TimeStamp submitTime;
 	
 	public Bid(Agent agent, Market market, TimeStamp submissionTime) {
 		this.agent = agent;
 		this.market = market;
-		this.submissionTime = submissionTime;
+		this.submitTime = submissionTime;
 		this.bidID = this.hashCode();
 	}
 
@@ -22,7 +22,7 @@ public abstract class Bid {
 		this.bidID = other.bidID;
 		this.agent = other.agent;
 		this.market = other.market;
-		this.submissionTime = other.submissionTime;
+		this.submitTime = other.submitTime;
 	}
 	
 	public Agent getAgent() {
@@ -33,8 +33,8 @@ public abstract class Bid {
 		return market;
 	}
 	
-	public TimeStamp getSubmissionTime() {
-		return submissionTime;
+	public TimeStamp getSubmitTime() {
+		return submitTime;
 	}
 	
 	@Deprecated // TODO Call getAgent instead

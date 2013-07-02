@@ -28,12 +28,9 @@ import event.TimeStamp;
  * @author ewah
  */
 public class CDAMarket extends Market {
-
-	public PQOrderBook orderbook;
 	
 	public CDAMarket(int marketID, MarketModel model) {
 		super(marketID, model);
-		orderbook = new PQOrderBook(this);
 	}
 	
 	/**
@@ -44,7 +41,6 @@ public class CDAMarket extends Market {
 	public CDAMarket(int marketID, SystemData d, ObjectProperties p, MarketModel model) {
 		super(marketID, d, p, model);
 		marketType = Consts.getMarketType(this.getName());
-		orderbook = new PQOrderBook(id, d);
 	}
 
 	public Bid getBidQuote() {
@@ -83,59 +79,6 @@ public class CDAMarket extends Market {
 	
 	public HashMap<Integer,Bid> getBids() {
 		return orderbook.getActiveBids();
-	}
-
-	
-	public Collection<Activity> clear(TimeStamp clearTime) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		orderbook.logActiveBids(clearTime);
-		orderbook.logFourHeap(clearTime);
-		
-		Logger.log(Logger.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
-				this.quote(clearTime));
-		ArrayList<Transaction> transactions = orderbook.earliestPriceClear(clearTime);
-		
-		if (transactions == null) {
-			lastClearTime = clearTime;
-			
-			orderbook.logActiveBids(clearTime);
-			orderbook.logFourHeap(clearTime);
-			data.addDepth(id, clearTime, orderbook.getDepth());
-			
-			Logger.log(Logger.INFO, clearTime + " | ....." + this + " " + 
-					this.getName() + "::clear: No change. Post-clear Quote" +  
-					this.quote(clearTime));
-			actMap.add(new SendToSIP(this, clearTime));
-			return actMap;
-		}
-		
-		// Add bid execution speed
-		ArrayList<Integer> IDs = orderbook.getClearedBidIDs();
-		for (Iterator<Integer> id = IDs.iterator(); id.hasNext(); ) {
-			addExecutionTime(id.next(), clearTime);
-		}
-		
-		// Add transactions to MarketModel
-		for(Transaction tr : transactions) {
-			model.addTrans(tr);
-			//update and log transactions
-			tr.getBuyer().updateTransactions(clearTime);
-			tr.getBuyer().logTransactions(clearTime);
-			tr.getSeller().updateTransactions(clearTime);
-			tr.getSeller().logTransactions(clearTime);
-			lastClearPrice = tr.price;
-		}
-		lastClearTime = clearTime;
-
-		orderbook.logActiveBids(clearTime);
-		orderbook.logClearedBids(clearTime);
-		orderbook.logFourHeap(clearTime);
-		data.addDepth(this.id, clearTime, orderbook.getDepth());
-		Logger.log(Logger.INFO, clearTime + " | ....." + toString() + " " + 
-				this.getName() + "::clear: Order book cleared: " +
-				"Post-clear Quote" + this.quote(clearTime));
-		actMap.add(new SendToSIP(this, clearTime));
-		return actMap;
 	}
 	
 	

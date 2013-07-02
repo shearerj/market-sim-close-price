@@ -82,7 +82,7 @@ public class BasicMarketMaker extends MarketMaker {
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		
 		// update all quotes
-		this.updateAllQuotes(ts);
+		this.updateQuotes(market, ts);
 
 		int bid = getBidPrice(market.getID()).getPrice();
 		int ask = getAskPrice(market.getID()).getPrice();

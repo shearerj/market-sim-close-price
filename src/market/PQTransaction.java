@@ -36,7 +36,7 @@ public class PQTransaction extends Transaction {
 			Bid sellBid, TimeStamp ts, Market market) {
 		quantity = new Integer(q);
 		price = p;
-		timestamp = ts;
+		execTime = ts;
 
 		this.buyer = buyer;
 		this.seller = seller;
@@ -63,8 +63,8 @@ public class PQTransaction extends Transaction {
 				other.seller.getID()).append(buyBid.getBidID(),
 				other.buyBid.getBidID()).append(sellBid.getBidID(),
 				other.sellBid.getBidID()).append(market.getID(),
-				other.market.getID()).append(timestamp.longValue(),
-				other.timestamp.longValue()).isEquals();
+				other.market.getID()).append(execTime.longValue(),
+				other.execTime.longValue()).isEquals();
 	}
 
 	@Override
@@ -73,7 +73,7 @@ public class PQTransaction extends Transaction {
 				quantity.intValue()).append(buyer.getID()).append(
 				seller.getID()).append(buyBid.getBidID()).append(
 				sellBid.getBidID()).append(market.getID()).append(
-				timestamp.longValue()).toHashCode();
+				execTime.longValue()).toHashCode();
 	}
 
 	@Override
@@ -82,7 +82,7 @@ public class PQTransaction extends Transaction {
 				+ quantity.toString() + ", price=" + price + ", buyerID="
 				+ buyer.getID() + ", sellerID=" + seller.getID()
 				+ ", buyBidID=" + buyBid.getBidID() + ", sellBidID="
-				+ sellBid.getBidID() + ", timestamp=" + timestamp.toString()
+				+ sellBid.getBidID() + ", timestamp=" + execTime.toString()
 				+ ", marketID=" + market.getID() + ")";
 		return result;
 	}
@@ -93,7 +93,7 @@ public class PQTransaction extends Transaction {
 	public void print() {
 		System.out.println(quantity + " " + price + " " + buyer.getID() + " "
 				+ seller.getID() + " " + buyBid.getBidID() + " "
-				+ sellBid.getBidID() + " " + timestamp.toString() + " "
+				+ sellBid.getBidID() + " " + execTime.toString() + " "
 				+ market.getID());
 	}
 
