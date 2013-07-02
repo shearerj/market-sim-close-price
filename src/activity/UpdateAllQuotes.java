@@ -25,7 +25,7 @@ public class UpdateAllQuotes extends Activity {
 		return new UpdateAllQuotes(this.ag, this.time);
 	}
 
-	public Collection<Activity> execute(TimeStamp time) {
+	public Collection<? extends Activity> execute(TimeStamp time) {
 		return this.ag.executeUpdateAllQuotes(time);
 	}
 
