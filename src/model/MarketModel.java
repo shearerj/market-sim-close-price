@@ -6,7 +6,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
+
+import activity.AgentArrival;
+import activity.Clear;
 
 import market.Bid;
 import market.Price;
@@ -14,7 +16,7 @@ import market.Transaction;
 import systemmanager.Consts;
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.MarketType;
-import utils.CollectionUtils;
+import systemmanager.SimulationSpec2;
 import utils.RandPlus;
 import data.AgentProperties;
 import data.AgentPropsPair;
@@ -23,7 +25,6 @@ import data.ObjectProperties;
 import data.SystemData;
 import entity.Agent;
 import entity.Market;
-import entity.SMAgent;
 import entity.SMAgentFactory;
 import event.EventManager;
 import event.TimeStamp;
@@ -76,7 +77,6 @@ public abstract class MarketModel {
 	protected final FundamentalValue fundamental;
 	protected final Collection<Market> markets;
 	protected final Collection<Transaction> trans;
-
 	protected final Collection<Agent> agents;
 
 	protected HashMap<Double, Double> modelSurplus; // hashed by rho value
@@ -112,17 +112,18 @@ public abstract class MarketModel {
 		this.agentIDgen = new IDGenerator();
 
 		// Setup
-		// FIXME I don't think this is how I want to do it. Also have to create SIPS...
 		setupMarkets(modelProps);
-		setupBackgroundAgents(modelProps, agentProps);
-		setupModelAgents(modelProps);
+		setupInformationProcessors(modelProps);
+		setupAgents(modelProps, agentProps);
 	}
 
 	protected abstract void setupMarkets(ObjectProperties modelProps);
+	
+	protected void setupInformationProcessors(ObjectProperties modelProps) {
+		// TODO create general sip
+	}
 
-	protected abstract void setupModelAgents(ObjectProperties modelProps);
-
-	protected void setupBackgroundAgents(ObjectProperties modelProps,
+	protected void setupAgents(ObjectProperties modelProps,
 			Map<AgentProperties, Integer> agentProps) {
 		for (Entry<AgentProperties, Integer> type : agentProps.entrySet()) {
 			// FIXME Replace 0 with default arrival rate
@@ -133,25 +134,28 @@ public abstract class MarketModel {
 			// generic or even specified, but for now we'll stick with the
 			// original implementation
 			Generator<TimeStamp> arrivals = new PoissonArrivalGenerator(
-					TimeStamp.startTime,
-					modelProps.getAsLong("arrival-rate", 0), new RandPlus(
+					Consts.START_TIME,
+					agProps.getAsLong(SimulationSpec2.ARRIVAL_RATE, 0), new RandPlus(
 							rand.nextLong()));
 			Generator<Market> marketRate = new RoundRobinGenerator<Market>(
 					markets);
 
-			SMAgentFactory factory = new SMAgentFactory(this, agProps,
+			SMAgentFactory factory = new SMAgentFactory(this,
 					agentIDgen, arrivals, marketRate, new RandPlus(
 							rand.nextLong()));
 
-			for (SMAgent agent : CollectionUtils.toIterable(factory, number))
-				agents.add(agent);
+			for (int i = 0; i < number; i++)
+				agents.add(factory.createAgent(agProps));
 		}
 	}
 	
 	public void scheduleActivities(EventManager manager) {
-		// TODO schedule agent arrival
 		// TODO schedule sendToSIP
-		// TODO Schedule initial market clear
+		for (Market market : markets)
+			// XXX startTime or infinite time? I think start time for CallMarket
+			manager.addActivity(new Clear(market, Consts.START_TIME));
+		for (Agent agent : agents)
+			manager.addActivity(new AgentArrival(agent, agent.getArrivalTime()));
 	}
 	
 	// TODO change to protected. External things shouldn't be able to add agents

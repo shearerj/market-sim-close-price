@@ -77,6 +77,7 @@ public class Consts {
 	
 	// TimeStamp
 	public final static TimeStamp INF_TIME = new TimeStamp(-1);
+	public final static TimeStamp START_TIME = new TimeStamp(0);
 	
 	// Price
 	public final static int INF_PRICE = Integer.MAX_VALUE;

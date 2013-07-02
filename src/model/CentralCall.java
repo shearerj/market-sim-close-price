@@ -59,14 +59,10 @@ public class CentralCall extends MarketModel {
 
 	@Override
 	protected void setupMarkets(ObjectProperties modelProps) {
-		// FIXME These values are probably not correct.
+		// FIXME These default values are probably not correct.
 		float pricingPolicy = modelProps.getAsFloat(CallMarket.PRICING_POLICY_KEY, 0);
 		TimeStamp clearFreq = new TimeStamp(modelProps.getAsLong(CallMarket.CLEAR_FREQ_KEY, 1000));
 		markets.add(new CallMarket(1, this, pricingPolicy, clearFreq));
 	}
 
-	@Override
-	protected void setupModelAgents(ObjectProperties modelProps) {
-		// Do nothing
-	}
 }

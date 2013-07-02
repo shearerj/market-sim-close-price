@@ -84,9 +84,11 @@ public class TwoMarket extends MarketModel {
 		markets.add(new CDAMarket(2, this));
 	}
 
-
 	@Override
-	protected void setupModelAgents(ObjectProperties modelProps) {
-		// TODO check for LA and if so add it with proper properties
+	protected void setupAgents(ObjectProperties modelProps,
+			Map<AgentProperties, Integer> agentProps) {
+		super.setupAgents(modelProps, agentProps);
+		// Look at model parameters and set up LA
 	}
+
 }

@@ -44,9 +44,5 @@ public class CentralCDA extends MarketModel {
 	protected void setupMarkets(ObjectProperties modelProps) {
 		markets.add(new CDAMarket(1, this));
 	}
-
-	@Override
-	protected void setupModelAgents(ObjectProperties modelProps) {
-		// Do nothing
-	}
+	
 }

@@ -23,21 +23,24 @@ public class Setup {
 
 	public void setup() {
 		ObjectProperties simProps = spec.getSimulationProperties();
-		
-		RandPlus rand = new RandPlus(simProps.getAsLong(SimulationSpec2.RAND_SEED, System.currentTimeMillis()));
-		
+
+		RandPlus rand = new RandPlus(simProps.getAsLong(
+				SimulationSpec2.RAND_SEED, System.currentTimeMillis()));
+
 		FundamentalValue fundamental = new FundamentalValue(
 				simProps.getAsDouble(SimulationSpec2.FUNDAMENTAL_KAPPA),
 				simProps.getAsInt(SimulationSpec2.FUNDAMENTAL_MEAN),
 				simProps.getAsDouble(SimulationSpec2.FUNDAMENTAL_SHOCK_VAR),
-				1000 /* FIXME length? */);
-		
-		MarketModelFactory modelFactory = new MarketModelFactory(spec.getBackgroundAgents(), fundamental, new RandPlus(rand.nextLong()));
-		
+				new RandPlus(rand.nextLong()));
+
+		MarketModelFactory modelFactory = new MarketModelFactory(
+				spec.getBackgroundAgents(), fundamental, new RandPlus(
+						rand.nextLong()));
+
 		Collection<MarketModel> models = new ArrayList<MarketModel>();
 		for (ModelProperties props : spec.getModels())
 			models.add(modelFactory.createModel(props));
-		
+
 		for (MarketModel model : models)
 			model.scheduleActivities(manager);
 	}
