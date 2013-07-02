@@ -64,7 +64,7 @@ public class ZIAgent extends BackgroundAgent {
 	@Override
 	public Collection<? extends Activity> agentStrategy(TimeStamp ts) {
 		// update quotes
-		this.updateAllQuotes(ts);
+		this.updateQuotes(market, ts);
 
 		int p, q;
 		q = rand.nextBoolean() ? 1 : -1; // 50% chance of being either long or
