@@ -20,18 +20,6 @@ public abstract class Entity {
 	public Entity(int agentID) {
 		id = agentID;
 	}
-
-	/**
-	 * Constructor
-	 * @param ID
-	 * @param l
-	 * @param d
-	 */
-	public Entity(int agentID, SystemData d, ObjectProperties ep) {
-		this.id = agentID;
-		this.data = d;
-		this.params = ep;
-	}
 	
 	/**
 	 * Gets Entity's ID.

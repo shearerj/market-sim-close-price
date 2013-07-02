@@ -2,8 +2,6 @@ package entity;
 
 import model.MarketModel;
 import utils.RandPlus;
-import data.ObjectProperties;
-import data.SystemData;
 import event.TimeStamp;
 
 /**

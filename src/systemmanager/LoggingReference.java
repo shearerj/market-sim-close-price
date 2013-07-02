@@ -140,7 +140,7 @@ public class LoggingReference {
 	 * Create SIP entity, which enters the system at time 0.
 	 */
 	public void createSIP() {
-		SIP iu = new SIP(0, data);
+		SIP iu = null; // new SIP(0, data);
 		data.setSIP(iu);
 	}
 	
@@ -242,7 +242,7 @@ public class LoggingReference {
 			
 			ObjectProperties mp = (ObjectProperties) mop.getObject();
 			String mtype = mop.getMarketType();
-			Market market = MarketFactory.createMarket(mtype, mID, data, mp, model);
+			Market market = null; // MarketFactory.createMarket(mtype, mID, data, mp, model);
 			market.linkModel(model.getID());
 			data.addMarket(market);
 			model.getMarketIDs().add(mID);

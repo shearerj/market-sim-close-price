@@ -1,18 +1,17 @@
 package entity;
 
-import data.ObjectProperties;
-import data.SystemData;
-import event.*;
-import logger.Logger;
-import model.*;
-import market.*;
-import activity.Activity;
-import systemmanager.*;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+
+import logger.Logger;
+import market.BestBidAsk;
+import market.Price;
+import model.MarketModel;
+import systemmanager.Consts;
+import activity.Activity;
+import event.TimeStamp;
 
 
 /**
@@ -28,16 +27,11 @@ public class SIP extends Entity {
 	private HashMap<Integer, BestBidAsk> lastQuotes;		// hashed by model ID
 	private HashMap<Integer, BestBidAsk> marketQuotes;		// hashed by market ID
 
-	/**
-	 * Constructor
-	 * @param ID
-	 * @param d
-	 */
-	public SIP(int ID, SystemData d) {
-		super(ID, d, new ObjectProperties());
-		tickSize = d.tickSize;
-		lastQuotes = new HashMap<Integer,BestBidAsk>();
-		marketQuotes = new HashMap<Integer,BestBidAsk>();
+	public SIP(int id, int tickSize) {
+		super(id);
+		this.tickSize = tickSize;
+		this.lastQuotes = new HashMap<Integer,BestBidAsk>();
+		this.marketQuotes = new HashMap<Integer,BestBidAsk>();
 	}
 	
 	/**

@@ -1,12 +1,10 @@
 package systemmanager;
 
-import entity.*;
-import event.TimeStamp;
-import data.ObjectProperties;
-
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+
+import event.TimeStamp;
 
 
 /**
