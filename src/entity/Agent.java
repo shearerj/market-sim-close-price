@@ -24,7 +24,7 @@ public abstract class Agent extends Entity {
 	// -- begin reorg -- stuff above line existed before and is still relevant...
 	
 	protected MarketModel model;
-	protected HashMap<Double,Double> surplus; //hashed by rho value
+	protected HashMap<Double,Double> surplusMap; //hashed by rho value
 	
 	// -- end reorg --
 	
@@ -1061,50 +1061,43 @@ public abstract class Agent extends Entity {
 	}
 
 	public HashMap<Double, Double> getSurplus() {
-		return surplus;
+		return surplusMap;
 	}
 	
 	public double getSurplus(double rho) {
-		return this.surplus.get(rho);
+		return this.surplusMap.get(rho);
 	}
 	
-	public double addSurplus(double rho, double fund, Transaction tr, boolean isBuyer) {
-		if(!this.surplus.containsKey(rho)) this.surplus.put(rho, 0.0);
-		double s=0;
-		double newSurplus=0;
-		//Updating surplus if this agent was a buyer
-		if(isBuyer) {
-			if(this.getPrivateValue() != null) {
-				for(int q=0; q < tr.getQuantity(); q++) {
-					int dev = this.getPrivateValueAt(q).getPrice();
-					s = dev + fund - tr.getPrice().getPrice();
-					newSurplus = s + this.surplus.get(rho);
-					this.surplus.put(rho, newSurplus);
-				}
+	public double addSurplus(double rho, int fund, Transaction tr, boolean isBuyer) {
+		if(!this.surplusMap.containsKey(rho)) this.surplusMap.put(rho, 0.0);
+		
+		//Determining Execution Time
+		double submissionTime;
+		if(isBuyer) submissionTime = tr.getBuyBid().getSubmissionTime().getLongValue();
+		else submissionTime = tr.getSellBid().getSubmissionTime().getLongValue();
+		double timeToExecution = tr.getTimestamp().getLongValue() - submissionTime;
+		
+		//Updating surplus
+		double oldSurplus = this.surplusMap.get(rho);
+		double discounted = 0;
+		int sign = isBuyer ? -1 : 1;
+		if(this.getPrivateValue() != null) {
+			for(int q=1; q <= tr.getQuantity(); q++) {
+				int valuation = this.getPrivateValueAt(q).getPrice() + fund;
+				int surplus = sign * (tr.getPrice().getPrice() - valuation);
+				discounted += Math.exp(-rho * timeToExecution * surplus);
 			}
-			else {
-				s = -tr.price.getPrice();
-				newSurplus = s + this.surplus.get(rho);
-				this.surplus.put(rho, newSurplus);
-			}
+			this.surplusMap.put(rho, oldSurplus + discounted);
 		}
-		//Updating surplus if this agent was a seller
 		else {
-			if(this.getPrivateValue() != null) {
-				for(int q=0; q < tr.getQuantity(); q++) {
-					int dev = this.getPrivateValueAt(q).getPrice();
-					s = dev + fund - tr.getPrice().getPrice();
-					newSurplus = s + this.surplus.get(rho);
-					this.surplus.put(rho, newSurplus);				
-				}
-			}
-			else {
-				s = tr.price.getPrice();
-				newSurplus = s + this.surplus.get(rho);
-				this.surplus.put(rho, newSurplus);			}
+			int surplus =  sign * tr.getPrice().getPrice();
+			discounted = Math.exp(-rho * timeToExecution * surplus);
+			discounted *= tr.getQuantity();
+			this.surplusMap.put(rho, oldSurplus + discounted);
 		}
-		Logger.log(Logger.INFO, tr.getTimestamp() + " | " + this + 
-				" Agent::updateTransactions: SURPLUS for this transaction: " + s);
-		return s;
+		Logger.log(Logger.INFO, tr.getTimestamp() + " | " + this +
+				" Agent::updateTransactions: SURPLUS at rho=" + rho +
+				" for this transaction: " + discounted);
+		return discounted;
 	}
 }
