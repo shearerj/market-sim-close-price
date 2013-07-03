@@ -21,6 +21,7 @@ import data.AgentPropsPair;
 import data.FundamentalValue;
 import data.ObjectProperties;
 import data.SystemData;
+import data.TimeSeries;
 import entity.Agent;
 import entity.Market;
 import entity.SMAgent;
@@ -80,6 +81,7 @@ public abstract class MarketModel {
 	protected final Collection<Agent> agents;
 
 	protected HashMap<Double, Double> modelSurplus; // hashed by rho value
+	protected TimeSeries NBBOSpreads;				//NBBO bid/ask spread values
 
 	protected final RandPlus rand;
 	protected final Generator<Integer> agentIDgen;
@@ -110,6 +112,7 @@ public abstract class MarketModel {
 		this.agents = new ArrayList<Agent>();
 		this.trans = new ArrayList<Transaction>();
 		this.agentIDgen = new IDGenerator();
+		this.NBBOSpreads = new TimeSeries();
 
 		// Setup
 		// FIXME I don't think this is how I want to do it. Also have to create SIPS...
@@ -406,5 +409,13 @@ public abstract class MarketModel {
 				this.modelSurplus.put(rho, this.modelSurplus.get(rho) + surplus);
 			}
 		}
+	}
+	
+	public void addNBBOSpread(TimeStamp ts, int spread) {
+		this.NBBOSpreads.add(ts, (double) spread);
+	}
+	
+	public TimeSeries getNBBOSpreads() {
+		return this.NBBOSpreads;
 	}
 }

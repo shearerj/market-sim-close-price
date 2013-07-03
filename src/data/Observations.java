@@ -429,12 +429,12 @@ public class Observations {
 		Feature feat = new Feature();
 
 		DescriptiveStatistics medians = new DescriptiveStatistics();
-		for (int mktID : model.getMarketIDs()) {
-			TimeSeries s = data.marketSpread.get(mktID);
-			if (s != null) {
+		for(Market market : model.getMarkets()) {
+			TimeSeries s = market.getSpread();
+			if (!s.isEmpty()) {
 				double[] array = s.getSampledArray(0, maxTime);
 				DescriptiveStatistics spreads = new DescriptiveStatistics(array);
-				double med = feat.addMedian("", MARKET + (-mktID) + "_"
+				double med = feat.addMedian("", MARKET + (-market.getID()) + "_"
 						+ TIMESERIES_MAXTIME, spreads);
 				medians.addValue(med);
 			}
@@ -442,7 +442,7 @@ public class Observations {
 		// average of median market spreads (for all markets in this model)
 		feat.addMean("", MARKET + "_" + TIMESERIES_MAXTIME, medians);
 
-		TimeSeries nbbo = data.NBBOSpread.get(model.getID());
+		TimeSeries nbbo = model.getNBBOSpreads();
 		if (nbbo != null) {
 			double[] array = nbbo.getSampledArray(0, maxTime);
 			DescriptiveStatistics spreads = new DescriptiveStatistics(array);
@@ -473,12 +473,12 @@ public class Observations {
 		DescriptiveStatistics stddev = new DescriptiveStatistics();
 		DescriptiveStatistics logPriceVol = new DescriptiveStatistics();
 		DescriptiveStatistics logRetVol = new DescriptiveStatistics();
-		for (int mktID : model.getMarketIDs()) {
-			String suffix = "_" + MARKET + (-mktID);
+		for (Market market : model.getMarkets()) {
+			String suffix = "_" + MARKET + (-market.getID());
 
-			TimeSeries mq = data.marketMidQuote.get(mktID);
-			if (mq != null) {
-				double[] mid = mq.getSampledArrayWithoutNaNs(period, maxTime);
+			TimeSeries ma = market.getMidQuotes();
+			if (!ma.isEmpty()) {
+				double[] mid = ma.getSampledArrayWithoutNaNs(period, maxTime);
 
 				// compute log price volatility for this market
 				DescriptiveStatistics mktPrices = new DescriptiveStatistics(mid);
@@ -489,7 +489,7 @@ public class Observations {
 				} // don't add if stddev is 0
 
 				// compute log-return volatility for this market
-				double[] midquote = mq.getSampledArray(period, maxTime);
+				double[] midquote = ma.getSampledArray(period, maxTime);
 				int size = midquote.length;
 				if (midquote.length > 0)
 					size = midquote.length - 1;

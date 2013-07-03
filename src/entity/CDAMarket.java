@@ -62,14 +62,14 @@ public class CDAMarket extends Market {
 	public Collection<? extends Activity> addBid(Bid b, TimeStamp ts) {
 		orderbook.insertBid((PQBid) b);
 		bids.add(b);
-		data.addDepth(id, ts, orderbook.getDepth());
+		this.addDepth(ts, orderbook.getDepth());
 		return Collections.singleton(new Clear(this, Consts.INF_TIME));
 	}
 	
 	
 	public Collection<Activity> removeBid(int agentID, TimeStamp ts) {
 		orderbook.removeBid(agentID);
-		data.addDepth(this.id, ts, orderbook.getDepth());
+		this.addDepth(ts, orderbook.getDepth());
 		// return clear(ts);
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		actMap.add(new Clear(this, Consts.INF_TIME));
@@ -90,19 +90,19 @@ public class CDAMarket extends Market {
 		if (bp != null && ap != null) {
 			if (bp.getPrice() == -1 || ap.getPrice() == -1) {
 				// either bid or ask are undefined
-				data.addSpread(id, quoteTime, Consts.INF_PRICE);
-				data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
+				this.addSpread(quoteTime, Consts.INF_PRICE);
+				this.addMidQuote(quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
 				
 			} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
 				Logger.log(Logger.ERROR, this.getName() + "::quote: ERROR bid > ask");
-				data.addSpread(id, quoteTime, Consts.INF_PRICE);
-				data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
+				this.addSpread(quoteTime, Consts.INF_PRICE);
+				this.addMidQuote(quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
 				
 			} else {
 				// valid bid-ask
 				data.addQuote(id, q);
-				data.addSpread(id, quoteTime, q.getSpread());
-				data.addMidQuotePrice(id, quoteTime, bp.getPrice(), ap.getPrice());
+				this.addSpread(quoteTime, q.getSpread());
+				this.addMidQuote(quoteTime, bp.getPrice(), ap.getPrice());
 			}
 		}
 		lastQuoteTime = quoteTime;

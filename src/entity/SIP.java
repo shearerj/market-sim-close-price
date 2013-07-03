@@ -109,14 +109,14 @@ public class SIP extends Entity {
 				s += " (before fix) " + lastQuote + " --> ";
 				
 				// Add spread of INF if inconsistent NBBO quote
-				this.data.addNBBOSpread(modelID, ts, Consts.INF_PRICE);
+				model.addNBBOSpread(ts, Consts.INF_PRICE);
 			} else {
 				// if bid-ask consistent, store the spread
-				this.data.addNBBOSpread(modelID, ts, lastQuote.getSpread());
+				model.addNBBOSpread(ts, lastQuote.getSpread());
 			}
 		} else {
 			// store spread of INF since no bid-ask spread
-			this.data.addNBBOSpread(modelID, ts, Consts.INF_PRICE);
+			model.addNBBOSpread(ts, Consts.INF_PRICE);
 		}
 		lastQuote = new BestBidAsk(lastQuote.bestBidMarket, bestBid, lastQuote.bestAskMarket, bestAsk);
 		lastQuotes.put(modelID, lastQuote);

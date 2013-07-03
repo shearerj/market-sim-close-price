@@ -3,7 +3,10 @@ package entity;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.TreeMap;
+
+import com.sun.tools.javac.util.List;
 
 import systemmanager.Consts;
 
@@ -19,6 +22,7 @@ import activity.ProcessQuote;
 import activity.SendToSIP;
 import data.ObjectProperties;
 import data.SystemData;
+import data.TimeSeries;
 import event.TimeStamp;
 
 /**
@@ -27,12 +31,16 @@ import event.TimeStamp;
  * @author ewah
  */
 public abstract class Market extends Entity {
-
+	
+	// XXX There should probably be more model specific stuff here...
 	// reorg
 	protected final MarketModel model;
-	protected ArrayList<Bid> bids;
-	// XXX There should probably be more model specific stuff here...
 	protected PQOrderBook orderbook;
+	//Statistics
+	protected List<Bid> bids;			//All bids ever submitted to the market
+	protected TimeSeries depths;		//Number of orders in the orderBook
+	protected TimeSeries spreads;		//Bid-ask spread value
+	protected TimeSeries midQuotes;		//Midpoint of bid/ask values
 	// end reorg
 
 	// Model information
@@ -82,6 +90,9 @@ public abstract class Market extends Entity {
 		// reorg
 		this.model = model;
 		this.orderbook = new PQOrderBook(this);
+		this.depths = new TimeSeries();
+		this.spreads = new TimeSeries();
+		this.midQuotes = new TimeSeries();
 	}
 
 	/**
@@ -163,7 +174,7 @@ public abstract class Market extends Entity {
 		
 		//If there are no new transactions
 		if(trans == null) {
-			data.addDepth(id, clearTime, orderbook.getDepth());
+			this.addDepth(clearTime, orderbook.getDepth());
 			
 			Logger.log(Logger.INFO, clearTime + " | ....." + this + " " + 
 					this.getName() + "::clear: No change. Post-clear Quote" +  
@@ -188,7 +199,7 @@ public abstract class Market extends Entity {
 		orderbook.logClearedBids(clearTime);
 		orderbook.logFourHeap(clearTime);
 		//Updating Depth
-		data.addDepth(this.id, clearTime, orderbook.getDepth());
+		this.addDepth(clearTime, orderbook.getDepth());
 		Logger.log(Logger.INFO, clearTime + " | ....." + toString() + " " + 
 				this.getName() + "::clear: Order book cleared: " +
 				"Post-clear Quote" + this.quote(clearTime));
@@ -206,7 +217,7 @@ public abstract class Market extends Entity {
 	 * 
 	 * @return bids
 	 */
-	public ArrayList<Bid> getAllBids() {
+	public List<Bid> getAllBids() {
 		return this.bids;
 	}
 
@@ -361,11 +372,39 @@ public abstract class Market extends Entity {
 	}
 
 	public Collection<Transaction> getModelTrans() {
-		return model.getTrans();
+		return this.model.getTrans();
 	}
 
 	public MarketModel getMarketModel() {
-		return model;
+		return this.model;
+	}
+	
+	public TimeSeries getDepth() {
+		return this.depths;
+	}
+	
+	public TimeSeries getSpread() {
+		return this.spreads;
+	}
+	
+	public TimeSeries getMidQuotes() {
+		return this.midQuotes;
+	}
+	
+	protected void addDepth(TimeStamp ts, int point) {
+		this.depths.add(ts, (double) point);
+	}
+	
+	protected void addSpread(TimeStamp ts, int point) {
+		this.spreads.add(ts, (double) point);
+	}
+	
+	protected void addMidQuote(TimeStamp ts, int bid, int ask) {
+		double midQuote = Double.NaN;
+		if (bid != Consts.INF_PRICE && ask != Consts.INF_PRICE) {
+			midQuote = (bid + ask) / 2;
+		}
+		this.midQuotes.add(ts, midQuote);
 	}
 
 	/**
@@ -390,5 +429,4 @@ public abstract class Market extends Entity {
 			map.put(b.getBidID(), b.getSubmitTime());
 		return map;
 	}
-
 }

@@ -6,8 +6,12 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -26,7 +30,7 @@ import org.apache.commons.lang3.ArrayUtils;
  *
  */
 public class TimeSeries {
-
+	//TODO - Implement as a Map
 	private List<TimeStamp> times;
 	private List<Double> points;	// recorded data points
 	private List<Double> series;	// fully expanded
@@ -40,6 +44,10 @@ public class TimeSeries {
 		times.add(new TimeStamp(0));
 		points.add(Double.NaN);
 		series.add(Double.NaN);
+	}
+	
+	public boolean isEmpty() {
+		return times.isEmpty();
 	}
 	
 	public List<TimeStamp> getTimes() {
