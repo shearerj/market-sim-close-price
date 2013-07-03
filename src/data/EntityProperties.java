@@ -5,11 +5,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.google.gson.Gson;
-
 public class EntityProperties {
 	
-	protected static final transient Gson gson = new Gson();
 	protected Map<String, String> properties;
 
 	public EntityProperties() {
@@ -107,20 +104,8 @@ public class EntityProperties {
 		properties.put(key, value);
 	}
 	
-	public void put(String key, int value) {
-		properties.put(key, Integer.toString(value));
-	}
-	
-	public void put(String key, double value) {
-		properties.put(key, Double.toString(value));
-	}
-
-	public void put(String key, float value) {
-		properties.put(key, Float.toString(value));
-	}
-	
-	public void put(String key, long value) {
-		properties.put(key, Long.toString(value));
+	public void put(String key, Number value) {
+		properties.put(key, value.toString());
 	}
 	
 	public void put(String key, boolean value) {

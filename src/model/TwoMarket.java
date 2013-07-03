@@ -2,6 +2,8 @@ package model;
 
 import java.util.Map;
 
+import com.google.gson.JsonObject;
+
 import utils.RandPlus;
 import data.AgentProperties;
 import data.FundamentalValue;
@@ -13,28 +15,27 @@ import entity.CDAMarket;
  * 
  * Class implementing the two-market model of latency arbitrage.
  * 
- * Configurations in the Two-Market Model specify what types of strategies
- * are allowed. Possible values for the configuration include:
+ * Configurations in the Two-Market Model specify what types of strategies are
+ * allowed. Possible values for the configuration include:
  * 
- * 		"LA:<strategy_string>"
- * 		"DUMMY"
+ * "LA:<strategy_string>" "DUMMY"
  * 
  * @author ewah
  */
 public class TwoMarket extends MarketModel {
-	
+
 	public TwoMarket(int modelID, FundamentalValue fundamental,
 			Map<AgentProperties, Integer> agentProps,
-			EntityProperties modelProps, RandPlus rand) {
-		super(modelID, fundamental, agentProps, modelProps, rand);
+			EntityProperties modelProps, JsonObject playerConfig, RandPlus rand) {
+		super(modelID, fundamental, agentProps, modelProps, playerConfig, rand);
 	}
-	
+
 	@Override
 	@Deprecated
 	public String getConfig() {
 		return config;
 	}
-	
+
 	@Deprecated
 	public int getAlternateMarket(int mainMarketID) {
 		if (marketIDs.contains(mainMarketID)) {
@@ -46,7 +47,6 @@ public class TwoMarket extends MarketModel {
 		}
 		return 0;
 	}
-
 
 	@Override
 	protected void setupMarkets(EntityProperties modelProps) {

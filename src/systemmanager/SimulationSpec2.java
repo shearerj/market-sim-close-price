@@ -47,9 +47,11 @@ public class SimulationSpec2 {
 	public final static String PRIMARY_MODEL = "primary_model";
 	public final static String RAND_SEED = "random_seed";
 
+	// XXX Move into model properties?
 	protected final EntityProperties simulationProperties;
 	protected final Collection<ModelProperties> models;
 	protected final Map<AgentProperties, Integer> backgroundAgents;
+	protected final JsonObject playerConfig;
 
 	public SimulationSpec2(File specFile) throws JsonSyntaxException,
 			JsonIOException, FileNotFoundException {
@@ -59,6 +61,7 @@ public class SimulationSpec2 {
 		simulationProperties = simulationProperties(config);
 		models = marketModels(config, systemModelProperties(config));
 		backgroundAgents = backgroundAgents(config, systemAgentProperties(config));
+		playerConfig = spec.getAsJsonObject(ASSIGN_KEY);
 	}
 
 	public SimulationSpec2(String specFileName) throws JsonSyntaxException,
@@ -136,6 +139,10 @@ public class SimulationSpec2 {
 
 	public Map<AgentProperties, Integer> getBackgroundAgents() {
 		return Collections.unmodifiableMap(backgroundAgents);
+	}
+	
+	public JsonObject getPlayerConfig() {
+		return playerConfig;
 	}
 
 	// TODO Implement Players

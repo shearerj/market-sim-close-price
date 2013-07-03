@@ -101,8 +101,8 @@ public class SystemManager {
 				new RandPlus(rand.nextLong()));
 
 		MarketModelFactory modelFactory = new MarketModelFactory(
-				spec.getBackgroundAgents(), fundamental, new RandPlus(
-						rand.nextLong()));
+				spec.getBackgroundAgents(), spec.getPlayerConfig(),
+				fundamental, new RandPlus(rand.nextLong()));
 
 		Logger.log(Logger.INFO, "------------------------------------------------");
 		Logger.log(Logger.INFO, "            Creating MARKET MODELS");
