@@ -47,8 +47,8 @@ import data.SystemData;
  */
 public abstract class MarketModel {
 
-	protected int modelID;
-	protected String config;
+	protected final int modelID;
+	protected String config; // TODO Does this need to be saved? or just used at construction?
 	protected SystemData data;
 	protected ArrayList<Integer> agentIDs;		// IDs of associated agents
 	protected ObjectProperties modelProperties;

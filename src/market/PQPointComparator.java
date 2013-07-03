@@ -17,7 +17,7 @@ import java.util.Comparator;
  * remaining ties in descending timestamps.
  * 
  */
-public class PQPointComparator implements Comparator
+public class PQPointComparator implements Comparator<PQPoint>
 {
 	private int pOrder; //ascending/descending
 	private int qOrder;
@@ -56,11 +56,10 @@ public class PQPointComparator implements Comparator
 	 * @param o2 object to compare to,  
 	 * @return 1,0,-1 if o1 is >=< o2
 	 */
-	public int compare(Object o1, Object o2)
+	@Override
+	public int compare(PQPoint pq1, PQPoint pq2)
 	{
-		PQPoint pq1 = (PQPoint)o1;
-		PQPoint pq2 = (PQPoint)o2;
-		int P,Q,T,O;
+		int P,Q,T;
 
 		//compare on price
 		P = pq1.getPrice().compareTo(pq2.getPrice());
@@ -81,12 +80,8 @@ public class PQPointComparator implements Comparator
 			T = 0;
 		}
 
-		//use the hashcodes as a last resort
-		O = new Integer((o1.hashCode())).compareTo(new Integer(o2.hashCode()));
-
 		//this will be <=> 0 based on comparisons and rankings of fields
-		int ret = 2*(pOrder*P+qOrder*Q+tOrder*T) + O ;
-
-		return (ret);
+		return pOrder*P+qOrder*Q+tOrder*T;
 	}
+	
 }

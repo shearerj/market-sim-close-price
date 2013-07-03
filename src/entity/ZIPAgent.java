@@ -6,6 +6,8 @@ import market.*;
 import activity.*;
 import systemmanager.*;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -24,8 +26,8 @@ import java.util.Random;
  */
 public class ZIPAgent extends BackgroundAgent {
 
-	private int bidRange;				// range for limit order        
-
+	@SuppressWarnings("unused")
+	private int bidRange;				// range for limit order
 	
 	public ZIPAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, modelID, d, p, l);
@@ -48,19 +50,19 @@ public class ZIPAgent extends BackgroundAgent {
 	}
 
 	@Override
-	public ActivityHashMap agentStrategy(TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
+	public Collection<Activity> agentStrategy(TimeStamp ts) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
 		int q = 1;
 		// 0.50% chance of being either long or short
 		if (rand.nextDouble() < 0.5) q = -q;
+		@SuppressWarnings("unused")
 		int val = Math.max(0, data.getFundamentalAt(ts).sum(getPrivateValueAt(q)).getPrice());
 
 		// Insert events for the agent to sleep, then wake up again at timestamp tsNew
 		int sleepTime = Integer.parseInt(params.get(SLEEPTIME_KEY));
 		double sleepVar = Double.parseDouble(params.get(SLEEPVAR_KEY));
 		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
-		actMap.insertActivity(Consts.BACKGROUND_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
-		actMap.insertActivity(Consts.BACKGROUND_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
+		actMap.add(new AgentStrategy(this, tsNew));
 		return actMap;
 	}
 }

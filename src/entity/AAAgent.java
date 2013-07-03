@@ -5,9 +5,11 @@ import data.Observations;
 import data.SystemData;
 import event.*;
 import market.*;
-import activity.*;
+import activity.Activity;
 import systemmanager.*;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -73,8 +75,8 @@ public class AAAgent extends BackgroundAgent {
 	
 	
 	@Override
-	public ActivityHashMap agentStrategy(TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
+	public Collection<Activity> agentStrategy(TimeStamp ts) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
 
 		int p = 0;
 		int q = 1;
@@ -89,7 +91,7 @@ public class AAAgent extends BackgroundAgent {
 			p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
 		}
 
-		actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
+		actMap.addAll(executeSubmitNMSBid(p, q, ts));	// bid does not expire
 		return actMap;
 	}
 }

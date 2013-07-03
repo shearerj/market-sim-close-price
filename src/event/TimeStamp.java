@@ -10,7 +10,7 @@ import java.util.*;
 
 import systemmanager.Consts;
 
-import activity.*;
+import activity.Activity;
 
 /**
  * The TimeStamp class is just a wrapper around java.lang.Long.
@@ -18,7 +18,7 @@ import activity.*;
  */
 public class TimeStamp implements Comparable<TimeStamp>
 {
-	private long ts;
+	private final long ts;
 	
 	public TimeStamp(Date d)    { ts = d.getTime();}
 	public TimeStamp(Long l)    { ts = l;}
@@ -35,7 +35,7 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @return true if TimeStamp is infinitely fast.
 	 */
 	public boolean isInfinitelyFast() {
-		return ts == Consts.INF_TIME;
+		return this.equals(Consts.INF_TIME); // TODO change to reference check?
 	}
 	
 	/**
@@ -135,9 +135,6 @@ public class TimeStamp implements Comparable<TimeStamp>
 		return (int) Long.signum(ts - other.ts);
 	}
 	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -150,10 +147,6 @@ public class TimeStamp implements Comparable<TimeStamp>
 	    return ts == other.ts;
 	}
 	
-	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		return (int) ts;
@@ -175,13 +168,13 @@ public class TimeStamp implements Comparable<TimeStamp>
 	 * @param acts
 	 * @return true if matches, false otherwise.
 	 */
-	public boolean checkActivityTimeStamp(ActivityList acts) {
-		for (Activity act : acts) {
-			if (!checkActivityTimeStamp(act)) {
-				System.err.println("TimeStamp::checkActivityTimeStamp::ERROR: activities do not match the timestamp");
-				return false;
-			}
-		}
-		return true;
-	}
+//	public boolean checkActivityTimeStamp(Collection<Activity> acts) {
+//		for (Activity act : acts) {
+//			if (!checkActivityTimeStamp(act)) {
+//				System.err.println("TimeStamp::checkActivityTimeStamp::ERROR: activities do not match the timestamp");
+//				return false;
+//			}
+//		}
+//		return true;
+//	}
 }

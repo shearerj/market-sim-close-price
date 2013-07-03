@@ -8,6 +8,9 @@ import activity.*;
 import systemmanager.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -102,10 +105,9 @@ public abstract class SMAgent extends Agent {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap submitNMSBid(int p, int q, long duration, TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
-				new SubmitNMSBid(this, p, q, duration, ts));
+	public Collection<Activity> submitNMSBid(int p, int q, TimeStamp duration, TimeStamp ts) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		actMap.add(new SubmitNMSBid(this, p, q, duration, ts));
 		return actMap;
 	}
 
@@ -118,10 +120,9 @@ public abstract class SMAgent extends Agent {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap submitNMSBid(int p, int q, TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
-				new SubmitNMSBid(this, p, q, Consts.INF_TIME, ts));
+	public Collection<Activity> submitNMSBid(int p, int q, TimeStamp ts) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		actMap.add(new SubmitNMSBid(this, p, q, Consts.INF_TIME, ts));
 		return actMap;
 	}
 	
@@ -135,45 +136,26 @@ public abstract class SMAgent extends Agent {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap submitNMSMultipleBid(int[] p, int[] q, TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.SUBMIT_BID_PRIORITY, 
-				new SubmitNMSMultipleBid(this, p, q, ts));
+	public Collection<Activity> submitNMSMultipleBid(List<Integer> p, List<Integer> q, 
+			TimeStamp ts) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		actMap.add(new SubmitNMSMultipleBid(this, p, q, ts));
 		return actMap;
 	}
 	
 	/**
-	 * Agent arrives in a single market. To ensure deterministic insertion, use
-	 * AgentReentry activity.
+	 * Agent arrives in a single market.
 	 * 
 	 * @param market
 	 * @param ts
-	 * @return ActivityHashMap
+	 * @return Collection<Activity>
 	 */
-	public ActivityHashMap agentArrival(TimeStamp ts) {
+	public Collection<Activity> agentArrival(TimeStamp ts) {
 		log.log(Log.INFO, ts.toString() + " | " + this + "->" + market.toString());
 		this.enterMarket(market, ts);
 		
-		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(Consts.ARRIVAL_PRIORITY, 
-				new AgentReentry(this, Consts.BACKGROUND_ARRIVAL_PRIORITY, ts));
-		// NOTE: Reentry must be inserted as priority > THRESHOLD_POST_PRIORITY
-		// otherwise the infinitely fast activities will not be inserted correctly
-//		actMap.insertActivity(Consts.BACKGROUND_AGENT_PRIORITY, new UpdateAllQuotes(this, ts));
-//		actMap.insertActivity(Consts.BACKGROUND_AGENT_PRIORITY, new AgentStrategy(this, market, ts));
-		return actMap;
-	}
-	
-	/**
-	 * Agent re-enters a market/wakes up.
-	 * 
-	 * @param priority
-	 * @param ts
-	 */
-	public ActivityHashMap agentReentry(int priority, TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
-		actMap.insertActivity(priority, new UpdateAllQuotes(this, ts));
-		actMap.insertActivity(priority, new AgentStrategy(this, market, ts));
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		actMap.add(new AgentStrategy(this, market, ts));
 		return actMap;
 	}
 	
@@ -181,18 +163,28 @@ public abstract class SMAgent extends Agent {
 	 * Agent departs a specified market, if it is active. //TODO fix later
 	 * 
 	 * @param market
-	 * @return ActivityHashMap
+	 * @return Collection<Activity>
 	 */
-	public ActivityHashMap agentDeparture(TimeStamp ts) {
-		market.agentIDs.remove(market.agentIDs.indexOf(this.ID));
-		market.buyers.remove(market.buyers.indexOf(this.ID));
-		market.sellers.remove(market.sellers.indexOf(this.ID));
-		market.removeBid(this.ID, ts);
-		this.exitMarket(market.ID);
-		ActivityHashMap actMap = new ActivityHashMap();
-		return actMap;
+	public Collection<Activity> agentDeparture(TimeStamp ts) {
+		market.agentIDs.remove(market.agentIDs.indexOf(this.id));
+		market.buyers.remove(market.buyers.indexOf(this.id));
+		market.sellers.remove(market.sellers.indexOf(this.id));
+		market.removeBid(this.id, ts);
+		this.exitMarket(market.id);
+		return Collections.emptyList();
 	}
 
+	/**
+	 * Updates quote for agent's primary market.
+	 * 
+	 * @param ts
+	 * @return
+	 */
+	public Collection<Activity> updateAllQuotes(TimeStamp ts) {
+		updateQuotes(market, ts);
+		return this.executeUpdateAllQuotes(ts);
+	}
+	
 	/**
 	 * Submit a bid to one of the possible markets, as following the National Market
 	 * System (NMS) regulations. The market selected will be that with the best available
@@ -205,7 +197,7 @@ public abstract class SMAgent extends Agent {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap executeSubmitNMSBid(int p, int q, TimeStamp ts) {
+	public Collection<Activity> executeSubmitNMSBid(int p, int q, TimeStamp ts) {
 		return executeSubmitNMSBid(p, q, Consts.INF_TIME, ts);
 	}
 	
@@ -220,16 +212,16 @@ public abstract class SMAgent extends Agent {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap executeSubmitNMSBid(int p, int q, long duration, TimeStamp ts) {
-		
-		ActivityHashMap actMap = new ActivityHashMap();
+	public Collection<Activity> executeSubmitNMSBid(int p, int q, TimeStamp duration, TimeStamp ts) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
 		
 		ArrayList<Integer> altMarketIDs = getAltMarketIDs();
 		int altMarketID = market.getID();	// initialize as main market ID
 		
 		// TODO - enable for more than two markets total (including main)
 		if (altMarketIDs.size() > 1) {
-			System.err.println("Agent::executeSubmitNMSBid: 2 markets permitted currently.");
+			System.err.println(this.getClass().getSimpleName() + 
+					"::executeSubmitNMSBid: 2 markets permitted currently.");
 			System.exit(1);
 		} else if (altMarketIDs.size() == 1) {
 			// get first alternate market since there are two markets total
@@ -238,7 +230,7 @@ public abstract class SMAgent extends Agent {
 		
 		// Set additional string to log bid's duration, if it expires
 		String logDuration = "";
-		if (duration != Consts.INF_TIME && duration > 0) {
+		if (duration != Consts.INF_TIME && duration.longValue() > 0) {
 			logDuration = ", duration=" + duration;
 		}
 		
@@ -297,8 +289,8 @@ public abstract class SMAgent extends Agent {
 			
 			// submit bid to the best market
 			marketSubmittedBid = data.getMarket(bestMarketID);
-			//actMap.appendActivityHashMap(submitBid(marketSubmittedBid, p, q, ts));
-			actMap.appendActivityHashMap(executeSubmitBid(marketSubmittedBid, p, q, ts));
+			//actMap.appendCollection<Activity>(submitBid(marketSubmittedBid, p, q, ts));
+			actMap.addAll(executeSubmitBid(marketSubmittedBid, p, q, ts));
 			log.log(Log.INFO, ts + " | " + this + " " + agentType + 
 					"::submitNMSBid: " + "+(" + p + "," + q + ") to " + 
 					marketSubmittedBid + logDuration);
@@ -312,17 +304,17 @@ public abstract class SMAgent extends Agent {
 					", " + mainMarketQuote.lastAskPrice.getPrice() + ")");
 			
 			// submit bid to the main market
-			marketSubmittedBid = market;
-			//actMap.appendActivityHashMap(submitBid(market, p, q, ts));
-			actMap.appendActivityHashMap(executeSubmitBid(marketSubmittedBid, p, q, ts));
 			log.log(Log.INFO, ts + " | " + this + " " + agentType + 
 					"::submitNMSBid: " + "+(" + p + "," + q + ") to " + 
 					market + logDuration);
+			marketSubmittedBid = market;
+			//actMap.appendCollection<Activity>(submitBid(market, p, q, ts));
+			actMap.addAll(executeSubmitBid(marketSubmittedBid, p, q, ts));
 		}
 		
-		if (duration != Consts.INF_TIME && duration > 0) {
+		if (duration != Consts.INF_TIME && duration.longValue() > 0) {
 			// Bid expires after a given duration
-			actMap.appendActivityHashMap(expireBid(marketSubmittedBid, duration, ts));
+			actMap.addAll(expireBid(marketSubmittedBid, duration, ts));
 		}
 		return actMap;
 	}
@@ -339,15 +331,17 @@ public abstract class SMAgent extends Agent {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap executeSubmitNMSMultipleBid(int[] price, int[] quantity, TimeStamp ts) {
+	public Collection<Activity> executeSubmitNMSMultipleBid(List<Integer> price, 
+			List<Integer> quantity, TimeStamp ts) {
 		
-		ActivityHashMap actMap = new ActivityHashMap();
+		Collection<Activity> actMap = new ArrayList<Activity>();
 		ArrayList<Integer> altMarketIDs = getAltMarketIDs();
 //		int altMarketID = market.getID();	// initialize as main market ID
 
 		// TODO - enable for more than two markets total (including main)
 		if (altMarketIDs.size() > 1) {
-			System.err.println("Agent::executeSubmitNMSBid: 2 markets permitted currently.");
+			System.err.println(this.getClass().getSimpleName() + 
+					"::executeSubmitNMSBid: 2 markets permitted currently.");
 		} else if (altMarketIDs.size() == 1) {
 			// get first alternate market since there are two markets total
 //			altMarketID = altMarketIDs.get(0);

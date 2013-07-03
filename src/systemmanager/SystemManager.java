@@ -8,9 +8,9 @@ import java.io.*;
 import java.text.DateFormat;
 
 /**
- * This class serves the purpose of the Client in the Command pattern, 
- * in that it instantiates the Activity objects and provides the methods
- * to execute them later.
+ * This class serves the purpose of the Client in the Command pattern, in that
+ * it instantiates the Activity objects and provides the methods to execute them
+ * later.
  * 
  * Usage: java -jar hft.jar [simulation folder name] [sample #]
  * 
@@ -32,7 +32,7 @@ public class SystemManager {
 		envProps = new Properties();
 		obs = new Observations(data);
 	}
-	
+
 	/**
 	 * Only one argument, which is the sample number, is processed
 	 * 
@@ -41,7 +41,7 @@ public class SystemManager {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		
+
 		SystemManager manager = new SystemManager();
 
 		if (args.length == 2) {
@@ -53,11 +53,33 @@ public class SystemManager {
 			SystemData.simDir = "";
 			data.num = 1;
 		}
-		
+
 		manager.setup();
 		manager.executeEvents();
 		manager.aggregateResults();
 		manager.close();
+	}
+	
+	/**
+	 * Method to execute all events in the Event Queue.
+	 */
+	public void executeEvents() {
+		while (!eventManager.isEmpty()) {
+			eventManager.executeNext();
+		}
+		log.log(Log.INFO, "STATUS: Simulation has ended.");
+	}
+
+
+	/**
+	 * Shuts down simulation. Removes empty log file if log level is 0.
+	 */
+	public void close() {
+		File f = new File(SystemData.simDir + Consts.logDir);
+		if (f.exists() && log.getLevel() == Log.NO_LOGGING) {
+			// remove the empty log file
+			f.delete();
+		}
 	}
 
 	/**
@@ -75,6 +97,7 @@ public class SystemManager {
 			// Create log file
 			int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
 			Date now = new Date();
+
 			String logFilename = SystemData.simDir.substring(0, 
 					SystemData.simDir.length()-1).replace("/", "-") + "_" + data.num;
 			logFilename += "_" + DateFormat.getDateInstance(DateFormat.MEDIUM, 
@@ -82,7 +105,7 @@ public class SystemManager {
 			logFilename += "_" + DateFormat.getTimeInstance(DateFormat.MEDIUM, 
 					Locale.UK).format(now);
 			logFilename = logFilename.replace(":",".");
-			
+
 			try {
 				// Check first if directory exists
 				File f = new File(SystemData.simDir);
@@ -109,7 +132,7 @@ public class SystemManager {
 
 			// Log properties
 			log.log(Log.DEBUG, envProps.toString());
-			
+
 			// Read simulation specification file
 			try {
 				// Check first if simulation spec file exists
@@ -135,40 +158,15 @@ public class SystemManager {
 			// Set up / create entities
 			SystemSetup s = new SystemSetup(specs, eventManager, data, log);
 			s.setupAll();
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	/**
-	 * Method to execute all events in the Event Queue.
-	 */
-	public void executeEvents() {
-		try {
-			while (!eventManager.isEventQueueEmpty()) {
-				eventManager.executeCurrentEvent();
-			}
-			String s = "STATUS: Event queue is now empty.";
-			log.log(Log.INFO, s);
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
 	/**
-	 * Shuts down simulation. Removes empty log file if log level is 0.
-	 */
-	public void close() {
-		File f = new File(SystemData.simDir + Consts.logDir);
-		if (f.exists() && log.getLevel() == Log.NO_LOGGING) {
-			// remove the empty log file
-			f.delete();
-		}
-	}
-	
-	/**
 	 * Load a configuration file InputStream into a Properties object.
+	 * 
 	 * @param p
 	 * @param config
 	 */
@@ -186,11 +184,12 @@ public class SystemManager {
 		}
 	}
 
-	
 	/**
 	 * Load a configuration file into a Properties object.
+	 * 
 	 * @param p
-	 * @param config	name of configuration file
+	 * @param config
+	 *            name of configuration file
 	 */
 	public void loadConfig(Properties p, String config) {
 		try {
@@ -203,8 +202,7 @@ public class SystemManager {
 			System.exit(0);
 		}
 	}
-	
-	
+
 	/**
 	 * Generate results report (payoff data, feature data logging).
 	 */

@@ -9,15 +9,15 @@ import java.util.*;
 /**
  * a single price-quantity bid point
  */
-public class PQPoint extends Point implements Comparable {
+public class PQPoint extends Point implements Comparable<PQPoint> {
 	
 	protected Price price;
 	protected int quantity;
 	protected int originalQuantity;
 
 	public PQBid Parent; 	//refer back to enclosing bid for timestamp/agentID
-	static Comparator comp;
-	public static Comparator compQtyPrice = new PQPointComparator(1, 2, 0);
+	static Comparator<PQPoint> comp;
+	public static Comparator<PQPoint> compQtyPrice = new PQPointComparator(1, 2, 0);
 
 	/**
 	 * create point with zero price/quantity
@@ -213,11 +213,9 @@ public class PQPoint extends Point implements Comparable {
 	 * @param other bid to compare to
 	 * @return  -1/0/1
 	 */
-	public int compareTo(Object other) 
+	public int compareTo(PQPoint other) 
 	{
-		PQPoint other_pq = (PQPoint)other;
-
-		return comp.compare(this, other_pq);
+		return comp.compare(this, other);
 	}
 }
 

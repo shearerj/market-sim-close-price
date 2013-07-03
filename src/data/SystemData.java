@@ -36,9 +36,9 @@ import java.io.OutputStreamWriter;
  */
 public class SystemData {
 
-	public int num;								// observation number
+	public int num;										// observation number
 	public static String simDir;						// simulations directory
-	public boolean EGTA;							// true if EGTA use case
+	public boolean EGTA;								// true if EGTA use case
 	
 	// Model information
 	public MarketModel primaryModel;

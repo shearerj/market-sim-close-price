@@ -1,5 +1,8 @@
 package activity;
 
+import java.util.Collection;
+import org.apache.commons.lang3.builder.*;
+
 import entity.*;
 import market.*;
 import event.TimeStamp;
@@ -14,22 +17,47 @@ public class Liquidate extends Activity {
 
 	private Agent ag;
 	private Price p;
-	
+
 	public Liquidate(Agent ag, Price p, TimeStamp t) {
+		super(t);
 		this.ag = ag;
 		this.p = p;
-		this.time = t;
 	}
-	
+
 	public Liquidate deepCopy() {
 		return new Liquidate(this.ag, this.p, this.time);
 	}
-	
-	public ActivityHashMap execute() {
-		return this.ag.executeLiquidate(this.p, this.time);
+
+	public Collection<Activity> execute(TimeStamp currentTime) {
+		return this.ag.executeLiquidate(this.p, currentTime);
+	}
+
+	public String toString() {
+		return new String(getName() + "::" + ag + " @" + p);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Liquidate other = (Liquidate) obj;
+		return new EqualsBuilder().
+				append(ag.getID(), other.ag.getID()).
+				append(p.getPrice(), other.p.getPrice()).
+				append(time.longValue(), other.time.longValue()).
+				isEquals();
 	}
 	
-	public String toString() {
-		return new String("Liquidate::" + this.ag + " at " + this.p);
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder(19, 37).
+				append(ag.getID()).
+				append(p.getPrice()).
+				append(time.longValue()).
+				toHashCode();
 	}
 }

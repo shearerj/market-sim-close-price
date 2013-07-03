@@ -161,6 +161,7 @@ public class FourHeap
 	 *
 	 *@return current bid or -1 if there are no buy bids in the heap
 	 */
+	@SuppressWarnings("unused")
 	public Price getBidQuote()
 	{
 		// new sell either has to beat a matching sell, or
@@ -219,10 +220,10 @@ public class FourHeap
 
 		//match the lower of the two (easiest buy to match)
 		//null is returned only if both arguments are null;
-		if (buyToBeat != null)
-			log(Log.DEBUG, "buyToBeat: "+buyToBeat);
-		if (sellToMatch != null)
-			log(Log.DEBUG, "sellToMatch: "+sellToMatch);
+//		if (buyToBeat != null)
+//			log(Log.DEBUG, "buyToBeat: "+buyToBeat);
+//		if (sellToMatch != null)
+//			log(Log.DEBUG, "sellToMatch: "+sellToMatch);
 		ret =  Price.min(buyToBeat, sellToMatch);
 
 		if (ret == null)
@@ -330,12 +331,12 @@ public class FourHeap
 	}
 
 	/**
-	 * clear the 4Heap, returning Vectors of matched buys/sells
+	 * clear the 4Heap, returning ArrayLists of matched buys/sells
 	 *
 	 * @param buys buys will be inserted here
 	 * @param sells sells will be inserted here
 	 */
-	public void clear(ArrayList buys, ArrayList sells)
+	public void clear(ArrayList<PQPoint> buys, ArrayList<PQPoint> sells)
 	{
 		equalizeRealSetSizes();
 		buys.addAll(matchBuySet);
@@ -590,13 +591,13 @@ public class FourHeap
 	{
 		if (!DEBUG)  return;
 
-		log(4,message);
+//		log(4,message);
 
 	}
 	final void debugn(String message)
 	{
 		if (!DEBUG) return;
-		log(4,message);
+//		log(4,message);
 
 
 	}
@@ -623,7 +624,7 @@ public class FourHeap
 	
 	private String printSet(int t)
 	{
-		SortedSet S = null;
+		SortedSet<PQPoint> S = null;
 		String s = new String("");
 		if (P_BUY == t)
 		{
@@ -647,13 +648,10 @@ public class FourHeap
 			s = s+"  size: "+matchSellSetSize+" ";
 			S = matchSellSet;
 		}
-		TreeSet T = (TreeSet)S;
-		Iterator I;
-		PQPoint P;
-		I = T.iterator();
+		Iterator<PQPoint> I = S.iterator();
 		while(I.hasNext())
 		{
-			P = (PQPoint)I.next();
+			PQPoint P = (PQPoint)I.next();
 			s = s+P.getAgentID()+":"+P.toString();
 		}
 		//s = s+'\n';

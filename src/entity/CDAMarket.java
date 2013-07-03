@@ -8,6 +8,7 @@ import activity.*;
 import systemmanager.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.HashMap;
 import java.util.TreeSet;
@@ -28,8 +29,8 @@ public class CDAMarket extends Market {
 	public CDAMarket(int marketID, SystemData d, ObjectProperties p, Log l) {
 		super(marketID, d, p, l);
 		marketType = Consts.getMarketType(this.getName());
-		orderbook = new PQOrderBook(ID);
-		orderbook.setParams(ID, l, d);
+		orderbook = new PQOrderBook(id);
+		orderbook.setParams(id, l, d);
 	}
 
 	public Bid getBidQuote() {
@@ -48,18 +49,24 @@ public class CDAMarket extends Market {
 		return ((PQBid) getAskQuote()).bidTreeSet.last().getPrice();
 	}
 	
-	public ActivityHashMap addBid(Bid b, TimeStamp ts) {
+	public Collection<Activity> addBid(Bid b, TimeStamp ts) {
 		orderbook.insertBid((PQBid) b);
-		data.addDepth(ID, ts, orderbook.getDepth());
+		data.addDepth(id, ts, orderbook.getDepth());
 		data.addSubmissionTime(b.getBidID(), ts);
-		return clear(ts);
+		// return clear(ts);
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		actMap.add(new Clear(this, Consts.INF_TIME));
+		return actMap;
 	}
 	
 	
-	public ActivityHashMap removeBid(int agentID, TimeStamp ts) {
+	public Collection<Activity> removeBid(int agentID, TimeStamp ts) {
 		orderbook.removeBid(agentID);
-		data.addDepth(this.ID, ts, orderbook.getDepth());
-		return clear(ts);
+		data.addDepth(this.id, ts, orderbook.getDepth());
+		// return clear(ts);
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		actMap.add(new Clear(this, Consts.INF_TIME));
+		return actMap;
 	}
 	
 	
@@ -68,8 +75,8 @@ public class CDAMarket extends Market {
 	}
 
 	
-	public ActivityHashMap clear(TimeStamp clearTime) {
-		ActivityHashMap actMap = new ActivityHashMap();
+	public Collection<Activity> clear(TimeStamp clearTime) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
 		orderbook.logActiveBids(clearTime);
 		orderbook.logFourHeap(clearTime);
 		
@@ -82,12 +89,12 @@ public class CDAMarket extends Market {
 			
 			orderbook.logActiveBids(clearTime);
 			orderbook.logFourHeap(clearTime);
-			data.addDepth(ID, clearTime, orderbook.getDepth());
+			data.addDepth(id, clearTime, orderbook.getDepth());
 			
 			log.log(Log.INFO, clearTime + " | ....." + this + " " + 
 					this.getName() + "::clear: No change. Post-clear Quote" +  
 					this.quote(clearTime));
-			actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new SendToSIP(this, clearTime));
+			actMap.add(new SendToSIP(this, clearTime));
 			return actMap;
 		}
 		
@@ -119,11 +126,11 @@ public class CDAMarket extends Market {
 		orderbook.logActiveBids(clearTime);
 		orderbook.logClearedBids(clearTime);
 		orderbook.logFourHeap(clearTime);
-		data.addDepth(this.ID, clearTime, orderbook.getDepth());
+		data.addDepth(this.id, clearTime, orderbook.getDepth());
 		log.log(Log.INFO, clearTime + " | ....." + toString() + " " + 
 				this.getName() + "::clear: Order book cleared: " +
 				"Post-clear Quote" + this.quote(clearTime));
-		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new SendToSIP(this, clearTime));
+		actMap.add(new SendToSIP(this, clearTime));
 		return actMap;
 	}
 	
@@ -136,19 +143,19 @@ public class CDAMarket extends Market {
 		if (bp != null && ap != null) {
 			if (bp.getPrice() == -1 || ap.getPrice() == -1) {
 				// either bid or ask are undefined
-				data.addSpread(ID, quoteTime, Consts.INF_PRICE);
-				data.addMidQuotePrice(ID, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
+				data.addSpread(id, quoteTime, Consts.INF_PRICE);
+				data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
 				
 			} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
 				log.log(Log.ERROR, this.getName() + "::quote: ERROR bid > ask");
-				data.addSpread(ID, quoteTime, Consts.INF_PRICE);
-				data.addMidQuotePrice(ID, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
+				data.addSpread(id, quoteTime, Consts.INF_PRICE);
+				data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
 				
 			} else {
 				// valid bid-ask
-				data.addQuote(ID, q);
-				data.addSpread(ID, quoteTime, q.getSpread());
-				data.addMidQuotePrice(ID, quoteTime, bp.getPrice(), ap.getPrice());
+				data.addQuote(id, q);
+				data.addSpread(id, quoteTime, q.getSpread());
+				data.addMidQuotePrice(id, quoteTime, bp.getPrice(), ap.getPrice());
 			}
 		}
 		lastQuoteTime = quoteTime;

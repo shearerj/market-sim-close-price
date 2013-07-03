@@ -10,8 +10,7 @@ import systemmanager.*;
  */
 public abstract class HFTAgent extends MMAgent {
 
-	public HFTAgent(int agentID, int modelID, SystemData d, 
-			ObjectProperties p, Log l) {
+	public HFTAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
 		super(agentID, modelID, d, p, l);
 	}
 }

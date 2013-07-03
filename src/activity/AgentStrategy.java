@@ -1,5 +1,8 @@
 package activity;
 
+import java.util.Collection;
+import org.apache.commons.lang3.builder.*;
+
 import entity.*;
 import event.*;
 
@@ -14,35 +17,68 @@ public class AgentStrategy extends Activity {
 	private Market mkt;
 
 	public AgentStrategy(Agent ag, TimeStamp t) {
-		this.ag = ag;
-		this.time = t;
-		this.mkt = null;
+		this(ag, null, t);
 	}
-	
+
 	public AgentStrategy(Agent ag, Market mkt, TimeStamp t) {
+		super(t);
 		this.ag = ag;
 		this.mkt = mkt;
-		this.time = t;
 	}
-	
+
 	public AgentStrategy deepCopy() {
+		return new AgentStrategy(this.ag, this.mkt, this.time);
+	}
+
+	public Collection<Activity> execute(TimeStamp currentTime) {
+		return ag.agentStrategy(currentTime);
+	}
+
+	@Override
+	public String toString() {
 		if (mkt == null) {
-			return new AgentStrategy(this.ag, this.time);
+			return new String(getName() + "::" + ag);
 		} else {
-			return new AgentStrategy(this.ag, this.mkt, this.time);
+			return new String(getName() + "::" + ag + "," + mkt);
+		}
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		AgentStrategy other = (AgentStrategy) obj;
+		if (mkt == null) {
+			return new EqualsBuilder().
+					append(ag.getID(), other.ag.getID()).
+					append(time.longValue(), other.time.longValue()).
+					isEquals();
+		} else {
+			return new EqualsBuilder().
+					append(ag.getID(), other.ag.getID()).
+					append(mkt.getID(), other.mkt.getID()).
+					append(time.longValue(), other.time.longValue()).
+					isEquals();
 		}
 	}
 	
-	public ActivityHashMap execute() {
-		return ag.agentStrategy(time);
-	}
-	
-	public String toString() {
+	@Override
+	public int hashCode() {
 		if (mkt == null) {
-			return new String("AgentStrategy::" + this.ag.toString());
+			return new HashCodeBuilder(19, 37).
+					append(ag.getID()).
+					append(time.longValue()).
+					toHashCode();
 		} else {
-			return new String("AgentStrategy::" + this.ag.toString() + "," + 
-					this.mkt.toString());
+			return new HashCodeBuilder(19, 37).
+					append(ag.getID()).
+					append(mkt.getID()).
+					append(time.longValue()).
+					toHashCode();
 		}
 	}
 }

@@ -38,15 +38,15 @@ public class RandomQueueTest {
 	public void randomSeedTest() {
 		long seed = rand.nextLong();
 		Collection<Integer> numbers = randomNumbers(10);
-		RandomQueue<Integer> a = new RandomQueue<Integer>(numbers, seed);
-		RandomQueue<Integer> b = new RandomQueue<Integer>(numbers, seed);
+		RandomQueue<Integer> a = new RandomQueue<Integer>(numbers, new Random(seed));
+		RandomQueue<Integer> b = new RandomQueue<Integer>(numbers, new Random(seed));
 		
 		Iterator<Integer> ita = a.iterator();
 		Iterator<Integer> itb = b.iterator();
 		while (ita.hasNext())
 			assertTrue(ita.next().equals(itb.next()));
 		
-		RandomQueue<Integer> c = new RandomQueue<Integer>(seed);
+		RandomQueue<Integer> c = new RandomQueue<Integer>(new Random(seed));
 		c.addAll(numbers);
 		
 		itb = b.iterator();
@@ -89,10 +89,21 @@ public class RandomQueueTest {
 	
 	@Test
 	public void offerPermutationTest() {
-		// Note, this test could fail due to inconceivably small random chance as well.
+		// Note, this test could fail due to inconceivably small random chance as well. 1/1000^1000
 		for (int i = 0; i < 1000; i++) {
-			Collection<Integer> numbers = new ArrayList<Integer>(1000);
-			RandomQueue<Integer> a = new RandomQueue<Integer>(numbers);
+			RandomQueue<Integer> a = new RandomQueue<Integer>(randomNumbers(1000));
+			a.add(0);
+			if (a.peek() != 0)
+				return;
+		}
+		fail();
+	}
+	
+	@Test
+	public void offerNonpermutationTest() {
+		// Note, this test could fail due to inconceivably small random chance as well. 1/2^10000 ~ 1/1000^1000
+		for (int i = 0; i < 10000; i++) {
+			RandomQueue<Integer> a = new RandomQueue<Integer>(randomNumbers(1));
 			a.add(0);
 			if (a.peek() == 0)
 				return;

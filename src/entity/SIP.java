@@ -5,10 +5,12 @@ import data.SystemData;
 import event.*;
 import model.*;
 import market.*;
-import activity.*;
+import activity.Activity;
 import systemmanager.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.HashMap;
 
@@ -65,15 +67,15 @@ public class SIP extends Entity {
 	}
 
 	/**
- 	 * Store market's best bid/ask & insert Activity to UpdateNBBO at some amount of time 
+ 	 * Process and store new quotes for the given market.
  	 *
  	 * @param mkt
  	 * @param bid
  	 * @param ask
  	 * @param ts
- 	 * @return ActivityHashMap
+ 	 * @return Collection<Activity>
  	 */
-	public ActivityHashMap processQuote(Market mkt, int bid, int ask, TimeStamp ts) {
+	public Collection<Activity> processQuote(Market mkt, int bid, int ask, TimeStamp ts) {
 		int mktID = mkt.getID();
 		BestBidAsk q = new BestBidAsk();
 		q.bestBid = bid;
@@ -83,7 +85,7 @@ public class SIP extends Entity {
 		marketQuotes.put(mktID, q);
 		log.log(Log.INFO, ts + " | " + data.getMarket(mktID) + " " + 
 				"ProcessQuote: " + q);
-		return null;
+		return updateNBBO(data.getModelByMarketID(mktID), ts);
 	}
 	
 	/**
@@ -93,10 +95,7 @@ public class SIP extends Entity {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap updateNBBO(MarketModel model, TimeStamp ts) {
-		
-		ActivityHashMap actMap = new ActivityHashMap();
-		
+	public Collection<Activity> updateNBBO(MarketModel model, TimeStamp ts) {
 		int modelID = model.getID();
 		ArrayList<Integer> ids = model.getMarketIDs();
 		String s = ts + " | " + ids + " UpdateNBBO: current " + getNBBOQuote(modelID)
@@ -128,7 +127,7 @@ public class SIP extends Entity {
 		lastQuote.bestAsk = bestAsk;
 		lastQuotes.put(modelID, lastQuote);
 		log.log(Log.INFO, s + "updated " + lastQuote);
-		return actMap;
+		return Collections.emptyList();
 	}
 
 	/**

@@ -3,9 +3,11 @@ package entity;
 import data.ObjectProperties;
 import data.SystemData;
 import event.*;
-import activity.*;
+import activity.Activity;
 import systemmanager.*;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 
 /**
@@ -41,8 +43,8 @@ public class DummyAgent extends HFTAgent {
 	
 	
 	@Override
-	public ActivityHashMap agentStrategy(TimeStamp ts) {
-		return null;
+	public Collection<Activity> agentStrategy(TimeStamp ts) {
+		return Collections.emptyList();
 	}
 	
 }
