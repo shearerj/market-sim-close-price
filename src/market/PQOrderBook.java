@@ -4,13 +4,13 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ArrayList;
-import java.util.TreeSet;
+
+import logger.Logger;
 
 import data.SystemData;
 
 import entity.Market;
 import event.TimeStamp;
-import systemmanager.*;
 
 /**
  * Price-quantity order book for a market.
@@ -20,24 +20,22 @@ import systemmanager.*;
 public class PQOrderBook extends OrderBook {
 
 	public FourHeap FH;
-
-	public PQOrderBook(int mktID) {
-		super(mktID);
-		FH = new FourHeap(mktID);
+	
+	public PQOrderBook(Market market) {
+		super(market);
 	}
 
-	public void setParams(int mktID, Log l, SystemData data) {
-		log = l;
-		marketID = mktID;
-		this.data = data;
-		FH.setParams(l, mktID);
+	@Deprecated
+	public PQOrderBook(int mktID, SystemData data) {
+		super(mktID, data);
+		FH = new FourHeap(data.getMarket(mktID));
 	}
 
 	/** 
 	 * inserts new bid into the order book
 	 */
 	public void insertBid(Bid newBid) {
-		Integer key = newBid.agentID;
+		Integer key = newBid.getAgent().getID();
 
 		// create entry if non-existent, remove old bid if exists
 		if (!activeBids.containsKey(key)) {
@@ -69,7 +67,7 @@ public class PQOrderBook extends OrderBook {
 		
 		// create entry if non-existent, or add as existing multi-point bid
 		if (!activeBids.containsKey(key)) {
-			PQBid newBid = new PQBid();
+			PQBid newBid = new PQBid(pq.getAgent(), pq.getMarket(), null);
 			newBid.addPoint(pq);
 			activeBids.put(key, newBid);
 		} else {
@@ -106,8 +104,9 @@ public class PQOrderBook extends OrderBook {
 	 * @return minimum price at which a winning buy could be placed
 	 */
 	public Bid getAskQuote() {
-		PQBid b = new PQBid();
-		b.addPoint(0, FH.getAskQuote());
+		PQPoint pq = FH.getAskQuote();
+		PQBid b = new PQBid(pq.getAgent(), pq.getMarket(), null);
+		b.addPoint(pq);
 		return b;
 	}
 
@@ -115,8 +114,9 @@ public class PQOrderBook extends OrderBook {
 	 * @return maximum price at which a winning sell could be placed
 	 */
 	public Bid getBidQuote() {
-		PQBid b = new PQBid();
-		b.addPoint(0, FH.getBidQuote());
+		PQPoint pq = FH.getBidQuote();
+		PQBid b = new PQBid(pq.getAgent(), pq.getMarket(), null);
+		b.addPoint(pq);
 		return b;
 	}
 
@@ -139,7 +139,7 @@ public class PQOrderBook extends OrderBook {
 				s += "(" + pq.getQuantity() + " " + pq.getPrice().toString() + ") ";
 			}
 		}
-		log.log(Log.INFO, s);
+		Logger.log(Logger.INFO, s);
 	}
 
 	/**
@@ -154,7 +154,7 @@ public class PQOrderBook extends OrderBook {
 				s += "(" + pq.getQuantity() + " " + pq.getPrice().toString() + ") ";
 			}
 		}
-		log.log(Log.INFO, s);
+		Logger.log(Logger.INFO, s);
 	}
 
 	
@@ -210,13 +210,13 @@ public class PQOrderBook extends OrderBook {
 			sell = matchingSells.get(j);
 			int q = Math.min(buy.getQuantity(), Math.abs(sell.getQuantity()));
 			Price p = PQPoint.earliestPrice(buy, sell);
-			int buyBidID = buy.Parent.getBidID();
-			int sellBidID = sell.Parent.getBidID();
+			PQBid buyBid = buy.Parent;
+			PQBid sellBid = sell.Parent;
 
-			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), 
-					buyBidID, sellBidID, ts, marketID));
+			transactions.add(new PQTransaction(q, p, buy.getAgent(), sell.getAgent(), 
+					buyBid, sellBid, ts, data.getMarket(marketID)));
 //			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-			log.log(Log.INFO, ts + " | " + data.getMarket(marketID) + 
+			Logger.log(Logger.INFO, ts + " | " + data.getMarket(marketID) + 
 					" Quantity=" + q + " cleared at Price=" + p.getPrice());
 
 			Integer key = new Integer(buy.getAgentID());
@@ -278,8 +278,8 @@ public class PQOrderBook extends OrderBook {
 			buy = (PQPoint) matchingBuys.get(i);
 			sell = (PQPoint) matchingSells.get(j);
 			int q = Math.min(buy.getQuantity(), Math.abs(sell.getQuantity()));
-			int buyBidID = buy.Parent.getBidID();
-			int sellBidID = sell.Parent.getBidID();
+			PQBid buyBid = buy.Parent;
+			PQBid sellBid = sell.Parent;
 			
 			// Assign price if not assigned yet
 			// Get price by taking first of the matching buys/sells
@@ -294,15 +294,15 @@ public class PQOrderBook extends OrderBook {
 				p = new Price(Math.round((ask.getPrice().getPrice() - 
 						bid.getPrice().getPrice()) * pricingPolicy + bid.getPrice().getPrice()));
 				p = new Price(Market.quantize(p.getPrice(), data.tickSize));
-				log.log(Log.INFO, ts + " | " + data.getMarket(marketID) + 
+				Logger.log(Logger.INFO, ts + " | " + data.getMarket(marketID) + 
 						" clearing price based on (BID: " + 
 						bid.getPrice().getPrice() + ", ASK:" + ask.getPrice().getPrice() + 
 						") & pricingPolicy=" + pricingPolicy + " => price " + p.getPrice());
 			}
-			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), 
-					buyBidID, sellBidID, ts, marketID));
+			transactions.add(new PQTransaction(q, p, buy.getAgent(), sell.getAgent(), 
+					buyBid, sellBid, ts, data.getMarket(marketID)));
 //			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-			log.log(Log.INFO, ts + " | " + data.getMarket(marketID) + 
+			Logger.log(Logger.INFO, ts + " | " + data.getMarket(marketID) + 
 					" Quantity=" + q + " cleared at Price=" + p.getPrice());
 			
 			Integer key = new Integer(buy.getAgentID());

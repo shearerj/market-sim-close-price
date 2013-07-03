@@ -1,8 +1,7 @@
 package entity;
 
-import data.*;
+import data.ObjectProperties;
 import data.SystemData;
-import systemmanager.*;
 
 /**
  * Abstract class for high-frequency traders.
@@ -11,9 +10,8 @@ import systemmanager.*;
  */
 public abstract class HFTAgent extends MMAgent {
 
-	public HFTAgent(int agentID, int modelID, SystemData d, 
-			ObjectProperties p, Log l) {
-		super(agentID, modelID, d, p, l);
+	public HFTAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
+		super(agentID, modelID, d, p);
 	}
 
 }

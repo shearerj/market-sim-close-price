@@ -1,16 +1,26 @@
 package entity;
 
-import market.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+
+import logger.Logger;
+import market.Bid;
+import market.PQBid;
+import market.PQOrderBook;
+import market.Price;
+import market.Quote;
+import market.Transaction;
+import model.MarketModel;
+import systemmanager.Consts;
+import activity.Activity;
+import activity.Clear;
+import activity.SendToSIP;
 import data.ObjectProperties;
 import data.SystemData;
 import event.TimeStamp;
-import activity.*;
-import systemmanager.*;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.HashMap;
-import java.util.TreeSet;
 
 /**
  * Class for a continuous double auction market.
@@ -18,18 +28,18 @@ import java.util.TreeSet;
  * @author ewah
  */
 public class CDAMarket extends Market {
-
-	public PQOrderBook orderbook;
+	
+	public CDAMarket(int marketID, MarketModel model) {
+		super(marketID, model);
+	}
 	
 	/**
 	 * Overloaded constructor.
 	 * @param marketID
 	 */
-	public CDAMarket(int marketID, SystemData d, ObjectProperties p, Log l, int ipID) {
-		super(marketID, d, p, l, ipID);
+	public CDAMarket(int marketID, SystemData d, ObjectProperties p, MarketModel model, int ipID) {
+		super(marketID, d, p, model, ipID);
 		marketType = Consts.getMarketType(this.getName());
-		orderbook = new PQOrderBook(ID);
-		orderbook.setParams(ID, l, d);
 	}
 
 	public Bid getBidQuote() {
@@ -48,83 +58,26 @@ public class CDAMarket extends Market {
 		return ((PQBid) getAskQuote()).bidTreeSet.last().getPrice();
 	}
 	
-	public ActivityHashMap addBid(Bid b, TimeStamp ts) {
+	public Collection<? extends Activity> addBid(Bid b, TimeStamp ts) {
 		orderbook.insertBid((PQBid) b);
-		data.addDepth(ID, ts, orderbook.getDepth());
-		data.addSubmissionTime(b.getBidID(), ts);
-		return clear(ts);
+		bids.add(b);
+		data.addDepth(id, ts, orderbook.getDepth());
+		return Collections.singleton(new Clear(this, Consts.INF_TIME));
 	}
 	
 	
-	public ActivityHashMap removeBid(int agentID, TimeStamp ts) {
+	public Collection<Activity> removeBid(int agentID, TimeStamp ts) {
 		orderbook.removeBid(agentID);
-		data.addDepth(this.ID, ts, orderbook.getDepth());
-		return clear(ts);
+		data.addDepth(this.id, ts, orderbook.getDepth());
+		// return clear(ts);
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		actMap.add(new Clear(this, Consts.INF_TIME));
+		return actMap;
 	}
 	
 	
 	public HashMap<Integer,Bid> getBids() {
 		return orderbook.getActiveBids();
-	}
-
-	
-	public ActivityHashMap clear(TimeStamp clearTime) {
-		ActivityHashMap actMap = new ActivityHashMap();
-		orderbook.logActiveBids(clearTime);
-		orderbook.logFourHeap(clearTime);
-		
-		log.log(Log.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
-				this.quote(clearTime));
-		ArrayList<Transaction> transactions = orderbook.earliestPriceClear(clearTime);
-		
-		if (transactions == null) {
-			lastClearTime = clearTime;
-			
-			orderbook.logActiveBids(clearTime);
-			orderbook.logFourHeap(clearTime);
-			data.addDepth(ID, clearTime, orderbook.getDepth());
-			
-			log.log(Log.INFO, clearTime + " | ....." + this + " " + 
-					this.getName() + "::clear: No change. Post-clear Quote" +  
-					this.quote(clearTime));
-			actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new SendToSIP(this, clearTime));
-			return actMap;
-		}
-		
-		// Add bid execution speed
-		ArrayList<Integer> IDs = orderbook.getClearedBidIDs();
-		for (Iterator<Integer> id = IDs.iterator(); id.hasNext(); ) {
-			data.addExecutionTime(id.next(), clearTime);
-		}
-		
-		// Add transactions to SystemData
-		TreeSet<Integer> transactingIDs = new TreeSet<Integer>();
-		for (Iterator<Transaction> i = transactions.iterator(); i.hasNext();) {
-			PQTransaction t = (PQTransaction) i.next();
-			// track which agents were involved in the transactions
-			transactingIDs.add(t.buyerID);
-			transactingIDs.add(t.sellerID);
-			
-			data.addTransaction(t);
-			lastClearPrice = t.price;
-		}
-		lastClearTime = clearTime;
-
-		// update and log transactions
-		for (Iterator<Integer> it = transactingIDs.iterator(); it.hasNext(); ) {
-			int id = it.next();
-			data.getAgent(id).updateTransactions(clearTime);
-			data.getAgent(id).logTransactions(clearTime); 
-		}
-		orderbook.logActiveBids(clearTime);
-		orderbook.logClearedBids(clearTime);
-		orderbook.logFourHeap(clearTime);
-		data.addDepth(this.ID, clearTime, orderbook.getDepth());
-		log.log(Log.INFO, clearTime + " | ....." + toString() + " " + 
-				this.getName() + "::clear: Order book cleared: " +
-				"Post-clear Quote" + this.quote(clearTime));
-		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new SendToSIP(this, clearTime));
-		return actMap;
 	}
 	
 	
@@ -136,19 +89,19 @@ public class CDAMarket extends Market {
 		if (bp != null && ap != null) {
 			if (bp.getPrice() == -1 || ap.getPrice() == -1) {
 				// either bid or ask are undefined
-				data.addSpread(ID, quoteTime, Consts.INF_PRICE);
-				data.addMidQuotePrice(ID, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
+				data.addSpread(id, quoteTime, Consts.INF_PRICE);
+				data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
 				
 			} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
-				log.log(Log.ERROR, this.getName() + "::quote: ERROR bid > ask");
-				data.addSpread(ID, quoteTime, Consts.INF_PRICE);
-				data.addMidQuotePrice(ID, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
+				Logger.log(Logger.ERROR, this.getName() + "::quote: ERROR bid > ask");
+				data.addSpread(id, quoteTime, Consts.INF_PRICE);
+				data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
 				
 			} else {
 				// valid bid-ask
-				data.addQuote(ID, q);
-				data.addSpread(ID, quoteTime, q.getSpread());
-				data.addMidQuotePrice(ID, quoteTime, bp.getPrice(), ap.getPrice());
+				data.addQuote(id, q);
+				data.addSpread(id, quoteTime, q.getSpread());
+				data.addMidQuotePrice(id, quoteTime, bp.getPrice(), ap.getPrice());
 			}
 		}
 		lastQuoteTime = quoteTime;

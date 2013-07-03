@@ -5,12 +5,15 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import market.BestBidAsk;
+import market.Price;
 import model.MarketModel;
-import systemmanager.Log;
+import java.util.Collection;
+import logger.Logger;
+
 import data.ObjectProperties;
 import data.SystemData;
-import activity.ActivityHashMap;
 import event.TimeStamp;
+import activity.Activity;
 
 /**
  * Superclass for Information Processors that either work
@@ -19,7 +22,7 @@ import event.TimeStamp;
  * @author ewah
  *
  */
-public abstract class IP_Super extends Entity {
+public abstract class AbstractIP extends Entity {
 	
 	protected int tickSize;
 	protected HashMap<Integer, BestBidAsk> lastQuotes;		// hashed by model ID
@@ -30,8 +33,8 @@ public abstract class IP_Super extends Entity {
 	 * @param ID
 	 * @param d
 	 */
-	public IP_Super(int ID, SystemData d, Log l) {
-		super(ID, d, new ObjectProperties(), l);
+	public AbstractIP(int ID, SystemData d) {
+		super(ID, d, new ObjectProperties());
 		tickSize = d.tickSize;
 		lastQuotes = new HashMap<Integer,BestBidAsk>();
 		marketQuotes = new HashMap<Integer,BestBidAsk>();
@@ -61,47 +64,53 @@ public abstract class IP_Super extends Entity {
 	 * @return
 	 */
 	protected BestBidAsk computeBestBidOffer(ArrayList<Integer> marketIDs, boolean nbbo) {
-		// check if goes through all models?
-	    int bestBid = -1;
-	    int bestBidMkt = 0;
-	    int bestAsk = -1;
-	    int bestAskMkt = 0;
+		Collection<Market> markets = new ArrayList<Market>(marketIDs.size());
+		for (int mktID : marketIDs)
+			markets.add(data.getMarket(mktID));
+		return computeBestBidOffer(markets, nbbo);
+	}
+	
+	/**
+	 * Find best quote across given markets (lowest ask & highest bid).
+	 * 
+	 * @param marketIDs
+	 * @param nbbo		true if getting NBBO, false if getting global quote
+	 * @return
+	 */
+	protected BestBidAsk computeBestBidOffer(Collection<Market> markets, boolean nbbo) {
+	    Price bestBid = null, bestAsk = null;
+	    Market bestBidMkt = null, bestAskMkt = null;
 	    
-	    for (Iterator<Integer> it = marketIDs.iterator(); it.hasNext(); ) {
-			int mktID = it.next();
-			int bid = -1, ask = -1;
+	    for (Market mkt : markets) {
+			Price bid, ask;
 			
 			if (nbbo) {
 				// NBBO quote (may be delayed)
 				BestBidAsk ba = new BestBidAsk();
-				if (marketQuotes.containsKey(mktID)) {
-					ba  = marketQuotes.get(mktID);
+				if (marketQuotes.containsKey(mkt.getID())) {
+					ba  = marketQuotes.get(mkt.getID());
 				}
 				bid = ba.bestBid;
 				ask = ba.bestAsk;
 			} else {
 				// global quote
-				bid = data.getMarket(mktID).getBidPrice().getPrice();
-				ask = data.getMarket(mktID).getAskPrice().getPrice();
+				bid = mkt.getBidPrice();
+				ask = mkt.getAskPrice();
 			}
 
+			// FIXME This seems wrong, should the conditional also assume bid != null?
 			// Best bid quote is highest BID
-			if (bestBid == -1 || bestBid < bid) {
-				if (bid != -1) bestBid = bid;
-				bestBidMkt = mktID;
+			if (bestBid == null || bestBid.compareTo(bid) < 0) {
+				if (bid != null) bestBid = bid;
+				bestBidMkt = mkt;
 			}
 			// Best ask quote is lowest ASK
-			if (bestAsk == -1 || bestAsk > ask) {
-				if (ask != -1) bestAsk = ask;
-				bestAskMkt = mktID;
+			if (bestAsk == null || bestAsk.compareTo(ask) > 0) {
+				if (ask != null) bestAsk = ask;
+				bestAskMkt = mkt;
 			}
 	    }
-	    BestBidAsk q = new BestBidAsk();
-	    q.bestBidMarket = bestBidMkt;
-	    q.bestBid = bestBid;
-	    q.bestAskMarket = bestAskMkt;
-	    q.bestAsk = bestAsk;
-	    return q;
+	    return new BestBidAsk(bestBidMkt, bestBid, bestAskMkt, bestAsk);
 	}
 	
 	/**
@@ -113,20 +122,16 @@ public abstract class IP_Super extends Entity {
  	 * @param ts
  	 * @return ActivityHashMap
  	 */
-	public ActivityHashMap processQuote(Market mkt, int bid, int ask, TimeStamp ts) {
+	public Collection<Activity> processQuote(Market mkt, int bid, int ask, TimeStamp ts) {
 		int mktID = mkt.getID();
-		BestBidAsk q = new BestBidAsk();
-		q.bestBid = bid;
-		q.bestAsk = ask;
-		q.bestBidMarket = mktID;
-		q.bestAskMarket = mktID;
+		BestBidAsk q = new BestBidAsk(mkt, new Price(bid), mkt, new Price(ask));
 		marketQuotes.put(mktID, q);
-		log.log(Log.INFO, ts + " | " + this + " | "+ data.getMarket(mktID) + " " + 
+		Logger.log(Logger.INFO, ts + " | " + this + " | "+ data.getMarket(mktID) + " " + 
 				"ProcessQuote: " + q);
 		return null;
 	}
 	
 	public abstract String toString();
 	
-	public abstract ActivityHashMap updateNBBO(MarketModel model, TimeStamp ts);
+	public abstract Collection<Activity> updateNBBO(MarketModel model, TimeStamp ts);
 }

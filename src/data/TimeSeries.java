@@ -1,7 +1,6 @@
 package data;
 
 import event.*;
-import systemmanager.Consts;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -39,8 +38,8 @@ public class TimeSeries {
 		
 		// initialized
 		times.add(new TimeStamp(0));
-		points.add(Consts.DOUBLE_NAN);
-		series.add(Consts.DOUBLE_NAN);
+		points.add(Double.NaN);
+		series.add(Double.NaN);
 	}
 	
 	public List<TimeStamp> getTimes() {
@@ -231,11 +230,10 @@ public class TimeSeries {
 	 * 
 	 * @param filename
 	 */
-	public void writeSeriesToFile(String filename) {
+	public void writeSeriesToFile(File file) {
 		try {
-			File f = new File(filename);
-			if (!f.isFile()) f.createNewFile();
-			FileOutputStream os = new FileOutputStream(f);
+			if (!file.isFile()) file.createNewFile();
+			FileOutputStream os = new FileOutputStream(file);
 			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
 			BufferedWriter bw = new BufferedWriter(osw);
 			for (Double d : series) {

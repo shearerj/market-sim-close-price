@@ -5,6 +5,8 @@ import entity.*;
 import market.*;
 import model.*;
 import systemmanager.*;
+import systemmanager.Consts.AgentType;
+import systemmanager.Consts.ModelType;
 
 import java.text.DecimalFormat;
 import java.util.*;
@@ -37,7 +39,7 @@ import java.io.OutputStreamWriter;
 public class SystemData {
 
 	public int num;								// observation number
-	public static String simDir;						// simulations directory
+	public File simDir;						// simulations directory
 	public boolean EGTA;							// true if EGTA use case
 	
 	// Model information
@@ -48,7 +50,6 @@ public class SystemData {
 	public HashMap<Integer,List<Integer>> modelTransID; // hashed by model ID	
 	
 	// Market information
-	public HashMap<Integer,PQBid> bids;					// all bids ever, hashed by bid ID
 	public HashMap<Integer,Price> privateValues;		// private values hashed by bid ID
 	public HashMap<Integer,Quote> quotes;				// hashed by market ID
 	public HashMap<Integer,Agent> agents;				// (all) agents hashed by ID
@@ -59,7 +60,7 @@ public class SystemData {
 	// Transaction information
 //	public HashMap<Integer,List<Transaction>> transactions; // hashed by model ID
 //	public HashMap<Integer,List<Integer>> transIDs;		// hashed by model ID
-	public HashMap<Integer,TreeSet<Transaction>> transactions; // hashed by model ID
+//	public HashMap<Integer,TreeSet<Transaction>> transactions; // hashed by model ID
 	
 	// Agent information
 	public int numEnvAgents;
@@ -70,11 +71,10 @@ public class SystemData {
 	public HashMap<Integer,List<AgentPropsPair>> modelAgentMap;
 	
 	private SIP sip;
-	private Sequence transIDSequence;	
 	private FundamentalValue fundamentalGenerator;
 	
 	// hashed by type, gives # of that type
-	public HashMap<String,Integer> numModelType;
+	public HashMap<ModelType,Integer> numModelType;
 	
 	// Parameters set by specification file
 	public TimeStamp simLength;
@@ -95,25 +95,21 @@ public class SystemData {
 	public HashMap<Integer,TimeSeries> marketMidQuote;			// hashed by market ID
 	public HashMap<Integer,TimeSeries> marketDepth;				// hashed by market ID
 	
-	public HashMap<Integer,TimeStamp> executionTime;		 	// hashed by bid ID
-	public HashMap<Integer,TimeStamp> submissionTime;			// hashed by bid ID
-	public HashMap<Integer,HashMap<Double,Surplus>> modelSurplus; // hashed by model ID
-																  // then by rho
-	
 	/**
 	 * Constructor
 	 */
-	public SystemData() {
-		bids = new HashMap<Integer,PQBid>();
+	public SystemData(int num, File simDir) {
+		this.num = num;
+		this.simDir = simDir;
+		
 		privateValues = new HashMap<Integer,Price>();
 		quotes = new HashMap<Integer,Quote>();
 		agents = new HashMap<Integer,Agent>();
 		players = new HashMap<Integer,Agent>();
 		markets = new HashMap<Integer,Market>();
 		models = new HashMap<Integer,MarketModel>();
-		numModelType = new HashMap<String,Integer>();
+		numModelType = new HashMap<ModelType,Integer>();
 		modelIDs = new ArrayList<Integer>();
-		transIDSequence = new Sequence(0);
 		primaryModel = null;
 		marketIDModelIDMap = new HashMap<Integer,Integer>();
 		modelTransID = new HashMap<Integer, List<Integer>>();
@@ -122,19 +118,11 @@ public class SystemData {
 		playerMap = new HashMap<AgentPropsPair, Integer>();
 		envAgentMap = new HashMap<AgentPropsPair, Integer>(); 
 	
-//		transactions = new HashMap<Integer,List<Transaction>>();
-//		transIDs = new HashMap<Integer,List<Integer>>();
-		transactions = new HashMap<Integer,TreeSet<Transaction>>();
-		
 		// Initialize containers for observations/features
 		marketDepth = new HashMap<Integer,TimeSeries>();
 		marketSpread = new HashMap<Integer,TimeSeries>();
 		NBBOSpread = new HashMap<Integer,TimeSeries>();
-		marketMidQuote = new HashMap<Integer,TimeSeries>();
-		executionTime = new HashMap<Integer,TimeStamp>();
-		submissionTime = new HashMap<Integer,TimeStamp>();
-		modelSurplus = new HashMap<Integer,HashMap<Double,Surplus>>();
-		
+		marketMidQuote = new HashMap<Integer,TimeSeries>();		
 	}
 	
 	
@@ -351,8 +339,8 @@ public class SystemData {
 	 * @param agentType
 	 * @return
 	 */
-	public boolean isSMAgent(String agentType) {
-		return Consts.SM_AGENT_TYPES.contains(agentType);
+	public boolean isSMAgent(AgentType agentType) {
+		return Consts.SM_AGENT.contains(agentType);
 	}
 	
 	/**
@@ -383,48 +371,9 @@ public class SystemData {
 		}
 		return ids;
 	}
-	
-	public PQBid getBid(int id) {
-		return bids.get(id);
-	}
 
 	public Price getPrivateValueByBid(int bidID) {
 		return privateValues.get(bidID);
-	}
-	
-	public TreeSet<Transaction> getTrans(int modelID) {
-		return transactions.get(modelID);
-	}
-	
-	/**
-	 * Get all transactions in specified model with ID after 
-	 * Transaction t's ID (not inclusive).
-	 * 
-	 * @param modelID
-	 * @param t
-	 * @return
-	 */
-	public Set<Transaction> getTransTailSet(int modelID, Transaction t) {
-		return transactions.get(modelID).tailSet(t, false);
-	}
-	
-	/**
-	 * @param bidID
-	 * @return
-	 */
-	public TimeStamp getTimeToExecution(int bidID) {
-		return executionTime.get(bidID);
-	}
-	
-	public HashMap<Double,Surplus> getSurplus(int modelID) {
-		return modelSurplus.get(modelID);
-	}
-	
-	public Surplus getSurplus(int modelID, double rho) {
-		if (modelSurplus.containsKey(modelID))
-			return modelSurplus.get(modelID).get(rho);
-		else 
-			return null;
 	}
 	
 
@@ -489,10 +438,6 @@ public class SystemData {
 		quotes.put(mktID, q);
 	}
 	
-	public void addBid(PQBid b) {
-		bids.put(b.getBidID(), b);
-	}
-	
 	public void addPrivateValue(int bidID, Price pv) {
 		privateValues.put(bidID, pv);
 	}
@@ -505,7 +450,7 @@ public class SystemData {
 	 * @param spread
 	 */
 	public void addSpread(int mktID, TimeStamp ts, int spread) {
-		double s = Consts.DOUBLE_NAN;
+		double s = Double.NaN;
 		if (spread != Consts.INF_PRICE) s = spread;
 			
 		if(!marketSpread.containsKey(mktID)) {
@@ -524,7 +469,7 @@ public class SystemData {
 	 * @param ask
 	 */
 	public void addMidQuotePrice(int mktID, TimeStamp ts, int bid, int ask) {
-		double midQuote = Consts.DOUBLE_NAN;
+		double midQuote = Double.NaN;
 		if (bid != Consts.INF_PRICE && ask != Consts.INF_PRICE) {
 			midQuote = (bid + ask) / 2;
 		}
@@ -561,15 +506,6 @@ public class SystemData {
 		}
 		marketDepth.get(mktID).add(ts, (double) depth);
 	}
-	
-	/**
-	 * Add bid submission time to the hash map container.
-	 * @param bidID
-	 * @param ts
-	 */
-	public void addSubmissionTime(int bidID, TimeStamp ts) {
-		submissionTime.put(bidID, ts);
-	}
 
 	/**
 	 * Add transaction ID to modelTransID container.
@@ -585,108 +521,6 @@ public class SystemData {
 			modelTransID.put(modelID, tmp);
 		}
 	}
-	
-	/**
-	 * Add transaction.
-	 * @param tr
-	 */
-	public void addTransaction(PQTransaction tr) {
-		int id = transIDSequence.increment();
-		tr.transID = id;
-		
-		MarketModel model = getModelByMarketID(tr.marketID);
-		int modelID = model.getID();
-		addSurplus(modelID, tr);
-		addModelTransID(modelID, tr.transID);
-
-//		if (!transactions.containsKey(modelID)) {
-//			transactions.put(modelID, new ArrayList<Transaction>());
-//		}
-//		transactions.get(modelID).add(tr);
-//		if (!transIDs.containsKey(modelID)) {
-//			transIDs.put(modelID, new ArrayList<Integer>());
-//		}
-//		transIDs.get(modelID).add(tr.transID);
-		if (!transactions.containsKey(modelID)) {
-			transactions.put(modelID, new TreeSet<Transaction>(new TransactionIDComparator()));
-		}
-		transactions.get(modelID).add(tr);
-	}
-	
-	/**
-	 * Add bid time to execution (difference between transaction and submission times).
-	 * @param bidID
-	 * @param ts
-	 */
-	public void addExecutionTime(int bidID, TimeStamp ts) {
-		// check if submission time contains it (if not, there is an error)
-		if (submissionTime.containsKey(bidID)) {
-			executionTime.put(bidID, ts.diff(submissionTime.get(bidID)));
-		} else {
-			System.err.println(this.getClass().getSimpleName() + 
-					":: submission time does not contain bidID " + bidID);
-		}
-	}
-
-	/***********************************
-	 * Surplus computations
-	 *
-	 **********************************/
-	
-	/**
-	 * Add surplus. Update surplus for given model, given value of rho, 
-	 * and given a new transaction to process.
-	 * 
-	 * @param modelID
-	 * @param t
-	 */
-	public void addSurplus(int modelID, PQTransaction t) {
-		if(!modelSurplus.containsKey(modelID)) {
-			modelSurplus.put(modelID, new HashMap<Double,Surplus>());
-		}
-		// compute surplus for all values of rho
-		for (double rho : Consts.rhos) {
-			if (!modelSurplus.get(modelID).containsKey(rho)) {
-				modelSurplus.get(modelID).put(rho, new Surplus(rho));
-			}
-			Surplus s = getSurplus(modelID, rho);
-			Price rt = getFundamentalAt(t.timestamp);
-			
-			// Compute buyer surplus
-			Agent buyer = getAgent(t.buyerID);
-			TimeStamp buyTime = getTimeToExecution(t.buyBidID);
-			if (buyer.getPrivateValue() != null) {
-				double cs = getPrivateValueByBid(t.buyBidID).sum(rt).diff(t.price).getPrice();				
-				// print model ID, buyerID, seller ID, private value, fundamental, trans price, surplus, time, rho
-				// System.out.println(modelID + "," + t.buyerID + "," + "," +getPrivateValueByBid(t.buyBidID)
-				//		+ "," + rt + "," + t.price + "," + cs + "," + buyTime + "," + rho);
-				s.addCumulative(t.buyerID, Math.exp(-rho * buyTime.longValue()) * cs);
-				
-			} else {
-				double cs = -t.price.getPrice();
-				// System.out.println(modelID + "," + t.buyerID + "," + "," +getPrivateValueByBid(t.buyBidID)
-				//		+ "," + rt + "," + t.price + "," + cs + "," + buyTime + "," + rho);
-				s.addCumulative(t.buyerID, Math.exp(-rho * buyTime.longValue()) * cs);
-			}
-			
-			// Compute seller surplus
-			Agent seller = getAgent(t.sellerID);
-			TimeStamp sellTime = getTimeToExecution(t.sellBidID);
-			if (seller.getPrivateValue() != null) {
-				double ps = t.price.diff(getPrivateValueByBid(t.sellBidID).sum(rt)).getPrice();
-				// System.out.println(modelID + "," + "," + t.sellerID + "," + getPrivateValueByBid(t.sellBidID)
-				//		+ "," + rt + "," + t.price + "," + ps + "," + sellTime + "," + rho);
-				s.addCumulative(t.sellerID, Math.exp(-rho * sellTime.longValue()) * ps);
-				
-			} else {
-				double ps = t.price.getPrice();
-				// System.out.println(modelID + "," + "," + t.sellerID + "," + getPrivateValueByBid(t.sellBidID)
-				//		+ "," + rt + "," + t.price + "," + ps + "," + sellTime + "," + rho);
-				s.addCumulative(t.sellerID, Math.exp(-rho * sellTime.longValue()) * ps);
-			}
-		}
-	}
-	
 	
 	/***********************************
 	 * Global fundamental generation
@@ -711,7 +545,7 @@ public class SystemData {
 		if (fundamentalGenerator == null) {
 			return new Price(0);
 		}
-		return fundamentalGenerator.getValueAt((int) ts.longValue());
+		return fundamentalGenerator.getValueAt(ts);
 	}
 	
 	/**
@@ -720,6 +554,10 @@ public class SystemData {
 	 */
 	public ArrayList<Price> getFundamentalValueProcess() {
 		return fundamentalGenerator.getProcess();
+	}
+	
+	public FundamentalValue getFundamenalValue() {
+		return fundamentalGenerator;
 	}
 	
 	
@@ -734,10 +572,10 @@ public class SystemData {
 	 * @param values
 	 * @param filename
 	 */
-	public static void writeToFile(double[] values, String filename) {
+	public void writeToFile(double[] values, String filename) {
 		try {
 			DecimalFormat df = new DecimalFormat("#.#######");
-			File f = new File(simDir + Consts.logDir + filename);
+			File f = new File(new File(simDir, Consts.logDir), filename);
 			if (!f.isFile()) f.createNewFile();
 			FileOutputStream os = new FileOutputStream(f);
 			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");

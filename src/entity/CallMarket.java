@@ -1,17 +1,26 @@
 package entity;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.TreeSet;
 
+import logger.Logger;
+import market.Bid;
+import market.PQBid;
+import market.PQOrderBook;
+import market.PQTransaction;
+import market.Price;
+import market.Quote;
+import market.Transaction;
+import model.MarketModel;
+import systemmanager.Consts;
+import activity.Activity;
+import activity.Clear;
+import activity.SendToSIP;
 import data.ObjectProperties;
 import data.SystemData;
-
-import market.*;
-import activity.*;
-import event.*;
-import systemmanager.*;
+import event.TimeStamp;
 
 /**
  * Class for a call market. The order book is closed, therefore agents will only
@@ -25,24 +34,25 @@ import systemmanager.*;
  */
 public class CallMarket extends Market {
 
-	public float pricingPolicy;
-	public PQOrderBook orderbook;
-	private TimeStamp clearFreq;
-	
 	public final static String CLEAR_FREQ_KEY = "clearFreq";
 	public final static String PRICING_POLICY_KEY = "pricingPolicy";
 	
-	/**
-	 * Overloaded constructor.
-	 * @param marketID
-	 */
-	public CallMarket(int marketID, SystemData d, ObjectProperties p, Log l, int ipID) {
-		super(marketID, d, p, l, ipID);
+	public float pricingPolicy; // XXX Unused?
+	protected final TimeStamp clearFreq;
+	protected TimeStamp nextClearTime;
+	
+	public CallMarket(int marketID, MarketModel model, float pricingPolicy, TimeStamp clearFreq) {
+		super(marketID, model);
+		this.pricingPolicy = pricingPolicy;
+		this.clearFreq = clearFreq;
+		this.nextClearTime = clearFreq;
+	}
+	
+	public CallMarket(int marketID, SystemData d, ObjectProperties p, MarketModel model, int ipID) {
+		super(marketID, d, p, model, ipID);
 		marketType = Consts.getMarketType(this.getName());
-		orderbook = new PQOrderBook(ID);
-		orderbook.setParams(ID, l, d);
-		pricingPolicy = (float) Double.parseDouble(params.get(CallMarket.PRICING_POLICY_KEY));
-		clearFreq = new TimeStamp(Integer.parseInt(params.get(CallMarket.CLEAR_FREQ_KEY)));
+		pricingPolicy = params.getAsFloat(CallMarket.PRICING_POLICY_KEY);
+		clearFreq = new TimeStamp(params.getAsInt(CallMarket.CLEAR_FREQ_KEY));
 		nextClearTime = clearFreq;
 	}
 	
@@ -62,25 +72,27 @@ public class CallMarket extends Market {
 		return lastAskPrice;
 	}
 	
-	public ActivityHashMap addBid(Bid b, TimeStamp ts) {
+	public Collection<Activity> addBid(Bid b, TimeStamp ts) {
 		// Unlike continuous auction market, no Clear inserted unless clear freq = 0
-		ActivityHashMap actMap = new ActivityHashMap();
+		Collection<Activity> actMap = new ArrayList<Activity>();
 		orderbook.insertBid((PQBid) b);
-		data.addDepth(ID, ts, orderbook.getDepth());
-		data.addSubmissionTime(b.getBidID(), ts);
+		bids.add(b);
+		data.addDepth(id, ts, orderbook.getDepth());
 		if (clearFreq.longValue() == 0) {
-			return clear(ts);
+			// return clear(ts);
+			actMap.add(new Clear(this, Consts.INF_TIME));
 		} // else, Clear activities are chained and continue that way
 		return actMap;
 	}
 	
-	public ActivityHashMap removeBid(int agentID, TimeStamp ts) {
+	public Collection<Activity> removeBid(int agentID, TimeStamp ts) {
 		// Unlike continuous auction market, no Clear inserted unless clear freq = 0
-		ActivityHashMap actMap = new ActivityHashMap();
+		Collection<Activity> actMap = new ArrayList<Activity>();
 		orderbook.removeBid(agentID);
-		data.addDepth(ID, ts, orderbook.getDepth());
+		data.addDepth(id, ts, orderbook.getDepth());
 		if (clearFreq.longValue() == 0) {
-			return clear(ts);
+			// return clear(ts);
+			actMap.add(new Clear(this, Consts.INF_TIME));
 		} // else, Clear activities are chained and continue that way
 		return actMap;
 	}
@@ -91,76 +103,16 @@ public class CallMarket extends Market {
 	}
 	
 
-	public ActivityHashMap clear(TimeStamp clearTime) {
-		ActivityHashMap actMap = new ActivityHashMap();
-		
+	public Collection<Activity> clear(TimeStamp clearTime) {
 		// Update the next clear time
 		nextClearTime = clearTime.sum(clearFreq);
-		orderbook.logFourHeap(clearTime);
+		Collection<Activity> actList = super.clear(clearTime);
 		
-		// Return prior quote (works b/c lastClearTime has not been updated yet)
-		log.log(Log.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
-				this.quote(clearTime));
-		ArrayList<Transaction> trans = orderbook.uniformPriceClear(clearTime, pricingPolicy);
-		
-		if (trans == null) {
-			lastClearTime = clearTime;
-			
-			orderbook.logActiveBids(clearTime);
-			orderbook.logFourHeap(clearTime);
-			data.addDepth(ID, clearTime, orderbook.getDepth());
-			
-			// Now update the quote
-			log.log(Log.INFO, clearTime + " | ....." + this + " " + 
-					this.getName() + "::clear: No change. Post-clear Quote" 
-					+ this.quote(clearTime));
-			actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new SendToSIP(this, clearTime));
-
-			if (clearFreq.longValue() > 0) {
-				actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, nextClearTime));				
-			}
-			return actMap;
-		}
-		
-		// Add bid execution speed
-		ArrayList<Integer> IDs = orderbook.getClearedBidIDs();
-		for (Iterator<Integer> id = IDs.iterator(); id.hasNext(); ) {
-			data.addExecutionTime(id.next(), clearTime);
-		}
-		
-		// Add transactions to SystemData
-		TreeSet<Integer> transactingIDs = new TreeSet<Integer>();
-		for (Iterator<Transaction> i = trans.iterator(); i.hasNext();) {
-			PQTransaction t = (PQTransaction) i.next();
-			// track which agents were involved in the transactions
-			transactingIDs.add(t.buyerID);
-			transactingIDs.add(t.sellerID);
-
-			data.addTransaction(t);
-			lastClearPrice = t.price;
-		}
-		lastClearTime = clearTime;
-
-		// update and log transactions
-		for (Iterator<Integer> it = transactingIDs.iterator(); it.hasNext(); ) {
-			int id = it.next();
-			data.getAgent(id).updateTransactions(clearTime);
-			data.getAgent(id).logTransactions(clearTime); 
-		}
-		orderbook.logActiveBids(clearTime);
-		orderbook.logClearedBids(clearTime);
-		orderbook.logFourHeap(clearTime);
-		data.addDepth(ID, clearTime, orderbook.getDepth());
-		log.log(Log.INFO, clearTime.toString() + " | ....." + this + " " + 
-				this.getName() + "::clear: Order book cleared: Post-clear Quote" 
-				+ this.quote(clearTime));
-		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new SendToSIP(this, clearTime));
-
 		// Insert next clear activity at some time in the future
 		if (clearFreq.longValue() > 0) {
-			actMap.insertActivity(Consts.CALL_CLEAR_PRIORITY, new Clear(this, nextClearTime));				
+			actList.add(new Clear(this, nextClearTime));				
 		}
-		return actMap;
+		return actList;
 	}
 	
 	
@@ -178,19 +130,19 @@ public class CallMarket extends Market {
 			if (bp != null && ap != null) {
 				if (bp.getPrice() == -1 || ap.getPrice() == -1) {
 					// either bid or ask are undefined
-					data.addSpread(ID, quoteTime, Consts.INF_PRICE);
-					data.addMidQuotePrice(ID, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);	
+					data.addSpread(id, quoteTime, Consts.INF_PRICE);
+					data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);	
 					
 				} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
-					log.log(Log.ERROR, this.getName() + "::quote: ERROR bid > ask");
-					data.addSpread(ID, quoteTime, Consts.INF_PRICE);
-					data.addMidQuotePrice(ID, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
+					Logger.log(Logger.ERROR, this.getName() + "::quote: ERROR bid > ask");
+					data.addSpread(id, quoteTime, Consts.INF_PRICE);
+					data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
 					
 				} else {
 					// valid bid-ask
-					data.addQuote(ID, q);
-					data.addSpread(ID, quoteTime, q.getSpread());
-					data.addMidQuotePrice(ID, quoteTime, bp.getPrice(), ap.getPrice());
+					data.addQuote(id, q);
+					data.addSpread(id, quoteTime, q.getSpread());
+					data.addMidQuotePrice(id, quoteTime, bp.getPrice(), ap.getPrice());
 				}
 			}
 			lastQuoteTime = quoteTime;

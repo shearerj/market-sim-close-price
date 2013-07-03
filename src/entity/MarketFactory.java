@@ -1,8 +1,9 @@
 package entity;
 
+import model.MarketModel;
+import systemmanager.Consts;
 import data.ObjectProperties;
 import data.SystemData;
-import systemmanager.*;
 
 /**
  * Factory class for creating Markets.
@@ -10,7 +11,7 @@ import systemmanager.*;
  * @author ewah
  */
 public class MarketFactory {
-	
+
 	/**
 	 * Create a new Market based on type parameter.
 	 * 
@@ -19,17 +20,15 @@ public class MarketFactory {
 	 * @param data
 	 * @return
 	 */
-	public static Market createMarket(String type,
-									  Integer marketID,
-									  SystemData data,
-									  ObjectProperties params,
-									  Log l, int ipID) { 
-		
-		if (type.equals(Consts.CDA)) {
-			return new CDAMarket(marketID, data, params, l, ipID);
-		} else if (type.equals(Consts.CALL)) {
-			return new CallMarket(marketID, data, params, l, ipID);
-		} else {
+	public static Market createMarket(String type, Integer marketID,
+			SystemData data, ObjectProperties params, MarketModel model, int ipID) {
+
+		switch (Consts.MarketType.valueOf(type)) {
+		case CDA:
+			return new CDAMarket(marketID, data, params, model, ipID);
+		case CALL:
+			return new CallMarket(marketID, data, params, model, ipID);
+		default:
 			return null;
 		}
 	}

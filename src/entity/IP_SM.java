@@ -17,8 +17,8 @@ public class IP_SM extends IP_Single_Market {
 	 * @param ID
 	 * @param d
 	 */
-	public IP_SM(int ID, SystemData d, Log l, int marketID) {
-		super(ID, d, l, marketID);
+	public IP_SM(int ID, SystemData d, int marketID) {
+		super(ID, d, marketID);
 	}
 	
 	/* (non-Javadoc)

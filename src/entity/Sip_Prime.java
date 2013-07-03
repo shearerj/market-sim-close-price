@@ -5,10 +5,14 @@ import market.*;
 import model.MarketModel;
 import systemmanager.*;
 import data.SystemData;
+import logger.Logger;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
-import activity.ActivityHashMap;
+import java.util.Collection;
+
+import activity.Activity;
 
 
 /**
@@ -19,7 +23,7 @@ import activity.ActivityHashMap;
  * 
  * @author ewah
  */
-public class Sip_Prime extends IP_Super {
+public class Sip_Prime extends AbstractIP {
 	
 	private int modelID;
 	
@@ -28,8 +32,8 @@ public class Sip_Prime extends IP_Super {
 	 * @param ID
 	 * @param d
 	 */
-	public Sip_Prime(int ID, SystemData d, Log l, int modelID) {
-		super(ID, d, l);
+	public Sip_Prime(int ID, SystemData d, int modelID) {
+		super(ID, d);
 		this.modelID = modelID;
 	}
 
@@ -51,10 +55,7 @@ public class Sip_Prime extends IP_Super {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap updateNBBO(MarketModel model, TimeStamp ts) {
-		
-		ActivityHashMap actMap = new ActivityHashMap();
-		
+	public Collection<Activity> updateNBBO(MarketModel model, TimeStamp ts) {
 		int modelID = model.getID();
 		ArrayList<Integer> ids = model.getMarketIDs();
 		String s = ts + " | " + ids + " UpdateNBBO: current " + getNBBOQuote(modelID)
@@ -62,14 +63,14 @@ public class Sip_Prime extends IP_Super {
 	
 		BestBidAsk lastQuote = computeBestBidOffer(ids, true);
 			
-		int bestBid = lastQuote.bestBid;
-		int bestAsk = lastQuote.bestAsk;
-		if ((bestBid != -1) && (bestAsk != -1)) {
+		Price bestBid = lastQuote.bestBid;
+		Price bestAsk = lastQuote.bestAsk;
+		if ((bestBid != null) && (bestAsk != null)) {
 			// check for inconsistency in buy/sell prices & fix if found
-			if (lastQuote.bestBid > lastQuote.bestAsk) {
-				int mid = (lastQuote.bestBid + lastQuote.bestAsk) / 2;
-				bestBid = mid - this.tickSize;
-				bestAsk = mid + this.tickSize;
+			if (lastQuote.bestBid.compareTo(lastQuote.bestAsk) > 0) {
+				int mid = (lastQuote.bestBid.getPrice() + lastQuote.bestAsk.getPrice()) / 2;
+				bestBid = new Price(mid - this.tickSize);
+				bestAsk = new Price(mid + this.tickSize);
 				s += " (before fix) " + lastQuote + " --> ";
 				
 				// Add spread of INF if inconsistent NBBO quote
@@ -82,11 +83,10 @@ public class Sip_Prime extends IP_Super {
 			// store spread of INF since no bid-ask spread
 			this.data.addNBBOSpread(modelID, ts, Consts.INF_PRICE);
 		}
-		lastQuote.bestBid = bestBid;
-		lastQuote.bestAsk = bestAsk;
+		lastQuote = new BestBidAsk(lastQuote.bestBidMarket, bestBid, lastQuote.bestAskMarket, bestAsk);
 		lastQuotes.put(modelID, lastQuote);
-		log.log(Log.INFO, s + "updated " + lastQuote);
-		return actMap;
+		Logger.log(Logger.INFO, s + "updated " + lastQuote);
+		return Collections.emptyList();
 	}
 	
 	/* (non-Javadoc)

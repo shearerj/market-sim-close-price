@@ -1,5 +1,8 @@
 package activity;
 
+import java.util.Collection;
+import org.apache.commons.lang3.builder.*;
+
 import entity.*;
 import event.TimeStamp;
 
@@ -11,21 +14,44 @@ import event.TimeStamp;
 public class SendToSIP extends Activity {
 
 	private Market mkt;
-	
+
 	public SendToSIP(Market mkt, TimeStamp t) {
+		super(t);
 		this.mkt = mkt;
-		this.time = t;
 	}
-	
+
 	public SendToSIP deepCopy() {
 		return new SendToSIP(this.mkt, this.time);
 	}
-	
-	public ActivityHashMap execute() {
-		return this.mkt.sendToSIP(this.time);
+
+	public Collection<Activity> execute(TimeStamp time) {
+		return this.mkt.sendToSIP(time);
+	}
+
+	public String toString() {
+		return new String(getName() + "::" + mkt);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == this)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SendToSIP other = (SendToSIP) obj;
+		return new EqualsBuilder().
+				append(mkt.getID(), other.mkt.getID()).
+				append(time.longValue(), other.time.longValue()).
+				isEquals();
 	}
 	
-	public String toString() {
-		return new String("SendToSIP::" + this.mkt);
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder(19, 37).
+				append(mkt.getID()).
+				append(time.longValue()).
+				toHashCode();
 	}
 }

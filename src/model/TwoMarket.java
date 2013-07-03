@@ -1,8 +1,12 @@
 package model;
 
+import java.util.Map;
+
 import data.*;
+import entity.CDAMarket;
 import systemmanager.*;
-import data.SystemData;
+import systemmanager.Consts.AgentType;
+import utils.RandPlus;
 
 /**
  * TWOMARKET
@@ -18,22 +22,28 @@ import data.SystemData;
  * @author ewah
  */
 public class TwoMarket extends MarketModel {
+
+	public TwoMarket(int modelID, FundamentalValue fundamental,
+			Map<AgentProperties, Integer> agentProps,
+			ObjectProperties modelProps, RandPlus rand) {
+		super(modelID, fundamental, agentProps, modelProps, rand);
+	}
 	
-	public TwoMarket(int modelID, ObjectProperties p, SystemData d, int sipID, Log l) {
-		super(modelID,p, d, sipID, l);
+	public TwoMarket(int modelID, ObjectProperties p, SystemData d, int sipID) {
+		super(modelID,p, d, sipID);
 		
-		config = p.get(Consts.MODEL_CONFIG_KEY);
+		config = p.getAsString(Consts.MODEL_CONFIG_KEY);
 		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
 			// Add two CDA markets with default settings
-			addMarketPropertyPair(Consts.CDA);
-			addMarketPropertyPair(Consts.CDA);
+			addMarketPropertyPair(Consts.MarketType.CDA);
+			addMarketPropertyPair(Consts.MarketType.CDA);
 			
 			// Check that config is not blank
 			if (!config.equals("")) {
 				// split on colon
 				String[] as = config.split("[:]+");
-				String agType = as[0];
-				if (!Consts.HFT_AGENT_TYPES.contains(agType)) {
+				AgentType agType = AgentType.valueOf(as[0]);
+				if (!Consts.MM_AGENT.contains(agType)) {
 					System.err.println(this.getClass().getSimpleName() + "::parseConfigs: " +
 									"model configuration " + config + " incorrect");
 					System.exit(1);
@@ -65,5 +75,18 @@ public class TwoMarket extends MarketModel {
 			}
 		}
 		return 0;
+	}
+
+
+	@Override
+	protected void setupMarkets(ObjectProperties modelProps) {
+		markets.add(new CDAMarket(1, this));
+		markets.add(new CDAMarket(2, this));
+	}
+
+
+	@Override
+	protected void setupModelAgents(ObjectProperties modelProps) {
+		// TODO check for LA and if so add it with proper properties
 	}
 }

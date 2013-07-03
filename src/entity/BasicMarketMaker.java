@@ -4,11 +4,15 @@ import data.ObjectProperties;
 import data.Observations;
 import data.SystemData;
 import event.*;
-import activity.*;
-import systemmanager.*;
+import activity.Activity;
+import activity.AgentStrategy;
+import activity.UpdateAllQuotes;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.ArrayList;
+
+import logger.Logger;
 
 /**
  * BasicMarketMaker
@@ -51,13 +55,13 @@ public class BasicMarketMaker extends MarketMaker {
 	 * @param p
 	 * @param l
 	 */
-	public BasicMarketMaker(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, modelID, d, p, l);
+	public BasicMarketMaker(int agentID, int modelID, SystemData d, ObjectProperties p) {
+		super(agentID, modelID, d, p);
 		arrivalTime = new TimeStamp(0);
-		sleepTime = Integer.parseInt(params.get(SLEEPTIME_KEY));
-//		sleepVar = Double.parseDouble(params.get(Agent.SLEEPVAR_KEY));
-		numRungs = Integer.parseInt(params.get(NUMRUNGS_KEY));
-		rungSize = Integer.parseInt(params.get(RUNGSIZE_KEY));
+		sleepTime = params.getAsInt(SLEEPTIME_KEY);
+//		sleepVar = params.getAsDouble(Agent.SLEEPVAR_KEY);
+		numRungs = params.getAsInt(NUMRUNGS_KEY);
+		rungSize = params.getAsInt(RUNGSIZE_KEY);
 		stepSize = Market.quantize(rungSize, data.tickSize);
 		
 		xt = -1;	// ask
@@ -74,15 +78,18 @@ public class BasicMarketMaker extends MarketMaker {
 	}
 	
 	@Override
-	public ActivityHashMap agentStrategy(TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
+	public Collection<Activity> agentStrategy(TimeStamp ts) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		
+		// update all quotes
+		this.updateAllQuotes(ts);
 
-		int bid = getBidPrice(getMarketID()).getPrice();
-		int ask = getAskPrice(getMarketID()).getPrice();
+		int bid = getBidPrice(market.getID()).getPrice();
+		int ask = getAskPrice(market.getID()).getPrice();
 
 		// check that bid or ask is defined
 		if (bid <=0  || ask <= 0) {
-			log.log(Log.INFO, ts + " | " + this + " " + agentType +
+			Logger.log(Logger.INFO, ts + " | " + this + " " + agentType +
 					"::agentStrategy: undefined quote in market " + getMarket());
 			
 		} else {
@@ -96,13 +103,13 @@ public class BasicMarketMaker extends MarketMaker {
 				int sellMaxPrice = ask + ct;	// max price for sell order in the ladder
 				
 				// check if the bid or ask crosses the NBBO 
-				if (lastNBBOQuote.bestAsk < ask) {
+				if (lastNBBOQuote.bestAsk.getPrice() < ask) {
 					// buy orders:  If ASK_N < X_t, then [ASK_N, ..., Y_t]
-					buyMinPrice = lastNBBOQuote.bestAsk;
+					buyMinPrice = lastNBBOQuote.bestAsk.getPrice();
 				}
-				if (lastNBBOQuote.bestBid > bid) {
+				if (lastNBBOQuote.bestBid.getPrice() > bid) {
 					// sell orders: If BID_N > Y_t, then [X_t, ..., BID_N]
-					sellMaxPrice = lastNBBOQuote.bestBid;
+					sellMaxPrice = lastNBBOQuote.bestBid.getPrice();
 				}
 				
 				// submits only one side if either bid or ask is undefined
@@ -123,13 +130,13 @@ public class BasicMarketMaker extends MarketMaker {
 					}
 				}
 				
-				log.log(Log.INFO, ts + " | " + getMarket() + " " + this + " " + agentType + 
+				Logger.log(Logger.INFO, ts + " | " + getMarket() + " " + this + " " + agentType + 
 						"::agentStrategy: ladder numRungs=" + numRungs + ", stepSize=" + stepSize + 
 						": buys [" + buyMinPrice + ", " + bid + "] &" + 
 						" sells [" + ask + ", " + sellMaxPrice + "]");
-				actMap.appendActivityHashMap(submitMultipleBid(getMarket(), prices, quantities, ts));
+				actMap.addAll(submitMultipleBid(getMarket(), prices, quantities, ts));
 			} else {
-				log.log(Log.INFO, ts + " | " + getMarket() + " " + this + " " + agentType + 
+				Logger.log(Logger.INFO, ts + " | " + getMarket() + " " + this + " " + agentType + 
 						"::agentStrategy: no change in submitted ladder.");
 			}
 		}
@@ -140,8 +147,8 @@ public class BasicMarketMaker extends MarketMaker {
 		// insert activities for next time the agent wakes up
 //		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
 		TimeStamp tsNew = ts.sum(new TimeStamp(sleepTime));
-		actMap.insertActivity(Consts.MARKETMAKER_PRIORITY, new UpdateAllQuotes(this, tsNew));
-		actMap.insertActivity(Consts.MARKETMAKER_PRIORITY, new AgentStrategy(this, market, tsNew));
+		actMap.add(new UpdateAllQuotes(this, tsNew));
+		actMap.add(new AgentStrategy(this, market, tsNew));
 		return actMap;
 	}
 	

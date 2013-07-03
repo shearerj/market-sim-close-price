@@ -1,12 +1,13 @@
 package entity;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+
+import activity.Activity;
 import data.ObjectProperties;
 import data.SystemData;
-import event.*;
-import activity.*;
-import systemmanager.*;
-
-import java.util.HashMap;
+import event.TimeStamp;
 
 /**
  * DUMMYAGENT
@@ -23,8 +24,8 @@ public class DummyAgent extends HFTAgent {
 	 * Overloaded constructor
 	 * @param agentID
 	 */
-	public DummyAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, modelID, d, p, l);
+	public DummyAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
+		super(agentID, modelID, d, p);
 		arrivalTime = new TimeStamp(0);
 		params = p;
 	}
@@ -41,8 +42,8 @@ public class DummyAgent extends HFTAgent {
 	
 	
 	@Override
-	public ActivityHashMap agentStrategy(TimeStamp ts) {
-		return null;
+	public Collection<Activity> agentStrategy(TimeStamp ts) {
+		return Collections.emptyList();
 	}
 	
 }

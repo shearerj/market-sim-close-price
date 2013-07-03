@@ -1,15 +1,17 @@
 package market;
 
 /**
- * Price class is wrapper for long; one unit represents one thousandth
- * of a dollar.
+ * Price class is wrapper for long; one unit represents one thousandth of a
+ * dollar.
  * 
  * @author ewah
  */
-public class Price implements Comparable<Object> {
+public class Price implements Comparable<Price> {
 
-	protected int price;
-	
+	public static int PRICE_PER_DOLLAR = 1000;
+
+	protected final int price;
+
 	/**
 	 * Constructor initializes price to zero.
 	 */
@@ -19,103 +21,77 @@ public class Price implements Comparable<Object> {
 
 	/**
 	 * Constructor taking in a int.
+	 * 
 	 * @param p
 	 */
 	public Price(int p) {
+		// TODO Decide if negative numbers should be allowed and how to include
+		// this in the "diff" function
 		price = p;
 	}
-	
-	/**
-	 * @return price as int
-	 */
+
 	public int getPrice() {
-		return new Integer(price).intValue();
+		return price;
 	}
-	
+
 	/**
 	 * @return price in dollars (3 decimal places)
 	 */
 	public double getDollarPrice() {
-		return price / 1000;
+		return price / (double) PRICE_PER_DOLLAR;
 	}
-	
+
 	/**
 	 * Add price to this object.
-	 * @param p
-	 * @return
 	 */
 	public Price sum(Price p) {
 		return new Price(this.price + p.price);
 	}
-	
+
 	/**
 	 * Subtract price from this object.
-	 * @param p
-	 * @return
 	 */
 	public Price diff(Price p) {
 		return new Price(this.price - p.price);
 	}
-	
-	/* (non-Javadoc)
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
-	public int compareTo(Object o) {
-		return Double.compare(price, ((Price) o).getPrice());
-	}
-	
-//	/**
-//	 * @param numDecPlaces
-//	 * @return string representation with the specified # of decimal places
-//	 */
-//	public String toString(int numDecPlaces)
-//	{
-//		String str = "#.";
-//
-//		for (int i = 0; i < numDecPlaces; i++)
-//			str = str.concat("0");
-//
-//		return new DecimalFormat(str).format(price);
-//	}
-	
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
+	@Override
+	public int compareTo(Price o) {
+		if (o == null) return 1;
+		return this.price - o.price;
+	}
+
 	@Override
 	public String toString() {
-		return new Integer(price).toString();
+		return Integer.toString(price);
 	}
 	
 	/**
-	 * Returns maximum of two Prices.
-	 * @param p1
-	 * @param p2
-	 * @return
+	 * True if p is null or this price is strictly greater
 	 */
-	public static Price max(Price p1, Price p2) {
-		if (p1 == null) return p2;
-		if (p2 == null) return p1;
-		
-		if (p1.compareTo(p2) > 0)
-			return p1;
-		else
-			return p2;
+	public boolean greaterThan(Price p) {
+		return p == null || compareTo(p) > 0;
+	}
+	
+	/**
+	 * True if p is null or this price is strictly less
+	 */
+	public boolean lessThan(Price p) {
+		return p == null || compareTo(p) < 0;
+	}
+	
+	/**
+	 * True if p is null or this price is greater or equal
+	 */
+	public boolean greaterThanEquals(Price p) {
+		return p == null || compareTo(p) >= 0;
+	}
+	
+	/**
+	 * True if p is null or this price is less or equal
+	 */
+	public boolean lessThanEqual(Price p) {
+		return p == null || compareTo(p) <= 0;
 	}
 
-	/**
-	 * Returns minimum of two Prices.
-	 * @param p1
-	 * @param p2
-	 * @return
-	 */
-	public static Price min(Price p1, Price p2) {
-		if (p1 == null) return p2;
-		if (p2 == null) return p1;
-		
-		if (p1.compareTo(p2) < 0)
-			return p1;
-		else
-			return p2;
-	}
 }

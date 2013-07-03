@@ -9,10 +9,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Iterator;
+
+import logger.Logger;
 
 import org.json.simple.*;
 import org.json.simple.parser.*;
+
+import systemmanager.Consts.AgentType;
+import systemmanager.Consts.ModelType;
 
 
 /**
@@ -25,7 +29,6 @@ import org.json.simple.parser.*;
  */
 public class SimulationSpec {
 
-	private Log log;
 	private SystemData data;
 	private JSONObject params;
 	private JSONObject assignments;
@@ -51,8 +54,7 @@ public class SimulationSpec {
 	 * @param file
 	 * @param l
 	 */
-	public SimulationSpec(String file, Log l, SystemData d) {
-		log = l;
+	public SimulationSpec(String file, SystemData d) {
 		data = d;
 		parser = new JSONParser();
 		loadFile(file);
@@ -107,7 +109,7 @@ public class SimulationSpec {
 		/*******************
 		 * MARKET MODELS
 		 *******************/
-		for (String modelType : Consts.MARKETMODEL_TYPES) {
+		for (ModelType modelType : ModelType.values()) {
 			// models here is a comma-separated list
 			String models = getValue(modelType);
 			if (models != null) {
@@ -135,7 +137,7 @@ public class SimulationSpec {
 		/*******************
 		 * CONFIGURATION - add environment agents
 		 *******************/
-		for (String agentType : Consts.SM_AGENT_TYPES) {
+		for (AgentType agentType : Consts.SM_AGENT) {
 			String num = getValue(agentType);
 			String setup = getValue(agentType + Consts.setupSuffix);
 			if (num != null) {
@@ -154,17 +156,17 @@ public class SimulationSpec {
 			if (strats != null) {			
 				@SuppressWarnings("unchecked")
 				ArrayList<String> strategies = (ArrayList<String>) strats;
-				for (Iterator<String> it = strategies.iterator(); it.hasNext(); ) {
-					String strat = it.next();
+				for (String strat : strategies) {
 					if (!strat.equals("")) {
 						String[] as = strat.split("[:]+");	// split on colon
 						if (as.length != 2) {
-							log.log(Log.ERROR, this.getClass().getSimpleName() + 
+							Logger.log(Logger.ERROR, this.getClass().getSimpleName() + 
 									"::setRolePlayers: " + "incorrect strategy string");
 						} else {
 							// first elt is agent type, second elt is strategy
-							ObjectProperties op = getStrategyParameters(as[0], as[1]);
-							data.addPlayerProperties(new AgentPropsPair(as[0], op));
+							AgentType type = AgentType.valueOf(as[0]);
+							ObjectProperties op = getStrategyParameters(type, as[1]);
+							data.addPlayerProperties(new AgentPropsPair(type, op));
 						}
 					}
 				}
@@ -185,6 +187,14 @@ public class SimulationSpec {
 			return null;
 		}
 	}
+	
+	public String getValue(ModelType key) {
+		return getValue(key.toString());
+	}
+	
+	public String getValue(AgentType key) {
+		return getValue(key.toString());
+	}
 
 	/**
 	 * Wrapper method because log is not static.
@@ -193,11 +203,11 @@ public class SimulationSpec {
 	 * @param strategy
 	 * @return
 	 */
-	private ObjectProperties getStrategyParameters(String type, String strategy) {
+	private ObjectProperties getStrategyParameters(AgentType type, String strategy) {
 		ObjectProperties op = SimulationSpec.getAgentProperties(type, strategy);
 		
 		if (op == null) {
-			log.log(Log.ERROR, this.getClass().getSimpleName() + 
+			Logger.log(Logger.ERROR, this.getClass().getSimpleName() + 
 					"::getStrategyParameters: error parsing " + strategy.split("[_]+"));
 		}
 		return op;
@@ -213,14 +223,14 @@ public class SimulationSpec {
 	 * @param strategy
 	 * @return ObjectProperties
 	 */
-	public static ObjectProperties getAgentProperties(String type, String strategy) {
+	public static ObjectProperties getAgentProperties(AgentType type, String strategy) {
 		ObjectProperties p = new ObjectProperties(Consts.getProperties(type));
 		p.put(Agent.STRATEGY_KEY, strategy);
 		
 		if (strategy == null) return p;
 		
 		// Check that strategy is not blank
-		if (!strategy.equals("") && !type.equals(Consts.DUMMY)) {
+		if (!strategy.equals("") && !type.equals(Consts.AgentType.DUMMY)) {
 			String[] stratParams = strategy.split("[_]+");
 			if (stratParams.length % 2 != 0) {
 				return null;
@@ -230,5 +240,9 @@ public class SimulationSpec {
 			}
 		}
 		return p;
+	}
+	
+	public static ObjectProperties getAgentProperties(String type, String strategy) {
+		return getAgentProperties(AgentType.valueOf(type), strategy);
 	}
 }

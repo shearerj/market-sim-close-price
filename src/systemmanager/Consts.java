@@ -1,10 +1,13 @@
 package systemmanager;
 
-import data.ObjectProperties;
 import entity.*;
+import event.TimeStamp;
+import data.ObjectProperties;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
+
 
 /**
  * System-wide constants and accessor methods. Sets default properties for each
@@ -16,7 +19,7 @@ public class Consts {
 	
 	// 0 indicates no surplus discounting
 	public final static double[] rhos = {0, 0.0006};
-//	{0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009};
+	//	{0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009};
 	
 	// 0 means sampling every time step
 	public final static int[] periods = {0, 1, 250};
@@ -26,20 +29,33 @@ public class Consts {
 	// **********************************************************
 	// Agent, market, and model types
 	// UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL
-	public final static String AA = "AA";
-	public final static String ZI = "ZI";
-	public final static String ZIP = "ZIP";
-	public final static String ZIR = "ZIR";
-	public final static String BASICMARKETMAKER = "BASICMM";
-	public final static String LA = "LA";
-	public final static String DUMMY = "DUMMY";
+	public static enum AgentType {
+		AA, ZI, ZIP, ZIR, BASICMM, LA, DUMMY;
+		public static boolean contains(String s) {
+			for (AgentType a : values()) if (a.toString().equals(s)) return true;
+			return false;
+		}
+	};
 	
-	public final static String CALL = "CALL";
-	public final static String CDA = "CDA";
+	public static enum ModelType {
+		TWOMARKET, CENTRALCDA, CENTRALCALL;
+		public static boolean contains(String s) {
+			for (ModelType a : values()) if (a.toString().equals(s)) return true;
+			return false;
+		}
+	};
 	
-	public final static String TWOMARKET = "TWOMARKET";
-	public final static String CENTRALCDA = "CENTRALCDA";
-	public final static String CENTRALCALL = "CENTRALCALL";
+	public static enum MarketType {
+		CDA, CALL;
+		public static boolean contains(String s) {
+			for (MarketType a : values()) if (a.toString().equals(s)) return true;
+			return false;
+		}
+	}
+	public static final EnumSet<AgentType> BACKGROUND_AGENT = EnumSet.of(AgentType.ZI, AgentType.ZIR, AgentType.ZIP, AgentType.AA);
+	public static final EnumSet<AgentType> MARKETMAKER_AGENT = EnumSet.of(AgentType.BASICMM);
+	public static final EnumSet<AgentType> MM_AGENT = EnumSet.of(AgentType.LA, AgentType.DUMMY);
+	public static final EnumSet<AgentType> SM_AGENT = EnumSet.complementOf(MM_AGENT);
 	
 	public final static String ROLE_HFT = "HFT";
 	public final static String ROLE_MARKETMAKER = "MARKETMAKER";
@@ -54,52 +70,19 @@ public class Consts {
 	public final static List<String> roles = 
 			Arrays.asList(ROLE_HFT, ROLE_MARKETMAKER, ROLE_BACKGROUND);
 	
-	public final static List<String> MARKETMODEL_TYPES =
-			Arrays.asList(TWOMARKET, CENTRALCDA, CENTRALCALL);
-	
-	public final static List<String> SM_AGENT_TYPES = 
-			Arrays.asList(ZI, ZIR,  ZIP, BASICMARKETMAKER, AA);
-	public final static List<String> HFT_AGENT_TYPES =
-			Arrays.asList(LA, DUMMY);
-	public final static List<String> MARKETMAKER_AGENT_TYPES = 
-			Arrays.asList(BASICMARKETMAKER);
-	public final static List<String> BACKGROUND_AGENT_TYPES =
-			Arrays.asList(ZI, ZIR, ZIP);
-	
 	// **********************************************************
 	// Setting up models
 	public final static String MODEL_CONFIG_KEY = "config";
 	public final static String MODEL_CONFIG_NONE = "NONE";
 	
-	// ActivityList priorities (lower the number, higher the priority)
-	public final static int HIGHEST_PRIORITY = -999;
-	public final static int ARRIVAL_PRIORITY = -10; 	// inserted with high priority
-	public final static int HFT_ARRIVAL_PRIORITY = -10;
-	public final static int DEFAULT_PRIORITY = 0;
-	public final static int SUBMIT_BID_PRIORITY = 0;
-	public final static int CDA_CLEAR_PRIORITY = 1;
-	public final static int WITHDRAW_BID_PRIORITY = 2; // always happen after the bid is submitted
-	public final static int THRESHOLD_PRE_PRIORITY = 2;
-	public final static int SEND_TO_SIP_PRIORITY = 3;
-	public final static int UPDATE_NBBO_PRIORITY = 3;
-	public final static int CALL_CLEAR_PRIORITY = 4;
-	public final static int THRESHOLD_POST_PRIORITY = 5;
-	public final static int HFT_AGENT_PRIORITY = 7;
-	public final static int MARKETMAKER_PRIORITY = 8;
-	public final static int BACKGROUND_ARRIVAL_PRIORITY = 9;
-	// public final static int BACKGROUND_REENTRY_PRIORITY = 10;
-	public final static int BACKGROUND_AGENT_PRIORITY = 12;
-	public final static int LOWEST_PRIORITY = 999;
-	
 	// TimeStamp
-	public final static long INF_TIME = -1;
+	public final static TimeStamp INF_TIME = new TimeStamp(-1);
 	
 	// Price
 	public final static int INF_PRICE = Integer.MAX_VALUE;
 	
 	// Other
 	public final static String NAN = "NaN";
-	public final static double DOUBLE_NAN = Double.NaN;
 	
 	// **********************************************************
 	// FILENAMES
@@ -114,7 +97,6 @@ public class Consts {
 
 	// Constants in simulation_spec file
 	public final static String setupSuffix = "_setup";
-	
 	
 
 	// **********************************************************
@@ -156,46 +138,59 @@ public class Consts {
 	 * @param type
 	 */
 	public final static ObjectProperties getProperties(String type) {
-		
-		// UPDATE WHEN ADD NEW AGENT OR MARKET
-		ObjectProperties p = new ObjectProperties();
-		
-		if (type.equals(LA)) {
-			p.put(Agent.SLEEPTIME_KEY, "0");
-			p.put(Agent.SLEEPVAR_KEY, "100");
-			p.put(LAAgent.ALPHA_KEY, "0.001");
-		}
-		if (type.equals(BASICMARKETMAKER)) {
-			p.put(Agent.SLEEPTIME_KEY, "200");
-			p.put(Agent.SLEEPVAR_KEY, "100");
-			p.put(BasicMarketMaker.NUMRUNGS_KEY, "10");
-			p.put(BasicMarketMaker.RUNGSIZE_KEY, "1000");
-		}
-		if (type.equals(CALL)) {
-			p.put(CallMarket.PRICING_POLICY_KEY, "0.5");
-			p.put(CallMarket.CLEAR_FREQ_KEY, "100");
-		}
-		if (type.equals(ZI)) {
-			p.put(Agent.BIDRANGE_KEY, "2000");
-		}
-		if (type.equals(ZIR)) {
-			p.put(Agent.BIDRANGE_KEY, "5000");
-			p.put(Agent.MAXQUANTITY_KEY, "10");
-		}
-		if (type.equals(ZIP)) {
-			p.put(Agent.SLEEPTIME_KEY, "50");
-			p.put(Agent.SLEEPVAR_KEY, "100");
-			p.put("c_R","0.05");
-			p.put("c_A","0.05");
-			p.put("beta","0.03");
-			p.put("betaVar", "0.005");
-			p.put("gamma","0.5");
-		}
-		if (type.equals(AA)) {
-			// FILL IN
-			p.put(AAAgent.BIDRANGE_KEY, "200"); // example only
-		}
-		return p;
+		if (MarketType.contains(type))
+			return getProperties(MarketType.valueOf(type));
+		else if (AgentType.contains(type))
+			return getProperties(AgentType.valueOf(type));
+		else if (ModelType.contains(type))
+			return getProperties(ModelType.valueOf(type));
+		else
+			// Log?
+			return new ObjectProperties();
 	}
 	
+	public final static ObjectProperties getProperties(ModelType type) {
+		// UPDATE WHEN ADD NEW MODEL
+		ObjectProperties p = new ObjectProperties();
+		switch (type) {
+		default:
+			return p;
+		}
+	}
+
+	public final static ObjectProperties getProperties(MarketType type) {
+		// UPDATE WHEN ADD NEW MARKET
+		ObjectProperties p = new ObjectProperties();
+		switch (type) {
+		case CALL:
+			p.put(CallMarket.PRICING_POLICY_KEY, "0.5");
+			p.put(CallMarket.CLEAR_FREQ_KEY, "100");
+			return p;
+		case CDA:
+			return p;
+		default:
+			return p;
+		}
+	}
+
+	public final static ObjectProperties getProperties(AgentType type) {
+		// UPDATE WHEN ADD NEW AGENT
+		ObjectProperties p = new ObjectProperties();
+		switch (type) {
+		case LA:
+			p.put(Agent.SLEEPTIME_KEY, 0);
+			p.put(Agent.SLEEPVAR_KEY, 100);
+			p.put(LAAgent.ALPHA_KEY, 0.001);
+			return p;
+		case BASICMM:
+			p.put(Agent.SLEEPTIME_KEY, 200);
+			p.put(Agent.SLEEPVAR_KEY, 100);
+			p.put(BasicMarketMaker.NUMRUNGS_KEY, 10);
+			p.put(BasicMarketMaker.RUNGSIZE_KEY, 1000);
+			return p;
+		default:
+			return p;
+		}
+	}
+
 }

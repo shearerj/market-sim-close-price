@@ -1,17 +1,20 @@
 package entity;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+
+import logger.Logger;
+import market.PrivateValue;
+import model.MarketModel;
+import utils.RandPlus;
+import activity.Activity;
+import activity.AgentStrategy;
 import data.ArrivalTime;
 import data.ObjectProperties;
 import data.Observations;
 import data.SystemData;
-import event.*;
-import market.*;
-import activity.*;
-import systemmanager.*;
-
-import java.util.HashMap;
-import java.util.Random;
-import java.util.ArrayList;
+import event.TimeStamp;
 
 /**
  * ZIRAGENT
@@ -40,38 +43,36 @@ import java.util.ArrayList;
  */
 public class ZIRAgent extends BackgroundAgent {
 
-	private int bidRange;					// range for limit order
-	private ArrivalTime reentry;			// re-entry times
-	private int lastPositionBalance;		// last position balance
-	private int maxAbsPosition;				// max quantity for position
+	protected int bidRange;					// range for limit order
+	protected ArrivalTime reentry;			// re-entry times
+	protected int lastPositionBalance;		// last position balance
+	protected int maxAbsPosition;				// max quantity for position
 	
 	// for computing discounted surplus
 	private ArrayList<TimeStamp> submissionTimes;
 
-	/**
-	 * @param agentID
-	 * @param modelID
-	 * @param d
-	 * @param p
-	 * @param l
-	 */
-	public ZIRAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, modelID, d, p, l);
-		
-		rand = new Random(Long.parseLong(params.get(Agent.RANDSEED_KEY)));
-		arrivalTime = new TimeStamp(Long.parseLong(params.get(Agent.ARRIVAL_KEY)));
-		bidRange = Integer.parseInt(params.get(ZIRAgent.BIDRANGE_KEY));
+	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
+			Market market, RandPlus rand, ObjectProperties props) {
+		super(agentID, arrivalTime, model, market, rand);
+		bidRange = params.getAsInt(BIDRANGE_KEY, 5000);
+		maxAbsPosition = params.getAsInt(MAXQUANTITY_KEY, 10);
 		reentry = new ArrivalTime(arrivalTime, this.data.reentryRate, rand);
-		maxAbsPosition = Integer.parseInt(params.get(ZIRAgent.MAXQUANTITY_KEY));
 		lastPositionBalance = positionBalance;
 		
 		submissionTimes = new ArrayList<TimeStamp>();
+		alpha = new PrivateValue(initPrivateValues(maxAbsPosition));
+	}
+	
+	public ZIRAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
+		super(agentID, modelID, d, p);
 		
-		ArrayList<Integer> alphas = new ArrayList<Integer>();
-		for (int i = -maxAbsPosition; i <= maxAbsPosition; i++) {
-			if (i != 0)	alphas.add((int) Math.round(getNormalRV(0, this.data.pvVar)));
-		}
-		alpha = new PrivateValue(alphas);
+		bidRange = params.getAsInt(ZIRAgent.BIDRANGE_KEY);
+		reentry = new ArrivalTime(arrivalTime, this.data.reentryRate, rand);
+		maxAbsPosition = params.getAsInt(ZIRAgent.MAXQUANTITY_KEY);
+		lastPositionBalance = positionBalance;
+		
+		submissionTimes = new ArrayList<TimeStamp>();
+		alpha = new PrivateValue(initPrivateValues(maxAbsPosition));
 	}
 	
 	
@@ -86,9 +87,11 @@ public class ZIRAgent extends BackgroundAgent {
 	
 	
 	@Override
-	public ActivityHashMap agentStrategy(TimeStamp ts) {
-		ActivityHashMap actMap = new ActivityHashMap();
+	public Collection<Activity> agentStrategy(TimeStamp ts) {
+		Collection<Activity> actMap = new ArrayList<Activity>();
 
+		this.updateAllQuotes(ts);
+		
 		String s = ts + " | " + this + " " + agentType + ":";
 		if (!ts.equals(arrivalTime)) {
 			s += " wake up.";
@@ -109,18 +112,17 @@ public class ZIRAgent extends BackgroundAgent {
 			int newPosition = q + positionBalance;
 			// check that will not exceed max absolute position
 			if (newPosition <= maxAbsPosition && newPosition >= -maxAbsPosition) {
-				val = Math.max(0, data.getFundamentalAt(ts).sum(getPrivateValueAt(q)).getPrice());
+				val = Math.max(0, model.getFundamentalAt(ts).sum(getPrivateValueAt(q)).getPrice());
 				s += " position=" + positionBalance + ", for q=" + q + ", value=" + 
-						data.getFundamentalAt(ts) + " + " + getPrivateValueAt(q) + "=" + val;
+						model.getFundamentalAt(ts) + " + " + getPrivateValueAt(q) + "=" + val;
 				
 				if (q > 0) {
 					p = (int) Math.max(0, ((val - 2*bidRange) + rand.nextDouble()*2*bidRange));
 				} else {
 					p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
 				}
-				log.log(Log.INFO, s);
-				//actMap.appendActivityHashMap(submitNMSBid(p, q, ts));	// bid does not expire
-				actMap.appendActivityHashMap(executeSubmitNMSBid(p, q, ts));
+				Logger.log(Logger.INFO, s);
+				actMap.addAll(executeSubmitNMSBid(p, q, ts));
 				submissionTimes.add(ts);
 				
 				lastPositionBalance = positionBalance;	// update position balance
@@ -128,18 +130,15 @@ public class ZIRAgent extends BackgroundAgent {
 			} else {
 				s += "new order would exceed max position " + maxAbsPosition 
 						+ "; no submission";
-				log.log(Log.INFO, s);
+				Logger.log(Logger.INFO, s);
 			}
 			// if exceed max position, then don't submit a new bid
 			// TODO - stay the same for now (position balance)
 		} else {
-			log.log(Log.INFO, s);
+			Logger.log(Logger.INFO, s);
 		}
 		
-		TimeStamp tsNew = reentry.next();	// compute next re-entry time
-		// NOTE: reentry priority must be <= SubmitBid priority
-		actMap.insertActivity(Consts.DEFAULT_PRIORITY, 
-				new AgentReentry(this, Consts.BACKGROUND_AGENT_PRIORITY, tsNew));
+		actMap.add(new AgentStrategy(this, reentry.next()));
 		return actMap;
 	}
 

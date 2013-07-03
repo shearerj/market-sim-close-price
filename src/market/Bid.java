@@ -1,42 +1,45 @@
 package market;
 
+import entity.Agent;
+import entity.Market;
 import event.TimeStamp;
 
 public abstract class Bid {
 
-	public Integer bidID;
-	protected Integer agentID;
-	protected Integer marketID;
-	public TimeStamp timestamp;
-
-	public Bid() {
-		this.bidID = this.hashCode();
-	}
+	protected final int bidID;
+	protected final Agent agent;
+	protected final Market market;
+	protected final TimeStamp submitTime;
 	
-	public Bid(int aID, int mID) {
-		this.agentID = aID;
-		this.marketID = mID;
+	public Bid(Agent agent, Market market, TimeStamp submissionTime) {
+		this.agent = agent;
+		this.market = market;
+		this.submitTime = submissionTime;
 		this.bidID = this.hashCode();
 	}
 
 	public Bid(Bid other) {
 		this.bidID = other.bidID;
-		this.agentID = other.agentID;
-		this.marketID = other.marketID;
-		this.timestamp = other.timestamp;
+		this.agent = other.agent;
+		this.market = other.market;
+		this.submitTime = other.submitTime;
 	}
 	
-	/**
-	 * accessor function for agentID
-	 *
-	 * @return the agentID of the bid
-	 */
-	public int getAgentID() {
-		return agentID.intValue();
+	public Agent getAgent() {
+		return agent;
 	}
 
-	public void setAgentID(int id) {
-		agentID = new Integer(id);
+	public Market getMarket() {
+		return market;
+	}
+	
+	public TimeStamp getSubmitTime() {
+		return submitTime;
+	}
+	
+	@Deprecated // TODO Call getAgent instead
+	public int getAgentID() {
+		return agent.getID();
 	}
 
 	/**
@@ -45,16 +48,7 @@ public abstract class Bid {
 	 * @return bidID
 	 */
 	public int getBidID() {
-		return bidID.intValue();
-	}
-
-	/**
-	 * accessor function for marketID
-	 * 
-	 * @return marketID
-	 */
-	public int getMarketID() {
-		return marketID.intValue();
+		return bidID;
 	}
 
 

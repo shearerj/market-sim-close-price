@@ -15,7 +15,7 @@
  *
  *  $Id: Log.java,v 1.17 2004/09/27 18:11:55 chengsf Exp $
  */
-package systemmanager;
+package logger;
 
 import java.io.*;
 import java.util.*;
@@ -24,18 +24,18 @@ import java.io.StringWriter;
 import java.io.PrintWriter;
 
 /**
- * A simple logging facility.  Data can be logged to a file, along with
- * a simple datestamp (datestamp can be turned off if desired), similiar
- * to the UNIX syslog facility.                      <BR><BR>
- *
- * At midnight, the current logfile will be closed, and a new one will
- * be opened.  A percent symbol, representing the insertion point for
- * a date string, should be placed into the log_path
- * to allow the server to correctly open the new file.  An example
- * log_path is the string &quot;logs/loco1-%.log&quot;.  The standard log
- * of the Loco is of this type, as is the Loco EventLog.
+ * A simple logging facility. Data can be logged to a file, along with a simple
+ * datestamp (datestamp can be turned off if desired), similiar to the UNIX
+ * syslog facility. <BR>
+ * <BR>
+ * 
+ * At midnight, the current logfile will be closed, and a new one will be
+ * opened. A percent symbol, representing the insertion point for a date string,
+ * should be placed into the log_path to allow the server to correctly open the
+ * new file. An example log_path is the string &quot;logs/loco1-%.log&quot;. The
+ * standard log of the Loco is of this type, as is the Loco EventLog.
  */
-public class Log {
+class Log {
 	private String error_string;
 	private RandomAccessFile raf;
 	private boolean isopen = false;
@@ -43,10 +43,10 @@ public class Log {
 	private int day_opened = 0;
 	private String original_input_path;
 	private String root_path;
-	//  private SimpleDateFormat sdf;
+	// private SimpleDateFormat sdf;
 	private Calendar cal;
 	private StringBuffer sb;
-	private boolean prepend_date = true;  // Default to datestamping
+	private boolean prepend_date = true; // Default to datestamping
 	private boolean echo = false;
 	private boolean overwrite = false;
 
@@ -58,15 +58,21 @@ public class Log {
 
 	/**
 	 * Create a new Log.
-	 * @param lev   the logging level for this log
-	 * @param sroot  the path to the distributions's root directory
-	 * @param log_path the log path, relative to the root.  If this
-	 *               string contains a '%' (percent), the current date will
-	 *               be substituted into the filename at that location in the
-	 *               path.
-	 * @param o specifies if the log file is overwritten or appended. true = overwrite, false append.
+	 * 
+	 * @param lev
+	 *            the logging level for this log
+	 * @param sroot
+	 *            the path to the distributions's root directory
+	 * @param log_path
+	 *            the log path, relative to the root. If this string contains a
+	 *            '%' (percent), the current date will be substituted into the
+	 *            filename at that location in the path.
+	 * @param o
+	 *            specifies if the log file is overwritten or appended. true =
+	 *            overwrite, false append.
 	 */
-	public Log(int lev, String sroot, String log_path, boolean o) throws IOException {
+	public Log(int lev, String sroot, String log_path, boolean o)
+			throws IOException {
 		log_level = (lev < NO_LOGGING) ? NO_LOGGING : lev;
 
 		root_path = sroot;
@@ -80,7 +86,7 @@ public class Log {
 	 * called by the constructor
 	 */
 	private synchronized void init() throws IOException {
-		//    sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+		// sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
 		cal = Calendar.getInstance();
 		sb = new StringBuffer();
 
@@ -91,32 +97,30 @@ public class Log {
 
 	/**
 	 * Set the echo flag to control if message gets written to stdout.
-	 * @param state    The new echo state (true echo, false do not)
+	 * 
+	 * @param state
+	 *            The new echo state (true echo, false do not)
 	 */
 	public synchronized void setEcho(boolean state) {
 		echo = state;
 	}
 
 	/**
-	 * Adjusts the logging level to the specified level.  Calls to
-	 * log () with a level higher than that level previously set with
-	 * a setLevel() call or the constructor will be ignored.  Example:
-	 * if your current logging level in the Log object is ERROR,
-	 * calls with logging level DEBUG will be ignored,
-	 * but with level ERROR it will be written
-	 * to the logfile.
-	 *                                                              <BR><BR>
-	 * @param newlev the new logging level.
+	 * Adjusts the logging level to the specified level. Calls to log () with a
+	 * level higher than that level previously set with a setLevel() call or the
+	 * constructor will be ignored. Example: if your current logging level in
+	 * the Log object is ERROR, calls with logging level DEBUG will be ignored,
+	 * but with level ERROR it will be written to the logfile. <BR>
+	 * <BR>
+	 * 
+	 * @param newlev
+	 *            the new logging level.
 	 */
 	public synchronized void setLevel(int newlev) {
-		log_level = (newlev < NO_LOGGING) ?
-				NO_LOGGING : newlev;
+		log_level = (newlev < NO_LOGGING) ? NO_LOGGING : newlev;
 	}
 
-	/**
-	 * @return
-	 */
-	public int getLevel() {
+	public synchronized int getLevel() {
 		return log_level;
 	}
 	
@@ -138,8 +142,7 @@ public class Log {
 			raf = new RandomAccessFile(logpath, "rw");
 			if (!overwrite)
 				raf.seek(raf.length());
-		}
-		catch (IOException ioe) {
+		} catch (IOException ioe) {
 			error_string = ioe.toString();
 			return (false);
 		}
@@ -168,8 +171,7 @@ public class Log {
 			c = path.charAt(i);
 			if (c != '%') {
 				sb.append(c);
-			}
-			else {
+			} else {
 				sb.append(localsdf.format(dt));
 			}
 		}
@@ -177,24 +179,26 @@ public class Log {
 	}
 
 	/**
-	 * logs an line to the logfile, containing the string s.  If the
-	 * lev parameter is greater than the current log level, the call
-	 * will simply return, without writing.
-	 * @param lev  the level of this log request.  If higher than the
-	 *             current logging level, this request will be ignored
-	 * @param s    the string to be written to the log
+	 * logs an line to the logfile, containing the string s. If the lev
+	 * parameter is greater than the current log level, the call will simply
+	 * return, without writing.
+	 * 
+	 * @param lev
+	 *            the level of this log request. If higher than the current
+	 *            logging level, this request will be ignored
+	 * @param s
+	 *            the string to be written to the log
 	 */
 	public synchronized void log(int lev, String src, String s) {
 		/*
-Control-M is the Carriage Return.
-
-MacOS terminates lines with CR
-Unix terminates lines with LF
-
-Java/C escaping for CR is \r or (char)13
-Java/C escaping for LF is \n or (char)10
+		 * Control-M is the Carriage Return.
+		 * 
+		 * MacOS terminates lines with CR Unix terminates lines with LF
+		 * 
+		 * Java/C escaping for CR is \r or (char)13 Java/C escaping for LF is \n
+		 * or (char)10
 		 */
-		//    s = MySystem.cleanXMLStr(s);
+		// s = MySystem.cleanXMLStr(s);
 
 		if (lev <= log_level) {
 			Date dt = new Date();
@@ -225,8 +229,8 @@ Java/C escaping for LF is \n or (char)10
 					// do nothing is writing is interrupted
 				} catch (IOException ioe) {
 					closeLog();
-					System.out.println("write to log failed: " +
-							ioe.toString());
+					System.out
+							.println("write to log failed: " + ioe.toString());
 					ioe.printStackTrace();
 				}
 
@@ -236,12 +240,15 @@ Java/C escaping for LF is \n or (char)10
 	}
 
 	/**
-	 * logs an line to the logfile, containing the string s.  If the
-	 * lev parameter is greater than the current log level, the call
-	 * will simply return, without writing.
-	 * @param lev  the level of this log request.  If higher than the
-	 *             current logging level, this request will be ignored
-	 * @param s    the string to be written to the log
+	 * logs an line to the logfile, containing the string s. If the lev
+	 * parameter is greater than the current log level, the call will simply
+	 * return, without writing.
+	 * 
+	 * @param lev
+	 *            the level of this log request. If higher than the current
+	 *            logging level, this request will be ignored
+	 * @param s
+	 *            the string to be written to the log
 	 */
 	public synchronized void log(int lev, String s) {
 		s = s.replaceAll("\n", "");
@@ -275,8 +282,8 @@ Java/C escaping for LF is \n or (char)10
 					// do nothing is writing is interrupted
 				} catch (IOException ioe) {
 					closeLog();
-					System.out.println("write to log failed: " +
-							ioe.toString());
+					System.out
+							.println("write to log failed: " + ioe.toString());
 					ioe.printStackTrace();
 				}
 
@@ -286,21 +293,20 @@ Java/C escaping for LF is \n or (char)10
 	}
 
 	/**
-	 * Closes this Log.  Any subsequent writes to this Log are simply
-	 * ignored.
+	 * Closes this Log. Any subsequent writes to this Log are simply ignored.
 	 */
 	public synchronized void closeLog() {
 		isopen = false;
 
 		try {
 			raf.close();
-		}
-		catch (IOException ioe) {
+		} catch (IOException ioe) {
 		}
 	}
 
 	/**
 	 * Get the root path.
+	 * 
 	 * @return Returns the root path.
 	 */
 	public synchronized String getRootPath() {
@@ -309,6 +315,7 @@ Java/C escaping for LF is \n or (char)10
 
 	/**
 	 * Get relative path to the log file.
+	 * 
 	 * @return Returns the relative path to the log file.
 	 */
 	public synchronized String getLogPath() {
@@ -316,18 +323,20 @@ Java/C escaping for LF is \n or (char)10
 	}
 
 	/**
-	 * Call this method with a prepend value of false to turn off the
-	 * automatic prepending of the date on each log output line.
-	 *                                                              <BR><BR>
-	 * @param prepend make this true if you want the Log object to
-	 *        prepend the date to the beginning of your log output
-	 *        lines, or false to turn off the datestamping.
+	 * Call this method with a prepend value of false to turn off the automatic
+	 * prepending of the date on each log output line. <BR>
+	 * <BR>
+	 * 
+	 * @param prepend
+	 *            make this true if you want the Log object to prepend the date
+	 *            to the beginning of your log output lines, or false to turn
+	 *            off the datestamping.
 	 */
 	public synchronized void setPrependDate(boolean prepend) {
 		prepend_date = prepend;
 	}
 
-	//return a string representation of the stack trace for exception e
+	// return a string representation of the stack trace for exception e
 	public synchronized static String stackTraceToString(Exception e) {
 		StringWriter buffer = new StringWriter();
 		PrintWriter out = new PrintWriter(buffer);
@@ -337,9 +346,11 @@ Java/C escaping for LF is \n or (char)10
 
 	/**
 	 * Move the current log file to gameID_[log-name] and create a new log file.
-	 * @param gameID the game ID
+	 * 
+	 * @param gameID
+	 *            the game ID
 	 * @return the name of the new log file, no path information; on an error,
-	 * returns an empty string.
+	 *         returns an empty string.
 	 */
 	public synchronized String saveLog(int gameID) {
 		closeLog();
@@ -375,4 +386,3 @@ Java/C escaping for LF is \n or (char)10
 		closeLog();
 	}
 }
-

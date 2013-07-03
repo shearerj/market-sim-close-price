@@ -1,5 +1,7 @@
 package data;
 
+import systemmanager.Consts.AgentType;
+
 
 /**
  * Pair of (agent type, object string). Used to store assignments from specification
@@ -9,15 +11,15 @@ package data;
  */
 public class AgentPropsPair {
 
-	  private final String left;
+	  private final AgentType left;
 	  private final ObjectProperties right;
 
-	  public AgentPropsPair(String left, ObjectProperties right) {
+	  public AgentPropsPair(AgentType left, ObjectProperties right) {
 		  this.left = left;
 		  this.right = right;
 	  }
 
-	  public String getAgentType() { return left; }
+	  public AgentType getAgentType() { return left; }
 
 	  public ObjectProperties getProperties() { return right; }
 

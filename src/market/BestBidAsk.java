@@ -1,5 +1,6 @@
 package market;
 
+import entity.Market;
 import systemmanager.Consts;
 
 /**
@@ -9,24 +10,34 @@ import systemmanager.Consts;
  */
 public class BestBidAsk {
 
-	// initialize to -1
-	public int bestBidMarket = 1;
-	public int bestBid = -1;
-	public int bestAskMarket = 1;
-	public int bestAsk = -1;
+	public final Market bestBidMarket, bestAskMarket;
+	public final Price bestBid, bestAsk;
+	
+	public BestBidAsk(Market bestBidMarket, Price bestBid, Market bestAskMarket, Price bestAsk) {
+		this.bestBidMarket = bestBidMarket;
+		this.bestBid       = bestBid;
+		this.bestAskMarket = bestAskMarket;
+		this.bestAsk       = bestAsk;
+	}
+	
+	// TODO make prices null?
+	public BestBidAsk() {
+		// initialize to -1
+		this(null, null, null, null);
+	}
 
 	/**
 	 * @return bid-ask spread of the quote (integer)
 	 */
 	public int getSpread() {
-		if (bestAsk >= bestBid) {
-			if (bestAsk == -1 || bestAsk == Consts.INF_PRICE) {	// ask undefined
+		if (bestAsk.compareTo(bestBid) >= 0) {
+			if (bestAsk.getPrice() == -1 || bestAsk.equals(Consts.INF_PRICE)) {	// ask undefined
 				return -Consts.INF_PRICE;
 			}
-			if (bestBid == -1 || bestBid == 0) {	// bid undefined
+			if (bestBid.getPrice() == -1 || bestBid.getPrice() == 0) {	// bid undefined
 				return Consts.INF_PRICE;
 			}
-			return bestAsk - bestBid;
+			return bestAsk.getPrice() - bestBid.getPrice();
 		}
 		// if bid crosses the ask, return a spread of INF
 		return Consts.INF_PRICE;

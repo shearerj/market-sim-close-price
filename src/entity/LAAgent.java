@@ -3,10 +3,14 @@ package entity;
 import data.*;
 import data.SystemData;
 import event.*;
+import logger.Logger;
 import market.*;
 import activity.*;
 import systemmanager.*;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 
 /**
@@ -21,20 +25,17 @@ import java.util.HashMap;
 public class LAAgent extends HFTAgent {
 	
 	private double alpha; // LA profit gap
-	private int sleepTime;
-	private double sleepVar;
-	
 	
 	/**
 	 * @param agentID
 	 */
-	public LAAgent(int agentID, int modelID, SystemData d, ObjectProperties p, Log l) {
-		super(agentID, modelID, d, p, l);
+	public LAAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
+		super(agentID, modelID, d, p);
 		arrivalTime = new TimeStamp(0);
 
-		alpha = Double.parseDouble(params.get(LAAgent.ALPHA_KEY));
-		sleepTime = Integer.parseInt(params.get(Agent.SLEEPTIME_KEY));
-		sleepVar = Double.parseDouble(params.get(Agent.SLEEPVAR_KEY));
+		alpha = params.getAsDouble(LAAgent.ALPHA_KEY);
+		sleepTime = params.getAsInt(Agent.SLEEPTIME_KEY);
+		sleepVar = params.getAsDouble(Agent.SLEEPVAR_KEY);
 	}
 	
 	
@@ -50,16 +51,19 @@ public class LAAgent extends HFTAgent {
 	}
 	
 	@Override
-	public ActivityHashMap agentStrategy(TimeStamp ts) {
+	public Collection<Activity> agentStrategy(TimeStamp ts) {
 
 		// Ensure that agent has arrived in the market
 		if (ts.compareTo(arrivalTime) >= 0) {
-			ActivityHashMap actMap = new ActivityHashMap();
-
+			Collection<Activity> actMap = new ArrayList<Activity>();
+			
+			// update quotes
+			this.updateAllQuotes(ts);
 			BestQuote bestQuote = findBestBuySell();
+			
 			if ((bestQuote.bestSell > (1+alpha)*bestQuote.bestBuy) && (bestQuote.bestBuy >= 0) ) {
 				
-				log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
+				Logger.log(Logger.INFO, ts.toString() + " | " + this + " " + agentType + 
 						"::agentStrategy: Found possible arb opp!");
 
 				int buyMarketID = bestQuote.bestBuyMarket;
@@ -78,53 +82,47 @@ public class LAAgent extends HFTAgent {
 					int quantity = Math.min(buySize, sellSize);
 
 					if (quantity > 0 && (buyMarketID != sellMarketID)) {
-						actMap.appendActivityHashMap(submitBid(buyMarket, midPoint-tickSize, 
-								quantity, ts));
-						actMap.appendActivityHashMap(submitBid(sellMarket, midPoint+tickSize, 
-								-quantity, ts));
-						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
+						Logger.log(Logger.INFO, ts.toString() + " | " + this + " " + agentType + 
 								"::agentStrategy: Exploit existing arb opp: " + bestQuote + 
 								" in " + data.getMarket(bestQuote.bestBuyMarket) + " & " 
 								+ data.getMarket(bestQuote.bestSellMarket));
+						
+						actMap.addAll(executeSubmitBid(buyMarket, midPoint-tickSize, 
+								quantity, ts));
+						actMap.addAll(executeSubmitBid(sellMarket, midPoint+tickSize, 
+								-quantity, ts));
 
 					} else if (buyMarketID == sellMarketID) {
-						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
+						Logger.log(Logger.INFO, ts.toString() + " | " + this + " " + agentType + 
 								"::agentStrategy: No arb opp since at least 1 market does not " +
 								"have both a bid and an ask");
 						// Note that this is due to a market not having both a bid & ask price,
 						// causing the buy and sell market IDs to be identical
 
 					} else if (quantity == 0) {
-						log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
+						Logger.log(Logger.INFO, ts.toString() + " | " + this + " " + agentType + 
 								"::agentStrategy: No quantity available");
 						// Note that if this message appears in a CDA market, then the HFT
 						// agent is beating the market's Clear activity, which is incorrect.
 					}
 					
 				} else {
-					log.log(Log.INFO, ts.toString() + " | " + this + " " + agentType + 
+					Logger.log(Logger.INFO, ts.toString() + " | " + this + " " + agentType + 
 							"::agentStrategy: Market quote(s) undefined. No bid submitted.");
 				}
 				
 			}
 			if (sleepTime > 0) {
 				TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
-				actMap.insertActivity(Consts.HFT_ARRIVAL_PRIORITY, 
-						new AgentReentry(this, Consts.HFT_AGENT_PRIORITY, tsNew));
-//				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
-//				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
+				actMap.add(new AgentStrategy(this, tsNew));
 				
 			} else if (sleepTime == 0) {
 				// infinitely fast HFT agent
-				TimeStamp tsNew = new TimeStamp(Consts.INF_TIME);
-//				actMap.insertActivity(Consts.DEFAULT_PRIORITY, 
-//						new AgentReentry(this, Consts.HFT_ARRIVAL_PRIORITY, tsNew));
-				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new UpdateAllQuotes(this, tsNew));
-				actMap.insertActivity(Consts.HFT_AGENT_PRIORITY, new AgentStrategy(this, tsNew));
+//				actMap.add(new AgentStrategy(this, Consts.INF_TIME));
 			}
 			return actMap;
 		}
-		return null;
+		return Collections.emptyList();
 	}
 	
 	

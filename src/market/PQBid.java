@@ -3,6 +3,10 @@ package market;
 import java.util.Iterator;
 import java.util.TreeSet;
 
+import entity.Agent;
+import entity.Market;
+import event.TimeStamp;
+
 /**
  * Contains array of PQPoints which can be evaluated independently by
  * the market (i.e., the bid is divisible). Bids are contained in
@@ -12,24 +16,16 @@ import java.util.TreeSet;
  */
 public class PQBid extends Bid {
 
-	private PQPointComparator comp;
 	public TreeSet<PQPoint> bidTreeSet;
 	
-	public PQBid() {
-		super();
-		comp = new PQPointComparator();
-		bidTreeSet = new TreeSet<PQPoint>(comp);
-	}
-	
-	public PQBid(int agentID, int marketID) {
-		super(agentID, marketID);
-		comp = new PQPointComparator();
-		bidTreeSet = new TreeSet<PQPoint>(comp);
+	public PQBid(Agent agent, Market market, TimeStamp submissionTime) {
+		super(agent, market, submissionTime);
+		bidTreeSet = new TreeSet<PQPoint>(new PQPointComparator());
 	}
 
 	public PQBid(PQBid other) {
 		super(other);
-		this.comp = other.comp;
+		// XXX Copied from AB3D. Potentially not a copy constructor, don't change.
 		this.bidTreeSet = other.bidTreeSet;
 	}
 	
@@ -50,6 +46,7 @@ public class PQBid extends Bid {
 	 */
 	public void addPoint(int q, Price p) {
 		PQPoint pq = new PQPoint(q, p);
+		pq.Parent = this;
 		addPoint(pq);
 	}
 
@@ -87,7 +84,7 @@ public class PQBid extends Bid {
 	 * @return number of units this is an offer for at a price of quote
 	 */
 	public Bid netOffer(Bid minimum, int strict) {
-		PQBid netoffer = new PQBid();
+		PQBid netoffer = new PQBid(this);
 		Price price = ((PQBid) minimum).bidTreeSet.first().getPrice();
 		if (bidTreeSet == null || bidTreeSet.isEmpty()) return null;
 

@@ -1,15 +1,26 @@
 package entity;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.TreeMap;
+
+import systemmanager.Consts;
+
+import logger.Logger;
+import market.Bid;
+import market.PQOrderBook;
+import market.Price;
+import market.Quote;
+import market.Transaction;
+import model.MarketModel;
+import activity.Activity;
+import activity.ProcessQuote;
+import activity.SendToSIP;
+import activity.UpdateNBBO;
 import data.ObjectProperties;
 import data.SystemData;
-import event.*;
-import model.*;
-import market.*;
-import activity.*;
-import systemmanager.*;
-
-import java.util.ArrayList;
-import java.util.HashMap;
+import event.TimeStamp;
 
 /**
  * Base class for all markets.
@@ -18,9 +29,17 @@ import java.util.HashMap;
  */
 public abstract class Market extends Entity {
 
+	// reorg
+	protected final MarketModel model;
+	protected ArrayList<Bid> bids;
+	// XXX There should probably be more model specific stuff here...
+	protected PQOrderBook orderbook;
+	// end reorg
+
 	// Model information
-	protected int modelID;				// ID of associated model
-	
+	// TODO equals method...
+	protected int modelID; // ID of associated model
+
 	// Agent information
 	protected ArrayList<Integer> buyers;
 	protected ArrayList<Integer> sellers;
@@ -28,7 +47,7 @@ public abstract class Market extends Entity {
 
 	// Market information
 	public TimeStamp nextQuoteTime;
-	public TimeStamp nextClearTime;		// Most important for call markets
+	public TimeStamp nextClearTime; // Most important for call markets
 	public TimeStamp lastQuoteTime;
 	public TimeStamp lastClearTime;
 	public TimeStamp lastBidTime;
@@ -40,20 +59,19 @@ public abstract class Market extends Entity {
 	public String marketType;
 	public int ip_LA_ID; // ID for LA & SM ip's
 	public int ip_SM_ID;
-	public IP_LA ip_LA;
+	public LAInformationProcessor ip_LA;
 	public IP_SM ip_SM;
 	
 
-	/**
-	 * @param marketID
-	 * @param d
-	 * @param p
-	 * @param l
-	 * @param ipID
-	 */
-	public Market(int marketID, SystemData d, ObjectProperties p, Log l, int ipID) {
-		super(marketID, d, p, l);
+	public Market(int marketID, MarketModel model) {
+		super(marketID);
+		this.model = model;
+	}
 
+	public Market(int marketID, SystemData d, ObjectProperties p,
+			MarketModel model, int ipID) {
+		super(marketID, d, p);
+		
 		agentIDs = new ArrayList<Integer>();
 		buyers = new ArrayList<Integer>();
 		sellers = new ArrayList<Integer>();
@@ -62,7 +80,7 @@ public abstract class Market extends Entity {
 		lastClearTime = new TimeStamp(-1);
 		nextQuoteTime = new TimeStamp(-1);
 		nextClearTime = new TimeStamp(-1);
-		
+
 		lastClearPrice = new Price(-1);
 		lastAskPrice = new Price(-1);
 		lastBidPrice = new Price(-1);
@@ -70,14 +88,17 @@ public abstract class Market extends Entity {
 		ip_LA_ID = ipID;
 		ip_SM_ID = ipID + 1;
 		
-		ip_LA = new IP_LA(ipID, d, l, marketID);
-		ip_SM = new IP_SM(ipID + 1, d, l, marketID);
+		ip_LA = new LAInformationProcessor(ipID, d, marketID);
+		ip_SM = new IP_SM(ipID + 1, d, marketID);
+		// reorg
+		this.model = model;
+		this.orderbook = new PQOrderBook(this);
 	}
 	
 	/**
 	 * @return IP_LA
 	 */
-	public IP_LA getIPLA() {
+	public LAInformationProcessor getIPLA() {
 		return this.ip_LA;
 	}
 	
@@ -96,14 +117,14 @@ public abstract class Market extends Entity {
 	public void linkModel(int id) {
 		this.modelID = id;
 	}
-	
+
 	/**
 	 * @return model ID
 	 */
 	public int getModelID() {
 		return this.modelID;
 	}
-	
+
 	/**
 	 * @return bid (highest buy offer)
 	 */
@@ -137,7 +158,7 @@ public abstract class Market extends Entity {
 	public int getAskQuantity() {
 		return lastAskQuantity;
 	}
-	
+
 	/**
 	 * Publish quotes.
 	 * 
@@ -151,7 +172,54 @@ public abstract class Market extends Entity {
 	 * @param clearTime
 	 * @return
 	 */
-	public abstract ActivityHashMap clear(TimeStamp clearTime);
+	public Collection<Activity> clear(TimeStamp clearTime) {
+		Collection<Activity> actList = new ArrayList<Activity>();
+		
+		//Log prior quote
+		Logger.log(Logger.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
+				this.quote(clearTime));
+		
+		//Update the orderbook
+		orderbook.logActiveBids(clearTime);
+		orderbook.logFourHeap(clearTime);
+		
+		ArrayList<Transaction> trans = orderbook.earliestPriceClear(clearTime);
+		lastClearTime = clearTime;
+		
+		//If there are no new transactions
+		if(trans == null) {
+			data.addDepth(id, clearTime, orderbook.getDepth());
+			
+			Logger.log(Logger.INFO, clearTime + " | ....." + this + " " + 
+					this.getName() + "::clear: No change. Post-clear Quote" +  
+					this.quote(clearTime));
+			
+			actList.add(new SendToSIP(this, clearTime));
+			return actList;
+		}
+		//Otherwise, update and log Transactions
+		for(Transaction tr : trans) {
+			model.addTrans(tr);
+			//update and log transactions
+			tr.getBuyer().updateTransactions(clearTime);
+			tr.getBuyer().logTransactions(clearTime);
+			tr.getSeller().updateTransactions(clearTime);
+			tr.getSeller().logTransactions(clearTime);
+			lastClearPrice = tr.price;			
+		}
+		
+		//Orderbook logging
+		orderbook.logActiveBids(clearTime);
+		orderbook.logClearedBids(clearTime);
+		orderbook.logFourHeap(clearTime);
+		//Updating Depth
+		data.addDepth(this.id, clearTime, orderbook.getDepth());
+		Logger.log(Logger.INFO, clearTime + " | ....." + toString() + " " + 
+				this.getName() + "::clear: Order book cleared: " +
+				"Post-clear Quote" + this.quote(clearTime));
+		actList.add(new SendToSIP(this, clearTime));
+		return actList;
+	}
 
 	/**
 	 * @return map of bids (hashed by agent ID)
@@ -159,24 +227,35 @@ public abstract class Market extends Entity {
 	public abstract HashMap<Integer, Bid> getBids();
 
 	/**
+	 * Returns all bids submitted to this market
+	 * 
+	 * @return bids
+	 */
+	public ArrayList<Bid> getAllBids() {
+		return this.bids;
+	}
+
+	/**
 	 * Add bid to the market.
 	 * 
 	 * @param b
-	 * @param ts TimeStamp of bid addition
-	 * @return ActivityHashMap of further activities to add, if any
+	 * @param ts
+	 *            TimeStamp of bid addition
+	 * @return Collection<Activity> of further activities to add, if any
 	 */
-	public abstract ActivityHashMap addBid(Bid b, TimeStamp ts);
+	public abstract Collection<? extends Activity> addBid(Bid b, TimeStamp ts);
 
 	/**
 	 * Remove bid for given agent from the market.
 	 * 
 	 * @param agentID
-	 * @param ts TimeStamp of bid removal
-	 * @return ActivityHashMap (unused for now)
+	 * @param ts
+	 *            TimeStamp of bid removal
+	 * @return Collection<Activity> (unused for now)
 	 */
-	public abstract ActivityHashMap removeBid(int agentID, TimeStamp ts);
-	
-	
+	public abstract Collection<? extends Activity> removeBid(int agentID,
+			TimeStamp ts);
+
 	/**
 	 * Clears all the market's data structures.
 	 */
@@ -196,30 +275,31 @@ public abstract class Market extends Entity {
 	}
 
 	/**
- 	 * Send market's bid/ask to the Security Information Processor and other IP's
- 	 *  to be processed at some time
- 	 * (determined by latency) in the future.
- 	 *
- 	 * @param ts
- 	 * @return
- 	 */
-	public ActivityHashMap sendToSIP(TimeStamp ts) {
-                int bid = this.getBidPrice().getPrice();
-                int ask = this.getAskPrice().getPrice();
-		log.log(Log.INFO, ts + " | " + this + " SendToSIP(" + bid + ", " + ask + ")");
+	 * Send market's bid/ask to the Security Information Processor to be
+	 * processed at some time (determined by latency) in the future.
+	 * 
+	 * @param ts
+	 * @return
+	 */
+	public Collection<Activity> sendToSIP(TimeStamp ts) {
+		int bid = this.getBidPrice().getPrice();
+		int ask = this.getAskPrice().getPrice();
+		Logger.log(Logger.INFO, ts + " | " + this + " SendToSIP(" + bid + ", "
+				+ ask + ")");
 
-		ActivityHashMap actMap = new ActivityHashMap();
-		MarketModel model = data.getModelByMarketID(this.getID());
+		Collection<Activity> actMap = new ArrayList<Activity>();
 		Sip_Prime sip = model.sip;
-		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new ProcessQuote(sip, this, bid, ask, ts.sum(data.nbboLatency)));
-		actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(sip, model, ts.sum(data.nbboLatency)));
-		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new ProcessQuote(ip_LA, this, bid, ask, ts.sum(data.hftLatency)));
-		actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(ip_LA, model, ts.sum(data.hftLatency)));
-		actMap.insertActivity(Consts.SEND_TO_SIP_PRIORITY, new ProcessQuote(ip_SM, this, bid, ask, ts.sum(data.smLatency)));
-		actMap.insertActivity(Consts.UPDATE_NBBO_PRIORITY, new UpdateNBBO(ip_SM, model, ts.sum(data.smLatency)));
+		
+		actMap.add(new ProcessQuote(sip, this, bid, ask, ts.sum(data.nbboLatency)));
+		actMap.add(new UpdateNBBO(sip, model, ts.sum(data.nbboLatency)));
+		actMap.add(new ProcessQuote(ip_LA, this, bid, ask, ts.sum(data.hftLatency)));
+		actMap.add(new UpdateNBBO(ip_LA, model, ts.sum(data.hftLatency)));
+		actMap.add(new ProcessQuote(ip_SM, this, bid, ask, ts.sum(data.smLatency)));
+		actMap.add(new UpdateNBBO(ip_SM, model, ts.sum(data.smLatency)));
+	
 		return actMap;
 	}
-	
+
 	/**
 	 * @return true if both BID & ASK are defined (!= -1)
 	 */
@@ -229,14 +309,16 @@ public abstract class Market extends Entity {
 		}
 		return true;
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
 		return new String("[" + this.getID() + "]");
 	}
-	
+
 	/**
 	 * Returns true if agent can sell in this market.
 	 * 
@@ -305,18 +387,35 @@ public abstract class Market extends Entity {
 		return lastQuoteTime;
 	}
 
-	
+	public Collection<Transaction> getModelTrans() {
+		return model.getTrans();
+	}
+
+	public MarketModel getMarketModel() {
+		return model;
+	}
+
 	/**
 	 * Quantizes the given integer based on the given granularity. Formula from
 	 * Wikipedia (http://en.wikipedia.org/wiki/Quantization_signal_processing)
 	 * 
-	 * @param num integer to quantize
-	 * @param n granularity (e.g. tick size)
+	 * @param num
+	 *            integer to quantize
+	 * @param n
+	 *            granularity (e.g. tick size)
 	 * @return
 	 */
 	public static int quantize(int num, int n) {
 		double tmp = 0.5 + Math.abs((double) num) / ((double) n);
-		return Integer.signum(num) * n * (int)Math.floor(tmp);
+		return Integer.signum(num) * n * (int) Math.floor(tmp);
+	}
+
+	@Deprecated
+	public TreeMap<Integer, TimeStamp> getSubmissionTimes() {
+		TreeMap<Integer, TimeStamp> map = new TreeMap<Integer, TimeStamp>();
+		for (Bid b : this.bids)
+			map.put(b.getBidID(), b.getSubmitTime());
+		return map;
 	}
 
 }

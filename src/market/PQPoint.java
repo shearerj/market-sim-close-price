@@ -6,18 +6,21 @@ package market;
 
 import java.util.*;
 
+import entity.Agent;
+import entity.Market;
+
 /**
  * a single price-quantity bid point
  */
-public class PQPoint extends Point implements Comparable {
+public class PQPoint extends Point implements Comparable<PQPoint> {
 	
 	protected Price price;
 	protected int quantity;
 	protected int originalQuantity;
 
 	public PQBid Parent; 	//refer back to enclosing bid for timestamp/agentID
-	static Comparator comp;
-	public static Comparator compQtyPrice = new PQPointComparator(1, 2, 0);
+	static Comparator<PQPoint> comp;
+	public static Comparator<PQPoint> compQtyPrice = new PQPointComparator(1, 2, 0);
 
 	/**
 	 * create point with zero price/quantity
@@ -96,10 +99,18 @@ public class PQPoint extends Point implements Comparable {
 	 *
 	 * @return the agentID of the parent Bid
 	 */
-	public  int getAgentID()
+	public int getAgentID()
 	{
 		if (Parent == null) return 0;
-		else return Parent.agentID.intValue();
+		else return Parent.getAgent().getID();
+	}
+	
+	public Agent getAgent() {
+		return Parent.getAgent();
+	}
+	
+	public Market getMarket() {
+		return Parent.getMarket();
 	}
 
 	/**
@@ -191,7 +202,7 @@ public class PQPoint extends Point implements Comparable {
 	 */
 	static Price earliestPrice(PQPoint P1, PQPoint P2)
 	{
-		if (P1.Parent.timestamp.compareTo(P2.Parent.timestamp) < 0)
+		if (P1.Parent.submitTime.compareTo(P2.Parent.submitTime) < 0)
 			return P1.getPrice();
 		else
 			return P2.getPrice();
@@ -213,11 +224,9 @@ public class PQPoint extends Point implements Comparable {
 	 * @param other bid to compare to
 	 * @return  -1/0/1
 	 */
-	public int compareTo(Object other) 
+	public int compareTo(PQPoint other) 
 	{
-		PQPoint other_pq = (PQPoint)other;
-
-		return comp.compare(this, other_pq);
+		return comp.compare(this, other);
 	}
 }
 

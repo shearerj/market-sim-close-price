@@ -10,15 +10,15 @@ import data.SystemData;
  * 
  * @author ewah
  */
-public class IP_LA extends IP_Single_Market {
+public class LAInformationProcessor extends IP_Single_Market {
 	
 	/**
 	 * Constructor
 	 * @param ID
 	 * @param d
 	 */
-	public IP_LA(int ID, SystemData d, Log l, int marketID) {
-		super(ID, d, l, marketID);
+	public LAInformationProcessor(int ID, SystemData d, int marketID) {
+		super(ID, d, marketID);
 	}
 	
 	/* (non-Javadoc)

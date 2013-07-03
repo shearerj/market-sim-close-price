@@ -1,9 +1,15 @@
 package model;
 
+import java.util.Map;
+
+import data.AgentProperties;
+import data.FundamentalValue;
 import data.ObjectProperties;
 import data.SystemData;
 import entity.CallMarket;
+import event.TimeStamp;
 import systemmanager.*;
+import utils.RandPlus;
 
 /**
  * CENTRALCALL
@@ -19,13 +25,20 @@ import systemmanager.*;
  */
 public class CentralCall extends MarketModel {
 
-	public CentralCall(int modelID, ObjectProperties p, SystemData d, int sipID, Log l) {
-		super(modelID, p, d, sipID, l);
+
+	public CentralCall(int modelID, FundamentalValue fundamental,
+			Map<AgentProperties, Integer> agentProps,
+			ObjectProperties modelProps, RandPlus rand) {
+		super(modelID, fundamental, agentProps, modelProps, rand);
+	}
+	
+	public CentralCall(int modelID, ObjectProperties p, SystemData d, int sipID) {
+		super(modelID, p, d, sipID);
 		
-		config = p.get(Consts.MODEL_CONFIG_KEY);
+		config = p.getAsString(Consts.MODEL_CONFIG_KEY);
 		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
 			
-			ObjectProperties mktProperties = Consts.getProperties(Consts.CALL);
+			ObjectProperties mktProperties = Consts.getProperties(Consts.MarketType.CALL);
 			
 			// Set clearing frequency to be NBBO latency or a constant
 			if (config.equals("NBBO")) {
@@ -36,12 +49,25 @@ public class CentralCall extends MarketModel {
 				mktProperties.put(CallMarket.CLEAR_FREQ_KEY, config.substring(5));
 			}
 			
-			addMarketPropertyPair(Consts.CALL, mktProperties);
+			addMarketPropertyPair(Consts.MarketType.CALL, mktProperties);
 		}
 	}
 	
 	@Override
 	public String getConfig() {
 		return config;
+	}
+
+	@Override
+	protected void setupMarkets(ObjectProperties modelProps) {
+		// FIXME These values are probably not correct.
+		float pricingPolicy = modelProps.getAsFloat(CallMarket.PRICING_POLICY_KEY, 0);
+		TimeStamp clearFreq = new TimeStamp(modelProps.getAsLong(CallMarket.CLEAR_FREQ_KEY, 1000));
+		markets.add(new CallMarket(1, this, pricingPolicy, clearFreq));
+	}
+
+	@Override
+	protected void setupModelAgents(ObjectProperties modelProps) {
+		// Do nothing
 	}
 }

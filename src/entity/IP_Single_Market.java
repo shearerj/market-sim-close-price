@@ -2,11 +2,15 @@ package entity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+
 import data.SystemData;
 
-import activity.ActivityHashMap;
+import java.util.Collection;
+import activity.Activity;
 import event.*;
 import market.*;
+import logger.Logger;
 import model.MarketModel;
 import systemmanager.*;
 
@@ -18,7 +22,7 @@ import systemmanager.*;
  * 
  * @author ewah
  */
-public abstract class IP_Single_Market extends IP_Super {
+public abstract class IP_Single_Market extends AbstractIP {
 
 	protected int marketID;
 	
@@ -27,8 +31,8 @@ public abstract class IP_Single_Market extends IP_Super {
 	 * @param ID
 	 * @param d
 	 */
-	public IP_Single_Market(int ID, SystemData d, Log l, int marketID) {
-		super(ID, d, l);
+	public IP_Single_Market(int ID, SystemData d, int marketID) {
+		super(ID, d);
 		this.marketID = marketID;
 	}
 	
@@ -54,9 +58,9 @@ public abstract class IP_Single_Market extends IP_Super {
 	 * @param ts
 	 * @return
 	 */
-	public ActivityHashMap updateNBBO(MarketModel model, TimeStamp ts) {
+	public Collection<Activity> updateNBBO(MarketModel model, TimeStamp ts) {
 		
-		ActivityHashMap actMap = new ActivityHashMap();
+		Collection<Activity> actMap = new ArrayList<Activity>();
 		
 		int modelID = model.getID();
 		ArrayList<Integer> ids = model.getMarketIDs();
@@ -66,12 +70,12 @@ public abstract class IP_Single_Market extends IP_Super {
 		Integer[] array = {marketID};
 		BestBidAsk lastQuote = computeBestBidOffer(new ArrayList<Integer>(Arrays.asList(array)), true);
 			
-		int bestBid = lastQuote.bestBid;
-		int bestAsk = lastQuote.bestAsk;
+		int bestBid = lastQuote.bestBid.getPrice();
+		int bestAsk = lastQuote.bestAsk.getPrice();
 		if ((bestBid != -1) && (bestAsk != -1)) {
 			// check for inconsistency in buy/sell prices & fix if found
-			if (lastQuote.bestBid > lastQuote.bestAsk) {
-				int mid = (lastQuote.bestBid + lastQuote.bestAsk) / 2;
+			if (bestBid > bestAsk) {
+				int mid = (bestBid+ bestAsk) / 2;
 				bestBid = mid - this.tickSize;
 				bestAsk = mid + this.tickSize;
 				s += " (before fix) " + lastQuote + " --> ";
@@ -86,11 +90,10 @@ public abstract class IP_Single_Market extends IP_Super {
 			// store spread of INF since no bid-ask spread
 			this.data.addNBBOSpread(modelID, ts, Consts.INF_PRICE);
 		}
-		lastQuote.bestBid = bestBid;
-		lastQuote.bestAsk = bestAsk;
+		lastQuote = new BestBidAsk(lastQuote.bestBidMarket, new Price(bestBid), lastQuote.bestAskMarket, new Price(bestAsk));
 		lastQuotes.put(modelID, lastQuote);
-		log.log(Log.INFO, s + "updated " + lastQuote);
-		return actMap;
+		Logger.log(Logger.INFO, s + "updated " + lastQuote);
+		return Collections.emptyList();
 	}
 	
 	/* (non-Javadoc)

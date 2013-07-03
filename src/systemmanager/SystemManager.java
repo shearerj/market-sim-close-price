@@ -7,10 +7,12 @@ import java.util.*;
 import java.io.*;
 import java.text.DateFormat;
 
+import logger.Logger;
+
 /**
- * This class serves the purpose of the Client in the Command pattern, 
- * in that it instantiates the Activity objects and provides the methods
- * to execute them later.
+ * This class serves the purpose of the Client in the Command pattern, in that
+ * it instantiates the Activity objects and provides the methods to execute them
+ * later.
  * 
  * Usage: java -jar hft.jar [simulation folder name] [sample #]
  * 
@@ -18,21 +20,20 @@ import java.text.DateFormat;
  */
 public class SystemManager {
 
-	private static EventManager eventManager;
-	private static SystemData data;
-	private static Observations obs;
-	private static Properties envProps;
-	private static Log log;
+	protected static DateFormat DATE_FORMAT = DateFormat.getDateInstance(
+			DateFormat.MEDIUM, Locale.UK);
+	protected static DateFormat TIME_FORMAT = DateFormat.getTimeInstance(
+			DateFormat.MEDIUM, Locale.UK);
 
-	/**
-	 * Constructor
-	 */
-	public SystemManager() {
-		data = new SystemData();
-		envProps = new Properties();
-		obs = new Observations(data);
-	}
-	
+	protected final EventManager eventManager;
+	protected final SystemData data;
+	protected final Observations obs;
+	protected final Properties envProps;
+	protected final SimulationSpec spec;
+
+	protected final int num; // sample number used for labeling output files
+	protected final File simFolder; // simulation folder name
+
 	/**
 	 * Only one argument, which is the sample number, is processed
 	 * 
@@ -40,185 +41,127 @@ public class SystemManager {
 	 * 
 	 * @param args
 	 */
-	public static void main(String[] args) {
-		
-		SystemManager manager = new SystemManager();
+	public static void main(String... args) {
 
-		if (args.length == 2) {
-			SystemData.simDir = args[0] + "/";
-			if (SystemData.simDir.charAt(0) == '/') 
-				SystemData.simDir = SystemData.simDir.substring(1);
-			data.num = Integer.parseInt(args[1]);
-		} else {
-			SystemData.simDir = "";
-			data.num = 1;
+		File simFolder = new File(".");
+		int simNumber = 1;
+		switch (args.length) {
+		default:
+			simNumber = Integer.parseInt(args[1]);
+		case 1:
+			simFolder = new File(args[0]);
+		case 0:
 		}
-		
-		manager.setup();
-		manager.executeEvents();
-		manager.aggregateResults();
-		manager.close();
+
+		try {
+			SystemManager manager = new SystemManager(simFolder, simNumber);
+			manager.executeEvents();
+			manager.aggregateResults();
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(1);
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+	}
+
+	public SystemManager(File simFolder, int simNumber) throws IOException {
+		if (!simFolder.exists())
+			throw new IllegalArgumentException(
+					"Simulation Folder must already exist and contain a simulation spec file. "
+							+ simFolder.getAbsolutePath() + " does not exist.");
+
+		this.simFolder = simFolder;
+		this.num = simNumber;
+
+		envProps = getProperties();
+		getLog(); // Must be called after "envProps"
+		data = new SystemData(simNumber, simFolder);
+		spec = getSimulationSpec(); // Must be after "log" and "data"
+		obs = new Observations(data);
+		eventManager = new EventManager(data.simLength);
+
+		new SystemSetup(spec, eventManager, data).setupAll();
+	}
+
+	protected Properties getProperties() throws IOException {
+		Properties props = new Properties();
+		props.load(new FileInputStream(new File(Consts.configDir, Consts.configFile)));
+		return props;
 	}
 
 	/**
-	 * Initialize parameters based on configuration file.
+	 * Must be done after "envProps" exists
 	 */
-	public void setup() {
+	protected void getLog() throws IOException {
+		// Create log file
+		int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
 
-		try {
-			// =================================================
-			// Load parameters
+		Date now = new Date();
+		StringBuilder logFileName = new StringBuilder(simFolder.getPath()
+				.replace('/', '_'));
+		logFileName.append('_').append(num).append('_');
+		logFileName.append(DATE_FORMAT.format(now)).append('_');
+		// TODO This replace should could be done by modifying the date
+		// format
+		logFileName.append(TIME_FORMAT.format(now).replace(':', '.'));
+		logFileName.append(".txt");
 
-			// Read environment parameters & set up environment
-			loadConfig(envProps, Consts.configDir + Consts.configFile);
-			
-			// Create log file
-			int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
-			Date now = new Date();
-			String logFilename = SystemData.simDir.substring(0, 
-					SystemData.simDir.length()-1).replace("/", "-") + "_" + data.num;
-			logFilename += "_" + DateFormat.getDateInstance(DateFormat.MEDIUM, 
-					Locale.UK).format(now);
-			logFilename += "_" + DateFormat.getTimeInstance(DateFormat.MEDIUM, 
-					Locale.UK).format(now);
-			logFilename = logFilename.replace(":",".");
-			
-			try {
-				// Check first if directory exists
-				File f = new File(SystemData.simDir);
-				if (!f.exists()) {
-					// Simulations directory not found
-					System.err.println(this.getClass().getSimpleName() + 
-							"::setup(String): simulation folder not found");
-					System.exit(1);
-				}
-				// Check for logs directory
-				String logPath = SystemData.simDir + Consts.logDir;
-				f = new File(logPath);
-				if (!f.exists()) {
-					// Create directory
-					new File(logPath).mkdir();
-				}
-				// Create log file
-				log = new Log(logLevel, ".", logPath + logFilename + ".txt", true);
-			} catch (Exception e) {
-				System.err.println(this.getClass().getSimpleName() + 
-						"::setup(String): error creating log file");
-				e.printStackTrace();
-			}
+		File logDir = new File(simFolder, Consts.logDir);
+		logDir.mkdirs();
 
-			// Log properties
-			log.log(Log.DEBUG, envProps.toString());
-			
-			// Read simulation specification file
-			try {
-				// Check first if simulation spec file exists
-				File f = new File(SystemData.simDir + Consts.simSpecFile);
-				if (!f.exists()) {
-					// Spec file is not found
-					System.err.println(this.getClass().getSimpleName() + 
-							"::setup(String): simulation_spec.json file not found");
-					System.exit(1);
-				}
-			} catch (Exception e) {
-				System.err.println(this.getClass().getSimpleName() + 
-						"::setup(String): error accessing spec file");
-				e.printStackTrace();
-			}
-			// Read simulation_spec.json file
-			SimulationSpec specs = new SimulationSpec(SystemData.simDir + 
-					Consts.simSpecFile,	log, data);
+		File logFile = new File(logDir, logFileName.toString());
+		if (logLevel == Logger.NO_LOGGING)
+			logFile.deleteOnExit();
 
-			// Create event manager
-			eventManager = new EventManager(data.simLength, log);
+		// Create log file
+		// TODO Look into constructor, I think the 2nd and 3rd arguments
+		// have to do with base directory and then logFileName. In this case
+		// "getPath" will probably do the right thing given the current
+		// setup, but isn't guaranteed to.
+		Logger.setup(logLevel, ".", logFile.getPath(), true);
 
-			// Set up / create entities
-			SystemSetup s = new SystemSetup(specs, eventManager, data, log);
-			s.setupAll();
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		// Log properties
+		Logger.log(Logger.DEBUG, envProps.toString());
 	}
-	
+
+	/**
+	 * Must be done after "log" and "data" exist
+	 * 
+	 * @return
+	 */
+	protected SimulationSpec getSimulationSpec() {
+		// Read simulation specification file
+		File simulationSpecFile = new File(simFolder, Consts.simSpecFile);
+		if (!simulationSpecFile.exists())
+			throw new IllegalArgumentException("Simulation Spec file ("
+					+ simulationSpecFile.getAbsolutePath() + ") doesn't exist");
+
+		// Read simulation_spec.json file
+		return new SimulationSpec(simulationSpecFile.getAbsolutePath(), data);
+	}
+
 	/**
 	 * Method to execute all events in the Event Queue.
 	 */
 	public void executeEvents() {
-		try {
-			while (!eventManager.isEventQueueEmpty()) {
-				eventManager.executeCurrentEvent();
-			}
-			String s = "STATUS: Event queue is now empty.";
-			log.log(Log.INFO, s);
-		} catch (Exception e) {
-			e.printStackTrace();
+		while (!eventManager.isEmpty()) {
+			eventManager.executeNext();
 		}
+		Logger.log(Logger.INFO, "STATUS: Simulation has ended.");
 	}
 
-	/**
-	 * Shuts down simulation. Removes empty log file if log level is 0.
-	 */
-	public void close() {
-		File f = new File(SystemData.simDir + Consts.logDir);
-		if (f.exists() && log.getLevel() == Log.NO_LOGGING) {
-			// remove the empty log file
-			f.delete();
-		}
-	}
-	
-	/**
-	 * Load a configuration file InputStream into a Properties object.
-	 * @param p
-	 * @param config
-	 */
-	public void loadInputStream(Properties p, InputStream config) {
-		try {
-			if (p == null)
-				return;
-			p.load(config);
-		} catch (IOException e) {
-			String s = this.getClass().getSimpleName() + "::loadConfig(InputStream): " + 
-					"error opening/processing config file: " + config + "/" + e;
-			log.log(Log.ERROR, s);
-			System.err.println(s);
-			System.exit(0);
-		}
-	}
-
-	
-	/**
-	 * Load a configuration file into a Properties object.
-	 * @param p
-	 * @param config	name of configuration file
-	 */
-	public void loadConfig(Properties p, String config) {
-		try {
-			loadInputStream(p, new FileInputStream(config));
-		} catch (FileNotFoundException e) {
-			String s = this.getClass().getSimpleName() + "::loadConfig(String): " + 
-					"error opening/processing config file: " + config + "/" + e;
-			log.log(Log.ERROR, s);
-			System.err.println(s);
-			System.exit(0);
-		}
-	}
-	
-	
 	/**
 	 * Generate results report (payoff data, feature data logging).
+	 * 
+	 * @throws IOException
 	 */
-	public void aggregateResults() {
-		try {			
-			File file = new File(SystemData.simDir + Consts.obsFile + data.num + ".json");
-			FileWriter txt = new FileWriter(file);
-			txt.write(obs.generateObservationFile());
-			txt.close();
-		} catch (Exception e) {
-			String s = this.getClass().getSimpleName() + "::aggregateResults(): " + 
-						"error creating observation file";
-			System.err.println(s);
-			e.printStackTrace();
-		}
+	public void aggregateResults() throws IOException {
+		File results = new File(simFolder, Consts.obsFile + data.num + ".json");
+		FileWriter writer = new FileWriter(results);
+		writer.write(obs.generateObservationFile());
+		writer.close();
 	}
+
 }
