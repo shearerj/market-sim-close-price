@@ -82,22 +82,22 @@ public class SystemManager {
 		// TODO move props to SimSpec?
 		initializeLogger(getProperties(), simFolder, simNumber);
 
-		SimulationSpec2 spec = getSimulationSpec(simFolder);
+		SimulationSpec spec = getSimulationSpec(simFolder);
 		EntityProperties simProps = spec.getSimulationProperties();
-		long seed = simProps.getAsLong(SimulationSpec2.RAND_SEED,
+		long seed = simProps.getAsLong(SimulationSpec.RAND_SEED,
 				System.currentTimeMillis());
 		Logger.log(Logger.INFO, "RandomSeed: " + seed);
 		RandPlus rand = new RandPlus(seed);
 
 		TimeStamp simLength = new TimeStamp(
-				simProps.getAsLong(SimulationSpec2.SIMULATION_LENGTH));
+				simProps.getAsLong(SimulationSpec.SIMULATION_LENGTH));
 		eventManager = new EventManager(simLength,
 				new RandPlus(rand.nextLong()));
 
 		FundamentalValue fundamental = new FundamentalValue(
-				simProps.getAsDouble(SimulationSpec2.FUNDAMENTAL_KAPPA),
-				simProps.getAsInt(SimulationSpec2.FUNDAMENTAL_MEAN),
-				simProps.getAsDouble(SimulationSpec2.FUNDAMENTAL_SHOCK_VAR),
+				simProps.getAsDouble(SimulationSpec.FUNDAMENTAL_KAPPA),
+				simProps.getAsInt(SimulationSpec.FUNDAMENTAL_MEAN),
+				simProps.getAsDouble(SimulationSpec.FUNDAMENTAL_SHOCK_VAR),
 				new RandPlus(rand.nextLong()));
 
 		MarketModelFactory modelFactory = new MarketModelFactory(
@@ -159,7 +159,7 @@ public class SystemManager {
 		Logger.log(Logger.DEBUG, envProps.toString());
 	}
 
-	protected static SimulationSpec2 getSimulationSpec(File simFolder)
+	protected static SimulationSpec getSimulationSpec(File simFolder)
 			throws JsonSyntaxException, JsonIOException, FileNotFoundException {
 		// Read simulation specification file
 		File simulationSpecFile = new File(simFolder, Consts.simSpecFile);
@@ -168,7 +168,7 @@ public class SystemManager {
 					+ simulationSpecFile.getAbsolutePath() + ") doesn't exist");
 
 		// Read simulation_spec.json file
-		return new SimulationSpec2(simulationSpecFile);
+		return new SimulationSpec(simulationSpecFile);
 	}
 
 	/**

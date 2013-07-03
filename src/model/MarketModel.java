@@ -20,7 +20,7 @@ import market.Transaction;
 import systemmanager.Consts;
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.MarketType;
-import systemmanager.SimulationSpec2;
+import systemmanager.SimulationSpec;
 import utils.RandPlus;
 import data.AgentProperties;
 import data.AgentPropsPair;
@@ -142,7 +142,7 @@ public abstract class MarketModel {
 			// generic or even specified, but for now we'll stick with the
 			// original implementation
 			SMAgentFactory factory = new PRRSMAgentFactory(this, agentIDgen,
-					agProps.getAsLong(SimulationSpec2.ARRIVAL_RATE, 100),
+					agProps.getAsLong(SimulationSpec.ARRIVAL_RATE, 100),
 					new RandPlus(rand.nextLong()));
 
 			for (int i = 0; i < number; i++)
