@@ -119,6 +119,7 @@ public class Observations {
 		}
 
 		// set up max time (where most agents have arrived)
+		// FIXME should probably involve simulation length at some point
 		long time = Math.round(data.getNumEnvAgents() / data.arrivalRate);
 		maxTime = Math.max(Consts.upToTime, Market.quantize((int) time, 1000));
 

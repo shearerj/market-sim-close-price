@@ -149,10 +149,10 @@ public abstract class MarketModel {
 		}
 	}
 	
+	// XXX Move all of this to initialization?
 	public void scheduleActivities(EventManager manager) {
 		// TODO schedule sendToSIP
 		for (Market market : markets)
-			// XXX startTime or infinite time? I think start time for CallMarket
 			manager.addActivity(new Clear(market, Consts.START_TIME));
 		for (Agent agent : agents)
 			manager.addActivity(new AgentArrival(agent, agent.getArrivalTime()));

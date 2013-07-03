@@ -22,6 +22,7 @@ public class Consts {
 	// 0 means sampling every time step
 	public final static int[] periods = {0, 1, 250};
 	
+	// FIXME shouldn't this just be simulation length?
 	public final static long upToTime = 3000;	// compute statistics up to this time
 	
 	// **********************************************************
