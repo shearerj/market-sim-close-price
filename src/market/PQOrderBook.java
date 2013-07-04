@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ArrayList;
 
+import utils.MathUtils;
+
 import logger.Logger;
 
 import data.SystemData;
@@ -293,7 +295,7 @@ public class PQOrderBook extends OrderBook {
 				
 				p = new Price(Math.round((ask.getPrice().getPrice() - 
 						bid.getPrice().getPrice()) * pricingPolicy + bid.getPrice().getPrice()));
-				p = new Price(Market.quantize(p.getPrice(), data.tickSize));
+				p = new Price(MathUtils.quantize(p.getPrice(), data.tickSize));
 				Logger.log(Logger.INFO, ts + " | " + data.getMarket(marketID) + 
 						" clearing price based on (BID: " + 
 						bid.getPrice().getPrice() + ", ASK:" + ask.getPrice().getPrice() + 

@@ -366,6 +366,10 @@ public abstract class MarketModel {
 	public Collection<Agent> getAgents() {
 		return Collections.unmodifiableCollection(agents);
 	}
+	
+	public Collection<Player> getPlayers() {
+		return Collections.unmodifiableCollection(players);
+	}
 
 	/**
 	 * 

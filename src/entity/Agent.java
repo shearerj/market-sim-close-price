@@ -20,6 +20,7 @@ import market.Transaction;
 import market.TransactionIDComparator;
 import model.MarketModel;
 import systemmanager.Consts;
+import utils.MathUtils;
 import utils.RandPlus;
 import activity.Activity;
 import activity.Liquidate;
@@ -486,7 +487,7 @@ public abstract class Agent extends Entity {
 		Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
 				+ "::submitBid: +(" + price + ", " + quantity + ") to " + market);
 
-		int p = Market.quantize(price, tickSize);
+		int p = MathUtils.quantize(price, tickSize);
 		PQBid pqBid = new PQBid(this, market, ts);
 		pqBid.addPoint(quantity, new Price(p));
 		// quantity can be +/-
@@ -522,7 +523,7 @@ public abstract class Agent extends Entity {
 		PQBid pqBid = new PQBid(this, mkt, ts);
 		for (int i = 0; i < price.size(); i++) {
 			if (quantity.get(i) != 0) {
-				int p = Market.quantize(price.get(i), tickSize);
+				int p = MathUtils.quantize(price.get(i), tickSize);
 				pqBid.addPoint(quantity.get(i), new Price(p));
 			}
 		}

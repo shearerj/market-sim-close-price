@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 import logger.Logger;
 import model.MarketModel;
+import utils.MathUtils;
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
@@ -54,7 +55,7 @@ public class BasicMarketMaker extends MarketMaker {
 		this.sleepTime = sleepTime;
 		this.numRungs = numRungs;
 		this.rungSize = rungSize;
-		this.stepSize = Market.quantize(rungSize, data.tickSize);
+		this.stepSize = MathUtils.quantize(rungSize, data.tickSize);
 
 		this.xt = -1; // ask
 		this.yt = -1; // bid

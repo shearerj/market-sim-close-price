@@ -9,9 +9,6 @@ import java.text.DateFormat;
 
 import utils.RandPlus;
 
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonSyntaxException;
-
 import logger.Logger;
 import model.MarketModel;
 import model.MarketModelFactory;
@@ -37,6 +34,7 @@ public class SystemManager {
 
 	protected final int num; // sample number used for labeling output files
 	protected final File simFolder; // simulation folder name
+	protected final SimulationSpec spec;
 
 	/**
 	 * Only one argument, which is the sample number, is processed
@@ -82,7 +80,7 @@ public class SystemManager {
 		// TODO move props to SimSpec?
 		initializeLogger(getProperties(), simFolder, simNumber);
 
-		SimulationSpec spec = getSimulationSpec(simFolder);
+		spec = new SimulationSpec(new File(simFolder, Consts.simSpecFile));
 		EntityProperties simProps = spec.getSimulationProperties();
 		long seed = simProps.getAsLong(SimulationSpec.RAND_SEED,
 				System.currentTimeMillis());
@@ -157,18 +155,6 @@ public class SystemManager {
 
 		// Log properties
 		Logger.log(Logger.DEBUG, envProps.toString());
-	}
-
-	protected static SimulationSpec getSimulationSpec(File simFolder)
-			throws JsonSyntaxException, JsonIOException, FileNotFoundException {
-		// Read simulation specification file
-		File simulationSpecFile = new File(simFolder, Consts.simSpecFile);
-		if (!simulationSpecFile.exists())
-			throw new IllegalArgumentException("Simulation Spec file ("
-					+ simulationSpecFile.getAbsolutePath() + ") doesn't exist");
-
-		// Read simulation_spec.json file
-		return new SimulationSpec(simulationSpecFile);
 	}
 
 	/**

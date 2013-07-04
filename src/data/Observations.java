@@ -15,6 +15,7 @@ import org.json.simple.JSONObject;
 
 import systemmanager.Consts;
 import systemmanager.SimulationSpec;
+import utils.MathUtils;
 import entity.Agent;
 import entity.BackgroundAgent;
 import entity.HFTAgent;
@@ -119,9 +120,8 @@ public class Observations {
 		}
 
 		// set up max time (where most agents have arrived)
-		// FIXME should probably involve simulation length at some point
 		long time = Math.round(data.getNumEnvAgents() / data.arrivalRate);
-		maxTime = Math.max(Consts.upToTime, Market.quantize((int) time, 1000));
+		maxTime = Math.max(Consts.upToTime, MathUtils.quantize((int) time, 1000));
 
 		addFeature("", getConfiguration());
 

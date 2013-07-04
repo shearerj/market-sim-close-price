@@ -78,11 +78,8 @@ public class Consts {
 	public final static TimeStamp INF_TIME = new TimeStamp(-1);
 	public final static TimeStamp START_TIME = new TimeStamp(0);
 	
-	// Price
+	// Price TODO Move to Price
 	public final static int INF_PRICE = Integer.MAX_VALUE;
-	
-	// Other
-	public final static String NAN = "NaN";
 	
 	// **********************************************************
 	// FILENAMES

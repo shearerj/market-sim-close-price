@@ -344,21 +344,6 @@ public abstract class Market extends Entity {
 		return model;
 	}
 
-	/**
-	 * Quantizes the given integer based on the given granularity. Formula from
-	 * Wikipedia (http://en.wikipedia.org/wiki/Quantization_signal_processing)
-	 * 
-	 * @param num
-	 *            integer to quantize
-	 * @param n
-	 *            granularity (e.g. tick size)
-	 * @return
-	 */
-	public static int quantize(int num, int n) {
-		double tmp = 0.5 + Math.abs((double) num) / ((double) n);
-		return Integer.signum(num) * n * (int) Math.floor(tmp);
-	}
-
 	@Deprecated
 	public TreeMap<Integer, TimeStamp> getSubmissionTimes() {
 		TreeMap<Integer, TimeStamp> map = new TreeMap<Integer, TimeStamp>();
