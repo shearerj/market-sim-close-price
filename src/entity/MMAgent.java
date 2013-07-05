@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import logger.Logger;
+import market.PrivateValue;
 import model.MarketModel;
 import systemmanager.Consts;
 import utils.RandPlus;
@@ -30,9 +31,9 @@ public abstract class MMAgent extends Agent {
 	protected final int sleepTime;
 	protected final double sleepVar;
 	
-	public MMAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
+	public MMAgent(int agentID, TimeStamp arrivalTime, MarketModel model, PrivateValue pv,
 			int sleepTime, double sleepVar, RandPlus rand) {
-		super(agentID, arrivalTime, model, rand);
+		super(agentID, arrivalTime, model, pv, rand);
 		this.sleepTime = sleepTime;
 		this.sleepVar = sleepVar;
 	}

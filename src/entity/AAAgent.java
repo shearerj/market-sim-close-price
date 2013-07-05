@@ -74,6 +74,7 @@ public class AAAgent extends BackgroundAgent {
 			testing = test; // for unit tests
 			// Agent Parameters
 			// Private Value
+			// FIXME initialized in constructor?
 			ArrayList<Integer> alphas = new ArrayList<Integer>();
 			for (int i = -maxAbsPosition; i < maxAbsPosition; i++) {
 				alphas.add((int) Math.round(rand.nextGaussian(0, pvVar)));
@@ -496,7 +497,8 @@ public class AAAgent extends BackgroundAgent {
 	public AAAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, int reentryRate, int maxAbsPosition, int testKey,
 			boolean debugging, RandPlus rand) {
-		super(agentID, arrivalTime, model, market, rand);
+		// TODO change "null" to proper private value initialization
+		super(agentID, arrivalTime, model, market, null, rand);
 		this.marketSubmittedBid = this.market;
 		this.reentry = new ArrivalTime(arrivalTime, reentryRate, rand);
 		this.maxAbsPosition = maxAbsPosition;
@@ -516,16 +518,6 @@ public class AAAgent extends BackgroundAgent {
 				params.getAsInt(AAAgent.MAXQUANTITY_KEY), params.getAsInt(
 						AAAgent.TEST_KEY, -1), params.getAsBoolean(
 						AAAgent.DEBUG_KEY, false), rand);
-	}
-
-	// Trivial Classes
-	@Override
-	public HashMap<String, Object> getObservation() {
-		HashMap<String, Object> obs = new HashMap<String, Object>();
-		obs.put(Observations.ROLE_KEY, getRole());
-		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
-		obs.put(Observations.STRATEGY_KEY, getFullStrategy());
-		return obs;
 	}
 
 	/**

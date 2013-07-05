@@ -222,11 +222,6 @@ public class EventQueueTest {
 		public Collection<Activity> execute(TimeStamp time) {
 			return Collections.emptyList();
 		}
-
-		@Override
-		public Activity deepCopy() {
-			return new DummyActivity(time);
-		}
 		
 	}
 	

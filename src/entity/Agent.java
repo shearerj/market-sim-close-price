@@ -35,7 +35,7 @@ import event.TimeStamp;
  * @author ewah
  */
 public abstract class Agent extends Entity {
-	
+
 	public final static String SLEEPTIME_KEY = "sleepTime";
 	public final static String SLEEPVAR_KEY = "sleepVar";
 	public final static String REENTRY_RATE = "reentryRate";
@@ -107,26 +107,25 @@ public abstract class Agent extends Entity {
 
 	// FIXME Agent probably needs more than this...
 	public Agent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			RandPlus rand) {
+			PrivateValue pv, RandPlus rand) {
 		super(agentID);
 		this.model = model;
 		this.rand = rand;
 		this.arrivalTime = arrivalTime;
+		this.alpha = pv;
 	}
 
-	public abstract Collection<? extends Activity> agentStrategy(TimeStamp ts);
+	public abstract Collection<? extends Activity> agentStrategy(
+			TimeStamp currentTime);
 
-	public abstract Collection<? extends Activity> agentArrival(TimeStamp ts);
+	public abstract Collection<? extends Activity> agentArrival(
+			TimeStamp currentTime);
 
-	public abstract Collection<? extends Activity> agentDeparture(TimeStamp ts);
+	public abstract Collection<? extends Activity> agentDeparture(
+			TimeStamp currentTime);
 
 	@Deprecated
 	public abstract Collection<? extends Activity> updateAllQuotes(TimeStamp ts);
-
-	@Deprecated
-	// This should probably just be done by observation, unless I don't
-	// understand something
-	public abstract HashMap<String, Object> getObservation();
 
 	/**
 	 * @return arrival time for an agent.
@@ -145,6 +144,9 @@ public abstract class Agent extends Entity {
 	/**
 	 * @return true if has non-null private value.
 	 */
+	@Deprecated
+	// This should not exist, agents without private value should have 0 private
+	// value...
 	public final boolean hasPrivateValue() {
 		return alpha != null;
 	}
@@ -189,30 +191,6 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * Initialize list of private values given max quantity.
-	 * 
-	 * @param q
-	 *            max position
-	 * @return
-	 */
-	// TODO / FIXME Move to constructor?
-	public ArrayList<Integer> initPrivateValues(int q) {
-		ArrayList<Integer> alphas = new ArrayList<Integer>();
-		for (int i = -q; i <= q; i++) {
-			if (i != 0)
-				alphas.add((int) Math.round(rand.nextGaussian(0, data.pvVar)));
-		}
-		return alphas;
-	}
-
-	/**
-	 * @return model ID of agent.
-	 */
-	public int getModelID() {
-		return modelID;
-	}
-
-	/**
 	 * @return MarketModel of the agent.
 	 */
 	public MarketModel getModel() {
@@ -220,10 +198,10 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * Method to get the type of the agent.
-	 * 
-	 * @return
+	 * @return Method to get the type of the agent.
 	 */
+	@Deprecated
+	// Doesn't make any sense
 	public String getType() {
 		return agentType;
 	}
@@ -231,6 +209,8 @@ public abstract class Agent extends Entity {
 	/**
 	 * @return role of agent
 	 */
+	@Deprecated
+	// Shouldn't ever be used
 	public String getRole() {
 		if (this instanceof HFTAgent) {
 			return Consts.ROLE_HFT;
@@ -249,6 +229,8 @@ public abstract class Agent extends Entity {
 	/**
 	 * @return strategy for observation file in format TYPE:STRATEGY
 	 */
+	@Deprecated
+	// Only necessary for players, not agents...
 	public String getFullStrategy() {
 		return this.getType() + ":" + params.getAsString(Agent.STRATEGY_KEY);
 	}
@@ -258,6 +240,7 @@ public abstract class Agent extends Entity {
 	 * 
 	 * @param logID
 	 */
+	@Deprecated
 	public void setLogID(int logID) {
 		this.logID = logID;
 	}
@@ -265,13 +248,9 @@ public abstract class Agent extends Entity {
 	/**
 	 * @return logID
 	 */
+	@Deprecated
 	public int getLogID() {
 		return this.logID;
-	}
-
-	@Override
-	public String toString() {
-		return new String("(" + this.logID + "," + this.getModel() + ")");
 	}
 
 	/**
@@ -281,6 +260,9 @@ public abstract class Agent extends Entity {
 	 * @param sleepVar
 	 * @return
 	 */
+	@Deprecated
+	// sleeptime not even defined for general agents. This should be moved
+	// somewhere else
 	public int getRandSleepTime(int sleepTime, double sleepVar) {
 		return (int) Math.round(rand.nextGaussian(sleepTime, sleepVar));
 	}
@@ -289,6 +271,8 @@ public abstract class Agent extends Entity {
 	 * @param mktID
 	 * @return number of quotes
 	 */
+	@Deprecated
+	// Should just call size on getQuote
 	public int getQuoteSize(int mktID) {
 		return getQuote(mktID).size();
 	}
@@ -296,10 +280,9 @@ public abstract class Agent extends Entity {
 	/**
 	 * If quotes contains list for that market, return it; otherwise return
 	 * empty list.
-	 * 
-	 * @param mktID
-	 * @return
 	 */
+	// TODO possibly remove / move somewhere else / at least use full market.
+	@Deprecated
 	public ArrayList<Quote> getQuote(int mktID) {
 		if (quotes.get(mktID) != null) {
 			return quotes.get(mktID);
@@ -315,6 +298,12 @@ public abstract class Agent extends Entity {
 	 * @param mktID
 	 * @param q
 	 */
+	// TODO This general quote functionality seems misplaced. If an agent needs
+	// to track market quotes it can implement that seperately along with any
+	// other data gathering it needs. It seems incorrect for it to be general
+	// agent functionality especially seeing as agents may want more refined
+	// information. This may be partially taken up in the information processors
+	@Deprecated
 	public void addQuote(int mktID, Quote q) {
 		if (quotes.get(mktID) == null) {
 			// create for that market
@@ -330,6 +319,7 @@ public abstract class Agent extends Entity {
 	 * @param mktID
 	 * @return most recent quote for the specified market
 	 */
+	@Deprecated
 	public Quote getLatestQuote(int mktID) {
 		if (quotes.isEmpty() || getQuote(mktID) == null) {
 			return new Quote();
@@ -345,6 +335,7 @@ public abstract class Agent extends Entity {
 	 * @param idx
 	 * @return quote at a specified index
 	 */
+	@Deprecated
 	public Quote getQuoteAt(int mktID, int idx) {
 		if (!getQuote(mktID).isEmpty()) {
 			// return new empty quote
@@ -358,6 +349,8 @@ public abstract class Agent extends Entity {
 	 * @param mktID
 	 * @return bid price for the specified market
 	 */
+	@Deprecated
+	// Agent should just go to market for this information
 	public Price getBidPrice(int mktID) {
 		return bidPrice.get(mktID);
 	}
@@ -366,6 +359,8 @@ public abstract class Agent extends Entity {
 	 * @param mktID
 	 * @return ask price for the specified market
 	 */
+	@Deprecated
+	// Agent should just go to market for this information
 	public Price getAskPrice(int mktID) {
 		return askPrice.get(mktID);
 	}
@@ -384,14 +379,12 @@ public abstract class Agent extends Entity {
 
 	/**
 	 * Enters market by adding market to data structures.
-	 * 
-	 * @param mkt
-	 * @param ts
 	 */
+	// TODO Is this really necessary?
 	protected void enterMarket(Market mkt, TimeStamp ts) {
-		mkt.agentIDs.add(this.id);
-		mkt.buyers.add(this.id);
-		mkt.sellers.add(this.id);
+		mkt.agentIDs.add(this.id); // Necessary?
+		mkt.buyers.add(this.id); // Necessary?
+		mkt.sellers.add(this.id); // Necessary?
 		quotes.put(mkt.id, new ArrayList<Quote>());
 
 		// Initialize bid/ask containers
@@ -403,9 +396,8 @@ public abstract class Agent extends Entity {
 
 	/**
 	 * Exits market by removing all entries hashed by the specified market ID.
-	 * 
-	 * @param mktID
 	 */
+	// TODO Is this really necessary?
 	protected void exitMarket(int mktID) {
 		bidPrice.remove(mktID);
 		askPrice.remove(mktID);
@@ -422,49 +414,36 @@ public abstract class Agent extends Entity {
 
 	/**
 	 * Wrapper method to submit bid to market after checking permissions.
-	 * 
-	 * @param mkt
-	 * @param price
-	 * @param quantity
-	 * @param ts
-	 * @return
 	 */
-	public Collection<Activity> submitBid(Market mkt, int price, int quantity,
-			TimeStamp ts) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new SubmitBid(this, mkt, price, quantity, ts));
-		return actMap;
+	public Collection<? extends Activity> submitBid(Market mkt, int price,
+			int quantity, TimeStamp ts) {
+		return Collections.singleton(new SubmitBid(this, mkt, price, quantity,
+				ts));
 	}
 
 	/**
 	 * Wrapper method to submit multiple-point bid to market after checking
 	 * permissions.
-	 * 
-	 * @param mkt
-	 * @param price
-	 * @param quantity
-	 * @param ts
-	 * @return
 	 */
-	public Collection<Activity> submitMultipleBid(Market mkt,
-			ArrayList<Integer> price, ArrayList<Integer> quantity, TimeStamp ts) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new SubmitMultipleBid(this, mkt, price, quantity, ts));
-		return actMap;
+	public Collection<? extends Activity> submitMultipleBid(Market mkt,
+			ArrayList<Integer> price, ArrayList<Integer> quantity, TimeStamp currentTime) {
+		return Collections.singleton(new SubmitMultipleBid(this, mkt, price,
+				quantity, currentTime));
 	}
 
 	/**
 	 * Wrapper method to expire the agent's bid from a market after a specified
 	 * duration.
+	 * 
+	 * TODO how does this work? Expires all bids? The first bid it finds? The
+	 * oldest bid? Maybe should contain a reference to the bid in question...
 	 */
 	public Collection<? extends Activity> expireBid(Market market,
-			TimeStamp duration, TimeStamp ts) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		TimeStamp withdrawTime = ts.sum(new TimeStamp(duration));
-		actMap.add(new WithdrawBid(this, market, withdrawTime));
-		Logger.log(Logger.INFO, ts + " | " + market + " " + this
+			TimeStamp duration, TimeStamp currentTime) {
+		TimeStamp withdrawTime = currentTime.sum(new TimeStamp(duration));
+		Logger.log(Logger.INFO, currentTime + " | " + market + " " + this
 				+ ": bid duration=" + duration);
-		return actMap;
+		return Collections.singleton(new WithdrawBid(this, market, withdrawTime));
 	}
 
 	/**
@@ -472,7 +451,8 @@ public abstract class Agent extends Entity {
 	 */
 	public Collection<? extends Activity> executeWithdrawBid(Market market,
 			TimeStamp ts) {
-		Logger.log(Logger.INFO, ts + " | " + this + " withdraw bid from " + market);
+		Logger.log(Logger.INFO, ts + " | " + this + " withdraw bid from "
+				+ market);
 		return market.removeBid(this.id, ts);
 	}
 
@@ -482,10 +462,11 @@ public abstract class Agent extends Entity {
 	public Collection<? extends Activity> executeSubmitBid(Market market,
 			int price, int quantity, TimeStamp ts) {
 		if (quantity == 0)
-			return Collections.emptyList();
+			return Collections.emptySet();
 
 		Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
-				+ "::submitBid: +(" + price + ", " + quantity + ") to " + market);
+				+ "::submitBid: +(" + price + ", " + quantity + ") to "
+				+ market);
 
 		int p = MathUtils.quantize(price, tickSize);
 		PQBid pqBid = new PQBid(this, market, ts);
@@ -539,13 +520,15 @@ public abstract class Agent extends Entity {
 	 */
 	public Collection<? extends Activity> liquidateAtFundamental(TimeStamp ts) {
 		Logger.log(Logger.INFO, ts + " | " + this + " liquidating...");
-		return Collections.singleton(new Liquidate(this, model.getFundamentalAt(ts), ts));
+		return Collections.singleton(new Liquidate(this,
+				model.getFundamentalAt(ts), ts));
 	}
 
 	/**
 	 * Liquidates an agent's position at the specified price.
 	 */
-	public Collection<? extends Activity> executeLiquidate(Price price, TimeStamp ts) {
+	public Collection<? extends Activity> executeLiquidate(Price price,
+			TimeStamp ts) {
 
 		Logger.log(Logger.INFO, ts + " | " + this
 				+ " pre-liquidation: position=" + positionBalance + ", profit="
@@ -1042,5 +1025,23 @@ public abstract class Agent extends Entity {
 				+ " Agent::updateTransactions: SURPLUS at rho=" + rho
 				+ " for this transaction: " + discounted);
 		return discounted;
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() ^ model.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof Agent))
+			return false;
+		Agent agent = (Agent) obj;
+		return super.equals(agent) && model.equals(agent.model);
+	}
+
+	@Override
+	public String toString() {
+		return new String("(" + this.logID + ", " + this.getModel() + ")");
 	}
 }

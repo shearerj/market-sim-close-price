@@ -2,7 +2,6 @@ package entity;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 
 import logger.Logger;
 import market.Price;
@@ -13,7 +12,6 @@ import activity.Activity;
 import activity.AgentStrategy;
 import data.ArrivalTime;
 import data.EntityProperties;
-import data.Observations;
 import event.TimeStamp;
 
 /**
@@ -47,31 +45,41 @@ public class ZIRAgent extends BackgroundAgent {
 	protected ArrivalTime reentry;			// re-entry times
 	protected int lastPositionBalance;		// last position balance
 	protected int maxAbsPosition;				// max quantity for position
-	
 	// for computing discounted surplus
-	private ArrayList<TimeStamp> submissionTimes;
+	protected ArrayList<TimeStamp> submissionTimes; // TODO currently unused
 
 	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
+			Market market, RandPlus rand, int bidRange, int maxAbsPosition,
+			int reentryRate, double pvVar) {
+		// TODO replace null with proper private value initialization
+		super(agentID, arrivalTime, model, market, getPrivateValue(maxAbsPosition, pvVar, rand), rand);
+		this.bidRange = bidRange;
+		this.maxAbsPosition = maxAbsPosition;
+		this.reentry = new ArrivalTime(arrivalTime, reentryRate, rand);
+		this.lastPositionBalance = positionBalance;
+		this.submissionTimes = new ArrayList<TimeStamp>();
+	}
+	
+	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, EntityProperties props) {
-		super(agentID, arrivalTime, model, market, rand);
-		bidRange = params.getAsInt(BIDRANGE_KEY, 5000);
-		maxAbsPosition = params.getAsInt(MAXQUANTITY_KEY, 10);
-		reentry = new ArrivalTime(arrivalTime, this.data.reentryRate, rand);
-		lastPositionBalance = positionBalance;
-		
-		submissionTimes = new ArrayList<TimeStamp>();
-		alpha = new PrivateValue(initPrivateValues(maxAbsPosition));
+		// TODO get keys and default value for reentry rate and pvvar
+		this(agentID, arrivalTime, model, market, rand, props.getAsInt(
+				BIDRANGE_KEY, 5000), props.getAsInt(MAXQUANTITY_KEY, 10),
+				props.getAsInt("reentry_rate", 100), props.getAsDouble("pvVar",
+						100));
 	}
 	
-	@Override
-	public HashMap<String, Object> getObservation() {
-		HashMap<String,Object> obs = new HashMap<String,Object>();
-		obs.put(Observations.ROLE_KEY, getRole());
-		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
-		obs.put(Observations.STRATEGY_KEY, getFullStrategy());
-		return obs;
+	/**
+	 * Initialize list of private values given max quantity.
+	 */
+	protected static PrivateValue getPrivateValue(int maxAbsPosition, double pvVar, RandPlus rand) {
+		ArrayList<Integer> alphas = new ArrayList<Integer>();
+		for (int i = -maxAbsPosition; i <= maxAbsPosition; i++) {
+			if (i != 0)
+				alphas.add((int) Math.round(rand.nextGaussian(0, pvVar)));
+		}
+		return new PrivateValue(alphas);
 	}
-	
 	
 	@Override
 	public Collection<Activity> agentStrategy(TimeStamp ts) {
@@ -127,11 +135,5 @@ public class ZIRAgent extends BackgroundAgent {
 		actMap.add(new AgentStrategy(this, reentry.next()));
 		return actMap;
 	}
-
-	/**
-	 * @return ArrivalTime object holding re-entries into market
-	 */
-	public ArrivalTime getReentryTimes() {
-		return reentry;
-	}
+	
 }

@@ -1,14 +1,13 @@
 package entity;
 
 import java.util.Collection;
-import java.util.HashMap;
 
 import market.Price;
+import market.PrivateValue;
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
 import data.EntityProperties;
-import data.Observations;
 import event.TimeStamp;
 
 /**
@@ -36,37 +35,29 @@ public class ZIAgent extends BackgroundAgent {
 	protected final int bidRange; // range for limit order
 
 	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, int bidRange) {
-		super(agentID, arrivalTime, model, market, rand);
+			Market market, RandPlus rand, int bidRange, double pvVar) {
+		super(agentID, arrivalTime, model, market, new PrivateValue((int) Math.round(rand.nextGaussian(0, pvVar)), (int) Math.round(rand.nextGaussian(0, pvVar))), rand);
 		this.bidRange = bidRange;
 	}
 
 	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, EntityProperties props) {
 		this(agentID, arrivalTime, model, market, rand, props.getAsInt(
-				BIDRANGE_KEY, 2000));
+				BIDRANGE_KEY, 2000), props.getAsDouble("pvVar", 100));
+		// FIXME get KEY for PVVar and and proper default 
 	}
 
 	@Override
-	public HashMap<String, Object> getObservation() {
-		HashMap<String, Object> obs = new HashMap<String, Object>();
-		obs.put(Observations.ROLE_KEY, getRole());
-		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
-		obs.put(Observations.STRATEGY_KEY, getFullStrategy());
-		return obs;
-	}
-
-	@Override
-	public Collection<? extends Activity> agentStrategy(TimeStamp ts) {
+	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
 		// update quotes
-		this.updateQuotes(market, ts);
+		this.updateQuotes(market, currentTime);
 
 		Price price;
 		int quantity;
 		quantity = rand.nextBoolean() ? 1 : -1; // 50% chance of being either long or
 											// short
 		int val = Math.max(0,
-				model.getFundamentalAt(ts).sum(getPrivateValueAt(quantity)).getPrice());
+				model.getFundamentalAt(currentTime).sum(getPrivateValueAt(quantity)).getPrice());
 
 		// basic ZI behavior
 		if (quantity > 0)
@@ -75,6 +66,6 @@ public class ZIAgent extends BackgroundAgent {
 		else
 			price = new Price((int) Math.max(0, (val + rand.nextDouble() * 2 * bidRange)));
 
-		return executeSubmitNMSBid(price, quantity, ts); // bid does not expire
+		return executeSubmitNMSBid(price, quantity, currentTime); // bid does not expire
 	}
 }

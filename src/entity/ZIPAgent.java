@@ -2,14 +2,12 @@ package entity;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
 import data.EntityProperties;
-import data.Observations;
 import event.TimeStamp;
 
 
@@ -33,7 +31,8 @@ public class ZIPAgent extends BackgroundAgent {
 	
 	public ZIPAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, EntityProperties props) {
-		super(agentID, arrivalTime, model, market, rand);
+		// TODO replace null with proper private value initialization
+		super(agentID, arrivalTime, model, market, null, rand);
 		this.bidRange = props.getAsInt(BIDRANGE_KEY, 2000);
 		this.sleepTime = props.getAsInt(SLEEPTIME_KEY, 50);
 		this.sleepVar = props.getAsInt(SLEEPVAR_KEY, 100);
@@ -45,20 +44,12 @@ public class ZIPAgent extends BackgroundAgent {
 	}
 
 	@Override
-	public HashMap<String, Object> getObservation() {
-		HashMap<String,Object> obs = new HashMap<String,Object>();
-		obs.put(Observations.ROLE_KEY, getRole());
-		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
-		obs.put(Observations.STRATEGY_KEY, getFullStrategy());
-		return obs;
-	}
-
-	@Override
 	public Collection<Activity> agentStrategy(TimeStamp ts) {
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		int q = 1;
 		// 0.50% chance of being either long or short
 		if (rand.nextDouble() < 0.5) q = -q;
+		@SuppressWarnings("unused")
 		int val = Math.max(0, model.getFundamentalAt(ts).sum(getPrivateValueAt(q)).getPrice());
 
 		// Insert events for the agent to sleep, then wake up again at timestamp tsNew

@@ -8,6 +8,7 @@ import java.util.List;
 import logger.Logger;
 import market.BestBidAsk;
 import market.Price;
+import market.PrivateValue;
 import market.Quote;
 import model.MarketModel;
 import systemmanager.Consts;
@@ -43,12 +44,12 @@ import event.TimeStamp;
 public abstract class SMAgent extends Agent {
 
 	protected final Market market;
-	protected Market marketSubmittedBid; // market to which bid has been
-											// submitted
+	// market to which bid has been submitted
+	protected Market marketSubmittedBid;
 
 	public SMAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand) {
-		super(agentID, arrivalTime, model, rand);
+			Market market, PrivateValue pv, RandPlus rand) {
+		super(agentID, arrivalTime, model, pv, rand);
 		this.market = market;
 	}
 
@@ -97,7 +98,7 @@ public abstract class SMAgent extends Agent {
 		this.enterMarket(market, ts);
 		// FIXME I think with the new event queue, this should be instantaneous
 		// not at the same time
-		return Collections.singleton(new AgentStrategy(this, market, ts));
+		return Collections.singleton(new AgentStrategy(this, market, Consts.INF_TIME));
 	}
 
 	/**

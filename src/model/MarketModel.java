@@ -358,11 +358,6 @@ public abstract class MarketModel {
 		return Collections.unmodifiableCollection(markets);
 	}
 
-	@Override
-	public String toString() {
-		return new String("{" + getID() + "}");
-	}
-
 	public Collection<Agent> getAgents() {
 		return Collections.unmodifiableCollection(agents);
 	}
@@ -409,5 +404,22 @@ public abstract class MarketModel {
 				this.modelSurplus.put(rho, this.modelSurplus.get(rho) + surplus);
 			}
 		}
+	}
+	
+	@Override
+	public int hashCode() {
+		return modelID;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof MarketModel)) return false;
+		MarketModel mm = (MarketModel) obj;
+		return modelID == mm.modelID;
+	}
+
+	@Override
+	public String toString() {
+		return new String("{" + modelID + "}");
 	}
 }

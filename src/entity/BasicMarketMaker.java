@@ -2,7 +2,6 @@ package entity;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 
 import logger.Logger;
 import model.MarketModel;
@@ -12,7 +11,6 @@ import activity.Activity;
 import activity.AgentStrategy;
 import activity.UpdateAllQuotes;
 import data.EntityProperties;
-import data.Observations;
 import event.TimeStamp;
 
 /**
@@ -68,15 +66,6 @@ public class BasicMarketMaker extends MarketMaker {
 				params.getAsInt(NUMRUNGS_KEY, 10), params.getAsInt(RUNGSIZE_KEY, 1000),
 				rand);
 		// SLEEPTIME_VAR = 100
-	}
-
-	@Override
-	public HashMap<String, Object> getObservation() {
-		HashMap<String, Object> obs = new HashMap<String, Object>();
-		obs.put(Observations.ROLE_KEY, getRole());
-		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
-		obs.put(Observations.STRATEGY_KEY, getFullStrategy());
-		return obs;
 	}
 
 	@Override

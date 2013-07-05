@@ -1,5 +1,6 @@
 package entity;
 
+import market.PrivateValue;
 import model.MarketModel;
 import utils.RandPlus;
 import event.TimeStamp;
@@ -12,8 +13,8 @@ import event.TimeStamp;
  */
 public abstract class BackgroundAgent extends SMAgent {
 	
-	public BackgroundAgent(int agentID, TimeStamp arrivalTime, MarketModel model, Market market, RandPlus rand) {
-		super(agentID, arrivalTime, model, market, rand);
+	public BackgroundAgent(int agentID, TimeStamp arrivalTime, MarketModel model, Market market, PrivateValue pv, RandPlus rand) {
+		super(agentID, arrivalTime, model, market, pv, rand);
 	}
 	
 }

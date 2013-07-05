@@ -180,7 +180,7 @@ public class Observations {
 		if (!data.isPlayer(agentID))
 			return;
 
-		HashMap<String, Object> obs = data.getAgent(agentID).getObservation();
+		HashMap<String, Object> obs = new HashMap<String, Object>(); //data.getAgent(agentID).getObservation();
 		if (obs == null || obs.isEmpty())
 			return;
 

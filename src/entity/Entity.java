@@ -29,9 +29,30 @@ public abstract class Entity {
 		return this.id;
 	}
 	
+	
+	
+	@Override
+	public int hashCode() {
+		return id;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof Entity)) return false;
+		Entity ent = (Entity) obj;
+		return id == ent.id;
+	}
+
+	@Override
+	// TODO Better toString?
+	public String toString() {
+		return "(" + id + ")";
+	}
+
 	/**
 	 * @return simple class name
 	 */
+	@Deprecated // Is this necessary?
 	public String getName() {
 		return this.getClass().getSimpleName();
 	}

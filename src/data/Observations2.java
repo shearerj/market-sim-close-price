@@ -130,11 +130,11 @@ public class Observations2 {
 	protected JsonArray playerObservations(MarketModel model) {
 		JsonArray players = new JsonArray();
 		for (Player player : model.getPlayers())
-			players.add(getObservation(player));
+			players.add(getPlayerObservation(player));
 		return players;
 	}
 
-	protected static JsonObject getObservation(Player player) {
+	protected static JsonObject getPlayerObservation(Player player) {
 		JsonObject observation = new JsonObject();
 		observation.addProperty(ROLE_KEY, player.getRole());
 		observation.addProperty(STRATEGY_KEY, player.getStrategy());

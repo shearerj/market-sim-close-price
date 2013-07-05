@@ -3,7 +3,6 @@ package entity;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 
 import logger.Logger;
 import market.BestQuote;
@@ -16,7 +15,6 @@ import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
 import data.EntityProperties;
-import data.Observations;
 import event.TimeStamp;
 
 /**
@@ -45,17 +43,6 @@ public class LAAgent extends HFTAgent {
 		this(agentID, model, props.getAsInt(SLEEPTIME_KEY, 0),
 				props.getAsDouble(SLEEPVAR_KEY, 100), props.getAsDouble(
 						ALPHA_KEY, 0.001), rand);
-	}
-
-	@Override
-	public HashMap<String, Object> getObservation() {
-		HashMap<String, Object> obs = new HashMap<String, Object>();
-		obs.put(Observations.ROLE_KEY, getRole());
-		obs.put(Observations.STRATEGY_KEY, getFullStrategy());
-		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
-		// HashMap<String,String> features = new HashMap<String,String>();
-		// obs.put(Observations.FEATURES_KEY, features);
-		return obs;
 	}
 
 	@Override

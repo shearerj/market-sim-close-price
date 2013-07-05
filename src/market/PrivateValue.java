@@ -28,12 +28,14 @@ import java.util.Collections;
  * 
  * @author ewah
  */
+// TODO Seems like this should maybe be a sorted map of ints to Price
 public class PrivateValue {
 
-	private List<Price> values;
-	private List<Integer> quantities;
+	protected final List<Price> values;
+	protected final List<Integer> quantities;
 	
 	public PrivateValue() {
+		// TODO this should initialize a private value that represents no private value.
 		values = new ArrayList<Price>();
 		quantities = new ArrayList<Integer>();
 	}
@@ -130,10 +132,6 @@ public class PrivateValue {
 		}
 	}
 
-	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	public String toString() {
 		return values.toString();
 	}

@@ -1,5 +1,6 @@
 package entity;
 
+import market.PrivateValue;
 import model.MarketModel;
 import systemmanager.Consts;
 import utils.RandPlus;
@@ -14,7 +15,7 @@ public abstract class MarketMaker extends SMAgent {
 
 	public MarketMaker(int agentID, MarketModel model,
 			Market market, RandPlus rand) {
-		super(agentID, Consts.START_TIME, model, market, rand);
+		super(agentID, Consts.START_TIME, model, market, new PrivateValue(), rand);
 	}
 	
 }
