@@ -9,6 +9,7 @@ import market.BestQuote;
 import market.Bid;
 import market.PQBid;
 import market.PQPoint;
+import market.Price;
 import model.MarketModel;
 import systemmanager.Consts;
 import utils.RandPlus;
@@ -30,16 +31,17 @@ public class LAAgent extends HFTAgent {
 
 	public final static String ALPHA_KEY = "alpha";
 
-	protected final double alpha; // LA profit gap
+	protected final double alpha; // LA profit gap FIXME Different from private
+									// value
 
-	public LAAgent(int agentID, MarketModel model,
-			int sleepTime, double sleepVar, double alpha, RandPlus rand) {
+	public LAAgent(int agentID, MarketModel model, int sleepTime,
+			double sleepVar, double alpha, RandPlus rand) {
 		super(agentID, Consts.START_TIME, model, sleepTime, sleepVar, rand);
 		this.alpha = alpha;
 	}
 
-	public LAAgent(int agentID, MarketModel model,
-			RandPlus rand, EntityProperties props) {
+	public LAAgent(int agentID, MarketModel model, RandPlus rand,
+			EntityProperties props) {
 		this(agentID, model, props.getAsInt(SLEEPTIME_KEY, 0),
 				props.getAsDouble(SLEEPVAR_KEY, 100), props.getAsDouble(
 						ALPHA_KEY, 0.001), rand);
@@ -56,29 +58,28 @@ public class LAAgent extends HFTAgent {
 			this.updateAllQuotes(ts);
 			BestQuote bestQuote = findBestBuySell();
 
-			if ((bestQuote.bestSell > (1 + alpha) * bestQuote.bestBuy)
-					&& (bestQuote.bestBuy >= 0)) {
+			if ((bestQuote.getBestSell().getPrice() > (1 + alpha)
+					* bestQuote.getBestBuy().getPrice())
+					&& (bestQuote.getBestBuy().getPrice() >= 0)) {
 
 				Logger.log(Logger.INFO, ts.toString() + " | " + this + " "
 						+ agentType
 						+ "::agentStrategy: Found possible arb opp!");
 
-				int buyMarketID = bestQuote.bestBuyMarket;
-				int sellMarketID = bestQuote.bestSellMarket;
-				Market buyMarket = data.getMarket(buyMarketID);
-				Market sellMarket = data.getMarket(sellMarketID);
+				Market buyMarket = bestQuote.getBestBuyMarket();
+				Market sellMarket = bestQuote.getBestSellMarket();
 
 				// check that BID/ASK defined for both markets
 				if (buyMarket.defined() && sellMarket.defined()) {
 
-					int midPoint = (bestQuote.bestBuy + bestQuote.bestSell) / 2;
-					int buySize = getBidQuantity(bestQuote.bestBuy, midPoint
-							- tickSize, buyMarketID, true);
-					int sellSize = getBidQuantity(midPoint + tickSize,
-							bestQuote.bestSell, sellMarketID, false);
+					int midPoint = (bestQuote.getBestBuy().getPrice() + bestQuote.getBestSell().getPrice()) / 2;
+					int buySize = getBidQuantity(bestQuote.getBestBuy(),
+							new Price(midPoint - tickSize), buyMarket, true);
+					int sellSize = getBidQuantity(new Price(midPoint + tickSize),
+							bestQuote.getBestSell(), sellMarket, false);
 					int quantity = Math.min(buySize, sellSize);
 
-					if (quantity > 0 && (buyMarketID != sellMarketID)) {
+					if (quantity > 0 && !(buyMarket.equals(sellMarket))) {
 						Logger.log(
 								Logger.INFO,
 								ts.toString()
@@ -87,18 +88,18 @@ public class LAAgent extends HFTAgent {
 										+ " "
 										+ agentType
 										+ "::agentStrategy: Exploit existing arb opp: "
-										+ bestQuote
-										+ " in "
-										+ data.getMarket(bestQuote.bestBuyMarket)
-										+ " & "
-										+ data.getMarket(bestQuote.bestSellMarket));
+										+ bestQuote + " in "
+										+ bestQuote.getBestBuyMarket() + " & "
+										+ bestQuote.getBestSellMarket());
 
-						actMap.addAll(executeSubmitBid(buyMarket, midPoint
-								- tickSize, quantity, ts));
-						actMap.addAll(executeSubmitBid(sellMarket, midPoint
-								+ tickSize, -quantity, ts));
+						// XXX Midpoint isn't quantized, so they'll be ticksize
+						// apart, but not actuall on a ticksize...
+						actMap.addAll(executeSubmitBid(buyMarket, new Price(
+								midPoint - tickSize), quantity, ts));
+						actMap.addAll(executeSubmitBid(sellMarket, new Price(
+								midPoint + tickSize), -quantity, ts));
 
-					} else if (buyMarketID == sellMarketID) {
+					} else if (buyMarket.equals(sellMarket)) {
 						Logger.log(
 								Logger.INFO,
 								ts.toString()
@@ -135,8 +136,8 @@ public class LAAgent extends HFTAgent {
 
 			}
 			if (sleepTime > 0) {
-				TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(
-						sleepTime, sleepVar)));
+				TimeStamp tsNew = ts.sum(new TimeStamp(
+						(long) rand.nextGaussian(sleepTime, sleepVar)));
 				actMap.add(new AgentStrategy(this, tsNew));
 
 			} else if (sleepTime == 0) {
@@ -149,6 +150,49 @@ public class LAAgent extends HFTAgent {
 	}
 
 	/**
+	 * Find best market to buy in (i.e. lowest ask) and to sell in (i.e. highest
+	 * bid). This is a global operation so it checks all markets in marketIDs
+	 * and it gets the up-to-date market quote with zero delays.
+	 * 
+	 * bestBuy = the best price an agent can buy at (the lowest sell bid).
+	 * bestSell = the best price an agent can sell at (the highest buy bid).
+	 * 
+	 * NOTE: This uses only those markets belonging to the agent's model, as
+	 * strategies can only be selected based on information on those markets.
+	 * 
+	 * TODO eventually this should use InformationProcessors
+	 * 
+	 * @return BestQuote
+	 */
+	protected BestQuote findBestBuySell() {
+		Price bestBuy = null, bestSell = null;
+		Market bestBuyMkt = null, bestSellMkt = null;
+
+		for (Market mkt : model.getMarkets()) {
+			// TODO This should use IP not modle.markets
+			Price bid = mkt.getBidPrice();
+			Price ask = mkt.getAskPrice();
+
+			// in case the bid/ask disappears
+			ArrayList<Price> price = new ArrayList<Price>();
+			price.add(bid);
+			price.add(ask);
+
+			// Best market to buy in is the one with the lowest ASK
+			if (ask.lessThan(bestBuy)) {
+				bestBuy = ask;
+				bestBuyMkt = mkt;
+			}
+			// Best market to sell in is the one with the highest BID
+			if (bid.greaterThan(bestSell)) {
+				bestSell = bid;
+				bestSellMkt = mkt;
+			}
+		}
+		return new BestQuote(bestBuyMkt, bestBuy, bestSellMkt, bestSell);
+	}
+
+	/**
 	 * Get the quantity for a bid between the begin and end prices.
 	 * 
 	 * @param beginPrice
@@ -158,18 +202,19 @@ public class LAAgent extends HFTAgent {
 	 *            true if buy, false if sell
 	 * @return
 	 */
-	private int getBidQuantity(int beginPrice, int endPrice, int marketID,
-			boolean buy) {
+	protected int getBidQuantity(Price beginPrice, Price endPrice,
+			Market marketID, boolean buy) {
 
 		int quantity = 0;
 
-		for (Bid bid : data.getMarket(marketID).getBids().values()) {
+		for (Bid bid : marketID.getBids().values()) {
 			PQBid b = (PQBid) bid;
 
 			for (PQPoint pq : b.bidTreeSet) {
-				int pqPrice = pq.getPrice().getPrice();
+				Price pqPrice = pq.getPrice();
 
-				if (pqPrice >= beginPrice && pqPrice <= endPrice) {
+				if (pqPrice.greaterThanEquals(beginPrice)
+						&& pqPrice.lessThanEqual(endPrice)) {
 					int bidQuantity = pq.getQuantity();
 
 					// Buy

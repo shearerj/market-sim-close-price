@@ -3,8 +3,11 @@ package activity;
 import entity.*;
 import event.*;
 
-import java.util.List;
 import java.util.Collection;
+import java.util.Map;
+
+import market.Price;
+
 import org.apache.commons.lang3.builder.*;
 
 /**
@@ -14,30 +17,23 @@ import org.apache.commons.lang3.builder.*;
  */
 public class SubmitMultipleBid extends Activity {
 
-	private Agent ag;
-	private Market mkt;
-	private List<Integer> price;
-	private List<Integer> quantity;
+	protected final Agent ag;
+	protected final Market mkt;
+	protected final Map<Price, Integer> priceQuantMap;
 
-	public SubmitMultipleBid(Agent ag, Market mkt, List<Integer> p, List<Integer> q, TimeStamp t) {
+	public SubmitMultipleBid(Agent ag, Market mkt, Map<Price, Integer> priceQuantMap, TimeStamp t) {
 		super(t);
 		this.ag = ag;
 		this.mkt = mkt;
-		this.price = p;
-		this.quantity = q;
+		this.priceQuantMap = priceQuantMap;
 	}
 
-	public SubmitMultipleBid deepCopy() {
-		return new SubmitMultipleBid(this.ag, this.mkt, this.price, this.quantity, this.time);
-	}
-
-	public Collection<? extends Activity> execute(TimeStamp time) {
-		return this.ag.executeSubmitMultipleBid(this.mkt, this.price, this.quantity, time);
+	public Collection<? extends Activity> execute(TimeStamp currentTime) {
+		return ag.executeSubmitMultipleBid(mkt, priceQuantMap, currentTime);
 	}
 
 	public String toString() {
-		return new String(getName() + "::" + ag + "," + mkt + "+(" + 
-				price + "," + quantity + ")");
+		return new String(getName() + "::" + ag + "," + mkt + "+" + priceQuantMap);
 	}
 
 	@Override
@@ -50,22 +46,20 @@ public class SubmitMultipleBid extends Activity {
 			return false;
 		SubmitMultipleBid other = (SubmitMultipleBid) obj;
 		return new EqualsBuilder().
-				append(ag.getID(), other.ag.getID()).
-				append(mkt.getID(), other.mkt.getID()).
-				append(price.hashCode(), other.price.hashCode()).
-				append(quantity.hashCode(), other.quantity.hashCode()).
-				append(time.longValue(), other.time.longValue()).
+				append(ag, other.ag).
+				append(mkt, other.mkt).
+				append(priceQuantMap, other.priceQuantMap).
+				append(time, other.time).
 				isEquals();
 	}
 	
 	@Override
 	public int hashCode() {
 		return new HashCodeBuilder(19, 37).
-				append(ag.getID()).
-				append(mkt.getID()).
-				append(price).
-				append(quantity).
-				append(time.longValue()).
+				append(ag).
+				append(mkt).
+				append(priceQuantMap).
+				append(time).
 				toHashCode();
 	}
 }

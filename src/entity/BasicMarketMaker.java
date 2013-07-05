@@ -2,8 +2,11 @@ package entity;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import logger.Logger;
+import market.Price;
 import model.MarketModel;
 import utils.MathUtils;
 import utils.RandPlus;
@@ -12,6 +15,8 @@ import activity.AgentStrategy;
 import activity.UpdateAllQuotes;
 import data.EntityProperties;
 import event.TimeStamp;
+
+import static systemmanager.Consts.ZERO_PRICE;
 
 /**
  * BasicMarketMaker
@@ -41,7 +46,7 @@ public class BasicMarketMaker extends MarketMaker {
 	protected final int rungSize;
 	protected final int numRungs; // # of ladder rungs on one side (e.g., number
 									// of buy orders)
-	protected int xt, yt; // stores the ask/bid, respectively FIXME Prices
+	protected Price xt, yt; // stores the ask/bid, respectively FIXME Prices
 							// instead, null instead of -1, ask / bid instead of
 							// xt, yt, just gather during strategy usntead of
 							// updating?
@@ -55,16 +60,15 @@ public class BasicMarketMaker extends MarketMaker {
 		this.rungSize = rungSize;
 		this.stepSize = MathUtils.quantize(rungSize, data.tickSize);
 
-		this.xt = -1; // ask
-		this.yt = -1; // bid
+		this.xt = null; // ask
+		this.yt = null; // bid
 	}
 
 	public BasicMarketMaker(int agentID, MarketModel model, Market market,
 			RandPlus rand, EntityProperties params) {
-		this(agentID, model, market, new TimeStamp(
-				params.getAsLong(SLEEPTIME_KEY, 200)),
-				params.getAsInt(NUMRUNGS_KEY, 10), params.getAsInt(RUNGSIZE_KEY, 1000),
-				rand);
+		this(agentID, model, market, new TimeStamp(params.getAsLong(
+				SLEEPTIME_KEY, 200)), params.getAsInt(NUMRUNGS_KEY, 10),
+				params.getAsInt(RUNGSIZE_KEY, 1000), rand);
 		// SLEEPTIME_VAR = 100
 	}
 
@@ -75,55 +79,49 @@ public class BasicMarketMaker extends MarketMaker {
 		// update all quotes
 		this.updateQuotes(market, ts);
 
-		int bid = getBidPrice(market.getID()).getPrice();
-		int ask = getAskPrice(market.getID()).getPrice();
+		Price bid = market.getBidPrice();
+		Price ask = market.getAskPrice();
 
 		// check that bid or ask is defined
-		if (bid <= 0 || ask <= 0) {
+		if (bid == null || ask == null) {
 			Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
 					+ "::agentStrategy: undefined quote in market "
 					+ getMarket());
 
 		} else {
 			// check if bid/ask has changed; if so, submit fresh orders
-			if (bid != yt || ask != xt) {
-				ArrayList<Integer> prices = new ArrayList<Integer>();
-				ArrayList<Integer> quantities = new ArrayList<Integer>();
+			if (!bid.equals(yt) || !ask.equals(yt)) {
+				Map<Price, Integer> priceQuantMap = new HashMap<Price, Integer>();
 
-				int ct = numRungs * stepSize;
-				int buyMinPrice = bid - ct; // min price for buy order in the
-											// ladder
-				int sellMaxPrice = ask + ct; // max price for sell order in the
-												// ladder
+				Price ct = new Price(numRungs * stepSize);
+				// min price for buy order in the ladder
+				Price buyMinPrice = bid.minus(ct);
+				// max price for sell order in the ladder
+				Price sellMaxPrice = ask.plus(ct);
 
 				// check if the bid or ask crosses the NBBO
-				if (lastNBBOQuote.bestAsk.getPrice() < ask) {
+				if (lastNBBOQuote.getBestAsk().lessThan(ask)) {
 					// buy orders: If ASK_N < X_t, then [ASK_N, ..., Y_t]
-					buyMinPrice = lastNBBOQuote.bestAsk.getPrice();
+					buyMinPrice = lastNBBOQuote.getBestAsk();
 				}
-				if (lastNBBOQuote.bestBid.getPrice() > bid) {
+				if (lastNBBOQuote.getBestBid().greaterThan(bid)) {
 					// sell orders: If BID_N > Y_t, then [X_t, ..., BID_N]
-					sellMaxPrice = lastNBBOQuote.bestBid.getPrice();
+					sellMaxPrice = lastNBBOQuote.getBestBid();
 				}
 
 				// submits only one side if either bid or ask is undefined
-				if (bid > 0) {
+				if (bid.greaterThan(ZERO_PRICE)) {
 					// build descending list of buy orders (yt, ..., yt - ct) or
 					// stops at NBBO ask
-					for (int p = bid; p >= buyMinPrice; p -= stepSize) {
-						if (p > 0) {
-							prices.add(p);
-							quantities.add(1);
-						}
-					}
+					for (int p = bid.getPrice(); p >= buyMinPrice.getPrice(); p -= stepSize)
+						if (p > 0)
+							priceQuantMap.put(new Price(p), 1);
 				}
-				if (ask > 0) {
+				if (ask.greaterThan(ZERO_PRICE)) {
 					// build ascending list of sell orders (xt, ..., xt + ct) or
 					// stops at NBBO bid
-					for (int p = ask; p <= sellMaxPrice; p += stepSize) {
-						prices.add(p);
-						quantities.add(-1);
-					}
+					for (int p = ask.getPrice(); p <= sellMaxPrice.getPrice(); p += stepSize)
+						priceQuantMap.put(new Price(p), -1);
 				}
 
 				Logger.log(Logger.INFO, ts + " | " + getMarket() + " " + this
@@ -131,8 +129,7 @@ public class BasicMarketMaker extends MarketMaker {
 						+ numRungs + ", stepSize=" + stepSize + ": buys ["
 						+ buyMinPrice + ", " + bid + "] &" + " sells [" + ask
 						+ ", " + sellMaxPrice + "]");
-				actMap.addAll(submitMultipleBid(getMarket(), prices,
-						quantities, ts));
+				actMap.addAll(submitMultipleBid(getMarket(), priceQuantMap, ts));
 			} else {
 				Logger.log(Logger.INFO, ts + " | " + getMarket() + " " + this
 						+ " " + agentType

@@ -449,7 +449,7 @@ public class SystemData {
 	 */
 	public void addSpread(int mktID, TimeStamp ts, int spread) {
 		double s = Double.NaN;
-		if (spread != Consts.INF_PRICE) s = spread;
+		if (spread != Consts.INF_PRICE.getPrice()) s = spread;
 			
 		if(!marketSpread.containsKey(mktID)) {
 			marketSpread.put(mktID, new TimeSeries());
@@ -468,7 +468,7 @@ public class SystemData {
 	 */
 	public void addMidQuotePrice(int mktID, TimeStamp ts, int bid, int ask) {
 		double midQuote = Double.NaN;
-		if (bid != Consts.INF_PRICE && ask != Consts.INF_PRICE) {
+		if (bid != Consts.INF_PRICE.getPrice() && ask != Consts.INF_PRICE.getPrice()) {
 			midQuote = (bid + ask) / 2;
 		}
 		if (!marketMidQuote.containsKey(mktID)) {

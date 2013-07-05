@@ -1,5 +1,7 @@
 package market;
 
+import utils.MathUtils;
+
 /**
  * Price class is wrapper for long; one unit represents one thousandth of a
  * dollar.
@@ -40,18 +42,22 @@ public class Price implements Comparable<Price> {
 	public double getDollarPrice() {
 		return price / (double) PRICE_PER_DOLLAR;
 	}
+	
+	public Price quantize(int quanta) {
+		return new Price(MathUtils.quantize(price, quanta));
+	}
 
 	/**
 	 * Add price to this object.
 	 */
-	public Price sum(Price p) {
+	public Price plus(Price p) {
 		return new Price(this.price + p.price);
 	}
 
 	/**
 	 * Subtract price from this object.
 	 */
-	public Price diff(Price p) {
+	public Price minus(Price p) {
 		return new Price(this.price - p.price);
 	}
 
@@ -59,11 +65,6 @@ public class Price implements Comparable<Price> {
 	public int compareTo(Price o) {
 		if (o == null) return 1;
 		return this.price - o.price;
-	}
-
-	@Override
-	public String toString() {
-		return Integer.toString(price);
 	}
 	
 	/**
@@ -92,6 +93,23 @@ public class Price implements Comparable<Price> {
 	 */
 	public boolean lessThanEqual(Price p) {
 		return p == null || compareTo(p) <= 0;
+	}
+	
+	@Override
+	public int hashCode() {
+		return price;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof Price)) return false;
+		Price other = (Price) obj;
+		return price == other.price;
+	}
+
+	@Override
+	public String toString() {
+		return Integer.toString(price);
 	}
 
 }

@@ -106,7 +106,7 @@ public class ZIRAgent extends BackgroundAgent {
 			int newPosition = quantity + positionBalance;
 			// check that will not exceed max absolute position
 			if (newPosition <= maxAbsPosition && newPosition >= -maxAbsPosition) {
-				val = Math.max(0, model.getFundamentalAt(ts).sum(getPrivateValueAt(quantity)).getPrice());
+				val = Math.max(0, model.getFundamentalAt(ts).plus(getPrivateValueAt(quantity)).getPrice());
 				s += " position=" + positionBalance + ", for q=" + quantity + ", value=" + 
 						model.getFundamentalAt(ts) + " + " + getPrivateValueAt(quantity) + "=" + val;
 				

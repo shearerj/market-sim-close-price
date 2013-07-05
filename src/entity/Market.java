@@ -156,7 +156,7 @@ public abstract class Market extends Entity {
 			tr.getBuyer().logTransactions(clearTime);
 			tr.getSeller().updateTransactions(clearTime);
 			tr.getSeller().logTransactions(clearTime);
-			lastClearPrice = tr.price;			
+			lastClearPrice = tr.getPrice();			
 		}
 		
 		//Orderbook logging
@@ -259,15 +259,6 @@ public abstract class Market extends Entity {
 		return true;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#toString()
-	 */
-	public String toString() {
-		return new String("[" + this.getID() + "]");
-	}
-
 	/**
 	 * Returns true if agent can sell in this market.
 	 * 
@@ -350,6 +341,23 @@ public abstract class Market extends Entity {
 		for (Bid b : this.bids)
 			map.put(b.getBidID(), b.getSubmitTime());
 		return map;
+	}
+	
+	@Override
+	public int hashCode() {
+		return super.hashCode() ^ model.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof Market)) return false;
+		Market market = (Market) obj;
+		return super.equals(market) && model.equals(market.model);
+	}
+
+	@Override
+	public String toString() {
+		return new String("[" + id + "]");
 	}
 
 }

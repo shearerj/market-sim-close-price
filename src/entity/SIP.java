@@ -42,7 +42,8 @@ public class SIP extends Entity {
 	 */
 	public BestBidAsk getNBBOQuote(int modelID) {
 		if (!lastQuotes.containsKey(modelID)) {
-			BestBidAsk b = new BestBidAsk();
+			// FIXME This shouldn't be done / shouldn't happen
+			BestBidAsk b = new BestBidAsk(null, null, null, null);
 			lastQuotes.put(modelID, b);
 			return b;
 		} else {
@@ -92,27 +93,27 @@ public class SIP extends Entity {
 	
 		BestBidAsk lastQuote = computeBestBidOffer(ids, true);
 			
-		Price bestBid = lastQuote.bestBid;
-		Price bestAsk = lastQuote.bestAsk;
+		Price bestBid = lastQuote.getBestBid();
+		Price bestAsk = lastQuote.getBestAsk();
 		if ((bestBid != null) && (bestAsk != null)) {
 			// check for inconsistency in buy/sell prices & fix if found
-			if (lastQuote.bestBid.compareTo(lastQuote.bestAsk) > 0) {
-				int mid = (lastQuote.bestBid.getPrice() + lastQuote.bestAsk.getPrice()) / 2;
+			if (lastQuote.getBestBid().compareTo(lastQuote.getBestAsk()) > 0) {
+				int mid = (lastQuote.getBestBid().getPrice() + lastQuote.getBestAsk().getPrice()) / 2;
 				bestBid = new Price(mid - this.tickSize);
 				bestAsk = new Price(mid + this.tickSize);
 				s += " (before fix) " + lastQuote + " --> ";
 				
 				// Add spread of INF if inconsistent NBBO quote
-				this.data.addNBBOSpread(modelID, ts, Consts.INF_PRICE);
+				this.data.addNBBOSpread(modelID, ts, Consts.INF_PRICE.getPrice());
 			} else {
 				// if bid-ask consistent, store the spread
 				this.data.addNBBOSpread(modelID, ts, lastQuote.getSpread());
 			}
 		} else {
 			// store spread of INF since no bid-ask spread
-			this.data.addNBBOSpread(modelID, ts, Consts.INF_PRICE);
+			this.data.addNBBOSpread(modelID, ts, Consts.INF_PRICE.getPrice());
 		}
-		lastQuote = new BestBidAsk(lastQuote.bestBidMarket, bestBid, lastQuote.bestAskMarket, bestAsk);
+		lastQuote = new BestBidAsk(lastQuote.getBestBidMarket(), bestBid, lastQuote.getBestAskMarket(), bestAsk);
 		lastQuotes.put(modelID, lastQuote);
 		Logger.log(Logger.INFO, s + "updated " + lastQuote);
 		return Collections.emptyList();
@@ -148,12 +149,15 @@ public class SIP extends Entity {
 			
 			if (nbbo) {
 				// NBBO quote (may be delayed)
-				BestBidAsk ba = new BestBidAsk();
 				if (marketQuotes.containsKey(mkt.getID())) {
-					ba  = marketQuotes.get(mkt.getID());
+					BestBidAsk ba  = marketQuotes.get(mkt.getID());
+					bid = ba.getBestBid();
+					ask = ba.getBestAsk();
+				} else {
+					bid = null;
+					ask = null;
 				}
-				bid = ba.bestBid;
-				ask = ba.bestAsk;
+				
 			} else {
 				// global quote
 				bid = mkt.getBidPrice();

@@ -268,7 +268,7 @@ public class Observations {
 		Feature feat = new Feature();
 		DescriptiveStatistics speeds = new DescriptiveStatistics();
 		for(Transaction tr : model.getTrans()) {
-			TimeStamp execTime = tr.getTimestamp();
+			TimeStamp execTime = tr.getExecTime();
 			TimeStamp buyerExecTime = execTime.diff(tr.getBuyBid().getSubmitTime());
 			TimeStamp sellerExecTime = execTime.diff(tr.getSellBid().getSubmitTime());
 			for(int q=0; q < tr.getQuantity(); q++) {
@@ -371,13 +371,13 @@ public class Observations {
 
 		for (Transaction t : trans) {
 			PQTransaction tr = (PQTransaction) t;
-			prices.addValue(tr.price.getPrice());
-			quantity.addValue(tr.quantity);
-			fundamental.addValue(model.getFundamentalAt(tr.execTime).getPrice());
+			prices.addValue(tr.getPrice().getPrice());
+			quantity.addValue(tr.getQuantity());
+			fundamental.addValue(model.getFundamentalAt(tr.getExecTime()).getPrice());
 
-			transPrices.add(tr.execTime, new Double(tr.price.getPrice()));
-			fundPrices.add(tr.execTime, new Double(model.getFundamentalAt(
-					tr.execTime).getPrice()));
+			transPrices.add(tr.getExecTime(), new Double(tr.getPrice().getPrice()));
+			fundPrices.add(tr.getExecTime(), new Double(model.getFundamentalAt(
+					tr.getExecTime()).getPrice()));
 
 			// update number of transactions
 			// buyer

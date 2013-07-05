@@ -193,24 +193,24 @@ public abstract class SMAgent extends Agent {
 		Price bestPrice;
 
 		if (quantity > 0) { // buy
-			nbboBetter = lastNBBOQuote.bestAsk != null
-					&& lastNBBOQuote.bestAsk.lessThan(mainMarketQuote.lastAskPrice);
+			nbboBetter = lastNBBOQuote.getBestAsk() != null
+					&& lastNBBOQuote.getBestAsk().lessThan(mainMarketQuote.lastAskPrice);
 			willTransact = nbboBetter
-					&& price.greaterThan(lastNBBOQuote.bestAsk);
+					&& price.greaterThan(lastNBBOQuote.getBestAsk());
 			if (willTransact) {
-				bestMarket = lastNBBOQuote.bestAskMarket;
-				bestPrice = lastNBBOQuote.bestAsk;
+				bestMarket = lastNBBOQuote.getBestAskMarket();
+				bestPrice = lastNBBOQuote.getBestAsk();
 			} else {
 				bestMarket = market;
 				bestPrice = mainMarketQuote.lastAskPrice;
 			}
 		} else { // sell
-			nbboBetter = lastNBBOQuote.bestBid != null
-					&& lastNBBOQuote.bestBid.greaterThan(mainMarketQuote.lastBidPrice);
-			willTransact = nbboBetter && price.lessThan(lastNBBOQuote.bestBid);
+			nbboBetter = lastNBBOQuote.getBestBid() != null
+					&& lastNBBOQuote.getBestBid().greaterThan(mainMarketQuote.lastBidPrice);
+			willTransact = nbboBetter && price.lessThan(lastNBBOQuote.getBestBid());
 			if (willTransact) {
-				bestMarket = lastNBBOQuote.bestBidMarket;
-				bestPrice = lastNBBOQuote.bestBid;
+				bestMarket = lastNBBOQuote.getBestBidMarket();
+				bestPrice = lastNBBOQuote.getBestBid();
 			} else {
 				bestMarket = market;
 				bestPrice = mainMarketQuote.lastBidPrice;
@@ -219,8 +219,8 @@ public abstract class SMAgent extends Agent {
 
 		if (nbboBetter)
 			Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
-					+ "::submitNMSBid: " + "NBBO(" + lastNBBOQuote.bestBid
-					+ ", " + lastNBBOQuote.bestAsk + ") better than " + market
+					+ "::submitNMSBid: " + "NBBO(" + lastNBBOQuote.getBestBid()
+					+ ", " + lastNBBOQuote.getBestAsk() + ") better than " + market
 					+ " Quote(" + mainMarketQuote.lastBidPrice + ", "
 					+ mainMarketQuote.lastAskPrice + ")");
 		if (willTransact)
@@ -232,7 +232,7 @@ public abstract class SMAgent extends Agent {
 		// submit bid to the best market
 		marketSubmittedBid = bestMarket;
 		Collection<Activity> actMap = new ArrayList<Activity>(executeSubmitBid(
-				bestMarket, price.getPrice(), quantity, ts));
+				bestMarket, price, quantity, ts));
 
 		String durationLog = duration != Consts.INF_TIME
 				&& duration.longValue() > 0 ? ", duration=" + duration : "";

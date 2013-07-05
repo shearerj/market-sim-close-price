@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
+import market.Price;
+
 import event.TimeStamp;
 
 
@@ -79,7 +81,8 @@ public class Consts {
 	public final static TimeStamp START_TIME = new TimeStamp(0);
 	
 	// Price TODO Move to Price
-	public final static int INF_PRICE = Integer.MAX_VALUE;
+	public final static Price INF_PRICE = new Price(Integer.MAX_VALUE);
+	public final static Price ZERO_PRICE = new Price(0); // TODO Better name
 	
 	// **********************************************************
 	// FILENAMES

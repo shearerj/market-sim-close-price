@@ -381,7 +381,7 @@ public abstract class MarketModel {
 	 * @param tr
 	 */
 	public void addSurplus(Transaction tr) {
-		int fund = this.getFundamentalAt(tr.getTimestamp()).getPrice();
+		int fund = this.getFundamentalAt(tr.getExecTime()).getPrice();
 		for (double rho : Consts.rhos) {
 			if (!this.modelSurplus.containsKey(rho))
 				this.modelSurplus.put(rho, 0.0);

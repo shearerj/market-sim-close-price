@@ -57,7 +57,7 @@ public class ZIAgent extends BackgroundAgent {
 		quantity = rand.nextBoolean() ? 1 : -1; // 50% chance of being either long or
 											// short
 		int val = Math.max(0,
-				model.getFundamentalAt(currentTime).sum(getPrivateValueAt(quantity)).getPrice());
+				model.getFundamentalAt(currentTime).plus(getPrivateValueAt(quantity)).getPrice());
 
 		// basic ZI behavior
 		if (quantity > 0)

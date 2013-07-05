@@ -115,13 +115,13 @@ public class CallMarket extends Market {
 			if (bp != null && ap != null) {
 				if (bp.getPrice() == -1 || ap.getPrice() == -1) {
 					// either bid or ask are undefined
-					data.addSpread(id, quoteTime, Consts.INF_PRICE);
-					data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);	
+					data.addSpread(id, quoteTime, Consts.INF_PRICE.getPrice());
+					data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE.getPrice(), Consts.INF_PRICE.getPrice());	
 					
-				} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
+				} else if (bp.compareTo(ap) > 0 && ap.getPrice() > 0) {
 					Logger.log(Logger.ERROR, this.getName() + "::quote: ERROR bid > ask");
-					data.addSpread(id, quoteTime, Consts.INF_PRICE);
-					data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
+					data.addSpread(id, quoteTime, Consts.INF_PRICE.getPrice());
+					data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE.getPrice(), Consts.INF_PRICE.getPrice());
 					
 				} else {
 					// valid bid-ask
