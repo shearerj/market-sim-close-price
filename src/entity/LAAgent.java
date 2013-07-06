@@ -1,10 +1,12 @@
 package entity;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.INFO;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import logger.Logger;
 import market.BestQuote;
 import market.Bid;
 import market.PQBid;
@@ -62,8 +64,7 @@ public class LAAgent extends HFTAgent {
 					* bestQuote.getBestBuy().getPrice())
 					&& (bestQuote.getBestBuy().getPrice() >= 0)) {
 
-				Logger.log(Logger.INFO, ts.toString() + " | " + this + " "
-						+ agentType
+				log(INFO, ts.toString() + " | " + this + " " + agentType
 						+ "::agentStrategy: Found possible arb opp!");
 
 				Market buyMarket = bestQuote.getBestBuyMarket();
@@ -75,13 +76,13 @@ public class LAAgent extends HFTAgent {
 					int midPoint = (bestQuote.getBestBuy().getPrice() + bestQuote.getBestSell().getPrice()) / 2;
 					int buySize = getBidQuantity(bestQuote.getBestBuy(),
 							new Price(midPoint - tickSize), buyMarket, true);
-					int sellSize = getBidQuantity(new Price(midPoint + tickSize),
+					int sellSize = getBidQuantity(
+							new Price(midPoint + tickSize),
 							bestQuote.getBestSell(), sellMarket, false);
 					int quantity = Math.min(buySize, sellSize);
 
 					if (quantity > 0 && !(buyMarket.equals(sellMarket))) {
-						Logger.log(
-								Logger.INFO,
+						log(INFO,
 								ts.toString()
 										+ " | "
 										+ this
@@ -100,8 +101,7 @@ public class LAAgent extends HFTAgent {
 								midPoint + tickSize), -quantity, ts));
 
 					} else if (buyMarket.equals(sellMarket)) {
-						Logger.log(
-								Logger.INFO,
+						log(INFO,
 								ts.toString()
 										+ " | "
 										+ this
@@ -114,8 +114,8 @@ public class LAAgent extends HFTAgent {
 						// causing the buy and sell market IDs to be identical
 
 					} else if (quantity == 0) {
-						Logger.log(Logger.INFO, ts.toString() + " | " + this
-								+ " " + agentType
+						log(INFO, ts.toString() + " | " + this + " "
+								+ agentType
 								+ "::agentStrategy: No quantity available");
 						// Note that if this message appears in a CDA market,
 						// then the HFT
@@ -124,8 +124,7 @@ public class LAAgent extends HFTAgent {
 					}
 
 				} else {
-					Logger.log(
-							Logger.INFO,
+					log(INFO,
 							ts.toString()
 									+ " | "
 									+ this

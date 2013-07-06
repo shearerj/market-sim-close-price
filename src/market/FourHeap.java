@@ -6,13 +6,21 @@
  */
 package market;
 
-import java.util.*;
+import static logger.Logger.Level.DEBUG;
+import static logger.Logger.Level.ERROR;
+import static logger.Logger.Level.INFO;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import logger.Logger;
-
+import logger.Logger.Level;
+import utils.Compare;
 import entity.Market;
 import event.TimeStamp;
-import utils.Compare;
 
 /**
  * 
@@ -27,7 +35,7 @@ import utils.Compare;
  */
 public class FourHeap {
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG_FLAG = false;
 	
 	protected final Market market;
 
@@ -131,9 +139,9 @@ public class FourHeap {
 		return Logger.shouldLog(code);
 	}
 
-	public void log(int code, String msg) {
+	public void log(Level code, String msg) {
 		msg = market.getID() + "," + msg;
-		Logger.log(code, msg);
+		log(code, msg);
 	}
 
 	/**
@@ -145,7 +153,7 @@ public class FourHeap {
 	public PQPoint getBidQuote() {
 		// new sell either has to beat a matching sell, or
 		// match a non-matching buy
-		if (DEBUG)
+		if (DEBUG_FLAG)
 			logSets();
 		PQPoint buyToMatch = null;
 		PQPoint sellToBeat = null;
@@ -163,10 +171,10 @@ public class FourHeap {
 
 		// return the Higher of the two prices (easiest to match)
 		// null is returned only if both arguments are null
-		if ((buyToMatch != null) && (DEBUG))
-			log(Logger.DEBUG, "buyToMatch: " + buyToMatch);
-		if ((sellToBeat != null) && (DEBUG))
-			log(Logger.DEBUG, "selltoBeat: " + sellToBeat);
+		if ((buyToMatch != null) && (DEBUG_FLAG))
+			log(DEBUG, "buyToMatch: " + buyToMatch);
+		if ((sellToBeat != null) && (DEBUG_FLAG))
+			log(DEBUG, "selltoBeat: " + sellToBeat);
 		ret = Compare.max(buyToMatch, sellToBeat);
 		if (ret == null)
 			ret = new PQPoint(0, new Price(-1));
@@ -183,7 +191,7 @@ public class FourHeap {
 		PQPoint sellToMatch = null;
 		PQPoint buyToBeat = null;
 		PQPoint ret = null;
-		if (DEBUG)
+		if (DEBUG_FLAG)
 			logSets();
 		// new buy either has to beat a matching buy, or
 		// match a non-matching sell
@@ -276,7 +284,7 @@ public class FourHeap {
 		equalizeSetSizes();
 		matchBids();
 		equalizeSetSizes();
-		if (DEBUG)
+		if (DEBUG_FLAG)
 			logSets();
 		debug("leaving remove");
 	}
@@ -478,7 +486,7 @@ public class FourHeap {
 		} catch (java.lang.NullPointerException e) {
 			logSets();
 			if (worstMatchingBuy() == null)
-				log(Logger.ERROR, "FourHeap::equalizeSetSizes, wmb==null");
+				log(ERROR, "FourHeap::equalizeSetSizes, wmb==null");
 			throw (e);
 		}
 
@@ -492,7 +500,7 @@ public class FourHeap {
 		} catch (java.lang.NullPointerException e) {
 			logSets();
 			if (worstMatchingSell() == null)
-				log(Logger.ERROR, "FourHeap::equalizeSetSizes, wms==null");
+				log(ERROR, "FourHeap::equalizeSetSizes, wms==null");
 
 			throw (e);
 		}
@@ -549,7 +557,7 @@ public class FourHeap {
 	}
 
 	final void debug(String message) {
-		if (!DEBUG)
+		if (!DEBUG_FLAG)
 			return;
 
 		// log(4,message);
@@ -557,7 +565,7 @@ public class FourHeap {
 	}
 
 	final void debugn(String message) {
-		if (!DEBUG)
+		if (!DEBUG_FLAG)
 			return;
 		// log(4,message);
 
@@ -573,13 +581,13 @@ public class FourHeap {
 		// if (shouldLog(Log.INFO)) {
 		// log(Log.INFO,"FourHeap::logSets, "+s);
 		// }
-		Logger.log(Logger.INFO, "    [" + market.getID() + "] " + "FourHeap::logSets::"
+		Logger.log(INFO, "    [" + market.getID() + "] " + "FourHeap::logSets::"
 				+ s);
 	}
 
 	public void logSets(TimeStamp ts) {
 		String s = printSet(0) + printSet(1) + printSet(2) + printSet(3);
-		Logger.log(Logger.INFO, ts.toString() + " | [" + market.getID() + "] "
+		Logger.log(INFO, ts.toString() + " | [" + market.getID() + "] "
 				+ "FourHeap::logSets::" + s);
 	}
 

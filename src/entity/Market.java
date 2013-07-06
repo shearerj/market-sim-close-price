@@ -1,11 +1,13 @@
 package entity;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.INFO;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.TreeMap;
 
-import logger.Logger;
 import market.Bid;
 import market.PQOrderBook;
 import market.Price;
@@ -127,7 +129,7 @@ public abstract class Market extends Entity {
 		Collection<Activity> actList = new ArrayList<Activity>();
 		
 		//Log prior quote
-		Logger.log(Logger.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
+		log(INFO, clearTime + " | " + this + " Prior-clear Quote" + 
 				this.quote(clearTime));
 		
 		//Update the orderbook
@@ -141,7 +143,7 @@ public abstract class Market extends Entity {
 		if(trans == null) {
 			data.addDepth(id, clearTime, orderbook.getDepth());
 			
-			Logger.log(Logger.INFO, clearTime + " | ....." + this + " " + 
+			log(INFO, clearTime + " | ....." + this + " " + 
 					this.getName() + "::clear: No change. Post-clear Quote" +  
 					this.quote(clearTime));
 			
@@ -165,7 +167,7 @@ public abstract class Market extends Entity {
 		orderbook.logFourHeap(clearTime);
 		//Updating Depth
 		data.addDepth(this.id, clearTime, orderbook.getDepth());
-		Logger.log(Logger.INFO, clearTime + " | ....." + toString() + " " + 
+		log(INFO, clearTime + " | ....." + toString() + " " + 
 				this.getName() + "::clear: Order book cleared: " +
 				"Post-clear Quote" + this.quote(clearTime));
 		actList.add(new SendToSIP(this, clearTime));
@@ -235,7 +237,7 @@ public abstract class Market extends Entity {
 	public Collection<Activity> sendToSIP(TimeStamp ts) {
 		int bid = this.getBidPrice().getPrice();
 		int ask = this.getAskPrice().getPrice();
-		Logger.log(Logger.INFO, ts + " | " + this + " SendToSIP(" + bid + ", "
+		log(INFO, ts + " | " + this + " SendToSIP(" + bid + ", "
 				+ ask + ")");
 
 		Collection<Activity> actMap = new ArrayList<Activity>();

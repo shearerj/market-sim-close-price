@@ -1,19 +1,34 @@
 package systemmanager;
 
-import data.*;
-import event.*;
-import logger.Logger;
-import model.*;
-import entity.*;
-import activity.*;
+import static logger.Logger.log;
+import static logger.Logger.Level.INFO;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Random;
 
+import model.MarketModel;
+import model.MarketObjectPair;
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.ModelType;
+import activity.AgentArrival;
+import activity.Clear;
+import activity.Liquidate;
+import activity.SendToSIP;
+import data.AgentPropsPair;
+import data.ArrivalTime;
+import data.EntityProperties;
+import data.Sequence;
+import data.SystemData;
+import entity.Agent;
+import entity.BasicMarketMaker;
+import entity.CallMarket;
+import entity.Market;
+import entity.SIP;
+import entity.SMAgent;
+import event.EventManager;
+import event.TimeStamp;
 
 /**
  * SYSTEMSETUP
@@ -114,17 +129,17 @@ public class LoggingReference {
 			// Must create market models before agents, so can add the agents
 			// then to the appropriate/corresponding markets.
 			createSIP(); // TODO Move to each market model...
-			Logger.log(Logger.INFO, "------------------------------------------------");
-			Logger.log(Logger.INFO, "            Creating MARKET MODELS");
+			log(INFO, "------------------------------------------------");
+			log(INFO, "            Creating MARKET MODELS");
 			createMarketModels();
-			Logger.log(Logger.INFO, "------------------------------------------------");
-			Logger.log(Logger.INFO, "            Creating AGENTS");
+			log(INFO, "------------------------------------------------");
+			log(INFO, "            Creating AGENTS");
 			createAllAgents(); // TODO Move to market Models
 
 			// Log agent information
 			logAgentInfo(); // TODO move to agent creation...
-			Logger.log(Logger.INFO, "------------------------------------------------");
-			Logger.log(Logger.INFO, " ");
+			log(INFO, "------------------------------------------------");
+			log(INFO, " ");
 
 			// Initial SendToSIP Activity for all markets
 			for (Market mkt : data.getMarkets().values()) { // Move to market Models
@@ -160,7 +175,7 @@ public class LoggingReference {
 				// always use default configuration of this market model
 				MarketModel primary = createModel(primaryModelType, "");
 				data.primaryModel = primary;
-				Logger.log(Logger.INFO, "Primary model: " + primaryModelType + "-(default)");
+				log(INFO, "Primary model: " + primaryModelType + "-(default)");
 				
 			} catch (Exception e) {
 				if (! Consts.ModelType.contains(desc[0])) {
@@ -178,7 +193,7 @@ public class LoggingReference {
 			for (ModelType modelType : data.numModelType.keySet()) {
 				
 				int numModelsOfThisType = data.numModelType.get(modelType);
-				Logger.log(Logger.INFO, "Models: " + numModelsOfThisType + " " + modelType);
+				log(INFO, "Models: " + numModelsOfThisType + " " + modelType);
 				
 				// Parse the comma separated types of agents (list of configuration strings)
 				// TODO Put this in config
@@ -225,7 +240,7 @@ public class LoggingReference {
 		p.put(Consts.MODEL_CONFIG_KEY, configuration);
 		MarketModel model = null; //ModelFactory.createModel(modelType, modelID, p, data);		
 		data.addModel(model);
-		Logger.log(Logger.INFO, model.getFullName() + ": " + model + " " + p);
+		log(INFO, model.getFullName() + ": " + model + " " + p);
 		createMarketsInModel(model);
 		return model;
 	}
@@ -251,7 +266,7 @@ public class LoggingReference {
 			if (market instanceof CallMarket) {
 				eventManager.addActivity(new Clear(market, market.getNextClearTime()));
 			}
-			Logger.log(Logger.INFO, "Markets: " + market.getType() + ", " + market);
+			log(INFO, "Markets: " + market.getType() + ", " + market);
 			
 			data.marketIDModelIDMap.put(mID, model.getID());
 		}
@@ -326,7 +341,7 @@ public class LoggingReference {
 		
 		// create all agents
 		for (MarketModel model : modelMap.values()) {
-			Logger.log(Logger.INFO, "MODEL: " + model.getFullName() + " agent types:");
+			log(INFO, "MODEL: " + model.getFullName() + " agent types:");
 			if (data.isEGTAUseCase()) {
 				createPlayersForModel(model);
 			}
@@ -361,7 +376,7 @@ public class LoggingReference {
 								seeds.get(ap).get(i), arrivals.get(ap).get(i));
 						ag.setLogID(logIDs.get(ap).get(i));
 					}
-					Logger.log(Logger.INFO, "Agents: " + numAg + " " + ap.getAgentType() + " " +
+					log(INFO, "Agents: " + numAg + " " + ap.getAgentType() + " " +
 							ap.getProperties());
 				}
 			}
@@ -399,7 +414,7 @@ public class LoggingReference {
 					ag.setLogID(ag.getID()); 	// set player ID = log ID
 					data.addPlayer(ag);			// add player to SystemData
 				}
-				Logger.log(Logger.INFO, "Players: " + numAg + " " + type);
+				log(INFO, "Players: " + numAg + " " + type);
 			}
 		} catch (Exception e) {
 			System.err.println(this.getClass().getSimpleName() + 
@@ -502,7 +517,7 @@ public class LoggingReference {
 				s += ", pv=" + ag.getPrivateValue();
 			}
 //			s += " ... params=" + ag.getProperties().toString();
-			Logger.log(Logger.INFO, s);
+			log(INFO, s);
 		}
 	}
 

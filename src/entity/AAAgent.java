@@ -1,19 +1,25 @@
 package entity;
 
-import data.*;
-import event.*;
-import logger.Logger;
-import market.*;
-import model.MarketModel;
-import activity.*;
-import utils.RandPlus;
-
-import java.util.*;
-
+import static logger.Logger.log;
+import static logger.Logger.Level.INFO;
 import static systemmanager.Consts.INF_PRICE;
 import static systemmanager.Consts.ZERO_PRICE;
 import static utils.Compare.max;
 import static utils.Compare.min;
+
+import java.util.ArrayList;
+import java.util.Collection;
+
+import market.Price;
+import market.PrivateValue;
+import market.Transaction;
+import model.MarketModel;
+import utils.RandPlus;
+import activity.Activity;
+import activity.AgentStrategy;
+import data.ArrivalTime;
+import data.EntityProperties;
+import event.TimeStamp;
 
 /**
  * This is the implementation of the Adaptive Aggressive strategy NOT READY FOR
@@ -189,7 +195,7 @@ public class AAAgent extends BackgroundAgent {
 
 			// Updating theta
 			theta = theta + beta_t * (thetaStar - theta);
-			Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
+			log(INFO, ts + " | " + this + " " + agentType
 					+ ": theta=" + theta);
 			return;
 		}
@@ -458,7 +464,7 @@ public class AAAgent extends BackgroundAgent {
 			if (newPosBal < (-1 * maxAbsPosition) || newPosBal > maxAbsPosition) {
 				s += "new order would exceed max position " + maxAbsPosition
 						+ "; no submission";
-				Logger.log(Logger.INFO, s);
+				log(INFO, s);
 				return actMap;
 			}
 
@@ -469,7 +475,7 @@ public class AAAgent extends BackgroundAgent {
 					|| (!isBuyer && strat.limit.greaterThanEquals(bestAsk))) {
 				s += "best offer is outside of limit price: " + strat.limit
 						+ "; no submission";
-				Logger.log(Logger.INFO, s);
+				log(INFO, s);
 				return actMap;
 			}
 
@@ -489,7 +495,7 @@ public class AAAgent extends BackgroundAgent {
 				Price submitPrice = bestBid.greaterThanEquals(price) ? bestBid : price;
 				actMap.addAll(executeSubmitNMSBid(submitPrice,
 						quantity, ts));
-				Logger.log(Logger.INFO, ts + " AA: Best ask: " + bestAsk
+				log(INFO, ts + " AA: Best ask: " + bestAsk
 						+ "\tAgent limit= " + limit + "\tsubmission= "
 						+ submitPrice);
 			}
@@ -576,9 +582,9 @@ public class AAAgent extends BackgroundAgent {
 		// TimeStamp tsNew = reentry.next();
 		actMap.add(new AgentStrategy(this, reentry.next()));
 
-		Logger.log(Logger.INFO, s + " " + isBuyer + " private valuation="
+		log(INFO, s + " " + isBuyer + " private valuation="
 				+ strat.limit);
-		Logger.log(Logger.INFO, s + " adaptiveness=" + strat.theta);
+		log(INFO, s + " adaptiveness=" + strat.theta);
 		return actMap;
 	}
 

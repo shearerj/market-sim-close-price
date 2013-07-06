@@ -1,13 +1,13 @@
 package data;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.ERROR;
+
 import java.util.ArrayList;
 
-import event.TimeStamp;
-
-import utils.RandPlus;
-
-import logger.Logger;
 import market.Price;
+import utils.RandPlus;
+import event.TimeStamp;
 
 /**
  * Class to store and compute a stochastic process used as a base to determine
@@ -57,7 +57,7 @@ public class FundamentalValue {
 	public Price getValueAt(TimeStamp t) {
 		int index = (int) t.getLongValue(); // Incase of overflow
 		if (index < 0) {
-			Logger.log(Logger.ERROR,
+			log(ERROR,
 					"Tried to access out of bounds TimeStamp: " + t);
 			return new Price(0);
 		}

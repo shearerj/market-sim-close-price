@@ -1,5 +1,11 @@
 package entity;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.DEBUG;
+import static logger.Logger.Level.ERROR;
+import static logger.Logger.Level.INFO;
+import static systemmanager.Consts.INF_PRICE;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,7 +15,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeSet;
 
-import logger.Logger;
 import market.BestBidAsk;
 import market.Bid;
 import market.PQBid;
@@ -19,7 +24,6 @@ import market.Quote;
 import market.Transaction;
 import market.TransactionIDComparator;
 import model.MarketModel;
-import static systemmanager.Consts.INF_PRICE;
 import systemmanager.Consts;
 import utils.RandPlus;
 import activity.Activity;
@@ -413,8 +417,8 @@ public abstract class Agent extends Entity {
 	public Collection<? extends Activity> expireBid(Market market,
 			TimeStamp duration, TimeStamp currentTime) {
 		TimeStamp withdrawTime = currentTime.sum(new TimeStamp(duration));
-		Logger.log(Logger.INFO, currentTime + " | " + market + " " + this
-				+ ": bid duration=" + duration);
+		log(INFO, currentTime + " | " + market + " " + this + ": bid duration="
+				+ duration);
 		return Collections.singleton(new WithdrawBid(this, market, withdrawTime));
 	}
 
@@ -423,8 +427,7 @@ public abstract class Agent extends Entity {
 	 */
 	public Collection<? extends Activity> executeWithdrawBid(Market market,
 			TimeStamp ts) {
-		Logger.log(Logger.INFO, ts + " | " + this + " withdraw bid from "
-				+ market);
+		log(INFO, ts + " | " + this + " withdraw bid from " + market);
 		return market.removeBid(this.id, ts);
 	}
 
@@ -436,9 +439,8 @@ public abstract class Agent extends Entity {
 		if (quantity == 0)
 			return Collections.emptySet();
 
-		Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
-				+ "::submitBid: +(" + price + ", " + quantity + ") to "
-				+ market);
+		log(INFO, ts + " | " + this + " " + agentType + "::submitBid: +("
+				+ price + ", " + quantity + ") to " + market);
 
 		Price p = price.quantize(tickSize);
 		PQBid pqBid = new PQBid(this, market, ts);
@@ -465,8 +467,7 @@ public abstract class Agent extends Entity {
 	// TODO swtich form parallel array lists to Map<Price, Integer>
 	public Collection<? extends Activity> executeSubmitMultipleBid(Market mkt,
 			Map<Price, Integer> priceQuantityMap, TimeStamp ts) {
-		Logger.log(Logger.INFO, ts + " | " + mkt + " " + this + ": +"
-				+ priceQuantityMap);
+		log(INFO, ts + " | " + mkt + " " + this + ": +" + priceQuantityMap);
 
 		PQBid pqBid = new PQBid(this, mkt, ts);
 		for (Entry<Price, Integer> priceQuant : priceQuantityMap.entrySet()) {
@@ -487,7 +488,7 @@ public abstract class Agent extends Entity {
 	 * liquidation.
 	 */
 	public Collection<? extends Activity> liquidateAtFundamental(TimeStamp ts) {
-		Logger.log(Logger.INFO, ts + " | " + this + " liquidating...");
+		log(INFO, ts + " | " + this + " liquidating...");
 		return Collections.singleton(new Liquidate(this,
 				model.getFundamentalAt(ts), ts)); // FIXME maybe infinite time?
 	}
@@ -498,9 +499,8 @@ public abstract class Agent extends Entity {
 	public Collection<? extends Activity> executeLiquidate(Price price,
 			TimeStamp ts) {
 
-		Logger.log(Logger.INFO, ts + " | " + this
-				+ " pre-liquidation: position=" + positionBalance + ", profit="
-				+ realizedProfit);
+		log(INFO, ts + " | " + this + " pre-liquidation: position="
+				+ positionBalance + ", profit=" + realizedProfit);
 
 		// If no net position, no need to liquidate
 		if (positionBalance == 0)
@@ -517,9 +517,9 @@ public abstract class Agent extends Entity {
 		}
 		positionBalance = 0;
 
-		Logger.log(Logger.INFO, ts + " | " + this
-				+ " post-liquidation: position=" + positionBalance
-				+ ", profit=" + realizedProfit + ", price=" + price);
+		log(INFO, ts + " | " + this + " post-liquidation: position="
+				+ positionBalance + ", profit=" + realizedProfit + ", price="
+				+ price);
 		return Collections.emptyList();
 	}
 
@@ -530,8 +530,8 @@ public abstract class Agent extends Entity {
 		lastGlobalQuote = sip.getGlobalQuote(modelID);
 		lastNBBOQuote = sip.getNBBOQuote(modelID);
 
-		Logger.log(Logger.INFO, ts + " | " + this + " Global" + lastGlobalQuote
-				+ ", NBBO" + lastNBBOQuote);
+		log(INFO, ts + " | " + this + " Global" + lastGlobalQuote + ", NBBO"
+				+ lastNBBOQuote);
 		return Collections.emptyList();
 	}
 
@@ -564,7 +564,7 @@ public abstract class Agent extends Entity {
 				lastClearTime.put(mkt.id, q.lastClearTime);
 			}
 		} else {
-			Logger.log(Logger.ERROR, "Agent::updateQuotes: Quote is null.");
+			log(ERROR, "Agent::updateQuotes: Quote is null.");
 		}
 		addQuote(mkt.id, q);
 	}
@@ -593,7 +593,7 @@ public abstract class Agent extends Entity {
 				+ ": Current Position=" + positionBalance
 				+ ", Realized Profit=" + rp;
 		// + ", Unrealized Profit=" + up;
-		Logger.log(Logger.INFO, s);
+		log(INFO, s);
 	}
 
 	/**
@@ -609,33 +609,30 @@ public abstract class Agent extends Entity {
 	 *         updated; false otherwise.
 	 * 
 	 */
-	@Deprecated // Transaction handeling probably shouldn't happen in agent?
+	@Deprecated
+	// Transaction handeling probably shouldn't happen in agent?
 	// TODO Ths seems bad. A lot of the erro checking should never happen.
 	public boolean processTransaction(Transaction t) {
 		boolean flag = true;
 		if (t == null) {
-			Logger.log(Logger.ERROR,
+			log(ERROR,
 					"Agent::processTransaction: Corrupted (null) transaction record.");
 			flag = false;
 		} else {
 			if (t.getMarket() == null) {
-				Logger.log(Logger.ERROR,
-						"Agent::processTransaction: t.market is null");
+				log(ERROR, "Agent::processTransaction: t.market is null");
 				flag = false;
 			}
 			if (t.getPrice() == null) {
-				Logger.log(Logger.ERROR,
-						"Agent::processTransaction: t.price is null");
+				log(ERROR, "Agent::processTransaction: t.price is null");
 				flag = false;
 			}
 			if (t.getQuantity() <= 0) {
-				Logger.log(Logger.ERROR,
-						"Agent::processTransaction: t.quantity is null");
+				log(ERROR, "Agent::processTransaction: t.quantity is null");
 				flag = false;
 			}
 			if (t.getExecTime() == null) {
-				Logger.log(Logger.ERROR,
-						"Agent::processTransaction: t.timestamp is null");
+				log(ERROR, "Agent::processTransaction: t.timestamp is null");
 				flag = false;
 			}
 		}
@@ -660,7 +657,8 @@ public abstract class Agent extends Entity {
 				} else if (-quantity < positionBalance) {
 					// closing out partial long position
 					int rprofit = realizedProfit;
-					rprofit += (-quantity) * (t.getPrice().getPrice() - averageCost);
+					rprofit += (-quantity)
+							* (t.getPrice().getPrice() - averageCost);
 					realizedProfit = rprofit;
 
 				} else if (-quantity >= positionBalance) {
@@ -682,7 +680,8 @@ public abstract class Agent extends Entity {
 				} else if (quantity < -positionBalance) {
 					// closing out partial short position
 					int rprofit = realizedProfit;
-					rprofit += quantity * (averageCost - t.getPrice().getPrice());
+					rprofit += quantity
+							* (averageCost - t.getPrice().getPrice());
 					realizedProfit = rprofit;
 
 				} else if (quantity >= -positionBalance) {
@@ -708,12 +707,12 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 *            TimeStamp of update
 	 */
-	@Deprecated // Transaction handling shouldn't happen in agent 
+	@Deprecated
+	// Transaction handling shouldn't happen in agent
 	public void updateTransactions(TimeStamp ts) {
 		Collection<Transaction> list = getNewTransactions();
 
-		Logger.log(Logger.DEBUG, ts + " | " + this + " " + "lastTrans="
-				+ lastTransaction);
+		log(DEBUG, ts + " | " + this + " " + "lastTrans=" + lastTransaction);
 
 		if (list != null) {
 			Transaction lastGoodTrans = null;
@@ -725,8 +724,7 @@ public abstract class Agent extends Entity {
 					boolean flag = processTransaction(t);
 					if (!flag && lastGoodTrans != null) {
 						lastTransaction = lastGoodTrans;
-						Logger.log(
-								Logger.ERROR,
+						log(ERROR,
 								ts
 										+ " | "
 										+ this
@@ -735,8 +733,7 @@ public abstract class Agent extends Entity {
 						break;
 					}
 
-					Logger.log(
-							Logger.INFO,
+					log(INFO,
 							ts
 									+ " | "
 									+ this
@@ -748,15 +745,15 @@ public abstract class Agent extends Entity {
 									+ ", seller="
 									+ data.getAgentLogID(t.getSeller().getID())
 									+ ", price=" + t.getPrice() + ", quantity="
-									+ t.getQuantity() + ", timeStamp=" + t.getExecTime()
-									+ ")");
+									+ t.getQuantity() + ", timeStamp="
+									+ t.getExecTime() + ")");
 				}
 				// Update transactions
 				lastGoodTrans = t;
 				transactions.add(t);
 			}
 			lastTransaction = lastGoodTrans;
-			Logger.log(Logger.DEBUG, ts + " | " + this + " " + "NEW lastTrans="
+			log(DEBUG, ts + " | " + this + " " + "NEW lastTrans="
 					+ lastGoodTrans);
 		}
 		lastTransTime = ts;
@@ -765,7 +762,8 @@ public abstract class Agent extends Entity {
 	/**
 	 * Gets all transactions that have not been processed yet.
 	 */
-	@Deprecated // Transaction handling shouldn't happen in agent
+	@Deprecated
+	// Transaction handling shouldn't happen in agent
 	public Collection<Transaction> getNewTransactions() {
 
 		if (lastTransaction == null) {
@@ -817,9 +815,9 @@ public abstract class Agent extends Entity {
 				}
 			}
 			if (positionBalance != 0) {
-				Logger.log(Logger.DEBUG, this.getModel().getFullName() + ": "
-						+ this + " bal=" + positionBalance + ", p=" + p
-						+ ", avgCost=" + averageCost);
+				log(DEBUG, this.getModel().getFullName() + ": " + this
+						+ " bal=" + positionBalance + ", p=" + p + ", avgCost="
+						+ averageCost);
 			}
 			if (p != -1) {
 				up += positionBalance * (p - averageCost);
@@ -839,7 +837,8 @@ public abstract class Agent extends Entity {
 	/**
 	 * Checks the bid/ask prices for errors.
 	 */
-	@Deprecated // Why does this exist? Never should have errors
+	@Deprecated
+	// Why does this exist? Never should have errors
 	boolean checkBidAsk(int mktID, ArrayList<Price> price) {
 		if (price.size() < 2)
 			return false;
@@ -854,21 +853,19 @@ public abstract class Agent extends Entity {
 			flag = false;
 		} else if (ask <= 0 && bid > 0) {
 			double oldask = ask;
-			Logger.log(Logger.DEBUG, "Agent::checkBidAsk: ask: " + oldask
-					+ " to " + ask);
+			log(DEBUG, "Agent::checkBidAsk: ask: " + oldask + " to " + ask);
 			prevAsk.put(mktID, ask);
 			prevBid.put(mktID, bid);
 		} else if (bid <= 0 && ask > 0) {
 			double oldbid = bid;
-			Logger.log(Logger.DEBUG, "Agent::checkBidAsk: bid: " + oldbid
-					+ " to " + bid);
+			log(DEBUG, "Agent::checkBidAsk: bid: " + oldbid + " to " + bid);
 			prevAsk.put(mktID, ask);
 			prevBid.put(mktID, bid);
 		} else {
 			double oldbid = bid;
 			double oldask = ask;
-			Logger.log(Logger.DEBUG, "Agent::checkBidAsk: bid: " + oldbid
-					+ " to " + bid + ", ask: " + oldask + " to " + ask);
+			log(DEBUG, "Agent::checkBidAsk: bid: " + oldbid + " to " + bid
+					+ ", ask: " + oldask + " to " + ask);
 		}
 		bid = Math.max(bid, 1);
 		ask = Math.max(ask, 1);
@@ -907,40 +904,40 @@ public abstract class Agent extends Entity {
 			discounted *= tr.getQuantity();
 			this.surplusMap.put(rho, oldSurplus + discounted);
 		}
-		Logger.log(Logger.INFO, tr.getExecTime() + " | " + this
+		log(INFO, tr.getExecTime() + " | " + this
 				+ " Agent::updateTransactions: SURPLUS at rho=" + rho
 				+ " for this transaction: " + discounted);
 		return discounted;
 	}
-	
+
 	/**
 	 * @return arrival time for an agent.
 	 */
 	public final TimeStamp getArrivalTime() {
 		return arrivalTime;
 	}
-	
+
 	/**
 	 * @return MarketModel of the agent.
 	 */
 	public final MarketModel getModel() {
 		return model;
 	}
-	
+
 	/**
 	 * @return private value.
 	 */
 	public final PrivateValue getPrivateValue() {
 		return alpha;
 	}
-	
+
 	/**
 	 * @return current cash balance
 	 */
 	public int getCashBalance() {
 		return cashBalance;
 	}
-	
+
 	public int getRealizedProfit() {
 		return realizedProfit;
 	}
@@ -956,7 +953,7 @@ public abstract class Agent extends Entity {
 	public int getPositionBalance() {
 		return positionBalance;
 	}
-	
+
 	public Map<Double, Double> getSurplus() {
 		return Collections.unmodifiableMap(surplusMap);
 	}

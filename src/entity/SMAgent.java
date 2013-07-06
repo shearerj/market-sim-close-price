@@ -1,11 +1,13 @@
 package entity;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.INFO;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import logger.Logger;
 import market.BestBidAsk;
 import market.Price;
 import market.PrivateValue;
@@ -93,7 +95,7 @@ public abstract class SMAgent extends Agent {
 	 * @return Collection<Activity>
 	 */
 	public Collection<? extends Activity> agentArrival(TimeStamp ts) {
-		Logger.log(Logger.INFO,
+		log(INFO,
 				ts.toString() + " | " + this + "->" + market.toString());
 		this.enterMarket(market, ts);
 		// FIXME I think with the new event queue, this should be instantaneous
@@ -218,13 +220,13 @@ public abstract class SMAgent extends Agent {
 		}
 
 		if (nbboBetter)
-			Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
+			log(INFO, ts + " | " + this + " " + agentType
 					+ "::submitNMSBid: " + "NBBO(" + lastNBBOQuote.getBestBid()
 					+ ", " + lastNBBOQuote.getBestAsk() + ") better than " + market
 					+ " Quote(" + mainMarketQuote.lastBidPrice + ", "
 					+ mainMarketQuote.lastAskPrice + ")");
 		if (willTransact)
-			Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
+			log(INFO, ts + " | " + this + " " + agentType
 					+ "::submitNMSBid: " + "Bid +(" + price + "," + quantity
 					+ ") will transact" + " immediately in " + bestMarket
 					+ " given best price " + bestPrice);
@@ -236,7 +238,7 @@ public abstract class SMAgent extends Agent {
 
 		String durationLog = duration != Consts.INF_TIME
 				&& duration.longValue() > 0 ? ", duration=" + duration : "";
-		Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
+		log(INFO, ts + " | " + this + " " + agentType
 				+ "::submitNMSBid: " + "+(" + price + "," + quantity + ") to "
 				+ bestMarket + durationLog);
 

@@ -1,11 +1,14 @@
 package entity;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.INFO;
+import static systemmanager.Consts.ZERO_PRICE;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import logger.Logger;
 import market.Price;
 import model.MarketModel;
 import utils.MathUtils;
@@ -15,8 +18,6 @@ import activity.AgentStrategy;
 import activity.UpdateAllQuotes;
 import data.EntityProperties;
 import event.TimeStamp;
-
-import static systemmanager.Consts.ZERO_PRICE;
 
 /**
  * BasicMarketMaker
@@ -84,7 +85,7 @@ public class BasicMarketMaker extends MarketMaker {
 
 		// check that bid or ask is defined
 		if (bid == null || ask == null) {
-			Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
+			log(INFO, ts + " | " + this + " " + agentType
 					+ "::agentStrategy: undefined quote in market "
 					+ getMarket());
 
@@ -124,15 +125,15 @@ public class BasicMarketMaker extends MarketMaker {
 						priceQuantMap.put(new Price(p), -1);
 				}
 
-				Logger.log(Logger.INFO, ts + " | " + getMarket() + " " + this
-						+ " " + agentType + "::agentStrategy: ladder numRungs="
+				log(INFO, ts + " | " + getMarket() + " " + this + " "
+						+ agentType + "::agentStrategy: ladder numRungs="
 						+ numRungs + ", stepSize=" + stepSize + ": buys ["
 						+ buyMinPrice + ", " + bid + "] &" + " sells [" + ask
 						+ ", " + sellMaxPrice + "]");
 				actMap.addAll(submitMultipleBid(getMarket(), priceQuantMap, ts));
 			} else {
-				Logger.log(Logger.INFO, ts + " | " + getMarket() + " " + this
-						+ " " + agentType
+				log(INFO, ts + " | " + getMarket() + " " + this + " "
+						+ agentType
 						+ "::agentStrategy: no change in submitted ladder.");
 			}
 		}

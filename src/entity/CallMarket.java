@@ -1,10 +1,12 @@
 package entity;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.ERROR;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
-import logger.Logger;
 import market.Bid;
 import market.PQBid;
 import market.Price;
@@ -119,7 +121,7 @@ public class CallMarket extends Market {
 					data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE.getPrice(), Consts.INF_PRICE.getPrice());	
 					
 				} else if (bp.compareTo(ap) > 0 && ap.getPrice() > 0) {
-					Logger.log(Logger.ERROR, this.getName() + "::quote: ERROR bid > ask");
+					log(ERROR, this.getName() + "::quote: ERROR bid > ask");
 					data.addSpread(id, quoteTime, Consts.INF_PRICE.getPrice());
 					data.addMidQuotePrice(id, quoteTime, Consts.INF_PRICE.getPrice(), Consts.INF_PRICE.getPrice());
 					

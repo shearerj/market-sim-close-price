@@ -1,16 +1,15 @@
 package market;
 
-import java.util.Map;
+import static logger.Logger.log;
+import static logger.Logger.Level.INFO;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.ArrayList;
+import java.util.Map;
 
 import utils.MathUtils;
-
-import logger.Logger;
-
 import data.SystemData;
-
 import entity.Market;
 import event.TimeStamp;
 
@@ -141,7 +140,7 @@ public class PQOrderBook extends OrderBook {
 				s += "(" + pq.getQuantity() + " " + pq.getPrice().toString() + ") ";
 			}
 		}
-		Logger.log(Logger.INFO, s);
+		log(INFO, s);
 	}
 
 	/**
@@ -156,7 +155,7 @@ public class PQOrderBook extends OrderBook {
 				s += "(" + pq.getQuantity() + " " + pq.getPrice().toString() + ") ";
 			}
 		}
-		Logger.log(Logger.INFO, s);
+		log(INFO, s);
 	}
 
 	
@@ -218,7 +217,7 @@ public class PQOrderBook extends OrderBook {
 			transactions.add(new PQTransaction(q, p, buy.getAgent(), sell.getAgent(), 
 					buyBid, sellBid, ts, data.getMarket(marketID)));
 //			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-			Logger.log(Logger.INFO, ts + " | " + data.getMarket(marketID) + 
+			log(INFO, ts + " | " + data.getMarket(marketID) + 
 					" Quantity=" + q + " cleared at Price=" + p.getPrice());
 
 			Integer key = new Integer(buy.getAgentID());
@@ -296,7 +295,7 @@ public class PQOrderBook extends OrderBook {
 				p = new Price(Math.round((ask.getPrice().getPrice() - 
 						bid.getPrice().getPrice()) * pricingPolicy + bid.getPrice().getPrice()));
 				p = new Price(MathUtils.quantize(p.getPrice(), data.tickSize));
-				Logger.log(Logger.INFO, ts + " | " + data.getMarket(marketID) + 
+				log(INFO, ts + " | " + data.getMarket(marketID) + 
 						" clearing price based on (BID: " + 
 						bid.getPrice().getPrice() + ", ASK:" + ask.getPrice().getPrice() + 
 						") & pricingPolicy=" + pricingPolicy + " => price " + p.getPrice());
@@ -304,7 +303,7 @@ public class PQOrderBook extends OrderBook {
 			transactions.add(new PQTransaction(q, p, buy.getAgent(), sell.getAgent(), 
 					buyBid, sellBid, ts, data.getMarket(marketID)));
 //			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-			Logger.log(Logger.INFO, ts + " | " + data.getMarket(marketID) + 
+			log(INFO, ts + " | " + data.getMarket(marketID) + 
 					" Quantity=" + q + " cleared at Price=" + p.getPrice());
 			
 			Integer key = new Integer(buy.getAgentID());

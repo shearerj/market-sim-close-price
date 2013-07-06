@@ -1,5 +1,8 @@
 package systemmanager;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.*;
+
 import data.*;
 import event.*;
 
@@ -84,7 +87,7 @@ public class SystemManager {
 		EntityProperties simProps = spec.getSimulationProperties();
 		long seed = simProps.getAsLong(SimulationSpec.RAND_SEED,
 				System.currentTimeMillis());
-		Logger.log(Logger.INFO, "RandomSeed: " + seed);
+		log(INFO, "RandomSeed: " + seed);
 		RandPlus rand = new RandPlus(seed);
 
 		TimeStamp simLength = new TimeStamp(
@@ -102,16 +105,16 @@ public class SystemManager {
 				spec.getBackgroundAgents(), spec.getPlayerConfig(),
 				fundamental, new RandPlus(rand.nextLong()));
 
-		Logger.log(Logger.INFO, "------------------------------------------------");
-		Logger.log(Logger.INFO, "            Creating MARKET MODELS");
+		log(INFO, "------------------------------------------------");
+		log(INFO, "            Creating MARKET MODELS");
 		models = new ArrayList<MarketModel>();
 		for (ModelProperties props : spec.getModels()) {
 			MarketModel model = modelFactory.createModel(props);
 			models.add(model);
 			// TODO Log markets?
-			Logger.log(Logger.INFO, props.getModelType() + ": " + model);
+			log(INFO, props.getModelType() + ": " + model);
 		}
-		Logger.log(Logger.INFO, "------------------------------------------------");
+		log(INFO, "------------------------------------------------");
 	}
 
 	protected Properties getProperties() throws IOException {
@@ -143,8 +146,6 @@ public class SystemManager {
 		logDir.mkdirs();
 
 		File logFile = new File(logDir, logFileName.toString());
-		if (logLevel == Logger.NO_LOGGING)
-			logFile.deleteOnExit();
 
 		// Create log file
 		// TODO Look into constructor, I think the 2nd and 3rd arguments
@@ -152,9 +153,12 @@ public class SystemManager {
 		// "getPath" will probably do the right thing given the current
 		// setup, but isn't guaranteed to.
 		Logger.setup(logLevel, ".", logFile.getPath(), true);
+		
+		if (Logger.getLevel() == NO_LOGGING)
+			logFile.deleteOnExit();
 
 		// Log properties
-		Logger.log(Logger.DEBUG, envProps.toString());
+		log(DEBUG, envProps.toString());
 	}
 
 	/**
@@ -165,7 +169,7 @@ public class SystemManager {
 			model.scheduleActivities(eventManager);
 		// TODO Get rid of event manager and move to system manager.
 		eventManager.execute();
-		Logger.log(Logger.INFO, "STATUS: Simulation has ended.");
+		log(INFO, "STATUS: Simulation has ended.");
 	}
 
 	public void aggregateResults() throws IOException {
