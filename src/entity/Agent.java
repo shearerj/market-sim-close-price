@@ -1,16 +1,21 @@
 package entity;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.DEBUG;
+import static logger.Logger.Level.ERROR;
+import static logger.Logger.Level.INFO;
+import static systemmanager.Consts.INF_PRICE;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeSet;
 
-import logger.Logger;
 import market.BestBidAsk;
-import market.BestQuote;
 import market.Bid;
 import market.PQBid;
 import market.Price;
@@ -34,7 +39,7 @@ import event.TimeStamp;
  * @author ewah
  */
 public abstract class Agent extends Entity {
-	
+
 	public final static String SLEEPTIME_KEY = "sleepTime";
 	public final static String SLEEPVAR_KEY = "sleepVar";
 	public final static String REENTRY_RATE = "reentryRate";
@@ -46,7 +51,7 @@ public abstract class Agent extends Entity {
 	// relevant...
 
 	protected MarketModel model;
-	protected HashMap<Double, Double> surplusMap; // hashed by rho value
+	protected Map<Double, Double> surplusMap; // hashed by rho value
 
 	// -- end reorg --
 
@@ -106,44 +111,32 @@ public abstract class Agent extends Entity {
 
 	// FIXME Agent probably needs more than this...
 	public Agent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			RandPlus rand) {
+			PrivateValue pv, RandPlus rand) {
 		super(agentID);
 		this.model = model;
 		this.rand = rand;
 		this.arrivalTime = arrivalTime;
+		this.alpha = pv;
 	}
 
-	public abstract Collection<? extends Activity> agentStrategy(TimeStamp ts);
+	public abstract Collection<? extends Activity> agentStrategy(
+			TimeStamp currentTime);
 
-	public abstract Collection<? extends Activity> agentArrival(TimeStamp ts);
+	public abstract Collection<? extends Activity> agentArrival(
+			TimeStamp currentTime);
 
-	public abstract Collection<? extends Activity> agentDeparture(TimeStamp ts);
+	public abstract Collection<? extends Activity> agentDeparture(
+			TimeStamp currentTime);
 
 	@Deprecated
 	public abstract Collection<? extends Activity> updateAllQuotes(TimeStamp ts);
 
-	@Deprecated
-	// This should probably just be done by observation, unless I don't
-	// understand something
-	public abstract HashMap<String, Object> getObservation();
-
-	/**
-	 * @return arrival time for an agent.
-	 */
-	public final TimeStamp getArrivalTime() {
-		return arrivalTime;
-	}
-
-	/**
-	 * @return private value.
-	 */
-	public final PrivateValue getPrivateValue() {
-		return alpha;
-	}
-
 	/**
 	 * @return true if has non-null private value.
 	 */
+	@Deprecated
+	// This should not exist, agents without private value should have 0 private
+	// value...
 	public final boolean hasPrivateValue() {
 		return alpha != null;
 	}
@@ -188,41 +181,10 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * Initialize list of private values given max quantity.
-	 * 
-	 * @param q
-	 *            max position
-	 * @return
+	 * @return Method to get the type of the agent.
 	 */
-	// TODO / FIXME Move to constructor?
-	public ArrayList<Integer> initPrivateValues(int q) {
-		ArrayList<Integer> alphas = new ArrayList<Integer>();
-		for (int i = -q; i <= q; i++) {
-			if (i != 0)
-				alphas.add((int) Math.round(rand.nextGaussian(0, data.pvVar)));
-		}
-		return alphas;
-	}
-
-	/**
-	 * @return model ID of agent.
-	 */
-	public int getModelID() {
-		return modelID;
-	}
-
-	/**
-	 * @return MarketModel of the agent.
-	 */
-	public MarketModel getModel() {
-		return model;
-	}
-
-	/**
-	 * Method to get the type of the agent.
-	 * 
-	 * @return
-	 */
+	@Deprecated
+	// Doesn't make any sense
 	public String getType() {
 		return agentType;
 	}
@@ -230,6 +192,8 @@ public abstract class Agent extends Entity {
 	/**
 	 * @return role of agent
 	 */
+	@Deprecated
+	// Shouldn't ever be used
 	public String getRole() {
 		if (this instanceof HFTAgent) {
 			return Consts.ROLE_HFT;
@@ -248,6 +212,8 @@ public abstract class Agent extends Entity {
 	/**
 	 * @return strategy for observation file in format TYPE:STRATEGY
 	 */
+	@Deprecated
+	// Only necessary for players, not agents...
 	public String getFullStrategy() {
 		return this.getType() + ":" + params.getAsString(Agent.STRATEGY_KEY);
 	}
@@ -257,6 +223,7 @@ public abstract class Agent extends Entity {
 	 * 
 	 * @param logID
 	 */
+	@Deprecated
 	public void setLogID(int logID) {
 		this.logID = logID;
 	}
@@ -264,13 +231,9 @@ public abstract class Agent extends Entity {
 	/**
 	 * @return logID
 	 */
+	@Deprecated
 	public int getLogID() {
 		return this.logID;
-	}
-
-	@Override
-	public String toString() {
-		return new String("(" + this.logID + "," + this.getModel() + ")");
 	}
 
 	/**
@@ -280,6 +243,9 @@ public abstract class Agent extends Entity {
 	 * @param sleepVar
 	 * @return
 	 */
+	@Deprecated
+	// sleeptime not even defined for general agents. This should be moved
+	// somewhere else
 	public int getRandSleepTime(int sleepTime, double sleepVar) {
 		return (int) Math.round(rand.nextGaussian(sleepTime, sleepVar));
 	}
@@ -288,6 +254,8 @@ public abstract class Agent extends Entity {
 	 * @param mktID
 	 * @return number of quotes
 	 */
+	@Deprecated
+	// Should just call size on getQuote
 	public int getQuoteSize(int mktID) {
 		return getQuote(mktID).size();
 	}
@@ -295,10 +263,9 @@ public abstract class Agent extends Entity {
 	/**
 	 * If quotes contains list for that market, return it; otherwise return
 	 * empty list.
-	 * 
-	 * @param mktID
-	 * @return
 	 */
+	// TODO possibly remove / move somewhere else / at least use full market.
+	@Deprecated
 	public ArrayList<Quote> getQuote(int mktID) {
 		if (quotes.get(mktID) != null) {
 			return quotes.get(mktID);
@@ -314,6 +281,12 @@ public abstract class Agent extends Entity {
 	 * @param mktID
 	 * @param q
 	 */
+	// TODO This general quote functionality seems misplaced. If an agent needs
+	// to track market quotes it can implement that seperately along with any
+	// other data gathering it needs. It seems incorrect for it to be general
+	// agent functionality especially seeing as agents may want more refined
+	// information. This may be partially taken up in the information processors
+	@Deprecated
 	public void addQuote(int mktID, Quote q) {
 		if (quotes.get(mktID) == null) {
 			// create for that market
@@ -329,6 +302,7 @@ public abstract class Agent extends Entity {
 	 * @param mktID
 	 * @return most recent quote for the specified market
 	 */
+	@Deprecated
 	public Quote getLatestQuote(int mktID) {
 		if (quotes.isEmpty() || getQuote(mktID) == null) {
 			return new Quote();
@@ -344,6 +318,7 @@ public abstract class Agent extends Entity {
 	 * @param idx
 	 * @return quote at a specified index
 	 */
+	@Deprecated
 	public Quote getQuoteAt(int mktID, int idx) {
 		if (!getQuote(mktID).isEmpty()) {
 			// return new empty quote
@@ -357,6 +332,8 @@ public abstract class Agent extends Entity {
 	 * @param mktID
 	 * @return bid price for the specified market
 	 */
+	@Deprecated
+	// Agent should just go to market for this information
 	public Price getBidPrice(int mktID) {
 		return bidPrice.get(mktID);
 	}
@@ -365,15 +342,10 @@ public abstract class Agent extends Entity {
 	 * @param mktID
 	 * @return ask price for the specified market
 	 */
+	@Deprecated
+	// Agent should just go to market for this information
 	public Price getAskPrice(int mktID) {
 		return askPrice.get(mktID);
-	}
-
-	/**
-	 * @return current cash balance
-	 */
-	public int getCashBalance() {
-		return cashBalance;
 	}
 
 	/***********************************
@@ -383,14 +355,12 @@ public abstract class Agent extends Entity {
 
 	/**
 	 * Enters market by adding market to data structures.
-	 * 
-	 * @param mkt
-	 * @param ts
 	 */
+	// TODO Is this really necessary?
 	protected void enterMarket(Market mkt, TimeStamp ts) {
-		mkt.agentIDs.add(this.id);
-		mkt.buyers.add(this.id);
-		mkt.sellers.add(this.id);
+		mkt.agentIDs.add(this.id); // Necessary?
+		mkt.buyers.add(this.id); // Necessary?
+		mkt.sellers.add(this.id); // Necessary?
 		quotes.put(mkt.id, new ArrayList<Quote>());
 
 		// Initialize bid/ask containers
@@ -402,9 +372,8 @@ public abstract class Agent extends Entity {
 
 	/**
 	 * Exits market by removing all entries hashed by the specified market ID.
-	 * 
-	 * @param mktID
 	 */
+	// TODO Is this really necessary?
 	protected void exitMarket(int mktID) {
 		bidPrice.remove(mktID);
 		askPrice.remove(mktID);
@@ -421,49 +390,36 @@ public abstract class Agent extends Entity {
 
 	/**
 	 * Wrapper method to submit bid to market after checking permissions.
-	 * 
-	 * @param mkt
-	 * @param price
-	 * @param quantity
-	 * @param ts
-	 * @return
 	 */
-	public Collection<Activity> submitBid(Market mkt, int price, int quantity,
-			TimeStamp ts) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new SubmitBid(this, mkt, price, quantity, ts));
-		return actMap;
+	public Collection<? extends Activity> submitBid(Market mkt, Price price,
+			int quantity, TimeStamp ts) {
+		return Collections.singleton(new SubmitBid(this, mkt, price, quantity,
+				ts));
 	}
 
 	/**
 	 * Wrapper method to submit multiple-point bid to market after checking
 	 * permissions.
-	 * 
-	 * @param mkt
-	 * @param price
-	 * @param quantity
-	 * @param ts
-	 * @return
 	 */
-	public Collection<Activity> submitMultipleBid(Market mkt,
-			ArrayList<Integer> price, ArrayList<Integer> quantity, TimeStamp ts) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new SubmitMultipleBid(this, mkt, price, quantity, ts));
-		return actMap;
+	public Collection<? extends Activity> submitMultipleBid(Market mkt,
+			Map<Price, Integer> priceQuantMap, TimeStamp currentTime) {
+		return Collections.singleton(new SubmitMultipleBid(this, mkt,
+				priceQuantMap, currentTime));
 	}
 
 	/**
 	 * Wrapper method to expire the agent's bid from a market after a specified
 	 * duration.
+	 * 
+	 * TODO how does this work? Expires all bids? The first bid it finds? The
+	 * oldest bid? Maybe should contain a reference to the bid in question...
 	 */
 	public Collection<? extends Activity> expireBid(Market market,
-			TimeStamp duration, TimeStamp ts) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		TimeStamp withdrawTime = ts.sum(new TimeStamp(duration));
-		actMap.add(new WithdrawBid(this, market, withdrawTime));
-		Logger.log(Logger.INFO, ts + " | " + market + " " + this
-				+ ": bid duration=" + duration);
-		return actMap;
+			TimeStamp duration, TimeStamp currentTime) {
+		TimeStamp withdrawTime = currentTime.sum(new TimeStamp(duration));
+		log(INFO, currentTime + " | " + market + " " + this + ": bid duration="
+				+ duration);
+		return Collections.singleton(new WithdrawBid(this, market, withdrawTime));
 	}
 
 	/**
@@ -471,7 +427,7 @@ public abstract class Agent extends Entity {
 	 */
 	public Collection<? extends Activity> executeWithdrawBid(Market market,
 			TimeStamp ts) {
-		Logger.log(Logger.INFO, ts + " | " + this + " withdraw bid from " + market);
+		log(INFO, ts + " | " + this + " withdraw bid from " + market);
 		return market.removeBid(this.id, ts);
 	}
 
@@ -479,16 +435,16 @@ public abstract class Agent extends Entity {
 	 * Submit a bid to the specified market.
 	 */
 	public Collection<? extends Activity> executeSubmitBid(Market market,
-			int price, int quantity, TimeStamp ts) {
+			Price price, int quantity, TimeStamp ts) {
 		if (quantity == 0)
-			return Collections.emptyList();
+			return Collections.emptySet();
 
-		Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
-				+ "::submitBid: +(" + price + ", " + quantity + ") to " + market);
+		log(INFO, ts + " | " + this + " " + agentType + "::submitBid: +("
+				+ price + ", " + quantity + ") to " + market);
 
-		int p = Market.quantize(price, tickSize);
+		Price p = price.quantize(tickSize);
 		PQBid pqBid = new PQBid(this, market, ts);
-		pqBid.addPoint(quantity, new Price(p));
+		pqBid.addPoint(quantity, p);
 		// quantity can be +/-
 		if (hasPrivateValue()) {
 			data.addPrivateValue(pqBid.getBidID(), getPrivateValueAt(quantity));
@@ -508,23 +464,18 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 * @return
 	 */
+	// TODO swtich form parallel array lists to Map<Price, Integer>
 	public Collection<? extends Activity> executeSubmitMultipleBid(Market mkt,
-			List<Integer> price, List<Integer> quantity, TimeStamp ts) {
-		if (price.size() != quantity.size()) {
-			Logger.log(Logger.ERROR, "Agent::submitMultipleBid: "
-					+ "Price/Quantity are not the same length");
-			return Collections.emptyList();
-		}
-
-		Logger.log(Logger.INFO, ts + " | " + mkt + " " + this + ": +(" + price
-				+ ", " + quantity + ")");
+			Map<Price, Integer> priceQuantityMap, TimeStamp ts) {
+		log(INFO, ts + " | " + mkt + " " + this + ": +" + priceQuantityMap);
 
 		PQBid pqBid = new PQBid(this, mkt, ts);
-		for (int i = 0; i < price.size(); i++) {
-			if (quantity.get(i) != 0) {
-				int p = Market.quantize(price.get(i), tickSize);
-				pqBid.addPoint(quantity.get(i), new Price(p));
-			}
+		for (Entry<Price, Integer> priceQuant : priceQuantityMap.entrySet()) {
+			int quantity = priceQuant.getValue();
+			Price price = priceQuant.getKey();
+			if (quantity == 0)
+				continue; // TODO add check in PQBid instead
+			pqBid.addPoint(quantity, price.quantize(tickSize));
 		}
 		// TODO incorporate multi-point PVs?
 		currentBid.put(mkt.id, pqBid);
@@ -537,18 +488,19 @@ public abstract class Agent extends Entity {
 	 * liquidation.
 	 */
 	public Collection<? extends Activity> liquidateAtFundamental(TimeStamp ts) {
-		Logger.log(Logger.INFO, ts + " | " + this + " liquidating...");
-		return Collections.singleton(new Liquidate(this, model.getFundamentalAt(ts), ts));
+		log(INFO, ts + " | " + this + " liquidating...");
+		return Collections.singleton(new Liquidate(this,
+				model.getFundamentalAt(ts), ts)); // FIXME maybe infinite time?
 	}
 
 	/**
 	 * Liquidates an agent's position at the specified price.
 	 */
-	public Collection<? extends Activity> executeLiquidate(Price price, TimeStamp ts) {
+	public Collection<? extends Activity> executeLiquidate(Price price,
+			TimeStamp ts) {
 
-		Logger.log(Logger.INFO, ts + " | " + this
-				+ " pre-liquidation: position=" + positionBalance + ", profit="
-				+ realizedProfit);
+		log(INFO, ts + " | " + this + " pre-liquidation: position="
+				+ positionBalance + ", profit=" + realizedProfit);
 
 		// If no net position, no need to liquidate
 		if (positionBalance == 0)
@@ -565,9 +517,9 @@ public abstract class Agent extends Entity {
 		}
 		positionBalance = 0;
 
-		Logger.log(Logger.INFO, ts + " | " + this
-				+ " post-liquidation: position=" + positionBalance
-				+ ", profit=" + realizedProfit + ", price=" + price);
+		log(INFO, ts + " | " + this + " post-liquidation: position="
+				+ positionBalance + ", profit=" + realizedProfit + ", price="
+				+ price);
 		return Collections.emptyList();
 	}
 
@@ -578,8 +530,8 @@ public abstract class Agent extends Entity {
 		lastGlobalQuote = sip.getGlobalQuote(modelID);
 		lastNBBOQuote = sip.getNBBOQuote(modelID);
 
-		Logger.log(Logger.INFO, ts + " | " + this + " Global" + lastGlobalQuote
-				+ ", NBBO" + lastNBBOQuote);
+		log(INFO, ts + " | " + this + " Global" + lastGlobalQuote + ", NBBO"
+				+ lastNBBOQuote);
 		return Collections.emptyList();
 	}
 
@@ -589,11 +541,14 @@ public abstract class Agent extends Entity {
 	 * @param mkt
 	 * @param ts
 	 */
+	@Deprecated
+	// Should just be done in strategy. Doesn't should need fields to store this
+	// info...
 	public void updateQuotes(Market mkt, TimeStamp ts) {
 		Quote q = mkt.quote(ts);
 		if (q != null) {
 			if (q.lastAskPrice == null)
-				askPrice.put(mkt.id, new Price(Consts.INF_PRICE));
+				askPrice.put(mkt.id, INF_PRICE);
 			else
 				askPrice.put(mkt.id, q.lastAskPrice);
 			if (q.lastBidPrice == null)
@@ -609,7 +564,7 @@ public abstract class Agent extends Entity {
 				lastClearTime.put(mkt.id, q.lastClearTime);
 			}
 		} else {
-			Logger.log(Logger.ERROR, "Agent::updateQuotes: Quote is null.");
+			log(ERROR, "Agent::updateQuotes: Quote is null.");
 		}
 		addQuote(mkt.id, q);
 	}
@@ -623,19 +578,22 @@ public abstract class Agent extends Entity {
 	 * Logs transactions for the agent and prints a summary of performance so
 	 * far.
 	 * 
-	 * @param ts
+	 * @param currentTime
 	 */
-	public void logTransactions(TimeStamp ts) {
+	// TODO Looging is good. Not sure if this is particularly necessary though.
+	// Maybe market can just do this at clear...
+	public void logTransactions(TimeStamp currentTime) {
 
 		int rp = getRealizedProfit();
 
 		// int up = getUnrealizedProfit();
 
-		String s = ts.toString() + " | " + this + " Agent::logTransactions: "
-				+ this.getModel().getFullName() + ": Current Position="
-				+ positionBalance + ", Realized Profit=" + rp;
+		String s = currentTime.toString() + " | " + this
+				+ " Agent::logTransactions: " + this.getModel().getFullName()
+				+ ": Current Position=" + positionBalance
+				+ ", Realized Profit=" + rp;
 		// + ", Unrealized Profit=" + up;
-		Logger.log(Logger.INFO, s);
+		log(INFO, s);
 	}
 
 	/**
@@ -651,31 +609,30 @@ public abstract class Agent extends Entity {
 	 *         updated; false otherwise.
 	 * 
 	 */
+	@Deprecated
+	// Transaction handeling probably shouldn't happen in agent?
+	// TODO Ths seems bad. A lot of the erro checking should never happen.
 	public boolean processTransaction(Transaction t) {
 		boolean flag = true;
 		if (t == null) {
-			Logger.log(Logger.ERROR,
+			log(ERROR,
 					"Agent::processTransaction: Corrupted (null) transaction record.");
 			flag = false;
 		} else {
 			if (t.getMarket() == null) {
-				Logger.log(Logger.ERROR,
-						"Agent::processTransaction: t.market is null");
+				log(ERROR, "Agent::processTransaction: t.market is null");
 				flag = false;
 			}
-			if (t.price == null) {
-				Logger.log(Logger.ERROR,
-						"Agent::processTransaction: t.price is null");
+			if (t.getPrice() == null) {
+				log(ERROR, "Agent::processTransaction: t.price is null");
 				flag = false;
 			}
-			if (t.quantity == null) {
-				Logger.log(Logger.ERROR,
-						"Agent::processTransaction: t.quantity is null");
+			if (t.getQuantity() <= 0) {
+				log(ERROR, "Agent::processTransaction: t.quantity is null");
 				flag = false;
 			}
-			if (t.execTime == null) {
-				Logger.log(Logger.ERROR,
-						"Agent::processTransaction: t.timestamp is null");
+			if (t.getExecTime() == null) {
+				log(ERROR, "Agent::processTransaction: t.timestamp is null");
 				flag = false;
 			}
 		}
@@ -683,24 +640,25 @@ public abstract class Agent extends Entity {
 			return false;
 		} else {
 			// check whether seller, in which case negate the quantity
-			int quantity = t.quantity;
+			int quantity = t.getQuantity();
 			if (this.id == t.getSeller().getID()) {
 				quantity = -quantity;
 			}
 			// update cash flow and position
 			if (positionBalance == 0) {
-				averageCost = t.price.getPrice();
+				averageCost = t.getPrice().getPrice();
 
 			} else if (positionBalance > 0) {
 				if (quantity > 0) {
 					int newCost = averageCost * positionBalance
-							+ t.price.getPrice() * quantity;
+							+ t.getPrice().getPrice() * quantity;
 					averageCost = newCost / (positionBalance + quantity);
 
 				} else if (-quantity < positionBalance) {
 					// closing out partial long position
 					int rprofit = realizedProfit;
-					rprofit += (-quantity) * (t.price.getPrice() - averageCost);
+					rprofit += (-quantity)
+							* (t.getPrice().getPrice() - averageCost);
 					realizedProfit = rprofit;
 
 				} else if (-quantity >= positionBalance) {
@@ -708,21 +666,22 @@ public abstract class Agent extends Entity {
 					// remaining quantity will start new short position
 					int rprofit = realizedProfit;
 					rprofit += positionBalance
-							* (t.price.getPrice() - averageCost);
+							* (t.getPrice().getPrice() - averageCost);
 					realizedProfit = rprofit;
-					averageCost = t.price.getPrice();
+					averageCost = t.getPrice().getPrice();
 				}
 
 			} else if (positionBalance < 0) {
 				if (quantity < 0) {
 					int newCost = averageCost * (-positionBalance)
-							+ t.price.getPrice() * (-quantity);
+							+ t.getPrice().getPrice() * (-quantity);
 					averageCost = -newCost / (positionBalance + quantity);
 
 				} else if (quantity < -positionBalance) {
 					// closing out partial short position
 					int rprofit = realizedProfit;
-					rprofit += quantity * (averageCost - t.price.getPrice());
+					rprofit += quantity
+							* (averageCost - t.getPrice().getPrice());
 					realizedProfit = rprofit;
 
 				} else if (quantity >= -positionBalance) {
@@ -730,9 +689,9 @@ public abstract class Agent extends Entity {
 					// remaining quantity will start new long position
 					int rprofit = realizedProfit;
 					rprofit += (-positionBalance)
-							* (averageCost - t.price.getPrice());
+							* (averageCost - t.getPrice().getPrice());
 					realizedProfit = rprofit;
-					averageCost = t.price.getPrice();
+					averageCost = t.getPrice().getPrice();
 				}
 			}
 			positionBalance += quantity;
@@ -748,11 +707,12 @@ public abstract class Agent extends Entity {
 	 * @param ts
 	 *            TimeStamp of update
 	 */
+	@Deprecated
+	// Transaction handling shouldn't happen in agent
 	public void updateTransactions(TimeStamp ts) {
 		Collection<Transaction> list = getNewTransactions();
 
-		Logger.log(Logger.DEBUG, ts + " | " + this + " " + "lastTrans="
-				+ lastTransaction);
+		log(DEBUG, ts + " | " + this + " " + "lastTrans=" + lastTransaction);
 
 		if (list != null) {
 			Transaction lastGoodTrans = null;
@@ -764,8 +724,7 @@ public abstract class Agent extends Entity {
 					boolean flag = processTransaction(t);
 					if (!flag && lastGoodTrans != null) {
 						lastTransaction = lastGoodTrans;
-						Logger.log(
-								Logger.ERROR,
+						log(ERROR,
 								ts
 										+ " | "
 										+ this
@@ -774,28 +733,27 @@ public abstract class Agent extends Entity {
 						break;
 					}
 
-					Logger.log(
-							Logger.INFO,
+					log(INFO,
 							ts
 									+ " | "
 									+ this
 									+ " "
 									+ "Agent::updateTransactions: New transaction received: ("
-									+ "transID=" + t.transID + ", mktID="
+									+ "transID=" + t.getTransID() + ", mktID="
 									+ t.getMarket().getID() + ", buyer="
 									+ data.getAgentLogID(t.getBuyer().getID())
 									+ ", seller="
 									+ data.getAgentLogID(t.getSeller().getID())
-									+ ", price=" + t.price + ", quantity="
-									+ t.quantity + ", timeStamp=" + t.execTime
-									+ ")");
+									+ ", price=" + t.getPrice() + ", quantity="
+									+ t.getQuantity() + ", timeStamp="
+									+ t.getExecTime() + ")");
 				}
 				// Update transactions
 				lastGoodTrans = t;
 				transactions.add(t);
 			}
 			lastTransaction = lastGoodTrans;
-			Logger.log(Logger.DEBUG, ts + " | " + this + " " + "NEW lastTrans="
+			log(DEBUG, ts + " | " + this + " " + "NEW lastTrans="
 					+ lastGoodTrans);
 		}
 		lastTransTime = ts;
@@ -803,9 +761,9 @@ public abstract class Agent extends Entity {
 
 	/**
 	 * Gets all transactions that have not been processed yet.
-	 * 
-	 * @return
 	 */
+	@Deprecated
+	// Transaction handling shouldn't happen in agent
 	public Collection<Transaction> getNewTransactions() {
 
 		if (lastTransaction == null) {
@@ -857,9 +815,9 @@ public abstract class Agent extends Entity {
 				}
 			}
 			if (positionBalance != 0) {
-				Logger.log(Logger.DEBUG, this.getModel().getFullName() + ": "
-						+ this + " bal=" + positionBalance + ", p=" + p
-						+ ", avgCost=" + averageCost);
+				log(DEBUG, this.getModel().getFullName() + ": " + this
+						+ " bal=" + positionBalance + ", p=" + p + ", avgCost="
+						+ averageCost);
 			}
 			if (p != -1) {
 				up += positionBalance * (p - averageCost);
@@ -871,88 +829,16 @@ public abstract class Agent extends Entity {
 		return up;
 	}
 
-	public int getRealizedProfit() {
-		return realizedProfit;
-	}
-
-	public int getPreLiquidationPosition() {
-		return preLiqPosition;
-	}
-
-	public int getPreLiquidationProfit() {
-		return preLiqRealizedProfit;
-	}
-
-	public int getPositionBalance() {
-		return positionBalance;
-	}
-
 	/***********************************
 	 * Methods for agent strategies
 	 * 
 	 **********************************/
 
 	/**
-	 * Find best market to buy in (i.e. lowest ask) and to sell in (i.e. highest
-	 * bid). This is a global operation so it checks all markets in marketIDs
-	 * and it gets the up-to-date market quote with zero delays.
-	 * 
-	 * bestBuy = the best price an agent can buy at (the lowest sell bid).
-	 * bestSell = the best price an agent can sell at (the highest buy bid).
-	 * 
-	 * NOTE: This uses only those markets belonging to the agent's model, as
-	 * strategies can only be selected based on information on those markets.
-	 * 
-	 * @return BestQuote
-	 */
-	protected BestQuote findBestBuySell() {
-		int bestBuy = -1;
-		int bestSell = -1;
-		int bestBuyMkt = 0;
-		int bestSellMkt = 0;
-
-		for (Iterator<Integer> it = this.getModel().getMarketIDs().iterator(); it.hasNext();) {
-			Market mkt = data.markets.get(it.next());
-			Price bid = getBidPrice(mkt.id);
-			Price ask = getAskPrice(mkt.id);
-
-			// in case the bid/ask disappears
-			ArrayList<Price> price = new ArrayList<Price>();
-			price.add(bid);
-			price.add(ask);
-
-			if (checkBidAsk(mkt.id, price)) {
-				Logger.log(Logger.DEBUG,
-						"Agent::findBestBuySell: issue with bid ask");
-			}
-			// Best market to buy in is the one with the lowest ASK
-			if (bestBuy == -1 || bestBuy > ask.getPrice()) {
-				if (ask.getPrice() != -1)
-					bestBuy = ask.getPrice();
-				bestBuyMkt = mkt.id;
-			}
-			// Best market to sell in is the one with the highest BID
-			if (bestSell == -1 || bestSell < bid.getPrice()) {
-				if (bid.getPrice() != -1)
-					bestSell = bid.getPrice();
-				bestSellMkt = mkt.id;
-			}
-		}
-		BestQuote q = new BestQuote();
-		q.bestBuy = bestBuy;
-		q.bestSell = bestSell;
-		q.bestBuyMarket = bestBuyMkt;
-		q.bestSellMarket = bestSellMkt;
-		return q;
-	}
-
-	/**
 	 * Checks the bid/ask prices for errors.
-	 * 
-	 * @param aucID
-	 * @param price
-	 * @return
 	 */
+	@Deprecated
+	// Why does this exist? Never should have errors
 	boolean checkBidAsk(int mktID, ArrayList<Price> price) {
 		if (price.size() < 2)
 			return false;
@@ -967,43 +853,24 @@ public abstract class Agent extends Entity {
 			flag = false;
 		} else if (ask <= 0 && bid > 0) {
 			double oldask = ask;
-			Logger.log(Logger.DEBUG, "Agent::checkBidAsk: ask: " + oldask
-					+ " to " + ask);
+			log(DEBUG, "Agent::checkBidAsk: ask: " + oldask + " to " + ask);
 			prevAsk.put(mktID, ask);
 			prevBid.put(mktID, bid);
 		} else if (bid <= 0 && ask > 0) {
 			double oldbid = bid;
-			Logger.log(Logger.DEBUG, "Agent::checkBidAsk: bid: " + oldbid
-					+ " to " + bid);
+			log(DEBUG, "Agent::checkBidAsk: bid: " + oldbid + " to " + bid);
 			prevAsk.put(mktID, ask);
 			prevBid.put(mktID, bid);
 		} else {
 			double oldbid = bid;
 			double oldask = ask;
-			Logger.log(Logger.DEBUG, "Agent::checkBidAsk: bid: " + oldbid
-					+ " to " + bid + ", ask: " + oldask + " to " + ask);
+			log(DEBUG, "Agent::checkBidAsk: bid: " + oldbid + " to " + bid
+					+ ", ask: " + oldask + " to " + ask);
 		}
 		bid = Math.max(bid, 1);
 		ask = Math.max(ask, 1);
 
 		return flag;
-	}
-
-	int compare(Agent other) {
-		if (this.id < other.getID())
-			return -1;
-		else if (this.id == other.getID())
-			return 0;
-		else
-			return 1;
-	}
-
-	public HashMap<Double, Double> getSurplus() {
-		return surplusMap;
-	}
-
-	public double getSurplus(double rho) {
-		return this.surplusMap.get(rho);
 	}
 
 	public double addSurplus(double rho, int fund, Transaction tr,
@@ -1017,7 +884,7 @@ public abstract class Agent extends Entity {
 			submissionTime = tr.getBuyBid().getSubmitTime().getLongValue();
 		else
 			submissionTime = tr.getSellBid().getSubmitTime().getLongValue();
-		double timeToExecution = tr.getTimestamp().getLongValue()
+		double timeToExecution = tr.getExecTime().getLongValue()
 				- submissionTime;
 
 		// Updating surplus
@@ -1037,9 +904,79 @@ public abstract class Agent extends Entity {
 			discounted *= tr.getQuantity();
 			this.surplusMap.put(rho, oldSurplus + discounted);
 		}
-		Logger.log(Logger.INFO, tr.getTimestamp() + " | " + this
+		log(INFO, tr.getExecTime() + " | " + this
 				+ " Agent::updateTransactions: SURPLUS at rho=" + rho
 				+ " for this transaction: " + discounted);
 		return discounted;
+	}
+
+	/**
+	 * @return arrival time for an agent.
+	 */
+	public final TimeStamp getArrivalTime() {
+		return arrivalTime;
+	}
+
+	/**
+	 * @return MarketModel of the agent.
+	 */
+	public final MarketModel getModel() {
+		return model;
+	}
+
+	/**
+	 * @return private value.
+	 */
+	public final PrivateValue getPrivateValue() {
+		return alpha;
+	}
+
+	/**
+	 * @return current cash balance
+	 */
+	public int getCashBalance() {
+		return cashBalance;
+	}
+
+	public int getRealizedProfit() {
+		return realizedProfit;
+	}
+
+	public int getPreLiquidationPosition() {
+		return preLiqPosition;
+	}
+
+	public int getPreLiquidationProfit() {
+		return preLiqRealizedProfit;
+	}
+
+	public int getPositionBalance() {
+		return positionBalance;
+	}
+
+	public Map<Double, Double> getSurplus() {
+		return Collections.unmodifiableMap(surplusMap);
+	}
+
+	public double getSurplus(double rho) {
+		return surplusMap.get(rho);
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() ^ model.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof Agent))
+			return false;
+		Agent agent = (Agent) obj;
+		return super.equals(agent) && model.equals(agent.model);
+	}
+
+	@Override
+	public String toString() {
+		return new String("(" + this.logID + ", " + this.getModel() + ")");
 	}
 }

@@ -1,7 +1,5 @@
 package data;
 
-import systemmanager.Consts;
-
 import java.text.DecimalFormat;
 import java.util.HashMap;
 
@@ -56,12 +54,10 @@ public class Feature {
 		
 		if (val instanceof String) {
 			ft.put(key, val);
+		} else if (Double.isNaN((Double) val)) {
+			ft.put(key, Double.NaN);
 		} else {
-			if (((Double) val).equals(Double.NaN)) {
-				ft.put(key, Consts.NAN);
-			} else {
-				ft.put(key, Double.parseDouble(df.format((Double) val)));
-			}
+			ft.put(key, Double.parseDouble(df.format((Double) val)));
 		}
 	}
 	

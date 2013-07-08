@@ -3,11 +3,8 @@ package logger;
 import java.io.IOException;
 
 public class Logger {
-
-	public static final int NO_LOGGING = 0;
-	public static final int ERROR = 1;
-	public static final int INFO = 2;
-	public static final int DEBUG = 3;
+	
+	public static enum Level { NO_LOGGING, ERROR, INFO, DEBUG };
 
 	protected static Log logger;
 
@@ -20,20 +17,20 @@ public class Logger {
 		}
 	}
 
-	public static void log(int level, String message) {
+	public static void log(Level level, String message) {
 		if (logger == null)
 			System.err.println("Logger Not Initialized! Can't write message\""
 					+ message + "\"");
 		else
-			logger.log(level, message);
+			logger.log(level.ordinal(), message);
 	}
 
 	public static boolean shouldLog(int level) {
 		return logger != null && logger.shouldLog(level);
 	}
 
-	public static int getLevel() {
-		return logger == null ? 0 : logger.getLevel();
+	public static Level getLevel() {
+		return logger == null ? Level.NO_LOGGING : Level.values()[logger.getLevel()];
 	}
 
 }

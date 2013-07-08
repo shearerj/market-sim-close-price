@@ -1,5 +1,8 @@
 package systemmanager;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.*;
+
 import data.*;
 import event.*;
 
@@ -8,9 +11,6 @@ import java.io.*;
 import java.text.DateFormat;
 
 import utils.RandPlus;
-
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonSyntaxException;
 
 import logger.Logger;
 import model.MarketModel;
@@ -37,6 +37,7 @@ public class SystemManager {
 
 	protected final int num; // sample number used for labeling output files
 	protected final File simFolder; // simulation folder name
+	protected final SimulationSpec spec;
 
 	/**
 	 * Only one argument, which is the sample number, is processed
@@ -82,38 +83,38 @@ public class SystemManager {
 		// TODO move props to SimSpec?
 		initializeLogger(getProperties(), simFolder, simNumber);
 
-		SimulationSpec2 spec = getSimulationSpec(simFolder);
+		spec = new SimulationSpec(new File(simFolder, Consts.simSpecFile));
 		EntityProperties simProps = spec.getSimulationProperties();
-		long seed = simProps.getAsLong(SimulationSpec2.RAND_SEED,
+		long seed = simProps.getAsLong(SimulationSpec.RAND_SEED,
 				System.currentTimeMillis());
-		Logger.log(Logger.INFO, "RandomSeed: " + seed);
+		log(INFO, "RandomSeed: " + seed);
 		RandPlus rand = new RandPlus(seed);
 
 		TimeStamp simLength = new TimeStamp(
-				simProps.getAsLong(SimulationSpec2.SIMULATION_LENGTH));
+				simProps.getAsLong(SimulationSpec.SIMULATION_LENGTH));
 		eventManager = new EventManager(simLength,
 				new RandPlus(rand.nextLong()));
 
 		FundamentalValue fundamental = new FundamentalValue(
-				simProps.getAsDouble(SimulationSpec2.FUNDAMENTAL_KAPPA),
-				simProps.getAsInt(SimulationSpec2.FUNDAMENTAL_MEAN),
-				simProps.getAsDouble(SimulationSpec2.FUNDAMENTAL_SHOCK_VAR),
+				simProps.getAsDouble(SimulationSpec.FUNDAMENTAL_KAPPA),
+				simProps.getAsInt(SimulationSpec.FUNDAMENTAL_MEAN),
+				simProps.getAsDouble(SimulationSpec.FUNDAMENTAL_SHOCK_VAR),
 				new RandPlus(rand.nextLong()));
 
 		MarketModelFactory modelFactory = new MarketModelFactory(
-				spec.getBackgroundAgents(), fundamental, new RandPlus(
-						rand.nextLong()));
+				spec.getBackgroundAgents(), spec.getPlayerConfig(),
+				fundamental, new RandPlus(rand.nextLong()));
 
-		Logger.log(Logger.INFO, "------------------------------------------------");
-		Logger.log(Logger.INFO, "            Creating MARKET MODELS");
+		log(INFO, "------------------------------------------------");
+		log(INFO, "            Creating MARKET MODELS");
 		models = new ArrayList<MarketModel>();
 		for (ModelProperties props : spec.getModels()) {
 			MarketModel model = modelFactory.createModel(props);
 			models.add(model);
 			// TODO Log markets?
-			Logger.log(Logger.INFO, props.getModelType() + ": " + model);
+			log(INFO, props.getModelType() + ": " + model);
 		}
-		Logger.log(Logger.INFO, "------------------------------------------------");
+		log(INFO, "------------------------------------------------");
 	}
 
 	protected Properties getProperties() throws IOException {
@@ -145,8 +146,6 @@ public class SystemManager {
 		logDir.mkdirs();
 
 		File logFile = new File(logDir, logFileName.toString());
-		if (logLevel == Logger.NO_LOGGING)
-			logFile.deleteOnExit();
 
 		// Create log file
 		// TODO Look into constructor, I think the 2nd and 3rd arguments
@@ -154,21 +153,12 @@ public class SystemManager {
 		// "getPath" will probably do the right thing given the current
 		// setup, but isn't guaranteed to.
 		Logger.setup(logLevel, ".", logFile.getPath(), true);
+		
+		if (Logger.getLevel() == NO_LOGGING)
+			logFile.deleteOnExit();
 
 		// Log properties
-		Logger.log(Logger.DEBUG, envProps.toString());
-	}
-
-	protected static SimulationSpec2 getSimulationSpec(File simFolder)
-			throws JsonSyntaxException, JsonIOException, FileNotFoundException {
-		// Read simulation specification file
-		File simulationSpecFile = new File(simFolder, Consts.simSpecFile);
-		if (!simulationSpecFile.exists())
-			throw new IllegalArgumentException("Simulation Spec file ("
-					+ simulationSpecFile.getAbsolutePath() + ") doesn't exist");
-
-		// Read simulation_spec.json file
-		return new SimulationSpec2(simulationSpecFile);
+		log(DEBUG, envProps.toString());
 	}
 
 	/**
@@ -179,7 +169,7 @@ public class SystemManager {
 			model.scheduleActivities(eventManager);
 		// TODO Get rid of event manager and move to system manager.
 		eventManager.execute();
-		Logger.log(Logger.INFO, "STATUS: Simulation has ended.");
+		log(INFO, "STATUS: Simulation has ended.");
 	}
 
 	public void aggregateResults() throws IOException {

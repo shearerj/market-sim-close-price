@@ -1,5 +1,8 @@
 package entity;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.INFO;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -139,7 +142,7 @@ public abstract class Market extends Entity {
 		Collection<Activity> actList = new ArrayList<Activity>();
 		
 		//Log prior quote
-		Logger.log(Logger.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
+		log(INFO, clearTime + " | " + this + " Prior-clear Quote" + 
 				this.quote(clearTime));
 		
 		//Update the orderbook
@@ -153,7 +156,7 @@ public abstract class Market extends Entity {
 		if(trans == null) {
 			this.addDepth(clearTime, orderbook.getDepth());
 			
-			Logger.log(Logger.INFO, clearTime + " | ....." + this + " " + 
+			log(INFO, clearTime + " | ....." + this + " " + 
 					this.getName() + "::clear: No change. Post-clear Quote" +  
 					this.quote(clearTime));
 			
@@ -168,7 +171,7 @@ public abstract class Market extends Entity {
 			tr.getBuyer().logTransactions(clearTime);
 			tr.getSeller().updateTransactions(clearTime);
 			tr.getSeller().logTransactions(clearTime);
-			lastClearPrice = tr.price;			
+			lastClearPrice = tr.getPrice();			
 		}
 		
 		//Orderbook logging
@@ -177,7 +180,7 @@ public abstract class Market extends Entity {
 		orderbook.logFourHeap(clearTime);
 		//Updating Depth
 		this.addDepth(clearTime, orderbook.getDepth());
-		Logger.log(Logger.INFO, clearTime + " | ....." + toString() + " " + 
+		Logger.log(Logger.Level.INFO, clearTime + " | ....." + toString() + " " + 
 				this.getName() + "::clear: Order book cleared: " +
 				"Post-clear Quote" + this.quote(clearTime));
 		actList.add(new SendToSIP(this, clearTime));
@@ -247,7 +250,7 @@ public abstract class Market extends Entity {
 	public Collection<Activity> sendToSIP(TimeStamp ts) {
 		int bid = this.getBidPrice().getPrice();
 		int ask = this.getAskPrice().getPrice();
-		Logger.log(Logger.INFO, ts + " | " + this + " SendToSIP(" + bid + ", "
+		log(INFO, ts + " | " + this + " SendToSIP(" + bid + ", "
 				+ ask + ")");
 
 		Collection<Activity> actMap = new ArrayList<Activity>();
@@ -269,15 +272,6 @@ public abstract class Market extends Entity {
 			return false;
 		}
 		return true;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#toString()
-	 */
-	public String toString() {
-		return new String("[" + this.getID() + "]");
 	}
 
 	/**
@@ -372,31 +366,16 @@ public abstract class Market extends Entity {
 		this.depths.add(ts, (double) point);
 	}
 	
-	protected void addSpread(TimeStamp ts, int point) {
-		this.spreads.add(ts, (double) point);
+	protected void addSpread(TimeStamp ts, int spread) {
+		this.spreads.add(ts, spread);
 	}
 	
-	protected void addMidQuote(TimeStamp ts, int bid, int ask) {
+	protected void addMidQuote(TimeStamp ts, Price bid, Price ask) {
 		double midQuote = Double.NaN;
 		if (bid != Consts.INF_PRICE && ask != Consts.INF_PRICE) {
-			midQuote = (bid + ask) / 2;
+			midQuote = (bid.getPrice() + ask.getPrice()) / 2;
 		}
 		this.midQuotes.add(ts, midQuote);
-	}
-
-	/**
-	 * Quantizes the given integer based on the given granularity. Formula from
-	 * Wikipedia (http://en.wikipedia.org/wiki/Quantization_signal_processing)
-	 * 
-	 * @param num
-	 *            integer to quantize
-	 * @param n
-	 *            granularity (e.g. tick size)
-	 * @return
-	 */
-	public static int quantize(int num, int n) {
-		double tmp = 0.5 + Math.abs((double) num) / ((double) n);
-		return Integer.signum(num) * n * (int) Math.floor(tmp);
 	}
 
 	@Deprecated
@@ -405,5 +384,22 @@ public abstract class Market extends Entity {
 		for (Bid b : this.bids)
 			map.put(b.getBidID(), b.getSubmitTime());
 		return map;
+	}
+	
+	@Override
+	public int hashCode() {
+		return super.hashCode() ^ model.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof Market)) return false;
+		Market market = (Market) obj;
+		return super.equals(market) && model.equals(market.model);
+	}
+
+	@Override
+	public String toString() {
+		return new String("[" + id + "]");
 	}
 }

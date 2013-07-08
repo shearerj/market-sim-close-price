@@ -14,7 +14,8 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.json.simple.JSONObject;
 
 import systemmanager.Consts;
-import systemmanager.SimulationSpec2;
+import systemmanager.SimulationSpec;
+import utils.MathUtils;
 import entity.Agent;
 import entity.BackgroundAgent;
 import entity.HFTAgent;
@@ -120,7 +121,7 @@ public class Observations {
 
 		// set up max time (where most agents have arrived)
 		long time = Math.round(data.getNumEnvAgents() / data.arrivalRate);
-		maxTime = Math.max(Consts.upToTime, Market.quantize((int) time, 1000));
+		maxTime = Math.max(Consts.upToTime, MathUtils.quantize((int) time, 1000));
 
 		addFeature("", getConfiguration());
 
@@ -179,7 +180,7 @@ public class Observations {
 		if (!data.isPlayer(agentID))
 			return;
 
-		HashMap<String, Object> obs = data.getAgent(agentID).getObservation();
+		HashMap<String, Object> obs = new HashMap<String, Object>(); //data.getAgent(agentID).getObservation();
 		if (obs == null || obs.isEmpty())
 			return;
 
@@ -236,15 +237,15 @@ public class Observations {
 	public Feature getConfiguration() {
 		Feature config = new Feature();
 		config.put(OBS_KEY, data.num);
-		config.put(SimulationSpec2.SIMULATION_LENGTH, data.simLength);
-		config.put(SimulationSpec2.TICK_SIZE, data.tickSize);
-		config.put(SimulationSpec2.LATENCY, data.nbboLatency);
-		config.put(SimulationSpec2.ARRIVAL_RATE, data.arrivalRate);
-		config.put(SimulationSpec2.REENTRY_RATE, data.reentryRate);
-		config.put(SimulationSpec2.FUNDAMENTAL_KAPPA, data.kappa);
-		config.put(SimulationSpec2.FUNDAMENTAL_MEAN, data.meanValue);
-		config.put(SimulationSpec2.FUNDAMENTAL_SHOCK_VAR, data.shockVar);
-		config.put(SimulationSpec2.PRIVATE_VALUE_VAR, data.pvVar);
+		config.put(SimulationSpec.SIMULATION_LENGTH, data.simLength);
+		config.put(SimulationSpec.TICK_SIZE, data.tickSize);
+		config.put(SimulationSpec.LATENCY, data.nbboLatency);
+		config.put(SimulationSpec.ARRIVAL_RATE, data.arrivalRate);
+		config.put(SimulationSpec.REENTRY_RATE, data.reentryRate);
+		config.put(SimulationSpec.FUNDAMENTAL_KAPPA, data.kappa);
+		config.put(SimulationSpec.FUNDAMENTAL_MEAN, data.meanValue);
+		config.put(SimulationSpec.FUNDAMENTAL_SHOCK_VAR, data.shockVar);
+		config.put(SimulationSpec.PRIVATE_VALUE_VAR, data.pvVar);
 
 		config.put(TIMESERIES_MAXTIME, maxTime);
 
@@ -267,7 +268,7 @@ public class Observations {
 		Feature feat = new Feature();
 		DescriptiveStatistics speeds = new DescriptiveStatistics();
 		for(Transaction tr : model.getTrans()) {
-			TimeStamp execTime = tr.getTimestamp();
+			TimeStamp execTime = tr.getExecTime();
 			TimeStamp buyerExecTime = execTime.diff(tr.getBuyBid().getSubmitTime());
 			TimeStamp sellerExecTime = execTime.diff(tr.getSellBid().getSubmitTime());
 			for(int q=0; q < tr.getQuantity(); q++) {
@@ -370,13 +371,13 @@ public class Observations {
 
 		for (Transaction t : trans) {
 			PQTransaction tr = (PQTransaction) t;
-			prices.addValue(tr.price.getPrice());
-			quantity.addValue(tr.quantity);
-			fundamental.addValue(model.getFundamentalAt(tr.execTime).getPrice());
+			prices.addValue(tr.getPrice().getPrice());
+			quantity.addValue(tr.getQuantity());
+			fundamental.addValue(model.getFundamentalAt(tr.getExecTime()).getPrice());
 
-			transPrices.add(tr.execTime, new Double(tr.price.getPrice()));
-			fundPrices.add(tr.execTime, new Double(model.getFundamentalAt(
-					tr.execTime).getPrice()));
+			transPrices.add(tr.getExecTime(), new Double(tr.getPrice().getPrice()));
+			fundPrices.add(tr.getExecTime(), new Double(model.getFundamentalAt(
+					tr.getExecTime()).getPrice()));
 
 			// update number of transactions
 			// buyer

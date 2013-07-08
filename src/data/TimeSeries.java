@@ -80,7 +80,7 @@ public class TimeSeries {
 	 * @param ts
 	 * @param point
 	 */
-	public void add(TimeStamp ts, Double point) {
+	public void add(TimeStamp ts, double point) {
 
 		// most recent time with associated point
 		TimeStamp startTime = times.get(indexOfLastPoint());
@@ -199,6 +199,8 @@ public class TimeSeries {
 	 * @param maxTime
 	 * @return
 	 */
+	// FIXME necessary to have it return an array? Also, possible to move this
+	// functionality into DSPlus class?
 	public double[] getSampledArrayWithoutNaNs(int period, long maxTime) {
 		int freq = period;
 		if (period <= 0) freq = 1;
@@ -213,15 +215,15 @@ public class TimeSeries {
 		List<Double> arr = new ArrayList<Double>();
 		// sample at end of window, not at beginning
 		for (int i = freq-1; i <= (int) lastIndex; i += freq) {
-			Double x = series.get(i);
-			if (!x.isNaN())	arr.add(x);
+			double x = series.get(i);
+			if (!Double.isNaN(x)) arr.add(x);
 		}
 		
 		// if lastIndex is before maxTime, fill in up to maxTime
 		if (lastIndex < maxTime && size > 0) {
 			for (int i = size; i < maxSize; i++) {
-				Double x = series.get(size - 1);
-				if (!x.isNaN())	arr.add(x);
+				double x = series.get(size - 1);
+				if (!Double.isNaN(x)) arr.add(x);
 			}
 		}
 		return ArrayUtils.toPrimitive(arr.toArray(new Double[arr.size()]));
@@ -244,8 +246,8 @@ public class TimeSeries {
 			FileOutputStream os = new FileOutputStream(file);
 			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
 			BufferedWriter bw = new BufferedWriter(osw);
-			for (Double d : series) {
-				bw.write(d.toString());
+			for (double d : series) {
+				bw.write(Double.toString(d));
 				bw.newLine();
 			}
 			bw.close();
@@ -271,7 +273,7 @@ public class TimeSeries {
 			BufferedWriter bw = new BufferedWriter(osw);
 			double[] subarray = this.getSampledArray(period, maxTime);
 			for (int i = 0; i < subarray.length; i++) {
-				bw.write(new Double(subarray[i]).toString());
+				bw.write(Double.toString(subarray[i]));
 				bw.newLine();
 			}
 			bw.close();

@@ -1,13 +1,16 @@
 package entity;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.INFO;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import logger.Logger;
 import market.BestBidAsk;
 import market.Price;
+import market.PrivateValue;
 import market.Quote;
 import model.MarketModel;
 import systemmanager.Consts;
@@ -43,12 +46,12 @@ import event.TimeStamp;
 public abstract class SMAgent extends Agent {
 
 	protected final Market market;
-	protected Market marketSubmittedBid; // market to which bid has been
-											// submitted
+	// market to which bid has been submitted
+	protected Market marketSubmittedBid;
 
 	public SMAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand) {
-		super(agentID, arrivalTime, model, rand);
+			Market market, PrivateValue pv, RandPlus rand) {
+		super(agentID, arrivalTime, model, pv, rand);
 		this.market = market;
 	}
 
@@ -92,12 +95,12 @@ public abstract class SMAgent extends Agent {
 	 * @return Collection<Activity>
 	 */
 	public Collection<? extends Activity> agentArrival(TimeStamp ts) {
-		Logger.log(Logger.INFO,
+		log(INFO,
 				ts.toString() + " | " + this + "->" + market.toString());
 		this.enterMarket(market, ts);
 		// FIXME I think with the new event queue, this should be instantaneous
 		// not at the same time
-		return Collections.singleton(new AgentStrategy(this, market, ts));
+		return Collections.singleton(new AgentStrategy(this, market, Consts.INF_TIME));
 	}
 
 	/**
@@ -192,24 +195,24 @@ public abstract class SMAgent extends Agent {
 		Price bestPrice;
 
 		if (quantity > 0) { // buy
-			nbboBetter = lastNBBOQuote.bestAsk != null
-					&& lastNBBOQuote.bestAsk.lessThan(mainMarketQuote.lastAskPrice);
+			nbboBetter = lastNBBOQuote.getBestAsk() != null
+					&& lastNBBOQuote.getBestAsk().lessThan(mainMarketQuote.lastAskPrice);
 			willTransact = nbboBetter
-					&& price.greaterThan(lastNBBOQuote.bestAsk);
+					&& price.greaterThan(lastNBBOQuote.getBestAsk());
 			if (willTransact) {
-				bestMarket = lastNBBOQuote.bestAskMarket;
-				bestPrice = lastNBBOQuote.bestAsk;
+				bestMarket = lastNBBOQuote.getBestAskMarket();
+				bestPrice = lastNBBOQuote.getBestAsk();
 			} else {
 				bestMarket = market;
 				bestPrice = mainMarketQuote.lastAskPrice;
 			}
 		} else { // sell
-			nbboBetter = lastNBBOQuote.bestBid != null
-					&& lastNBBOQuote.bestBid.greaterThan(mainMarketQuote.lastBidPrice);
-			willTransact = nbboBetter && price.lessThan(lastNBBOQuote.bestBid);
+			nbboBetter = lastNBBOQuote.getBestBid() != null
+					&& lastNBBOQuote.getBestBid().greaterThan(mainMarketQuote.lastBidPrice);
+			willTransact = nbboBetter && price.lessThan(lastNBBOQuote.getBestBid());
 			if (willTransact) {
-				bestMarket = lastNBBOQuote.bestBidMarket;
-				bestPrice = lastNBBOQuote.bestBid;
+				bestMarket = lastNBBOQuote.getBestBidMarket();
+				bestPrice = lastNBBOQuote.getBestBid();
 			} else {
 				bestMarket = market;
 				bestPrice = mainMarketQuote.lastBidPrice;
@@ -217,13 +220,13 @@ public abstract class SMAgent extends Agent {
 		}
 
 		if (nbboBetter)
-			Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
-					+ "::submitNMSBid: " + "NBBO(" + lastNBBOQuote.bestBid
-					+ ", " + lastNBBOQuote.bestAsk + ") better than " + market
+			log(INFO, ts + " | " + this + " " + agentType
+					+ "::submitNMSBid: " + "NBBO(" + lastNBBOQuote.getBestBid()
+					+ ", " + lastNBBOQuote.getBestAsk() + ") better than " + market
 					+ " Quote(" + mainMarketQuote.lastBidPrice + ", "
 					+ mainMarketQuote.lastAskPrice + ")");
 		if (willTransact)
-			Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
+			log(INFO, ts + " | " + this + " " + agentType
 					+ "::submitNMSBid: " + "Bid +(" + price + "," + quantity
 					+ ") will transact" + " immediately in " + bestMarket
 					+ " given best price " + bestPrice);
@@ -231,11 +234,11 @@ public abstract class SMAgent extends Agent {
 		// submit bid to the best market
 		marketSubmittedBid = bestMarket;
 		Collection<Activity> actMap = new ArrayList<Activity>(executeSubmitBid(
-				bestMarket, price.getPrice(), quantity, ts));
+				bestMarket, price, quantity, ts));
 
 		String durationLog = duration != Consts.INF_TIME
 				&& duration.longValue() > 0 ? ", duration=" + duration : "";
-		Logger.log(Logger.INFO, ts + " | " + this + " " + agentType
+		log(INFO, ts + " | " + this + " " + agentType
 				+ "::submitNMSBid: " + "+(" + price + "," + quantity + ") to "
 				+ bestMarket + durationLog);
 

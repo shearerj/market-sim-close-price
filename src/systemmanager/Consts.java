@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
+import market.Price;
+
 import event.TimeStamp;
 
 
@@ -22,6 +24,7 @@ public class Consts {
 	// 0 means sampling every time step
 	public final static int[] periods = {0, 1, 250};
 	
+	// FIXME shouldn't this just be simulation length?
 	public final static long upToTime = 3000;	// compute statistics up to this time
 	
 	// **********************************************************
@@ -77,11 +80,9 @@ public class Consts {
 	public final static TimeStamp INF_TIME = new TimeStamp(-1);
 	public final static TimeStamp START_TIME = new TimeStamp(0);
 	
-	// Price
-	public final static int INF_PRICE = Integer.MAX_VALUE;
-	
-	// Other
-	public final static String NAN = "NaN";
+	// Price TODO Move to Price
+	public final static Price INF_PRICE = new Price(Integer.MAX_VALUE);
+	public final static Price ZERO_PRICE = new Price(0); // TODO Better name
 	
 	// **********************************************************
 	// FILENAMES

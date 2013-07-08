@@ -32,18 +32,13 @@ public class PQTransaction extends Transaction {
 	 * @param mktID
 	 *            marketID
 	 */
-	public PQTransaction(int q, Price p, Agent buyer, Agent seller, Bid buyBid,
-			Bid sellBid, TimeStamp ts, Market market) {
-		quantity = new Integer(q);
-		price = p;
-		execTime = ts;
-
-		this.buyer = buyer;
-		this.seller = seller;
-		this.buyBid = buyBid;
-		this.sellBid = sellBid;
-		this.market = market;
+	public PQTransaction(int quantity, Price price, Agent buyer, Agent seller, Bid buyBid, Bid sellBid, TimeStamp execTime, Market market) {
+		// FIXME Transaction IDs never used or set...
+		super(0, buyer, seller, market, buyBid, sellBid, quantity, price,
+				execTime);
 	}
+
+
 
 	/**
 	 * NOTE: does not compare transaction IDs
@@ -58,7 +53,7 @@ public class PQTransaction extends Transaction {
 			return false;
 		PQTransaction other = (PQTransaction) obj;
 		return new EqualsBuilder().append(price.price, other.price.price).append(
-				quantity.intValue(), other.quantity.intValue()).append(
+				quantity, other.quantity).append(
 				buyer.getID(), other.buyer.getID()).append(seller.getID(),
 				other.seller.getID()).append(buyBid.getBidID(),
 				other.buyBid.getBidID()).append(sellBid.getBidID(),
@@ -70,7 +65,7 @@ public class PQTransaction extends Transaction {
 	@Override
 	public int hashCode() {
 		return new HashCodeBuilder(17, 31).append(price.price).append(
-				quantity.intValue()).append(buyer.getID()).append(
+				quantity).append(buyer.getID()).append(
 				seller.getID()).append(buyBid.getBidID()).append(
 				sellBid.getBidID()).append(market.getID()).append(
 				execTime.longValue()).toHashCode();
@@ -78,8 +73,8 @@ public class PQTransaction extends Transaction {
 
 	@Override
 	public String toString() {
-		String result = "Transaction(ID=" + transID.toString() + ", quantity="
-				+ quantity.toString() + ", price=" + price + ", buyerID="
+		String result = "Transaction(ID=" + transID + ", quantity="
+				+ quantity + ", price=" + price + ", buyerID="
 				+ buyer.getID() + ", sellerID=" + seller.getID()
 				+ ", buyBidID=" + buyBid.getBidID() + ", sellBidID="
 				+ sellBid.getBidID() + ", timestamp=" + execTime.toString()

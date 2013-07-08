@@ -19,8 +19,8 @@ public abstract class Activity {
 
 	protected final TimeStamp time;
 	
-	public Activity(TimeStamp t) {
-		time = t;
+	public Activity(TimeStamp time) {
+		this.time = time;
 	}
 
 	/**
@@ -31,19 +31,14 @@ public abstract class Activity {
 	public abstract Collection<? extends Activity> execute(TimeStamp currentTime);
 
 	/**
-	 * @return deep copy of the Activity.
-	 */
-	public abstract Activity deepCopy();
-
-	/**
 	 * @return TimeStamp of time variable
 	 */
 	public TimeStamp getTime() {
 		return this.time;
 	}
 
-	public String getName() {
-		return this.getClass().getSimpleName();
+	public final String getName() {
+		return getClass().getSimpleName();
 	}
 	
 }

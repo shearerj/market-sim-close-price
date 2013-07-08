@@ -1,5 +1,8 @@
 package event;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.*;
+
 import java.util.Random;
 
 import logger.Logger;
@@ -60,8 +63,8 @@ public class EventManager {
 	 */
 	protected void executeNext() {
 
-		if (Logger.getLevel() >= Logger.DEBUG)
-			Logger.log(Logger.DEBUG, this.getClass().getSimpleName()
+		if (Logger.getLevel().ordinal() >= DEBUG.ordinal())
+			log(DEBUG, this.getClass().getSimpleName()
 					+ "::executeNext: " + eventQueue);
 
 		try {

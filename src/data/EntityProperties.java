@@ -5,19 +5,19 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.google.gson.Gson;
-
 public class EntityProperties {
 	
-	protected static final transient Gson gson = new Gson();
+	protected EntityProperties def;
 	protected Map<String, String> properties;
 
 	public EntityProperties() {
-		properties = new HashMap<String, String>();
+		this.properties = new HashMap<String, String>();
+		this.def = null;
 	}
 	
-	public EntityProperties(EntityProperties copy) {
-		properties = new HashMap<String, String>(copy.properties);
+	public EntityProperties(EntityProperties def) {
+		this.properties = new HashMap<String, String>();
+		this.def = def;
 	}
 	
 	public EntityProperties(String config) {
@@ -28,6 +28,11 @@ public class EntityProperties {
 	public EntityProperties(EntityProperties def, String config) {
 		this(def);
 		addConfig(config);
+	}
+	
+	protected EntityProperties(Map<String, String> properties, EntityProperties def) {
+		this.properties = properties;
+		this.def = def;
 	}
 	
 	public void addConfig(String config) {
@@ -107,24 +112,31 @@ public class EntityProperties {
 		properties.put(key, value);
 	}
 	
-	public void put(String key, int value) {
-		properties.put(key, Integer.toString(value));
-	}
-	
-	public void put(String key, double value) {
-		properties.put(key, Double.toString(value));
-	}
-
-	public void put(String key, float value) {
-		properties.put(key, Float.toString(value));
-	}
-	
-	public void put(String key, long value) {
-		properties.put(key, Long.toString(value));
+	public void put(String key, Number value) {
+		properties.put(key, value.toString());
 	}
 	
 	public void put(String key, boolean value) {
 		properties.put(key, Boolean.toString(value));
+	}
+	
+	public EntityProperties getDefault() {
+		return def;
+	}
+	
+	public void setDefault(EntityProperties def) {
+		this.def = def;
+	}
+	
+	public EntityProperties flatten() {
+		Map<String, String> newProps = new HashMap<String, String>();
+		flattenHelper(newProps);
+		return new EntityProperties(newProps, null);
+	}
+	
+	private void flattenHelper(Map<String, String> newProps) {
+		if (def != null) def.flattenHelper(newProps);
+		newProps.putAll(properties);
 	}
 	
 	@Override
@@ -137,7 +149,7 @@ public class EntityProperties {
 	
 	@Override
 	public int hashCode() {
-		return properties.hashCode();
+		return properties.hashCode() ^ (def == null ? 0 : def.hashCode());
 	}
 	
 	public String toConfigString() {
@@ -148,9 +160,23 @@ public class EntityProperties {
 		return sb.substring(1);
 	}
 	
+	public String toCascadeString() {
+		if (def == null) return toString();
+		return toString() + " <- " + def.toCascadeString();
+	}
+	
 	@Override
 	public String toString() {
 		return properties.toString();
+	}
+	
+	public static void main(String... args) {
+		EntityProperties a = new EntityProperties("foo_5");
+		EntityProperties b = new EntityProperties(a);
+		EntityProperties c = new EntityProperties(b, "bar_baz");
+		System.out.println(c);
+		System.out.println(c.flatten());
+		System.out.println(c.toCascadeString());
 	}
 
 }

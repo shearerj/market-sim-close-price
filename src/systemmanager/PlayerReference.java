@@ -1,8 +1,7 @@
 package systemmanager;
 
-import data.*;
-import entity.Agent;
-import event.TimeStamp;
+import static logger.Logger.log;
+import static logger.Logger.Level.ERROR;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,13 +9,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 
-import logger.Logger;
-
-import org.json.simple.*;
-import org.json.simple.parser.*;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.ModelType;
+import data.AgentPropsPair;
+import data.EntityProperties;
+import data.SystemData;
+import entity.Agent;
+import event.TimeStamp;
 
 
 /**
@@ -158,7 +161,7 @@ public class PlayerReference {
 					if (!strat.equals("")) {
 						String[] as = strat.split("[:]+");	// split on colon
 						if (as.length != 2) {
-							Logger.log(Logger.ERROR, this.getClass().getSimpleName() + 
+							log(ERROR, this.getClass().getSimpleName() + 
 									"::setRolePlayers: " + "incorrect strategy string");
 						} else {
 							// first elt is agent type, second elt is strategy
@@ -205,7 +208,7 @@ public class PlayerReference {
 		EntityProperties op = PlayerReference.getAgentProperties(type, strategy);
 		
 		if (op == null) {
-			Logger.log(Logger.ERROR, this.getClass().getSimpleName() + 
+			log(ERROR, this.getClass().getSimpleName() + 
 					"::getStrategyParameters: error parsing " + strategy.split("[_]+"));
 		}
 		return op;

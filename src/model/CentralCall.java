@@ -2,6 +2,8 @@ package model;
 
 import java.util.Map;
 
+import com.google.gson.JsonObject;
+
 import utils.RandPlus;
 import data.AgentProperties;
 import data.FundamentalValue;
@@ -25,10 +27,10 @@ public class CentralCall extends MarketModel {
 
 	public CentralCall(int modelID, FundamentalValue fundamental,
 			Map<AgentProperties, Integer> agentProps,
-			EntityProperties modelProps, RandPlus rand) {
-		super(modelID, fundamental, agentProps, modelProps, rand);
+			EntityProperties modelProps, JsonObject playerConfig, RandPlus rand) {
+		super(modelID, fundamental, agentProps, modelProps, playerConfig, rand);
 	}
-	
+
 	@Override
 	public String getConfig() {
 		return config;
@@ -37,8 +39,10 @@ public class CentralCall extends MarketModel {
 	@Override
 	protected void setupMarkets(EntityProperties modelProps) {
 		// FIXME These default values are probably not correct.
-		float pricingPolicy = modelProps.getAsFloat(CallMarket.PRICING_POLICY_KEY, 0.5f);
-		TimeStamp clearFreq = new TimeStamp(modelProps.getAsLong(CallMarket.CLEAR_FREQ_KEY, 100));
+		float pricingPolicy = modelProps.getAsFloat(
+				CallMarket.PRICING_POLICY_KEY, 0.5f);
+		TimeStamp clearFreq = new TimeStamp(modelProps.getAsLong(
+				CallMarket.CLEAR_FREQ_KEY, 100));
 		markets.add(new CallMarket(1, this, pricingPolicy, clearFreq));
 	}
 

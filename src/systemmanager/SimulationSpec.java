@@ -30,7 +30,7 @@ import data.EntityProperties;
  * 
  * @author ewah
  */
-public class SimulationSpec2 {
+public class SimulationSpec {
 
 	public final static String ASSIGN_KEY = "assignment";
 	public final static String CONFIG_KEY = "configuration";
@@ -47,11 +47,13 @@ public class SimulationSpec2 {
 	public final static String PRIMARY_MODEL = "primary_model";
 	public final static String RAND_SEED = "random_seed";
 
+	// XXX Move into model properties?
 	protected final EntityProperties simulationProperties;
 	protected final Collection<ModelProperties> models;
 	protected final Map<AgentProperties, Integer> backgroundAgents;
+	protected final JsonObject playerConfig;
 
-	public SimulationSpec2(File specFile) throws JsonSyntaxException,
+	public SimulationSpec(File specFile) throws JsonSyntaxException,
 			JsonIOException, FileNotFoundException {
 		JsonObject spec = new Gson().fromJson(new FileReader(specFile), JsonObject.class);
 		JsonObject config = spec.getAsJsonObject(CONFIG_KEY);
@@ -59,9 +61,10 @@ public class SimulationSpec2 {
 		simulationProperties = simulationProperties(config);
 		models = marketModels(config, systemModelProperties(config));
 		backgroundAgents = backgroundAgents(config, systemAgentProperties(config));
+		playerConfig = spec.getAsJsonObject(ASSIGN_KEY);
 	}
 
-	public SimulationSpec2(String specFileName) throws JsonSyntaxException,
+	public SimulationSpec(String specFileName) throws JsonSyntaxException,
 			JsonIOException, FileNotFoundException {
 		this(new File(specFileName));
 	}
@@ -136,6 +139,10 @@ public class SimulationSpec2 {
 
 	public Map<AgentProperties, Integer> getBackgroundAgents() {
 		return Collections.unmodifiableMap(backgroundAgents);
+	}
+	
+	public JsonObject getPlayerConfig() {
+		return playerConfig;
 	}
 
 	// TODO Implement Players

@@ -12,54 +12,66 @@ import event.TimeStamp;
  */
 public class Transaction {
 	
-	public Integer transID;
-	protected Agent buyer;
-	protected Agent seller;
-	protected Market market;
-	protected Bid buyBid;
-	protected Bid sellBid;
+	protected final int transID;
+	protected final Agent buyer;
+	protected final Agent seller;
+	protected final Market market;
+	protected final Bid buyBid;
+	protected final Bid sellBid;
 	
 	//Transaction Info
-	public Integer quantity;
-	public Price price;
-	public TimeStamp execTime;
+	protected final int quantity;
+	protected final Price price;
+	protected final TimeStamp execTime;
 
-	public Transaction() {
+	public Transaction(int transID, Agent buyer, Agent seller, Market market,
+			Bid buyBid, Bid sellBid, int quantity, Price price,
+			TimeStamp execTime) {
+		super();
+		this.transID = transID;
+		this.buyer = buyer;
+		this.seller = seller;
+		this.market = market;
+		this.buyBid = buyBid;
+		this.sellBid = sellBid;
+		this.quantity = quantity;
+		this.price = price;
+		this.execTime = execTime;
 	}
 
-	public Integer getTransID() {
+	public final int getTransID() {
 		return transID;
 	}
 
-	public Agent getBuyer() {
+	public final Agent getBuyer() {
 		return buyer;
 	}
 
-	public Agent getSeller() {
+	public final Agent getSeller() {
 		return seller;
 	}
 
-	public Market getMarket() {
+	public final Market getMarket() {
 		return market;
 	}
 
-	public Bid getBuyBid() {
+	public final Bid getBuyBid() {
 		return buyBid;
 	}
 
-	public Bid getSellBid() {
+	public final Bid getSellBid() {
 		return sellBid;
 	}
 
-	public Integer getQuantity() {
+	public final int getQuantity() {
 		return quantity;
 	}
 
-	public Price getPrice() {
+	public final Price getPrice() {
 		return price;
 	}
 
-	public TimeStamp getTimestamp() {
+	public final TimeStamp getExecTime() {
 		return execTime;
 	}
 }
