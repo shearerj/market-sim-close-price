@@ -3,7 +3,6 @@ package entity;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,13 +24,13 @@ import event.TimeStamp;
 public class SIP extends Entity {
 
 	private int tickSize;
-	private HashMap<Integer, BestBidAsk> lastQuotes; // hashed by model ID
+	private HashMap<MarketModel, BestBidAsk> lastQuotes; // hashed by model ID
 	private HashMap<Integer, BestBidAsk> marketQuotes; // hashed by market ID
 
 	public SIP(int id, int tickSize) {
 		super(id);
 		this.tickSize = tickSize;
-		this.lastQuotes = new HashMap<Integer, BestBidAsk>();
+		this.lastQuotes = new HashMap<MarketModel, BestBidAsk>();
 		this.marketQuotes = new HashMap<Integer, BestBidAsk>();
 	}
 
@@ -41,14 +40,14 @@ public class SIP extends Entity {
 	 * @param modelID
 	 * @return BestBidAsk
 	 */
-	public BestBidAsk getNBBOQuote(int modelID) {
-		if (!lastQuotes.containsKey(modelID)) {
+	public BestBidAsk getNBBOQuote(MarketModel model) {
+		if (!lastQuotes.containsKey(model)) {
 			// FIXME This shouldn't be done / shouldn't happen
 			BestBidAsk b = new BestBidAsk(null, null, null, null);
-			lastQuotes.put(modelID, b);
+			lastQuotes.put(model, b);
 			return b;
 		} else {
-			return lastQuotes.get(modelID);
+			return lastQuotes.get(model);
 		}
 	}
 
@@ -58,8 +57,8 @@ public class SIP extends Entity {
 	 * @param modelID
 	 * @return BestBidAsk
 	 */
-	public BestBidAsk getGlobalQuote(int modelID) {
-		return this.computeBestBidOffer(data.getModel(modelID).getMarketIDs(),
+	public BestBidAsk getGlobalQuote(MarketModel model) {
+		return this.computeBestBidOffer(model.getMarkets(),
 				false);
 	}
 
@@ -88,12 +87,12 @@ public class SIP extends Entity {
 	 * @return
 	 */
 	public Collection<Activity> updateNBBO(MarketModel model, TimeStamp ts) {
-		int modelID = model.getID();
-		ArrayList<Integer> ids = model.getMarketIDs();
-		String s = ts + " | " + ids + " UpdateNBBO: current "
-				+ getNBBOQuote(modelID) + " --> ";
+		Collection<Market> markets = model.getMarkets();
+		
+		String s = ts + " | " + markets + " UpdateNBBO: current "
+				+ getNBBOQuote(model) + " --> ";
 
-		BestBidAsk lastQuote = computeBestBidOffer(ids, true);
+		BestBidAsk lastQuote = computeBestBidOffer(markets, true);
 
 		Price bestBid = lastQuote.getBestBid();
 		Price bestAsk = lastQuote.getBestAsk();
@@ -117,25 +116,9 @@ public class SIP extends Entity {
 		}
 		lastQuote = new BestBidAsk(lastQuote.getBestBidMarket(), bestBid,
 				lastQuote.getBestAskMarket(), bestAsk);
-		lastQuotes.put(modelID, lastQuote);
+		lastQuotes.put(model, lastQuote);
 		log(INFO, s + "updated " + lastQuote);
 		return Collections.emptyList();
-	}
-
-	/**
-	 * Find best quote across given markets (lowest ask & highest bid).
-	 * 
-	 * @param marketIDs
-	 * @param nbbo
-	 *            true if getting NBBO, false if getting global quote
-	 * @return
-	 */
-	private BestBidAsk computeBestBidOffer(ArrayList<Integer> marketIDs,
-			boolean nbbo) {
-		Collection<Market> markets = new ArrayList<Market>(marketIDs.size());
-		for (int mktID : marketIDs)
-			markets.add(data.getMarket(mktID));
-		return computeBestBidOffer(markets, nbbo);
 	}
 
 	/**

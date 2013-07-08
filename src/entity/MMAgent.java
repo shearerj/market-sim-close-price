@@ -48,10 +48,9 @@ public abstract class MMAgent extends Agent {
 	public Collection<Activity> agentArrival(TimeStamp ts) {
 
 		StringBuilder sb = new StringBuilder();
-		for (Integer id : this.getModel().getMarketIDs()) {
-			Market mkt = data.markets.get(id);
-			this.enterMarket(mkt, ts);
-			sb.append(mkt).append(",");
+		for (Market market : model.getMarkets()) {
+			enterMarket(market, ts);
+			sb.append(market).append(",");
 		}
 		log(INFO,
 				ts.toString() + " | " + this + "->"
@@ -92,10 +91,8 @@ public abstract class MMAgent extends Agent {
 	 * @return
 	 */
 	public Collection<? extends Activity> updateAllQuotes(TimeStamp ts) {
-		for (Integer id : data.getModel(modelID).getMarketIDs()) {
-			Market mkt = data.getMarket(id);
-			updateQuotes(mkt, ts);
-		}
+		for (Market market : model.getMarkets())
+			updateQuotes(market, ts);
 		return this.executeUpdateAllQuotes(ts);
 	}
 }

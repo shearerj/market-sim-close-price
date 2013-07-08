@@ -1,9 +1,12 @@
 package entity;
 
 import generators.Generator;
+import generators.PoissonArrivalGenerator;
+import generators.RoundRobinGenerator;
 
 import model.MarketModel;
 
+import systemmanager.Consts;
 import utils.RandPlus;
 import data.AgentProperties;
 import event.TimeStamp;
@@ -24,6 +27,16 @@ public class SMAgentFactory {
 		this.nextID = ids;
 		this.arrivalProcess = arrivalProcess;
 		this.marketAssignment = marketProcess;
+	}
+	
+	/**
+	 * SMAgent factory with Poisson arrivals and round robin market selection.
+	 */
+	public SMAgentFactory(MarketModel model, Generator<Integer> ids,
+			long arrivalRate, RandPlus rand) {
+		this(model, ids, new PoissonArrivalGenerator(Consts.START_TIME,
+				arrivalRate, new RandPlus(rand.nextLong())),
+				new RoundRobinGenerator<Market>(model.getMarkets()), rand);
 	}
 
 	public SMAgent createAgent(AgentProperties props) {

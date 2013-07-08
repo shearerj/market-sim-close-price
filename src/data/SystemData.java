@@ -131,16 +131,16 @@ public class SystemData {
 	/**
 	 * @return marketIDs of primary model
 	 */
-	public ArrayList<Integer> getPrimaryMarketIDs() {
-		return primaryModel.getMarketIDs();
-	}
+//	public ArrayList<Integer> getPrimaryMarketIDs() {
+//		return primaryModel.getMarketIDs();
+//	}
 	
 	/**
 	 * @return agentIDs of primary model
 	 */
-	public ArrayList<Integer> getPrimaryAgentIDs() {
-		return primaryModel.getAgentIDs();
-	}
+//	public ArrayList<Integer> getPrimaryAgentIDs() {
+//		return primaryModel.getAgentIDs();
+//	}
 	
 	/**
 	 * @param marketID

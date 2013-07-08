@@ -177,7 +177,7 @@ public abstract class SMAgent extends Agent {
 		if (quantity == 0)
 			return Collections.emptySet();
 
-		BestBidAsk lastNBBOQuote = sip.getNBBOQuote(model.getID());
+		BestBidAsk lastNBBOQuote = sip.getNBBOQuote(model);
 
 		// Identify best market, as based on the NBBO.
 		Quote mainMarketQuote = market.quote(ts);

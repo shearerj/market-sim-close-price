@@ -260,7 +260,7 @@ public class LoggingReference {
 			Market market = null; // MarketFactory.createMarket(mtype, mID, data, mp, model);
 			market.linkModel(model.getID());
 			data.addMarket(market);
-			model.getMarketIDs().add(mID);
+//			model.getMarketIDs().add(mID);
 			
 			// Check if is call market, then initialize clearing sequence
 			if (market instanceof CallMarket) {
@@ -358,7 +358,7 @@ public class LoggingReference {
 		try {
 			for (AgentPropsPair ap : allNonPlayers.keySet()) {
 				int numAg = allNonPlayers.get(ap);
-				ArrayList<Integer> assignMktIDs = assignAgToMkts(numAg, model.getMarketIDs());
+				ArrayList<Integer> assignMktIDs = assignAgToMkts(numAg, null /*model.getMarketIDs()*/);
 
 				// check if (1) is model agent, (2) present in this model OR if environment agent
 				if ((data.getModelAgentMap().containsKey(ap) && 
@@ -398,7 +398,7 @@ public class LoggingReference {
 		try {
 			for (String type : playerNumbers.keySet()) {
 				int numAg = playerNumbers.get(type);
-				ArrayList<Integer> assignMktIDs = assignAgToMkts(numAg, model.getMarketIDs());
+				ArrayList<Integer> assignMktIDs = assignAgToMkts(numAg, null /*model.getMarketIDs()*/);
 				
 				Random rand = new Random();
 				for (int i = 0; i < numAg; i++) {	

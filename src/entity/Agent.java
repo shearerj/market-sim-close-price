@@ -4,7 +4,6 @@ import static logger.Logger.log;
 import static logger.Logger.Level.DEBUG;
 import static logger.Logger.Level.ERROR;
 import static logger.Logger.Level.INFO;
-import static systemmanager.Consts.INF_PRICE;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,11 +54,7 @@ public abstract class Agent extends Entity {
 
 	// -- end reorg --
 
-	protected int modelID; // ID of associated model
-
 	// Market information (all hashed by market ID, as ID may be negative)
-	protected HashMap<Integer, Price> bidPrice;
-	protected HashMap<Integer, Price> askPrice;
 	protected HashMap<Integer, Bid> currentBid;
 	protected HashMap<Integer, ArrayList<Quote>> quotes;
 	protected HashMap<Integer, Integer> initBid;
@@ -328,26 +323,6 @@ public abstract class Agent extends Entity {
 		}
 	}
 
-	/**
-	 * @param mktID
-	 * @return bid price for the specified market
-	 */
-	@Deprecated
-	// Agent should just go to market for this information
-	public Price getBidPrice(int mktID) {
-		return bidPrice.get(mktID);
-	}
-
-	/**
-	 * @param mktID
-	 * @return ask price for the specified market
-	 */
-	@Deprecated
-	// Agent should just go to market for this information
-	public Price getAskPrice(int mktID) {
-		return askPrice.get(mktID);
-	}
-
 	/***********************************
 	 * Methods for Activities
 	 * 
@@ -375,8 +350,6 @@ public abstract class Agent extends Entity {
 	 */
 	// TODO Is this really necessary?
 	protected void exitMarket(int mktID) {
-		bidPrice.remove(mktID);
-		askPrice.remove(mktID);
 		currentBid.remove(mktID);
 		lastQuoteTime.remove(mktID);
 		nextQuoteTime.remove(mktID);
@@ -527,8 +500,8 @@ public abstract class Agent extends Entity {
 	 * Update global and NBBO quotes for the agent's model.
 	 */
 	public Collection<? extends Activity> executeUpdateAllQuotes(TimeStamp ts) {
-		lastGlobalQuote = sip.getGlobalQuote(modelID);
-		lastNBBOQuote = sip.getNBBOQuote(modelID);
+		lastGlobalQuote = sip.getGlobalQuote(model);
+		lastNBBOQuote = sip.getNBBOQuote(model);
 
 		log(INFO, ts + " | " + this + " Global" + lastGlobalQuote + ", NBBO"
 				+ lastNBBOQuote);
@@ -547,15 +520,6 @@ public abstract class Agent extends Entity {
 	public void updateQuotes(Market mkt, TimeStamp ts) {
 		Quote q = mkt.quote(ts);
 		if (q != null) {
-			if (q.lastAskPrice == null)
-				askPrice.put(mkt.id, INF_PRICE);
-			else
-				askPrice.put(mkt.id, q.lastAskPrice);
-			if (q.lastBidPrice == null)
-				bidPrice.put(mkt.id, new Price(0));
-			else
-				bidPrice.put(mkt.id, q.lastBidPrice);
-
 			if (q.lastQuoteTime != null)
 				lastQuoteTime.put(mkt.id, q.lastQuoteTime);
 
@@ -793,40 +757,29 @@ public abstract class Agent extends Entity {
 	 * @return agent's unrealized profit/gain
 	 */
 	public int getUnrealizedProfit() {
-		int up = 0;
-		int p = -1;
+		Price p = null;
 
-		try {
-			ArrayList<Integer> mIDs = this.getModel().getMarketIDs();
+		Collection<Market> markets = model.getMarkets();
 
-			if (positionBalance > 0) {
-				// For long position, compare cost to bid quote (buys)
-				for (int mktID : mIDs) {
-					if (p == -1 || p < bidPrice.get(mktID).getPrice()) {
-						p = bidPrice.get(mktID).getPrice();
-					}
-				}
-			} else {
-				// For short position, compare cost to ask quote (sells)
-				for (int mktID : mIDs) {
-					if (p == -1 || p > askPrice.get(mktID).getPrice()) {
-						p = askPrice.get(mktID).getPrice();
-					}
+		if (positionBalance > 0) {
+			// For long position, compare cost to bid quote (buys)
+			for (Market market : markets)
+				if (market.getBidPrice().greaterThan(p))
+					p = market.getBidPrice();
+		} else {
+			// For short position, compare cost to ask quote (sells)
+			for (Market market : markets) {
+				if (market.getAskPrice().lessThan(p)) {
+					p = market.getAskPrice();
 				}
 			}
-			if (positionBalance != 0) {
-				log(DEBUG, this.getModel().getFullName() + ": " + this
-						+ " bal=" + positionBalance + ", p=" + p + ", avgCost="
-						+ averageCost);
-			}
-			if (p != -1) {
-				up += positionBalance * (p - averageCost);
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
-		return up;
+		
+		if (positionBalance != 0)
+			log(DEBUG, this.getModel().getFullName() + ": " + this + " bal="
+					+ positionBalance + ", p=" + p + ", avgCost=" + averageCost);
+		
+		return p == null ? 0 : positionBalance * (p.getPrice() - averageCost);
 	}
 
 	/***********************************
