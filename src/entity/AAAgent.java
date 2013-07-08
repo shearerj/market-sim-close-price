@@ -22,8 +22,8 @@ import data.EntityProperties;
 import event.TimeStamp;
 
 /**
- * This is the implementation of the Adaptive Aggressive strategy NOT READY FOR
- * USE
+ * This is the implementation of the Adaptive Aggressive strategy.
+ * Documentation is on its way
  * 
  * 
  * @author drhurd
