@@ -1,14 +1,17 @@
 # experiments_latency.py
-# Runs expiriments with given parameters. Saves all results in a single CSV file, given by the first input argument. 
-# Tests for varying latency values
+#
+# This files run simulations while allowing the user to choose the variable that will be varied in the simulations. At the end it also
+# runs various datachecks on the data to make sure they make sense.It also gives the user the option to choose the minimum and maximum
+# values and the increment that the varaible will iterate over.
 
 import sys, time, os, shutil
 
 if not(len(sys.argv) == 6):
     print ("REMINDER: Compile jar with ant beforehand")
-    print ("Usage: ./experiments_latency.sh [experiment name] [num samples] [test var] [set iteration range (yes or no)] [email address]")
-    print ("Example: python experiments_latency.py MY_EXPERIMENT 100 ewah@umich.edu")
-    sys.exit(1)
+    print ("Usage: python experiments_variable.py [experiment name] [num samples] [test var] [set iteration range (yes or no)] [email address]")
+    print ("Example: python experiments_variable.py MY_EXPERIMENT 100 latency no ewah@umich.edu")
+    print ("Acceptable test variable: latency, sim_length, arrival_rate, tick_size, reentry_rate, mean_value, kappa, shock, private_value")
+    quit()
 
 #default parameters
 latency = 0
@@ -113,10 +116,19 @@ while i <= max_range:
     i += incr
 #end of while loop
 
-f.write('end time: %s \n' %time.asctime(time.localtime(time.time())))
-f.close()
-os.system('mail -s "[HFT EXPERIMENT] %s " "%s" < %s' %(sys.argv[1], sys.argv[5], output))
-os.remove(output)
+f.write('end time: %s \n \n' %time.asctime(time.localtime(time.time())))
+os.system("matlab -nojvm -nodisplay -nosplash -r 'dataChecks2 %s %s; quit'" %(csv, sys.argv[1]))
 
-os.system("./datachecks/matlab -nojvm -nodisplay -nosplash -r 'dataChecks2 %s ; quit'" %csv)
-os.system('mail -s "Data Check Results: %s" "%s" < "dataCheckResult.txt"' %(sys.argv[1], sys.argv[5]))
+f2 = open('%sDataCheckResult.txt' %sys.argv[1], "r")
+for line in f2:
+    f.write(line)
+f.close()
+f2.close()
+
+os.system('mail -s "[HFT EXPERIMENT] %s " "%s" < %s' %(sys.argv[1], sys.argv[5], output))
+
+os.remove(output)
+os.remove('%sDataCheckResult.txt' %sys.argv[1])
+os.remove('%s.mat' %sys.argv[1])
+
+
