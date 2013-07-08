@@ -57,7 +57,6 @@ public class AAAgent extends BackgroundAgent {
 	// Internal Strategy Class
 	//
 	private class AAStrategy {
-		private int testing;
 		// parameters
 		private Price limit; // limit price
 		private int historical; // number of historical prices to look at
@@ -80,8 +79,7 @@ public class AAAgent extends BackgroundAgent {
 									// not PV)
 		private double alphaMin; // min experienced value for alpha
 
-		public AAStrategy(int test) {
-			testing = test; // for unit tests
+		public AAStrategy() {
 			// Agent Parameters
 			// Private Value
 			// FIXME initialized in constructor?
@@ -225,8 +223,6 @@ public class AAAgent extends BackgroundAgent {
 			Price fundPrice = model.getFundamentalAt(ts);
 			Price deviation = getPrivateValueAt(positionBalance + quantity);
 			limit = fundPrice.plus(deviation);
-			if (testing != -1)
-				limit = new Price(testing);
 		}
 
 		/**
@@ -505,18 +501,18 @@ public class AAAgent extends BackgroundAgent {
 	}
 
 	public AAAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, int reentryRate, int maxAbsPosition, int testKey,
+			Market market, int reentryRate, int maxAbsPosition,
 			boolean debugging, RandPlus rand) {
 		// TODO change "null" to proper private value initialization
 		super(agentID, arrivalTime, model, market, null, rand);
 		this.marketSubmittedBid = this.market;
 		this.reentry = new ArrivalTime(arrivalTime, reentryRate, rand);
 		this.maxAbsPosition = maxAbsPosition;
-		this.strat = new AAStrategy(testKey);
+		this.strat = new AAStrategy();
 		this.isBuyer = rand.nextBoolean();
 
-		// Debugging Output
-//		this.debugging = debugging;
+		//Debugging Output
+		//this.debugging = debugging;
 		if (debugging)
 			printInitDebugInfo();
 	}
@@ -525,8 +521,7 @@ public class AAAgent extends BackgroundAgent {
 			Market market, RandPlus rand, EntityProperties params) {
 		this(agentID, arrivalTime, model, market,
 				params.getAsInt(REENTRY_RATE),
-				params.getAsInt(AAAgent.MAXQUANTITY_KEY), params.getAsInt(
-						AAAgent.TEST_KEY, -1), params.getAsBoolean(
+				params.getAsInt(AAAgent.MAXQUANTITY_KEY), params.getAsBoolean(
 						AAAgent.DEBUG_KEY, false), rand);
 	}
 

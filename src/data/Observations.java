@@ -236,7 +236,7 @@ public class Observations {
 	 */
 	public Feature getConfiguration() {
 		Feature config = new Feature();
-		config.put(OBS_KEY, data.num);
+		config.put(OBS_KEY, data.simNum);
 		config.put(SimulationSpec.SIMULATION_LENGTH, data.simLength);
 		config.put(SimulationSpec.TICK_SIZE, data.tickSize);
 		config.put(SimulationSpec.LATENCY, data.nbboLatency);

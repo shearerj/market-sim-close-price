@@ -38,9 +38,9 @@ import java.io.OutputStreamWriter;
  */
 public class SystemData {
 
-	public int num;								// observation number
+	public int simNum;						// observation number
 	public File simDir;						// simulations directory
-	public boolean EGTA;							// true if EGTA use case
+	public boolean EGTA;					// true if EGTA use case
 	
 	// Model information
 	public MarketModel primaryModel;
@@ -85,8 +85,8 @@ public class SystemData {
 	/**
 	 * Constructor
 	 */
-	public SystemData(int num, File simDir) {
-		this.num = num;
+	public SystemData(int simNum, File simDir) {
+		this.simNum = simNum;
 		this.simDir = simDir;
 		
 		privateValues = new HashMap<Integer,Price>();
