@@ -29,7 +29,7 @@ import entity.Market;
 import entity.MarketMaker;
 import event.TimeStamp;
 
-// XXX This current version of observations doesn't round doubles to the nearest ten thousandth
+// TODO This current version of observations doesn't round doubles to the nearest ten thousandth
 public class Observations2 {
 
 	// Players

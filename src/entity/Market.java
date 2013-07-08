@@ -6,11 +6,8 @@ import static logger.Logger.Level.INFO;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.TreeMap;
-import com.sun.tools.javac.util.List;
 
-import systemmanager.Consts;
 import logger.Logger;
 import market.Bid;
 import market.PQOrderBook;
@@ -22,7 +19,6 @@ import systemmanager.Consts;
 import activity.Activity;
 import activity.ProcessQuote;
 import activity.SendToSIP;
-import data.SystemData;
 import data.TimeSeries;
 import event.TimeStamp;
 
@@ -38,7 +34,7 @@ public abstract class Market extends Entity {
 	protected final MarketModel model;
 	protected PQOrderBook orderbook;
 	//Statistics
-	protected List<Bid> bids;			//All bids ever submitted to the market
+	protected Collection<Bid> bids;			//All bids ever submitted to the market
 	protected TimeSeries depths;		//Number of orders in the orderBook
 	protected TimeSeries spreads;		//Bid-ask spread value
 	protected TimeSeries midQuotes;		//Midpoint of bid/ask values
@@ -197,8 +193,8 @@ public abstract class Market extends Entity {
 	 * 
 	 * @return bids
 	 */
-	public List<Bid> getAllBids() {
-		return this.bids;
+	public Collection<Bid> getAllBids() {
+		return bids;
 	}
 
 	/**
