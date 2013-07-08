@@ -174,10 +174,8 @@ public class SystemManager {
 
 	public void aggregateResults() throws IOException {
 		File results = new File(simFolder, Consts.obsFile + num + ".json");
-		FileWriter writer = new FileWriter(results);
-		// TODO Actually generate observations
-		// writer.write(obs.generateObservationFile());
-		writer.close();
+		Observations obs = new Observations(spec, models);
+		obs.writeToFile(results);
 	}
 
 }

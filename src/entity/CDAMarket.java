@@ -1,7 +1,5 @@
 package entity;
 
-import static logger.Logger.Level.ERROR;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
