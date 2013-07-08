@@ -5,15 +5,15 @@ import java.util.Collection;
 import java.util.HashMap;
 
 import logger.Logger;
+import market.Price;
 import market.PrivateValue;
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
 import data.ArrivalTime;
-import data.ObjectProperties;
+import data.EntityProperties;
 import data.Observations;
-import data.SystemData;
 import event.TimeStamp;
 
 /**
@@ -52,7 +52,7 @@ public class ZIRAgent extends BackgroundAgent {
 	private ArrayList<TimeStamp> submissionTimes;
 
 	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, ObjectProperties props) {
+			Market market, RandPlus rand, EntityProperties props) {
 		super(agentID, arrivalTime, model, market, rand);
 		bidRange = params.getAsInt(BIDRANGE_KEY, 5000);
 		maxAbsPosition = params.getAsInt(MAXQUANTITY_KEY, 10);
@@ -62,19 +62,6 @@ public class ZIRAgent extends BackgroundAgent {
 		submissionTimes = new ArrayList<TimeStamp>();
 		alpha = new PrivateValue(initPrivateValues(maxAbsPosition));
 	}
-	
-	public ZIRAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
-		super(agentID, modelID, d, p);
-		
-		bidRange = params.getAsInt(ZIRAgent.BIDRANGE_KEY);
-		reentry = new ArrivalTime(arrivalTime, this.data.reentryRate, rand);
-		maxAbsPosition = params.getAsInt(ZIRAgent.MAXQUANTITY_KEY);
-		lastPositionBalance = positionBalance;
-		
-		submissionTimes = new ArrayList<TimeStamp>();
-		alpha = new PrivateValue(initPrivateValues(maxAbsPosition));
-	}
-	
 	
 	@Override
 	public HashMap<String, Object> getObservation() {
@@ -103,26 +90,25 @@ public class ZIRAgent extends BackgroundAgent {
 			// If either first arrival or if last order has already transacted then should 
 			// submit a new order. Otherwise, do nothing (does not cancel orders).
 			
-			int p = 0;
-			int q = 1;
+			Price price;
 			// 0.50% chance of being either long or short
-			if (rand.nextDouble() < 0.5) q = -q;
+			int quantity = rand.nextBoolean() ? 1 : -1;
 			
 			int val = 0;
-			int newPosition = q + positionBalance;
+			int newPosition = quantity + positionBalance;
 			// check that will not exceed max absolute position
 			if (newPosition <= maxAbsPosition && newPosition >= -maxAbsPosition) {
-				val = Math.max(0, model.getFundamentalAt(ts).sum(getPrivateValueAt(q)).getPrice());
-				s += " position=" + positionBalance + ", for q=" + q + ", value=" + 
-						model.getFundamentalAt(ts) + " + " + getPrivateValueAt(q) + "=" + val;
+				val = Math.max(0, model.getFundamentalAt(ts).sum(getPrivateValueAt(quantity)).getPrice());
+				s += " position=" + positionBalance + ", for q=" + quantity + ", value=" + 
+						model.getFundamentalAt(ts) + " + " + getPrivateValueAt(quantity) + "=" + val;
 				
-				if (q > 0) {
-					p = (int) Math.max(0, ((val - 2*bidRange) + rand.nextDouble()*2*bidRange));
+				if (quantity > 0) {
+					price = new Price((int) Math.max(0, ((val - 2*bidRange) + rand.nextDouble()*2*bidRange)));
 				} else {
-					p = (int) Math.max(0, (val + rand.nextDouble()*2*bidRange));
+					price = new Price((int) Math.max(0, (val + rand.nextDouble()*2*bidRange)));
 				}
 				Logger.log(Logger.INFO, s);
-				actMap.addAll(executeSubmitNMSBid(p, q, ts));
+				actMap.addAll(executeSubmitNMSBid(price, quantity, ts));
 				submissionTimes.add(ts);
 				
 				lastPositionBalance = positionBalance;	// update position balance

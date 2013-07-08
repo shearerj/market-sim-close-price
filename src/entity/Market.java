@@ -5,11 +5,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
-
 import com.sun.tools.javac.util.List;
 
 import systemmanager.Consts;
-
 import logger.Logger;
 import market.Bid;
 import market.PQOrderBook;
@@ -17,10 +15,10 @@ import market.Price;
 import market.Quote;
 import market.Transaction;
 import model.MarketModel;
+import systemmanager.Consts;
 import activity.Activity;
 import activity.ProcessQuote;
 import activity.SendToSIP;
-import data.ObjectProperties;
 import data.SystemData;
 import data.TimeSeries;
 import event.TimeStamp;
@@ -67,27 +65,6 @@ public abstract class Market extends Entity {
 
 	public Market(int marketID, MarketModel model) {
 		super(marketID);
-		this.model = model;
-	}
-
-	public Market(int marketID, SystemData d, ObjectProperties p,
-			MarketModel model) {
-		super(marketID, d, p);
-
-		agentIDs = new ArrayList<Integer>();
-		buyers = new ArrayList<Integer>();
-		sellers = new ArrayList<Integer>();
-
-		lastQuoteTime = new TimeStamp(-1);
-		lastClearTime = new TimeStamp(-1);
-		nextQuoteTime = new TimeStamp(-1);
-		nextClearTime = new TimeStamp(-1);
-
-		lastClearPrice = new Price(-1);
-		lastAskPrice = new Price(-1);
-		lastBidPrice = new Price(-1);
-
-		// reorg
 		this.model = model;
 		this.orderbook = new PQOrderBook(this);
 		this.depths = new TimeSeries();

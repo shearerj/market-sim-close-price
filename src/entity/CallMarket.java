@@ -3,23 +3,16 @@ package entity;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 
 import logger.Logger;
 import market.Bid;
 import market.PQBid;
-import market.PQOrderBook;
-import market.PQTransaction;
 import market.Price;
 import market.Quote;
-import market.Transaction;
 import model.MarketModel;
 import systemmanager.Consts;
 import activity.Activity;
 import activity.Clear;
-import activity.SendToSIP;
-import data.ObjectProperties;
-import data.SystemData;
 import event.TimeStamp;
 
 /**
@@ -46,14 +39,6 @@ public class CallMarket extends Market {
 		this.pricingPolicy = pricingPolicy;
 		this.clearFreq = clearFreq;
 		this.nextClearTime = clearFreq;
-	}
-	
-	public CallMarket(int marketID, SystemData d, ObjectProperties p, MarketModel model) {
-		super(marketID, d, p, model);
-		marketType = Consts.getMarketType(this.getName());
-		pricingPolicy = params.getAsFloat(CallMarket.PRICING_POLICY_KEY);
-		clearFreq = new TimeStamp(params.getAsInt(CallMarket.CLEAR_FREQ_KEY));
-		nextClearTime = clearFreq;
 	}
 	
 	public Bid getBidQuote() {

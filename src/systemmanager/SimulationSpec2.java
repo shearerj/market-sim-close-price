@@ -20,7 +20,7 @@ import com.google.gson.JsonSyntaxException;
 
 import data.AgentProperties;
 import data.ModelProperties;
-import data.ObjectProperties;
+import data.EntityProperties;
 
 /**
  * Stores list of web parameters used in EGTAOnline.
@@ -47,7 +47,7 @@ public class SimulationSpec2 {
 	public final static String PRIMARY_MODEL = "primary_model";
 	public final static String RAND_SEED = "random_seed";
 
-	protected final ObjectProperties simulationProperties;
+	protected final EntityProperties simulationProperties;
 	protected final Collection<ModelProperties> models;
 	protected final Map<AgentProperties, Integer> backgroundAgents;
 
@@ -66,8 +66,8 @@ public class SimulationSpec2 {
 		this(new File(specFileName));
 	}
 	
-	protected static ObjectProperties simulationProperties(JsonObject config) {
-		ObjectProperties simProps = new ObjectProperties();
+	protected static EntityProperties simulationProperties(JsonObject config) {
+		EntityProperties simProps = new EntityProperties();
 		simProps.put(SIMULATION_LENGTH, config.getAsJsonPrimitive(SIMULATION_LENGTH).getAsLong());
 		simProps.put(FUNDAMENTAL_MEAN, config.getAsJsonPrimitive(FUNDAMENTAL_MEAN).getAsInt());
 		simProps.put(FUNDAMENTAL_KAPPA, config.getAsJsonPrimitive(FUNDAMENTAL_KAPPA).getAsDouble());
@@ -80,22 +80,22 @@ public class SimulationSpec2 {
 		return simProps;
 	}
 	
-	protected static ObjectProperties systemModelProperties(JsonObject config) {
-		ObjectProperties modelProps = new ObjectProperties();
+	protected static EntityProperties systemModelProperties(JsonObject config) {
+		EntityProperties modelProps = new EntityProperties();
 		modelProps.put(LATENCY, config.getAsJsonPrimitive(
 				LATENCY).getAsLong());
 		return modelProps;
 	}
 	
-	protected static ObjectProperties systemAgentProperties(JsonObject config) {
-		ObjectProperties agentProps = new ObjectProperties();
+	protected static EntityProperties systemAgentProperties(JsonObject config) {
+		EntityProperties agentProps = new EntityProperties();
 		agentProps.put(TICK_SIZE, config.getAsJsonPrimitive(TICK_SIZE).getAsInt());
 		agentProps.put(ARRIVAL_RATE, config.getAsJsonPrimitive(ARRIVAL_RATE).getAsDouble());
 		agentProps.put(REENTRY_RATE, config.getAsJsonPrimitive(REENTRY_RATE).getAsDouble());
 		return agentProps;
 	}
 
-	protected static Collection<ModelProperties> marketModels(JsonObject config, ObjectProperties def) {
+	protected static Collection<ModelProperties> marketModels(JsonObject config, EntityProperties def) {
 		Collection<ModelProperties> models = new ArrayList<ModelProperties>();
 		
 		for (ModelType type : ModelType.values()) {
@@ -111,7 +111,7 @@ public class SimulationSpec2 {
 		return models;
 	}
 
-	protected Map<AgentProperties, Integer> backgroundAgents(JsonObject config, ObjectProperties def) {
+	protected Map<AgentProperties, Integer> backgroundAgents(JsonObject config, EntityProperties def) {
 		Map<AgentProperties, Integer> backgroundAgents = new HashMap<AgentProperties, Integer>();
 
 		for (AgentType agentType : Consts.SM_AGENT) {
@@ -126,7 +126,7 @@ public class SimulationSpec2 {
 		return backgroundAgents;
 	}
 
-	public ObjectProperties getSimulationProperties() {
+	public EntityProperties getSimulationProperties() {
 		return simulationProperties;
 	}
 

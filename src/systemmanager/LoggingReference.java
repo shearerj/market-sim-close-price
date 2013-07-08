@@ -57,11 +57,11 @@ import systemmanager.Consts.ModelType;
  * 
  * @author ewah
  */
-public class SystemSetup {
+public class LoggingReference {
 
 	private SystemData data;
 	private EventManager eventManager;
-	private SimulationSpec specs;
+	private PlayerReference specs;
 	
 	private Sequence agentIDSequence;
 	private Sequence marketIDSequence;
@@ -76,7 +76,7 @@ public class SystemSetup {
 	
 	private HashMap<String, Integer> playerNumbers;
 	private HashMap<String, ArrivalTime> playerArrivalGenerators;
-	private HashMap<String, ArrayList<ObjectProperties>> playerStrategies;
+	private HashMap<String, ArrayList<EntityProperties>> playerStrategies;
 	
 	/**
 	 * Constructor
@@ -85,7 +85,7 @@ public class SystemSetup {
 	 * @param d
 	 * @param l
 	 */
-	public SystemSetup(SimulationSpec s, EventManager em, SystemData d) {
+	public LoggingReference(PlayerReference s, EventManager em, SystemData d) {
 		specs = s;
 		eventManager = em;
 		data = d;
@@ -101,7 +101,7 @@ public class SystemSetup {
 		arrivalGenerators = new HashMap<AgentPropsPair, ArrivalTime>();
 		playerNumbers = new HashMap<String, Integer>();
 		playerArrivalGenerators = new HashMap<String, ArrivalTime>();
-		playerStrategies = new HashMap<String, ArrayList<ObjectProperties>>();
+		playerStrategies = new HashMap<String, ArrayList<EntityProperties>>();
 	}
 	
 	
@@ -140,7 +140,7 @@ public class SystemSetup {
 	 * Create SIP entity, which enters the system at time 0.
 	 */
 	public void createSIP() {
-		SIP iu = new SIP(0, data);
+		SIP iu = null; // new SIP(0, data);
 		data.setSIP(iu);
 	}
 	
@@ -218,12 +218,12 @@ public class SystemSetup {
 	 * @return model
 	 */
 	private MarketModel createModel(ModelType modelType, String configuration) {
-		ObjectProperties p = new ObjectProperties(Consts.getProperties(modelType));
+		EntityProperties p = null; //new ObjectProperties(Consts.getProperties(modelType));
 		
 		// create market model & determine its configuration
 		int modelID = modelIDSequence.increment();
 		p.put(Consts.MODEL_CONFIG_KEY, configuration);
-		MarketModel model = ModelFactory.createModel(modelType, modelID, p, data);		
+		MarketModel model = null; //ModelFactory.createModel(modelType, modelID, p, data);		
 		data.addModel(model);
 		Logger.log(Logger.INFO, model.getFullName() + ": " + model + " " + p);
 		createMarketsInModel(model);
@@ -240,9 +240,9 @@ public class SystemSetup {
 		for (MarketObjectPair mop : model.getMarketConfig()) {
 			int mID = marketIDSequence.decrement();
 			
-			ObjectProperties mp = (ObjectProperties) mop.getObject();
+			EntityProperties mp = (EntityProperties) mop.getObject();
 			String mtype = mop.getMarketType();
-			Market market = MarketFactory.createMarket(mtype, mID, data, mp, model);
+			Market market = null; // MarketFactory.createMarket(mtype, mID, data, mp, model);
 			market.linkModel(model.getID());
 			data.addMarket(market);
 			model.getMarketIDs().add(mID);
@@ -272,7 +272,7 @@ public class SystemSetup {
 			// set up their players & their arrivals
 			for (AgentPropsPair app : data.getPlayerMap().keySet()) {
 				String type = app.getAgentType().toString();
-				ObjectProperties o = app.getProperties();
+				EntityProperties o = app.getProperties();
 				int n = data.getPlayerMap().get(app);
 				
 				if (playerNumbers.containsKey(type)) {
@@ -283,7 +283,7 @@ public class SystemSetup {
 					playerNumbers.put(type, n);
 					playerArrivalGenerators.put(type, 
 							new ArrivalTime(new TimeStamp(0), data.arrivalRate));
-					playerStrategies.put(type, new ArrayList<ObjectProperties>(
+					playerStrategies.put(type, new ArrayList<EntityProperties>(
 							Collections.nCopies(n, o)));
 				}
 			}
@@ -352,7 +352,7 @@ public class SystemSetup {
 					
 					for (int i = 0; i < numAg; i++) {
 						// create copy of ObjectProperties in case modify it
-						ObjectProperties op = new ObjectProperties(ap.getProperties());
+						EntityProperties op = new EntityProperties(ap.getProperties());
 						if (data.isSMAgent(ap.getAgentType())) {
 							// must assign market if single-market agent
 							op.put(SMAgent.MARKETID_KEY, assignMktIDs.get(i).toString());
@@ -389,7 +389,7 @@ public class SystemSetup {
 				for (int i = 0; i < numAg; i++) {	
 					// create copy of ObjectProperties in case modify it
 					AgentType agType = AgentType.valueOf(type);
-					ObjectProperties op = new ObjectProperties(playerStrategies.get(type).get(i));
+					EntityProperties op = new EntityProperties(playerStrategies.get(type).get(i));
 					if (data.isSMAgent(agType)) {
 						// must assign market if single-market agent
 						op.put(SMAgent.MARKETID_KEY, assignMktIDs.get(i).toString());
@@ -420,7 +420,7 @@ public class SystemSetup {
 	 */
 	private Agent createAgent(MarketModel model, AgentPropsPair ap, Long seed, TimeStamp arr) { 
 		AgentType agType = ap.getAgentType();
-		ObjectProperties p = ap.getProperties();
+		EntityProperties p = ap.getProperties();
 		
 		p.put(Agent.RANDSEED_KEY, seed.toString());
 		int agID = agentIDSequence.increment();
@@ -429,7 +429,7 @@ public class SystemSetup {
 			p.put(Agent.ARRIVAL_KEY, arr.toString());
 			p.put(Agent.FUNDAMENTAL_KEY, model.getFundamentalAt(arr).toString());				
 		}
-		Agent agent = AgentFactory.createAgent(agType, agID, model.getID(), data, p);
+		Agent agent = null; //AgentFactory.createAgent(agType, agID, model.getID(), data, p);
 		
 		createInitialAgentEvents(agent);
 		data.addAgent(agent);
@@ -501,7 +501,7 @@ public class SystemSetup {
 			if (ag.hasPrivateValue()) {
 				s += ", pv=" + ag.getPrivateValue();
 			}
-			s += " ... params=" + ag.getProperties().toString();
+//			s += " ... params=" + ag.getProperties().toString();
 			Logger.log(Logger.INFO, s);
 		}
 	}

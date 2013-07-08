@@ -6,7 +6,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
+
+import activity.AgentArrival;
+import activity.Clear;
 
 import market.Bid;
 import market.Price;
@@ -14,17 +16,16 @@ import market.Transaction;
 import systemmanager.Consts;
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.MarketType;
-import utils.CollectionUtils;
+import systemmanager.SimulationSpec2;
 import utils.RandPlus;
 import data.AgentProperties;
 import data.AgentPropsPair;
 import data.FundamentalValue;
-import data.ObjectProperties;
+import data.EntityProperties;
 import data.SystemData;
 import data.TimeSeries;
 import entity.Agent;
 import entity.Market;
-import entity.SMAgent;
 import entity.SMAgentFactory;
 import event.EventManager;
 import event.TimeStamp;
@@ -77,7 +78,6 @@ public abstract class MarketModel {
 	protected final FundamentalValue fundamental;
 	protected final Collection<Market> markets;
 	protected final Collection<Transaction> trans;
-
 	protected final Collection<Agent> agents;
 
 	protected HashMap<Double, Double> modelSurplus; // hashed by rho value
@@ -92,7 +92,7 @@ public abstract class MarketModel {
 								// construction?
 	protected SystemData data;
 	protected ArrayList<Integer> agentIDs; // IDs of associated agents
-	protected ObjectProperties modelProperties;
+	protected EntityProperties modelProperties;
 	protected ArrayList<AgentPropsPair> agentConfig;
 	protected ArrayList<MarketObjectPair> modelMarketConfig;
 
@@ -102,7 +102,7 @@ public abstract class MarketModel {
 
 	public MarketModel(int modelID, FundamentalValue fundamental,
 			Map<AgentProperties, Integer> agentProps,
-			ObjectProperties modelProps, RandPlus rand) {
+			EntityProperties modelProps, RandPlus rand) {
 
 		this.modelID = modelID;
 		this.rand = rand;
@@ -115,17 +115,18 @@ public abstract class MarketModel {
 		this.NBBOSpreads = new TimeSeries();
 
 		// Setup
-		// FIXME I don't think this is how I want to do it. Also have to create SIPS...
 		setupMarkets(modelProps);
-		setupBackgroundAgents(modelProps, agentProps);
-		setupModelAgents(modelProps);
+		setupInformationProcessors(modelProps);
+		setupAgents(modelProps, agentProps);
 	}
 
-	protected abstract void setupMarkets(ObjectProperties modelProps);
+	protected abstract void setupMarkets(EntityProperties modelProps);
+	
+	protected void setupInformationProcessors(EntityProperties modelProps) {
+		// TODO create general sip
+	}
 
-	protected abstract void setupModelAgents(ObjectProperties modelProps);
-
-	protected void setupBackgroundAgents(ObjectProperties modelProps,
+	protected void setupAgents(EntityProperties modelProps,
 			Map<AgentProperties, Integer> agentProps) {
 		for (Entry<AgentProperties, Integer> type : agentProps.entrySet()) {
 			// FIXME Replace 0 with default arrival rate
@@ -136,52 +137,33 @@ public abstract class MarketModel {
 			// generic or even specified, but for now we'll stick with the
 			// original implementation
 			Generator<TimeStamp> arrivals = new PoissonArrivalGenerator(
-					TimeStamp.startTime,
-					modelProps.getAsLong("arrival-rate", 0), new RandPlus(
+					Consts.START_TIME,
+					agProps.getAsLong(SimulationSpec2.ARRIVAL_RATE, 0), new RandPlus(
 							rand.nextLong()));
 			Generator<Market> marketRate = new RoundRobinGenerator<Market>(
 					markets);
 
-			SMAgentFactory factory = new SMAgentFactory(this, agProps,
+			SMAgentFactory factory = new SMAgentFactory(this,
 					agentIDgen, arrivals, marketRate, new RandPlus(
 							rand.nextLong()));
 
-			for (SMAgent agent : CollectionUtils.toIterable(factory, number))
-				agents.add(agent);
+			for (int i = 0; i < number; i++)
+				agents.add(factory.createAgent(agProps));
 		}
 	}
 	
 	public void scheduleActivities(EventManager manager) {
-		// TODO schedule agent arrival
 		// TODO schedule sendToSIP
-		// TODO Schedule initial market clear
+		for (Market market : markets)
+			// XXX startTime or infinite time? I think start time for CallMarket
+			manager.addActivity(new Clear(market, Consts.START_TIME));
+		for (Agent agent : agents)
+			manager.addActivity(new AgentArrival(agent, agent.getArrivalTime()));
 	}
 	
 	// TODO change to protected. External things shouldn't be able to add agents
 	public void addAgent(Agent agent) {
 		agents.add(agent);
-	}
-
-	@Deprecated
-	public MarketModel(int modelID, ObjectProperties p, SystemData d) {
-		// reorg
-		fundamental = d.getFundamenalValue();
-		markets = new ArrayList<Market>();
-		trans = new ArrayList<Transaction>();
-		rand = new RandPlus();
-		agents = new ArrayList<Agent>();
-		agentIDgen = new IDGenerator();
-		// reorg
-
-		this.modelID = modelID;
-		data = d;
-		modelProperties = p;
-
-		agentIDs = new ArrayList<Integer>();
-		marketIDs = new ArrayList<Integer>();
-		modelMarketConfig = new ArrayList<MarketObjectPair>();
-		agentConfig = new ArrayList<AgentPropsPair>();
-
 	}
 
 	/**
@@ -230,20 +212,9 @@ public abstract class MarketModel {
 	 * @param agProperties
 	 */
 	public void addAgentPropertyPair(AgentType agType,
-			ObjectProperties agProperties) {
+			EntityProperties agProperties) {
 		AgentPropsPair app = new AgentPropsPair(agType, agProperties);
 		agentConfig.add(app);
-	}
-
-	/**
-	 * Add an agent with default property settings to the MarketModel.
-	 * 
-	 * @param agType
-	 */
-	public void addAgentPropertyPair(AgentType agType) {
-		ObjectProperties agProperties = Consts.getProperties(agType);
-		AgentPropsPair mpp = new AgentPropsPair(agType, agProperties);
-		agentConfig.add(mpp);
 	}
 
 	/**
@@ -268,19 +239,7 @@ public abstract class MarketModel {
 	 * @param mktProperties
 	 */
 	public void addMarketPropertyPair(MarketType mktType,
-			ObjectProperties mktProperties) {
-		MarketObjectPair mpp = new MarketObjectPair(mktType.toString(),
-				mktProperties);
-		modelMarketConfig.add(mpp);
-	}
-
-	/**
-	 * Add a market with default property settings to the MarketModel.
-	 * 
-	 * @param mktType
-	 */
-	public void addMarketPropertyPair(MarketType mktType) {
-		ObjectProperties mktProperties = Consts.getProperties(mktType);
+			EntityProperties mktProperties) {
 		MarketObjectPair mpp = new MarketObjectPair(mktType.toString(),
 				mktProperties);
 		modelMarketConfig.add(mpp);
@@ -293,7 +252,7 @@ public abstract class MarketModel {
 	 * @param idx
 	 * @param mktProperties
 	 */
-	public void editMarketPropertyPair(int idx, ObjectProperties mktProperties) {
+	public void editMarketPropertyPair(int idx, EntityProperties mktProperties) {
 		MarketObjectPair mpp = modelMarketConfig.get(idx);
 		modelMarketConfig.set(idx, new MarketObjectPair(mpp.getMarketType(),
 				mktProperties));

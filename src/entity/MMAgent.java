@@ -1,16 +1,16 @@
 package entity;
 
-import data.*;
-import activity.*;
-import event.TimeStamp;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import systemmanager.Consts;
-
 import logger.Logger;
+import model.MarketModel;
+import systemmanager.Consts;
+import utils.RandPlus;
+import activity.Activity;
+import activity.AgentStrategy;
+import event.TimeStamp;
 
 /**
  * MMAGENT
@@ -26,27 +26,19 @@ import logger.Logger;
  */
 public abstract class MMAgent extends Agent {
 
-	protected int sleepTime;
-	protected double sleepVar;
+	// TODO Are these really indicative of an MMAgent? Should the MMAgent have its own copy of Markets, or should it just go to Model?
+	protected final int sleepTime;
+	protected final double sleepVar;
 	
-	/**
-	 * Constructor for a multi-market agent.
-	 * 
-	 * @param agentID
-	 * @param modelID
-	 * @param d
-	 * @param p
-	 * @param l
-	 */
-	public MMAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
-		super(agentID, modelID, d, p);
+	public MMAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
+			int sleepTime, double sleepVar, RandPlus rand) {
+		super(agentID, arrivalTime, model, rand);
+		this.sleepTime = sleepTime;
+		this.sleepVar = sleepVar;
 	}
 	
 	/**
 	 * Agent arrives in a single market.
-	 * 
-	 * @param ts
-	 * @return Collection<Activity>
 	 */
 	public Collection<Activity> agentArrival(TimeStamp ts) {
 		
@@ -93,7 +85,7 @@ public abstract class MMAgent extends Agent {
 	 * @param ts
 	 * @return
 	 */
-	public Collection<Activity> updateAllQuotes(TimeStamp ts) {
+	public Collection<? extends Activity> updateAllQuotes(TimeStamp ts) {
 		for (Integer id : data.getModel(modelID).getMarketIDs()) {
 			Market mkt = data.getMarket(id);
 			updateQuotes(mkt, ts);

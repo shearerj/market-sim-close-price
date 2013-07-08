@@ -27,7 +27,7 @@ import systemmanager.Consts.ModelType;
  * 
  * @author ewah
  */
-public class SimulationSpec {
+public class PlayerReference {
 
 	private SystemData data;
 	private JSONObject params;
@@ -54,7 +54,7 @@ public class SimulationSpec {
 	 * @param file
 	 * @param l
 	 */
-	public SimulationSpec(String file, SystemData d) {
+	public PlayerReference(String file, SystemData d) {
 		data = d;
 		parser = new JSONParser();
 		loadFile(file);
@@ -140,7 +140,7 @@ public class SimulationSpec {
 			String setup = getValue(agentType + Consts.setupSuffix);
 			if (num != null) {
 				int n = Integer.parseInt(num);
-				ObjectProperties op = getStrategyParameters(agentType, setup);
+				EntityProperties op = getStrategyParameters(agentType, setup);
 				AgentPropsPair a = new AgentPropsPair(agentType, op);
 				data.addEnvAgentNumber(a, n);
 			}
@@ -163,7 +163,7 @@ public class SimulationSpec {
 						} else {
 							// first elt is agent type, second elt is strategy
 							AgentType type = AgentType.valueOf(as[0]);
-							ObjectProperties op = getStrategyParameters(type, as[1]);
+							EntityProperties op = getStrategyParameters(type, as[1]);
 							data.addPlayerProperties(new AgentPropsPair(type, op));
 						}
 					}
@@ -201,8 +201,8 @@ public class SimulationSpec {
 	 * @param strategy
 	 * @return
 	 */
-	private ObjectProperties getStrategyParameters(AgentType type, String strategy) {
-		ObjectProperties op = SimulationSpec.getAgentProperties(type, strategy);
+	private EntityProperties getStrategyParameters(AgentType type, String strategy) {
+		EntityProperties op = PlayerReference.getAgentProperties(type, strategy);
 		
 		if (op == null) {
 			Logger.log(Logger.ERROR, this.getClass().getSimpleName() + 
@@ -221,8 +221,8 @@ public class SimulationSpec {
 	 * @param strategy
 	 * @return ObjectProperties
 	 */
-	public static ObjectProperties getAgentProperties(AgentType type, String strategy) {
-		ObjectProperties p = new ObjectProperties(Consts.getProperties(type));
+	public static EntityProperties getAgentProperties(AgentType type, String strategy) {
+		EntityProperties p = null; // new ObjectProperties(Consts.getProperties(type));
 		p.put(Agent.STRATEGY_KEY, strategy);
 		
 		if (strategy == null) return p;
@@ -240,7 +240,7 @@ public class SimulationSpec {
 		return p;
 	}
 	
-	public static ObjectProperties getAgentProperties(String type, String strategy) {
+	public static EntityProperties getAgentProperties(String type, String strategy) {
 		return getAgentProperties(AgentType.valueOf(type), strategy);
 	}
 }

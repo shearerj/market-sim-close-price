@@ -8,20 +8,18 @@ import utils.RandPlus;
 import data.AgentProperties;
 import event.TimeStamp;
 
-public class SMAgentFactory extends Generator<SMAgent> {
+public class SMAgentFactory {
 
 	protected final RandPlus rand;
 	protected final MarketModel model;
-	protected final AgentProperties props;
 	protected final Generator<Integer> nextID;
 	protected final Generator<TimeStamp> arrivalProcess;
 	protected final Generator<Market> marketAssignment;
 
-	public SMAgentFactory(MarketModel model, AgentProperties props,
+	public SMAgentFactory(MarketModel model,
 			Generator<Integer> ids, Generator<TimeStamp> arrivalProcess,
 			Generator<Market> marketProcess, RandPlus rand) {
 		this.rand = rand;
-		this.props = props;
 		this.model = model;
 		this.nextID = ids;
 		this.arrivalProcess = arrivalProcess;
@@ -45,11 +43,6 @@ public class SMAgentFactory extends Generator<SMAgent> {
 		default:
 			return null;
 		}
-	}
-
-	@Override
-	public SMAgent next() {
-		return createAgent(props);
 	}
 
 }

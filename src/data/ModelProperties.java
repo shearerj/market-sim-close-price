@@ -2,8 +2,10 @@ package data;
 
 import systemmanager.Consts.ModelType;
 
-public class ModelProperties extends ObjectProperties {
+public class ModelProperties extends EntityProperties {
 
+	public static final String LA_KEY = "LA";
+	
 	protected final ModelType type;
 	
 	public ModelProperties(ModelType type) {
@@ -21,7 +23,7 @@ public class ModelProperties extends ObjectProperties {
 		this.type = type;
 	}
 	
-	public ModelProperties(ModelType type, ObjectProperties def, String config) {
+	public ModelProperties(ModelType type, EntityProperties def, String config) {
 		super(def, config);
 		this.type = type;
 	}
@@ -35,7 +37,7 @@ public class ModelProperties extends ObjectProperties {
 		// TODO change config so this makes more sense
 		int split = config.indexOf(':');
 		super.addConfig(config.substring(split + 1));
-		put("LA", "LA".equals(config.substring(0, split)));
+		put(LA_KEY, "LA".equals(config.substring(0, split)));
 	}
 
 }

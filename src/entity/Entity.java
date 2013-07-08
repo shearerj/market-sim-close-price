@@ -1,6 +1,6 @@
 package entity;
 
-import data.ObjectProperties;
+import data.EntityProperties;
 import data.SystemData;
 
 /**
@@ -15,22 +15,10 @@ public abstract class Entity {
 
 	public SystemData data;
 	protected final int id;
-	protected ObjectProperties params;		// stores all parameters
+	protected EntityProperties params;		// stores all parameters
 	
 	public Entity(int agentID) {
 		id = agentID;
-	}
-
-	/**
-	 * Constructor
-	 * @param ID
-	 * @param l
-	 * @param d
-	 */
-	public Entity(int agentID, SystemData d, ObjectProperties ep) {
-		this.id = agentID;
-		this.data = d;
-		this.params = ep;
 	}
 	
 	/**

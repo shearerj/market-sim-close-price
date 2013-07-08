@@ -3,13 +3,12 @@ package entity;
 import java.util.Collection;
 import java.util.HashMap;
 
-import market.PrivateValue;
+import market.Price;
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
-import data.ObjectProperties;
+import data.EntityProperties;
 import data.Observations;
-import data.SystemData;
 import event.TimeStamp;
 
 /**
@@ -43,20 +42,9 @@ public class ZIAgent extends BackgroundAgent {
 	}
 
 	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, ObjectProperties props) {
+			Market market, RandPlus rand, EntityProperties props) {
 		this(agentID, arrivalTime, model, market, rand, props.getAsInt(
 				BIDRANGE_KEY, 2000));
-	}
-
-	@Deprecated
-	public ZIAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
-		super(agentID, modelID, d, p);
-
-		bidRange = params.getAsInt(ZIAgent.BIDRANGE_KEY);
-
-		int alpha1 = (int) Math.round(rand.nextGaussian(0, this.data.pvVar));
-		int alpha2 = (int) Math.round(rand.nextGaussian(0, this.data.pvVar));
-		alpha = new PrivateValue(alpha1, alpha2);
 	}
 
 	@Override
@@ -73,19 +61,20 @@ public class ZIAgent extends BackgroundAgent {
 		// update quotes
 		this.updateQuotes(market, ts);
 
-		int p, q;
-		q = rand.nextBoolean() ? 1 : -1; // 50% chance of being either long or
+		Price price;
+		int quantity;
+		quantity = rand.nextBoolean() ? 1 : -1; // 50% chance of being either long or
 											// short
 		int val = Math.max(0,
-				model.getFundamentalAt(ts).sum(getPrivateValueAt(q)).getPrice());
+				model.getFundamentalAt(ts).sum(getPrivateValueAt(quantity)).getPrice());
 
 		// basic ZI behavior
-		if (q > 0)
-			p = (int) Math.max(0, ((val - 2 * bidRange) + rand.nextDouble() * 2
-					* bidRange));
+		if (quantity > 0)
+			price = new Price((int) Math.max(0, ((val - 2 * bidRange) + rand.nextDouble() * 2
+					* bidRange)));
 		else
-			p = (int) Math.max(0, (val + rand.nextDouble() * 2 * bidRange));
+			price = new Price((int) Math.max(0, (val + rand.nextDouble() * 2 * bidRange)));
 
-		return executeSubmitNMSBid(p, q, ts); // bid does not expire
+		return executeSubmitNMSBid(price, quantity, ts); // bid does not expire
 	}
 }

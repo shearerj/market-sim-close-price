@@ -17,8 +17,6 @@ import activity.Activity;
  * remain an immutable object
  */
 public class TimeStamp implements Comparable<TimeStamp> {
-
-	public static final TimeStamp startTime = new TimeStamp(0);
 	
 	protected final long ts;
 
@@ -62,7 +60,7 @@ public class TimeStamp implements Comparable<TimeStamp> {
 	 * 
 	 * @return the TimeStamp's receipt timestamp in microseconds
 	 */
-	public Long getLongValue() {
+	public long getLongValue() {
 		return ts;
 	}
 
