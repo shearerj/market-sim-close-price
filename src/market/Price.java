@@ -10,16 +10,10 @@ import utils.MathUtils;
  */
 public class Price implements Comparable<Price> {
 
+	public static final Price ZERO = new Price(0);
 	public static int PRICE_PER_DOLLAR = 1000;
 
 	protected final int price;
-
-	/**
-	 * Constructor initializes price to zero.
-	 */
-	public Price() {
-		price = 0;
-	}
 
 	/**
 	 * Constructor taking in a int.
@@ -42,7 +36,7 @@ public class Price implements Comparable<Price> {
 	public double getDollarPrice() {
 		return price / (double) PRICE_PER_DOLLAR;
 	}
-	
+
 	public Price quantize(int quanta) {
 		return new Price(MathUtils.quantize(price, quanta));
 	}
@@ -61,40 +55,50 @@ public class Price implements Comparable<Price> {
 		return new Price(this.price - p.price);
 	}
 
+	public Price nonnegative() {
+		if (price < 0)
+			return ZERO;
+		return this;
+	}
+
+	/**
+	 * Any price is greater than null
+	 */
 	@Override
 	public int compareTo(Price o) {
-		if (o == null) return 1;
+		if (o == null)
+			return 1;
 		return this.price - o.price;
 	}
-	
+
 	/**
 	 * True if p is null or this price is strictly greater
 	 */
 	public boolean greaterThan(Price p) {
 		return p == null || compareTo(p) > 0;
 	}
-	
+
 	/**
 	 * True if p is null or this price is strictly less
 	 */
 	public boolean lessThan(Price p) {
 		return p == null || compareTo(p) < 0;
 	}
-	
+
 	/**
 	 * True if p is null or this price is greater or equal
 	 */
 	public boolean greaterThanEquals(Price p) {
 		return p == null || compareTo(p) >= 0;
 	}
-	
+
 	/**
 	 * True if p is null or this price is less or equal
 	 */
 	public boolean lessThanEqual(Price p) {
 		return p == null || compareTo(p) <= 0;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return price;
@@ -102,7 +106,8 @@ public class Price implements Comparable<Price> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof Price)) return false;
+		if (obj == null || !(obj instanceof Price))
+			return false;
 		Price other = (Price) obj;
 		return price == other.price;
 	}

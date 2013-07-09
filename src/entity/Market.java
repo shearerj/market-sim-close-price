@@ -6,11 +6,8 @@ import static logger.Logger.Level.INFO;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.TreeMap;
-import com.sun.tools.javac.util.List;
 
-import systemmanager.Consts;
 import logger.Logger;
 import market.Bid;
 import market.PQOrderBook;
@@ -22,7 +19,6 @@ import systemmanager.Consts;
 import activity.Activity;
 import activity.ProcessQuote;
 import activity.SendToSIP;
-import data.SystemData;
 import data.TimeSeries;
 import event.TimeStamp;
 
@@ -200,7 +196,7 @@ public abstract class Market extends Entity {
 	 * @return bids
 	 */
 	public Collection<Bid> getAllBids() {
-		return this.bids;
+		return bids;
 	}
 
 	/**

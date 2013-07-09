@@ -44,18 +44,17 @@ public class ZIPAgent extends BackgroundAgent {
 	}
 
 	@Override
-	public Collection<Activity> agentStrategy(TimeStamp ts) {
+	public Collection<Activity> agentStrategy(TimeStamp currentTime) {
 		Collection<Activity> actMap = new ArrayList<Activity>();
-		int q = 1;
 		// 0.50% chance of being either long or short
-		if (rand.nextDouble() < 0.5) q = -q;
+		int quantity = rand.nextBoolean() ? 1 : -1;
 		@SuppressWarnings("unused")
-		int val = Math.max(0, model.getFundamentalAt(ts).plus(getPrivateValueAt(q)).getPrice());
+		int val = Math.max(0, model.getFundamentalAt(currentTime).plus(privateValue.getValueFromQuantity(positionBalance, quantity)).getPrice());
 
 		// Insert events for the agent to sleep, then wake up again at timestamp tsNew
 		int sleepTime = params.getAsInt(SLEEPTIME_KEY);
 		double sleepVar = params.getAsDouble(SLEEPVAR_KEY);
-		TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime, sleepVar)));
+		TimeStamp tsNew = currentTime.sum(new TimeStamp((long) rand.nextGaussian(sleepTime, sleepVar)));
 		actMap.add(new AgentStrategy(this, tsNew));
 		return actMap;
 	}

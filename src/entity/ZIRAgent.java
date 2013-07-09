@@ -54,7 +54,7 @@ public class ZIRAgent extends BackgroundAgent {
 			Market market, RandPlus rand, SIP sip, int bidRange, int maxAbsPosition,
 			int reentryRate, double pvVar) {
 		// TODO replace null with proper private value initialization
-		super(agentID, arrivalTime, model, market, getPrivateValue(
+		super(agentID, arrivalTime, model, market, new PrivateValue(
 				maxAbsPosition, pvVar, rand), rand, sip);
 		this.bidRange = bidRange;
 		this.maxAbsPosition = maxAbsPosition;
@@ -73,22 +73,9 @@ public class ZIRAgent extends BackgroundAgent {
 				props.getAsDouble("pvVar",100));
 	}
 
-	/**
-	 * Initialize list of private values given max quantity.
-	 */
-	protected static PrivateValue getPrivateValue(int maxAbsPosition,
-			double pvVar, RandPlus rand) {
-		ArrayList<Integer> alphas = new ArrayList<Integer>();
-		for (int i = -maxAbsPosition; i <= maxAbsPosition; i++) {
-			if (i != 0)
-				alphas.add((int) Math.round(rand.nextGaussian(0, pvVar)));
-		}
-		return new PrivateValue(alphas);
-	}
-
 	@Override
 	public Collection<Activity> agentStrategy(TimeStamp ts) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
+		Collection<Activity> activities = new ArrayList<Activity>();
 
 		this.updateQuotes(market, ts);
 
@@ -101,36 +88,28 @@ public class ZIRAgent extends BackgroundAgent {
 		}
 		if (positionBalance != lastPositionBalance || ts.equals(arrivalTime)) {
 			// If either first arrival or if last order has already transacted
-			// then should
-			// submit a new order. Otherwise, do nothing (does not cancel
-			// orders).
+			// then should submit a new order. Otherwise, do nothing (does not
+			// cancel orders).
 
-			Price price;
 			// 0.50% chance of being either long or short
 			int quantity = rand.nextBoolean() ? 1 : -1;
 
-			int val = 0;
 			int newPosition = quantity + positionBalance;
 			// check that will not exceed max absolute position
 			if (newPosition <= maxAbsPosition && newPosition >= -maxAbsPosition) {
-				val = Math.max(
-						0,
-						model.getFundamentalAt(ts).plus(
-								getPrivateValueAt(quantity)).getPrice());
+				Price val = model.getFundamentalAt(ts).plus(
+						privateValue.getValueFromQuantity(positionBalance, quantity)).nonnegative();
+				Price price = new Price(
+						(int) (val.getPrice() - Math.signum(quantity)
+								* rand.nextDouble() * 2 * bidRange)).nonnegative();
+
 				s += " position=" + positionBalance + ", for q=" + quantity
 						+ ", value=" + model.getFundamentalAt(ts) + " + "
-						+ getPrivateValueAt(quantity) + "=" + val;
-
-				if (quantity > 0) {
-					price = new Price((int) Math.max(0,
-							((val - 2 * bidRange) + rand.nextDouble() * 2
-									* bidRange)));
-				} else {
-					price = new Price((int) Math.max(0,
-							(val + rand.nextDouble() * 2 * bidRange)));
-				}
+						+ privateValue.getValueFromQuantity(positionBalance, quantity)
+						+ "=" + val;
 				log(INFO, s);
-				actMap.addAll(executeSubmitNMSBid(price, quantity, ts));
+
+				activities.addAll(executeSubmitNMSBid(price, quantity, ts));
 				submissionTimes.add(ts);
 
 				lastPositionBalance = positionBalance; // update position
@@ -147,8 +126,8 @@ public class ZIRAgent extends BackgroundAgent {
 			log(INFO, s);
 		}
 
-		actMap.add(new AgentStrategy(this, reentry.next()));
-		return actMap;
+		activities.add(new AgentStrategy(this, reentry.next()));
+		return activities;
 	}
 
 }

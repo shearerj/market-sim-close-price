@@ -22,7 +22,7 @@ public class UpdateAllQuotes extends Activity {
 	}
 
 	public UpdateAllQuotes deepCopy() {
-		return new UpdateAllQuotes(this.ag, this.time);
+		return new UpdateAllQuotes(this.ag, this.scheduledTime);
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp time) {
@@ -44,7 +44,7 @@ public class UpdateAllQuotes extends Activity {
 		UpdateAllQuotes other = (UpdateAllQuotes) obj;
 		return new EqualsBuilder().
 				append(ag.getID(), other.ag.getID()).
-				append(time.longValue(), other.time.longValue()).
+				append(scheduledTime.longValue(), other.scheduledTime.longValue()).
 				isEquals();
 	}
 	
@@ -52,7 +52,7 @@ public class UpdateAllQuotes extends Activity {
 	public int hashCode() {
 		return new HashCodeBuilder(19, 37).
 				append(ag.getID()).
-				append(time.longValue()).
+				append(scheduledTime.longValue()).
 				toHashCode();
 	}
 }

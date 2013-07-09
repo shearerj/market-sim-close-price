@@ -31,7 +31,6 @@ import data.SystemData;
 import data.TimeSeries;
 import entity.Agent;
 import entity.Market;
-import entity.PRRSMAgentFactory;
 import entity.SMAgentFactory;
 import event.EventManager;
 import event.TimeStamp;
@@ -103,7 +102,7 @@ public abstract class MarketModel {
 
 	// Store information on market IDs for each market specified in
 	// modelProperties
-	protected ArrayList<Integer> marketIDs;
+//	protected ArrayList<Integer> marketIDs;
 
 	public MarketModel(int modelID, FundamentalValue fundamental,
 			Map<AgentProperties, Integer> agentProps,
@@ -145,7 +144,7 @@ public abstract class MarketModel {
 			// In general the arrival process and market generation can be
 			// generic or even specified, but for now we'll stick with the
 			// original implementation
-			SMAgentFactory factory = new PRRSMAgentFactory(this, agentIDgen,
+			SMAgentFactory factory = new SMAgentFactory(this, agentIDgen,
 					agProps.getAsLong(SimulationSpec.ARRIVAL_RATE, 100),
 					new RandPlus(rand.nextLong()));
 
@@ -181,7 +180,7 @@ public abstract class MarketModel {
 				int count = stratEnt.getValue();
 				
 				// FIXME Arrival rate (100)?
-				SMAgentFactory factory = new PRRSMAgentFactory(this,
+				SMAgentFactory factory = new SMAgentFactory(this,
 						agentIDgen, 100, new RandPlus(rand.nextLong()));
 				
 				for (int i = 0; i < count; i++) {
@@ -314,24 +313,10 @@ public abstract class MarketModel {
 	}
 
 	/**
-	 * @return agentIDs
-	 */
-	public ArrayList<Integer> getAgentIDs() {
-		return agentIDs;
-	}
-
-	/**
-	 * @return marketIDs
-	 */
-	public ArrayList<Integer> getMarketIDs() {
-		return marketIDs;
-	}
-
-	/**
 	 * @return number of markets in the model
 	 */
 	public int getNumMarkets() {
-		return marketIDs.size();
+		return markets.size();
 	}
 
 	/**

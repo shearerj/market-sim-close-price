@@ -174,11 +174,7 @@ public class TimeStamp implements Comparable<TimeStamp> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
+		if (obj == null || !(obj instanceof TimeStamp))
 			return false;
 		final TimeStamp other = (TimeStamp) obj;
 		return ts == other.ts;

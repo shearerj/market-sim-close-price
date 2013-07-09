@@ -21,7 +21,7 @@ public class AgentDeparture extends Activity {
 	}
 
 	public AgentDeparture deepCopy() {
-		return new AgentDeparture(this.ag, this.time);
+		return new AgentDeparture(this.ag, this.scheduledTime);
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
@@ -43,7 +43,7 @@ public class AgentDeparture extends Activity {
 		AgentDeparture other = (AgentDeparture) obj;
 		return new EqualsBuilder().
 				append(ag.getID(), other.ag.getID()).
-				append(time.longValue(), other.time.longValue()).
+				append(scheduledTime.longValue(), other.scheduledTime.longValue()).
 				isEquals();
 	}
 	
@@ -51,7 +51,7 @@ public class AgentDeparture extends Activity {
 	public int hashCode() {
 		return new HashCodeBuilder(19, 37).
 				append(ag.getID()).
-				append(time.longValue()).
+				append(scheduledTime.longValue()).
 				toHashCode();
 	}
 }

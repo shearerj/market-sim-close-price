@@ -92,7 +92,7 @@ public class BasicMarketMaker extends MarketMaker {
 
 		} else {
 			// check if bid/ask has changed; if so, submit fresh orders
-			if (!bid.equals(yt) || !ask.equals(yt)) {
+			if (!bid.equals(yt) || !ask.equals(xt)) {
 				Map<Price, Integer> priceQuantMap = new HashMap<Price, Integer>();
 
 				Price ct = new Price(numRungs * stepSize);
