@@ -79,7 +79,7 @@ public class AAAgent extends BackgroundAgent {
 									// not PV)
 		private double alphaMin; // min experienced value for alpha
 
-		public AAStrategy() {
+		public AAStrategy(EntityProperties params) {
 			// Agent Parameters
 			// Private Value
 			// FIXME initialized in constructor?
@@ -91,20 +91,21 @@ public class AAAgent extends BackgroundAgent {
 			limit = alpha.getValueFromQuantity(0);
 
 			// Parameters are currently taken from Vytelingum paper
-			historical = params.getAsInt(AAAgent.HISTORICAL_KEY);
-			lambda_r = 0.01;
-			lambda_a = 0.01;
-			eta = params.getAsInt(AAAgent.ETA_KEY);
+			lambda_r = 0.05;
+			lambda_a = 0.02;
+			alphaMax = alphaMin = -1;
 			gamma = 2;
 			beta_r = (rand.nextDouble() * 0.4) + 0.2;
 			beta_t = (rand.nextDouble() * 0.4) + 0.2;
+			
 			// Initial aggression and theta
-			theta = params.getAsDouble(AAAgent.THETA_KEY);
-			aggression = params.getAsDouble(AAAgent.AGGRESSION_KEY);
+			theta = params.getAsDouble(AAAgent.THETA_KEY, 0);
+			aggression = params.getAsDouble(AAAgent.AGGRESSION_KEY, 0);
 			// Long term learning ranges
-			thetaMax = params.getAsDouble(AAAgent.THETAMAX_KEY);
-			thetaMin = params.getAsDouble(AAAgent.THETAMIN_KEY);
-			alphaMax = alphaMin = -1;
+			thetaMax = params.getAsDouble(AAAgent.THETAMAX_KEY, 4);
+			thetaMin = params.getAsDouble(AAAgent.THETAMIN_KEY, -4);
+			historical = params.getAsInt(AAAgent.HISTORICAL_KEY, 5);
+			eta = params.getAsInt(AAAgent.ETA_KEY, 3);
 		}
 
 		/**
@@ -424,7 +425,7 @@ public class AAAgent extends BackgroundAgent {
 			// Extra 1 added/subtracted in equations is to make sure agent
 			// submits better bid if
 			// difference/eta computes to be zero
-			if (targetPrice == null) {
+			if (targetPrice.equals(new Price(-1))) {
 				if (isBuyer) {
 					price = new Price(bestBid.getPrice()
 							+ (int) (min(bestAsk, strat.limit).minus(bestBid).getPrice() / strat.eta)
@@ -439,7 +440,6 @@ public class AAAgent extends BackgroundAgent {
 					price = max(price, strat.limit); // verifying
 																// price >=
 																// limit
-
 				}
 			}
 			// Had to convert from int to double for the division by eta (then
@@ -468,7 +468,7 @@ public class AAAgent extends BackgroundAgent {
 			// layer
 			// If best offer is outside of limit price, no bid is submitted
 			if ((isBuyer && strat.limit.lessThanEqual(bestBid))
-					|| (!isBuyer && strat.limit.greaterThanEquals(bestAsk))) {
+				|| (!isBuyer && strat.limit.greaterThanEquals(bestAsk))) {
 				s += "best offer is outside of limit price: " + strat.limit
 						+ "; no submission";
 				log(INFO, s);
@@ -501,28 +501,30 @@ public class AAAgent extends BackgroundAgent {
 	}
 
 	public AAAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, int reentryRate, int maxAbsPosition,
-			boolean debugging, RandPlus rand) {
+			Market market, RandPlus rand, EntityProperties params) {
 		// TODO change "null" to proper private value initialization
 		super(agentID, arrivalTime, model, market, null, rand);
+		
+		//Initialize market
 		this.marketSubmittedBid = this.market;
+		
+		//Initializing Reentry times
+		double reentryRate = params.getAsDouble(REENTRY_RATE, 0);
 		this.reentry = new ArrivalTime(arrivalTime, reentryRate, rand);
-		this.maxAbsPosition = maxAbsPosition;
-		this.strat = new AAStrategy();
+		
+		//Initializing Max Absolute Position
+		this.maxAbsPosition = params.getAsInt(MAXQUANTITY_KEY, 1);
+		
+		//Initializing Strategy Class
+		this.strat = new AAStrategy(params);
+		
+		//Determining whether agent is a buyer or a seller
 		this.isBuyer = rand.nextBoolean();
 
 		//Debugging Output
 		//this.debugging = debugging;
-		if (debugging)
-			printInitDebugInfo();
-	}
-
-	public AAAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, EntityProperties params) {
-		this(agentID, arrivalTime, model, market,
-				params.getAsInt(REENTRY_RATE),
-				params.getAsInt(AAAgent.MAXQUANTITY_KEY), params.getAsBoolean(
-						AAAgent.DEBUG_KEY, false), rand);
+		boolean debugging = params.getAsBoolean(DEBUG_KEY, false);
+		if (debugging) printInitDebugInfo();
 	}
 
 	/**

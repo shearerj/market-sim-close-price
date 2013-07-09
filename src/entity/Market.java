@@ -38,7 +38,7 @@ public abstract class Market extends Entity {
 	protected final MarketModel model;
 	protected PQOrderBook orderbook;
 	//Statistics
-	protected List<Bid> bids;			//All bids ever submitted to the market
+	protected Collection<Bid> bids;			//All bids ever submitted to the market
 	protected TimeSeries depths;		//Number of orders in the orderBook
 	protected TimeSeries spreads;		//Bid-ask spread value
 	protected TimeSeries midQuotes;		//Midpoint of bid/ask values
@@ -69,6 +69,8 @@ public abstract class Market extends Entity {
 	public Market(int marketID, MarketModel model) {
 		super(marketID);
 		this.model = model;
+		
+		this.bids = new ArrayList<Bid>();
 		this.orderbook = new PQOrderBook(this);
 		this.depths = new TimeSeries();
 		this.spreads = new TimeSeries();
@@ -197,7 +199,7 @@ public abstract class Market extends Entity {
 	 * 
 	 * @return bids
 	 */
-	public List<Bid> getAllBids() {
+	public Collection<Bid> getAllBids() {
 		return this.bids;
 	}
 

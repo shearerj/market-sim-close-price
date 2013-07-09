@@ -117,6 +117,12 @@ public abstract class Agent extends Entity {
 		this.rand = rand;
 		this.arrivalTime = arrivalTime;
 		this.alpha = pv;
+		
+		//Constructors
+		this.currentBid = new HashMap<Integer,Bid>(); 
+		this.surplusMap = new HashMap<Double, Double>();
+		this.transactions = new ArrayList<Transaction>();
+		this.idComparator = new TransactionIDComparator();
 	}
 
 	public abstract Collection<? extends Activity> agentStrategy(
@@ -447,7 +453,7 @@ public abstract class Agent extends Entity {
 		pqBid.addPoint(quantity, p);
 		// quantity can be +/-
 		if (hasPrivateValue()) {
-			data.addPrivateValue(pqBid.getBidID(), getPrivateValueAt(quantity));
+			//data.addPrivateValue(pqBid.getBidID(), getPrivateValueAt(quantity));
 		} else {
 			data.addPrivateValue(pqBid.getBidID(), null);
 		}
@@ -741,9 +747,9 @@ public abstract class Agent extends Entity {
 									+ "Agent::updateTransactions: New transaction received: ("
 									+ "transID=" + t.getTransID() + ", mktID="
 									+ t.getMarket().getID() + ", buyer="
-									+ data.getAgentLogID(t.getBuyer().getID())
+									+ t.getBuyer().getID()
 									+ ", seller="
-									+ data.getAgentLogID(t.getSeller().getID())
+									+ t.getSeller().getID()
 									+ ", price=" + t.getPrice() + ", quantity="
 									+ t.getQuantity() + ", timeStamp="
 									+ t.getExecTime() + ")");
@@ -770,12 +776,11 @@ public abstract class Agent extends Entity {
 			// get all transactions for this model
 			return model.getTrans();
 		} else {
-			TreeSet<Transaction> tmp = new TreeSet<Transaction>(idComparator);
-			tmp.addAll(model.getTrans());
 			// get all transactions after the last seen transaction (not
 			// inclusive)
-			return new ArrayList<Transaction>(tmp.tailSet(lastTransaction,
-					false));
+			TreeSet<Transaction> tmp = new TreeSet<Transaction>(idComparator);
+			tmp.addAll(model.getTrans());
+			return new ArrayList<Transaction>(tmp.tailSet(lastTransaction,false));
 		}
 	}
 

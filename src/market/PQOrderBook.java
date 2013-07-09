@@ -24,12 +24,7 @@ public class PQOrderBook extends OrderBook {
 	
 	public PQOrderBook(Market market) {
 		super(market);
-	}
-
-	@Deprecated
-	public PQOrderBook(int mktID, SystemData data) {
-		super(mktID, data);
-		FH = new FourHeap(data.getMarket(mktID));
+		FH = new FourHeap(market);
 	}
 
 	/** 
@@ -132,7 +127,7 @@ public class PQOrderBook extends OrderBook {
 	 * Print the active bids in the orderbook.
 	 */
 	public void logActiveBids(TimeStamp ts) {
-		String s = ts.toString() + " | " + data.getMarket(marketID) + " Active bids: ";
+		String s = ts.toString() + " | " + this.market + " Active bids: ";
 		for (Map.Entry<Integer,Bid> entry : activeBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
@@ -147,7 +142,7 @@ public class PQOrderBook extends OrderBook {
 	 * Print the cleared bids in the orderbook. 
 	 */
 	public void logClearedBids(TimeStamp ts) {
-		String s = ts.toString() + " | " + data.getMarket(marketID) + " Cleared bids: ";
+		String s = ts.toString() + " | " + this.market + " Cleared bids: ";
 		for (Map.Entry<Integer,Bid> entry : clearedBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
@@ -215,9 +210,9 @@ public class PQOrderBook extends OrderBook {
 			PQBid sellBid = sell.Parent;
 
 			transactions.add(new PQTransaction(q, p, buy.getAgent(), sell.getAgent(), 
-					buyBid, sellBid, ts, data.getMarket(marketID)));
+					buyBid, sellBid, ts, this.market));
 //			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-			log(INFO, ts + " | " + data.getMarket(marketID) + 
+			log(INFO, ts + " | " + this.market + 
 					" Quantity=" + q + " cleared at Price=" + p.getPrice());
 
 			Integer key = new Integer(buy.getAgentID());
