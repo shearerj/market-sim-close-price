@@ -43,7 +43,6 @@ public abstract class Agent extends Entity {
 	public final static String SLEEPVAR_KEY = "sleepVar";
 	public final static String REENTRY_RATE = "reentryRate";
 
-	protected int logID; // ID for logging purposes (should same across models)
 	protected final RandPlus rand;
 
 	// -- begin reorg -- stuff above line existed before and is still
@@ -72,7 +71,7 @@ public abstract class Agent extends Entity {
 	protected SIP sip;
 
 	// Agent parameters
-	protected PrivateValue alpha;
+	protected PrivateValue privateValue;
 	protected String agentType;
 	protected TimeStamp arrivalTime;
 
@@ -111,7 +110,7 @@ public abstract class Agent extends Entity {
 		this.model = model;
 		this.rand = rand;
 		this.arrivalTime = arrivalTime;
-		this.alpha = pv;
+		this.privateValue = pv;
 	}
 
 	public abstract Collection<? extends Activity> agentStrategy(
@@ -133,46 +132,7 @@ public abstract class Agent extends Entity {
 	// This should not exist, agents without private value should have 0 private
 	// value...
 	public final boolean hasPrivateValue() {
-		return alpha != null;
-	}
-
-	/**
-	 * Given additional quantity to buy/sell, return associated private
-	 * valuation (requires looking at current position balance).
-	 * 
-	 * Required because of indexing of quantities vector in PrivateValue.
-	 * 
-	 * @param quantity
-	 *            additional units to buy or sell
-	 * @return
-	 */
-	// TODO put this in PrivateValue
-	public Price getPrivateValueAt(int quantity) {
-		if (quantity > 0) {
-			// if buying
-			if (positionBalance >= 0) {
-				// if nonnegative current position, look at next position (+q)
-				return alpha.getValueFromQuantity(positionBalance + quantity);
-			} else {
-				// if negative current position, look at current position
-				return alpha.getValueFromQuantity(positionBalance);
-			}
-
-		} else if (quantity < 0) {
-			// if selling
-			if (positionBalance > 0) {
-				// if positive current position, look at current position
-				return alpha.getValueFromQuantity(positionBalance);
-			} else {
-				// if non-positive current position, look at next position
-				// (-|q|)
-				return alpha.getValueFromQuantity(positionBalance + quantity);
-			}
-
-		} else {
-			// not selling or buying
-			return new Price(0);
-		}
+		return privateValue != null;
 	}
 
 	/**
@@ -211,24 +171,6 @@ public abstract class Agent extends Entity {
 	// Only necessary for players, not agents...
 	public String getFullStrategy() {
 		return this.getType() + ":" + params.getAsString(Agent.STRATEGY_KEY);
-	}
-
-	/**
-	 * Sets logID of the agent.
-	 * 
-	 * @param logID
-	 */
-	@Deprecated
-	public void setLogID(int logID) {
-		this.logID = logID;
-	}
-
-	/**
-	 * @return logID
-	 */
-	@Deprecated
-	public int getLogID() {
-		return this.logID;
 	}
 
 	/**
@@ -419,11 +361,8 @@ public abstract class Agent extends Entity {
 		PQBid pqBid = new PQBid(this, market, ts);
 		pqBid.addPoint(quantity, p);
 		// quantity can be +/-
-		if (hasPrivateValue()) {
-			data.addPrivateValue(pqBid.getBidID(), getPrivateValueAt(quantity));
-		} else {
-			data.addPrivateValue(pqBid.getBidID(), null);
-		}
+		data.addPrivateValue(pqBid.getBidID(),
+				privateValue.getValueFromQuantity(positionBalance, quantity));
 		currentBid.put(market.id, pqBid);
 		return market.addBid(pqBid, ts);
 	}
@@ -705,9 +644,9 @@ public abstract class Agent extends Entity {
 									+ "Agent::updateTransactions: New transaction received: ("
 									+ "transID=" + t.getTransID() + ", mktID="
 									+ t.getMarket().getID() + ", buyer="
-									+ data.getAgentLogID(t.getBuyer().getID())
+									+ t.getBuyer().getID()
 									+ ", seller="
-									+ data.getAgentLogID(t.getSeller().getID())
+									+ t.getSeller().getID()
 									+ ", price=" + t.getPrice() + ", quantity="
 									+ t.getQuantity() + ", timeStamp="
 									+ t.getExecTime() + ")");
@@ -845,9 +784,9 @@ public abstract class Agent extends Entity {
 		double discounted = 0;
 		int sign = isBuyer ? -1 : 1;
 		if (this.getPrivateValue() != null) {
-			for (int q = 1; q <= tr.getQuantity(); q++) {
-				int valuation = this.getPrivateValueAt(q).getPrice() + fund;
-				int surplus = sign * (tr.getPrice().getPrice() - valuation);
+			for (int quantity = 1; quantity <= tr.getQuantity(); quantity++) {
+				Price valuation = privateValue.getValueFromQuantity(positionBalance, quantity).plus(new Price(fund));
+				int surplus = sign * tr.getPrice().minus(valuation).getPrice();
 				discounted += Math.exp(-rho * timeToExecution * surplus);
 			}
 			this.surplusMap.put(rho, oldSurplus + discounted);
@@ -881,7 +820,7 @@ public abstract class Agent extends Entity {
 	 * @return private value.
 	 */
 	public final PrivateValue getPrivateValue() {
-		return alpha;
+		return privateValue;
 	}
 
 	/**
@@ -930,6 +869,6 @@ public abstract class Agent extends Entity {
 
 	@Override
 	public String toString() {
-		return new String("(" + this.logID + ", " + this.getModel() + ")");
+		return new String("(" + id + ", " + model + ")");
 	}
 }

@@ -431,13 +431,13 @@ public class ObservationsReference {
 		DescriptiveStatistics medians = new DescriptiveStatistics();
 		for(Market market : model.getMarkets()) {
 			TimeSeries s = market.getSpread();
-			if (!s.isEmpty()) {
+//			if (!s.isEmpty()) {
 				double[] array = s.getSampledArray(0, maxTime);
 				DescriptiveStatistics spreads = new DescriptiveStatistics(array);
 				double med = feat.addMedian("", MARKET + (-market.getID()) + "_"
 						+ TIMESERIES_MAXTIME, spreads);
 				medians.addValue(med);
-			}
+//			}
 		}
 		// average of median market spreads (for all markets in this model)
 		feat.addMean("", MARKET + "_" + TIMESERIES_MAXTIME, medians);
@@ -477,7 +477,7 @@ public class ObservationsReference {
 			String suffix = "_" + MARKET + (-market.getID());
 
 			TimeSeries ma = market.getMidQuotes();
-			if (!ma.isEmpty()) {
+//			if (!ma.isEmpty()) { // can't be empty.
 				double[] mid = ma.getSampledArrayWithoutNaNs(period, maxTime);
 
 				// compute log price volatility for this market
@@ -504,7 +504,7 @@ public class ObservationsReference {
 				}
 				logRetVol.addValue(feat.addStdDev(prefix,
 						LOG + RETURN + suffix, mktLogReturns));
-			}
+//			}
 		}
 		// average measures across all markets in this model
 		feat.addMean(prefix, Feature.STDDEV + PRICE, stddev);

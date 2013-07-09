@@ -24,7 +24,7 @@ public class WithdrawBid extends Activity {
 	}
 
 	public WithdrawBid deepCopy() {
-		return new WithdrawBid(this.ag, this.mkt, this.time);
+		return new WithdrawBid(this.ag, this.mkt, this.scheduledTime);
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp time) {
@@ -47,7 +47,7 @@ public class WithdrawBid extends Activity {
 		return new EqualsBuilder().
 				append(ag.getID(), other.ag.getID()).
 				append(mkt.getID(), other.mkt.getID()).
-				append(time.longValue(), other.time.longValue()).
+				append(scheduledTime.longValue(), other.scheduledTime.longValue()).
 				isEquals();
 	}
 	
@@ -56,7 +56,7 @@ public class WithdrawBid extends Activity {
 		return new HashCodeBuilder(19, 37).
 				append(ag.getID()).
 				append(mkt.getID()).
-				append(time.longValue()).
+				append(scheduledTime.longValue()).
 				toHashCode();
 	}
 }

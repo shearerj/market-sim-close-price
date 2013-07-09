@@ -27,7 +27,7 @@ public class ProcessQuote extends Activity {
 	}
 
 	public ProcessQuote deepCopy() {
-		return new ProcessQuote(this.sip, this.mkt, this.bid, this.ask, this.time);
+		return new ProcessQuote(this.sip, this.mkt, this.bid, this.ask, this.scheduledTime);
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp time) {
@@ -52,7 +52,7 @@ public class ProcessQuote extends Activity {
 				append(sip.getID(), other.sip.getID()).
 				append(bid, other.bid).
 				append(ask, other.ask).
-				append(time.longValue(), other.time.longValue()).
+				append(scheduledTime.longValue(), other.scheduledTime.longValue()).
 				isEquals();
 	}
 	
@@ -63,7 +63,7 @@ public class ProcessQuote extends Activity {
 				append(sip.getID()).
 				append(bid).
 				append(ask).
-				append(time.longValue()).
+				append(scheduledTime.longValue()).
 				toHashCode();
 	}
 }

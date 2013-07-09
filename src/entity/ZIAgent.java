@@ -36,7 +36,7 @@ public class ZIAgent extends BackgroundAgent {
 
 	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, int bidRange, double pvVar) {
-		super(agentID, arrivalTime, model, market, new PrivateValue((int) Math.round(rand.nextGaussian(0, pvVar)), (int) Math.round(rand.nextGaussian(0, pvVar))), rand);
+		super(agentID, arrivalTime, model, market, new PrivateValue(1 , pvVar, rand), rand);
 		this.bidRange = bidRange;
 	}
 
@@ -57,7 +57,7 @@ public class ZIAgent extends BackgroundAgent {
 		quantity = rand.nextBoolean() ? 1 : -1; // 50% chance of being either long or
 											// short
 		int val = Math.max(0,
-				model.getFundamentalAt(currentTime).plus(getPrivateValueAt(quantity)).getPrice());
+				model.getFundamentalAt(currentTime).plus(privateValue.getValueFromQuantity(positionBalance, quantity)).getPrice());
 
 		// basic ZI behavior
 		if (quantity > 0)

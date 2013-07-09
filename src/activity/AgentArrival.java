@@ -13,45 +13,33 @@ import event.*;
  */
 public class AgentArrival extends Activity {
 
-	private Agent ag;
-	
-	public AgentArrival(Agent ag, TimeStamp t) {
-		super(t);
-		this.ag = ag;
+	protected final Agent agent;
+
+	public AgentArrival(Agent ag, TimeStamp currentTime) {
+		super(currentTime);
+		this.agent = ag;
 	}
-	
-	public AgentArrival deepCopy() {
-		return new AgentArrival(this.ag, this.time);
-	}
-	
+
+	@Override
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
-		return ag.agentArrival(currentTime); 
+		return agent.agentArrival(currentTime);
 	}
-	
+
 	public String toString() {
-		return new String(getName() + "::" + ag);
+		return new String(getName() + "::" + agent);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == this)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass()) 
+		if (obj == null || !(obj instanceof AgentArrival))
 			return false;
 		AgentArrival other = (AgentArrival) obj;
-		return new EqualsBuilder().
-			append(ag.getID(), other.ag.getID()).
-			append(time.longValue(), other.time.longValue()).
-			isEquals();
+		return new EqualsBuilder().append(agent, other.agent).append(scheduledTime,
+				other.scheduledTime).isEquals();
 	}
-	
+
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder(19, 37).
-				append(ag.getID()).
-				append(time.longValue()).
-				toHashCode();
+		return new HashCodeBuilder(19, 37).append(agent).append(scheduledTime).toHashCode();
 	}
 }

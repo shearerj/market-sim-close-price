@@ -175,10 +175,6 @@ public class SystemData {
 		return new ArrayList<Integer>(agents.keySet());
 	}
 	
-	public int getAgentLogID(int agentID) {
-		return agents.get(agentID).getLogID();
-	}
-	
 	public ArrayList<Integer> getPlayerIDs() {
 		return new ArrayList<Integer>(players.keySet());
 	}

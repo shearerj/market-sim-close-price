@@ -1,138 +1,103 @@
 package market;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
+
+import utils.RandPlus;
+import static utils.MathUtils.bound;
+import static market.Price.ZERO;
 
 /**
  * PRIVATEVALUE
  * 
- * Stores Prices in a vector of private values, sorted in descending order.
- * 
- * If (A, B) is the vector of private values, a trader with initial
- * net position = 0 has private valuation of A if selling 1 unit, and 
- * private value of B if buying 1 unit.
- * 
- * For a private valuation vector for maximum position q:
- * 	  ( a(-q),  a(-q+1), ..., a(-1), a(1), ..., a(q-1), a(q) )
- * Going from quantity -q to -q+1 is associated with value a(-q).
- * Going from quantity q to q-1 is associated with value a(q).
- * 
- * Private values are associated with changes in position. For example,
- * a trader with current balance of 1 who intends to buy 1 additional unit 
- * of the good will have private value a(2) for the additional unit.
- * 
- * As such, the getValueAt method in the Agent class is necessary to 
- * correctly determine the private value for a new order (as it is
- * based on both current position and the limit order quantity).
+ * Encapsulation of an agent's private value. <code>getValueFromQuantity</code>
+ * is the main method that should be used.
  * 
  * @author ewah
  */
-// TODO Seems like this should maybe be a sorted map of ints to Price
 public class PrivateValue {
 
-	protected final List<Price> values;
-	protected final List<Integer> quantities;
-	
+	protected final int offset;
+	protected final Price[] prices;
+
+	/**
+	 * Constructor for an agent without private value. This will return
+	 * Price.ZERO for every private value query.
+	 */
 	public PrivateValue() {
-		// TODO this should initialize a private value that represents no private value.
-		values = new ArrayList<Price>();
-		quantities = new ArrayList<Integer>();
-	}
-	
-	public PrivateValue(int[] alphas) {
-		values = new ArrayList<Price>();
-		for (int i = 0; i < alphas.length; i++) {
-			values.add(new Price(alphas[i]));
-		}
-		// sort in descending order
-        Collections.sort(values, Collections.reverseOrder());
-		quantities = new ArrayList<Integer>();
-		createQuantities(alphas.length);
-	}
-	
-	public PrivateValue(ArrayList<Integer> alphas) {
-		values = new ArrayList<Price>();
-		for (int i = 0; i < alphas.size(); i++) {
-			values.add(new Price(alphas.get(i)));
-		}
-		// sort in descending order
-        Collections.sort(values, Collections.reverseOrder());
-		quantities = new ArrayList<Integer>();
-		createQuantities(alphas.size());
-	}
-	
-	public PrivateValue(int alpha1, int alpha2) {
-		values = new ArrayList<Price>();
-		values.add(new Price(alpha1));
-		values.add(new Price(alpha2));
-		// sort in descending order
-		Collections.sort(values, Collections.reverseOrder());
-		quantities = new ArrayList<Integer>();
-		createQuantities(-1, 1);
-	}
-	
-	public PrivateValue(Price alpha1, Price alpha2) {
-		values = new ArrayList<Price>();
-		values.add(alpha1);
-		values.add(alpha2);
-		// sort in descending order
-		Collections.sort(values, Collections.reverseOrder());
-		quantities = new ArrayList<Integer>();
-		createQuantities(-1, 1);
-	}
-	
-	/**
-	 * Given a quantity to buy or sell (+/-), return the associated private
-	 * value.
-	 * 
-	 * @param q		quantity to buy or sell
-	 * @return
-	 */
-	public Price getValueFromQuantity(int q) {
-		if (quantities.contains(q))
-			return values.get(quantities.indexOf(q));
-		else
-			return new Price(0);
-	}
-	
-	/**
-	 * Reverses the alpha values.
-	 */
-	public void reverseValues() {
-		Collections.reverse(values);
-	}
-	
-	/**
-	 * Creates vector of (-qSell, -qSell+1, ..., -1, 1, ..., qBuy-1, qBuy)
-	 * 
-	 * @param qBuy
-	 * @param qSell
-	 */
-	private void createQuantities(int qBuy, int qSell) {
-		// error checking 
-		if (qSell > 0) qSell = -qSell;
-		if (qBuy < 0) qBuy = -qBuy;
-		
-		for (int i = qSell; i <= qBuy; i++) {
-			if (i != 0) quantities.add(i);
-		}
-	}
-	
-	/**
-	 * Creates vector of (-qMax, ..., -1, 1, ..., qMax) given the length of the
-	 * alpha vector (equal to 2*qMax).
-	 * 
-	 * @param legnth
-	 */
-	private void createQuantities(int length) {
-		int qMax = length / 2;
-		for (int i = -qMax; i <= qMax; i++) {
-			if (i != 0) quantities.add(i);
-		}
+		offset = 0;
+		prices = new Price[] { ZERO };
 	}
 
-	public String toString() {
-		return values.toString();
+	/**
+	 * Randomly generate private values for positional changes
+	 * 
+	 * @param maxPosition
+	 *            the maximum position the agent can take. Beyond max position
+	 *            the change in private value is zero.
+	 * @param var
+	 *            Gaussian variance to use during random private value
+	 *            initialization.
+	 * @param rand
+	 *            The random number generator to use for random generation.
+	 */
+	public PrivateValue(int maxPosition, double var, RandPlus rand) {
+		// Produces the exact same distribution as before
+		offset = maxPosition;
+		prices = new Price[maxPosition * 2 + 1];
+		for (int i = 0; i < prices.length; i++)
+			prices[i] = new Price((int) Math.round(rand.nextGaussian(0, var)));
+		Arrays.sort(prices);
+
+		Price median = prices[offset];
+		for (int i = 0; i < prices.length; i++)
+			prices[i] = prices[i].minus(median);
 	}
+
+	/**
+	 * @param position
+	 *            Agent's current position
+	 * @param quantity
+	 *            Number of goods Agent will acquire from current position
+	 * @return The change resulting from modifying ones position by that amount.
+	 */
+	public Price getValueFromQuantity(int position, int quantity) {
+		return getValueAtPosition(position + quantity).minus(
+				getValueAtPosition(position));
+	}
+
+	/**
+	 * Get a peudo private value for the agent from holding a specific position.
+	 * This call is experimental and may be deprecated in the future.
+	 * 
+	 * @param position
+	 *            The position of the Agent
+	 * @return The pseudo private value of the Agent at the position. This is
+	 *         additive so
+	 *         <code> getValueAtPosition(newPos).minus(getValueAtPosition(currentPos)) </code>
+	 *         represents the change in value for going from position currentPos
+	 *         to position newPos.
+	 */
+	public Price getValueAtPosition(int position) {
+		return prices[bound(position + offset, 0, prices.length - 1)];
+	}
+
+	@Override
+	public int hashCode() {
+		return Arrays.hashCode(prices) ^ offset;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof PrivateValue))
+			return false;
+		PrivateValue other = (PrivateValue) obj;
+		return other.offset == this.offset
+				&& Arrays.equals(other.prices, this.prices);
+	}
+
+	@Override
+	public String toString() {
+		return Arrays.toString(prices);
+	}
+
 }

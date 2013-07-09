@@ -89,8 +89,8 @@ public class AAAgent extends BackgroundAgent {
 			for (int i = -maxAbsPosition; i < maxAbsPosition; i++) {
 				alphas.add((int) Math.round(rand.nextGaussian(0, pvVar)));
 			}
-			alpha = new PrivateValue(alphas);
-			limit = alpha.getValueFromQuantity(0);
+			privateValue = new PrivateValue(maxAbsPosition, pvVar, rand);
+			limit = privateValue.getValueAtPosition(0); // XXX Guarenteed to be Price(0)
 
 			// Parameters are currently taken from Vytelingum paper
 			historical = params.getAsInt(AAAgent.HISTORICAL_KEY);
@@ -223,7 +223,7 @@ public class AAAgent extends BackgroundAgent {
 
 		private void determinePriceLimit(int quantity, TimeStamp ts) {
 			Price fundPrice = model.getFundamentalAt(ts);
-			Price deviation = getPrivateValueAt(positionBalance + quantity);
+			Price deviation = privateValue.getValueAtPosition(positionBalance + quantity);
 			limit = fundPrice.plus(deviation);
 			if (testing != -1)
 				limit = new Price(testing);

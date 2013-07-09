@@ -374,7 +374,7 @@ public class LoggingReference {
 						}
 						Agent ag = createAgent(model, new AgentPropsPair(ap.getAgentType(), op),
 								seeds.get(ap).get(i), arrivals.get(ap).get(i));
-						ag.setLogID(logIDs.get(ap).get(i));
+//						ag.setLogID(logIDs.get(ap).get(i));
 					}
 					log(INFO, "Agents: " + numAg + " " + ap.getAgentType() + " " +
 							ap.getProperties());
@@ -411,7 +411,7 @@ public class LoggingReference {
 					}
 					Agent ag = createAgent(model, new AgentPropsPair(agType, op),
 							rand.nextLong(), playerArrivalGenerators.get(type).next());
-					ag.setLogID(ag.getID()); 	// set player ID = log ID
+//					ag.setLogID(ag.getID()); 	// set player ID = log ID
 					data.addPlayer(ag);			// add player to SystemData
 				}
 				log(INFO, "Players: " + numAg + " " + type);

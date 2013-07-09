@@ -34,7 +34,7 @@ public class SubmitNMSBid extends Activity {
 
 	public SubmitNMSBid deepCopy() {
 		return new SubmitNMSBid(this.ag, this.price, this.quantity,
-				this.duration, this.time);
+				this.duration, this.scheduledTime);
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp time) {
@@ -55,12 +55,12 @@ public class SubmitNMSBid extends Activity {
 		return new EqualsBuilder().append(ag.getID(), other.ag.getID()).append(
 				price, other.price).append(quantity, other.quantity).append(
 				duration.longValue(), other.duration.longValue()).append(
-				time.longValue(), other.time.longValue()).isEquals();
+				scheduledTime.longValue(), other.scheduledTime.longValue()).isEquals();
 	}
 
 	@Override
 	public int hashCode() {
 		return new HashCodeBuilder(19, 37).append(ag.getID()).append(price).append(
-				quantity).append(time.longValue()).toHashCode();
+				quantity).append(scheduledTime.longValue()).toHashCode();
 	}
 }

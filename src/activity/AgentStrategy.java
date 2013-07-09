@@ -27,7 +27,7 @@ public class AgentStrategy extends Activity {
 	}
 
 	public AgentStrategy deepCopy() {
-		return new AgentStrategy(this.ag, this.mkt, this.time);
+		return new AgentStrategy(this.ag, this.mkt, this.scheduledTime);
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
@@ -55,13 +55,13 @@ public class AgentStrategy extends Activity {
 		if (mkt == null) {
 			return new EqualsBuilder().
 					append(ag.getID(), other.ag.getID()).
-					append(time.longValue(), other.time.longValue()).
+					append(scheduledTime.longValue(), other.scheduledTime.longValue()).
 					isEquals();
 		} else {
 			return new EqualsBuilder().
 					append(ag.getID(), other.ag.getID()).
 					append(mkt.getID(), other.mkt.getID()).
-					append(time.longValue(), other.time.longValue()).
+					append(scheduledTime.longValue(), other.scheduledTime.longValue()).
 					isEquals();
 		}
 	}
@@ -71,13 +71,13 @@ public class AgentStrategy extends Activity {
 		if (mkt == null) {
 			return new HashCodeBuilder(19, 37).
 					append(ag.getID()).
-					append(time.longValue()).
+					append(scheduledTime.longValue()).
 					toHashCode();
 		} else {
 			return new HashCodeBuilder(19, 37).
 					append(ag.getID()).
 					append(mkt.getID()).
-					append(time.longValue()).
+					append(scheduledTime.longValue()).
 					toHashCode();
 		}
 	}

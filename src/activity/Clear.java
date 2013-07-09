@@ -21,7 +21,7 @@ public class Clear extends Activity {
 	}
 
 	public Clear deepCopy() {
-		return new Clear(this.mkt, this.time);
+		return new Clear(this.mkt, this.scheduledTime);
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
@@ -43,7 +43,7 @@ public class Clear extends Activity {
 		Clear other = (Clear) obj;
 		return new EqualsBuilder().
 				append(mkt.getID(), other.mkt.getID()).
-				append(time.longValue(), other.time.longValue()).
+				append(scheduledTime.longValue(), other.scheduledTime.longValue()).
 				isEquals();
 	}
 	
@@ -51,7 +51,7 @@ public class Clear extends Activity {
 	public int hashCode() {
 		return new HashCodeBuilder(19, 37).
 				append(mkt.getID()).
-				append(time.longValue()).
+				append(scheduledTime.longValue()).
 				toHashCode();
 	}
 }
