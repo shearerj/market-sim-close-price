@@ -24,7 +24,6 @@ import market.Quote;
 import market.Transaction;
 import market.TransactionIDComparator;
 import model.MarketModel;
-import systemmanager.Consts;
 import utils.RandPlus;
 import activity.Activity;
 import activity.Liquidate;
@@ -65,7 +64,6 @@ public abstract class Agent extends Entity {
 	protected HashMap<Integer, TimeStamp> nextQuoteTime;
 	protected HashMap<Integer, TimeStamp> lastClearTime;
 	protected BestBidAsk lastNBBOQuote;
-	protected BestBidAsk lastGlobalQuote;
 	protected int tickSize;
 
 	// For quote generation
@@ -310,32 +308,28 @@ public abstract class Agent extends Entity {
 	 * Update global and NBBO quotes for the agent's model.
 	 */
 	public Collection<? extends Activity> executeUpdateAllQuotes(TimeStamp ts) {
-		lastGlobalQuote = sip.getGlobalQuote(model);
 		lastNBBOQuote = sip.getNBBOQuote(model);
-
-		log(INFO, ts + " | " + this + " Global" + lastGlobalQuote + ", NBBO"
-				+ lastNBBOQuote);
 		return Collections.emptyList();
 	}
 
 	/**
 	 * Updates quotes for the given market.
 	 * 
-	 * @param mkt
-	 * @param ts
+	 * @param market
+	 * @param currentTime
 	 */
 	@Deprecated
 	// Should just be done in strategy. Doesn't should need fields to store this
 	// info...
-	public void updateQuotes(Market mkt, TimeStamp ts) {
-		Quote q = mkt.quote(ts);
+	public void updateQuotes(Market market, TimeStamp currentTime) {
+		Quote q = market.quote(currentTime);
 		if (q != null) {
 			if (q.lastQuoteTime != null)
-				lastQuoteTime.put(mkt.id, q.lastQuoteTime);
+				lastQuoteTime.put(market.id, q.lastQuoteTime);
 
 			if (q.lastClearTime != null
-					&& lastClearTime.get(mkt.id) != q.lastClearTime) {
-				lastClearTime.put(mkt.id, q.lastClearTime);
+					&& lastClearTime.get(market.id) != q.lastClearTime) {
+				lastClearTime.put(market.id, q.lastClearTime);
 			}
 		} else {
 			log(ERROR, "Agent::updateQuotes: Quote is null.");

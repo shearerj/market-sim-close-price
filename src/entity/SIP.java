@@ -41,6 +41,7 @@ public class SIP extends Entity {
 	 * @return BestBidAsk
 	 */
 	public BestBidAsk getNBBOQuote(MarketModel model) {
+		// TODO Log transaction and difference between global quote
 		if (!lastQuotes.containsKey(model)) {
 			// FIXME This shouldn't be done / shouldn't happen
 			BestBidAsk b = new BestBidAsk(null, null, null, null);
