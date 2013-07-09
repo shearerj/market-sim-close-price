@@ -360,6 +360,14 @@ public class Observations {
 
 			// number of transactions, hashed by agent type
 			HashMap<String,Integer> numTrans = new HashMap<String,Integer>();
+			
+			// initialize for every agent type; otherwise will not log those w/o transactions
+			List<String> allAgentTypes = new ArrayList<String>(Consts.HFT_AGENT_TYPES);
+			allAgentTypes.addAll(Consts.BACKGROUND_AGENT_TYPES);
+			allAgentTypes.addAll(Consts.MARKETMAKER_AGENT_TYPES);
+			for (String s : allAgentTypes) {
+				numTrans.put(s, 0);
+			}
 
 			for (Transaction t : trans) {
 				PQTransaction tr = (PQTransaction) t;
