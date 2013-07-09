@@ -84,15 +84,4 @@ public abstract class MMAgent extends Agent {
 		return Collections.emptyList();
 	}
 
-	/**
-	 * Updates quotes for all markets.
-	 * 
-	 * @param ts
-	 * @return
-	 */
-	public Collection<? extends Activity> updateAllQuotes(TimeStamp ts) {
-		for (Market market : model.getMarkets())
-			updateQuotes(market, ts);
-		return this.executeUpdateAllQuotes(ts);
-	}
 }

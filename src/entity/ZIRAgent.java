@@ -76,8 +76,6 @@ public class ZIRAgent extends BackgroundAgent {
 	public Collection<Activity> agentStrategy(TimeStamp ts) {
 		Collection<Activity> activities = new ArrayList<Activity>();
 
-		this.updateQuotes(market, ts);
-
 		String s = ts + " | " + this + " " + agentType + ":";
 		if (!ts.equals(arrivalTime)) {
 			s += " wake up.";

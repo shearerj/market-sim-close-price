@@ -119,20 +119,6 @@ public abstract class SMAgent extends Agent {
 	}
 
 	/**
-	 * Updates quote for agent's primary market.
-	 * 
-	 * @param ts
-	 * @return
-	 */
-	@Deprecated
-	// I don't think this needs so / should be called anymore. The agent should
-	// just update information at strategy time and go from there
-	public Collection<? extends Activity> updateAllQuotes(TimeStamp ts) {
-		updateQuotes(market, ts);
-		return this.executeUpdateAllQuotes(ts);
-	}
-
-	/**
 	 * Submit a bid to one of the possible markets, as following the National
 	 * Market System (NMS) regulations. The market selected will be that with
 	 * the best available price, according the NBBO.

@@ -121,9 +121,6 @@ public abstract class Agent extends Entity {
 	public abstract Collection<? extends Activity> agentDeparture(
 			TimeStamp currentTime);
 
-	@Deprecated
-	public abstract Collection<? extends Activity> updateAllQuotes(TimeStamp ts);
-
 	/**
 	 * @return Method to get the type of the agent.
 	 */
@@ -302,38 +299,6 @@ public abstract class Agent extends Entity {
 				+ positionBalance + ", profit=" + realizedProfit + ", price="
 				+ price);
 		return Collections.emptyList();
-	}
-
-	/**
-	 * Update global and NBBO quotes for the agent's model.
-	 */
-	public Collection<? extends Activity> executeUpdateAllQuotes(TimeStamp ts) {
-		lastNBBOQuote = sip.getNBBOQuote(model);
-		return Collections.emptyList();
-	}
-
-	/**
-	 * Updates quotes for the given market.
-	 * 
-	 * @param market
-	 * @param currentTime
-	 */
-	@Deprecated
-	// Should just be done in strategy. Doesn't should need fields to store this
-	// info...
-	public void updateQuotes(Market market, TimeStamp currentTime) {
-		Quote q = market.quote(currentTime);
-		if (q != null) {
-			if (q.lastQuoteTime != null)
-				lastQuoteTime.put(market.id, q.lastQuoteTime);
-
-			if (q.lastClearTime != null
-					&& lastClearTime.get(market.id) != q.lastClearTime) {
-				lastClearTime.put(market.id, q.lastClearTime);
-			}
-		} else {
-			log(ERROR, "Agent::updateQuotes: Quote is null.");
-		}
 	}
 
 	/***********************************

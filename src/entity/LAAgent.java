@@ -57,7 +57,6 @@ public class LAAgent extends HFTAgent {
 			Collection<Activity> actMap = new ArrayList<Activity>();
 
 			// update quotes
-			this.updateAllQuotes(ts);
 			BestQuote bestQuote = findBestBuySell();
 
 			if ((bestQuote.getBestSell().getPrice() > (1 + alpha)
@@ -216,6 +215,7 @@ public class LAAgent extends HFTAgent {
 						&& pqPrice.lessThanEqual(endPrice)) {
 					int bidQuantity = pq.getQuantity();
 
+					// FIXME this seems like it might return the wrong thing
 					// Buy
 					if (buy && (bidQuantity < 0))
 						quantity -= bidQuantity;
