@@ -50,8 +50,8 @@ public abstract class SMAgent extends Agent {
 	protected Market marketSubmittedBid;
 
 	public SMAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, PrivateValue pv, RandPlus rand) {
-		super(agentID, arrivalTime, model, pv, rand);
+			Market market, PrivateValue pv, RandPlus rand, SIP sip) {
+		super(agentID, arrivalTime, model, pv, rand, sip);
 		this.market = market;
 	}
 

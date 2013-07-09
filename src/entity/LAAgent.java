@@ -37,16 +37,16 @@ public class LAAgent extends HFTAgent {
 									// value
 
 	public LAAgent(int agentID, MarketModel model, int sleepTime,
-			double sleepVar, double alpha, RandPlus rand) {
-		super(agentID, Consts.START_TIME, model, sleepTime, sleepVar, rand);
+			double sleepVar, double alpha, RandPlus rand, SIP sip) {
+		super(agentID, Consts.START_TIME, model, sleepTime, sleepVar, rand, sip);
 		this.alpha = alpha;
 	}
 
-	public LAAgent(int agentID, MarketModel model, RandPlus rand,
+	public LAAgent(int agentID, MarketModel model, RandPlus rand, SIP sip,
 			EntityProperties props) {
 		this(agentID, model, props.getAsInt(SLEEPTIME_KEY, 0),
 				props.getAsDouble(SLEEPVAR_KEY, 100), props.getAsDouble(
-						ALPHA_KEY, 0.001), rand);
+						ALPHA_KEY, 0.001), rand, sip);
 	}
 
 	@Override

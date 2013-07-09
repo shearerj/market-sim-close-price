@@ -111,12 +111,13 @@ public abstract class Agent extends Entity {
 
 	// FIXME Agent probably needs more than this...
 	public Agent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			PrivateValue pv, RandPlus rand) {
+			PrivateValue pv, RandPlus rand, SIP sip) {
 		super(agentID);
 		this.model = model;
 		this.rand = rand;
 		this.arrivalTime = arrivalTime;
 		this.alpha = pv;
+		this.sip = sip;
 		
 		//Constructors
 		this.currentBid = new HashMap<Integer,Bid>(); 

@@ -83,6 +83,7 @@ public class AAAgentTest {
 		model = marketModelFactory.createModel(modelProperties);
 		Collection<Market> markets = model.getMarkets();
 		for(Market mkt : markets) market = mkt;
+		assertTrue("Error setting up marketModel", market != null);
 		dummyAgents = new ArrayList<Agent>();
 	}
 	
@@ -92,7 +93,7 @@ public class AAAgentTest {
 		for(Market mkt : markets) market = mkt;
 		AAAgent agent = null;
 		do {
-			agent = new AAAgent(agentIndex, new TimeStamp(0), model, market, rand, agentProperties);
+			agent = new AAAgent(agentIndex, new TimeStamp(0), model, market, rand, null, agentProperties);
 		}while(agent.getBuyerStatus() != isBuyer);
 		
 		++agentIndex;

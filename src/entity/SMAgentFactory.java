@@ -36,8 +36,8 @@ public class SMAgentFactory {
 			return null; // FIXME implement
 		case ZI:
 			return new ZIAgent(nextID.next(), arrivalProcess.next(), model,
-					marketAssignment.next(), new RandPlus(rand.nextLong()),
-					props);
+					marketAssignment.next(), new RandPlus(rand.nextLong()), null,
+					props); //FIXME add SIP
 		case BASICMM:
 			return null; // FIXME implement
 		default:

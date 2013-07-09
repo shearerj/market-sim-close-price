@@ -54,8 +54,9 @@ public class BasicMarketMaker extends MarketMaker {
 	protected final TimeStamp sleepTime;
 
 	public BasicMarketMaker(int agentID, MarketModel model, Market market,
-			TimeStamp sleepTime, int numRungs, int rungSize, RandPlus rand) {
-		super(agentID, model, market, rand);
+			TimeStamp sleepTime, int numRungs, int rungSize, RandPlus rand,
+			SIP sip) {
+		super(agentID, model, market, rand, sip);
 		this.sleepTime = sleepTime;
 		this.numRungs = numRungs;
 		this.rungSize = rungSize;
@@ -66,10 +67,10 @@ public class BasicMarketMaker extends MarketMaker {
 	}
 
 	public BasicMarketMaker(int agentID, MarketModel model, Market market,
-			RandPlus rand, EntityProperties params) {
+			RandPlus rand, SIP sip, EntityProperties params) {
 		this(agentID, model, market, new TimeStamp(params.getAsLong(
 				SLEEPTIME_KEY, 200)), params.getAsInt(NUMRUNGS_KEY, 10),
-				params.getAsInt(RUNGSIZE_KEY, 1000), rand);
+				params.getAsInt(RUNGSIZE_KEY, 1000), rand, sip);
 		// SLEEPTIME_VAR = 100
 	}
 
