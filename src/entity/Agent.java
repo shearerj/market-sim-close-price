@@ -104,11 +104,18 @@ public abstract class Agent extends Entity {
 
 	// FIXME Agent probably needs more than this...
 	public Agent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			PrivateValue pv, RandPlus rand) {
+			PrivateValue pv, RandPlus rand, SIP sip) {
 		super(agentID);
 		this.model = model;
 		this.rand = rand;
 		this.arrivalTime = arrivalTime;
+		this.sip = sip;
+		
+		//Constructors
+		this.currentBid = new HashMap<Integer,Bid>(); 
+		this.surplusMap = new HashMap<Double, Double>();
+		this.transactions = new ArrayList<Transaction>();
+		this.idComparator = new TransactionIDComparator();
 		this.privateValue = pv;
 	}
 
@@ -226,8 +233,6 @@ public abstract class Agent extends Entity {
 		PQBid pqBid = new PQBid(this, market, ts);
 		pqBid.addPoint(quantity, p);
 		// quantity can be +/-
-		data.addPrivateValue(pqBid.getBidID(),
-				privateValue.getValueFromQuantity(positionBalance, quantity));
 		currentBid.put(market.id, pqBid);
 		return market.addBid(pqBid, ts);
 	}
@@ -501,12 +506,11 @@ public abstract class Agent extends Entity {
 			// get all transactions for this model
 			return model.getTrans();
 		} else {
-			TreeSet<Transaction> tmp = new TreeSet<Transaction>(idComparator);
-			tmp.addAll(model.getTrans());
 			// get all transactions after the last seen transaction (not
 			// inclusive)
-			return new ArrayList<Transaction>(tmp.tailSet(lastTransaction,
-					false));
+			TreeSet<Transaction> tmp = new TreeSet<Transaction>(idComparator);
+			tmp.addAll(model.getTrans());
+			return new ArrayList<Transaction>(tmp.tailSet(lastTransaction,false));
 		}
 	}
 

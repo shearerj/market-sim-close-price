@@ -30,9 +30,9 @@ public class ZIPAgent extends BackgroundAgent {
 	protected double c_R, c_A, beta, betaVar, gamma;
 	
 	public ZIPAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, EntityProperties props) {
+			Market market, RandPlus rand, SIP sip, EntityProperties props) {
 		// TODO replace null with proper private value initialization
-		super(agentID, arrivalTime, model, market, null, rand);
+		super(agentID, arrivalTime, model, market, null, rand, sip);
 		this.bidRange = props.getAsInt(BIDRANGE_KEY, 2000);
 		this.sleepTime = props.getAsInt(SLEEPTIME_KEY, 50);
 		this.sleepVar = props.getAsInt(SLEEPVAR_KEY, 100);

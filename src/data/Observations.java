@@ -152,6 +152,10 @@ public class Observations {
 		return observation;
 	}
 
+	/********************************************
+	 * Data aggregation
+	 *******************************************/
+
 	public static JsonObject getConfiguration(SimulationSpec spec, long maxTime) {
 		JsonObject config = new JsonObject();
 		// TODO Fix after figure out how use config

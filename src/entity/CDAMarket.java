@@ -84,7 +84,6 @@ public class CDAMarket extends Market {
 				
 			} else {
 				// valid bid-ask
-				data.addQuote(id, q);
 				this.addSpread(quoteTime, q.getSpread());
 				this.addMidQuote(quoteTime, bp, ap);
 			}

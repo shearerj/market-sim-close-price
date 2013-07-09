@@ -84,7 +84,7 @@ public abstract class MarketModel {
 	protected final Collection<Agent> agents;
 	protected final Collection<Player> players;
 
-	protected HashMap<Double, Double> modelSurplus; // hashed by rho value
+	protected Map<Double, Double> modelSurplus; // hashed by rho value
 	protected TimeSeries NBBOSpreads;				//NBBO bid/ask spread values
 
 	protected final RandPlus rand;
@@ -116,6 +116,7 @@ public abstract class MarketModel {
 		this.agents = new ArrayList<Agent>();
 		this.players = new ArrayList<Player>();
 		this.trans = new ArrayList<Transaction>();
+		this.modelSurplus = new HashMap<Double, Double>();
 		this.agentIDgen = new IDGenerator();
 		this.NBBOSpreads = new TimeSeries();
 

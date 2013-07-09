@@ -63,4 +63,17 @@ public class SubmitNMSBid extends Activity {
 		return new HashCodeBuilder(19, 37).append(ag.getID()).append(price).append(
 				quantity).append(scheduledTime.longValue()).toHashCode();
 	}
+
+	public SMAgent getAg() {
+		// TODO Auto-generated method stub
+		return ag;
+	}
+	
+	public Price getPrice() {
+		return price;
+	}
+	
+	public int getQuantity() {
+		return quantity;
+	}
 }

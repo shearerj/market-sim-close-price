@@ -213,8 +213,7 @@ public class FourHeap {
 		// log(Log.DEBUG, "sellToMatch: "+sellToMatch);
 		ret = Compare.min(buyToBeat, sellToMatch);
 
-		if (ret == null)
-			ret = new PQPoint(0, new Price(-1));
+		if (ret == null) ret = new PQPoint(0, new Price(-1));
 
 		return ret;
 

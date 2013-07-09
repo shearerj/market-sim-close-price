@@ -65,6 +65,8 @@ public abstract class Market extends Entity {
 	public Market(int marketID, MarketModel model) {
 		super(marketID);
 		this.model = model;
+		
+		this.bids = new ArrayList<Bid>();
 		this.orderbook = new PQOrderBook(this);
 		this.depths = new TimeSeries();
 		this.spreads = new TimeSeries();
