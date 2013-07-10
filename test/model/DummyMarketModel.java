@@ -1,5 +1,6 @@
 package model;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import utils.RandPlus;
@@ -22,7 +23,14 @@ public class DummyMarketModel extends MarketModel {
 	}
 	
 	public DummyMarketModel(int modelID) {
-		this(modelID, null, null, null, null, null);
+		this(modelID, new FundamentalValue(0, 0, 0, new RandPlus()), 
+				new HashMap<AgentProperties,Integer>(),
+				new EntityProperties(), new JsonObject(), 
+				new RandPlus());
+	}
+	
+	public DummyMarketModel() {
+		this(0);
 	}
 
 	@Override
