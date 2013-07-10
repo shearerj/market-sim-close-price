@@ -46,7 +46,7 @@ public class AAAgentTest {
 	private MarketModel model;
 	private Market market;
 	private int agentIndex;
-	private ArrayList<Agent> dummyAgents;
+	private SIP dummySIP;
 	
 	@BeforeClass
 	public static void setupClass() {
@@ -84,22 +84,25 @@ public class AAAgentTest {
 		Collection<Market> markets = model.getMarkets();
 		for(Market mkt : markets) market = mkt;
 		assertTrue("Error setting up marketModel", market != null);
-		dummyAgents = new ArrayList<Agent>();
+		
+		//Creating the dummy SIP
+		//XXX - Fix once SIP becomes important
+		dummySIP = new SIP(1,1);
 	}
 	
 	private AAAgent addAAAgent(MarketModel model, boolean isBuyer) {
 		Collection<Market> markets = model.getMarkets();
 		Market market = null;
 		for(Market mkt : markets) market = mkt;
-		AAAgent agent = null;
-		do {
-			agent = new AAAgent(agentIndex, new TimeStamp(0), model, market, rand, null, agentProperties);
-		}while(agent.getBuyerStatus() != isBuyer);
+		
+		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(BUYERSTATUS_KEY, isBuyer);
+		
+		AAAgent agent = new AAAgent(agentIndex, new TimeStamp(0), model, market, rand, dummySIP, testProps);
 		
 		++agentIndex;
 		
 		model.addAgent(agent);
-		dummyAgents.add(agent);
 		return agent;
 	}
 	
@@ -324,8 +327,9 @@ public class AAAgentTest {
 				assertTrue(bid.getQuantity() == 1);
 			}
 		}
-		//Checking that Aggression updated correctly
-		assertTrue(agent.getAggression() < 1);
+		//TODO - Checking that Aggression updated correctly
+		System.out.println("Aggression >= 1, actual: " + agent.getAggression());
+		assertTrue("Aggression >= 1, actual: " + agent.getAggression(), agent.getAggression() < 1);
 	}
 	
 	@Test

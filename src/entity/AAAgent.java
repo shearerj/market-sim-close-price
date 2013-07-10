@@ -38,6 +38,7 @@ public class AAAgent extends BackgroundAgent {
 	public final static String THETAMIN_KEY = "thetaMin";
 	public final static String DEBUG_KEY = "debug";
 	public final static String TEST_KEY = "AAtesting";
+	public final static String BUYERSTATUS_KEY = "buyerStatus";
 
 	//
 	// Private variables
@@ -513,7 +514,7 @@ public class AAAgent extends BackgroundAgent {
 		this.strat = new AAStrategy(params);
 		
 		//Determining whether agent is a buyer or a seller
-		this.isBuyer = rand.nextBoolean();
+		this.isBuyer = params.getAsBoolean(BUYERSTATUS_KEY, rand.nextBoolean());
 
 		//Debugging Output
 		//this.debugging = debugging;
