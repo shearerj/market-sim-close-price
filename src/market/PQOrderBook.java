@@ -101,7 +101,11 @@ public class PQOrderBook extends OrderBook {
 	 */
 	public Bid getAskQuote() {
 		PQPoint pq = FH.getAskQuote();
-		PQBid b = new PQBid(pq.getAgent(), pq.getMarket(), null);
+		
+		PQBid b = null;
+		if(pq.Parent != null) b = new PQBid(pq.getAgent(), pq.getMarket(), null);
+		else b = new PQBid(null, null, null);
+		
 		b.addPoint(pq);
 		return b;
 	}
@@ -111,7 +115,11 @@ public class PQOrderBook extends OrderBook {
 	 */
 	public Bid getBidQuote() {
 		PQPoint pq = FH.getBidQuote();
-		PQBid b = new PQBid(pq.getAgent(), pq.getMarket(), null);
+		
+		PQBid b = null;
+		if(pq.Parent != null) b = new PQBid(pq.getAgent(), pq.getMarket(), null);
+		else b = new PQBid(null, null, null);
+		
 		b.addPoint(pq);
 		return b;
 	}
