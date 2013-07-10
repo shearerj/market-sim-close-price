@@ -110,9 +110,9 @@ public abstract class Agent extends Entity {
 		this.rand = rand;
 		this.arrivalTime = arrivalTime;
 		this.sip = sip;
-		
-		//Constructors
-		this.currentBid = new HashMap<Integer,Bid>(); 
+
+		// Constructors
+		this.currentBid = new HashMap<Integer, Bid>();
 		this.surplusMap = new HashMap<Double, Double>();
 		this.transactions = new ArrayList<Transaction>();
 		this.idComparator = new TransactionIDComparator();
@@ -132,7 +132,8 @@ public abstract class Agent extends Entity {
 	 * @return Method to get the type of the agent.
 	 */
 	@Deprecated
-	// Doesn't make any sense
+	// FIXME should return Consts.AgentType corresponding to current agent. Need
+	// a good way to do this.
 	public String getType() {
 		return agentType;
 	}
@@ -510,7 +511,8 @@ public abstract class Agent extends Entity {
 			// inclusive)
 			TreeSet<Transaction> tmp = new TreeSet<Transaction>(idComparator);
 			tmp.addAll(model.getTrans());
-			return new ArrayList<Transaction>(tmp.tailSet(lastTransaction,false));
+			return new ArrayList<Transaction>(tmp.tailSet(lastTransaction,
+					false));
 		}
 	}
 

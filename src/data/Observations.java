@@ -10,6 +10,7 @@ import java.io.Writer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -20,6 +21,7 @@ import model.MarketModel;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import systemmanager.Consts;
+import systemmanager.Consts.AgentType;
 import systemmanager.SimulationSpec;
 import utils.DSPlus;
 
@@ -90,13 +92,13 @@ public class Observations {
 	public final static String LIQUIDATION = "liq";
 	public final static String PRE = "pre";
 	public final static String POST = "post";
-	
+
 	// VOLITILITY
 	public final static String RETURN = "return";
 	public final static String LOG = "log";
 
 	protected static transient final Gson gson = new Gson();
-	
+
 	JsonObject observations;
 
 	public Observations(SimulationSpec spec, Collection<MarketModel> models) {
@@ -284,7 +286,13 @@ public class Observations {
 		TimeSeries fundPrices = new TimeSeries();
 
 		// number of transactions, hashed by agent type
-		HashMap<String, Integer> numTrans = new HashMap<String, Integer>();
+		Map<String, Integer> numTrans = new HashMap<String, Integer>();
+
+		// So that agent types with 0 transactions still get logged. FIXME This
+		// maybe should pull only from agent types that had nonzero numbers, not
+		// every agent possible.
+		for (AgentType type : Consts.AgentType.values())
+			numTrans.put(type.toString(), 0);
 
 		for (Transaction t : model.getTrans()) {
 			// FIXME If these are always PQTrans then we should store that not
@@ -295,17 +303,19 @@ public class Observations {
 			quantity.addValue(tr.getQuantity());
 			fundamental.addValue(model.getFundamentalAt(tr.getExecTime()).getPrice());
 
-			transPrices.add(tr.getExecTime(), new Double(tr.getPrice().getPrice()));
-			fundPrices.add(tr.getExecTime(), new Double(model.getFundamentalAt(
-					tr.getExecTime()).getPrice()));
+			transPrices.add(tr.getExecTime(), new Double(
+					tr.getPrice().getPrice()));
+			fundPrices.add(
+					tr.getExecTime(),
+					new Double(
+							model.getFundamentalAt(tr.getExecTime()).getPrice()));
 
 			// update number of transactions
 			// buyer
 			for (Agent ag : new Agent[] { tr.getBuyer(), tr.getSeller() }) {
 				if (model.getAgents().contains(ag)) {
 					String type = ag.getType();
-					Integer num = numTrans.get(type);
-					numTrans.put(type, num == null ? 1 : num + 1);
+					numTrans.put(type, numTrans.get(type) + 1);
 				}
 			}
 		}
@@ -352,7 +362,7 @@ public class Observations {
 		DescriptiveStatistics medians = new DescriptiveStatistics();
 		for (Market market : model.getMarkets()) {
 			TimeSeries s = market.getSpread();
-			
+
 			double[] array = s.getSampledArray(0, maxTime);
 			DSPlus spreads = new DSPlus(array);
 			double med = spreads.getMedian();
@@ -367,12 +377,12 @@ public class Observations {
 				medians.getMean());
 
 		TimeSeries nbbo = model.getNBBOSpreads();
-		
+
 		double[] array = nbbo.getSampledArray(0, maxTime);
 		DSPlus spreads = new DSPlus(array);
 		feat.addProperty(delimit("_", MEDIAN, NBBO, TIMESERIES_MAXTIME),
 				spreads.getMedian());
-		
+
 		return feat;
 	}
 
@@ -411,20 +421,21 @@ public class Observations {
 	 * 
 	 * - standard deviation of log returns
 	 */
-	protected static JsonObject getVolatility(MarketModel model, int period, long maxTime) {
+	protected static JsonObject getVolatility(MarketModel model, int period,
+			long maxTime) {
 		JsonObject feat = new JsonObject();
-		
+
 		String prefix = period == 0 ? null : PERIODICITY + period;
 
 		DescriptiveStatistics stddev = new DescriptiveStatistics();
 		DescriptiveStatistics logPriceVol = new DescriptiveStatistics();
 		DescriptiveStatistics logRetVol = new DescriptiveStatistics();
-		
+
 		for (Market market : model.getMarkets()) {
 			String suffix = MARKET + Math.abs(market.getID());
 
 			TimeSeries mq = market.getMidQuotes();
-			
+
 			double[] mid = mq.getSampledArrayWithoutNaNs(period, maxTime);
 
 			// compute log price volatility for this market
@@ -455,22 +466,27 @@ public class Observations {
 					logStdev);
 			logRetVol.addValue(logStdev);
 		}
-		
+
 		// average measures across all markets in this model
-		feat.addProperty(delimit("_", prefix, MEAN, STDDEV + PRICE), stddev.getMean());
-		feat.addProperty(delimit("_", prefix, MEAN, LOG + PRICE), logPriceVol.getMean());
-		feat.addProperty(delimit("_", prefix, MEAN, LOG + RETURN), logRetVol.getMean());
-		
+		feat.addProperty(delimit("_", prefix, MEAN, STDDEV + PRICE),
+				stddev.getMean());
+		feat.addProperty(delimit("_", prefix, MEAN, LOG + PRICE),
+				logPriceVol.getMean());
+		feat.addProperty(delimit("_", prefix, MEAN, LOG + RETURN),
+				logRetVol.getMean());
+
 		return feat;
 	}
-	
-	public void writeToFile(File observationsFile) throws JsonIOException, IOException {
+
+	public void writeToFile(File observationsFile) throws JsonIOException,
+			IOException {
 		Writer writer = null;
 		try {
 			writer = new FileWriter(observationsFile);
 			gson.toJson(observations, writer);
 		} finally {
-			if (writer != null) writer.close();
+			if (writer != null)
+				writer.close();
 		}
 	}
 
