@@ -25,7 +25,7 @@ public class Consts {
 	// UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL
 	public static enum SMAgentType { AA, ZI, ZIP, ZIR, BASICMM };
 	public static enum ModelType { TWOMARKET, CENTRALCDA, CENTRALCALL };
-	public static enum MarketType { CDA, CALL }
+	public static enum MarketType { CDA, CALL };
 	
 	// TimeStamp TODO Move to TimeStamp?
 	public final static TimeStamp INF_TIME = new TimeStamp(-1);
