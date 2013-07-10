@@ -206,6 +206,11 @@ public abstract class MarketModel {
 		agents.add(agent);
 	}
 
+	
+	public void addMarket(Market market) {
+		markets.add(market);
+	}
+	
 	/**
 	 * @return configuration string for this model.
 	 */
