@@ -5,7 +5,6 @@ import static logger.Logger.Level.INFO;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 
 import market.PrivateValue;
 import model.MarketModel;
@@ -36,7 +35,8 @@ public abstract class MMAgent extends Agent {
 	protected final double sleepVar;
 
 	public MMAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			PrivateValue pv, int sleepTime, double sleepVar, RandPlus rand, SIP sip) {
+			PrivateValue pv, int sleepTime, double sleepVar, RandPlus rand,
+			SIP sip) {
 		super(agentID, arrivalTime, model, pv, rand, sip);
 		this.sleepTime = sleepTime;
 		this.sleepVar = sleepVar;
@@ -45,43 +45,25 @@ public abstract class MMAgent extends Agent {
 	/**
 	 * Agent arrives in a single market.
 	 */
-	public Collection<Activity> agentArrival(TimeStamp ts) {
+	public Collection<Activity> agentArrival(TimeStamp currentTime) {
 
 		StringBuilder sb = new StringBuilder();
-		for (Market market : model.getMarkets()) {
-			enterMarket(market, ts);
+		for (Market market : model.getMarkets())
 			sb.append(market).append(",");
-		}
 		log(INFO,
-				ts.toString() + " | " + this + "->"
+				currentTime.toString() + " | " + this + "->"
 						+ sb.substring(0, sb.length() - 1));
 
 		// Insert agent strategy call once it has arrived in the market
+		// FIXME I think this needs to be changed bassed off of the new event
+		// manager
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		if (sleepTime == 0) {
 			actMap.add(new AgentStrategy(this, Consts.INF_TIME));
 		} else {
-			actMap.add(new AgentStrategy(this, ts));
+			actMap.add(new AgentStrategy(this, currentTime));
 		}
 		return actMap;
-	}
-
-	/**
-	 * Agent departs all markets, if it is active. //TODO fix later
-	 * 
-	 * @return Collection<Activity>
-	 */
-	public Collection<Activity> agentDeparture(TimeStamp ts) {
-		for (Integer id : data.getMarketIDs()) {
-			Market mkt = data.markets.get(id);
-
-			mkt.agentIDs.remove(mkt.agentIDs.indexOf(this.id));
-			mkt.buyers.remove(mkt.buyers.indexOf(this.id));
-			mkt.sellers.remove(mkt.sellers.indexOf(this.id));
-			mkt.removeBid(this.id, ts);
-			this.exitMarket(id);
-		}
-		return Collections.emptyList();
 	}
 
 }

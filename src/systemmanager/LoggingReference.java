@@ -256,7 +256,7 @@ public class LoggingReference {
 			String mtype = mop.getMarketType();
 			Market market = null; // MarketFactory.createMarket(mtype, mID,
 									// data, mp, model);
-			market.linkModel(model.getID());
+//			market.linkModel(model.getID());
 			data.addMarket(market);
 			// model.getMarketIDs().add(mID);
 

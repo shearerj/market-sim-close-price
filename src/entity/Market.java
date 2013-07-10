@@ -40,15 +40,6 @@ public abstract class Market extends Entity {
 	protected TimeSeries midQuotes;		//Midpoint of bid/ask values
 	// end reorg
 
-	// Model information
-	// TODO equals method...
-	protected int modelID; // ID of associated model
-
-	// Agent information
-	protected ArrayList<Integer> buyers;
-	protected ArrayList<Integer> sellers;
-	protected ArrayList<Integer> agentIDs;
-
 	// Market information
 	public TimeStamp nextQuoteTime;
 	public TimeStamp nextClearTime; // Most important for call markets
@@ -71,22 +62,6 @@ public abstract class Market extends Entity {
 		this.depths = new TimeSeries();
 		this.spreads = new TimeSeries();
 		this.midQuotes = new TimeSeries();
-	}
-
-	/**
-	 * Set the model ID for the market.
-	 * 
-	 * @param id
-	 */
-	public void linkModel(int id) {
-		this.modelID = id;
-	}
-
-	/**
-	 * @return model ID
-	 */
-	public int getModelID() {
-		return this.modelID;
 	}
 
 	/**
@@ -221,15 +196,6 @@ public abstract class Market extends Entity {
 			TimeStamp ts);
 
 	/**
-	 * Clears all the market's data structures.
-	 */
-	protected void clearAll() {
-		buyers.clear();
-		sellers.clear();
-		agentIDs.clear();
-	}
-
-	/**
 	 * Method to get the type of the market.
 	 * 
 	 * @return
@@ -270,54 +236,6 @@ public abstract class Market extends Entity {
 			return false;
 		}
 		return true;
-	}
-
-	/**
-	 * Returns true if agent can sell in this market.
-	 * 
-	 * @param agentID
-	 * @return boolean
-	 */
-	public boolean canSell(int agentID) {
-		return sellers.contains(agentID);
-	}
-
-	/**
-	 * Returns true if agent can buy in this market.
-	 * 
-	 * @param agentID
-	 * @return boolean
-	 */
-	public boolean canBuy(int agentID) {
-		return buyers.contains(agentID);
-	}
-
-	/**
-	 * @return number of agents active in the market
-	 */
-	public int getNumAgents() {
-		return agentIDs.size();
-	}
-
-	/**
-	 * @return number of buyers in the market
-	 */
-	public int getNumBuyers() {
-		return buyers.size();
-	}
-
-	/**
-	 * @return number of sellers in the market
-	 */
-	public int getNumSellers() {
-		return sellers.size();
-	}
-
-	/**
-	 * @return array of agentIDs
-	 */
-	public ArrayList<Integer> getAgentIDs() {
-		return agentIDs;
 	}
 
 	public Price getLastClearPrice() {

@@ -122,9 +122,6 @@ public abstract class Agent extends Entity {
 	public abstract Collection<? extends Activity> agentArrival(
 			TimeStamp currentTime);
 
-	public abstract Collection<? extends Activity> agentDeparture(
-			TimeStamp currentTime);
-
 	/**
 	 * @return Method to get the type of the agent.
 	 */
@@ -139,39 +136,6 @@ public abstract class Agent extends Entity {
 	 * Methods for Activities
 	 * 
 	 **********************************/
-
-	/**
-	 * Enters market by adding market to data structures.
-	 */
-	// TODO Is this really necessary?
-	protected void enterMarket(Market mkt, TimeStamp ts) {
-		mkt.agentIDs.add(this.id); // Necessary?
-		mkt.buyers.add(this.id); // Necessary?
-		mkt.sellers.add(this.id); // Necessary?
-		quotes.put(mkt.id, new ArrayList<Quote>());
-
-		// Initialize bid/ask containers
-		prevBid.put(mkt.id, 0);
-		prevAsk.put(mkt.id, 0);
-		initBid.put(mkt.id, -1);
-		initAsk.put(mkt.id, -1);
-	}
-
-	/**
-	 * Exits market by removing all entries hashed by the specified market ID.
-	 */
-	// TODO Is this really necessary?
-	protected void exitMarket(int mktID) {
-		currentBid.remove(mktID);
-		lastQuoteTime.remove(mktID);
-		nextQuoteTime.remove(mktID);
-		lastClearTime.remove(mktID);
-		quotes.remove(mktID);
-		initBid.remove(mktID);
-		initAsk.remove(mktID);
-		prevBid.remove(mktID);
-		prevAsk.remove(mktID);
-	}
 
 	/**
 	 * Wrapper method to submit bid to market after checking permissions.
