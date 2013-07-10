@@ -1,11 +1,14 @@
 package entity;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.*;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
-import logger.Logger;
 import market.Bid;
 import market.PQBid;
 import market.Price;
@@ -23,8 +26,8 @@ import event.TimeStamp;
  */
 public class CDAMarket extends Market {
 	
-	public CDAMarket(int marketID, MarketModel model) {
-		super(marketID, model);
+	public CDAMarket(int marketID, MarketModel model, SIP sip) {
+		super(marketID, model, sip);
 	}
 
 	public Bid getBidQuote() {
@@ -51,17 +54,14 @@ public class CDAMarket extends Market {
 	}
 	
 	
-	public Collection<Activity> removeBid(int agentID, TimeStamp ts) {
-		orderbook.removeBid(agentID);
+	public Collection<? extends Activity> removeBid(Agent agent, TimeStamp ts) {
+		orderbook.removeBid(agent.getID());
 		this.addDepth(ts, orderbook.getDepth());
-		// return clear(ts);
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		actMap.add(new Clear(this, Consts.INF_TIME));
-		return actMap;
+		return Collections.singleton(new Clear(this, Consts.INF_TIME));
 	}
 	
 	
-	public HashMap<Integer,Bid> getBids() {
+	public Map<Integer,Bid> getBids() {
 		return orderbook.getActiveBids();
 	}
 	
@@ -78,7 +78,7 @@ public class CDAMarket extends Market {
 				this.addMidQuote(quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
 				
 			} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
-				Logger.log(Logger.Level.ERROR, this.getName() + "::quote: ERROR bid > ask");
+				log(ERROR, this.getName() + "::quote: ERROR bid > ask");
 				this.addSpread(quoteTime, Consts.INF_PRICE.getPrice());
 				this.addMidQuote(quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
 				

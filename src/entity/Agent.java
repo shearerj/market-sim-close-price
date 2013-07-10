@@ -177,7 +177,7 @@ public abstract class Agent extends Entity {
 	public Collection<? extends Activity> executeWithdrawBid(Market market,
 			TimeStamp ts) {
 		log(INFO, ts + " | " + this + " withdraw bid from " + market);
-		return market.removeBid(this.id, ts);
+		return market.removeBid(this, ts);
 	}
 
 	/**

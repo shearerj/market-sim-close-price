@@ -146,7 +146,7 @@ public class SystemData {
 	 * @param marketID
 	 * @return
 	 */
-	public HashMap<Integer,Bid> getBids(int marketID) {
+	public Map<Integer,Bid> getBids(int marketID) {
 		return markets.get(marketID).getBids();
 	}
 	

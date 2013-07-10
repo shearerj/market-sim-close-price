@@ -10,7 +10,6 @@ import market.PQBid;
 import market.Price;
 import model.CentralCDA;
 import model.MarketModel;
-import model.MarketModelFactory;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -23,7 +22,6 @@ import com.google.gson.JsonObject;
 
 import data.AgentProperties;
 import data.DummyFundamental;
-import data.EntityProperties;
 import data.FundamentalValue;
 import data.ModelProperties;
 import event.TimeStamp;
@@ -55,8 +53,7 @@ public class CDAMarketTest {
 	@Before
 	public void setup() {
 		model = new CentralCDA(1, fund, agentProperties, modelProperties, playerConfig, rand);
-		market = new CDAMarket(1, model);
-		model.addMarket(market);
+		market = model.getMarkets().iterator().next();
 		for(Market mkt : model.getMarkets()) market = mkt;
 		assertTrue("Error setting up marketModel", market != null);
 	}

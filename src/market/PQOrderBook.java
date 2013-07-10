@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import utils.MathUtils;
-import data.SystemData;
 import entity.Market;
 import event.TimeStamp;
 
@@ -31,7 +30,7 @@ public class PQOrderBook extends OrderBook {
 	 * inserts new bid into the order book
 	 */
 	public void insertBid(Bid newBid) {
-		Integer key = newBid.getAgent().getID();
+		int key = newBid.getAgent().getID();
 
 		// create entry if non-existent, remove old bid if exists
 		if (!activeBids.containsKey(key)) {
@@ -290,15 +289,15 @@ public class PQOrderBook extends OrderBook {
 				p = new Price(Math.round((ask.getPrice().getPrice() - 
 						bid.getPrice().getPrice()) * pricingPolicy + bid.getPrice().getPrice()));
 				p = new Price(MathUtils.quantize(p.getPrice(), data.tickSize));
-				log(INFO, ts + " | " + data.getMarket(marketID) + 
+				log(INFO, ts + " | " + market + 
 						" clearing price based on (BID: " + 
 						bid.getPrice().getPrice() + ", ASK:" + ask.getPrice().getPrice() + 
 						") & pricingPolicy=" + pricingPolicy + " => price " + p.getPrice());
 			}
 			transactions.add(new PQTransaction(q, p, buy.getAgent(), sell.getAgent(), 
-					buyBid, sellBid, ts, data.getMarket(marketID)));
+					buyBid, sellBid, ts, market));
 //			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-			log(INFO, ts + " | " + data.getMarket(marketID) + 
+			log(INFO, ts + " | " + market + 
 					" Quantity=" + q + " cleared at Price=" + p.getPrice());
 			
 			Integer key = new Integer(buy.getAgentID());

@@ -43,7 +43,7 @@ public class CentralCall extends MarketModel {
 				CallMarket.PRICING_POLICY_KEY, 0.5f);
 		TimeStamp clearFreq = new TimeStamp(modelProps.getAsLong(
 				CallMarket.CLEAR_FREQ_KEY, 100));
-		markets.add(new CallMarket(1, this, pricingPolicy, clearFreq));
+		markets.add(new CallMarket(1, this, sip, pricingPolicy, clearFreq));
 	}
 
 }

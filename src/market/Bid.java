@@ -36,11 +36,6 @@ public abstract class Bid {
 	public TimeStamp getSubmitTime() {
 		return submitTime;
 	}
-	
-	@Deprecated // TODO Call getAgent instead
-	public int getAgentID() {
-		return agent.getID();
-	}
 
 	/**
 	 * accessor function for bidID
@@ -99,17 +94,5 @@ public abstract class Bid {
 	 * @return true if contains buys
 	 */
 	public abstract boolean containsBuyOffers();
-
-	//
-	//    public abstract String allocString();
-	//
-	//    public abstract String sameBidArray(Bid other);
-	//
-	//    public abstract void addPoints(PQPoint[] points);
-	//
-	//    public abstract void addPoint(PQPoint p);
-	//
-	//    public abstract void addPoint(int q, Price p);
-	//
-	//    public abstract PQPoint [] getBidArray();
+	
 }

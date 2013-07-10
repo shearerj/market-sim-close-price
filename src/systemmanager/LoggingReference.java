@@ -470,7 +470,7 @@ public class LoggingReference {
 
 		createInitialAgentEvents(agent);
 		data.addAgent(agent);
-		model.addAgent(agent);
+//		model.addAgent(agent);
 		model.linkAgent(agID);
 		return agent;
 	}

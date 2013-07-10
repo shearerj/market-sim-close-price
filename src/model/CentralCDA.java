@@ -33,7 +33,7 @@ public class CentralCDA extends MarketModel {
 
 	@Override
 	protected void setupMarkets(EntityProperties modelProps) {
-		markets.add(new CDAMarket(1, this));
+		markets.add(new CDAMarket(1, this, sip));
 	}
 
 }
