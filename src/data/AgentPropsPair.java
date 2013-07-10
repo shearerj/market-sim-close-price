@@ -1,6 +1,6 @@
 package data;
 
-import systemmanager.Consts.AgentType;
+import systemmanager.Consts.SMAgentType;
 
 
 /**
@@ -11,15 +11,15 @@ import systemmanager.Consts.AgentType;
  */
 public class AgentPropsPair {
 
-	  private final AgentType left;
+	  private final SMAgentType left;
 	  private final EntityProperties right;
 
-	  public AgentPropsPair(AgentType left, EntityProperties right) {
+	  public AgentPropsPair(SMAgentType left, EntityProperties right) {
 		  this.left = left;
 		  this.right = right;
 	  }
 
-	  public AgentType getAgentType() { return left; }
+	  public SMAgentType getAgentType() { return left; }
 
 	  public EntityProperties getProperties() { return right; }
 

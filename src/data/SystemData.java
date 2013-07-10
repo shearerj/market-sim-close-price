@@ -5,7 +5,7 @@ import entity.*;
 import market.*;
 import model.*;
 import systemmanager.*;
-import systemmanager.Consts.AgentType;
+import systemmanager.Consts.SMAgentType;
 import systemmanager.Consts.ModelType;
 
 import java.text.DecimalFormat;
@@ -318,8 +318,9 @@ public class SystemData {
 	 * @param agentType
 	 * @return
 	 */
-	public boolean isSMAgent(AgentType agentType) {
-		return Consts.SM_AGENT.contains(agentType);
+	public boolean isSMAgent(SMAgentType agentType) {
+//		return Consts.SM_AGENTS.contains(agentType);
+		return false;
 	}
 	
 	/**
@@ -483,7 +484,7 @@ public class SystemData {
 	public void writeToFile(double[] values, String filename) {
 		try {
 			DecimalFormat df = new DecimalFormat("#.#######");
-			File f = new File(new File(simDir, Consts.logDir), filename);
+			File f = new File(new File(simDir, Consts.LOG_DIR), filename);
 			if (!f.isFile()) f.createNewFile();
 			FileOutputStream os = new FileOutputStream(f);
 			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");

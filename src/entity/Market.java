@@ -297,7 +297,7 @@ public abstract class Market extends Entity {
 
 	protected void addMidQuote(TimeStamp ts, Price bid, Price ask) {
 		double midQuote = Double.NaN;
-		if (bid != Consts.INF_PRICE && ask != Consts.INF_PRICE) {
+		if (!bid.equals(Price.INF) && !ask.equals(Price.INF)) {
 			midQuote = (bid.getPrice() + ask.getPrice()) / 2;
 		}
 		this.midQuotes.add(ts, midQuote);

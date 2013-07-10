@@ -1,13 +1,17 @@
 package entity;
 
+import static entity.AAAgent.*;
 import static logger.Logger.log;
 import static org.junit.Assert.assertTrue;
-import static entity.AAAgent.*;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import logger.Logger;
+import market.Price;
+import model.MarketModel;
+import model.MarketModelFactory;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -15,7 +19,6 @@ import org.junit.Test;
 
 import systemmanager.Consts;
 import utils.RandPlus;
-
 import activity.Activity;
 import activity.SubmitNMSBid;
 
@@ -27,12 +30,6 @@ import data.EntityProperties;
 import data.FundamentalValue;
 import data.ModelProperties;
 import event.TimeStamp;
-
-import logger.Logger;
-import market.Bid;
-import market.PQBid;
-import market.Price;
-import model.*;
 
 
 public class AAAgentTest {
@@ -150,15 +147,15 @@ public class AAAgentTest {
 	@Test
 	public void initialSellerTest() {
 		Logger.log(Logger.Level.DEBUG, "");
-		Logger.log(Logger.Level.DEBUG, "Testing seller on empty market: Result should be price=" + Consts.INF_PRICE);
+		Logger.log(Logger.Level.DEBUG, "Testing seller on empty market: Result should be price=" + Price.INF);
 		//Creating a seller
 		AAAgent agent = addAAAgent(model, false);
 		//Testing against an empty market
 		TimeStamp ts = new TimeStamp(100);
 		Collection<Activity> test = agent.agentStrategy(ts);
 		
-		//Checking that the submitted ask price is Consts.INF_Price
-		Activity act = new SubmitNMSBid(agent, Consts.INF_PRICE, -1, Consts.INF_TIME, ts);
+		//Checking that the submitted ask price is Price.INF
+		Activity act = new SubmitNMSBid(agent, Price.INF, -1, Consts.INF_TIME, ts);
 		//Finding the bid in the activity list
 		for(Activity itr : test) {
 			if(SubmitNMSBid.class.isAssignableFrom(itr.getClass())) {
@@ -166,7 +163,7 @@ public class AAAgentTest {
 				SubmitNMSBid bid = (SubmitNMSBid) itr;
 				//Asserting the bid is correct
 				assertTrue(bid.getAg().equals(agent));
-				assertTrue(bid.getPrice().equals(Consts.INF_PRICE));
+				assertTrue(bid.getPrice().equals(Price.INF));
 				assertTrue(bid.getQuantity() == -1);
 			}
 		}
@@ -344,7 +341,7 @@ public class AAAgentTest {
 		
 		//Testing the Agent
 		AAAgent agent = addAAAgent(model, false);
-		Logger.log(Logger.Level.DEBUG, "Price ~= " + (150000 + (Consts.INF_PRICE.getPrice()-150000)/3));
+		Logger.log(Logger.Level.DEBUG, "Price ~= " + (150000 + (Price.INF.getPrice()-150000)/3));
 		agent.setAggression(-1);
 		TimeStamp ts = new TimeStamp(100);
 		Collection<Activity> test = agent.agentStrategy(ts);
@@ -357,8 +354,8 @@ public class AAAgentTest {
 				SubmitNMSBid bid = (SubmitNMSBid) itr;
 				//Asserting the bid is correct
 				assertTrue(bid.getAg().equals(agent));
-				Price low = new Price(150000 + (Consts.INF_PRICE.getPrice()-150000)/3 - 5000);
-				Price high = new Price(150000 + (Consts.INF_PRICE.getPrice()-150000)/3 + 5000);
+				Price low = new Price(150000 + (Price.INF.getPrice()-150000)/3 - 5000);
+				Price high = new Price(150000 + (Price.INF.getPrice()-150000)/3 + 5000);
 				assertTrue(bid.getPrice().greaterThan(low));
 				assertTrue(bid.getPrice().lessThan(high));
 				assertTrue(bid.getQuantity() == -1);

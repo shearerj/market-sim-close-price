@@ -8,12 +8,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import systemmanager.Consts.AgentType;
+import systemmanager.Consts.SMAgentType;
 import systemmanager.Consts.ModelType;
 import data.AgentPropsPair;
 import data.EntityProperties;
@@ -125,9 +126,9 @@ public class PlayerReference {
 						// if > 1, # model type = # of items in the list
 						// check if there are NONE or 0 of this model
 						data.numModelType.put(modelType, configs.length);
-					} else if (!models.equals(Consts.MODEL_CONFIG_NONE) && 
-							!models.equals("0")) {
-						data.numModelType.put(modelType, configs.length);
+//					} else if (!models.equals(Consts.MODEL_CONFIG_NONE) && 
+//							!models.equals("0")) {
+//						data.numModelType.put(modelType, configs.length);
 					} else {
 						data.numModelType.put(modelType, 0);
 					}
@@ -138,9 +139,9 @@ public class PlayerReference {
 		/*******************
 		 * CONFIGURATION - add environment agents
 		 *******************/
-		for (AgentType agentType : Consts.SM_AGENT) {
+		for (SMAgentType agentType : Consts.SMAgentType.values()) {
 			String num = getValue(agentType);
-			String setup = getValue(agentType + Consts.setupSuffix);
+			String setup = getValue(agentType + Consts.SETUP_SUFFIX);
 			if (num != null) {
 				int n = Integer.parseInt(num);
 				EntityProperties op = getStrategyParameters(agentType, setup);
@@ -152,7 +153,7 @@ public class PlayerReference {
 		/*******************
 		 * ASSIGNMENT - add players
 		 *******************/
-		for (String role : Consts.roles) {
+		for (String role : Collections.singleton("EX_ROLE")/*Consts.roles*/) {
 			Object strats = assignments.get(role);
 			if (strats != null) {			
 				@SuppressWarnings("unchecked")
@@ -165,7 +166,7 @@ public class PlayerReference {
 									"::setRolePlayers: " + "incorrect strategy string");
 						} else {
 							// first elt is agent type, second elt is strategy
-							AgentType type = AgentType.valueOf(as[0]);
+							SMAgentType type = SMAgentType.valueOf(as[0]);
 							EntityProperties op = getStrategyParameters(type, as[1]);
 							data.addPlayerProperties(new AgentPropsPair(type, op));
 						}
@@ -193,7 +194,7 @@ public class PlayerReference {
 		return getValue(key.toString());
 	}
 	
-	public String getValue(AgentType key) {
+	public String getValue(SMAgentType key) {
 		return getValue(key.toString());
 	}
 
@@ -204,7 +205,7 @@ public class PlayerReference {
 	 * @param strategy
 	 * @return
 	 */
-	private EntityProperties getStrategyParameters(AgentType type, String strategy) {
+	private EntityProperties getStrategyParameters(SMAgentType type, String strategy) {
 		EntityProperties op = PlayerReference.getAgentProperties(type, strategy);
 		
 		if (op == null) {
@@ -224,14 +225,14 @@ public class PlayerReference {
 	 * @param strategy
 	 * @return ObjectProperties
 	 */
-	public static EntityProperties getAgentProperties(AgentType type, String strategy) {
+	public static EntityProperties getAgentProperties(SMAgentType type, String strategy) {
 		EntityProperties p = null; // new ObjectProperties(Consts.getProperties(type));
 		p.put(Agent.STRATEGY_KEY, strategy);
 		
 		if (strategy == null) return p;
 		
 		// Check that strategy is not blank
-		if (!strategy.equals("") && !type.equals(Consts.AgentType.DUMMY)) {
+		if (!strategy.equals("") /*&& !type.equals(Consts.AgentType.DUMMY)*/) {
 			String[] stratParams = strategy.split("[_]+");
 			if (stratParams.length % 2 != 0) {
 				return null;
@@ -244,6 +245,6 @@ public class PlayerReference {
 	}
 	
 	public static EntityProperties getAgentProperties(String type, String strategy) {
-		return getAgentProperties(AgentType.valueOf(type), strategy);
+		return getAgentProperties(SMAgentType.valueOf(type), strategy);
 	}
 }

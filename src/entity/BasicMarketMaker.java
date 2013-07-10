@@ -102,7 +102,7 @@ public class BasicMarketMaker extends MarketMaker {
 
 			// check if the bid or ask crosses the NBBO
 			// FIXME I believe this will create orders that would transact on
-			// another market...
+			// another market. Wait to hear from Elaine.
 			if (lastNBBOQuote.getBestAsk().lessThan(ask)) {
 				// buy orders: If ASK_N < X_t, then [ASK_N, ..., Y_t]
 				buyMinPrice = lastNBBOQuote.getBestAsk();

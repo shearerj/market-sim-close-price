@@ -83,7 +83,7 @@ public class SystemManager {
 		// TODO move props to SimSpec?
 		initializeLogger(getProperties(), simFolder, simNumber);
 
-		spec = new SimulationSpec(new File(simFolder, Consts.simSpecFile));
+		spec = new SimulationSpec(new File(simFolder, Consts.SIM_SPEC_FILE));
 		EntityProperties simProps = spec.getSimulationProperties();
 		long seed = simProps.getAsLong(SimulationSpec.RAND_SEED,
 				System.currentTimeMillis());
@@ -119,8 +119,8 @@ public class SystemManager {
 
 	protected Properties getProperties() throws IOException {
 		Properties props = new Properties();
-		props.load(new FileInputStream(new File(Consts.configDir,
-				Consts.configFile)));
+		props.load(new FileInputStream(new File(Consts.CONFIG_DIR,
+				Consts.CONFIG_FILE)));
 		return props;
 	}
 
@@ -142,7 +142,7 @@ public class SystemManager {
 		logFileName.append(TIME_FORMAT.format(now).replace(':', '.'));
 		logFileName.append(".txt");
 
-		File logDir = new File(simFolder, Consts.logDir);
+		File logDir = new File(simFolder, Consts.LOG_DIR);
 		logDir.mkdirs();
 
 		File logFile = new File(logDir, logFileName.toString());
@@ -173,7 +173,7 @@ public class SystemManager {
 	}
 
 	public void aggregateResults() throws IOException {
-		File results = new File(simFolder, Consts.obsFile + num + ".json");
+		File results = new File(simFolder, Consts.OBS_FILE_PREFIX + num + ".json");
 		Observations obs = new Observations(spec, models);
 		obs.writeToFile(results);
 	}

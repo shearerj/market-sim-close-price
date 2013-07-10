@@ -21,7 +21,7 @@ import model.MarketModel;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import systemmanager.Consts;
-import systemmanager.Consts.AgentType;
+import systemmanager.Consts.SMAgentType;
 import systemmanager.SimulationSpec;
 import utils.DSPlus;
 
@@ -291,7 +291,7 @@ public class Observations {
 		// So that agent types with 0 transactions still get logged. FIXME This
 		// maybe should pull only from agent types that had nonzero numbers, not
 		// every agent possible.
-		for (AgentType type : Consts.AgentType.values())
+		for (SMAgentType type : Consts.SMAgentType.values())
 			numTrans.put(type.toString(), 0);
 
 		for (Transaction t : model.getTrans()) {

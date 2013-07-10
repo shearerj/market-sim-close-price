@@ -8,8 +8,6 @@ package event;
 
 import java.util.*;
 
-import systemmanager.Consts;
-
 import activity.Activity;
 
 /**
@@ -17,6 +15,9 @@ import activity.Activity;
  * remain an immutable object
  */
 public class TimeStamp implements Comparable<TimeStamp> {
+	
+	public static final TimeStamp IMMEDIATE = new TimeStamp(-1);
+	public static final TimeStamp ZERO = new TimeStamp(0);
 	
 	protected final long ts;
 
@@ -46,13 +47,6 @@ public class TimeStamp implements Comparable<TimeStamp> {
 
 	public TimeStamp(TimeStamp ts) {
 		this.ts = new Long(ts.longValue());
-	}
-
-	/**
-	 * @return true if TimeStamp is infinitely fast.
-	 */
-	public boolean isInfinitelyFast() {
-		return this.equals(Consts.INF_TIME); // TODO change to reference check?
 	}
 
 	/**

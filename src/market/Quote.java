@@ -1,6 +1,5 @@
 package market;
 
-import static systemmanager.Consts.INF_PRICE;
 import entity.Market;
 import event.TimeStamp;
 
@@ -61,11 +60,11 @@ public class Quote {
 	public int getSpread() {
 		if (lastAskPrice.compareTo(lastBidPrice) >= 0) {
 			if (lastAskPrice.getPrice() == -1 || lastAskPrice.getPrice() == 0) {
-				return INF_PRICE.getPrice();
+				return Price.INF.getPrice();
 			}
 			if (lastBidPrice.getPrice() == -1 || 
-					lastBidPrice.equals(INF_PRICE)) {
-				return INF_PRICE.getPrice();
+					lastBidPrice.equals(Price.INF)) {
+				return Price.INF.getPrice();
 			}
 			return lastAskPrice.getPrice() - lastBidPrice.getPrice();
 		}

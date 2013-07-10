@@ -74,13 +74,13 @@ public class CDAMarket extends Market {
 		if (bp != null && ap != null) {
 			if (bp.getPrice() == -1 || ap.getPrice() == -1) {
 				// either bid or ask are undefined
-				this.addSpread(quoteTime, Consts.INF_PRICE.getPrice());
-				this.addMidQuote(quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
+				this.addSpread(quoteTime, Price.INF.getPrice());
+				this.addMidQuote(quoteTime, Price.INF, Price.INF);
 				
 			} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
 				log(ERROR, this.getName() + "::quote: ERROR bid > ask");
-				this.addSpread(quoteTime, Consts.INF_PRICE.getPrice());
-				this.addMidQuote(quoteTime, Consts.INF_PRICE, Consts.INF_PRICE);
+				this.addSpread(quoteTime, Price.INF.getPrice());
+				this.addMidQuote(quoteTime, Price.INF, Price.INF);
 				
 			} else {
 				// valid bid-ask

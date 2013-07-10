@@ -1,7 +1,6 @@
 package market;
 
 import entity.Market;
-import static systemmanager.Consts.INF_PRICE;
 
 /**
  * Data structure for holding best bid/ask quote (for updating NBBO)
@@ -26,18 +25,18 @@ public class BestBidAsk {
 	 */
 	public int getSpread() {
 		if (bestAsk.compareTo(bestBid) >= 0) {
-			if (bestAsk.getPrice() == -1 || bestAsk.equals(INF_PRICE)) { // ask
+			if (bestAsk.getPrice() == -1 || bestAsk.equals(Price.INF)) { // ask
 																			// undefined
-				return -INF_PRICE.getPrice();
+				return -Price.INF.getPrice();
 			}
 			if (bestBid.getPrice() == -1 || bestBid.getPrice() == 0) { // bid
 																		// undefined
-				return INF_PRICE.getPrice();
+				return Price.INF.getPrice();
 			}
 			return bestAsk.getPrice() - bestBid.getPrice();
 		}
 		// if bid crosses the ask, return a spread of INF
-		return INF_PRICE.getPrice();
+		return Price.INF.getPrice();
 	}
 
 	public Market getBestBidMarket() {

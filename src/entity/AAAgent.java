@@ -2,8 +2,6 @@ package entity;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
-import static systemmanager.Consts.INF_PRICE;
-import static systemmanager.Consts.ZERO_PRICE;
 import static utils.Compare.max;
 import static utils.Compare.min;
 
@@ -262,7 +260,7 @@ public class AAAgent extends BackgroundAgent {
 					// passive
 					if (aggression < 0) {
 						tau = movingAverage
-								+ (INF_PRICE.getPrice() - movingAverage)
+								+ (Price.INF.getPrice() - movingAverage)
 								* (Math.exp(-1 * aggression * theta) - 1)
 								/ (Math.exp(theta) - 1);
 					}
@@ -278,7 +276,7 @@ public class AAAgent extends BackgroundAgent {
 				else {
 					// passive
 					if (aggression < 0) {
-						tau = limit.getPrice() + INF_PRICE.minus(limit).getPrice()
+						tau = limit.getPrice() + Price.INF.minus(limit).getPrice()
 								* (Math.exp(-1 * aggression * theta) - 1)
 								/ (Math.exp(theta) - 1);
 					}
@@ -347,7 +345,7 @@ public class AAAgent extends BackgroundAgent {
 						r_shout = (-1 / theta)
 								* Math.log((tau - movingAverage)
 										* (Math.exp(theta) - 1)
-										/ (INF_PRICE.getPrice() - movingAverage)
+										/ (Price.INF.getPrice() - movingAverage)
 										+ 1);
 					}
 					// r > 0
@@ -364,7 +362,7 @@ public class AAAgent extends BackgroundAgent {
 						r_shout = (-1 / theta)
 								* Math.log((tau - limit.getPrice())
 										* (Math.exp(theta) - 1)
-										/ INF_PRICE.minus(limit).getPrice() + 1);
+										/ Price.INF.minus(limit).getPrice() + 1);
 					}
 					// TODO - SHOULD NOT REACH HERE
 					else {
@@ -401,7 +399,7 @@ public class AAAgent extends BackgroundAgent {
 
 			// if no bid or no ask, submit least aggressive price
 			if (bestBid == null || bestAsk == null) {
-				Price price = isBuyer ? ZERO_PRICE : INF_PRICE;
+				Price price = isBuyer ? Price.ZERO : Price.INF;
 				actMap.addAll(executeSubmitNMSBid(price, quantity,
 						ts));
 				return actMap;

@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import systemmanager.Consts.AgentType;
+import systemmanager.Consts.SMAgentType;
 import systemmanager.Consts.ModelType;
 
 import com.google.gson.Gson;
@@ -117,10 +117,10 @@ public class SimulationSpec {
 	protected Map<AgentProperties, Integer> backgroundAgents(JsonObject config, EntityProperties def) {
 		Map<AgentProperties, Integer> backgroundAgents = new HashMap<AgentProperties, Integer>();
 
-		for (AgentType agentType : Consts.SM_AGENT) {
+		for (SMAgentType agentType : Consts.SMAgentType.values()) {
 			JsonPrimitive numJson = config.getAsJsonPrimitive(agentType.toString());
 			JsonPrimitive setupJson = config.getAsJsonPrimitive(agentType
-					+ Consts.setupSuffix);
+					+ Consts.SETUP_SUFFIX);
 			if (numJson == null) continue;
 
 			AgentProperties props = new AgentProperties(agentType, def, setupJson.getAsString());

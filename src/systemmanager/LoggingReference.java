@@ -10,7 +10,7 @@ import java.util.Random;
 
 import model.MarketModel;
 import model.MarketObjectPair;
-import systemmanager.Consts.AgentType;
+import systemmanager.Consts.SMAgentType;
 import systemmanager.Consts.ModelType;
 import activity.AgentArrival;
 import activity.Clear;
@@ -171,10 +171,10 @@ public class LoggingReference {
 				log(INFO, "Primary model: " + primaryModelType + "-(default)");
 
 			} catch (Exception e) {
-				if (!Consts.ModelType.contains(desc[0])) {
+//				if (!Consts.ModelType.contains(desc[0])) {
 					System.err.println(this.getClass().getSimpleName()
 							+ "::createMarketModels: invalid primary market model type");
-				}
+//				}
 				System.err.println(e.toString());
 			}
 
@@ -233,7 +233,7 @@ public class LoggingReference {
 
 		// create market model & determine its configuration
 		int modelID = modelIDSequence.increment();
-		p.put(Consts.MODEL_CONFIG_KEY, configuration);
+//		p.put(Consts.MODEL_CONFIG_KEY, configuration);
 		MarketModel model = null; // ModelFactory.createModel(modelType,
 									// modelID, p, data);
 		data.addModel(model);
@@ -420,7 +420,7 @@ public class LoggingReference {
 				Random rand = new Random();
 				for (int i = 0; i < numAg; i++) {
 					// create copy of ObjectProperties in case modify it
-					AgentType agType = AgentType.valueOf(type);
+					SMAgentType agType = SMAgentType.valueOf(type);
 					EntityProperties op = new EntityProperties(
 							playerStrategies.get(type).get(i));
 					if (data.isSMAgent(agType)) {
@@ -455,7 +455,7 @@ public class LoggingReference {
 	 */
 	private Agent createAgent(MarketModel model, AgentPropsPair ap, Long seed,
 			TimeStamp arr) {
-		AgentType agType = ap.getAgentType();
+		SMAgentType agType = ap.getAgentType();
 		EntityProperties p = ap.getProperties();
 
 		p.put(Agent.RANDSEED_KEY, seed.toString());

@@ -18,7 +18,7 @@ import market.Bid;
 import market.Price;
 import market.Transaction;
 import systemmanager.Consts;
-import systemmanager.Consts.AgentType;
+import systemmanager.Consts.SMAgentType;
 import systemmanager.Consts.MarketType;
 import systemmanager.SimulationSpec;
 import utils.RandPlus;
@@ -252,7 +252,7 @@ public abstract class MarketModel {
 	 * @param agType
 	 * @param agProperties
 	 */
-	public void addAgentPropertyPair(AgentType agType,
+	public void addAgentPropertyPair(SMAgentType agType,
 			EntityProperties agProperties) {
 		AgentPropsPair app = new AgentPropsPair(agType, agProperties);
 		agentConfig.add(app);

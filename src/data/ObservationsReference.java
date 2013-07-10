@@ -137,8 +137,8 @@ public class ObservationsReference {
 				addFeature(modelName + VOL, getVolatility(model, period,
 						maxTime));
 			}
-			addFeature(modelName + Consts.ROLE_MARKETMAKER.toLowerCase(),
-					getMarketMakerInfo(model));
+//			addFeature(modelName + Consts.ROLE_MARKETMAKER.toLowerCase(),
+//					getMarketMakerInfo(model));
 
 			// TODO - need to remove the position balance hack
 			// addFeature(modelName + ROUTING, getRegNMSRoutingInfo(model));
@@ -201,7 +201,7 @@ public class ObservationsReference {
 	 * @param type
 	 */
 	public void outputSeries(TimeSeries s, String type) {
-		s.writeSeriesToFile(new File(new File(data.simDir, Consts.logDir), type
+		s.writeSeriesToFile(new File(new File(data.simDir, Consts.LOG_DIR), type
 				+ ".txt"));
 	}
 
@@ -214,16 +214,16 @@ public class ObservationsReference {
 	 */
 	public void outputSampledSeries(TimeSeries s, String type) {
 
-		s.writePointsToCSFile(data.simDir + Consts.logDir + type + "points.csv");
+		s.writePointsToCSFile(data.simDir + Consts.LOG_DIR + type + "points.csv");
 		for (int period : Consts.periods) {
 			s.writeSampledSeriesToFile(period, data.simLength.longValue(),
-					data.simDir + Consts.logDir + type + "_" + period + ".csv");
+					data.simDir + Consts.LOG_DIR + type + "_" + period + ".csv");
 		}
 	}
 
 	public void outputSampledSeries(int period, long maxTime, TimeSeries s,
 			String type) {
-		s.writeSampledSeriesToFile(period, maxTime, data.simDir + Consts.logDir
+		s.writeSampledSeriesToFile(period, maxTime, data.simDir + Consts.LOG_DIR
 				+ type + "_period" + period + ".csv");
 	}
 
@@ -326,13 +326,13 @@ public class ObservationsReference {
 				if (data.isEnvironmentAgent(ag.getID())) {
 					env.addValue(val);
 
-				feat.addSum("", Consts.ROLE_BACKGROUND.toLowerCase() + suffix,
-						bkgrd);
-				feat.addSum("", Consts.ROLE_MARKETMAKER.toLowerCase() + suffix,
-						mm);
-				feat.addSum("", Consts.ROLE_HFT.toLowerCase(), hft);
+//				feat.addSum("", Consts.ROLE_BACKGROUND.toLowerCase() + suffix,
+//						bkgrd);
+//				feat.addSum("", Consts.ROLE_MARKETMAKER.toLowerCase() + suffix,
+//						mm);
+//				feat.addSum("", Consts.ROLE_HFT.toLowerCase(), hft);
 				if (data.isEGTAUseCase()) { // only add if EGTA use case
-					feat.addSum("", Consts.TYPE_ENVIRONMENT.toLowerCase(), env);
+					//feat.addSum("", Consts.TYPE_ENVIRONMENT.toLowerCase(), env);
 				}
 				} else {
 					System.err.println(this.getClass().getSimpleName()
