@@ -1,5 +1,7 @@
 experiments_variable.py
 
+Last modified: 2013-07-10 hannoell
+
 What it does:
 This files run simulations while allowing the user to choose the variable that will be varied in the simulations. At the end it also runs various datachecks on the data to make sure they make sense.It also gives the user the option to choose the minimum and maximum values and the increment that the varaible will iterate over.
 
