@@ -112,7 +112,7 @@ public abstract class Market extends Entity {
 	
 	protected void setupIPSM() {
 		// TODO should have global variable of SM Latency
-		IP_SM ip_SM = new IP_SM(0, marketID, systemdata.sm_latency, this);
+		IP_SM ip_SM = new IP_SM(0, marketID, new TimeStamp(0), this);
 		addIP(ip_SM);
 	} 
 	
