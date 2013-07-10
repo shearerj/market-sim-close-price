@@ -1,14 +1,16 @@
 package model;
 
+import java.util.Collection;
 import java.util.Map;
 
-import systemmanager.Consts;
+import com.google.gson.JsonObject;
+
 import utils.RandPlus;
 import data.AgentProperties;
 import data.FundamentalValue;
-import data.ObjectProperties;
-import data.SystemData;
+import data.EntityProperties;
 import entity.CDAMarket;
+import entity.LAInformationProcessor;
 
 /**
  * CENTRALCDA
@@ -19,34 +21,21 @@ import entity.CDAMarket;
  * @author ewah
  */
 public class CentralCDA extends MarketModel {
-	
+
 	public CentralCDA(int modelID, FundamentalValue fundamental,
 			Map<AgentProperties, Integer> agentProps,
-			ObjectProperties modelProps, RandPlus rand) {
-		super(modelID, fundamental, agentProps, modelProps, rand);
+			EntityProperties modelProps, JsonObject playerConfig, RandPlus rand) {
+		super(modelID, fundamental, agentProps, modelProps, playerConfig, rand);
 	}
 
-	public CentralCDA(int modelID, ObjectProperties p, SystemData d, int sipID) {
-		super(modelID, p, d, sipID);
-		
-		config = p.getAsString(Consts.MODEL_CONFIG_KEY);
-		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
-			addMarketPropertyPair(Consts.MarketType.CDA);
-		}
-	}
-	
 	@Override
 	public String getConfig() {
 		return "";
 	}
 
 	@Override
-	protected void setupMarkets(ObjectProperties modelProps) {
-		markets.add(new CDAMarket(1, this));
+	protected void setupMarkets(EntityProperties modelProps) {
+		markets.add(new CDAMarket(1, this, this.getipIDgen())); /// not sure on numbering
 	}
 
-	@Override
-	protected void setupModelAgents(ObjectProperties modelProps) {
-		// Do nothing
-	}
 }

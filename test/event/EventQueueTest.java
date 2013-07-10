@@ -183,7 +183,7 @@ public class EventQueueTest {
 		assertFalse(q.contains(second));
 		
 		int bruteSize = 0;
-		for (Activity a : q) bruteSize++;
+		for (@SuppressWarnings("unused") Activity a : q) bruteSize++;
 		assertEquals(2, bruteSize);
 		
 		assertFalse(second == q.poll());
@@ -221,11 +221,6 @@ public class EventQueueTest {
 		@Override
 		public Collection<Activity> execute(TimeStamp time) {
 			return Collections.emptyList();
-		}
-
-		@Override
-		public Activity deepCopy() {
-			return new DummyActivity(time);
 		}
 		
 	}

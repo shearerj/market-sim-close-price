@@ -1,6 +1,5 @@
 package model;
 
-import data.ObjectProperties;
 import data.SystemData;
 import systemmanager.Consts.ModelType;
 
@@ -20,15 +19,15 @@ public class ModelFactory {
 	 * @param data
 	 * @return
 	 */
-	public static MarketModel createModel(ModelType type, int modelID, ObjectProperties props,
+	public static MarketModel createModel(ModelType type, int modelID,
 										  SystemData data, int sipID) {		
 		switch (type) {
 		case TWOMARKET:
-			return new TwoMarket(modelID, props, data, sipID);
+			//return new TwoMarket(modelID, data, sipID);
 		case CENTRALCDA:
-			return new CentralCDA(modelID, props, data, sipID);
+			//return new CentralCDA(modelID, data, sipID);
 		case CENTRALCALL:
-			return new CentralCall(modelID, props, data, sipID);
+			//return new CentralCall(modelID, data, sipID);
 		default:
 			return null; // Maybe not appropriate?
 		}

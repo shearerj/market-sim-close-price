@@ -6,6 +6,7 @@ import model.MarketModel;
 import systemmanager.*;
 import data.SystemData;
 import logger.Logger;
+import static logger.Logger.Level.INFO;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,8 +33,8 @@ public class Sip_Prime extends AbstractIP {
 	 * @param ID
 	 * @param d
 	 */
-	public Sip_Prime(int ID, SystemData d, int modelID) {
-		super(ID, d);
+	public Sip_Prime(int ID, int modelID, TimeStamp latency) {
+		super(ID, latency);
 		this.modelID = modelID;
 	}
 
@@ -63,29 +64,29 @@ public class Sip_Prime extends AbstractIP {
 	
 		BestBidAsk lastQuote = computeBestBidOffer(ids, true);
 			
-		Price bestBid = lastQuote.bestBid;
-		Price bestAsk = lastQuote.bestAsk;
+		Price bestBid = lastQuote.getBestBid();
+		Price bestAsk = lastQuote.getBestAsk();
 		if ((bestBid != null) && (bestAsk != null)) {
 			// check for inconsistency in buy/sell prices & fix if found
-			if (lastQuote.bestBid.compareTo(lastQuote.bestAsk) > 0) {
-				int mid = (lastQuote.bestBid.getPrice() + lastQuote.bestAsk.getPrice()) / 2;
+			if (lastQuote.getBestBid().compareTo(lastQuote.getBestAsk()) > 0) {
+				int mid = (lastQuote.getBestBid().getPrice() + lastQuote.getBestAsk().getPrice()) / 2;
 				bestBid = new Price(mid - this.tickSize);
 				bestAsk = new Price(mid + this.tickSize);
 				s += " (before fix) " + lastQuote + " --> ";
 				
 				// Add spread of INF if inconsistent NBBO quote
-				this.data.addNBBOSpread(modelID, ts, Consts.INF_PRICE);
+				model.addNBBOSpread(ts, Consts.INF_PRICE.getPrice());
 			} else {
 				// if bid-ask consistent, store the spread
-				this.data.addNBBOSpread(modelID, ts, lastQuote.getSpread());
+				model.addNBBOSpread(ts, lastQuote.getSpread());
 			}
 		} else {
 			// store spread of INF since no bid-ask spread
-			this.data.addNBBOSpread(modelID, ts, Consts.INF_PRICE);
+			model.addNBBOSpread(ts, Consts.INF_PRICE.getPrice());
 		}
-		lastQuote = new BestBidAsk(lastQuote.bestBidMarket, bestBid, lastQuote.bestAskMarket, bestAsk);
+		lastQuote = new BestBidAsk(lastQuote.getBestBidMarket(), bestBid, lastQuote.getBestAskMarket(), bestAsk);
 		lastQuotes.put(modelID, lastQuote);
-		Logger.log(Logger.INFO, s + "updated " + lastQuote);
+		Logger.log(INFO, s + "updated " + lastQuote);
 		return Collections.emptyList();
 	}
 	

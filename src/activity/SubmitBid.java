@@ -1,6 +1,9 @@
 package activity;
 
 import java.util.Collection;
+
+import market.Price;
+
 import org.apache.commons.lang3.builder.*;
 
 import entity.*;
@@ -15,10 +18,10 @@ public class SubmitBid extends Activity {
 
 	private Agent ag;
 	private Market mkt;
-	private int price;
+	private Price price;
 	private int quantity;
 
-	public SubmitBid(Agent ag, Market mkt, int p, int q, TimeStamp t) {
+	public SubmitBid(Agent ag, Market mkt, Price p, int q, TimeStamp t) {
 		super(t);
 		this.ag = ag;
 		this.mkt = mkt;
@@ -26,12 +29,8 @@ public class SubmitBid extends Activity {
 		this.quantity = q;
 	}
 
-	public SubmitBid deepCopy() {
-		return new SubmitBid(this.ag, this.mkt, this.price, this.quantity, this.time);
-	}
-
-	public Collection<? extends Activity> execute(TimeStamp time) {
-		return this.ag.executeSubmitBid(this.mkt, this.price, this.quantity, time);
+	public Collection<? extends Activity> execute(TimeStamp currentTime) {
+		return this.ag.executeSubmitBid(mkt, price, quantity, currentTime);
 	}
 
 	public String toString() {
@@ -41,30 +40,26 @@ public class SubmitBid extends Activity {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == this)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
+		if (obj == null || getClass() != obj.getClass())
 			return false;
 		SubmitBid other = (SubmitBid) obj;
 		return new EqualsBuilder().
-				append(ag.getID(), other.ag.getID()).
-				append(mkt.getID(), other.mkt.getID()).
+				append(ag, other.ag).
+				append(mkt, other.mkt).
 				append(price, other.price).
 				append(quantity, other.quantity).
-				append(time.longValue(), other.time.longValue()).
+				append(time, other.time).
 				isEquals();
 	}
 	
 	@Override
 	public int hashCode() {
 		return new HashCodeBuilder(19, 37).
-				append(ag.getID()).
-				append(mkt.getID()).
+				append(ag).
+				append(mkt).
 				append(price).
 				append(quantity).
-				append(time.longValue()).
+				append(time).
 				toHashCode();
 	}
 }

@@ -57,10 +57,6 @@ public class EventQueue implements Queue<Activity> {
 	protected int size;
 	protected Random rand;
 
-	public EventQueue() {
-		this(new Random());
-	}
-
 	public EventQueue(Random seed) {
 		this(8, seed);
 	}
@@ -74,6 +70,10 @@ public class EventQueue implements Queue<Activity> {
 		eventIndex = new HashMap<TimeStamp, Event>(capacity);
 		size = 0;
 		rand = seed;
+	}
+
+	public EventQueue() {
+		this(new Random());
 	}
 
 	@Override

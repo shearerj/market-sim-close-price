@@ -1,12 +1,16 @@
 package entity;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.INFO;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.TreeMap;
+import com.sun.tools.javac.util.List;
 
 import systemmanager.Consts;
-
 import logger.Logger;
 import market.Bid;
 import market.PQOrderBook;
@@ -14,12 +18,14 @@ import market.Price;
 import market.Quote;
 import market.Transaction;
 import model.MarketModel;
+import systemmanager.Consts;
 import activity.Activity;
 import activity.ProcessQuote;
 import activity.SendToSIP;
 import activity.UpdateNBBO;
-import data.ObjectProperties;
+import data.EntityProperties;
 import data.SystemData;
+import data.TimeSeries;
 import event.TimeStamp;
 
 /**
@@ -28,17 +34,22 @@ import event.TimeStamp;
  * @author ewah
  */
 public abstract class Market extends Entity {
-
+	
+	// XXX There should probably be more model specific stuff here...
 	// reorg
 	protected final MarketModel model;
-	protected ArrayList<Bid> bids;
-	// XXX There should probably be more model specific stuff here...
 	protected PQOrderBook orderbook;
+	//Statistics
+	protected List<Bid> bids;			//All bids ever submitted to the market
+	protected TimeSeries depths;		//Number of orders in the orderBook
+	protected TimeSeries spreads;		//Bid-ask spread value
+	protected TimeSeries midQuotes;		//Midpoint of bid/ask values
 	// end reorg
 
 	// Model information
 	// TODO equals method...
 	protected int modelID; // ID of associated model
+	protected int marketID;
 
 	// Agent information
 	protected ArrayList<Integer> buyers;
@@ -56,25 +67,23 @@ public abstract class Market extends Entity {
 	public Price lastBidPrice;
 	public int lastAskQuantity;
 	public int lastBidQuantity;
-	public String marketType;
-	public int ip_LA_ID; // ID for LA & SM ip's
-	public int ip_SM_ID;
-	public LAInformationProcessor ip_LA;
 	public IP_SM ip_SM;
+	public String marketType;
+	Collection<AbstractIP> ips;
 	
-
-	public Market(int marketID, MarketModel model) {
+/*
+	public Market(int marketID, MarketModel model, int ipID) {
 		super(marketID);
-		this.model = model;
-	}
-
-	public Market(int marketID, SystemData d, ObjectProperties p,
-			MarketModel model, int ipID) {
-		super(marketID, d, p);
 		
+		this.model = model;
+	}*/  // not sure which constructor to use... 
+
+	public Market(int marketID, MarketModel model, int ipID) {
+		super(marketID);
 		agentIDs = new ArrayList<Integer>();
 		buyers = new ArrayList<Integer>();
 		sellers = new ArrayList<Integer>();
+		this.marketID = marketID;
 
 		lastQuoteTime = new TimeStamp(-1);
 		lastClearTime = new TimeStamp(-1);
@@ -85,22 +94,27 @@ public abstract class Market extends Entity {
 		lastAskPrice = new Price(-1);
 		lastBidPrice = new Price(-1);
 		
-		ip_LA_ID = ipID;
-		ip_SM_ID = ipID + 1;
+		setupIPSM();
 		
-		ip_LA = new LAInformationProcessor(ipID, d, marketID);
-		ip_SM = new IP_SM(ipID + 1, d, marketID);
 		// reorg
 		this.model = model;
+
 		this.orderbook = new PQOrderBook(this);
+		this.depths = new TimeSeries();
+		this.spreads = new TimeSeries();
+		this.midQuotes = new TimeSeries();
+		addIP(model.sip);
 	}
 	
-	/**
-	 * @return IP_LA
-	 */
-	public LAInformationProcessor getIPLA() {
-		return this.ip_LA;
+	public void addIP(AbstractIP ip) {
+		ips.add(ip);
 	}
+	
+	protected void setupIPSM() {
+		// TODO should have global variable of SM Latency
+		IP_SM ip_SM = new IP_SM(0, marketID, systemdata.sm_latency, this);
+		addIP(ip_SM);
+	} 
 	
 	/**
 	 * @return IP_SM
@@ -176,7 +190,7 @@ public abstract class Market extends Entity {
 		Collection<Activity> actList = new ArrayList<Activity>();
 		
 		//Log prior quote
-		Logger.log(Logger.INFO, clearTime + " | " + this + " Prior-clear Quote" + 
+		log(INFO, clearTime + " | " + this + " Prior-clear Quote" + 
 				this.quote(clearTime));
 		
 		//Update the orderbook
@@ -188,9 +202,9 @@ public abstract class Market extends Entity {
 		
 		//If there are no new transactions
 		if(trans == null) {
-			data.addDepth(id, clearTime, orderbook.getDepth());
+			this.addDepth(clearTime, orderbook.getDepth());
 			
-			Logger.log(Logger.INFO, clearTime + " | ....." + this + " " + 
+			log(INFO, clearTime + " | ....." + this + " " + 
 					this.getName() + "::clear: No change. Post-clear Quote" +  
 					this.quote(clearTime));
 			
@@ -205,7 +219,7 @@ public abstract class Market extends Entity {
 			tr.getBuyer().logTransactions(clearTime);
 			tr.getSeller().updateTransactions(clearTime);
 			tr.getSeller().logTransactions(clearTime);
-			lastClearPrice = tr.price;			
+			lastClearPrice = tr.getPrice();			
 		}
 		
 		//Orderbook logging
@@ -213,8 +227,8 @@ public abstract class Market extends Entity {
 		orderbook.logClearedBids(clearTime);
 		orderbook.logFourHeap(clearTime);
 		//Updating Depth
-		data.addDepth(this.id, clearTime, orderbook.getDepth());
-		Logger.log(Logger.INFO, clearTime + " | ....." + toString() + " " + 
+		this.addDepth(clearTime, orderbook.getDepth());
+		Logger.log(Logger.Level.INFO, clearTime + " | ....." + toString() + " " + 
 				this.getName() + "::clear: Order book cleared: " +
 				"Post-clear Quote" + this.quote(clearTime));
 		actList.add(new SendToSIP(this, clearTime));
@@ -231,7 +245,7 @@ public abstract class Market extends Entity {
 	 * 
 	 * @return bids
 	 */
-	public ArrayList<Bid> getAllBids() {
+	public List<Bid> getAllBids() {
 		return this.bids;
 	}
 
@@ -284,19 +298,14 @@ public abstract class Market extends Entity {
 	public Collection<Activity> sendToSIP(TimeStamp ts) {
 		int bid = this.getBidPrice().getPrice();
 		int ask = this.getAskPrice().getPrice();
-		Logger.log(Logger.INFO, ts + " | " + this + " SendToSIP(" + bid + ", "
+		log(INFO, ts + " | " + this + " SendToSIP(" + bid + ", "
 				+ ask + ")");
 
 		Collection<Activity> actMap = new ArrayList<Activity>();
-		Sip_Prime sip = model.sip;
 		
-		actMap.add(new ProcessQuote(sip, this, bid, ask, ts.sum(data.nbboLatency)));
-		actMap.add(new UpdateNBBO(sip, model, ts.sum(data.nbboLatency)));
-		actMap.add(new ProcessQuote(ip_LA, this, bid, ask, ts.sum(data.hftLatency)));
-		actMap.add(new UpdateNBBO(ip_LA, model, ts.sum(data.hftLatency)));
-		actMap.add(new ProcessQuote(ip_SM, this, bid, ask, ts.sum(data.smLatency)));
-		actMap.add(new UpdateNBBO(ip_SM, model, ts.sum(data.smLatency)));
-	
+		for (AbstractIP ip : ips) {
+			actMap.add(ip.scheduleProcessQuote(this, bid, ask, ts));
+		}
 		return actMap;
 	}
 
@@ -308,15 +317,6 @@ public abstract class Market extends Entity {
 			return false;
 		}
 		return true;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#toString()
-	 */
-	public String toString() {
-		return new String("[" + this.getID() + "]");
 	}
 
 	/**
@@ -388,26 +388,39 @@ public abstract class Market extends Entity {
 	}
 
 	public Collection<Transaction> getModelTrans() {
-		return model.getTrans();
+		return this.model.getTrans();
 	}
 
 	public MarketModel getMarketModel() {
-		return model;
+		return this.model;
 	}
-
-	/**
-	 * Quantizes the given integer based on the given granularity. Formula from
-	 * Wikipedia (http://en.wikipedia.org/wiki/Quantization_signal_processing)
-	 * 
-	 * @param num
-	 *            integer to quantize
-	 * @param n
-	 *            granularity (e.g. tick size)
-	 * @return
-	 */
-	public static int quantize(int num, int n) {
-		double tmp = 0.5 + Math.abs((double) num) / ((double) n);
-		return Integer.signum(num) * n * (int) Math.floor(tmp);
+	
+	public TimeSeries getDepth() {
+		return this.depths;
+	}
+	
+	public TimeSeries getSpread() {
+		return this.spreads;
+	}
+	
+	public TimeSeries getMidQuotes() {
+		return this.midQuotes;
+	}
+	
+	protected void addDepth(TimeStamp ts, int point) {
+		this.depths.add(ts, (double) point);
+	}
+	
+	protected void addSpread(TimeStamp ts, int spread) {
+		this.spreads.add(ts, spread);
+	}
+	
+	protected void addMidQuote(TimeStamp ts, Price bid, Price ask) {
+		double midQuote = Double.NaN;
+		if (bid != Consts.INF_PRICE && ask != Consts.INF_PRICE) {
+			midQuote = (bid.getPrice() + ask.getPrice()) / 2;
+		}
+		this.midQuotes.add(ts, midQuote);
 	}
 
 	@Deprecated
@@ -417,5 +430,21 @@ public abstract class Market extends Entity {
 			map.put(b.getBidID(), b.getSubmitTime());
 		return map;
 	}
+	
+	@Override
+	public int hashCode() {
+		return super.hashCode() ^ model.hashCode();
+	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof Market)) return false;
+		Market market = (Market) obj;
+		return super.equals(market) && model.equals(market.model);
+	}
+
+	@Override
+	public String toString() {
+		return new String("[" + id + "]");
+	}
 }

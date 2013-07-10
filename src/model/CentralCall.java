@@ -1,15 +1,17 @@
 package model;
 
+import java.util.Collection;
 import java.util.Map;
 
+import com.google.gson.JsonObject;
+
+import utils.RandPlus;
 import data.AgentProperties;
 import data.FundamentalValue;
-import data.ObjectProperties;
-import data.SystemData;
+import data.EntityProperties;
 import entity.CallMarket;
+import entity.LAInformationProcessor;
 import event.TimeStamp;
-import systemmanager.*;
-import utils.RandPlus;
 
 /**
  * CENTRALCALL
@@ -27,47 +29,24 @@ public class CentralCall extends MarketModel {
 
 
 	public CentralCall(int modelID, FundamentalValue fundamental,
-			Map<AgentProperties, Integer> agentProps,
-			ObjectProperties modelProps, RandPlus rand) {
-		super(modelID, fundamental, agentProps, modelProps, rand);
+			Map<AgentProperties, Integer> agentProps, EntityProperties modelProps, 
+			JsonObject playerConfig, RandPlus rand) {
+		super(modelID, fundamental, agentProps, modelProps, playerConfig, rand);
 	}
-	
-	public CentralCall(int modelID, ObjectProperties p, SystemData d, int sipID) {
-		super(modelID, p, d, sipID);
-		
-		config = p.getAsString(Consts.MODEL_CONFIG_KEY);
-		if (!config.equals(Consts.MODEL_CONFIG_NONE) && !config.equals("0")) {
-			
-			ObjectProperties mktProperties = Consts.getProperties(Consts.MarketType.CALL);
-			
-			// Set clearing frequency to be NBBO latency or a constant
-			if (config.equals("NBBO")) {
-				mktProperties.put(CallMarket.CLEAR_FREQ_KEY, data.nbboLatency.toString());
-				
-			} else if (config.contains("CONST")){
-				// Add substring immediately after "CONST"
-				mktProperties.put(CallMarket.CLEAR_FREQ_KEY, config.substring(5));
-			}
-			
-			addMarketPropertyPair(Consts.MarketType.CALL, mktProperties);
-		}
-	}
-	
+
 	@Override
 	public String getConfig() {
 		return config;
 	}
 
 	@Override
-	protected void setupMarkets(ObjectProperties modelProps) {
-		// FIXME These values are probably not correct.
-		float pricingPolicy = modelProps.getAsFloat(CallMarket.PRICING_POLICY_KEY, 0);
-		TimeStamp clearFreq = new TimeStamp(modelProps.getAsLong(CallMarket.CLEAR_FREQ_KEY, 1000));
-		markets.add(new CallMarket(1, this, pricingPolicy, clearFreq));
+	protected void setupMarkets(EntityProperties modelProps) {
+		// FIXME These default values are probably not correct.
+		float pricingPolicy = modelProps.getAsFloat(
+				CallMarket.PRICING_POLICY_KEY, 0.5f);
+		TimeStamp clearFreq = new TimeStamp(modelProps.getAsLong(
+				CallMarket.CLEAR_FREQ_KEY, 100));
+		markets.add(new CallMarket(1, this, pricingPolicy, clearFreq)); // not sure on numbering...
 	}
 
-	@Override
-	protected void setupModelAgents(ObjectProperties modelProps) {
-		// Do nothing
-	}
 }

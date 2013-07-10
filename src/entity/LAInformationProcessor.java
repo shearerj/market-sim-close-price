@@ -2,6 +2,7 @@ package entity;
 
 import systemmanager.*;
 import data.SystemData;
+import event.TimeStamp;
 
 
 /**
@@ -12,13 +13,20 @@ import data.SystemData;
  */
 public class LAInformationProcessor extends IP_Single_Market {
 	
+	private LAAgent laagent;
+	
 	/**
 	 * Constructor
 	 * @param ID
 	 * @param d
 	 */
-	public LAInformationProcessor(int ID, SystemData d, int marketID) {
-		super(ID, d, marketID);
+	public LAInformationProcessor(int ID, int marketID, TimeStamp latency, Market mkt, LAAgent laagent) {
+		super(ID, marketID, latency, mkt);
+		this.laagent = laagent;
+	}
+	
+	public LAAgent getLAAgent() {
+		return this.laagent;
 	}
 	
 	/* (non-Javadoc)

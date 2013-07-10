@@ -1,7 +1,7 @@
 package market;
 
 import entity.Market;
-import systemmanager.Consts;
+import static systemmanager.Consts.INF_PRICE;
 
 /**
  * Data structure for holding best bid/ask quote (for updating NBBO)
@@ -10,20 +10,15 @@ import systemmanager.Consts;
  */
 public class BestBidAsk {
 
-	public final Market bestBidMarket, bestAskMarket;
-	public final Price bestBid, bestAsk;
-	
-	public BestBidAsk(Market bestBidMarket, Price bestBid, Market bestAskMarket, Price bestAsk) {
+	protected final Market bestBidMarket, bestAskMarket;
+	protected final Price bestBid, bestAsk;
+
+	public BestBidAsk(Market bestBidMarket, Price bestBid,
+			Market bestAskMarket, Price bestAsk) {
 		this.bestBidMarket = bestBidMarket;
-		this.bestBid       = bestBid;
+		this.bestBid = bestBid;
 		this.bestAskMarket = bestAskMarket;
-		this.bestAsk       = bestAsk;
-	}
-	
-	// TODO make prices null?
-	public BestBidAsk() {
-		// initialize to -1
-		this(null, null, null, null);
+		this.bestAsk = bestAsk;
 	}
 
 	/**
@@ -31,32 +26,55 @@ public class BestBidAsk {
 	 */
 	public int getSpread() {
 		if (bestAsk.compareTo(bestBid) >= 0) {
-			if (bestAsk.getPrice() == -1 || bestAsk.equals(Consts.INF_PRICE)) {	// ask undefined
-				return -Consts.INF_PRICE;
+			if (bestAsk.getPrice() == -1 || bestAsk.equals(INF_PRICE)) { // ask
+																			// undefined
+				return -INF_PRICE.getPrice();
 			}
-			if (bestBid.getPrice() == -1 || bestBid.getPrice() == 0) {	// bid undefined
-				return Consts.INF_PRICE;
+			if (bestBid.getPrice() == -1 || bestBid.getPrice() == 0) { // bid
+																		// undefined
+				return INF_PRICE.getPrice();
 			}
 			return bestAsk.getPrice() - bestBid.getPrice();
 		}
 		// if bid crosses the ask, return a spread of INF
-		return Consts.INF_PRICE;
+		return INF_PRICE.getPrice();
 	}
-	
+
+	public Market getBestBidMarket() {
+		return bestBidMarket;
+	}
+
+	public Market getBestAskMarket() {
+		return bestAskMarket;
+	}
+
+	public Price getBestBid() {
+		return bestBid;
+	}
+
+	public Price getBestAsk() {
+		return bestAsk;
+	}
+
+	@Override
+	public int hashCode() {
+		return bestBidMarket.hashCode() ^ bestBid.hashCode()
+				^ bestAskMarket.hashCode() ^ bestAsk.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof BestBidAsk))
+			return false;
+		BestBidAsk that = (BestBidAsk) obj;
+		return (bestBidMarket == that.bestBidMarket)
+				&& (bestBid == that.bestBid)
+				&& (bestAskMarket == that.bestAskMarket)
+				&& (bestAsk == that.bestAsk);
+	}
+
 	public String toString() {
 		return "(Bid: " + bestBid + ", Ask: " + bestAsk + ")";
 	}
 
-	@Override
-	public boolean equals(Object that) {
-		if (that instanceof BestBidAsk)
-			return equals((BestBidAsk) that);
-		else
-			return false;
-	}
-
-	public boolean equals(BestBidAsk that) {
-		return (bestBidMarket == that.bestBidMarket) && (bestBid == that.bestBid) &&
-				(bestAskMarket == that.bestAskMarket) && (bestAsk == that.bestAsk);
-	}
 }

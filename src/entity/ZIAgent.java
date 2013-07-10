@@ -1,15 +1,13 @@
 package entity;
 
 import java.util.Collection;
-import java.util.HashMap;
 
+import market.Price;
 import market.PrivateValue;
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
-import data.ObjectProperties;
-import data.Observations;
-import data.SystemData;
+import data.EntityProperties;
 import event.TimeStamp;
 
 /**
@@ -37,49 +35,37 @@ public class ZIAgent extends BackgroundAgent {
 	protected final int bidRange; // range for limit order
 
 	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, ObjectProperties props) {
-		super(agentID, arrivalTime, model, market, rand);
-		this.bidRange = props.getAsInt(BIDRANGE_KEY, 2000);
+			Market market, RandPlus rand, int bidRange, double pvVar) {
+		super(agentID, arrivalTime, model, market, new PrivateValue((int) Math.round(rand.nextGaussian(0, pvVar)), (int) Math.round(rand.nextGaussian(0, pvVar))), rand);
+		this.bidRange = bidRange;
 	}
 
-	public ZIAgent(int agentID, int modelID, SystemData d, ObjectProperties p) {
-		super(agentID, modelID, d, p);
-
-		bidRange = params.getAsInt(ZIAgent.BIDRANGE_KEY);
-
-		int alpha1 = (int) Math.round(rand.nextGaussian(0, this.data.pvVar));
-		int alpha2 = (int) Math.round(rand.nextGaussian(0, this.data.pvVar));
-		alpha = new PrivateValue(alpha1, alpha2);
+	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
+			Market market, RandPlus rand, EntityProperties props) {
+		this(agentID, arrivalTime, model, market, rand, props.getAsInt(
+				BIDRANGE_KEY, 2000), props.getAsDouble("pvVar", 100));
+		// FIXME get KEY for PVVar and and proper default 
 	}
 
 	@Override
-	public HashMap<String, Object> getObservation() {
-		HashMap<String, Object> obs = new HashMap<String, Object>();
-		obs.put(Observations.ROLE_KEY, getRole());
-		obs.put(Observations.PAYOFF_KEY, getRealizedProfit());
-		obs.put(Observations.STRATEGY_KEY, getFullStrategy());
-		return obs;
-	}
-
-	@Override
-	public Collection<? extends Activity> agentStrategy(TimeStamp ts) {
+	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
 		// update quotes
-		this.updateAllQuotes(ts);
+		this.updateQuotes(market, currentTime);
 
-		int p, q;
-		q = rand.nextBoolean() ? 1 : -1; // 50% chance of being either long or
+		Price price;
+		int quantity;
+		quantity = rand.nextBoolean() ? 1 : -1; // 50% chance of being either long or
 											// short
-		int val = Math
-				.max(0, model.getFundamentalAt(ts).sum(getPrivateValueAt(q))
-						.getPrice());
+		int val = Math.max(0,
+				model.getFundamentalAt(currentTime).plus(getPrivateValueAt(quantity)).getPrice());
 
 		// basic ZI behavior
-		if (q > 0)
-			p = (int) Math.max(0, ((val - 2 * bidRange) + rand.nextDouble() * 2
-					* bidRange));
+		if (quantity > 0)
+			price = new Price((int) Math.max(0, ((val - 2 * bidRange) + rand.nextDouble() * 2
+					* bidRange)));
 		else
-			p = (int) Math.max(0, (val + rand.nextDouble() * 2 * bidRange));
+			price = new Price((int) Math.max(0, (val + rand.nextDouble() * 2 * bidRange)));
 
-		return executeSubmitNMSBid(p, q, ts); // bid does not expire
+		return executeSubmitNMSBid(price, quantity, currentTime); // bid does not expire
 	}
 }

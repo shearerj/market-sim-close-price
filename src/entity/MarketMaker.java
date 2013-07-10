@@ -1,7 +1,9 @@
 package entity;
 
-import data.ObjectProperties;
-import data.SystemData;
+import market.PrivateValue;
+import model.MarketModel;
+import systemmanager.Consts;
+import utils.RandPlus;
 
 /**
  * Abstract class for MarketMakers. Makes it easier to test when 
@@ -11,9 +13,9 @@ import data.SystemData;
  */
 public abstract class MarketMaker extends SMAgent {
 
-	public MarketMaker(int agentID, int modelID, SystemData d, 
-			ObjectProperties p) {
-		super(agentID, modelID, d, p);
+	public MarketMaker(int agentID, MarketModel model,
+			Market market, RandPlus rand) {
+		super(agentID, Consts.START_TIME, model, market, new PrivateValue(), rand);
 	}
 	
 }

@@ -1,12 +1,12 @@
 package systemmanager;
 
-import entity.*;
-import event.TimeStamp;
-import data.ObjectProperties;
-
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+
+import market.Price;
+
+import event.TimeStamp;
 
 
 /**
@@ -24,6 +24,7 @@ public class Consts {
 	// 0 means sampling every time step
 	public final static int[] periods = {0, 1, 250};
 	
+	// FIXME shouldn't this just be simulation length?
 	public final static long upToTime = 3000;	// compute statistics up to this time
 	
 	// **********************************************************
@@ -77,12 +78,11 @@ public class Consts {
 	
 	// TimeStamp
 	public final static TimeStamp INF_TIME = new TimeStamp(-1);
+	public final static TimeStamp START_TIME = new TimeStamp(0);
 	
-	// Price
-	public final static int INF_PRICE = Integer.MAX_VALUE;
-	
-	// Other
-	public final static String NAN = "NaN";
+	// Price TODO Move to Price
+	public final static Price INF_PRICE = new Price(Integer.MAX_VALUE);
+	public final static Price ZERO_PRICE = new Price(0); // TODO Better name
 	
 	// **********************************************************
 	// FILENAMES
@@ -107,6 +107,7 @@ public class Consts {
 	 * @param className
 	 * @return String of market type
 	 */
+	@Deprecated
 	public static String getMarketType(String className) {
 		if (className.contains("Market"))
 			return className.replace("Market","").toUpperCase();
@@ -119,6 +120,7 @@ public class Consts {
 	 * @param className
 	 * @return
 	 */
+	@Deprecated
 	public static String getAgentType(String className) {
 		if (className.contains("Agent"))
 			return className.replace("Agent","").toUpperCase();
@@ -128,69 +130,9 @@ public class Consts {
 			return className.toUpperCase();
 	}
 	
+	@Deprecated
 	public static String getModelType(String className) {
 		return className.toUpperCase();
-	}
-
-	/**
-	 * Get hard-coded default properties for a given entity type.
-	 * 
-	 * @param type
-	 */
-	public final static ObjectProperties getProperties(String type) {
-		if (MarketType.contains(type))
-			return getProperties(MarketType.valueOf(type));
-		else if (AgentType.contains(type))
-			return getProperties(AgentType.valueOf(type));
-		else if (ModelType.contains(type))
-			return getProperties(ModelType.valueOf(type));
-		else
-			// Log?
-			return new ObjectProperties();
-	}
-	
-	public final static ObjectProperties getProperties(ModelType type) {
-		// UPDATE WHEN ADD NEW MODEL
-		ObjectProperties p = new ObjectProperties();
-		switch (type) {
-		default:
-			return p;
-		}
-	}
-
-	public final static ObjectProperties getProperties(MarketType type) {
-		// UPDATE WHEN ADD NEW MARKET
-		ObjectProperties p = new ObjectProperties();
-		switch (type) {
-		case CALL:
-			p.put(CallMarket.PRICING_POLICY_KEY, "0.5");
-			p.put(CallMarket.CLEAR_FREQ_KEY, "100");
-			return p;
-		case CDA:
-			return p;
-		default:
-			return p;
-		}
-	}
-
-	public final static ObjectProperties getProperties(AgentType type) {
-		// UPDATE WHEN ADD NEW AGENT
-		ObjectProperties p = new ObjectProperties();
-		switch (type) {
-		case LA:
-			p.put(Agent.SLEEPTIME_KEY, 0);
-			p.put(Agent.SLEEPVAR_KEY, 100);
-			p.put(LAAgent.ALPHA_KEY, 0.001);
-			return p;
-		case BASICMM:
-			p.put(Agent.SLEEPTIME_KEY, 200);
-			p.put(Agent.SLEEPVAR_KEY, 100);
-			p.put(BasicMarketMaker.NUMRUNGS_KEY, 10);
-			p.put(BasicMarketMaker.RUNGSIZE_KEY, 1000);
-			return p;
-		default:
-			return p;
-		}
 	}
 
 }

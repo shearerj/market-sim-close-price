@@ -12,16 +12,16 @@ import systemmanager.Consts.AgentType;
 public class AgentPropsPair {
 
 	  private final AgentType left;
-	  private final ObjectProperties right;
+	  private final EntityProperties right;
 
-	  public AgentPropsPair(AgentType left, ObjectProperties right) {
+	  public AgentPropsPair(AgentType left, EntityProperties right) {
 		  this.left = left;
 		  this.right = right;
 	  }
 
 	  public AgentType getAgentType() { return left; }
 
-	  public ObjectProperties getProperties() { return right; }
+	  public EntityProperties getProperties() { return right; }
 
 	  @Override
 	  public int hashCode() { return left.hashCode() ^ right.hashCode(); }

@@ -2,6 +2,7 @@ package entity;
 
 import systemmanager.*;
 import data.SystemData;
+import event.TimeStamp;
 
 
 /**
@@ -17,8 +18,8 @@ public class IP_SM extends IP_Single_Market {
 	 * @param ID
 	 * @param d
 	 */
-	public IP_SM(int ID, SystemData d, int marketID) {
-		super(ID, d, marketID);
+	public IP_SM(int ID, int marketID, TimeStamp latency, Market mkt) {
+		super(ID, marketID, latency, mkt);
 	}
 	
 	/* (non-Javadoc)

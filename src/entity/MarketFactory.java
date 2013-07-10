@@ -1,8 +1,9 @@
 package entity;
 
+import java.util.Collection;
+
 import model.MarketModel;
 import systemmanager.Consts;
-import data.ObjectProperties;
 import data.SystemData;
 
 /**
@@ -21,13 +22,13 @@ public class MarketFactory {
 	 * @return
 	 */
 	public static Market createMarket(String type, Integer marketID,
-			SystemData data, ObjectProperties params, MarketModel model, int ipID) {
+			MarketModel model, int ipID, Collection<LAInformationProcessor> ip_las) {
 
 		switch (Consts.MarketType.valueOf(type)) {
 		case CDA:
-			return new CDAMarket(marketID, data, params, model, ipID);
+			return new CDAMarket(marketID, model, ipID);
 		case CALL:
-			return new CallMarket(marketID, data, params, model, ipID);
+			//return new CallMarket(marketID, model, ipID);
 		default:
 			return null;
 		}

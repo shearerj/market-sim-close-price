@@ -1,13 +1,21 @@
 package systemmanager;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.*;
+
 import data.*;
+import entity.LAInformationProcessor;
 import event.*;
 
 import java.util.*;
 import java.io.*;
 import java.text.DateFormat;
 
+import utils.RandPlus;
+
 import logger.Logger;
+import model.MarketModel;
+import model.MarketModelFactory;
 
 /**
  * This class serves the purpose of the Client in the Command pattern, in that
@@ -26,13 +34,11 @@ public class SystemManager {
 			DateFormat.MEDIUM, Locale.UK);
 
 	protected final EventManager eventManager;
-	protected final SystemData data;
-	protected final Observations obs;
-	protected final Properties envProps;
-	protected final SimulationSpec spec;
+	protected final Collection<MarketModel> models;
 
 	protected final int num; // sample number used for labeling output files
 	protected final File simFolder; // simulation folder name
+	protected final SimulationSpec spec;
 
 	/**
 	 * Only one argument, which is the sample number, is processed
@@ -75,32 +81,61 @@ public class SystemManager {
 		this.simFolder = simFolder;
 		this.num = simNumber;
 
-		envProps = getProperties();
-		getLog(); // Must be called after "envProps"
-		data = new SystemData(simNumber, simFolder);
-		spec = getSimulationSpec(); // Must be after "log" and "data"
-		obs = new Observations(data);
-		eventManager = new EventManager(data.simLength);
+		// TODO move props to SimSpec?
+		initializeLogger(getProperties(), simFolder, simNumber);
 
-		new SystemSetup(spec, eventManager, data).setupAll();
+		spec = new SimulationSpec(new File(simFolder, Consts.simSpecFile));
+		EntityProperties simProps = spec.getSimulationProperties();
+		long seed = simProps.getAsLong(SimulationSpec.RAND_SEED,
+				System.currentTimeMillis());
+		log(INFO, "RandomSeed: " + seed);
+		RandPlus rand = new RandPlus(seed);
+
+		TimeStamp simLength = new TimeStamp(
+				simProps.getAsLong(SimulationSpec.SIMULATION_LENGTH));
+		eventManager = new EventManager(simLength,
+				new RandPlus(rand.nextLong()));
+
+		FundamentalValue fundamental = new FundamentalValue(
+				simProps.getAsDouble(SimulationSpec.FUNDAMENTAL_KAPPA),
+				simProps.getAsInt(SimulationSpec.FUNDAMENTAL_MEAN),
+				simProps.getAsDouble(SimulationSpec.FUNDAMENTAL_SHOCK_VAR),
+				new RandPlus(rand.nextLong()));
+
+		MarketModelFactory modelFactory = new MarketModelFactory(
+				spec.getBackgroundAgents(), spec.getPlayerConfig(),
+				fundamental, new RandPlus(rand.nextLong()));
+
+		log(INFO, "------------------------------------------------");
+		log(INFO, "            Creating MARKET MODELS");
+		models = new ArrayList<MarketModel>();
+		for (ModelProperties props : spec.getModels()) {
+			MarketModel model = modelFactory.createModel(props);
+			models.add(model);
+			// TODO Log markets?
+			log(INFO, props.getModelType() + ": " + model);
+		}
+		log(INFO, "------------------------------------------------");
 	}
 
 	protected Properties getProperties() throws IOException {
 		Properties props = new Properties();
-		props.load(new FileInputStream(new File(Consts.configDir, Consts.configFile)));
+		props.load(new FileInputStream(new File(Consts.configDir,
+				Consts.configFile)));
 		return props;
 	}
 
 	/**
 	 * Must be done after "envProps" exists
 	 */
-	protected void getLog() throws IOException {
+	protected static void initializeLogger(Properties envProps, File simFolder,
+			int num) throws IOException {
 		// Create log file
 		int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
 
 		Date now = new Date();
-		StringBuilder logFileName = new StringBuilder(simFolder.getPath()
-				.replace('/', '_'));
+		StringBuilder logFileName = new StringBuilder(
+				simFolder.getPath().replace('/', '_'));
 		logFileName.append('_').append(num).append('_');
 		logFileName.append(DATE_FORMAT.format(now)).append('_');
 		// TODO This replace should could be done by modifying the date
@@ -112,8 +147,6 @@ public class SystemManager {
 		logDir.mkdirs();
 
 		File logFile = new File(logDir, logFileName.toString());
-		if (logLevel == Logger.NO_LOGGING)
-			logFile.deleteOnExit();
 
 		// Create log file
 		// TODO Look into constructor, I think the 2nd and 3rd arguments
@@ -121,46 +154,30 @@ public class SystemManager {
 		// "getPath" will probably do the right thing given the current
 		// setup, but isn't guaranteed to.
 		Logger.setup(logLevel, ".", logFile.getPath(), true);
+		
+		if (Logger.getLevel() == NO_LOGGING)
+			logFile.deleteOnExit();
 
 		// Log properties
-		Logger.log(Logger.DEBUG, envProps.toString());
-	}
-
-	/**
-	 * Must be done after "log" and "data" exist
-	 * 
-	 * @return
-	 */
-	protected SimulationSpec getSimulationSpec() {
-		// Read simulation specification file
-		File simulationSpecFile = new File(simFolder, Consts.simSpecFile);
-		if (!simulationSpecFile.exists())
-			throw new IllegalArgumentException("Simulation Spec file ("
-					+ simulationSpecFile.getAbsolutePath() + ") doesn't exist");
-
-		// Read simulation_spec.json file
-		return new SimulationSpec(simulationSpecFile.getAbsolutePath(), data);
+		log(DEBUG, envProps.toString());
 	}
 
 	/**
 	 * Method to execute all events in the Event Queue.
 	 */
 	public void executeEvents() {
-		while (!eventManager.isEmpty()) {
-			eventManager.executeNext();
-		}
-		Logger.log(Logger.INFO, "STATUS: Simulation has ended.");
+		for (MarketModel model : models)
+			model.scheduleActivities(eventManager);
+		// TODO Get rid of event manager and move to system manager.
+		eventManager.execute();
+		log(INFO, "STATUS: Simulation has ended.");
 	}
 
-	/**
-	 * Generate results report (payoff data, feature data logging).
-	 * 
-	 * @throws IOException
-	 */
 	public void aggregateResults() throws IOException {
-		File results = new File(simFolder, Consts.obsFile + data.num + ".json");
+		File results = new File(simFolder, Consts.obsFile + num + ".json");
 		FileWriter writer = new FileWriter(results);
-		writer.write(obs.generateObservationFile());
+		// TODO Actually generate observations
+		// writer.write(obs.generateObservationFile());
 		writer.close();
 	}
 

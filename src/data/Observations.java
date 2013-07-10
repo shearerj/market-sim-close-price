@@ -10,12 +10,12 @@ import market.PQTransaction;
 import market.Transaction;
 import model.MarketModel;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.json.simple.JSONObject;
 
 import systemmanager.Consts;
 import systemmanager.SimulationSpec;
+import utils.MathUtils;
 import entity.Agent;
 import entity.BackgroundAgent;
 import entity.HFTAgent;
@@ -121,7 +121,7 @@ public class Observations {
 
 		// set up max time (where most agents have arrived)
 		long time = Math.round(data.getNumEnvAgents() / data.arrivalRate);
-		maxTime = Math.max(Consts.upToTime, Market.quantize((int) time, 1000));
+		maxTime = Math.max(Consts.upToTime, MathUtils.quantize((int) time, 1000));
 
 		addFeature("", getConfiguration());
 
@@ -180,7 +180,7 @@ public class Observations {
 		if (!data.isPlayer(agentID))
 			return;
 
-		HashMap<String, Object> obs = data.getAgent(agentID).getObservation();
+		HashMap<String, Object> obs = new HashMap<String, Object>(); //data.getAgent(agentID).getObservation();
 		if (obs == null || obs.isEmpty())
 			return;
 
@@ -268,7 +268,7 @@ public class Observations {
 		Feature feat = new Feature();
 		DescriptiveStatistics speeds = new DescriptiveStatistics();
 		for(Transaction tr : model.getTrans()) {
-			TimeStamp execTime = tr.getTimestamp();
+			TimeStamp execTime = tr.getExecTime();
 			TimeStamp buyerExecTime = execTime.diff(tr.getBuyBid().getSubmitTime());
 			TimeStamp sellerExecTime = execTime.diff(tr.getSellBid().getSubmitTime());
 			for(int q=0; q < tr.getQuantity(); q++) {
@@ -371,13 +371,13 @@ public class Observations {
 
 		for (Transaction t : trans) {
 			PQTransaction tr = (PQTransaction) t;
-			prices.addValue(tr.price.getPrice());
-			quantity.addValue(tr.quantity);
-			fundamental.addValue(model.getFundamentalAt(tr.execTime).getPrice());
+			prices.addValue(tr.getPrice().getPrice());
+			quantity.addValue(tr.getQuantity());
+			fundamental.addValue(model.getFundamentalAt(tr.getExecTime()).getPrice());
 
-			transPrices.add(tr.execTime, new Double(tr.price.getPrice()));
-			fundPrices.add(tr.execTime, new Double(model.getFundamentalAt(
-					tr.execTime).getPrice()));
+			transPrices.add(tr.getExecTime(), new Double(tr.getPrice().getPrice()));
+			fundPrices.add(tr.getExecTime(), new Double(model.getFundamentalAt(
+					tr.getExecTime()).getPrice()));
 
 			// update number of transactions
 			// buyer
@@ -429,12 +429,12 @@ public class Observations {
 		Feature feat = new Feature();
 
 		DescriptiveStatistics medians = new DescriptiveStatistics();
-		for (int mktID : model.getMarketIDs()) {
-			TimeSeries s = data.marketSpread.get(mktID);
-			if (s != null) {
+		for(Market market : model.getMarkets()) {
+			TimeSeries s = market.getSpread();
+			if (!s.isEmpty()) {
 				double[] array = s.getSampledArray(0, maxTime);
 				DescriptiveStatistics spreads = new DescriptiveStatistics(array);
-				double med = feat.addMedian("", MARKET + (-mktID) + "_"
+				double med = feat.addMedian("", MARKET + (-market.getID()) + "_"
 						+ TIMESERIES_MAXTIME, spreads);
 				medians.addValue(med);
 			}
@@ -442,7 +442,7 @@ public class Observations {
 		// average of median market spreads (for all markets in this model)
 		feat.addMean("", MARKET + "_" + TIMESERIES_MAXTIME, medians);
 
-		TimeSeries nbbo = data.NBBOSpread.get(model.getID());
+		TimeSeries nbbo = model.getNBBOSpreads();
 		if (nbbo != null) {
 			double[] array = nbbo.getSampledArray(0, maxTime);
 			DescriptiveStatistics spreads = new DescriptiveStatistics(array);
@@ -473,12 +473,12 @@ public class Observations {
 		DescriptiveStatistics stddev = new DescriptiveStatistics();
 		DescriptiveStatistics logPriceVol = new DescriptiveStatistics();
 		DescriptiveStatistics logRetVol = new DescriptiveStatistics();
-		for (int mktID : model.getMarketIDs()) {
-			String suffix = "_" + MARKET + (-mktID);
+		for (Market market : model.getMarkets()) {
+			String suffix = "_" + MARKET + (-market.getID());
 
-			TimeSeries mq = data.marketMidQuote.get(mktID);
-			if (mq != null) {
-				double[] mid = mq.getSampledArrayWithoutNaNs(period, maxTime);
+			TimeSeries ma = market.getMidQuotes();
+			if (!ma.isEmpty()) {
+				double[] mid = ma.getSampledArrayWithoutNaNs(period, maxTime);
 
 				// compute log price volatility for this market
 				DescriptiveStatistics mktPrices = new DescriptiveStatistics(mid);
@@ -489,7 +489,7 @@ public class Observations {
 				} // don't add if stddev is 0
 
 				// compute log-return volatility for this market
-				double[] midquote = mq.getSampledArray(period, maxTime);
+				double[] midquote = ma.getSampledArray(period, maxTime);
 				int size = midquote.length;
 				if (midquote.length > 0)
 					size = midquote.length - 1;

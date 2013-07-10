@@ -5,23 +5,37 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import com.google.gson.Gson;
-
-public class ObjectProperties {
+public class EntityProperties {
 	
-	protected static final transient Gson gson = new Gson();
+	protected EntityProperties def;
 	protected Map<String, String> properties;
 
-	public ObjectProperties() {
-		properties = new HashMap<String, String>();
+	public EntityProperties() {
+		this.properties = new HashMap<String, String>();
+		this.def = null;
 	}
 	
-	public ObjectProperties(ObjectProperties copy) {
-		properties = new HashMap<String, String>(copy.properties);
+	public EntityProperties(EntityProperties def) {
+		this.properties = new HashMap<String, String>();
+		this.def = def;
 	}
 	
-	public ObjectProperties(String config) {
+	public EntityProperties(String config) {
 		this();
+		addConfig(config);
+	}
+	
+	public EntityProperties(EntityProperties def, String config) {
+		this(def);
+		addConfig(config);
+	}
+	
+	protected EntityProperties(Map<String, String> properties, EntityProperties def) {
+		this.properties = properties;
+		this.def = def;
+	}
+	
+	public void addConfig(String config) {
 		String[] args = config.split("_");
 		for (int i = 0; i < (args.length/2)*2; i = i + 2) {
 			properties.put(args[i], args[i+1]);
@@ -98,37 +112,44 @@ public class ObjectProperties {
 		properties.put(key, value);
 	}
 	
-	public void put(String key, int value) {
-		properties.put(key, Integer.toString(value));
-	}
-	
-	public void put(String key, double value) {
-		properties.put(key, Double.toString(value));
-	}
-
-	public void put(String key, float value) {
-		properties.put(key, Float.toString(value));
-	}
-	
-	public void put(String key, long value) {
-		properties.put(key, Long.toString(value));
+	public void put(String key, Number value) {
+		properties.put(key, value.toString());
 	}
 	
 	public void put(String key, boolean value) {
 		properties.put(key, Boolean.toString(value));
 	}
 	
+	public EntityProperties getDefault() {
+		return def;
+	}
+	
+	public void setDefault(EntityProperties def) {
+		this.def = def;
+	}
+	
+	public EntityProperties flatten() {
+		Map<String, String> newProps = new HashMap<String, String>();
+		flattenHelper(newProps);
+		return new EntityProperties(newProps, null);
+	}
+	
+	private void flattenHelper(Map<String, String> newProps) {
+		if (def != null) def.flattenHelper(newProps);
+		newProps.putAll(properties);
+	}
+	
 	@Override
 	public boolean equals(Object o) {
-	    if (o == null || !(o instanceof ObjectProperties))
+	    if (o == null || !(o instanceof EntityProperties))
 	        return false;
-	    final ObjectProperties e = (ObjectProperties) o;
+	    final EntityProperties e = (EntityProperties) o;
 	    return properties.equals(e.properties);
 	}
 	
 	@Override
 	public int hashCode() {
-		return properties.hashCode();
+		return properties.hashCode() ^ (def == null ? 0 : def.hashCode());
 	}
 	
 	public String toConfigString() {
@@ -139,15 +160,23 @@ public class ObjectProperties {
 		return sb.substring(1);
 	}
 	
+	public String toCascadeString() {
+		if (def == null) return toString();
+		return toString() + " <- " + def.toCascadeString();
+	}
+	
 	@Override
 	public String toString() {
 		return properties.toString();
 	}
 	
 	public static void main(String... args) {
-		ObjectProperties e = new ObjectProperties("blah_1_hello_hft_key_6.7");
-		System.out.println(e);
-		System.out.println(e.toConfigString());
+		EntityProperties a = new EntityProperties("foo_5");
+		EntityProperties b = new EntityProperties(a);
+		EntityProperties c = new EntityProperties(b, "bar_baz");
+		System.out.println(c);
+		System.out.println(c.flatten());
+		System.out.println(c.toCascadeString());
 	}
 
 }

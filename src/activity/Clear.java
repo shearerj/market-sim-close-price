@@ -24,7 +24,7 @@ public class Clear extends Activity {
 		return new Clear(this.mkt, this.time);
 	}
 
-	public Collection<Activity> execute(TimeStamp currentTime) {
+	public Collection<? extends Activity> execute(TimeStamp currentTime) {
 		return this.mkt.clear(currentTime);
 	}
 

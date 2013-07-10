@@ -6,7 +6,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
+import activity.AgentArrival;
+import activity.Clear;
 
 import entity.Sip_Prime;
 import market.Bid;
@@ -15,21 +21,25 @@ import market.Transaction;
 import systemmanager.Consts;
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.MarketType;
-import utils.CollectionUtils;
+import systemmanager.SimulationSpec;
 import utils.RandPlus;
 import data.AgentProperties;
 import data.AgentPropsPair;
 import data.FundamentalValue;
-import data.ObjectProperties;
+import data.EntityProperties;
+import data.Player;
 import data.SystemData;
+import data.TimeSeries;
 import entity.Agent;
+import entity.LAAgent;
+import entity.LAInformationProcessor;
 import entity.Market;
-import entity.SMAgent;
+import entity.PRRSMAgentFactory;
 import entity.SMAgentFactory;
+import event.EventManager;
 import event.TimeStamp;
 import generators.Generator;
-import generators.PoissonArrivalGenerator;
-import generators.RoundRobinGenerator;
+import generators.IDGenerator;
 
 /**
  * MARKETMODEL
@@ -72,19 +82,22 @@ public abstract class MarketModel {
 	// -- begin reorg --
 
 	protected final int modelID;
-	protected final FundamentalValue fundamentalGenerator;
+	protected final FundamentalValue fundamental;
 	protected final Collection<Market> markets;
 	protected final Collection<Transaction> trans;
-
-	private final Collection<Agent> agents;
+	protected final Collection<Agent> agents;
+	protected final Collection<Player> players;
 
 	protected HashMap<Double, Double> modelSurplus; // hashed by rho value
+	protected TimeSeries NBBOSpreads;				//NBBO bid/ask spread values
 
 	protected final RandPlus rand;
-	protected int nextAgentID;
+	//protected int nextAgentID; not sure if we need this
 	
-	public int sipID;
+	public int ipID;
 	public Sip_Prime sip;
+	protected final Generator<Integer> agentIDgen;
+	protected final Generator<Integer> ipIDgen;
 
 	// -- end reorg --
 
@@ -92,9 +105,11 @@ public abstract class MarketModel {
 								// construction?
 	protected SystemData data;
 	protected ArrayList<Integer> agentIDs; // IDs of associated agents
-	protected ObjectProperties modelProperties;
+	protected ArrayList<Integer> ipIDs; // IDs of associated ips
+	protected EntityProperties modelProperties;
 	protected ArrayList<AgentPropsPair> agentConfig;
 	protected ArrayList<MarketObjectPair> modelMarketConfig;
+	protected Collection<TimeStamp> latencies;
 
 	// Store information on market IDs for each market specified in
 	// modelProperties
@@ -102,88 +117,92 @@ public abstract class MarketModel {
 
 	public MarketModel(int modelID, FundamentalValue fundamental,
 			Map<AgentProperties, Integer> agentProps,
-			ObjectProperties modelProps, RandPlus rand) {
+			EntityProperties modelProps, JsonObject playerConfig, RandPlus rand) {
 
 		this.modelID = modelID;
 		this.rand = rand;
-		this.fundamentalGenerator = fundamental;
+		this.fundamental = fundamental;
 		// XXX Perhaps HashSets instead of ArrayLists?
 		this.markets = new ArrayList<Market>();
 		this.agents = new ArrayList<Agent>();
+		this.players = new ArrayList<Player>();
 		this.trans = new ArrayList<Transaction>();
-		this.nextAgentID = 1;
+		this.agentIDgen = new IDGenerator();
+		this.ipIDgen = new IDGenerator();
+		this.NBBOSpreads = new TimeSeries();
 
 		// Setup
 		setupMarkets(modelProps);
-		setupBackgroundAgents(modelProps, agentProps);
-		setupModelAgents(modelProps);
+		//setupSIP(modelProps);
+		setupAgents(modelProps, agentProps);
+		setupPlayers(modelProps, playerConfig);
+		//setupLA_IPs(modelProps);
+	}
+	
+	public int getipIDgen() {
+		return this.ipIDgen.next();
 	}
 
-	protected abstract void setupMarkets(ObjectProperties modelProps);
+	protected abstract void setupMarkets(EntityProperties modelProps);
 
-	protected abstract void setupModelAgents(ObjectProperties modelProps);
-
-	protected void setupBackgroundAgents(ObjectProperties modelProps,
+	protected void setupAgents(EntityProperties modelProps,
 			Map<AgentProperties, Integer> agentProps) {
 		for (Entry<AgentProperties, Integer> type : agentProps.entrySet()) {
-			// FIXME Replace 0 with default arrival rate
 			AgentProperties agProps = type.getKey();
 			int number = type.getValue();
 
+			// FIXME Replace 0 with default arrival rate
+			//
 			// In general the arrival process and market generation can be
 			// generic or even specified, but for now we'll stick with the
 			// original implementation
-			Generator<TimeStamp> arrivals = new PoissonArrivalGenerator(
-					TimeStamp.startTime,
-					modelProps.getAsLong("arrival-rate", 0), new RandPlus(
-							rand.nextLong()));
-			Generator<Market> marketRate = new RoundRobinGenerator<Market>(
-					markets);
+			SMAgentFactory factory = new PRRSMAgentFactory(this, agentIDgen,
+					agProps.getAsLong(SimulationSpec.ARRIVAL_RATE, 100),
+					new RandPlus(rand.nextLong()));
 
-			SMAgentFactory factory = new SMAgentFactory(this, agProps,
-					nextAgentID, number, arrivals, marketRate, new RandPlus(
-							rand.nextLong()));
-
-			for (SMAgent agent : CollectionUtils.toIterable(factory)) {
-				agents.add(agent);
-				// TODO schedule agent arrival
-			}
-			nextAgentID += number;
+			for (int i = 0; i < number; i++)
+				agents.add(factory.createAgent(agProps));
 		}
 	}
-	
-	
-	
-	// TODO change to protected. External things shouldn't be able to add agents
-	public void addAgent(Agent agent) {
-		agents.add(agent);
-		nextAgentID++;
-	}
-	
-	protected void addAgents(Collection<Agent> agents) {
-		agents.addAll(agents);
-		nextAgentID += agents.size();
-	}
 
-	public MarketModel(int modelID, ObjectProperties p, SystemData d, int sipID) {
-		// reorg
-		fundamentalGenerator = d.getFundamenalValue();
-		markets = new ArrayList<Market>();
-		trans = new ArrayList<Transaction>();
-		rand = new RandPlus();
-		agents = new ArrayList<Agent>();
-		// reorg
-
-		this.modelID = modelID;
-		data = d;
-		modelProperties = p;
-
-		agentIDs = new ArrayList<Integer>();
-		marketIDs = new ArrayList<Integer>();
-		modelMarketConfig = new ArrayList<MarketObjectPair>();
-		agentConfig = new ArrayList<AgentPropsPair>();
-		this.sipID = sipID;
-		sip = new Sip_Prime(sipID, d, modelID);
+	private void setupPlayers(EntityProperties modelProps, JsonObject playerConfig) {
+		// First group by role and agentType for legacy reasons
+		Map<String, Map<String, Integer>> roleStratCounts = new HashMap<String, Map<String, Integer>>();
+		for (Entry<String, JsonElement> roleEnt : playerConfig.entrySet()) {
+			String role = roleEnt.getKey();
+			JsonArray strats = roleEnt.getValue().getAsJsonArray();
+			Map<String, Integer> stratCounts = roleStratCounts.get(role);
+			if (stratCounts == null) {
+				stratCounts = new HashMap<String, Integer>();
+				roleStratCounts.put(role, stratCounts);
+			}
+			
+			for (JsonElement jStrat : strats) {
+				String strat = jStrat.getAsString();
+				Integer count = stratCounts.get(strat);
+				stratCounts.put(strat, count == null ? 1 : count + 1);
+			}
+		}
+		
+		// Generate Players
+		for (Entry<String, Map<String, Integer>> roleEnt : roleStratCounts.entrySet()) {
+			String role = roleEnt.getKey();
+			for (Entry<String, Integer> stratEnt : roleEnt.getValue().entrySet()) {
+				String strat = stratEnt.getKey();
+				int count = stratEnt.getValue();
+				
+				// FIXME Arrival rate (100)?
+				SMAgentFactory factory = new PRRSMAgentFactory(this,
+						agentIDgen, 100, new RandPlus(rand.nextLong()));
+				
+				for (int i = 0; i < count; i++) {
+					Agent agent = factory.createAgent(new AgentProperties(strat));
+					agents.add(agent);
+					Player player = new Player(role, strat, agent);
+					players.add(player);
+				}
+			}
+		}
 	}
 	
 	/**
@@ -191,6 +210,19 @@ public abstract class MarketModel {
 	 */
 	public Sip_Prime getSip() {
 		return this.sip;
+	}
+
+	public void scheduleActivities(EventManager manager) {
+		// TODO schedule sendToSIP
+		for (Market market : markets)
+			manager.addActivity(new Clear(market, Consts.START_TIME));
+		for (Agent agent : agents)
+			manager.addActivity(new AgentArrival(agent, agent.getArrivalTime()));
+	}
+
+	// TODO change to protected. External things shouldn't be able to add agents
+	public void addAgent(Agent agent) { // no agent ++???
+		agents.add(agent);
 	}
 
 	/**
@@ -239,20 +271,9 @@ public abstract class MarketModel {
 	 * @param agProperties
 	 */
 	public void addAgentPropertyPair(AgentType agType,
-			ObjectProperties agProperties) {
+			EntityProperties agProperties) {
 		AgentPropsPair app = new AgentPropsPair(agType, agProperties);
 		agentConfig.add(app);
-	}
-
-	/**
-	 * Add an agent with default property settings to the MarketModel.
-	 * 
-	 * @param agType
-	 */
-	public void addAgentPropertyPair(AgentType agType) {
-		ObjectProperties agProperties = Consts.getProperties(agType);
-		AgentPropsPair mpp = new AgentPropsPair(agType, agProperties);
-		agentConfig.add(mpp);
 	}
 
 	/**
@@ -277,19 +298,7 @@ public abstract class MarketModel {
 	 * @param mktProperties
 	 */
 	public void addMarketPropertyPair(MarketType mktType,
-			ObjectProperties mktProperties) {
-		MarketObjectPair mpp = new MarketObjectPair(mktType.toString(),
-				mktProperties);
-		modelMarketConfig.add(mpp);
-	}
-
-	/**
-	 * Add a market with default property settings to the MarketModel.
-	 * 
-	 * @param mktType
-	 */
-	public void addMarketPropertyPair(MarketType mktType) {
-		ObjectProperties mktProperties = Consts.getProperties(mktType);
+			EntityProperties mktProperties) {
 		MarketObjectPair mpp = new MarketObjectPair(mktType.toString(),
 				mktProperties);
 		modelMarketConfig.add(mpp);
@@ -302,17 +311,17 @@ public abstract class MarketModel {
 	 * @param idx
 	 * @param mktProperties
 	 */
-	public void editMarketPropertyPair(int idx, ObjectProperties mktProperties) {
+	public void editMarketPropertyPair(int idx, EntityProperties mktProperties) {
 		MarketObjectPair mpp = modelMarketConfig.get(idx);
 		modelMarketConfig.set(idx, new MarketObjectPair(mpp.getMarketType(),
 				mktProperties));
 	}
 
 	public Price getFundamentalAt(TimeStamp ts) {
-		if (fundamentalGenerator == null)
+		if (fundamental == null)
 			// return new Price(0);
 			throw new IllegalStateException("No Fundamental Value...");
-		return fundamentalGenerator.getValueAt(ts);
+		return fundamental.getValueAt(ts);
 	}
 
 	/**
@@ -371,13 +380,12 @@ public abstract class MarketModel {
 		return Collections.unmodifiableCollection(markets);
 	}
 
-	@Override
-	public String toString() {
-		return new String("{" + getID() + "}");
-	}
-
 	public Collection<Agent> getAgents() {
 		return Collections.unmodifiableCollection(agents);
+	}
+	
+	public Collection<Player> getPlayers() {
+		return Collections.unmodifiableCollection(players);
 	}
 
 	/**
@@ -395,7 +403,7 @@ public abstract class MarketModel {
 	 * @param tr
 	 */
 	public void addSurplus(Transaction tr) {
-		int fund = this.getFundamentalAt(tr.getTimestamp()).getPrice();
+		int fund = this.getFundamentalAt(tr.getExecTime()).getPrice();
 		for (double rho : Consts.rhos) {
 			if (!this.modelSurplus.containsKey(rho))
 				this.modelSurplus.put(rho, 0.0);
@@ -418,5 +426,30 @@ public abstract class MarketModel {
 				this.modelSurplus.put(rho, this.modelSurplus.get(rho) + surplus);
 			}
 		}
+	}
+	
+	public void addNBBOSpread(TimeStamp ts, int spread) {
+		this.NBBOSpreads.add(ts, (double) spread);
+	}
+	
+	public TimeSeries getNBBOSpreads() {
+		return this.NBBOSpreads;
+	}
+		
+	@Override
+	public int hashCode() {
+		return modelID;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof MarketModel)) return false;
+		MarketModel mm = (MarketModel) obj;
+		return modelID == mm.modelID;
+	}
+
+	@Override
+	public String toString() {
+		return new String("{" + modelID + "}");
 	}
 }

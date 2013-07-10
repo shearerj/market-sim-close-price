@@ -3,6 +3,7 @@ package entity;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import static logger.Logger.Level.INFO;
 
 import market.BestBidAsk;
 import market.Price;
@@ -10,10 +11,10 @@ import model.MarketModel;
 import java.util.Collection;
 import logger.Logger;
 
-import data.ObjectProperties;
 import data.SystemData;
 import event.TimeStamp;
 import activity.Activity;
+import activity.ProcessQuote;
 
 /**
  * Superclass for Information Processors that either work
@@ -24,6 +25,7 @@ import activity.Activity;
  */
 public abstract class AbstractIP extends Entity {
 	
+	protected TimeStamp latency;
 	protected int tickSize;
 	protected HashMap<Integer, BestBidAsk> lastQuotes;		// hashed by model ID
 	protected HashMap<Integer, BestBidAsk> marketQuotes;		// hashed by market ID
@@ -33,11 +35,16 @@ public abstract class AbstractIP extends Entity {
 	 * @param ID
 	 * @param d
 	 */
-	public AbstractIP(int ID, SystemData d) {
-		super(ID, d, new ObjectProperties());
-		tickSize = d.tickSize;
+	public AbstractIP(int ID, TimeStamp latency) {
+		super(ID);
+		this.latency = latency;
+		tickSize = data.tickSize;
 		lastQuotes = new HashMap<Integer,BestBidAsk>();
 		marketQuotes = new HashMap<Integer,BestBidAsk>();
+	}
+	
+	public ProcessQuote scheduleProcessQuote(Market market, int bid, int ask, TimeStamp ts) {
+		return new ProcessQuote(this, market, bid, ask, ts.sum(latency));
 	}
 	
 	/**
@@ -48,7 +55,8 @@ public abstract class AbstractIP extends Entity {
 	 */
 	public BestBidAsk getNBBOQuote(int modelID) {
 		if (!lastQuotes.containsKey(modelID)) {
-			BestBidAsk b = new BestBidAsk();
+			// FIXME This shouldn't be done / shouldn't happen
+			BestBidAsk b = new BestBidAsk(null, null, null, null);
 			lastQuotes.put(modelID, b);
 			return b;
 		} else {
@@ -72,6 +80,8 @@ public abstract class AbstractIP extends Entity {
 	
 	/**
 	 * Find best quote across given markets (lowest ask & highest bid).
+	 * Note: for Single Markets, only one market will contain data and key
+	 * thus it will simply get BBO for one market.
 	 * 
 	 * @param marketIDs
 	 * @param nbbo		true if getting NBBO, false if getting global quote
@@ -81,33 +91,45 @@ public abstract class AbstractIP extends Entity {
 	    Price bestBid = null, bestAsk = null;
 	    Market bestBidMkt = null, bestAskMkt = null;
 	    
-	    for (Market mkt : markets) {
+	    for (Market mkt1 : markets) {
 			Price bid, ask;
 			
 			if (nbbo) {
 				// NBBO quote (may be delayed)
-				BestBidAsk ba = new BestBidAsk();
-				if (marketQuotes.containsKey(mkt.getID())) {
-					ba  = marketQuotes.get(mkt.getID());
+				BestBidAsk ba = marketQuotes.get(mkt1.getID());
+				if (marketQuotes.containsKey(mkt1.getID())) {
+					ba  = marketQuotes.get(mkt1.getID());
+					bid = ba.getBestBid();
+					ask = ba.getBestAsk();
 				}
-				bid = ba.bestBid;
-				ask = ba.bestAsk;
+				else {
+					bid = null;
+					ask = null;
+				}
 			} else {
 				// global quote
-				bid = mkt.getBidPrice();
-				ask = mkt.getAskPrice();
+				BestBidAsk ba = marketQuotes.get(mkt1.getID()); // unsure, think should be same
+				if (marketQuotes.containsKey(mkt1.getID())) {
+					ba  = marketQuotes.get(mkt1.getID());
+					bid = ba.getBestBid();
+					ask = ba.getBestAsk();
+				}
+				else {
+					bid = null;
+					ask = null;
+				}
 			}
 
 			// FIXME This seems wrong, should the conditional also assume bid != null?
 			// Best bid quote is highest BID
 			if (bestBid == null || bestBid.compareTo(bid) < 0) {
 				if (bid != null) bestBid = bid;
-				bestBidMkt = mkt;
+				bestBidMkt = mkt1;
 			}
 			// Best ask quote is lowest ASK
 			if (bestAsk == null || bestAsk.compareTo(ask) > 0) {
 				if (ask != null) bestAsk = ask;
-				bestAskMkt = mkt;
+				bestAskMkt = mkt1;
 			}
 	    }
 	    return new BestBidAsk(bestBidMkt, bestBid, bestAskMkt, bestAsk);
@@ -126,7 +148,7 @@ public abstract class AbstractIP extends Entity {
 		int mktID = mkt.getID();
 		BestBidAsk q = new BestBidAsk(mkt, new Price(bid), mkt, new Price(ask));
 		marketQuotes.put(mktID, q);
-		Logger.log(Logger.INFO, ts + " | " + this + " | "+ data.getMarket(mktID) + " " + 
+		Logger.log(INFO, ts + " | " + this + " | "+ data.getMarket(mktID) + " " + 
 				"ProcessQuote: " + q);
 		return null;
 	}

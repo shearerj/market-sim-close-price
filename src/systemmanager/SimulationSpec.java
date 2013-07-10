@@ -1,43 +1,40 @@
 package systemmanager;
 
-import data.*;
-import entity.Agent;
-import event.TimeStamp;
-
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.ArrayList;
-
-import logger.Logger;
-
-import org.json.simple.*;
-import org.json.simple.parser.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.ModelType;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSyntaxException;
+
+import data.AgentProperties;
+import data.ModelProperties;
+import data.EntityProperties;
 
 /**
- * Stores list of parameters used in the simulation_spec.json file.
+ * Stores list of web parameters used in EGTAOnline.
  * 
- * NOTE: All MarketModel types in the spec file must match the 
- * corresponding class name.
+ * NOTE: All MarketModel types in the spec file must match the corresponding
+ * class name.
  * 
  * @author ewah
  */
 public class SimulationSpec {
 
-	private SystemData data;
-	private JSONObject params;
-	private JSONObject assignments;
-	private JSONParser parser;
-	
 	public final static String ASSIGN_KEY = "assignment";
 	public final static String CONFIG_KEY = "configuration";
-	
-	// Parameters in spec file
+
 	public final static String SIMULATION_LENGTH = "sim_length";
 	public final static String TICK_SIZE = "tick_size";
 	public final static String LATENCY = "nbbo_latency";
@@ -48,201 +45,134 @@ public class SimulationSpec {
 	public final static String FUNDAMENTAL_SHOCK_VAR = "shock_var";
 	public final static String PRIVATE_VALUE_VAR = "private_value_var";
 	public final static String PRIMARY_MODEL = "primary_model";
-	
-	/**
-	 * Constructor
-	 * @param file
-	 * @param l
-	 */
-	public SimulationSpec(String file, SystemData d) {
-		data = d;
-		parser = new JSONParser();
-		loadFile(file);
-		readParams();
+	public final static String RAND_SEED = "random_seed";
+
+	// XXX Move into model properties?
+	protected final EntityProperties simulationProperties;
+	protected final Collection<ModelProperties> models;
+	protected final Map<AgentProperties, Integer> backgroundAgents;
+	protected final JsonObject playerConfig;
+
+	public SimulationSpec(File specFile) throws JsonSyntaxException,
+			JsonIOException, FileNotFoundException {
+		JsonObject spec = new Gson().fromJson(new FileReader(specFile), JsonObject.class);
+		JsonObject config = spec.getAsJsonObject(CONFIG_KEY);
+		
+		simulationProperties = simulationProperties(config);
+		models = marketModels(config, systemModelProperties(config));
+		backgroundAgents = backgroundAgents(config, systemAgentProperties(config));
+		playerConfig = spec.getAsJsonObject(ASSIGN_KEY);
+	}
+
+	public SimulationSpec(String specFileName) throws JsonSyntaxException,
+			JsonIOException, FileNotFoundException {
+		this(new File(specFileName));
 	}
 	
-	/**
-	 * Load the simulation specification file.
-	 * @param specFile
-	 */
-	public void loadFile(String specFile) {
-		try {
-			FileInputStream is = new FileInputStream(new File(specFile));
-			InputStreamReader isr = new InputStreamReader(is);
-			Object obj = parser.parse(isr);
-			JSONObject array = (JSONObject) obj;
-			assignments = (JSONObject) array.get(ASSIGN_KEY);
-			params = (JSONObject) array.get(CONFIG_KEY);
-			isr.close();
-			is.close();
-		} catch (IOException e) {
-			System.err.println(this.getClass().getSimpleName() + 
-					"::loadFile(String): error opening/processing spec file: " +
-					specFile);
-			e.printStackTrace();
-		} catch (ParseException e) {
-			System.err.println(this.getClass().getSimpleName() + 
-					"::loadFile(String): JSON parsing error");
-		}
+	protected static EntityProperties simulationProperties(JsonObject config) {
+		EntityProperties simProps = new EntityProperties();
+		simProps.put(SIMULATION_LENGTH, config.getAsJsonPrimitive(SIMULATION_LENGTH).getAsLong());
+		simProps.put(FUNDAMENTAL_MEAN, config.getAsJsonPrimitive(FUNDAMENTAL_MEAN).getAsInt());
+		simProps.put(FUNDAMENTAL_KAPPA, config.getAsJsonPrimitive(FUNDAMENTAL_KAPPA).getAsDouble());
+		simProps.put(FUNDAMENTAL_SHOCK_VAR, config.getAsJsonPrimitive(FUNDAMENTAL_SHOCK_VAR).getAsDouble());
+		simProps.put(RAND_SEED, config.getAsJsonPrimitive(RAND_SEED).getAsLong());
+		
+		// TODO Find location
+//		data.pvVar = config.getAsJsonPrimitive("private_value_var").getAsDouble();
+		
+		return simProps;
 	}
 	
+	protected static EntityProperties systemModelProperties(JsonObject config) {
+		EntityProperties modelProps = new EntityProperties();
+		modelProps.put(LATENCY, config.getAsJsonPrimitive(
+				LATENCY).getAsLong());
+		return modelProps;
+	}
 	
-	/**
-	 * Parses the spec file for config parameters. Overrides settings 
-	 * in environment properties file & agent properties config.
-	 */
-	public void readParams() {
+	protected static EntityProperties systemAgentProperties(JsonObject config) {
+		EntityProperties agentProps = new EntityProperties();
+		agentProps.put(TICK_SIZE, config.getAsJsonPrimitive(TICK_SIZE).getAsInt());
+		agentProps.put(ARRIVAL_RATE, config.getAsJsonPrimitive(ARRIVAL_RATE).getAsDouble());
+		agentProps.put(REENTRY_RATE, config.getAsJsonPrimitive(REENTRY_RATE).getAsDouble());
+		return agentProps;
+	}
+
+	protected static Collection<ModelProperties> marketModels(JsonObject config, EntityProperties def) {
+		Collection<ModelProperties> models = new ArrayList<ModelProperties>();
 		
-		data.simLength = new TimeStamp(Integer.parseInt(getValue(SIMULATION_LENGTH)));
-		data.tickSize = Integer.parseInt(getValue(TICK_SIZE));	
-		data.nbboLatency = new TimeStamp(Integer.parseInt(getValue(LATENCY)));
-		data.hftLatency = new TimeStamp(Integer.parseInt(getValue("hft_latency")));
-		data.smLatency = new TimeStamp(Integer.parseInt(getValue("sm_latency")));
-		data.arrivalRate = Double.parseDouble(getValue(ARRIVAL_RATE));
-		data.reentryRate = Double.parseDouble(getValue(REENTRY_RATE));
-		data.meanValue = Integer.parseInt(getValue(FUNDAMENTAL_MEAN));
-		data.kappa = Double.parseDouble(getValue(FUNDAMENTAL_KAPPA));
-		data.shockVar = Double.parseDouble(getValue(FUNDAMENTAL_SHOCK_VAR));
-		data.pvVar = Double.parseDouble(getValue(PRIVATE_VALUE_VAR));
-		data.primaryModelDesc = getValue(PRIMARY_MODEL);
-		
-		/*******************
-		 * MARKET MODELS
-		 *******************/
-		for (ModelType modelType : ModelType.values()) {
+		for (ModelType type : ModelType.values()) {
 			// models here is a comma-separated list
-			String models = getValue(modelType);
-			if (models != null) {
-				if (!models.isEmpty()) {
-					if (models.endsWith(",")) {
-						// remove any extra appended commas
-						models = models.substring(0, models.length() - 1);
-					}
-					String[] configs = models.split("[,]+");
-					
-					if (configs.length > 1) {
-						// if > 1, # model type = # of items in the list
-						// check if there are NONE or 0 of this model
-						data.numModelType.put(modelType, configs.length);
-					} else if (!models.equals(Consts.MODEL_CONFIG_NONE) && 
-							!models.equals("0")) {
-						data.numModelType.put(modelType, configs.length);
-					} else {
-						data.numModelType.put(modelType, 0);
-					}
-				}
-			}
+			JsonPrimitive modelsTest = config.getAsJsonPrimitive(type.toString());
+			if (modelsTest == null) continue;
+			String modelSpec = modelsTest.getAsString();
+			String[] configs = modelSpec.split(",+");
+
+			for (String configString : configs)
+				models.add(new ModelProperties(type, def, configString));
 		}
-		
-		/*******************
-		 * CONFIGURATION - add environment agents
-		 *******************/
+		return models;
+	}
+
+	protected Map<AgentProperties, Integer> backgroundAgents(JsonObject config, EntityProperties def) {
+		Map<AgentProperties, Integer> backgroundAgents = new HashMap<AgentProperties, Integer>();
+
 		for (AgentType agentType : Consts.SM_AGENT) {
-			String num = getValue(agentType);
-			String setup = getValue(agentType + Consts.setupSuffix);
-			if (num != null) {
-				int n = Integer.parseInt(num);
-				ObjectProperties op = getStrategyParameters(agentType, setup);
-				AgentPropsPair a = new AgentPropsPair(agentType, op);
-				data.addEnvAgentNumber(a, n);
-			}
-		}
+			JsonPrimitive numJson = config.getAsJsonPrimitive(agentType.toString());
+			JsonPrimitive setupJson = config.getAsJsonPrimitive(agentType
+					+ Consts.setupSuffix);
+			if (numJson == null) continue;
 
-		/*******************
-		 * ASSIGNMENT - add players
-		 *******************/
-		for (String role : Consts.roles) {
-			Object strats = assignments.get(role);
-			if (strats != null) {			
-				@SuppressWarnings("unchecked")
-				ArrayList<String> strategies = (ArrayList<String>) strats;
-				for (String strat : strategies) {
-					if (!strat.equals("")) {
-						String[] as = strat.split("[:]+");	// split on colon
-						if (as.length != 2) {
-							Logger.log(Logger.ERROR, this.getClass().getSimpleName() + 
-									"::setRolePlayers: " + "incorrect strategy string");
-						} else {
-							// first elt is agent type, second elt is strategy
-							AgentType type = AgentType.valueOf(as[0]);
-							ObjectProperties op = getStrategyParameters(type, as[1]);
-							data.addPlayerProperties(new AgentPropsPair(type, op));
-						}
-					}
-				}
-			}
+			AgentProperties props = new AgentProperties(agentType, def, setupJson.getAsString());
+			backgroundAgents.put(props, numJson.getAsInt());
 		}
-	}
-	
-	/**
-	 * Gets the value associated with a given key in the JSONObject.
-	 * 
-	 * @param key
-	 * @return
-	 */
-	public String getValue(String key) {
-		if (params.containsKey(key)) {
-			return (String) params.get(key);
-		} else {
-			return null;
-		}
-	}
-	
-	public String getValue(ModelType key) {
-		return getValue(key.toString());
-	}
-	
-	public String getValue(AgentType key) {
-		return getValue(key.toString());
+		return backgroundAgents;
 	}
 
-	/**
-	 * Wrapper method because log is not static.
-	 * 
-	 * @param type
-	 * @param strategy
-	 * @return
-	 */
-	private ObjectProperties getStrategyParameters(AgentType type, String strategy) {
-		ObjectProperties op = SimulationSpec.getAgentProperties(type, strategy);
-		
-		if (op == null) {
-			Logger.log(Logger.ERROR, this.getClass().getSimpleName() + 
-					"::getStrategyParameters: error parsing " + strategy.split("[_]+"));
-		}
-		return op;
+	public EntityProperties getSimulationProperties() {
+		return simulationProperties;
+	}
+
+	public Collection<ModelProperties> getModels() {
+		return Collections.unmodifiableCollection(models);
+	}
+
+	public Map<AgentProperties, Integer> getBackgroundAgents() {
+		return Collections.unmodifiableMap(backgroundAgents);
 	}
 	
-	
-	/**
-	 * Gets properties for an entity. Will overwrite default ObjectProperties set in
-	 * Consts. If the entity type indicates that the entity is a player in a role, 
-	 * this method parses the strategy, if any, in the simulation spec file.
-	 *
-	 * @param type
-	 * @param strategy
-	 * @return ObjectProperties
-	 */
-	public static ObjectProperties getAgentProperties(AgentType type, String strategy) {
-		ObjectProperties p = new ObjectProperties(Consts.getProperties(type));
-		p.put(Agent.STRATEGY_KEY, strategy);
-		
-		if (strategy == null) return p;
-		
-		// Check that strategy is not blank
-		if (!strategy.equals("") && !type.equals(Consts.AgentType.DUMMY)) {
-			String[] stratParams = strategy.split("[_]+");
-			if (stratParams.length % 2 != 0) {
-				return null;
-			}
-			for (int j = 0; j < stratParams.length; j += 2) {
-				p.put(stratParams[j], stratParams[j+1]);
-			}
-		}
-		return p;
+	public JsonObject getPlayerConfig() {
+		return playerConfig;
 	}
-	
-	public static ObjectProperties getAgentProperties(String type, String strategy) {
-		return getAgentProperties(AgentType.valueOf(type), strategy);
-	}
+
+	// TODO Implement Players
+//	protected void players(SystemData data) {
+//		JsonObject assignments = spec.getAsJsonObject(ASSIGN_KEY);
+//
+//		String primaryModel;
+//		for (String role : Consts.roles) {
+//			JsonArray strats = assignments.getAsJsonArray(role);
+//			if (strats == null)
+//				continue;
+//
+//			for (JsonElement stratE : strats) {
+//				String strat = stratE.getAsString();
+//				if (strat.isEmpty())
+//					continue;
+//				String[] as = strat.split(":+"); // split on colon
+//				if (as.length != 2) {
+//					Logger.log(Logger.ERROR, this.getClass().getSimpleName()
+//							+ "::setRolePlayers: "
+//							+ "incorrect strategy string");
+//				} else {
+//					// first elt is agent type, second elt is strategy
+//					AgentType type = AgentType.valueOf(as[0]);
+//					ObjectProperties op = getStrategyParameters(type, as[1]);
+//					data.addPlayerProperties(new AgentPropsPair(type, op));
+//				}
+//
+//			}
+//		}
+//	}
+
 }

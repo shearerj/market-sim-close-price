@@ -1,27 +1,48 @@
 package model;
 
+import generators.Generator;
+import generators.IDGenerator;
+
+import java.util.Collection;
 import java.util.Map;
+
+import com.google.gson.JsonObject;
 
 import utils.RandPlus;
 import data.AgentProperties;
+import data.FundamentalValue;
 import data.ModelProperties;
+import entity.LAInformationProcessor;
 
 public class MarketModelFactory {
 
 	protected final RandPlus rand;
-	protected final Map<AgentProperties, Integer> props;
-	protected int nextID;
-
-	public MarketModelFactory(MarketModel model, Map<AgentProperties, Integer> props, int initialID, RandPlus rand) {
+	protected final Map<AgentProperties, Integer> agentProps;
+	protected final Generator<Integer> modelIDs;
+	protected final FundamentalValue fundamental;
+	protected final JsonObject playerConfig;
+	private int sipID;
+	Collection<Integer> latencies;
+	protected Collection<LAInformationProcessor> ip_las;
+	
+	public MarketModelFactory(Map<AgentProperties, Integer> props, JsonObject playerConfig, 
+			FundamentalValue fundamental, RandPlus rand) {
 		this.rand = rand;
-		this.props = props;
-		this.nextID = initialID;
+		this.latencies = latencies;
+		this.ip_las = ip_las;
+		this.agentProps = props;
+		this.fundamental = fundamental;
+		this.playerConfig = playerConfig;
+		this.modelIDs = new IDGenerator();
+		this.sipID = 0;
 	}
 
-	protected MarketModel createModel(ModelProperties props) {
-		switch (props.getModelType()) {
+	public MarketModel createModel(ModelProperties modelProps) {
+		sipID++; // makes new sipID for each model
+		switch (modelProps.getModelType()) {
 		case CENTRALCDA:
-			return null; // FIXME change
+			return new CentralCDA(modelIDs.next(), fundamental, agentProps, modelProps, playerConfig,
+					new RandPlus(rand.nextLong()));
 		case CENTRALCALL:
 			return null; // FIXME change
 		case TWOMARKET:
@@ -29,10 +50,6 @@ public class MarketModelFactory {
 		default:
 			return null;
 		}
-	}
-	
-	public final int nextID() {
-		return nextID;
 	}
 
 }
