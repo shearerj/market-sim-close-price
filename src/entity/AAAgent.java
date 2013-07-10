@@ -43,7 +43,6 @@ public class AAAgent extends BackgroundAgent {
 	// Private variables
 	//
 	// system variables
-	private double pvVar; // Variance used to generate limit
 //	private boolean debugging;
 
 	// Agent market variables
@@ -81,14 +80,7 @@ public class AAAgent extends BackgroundAgent {
 
 		public AAStrategy(EntityProperties params) {
 			// Agent Parameters
-			// Private Value
-			// FIXME initialized in constructor?
-			ArrayList<Integer> alphas = new ArrayList<Integer>();
-			for (int i = -maxAbsPosition; i < maxAbsPosition; i++) {
-				alphas.add((int) Math.round(rand.nextGaussian(0, pvVar)));
-			}
-			privateValue = new PrivateValue(maxAbsPosition, pvVar, rand);
-			limit = privateValue.getValueAtPosition(0); // XXX Guarenteed to be Price(0)
+			limit = privateValue.getValueAtPosition(0); // XXX Guaranteed to be Price(0)
 
 			// Parameters are currently taken from Vytelingum paper
 			lambda_r = 0.05;
@@ -503,8 +495,10 @@ public class AAAgent extends BackgroundAgent {
 	public AAAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, SIP sip, EntityProperties params) {
 		// TODO change "null" to proper private value initialization
-		super(agentID, arrivalTime, model, market, null, rand, sip);
-		
+		super(agentID, arrivalTime, model, market, new PrivateValue(
+				params.getAsInt(MAXQUANTITY_KEY, 1), params.getAsDouble(
+						"pvVar", 100), rand), rand, sip);
+
 		//Initialize market
 		this.marketSubmittedBid = this.market;
 		

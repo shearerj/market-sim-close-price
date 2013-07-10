@@ -45,13 +45,18 @@ public abstract class Agent extends Entity {
 
 	protected final RandPlus rand;
 
-	// -- begin reorg -- stuff above line existed before and is still
-	// relevant...
+	protected final MarketModel model;
+	protected final Map<Double, Double> surplusMap; // hashed by rho value
+	// For quote generation
+	protected final SIP sip;
 
-	protected MarketModel model;
-	protected Map<Double, Double> surplusMap; // hashed by rho value
+	// Agent parameters
+	protected final PrivateValue privateValue;
+	protected final TimeStamp arrivalTime;
 
 	// -- end reorg --
+	
+	protected String agentType;
 
 	// Market information (all hashed by market ID, as ID may be negative)
 	protected HashMap<Integer, Bid> currentBid;
@@ -65,14 +70,6 @@ public abstract class Agent extends Entity {
 	protected HashMap<Integer, TimeStamp> lastClearTime;
 	protected BestBidAsk lastNBBOQuote;
 	protected int tickSize;
-
-	// For quote generation
-	protected SIP sip;
-
-	// Agent parameters
-	protected PrivateValue privateValue;
-	protected String agentType;
-	protected TimeStamp arrivalTime;
 
 	// Transaction information
 	protected TimeStamp lastTransTime;
