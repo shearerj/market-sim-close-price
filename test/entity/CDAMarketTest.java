@@ -10,6 +10,7 @@ import market.PQBid;
 import market.Price;
 import market.Transaction;
 import model.CentralCDA;
+import model.DummyMarketModel;
 import model.MarketModel;
 import model.MarketModelFactory;
 
@@ -44,18 +45,11 @@ public class CDAMarketTest {
 	public static void setupClass() {
 		//Setting up the log file
 		Logger.setup(3, "simulations/unit_testing", "unit_tests.txt", true);
-		
-		//Creating the setup properties
-		playerConfig = new JsonObject();
-		rand = new RandPlus(1);
-		fund = new DummyFundamental(0, 100000, 0, rand);
-		modelProperties = new ModelProperties(Consts.ModelType.CENTRALCDA);
-		agentProperties = new HashMap<AgentProperties, Integer>();
 	}
 	
 	@Before
 	public void setup() {
-		model = new CentralCDA(1, fund, agentProperties, modelProperties, playerConfig, rand);
+		model = new DummyMarketModel(1);
 		market = new CDAMarket(1, model);
 		model.addMarket(market);
 		for(Market mkt : model.getMarkets()) market = mkt;
@@ -105,8 +99,8 @@ public class CDAMarketTest {
 		
 		//Creating dummy agents
 		SIP sip = new SIP(1, 1);
-		Agent agent1 = new ZIAgent(0, time, model, market, new RandPlus(), sip, 0, 0);
-		Agent agent2 = new ZIAgent(0, time, model, market, new RandPlus(), sip, 0, 0);
+		Agent agent1 = new ZIAgent(1, time, model, market, new RandPlus(), sip, 0, 0);
+		Agent agent2 = new ZIAgent(2, time, model, market, new RandPlus(), sip, 0, 0);
 		
 		//Creating and adding bids
 		PQBid testBid1 = new PQBid(agent1, market, time);
@@ -134,8 +128,8 @@ public class CDAMarketTest {
 		
 		//Creating dummy agents
 		SIP sip = new SIP(1, 1);
-		Agent agent1 = new ZIAgent(0, time, model, market, new RandPlus(), sip, 0, 0);
-		Agent agent2 = new ZIAgent(0, time, model, market, new RandPlus(), sip, 0, 0);
+		Agent agent1 = new ZIAgent(1, time, model, market, new RandPlus(), sip, 0, 0);
+		Agent agent2 = new ZIAgent(2, time, model, market, new RandPlus(), sip, 0, 0);
 		
 		//Creating and adding bids
 		PQBid testBid1 = new PQBid(agent1, market, time);
@@ -155,5 +149,26 @@ public class CDAMarketTest {
 			assertTrue("Incorrect Price", tr.getPrice().equals(new Price(100)));
 			assertTrue("Incorrect Quantity", tr.getQuantity() == 1);
 		}
+	}
+	
+	@Test
+	public void MultiClear() {
+		TimeStamp time = new TimeStamp(0);
+		
+		//Creating dummy agents
+		SIP sip = new SIP(1, 1);
+		Agent agent1 = new ZIAgent(1, time, model, market, new RandPlus(), sip, 0, 0);
+		Agent agent2 = new ZIAgent(2, time, model, market, new RandPlus(), sip, 0, 0);
+		Agent agent3 = new ZIAgent(3, time, model, market, new RandPlus(), sip, 0, 0);
+		Agent agent4 = new ZIAgent(4, time, model, market, new RandPlus(), sip, 0, 0);
+		
+		//Creating and adding bids
+		PQBid testBid1 = new PQBid(agent1, market, time);
+		testBid1.addPoint(1, new Price(50));
+		market.addBid(testBid1, time);
+		PQBid testBid2 = new PQBid(agent2, market, time);
+		testBid1.addPoint(1, new Price(200));
+		market.addBid(testBid2, time);
+		
 	}
 }

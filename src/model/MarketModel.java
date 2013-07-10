@@ -205,7 +205,6 @@ public abstract class MarketModel {
 	public void addAgent(Agent agent) {
 		agents.add(agent);
 	}
-
 	
 	public void addMarket(Market market) {
 		markets.add(market);
