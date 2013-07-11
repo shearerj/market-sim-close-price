@@ -1,5 +1,6 @@
 package model;
 
+import java.util.Collection;
 import java.util.Map;
 
 import com.google.gson.JsonObject;
@@ -9,6 +10,7 @@ import data.AgentProperties;
 import data.FundamentalValue;
 import data.EntityProperties;
 import entity.CDAMarket;
+import entity.LAInformationProcessor;
 
 /**
  * CENTRALCDA
@@ -33,7 +35,7 @@ public class CentralCDA extends MarketModel {
 
 	@Override
 	protected void setupMarkets(EntityProperties modelProps) {
-		markets.add(new CDAMarket(1, this, sip));
+		markets.add(new CDAMarket(1, this, this.getipIDgen()));
 	}
 
 }

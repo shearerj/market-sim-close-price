@@ -1,5 +1,6 @@
 package entity;
 
+
 import static logger.Logger.log;
 import static logger.Logger.Level.DEBUG;
 import static logger.Logger.Level.ERROR;
@@ -48,7 +49,6 @@ public abstract class Agent extends Entity {
 	protected final MarketModel model;
 	protected final Map<Double, Double> surplusMap; // hashed by rho value
 	// For quote generation
-	protected final SIP sip;
 
 	// Agent parameters
 	protected final PrivateValue privateValue;
@@ -70,6 +70,12 @@ public abstract class Agent extends Entity {
 	protected HashMap<Integer, TimeStamp> lastClearTime;
 	protected BestBidAsk lastNBBOQuote;
 	protected int tickSize;
+	protected int modelID;
+
+	// For quote generation
+	protected Sip_Prime sip;
+	//protected IP_LA ip_LA;
+	//protected IP_SM ip_SM;
 
 	// Transaction information
 	protected TimeStamp lastTransTime;
@@ -101,12 +107,12 @@ public abstract class Agent extends Entity {
 
 	// FIXME Agent probably needs more than this...
 	public Agent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			PrivateValue pv, RandPlus rand, SIP sip) {
+			PrivateValue pv, RandPlus rand) {
 		super(agentID);
 		this.model = model;
 		this.rand = rand;
 		this.arrivalTime = arrivalTime;
-		this.sip = sip;
+		this.sip = model.getSip();
 
 		// Constructors
 		this.currentBid = new HashMap<Integer, Bid>();
@@ -114,6 +120,7 @@ public abstract class Agent extends Entity {
 		this.transactions = new ArrayList<Transaction>();
 		this.idComparator = new TransactionIDComparator();
 		this.privateValue = pv;
+		modelID = model.getID();
 	}
 
 	public abstract Collection<? extends Activity> agentStrategy(

@@ -48,11 +48,13 @@ public abstract class SMAgent extends Agent {
 	protected final Market market;
 	// market to which bid has been submitted
 	protected Market marketSubmittedBid;
+	protected IP_SM ip_sm;
 
 	public SMAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, PrivateValue pv, RandPlus rand, SIP sip) {
-		super(agentID, arrivalTime, model, pv, rand, sip);
+			Market market, PrivateValue pv, RandPlus rand) {
+		super(agentID, arrivalTime, model, pv, rand);
 		this.market = market;
+		this.ip_sm = marketSubmittedBid.getIPSM();
 	}
 
 	/**
@@ -145,10 +147,10 @@ public abstract class SMAgent extends Agent {
 		if (quantity == 0)
 			return Collections.emptySet();
 
-		BestBidAsk lastNBBOQuote = sip.getNBBOQuote(model);
+		BestBidAsk lastNBBOQuote = sip.getNBBOQuote(modelID);
 
 		// Identify best market, as based on the NBBO.
-		Quote mainMarketQuote = market.quote(ts);
+		BestBidAsk mainMarketQuote = market.ip_SM.getNBBOQuote(modelID);
 
 		// Check if NBBO indicates that other market better:
 		// - Want to buy for as low a price as possible, so find market with the
@@ -161,10 +163,14 @@ public abstract class SMAgent extends Agent {
 		boolean nbboBetter, willTransact;
 		Market bestMarket;
 		Price bestPrice;
+		
+		BestBidAsk bestbidask = ip_sm.getNBBOQuote(modelID);
+		BestBidAsk NBBO = model.sip.getNBBOQuote(modelID); //FIXME
+
 
 		if (quantity > 0) { // buy
 			nbboBetter = lastNBBOQuote.getBestAsk() != null
-					&& lastNBBOQuote.getBestAsk().lessThan(mainMarketQuote.lastAskPrice);
+					&& lastNBBOQuote.getBestAsk().lessThan(mainMarketQuote.getBestAsk()); // not stored -- should be best?
 			willTransact = nbboBetter
 					&& price.greaterThan(lastNBBOQuote.getBestAsk());
 			if (willTransact) {
@@ -172,18 +178,18 @@ public abstract class SMAgent extends Agent {
 				bestPrice = lastNBBOQuote.getBestAsk();
 			} else {
 				bestMarket = market;
-				bestPrice = mainMarketQuote.lastAskPrice;
+				bestPrice = mainMarketQuote.getBestAsk();
 			}
 		} else { // sell
 			nbboBetter = lastNBBOQuote.getBestBid() != null
-					&& lastNBBOQuote.getBestBid().greaterThan(mainMarketQuote.lastBidPrice);
+					&& lastNBBOQuote.getBestBid().greaterThan(mainMarketQuote.getBestBid());
 			willTransact = nbboBetter && price.lessThan(lastNBBOQuote.getBestBid());
 			if (willTransact) {
 				bestMarket = lastNBBOQuote.getBestBidMarket();
 				bestPrice = lastNBBOQuote.getBestBid();
 			} else {
 				bestMarket = market;
-				bestPrice = mainMarketQuote.lastBidPrice;
+				bestPrice = mainMarketQuote.getBestBid();
 			}
 		}
 
@@ -191,8 +197,8 @@ public abstract class SMAgent extends Agent {
 			log(INFO, ts + " | " + this + " " + agentType
 					+ "::submitNMSBid: " + "NBBO(" + lastNBBOQuote.getBestBid()
 					+ ", " + lastNBBOQuote.getBestAsk() + ") better than " + market
-					+ " Quote(" + mainMarketQuote.lastBidPrice + ", "
-					+ mainMarketQuote.lastAskPrice + ")");
+					+ " Quote(" + mainMarketQuote.getBestBid() + ", "
+					+ mainMarketQuote.getBestAsk() + ")");
 		if (willTransact)
 			log(INFO, ts + " | " + this + " " + agentType
 					+ "::submitNMSBid: " + "Bid +(" + price + "," + quantity

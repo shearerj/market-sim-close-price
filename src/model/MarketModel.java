@@ -14,6 +14,7 @@ import com.google.gson.JsonObject;
 import activity.AgentArrival;
 import activity.Clear;
 
+import entity.Sip_Prime;
 import market.Bid;
 import market.Price;
 import market.Transaction;
@@ -30,6 +31,8 @@ import data.Player;
 import data.SystemData;
 import data.TimeSeries;
 import entity.Agent;
+import entity.LAAgent;
+import entity.LAInformationProcessor;
 import entity.Market;
 import entity.SMAgentFactory;
 import entity.SIP;
@@ -87,10 +90,13 @@ public abstract class MarketModel {
 
 	protected Map<Double, Double> modelSurplus; // hashed by rho value
 	protected TimeSeries NBBOSpreads; // NBBO bid/ask spread values
-	protected final SIP sip;
 
 	protected final RandPlus rand;
+	//protected int nextAgentID; not sure if we need this
+	
+	public Sip_Prime sip;
 	protected final Generator<Integer> agentIDgen;
+	protected final Generator<Integer> ipIDgen;
 
 	// -- end reorg --
 
@@ -98,9 +104,11 @@ public abstract class MarketModel {
 								// construction?
 	protected SystemData data;
 	protected ArrayList<Integer> agentIDs; // IDs of associated agents
+	protected ArrayList<Integer> ipIDs; // IDs of associated ips
 	protected EntityProperties modelProperties;
 	protected ArrayList<AgentPropsPair> agentConfig;
 	protected ArrayList<MarketObjectPair> modelMarketConfig;
+	protected Collection<TimeStamp> latencies;
 
 	// Store information on market IDs for each market specified in
 	// modelProperties
@@ -120,15 +128,21 @@ public abstract class MarketModel {
 		this.trans = new ArrayList<Transaction>();
 		this.modelSurplus = new HashMap<Double, Double>();
 		this.agentIDgen = new IDGenerator();
+		this.ipIDgen = new IDGenerator();
 		this.NBBOSpreads = new TimeSeries();
 
-		// FIXME actually initialize SIP
-		this.sip = new SIP(0, 100 /* tick size */);
+		// FIXME actually initialize SIP -- why is this tick size? should be latency!!!
+		this.sip = new Sip_Prime(getipIDgen(), modelID, new TimeStamp(100) /* tick size */);
 
 		// Setup
 		setupMarkets(modelProps);
 		setupAgents(modelProps, agentProps);
 		setupPlayers(modelProps, playerConfig);
+		//setupLA_IPs(modelProps);
+	}
+	
+	public int getipIDgen() {
+		return this.ipIDgen.next();
 	}
 
 	protected abstract void setupMarkets(EntityProperties modelProps);
@@ -193,6 +207,13 @@ public abstract class MarketModel {
 			}
 		}
 	}
+	
+	/**
+	 * @return SIP
+	 */
+	public Sip_Prime getSip() {
+		return this.sip;
+	}
 
 	public void scheduleActivities(EventManager manager) {
 		// TODO schedule sendToSIP
@@ -203,9 +224,9 @@ public abstract class MarketModel {
 	}
 
 	// TODO remove
-	public void addAgent(Agent agent) {
-		agents.add(agent);
-	}
+	//public void addAgent(Agent agent) {
+		//agents.add(agent);
+	//}
 	
 	/**
 	 * @return configuration string for this model.

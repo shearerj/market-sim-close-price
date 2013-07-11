@@ -75,6 +75,8 @@ public class SystemData {
 	public TimeStamp simLength;
 	public int tickSize;
 	public TimeStamp nbboLatency;
+	public TimeStamp hftLatency;
+	public TimeStamp smLatency;
 	public double arrivalRate;
 	public double reentryRate;
 	public int meanValue;

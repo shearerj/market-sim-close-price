@@ -11,6 +11,9 @@ import data.AgentProperties;
 import data.FundamentalValue;
 import data.EntityProperties;
 import entity.CDAMarket;
+import entity.LAAgent;
+import entity.LAInformationProcessor;
+import event.TimeStamp;
 import entity.Market;
 
 /**
@@ -51,15 +54,21 @@ public class TwoMarket extends MarketModel {
 
 	@Override
 	protected void setupMarkets(EntityProperties modelProps) {
-		markets.add(new CDAMarket(1, this, sip));
-		markets.add(new CDAMarket(2, this, sip));
+		markets.add(new CDAMarket(1, this, this.getipIDgen()));
+		markets.add(new CDAMarket(2, this, this.getipIDgen()));
 	}
 
 	@Override
-	protected void setupAgents(EntityProperties modelProps,
+	protected void setupAgents(EntityProperties modelProps, // these are all of the key value pairs from sim spec.json
 			Map<AgentProperties, Integer> agentProps) {
 		super.setupAgents(modelProps, agentProps);
 		// Look at model parameters and set up LA
+		int numla = modelProps.getAsInt("numla", 0);
+		for (int i = 0; i < numla; i++) {
+			TimeStamp latency = new TimeStamp(modelProps.getAsInt("lat" + (i + 1), 100)); 
+			//TODO entity properties should be set,defaults currently not handled
+			new LAAgent(this.agentIDgen.next(), this, new RandPlus(rand.nextLong()), new EntityProperties(), latency);
+		}
 	}
 
 }

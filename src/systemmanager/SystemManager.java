@@ -4,6 +4,7 @@ import static logger.Logger.log;
 import static logger.Logger.Level.*;
 
 import data.*;
+import entity.LAInformationProcessor;
 import event.*;
 
 import java.util.*;

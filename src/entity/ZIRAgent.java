@@ -51,11 +51,11 @@ public class ZIRAgent extends BackgroundAgent {
 	protected ArrayList<TimeStamp> submissionTimes; // TODO currently unused
 
 	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, SIP sip, int bidRange, int maxAbsPosition,
+			Market market, RandPlus rand, int bidRange, int maxAbsPosition,
 			int reentryRate, double pvVar) {
 		// TODO replace null with proper private value initialization
 		super(agentID, arrivalTime, model, market, new PrivateValue(
-				maxAbsPosition, pvVar, rand), rand, sip);
+				maxAbsPosition, pvVar, rand), rand);
 		this.bidRange = bidRange;
 		this.maxAbsPosition = maxAbsPosition;
 		this.reentry = new ArrivalTime(arrivalTime, reentryRate, rand);
@@ -64,9 +64,9 @@ public class ZIRAgent extends BackgroundAgent {
 	}
 
 	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, SIP sip, EntityProperties props) {
+			Market market, RandPlus rand, EntityProperties props) {
 		// TODO get keys and default value for reentry rate and pvvar
-		this(agentID, arrivalTime, model, market, rand, sip,
+		this(agentID, arrivalTime, model, market, rand,
 				props.getAsInt(BIDRANGE_KEY, 5000), 
 				props.getAsInt(MAXQUANTITY_KEY, 10),
 				props.getAsInt("reentry_rate", 100), 

@@ -1,5 +1,6 @@
 package model;
 
+import java.util.Collection;
 import java.util.Map;
 
 import com.google.gson.JsonObject;
@@ -9,6 +10,7 @@ import data.AgentProperties;
 import data.FundamentalValue;
 import data.EntityProperties;
 import entity.CallMarket;
+import entity.LAInformationProcessor;
 import event.TimeStamp;
 
 /**
@@ -25,9 +27,10 @@ import event.TimeStamp;
  */
 public class CentralCall extends MarketModel {
 
+
 	public CentralCall(int modelID, FundamentalValue fundamental,
-			Map<AgentProperties, Integer> agentProps,
-			EntityProperties modelProps, JsonObject playerConfig, RandPlus rand) {
+			Map<AgentProperties, Integer> agentProps, EntityProperties modelProps, 
+			JsonObject playerConfig, RandPlus rand) {
 		super(modelID, fundamental, agentProps, modelProps, playerConfig, rand);
 	}
 
@@ -43,7 +46,7 @@ public class CentralCall extends MarketModel {
 				CallMarket.PRICING_POLICY_KEY, 0.5f);
 		TimeStamp clearFreq = new TimeStamp(modelProps.getAsLong(
 				CallMarket.CLEAR_FREQ_KEY, 100));
-		markets.add(new CallMarket(1, this, sip, pricingPolicy, clearFreq));
+		markets.add(new CallMarket(1, this, pricingPolicy, clearFreq)); // not sure on numbering...
 	}
 
 }

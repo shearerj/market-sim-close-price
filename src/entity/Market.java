@@ -21,6 +21,9 @@ import systemmanager.Consts;
 import activity.Activity;
 import activity.ProcessQuote;
 import activity.SendToSIP;
+import activity.UpdateNBBO;
+import data.EntityProperties;
+import data.SystemData;
 import data.TimeSeries;
 import event.TimeStamp;
 
@@ -33,7 +36,6 @@ public abstract class Market extends Entity {
 
 	protected final MarketModel model;
 	protected final PQOrderBook orderbook;
-	protected final SIP sip;
 
 	// Statistics
 	protected final Collection<Bid> bids; // All bids ever submitted to the
@@ -42,6 +44,16 @@ public abstract class Market extends Entity {
 	protected final TimeSeries spreads; // Bid-ask spread value
 	protected final TimeSeries midQuotes; // Midpoint of bid/ask values
 	// end reorg
+
+	// Model information
+	// TODO equals method...
+	protected int modelID; // ID of associated model
+	protected int marketID;
+
+	// Agent information
+	protected ArrayList<Integer> buyers;
+	protected ArrayList<Integer> sellers;
+	protected ArrayList<Integer> agentIDs;
 
 	// Market information
 	public TimeStamp nextQuoteTime;
@@ -54,18 +66,61 @@ public abstract class Market extends Entity {
 	public Price lastBidPrice;
 	public int lastAskQuantity;
 	public int lastBidQuantity;
+	public IP_SM ip_SM;
 	public String marketType;
-
-	public Market(int marketID, MarketModel model, SIP sip) {
+	Collection<AbstractIP> ips;
+	
+/*
+	public Market(int marketID, MarketModel model, int ipID) {
 		super(marketID);
+		
 		this.model = model;
-		this.sip = sip;
+	}*/  // not sure which constructor to use... 
+
+	public Market(int marketID, MarketModel model, int ipID) {
+		super(marketID);
+		agentIDs = new ArrayList<Integer>();
+		buyers = new ArrayList<Integer>();
+		sellers = new ArrayList<Integer>();
+		this.marketID = marketID;
+
+		lastQuoteTime = new TimeStamp(-1);
+		lastClearTime = new TimeStamp(-1);
+		nextQuoteTime = new TimeStamp(-1);
+		nextClearTime = new TimeStamp(-1);
+
+		lastClearPrice = new Price(-1);
+		lastAskPrice = new Price(-1);
+		lastBidPrice = new Price(-1);
+		
+		setupIPSM();
+		
+		// reorg
+		this.model = model;
 
 		this.bids = new ArrayList<Bid>();
 		this.orderbook = new PQOrderBook(this);
 		this.depths = new TimeSeries();
 		this.spreads = new TimeSeries();
 		this.midQuotes = new TimeSeries();
+		addIP(model.sip);
+	}
+	
+	public void addIP(AbstractIP ip) {
+		ips.add(ip);
+	}
+	
+	protected void setupIPSM() {
+		// TODO should have global variable of SM Latency
+		IP_SM ip_SM = new IP_SM(0, marketID, new TimeStamp(0), this);
+		addIP(ip_SM);
+	} 
+	
+	/**
+	 * @return IP_SM
+	 */
+	public IP_SM getIPSM() {
+		return this.ip_SM;
 	}
 
 	/**
@@ -229,15 +284,12 @@ public abstract class Market extends Entity {
 		log(INFO, currentTime + " | " + this + " SendToSIP(" + bid + ", " + ask
 				+ ")");
 
-		// FIXME latency should be inside SIP not inside market, unless we want
-		// market specific latency or something.
-		if (data.nbboLatency.longValue() == 0) {
-			return Collections.singleton(new ProcessQuote(sip, this, bid, ask,
-					Consts.INF_TIME));
-		} else {
-			return Collections.singleton(new ProcessQuote(sip, this, bid, ask,
-					currentTime.sum(data.nbboLatency)));
+		Collection<Activity> actMap = new ArrayList<Activity>();
+		
+		for (AbstractIP ip : ips) {
+			actMap.add(ip.scheduleProcessQuote(this, bid, ask, currentTime));
 		}
+		return actMap;
 	}
 
 	/**

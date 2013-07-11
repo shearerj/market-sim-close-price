@@ -35,21 +35,18 @@ public class CallMarket extends Market {
 	public float pricingPolicy; // XXX Unused?
 	protected final TimeStamp clearFreq;
 	protected TimeStamp nextClearTime;
-
-	public CallMarket(int marketID, MarketModel model, SIP sip,
-			float pricingPolicy, TimeStamp clearFreq) {
-		super(marketID, model, sip);
+	
+	public CallMarket(int marketID, MarketModel model, float pricingPolicy, TimeStamp clearFreq) {
+		super(marketID, model, model.getipIDgen());
 
 		if (clearFreq.after(Consts.START_TIME))
 			throw new IllegalArgumentException(
 					"Can't create a call market with 0 clear frequency. Create a CDA instead.");
-
 		this.pricingPolicy = pricingPolicy;
 		this.clearFreq = clearFreq;
 		this.nextClearTime = clearFreq;
 	}
 
-	@Override
 	public Bid getBidQuote() {
 		return this.orderbook.getBidQuote();
 	}

@@ -496,7 +496,7 @@ public class AAAgent extends BackgroundAgent {
 		// TODO change "null" to proper private value initialization
 		super(agentID, arrivalTime, model, market, new PrivateValue(
 				params.getAsInt(MAXQUANTITY_KEY, 1), params.getAsDouble(
-						"pvVar", 100), rand), rand, sip);
+						"pvVar", 100), rand), rand);
 
 		//Initialize market
 		this.marketSubmittedBid = this.market;

@@ -151,7 +151,8 @@ public class SIP extends Entity {
 
 			} else {
 				// global quote
-				bid = mkt.getBidPrice();
+				bid = mkt.getBidPrice(); // for sip_p this is the same as nbbo true
+										
 				ask = mkt.getAskPrice();
 			}
 
