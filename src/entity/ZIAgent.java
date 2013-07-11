@@ -1,5 +1,7 @@
 package entity;
 
+import static java.lang.Math.signum;
+
 import java.util.Collection;
 
 import market.Price;
@@ -36,7 +38,8 @@ public class ZIAgent extends BackgroundAgent {
 
 	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, int bidRange, double pvVar) {
-		super(agentID, arrivalTime, model, market, new PrivateValue((int) Math.round(rand.nextGaussian(0, pvVar)), (int) Math.round(rand.nextGaussian(0, pvVar))), rand);
+		super(agentID, arrivalTime, model, market, 
+				new PrivateValue(1, pvVar, rand), rand);
 		this.bidRange = bidRange;
 	}
 
@@ -44,28 +47,21 @@ public class ZIAgent extends BackgroundAgent {
 			Market market, RandPlus rand, EntityProperties props) {
 		this(agentID, arrivalTime, model, market, rand, props.getAsInt(
 				BIDRANGE_KEY, 2000), props.getAsDouble("pvVar", 100));
-		// FIXME get KEY for PVVar and and proper default 
+		// FIXME get KEY for PVVar and and proper default
 	}
 
 	@Override
 	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
-		// update quotes
-		this.updateQuotes(market, currentTime);
-
-		Price price;
-		int quantity;
-		quantity = rand.nextBoolean() ? 1 : -1; // 50% chance of being either long or
-											// short
-		int val = Math.max(0,
-				model.getFundamentalAt(currentTime).plus(getPrivateValueAt(quantity)).getPrice());
+		// 50% chance of being either long or short
+		int quantity = rand.nextBoolean() ? 1 : -1;
+		Price val = model.getFundamentalAt(currentTime).plus(
+				privateValue.getValueFromQuantity(positionBalance, quantity)).nonnegative();
 
 		// basic ZI behavior
-		if (quantity > 0)
-			price = new Price((int) Math.max(0, ((val - 2 * bidRange) + rand.nextDouble() * 2
-					* bidRange)));
-		else
-			price = new Price((int) Math.max(0, (val + rand.nextDouble() * 2 * bidRange)));
+		Price price = new Price((int) (val.getPrice() - signum(quantity)
+				* rand.nextDouble() * 2 * bidRange)).nonnegative();
 
-		return executeSubmitNMSBid(price, quantity, currentTime); // bid does not expire
+		// bid does not expire
+		return executeSubmitNMSBid(price, quantity, currentTime);
 	}
 }

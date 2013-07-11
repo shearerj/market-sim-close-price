@@ -5,12 +5,11 @@ import static logger.Logger.Level.INFO;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
-import com.sun.tools.javac.util.List;
 
-import systemmanager.Consts;
 import logger.Logger;
 import market.Bid;
 import market.PQOrderBook;
@@ -34,16 +33,16 @@ import event.TimeStamp;
  * @author ewah
  */
 public abstract class Market extends Entity {
-	
-	// XXX There should probably be more model specific stuff here...
-	// reorg
+
 	protected final MarketModel model;
-	protected PQOrderBook orderbook;
-	//Statistics
-	protected List<Bid> bids;			//All bids ever submitted to the market
-	protected TimeSeries depths;		//Number of orders in the orderBook
-	protected TimeSeries spreads;		//Bid-ask spread value
-	protected TimeSeries midQuotes;		//Midpoint of bid/ask values
+	protected final PQOrderBook orderbook;
+
+	// Statistics
+	protected final Collection<Bid> bids; // All bids ever submitted to the
+											// market
+	protected final TimeSeries depths; // Number of orders in the orderBook
+	protected final TimeSeries spreads; // Bid-ask spread value
+	protected final TimeSeries midQuotes; // Midpoint of bid/ask values
 	// end reorg
 
 	// Model information
@@ -99,6 +98,7 @@ public abstract class Market extends Entity {
 		// reorg
 		this.model = model;
 
+		this.bids = new ArrayList<Bid>();
 		this.orderbook = new PQOrderBook(this);
 		this.depths = new TimeSeries();
 		this.spreads = new TimeSeries();
@@ -121,22 +121,6 @@ public abstract class Market extends Entity {
 	 */
 	public IP_SM getIPSM() {
 		return this.ip_SM;
-	}
-
-	/**
-	 * Set the model ID for the market.
-	 * 
-	 * @param id
-	 */
-	public void linkModel(int id) {
-		this.modelID = id;
-	}
-
-	/**
-	 * @return model ID
-	 */
-	public int getModelID() {
-		return this.modelID;
 	}
 
 	/**
@@ -183,107 +167,105 @@ public abstract class Market extends Entity {
 	/**
 	 * Clears the order book.
 	 * 
-	 * @param clearTime
+	 * @param currentTime
 	 * @return
 	 */
-	public Collection<Activity> clear(TimeStamp clearTime) {
-		Collection<Activity> actList = new ArrayList<Activity>();
-		
-		//Log prior quote
-		log(INFO, clearTime + " | " + this + " Prior-clear Quote" + 
-				this.quote(clearTime));
-		
-		//Update the orderbook
-		orderbook.logActiveBids(clearTime);
-		orderbook.logFourHeap(clearTime);
-		
-		ArrayList<Transaction> trans = orderbook.earliestPriceClear(clearTime);
-		lastClearTime = clearTime;
-		
-		//If there are no new transactions
-		if(trans == null) {
-			this.addDepth(clearTime, orderbook.getDepth());
-			
-			log(INFO, clearTime + " | ....." + this + " " + 
-					this.getName() + "::clear: No change. Post-clear Quote" +  
-					this.quote(clearTime));
-			
-			actList.add(new SendToSIP(this, clearTime));
-			return actList;
+	public Collection<? extends Activity> clear(TimeStamp currentTime) {
+		// Log prior quote
+		log(INFO,
+				currentTime + " | " + this + " Prior-clear Quote"
+						+ this.quote(currentTime));
+
+		// Update the orderbook
+		orderbook.logActiveBids(currentTime);
+		orderbook.logFourHeap(currentTime);
+
+		ArrayList<Transaction> trans = orderbook.earliestPriceClear(currentTime);
+		lastClearTime = currentTime;
+
+		// If there are no new transactions
+		if (trans == null) {
+			this.addDepth(currentTime, orderbook.getDepth());
+
+			log(INFO,
+					currentTime + " | ....." + this + " " + this.getName()
+							+ "::clear: No change. Post-clear Quote"
+							+ this.quote(currentTime));
+
+			// FIXME SendToSIP(s) should probably happen after a quote update,
+			// not after a clear. In general a clear should always cause a quote
+			// update, but this is important to note. Also, if there's a clear,
+			// but no transactions, it's probably not worth a SendToSIP, unless
+			// you're a call market.
+			return Collections.singleton(new SendToSIP(this, currentTime));
 		}
-		//Otherwise, update and log Transactions
-		for(Transaction tr : trans) {
+		// Otherwise, update and log Transactions
+		for (Transaction tr : trans) {
 			model.addTrans(tr);
-			//update and log transactions
-			tr.getBuyer().updateTransactions(clearTime);
-			tr.getBuyer().logTransactions(clearTime);
-			tr.getSeller().updateTransactions(clearTime);
-			tr.getSeller().logTransactions(clearTime);
-			lastClearPrice = tr.getPrice();			
+			// update and log transactions
+			tr.getBuyer().updateTransactions(currentTime);
+			tr.getBuyer().logTransactions(currentTime);
+			tr.getSeller().updateTransactions(currentTime);
+			tr.getSeller().logTransactions(currentTime);
+			lastClearPrice = tr.getPrice();
 		}
-		
-		//Orderbook logging
-		orderbook.logActiveBids(clearTime);
-		orderbook.logClearedBids(clearTime);
-		orderbook.logFourHeap(clearTime);
-		//Updating Depth
-		this.addDepth(clearTime, orderbook.getDepth());
-		Logger.log(Logger.Level.INFO, clearTime + " | ....." + toString() + " " + 
-				this.getName() + "::clear: Order book cleared: " +
-				"Post-clear Quote" + this.quote(clearTime));
-		actList.add(new SendToSIP(this, clearTime));
-		return actList;
+
+		// Orderbook logging
+		orderbook.logActiveBids(currentTime);
+		orderbook.logClearedBids(currentTime);
+		orderbook.logFourHeap(currentTime);
+
+		// Updating Depth
+		this.addDepth(currentTime, orderbook.getDepth());
+		Logger.log(Logger.Level.INFO, currentTime + " | ....." + toString()
+				+ " " + this.getName() + "::clear: Order book cleared: "
+				+ "Post-clear Quote" + this.quote(currentTime));
+
+		return Collections.singleton(new SendToSIP(this, currentTime));
 	}
 
 	/**
 	 * @return map of bids (hashed by agent ID)
 	 */
-	public abstract HashMap<Integer, Bid> getBids();
+	public abstract Map<Integer, Bid> getBids();
 
 	/**
 	 * Returns all bids submitted to this market
 	 * 
 	 * @return bids
 	 */
-	public List<Bid> getAllBids() {
-		return this.bids;
+	public Collection<Bid> getAllBids() {
+		return bids;
 	}
 
 	/**
 	 * Add bid to the market.
 	 * 
 	 * @param b
-	 * @param ts
+	 * @param currentTime
 	 *            TimeStamp of bid addition
 	 * @return Collection<Activity> of further activities to add, if any
 	 */
-	public abstract Collection<? extends Activity> addBid(Bid b, TimeStamp ts);
+	public abstract Collection<? extends Activity> addBid(Bid b,
+			TimeStamp currentTime);
 
 	/**
 	 * Remove bid for given agent from the market.
 	 * 
 	 * @param agentID
-	 * @param ts
+	 * @param currentTime
 	 *            TimeStamp of bid removal
 	 * @return Collection<Activity> (unused for now)
 	 */
-	public abstract Collection<? extends Activity> removeBid(int agentID,
-			TimeStamp ts);
-
-	/**
-	 * Clears all the market's data structures.
-	 */
-	protected void clearAll() {
-		buyers.clear();
-		sellers.clear();
-		agentIDs.clear();
-	}
+	public abstract Collection<? extends Activity> removeBid(Agent agent,
+			TimeStamp currentTime);
 
 	/**
 	 * Method to get the type of the market.
 	 * 
 	 * @return
 	 */
+	@Deprecated
 	public String getType() {
 		return marketType;
 	}
@@ -292,19 +274,20 @@ public abstract class Market extends Entity {
 	 * Send market's bid/ask to the Security Information Processor to be
 	 * processed at some time (determined by latency) in the future.
 	 * 
-	 * @param ts
+	 * @param currentTime
 	 * @return
 	 */
-	public Collection<Activity> sendToSIP(TimeStamp ts) {
+	public Collection<? extends Activity> sendToSIP(TimeStamp currentTime) {
+		// TODO switch to Quote object
 		int bid = this.getBidPrice().getPrice();
 		int ask = this.getAskPrice().getPrice();
-		log(INFO, ts + " | " + this + " SendToSIP(" + bid + ", "
-				+ ask + ")");
+		log(INFO, currentTime + " | " + this + " SendToSIP(" + bid + ", " + ask
+				+ ")");
 
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		
 		for (AbstractIP ip : ips) {
-			actMap.add(ip.scheduleProcessQuote(this, bid, ask, ts));
+			actMap.add(ip.scheduleProcessQuote(this, bid, ask, currentTime));
 		}
 		return actMap;
 	}
@@ -313,58 +296,7 @@ public abstract class Market extends Entity {
 	 * @return true if both BID & ASK are defined (!= -1)
 	 */
 	public boolean defined() {
-		if (lastAskPrice.getPrice() == -1 || lastBidPrice.getPrice() == -1) {
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * Returns true if agent can sell in this market.
-	 * 
-	 * @param agentID
-	 * @return boolean
-	 */
-	public boolean canSell(int agentID) {
-		return sellers.contains(agentID);
-	}
-
-	/**
-	 * Returns true if agent can buy in this market.
-	 * 
-	 * @param agentID
-	 * @return boolean
-	 */
-	public boolean canBuy(int agentID) {
-		return buyers.contains(agentID);
-	}
-
-	/**
-	 * @return number of agents active in the market
-	 */
-	public int getNumAgents() {
-		return agentIDs.size();
-	}
-
-	/**
-	 * @return number of buyers in the market
-	 */
-	public int getNumBuyers() {
-		return buyers.size();
-	}
-
-	/**
-	 * @return number of sellers in the market
-	 */
-	public int getNumSellers() {
-		return sellers.size();
-	}
-
-	/**
-	 * @return array of agentIDs
-	 */
-	public ArrayList<Integer> getAgentIDs() {
-		return agentIDs;
+		return lastAskPrice != null && lastBidPrice != null;
 	}
 
 	public Price getLastClearPrice() {
@@ -394,27 +326,27 @@ public abstract class Market extends Entity {
 	public MarketModel getMarketModel() {
 		return this.model;
 	}
-	
+
 	public TimeSeries getDepth() {
 		return this.depths;
 	}
-	
+
 	public TimeSeries getSpread() {
 		return this.spreads;
 	}
-	
+
 	public TimeSeries getMidQuotes() {
 		return this.midQuotes;
 	}
-	
+
 	protected void addDepth(TimeStamp ts, int point) {
 		this.depths.add(ts, (double) point);
 	}
-	
+
 	protected void addSpread(TimeStamp ts, int spread) {
 		this.spreads.add(ts, spread);
 	}
-	
+
 	protected void addMidQuote(TimeStamp ts, Price bid, Price ask) {
 		double midQuote = Double.NaN;
 		if (bid != Consts.INF_PRICE && ask != Consts.INF_PRICE) {
@@ -430,7 +362,7 @@ public abstract class Market extends Entity {
 			map.put(b.getBidID(), b.getSubmitTime());
 		return map;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return super.hashCode() ^ model.hashCode();
@@ -438,7 +370,8 @@ public abstract class Market extends Entity {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof Market)) return false;
+		if (obj == null || !(obj instanceof Market))
+			return false;
 		Market market = (Market) obj;
 		return super.equals(market) && model.equals(market.model);
 	}

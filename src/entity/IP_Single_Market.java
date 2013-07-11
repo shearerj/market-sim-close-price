@@ -70,8 +70,7 @@ public abstract class IP_Single_Market extends AbstractIP {
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		
 		int modelID = model.getID();
-		ArrayList<Integer> ids = model.getMarketIDs();
-		String s = ts + " | " + ids + " UpdateNBBO: current " + getNBBOQuote(modelID)
+		String s = ts + " | " + model.getMarkets() + " UpdateNBBO: current " + getNBBOQuote(modelID)
 				+ " --> ";
 	
 		Integer[] array = {marketID};

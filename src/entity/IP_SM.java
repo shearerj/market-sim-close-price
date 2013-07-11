@@ -27,6 +27,6 @@ public class IP_SM extends IP_Single_Market {
 	 */
 	public String toString() {
 		return new String("IP_SM number " + this.getID() + ", model number " 
-				+ data.getMarket(marketID).getModelID());
+				+ data.getMarket(marketID)); // not number though
 	}
 }

@@ -24,7 +24,7 @@ public class UpdateNBBO extends Activity {
 	}
 
 	public UpdateNBBO deepCopy() {
-		return new UpdateNBBO(this.sip, this.mdl, this.time);
+		return new UpdateNBBO(this.sip, this.mdl, this.scheduledTime);
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp time) {
@@ -47,7 +47,7 @@ public class UpdateNBBO extends Activity {
 		return new EqualsBuilder().
 				append(sip.getID(), other.sip.getID()).
 				append(mdl.getID(), other.mdl.getID()).
-				append(time.longValue(), other.time.longValue()).
+				append(scheduledTime.longValue(), other.scheduledTime.longValue()).
 				isEquals();
 	}
 	
@@ -56,7 +56,7 @@ public class UpdateNBBO extends Activity {
 		return new HashCodeBuilder(19, 37).
 				append(sip.getID()).
 				append(mdl.getID()).
-				append(time.longValue()).
+				append(scheduledTime.longValue()).
 				toHashCode();
 	}
 }

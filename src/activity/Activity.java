@@ -17,10 +17,10 @@ import event.*;
  */
 public abstract class Activity {
 
-	protected final TimeStamp time;
+	protected final TimeStamp scheduledTime;
 	
-	public Activity(TimeStamp time) {
-		this.time = time;
+	public Activity(TimeStamp scheduledTime) {
+		this.scheduledTime = scheduledTime;
 	}
 
 	/**
@@ -31,14 +31,32 @@ public abstract class Activity {
 	public abstract Collection<? extends Activity> execute(TimeStamp currentTime);
 
 	/**
-	 * @return TimeStamp of time variable
+	 * @return time of activity
 	 */
-	public TimeStamp getTime() {
-		return this.time;
+	public final TimeStamp getTime() {
+		return scheduledTime;
 	}
 
 	public final String getName() {
 		return getClass().getSimpleName();
+	}
+
+	@Override
+	public int hashCode() {
+		return scheduledTime.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof Activity))
+			return false;
+		Activity other = (Activity) obj;
+		return scheduledTime.equals(other.scheduledTime);
+	}
+
+	@Override
+	public String toString() {
+		return "Activity :: " + scheduledTime;
 	}
 	
 }

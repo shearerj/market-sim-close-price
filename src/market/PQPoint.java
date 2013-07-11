@@ -14,6 +14,7 @@ import entity.Market;
  */
 public class PQPoint extends Point implements Comparable<PQPoint> {
 	
+	protected Agent agent;
 	protected Price price;
 	protected int quantity;
 	protected int originalQuantity;
@@ -59,9 +60,8 @@ public class PQPoint extends Point implements Comparable<PQPoint> {
 		if (comp == null) comp = new PQPointComparator(); 
 		price = p; 
 		quantity = q; 
-		Parent = P;
 		originalQuantity = q;
-
+		Parent = P;
 	}
 	/**
 	 * create a copy of the other point

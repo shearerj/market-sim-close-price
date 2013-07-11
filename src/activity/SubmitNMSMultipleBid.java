@@ -28,7 +28,7 @@ public class SubmitNMSMultipleBid extends Activity {
 	}
 
 	public SubmitNMSMultipleBid deepCopy() {
-		return new SubmitNMSMultipleBid(this.ag, this.price, this.quantity, this.time);
+		return new SubmitNMSMultipleBid(this.ag, this.price, this.quantity, this.scheduledTime);
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp time) {
@@ -53,7 +53,7 @@ public class SubmitNMSMultipleBid extends Activity {
 				append(ag.getID(), other.ag.getID()).
 				append(price.hashCode(), other.price.hashCode()).
 				append(quantity.hashCode(), other.quantity.hashCode()).
-				append(time.longValue(), other.time.longValue()).
+				append(scheduledTime.longValue(), other.scheduledTime.longValue()).
 				isEquals();
 	}
 	
@@ -63,7 +63,7 @@ public class SubmitNMSMultipleBid extends Activity {
 				append(ag.getID()).
 				append(price).
 				append(quantity).
-				append(time.longValue()).
+				append(scheduledTime.longValue()).
 				toHashCode();
 	}
 }

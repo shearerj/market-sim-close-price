@@ -25,7 +25,7 @@ public class Liquidate extends Activity {
 	}
 
 	public Liquidate deepCopy() {
-		return new Liquidate(this.ag, this.p, this.time);
+		return new Liquidate(this.ag, this.p, this.scheduledTime);
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
@@ -48,7 +48,7 @@ public class Liquidate extends Activity {
 		return new EqualsBuilder().
 				append(ag.getID(), other.ag.getID()).
 				append(p.getPrice(), other.p.getPrice()).
-				append(time.longValue(), other.time.longValue()).
+				append(scheduledTime.longValue(), other.scheduledTime.longValue()).
 				isEquals();
 	}
 	
@@ -57,7 +57,7 @@ public class Liquidate extends Activity {
 		return new HashCodeBuilder(19, 37).
 				append(ag.getID()).
 				append(p.getPrice()).
-				append(time.longValue()).
+				append(scheduledTime.longValue()).
 				toHashCode();
 	}
 }

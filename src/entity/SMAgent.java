@@ -98,40 +98,8 @@ public abstract class SMAgent extends Agent {
 	 */
 	public Collection<? extends Activity> agentArrival(TimeStamp ts) {
 		log(INFO,
-				ts.toString() + " | " + this + "->" + market.toString());
-		this.enterMarket(market, ts);
-		// FIXME I think with the new event queue, this should be instantaneous
-		// not at the same time
+				ts.toString() + " | " + this + "->" + market);
 		return Collections.singleton(new AgentStrategy(this, market, Consts.INF_TIME));
-	}
-
-	/**
-	 * Agent departs a specified market, if it is active. //TODO fix later
-	 * 
-	 * @param market
-	 * @return Collection<Activity>
-	 */
-	public Collection<Activity> agentDeparture(TimeStamp ts) {
-		market.agentIDs.remove(market.agentIDs.indexOf(this.id));
-		market.buyers.remove(market.buyers.indexOf(this.id));
-		market.sellers.remove(market.sellers.indexOf(this.id));
-		market.removeBid(this.id, ts);
-		this.exitMarket(market.id);
-		return Collections.emptyList();
-	}
-
-	/**
-	 * Updates quote for agent's primary market.
-	 * 
-	 * @param ts
-	 * @return
-	 */
-	@Deprecated
-	// I don't think this needs so / should be called anymore. The agent should
-	// just update information at strategy time and go from there
-	public Collection<? extends Activity> updateAllQuotes(TimeStamp ts) {
-		updateQuotes(market, ts);
-		return this.executeUpdateAllQuotes(ts);
 	}
 
 	/**

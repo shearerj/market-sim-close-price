@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import utils.MathUtils;
-import data.SystemData;
 import entity.Market;
 import event.TimeStamp;
 
@@ -24,19 +23,14 @@ public class PQOrderBook extends OrderBook {
 	
 	public PQOrderBook(Market market) {
 		super(market);
-	}
-
-	@Deprecated
-	public PQOrderBook(int mktID, SystemData data) {
-		super(mktID, data);
-		FH = new FourHeap(data.getMarket(mktID));
+		FH = new FourHeap(market);
 	}
 
 	/** 
 	 * inserts new bid into the order book
 	 */
 	public void insertBid(Bid newBid) {
-		Integer key = newBid.getAgent().getID();
+		int key = newBid.getAgent().getID();
 
 		// create entry if non-existent, remove old bid if exists
 		if (!activeBids.containsKey(key)) {
@@ -106,7 +100,11 @@ public class PQOrderBook extends OrderBook {
 	 */
 	public Bid getAskQuote() {
 		PQPoint pq = FH.getAskQuote();
-		PQBid b = new PQBid(pq.getAgent(), pq.getMarket(), null);
+		
+		PQBid b = null;
+		if(pq.Parent != null) b = new PQBid(pq.getAgent(), pq.getMarket(), null);
+		else b = new PQBid(null, null, null);
+		
 		b.addPoint(pq);
 		return b;
 	}
@@ -116,7 +114,11 @@ public class PQOrderBook extends OrderBook {
 	 */
 	public Bid getBidQuote() {
 		PQPoint pq = FH.getBidQuote();
-		PQBid b = new PQBid(pq.getAgent(), pq.getMarket(), null);
+		
+		PQBid b = null;
+		if(pq.Parent != null) b = new PQBid(pq.getAgent(), pq.getMarket(), null);
+		else b = new PQBid(null, null, null);
+		
 		b.addPoint(pq);
 		return b;
 	}
@@ -132,7 +134,7 @@ public class PQOrderBook extends OrderBook {
 	 * Print the active bids in the orderbook.
 	 */
 	public void logActiveBids(TimeStamp ts) {
-		String s = ts.toString() + " | " + data.getMarket(marketID) + " Active bids: ";
+		String s = ts.toString() + " | " + this.market + " Active bids: ";
 		for (Map.Entry<Integer,Bid> entry : activeBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
@@ -147,7 +149,7 @@ public class PQOrderBook extends OrderBook {
 	 * Print the cleared bids in the orderbook. 
 	 */
 	public void logClearedBids(TimeStamp ts) {
-		String s = ts.toString() + " | " + data.getMarket(marketID) + " Cleared bids: ";
+		String s = ts.toString() + " | " + this.market + " Cleared bids: ";
 		for (Map.Entry<Integer,Bid> entry : clearedBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
@@ -215,9 +217,9 @@ public class PQOrderBook extends OrderBook {
 			PQBid sellBid = sell.Parent;
 
 			transactions.add(new PQTransaction(q, p, buy.getAgent(), sell.getAgent(), 
-					buyBid, sellBid, ts, data.getMarket(marketID)));
+					buyBid, sellBid, ts, this.market));
 //			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-			log(INFO, ts + " | " + data.getMarket(marketID) + 
+			log(INFO, ts + " | " + this.market + 
 					" Quantity=" + q + " cleared at Price=" + p.getPrice());
 
 			Integer key = new Integer(buy.getAgentID());
@@ -295,15 +297,15 @@ public class PQOrderBook extends OrderBook {
 				p = new Price(Math.round((ask.getPrice().getPrice() - 
 						bid.getPrice().getPrice()) * pricingPolicy + bid.getPrice().getPrice()));
 				p = new Price(MathUtils.quantize(p.getPrice(), data.tickSize));
-				log(INFO, ts + " | " + data.getMarket(marketID) + 
+				log(INFO, ts + " | " + market + 
 						" clearing price based on (BID: " + 
 						bid.getPrice().getPrice() + ", ASK:" + ask.getPrice().getPrice() + 
 						") & pricingPolicy=" + pricingPolicy + " => price " + p.getPrice());
 			}
 			transactions.add(new PQTransaction(q, p, buy.getAgent(), sell.getAgent(), 
-					buyBid, sellBid, ts, data.getMarket(marketID)));
+					buyBid, sellBid, ts, market));
 //			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-			log(INFO, ts + " | " + data.getMarket(marketID) + 
+			log(INFO, ts + " | " + market + 
 					" Quantity=" + q + " cleared at Price=" + p.getPrice());
 			
 			Integer key = new Integer(buy.getAgentID());

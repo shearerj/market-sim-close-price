@@ -16,5 +16,9 @@ public class MathUtils {
 		// NaN and Inf to 0
 		return quanta * Math.floor(n / quanta + .5d);
 	}
+	
+	public static int bound(int num, int lower, int upper) {
+		return Math.max(Math.min(num, upper), lower);
+	}
 
 }

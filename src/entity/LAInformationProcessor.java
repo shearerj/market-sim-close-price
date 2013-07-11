@@ -34,6 +34,6 @@ public class LAInformationProcessor extends IP_Single_Market {
 	 */
 	public String toString() {
 		return new String("IP_LA number " + this.getID() + ", model number " 
-				+ data.getMarket(marketID).getModelID());
+				+ data.getMarket(marketID)); // not number though!
 	}
 }

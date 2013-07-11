@@ -24,7 +24,7 @@ public class CollectionUtils {
 	public static <E> Iterator<E> emptyIterator() {
 		return new EmptyIterator<E>();
 	}
-
+	
 	private static class EmptyIterator<E> implements Iterator<E> {
 
 		@Override
@@ -72,5 +72,5 @@ public class CollectionUtils {
 		}
 
 	}
-
+	
 }

@@ -45,7 +45,7 @@ public class Sip_Prime extends AbstractIP {
  	 * @return BestBidAsk
  	 */
 	public BestBidAsk getGlobalQuote(int modelID) {
-		return this.computeBestBidOffer(data.getModel(modelID).getMarketIDs(), false);
+		return this.computeBestBidOffer(data.getModel(modelID).getMarkets(), false);
 	}
 	
 	
@@ -58,11 +58,10 @@ public class Sip_Prime extends AbstractIP {
 	 */
 	public Collection<Activity> updateNBBO(MarketModel model, TimeStamp ts) {
 		int modelID = model.getID();
-		ArrayList<Integer> ids = model.getMarketIDs();
-		String s = ts + " | " + ids + " UpdateNBBO: current " + getNBBOQuote(modelID)
+		String s = ts + " | " + model.getMarkets() + " UpdateNBBO: current " + getNBBOQuote(modelID)
 				+ " --> ";
 	
-		BestBidAsk lastQuote = computeBestBidOffer(ids, true);
+		BestBidAsk lastQuote = computeBestBidOffer(model.getMarkets(), true);
 			
 		Price bestBid = lastQuote.getBestBid();
 		Price bestAsk = lastQuote.getBestAsk();

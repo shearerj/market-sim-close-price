@@ -1,6 +1,7 @@
 package model;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 
 import com.google.gson.JsonObject;
@@ -13,6 +14,7 @@ import entity.CDAMarket;
 import entity.LAAgent;
 import entity.LAInformationProcessor;
 import event.TimeStamp;
+import entity.Market;
 
 /**
  * TWOMARKET
@@ -41,21 +43,19 @@ public class TwoMarket extends MarketModel {
 	}
 
 	@Deprecated
-	public int getAlternateMarket(int mainMarketID) {
-		if (marketIDs.contains(mainMarketID)) {
-			if (marketIDs.get(0) == mainMarketID) {
-				return marketIDs.get(1);
-			} else {
-				return marketIDs.get(0);
-			}
-		}
-		return 0;
+	public Market getAlternateMarket(Market mainMarket) {
+		if (!markets.contains(mainMarket))
+			return null; // XXX Shouldn't happen...
+		Collection<Market> alternateMarkets = new HashSet<Market>(markets);
+		alternateMarkets.remove(mainMarket);
+		// XXX This should only work if markets has two unique markets...
+		return alternateMarkets.iterator().next();
 	}
 
 	@Override
 	protected void setupMarkets(EntityProperties modelProps) {
-		markets.add(new CDAMarket(1, this, this.getipIDgen())); // FIXME numbering?
-		markets.add(new CDAMarket(2, this, this.getipIDgen())); // FIXME numbering?
+		markets.add(new CDAMarket(1, this, this.getipIDgen()));
+		markets.add(new CDAMarket(2, this, this.getipIDgen()));
 	}
 
 	@Override

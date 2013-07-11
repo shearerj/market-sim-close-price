@@ -49,7 +49,7 @@ public class SubmitMultipleBid extends Activity {
 				append(ag, other.ag).
 				append(mkt, other.mkt).
 				append(priceQuantMap, other.priceQuantMap).
-				append(time, other.time).
+				append(scheduledTime, other.scheduledTime).
 				isEquals();
 	}
 	
@@ -59,7 +59,7 @@ public class SubmitMultipleBid extends Activity {
 				append(ag).
 				append(mkt).
 				append(priceQuantMap).
-				append(time).
+				append(scheduledTime).
 				toHashCode();
 	}
 }

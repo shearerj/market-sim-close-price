@@ -38,9 +38,9 @@ import java.io.OutputStreamWriter;
  */
 public class SystemData {
 
-	public int num;								// observation number
+	public int simNum;						// observation number
 	public File simDir;						// simulations directory
-	public boolean EGTA;							// true if EGTA use case
+	public boolean EGTA;					// true if EGTA use case
 	
 	// Model information
 	public MarketModel primaryModel;
@@ -87,8 +87,8 @@ public class SystemData {
 	/**
 	 * Constructor
 	 */
-	public SystemData(int num, File simDir) {
-		this.num = num;
+	public SystemData(int simNum, File simDir) {
+		this.simNum = simNum;
 		this.simDir = simDir;
 		
 		privateValues = new HashMap<Integer,Price>();
@@ -133,22 +133,22 @@ public class SystemData {
 	/**
 	 * @return marketIDs of primary model
 	 */
-	public ArrayList<Integer> getPrimaryMarketIDs() {
-		return primaryModel.getMarketIDs();
-	}
+//	public ArrayList<Integer> getPrimaryMarketIDs() {
+//		return primaryModel.getMarketIDs();
+//	}
 	
 	/**
 	 * @return agentIDs of primary model
 	 */
-	public ArrayList<Integer> getPrimaryAgentIDs() {
-		return primaryModel.getAgentIDs();
-	}
+//	public ArrayList<Integer> getPrimaryAgentIDs() {
+//		return primaryModel.getAgentIDs();
+//	}
 	
 	/**
 	 * @param marketID
 	 * @return
 	 */
-	public HashMap<Integer,Bid> getBids(int marketID) {
+	public Map<Integer,Bid> getBids(int marketID) {
 		return markets.get(marketID).getBids();
 	}
 	
@@ -175,10 +175,6 @@ public class SystemData {
 
 	public ArrayList<Integer> getAgentIDs() {
 		return new ArrayList<Integer>(agents.keySet());
-	}
-	
-	public int getAgentLogID(int agentID) {
-		return agents.get(agentID).getLogID();
 	}
 	
 	public ArrayList<Integer> getPlayerIDs() {

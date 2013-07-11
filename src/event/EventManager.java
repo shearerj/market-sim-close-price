@@ -2,11 +2,12 @@ package event;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.*;
+import static systemmanager.Consts.START_TIME;
+import static systemmanager.Consts.INF_TIME;
 
 import java.util.Random;
 
 import logger.Logger;
-import systemmanager.Consts;
 import activity.Activity;
 import activity.AgentStrategy;
 import activity.Clear;
@@ -30,7 +31,7 @@ public class EventManager {
 
 	public EventManager(TimeStamp simulationLength, Random rand) {
 		eventQueue = new EventQueue(rand);
-		currentTime = new TimeStamp(0);
+		currentTime = START_TIME;
 		this.simulationLength = simulationLength;
 	}
 
@@ -79,7 +80,7 @@ public class EventManager {
 			// AgentStrategy method through chaining).
 			//
 			// FIXME I'm not certain this will work as intended
-			if (act.getTime().equals(Consts.INF_TIME)
+			if (act.getTime().equals(INF_TIME)
 					&& act instanceof AgentStrategy) {
 				fastActivity = act;
 			}
