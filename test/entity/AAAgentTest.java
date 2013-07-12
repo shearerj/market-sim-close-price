@@ -10,6 +10,7 @@ import java.util.Map;
 
 import logger.Logger;
 import market.Price;
+import model.DummyMarketModel;
 import model.MarketModel;
 import model.MarketModelFactory;
 
@@ -34,13 +35,11 @@ import event.TimeStamp;
 
 public class AAAgentTest {
 
-	private static MarketModelFactory marketModelFactory;
 	private static FundamentalValue fund;
 	private static RandPlus rand;
-	private static ModelProperties modelProperties;
 	private static EntityProperties agentProperties;
 	
-	private MarketModel model;
+	private DummyMarketModel model;
 	private Market market;
 	private int agentIndex;
 	private SIP dummySIP;
@@ -51,14 +50,8 @@ public class AAAgentTest {
 		Logger.setup(3, "simulations/unit_testing", "unit_tests.txt", true);
 		
 		//Creating the setup properties
-		Map<AgentProperties, Integer> props = new HashMap<AgentProperties, Integer>();
-		JsonObject playerConfig = new JsonObject();
 		rand = new RandPlus(1);
 		fund = new DummyFundamental(0, 100000, 0, rand);
-		
-		//Setting up the MarketModelFactory
-		marketModelFactory = new MarketModelFactory(props, playerConfig, fund, rand);
-		modelProperties = new ModelProperties(Consts.ModelType.CENTRALCDA);
 		
 		//Setting up agentProperties
 		agentProperties = new EntityProperties();
@@ -77,46 +70,49 @@ public class AAAgentTest {
 	@Before
 	public void setupTest() {
 		//Creating the MarketModel
-		model = marketModelFactory.createModel(modelProperties);
-		Collection<Market> markets = model.getMarkets();
-		for(Market mkt : markets) market = mkt;
-		assertTrue("Error setting up marketModel", market != null);
-		
-		//Creating the dummy SIP
+		model = new DummyMarketModel(1);
+
 		//XXX - Fix once SIP becomes important
 		dummySIP = new SIP(1,1);
+		
+		market = new CDAMarket(1, model, dummySIP);
+		model.addMarket(market);
 	}
 	
-	private AAAgent addAAAgent(MarketModel model, boolean isBuyer) {
-		Collection<Market> markets = model.getMarkets();
-		Market market = null;
-		for(Market mkt : markets) market = mkt;
-		
+	private AAAgent addAgent(MarketModel model, Market market, boolean isBuyer) {
 		EntityProperties testProps = new EntityProperties(agentProperties);
 		testProps.put(BUYERSTATUS_KEY, isBuyer);
 		
-		AAAgent agent = new AAAgent(agentIndex, new TimeStamp(0), model, market, rand, dummySIP, testProps);
-		
-		++agentIndex;
+		AAAgent agent = new AAAgent(agentIndex++, new TimeStamp(0), model, 
+				market, rand, dummySIP, testProps);
 		
 		model.addAgent(agent);
 		return agent;
 	}
 	
-	private void addBid(Market market, int p, int q, int time) {
+	private void addBid(Market market, Price price, int q, TimeStamp ts) {
 		//creating a dummy agent
-		boolean isBuyer = (q >= 0) ? true : false;
-		AAAgent agent = addAAAgent(market.getMarketModel(), isBuyer);
-
+		MarketModel model = market.getMarketModel();
+		DummyAgent agent = new DummyAgent(agentIndex++, model, market);
 		//Having the agent submit a bid to the market
-		Price price = new Price(p);
-		TimeStamp ts = new TimeStamp(time);
-		agent.executeSubmitBid(market, price, q, ts);
+		agent.agentStrategy(ts, price, q);
+	}
+	
+	private void addBid(Market market, int p, int q, int ts) {
+		MarketModel model = market.getMarketModel();
+		DummyAgent agent = new DummyAgent(agentIndex++, model, market);
+		agent.agentStrategy(new TimeStamp(ts), new Price(p), q);
+	}
+	
+	private void addTransaction(Market market, Price p, int q, TimeStamp time) {
+		addBid(market, p, q, time);
+		addBid(market, p, -q, time);
+		market.clear(time);
 	}
 	
 	private void addTransaction(Market market, int p, int q, int time) {
-		addBid(market, p, q, time);
-		addBid(market, p, -q, time);
+		addBid(market, new Price(p), q, new TimeStamp(time));
+		addBid(market, new Price(p), q, new TimeStamp(time));
 		market.clear(new TimeStamp(time));
 	}
 		
@@ -125,7 +121,7 @@ public class AAAgentTest {
 		Logger.log(Logger.Level.DEBUG, "");
 		Logger.log(Logger.Level.DEBUG, "Testing buyer on empty market: Result should be price=0");
 		//Creating a buyer
-		AAAgent agent = addAAAgent(model, true);
+		AAAgent agent = addAgent(model, market, true);
 		//Testing against an empty market
 		TimeStamp ts = new TimeStamp(100);
 		Collection<Activity> test = agent.agentStrategy(ts);
@@ -149,7 +145,7 @@ public class AAAgentTest {
 		Logger.log(Logger.Level.DEBUG, "");
 		Logger.log(Logger.Level.DEBUG, "Testing seller on empty market: Result should be price=" + Price.INF);
 		//Creating a seller
-		AAAgent agent = addAAAgent(model, false);
+		AAAgent agent = addAgent(model, market, false);
 		//Testing against an empty market
 		TimeStamp ts = new TimeStamp(100);
 		Collection<Activity> test = agent.agentStrategy(ts);
@@ -176,11 +172,11 @@ public class AAAgentTest {
 		Logger.log(Logger.Level.DEBUG, "50000 < Bid price < 100000");
 		
 		//Setting up the bids
-		addBid(market, 50000, 1, 10);
-		addBid(market, 200000, -1, 10);
+		addBid(market, new Price(50000), 1, new TimeStamp(10));
+		addBid(market, new Price(200000), -1, new TimeStamp(10));
 		
 		//Testing against a market with initial bids but no transaction history
-		AAAgent agent = addAAAgent(model, true);
+		AAAgent agent = addAgent(model, market, true);
 		TimeStamp ts = new TimeStamp(100);
 		Collection<Activity> test = agent.agentStrategy(ts);
 		
@@ -205,11 +201,11 @@ public class AAAgentTest {
 		Logger.log(Logger.Level.DEBUG, "100000 < Ask price < 200000");
 
 		//Adding setup bids
-		addBid(market, 50000, 1, 10);
-		addBid(market, 200000, -1, 10);
+		addBid(market, new Price(50000), 1, new TimeStamp(10));
+		addBid(market, new Price(200000), -1, new TimeStamp(10));
 
 		//Creating the agent and running the test
-		AAAgent agent = addAAAgent(model, false);
+		AAAgent agent = addAgent(model, market, false);
 		TimeStamp ts = new TimeStamp(100);
 		Collection<Activity> test = agent.agentStrategy(ts);
 		
@@ -233,13 +229,13 @@ public class AAAgentTest {
 		Logger.log(Logger.Level.DEBUG, "Testing passive buyer on market with transactions");
 		
 		//Adding Transactions and Bids
-		addBid(market, 50000, 1, 10);
-		addBid(market, 150000, -1, 10);
+		addBid(market, new Price(50000), 1, new TimeStamp(10));
+		addBid(market, new Price(150000), -1, new TimeStamp(10));
 		//Transaction @75000
-		addTransaction(market, 75000, 1, 10);
+		addTransaction(market, new Price(75000), 1, new TimeStamp(10));
 		
 		//Setting up the agent
-		AAAgent agent = addAAAgent(model, true);
+		AAAgent agent = addAgent(model, market, true);
 		agent.setAggression(-1);
 		Logger.log(Logger.Level.DEBUG, "Price ~= 33334");
 		TimeStamp ts = new TimeStamp(100);
@@ -268,11 +264,11 @@ public class AAAgentTest {
 		Logger.log(Logger.Level.DEBUG, "Testing active buyer on market with transactions");
 		
 		//Adding Transactions and Bids
-		addBid(market, 50000, 1, 10);
-		addBid(market, 150000, -1, 10);
-		addTransaction(market, 75000, 1, 10);
+		addBid(market, new Price(50000), 1, new TimeStamp(10));
+		addBid(market, new Price(150000), -1, new TimeStamp(10));
+		addTransaction(market, new Price(75000), 1, new TimeStamp(10));
 		
-		AAAgent agent = addAAAgent(model, true);
+		AAAgent agent = addAgent(model, market, true);
 		Logger.log(Logger.Level.DEBUG, "Price ~= 58333");
 		agent.setAggression(0);
 		TimeStamp ts = new TimeStamp(110);
@@ -305,7 +301,7 @@ public class AAAgentTest {
 		addBid(market, 150000, -1, 10);
 		addTransaction(market, 75000, 1, 10);
 		
-		AAAgent agent = addAAAgent(model, true);
+		AAAgent agent = addAgent(model, market, true);
 		Logger.log(Logger.Level.DEBUG, "Price ~= 66667");
 		agent.setAggression(1);
 		TimeStamp ts = new TimeStamp(120);
@@ -340,7 +336,7 @@ public class AAAgentTest {
 		addTransaction(market, 125000, 1, 10);
 		
 		//Testing the Agent
-		AAAgent agent = addAAAgent(model, false);
+		AAAgent agent = addAgent(model, market, false);
 		Logger.log(Logger.Level.DEBUG, "Price ~= " + (150000 + (Price.INF.getPrice()-150000)/3));
 		agent.setAggression(-1);
 		TimeStamp ts = new TimeStamp(100);
@@ -375,7 +371,7 @@ public class AAAgentTest {
 		addBid(market, 150000, -1, 10);
 		addTransaction(market, 125000, 1, 10);
 		
-		AAAgent agent = addAAAgent(model, false);
+		AAAgent agent = addAgent(model, market, false);
 		log(Logger.Level.DEBUG, "Price ~= 141667");
 		agent.setAggression(0);
 		TimeStamp ts = new TimeStamp(110);
@@ -411,7 +407,7 @@ public class AAAgentTest {
 		addBid(market, 150000, -1, 10);
 		addTransaction(market, 125000, 1, 10);
 		
-		AAAgent agent = addAAAgent(model, false);
+		AAAgent agent = addAgent(model, market, false);
 		log(Logger.Level.DEBUG, "Price ~= 133334");
 		agent.setAggression(1);
 		TimeStamp ts = new TimeStamp(120);

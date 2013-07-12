@@ -2,6 +2,7 @@ package entity;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,6 +39,7 @@ public class CDAMarketTest {
 
 	private DummyMarketModel model;
 	private Market market;
+	private int agentIndex;
 
 	@BeforeClass
 	public static void setupClass() {
@@ -50,8 +52,7 @@ public class CDAMarketTest {
 		model = new DummyMarketModel(1);
 		market = new CDAMarket(1, model, null); // TODO Dummy IP
 		model.addMarket(market);
-		for(Market mkt : model.getMarkets()) market = mkt;
-		assertTrue("Error setting up marketModel", market != null);
+		agentIndex = 0;
 	}
 	
 	@Test
@@ -59,9 +60,7 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating the agent
-		//XXX - If/when sip becomes critical to agent function, must fix this (switch to agentfactory?)
-		SIP sip = new SIP(1, 1);
-		Agent agent = new ZIAgent(0, time, model, market, new RandPlus(), sip, 0, 0);
+		DummyAgent agent = new DummyAgent(agentIndex++, model, market);
 		
 		//Creating and adding the bid
 		PQBid testBid = new PQBid(agent, market, time);
@@ -78,8 +77,7 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating the agent
-		SIP sip = new SIP(1, 1);
-		Agent agent = new ZIAgent(0, time, model, market, new RandPlus(), sip, 0, 0);
+		DummyAgent agent = new DummyAgent(agentIndex++, model, market);
 		
 		//Creating and adding the bid
 		PQBid testBid = new PQBid(agent, market, time);
@@ -97,22 +95,19 @@ public class CDAMarketTest {
 		
 		//Creating dummy agents
 		SIP sip = new SIP(1, 1);
-		Agent agent1 = new ZIAgent(1, time, model, market, new RandPlus(), sip, 0, 0);
-		Agent agent2 = new ZIAgent(2, time, model, market, new RandPlus(), sip, 0, 0);
+		DummyAgent agent1 = new DummyAgent(agentIndex++, model, market);
+		DummyAgent agent2 = new DummyAgent(agentIndex++, model, market);
 		
 		//Creating and adding bids
-		PQBid testBid1 = new PQBid(agent1, market, time);
-		testBid1.addPoint(1, new Price(100));
-		market.addBid(testBid1, time);
-		PQBid testBid2 = new PQBid(agent2, market, time);
-		testBid1.addPoint(1, new Price(100));
-		market.addBid(testBid2, time);
+		PQBid bid1 = agent1.agentStrategy(time, new Price(100), 1);
+		PQBid bid2 = agent2.agentStrategy(time, new Price(100), -1);
 		
 		//Testing the market for the correct transaction
 		market.clear(time);
+		assertTrue(model.getTrans().size() == 1);
 		for(Transaction tr : model.getTrans()) {
-			assertTrue("Incorrect Buy Bid", tr.getBuyBid().equals(testBid1));
-			assertTrue("Incorrect Sell Bid", tr.getSellBid().equals(testBid2));
+			assertTrue("Incorrect Buy Bid", tr.getBuyBid().equals(bid1));
+			assertTrue("Incorrect Sell Bid", tr.getSellBid().equals(bid2));
 			assertTrue("Incorrect Buyer", tr.getBuyer().equals(agent1));
 			assertTrue("Incorrect Seller", tr.getSeller().equals(agent2));
 			assertTrue("Incorrect Price", tr.getPrice().equals(new Price(100)));
@@ -126,47 +121,65 @@ public class CDAMarketTest {
 		
 		//Creating dummy agents
 		SIP sip = new SIP(1, 1);
-		Agent agent1 = new ZIAgent(1, time, model, market, new RandPlus(), sip, 0, 0);
-		Agent agent2 = new ZIAgent(2, time, model, market, new RandPlus(), sip, 0, 0);
+		DummyAgent agent1 = new DummyAgent(agentIndex++, model, market);
+		DummyAgent agent2 = new DummyAgent(agentIndex++, model, market);
 		
 		//Creating and adding bids
-		PQBid testBid1 = new PQBid(agent1, market, time);
-		testBid1.addPoint(1, new Price(50));
-		market.addBid(testBid1, time);
-		PQBid testBid2 = new PQBid(agent2, market, time);
-		testBid1.addPoint(1, new Price(200));
-		market.addBid(testBid2, time);
+		PQBid bid1 = agent1.agentStrategy(time, new Price(200), 1);
+		PQBid bid2 = agent2.agentStrategy(time, new Price(50), -1);
 		
 		//Testing the market for the correct transaction
 		market.clear(time);
+		assertTrue(model.getTrans().size() == 1);
 		for(Transaction tr : model.getTrans()) {
-			assertTrue("Incorrect Buy Bid", tr.getBuyBid().equals(testBid1));
-			assertTrue("Incorrect Sell Bid", tr.getSellBid().equals(testBid2));
+			assertTrue("Incorrect Buy Bid", tr.getBuyBid().equals(bid1));
+			assertTrue("Incorrect Sell Bid", tr.getSellBid().equals(bid2));
 			assertTrue("Incorrect Buyer", tr.getBuyer().equals(agent1));
 			assertTrue("Incorrect Seller", tr.getSeller().equals(agent2));
-			assertTrue("Incorrect Price", tr.getPrice().equals(new Price(100)));
+			assertTrue("Incorrect Price", tr.getPrice().equals(new Price(50)));
 			assertTrue("Incorrect Quantity", tr.getQuantity() == 1);
 		}
 	}
 	
 	@Test
-	public void MultiClear() {
+	public void MultiBidSingleClear() {
 		TimeStamp time = new TimeStamp(0);
+		TimeStamp time2 = new TimeStamp(10);
 		
 		//Creating dummy agents
-		SIP sip = new SIP(1, 1);
-		Agent agent1 = new ZIAgent(1, time, model, market, new RandPlus(), sip, 0, 0);
-		Agent agent2 = new ZIAgent(2, time, model, market, new RandPlus(), sip, 0, 0);
-		Agent agent3 = new ZIAgent(3, time, model, market, new RandPlus(), sip, 0, 0);
-		Agent agent4 = new ZIAgent(4, time, model, market, new RandPlus(), sip, 0, 0);
+		DummyAgent agent1 = new DummyAgent(agentIndex++, model, market);
+		DummyAgent agent2 = new DummyAgent(agentIndex++, model, market);
+		DummyAgent agent3 = new DummyAgent(agentIndex++, model, market);
+		DummyAgent agent4 = new DummyAgent(agentIndex++, model, market);
 		
 		//Creating and adding bids
-		PQBid testBid1 = new PQBid(agent1, market, time);
-		testBid1.addPoint(1, new Price(50));
-		market.addBid(testBid1, time);
-		PQBid testBid2 = new PQBid(agent2, market, time);
-		testBid1.addPoint(1, new Price(200));
-		market.addBid(testBid2, time);
+		PQBid bid1 = agent1.agentStrategy(time, new Price(200), 1);
+		PQBid bid3 = agent3.agentStrategy(time, new Price(150), -1);
+		market.clear(time);
 		
+		PQBid bid2 = agent2.agentStrategy(time, new Price(100), 1);
+		PQBid bid4 = agent4.agentStrategy(time, new Price(100), -1);
+
+		//Testing that singular correct Transaction results
+		market.clear(time);
+		assertTrue(model.getTrans().size() == 2);
+
+		for(Transaction tr : model.getTrans()) {
+			assertTrue(
+					tr.getBuyBid().equals(bid1) &&
+					tr.getBuyer().equals(agent1) &&
+					tr.getSellBid().equals(bid3) &&
+					tr.getSeller().equals(agent3) &&
+					tr.getPrice().equals(new Price(150)) &&
+					tr.getQuantity() == 1
+					||
+					tr.getBuyBid().equals(bid2) &&
+					tr.getBuyer().equals(agent2) &&
+					tr.getSellBid().equals(bid4) &&
+					tr.getSeller().equals(agent4) &&
+					tr.getPrice().equals(new Price(100)) &&
+					tr.getQuantity() == 1
+			);
+		}
 	}
 }

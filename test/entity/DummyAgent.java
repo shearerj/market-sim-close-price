@@ -3,6 +3,8 @@ package entity;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import market.PQBid;
+import market.PQPoint;
 import market.Price;
 import market.PrivateValue;
 import model.MarketModel;
@@ -31,12 +33,17 @@ public class DummyAgent extends BackgroundAgent {
 		return new ArrayList<Activity>();
 	}
 	
-	public Collection<? extends Activity> 
-		agentStrategy(TimeStamp currentTime, Price price, int quantity) {
-		ArrayList<Activity> bid = new ArrayList<Activity>();
-		
-		bid.add(new SubmitNMSBid(this, price, quantity, Consts.INF_TIME, currentTime));
-		
+	/**
+	 * Submits a PQBid according to input market directly to the market
+	 * @param currentTime
+	 * @param price
+	 * @param quantity
+	 * @return PQBid that was submitted to the market
+	 */
+	public PQBid agentStrategy(TimeStamp currentTime, Price price, int quantity) {
+		PQBid bid = new PQBid(this, market, currentTime);
+		bid.addPoint(new PQPoint(quantity, price));
+		market.addBid(bid, currentTime);
 		return bid;
 	}
 
