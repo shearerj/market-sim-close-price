@@ -269,11 +269,11 @@ public class ObservationsReference {
 		DescriptiveStatistics speeds = new DescriptiveStatistics();
 		for(Transaction tr : model.getTrans()) {
 			TimeStamp execTime = tr.getExecTime();
-			TimeStamp buyerExecTime = execTime.diff(tr.getBuyBid().getSubmitTime());
-			TimeStamp sellerExecTime = execTime.diff(tr.getSellBid().getSubmitTime());
+			TimeStamp buyerExecTime = execTime.minus(tr.getBuyBid().getSubmitTime());
+			TimeStamp sellerExecTime = execTime.minus(tr.getSellBid().getSubmitTime());
 			for(int q=0; q < tr.getQuantity(); q++) {
-				speeds.addValue((double) buyerExecTime.getLongValue());
-				speeds.addValue((double) sellerExecTime.getLongValue());
+				speeds.addValue((double) buyerExecTime.longValue());
+				speeds.addValue((double) sellerExecTime.longValue());
 			}
 		}
 		// feat.addMax(speeds);
@@ -301,7 +301,7 @@ public class ObservationsReference {
 			}
 			
 			DescriptiveStatistics modelSurplus = new DescriptiveStatistics();
-			modelSurplus.addValue(model.getModelSurplus(rho));
+//			modelSurplus.addValue(model.getModelSurplus(rho));
 			
 			feat.addSum("", TOTAL + suffix, modelSurplus);
 			

@@ -17,6 +17,7 @@ import activity.Activity;
 import activity.AgentStrategy;
 import data.ArrivalTime;
 import data.EntityProperties;
+import data.Keys;
 import event.TimeStamp;
 
 /**
@@ -495,18 +496,18 @@ public class AAAgent extends BackgroundAgent {
 			Market market, RandPlus rand, SIP sip, EntityProperties params) {
 		// TODO change "null" to proper private value initialization
 		super(agentID, arrivalTime, model, market, new PrivateValue(
-				params.getAsInt(MAXQUANTITY_KEY, 1), params.getAsDouble(
+				params.getAsInt(Keys.MAX_QUANTITY, 1), params.getAsDouble(
 						"pvVar", 100), rand), rand, sip);
 
 		//Initialize market
 		this.marketSubmittedBid = this.market;
 		
 		//Initializing Reentry times
-		double reentryRate = params.getAsDouble(REENTRY_RATE, 0);
+		double reentryRate = params.getAsDouble(Keys.REENTRY_RATE, 0);
 		this.reentry = new ArrivalTime(arrivalTime, reentryRate, rand);
 		
 		//Initializing Max Absolute Position
-		this.maxAbsPosition = params.getAsInt(MAXQUANTITY_KEY, 1);
+		this.maxAbsPosition = params.getAsInt(Keys.MAX_QUANTITY, 1);
 		
 		//Initializing Strategy Class
 		this.strat = new AAStrategy(params);

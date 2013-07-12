@@ -85,7 +85,6 @@ public abstract class MarketModel {
 	protected final Collection<Agent> agents;
 	protected final Collection<Player> players;
 
-	protected Map<Double, Double> modelSurplus; // hashed by rho value
 	protected TimeSeries NBBOSpreads; // NBBO bid/ask spread values
 	protected final SIP sip;
 
@@ -118,7 +117,6 @@ public abstract class MarketModel {
 		this.agents = new ArrayList<Agent>();
 		this.players = new ArrayList<Player>();
 		this.trans = new ArrayList<Transaction>();
-		this.modelSurplus = new HashMap<Double, Double>();
 		this.agentIDgen = new IDGenerator();
 		this.NBBOSpreads = new TimeSeries();
 
@@ -219,6 +217,7 @@ public abstract class MarketModel {
 	 * 
 	 * @return model name
 	 */
+	@Deprecated
 	public String getFullName() {
 		String configStr = this.getConfig();
 		if (!this.getConfig().equals(""))
@@ -332,8 +331,7 @@ public abstract class MarketModel {
 	}
 
 	public void addTrans(Transaction tr) {
-		this.trans.add(tr);
-		this.addSurplus(tr);
+		trans.add(tr);
 	}
 
 	public ArrayList<Bid> getAllBids() {
@@ -354,46 +352,6 @@ public abstract class MarketModel {
 
 	public Collection<Player> getPlayers() {
 		return Collections.unmodifiableCollection(players);
-	}
-
-	/**
-	 * 
-	 * @param rho
-	 * @return Surplus for this model for the given value of rho
-	 */
-	public double getModelSurplus(double rho) {
-		return this.modelSurplus.get(rho);
-	}
-
-	/**
-	 * Update surplus for this and the agents involved in the transactions
-	 * 
-	 * @param tr
-	 */
-	public void addSurplus(Transaction tr) {
-		int fund = this.getFundamentalAt(tr.getExecTime()).getPrice();
-		for (double rho : Consts.rhos) {
-			if (!this.modelSurplus.containsKey(rho))
-				this.modelSurplus.put(rho, 0.0);
-			// Updating buyer surplus
-			Agent buyer = tr.getBuyer();
-			if (buyer.getPrivateValue() != null) {
-				double surplus = buyer.addSurplus(rho, fund, tr, true);
-				this.modelSurplus.put(rho, this.modelSurplus.get(rho) + surplus);
-			} else {
-				double surplus = buyer.addSurplus(rho, fund, tr, true);
-				this.modelSurplus.put(rho, this.modelSurplus.get(rho) + surplus);
-			}
-			// Updating seller surplus
-			Agent seller = tr.getSeller();
-			if (seller.getPrivateValue() != null) {
-				double surplus = seller.addSurplus(rho, fund, tr, false);
-				this.modelSurplus.put(rho, this.modelSurplus.get(rho) + surplus);
-			} else {
-				double surplus = seller.addSurplus(rho, fund, tr, false);
-				this.modelSurplus.put(rho, this.modelSurplus.get(rho) + surplus);
-			}
-		}
 	}
 
 	public void addNBBOSpread(TimeStamp ts, int spread) {
