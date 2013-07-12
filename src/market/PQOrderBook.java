@@ -4,6 +4,8 @@ import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -185,7 +187,7 @@ public class PQOrderBook extends OrderBook {
 	 * @return ArrayList of PQTransactions
 	 */
 	@Override
-	public ArrayList<Transaction> earliestPriceClear(TimeStamp ts) {
+	public Collection<Transaction> earliestPriceClear(TimeStamp ts) {
 		PQPoint buy, sell;
 		clearedBids = new HashMap<Integer,Bid>();
 		
@@ -206,7 +208,7 @@ public class PQOrderBook extends OrderBook {
 		}
 		int numBuys = matchingBuys.size();
 		int numSells = matchingSells.size();
-		if (numBuys == 0) return null;
+		if (numBuys == 0) return Collections.emptySet();
 
 		for (int i = 0, j = 0; i < numBuys || j < numSells;) {
 			buy = matchingBuys.get(i);

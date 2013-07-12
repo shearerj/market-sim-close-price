@@ -29,6 +29,7 @@ import data.AgentProperties;
 import data.DummyFundamental;
 import data.EntityProperties;
 import data.FundamentalValue;
+import data.Keys;
 import data.ModelProperties;
 import event.TimeStamp;
 
@@ -55,9 +56,8 @@ public class AAAgentTest {
 		
 		//Setting up agentProperties
 		agentProperties = new EntityProperties();
-		agentProperties.put(Agent.ARRIVAL_KEY, 0);
-		agentProperties.put(REENTRY_RATE, 0.25);
-		agentProperties.put(MAXQUANTITY_KEY, 10);
+		agentProperties.put(Keys.REENTRY_RATE, 0.25);
+		agentProperties.put(Keys.MAX_QUANTITY, 10);
 		agentProperties.put(DEBUG_KEY, false);
 		agentProperties.put(ETA_KEY, 3);
 		agentProperties.put(HISTORICAL_KEY, 5);

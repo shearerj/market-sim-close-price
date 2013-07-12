@@ -14,6 +14,7 @@ import activity.Activity;
 import activity.AgentStrategy;
 import data.ArrivalTime;
 import data.EntityProperties;
+import data.Keys;
 import event.TimeStamp;
 
 /**
@@ -67,8 +68,8 @@ public class ZIRAgent extends BackgroundAgent {
 			Market market, RandPlus rand, SIP sip, EntityProperties props) {
 		// TODO get keys and default value for reentry rate and pvvar
 		this(agentID, arrivalTime, model, market, rand, sip,
-				props.getAsInt(BIDRANGE_KEY, 5000), 
-				props.getAsInt(MAXQUANTITY_KEY, 10),
+				props.getAsInt(Keys.BID_RANGE, 5000), 
+				props.getAsInt(Keys.MAX_QUANTITY, 10),
 				props.getAsInt("reentry_rate", 100), 
 				props.getAsDouble("pvVar",100));
 	}

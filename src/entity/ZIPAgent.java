@@ -8,6 +8,7 @@ import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
 import data.EntityProperties;
+import data.Keys;
 import event.TimeStamp;
 
 
@@ -33,9 +34,9 @@ public class ZIPAgent extends BackgroundAgent {
 			Market market, RandPlus rand, SIP sip, EntityProperties props) {
 		// TODO replace null with proper private value initialization
 		super(agentID, arrivalTime, model, market, null, rand, sip);
-		this.bidRange = props.getAsInt(BIDRANGE_KEY, 2000);
-		this.sleepTime = props.getAsInt(SLEEPTIME_KEY, 50);
-		this.sleepVar = props.getAsInt(SLEEPVAR_KEY, 100);
+		this.bidRange = props.getAsInt(Keys.BID_RANGE, 2000);
+		this.sleepTime = props.getAsInt(Keys.SLEEP_TIME, 50);
+		this.sleepVar = props.getAsInt(Keys.SLEEP_VAR, 100);
 		this.c_R = props.getAsDouble("c_R", .05);
 		this.c_A = props.getAsDouble("c_A", .05);
 		this.beta = props.getAsDouble("beta", .03);
@@ -52,9 +53,9 @@ public class ZIPAgent extends BackgroundAgent {
 		int val = Math.max(0, model.getFundamentalAt(currentTime).plus(privateValue.getValueFromQuantity(positionBalance, quantity)).getPrice());
 
 		// Insert events for the agent to sleep, then wake up again at timestamp tsNew
-		int sleepTime = params.getAsInt(SLEEPTIME_KEY);
-		double sleepVar = params.getAsDouble(SLEEPVAR_KEY);
-		TimeStamp tsNew = currentTime.sum(new TimeStamp((long) rand.nextGaussian(sleepTime, sleepVar)));
+		int sleepTime = params.getAsInt(Keys.SLEEP_TIME);
+		double sleepVar = params.getAsDouble(Keys.SLEEP_VAR);
+		TimeStamp tsNew = currentTime.plus(new TimeStamp((long) rand.nextGaussian(sleepTime, sleepVar)));
 		actMap.add(new AgentStrategy(this, tsNew));
 		return actMap;
 	}

@@ -94,7 +94,7 @@ public class CallMarket extends Market {
 	@Override
 	public Collection<? extends Activity> clear(TimeStamp currentTime) {
 		// Update the next clear time
-		nextClearTime = currentTime.sum(clearFreq);
+		nextClearTime = currentTime.plus(clearFreq);
 		Collection<Activity> activities = new ArrayList<Activity>(
 				super.clear(currentTime));
 
@@ -135,7 +135,7 @@ public class CallMarket extends Market {
 				}
 			}
 			lastQuoteTime = quoteTime;
-			nextQuoteTime = quoteTime.sum(clearFreq);
+			nextQuoteTime = quoteTime.plus(clearFreq);
 
 			if (bp != null) {
 				lastBidPrice = bp;

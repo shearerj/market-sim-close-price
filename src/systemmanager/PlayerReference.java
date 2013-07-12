@@ -18,8 +18,8 @@ import systemmanager.Consts.SMAgentType;
 import systemmanager.Consts.ModelType;
 import data.AgentPropsPair;
 import data.EntityProperties;
+import data.Keys;
 import data.SystemData;
-import entity.Agent;
 import event.TimeStamp;
 
 
@@ -227,7 +227,7 @@ public class PlayerReference {
 	 */
 	public static EntityProperties getAgentProperties(SMAgentType type, String strategy) {
 		EntityProperties p = null; // new ObjectProperties(Consts.getProperties(type));
-		p.put(Agent.STRATEGY_KEY, strategy);
+//		p.put(Keys.STRATEGY, strategy);
 		
 		if (strategy == null) return p;
 		

@@ -11,15 +11,15 @@ import event.TimeStamp;
  * @author ewah
  */
 public class Transaction {
-	
+
 	protected final int transID;
 	protected final Agent buyer;
 	protected final Agent seller;
 	protected final Market market;
 	protected final Bid buyBid;
 	protected final Bid sellBid;
-	
-	//Transaction Info
+
+	// Transaction Info
 	protected final int quantity;
 	protected final Price price;
 	protected final TimeStamp execTime;
@@ -74,4 +74,35 @@ public class Transaction {
 	public final TimeStamp getExecTime() {
 		return execTime;
 	}
+
+	@Override
+	public int hashCode() {
+		return transID ^ buyBid.hashCode() ^ sellBid.hashCode()
+				^ buyer.hashCode() ^ seller.hashCode() ^ market.hashCode()
+				^ price.hashCode() ^ execTime.hashCode() ^ quantity;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof Transaction))
+			return false;
+		Transaction other = (Transaction) obj;
+		return this.transID == other.transID
+				&& this.buyBid.equals(other.buyBid)
+				&& this.sellBid.equals(other.sellBid)
+				&& this.buyer.equals(other.buyer)
+				&& this.seller.equals(other.seller)
+				&& this.market.equals(other.market)
+				&& this.price.equals(other.price)
+				&& this.execTime.equals(other.execTime)
+				&& this.quantity == other.quantity;
+	}
+
+	@Override
+	public String toString() {
+		return "(" + "transID=" + transID + ", mkt=" + market + ", buyer="
+				+ buyer + ", seller=" + seller + ", price=" + price
+				+ ", quantity=" + quantity + ", timeStamp=" + execTime + ")";
+	}
+
 }
