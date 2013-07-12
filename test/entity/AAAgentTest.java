@@ -43,7 +43,7 @@ public class AAAgentTest {
 	private MarketModel model;
 	private Market market;
 	private int agentIndex;
-	private SIP dummySIP;
+	public SIP dummySIP;
 	
 	@BeforeClass
 	public static void setupClass() {
@@ -84,7 +84,7 @@ public class AAAgentTest {
 		
 		//Creating the dummy SIP
 		//XXX - Fix once SIP becomes important
-		dummySIP = new SIP(1,1);
+		dummySIP = new SIP(1,1,new TimeStamp(0));
 	}
 	
 	private AAAgent addAAAgent(MarketModel model, boolean isBuyer) {
@@ -95,11 +95,11 @@ public class AAAgentTest {
 		EntityProperties testProps = new EntityProperties(agentProperties);
 		testProps.put(BUYERSTATUS_KEY, isBuyer);
 		
-		AAAgent agent = new AAAgent(agentIndex, new TimeStamp(0), model, market, rand, dummySIP, testProps);
+		AAAgent agent = new AAAgent(agentIndex, new TimeStamp(0), model, market, rand, testProps);
 		
 		++agentIndex;
 		
-		model.addAgent(agent);
+		//model.addAgent(agent); --not sure about this!
 		return agent;
 	}
 	
