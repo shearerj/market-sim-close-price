@@ -1,12 +1,12 @@
 package data;
 
-import systemmanager.Consts.SMAgentType;
+import systemmanager.Consts.AgentType;
 
 public class AgentProperties extends EntityProperties {
 
-	protected final SMAgentType type;
+	protected final AgentType type;
 
-	public AgentProperties(SMAgentType type) {
+	public AgentProperties(AgentType type) {
 		super();
 		this.type = type;
 	}
@@ -16,22 +16,22 @@ public class AgentProperties extends EntityProperties {
 		this.type = copy.type;
 	}
 
-	public AgentProperties(SMAgentType type, String config) {
+	public AgentProperties(AgentType type, String config) {
 		super(config);
 		this.type = type;
 	}
 
 	public AgentProperties(String config) {
-		this(SMAgentType.valueOf(config.substring(0, config.indexOf(':'))),
+		this(AgentType.valueOf(config.substring(0, config.indexOf(':'))),
 				config.substring(config.indexOf(':') + 1));
 	}
 
-	public AgentProperties(SMAgentType type, EntityProperties def, String config) {
+	public AgentProperties(AgentType type, EntityProperties def, String config) {
 		super(def, config);
 		this.type = type;
 	}
 
-	public SMAgentType getAgentType() {
+	public AgentType getAgentType() {
 		return type;
 	}
 

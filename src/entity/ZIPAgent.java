@@ -58,8 +58,6 @@ public class ZIPAgent extends BackgroundAgent {
 
 		// Insert events for the agent to sleep, then wake up again at timestamp
 		// tsNew
-		int sleepTime = params.getAsInt(Keys.SLEEP_TIME);
-		double sleepVar = params.getAsDouble(Keys.SLEEP_VAR);
 		TimeStamp tsNew = currentTime.plus(new TimeStamp(
 				(long) rand.nextGaussian(sleepTime, sleepVar)));
 		actMap.add(new AgentStrategy(this, tsNew));

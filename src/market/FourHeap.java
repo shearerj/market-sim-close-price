@@ -611,7 +611,7 @@ public class FourHeap {
 		Iterator<PQPoint> I = S.iterator();
 		while (I.hasNext()) {
 			PQPoint P = (PQPoint) I.next();
-			s = s + P.getAgentID() + ":" + P.toString();
+			s = s + P.getAgent().getID() + ":" + P.toString();
 		}
 		// s = s+'\n';
 		// System.out.println(s);

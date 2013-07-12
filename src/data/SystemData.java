@@ -5,7 +5,7 @@ import entity.*;
 import market.*;
 import model.*;
 import systemmanager.*;
-import systemmanager.Consts.SMAgentType;
+import systemmanager.Consts.AgentType;
 import systemmanager.Consts.ModelType;
 
 import java.text.DecimalFormat;
@@ -147,7 +147,7 @@ public class SystemData {
 	 * @return
 	 */
 	public Map<Integer,Bid> getBids(int marketID) {
-		return markets.get(marketID).getBids();
+		return null; //markets.get(marketID).getBids();
 	}
 	
 	public HashMap<Integer,Quote> getQuotes() {
@@ -318,7 +318,7 @@ public class SystemData {
 	 * @param agentType
 	 * @return
 	 */
-	public boolean isSMAgent(SMAgentType agentType) {
+	public boolean isSMAgent(AgentType agentType) {
 //		return Consts.SM_AGENTS.contains(agentType);
 		return false;
 	}

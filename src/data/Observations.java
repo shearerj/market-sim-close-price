@@ -21,7 +21,7 @@ import model.MarketModel;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import systemmanager.Consts;
-import systemmanager.Consts.SMAgentType;
+import systemmanager.Consts.AgentType;
 import systemmanager.SimulationSpec;
 import utils.DSPlus;
 
@@ -48,6 +48,7 @@ public class Observations {
 
 	// Config
 	public final static String NUM = "num";
+	public final static String OBS_KEY = "observation";
 	public final static String AGENTSETUP = "setup";
 	public final static String TIMESERIES_MAXTIME = "up_to_maxtime";
 
@@ -101,22 +102,22 @@ public class Observations {
 
 	JsonObject observations;
 
-	public Observations(SimulationSpec spec, Collection<MarketModel> models) {
+	public Observations(SimulationSpec spec, Collection<MarketModel> models,
+			int observationNum) {
 		observations = new JsonObject();
 
 		MarketModel firstModel = models.iterator().next();
 		observations.add(PLAYERS_KEY, playerObservations(firstModel));
 
-		long maxTime = 15000; // TODO Math.round(firstModel.getNumEnvAgents() /
-								// data.arrivalRate);
+		// FIXME Math.round(firstModel.getNumEnvAgents() / data.arrivalRate);
+		long maxTime = 15000;
 		maxTime = Math.max(Consts.upToTime, quantize((int) maxTime, 1000));
 
 		JsonObject feature = new JsonObject();
-		feature.add("", getConfiguration(spec, maxTime));
+		feature.add("", getConfiguration(spec, observationNum, maxTime));
 
 		for (MarketModel model : models) {
-			String modelName = model.getLogName(); // FIXME This shouldn't be in
-													// model
+			String modelName = model.getClass().getSimpleName().toLowerCase();
 
 			feature.add(delimit(modelName, SURPLUS), getSurplus(model));
 
@@ -148,9 +149,9 @@ public class Observations {
 		JsonObject observation = new JsonObject();
 		observation.addProperty(ROLE_KEY, player.getRole());
 		observation.addProperty(STRATEGY_KEY, player.getStrategy());
+		// Get surplus instead of realized profit?
 		observation.addProperty(PAYOFF_KEY,
-				player.getAgent().getRealizedProfit()); // Get surplus instead
-														// of realized profit?
+				player.getAgent().getRealizedProfit());
 		return observation;
 	}
 
@@ -158,21 +159,15 @@ public class Observations {
 	 * Data aggregation
 	 *******************************************/
 
-	public static JsonObject getConfiguration(SimulationSpec spec, long maxTime) {
+	protected static JsonObject getConfiguration(SimulationSpec spec,
+			int observationNum, long maxTime) {
 		JsonObject config = new JsonObject();
-		// TODO Fix after figure out how use config
-		// config.put(OBS_KEY, data.num);
-		// config.put(SimulationSpec.SIMULATION_LENGTH, data.simLength);
-		// config.put(SimulationSpec.TICK_SIZE, data.tickSize);
-		// config.put(SimulationSpec.LATENCY, data.nbboLatency);
-		// config.put(SimulationSpec.ARRIVAL_RATE, data.arrivalRate);
-		// config.put(SimulationSpec.REENTRY_RATE, data.reentryRate);
-		// config.put(SimulationSpec.FUNDAMENTAL_KAPPA, data.kappa);
-		// config.put(SimulationSpec.FUNDAMENTAL_MEAN, data.meanValue);
-		// config.put(SimulationSpec.FUNDAMENTAL_SHOCK_VAR, data.shockVar);
-		// config.put(SimulationSpec.PRIVATE_VALUE_VAR, data.pvVar);
 
+		config.addProperty(OBS_KEY, observationNum);
 		config.addProperty(TIMESERIES_MAXTIME, maxTime);
+		copyPropertiesToJson(config, spec.getSimulationProperties());
+		copyPropertiesToJson(config, spec.getDefaultModelProperties());
+		copyPropertiesToJson(config, spec.getDefaultAgentProperties());
 
 		for (Entry<AgentProperties, Integer> agentProps : spec.getBackgroundAgents().entrySet()) {
 			AgentProperties props = agentProps.getKey();
@@ -185,6 +180,12 @@ public class Observations {
 					props.toConfigString());
 		}
 		return config;
+	}
+
+	protected static void copyPropertiesToJson(JsonObject json,
+			EntityProperties props) {
+		for (String key : props.keys())
+			json.addProperty(key, props.getAsString(key));
 	}
 
 	/**
@@ -225,7 +226,7 @@ public class Observations {
 					env.addValue(agentSurplus);
 				}
 			}
-			
+
 			feat.addProperty(delimit("_", SUM, TOTAL, suffix),
 					modelSurplus.getSum());
 			feat.addProperty(delimit("_", SUM, ROLE_BACKGROUND, suffix),
@@ -234,7 +235,7 @@ public class Observations {
 					mm.getSum());
 			feat.addProperty(delimit("_", SUM, ROLE_HFT, suffix), hft.getSum());
 			if (!players.isEmpty())
-				// only add if EGTA use case
+			// only add if EGTA use case
 				feat.addProperty(delimit("_", SUM, TYPE_ENVIRONMENT, suffix),
 						env.getSum());
 		}
@@ -289,7 +290,7 @@ public class Observations {
 		// So that agent types with 0 transactions still get logged. XXX This
 		// maybe should pull only from agent types that had nonzero numbers, not
 		// every agent possible.
-		for (SMAgentType type : Consts.SMAgentType.values())
+		for (AgentType type : Consts.AgentType.values())
 			numTrans.put(type.toString(), 0);
 
 		for (Transaction t : model.getTrans()) {
@@ -326,11 +327,6 @@ public class Observations {
 		// compute RMSD (for price discovery) at different sampling frequencies
 		for (int period : Consts.periods) {
 			String prefix = period > 1 ? PERIODICITY + period : null;
-			// TODO The fact that you're getting a sampled array and then just
-			// plugging them into a DS tells me there's probably a better way to
-			// do this involving sampling from a DescriptiveStatistic.
-			// Potentially making a time series a subclass of descriptive
-			// statistic.
 			// XXX maxTime instead of simLength?
 			DSPlus pr = new DSPlus(transPrices.getSampledArray(period,
 					simLength));
@@ -388,8 +384,7 @@ public class Observations {
 		JsonObject feat = new JsonObject();
 
 		for (Agent ag : model.getAgents()) {
-			if (!(ag instanceof MarketMaker))
-				continue;
+			if (!(ag instanceof MarketMaker)) continue;
 			MarketMaker mm = (MarketMaker) ag;
 
 			// append the agentID in case more than one of this type
@@ -439,7 +434,7 @@ public class Observations {
 			feat.addProperty(delimit("_", prefix, STDDEV, PRICE, suffix), stdev);
 			stddev.addValue(stdev);
 			if (stdev != 0)
-				// don't add if stddev is 0
+			// don't add if stddev is 0
 				logPriceVol.addValue(Math.log(stdev));
 
 			// compute log-return volatility for this market
@@ -480,8 +475,7 @@ public class Observations {
 			writer = new FileWriter(observationsFile);
 			gson.toJson(observations, writer);
 		} finally {
-			if (writer != null)
-				writer.close();
+			if (writer != null) writer.close();
 		}
 	}
 

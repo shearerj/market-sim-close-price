@@ -8,21 +8,17 @@ import static systemmanager.Consts.INF_TIME;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import market.BestBidAsk;
 import market.Bid;
 import market.PQBid;
 import market.Price;
 import market.PrivateValue;
-import market.Quote;
 import market.Transaction;
 import model.MarketModel;
-import systemmanager.Consts;
 import utils.RandPlus;
 import activity.Activity;
 import activity.Liquidate;
@@ -39,22 +35,16 @@ import event.TimeStamp;
 public abstract class Agent extends Entity {
 
 	protected final RandPlus rand;
-
 	protected final MarketModel model;
-	// For quote generation
 	protected final SIP sip;
-
-	// Agent parameters
-	protected final PrivateValue privateValue;
-	protected final TimeStamp arrivalTime;
-
 	// List of all transactions. Implicitly time ordered due to transactions
 	// being created and assigned in time order.
 	protected final List<Transaction> transactions;
-
-	// Market information (all hashed by market ID, as ID may be negative)
 	protected final Collection<Bid> activeBids;
 	
+	// Agent parameters
+	protected final PrivateValue privateValue;
+	protected final TimeStamp arrivalTime;
 	protected final int tickSize;
 
 	// Tracking cash flow
@@ -65,8 +55,7 @@ public abstract class Agent extends Entity {
 	// for liquidation
 	protected int preLiqPosition;
 	protected int preLiqRealizedProfit;
-
-	// TODO Agent probably needs more than this...
+	
 	public Agent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			PrivateValue privateValue, RandPlus rand, SIP sip, int tickSize) {
 		super(agentID);

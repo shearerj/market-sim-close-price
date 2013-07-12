@@ -17,7 +17,6 @@ import market.Transaction;
 import model.MarketModel;
 import systemmanager.Consts;
 import activity.Activity;
-import activity.ProcessQuote;
 import activity.SendToSIP;
 import data.TimeSeries;
 import event.TimeStamp;
@@ -87,20 +86,6 @@ public abstract class Market extends Entity {
 	public abstract Price getAskPrice();
 
 	/**
-	 * @return last bid quantity
-	 */
-	public int getBidQuantity() {
-		return lastBidQuantity;
-	}
-
-	/**
-	 * @return last ask quantity
-	 */
-	public int getAskQuantity() {
-		return lastAskQuantity;
-	}
-
-	/**
 	 * Publish quotes.
 	 * 
 	 * @param quoteTime
@@ -129,18 +114,20 @@ public abstract class Market extends Entity {
 
 		// Different logging if no transactions
 		if (transes.isEmpty()) {
-			log(INFO, currentTime + " | ....." + this + " " + this.getName()
+			log(INFO, currentTime + " | ....." + this + " "
+					+ getClass().getSimpleName()
 					+ "::clear: No change. Post-clear Quote"
 					+ quote(currentTime));
 		} else {
 			orderbook.logActiveBids(currentTime);
 			orderbook.logClearedBids(currentTime);
 			orderbook.logFourHeap(currentTime);
-			log(INFO, currentTime + " | ....." + this + " " + this.getName()
+			log(INFO, currentTime + " | ....." + this + " "
+					+ getClass().getSimpleName()
 					+ "::clear: Order book cleared: " + "Post-clear Quote"
 					+ quote(currentTime));
 		}
-		
+
 		for (Transaction trans : transes) {
 			model.addTrans(trans);
 			trans.getBuyer().addTransaction(trans, currentTime);
@@ -159,7 +146,7 @@ public abstract class Market extends Entity {
 	/**
 	 * @return map of bids (hashed by agent ID)
 	 */
-	public abstract Map<Integer, Bid> getBids();
+	public abstract Map<Agent, Bid> getBids();
 
 	/**
 	 * Returns all bids submitted to this market
@@ -218,18 +205,16 @@ public abstract class Market extends Entity {
 
 		// FIXME latency should be inside SIP not inside market, unless we want
 		// market specific latency or something.
-		if (data.nbboLatency.longValue() == 0) {
-			return Collections.singleton(new ProcessQuote(sip, this, bid, ask,
-					Consts.INF_TIME));
-		} else {
-			return Collections.singleton(new ProcessQuote(sip, this, bid, ask,
-					currentTime.plus(data.nbboLatency)));
-		}
+		// if (data.nbboLatency.longValue() == 0) {
+		// return Collections.singleton(new ProcessQuote(sip, this, bid, ask,
+		// Consts.INF_TIME));
+		// } else {
+		// return Collections.singleton(new ProcessQuote(sip, this, bid, ask,
+		// currentTime.plus(data.nbboLatency)));
+		// }
+		return Collections.emptySet();
 	}
-
-	/**
-	 * @return true if both BID & ASK are defined (!= -1)
-	 */
+	
 	public boolean defined() {
 		return lastAskPrice != null && lastBidPrice != null;
 	}
@@ -256,10 +241,6 @@ public abstract class Market extends Entity {
 
 	public Collection<Transaction> getModelTrans() {
 		return this.model.getTrans();
-	}
-
-	public MarketModel getMarketModel() {
-		return this.model;
 	}
 
 	public TimeSeries getDepth() {
@@ -305,8 +286,7 @@ public abstract class Market extends Entity {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof Market))
-			return false;
+		if (obj == null || !(obj instanceof Market)) return false;
 		Market market = (Market) obj;
 		return super.equals(market) && model.equals(market.model);
 	}

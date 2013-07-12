@@ -18,7 +18,7 @@ import market.Bid;
 import market.Price;
 import market.Transaction;
 import systemmanager.Consts;
-import systemmanager.Consts.SMAgentType;
+import systemmanager.Consts.AgentType;
 import systemmanager.Consts.MarketType;
 import systemmanager.SimulationSpec;
 import utils.RandPlus;
@@ -227,15 +227,6 @@ public abstract class MarketModel {
 	}
 
 	/**
-	 * @return model name for observation file (format "modeltypeconfig")
-	 */
-	public String getLogName() {
-		// return this.getClass().getSimpleName().toLower Case() +
-		// this.getConfig().toLowerCase();
-		return getFullName().toLowerCase().replace("-", "");
-	}
-
-	/**
 	 * Adds an agent to the list of agents for the model.
 	 * 
 	 * @param id
@@ -251,7 +242,7 @@ public abstract class MarketModel {
 	 * @param agType
 	 * @param agProperties
 	 */
-	public void addAgentPropertyPair(SMAgentType agType,
+	public void addAgentPropertyPair(AgentType agType,
 			EntityProperties agProperties) {
 		AgentPropsPair app = new AgentPropsPair(agType, agProperties);
 		agentConfig.add(app);

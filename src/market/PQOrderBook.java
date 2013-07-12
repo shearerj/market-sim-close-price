@@ -9,8 +9,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import utils.MathUtils;
+import entity.Agent;
 import entity.Market;
 import event.TimeStamp;
 
@@ -32,17 +34,17 @@ public class PQOrderBook extends OrderBook {
 	 * inserts new bid into the order book
 	 */
 	public void insertBid(Bid newBid) {
-		int key = newBid.getAgent().getID();
+		Agent agent = newBid.getAgent();
 
 		// create entry if non-existent, remove old bid if exists
-		if (!activeBids.containsKey(key)) {
-			activeBids.put(key, (PQBid) newBid);
+		if (!activeBids.containsKey(agent)) {
+			activeBids.put(agent, (PQBid) newBid);
 		} else {
-			PQBid oldBid = (PQBid) activeBids.get(key);
+			PQBid oldBid = (PQBid) activeBids.get(agent);
 			for (Iterator<PQPoint> i = oldBid.bidTreeSet.iterator(); i.hasNext(); ) {
 				FH.removeBid(i.next());
 			}
-			activeBids.put(key, (PQBid) newBid);
+			activeBids.put(agent, (PQBid) newBid);
 		}
 		PQBid pqBid = (PQBid) newBid;
 		//insert all new Points from this Bid into the 4Heap
@@ -60,19 +62,19 @@ public class PQOrderBook extends OrderBook {
 	 */
 	public void insertPoint(Point newPoint) {
 		PQPoint pq = (PQPoint) newPoint;
-		Integer key = pq.getAgentID();
+		Agent agent = pq.getAgent();
 		
 		// create entry if non-existent, or add as existing multi-point bid
-		if (!activeBids.containsKey(key)) {
+		if (!activeBids.containsKey(agent)) {
 			PQBid newBid = new PQBid(pq.getAgent(), pq.getMarket(), null);
 			newBid.addPoint(pq);
-			activeBids.put(key, newBid);
+			activeBids.put(agent, newBid);
 		} else {
 			// don't need to add to FH since should already be there
-			PQBid oldBid = (PQBid) activeBids.get(key);
+			PQBid oldBid = (PQBid) activeBids.get(agent);
 			PQBid newBid = new PQBid(oldBid);
 			newBid.addPoint(pq);
-			activeBids.put(key, newBid);
+			activeBids.put(agent, newBid);
 		}
 	}
 	
@@ -137,7 +139,7 @@ public class PQOrderBook extends OrderBook {
 	 */
 	public void logActiveBids(TimeStamp ts) {
 		String s = ts.toString() + " | " + this.market + " Active bids: ";
-		for (Map.Entry<Integer,Bid> entry : activeBids.entrySet()) {
+		for (Entry<Agent, Bid> entry : activeBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
 				PQPoint pq = i.next();
@@ -152,7 +154,7 @@ public class PQOrderBook extends OrderBook {
 	 */
 	public void logClearedBids(TimeStamp ts) {
 		String s = ts.toString() + " | " + this.market + " Cleared bids: ";
-		for (Map.Entry<Integer,Bid> entry : clearedBids.entrySet()) {
+		for (Entry<Agent, Bid> entry : clearedBids.entrySet()) {
 			PQBid b = (PQBid) entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
 				PQPoint pq = i.next();
@@ -169,7 +171,7 @@ public class PQOrderBook extends OrderBook {
 	public ArrayList<Integer> getClearedBidIDs() {
 		if (!clearedBids.isEmpty()) {
 			ArrayList<Integer> IDs = new ArrayList<Integer>();
-			for (Map.Entry<Integer,Bid> entry : clearedBids.entrySet()) {
+			for (Entry<Agent, Bid> entry : clearedBids.entrySet()) {
 				PQBid b = (PQBid) entry.getValue();
 				IDs.add(b.getBidID());
 			}
@@ -189,7 +191,7 @@ public class PQOrderBook extends OrderBook {
 	@Override
 	public Collection<Transaction> earliestPriceClear(TimeStamp ts) {
 		PQPoint buy, sell;
-		clearedBids = new HashMap<Integer,Bid>();
+		clearedBids = new HashMap<Agent, Bid>();
 		
 		ArrayList<PQPoint> matchingBuys = new ArrayList<PQPoint>();
 		ArrayList<PQPoint> matchingSells = new ArrayList<PQPoint>();
@@ -200,8 +202,8 @@ public class PQOrderBook extends OrderBook {
 
 		if (!FH.matchBuySet.isEmpty() && !FH.matchSellSet.isEmpty()) {
 //			PQPoint b = (PQPoint) FH.matchBuySet.first();
-			buyAgentId = ((PQPoint) FH.matchBuySet.first()).getAgentID();
-			sellAgentId = ((PQPoint) FH.matchSellSet.first()).getAgentID();
+			buyAgentId = ((PQPoint) FH.matchBuySet.first()).getAgent().getID();
+			sellAgentId = ((PQPoint) FH.matchSellSet.first()).getAgent().getID();
 		}
 		if (buyAgentId != sellAgentId) {
 			FH.clear(matchingBuys, matchingSells);
@@ -224,12 +226,12 @@ public class PQOrderBook extends OrderBook {
 			log(INFO, ts + " | " + this.market + 
 					" Quantity=" + q + " cleared at Price=" + p.getPrice());
 
-			Integer key = new Integer(buy.getAgentID());
+			Agent key = buy.getAgent();
 			if (!clearedBids.containsKey(key)) {
 				clearedBids.put(key, buy.Parent);
 				// activeBids.remove(key);
 			}
-			key = new Integer(sell.getAgentID());
+			key = sell.getAgent();
 			if (!clearedBids.containsKey(key)) {
 				clearedBids.put(key, sell.Parent);
 				// activeBids.remove(key);
@@ -257,7 +259,7 @@ public class PQOrderBook extends OrderBook {
 	public ArrayList<Transaction> uniformPriceClear(TimeStamp ts, float pricingPolicy) {
 
 		PQPoint buy, sell;
-		clearedBids = new HashMap<Integer,Bid>();
+		clearedBids = new HashMap<Agent, Bid>();
 
 		ArrayList<PQPoint> matchingBuys = new ArrayList<PQPoint>();
 		ArrayList<PQPoint> matchingSells = new ArrayList<PQPoint>();
@@ -267,8 +269,8 @@ public class PQOrderBook extends OrderBook {
 		int sellAgentId = -2;
 
 		if (!FH.matchBuySet.isEmpty() && !FH.matchSellSet.isEmpty()) {
-			buyAgentId = ((PQPoint) FH.matchBuySet.first()).getAgentID();
-			sellAgentId = ((PQPoint) FH.matchSellSet.first()).getAgentID();
+			buyAgentId = ((PQPoint) FH.matchBuySet.first()).getAgent().getID();
+			sellAgentId = ((PQPoint) FH.matchSellSet.first()).getAgent().getID();
 		}
 		if (buyAgentId != sellAgentId) {
 			FH.clear(matchingBuys, matchingSells);
@@ -310,10 +312,10 @@ public class PQOrderBook extends OrderBook {
 			log(INFO, ts + " | " + market + 
 					" Quantity=" + q + " cleared at Price=" + p.getPrice());
 			
-			Integer key = new Integer(buy.getAgentID());
+			Agent key = buy.getAgent();
 			if (!clearedBids.containsKey(key))
 				clearedBids.put(key, buy.Parent);
-			key = new Integer(sell.getAgentID());
+			key = sell.getAgent();
 			if (!clearedBids.containsKey(key))
 				clearedBids.put(key, sell.Parent);
 

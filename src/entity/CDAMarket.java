@@ -1,12 +1,10 @@
 package entity;
 
 import static logger.Logger.log;
-import static logger.Logger.Level.*;
+import static logger.Logger.Level.ERROR;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import market.Bid;
@@ -61,7 +59,7 @@ public class CDAMarket extends Market {
 	}
 	
 	
-	public Map<Integer,Bid> getBids() {
+	public Map<Agent,Bid> getBids() {
 		return orderbook.getActiveBids();
 	}
 	
@@ -78,7 +76,7 @@ public class CDAMarket extends Market {
 				this.addMidQuote(quoteTime, Price.INF, Price.INF);
 				
 			} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
-				log(ERROR, this.getName() + "::quote: ERROR bid > ask");
+				log(ERROR, getClass().getSimpleName() + "::quote: ERROR bid > ask");
 				this.addSpread(quoteTime, Price.INF.getPrice());
 				this.addMidQuote(quoteTime, Price.INF, Price.INF);
 				

@@ -1,9 +1,5 @@
 package data;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -202,92 +198,6 @@ public class TimeSeries {
 			}
 		}
 		return ArrayUtils.toPrimitive(arr.toArray(new Double[arr.size()]));
-	}
-
-	/********************************************
-	 * Writing to output files
-	 *******************************************/
-
-	/**
-	 * Writes entire time series to file. First element is time 0.
-	 * 
-	 * @param filename
-	 */
-	public void writeSeriesToFile(File file) {
-		try {
-			if (!file.isFile())
-				file.createNewFile();
-			FileOutputStream os = new FileOutputStream(file);
-			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
-			BufferedWriter bw = new BufferedWriter(osw);
-			for (double d : series) {
-				bw.write(Double.toString(d));
-				bw.newLine();
-			}
-			bw.close();
-			osw.close();
-			os.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * Write a sampled version of the time series to a file.
-	 * 
-	 * @param period
-	 * @param maxTime
-	 * @param filename
-	 */
-	public void writeSampledSeriesToFile(int period, long maxTime,
-			String filename) {
-		try {
-			File f = new File(filename);
-			if (!f.isFile())
-				f.createNewFile();
-			FileOutputStream os = new FileOutputStream(f);
-			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
-			BufferedWriter bw = new BufferedWriter(osw);
-			double[] subarray = this.getSampledArray(period, maxTime);
-			for (int i = 0; i < subarray.length; i++) {
-				bw.write(Double.toString(subarray[i]));
-				bw.newLine();
-			}
-			bw.close();
-			osw.close();
-			os.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * Writes times & points to CSV.
-	 * 
-	 * @param filename
-	 */
-	public void writePointsToCSFile(String filename) {
-		try {
-			File f = new File(filename);
-			if (!f.isFile())
-				f.createNewFile();
-			FileOutputStream os = new FileOutputStream(f);
-			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
-			BufferedWriter bw = new BufferedWriter(osw);
-			// insert column headers
-			bw.write("time,point");
-			bw.newLine();
-			for (int i = 0; i < times.size(); i++) {
-				String s = times.get(i) + "," + points.get(i);
-				bw.write(s);
-				bw.newLine();
-			}
-			bw.close();
-			osw.close();
-			os.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 }

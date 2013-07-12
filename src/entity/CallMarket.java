@@ -3,10 +3,9 @@ package entity;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
-import logger.*;
+import logger.Logger;
 import market.Bid;
 import market.PQBid;
 import market.Price;
@@ -87,7 +86,7 @@ public class CallMarket extends Market {
 	}
 
 	@Override
-	public Map<Integer, Bid> getBids() {
+	public Map<Agent, Bid> getBids() {
 		return orderbook.getActiveBids();
 	}
 
@@ -122,14 +121,14 @@ public class CallMarket extends Market {
 							Price.INF);
 
 				} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
-					Logger.log(Logger.Level.ERROR, this.getName()
+					Logger.log(Logger.Level.ERROR, getClass().getSimpleName()
 							+ "::quote: ERROR bid > ask");
 					this.addSpread(quoteTime, Price.INF.getPrice());
 					this.addMidQuote(quoteTime, Price.INF,
 							Price.INF);
 				} else {
 					// valid bid-ask
-					data.addQuote(id, q);
+//					data.addQuote(id, q);
 					this.addSpread(quoteTime, q.getSpread());
 					this.addMidQuote(quoteTime, bp, ap);
 				}

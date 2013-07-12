@@ -7,17 +7,14 @@ import java.util.Set;
 
 public class EntityProperties {
 
-	protected EntityProperties def;
 	protected Map<String, String> properties;
 
 	public EntityProperties() {
 		this.properties = new HashMap<String, String>();
-		this.def = null;
 	}
 
 	public EntityProperties(EntityProperties def) {
-		this.properties = new HashMap<String, String>();
-		this.def = def;
+		this.properties = new HashMap<String, String>(def.properties);
 	}
 
 	public EntityProperties(String config) {
@@ -28,12 +25,6 @@ public class EntityProperties {
 	public EntityProperties(EntityProperties def, String config) {
 		this(def);
 		addConfig(config);
-	}
-
-	protected EntityProperties(Map<String, String> properties,
-			EntityProperties def) {
-		this.properties = properties;
-		this.def = def;
 	}
 
 	public void addConfig(String config) {
@@ -121,44 +112,6 @@ public class EntityProperties {
 		properties.put(key, Boolean.toString(value));
 	}
 
-	/**
-	 * @return The EntityProperties that backs the current one with defaults
-	 */
-	public EntityProperties getDefault() {
-		return def;
-	}
-
-	/**
-	 * Sets this EntityProperties backing properties to the supplied properties
-	 */
-	public void setDefault(EntityProperties def) {
-		this.def = def;
-	}
-
-	/**
-	 * Appends the supplied entity properties to the end of the defaults chain,
-	 * so that only properties that would have returned null before will not
-	 * have associated values.
-	 */
-	public void appendDefault(EntityProperties def) {
-		EntityProperties last = this;
-		while (last.def != null)
-			last = last.def;
-		last.def = def;
-	}
-
-	public EntityProperties flatten() {
-		Map<String, String> newProps = new HashMap<String, String>();
-		flattenHelper(newProps);
-		return new EntityProperties(newProps, null);
-	}
-
-	private void flattenHelper(Map<String, String> newProps) {
-		if (def != null)
-			def.flattenHelper(newProps);
-		newProps.putAll(properties);
-	}
-
 	@Override
 	public boolean equals(Object o) {
 		if (o == null || !(o instanceof EntityProperties))
@@ -169,7 +122,7 @@ public class EntityProperties {
 
 	@Override
 	public int hashCode() {
-		return properties.hashCode() ^ (def == null ? 0 : def.hashCode());
+		return properties.hashCode();
 	}
 
 	public String toConfigString() {
@@ -179,12 +132,6 @@ public class EntityProperties {
 		for (Entry<String, String> e : properties.entrySet())
 			sb.append('_').append(e.getKey()).append('_').append(e.getValue());
 		return sb.substring(1);
-	}
-
-	public String toCascadeString() {
-		if (def == null)
-			return toString();
-		return toString() + " <- " + def.toCascadeString();
 	}
 
 	@Override

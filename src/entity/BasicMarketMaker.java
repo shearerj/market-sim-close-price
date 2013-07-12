@@ -60,7 +60,7 @@ public class BasicMarketMaker extends MarketMaker {
 		this.numRungs = numRungs;
 		this.rungSize = rungSize;
 		// FIXME references SystemData
-		this.stepSize = MathUtils.quantize(rungSize, data.tickSize);
+		this.stepSize = MathUtils.quantize(rungSize, tickSize);
 		this.lastAsk = null; // ask
 		this.lastBid = null; // bid
 	}
