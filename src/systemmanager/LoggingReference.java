@@ -25,7 +25,6 @@ import entity.Agent;
 import entity.BasicMarketMaker;
 import entity.CallMarket;
 import entity.Market;
-import entity.SIP;
 import entity.SMAgent;
 import event.EventManager;
 import event.TimeStamp;

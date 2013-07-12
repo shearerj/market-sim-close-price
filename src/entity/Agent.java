@@ -73,7 +73,7 @@ public abstract class Agent extends Entity {
 	protected int modelID;
 
 	// For quote generation
-	protected Sip_Prime sip;
+	protected SIP sip;
 	//protected IP_LA ip_LA;
 	//protected IP_SM ip_SM;
 

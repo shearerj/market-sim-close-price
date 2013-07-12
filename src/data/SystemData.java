@@ -65,7 +65,6 @@ public class SystemData {
 	// hashed by model ID
 	public HashMap<Integer,List<AgentPropsPair>> modelAgentMap;
 	
-	private SIP sip;
 	private FundamentalValue fundamentalGenerator;
 	
 	// hashed by type, gives # of that type
@@ -163,10 +162,6 @@ public class SystemData {
 	 */
 	public Quote getQuote(int mktID) {
 		return quotes.get(mktID);
-	}
-	
-	public SIP getSIP() {
-		return sip;
 	}
 	
 	public HashMap<Integer,Agent> getAgents() {
@@ -410,10 +405,6 @@ public class SystemData {
 	public void addEnvAgentNumber(AgentPropsPair a, int n) {
 		envAgentMap.put(a, n);
 		numEnvAgents += n;
-	}
-	
-	public void setSIP(SIP sip) {
-		this.sip = sip;
 	}
 	
 	public void addQuote(int mktID, Quote q) {

@@ -6,7 +6,6 @@ import static logger.Logger.Level.INFO;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -17,13 +16,8 @@ import market.Price;
 import market.Quote;
 import market.Transaction;
 import model.MarketModel;
-import systemmanager.Consts;
 import activity.Activity;
-import activity.ProcessQuote;
 import activity.SendToSIP;
-import activity.UpdateNBBO;
-import data.EntityProperties;
-import data.SystemData;
 import data.TimeSeries;
 import event.TimeStamp;
 
@@ -66,9 +60,9 @@ public abstract class Market extends Entity {
 	public Price lastBidPrice;
 	public int lastAskQuantity;
 	public int lastBidQuantity;
-	public IP_SM ip_SM;
+	protected IPSM ip_SM;
 	public String marketType;
-	Collection<AbstractIP> ips;
+	protected final Collection<AbstractIP> ips;
 	
 /*
 	public Market(int marketID, MarketModel model, int ipID) {
@@ -83,6 +77,7 @@ public abstract class Market extends Entity {
 		buyers = new ArrayList<Integer>();
 		sellers = new ArrayList<Integer>();
 		this.marketID = marketID;
+		this.ips = new ArrayList<AbstractIP>();
 
 		lastQuoteTime = new TimeStamp(-1);
 		lastClearTime = new TimeStamp(-1);
@@ -93,7 +88,7 @@ public abstract class Market extends Entity {
 		lastAskPrice = new Price(-1);
 		lastBidPrice = new Price(-1);
 		
-		setupIPSM();
+		this.ip_SM = setupIPSM();
 		
 		// reorg
 		this.model = model;
@@ -110,16 +105,17 @@ public abstract class Market extends Entity {
 		ips.add(ip);
 	}
 	
-	protected void setupIPSM() {
+	protected IPSM setupIPSM() {
 		// TODO should have global variable of SM Latency
-		IP_SM ip_SM = new IP_SM(0, marketID, new TimeStamp(0), this);
+		IPSM ip_SM = new IPSM(0, marketID, new TimeStamp(0), this);
 		addIP(ip_SM);
+		return ip_SM;
 	} 
 	
 	/**
 	 * @return IP_SM
 	 */
-	public IP_SM getIPSM() {
+	public IPSM getIPSM() {
 		return this.ip_SM;
 	}
 

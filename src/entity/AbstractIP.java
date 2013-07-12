@@ -2,7 +2,6 @@ package entity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import static logger.Logger.Level.INFO;
 
 import market.BestBidAsk;
@@ -10,8 +9,6 @@ import market.Price;
 import model.MarketModel;
 import java.util.Collection;
 import logger.Logger;
-
-import data.SystemData;
 import event.TimeStamp;
 import activity.Activity;
 import activity.ProcessQuote;
@@ -26,8 +23,7 @@ import activity.ProcessQuote;
 public abstract class AbstractIP extends Entity {
 	
 	protected TimeStamp latency;
-	protected int tickSize;
-	protected HashMap<Integer, BestBidAsk> lastQuotes;		// hashed by model ID
+	protected BestBidAsk lastQuotes;		// hashed by model ID
 	protected HashMap<Integer, BestBidAsk> marketQuotes;		// hashed by market ID
 
 	/**
@@ -38,8 +34,7 @@ public abstract class AbstractIP extends Entity {
 	public AbstractIP(int ID, TimeStamp latency) {
 		super(ID);
 		this.latency = latency;
-		tickSize = data.tickSize;
-		lastQuotes = new HashMap<Integer,BestBidAsk>();
+		lastQuotes = new BestBidAsk(null, null, null, null);
 		marketQuotes = new HashMap<Integer,BestBidAsk>();
 	}
 	
@@ -53,15 +48,8 @@ public abstract class AbstractIP extends Entity {
 	 * @param modelID
 	 * @return BestBidAsk
 	 */
-	public BestBidAsk getNBBOQuote(int modelID) {
-		if (!lastQuotes.containsKey(modelID)) {
-			// FIXME This shouldn't be done / shouldn't happen
-			BestBidAsk b = new BestBidAsk(null, null, null, null);
-			lastQuotes.put(modelID, b);
-			return b;
-		} else {
-			return lastQuotes.get(modelID);
-		}
+	public BestBidAsk getNBBOQuote() {
+			return lastQuotes;
 	}
 	
 	/**

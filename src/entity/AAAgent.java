@@ -492,7 +492,7 @@ public class AAAgent extends BackgroundAgent {
 	}
 
 	public AAAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, SIP sip, EntityProperties params) {
+			Market market, RandPlus rand, EntityProperties params) {
 		// TODO change "null" to proper private value initialization
 		super(agentID, arrivalTime, model, market, new PrivateValue(
 				params.getAsInt(MAXQUANTITY_KEY, 1), params.getAsDouble(

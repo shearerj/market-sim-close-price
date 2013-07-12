@@ -3,10 +3,8 @@ package entity;
 import static logger.Logger.log;
 import static logger.Logger.Level.*;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import market.Bid;

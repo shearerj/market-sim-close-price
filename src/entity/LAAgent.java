@@ -13,7 +13,6 @@ import market.Bid;
 import market.PQBid;
 import market.PQPoint;
 import market.Price;
-import market.PrivateValue;
 import model.MarketModel;
 import systemmanager.Consts;
 import utils.RandPlus;
@@ -186,8 +185,8 @@ public class LAAgent extends HFTAgent {
 
 		for (LAInformationProcessor laip : ip_las) {
 			// TODO This should use IP not modle.markets
-			Price bid = laip.getNBBOQuote(1).getBestBid(); // TODO shouldn't have # as input
-			Price ask = laip.getNBBOQuote(1).getBestAsk();
+			Price bid = laip.getNBBOQuote().getBestBid(); // TODO shouldn't have # as input
+			Price ask = laip.getNBBOQuote().getBestAsk();
 
 			// in case the bid/ask disappears
 			ArrayList<Price> price = new ArrayList<Price>();

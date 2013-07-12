@@ -14,7 +14,7 @@ import com.google.gson.JsonObject;
 import activity.AgentArrival;
 import activity.Clear;
 
-import entity.Sip_Prime;
+import entity.SIP;
 import market.Bid;
 import market.Price;
 import market.Transaction;
@@ -35,7 +35,6 @@ import entity.LAAgent;
 import entity.LAInformationProcessor;
 import entity.Market;
 import entity.SMAgentFactory;
-import entity.SIP;
 import event.EventManager;
 import event.TimeStamp;
 import generators.Generator;
@@ -94,7 +93,7 @@ public abstract class MarketModel {
 	protected final RandPlus rand;
 	//protected int nextAgentID; not sure if we need this
 	
-	public Sip_Prime sip;
+	public SIP sip;
 	protected final Generator<Integer> agentIDgen;
 	protected final Generator<Integer> ipIDgen;
 
@@ -132,13 +131,12 @@ public abstract class MarketModel {
 		this.NBBOSpreads = new TimeSeries();
 
 		// FIXME actually initialize SIP -- why is this tick size? should be latency!!!
-		this.sip = new Sip_Prime(getipIDgen(), modelID, new TimeStamp(100) /* tick size */);
+		this.sip = new SIP(getipIDgen(), modelID, new TimeStamp(100) /* tick size */);
 
 		// Setup
 		setupMarkets(modelProps);
 		setupAgents(modelProps, agentProps);
 		setupPlayers(modelProps, playerConfig);
-		//setupLA_IPs(modelProps);
 	}
 	
 	public int getipIDgen() {
@@ -211,7 +209,7 @@ public abstract class MarketModel {
 	/**
 	 * @return SIP
 	 */
-	public Sip_Prime getSip() {
+	public SIP getSip() {
 		return this.sip;
 	}
 

@@ -1,7 +1,5 @@
 package entity;
 
-import systemmanager.*;
-import data.SystemData;
 import event.TimeStamp;
 
 
@@ -11,7 +9,7 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-public class LAInformationProcessor extends IP_Single_Market {
+public class LAInformationProcessor extends IP {
 	
 	private LAAgent laagent;
 	
