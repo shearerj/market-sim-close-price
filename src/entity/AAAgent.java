@@ -186,7 +186,7 @@ public class AAAgent extends BackgroundAgent {
 
 			// Updating theta
 			theta = theta + beta_t * (thetaStar - theta);
-			log(INFO, ts + " | " + this + " " + agentType
+			log(INFO, ts + " | " + this + " " + getType()
 					+ ": theta=" + theta);
 			return;
 		}
@@ -388,7 +388,7 @@ public class AAAgent extends BackgroundAgent {
 		 */
 		private Collection<Activity> biddingLayer(Price targetPrice,
 				int quantity, TimeStamp ts) {
-			String s = ts + " | " + this + " " + agentType + ":";
+			String s = ts + " | " + this + " " + getType() + ":";
 			Collection<Activity> actMap = new ArrayList<Activity>();
 
 			// Determining the offer price to (possibly) submit
@@ -497,7 +497,7 @@ public class AAAgent extends BackgroundAgent {
 		// TODO change "null" to proper private value initialization
 		super(agentID, arrivalTime, model, market, new PrivateValue(
 				params.getAsInt(Keys.MAX_QUANTITY, 1), params.getAsDouble(
-						"pvVar", 100), rand), rand, sip);
+						"pvVar", 100), rand), rand, sip, params.getAsInt("tickSize", 1000));
 
 		//Initialize market
 		this.marketSubmittedBid = this.market;
@@ -530,7 +530,7 @@ public class AAAgent extends BackgroundAgent {
 
 	@Override
 	public Collection<Activity> agentStrategy(TimeStamp ts) {
-		String s = ts + " | " + this + " " + agentType + ":";
+		String s = ts + " | " + this + " " + getType() + ":";
 		Collection<Activity> actMap = new ArrayList<Activity>();
 
 		// Update the moving average

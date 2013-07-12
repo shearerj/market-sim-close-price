@@ -54,8 +54,8 @@ public class BasicMarketMaker extends MarketMaker {
 
 	public BasicMarketMaker(int agentID, MarketModel model, Market market,
 			TimeStamp sleepTime, int numRungs, int rungSize, RandPlus rand,
-			SIP sip) {
-		super(agentID, model, market, rand, sip);
+			SIP sip, int tickSize) {
+		super(agentID, model, market, rand, sip, tickSize);
 		this.sleepTime = sleepTime;
 		this.numRungs = numRungs;
 		this.rungSize = rungSize;
@@ -69,7 +69,7 @@ public class BasicMarketMaker extends MarketMaker {
 			RandPlus rand, SIP sip, EntityProperties params) {
 		this(agentID, model, market, new TimeStamp(params.getAsLong(
 				Keys.SLEEP_TIME, 200)), params.getAsInt(Keys.NUM_RUNGS, 10),
-				params.getAsInt(Keys.RUNG_SIZE, 1000), rand, sip);
+				params.getAsInt(Keys.RUNG_SIZE, 1000), rand, sip, params.getAsInt("tickSize", 1000));
 		// SLEEPTIME_VAR = 100
 	}
 
@@ -87,7 +87,7 @@ public class BasicMarketMaker extends MarketMaker {
 		// market may not have any buy or sell orders. This could still allow
 		// agent strategy.
 		if (bid == null || ask == null) {
-			log(INFO, ts + " | " + this + " " + agentType
+			log(INFO, ts + " | " + this + " " + getType()
 					+ "::agentStrategy: undefined quote in market "
 					+ getMarket());
 
@@ -126,7 +126,7 @@ public class BasicMarketMaker extends MarketMaker {
 			for (int p = ask.getPrice(); p <= sellMaxPrice.getPrice(); p += stepSize)
 				priceQuantMap.put(new Price(p), -1);
 
-			log(INFO, ts + " | " + getMarket() + " " + this + " " + agentType
+			log(INFO, ts + " | " + getMarket() + " " + this + " " + getType()
 					+ "::agentStrategy: ladder numRungs=" + numRungs
 					+ ", stepSize=" + stepSize + ": buys [" + buyMinPrice
 					+ ", " + bid + "] &" + " sells [" + ask + ", "
@@ -134,7 +134,7 @@ public class BasicMarketMaker extends MarketMaker {
 			acts.addAll(submitMultipleBid(getMarket(), priceQuantMap, ts));
 
 		} else {
-			log(INFO, ts + " | " + getMarket() + " " + this + " " + agentType
+			log(INFO, ts + " | " + getMarket() + " " + this + " " + getType()
 					+ "::agentStrategy: no change in submitted ladder.");
 
 		}

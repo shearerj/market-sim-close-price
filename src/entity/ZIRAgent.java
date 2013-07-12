@@ -52,11 +52,11 @@ public class ZIRAgent extends BackgroundAgent {
 	protected ArrayList<TimeStamp> submissionTimes; // TODO currently unused
 
 	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, SIP sip, int bidRange, int maxAbsPosition,
-			int reentryRate, double pvVar) {
+			Market market, RandPlus rand, SIP sip, int bidRange,
+			int maxAbsPosition, int reentryRate, double pvVar, int tickSize) {
 		// TODO replace null with proper private value initialization
 		super(agentID, arrivalTime, model, market, new PrivateValue(
-				maxAbsPosition, pvVar, rand), rand, sip);
+				maxAbsPosition, pvVar, rand), rand, sip, tickSize);
 		this.bidRange = bidRange;
 		this.maxAbsPosition = maxAbsPosition;
 		this.reentry = new ArrivalTime(arrivalTime, reentryRate, rand);
@@ -67,18 +67,17 @@ public class ZIRAgent extends BackgroundAgent {
 	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, SIP sip, EntityProperties props) {
 		// TODO get keys and default value for reentry rate and pvvar
-		this(agentID, arrivalTime, model, market, rand, sip,
-				props.getAsInt(Keys.BID_RANGE, 5000), 
-				props.getAsInt(Keys.MAX_QUANTITY, 10),
-				props.getAsInt("reentry_rate", 100), 
-				props.getAsDouble("pvVar",100));
+		this(agentID, arrivalTime, model, market, rand, sip, props.getAsInt(
+				Keys.BID_RANGE, 5000), props.getAsInt(Keys.MAX_QUANTITY, 10),
+				props.getAsInt(Keys.REENTRY_RATE, 100), props.getAsDouble("pvVar",
+						100), props.getAsInt("tickSize", 1000));
 	}
 
 	@Override
 	public Collection<Activity> agentStrategy(TimeStamp ts) {
 		Collection<Activity> activities = new ArrayList<Activity>();
 
-		String s = ts + " | " + this + " " + agentType + ":";
+		String s = ts + " | " + this + " " + getType() + ":";
 		if (!ts.equals(arrivalTime)) {
 			s += " wake up.";
 			if (positionBalance == lastPositionBalance) {
@@ -97,15 +96,21 @@ public class ZIRAgent extends BackgroundAgent {
 			// check that will not exceed max absolute position
 			if (newPosition <= maxAbsPosition && newPosition >= -maxAbsPosition) {
 				Price val = model.getFundamentalAt(ts).plus(
-						privateValue.getValueFromQuantity(positionBalance, quantity)).nonnegative();
+						privateValue.getValueFromQuantity(positionBalance,
+								quantity)).nonnegative();
 				Price price = new Price(
 						(int) (val.getPrice() - Math.signum(quantity)
 								* rand.nextDouble() * 2 * bidRange)).nonnegative();
 
-				s += " position=" + positionBalance + ", for q=" + quantity
-						+ ", value=" + model.getFundamentalAt(ts) + " + "
-						+ privateValue.getValueFromQuantity(positionBalance, quantity)
-						+ "=" + val;
+				s += " position="
+						+ positionBalance
+						+ ", for q="
+						+ quantity
+						+ ", value="
+						+ model.getFundamentalAt(ts)
+						+ " + "
+						+ privateValue.getValueFromQuantity(positionBalance,
+								quantity) + "=" + val;
 				log(INFO, s);
 
 				activities.addAll(executeSubmitNMSBid(price, quantity, ts));

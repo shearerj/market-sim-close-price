@@ -38,8 +38,8 @@ public class LAAgent extends HFTAgent {
 									// value
 
 	public LAAgent(int agentID, MarketModel model, int sleepTime,
-			double sleepVar, double alpha, RandPlus rand, SIP sip) {
-		super(agentID, Consts.START_TIME, model, sleepTime, sleepVar, rand, sip);
+			double sleepVar, double alpha, RandPlus rand, SIP sip, int tickSize) {
+		super(agentID, Consts.START_TIME, model, sleepTime, sleepVar, rand, sip, tickSize);
 		this.alpha = alpha;
 	}
 
@@ -47,7 +47,7 @@ public class LAAgent extends HFTAgent {
 			EntityProperties props) {
 		this(agentID, model, props.getAsInt(Keys.SLEEP_TIME, 0),
 				props.getAsDouble(Keys.SLEEP_VAR, 100), props.getAsDouble(
-						ALPHA_KEY, 0.001), rand, sip);
+						ALPHA_KEY, 0.001), rand, sip, props.getAsInt("tickSize", 1000));
 	}
 
 	@Override
@@ -64,7 +64,7 @@ public class LAAgent extends HFTAgent {
 					* bestQuote.getBestBuy().getPrice())
 					&& (bestQuote.getBestBuy().getPrice() >= 0)) {
 
-				log(INFO, ts.toString() + " | " + this + " " + agentType
+				log(INFO, ts.toString() + " | " + this + " " + getType()
 						+ "::agentStrategy: Found possible arb opp!");
 
 				Market buyMarket = bestQuote.getBestBuyMarket();
@@ -87,7 +87,7 @@ public class LAAgent extends HFTAgent {
 										+ " | "
 										+ this
 										+ " "
-										+ agentType
+										+ getType()
 										+ "::agentStrategy: Exploit existing arb opp: "
 										+ bestQuote + " in "
 										+ bestQuote.getBestBuyMarket() + " & "
@@ -106,7 +106,7 @@ public class LAAgent extends HFTAgent {
 										+ " | "
 										+ this
 										+ " "
-										+ agentType
+										+ getType()
 										+ "::agentStrategy: No arb opp since at least 1 market does not "
 										+ "have both a bid and an ask");
 						// Note that this is due to a market not having both a
@@ -115,7 +115,7 @@ public class LAAgent extends HFTAgent {
 
 					} else if (quantity == 0) {
 						log(INFO, ts.toString() + " | " + this + " "
-								+ agentType
+								+ getType()
 								+ "::agentStrategy: No quantity available");
 						// Note that if this message appears in a CDA market,
 						// then the HFT
@@ -129,7 +129,7 @@ public class LAAgent extends HFTAgent {
 									+ " | "
 									+ this
 									+ " "
-									+ agentType
+									+ getType()
 									+ "::agentStrategy: Market quote(s) undefined. No bid submitted.");
 				}
 

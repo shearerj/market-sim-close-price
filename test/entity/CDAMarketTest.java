@@ -1,29 +1,24 @@
 package entity;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import logger.Logger;
 import market.PQBid;
 import market.Price;
 import market.Transaction;
-import model.CentralCDA;
 import model.DummyMarketModel;
-import model.MarketModel;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import systemmanager.Consts;
 import utils.RandPlus;
 
 import com.google.gson.JsonObject;
 
 import data.AgentProperties;
-import data.DummyFundamental;
 import data.FundamentalValue;
 import data.ModelProperties;
 import event.TimeStamp;
@@ -61,7 +56,7 @@ public class CDAMarketTest {
 		//Creating the agent
 		//XXX - If/when sip becomes critical to agent function, must fix this (switch to agentfactory?)
 		SIP sip = new SIP(1, 1);
-		Agent agent = new ZIAgent(0, time, model, market, new RandPlus(), sip, 0, 0);
+		Agent agent = new ZIAgent(0, time, model, market, new RandPlus(), sip, 0, 0, 1000);
 		
 		//Creating and adding the bid
 		PQBid testBid = new PQBid(agent, market, time);
@@ -79,7 +74,7 @@ public class CDAMarketTest {
 		
 		//Creating the agent
 		SIP sip = new SIP(1, 1);
-		Agent agent = new ZIAgent(0, time, model, market, new RandPlus(), sip, 0, 0);
+		Agent agent = new ZIAgent(0, time, model, market, new RandPlus(), sip, 0, 0, 1000);
 		
 		//Creating and adding the bid
 		PQBid testBid = new PQBid(agent, market, time);
@@ -97,8 +92,8 @@ public class CDAMarketTest {
 		
 		//Creating dummy agents
 		SIP sip = new SIP(1, 1);
-		Agent agent1 = new ZIAgent(1, time, model, market, new RandPlus(), sip, 0, 0);
-		Agent agent2 = new ZIAgent(2, time, model, market, new RandPlus(), sip, 0, 0);
+		Agent agent1 = new ZIAgent(1, time, model, market, new RandPlus(), sip, 0, 0, 1000);
+		Agent agent2 = new ZIAgent(2, time, model, market, new RandPlus(), sip, 0, 0, 1000);
 		
 		//Creating and adding bids
 		PQBid testBid1 = new PQBid(agent1, market, time);
@@ -126,8 +121,8 @@ public class CDAMarketTest {
 		
 		//Creating dummy agents
 		SIP sip = new SIP(1, 1);
-		Agent agent1 = new ZIAgent(1, time, model, market, new RandPlus(), sip, 0, 0);
-		Agent agent2 = new ZIAgent(2, time, model, market, new RandPlus(), sip, 0, 0);
+		Agent agent1 = new ZIAgent(1, time, model, market, new RandPlus(), sip, 0, 0, 1000);
+		Agent agent2 = new ZIAgent(2, time, model, market, new RandPlus(), sip, 0, 0, 1000);
 		
 		//Creating and adding bids
 		PQBid testBid1 = new PQBid(agent1, market, time);
@@ -155,10 +150,10 @@ public class CDAMarketTest {
 		
 		//Creating dummy agents
 		SIP sip = new SIP(1, 1);
-		Agent agent1 = new ZIAgent(1, time, model, market, new RandPlus(), sip, 0, 0);
-		Agent agent2 = new ZIAgent(2, time, model, market, new RandPlus(), sip, 0, 0);
-		Agent agent3 = new ZIAgent(3, time, model, market, new RandPlus(), sip, 0, 0);
-		Agent agent4 = new ZIAgent(4, time, model, market, new RandPlus(), sip, 0, 0);
+		Agent agent1 = new ZIAgent(1, time, model, market, new RandPlus(), sip, 0, 0, 1000);
+		Agent agent2 = new ZIAgent(2, time, model, market, new RandPlus(), sip, 0, 0, 1000);
+		Agent agent3 = new ZIAgent(3, time, model, market, new RandPlus(), sip, 0, 0, 1000);
+		Agent agent4 = new ZIAgent(4, time, model, market, new RandPlus(), sip, 0, 0, 1000);
 		
 		//Creating and adding bids
 		PQBid testBid1 = new PQBid(agent1, market, time);

@@ -50,8 +50,8 @@ public abstract class SMAgent extends Agent {
 	protected Market marketSubmittedBid;
 
 	public SMAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, PrivateValue pv, RandPlus rand, SIP sip) {
-		super(agentID, arrivalTime, model, pv, rand, sip);
+			Market market, PrivateValue pv, RandPlus rand, SIP sip, int tickSize) {
+		super(agentID, arrivalTime, model, pv, rand, sip, tickSize);
 		this.market = market;
 	}
 
@@ -188,13 +188,13 @@ public abstract class SMAgent extends Agent {
 		}
 
 		if (nbboBetter)
-			log(INFO, ts + " | " + this + " " + agentType
+			log(INFO, ts + " | " + this + " " + getType()
 					+ "::submitNMSBid: " + "NBBO(" + lastNBBOQuote.getBestBid()
 					+ ", " + lastNBBOQuote.getBestAsk() + ") better than " + market
 					+ " Quote(" + mainMarketQuote.lastBidPrice + ", "
 					+ mainMarketQuote.lastAskPrice + ")");
 		if (willTransact)
-			log(INFO, ts + " | " + this + " " + agentType
+			log(INFO, ts + " | " + this + " " + getType()
 					+ "::submitNMSBid: " + "Bid +(" + price + "," + quantity
 					+ ") will transact" + " immediately in " + bestMarket
 					+ " given best price " + bestPrice);
@@ -206,7 +206,7 @@ public abstract class SMAgent extends Agent {
 
 		String durationLog = duration != Consts.INF_TIME
 				&& duration.longValue() > 0 ? ", duration=" + duration : "";
-		log(INFO, ts + " | " + this + " " + agentType
+		log(INFO, ts + " | " + this + " " + getType()
 				+ "::submitNMSBid: " + "+(" + price + "," + quantity + ") to "
 				+ bestMarket + durationLog);
 

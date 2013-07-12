@@ -15,14 +15,14 @@ import event.TimeStamp;
 public class DummyAgent extends BackgroundAgent {
 
 	public DummyAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, PrivateValue pv, RandPlus rand, SIP sip) {
-		super(agentID, arrivalTime, model, market, pv, rand, sip);
+			Market market, PrivateValue pv, RandPlus rand, SIP sip, int tickSize) {
+		super(agentID, arrivalTime, model, market, pv, rand, sip, tickSize);
 		// TODO Auto-generated constructor stub
 	}
 	
 	public DummyAgent(int agentID, MarketModel model, Market market) {
 		this(agentID, new TimeStamp(0), model, market, 
-				new PrivateValue(), new RandPlus(), new SIP(1,1));
+				new PrivateValue(), new RandPlus(), new SIP(1,1), 1000);
 	}
 
 	@Override
