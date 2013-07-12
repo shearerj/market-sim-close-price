@@ -198,11 +198,6 @@ public class Observations {
 			String suffix = rho == 0 ? UNDISCOUNTED : DISCOUNTED + rho;
 
 			DescriptiveStatistics modelSurplus = new DescriptiveStatistics();
-			modelSurplus.addValue(model.getModelSurplus(rho));
-
-			feat.addProperty(delimit("_", SUM, TOTAL, suffix),
-					modelSurplus.getSum());
-
 			// sub-categories for surplus (roles)
 			DescriptiveStatistics bkgrd = new DescriptiveStatistics();
 			DescriptiveStatistics hft = new DescriptiveStatistics();
@@ -215,21 +210,24 @@ public class Observations {
 
 			// go through all agents & update for each agent type
 			for (Agent ag : model.getAgents()) {
-				double val = ag.getSurplus(rho);
+				double agentSurplus = ag.getSurplus(rho);
+				modelSurplus.addValue(agentSurplus);
 
 				if (ag instanceof BackgroundAgent) {
-					bkgrd.addValue(val);
+					bkgrd.addValue(agentSurplus);
 				} else if (ag instanceof HFTAgent) {
-					val = ag.getRealizedProfit();
-					hft.addValue(val);
+					agentSurplus = ag.getRealizedProfit();
+					hft.addValue(agentSurplus);
 				} else if (ag instanceof MarketMaker) {
-					mm.addValue(val);
+					mm.addValue(agentSurplus);
 				}
 				if (!players.contains(ag)) {
-					env.addValue(val);
+					env.addValue(agentSurplus);
 				}
 			}
-
+			
+			feat.addProperty(delimit("_", SUM, TOTAL, suffix),
+					modelSurplus.getSum());
 			feat.addProperty(delimit("_", SUM, ROLE_BACKGROUND, suffix),
 					bkgrd.getSum());
 			feat.addProperty(delimit("_", SUM, ROLE_MARKETMAKER, suffix),
@@ -252,11 +250,11 @@ public class Observations {
 
 		for (Transaction tr : model.getTrans()) {
 			TimeStamp execTime = tr.getExecTime();
-			TimeStamp buyerExecTime = execTime.diff(tr.getBuyBid().getSubmitTime());
-			TimeStamp sellerExecTime = execTime.diff(tr.getSellBid().getSubmitTime());
+			TimeStamp buyerExecTime = execTime.minus(tr.getBuyBid().getSubmitTime());
+			TimeStamp sellerExecTime = execTime.minus(tr.getSellBid().getSubmitTime());
 			for (int quantity = 0; quantity < tr.getQuantity(); quantity++) {
-				speeds.addValue((double) buyerExecTime.getLongValue());
-				speeds.addValue((double) sellerExecTime.getLongValue());
+				speeds.addValue((double) buyerExecTime.longValue());
+				speeds.addValue((double) sellerExecTime.longValue());
 			}
 		}
 
@@ -288,7 +286,7 @@ public class Observations {
 		// number of transactions, hashed by agent type
 		Map<String, Integer> numTrans = new HashMap<String, Integer>();
 
-		// So that agent types with 0 transactions still get logged. FIXME This
+		// So that agent types with 0 transactions still get logged. XXX This
 		// maybe should pull only from agent types that had nonzero numbers, not
 		// every agent possible.
 		for (SMAgentType type : Consts.SMAgentType.values())
@@ -303,12 +301,9 @@ public class Observations {
 			quantity.addValue(tr.getQuantity());
 			fundamental.addValue(model.getFundamentalAt(tr.getExecTime()).getPrice());
 
-			transPrices.add(tr.getExecTime(), new Double(
-					tr.getPrice().getPrice()));
-			fundPrices.add(
-					tr.getExecTime(),
-					new Double(
-							model.getFundamentalAt(tr.getExecTime()).getPrice()));
+			transPrices.add(tr.getExecTime(), tr.getPrice().getPrice());
+			fundPrices.add(tr.getExecTime(),
+					model.getFundamentalAt(tr.getExecTime()).getPrice());
 
 			// update number of transactions
 			// buyer

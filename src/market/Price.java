@@ -58,6 +58,14 @@ public class Price implements Comparable<Price> {
 	public Price minus(Price p) {
 		return new Price(this.price - p.price);
 	}
+	
+	public Price times(double x) {
+		return new Price((int) (price * x));
+	}
+	
+	public Price times(int x) {
+		return new Price(price * x);
+	}
 
 	public Price nonnegative() {
 		if (price < 0)

@@ -19,13 +19,13 @@ import activity.SendToSIP;
 import data.AgentPropsPair;
 import data.ArrivalTime;
 import data.EntityProperties;
+import data.Keys;
 import data.Sequence;
 import data.SystemData;
 import entity.Agent;
 import entity.BasicMarketMaker;
 import entity.CallMarket;
 import entity.Market;
-import entity.SMAgent;
 import event.EventManager;
 import event.TimeStamp;
 
@@ -305,7 +305,7 @@ public class LoggingReference {
 			// check if arrival rate already described for this
 			// AgentPropertiesPair
 			double rate = app.getProperties().getAsDouble(
-					Agent.ARRIVALRATE_KEY, data.arrivalRate);
+					Keys.ARRIVAL_RATE, data.arrivalRate);
 			arrivalGenerators.put(app, new ArrivalTime(new TimeStamp(0), rate));
 		}
 
@@ -370,8 +370,8 @@ public class LoggingReference {
 								ap.getProperties());
 						if (data.isSMAgent(ap.getAgentType())) {
 							// must assign market if single-market agent
-							op.put(SMAgent.MARKETID_KEY,
-									assignMktIDs.get(i).toString());
+//							op.put(Keys.MARKETID,
+//									assignMktIDs.get(i).toString());
 						}
 						Agent ag = createAgent(model,
 								new AgentPropsPair(ap.getAgentType(), op),
@@ -416,8 +416,8 @@ public class LoggingReference {
 							playerStrategies.get(type).get(i));
 					if (data.isSMAgent(agType)) {
 						// must assign market if single-market agent
-						op.put(SMAgent.MARKETID_KEY,
-								assignMktIDs.get(i).toString());
+//						op.put(Keys.MARKETID,
+//								assignMktIDs.get(i).toString());
 					}
 					Agent ag = createAgent(model,
 							new AgentPropsPair(agType, op), rand.nextLong(),
@@ -449,12 +449,12 @@ public class LoggingReference {
 		SMAgentType agType = ap.getAgentType();
 		EntityProperties p = ap.getProperties();
 
-		p.put(Agent.RANDSEED_KEY, seed.toString());
+		p.put(Keys.RAND_SEED, seed.toString());
 		int agID = agentIDSequence.increment();
 		if (data.isSMAgent(agType)) {
 			// must assign market if single-market agent
-			p.put(Agent.ARRIVAL_KEY, arr.toString());
-			p.put(Agent.FUNDAMENTAL_KEY, model.getFundamentalAt(arr).toString());
+//			p.put(Keys.ARRIVAL, arr.toString());
+//			p.put(Keys.FUNDAMENTAL, model.getFundamentalAt(arr).toString());
 		}
 		Agent agent = null; // AgentFactory.createAgent(agType, agID,
 							// model.getID(), data, p);
@@ -524,7 +524,7 @@ public class LoggingReference {
 			// print arrival times
 			String s = " " + ag.getID() + ": " + ag.toString() + "::"
 					+ ag.getType() + "::";
-			s += Agent.ARRIVAL_KEY + "=" + ag.getArrivalTime().toString();
+//			s += Keys.ARRIVAL + "=" + ag.getArrivalTime().toString();
 
 			// print private value if exists
 			s += ", pv=" + ag.getPrivateValue();

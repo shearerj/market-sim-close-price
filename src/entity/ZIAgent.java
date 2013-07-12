@@ -10,6 +10,7 @@ import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
 import data.EntityProperties;
+import data.Keys;
 import event.TimeStamp;
 
 /**
@@ -46,7 +47,7 @@ public class ZIAgent extends BackgroundAgent {
 	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, EntityProperties props) {
 		this(agentID, arrivalTime, model, market, rand, props.getAsInt(
-				BIDRANGE_KEY, 2000), props.getAsDouble("pvVar", 100));
+				Keys.BID_RANGE, 2000), props.getAsDouble("pvVar", 100));
 		// FIXME get KEY for PVVar and and proper default
 	}
 

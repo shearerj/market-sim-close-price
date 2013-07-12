@@ -169,14 +169,7 @@ public class EntityProperties {
 	public String toString() {
 		return properties.toString();
 	}
+
 	
-	public static void main(String... args) {
-		EntityProperties a = new EntityProperties("foo_5");
-		EntityProperties b = new EntityProperties(a);
-		EntityProperties c = new EntityProperties(b, "bar_baz");
-		System.out.println(c);
-		System.out.println(c.flatten());
-		System.out.println(c.toCascadeString());
-	}
 
 }

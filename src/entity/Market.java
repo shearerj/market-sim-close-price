@@ -2,6 +2,7 @@ package entity;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
+import static systemmanager.Consts.INF_TIME;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,7 +10,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
-import logger.Logger;
 import market.Bid;
 import market.PQOrderBook;
 import market.Price;
@@ -176,48 +176,37 @@ public abstract class Market extends Entity {
 		orderbook.logActiveBids(currentTime);
 		orderbook.logFourHeap(currentTime);
 
-		ArrayList<Transaction> trans = orderbook.earliestPriceClear(currentTime);
+		Collection<Transaction> transes = orderbook.earliestPriceClear(currentTime);
 		lastClearTime = currentTime;
+		addDepth(currentTime, orderbook.getDepth()); // Updating Depth
 
-		// If there are no new transactions
-		if (trans == null) {
-			this.addDepth(currentTime, orderbook.getDepth());
-
-			log(INFO,
-					currentTime + " | ....." + this + " " + this.getName()
-							+ "::clear: No change. Post-clear Quote"
-							+ this.quote(currentTime));
-
-			// FIXME SendToSIP(s) should probably happen after a quote update,
-			// not after a clear. In general a clear should always cause a quote
-			// update, but this is important to note. Also, if there's a clear,
-			// but no transactions, it's probably not worth a SendToSIP, unless
-			// you're a call market.
-			return Collections.singleton(new SendToSIP(this, currentTime));
+		// Different logging if no transactions
+		if (transes.isEmpty()) {
+			log(INFO, currentTime + " | ....." + this + " " + this.getName()
+					+ "::clear: No change. Post-clear Quote"
+					+ quote(currentTime));
+		} else {
+			orderbook.logActiveBids(currentTime);
+			orderbook.logClearedBids(currentTime);
+			orderbook.logFourHeap(currentTime);
+			log(INFO, currentTime + " | ....." + this + " " + this.getName()
+					+ "::clear: Order book cleared: " + "Post-clear Quote"
+					+ quote(currentTime));
 		}
-		// Otherwise, update and log Transactions
-		for (Transaction tr : trans) {
-			model.addTrans(tr);
-			// update and log transactions
-			tr.getBuyer().updateTransactions(currentTime);
-			tr.getBuyer().logTransactions(currentTime);
-			tr.getSeller().updateTransactions(currentTime);
-			tr.getSeller().logTransactions(currentTime);
-			lastClearPrice = tr.getPrice();
+		
+		for (Transaction trans : transes) {
+			model.addTrans(trans);
+			trans.getBuyer().addTransaction(trans, currentTime);
+			trans.getSeller().addTransaction(trans, currentTime);
+			lastClearPrice = trans.getPrice();
 		}
 
-		// Orderbook logging
-		orderbook.logActiveBids(currentTime);
-		orderbook.logClearedBids(currentTime);
-		orderbook.logFourHeap(currentTime);
-
-		// Updating Depth
-		this.addDepth(currentTime, orderbook.getDepth());
-		Logger.log(Logger.Level.INFO, currentTime + " | ....." + toString()
-				+ " " + this.getName() + "::clear: Order book cleared: "
-				+ "Post-clear Quote" + this.quote(currentTime));
-
-		return Collections.singleton(new SendToSIP(this, currentTime));
+		// FIXME SendToSIP(s) should probably happen after a quote update,
+		// not after a clear. In general a clear should always cause a quote
+		// update, but this is important to note. Also, if there's a clear,
+		// but no transactions, it's probably not worth a SendToSIP, unless
+		// you're a call market.
+		return Collections.singleton(new SendToSIP(this, INF_TIME));
 	}
 
 	/**

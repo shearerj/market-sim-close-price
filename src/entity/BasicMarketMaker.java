@@ -18,6 +18,7 @@ import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
 import data.EntityProperties;
+import data.Keys;
 import event.TimeStamp;
 
 /**
@@ -66,8 +67,8 @@ public class BasicMarketMaker extends MarketMaker {
 	public BasicMarketMaker(int agentID, MarketModel model, Market market,
 			RandPlus rand, EntityProperties params) {
 		this(agentID, model, market, new TimeStamp(params.getAsLong(
-				SLEEPTIME_KEY, 200)), params.getAsInt(NUMRUNGS_KEY, 10),
-				params.getAsInt(RUNGSIZE_KEY, 1000), rand);
+				Keys.SLEEP_TIME, 200)), params.getAsInt(Keys.NUM_RUNGS, 10),
+				params.getAsInt(Keys.RUNG_SIZE, 1000), rand);
 		// SLEEPTIME_VAR = 100
 	}
 
@@ -143,7 +144,7 @@ public class BasicMarketMaker extends MarketMaker {
 		// insert activities for next time the agent wakes up
 		// TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime,
 		// sleepVar)));
-		TimeStamp tsNew = ts.sum(new TimeStamp(sleepTime));
+		TimeStamp tsNew = ts.plus(sleepTime);
 		acts.add(new AgentStrategy(this, market, tsNew));
 		return acts;
 	}

@@ -55,7 +55,7 @@ public class FundamentalValue {
 	 * Returns the global fundamental value at time ts. If undefined, return 0.
 	 */
 	public Price getValueAt(TimeStamp t) {
-		int index = (int) t.getLongValue(); // Incase of overflow
+		int index = (int) t.longValue(); // Incase of overflow
 		if (index < 0) {
 			log(ERROR,
 					"Tried to access out of bounds TimeStamp: " + t);

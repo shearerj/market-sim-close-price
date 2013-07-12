@@ -39,7 +39,7 @@ public abstract class AbstractIP extends Entity {
 	}
 	
 	public ProcessQuote scheduleProcessQuote(Market market, int bid, int ask, TimeStamp ts) {
-		return new ProcessQuote(this, market, bid, ask, ts.sum(latency));
+		return new ProcessQuote(this, market, bid, ask, ts.plus(latency));
 	}
 	 
 	/**

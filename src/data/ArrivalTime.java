@@ -53,7 +53,7 @@ public class ArrivalTime {
 	public TimeStamp next() {
 		double tmp = rand.nextExponential(lambda);
 		TimeStamp interval = new TimeStamp((int) Math.ceil(tmp));
-		time = time.sum(interval);
+		time = time.plus(interval);
 		intervals.add(interval);
 		arrivalTimes.add(time);
 		return time;

@@ -19,6 +19,7 @@ import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
 import data.EntityProperties;
+import data.Keys;
 import event.TimeStamp;
 
 /**
@@ -48,9 +49,9 @@ public class LAAgent extends HFTAgent {
 
 	public LAAgent(int agentID, MarketModel model, RandPlus rand,
 			EntityProperties props, TimeStamp latency) {
-		this(agentID, model, props.getAsInt(SLEEPTIME_KEY, 0),
-				props.getAsDouble(SLEEPVAR_KEY, 100), props.getAsDouble(
-						ALPHA_KEY, 0.001), rand);
+	this(agentID, model, props.getAsInt(Keys.SLEEP_TIME, 0),
+			props.getAsDouble(Keys.SLEEP_VAR, 100), props.getAsDouble(
+					ALPHA_KEY, 0.001), rand);
 		this.latency = latency;
 		setupIP();
 	}
@@ -146,7 +147,7 @@ public class LAAgent extends HFTAgent {
 
 			}
 			if (sleepTime > 0) {
-				TimeStamp tsNew = ts.sum(new TimeStamp(
+				TimeStamp tsNew = ts.plus(new TimeStamp(
 						(long) rand.nextGaussian(sleepTime, sleepVar)));
 				actMap.add(new AgentStrategy(this, tsNew));
 
