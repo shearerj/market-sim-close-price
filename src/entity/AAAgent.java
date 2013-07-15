@@ -57,7 +57,6 @@ public class AAAgent extends BackgroundAgent {
 	//
 	private class AAStrategy {
 		// parameters
-		private Price limit; // limit price
 		private int historical; // number of historical prices to look at
 		private double lambda_r; // coefficient of relative perturbation of
 									// delta
@@ -69,7 +68,7 @@ public class AAAgent extends BackgroundAgent {
 		private double beta_t; // learning coefficient for theta (long term)
 
 		// Agent strategy variables
-		private Price mostRecentPrice;
+//		private Price mostRecentPrice;
 		private double aggression; // short term learning variable
 		private double theta; // long term learning variable
 		private double thetaMax; // max possible value for theta
@@ -80,7 +79,6 @@ public class AAAgent extends BackgroundAgent {
 
 		public AAStrategy(EntityProperties params) {
 			// Agent Parameters
-			limit = privateValue.getValueAtPosition(0); // XXX Guaranteed to be Price(0)
 
 			// Parameters are currently taken from Vytelingum paper
 			lambda_r = 0.05;
@@ -106,13 +104,13 @@ public class AAAgent extends BackgroundAgent {
 		 * @param ts
 		 *            , tau
 		 */
-		private void updateAggression(TimeStamp ts, Price tau,
-				double movingAverage) {
+		private void updateAggression(Price limit, Price tau, 
+				double movingAverage, Price mostRecentPrice) {
 			if (movingAverage == -1)
 				return; // If no transactions yet, cannot update
 
 			// Determining r_shout
-			double r_shout = determineAggression(mostRecentPrice, movingAverage);
+			double r_shout = determineAggression(limit, mostRecentPrice, movingAverage);
 
 			// Determining whether agent must be more or less aggressive
 			// See the Vytelingum paper (sec 4.3)
@@ -138,9 +136,6 @@ public class AAAgent extends BackgroundAgent {
 				else
 					sign = 1;
 			}
-			// Do not update aggression if it is not necessary
-			if (sign == 0)
-				return;
 
 			// Updating aggression
 			double delta = (1 + sign * lambda_r) * r_shout + sign * lambda_a;
@@ -153,11 +148,10 @@ public class AAAgent extends BackgroundAgent {
 		 * @param ts
 		 *            Current TimeStamp
 		 */
-		private void updateAdaptiveness(TimeStamp ts, double movingAverage,
+		private void updateAdaptiveness(double movingAverage,
 				double mvgAvgNum, ArrayList<Transaction> trans) {
-			// If number of transactions < historical, do not update
-			if (mvgAvgNum < historical)
-				return;
+			//Error Checking, must have some transactions
+			if(movingAverage == -1) return;
 
 			// Determining alpha
 			double alpha = 0;
@@ -184,18 +178,17 @@ public class AAAgent extends BackgroundAgent {
 					* (1 - alphaBar * Math.exp(gamma * (alphaBar - 1)))
 					+ thetaMin;
 
+			// If number of transactions < historical, do not update theta
+			if (mvgAvgNum < historical)
+				return;
+			
 			// Updating theta
 			theta = theta + beta_t * (thetaStar - theta);
-			log(INFO, ts + " | " + this + " " + getType()
-					+ ": theta=" + theta);
-			return;
 		}
 
 		private void findMovingAverage(double movingAverage, double mvgAvgNum,
 				ArrayList<Transaction> trans) {
-			if (trans.size() == 0)
-				return; // Error checking
-			mostRecentPrice = trans.get(trans.size() - 1).getPrice();
+			if (trans.size() == 0) return; // Error checking
 			double total = 0;
 			double num = 0;
 			// Iterate through past Quotes and use valid prices until you have
@@ -212,17 +205,19 @@ public class AAAgent extends BackgroundAgent {
 			// System.out.println(movingAverage);
 		}
 
-		private void determinePriceLimit(int quantity, TimeStamp ts) {
+		private Price determinePriceLimit(int quantity, TimeStamp ts) {
 			Price fundPrice = model.getFundamentalAt(ts);
 			Price deviation = privateValue.getValueAtPosition(positionBalance + quantity);
-			limit = fundPrice.plus(deviation);
+			return fundPrice.plus(deviation);
 		}
 
 		/**
 		 * 
 		 * @return price target according to the AA Strategy
 		 */
-		private Price determinePriceTarget(double movingAverage) {
+		private Price determinePriceTarget(Price limit, double movingAverage) {
+			//Error Checking - cannot comput if movingAverage is invalid
+			if(movingAverage == -1) return new Price(-1);
 			double tau;
 			// Buyers
 			if (isBuyer) {
@@ -296,7 +291,7 @@ public class AAAgent extends BackgroundAgent {
 		 * @param mostRecentPrice
 		 * @return
 		 */
-		private double determineAggression(Price mostRecentPrice,
+		private double determineAggression(Price limit, Price mostRecentPrice,
 				double movingAverage) {
 			double tau = mostRecentPrice.getPrice();
 			double r_shout = 0;
@@ -330,7 +325,7 @@ public class AAAgent extends BackgroundAgent {
 					// TODO - SHOULD NOT REACH HERE
 					else {
 						// I'M NOT SURE WHAT TO DO - FUNCTION UNDEFINED
-						r_shout = 0.75;
+						r_shout = 1;
 					}
 				}
 			}
@@ -368,7 +363,7 @@ public class AAAgent extends BackgroundAgent {
 					// TODO - SHOULD NOT REACH HERE
 					else {
 						// ROUND AND ROUND IT GOES, WHAT HAPPENS NOBODY KNOWS
-						r_shout = 0.75;
+						r_shout = 1;
 					}
 				}
 			}
@@ -386,7 +381,7 @@ public class AAAgent extends BackgroundAgent {
 		 * @param ts
 		 * @return
 		 */
-		private Collection<Activity> biddingLayer(Price targetPrice,
+		private Collection<Activity> biddingLayer(Price limit, Price targetPrice,
 				int quantity, TimeStamp ts) {
 			String s = ts + " | " + this + " " + getType() + ":";
 			Collection<Activity> actMap = new ArrayList<Activity>();
@@ -394,57 +389,6 @@ public class AAAgent extends BackgroundAgent {
 			// Determining the offer price to (possibly) submit
 			Price bestBid = market.getBidPrice();
 			Price bestAsk = market.getAskPrice();
-
-			// System.out.println("Bid: " + bestBid + " Ask: " + bestAsk);
-			// System.out.println(data.getFundamentalAt(ts).getPrice());
-
-			// if no bid or no ask, submit least aggressive price
-			if (bestBid == null || bestAsk == null) {
-				Price price = isBuyer ? Price.ZERO : Price.INF;
-				actMap.addAll(executeSubmitNMSBid(price, quantity,
-						ts));
-				return actMap;
-			}
-
-			// Pricing
-			// int sign = isBuyer ? 1 : -1;
-			Price price;
-			targetPrice = isBuyer ? min(limit, targetPrice) : max(
-					limit, targetPrice);
-
-			// See equations 10 and 11 in Vytelingum paper section 4.4 - bidding
-			// layer
-			// Extra 1 added/subtracted in equations is to make sure agent
-			// submits better bid if
-			// difference/eta computes to be zero
-			if (targetPrice.equals(new Price(-1))) {
-				if (isBuyer) {
-					price = new Price(bestBid.getPrice()
-							+ (int) (min(bestAsk, strat.limit).minus(bestBid).getPrice() / strat.eta)
-							+ 1);
-					price = min(price, strat.limit); // verifying
-																// price <=
-																// limit
-				} else {
-					price = new Price(bestAsk.getPrice()
-							- (int) (bestAsk.minus(max(bestBid, strat.limit)).getPrice() / strat.eta)
-							- 1);
-					price = max(price, strat.limit); // verifying
-																// price >=
-																// limit
-				}
-			}
-			// Had to convert from int to double for the division by eta (then
-			// back) - unnecessary if eta is an int
-			else {
-				if (isBuyer) {
-					price = new Price(bestBid.getPrice() + (targetPrice.minus(bestBid)).getPrice() / strat.eta + 1);
-					price = min(price, strat.limit);
-				} else {
-					price = new Price(bestAsk.getPrice() - bestAsk.minus(targetPrice).getPrice() / strat.eta - 1);
-					price = max(price, strat.limit);
-				}
-			}
 
 			// Can only submit offer if the offer would not cause position
 			// balance to exceed the agent's maximum position
@@ -455,37 +399,73 @@ public class AAAgent extends BackgroundAgent {
 				log(INFO, s);
 				return actMap;
 			}
-
-			// Submitting a bid - See Vytelingum paper section 4.4 - bidding
-			// layer
+			
+			// if no bid or no ask, submit least aggressive price
+			if (bestBid == null || bestAsk == null) {
+				Price price = isBuyer ? Price.ZERO : Price.INF;
+				actMap.addAll(executeSubmitNMSBid(price, quantity,
+						ts));
+				return actMap;
+			}
+			
 			// If best offer is outside of limit price, no bid is submitted
-			if ((isBuyer && strat.limit.lessThanEqual(bestBid))
-				|| (!isBuyer && strat.limit.greaterThanEquals(bestAsk))) {
-				s += "best offer is outside of limit price: " + strat.limit
+			if ((isBuyer && limit.lessThanEqual(bestBid))
+				|| (!isBuyer && limit.greaterThanEquals(bestAsk))) {
+				s += "best offer is outside of limit price: " + limit
 						+ "; no submission";
 				log(INFO, s);
 				return actMap;
 			}
 
-			// If moving Average is valid
+			// Pricing - verifying targetPrice
+			Price price;
+			if(!targetPrice.equals(new Price(-1)))
+				targetPrice = isBuyer ? min(limit, targetPrice) : 
+				max(limit, targetPrice);
+
+			// See equations 10 and 11 in Vytelingum paper section 4.4 - bidding
+			// layer
+			// Extra 1 added/subtracted in equations is to make sure agent
+			// submits better bid if
+			// difference/eta computes to be zero
+			if (targetPrice.equals(new Price(-1))) {
+				if (isBuyer) {
+					Price offset = min(bestAsk, limit).minus(bestBid).times(1/strat.eta);
+					price = bestBid.plus(offset).plus(new Price(1));
+					price = min(price, limit);
+				} else {
+					Price offset = bestAsk.minus( max(bestBid, limit) ).times(1/strat.eta);
+					price = bestAsk.minus(offset).minus(new Price(1));
+					price = max(price, limit);				
+				}
+			}
+			else {
+				if (isBuyer) {
+					Price offset = targetPrice.minus(bestBid).times(1/strat.eta);
+					price = bestBid.plus(offset).plus(new Price(1));
+					price = min(price, limit);
+				} else {
+					Price offset = bestAsk.minus(targetPrice).times(1/strat.eta);
+					price = bestAsk.minus(offset).minus(new Price(1));
+					price = max(price, limit);
+				}
+			}
+
+			// Submitting a bid - See Vytelingum paper section 4.4 - bidding
+			// layer
 			// Buyers
 			if (isBuyer) {
 				// if bestAsk < targetPrice, accept bestAsk
 				// else submit bid given by EQ 10/11
 				Price submitPrice = bestAsk.lessThanEqual(price) ? bestAsk : price;
-				actMap.addAll(executeSubmitNMSBid(submitPrice,
-						quantity, ts));
+				actMap.addAll(executeSubmitNMSBid(submitPrice, quantity, ts));
 			}
 			// Seller
 			else {
 				// If outstanding bid >= target price, submit ask at bid price
 				// else submit bid given by EQ 10/11
 				Price submitPrice = bestBid.greaterThanEquals(price) ? bestBid : price;
-				actMap.addAll(executeSubmitNMSBid(submitPrice,
-						quantity, ts));
-				log(INFO, ts + " AA: Best ask: " + bestAsk
-						+ "\tAgent limit= " + limit + "\tsubmission= "
-						+ submitPrice);
+				actMap.addAll(executeSubmitNMSBid(submitPrice, quantity, ts));
 			}
 
 			return actMap;
@@ -540,40 +520,34 @@ public class AAAgent extends BackgroundAgent {
 		ArrayList<Transaction> trans = new ArrayList<Transaction>(
 				model.getTrans());
 		strat.findMovingAverage(movingAverage, mvgAvgNum, trans);
+		Price lastPrice = trans.get(trans.size() - 1).getPrice();
 
 		// Determining Quantity
 		int quantity = isBuyer ? 1 : -1;
 
 		// Updating Price Limit
-		strat.determinePriceLimit(quantity, ts);
+		Price limit = strat.determinePriceLimit(quantity, ts);
 
 		// Determine the Target Price
-		Price targetPrice;
-		if (movingAverage == -1)
-			targetPrice = new Price(-1);
-		// Can only compute target price if movingAverage is valid
-		else
-			targetPrice = strat.determinePriceTarget(movingAverage);
+		Price targetPrice = strat.determinePriceTarget(limit, movingAverage);
 
 		// Bidding Layer - only if at least one ask and one bid have been
 		// submitted
 		// See Vytelingum paper section 4.4 - Bidding Layer
-		actMap.addAll(strat.biddingLayer(targetPrice, quantity, ts));
+		actMap.addAll(strat.biddingLayer(limit, targetPrice, quantity, ts));
 
 		// Update the short term learning variable
-		if (movingAverage != -1)
-			strat.updateAggression(ts, targetPrice, movingAverage);
+		strat.updateAggression(limit, targetPrice, movingAverage, lastPrice);
 
 		// Update long term learning variable
-		if (movingAverage != -1)
-			strat.updateAdaptiveness(ts, movingAverage, mvgAvgNum, trans);
+		strat.updateAdaptiveness(movingAverage, mvgAvgNum, trans);
 
 		// Market Reentry
 		// TimeStamp tsNew = reentry.next();
 		actMap.add(new AgentStrategy(this, reentry.next()));
 
 		log(INFO, s + " " + isBuyer + " private valuation="
-				+ strat.limit);
+				+ limit);
 		log(INFO, s + " adaptiveness=" + strat.theta);
 		return actMap;
 	}
