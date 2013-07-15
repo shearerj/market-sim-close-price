@@ -4,6 +4,7 @@ import static logger.Logger.log;
 import static logger.Logger.Level.*;
 
 import data.*;
+import entity.LAInformationProcessor;
 import event.*;
 
 import java.util.*;
@@ -35,7 +36,7 @@ public class SystemManager {
 	protected final EventManager eventManager;
 	protected final Collection<MarketModel> models;
 
-	protected final int num; // sample number used for labeling output files
+	protected final int obsNum; // sample number used for labeling output files
 	protected final File simFolder; // simulation folder name
 	protected final SimulationSpec spec;
 
@@ -78,7 +79,7 @@ public class SystemManager {
 							+ simFolder.getAbsolutePath() + " does not exist.");
 
 		this.simFolder = simFolder;
-		this.num = simNumber;
+		this.obsNum = simNumber;
 
 		// TODO move props to SimSpec?
 		initializeLogger(getProperties(), simFolder, simNumber);
@@ -173,8 +174,8 @@ public class SystemManager {
 	}
 
 	public void aggregateResults() throws IOException {
-		File results = new File(simFolder, Consts.OBS_FILE_PREFIX + num + ".json");
-		Observations obs = new Observations(spec, models);
+		File results = new File(simFolder, Consts.OBS_FILE_PREFIX + obsNum + ".json");
+		Observations obs = new Observations(spec, models, obsNum);
 		obs.writeToFile(results);
 	}
 

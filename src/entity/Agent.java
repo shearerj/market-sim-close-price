@@ -1,5 +1,6 @@
 package entity;
 
+
 import static logger.Logger.log;
 import static logger.Logger.Level.DEBUG;
 import static logger.Logger.Level.INFO;
@@ -8,20 +9,17 @@ import static systemmanager.Consts.INF_TIME;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import market.BestBidAsk;
 import market.Bid;
 import market.PQBid;
 import market.Price;
 import market.PrivateValue;
-import market.Quote;
 import market.Transaction;
 import model.MarketModel;
-import systemmanager.Consts;
 import utils.RandPlus;
 import activity.Activity;
 import activity.Liquidate;
@@ -38,37 +36,17 @@ import event.TimeStamp;
 public abstract class Agent extends Entity {
 
 	protected final RandPlus rand;
-
 	protected final MarketModel model;
-	protected final Map<Double, Double> surplusMap; // hashed by rho value
-	// For quote generation
 	protected final SIP sip;
-
+	// List of all transactions. Implicitly time ordered due to transactions
+	// being created and assigned in time order.
+	protected final List<Transaction> transactions;
+	protected final Collection<Bid> activeBids;
+	
 	// Agent parameters
 	protected final PrivateValue privateValue;
 	protected final TimeStamp arrivalTime;
-
-	// List of all transactions. Implicitely time ordered due to transactions
-	// being created and assigned in time order.
-	protected final List<Transaction> transactions;
-
-	// -- end reorg --
-
-	protected String agentType;
-
-	// Market information (all hashed by market ID, as ID may be negative)
-	protected HashMap<Integer, Bid> currentBid;
-	protected HashMap<Integer, ArrayList<Quote>> quotes;
-	protected HashMap<Integer, Integer> initBid;
-	protected HashMap<Integer, Integer> initAsk;
-	protected HashMap<Integer, Integer> prevBid;
-	protected HashMap<Integer, Integer> prevAsk;
-	protected HashMap<Integer, TimeStamp> lastQuoteTime;
-	protected HashMap<Integer, TimeStamp> nextQuoteTime;
-	protected HashMap<Integer, TimeStamp> lastClearTime;
-	protected BestBidAsk lastNBBOQuote;
-	
-	protected int tickSize;
+	protected final int tickSize;
 
 	// Tracking cash flow
 	protected int cashBalance;
@@ -78,23 +56,19 @@ public abstract class Agent extends Entity {
 	// for liquidation
 	protected int preLiqPosition;
 	protected int preLiqRealizedProfit;
-
-	// TODO Agent probably needs more than this...
+	
 	public Agent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			PrivateValue pv, RandPlus rand, SIP sip) {
+			PrivateValue privateValue, RandPlus rand, int tickSize) {
 		super(agentID);
 		this.model = model;
 		this.rand = rand;
 		this.arrivalTime = arrivalTime;
-		this.sip = sip;
-		this.privateValue = pv;
+		this.sip = model.getSip();
+		this.privateValue = privateValue;
+		this.tickSize = tickSize;
 
-		// Constructors
-		this.currentBid = new HashMap<Integer, Bid>();
-		this.surplusMap = new HashMap<Double, Double>();
-		for (double rho : Consts.rhos)
-			surplusMap.put(rho, 0d);
 		this.transactions = new ArrayList<Transaction>();
+		this.activeBids = new HashSet<Bid>();
 	}
 
 	public abstract Collection<? extends Activity> agentStrategy(
@@ -110,7 +84,7 @@ public abstract class Agent extends Entity {
 	// FIXME should return Consts.AgentType corresponding to current agent. Need
 	// a good way to do this.
 	public String getType() {
-		return agentType;
+		return getClass().getSimpleName();
 	}
 
 	/***********************************
@@ -169,14 +143,14 @@ public abstract class Agent extends Entity {
 		if (quantity == 0)
 			return Collections.emptySet();
 
-		log(INFO, ts + " | " + this + " " + agentType + "::submitBid: +("
+		log(INFO, ts + " | " + this + " " + getType() + "::submitBid: +("
 				+ price + ", " + quantity + ") to " + market);
 
 		Price p = price.quantize(tickSize);
 		PQBid pqBid = new PQBid(this, market, ts);
 		pqBid.addPoint(quantity, p);
 		// quantity can be +/-
-		currentBid.put(market.id, pqBid);
+		activeBids.add(pqBid);
 		return market.addBid(pqBid, ts);
 	}
 
@@ -203,7 +177,7 @@ public abstract class Agent extends Entity {
 			pqBid.addPoint(quantity, price.quantize(tickSize));
 		}
 		// TODO incorporate multi-point PVs?
-		currentBid.put(mkt.id, pqBid);
+		activeBids.add(pqBid);
 		return mkt.addBid(pqBid, ts);
 	}
 

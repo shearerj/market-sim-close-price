@@ -5,7 +5,7 @@ import entity.*;
 import market.*;
 import model.*;
 import systemmanager.*;
-import systemmanager.Consts.SMAgentType;
+import systemmanager.Consts.AgentType;
 import systemmanager.Consts.ModelType;
 
 import java.text.DecimalFormat;
@@ -65,7 +65,6 @@ public class SystemData {
 	// hashed by model ID
 	public HashMap<Integer,List<AgentPropsPair>> modelAgentMap;
 	
-	private SIP sip;
 	private FundamentalValue fundamentalGenerator;
 	
 	// hashed by type, gives # of that type
@@ -75,6 +74,8 @@ public class SystemData {
 	public TimeStamp simLength;
 	public int tickSize;
 	public TimeStamp nbboLatency;
+	public TimeStamp hftLatency;
+	public TimeStamp smLatency;
 	public double arrivalRate;
 	public double reentryRate;
 	public int meanValue;
@@ -147,7 +148,7 @@ public class SystemData {
 	 * @return
 	 */
 	public Map<Integer,Bid> getBids(int marketID) {
-		return markets.get(marketID).getBids();
+		return null; //markets.get(marketID).getBids();
 	}
 	
 	public HashMap<Integer,Quote> getQuotes() {
@@ -161,10 +162,6 @@ public class SystemData {
 	 */
 	public Quote getQuote(int mktID) {
 		return quotes.get(mktID);
-	}
-	
-	public SIP getSIP() {
-		return sip;
 	}
 	
 	public HashMap<Integer,Agent> getAgents() {
@@ -318,7 +315,7 @@ public class SystemData {
 	 * @param agentType
 	 * @return
 	 */
-	public boolean isSMAgent(SMAgentType agentType) {
+	public boolean isSMAgent(AgentType agentType) {
 //		return Consts.SM_AGENTS.contains(agentType);
 		return false;
 	}
@@ -408,10 +405,6 @@ public class SystemData {
 	public void addEnvAgentNumber(AgentPropsPair a, int n) {
 		envAgentMap.put(a, n);
 		numEnvAgents += n;
-	}
-	
-	public void setSIP(SIP sip) {
-		this.sip = sip;
 	}
 	
 	public void addQuote(int mktID, Quote q) {

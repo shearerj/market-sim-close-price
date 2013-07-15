@@ -1,12 +1,10 @@
 package entity;
 
 import static logger.Logger.log;
-import static logger.Logger.Level.*;
+import static logger.Logger.Level.ERROR;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import market.Bid;
@@ -25,10 +23,20 @@ import event.TimeStamp;
  * @author ewah
  */
 public class CDAMarket extends Market {
-	
-	public CDAMarket(int marketID, MarketModel model, SIP sip) {
-		super(marketID, model, sip);
+
+	public CDAMarket(int marketID, MarketModel model, int ipID) {
+		super(marketID, model, ipID);
 	}
+	
+	
+	/**   ----don't think we need this
+	 * Overloaded constructor.
+	 * @param marketID
+	 */
+	//public CDAMarket(int marketID, SystemData d, ObjectProperties p, MarketModel model, int ipID) {
+		//super(marketID, d, p, model, ipID);
+		//marketType = Consts.getMarketType(this.getName());
+	//}
 
 	public Bid getBidQuote() {
 		return orderbook.getBidQuote();
@@ -61,7 +69,7 @@ public class CDAMarket extends Market {
 	}
 	
 	
-	public Map<Integer,Bid> getBids() {
+	public Map<Agent,Bid> getBids() {
 		return orderbook.getActiveBids();
 	}
 	
@@ -78,7 +86,7 @@ public class CDAMarket extends Market {
 				this.addMidQuote(quoteTime, Price.INF, Price.INF);
 				
 			} else if (bp.compareTo(ap) == 1 && ap.getPrice() > 0) {
-				log(ERROR, this.getName() + "::quote: ERROR bid > ask");
+				log(ERROR, getClass().getSimpleName() + "::quote: ERROR bid > ask");
 				this.addSpread(quoteTime, Price.INF.getPrice());
 				this.addMidQuote(quoteTime, Price.INF, Price.INF);
 				

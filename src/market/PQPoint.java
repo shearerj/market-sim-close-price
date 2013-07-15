@@ -93,17 +93,6 @@ public class PQPoint extends Point implements Comparable<PQPoint> {
 		if (Parent != null) Parent.addPoint(sibling);
 		return sibling;
 	}
-
-	/**
-	 * get the agentID of the parent PQOrder
-	 *
-	 * @return the agentID of the parent Bid
-	 */
-	public int getAgentID()
-	{
-		if (Parent == null) return 0;
-		else return Parent.getAgent().getID();
-	}
 	
 	public Agent getAgent() {
 		return Parent.getAgent();

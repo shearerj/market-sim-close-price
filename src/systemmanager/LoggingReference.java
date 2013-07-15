@@ -10,7 +10,7 @@ import java.util.Random;
 
 import model.MarketModel;
 import model.MarketObjectPair;
-import systemmanager.Consts.SMAgentType;
+import systemmanager.Consts.AgentType;
 import systemmanager.Consts.ModelType;
 import activity.AgentArrival;
 import activity.Clear;
@@ -20,13 +20,11 @@ import data.AgentPropsPair;
 import data.ArrivalTime;
 import data.EntityProperties;
 import data.Keys;
-import data.Sequence;
 import data.SystemData;
 import entity.Agent;
 import entity.BasicMarketMaker;
 import entity.CallMarket;
 import entity.Market;
-import entity.SIP;
 import event.EventManager;
 import event.TimeStamp;
 
@@ -69,9 +67,9 @@ public class LoggingReference {
 	private EventManager eventManager;
 	private PlayerReference specs;
 
-	private Sequence agentIDSequence;
-	private Sequence marketIDSequence;
-	private Sequence modelIDSequence;
+//	private Sequence agentIDSequence;
+//	private Sequence marketIDSequence;
+//	private Sequence modelIDSequence;
 
 	private HashMap<AgentPropsPair, ArrayList<Integer>> logIDs;
 	private HashMap<AgentPropsPair, ArrayList<Long>> seeds;
@@ -96,9 +94,9 @@ public class LoggingReference {
 		specs = s;
 		eventManager = em;
 		data = d;
-		agentIDSequence = new Sequence(1);
-		marketIDSequence = new Sequence(-1);
-		modelIDSequence = new Sequence(1);
+//		agentIDSequence = new Sequence(1);
+//		marketIDSequence = new Sequence(-1);
+//		modelIDSequence = new Sequence(1);
 
 		logIDs = new HashMap<AgentPropsPair, ArrayList<Integer>>();
 		seeds = new HashMap<AgentPropsPair, ArrayList<Long>>();
@@ -120,7 +118,7 @@ public class LoggingReference {
 
 			// Must create market models before agents, so can add the agents
 			// then to the appropriate/corresponding markets.
-			createSIP(); // TODO Move to each market model...
+			//createSIP(); // TODO Move to each market model...
 			log(INFO, "------------------------------------------------");
 			log(INFO, "            Creating MARKET MODELS");
 			createMarketModels();
@@ -143,14 +141,6 @@ public class LoggingReference {
 					+ "::setupAll: error");
 			e.printStackTrace();
 		}
-	}
-
-	/**
-	 * Create SIP entity, which enters the system at time 0.
-	 */
-	public void createSIP() {
-		SIP iu = null; // new SIP(0, data);
-		data.setSIP(iu);
 	}
 
 	/**
@@ -232,7 +222,7 @@ public class LoggingReference {
 									// ObjectProperties(Consts.getProperties(modelType));
 
 		// create market model & determine its configuration
-		int modelID = modelIDSequence.increment();
+//		int modelID = modelIDSequence.increment();
 //		p.put(Consts.MODEL_CONFIG_KEY, configuration);
 		MarketModel model = null; // ModelFactory.createModel(modelType,
 									// modelID, p, data);
@@ -250,15 +240,13 @@ public class LoggingReference {
 	private void createMarketsInModel(MarketModel model) {
 		// create markets in the model
 		for (MarketObjectPair mop : model.getMarketConfig()) {
-			int mID = marketIDSequence.decrement();
+//			int mID = marketIDSequence.decrement();
 
 			EntityProperties mp = (EntityProperties) mop.getObject();
 			String mtype = mop.getMarketType();
-			Market market = null; // MarketFactory.createMarket(mtype, mID,
-									// data, mp, model);
-//			market.linkModel(model.getID());
+
+			Market market = null;
 			data.addMarket(market);
-			// model.getMarketIDs().add(mID);
 
 			// Check if is call market, then initialize clearing sequence
 			if (market instanceof CallMarket) {
@@ -267,7 +255,7 @@ public class LoggingReference {
 			}
 			log(INFO, "Markets: " + market.getType() + ", " + market);
 
-			data.marketIDModelIDMap.put(mID, model.getID());
+//			data.marketIDModelIDMap.put(mID, model.getID());
 		}
 	}
 
@@ -420,7 +408,7 @@ public class LoggingReference {
 				Random rand = new Random();
 				for (int i = 0; i < numAg; i++) {
 					// create copy of ObjectProperties in case modify it
-					SMAgentType agType = SMAgentType.valueOf(type);
+					AgentType agType = AgentType.valueOf(type);
 					EntityProperties op = new EntityProperties(
 							playerStrategies.get(type).get(i));
 					if (data.isSMAgent(agType)) {
@@ -455,11 +443,11 @@ public class LoggingReference {
 	 */
 	private Agent createAgent(MarketModel model, AgentPropsPair ap, Long seed,
 			TimeStamp arr) {
-		SMAgentType agType = ap.getAgentType();
+		AgentType agType = ap.getAgentType();
 		EntityProperties p = ap.getProperties();
 
 		p.put(Keys.RAND_SEED, seed.toString());
-		int agID = agentIDSequence.increment();
+//		int agID = agentIDSequence.increment();
 		if (data.isSMAgent(agType)) {
 			// must assign market if single-market agent
 //			p.put(Keys.ARRIVAL, arr.toString());
@@ -471,7 +459,7 @@ public class LoggingReference {
 		createInitialAgentEvents(agent);
 		data.addAgent(agent);
 //		model.addAgent(agent);
-		model.linkAgent(agID);
+//		model.linkAgent(agID);
 		return agent;
 	}
 

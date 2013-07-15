@@ -1,30 +1,24 @@
 package entity;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 import logger.Logger;
 import market.PQBid;
 import market.Price;
 import market.Transaction;
-import model.CentralCDA;
 import model.DummyMarketModel;
-import model.MarketModel;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import systemmanager.Consts;
 import utils.RandPlus;
 
 import com.google.gson.JsonObject;
 
 import data.AgentProperties;
-import data.DummyFundamental;
 import data.FundamentalValue;
 import data.ModelProperties;
 import event.TimeStamp;
@@ -50,7 +44,7 @@ public class CDAMarketTest {
 	@Before
 	public void setup() {
 		model = new DummyMarketModel(1);
-		market = new CDAMarket(1, model, null); // TODO Dummy IP
+		market = new CDAMarket(1, model, 0); // TODO Dummy IP
 		model.addMarket(market);
 		agentIndex = 1;
 	}
@@ -94,7 +88,6 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating dummy agents
-		SIP sip = new SIP(1, 1);
 		DummyAgent agent1 = new DummyAgent(agentIndex++, model, market);
 		DummyAgent agent2 = new DummyAgent(agentIndex++, model, market);
 		
@@ -120,7 +113,6 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating dummy agents
-		SIP sip = new SIP(1, 1);
 		DummyAgent agent1 = new DummyAgent(agentIndex++, model, market);
 		DummyAgent agent2 = new DummyAgent(agentIndex++, model, market);
 		

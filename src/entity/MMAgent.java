@@ -36,8 +36,8 @@ public abstract class MMAgent extends Agent {
 
 	public MMAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			PrivateValue pv, int sleepTime, double sleepVar, RandPlus rand,
-			SIP sip) {
-		super(agentID, arrivalTime, model, pv, rand, sip);
+			int tickSize) {
+		super(agentID, arrivalTime, model, pv, rand, tickSize);
 		this.sleepTime = sleepTime;
 		this.sleepVar = sleepVar;
 	}

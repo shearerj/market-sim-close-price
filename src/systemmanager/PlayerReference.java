@@ -14,7 +14,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import systemmanager.Consts.SMAgentType;
+import systemmanager.Consts.AgentType;
 import systemmanager.Consts.ModelType;
 import data.AgentPropsPair;
 import data.EntityProperties;
@@ -139,7 +139,7 @@ public class PlayerReference {
 		/*******************
 		 * CONFIGURATION - add environment agents
 		 *******************/
-		for (SMAgentType agentType : Consts.SMAgentType.values()) {
+		for (AgentType agentType : Consts.AgentType.values()) {
 			String num = getValue(agentType);
 			String setup = getValue(agentType + Consts.SETUP_SUFFIX);
 			if (num != null) {
@@ -166,7 +166,7 @@ public class PlayerReference {
 									"::setRolePlayers: " + "incorrect strategy string");
 						} else {
 							// first elt is agent type, second elt is strategy
-							SMAgentType type = SMAgentType.valueOf(as[0]);
+							AgentType type = AgentType.valueOf(as[0]);
 							EntityProperties op = getStrategyParameters(type, as[1]);
 							data.addPlayerProperties(new AgentPropsPair(type, op));
 						}
@@ -194,7 +194,7 @@ public class PlayerReference {
 		return getValue(key.toString());
 	}
 	
-	public String getValue(SMAgentType key) {
+	public String getValue(AgentType key) {
 		return getValue(key.toString());
 	}
 
@@ -205,7 +205,7 @@ public class PlayerReference {
 	 * @param strategy
 	 * @return
 	 */
-	private EntityProperties getStrategyParameters(SMAgentType type, String strategy) {
+	private EntityProperties getStrategyParameters(AgentType type, String strategy) {
 		EntityProperties op = PlayerReference.getAgentProperties(type, strategy);
 		
 		if (op == null) {
@@ -225,7 +225,7 @@ public class PlayerReference {
 	 * @param strategy
 	 * @return ObjectProperties
 	 */
-	public static EntityProperties getAgentProperties(SMAgentType type, String strategy) {
+	public static EntityProperties getAgentProperties(AgentType type, String strategy) {
 		EntityProperties p = null; // new ObjectProperties(Consts.getProperties(type));
 //		p.put(Keys.STRATEGY, strategy);
 		
@@ -245,6 +245,6 @@ public class PlayerReference {
 	}
 	
 	public static EntityProperties getAgentProperties(String type, String strategy) {
-		return getAgentProperties(SMAgentType.valueOf(type), strategy);
+		return getAgentProperties(AgentType.valueOf(type), strategy);
 	}
 }
