@@ -11,13 +11,13 @@ import utils.RandPlus;
  * @author drhurd
  *
  */
-public class DummyFundamental extends FundamentalValue{
-
-	public DummyFundamental(double kap, int meanVal, double var, RandPlus rand) {
-		super(kap, meanVal, var, rand);
-		// TODO Auto-generated constructor stub
+public class DummyFundamental extends FundamentalValue {
+	
+	public DummyFundamental(int mean) {
+		super(0, mean, 0, new RandPlus());
 	}
 	
+	@Override
 	public Price getValueAt(TimeStamp t) {
 		return new Price(meanValue);
 	}

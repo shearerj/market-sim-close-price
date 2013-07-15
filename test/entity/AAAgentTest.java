@@ -52,7 +52,7 @@ public class AAAgentTest {
 		
 		//Creating the setup properties
 		rand = new RandPlus(1);
-		fund = new DummyFundamental(0, 100000, 0, rand);
+		fund = new DummyFundamental(100000);
 		
 		//Setting up agentProperties
 		agentProperties = new EntityProperties();
