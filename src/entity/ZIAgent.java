@@ -38,16 +38,18 @@ public class ZIAgent extends BackgroundAgent {
 	protected final int bidRange; // range for limit order
 
 	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, SIP sip, int bidRange, double pvVar, int tickSize) {
-		super(agentID, arrivalTime, model, market, 
-				new PrivateValue(1, pvVar, rand), rand, sip, tickSize);
+			Market market, RandPlus rand, int bidRange, double pvVar,
+			int tickSize) {
+		super(agentID, arrivalTime, model, market, new PrivateValue(1, pvVar,
+				rand), rand, tickSize);
 		this.bidRange = bidRange;
 	}
 
 	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, SIP sip, EntityProperties props) {
-		this(agentID, arrivalTime, model, market, rand, sip, props.getAsInt(
-				Keys.BID_RANGE, 2000), props.getAsDouble("pvVar", 100), props.getAsInt("tickSize", 1000));
+			Market market, RandPlus rand, EntityProperties props) {
+		this(agentID, arrivalTime, model, market, rand, props.getAsInt(
+				Keys.BID_RANGE, 2000), props.getAsDouble("pvVar", 100),
+				props.getAsInt("tickSize", 1000));
 		// FIXME get KEY for PVVar and and proper default
 	}
 

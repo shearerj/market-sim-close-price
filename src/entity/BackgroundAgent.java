@@ -14,8 +14,8 @@ import event.TimeStamp;
 public abstract class BackgroundAgent extends SMAgent {
 	
 	public BackgroundAgent(int agentID, TimeStamp arrivalTime, MarketModel model, 
-			Market market, PrivateValue pv, RandPlus rand, SIP sip, int tickSize) {
-		super(agentID, arrivalTime, model, market, pv, rand, sip, tickSize);
+			Market market, PrivateValue pv, RandPlus rand, int tickSize) {
+		super(agentID, arrivalTime, model, market, pv, rand, tickSize);
 	}
 	
 }

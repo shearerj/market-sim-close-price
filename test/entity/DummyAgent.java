@@ -3,6 +3,8 @@ package entity;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import market.PQBid;
+import market.PQPoint;
 import market.Price;
 import market.PrivateValue;
 import model.MarketModel;
@@ -15,14 +17,14 @@ import event.TimeStamp;
 public class DummyAgent extends BackgroundAgent {
 
 	public DummyAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, PrivateValue pv, RandPlus rand, SIP sip, int tickSize) {
-		super(agentID, arrivalTime, model, market, pv, rand, sip, tickSize);
+			Market market, PrivateValue pv, RandPlus rand, int tickSize) {
+		super(agentID, arrivalTime, model, market, pv, rand, tickSize);
 		// TODO Auto-generated constructor stub
 	}
-	
+
 	public DummyAgent(int agentID, MarketModel model, Market market) {
-		this(agentID, new TimeStamp(0), model, market, 
-				new PrivateValue(), new RandPlus(), new SIP(1,1), 1000);
+		this(agentID, new TimeStamp(0), model, market, new PrivateValue(),
+				new RandPlus(), 1000);
 	}
 
 	@Override
@@ -30,13 +32,19 @@ public class DummyAgent extends BackgroundAgent {
 		// TODO Auto-generated method stub
 		return new ArrayList<Activity>();
 	}
-	
-	public Collection<? extends Activity> 
-		agentStrategy(TimeStamp currentTime, Price price, int quantity) {
-		ArrayList<Activity> bid = new ArrayList<Activity>();
-		
-		bid.add(new SubmitNMSBid(this, price, quantity, Consts.INF_TIME, currentTime));
-		
+
+	/**
+	 * Submits a PQBid according to input market directly to the market
+	 * 
+	 * @param currentTime
+	 * @param price
+	 * @param quantity
+	 * @return PQBid that was submitted to the market
+	 */
+	public PQBid agentStrategy(TimeStamp currentTime, Price price, int quantity) {
+		PQBid bid = new PQBid(this, market, currentTime);
+		bid.addPoint(new PQPoint(quantity, price));
+		market.addBid(bid, currentTime);
 		return bid;
 	}
 

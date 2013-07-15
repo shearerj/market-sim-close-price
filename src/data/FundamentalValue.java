@@ -43,7 +43,7 @@ public class FundamentalValue {
 	}
 
 	protected void computeFundamentalTo(int length) {
-		while (meanRevertProcess.size() < length) {
+		while (meanRevertProcess.size() < length + 1) {
 			int prevValue = meanRevertProcess.get(meanRevertProcess.size() - 1).getPrice();
 			int nextValue = (int) (rand.nextGaussian(0, shockVar)
 					+ (meanValue * kappa) + ((1 - kappa) * prevValue));

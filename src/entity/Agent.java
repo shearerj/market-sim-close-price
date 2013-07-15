@@ -1,5 +1,6 @@
 package entity;
 
+
 import static logger.Logger.log;
 import static logger.Logger.Level.DEBUG;
 import static logger.Logger.Level.INFO;
@@ -57,12 +58,12 @@ public abstract class Agent extends Entity {
 	protected int preLiqRealizedProfit;
 	
 	public Agent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			PrivateValue privateValue, RandPlus rand, SIP sip, int tickSize) {
+			PrivateValue privateValue, RandPlus rand, int tickSize) {
 		super(agentID);
 		this.model = model;
 		this.rand = rand;
 		this.arrivalTime = arrivalTime;
-		this.sip = sip;
+		this.sip = model.getSip();
 		this.privateValue = privateValue;
 		this.tickSize = tickSize;
 

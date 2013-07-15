@@ -15,6 +15,9 @@ import entity.Market;
 
 public class DummyMarketModel extends MarketModel {
 
+	//
+	// Constructors
+	//
 	public DummyMarketModel(int modelID, FundamentalValue fundamental,
 			Map<AgentProperties, Integer> agentProps,
 			EntityProperties modelProps, JsonObject playerConfig, RandPlus rand) {
@@ -33,18 +36,21 @@ public class DummyMarketModel extends MarketModel {
 		this(0);
 	}
 
-	@Override
-	protected void setupMarkets(EntityProperties modelProps) {
-		// TODO Auto-generated method stub
-
-	}
-
+	//
+	// Dummy Implemented methods
+	//
 	@Override
 	public String getConfig() {
-		// TODO Auto-generated method stub
-		return null;
+		return "Dummy Market";
 	}
-
+	
+	@Override
+	protected void setupMarkets(EntityProperties modelProps) {
+	}
+	
+	//
+	// Configuration methods
+	//
 	public void addMarket(Market market) {
 		this.markets.add(market);
 	}
@@ -52,4 +58,6 @@ public class DummyMarketModel extends MarketModel {
 	public void addAgent(Agent agent) {
 		this.agents.add(agent);
 	}
+
+
 }

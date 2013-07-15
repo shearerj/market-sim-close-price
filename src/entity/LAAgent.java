@@ -34,20 +34,30 @@ public class LAAgent extends HFTAgent {
 
 	public final static String ALPHA_KEY = "alpha";
 
-	protected final double alpha; // LA profit gap FIXME Different from private
-									// value
+	protected final double alpha; // LA profit gap
+
+	protected Collection<LAInformationProcessor> ip_las;
 
 	public LAAgent(int agentID, MarketModel model, int sleepTime,
-			double sleepVar, double alpha, RandPlus rand, SIP sip, int tickSize) {
-		super(agentID, Consts.START_TIME, model, sleepTime, sleepVar, rand, sip, tickSize);
+			double sleepVar, double alpha, TimeStamp latency, RandPlus rand,
+			int tickSize) {
+		super(agentID, Consts.START_TIME, model, sleepTime, sleepVar, rand,
+				tickSize);
 		this.alpha = alpha;
+
+		for (Market market : model.getMarkets()) {
+			this.addIP(
+					new LAInformationProcessor(model.getipIDgen(),
+							market.getID(), latency, market, this), market);
+		}
 	}
 
-	public LAAgent(int agentID, MarketModel model, RandPlus rand, SIP sip,
+	public LAAgent(int agentID, MarketModel model, RandPlus rand,
 			EntityProperties props) {
 		this(agentID, model, props.getAsInt(Keys.SLEEP_TIME, 0),
 				props.getAsDouble(Keys.SLEEP_VAR, 100), props.getAsDouble(
-						ALPHA_KEY, 0.001), rand, sip, props.getAsInt("tickSize", 1000));
+						ALPHA_KEY, 0.001), null, rand, props.getAsInt(
+						"tickSize", 1000));
 	}
 
 	@Override
@@ -148,6 +158,11 @@ public class LAAgent extends HFTAgent {
 		return Collections.emptyList();
 	}
 
+	public void addIP(LAInformationProcessor laip, Market market) {
+		this.ip_las.add(laip);
+		market.addIP(laip);
+	}
+
 	/**
 	 * Find best market to buy in (i.e. lowest ask) and to sell in (i.e. highest
 	 * bid). This is a global operation so it checks all markets in marketIDs
@@ -167,10 +182,11 @@ public class LAAgent extends HFTAgent {
 		Price bestBuy = null, bestSell = null;
 		Market bestBuyMkt = null, bestSellMkt = null;
 
-		for (Market mkt : model.getMarkets()) {
+		for (LAInformationProcessor laip : ip_las) {
 			// TODO This should use IP not modle.markets
-			Price bid = mkt.getBidPrice();
-			Price ask = mkt.getAskPrice();
+			Price bid = laip.getNBBOQuote().getBestBid(); // TODO shouldn't have
+															// # as input
+			Price ask = laip.getNBBOQuote().getBestAsk();
 
 			// in case the bid/ask disappears
 			ArrayList<Price> price = new ArrayList<Price>();
@@ -180,12 +196,12 @@ public class LAAgent extends HFTAgent {
 			// Best market to buy in is the one with the lowest ASK
 			if (ask.lessThan(bestBuy)) {
 				bestBuy = ask;
-				bestBuyMkt = mkt;
+				bestBuyMkt = laip.getMarket();
 			}
 			// Best market to sell in is the one with the highest BID
 			if (bid.greaterThan(bestSell)) {
 				bestSell = bid;
-				bestSellMkt = mkt;
+				bestSellMkt = laip.getMarket();
 			}
 		}
 		return new BestQuote(bestBuyMkt, bestBuy, bestSellMkt, bestSell);
@@ -218,11 +234,9 @@ public class LAAgent extends HFTAgent {
 
 					// FIXME this seems like it might return the wrong thing
 					// Buy
-					if (buy && (bidQuantity < 0))
-						quantity -= bidQuantity;
+					if (buy && (bidQuantity < 0)) quantity -= bidQuantity;
 					// Sell
-					if (!buy && (bidQuantity > 0))
-						quantity += bidQuantity;
+					if (!buy && (bidQuantity > 0)) quantity += bidQuantity;
 				}
 			}
 		}

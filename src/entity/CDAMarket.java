@@ -23,10 +23,20 @@ import event.TimeStamp;
  * @author ewah
  */
 public class CDAMarket extends Market {
-	
-	public CDAMarket(int marketID, MarketModel model, SIP sip) {
-		super(marketID, model, sip);
+
+	public CDAMarket(int marketID, MarketModel model, int ipID) {
+		super(marketID, model, ipID);
 	}
+	
+	
+	/**   ----don't think we need this
+	 * Overloaded constructor.
+	 * @param marketID
+	 */
+	//public CDAMarket(int marketID, SystemData d, ObjectProperties p, MarketModel model, int ipID) {
+		//super(marketID, d, p, model, ipID);
+		//marketType = Consts.getMarketType(this.getName());
+	//}
 
 	public Bid getBidQuote() {
 		return orderbook.getBidQuote();

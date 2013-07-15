@@ -2,6 +2,7 @@ package entity;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
+import static systemmanager.Consts.INF_TIME;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,7 +16,6 @@ import market.Price;
 import market.Quote;
 import market.Transaction;
 import model.MarketModel;
-import systemmanager.Consts;
 import activity.Activity;
 import activity.SendToSIP;
 import data.TimeSeries;
@@ -30,7 +30,6 @@ public abstract class Market extends Entity {
 
 	protected final MarketModel model;
 	protected final PQOrderBook orderbook;
-	protected final SIP sip;
 
 	// Statistics
 	protected final Collection<Bid> bids; // All bids ever submitted to the
@@ -39,6 +38,16 @@ public abstract class Market extends Entity {
 	protected final TimeSeries spreads; // Bid-ask spread value
 	protected final TimeSeries midQuotes; // Midpoint of bid/ask values
 	// end reorg
+
+	// Model information
+	// TODO equals method...
+	protected int modelID; // ID of associated model
+	protected int marketID;
+
+	// Agent information
+	protected ArrayList<Integer> buyers;
+	protected ArrayList<Integer> sellers;
+	protected ArrayList<Integer> agentIDs;
 
 	// Market information
 	public TimeStamp nextQuoteTime;
@@ -51,18 +60,63 @@ public abstract class Market extends Entity {
 	public Price lastBidPrice;
 	public int lastAskQuantity;
 	public int lastBidQuantity;
+	protected IPSM ip_SM;
 	public String marketType;
+	protected final Collection<AbstractIP> ips;
 
-	public Market(int marketID, MarketModel model, SIP sip) {
+	/*
+	 * public Market(int marketID, MarketModel model, int ipID) {
+	 * super(marketID);
+	 * 
+	 * this.model = model; }
+	 */// not sure which constructor to use...
+
+	public Market(int marketID, MarketModel model, int ipID) {
 		super(marketID);
+		agentIDs = new ArrayList<Integer>();
+		buyers = new ArrayList<Integer>();
+		sellers = new ArrayList<Integer>();
+		this.marketID = marketID;
+		this.ips = new ArrayList<AbstractIP>();
+
+		lastQuoteTime = new TimeStamp(-1);
+		lastClearTime = new TimeStamp(-1);
+		nextQuoteTime = new TimeStamp(-1);
+		nextClearTime = new TimeStamp(-1);
+
+		lastClearPrice = new Price(-1);
+		lastAskPrice = new Price(-1);
+		lastBidPrice = new Price(-1);
+
+		this.ip_SM = setupIPSM();
+
+		// reorg
 		this.model = model;
-		this.sip = sip;
 
 		this.bids = new ArrayList<Bid>();
 		this.orderbook = new PQOrderBook(this);
 		this.depths = new TimeSeries();
 		this.spreads = new TimeSeries();
 		this.midQuotes = new TimeSeries();
+		addIP(model.sip);
+	}
+
+	public void addIP(AbstractIP ip) {
+		ips.add(ip);
+	}
+
+	protected IPSM setupIPSM() {
+		// TODO should have global variable of SM Latency
+		IPSM ip_SM = new IPSM(0, marketID, new TimeStamp(0), this);
+		addIP(ip_SM);
+		return ip_SM;
+	}
+
+	/**
+	 * @return IP_SM
+	 */
+	public IPSM getIPSM() {
+		return this.ip_SM;
 	}
 
 	/**
@@ -140,7 +194,7 @@ public abstract class Market extends Entity {
 		// update, but this is important to note. Also, if there's a clear,
 		// but no transactions, it's probably not worth a SendToSIP, unless
 		// you're a call market.
-		return Collections.singleton(new SendToSIP(this, Consts.INF_TIME));
+		return Collections.singleton(new SendToSIP(this, INF_TIME));
 	}
 
 	/**
@@ -203,18 +257,13 @@ public abstract class Market extends Entity {
 		log(INFO, currentTime + " | " + this + " SendToSIP(" + bid + ", " + ask
 				+ ")");
 
-		// FIXME latency should be inside SIP not inside market, unless we want
-		// market specific latency or something.
-		// if (data.nbboLatency.longValue() == 0) {
-		// return Collections.singleton(new ProcessQuote(sip, this, bid, ask,
-		// Consts.INF_TIME));
-		// } else {
-		// return Collections.singleton(new ProcessQuote(sip, this, bid, ask,
-		// currentTime.plus(data.nbboLatency)));
-		// }
-		return Collections.emptySet();
+		Collection<Activity> activities = new ArrayList<Activity>();
+		for (AbstractIP ip : ips) {
+			activities.add(ip.scheduleProcessQuote(this, bid, ask, currentTime));
+		}
+		return activities;
 	}
-	
+
 	public boolean defined() {
 		return lastAskPrice != null && lastBidPrice != null;
 	}

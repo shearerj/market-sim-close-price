@@ -12,11 +12,10 @@ import utils.RandPlus;
  * @author ewah
  */
 public abstract class MarketMaker extends SMAgent {
-
 	public MarketMaker(int agentID, MarketModel model, Market market,
-			RandPlus rand, SIP sip, int tickSize) {
+			RandPlus rand, int tickSize) {
 		super(agentID, Consts.START_TIME, model, market, new PrivateValue(),
-				rand, sip, tickSize);
+				rand, tickSize);
 	}
 
 }

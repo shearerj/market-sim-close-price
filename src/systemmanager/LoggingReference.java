@@ -25,7 +25,6 @@ import entity.Agent;
 import entity.BasicMarketMaker;
 import entity.CallMarket;
 import entity.Market;
-import entity.SIP;
 import event.EventManager;
 import event.TimeStamp;
 
@@ -119,7 +118,7 @@ public class LoggingReference {
 
 			// Must create market models before agents, so can add the agents
 			// then to the appropriate/corresponding markets.
-			createSIP(); // TODO Move to each market model...
+			//createSIP(); // TODO Move to each market model...
 			log(INFO, "------------------------------------------------");
 			log(INFO, "            Creating MARKET MODELS");
 			createMarketModels();
@@ -142,14 +141,6 @@ public class LoggingReference {
 					+ "::setupAll: error");
 			e.printStackTrace();
 		}
-	}
-
-	/**
-	 * Create SIP entity, which enters the system at time 0.
-	 */
-	public void createSIP() {
-		SIP iu = null; // new SIP(0, data);
-		data.setSIP(iu);
 	}
 
 	/**
@@ -253,11 +244,9 @@ public class LoggingReference {
 
 			EntityProperties mp = (EntityProperties) mop.getObject();
 			String mtype = mop.getMarketType();
-			Market market = null; // MarketFactory.createMarket(mtype, mID,
-									// data, mp, model);
-//			market.linkModel(model.getID());
+
+			Market market = null;
 			data.addMarket(market);
-			// model.getMarketIDs().add(mID);
 
 			// Check if is call market, then initialize clearing sequence
 			if (market instanceof CallMarket) {
