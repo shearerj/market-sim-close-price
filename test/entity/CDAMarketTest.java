@@ -46,7 +46,7 @@ public class CDAMarketTest {
 		model = new DummyMarketModel(1);
 		market = new CDAMarket(1, model, 0); // TODO Dummy IP
 		model.addMarket(market);
-		agentIndex = 0;
+		agentIndex = 1;
 	}
 	
 	@Test
@@ -145,24 +145,18 @@ public class CDAMarketTest {
 		DummyAgent agent4 = new DummyAgent(agentIndex++, model, market);
 		
 		//Creating and adding bids
-		PQBid bid1 = agent1.agentStrategy(time, new Price(200), 1);
-		PQBid bid3 = agent3.agentStrategy(time, new Price(150), -1);
-		market.clear(time);
+		PQBid bid1 = agent1.agentStrategy(new TimeStamp(10), new Price(200), 1);
+		PQBid bid3 = agent3.agentStrategy(new TimeStamp(20), new Price(100), -1);
+		PQBid bid2 = agent2.agentStrategy(new TimeStamp(30), new Price(100), 1);
+		PQBid bid4 = agent4.agentStrategy(new TimeStamp(40), new Price(100), -1);
 		
-		PQBid bid2 = agent2.agentStrategy(time, new Price(100), 1);
-		PQBid bid4 = agent4.agentStrategy(time, new Price(100), -1);
-
-		//Testing that singular correct Transaction results
-		market.clear(time);
-		assertTrue(model.getTrans().size() == 2);
-
 		for(Transaction tr : model.getTrans()) {
 			assertTrue(
 					tr.getBuyBid().equals(bid1) &&
 					tr.getBuyer().equals(agent1) &&
 					tr.getSellBid().equals(bid3) &&
 					tr.getSeller().equals(agent3) &&
-					tr.getPrice().equals(new Price(150)) &&
+					tr.getPrice().equals(new Price(200)) &&
 					tr.getQuantity() == 1
 					||
 					tr.getBuyBid().equals(bid2) &&

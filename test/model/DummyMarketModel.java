@@ -8,6 +8,7 @@ import utils.RandPlus;
 import com.google.gson.JsonObject;
 
 import data.AgentProperties;
+import data.DummyFundamental;
 import data.EntityProperties;
 import data.FundamentalValue;
 import entity.Agent;
@@ -26,7 +27,7 @@ public class DummyMarketModel extends MarketModel {
 	}
 	
 	public DummyMarketModel(int modelID) {
-		this(modelID, new FundamentalValue(0, 0, 0, new RandPlus()), 
+		this(modelID, new DummyFundamental(100000), 
 				new HashMap<AgentProperties,Integer>(),
 				new EntityProperties(), new JsonObject(), 
 				new RandPlus());
