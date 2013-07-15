@@ -47,7 +47,7 @@ public abstract class SMAgent extends Agent {
 	protected final Market market;
 	// market to which bid has been submitted
 	protected Market marketSubmittedBid;
-	protected IPSM ip_sm;
+	protected SMIP ip_sm;
 
 	public SMAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, PrivateValue pv, RandPlus rand, int tickSize) {
@@ -146,10 +146,10 @@ public abstract class SMAgent extends Agent {
 		if (quantity == 0)
 			return Collections.emptySet();
 
-		BestBidAsk lastNBBOQuote = sip.getNBBOQuote();
+		BestBidAsk lastNBBOQuote = sip.getBBOQuote();
 
 		// Identify best market, as based on the NBBO.
-		BestBidAsk mainMarketQuote = ip_sm.getNBBOQuote();
+		BestBidAsk mainMarketQuote = ip_sm.getBBOQuote();
 
 		// Check if NBBO indicates that other market better:
 		// - Want to buy for as low a price as possible, so find market with the
@@ -162,10 +162,6 @@ public abstract class SMAgent extends Agent {
 		boolean nbboBetter, willTransact;
 		Market bestMarket;
 		Price bestPrice;
-		
-		BestBidAsk bestbidask = ip_sm.getNBBOQuote();
-		BestBidAsk NBBO = model.sip.getNBBOQuote(); //FIXME
-
 
 		if (quantity > 0) { // buy
 			nbboBetter = lastNBBOQuote.getBestAsk() != null

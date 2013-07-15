@@ -60,9 +60,9 @@ public abstract class Market extends Entity {
 	public Price lastBidPrice;
 	public int lastAskQuantity;
 	public int lastBidQuantity;
-	protected IPSM ip_SM;
+	protected SMIP ip_SM;
 	public String marketType;
-	protected final Collection<AbstractIP> ips;
+	protected final Collection<IP> ips;
 
 	/*
 	 * public Market(int marketID, MarketModel model, int ipID) {
@@ -77,7 +77,7 @@ public abstract class Market extends Entity {
 		buyers = new ArrayList<Integer>();
 		sellers = new ArrayList<Integer>();
 		this.marketID = marketID;
-		this.ips = new ArrayList<AbstractIP>();
+		this.ips = new ArrayList<IP>();
 
 		lastQuoteTime = new TimeStamp(-1);
 		lastClearTime = new TimeStamp(-1);
@@ -101,13 +101,13 @@ public abstract class Market extends Entity {
 		addIP(model.sip);
 	}
 
-	public void addIP(AbstractIP ip) {
+	public void addIP(IP ip) {
 		ips.add(ip);
 	}
 
-	protected IPSM setupIPSM() {
-		// TODO should have global variable of SM Latency
-		IPSM ip_SM = new IPSM(0, marketID, new TimeStamp(0), this);
+	protected SMIP setupIPSM() {
+		// TODO should have global variable of SM Latency, change IPSM's initialization
+		SMIP ip_SM = new SMIP(0, new TimeStamp(0), this);
 		addIP(ip_SM);
 		return ip_SM;
 	}
@@ -115,7 +115,7 @@ public abstract class Market extends Entity {
 	/**
 	 * @return IP_SM
 	 */
-	public IPSM getIPSM() {
+	public SMIP getIPSM() {
 		return this.ip_SM;
 	}
 
@@ -252,13 +252,13 @@ public abstract class Market extends Entity {
 	 */
 	public Collection<? extends Activity> sendToSIP(TimeStamp currentTime) {
 		// TODO switch to Quote object
-		int bid = this.getBidPrice().getPrice();
-		int ask = this.getAskPrice().getPrice();
+		Price bid = this.getBidPrice();
+		Price ask = this.getAskPrice();
 		log(INFO, currentTime + " | " + this + " SendToSIP(" + bid + ", " + ask
 				+ ")");
 
 		Collection<Activity> activities = new ArrayList<Activity>();
-		for (AbstractIP ip : ips) {
+		for (IP ip : ips) {
 			activities.add(ip.scheduleProcessQuote(this, bid, ask, currentTime));
 		}
 		return activities;

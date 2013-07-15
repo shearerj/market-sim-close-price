@@ -7,6 +7,7 @@ import logger.Logger;
 import static logger.Logger.Level.INFO;
 
 import java.util.Collections;
+import java.util.HashMap;
 
 import java.util.Collection;
 
@@ -21,10 +22,10 @@ import activity.Activity;
  * 
  * @author ewah
  */
-public class SIP extends AbstractIP { // FOR TESTS, WE MIGHT NEED TO PASS THIS IN AS ARGUMENT! TODO PASS What?
+public class SIP extends IP { // FOR TESTS, WE MIGHT NEED TO PASS THIS IN AS ARGUMENT! TODO PASS What?
 	
-	// FIXME Shouldn't take model ID. Shouldn't even know about the model
-	private int modelID;
+	protected final int modelID; // for logging only
+	protected HashMap<Market, BestBidAsk> marketQuotes;		// hashed by market
 	
 	/**
 	 * Constructor
@@ -34,34 +35,80 @@ public class SIP extends AbstractIP { // FOR TESTS, WE MIGHT NEED TO PASS THIS I
 	public SIP(int ID, int modelID, TimeStamp latency) {
 		super(ID, latency);
 		this.modelID = modelID;
+		marketQuotes = new HashMap<Market,BestBidAsk>();
 	}
-
+	
 	/**
- 	 * Get global BestBidAsk quote for the given model.
+ 	 * Store market's best bid/ask & insert Activity to UpdateNBBO at some amount of time 
  	 *
- 	 * @param modelID
- 	 * @return BestBidAsk
+ 	 * @param mkt
+ 	 * @param bid
+ 	 * @param ask
+ 	 * @param ts
+ 	 * @return ActivityHashMap
  	 */
-	public BestBidAsk getGlobalQuote(int modelID) {
-		// FIXME
-//		return this.computeBestBidOffer(data.getModel(modelID).getMarkets(), false);
+	public Collection<Activity> processQuote(Market mkt, Price bid, Price ask, TimeStamp ts) {
+		BestBidAsk q = new BestBidAsk(mkt, bid, mkt, ask);
+		marketQuotes.put(mkt, q);
+		Logger.log(INFO, ts + " | " + this + " | "+ mkt + " " + 
+				"ProcessQuote: " + q);
 		return null;
 	}
 	
+	/**
+	 * Find best quote across given markets (lowest ask & highest bid).
+	 * Note: for Single Markets, only one market will contain data and key
+	 * thus it will simply get BBO for one market.
+	 * 
+	 * @param marketIDs
+	 * @param nbbo		true if getting NBBO, false if getting global quote
+	 * @return
+	 */
+	protected BestBidAsk computeBestBidOffer(Collection<Market> markets) {
+	    Price bestBid = null, bestAsk = null;
+	    Market bestBidMkt = null, bestAskMkt = null;
+	    
+	    for (Market mkt1 : markets) {
+			Price bid, ask;
+				BestBidAsk ba = marketQuotes.get(mkt1.getID());
+				if (marketQuotes.containsKey(mkt1.getID())) {
+					ba  = marketQuotes.get(mkt1.getID());
+					bid = ba.getBestBid();
+					ask = ba.getBestAsk();
+				}
+				else {
+					bid = null;
+					ask = null;
+				}
+
+			// FIXME This seems wrong, should the conditional also assume bid != null?
+			// Best bid quote is highest BID
+			if (bestBid == null || bestBid.compareTo(bid) < 0) {
+				if (bid != null) bestBid = bid;
+				bestBidMkt = mkt1;
+			}
+			// Best ask quote is lowest ASK
+			if (bestAsk == null || bestAsk.compareTo(ask) > 0) {
+				if (ask != null) bestAsk = ask;
+				bestAskMkt = mkt1;
+			}
+	    }
+	    return new BestBidAsk(bestBidMkt, bestBid, bestAskMkt, bestAsk);
+	}
 	
 	/**
-	 * Method to update the NBBO values.
+	 * Method to update the BBO values.
+	 * In this case, for the NBBO.
 	 * 
 	 * @param model
 	 * @param ts
 	 * @return
 	 */
-	public Collection<Activity> updateNBBO(MarketModel model, TimeStamp ts) {
-		int modelID = model.getID();
-		String s = ts + " | " + model.getMarkets() + " UpdateNBBO: current " + getNBBOQuote()
+	public Collection<Activity> updateBBO(MarketModel model, TimeStamp ts) {
+		String s = ts + " | " + model.getMarkets() + " UpdateNBBO: current " + getBBOQuote()
 				+ " --> ";
 	
-		BestBidAsk lastQuote = computeBestBidOffer(model.getMarkets(), true);
+		BestBidAsk lastQuote = computeBestBidOffer(model.getMarkets());
 			
 		Price bestBid = lastQuote.getBestBid();
 		Price bestAsk = lastQuote.getBestAsk();
@@ -86,15 +133,15 @@ public class SIP extends AbstractIP { // FOR TESTS, WE MIGHT NEED TO PASS THIS I
 		}
 		lastQuote = new BestBidAsk(lastQuote.getBestBidMarket(), bestBid, lastQuote.getBestAskMarket(), bestAsk);
 		lastQuotes = lastQuote;
-		Logger.log(INFO, s + "updated " + lastQuote);
+		Logger.log(INFO, s + "updated " + lastQuotes);
 		return Collections.emptyList();
 	}
 	
-	/* (non-Javadoc)
+	/** (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return new String("SIP number " + this.getID() + ", model number " 
+		return new String("SIP number " + this + ", model number " 
 				+ modelID);
 	}
 }

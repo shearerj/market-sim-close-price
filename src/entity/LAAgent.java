@@ -36,7 +36,7 @@ public class LAAgent extends HFTAgent {
 
 	protected final double alpha; // LA profit gap
 
-	protected Collection<LAInformationProcessor> ip_las;
+	protected Collection<LAIP> ip_las;
 
 	public LAAgent(int agentID, MarketModel model, int sleepTime,
 			double sleepVar, double alpha, TimeStamp latency, RandPlus rand,
@@ -47,8 +47,7 @@ public class LAAgent extends HFTAgent {
 
 		for (Market market : model.getMarkets()) {
 			this.addIP(
-					new LAInformationProcessor(model.getipIDgen(),
-							market.getID(), latency, market, this), market);
+					new LAIP(model.getipIDgen(), latency, market, this), market);
 		}
 	}
 
@@ -158,7 +157,7 @@ public class LAAgent extends HFTAgent {
 		return Collections.emptyList();
 	}
 
-	public void addIP(LAInformationProcessor laip, Market market) {
+	public void addIP(LAIP laip, Market market) {
 		this.ip_las.add(laip);
 		market.addIP(laip);
 	}
@@ -182,11 +181,9 @@ public class LAAgent extends HFTAgent {
 		Price bestBuy = null, bestSell = null;
 		Market bestBuyMkt = null, bestSellMkt = null;
 
-		for (LAInformationProcessor laip : ip_las) {
-			// TODO This should use IP not modle.markets
-			Price bid = laip.getNBBOQuote().getBestBid(); // TODO shouldn't have
-															// # as input
-			Price ask = laip.getNBBOQuote().getBestAsk();
+		for (LAIP laip : ip_las) {
+			Price bid = laip.getBBOQuote().getBestBid();
+			Price ask = laip.getBBOQuote().getBestAsk();
 
 			// in case the bid/ask disappears
 			ArrayList<Price> price = new ArrayList<Price>();

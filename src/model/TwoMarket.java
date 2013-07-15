@@ -12,7 +12,7 @@ import data.FundamentalValue;
 import data.EntityProperties;
 import entity.CDAMarket;
 import entity.LAAgent;
-import entity.LAInformationProcessor;
+import entity.LAIP;
 import event.TimeStamp;
 import entity.Market;
 

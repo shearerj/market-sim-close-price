@@ -79,7 +79,7 @@ public class BasicMarketMaker extends MarketMaker {
 		Collection<Activity> acts = new ArrayList<Activity>();
 
 		// update NBBO
-		BestBidAsk lastNBBOQuote = sip.getNBBOQuote();
+		BestBidAsk lastNBBOQuote = sip.getBBOQuote();
 
 		Price bid = market.getBidPrice();
 		Price ask = market.getAskPrice();

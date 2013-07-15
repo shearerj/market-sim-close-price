@@ -10,7 +10,7 @@ import data.AgentProperties;
 import data.FundamentalValue;
 import data.EntityProperties;
 import entity.CallMarket;
-import entity.LAInformationProcessor;
+import entity.LAIP;
 import event.TimeStamp;
 
 /**

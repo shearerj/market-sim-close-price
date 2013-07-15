@@ -10,7 +10,7 @@ import data.AgentProperties;
 import data.FundamentalValue;
 import data.EntityProperties;
 import entity.CDAMarket;
-import entity.LAInformationProcessor;
+import entity.LAIP;
 
 /**
  * CENTRALCDA

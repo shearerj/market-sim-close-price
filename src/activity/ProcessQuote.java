@@ -1,6 +1,9 @@
 package activity;
 
 import java.util.Collection;
+
+import market.Price;
+
 import org.apache.commons.lang3.builder.*;
 
 import entity.*;
@@ -13,12 +16,12 @@ import event.TimeStamp;
  */
 public class ProcessQuote extends Activity {
 
-	private AbstractIP sip;
+	private IP sip;
 	private Market mkt;
-	private int bid;
-	private int ask;
+	private Price bid;
+	private Price ask;
 
-	public ProcessQuote(AbstractIP sip, Market mkt, int bid, int ask, TimeStamp t) {
+	public ProcessQuote(IP sip, Market mkt, Price bid, Price ask, TimeStamp t) {
 		super(t);
 		this.sip = sip;
 		this.mkt = mkt;

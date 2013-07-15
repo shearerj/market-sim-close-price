@@ -12,7 +12,7 @@ import utils.RandPlus;
 import data.AgentProperties;
 import data.FundamentalValue;
 import data.ModelProperties;
-import entity.LAInformationProcessor;
+import entity.LAIP;
 
 public class MarketModelFactory {
 
@@ -23,7 +23,7 @@ public class MarketModelFactory {
 	protected final JsonObject playerConfig;
 	private int sipID;
 	Collection<Integer> latencies;
-	protected Collection<LAInformationProcessor> ip_las;
+	protected Collection<LAIP> ip_las;
 	
 	public MarketModelFactory(Map<AgentProperties, Integer> props, JsonObject playerConfig, 
 			FundamentalValue fundamental, RandPlus rand) {

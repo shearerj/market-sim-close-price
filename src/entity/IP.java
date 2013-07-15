@@ -1,107 +1,57 @@
 package entity;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import static logger.Logger.Level.INFO;
+import java.util.HashMap;
 
-import java.util.Collection;
-import activity.Activity;
-import event.*;
-import market.*;
 import logger.Logger;
+import static logger.Logger.Level.INFO;
+import market.BestBidAsk;
+import market.Price;
 import model.MarketModel;
-
+import java.util.Collection;
+import event.TimeStamp;
+import activity.Activity;
+import activity.ProcessQuote;
 
 /**
- * Class that updates pertinent information for the system. 
- * Generally used for creating NBBO update events. 
- * Serves the purpose of the Information Processor for a single market
+ * Superclass for Information Processors that either work
+ * for one model or multiple.
  * 
- * @author ewah
+ * @author cnris
+ *
  */
-public abstract class IP extends AbstractIP {
-
-	protected Market mkt;
-	protected int marketID;
+public abstract class IP extends Entity {
 	
+	protected TimeStamp latency;
+	protected BestBidAsk lastQuotes;
+
 	/**
 	 * Constructor
 	 * @param ID
 	 * @param d
 	 */
-	public IP(int ID, int marketID, TimeStamp latency, Market mkt) {
-		super(ID, latency);
-		this.mkt = mkt;
-		this.marketID = marketID;
+	public IP(int ID, TimeStamp latency) {
+		super(ID);
+		this.latency = latency;
+		lastQuotes = new BestBidAsk(null, null, null, null);
 	}
 	
-	public int getMarketID() {
-		return marketID;
+	public ProcessQuote scheduleProcessQuote(Market market, Price bid, Price ask, TimeStamp ts) {
+		return new ProcessQuote(this, market, bid, ask, ts.plus(latency));
 	}
-	
-	Market getMarket() {
-		return this.mkt;
-	}
-
-	/**
- 	 * Get global BestBidAsk quote for the given MARKET
- 	 *
- 	 * @param modelID
- 	 * @return BestBidAsk
- 	 */
-	public BestBidAsk getGlobalQuote() {
-		Integer[] array = {marketID};
-		return this.computeBestBidOffer(new ArrayList<Integer>(Arrays.asList(array)), false);
-	}
+	 
+	public abstract Collection<Activity> processQuote(Market mkt, Price bid, Price ask, TimeStamp ts);
 	
 	/**
-	 * Method to update the NBBO values, in this case for only ONE market
+	 * Get BestBidAsk quote for the given model,
+	 * or market if SMIP
 	 * 
-	 * @param model
-	 * @param ts
-	 * @return
+	 * @param modelID
+	 * @return BestBidAsk
 	 */
-	public Collection<Activity> updateNBBO(MarketModel model, TimeStamp ts) {
-		
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		
-		int modelID = model.getID();
-		String s = ts + " | " + model.getMarkets() + " UpdateNBBO: current " + getNBBOQuote()
-				+ " --> ";
-	
-		Integer[] array = {marketID};
-		BestBidAsk lastQuote = computeBestBidOffer(new ArrayList<Integer>(Arrays.asList(array)), true);
-			
-		int bestBid = lastQuote.getBestBid().getPrice();
-		int bestAsk = lastQuote.getBestAsk().getPrice();
-		if ((bestBid != -1) && (bestAsk != -1)) {
-			// FIXME figure out best method for price disparity
-			// check for inconsistency in buy/sell prices & fix if found
-			if (bestBid > bestAsk) {
-				//int mid = (bestBid+ bestAsk) / 2;
-				//bestBid = mid - this.tickSize;
-				//bestAsk = mid + this.tickSize;
-				//s += " (before fix) " + lastQuote + " --> ";
-				
-				// Add spread of INF if inconsistent NBBO quote
-				model.addNBBOSpread(ts, Price.INF.getPrice()); // may not want to add this to MARKET????
-			} else {
-				// if bid-ask consistent, store the spread
-				model.addNBBOSpread(ts, lastQuote.getSpread());
-			}
-		} else {
-			// store spread of INF since no bid-ask spread
-			model.addNBBOSpread(ts, Price.INF.getPrice());
-		}
-		lastQuote = new BestBidAsk(lastQuote.getBestBidMarket(), new Price(bestBid), lastQuote.getBestAskMarket(), new Price(bestAsk));
-		lastQuotes = lastQuote;
-		Logger.log(INFO, s + "updated " + lastQuote);
-		return Collections.emptyList();
+	public BestBidAsk getBBOQuote() {
+			return lastQuotes;
 	}
 	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	public abstract String toString();
+	public abstract Collection<Activity> updateBBO(MarketModel model, TimeStamp ts);
 }
