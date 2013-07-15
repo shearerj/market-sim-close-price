@@ -47,7 +47,7 @@ public class LAAgent extends HFTAgent {
 
 		for (Market market : model.getMarkets()) {
 			this.addIP(
-					new LAIP(model.getipIDgen(), latency, market, this), market);
+					new LAIP(model.nextIPID(), latency, market, this), market);
 		}
 	}
 

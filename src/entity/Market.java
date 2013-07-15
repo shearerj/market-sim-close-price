@@ -31,20 +31,22 @@ public abstract class Market extends Entity {
 	protected final MarketModel model;
 	protected final PQOrderBook orderbook;
 	protected final SMIP ip;
+	protected final SIP sip; // For REG NMS
 	protected final Collection<IP> ips;
 
 	// Statistics
 	protected final Collection<Bid> bids; // All bids ever submitted to the market
-	protected final TimeSeries depths; // Number of orders in the orderBook
-	protected final TimeSeries spreads; // Bid-ask spread value
-	protected final TimeSeries midQuotes; // Midpoint of bid/ask values
+	protected final TimeSeries depths, spreads, midQuotes;
+	// depths: Number of orders in the orderBook
+	// spreads: Bid-ask spread value
+	// modQuotes: Midpoint of bid/ask values
 
 	// Market information
 	protected TimeStamp lastClearTime, lastBidTime;
 	protected Price lastClearPrice;
 	protected Quote quote;
 
-	public Market(int marketID, MarketModel model, int ipID) {
+	public Market(int marketID, MarketModel model) {
 		super(marketID);
 		this.model = model;
 		this.bids = new ArrayList<Bid>();
@@ -52,11 +54,14 @@ public abstract class Market extends Entity {
 		this.depths = new TimeSeries();
 		this.spreads = new TimeSeries();
 		this.midQuotes = new TimeSeries();
-		this.ips = new ArrayList<IP>();
 
 		// FIXME Add latency properly
-		this.ip = new SMIP(0, new TimeStamp(0), this);
-		ips.add(model.getSip());
+		this.ips = new ArrayList<IP>();
+		this.sip = model.getSIP();
+		this.ip = new SMIP(model.nextIPID(), new TimeStamp(0), this);
+		ips.add(sip);
+		ips.add(ip);
+		
 		this.lastClearTime = TimeStamp.ZERO;
 		this.lastClearPrice = null;
 		this.quote = new Quote(this, null, 0, null, 0, TimeStamp.ZERO);
@@ -189,13 +194,14 @@ public abstract class Market extends Entity {
 	 */
 	protected void updateQuote(TimeStamp currentTime) {
 		// TODO This first part should be done a lot differently
-		
+
 		Price askPrice = ((PQBid) orderbook.getAskQuote()).bidTreeSet.last().getPrice();
 		Price bidPrice = ((PQBid) orderbook.getBidQuote()).bidTreeSet.first().getPrice();
 		int askQuantity = ((PQBid) orderbook.getAskQuote()).bidTreeSet.last().getQuantity();
 		int bidQuantity = ((PQBid) orderbook.getBidQuote()).bidTreeSet.first().getQuantity();
-		
-		quote = new Quote(this, askPrice, askQuantity, bidPrice, bidQuantity, currentTime);
+
+		quote = new Quote(this, askPrice, askQuantity, bidPrice, bidQuantity,
+				currentTime);
 
 		addSpread(currentTime);
 		addMidQuote(currentTime);

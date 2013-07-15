@@ -64,7 +64,7 @@ public abstract class Agent extends Entity {
 		this.model = model;
 		this.rand = rand;
 		this.arrivalTime = arrivalTime;
-		this.sip = model.getSip();
+		this.sip = model.getSIP();
 		this.privateValue = privateValue;
 		this.tickSize = tickSize;
 

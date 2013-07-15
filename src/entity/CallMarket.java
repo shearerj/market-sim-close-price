@@ -32,7 +32,7 @@ public class CallMarket extends Market {
 
 	public CallMarket(int marketID, MarketModel model, float pricingPolicy,
 			TimeStamp clearFreq) {
-		super(marketID, model, model.getipIDgen());
+		super(marketID, model);
 
 		if (clearFreq.after(Consts.START_TIME))
 			throw new IllegalArgumentException(

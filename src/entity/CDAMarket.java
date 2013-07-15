@@ -21,7 +21,7 @@ import event.TimeStamp;
 public class CDAMarket extends Market {
 
 	public CDAMarket(int marketID, MarketModel model, int ipID) {
-		super(marketID, model, ipID);
+		super(marketID, model);
 	}
 
 	public Bid getBidQuote() {

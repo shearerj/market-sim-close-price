@@ -375,7 +375,7 @@ public class SystemData {
 		int id = mdl.getID();
 		models.put(id, mdl);
 		modelIDs.add(id);
-		addModelAgentsToMap(id, mdl.getAgentConfig());
+//		addModelAgentsToMap(id, mdl.getAgentConfig());
 	}
 	
 	public void addModelAgentsToMap(int modelID, ArrayList<AgentPropsPair> list) {

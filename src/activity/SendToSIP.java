@@ -20,10 +20,6 @@ public class SendToSIP extends Activity {
 		this.mkt = mkt;
 	}
 
-	public SendToSIP deepCopy() {
-		return new SendToSIP(this.mkt, this.scheduledTime);
-	}
-
 	public Collection<? extends Activity> execute(TimeStamp time) {
 		return this.mkt.sendToSIP(time);
 	}

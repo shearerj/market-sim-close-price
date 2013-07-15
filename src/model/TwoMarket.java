@@ -35,8 +35,8 @@ public class TwoMarket extends MarketModel {
 
 	@Override
 	protected void setupMarkets(EntityProperties modelProps) {
-		markets.add(new CDAMarket(1, this, this.getipIDgen()));
-		markets.add(new CDAMarket(2, this, this.getipIDgen()));
+		markets.add(new CDAMarket(1, this, this.nextIPID()));
+		markets.add(new CDAMarket(2, this, this.nextIPID()));
 	}
 
 	@Override
