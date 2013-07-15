@@ -1,16 +1,15 @@
 package model;
 
-import java.util.Collection;
 import java.util.Map;
+
+import utils.RandPlus;
 
 import com.google.gson.JsonObject;
 
-import utils.RandPlus;
 import data.AgentProperties;
-import data.FundamentalValue;
 import data.EntityProperties;
+import data.FundamentalValue;
 import entity.CallMarket;
-import entity.LAInformationProcessor;
 import event.TimeStamp;
 
 /**
@@ -32,11 +31,6 @@ public class CentralCall extends MarketModel {
 			Map<AgentProperties, Integer> agentProps, EntityProperties modelProps, 
 			JsonObject playerConfig, RandPlus rand) {
 		super(modelID, fundamental, agentProps, modelProps, playerConfig, rand);
-	}
-
-	@Override
-	public String getConfig() {
-		return config;
 	}
 
 	@Override

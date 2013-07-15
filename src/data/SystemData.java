@@ -232,9 +232,9 @@ public class SystemData {
 	 * @param id
 	 * @return
 	 */
-	public String getModelConfig(int id) {
-		return models.get(id).getConfig();
-	}
+//	public String getModelConfig(int id) {
+//		return models.get(id).getConfig();
+//	}
 	
 	/**
 	 * @return number of environment agents

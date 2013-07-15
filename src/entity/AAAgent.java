@@ -10,6 +10,7 @@ import java.util.Collection;
 
 import market.Price;
 import market.PrivateValue;
+import market.Quote;
 import market.Transaction;
 import model.MarketModel;
 import utils.RandPlus;
@@ -392,8 +393,9 @@ public class AAAgent extends BackgroundAgent {
 			Collection<Activity> actMap = new ArrayList<Activity>();
 
 			// Determining the offer price to (possibly) submit
-			Price bestBid = market.getBidPrice();
-			Price bestAsk = market.getAskPrice();
+			Quote quote = market.getQuote();
+			Price bestBid = quote.getBidPrice();
+			Price bestAsk = quote.getAskPrice();
 
 			// System.out.println("Bid: " + bestBid + " Ask: " + bestAsk);
 			// System.out.println(data.getFundamentalAt(ts).getPrice());

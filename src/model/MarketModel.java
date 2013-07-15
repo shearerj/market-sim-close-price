@@ -78,8 +78,6 @@ import generators.IDGenerator;
  */
 public abstract class MarketModel {
 
-	// -- begin reorg --
-
 	protected final int modelID;
 	protected final FundamentalValue fundamental;
 	protected final Collection<Market> markets;
@@ -92,7 +90,7 @@ public abstract class MarketModel {
 	protected final RandPlus rand;
 	//protected int nextAgentID; not sure if we need this
 	
-	public SIP sip;
+	protected final SIP sip;
 	protected final Generator<Integer> agentIDgen;
 	protected final Generator<Integer> ipIDgen;
 
@@ -219,16 +217,6 @@ public abstract class MarketModel {
 			manager.addActivity(new AgentArrival(agent, agent.getArrivalTime()));
 	}
 
-	// TODO remove
-	//public void addAgent(Agent agent) {
-		//agents.add(agent);
-	//}
-	
-	/**
-	 * @return configuration string for this model.
-	 */
-	public abstract String getConfig();
-
 	/**
 	 * Format "MODELTYPE-CONFIG" unless config string is empty, then "MODELTYPE"
 	 * If configuration string has a colon, i.e. CONFIG:PARAMS, then only
@@ -238,11 +226,11 @@ public abstract class MarketModel {
 	 */
 	@Deprecated
 	public String getFullName() {
-		String configStr = this.getConfig();
-		if (!this.getConfig().equals(""))
-			configStr = "-" + configStr;
-		String[] configs = configStr.split("[:]+");
-		return this.getClass().getSimpleName().toUpperCase() + configs[0];
+//		String configStr = this.getConfig();
+//		if (!this.getConfig().equals(""))
+//			configStr = "-" + configStr;
+//		String[] configs = configStr.split("[:]+");
+		return this.getClass().getSimpleName().toUpperCase() /*+ configs[0]*/;
 	}
 
 	/**

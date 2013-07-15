@@ -250,8 +250,8 @@ public class LoggingReference {
 
 			// Check if is call market, then initialize clearing sequence
 			if (market instanceof CallMarket) {
-				eventManager.addActivity(new Clear(market,
-						market.getNextClearTime()));
+//				eventManager.addActivity(new Clear(market,
+//						market.getNextClearTime()));
 			}
 			log(INFO, "Markets: " + market.getType() + ", " + market);
 

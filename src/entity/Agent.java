@@ -18,6 +18,7 @@ import market.Bid;
 import market.PQBid;
 import market.Price;
 import market.PrivateValue;
+import market.Quote;
 import market.Transaction;
 import model.MarketModel;
 import utils.RandPlus;
@@ -250,13 +251,13 @@ public abstract class Agent extends Entity {
 		if (positionBalance > 0) {
 			// For long position, compare cost to bid quote (buys)
 			for (Market market : model.getMarkets())
-				if (market.getBidPrice().greaterThan(p))
-					p = market.getBidPrice();
+				if (market.getQuote().getBidPrice().greaterThan(p))
+					p = market.getQuote().getBidPrice();
 		} else {
 			// For short position, compare cost to ask quote (sells)
 			for (Market market : model.getMarkets()) {
-				if (market.getAskPrice().lessThan(p)) {
-					p = market.getAskPrice();
+				if (market.getQuote().getAskPrice().lessThan(p)) {
+					p = market.getQuote().getAskPrice();
 				}
 			}
 		}

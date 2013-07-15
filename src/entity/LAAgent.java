@@ -81,7 +81,7 @@ public class LAAgent extends HFTAgent {
 				Market sellMarket = bestQuote.getBestAskMarket();
 
 				// check that BID/ASK defined for both markets
-				if (buyMarket.defined() && sellMarket.defined()) {
+				if (buyMarket.isDefined() && sellMarket.isDefined()) {
 
 					int midPoint = (bestQuote.getBestBid().getPrice() + bestQuote.getBestAsk().getPrice()) / 2;
 					int buySize = getBidQuantity(bestQuote.getBestBid(),
@@ -212,17 +212,17 @@ public class LAAgent extends HFTAgent {
 	 * 
 	 * @param beginPrice
 	 * @param endPrice
-	 * @param marketID
+	 * @param market
 	 * @param buy
 	 *            true if buy, false if sell
 	 * @return
 	 */
 	protected int getBidQuantity(Price beginPrice, Price endPrice,
-			Market marketID, boolean buy) {
+			Market market, boolean buy) {
 
 		int quantity = 0;
 
-		for (Bid bid : marketID.getBids().values()) {
+		for (Bid bid : market.getBids().values()) {
 			PQBid b = (PQBid) bid;
 
 			for (PQPoint pq : b.bidTreeSet) {

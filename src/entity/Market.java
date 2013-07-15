@@ -8,9 +8,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.TreeMap;
 
 import market.Bid;
+import market.PQBid;
 import market.PQOrderBook;
 import market.Price;
 import market.Quote;
@@ -30,148 +30,118 @@ public abstract class Market extends Entity {
 
 	protected final MarketModel model;
 	protected final PQOrderBook orderbook;
+	protected final IPSM ip;
+	protected final Collection<AbstractIP> ips;
 
 	// Statistics
-	protected final Collection<Bid> bids; // All bids ever submitted to the
-											// market
+	protected final Collection<Bid> bids; // All bids ever submitted to the market
 	protected final TimeSeries depths; // Number of orders in the orderBook
 	protected final TimeSeries spreads; // Bid-ask spread value
 	protected final TimeSeries midQuotes; // Midpoint of bid/ask values
-	// end reorg
-
-	// Model information
-	// TODO equals method...
-	protected int modelID; // ID of associated model
-	protected int marketID;
-
-	// Agent information
-	protected ArrayList<Integer> buyers;
-	protected ArrayList<Integer> sellers;
-	protected ArrayList<Integer> agentIDs;
 
 	// Market information
-	public TimeStamp nextQuoteTime;
-	public TimeStamp nextClearTime; // Most important for call markets
-	public TimeStamp lastQuoteTime;
-	public TimeStamp lastClearTime;
-	public TimeStamp lastBidTime;
-	public Price lastClearPrice;
-	public Price lastAskPrice;
-	public Price lastBidPrice;
-	public int lastAskQuantity;
-	public int lastBidQuantity;
-	protected IPSM ip_SM;
-	public String marketType;
-	protected final Collection<AbstractIP> ips;
-
-	/*
-	 * public Market(int marketID, MarketModel model, int ipID) {
-	 * super(marketID);
-	 * 
-	 * this.model = model; }
-	 */// not sure which constructor to use...
+	protected TimeStamp lastClearTime, lastBidTime;
+	protected Price lastClearPrice;
+	protected Quote quote;
 
 	public Market(int marketID, MarketModel model, int ipID) {
 		super(marketID);
-		agentIDs = new ArrayList<Integer>();
-		buyers = new ArrayList<Integer>();
-		sellers = new ArrayList<Integer>();
-		this.marketID = marketID;
-		this.ips = new ArrayList<AbstractIP>();
-
-		lastQuoteTime = new TimeStamp(-1);
-		lastClearTime = new TimeStamp(-1);
-		nextQuoteTime = new TimeStamp(-1);
-		nextClearTime = new TimeStamp(-1);
-
-		lastClearPrice = new Price(-1);
-		lastAskPrice = new Price(-1);
-		lastBidPrice = new Price(-1);
-
-		this.ip_SM = setupIPSM();
-
-		// reorg
 		this.model = model;
-
 		this.bids = new ArrayList<Bid>();
 		this.orderbook = new PQOrderBook(this);
 		this.depths = new TimeSeries();
 		this.spreads = new TimeSeries();
 		this.midQuotes = new TimeSeries();
-		addIP(model.sip);
+		this.ips = new ArrayList<AbstractIP>();
+
+		// FIXME Add latency properly
+		this.ip = new IPSM(0, id, new TimeStamp(0), this);
+		ips.add(model.getSip());
+		ips.add(ip);
+
+		this.lastClearTime = TimeStamp.ZERO;
+		this.lastClearPrice = null;
+		this.quote = new Quote(this, null, 0, null, 0, TimeStamp.ZERO);
+	}
+
+	public IPSM getIPSM() {
+		return this.ip;
+	}
+
+	public Quote getQuote() {
+		return quote;
+	}
+
+	/**
+	 * @return Map of current bids
+	 */
+	// TODO Remove, this is too powerful
+	public abstract Map<Agent, Bid> getBids();
+
+	/**
+	 * @return All bids submitted to this market
+	 */
+	public Collection<Bid> getAllBids() {
+		return bids;
 	}
 
 	public void addIP(AbstractIP ip) {
 		ips.add(ip);
 	}
 
-	protected IPSM setupIPSM() {
-		// TODO should have global variable of SM Latency
-		IPSM ip_SM = new IPSM(0, marketID, new TimeStamp(0), this);
-		addIP(ip_SM);
-		return ip_SM;
+	/**
+	 * Add bid to the market.
+	 */
+	public Collection<? extends Activity> addBid(Bid bid, TimeStamp currentTime) {
+		// FIXME This is bad. Add bid should enforce PQBid if this is the case,
+		// or the PQBid interface should be pushed to Bid
+		orderbook.insertBid((PQBid) bid);
+		bids.add(bid);
+		recordDepth(currentTime);
+		return Collections.emptySet();
 	}
 
 	/**
-	 * @return IP_SM
+	 * Remove bid for given agent from the market.
 	 */
-	public IPSM getIPSM() {
-		return this.ip_SM;
+	public Collection<? extends Activity> removeBid(Agent agent,
+			TimeStamp currentTime) {
+		orderbook.removeBid(agent.getID()); // TODO Change to Agent
+		recordDepth(currentTime);
+		return Collections.emptySet();
 	}
 
 	/**
-	 * @return bid (highest buy offer)
-	 */
-	public abstract Bid getBidQuote();
-
-	/**
-	 * @return ask (lowest sell offer)
-	 */
-	public abstract Bid getAskQuote();
-
-	/**
-	 * @return bid price (highest)
-	 */
-	public abstract Price getBidPrice();
-
-	/**
-	 * @return ask price (lowest
-	 */
-	public abstract Price getAskPrice();
-
-	/**
-	 * Publish quotes.
+	 * Method to get the type of the market.
 	 * 
-	 * @param quoteTime
+	 * @return
 	 */
-	public abstract Quote quote(TimeStamp quoteTime);
+	@Deprecated
+	public String getType() {
+		return getClass().getSimpleName();
+	}
 
 	/**
 	 * Clears the order book.
-	 * 
-	 * @param currentTime
-	 * @return
 	 */
 	public Collection<? extends Activity> clear(TimeStamp currentTime) {
+		lastClearTime = currentTime;
+
 		// Log prior quote
-		log(INFO,
-				currentTime + " | " + this + " Prior-clear Quote"
-						+ this.quote(currentTime));
+		log(INFO, currentTime + " | " + this + " Prior-clear Quote" + quote);
 
 		// Update the orderbook
 		orderbook.logActiveBids(currentTime);
 		orderbook.logFourHeap(currentTime);
 
 		Collection<Transaction> transes = orderbook.earliestPriceClear(currentTime);
-		lastClearTime = currentTime;
-		addDepth(currentTime, orderbook.getDepth()); // Updating Depth
+		recordDepth(currentTime); // Updating Depth
 
 		// Different logging if no transactions
 		if (transes.isEmpty()) {
 			log(INFO, currentTime + " | ....." + this + " "
 					+ getClass().getSimpleName()
-					+ "::clear: No change. Post-clear Quote"
-					+ quote(currentTime));
+					+ "::clear: No change. Post-clear Quote" + quote);
 		} else {
 			orderbook.logActiveBids(currentTime);
 			orderbook.logClearedBids(currentTime);
@@ -179,7 +149,7 @@ public abstract class Market extends Entity {
 			log(INFO, currentTime + " | ....." + this + " "
 					+ getClass().getSimpleName()
 					+ "::clear: Order book cleared: " + "Post-clear Quote"
-					+ quote(currentTime));
+					+ quote);
 		}
 
 		for (Transaction trans : transes) {
@@ -194,66 +164,18 @@ public abstract class Market extends Entity {
 		// update, but this is important to note. Also, if there's a clear,
 		// but no transactions, it's probably not worth a SendToSIP, unless
 		// you're a call market.
+		updateQuote(currentTime);
 		return Collections.singleton(new SendToSIP(this, INF_TIME));
 	}
 
 	/**
-	 * @return map of bids (hashed by agent ID)
-	 */
-	public abstract Map<Agent, Bid> getBids();
-
-	/**
-	 * Returns all bids submitted to this market
-	 * 
-	 * @return bids
-	 */
-	public Collection<Bid> getAllBids() {
-		return bids;
-	}
-
-	/**
-	 * Add bid to the market.
-	 * 
-	 * @param b
-	 * @param currentTime
-	 *            TimeStamp of bid addition
-	 * @return Collection<Activity> of further activities to add, if any
-	 */
-	public abstract Collection<? extends Activity> addBid(Bid b,
-			TimeStamp currentTime);
-
-	/**
-	 * Remove bid for given agent from the market.
-	 * 
-	 * @param agentID
-	 * @param currentTime
-	 *            TimeStamp of bid removal
-	 * @return Collection<Activity> (unused for now)
-	 */
-	public abstract Collection<? extends Activity> removeBid(Agent agent,
-			TimeStamp currentTime);
-
-	/**
-	 * Method to get the type of the market.
-	 * 
-	 * @return
-	 */
-	@Deprecated
-	public String getType() {
-		return marketType;
-	}
-
-	/**
-	 * Send market's bid/ask to the Security Information Processor to be
-	 * processed at some time (determined by latency) in the future.
-	 * 
-	 * @param currentTime
-	 * @return
+	 * Send market's bid/ask to the Security Information Processor to be processed at some time
+	 * (determined by latency) in the future.
 	 */
 	public Collection<? extends Activity> sendToSIP(TimeStamp currentTime) {
 		// TODO switch to Quote object
-		int bid = this.getBidPrice().getPrice();
-		int ask = this.getAskPrice().getPrice();
+		int bid = quote.getBidPrice().getPrice();
+		int ask = quote.getAskPrice().getPrice();
 		log(INFO, currentTime + " | " + this + " SendToSIP(" + bid + ", " + ask
 				+ ")");
 
@@ -264,32 +186,34 @@ public abstract class Market extends Entity {
 		return activities;
 	}
 
-	public boolean defined() {
-		return lastAskPrice != null && lastBidPrice != null;
+	/**
+	 * Updates the Markets current quote TODO This should be subsumed by sendToIPs. sendToIP should
+	 * compute this quote and update things appropriately.
+	 */
+	protected void updateQuote(TimeStamp currentTime) {
+		// TODO This first part should be done a lot differently
+		
+		Price askPrice = ((PQBid) orderbook.getAskQuote()).bidTreeSet.last().getPrice();
+		Price bidPrice = ((PQBid) orderbook.getBidQuote()).bidTreeSet.first().getPrice();
+		int askQuantity = ((PQBid) orderbook.getAskQuote()).bidTreeSet.last().getQuantity();
+		int bidQuantity = ((PQBid) orderbook.getBidQuote()).bidTreeSet.first().getQuantity();
+		
+		quote = new Quote(this, askPrice, askQuantity, bidPrice, bidQuantity, currentTime);
+
+		addSpread(currentTime);
+		addMidQuote(currentTime);
+	}
+
+	public boolean isDefined() {
+		return quote.isDefined();
 	}
 
 	public Price getLastClearPrice() {
 		return lastClearPrice;
 	}
 
-	public TimeStamp getNextClearTime() {
-		return nextClearTime;
-	}
-
 	public TimeStamp getLastClearTime() {
 		return lastClearTime;
-	}
-
-	public TimeStamp getNextQuoteTime() {
-		return nextQuoteTime;
-	}
-
-	public TimeStamp getLastQuoteTime() {
-		return lastQuoteTime;
-	}
-
-	public Collection<Transaction> getModelTrans() {
-		return this.model.getTrans();
 	}
 
 	public TimeSeries getDepth() {
@@ -304,28 +228,18 @@ public abstract class Market extends Entity {
 		return this.midQuotes;
 	}
 
-	protected void addDepth(TimeStamp ts, int point) {
-		this.depths.add(ts, (double) point);
+	protected void recordDepth(TimeStamp ts) {
+		depths.add(ts, orderbook.getDepth());
 	}
 
-	protected void addSpread(TimeStamp ts, int spread) {
-		this.spreads.add(ts, spread);
+	protected void addSpread(TimeStamp ts) {
+		spreads.add(ts, quote.getSpread());
 	}
 
-	protected void addMidQuote(TimeStamp ts, Price bid, Price ask) {
-		double midQuote = Double.NaN;
-		if (!bid.equals(Price.INF) && !ask.equals(Price.INF)) {
-			midQuote = (bid.getPrice() + ask.getPrice()) / 2;
-		}
-		this.midQuotes.add(ts, midQuote);
-	}
-
-	@Deprecated
-	public TreeMap<Integer, TimeStamp> getSubmissionTimes() {
-		TreeMap<Integer, TimeStamp> map = new TreeMap<Integer, TimeStamp>();
-		for (Bid b : this.bids)
-			map.put(b.getBidID(), b.getSubmitTime());
-		return map;
+	protected void addMidQuote(TimeStamp ts) {
+		double midQuote = quote.isDefined() ? Double.NaN
+				: (quote.getBidPrice().getPrice() + quote.getAskPrice().getPrice()) / 2d;
+		midQuotes.add(ts, midQuote);
 	}
 
 	@Override

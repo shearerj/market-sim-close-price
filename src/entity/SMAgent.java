@@ -164,7 +164,7 @@ public abstract class SMAgent extends Agent {
 		Price bestPrice;
 		
 		BestBidAsk bestbidask = ip_sm.getNBBOQuote();
-		BestBidAsk NBBO = model.sip.getNBBOQuote(); //FIXME
+		BestBidAsk NBBO = model.getSip().getNBBOQuote(); //FIXME
 
 
 		if (quantity > 0) { // buy

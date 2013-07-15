@@ -12,6 +12,7 @@ import java.util.Map;
 
 import market.BestBidAsk;
 import market.Price;
+import market.Quote;
 import model.MarketModel;
 import utils.MathUtils;
 import utils.RandPlus;
@@ -81,8 +82,9 @@ public class BasicMarketMaker extends MarketMaker {
 		// update NBBO
 		BestBidAsk lastNBBOQuote = sip.getNBBOQuote();
 
-		Price bid = market.getBidPrice();
-		Price ask = market.getAskPrice();
+		Quote quote = market.getQuote();
+		Price bid = quote.getBidPrice();
+		Price ask = quote.getAskPrice();
 
 		// TODO This doesn't represent an undefined quote, but the fact that a
 		// market may not have any buy or sell orders. This could still allow
