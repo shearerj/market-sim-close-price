@@ -1,0 +1,36 @@
+digraph G {
+	label="Activity Flow Chart"
+	fontsize=20
+	labelloc=t
+	splines=false
+
+	AgentArrival [label="Agent Arrival"]
+	AgentReentry [label="Agent Reentry"]
+	AgentStrategy [label="Agent Strategy"]
+	AgentArrival -> AgentReentry [style=dotted]
+	AgentArrival -> AgentStrategy
+	AgentReentry -> AgentStrategy
+
+	AgentStrategy -> AddBid [style=dotted]
+	AgentStrategy -> RemoveBid [style=dotted]
+	
+	AddBid [label="Submit (NMS) Bid"]
+	RemoveBid [label="Withdraw Bid"]
+	AddBid -> Clear [label=" CDA"]
+	RemoveBid -> Clear [label=" CDA"]
+	Clear -> Clear [constraint=false, label=" Call"]
+	
+	sendToIPs [label="Send to IPs"]
+	subgraph process {
+		rank=same	
+		ProcessQuote [label="Process Quote"]
+		ellipses [label="...", penwidth=0]
+		LAIPProcessQuote [label="LAIP: Process Quote"]
+	}
+	sendToIPs -> ellipses [style=invis]
+	Clear -> sendToIPs -> ProcessQuote
+	sendToIPs -> LAIPProcessQuote -> NotifyLA
+	NotifyLA [label="Notify LA"]
+
+	NotifyLA -> AgentStrategy [style=dotted, constraint=false]
+}
