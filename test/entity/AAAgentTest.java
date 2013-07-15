@@ -380,7 +380,7 @@ public class AAAgentTest {
 			}
 		}
 		//Checking that Aggression updated correctly
-		assertTrue(agent.getAggression() > 0);		
+		assertTrue(agent.getAggression() > 0);
 	}
 	
 	@Test

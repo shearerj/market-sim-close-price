@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import market.BestQuote;
+import market.BestBidAsk;
 import market.Bid;
 import market.PQBid;
 import market.PQPoint;
@@ -68,27 +68,27 @@ public class LAAgent extends HFTAgent {
 			Collection<Activity> actMap = new ArrayList<Activity>();
 
 			// update quotes
-			BestQuote bestQuote = findBestBuySell();
+			BestBidAsk bestQuote = findBestBuySell();
 
-			if ((bestQuote.getBestSell().getPrice() > (1 + alpha)
-					* bestQuote.getBestBuy().getPrice())
-					&& (bestQuote.getBestBuy().getPrice() >= 0)) {
+			if ((bestQuote.getBestAsk().getPrice() > (1 + alpha)
+					* bestQuote.getBestBid().getPrice())
+					&& (bestQuote.getBestBid().getPrice() >= 0)) {
 
 				log(INFO, ts.toString() + " | " + this + " " + getType()
 						+ "::agentStrategy: Found possible arb opp!");
 
-				Market buyMarket = bestQuote.getBestBuyMarket();
-				Market sellMarket = bestQuote.getBestSellMarket();
+				Market buyMarket = bestQuote.getBestBidMarket();
+				Market sellMarket = bestQuote.getBestAskMarket();
 
 				// check that BID/ASK defined for both markets
 				if (buyMarket.defined() && sellMarket.defined()) {
 
-					int midPoint = (bestQuote.getBestBuy().getPrice() + bestQuote.getBestSell().getPrice()) / 2;
-					int buySize = getBidQuantity(bestQuote.getBestBuy(),
+					int midPoint = (bestQuote.getBestBid().getPrice() + bestQuote.getBestAsk().getPrice()) / 2;
+					int buySize = getBidQuantity(bestQuote.getBestBid(),
 							new Price(midPoint - tickSize), buyMarket, true);
 					int sellSize = getBidQuantity(
 							new Price(midPoint + tickSize),
-							bestQuote.getBestSell(), sellMarket, false);
+							bestQuote.getBestAsk(), sellMarket, false);
 					int quantity = Math.min(buySize, sellSize);
 
 					if (quantity > 0 && !(buyMarket.equals(sellMarket))) {
@@ -100,8 +100,8 @@ public class LAAgent extends HFTAgent {
 										+ getType()
 										+ "::agentStrategy: Exploit existing arb opp: "
 										+ bestQuote + " in "
-										+ bestQuote.getBestBuyMarket() + " & "
-										+ bestQuote.getBestSellMarket());
+										+ bestQuote.getBestBidMarket() + " & "
+										+ bestQuote.getBestAskMarket());
 
 						// XXX Midpoint isn't quantized, so they'll be ticksize
 						// apart, but not actuall on a ticksize...
@@ -178,7 +178,7 @@ public class LAAgent extends HFTAgent {
 	 * 
 	 * @return BestQuote
 	 */
-	protected BestQuote findBestBuySell() {
+	protected BestBidAsk findBestBuySell() {
 		Price bestBuy = null, bestSell = null;
 		Market bestBuyMkt = null, bestSellMkt = null;
 
@@ -204,7 +204,7 @@ public class LAAgent extends HFTAgent {
 				bestSellMkt = laip.getMarket();
 			}
 		}
-		return new BestQuote(bestBuyMkt, bestBuy, bestSellMkt, bestSell);
+		return new BestBidAsk(bestBuyMkt, bestBuy, bestSellMkt, bestSell);
 	}
 
 	/**
