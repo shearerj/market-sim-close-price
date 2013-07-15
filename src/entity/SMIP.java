@@ -1,18 +1,16 @@
 package entity;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-
 import static logger.Logger.Level.INFO;
 
 import java.util.Collection;
-import activity.Activity;
-import event.*;
-import market.*;
+import java.util.Collections;
+
 import logger.Logger;
+import market.BestBidAsk;
+import market.Price;
 import model.MarketModel;
+import activity.Activity;
+import event.TimeStamp;
 
 
 /**
@@ -64,6 +62,7 @@ public class SMIP extends IP {
 	 * @param ts
 	 * @return
 	 */
+	// TODO This class shouldn't need this, as it's only returning the quote for a given market
 	public Collection<Activity> updateBBO(MarketModel model, TimeStamp ts) {
 		String s = ts + " | " + this.market + " UpdateNBBO: current " + getBBOQuote()
 				+ " --> ";
@@ -97,9 +96,6 @@ public class SMIP extends IP {
 		return Collections.emptyList();
 	}
 	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	public String toString() {
 		return "SMIP number " + id + ", " + "market" + market;
 	}

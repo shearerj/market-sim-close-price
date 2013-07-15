@@ -40,7 +40,7 @@ public class TwoMarket extends MarketModel {
 	}
 
 	@Override
-	protected void setupAgents(EntityProperties modelProps, // these are all of
+	protected void setupAgents(EntityProperties modelProps, // these are NOT all of
 															// the key value
 															// pairs from sim
 															// spec.json

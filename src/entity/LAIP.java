@@ -9,6 +9,7 @@ import event.TimeStamp;
  * 
  * @author cnris
  */
+// TODO Somewhere this needs to schedule it's agent's strategy
 public class LAIP extends SMIP {
 	
 	protected final LAAgent laagent;
