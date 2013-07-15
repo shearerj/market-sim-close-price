@@ -30,8 +30,8 @@ public abstract class Market extends Entity {
 
 	protected final MarketModel model;
 	protected final PQOrderBook orderbook;
-	protected final IPSM ip;
-	protected final Collection<AbstractIP> ips;
+	protected final SMIP ip;
+	protected final Collection<IP> ips;
 
 	// Statistics
 	protected final Collection<Bid> bids; // All bids ever submitted to the market
@@ -52,19 +52,18 @@ public abstract class Market extends Entity {
 		this.depths = new TimeSeries();
 		this.spreads = new TimeSeries();
 		this.midQuotes = new TimeSeries();
-		this.ips = new ArrayList<AbstractIP>();
+		this.ips = new ArrayList<IP>();
 
 		// FIXME Add latency properly
-		this.ip = new IPSM(0, id, new TimeStamp(0), this);
+		this.ip = new SMIP(0, new TimeStamp(0), this);
 		ips.add(model.getSip());
-		ips.add(ip);
-
 		this.lastClearTime = TimeStamp.ZERO;
 		this.lastClearPrice = null;
 		this.quote = new Quote(this, null, 0, null, 0, TimeStamp.ZERO);
 	}
 
-	public IPSM getIPSM() {
+	// TODO Rename
+	public SMIP getIPSM() {
 		return this.ip;
 	}
 
@@ -85,7 +84,7 @@ public abstract class Market extends Entity {
 		return bids;
 	}
 
-	public void addIP(AbstractIP ip) {
+	public void addIP(IP ip) {
 		ips.add(ip);
 	}
 
@@ -173,14 +172,12 @@ public abstract class Market extends Entity {
 	 * (determined by latency) in the future.
 	 */
 	public Collection<? extends Activity> sendToSIP(TimeStamp currentTime) {
-		// TODO switch to Quote object
-		int bid = quote.getBidPrice().getPrice();
-		int ask = quote.getAskPrice().getPrice();
-		log(INFO, currentTime + " | " + this + " SendToSIP(" + bid + ", " + ask
-				+ ")");
+		Price bid = quote.getBidPrice();
+		Price ask = quote.getAskPrice();
+		log(INFO, currentTime + " | " + this + " SendToSIP(" + quote + ")");
 
 		Collection<Activity> activities = new ArrayList<Activity>();
-		for (AbstractIP ip : ips) {
+		for (IP ip : ips) {
 			activities.add(ip.scheduleProcessQuote(this, bid, ask, currentTime));
 		}
 		return activities;

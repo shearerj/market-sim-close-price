@@ -29,12 +29,12 @@ public class Quote {
 		this.quoteTime = currentTime;
 
 		// XXX Are these the best way to handle these cases?
-		if (askPrice.lessThan(bidPrice)) {
+		if (askPrice == null || bidPrice == null) {
+			spread = Integer.MAX_VALUE;
+		} else if (askPrice.lessThan(bidPrice)) {
 			log(ERROR, market.getClass().getSimpleName()
 					+ "::quote: ERROR bid > ask");
 			spread = 0;
-		} else if (askPrice == null || bidPrice == null) {
-			spread = Integer.MAX_VALUE;
 		} else {
 			spread = askPrice.getPrice() - bidPrice.getPrice();
 		}

@@ -32,7 +32,7 @@ import data.SystemData;
 import data.TimeSeries;
 import entity.Agent;
 import entity.LAAgent;
-import entity.LAInformationProcessor;
+import entity.LAIP;
 import entity.Market;
 import entity.SMAgentFactory;
 import event.EventManager;
