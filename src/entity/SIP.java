@@ -141,7 +141,6 @@ public class SIP extends IP { // FOR TESTS, WE MIGHT NEED TO PASS THIS IN AS ARG
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return new String("SIP number " + this + ", model number " 
-				+ modelID);
+		return "SIP number " + id + ", model number " + modelID;
 	}
 }

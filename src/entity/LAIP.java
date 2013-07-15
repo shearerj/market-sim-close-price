@@ -28,6 +28,6 @@ public class LAIP extends SMIP {
 	}
 	
 	public String toString() {
-		return super.toString() + "LA: " + laagent;
+		return super.toString() + ", LA: " + laagent;
 	}
 }

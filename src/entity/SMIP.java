@@ -101,6 +101,6 @@ public class SMIP extends IP {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return "IP_SM number " + id + ", " + market;
+		return "SMIP number " + id + ", " + "market" + market;
 	}
 }
