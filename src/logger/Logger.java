@@ -19,7 +19,7 @@ public class Logger {
 
 	public static void log(Level level, String message) {
 		if (logger == null)
-			System.err.println("Logger Not Initialized! Can't write message\""
+			System.err.println("Logger Not Initialized! Can't write message: \""
 					+ message + "\"");
 		else
 			logger.log(level.ordinal(), message);
