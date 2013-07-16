@@ -147,19 +147,20 @@ public class CDAMarketTest {
 		MockAgent agent3 = new MockAgent(agentIndex++, model, market);
 		MockAgent agent4 = new MockAgent(agentIndex++, model, market);
 		
-
-		for (Transaction tr : model.getTrans()) {
-			assertTrue(true //tr.getBuyBid().equals(bid1) API Broke me
-					&& tr.getBuyer().equals(agent1)
-					//&& tr.getSellBid().equals(bid3)
-					&& tr.getSeller().equals(agent3)
-					&& tr.getPrice().equals(new Price(200))
-					//&& tr.getQuantity() == 1 || tr.getBuyBid().equals(bid2)
-					&& tr.getBuyer().equals(agent2)
-					//&& tr.getSellBid().equals(bid4)
-					&& tr.getSeller().equals(agent4)
-					&& tr.getPrice().equals(new Price(100))
-					&& tr.getQuantity() == 1);
+		// Creating and adding bids
+		market.submitBid(agent1, new Price(150),-1, time);
+		market.submitBid(agent2, new Price(100),-1, time);
+		market.submitBid(agent3, new Price(175), 1, time);
+		market.submitBid(agent4, new Price(125), 1, time);
+		market.clear(time);
+		System.out.println(model.getTrans().size());
+	}
+	
+	@Test
+	public void ExtraTest() {
+		for(int i=0; i < 100; i++) {
+			setup();
+			MultiBidSingleClear();
 		}
 	}
 }

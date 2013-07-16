@@ -226,25 +226,30 @@ public class AAAgent extends BackgroundAgent {
 				// Intramarginal - price limit is greater than p*
 				if (limit.getPrice() > movingAverage) {
 					// passive
-					if(aggression < 0) {
+					if(aggression == -1) 
+						tau = Price.ZERO.getPrice(); 
+					else if(aggression < 0) {
 						tau = movingAverage
 								* (1 - (Math.exp(-aggression * theta) - 1)
 										/ (Math.exp(theta) - 1));
 					}
 					//active
-					else if(aggression == 0) {
+					else if(aggression == 0)
 						tau = movingAverage;
-					}
 					// aggressive
-					else {
+					else if(aggression < 1){
 						tau = movingAverage + (limit.getPrice() - movingAverage)
 								* (Math.exp(aggression * theta) - 1)
 								/ (Math.exp(theta) - 1);
 					}
+					else
+						tau = limit.getPrice();
 				}
 				// Extramarginal - price limit is less than p*
 				else {
 					// passive
+					if(aggression == -1)
+						tau = Price.ZERO.getPrice();
 					if (aggression < 0) {
 						tau = limit.getPrice()
 								* (1 - (Math.exp(-1 * aggression * theta) - 1)
@@ -260,7 +265,9 @@ public class AAAgent extends BackgroundAgent {
 				// Intramarginal - cost is less than p*
 				if (limit.getPrice() < movingAverage) {
 					// passive
-					if (aggression < 0) {
+					if(aggression == -1)
+						tau = Price.INF.getPrice();
+					else if(aggression < 0) {
 						tau = movingAverage
 								+ (Price.INF.getPrice() - movingAverage)
 								* (Math.exp(-1 * aggression * theta) - 1)
@@ -271,17 +278,21 @@ public class AAAgent extends BackgroundAgent {
 						tau = movingAverage;
 					}
 					// aggressive
-					else {
+					else if(aggression < 1){
 						tau = limit.getPrice()
 								+ (movingAverage - limit.getPrice())
 								* (1 - (Math.exp(aggression * theta) - 1)
 										/ (Math.exp(theta) - 1));
 					}
+					else
+						tau = limit.getPrice();
 				}
 				// Extramarginal - cost is greater than p*
 				else {
 					// passive
-					if (aggression < 0) {
+					if(aggression == -1)
+						tau = Price.INF.getPrice();
+					else if(aggression < 0) {
 						tau = limit.getPrice() + Price.INF.minus(limit).getPrice()
 								* (Math.exp(-1 * aggression * theta) - 1)
 								/ (Math.exp(theta) - 1);
