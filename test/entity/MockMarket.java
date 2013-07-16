@@ -37,11 +37,5 @@ public class MockMarket extends Market {
 		return acts;
 	}
 
-	@Override
-	public Collection<? extends Activity> removeBid(Agent agent,
-			TimeStamp currentTime) {
-		orderbook.removeBid(agent.getID());
-		return new ArrayList<Activity>();
-	}
 
 }
