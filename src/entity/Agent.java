@@ -137,25 +137,6 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * Submit a bid to the specified market.
-	 */
-	public Collection<? extends Activity> executeSubmitBid(Market market,
-			Price price, int quantity, TimeStamp ts) {
-		if (quantity == 0)
-			return Collections.emptySet();
-
-		log(INFO, ts + " | " + this + " " + getType() + "::submitBid: +("
-				+ price + ", " + quantity + ") to " + market);
-
-		Price p = price.quantize(tickSize);
-		PQBid pqBid = new PQBid(this, market, ts);
-		pqBid.addPoint(quantity, p);
-		// quantity can be +/-
-		activeBids.add(pqBid);
-		return market.addBid(pqBid, ts);
-	}
-
-	/**
 	 * Submits a multiple-point bid to the specified market.
 	 * 
 	 * @param mkt
@@ -179,7 +160,8 @@ public abstract class Agent extends Entity {
 		}
 		// TODO incorporate multi-point PVs?
 		activeBids.add(pqBid);
-		return mkt.addBid(pqBid, ts);
+//		return mkt.addBid(pqBid, ts); FIXME fix this / move to market
+		return null;
 	}
 
 	/**

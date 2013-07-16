@@ -141,81 +141,82 @@ public abstract class SMAgent extends Agent {
 	 * Market System (NMS) regulations. The market selected will be that with
 	 * the best available price, according the NBBO.
 	 */
+	// FIXME Move to market
 	public Collection<? extends Activity> executeSubmitNMSBid(Price price,
 			int quantity, TimeStamp duration, TimeStamp ts) {
-		if (quantity == 0)
+//		if (quantity == 0)
 			return Collections.emptySet();
-
-		BestBidAsk lastNBBOQuote = sip.getBBOQuote();
-
-		// Identify best market, as based on the NBBO.
-		BestBidAsk mainMarketQuote = marketIP.getBBOQuote();
-
-		// Check if NBBO indicates that other market better:
-		// - Want to buy for as low a price as possible, so find market with the
-		// lowest ask.
-		// - Want to sell for as high a price as possible, so find market with
-		// the highest bid.
-		// - NBBO also better if the bid or ask in the current does not exist
-		// while NBBO does exist.
-
-		boolean nbboBetter, willTransact;
-		Market bestMarket;
-		Price bestPrice;
-
-		if (quantity > 0) { // buy
-			nbboBetter = lastNBBOQuote.getBestAsk() != null
-					&& lastNBBOQuote.getBestAsk().lessThan(mainMarketQuote.getBestAsk()); // not stored -- should be best?
-			willTransact = nbboBetter
-					&& price.greaterThan(lastNBBOQuote.getBestAsk());
-			if (willTransact) {
-				bestMarket = lastNBBOQuote.getBestAskMarket();
-				bestPrice = lastNBBOQuote.getBestAsk();
-			} else {
-				bestMarket = market;
-				bestPrice = mainMarketQuote.getBestAsk();
-			}
-		} else { // sell
-			nbboBetter = lastNBBOQuote.getBestBid() != null
-					&& lastNBBOQuote.getBestBid().greaterThan(mainMarketQuote.getBestBid());
-			willTransact = nbboBetter && price.lessThan(lastNBBOQuote.getBestBid());
-			if (willTransact) {
-				bestMarket = lastNBBOQuote.getBestBidMarket();
-				bestPrice = lastNBBOQuote.getBestBid();
-			} else {
-				bestMarket = market;
-				bestPrice = mainMarketQuote.getBestBid();
-			}
-		}
-
-		if (nbboBetter)
-			log(INFO, ts + " | " + this + " " + getType()
-					+ "::submitNMSBid: " + "NBBO(" + lastNBBOQuote.getBestBid()
-					+ ", " + lastNBBOQuote.getBestAsk() + ") better than " + market
-					+ " Quote(" + mainMarketQuote.getBestBid() + ", "
-					+ mainMarketQuote.getBestAsk() + ")");
-		if (willTransact)
-			log(INFO, ts + " | " + this + " " + getType()
-					+ "::submitNMSBid: " + "Bid +(" + price + "," + quantity
-					+ ") will transact" + " immediately in " + bestMarket
-					+ " given best price " + bestPrice);
-
-		// submit bid to the best market
-		marketSubmittedBid = bestMarket;
-		Collection<Activity> actMap = new ArrayList<Activity>(executeSubmitBid(
-				bestMarket, price, quantity, ts));
-
-		String durationLog = duration != Consts.INF_TIME
-				&& duration.longValue() > 0 ? ", duration=" + duration : "";
-		log(INFO, ts + " | " + this + " " + getType()
-				+ "::submitNMSBid: " + "+(" + price + "," + quantity + ") to "
-				+ bestMarket + durationLog);
-
-		if (duration != Consts.INF_TIME && duration.longValue() > 0) {
-			// Bid expires after a given duration
-			actMap.addAll(expireBid(bestMarket, duration, ts));
-		}
-		return actMap;
+//
+//		BestBidAsk lastNBBOQuote = sip.getBBOQuote();
+//
+//		// Identify best market, as based on the NBBO.
+//		BestBidAsk mainMarketQuote = marketIP.getBBOQuote();
+//
+//		// Check if NBBO indicates that other market better:
+//		// - Want to buy for as low a price as possible, so find market with the
+//		// lowest ask.
+//		// - Want to sell for as high a price as possible, so find market with
+//		// the highest bid.
+//		// - NBBO also better if the bid or ask in the current does not exist
+//		// while NBBO does exist.
+//
+//		boolean nbboBetter, willTransact;
+//		Market bestMarket;
+//		Price bestPrice;
+//
+//		if (quantity > 0) { // buy
+//			nbboBetter = lastNBBOQuote.getBestAsk() != null
+//					&& lastNBBOQuote.getBestAsk().lessThan(mainMarketQuote.getBestAsk()); // not stored -- should be best?
+//			willTransact = nbboBetter
+//					&& price.greaterThan(lastNBBOQuote.getBestAsk());
+//			if (willTransact) {
+//				bestMarket = lastNBBOQuote.getBestAskMarket();
+//				bestPrice = lastNBBOQuote.getBestAsk();
+//			} else {
+//				bestMarket = market;
+//				bestPrice = mainMarketQuote.getBestAsk();
+//			}
+//		} else { // sell
+//			nbboBetter = lastNBBOQuote.getBestBid() != null
+//					&& lastNBBOQuote.getBestBid().greaterThan(mainMarketQuote.getBestBid());
+//			willTransact = nbboBetter && price.lessThan(lastNBBOQuote.getBestBid());
+//			if (willTransact) {
+//				bestMarket = lastNBBOQuote.getBestBidMarket();
+//				bestPrice = lastNBBOQuote.getBestBid();
+//			} else {
+//				bestMarket = market;
+//				bestPrice = mainMarketQuote.getBestBid();
+//			}
+//		}
+//
+//		if (nbboBetter)
+//			log(INFO, ts + " | " + this + " " + getType()
+//					+ "::submitNMSBid: " + "NBBO(" + lastNBBOQuote.getBestBid()
+//					+ ", " + lastNBBOQuote.getBestAsk() + ") better than " + market
+//					+ " Quote(" + mainMarketQuote.getBestBid() + ", "
+//					+ mainMarketQuote.getBestAsk() + ")");
+//		if (willTransact)
+//			log(INFO, ts + " | " + this + " " + getType()
+//					+ "::submitNMSBid: " + "Bid +(" + price + "," + quantity
+//					+ ") will transact" + " immediately in " + bestMarket
+//					+ " given best price " + bestPrice);
+//
+//		// submit bid to the best market
+//		marketSubmittedBid = bestMarket;
+//		Collection<Activity> actMap = new ArrayList<Activity>(executeSubmitBid(
+//				bestMarket, price, quantity, ts));
+//
+//		String durationLog = duration != Consts.INF_TIME
+//				&& duration.longValue() > 0 ? ", duration=" + duration : "";
+//		log(INFO, ts + " | " + this + " " + getType()
+//				+ "::submitNMSBid: " + "+(" + price + "," + quantity + ") to "
+//				+ bestMarket + durationLog);
+//
+//		if (duration != Consts.INF_TIME && duration.longValue() > 0) {
+//			// Bid expires after a given duration
+//			actMap.addAll(expireBid(bestMarket, duration, ts));
+//		}
+//		return actMap;
 	}
 
 	public Collection<? extends Activity> executeSubmitNMSBid(Price p, int q,

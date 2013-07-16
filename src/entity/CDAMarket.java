@@ -40,9 +40,11 @@ public class CDAMarket extends Market {
 		return ((PQBid) getAskQuote()).bidTreeSet.last().getPrice();
 	}
 
-	public Collection<? extends Activity> addBid(Bid bid, TimeStamp curentTime) {
-		Collection<Activity> activities = new ArrayList<Activity>(super.addBid(
-				bid, curentTime));
+	@Override
+	public Collection<? extends Activity> submitBid(Agent agent, Price price,
+			int quantity, TimeStamp curentTime) {
+		Collection<Activity> activities = new ArrayList<Activity>(
+				super.submitBid(agent, price, quantity, curentTime));
 		activities.add(new Clear(this, Consts.INF_TIME));
 		return activities;
 	}

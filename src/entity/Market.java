@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+import market.BestBidAsk;
 import market.Bid;
 import market.PQBid;
 import market.PQOrderBook;
@@ -18,6 +19,7 @@ import market.Transaction;
 import model.MarketModel;
 import activity.Activity;
 import activity.SendToSIP;
+import activity.WithdrawBid;
 import data.TimeSeries;
 import event.TimeStamp;
 
@@ -61,7 +63,7 @@ public abstract class Market extends Entity {
 		this.ip = new SMIP(model.nextIPID(), new TimeStamp(0), this);
 		ips.add(sip);
 		ips.add(ip);
-		
+
 		this.lastClearTime = TimeStamp.ZERO;
 		this.lastClearPrice = null;
 		this.quote = new Quote(this, null, 0, null, 0, TimeStamp.ZERO);
@@ -91,18 +93,6 @@ public abstract class Market extends Entity {
 
 	public void addIP(IP ip) {
 		ips.add(ip);
-	}
-
-	/**
-	 * Add bid to the market.
-	 */
-	public Collection<? extends Activity> addBid(Bid bid, TimeStamp currentTime) {
-		// FIXME This is bad. Add bid should enforce PQBid if this is the case,
-		// or the PQBid interface should be pushed to Bid
-		orderbook.insertBid((PQBid) bid);
-		bids.add(bid);
-		recordDepth(currentTime);
-		return Collections.emptySet();
 	}
 
 	/**
@@ -139,7 +129,6 @@ public abstract class Market extends Entity {
 		orderbook.logFourHeap(currentTime);
 
 		Collection<Transaction> transes = orderbook.earliestPriceClear(currentTime);
-		recordDepth(currentTime); // Updating Depth
 
 		// Different logging if no transactions
 		if (transes.isEmpty()) {
@@ -195,16 +184,96 @@ public abstract class Market extends Entity {
 	protected void updateQuote(TimeStamp currentTime) {
 		// TODO This first part should be done a lot differently
 
-		Price askPrice = ((PQBid) orderbook.getAskQuote()).bidTreeSet.last().getPrice();
-		Price bidPrice = ((PQBid) orderbook.getBidQuote()).bidTreeSet.first().getPrice();
-		int askQuantity = ((PQBid) orderbook.getAskQuote()).bidTreeSet.last().getQuantity();
-		int bidQuantity = ((PQBid) orderbook.getBidQuote()).bidTreeSet.first().getQuantity();
+		PQBid ask = ((PQBid) orderbook.getAskQuote());
+		PQBid bid = ((PQBid) orderbook.getBidQuote());
+		Price askPrice = ask.bidTreeSet.last().getPrice();
+		Price bidPrice = bid.bidTreeSet.first().getPrice();
+		int askQuantity = ask.bidTreeSet.last().getQuantity();
+		int bidQuantity = bid.bidTreeSet.first().getQuantity();
 
 		quote = new Quote(this, askPrice, askQuantity, bidPrice, bidQuantity,
 				currentTime);
 
+		recordDepth(currentTime);
 		addSpread(currentTime);
 		addMidQuote(currentTime);
+	}
+
+	protected void recordDepth(TimeStamp ts) {
+		depths.add(ts, orderbook.getDepth());
+	}
+
+	protected void addSpread(TimeStamp ts) {
+		spreads.add(ts, quote.getSpread());
+	}
+
+	protected void addMidQuote(TimeStamp ts) {
+		double midQuote = quote.isDefined() ? Double.NaN
+				: (quote.getBidPrice().getPrice() + quote.getAskPrice().getPrice()) / 2d;
+		midQuotes.add(ts, midQuote);
+	}
+
+	// TODO switch to Bid Object
+	public Collection<? extends Activity> submitBid(Agent agent, Price price,
+			int quantity, TimeStamp currentTime) {
+		return submitBid(agent, price, quantity, currentTime,
+				TimeStamp.IMMEDIATE);
+	}
+
+	public Collection<? extends Activity> submitBid(Agent agent, Price price,
+			int quantity, TimeStamp currentTime, TimeStamp duration) {
+		if (quantity == 0) return Collections.emptySet();
+
+		log(INFO, currentTime + " | " + this + " " + getType()
+				+ "::submitBid: +(" + price + ", " + quantity + ") from "
+				+ agent);
+
+		PQBid pqBid = new PQBid(agent, this, currentTime);
+		pqBid.addPoint(quantity, price);
+
+		orderbook.insertBid(pqBid);
+		bids.add(pqBid);
+		recordDepth(currentTime);
+
+		if (duration.equals(TimeStamp.IMMEDIATE))
+			return Collections.emptySet();
+		else
+			return Collections.singleton(new WithdrawBid(agent, this,
+					currentTime.plus(duration)));
+	}
+
+	public Collection<? extends Activity> submitNMSBid(Agent agent,
+			Price price, int quantity, TimeStamp currentTime) {
+		return submitNMSBid(agent, price, quantity, currentTime,
+				TimeStamp.IMMEDIATE);
+	}
+
+	public Collection<? extends Activity> submitNMSBid(Agent agent,
+			Price price, int quantity, TimeStamp currentTime, TimeStamp duration) {
+		BestBidAsk nbbo = sip.getBBOQuote();
+		Market bestMarket;
+
+		if (quantity > 0) { // buy
+			boolean nbboBetter = nbbo.getBestAsk() != null
+					&& nbbo.getBestAsk().lessThan(quote.getAskPrice());
+			boolean willTransact = price.greaterThan(nbbo.getBestAsk());
+			bestMarket = nbboBetter && willTransact ? nbbo.getBestAskMarket()
+					: this;
+		} else { // sell
+			boolean nbboBetter = nbbo.getBestBid() != null
+					&& nbbo.getBestBid().greaterThan(quote.getBidPrice());
+			boolean willTransact = price.lessThan(nbbo.getBestBid());
+			bestMarket = nbboBetter && willTransact ? nbbo.getBestBidMarket()
+					: this;
+		}
+
+		if (!bestMarket.equals(this))
+			log(INFO, currentTime + " | " + agent + " " + getType()
+					+ "::submitNMSBid: " + "NBBO" + nbbo + " better than "
+					+ this + " Quote" + quote);
+
+		return bestMarket.submitBid(agent, price, quantity, currentTime,
+				duration);
 	}
 
 	public boolean isDefined() {
@@ -229,20 +298,6 @@ public abstract class Market extends Entity {
 
 	public TimeSeries getMidQuotes() {
 		return this.midQuotes;
-	}
-
-	protected void recordDepth(TimeStamp ts) {
-		depths.add(ts, orderbook.getDepth());
-	}
-
-	protected void addSpread(TimeStamp ts) {
-		spreads.add(ts, quote.getSpread());
-	}
-
-	protected void addMidQuote(TimeStamp ts) {
-		double midQuote = quote.isDefined() ? Double.NaN
-				: (quote.getBidPrice().getPrice() + quote.getAskPrice().getPrice()) / 2d;
-		midQuotes.add(ts, midQuote);
 	}
 
 	@Override

@@ -17,6 +17,7 @@ import systemmanager.Consts;
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
+import activity.SubmitBid;
 import data.EntityProperties;
 import data.Keys;
 import event.TimeStamp;
@@ -46,8 +47,8 @@ public class LAAgent extends HFTAgent {
 		this.alpha = alpha;
 
 		for (Market market : model.getMarkets()) {
-			this.addIP(
-					new LAIP(model.nextIPID(), latency, market, this), market);
+			this.addIP(new LAIP(model.nextIPID(), latency, market, this),
+					market);
 		}
 	}
 
@@ -104,10 +105,12 @@ public class LAAgent extends HFTAgent {
 
 						// XXX Midpoint isn't quantized, so they'll be ticksize
 						// apart, but not actuall on a ticksize...
-						actMap.addAll(executeSubmitBid(buyMarket, new Price(
-								midPoint - tickSize), quantity, ts));
-						actMap.addAll(executeSubmitBid(sellMarket, new Price(
-								midPoint + tickSize), -quantity, ts));
+						actMap.add(new SubmitBid(this, buyMarket, new Price(
+								midPoint - tickSize), quantity,
+								TimeStamp.IMMEDIATE));
+						actMap.add(new SubmitBid(this, sellMarket, new Price(
+								midPoint + tickSize), -quantity,
+								TimeStamp.IMMEDIATE));
 
 					} else if (buyMarket.equals(sellMarket)) {
 						log(INFO,
@@ -163,15 +166,15 @@ public class LAAgent extends HFTAgent {
 	}
 
 	/**
-	 * Find best market to buy in (i.e. lowest ask) and to sell in (i.e. highest
-	 * bid). This is a global operation so it checks all markets in marketIDs
-	 * and it gets the up-to-date market quote with zero delays.
+	 * Find best market to buy in (i.e. lowest ask) and to sell in (i.e. highest bid). This is a
+	 * global operation so it checks all markets in marketIDs and it gets the up-to-date market
+	 * quote with zero delays.
 	 * 
-	 * bestBuy = the best price an agent can buy at (the lowest sell bid).
-	 * bestSell = the best price an agent can sell at (the highest buy bid).
+	 * bestBuy = the best price an agent can buy at (the lowest sell bid). bestSell = the best price
+	 * an agent can sell at (the highest buy bid).
 	 * 
-	 * NOTE: This uses only those markets belonging to the agent's model, as
-	 * strategies can only be selected based on information on those markets.
+	 * NOTE: This uses only those markets belonging to the agent's model, as strategies can only be
+	 * selected based on information on those markets.
 	 * 
 	 * TODO eventually this should use InformationProcessors
 	 * 

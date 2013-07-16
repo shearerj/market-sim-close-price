@@ -93,7 +93,7 @@ public class AAAgentTest {
 		//creating a dummy agent
 		DummyAgent agent = new DummyAgent(agentIndex++, model, market);
 		//Having the agent submit a bid to the market
-		agent.agentStrategy(ts, price, q);
+		market.submitBid(agent, price, q, ts);
 	}
 	
 	private void addTransaction(MarketModel model, Market market, Price p, int q, TimeStamp time) {
