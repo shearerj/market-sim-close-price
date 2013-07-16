@@ -28,6 +28,11 @@ public class SendToIP extends Activity {
 		this.ip = ip;
 		this.quote = quote;
 	}
+	
+	public SendToIP(Market market, TimeStamp t) {
+		super(t);
+		this.mkt = market;
+	}
 
 	public Collection<? extends Activity> execute(TimeStamp time) {
 		return this.ip.sendToIP(mkt, quote.getBidPrice(), quote.getAskPrice(), time);
