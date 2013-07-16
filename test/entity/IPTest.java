@@ -7,6 +7,9 @@ import static entity.AAAgent.HISTORICAL_KEY;
 import static entity.AAAgent.THETAMAX_KEY;
 import static entity.AAAgent.THETAMIN_KEY;
 import static entity.AAAgent.THETA_KEY;
+
+import java.io.File;
+
 import logger.Logger;
 import model.MockMarketModel;
 
@@ -35,7 +38,7 @@ public class IPTest {
 	@BeforeClass
 	public static void setupClass() {
 		//Setting up the log file
-		Logger.setup(3, "simulations/unit_testing", "unit_tests.txt", true);
+		Logger.setup(3, new File("simulations/unit_testing/unit_tests.txt"));
 		
 		//Creating the setup properties
 		rand = new RandPlus(1);

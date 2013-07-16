@@ -109,16 +109,6 @@ public abstract class Market extends Entity {
 	}
 
 	/**
-	 * Method to get the type of the market.
-	 * 
-	 * @return
-	 */
-	@Deprecated
-	public String getType() {
-		return getClass().getSimpleName();
-	}
-
-	/**
 	 * Clears the order book.
 	 */
 	public Collection<? extends Activity> clear(TimeStamp currentTime) {
@@ -223,7 +213,7 @@ public abstract class Market extends Entity {
 			int quantity, TimeStamp currentTime, TimeStamp duration) {
 		if (quantity == 0) return Collections.emptySet();
 
-		log(INFO, currentTime + " | " + this + " " + getType()
+		log(INFO, currentTime + " | " + this + " " + getName()
 				+ "::submitBid: +(" + price + ", " + quantity + ") from "
 				+ agent);
 
@@ -301,7 +291,7 @@ public abstract class Market extends Entity {
 		}
 
 		if (!bestMarket.equals(this))
-			log(INFO, currentTime + " | " + agent + " " + getType()
+			log(INFO, currentTime + " | " + agent + " " + getName()
 					+ "::submitNMSBid: " + "NBBO" + nbbo + " better than "
 					+ this + " Quote" + quote);
 

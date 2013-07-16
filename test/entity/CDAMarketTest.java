@@ -2,10 +2,10 @@ package entity;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.util.Map;
 
 import logger.Logger;
-import market.PQBid;
 import market.Price;
 import market.Transaction;
 import model.MockMarketModel;
@@ -38,7 +38,7 @@ public class CDAMarketTest {
 	@BeforeClass
 	public static void setupClass() {
 		// Setting up the log file
-		Logger.setup(3, "simulations/unit_testing", "unit_tests.txt", true);
+		Logger.setup(3, new File("simulations/unit_testing/unit_tests.txt"));
 	}
 
 	@Before

@@ -343,9 +343,9 @@ public class SystemData {
 	public ArrayList<Integer> getMarketIDsOfType(String type) {
 		ArrayList<Integer> ids = new ArrayList<Integer>();
 		for (Map.Entry<Integer,Market> entry : markets.entrySet()) {
-			if (entry.getValue().getType().equals(type)) {
-				ids.add(entry.getKey());
-			}
+//			if (entry.getValue().getType().equals(type)) {
+//				ids.add(entry.getKey());
+//			}
 		}
 		return ids;
 	}

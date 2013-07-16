@@ -162,7 +162,7 @@ public class SystemManager {
 		// have to do with base directory and then logFileName. In this case
 		// "getPath" will probably do the right thing given the current
 		// setup, but isn't guaranteed to.
-		Logger.setup(logLevel, ".", logFile.getPath(), true);
+		Logger.setup(logLevel, logFile);
 		
 		if (Logger.getLevel() == NO_LOGGING)
 			logFile.deleteOnExit();

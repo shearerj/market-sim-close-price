@@ -11,6 +11,7 @@ import static entity.AAAgent.THETA_KEY;
 import static logger.Logger.log;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -24,7 +25,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import systemmanager.Consts;
 import utils.RandPlus;
 import activity.Activity;
 import activity.ProcessQuote;
@@ -49,7 +49,7 @@ public class AAAgentTest {
 	@BeforeClass
 	public static void setupClass() {
 		// Setting up the log file
-		Logger.setup(3, "simulations/unit_testing", "AA_unit_tests.txt", true);
+		Logger.setup(3, new File("simulations/unit_testing/AA_unit_tests.txt"));
 
 		// Creating the setup properties
 		rand = new RandPlus(1);
