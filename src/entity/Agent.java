@@ -10,11 +10,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import market.Bid;
-import market.PQBid;
 import market.Price;
 import market.PrivateValue;
 import market.Transaction;
@@ -22,9 +19,6 @@ import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
 import activity.Liquidate;
-import activity.SubmitBid;
-import activity.SubmitMultiPointBid;
-import activity.WithdrawBid;
 import event.TimeStamp;
 
 /**
@@ -54,7 +48,7 @@ public abstract class Agent extends Entity {
 	protected int positionBalance;
 	protected int averageCost;
 	protected int realizedProfit;
-	// for liquidation
+	// for liquidation XXX Should be moved to MarketMaker? Not sure...
 	protected int preLiqPosition;
 	protected int preLiqRealizedProfit;
 
@@ -89,42 +83,6 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * Withdraws a bid from the given market.
-	 */
-	public Collection<? extends Activity> executeWithdrawBid(Market market,
-			TimeStamp ts) {
-		log(INFO, ts + " | " + this + " withdraw bid from " + market);
-		return market.withdrawBid(this, ts);
-	}
-
-	/**
-	 * Submits a multiple-point bid to the specified market.
-	 * 
-	 * @param mkt
-	 * @param price
-	 * @param quantity
-	 * @param ts
-	 * @return
-	 */
-	// TODO swtich form parallel array lists to Map<Price, Integer>
-	public Collection<? extends Activity> executeSubmitMultipleBid(Market mkt,
-			Map<Price, Integer> priceQuantityMap, TimeStamp ts) {
-		log(INFO, ts + " | " + mkt + " " + this + ": +" + priceQuantityMap);
-
-		PQBid pqBid = new PQBid(this, mkt, ts);
-		for (Entry<Price, Integer> priceQuant : priceQuantityMap.entrySet()) {
-			int quantity = priceQuant.getValue();
-			Price price = priceQuant.getKey();
-			if (quantity == 0) continue; // TODO add check in PQBid instead
-			pqBid.addPoint(quantity, price.quantize(tickSize));
-		}
-		// TODO incorporate multi-point PVs?
-		activeBids.add(pqBid);
-		// return mkt.addBid(pqBid, ts); FIXME fix this / move to market
-		return null;
-	}
-
-	/**
 	 * Liquidate agent's position at the the value of the global fundamental at the specified time.
 	 * Price is determined by the fundamental at the time of liquidation.
 	 */
@@ -138,7 +96,7 @@ public abstract class Agent extends Entity {
 	/**
 	 * Liquidates an agent's position at the specified price.
 	 */
-	public Collection<? extends Activity> executeLiquidate(Price price,
+	public Collection<? extends Activity> liquidate(Price price,
 			TimeStamp ts) {
 
 		log(INFO, ts + " | " + this + " pre-liquidation: position="
@@ -201,7 +159,7 @@ public abstract class Agent extends Entity {
 			}
 		}
 
-		log(DEBUG, this.getModel().getFullName() + ": " + this + " bal="
+		log(DEBUG, model.getFullName() + ": " + this + " bal="
 				+ positionBalance + ", p=" + p + ", avgCost=" + averageCost);
 
 		return p == null ? Price.ZERO : new Price(positionBalance
@@ -210,18 +168,6 @@ public abstract class Agent extends Entity {
 
 	public final TimeStamp getArrivalTime() {
 		return arrivalTime;
-	}
-
-	public final MarketModel getModel() {
-		return model;
-	}
-
-	public final PrivateValue getPrivateValue() {
-		return privateValue;
-	}
-
-	public int getCashBalance() {
-		return cashBalance;
 	}
 
 	public int getRealizedProfit() {

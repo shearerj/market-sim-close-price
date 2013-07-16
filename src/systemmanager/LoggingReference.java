@@ -475,9 +475,9 @@ public class LoggingReference {
 
 		// set liquidation at the end of the simulation for market makers
 		if (agent instanceof BasicMarketMaker) {
-			eventManager.addActivity(new Liquidate(agent,
-					agent.getModel().getFundamentalAt(data.simLength),
-					data.simLength));
+//			eventManager.addActivity(new Liquidate(agent,
+//					agent.getModel().getFundamentalAt(data.simLength),
+//					data.simLength));
 		}
 	}
 
@@ -524,7 +524,7 @@ public class LoggingReference {
 //			s += Keys.ARRIVAL + "=" + ag.getArrivalTime().toString();
 
 			// print private value if exists
-			s += ", pv=" + ag.getPrivateValue();
+//			s += ", pv=" + ag.getPrivateValue();
 
 			// s += " ... params=" + ag.getProperties().toString();
 			log(INFO, s);

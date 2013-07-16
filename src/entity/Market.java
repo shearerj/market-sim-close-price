@@ -83,7 +83,9 @@ public abstract class Market extends Entity {
 	 * @return Map of current bids
 	 */
 	// TODO Remove, this is too powerful
-	public abstract Map<Agent, Bid> getBids();
+	public Map<Agent, Bid> getBids() {
+		return orderbook.getActiveBids();
+	}
 
 	/**
 	 * @return All bids submitted to this market
