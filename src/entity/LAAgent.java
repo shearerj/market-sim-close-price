@@ -185,8 +185,8 @@ public class LAAgent extends HFTAgent {
 		Market bestBuyMkt = null, bestSellMkt = null;
 
 		for (LAIP laip : ip_las) {
-			Price bid = laip.getBBOQuote().getBestBid();
-			Price ask = laip.getBBOQuote().getBestAsk();
+			Price bid = laip.getQuote().getBidPrice();
+			Price ask = laip.getQuote().getAskPrice();
 
 			// in case the bid/ask disappears
 			ArrayList<Price> price = new ArrayList<Price>();

@@ -2,11 +2,12 @@ package activity;
 
 import java.util.Collection;
 
-import market.Price;
+import market.Quote;
 
-import org.apache.commons.lang3.builder.*;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import entity.*;
+import entity.IP;
+import entity.Market;
 import event.TimeStamp;
 
 /**
@@ -16,57 +17,38 @@ import event.TimeStamp;
  */
 public class ProcessQuote extends Activity {
 
-	private IP ip;
-	private Market market;
-	private Price bid;
-	private Price ask;
+	protected final IP ip;
+	protected final Market market;
+	protected final Quote quote;
 
-	public ProcessQuote(IP ip, Market market, Price bid, Price ask, TimeStamp t) {
-		super(t);
+	public ProcessQuote(IP ip, Market market, Quote quote,
+			TimeStamp scheduledTime) {
+		super(scheduledTime);
 		this.ip = ip;
 		this.market = market;
-		this.bid = bid;
-		this.ask = ask;
+		this.quote = quote;
 	}
 
-	public ProcessQuote deepCopy() {
-		return new ProcessQuote(this.ip, this.market, this.bid, this.ask, this.scheduledTime);
-	}
-
-	public Collection<? extends Activity> execute(TimeStamp time) {
-		return this.ip.processQuote(this.market, this.bid, this.ask, time);
+	public Collection<? extends Activity> execute(TimeStamp currentTime) {
+		return this.ip.processQuote(market, quote, currentTime);
 	}
 
 	public String toString() {
-		return new String(getName() + "::" + market + ":(" + bid + "," + ask + ")");
+		return new String(getName() + "::" + market + ":" + quote);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == this)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
+		if (obj == null || !(obj instanceof ProcessQuote)) return false;
 		ProcessQuote other = (ProcessQuote) obj;
-		return new EqualsBuilder().
-				append(market.getID(), other.market.getID()).
-				append(ip.getID(), other.ip.getID()).
-				append(bid, other.bid).
-				append(ask, other.ask).
-				append(scheduledTime.longValue(), other.scheduledTime.longValue()).
-				isEquals();
+		return super.equals(other) && this.ip.equals(other.ip)
+				&& this.market.equals(other.market)
+				&& this.quote.equals(other.quote);
 	}
-	
+
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder(19, 37).
-				append(market.getID()).
-				append(ip.getID()).
-				append(bid).
-				append(ask).
-				append(scheduledTime.longValue()).
-				toHashCode();
+		return new HashCodeBuilder(19, 37).append(market).append(ip).append(
+				quote).append(scheduledTime).toHashCode();
 	}
 }

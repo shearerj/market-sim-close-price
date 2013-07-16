@@ -366,7 +366,7 @@ public class Observations {
 		feat.addProperty(delimit("_", MEAN, MARKET, TIMESERIES_MAXTIME),
 				medians.getMean());
 
-		TimeSeries nbbo = model.getNBBOSpreads();
+		TimeSeries nbbo = model.getSIP().getNBBOSpreads();
 
 		double[] array = nbbo.getSampledArray(0, maxTime);
 		DSPlus spreads = new DSPlus(array);

@@ -6,9 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import logger.Logger;
-import market.BestBidAsk;
-import market.Price;
-import model.MarketModel;
+import market.Quote;
 import activity.Activity;
 import event.TimeStamp;
 
@@ -22,7 +20,8 @@ import event.TimeStamp;
  */
 public class SMIP extends IP {
 
-	protected Market market;
+	protected final Market market;
+	protected Quote quote;
 	
 	/**
 	 * Constructor
@@ -34,69 +33,25 @@ public class SMIP extends IP {
 		this.market = market;
 	}
 	
-	Market getMarket() {
-		return this.market;
-	}
-	
 	/**
  	 * Store market's best bid/ask & insert Activity to UpdateNBBO at some amount of time 
  	 *
- 	 * @param mkt
+ 	 * @param market
  	 * @param bid
  	 * @param ask
- 	 * @param ts
+ 	 * @param currentTime
  	 * @return ActivityHashMap
  	 */
-	public Collection<Activity> processQuote(Market mkt, Price bid, Price ask, TimeStamp ts) {
-		BestBidAsk q = new BestBidAsk(mkt, bid, mkt, ask);
-		lastQuotes = q;
-		Logger.log(INFO, ts + " | " + this + " | "+ mkt + " " + 
-				"ProcessQuote: " + q);
-		return null;
+	public Collection<Activity> processQuote(Market market, Quote quote, TimeStamp currentTime) {
+		this.quote = quote;
+		Logger.log(INFO, currentTime + " | " + this + " | "+ market + " " + 
+				"ProcessQuote: " + quote);
+		return Collections.emptySet();
 	}
 	
-	/**
-	 * Method to update the BBO values, in this case for only ONE market
-	 * 
-	 * @param model
-	 * @param ts
-	 * @return
-	 */
-	/*
-	// TODO This class shouldn't need this, as it's only returning the quote for a given market
-	// NOTE: it could use this if it were worried about discrepencies in appearance of prices.
-	public Collection<Activity> updateBBO(MarketModel model, TimeStamp ts) {
-		String s = ts + " | " + this.market + " UpdateNBBO: current " + getBBOQuote()
-				+ " --> ";
-	
-		BestBidAsk lastQuote = new BestBidAsk(market, lastQuotes.getBestBid(), market, lastQuotes.getBestAsk());
-			
-		int bestBid = lastQuote.getBestBid().getPrice();
-		int bestAsk = lastQuote.getBestAsk().getPrice();
-		if ((bestBid != -1) && (bestAsk != -1)) {
-			// FIXME figure out best method for price disparity
-			// check for inconsistency in buy/sell prices & fix if found
-			if (bestBid > bestAsk) {
-				//int mid = (bestBid+ bestAsk) / 2;
-				//bestBid = mid - this.tickSize;
-				//bestAsk = mid + this.tickSize;
-				//s += " (before fix) " + lastQuote + " --> ";
-				
-				// Add spread of INF if inconsistent NBBO quote
-				model.addNBBOSpread(ts, Price.INF.getPrice()); // FIXME may not want to add this to MARKET????
-			} else {
-				// if bid-ask consistent, store the spread
-				model.addNBBOSpread(ts, lastQuote.getSpread());
-			}
-		} else {
-			// store spread of INF since no bid-ask spread
-			model.addNBBOSpread(ts, Price.INF.getPrice());
-		}
-		//lastQuote = new BestBidAsk(mkt, new Price(bestBid), mkt, new Price(bestAsk));
-		//lastQuotes = lastQuote;
-		Logger.log(INFO, s + "updated " + lastQuotes);
-		return Collections.emptyList();
-	}*/
+	public Quote getQuote() {
+		return quote;
+	}
 	
 	public String toString() {
 		return "SMIP number " + id + ", " + "market" + market;

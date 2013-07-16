@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import market.BestBidAsk;
 import market.Price;
 import market.PrivateValue;
 import market.Quote;
@@ -406,9 +407,9 @@ public class AAAgent extends BackgroundAgent {
 			String s = ts + " | " + this + " " + getName() + ":";
 
 			// Determining the offer price to (possibly) submit
-			Quote quote = primaryMarket.getQuote();
-			Price bestBid = quote.getBidPrice();
-			Price bestAsk = quote.getAskPrice();
+			Quote quote = marketIP.getQuote();
+			Price bestBid = quote.getAskPrice();
+			Price bestAsk = quote.getBidPrice();
 
 			// Can only submit offer if the offer would not cause position
 			// balance to exceed the agent's maximum position
@@ -527,7 +528,7 @@ public class AAAgent extends BackgroundAgent {
 		Collection<Activity> actMap = new ArrayList<Activity>();
 
 		ArrayList<Transaction> trans = new ArrayList<Transaction>(
-				model.getTrans());
+				marketIP.getTranses());
 		
 		// Update the moving average
 		Pair<Double, Double> pair = strat.findMovingAverage(trans);

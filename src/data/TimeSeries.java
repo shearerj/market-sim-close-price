@@ -132,6 +132,7 @@ public class TimeSeries {
 	 *            (inclusive)
 	 * @return
 	 */
+	// TODO Merge with DSPlus, so the method just returns a new descriptive statistic object
 	public double[] getSampledArray(int period, long maxTime) {
 		if (period <= 0) {
 			return getArrayUpTo(maxTime);

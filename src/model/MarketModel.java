@@ -24,7 +24,6 @@ import data.AgentProperties;
 import data.EntityProperties;
 import data.FundamentalValue;
 import data.Player;
-import data.TimeSeries;
 import entity.Agent;
 import entity.Market;
 import entity.SIP;
@@ -75,7 +74,6 @@ public abstract class MarketModel {
 	protected final Collection<Transaction> trans;
 	protected final Collection<Agent> agents;
 	protected final Collection<Player> players;
-	protected final TimeSeries NBBOSpreads; // NBBO bid/ask spread values TODO Move to SIP
 	protected final Generator<Integer> agentIDgen;
 	protected final Generator<Integer> ipIDgen;
 
@@ -93,7 +91,6 @@ public abstract class MarketModel {
 		this.trans = new ArrayList<Transaction>();
 		this.agentIDgen = new IDGenerator();
 		this.ipIDgen = new IDGenerator();
-		this.NBBOSpreads = new TimeSeries();
 		this.sip = new SIP(nextIPID(), modelID, new TimeStamp(100));
 
 		// Setup
@@ -228,14 +225,6 @@ public abstract class MarketModel {
 
 	public Collection<Player> getPlayers() {
 		return Collections.unmodifiableCollection(players);
-	}
-
-	public void addNBBOSpread(TimeStamp ts, int spread) {
-		this.NBBOSpreads.add(ts, (double) spread);
-	}
-
-	public TimeSeries getNBBOSpreads() {
-		return this.NBBOSpreads;
 	}
 
 	@Override
