@@ -517,7 +517,7 @@ public class AAAgent extends BackgroundAgent {
 		Collection<Activity> actMap = new ArrayList<Activity>();
 
 		ArrayList<Transaction> trans = new ArrayList<Transaction>(
-				model.getTrans());
+				marketIP.getTranses());
 		
 		// Update the moving average
 		Pair<Double, Double> pair = strat.findMovingAverage(trans);

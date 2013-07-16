@@ -182,8 +182,9 @@ public abstract class Market extends Entity {
 		log(INFO, currentTime + " | " + this + " SendToSIP(" + quote + ")");
 		
 		Collection<Activity> activities = new ArrayList<Activity>();
+		Collection<Transaction> transes = orderbook.earliestPriceClear(currentTime);
 		for (IP ip : ips) {
-			activities.add(new SendToIP(this, quote, ip, TimeStamp.IMMEDIATE));
+			activities.add(new SendToIP(this, quote, ip, TimeStamp.IMMEDIATE, transes));
 		}
 
 		recordDepth(currentTime);
