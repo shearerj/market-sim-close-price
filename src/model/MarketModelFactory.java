@@ -45,7 +45,7 @@ public class MarketModelFactory {
 			return new TwoMarket(modelIDs.next(), fundamental, agentProps,
 					modelProps, playerConfig, new RandPlus(rand.nextLong()));
 		default:
-			return null;
+			throw new IllegalArgumentException("Encountered Unknown Market Model Type");
 		}
 	}
 
