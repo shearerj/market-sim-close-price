@@ -7,56 +7,41 @@ import entity.*;
 import event.TimeStamp;
 
 /**
- * Class for Activity of withdrawing an agent's bid in a given market. Used when
- * bids expire as well.
+ * Class for Activity of withdrawing an agent's bid in a given market. Used when bids expire as
+ * well.
  * 
  * @author ewah
  */
 public class WithdrawBid extends Activity {
 
-	private Agent ag;
-	private Market mkt;
+	private Agent agent;
+	private Market market;
 
-	public WithdrawBid(Agent ag, Market mkt, TimeStamp t) {
-		super(t);
-		this.ag = ag;
-		this.mkt = mkt;
-	}
-
-	public WithdrawBid deepCopy() {
-		return new WithdrawBid(this.ag, this.mkt, this.scheduledTime);
+	public WithdrawBid(Agent agent, Market market, TimeStamp scheduledTime) {
+		super(scheduledTime);
+		this.agent = agent;
+		this.market = market;
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp time) {
-		return this.ag.executeWithdrawBid(this.mkt, time);
+		return market.withdrawBid(agent, time);
 	}
 
 	public String toString() {
-		return new String(getName() + "::" + ag + "," + mkt);
+		return new String(getName() + "::" + agent + "," + market);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == this)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
+		if (obj == null || !(obj instanceof WithdrawBid)) return false;
 		WithdrawBid other = (WithdrawBid) obj;
-		return new EqualsBuilder().
-				append(ag.getID(), other.ag.getID()).
-				append(mkt.getID(), other.mkt.getID()).
-				append(scheduledTime.longValue(), other.scheduledTime.longValue()).
-				isEquals();
+		return super.equals(obj) && this.agent.equals(other.agent)
+				&& this.market.equals(other.market);
 	}
-	
+
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder(19, 37).
-				append(ag.getID()).
-				append(mkt.getID()).
-				append(scheduledTime.longValue()).
-				toHashCode();
+		return new HashCodeBuilder(19, 37).append(agent).append(market).append(
+				scheduledTime).toHashCode();
 	}
 }

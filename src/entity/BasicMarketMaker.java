@@ -18,6 +18,7 @@ import utils.MathUtils;
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
+import activity.SubmitMultiPointBid;
 import data.EntityProperties;
 import data.Keys;
 import event.TimeStamp;
@@ -134,7 +135,7 @@ public class BasicMarketMaker extends MarketMaker {
 					+ ", stepSize=" + stepSize + ": buys [" + buyMinPrice
 					+ ", " + bid + "] &" + " sells [" + ask + ", "
 					+ sellMaxPrice + "]");
-			acts.addAll(submitMultipleBid(primaryMarket, priceQuantMap, ts));
+			acts.add(new SubmitMultiPointBid(this, primaryMarket, priceQuantMap, TimeStamp.IMMEDIATE));
 
 		} else {
 			log(INFO, ts + " | " + primaryMarket + " " + this + " " + getType()

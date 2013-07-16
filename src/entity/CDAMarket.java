@@ -49,10 +49,10 @@ public class CDAMarket extends Market {
 		return activities;
 	}
 
-	public Collection<? extends Activity> removeBid(Agent agent,
+	public Collection<? extends Activity> withdrawBid(Agent agent,
 			TimeStamp curentTime) {
 		Collection<Activity> activities = new ArrayList<Activity>(
-				super.removeBid(agent, curentTime));
+				super.withdrawBid(agent, curentTime));
 		activities.add(new Clear(this, Consts.INF_TIME));
 		return activities;
 	}
