@@ -1,6 +1,7 @@
 package activity;
 
 import java.util.Collection;
+import java.util.List;
 
 import market.Quote;
 import market.Transaction;
@@ -21,18 +22,18 @@ public class SendToIP extends Activity {
 	protected final Market market;
 	protected final IP ip;
 	protected final Quote quote;
-	Collection<Transaction> transes;
+	List<Transaction> transactions;
 
-	public SendToIP(Market market, Quote quote, IP ip, TimeStamp scheduledTime, Collection<Transaction> transes) {
+	public SendToIP(Market market, Quote quote, List<Transaction> transactions, IP ip, TimeStamp scheduledTime) {
 		super(scheduledTime);
 		this.market = market;
 		this.ip = ip;
 		this.quote = quote;
-		this.transes = transes;
+		this.transactions = transactions;
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp time) {
-		return ip.sendToIP(market, quote, time, transes);
+		return ip.sendToIP(market, quote, transactions, time);
 	}
 
 	public String toString() {

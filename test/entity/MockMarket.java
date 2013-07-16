@@ -1,9 +1,10 @@
 package entity;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import market.Price;
+import market.Transaction;
 import model.MarketModel;
 import activity.Activity;
 import event.TimeStamp;
@@ -23,7 +24,7 @@ public class MockMarket extends Market {
 			int quantity, TimeStamp currentTime) {
 		Collection<? extends Activity> acts = super.submitBid(agent, price,
 				quantity, currentTime);
-		updateQuote(currentTime);
+		updateQuote(Collections.<Transaction>emptyList(), currentTime);
 		return acts;
 	}
 
@@ -32,7 +33,7 @@ public class MockMarket extends Market {
 			TimeStamp currentTime) {
 		Collection<? extends Activity> acts = super.withdrawBid(agent,
 				currentTime);
-		updateQuote(currentTime);
+		updateQuote(Collections.<Transaction>emptyList(), currentTime);
 		return acts;
 	}
 

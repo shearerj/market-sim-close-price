@@ -1,14 +1,13 @@
 package market;
 
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import data.SystemData;
-
 import entity.Agent;
 import entity.Market;
-import event.*;
+import event.TimeStamp;
 
 /**
  * Base class for orderbooks. Each orderbook is associated with a single market.
@@ -42,9 +41,9 @@ public abstract class OrderBook {
 
 	public abstract void removeBid(int agentID);
 
-	public abstract Collection<Transaction> earliestPriceClear(TimeStamp ts);
+	public abstract List<Transaction> earliestPriceClear(TimeStamp ts);
 
-	public abstract Collection<Transaction> uniformPriceClear(TimeStamp ts,
+	public abstract List<Transaction> uniformPriceClear(TimeStamp ts,
 			float pricingPolicy);
 
 	public void insertBid(Bid newBid) {

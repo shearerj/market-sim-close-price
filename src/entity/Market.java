@@ -6,6 +6,7 @@ import static logger.Logger.Level.INFO;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -130,10 +131,10 @@ public abstract class Market extends Entity {
 		orderbook.logActiveBids(currentTime);
 		orderbook.logFourHeap(currentTime);
 
-		Collection<Transaction> transes = orderbook.earliestPriceClear(currentTime);
+		List<Transaction> transactions = orderbook.earliestPriceClear(currentTime);
 
 		// Different logging if no transactions
-		if (transes.isEmpty()) {
+		if (transactions.isEmpty()) {
 			log(INFO, currentTime + " | ....." + this + " "
 					+ getClass().getSimpleName()
 					+ "::clear: No change. Post-clear Quote" + quote);
@@ -147,7 +148,7 @@ public abstract class Market extends Entity {
 					+ quote);
 		}
 
-		for (Transaction trans : transes) {
+		for (Transaction trans : transactions) {
 			model.addTrans(trans);
 			trans.getBuyer().addTransaction(trans, currentTime);
 			trans.getSeller().addTransaction(trans, currentTime);
@@ -159,14 +160,16 @@ public abstract class Market extends Entity {
 		// update, but this is important to note. Also, if there's a clear,
 		// but no transactions, it's probably not worth a SendToSIP, unless
 		// you're a call market.
-		return updateQuote(currentTime);
+		return updateQuote(Collections.unmodifiableList(transactions),
+				currentTime);
 	}
 
 	/**
 	 * Updates the Markets current quote TODO This should be subsumed by sendToIPs. sendToIP should
 	 * compute this quote and update things appropriately.
 	 */
-	protected Collection<? extends Activity> updateQuote(TimeStamp currentTime) {
+	protected Collection<? extends Activity> updateQuote(
+			List<Transaction> transactions, TimeStamp currentTime) {
 		// TODO This first part should be done a lot differently
 
 		PQBid ask = ((PQBid) orderbook.getAskQuote());
@@ -178,13 +181,12 @@ public abstract class Market extends Entity {
 
 		quote = new Quote(this, askPrice, askQuantity, bidPrice, bidQuantity,
 				currentTime);
-		
-		log(INFO, currentTime + " | " + this + " SendToSIP(" + quote + ")");
-		
+
+		log(INFO, currentTime + " | " + this + " SendToSIP" + quote);
+
 		Collection<Activity> activities = new ArrayList<Activity>();
-		Collection<Transaction> transes = orderbook.earliestPriceClear(currentTime);
 		for (IP ip : ips) {
-			activities.add(new SendToIP(this, quote, ip, TimeStamp.IMMEDIATE, transes));
+			activities.add(new SendToIP(this, quote, transactions, ip, TimeStamp.IMMEDIATE));
 		}
 
 		recordDepth(currentTime);
@@ -334,7 +336,7 @@ public abstract class Market extends Entity {
 	public TimeSeries getMidQuotes() {
 		return this.midQuotes;
 	}
-	
+
 	public MarketModel getModel() {
 		return this.model;
 	}

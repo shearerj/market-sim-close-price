@@ -1,8 +1,10 @@
 package activity;
 
 import java.util.Collection;
+import java.util.List;
 
 import market.Quote;
+import market.Transaction;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -20,17 +22,19 @@ public class ProcessQuote extends Activity {
 	protected final IP ip;
 	protected final Market market;
 	protected final Quote quote;
+	protected final List<Transaction> newTransactions;
 
 	public ProcessQuote(IP ip, Market market, Quote quote,
-			TimeStamp scheduledTime) {
+			List<Transaction> newTransactions, TimeStamp scheduledTime) {
 		super(scheduledTime);
 		this.ip = ip;
 		this.market = market;
 		this.quote = quote;
+		this.newTransactions = newTransactions;
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
-		return this.ip.processQuote(market, quote, currentTime);
+		return this.ip.processQuote(market, quote, newTransactions, currentTime);
 	}
 
 	public String toString() {

@@ -2,9 +2,11 @@ package entity;
 
 import static logger.Logger.Level.INFO;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -14,6 +16,7 @@ import logger.Logger;
 import market.BestBidAsk;
 import market.Price;
 import market.Quote;
+import market.Transaction;
 import activity.Activity;
 import event.TimeStamp;
 
@@ -28,21 +31,25 @@ public class SIP extends IP {
 
 	protected final int modelID; // for logging only
 	protected final Map<Market, Quote> marketQuotes; // hashed by market
+	protected final List<Transaction> transactions;
 	protected BestBidAsk nbbo;
-	
-	protected final TimeSeries nbboSpreads; 
+
+	protected final TimeSeries nbboSpreads;
 
 	public SIP(int ID, int modelID, TimeStamp latency) {
 		super(ID, latency);
 		this.modelID = modelID;
 		this.marketQuotes = new HashMap<Market, Quote>();
-		
+		this.transactions = new ArrayList<Transaction>();
+
 		this.nbboSpreads = new TimeSeries();
 	}
 
 	public Collection<Activity> processQuote(Market mkt, Quote quote,
-			TimeStamp currentTime) {
+			List<Transaction> newTransactions, TimeStamp currentTime) {
 		marketQuotes.put(mkt, quote);
+		transactions.addAll(newTransactions);
+		
 		Logger.log(INFO, currentTime + " | " + this + " | " + mkt + " "
 				+ "ProcessQuote: " + quote);
 
@@ -75,11 +82,15 @@ public class SIP extends IP {
 		nbboSpreads.add(currentTime, nbbo.getSpread());
 		return Collections.emptySet();
 	}
-	
+
 	public BestBidAsk getNBBO() {
 		return nbbo;
 	}
 	
+	public List<Transaction> getTransactions() {
+		return Collections.unmodifiableList(transactions);
+	}
+
 	public TimeSeries getNBBOSpreads() {
 		return nbboSpreads;
 	}

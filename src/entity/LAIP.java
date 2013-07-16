@@ -2,8 +2,10 @@ package entity;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import market.Quote;
+import market.Transaction;
 import activity.Activity;
 import activity.AgentStrategy;
 import event.TimeStamp;
@@ -29,17 +31,17 @@ public class LAIP extends SMIP {
 	}
 
 	@Override
-	public Collection<Activity> processQuote(Market market, Quote quote,
-			TimeStamp currentTime) {
+	public Collection<? extends Activity> processQuote(Market market, Quote quote,
+			List<Transaction> newTransactions, TimeStamp currentTime) {
 		Collection<Activity> acts = new ArrayList<Activity>(super.processQuote(
-				market, quote, currentTime));
+				market, quote, newTransactions, currentTime));
 		acts.add(new AgentStrategy(laAgent, TimeStamp.IMMEDIATE));
 		return acts;
 	}
-	
+
 	// TODO May want to change this... Not great to just leak the market;
 	public Market getMarket() {
-		return market;
+		return assocaitedMarket;
 	}
 
 	@Override

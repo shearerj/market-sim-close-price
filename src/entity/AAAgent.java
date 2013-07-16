@@ -8,8 +8,8 @@ import static utils.Compare.min;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
-import market.BestBidAsk;
 import market.Price;
 import market.PrivateValue;
 import market.Quote;
@@ -152,7 +152,7 @@ public class AAAgent extends BackgroundAgent {
 		 * 
 		 */
 		private void updateAdaptiveness(double movingAverage,
-				double mvgAvgNum, ArrayList<Transaction> trans) {
+				double mvgAvgNum, List<Transaction> trans) {
 			//Error Checking, must have some transactions
 			if(movingAverage == -1) return;
 
@@ -189,7 +189,7 @@ public class AAAgent extends BackgroundAgent {
 			theta = theta + beta_t * (thetaStar - theta);
 		}
 
-		private Pair<Double, Double> findMovingAverage(ArrayList<Transaction> trans) {
+		private Pair<Double, Double> findMovingAverage(List<Transaction> trans) {
 			if (trans.size() == 0) 
 				return new Pair<Double, Double>(-1.0, 0.0); // Error checking
 			double total = 0;
@@ -516,8 +516,7 @@ public class AAAgent extends BackgroundAgent {
 		String s = ts + " | " + this + " " + getName() + ":";
 		Collection<Activity> actMap = new ArrayList<Activity>();
 
-		ArrayList<Transaction> trans = new ArrayList<Transaction>(
-				marketIP.getTranses());
+		List<Transaction> trans = sip.getTransactions();
 		
 		// Update the moving average
 		Pair<Double, Double> pair = strat.findMovingAverage(trans);
