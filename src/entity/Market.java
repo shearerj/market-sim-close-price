@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import market.BestBidAsk;
 import market.Bid;
@@ -82,7 +83,9 @@ public abstract class Market extends Entity {
 	 * @return Map of current bids
 	 */
 	// TODO Remove, this is too powerful
-	public abstract Map<Agent, Bid> getBids();
+	public Map<Agent, Bid> getBids() {
+		return orderbook.getActiveBids();
+	}
 
 	/**
 	 * @return All bids submitted to this market
@@ -98,7 +101,7 @@ public abstract class Market extends Entity {
 	/**
 	 * Remove bid for given agent from the market.
 	 */
-	public Collection<? extends Activity> removeBid(Agent agent,
+	public Collection<? extends Activity> withdrawBid(Agent agent,
 			TimeStamp currentTime) {
 		orderbook.removeBid(agent.getID()); // TODO Change to Agent
 		recordDepth(currentTime);
@@ -233,6 +236,37 @@ public abstract class Market extends Entity {
 
 		PQBid pqBid = new PQBid(agent, this, currentTime);
 		pqBid.addPoint(quantity, price);
+
+		orderbook.insertBid(pqBid);
+		bids.add(pqBid);
+		recordDepth(currentTime);
+
+		if (duration.equals(TimeStamp.IMMEDIATE))
+			return Collections.emptySet();
+		else
+			return Collections.singleton(new WithdrawBid(agent, this,
+					currentTime.plus(duration)));
+	}
+
+	public Collection<? extends Activity> submitMultiPointBid(Agent agent,
+			Map<Price, Integer> priceQuantityMap, TimeStamp currentTime) {
+		return submitMultiPointBid(agent, priceQuantityMap, currentTime,
+				TimeStamp.IMMEDIATE);
+	}
+
+	public Collection<? extends Activity> submitMultiPointBid(Agent agent,
+			Map<Price, Integer> priceQuantityMap, TimeStamp currentTime,
+			TimeStamp duration) {
+		log(INFO, currentTime + " | " + this + " " + agent + ": +"
+				+ priceQuantityMap);
+
+		PQBid pqBid = new PQBid(agent, this, currentTime);
+		for (Entry<Price, Integer> priceQuant : priceQuantityMap.entrySet()) {
+			int quantity = priceQuant.getValue();
+			Price price = priceQuant.getKey();
+			if (quantity == 0) continue; // TODO add check in PQPoint instead
+			pqBid.addPoint(quantity, price); // TODO Handle quantization
+		}
 
 		orderbook.insertBid(pqBid);
 		bids.add(pqBid);

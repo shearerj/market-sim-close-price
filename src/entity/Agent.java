@@ -1,6 +1,5 @@
 package entity;
 
-
 import static logger.Logger.log;
 import static logger.Logger.Level.DEBUG;
 import static logger.Logger.Level.INFO;
@@ -11,22 +10,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import market.Bid;
-import market.PQBid;
 import market.Price;
 import market.PrivateValue;
-import market.Quote;
 import market.Transaction;
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
 import activity.Liquidate;
-import activity.SubmitBid;
-import activity.SubmitMultipleBid;
-import activity.WithdrawBid;
 import event.TimeStamp;
 
 /**
@@ -42,8 +34,10 @@ public abstract class Agent extends Entity {
 	// List of all transactions. Implicitly time ordered due to transactions
 	// being created and assigned in time order.
 	protected final List<Transaction> transactions;
+	// TODO Currently unused? Bid should be added to this before it's submitted... Maybe Market
+	// should add t othis when a bid is submitted, so when it's removed this can also be updated...
 	protected final Collection<Bid> activeBids;
-	
+
 	// Agent parameters
 	protected final PrivateValue privateValue;
 	protected final TimeStamp arrivalTime;
@@ -54,10 +48,10 @@ public abstract class Agent extends Entity {
 	protected int positionBalance;
 	protected int averageCost;
 	protected int realizedProfit;
-	// for liquidation
+	// for liquidation XXX Should be moved to MarketMaker? Not sure...
 	protected int preLiqPosition;
 	protected int preLiqRealizedProfit;
-	
+
 	public Agent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			PrivateValue privateValue, RandPlus rand, int tickSize) {
 		super(agentID);
@@ -88,86 +82,9 @@ public abstract class Agent extends Entity {
 		return getClass().getSimpleName();
 	}
 
-	/***********************************
-	 * Methods for Activities
-	 * 
-	 **********************************/
-
 	/**
-	 * Wrapper method to submit bid to market after checking permissions.
-	 */
-	public Collection<? extends Activity> submitBid(Market market, Price price,
-			int quantity, TimeStamp scheduledTime) {
-		return Collections.singleton(new SubmitBid(this, market, price,
-				quantity, scheduledTime));
-	}
-
-	/**
-	 * Wrapper method to submit multiple-point bid to market after checking
-	 * permissions.
-	 */
-	public Collection<? extends Activity> submitMultipleBid(Market market,
-			Map<Price, Integer> priceQuantMap, TimeStamp scheduledTime) {
-		return Collections.singleton(new SubmitMultipleBid(this, market,
-				priceQuantMap, scheduledTime));
-	}
-
-	/**
-	 * Wrapper method to expire the agent's bid from a market after a specified
-	 * duration.
-	 * 
-	 * TODO how does this work? Expires all bids? The first bid it finds? The
-	 * oldest bid? Maybe should contain a reference to the bid in question...
-	 */
-	public Collection<? extends Activity> expireBid(Market market,
-			TimeStamp duration, TimeStamp currentTime) {
-		TimeStamp withdrawTime = currentTime.plus(duration);
-		log(INFO, currentTime + " | " + market + " " + this + ": bid duration="
-				+ duration);
-		return Collections.singleton(new WithdrawBid(this, market, withdrawTime));
-	}
-
-	/**
-	 * Withdraws a bid from the given market.
-	 */
-	public Collection<? extends Activity> executeWithdrawBid(Market market,
-			TimeStamp ts) {
-		log(INFO, ts + " | " + this + " withdraw bid from " + market);
-		return market.removeBid(this, ts);
-	}
-
-	/**
-	 * Submits a multiple-point bid to the specified market.
-	 * 
-	 * @param mkt
-	 * @param price
-	 * @param quantity
-	 * @param ts
-	 * @return
-	 */
-	// TODO swtich form parallel array lists to Map<Price, Integer>
-	public Collection<? extends Activity> executeSubmitMultipleBid(Market mkt,
-			Map<Price, Integer> priceQuantityMap, TimeStamp ts) {
-		log(INFO, ts + " | " + mkt + " " + this + ": +" + priceQuantityMap);
-
-		PQBid pqBid = new PQBid(this, mkt, ts);
-		for (Entry<Price, Integer> priceQuant : priceQuantityMap.entrySet()) {
-			int quantity = priceQuant.getValue();
-			Price price = priceQuant.getKey();
-			if (quantity == 0)
-				continue; // TODO add check in PQBid instead
-			pqBid.addPoint(quantity, price.quantize(tickSize));
-		}
-		// TODO incorporate multi-point PVs?
-		activeBids.add(pqBid);
-//		return mkt.addBid(pqBid, ts); FIXME fix this / move to market
-		return null;
-	}
-
-	/**
-	 * Liquidate agent's position at the the value of the global fundamental at
-	 * the specified time. Price is determined by the fundamental at the time of
-	 * liquidation.
+	 * Liquidate agent's position at the the value of the global fundamental at the specified time.
+	 * Price is determined by the fundamental at the time of liquidation.
 	 */
 	public Collection<? extends Activity> liquidateAtFundamental(
 			TimeStamp currentTime) {
@@ -179,15 +96,14 @@ public abstract class Agent extends Entity {
 	/**
 	 * Liquidates an agent's position at the specified price.
 	 */
-	public Collection<? extends Activity> executeLiquidate(Price price,
+	public Collection<? extends Activity> liquidate(Price price,
 			TimeStamp ts) {
 
 		log(INFO, ts + " | " + this + " pre-liquidation: position="
 				+ positionBalance + ", profit=" + realizedProfit);
 
 		// If no net position, no need to liquidate
-		if (positionBalance == 0)
-			return Collections.emptyList();
+		if (positionBalance == 0) return Collections.emptyList();
 
 		preLiqPosition = positionBalance;
 		preLiqRealizedProfit = getRealizedProfit();
@@ -226,8 +142,7 @@ public abstract class Agent extends Entity {
 	 * Computes any unrealized profit based on market bid/ask quotes.
 	 */
 	public Price getUnrealizedProfit() {
-		if (positionBalance == 0)
-			return Price.ZERO;
+		if (positionBalance == 0) return Price.ZERO;
 
 		Price p = null;
 		if (positionBalance > 0) {
@@ -244,7 +159,7 @@ public abstract class Agent extends Entity {
 			}
 		}
 
-		log(DEBUG, this.getModel().getFullName() + ": " + this + " bal="
+		log(DEBUG, model.getFullName() + ": " + this + " bal="
 				+ positionBalance + ", p=" + p + ", avgCost=" + averageCost);
 
 		return p == null ? Price.ZERO : new Price(positionBalance
@@ -253,18 +168,6 @@ public abstract class Agent extends Entity {
 
 	public final TimeStamp getArrivalTime() {
 		return arrivalTime;
-	}
-
-	public final MarketModel getModel() {
-		return model;
-	}
-
-	public final PrivateValue getPrivateValue() {
-		return privateValue;
-	}
-
-	public int getCashBalance() {
-		return cashBalance;
 	}
 
 	public int getRealizedProfit() {
@@ -284,12 +187,12 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * Iterates through the agent's transactions and calculates it's current
-	 * discounted surplus with the specified discount factor
+	 * Iterates through the agent's transactions and calculates it's current discounted surplus with
+	 * the specified discount factor
 	 * 
 	 * @param rho
-	 *            Discount factor. 0 means no discounting, while larger positive
-	 *            numbers represent larger discounting
+	 *            Discount factor. 0 means no discounting, while larger positive numbers represent
+	 *            larger discounting
 	 * @return
 	 */
 	public double getSurplus(double rho) {
@@ -329,8 +232,7 @@ public abstract class Agent extends Entity {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof Agent))
-			return false;
+		if (obj == null || !(obj instanceof Agent)) return false;
 		Agent agent = (Agent) obj;
 		return super.equals(agent) && model.equals(agent.model);
 	}

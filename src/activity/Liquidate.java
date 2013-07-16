@@ -29,7 +29,7 @@ public class Liquidate extends Activity {
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
-		return this.ag.executeLiquidate(this.p, currentTime);
+		return this.ag.liquidate(this.p, currentTime);
 	}
 
 	public String toString() {

@@ -325,7 +325,8 @@ public class SystemData {
 	 * @return true if agent with given ID has a non-null private value.
 	 */
 	public boolean hasPrivateValue(int id) {
-		 return (getAgent(id).getPrivateValue() != null);
+//		 return (getAgent(id).getPrivateValue() != null);
+		return false;
 	}
 	
 	

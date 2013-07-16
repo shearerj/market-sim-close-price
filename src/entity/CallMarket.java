@@ -2,9 +2,7 @@ package entity;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 
-import market.Bid;
 import model.MarketModel;
 import systemmanager.Consts;
 import activity.Activity;
@@ -37,14 +35,10 @@ public class CallMarket extends Market {
 		if (clearFreq.after(Consts.START_TIME))
 			throw new IllegalArgumentException(
 					"Can't create a call market with 0 clear frequency. Create a CDA instead.");
+		
 		this.pricingPolicy = pricingPolicy;
 		this.clearFreq = clearFreq;
 		this.nextClearTime = clearFreq;
-	}
-	
-	@Override
-	public Map<Agent, Bid> getBids() {
-		return orderbook.getActiveBids();
 	}
 
 	@Override
