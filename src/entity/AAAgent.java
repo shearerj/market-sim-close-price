@@ -225,10 +225,14 @@ public class AAAgent extends BackgroundAgent {
 				// Intramarginal - price limit is greater than p*
 				if (limit.getPrice() > movingAverage) {
 					// passive
-					if (aggression < 0) {
+					if(aggression < 0) {
 						tau = movingAverage
-								* (1 - (Math.exp(-1 * aggression * theta) - 1)
+								* (1 - (Math.exp(-aggression * theta) - 1)
 										/ (Math.exp(theta) - 1));
+					}
+					//active
+					else if(aggression == 0) {
+						tau = movingAverage;
 					}
 					// aggressive
 					else {
@@ -260,6 +264,10 @@ public class AAAgent extends BackgroundAgent {
 								+ (Price.INF.getPrice() - movingAverage)
 								* (Math.exp(-1 * aggression * theta) - 1)
 								/ (Math.exp(theta) - 1);
+					}
+					//active
+					else if(aggression == 0) {
+						tau = movingAverage;
 					}
 					// aggressive
 					else {

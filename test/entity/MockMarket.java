@@ -33,9 +33,8 @@ public class MockMarket extends Market {
 			int quantity, TimeStamp currentTime) {
 		Collection<Activity> acts = new ArrayList<Activity>
 			(super.submitBid(agent, price, quantity, currentTime));
-			this.updateQuote(currentTime);
+		this.updateQuote(currentTime);
 		return acts;
 	}
-
 
 }

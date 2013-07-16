@@ -306,7 +306,6 @@ public class AAAgentTest {
 		agent.setAggression(1);
 		TimeStamp ts = new TimeStamp(120);
 		Collection<Activity> test = agent.agentStrategy(ts);
-		Logger.log(Logger.Level.DEBUG, "Aggression adjusted from 1: " + agent.getAggression());		
 
 		//executing the bid submission - will go to the market
 		for(Activity act : test) {
@@ -322,8 +321,9 @@ public class AAAgentTest {
 		assertTrue(bid.getAgent().equals(agent));
 		Price low = new Price(65000);
 		Price high = new Price(70000);
-		assertTrue(bid.bidTreeSet.first().getPrice().greaterThan(low));
-		assertTrue(bid.bidTreeSet.first().getPrice().lessThan(high));
+		Price bidPrice = bid.bidTreeSet.first().getPrice();
+		assertTrue(bidPrice.toString(), bidPrice.greaterThan(low));
+		assertTrue(bidPrice.lessThan(high));
 		assertTrue(bid.bidTreeSet.first().getQuantity() > 0);
 	}
 	
