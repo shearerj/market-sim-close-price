@@ -33,6 +33,10 @@ simulations/*
 logs/*
 .settings/*
 
+# OSX Setting #
+###############
+.DS_Store
+
 # Emacs #
 #########
 *~

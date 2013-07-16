@@ -12,7 +12,7 @@ public class Price implements Comparable<Price> {
 
 	// TODO Take infinite price into account for subtraction, addition,
 	// toString, etc.
-	public static final Price INF = new Price(Integer.MAX_VALUE);
+	public static final Price INF = new Price(Integer.MAX_VALUE - 1);
 	public static final Price ZERO = new Price(0);
 
 	public static int PRICE_PER_DOLLAR = 1000;

@@ -402,7 +402,8 @@ public class AAAgent extends BackgroundAgent {
 			}
 			
 			// if no bid or no ask, submit least aggressive price
-			if (bestBid.equals(new Price(-1)) || bestAsk.equals(new Price(-1))) {
+			if (bestBid == null || bestAsk == null ||
+					bestBid.equals(new Price(-1)) || bestAsk.equals(new Price(-1))) {
 				Price price = isBuyer ? Price.ZERO : Price.INF;
 				return Collections.singleton(new SubmitNMSBid(AAAgent.this, price, quantity, primaryMarket, TimeStamp.IMMEDIATE));
 			}
@@ -429,22 +430,22 @@ public class AAAgent extends BackgroundAgent {
 			// difference/eta computes to be zero
 			if (targetPrice.equals(new Price(-1))) {
 				if (isBuyer) {
-					Price offset = min(bestAsk, limit).minus(bestBid).times(1/strat.eta);
+					Price offset = min(bestAsk, limit).minus(bestBid).times(1.0/strat.eta);
 					price = bestBid.plus(offset).plus(new Price(1));
 					price = min(price, limit);
 				} else {
-					Price offset = bestAsk.minus( max(bestBid, limit) ).times(1/strat.eta);
+					Price offset = bestAsk.minus( max(bestBid, limit) ).times(1.0/strat.eta);
 					price = bestAsk.minus(offset).minus(new Price(1));
 					price = max(price, limit);				
 				}
 			}
 			else {
 				if (isBuyer) {
-					Price offset = targetPrice.minus(bestBid).times(1/strat.eta);
+					Price offset = targetPrice.minus(bestBid).times(1.0/strat.eta);
 					price = bestBid.plus(offset).plus(new Price(1));
 					price = min(price, limit);
 				} else {
-					Price offset = bestAsk.minus(targetPrice).times(1/strat.eta);
+					Price offset = bestAsk.minus(targetPrice).times(1.0/strat.eta);
 					price = bestAsk.minus(offset).minus(new Price(1));
 					price = max(price, limit);
 				}
