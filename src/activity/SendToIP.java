@@ -1,6 +1,11 @@
 package activity;
 
 import java.util.Collection;
+
+import market.PQBid;
+import market.Price;
+import market.Quote;
+
 import org.apache.commons.lang3.builder.*;
 
 import entity.*;
@@ -11,17 +16,26 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-public class SendToSIP extends Activity {
+public class SendToIP extends Activity {
 
 	private Market mkt;
+	protected IP ip;
+	protected Quote quote;
 
-	public SendToSIP(Market mkt, TimeStamp t) {
+	public SendToIP(Market mkt, TimeStamp t, Quote quote, IP ip) {
 		super(t);
 		this.mkt = mkt;
+		this.ip = ip;
+		this.quote = quote;
+	}
+	
+	public SendToIP(Market market, TimeStamp t) {
+		super(t);
+		this.mkt = market;
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp time) {
-		return this.mkt.sendToSIP(time);
+		return this.ip.sendToIP(mkt, quote.getBidPrice(), quote.getAskPrice(), time);
 	}
 
 	public String toString() {
@@ -36,7 +50,7 @@ public class SendToSIP extends Activity {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		SendToSIP other = (SendToSIP) obj;
+		SendToIP other = (SendToIP) obj;
 		return new EqualsBuilder().
 				append(mkt.getID(), other.mkt.getID()).
 				append(scheduledTime.longValue(), other.scheduledTime.longValue()).
