@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Random;
 
 import model.MarketModel;
-import model.MarketObjectPair;
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.ModelType;
 import activity.AgentArrival;

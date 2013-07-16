@@ -39,9 +39,11 @@ public class MarketModelFactory {
 			return new CentralCDA(modelIDs.next(), fundamental, agentProps,
 					modelProps, playerConfig, new RandPlus(rand.nextLong()));
 		case CENTRALCALL:
-			return null; // FIXME implement
+			return new CentralCall(modelIDs.next(), fundamental, agentProps,
+					modelProps, playerConfig, new RandPlus(rand.nextLong()));
 		case TWOMARKET:
-			return null; // FIXME implement
+			return new TwoMarket(modelIDs.next(), fundamental, agentProps,
+					modelProps, playerConfig, new RandPlus(rand.nextLong()));
 		default:
 			return null;
 		}

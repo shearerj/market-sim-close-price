@@ -19,8 +19,8 @@ public class SMAgentFactory {
 	protected final Generator<TimeStamp> arrivalProcess;
 	protected final Generator<Market> marketAssignment;
 
-	public SMAgentFactory(MarketModel model,
-			Generator<Integer> ids, Generator<TimeStamp> arrivalProcess,
+	public SMAgentFactory(MarketModel model, Generator<Integer> ids,
+			Generator<TimeStamp> arrivalProcess,
 			Generator<Market> marketProcess, RandPlus rand) {
 		this.rand = rand;
 		this.model = model;
@@ -28,7 +28,7 @@ public class SMAgentFactory {
 		this.arrivalProcess = arrivalProcess;
 		this.marketAssignment = marketProcess;
 	}
-	
+
 	/**
 	 * SMAgent factory with Poisson arrivals and round robin market selection.
 	 */
@@ -42,19 +42,29 @@ public class SMAgentFactory {
 	public SMAgent createAgent(AgentProperties props) {
 		switch (props.getAgentType()) {
 		case AA:
-			return null; // FIXME implement
+			return new AAAgent(nextID.next(), arrivalProcess.next(), model,
+					marketAssignment.next(), new RandPlus(rand.nextLong()),
+					props);
 		case ZIP:
-			return null; // FIXME implement
+			return new ZIPAgent(nextID.next(), arrivalProcess.next(), model,
+					marketAssignment.next(), new RandPlus(rand.nextLong()),
+					props);
 		case ZIR:
-			return null; // FIXME implement
+			return new ZIRAgent(nextID.next(), arrivalProcess.next(), model,
+					marketAssignment.next(), new RandPlus(rand.nextLong()),
+					props);
 		case ZI:
 			return new ZIAgent(nextID.next(), arrivalProcess.next(), model,
 					marketAssignment.next(), new RandPlus(rand.nextLong()),
 					props);
 		case BASICMM:
-			return null; // FIXME implement
+			// XXX Should this advance the arrival process, even though it's not used?
+			return new BasicMarketMaker(nextID.next(), model,
+					marketAssignment.next(), new RandPlus(rand.nextLong()),
+					props);
 		default:
-			return null;
+			throw new IllegalArgumentException("Can't create AgentType: "
+					+ props.getAgentType());
 		}
 	}
 
