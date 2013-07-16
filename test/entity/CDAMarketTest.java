@@ -8,7 +8,7 @@ import logger.Logger;
 import market.PQBid;
 import market.Price;
 import market.Transaction;
-import model.DummyMarketModel;
+import model.MockMarketModel;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -31,7 +31,7 @@ public class CDAMarketTest {
 	private static Map<AgentProperties, Integer> agentProperties;
 	private static JsonObject playerConfig;
 
-	private DummyMarketModel model;
+	private MockMarketModel model;
 	private Market market;
 	private int agentIndex;
 
@@ -43,7 +43,7 @@ public class CDAMarketTest {
 	
 	@Before
 	public void setup() {
-		model = new DummyMarketModel(1);
+		model = new MockMarketModel(1);
 		market = new CDAMarket(1, model, 0); // TODO Dummy IP
 		model.addMarket(market);
 		agentIndex = 1;
@@ -54,7 +54,7 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating the agent
-		DummyAgent agent = new DummyAgent(agentIndex++, model, market);
+		MockAgent agent = new MockAgent(agentIndex++, model, market);
 		
 		//Creating and adding the bid
 		PQBid testBid = new PQBid(agent, market, time);
@@ -71,7 +71,7 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating the agent
-		DummyAgent agent = new DummyAgent(agentIndex++, model, market);
+		MockAgent agent = new MockAgent(agentIndex++, model, market);
 		
 		//Creating and adding the bid
 		PQBid testBid = new PQBid(agent, market, time);
@@ -88,8 +88,8 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating dummy agents
-		DummyAgent agent1 = new DummyAgent(agentIndex++, model, market);
-		DummyAgent agent2 = new DummyAgent(agentIndex++, model, market);
+		MockAgent agent1 = new MockAgent(agentIndex++, model, market);
+		MockAgent agent2 = new MockAgent(agentIndex++, model, market);
 		
 		//Creating and adding bids
 		PQBid bid1 = agent1.agentStrategy(time, new Price(100), 1);
@@ -113,8 +113,8 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating dummy agents
-		DummyAgent agent1 = new DummyAgent(agentIndex++, model, market);
-		DummyAgent agent2 = new DummyAgent(agentIndex++, model, market);
+		MockAgent agent1 = new MockAgent(agentIndex++, model, market);
+		MockAgent agent2 = new MockAgent(agentIndex++, model, market);
 		
 		//Creating and adding bids
 		PQBid bid1 = agent1.agentStrategy(time, new Price(200), 1);
@@ -139,10 +139,10 @@ public class CDAMarketTest {
 		TimeStamp time2 = new TimeStamp(10);
 		
 		//Creating dummy agents
-		DummyAgent agent1 = new DummyAgent(agentIndex++, model, market);
-		DummyAgent agent2 = new DummyAgent(agentIndex++, model, market);
-		DummyAgent agent3 = new DummyAgent(agentIndex++, model, market);
-		DummyAgent agent4 = new DummyAgent(agentIndex++, model, market);
+		MockAgent agent1 = new MockAgent(agentIndex++, model, market);
+		MockAgent agent2 = new MockAgent(agentIndex++, model, market);
+		MockAgent agent3 = new MockAgent(agentIndex++, model, market);
+		MockAgent agent4 = new MockAgent(agentIndex++, model, market);
 		
 		//Creating and adding bids
 		PQBid bid1 = agent1.agentStrategy(new TimeStamp(10), new Price(200), 1);

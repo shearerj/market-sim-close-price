@@ -14,15 +14,15 @@ import activity.Activity;
 import activity.SubmitNMSBid;
 import event.TimeStamp;
 
-public class DummyAgent extends BackgroundAgent {
+public class MockAgent extends BackgroundAgent {
 
-	public DummyAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
+	public MockAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, PrivateValue pv, RandPlus rand, int tickSize) {
 		super(agentID, arrivalTime, model, market, pv, rand, tickSize);
 		// TODO Auto-generated constructor stub
 	}
 
-	public DummyAgent(int agentID, MarketModel model, Market market) {
+	public MockAgent(int agentID, MarketModel model, Market market) {
 		this(agentID, new TimeStamp(0), model, market, new PrivateValue(),
 				new RandPlus(), 1000);
 	}
