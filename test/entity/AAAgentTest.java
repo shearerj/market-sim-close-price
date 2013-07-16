@@ -45,7 +45,6 @@ public class AAAgentTest {
 	private MockMarketModel model;
 	private Market market;
 	private int agentIndex;
-	public SIP dummySIP;
 
 	@BeforeClass
 	public static void setupClass() {
@@ -329,11 +328,8 @@ public class AAAgentTest {
 		Collection<Activity> test = agent.agentStrategy(ts);
 
 		// executing the bid submission - will go to the market
-		for (Activity act : test) {
-			if (SubmitNMSBid.class.isAssignableFrom(act.getClass())) {
-				act.execute(ts);
-			}
-		}
+		for (Activity act : test)
+			if (act instanceof SubmitNMSBid) act.execute(ts);
 
 		// Getting the bid from the market
 		PQBid bid = (PQBid) market.getBids().get(agent);

@@ -350,4 +350,10 @@ public class PQBid extends Bid {
 		//so containment is true
 		return true;
 	}
+	
+	@Override
+	public String toString() {
+		return bidTreeSet.toString();
+	}
+	
 }
