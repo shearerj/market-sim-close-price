@@ -41,6 +41,7 @@ public class SIP extends IP {
 		this.modelID = modelID;
 		this.marketQuotes = new HashMap<Market, Quote>();
 		this.transactions = new ArrayList<Transaction>();
+		this.nbbo = new BestBidAsk(null, null, null, null);
 
 		this.nbboSpreads = new TimeSeries();
 	}
