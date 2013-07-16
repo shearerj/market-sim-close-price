@@ -2,7 +2,6 @@ package entity;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
-import static systemmanager.Consts.INF_TIME;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -184,7 +183,7 @@ public abstract class Market extends Entity {
 		
 		Collection<Activity> activities = new ArrayList<Activity>();
 		for (IP ip : ips) {
-			activities.add(new SendToIP(this, TimeStamp.IMMEDIATE, quote, ip));
+			activities.add(new SendToIP(this, quote, ip, TimeStamp.IMMEDIATE));
 		}
 
 		recordDepth(currentTime);
@@ -281,7 +280,7 @@ public abstract class Market extends Entity {
 
 	public Collection<? extends Activity> submitNMSBid(Agent agent,
 			Price price, int quantity, TimeStamp currentTime, TimeStamp duration) {
-		BestBidAsk nbbo = sip.getBBOQuote();
+		BestBidAsk nbbo = sip.getNBBO();
 		Market bestMarket;
 
 		if (quantity > 0) { // buy

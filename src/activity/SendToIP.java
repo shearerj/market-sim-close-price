@@ -2,13 +2,12 @@ package activity;
 
 import java.util.Collection;
 
-import market.PQBid;
-import market.Price;
 import market.Quote;
 
-import org.apache.commons.lang3.builder.*;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import entity.*;
+import entity.IP;
+import entity.Market;
 import event.TimeStamp;
 
 /**
@@ -18,50 +17,36 @@ import event.TimeStamp;
  */
 public class SendToIP extends Activity {
 
-	private Market mkt;
-	protected IP ip;
-	protected Quote quote;
+	protected final Market market;
+	protected final IP ip;
+	protected final Quote quote;
 
-	public SendToIP(Market mkt, TimeStamp t, Quote quote, IP ip) {
-		super(t);
-		this.mkt = mkt;
+	public SendToIP(Market market, Quote quote, IP ip, TimeStamp scheduledTime) {
+		super(scheduledTime);
+		this.market = market;
 		this.ip = ip;
 		this.quote = quote;
 	}
-	
-	public SendToIP(Market market, TimeStamp t) {
-		super(t);
-		this.mkt = market;
-	}
 
 	public Collection<? extends Activity> execute(TimeStamp time) {
-		return this.ip.sendToIP(mkt, quote.getBidPrice(), quote.getAskPrice(), time);
+		return ip.sendToIP(market, quote, time);
 	}
 
 	public String toString() {
-		return new String(getName() + "::" + mkt);
+		return new String(getName() + "::" + market);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == this)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
+		if (obj == null || !(obj instanceof SendToIP)) return false;
 		SendToIP other = (SendToIP) obj;
-		return new EqualsBuilder().
-				append(mkt.getID(), other.mkt.getID()).
-				append(scheduledTime.longValue(), other.scheduledTime.longValue()).
-				isEquals();
+		return super.equals(other) && this.market.equals(other.market)
+				&& this.ip.equals(other.ip) && this.quote.equals(other.quote);
 	}
-	
+
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder(19, 37).
-				append(mkt.getID()).
-				append(scheduledTime.longValue()).
-				toHashCode();
+		return new HashCodeBuilder(19, 37).append(market).append(scheduledTime).append(
+				quote).append(ip).toHashCode();
 	}
 }

@@ -133,7 +133,7 @@ public class LoggingReference {
 			// Initial SendToSIP Activity for all markets
 			for (Market mkt : data.getMarkets().values()) { // Move to market
 															// Models
-				eventManager.addActivity(new SendToIP(mkt, new TimeStamp(0)));
+//				eventManager.addActivity(new SendToIP(mkt, new TimeStamp(0)));
 			}
 		} catch (Exception e) {
 			System.err.println(this.getClass().getSimpleName()
