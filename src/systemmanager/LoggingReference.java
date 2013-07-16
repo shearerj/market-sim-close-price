@@ -9,13 +9,12 @@ import java.util.HashMap;
 import java.util.Random;
 
 import model.MarketModel;
-import model.MarketObjectPair;
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.ModelType;
 import activity.AgentArrival;
 import activity.Clear;
 import activity.Liquidate;
-import activity.SendToSIP;
+import activity.SendToIP;
 import data.AgentPropsPair;
 import data.ArrivalTime;
 import data.EntityProperties;
@@ -134,7 +133,7 @@ public class LoggingReference {
 			// Initial SendToSIP Activity for all markets
 			for (Market mkt : data.getMarkets().values()) { // Move to market
 															// Models
-				eventManager.addActivity(new SendToSIP(mkt, new TimeStamp(0)));
+				eventManager.addActivity(new SendToIP(mkt, new TimeStamp(0)));
 			}
 		} catch (Exception e) {
 			System.err.println(this.getClass().getSimpleName()
@@ -227,7 +226,7 @@ public class LoggingReference {
 		MarketModel model = null; // ModelFactory.createModel(modelType,
 									// modelID, p, data);
 		data.addModel(model);
-		log(INFO, model.getFullName() + ": " + model + " " + p);
+		log(INFO, model.getName() + ": " + model + " " + p);
 		createMarketsInModel(model);
 		return model;
 	}
@@ -330,7 +329,7 @@ public class LoggingReference {
 
 		// create all agents
 		for (MarketModel model : modelMap.values()) {
-			log(INFO, "MODEL: " + model.getFullName() + " agent types:");
+			log(INFO, "MODEL: " + model.getName() + " agent types:");
 			if (data.isEGTAUseCase()) {
 				createPlayersForModel(model);
 			}
@@ -520,7 +519,7 @@ public class LoggingReference {
 
 			// print arrival times
 			String s = " " + ag.getID() + ": " + ag.toString() + "::"
-					+ ag.getType() + "::";
+					+ ag.getName() + "::";
 //			s += Keys.ARRIVAL + "=" + ag.getArrivalTime().toString();
 
 			// print private value if exists

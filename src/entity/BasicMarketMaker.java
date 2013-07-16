@@ -91,7 +91,7 @@ public class BasicMarketMaker extends MarketMaker {
 		// market may not have any buy or sell orders. This could still allow
 		// agent strategy.
 		if (bid == null || ask == null) {
-			log(INFO, ts + " | " + this + " " + getType()
+			log(INFO, ts + " | " + this + " " + getName()
 					+ "::agentStrategy: undefined quote in market "
 					+ primaryMarket);
 
@@ -130,7 +130,7 @@ public class BasicMarketMaker extends MarketMaker {
 			for (int p = ask.getPrice(); p <= sellMaxPrice.getPrice(); p += stepSize)
 				priceQuantMap.put(new Price(p), -1);
 
-			log(INFO, ts + " | " + primaryMarket + " " + this + " " + getType()
+			log(INFO, ts + " | " + primaryMarket + " " + this + " " + getName()
 					+ "::agentStrategy: ladder numRungs=" + numRungs
 					+ ", stepSize=" + stepSize + ": buys [" + buyMinPrice
 					+ ", " + bid + "] &" + " sells [" + ask + ", "
@@ -138,7 +138,7 @@ public class BasicMarketMaker extends MarketMaker {
 			acts.add(new SubmitMultiPointBid(this, primaryMarket, priceQuantMap, TimeStamp.IMMEDIATE));
 
 		} else {
-			log(INFO, ts + " | " + primaryMarket + " " + this + " " + getType()
+			log(INFO, ts + " | " + primaryMarket + " " + this + " " + getName()
 					+ "::agentStrategy: no change in submitted ladder.");
 
 		}

@@ -303,7 +303,7 @@ public class AAAgentTest {
 		
 		AAAgent agent = addAgent(model, market, true);
 		Logger.log(Logger.Level.DEBUG, "Price ~= 66667");
-		agent.setAggression(1);
+		agent.setAggression(1.0);
 		TimeStamp ts = new TimeStamp(120);
 		Collection<Activity> test = agent.agentStrategy(ts);
 
@@ -319,11 +319,11 @@ public class AAAgentTest {
 		//Asserting the bid is correct
 		assertTrue(bid.bidTreeSet.size() == 1);
 		assertTrue(bid.getAgent().equals(agent));
-		Price low = new Price(65000);
-		Price high = new Price(70000);
+		Price low = new Price(80000);
+		Price high = new Price(85000);
 		Price bidPrice = bid.bidTreeSet.first().getPrice();
-		assertTrue(bidPrice.toString(), bidPrice.greaterThan(low));
-		assertTrue(bidPrice.lessThan(high));
+		assertTrue(bidPrice.toString(), bid.bidTreeSet.first().getPrice().greaterThan(low));
+		assertTrue(bidPrice.toString(), bid.bidTreeSet.first().getPrice().lessThan(high));
 		assertTrue(bid.bidTreeSet.first().getQuantity() > 0);
 	}
 	
@@ -340,7 +340,7 @@ public class AAAgentTest {
 		//Testing the Agent
 		AAAgent agent = addAgent(model, market, false);
 		Logger.log(Logger.Level.DEBUG, "Price ~= " + (150000 + (Price.INF.getPrice()-150000)/3));
-		agent.setAggression(-1);
+		agent.setAggression(-1.0);
 		TimeStamp ts = new TimeStamp(100);
 		Collection<Activity> test = agent.agentStrategy(ts);
 		
@@ -358,8 +358,9 @@ public class AAAgentTest {
 		assertTrue(bid.getAgent().equals(agent));
 		Price low = new Price(150000 + (Price.INF.getPrice()-150000)/3 - 5000);
 		Price high = new Price(150000 + (Price.INF.getPrice()-150000)/3 + 5000);
-		assertTrue(bid.bidTreeSet.first().getPrice().greaterThan(low));
-		assertTrue(bid.bidTreeSet.first().getPrice().lessThan(high));
+		Price bidPrice = bid.bidTreeSet.first().getPrice();
+		assertTrue(bidPrice.toString(), bidPrice.greaterThan(low));
+		assertTrue(bidPrice.toString(), bidPrice.lessThan(high));
 		assertTrue(bid.bidTreeSet.first().getQuantity() < 0);
 	}
 	

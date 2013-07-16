@@ -14,6 +14,7 @@ import event.*;
  * 
  * @author ewah
  */
+// TODO Unimplimented
 public class SubmitNMSMultipleBid extends Activity {
 
 	private SMAgent ag;

@@ -21,34 +21,31 @@ public class MarketModelFactory {
 	protected final Generator<Integer> modelIDs;
 	protected final FundamentalValue fundamental;
 	protected final JsonObject playerConfig;
-	private int sipID;
 	Collection<Integer> latencies;
 	protected Collection<LAIP> ip_las;
-	
-	public MarketModelFactory(Map<AgentProperties, Integer> props, JsonObject playerConfig, 
-			FundamentalValue fundamental, RandPlus rand) {
+
+	public MarketModelFactory(Map<AgentProperties, Integer> props,
+			JsonObject playerConfig, FundamentalValue fundamental, RandPlus rand) {
 		this.rand = rand;
-		this.latencies = latencies;
-		this.ip_las = ip_las;
 		this.agentProps = props;
 		this.fundamental = fundamental;
 		this.playerConfig = playerConfig;
 		this.modelIDs = new IDGenerator();
-		this.sipID = 0;
 	}
 
 	public MarketModel createModel(ModelProperties modelProps) {
-		sipID++; // makes new sipID for each model
 		switch (modelProps.getModelType()) {
 		case CENTRALCDA:
-			return new CentralCDA(modelIDs.next(), fundamental, agentProps, modelProps, playerConfig,
-					new RandPlus(rand.nextLong()));
+			return new CentralCDA(modelIDs.next(), fundamental, agentProps,
+					modelProps, playerConfig, new RandPlus(rand.nextLong()));
 		case CENTRALCALL:
-			return null; // FIXME change
+			return new CentralCall(modelIDs.next(), fundamental, agentProps,
+					modelProps, playerConfig, new RandPlus(rand.nextLong()));
 		case TWOMARKET:
-			return null; // FIXME change
+			return new TwoMarket(modelIDs.next(), fundamental, agentProps,
+					modelProps, playerConfig, new RandPlus(rand.nextLong()));
 		default:
-			return null;
+			throw new IllegalArgumentException("Encountered Unknown Market Model Type");
 		}
 	}
 

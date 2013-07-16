@@ -62,7 +62,9 @@ public class SMIP extends IP {
 	 * @param ts
 	 * @return
 	 */
+	/*
 	// TODO This class shouldn't need this, as it's only returning the quote for a given market
+	// NOTE: it could use this if it were worried about discrepencies in appearance of prices.
 	public Collection<Activity> updateBBO(MarketModel model, TimeStamp ts) {
 		String s = ts + " | " + this.market + " UpdateNBBO: current " + getBBOQuote()
 				+ " --> ";
@@ -94,7 +96,7 @@ public class SMIP extends IP {
 		//lastQuotes = lastQuote;
 		Logger.log(INFO, s + "updated " + lastQuotes);
 		return Collections.emptyList();
-	}
+	}*/
 	
 	public String toString() {
 		return "SMIP number " + id + ", " + "market" + market;

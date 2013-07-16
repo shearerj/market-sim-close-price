@@ -52,7 +52,8 @@ public class SIP extends IP {
 		marketQuotes.put(mkt, q);
 		Logger.log(INFO, ts + " | " + this + " | " + mkt + " "
 				+ "ProcessQuote: " + q);
-		return null;
+		updateNBBO(mkt.getModel(), ts); // calls computeBestBidOffer
+		return Collections.emptySet();
 	}
 
 	/**
@@ -99,7 +100,7 @@ public class SIP extends IP {
 	 * Method to update the BBO values. In this case, for the NBBO.
 	 */
 	// TODO Since SIP is the only multimarket IP we have, these should probably all be called NBBO
-	public Collection<Activity> updateBBO(MarketModel model, TimeStamp ts) {
+	public Collection<Activity> updateNBBO(MarketModel model, TimeStamp ts) {
 		String s = ts + " | " + model.getMarkets() + " UpdateNBBO: current "
 				+ getBBOQuote() + " --> ";
 

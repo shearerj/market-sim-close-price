@@ -18,8 +18,8 @@ import event.TimeStamp;
  * 
  * Class implementing the two-market model of latency arbitrage.
  * 
- * Configurations in the Two-Market Model specify what types of strategies are
- * allowed. Possible values for the configuration include:
+ * Configurations in the Two-Market Model specify what types of strategies are allowed. Possible
+ * values for the configuration include:
  * 
  * "LA:<strategy_string>" "DUMMY"
  * 
@@ -40,10 +40,7 @@ public class TwoMarket extends MarketModel {
 	}
 
 	@Override
-	protected void setupAgents(EntityProperties modelProps, // these are NOT all of
-															// the key value
-															// pairs from sim
-															// spec.json
+	protected void setupAgents(EntityProperties modelProps,
 			Map<AgentProperties, Integer> agentProps) {
 		super.setupAgents(modelProps, agentProps);
 		// Look at model parameters and set up LA
@@ -51,8 +48,6 @@ public class TwoMarket extends MarketModel {
 		for (int i = 0; i < numla; i++) {
 			TimeStamp latency = new TimeStamp(modelProps.getAsInt("lat"
 					+ (i + 1), 100));
-			// TODO entity properties should be set,defaults currently not
-			// handled
 			// FIXME should pull sleeptime, sleepvar, alpha, and ticksize
 			// appropriately, instead of using the values I just inserted...
 			new LAAgent(this.agentIDgen.next(), this, 0, 0, 0.0001, latency,

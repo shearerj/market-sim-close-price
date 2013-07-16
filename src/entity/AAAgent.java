@@ -392,7 +392,7 @@ public class AAAgent extends BackgroundAgent {
 		 */
 		private Collection<? extends Activity> biddingLayer(Price limit, Price targetPrice,
 				int quantity, TimeStamp ts) {
-			String s = ts + " | " + this + " " + getType() + ":";
+			String s = ts + " | " + this + " " + getName() + ":";
 
 			// Determining the offer price to (possibly) submit
 			Quote quote = primaryMarket.getQuote();
@@ -512,7 +512,7 @@ public class AAAgent extends BackgroundAgent {
 
 	@Override
 	public Collection<Activity> agentStrategy(TimeStamp ts) {
-		String s = ts + " | " + this + " " + getType() + ":";
+		String s = ts + " | " + this + " " + getName() + ":";
 		Collection<Activity> actMap = new ArrayList<Activity>();
 
 		ArrayList<Transaction> trans = new ArrayList<Transaction>(

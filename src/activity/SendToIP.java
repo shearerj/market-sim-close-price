@@ -1,38 +1,45 @@
 package activity;
 
 import java.util.Collection;
+
+import market.PQBid;
+import market.Price;
+import market.Quote;
+
 import org.apache.commons.lang3.builder.*;
 
 import entity.*;
-import model.*;
 import event.TimeStamp;
 
 /**
- * Class for Activity of computing the National Best Bid and Offer (NBBO) for a given MarketModel.
+ * Class for Activity of sending new quote information to the Security Information Processor (SIP).
  * 
  * @author ewah
  */
-public class UpdateNBBO extends Activity {
+public class SendToIP extends Activity {
 
-	private IP sip;
-	private MarketModel mdl;
+	private Market mkt;
+	protected IP ip;
+	protected Quote quote;
 
-	public UpdateNBBO(IP sip, MarketModel mdl, TimeStamp t) {
+	public SendToIP(Market mkt, TimeStamp t, Quote quote, IP ip) {
 		super(t);
-		this.sip = sip;
-		this.mdl = mdl;
+		this.mkt = mkt;
+		this.ip = ip;
+		this.quote = quote;
 	}
-
-	public UpdateNBBO deepCopy() {
-		return new UpdateNBBO(this.sip, this.mdl, this.scheduledTime);
+	
+	public SendToIP(Market market, TimeStamp t) {
+		super(t);
+		this.mkt = market;
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp time) {
-		return this.sip.updateBBO(this.mdl, time);
+		return this.ip.sendToIP(mkt, quote.getBidPrice(), quote.getAskPrice(), time);
 	}
 
 	public String toString() {
-		return new String(getName() + "::" + mdl.getFullName());
+		return new String(getName() + "::" + mkt);
 	}
 
 	@Override
@@ -43,10 +50,9 @@ public class UpdateNBBO extends Activity {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		UpdateNBBO other = (UpdateNBBO) obj;
+		SendToIP other = (SendToIP) obj;
 		return new EqualsBuilder().
-				append(sip.getID(), other.sip.getID()).
-				append(mdl.getID(), other.mdl.getID()).
+				append(mkt.getID(), other.mkt.getID()).
 				append(scheduledTime.longValue(), other.scheduledTime.longValue()).
 				isEquals();
 	}
@@ -54,8 +60,7 @@ public class UpdateNBBO extends Activity {
 	@Override
 	public int hashCode() {
 		return new HashCodeBuilder(19, 37).
-				append(sip.getID()).
-				append(mdl.getID()).
+				append(mkt.getID()).
 				append(scheduledTime.longValue()).
 				toHashCode();
 	}
