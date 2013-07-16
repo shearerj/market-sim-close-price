@@ -15,6 +15,7 @@ import market.Quote;
 import market.Transaction;
 import model.MarketModel;
 import utils.RandPlus;
+import utils.Pair;
 import activity.Activity;
 import activity.AgentStrategy;
 import activity.SubmitNMSBid;
@@ -109,7 +110,7 @@ public class AAAgent extends BackgroundAgent {
 		 */
 		private void updateAggression(Price limit, Price tau, 
 				double movingAverage, Price mostRecentPrice) {
-			if (movingAverage == -1)
+			if (movingAverage == -1 || mostRecentPrice.equals(new Price(-1)))
 				return; // If no transactions yet, cannot update
 
 			// Determining r_shout
@@ -148,8 +149,6 @@ public class AAAgent extends BackgroundAgent {
 		/**
 		 * Update the long term learning variable
 		 * 
-		 * @param ts
-		 *            Current TimeStamp
 		 */
 		private void updateAdaptiveness(double movingAverage,
 				double mvgAvgNum, ArrayList<Transaction> trans) {
@@ -189,23 +188,22 @@ public class AAAgent extends BackgroundAgent {
 			theta = theta + beta_t * (thetaStar - theta);
 		}
 
-		private void findMovingAverage(double movingAverage, double mvgAvgNum,
-				ArrayList<Transaction> trans) {
-			if (trans.size() == 0) return; // Error checking
+		private Pair<Double, Double> findMovingAverage(ArrayList<Transaction> trans) {
+			if (trans.size() == 0) 
+				return new Pair<Double, Double>(-1.0, 0.0); // Error checking
 			double total = 0;
 			double num = 0;
-			// Iterate through past Quotes and use valid prices until you have
+			// Iterate through past Quotes and use valid prices
 			for (int i = trans.size() - 1; i >= 0 && num < historical; i--) {
 				total += (double) trans.get(i).getPrice().getPrice();
 				num += 1;
 			}
 			if (num == 0) {
-				movingAverage = -1;
-				return;
+				return new Pair<Double, Double>(-1.0, 0.0);
 			}
-			movingAverage = total / num;
-			mvgAvgNum = num;
-			// System.out.println(movingAverage);
+			double movingAverage = total / num;
+			double mvgAvgNum = num;
+			return new Pair<Double, Double>(movingAverage, mvgAvgNum);
 		}
 
 		private Price determinePriceLimit(int quantity, TimeStamp ts) {
@@ -219,7 +217,7 @@ public class AAAgent extends BackgroundAgent {
 		 * @return price target according to the AA Strategy
 		 */
 		private Price determinePriceTarget(Price limit, double movingAverage) {
-			//Error Checking - cannot comput if movingAverage is invalid
+			//Error Checking - cannot compute if movingAverage is invalid
 			if(movingAverage == -1) return new Price(-1);
 			double tau;
 			// Buyers
@@ -404,7 +402,7 @@ public class AAAgent extends BackgroundAgent {
 			}
 			
 			// if no bid or no ask, submit least aggressive price
-			if (bestBid == null || bestAsk == null) {
+			if (bestBid.equals(new Price(-1)) || bestAsk.equals(new Price(-1))) {
 				Price price = isBuyer ? Price.ZERO : Price.INF;
 				return Collections.singleton(new SubmitNMSBid(AAAgent.this, price, quantity, primaryMarket, TimeStamp.IMMEDIATE));
 			}
@@ -508,16 +506,21 @@ public class AAAgent extends BackgroundAgent {
 		String s = ts + " | " + this + " " + getType() + ":";
 		Collection<Activity> actMap = new ArrayList<Activity>();
 
-		// Update the moving average
-		int movingAverage = -1;
-		int mvgAvgNum = 0;
-		// EW: changed to get transactions for the model, not just a specific
-		// market
 		ArrayList<Transaction> trans = new ArrayList<Transaction>(
 				model.getTrans());
-		strat.findMovingAverage(movingAverage, mvgAvgNum, trans);
-		Price lastPrice = trans.get(trans.size() - 1).getPrice();
-
+		
+		// Update the moving average
+		Pair<Double, Double> pair = strat.findMovingAverage(trans);
+		double movingAverage = pair.left();
+		double mvgAvgNum = pair.right();
+		
+		//Determining the most recent Price
+		Price lastPrice;
+		if(trans.size() != 0)
+			lastPrice = trans.get(trans.size() - 1).getPrice();
+		else
+			lastPrice = new Price(-1);
+		
 		// Determining Quantity
 		int quantity = isBuyer ? 1 : -1;
 

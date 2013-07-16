@@ -8,7 +8,7 @@ import logger.Logger;
 import market.PQBid;
 import market.Price;
 import market.Transaction;
-import model.DummyMarketModel;
+import model.MockMarketModel;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -31,7 +31,7 @@ public class CDAMarketTest {
 	private static Map<AgentProperties, Integer> agentProperties;
 	private static JsonObject playerConfig;
 
-	private DummyMarketModel model;
+	private MockMarketModel model;
 	private Market market;
 	private int agentIndex;
 
@@ -43,7 +43,7 @@ public class CDAMarketTest {
 
 	@Before
 	public void setup() {
-		model = new DummyMarketModel(1);
+		model = new MockMarketModel(1);
 		market = new CDAMarket(1, model, 0); // TODO Dummy IP
 		model.addMarket(market);
 		agentIndex = 1;
@@ -54,7 +54,7 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 
 		// Creating the agent
-		DummyAgent agent = new DummyAgent(agentIndex++, model, market);
+		MockAgent agent = new MockAgent(agentIndex++, model, market);
 
 		// Creating and adding the bid
 		market.submitBid(agent, new Price(1), 1, time);
@@ -70,10 +70,10 @@ public class CDAMarketTest {
 	@Test
 	public void AddAsk() {
 		TimeStamp time = new TimeStamp(0);
-
-		// Creating the agent
-		DummyAgent agent = new DummyAgent(agentIndex++, model, market);
-
+		
+		//Creating the agent
+		MockAgent agent = new MockAgent(agentIndex++, model, market);
+		
 		// Creating and adding the bid
 		market.submitBid(agent, new Price(1), -1, time);
 
@@ -88,10 +88,11 @@ public class CDAMarketTest {
 	@Test
 	public void BasicEqualClear() {
 		TimeStamp time = new TimeStamp(0);
-
-		// Creating dummy agents
-		DummyAgent agent1 = new DummyAgent(agentIndex++, model, market);
-		DummyAgent agent2 = new DummyAgent(agentIndex++, model, market);
+		
+		//Creating dummy agents
+		MockAgent agent1 = new MockAgent(agentIndex++, model, market);
+		MockAgent agent2 = new MockAgent(agentIndex++, model, market);
+		
 
 		// Creating and adding bids
 		market.submitBid(agent1, new Price(100), 1, time);
@@ -113,11 +114,11 @@ public class CDAMarketTest {
 	@Test
 	public void BasicOverlapClear() {
 		TimeStamp time = new TimeStamp(0);
-
-		// Creating dummy agents
-		DummyAgent agent1 = new DummyAgent(agentIndex++, model, market);
-		DummyAgent agent2 = new DummyAgent(agentIndex++, model, market);
-
+		
+		//Creating dummy agents
+		MockAgent agent1 = new MockAgent(agentIndex++, model, market);
+		MockAgent agent2 = new MockAgent(agentIndex++, model, market);
+		
 		// Creating and adding bids
 		market.submitBid(agent1, new Price(200), 1, time);
 		market.submitBid(agent2, new Price(50), -1, time);
@@ -137,18 +138,15 @@ public class CDAMarketTest {
 
 	@Test
 	public void MultiBidSingleClear() {
-
-		// Creating dummy agents
-		DummyAgent agent1 = new DummyAgent(agentIndex++, model, market);
-		DummyAgent agent2 = new DummyAgent(agentIndex++, model, market);
-		DummyAgent agent3 = new DummyAgent(agentIndex++, model, market);
-		DummyAgent agent4 = new DummyAgent(agentIndex++, model, market);
-
-		// Creating and adding bids
-		market.submitBid(agent1, new Price(200), 1, new TimeStamp(10));
-		market.submitBid(agent2, new Price(100), -1, new TimeStamp(20));
-		market.submitBid(agent3, new Price(100), 1, new TimeStamp(30));
-		market.submitBid(agent4, new Price(100), -1, new TimeStamp(40));
+		TimeStamp time = new TimeStamp(0);
+		TimeStamp time2 = new TimeStamp(10);
+		
+		//Creating dummy agents
+		MockAgent agent1 = new MockAgent(agentIndex++, model, market);
+		MockAgent agent2 = new MockAgent(agentIndex++, model, market);
+		MockAgent agent3 = new MockAgent(agentIndex++, model, market);
+		MockAgent agent4 = new MockAgent(agentIndex++, model, market);
+		
 
 		for (Transaction tr : model.getTrans()) {
 			assertTrue(true //tr.getBuyBid().equals(bid1) API Broke me

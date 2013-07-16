@@ -14,16 +14,30 @@ import data.FundamentalValue;
 import entity.Agent;
 import entity.Market;
 
-public class DummyMarketModel extends MarketModel {
+public class MockMarketModel extends MarketModel {
+
+	//
+	// Constructors
+	//
+	public MockMarketModel(int modelID, FundamentalValue fundamental,
+			Map<AgentProperties, Integer> agentProps,
+			EntityProperties modelProps, JsonObject playerConfig, RandPlus rand) {
+		super(modelID, fundamental, agentProps, modelProps, playerConfig, rand);
+		// TODO Auto-generated constructor stub
+	}
 	
-	public DummyMarketModel(int modelID) {
-		super(modelID, new DummyFundamental(100000), 
+	public MockMarketModel(int modelID, FundamentalValue fundamental) {
+		this(modelID, fundamental, 
 				new HashMap<AgentProperties,Integer>(),
 				new EntityProperties(), new JsonObject(), 
 				new RandPlus());
 	}
 	
-	public DummyMarketModel() {
+	public MockMarketModel(int modelID) {
+		this(modelID, new DummyFundamental(100000));
+	}
+	
+	public MockMarketModel() {
 		this(0);
 	}
 
