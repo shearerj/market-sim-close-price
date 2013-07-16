@@ -1,20 +1,17 @@
 package model;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
+
+import utils.RandPlus;
 
 import com.google.gson.JsonObject;
 
-import utils.RandPlus;
 import data.AgentProperties;
-import data.FundamentalValue;
 import data.EntityProperties;
+import data.FundamentalValue;
 import entity.CDAMarket;
 import entity.LAAgent;
-import entity.LAInformationProcessor;
 import event.TimeStamp;
-import entity.Market;
 
 /**
  * TWOMARKET
@@ -37,29 +34,13 @@ public class TwoMarket extends MarketModel {
 	}
 
 	@Override
-	@Deprecated
-	public String getConfig() {
-		return config;
-	}
-
-	@Deprecated
-	public Market getAlternateMarket(Market mainMarket) {
-		if (!markets.contains(mainMarket)) return null; // XXX Shouldn't
-														// happen...
-		Collection<Market> alternateMarkets = new HashSet<Market>(markets);
-		alternateMarkets.remove(mainMarket);
-		// XXX This should only work if markets has two unique markets...
-		return alternateMarkets.iterator().next();
-	}
-
-	@Override
 	protected void setupMarkets(EntityProperties modelProps) {
-		markets.add(new CDAMarket(1, this, this.getipIDgen()));
-		markets.add(new CDAMarket(2, this, this.getipIDgen()));
+		markets.add(new CDAMarket(1, this, this.nextIPID()));
+		markets.add(new CDAMarket(2, this, this.nextIPID()));
 	}
 
 	@Override
-	protected void setupAgents(EntityProperties modelProps, // these are all of
+	protected void setupAgents(EntityProperties modelProps, // these are NOT all of
 															// the key value
 															// pairs from sim
 															// spec.json

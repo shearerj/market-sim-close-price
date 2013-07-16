@@ -1,16 +1,15 @@
 package model;
 
-import java.util.Collection;
 import java.util.Map;
+
+import utils.RandPlus;
 
 import com.google.gson.JsonObject;
 
-import utils.RandPlus;
 import data.AgentProperties;
-import data.FundamentalValue;
 import data.EntityProperties;
+import data.FundamentalValue;
 import entity.CDAMarket;
-import entity.LAInformationProcessor;
 
 /**
  * CENTRALCDA
@@ -29,13 +28,8 @@ public class CentralCDA extends MarketModel {
 	}
 
 	@Override
-	public String getConfig() {
-		return "";
-	}
-
-	@Override
 	protected void setupMarkets(EntityProperties modelProps) {
-		markets.add(new CDAMarket(1, this, this.getipIDgen()));
+		markets.add(new CDAMarket(1, this, this.nextIPID()));
 	}
 
 }

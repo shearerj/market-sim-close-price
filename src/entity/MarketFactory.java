@@ -22,7 +22,7 @@ public class MarketFactory {
 	 * @return
 	 */
 	public static Market createMarket(String type, Integer marketID,
-			MarketModel model, int ipID, Collection<LAInformationProcessor> ip_las) {
+			MarketModel model, int ipID, Collection<LAIP> ip_las) {
 
 		switch (Consts.MarketType.valueOf(type)) {
 		case CDA:

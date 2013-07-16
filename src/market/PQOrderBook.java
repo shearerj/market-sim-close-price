@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import utils.MathUtils;
@@ -184,12 +183,12 @@ public class PQOrderBook extends OrderBook {
 	/**
 	 * Clears at the earliest price (given matching bids). For auction markets.
 	 * 
-	 * @param ts
+	 * @param currentTime
 	 * @param pricingPolicy between 0 and 1, default 0.5
 	 * @return ArrayList of PQTransactions
 	 */
 	@Override
-	public Collection<Transaction> earliestPriceClear(TimeStamp ts) {
+	public Collection<Transaction> earliestPriceClear(TimeStamp currentTime) {
 		PQPoint buy, sell;
 		clearedBids = new HashMap<Agent, Bid>();
 		
@@ -221,9 +220,9 @@ public class PQOrderBook extends OrderBook {
 			PQBid sellBid = sell.Parent;
 
 			transactions.add(new PQTransaction(q, p, buy.getAgent(), sell.getAgent(), 
-					buyBid, sellBid, ts, this.market));
+					buyBid, sellBid, currentTime, this.market));
 //			transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-			log(INFO, ts + " | " + this.market + 
+			log(INFO, currentTime + " | " + this.market + 
 					" Quantity=" + q + " cleared at Price=" + p.getPrice());
 
 			Agent key = buy.getAgent();

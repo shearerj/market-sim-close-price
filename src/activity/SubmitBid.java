@@ -16,50 +16,42 @@ import event.*;
  */
 public class SubmitBid extends Activity {
 
-	private Agent ag;
-	private Market mkt;
+	// TODO Change this to a Bid Object. Will take a bid more thought.
+	private Agent agent;
+	private Market market;
 	private Price price;
 	private int quantity;
 
-	public SubmitBid(Agent ag, Market mkt, Price p, int q, TimeStamp t) {
-		super(t);
-		this.ag = ag;
-		this.mkt = mkt;
-		this.price = p;
-		this.quantity = q;
+	public SubmitBid(Agent agent, Market market, Price price, int quantity,
+			TimeStamp scheduledTime) {
+		super(scheduledTime);
+		this.agent = agent;
+		this.market = market;
+		this.price = price;
+		this.quantity = quantity;
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
-		return this.ag.executeSubmitBid(mkt, price, quantity, currentTime);
+		return market.submitBid(agent, price, quantity, currentTime);
 	}
 
 	public String toString() {
-		return new String(getName() + "::" + ag + "," + mkt + "+(" + price + ", " +
-				quantity + ")");
+		return new String(getName() + "::" + agent + "," + market + "+("
+				+ price + ", " + quantity + ")");
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || getClass() != obj.getClass())
-			return false;
+		if (obj == null || getClass() != obj.getClass()) return false;
 		SubmitBid other = (SubmitBid) obj;
-		return new EqualsBuilder().
-				append(ag, other.ag).
-				append(mkt, other.mkt).
-				append(price, other.price).
-				append(quantity, other.quantity).
-				append(scheduledTime, other.scheduledTime).
-				isEquals();
+		return new EqualsBuilder().append(agent, other.agent).append(market,
+				other.market).append(price, other.price).append(quantity,
+				other.quantity).append(scheduledTime, other.scheduledTime).isEquals();
 	}
-	
+
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder(19, 37).
-				append(ag).
-				append(mkt).
-				append(price).
-				append(quantity).
-				append(scheduledTime).
-				toHashCode();
+		return new HashCodeBuilder(19, 37).append(agent).append(market).append(
+				price).append(quantity).append(scheduledTime).toHashCode();
 	}
 }

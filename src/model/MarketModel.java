@@ -7,33 +7,27 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-
-import activity.AgentArrival;
-import activity.Clear;
-
-import entity.SIP;
 import market.Bid;
 import market.Price;
 import market.Transaction;
 import systemmanager.Consts;
-import systemmanager.Consts.AgentType;
-import systemmanager.Consts.MarketType;
 import systemmanager.SimulationSpec;
 import utils.RandPlus;
+import activity.AgentArrival;
+import activity.Clear;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 import data.AgentProperties;
-import data.AgentPropsPair;
-import data.FundamentalValue;
 import data.EntityProperties;
+import data.FundamentalValue;
 import data.Player;
-import data.SystemData;
 import data.TimeSeries;
 import entity.Agent;
-import entity.LAAgent;
-import entity.LAInformationProcessor;
 import entity.Market;
+import entity.SIP;
 import entity.SMAgentFactory;
 import event.EventManager;
 import event.TimeStamp;
@@ -43,74 +37,47 @@ import generators.IDGenerator;
 /**
  * MARKETMODEL
  * 
- * Base class for specifying a market model (e.g. two-market model, centralized
- * call market, etc.).
+ * Base class for specifying a market model (e.g. two-market model, centralized call market, etc.).
  * 
- * Multiple types of market models can be included in a single simulation trial.
- * Agents present in the simulation will reside in a primary market model (for
- * payoff output purposes in the observation files), but agents behave
- * independently within each model.
+ * Multiple types of market models can be included in a single simulation trial. Agents present in
+ * the simulation will reside in a primary market model (for payoff output purposes in the
+ * observation files), but agents behave independently within each model.
  * 
- * If the market model has only one market, then it is assumed to be a
- * "centralized" model. Note that not only can market properties be set here,
- * but also the assignments of agents to markets. The number of agents of each
- * type is fixed globally, but all or a subset of these agents can be assigned
- * to be in any of the available markets (single-market agents). If not
- * specified, all background agents are assumed to trade in all available
- * markets in the model.
+ * If the market model has only one market, then it is assumed to be a "centralized" model. Note
+ * that not only can market properties be set here, but also the assignments of agents to markets.
+ * The number of agents of each type is fixed globally, but all or a subset of these agents can be
+ * assigned to be in any of the available markets (single-market agents). If not specified, all
+ * background agents are assumed to trade in all available markets in the model.
  * 
  * Note:
  * 
- * Configuration: - Each model may have various configurations, e.g. specifying
- * the players allowed in that instance of the model. - Each configuration is a
- * string, and they are separated by commas.
+ * Configuration: - Each model may have various configurations, e.g. specifying the players allowed
+ * in that instance of the model. - Each configuration is a string, and they are separated by
+ * commas.
  * 
  * For example, in the spec file:
  * 
  * "MARKETMODEL": "A,B"
  * 
- * would indicate that for the given model, there is one instance of
- * configuration A and one instance of configuration B. The system, in this
- * case, would also determine that it needs to create two instances of this
- * model.
+ * would indicate that for the given model, there is one instance of configuration A and one
+ * instance of configuration B. The system, in this case, would also determine that it needs to
+ * create two instances of this model.
  * 
  * @author ewah
  */
 public abstract class MarketModel {
 
-	// -- begin reorg --
-
 	protected final int modelID;
+	protected final RandPlus rand;
+	protected final SIP sip;
 	protected final FundamentalValue fundamental;
 	protected final Collection<Market> markets;
 	protected final Collection<Transaction> trans;
 	protected final Collection<Agent> agents;
 	protected final Collection<Player> players;
-
-	protected TimeSeries NBBOSpreads; // NBBO bid/ask spread values
-
-	protected final RandPlus rand;
-	//protected int nextAgentID; not sure if we need this
-	
-	public SIP sip;
+	protected final TimeSeries NBBOSpreads; // NBBO bid/ask spread values TODO Move to SIP
 	protected final Generator<Integer> agentIDgen;
 	protected final Generator<Integer> ipIDgen;
-
-	// -- end reorg --
-
-	protected String config; // TODO Does this need to be saved? or just used at
-								// construction?
-	protected SystemData data;
-	protected ArrayList<Integer> agentIDs; // IDs of associated agents
-	protected ArrayList<Integer> ipIDs; // IDs of associated ips
-	protected EntityProperties modelProperties;
-	protected ArrayList<AgentPropsPair> agentConfig;
-	protected ArrayList<MarketObjectPair> modelMarketConfig;
-	protected Collection<TimeStamp> latencies;
-
-	// Store information on market IDs for each market specified in
-	// modelProperties
-	// protected ArrayList<Integer> marketIDs;
 
 	public MarketModel(int modelID, FundamentalValue fundamental,
 			Map<AgentProperties, Integer> agentProps,
@@ -127,18 +94,12 @@ public abstract class MarketModel {
 		this.agentIDgen = new IDGenerator();
 		this.ipIDgen = new IDGenerator();
 		this.NBBOSpreads = new TimeSeries();
-
-		// FIXME actually initialize SIP -- why is this tick size? should be latency!!!
-		this.sip = new SIP(getipIDgen(), modelID, new TimeStamp(100) /* tick size */);
+		this.sip = new SIP(nextIPID(), modelID, new TimeStamp(100));
 
 		// Setup
 		setupMarkets(modelProps);
 		setupAgents(modelProps, agentProps);
 		setupPlayers(modelProps, playerConfig);
-	}
-	
-	public int getipIDgen() {
-		return this.ipIDgen.next();
 	}
 
 	protected abstract void setupMarkets(EntityProperties modelProps);
@@ -203,123 +164,48 @@ public abstract class MarketModel {
 			}
 		}
 	}
-	
+
 	/**
 	 * @return SIP
 	 */
-	public SIP getSip() {
+	public SIP getSIP() {
 		return this.sip;
 	}
 
 	public void scheduleActivities(EventManager manager) {
-		// TODO schedule sendToSIP
+		// XXX There is probably a better way to initialize the first market clear. This has a
+		// problem if an agent strategy happens before the clear but at time 0. That shouldn't be
+		// allowed.
 		for (Market market : markets)
 			manager.addActivity(new Clear(market, Consts.START_TIME));
 		for (Agent agent : agents)
 			manager.addActivity(new AgentArrival(agent, agent.getArrivalTime()));
 	}
 
-	// TODO remove
-	//public void addAgent(Agent agent) {
-		//agents.add(agent);
-	//}
-	
-	/**
-	 * @return configuration string for this model.
-	 */
-	public abstract String getConfig();
+	public int nextIPID() {
+		return ipIDgen.next();
+	}
 
 	/**
-	 * Format "MODELTYPE-CONFIG" unless config string is empty, then "MODELTYPE"
-	 * If configuration string has a colon, i.e. CONFIG:PARAMS, then only
-	 * include the CONFIG portion.
+	 * Format "MODELTYPE-CONFIG" unless config string is empty, then "MODELTYPE" If configuration
+	 * string has a colon, i.e. CONFIG:PARAMS, then only include the CONFIG portion.
 	 * 
 	 * @return model name
 	 */
-	@Deprecated
+	@Deprecated // TODO Remove
 	public String getFullName() {
-		String configStr = this.getConfig();
-		if (!this.getConfig().equals(""))
-			configStr = "-" + configStr;
-		String[] configs = configStr.split("[:]+");
-		return this.getClass().getSimpleName().toUpperCase() + configs[0];
-	}
-
-	/**
-	 * Adds an agent to the list of agents for the model.
-	 * 
-	 * @param id
-	 */
-	public void linkAgent(int id) {
-		if (!agentIDs.contains(id))
-			agentIDs.add(id);
-	}
-
-	/**
-	 * Add an agent-property pair to the MarketModel.
-	 * 
-	 * @param agType
-	 * @param agProperties
-	 */
-	public void addAgentPropertyPair(AgentType agType,
-			EntityProperties agProperties) {
-		AgentPropsPair app = new AgentPropsPair(agType, agProperties);
-		agentConfig.add(app);
-	}
-
-	/**
-	 * @return agentConfig
-	 */
-	public ArrayList<AgentPropsPair> getAgentConfig() {
-		return agentConfig;
-	}
-
-	/**
-	 * @return number of (additional, non-environment) agents specified by
-	 *         config
-	 */
-	public int getNumModelAgents() {
-		return agentConfig.size();
-	}
-
-	/**
-	 * Add a market-property pair to the MarketModel.
-	 * 
-	 * @param mktType
-	 * @param mktProperties
-	 */
-	public void addMarketPropertyPair(MarketType mktType,
-			EntityProperties mktProperties) {
-		MarketObjectPair mpp = new MarketObjectPair(mktType.toString(),
-				mktProperties);
-		modelMarketConfig.add(mpp);
-	}
-
-	/**
-	 * Edits the market-property pair for the market at the given index. Retains
-	 * the market type.
-	 * 
-	 * @param idx
-	 * @param mktProperties
-	 */
-	public void editMarketPropertyPair(int idx, EntityProperties mktProperties) {
-		MarketObjectPair mpp = modelMarketConfig.get(idx);
-		modelMarketConfig.set(idx, new MarketObjectPair(mpp.getMarketType(),
-				mktProperties));
+		// String configStr = this.getConfig();
+		// if (!this.getConfig().equals(""))
+		// configStr = "-" + configStr;
+		// String[] configs = configStr.split("[:]+");
+		return this.getClass().getSimpleName().toUpperCase() /* + configs[0] */;
 	}
 
 	public Price getFundamentalAt(TimeStamp ts) {
 		if (fundamental == null)
-			// return new Price(0);
+		// return new Price(0);
 			throw new IllegalStateException("No Fundamental Value...");
 		return fundamental.getValueAt(ts);
-	}
-
-	/**
-	 * @return modelMarketConfig
-	 */
-	public ArrayList<MarketObjectPair> getMarketConfig() {
-		return modelMarketConfig;
 	}
 
 	/**
@@ -379,8 +265,7 @@ public abstract class MarketModel {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof MarketModel))
-			return false;
+		if (obj == null || !(obj instanceof MarketModel)) return false;
 		MarketModel mm = (MarketModel) obj;
 		return modelID == mm.modelID;
 	}

@@ -6,8 +6,6 @@
  */
 package event;
 
-import java.util.*;
-
 /**
  * The TimeStamp class is just a wrapper around java.lang.Long. This *must*
  * remain an immutable object

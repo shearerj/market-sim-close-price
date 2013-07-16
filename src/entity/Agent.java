@@ -18,6 +18,7 @@ import market.Bid;
 import market.PQBid;
 import market.Price;
 import market.PrivateValue;
+import market.Quote;
 import market.Transaction;
 import model.MarketModel;
 import utils.RandPlus;
@@ -63,7 +64,7 @@ public abstract class Agent extends Entity {
 		this.model = model;
 		this.rand = rand;
 		this.arrivalTime = arrivalTime;
-		this.sip = model.getSip();
+		this.sip = model.getSIP();
 		this.privateValue = privateValue;
 		this.tickSize = tickSize;
 
@@ -136,25 +137,6 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * Submit a bid to the specified market.
-	 */
-	public Collection<? extends Activity> executeSubmitBid(Market market,
-			Price price, int quantity, TimeStamp ts) {
-		if (quantity == 0)
-			return Collections.emptySet();
-
-		log(INFO, ts + " | " + this + " " + getType() + "::submitBid: +("
-				+ price + ", " + quantity + ") to " + market);
-
-		Price p = price.quantize(tickSize);
-		PQBid pqBid = new PQBid(this, market, ts);
-		pqBid.addPoint(quantity, p);
-		// quantity can be +/-
-		activeBids.add(pqBid);
-		return market.addBid(pqBid, ts);
-	}
-
-	/**
 	 * Submits a multiple-point bid to the specified market.
 	 * 
 	 * @param mkt
@@ -178,7 +160,8 @@ public abstract class Agent extends Entity {
 		}
 		// TODO incorporate multi-point PVs?
 		activeBids.add(pqBid);
-		return mkt.addBid(pqBid, ts);
+//		return mkt.addBid(pqBid, ts); FIXME fix this / move to market
+		return null;
 	}
 
 	/**
@@ -250,13 +233,13 @@ public abstract class Agent extends Entity {
 		if (positionBalance > 0) {
 			// For long position, compare cost to bid quote (buys)
 			for (Market market : model.getMarkets())
-				if (market.getBidPrice().greaterThan(p))
-					p = market.getBidPrice();
+				if (market.getQuote().getBidPrice().greaterThan(p))
+					p = market.getQuote().getBidPrice();
 		} else {
 			// For short position, compare cost to ask quote (sells)
 			for (Market market : model.getMarkets()) {
-				if (market.getAskPrice().lessThan(p)) {
-					p = market.getAskPrice();
+				if (market.getQuote().getAskPrice().lessThan(p)) {
+					p = market.getQuote().getAskPrice();
 				}
 			}
 		}

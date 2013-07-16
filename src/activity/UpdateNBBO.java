@@ -14,10 +14,10 @@ import event.TimeStamp;
  */
 public class UpdateNBBO extends Activity {
 
-	private AbstractIP sip;
+	private IP sip;
 	private MarketModel mdl;
 
-	public UpdateNBBO(AbstractIP sip, MarketModel mdl, TimeStamp t) {
+	public UpdateNBBO(IP sip, MarketModel mdl, TimeStamp t) {
 		super(t);
 		this.sip = sip;
 		this.mdl = mdl;
@@ -28,7 +28,7 @@ public class UpdateNBBO extends Activity {
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp time) {
-		return this.sip.updateNBBO(this.mdl, time);
+		return this.sip.updateBBO(this.mdl, time);
 	}
 
 	public String toString() {

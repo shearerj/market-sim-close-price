@@ -1,5 +1,8 @@
 package market;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.ERROR;
+
 import entity.Market;
 import event.TimeStamp;
 
@@ -10,70 +13,59 @@ import event.TimeStamp;
  */
 public class Quote {
 
-	public Price lastAskPrice;
-	public Price lastBidPrice;
-	public Price lastClearPrice;
-	public TimeStamp lastQuoteTime;
-	public TimeStamp nextQuoteTime;		// for now, unused
-	public TimeStamp nextClearTime;
-	public TimeStamp lastClearTime;
-	public Integer marketID;
-	public Integer lastAskQuantity;
-	public Integer lastBidQuantity;
-	
-	public int depth;
-	
-	public Quote() {
-		lastAskPrice = new Price(-1);
-		lastBidPrice = new Price(-1);
-		lastAskQuantity = 0;
-		lastBidQuantity = 0;
+	protected final Price askPrice, bidPrice;
+	protected final Market market;
+	protected final int askQuantity, bidQuantity;
+	protected final TimeStamp quoteTime;
+	protected final int spread;
+
+	public Quote(Market market, Price askPrice, int askQuantity,
+			Price bidPrice, int bidQuantity, TimeStamp currentTime) {
+		this.market = market;
+		this.askPrice = askPrice;
+		this.bidPrice = bidPrice;
+		this.askQuantity = askQuantity;
+		this.bidQuantity = bidQuantity;
+		this.quoteTime = currentTime;
+
+		// XXX Are these the best way to handle these cases?
+		if (askPrice == null || bidPrice == null) {
+			spread = Integer.MAX_VALUE;
+		} else if (askPrice.lessThan(bidPrice)) {
+			log(ERROR, market.getClass().getSimpleName()
+					+ "::quote: ERROR bid > ask");
+			spread = 0;
+		} else {
+			spread = askPrice.getPrice() - bidPrice.getPrice();
+		}
 	}
-	
+
+	public Price getAskPrice() {
+		return askPrice;
+	}
+
+	public Price getBidPrice() {
+		return bidPrice;
+	}
+
 	/**
-	 * Constructor
+	 * XXX Should also return if ask < bid?
 	 * 
-	 * @param mkt
+	 * @return true if the quote is defined (has an ask and a bid price)
 	 */
-	public Quote(Market mkt) {
-		marketID = mkt.getID();
-		
-		PQBid ask = (PQBid) mkt.getAskQuote();
-		PQBid bid = (PQBid) mkt.getBidQuote();
-		lastAskPrice = ask.bidTreeSet.last().price;
-		lastBidPrice = bid.bidTreeSet.first().price;
-		lastAskQuantity = ask.bidTreeSet.last().quantity;
-		lastBidQuantity = bid.bidTreeSet.first().quantity;
-		
-		lastClearPrice = mkt.getLastClearPrice();
-		nextClearTime = mkt.getNextClearTime();
-		lastClearTime = mkt.getLastClearTime();
-		nextQuoteTime = mkt.getNextQuoteTime();
-		lastQuoteTime = mkt.getLastQuoteTime();
-		
-		depth = 1;
+	public boolean isDefined() {
+		return askPrice != null && bidPrice != null;
 	}
-	
+
 	/**
 	 * @return bid-ask spread of the quote (integer)
 	 */
 	public int getSpread() {
-		if (lastAskPrice.compareTo(lastBidPrice) >= 0) {
-			if (lastAskPrice.getPrice() == -1 || lastAskPrice.getPrice() == 0) {
-				return Price.INF.getPrice();
-			}
-			if (lastBidPrice.getPrice() == -1 || 
-					lastBidPrice.equals(Price.INF)) {
-				return Price.INF.getPrice();
-			}
-			return lastAskPrice.getPrice() - lastBidPrice.getPrice();
-		}
-		return 0;
+		return spread;
 	}
-	
-	
+
 	public String toString() {
-		return "(Bid: " + lastBidPrice + ", Ask: " + lastAskPrice + ")";
+		return "(Bid: " + bidPrice + ", Ask: " + askPrice + ")";
 	}
-	
+
 }

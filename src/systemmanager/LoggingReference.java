@@ -239,24 +239,24 @@ public class LoggingReference {
 	 */
 	private void createMarketsInModel(MarketModel model) {
 		// create markets in the model
-		for (MarketObjectPair mop : model.getMarketConfig()) {
-//			int mID = marketIDSequence.decrement();
-
-			EntityProperties mp = (EntityProperties) mop.getObject();
-			String mtype = mop.getMarketType();
-
-			Market market = null;
-			data.addMarket(market);
-
-			// Check if is call market, then initialize clearing sequence
-			if (market instanceof CallMarket) {
-				eventManager.addActivity(new Clear(market,
-						market.getNextClearTime()));
-			}
-			log(INFO, "Markets: " + market.getType() + ", " + market);
-
-//			data.marketIDModelIDMap.put(mID, model.getID());
-		}
+//		for (MarketObjectPair mop : model.getMarketConfig()) {
+////			int mID = marketIDSequence.decrement();
+//
+//			EntityProperties mp = (EntityProperties) mop.getObject();
+//			String mtype = mop.getMarketType();
+//
+//			Market market = null;
+//			data.addMarket(market);
+//
+//			// Check if is call market, then initialize clearing sequence
+//			if (market instanceof CallMarket) {
+////				eventManager.addActivity(new Clear(market,
+////						market.getNextClearTime()));
+//			}
+//			log(INFO, "Markets: " + market.getType() + ", " + market);
+//
+////			data.marketIDModelIDMap.put(mID, model.getID());
+//		}
 	}
 
 	/**

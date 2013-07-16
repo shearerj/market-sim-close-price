@@ -26,11 +26,15 @@ public class MockMarketModel extends MarketModel {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public MockMarketModel(int modelID) {
-		this(modelID, new DummyFundamental(100000), 
+	public MockMarketModel(int modelID, FundamentalValue fundamental) {
+		this(modelID, fundamental, 
 				new HashMap<AgentProperties,Integer>(),
 				new EntityProperties(), new JsonObject(), 
 				new RandPlus());
+	}
+	
+	public MockMarketModel(int modelID) {
+		this(modelID, new DummyFundamental(100000));
 	}
 	
 	public MockMarketModel() {
@@ -40,10 +44,6 @@ public class MockMarketModel extends MarketModel {
 	//
 	// Dummy Implemented methods
 	//
-	@Override
-	public String getConfig() {
-		return "Dummy Market";
-	}
 	
 	@Override
 	protected void setupMarkets(EntityProperties modelProps) {

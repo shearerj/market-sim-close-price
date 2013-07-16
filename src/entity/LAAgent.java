@@ -17,6 +17,7 @@ import systemmanager.Consts;
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
+import activity.SubmitBid;
 import data.EntityProperties;
 import data.Keys;
 import event.TimeStamp;
@@ -36,7 +37,7 @@ public class LAAgent extends HFTAgent {
 
 	protected final double alpha; // LA profit gap
 
-	protected Collection<LAInformationProcessor> ip_las;
+	protected Collection<LAIP> ip_las;
 
 	public LAAgent(int agentID, MarketModel model, int sleepTime,
 			double sleepVar, double alpha, TimeStamp latency, RandPlus rand,
@@ -46,9 +47,8 @@ public class LAAgent extends HFTAgent {
 		this.alpha = alpha;
 
 		for (Market market : model.getMarkets()) {
-			this.addIP(
-					new LAInformationProcessor(model.getipIDgen(),
-							market.getID(), latency, market, this), market);
+			this.addIP(new LAIP(model.nextIPID(), latency, market, this),
+					market);
 		}
 	}
 
@@ -81,7 +81,7 @@ public class LAAgent extends HFTAgent {
 				Market sellMarket = bestQuote.getBestAskMarket();
 
 				// check that BID/ASK defined for both markets
-				if (buyMarket.defined() && sellMarket.defined()) {
+				if (buyMarket.isDefined() && sellMarket.isDefined()) {
 
 					int midPoint = (bestQuote.getBestBid().getPrice() + bestQuote.getBestAsk().getPrice()) / 2;
 					int buySize = getBidQuantity(bestQuote.getBestBid(),
@@ -105,10 +105,12 @@ public class LAAgent extends HFTAgent {
 
 						// XXX Midpoint isn't quantized, so they'll be ticksize
 						// apart, but not actuall on a ticksize...
-						actMap.addAll(executeSubmitBid(buyMarket, new Price(
-								midPoint - tickSize), quantity, ts));
-						actMap.addAll(executeSubmitBid(sellMarket, new Price(
-								midPoint + tickSize), -quantity, ts));
+						actMap.add(new SubmitBid(this, buyMarket, new Price(
+								midPoint - tickSize), quantity,
+								TimeStamp.IMMEDIATE));
+						actMap.add(new SubmitBid(this, sellMarket, new Price(
+								midPoint + tickSize), -quantity,
+								TimeStamp.IMMEDIATE));
 
 					} else if (buyMarket.equals(sellMarket)) {
 						log(INFO,
@@ -158,21 +160,21 @@ public class LAAgent extends HFTAgent {
 		return Collections.emptyList();
 	}
 
-	public void addIP(LAInformationProcessor laip, Market market) {
+	public void addIP(LAIP laip, Market market) {
 		this.ip_las.add(laip);
 		market.addIP(laip);
 	}
 
 	/**
-	 * Find best market to buy in (i.e. lowest ask) and to sell in (i.e. highest
-	 * bid). This is a global operation so it checks all markets in marketIDs
-	 * and it gets the up-to-date market quote with zero delays.
+	 * Find best market to buy in (i.e. lowest ask) and to sell in (i.e. highest bid). This is a
+	 * global operation so it checks all markets in marketIDs and it gets the up-to-date market
+	 * quote with zero delays.
 	 * 
-	 * bestBuy = the best price an agent can buy at (the lowest sell bid).
-	 * bestSell = the best price an agent can sell at (the highest buy bid).
+	 * bestBuy = the best price an agent can buy at (the lowest sell bid). bestSell = the best price
+	 * an agent can sell at (the highest buy bid).
 	 * 
-	 * NOTE: This uses only those markets belonging to the agent's model, as
-	 * strategies can only be selected based on information on those markets.
+	 * NOTE: This uses only those markets belonging to the agent's model, as strategies can only be
+	 * selected based on information on those markets.
 	 * 
 	 * TODO eventually this should use InformationProcessors
 	 * 
@@ -182,11 +184,9 @@ public class LAAgent extends HFTAgent {
 		Price bestBuy = null, bestSell = null;
 		Market bestBuyMkt = null, bestSellMkt = null;
 
-		for (LAInformationProcessor laip : ip_las) {
-			// TODO This should use IP not modle.markets
-			Price bid = laip.getNBBOQuote().getBestBid(); // TODO shouldn't have
-															// # as input
-			Price ask = laip.getNBBOQuote().getBestAsk();
+		for (LAIP laip : ip_las) {
+			Price bid = laip.getBBOQuote().getBestBid();
+			Price ask = laip.getBBOQuote().getBestAsk();
 
 			// in case the bid/ask disappears
 			ArrayList<Price> price = new ArrayList<Price>();
@@ -212,17 +212,17 @@ public class LAAgent extends HFTAgent {
 	 * 
 	 * @param beginPrice
 	 * @param endPrice
-	 * @param marketID
+	 * @param market
 	 * @param buy
 	 *            true if buy, false if sell
 	 * @return
 	 */
 	protected int getBidQuantity(Price beginPrice, Price endPrice,
-			Market marketID, boolean buy) {
+			Market market, boolean buy) {
 
 		int quantity = 0;
 
-		for (Bid bid : marketID.getBids().values()) {
+		for (Bid bid : market.getBids().values()) {
 			PQBid b = (PQBid) bid;
 
 			for (PQPoint pq : b.bidTreeSet) {
