@@ -19,7 +19,7 @@ import market.Quote;
 import market.Transaction;
 import model.MarketModel;
 import activity.Activity;
-import activity.SendToSIP;
+import activity.SendToIP;
 import activity.WithdrawBid;
 import data.TimeSeries;
 import event.TimeStamp;
@@ -160,31 +160,14 @@ public abstract class Market extends Entity {
 		// update, but this is important to note. Also, if there's a clear,
 		// but no transactions, it's probably not worth a SendToSIP, unless
 		// you're a call market.
-		updateQuote(currentTime);
-		return Collections.singleton(new SendToSIP(this, INF_TIME));
-	}
-
-	/**
-	 * Send market's bid/ask to the Security Information Processor to be processed at some time
-	 * (determined by latency) in the future.
-	 */
-	public Collection<? extends Activity> sendToSIP(TimeStamp currentTime) {
-		Price bid = quote.getBidPrice();
-		Price ask = quote.getAskPrice();
-		log(INFO, currentTime + " | " + this + " SendToSIP(" + quote + ")");
-
-		Collection<Activity> activities = new ArrayList<Activity>();
-		for (IP ip : ips) {
-			activities.add(ip.scheduleProcessQuote(this, bid, ask, currentTime));
-		}
-		return activities;
+		return updateQuote(currentTime);
 	}
 
 	/**
 	 * Updates the Markets current quote TODO This should be subsumed by sendToIPs. sendToIP should
 	 * compute this quote and update things appropriately.
 	 */
-	protected void updateQuote(TimeStamp currentTime) {
+	protected Collection<? extends Activity> updateQuote(TimeStamp currentTime) {
 		// TODO This first part should be done a lot differently
 
 		PQBid ask = ((PQBid) orderbook.getAskQuote());
@@ -196,10 +179,18 @@ public abstract class Market extends Entity {
 
 		quote = new Quote(this, askPrice, askQuantity, bidPrice, bidQuantity,
 				currentTime);
+		
+		log(INFO, currentTime + " | " + this + " SendToSIP(" + quote + ")");
+		
+		Collection<Activity> activities = new ArrayList<Activity>();
+		for (IP ip : ips) {
+			activities.add(new SendToIP(this, TimeStamp.IMMEDIATE, quote, ip));
+		}
 
 		recordDepth(currentTime);
 		addSpread(currentTime);
 		addMidQuote(currentTime);
+		return activities;
 	}
 
 	protected void recordDepth(TimeStamp ts) {
@@ -342,6 +333,10 @@ public abstract class Market extends Entity {
 
 	public TimeSeries getMidQuotes() {
 		return this.midQuotes;
+	}
+	
+	public MarketModel getModel() {
+		return this.model;
 	}
 
 	@Override

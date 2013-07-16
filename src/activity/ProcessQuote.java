@@ -16,29 +16,29 @@ import event.TimeStamp;
  */
 public class ProcessQuote extends Activity {
 
-	private IP sip;
-	private Market mkt;
+	private IP ip;
+	private Market market;
 	private Price bid;
 	private Price ask;
 
-	public ProcessQuote(IP sip, Market mkt, Price bid, Price ask, TimeStamp t) {
+	public ProcessQuote(IP ip, Market market, Price bid, Price ask, TimeStamp t) {
 		super(t);
-		this.sip = sip;
-		this.mkt = mkt;
+		this.ip = ip;
+		this.market = market;
 		this.bid = bid;
 		this.ask = ask;
 	}
 
 	public ProcessQuote deepCopy() {
-		return new ProcessQuote(this.sip, this.mkt, this.bid, this.ask, this.scheduledTime);
+		return new ProcessQuote(this.ip, this.market, this.bid, this.ask, this.scheduledTime);
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp time) {
-		return this.sip.processQuote(this.mkt, this.bid, this.ask, time);
+		return this.ip.processQuote(this.market, this.bid, this.ask, time);
 	}
 
 	public String toString() {
-		return new String(getName() + "::" + mkt + ":(" + bid + "," + ask + ")");
+		return new String(getName() + "::" + market + ":(" + bid + "," + ask + ")");
 	}
 
 	@Override
@@ -51,8 +51,8 @@ public class ProcessQuote extends Activity {
 			return false;
 		ProcessQuote other = (ProcessQuote) obj;
 		return new EqualsBuilder().
-				append(mkt.getID(), other.mkt.getID()).
-				append(sip.getID(), other.sip.getID()).
+				append(market.getID(), other.market.getID()).
+				append(ip.getID(), other.ip.getID()).
 				append(bid, other.bid).
 				append(ask, other.ask).
 				append(scheduledTime.longValue(), other.scheduledTime.longValue()).
@@ -62,8 +62,8 @@ public class ProcessQuote extends Activity {
 	@Override
 	public int hashCode() {
 		return new HashCodeBuilder(19, 37).
-				append(mkt.getID()).
-				append(sip.getID()).
+				append(market.getID()).
+				append(ip.getID()).
 				append(bid).
 				append(ask).
 				append(scheduledTime.longValue()).

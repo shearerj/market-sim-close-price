@@ -15,7 +15,7 @@ import systemmanager.Consts.ModelType;
 import activity.AgentArrival;
 import activity.Clear;
 import activity.Liquidate;
-import activity.SendToSIP;
+import activity.SendToIP;
 import data.AgentPropsPair;
 import data.ArrivalTime;
 import data.EntityProperties;
@@ -134,7 +134,7 @@ public class LoggingReference {
 			// Initial SendToSIP Activity for all markets
 			for (Market mkt : data.getMarkets().values()) { // Move to market
 															// Models
-				eventManager.addActivity(new SendToSIP(mkt, new TimeStamp(0)));
+				eventManager.addActivity(new SendToIP(mkt, new TimeStamp(0)));
 			}
 		} catch (Exception e) {
 			System.err.println(this.getClass().getSimpleName()

@@ -1,5 +1,6 @@
 package entity;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import market.BestBidAsk;
@@ -33,9 +34,11 @@ public abstract class IP extends Entity {
 		lastQuotes = new BestBidAsk(null, null, null, null);
 	}
 
-	public ProcessQuote scheduleProcessQuote(Market market, Price bid,
+	public Collection<ProcessQuote> sendToIP(Market market, Price bid,
 			Price ask, TimeStamp ts) {
-		return new ProcessQuote(this, market, bid, ask, ts.plus(latency));
+		Collection<ProcessQuote> activities = new ArrayList<ProcessQuote>();
+		activities.add(new ProcessQuote(this, market, bid, ask, ts.plus(latency)));
+		return activities;
 	}
 
 	public abstract Collection<Activity> processQuote(Market mkt, Price bid,
@@ -47,12 +50,7 @@ public abstract class IP extends Entity {
 	 * @param modelID
 	 * @return BestBidAsk
 	 */
-	// TODO This should be moved to SIP
 	public BestBidAsk getBBOQuote() {
 		return lastQuotes;
 	}
-
-	// TODO this should be moved to SIP
-	public abstract Collection<Activity> updateBBO(MarketModel model,
-			TimeStamp ts);
 }
