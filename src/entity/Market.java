@@ -121,7 +121,7 @@ public abstract class Market extends Entity {
 		orderbook.logActiveBids(currentTime);
 		orderbook.logFourHeap(currentTime);
 
-		List<Transaction> transactions = orderbook.earliestPriceClear(currentTime);
+		List<Transaction> transactions = clearPricing(currentTime);
 
 		// Different logging if no transactions
 		if (transactions.isEmpty()) {
@@ -155,6 +155,15 @@ public abstract class Market extends Entity {
 	}
 
 	/**
+	 * This method provides the abstraction for choosing what pricing rule the market clears at.
+	 * This method should actually do the order book clear. Essentially this should be
+	 * <code>orderbook.uniformPriceClear</code> or <code>orderbook.earliestPriceClear</code>
+	 */
+	// TODO There's probably a better way to do this. Maybe passing an object all of the way into
+	// the order book, that given some bids, determines where to price them.
+	protected abstract List<Transaction> clearPricing(TimeStamp currentTime);
+
+	/**
 	 * Updates the Markets current quote TODO This should be subsumed by sendToIPs. sendToIP should
 	 * compute this quote and update things appropriately.
 	 */
@@ -176,7 +185,8 @@ public abstract class Market extends Entity {
 
 		Collection<Activity> activities = new ArrayList<Activity>();
 		for (IP ip : ips) {
-			activities.add(new SendToIP(this, quote, transactions, ip, TimeStamp.IMMEDIATE));
+			activities.add(new SendToIP(this, quote, transactions, ip,
+					TimeStamp.IMMEDIATE));
 		}
 
 		recordDepth(currentTime);

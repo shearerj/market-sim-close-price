@@ -2,7 +2,9 @@ package entity;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
+import market.Transaction;
 import model.MarketModel;
 import systemmanager.Consts;
 import activity.Activity;
@@ -24,7 +26,7 @@ public class CallMarket extends Market {
 	public final static String CLEAR_FREQ_KEY = "clearFreq";
 	public final static String PRICING_POLICY_KEY = "pricingPolicy";
 
-	public float pricingPolicy; // XXX Unused?
+	protected final float pricingPolicy;
 	protected final TimeStamp clearFreq;
 	protected TimeStamp nextClearTime, nextQuoteTime;
 
@@ -50,6 +52,11 @@ public class CallMarket extends Market {
 		// Insert next clear activity at some time in the future
 		activities.add(new Clear(this, nextClearTime));
 		return activities;
+	}
+
+	@Override
+	protected List<Transaction> clearPricing(TimeStamp currentTime) {
+		return orderbook.uniformPriceClear(currentTime, pricingPolicy);
 	}
 	
 }

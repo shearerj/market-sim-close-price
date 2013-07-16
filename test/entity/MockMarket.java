@@ -2,6 +2,7 @@ package entity;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import market.Price;
 import market.Transaction;
@@ -35,6 +36,11 @@ public class MockMarket extends Market {
 				currentTime);
 		updateQuote(Collections.<Transaction>emptyList(), currentTime);
 		return acts;
+	}
+
+	@Override
+	protected List<Transaction> clearPricing(TimeStamp currentTime) {
+		return orderbook.uniformPriceClear(currentTime, 0.5f);
 	}
 
 }

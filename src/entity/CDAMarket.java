@@ -2,8 +2,10 @@ package entity;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import market.Price;
+import market.Transaction;
 import model.MarketModel;
 import systemmanager.Consts;
 import activity.Activity;
@@ -37,6 +39,11 @@ public class CDAMarket extends Market {
 				super.withdrawBid(agent, curentTime));
 		activities.add(new Clear(this, Consts.INF_TIME));
 		return activities;
+	}
+
+	@Override
+	protected List<Transaction> clearPricing(TimeStamp currentTime) {
+		return orderbook.earliestPriceClear(currentTime);
 	}
 
 }
