@@ -214,6 +214,9 @@ public abstract class Market extends Entity {
 	}
 
 	// TODO switch to Bid Object
+	/**
+	 * Bid doesn't expire
+	 */
 	public Collection<? extends Activity> submitBid(Agent agent, Price price,
 			int quantity, TimeStamp currentTime) {
 		return submitBid(agent, price, quantity, currentTime,
@@ -242,6 +245,9 @@ public abstract class Market extends Entity {
 					currentTime.plus(duration)));
 	}
 
+	/**
+	 * Bid doesn't expire
+	 */
 	public Collection<? extends Activity> submitNMSBid(Agent agent,
 			Price price, int quantity, TimeStamp currentTime) {
 		return submitNMSBid(agent, price, quantity, currentTime,
@@ -272,6 +278,10 @@ public abstract class Market extends Entity {
 					+ "::submitNMSBid: " + "NBBO" + nbbo + " better than "
 					+ this + " Quote" + quote);
 
+		// TODO Right now this causes an issue, because the agent won't know where its bid actually
+		// got submitted. I think to fix this agent's should have a bid object, and that would have
+		// the market it's in. If an agent submit's a bid to one market, but it gets routed, the
+		// bid's market will get updated
 		return bestMarket.submitBid(agent, price, quantity, currentTime,
 				duration);
 	}

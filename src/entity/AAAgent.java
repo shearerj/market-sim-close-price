@@ -7,6 +7,7 @@ import static utils.Compare.min;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import market.Price;
 import market.PrivateValue;
@@ -16,6 +17,7 @@ import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
+import activity.SubmitNMSBid;
 import data.ArrivalTime;
 import data.EntityProperties;
 import data.Keys;
@@ -382,13 +384,12 @@ public class AAAgent extends BackgroundAgent {
 		 * @param ts
 		 * @return
 		 */
-		private Collection<Activity> biddingLayer(Price limit, Price targetPrice,
+		private Collection<? extends Activity> biddingLayer(Price limit, Price targetPrice,
 				int quantity, TimeStamp ts) {
 			String s = ts + " | " + this + " " + getType() + ":";
-			Collection<Activity> actMap = new ArrayList<Activity>();
 
 			// Determining the offer price to (possibly) submit
-			Quote quote = market.getQuote();
+			Quote quote = primaryMarket.getQuote();
 			Price bestBid = quote.getBidPrice();
 			Price bestAsk = quote.getAskPrice();
 
@@ -399,15 +400,13 @@ public class AAAgent extends BackgroundAgent {
 				s += "new order would exceed max position " + maxAbsPosition
 						+ "; no submission";
 				log(INFO, s);
-				return actMap;
+				return Collections.emptySet(); 
 			}
 			
 			// if no bid or no ask, submit least aggressive price
 			if (bestBid == null || bestAsk == null) {
 				Price price = isBuyer ? Price.ZERO : Price.INF;
-				actMap.addAll(executeSubmitNMSBid(price, quantity,
-						ts));
-				return actMap;
+				return Collections.singleton(new SubmitNMSBid(AAAgent.this, price, quantity, primaryMarket, TimeStamp.IMMEDIATE));
 			}
 			
 			// If best offer is outside of limit price, no bid is submitted
@@ -416,7 +415,7 @@ public class AAAgent extends BackgroundAgent {
 				s += "best offer is outside of limit price: " + limit
 						+ "; no submission";
 				log(INFO, s);
-				return actMap;
+				return Collections.emptySet();
 			}
 
 			// Pricing - verifying targetPrice
@@ -455,22 +454,17 @@ public class AAAgent extends BackgroundAgent {
 
 			// Submitting a bid - See Vytelingum paper section 4.4 - bidding
 			// layer
-			// Buyers
-			if (isBuyer) {
+			if (isBuyer) { // Buyer
 				// if bestAsk < targetPrice, accept bestAsk
 				// else submit bid given by EQ 10/11
 				Price submitPrice = bestAsk.lessThanEqual(price) ? bestAsk : price;
-				actMap.addAll(executeSubmitNMSBid(submitPrice, quantity, ts));
-			}
-			// Seller
-			else {
+				return Collections.singleton(new SubmitNMSBid(AAAgent.this, submitPrice, quantity, primaryMarket, TimeStamp.IMMEDIATE));
+			} else { // Seller
 				// If outstanding bid >= target price, submit ask at bid price
 				// else submit bid given by EQ 10/11
 				Price submitPrice = bestBid.greaterThanEquals(price) ? bestBid : price;
-				actMap.addAll(executeSubmitNMSBid(submitPrice, quantity, ts));
+				return Collections.singleton(new SubmitNMSBid(AAAgent.this, submitPrice, quantity, primaryMarket, TimeStamp.IMMEDIATE));
 			}
-
-			return actMap;
 		}
 	}
 
@@ -481,7 +475,7 @@ public class AAAgent extends BackgroundAgent {
 				params.getAsInt(Keys.MAX_QUANTITY, 1), params.getAsDouble(
 						"pvVar", 100), rand), rand, params.getAsInt("tickSize", 1000));
 		//Initialize market
-		this.marketSubmittedBid = this.market;
+		this.marketSubmittedBid = this.primaryMarket;
 		
 		//Initializing Reentry times
 		double reentryRate = params.getAsDouble(Keys.REENTRY_RATE, 0);

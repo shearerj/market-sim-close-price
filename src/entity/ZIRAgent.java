@@ -12,6 +12,7 @@ import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
+import activity.SubmitNMSBid;
 import data.ArrivalTime;
 import data.EntityProperties;
 import data.Keys;
@@ -22,23 +23,20 @@ import event.TimeStamp;
  * 
  * A zero-intelligence agent with re-submission (ZIR).
  * 
- * The ZIR agent is primarily associated with a single market. It wakes up
- * periodically to submit a new bid (if its previous bid has transacted) or it
- * does nothing.
+ * The ZIR agent is primarily associated with a single market. It wakes up periodically to submit a
+ * new bid (if its previous bid has transacted) or it does nothing.
  * 
- * This agent bases its private value on a stochastic process, the parameters of
- * which are specified at the beginning of the simulation by the spec file. The
- * agent's private valuation is determined by value of the random process at the
- * time it enters, with some randomization added by using an individual variance
- * parameter. The private value is used to calculate the agent's surplus (and
+ * This agent bases its private value on a stochastic process, the parameters of which are specified
+ * at the beginning of the simulation by the spec file. The agent's private valuation is determined
+ * by value of the random process at the time it enters, with some randomization added by using an
+ * individual variance parameter. The private value is used to calculate the agent's surplus (and
  * thus the market's allocative efficiency).
  * 
- * This agent submits a single limit order at a time. It will modify its private
- * value if its bid has transacted by the time it wakes up.
+ * This agent submits a single limit order at a time. It will modify its private value if its bid
+ * has transacted by the time it wakes up.
  * 
- * NOTE: Each limit order price is uniformly distributed over a range that is
- * twice the size of bidRange in either a positive or negative direction from
- * the agent's private value.
+ * NOTE: Each limit order price is uniformly distributed over a range that is twice the size of
+ * bidRange in either a positive or negative direction from the agent's private value.
  * 
  * @author ewah
  */
@@ -52,8 +50,8 @@ public class ZIRAgent extends BackgroundAgent {
 	protected ArrayList<TimeStamp> submissionTimes; // TODO currently unused
 
 	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, int bidRange,
-			int maxAbsPosition, int reentryRate, double pvVar, int tickSize) {
+			Market market, RandPlus rand, int bidRange, int maxAbsPosition,
+			int reentryRate, double pvVar, int tickSize) {
 		// TODO replace null with proper private value initialization
 		super(agentID, arrivalTime, model, market, new PrivateValue(
 				maxAbsPosition, pvVar, rand), rand, tickSize);
@@ -69,8 +67,8 @@ public class ZIRAgent extends BackgroundAgent {
 		// TODO get keys and default value for reentry rate and pvvar
 		this(agentID, arrivalTime, model, market, rand, props.getAsInt(
 				Keys.BID_RANGE, 5000), props.getAsInt(Keys.MAX_QUANTITY, 10),
-				props.getAsInt(Keys.REENTRY_RATE, 100), props.getAsDouble("pvVar",
-						100), props.getAsInt("tickSize", 1000));
+				props.getAsInt(Keys.REENTRY_RATE, 100), props.getAsDouble(
+						"pvVar", 100), props.getAsInt("tickSize", 1000));
 	}
 
 	@Override
@@ -113,7 +111,8 @@ public class ZIRAgent extends BackgroundAgent {
 								quantity) + "=" + val;
 				log(INFO, s);
 
-				activities.addAll(executeSubmitNMSBid(price, quantity, ts));
+				activities.add(new SubmitNMSBid(this, price, quantity, primaryMarket,
+						TimeStamp.IMMEDIATE));
 				submissionTimes.add(ts);
 
 				lastPositionBalance = positionBalance; // update position

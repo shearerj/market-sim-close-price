@@ -82,7 +82,7 @@ public class BasicMarketMaker extends MarketMaker {
 		// update NBBO
 		BestBidAsk lastNBBOQuote = sip.getBBOQuote();
 
-		Quote quote = market.getQuote();
+		Quote quote = primaryMarket.getQuote();
 		Price bid = quote.getBidPrice();
 		Price ask = quote.getAskPrice();
 
@@ -92,7 +92,7 @@ public class BasicMarketMaker extends MarketMaker {
 		if (bid == null || ask == null) {
 			log(INFO, ts + " | " + this + " " + getType()
 					+ "::agentStrategy: undefined quote in market "
-					+ getMarket());
+					+ primaryMarket);
 
 		} else if (!bid.equals(lastBid) || !ask.equals(lastAsk)) {
 			// check if bid/ask has changed; if so, submit fresh orders
@@ -129,15 +129,15 @@ public class BasicMarketMaker extends MarketMaker {
 			for (int p = ask.getPrice(); p <= sellMaxPrice.getPrice(); p += stepSize)
 				priceQuantMap.put(new Price(p), -1);
 
-			log(INFO, ts + " | " + getMarket() + " " + this + " " + getType()
+			log(INFO, ts + " | " + primaryMarket + " " + this + " " + getType()
 					+ "::agentStrategy: ladder numRungs=" + numRungs
 					+ ", stepSize=" + stepSize + ": buys [" + buyMinPrice
 					+ ", " + bid + "] &" + " sells [" + ask + ", "
 					+ sellMaxPrice + "]");
-			acts.addAll(submitMultipleBid(getMarket(), priceQuantMap, ts));
+			acts.addAll(submitMultipleBid(primaryMarket, priceQuantMap, ts));
 
 		} else {
-			log(INFO, ts + " | " + getMarket() + " " + this + " " + getType()
+			log(INFO, ts + " | " + primaryMarket + " " + this + " " + getType()
 					+ "::agentStrategy: no change in submitted ladder.");
 
 		}
@@ -149,7 +149,7 @@ public class BasicMarketMaker extends MarketMaker {
 		// TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime,
 		// sleepVar)));
 		TimeStamp tsNew = ts.plus(sleepTime);
-		acts.add(new AgentStrategy(this, market, tsNew));
+		acts.add(new AgentStrategy(this, primaryMarket, tsNew));
 		return acts;
 	}
 

@@ -114,14 +114,13 @@ public class AAAgentTest {
 		
 		//Checking that the submitted bid price is 0
 		//Finding the bid in the activity list
+		SubmitNMSBid act = new SubmitNMSBid(agent, new Price(0), 1, market, TimeStamp.IMMEDIATE);
 		for(Activity itr : test) {
 			if(SubmitNMSBid.class.isAssignableFrom(itr.getClass())) {
 				//Casting the bid
 				SubmitNMSBid bid = (SubmitNMSBid) itr;
 				//Asserting the bid is correct
-				assertTrue(bid.getAg().equals(agent));
-				assertTrue(bid.getPrice().equals(new Price(0)));
-				assertTrue(bid.getQuantity() == 1);
+				assertTrue(bid.equals(act));
 			}
 		}
 	}
@@ -137,16 +136,14 @@ public class AAAgentTest {
 		Collection<Activity> test = agent.agentStrategy(ts);
 		
 		//Checking that the submitted ask price is Price.INF
-		Activity act = new SubmitNMSBid(agent, Price.INF, -1, Consts.INF_TIME, ts);
+		Activity act = new SubmitNMSBid(agent, Price.INF, -1, market, TimeStamp.IMMEDIATE);
 		//Finding the bid in the activity list
 		for(Activity itr : test) {
 			if(SubmitNMSBid.class.isAssignableFrom(itr.getClass())) {
 				//Casting the bid
 				SubmitNMSBid bid = (SubmitNMSBid) itr;
 				//Asserting the bid is correct
-				assertTrue(bid.getAg().equals(agent));
-				assertTrue(bid.getPrice().equals(Price.INF));
-				assertTrue(bid.getQuantity() == -1);
+				assertTrue(bid.equals(act));
 			}
 		}
 	}
