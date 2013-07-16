@@ -29,16 +29,18 @@ public class MockMarket extends Market {
 	}
 
 
-
 	@Override
 	public Map<Agent, Bid> getBids() {
 		return orderbook.getActiveBids();
 	}
-
-	public Collection<? extends Activity> addBid(Bid b, TimeStamp currentTime) {
-		orderbook.insertBid((PQBid) b);
-		bids.add(b);
-		return new ArrayList<Activity>();
+	
+	@Override
+	public Collection<? extends Activity> submitBid(Agent agent, Price price,
+			int quantity, TimeStamp currentTime) {
+		Collection<Activity> acts = new ArrayList<Activity>
+			(super.submitBid(agent, price, quantity, currentTime));
+			this.updateQuote(currentTime);
+		return acts;
 	}
 
 	@Override
