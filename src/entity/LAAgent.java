@@ -74,7 +74,7 @@ public class LAAgent extends HFTAgent {
 					* bestQuote.getBestBid().getPrice())
 					&& (bestQuote.getBestBid().getPrice() >= 0)) {
 
-				log(INFO, ts.toString() + " | " + this + " " + getType()
+				log(INFO, ts.toString() + " | " + this + " " + getName()
 						+ "::agentStrategy: Found possible arb opp!");
 
 				Market buyMarket = bestQuote.getBestBidMarket();
@@ -97,7 +97,7 @@ public class LAAgent extends HFTAgent {
 										+ " | "
 										+ this
 										+ " "
-										+ getType()
+										+ getName()
 										+ "::agentStrategy: Exploit existing arb opp: "
 										+ bestQuote + " in "
 										+ bestQuote.getBestBidMarket() + " & "
@@ -118,7 +118,7 @@ public class LAAgent extends HFTAgent {
 										+ " | "
 										+ this
 										+ " "
-										+ getType()
+										+ getName()
 										+ "::agentStrategy: No arb opp since at least 1 market does not "
 										+ "have both a bid and an ask");
 						// Note that this is due to a market not having both a
@@ -127,7 +127,7 @@ public class LAAgent extends HFTAgent {
 
 					} else if (quantity == 0) {
 						log(INFO, ts.toString() + " | " + this + " "
-								+ getType()
+								+ getName()
 								+ "::agentStrategy: No quantity available");
 						// Note that if this message appears in a CDA market,
 						// then the HFT
@@ -141,7 +141,7 @@ public class LAAgent extends HFTAgent {
 									+ " | "
 									+ this
 									+ " "
-									+ getType()
+									+ getName()
 									+ "::agentStrategy: Market quote(s) undefined. No bid submitted.");
 				}
 

@@ -4,7 +4,6 @@ import java.util.Collection;
 
 import model.MarketModel;
 import systemmanager.Consts;
-import data.SystemData;
 
 /**
  * Factory class for creating Markets.

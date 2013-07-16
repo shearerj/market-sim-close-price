@@ -20,6 +20,10 @@ public abstract class Entity {
 		return this.id;
 	}
 	
+	public final String getName() {
+		return getClass().getSimpleName();
+	}
+	
 	@Override
 	public int hashCode() {
 		return id;

@@ -69,18 +69,9 @@ public abstract class Agent extends Entity {
 	public abstract Collection<? extends Activity> agentStrategy(
 			TimeStamp currentTime);
 
+	// TODO not make abstract. Seems like an optional activity.
 	public abstract Collection<? extends Activity> agentArrival(
 			TimeStamp currentTime);
-
-	/**
-	 * @return Method to get the type of the agent.
-	 */
-	@Deprecated
-	// FIXME should return Consts.AgentType corresponding to current agent. Need
-	// a good way to do this.
-	public String getType() {
-		return getClass().getSimpleName();
-	}
 
 	/**
 	 * Liquidate agent's position at the the value of the global fundamental at the specified time.
@@ -96,8 +87,7 @@ public abstract class Agent extends Entity {
 	/**
 	 * Liquidates an agent's position at the specified price.
 	 */
-	public Collection<? extends Activity> liquidate(Price price,
-			TimeStamp ts) {
+	public Collection<? extends Activity> liquidate(Price price, TimeStamp ts) {
 
 		log(INFO, ts + " | " + this + " pre-liquidation: position="
 				+ positionBalance + ", profit=" + realizedProfit);
@@ -134,7 +124,7 @@ public abstract class Agent extends Entity {
 				+ "Agent::updateTransactions: New transaction received: "
 				+ trans);
 		log(INFO, currentTime + " | " + this + " Agent::logTransactions: "
-				+ model.getFullName() + ": Current Position=" + positionBalance
+				+ model.getName() + ": Current Position=" + positionBalance
 				+ ", Realized Profit=" + realizedProfit);
 	}
 
@@ -159,7 +149,7 @@ public abstract class Agent extends Entity {
 			}
 		}
 
-		log(DEBUG, model.getFullName() + ": " + this + " bal="
+		log(DEBUG, model.getName() + ": " + this + " bal="
 				+ positionBalance + ", p=" + p + ", avgCost=" + averageCost);
 
 		return p == null ? Price.ZERO : new Price(positionBalance

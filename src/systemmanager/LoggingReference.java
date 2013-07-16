@@ -227,7 +227,7 @@ public class LoggingReference {
 		MarketModel model = null; // ModelFactory.createModel(modelType,
 									// modelID, p, data);
 		data.addModel(model);
-		log(INFO, model.getFullName() + ": " + model + " " + p);
+		log(INFO, model.getName() + ": " + model + " " + p);
 		createMarketsInModel(model);
 		return model;
 	}
@@ -330,7 +330,7 @@ public class LoggingReference {
 
 		// create all agents
 		for (MarketModel model : modelMap.values()) {
-			log(INFO, "MODEL: " + model.getFullName() + " agent types:");
+			log(INFO, "MODEL: " + model.getName() + " agent types:");
 			if (data.isEGTAUseCase()) {
 				createPlayersForModel(model);
 			}
@@ -520,7 +520,7 @@ public class LoggingReference {
 
 			// print arrival times
 			String s = " " + ag.getID() + ": " + ag.toString() + "::"
-					+ ag.getType() + "::";
+					+ ag.getName() + "::";
 //			s += Keys.ARRIVAL + "=" + ag.getArrivalTime().toString();
 
 			// print private value if exists

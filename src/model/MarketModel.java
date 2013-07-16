@@ -165,9 +165,6 @@ public abstract class MarketModel {
 		}
 	}
 
-	/**
-	 * @return SIP
-	 */
 	public SIP getSIP() {
 		return this.sip;
 	}
@@ -186,21 +183,6 @@ public abstract class MarketModel {
 		return ipIDgen.next();
 	}
 
-	/**
-	 * Format "MODELTYPE-CONFIG" unless config string is empty, then "MODELTYPE" If configuration
-	 * string has a colon, i.e. CONFIG:PARAMS, then only include the CONFIG portion.
-	 * 
-	 * @return model name
-	 */
-	@Deprecated // TODO Remove
-	public String getFullName() {
-		// String configStr = this.getConfig();
-		// if (!this.getConfig().equals(""))
-		// configStr = "-" + configStr;
-		// String[] configs = configStr.split("[:]+");
-		return this.getClass().getSimpleName().toUpperCase() /* + configs[0] */;
-	}
-
 	public Price getFundamentalAt(TimeStamp ts) {
 		if (fundamental == null)
 		// return new Price(0);
@@ -208,16 +190,14 @@ public abstract class MarketModel {
 		return fundamental.getValueAt(ts);
 	}
 
-	/**
-	 * @return number of markets in the model
-	 */
+	public final String getName() {
+		return getClass().getSimpleName();
+	}
+	
 	public int getNumMarkets() {
 		return markets.size();
 	}
 
-	/**
-	 * @return modelID
-	 */
 	public int getID() {
 		return modelID;
 	}

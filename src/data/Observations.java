@@ -21,7 +21,6 @@ import model.MarketModel;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import systemmanager.Consts;
-import systemmanager.Consts.AgentType;
 import systemmanager.SimulationSpec;
 import utils.DSPlus;
 
@@ -290,8 +289,8 @@ public class Observations {
 		// So that agent types with 0 transactions still get logged. XXX This
 		// maybe should pull only from agent types that had nonzero numbers, not
 		// every agent possible.
-		for (AgentType type : Consts.AgentType.values())
-			numTrans.put(type.toString(), 0);
+		for (Agent agent : model.getAgents())
+			numTrans.put(agent.getName(), 0);
 
 		for (Transaction t : model.getTrans()) {
 			// FIXME If these are always PQTrans then we should store that not
@@ -308,10 +307,10 @@ public class Observations {
 
 			// update number of transactions
 			// buyer
-			for (Agent ag : new Agent[] { tr.getBuyer(), tr.getSeller() }) {
-				if (model.getAgents().contains(ag)) {
-					String type = ag.getType();
-					numTrans.put(type, numTrans.get(type) + 1);
+			for (Agent agent : new Agent[] { tr.getBuyer(), tr.getSeller() }) {
+				if (model.getAgents().contains(agent)) {
+					String name = agent.getName();
+					numTrans.put(name, numTrans.get(name) + 1);
 				}
 			}
 		}
