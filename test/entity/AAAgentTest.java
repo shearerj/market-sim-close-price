@@ -19,7 +19,6 @@ import logger.Logger;
 import market.PQBid;
 import market.Price;
 import model.MockMarketModel;
-import model.MarketModel;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -79,7 +78,7 @@ public class AAAgentTest {
 		model.addMarket(market);
 	}
 
-	private AAAgent addAgent(MarketModel model, Market market, boolean isBuyer) {
+	private AAAgent addAgent(boolean isBuyer) {
 		EntityProperties testProps = new EntityProperties(agentProperties);
 		testProps.put(BUYERSTATUS_KEY, isBuyer);
 
@@ -89,7 +88,7 @@ public class AAAgentTest {
 		return agent;
 	}
 
-	private void addBid(MarketModel model, Market market, Price price, int quantity,
+	private void addBid(Price price, int quantity,
 			TimeStamp time) {
 		// creating a dummy agent
 		MockAgent agent = new MockAgent(agentIndex++, model, market);
@@ -106,10 +105,9 @@ public class AAAgentTest {
 			if (act instanceof ProcessQuote) act.execute(time);
 	}
 
-	private void addTransaction(MarketModel model, Market market, Price p,
-			int q, TimeStamp time) {
-		addBid(model, market, p, q, time);
-		addBid(model, market, p, -q, time);
+	private void addTransaction(Price p, int q, TimeStamp time) {
+		addBid(p, q, time);
+		addBid(p, -q, time);
 		Collection<? extends Activity> clearActs = market.clear(time);
 
 		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
@@ -126,95 +124,79 @@ public class AAAgentTest {
 
 		// executing the bid submission - will go to the market
 		for (Activity act : test) {
-			if (SubmitNMSBid.class.isAssignableFrom(act.getClass())) {
+			if (act instanceof SubmitNMSBid) {
 				act.execute(time);
 			}
-		} 
+		}
+	}
+	
+	private void assertCorrectBid(Agent agent,
+			Price low, Price high, int quantity) {
+		PQBid bid = (PQBid) market.getBids().get(agent);
+		// Asserting the bid is correct
+		assertTrue(bid.bidTreeSet.size() == 1);
+		assertTrue(bid.getAgent() != null);
+		assertTrue(bid.getAgent().equals(agent));
+		assertTrue(bid.bidTreeSet.first().getPrice().greaterThan(low));
+		assertTrue(bid.bidTreeSet.first().getPrice().lessThan(high));
+		assertTrue(bid.bidTreeSet.first().getQuantity() == quantity);
+	}
+	
+	private void assertCorrectBid(Agent agent,
+			Price match, int quantity) {
+		PQBid bid = (PQBid) market.getBids().get(agent);
+		// Asserting the bid is correct
+		assertTrue(bid.bidTreeSet.size() == 1);
+		assertTrue(bid.getAgent() != null);
+		assertTrue(bid.getAgent().equals(agent));
+		assertTrue(bid.bidTreeSet.first().getPrice().equals(match));
+		assertTrue(bid.bidTreeSet.first().getQuantity() == quantity);
 	}
 
 	@Test
 	public void initialBuyer() {
-		Logger.log(Logger.Level.DEBUG, "");
 		Logger.log(Logger.Level.DEBUG,
-				"Testing buyer on empty market: Result should be price=0");
+				"\nTesting buyer on empty market: Result should be price=0");
 		// Creating a buyer
-		AAAgent agent = addAgent(model, market, true);
+		AAAgent agent = addAgent(true);
 		// Testing against an empty market
-		TimeStamp ts = new TimeStamp(100);
-		executeAgentStrategy(agent, ts);
+		executeAgentStrategy(agent, new TimeStamp(100));
 
-		// Getting the bid from the market
-		PQBid bid = (PQBid) market.getBids().get(agent);
-		// Asserting the bid is correct
-		assertTrue(bid.bidTreeSet.size() == 1);
-		assertTrue(bid.getAgent().equals(agent));
-		assertTrue(bid.bidTreeSet.first().getPrice().equals(new Price(0)));
-		assertTrue(bid.bidTreeSet.first().getQuantity() > 0);
+		//Checking the bid
+		assertCorrectBid(agent, Price.ZERO, 1);
 	}
 
 	@Test
 	public void initialSeller() {
-		Logger.log(Logger.Level.DEBUG, "");
 		Logger.log(Logger.Level.DEBUG,
-				"Testing seller on empty market: Result should be price="
+				"\nTesting seller on empty market: Result should be price="
 						+ Price.INF);
 		// Creating a seller
-		AAAgent agent = addAgent(model, market, false);
+		AAAgent agent = addAgent(false);
 		// Testing against an empty market
-		TimeStamp ts = new TimeStamp(100);
-		Collection<Activity> test = agent.agentStrategy(ts);
+		executeAgentStrategy(agent, new TimeStamp(100));
 
-		// executing the bid submission - will go to the market
-		for (Activity act : test) {
-			if (SubmitNMSBid.class.isAssignableFrom(act.getClass())) {
-				act.execute(ts);
-			}
-		}
-
-		// Getting the bid from the market
-		PQBid bid = (PQBid) market.getBids().get(agent);
-		// Asserting the bid is correct
-		assertTrue(bid != null);
-		assertTrue(bid.bidTreeSet.size() == 1);
-		assertTrue(bid.getAgent().equals(agent));
-		assertTrue(bid.bidTreeSet.first().getPrice().equals(Price.INF));
-		assertTrue(bid.bidTreeSet.first().getQuantity() < 0);
+		assertCorrectBid(agent, Price.INF, -1);
 	}
 
 	@Test
 	public void noTransactionsBuyer() {
-		Logger.log(Logger.Level.DEBUG, "");
 		Logger.log(Logger.Level.DEBUG,
-				"Testing buyer on market with bids/asks but no transactions");
+				"\nTesting buyer on market with bids/asks but no transactions");
 		Logger.log(Logger.Level.DEBUG, "50000 < Bid price < 100000");
 
 		// Setting up the bids
-		addBid(model, market, new Price(50000), 1, new TimeStamp(10));
-		addBid(model, market, new Price(200000), -1, new TimeStamp(10));
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(200000), -1, new TimeStamp(10));
 
 		// Testing against a market with initial bids but no transaction history
-		AAAgent agent = addAgent(model, market, true);
-		TimeStamp ts = new TimeStamp(100);
-		Collection<Activity> test = agent.agentStrategy(ts);
+		AAAgent agent = addAgent(true);
+		executeAgentStrategy(agent, new TimeStamp(100));
 
-		// executing the bid submission - will go to the market
-		for (Activity act : test) {
-			if (SubmitNMSBid.class.isAssignableFrom(act.getClass())) {
-				act.execute(ts);
-			}
-		}
-
-		// Getting the bid from the market
-		PQBid bid = (PQBid) market.getBids().get(agent);
 		// Asserting the bid is correct
-		assertTrue(bid.bidTreeSet.size() == 1);
-		assertTrue(bid.getAgent().equals(agent));
-		Price low = new Price(50000);
-		Price high = new Price(100000);
-		Price bidPrice = bid.bidTreeSet.first().getPrice();
-		assertTrue(bidPrice.toString(), bidPrice.greaterThan(low));
-		assertTrue(bidPrice.toString(), bidPrice.lessThan(high));
-		assertTrue(bid.bidTreeSet.first().getQuantity() > 0);
+		Price low = new Price(65000);
+		Price high = new Price(70000);
+		assertCorrectBid(agent, low, high, 1);
 	}
 
 	@Test
@@ -224,32 +206,17 @@ public class AAAgentTest {
 		Logger.log(Logger.Level.DEBUG, "100000 < Ask price < 200000");
 
 		// Adding setup bids
-		addBid(model, market, new Price(50000), 1, new TimeStamp(10));
-		addBid(model, market, new Price(200000), -1, new TimeStamp(10));
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(200000), -1, new TimeStamp(10));
 
 		// Creating the agent and running the test
-		AAAgent agent = addAgent(model, market, false);
-		TimeStamp ts = new TimeStamp(100);
-		Collection<Activity> test = agent.agentStrategy(ts);
+		AAAgent agent = addAgent(false);
+		executeAgentStrategy(agent, new TimeStamp(100));
 
-		// executing the bid submission - will go to the market
-		for (Activity act : test) {
-			if (SubmitNMSBid.class.isAssignableFrom(act.getClass())) {
-				act.execute(ts);
-			}
-		}
-
-		// Getting the bid from the market
-		PQBid bid = (PQBid) market.getBids().get(agent);
 		// Asserting the bid is correct
-		assertTrue(bid.bidTreeSet.size() == 1);
-		assertTrue(bid.getAgent().equals(agent));
 		Price low = new Price(165000);
 		Price high = new Price(170000);
-		Price bidPrice = bid.bidTreeSet.first().getPrice();
-		assertTrue(bidPrice.toString(), bidPrice.greaterThan(low));
-		assertTrue(bidPrice.toString(), bidPrice.lessThan(high));
-		assertTrue(bid.bidTreeSet.first().getQuantity() < 0);
+		assertCorrectBid(agent, low, high, -1);
 	}
 
 	@Test
@@ -258,34 +225,19 @@ public class AAAgentTest {
 				"\nTesting passive buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(model, market, new Price(50000), 1, new TimeStamp(10));
-		addBid(model, market, new Price(150000), -1, new TimeStamp(10));
-		addTransaction(model, market, new Price(75000), 1, new TimeStamp(15));
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(10));
+		addTransaction(new Price(75000), 1, new TimeStamp(15));
 
 		// Setting up the agent
-		AAAgent agent = addAgent(model, market, true);
+		AAAgent agent = addAgent(true);
 		agent.setAggression(-1);
-		Logger.log(Logger.Level.DEBUG, "Price ~= 33334");
-		TimeStamp ts = new TimeStamp(100);
-		Collection<Activity> test = agent.agentStrategy(ts);
+		executeAgentStrategy(agent, new TimeStamp(100));
 
-		// executing the bid submission - will go to the market
-		for (Activity act : test) {
-			if (SubmitNMSBid.class.isAssignableFrom(act.getClass())) {
-				act.execute(ts);
-			}
-		}
-
-		// Getting the bid from the market
-		PQBid bid = (PQBid) market.getBids().get(agent);
 		// Asserting the bid is correct
-		assertTrue(bid.bidTreeSet.size() == 1);
-		assertTrue(bid.getAgent().equals(agent));
 		Price low = new Price(30000);
 		Price high = new Price(35000);
-		assertTrue(bid.bidTreeSet.first().getPrice().greaterThan(low));
-		assertTrue(bid.bidTreeSet.first().getPrice().lessThan(high));
-		assertTrue(bid.bidTreeSet.first().getQuantity() > 0);
+		assertCorrectBid(agent, low, high, 1);
 	}
 
 	@Test
@@ -294,35 +246,20 @@ public class AAAgentTest {
 				"\nTesting r = -0.5 buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(model, market, new Price(50000), 1, new TimeStamp(10));
-		addBid(model, market, new Price(150000), -1, new TimeStamp(10));
-		addTransaction(model, market, new Price(75000), 1, new TimeStamp(15));
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(10));
+		addTransaction(new Price(75000), 1, new TimeStamp(15));
 
 		// Setting up the agent
-		AAAgent agent = addAgent(model, market, true);
+		AAAgent agent = addAgent(true);
 		agent.setAggression(-0.5);
 		agent.setAdaptivness(-3.0);
-		TimeStamp ts = new TimeStamp(100);
-		Collection<Activity> test = agent.agentStrategy(ts);
+		executeAgentStrategy(agent, new TimeStamp(100));
 
-		// executing the bid submission - will go to the market
-		for (Activity act : test) {
-			if (SubmitNMSBid.class.isAssignableFrom(act.getClass())) {
-				act.execute(ts);
-			}
-		}
-
-		// Getting the bid from the market
-		PQBid bid = (PQBid) market.getBids().get(agent);
 		// Asserting the bid is correct
-		assertTrue(bid.bidTreeSet.size() == 1);
-		assertTrue(bid.getAgent().equals(agent));
 		Price low = new Price(36000);
 		Price high = new Price(39000);
-		Price bidPrice = bid.bidTreeSet.first().getPrice();
-		assertTrue(bidPrice.toString(), bidPrice.greaterThan(low));
-		assertTrue(bidPrice.toString(), bidPrice.lessThan(high));
-		assertTrue(bid.bidTreeSet.first().getQuantity() > 0);
+		assertCorrectBid(agent, low, high, 1);
 	}
 
 	@Test
@@ -332,31 +269,19 @@ public class AAAgentTest {
 				"Testing active buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(model, market, new Price(50000), 1, new TimeStamp(10));
-		addBid(model, market, new Price(150000), -1, new TimeStamp(10));
-		addTransaction(model, market, new Price(75000), 1, new TimeStamp(20));
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(10));
+		addTransaction(new Price(75000), 1, new TimeStamp(20));
 
-		AAAgent agent = addAgent(model, market, true);
+		AAAgent agent = addAgent(true);
 		Logger.log(Logger.Level.DEBUG, "Price ~= 58333");
 		agent.setAggression(0);
-		TimeStamp ts = new TimeStamp(110);
-		Collection<Activity> test = agent.agentStrategy(ts);
+		executeAgentStrategy(agent, new TimeStamp(100));
 
-		// executing the bid submission - will go to the market
-		for (Activity act : test)
-			if (act instanceof SubmitNMSBid) act.execute(ts);
-
-		// Getting the bid from the market
-		PQBid bid = (PQBid) market.getBids().get(agent);
 		// Asserting the bid is correct
-		assertTrue(bid.bidTreeSet.size() == 1);
-		assertTrue(bid.getAgent().equals(agent));
-		Price low = new Price(50000);
-		Price high = new Price(60000);
-		assertTrue(bid.bidTreeSet.first().getPrice().toString(),
-				bid.bidTreeSet.first().getPrice().greaterThan(low));
-		assertTrue(bid.bidTreeSet.first().getPrice().lessThan(high));
-		assertTrue(bid.bidTreeSet.first().getQuantity() > 0);
+		Price low = new Price(57000);
+		Price high = new Price(59000);
+		assertCorrectBid(agent, low, high, 1);
 	}
 
 	@Test
@@ -365,35 +290,20 @@ public class AAAgentTest {
 				"\nTesting r = -0.5 buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(model, market, new Price(50000), 1, new TimeStamp(10));
-		addBid(model, market, new Price(150000), -1, new TimeStamp(10));
-		addTransaction(model, market, new Price(75000), 1, new TimeStamp(15));
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(10));
+		addTransaction(new Price(75000), 1, new TimeStamp(15));
 
 		// Setting up the agent
-		AAAgent agent = addAgent(model, market, true);
+		AAAgent agent = addAgent(true);
 		agent.setAggression(0.5);
 		agent.setAdaptivness(-3.0);
-		TimeStamp ts = new TimeStamp(100);
-		Collection<Activity> test = agent.agentStrategy(ts);
+		executeAgentStrategy(agent, new TimeStamp(100));
 
-		// executing the bid submission - will go to the market
-		for (Activity act : test) {
-			if (SubmitNMSBid.class.isAssignableFrom(act.getClass())) {
-				act.execute(ts);
-			}
-		}
-
-		// Getting the bid from the market
-		PQBid bid = (PQBid) market.getBids().get(agent);
 		// Asserting the bid is correct
-		assertTrue(bid.bidTreeSet.size() == 1);
-		assertTrue(bid.getAgent().equals(agent));
 		Price low = new Price(64000);
 		Price high = new Price(66000);
-		Price bidPrice = bid.bidTreeSet.first().getPrice();
-		assertTrue(bidPrice.toString(), bidPrice.greaterThan(low));
-		assertTrue(bidPrice.toString(), bidPrice.lessThan(high));
-		assertTrue(bid.bidTreeSet.first().getQuantity() > 0);
+		assertCorrectBid(agent, low, high, 1);
 	}
 
 	@Test
@@ -403,36 +313,19 @@ public class AAAgentTest {
 				"Testing aggressive buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(model, market, new Price(50000), 1, new TimeStamp(10));
-		addBid(model, market, new Price(150000), -1, new TimeStamp(10));
-		addTransaction(model, market, new Price(75000), 1, new TimeStamp(20));
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(10));
+		addTransaction(new Price(75000), 1, new TimeStamp(20));
 
-		AAAgent agent = addAgent(model, market, true);
+		AAAgent agent = addAgent(true);
 		Logger.log(Logger.Level.DEBUG, "Price ~= 66667");
 		agent.setAggression(1.0);
-		TimeStamp ts = new TimeStamp(120);
-		Collection<Activity> test = agent.agentStrategy(ts);
+		executeAgentStrategy(agent, new TimeStamp(100));
 
-		// executing the bid submission - will go to the market
-		for (Activity act : test) {
-			if (SubmitNMSBid.class.isAssignableFrom(act.getClass())) {
-				act.execute(ts);
-			}
-		}
-
-		// Getting the bid from the market
-		PQBid bid = (PQBid) market.getBids().get(agent);
 		// Asserting the bid is correct
-		assertTrue(bid.bidTreeSet.size() == 1);
-		assertTrue(bid.getAgent().equals(agent));
 		Price low = new Price(65000);
-		Price high = new Price(70000);
-		Price bidPrice = bid.bidTreeSet.first().getPrice();
-		assertTrue(bidPrice.toString(),
-				bid.bidTreeSet.first().getPrice().greaterThan(low));
-		assertTrue(bidPrice.toString(),
-				bid.bidTreeSet.first().getPrice().lessThan(high));
-		assertTrue(bid.bidTreeSet.first().getQuantity() > 0);
+		Price high = new Price(68000);
+		assertCorrectBid(agent, low, high, 1);
 	}
 
 	@Test
@@ -442,75 +335,44 @@ public class AAAgentTest {
 				"Testing passive seller on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(model, market, new Price(50000), 1, new TimeStamp(10));
-		addBid(model, market, new Price(150000), -1, new TimeStamp(10));
-		addTransaction(model, market, new Price(125000), 1, new TimeStamp(20));
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(10));
+		addTransaction(new Price(125000), 1, new TimeStamp(20));
 
 		// Testing the Agent
-		AAAgent agent = addAgent(model, market, false);
+		AAAgent agent = addAgent(false);
 		Logger.log(Logger.Level.DEBUG,
 				"Price ~= " + (150000 + (Price.INF.getPrice() - 150000) / 3));
 		agent.setAggression(-1.0);
-		TimeStamp ts = new TimeStamp(100);
-		Collection<Activity> test = agent.agentStrategy(ts);
+		executeAgentStrategy(agent, new TimeStamp(100));
 
-		// executing the bid submission - will go to the market
-		for (Activity act : test) {
-			if (SubmitNMSBid.class.isAssignableFrom(act.getClass())) {
-				act.execute(ts);
-			}
-		}
-
-		// Getting the bid from the market
-		PQBid bid = (PQBid) market.getBids().get(agent);
 		// Asserting the bid is correct
-		assertTrue(bid.bidTreeSet.size() == 1);
-		assertTrue(bid.getAgent().equals(agent));
 		Price low = new Price(
 				150000 + (Price.INF.getPrice() - 150000) / 3 - 1000);
 		Price high = new Price(
 				150000 + (Price.INF.getPrice() - 150000) / 3 + 1000);
-		Price bidPrice = bid.bidTreeSet.first().getPrice();
-		assertTrue(bidPrice.toString(), bidPrice.greaterThan(low));
-		assertTrue(bidPrice.toString(), bidPrice.lessThan(high));
-		assertTrue(bid.bidTreeSet.first().getQuantity() < 0);
+		assertCorrectBid(agent, low, high, -1);
 	}
 
 	@Test
 	public void IntraSellerActive() { // Check Aggression
-		Logger.log(Logger.Level.DEBUG, "");
 		Logger.log(Logger.Level.DEBUG,
-				"Testing active seller on market with transactions");
+				"\nTesting active seller on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(model, market, new Price(50000), 1, new TimeStamp(10));
-		addBid(model, market, new Price(150000), -1, new TimeStamp(10));
-		addTransaction(model, market, new Price(125000), 1, new TimeStamp(20));
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(10));
+		addTransaction(new Price(125000), 1, new TimeStamp(20));
 
-		AAAgent agent = addAgent(model, market, false);
+		AAAgent agent = addAgent(false);
 		log(Logger.Level.DEBUG, "Price ~= 141667");
 		agent.setAggression(0);
-		TimeStamp ts = new TimeStamp(110);
-		Collection<Activity> test = agent.agentStrategy(ts);
+		executeAgentStrategy(agent, new TimeStamp(100));
 
-		// executing the bid submission - will go to the market
-		for (Activity act : test) {
-			if (SubmitNMSBid.class.isAssignableFrom(act.getClass())) {
-				act.execute(ts);
-			}
-		}
-
-		// Getting the bid from the market
-		PQBid bid = (PQBid) market.getBids().get(agent);
 		// Asserting the bid is correct
-		assertTrue(bid.bidTreeSet.size() == 1);
-		assertTrue(bid.getAgent().equals(agent));
 		Price low = new Price(138000);
 		Price high = new Price(144000);
-		Price bidPrice = bid.bidTreeSet.first().getPrice();
-		assertTrue(bidPrice.toString(), bidPrice.greaterThan(low));
-		assertTrue(bidPrice.toString(), bidPrice.lessThan(high));
-		assertTrue(bid.bidTreeSet.first().getQuantity() < 0);
+		assertCorrectBid(agent, low, high, 1);
 	}
 
 	@Test
@@ -520,49 +382,126 @@ public class AAAgentTest {
 				"Testing aggressive seller on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(model, market, new Price(50000), 1, new TimeStamp(10));
-		addBid(model, market, new Price(150000), -1, new TimeStamp(10));
-		addTransaction(model, market, new Price(125000), 1, new TimeStamp(20));
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(10));
+		addTransaction(new Price(125000), 1, new TimeStamp(20));
 
-		AAAgent agent = addAgent(model, market, false);
+		AAAgent agent = addAgent(false);
 		agent.setAggression(1);
-		TimeStamp ts = new TimeStamp(120);
-		Collection<Activity> test = agent.agentStrategy(ts);
+		executeAgentStrategy(agent, new TimeStamp(100));
 
-		// executing the bid submission - will go to the market
-		for (Activity act : test) {
-			if (SubmitNMSBid.class.isAssignableFrom(act.getClass())) {
-				act.execute(ts);
-			}
-		}
-
-		// Getting the bid from the market
-		PQBid bid = (PQBid) market.getBids().get(agent);
 		// Asserting the bid is correct
-		assertTrue(bid.bidTreeSet.size() == 1);
-		assertTrue(bid.getAgent().equals(agent));
 		Price low = new Price(130000);
 		Price high = new Price(135000);
-		assertTrue(bid.bidTreeSet.first().getPrice().greaterThan(low));
-		assertTrue(bid.bidTreeSet.first().getPrice().lessThan(high));
-		assertTrue(bid.bidTreeSet.first().getQuantity() < 0);
+		assertCorrectBid(agent, low, high, 1);
 	}
 
+	
+	@Test
+	public void ExtraBuyerPassive() {
+		Logger.log(Logger.Level.DEBUG,
+				"\nTesting passive buyer on market with transactions");
+
+		// Adding Transactions and Bids
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(10));
+		addTransaction(new Price(125000), 1, new TimeStamp(15));
+
+		// Setting up the agent
+		AAAgent agent = addAgent(true);
+		agent.setAggression(-1);
+		TimeStamp time = new TimeStamp(100);
+		executeAgentStrategy(agent, time);
+		
+		// Asserting the bid is correct
+		Price low = new Price(30000);
+		Price high = new Price(35000);
+		assertCorrectBid(agent, low, high, 1);
+		
+	}
+
+	@Test
+	public void ExtraBuyerNegative() {
+		Logger.log(Logger.Level.DEBUG,
+				"\nTesting r = -0.5 buyer on market with transactions");
+
+		// Adding Transactions and Bids
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(10));
+		addTransaction(new Price(125000), 1, new TimeStamp(15));
+
+		// Setting up the agent
+		AAAgent agent = addAgent(true);
+		agent.setAggression(-0.5);
+		agent.setAdaptivness(-3.0);
+		executeAgentStrategy(agent, new TimeStamp(100));
+
+		// Asserting the bid is correct
+		Price low = new Price(38000);
+		Price high = new Price(41000);
+		assertCorrectBid(agent, low, high, 1);
+	}
+	
+	@Test
+	public void ExtraBuyerActive() {
+		Logger.log(Logger.Level.DEBUG,
+				"\nTesting r = 0 buyer on market with transactions");
+
+		// Adding Transactions and Bids
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(10));
+		addTransaction(new Price(125000), 1, new TimeStamp(15));
+
+		// Setting up the agent
+		AAAgent agent = addAgent(true);
+		agent.setAggression(0);
+		agent.setAdaptivness(-3.0);
+		executeAgentStrategy(agent, new TimeStamp(100));
+
+		// Asserting the bid is correct
+		Price low = new Price(65000);
+		Price high = new Price(70000);
+		assertCorrectBid(agent, low, high, 1);
+	}
+
+	@Test
+	public void ExtraBuyerPositive() {
+		Logger.log(Logger.Level.DEBUG,
+				"\nTesting r = 0 buyer on market with transactions");
+
+		// Adding Transactions and Bids
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(10));
+		addTransaction(new Price(125000), 1, new TimeStamp(15));
+
+		// Setting up the agent
+		AAAgent agent = addAgent(true);
+		agent.setAggression(0.5);
+		agent.setAdaptivness(-3.0);
+		executeAgentStrategy(agent, new TimeStamp(100));
+
+		// Asserting the bid is correct
+		Price low = new Price(65000);
+		Price high = new Price(70000);
+		assertCorrectBid(agent, low, high, 1);
+	}
+
+	
 	@Test
 	public void AggressionLearning() {
 		Logger.log(Logger.Level.DEBUG, "");
 		Logger.log(Logger.Level.DEBUG, "Testing aggression learning");
 
 		// Adding Bids and Transactions
-		addBid(model, market, new Price(50000), 1, new TimeStamp(10));
-		addBid(model, market, new Price(150000), -1, new TimeStamp(10));
-		addTransaction(model, market, new Price(100000), 1, new TimeStamp(20));
-		addTransaction(model, market, new Price(100000), 1, new TimeStamp(21));
-		addTransaction(model, market, new Price(100000), 1, new TimeStamp(22));
-		addTransaction(model, market, new Price(100000), 1, new TimeStamp(23));
-		addTransaction(model, market, new Price(100000), 1, new TimeStamp(24));
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(10));
+		addTransaction(new Price(100000), 1, new TimeStamp(20));
+		addTransaction(new Price(100000), 1, new TimeStamp(21));
+		addTransaction(new Price(100000), 1, new TimeStamp(22));
+		addTransaction(new Price(100000), 1, new TimeStamp(23));
+		addTransaction(new Price(100000), 1, new TimeStamp(24));
 
-		AAAgent agent = addAgent(model, market, false);
+		AAAgent agent = addAgent(false);
 		TimeStamp ts = new TimeStamp(100);
 		Collection<Activity> test = agent.agentStrategy(ts);
 		System.out.println(agent.getAggression());
@@ -576,4 +515,5 @@ public class AAAgentTest {
 		}
 		assertTrue(agent.getAggression() < 0);
 	}
+	
 }
