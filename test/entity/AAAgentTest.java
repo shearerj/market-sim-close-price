@@ -89,12 +89,21 @@ public class AAAgentTest {
 		return agent;
 	}
 
-	private void addBid(MarketModel model, Market market, Price price, int q,
-			TimeStamp ts) {
+	private void addBid(MarketModel model, Market market, Price price, int quantity,
+			TimeStamp time) {
 		// creating a dummy agent
 		MockAgent agent = new MockAgent(agentIndex++, model, market);
 		// Having the agent submit a bid to the market
-		market.submitBid(agent, price, q, ts);
+		Collection<? extends Activity> bidActs = market.submitBid(agent, price,
+				quantity, time);
+
+		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
+		// the transaction would work
+		Collection<Activity> sendActs = new ArrayList<Activity>();
+		for (Activity act : bidActs)
+			if (act instanceof SendToIP) sendActs.addAll(act.execute(time));
+		for (Activity act : sendActs)
+			if (act instanceof ProcessQuote) act.execute(time);
 	}
 
 	private void addTransaction(MarketModel model, Market market, Price p,

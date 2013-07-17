@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import data.SystemData;
 import entity.Agent;
 import entity.Market;
 import event.TimeStamp;
@@ -20,12 +19,10 @@ public abstract class OrderBook {
 	// reorg
 	protected final Market market;
 
-	public SystemData data;
-
 	// hashed by agent ID FIXME Can only store one bid for each agent including
 	// HFT
 	public Map<Agent, Bid> activeBids;
-	public Map<Agent, Bid> clearedBids;
+	public Map<Agent, Bid> clearedBids; // XXX Will this work?
 
 	public OrderBook(Market market) {
 		this.market = market;

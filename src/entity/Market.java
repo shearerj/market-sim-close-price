@@ -284,20 +284,18 @@ public abstract class Market extends Entity {
 	public Collection<? extends Activity> submitNMSBid(Agent agent,
 			Price price, int quantity, TimeStamp currentTime, TimeStamp duration) {
 		BestBidAsk nbbo = sip.getNBBO();
-		Market bestMarket;
+		Market bestMarket = this;
 
 		if (quantity > 0) { // buy
 			boolean nbboBetter = nbbo.getBestAsk() != null
 					&& nbbo.getBestAsk().lessThan(quote.getAskPrice());
 			boolean willTransact = price.greaterThan(nbbo.getBestAsk());
-			bestMarket = nbboBetter && willTransact ? nbbo.getBestAskMarket()
-					: this;
+			if (nbboBetter && willTransact) bestMarket = nbbo.getBestAskMarket();
 		} else { // sell
 			boolean nbboBetter = nbbo.getBestBid() != null
 					&& nbbo.getBestBid().greaterThan(quote.getBidPrice());
 			boolean willTransact = price.lessThan(nbbo.getBestBid());
-			bestMarket = nbboBetter && willTransact ? nbbo.getBestBidMarket()
-					: this;
+			if (nbboBetter && willTransact) bestMarket = nbbo.getBestBidMarket();
 		}
 
 		if (!bestMarket.equals(this))

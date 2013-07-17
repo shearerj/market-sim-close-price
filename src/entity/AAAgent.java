@@ -408,8 +408,8 @@ public class AAAgent extends BackgroundAgent {
 
 			// Determining the offer price to (possibly) submit
 			Quote quote = marketIP.getQuote();
-			Price bestBid = quote.getAskPrice();
-			Price bestAsk = quote.getBidPrice();
+			Price bestBid = quote.getBidPrice();
+			Price bestAsk = quote.getAskPrice();
 
 			// Can only submit offer if the offer would not cause position
 			// balance to exceed the agent's maximum position
