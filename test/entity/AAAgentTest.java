@@ -120,6 +120,17 @@ public class AAAgentTest {
 		for (Activity act : sendActs)
 			if (act instanceof ProcessQuote) act.execute(time);
 	}
+	
+	private void executeAgentStrategy(Agent agent, TimeStamp time) {
+		Collection<? extends Activity> test = agent.agentStrategy(time);
+
+		// executing the bid submission - will go to the market
+		for (Activity act : test) {
+			if (SubmitNMSBid.class.isAssignableFrom(act.getClass())) {
+				act.execute(time);
+			}
+		} 
+	}
 
 	@Test
 	public void initialBuyer() {
@@ -130,14 +141,7 @@ public class AAAgentTest {
 		AAAgent agent = addAgent(model, market, true);
 		// Testing against an empty market
 		TimeStamp ts = new TimeStamp(100);
-		Collection<Activity> test = agent.agentStrategy(ts);
-
-		// executing the bid submission - will go to the market
-		for (Activity act : test) {
-			if (SubmitNMSBid.class.isAssignableFrom(act.getClass())) {
-				act.execute(ts);
-			}
-		}
+		executeAgentStrategy(agent, ts);
 
 		// Getting the bid from the market
 		PQBid bid = (PQBid) market.getBids().get(agent);
@@ -207,8 +211,9 @@ public class AAAgentTest {
 		assertTrue(bid.getAgent().equals(agent));
 		Price low = new Price(50000);
 		Price high = new Price(100000);
-		assertTrue(bid.bidTreeSet.first().getPrice().greaterThan(low));
-		assertTrue(bid.bidTreeSet.first().getPrice().lessThan(high));
+		Price bidPrice = bid.bidTreeSet.first().getPrice();
+		assertTrue(bidPrice.toString(), bidPrice.greaterThan(low));
+		assertTrue(bidPrice.toString(), bidPrice.lessThan(high));
 		assertTrue(bid.bidTreeSet.first().getQuantity() > 0);
 	}
 
@@ -241,8 +246,9 @@ public class AAAgentTest {
 		assertTrue(bid.getAgent().equals(agent));
 		Price low = new Price(165000);
 		Price high = new Price(170000);
-		assertTrue(bid.bidTreeSet.first().getPrice().greaterThan(low));
-		assertTrue(bid.bidTreeSet.first().getPrice().lessThan(high));
+		Price bidPrice = bid.bidTreeSet.first().getPrice();
+		assertTrue(bidPrice.toString(), bidPrice.greaterThan(low));
+		assertTrue(bidPrice.toString(), bidPrice.lessThan(high));
 		assertTrue(bid.bidTreeSet.first().getQuantity() < 0);
 	}
 
@@ -508,14 +514,6 @@ public class AAAgentTest {
 	}
 
 	@Test
-	public void ExtraTest() {
-		for (int i = 0; i < 100; i++) {
-			setupTest();
-			IntraSellerActive();
-		}
-	}
-
-	@Test
 	public void IntraSellerAggressive() { // Check Aggression
 		Logger.log(Logger.Level.DEBUG, "");
 		Logger.log(Logger.Level.DEBUG,
@@ -527,7 +525,6 @@ public class AAAgentTest {
 		addTransaction(model, market, new Price(125000), 1, new TimeStamp(20));
 
 		AAAgent agent = addAgent(model, market, false);
-		log(Logger.Level.DEBUG, "Price ~= 133334");
 		agent.setAggression(1);
 		TimeStamp ts = new TimeStamp(120);
 		Collection<Activity> test = agent.agentStrategy(ts);
