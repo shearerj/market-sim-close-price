@@ -4,33 +4,27 @@ digraph G {
 	labelloc=t
 	splines=false
 
-	AgentArrival [label="Agent Arrival"]
-	AgentReentry [label="Agent Reentry"]
-	AgentStrategy [label="Agent Strategy"]
-	AgentArrival -> AgentReentry [style=dotted]
-	AgentArrival -> AgentStrategy
-	AgentReentry -> AgentStrategy
+	"Agent Arrival" -> "Agent Reentry" [style=dotted]
+	"Agent Arrival" -> "Agent Strategy"
+	"Agent Reentry" -> "Agent Strategy"
 
-	AgentStrategy -> AddBid [style=dotted]
-	AgentStrategy -> RemoveBid [style=dotted]
+	"Agent Strategy" -> "Submit (NMS) Bid" [style=dotted]
+	"Agent Strategy" -> "Withdraw Bid" [style=dotted]
 	
-	AddBid [label="Submit (NMS) Bid"]
-	RemoveBid [label="Withdraw Bid"]
-	AddBid -> Clear [label=" CDA"]
-	RemoveBid -> Clear [label=" CDA"]
+	"Submit (NMS) Bid" -> Clear [label=" CDA"]
+	"Withdraw Bid" -> Clear [label=" CDA"]
 	Clear -> Clear [constraint=false, label=" Call"]
 	
-	sendToIPs [label="Send to IPs"]
-	subgraph process {
-		rank=same	
-		ProcessQuote [label="Process Quote"]
-		ellipses [label="...", penwidth=0]
-		LAIPProcessQuote [label="LAIP: Process Quote"]
-	}
-	sendToIPs -> ellipses [style=invis]
-	Clear -> sendToIPs -> ProcessQuote
-	sendToIPs -> LAIPProcessQuote -> NotifyLA
-	NotifyLA [label="Notify LA"]
+	Clear -> "Send To IP"
+	Clear -> ell1 [style=invis]
+	Clear -> "LAIP: Send To IP"
 
-	NotifyLA -> AgentStrategy [style=dotted, constraint=false]
+	ell1 [label="...", penwidth=0]
+	ell2 [label="...", penwidth=0]
+	
+	"Send To IP" -> "Process Quote" [weight=2]
+	ell1 -> ell2 [style=invis, weight=2]
+	"LAIP: Send To IP" -> "LAIP: Process Quote" [weight=2]
+
+	"LAIP: Process Quote" -> "Agent Strategy" [style=dotted, constraint=false]
 }
