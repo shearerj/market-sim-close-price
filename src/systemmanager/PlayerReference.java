@@ -19,7 +19,7 @@ import systemmanager.Consts.ModelType;
 import data.AgentPropsPair;
 import data.EntityProperties;
 import data.Keys;
-import data.SystemData;
+//import data.SystemData;
 import event.TimeStamp;
 
 
@@ -33,7 +33,7 @@ import event.TimeStamp;
  */
 public class PlayerReference {
 
-	private SystemData data;
+//	private SystemData data;
 	private JSONObject params;
 	private JSONObject assignments;
 	private JSONParser parser;
@@ -58,12 +58,12 @@ public class PlayerReference {
 	 * @param file
 	 * @param l
 	 */
-	public PlayerReference(String file, SystemData d) {
-		data = d;
-		parser = new JSONParser();
-		loadFile(file);
-		readParams();
-	}
+//	public PlayerReference(String file, SystemData d) {
+//		data = d;
+//		parser = new JSONParser();
+//		loadFile(file);
+//		readParams();
+//	}
 	
 	/**
 	 * Load the simulation specification file.
@@ -97,16 +97,16 @@ public class PlayerReference {
 	 */
 	public void readParams() {
 		
-		data.simLength = new TimeStamp(Integer.parseInt(getValue(SIMULATION_LENGTH)));
-		data.tickSize = Integer.parseInt(getValue(TICK_SIZE));	
-		data.nbboLatency = new TimeStamp(Integer.parseInt(getValue(LATENCY)));
-		data.arrivalRate = Double.parseDouble(getValue(ARRIVAL_RATE));
-		data.reentryRate = Double.parseDouble(getValue(REENTRY_RATE));
-		data.meanValue = Integer.parseInt(getValue(FUNDAMENTAL_MEAN));
-		data.kappa = Double.parseDouble(getValue(FUNDAMENTAL_KAPPA));
-		data.shockVar = Double.parseDouble(getValue(FUNDAMENTAL_SHOCK_VAR));
-		data.pvVar = Double.parseDouble(getValue(PRIVATE_VALUE_VAR));
-		data.primaryModelDesc = getValue(PRIMARY_MODEL);
+//		data.simLength = new TimeStamp(Integer.parseInt(getValue(SIMULATION_LENGTH)));
+//		data.tickSize = Integer.parseInt(getValue(TICK_SIZE));	
+//		data.nbboLatency = new TimeStamp(Integer.parseInt(getValue(LATENCY)));
+//		data.arrivalRate = Double.parseDouble(getValue(ARRIVAL_RATE));
+//		data.reentryRate = Double.parseDouble(getValue(REENTRY_RATE));
+//		data.meanValue = Integer.parseInt(getValue(FUNDAMENTAL_MEAN));
+//		data.kappa = Double.parseDouble(getValue(FUNDAMENTAL_KAPPA));
+//		data.shockVar = Double.parseDouble(getValue(FUNDAMENTAL_SHOCK_VAR));
+//		data.pvVar = Double.parseDouble(getValue(PRIVATE_VALUE_VAR));
+//		data.primaryModelDesc = getValue(PRIMARY_MODEL);
 		
 		/*******************
 		 * MARKET MODELS
@@ -125,12 +125,12 @@ public class PlayerReference {
 					if (configs.length > 1) {
 						// if > 1, # model type = # of items in the list
 						// check if there are NONE or 0 of this model
-						data.numModelType.put(modelType, configs.length);
+//						data.numModelType.put(modelType, configs.length);
 //					} else if (!models.equals(Consts.MODEL_CONFIG_NONE) && 
 //							!models.equals("0")) {
 //						data.numModelType.put(modelType, configs.length);
 					} else {
-						data.numModelType.put(modelType, 0);
+//						data.numModelType.put(modelType, 0);
 					}
 				}
 			}
@@ -146,7 +146,7 @@ public class PlayerReference {
 				int n = Integer.parseInt(num);
 				EntityProperties op = getStrategyParameters(agentType, setup);
 				AgentPropsPair a = new AgentPropsPair(agentType, op);
-				data.addEnvAgentNumber(a, n);
+//				data.addEnvAgentNumber(a, n);
 			}
 		}
 
@@ -168,7 +168,7 @@ public class PlayerReference {
 							// first elt is agent type, second elt is strategy
 							AgentType type = AgentType.valueOf(as[0]);
 							EntityProperties op = getStrategyParameters(type, as[1]);
-							data.addPlayerProperties(new AgentPropsPair(type, op));
+//							data.addPlayerProperties(new AgentPropsPair(type, op));
 						}
 					}
 				}

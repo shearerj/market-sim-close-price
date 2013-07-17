@@ -19,7 +19,7 @@ import data.AgentPropsPair;
 import data.ArrivalTime;
 import data.EntityProperties;
 import data.Keys;
-import data.SystemData;
+//import data.SystemData;
 import entity.Agent;
 import entity.BasicMarketMaker;
 import entity.CallMarket;
@@ -62,7 +62,7 @@ import event.TimeStamp;
  */
 public class LoggingReference {
 
-	private SystemData data;
+//	private SystemData data;
 	private EventManager eventManager;
 	private PlayerReference specs;
 
@@ -89,31 +89,31 @@ public class LoggingReference {
 	 * @param d
 	 * @param l
 	 */
-	public LoggingReference(PlayerReference s, EventManager em, SystemData d) {
-		specs = s;
-		eventManager = em;
-		data = d;
-//		agentIDSequence = new Sequence(1);
-//		marketIDSequence = new Sequence(-1);
-//		modelIDSequence = new Sequence(1);
-
-		logIDs = new HashMap<AgentPropsPair, ArrayList<Integer>>();
-		seeds = new HashMap<AgentPropsPair, ArrayList<Long>>();
-		arrivals = new HashMap<AgentPropsPair, ArrayList<TimeStamp>>();
-		modelMap = new HashMap<Integer, MarketModel>();
-		allNonPlayers = new HashMap<AgentPropsPair, Integer>();
-		arrivalGenerators = new HashMap<AgentPropsPair, ArrivalTime>();
-		playerNumbers = new HashMap<String, Integer>();
-		playerArrivalGenerators = new HashMap<String, ArrivalTime>();
-		playerStrategies = new HashMap<String, ArrayList<EntityProperties>>();
-	}
+//	public LoggingReference(PlayerReference s, EventManager em, SystemData d) {
+//		specs = s;
+//		eventManager = em;
+//		data = d;
+////		agentIDSequence = new Sequence(1);
+////		marketIDSequence = new Sequence(-1);
+////		modelIDSequence = new Sequence(1);
+//
+//		logIDs = new HashMap<AgentPropsPair, ArrayList<Integer>>();
+//		seeds = new HashMap<AgentPropsPair, ArrayList<Long>>();
+//		arrivals = new HashMap<AgentPropsPair, ArrayList<TimeStamp>>();
+//		modelMap = new HashMap<Integer, MarketModel>();
+//		allNonPlayers = new HashMap<AgentPropsPair, Integer>();
+//		arrivalGenerators = new HashMap<AgentPropsPair, ArrivalTime>();
+//		playerNumbers = new HashMap<String, Integer>();
+//		playerArrivalGenerators = new HashMap<String, ArrivalTime>();
+//		playerStrategies = new HashMap<String, ArrayList<EntityProperties>>();
+//	}
 
 	public void setupAll() {
 		try {
 			// Generate private values
-			data.globalFundamentalValues();
-			data.EGTA = (data.getNumPlayers() > 0); // TODO Should have one flag
-													// for EGTA
+//			data.globalFundamentalValues();
+//			data.EGTA = (data.getNumPlayers() > 0); // TODO Should have one flag
+//													// for EGTA
 
 			// Must create market models before agents, so can add the agents
 			// then to the appropriate/corresponding markets.
@@ -131,10 +131,10 @@ public class LoggingReference {
 			log(INFO, " ");
 
 			// Initial SendToSIP Activity for all markets
-			for (Market mkt : data.getMarkets().values()) { // Move to market
-															// Models
-//				eventManager.addActivity(new SendToIP(mkt, new TimeStamp(0)));
-			}
+//			for (Market mkt : data.getMarkets().values()) { // Move to market
+//															// Models
+////				eventManager.addActivity(new SendToIP(mkt, new TimeStamp(0)));
+//			}
 		} catch (Exception e) {
 			System.err.println(this.getClass().getSimpleName()
 					+ "::setupAll: error");
@@ -148,46 +148,46 @@ public class LoggingReference {
 	public void createMarketModels() {
 
 		// If EGTA use case, then only configure the primary model
-		if (data.isEGTAUseCase()) {
-
-			// get information on the primary market model: (MODELNAME)
-			String[] desc = data.primaryModelDesc.split("[-]+");
-			try {
-				ModelType primaryModelType = ModelType.valueOf(desc[0]);
-				// always use default configuration of this market model
-				MarketModel primary = createModel(primaryModelType, "");
-				data.primaryModel = primary;
-				log(INFO, "Primary model: " + primaryModelType + "-(default)");
-
-			} catch (Exception e) {
-//				if (!Consts.ModelType.contains(desc[0])) {
-					System.err.println(this.getClass().getSimpleName()
-							+ "::createMarketModels: invalid primary market model type");
-//				}
-				System.err.println(e.toString());
-			}
-
-		} else {
+//		if (data.isEGTAUseCase()) {
+//
+//			// get information on the primary market model: (MODELNAME)
+//			String[] desc = data.primaryModelDesc.split("[-]+");
+//			try {
+//				ModelType primaryModelType = ModelType.valueOf(desc[0]);
+//				// always use default configuration of this market model
+//				MarketModel primary = createModel(primaryModelType, "");
+//				data.primaryModel = primary;
+//				log(INFO, "Primary model: " + primaryModelType + "-(default)");
+//
+//			} catch (Exception e) {
+////				if (!Consts.ModelType.contains(desc[0])) {
+//					System.err.println(this.getClass().getSimpleName()
+//							+ "::createMarketModels: invalid primary market model type");
+////				}
+//				System.err.println(e.toString());
+//			}
+//
+//		} else {
 			// No players means market models simulation; no primary model (set
 			// as null)
-			data.primaryModel = null;
+//			data.primaryModel = null;
 
 			// Create by model type
-			for (ModelType modelType : data.numModelType.keySet()) {
-
-				int numModelsOfThisType = data.numModelType.get(modelType);
-				log(INFO, "Models: " + numModelsOfThisType + " " + modelType);
-
-				// Parse the comma separated types of agents (list of
-				// configuration strings)
-				// TODO Put this in config
-				String[] configs = parseModelConfigList(specs.getValue(modelType));
-
-				for (int i = 0; i < numModelsOfThisType; i++) {
-					createModel(modelType, configs[i]);
-				}
-			}
-		}
+//			for (ModelType modelType : data.numModelType.keySet()) {
+//
+//				int numModelsOfThisType = data.numModelType.get(modelType);
+//				log(INFO, "Models: " + numModelsOfThisType + " " + modelType);
+//
+//				// Parse the comma separated types of agents (list of
+//				// configuration strings)
+//				// TODO Put this in config
+//				String[] configs = parseModelConfigList(specs.getValue(modelType));
+//
+//				for (int i = 0; i < numModelsOfThisType; i++) {
+//					createModel(modelType, configs[i]);
+//				}
+//			}
+//		}
 	}
 
 	/**
@@ -225,7 +225,7 @@ public class LoggingReference {
 //		p.put(Consts.MODEL_CONFIG_KEY, configuration);
 		MarketModel model = null; // ModelFactory.createModel(modelType,
 									// modelID, p, data);
-		data.addModel(model);
+//		data.addModel(model);
 		log(INFO, model.getName() + ": " + model + " " + p);
 		createMarketsInModel(model);
 		return model;
@@ -264,45 +264,45 @@ public class LoggingReference {
 	 */
 	private void createAllAgents() {
 
-		if (data.isEGTAUseCase()) {
-			// EGTA - create agents only for primary model
-			// No model-level agents created in this use case
-			modelMap.put(data.getPrimaryModel().getID(), data.getPrimaryModel());
-
-			// set up their players & their arrivals
-			for (AgentPropsPair app : data.getPlayerMap().keySet()) {
-				String type = app.getAgentType().toString();
-				EntityProperties o = app.getProperties();
-				int n = data.getPlayerMap().get(app);
-
-				if (playerNumbers.containsKey(type)) {
-					playerNumbers.put(type, playerNumbers.get(type) + n);
-					playerStrategies.get(type).addAll(Collections.nCopies(n, o));
-
-				} else {
-					playerNumbers.put(type, n);
-					playerArrivalGenerators.put(type, new ArrivalTime(
-							new TimeStamp(0), data.arrivalRate));
-					playerStrategies.put(type, new ArrayList<EntityProperties>(
-							Collections.nCopies(n, o)));
-				}
-			}
-
-		} else {
+//		if (data.isEGTAUseCase()) {
+//			// EGTA - create agents only for primary model
+//			// No model-level agents created in this use case
+//			modelMap.put(data.getPrimaryModel().getID(), data.getPrimaryModel());
+//
+//			// set up their players & their arrivals
+//			for (AgentPropsPair app : data.getPlayerMap().keySet()) {
+//				String type = app.getAgentType().toString();
+//				EntityProperties o = app.getProperties();
+//				int n = data.getPlayerMap().get(app);
+//
+//				if (playerNumbers.containsKey(type)) {
+//					playerNumbers.put(type, playerNumbers.get(type) + n);
+//					playerStrategies.get(type).addAll(Collections.nCopies(n, o));
+//
+//				} else {
+//					playerNumbers.put(type, n);
+//					playerArrivalGenerators.put(type, new ArrivalTime(
+//							new TimeStamp(0), data.arrivalRate));
+//					playerStrategies.put(type, new ArrayList<EntityProperties>(
+//							Collections.nCopies(n, o)));
+//				}
+//			}
+//
+//		} else {
 			// MARKET MODELS SIMULATION - create environment & model agents
 			// Environment agents are present in EVERY market model
-			modelMap.putAll(data.getModels());
-			allNonPlayers.putAll(data.getModelAgentMap());
-		}
+//			modelMap.putAll(data.getModels());
+//			allNonPlayers.putAll(data.getModelAgentMap());
+//		}
 
 		// add environment agents & set up their arrivals
-		allNonPlayers.putAll(data.getEnvAgentMap());
+//		allNonPlayers.putAll(data.getEnvAgentMap());
 		for (AgentPropsPair app : allNonPlayers.keySet()) {
 			// check if arrival rate already described for this
 			// AgentPropertiesPair
-			double rate = app.getProperties().getAsDouble(
-					Keys.ARRIVAL_RATE, data.arrivalRate);
-			arrivalGenerators.put(app, new ArrivalTime(new TimeStamp(0), rate));
+//			double rate = app.getProperties().getAsDouble(
+//					Keys.ARRIVAL_RATE, data.arrivalRate);
+//			arrivalGenerators.put(app, new ArrivalTime(new TimeStamp(0), rate));
 		}
 
 		// TODO pull out arrivals for future reference
@@ -310,7 +310,7 @@ public class LoggingReference {
 		// generate logIDs, random number generator seeds, & arrivals for
 		// non-players
 		Random rand = new Random();
-		int id = data.getNumPlayers() + 1;
+//		int id = data.getNumPlayers() + 1;
 		for (AgentPropsPair prop : allNonPlayers.keySet()) {
 			ArrayList<Integer> ids = new ArrayList<Integer>();
 			ArrayList<Long> sd = new ArrayList<Long>();
@@ -318,9 +318,9 @@ public class LoggingReference {
 
 			// iterate through # of agents specified by this AgentPropsPair
 			for (int i = 0; i < allNonPlayers.get(prop); i++) {
-				ids.add(id++);
-				sd.add(rand.nextLong());
-				arr.add(arrivalGenerators.get(prop).next());
+//				ids.add(id++);
+//				sd.add(rand.nextLong());
+//				arr.add(arrivalGenerators.get(prop).next());
 			}
 			logIDs.put(prop, ids);
 			seeds.put(prop, sd);
@@ -330,9 +330,9 @@ public class LoggingReference {
 		// create all agents
 		for (MarketModel model : modelMap.values()) {
 			log(INFO, "MODEL: " + model.getName() + " agent types:");
-			if (data.isEGTAUseCase()) {
-				createPlayersForModel(model);
-			}
+//			if (data.isEGTAUseCase()) {
+//				createPlayersForModel(model);
+//			}
 			createNonPlayersForModel(model);
 		}
 	}
@@ -356,19 +356,19 @@ public class LoggingReference {
 
 				// check if (1) is model agent, (2) present in this model OR if
 				// environment agent
-				if ((data.getModelAgentMap().containsKey(ap) && data.getModelAgentByModel(
-						model.getID()).contains(ap))
-						|| data.getEnvAgentMap().containsKey(ap)) {
+//				if ((data.getModelAgentMap().containsKey(ap) && data.getModelAgentByModel(
+//						model.getID()).contains(ap))
+//						|| data.getEnvAgentMap().containsKey(ap)) {
 
 					for (int i = 0; i < numAg; i++) {
 						// create copy of ObjectProperties in case modify it
 						EntityProperties op = new EntityProperties(
 								ap.getProperties());
-						if (data.isSMAgent(ap.getAgentType())) {
-							// must assign market if single-market agent
-//							op.put(Keys.MARKETID,
-//									assignMktIDs.get(i).toString());
-						}
+//						if (data.isSMAgent(ap.getAgentType())) {
+//							// must assign market if single-market agent
+////							op.put(Keys.MARKETID,
+////									assignMktIDs.get(i).toString());
+//						}
 						Agent ag = createAgent(model,
 								new AgentPropsPair(ap.getAgentType(), op),
 								seeds.get(ap).get(i), arrivals.get(ap).get(i));
@@ -376,7 +376,7 @@ public class LoggingReference {
 					}
 					log(INFO, "Agents: " + numAg + " " + ap.getAgentType()
 							+ " " + ap.getProperties());
-				}
+//				}
 			}
 		} catch (Exception e) {
 			System.err.println(this.getClass().getSimpleName()
@@ -410,16 +410,16 @@ public class LoggingReference {
 					AgentType agType = AgentType.valueOf(type);
 					EntityProperties op = new EntityProperties(
 							playerStrategies.get(type).get(i));
-					if (data.isSMAgent(agType)) {
-						// must assign market if single-market agent
-//						op.put(Keys.MARKETID,
-//								assignMktIDs.get(i).toString());
-					}
+//					if (data.isSMAgent(agType)) {
+//						// must assign market if single-market agent
+////						op.put(Keys.MARKETID,
+////								assignMktIDs.get(i).toString());
+//					}
 					Agent ag = createAgent(model,
 							new AgentPropsPair(agType, op), rand.nextLong(),
 							playerArrivalGenerators.get(type).next());
 					// ag.setLogID(ag.getID()); // set player ID = log ID
-					data.addPlayer(ag); // add player to SystemData
+//					data.addPlayer(ag); // add player to SystemData
 				}
 				log(INFO, "Players: " + numAg + " " + type);
 			}
@@ -447,16 +447,16 @@ public class LoggingReference {
 
 		p.put(Keys.RAND_SEED, seed.toString());
 //		int agID = agentIDSequence.increment();
-		if (data.isSMAgent(agType)) {
-			// must assign market if single-market agent
-//			p.put(Keys.ARRIVAL, arr.toString());
-//			p.put(Keys.FUNDAMENTAL, model.getFundamentalAt(arr).toString());
-		}
+//		if (data.isSMAgent(agType)) {
+//			// must assign market if single-market agent
+////			p.put(Keys.ARRIVAL, arr.toString());
+////			p.put(Keys.FUNDAMENTAL, model.getFundamentalAt(arr).toString());
+//		}
 		Agent agent = null; // AgentFactory.createAgent(agType, agID,
 							// model.getID(), data, p);
 
 		createInitialAgentEvents(agent);
-		data.addAgent(agent);
+//		data.addAgent(agent);
 //		model.addAgent(agent);
 //		model.linkAgent(agID);
 		return agent;
@@ -513,21 +513,21 @@ public class LoggingReference {
 	 * Logs agent information.
 	 */
 	public void logAgentInfo() {
-		ArrayList<Integer> ids = data.getAgentIDs();
-		for (Integer id : ids) {
-			Agent ag = data.getAgent(id);
+//		ArrayList<Integer> ids = data.getAgentIDs();
+//		for (Integer id : ids) {
+//			Agent ag = data.getAgent(id);
 
 			// print arrival times
-			String s = " " + ag.getID() + ": " + ag.toString() + "::"
-					+ ag.getName() + "::";
+//			String s = " " + ag.getID() + ": " + ag.toString() + "::"
+//					+ ag.getName() + "::";
 //			s += Keys.ARRIVAL + "=" + ag.getArrivalTime().toString();
 
 			// print private value if exists
 //			s += ", pv=" + ag.getPrivateValue();
 
 			// s += " ... params=" + ag.getProperties().toString();
-			log(INFO, s);
-		}
+//			log(INFO, s);
+//		}
 	}
 
 }

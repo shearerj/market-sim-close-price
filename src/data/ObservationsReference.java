@@ -34,7 +34,7 @@ import event.TimeStamp;
  */
 public class ObservationsReference {
 
-	private SystemData data;
+//	private SystemData data;
 	private HashMap<String, Object> observations;
 	private long maxTime;
 
@@ -89,10 +89,10 @@ public class ObservationsReference {
 	/**
 	 * Constructor
 	 */
-	public ObservationsReference(SystemData d) {
-		observations = new HashMap<String, Object>();
-		data = d;
-	}
+//	public ObservationsReference(SystemData d) {
+//		observations = new HashMap<String, Object>();
+//		data = d;
+//	}
 
 	/**
 	 * Writes observations to the JSON file.
@@ -115,18 +115,18 @@ public class ObservationsReference {
 	public void computeAll() {
 
 		// log observations for players
-		for (Integer id : data.getPlayerIDs()) {
-			addObservation(id);
-		}
+//		for (Integer id : data.getPlayerIDs()) {
+//			addObservation(id);
+//		}
 
 		// set up max time (where most agents have arrived)
-		long time = Math.round(data.getNumEnvAgents() / data.arrivalRate);
-		maxTime = Math.max(Consts.upToTime, MathUtils.quantize((int) time, 1000));
+//		long time = Math.round(data.getNumEnvAgents() / data.arrivalRate);
+//		maxTime = Math.max(Consts.upToTime, MathUtils.quantize((int) time, 1000));
 
 //		addFeature("", getConfiguration());
 
 		// iterate through all models
-		for (MarketModel model : data.getModels().values()) {
+//		for (MarketModel model : data.getModels().values()) {
 //			String modelName = model.getLogName() + "_";
 
 //			addFeature(modelName + SURPLUS, getSurplus(model));
@@ -142,7 +142,7 @@ public class ObservationsReference {
 
 			// TODO - need to remove the position balance hack
 			// addFeature(modelName + ROUTING, getRegNMSRoutingInfo(model));
-		}
+//		}
 	}
 
 	/**
@@ -177,8 +177,8 @@ public class ObservationsReference {
 	public void addObservation(int agentID) {
 
 		// Don't add observation if agent is not a player in the game
-		if (!data.isPlayer(agentID))
-			return;
+//		if (!data.isPlayer(agentID))
+//			return;
 
 		HashMap<String, Object> obs = new HashMap<String, Object>(); //data.getAgent(agentID).getObservation();
 		if (obs == null || obs.isEmpty())
