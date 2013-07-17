@@ -47,6 +47,14 @@ public class Quote {
 	public Price getBidPrice() {
 		return bidPrice;
 	}
+	
+	public int getAskQuantity() {
+		return askQuantity;
+	}
+	
+	public int getBidQuantity() {
+		return bidQuantity;
+	}
 
 	/**
 	 * XXX Should also return if ask < bid?

@@ -14,5 +14,8 @@ public class Keys {
 	public final static String MAX_QUANTITY = "maxqty";
 	public final static String NUM_RUNGS = "numRungs";
 	public final static String RUNG_SIZE = "rungSize";
+	public final static String ALPHA = "alpha";
+	
+	public final static String TICK_SIZE = "tickSize";
 
 }

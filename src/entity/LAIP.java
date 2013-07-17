@@ -39,11 +39,6 @@ public class LAIP extends SMIP {
 		return acts;
 	}
 
-	// TODO May want to change this... Not great to just leak the market;
-	public Market getMarket() {
-		return assocaitedMarket;
-	}
-
 	@Override
 	public String toString() {
 		return super.toString() + ", LA: " + laAgent;
