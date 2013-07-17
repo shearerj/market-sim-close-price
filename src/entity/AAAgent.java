@@ -125,7 +125,7 @@ public class AAAgent extends BackgroundAgent {
 			// Buyers
 			if (isBuyer) {
 				// if target price is greater, agent should be less aggressive
-				if (tau.greaterThanEquals(mostRecentPrice))
+				if (tau.greaterThan(mostRecentPrice))
 					sign = -1;
 				// if transaction price is greater, agent should be more
 				// aggressive
@@ -134,7 +134,7 @@ public class AAAgent extends BackgroundAgent {
 			} else {
 				// if target price is less than most recent transaction, agent
 				// should be less aggressive
-				if (tau.lessThanEqual(mostRecentPrice))
+				if (tau.lessThan(mostRecentPrice))
 					sign = -1;
 				// if target price is greater than most recent transaction,
 				// agent should be more aggressive
@@ -556,11 +556,26 @@ public class AAAgent extends BackgroundAgent {
 		actMap.addAll(strat.biddingLayer(limit, targetPrice, quantity, ts));
 
 		// Update the short term learning variable
+		double oldAggression = strat.aggression;
 		strat.updateAggression(limit, targetPrice, movingAverage, lastPrice);
 
+		//Asserting that aggression updated correctly
+		if(isBuyer) {
+			if(lastPrice.lessThan(targetPrice)) 
+				assert(oldAggression > strat.aggression);
+			else
+				assert(oldAggression < strat.aggression);
+		}
+		else {
+			if(lastPrice.greaterThan(targetPrice))
+				assert(oldAggression > strat.aggression);
+			else
+				assert(oldAggression < strat.aggression);
+		}
+		
 		// Update long term learning variable
 		strat.updateAdaptiveness(movingAverage, mvgAvgNum, trans);
-
+		
 		// Market Reentry
 		// TimeStamp tsNew = reentry.next();
 		actMap.add(new AgentStrategy(this, reentry.next()));

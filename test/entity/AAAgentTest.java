@@ -269,15 +269,18 @@ public class AAAgentTest {
 		assertCorrectBid(agent, low, high, 1);
 	}
 
+	/**
+	 * Currently fails due to incorrect market behavior,
+	 * but AAAgent acts correctly based on the information it receives
+	 */
 	@Test
 	public void IntraBuyerActive() {
-		Logger.log(Logger.Level.DEBUG, "");
 		Logger.log(Logger.Level.DEBUG,
-				"Testing active buyer on market with transactions");
+				"\nTesting active buyer on market with transactions");
 
 		// Adding Transactions and Bids
 		addBid(new Price(50000), 1, new TimeStamp(10));
-		addBid(new Price(150000), -1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(15));
 		addTransaction(new Price(75000), 1, new TimeStamp(20));
 
 		AAAgent agent = addAgent(true);
@@ -291,6 +294,10 @@ public class AAAgentTest {
 		assertCorrectBid(agent, low, high, 1);
 	}
 
+	/**
+	 * Currently fails due to incorrect market behavior,
+	 * but AAAgent acts correctly based on the information it receives
+	 */
 	@Test
 	public void IntraBuyerPositive() {
 		Logger.log(Logger.Level.DEBUG,
@@ -361,14 +368,18 @@ public class AAAgentTest {
 		assertCorrectBid(agent, low, high, -1);
 	}
 
+	/**
+	 * Currently fails due to incorrect market behavior,
+	 * but AAAgent acts correctly based on the information it receives
+	 */
 	@Test
-	public void IntraSellerActive() { // Check Aggression
+	public void IntraSellerActive() {
 		Logger.log(Logger.Level.DEBUG,
 				"\nTesting active seller on market with transactions");
 
 		// Adding Transactions and Bids
 		addBid(new Price(50000), 1, new TimeStamp(10));
-		addBid(new Price(150000), -1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(15));
 		addTransaction(new Price(125000), 1, new TimeStamp(20));
 
 		AAAgent agent = addAgent(false);
@@ -500,7 +511,7 @@ public class AAAgentTest {
 		// Adding Transactions and Bids
 		addBid(new Price(50000), 1, new TimeStamp(10));
 		addBid(new Price(150000), -1, new TimeStamp(10));
-		addTransaction(new Price(125000), 1, new TimeStamp(15));
+		addTransaction(new Price(75000), 1, new TimeStamp(15));
 
 		// Setting up the agent
 		AAAgent agent = addAgent(false);
@@ -514,35 +525,64 @@ public class AAAgentTest {
 		assertCorrectBid(agent, low, high, -1);
 	}
 
-	
-	
 	@Test
-	public void AggressionLearning() {
-		Logger.log(Logger.Level.DEBUG, "");
-		Logger.log(Logger.Level.DEBUG, "Testing aggression learning");
+	public void ExtraSellerActive() {
+		Logger.log(Logger.Level.DEBUG,
+				"\nTesting passive buyer on market with transactions");
+
+		// Adding Transactions and Bids
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(10));
+		addTransaction(new Price(75000), 1, new TimeStamp(15));
+
+		// Setting up the agent
+		AAAgent agent = addAgent(false);
+		agent.setAggression(0);
+		TimeStamp time = new TimeStamp(100);
+		executeAgentStrategy(agent, time);
+		
+		// Asserting the bid is correct
+		Price low = new Price(132000);
+		Price high = new Price(135000);
+		assertCorrectBid(agent, low, high, -1);
+	}
+
+	@Test
+	public void BuyerAggressionIncrease() {
+		Logger.log(Logger.Level.DEBUG, "\nTesting aggression learning");
 
 		// Adding Bids and Transactions
 		addBid(new Price(50000), 1, new TimeStamp(10));
 		addBid(new Price(150000), -1, new TimeStamp(10));
-		addTransaction(new Price(100000), 1, new TimeStamp(20));
-		addTransaction(new Price(100000), 1, new TimeStamp(21));
-		addTransaction(new Price(100000), 1, new TimeStamp(22));
-		addTransaction(new Price(100000), 1, new TimeStamp(23));
-		addTransaction(new Price(100000), 1, new TimeStamp(24));
+		addTransaction(new Price(95000), 1, new TimeStamp(20));
+		addTransaction(new Price(100000), 1, new TimeStamp(25));
+		addTransaction(new Price(100000), 1, new TimeStamp(30));
+		addTransaction(new Price(100000), 1, new TimeStamp(35));
+		addTransaction(new Price(105000), 1, new TimeStamp(40));
+
+		AAAgent agent = addAgent(true);
+		executeAgentStrategy(agent, new TimeStamp(100));
+		assertCorrectBid(agent, new Price(50000), new Price(100000), 1);
+		assertTrue(agent.getAggression() > 0);
+	}
+	
+	@Test
+	public void SellerAggressionIncrease() {
+		Logger.log(Logger.Level.DEBUG, "\nTesting aggression learning");
+
+		// Adding Bids and Transactions
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(10));
+		addTransaction(new Price(105000), 1, new TimeStamp(20));
+		addTransaction(new Price(100000), 1, new TimeStamp(25));
+		addTransaction(new Price(100000), 1, new TimeStamp(30));
+		addTransaction(new Price(100000), 1, new TimeStamp(35));
+		addTransaction(new Price(95000), 1, new TimeStamp(40));
 
 		AAAgent agent = addAgent(false);
-		TimeStamp ts = new TimeStamp(100);
-		Collection<Activity> test = agent.agentStrategy(ts);
-		System.out.println(agent.getAggression());
-		// Finding the bid in the activity list
-		for (Activity itr : test) {
-			if (SubmitNMSBid.class.isAssignableFrom(itr.getClass())) {
-				// Casting the bid
-				// SubmitNMSBid bid = (SubmitNMSBid) itr;
-				// System.out.println(bid.getPrice());
-			}
-		}
-		assertTrue(agent.getAggression() < 0);
+		executeAgentStrategy(agent, new TimeStamp(100));
+		assertCorrectBid(agent, new Price(100000), new Price(150000), -1);
+		assertTrue(agent.getAggression() > 0);
 	}
 	
 }
