@@ -134,12 +134,19 @@ public class AAAgentTest {
 			Price low, Price high, int quantity) {
 		PQBid bid = (PQBid) market.getBids().get(agent);
 		// Asserting the bid is correct
-		assertTrue(bid.bidTreeSet.size() == 1);
-		assertTrue(bid.getAgent() != null);
-		assertTrue(bid.getAgent().equals(agent));
-		assertTrue(bid.bidTreeSet.first().getPrice().greaterThan(low));
-		assertTrue(bid.bidTreeSet.first().getPrice().lessThan(high));
-		assertTrue(bid.bidTreeSet.first().getQuantity() == quantity);
+		assertTrue("BidTreeSize is incorrect", bid.bidTreeSet.size() == 1);
+		
+		assertTrue("Bid agent is null", bid.getAgent() != null);
+		assertTrue("Bid agent is incorrect", bid.getAgent().equals(agent));
+
+		Price bidPrice = bid.bidTreeSet.first().getPrice();
+		assertTrue("Bid price (" + bidPrice + ") less than " + low,
+				bidPrice.greaterThan(low));
+		assertTrue("Bid price (" + bidPrice + ") greater than " + high,
+				bidPrice.lessThan(high));
+		
+		assertTrue("Quantity is incorrect",
+				bid.bidTreeSet.first().getQuantity() == quantity);
 	}
 	
 	private void assertCorrectBid(Agent agent,
@@ -258,7 +265,7 @@ public class AAAgentTest {
 
 		// Asserting the bid is correct
 		Price low = new Price(36000);
-		Price high = new Price(39000);
+		Price high = new Price(41000);
 		assertCorrectBid(agent, low, high, 1);
 	}
 
@@ -372,7 +379,7 @@ public class AAAgentTest {
 		// Asserting the bid is correct
 		Price low = new Price(138000);
 		Price high = new Price(144000);
-		assertCorrectBid(agent, low, high, 1);
+		assertCorrectBid(agent, low, high, -1);
 	}
 
 	@Test
@@ -393,7 +400,7 @@ public class AAAgentTest {
 		// Asserting the bid is correct
 		Price low = new Price(130000);
 		Price high = new Price(135000);
-		assertCorrectBid(agent, low, high, 1);
+		assertCorrectBid(agent, low, high, -1);
 	}
 
 	
@@ -417,7 +424,6 @@ public class AAAgentTest {
 		Price low = new Price(30000);
 		Price high = new Price(35000);
 		assertCorrectBid(agent, low, high, 1);
-		
 	}
 
 	@Test
@@ -486,6 +492,29 @@ public class AAAgentTest {
 		assertCorrectBid(agent, low, high, 1);
 	}
 
+	@Test
+	public void ExtraSellerPassive() {
+		Logger.log(Logger.Level.DEBUG,
+				"\nTesting passive buyer on market with transactions");
+
+		// Adding Transactions and Bids
+		addBid(new Price(50000), 1, new TimeStamp(10));
+		addBid(new Price(150000), -1, new TimeStamp(10));
+		addTransaction(new Price(125000), 1, new TimeStamp(15));
+
+		// Setting up the agent
+		AAAgent agent = addAgent(false);
+		agent.setAggression(-1);
+		TimeStamp time = new TimeStamp(100);
+		executeAgentStrategy(agent, time);
+		
+		// Asserting the bid is correct
+		Price low = new Price(95000).plus(Price.INF.times(1.0/3.0));
+		Price high = new Price(105000).plus(Price.INF.times(1.0/3.0));
+		assertCorrectBid(agent, low, high, -1);
+	}
+
+	
 	
 	@Test
 	public void AggressionLearning() {
