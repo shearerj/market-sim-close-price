@@ -1,5 +1,6 @@
 package entity;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -23,18 +24,20 @@ public class MockMarket extends Market {
 	@Override
 	public Collection<? extends Activity> submitBid(Agent agent, Price price,
 			int quantity, TimeStamp currentTime) {
-		Collection<? extends Activity> acts = super.submitBid(agent, price,
-				quantity, currentTime);
-		updateQuote(Collections.<Transaction>emptyList(), currentTime);
+		Collection<Activity> acts = new ArrayList<Activity>(super.submitBid(
+				agent, price, quantity, currentTime));
+		acts.addAll(updateQuote(Collections.<Transaction> emptyList(),
+				currentTime));
 		return acts;
 	}
 
 	@Override
 	public Collection<? extends Activity> withdrawBid(Agent agent,
 			TimeStamp currentTime) {
-		Collection<? extends Activity> acts = super.withdrawBid(agent,
-				currentTime);
-		updateQuote(Collections.<Transaction>emptyList(), currentTime);
+		Collection<Activity> acts = new ArrayList<Activity>(super.withdrawBid(
+				agent, currentTime));
+		acts.addAll(updateQuote(Collections.<Transaction> emptyList(),
+				currentTime));
 		return acts;
 	}
 
