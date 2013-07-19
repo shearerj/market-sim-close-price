@@ -20,7 +20,7 @@ public abstract class ReentryAgent extends BackgroundAgent {
 	protected ArrivalTime reentry; // re-entry times
 	
 	public ReentryAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, PrivateValue pv, RandPlus rand, int reentryRate, 
+			Market market, PrivateValue pv, RandPlus rand, double reentryRate, 
 			int tickSize) {
 		super(agentID, arrivalTime, model, market, pv, rand, tickSize);
 	

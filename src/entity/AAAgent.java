@@ -491,13 +491,13 @@ public class AAAgent extends ReentryAgent {
 		this(agentID, arrivalTime, model, market, rand, params,
 				new PrivateValue(params.getAsInt(Keys.MAX_QUANTITY, 1),
 						params.getAsDouble("pvVar", 100), rand), 
-				params.getAsInt(Keys.REENTRY_RATE, 100),
+				params.getAsDouble(Keys.REENTRY_RATE, 100),
 				params.getAsInt("tickSize", 1000));
 	}
 	
 	public AAAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, EntityProperties params, 
-			PrivateValue privateValue, int reentryRate, int tickSize) {
+			PrivateValue privateValue, double reentryRate, int tickSize) {
 		// TODO change "null" to proper private value initialization
 		super(agentID, arrivalTime, model, market, privateValue, rand, 
 				reentryRate, tickSize);
