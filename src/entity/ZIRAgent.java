@@ -50,7 +50,7 @@ public class ZIRAgent extends ReentryAgent {
 
 	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, int bidRange, int maxAbsPosition,
-			int reentryRate, double pvVar, int tickSize) {
+			double reentryRate, double pvVar, int tickSize) {
 		// TODO replace null with proper private value initialization
 		super(agentID, arrivalTime, model, market, new PrivateValue(
 				maxAbsPosition, pvVar, rand), rand, reentryRate, tickSize);
@@ -65,7 +65,7 @@ public class ZIRAgent extends ReentryAgent {
 		// TODO get keys and default value for reentry rate and pvvar
 		this(agentID, arrivalTime, model, market, rand, props.getAsInt(
 				Keys.BID_RANGE, 5000), props.getAsInt(Keys.MAX_QUANTITY, 10),
-				props.getAsInt(Keys.REENTRY_RATE, 100), props.getAsDouble(
+				props.getAsDouble(Keys.REENTRY_RATE, 100), props.getAsDouble(
 						"pvVar", 100), props.getAsInt("tickSize", 1000));
 	}
 
