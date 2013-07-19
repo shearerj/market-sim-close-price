@@ -590,7 +590,7 @@ public class FourHeap {
 				+ "FourHeap::logSets::" + s);
 	}
 
-	private String printSet(int t) {
+	public String printSet(int t) {
 		SortedSet<PQPoint> S = null;
 		String s = new String("");
 		if (P_BUY == t) {
