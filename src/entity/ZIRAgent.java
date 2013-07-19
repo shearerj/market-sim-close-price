@@ -40,10 +40,9 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-public class ZIRAgent extends BackgroundAgent {
+public class ZIRAgent extends ReentryAgent {
 
 	protected int bidRange; // range for limit order
-	protected ArrivalTime reentry; // re-entry times
 	protected int lastPositionBalance; // last position balance
 	protected int maxAbsPosition; // max quantity for position
 	// for computing discounted surplus
@@ -54,10 +53,9 @@ public class ZIRAgent extends BackgroundAgent {
 			int reentryRate, double pvVar, int tickSize) {
 		// TODO replace null with proper private value initialization
 		super(agentID, arrivalTime, model, market, new PrivateValue(
-				maxAbsPosition, pvVar, rand), rand, tickSize);
+				maxAbsPosition, pvVar, rand), rand, reentryRate, tickSize);
 		this.bidRange = bidRange;
 		this.maxAbsPosition = maxAbsPosition;
-		this.reentry = new ArrivalTime(arrivalTime, reentryRate, rand);
 		this.lastPositionBalance = positionBalance;
 		this.submissionTimes = new ArrayList<TimeStamp>();
 	}
@@ -129,7 +127,7 @@ public class ZIRAgent extends BackgroundAgent {
 			log(INFO, s);
 		}
 
-		activities.add(new AgentStrategy(this, reentry.next()));
+		activities.add(new AgentStrategy(this, getNextReentryTime()));
 		return activities;
 	}
 

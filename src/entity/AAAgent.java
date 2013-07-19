@@ -33,7 +33,7 @@ import event.TimeStamp;
  * @author drhurd
  */
 
-public class AAAgent extends BackgroundAgent {
+public class AAAgent extends ReentryAgent {
 	public final static String HISTORICAL_KEY = "historical";
 	public final static String ETA_KEY = "eta";
 	public final static String AGGRESSION_KEY = "aggression";
@@ -54,7 +54,6 @@ public class AAAgent extends BackgroundAgent {
 	private AAStrategy strat; // Holder class for all of the strategy parameters
 								// and variables
 	private boolean isBuyer; // randomly assigned at initialization
-	private ArrivalTime reentry; // re-entry times
 	private int maxAbsPosition; // maxPosition the agent can take on
 
 	//
@@ -489,15 +488,24 @@ public class AAAgent extends BackgroundAgent {
 
 	public AAAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, EntityProperties params) {
+		this(agentID, arrivalTime, model, market, rand, params,
+				new PrivateValue(params.getAsInt(Keys.MAX_QUANTITY, 1),
+						params.getAsDouble("pvVar", 100), rand), 
+				params.getAsInt(Keys.REENTRY_RATE, 100),
+				params.getAsInt("tickSize", 1000));
+	}
+	
+	public AAAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
+			Market market, RandPlus rand, EntityProperties params, 
+			PrivateValue privateValue, int reentryRate, int tickSize) {
 		// TODO change "null" to proper private value initialization
-		super(agentID, arrivalTime, model, market, new PrivateValue(
-				params.getAsInt(Keys.MAX_QUANTITY, 1), params.getAsDouble(
-						"pvVar", 100), rand), rand, params.getAsInt("tickSize", 1000));
+		super(agentID, arrivalTime, model, market, privateValue, rand, 
+				reentryRate, tickSize);
+		
 		//Initialize market
 		this.marketSubmittedBid = this.primaryMarket;
 		
 		//Initializing Reentry times
-		double reentryRate = params.getAsDouble(Keys.REENTRY_RATE, 0);
 		this.reentry = new ArrivalTime(arrivalTime, reentryRate, rand);
 		
 		//Initializing Max Absolute Position
@@ -513,13 +521,6 @@ public class AAAgent extends BackgroundAgent {
 		//this.debugging = debugging;
 		boolean debugging = params.getAsBoolean(DEBUG_KEY, false);
 		if (debugging) printInitDebugInfo();
-	}
-
-	/**
-	 * @return ArrivalTime object holding re-entries into market
-	 */
-	public ArrivalTime getReentryTimes() {
-		return reentry;
 	}
 
 	@Override
@@ -580,9 +581,6 @@ public class AAAgent extends BackgroundAgent {
 		// TimeStamp tsNew = reentry.next();
 		actMap.add(new AgentStrategy(this, reentry.next()));
 
-		log(INFO, s + " " + isBuyer + " private valuation="
-				+ limit);
-		log(INFO, s + " adaptiveness=" + strat.theta);
 		return actMap;
 	}
 
