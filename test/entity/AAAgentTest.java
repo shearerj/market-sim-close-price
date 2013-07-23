@@ -29,9 +29,7 @@ import activity.Activity;
 import activity.ProcessQuote;
 import activity.SendToIP;
 import activity.SubmitNMSBid;
-import data.DummyFundamental;
 import data.EntityProperties;
-import data.FundamentalValue;
 import data.Keys;
 import event.TimeStamp;
 

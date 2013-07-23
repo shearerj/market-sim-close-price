@@ -4,11 +4,13 @@ import java.io.File;
 import java.io.IOException;
 
 public class Logger {
-	
-	public static enum Level { NO_LOGGING, ERROR, INFO, DEBUG };
+
+	public static enum Level {
+		NO_LOGGING, ERROR, INFO, DEBUG
+	};
 
 	protected static Log logger;
-	
+
 	public static void setup(int lev, File logFile) {
 		try {
 			logFile.getParentFile().mkdirs();
@@ -19,10 +21,13 @@ public class Logger {
 		}
 	}
 
+	// TODO Have looger require event manager for setup. When logger is called, it references the
+	// current time of the event queue.
+	//
+	// TODO Also get rid of junk at beginning of logger output.
 	public static void log(Level level, String message) {
 		if (logger == null)
-			System.err.println("LNI: "
-					+ message);
+			System.err.println("LNI: " + message);
 		else
 			logger.log(level.ordinal(), message);
 	}
@@ -32,7 +37,8 @@ public class Logger {
 	}
 
 	public static Level getLevel() {
-		return logger == null ? Level.NO_LOGGING : Level.values()[logger.getLevel()];
+		return logger == null ? Level.NO_LOGGING
+				: Level.values()[logger.getLevel()];
 	}
 
 }

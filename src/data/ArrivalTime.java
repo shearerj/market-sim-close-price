@@ -11,6 +11,7 @@ import utils.RandPlus;
  * 
  * @author ewah
  */
+// TODO Remove and replace with Generator<TimeStamp>
 public class ArrivalTime {
 
 	private TimeStamp time;

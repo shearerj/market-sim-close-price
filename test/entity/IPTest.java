@@ -17,32 +17,22 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import utils.RandPlus;
-import data.DummyFundamental;
 import data.EntityProperties;
-import data.FundamentalValue;
 import data.Keys;
 import event.TimeStamp;
 
 public class IPTest {
 
-	private static FundamentalValue fund;
-	private static RandPlus rand;
 	private static EntityProperties agentProperties;
 	
 	private MockMarketModel model;
 	private Market market;
-	private int agentIndex;
 	public SIP dummySIP;
 	
 	@BeforeClass
 	public static void setupClass() {
 		//Setting up the log file
 		Logger.setup(3, new File("simulations/unit_testing/unit_tests.txt"));
-		
-		//Creating the setup properties
-		rand = new RandPlus(1);
-		fund = new DummyFundamental(100000);
 		
 		//Setting up agentProperties
 		agentProperties = new EntityProperties();

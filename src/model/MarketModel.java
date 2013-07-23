@@ -113,7 +113,7 @@ public abstract class MarketModel {
 			// generic or even specified, but for now we'll stick with the
 			// original implementation
 			SMAgentFactory factory = new SMAgentFactory(this, agentIDgen,
-					agProps.getAsLong(SimulationSpec.ARRIVAL_RATE, 100),
+					agProps.getAsDouble(SimulationSpec.ARRIVAL_RATE, 0.075),
 					new RandPlus(rand.nextLong()));
 
 			for (int i = 0; i < number; i++)
