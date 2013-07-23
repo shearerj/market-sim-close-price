@@ -15,6 +15,7 @@ public class Logger {
 		try {
 			logFile.getParentFile().mkdirs();
 			logger = new Log(lev, ".", logFile.getPath(), true);
+			logger.setPrependDate(false);
 		} catch (IOException e) {
 			System.err.println("Couldn't create log file");
 			e.printStackTrace();
