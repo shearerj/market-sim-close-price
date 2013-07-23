@@ -37,7 +37,6 @@ import event.TimeStamp;
 
 public class AAAgentTest {
 
-	private static FundamentalValue fund;
 	private static RandPlus rand;
 	private static EntityProperties agentProperties;
 
@@ -52,7 +51,6 @@ public class AAAgentTest {
 
 		// Creating the setup properties
 		rand = new RandPlus(1);
-		fund = new DummyFundamental(100000);
 
 		// Setting up agentProperties
 		agentProperties = new EntityProperties();

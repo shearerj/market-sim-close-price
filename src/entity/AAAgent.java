@@ -119,7 +119,6 @@ public class AAAgent extends ReentryAgent {
 		eta = params.getAsInt(AAAgent.ETA_KEY, 3);
 		thetaMax = params.getAsDouble(AAAgent.THETAMAX_KEY, 4);
 		thetaMin = params.getAsDouble(AAAgent.THETAMIN_KEY, -4);
-		
 	}
 
 	@Override
