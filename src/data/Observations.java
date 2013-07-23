@@ -40,10 +40,10 @@ import event.TimeStamp;
 public class Observations {
 
 	// Players
-	public final static String PLAYERS_KEY = "players";
-	public final static String ROLE_KEY = "role";
-	public final static String PAYOFF_KEY = "payoff";
-	public final static String STRATEGY_KEY = "strategy";
+	public final static String PLAYERS = "players";
+	public final static String ROLE = "role";
+	public final static String PAYOFF = "payoff";
+	public final static String STRATEGY = "strategy";
 
 	// Config
 	public final static String NUM = "num";
@@ -52,6 +52,7 @@ public class Observations {
 	public final static String TIMESERIES_MAXTIME = "up_to_maxtime";
 
 	// Features
+	public final static String FEATURES = "features";
 	public final static String SURPLUS = "surplus";
 	public final static String EXECTIME = "exectime";
 	public final static String TRANSACTIONS = "trans";
@@ -106,30 +107,31 @@ public class Observations {
 		observations = new JsonObject();
 
 		MarketModel firstModel = models.iterator().next();
-		observations.add(PLAYERS_KEY, playerObservations(firstModel));
+		observations.add(PLAYERS, playerObservations(firstModel));
 
 		// FIXME Math.round(firstModel.getNumEnvAgents() / data.arrivalRate);
 		long maxTime = 15000;
 		maxTime = Math.max(Consts.upToTime, quantize((int) maxTime, 1000));
 
-		JsonObject feature = new JsonObject();
-		feature.add("", getConfiguration(spec, observationNum, maxTime));
+		JsonObject features = new JsonObject();
+		observations.add(FEATURES, features);
+		features.add("", getConfiguration(spec, observationNum, maxTime));
 
 		for (MarketModel model : models) {
 			String modelName = model.getClass().getSimpleName().toLowerCase();
 
-			feature.add(delimit(modelName, SURPLUS), getSurplus(model));
+			features.add(delimit(modelName, SURPLUS), getSurplus(model));
 
-			feature.add(delimit(modelName, EXECTIME), getExecutionTime(model));
+			features.add(delimit(modelName, EXECTIME), getExecutionTime(model));
 			// FIXME this should maybe be simLength instead of maxTime...
-			feature.add(delimit(modelName, TRANSACTIONS),
+			features.add(delimit(modelName, TRANSACTIONS),
 					getTransactionInfo(model, maxTime));
-			feature.add(delimit(modelName, SPREADS), getSpread(model, maxTime));
-			feature.add(delimit(modelName, ROLE_MARKETMAKER),
+			features.add(delimit(modelName, SPREADS), getSpread(model, maxTime));
+			features.add(delimit(modelName, ROLE_MARKETMAKER),
 					getMarketMakerInfo(model));
 
 			for (int period : Consts.periods)
-				feature.add(delimit(modelName, VOL),
+				features.add(delimit(modelName, VOL),
 						getVolatility(model, period, maxTime));
 
 			// TODO - need to remove the position balance hack
@@ -146,10 +148,10 @@ public class Observations {
 
 	protected static JsonObject getPlayerObservation(Player player) {
 		JsonObject observation = new JsonObject();
-		observation.addProperty(ROLE_KEY, player.getRole());
-		observation.addProperty(STRATEGY_KEY, player.getStrategy());
+		observation.addProperty(ROLE, player.getRole());
+		observation.addProperty(STRATEGY, player.getStrategy());
 		// Get surplus instead of realized profit?
-		observation.addProperty(PAYOFF_KEY,
+		observation.addProperty(PAYOFF,
 				player.getAgent().getRealizedProfit());
 		return observation;
 	}

@@ -3,7 +3,6 @@ package entity;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.util.Map;
 
 import logger.Logger;
 import market.Price;
@@ -14,22 +13,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import utils.RandPlus;
-
-import com.google.gson.JsonObject;
-
-import data.AgentProperties;
-import data.FundamentalValue;
-import data.ModelProperties;
 import event.TimeStamp;
 
 public class CDAMarketTest {
-
-	private static FundamentalValue fund;
-	private static RandPlus rand;
-	private static ModelProperties modelProperties;
-	private static Map<AgentProperties, Integer> agentProperties;
-	private static JsonObject playerConfig;
 
 	private MockMarketModel model;
 	private Market market;
@@ -139,7 +125,6 @@ public class CDAMarketTest {
 	@Test
 	public void MultiBidSingleClear() {
 		TimeStamp time = new TimeStamp(0);
-		TimeStamp time2 = new TimeStamp(10);
 		
 		//Creating dummy agents
 		MockAgent agent1 = new MockAgent(agentIndex++, model, market);

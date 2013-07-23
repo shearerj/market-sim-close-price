@@ -183,6 +183,7 @@ public class SystemManager {
 	}
 
 	public void aggregateResults() throws IOException {
+		// TODO Also serialize all entity objects and models for later data analysis
 		File results = new File(simFolder, Consts.OBS_FILE_PREFIX + obsNum + ".json");
 		Observations obs = new Observations(spec, models, obsNum);
 		obs.writeToFile(results);

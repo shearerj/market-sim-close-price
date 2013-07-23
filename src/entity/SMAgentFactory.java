@@ -33,7 +33,7 @@ public class SMAgentFactory {
 	 * SMAgent factory with Poisson arrivals and round robin market selection.
 	 */
 	public SMAgentFactory(MarketModel model, Generator<Integer> ids,
-			long arrivalRate, RandPlus rand) {
+			double arrivalRate, RandPlus rand) {
 		this(model, ids, new PoissonArrivalGenerator(Consts.START_TIME,
 				arrivalRate, new RandPlus(rand.nextLong())),
 				new RoundRobinGenerator<Market>(model.getMarkets()), rand);

@@ -13,7 +13,6 @@ import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
 import activity.SubmitNMSBid;
-import data.ArrivalTime;
 import data.EntityProperties;
 import data.Keys;
 import event.TimeStamp;
