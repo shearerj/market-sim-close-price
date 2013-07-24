@@ -20,7 +20,7 @@ public class Bid {
 	protected final Agent agent;
 	protected final Market market;
 	protected final TimeStamp submitTime;
-	public TreeSet<Point> bidTreeSet;
+	public TreeSet<Point> bidTreeSet; // FIXME protected final
 	
 	public Bid(Agent agent, Market market, TimeStamp submissionTime) {
 		this.agent = agent;

@@ -12,7 +12,7 @@ import java.util.Map.Entry;
 
 import market.BestBidAsk;
 import market.Bid;
-import market.PQOrderBook;
+import market.OrderBook;
 import market.Price;
 import market.Quote;
 import market.Transaction;
@@ -31,7 +31,7 @@ import event.TimeStamp;
 public abstract class Market extends Entity {
 
 	protected final MarketModel model;
-	protected final PQOrderBook orderbook;
+	protected final OrderBook orderbook;
 	protected final SMIP ip;
 	protected final SIP sip; // For REG NMS
 	protected final Collection<IP> ips;
@@ -52,7 +52,7 @@ public abstract class Market extends Entity {
 		super(marketID);
 		this.model = model;
 		this.bids = new ArrayList<Bid>();
-		this.orderbook = new PQOrderBook(this);
+		this.orderbook = new OrderBook(this);
 		this.depths = new TimeSeries();
 		this.spreads = new TimeSeries();
 		this.midQuotes = new TimeSeries();
