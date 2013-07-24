@@ -40,15 +40,15 @@ public class PQOrderBook extends OrderBook {
 			activeBids.put(agent, newBid);
 		} else {
 			Bid oldBid = activeBids.get(agent);
-			for (Iterator<PQPoint> i = oldBid.bidTreeSet.iterator(); i.hasNext();) {
+			for (Iterator<Point> i = oldBid.bidTreeSet.iterator(); i.hasNext();) {
 				FH.removeBid(i.next());
 			}
 			activeBids.put(agent, newBid);
 		}
 		Bid pqBid = newBid;
 		// insert all new Points from this Bid into the 4Heap
-		for (Iterator<PQPoint> i = pqBid.bidTreeSet.iterator(); i.hasNext();) {
-			PQPoint p = i.next();
+		for (Iterator<Point> i = pqBid.bidTreeSet.iterator(); i.hasNext();) {
+			Point p = i.next();
 			p.Parent = pqBid;
 			FH.insertBid(p);
 		}
@@ -60,8 +60,7 @@ public class PQOrderBook extends OrderBook {
 	 * 
 	 * @param newPoint
 	 */
-	public void insertPoint(Point newPoint) {
-		PQPoint pq = (PQPoint) newPoint;
+	public void insertPoint(Point pq) {
 		Agent agent = pq.getAgent();
 
 		// create entry if non-existent, or add as existing multi-point bid
@@ -86,8 +85,8 @@ public class PQOrderBook extends OrderBook {
 
 		if (!activeBids.containsKey(key)) return;
 
-		// remove all the PQPoints from the FourHeap
-		for (Iterator<PQPoint> i = oldBid.bidTreeSet.iterator(); i.hasNext();) {
+		// remove all the Points from the FourHeap
+		for (Iterator<Point> i = oldBid.bidTreeSet.iterator(); i.hasNext();) {
 			FH.removeBid(i.next());
 		}
 		activeBids.remove(key);
@@ -102,7 +101,7 @@ public class PQOrderBook extends OrderBook {
 	 * @return minimum price at which a winning buy could be placed
 	 */
 	public Bid getAskQuote() {
-		PQPoint pq = FH.getAskQuote();
+		Point pq = FH.getAskQuote();
 
 		Bid b = null;
 		if (pq.Parent != null)
@@ -118,7 +117,7 @@ public class PQOrderBook extends OrderBook {
 	 * @return maximum price at which a winning sell could be placed
 	 */
 	public Bid getBidQuote() {
-		PQPoint pq = FH.getBidQuote();
+		Point pq = FH.getBidQuote();
 
 		Bid b = null;
 		if (pq.Parent != null)
@@ -144,8 +143,8 @@ public class PQOrderBook extends OrderBook {
 		String s = ts.toString() + " | " + this.market + " Active bids: ";
 		for (Entry<Agent, Bid> entry : activeBids.entrySet()) {
 			Bid b = entry.getValue();
-			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext();) {
-				PQPoint pq = i.next();
+			for (Iterator<Point> i = b.bidTreeSet.iterator(); i.hasNext();) {
+				Point pq = i.next();
 				s += "(" + pq.getQuantity() + " " + pq.getPrice().toString()
 						+ ") ";
 			}
@@ -160,8 +159,8 @@ public class PQOrderBook extends OrderBook {
 		String s = ts.toString() + " | " + this.market + " Cleared bids: ";
 		for (Entry<Agent, Bid> entry : clearedBids.entrySet()) {
 			Bid b = entry.getValue();
-			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext();) {
-				PQPoint pq = i.next();
+			for (Iterator<Point> i = b.bidTreeSet.iterator(); i.hasNext();) {
+				Point pq = i.next();
 				s += "(" + pq.getQuantity() + " " + pq.getPrice().toString()
 						+ ") ";
 			}
@@ -194,20 +193,19 @@ public class PQOrderBook extends OrderBook {
 	 */
 	@Override
 	public List<Transaction> earliestPriceClear(TimeStamp currentTime) {
-		PQPoint buy, sell;
+		Point buy, sell;
 		clearedBids = new HashMap<Agent, Bid>();
 
-		ArrayList<PQPoint> matchingBuys = new ArrayList<PQPoint>();
-		ArrayList<PQPoint> matchingSells = new ArrayList<PQPoint>();
+		ArrayList<Point> matchingBuys = new ArrayList<Point>();
+		ArrayList<Point> matchingSells = new ArrayList<Point>();
 		ArrayList<Transaction> transactions = new ArrayList<Transaction>();
 
 		int buyAgentId = -1;
 		int sellAgentId = -2;
 
 		if (!FH.matchBuySet.isEmpty() && !FH.matchSellSet.isEmpty()) {
-			// PQPoint b = (PQPoint) FH.matchBuySet.first();
-			buyAgentId = ((PQPoint) FH.matchBuySet.first()).getAgent().getID();
-			sellAgentId = ((PQPoint) FH.matchSellSet.first()).getAgent().getID();
+			buyAgentId = FH.matchBuySet.first().getAgent().getID();
+			sellAgentId = FH.matchSellSet.first().getAgent().getID();
 		}
 		if (buyAgentId != sellAgentId) {
 			FH.clear(matchingBuys, matchingSells);
@@ -220,7 +218,7 @@ public class PQOrderBook extends OrderBook {
 			buy = matchingBuys.get(i);
 			sell = matchingSells.get(j);
 			int q = Math.min(buy.getQuantity(), Math.abs(sell.getQuantity()));
-			Price p = PQPoint.earliestPrice(buy, sell);
+			Price p = Point.earliestPrice(buy, sell);
 			Bid buyBid = buy.Parent;
 			Bid sellBid = sell.Parent;
 
@@ -263,19 +261,19 @@ public class PQOrderBook extends OrderBook {
 	public ArrayList<Transaction> uniformPriceClear(TimeStamp ts,
 			float pricingPolicy) {
 
-		PQPoint buy, sell;
+		Point buy, sell;
 		clearedBids = new HashMap<Agent, Bid>();
 
-		ArrayList<PQPoint> matchingBuys = new ArrayList<PQPoint>();
-		ArrayList<PQPoint> matchingSells = new ArrayList<PQPoint>();
+		ArrayList<Point> matchingBuys = new ArrayList<Point>();
+		ArrayList<Point> matchingSells = new ArrayList<Point>();
 		ArrayList<Transaction> transactions = new ArrayList<Transaction>();
 
 		int buyAgentId = -1;
 		int sellAgentId = -2;
 
 		if (!FH.matchBuySet.isEmpty() && !FH.matchSellSet.isEmpty()) {
-			buyAgentId = ((PQPoint) FH.matchBuySet.first()).getAgent().getID();
-			sellAgentId = ((PQPoint) FH.matchSellSet.first()).getAgent().getID();
+			buyAgentId = FH.matchBuySet.first().getAgent().getID();
+			sellAgentId = FH.matchSellSet.first().getAgent().getID();
 		}
 		if (buyAgentId != sellAgentId) {
 			FH.clear(matchingBuys, matchingSells);
@@ -287,8 +285,8 @@ public class PQOrderBook extends OrderBook {
 
 		Price p = new Price(0);
 		for (int i = 0, j = 0; i < numBuys || j < numSells;) {
-			buy = (PQPoint) matchingBuys.get(i);
-			sell = (PQPoint) matchingSells.get(j);
+			buy = matchingBuys.get(i);
+			sell = matchingSells.get(j);
 			int q = Math.min(buy.getQuantity(), Math.abs(sell.getQuantity()));
 			Bid buyBid = buy.Parent;
 			Bid sellBid = sell.Parent;
@@ -296,12 +294,12 @@ public class PQOrderBook extends OrderBook {
 			// Assign price if not assigned yet
 			// Get price by taking first of the matching buys/sells
 			if (p.getPrice() == 0) {
-				// TreeSet<PQPoint> b = new TreeSet<PQPoint>(matchingBuys);
-				// TreeSet<PQPoint> a = new TreeSet<PQPoint>(matchingSells);
-				// PQPoint bid = b.first();
-				// PQPoint ask = a.last();
-				PQPoint bid = getBidQuote().bidTreeSet.first();
-				PQPoint ask = getAskQuote().bidTreeSet.first();
+				// TreeSet<Point> b = new TreeSet<Point>(matchingBuys);
+				// TreeSet<Point> a = new TreeSet<Point>(matchingSells);
+				// Point bid = b.first();
+				// Point ask = a.last();
+				Point bid = getBidQuote().bidTreeSet.first();
+				Point ask = getAskQuote().bidTreeSet.first();
 
 				p = new Price(
 						Math.round((ask.getPrice().getPrice() - bid.getPrice().getPrice())

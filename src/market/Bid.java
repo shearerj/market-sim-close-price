@@ -8,7 +8,7 @@ import entity.Market;
 import event.TimeStamp;
 
 /**
- * Contains array of PQPoints which can be evaluated independently by
+ * Contains array of Points which can be evaluated independently by
  * the market (i.e., the bid is divisible). Bids are contained in
  * an array sorted by price and quantity, both descending.
  * 
@@ -20,14 +20,14 @@ public class Bid {
 	protected final Agent agent;
 	protected final Market market;
 	protected final TimeStamp submitTime;
-	public TreeSet<PQPoint> bidTreeSet;
+	public TreeSet<Point> bidTreeSet;
 	
 	public Bid(Agent agent, Market market, TimeStamp submissionTime) {
 		this.agent = agent;
 		this.market = market;
 		this.submitTime = submissionTime;
 		this.bidID = this.hashCode();
-		this.bidTreeSet = new TreeSet<PQPoint>(new PQPointComparator());
+		this.bidTreeSet = new TreeSet<Point>(new PointComparator());
 	}
 
 	public Bid(Bid other) {
@@ -63,9 +63,9 @@ public class Bid {
 	/**
 	 * Add point p to bidTreeSet
 	 * 
-	 * @param p PQPoint to add to the bid
+	 * @param p Point to add to the bid
 	 */
-	public void addPoint(PQPoint p) {
+	public void addPoint(Point p) {
 		bidTreeSet.add(p);
 	}
 
@@ -76,7 +76,7 @@ public class Bid {
 	 * @param p price
 	 */
 	public void addPoint(int q, Price p) {
-		PQPoint pq = new PQPoint(q, p);
+		Point pq = new Point(q, p);
 		pq.Parent = this;
 		addPoint(pq);
 	}
@@ -86,7 +86,7 @@ public class Bid {
 	 * 
 	 * @param points
 	 */
-	public void addPoints(PQPoint[] points) {
+	public void addPoints(Point[] points) {
 		for (int i = 0; i < points.length; i++) {
 			addPoint(points[i]);
 		}
@@ -120,8 +120,8 @@ public class Bid {
 		if (bidTreeSet == null || bidTreeSet.isEmpty()) return null;
 
 		int quantity = 0;
-		for (Iterator<PQPoint> i = bidTreeSet.iterator(); i.hasNext(); ) {
-			PQPoint pq = i.next();
+		for (Iterator<Point> i = bidTreeSet.iterator(); i.hasNext(); ) {
+			Point pq = i.next();
 			int bidQ = pq.getQuantity();
 			// determine quantity available at the minimum bid price
 			if ((bidQ > 0 && pq.getPrice().compareTo(price) >= strict) ||
@@ -152,8 +152,8 @@ public class Bid {
 
 		if (bidTreeSet == null || bidTreeSet.isEmpty()) return 0;
 
-		PQPoint[] bidArray = bidTreeSet.toArray(new PQPoint[0]);
-		PQPoint[] otherArray = other.bidTreeSet.toArray(new PQPoint[0]);
+		Point[] bidArray = bidTreeSet.toArray(new Point[0]);
+		Point[] otherArray = other.bidTreeSet.toArray(new Point[0]);
 
 		//find the lowest sell offer  in this and other bid (bid is ordered & monotone)
 		while ((thisP < bidTreeSet.size() - 1) && (bidArray[thisP + 1].getQuantity() < 0))
@@ -165,7 +165,7 @@ public class Bid {
 		 *  at a price >= other
 		 *  algorithm ends up comparing at each price point of both bids
 		 */
-		PQPoint nextPoint;
+		Point nextPoint;
 		int i = thisP, j = otherP;
 		while ((i >= 0) || (j >= 0)) {
 			//compute the next price at which bids must be compared
@@ -214,8 +214,8 @@ public class Bid {
 
 		if (bidTreeSet == null || bidTreeSet.isEmpty()) return 0;
 
-		PQPoint[] bidArray = bidTreeSet.toArray(new PQPoint[0]);
-		PQPoint[] otherArray = other.bidTreeSet.toArray(new PQPoint[0]);
+		Point[] bidArray = bidTreeSet.toArray(new Point[0]);
+		Point[] otherArray = other.bidTreeSet.toArray(new Point[0]);
 		
 		//find the highest buy offer in this and other bid
 		//(bids are ordered(descending) & monotone)
@@ -235,7 +235,7 @@ public class Bid {
 		/* for each distinct price point P of bids' combined points,
 		 *add up the quantity each bid offers  at a price >= P
 		 */
-		PQPoint nextPoint;
+		Point nextPoint;
 		int i = thisP, j = otherP;
 		while ((i < bidArray.length) || (j < otherArray.length)) {
 
@@ -277,7 +277,7 @@ public class Bid {
 	public boolean containsBuyOffers() {
 		if (bidTreeSet == null || bidTreeSet.isEmpty()) return false;
 
-		for (Iterator<PQPoint> i = bidTreeSet.iterator(); i.hasNext(); )
+		for (Iterator<Point> i = bidTreeSet.iterator(); i.hasNext(); )
 			if (i.next().getQuantity() > 0) return true;
 
 		return false;
@@ -291,7 +291,7 @@ public class Bid {
 	public boolean containsSellOffers() {
 		if (bidTreeSet == null || bidTreeSet.isEmpty()) return false;
 
-		for (Iterator<PQPoint> i = bidTreeSet.iterator(); i.hasNext(); )
+		for (Iterator<Point> i = bidTreeSet.iterator(); i.hasNext(); )
 			if (i.next().getQuantity() < 0) return true;
 
 		return false;
@@ -306,8 +306,8 @@ public class Bid {
 	public boolean contains(Bid other) {
 		if (other == null) return true;
 		
-		PQPoint[] bidArray = bidTreeSet.toArray(new PQPoint[0]);
-		PQPoint[] otherArray = other.bidTreeSet.toArray(new PQPoint[0]);
+		Point[] bidArray = bidTreeSet.toArray(new Point[0]);
+		Point[] otherArray = other.bidTreeSet.toArray(new Point[0]);
 		
 		
 		if (otherArray == null) return true;
@@ -328,7 +328,7 @@ public class Bid {
 				if (thisQ == 0) {
 					if (j >= bidArray.length)
 						return false;
-					PQPoint PQ = bidArray[j++];
+					Point PQ = bidArray[j++];
 					thisP = PQ.getPrice();
 					thisQ = PQ.getQuantity();
 				}
@@ -361,7 +361,7 @@ public class Bid {
 				if (thisQ == 0) {
 					if (j >= bidArray.length)
 						return false;
-					PQPoint PQ = bidArray[j++];
+					Point PQ = bidArray[j++];
 					thisP = PQ.getPrice();
 					thisQ = PQ.getQuantity();
 				}

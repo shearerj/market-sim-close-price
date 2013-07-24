@@ -14,7 +14,7 @@ import java.util.Comparator;
  * ties in descending timestamps.
  * 
  */
-public class PQPointComparator implements Comparator<PQPoint> {
+public class PointComparator implements Comparator<Point> {
 	private int pOrder; // ascending/descending
 	private int qOrder;
 	private int tOrder;
@@ -30,7 +30,7 @@ public class PQPointComparator implements Comparator<PQPoint> {
 	 * @param tAscending
 	 *            > 0 sorts in ascending timestamp . . .
 	 */
-	public PQPointComparator(int pAscending, int qAscending, int tAscending) {
+	public PointComparator(int pAscending, int qAscending, int tAscending) {
 		// This takes 2 to the power of, so that if the highest ranked one has a certain sign, then
 		// the comparison will also be required to have that result. Before that wasn't the case.
 		pOrder = power2(pAscending);
@@ -41,7 +41,7 @@ public class PQPointComparator implements Comparator<PQPoint> {
 	/**
 	 * default is to sort in descending order of price/ inc date, dec quantity
 	 */
-	public PQPointComparator() {
+	public PointComparator() {
 		pOrder = -3;
 		qOrder = -1;
 		tOrder = 2;
@@ -66,7 +66,7 @@ public class PQPointComparator implements Comparator<PQPoint> {
 	 * @return 1,0,-1 if o1 is >=< o2
 	 */
 	@Override
-	public int compare(PQPoint pq1, PQPoint pq2) {
+	public int compare(Point pq1, Point pq2) {
 		int price, quantity, time;
 
 		// compare on price
