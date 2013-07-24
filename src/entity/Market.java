@@ -12,7 +12,6 @@ import java.util.Map.Entry;
 
 import market.BestBidAsk;
 import market.Bid;
-import market.PQBid;
 import market.PQOrderBook;
 import market.Price;
 import market.Quote;
@@ -171,8 +170,8 @@ public abstract class Market extends Entity {
 			List<Transaction> transactions, TimeStamp currentTime) {
 		// TODO This first part should be done a lot differently
 
-		PQBid ask = ((PQBid) orderbook.getAskQuote());
-		PQBid bid = ((PQBid) orderbook.getBidQuote());
+		Bid ask = orderbook.getAskQuote();
+		Bid bid = orderbook.getBidQuote();
 		Price askPrice = ask.bidTreeSet.last().getPrice();
 		Price bidPrice = bid.bidTreeSet.first().getPrice();
 		int askQuantity = ask.bidTreeSet.last().getQuantity();
@@ -227,7 +226,7 @@ public abstract class Market extends Entity {
 				+ "::submitBid: +(" + price + ", " + quantity + ") from "
 				+ agent);
 
-		PQBid pqBid = new PQBid(agent, this, currentTime);
+		Bid pqBid = new Bid(agent, this, currentTime);
 		pqBid.addPoint(quantity, price);
 
 		orderbook.insertBid(pqBid);
@@ -253,7 +252,7 @@ public abstract class Market extends Entity {
 		log(INFO, currentTime + " | " + this + " " + agent + ": +"
 				+ priceQuantityMap);
 
-		PQBid pqBid = new PQBid(agent, this, currentTime);
+		Bid pqBid = new Bid(agent, this, currentTime);
 		for (Entry<Price, Integer> priceQuant : priceQuantityMap.entrySet()) {
 			int quantity = priceQuant.getValue();
 			Price price = priceQuant.getKey();

@@ -27,7 +27,7 @@ public class FourHeapTest {
 	public void InsertSingleBid() {
 		MockAgent agent1 = new MockAgent(idx++, model, market);
 		TimeStamp time1 = new TimeStamp(0);
-		PQBid pq1 = new PQBid(agent1, market, time1);
+		Bid pq1 = new Bid(agent1, market, time1);
 		PQPoint p1 = new PQPoint(-1, new Price(150), pq1);
 		FH.insertBid(p1);
 		printFH();
@@ -38,9 +38,9 @@ public class FourHeapTest {
 		MockAgent agent1 = new MockAgent(idx++, model, market);
 		MockAgent agent2 = new MockAgent(idx++, model, market);
 		TimeStamp time1 = new TimeStamp(0);
-		PQBid pq1 = new PQBid(agent1, market, time1);
+		Bid pq1 = new Bid(agent1, market, time1);
 		PQPoint p1 = new PQPoint(-1, new Price(150), pq1);
-		PQBid pq2 = new PQBid(agent2, market, time1);
+		Bid pq2 = new Bid(agent2, market, time1);
 		PQPoint p2 = new PQPoint(-1, new Price(100), pq2);
 		FH.insertBid(p1);
 		//printFH();

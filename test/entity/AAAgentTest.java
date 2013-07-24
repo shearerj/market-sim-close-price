@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import logger.Logger;
-import market.PQBid;
+import market.Bid;
 import market.Price;
 import model.MockMarketModel;
 
@@ -130,7 +130,7 @@ public class AAAgentTest {
 	
 	private void assertCorrectBid(Agent agent,
 			Price low, Price high, int quantity) {
-		PQBid bid = (PQBid) market.getBids().get(agent);
+		Bid bid = market.getBids().get(agent);
 		// Asserting the bid is correct
 		assertTrue("BidTreeSize is incorrect", bid.bidTreeSet.size() == 1);
 		
@@ -149,7 +149,7 @@ public class AAAgentTest {
 	
 	private void assertCorrectBid(Agent agent,
 			Price match, int quantity) {
-		PQBid bid = (PQBid) market.getBids().get(agent);
+		Bid bid = market.getBids().get(agent);
 		// Asserting the bid is correct
 		assertTrue(bid.bidTreeSet.size() == 1);
 		assertTrue(bid.getAgent() != null);

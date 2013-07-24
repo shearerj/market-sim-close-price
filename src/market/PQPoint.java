@@ -12,6 +12,7 @@ import entity.Market;
 /**
  * a single price-quantity bid point
  */
+// FIXME
 public class PQPoint extends Point implements Comparable<PQPoint> {
 
 	protected Agent agent;
@@ -19,7 +20,7 @@ public class PQPoint extends Point implements Comparable<PQPoint> {
 	protected int quantity;
 	protected int originalQuantity;
 
-	public PQBid Parent; // refer back to enclosing bid for timestamp/agentID
+	public Bid Parent; // refer back to enclosing bid for timestamp/agentID
 	static Comparator<PQPoint> comp;
 	public static Comparator<PQPoint> compQtyPrice = new PQPointComparator(1,
 			2, 0);
@@ -60,7 +61,7 @@ public class PQPoint extends Point implements Comparable<PQPoint> {
 	 * @param P
 	 *            Parent PQOrder
 	 */
-	public PQPoint(int q, Price p, PQBid P) {
+	public PQPoint(int q, Price p, Bid P) {
 		if (comp == null) comp = new PQPointComparator();
 		price = p;
 		quantity = q;

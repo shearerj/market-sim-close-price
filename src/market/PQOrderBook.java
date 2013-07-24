@@ -37,15 +37,15 @@ public class PQOrderBook extends OrderBook {
 
 		// create entry if non-existent, remove old bid if exists
 		if (!activeBids.containsKey(agent)) {
-			activeBids.put(agent, (PQBid) newBid);
+			activeBids.put(agent, newBid);
 		} else {
-			PQBid oldBid = (PQBid) activeBids.get(agent);
+			Bid oldBid = activeBids.get(agent);
 			for (Iterator<PQPoint> i = oldBid.bidTreeSet.iterator(); i.hasNext();) {
 				FH.removeBid(i.next());
 			}
-			activeBids.put(agent, (PQBid) newBid);
+			activeBids.put(agent, newBid);
 		}
-		PQBid pqBid = (PQBid) newBid;
+		Bid pqBid = newBid;
 		// insert all new Points from this Bid into the 4Heap
 		for (Iterator<PQPoint> i = pqBid.bidTreeSet.iterator(); i.hasNext();) {
 			PQPoint p = i.next();
@@ -66,15 +66,14 @@ public class PQOrderBook extends OrderBook {
 
 		// create entry if non-existent, or add as existing multi-point bid
 		if (!activeBids.containsKey(agent)) {
-			PQBid newBid = new PQBid(pq.getAgent(), pq.getMarket(), null);
+			Bid newBid = new Bid(pq.getAgent(), pq.getMarket(), null);
 			newBid.addPoint(pq);
 			activeBids.put(agent, newBid);
 		} else {
 			// don't need to add to FH since should already be there
-			PQBid oldBid = (PQBid) activeBids.get(agent);
-			PQBid newBid = new PQBid(oldBid);
-			newBid.addPoint(pq);
-			activeBids.put(agent, newBid);
+			Bid oldBid = activeBids.get(agent);
+			oldBid.addPoint(pq);
+			activeBids.put(agent, oldBid);
 		}
 	}
 
@@ -83,7 +82,7 @@ public class PQOrderBook extends OrderBook {
 	 */
 	public void removeBid(int agentID) {
 		Integer key = new Integer(agentID);
-		PQBid oldBid = (PQBid) activeBids.get(key);
+		Bid oldBid = activeBids.get(key);
 
 		if (!activeBids.containsKey(key)) return;
 
@@ -105,11 +104,11 @@ public class PQOrderBook extends OrderBook {
 	public Bid getAskQuote() {
 		PQPoint pq = FH.getAskQuote();
 
-		PQBid b = null;
+		Bid b = null;
 		if (pq.Parent != null)
-			b = new PQBid(pq.getAgent(), pq.getMarket(), null);
+			b = new Bid(pq.getAgent(), pq.getMarket(), null);
 		else
-			b = new PQBid(null, null, null);
+			b = new Bid(null, null, null);
 
 		b.addPoint(pq);
 		return b;
@@ -121,11 +120,11 @@ public class PQOrderBook extends OrderBook {
 	public Bid getBidQuote() {
 		PQPoint pq = FH.getBidQuote();
 
-		PQBid b = null;
+		Bid b = null;
 		if (pq.Parent != null)
-			b = new PQBid(pq.getAgent(), pq.getMarket(), null);
+			b = new Bid(pq.getAgent(), pq.getMarket(), null);
 		else
-			b = new PQBid(null, null, null);
+			b = new Bid(null, null, null);
 
 		b.addPoint(pq);
 		return b;
@@ -144,7 +143,7 @@ public class PQOrderBook extends OrderBook {
 	public void logActiveBids(TimeStamp ts) {
 		String s = ts.toString() + " | " + this.market + " Active bids: ";
 		for (Entry<Agent, Bid> entry : activeBids.entrySet()) {
-			PQBid b = (PQBid) entry.getValue();
+			Bid b = entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext();) {
 				PQPoint pq = i.next();
 				s += "(" + pq.getQuantity() + " " + pq.getPrice().toString()
@@ -160,7 +159,7 @@ public class PQOrderBook extends OrderBook {
 	public void logClearedBids(TimeStamp ts) {
 		String s = ts.toString() + " | " + this.market + " Cleared bids: ";
 		for (Entry<Agent, Bid> entry : clearedBids.entrySet()) {
-			PQBid b = (PQBid) entry.getValue();
+			Bid b = entry.getValue();
 			for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext();) {
 				PQPoint pq = i.next();
 				s += "(" + pq.getQuantity() + " " + pq.getPrice().toString()
@@ -177,7 +176,7 @@ public class PQOrderBook extends OrderBook {
 		if (!clearedBids.isEmpty()) {
 			ArrayList<Integer> IDs = new ArrayList<Integer>();
 			for (Entry<Agent, Bid> entry : clearedBids.entrySet()) {
-				PQBid b = (PQBid) entry.getValue();
+				Bid b = entry.getValue();
 				IDs.add(b.getBidID());
 			}
 			return IDs;
@@ -222,8 +221,8 @@ public class PQOrderBook extends OrderBook {
 			sell = matchingSells.get(j);
 			int q = Math.min(buy.getQuantity(), Math.abs(sell.getQuantity()));
 			Price p = PQPoint.earliestPrice(buy, sell);
-			PQBid buyBid = buy.Parent;
-			PQBid sellBid = sell.Parent;
+			Bid buyBid = buy.Parent;
+			Bid sellBid = sell.Parent;
 
 			transactions.add(new PQTransaction(q, p, buy.getAgent(),
 					sell.getAgent(), buyBid, sellBid, currentTime, this.market));
@@ -291,8 +290,8 @@ public class PQOrderBook extends OrderBook {
 			buy = (PQPoint) matchingBuys.get(i);
 			sell = (PQPoint) matchingSells.get(j);
 			int q = Math.min(buy.getQuantity(), Math.abs(sell.getQuantity()));
-			PQBid buyBid = buy.Parent;
-			PQBid sellBid = sell.Parent;
+			Bid buyBid = buy.Parent;
+			Bid sellBid = sell.Parent;
 
 			// Assign price if not assigned yet
 			// Get price by taking first of the matching buys/sells
@@ -301,8 +300,8 @@ public class PQOrderBook extends OrderBook {
 				// TreeSet<PQPoint> a = new TreeSet<PQPoint>(matchingSells);
 				// PQPoint bid = b.first();
 				// PQPoint ask = a.last();
-				PQPoint bid = ((PQBid) getBidQuote()).bidTreeSet.first();
-				PQPoint ask = ((PQBid) getAskQuote()).bidTreeSet.first();
+				PQPoint bid = getBidQuote().bidTreeSet.first();
+				PQPoint ask = getAskQuote().bidTreeSet.first();
 
 				p = new Price(
 						Math.round((ask.getPrice().getPrice() - bid.getPrice().getPrice())
@@ -334,117 +333,5 @@ public class PQOrderBook extends OrderBook {
 		}
 		return transactions;
 	}
-
-	// /**
-	// * Fixes issue caused by multi-unit bids where a partially-transacted bid
-	// * remains in the clearedBids lists. Copies bids with non-zero quantities
-	// * in clearedBids back to activeBids.
-	// */
-	// private void updateActiveBids() {
-	// // cycle through the list of bids in cleared to check for ones with unit=1
-	// for (Map.Entry<Integer,Bid> entry : clearedBids.entrySet()) {
-	// PQBid b = (PQBid) entry.getValue();
-	// for (Iterator<PQPoint> i = b.bidTreeSet.iterator(); i.hasNext(); ) {
-	// PQPoint pq = i.next();
-	//
-	// if (pq.getQuantity() != 0) {
-	// // need to add to active bids
-	// insertPoint(pq);
-	// // don't need to remove from cleared bids because that resets
-	// }
-	// }
-	// }
-	// }
-	//
-	// /**
-	// * Clear the orderbook. If there is tie between bids, choose the one with the
-	// * earlier price.
-	// *
-	// * @param ts
-	// * @return
-	// */
-	// public ArrayList<Transaction> earliestPriceClear(TimeStamp ts) {
-	// PQPoint buy, sell;
-	// clearedBids = null;
-	//
-	// ArrayList<PQPoint> matchingBuys = new ArrayList<PQPoint>();
-	// ArrayList<PQPoint> matchingSells = new ArrayList<PQPoint>();
-	// ArrayList<Transaction> transactions = null;
-	//
-	// int buyAgentId = -1;
-	// int sellAgentId = -2;
-	//
-	// if (!FH.matchBuySet.isEmpty() && !FH.matchSellSet.isEmpty()) {
-	// // PQPoint b = (PQPoint) FH.matchBuySet.first();
-	// buyAgentId = ((PQPoint) FH.matchBuySet.first()).getAgentID();
-	// sellAgentId = ((PQPoint) FH.matchSellSet.first()).getAgentID();
-	// }
-	// if (buyAgentId != sellAgentId) {
-	// FH.clear(matchingBuys, matchingSells);
-	// }
-	//
-	// int numBuys = matchingBuys.size();
-	// int numSells = matchingSells.size();
-	// if (numBuys == 0) return null;
-	//
-	// clearedBids = new HashMap<Integer,Bid>();
-	//
-	// while (!matchingBuys.isEmpty() && !matchingSells.isEmpty()) {
-	// buy = null;
-	// sell = null;
-	// clearedBids = new HashMap<Integer,Bid>();
-	// transactions = new ArrayList<Transaction>();
-	// int i, j; // i is index for buys, j is index for sells
-	//
-	// // More buys through sells, so go through sells first
-	// if (numBuys != numSells)
-	// i = 0;
-	// if (numBuys >= numSells) {
-	// sell = matchingSells.get(numSells-1);
-	// j = numSells-1;
-	// for (i = numBuys-1; i >= 0; i--) {
-	// if (matchingBuys.get(i).getAgentID() != sell.getAgentID()) {
-	// buy = matchingBuys.get(i);
-	// break;
-	// }
-	// }
-	// } else { // More sells than buys, so go through buys first
-	// buy = matchingBuys.get(numBuys-1);
-	// i = numBuys-1;
-	// for (j = numSells-1; j >= 0; j--) {
-	// if (matchingSells.get(j).getAgentID() != buy.getAgentID()) {
-	// sell = matchingSells.get(j);
-	// break;
-	// }
-	// }
-	// }
-	// if (buy == null || sell == null) {
-	// // due to agentIDs being the same, exit while loop
-	// break;
-	// }
-	//
-	// int q = Math.min(buy.getQuantity(), Math.abs(sell.getQuantity()));
-	// Price p = PQPoint.earliestPrice(buy, sell);
-	// transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts, marketID));
-	//
-	// Integer key = new Integer(buy.getAgentID());
-	// if (!clearedBids.containsKey(key)) {
-	// clearedBids.put(key, buy.Parent);
-	// // activeBids.remove(key);
-	// }
-	// key = new Integer(sell.getAgentID());
-	// if (!clearedBids.containsKey(key)) {
-	// clearedBids.put(key, sell.Parent);
-	// // activeBids.remove(key);
-	// }
-	//
-	// buy.transact(q);
-	// sell.transact(-1 * q);
-	// // Update MB/MS lists
-	// if (buy.getQuantity() == 0) matchingBuys.remove(i);
-	// if (sell.getQuantity() == 0) matchingSells.remove(j);
-	// }
-	// return transactions;
-	// }
 
 }
