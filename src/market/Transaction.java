@@ -1,12 +1,15 @@
 package market;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import entity.Agent;
 import entity.Market;
 import event.TimeStamp;
 
 /**
- * Base class for Transactions. Contains information on buyer/seller, market,
- * quantity, price, and time.
+ * Base class for Transactions. Contains information on buyer/seller, market, quantity, price, and
+ * time.
  * 
  * @author ewah
  */
@@ -24,11 +27,9 @@ public class Transaction {
 	protected final Price price;
 	protected final TimeStamp execTime;
 
-	public Transaction(int transID, Agent buyer, Agent seller, Market market,
-			Bid buyBid, Bid sellBid, int quantity, Price price,
-			TimeStamp execTime) {
-		super();
-		this.transID = transID;
+	public Transaction(Agent buyer, Agent seller, Market market, Bid buyBid,
+			Bid sellBid, int quantity, Price price, TimeStamp execTime) {
+		this.transID = hashCode();
 		this.buyer = buyer;
 		this.seller = seller;
 		this.market = market;
@@ -76,26 +77,21 @@ public class Transaction {
 	}
 
 	@Override
-	public int hashCode() {
-		return transID ^ buyBid.hashCode() ^ sellBid.hashCode()
-				^ buyer.hashCode() ^ seller.hashCode() ^ market.hashCode()
-				^ price.hashCode() ^ execTime.hashCode() ^ quantity;
+	public boolean equals(Object obj) {
+		if (obj == null || getClass() != obj.getClass()) return false;
+		Transaction other = (Transaction) obj;
+		return new EqualsBuilder().append(price, other.price).append(quantity,
+				other.quantity).append(buyer, other.buyer).append(seller,
+				other.seller).append(buyBid, other.buyBid).append(sellBid,
+				other.sellBid).append(market, other.market).append(execTime,
+				other.execTime).isEquals();
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof Transaction))
-			return false;
-		Transaction other = (Transaction) obj;
-		return this.transID == other.transID
-				&& this.buyBid.equals(other.buyBid)
-				&& this.sellBid.equals(other.sellBid)
-				&& this.buyer.equals(other.buyer)
-				&& this.seller.equals(other.seller)
-				&& this.market.equals(other.market)
-				&& this.price.equals(other.price)
-				&& this.execTime.equals(other.execTime)
-				&& this.quantity == other.quantity;
+	public int hashCode() {
+		return new HashCodeBuilder(17, 31).append(price).append(quantity).append(
+				buyer).append(seller).append(buyBid).append(sellBid).append(
+				market).append(execTime).toHashCode();
 	}
 
 	@Override

@@ -378,6 +378,8 @@ public class Bid {
 		return true;
 	}
 	
+	// FIXME Add Equals and HashCode
+	
 	@Override
 	public String toString() {
 		return bidTreeSet.toString();

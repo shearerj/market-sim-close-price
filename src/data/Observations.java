@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import market.PQTransaction;
 import market.Transaction;
 import model.MarketModel;
 
@@ -294,11 +293,10 @@ public class Observations {
 		for (Agent agent : model.getAgents())
 			numTrans.put(agent.getName(), 0);
 
-		for (Transaction t : model.getTrans()) {
+		for (Transaction tr : model.getTrans()) {
 			// FIXME If these are always PQTrans then we should store that not
 			// generic transactions, or add the common functionality to generic
 			// transactions
-			PQTransaction tr = (PQTransaction) t;
 			prices.addValue(tr.getPrice().getPrice());
 			quantity.addValue(tr.getQuantity());
 			fundamental.addValue(model.getFundamentalAt(tr.getExecTime()).getPrice());

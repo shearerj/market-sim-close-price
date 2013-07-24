@@ -222,8 +222,7 @@ public class PQOrderBook extends OrderBook {
 			Bid buyBid = buy.Parent;
 			Bid sellBid = sell.Parent;
 
-			transactions.add(new PQTransaction(q, p, buy.getAgent(),
-					sell.getAgent(), buyBid, sellBid, currentTime, this.market));
+			transactions.add(new Transaction(buy.getAgent(), sell.getAgent(), market, buyBid, sellBid, q, p, currentTime));
 			// transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts,
 			// marketID));
 			log(INFO, currentTime + " | " + this.market + " Quantity=" + q
@@ -252,13 +251,13 @@ public class PQOrderBook extends OrderBook {
 	/**
 	 * Clears at a uniform price. For call markets.
 	 * 
-	 * @param ts
+	 * @param currentTime
 	 * @param pricingPolicy
 	 *            between 0 and 1, default 0.5
 	 * @return ArrayList of PQTransactions
 	 */
 	@Override
-	public ArrayList<Transaction> uniformPriceClear(TimeStamp ts,
+	public ArrayList<Transaction> uniformPriceClear(TimeStamp currentTime,
 			float pricingPolicy) {
 
 		Point buy, sell;
@@ -304,17 +303,17 @@ public class PQOrderBook extends OrderBook {
 				p = new Price(
 						Math.round((ask.getPrice().getPrice() - bid.getPrice().getPrice())
 								* pricingPolicy + bid.getPrice().getPrice())).quantize(tickSize);
-				log(INFO, ts + " | " + market
+				log(INFO, currentTime + " | " + market
 						+ " clearing price based on (BID: "
 						+ bid.getPrice().getPrice() + ", ASK:"
 						+ ask.getPrice().getPrice() + ") & pricingPolicy="
 						+ pricingPolicy + " => price " + p.getPrice());
 			}
-			transactions.add(new PQTransaction(q, p, buy.getAgent(),
-					sell.getAgent(), buyBid, sellBid, ts, market));
+			transactions.add(new Transaction(buy.getAgent(),
+					sell.getAgent(), market, buyBid, sellBid, q, p, currentTime));
 			// transactions.add(new PQTransaction(q, p, buy.getAgentID(), sell.getAgentID(), ts,
 			// marketID));
-			log(INFO, ts + " | " + market + " Quantity=" + q
+			log(INFO, currentTime + " | " + market + " Quantity=" + q
 					+ " cleared at Price=" + p.getPrice());
 
 			Agent key = buy.getAgent();
