@@ -172,10 +172,10 @@ public abstract class Market extends Entity {
 
 		Bid ask = orderbook.getAskQuote();
 		Bid bid = orderbook.getBidQuote();
-		Price askPrice = ask.bidTreeSet.last().getPrice();
-		Price bidPrice = bid.bidTreeSet.first().getPrice();
-		int askQuantity = ask.bidTreeSet.last().getQuantity();
-		int bidQuantity = bid.bidTreeSet.first().getQuantity();
+		Price askPrice = ask.getPoints().last().getPrice();
+		Price bidPrice = bid.getPoints().first().getPrice();
+		int askQuantity = ask.getPoints().last().getQuantity();
+		int bidQuantity = bid.getPoints().first().getQuantity();
 
 		quote = new Quote(this, askPrice, askQuantity, bidPrice, bidQuantity,
 				currentTime);

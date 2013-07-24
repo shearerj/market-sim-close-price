@@ -23,13 +23,11 @@ import event.TimeStamp;
  */
 public class OrderBook {
 
-	// reorg
 	protected final Market market;
 
-	// hashed by agent ID FIXME Can only store one bid for each agent including
-	// HFT
-	public Map<Agent, Bid> activeBids; // FIXME not public
-	public Map<Agent, Bid> clearedBids; // XXX Will this work?
+	// FIXME Can only store one bid for each agent including HFT
+	protected final Map<Agent, Bid> activeBids;
+	protected Map<Agent, Bid> clearedBids; // XXX Will this work?
 
 	public FourHeap FH;
 	protected final int tickSize;
@@ -62,14 +60,14 @@ public class OrderBook {
 			activeBids.put(agent, newBid);
 		} else {
 			Bid oldBid = activeBids.get(agent);
-			for (Iterator<Point> i = oldBid.bidTreeSet.iterator(); i.hasNext();) {
+			for (Iterator<Point> i = oldBid.sortedPoints.iterator(); i.hasNext();) {
 				FH.removeBid(i.next());
 			}
 			activeBids.put(agent, newBid);
 		}
 		Bid pqBid = newBid;
 		// insert all new Points from this Bid into the 4Heap
-		for (Iterator<Point> i = pqBid.bidTreeSet.iterator(); i.hasNext();) {
+		for (Iterator<Point> i = pqBid.sortedPoints.iterator(); i.hasNext();) {
 			Point p = i.next();
 			p.Parent = pqBid;
 			FH.insertBid(p);
@@ -108,7 +106,7 @@ public class OrderBook {
 		if (!activeBids.containsKey(key)) return;
 
 		// remove all the Points from the FourHeap
-		for (Iterator<Point> i = oldBid.bidTreeSet.iterator(); i.hasNext();) {
+		for (Iterator<Point> i = oldBid.sortedPoints.iterator(); i.hasNext();) {
 			FH.removeBid(i.next());
 		}
 		activeBids.remove(key);
@@ -164,7 +162,7 @@ public class OrderBook {
 		String s = ts.toString() + " | " + this.market + " Active bids: ";
 		for (Entry<Agent, Bid> entry : activeBids.entrySet()) {
 			Bid b = entry.getValue();
-			for (Iterator<Point> i = b.bidTreeSet.iterator(); i.hasNext();) {
+			for (Iterator<Point> i = b.sortedPoints.iterator(); i.hasNext();) {
 				Point pq = i.next();
 				s += "(" + pq.getQuantity() + " " + pq.getPrice().toString()
 						+ ") ";
@@ -180,28 +178,13 @@ public class OrderBook {
 		String s = ts.toString() + " | " + this.market + " Cleared bids: ";
 		for (Entry<Agent, Bid> entry : clearedBids.entrySet()) {
 			Bid b = entry.getValue();
-			for (Iterator<Point> i = b.bidTreeSet.iterator(); i.hasNext();) {
+			for (Iterator<Point> i = b.sortedPoints.iterator(); i.hasNext();) {
 				Point pq = i.next();
 				s += "(" + pq.getQuantity() + " " + pq.getPrice().toString()
 						+ ") ";
 			}
 		}
 		log(INFO, s);
-	}
-
-	/**
-	 * @return array of bid IDs of the cleared bids
-	 */
-	public ArrayList<Integer> getClearedBidIDs() {
-		if (!clearedBids.isEmpty()) {
-			ArrayList<Integer> IDs = new ArrayList<Integer>();
-			for (Entry<Agent, Bid> entry : clearedBids.entrySet()) {
-				Bid b = entry.getValue();
-				IDs.add(b.getBidID());
-			}
-			return IDs;
-		}
-		return null;
 	}
 
 	/**
@@ -317,8 +300,8 @@ public class OrderBook {
 				// TreeSet<Point> a = new TreeSet<Point>(matchingSells);
 				// Point bid = b.first();
 				// Point ask = a.last();
-				Point bid = getBidQuote().bidTreeSet.first();
-				Point ask = getAskQuote().bidTreeSet.first();
+				Point bid = getBidQuote().sortedPoints.first();
+				Point ask = getAskQuote().sortedPoints.first();
 
 				p = new Price(
 						Math.round((ask.getPrice().getPrice() - bid.getPrice().getPrice())

@@ -132,30 +132,30 @@ public class AAAgentTest {
 			Price low, Price high, int quantity) {
 		Bid bid = market.getBids().get(agent);
 		// Asserting the bid is correct
-		assertTrue("BidTreeSize is incorrect", bid.bidTreeSet.size() == 1);
+		assertTrue("BidTreeSize is incorrect", bid.getPoints().size() == 1);
 		
 		assertTrue("Bid agent is null", bid.getAgent() != null);
 		assertTrue("Bid agent is incorrect", bid.getAgent().equals(agent));
 
-		Price bidPrice = bid.bidTreeSet.first().getPrice();
+		Price bidPrice = bid.getPoints().first().getPrice();
 		assertTrue("Bid price (" + bidPrice + ") less than " + low,
 				bidPrice.greaterThan(low));
 		assertTrue("Bid price (" + bidPrice + ") greater than " + high,
 				bidPrice.lessThan(high));
 		
 		assertTrue("Quantity is incorrect",
-				bid.bidTreeSet.first().getQuantity() == quantity);
+				bid.getPoints().first().getQuantity() == quantity);
 	}
 	
 	private void assertCorrectBid(Agent agent,
 			Price match, int quantity) {
 		Bid bid = market.getBids().get(agent);
 		// Asserting the bid is correct
-		assertTrue(bid.bidTreeSet.size() == 1);
+		assertTrue(bid.getPoints().size() == 1);
 		assertTrue(bid.getAgent() != null);
 		assertTrue(bid.getAgent().equals(agent));
-		assertTrue(bid.bidTreeSet.first().getPrice().equals(match));
-		assertTrue(bid.bidTreeSet.first().getQuantity() == quantity);
+		assertTrue(bid.getPoints().first().getPrice().equals(match));
+		assertTrue(bid.getPoints().first().getQuantity() == quantity);
 	}
 
 	@Test

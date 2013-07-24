@@ -1,6 +1,8 @@
 package market;
 
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.SortedSet;
 import java.util.TreeSet;
 
 import entity.Agent;
@@ -20,14 +22,14 @@ public class Bid {
 	protected final Agent agent;
 	protected final Market market;
 	protected final TimeStamp submitTime;
-	public TreeSet<Point> bidTreeSet; // FIXME protected final
+	protected final SortedSet<Point> sortedPoints;
 	
 	public Bid(Agent agent, Market market, TimeStamp submissionTime) {
 		this.agent = agent;
 		this.market = market;
 		this.submitTime = submissionTime;
 		this.bidID = this.hashCode();
-		this.bidTreeSet = new TreeSet<Point>(new PointComparator());
+		this.sortedPoints = new TreeSet<Point>(new PointComparator());
 	}
 
 	public Bid(Bid other) {
@@ -36,7 +38,7 @@ public class Bid {
 		this.market = other.market;
 		this.submitTime = other.submitTime;
 		
-		this.bidTreeSet = other.bidTreeSet;
+		this.sortedPoints = other.sortedPoints;
 	}
 	
 	public Agent getAgent() {
@@ -60,13 +62,17 @@ public class Bid {
 		return bidID;
 	}
 	
+	public SortedSet<Point> getPoints() {
+		return Collections.unmodifiableSortedSet(sortedPoints);
+	}
+	
 	/**
 	 * Add point p to bidTreeSet
 	 * 
 	 * @param p Point to add to the bid
 	 */
 	public void addPoint(Point p) {
-		bidTreeSet.add(p);
+		sortedPoints.add(p);
 	}
 
 	/**
@@ -96,14 +102,14 @@ public class Bid {
 	 * @return price as String
 	 */
 	public String priceString() {
-		return new Float(bidTreeSet.first().price.price).toString();
+		return new Float(sortedPoints.first().price.price).toString();
 	}
 	
 	/**
 	 * @return quantity as String
 	 */
 	public String quantityString() {
-		return new Integer(bidTreeSet.first().quantity).toString();
+		return new Integer(sortedPoints.first().quantity).toString();
 	}
 	
 	/**
@@ -116,11 +122,11 @@ public class Bid {
 	 */
 	public Bid netOffer(Bid minimum, int strict) {
 		Bid netoffer = new Bid(this);
-		Price price = minimum.bidTreeSet.first().getPrice();
-		if (bidTreeSet == null || bidTreeSet.isEmpty()) return null;
+		Price price = minimum.sortedPoints.first().getPrice();
+		if (sortedPoints == null || sortedPoints.isEmpty()) return null;
 
 		int quantity = 0;
-		for (Iterator<Point> i = bidTreeSet.iterator(); i.hasNext(); ) {
+		for (Iterator<Point> i = sortedPoints.iterator(); i.hasNext(); ) {
 			Point pq = i.next();
 			int bidQ = pq.getQuantity();
 			// determine quantity available at the minimum bid price
@@ -150,15 +156,15 @@ public class Bid {
 		int dominates = 0;
 		int dominated = 0;
 
-		if (bidTreeSet == null || bidTreeSet.isEmpty()) return 0;
+		if (sortedPoints == null || sortedPoints.isEmpty()) return 0;
 
-		Point[] bidArray = bidTreeSet.toArray(new Point[0]);
-		Point[] otherArray = other.bidTreeSet.toArray(new Point[0]);
+		Point[] bidArray = sortedPoints.toArray(new Point[0]);
+		Point[] otherArray = other.sortedPoints.toArray(new Point[0]);
 
 		//find the lowest sell offer  in this and other bid (bid is ordered & monotone)
-		while ((thisP < bidTreeSet.size() - 1) && (bidArray[thisP + 1].getQuantity() < 0))
+		while ((thisP < sortedPoints.size() - 1) && (bidArray[thisP + 1].getQuantity() < 0))
 			thisP++;
-		while ((otherP < other.bidTreeSet.size() - 1) && (otherArray[otherP + 1].getQuantity() < 0))
+		while ((otherP < other.sortedPoints.size() - 1) && (otherArray[otherP + 1].getQuantity() < 0))
 			otherP++;
 
 		/* for each price point in the other bid, add up the quantity this bid offers
@@ -212,10 +218,10 @@ public class Bid {
 		int dominates = 0;
 		int dominated = 0;
 
-		if (bidTreeSet == null || bidTreeSet.isEmpty()) return 0;
+		if (sortedPoints == null || sortedPoints.isEmpty()) return 0;
 
-		Point[] bidArray = bidTreeSet.toArray(new Point[0]);
-		Point[] otherArray = other.bidTreeSet.toArray(new Point[0]);
+		Point[] bidArray = sortedPoints.toArray(new Point[0]);
+		Point[] otherArray = other.sortedPoints.toArray(new Point[0]);
 		
 		//find the highest buy offer in this and other bid
 		//(bids are ordered(descending) & monotone)
@@ -275,9 +281,9 @@ public class Bid {
 	 * @return true if the Bid contains offers to buy
 	 */
 	public boolean containsBuyOffers() {
-		if (bidTreeSet == null || bidTreeSet.isEmpty()) return false;
+		if (sortedPoints == null || sortedPoints.isEmpty()) return false;
 
-		for (Iterator<Point> i = bidTreeSet.iterator(); i.hasNext(); )
+		for (Iterator<Point> i = sortedPoints.iterator(); i.hasNext(); )
 			if (i.next().getQuantity() > 0) return true;
 
 		return false;
@@ -289,9 +295,9 @@ public class Bid {
 	 * @return true if the Bid contains offers to sell
 	 */
 	public boolean containsSellOffers() {
-		if (bidTreeSet == null || bidTreeSet.isEmpty()) return false;
+		if (sortedPoints == null || sortedPoints.isEmpty()) return false;
 
-		for (Iterator<Point> i = bidTreeSet.iterator(); i.hasNext(); )
+		for (Iterator<Point> i = sortedPoints.iterator(); i.hasNext(); )
 			if (i.next().getQuantity() < 0) return true;
 
 		return false;
@@ -306,8 +312,8 @@ public class Bid {
 	public boolean contains(Bid other) {
 		if (other == null) return true;
 		
-		Point[] bidArray = bidTreeSet.toArray(new Point[0]);
-		Point[] otherArray = other.bidTreeSet.toArray(new Point[0]);
+		Point[] bidArray = sortedPoints.toArray(new Point[0]);
+		Point[] otherArray = other.sortedPoints.toArray(new Point[0]);
 		
 		
 		if (otherArray == null) return true;
@@ -382,7 +388,7 @@ public class Bid {
 	
 	@Override
 	public String toString() {
-		return bidTreeSet.toString();
+		return sortedPoints.toString();
 	}
 	
 }
