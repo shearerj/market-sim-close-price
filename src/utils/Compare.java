@@ -1,5 +1,7 @@
 package utils;
 
+import java.util.Comparator;
+
 public class Compare {
 
 	/**
@@ -24,6 +26,22 @@ public class Compare {
 		if (b == null)
 			return a;
 		return a.compareTo(b) <= 0 ? a : b;
+	}
+	
+	/**
+	 * Only works if E implements Comparable<E>
+	 * @return
+	 */
+	public static <E> Comparator<E> comparator() {
+		return new CompComparator<E>();
+	}
+	
+	private static class CompComparator<E> implements Comparator<E> {
+		@SuppressWarnings("unchecked")
+		@Override
+		public int compare(E o1, E o2) {
+			return ((Comparable<E>) o1).compareTo(o2);
+		}
 	}
 
 }
