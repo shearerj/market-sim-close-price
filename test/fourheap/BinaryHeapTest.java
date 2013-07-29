@@ -1,4 +1,4 @@
-package utils;
+package fourheap;
 
 import static org.junit.Assert.*;
 
@@ -11,6 +11,8 @@ import java.util.Random;
 import java.util.Set;
 
 import org.junit.Test;
+
+import fourheap.BinaryHeap;
 
 public class BinaryHeapTest {
 

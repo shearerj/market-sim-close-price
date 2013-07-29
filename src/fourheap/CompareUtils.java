@@ -1,8 +1,8 @@
-package utils;
+package fourheap;
 
 import java.util.Comparator;
 
-public class Compare {
+public class CompareUtils {
 
 	/**
 	 * Returns the maximum of two comparable elements. If the elements are the
@@ -28,19 +28,15 @@ public class Compare {
 		return a.compareTo(b) <= 0 ? a : b;
 	}
 	
-	/**
-	 * Only works if E implements Comparable<E>
-	 * @return
-	 */
-	public static <E> Comparator<E> naturalOrder() {
-		return new CompComparator<E>();
+	public static <T> Comparator<T> naturalOrder() {
+		return new CompComparator<T>();
 	}
 	
-	private static class CompComparator<E> implements Comparator<E> {
+	private static class CompComparator<T> implements Comparator<T> {
 		@SuppressWarnings("unchecked")
 		@Override
-		public int compare(E o1, E o2) {
-			return ((Comparable<E>) o1).compareTo(o2);
+		public int compare(T t1, T t2) {
+			return ((Comparable<T>) t1).compareTo(t2);
 		}
 	}
 

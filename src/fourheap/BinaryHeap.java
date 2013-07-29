@@ -1,4 +1,4 @@
-package utils;
+package fourheap;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,7 +19,7 @@ public class BinaryHeap<E> implements Queue<E> {
 	protected final Comparator<E> comp;
 
 	public BinaryHeap() {
-		this(Compare.<E> comparator());
+		this(CompareUtils.<E> naturalOrder());
 	}
 
 	public BinaryHeap(Comparator<E> comp) {
