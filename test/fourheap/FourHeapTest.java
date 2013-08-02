@@ -58,9 +58,6 @@ public class FourHeapTest {
 		FourHeap<Integer, Integer> fh = new FourHeap<Integer, Integer>();
 		Order<Integer, Integer> o1 = new Order<Integer, Integer>(5, 3, 3); 
 		fh.insertOrder(o1);
-		Pair<?, ?> active = fh.activeOrders.get(o1);
-		assertNotEquals(null, active.left());
-		assertEquals(null, active.right());
 		assertTrue(fh.buyMatched.isEmpty());
 		assertFalse(fh.buyUnmatched.isEmpty());
 		assertTrue(fh.sellMatched.isEmpty());
@@ -72,9 +69,6 @@ public class FourHeapTest {
 		FourHeap<Integer, Integer> fh = new FourHeap<Integer, Integer>();
 		Order<Integer, Integer> o1 = new Order<Integer, Integer>(5, -3, 3); 
 		fh.insertOrder(o1);
-		Pair<?, ?> active = fh.activeOrders.get(o1);
-		assertNotEquals(null, active.left());
-		assertEquals(null, active.right());
 		assertTrue(fh.buyMatched.isEmpty());
 		assertTrue(fh.buyUnmatched.isEmpty());
 		assertTrue(fh.sellMatched.isEmpty());
@@ -90,33 +84,28 @@ public class FourHeapTest {
 		fh.insertOrder(o1);
 		fh.insertOrder(o2);
 		
-		Pair<?, ?> active = fh.activeOrders.get(o1);
-		assertEquals(null, active.left());
-		assertNotEquals(null, active.right());
-		active = fh.activeOrders.get(o2);
-		assertEquals(null, active.left());
-		assertNotEquals(null, active.right());
-		
 		assertFalse(fh.buyMatched.isEmpty());
 		assertTrue(fh.buyUnmatched.isEmpty());
 		assertFalse(fh.sellMatched.isEmpty());
 		assertTrue(fh.sellUnmatched.isEmpty());
 		
-		Order<Integer, Integer> o3 = new Order<Integer, Integer>(5, -4, 3); 
-		Order<Integer, Integer> o4 = new Order<Integer, Integer>(5, 2, 4);
+		Order<Integer, Integer> o3 = new Order<Integer, Integer>(5, 2, 6);
+		Order<Integer, Integer> o4 = new Order<Integer, Integer>(5, -4, 5); 
 		fh.insertOrder(o3);
 		fh.insertOrder(o4);
-		
-		active = fh.activeOrders.get(o3);
-		assertNotEquals(null, active.left());
-		assertNotEquals(null, active.right());
 		
 		assertFalse(fh.buyMatched.isEmpty());
 		assertTrue(fh.buyUnmatched.isEmpty());
 		assertFalse(fh.sellMatched.isEmpty());
 		assertFalse(fh.sellUnmatched.isEmpty());
 		
-		System.out.println(fh);
+		Order<Integer, Integer> o5 = new Order<Integer, Integer>(7, 4, 7);
+		fh.insertOrder(o5);
+		
+		assertFalse(fh.buyMatched.isEmpty());
+		assertFalse(fh.buyUnmatched.isEmpty());
+		assertFalse(fh.sellMatched.isEmpty());
+		assertTrue(fh.sellUnmatched.isEmpty());
 	}
 
 }
