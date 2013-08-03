@@ -2,7 +2,7 @@ package data;
 
 public class Keys {
 
-	// FIXME Finish moving all keys here, make sure setup is correct...
+	// TODO Finish moving all keys here, make sure setup is correct...
 	public final static String RAND_SEED = "seed";
 	public final static String ARRIVAL_RATE = "arrivalRate";
 	
@@ -18,5 +18,7 @@ public class Keys {
 	public final static String ALPHA = "alpha";
 	
 	public final static String TICK_SIZE = "tickSize";
+	
+	public final static String PV_VAR = "pvVar";
 
 }

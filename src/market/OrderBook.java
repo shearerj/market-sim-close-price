@@ -25,9 +25,8 @@ public class OrderBook {
 
 	protected final Market market;
 
-	// FIXME Can only store one bid for each agent including HFT
 	protected final Map<Agent, Bid> activeBids;
-	protected Map<Agent, Bid> clearedBids; // XXX Will this work?
+	protected Map<Agent, Bid> clearedBids;
 
 	public FourHeap FH;
 	protected final int tickSize;
@@ -37,7 +36,7 @@ public class OrderBook {
 		this.activeBids = new HashMap<Agent, Bid>();
 		this.clearedBids = new HashMap<Agent, Bid>();
 		this.FH = new FourHeap(market);
-		this.tickSize = 1; // FIXME
+		this.tickSize = 1; // TODO Allow variable tick size
 	}
 
 	public Bid getBid(int agentID) {

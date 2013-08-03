@@ -18,7 +18,6 @@ import event.TimeStamp;
  */
 public class Bid {
 
-	protected final int bidID;
 	protected final Agent agent;
 	protected final Market market;
 	protected final TimeStamp submitTime;
@@ -28,12 +27,10 @@ public class Bid {
 		this.agent = agent;
 		this.market = market;
 		this.submitTime = submissionTime;
-		this.bidID = this.hashCode();
 		this.sortedPoints = new TreeSet<Point>(new PointComparator());
 	}
 
 	public Bid(Bid other) {
-		this.bidID = other.bidID;
 		this.agent = other.agent;
 		this.market = other.market;
 		this.submitTime = other.submitTime;
@@ -51,15 +48,6 @@ public class Bid {
 	
 	public TimeStamp getSubmitTime() {
 		return submitTime;
-	}
-
-	/**
-	 * accessor function for bidID
-	 *
-	 * @return bidID
-	 */
-	public int getBidID() {
-		return bidID;
 	}
 	
 	public SortedSet<Point> getPoints() {
@@ -383,8 +371,6 @@ public class Bid {
 		//so containment is true
 		return true;
 	}
-	
-	// FIXME Add Equals and HashCode
 	
 	@Override
 	public String toString() {

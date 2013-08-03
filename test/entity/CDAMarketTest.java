@@ -48,8 +48,8 @@ public class CDAMarketTest {
 		// Testing the market
 		// PQBid testBid = new PQBid(agent, market, time);
 		// testBid.addPoint(1, new Price(1));
-		// assertTrue(market.getBids().containsValue(testBid)); // FIXME API broke this too
-		// assertTrue(testBid.contains(market.getBidQuote())); // FIXME This API was removed. Not
+		// assertTrue(market.getBids().containsValue(testBid)); // TODO API broke this too
+		// assertTrue(testBid.contains(market.getBidQuote()));
 		// sure of a better way to test this.
 	}
 
@@ -66,8 +66,8 @@ public class CDAMarketTest {
 		// Testing the market
 		// PQBid testBid = new PQBid(agent, market, time);
 		// testBid.addPoint(-1, new Price(1));
-		// assertTrue(market.getBids().containsValue(testBid)); // FIXME API broke this
-		// assertTrue(testBid.contains(market.getAskQuote())); // FIXME This API was removed. Not
+		// assertTrue(market.getBids().containsValue(testBid)); // TODO API broke this
+		// assertTrue(testBid.contains(market.getAskQuote()));
 		// sure of a better way to test this.
 	}
 
@@ -88,8 +88,6 @@ public class CDAMarketTest {
 		market.clear(time);
 		assertTrue(model.getTrans().size() == 1);
 		for (Transaction tr : model.getTrans()) {
-//			assertTrue("Incorrect Buy Bid", tr.getBuyBid().equals(bid1)); FIXME API broke
-//			assertTrue("Incorrect Sell Bid", tr.getSellBid().equals(bid2));
 			assertTrue("Incorrect Buyer", tr.getBuyer().equals(agent1));
 			assertTrue("Incorrect Seller", tr.getSeller().equals(agent2));
 			assertTrue("Incorrect Price", tr.getPrice().equals(new Price(100)));
@@ -113,8 +111,6 @@ public class CDAMarketTest {
 		market.clear(time);
 		assertTrue(model.getTrans().size() == 1);
 		for (Transaction tr : model.getTrans()) {
-//			assertTrue("Incorrect Buy Bid", tr.getBuyBid().equals(bid1)); // FIXME API broke me
-//			assertTrue("Incorrect Sell Bid", tr.getSellBid().equals(bid2));
 			assertTrue("Incorrect Buyer", tr.getBuyer().equals(agent1));
 			assertTrue("Incorrect Seller", tr.getSeller().equals(agent2));
 			assertTrue("Incorrect Price", tr.getPrice().equals(new Price(50)));

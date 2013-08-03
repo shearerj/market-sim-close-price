@@ -47,23 +47,19 @@ public class Event extends RandomQueue<Activity> implements Comparable<Event> {
 
 	@Override
 	public boolean add(Activity act) {
-		if (act == null) {
-			System.err.println("Tried to add null Activity to Event");
-			return false; // FIXME Handle Appropriately
-		} else if (!eventTime.equals(act.getTime())) {
+		if (act == null)
+			throw new IllegalArgumentException("Can't add null activity");
+		else if (!eventTime.equals(act.getTime()))
 			throw new IllegalArgumentException("Can't add an activity that doesn't share the time of the event");
-		} else {
+		else
 			return super.add(act);
-		}
 	}
 
 
 	@Override
 	public boolean addAll(Collection<? extends Activity> acts) {
-		if (acts == null) {
-			System.err.println("Tried to add null Activity to Event");
-			return false; // FIXME Handle Appropriately
-		}
+		if (acts == null)
+			throw new IllegalArgumentException("Can't add null list of activities");
 		boolean modified = false;
 		for (Activity act : acts)
 			modified |= add(act);

@@ -33,8 +33,9 @@ public class SubmitNMSMultipleBid extends Activity {
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp time) {
+		// TODO make this correct
 //		return this.ag.executeSubmitNMSMultipleBid(this.price, this.quantity, time);
-		return null; // FIXME fixme
+		return null;
 	}
 
 	public String toString() {

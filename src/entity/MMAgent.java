@@ -29,8 +29,7 @@ import event.TimeStamp;
  */
 public abstract class MMAgent extends Agent {
 
-	// TODO Are these really indicative of an MMAgent? Should the MMAgent have
-	// its own copy of Markets, or should it just go to Model?
+	// TODO Should the MMAgent have its own copy of Markets, or should it just go to Model?
 	protected final int sleepTime;
 	protected final double sleepVar;
 
@@ -54,9 +53,6 @@ public abstract class MMAgent extends Agent {
 				currentTime.toString() + " | " + this + "->"
 						+ sb.substring(0, sb.length() - 1));
 
-		// Insert agent strategy call once it has arrived in the market
-		// FIXME I think this needs to be changed bassed off of the new event
-		// manager
 		Collection<Activity> actMap = new ArrayList<Activity>();
 		if (sleepTime == 0) {
 			actMap.add(new AgentStrategy(this, Consts.INF_TIME));
