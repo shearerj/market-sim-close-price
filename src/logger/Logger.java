@@ -22,10 +22,8 @@ public class Logger {
 		}
 	}
 
-	// TODO Have looger require event manager for setup. When logger is called, it references the
+	// TODO Have logger require event manager for setup. When logger is called, it references the
 	// current time of the event queue.
-	//
-	// TODO Also get rid of junk at beginning of logger output.
 	public static void log(Level level, String message) {
 		if (logger == null)
 			System.err.println("LNI: " + message);

@@ -48,9 +48,9 @@ public class TwoMarket extends MarketModel {
 		for (int i = 0; i < numla; i++) {
 			TimeStamp latency = new TimeStamp(modelProps.getAsInt("lat"
 					+ (i + 1), 100));
-			// FIXME should pull sleeptime, sleepvar, alpha, and ticksize
-			// appropriately, instead of using the values I just inserted...
-			new LAAgent(this.agentIDgen.next(), this, 0, 0, 0.0001, latency,
+			// FIXME should pull alpha, and ticksize appropriately, instead of using the values I
+			// just inserted...
+			new LAAgent(this.agentIDgen.next(), this, 0.0001, latency,
 					new RandPlus(rand.nextLong()), 1000);
 		}
 	}

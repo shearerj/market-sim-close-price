@@ -13,9 +13,8 @@ import event.TimeStamp;
 public abstract class HFTAgent extends MMAgent {
 
 	public HFTAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			int sleepTime, double sleepVar, RandPlus rand, int tickSize) {
-		super(agentID, arrivalTime, model, new PrivateValue(), sleepTime,
-				sleepVar, rand, tickSize);
+			RandPlus rand, int tickSize) {
+		super(agentID, arrivalTime, model, new PrivateValue(), rand, tickSize);
 	}
 	
 }

@@ -3,15 +3,13 @@ package entity;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import market.PrivateValue;
 import model.MarketModel;
-import systemmanager.Consts;
 import utils.RandPlus;
 import activity.Activity;
-import activity.AgentStrategy;
 import event.TimeStamp;
 
 /**
@@ -30,15 +28,9 @@ import event.TimeStamp;
 public abstract class MMAgent extends Agent {
 
 	// TODO Should the MMAgent have its own copy of Markets, or should it just go to Model?
-	protected final int sleepTime;
-	protected final double sleepVar;
-
 	public MMAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			PrivateValue pv, int sleepTime, double sleepVar, RandPlus rand,
-			int tickSize) {
+			PrivateValue pv, RandPlus rand, int tickSize) {
 		super(agentID, arrivalTime, model, pv, rand, tickSize);
-		this.sleepTime = sleepTime;
-		this.sleepVar = sleepVar;
 	}
 
 	/**
@@ -50,16 +42,10 @@ public abstract class MMAgent extends Agent {
 		for (Market market : model.getMarkets())
 			sb.append(market).append(",");
 		log(INFO,
-				currentTime.toString() + " | " + this + "->"
+				currentTime + " | " + this + "->"
 						+ sb.substring(0, sb.length() - 1));
 
-		Collection<Activity> actMap = new ArrayList<Activity>();
-		if (sleepTime == 0) {
-			actMap.add(new AgentStrategy(this, Consts.INF_TIME));
-		} else {
-			actMap.add(new AgentStrategy(this, currentTime));
-		}
-		return actMap;
+		return Collections.emptySet();
 	}
 
 }

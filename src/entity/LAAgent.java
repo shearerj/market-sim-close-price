@@ -30,11 +30,9 @@ public class LAAgent extends HFTAgent {
 	protected final double alpha; // LA profit gap
 	protected final Map<Market, LAIP> ips;
 
-	public LAAgent(int agentID, MarketModel model, int sleepTime,
-			double sleepVar, double alpha, TimeStamp latency, RandPlus rand,
-			int tickSize) {
-		super(agentID, Consts.START_TIME, model, sleepTime, sleepVar, rand,
-				tickSize);
+	public LAAgent(int agentID, MarketModel model, double alpha,
+			TimeStamp latency, RandPlus rand, int tickSize) {
+		super(agentID, Consts.START_TIME, model, rand, tickSize);
 		this.alpha = alpha;
 		this.ips = new HashMap<Market, LAIP>();
 
@@ -47,10 +45,8 @@ public class LAAgent extends HFTAgent {
 
 	public LAAgent(int agentID, MarketModel model, RandPlus rand,
 			EntityProperties props) {
-		this(agentID, model, props.getAsInt(Keys.SLEEP_TIME, 0),
-				props.getAsDouble(Keys.SLEEP_VAR, 100), props.getAsDouble(
-						Keys.ALPHA, 0.001), null, rand, props.getAsInt(
-						Keys.TICK_SIZE, 1000));
+		this(agentID, model, props.getAsDouble(Keys.ALPHA, 0.001), null, rand,
+				props.getAsInt(Keys.TICK_SIZE, 1000));
 	}
 
 	@Override
