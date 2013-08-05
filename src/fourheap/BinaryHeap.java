@@ -155,6 +155,10 @@ public class BinaryHeap<E> implements Queue<E> {
 		if (isEmpty()) return null;
 		return elements.get(0);
 	}
+	
+	public Comparator<E> comparator() {
+		return comp;
+	}
 
 	/**
 	 * Swaps elements in position i and j
