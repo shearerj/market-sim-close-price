@@ -1,4 +1,4 @@
-package entity;
+package entity.agent;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
@@ -16,7 +16,7 @@ import activity.AgentStrategy;
 import activity.SubmitOrder;
 import data.EntityProperties;
 import data.Keys;
-import entity.market.BestBidAsk;
+import entity.infoproc.BestBidAsk;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Quote;

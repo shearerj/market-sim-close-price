@@ -1,4 +1,4 @@
-package entity;
+package entity.infoproc;
 
 import static logger.Logger.Level.INFO;
 
@@ -14,7 +14,6 @@ import data.TimeSeries;
 
 import logger.Logger;
 import activity.Activity;
-import entity.market.BestBidAsk;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Quote;

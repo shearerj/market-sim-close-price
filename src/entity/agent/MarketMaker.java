@@ -1,4 +1,4 @@
-package entity;
+package entity.agent;
 
 import entity.market.Market;
 import entity.market.PrivateValue;

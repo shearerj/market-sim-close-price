@@ -1,4 +1,4 @@
-package entity;
+package entity.agent;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,6 +8,7 @@ import clearingrule.UniformPriceClear;
 
 import model.MarketModel;
 import activity.Activity;
+import entity.agent.Agent;
 import entity.market.Market;
 import entity.market.Order;
 import entity.market.Price;

@@ -2,7 +2,7 @@ package entity.market;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import entity.Agent;
+import entity.agent.Agent;
 import event.TimeStamp;
 
 /**

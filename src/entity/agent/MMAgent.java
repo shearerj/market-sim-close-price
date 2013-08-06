@@ -1,4 +1,4 @@
-package entity;
+package entity.agent;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;

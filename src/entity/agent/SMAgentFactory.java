@@ -1,4 +1,4 @@
-package entity;
+package entity.agent;
 
 import generators.Generator;
 import generators.PoissonArrivalGenerator;

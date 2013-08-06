@@ -1,4 +1,4 @@
-package entity;
+package entity.agent;
 
 import static org.junit.Assert.assertTrue;
 

@@ -27,10 +27,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 
-import entity.Agent;
-import entity.BackgroundAgent;
-import entity.HFTAgent;
-import entity.MarketMaker;
+import entity.agent.Agent;
+import entity.agent.BackgroundAgent;
+import entity.agent.HFTAgent;
+import entity.agent.MarketMaker;
 import entity.market.Market;
 import entity.market.Transaction;
 import event.TimeStamp;

@@ -1,6 +1,6 @@
 package data;
 
-import entity.Agent;
+import entity.agent.Agent;
 
 public class Player {
 	

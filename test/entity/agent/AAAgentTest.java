@@ -1,13 +1,13 @@
-package entity;
+package entity.agent;
 
-import static entity.AAAgent.AGGRESSION_KEY;
-import static entity.AAAgent.BUYERSTATUS_KEY;
-import static entity.AAAgent.DEBUG_KEY;
-import static entity.AAAgent.ETA_KEY;
-import static entity.AAAgent.HISTORICAL_KEY;
-import static entity.AAAgent.THETAMAX_KEY;
-import static entity.AAAgent.THETAMIN_KEY;
-import static entity.AAAgent.THETA_KEY;
+import static entity.agent.AAAgent.AGGRESSION_KEY;
+import static entity.agent.AAAgent.BUYERSTATUS_KEY;
+import static entity.agent.AAAgent.DEBUG_KEY;
+import static entity.agent.AAAgent.ETA_KEY;
+import static entity.agent.AAAgent.HISTORICAL_KEY;
+import static entity.agent.AAAgent.THETAMAX_KEY;
+import static entity.agent.AAAgent.THETAMIN_KEY;
+import static entity.agent.AAAgent.THETA_KEY;
 import static logger.Logger.log;
 import static org.junit.Assert.assertTrue;
 
@@ -30,6 +30,8 @@ import activity.SendToIP;
 import activity.SubmitNMSOrder;
 import data.EntityProperties;
 import data.Keys;
+import entity.agent.AAAgent;
+import entity.agent.Agent;
 import entity.market.Market;
 import entity.market.Order;
 import entity.market.Price;

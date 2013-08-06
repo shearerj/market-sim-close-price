@@ -1,4 +1,4 @@
-package entity;
+package entity.infoproc;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -6,6 +6,7 @@ import java.util.List;
 
 import activity.Activity;
 import activity.ProcessQuote;
+import entity.Entity;
 import entity.market.Market;
 import entity.market.Quote;
 import entity.market.Transaction;

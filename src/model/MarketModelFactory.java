@@ -12,7 +12,7 @@ import utils.RandPlus;
 import data.AgentProperties;
 import data.FundamentalValue;
 import data.ModelProperties;
-import entity.LAIP;
+import entity.infoproc.LAIP;
 
 public class MarketModelFactory {
 

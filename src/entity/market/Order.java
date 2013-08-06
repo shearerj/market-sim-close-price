@@ -1,6 +1,6 @@
 package entity.market;
 
-import entity.Agent;
+import entity.agent.Agent;
 import event.TimeStamp;
 
 /**

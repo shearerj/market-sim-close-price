@@ -1,4 +1,4 @@
-package entity;
+package entity.agent;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,6 +14,7 @@ import activity.Activity;
 import activity.SubmitOrder;
 import data.EntityProperties;
 import data.Keys;
+import entity.infoproc.LAIP;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Quote;

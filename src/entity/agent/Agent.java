@@ -1,4 +1,4 @@
-package entity;
+package entity.agent;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.DEBUG;
@@ -15,6 +15,8 @@ import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
 import activity.Liquidate;
+import entity.Entity;
+import entity.infoproc.SIP;
 import entity.market.Order;
 import entity.market.Price;
 import entity.market.PrivateValue;

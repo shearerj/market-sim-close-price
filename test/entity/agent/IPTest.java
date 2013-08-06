@@ -1,12 +1,12 @@
-package entity;
+package entity.agent;
 
-import static entity.AAAgent.AGGRESSION_KEY;
-import static entity.AAAgent.DEBUG_KEY;
-import static entity.AAAgent.ETA_KEY;
-import static entity.AAAgent.HISTORICAL_KEY;
-import static entity.AAAgent.THETAMAX_KEY;
-import static entity.AAAgent.THETAMIN_KEY;
-import static entity.AAAgent.THETA_KEY;
+import static entity.agent.AAAgent.AGGRESSION_KEY;
+import static entity.agent.AAAgent.DEBUG_KEY;
+import static entity.agent.AAAgent.ETA_KEY;
+import static entity.agent.AAAgent.HISTORICAL_KEY;
+import static entity.agent.AAAgent.THETAMAX_KEY;
+import static entity.agent.AAAgent.THETAMIN_KEY;
+import static entity.agent.AAAgent.THETA_KEY;
 
 import java.io.File;
 
@@ -19,6 +19,7 @@ import org.junit.Test;
 
 import data.EntityProperties;
 import data.Keys;
+import entity.infoproc.SIP;
 import entity.market.CDAMarket;
 import entity.market.Market;
 import event.TimeStamp;

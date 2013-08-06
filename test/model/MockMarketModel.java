@@ -11,7 +11,7 @@ import data.AgentProperties;
 import data.DummyFundamental;
 import data.EntityProperties;
 import data.FundamentalValue;
-import entity.Agent;
+import entity.agent.Agent;
 import entity.market.Market;
 
 public class MockMarketModel extends MarketModel {

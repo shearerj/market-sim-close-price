@@ -1,4 +1,4 @@
-package entity;
+package entity.infoproc;
 
 import static logger.Logger.Level.INFO;
 

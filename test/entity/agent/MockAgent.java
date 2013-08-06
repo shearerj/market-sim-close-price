@@ -1,4 +1,4 @@
-package entity;
+package entity.agent;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -6,6 +6,7 @@ import java.util.Collection;
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
+import entity.agent.BackgroundAgent;
 import entity.market.Market;
 import entity.market.PrivateValue;
 import event.TimeStamp;

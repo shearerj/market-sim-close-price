@@ -10,7 +10,7 @@ import model.MarketModel;
 import systemmanager.Consts;
 import activity.Activity;
 import activity.Clear;
-import entity.Agent;
+import entity.agent.Agent;
 import event.TimeStamp;
 
 /**

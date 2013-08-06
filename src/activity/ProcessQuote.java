@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import entity.IP;
+import entity.infoproc.IP;
 import entity.market.Market;
 import entity.market.Quote;
 import entity.market.Transaction;

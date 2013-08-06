@@ -1,4 +1,4 @@
-package entity;
+package entity.agent;
 
 import model.MarketModel;
 import utils.RandPlus;

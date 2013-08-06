@@ -1,4 +1,7 @@
-package entity.market;
+package entity.infoproc;
+
+import entity.market.Market;
+import entity.market.Price;
 
 
 /**
@@ -20,22 +23,12 @@ public class BestBidAsk {
 	}
 
 	/**
-	 * @return bid-ask spread of the quote (integer)
+	 * @return bid-ask spread of the quote (double)
 	 */
-	public int getSpread() {
-		if (bestAsk.compareTo(bestBid) >= 0) {
-			if (bestAsk.getPrice() == -1 || bestAsk.equals(Price.INF)) { // ask
-																			// undefined
-				return -Price.INF.getPrice();
-			}
-			if (bestBid.getPrice() == -1 || bestBid.getPrice() == 0) { // bid
-																		// undefined
-				return Price.INF.getPrice();
-			}
-			return bestAsk.getPrice() - bestBid.getPrice();
-		}
-		// if bid crosses the ask, return a spread of INF
-		return Price.INF.getPrice();
+	public double getSpread() {
+		if (bestAsk == null || bestBid == null || bestAsk.lessThan(bestBid))
+			return Double.POSITIVE_INFINITY;
+		return bestAsk.getPrice() - bestBid.getPrice();
 	}
 
 	public Market getBestBidMarket() {

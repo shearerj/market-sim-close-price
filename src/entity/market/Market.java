@@ -18,11 +18,12 @@ import activity.Activity;
 import activity.SendToIP;
 import activity.WithdrawOrder;
 import data.TimeSeries;
-import entity.Agent;
 import entity.Entity;
-import entity.IP;
-import entity.SIP;
-import entity.SMIP;
+import entity.agent.Agent;
+import entity.infoproc.BestBidAsk;
+import entity.infoproc.IP;
+import entity.infoproc.SIP;
+import entity.infoproc.SMIP;
 import event.TimeStamp;
 import fourheap.FourHeap;
 

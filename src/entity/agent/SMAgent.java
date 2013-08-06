@@ -1,4 +1,4 @@
-package entity;
+package entity.agent;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
@@ -11,6 +11,7 @@ import systemmanager.Consts;
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
+import entity.infoproc.SMIP;
 import entity.market.Market;
 import entity.market.PrivateValue;
 import event.TimeStamp;

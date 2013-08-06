@@ -5,7 +5,7 @@ import java.util.Collection;
 
 import org.apache.commons.lang3.builder.*;
 
-import entity.*;
+import entity.agent.*;
 import entity.market.Market;
 import entity.market.Price;
 import event.*;
