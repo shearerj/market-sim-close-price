@@ -25,21 +25,14 @@ public class AgentArrival extends Activity {
 		return agent.agentArrival(currentTime);
 	}
 
-	public String toString() {
-		return new String(getName() + "::" + agent);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof AgentArrival))
-			return false;
-		AgentArrival other = (AgentArrival) obj;
-		return new EqualsBuilder().append(agent, other.agent).append(scheduledTime,
-				other.scheduledTime).isEquals();
-	}
-
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder(19, 37).append(agent).append(scheduledTime).toHashCode();
+		return new HashCodeBuilder(19, 37).append(agent).append(
+				super.hashCode()).toHashCode();
 	}
+
+	public String toString() {
+		return getName() + " :: " + agent;
+	}
+
 }

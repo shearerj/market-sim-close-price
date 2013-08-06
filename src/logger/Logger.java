@@ -10,34 +10,53 @@ public class Logger {
 	};
 
 	protected static Log logger;
-
-	public static void setup(int lev, File logFile) {
+	protected static boolean outError = true; // TODO make setting
+	protected static Prefix prefix = new EmptyPrefix();
+	
+	public static void setup(int lev, File logFile, boolean outError, Prefix prefix) {
 		try {
 			logFile.getParentFile().mkdirs();
 			logger = new Log(lev, ".", logFile.getPath(), true);
 			logger.setPrependDate(false);
+			Logger.outError = outError;
+			Logger.prefix = prefix;
 		} catch (IOException e) {
 			System.err.println("Couldn't create log file");
 			e.printStackTrace();
 		}
 	}
-
-	// TODO Have logger require event manager for setup. When logger is called, it references the
-	// current time of the event queue.
-	public static void log(Level level, String message) {
-		if (logger == null)
-			System.err.println("LNI: " + message);
-		else
-			logger.log(level.ordinal(), message);
+	
+	public static void setup(int lev, File logFile, boolean outError) {
+		setup(lev, logFile, outError, prefix);
+	}
+	
+	public static void setup(int lev, File logFile) {
+		setup(lev, logFile, outError, prefix);
 	}
 
-	public static boolean shouldLog(int level) {
-		return logger != null && logger.shouldLog(level);
+	public static void log(Level level, String message) {
+		if (logger == null) {
+			System.err.println("LNI: " + message);
+			return;
+		}
+		message = prefix.getPrefix() + message;
+		logger.log(level.ordinal(), message);
+		if (level == Level.ERROR)
+			System.err.println(message);
 	}
 
 	public static Level getLevel() {
 		return logger == null ? Level.NO_LOGGING
 				: Level.values()[logger.getLevel()];
+	}
+	
+	public static interface Prefix {
+		public String getPrefix();
+	}
+	
+	private static class EmptyPrefix implements Prefix {
+		@Override
+		public String getPrefix() { return ""; }
 	}
 
 }

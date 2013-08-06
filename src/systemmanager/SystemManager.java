@@ -16,6 +16,7 @@ import java.util.Locale;
 import java.util.Properties;
 
 import logger.Logger;
+import logger.Logger.Prefix;
 import model.MarketModel;
 import model.MarketModelFactory;
 import utils.RandPlus;
@@ -23,7 +24,6 @@ import data.EntityProperties;
 import data.FundamentalValue;
 import data.ModelProperties;
 import data.Observations;
-import event.EventManager;
 import event.TimeStamp;
 
 /**
@@ -48,6 +48,7 @@ public class SystemManager {
 	protected final int obsNum; // sample number used for labeling output files
 	protected final File simFolder; // simulation folder name
 	protected final SimulationSpec spec;
+	protected final TimeStamp simulationLength;
 
 	/**
 	 * Only one argument, which is the sample number, is processed
@@ -91,19 +92,19 @@ public class SystemManager {
 		this.obsNum = simNumber;
 
 		// TODO move props to SimSpec?
-		initializeLogger(getProperties(), simFolder, simNumber);
 
 		spec = new SimulationSpec(new File(simFolder, Consts.SIM_SPEC_FILE));
 		EntityProperties simProps = spec.getSimulationProperties();
 		long seed = simProps.getAsLong(SimulationSpec.RAND_SEED,
 				System.currentTimeMillis());
-		log(INFO, "RandomSeed: " + seed);
 		RandPlus rand = new RandPlus(seed);
 
-		TimeStamp simLength = new TimeStamp(
-				simProps.getAsLong(SimulationSpec.SIMULATION_LENGTH));
-		eventManager = new EventManager(simLength,
-				new RandPlus(rand.nextLong()));
+		simulationLength = new TimeStamp(simProps.getAsLong(SimulationSpec.SIMULATION_LENGTH));
+		eventManager = new EventManager(new RandPlus(rand.nextLong()));
+		
+		initializeLogger(getProperties(), simFolder, simNumber, eventManager);
+		log(INFO, "Random Seed: " + seed);
+		// TODO Log configuration
 
 		FundamentalValue fundamental = new FundamentalValue(
 				simProps.getAsDouble(SimulationSpec.FUNDAMENTAL_KAPPA),
@@ -115,6 +116,7 @@ public class SystemManager {
 				spec.getBackgroundAgents(), spec.getPlayerConfig(),
 				fundamental, new RandPlus(rand.nextLong()));
 
+		// TODO Only create one market model?
 		log(INFO, "------------------------------------------------");
 		log(INFO, "            Creating MARKET MODELS");
 		models = new ArrayList<MarketModel>();
@@ -138,7 +140,7 @@ public class SystemManager {
 	 * Must be done after "envProps" exists
 	 */
 	protected static void initializeLogger(Properties envProps, File simFolder,
-			int num) throws IOException {
+			int num, final EventManager eventManager) throws IOException {
 		// Create log file
 		int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
 
@@ -147,7 +149,7 @@ public class SystemManager {
 				simFolder.getPath().replace('/', '_'));
 		logFileName.append('_').append(num).append('_');
 		logFileName.append(DATE_FORMAT.format(now)).append('_');
-		// TODO This replace should could be done by modifying the date
+		// TODO This replace should/could be done by modifying the date
 		// format
 		logFileName.append(TIME_FORMAT.format(now).replace(':', '.'));
 		logFileName.append(".txt");
@@ -158,11 +160,13 @@ public class SystemManager {
 		File logFile = new File(logDir, logFileName.toString());
 
 		// Create log file
-		// TODO Look into constructor, I think the 2nd and 3rd arguments
-		// have to do with base directory and then logFileName. In this case
-		// "getPath" will probably do the right thing given the current
-		// setup, but isn't guaranteed to.
-		Logger.setup(logLevel, logFile);
+		Logger.setup(logLevel, logFile, true, new Prefix() {
+			@Override
+			// TODO If/when only one market model, change this to prefix model id
+			public String getPrefix() {
+				return String.format("% 4d| ", eventManager.getCurrentTime().longValue());
+			}
+		});
 		
 		if (Logger.getLevel() == NO_LOGGING)
 			logFile.deleteOnExit();
@@ -178,7 +182,7 @@ public class SystemManager {
 		for (MarketModel model : models)
 			model.scheduleActivities(eventManager);
 		// TODO Get rid of event manager and move to system manager.
-		eventManager.execute();
+		eventManager.executeUntil(simulationLength);
 		log(INFO, "STATUS: Simulation has ended.");
 	}
 

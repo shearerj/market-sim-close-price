@@ -310,7 +310,7 @@ public class AAAgent extends ReentryAgent {
 	 */
 	private Collection<? extends Activity> biddingLayer(Price limit, Price targetPrice,
 			int quantity, TimeStamp ts) {
-		String s = ts + " | " + this + " " + getName() + ":";
+		String s = this + " " + getName() + ":";
 
 		// Determining the offer price to (possibly) submit
 		Quote quote = marketIP.getQuote();

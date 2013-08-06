@@ -13,45 +13,30 @@ import event.TimeStamp;
  */
 public class Clear extends Activity {
 
-	private Market mkt;
+	protected final Market market;
 
-	public Clear(Market mkt, TimeStamp t) {
-		super(t);
-		this.mkt = mkt;
+	public Clear(Market market, TimeStamp scheduledTime) {
+		super(scheduledTime);
+		this.market = market;
 	}
 
 	public Clear deepCopy() {
-		return new Clear(this.mkt, this.scheduledTime);
+		return new Clear(this.market, this.scheduledTime);
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
-		return this.mkt.clear(currentTime);
-	}
-
-	public String toString() {
-		return new String(getName() + "::" + mkt);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == this)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Clear other = (Clear) obj;
-		return new EqualsBuilder().
-				append(mkt.getID(), other.mkt.getID()).
-				append(scheduledTime.longValue(), other.scheduledTime.longValue()).
-				isEquals();
+		return this.market.clear(currentTime);
 	}
 	
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder(19, 37).
-				append(mkt.getID()).
-				append(scheduledTime.longValue()).
-				toHashCode();
+		return new HashCodeBuilder(19, 37).append(market).append(
+				super.hashCode()).toHashCode();
 	}
+
+	@Override
+	public String toString() {
+		return getName() + " :: " + market;
+	}
+	
 }

@@ -7,7 +7,6 @@ import java.util.Collections;
 import clearingrule.EarliestPriceClear;
 
 import model.MarketModel;
-import systemmanager.Consts;
 import activity.Activity;
 import activity.Clear;
 import entity.agent.Agent;
@@ -20,8 +19,8 @@ import event.TimeStamp;
  */
 public class CDAMarket extends Market {
 
-	public CDAMarket(int marketID, MarketModel model, int ipID) {
-		super(marketID, model, new EarliestPriceClear());
+	public CDAMarket(int marketID, MarketModel model, TimeStamp latency) {
+		super(marketID, model, new EarliestPriceClear(), latency);
 	}
 
 	@Override
@@ -29,7 +28,7 @@ public class CDAMarket extends Market {
 			int quantity, TimeStamp curentTime) {
 		Collection<Activity> activities = new ArrayList<Activity>(
 				super.submitOrder(agent, price, quantity, curentTime));
-		activities.add(new Clear(this, Consts.INF_TIME));
+		activities.add(new Clear(this, TimeStamp.IMMEDIATE));
 		return activities;
 	}
 

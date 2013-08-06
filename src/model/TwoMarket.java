@@ -35,8 +35,9 @@ public class TwoMarket extends MarketModel {
 
 	@Override
 	protected void setupMarkets(EntityProperties modelProps) {
-		markets.add(new CDAMarket(1, this, this.nextIPID()));
-		markets.add(new CDAMarket(2, this, this.nextIPID()));
+		// FIXME Add latency from settings
+		markets.add(new CDAMarket(1, this, TimeStamp.IMMEDIATE));
+		markets.add(new CDAMarket(2, this, TimeStamp.IMMEDIATE));
 	}
 
 	@Override

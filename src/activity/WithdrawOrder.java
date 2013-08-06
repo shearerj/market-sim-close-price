@@ -27,19 +27,14 @@ public class WithdrawOrder extends Activity {
 		return order.getMarket().withdrawOrder(order, time);
 	}
 
-	public String toString() {
-		return new String(getName() + "::" + order);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof WithdrawOrder)) return false;
-		WithdrawOrder other = (WithdrawOrder) obj;
-		return super.equals(obj) && this.order.equals(other.order);
-	}
-
 	@Override
 	public int hashCode() {
 		return new HashCodeBuilder(19, 37).append(order).append(super.hashCode()).toHashCode();
 	}
+	
+	@Override
+	public String toString() {
+		return new String(getName() + " :: " + order);
+	}
+	
 }

@@ -44,13 +44,12 @@ public class SIP extends IP {
 		this.nbboSpreads = new TimeSeries();
 	}
 
-	public Collection<Activity> processQuote(Market mkt, Quote quote,
+	public Collection<Activity> processQuote(Market market, Quote quote,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
-		marketQuotes.put(mkt, quote);
+		marketQuotes.put(market, quote);
 		transactions.addAll(newTransactions);
 		
-		Logger.log(INFO, currentTime + " | " + this + " | " + mkt + " "
-				+ "ProcessQuote: " + quote);
+		Logger.log(INFO, market + " -> " + this + " ProcessQuote: " + quote);
 
 		Price bestBid = null, bestAsk = null;
 		Market bestBidMkt = null, bestAskMkt = null;

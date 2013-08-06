@@ -15,9 +15,6 @@ import org.junit.Test;
 
 import activity.Activity;
 
-import systemmanager.Consts;
-
-import event.EventQueue;
 import event.TimeStamp;
 
 public class EventQueueTest {
@@ -45,8 +42,8 @@ public class EventQueueTest {
 		assertEquals(second, q.peek());
 		assertEquals(2, q.size());
 		
-		Activity inf1 = new DummyActivity(Consts.INF_TIME);
-		Activity inf2 = new DummyActivity(Consts.INF_TIME);
+		Activity inf1 = new DummyActivity(TimeStamp.IMMEDIATE);
+		Activity inf2 = new DummyActivity(TimeStamp.IMMEDIATE);
 		q.add(inf1);
 		assertEquals(3, q.size());
 		assertEquals(inf1, q.poll());

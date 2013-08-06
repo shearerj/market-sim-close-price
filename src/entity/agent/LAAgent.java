@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import model.MarketModel;
-import systemmanager.Consts;
 import utils.RandPlus;
 import activity.Activity;
 import activity.SubmitOrder;
@@ -34,7 +33,7 @@ public class LAAgent extends HFTAgent {
 
 	public LAAgent(int agentID, MarketModel model, double alpha,
 			TimeStamp latency, RandPlus rand, int tickSize) {
-		super(agentID, Consts.START_TIME, model, rand, tickSize);
+		super(agentID, TimeStamp.ZERO, model, rand, tickSize);
 		this.alpha = alpha;
 		this.ips = new HashMap<Market, HFTIP>();
 

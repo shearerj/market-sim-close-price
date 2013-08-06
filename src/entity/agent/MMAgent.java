@@ -37,14 +37,13 @@ public abstract class MMAgent extends Agent {
 	/**
 	 * Agent arrives in a single market.
 	 */
+	@Override
 	public Collection<Activity> agentArrival(TimeStamp currentTime) {
 
 		StringBuilder sb = new StringBuilder();
 		for (Market market : model.getMarkets())
 			sb.append(market).append(",");
-		log(INFO,
-				currentTime + " | " + this + "->"
-						+ sb.substring(0, sb.length() - 1));
+		log(INFO, this + "->" + sb.substring(0, sb.length() - 1));
 
 		return Collections.emptySet();
 	}

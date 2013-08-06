@@ -90,7 +90,7 @@ public class BasicMarketMaker extends MarketMaker {
 		// market may not have any buy or sell orders. This could still allow
 		// agent strategy.
 		if (bid == null || ask == null) {
-			log(INFO, ts + " | " + this + " " + getName()
+			log(INFO, this + " " + getName()
 					+ "::agentStrategy: undefined quote in market "
 					+ primaryMarket);
 
@@ -148,7 +148,7 @@ public class BasicMarketMaker extends MarketMaker {
 		// TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime,
 		// sleepVar)));
 		TimeStamp tsNew = ts.plus(sleepTime);
-		acts.add(new AgentStrategy(this, primaryMarket, tsNew));
+		acts.add(new AgentStrategy(this, tsNew));
 		return acts;
 	}
 

@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import systemmanager.Consts;
+import systemmanager.EventManager;
 import systemmanager.SimulationSpec;
 import utils.RandPlus;
 import activity.AgentArrival;
@@ -28,7 +28,6 @@ import entity.market.Market;
 import entity.market.Order;
 import entity.market.Price;
 import entity.market.Transaction;
-import event.EventManager;
 import event.TimeStamp;
 import generators.Generator;
 import generators.IDGenerator;
@@ -171,7 +170,7 @@ public abstract class MarketModel {
 		// problem if an agent strategy happens before the clear but at time 0. That shouldn't be
 		// allowed.
 		for (Market market : markets)
-			manager.addActivity(new Clear(market, Consts.START_TIME));
+			manager.addActivity(new Clear(market, TimeStamp.ZERO));
 		for (Agent agent : agents)
 			manager.addActivity(new AgentArrival(agent, agent.getArrivalTime()));
 	}

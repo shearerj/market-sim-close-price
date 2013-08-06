@@ -1,4 +1,4 @@
-package entity.agent;
+package entity.market;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,7 +18,7 @@ import event.TimeStamp;
 public class MockMarket extends Market {
 
 	public MockMarket(int marketID, MarketModel model) {
-		super(marketID, model, new UniformPriceClear(0.5d));
+		super(marketID, model, new UniformPriceClear(0.5d), TimeStamp.IMMEDIATE);
 	}
 
 	public MockMarket(MarketModel model) {

@@ -3,7 +3,6 @@ package entity.agent;
 import static logger.Logger.log;
 import static logger.Logger.Level.DEBUG;
 import static logger.Logger.Level.INFO;
-import static systemmanager.Consts.INF_TIME;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,7 +70,7 @@ public abstract class Agent extends Entity {
 	public abstract Collection<? extends Activity> agentStrategy(
 			TimeStamp currentTime);
 
-	// TODO not make abstract. Seems like an optional activity.
+	// TODO not make abstract. Seems like an optional activity. Or remove entirely?
 	public abstract Collection<? extends Activity> agentArrival(
 			TimeStamp currentTime);
 
@@ -81,9 +80,9 @@ public abstract class Agent extends Entity {
 	 */
 	public Collection<? extends Activity> liquidateAtFundamental(
 			TimeStamp currentTime) {
-		log(INFO, currentTime + " | " + this + " liquidating...");
+		log(INFO, this + " liquidating...");
 		return Collections.singleton(new Liquidate(this,
-				model.getFundamentalAt(currentTime), INF_TIME));
+				model.getFundamentalAt(currentTime), TimeStamp.IMMEDIATE));
 	}
 
 	/**
@@ -91,7 +90,7 @@ public abstract class Agent extends Entity {
 	 */
 	public Collection<? extends Activity> liquidate(Price price, TimeStamp ts) {
 
-		log(INFO, ts + " | " + this + " pre-liquidation: position="
+		log(INFO, this + " pre-liquidation: position="
 				+ positionBalance + ", profit=" + realizedProfit);
 
 		// If no net position, no need to liquidate
@@ -108,7 +107,7 @@ public abstract class Agent extends Entity {
 		}
 		positionBalance = 0;
 
-		log(INFO, ts + " | " + this + " post-liquidation: position="
+		log(INFO, this + " post-liquidation: position="
 				+ positionBalance + ", profit=" + realizedProfit + ", price="
 				+ price);
 		return Collections.emptyList();
@@ -138,10 +137,10 @@ public abstract class Agent extends Entity {
 		transactions.add(trans);
 
 		// XXX currentTime should equal Trans.getExecTime() so redundant?
-		log(INFO, currentTime + " | " + this + " "
+		log(INFO, this + " "
 				+ "Agent::updateTransactions: New transaction received: "
 				+ trans);
-		log(INFO, currentTime + " | " + this + " Agent::logTransactions: "
+		log(INFO, this + " Agent::logTransactions: "
 				+ model.getName() + ": Current Position=" + positionBalance
 				+ ", Realized Profit=" + realizedProfit);
 	}

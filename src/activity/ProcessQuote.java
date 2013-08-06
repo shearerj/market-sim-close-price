@@ -45,7 +45,7 @@ public class ProcessQuote extends Activity {
 	
 	@Override
 	public String toString() {
-		return getName() + "::" + market + " -> " + ip + " : " + quote;
+		return getName() + " :: " + market + " -> " + ip + " : " + quote;
 	}
 	
 }

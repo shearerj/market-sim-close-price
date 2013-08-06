@@ -22,7 +22,7 @@ public class SendToIP extends Activity {
 	protected final Market market;
 	protected final IP ip;
 	protected final Quote quote;
-	List<Transaction> transactions;
+	protected final List<Transaction> transactions;
 
 	public SendToIP(Market market, Quote quote, List<Transaction> transactions, IP ip, TimeStamp scheduledTime) {
 		super(scheduledTime);
@@ -38,12 +38,12 @@ public class SendToIP extends Activity {
 
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder(19, 37).append(market).append(scheduledTime).append(
-				quote).append(ip).toHashCode();
+		return new HashCodeBuilder(19, 37).append(market).append(super.hashCode()).append(
+				quote).append(ip).append(transactions).toHashCode();
 	}
 	
 	@Override
 	public String toString() {
-		return getName() + "::" + market + " -> " + ip;
+		return getName() + " :: " + market + " -> " + ip;
 	}
 }

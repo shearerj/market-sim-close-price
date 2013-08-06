@@ -6,7 +6,6 @@ import java.util.Collection;
 import clearingrule.UniformPriceClear;
 
 import model.MarketModel;
-import systemmanager.Consts;
 import activity.Activity;
 import activity.Clear;
 import event.TimeStamp;
@@ -31,10 +30,10 @@ public class CallMarket extends Market {
 	protected TimeStamp nextClearTime, nextQuoteTime;
 
 	public CallMarket(int marketID, MarketModel model, double pricingPolicy,
-			TimeStamp clearFreq) {
-		super(marketID, model, new UniformPriceClear(pricingPolicy));
+			TimeStamp clearFreq, TimeStamp latency) {
+		super(marketID, model, new UniformPriceClear(pricingPolicy), latency);
 
-		if (clearFreq.after(Consts.START_TIME))
+		if (clearFreq.after(TimeStamp.ZERO))
 			throw new IllegalArgumentException(
 					"Can't create a call market with 0 clear frequency. Create a CDA instead.");
 		

@@ -45,8 +45,7 @@ public class SMIP extends IP {
 					"Can't update an SM Market with anything but it's market");
 
 		this.quote = quote;
-		Logger.log(INFO, currentTime + " | " + this + " | " + market + " "
-				+ "ProcessQuote: " + quote);
+		Logger.log(INFO, market + " -> " + this + " ProcessQuote: " + quote);
 		return Collections.emptySet();
 	}
 

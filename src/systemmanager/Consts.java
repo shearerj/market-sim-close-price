@@ -1,8 +1,5 @@
 package systemmanager;
 
-import event.TimeStamp;
-
-
 /**
  * System-wide constants and accessor methods. Sets default properties for each
  * type of entity.
@@ -15,7 +12,7 @@ public class Consts {
 	public final static double[] rhos = {0, 0.0006};
 	//	{0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009};
 	
-	// 0 means sampling every time step
+	// 0 means sampling every time step, different than 1?
 	public final static int[] periods = {0, 1, 250};
 	
 	public final static long upToTime = 3000;	// compute statistics up to this time
@@ -26,10 +23,6 @@ public class Consts {
 	public static enum AgentType { AA, ZI, ZIP, ZIR, BASICMM, LA };
 	public static enum ModelType { TWOMARKET, CENTRALCDA, CENTRALCALL };
 	public static enum MarketType { CDA, CALL };
-	
-	// TimeStamp TODO Move to TimeStamp?
-	public final static TimeStamp INF_TIME = new TimeStamp(-1);
-	public final static TimeStamp START_TIME = new TimeStamp(0);
 	
 	// **********************************************************
 	// FILENAMES

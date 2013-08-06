@@ -73,7 +73,7 @@ public class ZIRAgent extends ReentryAgent {
 	public Collection<Activity> agentStrategy(TimeStamp ts) {
 		Collection<Activity> activities = new ArrayList<Activity>();
 
-		String s = ts + " | " + this + " " + getName() + ":";
+		String s = this + " " + getName() + ":";
 		if (!ts.equals(arrivalTime)) {
 			s += " wake up.";
 			if (positionBalance == lastPositionBalance) {
@@ -98,13 +98,8 @@ public class ZIRAgent extends ReentryAgent {
 						(int) (val.getPrice() - Math.signum(quantity)
 								* rand.nextDouble() * 2 * bidRange)).nonnegative();
 
-				s += " position="
-						+ positionBalance
-						+ ", for q="
-						+ quantity
-						+ ", value="
-						+ model.getFundamentalAt(ts)
-						+ " + "
+				s += " position=" + positionBalance + ", for q=" + quantity
+						+ ", value=" + model.getFundamentalAt(ts) + " + "
 						+ privateValue.getValueFromQuantity(positionBalance,
 								quantity) + "=" + val;
 				log(INFO, s);

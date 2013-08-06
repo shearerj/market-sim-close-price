@@ -22,14 +22,8 @@ public abstract class IP extends Entity {
 
 	protected TimeStamp latency;
 
-	/**
-	 * Constructor
-	 * 
-	 * @param ID
-	 * @param d
-	 */
-	public IP(int ID, TimeStamp latency) {
-		super(ID);
+	public IP(int id, TimeStamp latency) {
+		super(id);
 		this.latency = latency;
 	}
 

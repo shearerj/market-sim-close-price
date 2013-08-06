@@ -16,49 +16,28 @@ import event.TimeStamp;
 // TODO Currently unused
 public class Liquidate extends Activity {
 
-	private Agent ag;
-	private Price p;
+	protected final Agent agent;
+	protected final Price price;
 
-	public Liquidate(Agent ag, Price p, TimeStamp t) {
-		super(t);
-		this.ag = ag;
-		this.p = p;
-	}
-
-	public Liquidate deepCopy() {
-		return new Liquidate(this.ag, this.p, this.scheduledTime);
+	public Liquidate(Agent agent, Price price, TimeStamp scheduledTime) {
+		super(scheduledTime);
+		this.agent = agent;
+		this.price = price;
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
-		return this.ag.liquidate(this.p, currentTime);
-	}
-
-	public String toString() {
-		return new String(getName() + "::" + ag + " @" + p);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == this)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Liquidate other = (Liquidate) obj;
-		return new EqualsBuilder().
-				append(ag.getID(), other.ag.getID()).
-				append(p.getPrice(), other.p.getPrice()).
-				append(scheduledTime.longValue(), other.scheduledTime.longValue()).
-				isEquals();
+		return this.agent.liquidate(this.price, currentTime);
 	}
 	
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder(19, 37).
-				append(ag.getID()).
-				append(p.getPrice()).
-				append(scheduledTime.longValue()).
-				toHashCode();
+		return new HashCodeBuilder(19, 37).append(agent).append(price).append(
+				super.hashCode()).toHashCode();
 	}
+	
+	@Override
+	public String toString() {
+		return getName() + " :: " + agent + " @" + price;
+	}
+	
 }

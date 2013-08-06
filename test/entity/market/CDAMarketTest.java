@@ -1,4 +1,4 @@
-package entity.agent;
+package entity.market;
 
 import static org.junit.Assert.assertTrue;
 
@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import entity.agent.MockAgent;
 import entity.market.CDAMarket;
 import entity.market.Market;
 import entity.market.Price;
@@ -25,14 +26,13 @@ public class CDAMarketTest {
 
 	@BeforeClass
 	public static void setupClass() {
-		// Setting up the log file
 		Logger.setup(3, new File("simulations/unit_testing/unit_tests.txt"));
 	}
 
 	@Before
 	public void setup() {
 		model = new MockMarketModel(1);
-		market = new CDAMarket(1, model, 0); // TODO Dummy IP
+		market = new CDAMarket(1, model, TimeStamp.IMMEDIATE);
 		model.addMarket(market);
 		agentIndex = 1;
 	}
@@ -136,7 +136,6 @@ public class CDAMarketTest {
 		market.submitOrder(agent3, new Price(175), 1, time);
 		market.submitOrder(agent4, new Price(125), 1, time);
 		market.clear(time);
-		System.out.println(model.getTrans().size());
 	}
 	
 	@Test

@@ -41,31 +41,30 @@ public abstract class Market extends Entity {
 	protected final SMIP ip;
 	protected final SIP sip;
 	protected final Collection<IP> ips;
+	
+	protected Quote quote;
+	protected TimeStamp lastClearTime, lastOrderTime;
+	protected Price lastClearPrice;
 
 	// Book keeping
 	protected final Map<fourheap.Order<Price, TimeStamp>, Order> orderMapping;
-
-	// Statistics
-	protected final Collection<Order> orders; // All bids ever submitted to the market
+	protected final Collection<Order> orders; // All orders ever submitted to the market
+	
 	// depths: Number of orders in the orderBook
 	// spreads: Bid-ask spread value
-	// modQuotes: Midpoint of bid/ask values
+	// midQuotes: Midpoint of bid/ask values
 	protected final TimeSeries depths, spreads, midQuotes;
 
-	// Market information - Move to IP
-	protected TimeStamp lastClearTime, lastBidTime;
-	protected Price lastClearPrice;
 
-	public Market(int marketID, MarketModel model, ClearingRule clearingRule) {
+	public Market(int marketID, MarketModel model, ClearingRule clearingRule, TimeStamp latency) {
 		super(marketID);
 		this.model = model;
 		this.orderbook = new FourHeap<Price, TimeStamp>();
 		this.clearingRule = clearingRule;
 
-		// FIXME Add latency properly, change null to this
 		this.ips = new ArrayList<IP>();
 		this.sip = model.getSIP();
-		this.ip = new SMIP(model.nextIPID(), new TimeStamp(0), this);
+		this.ip = new SMIP(model.nextIPID(), latency, this);
 		ips.add(sip);
 		ips.add(ip);
 
@@ -122,8 +121,10 @@ public abstract class Market extends Entity {
 					pit.next(), currentTime);
 			transactions.add(trans);
 			model.addTrans(trans);
+			// TODO add delay to this
 			buy.getAgent().addTransaction(trans, currentTime);
-			// FIXME Account for same buyer and seller
+			if (!buy.getAgent().equals(sell.getAgent())) // Incase buyer == seller
+				sell.getAgent().addTransaction(trans, currentTime);
 			// FIXME Set last clear price / do it in update quote
 		}
 
@@ -131,8 +132,7 @@ public abstract class Market extends Entity {
 	}
 
 	/**
-	 * Updates the Markets current quote TODO This should be subsumed by sendToIPs. sendToIP should
-	 * compute this quote and update things appropriately.
+	 * Updates the Markets current quote
 	 */
 	protected Collection<? extends Activity> updateQuote(
 			List<Transaction> transactions, TimeStamp currentTime) {
@@ -141,7 +141,7 @@ public abstract class Market extends Entity {
 
 		Quote quote = new Quote(this, ask, bid, currentTime);
 
-		log(INFO, currentTime + " | " + this + " SendToSIP" + quote);
+		log(INFO, this + " SendToSIP" + quote);
 
 		Collection<Activity> activities = new ArrayList<Activity>();
 		for (IP ip : ips)
@@ -171,9 +171,8 @@ public abstract class Market extends Entity {
 			int quantity, TimeStamp currentTime, TimeStamp duration) {
 		if (quantity == 0) return Collections.emptySet();
 
-		log(INFO, currentTime + " | " + this + " " + getName()
-				+ "::submitBid: +(" + price + ", " + quantity + ") from "
-				+ agent);
+		log(INFO, this + " " + getName() + "::submitBid: +(" + price + ", "
+				+ quantity + ") from " + agent);
 
 		fourheap.Order<Price, TimeStamp> nativeOrder = new fourheap.Order<Price, TimeStamp>(
 				price, quantity, currentTime);
@@ -222,9 +221,8 @@ public abstract class Market extends Entity {
 		}
 
 		if (!bestMarket.equals(this))
-			log(INFO, currentTime + " | " + agent + " " + getName()
-					+ "::submitNMSBid: " + "NBBO" + nbbo + " better than "
-					+ this + " Quote" + null);
+			log(INFO, agent + " " + getName() + "::submitNMSBid: " + "NBBO"
+					+ nbbo + " better than " + this + " Quote" + null);
 
 		return bestMarket.submitOrder(agent, price, quantity, currentTime,
 				duration);

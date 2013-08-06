@@ -6,7 +6,6 @@ import generators.RoundRobinGenerator;
 
 import model.MarketModel;
 
-import systemmanager.Consts;
 import utils.RandPlus;
 import data.AgentProperties;
 import entity.market.Market;
@@ -35,7 +34,7 @@ public class SMAgentFactory {
 	 */
 	public SMAgentFactory(MarketModel model, Generator<Integer> ids,
 			double arrivalRate, RandPlus rand) {
-		this(model, ids, new PoissonArrivalGenerator(Consts.START_TIME,
+		this(model, ids, new PoissonArrivalGenerator(TimeStamp.IMMEDIATE,
 				arrivalRate, new RandPlus(rand.nextLong())),
 				new RoundRobinGenerator<Market>(model.getMarkets()), rand);
 	}

@@ -47,16 +47,8 @@ public abstract class Activity {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof Activity))
-			return false;
-		Activity other = (Activity) obj;
-		return scheduledTime.equals(other.scheduledTime);
-	}
-
-	@Override
 	public String toString() {
-		return "Activity :: " + scheduledTime;
+		return getName() + " :: " + scheduledTime;
 	}
 	
 }

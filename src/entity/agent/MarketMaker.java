@@ -2,8 +2,8 @@ package entity.agent;
 
 import entity.market.Market;
 import entity.market.PrivateValue;
+import event.TimeStamp;
 import model.MarketModel;
-import systemmanager.Consts;
 import utils.RandPlus;
 
 /**
@@ -16,7 +16,7 @@ import utils.RandPlus;
 public abstract class MarketMaker extends SMAgent {
 	public MarketMaker(int agentID, MarketModel model, Market market,
 			RandPlus rand, int tickSize) {
-		super(agentID, Consts.START_TIME, model, market, new PrivateValue(),
+		super(agentID, TimeStamp.ZERO, model, market, new PrivateValue(),
 				rand, tickSize);
 	}
 

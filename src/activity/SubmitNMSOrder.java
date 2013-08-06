@@ -43,25 +43,17 @@ public class SubmitNMSOrder extends Activity {
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
 		return primaryMarket.submitNMSOrder(agent, price, quantity, currentTime);
 	}
-
-	public String toString() {
-		return new String(getName() + "::" + agent + "," + "+(" + price + ", "
-				+ quantity + ")");
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null | getClass() != obj.getClass()) return false;
-		SubmitNMSOrder other = (SubmitNMSOrder) obj;
-		return this.agent.equals(other.agent) && this.price.equals(other.price)
-				&& this.quantity == other.quantity
-				&& this.primaryMarket == other.primaryMarket;
-	}
-
+	
 	@Override
 	public int hashCode() {
 		return new HashCodeBuilder(19, 37).append(agent).append(price).append(
-				quantity).append(scheduledTime).toHashCode();
+				quantity).append(super.hashCode()).toHashCode();
 	}
-
+	
+	@Override
+	public String toString() {
+		return getName() + " :: " + agent + "+(" + price + ", " + quantity
+				+ ") -> " + primaryMarket;
+	}
+	
 }

@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.Collections;
 
 import model.MarketModel;
-import systemmanager.Consts;
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
@@ -54,15 +53,14 @@ public abstract class SMAgent extends Agent {
 
 	/**
 	 * Agent arrives in a single market.
-	 * 
-	 * @param primaryMarket
-	 * @param ts
+	 *
+	 * @param currentTime
 	 * @return Collection<Activity>
 	 */
-	public Collection<? extends Activity> agentArrival(TimeStamp ts) {
-		log(INFO,
-				ts.toString() + " | " + this + "->" + primaryMarket);
-		return Collections.singleton(new AgentStrategy(this, primaryMarket, Consts.INF_TIME));
+	public Collection<? extends Activity> agentArrival(TimeStamp currentTime) {
+		// FIXME puhs up into agent, keep log in overwritten part
+		log(INFO, this + "->" + primaryMarket);
+		return Collections.singleton(new AgentStrategy(this, TimeStamp.IMMEDIATE));
 	}
 
 }
