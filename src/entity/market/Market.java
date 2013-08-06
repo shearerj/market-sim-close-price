@@ -109,14 +109,14 @@ public abstract class Market extends Entity {
 		List<fourheap.Transaction<Price, TimeStamp>> ftransactions = orderbook.clear();
 		List<Price> prices = clearingRule.pricing(ftransactions);
 
-		List<Transaction2> transactions = new ArrayList<Transaction2>(
+		List<Transaction> transactions = new ArrayList<Transaction>(
 				ftransactions.size());
 		Iterator<Price> pit = prices.iterator();
 		for (fourheap.Transaction<Price, TimeStamp> ftrans : ftransactions) {
 
 			Order buy = orderMapping.get(ftrans.getBuy());
 			Order sell = orderMapping.get(ftrans.getSell());
-			Transaction2 trans = new Transaction2(buy.getAgent(),
+			Transaction trans = new Transaction(buy.getAgent(),
 					sell.getAgent(), this, buy, sell, ftrans.getQuantity(),
 					pit.next(), currentTime);
 			model.addTrans(trans);

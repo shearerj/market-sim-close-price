@@ -1,6 +1,5 @@
 package entity.market;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import entity.Agent;
@@ -17,55 +16,55 @@ public class Transaction {
 	protected final Agent buyer;
 	protected final Agent seller;
 	protected final Market market;
-	protected final Bid buyBid;
-	protected final Bid sellBid;
+	protected final Order buyOrder;
+	protected final Order sellOrder;
 
 	// Transaction Info
 	protected final int quantity;
 	protected final Price price;
 	protected final TimeStamp execTime;
 
-	public Transaction(Agent buyer, Agent seller, Market market, Bid buyBid,
-			Bid sellBid, int quantity, Price price, TimeStamp execTime) {
+	public Transaction(Agent buyer, Agent seller, Market market, Order buyOrder,
+			Order sellOrder, int quantity, Price price, TimeStamp execTime) {
 		this.buyer = buyer;
 		this.seller = seller;
 		this.market = market;
-		this.buyBid = buyBid;
-		this.sellBid = sellBid;
+		this.buyOrder = buyOrder;
+		this.sellOrder = sellOrder;
 		this.quantity = quantity;
 		this.price = price;
 		this.execTime = execTime;
 	}
 
-	public Agent getBuyer() {
+	public final Agent getBuyer() {
 		return buyer;
 	}
 
-	public Agent getSeller() {
+	public final Agent getSeller() {
 		return seller;
 	}
 
-	public Market getMarket() {
+	public final Market getMarket() {
 		return market;
 	}
 
-	public Bid getBuyBid() {
-		return buyBid;
+	public final Order getBuyBid() {
+		return buyOrder;
 	}
 
-	public Bid getSellBid() {
-		return sellBid;
+	public final Order getSellBid() {
+		return sellOrder;
 	}
 
-	public int getQuantity() {
+	public final int getQuantity() {
 		return quantity;
 	}
 
-	public Price getPrice() {
+	public final Price getPrice() {
 		return price;
 	}
 
-	public TimeStamp getExecTime() {
+	public final TimeStamp getExecTime() {
 		return execTime;
 	}
 
@@ -73,17 +72,16 @@ public class Transaction {
 	public boolean equals(Object obj) {
 		if (obj == null || getClass() != obj.getClass()) return false;
 		Transaction other = (Transaction) obj;
-		return new EqualsBuilder().append(price, other.price).append(quantity,
-				other.quantity).append(buyer, other.buyer).append(seller,
-				other.seller).append(buyBid, other.buyBid).append(sellBid,
-				other.sellBid).append(market, other.market).append(execTime,
-				other.execTime).isEquals();
+		return price.equals(other.price) && quantity == other.quantity
+				&& buyOrder.equals(other.buyOrder) && sellOrder.equals(other.sellOrder)
+				&& buyer.equals(other.buyer) && seller.equals(other.seller)
+				&& market.equals(other.market) && execTime.equals(other.execTime);
 	}
 
 	@Override
 	public int hashCode() {
 		return new HashCodeBuilder(17, 31).append(price).append(quantity).append(
-				buyer).append(seller).append(buyBid).append(sellBid).append(
+				buyer).append(seller).append(buyOrder).append(sellOrder).append(
 				market).append(execTime).toHashCode();
 	}
 

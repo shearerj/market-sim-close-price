@@ -10,14 +10,13 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-public class Order extends Bid {
+public class Order {
 
 	protected final Agent agent;
 	protected Market market;
 	protected final fourheap.Order<Price, TimeStamp> order;
 	
 	public Order(Agent agent, Market market, fourheap.Order<Price, TimeStamp> order) {
-		super(agent, market, order.getSubmitTime()); // FIXME Remove and subclassing
 		this.agent = agent;
 		this.market = market;
 		this.order = order;
