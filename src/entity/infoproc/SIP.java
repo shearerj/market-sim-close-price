@@ -29,7 +29,6 @@ import event.TimeStamp;
  */
 public class SIP extends IP {
 
-	protected final int modelID; // for logging only
 	protected final Map<Market, Quote> marketQuotes; // hashed by market
 	protected final List<Transaction> transactions;
 	protected BestBidAsk nbbo;
@@ -38,7 +37,6 @@ public class SIP extends IP {
 
 	public SIP(int ID, int modelID, TimeStamp latency) {
 		super(ID, latency);
-		this.modelID = modelID;
 		this.marketQuotes = new HashMap<Market, Quote>();
 		this.transactions = new ArrayList<Transaction>();
 		this.nbbo = new BestBidAsk(null, null, null, null);
@@ -97,6 +95,6 @@ public class SIP extends IP {
 	}
 
 	public String toString() {
-		return "SIP number " + id + ", model number " + modelID;
+		return "SIP";
 	}
 }

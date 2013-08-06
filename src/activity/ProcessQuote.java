@@ -37,22 +37,15 @@ public class ProcessQuote extends Activity {
 		return this.ip.processQuote(market, quote, newTransactions, currentTime);
 	}
 
-	public String toString() {
-		return new String(getName() + "::" + market + ":" + quote);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof ProcessQuote)) return false;
-		ProcessQuote other = (ProcessQuote) obj;
-		return super.equals(other) && this.ip.equals(other.ip)
-				&& this.market.equals(other.market)
-				&& this.quote.equals(other.quote);
-	}
-
 	@Override
 	public int hashCode() {
 		return new HashCodeBuilder(19, 37).append(market).append(ip).append(
 				quote).append(scheduledTime).toHashCode();
 	}
+	
+	@Override
+	public String toString() {
+		return getName() + "::" + market + " -> " + ip + " : " + quote;
+	}
+	
 }

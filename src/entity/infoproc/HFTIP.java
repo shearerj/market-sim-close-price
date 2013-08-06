@@ -6,7 +6,7 @@ import java.util.List;
 
 import activity.Activity;
 import activity.AgentStrategy;
-import entity.agent.LAAgent;
+import entity.agent.HFTAgent;
 import entity.market.Market;
 import entity.market.Quote;
 import entity.market.Transaction;
@@ -17,9 +17,9 @@ import event.TimeStamp;
  * 
  * @author cnris
  */
-public class LAIP extends SMIP {
+public class HFTIP extends SMIP {
 
-	protected final LAAgent laAgent;
+	protected final HFTAgent hftAgent;
 
 	/**
 	 * Constructor
@@ -27,9 +27,9 @@ public class LAIP extends SMIP {
 	 * @param ID
 	 * @param d
 	 */
-	public LAIP(int ID, TimeStamp latency, Market mkt, LAAgent laagent) {
+	public HFTIP(int ID, TimeStamp latency, Market mkt, HFTAgent hftAgent) {
 		super(ID, latency, mkt);
-		this.laAgent = laagent;
+		this.hftAgent = hftAgent;
 	}
 
 	@Override
@@ -37,12 +37,12 @@ public class LAIP extends SMIP {
 			List<Transaction> newTransactions, TimeStamp currentTime) {
 		Collection<Activity> acts = new ArrayList<Activity>(super.processQuote(
 				market, quote, newTransactions, currentTime));
-		acts.add(new AgentStrategy(laAgent, TimeStamp.IMMEDIATE));
+		acts.add(new AgentStrategy(hftAgent, TimeStamp.IMMEDIATE));
 		return acts;
 	}
 
 	@Override
 	public String toString() {
-		return super.toString() + ", LA: " + laAgent;
+		return "(HFTIP " + id + " in " + assocaitedMarket + " for " + hftAgent + ")"; 
 	}
 }

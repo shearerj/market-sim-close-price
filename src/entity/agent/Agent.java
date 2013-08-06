@@ -240,13 +240,6 @@ public abstract class Agent extends Entity {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof Agent)) return false;
-		Agent agent = (Agent) obj;
-		return super.equals(agent) && model.equals(agent.model);
-	}
-
-	@Override
 	public String toString() {
 		return new String("(" + id + ", " + model + ")");
 	}

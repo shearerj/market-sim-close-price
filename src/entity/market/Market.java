@@ -65,7 +65,7 @@ public abstract class Market extends Entity {
 		// FIXME Add latency properly, change null to this
 		this.ips = new ArrayList<IP>();
 		this.sip = model.getSIP();
-		this.ip = new SMIP(model.nextIPID(), new TimeStamp(0), null);
+		this.ip = new SMIP(model.nextIPID(), new TimeStamp(0), this);
 		ips.add(sip);
 		ips.add(ip);
 
@@ -120,14 +120,14 @@ public abstract class Market extends Entity {
 			Transaction trans = new Transaction(buy.getAgent(),
 					sell.getAgent(), this, buy, sell, ftrans.getQuantity(),
 					pit.next(), currentTime);
+			transactions.add(trans);
 			model.addTrans(trans);
 			buy.getAgent().addTransaction(trans, currentTime);
 			// FIXME Account for same buyer and seller
 			// FIXME Set last clear price / do it in update quote
 		}
 
-		List<Transaction> tempTrans = new ArrayList<Transaction>(transactions); // FIXME remove
-		return updateQuote(Collections.unmodifiableList(tempTrans), currentTime);
+		return updateQuote(Collections.unmodifiableList(transactions), currentTime);
 	}
 
 	/**
@@ -257,13 +257,6 @@ public abstract class Market extends Entity {
 	@Override
 	public int hashCode() {
 		return super.hashCode() ^ model.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof Market)) return false;
-		Market market = (Market) obj;
-		return super.equals(market) && model.equals(market.model);
 	}
 
 	@Override

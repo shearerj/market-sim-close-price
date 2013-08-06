@@ -55,6 +55,6 @@ public class SMIP extends IP {
 	}
 
 	public String toString() {
-		return "SMIP number " + id + ", " + "market" + assocaitedMarket;
+		return "(SMIP " + id + " in " + assocaitedMarket + ")";
 	}
 }

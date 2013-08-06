@@ -30,13 +30,6 @@ public abstract class Entity {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof Entity)) return false;
-		Entity ent = (Entity) obj;
-		return id == ent.id;
-	}
-
-	@Override
 	public String toString() {
 		return "(" + id + ")";
 	}

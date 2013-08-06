@@ -123,10 +123,18 @@ public class Price implements Comparable<Price> {
 		Price other = (Price) obj;
 		return price == other.price;
 	}
-
+	
 	@Override
 	public String toString() {
-		return Integer.toString(price);
+		int dollars = price / PRICE_PER_DOLLAR;
+		int digits = MathUtils.logn(PRICE_PER_DOLLAR, 10);
+		int cents = price % PRICE_PER_DOLLAR;
+		while (digits > 2 && cents % 10 == 0) {
+			cents /= 10;
+			digits--;
+		}
+		
+		return String.format("$%d.%0" + digits + "d", dollars, cents);
 	}
 
 }

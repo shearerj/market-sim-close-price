@@ -36,21 +36,14 @@ public class SendToIP extends Activity {
 		return ip.sendToIP(market, quote, transactions, time);
 	}
 
-	public String toString() {
-		return new String(getName() + "::" + market);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof SendToIP)) return false;
-		SendToIP other = (SendToIP) obj;
-		return super.equals(other) && this.market.equals(other.market)
-				&& this.ip.equals(other.ip) && this.quote.equals(other.quote);
-	}
-
 	@Override
 	public int hashCode() {
 		return new HashCodeBuilder(19, 37).append(market).append(scheduledTime).append(
 				quote).append(ip).toHashCode();
+	}
+	
+	@Override
+	public String toString() {
+		return getName() + "::" + market + " -> " + ip;
 	}
 }

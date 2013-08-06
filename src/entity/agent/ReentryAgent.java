@@ -18,6 +18,7 @@ import event.TimeStamp;
  */
 public abstract class ReentryAgent extends BackgroundAgent {
 
+	// TODO Change to generator
 	protected ArrivalTime reentry; // re-entry times
 	
 	public ReentryAgent(int agentID, TimeStamp arrivalTime, MarketModel model,

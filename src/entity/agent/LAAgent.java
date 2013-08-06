@@ -14,7 +14,7 @@ import activity.Activity;
 import activity.SubmitOrder;
 import data.EntityProperties;
 import data.Keys;
-import entity.infoproc.LAIP;
+import entity.infoproc.HFTIP;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Quote;
@@ -30,16 +30,16 @@ import event.TimeStamp;
 public class LAAgent extends HFTAgent {
 
 	protected final double alpha; // LA profit gap
-	protected final Map<Market, LAIP> ips;
+	protected final Map<Market, HFTIP> ips;
 
 	public LAAgent(int agentID, MarketModel model, double alpha,
 			TimeStamp latency, RandPlus rand, int tickSize) {
 		super(agentID, Consts.START_TIME, model, rand, tickSize);
 		this.alpha = alpha;
-		this.ips = new HashMap<Market, LAIP>();
+		this.ips = new HashMap<Market, HFTIP>();
 
 		for (Market market : model.getMarkets()) {
-			LAIP laip = new LAIP(model.nextIPID(), latency, market, this);
+			HFTIP laip = new HFTIP(model.nextIPID(), latency, market, this);
 			ips.put(market, laip);
 			market.addIP(laip);
 		}
@@ -57,7 +57,7 @@ public class LAAgent extends HFTAgent {
 		Market bestBidMarket = null, bestAskMarket = null;
 		int bestBidQuantity = 0, bestAskQuantity = 0;
 
-		for (Entry<Market, LAIP> ipEntry : ips.entrySet()) {
+		for (Entry<Market, HFTIP> ipEntry : ips.entrySet()) {
 			Quote q = ipEntry.getValue().getQuote();
 			if (q.getAskPrice() != null && q.getAskPrice().lessThan(bestAsk)) {
 				bestAsk = q.getAskPrice();
