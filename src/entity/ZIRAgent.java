@@ -10,7 +10,7 @@ import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
-import activity.SubmitNMSBid;
+import activity.SubmitNMSOrder;
 import data.EntityProperties;
 import data.Keys;
 import entity.market.Market;
@@ -109,7 +109,7 @@ public class ZIRAgent extends ReentryAgent {
 								quantity) + "=" + val;
 				log(INFO, s);
 
-				activities.add(new SubmitNMSBid(this, price, quantity, primaryMarket,
+				activities.add(new SubmitNMSOrder(this, price, quantity, primaryMarket,
 						TimeStamp.IMMEDIATE));
 				submissionTimes.add(ts);
 

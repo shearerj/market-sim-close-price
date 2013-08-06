@@ -24,8 +24,8 @@ import data.Player;
 import entity.Agent;
 import entity.SIP;
 import entity.SMAgentFactory;
-import entity.market.Bid;
 import entity.market.Market;
+import entity.market.Order;
 import entity.market.Price;
 import entity.market.Transaction;
 import event.EventManager;
@@ -207,12 +207,12 @@ public abstract class MarketModel {
 		trans.add(tr);
 	}
 
-	public ArrayList<Bid> getAllBids() {
-		ArrayList<Bid> modelBids = new ArrayList<Bid>();
-		for (Market mkt : markets) {
-			modelBids.addAll(mkt.getAllBids());
+	public Collection<Order> getAllOrders() {
+		ArrayList<Order> modelOrders = new ArrayList<Order>();
+		for (Market market : markets) {
+			modelOrders.addAll(market.getAllOrders());
 		}
-		return modelBids;
+		return modelOrders;
 	}
 
 	public Collection<Market> getMarkets() {

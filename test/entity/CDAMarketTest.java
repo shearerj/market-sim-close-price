@@ -45,7 +45,7 @@ public class CDAMarketTest {
 		MockAgent agent = new MockAgent(agentIndex++, model, market);
 
 		// Creating and adding the bid
-		market.submitBid(agent, new Price(1), 1, time);
+		market.submitOrder(agent, new Price(1), 1, time);
 
 		// Testing the market
 		// PQBid testBid = new PQBid(agent, market, time);
@@ -63,7 +63,7 @@ public class CDAMarketTest {
 		MockAgent agent = new MockAgent(agentIndex++, model, market);
 		
 		// Creating and adding the bid
-		market.submitBid(agent, new Price(1), -1, time);
+		market.submitOrder(agent, new Price(1), -1, time);
 
 		// Testing the market
 		// PQBid testBid = new PQBid(agent, market, time);
@@ -83,8 +83,8 @@ public class CDAMarketTest {
 		
 
 		// Creating and adding bids
-		market.submitBid(agent1, new Price(100), 1, time);
-		market.submitBid(agent2, new Price(100), -1, time);
+		market.submitOrder(agent1, new Price(100), 1, time);
+		market.submitOrder(agent2, new Price(100), -1, time);
 
 		// Testing the market for the correct transaction
 		market.clear(time);
@@ -106,8 +106,8 @@ public class CDAMarketTest {
 		MockAgent agent2 = new MockAgent(agentIndex++, model, market);
 		
 		// Creating and adding bids
-		market.submitBid(agent1, new Price(200), 1, time);
-		market.submitBid(agent2, new Price(50), -1, time);
+		market.submitOrder(agent1, new Price(200), 1, time);
+		market.submitOrder(agent2, new Price(50), -1, time);
 
 		// Testing the market for the correct transaction
 		market.clear(time);
@@ -131,10 +131,10 @@ public class CDAMarketTest {
 		MockAgent agent4 = new MockAgent(agentIndex++, model, market);
 		
 		// Creating and adding bids
-		market.submitBid(agent1, new Price(150),-1, time);
-		market.submitBid(agent2, new Price(100),-1, time);
-		market.submitBid(agent3, new Price(175), 1, time);
-		market.submitBid(agent4, new Price(125), 1, time);
+		market.submitOrder(agent1, new Price(150),-1, time);
+		market.submitOrder(agent2, new Price(100),-1, time);
+		market.submitOrder(agent3, new Price(175), 1, time);
+		market.submitOrder(agent4, new Price(125), 1, time);
 		market.clear(time);
 		System.out.println(model.getTrans().size());
 	}

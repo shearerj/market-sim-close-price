@@ -9,11 +9,11 @@ import java.util.NoSuchElementException;
 
 public class CollectionUtils {
 	
-	public <E> Collection<E> concat(Collection<? extends E>... collections) {
+	public static <E> Collection<E> concat(Collection<? extends E>... collections) {
 		return concat(Arrays.asList(collections));
 	}
 	
-	public <E> Collection<E> concat(List<? extends Collection<? extends E>> collections) {
+	public static <E> Collection<E> concat(List<? extends Collection<? extends E>> collections) {
 		Collection<E> concated = new ArrayList<E>();
 		for (Collection<? extends E> coll : collections)
 			concated.addAll(coll);

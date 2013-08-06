@@ -14,6 +14,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 
 import logger.Logger;
 import model.MockMarketModel;
@@ -26,11 +27,11 @@ import utils.RandPlus;
 import activity.Activity;
 import activity.ProcessQuote;
 import activity.SendToIP;
-import activity.SubmitNMSBid;
+import activity.SubmitNMSOrder;
 import data.EntityProperties;
 import data.Keys;
-import entity.market.Bid;
 import entity.market.Market;
+import entity.market.Order;
 import entity.market.Price;
 import event.TimeStamp;
 
@@ -92,7 +93,7 @@ public class AAAgentTest {
 		// creating a dummy agent
 		MockAgent agent = new MockAgent(agentIndex++, model, market);
 		// Having the agent submit a bid to the market
-		Collection<? extends Activity> bidActs = market.submitBid(agent, price,
+		Collection<? extends Activity> bidActs = market.submitOrder(agent, price,
 				quantity, time);
 
 		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
@@ -123,40 +124,34 @@ public class AAAgentTest {
 
 		// executing the bid submission - will go to the market
 		for (Activity act : test) {
-			if (act instanceof SubmitNMSBid) {
+			if (act instanceof SubmitNMSOrder) {
 				act.execute(time);
 			}
 		}
 	}
 	
-	private void assertCorrectBid(Agent agent,
-			Price low, Price high, int quantity) {
-		Bid bid = market.getBids().get(agent);
+	private void assertCorrectBid(Agent agent, Price low, Price high,
+			int quantity) {
+		Iterator<Order> orders = agent.activeOrders.iterator();
 		// Asserting the bid is correct
-		assertTrue("BidTreeSize is incorrect", bid.getPoints().size() == 1);
-		
-		assertTrue("Bid agent is null", bid.getAgent() != null);
-		assertTrue("Bid agent is incorrect", bid.getAgent().equals(agent));
+		assertTrue("OrderSize is incorrect", orders.hasNext());
+		Order order = orders.next();
 
-		Price bidPrice = bid.getPoints().first().getPrice();
-		assertTrue("Bid price (" + bidPrice + ") less than " + low,
+		assertTrue("Order agent is null", order.getAgent() != null);
+		assertTrue("Order agent is incorrect", order.getAgent().equals(agent));
+
+		Price bidPrice = order.getPrice();
+		assertTrue("Order price (" + bidPrice + ") less than " + low,
 				bidPrice.greaterThan(low));
-		assertTrue("Bid price (" + bidPrice + ") greater than " + high,
+		assertTrue("Order price (" + bidPrice + ") greater than " + high,
 				bidPrice.lessThan(high));
-		
-		assertTrue("Quantity is incorrect",
-				bid.getPoints().first().getQuantity() == quantity);
+
+		assertTrue("Quantity is incorrect", order.getQuantity() == quantity);
 	}
 	
 	private void assertCorrectBid(Agent agent,
 			Price match, int quantity) {
-		Bid bid = market.getBids().get(agent);
-		// Asserting the bid is correct
-		assertTrue(bid.getPoints().size() == 1);
-		assertTrue(bid.getAgent() != null);
-		assertTrue(bid.getAgent().equals(agent));
-		assertTrue(bid.getPoints().first().getPrice().equals(match));
-		assertTrue(bid.getPoints().first().getQuantity() == quantity);
+		assertCorrectBid(agent, new Price(-1), new Price(Integer.MAX_VALUE), quantity);
 	}
 
 	@Test

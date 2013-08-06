@@ -7,15 +7,13 @@ import static utils.Compare.min;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 import model.MarketModel;
 import utils.MathUtils;
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
-import activity.SubmitMultiPointBid;
+import activity.SubmitOrder;
 import data.EntityProperties;
 import data.Keys;
 import entity.market.BestBidAsk;
@@ -84,7 +82,7 @@ public class BasicMarketMaker extends MarketMaker {
 		// update NBBO
 		BestBidAsk lastNBBOQuote = sip.getNBBO();
 
-		Quote quote = primaryMarket.getQuote();
+		Quote quote = marketIP.getQuote();
 		Price bid = quote.getBidPrice();
 		Price ask = quote.getAskPrice();
 
@@ -98,7 +96,7 @@ public class BasicMarketMaker extends MarketMaker {
 
 		} else if (!bid.equals(lastBid) || !ask.equals(lastAsk)) {
 			// check if bid/ask has changed; if so, submit fresh orders
-			Map<Price, Integer> priceQuantMap = new HashMap<Price, Integer>();
+			// FIXME Withdraw old orders
 
 			Price ct = new Price(numRungs * stepSize);
 			// min price for buy order in the ladder
@@ -124,19 +122,18 @@ public class BasicMarketMaker extends MarketMaker {
 			// build descending list of buy orders (yt, ..., yt - ct) or
 			// stops at NBBO ask
 			for (int price = bid.getPrice(); price >= buyMinPrice.getPrice(); price -= stepSize)
-				priceQuantMap.put(new Price(price), 1);
+				acts.add(new SubmitOrder(this, primaryMarket, new Price(price), 1, TimeStamp.IMMEDIATE));
 
 			// build ascending list of sell orders (xt, ..., xt + ct) or
 			// stops at NBBO bid
-			for (int p = ask.getPrice(); p <= sellMaxPrice.getPrice(); p += stepSize)
-				priceQuantMap.put(new Price(p), -1);
+			for (int price = ask.getPrice(); price <= sellMaxPrice.getPrice(); price += stepSize)
+				acts.add(new SubmitOrder(this, primaryMarket, new Price(price), -1, TimeStamp.IMMEDIATE));
 
 			log(INFO, ts + " | " + primaryMarket + " " + this + " " + getName()
 					+ "::agentStrategy: ladder numRungs=" + numRungs
 					+ ", stepSize=" + stepSize + ": buys [" + buyMinPrice
 					+ ", " + bid + "] &" + " sells [" + ask + ", "
 					+ sellMaxPrice + "]");
-			acts.add(new SubmitMultiPointBid(this, primaryMarket, priceQuantMap, TimeStamp.IMMEDIATE));
 
 		} else {
 			log(INFO, ts + " | " + primaryMarket + " " + this + " " + getName()

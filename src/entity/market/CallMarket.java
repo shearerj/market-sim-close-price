@@ -2,7 +2,8 @@ package entity.market;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+
+import clearingrule.UniformPriceClear;
 
 import model.MarketModel;
 import systemmanager.Consts;
@@ -25,19 +26,18 @@ public class CallMarket extends Market {
 	public final static String CLEAR_FREQ_KEY = "clearFreq";
 	public final static String PRICING_POLICY_KEY = "pricingPolicy";
 
-	protected final float pricingPolicy;
+	// FIXME Move to SMIP?
 	protected final TimeStamp clearFreq;
 	protected TimeStamp nextClearTime, nextQuoteTime;
 
-	public CallMarket(int marketID, MarketModel model, float pricingPolicy,
+	public CallMarket(int marketID, MarketModel model, double pricingPolicy,
 			TimeStamp clearFreq) {
-		super(marketID, model);
+		super(marketID, model, new UniformPriceClear(pricingPolicy));
 
 		if (clearFreq.after(Consts.START_TIME))
 			throw new IllegalArgumentException(
 					"Can't create a call market with 0 clear frequency. Create a CDA instead.");
 		
-		this.pricingPolicy = pricingPolicy;
 		this.clearFreq = clearFreq;
 		this.nextClearTime = clearFreq;
 	}
@@ -51,11 +51,6 @@ public class CallMarket extends Market {
 		// Insert next clear activity at some time in the future
 		activities.add(new Clear(this, nextClearTime));
 		return activities;
-	}
-
-	@Override
-	protected List<Transaction> clearPricing(TimeStamp currentTime) {
-		return orderbook.uniformPriceClear(currentTime, pricingPolicy);
 	}
 	
 }

@@ -8,7 +8,7 @@ import java.util.Collections;
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
-import activity.SubmitNMSBid;
+import activity.SubmitNMSOrder;
 import data.EntityProperties;
 import data.Keys;
 import entity.market.Market;
@@ -66,7 +66,7 @@ public class ZIAgent extends BackgroundAgent {
 				* rand.nextDouble() * 2 * bidRange)).nonnegative();
 
 		// bid does not expire
-		return Collections.singleton(new SubmitNMSBid(this, price, quantity,
+		return Collections.singleton(new SubmitNMSOrder(this, price, quantity,
 				primaryMarket, TimeStamp.IMMEDIATE));
 	}
 }

@@ -2,7 +2,9 @@ package entity.market;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
+
+import clearingrule.EarliestPriceClear;
 
 import model.MarketModel;
 import systemmanager.Consts;
@@ -19,30 +21,25 @@ import event.TimeStamp;
 public class CDAMarket extends Market {
 
 	public CDAMarket(int marketID, MarketModel model, int ipID) {
-		super(marketID, model);
+		super(marketID, model, new EarliestPriceClear());
 	}
 
 	@Override
-	public Collection<? extends Activity> submitBid(Agent agent, Price price,
+	public Collection<? extends Activity> submitOrder(Agent agent, Price price,
 			int quantity, TimeStamp curentTime) {
 		Collection<Activity> activities = new ArrayList<Activity>(
-				super.submitBid(agent, price, quantity, curentTime));
+				super.submitOrder(agent, price, quantity, curentTime));
 		activities.add(new Clear(this, Consts.INF_TIME));
 		return activities;
 	}
 
 	@Override
-	public Collection<? extends Activity> withdrawBid(Agent agent,
-			TimeStamp curentTime) {
-		Collection<Activity> activities = new ArrayList<Activity>(
-				super.withdrawBid(agent, curentTime));
-		activities.add(new Clear(this, Consts.INF_TIME));
-		return activities;
-	}
-
-	@Override
-	protected List<Transaction> clearPricing(TimeStamp currentTime) {
-		return orderbook.earliestPriceClear(currentTime);
+	public Collection<? extends Activity> withdrawOrder(Order order,
+			TimeStamp currentTime) {
+		Collection<Activity> acts = new ArrayList<Activity>(2);
+		acts.addAll(super.withdrawOrder(order, currentTime));
+		acts.addAll(updateQuote(Collections.<Transaction>emptyList(), currentTime));
+		return acts;
 	}
 
 }

@@ -15,7 +15,7 @@ import event.*;
  * 
  * @author ewah
  */
-public class SubmitBid extends Activity {
+public class SubmitOrder extends Activity {
 
 	// TODO Change this to a Bid Object. Will take a bid more thought.
 	private Agent agent;
@@ -23,7 +23,7 @@ public class SubmitBid extends Activity {
 	private Price price;
 	private int quantity;
 
-	public SubmitBid(Agent agent, Market market, Price price, int quantity,
+	public SubmitOrder(Agent agent, Market market, Price price, int quantity,
 			TimeStamp scheduledTime) {
 		super(scheduledTime);
 		this.agent = agent;
@@ -33,7 +33,7 @@ public class SubmitBid extends Activity {
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
-		return market.submitBid(agent, price, quantity, currentTime);
+		return market.submitOrder(agent, price, quantity, currentTime);
 	}
 
 	public String toString() {
@@ -44,7 +44,7 @@ public class SubmitBid extends Activity {
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null || getClass() != obj.getClass()) return false;
-		SubmitBid other = (SubmitBid) obj;
+		SubmitOrder other = (SubmitOrder) obj;
 		return new EqualsBuilder().append(agent, other.agent).append(market,
 				other.market).append(price, other.price).append(quantity,
 				other.quantity).append(scheduledTime, other.scheduledTime).isEquals();

@@ -48,7 +48,7 @@ public abstract class SMAgent extends Agent {
 			Market market, PrivateValue pv, RandPlus rand, int tickSize) {
 		super(agentID, arrivalTime, model, pv, rand, tickSize);
 		this.primaryMarket = market;
-		this.marketIP = market.getIPSM();
+		this.marketIP = market.getSMIP();
 	}
 
 	/**

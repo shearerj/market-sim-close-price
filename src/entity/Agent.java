@@ -15,7 +15,6 @@ import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
 import activity.Liquidate;
-import entity.market.Market;
 import entity.market.Order;
 import entity.market.Price;
 import entity.market.PrivateValue;
@@ -148,23 +147,24 @@ public abstract class Agent extends Entity {
 	/**
 	 * Computes any unrealized profit based on market bid/ask quotes.
 	 */
+	// FIXME Do this properly. Does it need to reference Market explicitely?
 	public Price getUnrealizedProfit() {
 		if (positionBalance == 0) return Price.ZERO;
 
 		Price p = null;
-		if (positionBalance > 0) {
-			// For long position, compare cost to bid quote (buys)
-			for (Market market : model.getMarkets())
-				if (market.getQuote().getBidPrice().greaterThan(p))
-					p = market.getQuote().getBidPrice();
-		} else {
-			// For short position, compare cost to ask quote (sells)
-			for (Market market : model.getMarkets()) {
-				if (market.getQuote().getAskPrice().lessThan(p)) {
-					p = market.getQuote().getAskPrice();
-				}
-			}
-		}
+//		if (positionBalance > 0) {
+//			// For long position, compare cost to bid quote (buys)
+//			for (Market market : model.getMarkets())
+//				if (market.getQuote().getBidPrice().greaterThan(p))
+//					p = market.getQuote().getBidPrice();
+//		} else {
+//			// For short position, compare cost to ask quote (sells)
+//			for (Market market : model.getMarkets()) {
+//				if (market.getQuote().getAskPrice().lessThan(p)) {
+//					p = market.getQuote().getAskPrice();
+//				}
+//			}
+//		}
 
 		log(DEBUG, model.getName() + ": " + this + " bal="
 				+ positionBalance + ", p=" + p + ", avgCost=" + averageCost);

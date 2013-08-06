@@ -15,7 +15,7 @@ import utils.RandPlus;
 import utils.Pair;
 import activity.Activity;
 import activity.AgentStrategy;
-import activity.SubmitNMSBid;
+import activity.SubmitNMSOrder;
 import data.ArrivalTime;
 import data.EntityProperties;
 import data.Keys;
@@ -331,7 +331,7 @@ public class AAAgent extends ReentryAgent {
 		if (bestBid == null || bestAsk == null ||
 				bestBid.equals(new Price(-1)) || bestAsk.equals(new Price(-1))) {
 			Price price = isBuyer ? Price.ZERO : Price.INF;
-			return Collections.singleton(new SubmitNMSBid(AAAgent.this, price, quantity, primaryMarket, TimeStamp.IMMEDIATE));
+			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, price, quantity, primaryMarket, TimeStamp.IMMEDIATE));
 		}
 		
 		// If best offer is outside of limit price, no bid is submitted
@@ -383,12 +383,12 @@ public class AAAgent extends ReentryAgent {
 			// if bestAsk < targetPrice, accept bestAsk
 			// else submit bid given by EQ 10/11
 			Price submitPrice = bestAsk.lessThanEqual(price) ? bestAsk : price;
-			return Collections.singleton(new SubmitNMSBid(AAAgent.this, submitPrice, quantity, primaryMarket, TimeStamp.IMMEDIATE));
+			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, submitPrice, quantity, primaryMarket, TimeStamp.IMMEDIATE));
 		} else { // Seller
 			// If outstanding bid >= target price, submit ask at bid price
 			// else submit bid given by EQ 10/11
 			Price submitPrice = bestBid.greaterThanEquals(price) ? bestBid : price;
-			return Collections.singleton(new SubmitNMSBid(AAAgent.this, submitPrice, quantity, primaryMarket, TimeStamp.IMMEDIATE));
+			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, submitPrice, quantity, primaryMarket, TimeStamp.IMMEDIATE));
 		}
 	}
 	

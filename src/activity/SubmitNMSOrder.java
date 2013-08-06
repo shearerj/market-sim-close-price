@@ -16,7 +16,7 @@ import event.*;
  * 
  * @author ewah
  */
-public class SubmitNMSBid extends Activity {
+public class SubmitNMSOrder extends Activity {
 
 	protected final Agent agent;
 	protected final Price price;
@@ -24,7 +24,7 @@ public class SubmitNMSBid extends Activity {
 	protected final Market primaryMarket;
 	protected final TimeStamp duration;
 
-	public SubmitNMSBid(Agent agent, Price price, int quantity,
+	public SubmitNMSOrder(Agent agent, Price price, int quantity,
 			Market primaryMarket, TimeStamp scheduledTime, TimeStamp duration) {
 		super(scheduledTime);
 		this.agent = agent;
@@ -34,14 +34,14 @@ public class SubmitNMSBid extends Activity {
 		this.duration = duration;
 	}
 
-	public SubmitNMSBid(Agent agent, Price price, int quantity,
+	public SubmitNMSOrder(Agent agent, Price price, int quantity,
 			Market primaryMarket, TimeStamp scheduledTime) {
 		this(agent, price, quantity, primaryMarket, scheduledTime,
 				TimeStamp.IMMEDIATE);
 	}
 
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
-		return primaryMarket.submitNMSBid(agent, price, quantity, currentTime);
+		return primaryMarket.submitNMSOrder(agent, price, quantity, currentTime);
 	}
 
 	public String toString() {
@@ -52,7 +52,7 @@ public class SubmitNMSBid extends Activity {
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null | getClass() != obj.getClass()) return false;
-		SubmitNMSBid other = (SubmitNMSBid) obj;
+		SubmitNMSOrder other = (SubmitNMSOrder) obj;
 		return this.agent.equals(other.agent) && this.price.equals(other.price)
 				&& this.quantity == other.quantity
 				&& this.primaryMarket == other.primaryMarket;

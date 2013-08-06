@@ -3,11 +3,13 @@ package entity;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+
+import clearingrule.UniformPriceClear;
 
 import model.MarketModel;
 import activity.Activity;
 import entity.market.Market;
+import entity.market.Order;
 import entity.market.Price;
 import entity.market.Transaction;
 import event.TimeStamp;
@@ -15,7 +17,7 @@ import event.TimeStamp;
 public class MockMarket extends Market {
 
 	public MockMarket(int marketID, MarketModel model) {
-		super(marketID, model);
+		super(marketID, model, new UniformPriceClear(0.5d));
 	}
 
 	public MockMarket(MarketModel model) {
@@ -23,28 +25,21 @@ public class MockMarket extends Market {
 	}
 
 	@Override
-	public Collection<? extends Activity> submitBid(Agent agent, Price price,
+	public Collection<? extends Activity> submitOrder(Agent agent, Price price,
 			int quantity, TimeStamp currentTime) {
-		Collection<Activity> acts = new ArrayList<Activity>(super.submitBid(
-				agent, price, quantity, currentTime));
-		acts.addAll(updateQuote(Collections.<Transaction> emptyList(),
-				currentTime));
+		Collection<Activity> acts = new ArrayList<Activity>(2);
+		acts.addAll(super.submitOrder(agent, price, quantity, currentTime));
+		acts.addAll(updateQuote(Collections.<Transaction> emptyList(), currentTime));
 		return acts;
 	}
 
 	@Override
-	public Collection<? extends Activity> withdrawBid(Agent agent,
+	public Collection<? extends Activity> withdrawOrder(Order order,
 			TimeStamp currentTime) {
-		Collection<Activity> acts = new ArrayList<Activity>(super.withdrawBid(
-				agent, currentTime));
-		acts.addAll(updateQuote(Collections.<Transaction> emptyList(),
-				currentTime));
+		Collection<Activity> acts = new ArrayList<Activity>(2);
+		acts.addAll(super.withdrawOrder(order, currentTime));
+		acts.addAll(updateQuote(Collections.<Transaction> emptyList(), currentTime));
 		return acts;
-	}
-
-	@Override
-	protected List<Transaction> clearPricing(TimeStamp currentTime) {
-		return orderbook.uniformPriceClear(currentTime, 0.5f);
 	}
 
 }

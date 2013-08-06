@@ -11,7 +11,7 @@ import model.MarketModel;
 import systemmanager.Consts;
 import utils.RandPlus;
 import activity.Activity;
-import activity.SubmitBid;
+import activity.SubmitOrder;
 import data.EntityProperties;
 import data.Keys;
 import entity.market.Market;
@@ -78,8 +78,8 @@ public class LAAgent extends HFTAgent {
 
 		Price midPoint = bestBid.plus(bestAsk).times(0.5).quantize(tickSize);
 		int quantity = Math.min(bestBidQuantity, bestAskQuantity);
-		return Arrays.asList(new SubmitBid(this, bestBidMarket, midPoint,
-				-quantity, TimeStamp.IMMEDIATE), new SubmitBid(this, bestAskMarket,
+		return Arrays.asList(new SubmitOrder(this, bestBidMarket, midPoint,
+				-quantity, TimeStamp.IMMEDIATE), new SubmitOrder(this, bestAskMarket,
 				midPoint, quantity, TimeStamp.IMMEDIATE));
 	}
 
