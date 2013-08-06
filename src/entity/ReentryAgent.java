@@ -4,9 +4,10 @@ package entity;
 import java.util.ArrayList;
 
 import data.ArrivalTime;
-import market.PrivateValue;
 import model.MarketModel;
 import utils.RandPlus;
+import entity.market.Market;
+import entity.market.PrivateValue;
 import event.TimeStamp;
 
 

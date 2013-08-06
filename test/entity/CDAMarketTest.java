@@ -5,14 +5,16 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 
 import logger.Logger;
-import market.Price;
-import market.Transaction;
 import model.MockMarketModel;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import entity.market.CDAMarket;
+import entity.market.Market;
+import entity.market.Price;
+import entity.market.Transaction;
 import event.TimeStamp;
 
 public class CDAMarketTest {

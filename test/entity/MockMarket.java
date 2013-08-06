@@ -5,10 +5,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import market.Price;
-import market.Transaction;
 import model.MarketModel;
 import activity.Activity;
+import entity.market.Market;
+import entity.market.Price;
+import entity.market.Transaction;
 import event.TimeStamp;
 
 public class MockMarket extends Market {

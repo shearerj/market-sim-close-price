@@ -4,10 +4,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import market.Quote;
-import market.Transaction;
 import activity.Activity;
 import activity.AgentStrategy;
+import entity.market.Market;
+import entity.market.Quote;
+import entity.market.Transaction;
 import event.TimeStamp;
 
 /**

@@ -12,7 +12,7 @@ import data.DummyFundamental;
 import data.EntityProperties;
 import data.FundamentalValue;
 import entity.Agent;
-import entity.Market;
+import entity.market.Market;
 
 public class MockMarketModel extends MarketModel {
 

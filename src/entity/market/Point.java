@@ -1,9 +1,8 @@
-package market;
+package entity.market;
 
 import java.util.Comparator;
 
 import entity.Agent;
-import entity.Market;
 
 public class Point implements Comparable<Point> {
 

@@ -3,13 +3,13 @@ package activity;
 import java.util.Collection;
 import java.util.List;
 
-import market.Quote;
-import market.Transaction;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import entity.IP;
-import entity.Market;
+import entity.market.Market;
+import entity.market.Quote;
+import entity.market.Transaction;
 import event.TimeStamp;
 
 /**

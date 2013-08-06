@@ -9,7 +9,7 @@ import com.google.gson.JsonObject;
 import data.AgentProperties;
 import data.EntityProperties;
 import data.FundamentalValue;
-import entity.CallMarket;
+import entity.market.CallMarket;
 import event.TimeStamp;
 
 /**

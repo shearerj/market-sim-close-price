@@ -19,6 +19,8 @@ import org.junit.Test;
 
 import data.EntityProperties;
 import data.Keys;
+import entity.market.CDAMarket;
+import entity.market.Market;
 import event.TimeStamp;
 
 public class IPTest {

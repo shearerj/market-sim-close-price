@@ -1,8 +1,10 @@
-package market;
+package clearingrule;
 
 import java.util.ArrayList;
 import java.util.List;
 
+
+import entity.market.Price;
 import event.TimeStamp;
 import fourheap.Transaction;
 

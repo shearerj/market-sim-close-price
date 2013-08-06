@@ -7,9 +7,10 @@ import java.util.Collections;
 import java.util.List;
 
 import logger.Logger;
-import market.Quote;
-import market.Transaction;
 import activity.Activity;
+import entity.market.Market;
+import entity.market.Quote;
+import entity.market.Transaction;
 import event.TimeStamp;
 
 /**

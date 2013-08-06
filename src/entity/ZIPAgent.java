@@ -9,6 +9,7 @@ import activity.Activity;
 import activity.AgentStrategy;
 import data.EntityProperties;
 import data.Keys;
+import entity.market.Market;
 import event.TimeStamp;
 
 /**

@@ -1,6 +1,5 @@
-package market;
+package entity.market;
 
-import entity.Market;
 
 /**
  * Data structure for holding best bid/ask quote (for updating NBBO)

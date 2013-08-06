@@ -4,7 +4,7 @@ import java.util.Collection;
 import org.apache.commons.lang3.builder.*;
 
 import entity.*;
-import market.*;
+import entity.market.*;
 import event.TimeStamp;
 
 /**

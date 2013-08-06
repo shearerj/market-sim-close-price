@@ -1,9 +1,8 @@
-package market;
+package entity.market;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.ERROR;
 
-import entity.Market;
 import event.TimeStamp;
 
 /**

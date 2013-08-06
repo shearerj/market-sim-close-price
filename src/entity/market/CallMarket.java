@@ -1,10 +1,9 @@
-package entity;
+package entity.market;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import market.Transaction;
 import model.MarketModel;
 import systemmanager.Consts;
 import activity.Activity;

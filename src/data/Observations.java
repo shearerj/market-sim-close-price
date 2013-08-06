@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import market.Transaction;
 import model.MarketModel;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
@@ -31,8 +30,9 @@ import com.google.gson.JsonObject;
 import entity.Agent;
 import entity.BackgroundAgent;
 import entity.HFTAgent;
-import entity.Market;
 import entity.MarketMaker;
+import entity.market.Market;
+import entity.market.Transaction;
 import event.TimeStamp;
 
 // TODO This current version of observations doesn't round doubles to the nearest ten thousandth

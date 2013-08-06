@@ -1,15 +1,14 @@
-package entity;
+package entity.market;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import market.Price;
-import market.Transaction;
 import model.MarketModel;
 import systemmanager.Consts;
 import activity.Activity;
 import activity.Clear;
+import entity.Agent;
 import event.TimeStamp;
 
 /**

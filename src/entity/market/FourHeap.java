@@ -4,7 +4,7 @@
  * 
  * Edited 2012/06/08 by ewah
  */
-package market;
+package entity.market;
 
 import static logger.Logger.Level.DEBUG;
 import static logger.Logger.Level.ERROR;
@@ -19,7 +19,6 @@ import java.util.TreeSet;
 import logger.Logger;
 import logger.Logger.Level;
 import utils.Compare;
-import entity.Market;
 import event.TimeStamp;
 
 /**

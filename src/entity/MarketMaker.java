@@ -1,6 +1,7 @@
 package entity;
 
-import market.PrivateValue;
+import entity.market.Market;
+import entity.market.PrivateValue;
 import model.MarketModel;
 import systemmanager.Consts;
 import utils.RandPlus;

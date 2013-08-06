@@ -1,4 +1,4 @@
-package market;
+package entity.market;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import entity.Agent;
-import entity.Market;
 import event.TimeStamp;
 
 /**

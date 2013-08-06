@@ -10,9 +10,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import market.BestBidAsk;
-import market.Price;
-import market.Quote;
 import model.MarketModel;
 import utils.MathUtils;
 import utils.RandPlus;
@@ -21,6 +18,10 @@ import activity.AgentStrategy;
 import activity.SubmitMultiPointBid;
 import data.EntityProperties;
 import data.Keys;
+import entity.market.BestBidAsk;
+import entity.market.Market;
+import entity.market.Price;
+import entity.market.Quote;
 import event.TimeStamp;
 
 /**

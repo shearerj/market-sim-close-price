@@ -9,6 +9,7 @@ import model.MarketModel;
 import systemmanager.Consts;
 import utils.RandPlus;
 import data.AgentProperties;
+import entity.market.Market;
 import event.TimeStamp;
 
 public class SMAgentFactory {

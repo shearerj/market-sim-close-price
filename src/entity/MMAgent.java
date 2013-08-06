@@ -6,10 +6,11 @@ import static logger.Logger.Level.INFO;
 import java.util.Collection;
 import java.util.Collections;
 
-import market.PrivateValue;
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
+import entity.market.Market;
+import entity.market.PrivateValue;
 import event.TimeStamp;
 
 /**

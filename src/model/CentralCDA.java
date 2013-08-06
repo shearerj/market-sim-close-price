@@ -9,7 +9,7 @@ import com.google.gson.JsonObject;
 import data.AgentProperties;
 import data.EntityProperties;
 import data.FundamentalValue;
-import entity.CDAMarket;
+import entity.market.CDAMarket;
 
 /**
  * CENTRALCDA

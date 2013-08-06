@@ -10,10 +10,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import market.Price;
-import market.PrivateValue;
-import market.Quote;
-import market.Transaction;
 import model.MarketModel;
 import utils.RandPlus;
 import utils.Pair;
@@ -23,6 +19,11 @@ import activity.SubmitNMSBid;
 import data.ArrivalTime;
 import data.EntityProperties;
 import data.Keys;
+import entity.market.Market;
+import entity.market.Price;
+import entity.market.PrivateValue;
+import entity.market.Quote;
+import entity.market.Transaction;
 import event.TimeStamp;
 
 /**

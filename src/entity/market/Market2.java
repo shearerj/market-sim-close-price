@@ -1,4 +1,4 @@
-package market;
+package entity.market;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
@@ -9,14 +9,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Iterator;
+
+import clearingrule.ClearingRule;
 
 import model.MarketModel;
 import activity.Activity;
 import activity.SendToIP;
-import activity.WithdrawBid;
+import activity.WithdrawOrder;
 import data.TimeSeries;
 import entity.Agent;
-import entity.Entity;
 import entity.IP;
 import entity.SIP;
 import entity.SMIP;
@@ -28,16 +30,16 @@ import fourheap.FourHeap;
  * 
  * @author ewah
  */
-public abstract class Market2 extends Entity {
+public abstract class Market2 extends Market {
 
 	protected final MarketModel model;
 	protected final FourHeap<Price, TimeStamp> orderbook;
 	protected final ClearingRule clearingRule;
-	
+
 	protected final SMIP ip;
 	protected final SIP sip;
 	protected final Collection<IP> ips;
-	
+
 	// Book keeping
 	protected final Map<fourheap.Order<Price, TimeStamp>, Order> orderMapping;
 
@@ -53,27 +55,30 @@ public abstract class Market2 extends Entity {
 	protected Price lastClearPrice;
 
 	public Market2(int marketID, MarketModel model, ClearingRule clearingRule) {
-		super(marketID);
+		super(marketID, model); // FIXME change to entity
 		this.model = model;
 		this.orderbook = new FourHeap<Price, TimeStamp>();
 		this.clearingRule = clearingRule;
-		
+
 		// FIXME Add latency properly, change null to this
 		this.ips = new ArrayList<IP>();
 		this.sip = model.getSIP();
 		this.ip = new SMIP(model.nextIPID(), new TimeStamp(0), null);
 		ips.add(sip);
 		ips.add(ip);
-		
+
 		this.orderMapping = new HashMap<fourheap.Order<Price, TimeStamp>, Order>();
 		this.orders = new ArrayList<Order>();
-		
+
 		this.depths = new TimeSeries();
 		this.spreads = new TimeSeries();
 		this.midQuotes = new TimeSeries();
 	}
 
-	// TODO Rename
+	public void addIP(IP ip) {
+		ips.add(ip);
+	}
+
 	public SMIP getSMIP() {
 		return this.ip;
 	}
@@ -85,39 +90,42 @@ public abstract class Market2 extends Entity {
 		return Collections.unmodifiableCollection(orders);
 	}
 
-	public void addIP(IP ip) {
-		ips.add(ip);
+	public Collection<? extends Activity> withdrawOrder(Order order,
+			TimeStamp currentTime) {
+		// FIXME Log something
+		orderbook.withdrawOrder(order.order);
+		order.agent.removeOrder(order);
+		return Collections.emptySet();
 	}
 
-	// FIXME Withdraw order method
+	// FIXME withdraw quantity of an order
 
 	/**
 	 * Clears the order book.
 	 */
 	public Collection<? extends Activity> clear(TimeStamp currentTime) {
 
-		// FIXME Log prior quote
-		log(INFO, currentTime + " | " + this + " Prior-clear Quote" + null);
-
 		List<fourheap.Transaction<Price, TimeStamp>> ftransactions = orderbook.clear();
 		List<Price> prices = clearingRule.pricing(ftransactions);
 
-		// FIXME log postclear quote
+		List<Transaction2> transactions = new ArrayList<Transaction2>(
+				ftransactions.size());
+		Iterator<Price> pit = prices.iterator();
+		for (fourheap.Transaction<Price, TimeStamp> ftrans : ftransactions) {
 
-		List<Transaction> transactions = new ArrayList<Transaction>(ftransactions.size());
-		for (fourheap.Transaction<Price, TimeStamp> trans : ftransactions) {
-			// FIXME Construct new Transaction
-			// FIXME Add transaction to model
-			// FIXME Add Transaction to Buyer and Seller account for same buyer and seller
-			// FIXME Set last clear price
+			Order buy = orderMapping.get(ftrans.getBuy());
+			Order sell = orderMapping.get(ftrans.getSell());
+			Transaction2 trans = new Transaction2(buy.getAgent(),
+					sell.getAgent(), this, buy, sell, ftrans.getQuantity(),
+					pit.next(), currentTime);
+			model.addTrans(trans);
+			buy.getAgent().addTransaction(trans, currentTime);
+			// FIXME Account for same buyer and seller
+			// FIXME Set last clear price / do it in update quote
 		}
 
-		// FIXME SendToSIP(s) should probably happen after a quote update,
-		// not after a clear. In general a clear should always cause a quote
-		// update, but this is important to note. Also, if there's a clear,
-		// but no transactions, it's probably not worth a SendToSIP, unless
-		// you're a call market.
-		return updateQuote(Collections.unmodifiableList(transactions), currentTime);
+		List<Transaction> tempTrans = new ArrayList<Transaction>(transactions); // FIXME remove
+		return updateQuote(Collections.unmodifiableList(tempTrans), currentTime);
 	}
 
 	/**
@@ -126,47 +134,27 @@ public abstract class Market2 extends Entity {
 	 */
 	protected Collection<? extends Activity> updateQuote(
 			List<Transaction> transactions, TimeStamp currentTime) {
-		// TODO This first part should be done a lot differently
-
 		Price ask = orderbook.askQuote();
 		Price bid = orderbook.bidQuote();
 
-		// FIXME Change the way quote is
-		Quote quote = new Quote(null, ask, bid, currentTime);
+		Quote quote = new Quote(this, ask, bid, currentTime);
 
 		log(INFO, currentTime + " | " + this + " SendToSIP" + quote);
 
 		Collection<Activity> activities = new ArrayList<Activity>();
 		for (IP ip : ips)
 			// FIXME Change null to this
-			activities.add(new SendToIP(null, quote, transactions, ip,
+			activities.add(new SendToIP(this, quote, transactions, ip,
 					TimeStamp.IMMEDIATE));
 
-		// FIXME Change way this is organized
-		recordDepth(currentTime);
-		addSpread(currentTime);
-		addMidQuote(currentTime);
+		depths.add(currentTime, orderbook.size());
+		spreads.add(currentTime, quote.getSpread());
+		midQuotes.add(currentTime, quote.getMidquote());
 		return activities;
 	}
 
-	protected void recordDepth(TimeStamp ts) {
-		depths.add(ts, orderbook.size());
-	}
-
-	protected void addSpread(TimeStamp ts) {
-		// FIXME Add spread calculation to quote
-//		spreads.add(ts, quote.getSpread());
-	}
-
-	protected void addMidQuote(TimeStamp ts) {
-		// FIXME Add midquote method to quote
-//		double midQuote = quote.isDefined() ? Double.NaN
-//				: (quote.getBidPrice().getPrice() + quote.getAskPrice().getPrice()) / 2d;
-//		midQuotes.add(ts, midQuote);
-	}
-
 	// TODO Add bid type that gets withdrawn after next clear
-	
+
 	// TODO switch to Bid Object
 	/**
 	 * Bid doesn't expire
@@ -185,20 +173,23 @@ public abstract class Market2 extends Entity {
 				+ "::submitBid: +(" + price + ", " + quantity + ") from "
 				+ agent);
 
-//		Bid pqBid = new Bid(agent, this, currentTime);
-//		pqBid.addPoint(quantity, price);
-//
-//		orderbook.insertBid(pqBid);
-//		bids.add(pqBid);
-		recordDepth(currentTime);
+		fourheap.Order<Price, TimeStamp> nativeOrder = new fourheap.Order<Price, TimeStamp>(
+				price, quantity, currentTime);
+		Order order = new Order(agent, this, nativeOrder);
 
-		if (duration.equals(TimeStamp.IMMEDIATE))
-			return Collections.emptySet();
-		else
-			return Collections.singleton(new WithdrawBid(agent, null,
-					currentTime.plus(duration)));
+		orderbook.insertOrder(nativeOrder);
+		orderMapping.put(nativeOrder, order);
+		orders.add(order);
+		agent.addOrder(order);
+
+		Collection<Activity> activities = new ArrayList<Activity>(updateQuote(
+				Collections.<Transaction> emptyList(), currentTime));
+
+		if (!duration.equals(TimeStamp.IMMEDIATE))
+			activities.add(new WithdrawOrder(order, currentTime.plus(duration)));
+		return activities;
 	}
-	
+
 	/**
 	 * Bid doesn't expire
 	 */
@@ -208,32 +199,32 @@ public abstract class Market2 extends Entity {
 				TimeStamp.IMMEDIATE);
 	}
 
+	// FIXME How should call markets handle Reg NMS. Can't route to call market to get immediate
+	// execution.
 	public Collection<? extends Activity> submitNMSBid(Agent agent,
 			Price price, int quantity, TimeStamp currentTime, TimeStamp duration) {
 		BestBidAsk nbbo = sip.getNBBO();
-		Market2 bestMarket = this;
+		Market bestMarket = this;
 
-//		if (quantity > 0) { // buy
-//			boolean nbboBetter = nbbo.getBestAsk() != null
-//					&& nbbo.getBestAsk().lessThan(quote.getAskPrice());
-//			boolean willTransact = price.greaterThan(nbbo.getBestAsk());
-//			if (nbboBetter && willTransact) bestMarket = nbbo.getBestAskMarket();
-//		} else { // sell
-//			boolean nbboBetter = nbbo.getBestBid() != null
-//					&& nbbo.getBestBid().greaterThan(quote.getBidPrice());
-//			boolean willTransact = price.lessThan(nbbo.getBestBid());
-//			if (nbboBetter && willTransact) bestMarket = nbbo.getBestBidMarket();
-//		}
+		if (quantity > 0) { // buy
+			boolean nbboBetter = nbbo.getBestAsk() != null
+					&& nbbo.getBestAsk().lessThan(quote.getAskPrice());
+			boolean willTransact = price.greaterThan(nbbo.getBestAsk());
+			if (nbboBetter && willTransact)
+				bestMarket = nbbo.getBestAskMarket();
+		} else { // sell
+			boolean nbboBetter = nbbo.getBestBid() != null
+					&& nbbo.getBestBid().greaterThan(quote.getBidPrice());
+			boolean willTransact = price.lessThan(nbbo.getBestBid());
+			if (nbboBetter && willTransact)
+				bestMarket = nbbo.getBestBidMarket();
+		}
 
 		if (!bestMarket.equals(this))
 			log(INFO, currentTime + " | " + agent + " " + getName()
 					+ "::submitNMSBid: " + "NBBO" + nbbo + " better than "
 					+ this + " Quote" + null);
 
-		// FIXME Right now this causes an issue, because the agent won't know where its bid actually
-		// got submitted. I think to fix this agent's should have a bid object, and that would have
-		// the market it's in. If an agent submit's a bid to one market, but it gets routed, the
-		// bid's market will get updated
 		return bestMarket.submitBid(agent, price, quantity, currentTime,
 				duration);
 	}

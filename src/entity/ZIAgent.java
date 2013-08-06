@@ -5,14 +5,15 @@ import static java.lang.Math.signum;
 import java.util.Collection;
 import java.util.Collections;
 
-import market.Price;
-import market.PrivateValue;
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
 import activity.SubmitNMSBid;
 import data.EntityProperties;
 import data.Keys;
+import entity.market.Market;
+import entity.market.Price;
+import entity.market.PrivateValue;
 import event.TimeStamp;
 
 /**

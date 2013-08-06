@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import market.Price;
-import market.Quote;
 import model.MarketModel;
 import systemmanager.Consts;
 import utils.RandPlus;
@@ -16,6 +14,9 @@ import activity.Activity;
 import activity.SubmitBid;
 import data.EntityProperties;
 import data.Keys;
+import entity.market.Market;
+import entity.market.Price;
+import entity.market.Quote;
 import event.TimeStamp;
 
 /**

@@ -3,10 +3,11 @@ package entity;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import market.PrivateValue;
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
+import entity.market.Market;
+import entity.market.PrivateValue;
 import event.TimeStamp;
 
 public class MockAgent extends BackgroundAgent {

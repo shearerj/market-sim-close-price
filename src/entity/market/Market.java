@@ -1,4 +1,4 @@
-package entity;
+package entity.market;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
@@ -10,17 +10,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import market.BestBidAsk;
-import market.Bid;
-import market.OrderBook;
-import market.Price;
-import market.Quote;
-import market.Transaction;
 import model.MarketModel;
 import activity.Activity;
 import activity.SendToIP;
 import activity.WithdrawBid;
 import data.TimeSeries;
+import entity.Agent;
+import entity.Entity;
+import entity.IP;
+import entity.SIP;
+import entity.SMIP;
 import event.TimeStamp;
 
 /**

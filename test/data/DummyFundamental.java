@@ -1,6 +1,6 @@
 package data;
 
-import market.Price;
+import entity.market.Price;
 import event.TimeStamp;
 import utils.RandPlus;
 

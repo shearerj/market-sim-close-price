@@ -1,12 +1,13 @@
 package activity;
 
 import entity.*;
+import entity.market.Market;
+import entity.market.Price;
 import event.*;
 
 import java.util.Collection;
 import java.util.Map;
 
-import market.Price;
 
 import org.apache.commons.lang3.builder.*;
 

@@ -13,11 +13,12 @@ import java.util.Map.Entry;
 import data.TimeSeries;
 
 import logger.Logger;
-import market.BestBidAsk;
-import market.Price;
-import market.Quote;
-import market.Transaction;
 import activity.Activity;
+import entity.market.BestBidAsk;
+import entity.market.Market;
+import entity.market.Price;
+import entity.market.Quote;
+import entity.market.Transaction;
 import event.TimeStamp;
 
 /**

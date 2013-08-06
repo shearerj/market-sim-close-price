@@ -2,6 +2,12 @@ package market;
 
 import model.*;
 import entity.*;
+import entity.market.Bid;
+import entity.market.CDAMarket;
+import entity.market.FourHeap;
+import entity.market.Market;
+import entity.market.Point;
+import entity.market.Price;
 import event.TimeStamp;
 
 import org.junit.Before;

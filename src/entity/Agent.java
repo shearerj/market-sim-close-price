@@ -11,14 +11,15 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-import market.Order;
-import market.Price;
-import market.PrivateValue;
-import market.Transaction;
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
 import activity.Liquidate;
+import entity.market.Market;
+import entity.market.Order;
+import entity.market.Price;
+import entity.market.PrivateValue;
+import entity.market.Transaction;
 import event.TimeStamp;
 
 /**
@@ -116,6 +117,7 @@ public abstract class Agent extends Entity {
 	 * Adds an agent's order to its memory so it knows about it, and can cancel it
 	 */
 	public void addOrder(Order order) {
+		// FIXME checks for proper order
 		activeOrders.add(order);
 	}
 	
@@ -127,6 +129,7 @@ public abstract class Agent extends Entity {
 	}
 	
 	// TODO gives the agent instant data. Should instead process with delay
+	// FIXME change logger so this doesn't need current time
 	public void addTransaction(Transaction trans, TimeStamp currentTime) {
 		if (!trans.getBuyer().equals(this) && !trans.getSeller().equals(this))
 			throw new IllegalArgumentException(

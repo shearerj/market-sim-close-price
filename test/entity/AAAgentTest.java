@@ -16,8 +16,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import logger.Logger;
-import market.Bid;
-import market.Price;
 import model.MockMarketModel;
 
 import org.junit.Before;
@@ -31,6 +29,9 @@ import activity.SendToIP;
 import activity.SubmitNMSBid;
 import data.EntityProperties;
 import data.Keys;
+import entity.market.Bid;
+import entity.market.Market;
+import entity.market.Price;
 import event.TimeStamp;
 
 public class AAAgentTest {

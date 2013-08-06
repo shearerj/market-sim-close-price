@@ -1,9 +1,24 @@
 package utils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 public class CollectionUtils {
+	
+	public <E> Collection<E> concat(Collection<? extends E>... collections) {
+		return concat(Arrays.asList(collections));
+	}
+	
+	public <E> Collection<E> concat(List<? extends Collection<? extends E>> collections) {
+		Collection<E> concated = new ArrayList<E>();
+		for (Collection<? extends E> coll : collections)
+			concated.addAll(coll);
+		return concated;
+	}
 
 	public static <E> Iterable<E> toIterable(final Iterator<E> it) {
 		return new Iterable<E>() {

@@ -1,10 +1,10 @@
-package market;
+package entity.market;
 
 import java.util.Arrays;
 
 import utils.RandPlus;
 import static utils.MathUtils.bound;
-import static market.Price.ZERO;
+import static entity.market.Price.ZERO;
 
 /**
  * PRIVATEVALUE

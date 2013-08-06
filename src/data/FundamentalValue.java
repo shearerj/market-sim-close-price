@@ -5,8 +5,8 @@ import static logger.Logger.Level.ERROR;
 
 import java.util.ArrayList;
 
-import market.Price;
 import utils.RandPlus;
+import entity.market.Price;
 import event.TimeStamp;
 
 /**

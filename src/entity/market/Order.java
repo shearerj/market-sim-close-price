@@ -1,7 +1,6 @@
-package market;
+package entity.market;
 
 import entity.Agent;
-import entity.Market;
 import event.TimeStamp;
 
 /**
@@ -11,13 +10,14 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-public class Order {
+public class Order extends Bid {
 
 	protected final Agent agent;
-	protected Market market;
+	protected Market2 market;
 	protected final fourheap.Order<Price, TimeStamp> order;
 	
-	public Order(Agent agent, Market market, fourheap.Order<Price, TimeStamp> order) {
+	public Order(Agent agent, Market2 market, fourheap.Order<Price, TimeStamp> order) {
+		super(agent, market, order.getSubmitTime()); // FIXME Remove and subclassing
 		this.agent = agent;
 		this.market = market;
 		this.order = order;
@@ -27,7 +27,7 @@ public class Order {
 		return agent;
 	}
 
-	public Market getMarket() {
+	public Market2 getMarket() {
 		return market;
 	}
 	
