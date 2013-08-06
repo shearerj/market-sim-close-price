@@ -13,47 +13,23 @@ import event.TimeStamp;
  */
 public class Quote {
 
-	protected final Price askPrice, bidPrice;
+	protected final Price ask, bid;
 	protected final Market market;
-	protected final int askQuantity, bidQuantity;
 	protected final TimeStamp quoteTime;
-	protected final int spread;
 
-	public Quote(Market market, Price askPrice, int askQuantity,
-			Price bidPrice, int bidQuantity, TimeStamp currentTime) {
+	public Quote(Market market, Price ask, Price bid, TimeStamp currentTime) {
 		this.market = market;
-		this.askPrice = askPrice;
-		this.bidPrice = bidPrice;
-		this.askQuantity = askQuantity;
-		this.bidQuantity = bidQuantity;
+		this.ask = ask;
+		this.bid = bid;
 		this.quoteTime = currentTime;
-
-		// XXX Are these the best way to handle these cases?
-		if (askPrice == null || bidPrice == null) {
-			spread = Integer.MAX_VALUE;
-		} else if (askPrice.lessThan(bidPrice)) {
-			log(ERROR, market.getClass().getSimpleName()
-					+ "::quote: ERROR bid > ask");
-			spread = 0;
-		} else {
-			spread = askPrice.getPrice() - bidPrice.getPrice();
-		}
 	}
 
 	public Price getAskPrice() {
-		return askPrice;
+		return ask;
 	}
 
 	public Price getBidPrice() {
-		return bidPrice;
-	}
-	
-	public int getAskQuantity() {
-		return askQuantity;
-	}
-	
-	public int getBidQuantity() {
-		return bidQuantity;
+		return bid;
 	}
 
 	/**
@@ -62,18 +38,37 @@ public class Quote {
 	 * @return true if the quote is defined (has an ask and a bid price)
 	 */
 	public boolean isDefined() {
-		return askPrice != null && bidPrice != null;
+		return ask != null && bid != null;
 	}
 
 	/**
-	 * @return bid-ask spread of the quote (integer)
+	 * @return bid-ask spread of the quote
 	 */
-	public int getSpread() {
-		return spread;
+	public double getSpread() {
+		// XXX Are these the best way to handle these cases?
+		if (ask == null || bid == null) {
+			return Double.POSITIVE_INFINITY;
+		} else if (ask.lessThan(bid)) {
+			log(ERROR, market.getClass().getSimpleName()
+					+ "::quote: ERROR bid > ask");
+			return 0;
+		} else {
+			return ask.getPrice() - bid.getPrice();
+		}
+	}
+	
+	public double getMidquote() {
+		// XXX Are these the best way to handle these cases?
+		if (ask == null || bid == null)
+			return Double.NaN;
+		else if (ask.lessThan(bid))
+			log(ERROR, market.getClass().getSimpleName()
+					+ "::quote: ERROR bid > ask");
+		return (ask.getPrice() + bid.getPrice())/ 2d;
 	}
 
 	public String toString() {
-		return "(Bid: " + bidPrice + ", Ask: " + askPrice + ")";
+		return "(Bid: " + bid + ", Ask: " + ask + ")";
 	}
 
 }

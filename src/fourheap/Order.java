@@ -6,8 +6,8 @@ import static java.lang.Integer.signum;
 public class Order<P extends Comparable<P>, T extends Comparable<T>> {
 
 	protected final P price;
-	protected int totalQuantity;
-	protected int quantity; // Negative to sell
+	protected int totalQuantity; // Negative to sell
+	protected int quantity;
 	protected final T submitTime;
 
 	public Order(P price, int initialQuantity, T submitTime) {

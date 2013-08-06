@@ -60,12 +60,14 @@ public class LAAgent extends HFTAgent {
 			if (q.getAskPrice() != null && q.getAskPrice().lessThan(bestAsk)) {
 				bestAsk = q.getAskPrice();
 				bestAskMarket = ipEntry.getKey();
-				bestAskQuantity = -q.getAskQuantity();
+//				bestAskQuantity = -q.getAskQuantity(); FIXME quantity no longer in quote
+				// This shouldn't be a problem because quote shouldn't have quantity. LAAgent should
+				// have to go to order book to get this info
 			}
 			if (q.getBidPrice() != null && q.getBidPrice().greaterThan(bestBid)) {
 				bestBid = q.getBidPrice();
 				bestBidMarket = ipEntry.getKey();
-				bestBidQuantity = q.getBidQuantity();
+//				bestBidQuantity = q.getBidQuantity();
 			}
 		}
 

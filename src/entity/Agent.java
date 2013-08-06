@@ -11,7 +11,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-import market.Bid;
+import market.Order;
 import market.Price;
 import market.PrivateValue;
 import market.Transaction;
@@ -36,7 +36,7 @@ public abstract class Agent extends Entity {
 	protected final List<Transaction> transactions;
 	// TODO Currently unused? Bid should be added to this before it's submitted... Maybe Market
 	// should add t othis when a bid is submitted, so when it's removed this can also be updated...
-	protected final Collection<Bid> activeBids;
+	protected final Collection<Order> activeOrders;
 
 	// Agent parameters
 	protected final PrivateValue privateValue;
@@ -63,7 +63,7 @@ public abstract class Agent extends Entity {
 		this.tickSize = tickSize;
 
 		this.transactions = new ArrayList<Transaction>();
-		this.activeBids = new HashSet<Bid>();
+		this.activeOrders = new HashSet<Order>();
 	}
 
 	public abstract Collection<? extends Activity> agentStrategy(
@@ -112,6 +112,20 @@ public abstract class Agent extends Entity {
 		return Collections.emptyList();
 	}
 
+	/**
+	 * Adds an agent's order to its memory so it knows about it, and can cancel it
+	 */
+	public void addOrder(Order order) {
+		activeOrders.add(order);
+	}
+	
+	/**
+	 * Removes order when it's no longer active
+	 */
+	public void removeOrder(Order order) {
+		activeOrders.remove(order);
+	}
+	
 	// TODO gives the agent instant data. Should instead process with delay
 	public void addTransaction(Transaction trans, TimeStamp currentTime) {
 		if (!trans.getBuyer().equals(this) && !trans.getSeller().equals(this))

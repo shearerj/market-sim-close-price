@@ -66,7 +66,7 @@ public abstract class Market extends Entity {
 
 		this.lastClearTime = TimeStamp.ZERO;
 		this.lastClearPrice = null;
-		this.quote = new Quote(this, null, 0, null, 0, TimeStamp.ZERO);
+		this.quote = new Quote(this, null, null, TimeStamp.ZERO);
 	}
 
 	// TODO Rename
@@ -174,11 +174,8 @@ public abstract class Market extends Entity {
 		Bid bid = orderbook.getBidQuote();
 		Price askPrice = ask.getPoints().last().getPrice();
 		Price bidPrice = bid.getPoints().first().getPrice();
-		int askQuantity = ask.getPoints().last().getQuantity();
-		int bidQuantity = bid.getPoints().first().getQuantity();
 
-		quote = new Quote(this, askPrice, askQuantity, bidPrice, bidQuantity,
-				currentTime);
+		quote = new Quote(this, askPrice, bidPrice, currentTime);
 
 		log(INFO, currentTime + " | " + this + " SendToSIP" + quote);
 

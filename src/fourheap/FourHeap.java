@@ -3,6 +3,7 @@ package fourheap;
 import static fourheap.CompareUtils.max;
 import static fourheap.CompareUtils.min;
 import static java.lang.Integer.signum;
+import static java.lang.Math.abs;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,17 +21,15 @@ public class FourHeap<P extends Comparable<P>, T extends Comparable<T>> {
 	// either unmatched or matched. if a split order has quantity 0, it shouldn't be in its
 	// respective heap.
 	protected final Map<Order<P, T>, Pair<SplitOrder, SplitOrder>> activeOrders;
+	protected int size;
 
 	public FourHeap() {
-		sellUnmatched = new BinaryHeap<SplitOrder>(new OrderComparator(true,
-				true));
-		sellMatched = new BinaryHeap<SplitOrder>(new OrderComparator(false,
-				true));
-		buyUnmatched = new BinaryHeap<SplitOrder>(new OrderComparator(false,
-				false));
-		buyMatched = new BinaryHeap<SplitOrder>(
-				new OrderComparator(true, false));
+		sellUnmatched = new BinaryHeap<SplitOrder>(new OrderComparator(true, true));
+		sellMatched = new BinaryHeap<SplitOrder>(new OrderComparator(false, true));
+		buyUnmatched = new BinaryHeap<SplitOrder>(new OrderComparator(false, false));
+		buyMatched = new BinaryHeap<SplitOrder>(new OrderComparator(true, false));
 		activeOrders = new HashMap<Order<P, T>, Pair<SplitOrder, SplitOrder>>();
+		size = 0;
 	}
 
 	// FIXME insert can displace an already matched bid
@@ -39,9 +38,9 @@ public class FourHeap<P extends Comparable<P>, T extends Comparable<T>> {
 			throw new IllegalArgumentException(
 					"Orders must have nonzero quantity");
 
+		size += abs(order.quantity);
 		int t = Integer.signum(order.quantity); // Sell or Buy
-		BinaryHeap<SplitOrder> unmatchedHeap = t < 0 ? buyUnmatched
-				: sellUnmatched;
+		BinaryHeap<SplitOrder> unmatchedHeap = t < 0 ? buyUnmatched : sellUnmatched;
 		BinaryHeap<SplitOrder> matchedHeap = t > 0 ? buyMatched : sellMatched;
 		int unmatchedQuantity = order.quantity;
 
@@ -85,6 +84,7 @@ public class FourHeap<P extends Comparable<P>, T extends Comparable<T>> {
 			throw new IllegalArgumentException(
 					"Can't withdraw more than in order");
 
+		size -= abs(quantity);
 		BinaryHeap<SplitOrder> matchedHeap = t < 0 ? buyMatched : sellMatched;
 		Pair<SplitOrder, SplitOrder> active = activeOrders.get(order);
 		if (active == null) return; // Order not in fourheap
@@ -132,13 +132,12 @@ public class FourHeap<P extends Comparable<P>, T extends Comparable<T>> {
 		
 		List<Transaction<P, T>> transactions = new ArrayList<Transaction<P, T>>();
 		while (buyIt.hasNext() || sellIt.hasNext()) {
-			if (buy == null || buy.quantity == 0)
-				buy = buyIt.next();
-			if (sell == null || sell.quantity == 0)
-				sell = sellIt.next();
+			if (buy == null || buy.quantity == 0) buy = buyIt.next();
+			if (sell == null || sell.quantity == 0) sell = sellIt.next();
 			int quantity = Math.min(buy.quantity, -sell.quantity);
 			transactions.add(buy.order.transact(sell.order, quantity));
 			
+			size -= 2*quantity;
 			buy.quantity -= quantity;
 			sell.quantity += quantity;
 			if (buy.order.quantity == 0) activeOrders.remove(buy.order);
@@ -149,6 +148,30 @@ public class FourHeap<P extends Comparable<P>, T extends Comparable<T>> {
 
 	public boolean contains(Order<P, T> order) {
 		return activeOrders.containsKey(order);
+	}
+
+	public P bidQuote() {
+		P sin = sellMatched.peek() == null ? null : sellMatched.peek().price;
+		P bout = buyUnmatched.peek() == null ? null : buyUnmatched.peek().price;
+		return max(sin, bout);
+	}
+	
+	public P askQuote() {
+		P sout = sellUnmatched.peek() == null ? null : sellUnmatched.peek().price;
+		P bin = buyMatched.peek() == null ? null : buyMatched.peek().price;
+		return min(sout, bin);
+	}
+	
+	/**
+	 * @return total quantity of every order in the Fourheap
+	 */
+	public int size() {
+		return size;
+	}
+	
+	public boolean isEmpty() {
+		return buyUnmatched.isEmpty() && sellUnmatched.isEmpty()
+				&& buyMatched.isEmpty() && sellMatched.isEmpty();
 	}
 
 	/**
@@ -162,29 +185,17 @@ public class FourHeap<P extends Comparable<P>, T extends Comparable<T>> {
 		BinaryHeap<SplitOrder> unmatchedHeap, matchedHeap;
 		unmatchedHeap = sell ? sellUnmatched : buyUnmatched;
 		matchedHeap = sell ? sellMatched : buyMatched;
-
+	
 		// Remove any existing split orders
 		Pair<SplitOrder, SplitOrder> active = activeOrders.get(order);
 		SplitOrder unmatched = active.left(), matched = active.right();
-
+	
 		unmatchedHeap.remove(unmatched);
 		matchedHeap.remove(matched);
 		matched.quantity += quantity;
 		unmatched.quantity -= quantity;
 		if (matched.quantity != 0) matchedHeap.offer(matched);
 		if (unmatched.quantity != 0) unmatchedHeap.offer(unmatched);
-	}
-	
-	public P bidQuote() {
-		P sin = sellMatched.peek() == null ? null : sellMatched.peek().price;
-		P bout = buyUnmatched.peek() == null ? null : buyUnmatched.peek().price;
-		return max(sin, bout);
-	}
-	
-	public P askQuote() {
-		P sout = sellUnmatched.peek() == null ? null : sellUnmatched.peek().price;
-		P bin = buyMatched.peek() == null ? null : buyMatched.peek().price;
-		return min(sout, bin);
 	}
 
 	@Override
