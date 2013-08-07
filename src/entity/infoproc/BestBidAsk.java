@@ -28,7 +28,7 @@ public class BestBidAsk {
 	public double getSpread() {
 		if (bestAsk == null || bestBid == null || bestAsk.lessThan(bestBid))
 			return Double.POSITIVE_INFINITY;
-		return bestAsk.getPrice() - bestBid.getPrice();
+		return bestAsk.getInTicks() - bestBid.getInTicks();
 	}
 
 	public Market getBestBidMarket() {

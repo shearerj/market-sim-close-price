@@ -177,7 +177,7 @@ public class AAAgent extends ReentryAgent {
 		double num = 0;
 		// Iterate through past Quotes and use valid prices
 		for (int i = trans.size() - 1; i >= 0 && num < historical; i--) {
-			total += (double) trans.get(i).getPrice().getPrice();
+			total += (double) trans.get(i).getPrice().getInTicks();
 			num += 1;
 		}
 		if (num == 0) {
@@ -206,10 +206,10 @@ public class AAAgent extends ReentryAgent {
 		// Buyers
 		if (isBuyer) {
 			// Intramarginal - price limit is greater than p*
-			if (limit.getPrice() > movingAverage) {
+			if (limit.getInTicks() > movingAverage) {
 				// passive
 				if(aggression == -1) 
-					tau = Price.ZERO.getPrice(); 
+					tau = Price.ZERO.getInTicks(); 
 				else if(aggression < 0) {
 					tau = movingAverage
 							* (1 - (Math.exp(-aggression * theta) - 1)
@@ -220,38 +220,38 @@ public class AAAgent extends ReentryAgent {
 					tau = movingAverage;
 				// aggressive
 				else if(aggression < 1){
-					tau = movingAverage + (limit.getPrice() - movingAverage)
+					tau = movingAverage + (limit.getInTicks() - movingAverage)
 							* (Math.exp(aggression * theta) - 1)
 							/ (Math.exp(theta) - 1);
 				}
 				else
-					tau = limit.getPrice();
+					tau = limit.getInTicks();
 			}
 			// Extramarginal - price limit is less than p*
 			else {
 				// passive
 				if(aggression == -1)
-					tau = Price.ZERO.getPrice();
+					tau = Price.ZERO.getInTicks();
 				if (aggression < 0) {
-					tau = limit.getPrice()
+					tau = limit.getInTicks()
 							* (1 - (Math.exp(-1 * aggression * theta) - 1)
 									/ (Math.exp(theta) - 1));
 				}
 				// aggressive
 				else
-					tau = limit.getPrice();
+					tau = limit.getInTicks();
 			}
 		}
 		// Sellers
 		else {
 			// Intramarginal - cost is less than p*
-			if (limit.getPrice() < movingAverage) {
+			if (limit.getInTicks() < movingAverage) {
 				// passive
 				if(aggression == -1)
-					tau = Price.INF.getPrice();
+					tau = Price.INF.getInTicks();
 				else if(aggression < 0) {
 					tau = movingAverage
-							+ (Price.INF.getPrice() - movingAverage)
+							+ (Price.INF.getInTicks() - movingAverage)
 							* (Math.exp(-1 * aggression * theta) - 1)
 							/ (Math.exp(theta) - 1);
 				}
@@ -261,27 +261,27 @@ public class AAAgent extends ReentryAgent {
 				}
 				// aggressive
 				else if(aggression < 1){
-					tau = limit.getPrice()
-							+ (movingAverage - limit.getPrice())
+					tau = limit.getInTicks()
+							+ (movingAverage - limit.getInTicks())
 							* (1 - (Math.exp(aggression * theta) - 1)
 									/ (Math.exp(theta) - 1));
 				}
 				else
-					tau = limit.getPrice();
+					tau = limit.getInTicks();
 			}
 			// Extramarginal - cost is greater than p*
 			else {
 				// passive
 				if(aggression == -1)
-					tau = Price.INF.getPrice();
+					tau = Price.INF.getInTicks();
 				else if(aggression < 0) {
-					tau = limit.getPrice() + Price.INF.minus(limit).getPrice()
+					tau = limit.getInTicks() + Price.INF.minus(limit).getInTicks()
 							* (Math.exp(-1 * aggression * theta) - 1)
 							/ (Math.exp(theta) - 1);
 				}
 				// aggressive
 				else
-					tau = limit.getPrice();
+					tau = limit.getInTicks();
 			}
 		}
 		return new Price((int) Math.round(tau));
@@ -432,12 +432,12 @@ public class AAAgent extends ReentryAgent {
 	 */
 	private double determineAggression(Price limit, Price mostRecentPrice,
 			double movingAverage) {
-		double tau = mostRecentPrice.getPrice();
+		double tau = mostRecentPrice.getInTicks();
 		double r_shout = 0;
 		// Buyers
 		if (isBuyer) {
 			// Intramarginal
-			if (limit.getPrice() > movingAverage) {
+			if (limit.getInTicks() > movingAverage) {
 				if (tau == movingAverage)
 					return 0;
 				// r < 0
@@ -451,14 +451,14 @@ public class AAAgent extends ReentryAgent {
 					r_shout = (1 / theta)
 							* Math.log((tau - movingAverage)
 									* (Math.exp(theta) - 1)
-									/ (limit.getPrice() - movingAverage));
+									/ (limit.getInTicks() - movingAverage));
 				}
 			}
 			// Extramarginal
 			else {
-				if (tau < limit.getPrice()) {
+				if (tau < limit.getInTicks()) {
 					r_shout = (-1 / theta)
-							* Math.log((1 - tau / limit.getPrice())
+							* Math.log((1 - tau / limit.getInTicks())
 									* (Math.exp(theta) - 1) + 1);
 				}
 				// TODO - SHOULD NOT REACH HERE
@@ -472,7 +472,7 @@ public class AAAgent extends ReentryAgent {
 		// Sellers
 		else {
 			// Intramarginal
-			if (limit.getPrice() < movingAverage) {
+			if (limit.getInTicks() < movingAverage) {
 				if (tau == movingAverage)
 					return 0;
 				// r < 0
@@ -480,24 +480,24 @@ public class AAAgent extends ReentryAgent {
 					r_shout = (-1 / theta)
 							* Math.log((tau - movingAverage)
 									* (Math.exp(theta) - 1)
-									/ (Price.INF.getPrice() - movingAverage)
+									/ (Price.INF.getInTicks() - movingAverage)
 									+ 1);
 				}
 				// r > 0
 				else {
 					r_shout = (1 / theta)
-							* Math.log((1 - (tau - limit.getPrice())
-									/ (movingAverage - limit.getPrice()))
+							* Math.log((1 - (tau - limit.getInTicks())
+									/ (movingAverage - limit.getInTicks()))
 									* (Math.exp(theta) - 1) + 1);
 				}
 			}
 			// Extramarginal
 			else {
-				if (tau > limit.getPrice()) {
+				if (tau > limit.getInTicks()) {
 					r_shout = (-1 / theta)
-							* Math.log((tau - limit.getPrice())
+							* Math.log((tau - limit.getInTicks())
 									* (Math.exp(theta) - 1)
-									/ Price.INF.minus(limit).getPrice() + 1);
+									/ Price.INF.minus(limit).getInTicks() + 1);
 				}
 				// TODO - SHOULD NOT REACH HERE
 				else {
@@ -525,7 +525,7 @@ public class AAAgent extends ReentryAgent {
 		double alpha = 0;
 		int num = 0;
 		for (int i = trans.size() - 1; i >= 0 && num < historical; i--) {
-			double price = trans.get(i).getPrice().getPrice();
+			double price = trans.get(i).getPrice().getInTicks();
 			if (price != -1) {
 				alpha += Math.pow(price - movingAverage, 2);
 				num++;

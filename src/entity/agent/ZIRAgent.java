@@ -95,7 +95,7 @@ public class ZIRAgent extends ReentryAgent {
 						privateValue.getValueFromQuantity(positionBalance,
 								quantity)).nonnegative();
 				Price price = new Price(
-						(int) (val.getPrice() - Math.signum(quantity)
+						(int) (val.getInTicks() - Math.signum(quantity)
 								* rand.nextDouble() * 2 * bidRange)).nonnegative();
 
 				s += " position=" + positionBalance + ", for q=" + quantity

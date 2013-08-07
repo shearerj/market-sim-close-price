@@ -121,12 +121,12 @@ public class BasicMarketMaker extends MarketMaker {
 
 			// build descending list of buy orders (yt, ..., yt - ct) or
 			// stops at NBBO ask
-			for (int price = bid.getPrice(); price >= buyMinPrice.getPrice(); price -= stepSize)
+			for (int price = bid.getInTicks(); price >= buyMinPrice.getInTicks(); price -= stepSize)
 				acts.add(new SubmitOrder(this, primaryMarket, new Price(price), 1, TimeStamp.IMMEDIATE));
 
 			// build ascending list of sell orders (xt, ..., xt + ct) or
 			// stops at NBBO bid
-			for (int price = ask.getPrice(); price <= sellMaxPrice.getPrice(); price += stepSize)
+			for (int price = ask.getInTicks(); price <= sellMaxPrice.getInTicks(); price += stepSize)
 				acts.add(new SubmitOrder(this, primaryMarket, new Price(price), -1, TimeStamp.IMMEDIATE));
 
 			log(INFO, ts + " | " + primaryMarket + " " + this + " " + getName()

@@ -62,7 +62,7 @@ public class ZIAgent extends BackgroundAgent {
 				privateValue.getValueFromQuantity(positionBalance, quantity)).nonnegative();
 
 		// basic ZI behavior
-		Price price = new Price((int) (val.getPrice() - signum(quantity)
+		Price price = new Price((int) (val.getInTicks() - signum(quantity)
 				* rand.nextDouble() * 2 * bidRange)).nonnegative();
 
 		// bid does not expire

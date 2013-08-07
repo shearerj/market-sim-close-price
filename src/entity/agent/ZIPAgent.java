@@ -55,7 +55,7 @@ public class ZIPAgent extends BackgroundAgent {
 				0,
 				model.getFundamentalAt(currentTime).plus(
 						privateValue.getValueFromQuantity(positionBalance,
-								quantity)).getPrice());
+								quantity)).getInTicks());
 
 		// Insert events for the agent to sleep, then wake up again at timestamp
 		// tsNew

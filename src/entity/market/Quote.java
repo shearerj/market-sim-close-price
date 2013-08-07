@@ -52,7 +52,7 @@ public class Quote {
 					+ "::quote: ERROR bid > ask");
 			return 0;
 		} else {
-			return ask.getPrice() - bid.getPrice();
+			return ask.getInTicks() - bid.getInTicks();
 		}
 	}
 	
@@ -63,7 +63,7 @@ public class Quote {
 		else if (ask.lessThan(bid))
 			log(ERROR, market.getClass().getSimpleName()
 					+ "::quote: ERROR bid > ask");
-		return (ask.getPrice() + bid.getPrice())/ 2d;
+		return (ask.getInTicks() + bid.getInTicks())/ 2d;
 	}
 
 	public String toString() {

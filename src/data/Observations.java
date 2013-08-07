@@ -253,8 +253,8 @@ public class Observations {
 			TimeStamp buyerExecTime = execTime.minus(tr.getBuyBid().getSubmitTime());
 			TimeStamp sellerExecTime = execTime.minus(tr.getSellBid().getSubmitTime());
 			for (int quantity = 0; quantity < tr.getQuantity(); quantity++) {
-				speeds.addValue((double) buyerExecTime.longValue());
-				speeds.addValue((double) sellerExecTime.longValue());
+				speeds.addValue((double) buyerExecTime.getInTicks());
+				speeds.addValue((double) sellerExecTime.getInTicks());
 			}
 		}
 
@@ -293,12 +293,12 @@ public class Observations {
 			numTrans.put(agent.getName(), 0);
 
 		for (Transaction trans : model.getTrans()) {
-			prices.addValue(trans.getPrice().getPrice());
+			prices.addValue(trans.getPrice().getInTicks());
 			quantity.addValue(trans.getQuantity());
-			fundamental.addValue(model.getFundamentalAt(trans.getExecTime()).getPrice());
+			fundamental.addValue(model.getFundamentalAt(trans.getExecTime()).getInTicks());
 
-			transPrices.add((int) trans.getExecTime().longValue(), trans.getPrice().getPrice());
-			fundPrices.add((int) trans.getExecTime().longValue(), model.getFundamentalAt(trans.getExecTime()).getPrice());
+			transPrices.add((int) trans.getExecTime().getInTicks(), trans.getPrice().getInTicks());
+			fundPrices.add((int) trans.getExecTime().getInTicks(), model.getFundamentalAt(trans.getExecTime()).getInTicks());
 
 			// update number of transactions
 			if (model.getAgents().contains(trans.getBuyer())) {

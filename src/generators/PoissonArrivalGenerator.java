@@ -8,7 +8,7 @@ public class PoissonArrivalGenerator extends Generator<TimeStamp> {
 	PoissonProcess proc;
 
 	public PoissonArrivalGenerator(TimeStamp initialTime, double rate, RandPlus rand) {
-		proc = new PoissonProcess(initialTime.longValue(), rate, rand);
+		proc = new PoissonProcess(initialTime.getInTicks(), rate, rand);
 	}
 
 	@Override

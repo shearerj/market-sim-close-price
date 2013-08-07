@@ -165,7 +165,7 @@ public class SystemManager {
 			@Override
 			// TODO If/when only one market model, change this to prefix model id
 			public String getPrefix() {
-				return String.format("% 4d| ", eventManager.getCurrentTime().longValue());
+				return String.format("% 4d| ", eventManager.getCurrentTime().getInTicks());
 			}
 		});
 		

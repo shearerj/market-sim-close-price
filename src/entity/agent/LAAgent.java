@@ -73,7 +73,7 @@ public class LAAgent extends HFTAgent {
 		}
 
 		if (bestBid == null || bestAsk == null
-				|| bestAsk.getPrice() < (1 + alpha) * bestBid.getPrice())
+				|| bestAsk.getInTicks() < (1 + alpha) * bestBid.getInTicks())
 			return Collections.emptySet();
 
 		Price midPoint = bestBid.plus(bestAsk).times(0.5).quantize(tickSize);

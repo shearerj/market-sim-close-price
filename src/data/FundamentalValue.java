@@ -44,7 +44,7 @@ public class FundamentalValue {
 
 	protected void computeFundamentalTo(int length) {
 		while (meanRevertProcess.size() < length + 1) {
-			int prevValue = meanRevertProcess.get(meanRevertProcess.size() - 1).getPrice();
+			int prevValue = meanRevertProcess.get(meanRevertProcess.size() - 1).getInTicks();
 			int nextValue = (int) (rand.nextGaussian(0, shockVar)
 					+ (meanValue * kappa) + ((1 - kappa) * prevValue));
 			meanRevertProcess.add(new Price(Math.max(nextValue, 0)));
@@ -55,7 +55,7 @@ public class FundamentalValue {
 	 * Returns the global fundamental value at time ts. If undefined, return 0.
 	 */
 	public Price getValueAt(TimeStamp t) {
-		int index = (int) t.longValue(); // Incase of overflow
+		int index = (int) t.getInTicks(); // Incase of overflow
 		if (index < 0) {
 			log(ERROR,
 					"Tried to access out of bounds TimeStamp: " + t);

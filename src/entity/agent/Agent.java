@@ -100,10 +100,10 @@ public abstract class Agent extends Entity {
 		preLiqRealizedProfit = getRealizedProfit();
 		if (positionBalance > 0) {
 			// need to sell
-			realizedProfit += positionBalance * price.getPrice();
+			realizedProfit += positionBalance * price.getInTicks();
 		} else {
 			// need to buy
-			realizedProfit -= positionBalance * price.getPrice();
+			realizedProfit -= positionBalance * price.getInTicks();
 		}
 		positionBalance = 0;
 
@@ -171,7 +171,7 @@ public abstract class Agent extends Entity {
 				+ positionBalance + ", p=" + p + ", avgCost=" + averageCost);
 
 		return p == null ? Price.ZERO : new Price(positionBalance
-				* (p.getPrice() - averageCost));
+				* (p.getInTicks() - averageCost));
 	}
 
 	public final TimeStamp getArrivalTime() {
@@ -227,8 +227,8 @@ public abstract class Agent extends Entity {
 			Price transactionSurplus = fundamental.plus(pv).minus(cost).times(
 					sign);
 
-			surplus += Math.exp(rho * timeToExecution.longValue())
-					* transactionSurplus.getPrice();
+			surplus += Math.exp(rho * timeToExecution.getInTicks())
+					* transactionSurplus.getInTicks();
 		}
 		return surplus;
 	}

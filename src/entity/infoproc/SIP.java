@@ -68,7 +68,7 @@ public class SIP extends IP {
 
 		// NBBO Fix FIXME should figure out best way to handle price discrepancies
 		if (bestBid != null && bestAsk != null && bestBid.greaterThan(bestAsk)) {
-			int mid = (bestBid.getPrice() + bestAsk.getPrice()) / 2;
+			int mid = (bestBid.getInTicks() + bestAsk.getInTicks()) / 2;
 			// Removed the tick increment from old fix, mainly for ease of use. What would the
 			// appropriate tick size for the SIP be anyways, in terms of this fix? Seems like
 			// just the midpoint will work fine.
@@ -77,7 +77,7 @@ public class SIP extends IP {
 		}
 
 		nbbo = new BestBidAsk(bestBidMkt, bestBid, bestAskMkt, bestAsk);
-		nbboSpreads.add((int) currentTime.longValue(), nbbo.getSpread());
+		nbboSpreads.add((int) currentTime.getInTicks(), nbbo.getSpread());
 		return Collections.emptySet();
 	}
 

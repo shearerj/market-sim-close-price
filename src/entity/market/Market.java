@@ -168,9 +168,9 @@ public abstract class Market extends Entity {
 			activities.add(new SendToIP(this, quote, transactions, ip,
 					TimeStamp.IMMEDIATE));
 
-		depths.add((int) currentTime.longValue(), orderbook.size());
-		spreads.add((int) currentTime.longValue(), quote.getSpread());
-		midQuotes.add((int) currentTime.longValue(), quote.getMidquote());
+		depths.add((int) currentTime.getInTicks(), orderbook.size());
+		spreads.add((int) currentTime.getInTicks(), quote.getSpread());
+		midQuotes.add((int) currentTime.getInTicks(), quote.getMidquote());
 		return activities;
 	}
 	
@@ -211,7 +211,7 @@ public abstract class Market extends Entity {
 		orderMapping.put(nativeOrder, order);
 		orders.add(order);
 		agent.addOrder(order);
-		depths.add((int) currentTime.longValue(), orderbook.size());
+		depths.add((int) currentTime.getInTicks(), orderbook.size());
 
 		if (!duration.equals(TimeStamp.IMMEDIATE))
 			return Collections.singleton(new WithdrawOrder(order, currentTime.plus(duration)));

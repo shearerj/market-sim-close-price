@@ -15,60 +15,60 @@ public class Price implements Comparable<Price> {
 	public static final Price INF = new Price(Integer.MAX_VALUE - 1);
 	public static final Price ZERO = new Price(0);
 
-	public static int PRICE_PER_DOLLAR = 1000;
+	public static int TICKS_PER_DOLLAR = 1000;
 
-	protected final int price;
+	protected final int ticks; // in ticks
 
 	/**
 	 * Constructor taking in a int.
 	 * 
-	 * @param p
+	 * @param ticks
 	 */
-	public Price(int p) {
-		// TODO Decide if negative numbers should be allowed and how to include
+	public Price(int ticks) {
+		// XXX Decide if negative numbers should be allowed and how to include
 		// this in the "diff" function
-		price = p;
+		this.ticks = ticks;
 	}
 
-	public int getPrice() {
-		return price;
+	public int getInTicks() {
+		return ticks;
 	}
 
 	/**
-	 * @return price in dollars (3 decimal places)
+	 * @return price in dollars
 	 */
-	public double getDollarPrice() {
-		return price / (double) PRICE_PER_DOLLAR;
+	public double getInDollars() {
+		return ticks / (double) TICKS_PER_DOLLAR;
 	}
 
 	public Price quantize(int quanta) {
-		return new Price(MathUtils.quantize(price, quanta));
+		return new Price(MathUtils.quantize(ticks, quanta));
 	}
 
 	/**
 	 * Add price to this object.
 	 */
 	public Price plus(Price p) {
-		return new Price(this.price + p.price);
+		return new Price(this.ticks + p.ticks);
 	}
 
 	/**
 	 * Subtract price from this object.
 	 */
 	public Price minus(Price p) {
-		return new Price(this.price - p.price);
+		return new Price(this.ticks - p.ticks);
 	}
 	
 	public Price times(double x) {
-		return new Price((int) (price * x));
+		return new Price((int) (ticks * x));
 	}
 	
 	public Price times(int x) {
-		return new Price(price * x);
+		return new Price(ticks * x);
 	}
 
 	public Price nonnegative() {
-		if (price < 0)
+		if (ticks < 0)
 			return ZERO;
 		return this;
 	}
@@ -80,7 +80,7 @@ public class Price implements Comparable<Price> {
 	public int compareTo(Price o) {
 		if (o == null)
 			return 1;
-		return this.price - o.price;
+		return this.ticks - o.ticks;
 	}
 
 	/**
@@ -113,7 +113,7 @@ public class Price implements Comparable<Price> {
 
 	@Override
 	public int hashCode() {
-		return price;
+		return ticks;
 	}
 
 	@Override
@@ -121,14 +121,14 @@ public class Price implements Comparable<Price> {
 		if (obj == null || !(obj instanceof Price))
 			return false;
 		Price other = (Price) obj;
-		return price == other.price;
+		return ticks == other.ticks;
 	}
 	
 	@Override
 	public String toString() {
-		int dollars = price / PRICE_PER_DOLLAR;
-		int digits = MathUtils.logn(PRICE_PER_DOLLAR, 10);
-		int cents = price % PRICE_PER_DOLLAR;
+		int dollars = ticks / TICKS_PER_DOLLAR;
+		int digits = MathUtils.logn(TICKS_PER_DOLLAR, 10);
+		int cents = ticks % TICKS_PER_DOLLAR;
 		while (digits > 2 && cents % 10 == 0) {
 			cents /= 10;
 			digits--;
