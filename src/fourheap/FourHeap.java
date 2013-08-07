@@ -32,7 +32,6 @@ public class FourHeap<P extends Comparable<P>, T extends Comparable<T>> {
 		size = 0;
 	}
 
-	// FIXME insert can displace an already matched bid
 	public void insertOrder(Order<P, T> order) {
 		if (order.quantity == 0)
 			throw new IllegalArgumentException(

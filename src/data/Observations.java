@@ -293,25 +293,23 @@ public class Observations {
 		for (Agent agent : model.getAgents())
 			numTrans.put(agent.getName(), 0);
 
-		for (Transaction tr : model.getTrans()) {
-			// FIXME If these are always PQTrans then we should store that not
-			// generic transactions, or add the common functionality to generic
-			// transactions
-			prices.addValue(tr.getPrice().getPrice());
-			quantity.addValue(tr.getQuantity());
-			fundamental.addValue(model.getFundamentalAt(tr.getExecTime()).getPrice());
+		for (Transaction trans : model.getTrans()) {
+			prices.addValue(trans.getPrice().getPrice());
+			quantity.addValue(trans.getQuantity());
+			fundamental.addValue(model.getFundamentalAt(trans.getExecTime()).getPrice());
 
-			transPrices.add(tr.getExecTime(), tr.getPrice().getPrice());
-			fundPrices.add(tr.getExecTime(),
-					model.getFundamentalAt(tr.getExecTime()).getPrice());
+			transPrices.add(trans.getExecTime(), trans.getPrice().getPrice());
+			fundPrices.add(trans.getExecTime(), model.getFundamentalAt(trans.getExecTime()).getPrice());
 
 			// update number of transactions
-			// buyer
-			for (Agent agent : new Agent[] { tr.getBuyer(), tr.getSeller() }) {
-				if (model.getAgents().contains(agent)) {
-					String name = agent.getName();
-					numTrans.put(name, numTrans.get(name) + 1);
-				}
+			if (model.getAgents().contains(trans.getBuyer())) {
+				String name = trans.getBuyer().getName();
+				numTrans.put(name, numTrans.get(name) + 1);
+			}
+			if (!trans.getBuyer().equals(trans.getSeller())
+					&& model.getAgents().contains(trans.getSeller())) {
+				String name = trans.getSeller().getName();
+				numTrans.put(name, numTrans.get(name) + 1);
 			}
 		}
 		feat.addProperty(delimit("_", MEAN, PRICE), prices.getMean());
@@ -342,9 +340,9 @@ public class Observations {
 	 * 
 	 * NOTE: The computed median will include NaNs in the list of numbers.
 	 * 
-	 * FIXME Is this correct? The NaN's appear randomly dispersed, so the median
-	 * calculation depends on where in the original series the NaN's occurred.
-	 * This definitely doesn't make sense
+	 * TODO Think about how to handle the spreads of the model when they're nan. Obviously we want
+	 * metrics that take into account a NaN / Infinite spread, but it's unclear how best to achieve
+	 * that.
 	 */
 	protected static JsonObject getSpread(MarketModel model, long maxTime) {
 		JsonObject feat = new JsonObject();

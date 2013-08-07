@@ -117,7 +117,8 @@ public abstract class Agent extends Entity {
 	 * Adds an agent's order to its memory so it knows about it, and can cancel it
 	 */
 	public void addOrder(Order order) {
-		// FIXME checks for proper order
+		if (!order.getAgent().equals(this))
+			throw new IllegalArgumentException("Can't add illegal for a different agent");
 		activeOrders.add(order);
 	}
 	
@@ -129,8 +130,7 @@ public abstract class Agent extends Entity {
 	}
 	
 	// TODO gives the agent instant data. Should instead process with delay
-	// FIXME change logger so this doesn't need current time
-	public void addTransaction(Transaction trans, TimeStamp currentTime) {
+	public void addTransaction(Transaction trans) {
 		if (!trans.getBuyer().equals(this) && !trans.getSeller().equals(this))
 			throw new IllegalArgumentException(
 					"Can only add a transaction that this agent participated in");
@@ -148,24 +148,24 @@ public abstract class Agent extends Entity {
 	/**
 	 * Computes any unrealized profit based on market bid/ask quotes.
 	 */
-	// FIXME Do this properly. Does it need to reference Market explicitely?
+	// TODO Implement this
 	public Price getUnrealizedProfit() {
 		if (positionBalance == 0) return Price.ZERO;
 
 		Price p = null;
-//		if (positionBalance > 0) {
-//			// For long position, compare cost to bid quote (buys)
+		if (positionBalance > 0) {
+			// For long position, compare cost to bid quote (buys)
 //			for (Market market : model.getMarkets())
 //				if (market.getQuote().getBidPrice().greaterThan(p))
 //					p = market.getQuote().getBidPrice();
-//		} else {
-//			// For short position, compare cost to ask quote (sells)
+		} else {
+			// For short position, compare cost to ask quote (sells)
 //			for (Market market : model.getMarkets()) {
 //				if (market.getQuote().getAskPrice().lessThan(p)) {
 //					p = market.getQuote().getAskPrice();
 //				}
 //			}
-//		}
+		}
 
 		log(DEBUG, model.getName() + ": " + this + " bal="
 				+ positionBalance + ", p=" + p + ", avgCost=" + averageCost);

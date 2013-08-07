@@ -1,5 +1,7 @@
 package entity.market;
 
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import entity.agent.Agent;
 import event.TimeStamp;
 
@@ -42,7 +44,11 @@ public class Order {
 		return order.getQuantity();
 	}
 	
-	// FIXME Equals and Hashcode
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder(19, 37).append(agent).append(market).append(
+				order).toHashCode();
+	}
 	
 	@Override
 	public String toString() {

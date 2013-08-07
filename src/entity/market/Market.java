@@ -142,9 +142,9 @@ public abstract class Market extends Entity {
 			transactions.add(trans);
 			model.addTrans(trans);
 			// TODO add delay to this
-			buy.getAgent().addTransaction(trans, currentTime);
+			buy.getAgent().addTransaction(trans);
 			if (!buy.getAgent().equals(sell.getAgent())) // In case buyer == seller
-				sell.getAgent().addTransaction(trans, currentTime);
+				sell.getAgent().addTransaction(trans);
 			// FIXME Set last clear price / do it in update quote
 		}
 
