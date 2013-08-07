@@ -1,4 +1,4 @@
-package utils;
+package data;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
@@ -14,7 +14,6 @@ public class DSPlus extends DescriptiveStatistics {
 
 	public DSPlus(int window) {
 		super(window);
-		// TODO Auto-generated constructor stub
 	}
 
 	public DSPlus(double[] initialDoubleArray) {

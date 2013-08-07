@@ -20,7 +20,6 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import systemmanager.Consts;
 import systemmanager.SimulationSpec;
-import utils.DSPlus;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -298,8 +297,8 @@ public class Observations {
 			quantity.addValue(trans.getQuantity());
 			fundamental.addValue(model.getFundamentalAt(trans.getExecTime()).getPrice());
 
-			transPrices.add(trans.getExecTime(), trans.getPrice().getPrice());
-			fundPrices.add(trans.getExecTime(), model.getFundamentalAt(trans.getExecTime()).getPrice());
+			transPrices.add((int) trans.getExecTime().longValue(), trans.getPrice().getPrice());
+			fundPrices.add((int) trans.getExecTime().longValue(), model.getFundamentalAt(trans.getExecTime()).getPrice());
 
 			// update number of transactions
 			if (model.getAgents().contains(trans.getBuyer())) {
@@ -325,10 +324,8 @@ public class Observations {
 		for (int period : Consts.periods) {
 			String prefix = period > 1 ? PERIODICITY + period : null;
 			// XXX maxTime instead of simLength?
-			DSPlus pr = new DSPlus(transPrices.getSampledArray(period,
-					simLength));
-			DSPlus fund = new DSPlus(fundPrices.getSampledArray(period,
-					simLength));
+			DSPlus pr = transPrices.getSampledStats(period, (int) simLength);
+			DSPlus fund = fundPrices.getSampledStats(period, (int) simLength);
 
 			feat.addProperty(delimit("_", prefix, RMSD), pr.getRMSD(fund));
 		}
@@ -350,9 +347,7 @@ public class Observations {
 		DescriptiveStatistics medians = new DescriptiveStatistics();
 		for (Market market : model.getMarkets()) {
 			TimeSeries s = market.getSpread();
-
-			double[] array = s.getSampledArray(0, maxTime);
-			DSPlus spreads = new DSPlus(array);
+			DSPlus spreads = s.getSampledStats(1, (int) maxTime);
 			double med = spreads.getMedian();
 			feat.addProperty(
 					delimit("_", MEDIAN, MARKET + Math.abs(market.getID()),
@@ -365,9 +360,7 @@ public class Observations {
 				medians.getMean());
 
 		TimeSeries nbbo = model.getSIP().getNBBOSpreads();
-
-		double[] array = nbbo.getSampledArray(0, maxTime);
-		DSPlus spreads = new DSPlus(array);
+		DSPlus spreads = nbbo.getSampledStats(1, (int) maxTime);
 		feat.addProperty(delimit("_", MEDIAN, NBBO, TIMESERIES_MAXTIME),
 				spreads.getMedian());
 
@@ -422,11 +415,8 @@ public class Observations {
 			String suffix = MARKET + Math.abs(market.getID());
 
 			TimeSeries mq = market.getMidQuotes();
-
-			double[] mid = mq.getSampledArrayWithoutNaNs(period, maxTime);
-
 			// compute log price volatility for this market
-			DescriptiveStatistics mktPrices = new DescriptiveStatistics(mid);
+			DescriptiveStatistics mktPrices = mq.getSampledStatsSansNaNs(period, (int) maxTime, 0);
 			double stdev = mktPrices.getStandardDeviation();
 			feat.addProperty(delimit("_", prefix, STDDEV, PRICE, suffix), stdev);
 			stddev.addValue(stdev);
@@ -435,18 +425,8 @@ public class Observations {
 				logPriceVol.addValue(Math.log(stdev));
 
 			// compute log-return volatility for this market
-			double[] midquote = mq.getSampledArray(period, maxTime);
-			int size = midquote.length == 0 ? 0 : midquote.length - 1;
-
-			double[] logReturns = new double[size];
-			DescriptiveStatistics mktLogReturns = new DescriptiveStatistics();
-			// FIXME why do we ignore the first point.
-			for (int i = 1; i < midquote.length; i++) {
-				logReturns[i - 1] = Math.log(midquote[i] / midquote[i - 1]);
-				if (!Double.isNaN(logReturns[i - 1])) {
-					mktLogReturns.addValue(logReturns[i - 1]);
-				}
-			}
+			// XXX This change from before. Before if the ratio was NaN it go thrown out. Now the previous value is used.
+			DescriptiveStatistics mktLogReturns = mq.getSampledLogRatioStatsSansNaNs(period, (int) maxTime, 1);
 			double logStdev = mktLogReturns.getStandardDeviation();
 			feat.addProperty(
 					delimit("_", prefix, STDDEV, LOG + RETURN, suffix),

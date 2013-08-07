@@ -77,7 +77,7 @@ public class SIP extends IP {
 		}
 
 		nbbo = new BestBidAsk(bestBidMkt, bestBid, bestAskMkt, bestAsk);
-		nbboSpreads.add(currentTime, nbbo.getSpread());
+		nbboSpreads.add((int) currentTime.longValue(), nbbo.getSpread());
 		return Collections.emptySet();
 	}
 
