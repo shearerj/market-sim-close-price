@@ -1,13 +1,5 @@
 package entity.agent;
 
-import static entity.agent.AAAgent.AGGRESSION_KEY;
-import static entity.agent.AAAgent.BUYERSTATUS_KEY;
-import static entity.agent.AAAgent.DEBUG_KEY;
-import static entity.agent.AAAgent.ETA_KEY;
-import static entity.agent.AAAgent.HISTORICAL_KEY;
-import static entity.agent.AAAgent.THETAMAX_KEY;
-import static entity.agent.AAAgent.THETAMIN_KEY;
-import static entity.agent.AAAgent.THETA_KEY;
 import static logger.Logger.log;
 import static org.junit.Assert.assertTrue;
 
@@ -30,8 +22,6 @@ import activity.SendToIP;
 import activity.SubmitNMSOrder;
 import data.EntityProperties;
 import data.Keys;
-import entity.agent.AAAgent;
-import entity.agent.Agent;
 import entity.market.Market;
 import entity.market.MockMarket;
 import entity.market.Order;
@@ -40,7 +30,6 @@ import event.TimeStamp;
 
 public class AAAgentTest {
 
-//	private static FundamentalValue fund;
 	private static RandPlus rand;
 	private static EntityProperties agentProperties;
 
@@ -61,13 +50,13 @@ public class AAAgentTest {
 		agentProperties = new EntityProperties();
 		agentProperties.put(Keys.REENTRY_RATE, 0.25);
 		agentProperties.put(Keys.MAX_QUANTITY, 10);
-		agentProperties.put(DEBUG_KEY, false);
-		agentProperties.put(ETA_KEY, 3);
-		agentProperties.put(HISTORICAL_KEY, 5);
-		agentProperties.put(AGGRESSION_KEY, 0);
-		agentProperties.put(THETA_KEY, 0);
-		agentProperties.put(THETAMAX_KEY, 4);
-		agentProperties.put(THETAMIN_KEY, -4);
+		agentProperties.put(Keys.DEBUG, false);
+		agentProperties.put(Keys.ETA, 3);
+		agentProperties.put(Keys.HISTORICAL, 5);
+		agentProperties.put(Keys.AGGRESSION, 0);
+		agentProperties.put(Keys.THETA, 0);
+		agentProperties.put(Keys.THETA_MAX, 4);
+		agentProperties.put(Keys.THETA_MIN, -4);
 	}
 
 	@Before
@@ -83,7 +72,7 @@ public class AAAgentTest {
 
 	private AAAgent addAgent(boolean isBuyer) {
 		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(BUYERSTATUS_KEY, isBuyer);
+		testProps.put(Keys.BUYER_STATUS, isBuyer);
 
 		AAAgent agent = new AAAgent(agentIndex++, new TimeStamp(0), model,
 				market, rand, testProps);

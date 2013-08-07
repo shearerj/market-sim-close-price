@@ -22,9 +22,6 @@ import event.TimeStamp;
  */
 public class CallMarket extends Market {
 
-	public final static String CLEAR_FREQ_KEY = "clearFreq";
-	public final static String PRICING_POLICY_KEY = "pricingPolicy";
-
 	// FIXME Move to SMIP?
 	protected final TimeStamp clearFreq;
 	protected TimeStamp nextClearTime, nextQuoteTime;

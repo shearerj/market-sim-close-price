@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 import data.AgentProperties;
 import data.EntityProperties;
 import data.FundamentalValue;
+import data.Keys;
 import entity.market.CallMarket;
 import event.TimeStamp;
 
@@ -36,10 +37,10 @@ public class CentralCall extends MarketModel {
 	@Override
 	protected void setupMarkets(EntityProperties modelProps) {
 		// FIXME These default values are probably not correct.
-		float pricingPolicy = modelProps.getAsFloat(
-				CallMarket.PRICING_POLICY_KEY, 0.5f);
+		double pricingPolicy = modelProps.getAsDouble(
+				Keys.PRICING_POLICY, 0.5d);
 		TimeStamp clearFreq = new TimeStamp(modelProps.getAsLong(
-				CallMarket.CLEAR_FREQ_KEY, 100));
+				Keys.CLEAR_FREQ, 100));
 		// FIXME Add latency option
 		markets.add(new CallMarket(1, this, pricingPolicy, clearFreq, TimeStamp.IMMEDIATE)); // not sure on numbering...
 	}

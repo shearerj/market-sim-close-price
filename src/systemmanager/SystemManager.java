@@ -22,6 +22,7 @@ import model.MarketModelFactory;
 import utils.RandPlus;
 import data.EntityProperties;
 import data.FundamentalValue;
+import data.Keys;
 import data.ModelProperties;
 import data.Observations;
 import event.TimeStamp;
@@ -95,11 +96,11 @@ public class SystemManager {
 
 		spec = new SimulationSpec(new File(simFolder, Consts.SIM_SPEC_FILE));
 		EntityProperties simProps = spec.getSimulationProperties();
-		long seed = simProps.getAsLong(SimulationSpec.RAND_SEED,
+		long seed = simProps.getAsLong(Keys.RAND_SEED,
 				System.currentTimeMillis());
 		RandPlus rand = new RandPlus(seed);
 
-		simulationLength = new TimeStamp(simProps.getAsLong(SimulationSpec.SIMULATION_LENGTH));
+		simulationLength = new TimeStamp(simProps.getAsLong(Keys.SIMULATION_LENGTH));
 		eventManager = new EventManager(new RandPlus(rand.nextLong()));
 		
 		initializeLogger(getProperties(), simFolder, simNumber, eventManager);
@@ -107,9 +108,9 @@ public class SystemManager {
 		// TODO Log configuration
 
 		FundamentalValue fundamental = new FundamentalValue(
-				simProps.getAsDouble(SimulationSpec.FUNDAMENTAL_KAPPA),
-				simProps.getAsInt(SimulationSpec.FUNDAMENTAL_MEAN),
-				simProps.getAsDouble(SimulationSpec.FUNDAMENTAL_SHOCK_VAR),
+				simProps.getAsDouble(Keys.FUNDAMENTAL_KAPPA),
+				simProps.getAsInt(Keys.FUNDAMENTAL_MEAN),
+				simProps.getAsDouble(Keys.FUNDAMENTAL_SHOCK_VAR),
 				new RandPlus(rand.nextLong()));
 
 		MarketModelFactory modelFactory = new MarketModelFactory(

@@ -19,6 +19,7 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 
 import data.AgentProperties;
+import data.Keys;
 import data.ModelProperties;
 import data.EntityProperties;
 
@@ -32,27 +33,12 @@ import data.EntityProperties;
  */
 public class SimulationSpec {
 
-	public final static String ASSIGN_KEY = "assignment";
-	public final static String CONFIG_KEY = "configuration";
-
-	public final static String SIMULATION_LENGTH = "sim_length";
-	public final static String TICK_SIZE = "tick_size";
-	public final static String LATENCY = "nbbo_latency";
-	public final static String ARRIVAL_RATE = "arrival_rate";
-	public final static String REENTRY_RATE = "reentry_rate";
-	public final static String FUNDAMENTAL_MEAN = "mean_value";
-	public final static String FUNDAMENTAL_KAPPA = "kappa";
-	public final static String FUNDAMENTAL_SHOCK_VAR = "shock_var";
-	public final static String PRIVATE_VALUE_VAR = "private_value_var";
-	public final static String PRIMARY_MODEL = "primary_model";
-	public final static String RAND_SEED = "random_seed";
-
-	protected static final String[] simulationKeys = { SIMULATION_LENGTH,
-			FUNDAMENTAL_MEAN, FUNDAMENTAL_KAPPA, FUNDAMENTAL_SHOCK_VAR,
-			RAND_SEED };
-	protected static final String[] modelKeys = { LATENCY };
-	protected static final String[] agentKeys = { TICK_SIZE, ARRIVAL_RATE,
-			REENTRY_RATE, "private_value_var" };
+	protected static final String[] simulationKeys = { Keys.SIMULATION_LENGTH,
+			Keys.FUNDAMENTAL_MEAN, Keys.FUNDAMENTAL_KAPPA, Keys.FUNDAMENTAL_SHOCK_VAR,
+			Keys.RAND_SEED };
+	protected static final String[] modelKeys = { Keys.LATENCY };
+	protected static final String[] agentKeys = { Keys.TICK_SIZE, Keys.ARRIVAL_RATE,
+			Keys.REENTRY_RATE, "private_value_var" };
 
 	// XXX Move into model properties?
 	protected final EntityProperties simulationProperties;
@@ -67,7 +53,7 @@ public class SimulationSpec {
 			JsonIOException, FileNotFoundException {
 		JsonObject spec = new Gson().fromJson(new FileReader(specFile),
 				JsonObject.class);
-		JsonObject config = spec.getAsJsonObject(CONFIG_KEY);
+		JsonObject config = spec.getAsJsonObject(Keys.CONFIG);
 
 		simulationProperties = readProperties(config, simulationKeys);
 		defaultModelProperties = readProperties(config, modelKeys);
@@ -75,7 +61,7 @@ public class SimulationSpec {
 
 		models = marketModels(config, defaultModelProperties);
 		backgroundAgents = backgroundAgents(config, defaultAgentProperties);
-		playerConfig = spec.getAsJsonObject(ASSIGN_KEY);
+		playerConfig = spec.getAsJsonObject(Keys.ASSIGN);
 	}
 
 	public SimulationSpec(String specFileName) throws JsonSyntaxException,

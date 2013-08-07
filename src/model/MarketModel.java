@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import systemmanager.EventManager;
-import systemmanager.SimulationSpec;
 import utils.RandPlus;
 import activity.AgentArrival;
 import activity.Clear;
@@ -20,6 +19,7 @@ import com.google.gson.JsonObject;
 import data.AgentProperties;
 import data.EntityProperties;
 import data.FundamentalValue;
+import data.Keys;
 import data.Player;
 import entity.agent.Agent;
 import entity.agent.SMAgentFactory;
@@ -112,7 +112,7 @@ public abstract class MarketModel {
 			// generic or even specified, but for now we'll stick with the
 			// original implementation
 			SMAgentFactory factory = new SMAgentFactory(this, agentIDgen,
-					agProps.getAsDouble(SimulationSpec.ARRIVAL_RATE, 0.075),
+					agProps.getAsDouble(Keys.ARRIVAL_RATE, 0.075),
 					new RandPlus(rand.nextLong()));
 
 			for (int i = 0; i < number; i++)
@@ -120,7 +120,7 @@ public abstract class MarketModel {
 		}
 	}
 
-	private void setupPlayers(EntityProperties modelProps,
+	protected void setupPlayers(EntityProperties modelProps,
 			JsonObject playerConfig) {
 		// First group by role and agentType for legacy reasons
 		Map<String, Map<String, Integer>> roleStratCounts = new HashMap<String, Map<String, Integer>>();

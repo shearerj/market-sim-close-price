@@ -35,20 +35,7 @@ import event.TimeStamp;
  */
 
 public class AAAgent extends ReentryAgent {
-	public final static String HISTORICAL_KEY = "historical";
-	public final static String ETA_KEY = "eta";
-	public final static String AGGRESSION_KEY = "aggression";
-	public final static String THETA_KEY = "theta";
-	public final static String THETAMAX_KEY = "thetaMax";
-	public final static String THETAMIN_KEY = "thetaMin";
-	public final static String DEBUG_KEY = "debug";
-	public final static String TEST_KEY = "AAtesting";
-	public final static String BUYERSTATUS_KEY = "buyerStatus";
-
-	//
-	// Private variables
-	//
-
+	
 	// Agent market variables
 	private boolean isBuyer; // randomly assigned at initialization
 	private int maxAbsPosition; // maxPosition the agent can take on
@@ -102,7 +89,7 @@ public class AAAgent extends ReentryAgent {
 		
 		
 		//Determining whether agent is a buyer or a seller
-		this.isBuyer = params.getAsBoolean(BUYERSTATUS_KEY, rand.nextBoolean());
+		this.isBuyer = params.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean());
 
 		//Initializing parameters
 		// Parameters are currently taken from Vytelingum paper
@@ -114,12 +101,12 @@ public class AAAgent extends ReentryAgent {
 		beta_t = (rand.nextDouble() * 0.4) + 0.2;
 		
 		//Initializing strategy variables
-		theta = params.getAsDouble(AAAgent.THETA_KEY, 0);
-		aggression = params.getAsDouble(AAAgent.AGGRESSION_KEY, 0);
-		historical = params.getAsInt(AAAgent.HISTORICAL_KEY, 5);
-		eta = params.getAsInt(AAAgent.ETA_KEY, 3);
-		thetaMax = params.getAsDouble(AAAgent.THETAMAX_KEY, 4);
-		thetaMin = params.getAsDouble(AAAgent.THETAMIN_KEY, -4);
+		theta = params.getAsDouble(Keys.THETA, 0);
+		aggression = params.getAsDouble(Keys.AGGRESSION, 0);
+		historical = params.getAsInt(Keys.HISTORICAL, 5);
+		eta = params.getAsInt(Keys.ETA, 3);
+		thetaMax = params.getAsDouble(Keys.THETA_MAX, 4);
+		thetaMin = params.getAsDouble(Keys.THETA_MIN, -4);
 		
 	}
 

@@ -49,7 +49,7 @@ public class ZIAgent extends BackgroundAgent {
 	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, EntityProperties props) {
 		this(agentID, arrivalTime, model, market, rand, props.getAsInt(
-				Keys.BID_RANGE, 2000), props.getAsDouble(Keys.PV_VAR, 100),
+				Keys.BID_RANGE, 2000), props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100),
 				props.getAsInt(Keys.TICK_SIZE, 1));
 		// FIXME PVVar proper default
 	}

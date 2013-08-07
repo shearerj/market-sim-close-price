@@ -2,6 +2,9 @@ package entity.market;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
+import static java.lang.Integer.signum;
+import static java.lang.Math.min;
+import static java.lang.Math.max;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -93,13 +96,28 @@ public abstract class Market extends Entity {
 
 	public Collection<? extends Activity> withdrawOrder(Order order,
 			TimeStamp currentTime) {
-		// FIXME Log something
-		orderbook.withdrawOrder(order.order);
-		order.agent.removeOrder(order);
-		return Collections.emptySet();
+		return withdrawOrder(order, order.getQuantity(), currentTime);
 	}
 
-	// FIXME withdraw quantity of an order
+	/**
+	 * This will work even if quantity has "decreased" after order was submitted. Trying to cancel a
+	 * higher quantity than the order has to offer will simply result in the entire order being
+	 * cancelled.
+	 * 
+	 * @param order
+	 * @param quantity
+	 * @param currentTime
+	 * @return
+	 */
+	public Collection<? extends Activity> withdrawOrder(Order order, int quantity, TimeStamp currentTime) {
+		if (order.getQuantity() == 0) return Collections.emptySet();
+		if (quantity == 0 || signum(order.getQuantity()) != signum(quantity))
+			throw new IllegalArgumentException("Improper quantity");
+		quantity = quantity < 0 ? max(quantity, order.getQuantity()) : min(quantity, order.getQuantity());
+		orderbook.withdrawOrder(order.order, quantity);
+		checkOrder(order);
+		return Collections.emptySet();
+	}
 
 	/**
 	 * Clears the order book.
@@ -119,11 +137,13 @@ public abstract class Market extends Entity {
 			Transaction trans = new Transaction(buy.getAgent(),
 					sell.getAgent(), this, buy, sell, ftrans.getQuantity(),
 					pit.next(), currentTime);
+			checkOrder(buy);
+			checkOrder(sell);
 			transactions.add(trans);
 			model.addTrans(trans);
 			// TODO add delay to this
 			buy.getAgent().addTransaction(trans, currentTime);
-			if (!buy.getAgent().equals(sell.getAgent())) // Incase buyer == seller
+			if (!buy.getAgent().equals(sell.getAgent())) // In case buyer == seller
 				sell.getAgent().addTransaction(trans, currentTime);
 			// FIXME Set last clear price / do it in update quote
 		}
@@ -145,7 +165,6 @@ public abstract class Market extends Entity {
 
 		Collection<Activity> activities = new ArrayList<Activity>();
 		for (IP ip : ips)
-			// FIXME Change null to this
 			activities.add(new SendToIP(this, quote, transactions, ip,
 					TimeStamp.IMMEDIATE));
 
@@ -154,10 +173,20 @@ public abstract class Market extends Entity {
 		midQuotes.add(currentTime, quote.getMidquote());
 		return activities;
 	}
+	
+	/**
+	 * Removes order from appropriate data structures if it's fully transacted
+	 * @order
+	 */
+	protected void checkOrder(Order order) {
+		if (order.getQuantity() == 0) {
+			order.agent.removeOrder(order);
+			orderMapping.remove(order.order);
+		}
+	}
 
 	// TODO Add bid type that gets withdrawn after next clear
 
-	// TODO switch to Bid Object
 	/**
 	 * Bid doesn't expire
 	 */
@@ -198,9 +227,11 @@ public abstract class Market extends Entity {
 				TimeStamp.IMMEDIATE);
 	}
 
-	// FIXME How should call markets handle Reg NMS. Can't route to call market to get immediate
+	// TODO How should call markets handle Reg NMS. Can't route to call market to get immediate
 	// execution.
-	// FIXME orderbook.(bid/ask)Quote() will return the current quote, not the published one
+	// TODO orderbook.(bid/ask)Quote() will return the current quote, not the published one
+	// TODO NMSOrder will not route properly for a call market if there is another market in the
+	// model
 	public Collection<? extends Activity> submitNMSOrder(Agent agent,
 			Price price, int quantity, TimeStamp currentTime, TimeStamp duration) {
 		BestBidAsk nbbo = sip.getNBBO();
