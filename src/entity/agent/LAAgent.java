@@ -47,7 +47,7 @@ public class LAAgent extends HFTAgent {
 	public LAAgent(int agentID, MarketModel model, RandPlus rand,
 			EntityProperties props) {
 		this(agentID, model, props.getAsDouble(Keys.ALPHA, 0.001),
-				new TimeStamp(props.getAsLong(Keys.LATENCY, -1)), rand,
+				new TimeStamp(props.getAsLong(Keys.LA_LATENCY, -1)), rand,
 				props.getAsInt(Keys.TICK_SIZE, 1000));
 	}
 

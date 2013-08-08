@@ -45,7 +45,7 @@ public class TimeSeries {
 	}
 
 	/**
-	 * Add a data point (int, double) to containers.
+	 * Add a data point (int, double) to container
 	 */
 	public void add(int ts, double point) {
 		int lastTime = times.get(times.size() - 1);
@@ -62,40 +62,44 @@ public class TimeSeries {
 	}
 
 	/**
-	 * Sample values according to specified period & return array. Returns value
-	 * at the END of each period. Example: For sampling interval of 100, the
-	 * first item in the sampled array would be the 100th element.
+	 * Sample values according to specified period & return a DescriptiveStatistics object for the
+	 * sampled values. Returns value at the END of each period. Example: For sampling interval of
+	 * 100, the first item in the sampled array would be the 100th element (index 99).
 	 * 
-	 * Will also fill in values up to maxTime, if the last time stored is before
+	 * Will also fill in values up to (not including) maxTime, if the last time stored is before
 	 * maxTime.
 	 * 
-	 * If period == 0, then will include every time stamp.
-	 * 
-	 * @param period
-	 * @param maxTime
-	 *            (inclusive)
-	 * @return
+	 * If period == 1, then will include every time stamp.
 	 */
-	// FIXME Make noninclusive. Make sure callers still call appropriately
 	public DSPlus getSampledStats(int period, int maxTime) {
 		return new DSPlus(sample(period, maxTime));
 	}
 
 	/**
-	 * For use with DescriptiveStatistics objects, which cannot ignore NaNs.
-	 * 
-	 * @param period
-	 * @param maxTime
-	 * @return
+	 * Same as getSampledStats, but removes all NaNs
 	 */
-	public DSPlus getSampledStatsSansNaNs(int period, int maxTime, double def) {
-		return new DSPlus(sansNans(sample(period, maxTime), def));
+	public DSPlus getSampledStatsSansNaNs(int period, int maxTime) {
+		return new DSPlus(sansNans(sample(period, maxTime)));
 	}
 	
-	public DSPlus getSampledLogRatioStatsSansNaNs(int period, int maxTime, double def) {
-		return new DSPlus(sansNans(logRatio(sample(period, maxTime)), def));
+	/**
+	 * Same as getSampledStatsSansNaNs, but this returns a descriptive statistics object seeded with
+	 * the log ratio of adjacent sampled values. NaNs are removed
+	 */
+	public DSPlus getSampledLogRatioStatsSansNaNs(int period, int maxTime) {
+		return new DSPlus(sansNans(logRatio(sample(period, maxTime))));
 	}
 	
+	/**
+	 * Sample values according to specified period & return array. Returns value at the END of each
+	 * period. Example: For sampling interval of 100, the first item in the sampled array would be
+	 * the 100th element (index 99).
+	 * 
+	 * Will also fill in values up to (not including) maxTime, if the last time stored is before
+	 * maxTime.
+	 * 
+	 * If period == 1, then will include every time stamp.
+	 */
 	protected double[] sample(int period, int maxTime) {
 		if (period <= 0)
 			throw new IllegalArgumentException("Period must be positive");
@@ -104,31 +108,44 @@ public class TimeSeries {
 		
 		Iterator<Integer> itt = times.iterator();
 		Iterator<Double> itd = points.iterator();
-		int time = 0;
+		int time = period - 1; // Sample at end of period
 		int nextTime;
 		double point = Double.NaN;
-		while(itt.hasNext() && itd.hasNext() && time <= maxTime) {
+		while(itt.hasNext() && itd.hasNext() && time < maxTime) {
 			nextTime = itt.next();
-			while (time < nextTime && time <= maxTime) {
+			while (time < nextTime && time < maxTime) {
 				sampled.add(point);
 				time += period;
 			}
 			point = itd.next();
 		}
-		while (time <= maxTime) {
+		while (time < maxTime) {
 			sampled.add(point);
 			time += period;
 		}
 		return ArrayUtils.toPrimitive(sampled.toArray(new Double[sampled.size()]));
 	}
 	
-	protected final static double[] sansNans(double[] array, double def) {
-		if (array.length > 0 && Double.isNaN(array[0])) array[0] = def;
-		for (int i = 1; i < array.length; i++)
-			if (Double.isNaN(array[i])) array[i] = array[i - 1];
-		return array;
+	/**
+	 * Removes NaNs from an array
+	 * 
+	 * [4, 6, NaN, 10] -> [4, 6, 10]
+	 */
+	protected final static double[] sansNans(double[] array) {
+		int nonNans = 0;
+		for (double d : array)
+			if (!Double.isNaN(d)) nonNans++;
+		double[] sansNans = new double[nonNans];
+		int i = 0;
+		for (double d : array)
+			if (!Double.isNaN(d)) sansNans[i++] = d;
+		return sansNans;
 	}
-	
+
+	/**
+	 * Returns a new array with one less element, where each element is the logRatio
+	 * between the two adjacent elements
+	 */
 	protected final static double[] logRatio(double[] array) {
 		double[] logr = new double[array.length - 1];
 		for (int i = 0; i < logr.length; i++)

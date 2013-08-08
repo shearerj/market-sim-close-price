@@ -42,17 +42,15 @@ public class ZIPAgent extends ReentryAgent {
 		this.gamma = gamma;
 	}
 	
-	// FIXME Move to keys
 	public ZIPAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, EntityProperties props) {
-		// FIXME replace null with proper private value initialization
 		this(agentID, arrivalTime, model, market, rand, props.getAsDouble(
 				Keys.PRIVATE_VALUE_VAR, 100000000), props.getAsInt(
 				Keys.TICK_SIZE, 1), props.getAsInt(Keys.BID_RANGE, 5000),
 				props.getAsDouble(Keys.REENTRY_RATE, 0.005), props.getAsDouble(
-						"c_R", .05), props.getAsDouble("c_A", .05),
-				props.getAsDouble("beta", .03), props.getAsDouble("betaVar",
-						.005), props.getAsDouble("gamma", .5));
+						Keys.CR, .05), props.getAsDouble(Keys.CA, .05),
+				props.getAsDouble(Keys.BETA, .03), props.getAsDouble(
+						Keys.BETA_VAR, .005), props.getAsDouble(Keys.BETA, .5));
 	}
 	
 	@Override

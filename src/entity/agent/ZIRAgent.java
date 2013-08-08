@@ -41,26 +41,19 @@ import event.TimeStamp;
 public class ZIRAgent extends ReentryAgent {
 
 	protected int bidRange; // range for limit order
-	protected int lastPositionBalance; // last position balance
 	protected int maxAbsPosition; // max quantity for position
-	// for computing discounted surplus
-	protected ArrayList<TimeStamp> submissionTimes; // FIXME currently unused
 
 	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, int bidRange, int maxAbsPosition,
 			double reentryRate, double pvVar, int tickSize) {
-		// TODO replace null with proper private value initialization
 		super(agentID, arrivalTime, model, market, new PrivateValue(
 				maxAbsPosition, pvVar, rand), rand, reentryRate, tickSize);
 		this.bidRange = bidRange;
 		this.maxAbsPosition = maxAbsPosition;
-		this.lastPositionBalance = positionBalance;
-		this.submissionTimes = new ArrayList<TimeStamp>();
 	}
 
 	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, EntityProperties props) {
-		// TODO get keys and default value for reentry rate and pvvar
 		this(agentID, arrivalTime, model, market, rand, props.getAsInt(
 				Keys.BID_RANGE, 5000), props.getAsInt(Keys.MAX_QUANTITY, 10),
 				props.getAsDouble(Keys.REENTRY_RATE, 0.005), props.getAsDouble(
@@ -72,53 +65,45 @@ public class ZIRAgent extends ReentryAgent {
 	public Collection<Activity> agentStrategy(TimeStamp currentTime) {
 		Collection<Activity> activities = new ArrayList<Activity>(super.agentStrategy(currentTime));
 
-		String s = this + " " + getName() + ":";
+		StringBuilder sb = new StringBuilder().append(this).append(" ");
+		sb.append(getName()).append(':');
 		if (!currentTime.equals(arrivalTime)) {
-			s += " wake up.";
-			if (positionBalance == lastPositionBalance) {
-				s += " last order has not transacted, go back to sleep";
-			}
+			sb.append(" wake up.");
 		}
-		if (positionBalance != lastPositionBalance || currentTime.equals(arrivalTime)) {
-			// If either first arrival or if last order has already transacted
-			// then should submit a new order. Otherwise, do nothing (does not
-			// cancel orders).
+		if (!activeOrders.isEmpty()) {
+			sb.append(" last order has not transacted, go back to sleep");
+			log(INFO, sb.toString());
+			return activities;
+		}
 
-			// 0.50% chance of being either long or short
-			int quantity = rand.nextBoolean() ? 1 : -1;
+		// 0.50% chance of being either long or short
+		int quantity = rand.nextBoolean() ? 1 : -1;
 
-			int newPosition = quantity + positionBalance;
-			// check that will not exceed max absolute position
-			if (newPosition <= maxAbsPosition && newPosition >= -maxAbsPosition) {
-				Price val = model.getFundamentalAt(currentTime).plus(
-						privateValue.getValueFromQuantity(positionBalance,
-								quantity)).nonnegative();
-				Price price = new Price(
-						(int) (val.getInTicks() - Math.signum(quantity)
-								* rand.nextDouble() * 2 * bidRange)).nonnegative();
+		int newPosition = quantity + positionBalance;
+		// check that will not exceed max absolute position
+		if (newPosition <= maxAbsPosition && newPosition >= -maxAbsPosition) {
+			Price val = model.getFundamentalAt(currentTime).plus(
+					privateValue.getValueFromQuantity(positionBalance, quantity)).nonnegative();
+			Price price = new Price(
+					(int) (val.getInTicks() - Math.signum(quantity)
+							* rand.nextDouble() * 2 * bidRange)).nonnegative();
 
-				s += " position=" + positionBalance + ", for q=" + quantity
-						+ ", value=" + model.getFundamentalAt(currentTime) + " + "
-						+ privateValue.getValueFromQuantity(positionBalance,
-								quantity) + "=" + val;
-				log(INFO, s);
+			sb.append(" position=").append(positionBalance).append(", for q=");
+			sb.append(quantity).append(", value=");
+			sb.append(model.getFundamentalAt(currentTime)).append(" + ");
+			sb.append(privateValue.getValueFromQuantity(positionBalance,
+					quantity));
+			sb.append('=').append(val);
+			log(INFO, sb.toString());
 
-				activities.add(new SubmitNMSOrder(this, price, quantity, primaryMarket,
-						TimeStamp.IMMEDIATE));
-				submissionTimes.add(currentTime);
-
-				lastPositionBalance = positionBalance; // update position
-														// balance
-
-			} else {
-				s += "new order would exceed max position " + maxAbsPosition
-						+ "; no submission";
-				log(INFO, s);
-			}
+			activities.add(new SubmitNMSOrder(this, price, quantity,
+					primaryMarket, TimeStamp.IMMEDIATE));
+		} else {
 			// if exceed max position, then don't submit a new bid
 			// TODO - stay the same for now (position balance)
-		} else {
-			log(INFO, s);
+			sb.append("new order would exceed max position ");
+			sb.append(maxAbsPosition).append("; no submission");
+			log(INFO, sb.toString());
 		}
 		return activities;
 	}

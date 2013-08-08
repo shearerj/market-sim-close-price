@@ -35,8 +35,6 @@ public abstract class Agent extends Entity {
 	// List of all transactions. Implicitly time ordered due to transactions
 	// being created and assigned in time order.
 	protected final List<Transaction> transactions;
-	// TODO Currently unused? Bid should be added to this before it's submitted... Maybe Market
-	// should add t othis when a bid is submitted, so when it's removed this can also be updated...
 	protected final Collection<Order> activeOrders;
 
 	// Agent parameters
@@ -44,9 +42,9 @@ public abstract class Agent extends Entity {
 	protected final TimeStamp arrivalTime;
 	protected final int tickSize;
 
+	protected int positionBalance;
 	// Tracking cash flow
 	protected int cashBalance;
-	protected int positionBalance;
 	protected int averageCost;
 	protected int realizedProfit;
 	// for liquidation XXX Should be moved to MarketMaker? Not sure...
@@ -135,6 +133,11 @@ public abstract class Agent extends Entity {
 			throw new IllegalArgumentException(
 					"Can only add a transaction that this agent participated in");
 		transactions.add(trans);
+		// Not an else if in case buyer and seller are the same
+		if (trans.getBuyer().equals(this))
+			positionBalance += trans.getQuantity();
+		if (trans.getSeller().equals(this))
+			positionBalance -= trans.getQuantity();
 
 		// XXX currentTime should equal Trans.getExecTime() so redundant?
 		log(INFO, this + " "

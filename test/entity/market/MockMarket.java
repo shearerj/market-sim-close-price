@@ -18,7 +18,7 @@ import event.TimeStamp;
 public class MockMarket extends Market {
 
 	public MockMarket(int marketID, MarketModel model) {
-		super(marketID, model, new UniformPriceClear(0.5d), TimeStamp.IMMEDIATE);
+		super(marketID, model, new UniformPriceClear(0.5d, 1), TimeStamp.IMMEDIATE);
 	}
 
 	public MockMarket(MarketModel model) {

@@ -66,7 +66,7 @@ public class SIP extends IP {
 			}
 		}
 
-		// NBBO Fix FIXME should figure out best way to handle price discrepancies
+		// NBBO Fix XXX should figure out best way to handle price discrepancies
 		if (bestBid != null && bestAsk != null && bestBid.greaterThan(bestAsk)) {
 			int mid = (bestBid.getInTicks() + bestAsk.getInTicks()) / 2;
 			// Removed the tick increment from old fix, mainly for ease of use. What would the

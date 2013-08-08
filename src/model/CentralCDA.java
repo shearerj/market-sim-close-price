@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 import data.AgentProperties;
 import data.EntityProperties;
 import data.FundamentalValue;
+import data.Keys;
 import entity.market.CDAMarket;
 import event.TimeStamp;
 
@@ -30,8 +31,8 @@ public class CentralCDA extends MarketModel {
 
 	@Override
 	protected void setupMarkets(EntityProperties modelProps) {
-		// FIXME Get latency from settings
-		markets.add(new CDAMarket(1, this, TimeStamp.IMMEDIATE));
+		TimeStamp latency = new TimeStamp(modelProps.getAsLong(Keys.MARKET_LATENCY, -1));
+		markets.add(new CDAMarket(1, this, latency));
 	}
 
 }

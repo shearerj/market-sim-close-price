@@ -19,12 +19,19 @@ public interface Keys {
 	
 	public final static String PRIVATE_VALUE_VAR = "privateValueVar";
 	public final static String SIMULATION_LENGTH = "simLength";
-	public final static String LATENCY = "nbboLatency";
 	public final static String FUNDAMENTAL_MEAN = "meanValue";
 	public final static String FUNDAMENTAL_KAPPA = "kappa";
 	public final static String FUNDAMENTAL_SHOCK_VAR = "shockVar";
 	public final static String PRIMARY_MODEL = "primaryModel";
 	
+	public final static String NUM_LA = "numLA";
+	
+	// Latency
+	public final static String NBBO_LATENCY = "nbboLatency";
+	public final static String MARKET_LATENCY = "mktLatency";
+	public final static String LA_LATENCY = "laLatency";
+	
+	// Call Market
 	public final static String CLEAR_FREQ = "clearFreq";
 	public final static String PRICING_POLICY = "pricingPolicy";
 
@@ -42,5 +49,12 @@ public interface Keys {
 	public final static String DEBUG = "debug";
 	public final static String TEST = "AAtesting";
 	public final static String BUYER_STATUS = "buyerStatus";
+	
+	// ZIP
+	public final static String CR = "cR";
+	public final static String CA = "cA";
+	public final static String BETA = "beta";
+	public final static String BETA_VAR = "betaVar";
+	public final static String GAMMA = "gamma";
 	
 }

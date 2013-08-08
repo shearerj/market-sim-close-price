@@ -45,11 +45,11 @@ public class EventManager {
 	}
 
 	/**
-	 * Executes activities until and including time
+	 * Executes activities until (not including) time
 	 * @param time
 	 */
 	public void executeUntil(TimeStamp time) {
-		while (!isEmpty() && !eventQueue.peek().getTime().after(time))
+		while (!isEmpty() && eventQueue.peek().getTime().before(time))
 			executeNext();
 	}
 

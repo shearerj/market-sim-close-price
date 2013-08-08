@@ -36,7 +36,7 @@ public class SimulationSpec {
 	protected static final String[] simulationKeys = { Keys.SIMULATION_LENGTH,
 			Keys.FUNDAMENTAL_MEAN, Keys.FUNDAMENTAL_KAPPA, Keys.FUNDAMENTAL_SHOCK_VAR,
 			Keys.RAND_SEED };
-	protected static final String[] modelKeys = { Keys.LATENCY, Keys.ARRIVAL_RATE };
+	protected static final String[] modelKeys = { Keys.NBBO_LATENCY, Keys.ARRIVAL_RATE, Keys.MARKET_LATENCY, Keys.TICK_SIZE };
 	protected static final String[] agentKeys = { Keys.TICK_SIZE, Keys.ARRIVAL_RATE,
 			Keys.REENTRY_RATE, Keys.PRIVATE_VALUE_VAR };
 

@@ -40,12 +40,24 @@ public class DSPlus extends DescriptiveStatistics {
 		}
 		return Math.sqrt(rmsd / n);
 	}
+	
+	public double[] getValuesSansNaNs() {
+		int nonNans = 0;
+		for (double d : getValues())
+			if (!Double.isNaN(d)) nonNans++;
+		double[] sansNaNs = new double[nonNans];
+		int i = 0;
+		for (double d : getValues())
+			if (!Double.isNaN(d)) sansNaNs[i++] = d;
+		return sansNaNs;
+	}
 
-	// FIXME This currently has very bad behavior with nans. Should fix, but
-	// it's not clear what the proper fix should be. One would be making nans
-	// positive or negative infinity...
+	/**
+	 * Get's median without NaNs, because NaN's don't make sense for a median calculation.
+	 * Disregarding them is equivalent to alternatively making them positive and negative infinity.
+	 */
 	public double getMedian() {
-		return median.evaluate(getValues());
+		return median.evaluate(getValuesSansNaNs());
 	}
 
 }

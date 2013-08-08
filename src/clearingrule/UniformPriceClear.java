@@ -13,21 +13,24 @@ import fourheap.Transaction;
 
 public class UniformPriceClear implements ClearingRule {
 
-	double ratio;
+	protected final double ratio;
+	protected final int tickSize;
 	
-	public UniformPriceClear(double ratio) {
+	public UniformPriceClear(double ratio, int tickSize) {
 		this.ratio = ratio;
+		this.tickSize = tickSize;
 	}
 
 	@Override
-	// FIXME ticksize!
 	public List<Price> pricing(List<Transaction<Price, TimeStamp>> transactions) {
 		Price minBuy = null, maxSell = null;
 		for (Transaction<Price, TimeStamp> trans : transactions) {
 			minBuy = min(minBuy, trans.getBuy().getPrice());
 			maxSell = max(maxSell, trans.getSell().getPrice());
 		}
-		Price clearPrice = new Price((int) (minBuy.getInTicks() * ratio + maxSell.getInTicks() * (1 - ratio)));
+		Price clearPrice = new Price(
+				(int) (minBuy.getInTicks() * ratio + maxSell.getInTicks()
+						* (1 - ratio))).quantize(tickSize);
 		List<Price> prices = new ArrayList<Price>(transactions.size());
 		for (int i = 0; i < transactions.size(); i++)
 			prices.add(clearPrice);

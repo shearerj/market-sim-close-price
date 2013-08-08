@@ -46,8 +46,6 @@ public abstract class Market extends Entity {
 	protected final Collection<IP> ips;
 	
 	protected Quote quote;
-	protected TimeStamp lastClearTime, lastOrderTime;
-	protected Price lastClearPrice;
 
 	// Book keeping
 	protected final Map<fourheap.Order<Price, TimeStamp>, Order> orderMapping;
@@ -145,7 +143,6 @@ public abstract class Market extends Entity {
 			buy.getAgent().addTransaction(trans);
 			if (!buy.getAgent().equals(sell.getAgent())) // In case buyer == seller
 				sell.getAgent().addTransaction(trans);
-			// FIXME Set last clear price / do it in update quote
 		}
 
 		return updateQuote(Collections.unmodifiableList(transactions), currentTime);
@@ -257,14 +254,6 @@ public abstract class Market extends Entity {
 
 		return bestMarket.submitOrder(agent, price, quantity, currentTime,
 				duration);
-	}
-
-	public Price getLastClearPrice() {
-		return lastClearPrice;
-	}
-
-	public TimeStamp getLastClearTime() {
-		return lastClearTime;
 	}
 
 	public TimeSeries getDepth() {

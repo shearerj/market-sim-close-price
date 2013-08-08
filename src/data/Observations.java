@@ -416,7 +416,7 @@ public class Observations {
 
 			TimeSeries mq = market.getMidQuotes();
 			// compute log price volatility for this market
-			DescriptiveStatistics mktPrices = mq.getSampledStatsSansNaNs(period, (int) maxTime, 0);
+			DescriptiveStatistics mktPrices = mq.getSampledStatsSansNaNs(period, (int) maxTime);
 			double stdev = mktPrices.getStandardDeviation();
 			feat.addProperty(delimit("_", prefix, STDDEV, PRICE, suffix), stdev);
 			stddev.addValue(stdev);
@@ -426,7 +426,7 @@ public class Observations {
 
 			// compute log-return volatility for this market
 			// XXX This change from before. Before if the ratio was NaN it go thrown out. Now the previous value is used.
-			DescriptiveStatistics mktLogReturns = mq.getSampledLogRatioStatsSansNaNs(period, (int) maxTime, 1);
+			DescriptiveStatistics mktLogReturns = mq.getSampledLogRatioStatsSansNaNs(period, (int) maxTime);
 			double logStdev = mktLogReturns.getStandardDeviation();
 			feat.addProperty(
 					delimit("_", prefix, STDDEV, LOG + RETURN, suffix),

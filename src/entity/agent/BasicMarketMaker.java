@@ -14,10 +14,12 @@ import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
 import activity.SubmitOrder;
+import activity.WithdrawOrder;
 import data.EntityProperties;
 import data.Keys;
 import entity.infoproc.BestBidAsk;
 import entity.market.Market;
+import entity.market.Order;
 import entity.market.Price;
 import entity.market.Quote;
 import event.TimeStamp;
@@ -61,8 +63,8 @@ public class BasicMarketMaker extends MarketMaker {
 		this.numRungs = numRungs;
 		this.rungSize = rungSize;
 		this.stepSize = MathUtils.quantize(rungSize, tickSize);
-		this.lastAsk = null; // ask
-		this.lastBid = null; // bid
+		this.lastAsk = null;
+		this.lastBid = null;
 	}
 
 	public BasicMarketMaker(int agentID, MarketModel model, Market market,
@@ -75,7 +77,7 @@ public class BasicMarketMaker extends MarketMaker {
 	}
 
 	@Override
-	public Collection<Activity> agentStrategy(TimeStamp ts) {
+	public Collection<Activity> agentStrategy(TimeStamp currentTime) {
 		Collection<Activity> acts = new ArrayList<Activity>();
 
 		// update NBBO
@@ -84,60 +86,62 @@ public class BasicMarketMaker extends MarketMaker {
 		Quote quote = marketIP.getQuote();
 		Price bid = quote.getBidPrice();
 		Price ask = quote.getAskPrice();
+		
+		// Quote changed, withdraw all orders
+		if ((bid == null && lastBid != null)
+				|| (bid != null && !bid.equals(lastBid))
+				|| (ask == null && lastAsk != null)
+				|| (ask != null && !ask.equals(lastAsk))) {
+			for (Order order : activeOrders)
+				acts.add(new WithdrawOrder(order, TimeStamp.IMMEDIATE));
+			
+			if (!quote.isDefined()) {
+				log(INFO, this + " " + getName()
+						+ "::agentStrategy: undefined quote in market "
+						+ primaryMarket);
+			} else {
+				
+				Price ct = new Price(numRungs * stepSize);
+				// min price for buy order in the ladder
+				Price buyMinPrice = min(bid.minus(ct), lastNBBOQuote.getBestAsk());
+				// max price for sell order in the ladder
+				Price sellMaxPrice = max(ask.plus(ct), lastNBBOQuote.getBestBid());
 
-		// TODO This doesn't represent an undefined quote, but the fact that a
-		// market may not have any buy or sell orders. This could still allow
-		// agent strategy.
-		if (bid == null || ask == null) {
-			log(INFO, this + " " + getName()
-					+ "::agentStrategy: undefined quote in market "
-					+ primaryMarket);
+				// check if the bid or ask crosses the NBBO
+				// FIXME I believe this will create orders that would transact on
+				// another market. Wait to hear from Elaine.
+				if (lastNBBOQuote.getBestAsk().lessThan(ask)) {
+					// buy orders: If ASK_N < X_t, then [ASK_N, ..., Y_t]
+					buyMinPrice = lastNBBOQuote.getBestAsk();
+				}
+				if (lastNBBOQuote.getBestBid().greaterThan(bid)) {
+					// sell orders: If BID_N > Y_t, then [X_t, ..., BID_N]
+					sellMaxPrice = lastNBBOQuote.getBestBid();
+				}
 
-		} else if (!bid.equals(lastBid) || !ask.equals(lastAsk)) {
-			// check if bid/ask has changed; if so, submit fresh orders
-			// FIXME Withdraw old orders
+				// TODO change from this implementation, which only works if both
+				// sides are defined, to one that looks at each side individually.
 
-			Price ct = new Price(numRungs * stepSize);
-			// min price for buy order in the ladder
-			Price buyMinPrice = min(bid.minus(ct), lastNBBOQuote.getBestAsk());
-			// max price for sell order in the ladder
-			Price sellMaxPrice = max(ask.plus(ct), lastNBBOQuote.getBestBid());
+				// build descending list of buy orders (yt, ..., yt - ct) or
+				// stops at NBBO ask
+				for (int price = bid.getInTicks(); price >= buyMinPrice.getInTicks(); price -= stepSize)
+					acts.add(new SubmitOrder(this, primaryMarket, new Price(price), 1, TimeStamp.IMMEDIATE));
 
-			// check if the bid or ask crosses the NBBO
-			// FIXME I believe this will create orders that would transact on
-			// another market. Wait to hear from Elaine.
-			if (lastNBBOQuote.getBestAsk().lessThan(ask)) {
-				// buy orders: If ASK_N < X_t, then [ASK_N, ..., Y_t]
-				buyMinPrice = lastNBBOQuote.getBestAsk();
+				// build ascending list of sell orders (xt, ..., xt + ct) or
+				// stops at NBBO bid
+				for (int price = ask.getInTicks(); price <= sellMaxPrice.getInTicks(); price += stepSize)
+					acts.add(new SubmitOrder(this, primaryMarket, new Price(price), -1, TimeStamp.IMMEDIATE));
+
+				log(INFO, primaryMarket + " " + this + " " + getName()
+						+ "::agentStrategy: ladder numRungs=" + numRungs
+						+ ", stepSize=" + stepSize + ": buys [" + buyMinPrice
+						+ ", " + bid + "] &" + " sells [" + ask + ", "
+						+ sellMaxPrice + "]");
+				
 			}
-			if (lastNBBOQuote.getBestBid().greaterThan(bid)) {
-				// sell orders: If BID_N > Y_t, then [X_t, ..., BID_N]
-				sellMaxPrice = lastNBBOQuote.getBestBid();
-			}
-
-			// TODO change from this implementation, which only works if both
-			// sides are defined, to one that looks at each side individually.
-
-			// build descending list of buy orders (yt, ..., yt - ct) or
-			// stops at NBBO ask
-			for (int price = bid.getInTicks(); price >= buyMinPrice.getInTicks(); price -= stepSize)
-				acts.add(new SubmitOrder(this, primaryMarket, new Price(price), 1, TimeStamp.IMMEDIATE));
-
-			// build ascending list of sell orders (xt, ..., xt + ct) or
-			// stops at NBBO bid
-			for (int price = ask.getInTicks(); price <= sellMaxPrice.getInTicks(); price += stepSize)
-				acts.add(new SubmitOrder(this, primaryMarket, new Price(price), -1, TimeStamp.IMMEDIATE));
-
-			log(INFO, ts + " | " + primaryMarket + " " + this + " " + getName()
-					+ "::agentStrategy: ladder numRungs=" + numRungs
-					+ ", stepSize=" + stepSize + ": buys [" + buyMinPrice
-					+ ", " + bid + "] &" + " sells [" + ask + ", "
-					+ sellMaxPrice + "]");
-
 		} else {
-			log(INFO, ts + " | " + primaryMarket + " " + this + " " + getName()
+			log(INFO, currentTime + " | " + primaryMarket + " " + this + " " + getName()
 					+ "::agentStrategy: no change in submitted ladder.");
-
 		}
 		// update latest bid/ask prices
 		lastAsk = ask;
@@ -146,7 +150,7 @@ public class BasicMarketMaker extends MarketMaker {
 		// insert activities for next time the agent wakes up
 		// TimeStamp tsNew = ts.sum(new TimeStamp(getRandSleepTime(sleepTime,
 		// sleepVar)));
-		TimeStamp tsNew = ts.plus(sleepTime);
+		TimeStamp tsNew = currentTime.plus(sleepTime);
 		acts.add(new AgentStrategy(this, tsNew));
 		return acts;
 	}

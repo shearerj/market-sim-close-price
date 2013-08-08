@@ -26,8 +26,8 @@ public class CallMarket extends Market {
 	protected TimeStamp nextClearTime;
 
 	public CallMarket(int marketID, MarketModel model, double pricingPolicy,
-			TimeStamp clearFreq, TimeStamp latency) {
-		super(marketID, model, new UniformPriceClear(pricingPolicy), latency);
+			TimeStamp clearFreq, TimeStamp latency, int tickSize) {
+		super(marketID, model, new UniformPriceClear(pricingPolicy, tickSize), latency);
 
 		if (clearFreq.after(TimeStamp.ZERO))
 			throw new IllegalArgumentException(

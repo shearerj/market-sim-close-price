@@ -106,8 +106,6 @@ public abstract class MarketModel {
 			AgentProperties agProps = type.getKey();
 			int number = type.getValue();
 
-			// FIXME Replace 0 with default arrival rate
-			//
 			// In general the arrival process and market generation can be
 			// generic or even specified, but for now we'll stick with the
 			// original implementation
