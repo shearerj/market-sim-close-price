@@ -1,6 +1,6 @@
 package data;
 
-public class Keys {
+public interface Keys {
 
 	public final static String RAND_SEED = "randomSeed";
 	
@@ -8,8 +8,6 @@ public class Keys {
 	public final static String REENTRY_RATE = "reentryRate";
 	
 	public final static String SLEEP_TIME = "sleepTime";
-	public final static String SLEEP_VAR = "sleepVar";
-	public final static String SLEEP_RATE = "sleepRate";
 
 	public final static String BID_RANGE = "bidRange";
 	public final static String MAX_QUANTITY = "maxqty";

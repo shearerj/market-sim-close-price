@@ -36,9 +36,9 @@ public class SimulationSpec {
 	protected static final String[] simulationKeys = { Keys.SIMULATION_LENGTH,
 			Keys.FUNDAMENTAL_MEAN, Keys.FUNDAMENTAL_KAPPA, Keys.FUNDAMENTAL_SHOCK_VAR,
 			Keys.RAND_SEED };
-	protected static final String[] modelKeys = { Keys.LATENCY };
+	protected static final String[] modelKeys = { Keys.LATENCY, Keys.ARRIVAL_RATE };
 	protected static final String[] agentKeys = { Keys.TICK_SIZE, Keys.ARRIVAL_RATE,
-			Keys.REENTRY_RATE, "private_value_var" };
+			Keys.REENTRY_RATE, Keys.PRIVATE_VALUE_VAR };
 
 	// XXX Move into model properties?
 	protected final EntityProperties simulationProperties;
@@ -80,7 +80,7 @@ public class SimulationSpec {
 		return props;
 	}
 
-	protected static Collection<ModelProperties> marketModels(
+	protected Collection<ModelProperties> marketModels(
 			JsonObject config, EntityProperties def) {
 		Collection<ModelProperties> models = new ArrayList<ModelProperties>();
 

@@ -40,7 +40,7 @@ public class CentralCall extends MarketModel {
 		double pricingPolicy = modelProps.getAsDouble(
 				Keys.PRICING_POLICY, 0.5d);
 		TimeStamp clearFreq = new TimeStamp(modelProps.getAsLong(
-				Keys.CLEAR_FREQ, 100));
+				Keys.CLEAR_FREQ, 1000));
 		// FIXME Add latency option
 		markets.add(new CallMarket(1, this, pricingPolicy, clearFreq, TimeStamp.IMMEDIATE)); // not sure on numbering...
 	}

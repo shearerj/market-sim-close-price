@@ -9,7 +9,6 @@ import java.util.Collection;
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
-import activity.AgentStrategy;
 import activity.SubmitNMSOrder;
 import data.EntityProperties;
 import data.Keys;
@@ -46,7 +45,7 @@ public class ZIRAgent extends ReentryAgent {
 	protected int lastPositionBalance; // last position balance
 	protected int maxAbsPosition; // max quantity for position
 	// for computing discounted surplus
-	protected ArrayList<TimeStamp> submissionTimes; // TODO currently unused
+	protected ArrayList<TimeStamp> submissionTimes; // FIXME currently unused
 
 	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, int bidRange, int maxAbsPosition,
@@ -65,22 +64,23 @@ public class ZIRAgent extends ReentryAgent {
 		// TODO get keys and default value for reentry rate and pvvar
 		this(agentID, arrivalTime, model, market, rand, props.getAsInt(
 				Keys.BID_RANGE, 5000), props.getAsInt(Keys.MAX_QUANTITY, 10),
-				props.getAsDouble(Keys.REENTRY_RATE, 100), props.getAsDouble(
-						"pvVar", 100), props.getAsInt("tickSize", 1000));
+				props.getAsDouble(Keys.REENTRY_RATE, 0.005), props.getAsDouble(
+						Keys.PRIVATE_VALUE_VAR, 100000000), props.getAsInt(
+						Keys.TICK_SIZE, 1));
 	}
 
 	@Override
-	public Collection<Activity> agentStrategy(TimeStamp ts) {
-		Collection<Activity> activities = new ArrayList<Activity>();
+	public Collection<Activity> agentStrategy(TimeStamp currentTime) {
+		Collection<Activity> activities = new ArrayList<Activity>(super.agentStrategy(currentTime));
 
 		String s = this + " " + getName() + ":";
-		if (!ts.equals(arrivalTime)) {
+		if (!currentTime.equals(arrivalTime)) {
 			s += " wake up.";
 			if (positionBalance == lastPositionBalance) {
 				s += " last order has not transacted, go back to sleep";
 			}
 		}
-		if (positionBalance != lastPositionBalance || ts.equals(arrivalTime)) {
+		if (positionBalance != lastPositionBalance || currentTime.equals(arrivalTime)) {
 			// If either first arrival or if last order has already transacted
 			// then should submit a new order. Otherwise, do nothing (does not
 			// cancel orders).
@@ -91,7 +91,7 @@ public class ZIRAgent extends ReentryAgent {
 			int newPosition = quantity + positionBalance;
 			// check that will not exceed max absolute position
 			if (newPosition <= maxAbsPosition && newPosition >= -maxAbsPosition) {
-				Price val = model.getFundamentalAt(ts).plus(
+				Price val = model.getFundamentalAt(currentTime).plus(
 						privateValue.getValueFromQuantity(positionBalance,
 								quantity)).nonnegative();
 				Price price = new Price(
@@ -99,14 +99,14 @@ public class ZIRAgent extends ReentryAgent {
 								* rand.nextDouble() * 2 * bidRange)).nonnegative();
 
 				s += " position=" + positionBalance + ", for q=" + quantity
-						+ ", value=" + model.getFundamentalAt(ts) + " + "
+						+ ", value=" + model.getFundamentalAt(currentTime) + " + "
 						+ privateValue.getValueFromQuantity(positionBalance,
 								quantity) + "=" + val;
 				log(INFO, s);
 
 				activities.add(new SubmitNMSOrder(this, price, quantity, primaryMarket,
 						TimeStamp.IMMEDIATE));
-				submissionTimes.add(ts);
+				submissionTimes.add(currentTime);
 
 				lastPositionBalance = positionBalance; // update position
 														// balance
@@ -121,8 +121,6 @@ public class ZIRAgent extends ReentryAgent {
 		} else {
 			log(INFO, s);
 		}
-
-		activities.add(new AgentStrategy(this, getNextReentryTime()));
 		return activities;
 	}
 

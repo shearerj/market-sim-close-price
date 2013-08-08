@@ -147,9 +147,8 @@ public abstract class MarketModel {
 				String strat = stratEnt.getKey();
 				int count = stratEnt.getValue();
 
-				// FIXME Arrival rate (100)?
 				SMAgentFactory factory = new SMAgentFactory(this, agentIDgen,
-						100, new RandPlus(rand.nextLong()));
+						modelProps.getAsDouble(Keys.ARRIVAL_RATE, 0.075), new RandPlus(rand.nextLong()));
 
 				for (int i = 0; i < count; i++) {
 					Agent agent = factory.createAgent(new AgentProperties(strat));

@@ -16,7 +16,6 @@ import utils.Pair;
 import activity.Activity;
 import activity.AgentStrategy;
 import activity.SubmitNMSOrder;
-import data.ArrivalTime;
 import data.EntityProperties;
 import data.Keys;
 import entity.market.Market;
@@ -62,19 +61,17 @@ public class AAAgent extends ReentryAgent {
 			Market market, RandPlus rand, EntityProperties params) {
 		this(agentID, arrivalTime, model, market, rand, params,
 				new PrivateValue(params.getAsInt(Keys.MAX_QUANTITY, 1),
-						params.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100), rand), 
-				params.getAsDouble(Keys.REENTRY_RATE, 100),
+						params.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000), rand), 
+				params.getAsDouble(Keys.REENTRY_RATE, 0.005),
 				params.getAsInt(Keys.TICK_SIZE, 1));
 	}
 	
 	public AAAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, EntityProperties params, 
+			Market market, RandPlus rand, EntityProperties params,
 			PrivateValue privateValue, double reentryRate, int tickSize) {
-		super(agentID, arrivalTime, model, market, privateValue, rand, 
-				reentryRate, tickSize);
-		
-		//Initializing Reentry times
-		this.reentry = new ArrivalTime(arrivalTime, reentryRate, rand);
+		super(agentID, arrivalTime, model, market, privateValue, rand,
+				reentryRate,
+				tickSize);
 		
 		//Initializing Max Absolute Position
 		this.maxAbsPosition = params.getAsInt(Keys.MAX_QUANTITY, 1);

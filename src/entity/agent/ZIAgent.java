@@ -49,9 +49,8 @@ public class ZIAgent extends BackgroundAgent {
 	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, EntityProperties props) {
 		this(agentID, arrivalTime, model, market, rand, props.getAsInt(
-				Keys.BID_RANGE, 2000), props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100),
+				Keys.BID_RANGE, 2000), props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),
 				props.getAsInt(Keys.TICK_SIZE, 1));
-		// FIXME PVVar proper default
 	}
 
 	@Override
@@ -63,9 +62,8 @@ public class ZIAgent extends BackgroundAgent {
 
 		// basic ZI behavior
 		Price price = new Price((int) (val.getInTicks() - signum(quantity)
-				* rand.nextDouble() * 2 * bidRange)).nonnegative();
+				* rand.nextDouble() * 2 * bidRange)).nonnegative().quantize(tickSize);
 
-		// bid does not expire
 		return Collections.singleton(new SubmitNMSOrder(this, price, quantity,
 				primaryMarket, TimeStamp.IMMEDIATE));
 	}

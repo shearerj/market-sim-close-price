@@ -60,7 +60,6 @@ public class BasicMarketMaker extends MarketMaker {
 		this.sleepTime = sleepTime;
 		this.numRungs = numRungs;
 		this.rungSize = rungSize;
-		// FIXME references SystemData
 		this.stepSize = MathUtils.quantize(rungSize, tickSize);
 		this.lastAsk = null; // ask
 		this.lastBid = null; // bid
@@ -71,7 +70,7 @@ public class BasicMarketMaker extends MarketMaker {
 		this(agentID, model, market, new TimeStamp(params.getAsLong(
 				Keys.SLEEP_TIME, 200)), params.getAsInt(Keys.NUM_RUNGS, 10),
 				params.getAsInt(Keys.RUNG_SIZE, 1000), rand, params.getAsInt(
-						"tickSize", 1000));
+						Keys.TICK_SIZE, 1));
 		// SLEEPTIME_VAR = 100
 	}
 

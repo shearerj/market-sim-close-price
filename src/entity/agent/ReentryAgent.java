@@ -1,14 +1,17 @@
 package entity.agent;
 
+import java.util.Collection;
+import java.util.Collections;
 
-import java.util.ArrayList;
-
-import data.ArrivalTime;
+import activity.Activity;
+import activity.AgentStrategy;
 import model.MarketModel;
 import utils.RandPlus;
 import entity.market.Market;
 import entity.market.PrivateValue;
 import event.TimeStamp;
+import generators.ExponentialInterarrivalGenerator;
+import generators.Generator;
 
 
 /**
@@ -18,25 +21,31 @@ import event.TimeStamp;
  */
 public abstract class ReentryAgent extends BackgroundAgent {
 
-	// TODO Change to generator
-	protected ArrivalTime reentry; // re-entry times
+	protected Generator<TimeStamp> reentry; // re-entry times
 	
 	public ReentryAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, PrivateValue pv, RandPlus rand, double reentryRate, 
+			Market market, PrivateValue pv, RandPlus rand, Generator<TimeStamp> reentry, 
 			int tickSize) {
 		super(agentID, arrivalTime, model, market, pv, rand, tickSize);
 	
-		
-		//Creating the reentry object
-		this.reentry = new ArrivalTime(arrivalTime, reentryRate, rand);
+		this.reentry = reentry;
 	}
 	
-	public TimeStamp getNextReentryTime() {
-		return reentry.next();
+	/**
+	 * Shortcut constructor for exponential interarrivals (e.g. poisson reentries)
+	 */
+	public ReentryAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
+			Market market, PrivateValue pv, RandPlus rand, double reentryRate,
+			int tickSize) {
+		this(agentID, arrivalTime, model, market, pv, rand,
+				new ExponentialInterarrivalGenerator(reentryRate, rand),
+				tickSize);
 	}
-	
-	public ArrayList<TimeStamp> getReentryTimes() {
-		return reentry.getArrivalTimes();
+
+	@Override
+	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
+		TimeStamp nextStrategy = currentTime.plus(reentry.next());
+		return Collections.singleton(new AgentStrategy(this, nextStrategy));
 	}
 
 }

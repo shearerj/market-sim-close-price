@@ -6,10 +6,10 @@ import java.util.Collection;
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
-import activity.AgentStrategy;
 import data.EntityProperties;
 import data.Keys;
 import entity.market.Market;
+import entity.market.PrivateValue;
 import event.TimeStamp;
 
 /**
@@ -24,30 +24,42 @@ import event.TimeStamp;
  * @author ewah, sgchako, kunshao, marzuq, gshiva
  * 
  */
-public class ZIPAgent extends BackgroundAgent {
+public class ZIPAgent extends ReentryAgent {
 
-	protected int bidRange; // range for limit order
-	protected int sleepTime, sleepVar;
-	protected double c_R, c_A, beta, betaVar, gamma;
+	protected final int bidRange; // range for limit order
+	protected final double c_R, c_A, beta, betaVar, gamma;
 
 	public ZIPAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, EntityProperties props) {
-		// TODO replace null with proper private value initialization
-		super(agentID, arrivalTime, model, market, null, rand, props.getAsInt(
-				"tickSize", 1000));
-		this.bidRange = props.getAsInt(Keys.BID_RANGE, 2000);
-		this.sleepTime = props.getAsInt(Keys.SLEEP_TIME, 50);
-		this.sleepVar = props.getAsInt(Keys.SLEEP_VAR, 100);
-		this.c_R = props.getAsDouble("c_R", .05);
-		this.c_A = props.getAsDouble("c_A", .05);
-		this.beta = props.getAsDouble("beta", .03);
-		this.betaVar = props.getAsDouble("betaVar", .005);
-		this.gamma = props.getAsDouble("gamma", .5);
+			Market market, RandPlus rand, double pvVar, int tickSize,
+			int bidRange, double reentryRate, double c_R, double c_A, double beta, double betaVar, double gamma) {
+		super(agentID, arrivalTime, model, market, new PrivateValue(1,
+				pvVar, rand),
+				rand, reentryRate, tickSize);
+		this.bidRange = bidRange;
+		this.c_R = c_R;
+		this.c_A = c_A;
+		this.beta = beta;
+		this.betaVar = betaVar;
+		this.gamma = gamma;
 	}
-
+	
+	// FIXME Move to keys
+	public ZIPAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
+			Market market, RandPlus rand, EntityProperties props) {
+		// FIXME replace null with proper private value initialization
+		this(agentID, arrivalTime, model, market, rand, props.getAsDouble(
+				Keys.PRIVATE_VALUE_VAR, 100000000), props.getAsInt(
+				Keys.TICK_SIZE, 1), props.getAsInt(Keys.BID_RANGE, 5000),
+				props.getAsDouble(Keys.REENTRY_RATE, 0.005), props.getAsDouble(
+						"c_R", .05), props.getAsDouble("c_A", .05),
+				props.getAsDouble("beta", .03), props.getAsDouble("betaVar",
+						.005), props.getAsDouble("gamma", .5));
+	}
+	
 	@Override
-	public Collection<Activity> agentStrategy(TimeStamp currentTime) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
+	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
+		Collection<Activity> acts = new ArrayList<Activity>(super.agentStrategy(currentTime));
+		
 		// 0.50% chance of being either long or short
 		int quantity = rand.nextBoolean() ? 1 : -1;
 		@SuppressWarnings("unused")
@@ -59,9 +71,6 @@ public class ZIPAgent extends BackgroundAgent {
 
 		// Insert events for the agent to sleep, then wake up again at timestamp
 		// tsNew
-		TimeStamp tsNew = currentTime.plus(new TimeStamp(
-				(long) rand.nextGaussian(sleepTime, sleepVar)));
-		actMap.add(new AgentStrategy(this, tsNew));
-		return actMap;
+		return acts;
 	}
 }

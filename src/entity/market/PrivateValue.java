@@ -41,7 +41,9 @@ public class PrivateValue {
 	 *            The random number generator to use for random generation.
 	 */
 	public PrivateValue(int maxPosition, double var, RandPlus rand) {
-		// Produces the exact same distribution as before
+		if (maxPosition <= 0) throw new IllegalArgumentException("Max Position must be positive");
+		
+		// Identical to legacy generation in final output
 		offset = maxPosition;
 		prices = new Price[maxPosition * 2 + 1];
 		for (int i = 0; i < prices.length; i++)
