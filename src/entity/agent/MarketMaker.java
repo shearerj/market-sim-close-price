@@ -1,7 +1,6 @@
 package entity.agent;
 
 import entity.market.Market;
-import entity.market.PrivateValue;
 import event.TimeStamp;
 import model.MarketModel;
 import utils.RandPlus;

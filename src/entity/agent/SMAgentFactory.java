@@ -1,8 +1,8 @@
 package entity.agent;
 
-import generators.Generator;
-import generators.PoissonArrivalGenerator;
-import generators.RoundRobinGenerator;
+import generator.Generator;
+import generator.PoissonArrivalGenerator;
+import generator.RoundRobinGenerator;
 
 import model.MarketModel;
 

@@ -1,4 +1,4 @@
-package generators;
+package generator;
 
 public class IDGenerator extends Generator<Integer> {
 	

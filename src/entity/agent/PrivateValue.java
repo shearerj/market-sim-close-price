@@ -1,6 +1,8 @@
-package entity.market;
+package entity.agent;
 
 import java.util.Arrays;
+
+import entity.market.Price;
 
 import utils.RandPlus;
 import static utils.MathUtils.bound;

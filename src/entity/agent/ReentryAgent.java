@@ -8,10 +8,9 @@ import activity.AgentStrategy;
 import model.MarketModel;
 import utils.RandPlus;
 import entity.market.Market;
-import entity.market.PrivateValue;
 import event.TimeStamp;
-import generators.ExponentialInterarrivalGenerator;
-import generators.Generator;
+import generator.ExponentialInterarrivalGenerator;
+import generator.Generator;
 
 
 /**

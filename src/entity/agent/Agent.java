@@ -19,7 +19,6 @@ import entity.Entity;
 import entity.infoproc.SIP;
 import entity.market.Order;
 import entity.market.Price;
-import entity.market.PrivateValue;
 import entity.market.Transaction;
 import event.TimeStamp;
 

@@ -9,7 +9,6 @@ import activity.Activity;
 import data.EntityProperties;
 import data.Keys;
 import entity.market.Market;
-import entity.market.PrivateValue;
 import event.TimeStamp;
 
 /**

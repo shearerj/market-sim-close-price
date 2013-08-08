@@ -29,8 +29,8 @@ import entity.market.Order;
 import entity.market.Price;
 import entity.market.Transaction;
 import event.TimeStamp;
-import generators.Generator;
-import generators.IDGenerator;
+import generator.Generator;
+import generator.IDGenerator;
 
 /**
  * MARKETMODEL

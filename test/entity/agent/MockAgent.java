@@ -8,7 +8,6 @@ import utils.RandPlus;
 import activity.Activity;
 import entity.agent.BackgroundAgent;
 import entity.market.Market;
-import entity.market.PrivateValue;
 import event.TimeStamp;
 
 public class MockAgent extends BackgroundAgent {

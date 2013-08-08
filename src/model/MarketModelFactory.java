@@ -1,7 +1,7 @@
 package model;
 
-import generators.Generator;
-import generators.IDGenerator;
+import generator.Generator;
+import generator.IDGenerator;
 
 import java.util.Collection;
 import java.util.Map;

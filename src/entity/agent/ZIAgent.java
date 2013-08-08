@@ -13,7 +13,6 @@ import data.EntityProperties;
 import data.Keys;
 import entity.market.Market;
 import entity.market.Price;
-import entity.market.PrivateValue;
 import event.TimeStamp;
 
 /**
