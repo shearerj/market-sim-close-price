@@ -107,8 +107,8 @@ public class Observations {
 		MarketModel firstModel = models.iterator().next();
 		observations.add(PLAYERS, playerObservations(firstModel));
 
-		// FIXME Math.round(firstModel.getNumEnvAgents() / data.arrivalRate);
-		long maxTime = 15000;
+		double arrivalRate = spec.getDefaultAgentProperties().getAsDouble(Keys.ARRIVAL_RATE, 0.075);
+		long maxTime = Math.round(firstModel.getAgents().size() / arrivalRate);
 		maxTime = Math.max(Consts.upToTime, quantize((int) maxTime, 1000));
 
 		JsonObject features = new JsonObject();

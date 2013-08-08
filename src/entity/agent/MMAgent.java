@@ -4,7 +4,6 @@ import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
 import java.util.Collection;
-import java.util.Collections;
 
 import model.MarketModel;
 import utils.RandPlus;
@@ -28,24 +27,20 @@ import event.TimeStamp;
  */
 public abstract class MMAgent extends Agent {
 
-	// TODO Should the MMAgent have its own copy of Markets, or should it just go to Model?
+	// XXX Should the MMAgent have its own copy of Markets, or should it just go to Model?
 	public MMAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			PrivateValue pv, RandPlus rand, int tickSize) {
 		super(agentID, arrivalTime, model, pv, rand, tickSize);
 	}
 
-	/**
-	 * Agent arrives in a single market.
-	 */
 	@Override
-	public Collection<Activity> agentArrival(TimeStamp currentTime) {
-
+	public Collection<? extends Activity> agentArrival(TimeStamp currentTime) {
 		StringBuilder sb = new StringBuilder();
 		for (Market market : model.getMarkets())
 			sb.append(market).append(",");
 		log(INFO, this + "->" + sb.substring(0, sb.length() - 1));
 
-		return Collections.emptySet();
+		return super.agentArrival(currentTime);
 	}
 
 }

@@ -21,10 +21,9 @@ import event.TimeStamp;
  * @author ewah
  */
 public class CallMarket extends Market {
-
-	// FIXME Move to SMIP?
+	
 	protected final TimeStamp clearFreq;
-	protected TimeStamp nextClearTime, nextQuoteTime;
+	protected TimeStamp nextClearTime;
 
 	public CallMarket(int marketID, MarketModel model, double pricingPolicy,
 			TimeStamp clearFreq, TimeStamp latency) {

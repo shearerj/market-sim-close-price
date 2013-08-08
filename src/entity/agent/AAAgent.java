@@ -42,10 +42,8 @@ public class AAAgent extends ReentryAgent {
 
 	//Agent parameters
 	private int historical; // number of historical prices to look at
-	private double lambda_r; // coefficient of relative perturbation of
-								// delta
-	private double lambda_a; // coefficient of absolute perturbation of
-								// delta
+	private double lambda_r; // coefficient of relative perturbation of delta
+	private double lambda_a; // coefficient of absolute perturbation of delta
 	private int eta; // price determination coefficient
 	private double gamma; // long term learning variable
 	private double beta_r; // learning coefficient for r (short term)
@@ -56,8 +54,7 @@ public class AAAgent extends ReentryAgent {
 	private double theta; // long term learning variable
 	private double thetaMax; // max possible value for theta
 	private double thetaMin; // min possible value for theta
-	private double alphaMax; // max experienced value for alpha (for theta,
-								// not PV)
+	private double alphaMax; // max experienced value for alpha (for theta, not PV)
 	private double alphaMin; // min experienced value for alpha
 
 
@@ -65,21 +62,16 @@ public class AAAgent extends ReentryAgent {
 			Market market, RandPlus rand, EntityProperties params) {
 		this(agentID, arrivalTime, model, market, rand, params,
 				new PrivateValue(params.getAsInt(Keys.MAX_QUANTITY, 1),
-						params.getAsDouble("pvVar", 100), rand), 
+						params.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100), rand), 
 				params.getAsDouble(Keys.REENTRY_RATE, 100),
-				params.getAsInt("tickSize", 1000));
+				params.getAsInt(Keys.TICK_SIZE, 1));
 	}
 	
 	public AAAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			Market market, RandPlus rand, EntityProperties params, 
 			PrivateValue privateValue, double reentryRate, int tickSize) {
-		// TODO change "null" to proper private value initialization
 		super(agentID, arrivalTime, model, market, privateValue, rand, 
 				reentryRate, tickSize);
-		
-		
-		//Initialize market
-		this.marketSubmittedBid = this.primaryMarket;
 		
 		//Initializing Reentry times
 		this.reentry = new ArrivalTime(arrivalTime, reentryRate, rand);

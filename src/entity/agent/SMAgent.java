@@ -4,12 +4,10 @@ import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
 import java.util.Collection;
-import java.util.Collections;
 
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
-import activity.AgentStrategy;
 import entity.infoproc.SMIP;
 import entity.market.Market;
 import entity.market.PrivateValue;
@@ -40,8 +38,6 @@ import event.TimeStamp;
 public abstract class SMAgent extends Agent {
 
 	protected final Market primaryMarket;
-	// market to which bid has been submitted
-	protected Market marketSubmittedBid;
 	protected final SMIP marketIP;
 
 	public SMAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
@@ -51,16 +47,10 @@ public abstract class SMAgent extends Agent {
 		this.marketIP = market.getSMIP();
 	}
 
-	/**
-	 * Agent arrives in a single market.
-	 *
-	 * @param currentTime
-	 * @return Collection<Activity>
-	 */
+	@Override
 	public Collection<? extends Activity> agentArrival(TimeStamp currentTime) {
-		// FIXME puhs up into agent, keep log in overwritten part
 		log(INFO, this + "->" + primaryMarket);
-		return Collections.singleton(new AgentStrategy(this, TimeStamp.IMMEDIATE));
+		return super.agentArrival(currentTime);
 	}
 
 }

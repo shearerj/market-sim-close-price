@@ -13,6 +13,7 @@ import java.util.List;
 import model.MarketModel;
 import utils.RandPlus;
 import activity.Activity;
+import activity.AgentStrategy;
 import activity.Liquidate;
 import entity.Entity;
 import entity.infoproc.SIP;
@@ -70,9 +71,9 @@ public abstract class Agent extends Entity {
 	public abstract Collection<? extends Activity> agentStrategy(
 			TimeStamp currentTime);
 
-	// TODO not make abstract. Seems like an optional activity. Or remove entirely?
-	public abstract Collection<? extends Activity> agentArrival(
-			TimeStamp currentTime);
+	public Collection<? extends Activity> agentArrival(TimeStamp currentTime) {
+		return Collections.singleton(new AgentStrategy(this, TimeStamp.IMMEDIATE));
+	}
 
 	/**
 	 * Liquidate agent's position at the the value of the global fundamental at the specified time.
