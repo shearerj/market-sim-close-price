@@ -49,6 +49,7 @@ public abstract class Market extends Entity {
 
 	// Book keeping
 	protected final Map<fourheap.Order<Price, TimeStamp>, Order> orderMapping;
+	protected final Map<Price, Integer> askPriceQuantity, bidPriceQuantity;
 	protected final Collection<Order> orders; // All orders ever submitted to the market
 	
 	// depths: Number of orders in the orderBook
@@ -62,6 +63,7 @@ public abstract class Market extends Entity {
 		this.model = model;
 		this.orderbook = new FourHeap<Price, TimeStamp>();
 		this.clearingRule = clearingRule;
+		this.quote = new Quote(this, null, 0, null, 0, TimeStamp.ZERO);
 
 		this.ips = new ArrayList<IP>();
 		this.sip = model.getSIP();
@@ -70,6 +72,8 @@ public abstract class Market extends Entity {
 		ips.add(ip);
 
 		this.orderMapping = new HashMap<fourheap.Order<Price, TimeStamp>, Order>();
+		this.askPriceQuantity = new HashMap<Price, Integer>();
+		this.bidPriceQuantity = new HashMap<Price, Integer>();
 		this.orders = new ArrayList<Order>();
 
 		this.depths = new TimeSeries();
@@ -112,6 +116,10 @@ public abstract class Market extends Entity {
 		if (quantity == 0 || signum(order.getQuantity()) != signum(quantity))
 			throw new IllegalArgumentException("Improper quantity");
 		quantity = quantity < 0 ? max(quantity, order.getQuantity()) : min(quantity, order.getQuantity());
+		
+		Map<Price, Integer> priceQuant = order.getQuantity() < 0 ? askPriceQuantity : bidPriceQuantity;
+		updatePriceQuant(priceQuant, order.getPrice(), -quantity);
+		
 		orderbook.withdrawOrder(order.order, quantity);
 		checkOrder(order);
 		return Collections.emptySet();
@@ -135,6 +143,10 @@ public abstract class Market extends Entity {
 			Transaction trans = new Transaction(buy.getAgent(),
 					sell.getAgent(), this, buy, sell, ftrans.getQuantity(),
 					pit.next(), currentTime);
+			
+			updatePriceQuant(askPriceQuantity, sell.getPrice(), trans.getQuantity());
+			updatePriceQuant(bidPriceQuantity, buy.getPrice(), -trans.getQuantity());
+			
 			checkOrder(buy);
 			checkOrder(sell);
 			transactions.add(trans);
@@ -155,8 +167,16 @@ public abstract class Market extends Entity {
 			List<Transaction> transactions, TimeStamp currentTime) {
 		Price ask = orderbook.askQuote();
 		Price bid = orderbook.bidQuote();
-
-		Quote quote = new Quote(this, ask, bid, currentTime);
+		Integer quantityAsk = ask == null ? 0 : askPriceQuantity.get(ask);
+		Integer quantityBid = bid == null ? 0 : bidPriceQuantity.get(bid);
+		// TODO In certain circumstances, there will be no quotes with the current ask or bid price
+		// in the market. This is a result of the ask price being set as part of a matched order.
+		// The correct "quantity" is 0, but it doesn't tell how many orders are available at that
+		// price.
+		// TODO This would be possible with a sorted map to find the quantity just under. Not sure
+		// if this is a good idea.
+		quote = new Quote(this, ask, quantityAsk == null ? 0 : quantityAsk,
+				bid, quantityBid == null ? 0 : quantityBid, currentTime);
 
 		log(INFO, this + " SendToSIP" + quote);
 
@@ -181,8 +201,15 @@ public abstract class Market extends Entity {
 			orderMapping.remove(order.order);
 		}
 	}
+	
+	protected void updatePriceQuant(Map<Price, Integer> priceQuant, Price price, int quantity) {
+		Integer oldQuant = priceQuant.get(price);
+		int newQuant = (oldQuant == null ? 0 : oldQuant) + quantity;
+		if (newQuant == 0) priceQuant.remove(price);
+		else priceQuant.put(price, newQuant);
+	}
 
-	// TODO Add bid type that gets withdrawn after next clear
+	// TODO Add IOC Order
 
 	/**
 	 * Bid doesn't expire
@@ -200,6 +227,9 @@ public abstract class Market extends Entity {
 		log(INFO, this + " " + getName() + "::submitBid: +(" + price + ", "
 				+ quantity + ") from " + agent);
 
+		Map<Price, Integer> priceQuant = quantity < 0 ? askPriceQuantity : bidPriceQuantity;
+		updatePriceQuant(priceQuant, price, quantity);
+		
 		fourheap.Order<Price, TimeStamp> nativeOrder = new fourheap.Order<Price, TimeStamp>(
 				price, quantity, currentTime);
 		Order order = new Order(agent, this, nativeOrder);

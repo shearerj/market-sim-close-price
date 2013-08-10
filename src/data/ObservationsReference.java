@@ -140,7 +140,6 @@
 ////			addFeature(modelName + Consts.ROLE_MARKETMAKER.toLowerCase(),
 ////					getMarketMakerInfo(model));
 //
-//			// TODO - need to remove the position balance hack
 //			// addFeature(modelName + ROUTING, getRegNMSRoutingInfo(model));
 ////		}
 //	}

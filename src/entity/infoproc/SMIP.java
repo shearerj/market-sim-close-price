@@ -33,7 +33,7 @@ public class SMIP extends IP {
 	public SMIP(int ID, TimeStamp latency, Market market) {
 		super(ID, latency);
 		this.assocaitedMarket = market;
-		this.quote = new Quote(null, null, null, TimeStamp.ZERO);
+		this.quote = new Quote(null, null, 0, null, 0, TimeStamp.ZERO);
 	}
 
 	@Override

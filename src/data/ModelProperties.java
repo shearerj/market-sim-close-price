@@ -34,7 +34,7 @@ public class ModelProperties extends EntityProperties {
 
 	@Override
 	public void addConfig(String config) {
-		// TODO change config so this makes more sense
+		// FIXME change config so this makes more sense
 		int split = config.indexOf(':');
 		super.addConfig(config.substring(split + 1));
 		put(LA_KEY, "LA".equals(config.substring(0, split)));

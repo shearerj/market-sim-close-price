@@ -13,13 +13,16 @@ import event.TimeStamp;
 public class Quote {
 
 	protected final Price ask, bid;
+	protected final int quantityAsk, quantityBid;
 	protected final Market market;
 	protected final TimeStamp quoteTime;
 
-	public Quote(Market market, Price ask, Price bid, TimeStamp currentTime) {
+	public Quote(Market market, Price ask, int quantityAsk, Price bid, int quantityBid, TimeStamp currentTime) {
 		this.market = market;
 		this.ask = ask;
+		this.quantityAsk = quantityAsk;
 		this.bid = bid;
+		this.quantityBid = quantityBid;
 		this.quoteTime = currentTime;
 	}
 
@@ -67,7 +70,8 @@ public class Quote {
 	}
 
 	public String toString() {
-		return "(Bid: " + bid + ", Ask: " + ask + ")";
+		return "(Bid: " + bid + " @" + quantityBid + ", Ask: " + ask + " @"
+				+ quantityAsk + ")";
 	}
 
 }

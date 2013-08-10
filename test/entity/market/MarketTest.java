@@ -12,17 +12,14 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import entity.agent.Agent;
 import entity.agent.MockAgent;
-import entity.market.CDAMarket;
-import entity.market.Market;
-import entity.market.Price;
-import entity.market.Transaction;
 import event.TimeStamp;
 
-public class CDAMarketTest {
+public class MarketTest {
 
 	private MockMarketModel model;
-	private Market market;
+	private MockMarket market;
 	private int agentIndex;
 
 	@BeforeClass
@@ -33,29 +30,36 @@ public class CDAMarketTest {
 	@Before
 	public void setup() {
 		model = new MockMarketModel(1);
-		market = new CDAMarket(1, model, TimeStamp.IMMEDIATE);
+		market = new MockMarket(1, model);
 		model.addMarket(market);
 		agentIndex = 1;
 	}
 
 	@Test
 	public void AddBid() {
-		TimeStamp time = new TimeStamp(0);
-
-		// Creating the agent
-		MockAgent agent = new MockAgent(agentIndex++, model, market);
-
-		// Creating and adding the bid
+		Quote quote;
+		Order order;
+		Agent agent;
+		Collection<Order> orders;
+		TimeStamp time;
+		
+		time = new TimeStamp(0);
+		agent = new MockAgent(agentIndex++, model, market);
 		market.submitOrder(agent, new Price(1), 1, time);
 
-		Collection<Order> orders = market.orderMapping.values();
+		orders = market.orderMapping.values();
 		assertFalse(orders.isEmpty());
-		Order order = orders.iterator().next();
+		order = orders.iterator().next();
 		assertEquals(new Price(1), order.getPrice());
 		assertEquals(1, order.getQuantity());
 		assertEquals(time, order.getSubmitTime());
 		assertEquals(agent, order.getAgent());
 		assertEquals(market, order.getMarket());
+		quote = market.quote; 
+		assertEquals(null, quote.ask);
+		assertEquals(0, quote.quantityAsk);
+		assertEquals(new Price(1), quote.bid);
+		assertEquals(1, quote.quantityBid);
 	}
 
 	@Test
@@ -150,4 +154,5 @@ public class CDAMarketTest {
 			MultiBidSingleClear();
 		}
 	}
+	
 }

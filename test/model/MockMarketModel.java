@@ -1,7 +1,6 @@
 package model;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import utils.RandPlus;
 
@@ -15,19 +14,9 @@ import entity.agent.Agent;
 import entity.market.Market;
 
 public class MockMarketModel extends MarketModel {
-
-	//
-	// Constructors
-	//
-	public MockMarketModel(int modelID, FundamentalValue fundamental,
-			Map<AgentProperties, Integer> agentProps,
-			EntityProperties modelProps, JsonObject playerConfig, RandPlus rand) {
-		super(modelID, fundamental, agentProps, modelProps, playerConfig, rand);
-		// TODO Auto-generated constructor stub
-	}
 	
 	public MockMarketModel(int modelID, FundamentalValue fundamental) {
-		this(modelID, fundamental, 
+		super(modelID, fundamental, 
 				new HashMap<AgentProperties,Integer>(),
 				new EntityProperties(), new JsonObject(), 
 				new RandPlus());
@@ -40,25 +29,16 @@ public class MockMarketModel extends MarketModel {
 	public MockMarketModel() {
 		this(0);
 	}
-
-	//
-	// Dummy Implemented methods
-	//
 	
 	@Override
-	protected void setupMarkets(EntityProperties modelProps) {
-	}
+	protected void setupMarkets(EntityProperties modelProps) { }
 	
-	//
-	// Configuration methods
-	//
 	public void addMarket(Market market) {
-		this.markets.add(market);
+		markets.add(market);
 	}
 
 	public void addAgent(Agent agent) {
-		this.agents.add(agent);
+		agents.add(agent);
 	}
-
 
 }
