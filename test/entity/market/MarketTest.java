@@ -18,6 +18,7 @@ import event.TimeStamp;
 
 public class MarketTest {
 
+	// TODO Better testing of correct quote quantity
 	private MockMarketModel model;
 	private MockMarket market;
 	private int agentIndex;
@@ -37,39 +38,29 @@ public class MarketTest {
 
 	@Test
 	public void AddBid() {
-		Quote quote;
-		Order order;
-		Agent agent;
-		Collection<Order> orders;
-		TimeStamp time;
-		
-		time = new TimeStamp(0);
-		agent = new MockAgent(agentIndex++, model, market);
+		TimeStamp time = new TimeStamp(0);
+		Agent agent = new MockAgent(agentIndex++, model, market);
 		market.submitOrder(agent, new Price(1), 1, time);
 
-		orders = market.orderMapping.values();
+		Collection<Order> orders = market.orderMapping.values();
 		assertFalse(orders.isEmpty());
-		order = orders.iterator().next();
+		Order order = orders.iterator().next();
 		assertEquals(new Price(1), order.getPrice());
 		assertEquals(1, order.getQuantity());
 		assertEquals(time, order.getSubmitTime());
 		assertEquals(agent, order.getAgent());
 		assertEquals(market, order.getMarket());
-		quote = market.quote; 
+		Quote quote = market.quote; 
 		assertEquals(null, quote.ask);
-		assertEquals(0, quote.quantityAsk);
+		assertEquals(0, quote.askQuantity);
 		assertEquals(new Price(1), quote.bid);
-		assertEquals(1, quote.quantityBid);
+		assertEquals(1, quote.bidQuantity);
 	}
 
 	@Test
 	public void AddAsk() {
 		TimeStamp time = new TimeStamp(0);
-		
-		//Creating the agent
-		MockAgent agent = new MockAgent(agentIndex++, model, market);
-		
-		// Creating and adding the bid
+		Agent agent = new MockAgent(agentIndex++, model, market);
 		market.submitOrder(agent, new Price(1), -1, time);
 
 		Collection<Order> orders = market.orderMapping.values();
@@ -80,6 +71,11 @@ public class MarketTest {
 		assertEquals(time, order.getSubmitTime());
 		assertEquals(agent, order.getAgent());
 		assertEquals(market, order.getMarket());
+		Quote quote = market.quote; 
+		assertEquals(new Price(1), quote.ask);
+		assertEquals(-1, quote.askQuantity);
+		assertEquals(null, quote.bid);
+		assertEquals(0, quote.bidQuantity);
 	}
 
 	@Test
@@ -99,11 +95,14 @@ public class MarketTest {
 		market.clear(time);
 		assertTrue(model.getTrans().size() == 1);
 		for (Transaction tr : model.getTrans()) {
-			assertTrue("Incorrect Buyer", tr.getBuyer().equals(agent1));
-			assertTrue("Incorrect Seller", tr.getSeller().equals(agent2));
-			assertTrue("Incorrect Price", tr.getPrice().equals(new Price(100)));
-			assertTrue("Incorrect Quantity", tr.getQuantity() == 1);
+			assertEquals("Incorrect Buyer", agent1, tr.getBuyer());
+			assertEquals("Incorrect Seller", agent2, tr.getSeller());
+			assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		}
+		
+		Quote quote = market.quote;
+		assertEquals(null, quote.getAskPrice());
+		assertEquals(null, quote.getBidPrice());
 	}
 
 	@Test
@@ -122,10 +121,9 @@ public class MarketTest {
 		market.clear(time);
 		assertTrue(model.getTrans().size() == 1);
 		for (Transaction tr : model.getTrans()) {
-			assertTrue("Incorrect Buyer", tr.getBuyer().equals(agent1));
-			assertTrue("Incorrect Seller", tr.getSeller().equals(agent2));
-			assertTrue("Incorrect Price", tr.getPrice().equals(new Price(50)));
-			assertTrue("Incorrect Quantity", tr.getQuantity() == 1);
+			assertEquals("Incorrect Buyer", agent1, tr.getBuyer());
+			assertEquals("Incorrect Seller", agent2, tr.getSeller());
+			assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		}
 	}
 
@@ -145,6 +143,15 @@ public class MarketTest {
 		market.submitOrder(agent3, new Price(175), 1, time);
 		market.submitOrder(agent4, new Price(125), 1, time);
 		market.clear(time);
+		
+		Quote quote = market.quote;
+		assertEquals(new Price(125), quote.getBidPrice());
+		assertEquals(new Price(150), quote.getAskPrice());
+		assertEquals(1, quote.getBidQuantity());
+		assertEquals(-1, quote.getAskQuantity());
+		
+		market.submitOrder(agent3, new Price(150), -2, time);
+		assertEquals(-3, market.quote.getAskQuantity());
 	}
 	
 	@Test

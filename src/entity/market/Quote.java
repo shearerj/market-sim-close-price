@@ -13,16 +13,17 @@ import event.TimeStamp;
 public class Quote {
 
 	protected final Price ask, bid;
-	protected final int quantityAsk, quantityBid;
+	protected final int askQuantity, bidQuantity;
 	protected final Market market;
 	protected final TimeStamp quoteTime;
 
-	public Quote(Market market, Price ask, int quantityAsk, Price bid, int quantityBid, TimeStamp currentTime) {
+	public Quote(Market market, Price ask, int askQuantity, Price bid,
+			int bidQuantity, TimeStamp currentTime) {
 		this.market = market;
 		this.ask = ask;
-		this.quantityAsk = quantityAsk;
+		this.askQuantity = askQuantity;
 		this.bid = bid;
-		this.quantityBid = quantityBid;
+		this.bidQuantity = bidQuantity;
 		this.quoteTime = currentTime;
 	}
 
@@ -33,10 +34,16 @@ public class Quote {
 	public Price getBidPrice() {
 		return bid;
 	}
+	
+	public int getBidQuantity() {
+		return bidQuantity;
+	}
+	
+	public int getAskQuantity() {
+		return askQuantity;
+	}
 
 	/**
-	 * XXX Should also return if ask < bid?
-	 * 
 	 * @return true if the quote is defined (has an ask and a bid price)
 	 */
 	public boolean isDefined() {
@@ -70,8 +77,8 @@ public class Quote {
 	}
 
 	public String toString() {
-		return "(Bid: " + bid + " @" + quantityBid + ", Ask: " + ask + " @"
-				+ quantityAsk + ")";
+		return "(Bid: " + bid + " @" + bidQuantity + ", Ask: " + ask + " @"
+				+ askQuantity + ")";
 	}
 
 }

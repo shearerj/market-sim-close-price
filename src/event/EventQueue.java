@@ -37,8 +37,6 @@ import activity.Activity;
  */
 public class EventQueue implements Queue<Activity> {
 
-	// TODO Don't allow null activities / Handled kind of by Event...
-	// TODO Don't allow time stamps below current time unless = inf time
 	// TODO Switch PriorityQueue to HashPriorityQueue so we get constant time
 	// removal...
 
@@ -98,6 +96,7 @@ public class EventQueue implements Queue<Activity> {
 
 	@Override
 	public boolean addAll(Collection<? extends Activity> c) {
+		if (c == null) return false;
 		boolean modified = false;
 		for (Activity act : c)
 			modified |= add(act);
@@ -163,6 +162,7 @@ public class EventQueue implements Queue<Activity> {
 	 */
 	@Override
 	public boolean removeAll(Collection<?> c) {
+		if (c == null) return false;
 		boolean modified = false;
 		for (Object o : c)
 			modified |= remove(o);
@@ -175,6 +175,7 @@ public class EventQueue implements Queue<Activity> {
 	 */
 	@Override
 	public boolean retainAll(Collection<?> c) {
+		if (c == null) return false;
 		boolean modified = false;
 		for (Iterator<Event> it = eventQueue.iterator(); it.hasNext();) {
 			Event e = it.next();
@@ -222,6 +223,8 @@ public class EventQueue implements Queue<Activity> {
 
 	@Override
 	public boolean add(Activity act) {
+		if (act == null) throw new IllegalArgumentException("Can't insert null activities");
+		
 		TimeStamp t = act.getTime();
 		Event e = eventIndex.get(t);
 		if (e == null) {

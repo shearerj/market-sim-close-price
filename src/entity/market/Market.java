@@ -167,14 +167,18 @@ public abstract class Market extends Entity {
 			List<Transaction> transactions, TimeStamp currentTime) {
 		Price ask = orderbook.askQuote();
 		Price bid = orderbook.bidQuote();
-		Integer quantityAsk = ask == null ? 0 : askPriceQuantity.get(ask);
-		Integer quantityBid = bid == null ? 0 : bidPriceQuantity.get(bid);
+		Integer quantityAsk = ask == null ? (Integer) 0 : askPriceQuantity.get(ask);
+		Integer quantityBid = bid == null ? (Integer) 0 : bidPriceQuantity.get(bid);
 		// TODO In certain circumstances, there will be no quotes with the current ask or bid price
 		// in the market. This is a result of the ask price being set as part of a matched order.
 		// The correct "quantity" is 0, but it doesn't tell how many orders are available at that
-		// price.
-		// TODO This would be possible with a sorted map to find the quantity just under. Not sure
-		// if this is a good idea.
+		// price. This is possible to do a number of ways. One could use a sorted map which has log
+		// time, one could scan the heap which would be worst case linear, or probably the best
+		// thing would be to have the heap have a hashmap to check the quantity based off of wither
+		// matched or unmatched order... I think this may be fine the way it is, only because if
+		// quantity is 0, but price isn't null, then you'll have to bid over instead of equal to the
+		// quote in order to execute. Also, this will only happen when there are matched orders when
+		// a quote is generated, which is currently never possible
 		quote = new Quote(this, ask, quantityAsk == null ? 0 : quantityAsk,
 				bid, quantityBid == null ? 0 : quantityBid, currentTime);
 
@@ -209,7 +213,7 @@ public abstract class Market extends Entity {
 		else priceQuant.put(price, newQuant);
 	}
 
-	// TODO Add IOC Order
+	// TODO Add IOC / Fill or Kill Order
 
 	/**
 	 * Bid doesn't expire
