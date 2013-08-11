@@ -10,8 +10,8 @@ import utils.MathUtils;
  */
 public class Price implements Comparable<Price> {
 
-	// TODO Take infinite price into account for subtraction, addition,
-	// toString, etc.
+	// XXX Take infinite price into account for subtraction, addition,
+	// toString, etc. Basically, should infinite price be special?
 	public static final Price INF = new Price(Integer.MAX_VALUE - 1);
 	public static final Price ZERO = new Price(0);
 

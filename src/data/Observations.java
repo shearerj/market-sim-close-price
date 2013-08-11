@@ -334,12 +334,6 @@ public class Observations {
 
 	/**
 	 * Computes spread metrics for the given model.
-	 * 
-	 * NOTE: The computed median will include NaNs in the list of numbers.
-	 * 
-	 * TODO Think about how to handle the spreads of the model when they're nan. Obviously we want
-	 * metrics that take into account a NaN / Infinite spread, but it's unclear how best to achieve
-	 * that.
 	 */
 	protected static JsonObject getSpread(MarketModel model, long maxTime) {
 		JsonObject feat = new JsonObject();
@@ -425,7 +419,8 @@ public class Observations {
 				logPriceVol.addValue(Math.log(stdev));
 
 			// compute log-return volatility for this market
-			// XXX This change from before. Before if the ratio was NaN it go thrown out. Now the previous value is used.
+			// XXX This change from before. Before if the ratio was NaN it go thrown out. Now the
+			// previous value is used.
 			DescriptiveStatistics mktLogReturns = mq.getSampledLogRatioStatsSansNaNs(period, (int) maxTime);
 			double logStdev = mktLogReturns.getStandardDeviation();
 			feat.addProperty(

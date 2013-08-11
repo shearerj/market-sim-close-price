@@ -47,7 +47,7 @@ public abstract class Agent extends Entity {
 	protected int cashBalance;
 	protected int averageCost;
 	protected int realizedProfit;
-	// for liquidation XXX Should be moved to MarketMaker? Not sure...
+	// for liquidation Currently unused
 	protected int preLiqPosition;
 	protected int preLiqRealizedProfit;
 
@@ -138,8 +138,7 @@ public abstract class Agent extends Entity {
 			positionBalance += trans.getQuantity();
 		if (trans.getSeller().equals(this))
 			positionBalance -= trans.getQuantity();
-
-		// XXX currentTime should equal Trans.getExecTime() so redundant?
+		
 		log(INFO, this + " "
 				+ "Agent::updateTransactions: New transaction received: "
 				+ trans);
@@ -207,7 +206,7 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public double getSurplus(double rho) {
-		double surplus = 0; // XXX Price instead of double?
+		double surplus = 0;
 
 		for (Transaction tr : transactions) {
 

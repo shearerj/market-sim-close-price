@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.ModelType;
@@ -19,9 +20,9 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 
 import data.AgentProperties;
+import data.EntityProperties;
 import data.Keys;
 import data.ModelProperties;
-import data.EntityProperties;
 
 /**
  * Stores list of web parameters used in EGTAOnline.
@@ -40,7 +41,6 @@ public class SimulationSpec {
 	protected static final String[] agentKeys = { Keys.TICK_SIZE, Keys.ARRIVAL_RATE,
 			Keys.REENTRY_RATE, Keys.PRIVATE_VALUE_VAR };
 
-	// XXX Move into model properties?
 	protected final EntityProperties simulationProperties;
 	protected final EntityProperties defaultModelProperties;
 	protected final EntityProperties defaultAgentProperties;
@@ -136,6 +136,32 @@ public class SimulationSpec {
 
 	public JsonObject getPlayerConfig() {
 		return playerConfig;
+	}
+	
+	public JsonObject toJson() {
+		JsonObject config = new JsonObject();
+		
+		for (String key : simulationProperties.keys())
+			config.addProperty(key, simulationProperties.getAsString(key));
+		for (String key : defaultModelProperties.keys())
+			config.addProperty(key, defaultModelProperties.getAsString(key));
+		for (String key : defaultAgentProperties.keys())
+			config.addProperty(key, defaultAgentProperties.getAsString(key));
+
+		for (Entry<AgentProperties, Integer> agentProps : getBackgroundAgents().entrySet()) {
+			AgentProperties props = agentProps.getKey();
+			int number = agentProps.getValue();
+
+			config.addProperty(props.getAgentType().toString(), number);
+			config.addProperty(props.getAgentType() + Consts.SETUP_SUFFIX,
+					props.toConfigString());
+		}
+		return config;
+	}
+	
+	@Override
+	public String toString() {
+		return toJson().toString();
 	}
 
 }

@@ -25,6 +25,10 @@ public class BinaryHeap<E> implements Queue<E> {
 	public BinaryHeap(Comparator<E> comp) {
 		this(8, comp);
 	}
+	
+	public BinaryHeap(int initialSize) {
+		this(CompareUtils.<E> naturalOrder());
+	}
 
 	public BinaryHeap(int initialSize, Comparator<E> comp) {
 		elements = new ArrayList<E>(initialSize);

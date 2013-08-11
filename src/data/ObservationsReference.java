@@ -513,7 +513,7 @@
 ////	}
 //
 //	/**
-//	 * TODO remove hack to determine if its bid transacted or not
+//	 * remove hack to determine if its bid transacted or not
 //	 * 
 //	 * @return HashMap of order routing info
 //	 */

@@ -112,21 +112,21 @@
 //		try {
 //			// Generate private values
 ////			data.globalFundamentalValues();
-////			data.EGTA = (data.getNumPlayers() > 0); // TODO Should have one flag
+////			data.EGTA = (data.getNumPlayers() > 0); // Should have one flag
 ////													// for EGTA
 //
 //			// Must create market models before agents, so can add the agents
 //			// then to the appropriate/corresponding markets.
-//			//createSIP(); // TODO Move to each market model...
+//			//createSIP(); // Move to each market model...
 //			log(INFO, "------------------------------------------------");
 //			log(INFO, "            Creating MARKET MODELS");
 //			createMarketModels();
 //			log(INFO, "------------------------------------------------");
 //			log(INFO, "            Creating AGENTS");
-//			createAllAgents(); // TODO Move to market Models
+//			createAllAgents(); // Move to market Models
 //
 //			// Log agent information
-//			logAgentInfo(); // TODO move to agent creation...
+//			logAgentInfo(); // move to agent creation...
 //			log(INFO, "------------------------------------------------");
 //			log(INFO, " ");
 //
@@ -180,7 +180,7 @@
 ////
 ////				// Parse the comma separated types of agents (list of
 ////				// configuration strings)
-////				// TODO Put this in config
+////				// Put this in config
 ////				String[] configs = parseModelConfigList(specs.getValue(modelType));
 ////
 ////				for (int i = 0; i < numModelsOfThisType; i++) {
@@ -305,7 +305,7 @@
 ////			arrivalGenerators.put(app, new ArrivalTime(new TimeStamp(0), rate));
 //		}
 //
-//		// TODO pull out arrivals for future reference
+//		// pull out arrivals for future reference
 //
 //		// generate logIDs, random number generator seeds, & arrivals for
 //		// non-players

@@ -9,10 +9,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Locale;
 import java.util.Properties;
 
 import logger.Logger;
@@ -25,6 +25,7 @@ import data.FundamentalValue;
 import data.Keys;
 import data.ModelProperties;
 import data.Observations;
+import entity.market.Market;
 import event.TimeStamp;
 
 /**
@@ -38,10 +39,7 @@ import event.TimeStamp;
  */
 public class SystemManager {
 
-	protected static DateFormat DATE_FORMAT = DateFormat.getDateInstance(
-			DateFormat.MEDIUM, Locale.UK);
-	protected static DateFormat TIME_FORMAT = DateFormat.getTimeInstance(
-			DateFormat.MEDIUM, Locale.UK);
+	protected static DateFormat DATE_FORMAT = new SimpleDateFormat("dd-MMM-yyyy_HH.mm.ss");
 
 	protected final EventManager eventManager;
 	protected final Collection<MarketModel> models;
@@ -92,9 +90,8 @@ public class SystemManager {
 		this.simFolder = simFolder;
 		this.obsNum = simNumber;
 
-		// TODO move props to SimSpec?
-
 		spec = new SimulationSpec(new File(simFolder, Consts.SIM_SPEC_FILE));
+		// XXX Move props to simspec?
 		EntityProperties simProps = spec.getSimulationProperties();
 		long seed = simProps.getAsLong(Keys.RAND_SEED,
 				System.currentTimeMillis());
@@ -105,7 +102,7 @@ public class SystemManager {
 		
 		initializeLogger(getProperties(), simFolder, simNumber, eventManager);
 		log(INFO, "Random Seed: " + seed);
-		// TODO Log configuration
+		log(INFO, "Configuration: " + spec);
 
 		FundamentalValue fundamental = new FundamentalValue(
 				simProps.getAsDouble(Keys.FUNDAMENTAL_KAPPA),
@@ -124,8 +121,9 @@ public class SystemManager {
 		for (ModelProperties props : spec.getModels()) {
 			MarketModel model = modelFactory.createModel(props);
 			models.add(model);
-			// TODO Log markets?
 			log(INFO, props.getModelType() + ": " + model);
+			for (Market market : model.getMarkets())
+				log(INFO, market.getName() + " " + market + " in " + model);
 		}
 		log(INFO, "------------------------------------------------");
 	}
@@ -145,15 +143,10 @@ public class SystemManager {
 		// Create log file
 		int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
 
-		Date now = new Date();
 		StringBuilder logFileName = new StringBuilder(
 				simFolder.getPath().replace('/', '_'));
 		logFileName.append('_').append(num).append('_');
-		logFileName.append(DATE_FORMAT.format(now)).append('_');
-		// TODO This replace should/could be done by modifying the date
-		// format
-		logFileName.append(TIME_FORMAT.format(now).replace(':', '.'));
-		logFileName.append(".txt");
+		logFileName.append(DATE_FORMAT.format(new Date())).append(".txt");
 
 		File logDir = new File(simFolder, Consts.LOG_DIR);
 		logDir.mkdirs();
@@ -182,7 +175,6 @@ public class SystemManager {
 	public void executeEvents() {
 		for (MarketModel model : models)
 			model.scheduleActivities(eventManager);
-		// TODO Get rid of event manager and move to system manager.
 		eventManager.executeUntil(simulationLength);
 		log(INFO, "STATUS: Simulation has ended.");
 	}

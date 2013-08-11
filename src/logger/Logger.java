@@ -10,7 +10,7 @@ public class Logger {
 	};
 
 	protected static Log logger;
-	protected static boolean outError = true; // TODO make setting
+	protected static boolean outError = true;
 	protected static Prefix prefix = new EmptyPrefix();
 	
 	public static void setup(int lev, File logFile, boolean outError, Prefix prefix) {

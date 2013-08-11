@@ -8,9 +8,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Random;
+
+import fourheap.BinaryHeap;
 
 
 import utils.CollectionUtils;
@@ -36,10 +37,7 @@ import activity.Activity;
  * 
  */
 public class EventQueue implements Queue<Activity> {
-
-	// TODO Switch PriorityQueue to HashPriorityQueue so we get constant time
-	// removal...
-
+	
 	// Invariant that no event is ever empty at the end of execution.
 	//
 	// Note: Current implementation means instantTime stuff gets executed in a
@@ -51,7 +49,7 @@ public class EventQueue implements Queue<Activity> {
 	// proceeds it. Activities scheduled at the same time (even infinitely fast)
 	// may occur in any order.
 
-	protected PriorityQueue<Event> eventQueue;
+	protected BinaryHeap<Event> eventQueue;
 	protected HashMap<TimeStamp, Event> eventIndex;
 	protected int size;
 	protected Random rand;
@@ -65,7 +63,7 @@ public class EventQueue implements Queue<Activity> {
 	}
 
 	public EventQueue(int capacity, Random seed) {
-		eventQueue = new PriorityQueue<Event>(capacity);
+		eventQueue = new BinaryHeap<Event>(capacity);
 		eventIndex = new HashMap<TimeStamp, Event>(capacity);
 		size = 0;
 		rand = seed;

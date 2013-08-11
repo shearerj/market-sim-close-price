@@ -169,7 +169,7 @@ public abstract class Market extends Entity {
 		Price bid = orderbook.bidQuote();
 		Integer quantityAsk = ask == null ? (Integer) 0 : askPriceQuantity.get(ask);
 		Integer quantityBid = bid == null ? (Integer) 0 : bidPriceQuantity.get(bid);
-		// TODO In certain circumstances, there will be no quotes with the current ask or bid price
+		// TODO In certain circumstances, there will be no orders with the current ask or bid price
 		// in the market. This is a result of the ask price being set as part of a matched order.
 		// The correct "quantity" is 0, but it doesn't tell how many orders are available at that
 		// price. This is possible to do a number of ways. One could use a sorted map which has log
@@ -259,10 +259,9 @@ public abstract class Market extends Entity {
 	}
 
 	// TODO How should call markets handle Reg NMS. Can't route to call market to get immediate
-	// execution.
+	// execution. NMSOrder will not route properly for a call market if there is another market in
+	// the model
 	// TODO orderbook.(bid/ask)Quote() will return the current quote, not the published one
-	// TODO NMSOrder will not route properly for a call market if there is another market in the
-	// model
 	public Collection<? extends Activity> submitNMSOrder(Agent agent,
 			Price price, int quantity, TimeStamp currentTime, TimeStamp duration) {
 		BestBidAsk nbbo = sip.getNBBO();
@@ -270,13 +269,13 @@ public abstract class Market extends Entity {
 
 		if (quantity > 0) { // buy
 			boolean nbboBetter = nbbo.getBestAsk() != null
-					&& nbbo.getBestAsk().lessThan(orderbook.askQuote());
+					&& nbbo.getBestAsk().lessThan(quote.getAskPrice());
 			boolean willTransact = price.greaterThan(nbbo.getBestAsk());
 			if (nbboBetter && willTransact)
 				bestMarket = nbbo.getBestAskMarket();
 		} else { // sell
 			boolean nbboBetter = nbbo.getBestBid() != null
-					&& nbbo.getBestBid().greaterThan(orderbook.bidQuote());
+					&& nbbo.getBestBid().greaterThan(quote.getBidPrice());
 			boolean willTransact = price.lessThan(nbbo.getBestBid());
 			if (nbboBetter && willTransact)
 				bestMarket = nbbo.getBestBidMarket();
