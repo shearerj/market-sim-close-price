@@ -100,7 +100,9 @@ public class SystemManager {
 		simulationLength = new TimeStamp(simProps.getAsLong(Keys.SIMULATION_LENGTH));
 		eventManager = new EventManager(new RandPlus(rand.nextLong()));
 		
-		initializeLogger(getProperties(), simFolder, simNumber, eventManager);
+		initializeLogger(getProperties(), simFolder, simNumber, eventManager,
+				spec.getSimulationProperties().getAsInt(Keys.SIMULATION_LENGTH,
+						10000));
 		log(INFO, "Random Seed: " + seed);
 		log(INFO, "Configuration: " + spec);
 
@@ -139,7 +141,8 @@ public class SystemManager {
 	 * Must be done after "envProps" exists
 	 */
 	protected static void initializeLogger(Properties envProps, File simFolder,
-			int num, final EventManager eventManager) throws IOException {
+			int num, final EventManager eventManager, final int simLength)
+			throws IOException {
 		// Create log file
 		int logLevel = Integer.parseInt(envProps.getProperty("logLevel"));
 
@@ -158,7 +161,8 @@ public class SystemManager {
 			@Override
 			// TODO If/when only one market model, change this to prefix model id
 			public String getPrefix() {
-				return String.format("% 4d| ", eventManager.getCurrentTime().getInTicks());
+				return String.format("%" + Integer.toString(simLength).length()
+						+ "d| ", eventManager.getCurrentTime().getInTicks());
 			}
 		});
 		

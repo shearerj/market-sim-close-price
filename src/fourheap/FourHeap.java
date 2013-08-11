@@ -44,8 +44,11 @@ public class FourHeap<P extends Comparable<P>, T extends Comparable<T>> {
 		int unmatchedQuantity = order.quantity;
 
 		// First match with unmatched orders
-		while (unmatchedQuantity * t > 0 && !unmatchedHeap.isEmpty()
-				&& unmatchedHeap.peek().price.compareTo(order.price) * t <= 0) {
+		while (unmatchedQuantity * t > 0
+				&& !unmatchedHeap.isEmpty()
+				&& unmatchedHeap.peek().price.compareTo(order.price) * t <= 0
+				&& (matchedHeap.isEmpty() || unmatchedHeap.peek().price.compareTo(matchedHeap.peek().price)
+						* t <= 0)) {
 
 			SplitOrder match = unmatchedHeap.poll();
 			int quantityMatched = t

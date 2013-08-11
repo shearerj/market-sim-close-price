@@ -3,11 +3,13 @@ package fourheap;
 import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.Random;
 
 import org.junit.Test;
 
-// FIXME Error with fourheap overmatching and resulting in orders that would never happen
 public class FourHeapTest {
+	
+	protected final static Random rand = new Random();
 
 	@Test
 	public void heapOrderTest() {
@@ -72,7 +74,7 @@ public class FourHeapTest {
 		assertEquals((Integer) 5, fh.bidQuote());
 		assertEquals(null, fh.askQuote());
 		assertEquals(3, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 	}
 	
 	@Test
@@ -89,7 +91,7 @@ public class FourHeapTest {
 		assertEquals(null, fh.bidQuote());
 		assertEquals((Integer) 5, fh.askQuote());
 		assertEquals(3, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 	}
 	
 	@Test
@@ -107,7 +109,7 @@ public class FourHeapTest {
 		assertEquals((Integer) 5, fh.bidQuote());
 		assertEquals((Integer) 7, fh.askQuote());
 		assertEquals(6, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 		
 		fh = new FourHeap<Integer, Integer>();
 		insertOrder(fh, 5, -5, 0);
@@ -120,7 +122,7 @@ public class FourHeapTest {
 		assertEquals((Integer) 5, fh.bidQuote());
 		assertEquals((Integer) 5, fh.askQuote());
 		assertEquals(8, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 		
 		fh = new FourHeap<Integer, Integer>();
 		insertOrder(fh, 5, -3, 0);
@@ -133,7 +135,7 @@ public class FourHeapTest {
 		assertEquals((Integer) 7, fh.bidQuote());
 		assertEquals((Integer) 7, fh.askQuote());
 		assertEquals(8, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 	}
 	
 	@Test
@@ -147,7 +149,7 @@ public class FourHeapTest {
 		assertEquals((Integer) 5, fh.bidQuote());
 		assertEquals((Integer) 7, fh.askQuote());
 		assertEquals(7, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 		
 		fh = new FourHeap<Integer, Integer>();		
 		insertOrder(fh, 5, -3, 0);
@@ -156,7 +158,7 @@ public class FourHeapTest {
 		assertEquals((Integer) 6, fh.bidQuote());
 		assertEquals((Integer) 7, fh.askQuote());
 		assertEquals(7, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 
 		fh = new FourHeap<Integer, Integer>();		
 		insertOrder(fh, 5, -3, 0);
@@ -165,7 +167,7 @@ public class FourHeapTest {
 		assertEquals((Integer) 7, fh.bidQuote());
 		assertEquals((Integer) 7, fh.askQuote());
 		assertEquals(7, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 	}
 	
 	@Test
@@ -185,7 +187,7 @@ public class FourHeapTest {
 		assertEquals((Integer) 5, fh.bidQuote());
 		assertEquals(null, fh.askQuote());
 		assertEquals(1, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 		
 		fh.withdrawOrder(o);
 		
@@ -197,7 +199,7 @@ public class FourHeapTest {
 		assertEquals(null, fh.bidQuote());
 		assertEquals(null, fh.askQuote());
 		assertEquals(0, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 	}
 	
 	@Test
@@ -217,7 +219,7 @@ public class FourHeapTest {
 		assertEquals(null, fh.bidQuote());
 		assertEquals((Integer) 5, fh.askQuote());
 		assertEquals(1, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 		
 		fh.withdrawOrder(o);
 		
@@ -229,7 +231,7 @@ public class FourHeapTest {
 		assertEquals(null, fh.bidQuote());
 		assertEquals(null, fh.askQuote());
 		assertEquals(0, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 	}
 	
 	@Test
@@ -249,7 +251,7 @@ public class FourHeapTest {
 		assertEquals((Integer) 5, fh.bidQuote());
 		assertEquals((Integer) 5, fh.askQuote());
 		assertEquals(4, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 		
 		fh.withdrawOrder(os);
 		
@@ -260,7 +262,7 @@ public class FourHeapTest {
 		assertEquals((Integer) 7, fh.bidQuote());
 		assertEquals(null, fh.askQuote());
 		assertEquals(1, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 		
 		fh = new FourHeap<Integer, Integer>();
 		os = insertOrder(fh, 5, -5, 0);
@@ -274,7 +276,7 @@ public class FourHeapTest {
 		assertEquals((Integer) 7, fh.bidQuote());
 		assertEquals((Integer) 7, fh.askQuote());
 		assertEquals(5, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 		
 		fh.withdrawOrder(ob);
 		
@@ -285,7 +287,7 @@ public class FourHeapTest {
 		assertEquals(null, fh.bidQuote());
 		assertEquals((Integer) 5, fh.askQuote());
 		assertEquals(2, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 
 		fh = new FourHeap<Integer, Integer>();
 		os = insertOrder(fh, 5, -3, 0);
@@ -299,7 +301,7 @@ public class FourHeapTest {
 		assertEquals((Integer) 5, fh.bidQuote());
 		assertEquals((Integer) 5, fh.askQuote());
 		assertEquals(4, fh.size());
-		assertConsistency(fh);
+		assertInvariants(fh);
 	}
 	
 	@Test
@@ -334,6 +336,7 @@ public class FourHeapTest {
 		assertEquals(1, fh.size());
 		assertFalse(fh.contains(os));
 		assertTrue(fh.contains(ob));
+		assertInvariants(fh);
 	}
 	
 	@Test
@@ -360,6 +363,47 @@ public class FourHeapTest {
 		assertEquals(1, fh.size());
 		assertFalse(fh.contains(os));
 		assertFalse(fh.contains(ob));
+		assertInvariants(fh);
+	}
+	
+	@Test
+	public void specificInvariantTest() {
+		FourHeap<Integer, Integer> fh;
+		
+		fh = new FourHeap<Integer, Integer>();
+		insertOrder(fh, 2, 1, 0);
+		insertOrder(fh, 1, -1, 1);
+		insertOrder(fh, 4, -1, 2);
+		insertOrder(fh, 3, 1, 3);
+		insertOrder(fh, 5, 1, 4);
+		
+		assertInvariants(fh);
+		
+		fh = new FourHeap<Integer, Integer>();
+		insertOrder(fh, 4, -1, 0);
+		insertOrder(fh, 5, 1, 1);
+		insertOrder(fh, 2, 1, 2);
+		insertOrder(fh, 3, -1, 3);
+		insertOrder(fh, 1, -1, 4);
+		
+		assertInvariants(fh);
+	}
+	
+	@Test
+	public void quoteInvariantTest() {
+		FourHeap<Integer, Integer> fh = new FourHeap<Integer, Integer>();
+		for (int i = 0; i < 1000; i++) {
+			insertOrder(fh, rand.nextInt(900000) + 100000,
+					rand.nextBoolean() ? 1 : -1, i);
+			assertInvariants(fh);
+		}
+		
+	}
+	
+	@Test
+	public void repeatedInvarianceTest() {
+		for (int i = 0; i < 100; i++)
+			quoteInvariantTest();
 	}
 	
 	protected static Order<Integer, Integer> insertOrder(
@@ -369,15 +413,30 @@ public class FourHeapTest {
 		return order;
 	}
 	
-	protected static void assertConsistency(FourHeap<Integer, Integer> fh) {
-		assertEquals(size(fh.sellMatched), -size(fh.buyMatched));
-	}
-	
 	protected static int size(BinaryHeap<FourHeap<Integer, Integer>.SplitOrder> bh) {
 		int size = 0;
 		for (FourHeap<Integer, Integer>.SplitOrder so : bh)
 			size += so.quantity;
 		return size;
+	}
+	
+	protected static void assertInvariants(FourHeap<Integer, Integer> fh) {
+		FourHeap<Integer, Integer>.SplitOrder bi, bo, si, so;
+		Integer bid, ask;
+		
+		bi = fh.buyMatched.peek();
+		bo = fh.buyUnmatched.peek();
+		si = fh.sellMatched.peek();
+		so = fh.sellUnmatched.peek();
+		bid = fh.bidQuote();
+		ask = fh.askQuote();
+		
+		assertTrue(bi == null || bo == null || bi.price >= bo.price);
+		assertTrue(so == null || si == null || so.price >= si.price);
+		assertTrue(so == null || bo == null || so.price >= bo.price);
+		assertTrue(bi == null || si == null || bi.price >= si.price);
+		assertTrue(bid == null || ask == null || bid <= ask);
+		assertEquals(size(fh.sellMatched), -size(fh.buyMatched));
 	}
 
 }
