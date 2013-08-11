@@ -4,6 +4,7 @@ import static utils.Compare.min;
 import static utils.Compare.max;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -23,6 +24,7 @@ public class UniformPriceClear implements ClearingRule {
 
 	@Override
 	public List<Price> pricing(List<Transaction<Price, TimeStamp>> transactions) {
+		if (transactions.isEmpty()) return Collections.emptyList();
 		Price minBuy = null, maxSell = null;
 		for (Transaction<Price, TimeStamp> trans : transactions) {
 			minBuy = min(minBuy, trans.getBuy().getPrice());

@@ -29,7 +29,7 @@ public class CallMarket extends Market {
 			TimeStamp clearFreq, TimeStamp latency, int tickSize) {
 		super(marketID, model, new UniformPriceClear(pricingPolicy, tickSize), latency);
 
-		if (clearFreq.after(TimeStamp.ZERO))
+		if (!clearFreq.after(TimeStamp.ZERO))
 			throw new IllegalArgumentException(
 					"Can't create a call market with 0 clear frequency. Create a CDA instead.");
 		

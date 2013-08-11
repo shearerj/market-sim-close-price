@@ -25,8 +25,7 @@ public class Order<P extends Comparable<P>, T extends Comparable<T>> {
 		Order<P, T> buy = this.totalQuantity > 0 ? this : other;
 		Order<P, T> sell = this.totalQuantity > 0 ? other : this;
 		
-		if (price.compareTo(buy.price) > 0
-				|| price.compareTo(sell.price) < 0)
+		if (sell.price.compareTo(buy.price) > 0)
 			throw new IllegalArgumentException("Invalid Price");
 		buy.quantity -= buyQuantity;
 		sell.quantity += buyQuantity;

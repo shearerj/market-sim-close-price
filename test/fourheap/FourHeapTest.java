@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.junit.Test;
 
+// FIXME Error with fourheap overmatching and resulting in orders that would never happen
 public class FourHeapTest {
 
 	@Test
