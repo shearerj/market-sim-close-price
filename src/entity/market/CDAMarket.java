@@ -25,9 +25,9 @@ public class CDAMarket extends Market {
 
 	@Override
 	public Collection<? extends Activity> submitOrder(Agent agent, Price price,
-			int quantity, TimeStamp curentTime) {
+			int quantity, TimeStamp curentTime, TimeStamp duration) {
 		Collection<Activity> activities = new ArrayList<Activity>(
-				super.submitOrder(agent, price, quantity, curentTime));
+				super.submitOrder(agent, price, quantity, curentTime, duration));
 		activities.add(new Clear(this, TimeStamp.IMMEDIATE));
 		return activities;
 	}

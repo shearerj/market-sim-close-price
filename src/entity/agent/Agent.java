@@ -212,6 +212,7 @@ public abstract class Agent extends Entity {
 
 			TimeStamp submissionTime;
 			int sign;
+			// FIXME Wrong if agent transacts with itself
 			if (tr.getBuyer().equals(this)) {
 				submissionTime = tr.getBuyBid().getSubmitTime();
 				sign = 1;
