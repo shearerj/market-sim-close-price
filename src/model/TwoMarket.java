@@ -52,9 +52,9 @@ public class TwoMarket extends MarketModel {
 		for (int i = 0; i < numla; i++) {
 			TimeStamp latency = new TimeStamp(modelProps.getAsInt(Keys.LA_LATENCY
 					+ (i + 1), -1));
-			
-			new LAAgent(this.agentIDgen.next(), this, alpha, latency,
-					new RandPlus(rand.nextLong()), tickSize);
+
+			agents.add(new LAAgent(this.agentIDgen.next(), this, alpha,
+					latency, new RandPlus(rand.nextLong()), tickSize));
 		}
 	}
 

@@ -1,7 +1,6 @@
 package entity.agent;
 
 import static logger.Logger.log;
-import static logger.Logger.Level.DEBUG;
 import static logger.Logger.Level.INFO;
 
 import java.util.ArrayList;
@@ -152,34 +151,36 @@ public abstract class Agent extends Entity {
 	 */
 	// TODO Implement this
 	public Price getUnrealizedProfit() {
-		if (positionBalance == 0) return Price.ZERO;
-
-		Price p = null;
-		if (positionBalance > 0) {
+		throw new IllegalArgumentException();
+//		if (positionBalance == 0) return Price.ZERO;
+//
+//		Price p = null;
+//		if (positionBalance > 0) {
 			// For long position, compare cost to bid quote (buys)
 //			for (Market market : model.getMarkets())
 //				if (market.getQuote().getBidPrice().greaterThan(p))
 //					p = market.getQuote().getBidPrice();
-		} else {
+//		} else {
 			// For short position, compare cost to ask quote (sells)
 //			for (Market market : model.getMarkets()) {
 //				if (market.getQuote().getAskPrice().lessThan(p)) {
 //					p = market.getQuote().getAskPrice();
 //				}
 //			}
-		}
-
-		log(DEBUG, model.getName() + ": " + this + " bal="
-				+ positionBalance + ", p=" + p + ", avgCost=" + averageCost);
-
-		return p == null ? Price.ZERO : new Price(positionBalance
-				* (p.getInTicks() - averageCost));
+//		}
+//
+//		log(DEBUG, model.getName() + ": " + this + " bal="
+//				+ positionBalance + ", p=" + p + ", avgCost=" + averageCost);
+//
+//		return p == null ? Price.ZERO : new Price(positionBalance
+//				* (p.getInTicks() - averageCost));
 	}
 
 	public final TimeStamp getArrivalTime() {
 		return arrivalTime;
 	}
 
+	// FIXME remove in favor of surplus 0
 	public int getRealizedProfit() {
 		return realizedProfit;
 	}

@@ -87,9 +87,9 @@ public class TimeStamp implements Comparable<TimeStamp> {
 	
 	@Override
 	public String toString() {
-		long seconds = ticks / TICKS_PER_SECOND;
+		long seconds = Long.signum(ticks) * Math.abs(ticks / TICKS_PER_SECOND);
 		int digits = MathUtils.logn(TICKS_PER_SECOND, 10);
-		long microseconds = ticks % TICKS_PER_SECOND;
+		long microseconds = Math.abs(ticks % TICKS_PER_SECOND);
 		while (digits > 3 && microseconds % 10 == 0) {
 			microseconds /= 10;
 			digits--;

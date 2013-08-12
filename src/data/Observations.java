@@ -116,20 +116,20 @@ public class Observations {
 		features.add("", getConfiguration(spec, observationNum, maxTime));
 
 		for (MarketModel model : models) {
-			String modelName = model.getClass().getSimpleName().toLowerCase();
+			String modelName = model.getName().toLowerCase() + "_" + model.getID();
 
-			features.add(delimit(modelName, SURPLUS), getSurplus(model));
+			features.add(modelName + "_" + SURPLUS, getSurplus(model));
 
-			features.add(delimit(modelName, EXECTIME), getExecutionTime(model));
+			features.add(modelName + "_" + EXECTIME, getExecutionTime(model));
 			// FIXME this should maybe be simLength instead of maxTime...
-			features.add(delimit(modelName, TRANSACTIONS),
+			features.add(modelName + "_" + TRANSACTIONS,
 					getTransactionInfo(model, maxTime));
-			features.add(delimit(modelName, SPREADS), getSpread(model, maxTime));
-			features.add(delimit(modelName, ROLE_MARKETMAKER),
+			features.add(modelName + "_" + SPREADS, getSpread(model, maxTime));
+			features.add(modelName + "_" + ROLE_MARKETMAKER,
 					getMarketMakerInfo(model));
 
 			for (int period : Consts.periods)
-				features.add(delimit(modelName, VOL),
+				features.add(modelName + "_" + VOL,
 						getVolatility(model, period, maxTime));
 
 			// TODO - need to remove the position balance hack
@@ -172,10 +172,8 @@ public class Observations {
 			AgentProperties props = agentProps.getKey();
 			int number = agentProps.getValue();
 
-			config.addProperty(
-					delimit("_", props.getAgentType().toString(), NUM), number);
-			config.addProperty(
-					delimit("_", props.getAgentType().toString(), AGENTSETUP),
+			config.addProperty(props.getAgentType() + "_" + NUM, number);
+			config.addProperty(props.getAgentType() + "_" + AGENTSETUP,
 					props.toConfigString());
 		}
 		return config;
@@ -216,7 +214,8 @@ public class Observations {
 				if (ag instanceof BackgroundAgent) {
 					bkgrd.addValue(agentSurplus);
 				} else if (ag instanceof HFTAgent) {
-					agentSurplus = ag.getRealizedProfit();
+					// FIXME This is not correct if the agent has a net position at the end...
+					agentSurplus = ag.getSurplus(0);
 					hft.addValue(agentSurplus);
 				} else if (ag instanceof MarketMaker) {
 					mm.addValue(agentSurplus);
@@ -311,14 +310,12 @@ public class Observations {
 				numTrans.put(name, numTrans.get(name) + 1);
 			}
 		}
-		feat.addProperty(delimit("_", MEAN, PRICE), prices.getMean());
-		feat.addProperty(delimit("_", STDDEV, PRICE),
-				prices.getStandardDeviation());
+		feat.addProperty(MEAN + "_" + PRICE, prices.getMean());
+		feat.addProperty(STDDEV + "_" + PRICE, prices.getStandardDeviation());
 
 		// number of transactions for each agent type
 		for (Entry<String, Integer> e : numTrans.entrySet())
-			feat.addProperty(delimit("_", e.getKey().toLowerCase(), NUM),
-					e.getValue());
+			feat.addProperty(e.getKey().toLowerCase() + "_" + NUM, e.getValue());
 
 		// compute RMSD (for price discovery) at different sampling frequencies
 		for (int period : Consts.periods) {
@@ -327,7 +324,7 @@ public class Observations {
 			DSPlus pr = transPrices.getSampledStats(period, (int) simLength);
 			DSPlus fund = fundPrices.getSampledStats(period, (int) simLength);
 
-			feat.addProperty(delimit("_", prefix, RMSD), pr.getRMSD(fund));
+			feat.addProperty(prefix + "_" + RMSD, pr.getRMSD(fund));
 		}
 		return feat;
 	}
