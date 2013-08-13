@@ -13,6 +13,8 @@ import utils.RandPlus;
  */
 public class DummyFundamental extends FundamentalValue {
 	
+	private static final long serialVersionUID = 1L;
+
 	public DummyFundamental(int mean) {
 		super(0, mean, 0, new RandPlus());
 	}

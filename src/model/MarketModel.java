@@ -64,7 +64,8 @@ import generator.IDGenerator;
  * 
  * @author ewah
  */
-public abstract class MarketModel implements Serializable {
+// TODO Remove an merge into event manager?
+public class MarketModel implements Serializable {
 
 	private static final long serialVersionUID = 949337505724211161L;
 	
@@ -101,7 +102,9 @@ public abstract class MarketModel implements Serializable {
 		setupPlayers(modelProps, playerConfig);
 	}
 
-	protected abstract void setupMarkets(EntityProperties modelProps);
+	protected void setupMarkets(EntityProperties modelProps) {
+		// FIXME
+	}
 
 	protected void setupAgents(EntityProperties modelProps,
 			Map<AgentProperties, Integer> agentProps) {

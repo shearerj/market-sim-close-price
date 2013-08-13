@@ -12,20 +12,18 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
+
+import java.util.Collections;
 import java.util.Date;
 import java.util.Properties;
 
 import logger.Logger;
 import logger.Logger.Prefix;
 import model.MarketModel;
-import model.MarketModelFactory;
 import utils.RandPlus;
 import data.EntityProperties;
 import data.FundamentalValue;
 import data.Keys;
-import data.ModelProperties;
 import data.Observations;
 import entity.market.Market;
 import event.TimeStamp;
@@ -44,7 +42,7 @@ public class SystemManager {
 	protected static DateFormat DATE_FORMAT = new SimpleDateFormat("dd-MMM-yyyy_HH.mm.ss");
 
 	protected final EventManager eventManager;
-	protected final Collection<MarketModel> models;
+	protected final MarketModel model;
 
 	protected final int obsNum; // sample number used for labeling output files
 	protected final File simFolder; // simulation folder name
@@ -114,21 +112,17 @@ public class SystemManager {
 				simProps.getAsDouble(Keys.FUNDAMENTAL_SHOCK_VAR),
 				new RandPlus(rand.nextLong()));
 
-		MarketModelFactory modelFactory = new MarketModelFactory(
-				spec.getBackgroundAgents(), spec.getPlayerConfig(),
-				fundamental, new RandPlus(rand.nextLong()));
-
 		// TODO Only create one market model?
 		log(INFO, "------------------------------------------------");
 		log(INFO, "            Creating MARKET MODELS");
-		models = new ArrayList<MarketModel>();
-		for (ModelProperties props : spec.getModels()) {
-			MarketModel model = modelFactory.createModel(props);
-			models.add(model);
-			log(INFO, props.getModelType() + ": " + model);
-			for (Market market : model.getMarkets())
-				log(INFO, market.getName() + " " + market + " in " + model);
-		}
+		
+		// FIXME 
+		model = new MarketModel(1, fundamental, spec.getBackgroundAgents(),
+				null, spec.getPlayerConfig(), rand);
+
+		log(INFO, null + ": " + model);
+		for (Market market : model.getMarkets())
+			log(INFO, market.getName() + " " + market + " in " + model);
 		log(INFO, "------------------------------------------------");
 	}
 
@@ -179,8 +173,7 @@ public class SystemManager {
 	 * Method to execute all events in the Event Queue.
 	 */
 	public void executeEvents() {
-		for (MarketModel model : models)
-			model.scheduleActivities(eventManager);
+		model.scheduleActivities(eventManager);
 		eventManager.executeUntil(simulationLength);
 		log(INFO, "STATUS: Simulation has ended.");
 	}
@@ -189,14 +182,12 @@ public class SystemManager {
 		if (Logger.getLevel() == DEBUG) { // Write out objects for further analysis
 			File objects = new File(simFolder, Consts.OBJS_FILE_PREFIX + obsNum + ".bit");
 			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(objects));
-			out.write(models.size());
-			for (MarketModel model : models)
-				out.writeObject(model);
+			out.writeObject(model);
 			out.close();
 		}
 		// TODO Serialize all entity objects and models for later data analysis
 		File results = new File(simFolder, Consts.OBS_FILE_PREFIX + obsNum + ".json");
-		Observations obs = new Observations(spec, models, obsNum);
+		Observations obs = new Observations(spec, Collections.singletonList(model), obsNum);
 		obs.writeToFile(results);
 	}
 
