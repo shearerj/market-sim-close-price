@@ -94,7 +94,7 @@ public abstract class Agent extends Entity {
 		if (positionBalance == 0) return Collections.emptyList();
 
 		preLiqPosition = positionBalance;
-		preLiqRealizedProfit = getRealizedProfit();
+		preLiqRealizedProfit = (int) getSurplus(0); // XXX This is almost certainly wrong
 		if (positionBalance > 0) {
 			// need to sell
 			realizedProfit += positionBalance * price.getInTicks();
@@ -178,11 +178,6 @@ public abstract class Agent extends Entity {
 
 	public final TimeStamp getArrivalTime() {
 		return arrivalTime;
-	}
-
-	// FIXME remove in favor of surplus 0
-	public int getRealizedProfit() {
-		return realizedProfit;
 	}
 
 	public int getPreLiquidationPosition() {

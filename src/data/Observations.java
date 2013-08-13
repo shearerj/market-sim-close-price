@@ -150,7 +150,7 @@ public class Observations {
 		observation.addProperty(STRATEGY, player.getStrategy());
 		// Get surplus instead of realized profit?
 		observation.addProperty(PAYOFF,
-				player.getAgent().getRealizedProfit());
+				player.getAgent().getSurplus(0));
 		return observation;
 	}
 
@@ -379,7 +379,7 @@ public class Observations {
 			feat.addProperty(delimit("_", PROFIT, PRE, LIQUIDATION + suffix),
 					mm.getPreLiquidationProfit());
 			feat.addProperty(delimit("_", PROFIT, POST, LIQUIDATION + suffix),
-					mm.getRealizedProfit());
+					mm.getSurplus(0));
 		}
 		return feat;
 	}
