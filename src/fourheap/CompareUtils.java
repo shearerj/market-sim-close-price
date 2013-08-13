@@ -1,5 +1,6 @@
 package fourheap;
 
+import java.io.Serializable;
 import java.util.Comparator;
 
 public class CompareUtils {
@@ -32,7 +33,9 @@ public class CompareUtils {
 		return new CompComparator<T>();
 	}
 	
-	private static class CompComparator<T> implements Comparator<T> {
+	private static class CompComparator<T> implements Comparator<T>, Serializable {
+		private static final long serialVersionUID = 6468496103741355158L;
+
 		@SuppressWarnings("unchecked")
 		@Override
 		public int compare(T t1, T t2) {

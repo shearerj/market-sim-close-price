@@ -1,6 +1,8 @@
 package generator;
 
 public class IDGenerator extends Generator<Integer> {
+
+	private static final long serialVersionUID = 76814407615908961L;
 	
 	protected int next;
 	protected int step;

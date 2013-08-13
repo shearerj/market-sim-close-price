@@ -1,5 +1,7 @@
 package entity.infoproc;
 
+import java.io.Serializable;
+
 import entity.market.Market;
 import entity.market.Price;
 
@@ -9,8 +11,10 @@ import entity.market.Price;
  * 
  * @author ewah
  */
-public class BestBidAsk {
-
+public class BestBidAsk implements Serializable {
+	
+	private static final long serialVersionUID = -7312167969610706296L;
+	
 	protected final Market bestBidMarket, bestAskMarket;
 	protected final Price bestBid, bestAsk;
 

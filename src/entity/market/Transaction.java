@@ -1,5 +1,7 @@
 package entity.market;
 
+import java.io.Serializable;
+
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import entity.agent.Agent;
@@ -11,8 +13,10 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-public class Transaction {
+public class Transaction implements Serializable {
 
+	private static final long serialVersionUID = 8420827805792281642L;
+	
 	protected final Agent buyer;
 	protected final Agent seller;
 	protected final Market market;

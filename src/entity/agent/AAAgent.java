@@ -34,6 +34,8 @@ import event.TimeStamp;
 
 public class AAAgent extends ReentryAgent {
 	
+	private static final long serialVersionUID = 2418819222375372886L;
+	
 	// Agent market variables
 	private boolean isBuyer; // randomly assigned at initialization
 	private int maxAbsPosition; // maxPosition the agent can take on

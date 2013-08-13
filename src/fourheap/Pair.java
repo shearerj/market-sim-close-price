@@ -1,5 +1,7 @@
 package fourheap;
 
+import java.io.Serializable;
+
 /**
  * Simple immutable pair implementation
  * 
@@ -8,8 +10,10 @@ package fourheap;
  * @param <A>
  * @param <B>
  */
-public class Pair<A, B> {
+public class Pair<A, B> implements Serializable {
 
+	private static final long serialVersionUID = -603670378991034224L;
+	
 	protected A left;
 	protected B right;
 

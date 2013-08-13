@@ -1,5 +1,7 @@
 package entity.market;
 
+import java.io.Serializable;
+
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import entity.agent.Agent;
@@ -12,8 +14,10 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-public class Order {
+public class Order implements Serializable {
 
+	private static final long serialVersionUID = 4020465194816241014L;
+	
 	protected final Agent agent;
 	protected Market market;
 	protected final fourheap.Order<Price, TimeStamp> order;

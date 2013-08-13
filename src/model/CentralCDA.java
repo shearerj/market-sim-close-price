@@ -22,6 +22,8 @@ import event.TimeStamp;
  * @author ewah
  */
 public class CentralCDA extends MarketModel {
+	
+	private static final long serialVersionUID = -6945232235329268406L;
 
 	public CentralCDA(int modelID, FundamentalValue fundamental,
 			Map<AgentProperties, Integer> agentProps,

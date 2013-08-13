@@ -7,6 +7,8 @@ import utils.RandPlus;
  */
 public class PoissonProcess extends Generator<Double> {
 
+	private static final long serialVersionUID = 1600945421354708623L;
+	
 	protected final double rate;
 	protected final RandPlus rand;
 	protected double lastValue;

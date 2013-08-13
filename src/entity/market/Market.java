@@ -37,6 +37,8 @@ import fourheap.FourHeap;
  */
 public abstract class Market extends Entity {
 
+	private static final long serialVersionUID = 8806298743451593261L;
+	
 	protected final MarketModel model;
 	protected final FourHeap<Price, TimeStamp> orderbook;
 	protected final ClearingRule clearingRule;

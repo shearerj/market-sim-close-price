@@ -27,6 +27,7 @@ import event.TimeStamp;
  */
 public class CentralCall extends MarketModel {
 
+	private static final long serialVersionUID = 199714042564426701L;
 
 	public CentralCall(int modelID, FundamentalValue fundamental,
 			Map<AgentProperties, Integer> agentProps, EntityProperties modelProps, 

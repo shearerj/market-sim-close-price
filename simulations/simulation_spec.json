@@ -3,12 +3,12 @@
     },	
     "configuration": {
 	"simLength": "15000",
-	"TWOMARKET": "LA:sleepTime_0_alpha_0.001,DUMMY",
-	"CENTRALCDA": "1",
-	"CENTRALCALL": "NBBO",
+	"TWOMARKET": "numLA_1_sleepTime_0_alpha_0.001,numLA_0",
+	"CENTRALCDA": "",
+	"CENTRALCALL": "callFreq_100",
 	"BASICMM": "0",
 	"BASICMM_setup": "sleepTime_200_numRungs_10_rungSize_1000",
-	"ZI": "3",
+	"ZI": "250",
 	"ZI_setup": "bidRange_2000",
 	"ZIR": "0",
 	"ZIR_setup": "bidRange_2000_maxqty_5",
@@ -17,12 +17,12 @@
 	"AA": "0",
 	"AA_setup": "",
 	"tickSize": "1",
-	"nbboLatency": "0",
+	"nbboLatency": "100",
 	"arrivalRate": "0.075",
 	"reentryRate": "0.005",
 	"meanValue": "100000",
 	"kappa": "0.05",
 	"shockVar": "150000000",
-	"privateValueVar": "100000000",
+	"privateValueVar": "100000000"
     }
 }

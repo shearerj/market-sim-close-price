@@ -34,6 +34,7 @@ public class Consts {
 	public final static String SIM_SPEC_FILE = "simulation_spec.json";
 	public final static String CONFIG_FILE = "env.properties";
 	public final static String OBS_FILE_PREFIX = "observation";
+	public final static String OBJS_FILE_PREFIX = "objects";
 
 	// Constants in simulation_spec file
 	public final static String SETUP_SUFFIX = "_setup";

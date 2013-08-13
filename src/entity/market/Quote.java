@@ -3,6 +3,8 @@ package entity.market;
 import static logger.Logger.log;
 import static logger.Logger.Level.ERROR;
 
+import java.io.Serializable;
+
 import event.TimeStamp;
 
 /**
@@ -10,8 +12,10 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-public class Quote {
+public class Quote implements Serializable {
 
+	private static final long serialVersionUID = 3842989596948215994L;
+	
 	protected final Price ask, bid;
 	protected final int askQuantity, bidQuantity;
 	protected final Market market;

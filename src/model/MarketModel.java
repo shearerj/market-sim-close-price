@@ -1,5 +1,6 @@
 package model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -63,8 +64,10 @@ import generator.IDGenerator;
  * 
  * @author ewah
  */
-public abstract class MarketModel {
+public abstract class MarketModel implements Serializable {
 
+	private static final long serialVersionUID = 949337505724211161L;
+	
 	protected final int modelID;
 	protected final RandPlus rand;
 	protected final SIP sip;

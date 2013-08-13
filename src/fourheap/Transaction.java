@@ -1,7 +1,11 @@
 package fourheap;
 
-public class Transaction<P extends Comparable<P>, T extends Comparable<T>> {
+import java.io.Serializable;
 
+public class Transaction<P extends Comparable<P>, T extends Comparable<T>> implements Serializable {
+
+	private static final long serialVersionUID = -6073835626927361670L;
+	
 	protected final Order<P, T> buy, sell;
 	protected final int quantity;
 	

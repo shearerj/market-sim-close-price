@@ -7,7 +7,9 @@ import static logger.Logger.Level.NO_LOGGING;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -184,6 +186,14 @@ public class SystemManager {
 	}
 
 	public void aggregateResults() throws IOException {
+		if (Logger.getLevel() == DEBUG) { // Write out objects for further analysis
+			File objects = new File(simFolder, Consts.OBJS_FILE_PREFIX + obsNum + ".bit");
+			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(objects));
+			out.write(models.size());
+			for (MarketModel model : models)
+				out.writeObject(model);
+			out.close();
+		}
 		// TODO Serialize all entity objects and models for later data analysis
 		File results = new File(simFolder, Consts.OBS_FILE_PREFIX + obsNum + ".json");
 		Observations obs = new Observations(spec, models, obsNum);

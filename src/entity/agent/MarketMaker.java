@@ -13,6 +13,9 @@ import utils.RandPlus;
 // TODO Currently MarketMakers don't ever schedule a liquidate. Not sure exactly when this should
 // happen.
 public abstract class MarketMaker extends SMAgent {
+
+	private static final long serialVersionUID = -782740037969385370L;
+
 	public MarketMaker(int agentID, MarketModel model, Market market,
 			RandPlus rand, int tickSize) {
 		super(agentID, TimeStamp.ZERO, model, market, new PrivateValue(),

@@ -6,8 +6,10 @@ import java.util.List;
 
 public class RoundRobinGenerator<E> extends Generator<E> {
 
-	List<E> items;
-	int position;
+	private static final long serialVersionUID = -8846597461654930791L;
+	
+	protected final List<E> items;
+	protected int position;
 	
 	public RoundRobinGenerator(Collection<? extends E> items) {
 		this.position = 0;

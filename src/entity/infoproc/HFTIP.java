@@ -19,6 +19,8 @@ import event.TimeStamp;
  */
 public class HFTIP extends SMIP {
 
+	private static final long serialVersionUID = -4104375974647291881L;
+	
 	protected final HFTAgent hftAgent;
 
 	/**

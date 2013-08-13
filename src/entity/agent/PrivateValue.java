@@ -1,5 +1,6 @@
 package entity.agent;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 import entity.market.Price;
@@ -16,8 +17,10 @@ import static entity.market.Price.ZERO;
  * 
  * @author ewah
  */
-public class PrivateValue {
+public class PrivateValue implements Serializable {
 
+	private static final long serialVersionUID = -348702049295080442L;
+	
 	protected final int offset;
 	protected final Price[] prices;
 

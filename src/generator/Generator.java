@@ -1,8 +1,11 @@
 package generator;
 
+import java.io.Serializable;
 import java.util.Iterator;
 
-public abstract class Generator<E> implements Iterator<E> {
+public abstract class Generator<E> implements Iterator<E>, Serializable {
+
+	private static final long serialVersionUID = 4983959735784637652L;
 
 	@Override
 	public final boolean hasNext() {

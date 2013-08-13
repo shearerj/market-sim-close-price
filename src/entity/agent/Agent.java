@@ -28,6 +28,8 @@ import event.TimeStamp;
  */
 public abstract class Agent extends Entity {
 
+	private static final long serialVersionUID = 5363438238024144057L;
+	
 	protected final RandPlus rand;
 	protected final MarketModel model;
 	protected final SIP sip;

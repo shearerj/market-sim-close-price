@@ -25,6 +25,8 @@ import event.TimeStamp;
  */
 public class ZIPAgent extends ReentryAgent {
 
+	private static final long serialVersionUID = 8138883791556301413L;
+	
 	protected final int bidRange; // range for limit order
 	protected final double c_R, c_A, beta, betaVar, gamma;
 

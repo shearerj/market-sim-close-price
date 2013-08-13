@@ -3,8 +3,12 @@ package fourheap;
 import static java.lang.Math.abs;
 import static java.lang.Integer.signum;
 
-public class Order<P extends Comparable<P>, T extends Comparable<T>> {
+import java.io.Serializable;
 
+public class Order<P extends Comparable<P>, T extends Comparable<T>> implements Serializable {
+
+	private static final long serialVersionUID = -3460176014871040729L;
+	
 	protected final P price;
 	protected int totalQuantity; // Negative to sell
 	protected int quantity;

@@ -36,6 +36,8 @@ import event.TimeStamp;
  */
 public abstract class SMAgent extends Agent {
 
+	private static final long serialVersionUID = 3156640550886695881L;
+	
 	protected final Market primaryMarket;
 	protected final SMIP marketIP;
 

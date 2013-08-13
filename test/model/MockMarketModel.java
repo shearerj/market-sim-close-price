@@ -14,7 +14,9 @@ import entity.agent.Agent;
 import entity.market.Market;
 
 public class MockMarketModel extends MarketModel {
-	
+
+	private static final long serialVersionUID = 1L;
+
 	public MockMarketModel(int modelID, FundamentalValue fundamental) {
 		super(modelID, fundamental, 
 				new HashMap<AgentProperties,Integer>(),

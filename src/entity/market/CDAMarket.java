@@ -19,6 +19,8 @@ import event.TimeStamp;
  */
 public class CDAMarket extends Market {
 
+	private static final long serialVersionUID = -6780130359417129449L;
+
 	public CDAMarket(int marketID, MarketModel model, TimeStamp latency) {
 		super(marketID, model, new EarliestPriceClear(), latency);
 	}

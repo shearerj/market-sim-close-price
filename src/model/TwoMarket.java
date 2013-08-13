@@ -28,6 +28,8 @@ import event.TimeStamp;
  */
 public class TwoMarket extends MarketModel {
 
+	private static final long serialVersionUID = 4821870948159520911L;
+
 	public TwoMarket(int modelID, FundamentalValue fundamental,
 			Map<AgentProperties, Integer> agentProps,
 			EntityProperties modelProps, JsonObject playerConfig, RandPlus rand) {

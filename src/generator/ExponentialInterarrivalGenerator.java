@@ -5,6 +5,8 @@ import event.TimeStamp;
 
 public class ExponentialInterarrivalGenerator extends Generator<TimeStamp> {
 	
+	private static final long serialVersionUID = 3285386017387161748L;
+	
 	protected final RandPlus rand;
 	protected final double rate;
 

@@ -1,5 +1,6 @@
 package data;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -20,8 +21,10 @@ import org.apache.commons.lang3.ArrayUtils;
  * @author ewah
  * 
  */
-public class TimeSeries {
+public class TimeSeries implements Serializable {
 	
+	private static final long serialVersionUID = 7835744389750549565L;
+
 	protected static double DEFAULT = Double.NaN;
 	
 	protected final List<Integer> times;

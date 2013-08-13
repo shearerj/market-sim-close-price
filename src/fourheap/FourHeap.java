@@ -5,6 +5,7 @@ import static fourheap.CompareUtils.min;
 import static java.lang.Integer.signum;
 import static java.lang.Math.abs;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,8 +14,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class FourHeap<P extends Comparable<P>, T extends Comparable<T>> {
+public class FourHeap<P extends Comparable<P>, T extends Comparable<T>> implements Serializable {
 
+	private static final long serialVersionUID = -7322375558427133915L;
+	
 	protected final BinaryHeap<SplitOrder> sellUnmatched, sellMatched,
 			buyUnmatched, buyMatched;
 	// Left is unmatched, Right is matched Should have a split order of 0 if nothing exists in
@@ -206,7 +209,9 @@ public class FourHeap<P extends Comparable<P>, T extends Comparable<T>> {
 				+ buyMatched + ", Si: " + sellMatched + ">";
 	}
 
-	protected class SplitOrder {
+	protected class SplitOrder implements Serializable {
+		private static final long serialVersionUID = 8502206148661366958L;
+		
 		protected final P price;
 		protected int quantity;
 		protected final T time;
@@ -232,8 +237,9 @@ public class FourHeap<P extends Comparable<P>, T extends Comparable<T>> {
 	/**
 	 * Compares price, then time, then quantity
 	 */
-	protected class OrderComparator implements Comparator<SplitOrder> {
-
+	protected class OrderComparator implements Comparator<SplitOrder>, Serializable {
+		private static final long serialVersionUID = -9033635126415338714L;
+		
 		Comparator<P> priceComp;
 		Comparator<T> timeComp;
 		Comparator<Integer> quantComp;

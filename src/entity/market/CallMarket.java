@@ -22,6 +22,8 @@ import event.TimeStamp;
  */
 public class CallMarket extends Market {
 	
+	private static final long serialVersionUID = -1736458709580878467L;
+	
 	protected final TimeStamp clearFreq;
 	protected TimeStamp nextClearTime;
 

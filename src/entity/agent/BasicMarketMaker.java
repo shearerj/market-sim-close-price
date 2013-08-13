@@ -48,6 +48,8 @@ import event.TimeStamp;
  */
 public class BasicMarketMaker extends MarketMaker {
 
+	private static final long serialVersionUID = 9057600979711100221L;
+	
 	protected final int stepSize;
 	protected final int rungSize;
 	// # of ladder rungs on one side (e.g., number of buy orders)

@@ -5,6 +5,8 @@ import event.TimeStamp;
 
 public class PoissonArrivalGenerator extends Generator<TimeStamp> {
 	
+	private static final long serialVersionUID = -999049122857549847L;
+	
 	protected TimeStamp lastTime;
 	protected ExponentialInterarrivalGenerator gen;
 

@@ -1,5 +1,7 @@
 package entity.market;
 
+import java.io.Serializable;
+
 import utils.MathUtils;
 
 /**
@@ -8,8 +10,10 @@ import utils.MathUtils;
  * 
  * @author ewah
  */
-public class Price implements Comparable<Price> {
+public class Price implements Comparable<Price>, Serializable {
 
+	private static final long serialVersionUID = 772101228717034473L;
+	
 	// XXX Take infinite price into account for subtraction, addition,
 	// toString, etc. Basically, should infinite price be special?
 	public static final Price INF = new Price(Integer.MAX_VALUE - 1);

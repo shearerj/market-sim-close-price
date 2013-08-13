@@ -35,6 +35,8 @@ import event.TimeStamp;
  */
 public class ZIAgent extends BackgroundAgent {
 
+	private static final long serialVersionUID = 1148707664467962927L;
+	
 	protected final int bidRange; // range for limit order
 
 	public ZIAgent(int agentID, TimeStamp arrivalTime, MarketModel model,

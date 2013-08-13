@@ -29,6 +29,8 @@ import event.TimeStamp;
  */
 public class SIP extends IP {
 
+	private static final long serialVersionUID = -4600049787044894823L;
+	
 	protected final Map<Market, Quote> marketQuotes; // hashed by market
 	protected final List<Transaction> transactions;
 	protected BestBidAsk nbbo;

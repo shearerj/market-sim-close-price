@@ -3,6 +3,7 @@ package data;
 import static logger.Logger.log;
 import static logger.Logger.Level.ERROR;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import utils.RandPlus;
@@ -16,8 +17,11 @@ import event.TimeStamp;
  * @author ewah
  */
 // XXX Potentially need a way to do this that will work for longs / arbitrary time stamps
-public class FundamentalValue {
+// XXX Potentially move this to another package?
+public class FundamentalValue implements Serializable {
 
+	private static final long serialVersionUID = 6764216196138108452L;
+	
 	protected final ArrayList<Double> meanRevertProcess;
 	protected final double kappa;
 	protected final int meanValue;

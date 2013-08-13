@@ -10,6 +10,8 @@ import fourheap.Transaction;
 
 public class EarliestPriceClear implements ClearingRule {
 
+	private static final long serialVersionUID = -6417178198266057261L;
+
 	@Override
 	public List<Price> pricing(List<Transaction<Price, TimeStamp>> transactions) {
 		List<Price> prices = new ArrayList<Price>(transactions.size());

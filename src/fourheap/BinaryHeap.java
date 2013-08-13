@@ -1,5 +1,6 @@
 package fourheap;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,8 +13,10 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.Set;
 
-public class BinaryHeap<E> implements Queue<E> {
+public class BinaryHeap<E> implements Queue<E>, Serializable {
 
+	private static final long serialVersionUID = 6048249591836891615L;
+	
 	protected final ArrayList<E> elements;
 	protected final Map<E, Integer> mapping;
 	protected final Comparator<E> comp;

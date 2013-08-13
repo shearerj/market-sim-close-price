@@ -14,6 +14,8 @@ import fourheap.Transaction;
 
 public class UniformPriceClear implements ClearingRule {
 
+	private static final long serialVersionUID = -342335313880137387L;
+	
 	protected final double ratio;
 	protected final int tickSize;
 	

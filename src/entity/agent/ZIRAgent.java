@@ -40,6 +40,8 @@ import event.TimeStamp;
  */
 public class ZIRAgent extends ReentryAgent {
 
+	private static final long serialVersionUID = -1155740218390579581L;
+	
 	protected int bidRange; // range for limit order
 	protected int maxAbsPosition; // max quantity for position
 

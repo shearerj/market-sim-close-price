@@ -28,6 +28,8 @@ import event.TimeStamp;
  */
 public class LAAgent extends HFTAgent {
 
+	private static final long serialVersionUID = 1479379512311568959L;
+	
 	protected final double alpha; // LA profit gap
 	protected final Map<Market, HFTIP> ips;
 

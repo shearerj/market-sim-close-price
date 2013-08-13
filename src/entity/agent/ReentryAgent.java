@@ -20,6 +20,8 @@ import generator.Generator;
  */
 public abstract class ReentryAgent extends BackgroundAgent {
 
+	private static final long serialVersionUID = -4312261553207167428L;
+	
 	protected Generator<TimeStamp> reentry; // re-entry times
 	
 	public ReentryAgent(int agentID, TimeStamp arrivalTime, MarketModel model,

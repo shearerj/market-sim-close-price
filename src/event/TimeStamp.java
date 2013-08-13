@@ -6,13 +6,17 @@
  */
 package event;
 
+import java.io.Serializable;
+
 import utils.MathUtils;
 
 /**
  * The TimeStamp class is just a wrapper around java.lang.Long. This *must*
  * remain an immutable object
  */
-public class TimeStamp implements Comparable<TimeStamp> {
+public class TimeStamp implements Comparable<TimeStamp>, Serializable {
+	
+	private static final long serialVersionUID = -2109498445060507654L;
 	
 	public static final TimeStamp IMMEDIATE = new TimeStamp(-1);
 	public static final TimeStamp ZERO = new TimeStamp(0);

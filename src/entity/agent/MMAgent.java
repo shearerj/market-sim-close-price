@@ -26,6 +26,8 @@ import event.TimeStamp;
  */
 public abstract class MMAgent extends Agent {
 
+	private static final long serialVersionUID = 2297636044775909734L;
+
 	// XXX Should the MMAgent have its own copy of Markets, or should it just go to Model?
 	public MMAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
 			PrivateValue pv, RandPlus rand, int tickSize) {

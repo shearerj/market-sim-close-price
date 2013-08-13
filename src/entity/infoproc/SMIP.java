@@ -21,6 +21,8 @@ import event.TimeStamp;
  */
 public class SMIP extends IP {
 
+	private static final long serialVersionUID = 827960237754648780L;
+	
 	protected final Market assocaitedMarket;
 	protected Quote quote;
 

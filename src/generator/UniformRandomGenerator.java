@@ -8,6 +8,8 @@ import utils.RandPlus;
 
 public class UniformRandomGenerator<E> extends Generator<E> {
 	
+	private static final long serialVersionUID = -7395358358145905329L;
+	
 	protected final List<E> items;
 	protected final RandPlus rand;
 
