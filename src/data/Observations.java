@@ -248,7 +248,7 @@ public class Observations {
 		JsonObject feat = new JsonObject();
 		DescriptiveStatistics speeds = new DescriptiveStatistics();
 
-		for (Transaction tr : model.getTrans()) {
+		for (Transaction tr : model.getTransactions()) {
 			TimeStamp execTime = tr.getExecTime();
 			TimeStamp buyerExecTime = execTime.minus(tr.getBuyBid().getSubmitTime());
 			TimeStamp sellerExecTime = execTime.minus(tr.getSellBid().getSubmitTime());
@@ -292,7 +292,7 @@ public class Observations {
 		for (Agent agent : model.getAgents())
 			numTrans.put(agent.getName(), 0);
 
-		for (Transaction trans : model.getTrans()) {
+		for (Transaction trans : model.getTransactions()) {
 			prices.addValue(trans.getPrice().getInTicks());
 			quantity.addValue(trans.getQuantity());
 			fundamental.addValue(model.getFundamentalAt(trans.getExecTime()).getInTicks());

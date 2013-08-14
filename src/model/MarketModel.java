@@ -191,7 +191,7 @@ public class MarketModel implements Serializable {
 		return modelID;
 	}
 
-	public Collection<Transaction> getTrans() {
+	public Collection<Transaction> getTransactions() {
 		Collection<Transaction> trans = new HashSet<Transaction>();
 		for (Market market : markets)
 			trans.addAll(market.getTransactions());
