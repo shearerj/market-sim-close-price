@@ -184,8 +184,12 @@ public class SystemManager {
 			out.close();
 		}
 		// TODO Serialize all entity objects and models for later data analysis
-		File results = new File(simFolder, Consts.OBS_FILE_PREFIX + obsNum + ".json");
-		Observations obs = new Observations(spec, model, obsNum);
+		File results = new File(simFolder, Consts.OBS_FILE_PREFIX + obsNum
+				+ ".json");
+		Observations obs = new Observations(spec, model.getMarkets(),
+				model.getAgents(), model.getPlayers(), model.getTransactions(),
+				model.fundamental, model.getSIP(), model.getName() + "_"
+						+ model.getID(), obsNum);
 		obs.writeToFile(results);
 	}
 

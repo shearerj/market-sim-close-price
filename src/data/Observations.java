@@ -14,8 +14,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import model.MarketModel;
-
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import systemmanager.Consts;
@@ -102,15 +100,17 @@ public class Observations {
 
 	JsonObject observations;
 
-	public Observations(SimulationSpec spec, MarketModel model,
-			int observationNum) {
-		Collection<Market> markets = model.getMarkets();
-		Collection<Agent> agents = model.getAgents();
-		Collection<Player> players = model.getPlayers();
-		Collection<Transaction> transactions = model.getTransactions();
-		FundamentalValue fundamental = model.fundamental;
-		SIP sip = model.getSIP();
-		String modelName = model.getName().toLowerCase() + "_" + model.getID();
+	public Observations(SimulationSpec spec, Collection<Market> markets,
+			Collection<Agent> agents, Collection<Player> players,
+			Collection<Transaction> transactions, FundamentalValue fundamental,
+			SIP sip, String modelName, int observationNum) {
+		// Collection<Market> markets = model.getMarkets();
+//		Collection<Agent> agents = model.getAgents();
+//		Collection<Player> players = model.getPlayers();
+//		Collection<Transaction> transactions = model.getTransactions();
+//		FundamentalValue fundamental = model.fundamental;
+//		SIP sip = model.getSIP();
+//		String modelName = model.getName().toLowerCase() + "_" + model.getID();
 		
 		observations = new JsonObject();
 
