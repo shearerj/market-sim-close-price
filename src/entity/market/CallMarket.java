@@ -3,7 +3,10 @@ package entity.market;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import systemmanager.Keys;
+
 import clearingrule.UniformPriceClear;
+import data.EntityProperties;
 
 import model.MarketModel;
 import activity.Activity;
@@ -27,16 +30,23 @@ public class CallMarket extends Market {
 	protected final TimeStamp clearFreq;
 	protected TimeStamp nextClearTime;
 
-	public CallMarket(int marketID, MarketModel model, double pricingPolicy,
+	public CallMarket(MarketModel model, double pricingPolicy,
 			TimeStamp clearFreq, TimeStamp latency, int tickSize) {
-		super(marketID, model, new UniformPriceClear(pricingPolicy, tickSize), latency);
+		super(model, new UniformPriceClear(pricingPolicy, tickSize), latency);
 
 		if (!clearFreq.after(TimeStamp.ZERO))
 			throw new IllegalArgumentException(
 					"Can't create a call market with 0 clear frequency. Create a CDA instead.");
 		
 		this.clearFreq = clearFreq;
-		this.nextClearTime = clearFreq;
+		this.nextClearTime = TimeStamp.ZERO;
+	}
+	
+	public CallMarket(MarketModel model, EntityProperties props) {
+		this(model, props.getAsDouble(Keys.PRICING_POLICY, 0.5), new TimeStamp(
+				props.getAsInt(Keys.CLEAR_FREQ, 100)), new TimeStamp(
+				props.getAsInt(Keys.MARKET_LATENCY, -1)), props.getAsInt(
+				Keys.TICK_SIZE, 1));
 	}
 
 	@Override

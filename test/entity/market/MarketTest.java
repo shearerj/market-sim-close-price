@@ -31,7 +31,7 @@ public class MarketTest {
 	@Before
 	public void setup() {
 		model = new MockMarketModel(1);
-		market = new MockMarket(1, model);
+		market = new MockMarket(model);
 		model.addMarket(market);
 		agentIndex = 1;
 	}

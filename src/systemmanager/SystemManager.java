@@ -23,7 +23,6 @@ import model.MarketModel;
 import utils.RandPlus;
 import data.EntityProperties;
 import data.FundamentalValue;
-import data.Keys;
 import data.Observations;
 import entity.market.Market;
 import event.TimeStamp;
@@ -92,7 +91,7 @@ public class SystemManager {
 
 		spec = new SimulationSpec(new File(simFolder, Consts.SIM_SPEC_FILE));
 		// XXX Move props to simspec?
-		EntityProperties simProps = spec.getSimulationProperties();
+		EntityProperties simProps = spec.getSimulationConfig();
 		long seed = simProps.getAsLong(Keys.RAND_SEED,
 				System.currentTimeMillis());
 		RandPlus rand = new RandPlus(seed);
@@ -101,7 +100,7 @@ public class SystemManager {
 		eventManager = new EventManager(new RandPlus(rand.nextLong()));
 		
 		initializeLogger(getProperties(), simFolder, simNumber, eventManager,
-				spec.getSimulationProperties().getAsInt(Keys.SIMULATION_LENGTH,
+				spec.getSimulationConfig().getAsInt(Keys.SIMULATION_LENGTH,
 						10000));
 		log(INFO, "Random Seed: " + seed);
 		log(INFO, "Configuration: " + spec);
@@ -116,8 +115,8 @@ public class SystemManager {
 		log(INFO, "------------------------------------------------");
 		log(INFO, "            Creating MARKET MODELS");
 		
-		// FIXME 
-		model = new MarketModel(1, fundamental, spec.getBackgroundAgents(),
+		// FIXME not proper call
+		model = new MarketModel(1, fundamental, spec.getAgentConfigs(),
 				null, spec.getPlayerConfig(), rand);
 
 		log(INFO, null + ": " + model);

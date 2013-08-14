@@ -32,7 +32,7 @@ public class AgentStrategy extends Activity {
 
 	@Override
 	public String toString() {
-		return getName() + " :: " + agent;
+		return super.toString() + agent;
 	}
 
 }

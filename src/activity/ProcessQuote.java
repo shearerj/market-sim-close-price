@@ -33,6 +33,7 @@ public class ProcessQuote extends Activity {
 		this.newTransactions = newTransactions;
 	}
 
+	@Override
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
 		return this.ip.processQuote(market, quote, newTransactions, currentTime);
 	}
@@ -45,7 +46,7 @@ public class ProcessQuote extends Activity {
 	
 	@Override
 	public String toString() {
-		return getName() + " :: " + market + " -> " + ip + " : " + quote;
+		return super.toString() + market + " -> " + ip + " : " + quote;
 	}
 	
 }

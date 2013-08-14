@@ -25,6 +25,7 @@ public class Liquidate extends Activity {
 		this.price = price;
 	}
 
+	@Override
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
 		return this.agent.liquidate(this.price, currentTime);
 	}
@@ -37,7 +38,7 @@ public class Liquidate extends Activity {
 	
 	@Override
 	public String toString() {
-		return getName() + " :: " + agent + " @" + price;
+		return super.toString() + agent + " @" + price;
 	}
 	
 }

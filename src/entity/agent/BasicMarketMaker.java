@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import model.MarketModel;
+import systemmanager.Keys;
 import utils.MathUtils;
 import utils.RandPlus;
 import activity.Activity;
@@ -16,7 +17,6 @@ import activity.AgentStrategy;
 import activity.SubmitOrder;
 import activity.WithdrawOrder;
 import data.EntityProperties;
-import data.Keys;
 import entity.infoproc.BestBidAsk;
 import entity.market.Market;
 import entity.market.Order;

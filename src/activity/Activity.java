@@ -37,10 +37,6 @@ public abstract class Activity {
 		return scheduledTime;
 	}
 
-	public final String getName() {
-		return getClass().getSimpleName();
-	}
-
 	@Override
 	public int hashCode() {
 		return scheduledTime.hashCode();
@@ -48,7 +44,7 @@ public abstract class Activity {
 
 	@Override
 	public String toString() {
-		return getName() + " :: " + scheduledTime;
+		return getClass().getSimpleName() + " :: ";
 	}
 	
 }

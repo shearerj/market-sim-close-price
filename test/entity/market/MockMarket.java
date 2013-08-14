@@ -19,12 +19,8 @@ public class MockMarket extends Market {
 
 	private static final long serialVersionUID = 1L;
 
-	public MockMarket(int marketID, MarketModel model) {
-		super(marketID, model, new UniformPriceClear(0.5d, 1), TimeStamp.IMMEDIATE);
-	}
-
 	public MockMarket(MarketModel model) {
-		this(0, model);
+		super(model, new UniformPriceClear(0.5d, 1), TimeStamp.IMMEDIATE);
 	}
 
 	@Override

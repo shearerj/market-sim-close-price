@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import systemmanager.EventManager;
+import systemmanager.Keys;
 import utils.RandPlus;
 import activity.AgentArrival;
 import activity.Clear;
@@ -20,10 +21,9 @@ import com.google.gson.JsonObject;
 import data.AgentProperties;
 import data.EntityProperties;
 import data.FundamentalValue;
-import data.Keys;
 import data.Player;
 import entity.agent.Agent;
-import entity.agent.SMAgentFactory;
+import entity.agent.AgentFactory;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Order;
@@ -81,13 +81,12 @@ public class MarketModel implements Serializable {
 	protected final Generator<Integer> ipIDgen;
 
 	public MarketModel(int modelID, FundamentalValue fundamental,
-			Map<AgentProperties, Integer> agentProps,
+			Collection<AgentProperties> agentProps,
 			EntityProperties modelProps, JsonObject playerConfig, RandPlus rand) {
 
 		this.modelID = modelID;
 		this.rand = rand;
 		this.fundamental = fundamental;
-		// XXX Perhaps HashSets instead of ArrayLists?
 		this.markets = new ArrayList<Market>();
 		this.agents = new ArrayList<Agent>();
 		this.players = new ArrayList<Player>();
@@ -107,17 +106,17 @@ public class MarketModel implements Serializable {
 	}
 
 	protected void setupAgents(EntityProperties modelProps,
-			Map<AgentProperties, Integer> agentProps) {
-		for (Entry<AgentProperties, Integer> type : agentProps.entrySet()) {
-			AgentProperties agProps = type.getKey();
-			int number = type.getValue();
-
-			// In general the arrival process and market generation can be
+			Collection<AgentProperties> agentProps) {
+		for (AgentProperties agProps : agentProps) {
+			int number = agProps.getAsInt(Keys.NUM, 0);
+			double arrivalRate = agProps.getAsDouble(Keys.ARRIVAL_RATE, 0.075);
+			
+			
+			// XXX In general the arrival process and market generation can be
 			// generic or even specified, but for now we'll stick with the
 			// original implementation
-			SMAgentFactory factory = new SMAgentFactory(this, agentIDgen,
-					agProps.getAsDouble(Keys.ARRIVAL_RATE, 0.075),
-					new RandPlus(rand.nextLong()));
+			AgentFactory factory = new AgentFactory(this, agentIDgen,
+					arrivalRate, new RandPlus(rand.nextLong()));
 
 			for (int i = 0; i < number; i++)
 				agents.add(factory.createAgent(agProps));
@@ -149,12 +148,13 @@ public class MarketModel implements Serializable {
 			String role = roleEnt.getKey();
 			for (Entry<String, Integer> stratEnt : roleEnt.getValue().entrySet()) {
 				String strat = stratEnt.getKey();
-				int count = stratEnt.getValue();
+				int number = stratEnt.getValue();
+				double arrivalRate = modelProps.getAsDouble(Keys.ARRIVAL_RATE, 0.075);
 
-				SMAgentFactory factory = new SMAgentFactory(this, agentIDgen,
-						modelProps.getAsDouble(Keys.ARRIVAL_RATE, 0.075), new RandPlus(rand.nextLong()));
+				AgentFactory factory = new AgentFactory(this, agentIDgen,
+						arrivalRate, new RandPlus(rand.nextLong()));
 
-				for (int i = 0; i < count; i++) {
+				for (int i = 0; i < number; i++) {
 					Agent agent = factory.createAgent(new AgentProperties(strat));
 					agents.add(agent);
 					Player player = new Player(role, strat, agent);
@@ -169,11 +169,8 @@ public class MarketModel implements Serializable {
 	}
 
 	public void scheduleActivities(EventManager manager) {
-		// XXX There is probably a better way to initialize the first market clear. This has a
-		// problem if an agent strategy happens before the clear but at time 0. That shouldn't be
-		// allowed.
 		for (Market market : markets)
-			manager.addActivity(new Clear(market, TimeStamp.ZERO));
+			manager.addActivity(new Clear(market, TimeStamp.IMMEDIATE));
 		for (Agent agent : agents)
 			manager.addActivity(new AgentArrival(agent, agent.getArrivalTime()));
 	}
@@ -183,9 +180,6 @@ public class MarketModel implements Serializable {
 	}
 
 	public Price getFundamentalAt(TimeStamp ts) {
-		if (fundamental == null)
-		// return new Price(0);
-			throw new IllegalStateException("No Fundamental Value...");
 		return fundamental.getValueAt(ts);
 	}
 

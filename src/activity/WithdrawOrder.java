@@ -29,6 +29,7 @@ public class WithdrawOrder extends Activity {
 		this.quantity = quantity;
 	}
 
+	@Override
 	public Collection<? extends Activity> execute(TimeStamp time) {
 		return order.getMarket().withdrawOrder(order, quantity, time);
 	}
@@ -40,7 +41,7 @@ public class WithdrawOrder extends Activity {
 	
 	@Override
 	public String toString() {
-		return new String(getName() + " :: " + order);
+		return super.toString() + order;
 	}
 	
 }

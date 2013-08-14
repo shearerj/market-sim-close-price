@@ -31,6 +31,7 @@ public class SubmitOrder extends Activity {
 		this.quantity = quantity;
 	}
 
+	@Override
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
 		return market.submitOrder(agent, price, quantity, currentTime);
 	}
@@ -43,7 +44,7 @@ public class SubmitOrder extends Activity {
 	
 	@Override
 	public String toString() {
-		return getName() + " :: " + agent + "+(" + price + ", " + quantity
+		return super.toString() + agent + "+(" + price + ", " + quantity
 				+ ") -> " + market;
 	}
 	

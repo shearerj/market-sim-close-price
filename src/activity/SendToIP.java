@@ -32,6 +32,7 @@ public class SendToIP extends Activity {
 		this.transactions = transactions;
 	}
 
+	@Override
 	public Collection<? extends Activity> execute(TimeStamp time) {
 		return ip.sendToIP(market, quote, transactions, time);
 	}
@@ -44,6 +45,6 @@ public class SendToIP extends Activity {
 	
 	@Override
 	public String toString() {
-		return getName() + " :: " + market + " -> " + ip;
+		return super.toString() + market + " -> " + ip;
 	}
 }

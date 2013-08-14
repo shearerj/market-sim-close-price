@@ -20,10 +20,7 @@ public class Clear extends Activity {
 		this.market = market;
 	}
 
-	public Clear deepCopy() {
-		return new Clear(this.market, this.scheduledTime);
-	}
-
+	@Override
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
 		return this.market.clear(currentTime);
 	}
@@ -36,7 +33,7 @@ public class Clear extends Activity {
 
 	@Override
 	public String toString() {
-		return getName() + " :: " + market;
+		return super.toString() + market;
 	}
 	
 }

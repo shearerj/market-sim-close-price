@@ -1,6 +1,6 @@
 package model;
 
-import java.util.HashMap;
+import java.util.Collections;
 
 import utils.RandPlus;
 
@@ -19,7 +19,7 @@ public class MockMarketModel extends MarketModel {
 
 	public MockMarketModel(int modelID, FundamentalValue fundamental) {
 		super(modelID, fundamental, 
-				new HashMap<AgentProperties,Integer>(),
+				Collections.<AgentProperties>emptySet(),
 				new EntityProperties(), new JsonObject(), 
 				new RandPlus());
 	}
@@ -31,9 +31,6 @@ public class MockMarketModel extends MarketModel {
 	public MockMarketModel() {
 		this(0);
 	}
-	
-	@Override
-	protected void setupMarkets(EntityProperties modelProps) { }
 	
 	public void addMarket(Market market) {
 		markets.add(market);

@@ -40,6 +40,7 @@ public class SubmitNMSOrder extends Activity {
 				TimeStamp.IMMEDIATE);
 	}
 
+	@Override
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
 		return primaryMarket.submitNMSOrder(agent, price, quantity, currentTime);
 	}
@@ -52,7 +53,7 @@ public class SubmitNMSOrder extends Activity {
 	
 	@Override
 	public String toString() {
-		return getName() + " :: " + agent + "+(" + price + ", " + quantity
+		return super.toString() + agent + "(" + price + ", " + quantity
 				+ ") -> " + primaryMarket;
 	}
 	

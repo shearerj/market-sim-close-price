@@ -19,6 +19,7 @@ import model.MarketModel;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import systemmanager.Consts;
+import systemmanager.Keys;
 import systemmanager.SimulationSpec;
 
 import com.google.gson.Gson;
@@ -107,7 +108,7 @@ public class Observations {
 		MarketModel firstModel = models.iterator().next();
 		observations.add(PLAYERS, playerObservations(firstModel));
 
-		double arrivalRate = spec.getDefaultAgentProperties().getAsDouble(Keys.ARRIVAL_RATE, 0.075);
+		double arrivalRate = spec.getDefaultAgentConfig().getAsDouble(Keys.ARRIVAL_RATE, 0.075);
 		long maxTime = Math.round(firstModel.getAgents().size() / arrivalRate);
 		maxTime = Math.max(Consts.upToTime, quantize((int) maxTime, 1000));
 
@@ -164,13 +165,13 @@ public class Observations {
 
 		config.addProperty(OBS_KEY, observationNum);
 		config.addProperty(TIMESERIES_MAXTIME, maxTime);
-		copyPropertiesToJson(config, spec.getSimulationProperties());
-		copyPropertiesToJson(config, spec.getDefaultModelProperties());
-		copyPropertiesToJson(config, spec.getDefaultAgentProperties());
+		copyPropertiesToJson(config, spec.getSimulationConfig());
+		copyPropertiesToJson(config, spec.getDefaultMarketConfig());
+		copyPropertiesToJson(config, spec.getDefaultAgentConfig());
 
-		for (Entry<AgentProperties, Integer> agentProps : spec.getBackgroundAgents().entrySet()) {
-			AgentProperties props = agentProps.getKey();
-			int number = agentProps.getValue();
+		for (AgentProperties props : spec.getAgentConfigs()) {
+			// TODO Change to not split off number...
+			int number = props.getAsInt(Keys.NUM, 0);
 
 			config.addProperty(props.getAgentType() + "_" + NUM, number);
 			config.addProperty(props.getAgentType() + "_" + AGENTSETUP,

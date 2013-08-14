@@ -11,7 +11,7 @@ import data.AgentProperties;
 import entity.market.Market;
 import event.TimeStamp;
 
-public class SMAgentFactory {
+public class AgentFactory {
 
 	protected final RandPlus rand;
 	protected final MarketModel model;
@@ -19,7 +19,7 @@ public class SMAgentFactory {
 	protected final Generator<TimeStamp> arrivalProcess;
 	protected final Generator<Market> marketAssignment;
 
-	public SMAgentFactory(MarketModel model, Generator<Integer> ids,
+	public AgentFactory(MarketModel model, Generator<Integer> ids,
 			Generator<TimeStamp> arrivalProcess,
 			Generator<Market> marketProcess, RandPlus rand) {
 		this.rand = rand;
@@ -32,14 +32,17 @@ public class SMAgentFactory {
 	/**
 	 * SMAgent factory with Poisson arrivals and round robin market selection.
 	 */
-	public SMAgentFactory(MarketModel model, Generator<Integer> ids,
+	public AgentFactory(MarketModel model, Generator<Integer> ids,
 			double arrivalRate, RandPlus rand) {
 		this(model, ids, new PoissonArrivalGenerator(TimeStamp.IMMEDIATE,
 				arrivalRate, new RandPlus(rand.nextLong())),
 				new RoundRobinGenerator<Market>(model.getMarkets()), rand);
 	}
 
-	public SMAgent createAgent(AgentProperties props) {
+	// XXX Not all agents advance all of the parameters like the market or the arrival process. One
+	// just has to be sure that this happens appropriately if one factory is creating several
+	// different classes of agents.
+	public Agent createAgent(AgentProperties props) {
 		switch (props.getAgentType()) {
 		case AA:
 			return new AAAgent(nextID.next(), arrivalProcess.next(), model,
@@ -58,10 +61,12 @@ public class SMAgentFactory {
 					marketAssignment.next(), new RandPlus(rand.nextLong()),
 					props);
 		case BASICMM:
-			// XXX Should this advance the arrival process, even though it's not used?
 			return new BasicMarketMaker(nextID.next(), model,
 					marketAssignment.next(), new RandPlus(rand.nextLong()),
 					props);
+		case LA:
+			return new LAAgent(nextID.next(), model, new RandPlus(
+					rand.nextLong()), props);
 		default:
 			throw new IllegalArgumentException("Can't create AgentType: "
 					+ props.getAgentType());

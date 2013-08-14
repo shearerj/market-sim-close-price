@@ -26,7 +26,7 @@ public class MarketProperties extends EntityProperties {
 		this.type = type;
 	}
 	
-	public MarketType getModelType() {
+	public MarketType getMarketType() {
 		return type;
 	}
 

@@ -31,8 +31,9 @@ public class AgentArrival extends Activity {
 				super.hashCode()).toHashCode();
 	}
 
+	@Override
 	public String toString() {
-		return getName() + " :: " + agent;
+		return super.toString() + agent;
 	}
 
 }

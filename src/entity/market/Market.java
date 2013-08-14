@@ -38,6 +38,7 @@ import fourheap.FourHeap;
 public abstract class Market extends Entity {
 
 	private static final long serialVersionUID = 8806298743451593261L;
+	private static int nextID = 1;
 	
 	protected final MarketModel model;
 	protected final FourHeap<Price, TimeStamp> orderbook;
@@ -60,8 +61,8 @@ public abstract class Market extends Entity {
 	protected final TimeSeries depths, spreads, midQuotes;
 
 
-	public Market(int marketID, MarketModel model, ClearingRule clearingRule, TimeStamp latency) {
-		super(marketID);
+	public Market(MarketModel model, ClearingRule clearingRule, TimeStamp latency) {
+		super(++nextID);
 		this.model = model;
 		this.orderbook = new FourHeap<Price, TimeStamp>();
 		this.clearingRule = clearingRule;
@@ -316,4 +317,5 @@ public abstract class Market extends Entity {
 	public String toString() {
 		return new String("[" + id + "]");
 	}
+	
 }

@@ -1,12 +1,10 @@
 package systemmanager;
 
 /**
- * System-wide constants and accessor methods. Sets default properties for each
- * type of entity.
- * 
+ * System-wide constants 
  * @author ewah
  */
-public class Consts {
+public interface Consts {
 	
 	// 0 indicates no surplus discounting
 	public final static double[] rhos = {0, 0.0006};
@@ -20,7 +18,6 @@ public class Consts {
 	// Agent, market, and model types
 	// UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL
 	public static enum AgentType { AA, ZI, ZIP, ZIR, BASICMM, LA };
-	public static enum ModelType { TWOMARKET, CENTRALCDA, CENTRALCALL };
 	public static enum MarketType { CDA, CALL };
 	
 	// **********************************************************
