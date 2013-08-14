@@ -1,4 +1,4 @@
-package clearingrule;
+package entity.market.clearingrule;
 
 import static utils.Compare.min;
 import static utils.Compare.max;

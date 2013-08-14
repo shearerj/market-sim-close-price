@@ -13,6 +13,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import entity.agent.MockAgent;
+import entity.infoproc.SIP;
 import entity.market.CDAMarket;
 import entity.market.Market;
 import entity.market.Price;
@@ -22,6 +23,7 @@ import event.TimeStamp;
 public class CDAMarketTest {
 
 	private MockMarketModel model;
+	private SIP sip;
 	private Market market;
 
 	@BeforeClass
@@ -32,7 +34,8 @@ public class CDAMarketTest {
 	@Before
 	public void setup() {
 		model = new MockMarketModel();
-		market = new CDAMarket(model, TimeStamp.IMMEDIATE);
+		sip = new SIP(TimeStamp.IMMEDIATE);
+		market = new CDAMarket(sip, TimeStamp.IMMEDIATE);
 		model.addMarket(market);
 	}
 

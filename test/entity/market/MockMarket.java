@@ -4,23 +4,22 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-import clearingrule.UniformPriceClear;
-
-import model.MarketModel;
 import activity.Activity;
 import entity.agent.Agent;
+import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Order;
 import entity.market.Price;
 import entity.market.Transaction;
+import entity.market.clearingrule.UniformPriceClear;
 import event.TimeStamp;
 
 public class MockMarket extends Market {
 
 	private static final long serialVersionUID = 1L;
 
-	public MockMarket(MarketModel model) {
-		super(model, new UniformPriceClear(0.5d, 1), TimeStamp.IMMEDIATE);
+	public MockMarket(SIP sip) {
+		super(sip, new UniformPriceClear(0.5, 1), TimeStamp.IMMEDIATE);
 	}
 
 	@Override

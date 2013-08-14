@@ -5,12 +5,12 @@ import java.util.Collection;
 
 import systemmanager.Keys;
 
-import clearingrule.UniformPriceClear;
 import data.EntityProperties;
 
-import model.MarketModel;
 import activity.Activity;
 import activity.Clear;
+import entity.infoproc.SIP;
+import entity.market.clearingrule.UniformPriceClear;
 import event.TimeStamp;
 
 /**
@@ -30,9 +30,9 @@ public class CallMarket extends Market {
 	protected final TimeStamp clearFreq;
 	protected TimeStamp nextClearTime;
 
-	public CallMarket(MarketModel model, double pricingPolicy,
+	public CallMarket(SIP sip, double pricingPolicy,
 			TimeStamp clearFreq, TimeStamp latency, int tickSize) {
-		super(model, new UniformPriceClear(pricingPolicy, tickSize), latency);
+		super(sip, new UniformPriceClear(pricingPolicy, tickSize), latency);
 
 		if (!clearFreq.after(TimeStamp.ZERO))
 			throw new IllegalArgumentException(
@@ -42,8 +42,8 @@ public class CallMarket extends Market {
 		this.nextClearTime = TimeStamp.ZERO;
 	}
 	
-	public CallMarket(MarketModel model, EntityProperties props) {
-		this(model, props.getAsDouble(Keys.PRICING_POLICY, 0.5), new TimeStamp(
+	public CallMarket(SIP sip, EntityProperties props) {
+		this(sip, props.getAsDouble(Keys.PRICING_POLICY, 0.5), new TimeStamp(
 				props.getAsInt(Keys.CLEAR_FREQ, 100)), new TimeStamp(
 				props.getAsInt(Keys.MARKET_LATENCY, -1)), props.getAsInt(
 				Keys.TICK_SIZE, 1));

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -100,7 +101,7 @@ public class MarketModel implements Serializable {
 	}
 
 	protected void setupMarkets(Collection<MarketProperties> marketProps) {
-		MarketFactory factory = new MarketFactory(this);
+		MarketFactory factory = new MarketFactory(sip);
 		for (MarketProperties mktProps : marketProps)
 			for (int i = 0; i < mktProps.getAsInt(Keys.NUM, 1); i++)
 				markets.add(factory.createMarket(mktProps));
@@ -191,11 +192,10 @@ public class MarketModel implements Serializable {
 	}
 
 	public Collection<Transaction> getTrans() {
+		Collection<Transaction> trans = new HashSet<Transaction>();
+		for (Market market : markets)
+			trans.addAll(market.getTransactions());
 		return trans;
-	}
-
-	public void addTrans(Transaction tr) {
-		trans.add(tr);
 	}
 
 	public Collection<Order> getAllOrders() {

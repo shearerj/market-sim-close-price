@@ -6,13 +6,13 @@ import java.util.Collections;
 
 import systemmanager.Keys;
 
-import clearingrule.EarliestPriceClear;
 import data.EntityProperties;
 
-import model.MarketModel;
 import activity.Activity;
 import activity.Clear;
 import entity.agent.Agent;
+import entity.infoproc.SIP;
+import entity.market.clearingrule.EarliestPriceClear;
 import event.TimeStamp;
 
 /**
@@ -24,12 +24,12 @@ public class CDAMarket extends Market {
 
 	private static final long serialVersionUID = -6780130359417129449L;
 
-	public CDAMarket(MarketModel model, TimeStamp latency) {
-		super(model, new EarliestPriceClear(), latency);
+	public CDAMarket(SIP sip, TimeStamp latency) {
+		super(sip, new EarliestPriceClear(), latency);
 	}
 	
-	public CDAMarket(MarketModel model, EntityProperties props) {
-		this(model, new TimeStamp(props.getAsInt(Keys.MARKET_LATENCY, -1)));
+	public CDAMarket(SIP sip, EntityProperties props) {
+		this(sip, new TimeStamp(props.getAsInt(Keys.MARKET_LATENCY, -1)));
 	}
 
 	@Override

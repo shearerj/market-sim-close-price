@@ -14,6 +14,7 @@ import org.junit.Test;
 
 import entity.agent.Agent;
 import entity.agent.MockAgent;
+import entity.infoproc.SIP;
 import event.TimeStamp;
 
 public class MarketTest {
@@ -21,6 +22,7 @@ public class MarketTest {
 	// TODO Better testing of correct quote quantity
 	private MockMarketModel model;
 	private MockMarket market;
+	private SIP sip;
 
 	@BeforeClass
 	public static void setupClass() {
@@ -30,7 +32,8 @@ public class MarketTest {
 	@Before
 	public void setup() {
 		model = new MockMarketModel();
-		market = new MockMarket(model);
+		sip = new SIP(TimeStamp.IMMEDIATE);
+		market = new MockMarket(sip);
 		model.addMarket(market);
 	}
 

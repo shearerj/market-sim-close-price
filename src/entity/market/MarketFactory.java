@@ -1,22 +1,22 @@
 package entity.market;
 
-import model.MarketModel;
 import data.MarketProperties;
+import entity.infoproc.SIP;
 
 public class MarketFactory {
 
-	protected final MarketModel model;
+	protected final SIP sip;
 
-	public MarketFactory(MarketModel model) {
-		this.model = model;
+	public MarketFactory(SIP sip) {
+		this.sip = sip;
 	}
 
 	public Market createMarket(MarketProperties props) {
 		switch (props.getMarketType()) {
 		case CDA:
-			return new CDAMarket(model, props);
+			return new CDAMarket(sip, props);
 		case CALL:
-			return new CallMarket(model, props);
+			return new CallMarket(sip, props);
 		default:
 			throw new IllegalArgumentException("Can't create MarketType: "
 					+ props.getMarketType());

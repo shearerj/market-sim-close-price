@@ -2,8 +2,6 @@ package entity.market;
 
 import java.io.Serializable;
 
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
 import entity.agent.Agent;
 import event.TimeStamp;
 
@@ -70,13 +68,6 @@ public class Transaction implements Serializable {
 
 	public final TimeStamp getExecTime() {
 		return execTime;
-	}
-
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder(17, 31).append(price).append(quantity).append(
-				buyer).append(seller).append(buyOrder).append(sellOrder).append(
-				market).append(execTime).toHashCode();
 	}
 
 	@Override

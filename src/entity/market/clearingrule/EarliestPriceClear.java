@@ -1,4 +1,4 @@
-package clearingrule;
+package entity.market.clearingrule;
 
 import java.util.ArrayList;
 import java.util.List;

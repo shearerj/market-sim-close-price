@@ -14,9 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Iterator;
 
-import clearingrule.ClearingRule;
-
-import model.MarketModel;
 import activity.Activity;
 import activity.SendToIP;
 import activity.WithdrawOrder;
@@ -27,6 +24,7 @@ import entity.infoproc.BestBidAsk;
 import entity.infoproc.IP;
 import entity.infoproc.SIP;
 import entity.infoproc.SMIP;
+import entity.market.clearingrule.ClearingRule;
 import event.TimeStamp;
 import fourheap.FourHeap;
 
@@ -40,7 +38,6 @@ public abstract class Market extends Entity {
 	private static final long serialVersionUID = 8806298743451593261L;
 	private static int nextID = 1;
 	
-	protected final MarketModel model;
 	protected final FourHeap<Price, TimeStamp> orderbook;
 	protected final ClearingRule clearingRule;
 
@@ -54,6 +51,7 @@ public abstract class Market extends Entity {
 	protected final Map<fourheap.Order<Price, TimeStamp>, Order> orderMapping;
 	protected final Map<Price, Integer> askPriceQuantity, bidPriceQuantity;
 	protected final Collection<Order> orders; // All orders ever submitted to the market
+	protected final Collection<Transaction> transactions; // All successful transactions
 	
 	// depths: Number of orders in the orderBook
 	// spreads: Bid-ask spread value
@@ -61,15 +59,14 @@ public abstract class Market extends Entity {
 	protected final TimeSeries depths, spreads, midQuotes;
 
 
-	public Market(MarketModel model, ClearingRule clearingRule, TimeStamp latency) {
+	public Market(SIP sip, ClearingRule clearingRule, TimeStamp latency) {
 		super(nextID++);
-		this.model = model;
 		this.orderbook = new FourHeap<Price, TimeStamp>();
 		this.clearingRule = clearingRule;
 		this.quote = new Quote(this, null, 0, null, 0, TimeStamp.ZERO);
 
 		this.ips = new ArrayList<IP>();
-		this.sip = model.getSIP();
+		this.sip = sip;
 		this.ip = new SMIP(latency, this);
 		ips.add(sip);
 		ips.add(ip);
@@ -78,6 +75,7 @@ public abstract class Market extends Entity {
 		this.askPriceQuantity = new HashMap<Price, Integer>();
 		this.bidPriceQuantity = new HashMap<Price, Integer>();
 		this.orders = new ArrayList<Order>();
+		this.transactions = new ArrayList<Transaction>();
 
 		this.depths = new TimeSeries();
 		this.spreads = new TimeSeries();
@@ -153,7 +151,7 @@ public abstract class Market extends Entity {
 			checkOrder(buy);
 			checkOrder(sell);
 			transactions.add(trans);
-			model.addTrans(trans);
+			transactions.add(trans);
 			// TODO add delay to this
 			buy.getAgent().addTransaction(trans);
 			if (!buy.getAgent().equals(sell.getAgent())) // In case buyer == seller
@@ -291,6 +289,10 @@ public abstract class Market extends Entity {
 		return bestMarket.submitOrder(agent, price, quantity, currentTime,
 				duration);
 	}
+	
+	public Collection<Transaction> getTransactions() {
+		return Collections.unmodifiableCollection(transactions);
+	}
 
 	public TimeSeries getDepth() {
 		return this.depths;
@@ -302,15 +304,6 @@ public abstract class Market extends Entity {
 
 	public TimeSeries getMidQuotes() {
 		return this.midQuotes;
-	}
-
-	public MarketModel getModel() {
-		return this.model;
-	}
-
-	@Override
-	public int hashCode() {
-		return super.hashCode() ^ model.hashCode();
 	}
 
 	@Override

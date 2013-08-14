@@ -22,6 +22,7 @@ import activity.ProcessQuote;
 import activity.SendToIP;
 import activity.SubmitNMSOrder;
 import data.EntityProperties;
+import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.MockMarket;
 import entity.market.Order;
@@ -35,6 +36,7 @@ public class AAAgentTest {
 
 	private MockMarketModel model;
 	private Market market;
+	private SIP sip;
 
 	@BeforeClass
 	public static void setupClass() {
@@ -62,9 +64,9 @@ public class AAAgentTest {
 	public void setupTest() {
 		// Creating the MockMarketModel
 		model = new MockMarketModel();
-
+		sip = new SIP(TimeStamp.IMMEDIATE);
 		// Creating the MockMarket
-		market = new MockMarket(model);
+		market = new MockMarket(sip);
 
 		model.addMarket(market);
 	}
