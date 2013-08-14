@@ -5,9 +5,11 @@ import static logger.Logger.Level.INFO;
 
 import java.util.Collection;
 
-import model.MarketModel;
+import data.FundamentalValue;
+
 import utils.RandPlus;
 import activity.Activity;
+import entity.infoproc.SIP;
 import entity.market.Market;
 import event.TimeStamp;
 
@@ -27,17 +29,21 @@ import event.TimeStamp;
 public abstract class MMAgent extends Agent {
 
 	private static final long serialVersionUID = 2297636044775909734L;
-
-	// XXX Should the MMAgent have its own copy of Markets, or should it just go to Model?
-	public MMAgent(TimeStamp arrivalTime, MarketModel model,
-			PrivateValue pv, RandPlus rand, int tickSize) {
-		super(arrivalTime, model, pv, rand, tickSize);
+	
+	protected final Collection<Market> markets; 
+	
+	// TODO Just keep the SMIPs and not the actual markets...
+	public MMAgent(TimeStamp arrivalTime, Collection<Market> markets,
+			FundamentalValue fundamental, SIP sip, PrivateValue pv,
+			RandPlus rand, int tickSize) {
+		super(arrivalTime, fundamental, sip, pv, rand, tickSize);
+		this.markets = markets;
 	}
 
 	@Override
 	public Collection<? extends Activity> agentArrival(TimeStamp currentTime) {
 		StringBuilder sb = new StringBuilder();
-		for (Market market : model.getMarkets())
+		for (Market market : markets)
 			sb.append(market).append(",");
 		log(INFO, this + "->" + sb.substring(0, sb.length() - 1));
 

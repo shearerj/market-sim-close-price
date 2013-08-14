@@ -1,8 +1,9 @@
 package entity.agent;
 
+import data.FundamentalValue;
+import entity.infoproc.SIP;
 import entity.market.Market;
 import event.TimeStamp;
-import model.MarketModel;
 import utils.RandPlus;
 
 /**
@@ -16,9 +17,9 @@ public abstract class MarketMaker extends SMAgent {
 
 	private static final long serialVersionUID = -782740037969385370L;
 
-	public MarketMaker(MarketModel model, Market market,
+	public MarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			RandPlus rand, int tickSize) {
-		super(TimeStamp.ZERO, model, market, new PrivateValue(),
+		super(TimeStamp.ZERO, fundamental, sip, market, new PrivateValue(),
 				rand, tickSize);
 	}
 

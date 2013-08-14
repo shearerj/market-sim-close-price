@@ -6,11 +6,13 @@ import java.io.File;
 import java.util.Collection;
 
 import logger.Logger;
-import model.MockMarketModel;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import data.DummyFundamental;
+import data.FundamentalValue;
 
 import entity.agent.Agent;
 import entity.agent.MockAgent;
@@ -20,7 +22,7 @@ import event.TimeStamp;
 public class MarketTest {
 
 	// TODO Better testing of correct quote quantity
-	private MockMarketModel model;
+	private FundamentalValue fundamental = new DummyFundamental(100000);
 	private MockMarket market;
 	private SIP sip;
 
@@ -31,16 +33,14 @@ public class MarketTest {
 
 	@Before
 	public void setup() {
-		model = new MockMarketModel();
 		sip = new SIP(TimeStamp.IMMEDIATE);
 		market = new MockMarket(sip);
-		model.addMarket(market);
 	}
 
 	@Test
 	public void AddBid() {
 		TimeStamp time = new TimeStamp(0);
-		Agent agent = new MockAgent(model, market);
+		Agent agent = new MockAgent(fundamental, sip, market);
 		market.submitOrder(agent, new Price(1), 1, time);
 
 		Collection<Order> orders = market.orderMapping.values();
@@ -61,7 +61,7 @@ public class MarketTest {
 	@Test
 	public void AddAsk() {
 		TimeStamp time = new TimeStamp(0);
-		Agent agent = new MockAgent(model, market);
+		Agent agent = new MockAgent(fundamental, sip, market);
 		market.submitOrder(agent, new Price(1), -1, time);
 
 		Collection<Order> orders = market.orderMapping.values();
@@ -84,8 +84,8 @@ public class MarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(model, market);
-		MockAgent agent2 = new MockAgent(model, market);
+		MockAgent agent1 = new MockAgent(fundamental, sip, market);
+		MockAgent agent2 = new MockAgent(fundamental, sip, market);
 		
 
 		// Creating and adding bids
@@ -94,8 +94,8 @@ public class MarketTest {
 
 		// Testing the market for the correct transaction
 		market.clear(time);
-		assertTrue(model.getTrans().size() == 1);
-		for (Transaction tr : model.getTrans()) {
+		assertTrue(market.getTransactions().size() == 1);
+		for (Transaction tr : market.getTransactions()) {
 			assertEquals("Incorrect Buyer", agent1, tr.getBuyer());
 			assertEquals("Incorrect Seller", agent2, tr.getSeller());
 			assertEquals("Incorrect Quantity", 1, tr.getQuantity());
@@ -111,8 +111,8 @@ public class MarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(model, market);
-		MockAgent agent2 = new MockAgent(model, market);
+		MockAgent agent1 = new MockAgent(fundamental, sip, market);
+		MockAgent agent2 = new MockAgent(fundamental, sip, market);
 		
 		// Creating and adding bids
 		market.submitOrder(agent1, new Price(200), 1, time);
@@ -120,8 +120,8 @@ public class MarketTest {
 
 		// Testing the market for the correct transaction
 		market.clear(time);
-		assertTrue(model.getTrans().size() == 1);
-		for (Transaction tr : model.getTrans()) {
+		assertTrue(market.getTransactions().size() == 1);
+		for (Transaction tr : market.getTransactions()) {
 			assertEquals("Incorrect Buyer", agent1, tr.getBuyer());
 			assertEquals("Incorrect Seller", agent2, tr.getSeller());
 			assertEquals("Incorrect Quantity", 1, tr.getQuantity());
@@ -133,10 +133,10 @@ public class MarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(model, market);
-		MockAgent agent2 = new MockAgent(model, market);
-		MockAgent agent3 = new MockAgent(model, market);
-		MockAgent agent4 = new MockAgent(model, market);
+		MockAgent agent1 = new MockAgent(fundamental, sip, market);
+		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockAgent agent3 = new MockAgent(fundamental, sip, market);
+		MockAgent agent4 = new MockAgent(fundamental, sip, market);
 		
 		// Creating and adding bids
 		market.submitOrder(agent1, new Price(150),-1, time);

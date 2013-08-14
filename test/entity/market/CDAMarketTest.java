@@ -6,11 +6,13 @@ import java.io.File;
 import java.util.Collection;
 
 import logger.Logger;
-import model.MockMarketModel;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import data.DummyFundamental;
+import data.FundamentalValue;
 
 import entity.agent.MockAgent;
 import entity.infoproc.SIP;
@@ -22,7 +24,7 @@ import event.TimeStamp;
 
 public class CDAMarketTest {
 
-	private MockMarketModel model;
+	private FundamentalValue fundamental = new DummyFundamental(100000);
 	private SIP sip;
 	private Market market;
 
@@ -33,10 +35,8 @@ public class CDAMarketTest {
 
 	@Before
 	public void setup() {
-		model = new MockMarketModel();
 		sip = new SIP(TimeStamp.IMMEDIATE);
 		market = new CDAMarket(sip, TimeStamp.IMMEDIATE);
-		model.addMarket(market);
 	}
 
 	@Test
@@ -44,7 +44,7 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 
 		// Creating the agent
-		MockAgent agent = new MockAgent(model, market);
+		MockAgent agent = new MockAgent(fundamental, sip, market);
 
 		// Creating and adding the bid
 		market.submitOrder(agent, new Price(1), 1, time);
@@ -64,7 +64,7 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating the agent
-		MockAgent agent = new MockAgent(model, market);
+		MockAgent agent = new MockAgent(fundamental, sip, market);
 		
 		// Creating and adding the bid
 		market.submitOrder(agent, new Price(1), -1, time);
@@ -84,8 +84,8 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(model, market);
-		MockAgent agent2 = new MockAgent(model, market);
+		MockAgent agent1 = new MockAgent(fundamental, sip, market);
+		MockAgent agent2 = new MockAgent(fundamental, sip, market);
 		
 
 		// Creating and adding bids
@@ -94,8 +94,8 @@ public class CDAMarketTest {
 
 		// Testing the market for the correct transaction
 		market.clear(time);
-		assertTrue(model.getTrans().size() == 1);
-		for (Transaction tr : model.getTrans()) {
+		assertTrue(market.getTransactions().size() == 1);
+		for (Transaction tr : market.getTransactions()) {
 			assertTrue("Incorrect Buyer", tr.getBuyer().equals(agent1));
 			assertTrue("Incorrect Seller", tr.getSeller().equals(agent2));
 			assertTrue("Incorrect Price", tr.getPrice().equals(new Price(100)));
@@ -108,8 +108,8 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(model, market);
-		MockAgent agent2 = new MockAgent(model, market);
+		MockAgent agent1 = new MockAgent(fundamental, sip, market);
+		MockAgent agent2 = new MockAgent(fundamental, sip, market);
 		
 		// Creating and adding bids
 		market.submitOrder(agent1, new Price(200), 1, time);
@@ -117,8 +117,8 @@ public class CDAMarketTest {
 
 		// Testing the market for the correct transaction
 		market.clear(time);
-		assertTrue(model.getTrans().size() == 1);
-		for (Transaction tr : model.getTrans()) {
+		assertTrue(market.getTransactions().size() == 1);
+		for (Transaction tr : market.getTransactions()) {
 			assertTrue("Incorrect Buyer", tr.getBuyer().equals(agent1));
 			assertTrue("Incorrect Seller", tr.getSeller().equals(agent2));
 			assertTrue("Incorrect Price", tr.getPrice().equals(new Price(50)));
@@ -131,10 +131,10 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(model, market);
-		MockAgent agent2 = new MockAgent(model, market);
-		MockAgent agent3 = new MockAgent(model, market);
-		MockAgent agent4 = new MockAgent(model, market);
+		MockAgent agent1 = new MockAgent(fundamental, sip, market);
+		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockAgent agent3 = new MockAgent(fundamental, sip, market);
+		MockAgent agent4 = new MockAgent(fundamental, sip, market);
 		
 		// Creating and adding bids
 		market.submitOrder(agent1, new Price(150),-1, time);

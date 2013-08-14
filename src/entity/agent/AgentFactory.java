@@ -1,27 +1,34 @@
 package entity.agent;
 
+import java.util.Collection;
+
 import generator.Generator;
 import generator.PoissonArrivalGenerator;
 import generator.RoundRobinGenerator;
 
-import model.MarketModel;
-
 import utils.RandPlus;
 import data.AgentProperties;
+import data.FundamentalValue;
+import entity.infoproc.SIP;
 import entity.market.Market;
 import event.TimeStamp;
 
 public class AgentFactory {
 
 	protected final RandPlus rand;
-	protected final MarketModel model;
+	protected final FundamentalValue fundamental;
+	protected final SIP sip;
+	protected final Collection<Market> markets;
 	protected final Generator<TimeStamp> arrivalProcess;
 	protected final Generator<Market> marketAssignment;
 
-	public AgentFactory(MarketModel model, Generator<TimeStamp> arrivalProcess,
+	public AgentFactory(FundamentalValue fundamental, SIP sip,
+			Generator<TimeStamp> arrivalProcess, Collection<Market> markets,
 			Generator<Market> marketProcess, RandPlus rand) {
 		this.rand = rand;
-		this.model = model;
+		this.fundamental = fundamental;
+		this.sip = sip;
+		this.markets = markets;
 		this.arrivalProcess = arrivalProcess;
 		this.marketAssignment = marketProcess;
 	}
@@ -29,10 +36,11 @@ public class AgentFactory {
 	/**
 	 * SMAgent factory with Poisson arrivals and round robin market selection.
 	 */
-	public AgentFactory(MarketModel model, double arrivalRate, RandPlus rand) {
-		this(model, new PoissonArrivalGenerator(TimeStamp.IMMEDIATE,
-				arrivalRate, new RandPlus(rand.nextLong())),
-				new RoundRobinGenerator<Market>(model.getMarkets()), rand);
+	public AgentFactory(FundamentalValue fundamental, SIP sip,
+			Collection<Market> markets, double arrivalRate, RandPlus rand) {
+		this(fundamental, sip, new PoissonArrivalGenerator(TimeStamp.IMMEDIATE,
+				arrivalRate, new RandPlus(rand.nextLong())), markets,
+				new RoundRobinGenerator<Market>(markets), rand);
 	}
 
 	// XXX Not all agents advance all of the parameters like the market or the arrival process. One
@@ -41,26 +49,28 @@ public class AgentFactory {
 	public Agent createAgent(AgentProperties props) {
 		switch (props.getAgentType()) {
 		case AA:
-			return new AAAgent(arrivalProcess.next(), model,
+			return new AAAgent(arrivalProcess.next(), fundamental, sip,
 					marketAssignment.next(), new RandPlus(rand.nextLong()),
 					props);
 		case ZIP:
-			return new ZIPAgent(arrivalProcess.next(), model,
+			return new ZIPAgent(arrivalProcess.next(), fundamental, sip,
 					marketAssignment.next(), new RandPlus(rand.nextLong()),
 					props);
 		case ZIR:
-			return new ZIRAgent(arrivalProcess.next(), model,
+			return new ZIRAgent(arrivalProcess.next(), fundamental, sip,
 					marketAssignment.next(), new RandPlus(rand.nextLong()),
 					props);
 		case ZI:
-			return new ZIAgent(arrivalProcess.next(), model,
+			return new ZIAgent(arrivalProcess.next(), fundamental, sip,
 					marketAssignment.next(), new RandPlus(rand.nextLong()),
 					props);
 		case BASICMM:
-			return new BasicMarketMaker(model, marketAssignment.next(),
-					new RandPlus(rand.nextLong()), props);
+			return new BasicMarketMaker(fundamental, sip,
+					marketAssignment.next(), new RandPlus(rand.nextLong()),
+					props);
 		case LA:
-			return new LAAgent(model, new RandPlus(rand.nextLong()), props);
+			return new LAAgent(markets, fundamental, sip, new RandPlus(
+					rand.nextLong()), props);
 		default:
 			throw new IllegalArgumentException("Can't create AgentType: "
 					+ props.getAgentType());

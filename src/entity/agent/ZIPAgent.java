@@ -3,11 +3,12 @@ package entity.agent;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import model.MarketModel;
 import systemmanager.Keys;
 import utils.RandPlus;
 import activity.Activity;
 import data.EntityProperties;
+import data.FundamentalValue;
+import entity.infoproc.SIP;
 import entity.market.Market;
 import event.TimeStamp;
 
@@ -30,11 +31,11 @@ public class ZIPAgent extends ReentryAgent {
 	protected final int bidRange; // range for limit order
 	protected final double c_R, c_A, beta, betaVar, gamma;
 
-	public ZIPAgent(TimeStamp arrivalTime, MarketModel model, Market market,
+	public ZIPAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
 			RandPlus rand, double pvVar, int tickSize, int bidRange,
 			double reentryRate, double c_R, double c_A, double beta,
 			double betaVar, double gamma) {
-		super(arrivalTime, model, market, new PrivateValue(1,
+		super(arrivalTime, fundamental, sip, market, new PrivateValue(1,
 				pvVar, rand),
 				rand, reentryRate, tickSize);
 		this.bidRange = bidRange;
@@ -45,9 +46,9 @@ public class ZIPAgent extends ReentryAgent {
 		this.gamma = gamma;
 	}
 	
-	public ZIPAgent(TimeStamp arrivalTime, MarketModel model, Market market,
+	public ZIPAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
 			RandPlus rand, EntityProperties props) {
-		this(arrivalTime, model, market, rand, props.getAsDouble(
+		this(arrivalTime, fundamental, sip, market, rand, props.getAsDouble(
 				Keys.PRIVATE_VALUE_VAR, 100000000), props.getAsInt(
 				Keys.TICK_SIZE, 1), props.getAsInt(Keys.BID_RANGE, 5000),
 				props.getAsDouble(Keys.REENTRY_RATE, 0.005), props.getAsDouble(
@@ -65,7 +66,7 @@ public class ZIPAgent extends ReentryAgent {
 		@SuppressWarnings("unused")
 		int val = Math.max(
 				0,
-				model.getFundamentalAt(currentTime).plus(
+				fundamental.getValueAt(currentTime).plus(
 						privateValue.getValueFromQuantity(positionBalance,
 								quantity)).getInTicks());
 

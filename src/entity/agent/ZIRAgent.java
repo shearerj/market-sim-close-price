@@ -6,12 +6,13 @@ import static logger.Logger.Level.INFO;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import model.MarketModel;
 import systemmanager.Keys;
 import utils.RandPlus;
 import activity.Activity;
 import activity.SubmitNMSOrder;
 import data.EntityProperties;
+import data.FundamentalValue;
+import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
 import event.TimeStamp;
@@ -45,18 +46,18 @@ public class ZIRAgent extends ReentryAgent {
 	protected int bidRange; // range for limit order
 	protected int maxAbsPosition; // max quantity for position
 
-	public ZIRAgent(TimeStamp arrivalTime, MarketModel model, Market market,
+	public ZIRAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
 			RandPlus rand, int bidRange, int maxAbsPosition,
 			double reentryRate, double pvVar, int tickSize) {
-		super(arrivalTime, model, market, new PrivateValue(maxAbsPosition,
+		super(arrivalTime, fundamental, sip, market, new PrivateValue(maxAbsPosition,
 				pvVar, rand), rand, reentryRate, tickSize);
 		this.bidRange = bidRange;
 		this.maxAbsPosition = maxAbsPosition;
 	}
 
-	public ZIRAgent(TimeStamp arrivalTime, MarketModel model, Market market,
+	public ZIRAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
 			RandPlus rand, EntityProperties props) {
-		this(arrivalTime, model, market, rand, props.getAsInt(Keys.BID_RANGE,
+		this(arrivalTime, fundamental, sip, market, rand, props.getAsInt(Keys.BID_RANGE,
 				5000), props.getAsInt(Keys.MAX_QUANTITY, 10),
 				props.getAsDouble(Keys.REENTRY_RATE, 0.005), props.getAsDouble(
 						Keys.PRIVATE_VALUE_VAR, 100000000), props.getAsInt(
@@ -84,7 +85,7 @@ public class ZIRAgent extends ReentryAgent {
 		int newPosition = quantity + positionBalance;
 		// check that will not exceed max absolute position
 		if (newPosition <= maxAbsPosition && newPosition >= -maxAbsPosition) {
-			Price val = model.getFundamentalAt(currentTime).plus(
+			Price val = fundamental.getValueAt(currentTime).plus(
 					privateValue.getValueFromQuantity(positionBalance, quantity)).nonnegative();
 			Price price = new Price(
 					(int) (val.getInTicks() - Math.signum(quantity)
@@ -92,7 +93,7 @@ public class ZIRAgent extends ReentryAgent {
 
 			sb.append(" position=").append(positionBalance).append(", for q=");
 			sb.append(quantity).append(", value=");
-			sb.append(model.getFundamentalAt(currentTime)).append(" + ");
+			sb.append(fundamental.getValueAt(currentTime)).append(" + ");
 			sb.append(privateValue.getValueFromQuantity(positionBalance,
 					quantity));
 			sb.append('=').append(val);

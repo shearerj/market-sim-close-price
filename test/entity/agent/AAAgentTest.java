@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import logger.Logger;
-import model.MockMarketModel;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -21,7 +20,9 @@ import activity.Activity;
 import activity.ProcessQuote;
 import activity.SendToIP;
 import activity.SubmitNMSOrder;
+import data.DummyFundamental;
 import data.EntityProperties;
+import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.MockMarket;
@@ -34,7 +35,7 @@ public class AAAgentTest {
 	private static RandPlus rand;
 	private static EntityProperties agentProperties;
 
-	private MockMarketModel model;
+	private FundamentalValue fundamental = new DummyFundamental(100000);
 	private Market market;
 	private SIP sip;
 
@@ -62,20 +63,16 @@ public class AAAgentTest {
 
 	@Before
 	public void setupTest() {
-		// Creating the MockMarketModel
-		model = new MockMarketModel();
 		sip = new SIP(TimeStamp.IMMEDIATE);
 		// Creating the MockMarket
 		market = new MockMarket(sip);
-
-		model.addMarket(market);
 	}
 
 	private AAAgent addAgent(boolean isBuyer) {
 		EntityProperties testProps = new EntityProperties(agentProperties);
 		testProps.put(Keys.BUYER_STATUS, isBuyer);
 
-		AAAgent agent = new AAAgent(new TimeStamp(0), model, market, rand,
+		AAAgent agent = new AAAgent(new TimeStamp(0), fundamental, sip, market, rand,
 				testProps);
 
 		return agent;
@@ -85,7 +82,7 @@ public class AAAgentTest {
 			int time) {
 		TimeStamp currentTime = new TimeStamp(time);
 		// creating a dummy agent
-		MockAgent agent = new MockAgent(model, market);
+		MockAgent agent = new MockAgent(fundamental, sip, market);
 		// Having the agent submit a bid to the market
 		Collection<? extends Activity> bidActs = market.submitOrder(agent, new Price(price),
 				quantity, currentTime);

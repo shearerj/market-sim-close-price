@@ -3,10 +3,12 @@ package entity.agent;
 import java.util.Collection;
 import java.util.Collections;
 
+import data.FundamentalValue;
+
 import activity.Activity;
 import activity.AgentStrategy;
-import model.MarketModel;
 import utils.RandPlus;
+import entity.infoproc.SIP;
 import entity.market.Market;
 import event.TimeStamp;
 import generator.ExponentialInterarrivalGenerator;
@@ -24,10 +26,10 @@ public abstract class ReentryAgent extends BackgroundAgent {
 	
 	protected Generator<TimeStamp> reentry; // re-entry times
 	
-	public ReentryAgent(TimeStamp arrivalTime, MarketModel model,
+	public ReentryAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Market market, PrivateValue pv, RandPlus rand,
 			Generator<TimeStamp> reentry, int tickSize) {
-		super(arrivalTime, model, market, pv, rand, tickSize);
+		super(arrivalTime, fundamental, sip, market, pv, rand, tickSize);
 	
 		this.reentry = reentry;
 	}
@@ -35,10 +37,10 @@ public abstract class ReentryAgent extends BackgroundAgent {
 	/**
 	 * Shortcut constructor for exponential interarrivals (e.g. poisson reentries)
 	 */
-	public ReentryAgent(TimeStamp arrivalTime, MarketModel model,
+	public ReentryAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Market market, PrivateValue pv, RandPlus rand, double reentryRate,
 			int tickSize) {
-		this(arrivalTime, model, market, pv, rand,
+		this(arrivalTime, fundamental, sip, market, pv, rand,
 				new ExponentialInterarrivalGenerator(reentryRate, rand),
 				tickSize);
 	}

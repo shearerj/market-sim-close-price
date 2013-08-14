@@ -3,10 +3,12 @@ package entity.agent;
 import java.util.Collection;
 import java.util.Collections;
 
-import model.MarketModel;
+import data.FundamentalValue;
+
 import utils.RandPlus;
 import activity.Activity;
 import entity.agent.BackgroundAgent;
+import entity.infoproc.SIP;
 import entity.market.Market;
 import event.TimeStamp;
 
@@ -14,8 +16,8 @@ public class MockAgent extends BackgroundAgent {
 
 	private static final long serialVersionUID = 1L;
 
-	public MockAgent(MarketModel model, Market market) {
-		super(new TimeStamp(0), model, market, new PrivateValue(),
+	public MockAgent(FundamentalValue fundamental, SIP sip, Market market) {
+		super(new TimeStamp(0), fundamental, sip, market, new PrivateValue(),
 				new RandPlus(), 1000);
 	}
 

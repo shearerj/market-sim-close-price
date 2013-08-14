@@ -115,8 +115,8 @@ public class MarketModel implements Serializable {
 			// XXX In general the arrival process and market generation can be
 			// generic or even specified, but for now we'll stick with the
 			// original implementation
-			AgentFactory factory = new AgentFactory(this, arrivalRate,
-					new RandPlus(rand.nextLong()));
+			AgentFactory factory = new AgentFactory(fundamental, sip, markets,
+					arrivalRate, new RandPlus(rand.nextLong()));
 
 			for (int i = 0; i < number; i++)
 				agents.add(factory.createAgent(agProps));
@@ -151,8 +151,8 @@ public class MarketModel implements Serializable {
 				int number = stratEnt.getValue();
 				double arrivalRate = modelProps.getAsDouble(Keys.ARRIVAL_RATE, 0.075);
 
-				AgentFactory factory = new AgentFactory(this, arrivalRate,
-						new RandPlus(rand.nextLong()));
+				AgentFactory factory = new AgentFactory(fundamental, sip,
+						markets, arrivalRate, new RandPlus(rand.nextLong()));
 
 				for (int i = 0; i < number; i++) {
 					Agent agent = factory.createAgent(new AgentProperties(strat));

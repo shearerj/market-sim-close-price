@@ -1,7 +1,11 @@
 package entity.agent;
 
-import model.MarketModel;
+import java.util.Collection;
+
+import data.FundamentalValue;
 import utils.RandPlus;
+import entity.infoproc.SIP;
+import entity.market.Market;
 import event.TimeStamp;
 
 /**
@@ -13,9 +17,10 @@ public abstract class HFTAgent extends MMAgent {
 
 	private static final long serialVersionUID = -1483633963238206201L;
 
-	public HFTAgent(TimeStamp arrivalTime, MarketModel model,
-			RandPlus rand, int tickSize) {
-		super(arrivalTime, model, new PrivateValue(), rand, tickSize);
+	public HFTAgent(TimeStamp arrivalTime, Collection<Market> markets,
+			FundamentalValue fundamental, SIP sip, RandPlus rand, int tickSize) {
+		super(arrivalTime, markets, fundamental, sip, new PrivateValue(), rand,
+				tickSize);
 	}
-	
+
 }

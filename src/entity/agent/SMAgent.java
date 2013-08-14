@@ -5,9 +5,11 @@ import static logger.Logger.Level.INFO;
 
 import java.util.Collection;
 
-import model.MarketModel;
+import data.FundamentalValue;
+
 import utils.RandPlus;
 import activity.Activity;
+import entity.infoproc.SIP;
 import entity.infoproc.SMIP;
 import entity.market.Market;
 import event.TimeStamp;
@@ -38,12 +40,13 @@ public abstract class SMAgent extends Agent {
 
 	private static final long serialVersionUID = 3156640550886695881L;
 	
+	// TODO Only store market ip and submit orders through it...?
 	protected final Market primaryMarket;
 	protected final SMIP marketIP;
 
-	public SMAgent(TimeStamp arrivalTime, MarketModel model,
+	public SMAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Market market, PrivateValue pv, RandPlus rand, int tickSize) {
-		super(arrivalTime, model, pv, rand, tickSize);
+		super(arrivalTime, fundamental, sip, pv, rand, tickSize);
 		this.primaryMarket = market;
 		this.marketIP = market.getSMIP();
 	}

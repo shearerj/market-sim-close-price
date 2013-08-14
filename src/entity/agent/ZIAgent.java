@@ -5,12 +5,13 @@ import static java.lang.Math.signum;
 import java.util.Collection;
 import java.util.Collections;
 
-import model.MarketModel;
 import systemmanager.Keys;
 import utils.RandPlus;
 import activity.Activity;
 import activity.SubmitNMSOrder;
 import data.EntityProperties;
+import data.FundamentalValue;
+import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
 import event.TimeStamp;
@@ -39,17 +40,17 @@ public class ZIAgent extends BackgroundAgent {
 	
 	protected final int bidRange; // range for limit order
 
-	public ZIAgent(TimeStamp arrivalTime, MarketModel model,
+	public ZIAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Market market, RandPlus rand, int bidRange, double pvVar,
 			int tickSize) {
-		super(arrivalTime, model, market, new PrivateValue(1, pvVar,
+		super(arrivalTime, fundamental, sip, market, new PrivateValue(1, pvVar,
 				rand), rand, tickSize);
 		this.bidRange = bidRange;
 	}
 
-	public ZIAgent(TimeStamp arrivalTime, MarketModel model,
+	public ZIAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Market market, RandPlus rand, EntityProperties props) {
-		this(arrivalTime, model, market, rand, props.getAsInt(
+		this(arrivalTime, fundamental, sip, market, rand, props.getAsInt(
 				Keys.BID_RANGE, 2000), props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),
 				props.getAsInt(Keys.TICK_SIZE, 1));
 	}
@@ -58,7 +59,7 @@ public class ZIAgent extends BackgroundAgent {
 	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
 		// 50% chance of being either long or short
 		int quantity = rand.nextBoolean() ? 1 : -1;
-		Price val = model.getFundamentalAt(currentTime).plus(
+		Price val = fundamental.getValueAt(currentTime).plus(
 				privateValue.getValueFromQuantity(positionBalance, quantity)).nonnegative();
 
 		// basic ZI behavior

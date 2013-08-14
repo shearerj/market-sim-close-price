@@ -9,7 +9,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-import model.MarketModel;
+import data.FundamentalValue;
+
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
@@ -32,7 +33,7 @@ public abstract class Agent extends Entity {
 	private static int nextID = 1;
 	
 	protected final RandPlus rand;
-	protected final MarketModel model;
+	protected final FundamentalValue fundamental;
 	protected final SIP sip;
 	// List of all transactions. Implicitly time ordered due to transactions
 	// being created and assigned in time order.
@@ -53,13 +54,13 @@ public abstract class Agent extends Entity {
 	protected int preLiqPosition;
 	protected int preLiqRealizedProfit;
 
-	public Agent(TimeStamp arrivalTime, MarketModel model,
+	public Agent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			PrivateValue privateValue, RandPlus rand, int tickSize) {
 		super(nextID++);
-		this.model = model;
+		this.fundamental = fundamental;
 		this.rand = rand;
 		this.arrivalTime = arrivalTime;
-		this.sip = model.getSIP();
+		this.sip = sip;
 		this.privateValue = privateValue;
 		this.tickSize = tickSize;
 
@@ -82,7 +83,7 @@ public abstract class Agent extends Entity {
 			TimeStamp currentTime) {
 		log(INFO, this + " liquidating...");
 		return Collections.singleton(new Liquidate(this,
-				model.getFundamentalAt(currentTime), TimeStamp.IMMEDIATE));
+				fundamental.getValueAt(currentTime), TimeStamp.IMMEDIATE));
 	}
 
 	/**
@@ -144,9 +145,8 @@ public abstract class Agent extends Entity {
 		log(INFO, this + " "
 				+ "Agent::updateTransactions: New transaction received: "
 				+ trans);
-		log(INFO, this + " Agent::logTransactions: "
-				+ model.getName() + ": Current Position=" + positionBalance
-				+ ", Realized Profit=" + realizedProfit);
+		log(INFO, this + " Agent::logTransactions: Current Position="
+				+ positionBalance + ", Realized Profit=" + realizedProfit);
 	}
 
 	/**
@@ -207,26 +207,26 @@ public abstract class Agent extends Entity {
 	public double getSurplus(double rho) {
 		double surplus = 0;
 
-		for (Transaction tr : transactions) {
+		for (Transaction trans : transactions) {
 
 			TimeStamp submissionTime;
 			int sign;
 			// FIXME Wrong if agent transacts with itself
-			if (tr.getBuyer().equals(this)) {
-				submissionTime = tr.getBuyBid().getSubmitTime();
+			if (trans.getBuyer().equals(this)) {
+				submissionTime = trans.getBuyBid().getSubmitTime();
 				sign = 1;
 			} else {
-				submissionTime = tr.getSellBid().getSubmitTime();
+				submissionTime = trans.getSellBid().getSubmitTime();
 				sign = -1;
 			}
-			TimeStamp timeToExecution = tr.getExecTime().minus(submissionTime);
+			TimeStamp timeToExecution = trans.getExecTime().minus(submissionTime);
 
-			Price fundamental = model.getFundamentalAt(tr.getExecTime()).times(
-					tr.getQuantity());
+			Price fund = fundamental.getValueAt(trans.getExecTime()).times(
+					trans.getQuantity());
 			Price pv = privateValue.getValueFromQuantity(positionBalance,
-					tr.getQuantity());
-			Price cost = tr.getPrice().times(tr.getQuantity());
-			Price transactionSurplus = fundamental.plus(pv).minus(cost).times(
+					trans.getQuantity());
+			Price cost = trans.getPrice().times(trans.getQuantity());
+			Price transactionSurplus = fund.plus(pv).minus(cost).times(
 					sign);
 
 			surplus += Math.exp(rho * timeToExecution.getInTicks())
@@ -234,14 +234,9 @@ public abstract class Agent extends Entity {
 		}
 		return surplus;
 	}
-
-	@Override
-	public int hashCode() {
-		return super.hashCode() ^ model.hashCode();
-	}
-
+	
 	@Override
 	public String toString() {
-		return new String("(" + id + ", " + model + ")");
+		return "(" + id + ")";
 	}
 }

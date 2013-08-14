@@ -8,7 +8,6 @@ import static utils.Compare.min;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import model.MarketModel;
 import systemmanager.Keys;
 import utils.MathUtils;
 import utils.RandPlus;
@@ -17,7 +16,9 @@ import activity.AgentStrategy;
 import activity.SubmitOrder;
 import activity.WithdrawOrder;
 import data.EntityProperties;
+import data.FundamentalValue;
 import entity.infoproc.BestBidAsk;
+import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Order;
 import entity.market.Price;
@@ -57,10 +58,10 @@ public class BasicMarketMaker extends MarketMaker {
 	protected Price lastAsk, lastBid; // stores the last ask/bid, respectively
 	protected final TimeStamp sleepTime;
 
-	public BasicMarketMaker(MarketModel model, Market market,
+	public BasicMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			TimeStamp sleepTime, int numRungs, int rungSize, RandPlus rand,
 			int tickSize) {
-		super(model, market, rand, tickSize);
+		super(fundamental, sip, market, rand, tickSize);
 		this.sleepTime = sleepTime;
 		this.numRungs = numRungs;
 		this.rungSize = rungSize;
@@ -69,9 +70,9 @@ public class BasicMarketMaker extends MarketMaker {
 		this.lastBid = null;
 	}
 
-	public BasicMarketMaker(MarketModel model, Market market,
+	public BasicMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			RandPlus rand, EntityProperties params) {
-		this(model, market, new TimeStamp(params.getAsLong(
+		this(fundamental, sip, market, new TimeStamp(params.getAsLong(
 				Keys.SLEEP_TIME, 200)), params.getAsInt(Keys.NUM_RUNGS, 10),
 				params.getAsInt(Keys.RUNG_SIZE, 1000), rand, params.getAsInt(
 						Keys.TICK_SIZE, 1));

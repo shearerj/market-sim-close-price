@@ -27,11 +27,6 @@ public abstract class Entity implements Serializable {
 	public final String getName() {
 		return getClass().getSimpleName();
 	}
-	
-	@Override
-	public int hashCode() {
-		return id;
-	}
 
 	@Override
 	public String toString() {

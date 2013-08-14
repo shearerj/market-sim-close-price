@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import model.MarketModel;
 import systemmanager.Keys;
 import utils.RandPlus;
 import utils.Pair;
@@ -18,6 +17,8 @@ import activity.Activity;
 import activity.AgentStrategy;
 import activity.SubmitNMSOrder;
 import data.EntityProperties;
+import data.FundamentalValue;
+import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Quote;
@@ -58,19 +59,19 @@ public class AAAgent extends ReentryAgent {
 	private double alphaMin; // min experienced value for alpha
 
 
-	public AAAgent(TimeStamp arrivalTime, MarketModel model, Market market,
+	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
 			RandPlus rand, EntityProperties params) {
-		this(arrivalTime, model, market, rand, params, new PrivateValue(
+		this(arrivalTime, fundamental, sip, market, rand, params, new PrivateValue(
 				params.getAsInt(Keys.MAX_QUANTITY, 1), params.getAsDouble(
 						Keys.PRIVATE_VALUE_VAR, 100000000), rand),
 				params.getAsDouble(Keys.REENTRY_RATE, 0.005), params.getAsInt(
 						Keys.TICK_SIZE, 1));
 	}
 	
-	public AAAgent(TimeStamp arrivalTime, MarketModel model, Market market,
+	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
 			RandPlus rand, EntityProperties params, PrivateValue privateValue,
 			double reentryRate, int tickSize) {
-		super(arrivalTime, model, market, privateValue, rand, reentryRate,
+		super(arrivalTime, fundamental, sip, market, privateValue, rand, reentryRate,
 				tickSize);
 		
 		//Initializing Max Absolute Position
@@ -179,7 +180,7 @@ public class AAAgent extends ReentryAgent {
 
 	
 	private Price determinePriceLimit(int quantity, TimeStamp ts) {
-		Price fundPrice = model.getFundamentalAt(ts);
+		Price fundPrice = fundamental.getValueAt(ts);
 		Price deviation = privateValue.getValueAtPosition(positionBalance + quantity);
 		return fundPrice.plus(deviation);
 	}

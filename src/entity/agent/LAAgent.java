@@ -7,13 +7,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import model.MarketModel;
 import systemmanager.Keys;
 import utils.RandPlus;
 import activity.Activity;
 import activity.SubmitOrder;
 import data.EntityProperties;
+import data.FundamentalValue;
 import entity.infoproc.HFTIP;
+import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Quote;
@@ -33,22 +34,23 @@ public class LAAgent extends HFTAgent {
 	protected final double alpha; // LA profit gap
 	protected final Map<Market, HFTIP> ips;
 
-	public LAAgent(MarketModel model, double alpha,
-			TimeStamp latency, RandPlus rand, int tickSize) {
-		super(TimeStamp.ZERO, model, rand, tickSize);
+	public LAAgent(Collection<Market> markets, FundamentalValue fundamental,
+			SIP sip, double alpha, TimeStamp latency, RandPlus rand,
+			int tickSize) {
+		super(TimeStamp.ZERO, markets, fundamental, sip, rand, tickSize);
 		this.alpha = alpha;
 		this.ips = new HashMap<Market, HFTIP>();
 
-		for (Market market : model.getMarkets()) {
+		for (Market market : markets) {
 			HFTIP laip = new HFTIP(latency, market, this);
 			ips.put(market, laip);
 			market.addIP(laip);
 		}
 	}
 
-	public LAAgent(MarketModel model, RandPlus rand,
-			EntityProperties props) {
-		this(model, props.getAsDouble(Keys.ALPHA, 0.001),
+	public LAAgent(Collection<Market> markets, FundamentalValue fundamental,
+			SIP sip, RandPlus rand, EntityProperties props) {
+		this(markets, fundamental, sip, props.getAsDouble(Keys.ALPHA, 0.001),
 				new TimeStamp(props.getAsLong(Keys.LA_LATENCY, -1)), rand,
 				props.getAsInt(Keys.TICK_SIZE, 1000));
 	}
