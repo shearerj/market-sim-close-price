@@ -31,6 +31,7 @@ import entity.agent.Agent;
 import entity.agent.BackgroundAgent;
 import entity.agent.HFTAgent;
 import entity.agent.MarketMaker;
+import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Transaction;
 import event.TimeStamp;
@@ -101,48 +102,51 @@ public class Observations {
 
 	JsonObject observations;
 
-	public Observations(SimulationSpec spec, Collection<MarketModel> models,
+	public Observations(SimulationSpec spec, MarketModel model,
 			int observationNum) {
+		Collection<Market> markets = model.getMarkets();
+		Collection<Agent> agents = model.getAgents();
+		Collection<Player> players = model.getPlayers();
+		Collection<Transaction> transactions = model.getTransactions();
+		FundamentalValue fundamental = model.fundamental;
+		SIP sip = model.getSIP();
+		String modelName = model.getName().toLowerCase() + "_" + model.getID();
+		
 		observations = new JsonObject();
 
-		MarketModel firstModel = models.iterator().next();
-		observations.add(PLAYERS, playerObservations(firstModel));
+		observations.add(PLAYERS, playerObservations(players));
 
 		double arrivalRate = spec.getDefaultAgentConfig().getAsDouble(Keys.ARRIVAL_RATE, 0.075);
-		long maxTime = Math.round(firstModel.getAgents().size() / arrivalRate);
+		long maxTime = Math.round(agents.size() / arrivalRate);
 		maxTime = Math.max(Consts.upToTime, quantize((int) maxTime, 1000));
 
 		JsonObject features = new JsonObject();
 		observations.add(FEATURES, features);
 		features.add("", getConfiguration(spec, observationNum, maxTime));
 
-		for (MarketModel model : models) {
-			String modelName = model.getName().toLowerCase() + "_" + model.getID();
+		features.add(modelName + "_" + SURPLUS, getSurplus(agents, players));
 
-			features.add(modelName + "_" + SURPLUS, getSurplus(model));
+		features.add(modelName + "_" + EXECTIME, getExecutionTime(transactions));
+		// FIXME this should maybe be simLength instead of maxTime...
+		features.add(modelName + "_" + TRANSACTIONS,
+				getTransactionInfo(agents, transactions, fundamental, maxTime));
+		features.add(modelName + "_" + SPREADS, getSpread(markets, sip, maxTime));
+		features.add(modelName + "_" + ROLE_MARKETMAKER,
+				getMarketMakerInfo(agents));
 
-			features.add(modelName + "_" + EXECTIME, getExecutionTime(model));
-			// FIXME this should maybe be simLength instead of maxTime...
-			features.add(modelName + "_" + TRANSACTIONS,
-					getTransactionInfo(model, maxTime));
-			features.add(modelName + "_" + SPREADS, getSpread(model, maxTime));
-			features.add(modelName + "_" + ROLE_MARKETMAKER,
-					getMarketMakerInfo(model));
+		for (int period : Consts.periods)
+			features.add(modelName + "_" + VOL,
+					getVolatility(markets, period, maxTime));
 
-			for (int period : Consts.periods)
-				features.add(modelName + "_" + VOL,
-						getVolatility(model, period, maxTime));
-
-			// TODO - need to remove the position balance hack
-			// addFeature(modelName + ROUTING, getRegNMSRoutingInfo(model));
-		}
+		// TODO - need to remove the position balance hack
+		// addFeature(modelName + ROUTING, getRegNMSRoutingInfo(model));
 	}
 
-	protected JsonArray playerObservations(MarketModel model) {
-		JsonArray players = new JsonArray();
-		for (Player player : model.getPlayers())
-			players.add(getPlayerObservation(player));
-		return players;
+	protected JsonArray playerObservations(Collection<Player> players) {
+		JsonArray obs = new JsonArray();
+		for (Player player : players)
+			obs.add(getPlayerObservation(player));
+		return obs;
 	}
 
 	protected static JsonObject getPlayerObservation(Player player) {
@@ -190,7 +194,7 @@ public class Observations {
 	 * Extract discounted surplus for background agents, including those that
 	 * are players (in the EGTA use case).
 	 */
-	protected static JsonObject getSurplus(MarketModel model) {
+	protected static JsonObject getSurplus(Collection<Agent> agents, Collection<Player> players) {
 		JsonObject feat = new JsonObject();
 
 		for (double rho : Consts.rhos) {
@@ -203,25 +207,25 @@ public class Observations {
 			DescriptiveStatistics mm = new DescriptiveStatistics();
 			DescriptiveStatistics env = new DescriptiveStatistics();
 
-			Set<Agent> players = new HashSet<Agent>();
-			for (Player p : model.getPlayers())
-				players.add(p.getAgent());
+			Set<Agent> playerSet = new HashSet<Agent>();
+			for (Player p : players)
+				playerSet.add(p.getAgent());
 
 			// go through all agents & update for each agent type
-			for (Agent ag : model.getAgents()) {
-				double agentSurplus = ag.getSurplus(rho);
+			for (Agent agent : agents) {
+				double agentSurplus = agent.getSurplus(rho);
 				modelSurplus.addValue(agentSurplus);
 
-				if (ag instanceof BackgroundAgent) {
+				if (agent instanceof BackgroundAgent) {
 					bkgrd.addValue(agentSurplus);
-				} else if (ag instanceof HFTAgent) {
+				} else if (agent instanceof HFTAgent) {
 					// FIXME This is not correct if the agent has a net position at the end...
-					agentSurplus = ag.getSurplus(0);
+					agentSurplus = agent.getSurplus(0);
 					hft.addValue(agentSurplus);
-				} else if (ag instanceof MarketMaker) {
+				} else if (agent instanceof MarketMaker) {
 					mm.addValue(agentSurplus);
 				}
-				if (!players.contains(ag)) {
+				if (!playerSet.contains(agent)) {
 					env.addValue(agentSurplus);
 				}
 			}
@@ -244,15 +248,15 @@ public class Observations {
 	/**
 	 * Execution time metrics.
 	 */
-	protected static JsonObject getExecutionTime(MarketModel model) {
+	protected static JsonObject getExecutionTime(Collection<Transaction> transactions) {
 		JsonObject feat = new JsonObject();
 		DescriptiveStatistics speeds = new DescriptiveStatistics();
 
-		for (Transaction tr : model.getTransactions()) {
-			TimeStamp execTime = tr.getExecTime();
-			TimeStamp buyerExecTime = execTime.minus(tr.getBuyBid().getSubmitTime());
-			TimeStamp sellerExecTime = execTime.minus(tr.getSellBid().getSubmitTime());
-			for (int quantity = 0; quantity < tr.getQuantity(); quantity++) {
+		for (Transaction trans : transactions) {
+			TimeStamp execTime = trans.getExecTime();
+			TimeStamp buyerExecTime = execTime.minus(trans.getBuyBid().getSubmitTime());
+			TimeStamp sellerExecTime = execTime.minus(trans.getSellBid().getSubmitTime());
+			for (int quantity = 0; quantity < trans.getQuantity(); quantity++) {
 				speeds.addValue((double) buyerExecTime.getInTicks());
 				speeds.addValue((double) sellerExecTime.getInTicks());
 			}
@@ -272,9 +276,10 @@ public class Observations {
 	 * for each TimeStamp and thus it only gives the most recent transaction at
 	 * any given time.
 	 */
-	protected static JsonObject getTransactionInfo(MarketModel model,
+	protected static JsonObject getTransactionInfo(Collection<Agent> agents, Collection<Transaction> transactions, FundamentalValue fund,
 			long simLength) {
 		JsonObject feat = new JsonObject();
+		// TODO Make sure Agents is a set...
 
 		DescriptiveStatistics prices = new DescriptiveStatistics();
 		DescriptiveStatistics quantity = new DescriptiveStatistics();
@@ -286,27 +291,25 @@ public class Observations {
 		// number of transactions, hashed by agent type
 		Map<String, Integer> numTrans = new HashMap<String, Integer>();
 
-		// So that agent types with 0 transactions still get logged. XXX This
-		// maybe should pull only from agent types that had nonzero numbers, not
-		// every agent possible.
-		for (Agent agent : model.getAgents())
+		// So that agent types with 0 transactions still get logged.
+		for (Agent agent : agents)
 			numTrans.put(agent.getName(), 0);
 
-		for (Transaction trans : model.getTransactions()) {
+		for (Transaction trans : transactions) {
 			prices.addValue(trans.getPrice().getInTicks());
 			quantity.addValue(trans.getQuantity());
-			fundamental.addValue(model.getFundamentalAt(trans.getExecTime()).getInTicks());
+			fundamental.addValue(fund.getValueAt(trans.getExecTime()).getInTicks());
 
 			transPrices.add((int) trans.getExecTime().getInTicks(), trans.getPrice().getInTicks());
-			fundPrices.add((int) trans.getExecTime().getInTicks(), model.getFundamentalAt(trans.getExecTime()).getInTicks());
+			fundPrices.add((int) trans.getExecTime().getInTicks(), fund.getValueAt(trans.getExecTime()).getInTicks());
 
 			// update number of transactions
-			if (model.getAgents().contains(trans.getBuyer())) {
+			if (agents.contains(trans.getBuyer())) {
 				String name = trans.getBuyer().getName();
 				numTrans.put(name, numTrans.get(name) + 1);
 			}
 			if (!trans.getBuyer().equals(trans.getSeller())
-					&& model.getAgents().contains(trans.getSeller())) {
+					&& agents.contains(trans.getSeller())) {
 				String name = trans.getSeller().getName();
 				numTrans.put(name, numTrans.get(name) + 1);
 			}
@@ -323,9 +326,9 @@ public class Observations {
 			String prefix = period > 1 ? PERIODICITY + period : null;
 			// XXX maxTime instead of simLength?
 			DSPlus pr = transPrices.getSampledStats(period, (int) simLength);
-			DSPlus fund = fundPrices.getSampledStats(period, (int) simLength);
+			DSPlus fundStat = fundPrices.getSampledStats(period, (int) simLength);
 
-			feat.addProperty(prefix + "_" + RMSD, pr.getRMSD(fund));
+			feat.addProperty(prefix + "_" + RMSD, pr.getRMSD(fundStat));
 		}
 		return feat;
 	}
@@ -333,11 +336,11 @@ public class Observations {
 	/**
 	 * Computes spread metrics for the given model.
 	 */
-	protected static JsonObject getSpread(MarketModel model, long maxTime) {
+	protected static JsonObject getSpread(Collection<Market> markets, SIP sip, long maxTime) {
 		JsonObject feat = new JsonObject();
 
 		DescriptiveStatistics medians = new DescriptiveStatistics();
-		for (Market market : model.getMarkets()) {
+		for (Market market : markets) {
 			TimeSeries s = market.getSpread();
 			DSPlus spreads = s.getSampledStats(1, (int) maxTime);
 			double med = spreads.getMedian();
@@ -351,7 +354,7 @@ public class Observations {
 		feat.addProperty(delimit("_", MEAN, MARKET, TIMESERIES_MAXTIME),
 				medians.getMean());
 
-		TimeSeries nbbo = model.getSIP().getNBBOSpreads();
+		TimeSeries nbbo = sip.getNBBOSpreads();
 		DSPlus spreads = nbbo.getSampledStats(1, (int) maxTime);
 		feat.addProperty(delimit("_", MEDIAN, NBBO, TIMESERIES_MAXTIME),
 				spreads.getMedian());
@@ -362,10 +365,10 @@ public class Observations {
 	/**
 	 * Track liquidation-related features & profit for market makers.
 	 */
-	protected static JsonObject getMarketMakerInfo(MarketModel model) {
+	protected static JsonObject getMarketMakerInfo(Collection<Agent> agents) {
 		JsonObject feat = new JsonObject();
 
-		for (Agent ag : model.getAgents()) {
+		for (Agent ag : agents) {
 			if (!(ag instanceof MarketMaker)) continue;
 			MarketMaker mm = (MarketMaker) ag;
 
@@ -393,7 +396,7 @@ public class Observations {
 	 * 
 	 * - standard deviation of log returns
 	 */
-	protected static JsonObject getVolatility(MarketModel model, int period,
+	protected static JsonObject getVolatility(Collection<Market> markets, int period,
 			long maxTime) {
 		JsonObject feat = new JsonObject();
 
@@ -403,7 +406,7 @@ public class Observations {
 		DescriptiveStatistics logPriceVol = new DescriptiveStatistics();
 		DescriptiveStatistics logRetVol = new DescriptiveStatistics();
 
-		for (Market market : model.getMarkets()) {
+		for (Market market : markets) {
 			String suffix = MARKET + Math.abs(market.getID());
 
 			TimeSeries mq = market.getMidQuotes();

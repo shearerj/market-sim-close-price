@@ -13,7 +13,6 @@ import java.io.ObjectOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.Properties;
 
@@ -186,7 +185,7 @@ public class SystemManager {
 		}
 		// TODO Serialize all entity objects and models for later data analysis
 		File results = new File(simFolder, Consts.OBS_FILE_PREFIX + obsNum + ".json");
-		Observations obs = new Observations(spec, Collections.singletonList(model), obsNum);
+		Observations obs = new Observations(spec, model, obsNum);
 		obs.writeToFile(results);
 	}
 

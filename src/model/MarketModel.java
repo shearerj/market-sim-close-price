@@ -73,7 +73,7 @@ public class MarketModel implements Serializable {
 	protected final int modelID;
 	protected final RandPlus rand;
 	protected final SIP sip;
-	protected final FundamentalValue fundamental;
+	public final FundamentalValue fundamental;
 	protected final Collection<Market> markets;
 	protected final Collection<Transaction> trans;
 	protected final Collection<Agent> agents;
