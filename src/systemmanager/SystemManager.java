@@ -44,7 +44,7 @@ public class SystemManager {
 	protected final MarketModel model;
 
 	protected final int obsNum; // sample number used for labeling output files
-	protected final File simFolder; // simulation folder name
+	protected final File simFolder; // simulation folder
 	protected final SimulationSpec spec;
 	protected final TimeStamp simulationLength;
 
@@ -115,9 +115,9 @@ public class SystemManager {
 		log(INFO, "------------------------------------------------");
 		log(INFO, "            Creating MARKET MODELS");
 		
-		// FIXME not proper call
-		model = new MarketModel(1, fundamental, spec.getAgentConfigs(),
-				null, spec.getPlayerConfig(), rand);
+		model = new MarketModel(fundamental, spec.getSimulationConfig(),
+				spec.getMarketConfigs(), spec.getAgentConfigs(),
+				spec.getPlayerConfig(), rand);
 
 		log(INFO, null + ": " + model);
 		for (Market market : model.getMarkets())

@@ -61,7 +61,7 @@ public class AAAgentTest {
 	@Before
 	public void setupTest() {
 		// Creating the MockMarketModel
-		model = new MockMarketModel(1);
+		model = new MockMarketModel();
 
 		// Creating the MockMarket
 		market = new MockMarket(model);

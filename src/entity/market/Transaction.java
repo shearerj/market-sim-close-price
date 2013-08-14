@@ -73,16 +73,6 @@ public class Transaction implements Serializable {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || getClass() != obj.getClass()) return false;
-		Transaction other = (Transaction) obj;
-		return price.equals(other.price) && quantity == other.quantity
-				&& buyOrder.equals(other.buyOrder) && sellOrder.equals(other.sellOrder)
-				&& buyer.equals(other.buyer) && seller.equals(other.seller)
-				&& market.equals(other.market) && execTime.equals(other.execTime);
-	}
-
-	@Override
 	public int hashCode() {
 		return new HashCodeBuilder(17, 31).append(price).append(quantity).append(
 				buyer).append(seller).append(buyOrder).append(sellOrder).append(

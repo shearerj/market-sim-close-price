@@ -29,7 +29,7 @@ public class MarketTest {
 
 	@Before
 	public void setup() {
-		model = new MockMarketModel(1);
+		model = new MockMarketModel();
 		market = new MockMarket(model);
 		model.addMarket(market);
 	}

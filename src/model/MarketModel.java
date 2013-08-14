@@ -21,11 +21,13 @@ import com.google.gson.JsonObject;
 import data.AgentProperties;
 import data.EntityProperties;
 import data.FundamentalValue;
+import data.MarketProperties;
 import data.Player;
 import entity.agent.Agent;
 import entity.agent.AgentFactory;
 import entity.infoproc.SIP;
 import entity.market.Market;
+import entity.market.MarketFactory;
 import entity.market.Order;
 import entity.market.Price;
 import entity.market.Transaction;
@@ -76,11 +78,13 @@ public class MarketModel implements Serializable {
 	protected final Collection<Agent> agents;
 	protected final Collection<Player> players;
 
-	public MarketModel(int modelID, FundamentalValue fundamental,
-			Collection<AgentProperties> agentProps,
-			EntityProperties modelProps, JsonObject playerConfig, RandPlus rand) {
+	public MarketModel(FundamentalValue fundamental,
+			EntityProperties simulationProps,
+			Collection<MarketProperties> marketProps,
+			Collection<AgentProperties> agentProps, JsonObject playerConfig,
+			RandPlus rand) {
 
-		this.modelID = modelID;
+		this.modelID = 1; // FIXME Remove
 		this.rand = rand;
 		this.fundamental = fundamental;
 		this.markets = new ArrayList<Market>();
@@ -90,21 +94,22 @@ public class MarketModel implements Serializable {
 		this.sip = new SIP(new TimeStamp(100)); // FIXME NbboLatency
 
 		// Setup
-		setupMarkets(modelProps);
-		setupAgents(modelProps, agentProps);
-		setupPlayers(modelProps, playerConfig);
+		setupMarkets(marketProps);
+		setupAgents(agentProps);
+		setupPlayers(simulationProps, playerConfig);
 	}
 
-	protected void setupMarkets(EntityProperties modelProps) {
-		// FIXME
+	protected void setupMarkets(Collection<MarketProperties> marketProps) {
+		MarketFactory factory = new MarketFactory(this);
+		for (MarketProperties mktProps : marketProps)
+			for (int i = 0; i < mktProps.getAsInt(Keys.NUM, 1); i++)
+				markets.add(factory.createMarket(mktProps));
 	}
 
-	protected void setupAgents(EntityProperties modelProps,
-			Collection<AgentProperties> agentProps) {
+	protected void setupAgents(Collection<AgentProperties> agentProps) {
 		for (AgentProperties agProps : agentProps) {
 			int number = agProps.getAsInt(Keys.NUM, 0);
 			double arrivalRate = agProps.getAsDouble(Keys.ARRIVAL_RATE, 0.075);
-			
 			
 			// XXX In general the arrival process and market generation can be
 			// generic or even specified, but for now we'll stick with the

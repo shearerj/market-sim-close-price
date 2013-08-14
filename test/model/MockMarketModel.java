@@ -10,6 +10,7 @@ import data.AgentProperties;
 import data.DummyFundamental;
 import data.EntityProperties;
 import data.FundamentalValue;
+import data.MarketProperties;
 import entity.agent.Agent;
 import entity.market.Market;
 
@@ -17,19 +18,15 @@ public class MockMarketModel extends MarketModel {
 
 	private static final long serialVersionUID = 1L;
 
-	public MockMarketModel(int modelID, FundamentalValue fundamental) {
-		super(modelID, fundamental, 
-				Collections.<AgentProperties>emptySet(),
-				new EntityProperties(), new JsonObject(), 
+	public MockMarketModel(FundamentalValue fundamental) {
+		super(fundamental, new EntityProperties(),
+				Collections.<MarketProperties> emptySet(),
+				Collections.<AgentProperties> emptySet(), new JsonObject(),
 				new RandPlus());
 	}
 	
-	public MockMarketModel(int modelID) {
-		this(modelID, new DummyFundamental(100000));
-	}
-	
 	public MockMarketModel() {
-		this(0);
+		this(new DummyFundamental(100000));
 	}
 	
 	public void addMarket(Market market) {

@@ -31,7 +31,7 @@ public class CDAMarketTest {
 
 	@Before
 	public void setup() {
-		model = new MockMarketModel(1);
+		model = new MockMarketModel();
 		market = new CDAMarket(model, TimeStamp.IMMEDIATE);
 		model.addMarket(market);
 	}
