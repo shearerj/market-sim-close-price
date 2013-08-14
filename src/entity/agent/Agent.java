@@ -29,6 +29,7 @@ import event.TimeStamp;
 public abstract class Agent extends Entity {
 
 	private static final long serialVersionUID = 5363438238024144057L;
+	private static int nextID = 1;
 	
 	protected final RandPlus rand;
 	protected final MarketModel model;
@@ -52,9 +53,9 @@ public abstract class Agent extends Entity {
 	protected int preLiqPosition;
 	protected int preLiqRealizedProfit;
 
-	public Agent(int agentID, TimeStamp arrivalTime, MarketModel model,
+	public Agent(TimeStamp arrivalTime, MarketModel model,
 			PrivateValue privateValue, RandPlus rand, int tickSize) {
-		super(agentID);
+		super(nextID++);
 		this.model = model;
 		this.rand = rand;
 		this.arrivalTime = arrivalTime;

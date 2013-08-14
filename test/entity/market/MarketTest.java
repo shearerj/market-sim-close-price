@@ -21,7 +21,6 @@ public class MarketTest {
 	// TODO Better testing of correct quote quantity
 	private MockMarketModel model;
 	private MockMarket market;
-	private int agentIndex;
 
 	@BeforeClass
 	public static void setupClass() {
@@ -33,13 +32,12 @@ public class MarketTest {
 		model = new MockMarketModel(1);
 		market = new MockMarket(model);
 		model.addMarket(market);
-		agentIndex = 1;
 	}
 
 	@Test
 	public void AddBid() {
 		TimeStamp time = new TimeStamp(0);
-		Agent agent = new MockAgent(agentIndex++, model, market);
+		Agent agent = new MockAgent(model, market);
 		market.submitOrder(agent, new Price(1), 1, time);
 
 		Collection<Order> orders = market.orderMapping.values();
@@ -60,7 +58,7 @@ public class MarketTest {
 	@Test
 	public void AddAsk() {
 		TimeStamp time = new TimeStamp(0);
-		Agent agent = new MockAgent(agentIndex++, model, market);
+		Agent agent = new MockAgent(model, market);
 		market.submitOrder(agent, new Price(1), -1, time);
 
 		Collection<Order> orders = market.orderMapping.values();
@@ -83,8 +81,8 @@ public class MarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(agentIndex++, model, market);
-		MockAgent agent2 = new MockAgent(agentIndex++, model, market);
+		MockAgent agent1 = new MockAgent(model, market);
+		MockAgent agent2 = new MockAgent(model, market);
 		
 
 		// Creating and adding bids
@@ -110,8 +108,8 @@ public class MarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(agentIndex++, model, market);
-		MockAgent agent2 = new MockAgent(agentIndex++, model, market);
+		MockAgent agent1 = new MockAgent(model, market);
+		MockAgent agent2 = new MockAgent(model, market);
 		
 		// Creating and adding bids
 		market.submitOrder(agent1, new Price(200), 1, time);
@@ -132,10 +130,10 @@ public class MarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(agentIndex++, model, market);
-		MockAgent agent2 = new MockAgent(agentIndex++, model, market);
-		MockAgent agent3 = new MockAgent(agentIndex++, model, market);
-		MockAgent agent4 = new MockAgent(agentIndex++, model, market);
+		MockAgent agent1 = new MockAgent(model, market);
+		MockAgent agent2 = new MockAgent(model, market);
+		MockAgent agent3 = new MockAgent(model, market);
+		MockAgent agent4 = new MockAgent(model, market);
 		
 		// Creating and adding bids
 		market.submitOrder(agent1, new Price(150),-1, time);

@@ -35,7 +35,6 @@ public class AAAgentTest {
 
 	private MockMarketModel model;
 	private Market market;
-	private int agentIndex;
 
 	@BeforeClass
 	public static void setupClass() {
@@ -74,8 +73,8 @@ public class AAAgentTest {
 		EntityProperties testProps = new EntityProperties(agentProperties);
 		testProps.put(Keys.BUYER_STATUS, isBuyer);
 
-		AAAgent agent = new AAAgent(agentIndex++, new TimeStamp(0), model,
-				market, rand, testProps);
+		AAAgent agent = new AAAgent(new TimeStamp(0), model, market, rand,
+				testProps);
 
 		return agent;
 	}
@@ -84,7 +83,7 @@ public class AAAgentTest {
 			int time) {
 		TimeStamp currentTime = new TimeStamp(time);
 		// creating a dummy agent
-		MockAgent agent = new MockAgent(agentIndex++, model, market);
+		MockAgent agent = new MockAgent(model, market);
 		// Having the agent submit a bid to the market
 		Collection<? extends Activity> bidActs = market.submitOrder(agent, new Price(price),
 				quantity, currentTime);

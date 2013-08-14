@@ -13,9 +13,9 @@ public abstract class HFTAgent extends MMAgent {
 
 	private static final long serialVersionUID = -1483633963238206201L;
 
-	public HFTAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
+	public HFTAgent(TimeStamp arrivalTime, MarketModel model,
 			RandPlus rand, int tickSize) {
-		super(agentID, arrivalTime, model, new PrivateValue(), rand, tickSize);
+		super(arrivalTime, model, new PrivateValue(), rand, tickSize);
 	}
 	
 }

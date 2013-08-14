@@ -21,11 +21,12 @@ import event.TimeStamp;
 public abstract class IP extends Entity {
 
 	private static final long serialVersionUID = -1150989788412631133L;
+	private static int nextID;
 	
 	protected TimeStamp latency;
 
-	public IP(int id, TimeStamp latency) {
-		super(id);
+	public IP(TimeStamp latency) {
+		super(nextID++);
 		this.latency = latency;
 	}
 

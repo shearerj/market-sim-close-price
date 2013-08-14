@@ -37,8 +37,8 @@ public class SIP extends IP {
 
 	protected final TimeSeries nbboSpreads;
 
-	public SIP(int ID, int modelID, TimeStamp latency) {
-		super(ID, latency);
+	public SIP(TimeStamp latency) {
+		super(latency);
 		this.marketQuotes = new HashMap<Market, Quote>();
 		this.transactions = new ArrayList<Transaction>();
 		this.nbbo = new BestBidAsk(null, null, null, null);

@@ -29,8 +29,8 @@ public class HFTIP extends SMIP {
 	 * @param ID
 	 * @param d
 	 */
-	public HFTIP(int ID, TimeStamp latency, Market mkt, HFTAgent hftAgent) {
-		super(ID, latency, mkt);
+	public HFTIP(TimeStamp latency, Market mkt, HFTAgent hftAgent) {
+		super(latency, mkt);
 		this.hftAgent = hftAgent;
 	}
 

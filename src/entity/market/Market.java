@@ -62,7 +62,7 @@ public abstract class Market extends Entity {
 
 
 	public Market(MarketModel model, ClearingRule clearingRule, TimeStamp latency) {
-		super(++nextID);
+		super(nextID++);
 		this.model = model;
 		this.orderbook = new FourHeap<Price, TimeStamp>();
 		this.clearingRule = clearingRule;
@@ -70,7 +70,7 @@ public abstract class Market extends Entity {
 
 		this.ips = new ArrayList<IP>();
 		this.sip = model.getSIP();
-		this.ip = new SMIP(model.nextIPID(), latency, this);
+		this.ip = new SMIP(latency, this);
 		ips.add(sip);
 		ips.add(ip);
 

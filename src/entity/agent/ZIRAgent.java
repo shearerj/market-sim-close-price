@@ -45,19 +45,19 @@ public class ZIRAgent extends ReentryAgent {
 	protected int bidRange; // range for limit order
 	protected int maxAbsPosition; // max quantity for position
 
-	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, int bidRange, int maxAbsPosition,
+	public ZIRAgent(TimeStamp arrivalTime, MarketModel model, Market market,
+			RandPlus rand, int bidRange, int maxAbsPosition,
 			double reentryRate, double pvVar, int tickSize) {
-		super(agentID, arrivalTime, model, market, new PrivateValue(
-				maxAbsPosition, pvVar, rand), rand, reentryRate, tickSize);
+		super(arrivalTime, model, market, new PrivateValue(maxAbsPosition,
+				pvVar, rand), rand, reentryRate, tickSize);
 		this.bidRange = bidRange;
 		this.maxAbsPosition = maxAbsPosition;
 	}
 
-	public ZIRAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, EntityProperties props) {
-		this(agentID, arrivalTime, model, market, rand, props.getAsInt(
-				Keys.BID_RANGE, 5000), props.getAsInt(Keys.MAX_QUANTITY, 10),
+	public ZIRAgent(TimeStamp arrivalTime, MarketModel model, Market market,
+			RandPlus rand, EntityProperties props) {
+		this(arrivalTime, model, market, rand, props.getAsInt(Keys.BID_RANGE,
+				5000), props.getAsInt(Keys.MAX_QUANTITY, 10),
 				props.getAsDouble(Keys.REENTRY_RATE, 0.005), props.getAsDouble(
 						Keys.PRIVATE_VALUE_VAR, 100000000), props.getAsInt(
 						Keys.TICK_SIZE, 1));

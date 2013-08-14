@@ -30,10 +30,11 @@ public class ZIPAgent extends ReentryAgent {
 	protected final int bidRange; // range for limit order
 	protected final double c_R, c_A, beta, betaVar, gamma;
 
-	public ZIPAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, double pvVar, int tickSize,
-			int bidRange, double reentryRate, double c_R, double c_A, double beta, double betaVar, double gamma) {
-		super(agentID, arrivalTime, model, market, new PrivateValue(1,
+	public ZIPAgent(TimeStamp arrivalTime, MarketModel model, Market market,
+			RandPlus rand, double pvVar, int tickSize, int bidRange,
+			double reentryRate, double c_R, double c_A, double beta,
+			double betaVar, double gamma) {
+		super(arrivalTime, model, market, new PrivateValue(1,
 				pvVar, rand),
 				rand, reentryRate, tickSize);
 		this.bidRange = bidRange;
@@ -44,9 +45,9 @@ public class ZIPAgent extends ReentryAgent {
 		this.gamma = gamma;
 	}
 	
-	public ZIPAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, EntityProperties props) {
-		this(agentID, arrivalTime, model, market, rand, props.getAsDouble(
+	public ZIPAgent(TimeStamp arrivalTime, MarketModel model, Market market,
+			RandPlus rand, EntityProperties props) {
+		this(arrivalTime, model, market, rand, props.getAsDouble(
 				Keys.PRIVATE_VALUE_VAR, 100000000), props.getAsInt(
 				Keys.TICK_SIZE, 1), props.getAsInt(Keys.BID_RANGE, 5000),
 				props.getAsDouble(Keys.REENTRY_RATE, 0.005), props.getAsDouble(

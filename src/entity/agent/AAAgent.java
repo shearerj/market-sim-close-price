@@ -58,20 +58,19 @@ public class AAAgent extends ReentryAgent {
 	private double alphaMin; // min experienced value for alpha
 
 
-	public AAAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, EntityProperties params) {
-		this(agentID, arrivalTime, model, market, rand, params,
-				new PrivateValue(params.getAsInt(Keys.MAX_QUANTITY, 1),
-						params.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000), rand), 
-				params.getAsDouble(Keys.REENTRY_RATE, 0.005),
-				params.getAsInt(Keys.TICK_SIZE, 1));
+	public AAAgent(TimeStamp arrivalTime, MarketModel model, Market market,
+			RandPlus rand, EntityProperties params) {
+		this(arrivalTime, model, market, rand, params, new PrivateValue(
+				params.getAsInt(Keys.MAX_QUANTITY, 1), params.getAsDouble(
+						Keys.PRIVATE_VALUE_VAR, 100000000), rand),
+				params.getAsDouble(Keys.REENTRY_RATE, 0.005), params.getAsInt(
+						Keys.TICK_SIZE, 1));
 	}
 	
-	public AAAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, RandPlus rand, EntityProperties params,
-			PrivateValue privateValue, double reentryRate, int tickSize) {
-		super(agentID, arrivalTime, model, market, privateValue, rand,
-				reentryRate,
+	public AAAgent(TimeStamp arrivalTime, MarketModel model, Market market,
+			RandPlus rand, EntityProperties params, PrivateValue privateValue,
+			double reentryRate, int tickSize) {
+		super(arrivalTime, model, market, privateValue, rand, reentryRate,
 				tickSize);
 		
 		//Initializing Max Absolute Position

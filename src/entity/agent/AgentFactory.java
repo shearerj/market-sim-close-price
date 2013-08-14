@@ -15,16 +15,13 @@ public class AgentFactory {
 
 	protected final RandPlus rand;
 	protected final MarketModel model;
-	protected final Generator<Integer> nextID;
 	protected final Generator<TimeStamp> arrivalProcess;
 	protected final Generator<Market> marketAssignment;
 
-	public AgentFactory(MarketModel model, Generator<Integer> ids,
-			Generator<TimeStamp> arrivalProcess,
+	public AgentFactory(MarketModel model, Generator<TimeStamp> arrivalProcess,
 			Generator<Market> marketProcess, RandPlus rand) {
 		this.rand = rand;
 		this.model = model;
-		this.nextID = ids;
 		this.arrivalProcess = arrivalProcess;
 		this.marketAssignment = marketProcess;
 	}
@@ -32,9 +29,8 @@ public class AgentFactory {
 	/**
 	 * SMAgent factory with Poisson arrivals and round robin market selection.
 	 */
-	public AgentFactory(MarketModel model, Generator<Integer> ids,
-			double arrivalRate, RandPlus rand) {
-		this(model, ids, new PoissonArrivalGenerator(TimeStamp.IMMEDIATE,
+	public AgentFactory(MarketModel model, double arrivalRate, RandPlus rand) {
+		this(model, new PoissonArrivalGenerator(TimeStamp.IMMEDIATE,
 				arrivalRate, new RandPlus(rand.nextLong())),
 				new RoundRobinGenerator<Market>(model.getMarkets()), rand);
 	}
@@ -45,28 +41,26 @@ public class AgentFactory {
 	public Agent createAgent(AgentProperties props) {
 		switch (props.getAgentType()) {
 		case AA:
-			return new AAAgent(nextID.next(), arrivalProcess.next(), model,
+			return new AAAgent(arrivalProcess.next(), model,
 					marketAssignment.next(), new RandPlus(rand.nextLong()),
 					props);
 		case ZIP:
-			return new ZIPAgent(nextID.next(), arrivalProcess.next(), model,
+			return new ZIPAgent(arrivalProcess.next(), model,
 					marketAssignment.next(), new RandPlus(rand.nextLong()),
 					props);
 		case ZIR:
-			return new ZIRAgent(nextID.next(), arrivalProcess.next(), model,
+			return new ZIRAgent(arrivalProcess.next(), model,
 					marketAssignment.next(), new RandPlus(rand.nextLong()),
 					props);
 		case ZI:
-			return new ZIAgent(nextID.next(), arrivalProcess.next(), model,
+			return new ZIAgent(arrivalProcess.next(), model,
 					marketAssignment.next(), new RandPlus(rand.nextLong()),
 					props);
 		case BASICMM:
-			return new BasicMarketMaker(nextID.next(), model,
-					marketAssignment.next(), new RandPlus(rand.nextLong()),
-					props);
+			return new BasicMarketMaker(model, marketAssignment.next(),
+					new RandPlus(rand.nextLong()), props);
 		case LA:
-			return new LAAgent(nextID.next(), model, new RandPlus(
-					rand.nextLong()), props);
+			return new LAAgent(model, new RandPlus(rand.nextLong()), props);
 		default:
 			throw new IllegalArgumentException("Can't create AgentType: "
 					+ props.getAgentType());

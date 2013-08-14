@@ -30,8 +30,6 @@ import entity.market.Order;
 import entity.market.Price;
 import entity.market.Transaction;
 import event.TimeStamp;
-import generator.Generator;
-import generator.IDGenerator;
 
 /**
  * MARKETMODEL
@@ -64,7 +62,7 @@ import generator.IDGenerator;
  * 
  * @author ewah
  */
-// TODO Remove an merge into event manager?
+// TODO Remove and merge into event manager?
 public class MarketModel implements Serializable {
 
 	private static final long serialVersionUID = 949337505724211161L;
@@ -77,8 +75,6 @@ public class MarketModel implements Serializable {
 	protected final Collection<Transaction> trans;
 	protected final Collection<Agent> agents;
 	protected final Collection<Player> players;
-	protected final Generator<Integer> agentIDgen;
-	protected final Generator<Integer> ipIDgen;
 
 	public MarketModel(int modelID, FundamentalValue fundamental,
 			Collection<AgentProperties> agentProps,
@@ -91,9 +87,7 @@ public class MarketModel implements Serializable {
 		this.agents = new ArrayList<Agent>();
 		this.players = new ArrayList<Player>();
 		this.trans = new ArrayList<Transaction>();
-		this.agentIDgen = new IDGenerator();
-		this.ipIDgen = new IDGenerator();
-		this.sip = new SIP(nextIPID(), modelID, new TimeStamp(100));
+		this.sip = new SIP(new TimeStamp(100)); // FIXME NbboLatency
 
 		// Setup
 		setupMarkets(modelProps);
@@ -115,8 +109,8 @@ public class MarketModel implements Serializable {
 			// XXX In general the arrival process and market generation can be
 			// generic or even specified, but for now we'll stick with the
 			// original implementation
-			AgentFactory factory = new AgentFactory(this, agentIDgen,
-					arrivalRate, new RandPlus(rand.nextLong()));
+			AgentFactory factory = new AgentFactory(this, arrivalRate,
+					new RandPlus(rand.nextLong()));
 
 			for (int i = 0; i < number; i++)
 				agents.add(factory.createAgent(agProps));
@@ -151,8 +145,8 @@ public class MarketModel implements Serializable {
 				int number = stratEnt.getValue();
 				double arrivalRate = modelProps.getAsDouble(Keys.ARRIVAL_RATE, 0.075);
 
-				AgentFactory factory = new AgentFactory(this, agentIDgen,
-						arrivalRate, new RandPlus(rand.nextLong()));
+				AgentFactory factory = new AgentFactory(this, arrivalRate,
+						new RandPlus(rand.nextLong()));
 
 				for (int i = 0; i < number; i++) {
 					Agent agent = factory.createAgent(new AgentProperties(strat));
@@ -173,10 +167,6 @@ public class MarketModel implements Serializable {
 			manager.addActivity(new Clear(market, TimeStamp.IMMEDIATE));
 		for (Agent agent : agents)
 			manager.addActivity(new AgentArrival(agent, agent.getArrivalTime()));
-	}
-
-	public int nextIPID() {
-		return ipIDgen.next();
 	}
 
 	public Price getFundamentalAt(TimeStamp ts) {

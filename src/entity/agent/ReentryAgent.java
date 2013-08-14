@@ -24,10 +24,10 @@ public abstract class ReentryAgent extends BackgroundAgent {
 	
 	protected Generator<TimeStamp> reentry; // re-entry times
 	
-	public ReentryAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
-			Market market, PrivateValue pv, RandPlus rand, Generator<TimeStamp> reentry, 
-			int tickSize) {
-		super(agentID, arrivalTime, model, market, pv, rand, tickSize);
+	public ReentryAgent(TimeStamp arrivalTime, MarketModel model,
+			Market market, PrivateValue pv, RandPlus rand,
+			Generator<TimeStamp> reentry, int tickSize) {
+		super(arrivalTime, model, market, pv, rand, tickSize);
 	
 		this.reentry = reentry;
 	}
@@ -35,10 +35,10 @@ public abstract class ReentryAgent extends BackgroundAgent {
 	/**
 	 * Shortcut constructor for exponential interarrivals (e.g. poisson reentries)
 	 */
-	public ReentryAgent(int agentID, TimeStamp arrivalTime, MarketModel model,
+	public ReentryAgent(TimeStamp arrivalTime, MarketModel model,
 			Market market, PrivateValue pv, RandPlus rand, double reentryRate,
 			int tickSize) {
-		this(agentID, arrivalTime, model, market, pv, rand,
+		this(arrivalTime, model, market, pv, rand,
 				new ExponentialInterarrivalGenerator(reentryRate, rand),
 				tickSize);
 	}

@@ -15,9 +15,9 @@ public abstract class BackgroundAgent extends SMAgent {
 	
 	private static final long serialVersionUID = 7742389103679854398L;
 
-	public BackgroundAgent(int agentID, TimeStamp arrivalTime, MarketModel model, 
+	public BackgroundAgent(TimeStamp arrivalTime, MarketModel model, 
 			Market market, PrivateValue pv, RandPlus rand, int tickSize) {
-		super(agentID, arrivalTime, model, market, pv, rand, tickSize);
+		super(arrivalTime, model, market, pv, rand, tickSize);
 	}
 	
 }
