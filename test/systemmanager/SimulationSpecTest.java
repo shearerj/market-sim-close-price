@@ -185,12 +185,16 @@ public class SimulationSpecTest {
 		config.addProperty(CALL.toString(), Keys.NUM + "_4");
 		
 		spec = new SimulationSpec(new StringReader(json.toString()));
-		assertEquals("1CDA_4CALL_1", spec.getSimulationProps().getAsString(Keys.MODEL_NAME));
-		
+		String name = spec.getSimulationProps().getAsString(Keys.MODEL_NAME);
+		if (!(name.equals("4CALL_1CDA_1") || name.equals("1CDA_4CALL_1")))
+			fail();
+
 		config.addProperty(LA.toString(), Keys.NUM + "_51");
-		
+
 		spec = new SimulationSpec(new StringReader(json.toString()));
-		assertEquals("1CDA_4CALL_51LA_1", spec.getSimulationProps().getAsString(Keys.MODEL_NAME));
+		name = spec.getSimulationProps().getAsString(Keys.MODEL_NAME);
+		if (!(name.equals("1CDA_4CALL_51LA_1") || name.equals("4CALL_1CDA_51LA_1")))
+			fail();
 	}
 
 }

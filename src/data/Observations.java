@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +22,7 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import systemmanager.Consts;
 import systemmanager.Keys;
 import systemmanager.SimulationSpec;
+import utils.CollectionUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -109,15 +109,15 @@ public class Observations {
 			FundamentalValue fundamental, SIP sip, String modelName,
 			int observationNum) {
 		
-		List<Transaction> transactions = new ArrayList<Transaction>();
+		Collection<List<Transaction>> transactionLists = new ArrayList<List<Transaction>>();
 		for (Market market : markets)
-			transactions.addAll(market.getTransactions());
-		// FIXME Since all market transactions are sorted, this can be done in linear time
-		Collections.sort(transactions, new Comparator<Transaction>() {
-			public int compare(Transaction o1, Transaction o2) {
-				return o1.getExecTime().compareTo(o2.getExecTime());
-			}
-		});
+			transactionLists.add(market.getTransactions());
+		List<Transaction> transactions = CollectionUtils.mergeSortedLists(
+				transactionLists, new Comparator<Transaction>() {
+					public int compare(Transaction o1, Transaction o2) {
+						return o1.getExecTime().compareTo(o2.getExecTime());
+					}
+				});
 		
 		observations = new JsonObject();
 
@@ -131,19 +131,16 @@ public class Observations {
 		observations.add(FEATURES, features);
 		features.add("", getConfiguration(spec, observationNum, maxTime));
 
-		features.add(modelName + "_" + SURPLUS, getSurplus(agents, players));
+		features.add(SURPLUS, getSurplus(agents, players));
 
-		features.add(modelName + "_" + EXECTIME, getExecutionTime(transactions));
-		// FIXME this should maybe be simLength instead of maxTime...
-		features.add(modelName + "_" + TRANSACTIONS,
+		features.add(EXECTIME, getExecutionTime(transactions));
+		features.add(TRANSACTIONS,
 				getTransactionInfo(agents, transactions, fundamental, maxTime));
-		features.add(modelName + "_" + SPREADS, getSpread(markets, sip, maxTime));
-		features.add(modelName + "_" + ROLE_MARKETMAKER,
-				getMarketMakerInfo(agents));
+		features.add(SPREADS, getSpread(markets, sip, maxTime));
+		features.add(ROLE_MARKETMAKER, getMarketMakerInfo(agents));
 
 		for (int period : Consts.periods)
-			features.add(modelName + "_" + VOL,
-					getVolatility(markets, period, maxTime));
+			features.add(VOL, getVolatility(markets, period, maxTime));
 
 		// TODO - need to remove the position balance hack
 		// addFeature(modelName + ROUTING, getRegNMSRoutingInfo(model));
@@ -226,8 +223,7 @@ public class Observations {
 				if (agent instanceof BackgroundAgent) {
 					bkgrd.addValue(agentSurplus);
 				} else if (agent instanceof HFTAgent) {
-					// FIXME This is not correct if the agent has a net position at the end...
-					agentSurplus = agent.getSurplus(0);
+					// FIXME This is not necessarily correct if the agent has a net position at the end...
 					hft.addValue(agentSurplus);
 				} else if (agent instanceof MarketMaker) {
 					mm.addValue(agentSurplus);
@@ -330,12 +326,12 @@ public class Observations {
 
 		// compute RMSD (for price discovery) at different sampling frequencies
 		for (int period : Consts.periods) {
-			String prefix = period > 1 ? PERIODICITY + period : null;
+			String key = period > 1 ? PERIODICITY + period + "_" + RMSD : RMSD; 
 			// XXX maxTime instead of simLength?
 			DSPlus pr = transPrices.getSampledStats(period, (int) simLength);
 			DSPlus fundStat = fundPrices.getSampledStats(period, (int) simLength);
 
-			feat.addProperty(prefix + "_" + RMSD, pr.getRMSD(fundStat));
+			feat.addProperty(key, pr.getRMSD(fundStat));
 		}
 		return feat;
 	}

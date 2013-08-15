@@ -13,6 +13,9 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.Set;
 
+// TODO long time in the future. Turn this into a factory to produce, therefore with
+// a comparator, you can input any type, but if you want to not use a comparator, it
+// must be a type that implements comparable.
 public class BinaryHeap<E> implements Queue<E>, Serializable {
 
 	private static final long serialVersionUID = 6048249591836891615L;

@@ -9,7 +9,7 @@ Merges log files. This is very unsafe in terms of file handling, but if it's
 only used as a one time script it should work fine.
 """
 
-retime = re.compile(r'\d+\|(\d+)')
+retime = re.compile(r'\d+\|\s*(\d+)')
 
 class LogReader:
     def __init__(self, f):
@@ -41,10 +41,16 @@ def merge(logs):
 
     while not queue.empty():
         reader = queue.get()
-        line = reader.nextline()
+        time = reader.time
+        while reader.time == time:
+            line = reader.nextline()
+            if not line:
+                break
+            sys.stdout.write(line)
+        #line = reader.nextline()
         if not line:
             continue
-        sys.stdout.write(line)
+        #sys.stdout.write(line)
         queue.put(reader)
 
 if __name__ == "__main__":

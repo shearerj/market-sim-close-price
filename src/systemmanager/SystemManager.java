@@ -126,7 +126,9 @@ public class SystemManager {
 		eventManager = new EventManager(new RandPlus(rand.nextLong()));
 		
 		initializeLogger(getLogLevel(), simFolder, simNumber, eventManager,
-				simProps.getAsInt(Keys.SIMULATION_LENGTH, 10000));
+				simProps.getAsInt(Keys.SIMULATION_LENGTH, 10000),
+				simProps.getAsInt(Keys.MODEL_NUM));
+		log(INFO, modelName);
 		log(INFO, "Random Seed: " + seed);
 		log(INFO, "Configuration: " + spec);
 
@@ -143,7 +145,8 @@ public class SystemManager {
 		setupAgents(agentProps);
 		setupPlayers(simProps, playerConfig);
 
-		// FIXME Log market creation
+		for (Market market : markets)
+			log(INFO, "Created Market: " + market);
 	}
 	
 	protected void setupMarkets(Collection<MarketProperties> marketProps) {
@@ -223,7 +226,7 @@ public class SystemManager {
 	 * Must be done after "envProps" exists
 	 */
 	protected static void initializeLogger(int logLevel, File simFolder,
-			int num, final EventManager eventManager, final int simLength)
+			int num, final EventManager eventManager, int simLength, final int modelNumber)
 			throws IOException {
 		StringBuilder logFileName = new StringBuilder(
 				simFolder.getPath().replace('/', '_'));
@@ -234,14 +237,15 @@ public class SystemManager {
 		logDir.mkdirs();
 
 		File logFile = new File(logDir, logFileName.toString());
+		final int digits = Integer.toString(simLength).length();
 
 		// Create log file
 		Logger.setup(logLevel, logFile, true, new Prefix() {
 			@Override
 			// TODO If/when only one market model, change this to prefix model id
 			public String getPrefix() {
-				return String.format("%" + Integer.toString(simLength).length()
-						+ "d| ", eventManager.getCurrentTime().getInTicks());
+				return String.format("%" + digits + "d|%d| ",
+						eventManager.getCurrentTime().getInTicks(), modelNumber);
 			}
 		});
 		

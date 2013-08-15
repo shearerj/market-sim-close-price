@@ -32,15 +32,14 @@ public class Compare {
 	 * Only works if E implements Comparable<E>
 	 * @return
 	 */
-	public static <E> Comparator<E> naturalOrder() {
+	public static <E extends Comparable<? super E>> Comparator<E> naturalOrder() {
 		return new CompComparator<E>();
 	}
 	
-	private static class CompComparator<E> implements Comparator<E> {
-		@SuppressWarnings("unchecked")
+	private static class CompComparator<E extends Comparable<? super E>> implements Comparator<E> {
 		@Override
 		public int compare(E o1, E o2) {
-			return ((Comparable<E>) o1).compareTo(o2);
+			return o1.compareTo(o2);
 		}
 	}
 

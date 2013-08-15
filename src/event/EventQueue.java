@@ -8,11 +8,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Random;
-
-import fourheap.BinaryHeap;
-
 
 import utils.CollectionUtils;
 
@@ -49,7 +47,7 @@ public class EventQueue implements Queue<Activity> {
 	// proceeds it. Activities scheduled at the same time (even infinitely fast)
 	// may occur in any order.
 
-	protected BinaryHeap<Event> eventQueue;
+	protected PriorityQueue<Event> eventQueue;
 	protected HashMap<TimeStamp, Event> eventIndex;
 	protected int size;
 	protected Random rand;
@@ -63,7 +61,7 @@ public class EventQueue implements Queue<Activity> {
 	}
 
 	public EventQueue(int capacity, Random seed) {
-		eventQueue = new BinaryHeap<Event>(capacity);
+		eventQueue = new PriorityQueue<Event>(capacity);
 		eventIndex = new HashMap<TimeStamp, Event>(capacity);
 		size = 0;
 		rand = seed;
