@@ -69,6 +69,7 @@ public class SystemManager {
 	protected final File simFolder; // simulation folder
 	protected final SimulationSpec spec;
 	protected final TimeStamp simulationLength;
+	protected final String modelName;
 
 	/**
 	 * Only one argument, which is the sample number, is processed
@@ -112,13 +113,14 @@ public class SystemManager {
 		this.obsNum = simNumber;
 
 		spec = new SimulationSpec(new File(simFolder, Consts.SIM_SPEC_FILE));
-		EntityProperties simProps = spec.getSimulationConfig();
-		Collection<MarketProperties> marketProps = spec.getMarketConfigs();
-		Collection<AgentProperties> agentProps = spec.getAgentConfigs();
-		JsonObject playerConfig = spec.getPlayerConfig();
+		EntityProperties simProps = spec.getSimulationProps();
+		Collection<MarketProperties> marketProps = spec.getMarketProps();
+		Collection<AgentProperties> agentProps = spec.getAgentProps();
+		JsonObject playerConfig = spec.getPlayerProps();
 		
 		long seed = simProps.getAsLong(Keys.RAND_SEED, System.currentTimeMillis());
 		rand = new RandPlus(seed);
+		modelName = simProps.getAsString(Keys.MODEL_NAME); // TODO Move name generation here?
 
 		simulationLength = new TimeStamp(simProps.getAsLong(Keys.SIMULATION_LENGTH));
 		eventManager = new EventManager(new RandPlus(rand.nextLong()));
@@ -273,7 +275,7 @@ public class SystemManager {
 		}
 		File results = new File(simFolder, Consts.OBS_FILE_PREFIX + obsNum + ".json");
 		Observations obs = new Observations(spec, markets, agents, players,
-				fundamental, sip, "_" /* TODO name */, obsNum);
+				fundamental, sip, modelName, obsNum);
 		obs.writeToFile(results);
 	}
 

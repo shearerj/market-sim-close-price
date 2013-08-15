@@ -7,9 +7,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -105,15 +109,21 @@ public class Observations {
 			FundamentalValue fundamental, SIP sip, String modelName,
 			int observationNum) {
 		
-		Collection<Transaction> transactions = new HashSet<Transaction>();
+		List<Transaction> transactions = new ArrayList<Transaction>();
 		for (Market market : markets)
 			transactions.addAll(market.getTransactions());
+		// FIXME Since all market transactions are sorted, this can be done in linear time
+		Collections.sort(transactions, new Comparator<Transaction>() {
+			public int compare(Transaction o1, Transaction o2) {
+				return o1.getExecTime().compareTo(o2.getExecTime());
+			}
+		});
 		
 		observations = new JsonObject();
 
 		observations.add(PLAYERS, playerObservations(players));
 
-		double arrivalRate = spec.getDefaultAgentConfig().getAsDouble(Keys.ARRIVAL_RATE, 0.075);
+		double arrivalRate = spec.getDefaultAgentProps().getAsDouble(Keys.ARRIVAL_RATE, 0.075);
 		long maxTime = Math.round(agents.size() / arrivalRate);
 		maxTime = Math.max(Consts.upToTime, quantize((int) maxTime, 1000));
 
@@ -166,11 +176,11 @@ public class Observations {
 
 		config.addProperty(OBS_KEY, observationNum);
 		config.addProperty(TIMESERIES_MAXTIME, maxTime);
-		copyPropertiesToJson(config, spec.getSimulationConfig());
-		copyPropertiesToJson(config, spec.getDefaultMarketConfig());
-		copyPropertiesToJson(config, spec.getDefaultAgentConfig());
+		copyPropertiesToJson(config, spec.getSimulationProps());
+		copyPropertiesToJson(config, spec.getDefaultMarketProps());
+		copyPropertiesToJson(config, spec.getDefaultAgentProps());
 
-		for (AgentProperties props : spec.getAgentConfigs()) {
+		for (AgentProperties props : spec.getAgentProps()) {
 			// TODO Change to not split off number...
 			int number = props.getAsInt(Keys.NUM, 0);
 

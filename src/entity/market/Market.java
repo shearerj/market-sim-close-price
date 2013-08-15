@@ -51,7 +51,7 @@ public abstract class Market extends Entity {
 	protected final Map<fourheap.Order<Price, TimeStamp>, Order> orderMapping;
 	protected final Map<Price, Integer> askPriceQuantity, bidPriceQuantity;
 	protected final Collection<Order> orders; // All orders ever submitted to the market
-	protected final Collection<Transaction> transactions; // All successful transactions
+	protected final List<Transaction> allTransactions; // All successful transactions
 	
 	// depths: Number of orders in the orderBook
 	// spreads: Bid-ask spread value
@@ -75,7 +75,7 @@ public abstract class Market extends Entity {
 		this.askPriceQuantity = new HashMap<Price, Integer>();
 		this.bidPriceQuantity = new HashMap<Price, Integer>();
 		this.orders = new ArrayList<Order>();
-		this.transactions = new ArrayList<Transaction>();
+		this.allTransactions = new ArrayList<Transaction>();
 
 		this.depths = new TimeSeries();
 		this.spreads = new TimeSeries();
@@ -134,8 +134,7 @@ public abstract class Market extends Entity {
 		List<fourheap.Transaction<Price, TimeStamp>> ftransactions = orderbook.clear();
 		List<Price> prices = clearingRule.pricing(ftransactions);
 
-		List<Transaction> transactions = new ArrayList<Transaction>(
-				ftransactions.size());
+		List<Transaction> transactions = new ArrayList<Transaction>(ftransactions.size());
 		Iterator<Price> pit = prices.iterator();
 		for (fourheap.Transaction<Price, TimeStamp> ftrans : ftransactions) {
 
@@ -151,7 +150,7 @@ public abstract class Market extends Entity {
 			checkOrder(buy);
 			checkOrder(sell);
 			transactions.add(trans);
-			transactions.add(trans);
+			allTransactions.add(trans);
 			// TODO add delay to this
 			buy.getAgent().addTransaction(trans);
 			if (!buy.getAgent().equals(sell.getAgent())) // In case buyer == seller
@@ -290,8 +289,8 @@ public abstract class Market extends Entity {
 				duration);
 	}
 	
-	public Collection<Transaction> getTransactions() {
-		return Collections.unmodifiableCollection(transactions);
+	public List<Transaction> getTransactions() {
+		return Collections.unmodifiableList(allTransactions);
 	}
 
 	public TimeSeries getDepth() {
