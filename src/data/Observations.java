@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,7 +23,6 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import systemmanager.Consts;
 import systemmanager.Keys;
 import systemmanager.SimulationSpec;
-import utils.CollectionUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -109,15 +109,14 @@ public class Observations {
 			FundamentalValue fundamental, SIP sip, String modelName,
 			int observationNum) {
 		
-		Collection<List<Transaction>> transactionLists = new ArrayList<List<Transaction>>();
+		List<Transaction> transactions = new ArrayList<Transaction>();
 		for (Market market : markets)
-			transactionLists.add(market.getTransactions());
-		List<Transaction> transactions = CollectionUtils.mergeSortedLists(
-				transactionLists, new Comparator<Transaction>() {
-					public int compare(Transaction o1, Transaction o2) {
-						return o1.getExecTime().compareTo(o2.getExecTime());
-					}
-				});
+			transactions.addAll(market.getTransactions());
+		Collections.sort(transactions, new Comparator<Transaction>() {
+			public int compare(Transaction o1, Transaction o2) {
+				return o1.getExecTime().compareTo(o2.getExecTime());
+			}
+		});
 		
 		observations = new JsonObject();
 
