@@ -102,15 +102,12 @@ public class Observations {
 
 	public Observations(SimulationSpec spec, Collection<Market> markets,
 			Collection<Agent> agents, Collection<Player> players,
-			Collection<Transaction> transactions, FundamentalValue fundamental,
-			SIP sip, String modelName, int observationNum) {
-		// Collection<Market> markets = model.getMarkets();
-//		Collection<Agent> agents = model.getAgents();
-//		Collection<Player> players = model.getPlayers();
-//		Collection<Transaction> transactions = model.getTransactions();
-//		FundamentalValue fundamental = model.fundamental;
-//		SIP sip = model.getSIP();
-//		String modelName = model.getName().toLowerCase() + "_" + model.getID();
+			FundamentalValue fundamental, SIP sip, String modelName,
+			int observationNum) {
+		
+		Collection<Transaction> transactions = new HashSet<Transaction>();
+		for (Market market : markets)
+			transactions.addAll(market.getTransactions());
 		
 		observations = new JsonObject();
 
