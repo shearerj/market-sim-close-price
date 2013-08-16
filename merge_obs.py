@@ -1,7 +1,7 @@
 from sys import argv, stdout
+from os import listdir, path
 import json
 import obs2csv
-from os import listdir
 
 def commonConfig(configs):
     return dict(set.intersection(*[set(c.items()) for c in configs]))
@@ -22,10 +22,12 @@ def mergeObs(obs):
             features[name + k] = v
     return {'assignment':[], 'features':features}
 
-if __name__ == '__main__':
-    dirs = argv[1:]
+def mergeObsDirectories(dirs, output):
     unique = set.intersection(*[set(f for f in listdir(d) if 'observation' in f) for d in dirs])
     def doMerge():
         for obs in unique:
-            yield mergeObs([readJson(d + '/' + obs) for d in dirs])
-    obs2csv.aggregate(stdout, doMerge())
+            yield mergeObs([readJson(path.join(d, obs)) for d in dirs])
+    obs2csv.aggregate(output, doMerge())
+    
+if __name__ == '__main__':
+    mergeObsDirectories(argv[1:], stdout)

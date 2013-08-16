@@ -117,8 +117,12 @@ public class SystemManager {
 		Collection<MarketProperties> marketProps = spec.getMarketProps();
 		Collection<AgentProperties> agentProps = spec.getAgentProps();
 		JsonObject playerConfig = spec.getPlayerProps();
-		
-		long seed = simProps.getAsLong(Keys.RAND_SEED, System.currentTimeMillis());
+
+		// XXX Adding obsNum is a hack so that it's easy to run a set of simulations with the same
+		// random seed. This is fine if the random number generator is good, and a seed only one off
+		// produces sufficiently independent draws, but if this isn't the case this is poisoning
+		// results.
+		long seed = simProps.getAsLong(Keys.RAND_SEED, System.currentTimeMillis()) + obsNum;
 		rand = new RandPlus(seed);
 		modelName = simProps.getAsString(Keys.MODEL_NAME); // TODO Move name generation here?
 

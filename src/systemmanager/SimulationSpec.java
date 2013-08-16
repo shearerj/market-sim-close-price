@@ -161,11 +161,11 @@ public class SimulationSpec {
 	
 	/**
 	 * Used to generate a unique name for the simulation. If a name is given in the spec, it will
-	 * use that name. Otherwise if there's a preset, it will use that appended with the model
-	 * number. If there's no preset it will form a string with the number of markets, LA agents, and
-	 * the model number. The central call market would simply be called 1CALL_1. TWOMARKET with an
-	 * LA would be 2CDA_1LA_1. A hypothetical model with 2 CDA markets, 1 call market, and 2 la
-	 * agents would be 2CDA_1CALL_2LA_1.
+	 * use that name. Otherwise if there's a preset, it will use the name of the preset. If there's
+	 * no preset it will form a string with the number of markets, LA agents, and the model number.
+	 * The central call market would simply be called 1CALL_1. TWOMARKET with an LA would be
+	 * 2CDA_1LA_1. A hypothetical model with 2 CDA markets, 1 call market, and 2 la agents would be
+	 * 2CDA_1CALL_2LA_1.
 	 */
 	// XXX Move to System Manager? I'm not sure this should go here.
 	protected void getName(JsonObject config,
@@ -176,8 +176,7 @@ public class SimulationSpec {
 		JsonPrimitive preset = config.getAsJsonPrimitive(Keys.PRESETS);
 		if (preset != null) {
 			// Use preset
-			config.addProperty(Keys.MODEL_NAME, preset.getAsString() + "_"
-					+ config.getAsJsonPrimitive(Keys.MODEL_NUM).getAsString());
+			config.addProperty(Keys.MODEL_NAME, preset.getAsString());
 		} else {
 			// Use config
 			Map<MarketType, Integer> marketCounts = new HashMap<MarketType, Integer>(MarketType.values().length);

@@ -1,5 +1,5 @@
 from sys import argv, stdout
-from os import listdir
+from os import path, listdir
 import json
 
 def feat2dict(feat):
@@ -41,9 +41,8 @@ if __name__ == '__main__':
 
     def obsJson():
         for obs in (o for o in listdir(fol) if 'observation' in o):
-            f = open(fol + '/' + obs)
-            j = json.load(f)
-            f.close()
+            with open(path.join(fol, obs)) as f:
+                j = json.load(f)
             yield j
 
     aggregate(out, obsJson())

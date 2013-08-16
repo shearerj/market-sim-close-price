@@ -1,5 +1,5 @@
 import sys
-from sys import argv
+from sys import argv, stdout, exit
 import os.path
 import re
 from Queue import PriorityQueue
@@ -46,7 +46,7 @@ def merge(logs):
             line = reader.nextline()
             if not line:
                 break
-            sys.stdout.write(line)
+            stdout.write(line)
         #line = reader.nextline()
         if not line:
             continue
@@ -59,6 +59,6 @@ if __name__ == "__main__":
         print ""
         print "Usage: python merge_logs.py [log files] > new_log_file"
         print "       python merge_logs.py <log_dir>/* > new_log_file"
-        sys.exit(1)
+        exit(1)
     merge(open(f) for f in argv[1:])
     
