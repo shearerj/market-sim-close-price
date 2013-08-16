@@ -10,8 +10,8 @@ import event.*;
  * 
  * Based on the Command Pattern.
  * 
- * NOTE: If Activity has a negative TimeStamp, then it an "infinitely fast"
- * activity which has a variable TimeStamp.
+ * NOTE: If Activity has a negative scheduledTime, then it an "infinitely fast"
+ * activity and will be executed immediately
  * 
  * @author ewah
  */
@@ -36,10 +36,15 @@ public abstract class Activity {
 	public final TimeStamp getTime() {
 		return scheduledTime;
 	}
-
+	
 	@Override
-	public int hashCode() {
-		return scheduledTime.hashCode();
+	public final int hashCode() {
+		return super.hashCode();
+	}
+	
+	@Override
+	public final boolean equals(Object obj) {
+		return super.equals(obj);
 	}
 
 	@Override

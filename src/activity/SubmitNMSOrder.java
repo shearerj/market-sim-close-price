@@ -2,13 +2,10 @@ package activity;
 
 import java.util.Collection;
 
-
-import org.apache.commons.lang3.builder.*;
-
-import entity.agent.*;
+import entity.agent.Agent;
 import entity.market.Market;
 import entity.market.Price;
-import event.*;
+import event.TimeStamp;
 
 /**
  * Class for Activity of submitting a National Market System (NMS) bid (price + quantity) to a
@@ -43,12 +40,6 @@ public class SubmitNMSOrder extends Activity {
 	@Override
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
 		return primaryMarket.submitNMSOrder(agent, price, quantity, currentTime);
-	}
-	
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder(19, 37).append(agent).append(price).append(
-				quantity).append(super.hashCode()).toHashCode();
 	}
 	
 	@Override

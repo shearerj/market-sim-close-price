@@ -1,16 +1,16 @@
 package activity;
 
 import java.util.Collection;
-import org.apache.commons.lang3.builder.*;
 
-import entity.agent.*;
-import event.*;
+import entity.agent.Agent;
+import event.TimeStamp;
 
 /**
  * Class for activity of agents arriving in a market or market(s).
  * 
  * @author ewah
  */
+// XXX Is this activity necessary?
 public class AgentArrival extends Activity {
 
 	protected final Agent agent;
@@ -23,12 +23,6 @@ public class AgentArrival extends Activity {
 	@Override
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
 		return agent.agentArrival(currentTime);
-	}
-
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder(19, 37).append(agent).append(
-				super.hashCode()).toHashCode();
 	}
 
 	@Override

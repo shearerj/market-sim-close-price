@@ -2,14 +2,11 @@ package activity;
 
 import java.util.Collection;
 
-
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
 import entity.market.Order;
 import event.TimeStamp;
 
 /**
- * Class for Activity of withdrawing an agent's bid in a given market. Used when bids expire as
+ * Class for Activity of withdrawing an agent's order in a given market. Used when bids expire as
  * well.
  * 
  * @author ewah
@@ -32,11 +29,6 @@ public class WithdrawOrder extends Activity {
 	@Override
 	public Collection<? extends Activity> execute(TimeStamp time) {
 		return order.getMarket().withdrawOrder(order, quantity, time);
-	}
-
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder(19, 37).append(order).append(super.hashCode()).toHashCode();
 	}
 	
 	@Override

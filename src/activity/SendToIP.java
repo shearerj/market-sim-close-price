@@ -3,9 +3,6 @@ package activity;
 import java.util.Collection;
 import java.util.List;
 
-
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
 import entity.infoproc.IP;
 import entity.market.Market;
 import entity.market.Quote;
@@ -13,7 +10,8 @@ import entity.market.Transaction;
 import event.TimeStamp;
 
 /**
- * Class for Activity of sending new quote information to the Security Information Processor (SIP).
+ * Class for Activity of sending new quote information to an information processor, including the
+ * Security Information Processor (SIP).
  * 
  * @author ewah
  */
@@ -35,12 +33,6 @@ public class SendToIP extends Activity {
 	@Override
 	public Collection<? extends Activity> execute(TimeStamp time) {
 		return ip.sendToIP(market, quote, transactions, time);
-	}
-
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder(19, 37).append(market).append(super.hashCode()).append(
-				quote).append(ip).append(transactions).toHashCode();
 	}
 	
 	@Override

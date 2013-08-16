@@ -3,9 +3,6 @@ package activity;
 import java.util.Collection;
 import java.util.List;
 
-
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
 import entity.infoproc.IP;
 import entity.market.Market;
 import entity.market.Quote;
@@ -36,12 +33,6 @@ public class ProcessQuote extends Activity {
 	@Override
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
 		return this.ip.processQuote(market, quote, newTransactions, currentTime);
-	}
-
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder(19, 37).append(market).append(ip).append(
-				quote).append(scheduledTime).toHashCode();
 	}
 	
 	@Override

@@ -1,10 +1,9 @@
 package activity;
 
 import java.util.Collection;
-import org.apache.commons.lang3.builder.*;
 
-import entity.agent.*;
-import entity.market.*;
+import entity.agent.Agent;
+import entity.market.Price;
 import event.TimeStamp;
 
 /**
@@ -28,12 +27,6 @@ public class Liquidate extends Activity {
 	@Override
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
 		return this.agent.liquidate(this.price, currentTime);
-	}
-	
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder(19, 37).append(agent).append(price).append(
-				super.hashCode()).toHashCode();
 	}
 	
 	@Override

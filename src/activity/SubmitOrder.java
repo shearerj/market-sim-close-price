@@ -2,13 +2,10 @@ package activity;
 
 import java.util.Collection;
 
-
-import org.apache.commons.lang3.builder.*;
-
-import entity.agent.*;
+import entity.agent.Agent;
 import entity.market.Market;
 import entity.market.Price;
-import event.*;
+import event.TimeStamp;
 
 /**
  * Class for Activity of submitting a bid (price + quantity) to a market.
@@ -34,12 +31,6 @@ public class SubmitOrder extends Activity {
 	@Override
 	public Collection<? extends Activity> execute(TimeStamp currentTime) {
 		return market.submitOrder(agent, price, quantity, currentTime);
-	}
-
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder(19, 37).append(agent).append(market).append(
-				price).append(quantity).append(super.hashCode()).toHashCode();
 	}
 	
 	@Override
