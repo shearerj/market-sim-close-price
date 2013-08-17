@@ -1,5 +1,7 @@
 package data;
 
+import static com.google.common.base.Predicates.equalTo;
+import static com.google.common.base.Predicates.not;
 import static utils.MathUtils.quantize;
 import static utils.StringUtils.delimit;
 
@@ -24,6 +26,7 @@ import systemmanager.Consts;
 import systemmanager.Keys;
 import systemmanager.SimulationSpec;
 
+import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonIOException;
@@ -327,10 +330,10 @@ public class Observations {
 		for (int period : Consts.periods) {
 			String key = period > 1 ? PERIODICITY + period + "_" + RMSD : RMSD; 
 			// XXX maxTime instead of simLength?
-			DSPlus pr = transPrices.getSampledStats(period, (int) simLength);
-			DSPlus fundStat = fundPrices.getSampledStats(period, (int) simLength);
+			DescriptiveStatistics pr = DSPlus.create(transPrices.sample(period, (int) simLength));
+			DescriptiveStatistics fundStat = DSPlus.create(fundPrices.sample(period, (int) simLength));
 
-			feat.addProperty(key, pr.getRMSD(fundStat));
+			feat.addProperty(key, DSPlus.rmsd(pr, fundStat));
 		}
 		return feat;
 	}
@@ -344,8 +347,8 @@ public class Observations {
 		DescriptiveStatistics medians = new DescriptiveStatistics();
 		for (Market market : markets) {
 			TimeSeries s = market.getSpread();
-			DSPlus spreads = s.getSampledStats(1, (int) maxTime);
-			double med = spreads.getMedian();
+			DescriptiveStatistics spreads = DSPlus.create(s.sample(1, (int) maxTime));
+			double med = DSPlus.median(spreads);
 			feat.addProperty(
 					delimit("_", MEDIAN, MARKET + Math.abs(market.getID()),
 							TIMESERIES_MAXTIME), med);
@@ -357,9 +360,9 @@ public class Observations {
 				medians.getMean());
 
 		TimeSeries nbbo = sip.getNBBOSpreads();
-		DSPlus spreads = nbbo.getSampledStats(1, (int) maxTime);
+		DescriptiveStatistics spreads = DSPlus.create(nbbo.sample(1, (int) maxTime));
 		feat.addProperty(delimit("_", MEDIAN, NBBO, TIMESERIES_MAXTIME),
-				spreads.getMedian());
+				DSPlus.median(spreads));
 
 		return feat;
 	}
@@ -413,18 +416,19 @@ public class Observations {
 
 			TimeSeries mq = market.getMidQuotes();
 			// compute log price volatility for this market
-			DescriptiveStatistics mktPrices = mq.getSampledStatsSansNaNs(period, (int) maxTime);
+			Iterable<Double> filtered = Iterables.filter(mq.sample(period, (int) maxTime), not(equalTo(Double.NaN)));
+			DescriptiveStatistics mktPrices = DSPlus.create(filtered);
 			double stdev = mktPrices.getStandardDeviation();
 			feat.addProperty(delimit("_", prefix, STDDEV, PRICE, suffix), stdev);
 			stddev.addValue(stdev);
 			if (stdev != 0)
-			// don't add if stddev is 0
+				// don't add if stddev is 0
 				logPriceVol.addValue(Math.log(stdev));
 
 			// compute log-return volatility for this market
 			// XXX This change from before. Before if the ratio was NaN it go thrown out. Now the
 			// previous value is used.
-			DescriptiveStatistics mktLogReturns = mq.getSampledLogRatioStatsSansNaNs(period, (int) maxTime);
+			DescriptiveStatistics mktLogReturns = DSPlus.createLogRatio(mq.sample(period, (int) maxTime));
 			double logStdev = mktLogReturns.getStandardDeviation();
 			feat.addProperty(
 					delimit("_", prefix, STDDEV, LOG + RETURN, suffix),
