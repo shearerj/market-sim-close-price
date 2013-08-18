@@ -4,9 +4,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 
 import systemmanager.Keys;
-import utils.Rands;
 import activity.Activity;
 import activity.SubmitOrder;
 
@@ -37,7 +37,7 @@ public class LAAgent extends HFTAgent {
 	protected final Map<Market, HFTIP> ips;
 
 	public LAAgent(Collection<Market> markets, FundamentalValue fundamental,
-			SIP sip, double alpha, TimeStamp latency, Rands rand,
+			SIP sip, double alpha, TimeStamp latency, Random rand,
 			int tickSize) {
 		super(TimeStamp.ZERO, markets, fundamental, sip, rand, tickSize);
 		this.alpha = alpha;
@@ -51,7 +51,7 @@ public class LAAgent extends HFTAgent {
 	}
 
 	public LAAgent(Collection<Market> markets, FundamentalValue fundamental,
-			SIP sip, Rands rand, EntityProperties props) {
+			SIP sip, Random rand, EntityProperties props) {
 		this(markets, fundamental, sip, props.getAsDouble(Keys.ALPHA, 0.001),
 				new TimeStamp(props.getAsLong(Keys.LA_LATENCY, -1)), rand,
 				props.getAsInt(Keys.TICK_SIZE, 1000));

@@ -1,6 +1,7 @@
 package interators;
 
 import java.io.Serializable;
+import java.util.Random;
 
 import com.google.common.collect.AbstractIterator;
 
@@ -11,17 +12,17 @@ public class ExpInterarrivals extends AbstractIterator<TimeStamp> implements Ser
 	
 	private static final long serialVersionUID = 3285386017387161748L;
 	
-	protected final Rands rand;
+	protected final Random rand;
 	protected final double rate;
 
-	public ExpInterarrivals(double rate, Rands rand) {
+	public ExpInterarrivals(double rate, Random rand) {
 		this.rand = rand;
 		this.rate = rate;
 	}
 
 	@Override
 	protected TimeStamp computeNext() {
-		return new TimeStamp((long) Math.ceil(rand.nextExponential(rate)));
+		return new TimeStamp((long) Math.ceil(Rands.nextExponential(rand, rate)));
 	}
 
 }

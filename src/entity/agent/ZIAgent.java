@@ -4,9 +4,9 @@ import static java.lang.Math.signum;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Random;
 
 import systemmanager.Keys;
-import utils.Rands;
 import activity.Activity;
 import activity.SubmitNMSOrder;
 import data.EntityProperties;
@@ -41,7 +41,7 @@ public class ZIAgent extends BackgroundAgent {
 	protected final int bidRange; // range for limit order
 
 	public ZIAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			Market market, Rands rand, int bidRange, double pvVar,
+			Market market, Random rand, int bidRange, double pvVar,
 			int tickSize) {
 		super(arrivalTime, fundamental, sip, market, new PrivateValue(1, pvVar,
 				rand), rand, tickSize);
@@ -49,7 +49,7 @@ public class ZIAgent extends BackgroundAgent {
 	}
 
 	public ZIAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			Market market, Rands rand, EntityProperties props) {
+			Market market, Random rand, EntityProperties props) {
 		this(arrivalTime, fundamental, sip, market, rand, props.getAsInt(
 				Keys.BID_RANGE, 2000), props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),
 				props.getAsInt(Keys.TICK_SIZE, 1));

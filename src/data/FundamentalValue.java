@@ -5,6 +5,7 @@ import static logger.Logger.Level.ERROR;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Random;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -28,7 +29,7 @@ public class FundamentalValue implements Serializable {
 	protected final double kappa;
 	protected final int meanValue;
 	protected final double shockVar;
-	protected Rands rand;
+	protected final Random rand;
 
 	/**
 	 * Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps
@@ -37,7 +38,7 @@ public class FundamentalValue implements Serializable {
 	 * @param var Gaussian Process variance
 	 * @param rand Random generator
 	 */
-	public FundamentalValue(double kap, int meanVal, double var, Rands rand) {
+	public FundamentalValue(double kap, int meanVal, double var, Random rand) {
 		this.rand = rand;
 		this.kappa = kap;
 		this.meanValue = meanVal;
@@ -45,13 +46,13 @@ public class FundamentalValue implements Serializable {
 
 		// stochastic initial conditions for random process
 		meanRevertProcess = Lists.newArrayList();
-		meanRevertProcess.add(rand.nextGaussian(meanValue, shockVar));
+		meanRevertProcess.add(Rands.nextGaussian(rand, meanValue, shockVar));
 	}
 
 	protected void computeFundamentalTo(int maxQuery) {
 		for (int i = meanRevertProcess.size(); i <= maxQuery; i++) {
 			double prevValue = Iterables.getLast(meanRevertProcess);
-			double nextValue = rand.nextGaussian(meanValue * kappa
+			double nextValue = Rands.nextGaussian(rand, meanValue * kappa
 					+ (1 - kappa) * prevValue, shockVar);
 			meanRevertProcess.add(nextValue);
 		}

@@ -17,11 +17,11 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Random;
 
 import logger.Logger;
 import logger.Logger.Prefix;
 import utils.Pair;
-import utils.Rands;
 import activity.AgentArrival;
 import activity.Clear;
 
@@ -60,7 +60,7 @@ public class SystemManager {
 
 	protected static DateFormat DATE_FORMAT = new SimpleDateFormat("dd-MMM-yyyy_HH.mm.ss");
 
-	protected final Rands rand;
+	protected final Random rand;
 	protected final EventManager eventManager;
 	protected final FundamentalValue fundamental;
 	protected final SIP sip;
@@ -125,11 +125,11 @@ public class SystemManager {
 		// produces sufficiently independent draws, but if this isn't the case this is poisoning
 		// results.
 		long seed = Longs.hashCode(simProps.getAsLong(Keys.RAND_SEED, System.currentTimeMillis()) + obsNum);
-		rand = new Rands(seed);
+		rand = new Random(seed);
 		modelName = simProps.getAsString(Keys.MODEL_NAME); // TODO Move name generation here?
 
 		simulationLength = new TimeStamp(simProps.getAsLong(Keys.SIMULATION_LENGTH));
-		eventManager = new EventManager(new Rands(rand.nextLong()));
+		eventManager = new EventManager(new Random(rand.nextLong()));
 		
 		initializeLogger(getLogLevel(), simFolder, simNumber, eventManager,
 				simProps.getAsInt(Keys.SIMULATION_LENGTH, 10000),
@@ -142,7 +142,7 @@ public class SystemManager {
 				simProps.getAsDouble(Keys.FUNDAMENTAL_KAPPA),
 				simProps.getAsInt(Keys.FUNDAMENTAL_MEAN),
 				simProps.getAsDouble(Keys.FUNDAMENTAL_SHOCK_VAR),
-				new Rands(rand.nextLong()));
+				new Random(rand.nextLong()));
 		sip = new SIP(new TimeStamp(simProps.getAsInt(Keys.NBBO_LATENCY)));
 		markets = setupMarkets(marketProps);
 		agents = setupAgents(agentProps);
@@ -172,7 +172,7 @@ public class SystemManager {
 			// generic, but for now we'll stick with the original implementation which is round
 			// robin markets and poisson arrival
 			AgentFactory factory = new AgentFactory(fundamental, sip, markets,
-					arrivalRate, new Rands(rand.nextLong()));
+					arrivalRate, new Random(rand.nextLong()));
 
 			for (int i = 0; i < number; i++)
 				agents.add(factory.createAgent(agProps));
@@ -199,7 +199,7 @@ public class SystemManager {
 			String strat = roleEnt.getElement().strat();
 
 			AgentFactory factory = new AgentFactory(fundamental, sip, markets,
-					arrivalRate, new Rands(rand.nextLong()));
+					arrivalRate, new Random(rand.nextLong()));
 			for (int i = 0; i < roleEnt.getCount(); i++) {
 				Agent agent = factory.createAgent(new AgentProperties(strat));
 				agents.add(agent);

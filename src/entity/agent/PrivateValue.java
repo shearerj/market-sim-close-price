@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import utils.Rands;
 
@@ -53,14 +54,14 @@ public class PrivateValue implements Serializable {
 	 * @param rand
 	 *            The random number generator to use for random generation.
 	 */
-	public PrivateValue(int maxPosition, double var, Rands rand) {
+	public PrivateValue(int maxPosition, double var, Random rand) {
 		checkArgument(maxPosition > 0, "Max Position must be positive");
 		
 		// Identical to legacy generation in final output
 		this.offset = maxPosition;
 		double[] prices = new double[maxPosition * 2 + 1];
 		for (int i = 0; i < prices.length; i++)
-			prices[i] = rand.nextGaussian(0, var);
+			prices[i] = Rands.nextGaussian(rand, 0, var);
 		Arrays.sort(prices);
 		double median = prices[offset];
 		for (int i = 0; i < prices.length; i++)

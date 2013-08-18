@@ -8,11 +8,11 @@ import static utils.Compare.min;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import com.google.common.collect.Lists;
 
 import systemmanager.Keys;
-import utils.Rands;
 import utils.Pair;
 import activity.Activity;
 import activity.AgentStrategy;
@@ -61,7 +61,7 @@ public class AAAgent extends ReentryAgent {
 
 
 	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
-			Rands rand, EntityProperties params) {
+			Random rand, EntityProperties params) {
 		this(arrivalTime, fundamental, sip, market, rand, params, new PrivateValue(
 				params.getAsInt(Keys.MAX_QUANTITY, 1), params.getAsDouble(
 						Keys.PRIVATE_VALUE_VAR, 100000000), rand),
@@ -70,7 +70,7 @@ public class AAAgent extends ReentryAgent {
 	}
 	
 	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
-			Rands rand, EntityProperties params, PrivateValue privateValue,
+			Random rand, EntityProperties params, PrivateValue privateValue,
 			double reentryRate, int tickSize) {
 		super(arrivalTime, fundamental, sip, market, privateValue, rand, reentryRate,
 				tickSize);
