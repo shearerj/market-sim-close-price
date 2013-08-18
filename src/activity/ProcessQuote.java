@@ -1,5 +1,7 @@
 package activity;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -24,10 +26,10 @@ public class ProcessQuote extends Activity {
 	public ProcessQuote(IP ip, Market market, Quote quote,
 			List<Transaction> newTransactions, TimeStamp scheduledTime) {
 		super(scheduledTime);
-		this.ip = ip;
-		this.market = market;
-		this.quote = quote;
-		this.newTransactions = newTransactions;
+		this.ip = checkNotNull(ip, "IP");
+		this.market = checkNotNull(market, "Market");
+		this.quote = checkNotNull(quote, "Quote");
+		this.newTransactions = checkNotNull(newTransactions, "New Transactions");
 	}
 
 	@Override

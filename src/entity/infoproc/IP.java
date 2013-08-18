@@ -1,8 +1,11 @@
 package entity.infoproc;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+
+import com.google.common.collect.ImmutableList;
 
 import activity.Activity;
 import activity.ProcessQuote;
@@ -27,12 +30,12 @@ public abstract class IP extends Entity {
 
 	public IP(TimeStamp latency) {
 		super(nextID++);
-		this.latency = latency;
+		this.latency = checkNotNull(latency, "Latency");
 	}
 
 	public Collection<? extends Activity> sendToIP(Market market, Quote quote,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
-		return Collections.singleton(new ProcessQuote(this, market, quote,
+		return ImmutableList.of(new ProcessQuote(this, market, quote,
 				newTransactions, currentTime.plus(latency)));
 	}
 

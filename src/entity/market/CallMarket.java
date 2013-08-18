@@ -1,14 +1,16 @@
 package entity.market;
 
-import java.util.ArrayList;
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.Collection;
 
 import systemmanager.Keys;
-
-import data.EntityProperties;
-
 import activity.Activity;
 import activity.Clear;
+
+import com.google.common.collect.ImmutableList;
+
+import data.EntityProperties;
 import entity.infoproc.SIP;
 import entity.market.clearingrule.UniformPriceClear;
 import event.TimeStamp;
@@ -33,11 +35,9 @@ public class CallMarket extends Market {
 	public CallMarket(SIP sip, double pricingPolicy,
 			TimeStamp clearFreq, TimeStamp latency, int tickSize) {
 		super(sip, new UniformPriceClear(pricingPolicy, tickSize), latency);
+		checkArgument(clearFreq.after(TimeStamp.ZERO),
+				"Can't create a call market with 0 clear frequency. Create a CDA instead.");
 
-		if (!clearFreq.after(TimeStamp.ZERO))
-			throw new IllegalArgumentException(
-					"Can't create a call market with 0 clear frequency. Create a CDA instead.");
-		
 		this.clearFreq = clearFreq;
 		this.nextClearTime = TimeStamp.ZERO;
 	}
@@ -53,11 +53,8 @@ public class CallMarket extends Market {
 	public Collection<? extends Activity> clear(TimeStamp currentTime) {
 		// Update the next clear time
 		nextClearTime = currentTime.plus(clearFreq);
-		Collection<Activity> activities = new ArrayList<Activity>(
-				super.clear(currentTime));
-		// Insert next clear activity at some time in the future
-		activities.add(new Clear(this, nextClearTime));
-		return activities;
+		return ImmutableList.<Activity> builder().addAll(
+				super.clear(currentTime)).add(new Clear(this, nextClearTime)).build();
 	}
-	
+
 }

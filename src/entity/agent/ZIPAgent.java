@@ -1,7 +1,8 @@
 package entity.agent;
 
-import java.util.ArrayList;
 import java.util.Collection;
+
+import com.google.common.collect.Lists;
 
 import systemmanager.Keys;
 import utils.RandPlus;
@@ -59,7 +60,7 @@ public class ZIPAgent extends ReentryAgent {
 	
 	@Override
 	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
-		Collection<Activity> acts = new ArrayList<Activity>(super.agentStrategy(currentTime));
+		Collection<Activity> acts = Lists.newArrayList(super.agentStrategy(currentTime));
 		
 		// 0.50% chance of being either long or short
 		int quantity = rand.nextBoolean() ? 1 : -1;

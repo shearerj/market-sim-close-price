@@ -2,6 +2,8 @@ package entity.infoproc;
 
 import java.io.Serializable;
 
+import com.google.common.base.Objects;
+
 import entity.market.Market;
 import entity.market.Price;
 
@@ -53,19 +55,18 @@ public class BestBidAsk implements Serializable {
 
 	@Override
 	public int hashCode() {
-		return bestBidMarket.hashCode() ^ bestBid.hashCode()
-				^ bestAskMarket.hashCode() ^ bestAsk.hashCode();
+		return Objects.hashCode(bestBidMarket, bestBid, bestAskMarket, bestAsk);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof BestBidAsk))
+		if (obj == null || !(obj.getClass().equals(getClass())))
 			return false;
 		BestBidAsk that = (BestBidAsk) obj;
-		return (bestBidMarket == that.bestBidMarket)
-				&& (bestBid == that.bestBid)
-				&& (bestAskMarket == that.bestAskMarket)
-				&& (bestAsk == that.bestAsk);
+		return Objects.equal(bestBidMarket, that.bestBidMarket)
+				&& Objects.equal(bestBid, that.bestBid)
+				&& Objects.equal(bestAskMarket, that.bestAskMarket)
+				&& Objects.equal(bestAsk, that.bestAsk);
 	}
 
 	public String toString() {

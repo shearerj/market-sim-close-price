@@ -1,5 +1,8 @@
 package activity;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 
 import entity.agent.Agent;
@@ -22,9 +25,10 @@ public class SubmitOrder extends Activity {
 	public SubmitOrder(Agent agent, Market market, Price price, int quantity,
 			TimeStamp scheduledTime) {
 		super(scheduledTime);
-		this.agent = agent;
-		this.market = market;
-		this.price = price;
+		checkArgument(quantity != 0, "Quantiy can't be 0");
+		this.agent = checkNotNull(agent, "Agent");
+		this.market = checkNotNull(market, "Market");
+		this.price = checkNotNull(price, "Price");
 		this.quantity = quantity;
 	}
 

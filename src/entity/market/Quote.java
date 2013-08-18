@@ -5,6 +5,8 @@ import static logger.Logger.Level.ERROR;
 
 import java.io.Serializable;
 
+import com.google.common.base.Objects;
+
 import event.TimeStamp;
 
 /**
@@ -78,6 +80,24 @@ public class Quote implements Serializable {
 			log(ERROR, market.getClass().getSimpleName()
 					+ "::quote: ERROR bid > ask");
 		return (ask.getInTicks() + bid.getInTicks())/ 2d;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(market, ask, askQuantity, bid, bidQuantity, quoteTime);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj.getClass().equals(getClass())))
+			return false;
+		Quote that = (Quote) obj;
+		return Objects.equal(market, that.market)
+				&& Objects.equal(ask, that.ask)
+				&& Objects.equal(bid, that.bid)
+				&& Objects.equal(quoteTime, that.quoteTime)
+				&& askQuantity == that.askQuantity
+				&& bidQuantity == that.bidQuantity;
 	}
 
 	public String toString() {

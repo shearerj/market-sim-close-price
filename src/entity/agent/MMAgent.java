@@ -5,6 +5,8 @@ import static logger.Logger.Level.INFO;
 
 import java.util.Collection;
 
+import com.google.common.base.Joiner;
+
 import data.FundamentalValue;
 
 import utils.RandPlus;
@@ -29,6 +31,7 @@ import event.TimeStamp;
 public abstract class MMAgent extends Agent {
 
 	private static final long serialVersionUID = 2297636044775909734L;
+	protected final static Joiner marketJoiner = Joiner.on(',');
 	
 	protected final Collection<Market> markets; 
 	
@@ -42,11 +45,7 @@ public abstract class MMAgent extends Agent {
 
 	@Override
 	public Collection<? extends Activity> agentArrival(TimeStamp currentTime) {
-		StringBuilder sb = new StringBuilder();
-		for (Market market : markets)
-			sb.append(market).append(",");
-		log(INFO, this + "->" + sb.substring(0, sb.length() - 1));
-
+		log(INFO, this + "->" + marketJoiner.join(markets));
 		return super.agentArrival(currentTime);
 	}
 

@@ -2,7 +2,7 @@ package entity.market;
 
 import java.io.Serializable;
 
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+import com.google.common.base.Objects;
 
 import entity.agent.Agent;
 import event.TimeStamp;
@@ -50,8 +50,17 @@ public class Order implements Serializable {
 	
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder(19, 37).append(agent).append(market).append(
-				order).toHashCode();
+		return Objects.hashCode(agent, market, order);
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj.getClass().equals(getClass())))
+			return false;
+		Order that = (Order) obj;
+		return Objects.equal(agent, that.agent)
+				&& Objects.equal(market, that.market)
+				&& Objects.equal(order, that.order);
 	}
 	
 	@Override

@@ -1,5 +1,8 @@
 package activity;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 
 import entity.market.Order;
@@ -22,7 +25,8 @@ public class WithdrawOrder extends Activity {
 
 	public WithdrawOrder(Order order, int quantity, TimeStamp scheduledTime) {
 		super(scheduledTime);
-		this.order = order;
+		checkArgument(quantity != 0, "Quantiy can't be 0");
+		this.order = checkNotNull(order, "Order");
 		this.quantity = quantity;
 	}
 

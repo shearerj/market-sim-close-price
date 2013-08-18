@@ -1,9 +1,7 @@
 package entity.agent;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -11,6 +9,10 @@ import systemmanager.Keys;
 import utils.RandPlus;
 import activity.Activity;
 import activity.SubmitOrder;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
+
 import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.HFTIP;
@@ -39,7 +41,7 @@ public class LAAgent extends HFTAgent {
 			int tickSize) {
 		super(TimeStamp.ZERO, markets, fundamental, sip, rand, tickSize);
 		this.alpha = alpha;
-		this.ips = new HashMap<Market, HFTIP>();
+		this.ips = Maps.newHashMap();
 
 		for (Market market : markets) {
 			HFTIP laip = new HFTIP(latency, market, this);
@@ -79,7 +81,7 @@ public class LAAgent extends HFTAgent {
 			return Collections.emptySet();
 
 		Price midPoint = bestBid.plus(bestAsk).times(0.5).quantize(tickSize);
-		return Arrays.asList(new SubmitOrder(this, bestBidMarket, midPoint,
+		return ImmutableList.of(new SubmitOrder(this, bestBidMarket, midPoint,
 				-1, TimeStamp.IMMEDIATE), new SubmitOrder(this, bestAskMarket,
 				midPoint, 1, TimeStamp.IMMEDIATE));
 	}

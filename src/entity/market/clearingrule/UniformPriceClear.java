@@ -1,12 +1,11 @@
 package entity.market.clearingrule;
 
-import static utils.Compare.min;
-import static utils.Compare.max;
+import java.util.Map;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Ordering;
 
 import entity.market.Price;
 import event.TimeStamp;
@@ -15,6 +14,7 @@ import fourheap.Transaction;
 public class UniformPriceClear implements ClearingRule {
 
 	private static final long serialVersionUID = -342335313880137387L;
+	protected static final Ordering<Price> ord = Ordering.natural();
 	
 	protected final double ratio;
 	protected final int tickSize;
@@ -25,20 +25,24 @@ public class UniformPriceClear implements ClearingRule {
 	}
 
 	@Override
-	public List<Price> pricing(List<Transaction<Price, TimeStamp>> transactions) {
-		if (transactions.isEmpty()) return Collections.emptyList();
+	public Map<Transaction<Price, TimeStamp>, Price> pricing(
+			Iterable<Transaction<Price, TimeStamp>> transactions) {
+		if (Iterables.isEmpty(transactions)) return ImmutableMap.of();
+		
 		Price minBuy = null, maxSell = null;
 		for (Transaction<Price, TimeStamp> trans : transactions) {
-			minBuy = min(minBuy, trans.getBuy().getPrice());
-			maxSell = max(maxSell, trans.getSell().getPrice());
+			minBuy = ord.min(minBuy, trans.getBuy().getPrice());
+			maxSell = ord.max(maxSell, trans.getSell().getPrice());
 		}
+		
 		Price clearPrice = new Price(
 				(int) (minBuy.getInTicks() * ratio + maxSell.getInTicks()
 						* (1 - ratio))).quantize(tickSize);
-		List<Price> prices = new ArrayList<Price>(transactions.size());
-		for (int i = 0; i < transactions.size(); i++)
-			prices.add(clearPrice);
-		return prices;
+		
+		Builder<Transaction<Price, TimeStamp>, Price> prices = ImmutableMap.builder();
+		for (Transaction<Price, TimeStamp> trans : transactions)
+			prices.put(trans, clearPrice);
+		return prices.build();
 	}
 
 }

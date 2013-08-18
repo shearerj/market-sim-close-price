@@ -1,20 +1,22 @@
 package entity.agent;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import data.FundamentalValue;
 
 import utils.RandPlus;
 import activity.Activity;
 import activity.AgentStrategy;
-import activity.Liquidate;
 import entity.Entity;
 import entity.infoproc.SIP;
 import entity.market.Order;
@@ -49,23 +51,23 @@ public abstract class Agent extends Entity {
 	// Tracking cash flow
 	protected int cashBalance;
 	protected int averageCost;
+	// for liquidation XXX Currently unused
 	protected int realizedProfit;
-	// for liquidation Currently unused
 	protected int preLiqPosition;
 	protected int preLiqRealizedProfit;
 
 	public Agent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			PrivateValue privateValue, RandPlus rand, int tickSize) {
 		super(nextID++);
-		this.fundamental = fundamental;
+		this.fundamental = checkNotNull(fundamental);
 		this.rand = rand;
-		this.arrivalTime = arrivalTime;
+		this.arrivalTime = checkNotNull(arrivalTime);
 		this.sip = sip;
-		this.privateValue = privateValue;
+		this.privateValue = checkNotNull(privateValue);
 		this.tickSize = tickSize;
 
-		this.transactions = new ArrayList<Transaction>();
-		this.activeOrders = new HashSet<Order>();
+		this.transactions = Lists.newArrayList();
+		this.activeOrders = Sets.newHashSet();
 	}
 
 	public abstract Collection<? extends Activity> agentStrategy(
@@ -79,20 +81,21 @@ public abstract class Agent extends Entity {
 	 * Liquidate agent's position at the the value of the global fundamental at the specified time.
 	 * Price is determined by the fundamental at the time of liquidation.
 	 */
+	
 	public Collection<? extends Activity> liquidateAtFundamental(
 			TimeStamp currentTime) {
 		log(INFO, this + " liquidating...");
-		return Collections.singleton(new Liquidate(this,
-				fundamental.getValueAt(currentTime), TimeStamp.IMMEDIATE));
+		return liquidate(fundamental.getValueAt(currentTime), currentTime);
 	}
 
 	/**
 	 * Liquidates an agent's position at the specified price.
 	 */
+	// TODO Unused
 	public Collection<? extends Activity> liquidate(Price price, TimeStamp ts) {
 
 		log(INFO, this + " pre-liquidation: position="
-				+ positionBalance + ", profit=" + realizedProfit);
+				+ positionBalance);
 
 		// If no net position, no need to liquidate
 		if (positionBalance == 0) return Collections.emptyList();
@@ -118,8 +121,8 @@ public abstract class Agent extends Entity {
 	 * Adds an agent's order to its memory so it knows about it, and can cancel it
 	 */
 	public void addOrder(Order order) {
-		if (!order.getAgent().equals(this))
-			throw new IllegalArgumentException("Can't add illegal for a different agent");
+		checkArgument(order.getAgent().equals(this),
+				"Can't add order for a different agent");
 		activeOrders.add(order);
 	}
 	
@@ -132,9 +135,8 @@ public abstract class Agent extends Entity {
 	
 	// TODO gives the agent instant data. Should instead process with delay
 	public void addTransaction(Transaction trans) {
-		if (!trans.getBuyer().equals(this) && !trans.getSeller().equals(this))
-			throw new IllegalArgumentException(
-					"Can only add a transaction that this agent participated in");
+		checkArgument(trans.getBuyer().equals(this) || trans.getSeller().equals(this),
+				"Can only add a transaction that this agent participated in");
 		transactions.add(trans);
 		// Not an else if in case buyer and seller are the same
 		if (trans.getBuyer().equals(this))
@@ -146,25 +148,25 @@ public abstract class Agent extends Entity {
 				+ "Agent::updateTransactions: New transaction received: "
 				+ trans);
 		log(INFO, this + " Agent::logTransactions: Current Position="
-				+ positionBalance + ", Realized Profit=" + realizedProfit);
+				+ positionBalance);
 	}
 
 	/**
 	 * Computes any unrealized profit based on market bid/ask quotes.
 	 */
 	// TODO Implement this
-	public Price getUnrealizedProfit() {
-		throw new IllegalArgumentException();
+//	public Price getUnrealizedProfit() {
+//		throw new IllegalArgumentException();
 //		if (positionBalance == 0) return Price.ZERO;
 //
 //		Price p = null;
 //		if (positionBalance > 0) {
-			// For long position, compare cost to bid quote (buys)
+//			// For long position, compare cost to bid quote (buys)
 //			for (Market market : model.getMarkets())
 //				if (market.getQuote().getBidPrice().greaterThan(p))
 //					p = market.getQuote().getBidPrice();
 //		} else {
-			// For short position, compare cost to ask quote (sells)
+//			// For short position, compare cost to ask quote (sells)
 //			for (Market market : model.getMarkets()) {
 //				if (market.getQuote().getAskPrice().lessThan(p)) {
 //					p = market.getQuote().getAskPrice();
@@ -177,22 +179,10 @@ public abstract class Agent extends Entity {
 //
 //		return p == null ? Price.ZERO : new Price(positionBalance
 //				* (p.getInTicks() - averageCost));
-	}
+//	}
 
 	public final TimeStamp getArrivalTime() {
 		return arrivalTime;
-	}
-
-	public int getPreLiquidationPosition() {
-		return preLiqPosition;
-	}
-
-	public int getPreLiquidationProfit() {
-		return preLiqRealizedProfit;
-	}
-
-	public int getPositionBalance() {
-		return positionBalance;
 	}
 
 	/**
@@ -205,14 +195,17 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public double getSurplus(double rho) {
+		checkArgument(rho >= 0, "Can't have a negative discoutn factor");
 		double surplus = 0;
 
 		for (Transaction trans : transactions) {
-
 			TimeStamp submissionTime;
 			int sign;
-			// FIXME Wrong if agent transacts with itself
-			if (trans.getBuyer().equals(this)) {
+			
+			if (trans.getBuyer().equals(trans.getSeller())) {
+				// FIXME Handle appropriately...
+				continue;
+			} else if (trans.getBuyer().equals(this)) {
 				submissionTime = trans.getBuyBid().getSubmitTime();
 				sign = 1;
 			} else {
@@ -235,6 +228,16 @@ public abstract class Agent extends Entity {
 		return surplus;
 	}
 	
+	@Override
+	public final int hashCode() {
+		return super.hashCode();
+	}
+
+	@Override
+	public final boolean equals(Object obj) {
+		return super.equals(obj);
+	}
+
 	@Override
 	public String toString() {
 		return "(" + id + ")";

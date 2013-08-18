@@ -1,5 +1,8 @@
 package activity;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 
 import entity.agent.Agent;
@@ -24,11 +27,12 @@ public class SubmitNMSOrder extends Activity {
 	public SubmitNMSOrder(Agent agent, Price price, int quantity,
 			Market primaryMarket, TimeStamp scheduledTime, TimeStamp duration) {
 		super(scheduledTime);
-		this.agent = agent;
-		this.price = price;
+		checkArgument(quantity != 0, "Quantiy can't be 0");
+		this.agent = checkNotNull(agent, "Agent");
+		this.price = checkNotNull(price, "Price");
 		this.quantity = quantity;
-		this.primaryMarket = primaryMarket;
-		this.duration = duration;
+		this.primaryMarket = checkNotNull(primaryMarket, "Primary Market");
+		this.duration = checkNotNull(duration, "Duration");
 	}
 
 	public SubmitNMSOrder(Agent agent, Price price, int quantity,

@@ -375,20 +375,20 @@ public class Observations {
 
 		for (Agent ag : agents) {
 			if (!(ag instanceof MarketMaker)) continue;
-			MarketMaker mm = (MarketMaker) ag;
+//			MarketMaker mm = (MarketMaker) ag;
 
 			// append the agentID in case more than one of this type
-			String suffix = Integer.toString(mm.getID());
-			feat.addProperty(delimit("_", POSITION, PRE, LIQUIDATION + suffix),
-					mm.getPreLiquidationPosition());
-			// just to double-check, should be 0 position after liquidation
-			feat.addProperty(
-					delimit("_", POSITION, POST, LIQUIDATION + suffix),
-					mm.getPositionBalance());
-			feat.addProperty(delimit("_", PROFIT, PRE, LIQUIDATION + suffix),
-					mm.getPreLiquidationProfit());
-			feat.addProperty(delimit("_", PROFIT, POST, LIQUIDATION + suffix),
-					mm.getSurplus(0));
+//			String suffix = Integer.toString(mm.getID());
+//			feat.addProperty(delimit("_", POSITION, PRE, LIQUIDATION + suffix),
+//					mm.getPreLiquidationPosition());
+//			// just to double-check, should be 0 position after liquidation
+//			feat.addProperty(
+//					delimit("_", POSITION, POST, LIQUIDATION + suffix),
+//					mm.getPositionBalance());
+//			feat.addProperty(delimit("_", PROFIT, PRE, LIQUIDATION + suffix),
+//					mm.getPreLiquidationProfit());
+//			feat.addProperty(delimit("_", PROFIT, POST, LIQUIDATION + suffix),
+//					mm.getSurplus(0));
 		}
 		return feat;
 	}

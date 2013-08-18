@@ -2,13 +2,14 @@ package entity.infoproc;
 
 import static logger.Logger.Level.INFO;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import data.TimeSeries;
 
@@ -39,8 +40,8 @@ public class SIP extends IP {
 
 	public SIP(TimeStamp latency) {
 		super(latency);
-		this.marketQuotes = new HashMap<Market, Quote>();
-		this.transactions = new ArrayList<Transaction>();
+		this.marketQuotes = Maps.newHashMap();
+		this.transactions = Lists.newArrayList();
 		this.nbbo = new BestBidAsk(null, null, null, null);
 
 		this.nbboSpreads = new TimeSeries();
@@ -80,7 +81,7 @@ public class SIP extends IP {
 
 		nbbo = new BestBidAsk(bestBidMkt, bestBid, bestAskMkt, bestAsk);
 		nbboSpreads.add((int) currentTime.getInTicks(), nbbo.getSpread());
-		return Collections.emptySet();
+		return ImmutableList.of();
 	}
 
 	public BestBidAsk getNBBO() {
@@ -88,7 +89,7 @@ public class SIP extends IP {
 	}
 	
 	public List<Transaction> getTransactions() {
-		return Collections.unmodifiableList(transactions);
+		return ImmutableList.copyOf(transactions);
 	}
 
 	public TimeSeries getNBBOSpreads() {

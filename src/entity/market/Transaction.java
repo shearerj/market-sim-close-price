@@ -71,6 +71,16 @@ public class Transaction implements Serializable {
 	}
 
 	@Override
+	public final int hashCode() {
+		return super.hashCode();
+	}
+
+	@Override
+	public final boolean equals(Object obj) {
+		return super.equals(obj);
+	}
+
+	@Override
 	public String toString() {
 		return "(mkt=" + market + ", buyer="
 				+ buyer + ", seller=" + seller + ", price=" + price

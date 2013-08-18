@@ -1,5 +1,7 @@
 package activity;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 
 import entity.market.Market;
@@ -16,7 +18,7 @@ public class Clear extends Activity {
 
 	public Clear(Market market, TimeStamp scheduledTime) {
 		super(scheduledTime);
-		this.market = market;
+		this.market = checkNotNull(market, "Market");
 	}
 
 	@Override

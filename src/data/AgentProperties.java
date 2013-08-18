@@ -1,5 +1,6 @@
 package data;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import systemmanager.Consts.AgentType;
 
 public class AgentProperties extends EntityProperties {
@@ -8,7 +9,7 @@ public class AgentProperties extends EntityProperties {
 
 	public AgentProperties(AgentType type) {
 		super();
-		this.type = type;
+		this.type = checkNotNull(type, "Type");
 	}
 
 	public AgentProperties(AgentProperties copy) {

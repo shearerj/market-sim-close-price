@@ -1,8 +1,9 @@
 package entity.infoproc;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import com.google.common.collect.ImmutableList;
 
 import activity.Activity;
 import activity.AgentStrategy;
@@ -23,12 +24,6 @@ public class HFTIP extends SMIP {
 	
 	protected final HFTAgent hftAgent;
 
-	/**
-	 * Constructor
-	 * 
-	 * @param ID
-	 * @param d
-	 */
 	public HFTIP(TimeStamp latency, Market mkt, HFTAgent hftAgent) {
 		super(latency, mkt);
 		this.hftAgent = hftAgent;
@@ -37,10 +32,9 @@ public class HFTIP extends SMIP {
 	@Override
 	public Collection<? extends Activity> processQuote(Market market, Quote quote,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
-		Collection<Activity> acts = new ArrayList<Activity>(super.processQuote(
-				market, quote, newTransactions, currentTime));
-		acts.add(new AgentStrategy(hftAgent, TimeStamp.IMMEDIATE));
-		return acts;
+		return ImmutableList.<Activity> builder().addAll(
+				super.processQuote(market, quote, newTransactions, currentTime)).add(
+				new AgentStrategy(hftAgent, TimeStamp.IMMEDIATE)).build();
 	}
 
 	@Override

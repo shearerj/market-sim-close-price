@@ -1,6 +1,11 @@
 package entity.market;
 
 import java.io.Serializable;
+import static java.math.RoundingMode.HALF_EVEN;
+
+import com.google.common.base.Objects;
+import com.google.common.math.DoubleMath;
+import com.google.common.primitives.Ints;
 
 import utils.MathUtils;
 
@@ -32,6 +37,10 @@ public class Price implements Comparable<Price>, Serializable {
 		// XXX Decide if negative numbers should be allowed and how to include
 		// this in the "diff" function
 		this.ticks = ticks;
+	}
+	
+	public Price(double ticks) {
+		this(DoubleMath.roundToInt(ticks, HALF_EVEN));
 	}
 
 	public int getInTicks() {
@@ -84,7 +93,7 @@ public class Price implements Comparable<Price>, Serializable {
 	public int compareTo(Price o) {
 		if (o == null)
 			return 1;
-		return this.ticks - o.ticks;
+		return Ints.compare(ticks, o.ticks);
 	}
 
 	/**
@@ -117,7 +126,7 @@ public class Price implements Comparable<Price>, Serializable {
 
 	@Override
 	public int hashCode() {
-		return ticks;
+		return Objects.hashCode(ticks);
 	}
 
 	@Override

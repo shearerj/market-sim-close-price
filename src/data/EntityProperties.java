@@ -1,6 +1,7 @@
 package data;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -24,7 +25,7 @@ public class EntityProperties {
 	}
 
 	public EntityProperties(EntityProperties def) {
-		this.properties = Maps.newHashMap(def.properties);
+		this.properties = Maps.newHashMap(checkNotNull(def.properties));
 	}
 
 	public EntityProperties(String config) {
@@ -38,6 +39,7 @@ public class EntityProperties {
 	}
 
 	public void addConfig(String config) {
+		checkNotNull(config, "Config String");
 		ImmutableList<String> args = ImmutableList.copyOf(configSplitter.split(config));
 		checkArgument(args.size() % 2 == 0, "Not key value pair");
 		for (Iterator<String> it = args.iterator(); it.hasNext();) {

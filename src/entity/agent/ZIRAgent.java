@@ -3,8 +3,9 @@ package entity.agent;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
-import java.util.ArrayList;
 import java.util.Collection;
+
+import com.google.common.collect.Lists;
 
 import systemmanager.Keys;
 import utils.RandPlus;
@@ -66,7 +67,7 @@ public class ZIRAgent extends ReentryAgent {
 
 	@Override
 	public Collection<Activity> agentStrategy(TimeStamp currentTime) {
-		Collection<Activity> activities = new ArrayList<Activity>(super.agentStrategy(currentTime));
+		Collection<Activity> acts = Lists.newArrayList(super.agentStrategy(currentTime));
 
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append(':');
@@ -76,7 +77,7 @@ public class ZIRAgent extends ReentryAgent {
 		if (!activeOrders.isEmpty()) {
 			sb.append(" last order has not transacted, go back to sleep");
 			log(INFO, sb.toString());
-			return activities;
+			return acts;
 		}
 
 		// 0.50% chance of being either long or short
@@ -99,7 +100,7 @@ public class ZIRAgent extends ReentryAgent {
 			sb.append('=').append(val);
 			log(INFO, sb.toString());
 
-			activities.add(new SubmitNMSOrder(this, price, quantity,
+			acts.add(new SubmitNMSOrder(this, price, quantity,
 					primaryMarket, TimeStamp.IMMEDIATE));
 		} else {
 			// if exceed max position, then don't submit a new bid
@@ -108,7 +109,7 @@ public class ZIRAgent extends ReentryAgent {
 			sb.append(maxAbsPosition).append("; no submission");
 			log(INFO, sb.toString());
 		}
-		return activities;
+		return acts;
 	}
 
 }

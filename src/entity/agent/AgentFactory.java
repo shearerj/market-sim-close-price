@@ -1,10 +1,11 @@
 package entity.agent;
 
-import java.util.Collection;
+import interators.PoissonArrival;
 
-import generator.Generator;
-import generator.PoissonArrivalGenerator;
-import generator.RoundRobinGenerator;
+import java.util.Collection;
+import java.util.Iterator;
+
+import com.google.common.collect.Iterators;
 
 import utils.RandPlus;
 import data.AgentProperties;
@@ -19,12 +20,12 @@ public class AgentFactory {
 	protected final FundamentalValue fundamental;
 	protected final SIP sip;
 	protected final Collection<Market> markets;
-	protected final Generator<TimeStamp> arrivalProcess;
-	protected final Generator<Market> marketAssignment;
+	protected final Iterator<TimeStamp> arrivalProcess;
+	protected final Iterator<Market> marketAssignment;
 
 	public AgentFactory(FundamentalValue fundamental, SIP sip,
-			Generator<TimeStamp> arrivalProcess, Collection<Market> markets,
-			Generator<Market> marketProcess, RandPlus rand) {
+			Iterator<TimeStamp> arrivalProcess, Collection<Market> markets,
+			Iterator<Market> marketProcess, RandPlus rand) {
 		this.rand = rand;
 		this.fundamental = fundamental;
 		this.sip = sip;
@@ -38,9 +39,9 @@ public class AgentFactory {
 	 */
 	public AgentFactory(FundamentalValue fundamental, SIP sip,
 			Collection<Market> markets, double arrivalRate, RandPlus rand) {
-		this(fundamental, sip, new PoissonArrivalGenerator(TimeStamp.IMMEDIATE,
+		this(fundamental, sip, new PoissonArrival(TimeStamp.IMMEDIATE,
 				arrivalRate, new RandPlus(rand.nextLong())), markets,
-				new RoundRobinGenerator<Market>(markets), rand);
+				Iterators.cycle(markets), rand);
 	}
 
 	// XXX Not all agents advance all of the parameters like the market or the arrival process. One

@@ -1,5 +1,7 @@
 package activity;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 
 import entity.agent.Agent;
@@ -16,7 +18,7 @@ public class AgentStrategy extends Activity {
 
 	public AgentStrategy(Agent agent, TimeStamp scheduledTime) {
 		super(scheduledTime);
-		this.agent = agent;
+		this.agent = checkNotNull(agent, "Agent");
 	}
 
 	@Override

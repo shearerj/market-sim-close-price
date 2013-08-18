@@ -5,10 +5,11 @@ import static logger.Logger.Level.INFO;
 import static utils.Compare.max;
 import static utils.Compare.min;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import com.google.common.collect.Lists;
 
 import systemmanager.Keys;
 import utils.RandPlus;
@@ -101,8 +102,8 @@ public class AAAgent extends ReentryAgent {
 	}
 
 	@Override
-	public Collection<Activity> agentStrategy(TimeStamp ts) {
-		Collection<Activity> actMap = new ArrayList<Activity>();
+	public Collection<Activity> agentStrategy(TimeStamp currentTime) {
+		Collection<Activity> acts = Lists.newArrayList(super.agentStrategy(currentTime));
 
 		List<Transaction> trans = sip.getTransactions();
 		
@@ -122,7 +123,7 @@ public class AAAgent extends ReentryAgent {
 		int quantity = isBuyer ? 1 : -1;
 
 		// Updating Price Limit
-		Price limit = determinePriceLimit(quantity, ts);
+		Price limit = determinePriceLimit(quantity, currentTime);
 
 		// Determine the Target Price
 		Price targetPrice = determinePriceTarget(limit, movingAverage);
@@ -130,7 +131,7 @@ public class AAAgent extends ReentryAgent {
 		// Bidding Layer - only if at least one ask and one bid have been
 		// submitted
 		// See Vytelingum paper section 4.4 - Bidding Layer
-		actMap.addAll(biddingLayer(limit, targetPrice, quantity, ts));
+		acts.addAll(biddingLayer(limit, targetPrice, quantity, currentTime));
 
 		// Update the short term learning variable
 		double oldAggression = aggression;
@@ -155,9 +156,9 @@ public class AAAgent extends ReentryAgent {
 		
 		// Market Reentry
 		// TimeStamp tsNew = reentry.next();
-		actMap.add(new AgentStrategy(this, reentry.next()));
+		acts.add(new AgentStrategy(this, reentry.next()));
 
-		return actMap;
+		return acts;
 	}
 	
 	private Pair<Double, Double> findMovingAverage(List<Transaction> trans) {
@@ -545,23 +546,23 @@ public class AAAgent extends ReentryAgent {
 	}
 
 	
-	public boolean getBuyerStatus() {
+	boolean getBuyerStatus() {
 		return isBuyer;
 	}
 
-	public double getAggression() {
+	double getAggression() {
 		return aggression;
 	}
 
-	public void setAggression(double in) {
+	void setAggression(double in) {
 		aggression = in;
 	}
 
-	public double getAdaptiveness() {
+	double getAdaptiveness() {
 		return theta;
 	}
 
-	public void setAdaptivness(double in) {
+	void setAdaptivness(double in) {
 		theta = in;
 	}
 

@@ -1,5 +1,7 @@
 package activity;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -24,10 +26,10 @@ public class SendToIP extends Activity {
 
 	public SendToIP(Market market, Quote quote, List<Transaction> transactions, IP ip, TimeStamp scheduledTime) {
 		super(scheduledTime);
-		this.market = market;
-		this.ip = ip;
-		this.quote = quote;
-		this.transactions = transactions;
+		this.market = checkNotNull(market, "Market");
+		this.ip = checkNotNull(ip, "IP");
+		this.quote = checkNotNull(quote, "Quote");
+		this.transactions = checkNotNull(transactions, "Transactions");
 	}
 
 	@Override

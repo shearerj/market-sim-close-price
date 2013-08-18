@@ -1,5 +1,7 @@
 package activity;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 
 import entity.agent.Agent;
@@ -15,9 +17,9 @@ public class AgentArrival extends Activity {
 
 	protected final Agent agent;
 
-	public AgentArrival(Agent ag, TimeStamp currentTime) {
+	public AgentArrival(Agent agent, TimeStamp currentTime) {
 		super(currentTime);
-		this.agent = ag;
+		this.agent = checkNotNull(agent, "Agent");
 	}
 
 	@Override

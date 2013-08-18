@@ -1,5 +1,6 @@
 package data;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import systemmanager.Consts.MarketType;
 
 public class MarketProperties extends EntityProperties {
@@ -8,7 +9,7 @@ public class MarketProperties extends EntityProperties {
 	
 	public MarketProperties(MarketType type) {
 		super();
-		this.type = type;
+		this.type = checkNotNull(type, "Market Type");
 	}
 
 	public MarketProperties(MarketProperties copy) {

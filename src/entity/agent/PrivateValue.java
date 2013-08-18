@@ -1,13 +1,21 @@
 package entity.agent;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static entity.market.Price.ZERO;
+import static utils.MathUtils.bound;
+
 import java.io.Serializable;
 import java.util.Arrays;
-
-import entity.market.Price;
+import java.util.Collections;
+import java.util.List;
 
 import utils.RandPlus;
-import static utils.MathUtils.bound;
-import static entity.market.Price.ZERO;
+
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+
+import entity.market.Price;
 
 /**
  * PRIVATEVALUE
@@ -22,7 +30,7 @@ public class PrivateValue implements Serializable {
 	private static final long serialVersionUID = -348702049295080442L;
 	
 	protected final int offset;
-	protected final Price[] prices;
+	protected final List<Price> prices;
 
 	/**
 	 * Constructor for an agent without private value. This will return
@@ -30,7 +38,7 @@ public class PrivateValue implements Serializable {
 	 */
 	public PrivateValue() {
 		offset = 0;
-		prices = new Price[] { ZERO };
+		prices = Collections.singletonList(ZERO);
 	}
 
 	/**
@@ -46,18 +54,23 @@ public class PrivateValue implements Serializable {
 	 *            The random number generator to use for random generation.
 	 */
 	public PrivateValue(int maxPosition, double var, RandPlus rand) {
-		if (maxPosition <= 0) throw new IllegalArgumentException("Max Position must be positive");
+		checkArgument(maxPosition > 0, "Max Position must be positive");
 		
 		// Identical to legacy generation in final output
-		offset = maxPosition;
-		prices = new Price[maxPosition * 2 + 1];
+		this.offset = maxPosition;
+		double[] prices = new double[maxPosition * 2 + 1];
 		for (int i = 0; i < prices.length; i++)
-			prices[i] = new Price((int) Math.round(rand.nextGaussian(0, var)));
+			prices[i] = rand.nextGaussian(0, var);
 		Arrays.sort(prices);
-
-		Price median = prices[offset];
+		double median = prices[offset];
 		for (int i = 0; i < prices.length; i++)
-			prices[i] = prices[i].minus(median);
+			prices[i] = prices[i] - median;
+		
+		Builder<Price> builder = ImmutableList.builder();
+		for (double price : prices)
+			builder.add(new Price(price));
+		
+		this.prices = builder.build();
 	}
 
 	/**
@@ -85,12 +98,12 @@ public class PrivateValue implements Serializable {
 	 *         to position newPos.
 	 */
 	public Price getValueAtPosition(int position) {
-		return prices[bound(position + offset, 0, prices.length - 1)];
+		return prices.get(bound(position + offset, 0, prices.size() - 1));
 	}
 
 	@Override
 	public int hashCode() {
-		return Arrays.hashCode(prices) ^ offset;
+		return Objects.hashCode(prices, offset);
 	}
 
 	@Override
@@ -98,13 +111,12 @@ public class PrivateValue implements Serializable {
 		if (obj == null || !(obj instanceof PrivateValue))
 			return false;
 		PrivateValue other = (PrivateValue) obj;
-		return other.offset == this.offset
-				&& Arrays.equals(other.prices, this.prices);
+		return other.offset == this.offset && other.prices.equals(prices);
 	}
 
 	@Override
 	public String toString() {
-		return Arrays.toString(prices);
+		return prices.toString();
 	}
 
 }

@@ -6,6 +6,9 @@ import static logger.Logger.Level.ERROR;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+
 import utils.RandPlus;
 import entity.market.Price;
 import event.TimeStamp;
@@ -16,7 +19,6 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-// XXX Potentially need a way to do this that will work for longs / arbitrary time stamps
 // XXX Potentially move this to another package?
 public class FundamentalValue implements Serializable {
 
@@ -42,13 +44,13 @@ public class FundamentalValue implements Serializable {
 		this.shockVar = var;
 
 		// stochastic initial conditions for random process
-		meanRevertProcess = new ArrayList<Double>();
+		meanRevertProcess = Lists.newArrayList();
 		meanRevertProcess.add(rand.nextGaussian(meanValue, shockVar));
 	}
 
-	protected void computeFundamentalTo(int length) {
-		while (meanRevertProcess.size() < length + 1) {
-			double prevValue = meanRevertProcess.get(meanRevertProcess.size() - 1);
+	protected void computeFundamentalTo(int maxQuery) {
+		for (int i = meanRevertProcess.size(); i <= maxQuery; i++) {
+			double prevValue = Iterables.getLast(meanRevertProcess);
 			double nextValue = rand.nextGaussian(meanValue * kappa
 					+ (1 - kappa) * prevValue, shockVar);
 			meanRevertProcess.add(nextValue);

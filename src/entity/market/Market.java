@@ -2,17 +2,23 @@ package entity.market;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.signum;
 import static java.lang.Math.min;
 import static java.lang.Math.max;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Iterator;
+import java.util.Map.Entry;
+
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multiset;
 
 import activity.Activity;
 import activity.SendToIP;
@@ -49,7 +55,7 @@ public abstract class Market extends Entity {
 
 	// Book keeping
 	protected final Map<fourheap.Order<Price, TimeStamp>, Order> orderMapping;
-	protected final Map<Price, Integer> askPriceQuantity, bidPriceQuantity;
+	protected final Multiset<Price> askPriceQuantity, bidPriceQuantity;
 	protected final Collection<Order> orders; // All orders ever submitted to the market
 	protected final List<Transaction> allTransactions; // All successful transactions
 	
@@ -65,17 +71,17 @@ public abstract class Market extends Entity {
 		this.clearingRule = clearingRule;
 		this.quote = new Quote(this, null, 0, null, 0, TimeStamp.ZERO);
 
-		this.ips = new ArrayList<IP>();
+		this.ips = Lists.newArrayList();
 		this.sip = sip;
 		this.ip = new SMIP(latency, this);
 		ips.add(sip);
 		ips.add(ip);
 
-		this.orderMapping = new HashMap<fourheap.Order<Price, TimeStamp>, Order>();
-		this.askPriceQuantity = new HashMap<Price, Integer>();
-		this.bidPriceQuantity = new HashMap<Price, Integer>();
-		this.orders = new ArrayList<Order>();
-		this.allTransactions = new ArrayList<Transaction>();
+		this.orderMapping = Maps.newHashMap();
+		this.askPriceQuantity = HashMultiset.create();
+		this.bidPriceQuantity = HashMultiset.create();
+		this.orders = Lists.newArrayList();
+		this.allTransactions = Lists.newArrayList();
 
 		this.depths = new TimeSeries();
 		this.spreads = new TimeSeries();
@@ -83,6 +89,7 @@ public abstract class Market extends Entity {
 	}
 
 	public void addIP(IP ip) {
+		checkNotNull(ip, "IP");
 		ips.add(ip);
 	}
 
@@ -94,7 +101,7 @@ public abstract class Market extends Entity {
 	 * @return All bids submitted to this market
 	 */
 	public Collection<Order> getAllOrders() {
-		return Collections.unmodifiableCollection(orders);
+		return ImmutableList.copyOf(orders);
 	}
 
 	public Collection<? extends Activity> withdrawOrder(Order order,
@@ -106,47 +113,42 @@ public abstract class Market extends Entity {
 	 * This will work even if quantity has "decreased" after order was submitted. Trying to cancel a
 	 * higher quantity than the order has to offer will simply result in the entire order being
 	 * cancelled.
-	 * 
-	 * @param order
-	 * @param quantity
-	 * @param currentTime
-	 * @return
 	 */
 	public Collection<? extends Activity> withdrawOrder(Order order, int quantity, TimeStamp currentTime) {
-		if (order.getQuantity() == 0) return Collections.emptySet();
-		if (quantity == 0 || signum(order.getQuantity()) != signum(quantity))
-			throw new IllegalArgumentException("Improper quantity");
-		quantity = quantity < 0 ? max(quantity, order.getQuantity()) : min(quantity, order.getQuantity());
+		if (order.getQuantity() == 0) return ImmutableList.of();
+		checkArgument(quantity != 0 && signum(order.getQuantity()) == signum(quantity),
+				"Improper quantity");
+		quantity = quantity < 0 ? max(quantity, order.getQuantity()) : min(
+				quantity, order.getQuantity());
 		
-		Map<Price, Integer> priceQuant = order.getQuantity() < 0 ? askPriceQuantity : bidPriceQuantity;
-		updatePriceQuant(priceQuant, order.getPrice(), -quantity);
+		Multiset<Price> priceQuant = order.getQuantity() < 0 ? askPriceQuantity : bidPriceQuantity;
+		int newQuantity = priceQuant.count(order.getPrice()) - quantity;
+		priceQuant.setCount(order.getPrice(), newQuantity);
 		
 		orderbook.withdrawOrder(order.order, quantity);
 		checkOrder(order);
-		return Collections.emptySet();
+		return ImmutableList.of();
 	}
 
 	/**
 	 * Clears the order book.
 	 */
 	public Collection<? extends Activity> clear(TimeStamp currentTime) {
-
 		List<fourheap.Transaction<Price, TimeStamp>> ftransactions = orderbook.clear();
-		List<Price> prices = clearingRule.pricing(ftransactions);
+		Builder<Transaction> transactions = ImmutableList.builder();
+		for (Entry<fourheap.Transaction<Price, TimeStamp>, Price> e : clearingRule.pricing(ftransactions).entrySet()) {
 
-		List<Transaction> transactions = new ArrayList<Transaction>(ftransactions.size());
-		Iterator<Price> pit = prices.iterator();
-		for (fourheap.Transaction<Price, TimeStamp> ftrans : ftransactions) {
-
-			Order buy = orderMapping.get(ftrans.getBuy());
-			Order sell = orderMapping.get(ftrans.getSell());
+			Order buy = orderMapping.get(e.getKey().getBuy());
+			Order sell = orderMapping.get(e.getKey().getSell());
 			Transaction trans = new Transaction(buy.getAgent(),
-					sell.getAgent(), this, buy, sell, ftrans.getQuantity(),
-					pit.next(), currentTime);
+					sell.getAgent(), this, buy, sell, e.getKey().getQuantity(),
+					e.getValue(), currentTime);
 			
-			updatePriceQuant(askPriceQuantity, sell.getPrice(), trans.getQuantity());
-			updatePriceQuant(bidPriceQuantity, buy.getPrice(), -trans.getQuantity());
-			
+			int newAskQuantity = askPriceQuantity.count(sell.getPrice()) + trans.getQuantity();
+			askPriceQuantity.setCount(sell.getPrice(), newAskQuantity);
+			int newBidQuantity = bidPriceQuantity.count(buy.getPrice()) - trans.getQuantity();
+			bidPriceQuantity.setCount(buy.getPrice(), newBidQuantity);
+		
 			checkOrder(buy);
 			checkOrder(sell);
 			transactions.add(trans);
@@ -157,7 +159,7 @@ public abstract class Market extends Entity {
 				sell.getAgent().addTransaction(trans);
 		}
 
-		return updateQuote(Collections.unmodifiableList(transactions), currentTime);
+		return updateQuote(transactions.build(), currentTime);
 	}
 
 	/**
@@ -167,8 +169,8 @@ public abstract class Market extends Entity {
 			List<Transaction> transactions, TimeStamp currentTime) {
 		Price ask = orderbook.askQuote();
 		Price bid = orderbook.bidQuote();
-		Integer quantityAsk = ask == null ? (Integer) 0 : askPriceQuantity.get(ask);
-		Integer quantityBid = bid == null ? (Integer) 0 : bidPriceQuantity.get(bid);
+		int quantityAsk = askPriceQuantity.count(ask);
+		int quantityBid = bidPriceQuantity.count(bid);
 		// TODO In certain circumstances, there will be no orders with the current ask or bid price
 		// in the market. This is a result of the ask price being set as part of a matched order.
 		// The correct "quantity" is 0, but it doesn't tell how many orders are available at that
@@ -179,20 +181,18 @@ public abstract class Market extends Entity {
 		// quantity is 0, but price isn't null, then you'll have to bid over instead of equal to the
 		// quote in order to execute. Also, this will only happen when there are matched orders when
 		// a quote is generated, which is currently never possible
-		quote = new Quote(this, ask, quantityAsk == null ? 0 : quantityAsk,
-				bid, quantityBid == null ? 0 : quantityBid, currentTime);
+		quote = new Quote(this, ask, quantityAsk, bid, quantityBid, currentTime);
 
 		log(INFO, this + " SendToSIP" + quote);
-
-		Collection<Activity> activities = new ArrayList<Activity>();
-		for (IP ip : ips)
-			activities.add(new SendToIP(this, quote, transactions, ip,
-					TimeStamp.IMMEDIATE));
 
 		depths.add((int) currentTime.getInTicks(), orderbook.size());
 		spreads.add((int) currentTime.getInTicks(), quote.getSpread());
 		midQuotes.add((int) currentTime.getInTicks(), quote.getMidquote());
-		return activities;
+		
+		Builder<Activity> acts = ImmutableList.builder();
+		for (IP ip : ips)
+			acts.add(new SendToIP(this, quote, transactions, ip, TimeStamp.IMMEDIATE));
+		return acts.build();
 	}
 	
 	/**
@@ -205,13 +205,6 @@ public abstract class Market extends Entity {
 			orderMapping.remove(order.order);
 		}
 	}
-	
-	protected void updatePriceQuant(Map<Price, Integer> priceQuant, Price price, int quantity) {
-		Integer oldQuant = priceQuant.get(price);
-		int newQuant = (oldQuant == null ? 0 : oldQuant) + quantity;
-		if (newQuant == 0) priceQuant.remove(price);
-		else priceQuant.put(price, newQuant);
-	}
 
 	// TODO Add IOC / Fill or Kill Order
 
@@ -220,19 +213,19 @@ public abstract class Market extends Entity {
 	 */
 	public Collection<? extends Activity> submitOrder(Agent agent, Price price,
 			int quantity, TimeStamp currentTime) {
-		return submitOrder(agent, price, quantity, currentTime,
-				TimeStamp.IMMEDIATE);
+		return submitOrder(agent, price, quantity, currentTime, TimeStamp.IMMEDIATE);
 	}
 
 	public Collection<? extends Activity> submitOrder(Agent agent, Price price,
 			int quantity, TimeStamp currentTime, TimeStamp duration) {
-		if (quantity == 0) return Collections.emptySet();
+		checkArgument(quantity != 0, "Can't submit a 0 quantity order");
 
 		log(INFO, this + " " + getName() + "::submitBid: +(" + price + ", "
 				+ quantity + ") from " + agent);
 
-		Map<Price, Integer> priceQuant = quantity < 0 ? askPriceQuantity : bidPriceQuantity;
-		updatePriceQuant(priceQuant, price, quantity);
+		Multiset<Price> priceQuant = quantity < 0 ? askPriceQuantity : bidPriceQuantity;
+		int newQuantity = priceQuant.count(price) + quantity;
+		priceQuant.setCount(price, newQuantity);
 		
 		fourheap.Order<Price, TimeStamp> nativeOrder = new fourheap.Order<Price, TimeStamp>(
 				price, quantity, currentTime);
@@ -243,10 +236,10 @@ public abstract class Market extends Entity {
 		orders.add(order);
 		agent.addOrder(order);
 		depths.add((int) currentTime.getInTicks(), orderbook.size());
-
+		
 		if (!duration.equals(TimeStamp.IMMEDIATE))
-			return Collections.singleton(new WithdrawOrder(order, currentTime.plus(duration)));
-		return Collections.emptySet();
+			return ImmutableList.of(new WithdrawOrder(order, currentTime.plus(duration)));
+		return ImmutableList.of();
 	}
 
 	/**
@@ -290,7 +283,7 @@ public abstract class Market extends Entity {
 	}
 	
 	public List<Transaction> getTransactions() {
-		return Collections.unmodifiableList(allTransactions);
+		return ImmutableList.copyOf(allTransactions);
 	}
 
 	public TimeSeries getDepth() {

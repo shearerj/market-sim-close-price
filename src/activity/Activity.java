@@ -1,5 +1,7 @@
 package activity;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 
 import event.*;
@@ -20,7 +22,7 @@ public abstract class Activity {
 	protected final TimeStamp scheduledTime;
 	
 	public Activity(TimeStamp scheduledTime) {
-		this.scheduledTime = scheduledTime;
+		this.scheduledTime = checkNotNull(scheduledTime, "Scheduled Time");
 	}
 
 	/**

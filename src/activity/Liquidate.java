@@ -1,5 +1,7 @@
 package activity;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 
 import entity.agent.Agent;
@@ -20,8 +22,8 @@ public class Liquidate extends Activity {
 
 	public Liquidate(Agent agent, Price price, TimeStamp scheduledTime) {
 		super(scheduledTime);
-		this.agent = agent;
-		this.price = price;
+		this.agent = checkNotNull(agent, "Agent");
+		this.price = checkNotNull(price, "Price");
 	}
 
 	@Override

@@ -1,8 +1,9 @@
 package entity.market.clearingrule;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 
 import entity.market.Price;
 import event.TimeStamp;
@@ -13,13 +14,14 @@ public class EarliestPriceClear implements ClearingRule {
 	private static final long serialVersionUID = -6417178198266057261L;
 
 	@Override
-	public List<Price> pricing(List<Transaction<Price, TimeStamp>> transactions) {
-		List<Price> prices = new ArrayList<Price>(transactions.size());
+	public Map<Transaction<Price, TimeStamp>, Price> pricing(
+			Iterable<Transaction<Price, TimeStamp>> transactions) {
+		Builder<Transaction<Price, TimeStamp>, Price> prices = ImmutableMap.builder();
 		for (Transaction<Price, TimeStamp> trans : transactions)
-			prices.add(trans.getBuy().getSubmitTime().before(trans.getSell().getSubmitTime())
+			prices.put(trans, trans.getBuy().getSubmitTime().before(trans.getSell().getSubmitTime())
 					? trans.getBuy().getPrice()
 					: trans.getSell().getPrice());
-		return prices;
+		return prices.build();
 	}
 
 }

@@ -1,7 +1,10 @@
 package entity.agent;
 
+import interators.ExpInterarrivals;
+
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 
 import data.FundamentalValue;
 
@@ -11,8 +14,6 @@ import utils.RandPlus;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import event.TimeStamp;
-import generator.ExponentialInterarrivalGenerator;
-import generator.Generator;
 
 
 /**
@@ -24,11 +25,11 @@ public abstract class ReentryAgent extends BackgroundAgent {
 
 	private static final long serialVersionUID = -4312261553207167428L;
 	
-	protected Generator<TimeStamp> reentry; // re-entry times
+	protected Iterator<TimeStamp> reentry; // re-entry times
 	
 	public ReentryAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Market market, PrivateValue pv, RandPlus rand,
-			Generator<TimeStamp> reentry, int tickSize) {
+			Iterator<TimeStamp> reentry, int tickSize) {
 		super(arrivalTime, fundamental, sip, market, pv, rand, tickSize);
 	
 		this.reentry = reentry;
@@ -41,7 +42,7 @@ public abstract class ReentryAgent extends BackgroundAgent {
 			Market market, PrivateValue pv, RandPlus rand, double reentryRate,
 			int tickSize) {
 		this(arrivalTime, fundamental, sip, market, pv, rand,
-				new ExponentialInterarrivalGenerator(reentryRate, rand),
+				new ExpInterarrivals(reentryRate, rand),
 				tickSize);
 	}
 

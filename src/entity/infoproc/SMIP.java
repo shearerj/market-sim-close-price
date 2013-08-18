@@ -1,5 +1,6 @@
 package entity.infoproc;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static logger.Logger.Level.INFO;
 
 import java.util.Collection;
@@ -42,9 +43,8 @@ public class SMIP extends IP {
 	public Collection<? extends Activity> processQuote(Market market,
 			Quote quote, List<Transaction> newTransactions,
 			TimeStamp currentTime) {
-		if (!market.equals(assocaitedMarket))
-			throw new IllegalArgumentException(
-					"Can't update an SM Market with anything but it's market");
+		checkArgument(market.equals(assocaitedMarket),
+				"Can't update an SM Market with anything but it's market");
 
 		this.quote = quote;
 		Logger.log(INFO, market + " -> " + this + " ProcessQuote: " + quote);
