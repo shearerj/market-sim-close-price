@@ -2,18 +2,22 @@ package fourheap;
 
 import java.io.Serializable;
 
-// TODO Factory Pattern
-public class Transaction<P extends Comparable<P>, T extends Comparable<T>> implements Serializable {
+public class Transaction<P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
 
 	private static final long serialVersionUID = -6073835626927361670L;
 	
 	protected final Order<P, T> buy, sell;
 	protected final int quantity;
 	
-	public Transaction(Order<P, T> buy, Order<P, T> sell, int quantity) {
+	protected Transaction(Order<P, T> buy, Order<P, T> sell, int quantity) {
 		this.buy = buy;
 		this.sell = sell;
 		this.quantity = quantity;
+	}
+
+	public static <P extends Comparable<? super P>, T extends Comparable<? super T>> Transaction<P, T> create(
+			Order<P, T> buy, Order<P, T> sell, int quantity) {
+		return new Transaction<P, T>(buy, sell, quantity);
 	}
 
 	public Order<P, T> getBuy() {

@@ -7,8 +7,7 @@ import static java.lang.Integer.signum;
 
 import java.io.Serializable;
 
-// FIXME Factory Pattern
-public class Order<P extends Comparable<P>, T extends Comparable<T>> implements Serializable {
+public class Order<P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
 
 	private static final long serialVersionUID = -3460176014871040729L;
 	
@@ -17,7 +16,7 @@ public class Order<P extends Comparable<P>, T extends Comparable<T>> implements 
 	protected int quantity;
 	protected final T submitTime;
 
-	public Order(P price, int initialQuantity, T submitTime) {
+	protected Order(P price, int initialQuantity, T submitTime) {
 		checkArgument(initialQuantity != 0, "Initial Quantity can't be zero");
 		this.price = checkNotNull(price, "Price");
 		this.totalQuantity = initialQuantity;
@@ -25,18 +24,19 @@ public class Order<P extends Comparable<P>, T extends Comparable<T>> implements 
 		this.submitTime = checkNotNull(submitTime, "Submit Time");
 	}
 	
-	public Order(P price, T submitTime) {
-		this(price, 1, submitTime);
+	public static <P extends Comparable<? super P>, T extends Comparable<? super T>> Order<P, T> create(
+			P price, int initialQuantity, T submitTime) {
+		return new Order<P, T>(price, initialQuantity, submitTime);
 	}
 
 	Transaction<P, T> transact(Order<P, T> other, int buyQuantity) {
 		Order<P, T> buy = this.totalQuantity > 0 ? this : other;
 		Order<P, T> sell = this.totalQuantity > 0 ? other : this;
 		
-		checkArgument(sell.price.compareTo(buy.price) < 0, "Invalid Price");
+		checkArgument(sell.price.compareTo(buy.price) <= 0, "Invalid Price");
 		buy.quantity -= buyQuantity;
 		sell.quantity += buyQuantity;
-		return new Transaction<P, T>(buy, sell, buyQuantity);
+		return Transaction.create(buy, sell, buyQuantity);
 	}
 	
 	void withdraw(int quantity) {

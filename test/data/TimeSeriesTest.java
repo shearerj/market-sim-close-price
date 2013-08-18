@@ -10,7 +10,7 @@ import java.util.Random;
 
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.Doubles;
 
 public class TimeSeriesTest {
 	
@@ -101,11 +101,11 @@ public class TimeSeriesTest {
 		
 		values = t.sample(25, 75);
 		assertEquals(3, values.size());
-		assertEquals(ImmutableList.of(5.6, Double.NaN, 3.9), values);
+		assertEquals(Doubles.asList(5.6, Double.NaN, 3.9), values);
 		
 		values = t.sample(25, 75, not(equalTo(Double.NaN)));
 		assertEquals(3, values.size());
-		assertEquals(ImmutableList.of(5.6, 7.4, 3.9), values);
+		assertEquals(Doubles.asList(5.6, 7.4, 3.9), values);
 	}
 
 }

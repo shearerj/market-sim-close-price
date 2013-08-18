@@ -4,7 +4,6 @@
 package utils;
 
 import java.util.AbstractQueue;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -26,23 +25,30 @@ public class RandomQueue<E> extends AbstractQueue<E> {
 	protected Random rand;
 	protected List<E> elements;
 
-	public RandomQueue() {
-		this(new Random());
-	}
-
-	public RandomQueue(Random seed) {
+	 protected RandomQueue(Random seed) {
 		elements = Lists.newArrayList();
 		rand = seed;
 	}
 
-	public RandomQueue(Collection<? extends E> initialElements) {
-		this();
-		addAll(initialElements);
-	}
-
-	public RandomQueue(Collection<? extends E> initialElements, Random seed) {
+	protected RandomQueue(Iterable<? extends E> initialElements, Random seed) {
 		this(seed);
-		addAll(initialElements);
+		Iterables.addAll(this, initialElements);
+	}
+	
+	public static <E> RandomQueue<E> create() {
+		return create(new Random());
+	}
+	
+	public static <E> RandomQueue<E> create(Random seed) {
+		return new RandomQueue<E>(seed);
+	}
+	
+	public static <E> RandomQueue<E> create(Iterable<? extends E> initialElements) {
+		return create(initialElements, new Random());
+	}
+	
+	public static <E> RandomQueue<E> create(Iterable<? extends E> initialElements, Random seed) {
+		return new RandomQueue<E>(initialElements, seed);
 	}
 
 	@Override

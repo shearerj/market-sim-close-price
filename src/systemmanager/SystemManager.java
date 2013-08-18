@@ -237,7 +237,6 @@ public class SystemManager {
 		// Create log file
 		Logger.setup(logLevel, logFile, true, new Prefix() {
 			@Override
-			// TODO If/when only one market model, change this to prefix model id
 			public String getPrefix() {
 				return String.format("%" + digits + "d|%d| ",
 						eventManager.getCurrentTime().getInTicks(), modelNumber);

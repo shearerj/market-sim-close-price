@@ -68,7 +68,7 @@ public abstract class Market extends Entity {
 
 	public Market(SIP sip, ClearingRule clearingRule, TimeStamp latency) {
 		super(nextID++);
-		this.orderbook = new FourHeap<Price, TimeStamp>();
+		this.orderbook = FourHeap.create();
 		this.clearingRule = clearingRule;
 		this.quote = new Quote(this, null, 0, null, 0, TimeStamp.ZERO);
 
@@ -223,8 +223,8 @@ public abstract class Market extends Entity {
 
 		Multiset<Price> priceQuant = quantity < 0 ? askPriceQuantity : bidPriceQuantity;
 		priceQuant.add(price, abs(quantity));
-		
-		fourheap.Order<Price, TimeStamp> nativeOrder = new fourheap.Order<Price, TimeStamp>(
+
+		fourheap.Order<Price, TimeStamp> nativeOrder = fourheap.Order.create(
 				price, quantity, currentTime);
 		Order order = new Order(agent, this, nativeOrder);
 
@@ -250,7 +250,6 @@ public abstract class Market extends Entity {
 	// TODO How should call markets handle Reg NMS. Can't route to call market to get immediate
 	// execution. NMSOrder will not route properly for a call market if there is another market in
 	// the model
-	// TODO orderbook.(bid/ask)Quote() will return the current quote, not the published one
 	public Collection<? extends Activity> submitNMSOrder(Agent agent,
 			Price price, int quantity, TimeStamp currentTime, TimeStamp duration) {
 		BestBidAsk nbbo = sip.getNBBO();

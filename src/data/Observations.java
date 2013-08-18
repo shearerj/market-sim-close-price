@@ -39,7 +39,6 @@ import entity.market.Market;
 import entity.market.Transaction;
 import event.TimeStamp;
 
-// TODO This current version of observations doesn't round doubles to the nearest ten thousandth
 public class Observations {
 	
 	public final static Joiner J = Joiner.on('_');
@@ -268,7 +267,6 @@ public class Observations {
 	protected static JsonObject getTransactionInfo(Collection<Agent> agents, Collection<Transaction> transactions, FundamentalValue fund,
 			long simLength) {
 		JsonObject feat = new JsonObject();
-		// TODO Make sure Agents is a set...
 
 		DescriptiveStatistics prices = new DescriptiveStatistics();
 		DescriptiveStatistics quantity = new DescriptiveStatistics();

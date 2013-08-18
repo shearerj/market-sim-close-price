@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
@@ -15,6 +16,7 @@ import org.junit.Test;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
+import com.google.common.collect.Sets;
 
 public class BinaryHeapTest {
 
@@ -77,6 +79,20 @@ public class BinaryHeapTest {
 		Collections.sort(left);
 		for (int i : left)
 			assertEquals(i, (int) a.poll());
+	}
+	
+	@Test
+	public void removeTest2() {
+		BinaryHeap<Integer> a = BinaryHeap.create();
+		Set<Integer> nums = Sets.newHashSet(randomInts(1000));
+		a.addAll(nums);
+		assertTrue(a.containsAll(nums));
+		
+		for (Iterator<Integer> it = a.iterator(); it.hasNext();) {
+			nums.remove(it.next());
+			if (rand.nextBoolean()) it.remove();
+		}
+		assertTrue(nums.isEmpty());
 	}
 	
 	@Test

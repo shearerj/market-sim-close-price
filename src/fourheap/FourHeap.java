@@ -14,7 +14,7 @@ import com.google.common.collect.Ordering;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.primitives.Ints;
 
-public class FourHeap<P extends Comparable<P>, T extends Comparable<T>> implements Serializable {
+public class FourHeap<P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
 
 	private static final long serialVersionUID = -7322375558427133915L;
 	protected final Ordering<P> pord = Ordering.natural();
@@ -27,13 +27,17 @@ public class FourHeap<P extends Comparable<P>, T extends Comparable<T>> implemen
 	protected final Map<Order<P, T>, OrderRecord> activeOrders;
 	protected int size;
 
-	public FourHeap() {
+	protected FourHeap() {
 		sellUnmatched = BinaryHeap.create(priceComp.compound(timeComp).compound(quantComp));
 		sellMatched = BinaryHeap.create(priceComp.reverse().compound(timeComp).compound(quantComp));
 		buyUnmatched = BinaryHeap.create(priceComp.reverse().compound(timeComp).compound(quantComp.reverse()));
 		buyMatched = BinaryHeap.create(priceComp.compound(timeComp).compound(quantComp.reverse()));
 		activeOrders = Maps.newHashMap();
 		size = 0;
+	}
+	
+	public static <P extends Comparable<? super P>, T extends Comparable<? super T>> FourHeap<P, T> create() {
+		return new FourHeap<P, T>();
 	}
 
 	public void insertOrder(Order<P, T> order) {
@@ -62,7 +66,7 @@ public class FourHeap<P extends Comparable<P>, T extends Comparable<T>> implemen
 		// Next displace inferior matched orders
 		SplitOrder test = new SplitOrder(order); // test comparison
 		while (abs(unmatchedQuantity) > 0 && !matchedHeap.isEmpty()
-				&& matchedHeap.comp.compare(test, matchedHeap.peek()) > 0) {
+				&& matchedHeap.ordering.compare(test, matchedHeap.peek()) > 0) {
 
 			SplitOrder match = matchedHeap.poll();
 			int quantityMatched = t
@@ -115,8 +119,8 @@ public class FourHeap<P extends Comparable<P>, T extends Comparable<T>> implemen
 	}
 
 	public List<Transaction<P, T>> clear() {
-		List<SplitOrder> buys = Ordering.from(buyUnmatched.comp).sortedCopy(buyMatched);
-		List<SplitOrder> sells = Ordering.from(sellUnmatched.comp).sortedCopy(sellMatched);
+		List<SplitOrder> buys = buyUnmatched.ordering.sortedCopy(buyMatched);
+		List<SplitOrder> sells = sellUnmatched.ordering.sortedCopy(sellMatched);
 		buyMatched.clear();
 		sellMatched.clear();
 
