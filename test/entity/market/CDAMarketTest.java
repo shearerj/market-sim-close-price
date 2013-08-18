@@ -11,6 +11,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.google.common.collect.Iterables;
+
 import data.DummyFundamental;
 import data.FundamentalValue;
 
@@ -51,7 +53,7 @@ public class CDAMarketTest {
 
 		Collection<Order> orders = market.orderMapping.values();
 		assertFalse(orders.isEmpty());
-		Order order = orders.iterator().next();
+		Order order = Iterables.getFirst(orders, null);
 		assertEquals(new Price(1), order.getPrice());
 		assertEquals(1, order.getQuantity());
 		assertEquals(time, order.getSubmitTime());
@@ -71,7 +73,7 @@ public class CDAMarketTest {
 
 		Collection<Order> orders = market.orderMapping.values();
 		assertFalse(orders.isEmpty());
-		Order order = orders.iterator().next();
+		Order order = Iterables.getFirst(orders, null);
 		assertEquals(new Price(1), order.getPrice());
 		assertEquals(-1, order.getQuantity());
 		assertEquals(time, order.getSubmitTime());

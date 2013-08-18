@@ -4,9 +4,7 @@ import static logger.Logger.log;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
 import logger.Logger;
 
@@ -20,6 +18,11 @@ import activity.Activity;
 import activity.ProcessQuote;
 import activity.SendToIP;
 import activity.SubmitNMSOrder;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.Iterables;
+
 import data.DummyFundamental;
 import data.EntityProperties;
 import data.FundamentalValue;
@@ -89,10 +92,10 @@ public class AAAgentTest {
 
 		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
 		// the transaction would work
-		Collection<Activity> sendActs = new ArrayList<Activity>();
+		Builder<Activity> sendActs = ImmutableList.builder();
 		for (Activity act : bidActs)
 			if (act instanceof SendToIP) sendActs.addAll(act.execute(currentTime));
-		for (Activity act : sendActs)
+		for (Activity act : sendActs.build())
 			if (act instanceof ProcessQuote) act.execute(currentTime);
 	}
 
@@ -104,10 +107,10 @@ public class AAAgentTest {
 
 		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
 		// the transaction would work
-		Collection<Activity> sendActs = new ArrayList<Activity>();
+		Builder<Activity> sendActs = ImmutableList.builder();
 		for (Activity act : clearActs)
 			if (act instanceof SendToIP) sendActs.addAll(act.execute(currentTime));
-		for (Activity act : sendActs)
+		for (Activity act : sendActs.build())
 			if (act instanceof ProcessQuote) act.execute(currentTime);
 	}
 	
@@ -123,10 +126,10 @@ public class AAAgentTest {
 	
 	private void assertCorrectBid(Agent agent, int low, int high,
 			int quantity) {
-		Iterator<Order> orders = agent.activeOrders.iterator();
+		Collection<Order> orders = agent.activeOrders;
 		// Asserting the bid is correct
-		assertTrue("OrderSize is incorrect", orders.hasNext());
-		Order order = orders.next();
+		assertTrue("OrderSize is incorrect", !orders.isEmpty());
+		Order order = Iterables.getFirst(orders, null);
 
 		assertTrue("Order agent is null", order.getAgent() != null);
 		assertTrue("Order agent is incorrect", order.getAgent().equals(agent));

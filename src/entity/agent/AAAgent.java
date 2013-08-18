@@ -108,9 +108,9 @@ public class AAAgent extends ReentryAgent {
 		List<Transaction> trans = sip.getTransactions();
 		
 		// Update the moving average
-		Pair<Double, Double> pair = findMovingAverage(trans);
-		double movingAverage = pair.left();
-		double mvgAvgNum = pair.right();
+		MovingAverage avg = findMovingAverage(trans);
+		double movingAverage = avg.movingAverage();
+		double mvgAvgNum = avg.movingAverageNum();
 		
 		//Determining the most recent Price
 		Price lastPrice;
@@ -161,9 +161,9 @@ public class AAAgent extends ReentryAgent {
 		return acts;
 	}
 	
-	private Pair<Double, Double> findMovingAverage(List<Transaction> trans) {
+	private MovingAverage findMovingAverage(List<Transaction> trans) {
 		if (trans.size() == 0) 
-			return new Pair<Double, Double>(-1.0, 0.0); // Error checking
+			return new MovingAverage(-1, 0); // Error checking
 		double total = 0;
 		double num = 0;
 		// Iterate through past Quotes and use valid prices
@@ -172,11 +172,11 @@ public class AAAgent extends ReentryAgent {
 			num += 1;
 		}
 		if (num == 0) {
-			return new Pair<Double, Double>(-1.0, 0.0);
+			return new MovingAverage(-1, 0);
 		}
 		double movingAverage = total / num;
 		double mvgAvgNum = num;
-		return new Pair<Double, Double>(movingAverage, mvgAvgNum);
+		return new MovingAverage(movingAverage, mvgAvgNum);
 	}
 
 	
@@ -564,6 +564,14 @@ public class AAAgent extends ReentryAgent {
 
 	void setAdaptivness(double in) {
 		theta = in;
+	}
+	
+	protected static class MovingAverage extends Pair<Double, Double> {
+		protected MovingAverage(double left, double right) {
+			super(left, right);
+		}
+		protected double movingAverage() { return left; }
+		protected double movingAverageNum() { return right; }
 	}
 
 }

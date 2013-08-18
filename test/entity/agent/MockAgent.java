@@ -1,7 +1,8 @@
 package entity.agent;
 
 import java.util.Collection;
-import java.util.Collections;
+
+import com.google.common.collect.ImmutableSet;
 
 import data.FundamentalValue;
 
@@ -23,7 +24,7 @@ public class MockAgent extends BackgroundAgent {
 
 	@Override
 	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
-		return Collections.emptySet();
+		return ImmutableSet.of();
 	}
 
 }

@@ -1,24 +1,41 @@
 package systemmanager;
 
-import static systemmanager.Keys.*;
-import static systemmanager.Consts.AgentType.*;
-import static systemmanager.Consts.MarketType.*;
+import static com.google.common.base.Predicates.equalTo;
+import static systemmanager.Consts.AgentType.LA;
+import static systemmanager.Consts.MarketType.CALL;
+import static systemmanager.Consts.MarketType.CDA;
+import static systemmanager.Keys.ARRIVAL_RATE;
+import static systemmanager.Keys.CLEAR_FREQ;
+import static systemmanager.Keys.FUNDAMENTAL_KAPPA;
+import static systemmanager.Keys.FUNDAMENTAL_MEAN;
+import static systemmanager.Keys.FUNDAMENTAL_SHOCK_VAR;
+import static systemmanager.Keys.MARKET_LATENCY;
+import static systemmanager.Keys.MODEL_NAME;
+import static systemmanager.Keys.MODEL_NUM;
+import static systemmanager.Keys.NBBO_LATENCY;
+import static systemmanager.Keys.NUM;
+import static systemmanager.Keys.PRIVATE_VALUE_VAR;
+import static systemmanager.Keys.RAND_SEED;
+import static systemmanager.Keys.REENTRY_RATE;
+import static systemmanager.Keys.SIMULATION_LENGTH;
+import static systemmanager.Keys.TICK_SIZE;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.MarketType;
 import systemmanager.Consts.Presets;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Multiset;
 import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
@@ -39,7 +56,8 @@ import data.MarketProperties;
  */
 public class SimulationSpec {
 
-	protected static final String DELIMITER = ";"; // Delimiter for list of configs
+	protected static final Splitter split = Splitter.on(';');
+	protected static final Gson gson = new Gson();
 	
 	protected static final String[] simulationKeys = { SIMULATION_LENGTH,
 			FUNDAMENTAL_MEAN, FUNDAMENTAL_KAPPA, FUNDAMENTAL_SHOCK_VAR,
@@ -62,7 +80,7 @@ public class SimulationSpec {
 	}
 	
 	public SimulationSpec(Reader reader) {
-		rawSpec = new Gson().fromJson(reader, JsonObject.class);
+		rawSpec = gson.fromJson(reader, JsonObject.class);
 		JsonObject config = rawSpec.getAsJsonObject(Keys.CONFIG);
 		JsonObject players = rawSpec.getAsJsonObject(Keys.ASSIGN);
 
@@ -98,29 +116,28 @@ public class SimulationSpec {
 
 	protected Collection<MarketProperties> markets(
 			JsonObject config, EntityProperties def) {
-		Collection<MarketProperties> markets = new ArrayList<MarketProperties>();
+		Builder<MarketProperties> markets = ImmutableList.builder();
 
 		for (MarketType marketType : MarketType.values()) {
 			JsonPrimitive configJson = config.getAsJsonPrimitive(marketType.toString());
 			if (configJson == null) continue;
-			for (String marketConfig : configJson.getAsString().split(DELIMITER))
+			for (String marketConfig : split.split(configJson.getAsString()))
 				markets.add(new MarketProperties(marketType, def, marketConfig));
 		}
-		return markets;
+		return markets.build();
 	}
 
 	protected Collection<AgentProperties> agents(JsonObject config,
 			EntityProperties def) {
-		Collection<AgentProperties> backgroundAgents = new ArrayList<AgentProperties>();
+		Builder<AgentProperties> backgroundAgents = ImmutableList.builder();
 
 		for (AgentType agentType : Consts.AgentType.values()) {
-			JsonPrimitive setupJson = config.getAsJsonPrimitive(agentType.toString());
-			if (setupJson == null) continue;
-			for (String agentConfig : setupJson.getAsString().split(DELIMITER))
-				backgroundAgents.add(new AgentProperties(agentType, def,
-						agentConfig));
+			JsonPrimitive configJson = config.getAsJsonPrimitive(agentType.toString());
+			if (configJson == null) continue;
+			for (String agentConfig : split.split(configJson.getAsString()))
+				backgroundAgents.add(new AgentProperties(agentType, def, agentConfig));
 		}
-		return backgroundAgents;
+		return backgroundAgents.build();
 	}
 	
 	/**
@@ -179,31 +196,23 @@ public class SimulationSpec {
 			config.addProperty(Keys.MODEL_NAME, preset.getAsString());
 		} else {
 			// Use config
-			Map<MarketType, Integer> marketCounts = new HashMap<MarketType, Integer>(MarketType.values().length);
-			for (MarketType mktType : MarketType.values())
-				marketCounts.put(mktType, 0);
+			Multiset<MarketType> marketCounts = HashMultiset.create();
 			for (MarketProperties props : marketProps)
-				marketCounts.put(
-						props.getMarketType(),
-						props.getAsInt(Keys.NUM, 0) + marketCounts.get(props.getMarketType()));
+				marketCounts.add(props.getMarketType(), props.getAsInt(Keys.NUM, 0));
 
-			Map<AgentType, Integer> agentCounts = new HashMap<AgentType, Integer>(AgentType.values().length);
-			for (AgentType agType : AgentType.values())
-				agentCounts.put(agType, 0);
+			Multiset<AgentType> agentCounts = HashMultiset.create();
 			for (AgentProperties props : agentProps)
-				agentCounts.put(
-						props.getAgentType(),
-						props.getAsInt(Keys.NUM, 0) + agentCounts.get(props.getAgentType()));
+				agentCounts.add(props.getAgentType(), props.getAsInt(Keys.NUM, 0));
 
 			int num = config.getAsJsonPrimitive(Keys.MODEL_NUM).getAsInt();
 			
 			StringBuilder sb = new StringBuilder();
-			for (Entry<MarketType, Integer> e : marketCounts.entrySet())
-				if (e.getValue() > 0)
-					sb.append(e.getValue()).append(e.getKey()).append('_');
-			for (Entry<AgentType, Integer> e : agentCounts.entrySet())
-				if (e.getValue() > 0 && e.getKey() == LA)
-					sb.append(e.getValue()).append(e.getKey()).append('_');
+			for (Multiset.Entry<MarketType> e : marketCounts.entrySet())
+				sb.append(e.getCount()).append(e.getElement()).append('_');
+			Iterables.filter(agentCounts.elementSet(), equalTo(LA));
+			for (Multiset.Entry<AgentType> e : agentCounts.entrySet())
+				if (e.getElement() == LA)
+					sb.append(e.getCount()).append(e.getElement()).append('_');
 			sb.append(num);
 			config.addProperty(Keys.MODEL_NAME, sb.toString());
 		}
@@ -222,11 +231,11 @@ public class SimulationSpec {
 	}
 
 	public Collection<MarketProperties> getMarketProps() {
-		return Collections.unmodifiableCollection(marketProps);
+		return ImmutableList.copyOf(marketProps);
 	}
 
 	public Collection<AgentProperties> getAgentProps() {
-		return Collections.unmodifiableCollection(agentProps);
+		return ImmutableList.copyOf(agentProps);
 	}
 
 	public JsonObject getPlayerProps() {

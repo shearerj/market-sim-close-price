@@ -2,9 +2,10 @@ package systemmanager;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.*;
-import static utils.Compare.max;
 
 import java.util.Random;
+
+import com.google.common.collect.Ordering;
 
 import event.EventQueue;
 import event.TimeStamp;
@@ -22,6 +23,8 @@ import activity.Activity;
  * @author ewah
  */
 public class EventManager {
+	
+	protected static final Ordering<TimeStamp> ord = Ordering.natural();
 
 	protected EventQueue eventQueue;
 	protected TimeStamp currentTime;
@@ -66,7 +69,7 @@ public class EventManager {
 		try {
 			
 			Activity act = eventQueue.remove();
-			currentTime = max(currentTime, act.getTime());
+			currentTime = ord.max(currentTime, act.getTime());
 			eventQueue.addAll(act.execute(currentTime));
 			log(DEBUG, act.toString());
 		} catch (Exception e) {

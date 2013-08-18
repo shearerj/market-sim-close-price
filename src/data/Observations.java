@@ -26,7 +26,6 @@ import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multiset;
-import com.google.common.collect.Multiset.Entry;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -280,10 +279,6 @@ public class Observations {
 
 		// number of transactions, hashed by agent type
 		Multiset<String> numTrans = HashMultiset.create();
-
-		// So that agent types with 0 transactions still get logged.
-//		for (Agent agent : agents)
-//			numTrans.put(agent.getName(), 0);
 		for (Transaction trans : transactions) {
 			prices.addValue(trans.getPrice().getInTicks());
 			quantity.addValue(trans.getQuantity());
@@ -301,9 +296,12 @@ public class Observations {
 		feat.addProperty(J.join(MEAN, PRICE), prices.getMean());
 		feat.addProperty(J.join(STDDEV, PRICE), prices.getStandardDeviation());
 
-		// number of transactions for each agent type
-		for (Entry<String> e : numTrans.entrySet())
-			feat.addProperty(J.join(e.getElement().toLowerCase(), NUM), e.getCount());
+		// So that agent types with 0 transactions still get logged.
+		ImmutableSet.Builder<String> names = ImmutableSet.builder();
+		for (Agent agent : agents)
+			names.add(agent.getName());
+		for (String name : names.build())
+			feat.addProperty(J.join(name.toLowerCase(), NUM), numTrans.count(name));
 
 		// compute RMSD (for price discovery) at different sampling frequencies
 		for (int period : Consts.periods) {

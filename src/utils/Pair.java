@@ -10,23 +10,14 @@ import com.google.common.base.Objects;
  * @param <A>
  * @param <B>
  */
-// FIXME Factory Pattern
-public class Pair<A, B> {
+public abstract class Pair<A, B> {
 
-	private final A left;
-	private final B right;
+	protected final A left;
+	protected final B right;
 
-	public Pair(A left, B right) {
+	protected Pair(A left, B right) {
 		this.left = left;
 		this.right = right;
-	}
-
-	public A left() {
-		return left;
-	}
-
-	public B right() {
-		return right;
 	}
 
 	@Override

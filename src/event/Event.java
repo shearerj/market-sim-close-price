@@ -6,6 +6,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.Random;
 
+import com.google.common.base.Objects;
+
 import utils.RandomQueue;
 import activity.Activity;
 
@@ -49,6 +51,18 @@ public class Event extends RandomQueue<Activity> implements Comparable<Event> {
 		checkArgument(eventTime.equals(act.getTime()),
 				"Can't add an activity that doesn't share the time of the event");
 		return super.add(act);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj.getClass().equals(getClass()))) return false;
+		Event that = (Event) obj;
+		return super.equals(that) && eventTime.equals(that.eventTime);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(super.hashCode(), eventTime);
 	}
 
 	@Override

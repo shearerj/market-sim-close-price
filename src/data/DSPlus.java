@@ -16,7 +16,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Doubles;
 
-// FIXME change this to be more inline with java. Just give it static interfaces...
 public abstract class DSPlus {
 
 	protected static final Median median = new Median();

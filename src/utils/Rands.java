@@ -2,7 +2,7 @@ package utils;
 
 import java.util.Random;
 
-// FIXME Make methods static
+// TODO Make methods static?
 public class Rands extends Random {
 
 	private static final long serialVersionUID = -3289945139751584689L;

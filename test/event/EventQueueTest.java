@@ -1,11 +1,10 @@
 package event;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -15,7 +14,9 @@ import org.junit.Test;
 
 import activity.Activity;
 
-import event.TimeStamp;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.Iterators;
 
 public class EventQueueTest {
 	
@@ -54,7 +55,7 @@ public class EventQueueTest {
 		assertEquals(2, q.size());
 		
 		assertEquals(second, q.peek());
-		q.addAll(Arrays.asList(new Activity[] { inf1, inf2 }));
+		q.addAll(ImmutableList.of(inf1, inf2));
 		assertEquals(4, q.size());
 		q.poll();
 		q.poll();
@@ -90,8 +91,8 @@ public class EventQueueTest {
 	@Test
 	public void clearTest() {
 		EventQueue q = new EventQueue();
-		q.addAll(Arrays.asList(new Activity[] { new DummyActivity(0),
-				new DummyActivity(1), new DummyActivity(2) }));
+		q.addAll(ImmutableList.of(new DummyActivity(0), new DummyActivity(1),
+				new DummyActivity(2)));
 		assertFalse(q.isEmpty());
 		q.clear();
 		assertTrue(q.isEmpty());
@@ -105,7 +106,7 @@ public class EventQueueTest {
 		Activity second = new DummyActivity(1);
 		Activity third = new DummyActivity(2);
 
-		q.addAll(Arrays.asList(new Activity[] { first, second, third }));
+		q.addAll(ImmutableList.of(first, second, third));
 		assertTrue(q.remove(second));
 		assertEquals(first, q.poll());
 		assertEquals(third, q.poll());
@@ -120,8 +121,8 @@ public class EventQueueTest {
 		Activity second = new DummyActivity(1);
 		Activity third = new DummyActivity(2);
 
-		q.addAll(Arrays.asList(new Activity[] { first, second, third }));
-		assertTrue(q.removeAll(Arrays.asList(new Activity[] { first, second })));
+		q.addAll(ImmutableList.of(first, second, third));
+		assertTrue(q.removeAll(ImmutableList.of(first, second)));
 		assertEquals(third, q.poll());
 		assertTrue(q.isEmpty());
 	}
@@ -134,8 +135,8 @@ public class EventQueueTest {
 		Activity second = new DummyActivity(1);
 		Activity third = new DummyActivity(2);
 
-		q.addAll(Arrays.asList(new Activity[] { first, second, third }));
-		assertTrue(q.retainAll(Arrays.asList(new Activity[] { second })));
+		q.addAll(ImmutableList.of(first, second, third));
+		assertTrue(q.retainAll(ImmutableList.of(second)));
 		assertEquals(second, q.poll());
 		assertTrue(q.isEmpty());
 	}
@@ -144,16 +145,14 @@ public class EventQueueTest {
 	public void toArrayTest() {
 		EventQueue q = new EventQueue();
 
-		List<Activity> acts = Arrays.asList(new Activity[] { new DummyActivity(0),
-				new DummyActivity(1), new DummyActivity(2) });
+		List<? extends Activity> acts = ImmutableList.of(new DummyActivity(0),
+				new DummyActivity(1), new DummyActivity(2));
 		q.addAll(acts);
-		Object[] arrayO = q.toArray();
-		for (Object o : arrayO) {
+		for (Object o : q.toArray()) {
 			assertTrue(acts.contains(o));
 		}
 		
-		Activity[] arrayA = q.toArray(new Activity[0]);
-		for (Activity a : arrayA) {
+		for (Activity a : q.toArray(new Activity[0])) {
 			assertTrue(acts.contains(a));
 		}
 	}
@@ -165,7 +164,7 @@ public class EventQueueTest {
 		Activity first = new DummyActivity(0);
 		Activity second = new DummyActivity(1);
 		Activity third = new DummyActivity(2);
-		List<Activity> acts = Arrays.asList(new Activity[] { first, second, third });
+		List<Activity> acts = ImmutableList.of(first, second, third);
 
 		q.addAll(acts);
 		for (Activity a : q) {
@@ -179,9 +178,7 @@ public class EventQueueTest {
 		assertEquals(2, q.size());
 		assertFalse(q.contains(second));
 		
-		int bruteSize = 0;
-		for (@SuppressWarnings("unused") Activity a : q) bruteSize++;
-		assertEquals(2, bruteSize);
+		assertEquals(2, Iterators.size(q.iterator()));
 		
 		assertFalse(second == q.poll());
 		assertFalse(second == q.poll());
@@ -194,10 +191,11 @@ public class EventQueueTest {
 		EventQueue q1 = new EventQueue(new Random(seed));
 		EventQueue q2 = new EventQueue(new Random(seed));
 		
-		List<Activity> acts = new ArrayList<Activity>();
+		Builder<Activity> builder = ImmutableList.builder();
 		for (int i = 0; i < 1000; i++) {
-			acts.add(new DummyActivity(rand.nextInt(100)));
+			builder.add(new DummyActivity(rand.nextInt(100)));
 		}
+		List<Activity> acts = builder.build();
 		q1.addAll(acts);
 		q2.addAll(acts);
 		
@@ -216,8 +214,8 @@ public class EventQueueTest {
 		}
 
 		@Override
-		public Collection<Activity> execute(TimeStamp time) {
-			return Collections.emptyList();
+		public Collection<? extends Activity> execute(TimeStamp time) {
+			return ImmutableList.of();
 		}
 		
 	}

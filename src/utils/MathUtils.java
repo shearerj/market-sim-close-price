@@ -1,5 +1,9 @@
 package utils;
 
+import static java.math.RoundingMode.HALF_EVEN;
+
+import com.google.common.math.DoubleMath;
+
 public class MathUtils {
 
 	/**
@@ -8,7 +12,7 @@ public class MathUtils {
 	 * quantize(-5, 10) = 0
 	 */
 	public static int quantize(int n, int quanta) {
-		return quanta * (int) Math.round(n / (double) quanta);
+		return quanta * DoubleMath.roundToInt(n / (double) quanta, HALF_EVEN);
 	}
 
 	public static double quantize(double n, double quanta) {
