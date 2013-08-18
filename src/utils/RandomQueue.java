@@ -3,12 +3,14 @@
  */
 package utils;
 
-import java.util.ArrayList;
+import java.util.AbstractQueue;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Queue;
+import java.util.List;
 import java.util.Random;
+
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 
 /**
  * Randomly ordered queue. Elements will come out in a random order independent
@@ -19,18 +21,17 @@ import java.util.Random;
  * @author ebrink
  * 
  */
-public class RandomQueue<E> implements Queue<E> {
+public class RandomQueue<E> extends AbstractQueue<E> {
 
 	protected Random rand;
-	protected ArrayList<E> elements;
+	protected List<E> elements;
 
 	public RandomQueue() {
-		elements = new ArrayList<E>();
-		rand = new Random();
+		this(new Random());
 	}
 
 	public RandomQueue(Random seed) {
-		elements = new ArrayList<E>();
+		elements = Lists.newArrayList();
 		rand = seed;
 	}
 
@@ -45,32 +46,8 @@ public class RandomQueue<E> implements Queue<E> {
 	}
 
 	@Override
-	public boolean addAll(Collection<? extends E> c) {
-		if (c.isEmpty())
-			return false;
-		for (E elem : c)
-			add(elem);
-		return true;
-	}
-
-	@Override
 	public void clear() {
 		elements.clear();
-	}
-
-	@Override
-	public boolean contains(Object o) {
-		return elements.contains(o);
-	}
-
-	@Override
-	public boolean containsAll(Collection<?> c) {
-		return elements.containsAll(c);
-	}
-
-	@Override
-	public boolean isEmpty() {
-		return elements.isEmpty();
 	}
 
 	@Override
@@ -79,40 +56,12 @@ public class RandomQueue<E> implements Queue<E> {
 	}
 
 	@Override
-	public boolean remove(Object o) {
-		return elements.remove(o);
-	}
-
-	@Override
-	public boolean removeAll(Collection<?> c) {
-		boolean changed = false;
-		for (Object o : c)
-			changed |= remove(o);
-		return changed;
-	}
-
-	@Override
-	public boolean retainAll(Collection<?> c) {
-		return elements.retainAll(c);
-	}
-
-	@Override
 	public int size() {
 		return elements.size();
 	}
 
 	@Override
-	public Object[] toArray() {
-		return elements.toArray();
-	}
-
-	@Override
-	public <T> T[] toArray(T[] a) {
-		return elements.toArray(a);
-	}
-
-	@Override
-	public boolean add(E e) {
+	public boolean offer(E e) {
 		elements.add(e);
 		int swap = rand.nextInt(size());
 		elements.set(size() - 1, elements.get(swap));
@@ -121,22 +70,8 @@ public class RandomQueue<E> implements Queue<E> {
 	}
 
 	@Override
-	public E element() {
-		if (isEmpty())
-			throw new NoSuchElementException("RandomQueue is empty");
-		return peek();
-	}
-
-	@Override
-	public boolean offer(E e) {
-		return add(e);
-	}
-
-	@Override
 	public E peek() {
-		if (isEmpty())
-			return null;
-		return elements.get(size() - 1);
+		return Iterables.getLast(elements, null);
 	}
 
 	@Override
@@ -147,16 +82,8 @@ public class RandomQueue<E> implements Queue<E> {
 	}
 
 	@Override
-	public E remove() {
-		if (isEmpty())
-			throw new NoSuchElementException("RandomQueue is empty");
-		return poll();
-	}
-
-	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof RandomQueue))
-			return false;
+		if (obj == null || !(obj.getClass().equals(getClass()))) return false;
 		return elements.equals(((RandomQueue<?>) obj).elements);
 	}
 

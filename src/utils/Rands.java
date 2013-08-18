@@ -2,15 +2,16 @@ package utils;
 
 import java.util.Random;
 
-public class RandPlus extends Random {
+// FIXME Make methods static
+public class Rands extends Random {
 
 	private static final long serialVersionUID = -3289945139751584689L;
 
-	public RandPlus() {
+	public Rands() {
 		super();
 	}
 
-	public RandPlus(long seed) {
+	public Rands(long seed) {
 		super(seed);
 	}
 	

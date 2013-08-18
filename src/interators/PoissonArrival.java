@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import com.google.common.collect.AbstractSequentialIterator;
 
-import utils.RandPlus;
+import utils.Rands;
 import event.TimeStamp;
 
 public class PoissonArrival extends AbstractSequentialIterator<TimeStamp> implements Serializable {
@@ -13,7 +13,7 @@ public class PoissonArrival extends AbstractSequentialIterator<TimeStamp> implem
 	
 	protected final ExpInterarrivals gen;
 
-	public PoissonArrival(TimeStamp initialTime, double rate, RandPlus rand) {
+	public PoissonArrival(TimeStamp initialTime, double rate, Rands rand) {
 		super(initialTime);
 		gen = new ExpInterarrivals(rate, rand);
 	}

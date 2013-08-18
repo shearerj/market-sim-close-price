@@ -8,6 +8,9 @@ package event;
 
 import java.io.Serializable;
 
+import com.google.common.base.Objects;
+import com.google.common.primitives.Longs;
+
 import utils.MathUtils;
 
 /**
@@ -20,7 +23,6 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	
 	public static final TimeStamp IMMEDIATE = new TimeStamp(-1);
 	public static final TimeStamp ZERO = new TimeStamp(0);
-	
 	public static final int TICKS_PER_SECOND = 1000000;
 	
 	protected final long ticks;
@@ -72,8 +74,7 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	}
 
 	public int compareTo(TimeStamp other) {
-		// Signum prevents overflow issues
-		return (int) Long.signum(ticks - other.ticks);
+		return Longs.compare(ticks, other.ticks);
 	}
 
 	@Override
@@ -86,7 +87,7 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 
 	@Override
 	public int hashCode() {
-		return (int) ticks;
+		return Objects.hashCode(ticks);
 	}
 	
 	@Override
@@ -98,7 +99,6 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 			microseconds /= 10;
 			digits--;
 		}
-		
 		return String.format("%d.%0" + digits + "ds", seconds, microseconds);
 	}
 

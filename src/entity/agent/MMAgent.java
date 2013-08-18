@@ -9,7 +9,7 @@ import com.google.common.base.Joiner;
 
 import data.FundamentalValue;
 
-import utils.RandPlus;
+import utils.Rands;
 import activity.Activity;
 import entity.infoproc.SIP;
 import entity.market.Market;
@@ -38,7 +38,7 @@ public abstract class MMAgent extends Agent {
 	// TODO Just keep the SMIPs and not the actual markets...
 	public MMAgent(TimeStamp arrivalTime, Collection<Market> markets,
 			FundamentalValue fundamental, SIP sip, PrivateValue pv,
-			RandPlus rand, int tickSize) {
+			Rands rand, int tickSize) {
 		super(arrivalTime, fundamental, sip, pv, rand, tickSize);
 		this.markets = markets;
 	}

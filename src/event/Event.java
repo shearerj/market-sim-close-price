@@ -1,8 +1,9 @@
 package event;
 
-import java.util.ArrayList;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Random;
 
 import utils.RandomQueue;
@@ -21,24 +22,22 @@ public class Event extends RandomQueue<Activity> implements Comparable<Event> {
 	private final TimeStamp eventTime; // time in microseconds (only positive)
 
 	public Event(TimeStamp time) {
-		super();
-		eventTime = time;
+		this(time, new Random());
 	}
 
 	public Event(TimeStamp time, Random seed) {
 		super(seed);
-		eventTime = time;
+		eventTime = checkNotNull(time, "Time");
 	}
 
 	public Event(TimeStamp time, Collection<? extends Activity> acts) {
-		super(acts);
-		eventTime = time;
+		this(time, acts, new Random());
 	}
 
 	public Event(TimeStamp time, Collection<? extends Activity> acts,
 			Random seed) {
 		super(acts, seed);
-		eventTime = time;
+		eventTime = checkNotNull(time, "Time");
 	}
 
 	public TimeStamp getTime() {
@@ -47,47 +46,20 @@ public class Event extends RandomQueue<Activity> implements Comparable<Event> {
 
 	@Override
 	public boolean add(Activity act) {
-		if (act == null)
-			throw new IllegalArgumentException("Can't add null activity");
-		else if (!eventTime.equals(act.getTime()))
-			throw new IllegalArgumentException("Can't add an activity that doesn't share the time of the event");
-		else
-			return super.add(act);
-	}
-
-
-	@Override
-	public boolean addAll(Collection<? extends Activity> acts) {
-		if (acts == null)
-			throw new IllegalArgumentException("Can't add null list of activities");
-		boolean modified = false;
-		for (Activity act : acts)
-			modified |= add(act);
-		return modified;
+		checkArgument(eventTime.equals(act.getTime()),
+				"Can't add an activity that doesn't share the time of the event");
+		return super.add(act);
 	}
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder(eventTime.toString())
-				.append(" | ");
-		// stored in reverse order to how removed from Q
-		ArrayList<Activity> tmp = new ArrayList<Activity>(elements);
-		Collections.reverse(tmp);
-		for (Activity act : tmp)
-			sb.append(act).append(" -> ");
-		return sb.substring(0, sb.length() - 4);
+		return eventTime + " | " + super.toString();
 	}
 
 	@Override
 	public int compareTo(Event e) {
-		if (e == null)
-			throw new NullPointerException("Can't compare to a null event");
+		checkNotNull(e, "Event");
 		return getTime().compareTo(e.getTime());
-	}
-
-	@Override
-	public boolean offer(Activity e) {
-		return add(e);
 	}
 
 }

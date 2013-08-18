@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import utils.RandPlus;
+import utils.Rands;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -53,7 +53,7 @@ public class PrivateValue implements Serializable {
 	 * @param rand
 	 *            The random number generator to use for random generation.
 	 */
-	public PrivateValue(int maxPosition, double var, RandPlus rand) {
+	public PrivateValue(int maxPosition, double var, Rands rand) {
 		checkArgument(maxPosition > 0, "Max Position must be positive");
 		
 		// Identical to legacy generation in final output

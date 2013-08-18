@@ -1,10 +1,13 @@
 package fourheap;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Math.abs;
 import static java.lang.Integer.signum;
 
 import java.io.Serializable;
 
+// FIXME Factory Pattern
 public class Order<P extends Comparable<P>, T extends Comparable<T>> implements Serializable {
 
 	private static final long serialVersionUID = -3460176014871040729L;
@@ -15,10 +18,11 @@ public class Order<P extends Comparable<P>, T extends Comparable<T>> implements 
 	protected final T submitTime;
 
 	public Order(P price, int initialQuantity, T submitTime) {
-		this.price = price;
+		checkArgument(initialQuantity != 0, "Initial Quantity can't be zero");
+		this.price = checkNotNull(price, "Price");
 		this.totalQuantity = initialQuantity;
 		this.quantity = initialQuantity;
-		this.submitTime = submitTime;
+		this.submitTime = checkNotNull(submitTime, "Submit Time");
 	}
 	
 	public Order(P price, T submitTime) {
@@ -29,8 +33,7 @@ public class Order<P extends Comparable<P>, T extends Comparable<T>> implements 
 		Order<P, T> buy = this.totalQuantity > 0 ? this : other;
 		Order<P, T> sell = this.totalQuantity > 0 ? other : this;
 		
-		if (sell.price.compareTo(buy.price) > 0)
-			throw new IllegalArgumentException("Invalid Price");
+		checkArgument(sell.price.compareTo(buy.price) < 0, "Invalid Price");
 		buy.quantity -= buyQuantity;
 		sell.quantity += buyQuantity;
 		return new Transaction<P, T>(buy, sell, buyQuantity);
@@ -56,12 +59,12 @@ public class Order<P extends Comparable<P>, T extends Comparable<T>> implements 
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		return super.hashCode();
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public final boolean equals(Object obj) {
 		return super.equals(obj);
 	}
 

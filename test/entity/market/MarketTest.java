@@ -74,7 +74,7 @@ public class MarketTest {
 		assertEquals(market, order.getMarket());
 		Quote quote = market.quote; 
 		assertEquals(new Price(1), quote.ask);
-		assertEquals(-1, quote.askQuantity);
+		assertEquals(1, quote.askQuantity);
 		assertEquals(null, quote.bid);
 		assertEquals(0, quote.bidQuantity);
 	}
@@ -149,10 +149,10 @@ public class MarketTest {
 		assertEquals(new Price(125), quote.getBidPrice());
 		assertEquals(new Price(150), quote.getAskPrice());
 		assertEquals(1, quote.getBidQuantity());
-		assertEquals(-1, quote.getAskQuantity());
+		assertEquals(1, quote.getAskQuantity());
 		
 		market.submitOrder(agent3, new Price(150), -2, time);
-		assertEquals(-3, market.quote.getAskQuantity());
+		assertEquals(3, market.quote.getAskQuantity());
 	}
 	
 	@Test

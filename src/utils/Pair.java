@@ -1,5 +1,7 @@
 package utils;
 
+import com.google.common.base.Objects;
+
 /**
  * Simple immutable pair implementation
  * 
@@ -8,10 +10,11 @@ package utils;
  * @param <A>
  * @param <B>
  */
+// FIXME Factory Pattern
 public class Pair<A, B> {
 
-	private A left;
-	private B right;
+	private final A left;
+	private final B right;
 
 	public Pair(A left, B right) {
 		this.left = left;
@@ -28,16 +31,14 @@ public class Pair<A, B> {
 
 	@Override
 	public int hashCode() {
-		return (left == null ? 0 : left.hashCode())
-				^ (right == null ? 0 : right.hashCode());
+		return Objects.hashCode(left, right);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null || !(obj instanceof Pair)) return false;
 		Pair<?, ?> other = (Pair<?, ?>) obj;
-		return ((left == null && other.left == null) || left.equals(other.left))
-				&& ((right == null && other.right == null) || right.equals(other.right));
+		return Objects.equal(left, other.left) && Objects.equal(right, other.right);
 	}
 
 	@Override

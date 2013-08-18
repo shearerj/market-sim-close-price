@@ -1,7 +1,7 @@
 package entity.agent;
 
 import data.FundamentalValue;
-import utils.RandPlus;
+import utils.Rands;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import event.TimeStamp;
@@ -17,7 +17,7 @@ public abstract class BackgroundAgent extends SMAgent {
 	private static final long serialVersionUID = 7742389103679854398L;
 
 	public BackgroundAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
-			Market market, PrivateValue pv, RandPlus rand, int tickSize) {
+			Market market, PrivateValue pv, Rands rand, int tickSize) {
 		super(arrivalTime, fundamental, sip, market, pv, rand, tickSize);
 	}
 	

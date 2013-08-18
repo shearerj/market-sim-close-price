@@ -4,17 +4,17 @@ import java.io.Serializable;
 
 import com.google.common.collect.AbstractIterator;
 
-import utils.RandPlus;
+import utils.Rands;
 import event.TimeStamp;
 
 public class ExpInterarrivals extends AbstractIterator<TimeStamp> implements Serializable {
 	
 	private static final long serialVersionUID = 3285386017387161748L;
 	
-	protected final RandPlus rand;
+	protected final Rands rand;
 	protected final double rate;
 
-	public ExpInterarrivals(double rate, RandPlus rand) {
+	public ExpInterarrivals(double rate, Rands rand) {
 		this.rand = rand;
 		this.rate = rate;
 	}

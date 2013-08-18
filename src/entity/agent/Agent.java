@@ -14,7 +14,7 @@ import com.google.common.collect.Sets;
 
 import data.FundamentalValue;
 
-import utils.RandPlus;
+import utils.Rands;
 import activity.Activity;
 import activity.AgentStrategy;
 import entity.Entity;
@@ -34,7 +34,7 @@ public abstract class Agent extends Entity {
 	private static final long serialVersionUID = 5363438238024144057L;
 	private static int nextID = 1;
 	
-	protected final RandPlus rand;
+	protected final Rands rand;
 	protected final FundamentalValue fundamental;
 	protected final SIP sip;
 	// List of all transactions. Implicitly time ordered due to transactions
@@ -57,7 +57,7 @@ public abstract class Agent extends Entity {
 	protected int preLiqRealizedProfit;
 
 	public Agent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			PrivateValue privateValue, RandPlus rand, int tickSize) {
+			PrivateValue privateValue, Rands rand, int tickSize) {
 		super(nextID++);
 		this.fundamental = checkNotNull(fundamental);
 		this.rand = rand;

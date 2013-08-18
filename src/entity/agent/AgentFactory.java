@@ -7,7 +7,7 @@ import java.util.Iterator;
 
 import com.google.common.collect.Iterators;
 
-import utils.RandPlus;
+import utils.Rands;
 import data.AgentProperties;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
@@ -16,7 +16,7 @@ import event.TimeStamp;
 
 public class AgentFactory {
 
-	protected final RandPlus rand;
+	protected final Rands rand;
 	protected final FundamentalValue fundamental;
 	protected final SIP sip;
 	protected final Collection<Market> markets;
@@ -25,7 +25,7 @@ public class AgentFactory {
 
 	public AgentFactory(FundamentalValue fundamental, SIP sip,
 			Iterator<TimeStamp> arrivalProcess, Collection<Market> markets,
-			Iterator<Market> marketProcess, RandPlus rand) {
+			Iterator<Market> marketProcess, Rands rand) {
 		this.rand = rand;
 		this.fundamental = fundamental;
 		this.sip = sip;
@@ -38,9 +38,9 @@ public class AgentFactory {
 	 * SMAgent factory with Poisson arrivals and round robin market selection.
 	 */
 	public AgentFactory(FundamentalValue fundamental, SIP sip,
-			Collection<Market> markets, double arrivalRate, RandPlus rand) {
+			Collection<Market> markets, double arrivalRate, Rands rand) {
 		this(fundamental, sip, new PoissonArrival(TimeStamp.IMMEDIATE,
-				arrivalRate, new RandPlus(rand.nextLong())), markets,
+				arrivalRate, new Rands(rand.nextLong())), markets,
 				Iterators.cycle(markets), rand);
 	}
 
@@ -51,26 +51,26 @@ public class AgentFactory {
 		switch (props.getAgentType()) {
 		case AA:
 			return new AAAgent(arrivalProcess.next(), fundamental, sip,
-					marketAssignment.next(), new RandPlus(rand.nextLong()),
+					marketAssignment.next(), new Rands(rand.nextLong()),
 					props);
 		case ZIP:
 			return new ZIPAgent(arrivalProcess.next(), fundamental, sip,
-					marketAssignment.next(), new RandPlus(rand.nextLong()),
+					marketAssignment.next(), new Rands(rand.nextLong()),
 					props);
 		case ZIR:
 			return new ZIRAgent(arrivalProcess.next(), fundamental, sip,
-					marketAssignment.next(), new RandPlus(rand.nextLong()),
+					marketAssignment.next(), new Rands(rand.nextLong()),
 					props);
 		case ZI:
 			return new ZIAgent(arrivalProcess.next(), fundamental, sip,
-					marketAssignment.next(), new RandPlus(rand.nextLong()),
+					marketAssignment.next(), new Rands(rand.nextLong()),
 					props);
 		case BASICMM:
 			return new BasicMarketMaker(fundamental, sip,
-					marketAssignment.next(), new RandPlus(rand.nextLong()),
+					marketAssignment.next(), new Rands(rand.nextLong()),
 					props);
 		case LA:
-			return new LAAgent(markets, fundamental, sip, new RandPlus(
+			return new LAAgent(markets, fundamental, sip, new Rands(
 					rand.nextLong()), props);
 		default:
 			throw new IllegalArgumentException("Can't create AgentType: "

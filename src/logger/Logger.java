@@ -5,9 +5,7 @@ import java.io.IOException;
 
 public class Logger {
 
-	public static enum Level {
-		NO_LOGGING, ERROR, INFO, DEBUG
-	};
+	public static enum Level { NO_LOGGING, ERROR, INFO, DEBUG };
 
 	protected static Log logger;
 	protected static boolean outError = true;

@@ -13,7 +13,7 @@ public class DSPlusTest {
 	public void logRatioTest() {
 		DescriptiveStatistics ds;
 		
-		ds = DSPlus.createLogRatio(Doubles.asList(1, Math.E, 1/Math.E));
+		ds = DSPlus.fromLogRatioOf(Doubles.asList(1, Math.E, 1/Math.E));
 		assertEquals(1, ds.getMax(), 0.001);
 		assertEquals(-2, ds.getMin(), 0.001);
 	}

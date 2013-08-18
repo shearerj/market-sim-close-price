@@ -28,8 +28,9 @@ public class UniformPriceClear implements ClearingRule {
 	public Map<Transaction<Price, TimeStamp>, Price> pricing(
 			Iterable<Transaction<Price, TimeStamp>> transactions) {
 		if (Iterables.isEmpty(transactions)) return ImmutableMap.of();
-		
-		Price minBuy = null, maxSell = null;
+
+		Price minBuy = Iterables.getFirst(transactions, null).getBuy().getPrice();
+		Price maxSell = Iterables.getFirst(transactions, null).getSell().getPrice();
 		for (Transaction<Price, TimeStamp> trans : transactions) {
 			minBuy = ord.min(minBuy, trans.getBuy().getPrice());
 			maxSell = ord.max(maxSell, trans.getSell().getPrice());

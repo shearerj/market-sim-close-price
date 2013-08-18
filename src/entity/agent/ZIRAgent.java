@@ -8,7 +8,7 @@ import java.util.Collection;
 import com.google.common.collect.Lists;
 
 import systemmanager.Keys;
-import utils.RandPlus;
+import utils.Rands;
 import activity.Activity;
 import activity.SubmitNMSOrder;
 import data.EntityProperties;
@@ -48,7 +48,7 @@ public class ZIRAgent extends ReentryAgent {
 	protected int maxAbsPosition; // max quantity for position
 
 	public ZIRAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
-			RandPlus rand, int bidRange, int maxAbsPosition,
+			Rands rand, int bidRange, int maxAbsPosition,
 			double reentryRate, double pvVar, int tickSize) {
 		super(arrivalTime, fundamental, sip, market, new PrivateValue(maxAbsPosition,
 				pvVar, rand), rand, reentryRate, tickSize);
@@ -57,7 +57,7 @@ public class ZIRAgent extends ReentryAgent {
 	}
 
 	public ZIRAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
-			RandPlus rand, EntityProperties props) {
+			Rands rand, EntityProperties props) {
 		this(arrivalTime, fundamental, sip, market, rand, props.getAsInt(Keys.BID_RANGE,
 				5000), props.getAsInt(Keys.MAX_QUANTITY, 10),
 				props.getAsDouble(Keys.REENTRY_RATE, 0.005), props.getAsDouble(

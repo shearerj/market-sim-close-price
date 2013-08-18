@@ -4,7 +4,7 @@ import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import event.TimeStamp;
-import utils.RandPlus;
+import utils.Rands;
 
 /**
  * Abstract class for MarketMakers. Makes it easier to test when an agent is a market maker.
@@ -18,7 +18,7 @@ public abstract class MarketMaker extends SMAgent {
 	private static final long serialVersionUID = -782740037969385370L;
 
 	public MarketMaker(FundamentalValue fundamental, SIP sip, Market market,
-			RandPlus rand, int tickSize) {
+			Rands rand, int tickSize) {
 		super(TimeStamp.ZERO, fundamental, sip, market, new PrivateValue(),
 				rand, tickSize);
 	}

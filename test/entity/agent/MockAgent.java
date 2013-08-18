@@ -5,7 +5,7 @@ import java.util.Collections;
 
 import data.FundamentalValue;
 
-import utils.RandPlus;
+import utils.Rands;
 import activity.Activity;
 import entity.agent.BackgroundAgent;
 import entity.infoproc.SIP;
@@ -18,7 +18,7 @@ public class MockAgent extends BackgroundAgent {
 
 	public MockAgent(FundamentalValue fundamental, SIP sip, Market market) {
 		super(new TimeStamp(0), fundamental, sip, market, new PrivateValue(),
-				new RandPlus(), 1000);
+				new Rands(), 1000);
 	}
 
 	@Override

@@ -7,6 +7,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Integer.signum;
 import static java.lang.Math.min;
 import static java.lang.Math.max;
+import static java.lang.Math.abs;
 
 import java.util.Collection;
 import java.util.List;
@@ -122,8 +123,7 @@ public abstract class Market extends Entity {
 				quantity, order.getQuantity());
 		
 		Multiset<Price> priceQuant = order.getQuantity() < 0 ? askPriceQuantity : bidPriceQuantity;
-		int newQuantity = priceQuant.count(order.getPrice()) - quantity;
-		priceQuant.setCount(order.getPrice(), newQuantity);
+		priceQuant.remove(order.getPrice(), abs(quantity));
 		
 		orderbook.withdrawOrder(order.order, quantity);
 		checkOrder(order);
@@ -144,10 +144,8 @@ public abstract class Market extends Entity {
 					sell.getAgent(), this, buy, sell, e.getKey().getQuantity(),
 					e.getValue(), currentTime);
 			
-			int newAskQuantity = askPriceQuantity.count(sell.getPrice()) + trans.getQuantity();
-			askPriceQuantity.setCount(sell.getPrice(), newAskQuantity);
-			int newBidQuantity = bidPriceQuantity.count(buy.getPrice()) - trans.getQuantity();
-			bidPriceQuantity.setCount(buy.getPrice(), newBidQuantity);
+			askPriceQuantity.remove(sell.getPrice(), trans.getQuantity());
+			bidPriceQuantity.remove(buy.getPrice(), trans.getQuantity());
 		
 			checkOrder(buy);
 			checkOrder(sell);
@@ -224,8 +222,7 @@ public abstract class Market extends Entity {
 				+ quantity + ") from " + agent);
 
 		Multiset<Price> priceQuant = quantity < 0 ? askPriceQuantity : bidPriceQuantity;
-		int newQuantity = priceQuant.count(price) + quantity;
-		priceQuant.setCount(price, newQuantity);
+		priceQuant.add(price, abs(quantity));
 		
 		fourheap.Order<Price, TimeStamp> nativeOrder = new fourheap.Order<Price, TimeStamp>(
 				price, quantity, currentTime);
@@ -247,8 +244,7 @@ public abstract class Market extends Entity {
 	 */
 	public Collection<? extends Activity> submitNMSOrder(Agent agent,
 			Price price, int quantity, TimeStamp currentTime) {
-		return submitNMSOrder(agent, price, quantity, currentTime,
-				TimeStamp.IMMEDIATE);
+		return submitNMSOrder(agent, price, quantity, currentTime, TimeStamp.IMMEDIATE);
 	}
 
 	// TODO How should call markets handle Reg NMS. Can't route to call market to get immediate
@@ -278,8 +274,7 @@ public abstract class Market extends Entity {
 			log(INFO, agent + " " + getName() + "::submitNMSBid: " + "NBBO"
 					+ nbbo + " better than " + this + " Quote" + null);
 
-		return bestMarket.submitOrder(agent, price, quantity, currentTime,
-				duration);
+		return bestMarket.submitOrder(agent, price, quantity, currentTime, duration);
 	}
 	
 	public List<Transaction> getTransactions() {

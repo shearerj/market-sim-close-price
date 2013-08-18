@@ -5,7 +5,7 @@ import java.util.Collection;
 import com.google.common.collect.Lists;
 
 import systemmanager.Keys;
-import utils.RandPlus;
+import utils.Rands;
 import activity.Activity;
 import data.EntityProperties;
 import data.FundamentalValue;
@@ -33,7 +33,7 @@ public class ZIPAgent extends ReentryAgent {
 	protected final double c_R, c_A, beta, betaVar, gamma;
 
 	public ZIPAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
-			RandPlus rand, double pvVar, int tickSize, int bidRange,
+			Rands rand, double pvVar, int tickSize, int bidRange,
 			double reentryRate, double c_R, double c_A, double beta,
 			double betaVar, double gamma) {
 		super(arrivalTime, fundamental, sip, market, new PrivateValue(1,
@@ -48,7 +48,7 @@ public class ZIPAgent extends ReentryAgent {
 	}
 	
 	public ZIPAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
-			RandPlus rand, EntityProperties props) {
+			Rands rand, EntityProperties props) {
 		this(arrivalTime, fundamental, sip, market, rand, props.getAsDouble(
 				Keys.PRIVATE_VALUE_VAR, 100000000), props.getAsInt(
 				Keys.TICK_SIZE, 1), props.getAsInt(Keys.BID_RANGE, 5000),

@@ -10,7 +10,7 @@ import data.FundamentalValue;
 
 import activity.Activity;
 import activity.AgentStrategy;
-import utils.RandPlus;
+import utils.Rands;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import event.TimeStamp;
@@ -28,7 +28,7 @@ public abstract class ReentryAgent extends BackgroundAgent {
 	protected Iterator<TimeStamp> reentry; // re-entry times
 	
 	public ReentryAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			Market market, PrivateValue pv, RandPlus rand,
+			Market market, PrivateValue pv, Rands rand,
 			Iterator<TimeStamp> reentry, int tickSize) {
 		super(arrivalTime, fundamental, sip, market, pv, rand, tickSize);
 	
@@ -39,7 +39,7 @@ public abstract class ReentryAgent extends BackgroundAgent {
 	 * Shortcut constructor for exponential interarrivals (e.g. poisson reentries)
 	 */
 	public ReentryAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			Market market, PrivateValue pv, RandPlus rand, double reentryRate,
+			Market market, PrivateValue pv, Rands rand, double reentryRate,
 			int tickSize) {
 		this(arrivalTime, fundamental, sip, market, pv, rand,
 				new ExpInterarrivals(reentryRate, rand),

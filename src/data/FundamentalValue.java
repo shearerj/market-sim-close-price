@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
-import utils.RandPlus;
+import utils.Rands;
 import entity.market.Price;
 import event.TimeStamp;
 
@@ -28,7 +28,7 @@ public class FundamentalValue implements Serializable {
 	protected final double kappa;
 	protected final int meanValue;
 	protected final double shockVar;
-	protected RandPlus rand;
+	protected Rands rand;
 
 	/**
 	 * Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps
@@ -37,7 +37,7 @@ public class FundamentalValue implements Serializable {
 	 * @param var Gaussian Process variance
 	 * @param rand Random generator
 	 */
-	public FundamentalValue(double kap, int meanVal, double var, RandPlus rand) {
+	public FundamentalValue(double kap, int meanVal, double var, Rands rand) {
 		this.rand = rand;
 		this.kappa = kap;
 		this.meanValue = meanVal;

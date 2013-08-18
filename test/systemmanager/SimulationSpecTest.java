@@ -163,13 +163,7 @@ public class SimulationSpecTest {
 		
 		SimulationSpec spec = new SimulationSpec(new StringReader(json.toString()));
 		assertEquals(1, spec.getSimulationProps().getAsInt(Keys.MODEL_NUM));
-		assertEquals("TWOMARKETLA_1", spec.getSimulationProps().getAsString(Keys.MODEL_NAME));
-		
-		config.addProperty(Keys.MODEL_NUM, 7);
-		
-		spec = new SimulationSpec(new StringReader(json.toString()));
-		assertEquals(7, spec.getSimulationProps().getAsInt(Keys.MODEL_NUM));
-		assertEquals("TWOMARKETLA_7", spec.getSimulationProps().getAsString(Keys.MODEL_NAME));
+		assertEquals("TWOMARKETLA", spec.getSimulationProps().getAsString(Keys.MODEL_NAME));
 	}
 	
 	@Test

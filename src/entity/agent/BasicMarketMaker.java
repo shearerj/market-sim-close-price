@@ -10,7 +10,7 @@ import java.util.Collection;
 
 import systemmanager.Keys;
 import utils.MathUtils;
-import utils.RandPlus;
+import utils.Rands;
 import activity.Activity;
 import activity.AgentStrategy;
 import activity.SubmitOrder;
@@ -59,7 +59,7 @@ public class BasicMarketMaker extends MarketMaker {
 	protected final TimeStamp sleepTime;
 
 	public BasicMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
-			TimeStamp sleepTime, int numRungs, int rungSize, RandPlus rand,
+			TimeStamp sleepTime, int numRungs, int rungSize, Rands rand,
 			int tickSize) {
 		super(fundamental, sip, market, rand, tickSize);
 		this.sleepTime = sleepTime;
@@ -71,7 +71,7 @@ public class BasicMarketMaker extends MarketMaker {
 	}
 
 	public BasicMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
-			RandPlus rand, EntityProperties params) {
+			Rands rand, EntityProperties params) {
 		this(fundamental, sip, market, new TimeStamp(params.getAsLong(
 				Keys.SLEEP_TIME, 200)), params.getAsInt(Keys.NUM_RUNGS, 10),
 				params.getAsInt(Keys.RUNG_SIZE, 1000), rand, params.getAsInt(

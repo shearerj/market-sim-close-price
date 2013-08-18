@@ -7,7 +7,7 @@ import java.util.Collection;
 
 import data.FundamentalValue;
 
-import utils.RandPlus;
+import utils.Rands;
 import activity.Activity;
 import entity.infoproc.SIP;
 import entity.infoproc.SMIP;
@@ -45,7 +45,7 @@ public abstract class SMAgent extends Agent {
 	protected final SMIP marketIP;
 
 	public SMAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			Market market, PrivateValue pv, RandPlus rand, int tickSize) {
+			Market market, PrivateValue pv, Rands rand, int tickSize) {
 		super(arrivalTime, fundamental, sip, pv, rand, tickSize);
 		this.primaryMarket = market;
 		this.marketIP = market.getSMIP();

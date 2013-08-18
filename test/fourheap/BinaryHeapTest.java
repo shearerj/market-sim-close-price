@@ -1,8 +1,9 @@
 package fourheap;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -12,7 +13,9 @@ import java.util.Set;
 
 import org.junit.Test;
 
-import fourheap.BinaryHeap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.Ordering;
 
 public class BinaryHeapTest {
 
@@ -20,13 +23,13 @@ public class BinaryHeapTest {
 
 	@Test
 	public void emptyConstructorTest() {
-		BinaryHeap<Integer> a = new BinaryHeap<Integer>();
+		BinaryHeap<Integer> a = BinaryHeap.create();
 		assertTrue(a.isEmpty());
 	}
 
 	@Test
 	public void peekTest() {
-		BinaryHeap<Integer> a = new BinaryHeap<Integer>();
+		BinaryHeap<Integer> a = BinaryHeap.create();
 		assertEquals(null, a.peek());
 		assertEquals(0, a.size());
 		a.add(4);
@@ -42,7 +45,7 @@ public class BinaryHeapTest {
 
 	@Test
 	public void addTest() {
-		BinaryHeap<Integer> a = new BinaryHeap<Integer>();
+		BinaryHeap<Integer> a = BinaryHeap.create();
 		List<Integer> nums = randomInts(1000);
 		for (int i : nums)
 			a.offer(i);
@@ -53,7 +56,7 @@ public class BinaryHeapTest {
 	
 	@Test
 	public void addAllTest() {
-		BinaryHeap<Integer> a = new BinaryHeap<Integer>();
+		BinaryHeap<Integer> a = BinaryHeap.create();
 		List<Integer> nums = randomInts(1000);
 		a.addAll(nums);
 		Collections.sort(nums);
@@ -63,7 +66,7 @@ public class BinaryHeapTest {
 	
 	@Test
 	public void removeTest() {
-		BinaryHeap<Integer> a = new BinaryHeap<Integer>();
+		BinaryHeap<Integer> a = BinaryHeap.create();
 		List<Integer> nums = randomInts(1000);
 		a.addAll(nums);
 		assertTrue(a.containsAll(nums));
@@ -79,7 +82,7 @@ public class BinaryHeapTest {
 	
 	@Test
 	public void removeAllTest() {
-		BinaryHeap<Integer> a = new BinaryHeap<Integer>();
+		BinaryHeap<Integer> a = BinaryHeap.create();
 		List<Integer> nums = randomInts(1000);
 		a.addAll(nums);
 		assertTrue(a.containsAll(nums));
@@ -91,7 +94,7 @@ public class BinaryHeapTest {
 	
 	@Test
 	public void removeAllTest2() {
-		BinaryHeap<Integer> a = new BinaryHeap<Integer>();
+		BinaryHeap<Integer> a = BinaryHeap.create();
 		List<Integer> nums = randomInts(1000);
 		a.addAll(nums);
 		assertTrue(a.containsAll(nums));
@@ -106,7 +109,7 @@ public class BinaryHeapTest {
 	
 	@Test
 	public void cycleTest() {
-		BinaryHeap<Integer> a = new BinaryHeap<Integer>();
+		BinaryHeap<Integer> a = BinaryHeap.create();
 		List<Integer> nums = randomInts(1000);
 		a.addAll(nums);
 		assertTrue(a.containsAll(nums));
@@ -133,7 +136,7 @@ public class BinaryHeapTest {
 	
 	@Test
 	public void comparatorTest() {
-		BinaryHeap<Integer> a = new BinaryHeap<Integer>(Collections.<Integer>reverseOrder());
+		BinaryHeap<Integer> a = BinaryHeap.create(Ordering.<Integer> natural().reverse());
 		List<Integer> nums = randomInts(1000);
 		a.addAll(nums);
 		Collections.sort(nums, Collections.reverseOrder());
@@ -143,7 +146,7 @@ public class BinaryHeapTest {
 	
 	@Test
 	public void iteratorTest() {
-		BinaryHeap<Integer> a = new BinaryHeap<Integer>(Collections.<Integer>reverseOrder());
+		BinaryHeap<Integer> a = BinaryHeap.create(Ordering.<Integer> natural().reverse());
 		Set<Integer> nums = new HashSet<Integer>(randomInts(1000));
 		a.addAll(nums);
 		for (int i : a)
@@ -152,21 +155,21 @@ public class BinaryHeapTest {
 	
 	@Test (expected = NoSuchElementException.class)
 	public void elementTest() {
-		BinaryHeap<Integer> a = new BinaryHeap<Integer>(Collections.<Integer>reverseOrder());
+		BinaryHeap<Integer> a = BinaryHeap.create();
 		a.element();
 	}
 	
 	@Test (expected = NoSuchElementException.class)
 	public void removeExceptionTest() {
-		BinaryHeap<Integer> a = new BinaryHeap<Integer>(Collections.<Integer>reverseOrder());
+		BinaryHeap<Integer> a = BinaryHeap.create();
 		a.remove();
 	}
 
 	protected List<Integer> randomInts(int num) {
-		List<Integer> collection = new ArrayList<Integer>(num);
+		Builder<Integer> collection = ImmutableList.builder();
 		for (int i = 0; i < num; i++)
 			collection.add(rand.nextInt());
-		return collection;
+		return collection.build();
 	}
 
 }

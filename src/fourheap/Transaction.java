@@ -2,6 +2,7 @@ package fourheap;
 
 import java.io.Serializable;
 
+// TODO Factory Pattern
 public class Transaction<P extends Comparable<P>, T extends Comparable<T>> implements Serializable {
 
 	private static final long serialVersionUID = -6073835626927361670L;
@@ -28,21 +29,13 @@ public class Transaction<P extends Comparable<P>, T extends Comparable<T>> imple
 	}
 
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + buy.hashCode();
-		result = prime * result + quantity;
-		result = prime * result + sell.hashCode();
-		return result;
+	public final int hashCode() {
+		return super.hashCode();
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || getClass() != obj.getClass()) return false;
-		Transaction<?, ?> other = (Transaction<?, ?>) obj;
-		return buy.equals(other.buy) && sell.equals(other.sell)
-				&& quantity == other.quantity;
+	public final boolean equals(Object obj) {
+		return super.equals(obj);
 	}
 	
 	@Override

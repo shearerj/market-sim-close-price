@@ -2,7 +2,7 @@ package data;
 
 import entity.market.Price;
 import event.TimeStamp;
-import utils.RandPlus;
+import utils.Rands;
 
 /**
  * Dummy class to make unit testing of agents easier.
@@ -16,7 +16,7 @@ public class DummyFundamental extends FundamentalValue {
 	private static final long serialVersionUID = 1L;
 
 	public DummyFundamental(int mean) {
-		super(0, mean, 0, new RandPlus());
+		super(0, mean, 0, new Rands());
 	}
 	
 	@Override

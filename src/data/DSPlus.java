@@ -21,21 +21,25 @@ public abstract class DSPlus {
 
 	protected static final Median median = new Median();
 	
-	public static DescriptiveStatistics create(Iterator<Double> initialValues) {
-		return create(ImmutableList.copyOf(initialValues));
+	public static DescriptiveStatistics from() {
+		return new DescriptiveStatistics();
 	}
 	
-	public static DescriptiveStatistics create(Iterable<Double> initialValues) {
-		return create(ImmutableList.copyOf(initialValues));
+	public static DescriptiveStatistics from(Iterator<Double> initialValues) {
+		return from(ImmutableList.copyOf(initialValues));
 	}
 	
-	public static DescriptiveStatistics create(Collection<Double> initialValues) {
+	public static DescriptiveStatistics from(Iterable<Double> initialValues) {
+		return from(ImmutableList.copyOf(initialValues));
+	}
+	
+	public static DescriptiveStatistics from(Collection<Double> initialValues) {
 		return new DescriptiveStatistics(Doubles.toArray(initialValues));
 	}
 	
-	public static DescriptiveStatistics createLogRatio(Iterable<Double> initialValues) {
+	public static DescriptiveStatistics fromLogRatioOf(Iterable<Double> initialValues) {
 		if (Iterables.isEmpty(initialValues))
-			return create(Collections.<Double> emptyList());
+			return from(Collections.<Double> emptyList());
 		
 		List<Double> logRatio = Lists.newArrayList();
 		double last = Iterables.getFirst(initialValues, Double.NaN);
@@ -44,7 +48,7 @@ public abstract class DSPlus {
 			if (!Double.isNaN(ratio)) logRatio.add(ratio);
 			last = next;
 		}
-		return create(logRatio);
+		return from(logRatio);
 	}
 
 	public static double rmsd(DescriptiveStatistics first, DescriptiveStatistics other) {

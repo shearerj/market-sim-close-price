@@ -1,55 +1,53 @@
 package fourheap;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.AbstractQueue;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Queue;
-import java.util.Set;
 
-// TODO long time in the future. Turn this into a factory to produce, therefore with
-// a comparator, you can input any type, but if you want to not use a comparator, it
-// must be a type that implements comparable.
-public class BinaryHeap<E> implements Queue<E>, Serializable {
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Ordering;
+
+// TODO Implement iterator remove
+// TODO change workings to not use swap, but instead only update when necessary. Basically, move swap into shiftUp and ShiftDown
+public class BinaryHeap<E> extends AbstractQueue<E> implements Serializable {
 
 	private static final long serialVersionUID = 6048249591836891615L;
 	
-	protected final ArrayList<E> elements;
+	protected final List<E> elements;
 	protected final Map<E, Integer> mapping;
 	protected final Comparator<E> comp;
 
-	public BinaryHeap() {
-		this(CompareUtils.<E> naturalOrder());
-	}
-
-	public BinaryHeap(Comparator<E> comp) {
-		this(8, comp);
+	protected BinaryHeap(int initialSize, Comparator<E> comp) {
+		elements = Lists.newArrayListWithExpectedSize(initialSize);
+		mapping = Maps.newHashMapWithExpectedSize(initialSize);
+		this.comp = comp;
 	}
 	
-	public BinaryHeap(int initialSize) {
-		this(CompareUtils.<E> naturalOrder());
+	public static <E extends Comparable<? super E>> BinaryHeap<E> create() {
+		return create(8);
 	}
-
-	public BinaryHeap(int initialSize, Comparator<E> comp) {
-		elements = new ArrayList<E>(initialSize);
-		mapping = new HashMap<E, Integer>(initialSize);
-		this.comp = comp;
+	
+	public static <E extends Comparable<? super E>> BinaryHeap<E> create(int initialCapactiy) {
+		return create(initialCapactiy, Ordering.<E> natural());
+	}
+	
+	public static <E> BinaryHeap<E> create(Comparator<E> comp) {
+		return create(8, comp);
+	}
+	
+	public static <E> BinaryHeap<E> create(int initialCapacity, Comparator<E> comp) {
+		return new BinaryHeap<E>(initialCapacity, comp);
 	}
 
 	@Override
 	public int size() {
 		return elements.size();
-	}
-
-	@Override
-	public boolean isEmpty() {
-		return elements.isEmpty();
 	}
 
 	@Override
@@ -59,17 +57,7 @@ public class BinaryHeap<E> implements Queue<E>, Serializable {
 
 	@Override
 	public Iterator<E> iterator() {
-		return Collections.unmodifiableList(elements).iterator();
-	}
-
-	@Override
-	public Object[] toArray() {
-		return elements.toArray();
-	}
-
-	@Override
-	public <T> T[] toArray(T[] a) {
-		return elements.toArray(a);
+		return Iterators.unmodifiableIterator(elements.iterator());
 	}
 
 	@Override
@@ -84,64 +72,18 @@ public class BinaryHeap<E> implements Queue<E>, Serializable {
 	}
 
 	@Override
-	public boolean containsAll(Collection<?> c) {
-		for (Object o : c)
-			if (!contains(o)) return false;
-		return true;
-	}
-
-	@Override
-	public boolean addAll(Collection<? extends E> c) {
-		for (E elem : c) {
-			int pos = size();
-			elements.add(elem);
-			mapping.put(elem, pos);
-		}
-		heapify();
-		return true;
-	}
-
-	@Override
-	public boolean removeAll(Collection<?> c) {
-		// TODO Make more efficient by removing everything and doing a heapify?
-		boolean modified = false;
-		for (Object o : c)
-			modified |= remove(o);
-		return modified;
-	}
-
-	@Override
-	public boolean retainAll(Collection<?> c) {
-		// TODO Make more efficient by retaining all and doing a heapify?
-		Set<E> toRemove = new HashSet<E>(elements);
-		toRemove.removeAll(c);
-		return removeAll(toRemove);
-	}
-
-	@Override
 	public void clear() {
 		elements.clear();
 		mapping.clear();
 	}
 
 	@Override
-	public boolean add(E e) {
+	public boolean offer(E e) {
 		int pos = size();
 		elements.add(e);
 		mapping.put(e, pos);
 		shiftUp(pos);
 		return true;
-	}
-
-	@Override
-	public boolean offer(E e) {
-		return add(e);
-	}
-
-	@Override
-	public E remove() {
-		if (isEmpty()) throw new NoSuchElementException();
-		return poll();
 	}
 
 	@Override
@@ -155,15 +97,8 @@ public class BinaryHeap<E> implements Queue<E>, Serializable {
 	}
 
 	@Override
-	public E element() {
-		if (isEmpty()) throw new NoSuchElementException();
-		return elements.get(0);
-	}
-
-	@Override
 	public E peek() {
-		if (isEmpty()) return null;
-		return elements.get(0);
+		return Iterables.getFirst(elements, null);
 	}
 	
 	public Comparator<E> comparator() {
@@ -226,11 +161,6 @@ public class BinaryHeap<E> implements Queue<E>, Serializable {
 		if (obj == null || getClass() != obj.getClass()) return false;
 		BinaryHeap<?> other = (BinaryHeap<?>) obj;
 		return elements.equals(other.elements);
-	}
-
-	@Override
-	public String toString() {
-		return elements.toString();
 	}
 
 }

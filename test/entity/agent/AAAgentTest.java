@@ -15,7 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Keys;
-import utils.RandPlus;
+import utils.Rands;
 import activity.Activity;
 import activity.ProcessQuote;
 import activity.SendToIP;
@@ -32,7 +32,7 @@ import event.TimeStamp;
 
 public class AAAgentTest {
 
-	private static RandPlus rand;
+	private static Rands rand;
 	private static EntityProperties agentProperties;
 
 	private FundamentalValue fundamental = new DummyFundamental(100000);
@@ -45,7 +45,7 @@ public class AAAgentTest {
 		Logger.setup(3, new File("simulations/unit_testing/AA_unit_tests.txt"));
 
 		// Creating the setup properties
-		rand = new RandPlus(1);
+		rand = new Rands(1);
 //		fund = new DummyFundamental(100000);
 
 		// Setting up agentProperties

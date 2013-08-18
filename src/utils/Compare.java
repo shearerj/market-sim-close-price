@@ -1,7 +1,5 @@
 package utils;
 
-import java.util.Comparator;
-
 public class Compare {
 
 	/**
@@ -26,21 +24,6 @@ public class Compare {
 		if (b == null)
 			return a;
 		return a.compareTo(b) <= 0 ? a : b;
-	}
-	
-	/**
-	 * Only works if E implements Comparable<E>
-	 * @return
-	 */
-	public static <E extends Comparable<? super E>> Comparator<E> naturalOrder() {
-		return new CompComparator<E>();
-	}
-	
-	private static class CompComparator<E extends Comparable<? super E>> implements Comparator<E> {
-		@Override
-		public int compare(E o1, E o2) {
-			return o1.compareTo(o2);
-		}
 	}
 
 }
