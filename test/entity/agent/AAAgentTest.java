@@ -87,7 +87,7 @@ public class AAAgentTest {
 		// creating a dummy agent
 		MockAgent agent = new MockAgent(fundamental, sip, market);
 		// Having the agent submit a bid to the market
-		Collection<? extends Activity> bidActs = market.submitOrder(agent, new Price(price),
+		Iterable<? extends Activity> bidActs = market.submitOrder(agent, new Price(price),
 				quantity, currentTime);
 
 		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
@@ -103,7 +103,7 @@ public class AAAgentTest {
 		addBid(p, q, time);
 		addBid(p, -q, time);
 		TimeStamp currentTime = new TimeStamp(time);
-		Collection<? extends Activity> clearActs = market.clear(currentTime);
+		Iterable<? extends Activity> clearActs = market.clear(currentTime);
 
 		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
 		// the transaction would work
@@ -116,7 +116,7 @@ public class AAAgentTest {
 	
 	private void executeAgentStrategy(Agent agent, int time) {
 		TimeStamp currentTime = new TimeStamp(time);
-		Collection<? extends Activity> test = agent.agentStrategy(currentTime);
+		Iterable<? extends Activity> test = agent.agentStrategy(currentTime);
 
 		// executing the bid submission - will go to the market
 		for (Activity act : test)

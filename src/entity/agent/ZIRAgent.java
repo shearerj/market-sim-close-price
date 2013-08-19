@@ -3,10 +3,10 @@ package entity.agent;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
-import java.util.Collection;
 import java.util.Random;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 
 import systemmanager.Keys;
 import activity.Activity;
@@ -66,8 +66,9 @@ public class ZIRAgent extends ReentryAgent {
 	}
 
 	@Override
-	public Collection<Activity> agentStrategy(TimeStamp currentTime) {
-		Collection<Activity> acts = Lists.newArrayList(super.agentStrategy(currentTime));
+	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
+		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
+				super.agentStrategy(currentTime));
 
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append(':');
@@ -77,7 +78,7 @@ public class ZIRAgent extends ReentryAgent {
 		if (!activeOrders.isEmpty()) {
 			sb.append(" last order has not transacted, go back to sleep");
 			log(INFO, sb.toString());
-			return acts;
+			return acts.build();
 		}
 
 		// 0.50% chance of being either long or short
@@ -109,7 +110,7 @@ public class ZIRAgent extends ReentryAgent {
 			sb.append(maxAbsPosition).append("; no submission");
 			log(INFO, sb.toString());
 		}
-		return acts;
+		return acts.build();
 	}
 
 }

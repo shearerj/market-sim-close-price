@@ -105,7 +105,7 @@ public abstract class Market extends Entity {
 		return ImmutableList.copyOf(orders);
 	}
 
-	public Collection<? extends Activity> withdrawOrder(Order order,
+	public Iterable<? extends Activity> withdrawOrder(Order order,
 			TimeStamp currentTime) {
 		return withdrawOrder(order, order.getQuantity(), currentTime);
 	}
@@ -115,7 +115,7 @@ public abstract class Market extends Entity {
 	 * higher quantity than the order has to offer will simply result in the entire order being
 	 * cancelled.
 	 */
-	public Collection<? extends Activity> withdrawOrder(Order order, int quantity, TimeStamp currentTime) {
+	public Iterable<? extends Activity> withdrawOrder(Order order, int quantity, TimeStamp currentTime) {
 		if (order.getQuantity() == 0) return ImmutableList.of();
 		checkArgument(quantity != 0 && signum(order.getQuantity()) == signum(quantity),
 				"Improper quantity");
@@ -133,7 +133,7 @@ public abstract class Market extends Entity {
 	/**
 	 * Clears the order book.
 	 */
-	public Collection<? extends Activity> clear(TimeStamp currentTime) {
+	public Iterable<? extends Activity> clear(TimeStamp currentTime) {
 		List<fourheap.Transaction<Price, TimeStamp>> ftransactions = orderbook.clear();
 		Builder<Transaction> transactions = ImmutableList.builder();
 		for (Entry<fourheap.Transaction<Price, TimeStamp>, Price> e : clearingRule.pricing(ftransactions).entrySet()) {
@@ -163,7 +163,7 @@ public abstract class Market extends Entity {
 	/**
 	 * Updates the Markets current quote
 	 */
-	protected Collection<? extends Activity> updateQuote(
+	protected Iterable<? extends Activity> updateQuote(
 			List<Transaction> transactions, TimeStamp currentTime) {
 		Price ask = orderbook.askQuote();
 		Price bid = orderbook.bidQuote();
@@ -209,12 +209,12 @@ public abstract class Market extends Entity {
 	/**
 	 * Bid doesn't expire
 	 */
-	public Collection<? extends Activity> submitOrder(Agent agent, Price price,
+	public Iterable<? extends Activity> submitOrder(Agent agent, Price price,
 			int quantity, TimeStamp currentTime) {
 		return submitOrder(agent, price, quantity, currentTime, TimeStamp.IMMEDIATE);
 	}
 
-	public Collection<? extends Activity> submitOrder(Agent agent, Price price,
+	public Iterable<? extends Activity> submitOrder(Agent agent, Price price,
 			int quantity, TimeStamp currentTime, TimeStamp duration) {
 		checkArgument(quantity != 0, "Can't submit a 0 quantity order");
 
@@ -242,7 +242,7 @@ public abstract class Market extends Entity {
 	/**
 	 * Bid doesn't expire
 	 */
-	public Collection<? extends Activity> submitNMSOrder(Agent agent,
+	public Iterable<? extends Activity> submitNMSOrder(Agent agent,
 			Price price, int quantity, TimeStamp currentTime) {
 		return submitNMSOrder(agent, price, quantity, currentTime, TimeStamp.IMMEDIATE);
 	}
@@ -250,7 +250,7 @@ public abstract class Market extends Entity {
 	// TODO How should call markets handle Reg NMS. Can't route to call market to get immediate
 	// execution. NMSOrder will not route properly for a call market if there is another market in
 	// the model
-	public Collection<? extends Activity> submitNMSOrder(Agent agent,
+	public Iterable<? extends Activity> submitNMSOrder(Agent agent,
 			Price price, int quantity, TimeStamp currentTime, TimeStamp duration) {
 		BestBidAsk nbbo = sip.getNBBO();
 		Market bestMarket = this;

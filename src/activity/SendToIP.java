@@ -2,7 +2,6 @@ package activity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
 import java.util.List;
 
 import entity.infoproc.IP;
@@ -33,7 +32,7 @@ public class SendToIP extends Activity {
 	}
 
 	@Override
-	public Collection<? extends Activity> execute(TimeStamp time) {
+	public Iterable<? extends Activity> execute(TimeStamp time) {
 		return ip.sendToIP(market, quote, transactions, time);
 	}
 	

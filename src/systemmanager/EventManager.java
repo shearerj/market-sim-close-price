@@ -5,6 +5,7 @@ import static logger.Logger.Level.*;
 
 import java.util.Random;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 
 import event.EventQueue;
@@ -70,7 +71,7 @@ public class EventManager {
 			
 			Activity act = eventQueue.remove();
 			currentTime = ord.max(currentTime, act.getTime());
-			eventQueue.addAll(act.execute(currentTime));
+			Iterables.addAll(eventQueue, act.execute(currentTime));
 			log(DEBUG, act.toString());
 		} catch (Exception e) {
 			log(ERROR, this.getClass().getSimpleName()

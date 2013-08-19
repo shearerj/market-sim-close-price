@@ -2,8 +2,6 @@ package activity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
-
 import entity.agent.Agent;
 import entity.market.Price;
 import event.TimeStamp;
@@ -27,7 +25,7 @@ public class Liquidate extends Activity {
 	}
 
 	@Override
-	public Collection<? extends Activity> execute(TimeStamp currentTime) {
+	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
 		return this.agent.liquidate(this.price, currentTime);
 	}
 	

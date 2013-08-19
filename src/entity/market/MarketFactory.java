@@ -18,8 +18,7 @@ public class MarketFactory {
 		case CALL:
 			return new CallMarket(sip, props);
 		default:
-			throw new IllegalArgumentException("Can't create MarketType: "
-					+ props.getMarketType());
+			throw new IllegalArgumentException("Can't create MarketType: " + props.getMarketType());
 		}
 	}
 

@@ -2,8 +2,6 @@ package activity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
-
 import entity.agent.Agent;
 import event.TimeStamp;
 
@@ -22,7 +20,7 @@ public class AgentStrategy extends Activity {
 	}
 
 	@Override
-	public Collection<? extends Activity> execute(TimeStamp currentTime) {
+	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
 		return agent.agentStrategy(currentTime);
 	}
 

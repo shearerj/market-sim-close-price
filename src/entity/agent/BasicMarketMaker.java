@@ -79,7 +79,7 @@ public class BasicMarketMaker extends MarketMaker {
 	}
 
 	@Override
-	public Collection<Activity> agentStrategy(TimeStamp currentTime) {
+	public Iterable<Activity> agentStrategy(TimeStamp currentTime) {
 		Collection<Activity> acts = new ArrayList<Activity>();
 
 		// update NBBO

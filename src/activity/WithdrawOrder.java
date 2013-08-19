@@ -3,8 +3,6 @@ package activity;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
-
 import entity.market.Order;
 import event.TimeStamp;
 
@@ -31,7 +29,7 @@ public class WithdrawOrder extends Activity {
 	}
 
 	@Override
-	public Collection<? extends Activity> execute(TimeStamp time) {
+	public Iterable<? extends Activity> execute(TimeStamp time) {
 		return order.getMarket().withdrawOrder(order, quantity, time);
 	}
 	

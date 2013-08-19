@@ -2,9 +2,9 @@ package entity.agent;
 
 import static java.lang.Math.signum;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Random;
+
+import com.google.common.collect.ImmutableList;
 
 import systemmanager.Keys;
 import activity.Activity;
@@ -56,7 +56,7 @@ public class ZIAgent extends BackgroundAgent {
 	}
 
 	@Override
-	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
+	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
 		// 50% chance of being either long or short
 		int quantity = rand.nextBoolean() ? 1 : -1;
 		Price val = fundamental.getValueAt(currentTime).plus(
@@ -66,7 +66,7 @@ public class ZIAgent extends BackgroundAgent {
 		Price price = new Price((int) (val.getInTicks() - signum(quantity)
 				* rand.nextDouble() * 2 * bidRange)).nonnegative().quantize(tickSize);
 
-		return Collections.singleton(new SubmitNMSOrder(this, price, quantity,
+		return ImmutableList.of(new SubmitNMSOrder(this, price, quantity,
 				primaryMarket, TimeStamp.IMMEDIATE));
 	}
 }

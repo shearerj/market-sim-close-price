@@ -59,8 +59,8 @@ public class ZIPAgent extends ReentryAgent {
 	}
 	
 	@Override
-	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
-		Collection<Activity> acts = Lists.newArrayList(super.agentStrategy(currentTime));
+	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
+		Collection<? extends Activity> acts = Lists.newArrayList(super.agentStrategy(currentTime));
 		
 		// 0.50% chance of being either long or short
 		int quantity = rand.nextBoolean() ? 1 : -1;

@@ -3,7 +3,6 @@ package entity.agent;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
-import java.util.Collection;
 import java.util.Random;
 
 import data.FundamentalValue;
@@ -52,7 +51,7 @@ public abstract class SMAgent extends Agent {
 	}
 
 	@Override
-	public Collection<? extends Activity> agentArrival(TimeStamp currentTime) {
+	public Iterable<? extends Activity> agentArrival(TimeStamp currentTime) {
 		log(INFO, this + "->" + primaryMarket);
 		return super.agentArrival(currentTime);
 	}

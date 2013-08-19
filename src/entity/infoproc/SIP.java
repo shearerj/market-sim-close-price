@@ -2,7 +2,6 @@ package entity.infoproc;
 
 import static logger.Logger.Level.INFO;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -47,7 +46,7 @@ public class SIP extends IP {
 		this.nbboSpreads = new TimeSeries();
 	}
 
-	public Collection<Activity> processQuote(Market market, Quote quote,
+	public Iterable<Activity> processQuote(Market market, Quote quote,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
 		marketQuotes.put(market, quote);
 		transactions.addAll(newTransactions);

@@ -70,10 +70,10 @@ public abstract class Agent extends Entity {
 		this.activeOrders = Sets.newHashSet();
 	}
 
-	public abstract Collection<? extends Activity> agentStrategy(
+	public abstract Iterable<? extends Activity> agentStrategy(
 			TimeStamp currentTime);
 
-	public Collection<? extends Activity> agentArrival(TimeStamp currentTime) {
+	public Iterable<? extends Activity> agentArrival(TimeStamp currentTime) {
 		return Collections.singleton(new AgentStrategy(this, TimeStamp.IMMEDIATE));
 	}
 
@@ -82,7 +82,7 @@ public abstract class Agent extends Entity {
 	 * Price is determined by the fundamental at the time of liquidation.
 	 */
 	
-	public Collection<? extends Activity> liquidateAtFundamental(
+	public Iterable<? extends Activity> liquidateAtFundamental(
 			TimeStamp currentTime) {
 		log(INFO, this + " liquidating...");
 		return liquidate(fundamental.getValueAt(currentTime), currentTime);
@@ -92,7 +92,7 @@ public abstract class Agent extends Entity {
 	 * Liquidates an agent's position at the specified price.
 	 */
 	// TODO Unused
-	public Collection<? extends Activity> liquidate(Price price, TimeStamp ts) {
+	public Iterable<? extends Activity> liquidate(Price price, TimeStamp ts) {
 
 		log(INFO, this + " pre-liquidation: position="
 				+ positionBalance);

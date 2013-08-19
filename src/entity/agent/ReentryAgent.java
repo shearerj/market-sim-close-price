@@ -2,10 +2,10 @@ package entity.agent;
 
 import interators.ExpInterarrivals;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Random;
+
+import com.google.common.collect.ImmutableList;
 
 import data.FundamentalValue;
 
@@ -47,9 +47,9 @@ public abstract class ReentryAgent extends BackgroundAgent {
 	}
 
 	@Override
-	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
+	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
 		TimeStamp nextStrategy = currentTime.plus(reentry.next());
-		return Collections.singleton(new AgentStrategy(this, nextStrategy));
+		return ImmutableList.of(new AgentStrategy(this, nextStrategy));
 	}
 
 }

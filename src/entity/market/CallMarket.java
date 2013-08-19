@@ -2,8 +2,6 @@ package entity.market;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.Collection;
-
 import systemmanager.Keys;
 import activity.Activity;
 import activity.Clear;
@@ -50,7 +48,7 @@ public class CallMarket extends Market {
 	}
 
 	@Override
-	public Collection<? extends Activity> clear(TimeStamp currentTime) {
+	public Iterable<? extends Activity> clear(TimeStamp currentTime) {
 		// Update the next clear time
 		nextClearTime = currentTime.plus(clearFreq);
 		return ImmutableList.<Activity> builder().addAll(

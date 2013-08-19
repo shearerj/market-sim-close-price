@@ -3,8 +3,6 @@ package activity;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
-
 import entity.agent.Agent;
 import entity.market.Market;
 import entity.market.Price;
@@ -42,7 +40,7 @@ public class SubmitNMSOrder extends Activity {
 	}
 
 	@Override
-	public Collection<? extends Activity> execute(TimeStamp currentTime) {
+	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
 		return primaryMarket.submitNMSOrder(agent, price, quantity, currentTime);
 	}
 	

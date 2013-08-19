@@ -44,7 +44,7 @@ public abstract class MMAgent extends Agent {
 	}
 
 	@Override
-	public Collection<? extends Activity> agentArrival(TimeStamp currentTime) {
+	public Iterable<? extends Activity> agentArrival(TimeStamp currentTime) {
 		log(INFO, this + "->" + marketJoiner.join(markets));
 		return super.agentArrival(currentTime);
 	}

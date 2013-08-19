@@ -1,8 +1,5 @@
 package entity.market;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import com.google.common.collect.ImmutableList;
 
 import systemmanager.Keys;
@@ -34,7 +31,7 @@ public class CDAMarket extends Market {
 	}
 
 	@Override
-	public Collection<? extends Activity> submitOrder(Agent agent, Price price,
+	public Iterable<? extends Activity> submitOrder(Agent agent, Price price,
 			int quantity, TimeStamp curentTime, TimeStamp duration) {
 		return ImmutableList.<Activity> builder().addAll(
 				super.submitOrder(agent, price, quantity, curentTime, duration)).add(
@@ -42,11 +39,11 @@ public class CDAMarket extends Market {
 	}
 
 	@Override
-	public Collection<? extends Activity> withdrawOrder(Order order,
+	public Iterable<? extends Activity> withdrawOrder(Order order,
 			TimeStamp currentTime) {
 		return ImmutableList.<Activity> builder().addAll(
 				super.withdrawOrder(order, currentTime)).addAll(
-				updateQuote(Collections.<Transaction> emptyList(), currentTime)).build();
+				updateQuote(ImmutableList.<Transaction> of(), currentTime)).build();
 	}
 
 }

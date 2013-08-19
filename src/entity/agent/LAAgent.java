@@ -60,7 +60,7 @@ public class LAAgent extends HFTAgent {
 	@Override
 	// TODO Extend to multiple quantities / all possible arbitrage opportunities
 	// TODO Strategy for orders that don't execute
-	public Collection<? extends Activity> agentStrategy(TimeStamp ts) {
+	public Iterable<? extends Activity> agentStrategy(TimeStamp ts) {
 		Price bestBid = null, bestAsk = null;
 		Market bestBidMarket = null, bestAskMarket = null;
 

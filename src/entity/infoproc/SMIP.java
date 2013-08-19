@@ -3,12 +3,13 @@ package entity.infoproc;
 import static com.google.common.base.Preconditions.checkArgument;
 import static logger.Logger.Level.INFO;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import logger.Logger;
 import activity.Activity;
+
+import com.google.common.collect.ImmutableList;
+
 import entity.market.Market;
 import entity.market.Quote;
 import entity.market.Transaction;
@@ -40,7 +41,7 @@ public class SMIP extends IP {
 	}
 
 	@Override
-	public Collection<? extends Activity> processQuote(Market market,
+	public Iterable<? extends Activity> processQuote(Market market,
 			Quote quote, List<Transaction> newTransactions,
 			TimeStamp currentTime) {
 		checkArgument(market.equals(assocaitedMarket),
@@ -48,7 +49,7 @@ public class SMIP extends IP {
 
 		this.quote = quote;
 		Logger.log(INFO, market + " -> " + this + " ProcessQuote: " + quote);
-		return Collections.emptySet();
+		return ImmutableList.of();
 	}
 
 	public Quote getQuote() {

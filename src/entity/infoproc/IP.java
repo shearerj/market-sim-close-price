@@ -2,7 +2,6 @@ package entity.infoproc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
@@ -33,13 +32,13 @@ public abstract class IP extends Entity {
 		this.latency = checkNotNull(latency, "Latency");
 	}
 
-	public Collection<? extends Activity> sendToIP(Market market, Quote quote,
+	public Iterable<? extends Activity> sendToIP(Market market, Quote quote,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
 		return ImmutableList.of(new ProcessQuote(this, market, quote,
 				newTransactions, currentTime.plus(latency)));
 	}
 
-	public abstract Collection<? extends Activity> processQuote(Market market, Quote quote,
+	public abstract Iterable<? extends Activity> processQuote(Market market, Quote quote,
 			List<Transaction> newTransactions, TimeStamp currentTime);
 
 }

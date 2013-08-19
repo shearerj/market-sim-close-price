@@ -2,8 +2,6 @@ package activity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
-
 import event.*;
 
 /**
@@ -30,7 +28,7 @@ public abstract class Activity {
 	 * 
 	 * @return hash table of generated Activity vectors, hashed by TimeStamp
 	 */
-	public abstract Collection<? extends Activity> execute(TimeStamp currentTime);
+	public abstract Iterable<? extends Activity> execute(TimeStamp currentTime);
 
 	/**
 	 * @return time of activity

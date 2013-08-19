@@ -1,12 +1,12 @@
 package entity.infoproc;
 
-import java.util.Collection;
 import java.util.List;
-
-import com.google.common.collect.ImmutableList;
 
 import activity.Activity;
 import activity.AgentStrategy;
+
+import com.google.common.collect.ImmutableList;
+
 import entity.agent.HFTAgent;
 import entity.market.Market;
 import entity.market.Quote;
@@ -30,7 +30,7 @@ public class HFTIP extends SMIP {
 	}
 
 	@Override
-	public Collection<? extends Activity> processQuote(Market market, Quote quote,
+	public Iterable<? extends Activity> processQuote(Market market, Quote quote,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
 		return ImmutableList.<Activity> builder().addAll(
 				super.processQuote(market, quote, newTransactions, currentTime)).add(
