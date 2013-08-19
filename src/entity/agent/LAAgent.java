@@ -2,6 +2,7 @@ package entity.agent;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -11,6 +12,7 @@ import activity.Activity;
 import activity.SubmitOrder;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Maps;
 
 import data.EntityProperties;
@@ -21,6 +23,9 @@ import entity.market.Market;
 import entity.market.Price;
 import entity.market.Quote;
 import event.TimeStamp;
+import fourheap.FourHeap;
+import fourheap.Order;
+import fourheap.Transaction;
 
 /**
  * LAAGENT
@@ -58,7 +63,6 @@ public class LAAgent extends HFTAgent {
 	}
 
 	@Override
-	// TODO Extend to multiple quantities / all possible arbitrage opportunities
 	// TODO Strategy for orders that don't execute
 	public Iterable<? extends Activity> agentStrategy(TimeStamp ts) {
 		Price bestBid = null, bestAsk = null;
@@ -84,6 +88,39 @@ public class LAAgent extends HFTAgent {
 		return ImmutableList.of(new SubmitOrder(this, bestBidMarket, midPoint,
 				-1, TimeStamp.IMMEDIATE), new SubmitOrder(this, bestAskMarket,
 				midPoint, 1, TimeStamp.IMMEDIATE));
+	}
+	
+	public Iterable<? extends Activity> agentStrategy2(TimeStamp ts) {
+		FourHeap<Price, Integer> fh = FourHeap.create();
+		Map<Order<Price, Integer>, Market> orderMap = Maps.newHashMap();
+		
+		for (Entry<Market, HFTIP> ipEntry : ips.entrySet()) {
+			Quote q = ipEntry.getValue().getQuote();
+			if (q.getBidPrice() != null && q.getBidQuantity() > 0) {
+				Order<Price, Integer> order = Order.create(q.getBidPrice(), q.getBidQuantity(), 0);
+				orderMap.put(order, ipEntry.getKey());
+				fh.insertOrder(order);
+			}
+			if (q.getAskPrice() != null && q.getAskQuantity() > 0) {
+				Order<Price, Integer> order = Order.create(q.getAskPrice(), -q.getAskQuantity(), 0);
+				orderMap.put(order, ipEntry.getKey());
+				fh.insertOrder(order);
+			}
+		}
+		
+		List<Transaction<Price, Integer>> transactions = fh.clear();
+		Builder<Activity> acts = ImmutableList.builder();
+		for (Transaction<Price, Integer> trans : transactions) {
+			Order<Price, Integer> buy = trans.getBuy(), sell = trans.getSell();
+			if (sell.getPrice().getInTicks() * (1 + alpha) > buy.getPrice().getInTicks())
+				continue;
+			double midPoint = .5 * (buy.getPrice().getInTicks() + sell.getPrice().getInTicks()); 
+			Price midPrice = new Price(midPoint).quantize(tickSize);
+			
+			acts.add(new SubmitOrder(this, orderMap.get(sell), midPrice, trans.getQuantity(), TimeStamp.IMMEDIATE));
+			acts.add(new SubmitOrder(this, orderMap.get(buy), midPrice, -trans.getQuantity(), TimeStamp.IMMEDIATE));
+		}
+		return acts.build();
 	}
 
 }
