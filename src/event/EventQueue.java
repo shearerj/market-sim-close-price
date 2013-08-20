@@ -3,15 +3,20 @@ package event;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.AbstractQueue;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.PriorityQueue;
 import java.util.Random;
 
 import activity.Activity;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 
@@ -146,6 +151,22 @@ public class EventQueue extends AbstractQueue<Activity> {
 	public Activity peek() {
 		if (isEmpty()) return null;
 		return eventQueue.peek().peek();
+	}
+
+	@Override
+	public boolean addAll(Collection<? extends Activity> c) {
+		return addAll((Iterable<? extends Activity>) c);
+	}
+	
+	// Add collections in reverse. This ensures invariant.
+	public boolean addAll(Iterable<? extends Activity> c) {
+		if (c instanceof List) {
+			return super.addAll(Lists.reverse((List<? extends Activity>) c));
+		} else if (c instanceof NavigableSet) {
+			return super.addAll(((NavigableSet<? extends Activity>) c).descendingSet());
+		} else {
+			return super.addAll(ImmutableList.copyOf(c)); // expensive copy as fallback
+		}
 	}
 
 	/**
