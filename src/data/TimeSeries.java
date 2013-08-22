@@ -53,8 +53,8 @@ public class TimeSeries implements Serializable {
 	/**
 	 * Add a data point (int, double) to container
 	 */
-	public void add(int time, double value) {
-		int lastTime = Iterables.getLast(points, new Point(0, Double.NaN)).time;
+	public void add(long time, double value) {
+		long lastTime = Iterables.getLast(points, new Point(0, Double.NaN)).time;
 		checkArgument(time >= lastTime, "Can't add time before last time");
 		
 		points.add(new Point(time, value));
@@ -70,30 +70,30 @@ public class TimeSeries implements Serializable {
 	 * 
 	 * If period == 1, then will include every time stamp.
 	 */
-	public List<Double> sample(int period, int maxTime) {
-		return sample(period, maxTime, Predicates.<Integer> alwaysTrue(), Predicates.<Double> alwaysTrue());
+	public List<Double> sample(long period, long maxTime) {
+		return sample(period, maxTime, Predicates.<Long> alwaysTrue(), Predicates.<Double> alwaysTrue());
 	}
 	
-	public List<Double> sample(int period, int maxTime, Predicate<Double> valuePred) {
-		return sample(period, maxTime, Predicates.<Integer> alwaysTrue(), valuePred);
+	public List<Double> sample(long period, long maxTime, Predicate<Double> valuePred) {
+		return sample(period, maxTime, Predicates.<Long> alwaysTrue(), valuePred);
 	}
 	
-	public List<Double> sample(int period, int maxTime, Predicate<Integer> timePred, Predicate<Double> valuePred) {
+	public List<Double> sample(long period, long maxTime, Predicate<Long> timePred, Predicate<Double> valuePred) {
 		return sample(period, maxTime, Iterables.filter(points, pointPredicate(timePred, valuePred)));
 	}
 	
-	protected List<Double> sample(int period, int maxTime, Iterable<Point> toSample) {
+	protected List<Double> sample(long period, long maxTime, Iterable<Point> toSample) {
 		return sample(period, maxTime, toSample.iterator());
 	}
 	
-	protected List<Double> sample(int period, int maxTime, Iterator<Point> toSample) {
+	protected List<Double> sample(long period, long maxTime, Iterator<Point> toSample) {
 		checkArgument(period > 0, "Period must be positive");
 		
 		List<Double> sampled = Lists.newArrayList();
 		PeekingIterator<Point> it = Iterators.peekingIterator(toSample);
 		Point current = new Point(0, defaultValue);
 		
-		for (int time = period - 1; time < maxTime; time += period) {
+		for (long time = period - 1; time < maxTime; time += period) {
 			while (it.hasNext() && it.peek().time <= time)
 				current = it.next();
 			sampled.add(current.value);
@@ -101,7 +101,7 @@ public class TimeSeries implements Serializable {
 		return sampled;
 	}
 	
-	protected static Predicate<Point> pointPredicate(final Predicate<Integer> timePred, final Predicate<Double> valuePred) {
+	protected static Predicate<Point> pointPredicate(final Predicate<Long> timePred, final Predicate<Double> valuePred) {
 		return new Predicate<Point>() {
 			@Override
 			public boolean apply(Point arg0) {
@@ -110,11 +110,11 @@ public class TimeSeries implements Serializable {
 		};
 	}
 	
-	protected static final class Point implements Entry<Integer, Double> {
-		protected final int time;
+	protected static final class Point implements Entry<Long, Double> {
+		protected final long time;
 		protected final double value;
 		
-		protected Point(int time, double value) {
+		protected Point(long time, double value) {
 			this.time = time;
 			this.value = value;
 		}
@@ -125,7 +125,7 @@ public class TimeSeries implements Serializable {
 		}
 
 		@Override
-		public Integer getKey() {
+		public Long getKey() {
 			return time;
 		}
 
