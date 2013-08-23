@@ -69,4 +69,10 @@ public class ZIAgent extends BackgroundAgent {
 		return ImmutableList.of(new SubmitNMSOrder(this, price, quantity,
 				primaryMarket, TimeStamp.IMMEDIATE));
 	}
+
+	@Override
+	public String toString() {
+		return "ZI " + super.toString();
+	}
+	
 }

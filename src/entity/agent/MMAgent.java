@@ -1,8 +1,5 @@
 package entity.agent;
 
-import static logger.Logger.log;
-import static logger.Logger.Level.INFO;
-
 import java.util.Collection;
 import java.util.Random;
 
@@ -45,7 +42,6 @@ public abstract class MMAgent extends Agent {
 
 	@Override
 	public Iterable<? extends Activity> agentArrival(TimeStamp currentTime) {
-		log(INFO, this + "->" + marketJoiner.join(markets));
 		return super.agentArrival(currentTime);
 	}
 

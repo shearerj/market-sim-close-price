@@ -49,10 +49,14 @@ public class CallMarket extends Market {
 
 	@Override
 	public Iterable<? extends Activity> clear(TimeStamp currentTime) {
-		// Update the next clear time
 		nextClearTime = currentTime.plus(clearFreq);
 		return ImmutableList.<Activity> builder().addAll(
 				super.clear(currentTime)).add(new Clear(this, nextClearTime)).build();
+	}
+
+	@Override
+	public String toString() {
+		return "Call " + super.toString();
 	}
 
 }

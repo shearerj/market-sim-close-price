@@ -82,7 +82,7 @@ public class SystemManager {
 	 * @param args
 	 */
 	public static void main(String... args) {
-
+		
 		File simFolder = new File(".");
 		int simNumber = 1;
 		switch (args.length) {

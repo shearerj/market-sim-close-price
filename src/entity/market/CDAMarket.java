@@ -46,4 +46,9 @@ public class CDAMarket extends Market {
 				updateQuote(ImmutableList.<Transaction> of(), currentTime)).build();
 	}
 
+	@Override
+	public String toString() {
+		return "CDA " + super.toString();
+	}
+
 }

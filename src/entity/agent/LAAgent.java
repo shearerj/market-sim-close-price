@@ -1,5 +1,8 @@
 package entity.agent;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.INFO;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -63,7 +66,7 @@ public class LAAgent extends HFTAgent {
 	}
 
 	@Override
-	// TODO Strategy for orders that don't execute
+	// TODO Need strategy for orders that don't execute
 	public Iterable<? extends Activity> agentStrategy(TimeStamp ts) {
 		Price bestBid = null, bestAsk = null;
 		Market bestBidMarket = null, bestAskMarket = null;
@@ -83,13 +86,18 @@ public class LAAgent extends HFTAgent {
 		if (bestBid == null || bestAsk == null
 				|| bestAsk.getInTicks() * (1 + alpha) > bestBid.getInTicks())
 			return Collections.emptySet();
-
+		
+		log(INFO, this + " arbitrage between " + bestBidMarket + " and " + bestAskMarket);
 		Price midPoint = bestBid.plus(bestAsk).times(0.5).quantize(tickSize);
 		return ImmutableList.of(new SubmitOrder(this, bestBidMarket, midPoint,
 				-1, TimeStamp.IMMEDIATE), new SubmitOrder(this, bestAskMarket,
 				midPoint, 1, TimeStamp.IMMEDIATE));
 	}
-	
+
+	// This should be a natural extension of the arbitrage strategy extended to multi quantities,
+	// which should be necessary if the arbitrageur has a latency. FIXME For some reason this is not
+	// the same as the above strategy, sometimes making more profit, sometimes less, and I'm unsure
+	// why.
 	public Iterable<? extends Activity> agentStrategy2(TimeStamp ts) {
 		FourHeap<Price, Integer> fh = FourHeap.create();
 		Map<Order<Price, Integer>, Market> orderMap = Maps.newHashMap();
@@ -121,6 +129,11 @@ public class LAAgent extends HFTAgent {
 			acts.add(new SubmitOrder(this, orderMap.get(buy), midPrice, -trans.getQuantity(), TimeStamp.IMMEDIATE));
 		}
 		return acts.build();
+	}
+
+	@Override
+	public String toString() {
+		return "LA " + super.toString();
 	}
 
 }
