@@ -1,15 +1,13 @@
 package activity;
 
-import java.util.Collection;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.List;
 
-import market.Quote;
-import market.Transaction;
-
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
-import entity.IP;
-import entity.Market;
+import entity.infoproc.IP;
+import entity.market.Market;
+import entity.market.Quote;
+import entity.market.Transaction;
 import event.TimeStamp;
 
 /**
@@ -27,32 +25,20 @@ public class ProcessQuote extends Activity {
 	public ProcessQuote(IP ip, Market market, Quote quote,
 			List<Transaction> newTransactions, TimeStamp scheduledTime) {
 		super(scheduledTime);
-		this.ip = ip;
-		this.market = market;
-		this.quote = quote;
-		this.newTransactions = newTransactions;
+		this.ip = checkNotNull(ip, "IP");
+		this.market = checkNotNull(market, "Market");
+		this.quote = checkNotNull(quote, "Quote");
+		this.newTransactions = checkNotNull(newTransactions, "New Transactions");
 	}
 
-	public Collection<? extends Activity> execute(TimeStamp currentTime) {
+	@Override
+	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
 		return this.ip.processQuote(market, quote, newTransactions, currentTime);
 	}
-
+	
+	@Override
 	public String toString() {
-		return new String(getName() + "::" + market + ":" + quote);
+		return super.toString() + market + " -> " + ip + " : " + quote;
 	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof ProcessQuote)) return false;
-		ProcessQuote other = (ProcessQuote) obj;
-		return super.equals(other) && this.ip.equals(other.ip)
-				&& this.market.equals(other.market)
-				&& this.quote.equals(other.quote);
-	}
-
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder(19, 37).append(market).append(ip).append(
-				quote).append(scheduledTime).toHashCode();
-	}
+	
 }

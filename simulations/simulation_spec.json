@@ -1,27 +1,21 @@
-{"assignment": {
-},
-"configuration": {
-"sim_length": "15000",
-"primary_model": "CENTRALCDA",
-"TWOMARKET": "LA:sleepTime_0_alpha_0.001,DUMMY",
-"CENTRALCDA": "1",
-"CENTRALCALL": "NBBO",
-"BASICMM": "0",
-"BASICMM_setup": "sleepTime_200_numRungs_10_rungSize_1000",
-"ZI": "3",
-"ZI_setup": "bidRange_2000",
-"ZIR": "0",
-"ZIR_setup": "bidRange_2000_maxqty_5",
-"ZIP": "0",
-"ZIP_setup": "",
-"AA": "0",
-"AA_setup": "",
-"tick_size": "1",
-"nbbo_latency": "0",
-"arrival_rate": "0.075",
-"reentry_rate": "0.005",
-"mean_value": "100000",
-"kappa": "0.05",
-"shock_var": "150000000",
-"private_value_var": "100000000",
-} }
+{
+    "assignment": {
+    },	
+    "configuration": {
+	"simLength": "15000",
+	"presets" : "CENTRALCDA",
+	"BASICMM": "num_0_sleepTime_200_numRungs_10_rungSize_1000",
+	"ZI": "num_250_bidRange_2000",
+	"ZIR": "num_0_bidRange_2000_maxqty_5",
+	"ZIP": "num_0",
+	"AA": "num_0",
+	"tickSize": "1",
+	"nbboLatency": "100",
+	"arrivalRate": "0.075",
+	"reentryRate": "0.005",
+	"meanValue": "100000",
+	"kappa": "0.05",
+	"shockVar": "150000000",
+	"privateValueVar": "100000000"
+    }
+}

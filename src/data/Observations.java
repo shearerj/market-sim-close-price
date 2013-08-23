@@ -1,43 +1,47 @@
 package data;
 
+import static com.google.common.base.Predicates.equalTo;
+import static com.google.common.base.Predicates.not;
 import static utils.MathUtils.quantize;
-import static utils.StringUtils.delimit;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
-
-import market.PQTransaction;
-import market.Transaction;
-import model.MarketModel;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import systemmanager.Consts;
+import systemmanager.Keys;
 import systemmanager.SimulationSpec;
-import utils.DSPlus;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Multiset;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 
-import entity.Agent;
-import entity.BackgroundAgent;
-import entity.HFTAgent;
-import entity.Market;
-import entity.MarketMaker;
+import entity.agent.Agent;
+import entity.agent.BackgroundAgent;
+import entity.agent.HFTAgent;
+import entity.agent.MarketMaker;
+import entity.infoproc.SIP;
+import entity.market.Market;
+import entity.market.Transaction;
 import event.TimeStamp;
 
-// TODO This current version of observations doesn't round doubles to the nearest ten thousandth
 public class Observations {
+	
+	public final static Joiner J = Joiner.on('_');
 
 	// Players
 	public final static String PLAYERS = "players";
@@ -82,6 +86,7 @@ public class Observations {
 	// TRANSACTION INFO
 	public final static String PRICE = "price";
 	public final static String PERIODICITY = "freq";
+	public final static String NOPERIODICITY = "noperiod";
 
 	// SPREAD
 	public final static String NBBO = "nbbo";
@@ -102,58 +107,51 @@ public class Observations {
 
 	JsonObject observations;
 
-	public Observations(SimulationSpec spec, Collection<MarketModel> models,
+	public Observations(SimulationSpec spec, Collection<Market> markets,
+			Collection<Agent> agents, Collection<Player> players,
+			FundamentalValue fundamental, SIP sip, String modelName,
 			int observationNum) {
+		
+		Builder<List<Transaction>> transactionLists = ImmutableList.builder();
+		for (Market market : markets)
+			transactionLists.add(market.getTransactions());
+		List<Transaction> transactions = ImmutableList.copyOf(Iterables.mergeSorted(
+				transactionLists.build(), new Comparator<Transaction>() {
+					@Override
+					public int compare(Transaction o1, Transaction o2) {
+						return o1.getExecTime().compareTo(o2.getExecTime());
+					}
+				}));
+
 		observations = new JsonObject();
+		observations.add(PLAYERS, playerObservations(players));
 
-		MarketModel firstModel = models.iterator().next();
-		observations.add(PLAYERS, playerObservations(firstModel));
-
-		// FIXME Math.round(firstModel.getNumEnvAgents() / data.arrivalRate);
-		long maxTime = 15000;
+		double arrivalRate = spec.getDefaultAgentProps().getAsDouble(Keys.ARRIVAL_RATE, 0.075);
+		long maxTime = Math.round(agents.size() / arrivalRate);
 		maxTime = Math.max(Consts.upToTime, quantize((int) maxTime, 1000));
 
 		JsonObject features = new JsonObject();
 		observations.add(FEATURES, features);
+		
 		features.add("", getConfiguration(spec, observationNum, maxTime));
+		features.add(SURPLUS, getSurplus(agents, players));
+		features.add(EXECTIME, getExecutionTime(transactions));
+		features.add(TRANSACTIONS, getTransactionInfo(agents, transactions, fundamental, maxTime));
+		features.add(SPREADS, getSpread(markets, sip, maxTime));
+		features.add(ROLE_MARKETMAKER, getMarketMakerInfo(agents));
 
-		for (MarketModel model : models) {
-			String modelName = model.getClass().getSimpleName().toLowerCase();
+		for (int period : Consts.periods)
+			features.add(VOL, getVolatility(markets, period, maxTime));
 
-			features.add(delimit(modelName, SURPLUS), getSurplus(model));
-
-			features.add(delimit(modelName, EXECTIME), getExecutionTime(model));
-			// FIXME this should maybe be simLength instead of maxTime...
-			features.add(delimit(modelName, TRANSACTIONS),
-					getTransactionInfo(model, maxTime));
-			features.add(delimit(modelName, SPREADS), getSpread(model, maxTime));
-			features.add(delimit(modelName, ROLE_MARKETMAKER),
-					getMarketMakerInfo(model));
-
-			for (int period : Consts.periods)
-				features.add(delimit(modelName, VOL),
-						getVolatility(model, period, maxTime));
-
-			// TODO - need to remove the position balance hack
-			// addFeature(modelName + ROUTING, getRegNMSRoutingInfo(model));
-		}
+		// TODO - need to remove the position balance hack
+		// addFeature(modelName + ROUTING, getRegNMSRoutingInfo(model));
 	}
 
-	protected JsonArray playerObservations(MarketModel model) {
-		JsonArray players = new JsonArray();
-		for (Player player : model.getPlayers())
-			players.add(getPlayerObservation(player));
-		return players;
-	}
-
-	protected static JsonObject getPlayerObservation(Player player) {
-		JsonObject observation = new JsonObject();
-		observation.addProperty(ROLE, player.getRole());
-		observation.addProperty(STRATEGY, player.getStrategy());
-		// Get surplus instead of realized profit?
-		observation.addProperty(PAYOFF,
-				player.getAgent().getRealizedProfit());
-		return observation;
+	protected JsonArray playerObservations(Collection<Player> players) {
+		JsonArray obs = new JsonArray();
+		for (Player player : players)
+			obs.add(player.toJson());
+		return obs;
 	}
 
 	/********************************************
@@ -166,79 +164,71 @@ public class Observations {
 
 		config.addProperty(OBS_KEY, observationNum);
 		config.addProperty(TIMESERIES_MAXTIME, maxTime);
-		copyPropertiesToJson(config, spec.getSimulationProperties());
-		copyPropertiesToJson(config, spec.getDefaultModelProperties());
-		copyPropertiesToJson(config, spec.getDefaultAgentProperties());
+		spec.getSimulationProps().copyToJson(config);
+		spec.getDefaultMarketProps().copyToJson(config);
+		spec.getDefaultAgentProps().copyToJson(config);
 
-		for (Entry<AgentProperties, Integer> agentProps : spec.getBackgroundAgents().entrySet()) {
-			AgentProperties props = agentProps.getKey();
-			int number = agentProps.getValue();
+		for (AgentProperties props : spec.getAgentProps()) {
+			// TODO Change to not split off number...
+			int number = props.getAsInt(Keys.NUM, 0);
 
-			config.addProperty(
-					delimit("_", props.getAgentType().toString(), NUM), number);
-			config.addProperty(
-					delimit("_", props.getAgentType().toString(), AGENTSETUP),
+			config.addProperty(J.join(props.getAgentType(), NUM), number);
+			config.addProperty(J.join(props.getAgentType(), AGENTSETUP), 
 					props.toConfigString());
 		}
 		return config;
-	}
-
-	protected static void copyPropertiesToJson(JsonObject json,
-			EntityProperties props) {
-		for (String key : props.keys())
-			json.addProperty(key, props.getAsString(key));
 	}
 
 	/**
 	 * Extract discounted surplus for background agents, including those that
 	 * are players (in the EGTA use case).
 	 */
-	protected static JsonObject getSurplus(MarketModel model) {
+	protected static JsonObject getSurplus(Collection<Agent> agents, Collection<Player> players) {
 		JsonObject feat = new JsonObject();
 
 		for (double rho : Consts.rhos) {
 			String suffix = rho == 0 ? UNDISCOUNTED : DISCOUNTED + rho;
 
-			DescriptiveStatistics modelSurplus = new DescriptiveStatistics();
+			DescriptiveStatistics modelSurplus, background, hft, marketMaker, environment;
+			modelSurplus = DSPlus.from();
 			// sub-categories for surplus (roles)
-			DescriptiveStatistics bkgrd = new DescriptiveStatistics();
-			DescriptiveStatistics hft = new DescriptiveStatistics();
-			DescriptiveStatistics mm = new DescriptiveStatistics();
-			DescriptiveStatistics env = new DescriptiveStatistics();
+			background = DSPlus.from();
+			hft = DSPlus.from();
+			marketMaker = DSPlus.from();
+			environment = DSPlus.from();
 
-			Set<Agent> players = new HashSet<Agent>();
-			for (Player p : model.getPlayers())
-				players.add(p.getAgent());
+			ImmutableSet.Builder<Agent> builder = ImmutableSet.builder();
+			for (Player p : players)
+				builder.add(p.getAgent());
+			Set<Agent> playerSet = builder.build();
 
 			// go through all agents & update for each agent type
-			for (Agent ag : model.getAgents()) {
-				double agentSurplus = ag.getSurplus(rho);
+			for (Agent agent : agents) {
+				double agentSurplus = agent.getSurplus(rho);
 				modelSurplus.addValue(agentSurplus);
 
-				if (ag instanceof BackgroundAgent) {
-					bkgrd.addValue(agentSurplus);
-				} else if (ag instanceof HFTAgent) {
-					agentSurplus = ag.getRealizedProfit();
+				if (agent instanceof BackgroundAgent) {
+					background.addValue(agentSurplus);
+				} else if (agent instanceof HFTAgent) {
+					// FIXME This is not necessarily correct if the agent has a net position at the end...
 					hft.addValue(agentSurplus);
-				} else if (ag instanceof MarketMaker) {
-					mm.addValue(agentSurplus);
+				} else if (agent instanceof MarketMaker) {
+					marketMaker.addValue(agentSurplus);
 				}
-				if (!players.contains(ag)) {
-					env.addValue(agentSurplus);
+				if (!playerSet.contains(agent)) {
+					environment.addValue(agentSurplus);
 				}
 			}
 
-			feat.addProperty(delimit("_", SUM, TOTAL, suffix),
+			feat.addProperty(J.join(SUM, TOTAL, suffix),
 					modelSurplus.getSum());
-			feat.addProperty(delimit("_", SUM, ROLE_BACKGROUND, suffix),
-					bkgrd.getSum());
-			feat.addProperty(delimit("_", SUM, ROLE_MARKETMAKER, suffix),
-					mm.getSum());
-			feat.addProperty(delimit("_", SUM, ROLE_HFT, suffix), hft.getSum());
-			if (!players.isEmpty())
-			// only add if EGTA use case
-				feat.addProperty(delimit("_", SUM, TYPE_ENVIRONMENT, suffix),
-						env.getSum());
+			feat.addProperty(J.join(SUM, ROLE_BACKGROUND, suffix),
+					background.getSum());
+			feat.addProperty(J.join(SUM, ROLE_MARKETMAKER, suffix),
+					marketMaker.getSum());
+			feat.addProperty(J.join(SUM, ROLE_HFT, suffix), hft.getSum());
+			feat.addProperty(J.join(SUM, TYPE_ENVIRONMENT, suffix),
+					environment.getSum());
 		}
 		return feat;
 	}
@@ -246,17 +236,17 @@ public class Observations {
 	/**
 	 * Execution time metrics.
 	 */
-	protected static JsonObject getExecutionTime(MarketModel model) {
+	protected static JsonObject getExecutionTime(Collection<Transaction> transactions) {
 		JsonObject feat = new JsonObject();
-		DescriptiveStatistics speeds = new DescriptiveStatistics();
+		DescriptiveStatistics speeds = DSPlus.from();
 
-		for (Transaction tr : model.getTrans()) {
-			TimeStamp execTime = tr.getExecTime();
-			TimeStamp buyerExecTime = execTime.minus(tr.getBuyBid().getSubmitTime());
-			TimeStamp sellerExecTime = execTime.minus(tr.getSellBid().getSubmitTime());
-			for (int quantity = 0; quantity < tr.getQuantity(); quantity++) {
-				speeds.addValue((double) buyerExecTime.longValue());
-				speeds.addValue((double) sellerExecTime.longValue());
+		for (Transaction trans : transactions) {
+			TimeStamp execTime = trans.getExecTime();
+			TimeStamp buyerExecTime = execTime.minus(trans.getBuyBid().getSubmitTime());
+			TimeStamp sellerExecTime = execTime.minus(trans.getSellBid().getSubmitTime());
+			for (int quantity = 0; quantity < trans.getQuantity(); quantity++) {
+				speeds.addValue((double) buyerExecTime.getInTicks());
+				speeds.addValue((double) sellerExecTime.getInTicks());
 			}
 		}
 
@@ -274,7 +264,7 @@ public class Observations {
 	 * for each TimeStamp and thus it only gives the most recent transaction at
 	 * any given time.
 	 */
-	protected static JsonObject getTransactionInfo(MarketModel model,
+	protected static JsonObject getTransactionInfo(Collection<Agent> agents, Collection<Transaction> transactions, FundamentalValue fund,
 			long simLength) {
 		JsonObject feat = new JsonObject();
 
@@ -286,94 +276,67 @@ public class Observations {
 		TimeSeries fundPrices = new TimeSeries();
 
 		// number of transactions, hashed by agent type
-		Map<String, Integer> numTrans = new HashMap<String, Integer>();
+		Multiset<String> numTrans = HashMultiset.create();
+		for (Transaction trans : transactions) {
+			prices.addValue(trans.getPrice().getInTicks());
+			quantity.addValue(trans.getQuantity());
+			fundamental.addValue(fund.getValueAt(trans.getExecTime()).getInTicks());
 
-		// So that agent types with 0 transactions still get logged. XXX This
-		// maybe should pull only from agent types that had nonzero numbers, not
-		// every agent possible.
-		for (Agent agent : model.getAgents())
-			numTrans.put(agent.getName(), 0);
-
-		for (Transaction t : model.getTrans()) {
-			// FIXME If these are always PQTrans then we should store that not
-			// generic transactions, or add the common functionality to generic
-			// transactions
-			PQTransaction tr = (PQTransaction) t;
-			prices.addValue(tr.getPrice().getPrice());
-			quantity.addValue(tr.getQuantity());
-			fundamental.addValue(model.getFundamentalAt(tr.getExecTime()).getPrice());
-
-			transPrices.add(tr.getExecTime(), tr.getPrice().getPrice());
-			fundPrices.add(tr.getExecTime(),
-					model.getFundamentalAt(tr.getExecTime()).getPrice());
+			transPrices.add((int) trans.getExecTime().getInTicks(), trans.getPrice().getInTicks());
+			fundPrices.add((int) trans.getExecTime().getInTicks(), fund.getValueAt(trans.getExecTime()).getInTicks());
 
 			// update number of transactions
-			// buyer
-			for (Agent agent : new Agent[] { tr.getBuyer(), tr.getSeller() }) {
-				if (model.getAgents().contains(agent)) {
-					String name = agent.getName();
-					numTrans.put(name, numTrans.get(name) + 1);
-				}
-			}
+			numTrans.add(trans.getBuyer().getName());
+			if (!trans.getBuyer().equals(trans.getSeller()))
+				// If agent transacts with itself only count as one transaction 
+				numTrans.add(trans.getSeller().getName());
 		}
-		feat.addProperty(delimit("_", MEAN, PRICE), prices.getMean());
-		feat.addProperty(delimit("_", STDDEV, PRICE),
-				prices.getStandardDeviation());
+		feat.addProperty(J.join(MEAN, PRICE), prices.getMean());
+		feat.addProperty(J.join(STDDEV, PRICE), prices.getStandardDeviation());
 
-		// number of transactions for each agent type
-		for (Entry<String, Integer> e : numTrans.entrySet())
-			feat.addProperty(delimit("_", e.getKey().toLowerCase(), NUM),
-					e.getValue());
+		// So that agent types with 0 transactions still get logged.
+		ImmutableSet.Builder<String> names = ImmutableSet.builder();
+		for (Agent agent : agents)
+			names.add(agent.getName());
+		for (String name : names.build())
+			feat.addProperty(J.join(name.toLowerCase(), NUM), numTrans.count(name));
 
 		// compute RMSD (for price discovery) at different sampling frequencies
 		for (int period : Consts.periods) {
-			String prefix = period > 1 ? PERIODICITY + period : null;
+			String key = period > 1 ? J.join(PERIODICITY + period, RMSD) : RMSD; 
 			// XXX maxTime instead of simLength?
-			DSPlus pr = new DSPlus(transPrices.getSampledArray(period,
-					simLength));
-			DSPlus fund = new DSPlus(fundPrices.getSampledArray(period,
-					simLength));
+			DescriptiveStatistics pr = DSPlus.from(transPrices.sample(period, (int) simLength));
+			DescriptiveStatistics fundStat = DSPlus.from(fundPrices.sample(period, (int) simLength));
 
-			feat.addProperty(delimit("_", prefix, RMSD), pr.getRMSD(fund));
+			feat.addProperty(key, DSPlus.rmsd(pr, fundStat));
 		}
 		return feat;
 	}
 
 	/**
 	 * Computes spread metrics for the given model.
-	 * 
-	 * NOTE: The computed median will include NaNs in the list of numbers.
-	 * 
-	 * FIXME Is this correct? The NaN's appear randomly dispersed, so the median
-	 * calculation depends on where in the original series the NaN's occurred.
-	 * This definitely doesn't make sense
 	 */
-	protected static JsonObject getSpread(MarketModel model, long maxTime) {
+	protected static JsonObject getSpread(Collection<Market> markets, SIP sip, long maxTime) {
 		JsonObject feat = new JsonObject();
 
-		DescriptiveStatistics medians = new DescriptiveStatistics();
-		for (Market market : model.getMarkets()) {
+		DescriptiveStatistics medians = DSPlus.from();
+		for (Market market : markets) {
 			TimeSeries s = market.getSpread();
-
-			double[] array = s.getSampledArray(0, maxTime);
-			DSPlus spreads = new DSPlus(array);
-			double med = spreads.getMedian();
-			feat.addProperty(
-					delimit("_", MEDIAN, MARKET + Math.abs(market.getID()),
-							TIMESERIES_MAXTIME), med);
+			DescriptiveStatistics spreads = DSPlus.from(s.sample(1, (int) maxTime));
+			double med = DSPlus.median(spreads);
+			feat.addProperty(J.join(MEDIAN, MARKET + Math.abs(market.getID()),
+					TIMESERIES_MAXTIME), med);
 			medians.addValue(med);
 		}
 
 		// average of median market spreads (for all markets in this model)
-		feat.addProperty(delimit("_", MEAN, MARKET, TIMESERIES_MAXTIME),
+		feat.addProperty(J.join(MEAN, MARKET, TIMESERIES_MAXTIME),
 				medians.getMean());
 
-		TimeSeries nbbo = model.getSIP().getNBBOSpreads();
-
-		double[] array = nbbo.getSampledArray(0, maxTime);
-		DSPlus spreads = new DSPlus(array);
-		feat.addProperty(delimit("_", MEDIAN, NBBO, TIMESERIES_MAXTIME),
-				spreads.getMedian());
+		TimeSeries nbbo = sip.getNBBOSpreads();
+		DescriptiveStatistics spreads = DSPlus.from(nbbo.sample(1, (int) maxTime));
+		feat.addProperty(J.join(MEDIAN, NBBO, TIMESERIES_MAXTIME),
+				DSPlus.median(spreads));
 
 		return feat;
 	}
@@ -381,26 +344,25 @@ public class Observations {
 	/**
 	 * Track liquidation-related features & profit for market makers.
 	 */
-	protected static JsonObject getMarketMakerInfo(MarketModel model) {
+	protected static JsonObject getMarketMakerInfo(Collection<Agent> agents) {
 		JsonObject feat = new JsonObject();
 
-		for (Agent ag : model.getAgents()) {
-			if (!(ag instanceof MarketMaker)) continue;
-			MarketMaker mm = (MarketMaker) ag;
-
-			// append the agentID in case more than one of this type
-			String suffix = Integer.toString(mm.getID());
-			feat.addProperty(delimit("_", POSITION, PRE, LIQUIDATION + suffix),
-					mm.getPreLiquidationPosition());
-			// just to double-check, should be 0 position after liquidation
-			feat.addProperty(
-					delimit("_", POSITION, POST, LIQUIDATION + suffix),
-					mm.getPositionBalance());
-			feat.addProperty(delimit("_", PROFIT, PRE, LIQUIDATION + suffix),
-					mm.getPreLiquidationProfit());
-			feat.addProperty(delimit("_", PROFIT, POST, LIQUIDATION + suffix),
-					mm.getRealizedProfit());
-		}
+//		for (Agent ag : agents) {
+//			if (!(ag instanceof MarketMaker)) continue;
+//			MarketMaker mm = (MarketMaker) ag;
+//
+//			// append the agentID in case more than one of this type
+//			String suffix = Integer.toString(mm.getID());
+//			feat.addProperty(J.join(POSITION, PRE, LIQUIDATION + suffix),
+//					mm.getPreLiquidationPosition());
+//			// just to double-check, should be 0 position after liquidation
+//			feat.addProperty(J.join(POSITION, POST, LIQUIDATION + suffix),
+//					mm.getPositionBalance());
+//			feat.addProperty(J.join(PROFIT, PRE, LIQUIDATION + suffix),
+//					mm.getPreLiquidationProfit());
+//			feat.addProperty(J.join(PROFIT, POST, LIQUIDATION + suffix),
+//					mm.getSurplus(0));
+//		}
 		return feat;
 	}
 
@@ -412,65 +374,49 @@ public class Observations {
 	 * 
 	 * - standard deviation of log returns
 	 */
-	protected static JsonObject getVolatility(MarketModel model, int period,
+	protected static JsonObject getVolatility(Collection<Market> markets, int period,
 			long maxTime) {
 		JsonObject feat = new JsonObject();
 
-		String prefix = period == 0 ? null : PERIODICITY + period;
+		String prefix = period == 1 ? NOPERIODICITY : PERIODICITY + period;
 
-		DescriptiveStatistics stddev = new DescriptiveStatistics();
-		DescriptiveStatistics logPriceVol = new DescriptiveStatistics();
-		DescriptiveStatistics logRetVol = new DescriptiveStatistics();
+		DescriptiveStatistics stddev = DSPlus.from();
+		DescriptiveStatistics logPriceVol = DSPlus.from();
+		DescriptiveStatistics logRetVol = DSPlus.from();
 
-		for (Market market : model.getMarkets()) {
+		for (Market market : markets) {
 			String suffix = MARKET + Math.abs(market.getID());
 
 			TimeSeries mq = market.getMidQuotes();
-
-			double[] mid = mq.getSampledArrayWithoutNaNs(period, maxTime);
-
 			// compute log price volatility for this market
-			DescriptiveStatistics mktPrices = new DescriptiveStatistics(mid);
+			Iterable<Double> filtered = Iterables.filter(mq.sample(period, (int) maxTime), not(equalTo(Double.NaN)));
+			DescriptiveStatistics mktPrices = DSPlus.from(filtered);
 			double stdev = mktPrices.getStandardDeviation();
-			feat.addProperty(delimit("_", prefix, STDDEV, PRICE, suffix), stdev);
+			feat.addProperty(J.join(prefix, STDDEV, PRICE, suffix), stdev);
 			stddev.addValue(stdev);
 			if (stdev != 0)
-			// don't add if stddev is 0
+				// don't add if stddev is 0
 				logPriceVol.addValue(Math.log(stdev));
 
 			// compute log-return volatility for this market
-			double[] midquote = mq.getSampledArray(period, maxTime);
-			int size = midquote.length == 0 ? 0 : midquote.length - 1;
-
-			double[] logReturns = new double[size];
-			DescriptiveStatistics mktLogReturns = new DescriptiveStatistics();
-			// FIXME why do we ignore the first point.
-			for (int i = 1; i < midquote.length; i++) {
-				logReturns[i - 1] = Math.log(midquote[i] / midquote[i - 1]);
-				if (!Double.isNaN(logReturns[i - 1])) {
-					mktLogReturns.addValue(logReturns[i - 1]);
-				}
-			}
+			// XXX This change from before. Before if the ratio was NaN it go thrown out. Now the
+			// previous value is used.
+			DescriptiveStatistics mktLogReturns = DSPlus.fromLogRatioOf(mq.sample(period, (int) maxTime));
 			double logStdev = mktLogReturns.getStandardDeviation();
-			feat.addProperty(
-					delimit("_", prefix, STDDEV, LOG + RETURN, suffix),
+			feat.addProperty(J.join(prefix, STDDEV, LOG + RETURN, suffix),
 					logStdev);
 			logRetVol.addValue(logStdev);
 		}
 
 		// average measures across all markets in this model
-		feat.addProperty(delimit("_", prefix, MEAN, STDDEV + PRICE),
-				stddev.getMean());
-		feat.addProperty(delimit("_", prefix, MEAN, LOG + PRICE),
-				logPriceVol.getMean());
-		feat.addProperty(delimit("_", prefix, MEAN, LOG + RETURN),
-				logRetVol.getMean());
+		feat.addProperty(J.join(prefix, MEAN, STDDEV + PRICE), stddev.getMean());
+		feat.addProperty(J.join(prefix, MEAN, LOG + PRICE), logPriceVol.getMean());
+		feat.addProperty(J.join(prefix, MEAN, LOG + RETURN), logRetVol.getMean());
 
 		return feat;
 	}
 
-	public void writeToFile(File observationsFile) throws JsonIOException,
-			IOException {
+	public void writeToFile(File observationsFile) throws IOException {
 		Writer writer = null;
 		try {
 			writer = new FileWriter(observationsFile);

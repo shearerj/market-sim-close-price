@@ -6,107 +6,75 @@
  */
 package event;
 
+import java.io.Serializable;
+
+import com.google.common.base.Objects;
+import com.google.common.primitives.Longs;
+
+import utils.MathUtils;
+
 /**
  * The TimeStamp class is just a wrapper around java.lang.Long. This *must*
  * remain an immutable object
  */
-public class TimeStamp implements Comparable<TimeStamp> {
+public class TimeStamp implements Comparable<TimeStamp>, Serializable {
+	
+	private static final long serialVersionUID = -2109498445060507654L;
 	
 	public static final TimeStamp IMMEDIATE = new TimeStamp(-1);
 	public static final TimeStamp ZERO = new TimeStamp(0);
-	
 	public static final int TICKS_PER_SECOND = 1000000;
 	
-	protected final long time;
+	protected final long ticks;
 
-	public TimeStamp(long l) {
-		time = l;
+	public TimeStamp(long ticks) {
+		this.ticks = ticks;
 	}
 
-	public TimeStamp(int i) {
-		time = (long) i;
+	public TimeStamp(int ticks) {
+		this((long) ticks);
 	}
 	
-	/**
-	 * Convert the timestamp to seconds
-	 * 
-	 * @return the TimeStamp's receipt timestamp in seconds
-	 */
 	public double getInSeconds() {
-		return time / (double) TICKS_PER_SECOND;
+		return ticks / (double) TICKS_PER_SECOND;
 	}
 
 	/**
-	 * Diff the object's timestamp with the specified value.
-	 * 
-	 * @param other
-	 *            the comparison timestamp
-	 * @return the difference
+	 * Subtract two TimeStamps
 	 */
 	public TimeStamp minus(TimeStamp other) {
-		return new TimeStamp(this.time - other.time);
+		return new TimeStamp(this.ticks - other.ticks);
 	}
 
 	/**
-	 * Sum the object's timestamp with the specified value.
-	 * 
-	 * @param other
-	 *            the comparison timestamp
-	 * @return the sum
+	 * Add two TimeStamps together
 	 */
 	public TimeStamp plus(TimeStamp other) {
-		return new TimeStamp(this.time + other.time);
+		return new TimeStamp(this.ticks + other.ticks);
+	}
+
+	public long getInTicks() {
+		return ticks;
 	}
 
 	/**
-	 * Convert the timestamp to a long.
-	 * 
-	 * @return the converted timestamp
-	 */
-	public long longValue() {
-		return time;
-	}
-
-	/**
-	 * Convert the timestamp to a string.
-	 * 
-	 * @return the converted timestamp
-	 */
-	public String toString() {
-		return Long.toString(time);
-	}
-
-	/**
-	 * Determines if the timestamp is before the specified timestamp.
-	 * 
 	 * @param other
-	 *            the comparison timestamp
-	 * @return true if other is before, otherwise false
+	 * @return true if other is before or null
 	 */
 	public boolean before(TimeStamp other) {
-		return time < other.time;
+		return other == null || ticks < other.ticks;
 	}
 
 	/**
-	 * Determines if the timestamp is after the specified timestamp.
-	 * 
 	 * @param other
-	 *            the comparison timestamp
-	 * @return true if other is after, otherwise false
+	 * @return true if other is after or null
 	 */
 	public boolean after(TimeStamp other) {
-		return time > other.time;
+		return other == null || ticks > other.ticks;
 	}
 
-	/**
-	 * Compares two timestamps.
-	 * 
-	 * @param other
-	 *            the comparison timestamp
-	 * @return 0 if equal, <0 if invoking timestamp is less, >0 if greater
-	 */
 	public int compareTo(TimeStamp other) {
-		return (int) Long.signum(time - other.time);
+		return Longs.compare(ticks, other.ticks);
 	}
 
 	@Override
@@ -114,12 +82,24 @@ public class TimeStamp implements Comparable<TimeStamp> {
 		if (obj == null || !(obj instanceof TimeStamp))
 			return false;
 		final TimeStamp other = (TimeStamp) obj;
-		return time == other.time;
+		return ticks == other.ticks;
 	}
 
 	@Override
 	public int hashCode() {
-		return (int) time;
+		return Objects.hashCode(ticks);
+	}
+	
+	@Override
+	public String toString() {
+		long seconds = Long.signum(ticks) * Math.abs(ticks / TICKS_PER_SECOND);
+		int digits = MathUtils.logn(TICKS_PER_SECOND, 10);
+		long microseconds = Math.abs(ticks % TICKS_PER_SECOND);
+		while (digits > 3 && microseconds % 10 == 0) {
+			microseconds /= 10;
+			digits--;
+		}
+		return String.format("%d.%0" + digits + "ds", seconds, microseconds);
 	}
 
 }

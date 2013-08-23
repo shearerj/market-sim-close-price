@@ -1,20 +1,33 @@
 package data;
 
-import java.util.HashMap;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Joiner.MapJoiner;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
+import com.google.gson.JsonObject;
+
 public class EntityProperties {
+	
+	private final static Splitter configSplitter = Splitter.on('_');
+	private final static MapJoiner configJoiner = Joiner.on('_').withKeyValueSeparator("_");
 
 	protected Map<String, String> properties;
 
 	public EntityProperties() {
-		this.properties = new HashMap<String, String>();
+		this.properties = Maps.newHashMap();
 	}
 
 	public EntityProperties(EntityProperties def) {
-		this.properties = new HashMap<String, String>(def.properties);
+		this.properties = Maps.newHashMap(checkNotNull(def.properties));
 	}
 
 	public EntityProperties(String config) {
@@ -28,9 +41,11 @@ public class EntityProperties {
 	}
 
 	public void addConfig(String config) {
-		String[] args = config.split("_");
-		for (int i = 0; i < (args.length / 2) * 2; i = i + 2) {
-			properties.put(args[i], args[i + 1]);
+		checkNotNull(config, "Config String");
+		ImmutableList<String> args = ImmutableList.copyOf(configSplitter.split(config));
+		checkArgument(args.size() % 2 == 0, "Not key value pair");
+		for (Iterator<String> it = args.iterator(); it.hasNext();) {
+			properties.put(it.next(), it.next());
 		}
 	}
 
@@ -111,6 +126,12 @@ public class EntityProperties {
 	public void put(String key, boolean value) {
 		properties.put(key, Boolean.toString(value));
 	}
+	
+	public JsonObject copyToJson(JsonObject json) {
+		for (Entry<String, String> e : properties.entrySet())
+			json.addProperty(e.getKey(), e.getValue());
+		return json;
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -126,12 +147,7 @@ public class EntityProperties {
 	}
 
 	public String toConfigString() {
-		if (properties.isEmpty())
-			return "";
-		StringBuilder sb = new StringBuilder();
-		for (Entry<String, String> e : properties.entrySet())
-			sb.append('_').append(e.getKey()).append('_').append(e.getValue());
-		return sb.substring(1);
+		return configJoiner.join(properties);
 	}
 
 	@Override

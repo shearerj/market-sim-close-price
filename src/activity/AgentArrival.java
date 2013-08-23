@@ -1,45 +1,33 @@
 package activity;
 
-import java.util.Collection;
-import org.apache.commons.lang3.builder.*;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import entity.*;
-import event.*;
+import entity.agent.Agent;
+import event.TimeStamp;
 
 /**
  * Class for activity of agents arriving in a market or market(s).
  * 
  * @author ewah
  */
+// XXX Is this activity necessary?
 public class AgentArrival extends Activity {
 
 	protected final Agent agent;
 
-	public AgentArrival(Agent ag, TimeStamp currentTime) {
+	public AgentArrival(Agent agent, TimeStamp currentTime) {
 		super(currentTime);
-		this.agent = ag;
+		this.agent = checkNotNull(agent, "Agent");
 	}
 
 	@Override
-	public Collection<? extends Activity> execute(TimeStamp currentTime) {
+	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
 		return agent.agentArrival(currentTime);
 	}
 
+	@Override
 	public String toString() {
-		return new String(getName() + "::" + agent);
+		return super.toString() + agent;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof AgentArrival))
-			return false;
-		AgentArrival other = (AgentArrival) obj;
-		return new EqualsBuilder().append(agent, other.agent).append(scheduledTime,
-				other.scheduledTime).isEquals();
-	}
-
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder(19, 37).append(agent).append(scheduledTime).toHashCode();
-	}
 }

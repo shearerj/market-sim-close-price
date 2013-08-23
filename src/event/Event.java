@@ -1,44 +1,56 @@
 package event;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collections;
+import java.util.Queue;
 import java.util.Random;
+
+import com.google.common.base.Objects;
+import com.google.common.collect.ForwardingQueue;
+import com.google.common.collect.Queues;
 
 import utils.RandomQueue;
 import activity.Activity;
 
 /**
- * Class representing an event in time. Each Event is a randomly ordered queue
- * of activities and a TimeStamp indicating when it is to occur.
+ * Class representing an event in time. Each Event is a randomly ordered queue of activities and a
+ * TimeStamp indicating when it is to occur.
  * 
  * Null activities may not be added to an Event
  * 
  * @author ebrink
  */
-public class Event extends RandomQueue<Activity> implements Comparable<Event> {
+public class Event extends ForwardingQueue<Activity> implements Comparable<Event> {
 
-	private final TimeStamp eventTime; // time in microseconds (only positive)
+	protected final TimeStamp eventTime;
+	// Is a LiFo queue for infinite time activities, and a random queue otherwise
+	protected final Queue<Activity> delegate;
 
 	public Event(TimeStamp time) {
-		super();
-		eventTime = time;
+		this(time, new Random());
 	}
 
 	public Event(TimeStamp time, Random seed) {
-		super(seed);
-		eventTime = time;
+		eventTime = checkNotNull(time, "Time");
+		if (time.equals(TimeStamp.IMMEDIATE))
+			delegate = Collections.asLifoQueue(Queues.<Activity> newArrayDeque());
+		else
+			delegate = RandomQueue.create(seed);
 	}
 
-	public Event(TimeStamp time, Collection<? extends Activity> acts) {
-		super(acts);
-		eventTime = time;
+	public Event(TimeStamp time, Iterable<? extends Activity> acts) {
+		this(time, acts, new Random());
 	}
 
-	public Event(TimeStamp time, Collection<? extends Activity> acts,
+	public Event(TimeStamp time, Iterable<? extends Activity> acts,
 			Random seed) {
-		super(acts, seed);
-		eventTime = time;
+		eventTime = checkNotNull(time, "Time");
+		if (time.equals(TimeStamp.IMMEDIATE))
+			delegate = Collections.asLifoQueue(Queues.<Activity> newArrayDeque(acts));
+		else
+			delegate = RandomQueue.create(acts, seed);
 	}
 
 	public TimeStamp getTime() {
@@ -47,51 +59,37 @@ public class Event extends RandomQueue<Activity> implements Comparable<Event> {
 
 	@Override
 	public boolean add(Activity act) {
-		if (act == null) {
-			System.err.println("Tried to add null Activity to Event");
-			return false; // FIXME Handle Appropriately
-		} else if (!eventTime.equals(act.getTime())) {
-			throw new IllegalArgumentException("Can't add an activity that doesn't share the time of the event");
-		} else {
-			return super.add(act);
-		}
+		checkArgument(eventTime.equals(act.getTime()),
+				"Can't add an activity that doesn't share the time of the event");
+		return super.add(act);
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj.getClass().equals(getClass()))) return false;
+		Event that = (Event) obj;
+		return super.equals(that) && eventTime.equals(that.eventTime);
+	}
 
 	@Override
-	public boolean addAll(Collection<? extends Activity> acts) {
-		if (acts == null) {
-			System.err.println("Tried to add null Activity to Event");
-			return false; // FIXME Handle Appropriately
-		}
-		boolean modified = false;
-		for (Activity act : acts)
-			modified |= add(act);
-		return modified;
+	public int hashCode() {
+		return Objects.hashCode(super.hashCode(), eventTime);
 	}
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder(eventTime.toString())
-				.append(" | ");
-		// stored in reverse order to how removed from Q
-		ArrayList<Activity> tmp = new ArrayList<Activity>(elements);
-		Collections.reverse(tmp);
-		for (Activity act : tmp)
-			sb.append(act).append(" -> ");
-		return sb.substring(0, sb.length() - 4);
+		return eventTime + " | " + super.toString();
 	}
 
 	@Override
 	public int compareTo(Event e) {
-		if (e == null)
-			throw new NullPointerException("Can't compare to a null event");
+		checkNotNull(e, "Event");
 		return getTime().compareTo(e.getTime());
 	}
 
 	@Override
-	public boolean offer(Activity e) {
-		return add(e);
+	protected Queue<Activity> delegate() {
+		return delegate;
 	}
 
 }

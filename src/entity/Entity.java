@@ -1,5 +1,7 @@
 package entity;
 
+import java.io.Serializable;
+
 /**
  * This class is the base for all things that may perform an action/activity 
  * in the simulation (e.g. agents, markets, etc).
@@ -8,8 +10,10 @@ package entity;
  * 
  * @author ewah
  */
-public abstract class Entity {
+public abstract class Entity implements Serializable {
 
+	private static final long serialVersionUID = -7406324829959902527L;
+	
 	protected final int id;
 	
 	public Entity(int agentID) {
@@ -22,18 +26,6 @@ public abstract class Entity {
 	
 	public final String getName() {
 		return getClass().getSimpleName();
-	}
-	
-	@Override
-	public int hashCode() {
-		return id;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof Entity)) return false;
-		Entity ent = (Entity) obj;
-		return id == ent.id;
 	}
 
 	@Override

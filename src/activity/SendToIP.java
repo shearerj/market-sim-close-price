@@ -1,19 +1,18 @@
 package activity;
 
-import java.util.Collection;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.List;
 
-import market.Quote;
-import market.Transaction;
-
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
-import entity.IP;
-import entity.Market;
+import entity.infoproc.IP;
+import entity.market.Market;
+import entity.market.Quote;
+import entity.market.Transaction;
 import event.TimeStamp;
 
 /**
- * Class for Activity of sending new quote information to the Security Information Processor (SIP).
+ * Class for Activity of sending new quote information to an information processor, including the
+ * Security Information Processor (SIP).
  * 
  * @author ewah
  */
@@ -22,35 +21,23 @@ public class SendToIP extends Activity {
 	protected final Market market;
 	protected final IP ip;
 	protected final Quote quote;
-	List<Transaction> transactions;
+	protected final List<Transaction> transactions;
 
 	public SendToIP(Market market, Quote quote, List<Transaction> transactions, IP ip, TimeStamp scheduledTime) {
 		super(scheduledTime);
-		this.market = market;
-		this.ip = ip;
-		this.quote = quote;
-		this.transactions = transactions;
+		this.market = checkNotNull(market, "Market");
+		this.ip = checkNotNull(ip, "IP");
+		this.quote = checkNotNull(quote, "Quote");
+		this.transactions = checkNotNull(transactions, "Transactions");
 	}
 
-	public Collection<? extends Activity> execute(TimeStamp time) {
+	@Override
+	public Iterable<? extends Activity> execute(TimeStamp time) {
 		return ip.sendToIP(market, quote, transactions, time);
 	}
-
+	
+	@Override
 	public String toString() {
-		return new String(getName() + "::" + market);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof SendToIP)) return false;
-		SendToIP other = (SendToIP) obj;
-		return super.equals(other) && this.market.equals(other.market)
-				&& this.ip.equals(other.ip) && this.quote.equals(other.quote);
-	}
-
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder(19, 37).append(market).append(scheduledTime).append(
-				quote).append(ip).toHashCode();
+		return super.toString() + market + " -> " + ip;
 	}
 }

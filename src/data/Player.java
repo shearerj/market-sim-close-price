@@ -1,6 +1,9 @@
 package data;
 
-import entity.Agent;
+import static data.Observations.*;
+import com.google.gson.JsonObject;
+
+import entity.agent.Agent;
 
 public class Player {
 	
@@ -14,16 +17,17 @@ public class Player {
 		this.agent = agent;
 	}
 
-	public String getRole() {
-		return role;
-	}
-
-	public String getStrategy() {
-		return strategy;
-	}
-
 	public Agent getAgent() {
 		return agent;
+	}
+	
+	public JsonObject toJson() {
+		JsonObject observation = new JsonObject();
+		observation.addProperty(ROLE, role);
+		observation.addProperty(STRATEGY, strategy);
+		// FIXME Get surplus instead of realized profit?
+		observation.addProperty(PAYOFF, agent.getSurplus(0));
+		return observation;
 	}
 
 }

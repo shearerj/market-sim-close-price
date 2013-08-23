@@ -1,6 +1,6 @@
 package activity;
 
-import java.util.Collection;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import event.*;
 
@@ -10,8 +10,8 @@ import event.*;
  * 
  * Based on the Command Pattern.
  * 
- * NOTE: If Activity has a negative TimeStamp, then it an "infinitely fast"
- * activity which has a variable TimeStamp.
+ * NOTE: If Activity has a negative scheduledTime, then it an "infinitely fast"
+ * activity and will be executed immediately
  * 
  * @author ewah
  */
@@ -20,7 +20,7 @@ public abstract class Activity {
 	protected final TimeStamp scheduledTime;
 	
 	public Activity(TimeStamp scheduledTime) {
-		this.scheduledTime = scheduledTime;
+		this.scheduledTime = checkNotNull(scheduledTime, "Scheduled Time");
 	}
 
 	/**
@@ -28,7 +28,7 @@ public abstract class Activity {
 	 * 
 	 * @return hash table of generated Activity vectors, hashed by TimeStamp
 	 */
-	public abstract Collection<? extends Activity> execute(TimeStamp currentTime);
+	public abstract Iterable<? extends Activity> execute(TimeStamp currentTime);
 
 	/**
 	 * @return time of activity
@@ -36,27 +36,20 @@ public abstract class Activity {
 	public final TimeStamp getTime() {
 		return scheduledTime;
 	}
-
-	public final String getName() {
-		return getClass().getSimpleName();
-	}
-
+	
 	@Override
-	public int hashCode() {
-		return scheduledTime.hashCode();
+	public final int hashCode() {
+		return super.hashCode();
 	}
-
+	
 	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof Activity))
-			return false;
-		Activity other = (Activity) obj;
-		return scheduledTime.equals(other.scheduledTime);
+	public final boolean equals(Object obj) {
+		return super.equals(obj);
 	}
 
 	@Override
 	public String toString() {
-		return "Activity :: " + scheduledTime;
+		return getClass().getSimpleName() + " :: ";
 	}
 	
 }
