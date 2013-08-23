@@ -448,6 +448,7 @@ public class AAAgent extends ReentryAgent {
 			// Extramarginal
 			else {
 				if (tau < limit.getInTicks()) {
+					
 					r_shout = (-1 / theta)
 							* Math.log((1 - tau / limit.getInTicks())
 									* (Math.exp(theta) - 1) + 1);
@@ -468,6 +469,7 @@ public class AAAgent extends ReentryAgent {
 					return 0;
 				// r < 0
 				if (tau > movingAverage) {
+					if(theta == 0) return -0.5; //handling NaN exception
 					r_shout = (-1 / theta)
 							* Math.log((tau - movingAverage)
 									* (Math.exp(theta) - 1)
@@ -476,6 +478,7 @@ public class AAAgent extends ReentryAgent {
 				}
 				// r > 0
 				else {
+					if(theta == 0) return 0.5; //handling NaN exception
 					r_shout = (1 / theta)
 							* Math.log((1 - (tau - limit.getInTicks())
 									/ (movingAverage - limit.getInTicks()))
