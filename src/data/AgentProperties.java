@@ -36,4 +36,9 @@ public class AgentProperties extends EntityProperties {
 		return type;
 	}
 
+	@Override
+	public String toString() {
+		return type + " " + super.toString();
+	}
+
 }

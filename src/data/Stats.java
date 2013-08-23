@@ -13,6 +13,7 @@ import com.google.common.eventbus.Subscribe;
 
 import entity.market.Market;
 
+// TODO I think this should maybe be how observations works, but I can decided if they should be stand alone or not... 
 public class Stats {
 
 	public static final EventBus BUS = new EventBus();

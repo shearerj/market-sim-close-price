@@ -1,11 +1,9 @@
 package entity.infoproc;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static logger.Logger.Level.INFO;
 
 import java.util.List;
 
-import logger.Logger;
 import activity.Activity;
 
 import com.google.common.collect.ImmutableList;
@@ -48,7 +46,6 @@ public class SMIP extends IP {
 				"Can't update an SM Market with anything but it's market");
 
 		this.quote = quote;
-		Logger.log(INFO, market + " -> " + this + " ProcessQuote: " + quote);
 		return ImmutableList.of();
 	}
 

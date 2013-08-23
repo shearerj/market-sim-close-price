@@ -68,7 +68,7 @@ public abstract class Market extends Entity {
 
 	public Market(SIP sip, ClearingRule clearingRule, TimeStamp latency) {
 		super(nextID++);
-		this.orderbook = FourHeap.create();
+		this.orderbook = FourHeap.<Price, TimeStamp>create();
 		this.clearingRule = clearingRule;
 		this.quote = new Quote(this, null, 0, null, 0, TimeStamp.ZERO);
 
@@ -181,7 +181,7 @@ public abstract class Market extends Entity {
 		// a quote is generated, which is currently never possible
 		quote = new Quote(this, ask, quantityAsk, bid, quantityBid, currentTime);
 
-		log(INFO, this + " SendToSIP" + quote);
+		log(INFO, this + " " + quote);
 
 		depths.add((int) currentTime.getInTicks(), orderbook.size());
 		spreads.add((int) currentTime.getInTicks(), quote.getSpread());
@@ -218,8 +218,7 @@ public abstract class Market extends Entity {
 			int quantity, TimeStamp currentTime, TimeStamp duration) {
 		checkArgument(quantity != 0, "Can't submit a 0 quantity order");
 
-		log(INFO, this + " " + getName() + "::submitBid: +(" + price + ", "
-				+ quantity + ") from " + agent);
+		log(INFO, agent + " (" + price + ", " + quantity + ") -> " + this);
 
 		Multiset<Price> priceQuant = quantity < 0 ? askPriceQuantity : bidPriceQuantity;
 		priceQuant.add(price, abs(quantity));
@@ -256,22 +255,24 @@ public abstract class Market extends Entity {
 		Market bestMarket = this;
 
 		if (quantity > 0) { // buy
+			boolean wontTransact = price.lessThan(quote.getAskPrice());
 			boolean nbboBetter = nbbo.getBestAsk() != null
 					&& nbbo.getBestAsk().lessThan(quote.getAskPrice());
 			boolean willTransact = price.greaterThan(nbbo.getBestAsk());
-			if (nbboBetter && willTransact)
+			if (wontTransact && nbboBetter && willTransact)
 				bestMarket = nbbo.getBestAskMarket();
 		} else { // sell
+			boolean wontTransact = price.greaterThan(quote.getBidPrice());
 			boolean nbboBetter = nbbo.getBestBid() != null
 					&& nbbo.getBestBid().greaterThan(quote.getBidPrice());
 			boolean willTransact = price.lessThan(nbbo.getBestBid());
-			if (nbboBetter && willTransact)
+			if (wontTransact && nbboBetter && willTransact)
 				bestMarket = nbbo.getBestBidMarket();
 		}
 
 		if (!bestMarket.equals(this))
-			log(INFO, agent + " " + getName() + "::submitNMSBid: " + "NBBO"
-					+ nbbo + " better than " + this + " Quote" + null);
+			log(INFO, "Routing " + agent + " (" + price + ", " + quantity
+					+ ") -> " + this + " " + quote + " to NBBO " + nbbo);
 
 		return bestMarket.submitOrder(agent, price, quantity, currentTime, duration);
 	}

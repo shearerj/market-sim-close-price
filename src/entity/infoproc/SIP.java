@@ -51,7 +51,7 @@ public class SIP extends IP {
 		marketQuotes.put(market, quote);
 		transactions.addAll(newTransactions);
 		
-		Logger.log(INFO, market + " -> " + this + " ProcessQuote: " + quote);
+		Logger.log(INFO, market + " -> " + this + " quote " + quote);
 
 		Price bestBid = null, bestAsk = null;
 		Market bestBidMkt = null, bestAskMkt = null;

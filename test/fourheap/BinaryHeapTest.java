@@ -24,13 +24,13 @@ public class BinaryHeapTest {
 
 	@Test
 	public void emptyConstructorTest() {
-		BinaryHeap<Integer> a = BinaryHeap.create();
+		BinaryHeap<Integer> a = BinaryHeap.<Integer>create();
 		assertTrue(a.isEmpty());
 	}
 
 	@Test
 	public void peekTest() {
-		BinaryHeap<Integer> a = BinaryHeap.create();
+		BinaryHeap<Integer> a = BinaryHeap.<Integer>create();
 		assertEquals(null, a.peek());
 		assertEquals(0, a.size());
 		a.add(4);
@@ -46,7 +46,7 @@ public class BinaryHeapTest {
 
 	@Test
 	public void addTest() {
-		BinaryHeap<Integer> a = BinaryHeap.create();
+		BinaryHeap<Integer> a = BinaryHeap.<Integer>create();
 		List<Integer> nums = randomInts(1000);
 		for (int i : nums)
 			a.offer(i);
@@ -57,7 +57,7 @@ public class BinaryHeapTest {
 	
 	@Test
 	public void addAllTest() {
-		BinaryHeap<Integer> a = BinaryHeap.create();
+		BinaryHeap<Integer> a = BinaryHeap.<Integer>create();
 		List<Integer> nums = randomInts(1000);
 		a.addAll(nums);
 		Collections.sort(nums);
@@ -67,7 +67,7 @@ public class BinaryHeapTest {
 	
 	@Test
 	public void removeTest() {
-		BinaryHeap<Integer> a = BinaryHeap.create();
+		BinaryHeap<Integer> a = BinaryHeap.<Integer>create();
 		List<Integer> nums = randomInts(1000);
 		a.addAll(nums);
 		assertTrue(a.containsAll(nums));
@@ -83,7 +83,7 @@ public class BinaryHeapTest {
 	
 	@Test
 	public void removeTest2() {
-		BinaryHeap<Integer> a = BinaryHeap.create();
+		BinaryHeap<Integer> a = BinaryHeap.<Integer>create();
 		Set<Integer> nums = Sets.newHashSet(randomInts(1000));
 		a.addAll(nums);
 		assertTrue(a.containsAll(nums));
@@ -97,7 +97,7 @@ public class BinaryHeapTest {
 	
 	@Test
 	public void removeAllTest() {
-		BinaryHeap<Integer> a = BinaryHeap.create();
+		BinaryHeap<Integer> a = BinaryHeap.<Integer>create();
 		List<Integer> nums = randomInts(1000);
 		a.addAll(nums);
 		assertTrue(a.containsAll(nums));
@@ -109,7 +109,7 @@ public class BinaryHeapTest {
 	
 	@Test
 	public void removeAllTest2() {
-		BinaryHeap<Integer> a = BinaryHeap.create();
+		BinaryHeap<Integer> a = BinaryHeap.<Integer>create();
 		List<Integer> nums = randomInts(1000);
 		a.addAll(nums);
 		assertTrue(a.containsAll(nums));
@@ -124,7 +124,7 @@ public class BinaryHeapTest {
 	
 	@Test
 	public void cycleTest() {
-		BinaryHeap<Integer> a = BinaryHeap.create();
+		BinaryHeap<Integer> a = BinaryHeap.<Integer>create();
 		List<Integer> nums = randomInts(1000);
 		a.addAll(nums);
 		assertTrue(a.containsAll(nums));
@@ -170,13 +170,13 @@ public class BinaryHeapTest {
 	
 	@Test (expected = NoSuchElementException.class)
 	public void elementTest() {
-		BinaryHeap<Integer> a = BinaryHeap.create();
+		BinaryHeap<Integer> a = BinaryHeap.<Integer>create();
 		a.element();
 	}
 	
 	@Test (expected = NoSuchElementException.class)
 	public void removeExceptionTest() {
-		BinaryHeap<Integer> a = BinaryHeap.create();
+		BinaryHeap<Integer> a = BinaryHeap.<Integer>create();
 		a.remove();
 	}
 

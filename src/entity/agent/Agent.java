@@ -143,12 +143,8 @@ public abstract class Agent extends Entity {
 			positionBalance += trans.getQuantity();
 		if (trans.getSeller().equals(this))
 			positionBalance -= trans.getQuantity();
-		
-		log(INFO, this + " "
-				+ "Agent::updateTransactions: New transaction received: "
-				+ trans);
-		log(INFO, this + " Agent::logTransactions: Current Position="
-				+ positionBalance);
+
+		log(INFO, this + " transacted to position " + positionBalance);
 	}
 
 	/**

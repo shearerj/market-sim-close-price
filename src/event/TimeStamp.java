@@ -92,6 +92,8 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	
 	@Override
 	public String toString() {
+		if (equals(TimeStamp.IMMEDIATE)) return "immediate";
+		
 		long seconds = Long.signum(ticks) * Math.abs(ticks / TICKS_PER_SECOND);
 		int digits = MathUtils.logn(TICKS_PER_SECOND, 10);
 		long microseconds = Math.abs(ticks % TICKS_PER_SECOND);

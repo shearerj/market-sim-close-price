@@ -86,8 +86,10 @@ public class LAAgent extends HFTAgent {
 		if (bestBid == null || bestAsk == null
 				|| bestAsk.getInTicks() * (1 + alpha) > bestBid.getInTicks())
 			return Collections.emptySet();
-		
-		log(INFO, this + " arbitrage between " + bestBidMarket + " and " + bestAskMarket);
+
+		log(INFO, this + " detected arbitrage between " + bestBidMarket + " "
+				+ ips.get(bestBidMarket).getQuote() + " and " + bestAskMarket
+				+ " " + ips.get(bestAskMarket).getQuote());
 		Price midPoint = bestBid.plus(bestAsk).times(0.5).quantize(tickSize);
 		return ImmutableList.of(new SubmitOrder(this, bestBidMarket, midPoint,
 				-1, TimeStamp.IMMEDIATE), new SubmitOrder(this, bestAskMarket,
@@ -99,7 +101,7 @@ public class LAAgent extends HFTAgent {
 	// the same as the above strategy, sometimes making more profit, sometimes less, and I'm unsure
 	// why.
 	public Iterable<? extends Activity> agentStrategy2(TimeStamp ts) {
-		FourHeap<Price, Integer> fh = FourHeap.create();
+		FourHeap<Price, Integer> fh = FourHeap.<Price, Integer> create();
 		Map<Order<Price, Integer>, Market> orderMap = Maps.newHashMap();
 		
 		for (Entry<Market, HFTIP> ipEntry : ips.entrySet()) {

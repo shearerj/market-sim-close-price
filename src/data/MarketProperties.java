@@ -30,5 +30,10 @@ public class MarketProperties extends EntityProperties {
 	public MarketType getMarketType() {
 		return type;
 	}
+	
+	@Override
+	public String toString() {
+		return type + " " + super.toString();
+	}
 
 }

@@ -39,7 +39,7 @@ public class AgentFactory {
 	 */
 	public AgentFactory(FundamentalValue fundamental, SIP sip,
 			Collection<Market> markets, double arrivalRate, Random rand) {
-		this(fundamental, sip, new PoissonArrival(TimeStamp.IMMEDIATE,
+		this(fundamental, sip, new PoissonArrival(TimeStamp.ZERO,
 				arrivalRate, new Random(rand.nextLong())), markets,
 				Iterators.cycle(markets), rand);
 	}

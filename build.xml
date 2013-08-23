@@ -86,7 +86,7 @@
       </classpath>
       <!-- Run every test in ${test} -->
       <batchtest>
-	<fileset dir="${test}" includes="**/*.java"/>
+	<fileset dir="${test}" includes="**/*Test*.java"/>
 	<formatter type="brief" usefile="false"/>
       </batchtest>
     </junit>
