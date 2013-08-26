@@ -5,18 +5,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.AbstractQueue;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.NavigableSet;
+import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Random;
 
 import activity.Activity;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableListMultimap.Builder;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 /**
@@ -50,6 +50,8 @@ public class EventQueue extends AbstractQueue<Activity> {
 	// proceeds it. Activities scheduled at the same time (even infinitely fast)
 	// may occur in any order.
 
+	// TODO Keep modCount to detect concurrent modification exception
+	
 	protected PriorityQueue<Event> eventQueue;
 	protected Map<TimeStamp, Event> eventIndex;
 	protected int size;
@@ -153,19 +155,29 @@ public class EventQueue extends AbstractQueue<Activity> {
 	}
 
 	@Override
-	public boolean addAll(Collection<? extends Activity> c) {
-		return addAll((Iterable<? extends Activity>) c);
+	public boolean addAll(Collection<? extends Activity> acts) {
+		return addAll((Iterable<? extends Activity>) acts);
 	}
 	
 	// Add collections in reverse. This ensures invariant.
-	public boolean addAll(Iterable<? extends Activity> c) {
-		if (c instanceof List) {
-			return super.addAll(Lists.reverse((List<? extends Activity>) c));
-		} else if (c instanceof NavigableSet) {
-			return super.addAll(((NavigableSet<? extends Activity>) c).descendingSet());
-		} else {
-			return super.addAll(ImmutableList.copyOf(c)); // expensive copy as fallback
+	public boolean addAll(Iterable<? extends Activity> acts) {
+		if (Iterables.isEmpty(acts)) return false;
+		// Group Activities by Time
+		Builder<TimeStamp, Activity> build = ImmutableListMultimap.builder();
+		for (Activity act : acts) build.put(act.getTime(), act);
+		
+		// Add them all to the appropriate event as a collection to maintain execution orders 
+		for (Entry<TimeStamp, Collection<Activity>> ent : build.build().asMap().entrySet()) {
+			TimeStamp t = ent.getKey();
+			Event e = eventIndex.get(t);
+			if (e == null) {
+				e = new Event(t, rand);
+				eventIndex.put(t, e);
+				eventQueue.add(e);
+			}
+			e.addAll(ent.getValue());
 		}
+		return true;
 	}
 
 	@Override
