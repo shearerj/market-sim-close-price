@@ -2,6 +2,8 @@ package entity.market;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.Random;
+
 import systemmanager.Keys;
 import activity.Activity;
 import activity.Clear;
@@ -31,8 +33,8 @@ public class CallMarket extends Market {
 	protected TimeStamp nextClearTime;
 
 	public CallMarket(SIP sip, double pricingPolicy,
-			TimeStamp clearFreq, TimeStamp latency, int tickSize) {
-		super(sip, new UniformPriceClear(pricingPolicy, tickSize), latency);
+			TimeStamp clearFreq, TimeStamp latency, int tickSize, Random rand) {
+		super(sip, new UniformPriceClear(pricingPolicy, tickSize), latency, rand);
 		checkArgument(clearFreq.after(TimeStamp.ZERO),
 				"Can't create a call market with 0 clear frequency. Create a CDA instead.");
 
@@ -40,11 +42,11 @@ public class CallMarket extends Market {
 		this.nextClearTime = TimeStamp.ZERO;
 	}
 	
-	public CallMarket(SIP sip, EntityProperties props) {
+	public CallMarket(SIP sip, Random rand, EntityProperties props) {
 		this(sip, props.getAsDouble(Keys.PRICING_POLICY, 0.5), new TimeStamp(
 				props.getAsInt(Keys.CLEAR_FREQ, 100)), new TimeStamp(
 				props.getAsInt(Keys.MARKET_LATENCY, -1)), props.getAsInt(
-				Keys.TICK_SIZE, 1));
+				Keys.TICK_SIZE, 1), rand);
 	}
 
 	@Override

@@ -62,7 +62,7 @@ public class LAAgent extends HFTAgent {
 			SIP sip, Random rand, EntityProperties props) {
 		this(markets, fundamental, sip, props.getAsDouble(Keys.ALPHA, 0.001),
 				new TimeStamp(props.getAsLong(Keys.LA_LATENCY, -1)), rand,
-				props.getAsInt(Keys.TICK_SIZE, 1000));
+				props.getAsInt(Keys.TICK_SIZE, 1));
 	}
 
 	@Override

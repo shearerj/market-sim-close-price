@@ -6,7 +6,7 @@
   <!-- set global properties for this build -->
   <property name="src"   location="src"/>
   <property name="test"  location="test"/>
-  <property name="build" location="build"/>
+  <property name="build" location="build-ant"/>
   <property name="build-test" location="build_test"/>
   <property name="dist"  location="dist"/>
   <property name="lib"	 location="lib"/>

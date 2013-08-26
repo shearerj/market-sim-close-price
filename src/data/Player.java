@@ -1,11 +1,16 @@
 package data;
 
 import static data.Observations.*;
+
+import java.io.Serializable;
+
 import com.google.gson.JsonObject;
 
 import entity.agent.Agent;
 
-public class Player {
+public class Player implements Serializable {
+	
+	private static final long serialVersionUID = 7233996258432288503L;
 	
 	protected final String role;
 	protected final String strategy;

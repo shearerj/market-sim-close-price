@@ -13,6 +13,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
+
+import utils.Iterables2;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
@@ -47,6 +50,7 @@ public abstract class Market extends Entity {
 	
 	protected final FourHeap<Price, TimeStamp> orderbook;
 	protected final ClearingRule clearingRule;
+	protected final Random rand;
 
 	protected final SMIP ip;
 	protected final SIP sip;
@@ -66,10 +70,11 @@ public abstract class Market extends Entity {
 	protected final TimeSeries depths, spreads, midQuotes;
 
 
-	public Market(SIP sip, ClearingRule clearingRule, TimeStamp latency) {
+	public Market(SIP sip, ClearingRule clearingRule, TimeStamp latency, Random rand) {
 		super(nextID++);
 		this.orderbook = FourHeap.<Price, TimeStamp>create();
 		this.clearingRule = clearingRule;
+		this.rand = rand;
 		this.quote = new Quote(this, null, 0, null, 0, TimeStamp.ZERO);
 
 		this.ips = Lists.newArrayList();
@@ -188,7 +193,7 @@ public abstract class Market extends Entity {
 		midQuotes.add((int) currentTime.getInTicks(), quote.getMidquote());
 		
 		Builder<Activity> acts = ImmutableList.builder();
-		for (IP ip : ips)
+		for (IP ip : Iterables2.randomOrder(ips, rand))
 			acts.add(new SendToIP(this, quote, transactions, ip, TimeStamp.IMMEDIATE));
 		return acts.build();
 	}

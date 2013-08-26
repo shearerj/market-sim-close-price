@@ -27,6 +27,9 @@ public class FourHeap<P extends Comparable<? super P>, T extends Comparable<? su
 	protected final Map<Order<P, T>, OrderRecord> activeOrders;
 	protected int size;
 
+	protected final Ordering<SplitOrder> priceComp = new PriceOrdering(),
+			timeComp = new TimeOrdering(), quantComp = new QuantOrdering();
+
 	protected FourHeap() {
 		sellUnmatched = BinaryHeap.create(priceComp.compound(timeComp).compound(quantComp));
 		sellMatched = BinaryHeap.create(priceComp.reverse().compound(timeComp).compound(quantComp));
@@ -247,24 +250,32 @@ public class FourHeap<P extends Comparable<? super P>, T extends Comparable<? su
 		protected OrderRecord(Order<P, T> order) {
 			unmatched = new SplitOrder(order);
 			matched = new SplitOrder(order, 0);
-		}
-		
+		}	
 	}
-	
-	protected final Ordering<SplitOrder> priceComp = new Ordering<SplitOrder>() {
+
+	// These had to be declared separately so they could implements serializable
+	protected class PriceOrdering extends Ordering<SplitOrder> implements Serializable {
+		private static final long serialVersionUID = -6083048512440275282L;
+
 		public int compare(SplitOrder first, SplitOrder second) {
 			return first.price.compareTo(second.price);
 		}
-	};
-	protected final Ordering<SplitOrder> timeComp = new Ordering<SplitOrder>() {
+	}
+	
+	protected class TimeOrdering extends Ordering<SplitOrder> implements Serializable {
+		private static final long serialVersionUID = -5355682963794695579L;
+		
 		public int compare(SplitOrder first, SplitOrder second) {
 			return first.time.compareTo(second.time);
 		}
-	};
-	protected final Ordering<SplitOrder> quantComp = new Ordering<SplitOrder>() {
+	}
+	
+	protected class QuantOrdering extends Ordering<SplitOrder> implements Serializable {
+		private static final long serialVersionUID = 6009457444173698197L;
+
 		public int compare(SplitOrder first, SplitOrder second) {
 			return Ints.compare(first.quantity, second.quantity);
 		}
 	};
-
+	
 }

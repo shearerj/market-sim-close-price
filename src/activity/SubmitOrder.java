@@ -37,7 +37,7 @@ public class SubmitOrder extends Activity {
 	
 	@Override
 	public String toString() {
-		return super.toString() + agent + "+(" + price + ", " + quantity
+		return super.toString() + agent + " (" + price + ", " + quantity
 				+ ") -> " + market;
 	}
 	

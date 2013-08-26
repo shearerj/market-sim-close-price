@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
+import java.io.Serializable;
 import java.util.Collection;
 
 import systemmanager.Consts.AgentType;
@@ -54,8 +55,9 @@ import data.MarketProperties;
  * 
  * @author ewah
  */
-public class SimulationSpec {
+public class SimulationSpec implements Serializable {
 
+	private static final long serialVersionUID = 5646083286397841102L;
 	protected static final Splitter split = Splitter.on(';');
 	protected static final Gson gson = new Gson();
 	
@@ -66,14 +68,14 @@ public class SimulationSpec {
 	protected static final String[] agentKeys = { TICK_SIZE, ARRIVAL_RATE,
 			REENTRY_RATE, PRIVATE_VALUE_VAR };
 
-	protected final JsonObject rawSpec;
+	protected transient final JsonObject rawSpec;
 	protected final EntityProperties simulationProperties;
 	protected final EntityProperties defaultMarketProperties;
 	protected final EntityProperties defaultAgentProperties;
 
 	protected final Collection<MarketProperties> marketProps;
 	protected final Collection<AgentProperties> agentProps;
-	protected final JsonObject playerProps; // TODO Change to properties object
+	protected transient final JsonObject playerProps; // TODO Change to properties object
 
 	public SimulationSpec(File specFile) throws FileNotFoundException {
 		this(new FileReader(specFile));

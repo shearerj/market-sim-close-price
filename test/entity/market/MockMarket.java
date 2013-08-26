@@ -1,6 +1,7 @@
 package entity.market;
 
 import java.util.Collection;
+import java.util.Random;
 
 import activity.Activity;
 
@@ -16,7 +17,7 @@ public class MockMarket extends Market {
 	private static final long serialVersionUID = 1L;
 
 	public MockMarket(SIP sip) {
-		super(sip, new UniformPriceClear(0.5, 1), TimeStamp.IMMEDIATE);
+		super(sip, new UniformPriceClear(0.5, 1), TimeStamp.IMMEDIATE, new Random());
 	}
 
 	@Override

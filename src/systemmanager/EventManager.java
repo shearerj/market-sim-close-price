@@ -10,7 +10,6 @@ import com.google.common.collect.Ordering;
 import event.EventQueue;
 import event.TimeStamp;
 
-import logger.Logger;
 import activity.Activity;
 
 /**
@@ -61,20 +60,14 @@ public class EventManager {
 	 * is complete. Adds new events to EventQ after event completion.
 	 */
 	protected void executeNext() {
-
-		if (Logger.getLevel().ordinal() >= DEBUG.ordinal())
-			log(DEBUG, this.getClass().getSimpleName()
-					+ "::executeNext: " + eventQueue);
-
 		try {
-			
 			Activity act = eventQueue.remove();
 			currentTime = ord.max(currentTime, act.getTime());
+			log(DEBUG, act + " then " + eventQueue);
 			eventQueue.addAll(act.execute(currentTime));
-			log(DEBUG, act.toString());
+			
 		} catch (Exception e) {
-			log(ERROR, this.getClass().getSimpleName()
-					+ "::executeNext:error executing activity.");
+			log(ERROR, "Error executing activity");
 			e.printStackTrace();
 		}
 	}

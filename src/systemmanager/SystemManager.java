@@ -2,15 +2,12 @@ package systemmanager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static logger.Logger.log;
-import static logger.Logger.Level.DEBUG;
 import static logger.Logger.Level.INFO;
 import static logger.Logger.Level.NO_LOGGING;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -154,7 +151,7 @@ public class SystemManager {
 	
 	protected Collection<Market> setupMarkets(Collection<MarketProperties> marketProps) {
 		Builder<Market> markets = ImmutableList.builder();
-		MarketFactory factory = new MarketFactory(sip);
+		MarketFactory factory = new MarketFactory(sip, new Random(rand.nextLong()));
 		for (MarketProperties mktProps : marketProps)
 			for (int i = 0; i < mktProps.getAsInt(Keys.NUM, 1); i++)
 				markets.add(factory.createMarket(mktProps));
@@ -260,17 +257,6 @@ public class SystemManager {
 	}
 
 	public void aggregateResults() throws IOException {
-		if (Logger.getLevel() == DEBUG) { // Write out objects for further analysis
-			File objects = new File(simFolder, Consts.OBJS_FILE_PREFIX + obsNum + ".bit");
-			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(objects));
-			out.writeObject(spec);
-			out.writeObject(fundamental);
-			out.writeObject(sip);
-			out.writeObject(markets);
-			out.writeObject(agents);
-			out.writeObject(players);
-			out.close();
-		}
 		File results = new File(simFolder, Consts.OBS_FILE_PREFIX + obsNum + ".json");
 		Observations obs = new Observations(spec, markets, agents, players,
 				fundamental, sip, modelName, obsNum);

@@ -5,6 +5,8 @@ import systemmanager.Consts.AgentType;
 
 public class AgentProperties extends EntityProperties {
 
+	private static final long serialVersionUID = -8267036814743083118L;
+	
 	protected final AgentType type;
 
 	public AgentProperties(AgentType type) {

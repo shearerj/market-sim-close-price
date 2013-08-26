@@ -110,7 +110,8 @@ public class TimeSeries implements Serializable {
 		};
 	}
 	
-	protected static final class Point implements Entry<Long, Double> {
+	protected static final class Point implements Entry<Long, Double>, Serializable {
+		private static final long serialVersionUID = 8793011684140207592L;
 		protected final long time;
 		protected final double value;
 		

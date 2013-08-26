@@ -5,6 +5,8 @@ import systemmanager.Consts.MarketType;
 
 public class MarketProperties extends EntityProperties {
 	
+	private static final long serialVersionUID = -8634339070031699521L;
+	
 	protected final MarketType type;
 	
 	public MarketProperties(MarketType type) {

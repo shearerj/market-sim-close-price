@@ -18,7 +18,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Ordering;
 
 /**
  * The EventQueue is a a queue of upcoming events which are composed of
@@ -169,13 +168,11 @@ public class EventQueue extends AbstractQueue<Activity> {
 		}
 	}
 
-	/**
-	 * This method can be very inefficient, and shouldn't be used if it can be
-	 * helped.
-	 */
 	@Override
 	public String toString() {
-		return "Q: " + joiner.join(Ordering.natural().sortedCopy(eventQueue));
+		if (isEmpty()) return "[]";
+		else if (eventQueue.size() == 1) return eventQueue.toString();
+		else return "[" + eventQueue.peek() + ", ...]";
 	}
 
 	protected class EventQueueIterator implements Iterator<Activity> {

@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Random;
 
 import logger.Logger;
 
@@ -38,7 +39,7 @@ public class CDAMarketTest {
 	@Before
 	public void setup() {
 		sip = new SIP(TimeStamp.IMMEDIATE);
-		market = new CDAMarket(sip, TimeStamp.IMMEDIATE);
+		market = new CDAMarket(sip, TimeStamp.IMMEDIATE, new Random());
 	}
 
 	@Test

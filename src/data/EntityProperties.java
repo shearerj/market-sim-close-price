@@ -3,6 +3,7 @@ package data;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -15,8 +16,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
 
-public class EntityProperties {
+public class EntityProperties implements Serializable {
 	
+	private static final long serialVersionUID = -7220533203495890410L;
 	private final static Splitter configSplitter = Splitter.on('_');
 	private final static MapJoiner configJoiner = Joiner.on('_').withKeyValueSeparator("_");
 

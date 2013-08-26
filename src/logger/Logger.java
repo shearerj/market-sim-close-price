@@ -42,6 +42,10 @@ public class Logger {
 		if (level == Level.ERROR)
 			System.err.println(message);
 	}
+	
+	public static void log(Level level, Object message) {
+		log(level, message.toString());
+	}
 
 	public static Level getLevel() {
 		return logger == null ? Level.NO_LOGGING

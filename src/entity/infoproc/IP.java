@@ -32,10 +32,12 @@ public abstract class IP extends Entity {
 		this.latency = checkNotNull(latency, "Latency");
 	}
 
+	// FIXME IF two infinite process 
 	public Iterable<? extends Activity> sendToIP(Market market, Quote quote,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
+		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? TimeStamp.IMMEDIATE : currentTime.plus(latency); 
 		return ImmutableList.of(new ProcessQuote(this, market, quote,
-				newTransactions, currentTime.plus(latency)));
+				newTransactions, nextTime));
 	}
 
 	public abstract Iterable<? extends Activity> processQuote(Market market, Quote quote,
