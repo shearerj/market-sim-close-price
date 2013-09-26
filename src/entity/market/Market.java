@@ -225,9 +225,6 @@ public abstract class Market extends Entity {
 
 		log(INFO, agent + " (" + price + ", " + quantity + ") -> " + this);
 
-		Multiset<Price> priceQuant = quantity < 0 ? askPriceQuantity : bidPriceQuantity;
-		priceQuant.add(price, abs(quantity));
-
 		fourheap.Order<Price, TimeStamp> nativeOrder = fourheap.Order.create(
 				price, quantity, currentTime);
 		Order order = new Order(agent, this, nativeOrder);
@@ -260,18 +257,16 @@ public abstract class Market extends Entity {
 		Market bestMarket = this;
 
 		if (quantity > 0) { // buy
-			boolean wontTransact = price.lessThan(quote.getAskPrice());
 			boolean nbboBetter = nbbo.getBestAsk() != null
 					&& nbbo.getBestAsk().lessThan(quote.getAskPrice());
 			boolean willTransact = price.greaterThan(nbbo.getBestAsk());
-			if (wontTransact && nbboBetter && willTransact)
+			if (nbboBetter && willTransact)
 				bestMarket = nbbo.getBestAskMarket();
 		} else { // sell
-			boolean wontTransact = price.greaterThan(quote.getBidPrice());
 			boolean nbboBetter = nbbo.getBestBid() != null
 					&& nbbo.getBestBid().greaterThan(quote.getBidPrice());
 			boolean willTransact = price.lessThan(nbbo.getBestBid());
-			if (wontTransact && nbboBetter && willTransact)
+			if (nbboBetter && willTransact)
 				bestMarket = nbbo.getBestBidMarket();
 		}
 

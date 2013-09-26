@@ -2,8 +2,12 @@
     "assignment": {
     },	
     "configuration": {
+    "modelName" : "mySimulation",
+	"modelNum" : "1",
 	"simLength": "15000",
 	"presets" : "CENTRALCDA",
+	"CDA" : "num_0",
+	"CALL" : "num_0",
 	"BASICMM": "num_0_sleepTime_200_numRungs_10_rungSize_1000",
 	"ZI": "num_250_bidRange_2000",
 	"ZIR": "num_0_bidRange_2000_maxqty_5",

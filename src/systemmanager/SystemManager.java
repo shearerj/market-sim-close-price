@@ -151,10 +151,12 @@ public class SystemManager {
 	
 	protected Collection<Market> setupMarkets(Collection<MarketProperties> marketProps) {
 		Builder<Market> markets = ImmutableList.builder();
-		MarketFactory factory = new MarketFactory(sip, new Random(rand.nextLong()));
-		for (MarketProperties mktProps : marketProps)
+		Random ran = new Random(rand.nextLong());
+		for (MarketProperties mktProps : marketProps) {
+			MarketFactory factory = new MarketFactory(sip, ran);
 			for (int i = 0; i < mktProps.getAsInt(Keys.NUM, 1); i++)
 				markets.add(factory.createMarket(mktProps));
+		}
 		return markets.build();
 	}
 	

@@ -128,6 +128,8 @@ public class CDAMarketTest {
 			assertTrue("Incorrect Quantity", tr.getQuantity() == 1);
 		}
 	}
+	
+	// TODO Run multioverlap clear check that it never happens
 
 	@Test
 	public void MultiBidSingleClear() {
