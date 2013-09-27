@@ -75,6 +75,13 @@ public class PrivateValue implements Serializable {
 	}
 
 	/**
+	 * @return offset (max absolute value position)
+	 */
+	public int getMaxAbsPosition() {
+		return offset;
+	}
+	
+	/**
 	 * @param position
 	 *            Agent's current position
 	 * @param quantity
@@ -87,7 +94,7 @@ public class PrivateValue implements Serializable {
 	}
 
 	/**
-	 * Get a peudo private value for the agent from holding a specific position.
+	 * Get a pseudo private value for the agent from holding a specific position.
 	 * This call is experimental and may be deprecated in the future.
 	 * 
 	 * @param position

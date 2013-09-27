@@ -34,13 +34,12 @@ import event.TimeStamp;
  * @author drhurd
  */
 
-public class AAAgent extends ReentryAgent {
+public class AAAgent extends BackgroundAgent {
 	
 	private static final long serialVersionUID = 2418819222375372886L;
 	
 	// Agent market variables
 	private boolean isBuyer; // randomly assigned at initialization
-	private int maxAbsPosition; // maxPosition the agent can take on
 
 	//Agent parameters
 	private int historical; // number of historical prices to look at
@@ -60,45 +59,56 @@ public class AAAgent extends ReentryAgent {
 	private double alphaMin; // min experienced value for alpha
 
 
-	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, EntityProperties params) {
-		this(arrivalTime, fundamental, sip, market, rand, params, new PrivateValue(
-				params.getAsInt(Keys.MAX_QUANTITY, 1), params.getAsDouble(
-						Keys.PRIVATE_VALUE_VAR, 100000000), rand),
-				params.getAsDouble(Keys.REENTRY_RATE, 0.005), params.getAsInt(
-						Keys.TICK_SIZE, 1));
-	}
-	
-	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, EntityProperties params, PrivateValue privateValue,
-			double reentryRate, int tickSize) {
-		super(arrivalTime, fundamental, sip, market, privateValue, rand, reentryRate,
-				tickSize);
-		
-		//Initializing Max Absolute Position
-		this.maxAbsPosition = params.getAsInt(Keys.MAX_QUANTITY, 1);
-		
-		
-		//Determining whether agent is a buyer or a seller
-		this.isBuyer = params.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean());
-
+	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
+			Market market, Random rand, double reentryRate, double pvVar,
+			int tickSize, int maxAbsPosition, int bidRangeMin, int bidRangeMax,
+			double aggression, double theta, double thetaMin, double thetaMax,
+			int historical, int eta, double lambdaR, double lambdaA,
+			double gamma, double betaR, double betaT) {
+		super(arrivalTime, fundamental, sip, market, rand, reentryRate, 
+				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize, 
+				bidRangeMin, bidRangeMax);
 		//Initializing parameters
-		// Parameters are currently taken from Vytelingum paper
-		lambda_r = 0.05;
-		lambda_a = 0.02;
-		alphaMax = alphaMin = -1;
-		gamma = 2;
-		beta_r = (rand.nextDouble() * 0.4) + 0.2;
-		beta_t = (rand.nextDouble() * 0.4) + 0.2;
+		this.aggression = aggression;
+		this.theta = theta;
+		this.thetaMin = thetaMin;
+		this.thetaMax = thetaMax;
+		this.alphaMin = -1;
+		this.alphaMax = Price.INF.getInTicks();
 		
 		//Initializing strategy variables
-		theta = params.getAsDouble(Keys.THETA, 0);
-		aggression = params.getAsDouble(Keys.AGGRESSION, 0);
-		historical = params.getAsInt(Keys.HISTORICAL, 5);
-		eta = params.getAsInt(Keys.ETA, 3);
-		thetaMax = params.getAsDouble(Keys.THETA_MAX, 4);
-		thetaMin = params.getAsDouble(Keys.THETA_MIN, -4);
+		this.historical = historical;
+		this.lambda_a = lambdaA;
+		this.lambda_r = lambdaR;
+		this.gamma = gamma;
+		this.eta = eta;
+		this.beta_r = betaR;
+		this.beta_t = betaT;
+	}
+	
+	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
+			Market market, Random rand, EntityProperties props) {
+		this(arrivalTime, fundamental, sip, market, rand,
+				props.getAsDouble(Keys.REENTRY_RATE, 0.005), 
+				props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),
+				props.getAsInt(Keys.TICK_SIZE, 1),
+				props.getAsInt(Keys.MAX_QUANTITY, 10),
+				props.getAsInt(Keys.BID_RANGE_MIN, 0),
+				props.getAsInt(Keys.BID_RANGE_MAX, 5000), 
+				props.getAsDouble(Keys.AGGRESSION, 0),
+				props.getAsDouble(Keys.THETA, 0),
+				props.getAsDouble(Keys.THETA_MIN, -4),
+				props.getAsDouble(Keys.THETA_MAX, 4),
+				props.getAsInt(Keys.HISTORICAL, 5),
+				props.getAsInt(Keys.ETA, 3), 
+				props.getAsDouble(Keys.LAMBDA_R, 0.05),
+				props.getAsDouble(Keys.LAMBDA_A, 0.02),
+				props.getAsDouble(Keys.GAMMA, 2), 
+				props.getAsDouble(Keys.BETA_R, .5),
+				props.getAsDouble(Keys.BETA_T, .005));
 		
+		//Determining whether agent is a buyer or a seller
+//		this.isBuyer = params.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean());		//TODO
 	}
 
 	@Override
@@ -298,8 +308,9 @@ public class AAAgent extends ReentryAgent {
 		// Can only submit offer if the offer would not cause position
 		// balance to exceed the agent's maximum position
 		int newPosBal = positionBalance + quantity;
-		if (newPosBal < (-1 * maxAbsPosition) || newPosBal > maxAbsPosition) {
-			s += "new order would exceed max position " + maxAbsPosition
+		if (newPosBal < (-1 * privateValue.getMaxAbsPosition()) || 
+				newPosBal > privateValue.getMaxAbsPosition()) {
+			s += "new order would exceed max position " + privateValue.getMaxAbsPosition()
 					+ "; no submission";
 			log(INFO, s);
 			return Collections.emptySet(); 

@@ -12,7 +12,8 @@ public interface Keys {
 	public final static String ARRIVAL_RATE = "arrivalRate";
 	public final static String REENTRY_RATE = "reentryRate";
 
-	public final static String BID_RANGE = "bidRange";
+	public final static String BID_RANGE_MAX = "bidRangeMax";
+	public final static String BID_RANGE_MIN = "bidRangeMin";
 	public final static String MAX_QUANTITY = "maxqty";
 	public final static String ALPHA = "alpha";
 	
@@ -50,6 +51,10 @@ public interface Keys {
 	public final static String HISTORICAL = "historical";
 	public final static String ETA = "eta";
 	public final static String AGGRESSION = "aggression";
+	public final static String LAMBDA_R = "lambdaR";
+	public final static String LAMBDA_A = "lambdaA";
+	public final static String BETA_R = "betaR";
+	public final static String BETA_T = "betaT";
 	public final static String THETA = "theta";
 	public final static String THETA_MAX = "thetaMax";
 	public final static String THETA_MIN = "thetaMin";

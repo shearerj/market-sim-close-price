@@ -1,19 +1,13 @@
 package entity.agent;
 
-import static java.lang.Math.signum;
-
 import java.util.Random;
-
-import com.google.common.collect.ImmutableList;
 
 import systemmanager.Keys;
 import activity.Activity;
-import activity.SubmitNMSOrder;
 import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
-import entity.market.Price;
 import event.TimeStamp;
 
 /**
@@ -37,37 +31,30 @@ import event.TimeStamp;
 public class ZIAgent extends BackgroundAgent {
 
 	private static final long serialVersionUID = 1148707664467962927L;
-	
-	protected final int bidRange; // range for limit order
 
 	public ZIAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			Market market, Random rand, int bidRange, double pvVar,
-			int tickSize) {
-		super(arrivalTime, fundamental, sip, market, new PrivateValue(1, pvVar,
-				rand), rand, tickSize);
-		this.bidRange = bidRange;
+			Market market, Random rand, double reentryRate, double pvVar,
+			int tickSize, int bidRangeMin, int bidRangeMax) {
+		super(arrivalTime, fundamental, sip, market, rand, reentryRate, 
+				new PrivateValue(1, pvVar, rand), tickSize, 
+				bidRangeMin, bidRangeMax);
 	}
 
 	public ZIAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, EntityProperties props) {
-		this(arrivalTime, fundamental, sip, market, rand, props.getAsInt(
-				Keys.BID_RANGE, 2000), props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),
-				props.getAsInt(Keys.TICK_SIZE, 1));
+		this(arrivalTime, fundamental, sip, market, rand,
+				props.getAsDouble(Keys.REENTRY_RATE, 0),
+				props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000), 
+				props.getAsInt(Keys.TICK_SIZE, 1),
+				props.getAsInt(Keys.BID_RANGE_MIN, 0),
+				props.getAsInt(Keys.BID_RANGE_MAX, 5000));
 	}
 
 	@Override
 	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
 		// 50% chance of being either long or short
 		int quantity = rand.nextBoolean() ? 1 : -1;
-		Price val = fundamental.getValueAt(currentTime).plus(
-				privateValue.getValueFromQuantity(positionBalance, quantity)).nonnegative();
-
-		// basic ZI behavior
-		Price price = new Price((int) (val.getInTicks() - signum(quantity)
-				* rand.nextDouble() * 2 * bidRange)).nonnegative().quantize(tickSize);
-
-		return ImmutableList.of(new SubmitNMSOrder(this, price, quantity,
-				primaryMarket, TimeStamp.IMMEDIATE));
+		return this.executeZIStrategy(quantity, currentTime);
 	}
 
 	@Override

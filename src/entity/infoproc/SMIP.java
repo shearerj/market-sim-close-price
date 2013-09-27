@@ -23,7 +23,7 @@ public class SMIP extends IP {
 
 	private static final long serialVersionUID = 827960237754648780L;
 	
-	protected final Market assocaitedMarket;
+	protected final Market associatedMarket;
 	protected Quote quote;
 
 	/**
@@ -34,7 +34,7 @@ public class SMIP extends IP {
 	 */
 	public SMIP(TimeStamp latency, Market market) {
 		super(latency);
-		this.assocaitedMarket = market;
+		this.associatedMarket = market;
 		this.quote = new Quote(null, null, 0, null, 0, TimeStamp.ZERO);
 	}
 
@@ -42,8 +42,8 @@ public class SMIP extends IP {
 	public Iterable<? extends Activity> processQuote(Market market,
 			Quote quote, List<Transaction> newTransactions,
 			TimeStamp currentTime) {
-		checkArgument(market.equals(assocaitedMarket),
-				"Can't update an SM Market with anything but it's market");
+		checkArgument(market.equals(associatedMarket),
+				"Can't update an SM Market with anything but its market");
 
 		this.quote = quote;
 		return ImmutableList.of();
@@ -54,6 +54,6 @@ public class SMIP extends IP {
 	}
 
 	public String toString() {
-		return "(SMIP " + id + " in " + assocaitedMarket + ")";
+		return "(SMIP " + id + " in " + associatedMarket + ")";
 	}
 }

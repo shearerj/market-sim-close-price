@@ -19,7 +19,7 @@ public class MockAgent extends BackgroundAgent {
 
 	public MockAgent(FundamentalValue fundamental, SIP sip, Market market) {
 		super(new TimeStamp(0), fundamental, sip, market, new PrivateValue(),
-				new Random(), 1000);
+				new Random(), 0, 1000);
 	}
 
 	@Override

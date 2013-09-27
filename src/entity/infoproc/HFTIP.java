@@ -39,6 +39,6 @@ public class HFTIP extends SMIP {
 
 	@Override
 	public String toString() {
-		return "(HFTIP " + id + " in " + assocaitedMarket + " for " + hftAgent + ")"; 
+		return "(HFTIP " + id + " in " + associatedMarket + " for " + hftAgent + ")"; 
 	}
 }
