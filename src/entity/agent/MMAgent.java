@@ -36,7 +36,7 @@ public abstract class MMAgent extends Agent {
 	public MMAgent(TimeStamp arrivalTime, Collection<Market> markets,
 			FundamentalValue fundamental, SIP sip, PrivateValue pv,
 			Random rand, int tickSize) {
-		super(arrivalTime, fundamental, sip, pv, rand, tickSize);
+		super(arrivalTime, fundamental, sip, rand, pv, tickSize);
 		this.markets = markets;
 	}
 

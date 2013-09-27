@@ -20,8 +20,8 @@ public abstract class MarketMaker extends SMAgent {
 
 	public MarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, int tickSize) {
-		super(TimeStamp.ZERO, fundamental, sip, market, new PrivateValue(),
-				rand, tickSize);
+		super(TimeStamp.ZERO, fundamental, sip, market, rand,
+				new PrivateValue(), tickSize);
 	}
 
 }

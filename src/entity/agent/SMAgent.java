@@ -41,8 +41,8 @@ public abstract class SMAgent extends Agent {
 	protected final SMIP marketIP;
 
 	public SMAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			Market market, PrivateValue pv, Random rand, int tickSize) {
-		super(arrivalTime, fundamental, sip, pv, rand, tickSize);
+			Market market, Random rand, PrivateValue pv, int tickSize) {
+		super(arrivalTime, fundamental, sip, rand, pv, tickSize);
 		this.primaryMarket = market;
 		this.marketIP = market.getSMIP();
 	}

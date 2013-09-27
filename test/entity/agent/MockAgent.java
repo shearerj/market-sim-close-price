@@ -18,8 +18,8 @@ public class MockAgent extends BackgroundAgent {
 	private static final long serialVersionUID = 1L;
 
 	public MockAgent(FundamentalValue fundamental, SIP sip, Market market) {
-		super(new TimeStamp(0), fundamental, sip, market, new PrivateValue(),
-				new Random(), 0, 1000);
+		super(new TimeStamp(0), fundamental, sip, market, new Random(), 0,
+				new PrivateValue(),	1, 0, 1000);
 	}
 
 	@Override

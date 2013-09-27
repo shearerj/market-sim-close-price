@@ -57,7 +57,7 @@ public abstract class Agent extends Entity {
 	protected int preLiqRealizedProfit;
 
 	public Agent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			PrivateValue privateValue, Random rand, int tickSize) {
+			Random rand, PrivateValue privateValue, int tickSize) {
 		super(nextID++);
 		this.fundamental = checkNotNull(fundamental);
 		this.rand = rand;

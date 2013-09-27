@@ -41,7 +41,7 @@ public abstract class BackgroundAgent extends SMAgent {
 			Market market, Random rand, Iterator<TimeStamp> reentry,
 			PrivateValue pv, int tickSize, int bidRangeMin,
 			int bidRangeMax) {
-		super(arrivalTime, fundamental, sip, market, pv, rand, tickSize);
+		super(arrivalTime, fundamental, sip, market, rand, pv, tickSize);
 	
 		this.reentry = reentry;
 		this.bidRangeMin = bidRangeMin;
