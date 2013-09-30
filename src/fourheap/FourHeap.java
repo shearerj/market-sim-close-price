@@ -121,7 +121,7 @@ public class FourHeap<P extends Comparable<? super P>, T extends Comparable<? su
 		if (order.quantity == 0) activeOrders.remove(order);
 	}
 
-	public List<Transaction<P, T>> clear() {
+	public List<MatchedOrders<P, T>> clear() {
 		List<SplitOrder> buys = buyUnmatched.ordering.sortedCopy(buyMatched);
 		List<SplitOrder> sells = sellUnmatched.ordering.sortedCopy(sellMatched);
 		buyMatched.clear();
@@ -131,7 +131,7 @@ public class FourHeap<P extends Comparable<? super P>, T extends Comparable<? su
 		Iterator<SplitOrder> buyIt = buys.iterator();
 		Iterator<SplitOrder> sellIt = sells.iterator();
 		
-		Builder<Transaction<P, T>> transactions = ImmutableList.builder();
+		Builder<MatchedOrders<P, T>> transactions = ImmutableList.builder();
 		while (buyIt.hasNext() || sellIt.hasNext()) {
 			if (buy.quantity == 0) buy = buyIt.next();
 			if (sell.quantity == 0) sell = sellIt.next();

@@ -17,7 +17,7 @@ public class MockMarket extends Market {
 	private static final long serialVersionUID = 1L;
 
 	public MockMarket(SIP sip) {
-		super(sip, new UniformPriceClear(0.5, 1), TimeStamp.IMMEDIATE, new Random());
+		super(sip, TimeStamp.IMMEDIATE, new UniformPriceClear(0.5, 1), new Random());
 	}
 
 	@Override

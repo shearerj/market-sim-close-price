@@ -45,7 +45,7 @@ public class AAAgentTest {
 	@BeforeClass
 	public static void setupClass() {
 		// Setting up the log file
-		Logger.setup(3, new File("simulations/unit_testing/AA_unit_tests.txt"));
+		Logger.setup(3, new File("simulations/unit_testing/AAAgentTest.log"));
 
 		// Creating the setup properties
 		rand = new Random(1);

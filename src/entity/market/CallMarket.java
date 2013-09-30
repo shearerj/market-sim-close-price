@@ -32,21 +32,21 @@ public class CallMarket extends Market {
 	protected final TimeStamp clearFreq;
 	protected TimeStamp nextClearTime;
 
-	public CallMarket(SIP sip, double pricingPolicy,
-			TimeStamp clearFreq, TimeStamp latency, int tickSize, Random rand) {
-		super(sip, new UniformPriceClear(pricingPolicy, tickSize), latency, rand);
+	public CallMarket(SIP sip, TimeStamp latency, Random rand, int tickSize,
+			double pricingPolicy, TimeStamp clearFreq) {
+		super(sip, latency, new UniformPriceClear(pricingPolicy, tickSize), rand);
 		checkArgument(clearFreq.after(TimeStamp.ZERO),
-				"Can't create a call market with 0 clear frequency. Create a CDA instead.");
+				"Can't create a call market with 0 clear frequency. Create a CDA instead.");	// TODO really? why not?
 
 		this.clearFreq = clearFreq;
 		this.nextClearTime = TimeStamp.ZERO;
 	}
 	
 	public CallMarket(SIP sip, Random rand, EntityProperties props) {
-		this(sip, props.getAsDouble(Keys.PRICING_POLICY, 0.5), new TimeStamp(
-				props.getAsInt(Keys.CLEAR_FREQ, 100)), new TimeStamp(
-				props.getAsInt(Keys.MARKET_LATENCY, -1)), props.getAsInt(
-				Keys.TICK_SIZE, 1), rand);
+		this(sip, new TimeStamp(props.getAsInt(Keys.MARKET_LATENCY, -1)), rand,
+				props.getAsInt(Keys.TICK_SIZE, 1),
+				props.getAsDouble(Keys.PRICING_POLICY, 0.5),
+				new TimeStamp(props.getAsInt(Keys.CLEAR_FREQ, 100)));
 	}
 
 	@Override

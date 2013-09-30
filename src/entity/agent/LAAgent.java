@@ -28,7 +28,7 @@ import entity.market.Quote;
 import event.TimeStamp;
 import fourheap.FourHeap;
 import fourheap.Order;
-import fourheap.Transaction;
+import fourheap.MatchedOrders;
 
 /**
  * LAAGENT
@@ -118,9 +118,9 @@ public class LAAgent extends HFTAgent {
 			}
 		}
 		
-		List<Transaction<Price, Integer>> transactions = fh.clear();
+		List<MatchedOrders<Price, Integer>> transactions = fh.clear();
 		Builder<Activity> acts = ImmutableList.builder();
-		for (Transaction<Price, Integer> trans : transactions) {
+		for (MatchedOrders<Price, Integer> trans : transactions) {
 			Order<Price, Integer> buy = trans.getBuy(), sell = trans.getSell();
 			if (sell.getPrice().getInTicks() * (1 + alpha) > buy.getPrice().getInTicks())
 				continue;

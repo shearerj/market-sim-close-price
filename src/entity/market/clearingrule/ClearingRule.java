@@ -6,10 +6,10 @@ import java.util.Map;
 
 import entity.market.Price;
 import event.TimeStamp;
-import fourheap.Transaction;
+import fourheap.MatchedOrders;
 
 public interface ClearingRule extends Serializable {
 
-	public Map<Transaction<Price, TimeStamp>, Price> pricing(Iterable<Transaction<Price, TimeStamp>> transactions);
+	public Map<MatchedOrders<Price, TimeStamp>, Price> pricing(Iterable<MatchedOrders<Price, TimeStamp>> transactions);
 	
 }

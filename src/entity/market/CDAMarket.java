@@ -24,12 +24,13 @@ public class CDAMarket extends Market {
 
 	private static final long serialVersionUID = -6780130359417129449L;
 
-	public CDAMarket(SIP sip, TimeStamp latency, Random rand) {
-		super(sip, new EarliestPriceClear(), latency, rand);
+	public CDAMarket(SIP sip, TimeStamp latency, Random rand, int tickSize) {
+		super(sip, latency, new EarliestPriceClear(tickSize), rand);
 	}
 	
 	public CDAMarket(SIP sip, Random rand, EntityProperties props) {
-		this(sip, new TimeStamp(props.getAsInt(Keys.MARKET_LATENCY, -1)), rand);
+		this(sip, new TimeStamp(props.getAsInt(Keys.MARKET_LATENCY, -1)), rand,
+				props.getAsInt(Keys.TICK_SIZE, 1));
 	}
 
 	@Override

@@ -318,8 +318,8 @@ public class FourHeapTest {
 	public void clearTest() {
 		FourHeap<Integer, Integer> fh;
 		Order<Integer, Integer> os, ob;
-		List<Transaction<Integer, Integer>> transactions;
-		Transaction<Integer, Integer> trans;
+		List<MatchedOrders<Integer, Integer>> transactions;
+		MatchedOrders<Integer, Integer> trans;
 		
 		fh = FourHeap.<Integer, Integer>create();
 		os = insertOrder(fh, 5, -2, 0);
@@ -343,8 +343,8 @@ public class FourHeapTest {
 	public void multiOrderClearTest() {
 		FourHeap<Integer, Integer> fh;
 		Order<Integer, Integer> os, ob;
-		List<Transaction<Integer, Integer>> transactions;
-		Transaction<Integer, Integer> trans;
+		List<MatchedOrders<Integer, Integer>> transactions;
+		MatchedOrders<Integer, Integer> trans;
 		
 		fh = FourHeap.<Integer, Integer>create();
 		os = insertOrder(fh, 5, -3, 0);

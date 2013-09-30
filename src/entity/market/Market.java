@@ -70,7 +70,7 @@ public abstract class Market extends Entity {
 	protected final TimeSeries depths, spreads, midQuotes;
 
 
-	public Market(SIP sip, ClearingRule clearingRule, TimeStamp latency, Random rand) {
+	public Market(SIP sip, TimeStamp latency, ClearingRule clearingRule, Random rand) {
 		super(nextID++);
 		this.orderbook = FourHeap.<Price, TimeStamp>create();
 		this.clearingRule = clearingRule;
@@ -139,9 +139,9 @@ public abstract class Market extends Entity {
 	 * Clears the order book.
 	 */
 	public Iterable<? extends Activity> clear(TimeStamp currentTime) {
-		List<fourheap.Transaction<Price, TimeStamp>> ftransactions = orderbook.clear();
+		List<fourheap.MatchedOrders<Price, TimeStamp>> ftransactions = orderbook.clear();
 		Builder<Transaction> transactions = ImmutableList.builder();
-		for (Entry<fourheap.Transaction<Price, TimeStamp>, Price> e : clearingRule.pricing(ftransactions).entrySet()) {
+		for (Entry<fourheap.MatchedOrders<Price, TimeStamp>, Price> e : clearingRule.pricing(ftransactions).entrySet()) {
 
 			Order buy = orderMapping.get(e.getKey().getBuy());
 			Order sell = orderMapping.get(e.getKey().getSell());

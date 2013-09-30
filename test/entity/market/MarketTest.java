@@ -19,6 +19,9 @@ import entity.agent.MockAgent;
 import entity.infoproc.SIP;
 import event.TimeStamp;
 
+/**
+ * TODO - check this class
+ */
 public class MarketTest {
 
 	// TODO Better testing of correct quote quantity
