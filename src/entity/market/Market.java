@@ -43,6 +43,10 @@ import fourheap.FourHeap;
  * 
  * @author ewah
  */
+/**
+ * @author ewah
+ *
+ */
 public abstract class Market extends Entity {
 
 	private static final long serialVersionUID = 8806298743451593261L;
@@ -124,8 +128,8 @@ public abstract class Market extends Entity {
 		if (order.getQuantity() == 0) return ImmutableList.of();
 		checkArgument(quantity != 0 && signum(order.getQuantity()) == signum(quantity),
 				"Improper quantity");
-		quantity = quantity < 0 ? max(quantity, order.getQuantity()) : min(
-				quantity, order.getQuantity());
+		quantity = quantity < 0 ? max(quantity, order.getQuantity()) : 
+								  min(quantity, order.getQuantity());
 		
 		Multiset<Price> priceQuant = order.getQuantity() < 0 ? askPriceQuantity : bidPriceQuantity;
 		priceQuant.remove(order.getPrice(), abs(quantity));
@@ -219,6 +223,14 @@ public abstract class Market extends Entity {
 		return submitOrder(agent, price, quantity, currentTime, TimeStamp.IMMEDIATE);
 	}
 
+	/**
+	 * @param agent
+	 * @param price
+	 * @param quantity
+	 * @param currentTime
+	 * @param duration
+	 * @return
+	 */
 	public Iterable<? extends Activity> submitOrder(Agent agent, Price price,
 			int quantity, TimeStamp currentTime, TimeStamp duration) {
 		checkArgument(quantity != 0, "Can't submit a 0 quantity order");
@@ -229,7 +241,8 @@ public abstract class Market extends Entity {
 				price, quantity, currentTime);
 		Order order = new Order(agent, this, nativeOrder);
 
-		// TODO add abs val of quantity to ask/bidPriceQuantity
+		Multiset<Price> priceQuant = order.getQuantity() < 0 ? askPriceQuantity : bidPriceQuantity;
+		priceQuant.add(order.getPrice(), abs(quantity));
 		
 		orderbook.insertOrder(nativeOrder);
 		orderMapping.put(nativeOrder, order);
