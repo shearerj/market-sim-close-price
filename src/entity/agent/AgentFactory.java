@@ -1,6 +1,6 @@
 package entity.agent;
 
-import interators.PoissonArrival;
+import iterators.PoissonArrival;
 
 import java.util.Collection;
 import java.util.Iterator;

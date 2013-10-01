@@ -229,6 +229,8 @@ public abstract class Market extends Entity {
 				price, quantity, currentTime);
 		Order order = new Order(agent, this, nativeOrder);
 
+		// TODO add abs val of quantity to ask/bidPriceQuantity
+		
 		orderbook.insertOrder(nativeOrder);
 		orderMapping.put(nativeOrder, order);
 		orders.add(order);

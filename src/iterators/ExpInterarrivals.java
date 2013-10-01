@@ -1,4 +1,4 @@
-package interators;
+package iterators;
 
 import java.io.Serializable;
 import java.util.Random;

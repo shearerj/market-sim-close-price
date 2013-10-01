@@ -3,7 +3,7 @@ package entity.agent;
 import static java.lang.Math.signum;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
-import interators.ExpInterarrivals;
+import iterators.ExpInterarrivals;
 
 import java.util.Iterator;
 import java.util.Random;
