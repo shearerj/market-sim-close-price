@@ -123,6 +123,8 @@ public abstract class Market extends Entity {
 	 * This will work even if quantity has "decreased" after order was submitted. Trying to cancel a
 	 * higher quantity than the order has to offer will simply result in the entire order being
 	 * cancelled.
+	 * 
+	 * NOTE: quantity can be negative. If withdrawing part of sell order, quantity should be < 0
 	 */
 	public Iterable<? extends Activity> withdrawOrder(Order order, int quantity, TimeStamp currentTime) {
 		if (order.getQuantity() == 0) return ImmutableList.of();
@@ -149,21 +151,23 @@ public abstract class Market extends Entity {
 
 			Order buy = orderMapping.get(e.getKey().getBuy());
 			Order sell = orderMapping.get(e.getKey().getSell());
-			Transaction trans = new Transaction(buy.getAgent(),
-					sell.getAgent(), this, buy, sell, e.getKey().getQuantity(),
-					e.getValue(), currentTime);
 			
-			askPriceQuantity.remove(sell.getPrice(), trans.getQuantity());
-			bidPriceQuantity.remove(buy.getPrice(), trans.getQuantity());
-		
-			checkOrder(buy);
-			checkOrder(sell);
-			transactions.add(trans);
-			allTransactions.add(trans);
-			// TODO add delay to this
-			buy.getAgent().addTransaction(trans);
-			if (!buy.getAgent().equals(sell.getAgent())) // In case buyer == seller
+			if (!buy.getAgent().equals(sell.getAgent())) { // In case buyer == seller
+				Transaction trans = new Transaction(buy.getAgent(),
+						sell.getAgent(), this, buy, sell, e.getKey().getQuantity(),
+						e.getValue(), currentTime);
+				
+				askPriceQuantity.remove(sell.getPrice(), trans.getQuantity());
+				bidPriceQuantity.remove(buy.getPrice(), trans.getQuantity());
+			
+				checkOrder(buy);
+				checkOrder(sell);
+				transactions.add(trans);
+				allTransactions.add(trans);
+				// TODO add delay to this
+				buy.getAgent().addTransaction(trans);
 				sell.getAgent().addTransaction(trans);
+			}
 		}
 
 		return updateQuote(transactions.build(), currentTime);

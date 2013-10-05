@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -14,9 +15,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import data.FundamentalValue;
-
 import activity.Activity;
 import activity.AgentStrategy;
+import activity.WithdrawOrder;
 import entity.Entity;
 import entity.infoproc.SIP;
 import entity.market.Order;
@@ -131,6 +132,19 @@ public abstract class Agent extends Entity {
 	 */
 	public void removeOrder(Order order) {
 		activeOrders.remove(order);
+	}
+
+	// TODO how does agent remove a specific order? based on time?
+	
+	/**
+	 * Withdraw all active orders.
+	 * @return
+	 */
+	public Iterable<? extends Activity> withdrawAllOrders() {
+		Collection<Activity> acts = new ArrayList<Activity>();
+		for (Order order : activeOrders)
+			acts.add(new WithdrawOrder(order, TimeStamp.IMMEDIATE));
+		return acts;
 	}
 	
 	// TODO gives the agent instant data. Should instead process with delay

@@ -64,9 +64,6 @@ public abstract class BackgroundAgent extends SMAgent {
 		return ImmutableList.of(new AgentStrategy(this, nextStrategy));
 	}
 	
-	// TODO
-	// withdraw orders? all orders?
-	
 	/**
 	 * Submits a NMS-routed Zero-Intelligence limit order.
 	 * 
@@ -107,10 +104,8 @@ public abstract class BackgroundAgent extends SMAgent {
 			return ImmutableList.of();
 		}
 		
-
 //		Price price = new Price((int) (val.getInTicks() - signum(quantity)
 //				* rand.nextDouble() * 2 * bidRangeMax)).nonnegative().quantize(tickSize);
-
 	}
 	
 	/**
@@ -124,6 +119,5 @@ public abstract class BackgroundAgent extends SMAgent {
 		return fundamental.getValueAt(currentTime).plus(
 				privateValue.getValueFromQuantity(positionBalance, quantity)).nonnegative();
 	}
-	
 	
 }

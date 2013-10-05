@@ -6,11 +6,11 @@ import java.util.Random;
 import com.google.common.collect.ImmutableSet;
 
 import data.FundamentalValue;
-
 import activity.Activity;
 import entity.agent.BackgroundAgent;
 import entity.infoproc.SIP;
 import entity.market.Market;
+import entity.market.Order;
 import event.TimeStamp;
 
 public class MockAgent extends BackgroundAgent {
@@ -27,4 +27,7 @@ public class MockAgent extends BackgroundAgent {
 		return ImmutableSet.of();
 	}
 
+	public Collection<Order> getOrders() {
+		return this.activeOrders;
+	}
 }

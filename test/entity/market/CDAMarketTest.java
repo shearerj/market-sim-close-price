@@ -102,6 +102,20 @@ public class CDAMarketTest {
 		assertTrue("Incorrect ASK quantity", q.askQuantity == 1);
 		assertTrue("Incorrect BID quantity", q.bidQuantity == 0);
 	}
+	
+	@Test
+	public void selfTrade() {
+		// Verify that agent can't trade with itself
+		TimeStamp time0 = TimeStamp.ZERO;
+		
+		MockAgent agent1 = new MockAgent(fundamental, sip, market);
+		
+		market.submitOrder(agent1, new Price(100),-1, time0);
+		market.submitOrder(agent1, new Price(150), 1, time0);
+		market.clear(time0);
+		
+		assertTrue(market.getTransactions().size() == 0);
+	}
 
 	@Test
 	public void basicEqualClear() {
@@ -235,12 +249,16 @@ public class CDAMarketTest {
 			setup();
 			multiOverlapClear();
 			setup();
-			priceTiesTest();
+			priceTies();
 		}
 	}
 	
 	
-	public void multiQuantityTest() {
+	/**
+	 * Test quantities of partially transacted orders. 
+	 */
+	@Test
+	public void partialQuantity() {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time2 = new TimeStamp(1);
 		
@@ -265,7 +283,102 @@ public class CDAMarketTest {
 		assertTrue("Incorrect ASK", q.ask == null);
 		assertTrue("Incorrect BID", q.bid.equals(new Price(150)));
 		assertTrue("Incorrect ASK quantity", q.askQuantity == 0);
-		assertTrue("Incorrect BID quantity", q.bidQuantity == 3);	// TODO BID/ASK do not take into account quantity?
+		assertTrue("Incorrect BID quantity", q.bidQuantity == 3);
+	}
+	
+	@Test
+	public void multiQuantity() {
+		TimeStamp time0 = TimeStamp.ZERO;
+		TimeStamp time1 = new TimeStamp(1);
+
+		MockAgent agent1 = new MockAgent(fundamental, sip, market);
+		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		
+		market.submitOrder(agent1, new Price(150),-1, time0);
+		market.submitOrder(agent1, new Price(140),-1, time0);
+		market.clear(time0);
+
+		// Both agents' sell orders should transact b/c partial quantity withdrawn
+		market.submitOrder(agent2, new Price(155), 2, time1);
+		market.clear(time1);	// TODO this throws a null pointer exception
+		// on second loop the buy order is null, as it gets removed from the data structure
+		assertTrue(market.getTransactions().size() == 2);
+		Transaction tr = market.getTransactions().get(0);
+		assertTrue("Incorrect Price", tr.getPrice().equals(new Price(140)));
+		assertTrue("Incorrect Quantity", tr.getQuantity() == 1);
+		tr = market.getTransactions().get(1);
+		assertTrue("Incorrect Price", tr.getPrice().equals(new Price(150)));
+		assertTrue("Incorrect Quantity", tr.getQuantity() == 1);
+	}
+	
+	
+	/**
+	 * Tests order withdrawals. Via agent withdrawals & market withdrawals.
+	 */
+	@Test
+	public void basicWithdraw() {
+		TimeStamp time0 = TimeStamp.ZERO;
+		TimeStamp time1 = new TimeStamp(1);
+		TimeStamp time2 = new TimeStamp(2);
+		
+		MockAgent agent1 = new MockAgent(fundamental, sip, market);
+		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		
+		market.submitOrder(agent1, new Price(100),-1, time0);
+		market.clear(time0);
+		Iterable<? extends Activity> acts = agent1.withdrawAllOrders();
+		for (Activity a : acts) a.execute(time0);
+		
+		// Check that no transaction, because agent1 withdrew its order
+		market.submitOrder(agent2, new Price(125), 1, time1);
+		assertTrue(market.getTransactions().size() == 0);
+
+		market.submitOrder(agent2, new Price(110), 1, time1);
+		Collection<Order> orders = agent2.getOrders();
+		Order toWithdraw = null;
+		for (Order o : orders)
+			if (o.getPrice().equals(new Price(125))) toWithdraw = o;
+		market.withdrawOrder(toWithdraw, time1);
+		market.clear(time1);
+		
+		// Check that it transacts at 110, price of order that was not withdrawn
+		market.submitOrder(agent1, new Price(100),-1, time2);
+		market.clear(time2);
+		assertTrue(market.getTransactions().size() == 1);
+		Transaction tr = market.getTransactions().get(0);
+		assertTrue("Incorrect Price", tr.getPrice().equals(new Price(110)));
+		assertTrue("Incorrect Quantity", tr.getQuantity() == 1);
+	}
+	
+	@Test
+	public void multiQuantityWithdraw() {
+		TimeStamp time0 = TimeStamp.ZERO;
+		TimeStamp time1 = new TimeStamp(1);
+
+		MockAgent agent1 = new MockAgent(fundamental, sip, market);
+		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		
+		market.submitOrder(agent1, new Price(150),-1, time0);
+		market.submitOrder(agent1, new Price(140),-2, time0);
+		Collection<Order> orders = agent1.getOrders();
+		Order toWithdraw = null;
+		for (Order o : orders)
+			if (o.getPrice().equals(new Price(140))) toWithdraw = o;
+		market.withdrawOrder(toWithdraw, -1, time0);
+		market.clear(time0);
+
+		// Both agents' sell orders should transact b/c partial quantity withdrawn
+		market.submitOrder(agent2, new Price(155), 1, time1);
+		market.clear(time1);
+		market.submitOrder(agent2,  new Price(155), 1, time1);
+		market.clear(time1);
+		assertTrue(market.getTransactions().size() == 2);
+		Transaction tr = market.getTransactions().get(0);
+		assertTrue("Incorrect Price", tr.getPrice().equals(new Price(140)));
+		assertTrue("Incorrect Quantity", tr.getQuantity() == 1);
+		tr = market.getTransactions().get(1);
+		assertTrue("Incorrect Price", tr.getPrice().equals(new Price(150)));
+		assertTrue("Incorrect Quantity", tr.getQuantity() == 1);
 	}
 	
 	
@@ -274,7 +387,7 @@ public class CDAMarketTest {
 	 * order that arrived first if there is a tie in price.
 	 */
 	@Test
-	public void priceTiesTest() {
+	public void priceTies() {
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 		TimeStamp time2 = new TimeStamp(2);
@@ -381,18 +494,12 @@ public class CDAMarketTest {
 		assertTrue("Incorrect Seller", tr.getSeller().equals(agent3));
 		assertTrue("Incorrect Price", tr.getPrice().equals(new Price(100)));
 		assertTrue("Incorrect Quantity", tr.getQuantity() == 1);
-	}
-	
-	public void testTrades() {
-		// TODO can't trade with itself
-	}
-	
+	}	
 	
 	public void latencyTest() {
 		// TODO check that market quotes are updating correctly
 		// test one market where immediately, and one where not.
 		
 		// TODO test market where IP has a latency, test that bid/ask updated correctly
-		
 	}
 }
