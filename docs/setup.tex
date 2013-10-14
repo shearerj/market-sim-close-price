@@ -68,9 +68,10 @@ cd hft_project
 git clone git@hft.eecs.umich.edu:hft.git
 \end{verbatim}
 
-\item Switch to the reorg branch
+\item Move to the repository directory and switch to the reorg branch
 
 \begin{verbatim}
+cd hft
 git checkout reorg
 \end{verbatim}
 
@@ -102,33 +103,35 @@ somewhere else, make the necessary changes.
   the top level directory of the repository
   (\path{~/hft_project/hft/build.xml}). Leave the project name unchanged and
   click Finish.
-\item At this point, the project will be imported automatically. Remove the JRE
-  System Library from the build path (via the right-click menu). Delete
-  \$\{classpath\}.
+\item At this point, the project will be imported automatically.
+\item Fix the project build path:
   \begin{enumerate}
   \item Right-click the project in the Project Explorer View and select
     Properties.
   \item Click Java Build Path in the left panel, then select Libraries (at the
-    top). Remove the JRE System Library and \$\{classpath\}.
+    top). Remove the JRE System Library.
   \item Click ``Add Library'' and add a JRE System Library (make sure you add a
     java 6 library!).
-  \item Still within Java Build Path, select Source. At the very bottom, change
-    the default output folder to \path{hft/build}.
+  \item Select Source at the top (next to libraries).
+  \item Click Add Folder and select ``test.''
+  \item Click OK and close the window.
   \end{enumerate}
 
-\item Before setting up the run command, create a directory to run your
-  simulations in.  To keep the repository organized, run all of your simulations
-  within the \path{simulations} directory.
+\item Before getting setup to run the simulator, you need to create a directory
+  to run your simulations in.  To keep the repository organized, run all of your
+  simulations within the \path{simulations} directory.
   \begin{enumerate}
-  \item Create a folder within simulations (e.g. \path{simulations/test})
+  \item Created a folder in the root of the repository called \path{simulations}.
+  \item Create a folder within simulations (e.g. \path{simulations/test}).
   \item Copy \path{docs/simulation_spec.json} into the folder you just created.
   \end{enumerate}
 
-\item In the Properties window, to set up run/debug configurations:
+\item In the Properties window setup run/debug configurations:
   \begin{enumerate}
+  \item Right click on the project again and select Properties.
   \item Select Run/Debug Settings in the left panel. Add a new launch
     configuration (Java Application).
-  \item At the top, change the name of the launch if you'd like. To select the
+  \item At the top, change the name to ``Run Simulator.'' To select the
     correct main class, click ``Search...'' and select SystemManager.
   \item Select the Arguments tab and enter something like the following into the
     ``Program Arguments'' window:
@@ -142,9 +145,8 @@ above.  This can be any directory as long as it has a
 \path{simulation_spec.json} file in it.
 
 The second argument represents what run number to use. In this case we're
-specifying run 1, but it can be any arbitrary number. It is the number appended
-to the name of generated observation files to tell the simulation run it is
-associated with.
+specifying run 1, but it can be any arbitrary number. This number is appended
+to the name of generated observation files.
   \end{enumerate}
   
 \item Save your settings and you should now be able to run the simulator in
@@ -152,9 +154,9 @@ Eclipse!
 
 \item Test that everything worked:
   \begin{enumerate}
-  \item Click the down arrow next to the green Run icon
-  \item Select ``Run Configurations...''
-  \item Select SystemManager from the left hand column and click Run
+  \item Click the down arrow next to the green arrow Run icon and select ``Run
+    Configurations...''
+  \item Select ``Run Simulator'' from the left hand column and click Run
   \item Check that there's an observation file called
     \path{simulations/test/observation1.json}, and a log file in
     \path{simulations/test/logs}.
