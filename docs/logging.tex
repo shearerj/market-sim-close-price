@@ -1,0 +1,275 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1.2in]{geometry}
+\usepackage{color,soul,hyperref,url}
+\usepackage{graphicx,amstext}
+\usepackage{subfigure}
+\usepackage{amsmath}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{paralist}
+
+\newcommand{\includefile}[2][]{\begingroup
+  \catcode`_=12 \docode{#1}{#2}}
+\newcommand{\docode}[2]{\lstinputlisting[#1]{#2}}
+
+\lstset{
+  basicstyle=\ttfamily,
+  breaklines=true
+}
+
+\begin{document}
+	
+\title{Logging}
+\author{
+  Elaine Wah \\
+  \href{mailto:ewah@umich.edu}{ewah@umich.edu}
+}
+\date{Updated: May 2013}
+\maketitle
+
+\section{File Location}
+
+All log files are saved in the folder \texttt{logs} that is created in the
+directory that contains the \texttt{simulation\_spec.json} file.  Logs (.txt
+files) are named according the following convention: There are four sections in
+the filename, each separated by underscores (examples refer to the filename
+\texttt{simulations-test\_2\_12-Feb-2013\_13.45.00.txt}):
+
+\begin{description}
+\item[Directory or path] with the spec file, with forward slashes replaced by
+  hyphens (e.g., the base directory is \texttt{simulations/test})
+\item[Observation number] (e.g., here it is observation \#2)
+\item[Date] (dd-MMM-YYYY format)
+\item[Time] (hh.mm.ss format, 24-hour clock, e.g., time here is 1:45:00 PM)
+\end{description}
+
+\section{Reading Lines}
+
+A line in a log file will look like
+
+\begin{verbatim}
+<message type>| <simulator time>|<model num>| <message>
+\end{verbatim}
+
+\begin{description}
+\item[message type] is the level of the logging message. It can be one of three things
+  \begin{enumerate}[1)]
+    \item Error
+    \item Info
+    \item Debug
+  \end{enumerate}
+\item[simulator time] is the current time in ticks of the simulator when the
+  message was produced.
+\item[model num] is the model number of the simulation. The default value
+  is 0, but it can be set to other numbers for merging log files.
+\item[message] This is the actual debug message which can be a number of
+  different things about the progression of the simulation (TODO: detailed
+  description of all possible debug messages). Two useful things to be aware of
+  are:
+  \begin{description}
+  \item[Market ID]s are within square brackets, e.g., \texttt{[-1]}.
+  \item[Agent ID]s are positive, and are within parentheses, e.g., \texttt{(1)};
+    each agent has a \emph{unique} agent ID.
+  \end{description}
+\end{description}
+
+Note that within the \texttt{config} directory there is a file called
+\texttt{env.properties}, which is used to specify the logging level. Log level 2
+will be adequate for most debugging purposes.
+%
+While printing to \texttt{System.out} will be useful for initial debugging,
+looking at the logs and observation files will be necessary in order to verify
+that agents are behaving as expected.
+
+\section{Configuration File}
+
+The log file excerpted in the following sections is located at
+\path{simulations_1_13-Oct-2013_16.35.17.txt}, and was generated using the
+following \path{simulation_spec.json} file:
+
+\includefile{simulation_spec.json}
+
+\section{Simulation Initialization}
+
+When a simulation is initialized, the following items are
+specified: \begin{inparaenum}[1)] \item the name of the simulation, \item the
+  random seed used to run the simulation, \item the full configuration, \item number and type of each market,
+  and \item market ID. \end{inparaenum} For example:
+\includefile[lastline=5]{simulations_1_13-Oct-2013_16.35.17.txt}
+In the previous file each lines means:
+\begin{description}
+\item[\texttt{mySimulation}] --- Is the name of the simulation. This is used in
+  the observation file and give a unique name to a specific simulation.
+\item[\texttt{Random Seed : -1282951707}] --- This prints out the random seed
+  used to generate this simulation.
+\item[\texttt{Configuration :...}] --- Is the entire \path{simulation_spec.json}
+  file for this simulation.
+\item[\texttt{Created Market : CDA [1]}] --- Specifies that market 1 is a CDA
+  market.
+%\item[\texttt{Market Config}] was removed
+\end{description}
+
+\section{Agent Creation \& Initialization}
+
+%\subsection{Agent creation} was removed
+
+\subsection{Agent initialization}
+During agent initialization, agents are assigned: (1) arrival times; (2) private valuations, if they have one; (3) agent IDs; and (4) log IDs.
+The general format for logging agent initialization is:
+\begin{verbatim}
+<agentID>: (<logID>,{modelID})::<type>::arrivalTime=<time>, pv=<private value>
+... params={<parameter_n>=<value_n>}
+\end{verbatim}
+A partial example of agent initialization logging follows (for a simulation with 5 ZI agents and a single LA agent in market model \#2, the two-market model with LA):
+\begin{verbatim}
+1369933844607|X|2| 1: (1,{1})::ZI::arrivalTime=1, pv=[[809, -15701]] ... 
+params={bidRange=2000, marketID=-1, arrivalTime=1, seed=1511539776185465446, 
+fundamentalAtArrival=129299}
+1369933844607|X|2| 2: (2,{1})::ZI::arrivalTime=4, pv=[[6490, -8052]] ... 
+params={bidRange=2000, marketID=-1, arrivalTime=4, seed=-8400005381541772898, 
+fundamentalAtArrival=149413}
+1369933844607|X|2| 3: (3,{1})::ZI::arrivalTime=6, pv=[[13789, 838]] ... 
+params={bidRange=2000, marketID=-1, arrivalTime=6, seed=2413135968883302395, 
+fundamentalAtArrival=146299}
+1369933844607|X|2| 4: (4,{1})::ZI::arrivalTime=25, pv=[[12627, 5135]] ... 
+params={bidRange=2000, marketID=-1, arrivalTime=25, seed=1167348736068771780, 
+fundamentalAtArrival=110522}
+1369933844608|X|2| 5: (5,{1})::ZI::arrivalTime=36, pv=[[8643, 2744]] ... 
+params={bidRange=2000, marketID=-1, arrivalTime=36, seed=-2222894510176179867, 
+fundamentalAtArrival=79820}
+1369933844608|X|2| 6: (1,{2})::ZI::arrivalTime=1, pv=[[809, -15701]] ... 
+params={bidRange=2000, marketID=-2, arrivalTime=1, seed=1511539776185465446, 
+fundamentalAtArrival=129299}
+1369933844608|X|2| 7: (2,{2})::ZI::arrivalTime=4, pv=[[6490, -8052]] ... 
+params={bidRange=2000, marketID=-3, arrivalTime=4, seed=-8400005381541772898, 
+fundamentalAtArrival=149413}
+1369933844608|X|2| 8: (3,{2})::ZI::arrivalTime=6, pv=[[13789, 838]] ... 
+params={bidRange=2000, marketID=-2, arrivalTime=6, seed=2413135968883302395, 
+fundamentalAtArrival=146299}
+1369933844608|X|2| 9: (4,{2})::ZI::arrivalTime=25, pv=[[12627, 5135]] ... 
+params={bidRange=2000, marketID=-3, arrivalTime=25, seed=1167348736068771780, 
+fundamentalAtArrival=110522}
+1369933844608|X|2| 10: (5,{2})::ZI::arrivalTime=36, pv=[[8643, 2744]] ... 
+params={bidRange=2000, marketID=-2, arrivalTime=36, seed=-2222894510176179867, 
+fundamentalAtArrival=79820}
+1369933844608|X|2| 11: (6,{2})::LA::arrivalTime=0 ... params={sleepVar=100, 
+sleepTime=0, seed=4181524093244964785, alpha=0.001}
+1369933844608|X|2| 12: (1,{3})::ZI::arrivalTime=1, pv=[[809, -15701]] ... 
+params={bidRange=2000, marketID=-4, arrivalTime=1, seed=1511539776185465446, 
+fundamentalAtArrival=129299}
+.
+.
+.
+1369933844609|X|2| 22: (5,{4})::ZI::arrivalTime=36, pv=[[8643, 2744]] ... 
+params={bidRange=2000, marketID=-6, arrivalTime=36, seed=-2222894510176179867, 
+fundamentalAtArrival=79820}
+1369933844609|X|2|------------------------------------------------
+\end{verbatim}
+
+Explanations of some select lines:
+\begin{description}
+\item \texttt{1: (1,{1})::ZI::arrivalTime=1, pv=[[809, -15701]]} --- initializes a ZI agent within market model 1 with agentID=1, logID=1, arrival time of 1 and private valuation vector of 101525
+
+\item \texttt{6: (1,{2})::ZI::arrivalTime=1, pv=[[809, -15701]]} --- initializes a ZI agent with the same pseudorandom number generator seed but in market model 2 with agentID=6, logID=1 (the same as before), and the same arrival time/private value.
+
+\item \texttt{11: (6,{2})::LA::arrivalTime=0} --- initializes the latency arbitrageur with agentID=11 and logID=6. Note that LA is only initialized for market model 2.
+\end{description}
+
+In the simulator, \texttt{params} is a general-purpose container for storing parameters and associated values during entity creation and initialization. These may be strategy parameters set in the specification file or the common random numbers stored for agent populations.
+
+
+\section{Market simulation}
+
+After market models, markets, and agents are created, the simulation begins running.
+Each line will have a timestamp (which is the number following the first 18 characters).
+For example, in 
+\begin{verbatim}
+1369933844610|X|2|0 | (1,{2})->[-2],[-3]
+\end{verbatim}
+the first section \texttt{1369933844610|X|2|} can be ignored, and the timestamp here is 0.
+
+In general, agents in the log files are referred to by log ID and market model (e.g., \texttt{(1,{2})} is agent with log ID 1 in market model 2) as this simplifies the comparison of agent behavior across models.
+Some of the types of activities that will be logged:
+%
+\begin{description}
+
+\item[Arrival] Agent with log ID 1 in market model 2 arrives in markets --2 and --3.
+\begin{verbatim}
+0 | (1,{2})->[-2],[-3]
+\end{verbatim}
+\item[Communication with SIP] See first tutorial for explanation of these activities. The last line gives the updated NBBO quote after the execution of these activities. Any price of \texttt{-1} means that it is undefined. In the following example, the activities are executed by market --6.
+The NBBO quote is represented as being the best between multiple markets by multiple IDs within square brackets, e.g., \texttt{[-2,-3]} (see last line).
+\begin{verbatim}
+0 | [-6] SendToSIP(-1, -1)
+0 | [-6] ProcessQuote: (Bid: -1, Ask: -1)
+0 | [-6] UpdateNBBO: current (Bid: -1, Ask: -1) --> updated NBBO(Bid: -1, Ask: -1)
+0 | [-5] SendToSIP(-1, -1)
+0 | [-5] ProcessQuote: (Bid: -1, Ask: -1)
+0 | [-4, -5] UpdateNBBO: current (Bid: -1, Ask: -1) --> updated NBBO(Bid: -1, Ask: -1)
+\end{verbatim}
+
+\item[Updating quotes] These lines just give the updated quotes at timestamp 36 for agent 6 in model 2. Only HFT agents can act on the Global quote (best buy/sell prices in all markets).
+Non-HF traders can only act based on knowledge of their primary market and the NBBO quote.
+\begin{verbatim}
+36 | (6,{2}) Global(Bid: 144052, Ask: 156447), NBBO(Bid: 144052, Ask: 156447)
+\end{verbatim}
+
+\item[Bid submission] ZI agent 2 in model 1 submits a bid that will be routed according to Regulation NMS. The bid it submits to market \texttt{-1} is an order \texttt{(144052,-1)}, i.e. to sell 1 unit (represented by $-1$) at price 144052.
+See \texttt{SMAgent.java} for details on order routing.
+\begin{verbatim}
+6 | (3,{1}) ZI::submitNMSBid: +(144052,1) to [-1]
+6 | (3,{2}) ZI::submitNMSBid: NBBO(110054, 156447) better than [-2] 
+Quote(110054, -1)
+\end{verbatim}
+
+\item[Order matching and clearing]
+A ZI agent (log ID=5) in model 1 (centralized CDA market model) arrives and submits an order to sell 1 unit at price 91109 at timestamp 36. There is only one market in the model (with ID=--1).
+\begin{verbatim}
+36 | (5,{1}) ZI::submitNMSBid: NBBO(144052, 156447) worse than/same as [-1] 
+Quote(144052, 156447)
+36 | (5,{1}) ZI::submitBid: +(91109, -1) to [-1]
+\end{verbatim}
+%
+%
+The submitted order matches with an order to buy at price 144052. Note that \texttt{5:(-1 91109)} indicates that agent with logID=5 submitted the newest order. \texttt{MB} gives the list of matching buy orders, \texttt{MS} gives the list of matching sells. Since this is a CDA, the transaction clears at the price of the incumbent order (144052).
+%
+\begin{verbatim}
+36 | [-1] Active bids: (1 110054) (-1 156447) (1 144052) (1 111727) (-1 91109)
+36 | [-1] FourHeap::logSets::Buys: 4:(1 111727)1:(1 110054) Sells: 2:(-1 156447) 
+MB:   size: 1 3:(1 144052) MS:   size: 1 5:(-1 91109)
+36 | [-1] Prior-clear Quote(Bid: 111727, Ask: 144052)
+36 | [-1] Quantity=1 cleared at Price=144052
+\end{verbatim}
+%
+%
+The agent processes the transaction:
+\begin{verbatim}
+36 | (3,{1}) Agent::updateTransactions: New transaction received: (mktID=-1, 
+transID=0 buyer=3, seller=5, price=144052, quantity=1, timeStamp=36)
+36 | (3,{1}) Agent::updateTransactions: BUYER surplus: ([[13789, 838]]+79820)
+-144052=-63394, SELLER surplus: 144052-([[8643, 2744]]+79820)=55589
+36 | (3,{1}) Agent::updateTransactions: SURPLUS: -7805
+36 | (3,{1}) Agent::logTransactions: CENTRALCDA: Current Position=1, Realized 
+Profit=0
+36 | (5,{1}) Agent::updateTransactions: New transaction received: (mktID=-1, 
+transID=0 buyer=3, seller=5, price=144052, quantity=1, timeStamp=36)
+36 | (5,{1}) Agent::updateTransactions: BUYER surplus: ([[13789, 838]]+79820)
+-144052=-63394, SELLER surplus: 144052-([[8643, 2744]]+79820)=55589
+36 | (5,{1}) Agent::updateTransactions: SURPLUS: -7805
+36 | (5,{1}) Agent::logTransactions: CENTRALCDA: Current Position=-1, Realized 
+Profit=0
+\end{verbatim}
+
+%
+The matching orders have been removed from the order book (the \texttt{MB} and \texttt{MS} lists are now both empty):
+\begin{verbatim}
+36 | [-2] Active bids: (1 110054) (0 144052) (0 91109)
+36 | [-2] Cleared bids: (0 144052) (0 91109)
+36 | [-2] FourHeap::logSets::Buys: 6:(1 110054) Sells:  MB:   size: 0  MS:   size: 0
+36 | .....[-2] CDAMarket::clear: Order book cleared: Post-clear Quote(Bid: 110054, 
+Ask: -1)
+\end{verbatim}
+
+\end{description}
+
+\end{document}
