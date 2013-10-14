@@ -5,7 +5,7 @@
 	"modelName" : "mySimulation",
 	"modelNum" : "1",
 	"simLength": "15000",
-	"presets" : "TWOMARKET",
+	"presets" : "TWOMARKETLA",
 	"CDA" : "num_0",
 	"CALL" : "num_0",
 	"BASICMM": "num_0_sleepTime_200_numRungs_10_rungSize_1000",
