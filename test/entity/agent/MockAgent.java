@@ -30,4 +30,9 @@ public class MockAgent extends BackgroundAgent {
 	public Collection<Order> getOrders() {
 		return this.activeOrders;
 	}
+	
+	@Override
+	public String toString() {
+		return "MockAgent " + super.toString();
+	}
 }

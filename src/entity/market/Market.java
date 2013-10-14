@@ -37,6 +37,7 @@ import entity.infoproc.SMIP;
 import entity.market.clearingrule.ClearingRule;
 import event.TimeStamp;
 import fourheap.FourHeap;
+import fourheap.MatchedOrders;
 
 /**
  * Base class for all markets.
@@ -137,7 +138,12 @@ public abstract class Market extends Entity {
 		priceQuant.remove(order.getPrice(), abs(quantity));
 		
 		orderbook.withdrawOrder(order.order, quantity);
-		checkOrder(order);
+		
+		if (order.getQuantity() == 0) {
+			order.agent.removeOrder(order);
+			orderMapping.remove(order.order);
+		}
+		
 		return ImmutableList.of();
 	}
 
@@ -145,13 +151,16 @@ public abstract class Market extends Entity {
 	 * Clears the order book.
 	 */
 	public Iterable<? extends Activity> clear(TimeStamp currentTime) {
-		List<fourheap.MatchedOrders<Price, TimeStamp>> ftransactions = orderbook.clear();
+		List<MatchedOrders<Price, TimeStamp>> matchedOrders = orderbook.clear();
 		Builder<Transaction> transactions = ImmutableList.builder();
-		for (Entry<fourheap.MatchedOrders<Price, TimeStamp>, Price> e : clearingRule.pricing(ftransactions).entrySet()) {
+		for (Entry<MatchedOrders<Price, TimeStamp>, Price> e : clearingRule.pricing(matchedOrders).entrySet()) {
 
 			Order buy = orderMapping.get(e.getKey().getBuy());
 			Order sell = orderMapping.get(e.getKey().getSell());
 			
+			// FIXME We can't just ignore it. We have to remove them or something. This isn't the
+			// correct solution to this
+
 			if (!buy.getAgent().equals(sell.getAgent())) { // In case buyer == seller
 				Transaction trans = new Transaction(buy.getAgent(),
 						sell.getAgent(), this, buy, sell, e.getKey().getQuantity(),
@@ -159,15 +168,25 @@ public abstract class Market extends Entity {
 				
 				askPriceQuantity.remove(sell.getPrice(), trans.getQuantity());
 				bidPriceQuantity.remove(buy.getPrice(), trans.getQuantity());
-			
-				checkOrder(buy);
-				checkOrder(sell);
+				
 				transactions.add(trans);
 				allTransactions.add(trans);
-				// TODO add delay to this
+				// TODO add delay to agent facing actions...
 				buy.getAgent().addTransaction(trans);
+				if (buy.getQuantity() == 0)
+					buy.agent.removeOrder(buy);
 				sell.getAgent().addTransaction(trans);
+				if (sell.getQuantity() == 0)
+					sell.agent.removeOrder(sell);
 			}
+		}
+		
+		// Remove transacted orders
+		for (MatchedOrders<Price, TimeStamp> match : matchedOrders) {
+			if (match.getBuy().getQuantity() == 0)
+				orderMapping.remove(match.getBuy());
+			if (match.getSell().getQuantity() == 0)
+				orderMapping.remove(match.getSell());
 		}
 
 		return updateQuote(transactions.build(), currentTime);
@@ -204,17 +223,6 @@ public abstract class Market extends Entity {
 		for (IP ip : Iterables2.randomOrder(ips, rand))
 			acts.add(new SendToIP(this, quote, transactions, ip, TimeStamp.IMMEDIATE));
 		return acts.build();
-	}
-	
-	/**
-	 * Removes order from appropriate data structures if it's fully transacted
-	 * @order
-	 */
-	protected void checkOrder(Order order) {
-		if (order.getQuantity() == 0) {
-			order.agent.removeOrder(order);
-			orderMapping.remove(order.order);
-		}
 	}
 
 	// TODO Add IOC / Fill or Kill Order

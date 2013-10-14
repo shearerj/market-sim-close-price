@@ -21,12 +21,12 @@ public class EarliestPriceClear implements ClearingRule {
 	
 	@Override
 	public Map<MatchedOrders<Price, TimeStamp>, Price> pricing(
-			Iterable<MatchedOrders<Price, TimeStamp>> transactions) {
+			Iterable<MatchedOrders<Price, TimeStamp>> matchedOrders) {
 		Builder<MatchedOrders<Price, TimeStamp>, Price> prices = ImmutableMap.builder();
-		for (MatchedOrders<Price, TimeStamp> trans : transactions)
-			prices.put(trans, trans.getBuy().getSubmitTime().before(trans.getSell().getSubmitTime())
-					? trans.getBuy().getPrice().quantize(tickSize)
-					: trans.getSell().getPrice().quantize(tickSize));
+		for (MatchedOrders<Price, TimeStamp> match : matchedOrders)
+			prices.put(match, match.getBuy().getSubmitTime().before(match.getSell().getSubmitTime())
+					? match.getBuy().getPrice().quantize(tickSize)
+					: match.getSell().getPrice().quantize(tickSize));
 		// TODO will always pick seller's price when at the same time, is this correct? Probably not?
 		return prices.build();
 	}
