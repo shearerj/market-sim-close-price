@@ -29,9 +29,6 @@ public class CallMarketTest {
 	private FundamentalValue fundamental = new DummyFundamental(100000);
 	private SIP sip;
 	private Market market1;
-	private Market market2;
-	private Market market3;
-	private Market market4;
 
 	@BeforeClass
 	public static void setupClass() {
@@ -44,15 +41,15 @@ public class CallMarketTest {
 		// no delay from SIP + clears every 100
 		market1 = new CallMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1, 0.5,
 				new TimeStamp(100));
-		// no delay from SIP + clears immediately
-		market2 = new CallMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1, 0.5,
-				TimeStamp.ZERO);
-		// delayed info + clears every 100
-		market2 = new CallMarket(sip, new TimeStamp(100), new Random(), 1, 0.5,
-				new TimeStamp(100));
-		// delayed info + clears immediately
-		market2 = new CallMarket(sip, new TimeStamp(100), new Random(), 1, 0.5,
-				TimeStamp.ZERO);
+//		// no delay from SIP + clears immediately
+//		market2 = new CallMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1, 0.5,
+//				TimeStamp.ZERO);
+//		// delayed info + clears every 100
+//		market2 = new CallMarket(sip, new TimeStamp(100), new Random(), 1, 0.5,
+//				new TimeStamp(100));
+//		// delayed info + clears immediately
+//		market2 = new CallMarket(sip, new TimeStamp(100), new Random(), 1, 0.5,
+//				TimeStamp.ZERO);
 	}
 
 	@Test
@@ -137,7 +134,8 @@ public class CallMarketTest {
 		for (Transaction tr : market1.getTransactions()) {
 			assertTrue("Incorrect Buyer", tr.getBuyer().equals(agent1));
 			assertTrue("Incorrect Seller", tr.getSeller().equals(agent2));
-			assertTrue("Incorrect Price", tr.getPrice().equals(new Price(50)));
+			// XXX The below line was 50, but this isn't a CDA so it should be 125, right?
+			assertTrue("Incorrect Price", tr.getPrice().equals(new Price(125)));
 			assertTrue("Incorrect Quantity", tr.getQuantity() == 1);
 		}
 	}
