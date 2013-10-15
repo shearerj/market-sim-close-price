@@ -40,13 +40,24 @@ import fourheap.FourHeap;
 import fourheap.MatchedOrders;
 
 /**
- * Base class for all markets.
+ * Base class for all markets. This class provides almost all market
+ * functionality that one should need for creating a market.
+ * 
+ * A market needs two things to function appropriately. First is a latency. This
+ * represents how long it takes background agents (with only one primary market)
+ * to get information from the market. A latency of TimeStamp.IMMEDIATE makes
+ * this immediate. The second thing they need is a ClearingRule. A ClearingRule
+ * is a class that takes a set of MatchedOrders and assigns a price to them.
+ * This facilitates the difference in pricing between a call market and a CDA.
+ * 
+ * By default the only method that schedules more activities is a Clear. A clear
+ * will trigger a SendToIP for every IP this Market knows about (via the method
+ * updateQuote). Every other time another action needs to happen it needs to be
+ * overridden by the subclass. For example, a CDA will trigger a Clear after a
+ * SubmitOrder, and sendToIP activitites after a WithdrawOrder. A call market will
+ * schedule another Clear after an existing one.
  * 
  * @author ewah
- */
-/**
- * @author ewah
- *
  */
 public abstract class Market extends Entity {
 
@@ -59,15 +70,15 @@ public abstract class Market extends Entity {
 
 	protected final SMIP ip;
 	protected final SIP sip;
-	protected final Collection<IP> ips;
+	protected final Collection<IP> ips; // All the information processors that get data
 	
-	protected Quote quote;
+	protected Quote quote; // Current quote
 
 	// Book keeping
-	protected final Map<fourheap.Order<Price, TimeStamp>, Order> orderMapping;
-	protected final Multiset<Price> askPriceQuantity, bidPriceQuantity;
+	protected final Map<fourheap.Order<Price, TimeStamp>, Order> orderMapping; // How to get full orders from fourheap Orders
+	protected final Multiset<Price> askPriceQuantity, bidPriceQuantity; // How many orders are at a specific price
 	protected final Collection<Order> orders; // All orders ever submitted to the market
-	protected final List<Transaction> allTransactions; // All successful transactions
+	protected final List<Transaction> allTransactions; // All successful transactions, implicitly time ordered
 	
 	// depths: Number of orders in the orderBook
 	// spreads: Bid-ask spread value
@@ -75,6 +86,20 @@ public abstract class Market extends Entity {
 	protected final TimeSeries depths, spreads, midQuotes;
 
 
+	/**
+	 * Constructor
+	 * 
+	 * @param sip
+	 *            the SIP for this simulation
+	 * @param latency
+	 *            how long it takes agents with market as a primary model get
+	 *            get notified of market changes
+	 * @param clearingRule
+	 *            a class that dictates how the prices on matching orders are
+	 *            set
+	 * @param rand
+	 *            the random number generator to use
+	 */
 	public Market(SIP sip, TimeStamp latency, ClearingRule clearingRule, Random rand) {
 		super(nextID++);
 		this.orderbook = FourHeap.<Price, TimeStamp>create();
@@ -99,6 +124,13 @@ public abstract class Market extends Entity {
 		this.midQuotes = new TimeSeries();
 	}
 
+	/**
+	 * Add an IP to this market that will get notified when the market quote and
+	 * transactions change.
+	 * 
+	 * @param ip
+	 *            the IP to add
+	 */
 	public void addIP(IP ip) {
 		checkNotNull(ip, "IP");
 		ips.add(ip);
@@ -109,24 +141,52 @@ public abstract class Market extends Entity {
 	}
 
 	/**
-	 * @return All bids submitted to this market
+	 * Get all orders ever submitted to the market
+	 * 
+	 * @return All orders ever submitted to this market
 	 */
 	public Collection<Order> getAllOrders() {
 		return ImmutableList.copyOf(orders);
 	}
-
+	
+	/**
+	 * Convenience method to fully remove an order.
+	 * 
+	 * NOTE: This should only be called by the corresponding activity
+	 * 
+	 * @param order
+	 *            order to remove
+	 * @param currentTime
+	 *            the current time
+	 * @return any side effect activities (base case none)
+	 */
 	public Iterable<? extends Activity> withdrawOrder(Order order,
 			TimeStamp currentTime) {
 		return withdrawOrder(order, order.getQuantity(), currentTime);
 	}
 
 	/**
-	 * This will work even if quantity has "decreased" after order was submitted. Trying to cancel a
-	 * higher quantity than the order has to offer will simply result in the entire order being
-	 * cancelled.
+	 * Method to withdraw specific quantity from an order. Quantity can be
+	 * thought of quantity and type of order. If withdrawing part of sell order,
+	 * quantity should be < 0.
 	 * 
-	 * NOTE: quantity can be negative. If withdrawing part of sell order, quantity should be < 0
+	 * This will work even if quantity has "decreased" after order was
+	 * submitted. Trying to cancel a higher quantity than the order has to offer
+	 * will simply result in the entire order being cancelled.
+	 * 
+	 * NOTE: This should only be called by the corresponding activity
+	 * 
+	 * @param order
+	 *            order to withdraw quantity from
+	 * @param quantity
+	 *            quantity to withdraw, should be negative when withdrawing sell
+	 *            orders
+	 * @param currentTime
+	 *            the current time
+	 * @return any side effect activities (base case none)
 	 */
+	// XXX Should this actually require negative quantity for sell orders? or
+	// should the logic be in here?
 	public Iterable<? extends Activity> withdrawOrder(Order order, int quantity, TimeStamp currentTime) {
 		if (order.getQuantity() == 0) return ImmutableList.of();
 		checkArgument(quantity != 0 && signum(order.getQuantity()) == signum(quantity),
@@ -149,6 +209,12 @@ public abstract class Market extends Entity {
 
 	/**
 	 * Clears the order book.
+	 * 
+	 * NOTE: This should only be called by the corresponding activity
+	 * 
+	 * @param currentTime
+	 *            the current time
+	 * @return any side effect activities (base case SendToIP activities)
 	 */
 	public Iterable<? extends Activity> clear(TimeStamp currentTime) {
 		List<MatchedOrders<Price, TimeStamp>> matchedOrders = orderbook.clear();
@@ -181,7 +247,7 @@ public abstract class Market extends Entity {
 			}
 		}
 		
-		// Remove transacted orders
+		// Remove fully transacted orders
 		for (MatchedOrders<Price, TimeStamp> match : matchedOrders) {
 			if (match.getBuy().getQuantity() == 0)
 				orderMapping.remove(match.getBuy());
@@ -193,7 +259,14 @@ public abstract class Market extends Entity {
 	}
 
 	/**
-	 * Updates the Markets current quote
+	 * Updates the Markets current quote and returns a set of SendToIP
+	 * activities for every IP the market "knows" about
+	 * 
+	 * @param transactions
+	 *            the transactions that are new since the last quote update
+	 * @param currentTime
+	 *            the current time
+	 * @return the SendToIP activities required to propagate information
 	 */
 	protected Iterable<? extends Activity> updateQuote(
 			List<Transaction> transactions, TimeStamp currentTime) {
@@ -201,16 +274,21 @@ public abstract class Market extends Entity {
 		Price bid = orderbook.bidQuote();
 		int quantityAsk = askPriceQuantity.count(ask);
 		int quantityBid = bidPriceQuantity.count(bid);
-		// TODO In certain circumstances, there will be no orders with the current ask or bid price
-		// in the market. This is a result of the ask price being set as part of a matched order.
-		// The correct "quantity" is 0, but it doesn't tell how many orders are available at that
-		// price. This is possible to do a number of ways. One could use a sorted map which has log
-		// time, one could scan the heap which would be worst case linear, or probably the best
-		// thing would be to have the heap have a hashmap to check the quantity based off of wither
-		// matched or unmatched order... I think this may be fine the way it is, only because if
-		// quantity is 0, but price isn't null, then you'll have to bid over instead of equal to the
-		// quote in order to execute. Also, this will only happen when there are matched orders when
-		// a quote is generated, which is currently never possible
+		/*
+		 * TODO In certain circumstances, there will be no orders with the
+		 * current ask or bid price in the market. This is a result of the ask
+		 * price being set as part of a matched order. The correct "quantity" is
+		 * 0, but it doesn't tell how many orders are available at that price.
+		 * This is possible to do a number of ways. One could use a sorted map
+		 * which has log time, one could scan the heap which would be worst case
+		 * linear, or probably the best thing would be to have the heap have a
+		 * hashmap to check the quantity based off of wither matched or
+		 * unmatched order... I think this may be fine the way it is, only
+		 * because if quantity is 0, but price isn't null, then you'll have to
+		 * bid over instead of equal to the quote in order to execute. Also,
+		 * this will only happen when there are matched orders when a quote is
+		 * generated, which is currently never possible
+		 */
 		quote = new Quote(this, ask, quantityAsk, bid, quantityBid, currentTime);
 
 		log(INFO, this + " " + quote);
@@ -225,10 +303,26 @@ public abstract class Market extends Entity {
 		return acts.build();
 	}
 
-	// TODO Add IOC / Fill or Kill Order
+	/*
+	 * TODO Add IOC / Fill or Kill Order (potentially change current syntax so
+	 * that a withdraw without a duration never expires, and one with duration
+	 * IMMEDIATE is a Fill or Kill. Not sure if this will work / make sense.
+	 */
 
 	/**
-	 * Bid doesn't expire
+	 * Submit an order that doesn't expire
+	 * 
+	 * NOTE: This should only be called by the corresponding activity
+	 * 
+	 * @param agent
+	 *            The agent that's submitting the order
+	 * @param price
+	 *            The price of the order
+	 * @param quantity
+	 *            The quantity of the order (negative for sell orders)
+	 * @param currentTime
+	 *            The current time
+	 * @return any side effect activities (base case none)
 	 */
 	public Iterable<? extends Activity> submitOrder(Agent agent, Price price,
 			int quantity, TimeStamp currentTime) {
@@ -236,12 +330,24 @@ public abstract class Market extends Entity {
 	}
 
 	/**
+	 * Submit an order that will "expire." An order expires by returning a
+	 * withdrawOrder activity scheduled at currentTime + duration in the future.
+	 * 
+	 * NOTE: This should only be called by the corresponding activity
+	 * 
 	 * @param agent
+	 *            The agent submitting the order
 	 * @param price
+	 *            The price of the order
 	 * @param quantity
+	 *            The quantity of the order, negative for sell orders
 	 * @param currentTime
+	 *            The current time
 	 * @param duration
-	 * @return
+	 *            The amount of time to wait before canceling the order. Use
+	 *            TimeStamp.IMMEDIATE for an order that doesn't expire.
+	 * @return The side effect activities (base case potentially a WithdrawOrder for this
+	 *         method)
 	 */
 	public Iterable<? extends Activity> submitOrder(Agent agent, Price price,
 			int quantity, TimeStamp currentTime, TimeStamp duration) {
@@ -268,16 +374,54 @@ public abstract class Market extends Entity {
 	}
 
 	/**
-	 * Bid doesn't expire
+	 * Submit a routed order that doesn't expire. The placed bid will be routed
+	 * to the Market that appears to offer the best execution according to the
+	 * NBBO and this market's current up to date quote.
+	 * 
+	 * NOTE: This should only be called by the corresponding activity
+	 * 
+	 * @param agent
+	 *            The agent that's submitting the order
+	 * @param price
+	 *            The price of the order
+	 * @param quantity
+	 *            The quantity of the order, negative for sell orders
+	 * @param currentTime
+	 *            The currentTime
+	 * @return Any side effect activities (none in base case)
 	 */
 	public Iterable<? extends Activity> submitNMSOrder(Agent agent,
 			Price price, int quantity, TimeStamp currentTime) {
 		return submitNMSOrder(agent, price, quantity, currentTime, TimeStamp.IMMEDIATE);
 	}
 
-	// TODO How should call markets handle Reg NMS. Can't route to call market to get immediate
-	// execution. NMSOrder will not route properly for a call market if there is another market in
-	// the model
+	/**
+	 * Submit a routed order that "expires" after duration. The placed bid will
+	 * be routed to the Market that appears to offer the best execution
+	 * according to the NBBO and this market's current up to date quote. If
+	 * duration is TimeStamp.IMMEDIATE than the order will not expire.
+	 * 
+	 * NOTE: This should only be called by the corresponding activity
+	 * 
+	 * @param agent
+	 *            The agent submitting the order
+	 * @param price
+	 *            The price of the order
+	 * @param quantity
+	 *            The quantity of the order, negative for sell orders
+	 * @param currentTime
+	 *            The current time
+	 * @param duration
+	 *            The duration before the bid should expire. If duration =
+	 *            TimeStamp(1), the bid will expire after 1 millisecond. To make
+	 *            an order that doesn't expire use TimeStamp.IMMEDIATE.
+	 * @return Any side effect activities (base case possibly a withdraw order)
+	 */
+	/*
+	 * TODO How should call markets handle Reg NMS. Can't route to call market
+	 * to get immediate execution. NMSOrder will not route properly for a call
+	 * market if there is another market in the model
+	 */
 	public Iterable<? extends Activity> submitNMSOrder(Agent agent,
 			Price price, int quantity, TimeStamp currentTime, TimeStamp duration) {
 		BestBidAsk nbbo = sip.getNBBO();
@@ -304,22 +448,47 @@ public abstract class Market extends Entity {
 		return bestMarket.submitOrder(agent, price, quantity, currentTime, duration);
 	}
 	
+	/**
+	 * Get a list of all transactions in the market. This should NOT be used by
+	 * agents to get transaction lists.
+	 * 
+	 * @return An immutable list of Transactions.
+	 */
 	public List<Transaction> getTransactions() {
 		return ImmutableList.copyOf(allTransactions);
 	}
 
+	/**
+	 * Get the depths. Used for observations.
+	 * 
+	 * @return The depths of the Market
+	 */
 	public TimeSeries getDepth() {
 		return this.depths;
 	}
 
+	/**
+	 * Get the spreads. Used for observations.
+	 * 
+	 * @return The spreads of the Market
+	 */
 	public TimeSeries getSpread() {
 		return this.spreads;
 	}
 
+	/**
+	 * Get the mid quotes. Used for observations.
+	 * 
+	 * @return The mid quotes of the Market
+	 */
 	public TimeSeries getMidQuotes() {
 		return this.midQuotes;
 	}
 
+	/**
+	 * Base Market just returns the id in []. Subclasses should override to also
+	 * add information about the type of market.
+	 */
 	@Override
 	public String toString() {
 		return new String("[" + id + "]");
