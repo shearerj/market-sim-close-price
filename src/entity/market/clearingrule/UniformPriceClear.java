@@ -35,11 +35,10 @@ public class UniformPriceClear implements ClearingRule {
 			minBuy = ord.min(minBuy, trans.getBuy().getPrice());
 			maxSell = ord.max(maxSell, trans.getSell().getPrice());
 		}
-		
-		Price clearPrice = new Price(
-				(int) (minBuy.getInTicks() * ratio + maxSell.getInTicks()
-						* (1 - ratio))).quantize(tickSize);
-		
+
+		Price clearPrice = new Price(minBuy.doubleValue() * ratio
+				+ maxSell.doubleValue() * (1 - ratio)).quantize(tickSize);
+
 		Builder<MatchedOrders<Price, TimeStamp>, Price> prices = ImmutableMap.builder();
 		for (MatchedOrders<Price, TimeStamp> trans : transactions)
 			prices.put(trans, clearPrice);

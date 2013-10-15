@@ -82,7 +82,7 @@ public abstract class BackgroundAgent extends SMAgent {
 				newPosition >= -privateValue.getMaxAbsPosition()) {
 			
 			Price val = getValuation(quantity, currentTime);
-			Price price = new Price((int) (val.getInTicks() + signum(quantity) * 
+			Price price = new Price((val.doubleValue() + signum(quantity) * 
 					Rands.nextUniform(rand, bidRangeMin, bidRangeMax))).nonnegative().quantize(tickSize);
 			
 			sb.append(" position=").append(positionBalance).append(", for q=");
@@ -116,8 +116,10 @@ public abstract class BackgroundAgent extends SMAgent {
 	 * @return
 	 */
 	public Price getValuation(int quantity, TimeStamp currentTime) {
-		return fundamental.getValueAt(currentTime).plus(
-				privateValue.getValueFromQuantity(positionBalance, quantity)).nonnegative();
+		return new Price(
+				fundamental.getValueAt(currentTime).intValue()
+						+ privateValue.getValueFromQuantity(positionBalance,
+								quantity).intValue()).nonnegative();
 	}
 	
 }

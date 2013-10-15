@@ -278,12 +278,12 @@ public class Observations {
 		// number of transactions, hashed by agent type
 		Multiset<String> numTrans = HashMultiset.create();
 		for (Transaction trans : transactions) {
-			prices.addValue(trans.getPrice().getInTicks());
+			prices.addValue(trans.getPrice().intValue());
 			quantity.addValue(trans.getQuantity());
-			fundamental.addValue(fund.getValueAt(trans.getExecTime()).getInTicks());
+			fundamental.addValue(fund.getValueAt(trans.getExecTime()).intValue());
 
-			transPrices.add((int) trans.getExecTime().getInTicks(), trans.getPrice().getInTicks());
-			fundPrices.add((int) trans.getExecTime().getInTicks(), fund.getValueAt(trans.getExecTime()).getInTicks());
+			transPrices.add((int) trans.getExecTime().getInTicks(), trans.getPrice().intValue());
+			fundPrices.add((int) trans.getExecTime().getInTicks(), fund.getValueAt(trans.getExecTime()).intValue());
 
 			// update number of transactions
 			numTrans.add(trans.getBuyer().getName());

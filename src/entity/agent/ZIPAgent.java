@@ -69,9 +69,9 @@ public class ZIPAgent extends BackgroundAgent {
 		@SuppressWarnings("unused")
 		int val = Math.max(
 				0,
-				fundamental.getValueAt(currentTime).plus(
-						privateValue.getValueFromQuantity(positionBalance,
-								quantity)).getInTicks());
+				fundamental.getValueAt(currentTime).intValue()
+						+ privateValue.getValueFromQuantity(positionBalance,
+								quantity).intValue());
 
 		// Insert events for the agent to sleep, then wake up again at timestamp
 		// tsNew

@@ -103,11 +103,11 @@ public class BasicMarketMaker extends MarketMaker {
 						+ primaryMarket);
 			} else {
 				
-				Price ct = new Price(numRungs * stepSize);
+				int ct = numRungs * stepSize;
 				// min price for buy order in the ladder
-				Price buyMinPrice = min(bid.minus(ct), lastNBBOQuote.getBestAsk());
+				Price buyMinPrice = min(new Price(bid.intValue() - ct), lastNBBOQuote.getBestAsk());
 				// max price for sell order in the ladder
-				Price sellMaxPrice = max(ask.plus(ct), lastNBBOQuote.getBestBid());
+				Price sellMaxPrice = max(new Price(ask.intValue() - ct), lastNBBOQuote.getBestBid());
 
 				// check if the bid or ask crosses the NBBO
 				// FIXME I believe this will create orders that would transact on
@@ -126,12 +126,12 @@ public class BasicMarketMaker extends MarketMaker {
 
 				// build descending list of buy orders (yt, ..., yt - ct) or
 				// stops at NBBO ask
-				for (int price = bid.getInTicks(); price >= buyMinPrice.getInTicks(); price -= stepSize)
+				for (int price = bid.intValue(); price >= buyMinPrice.intValue(); price -= stepSize)
 					acts.add(new SubmitOrder(this, primaryMarket, new Price(price), 1, TimeStamp.IMMEDIATE));
 
 				// build ascending list of sell orders (xt, ..., xt + ct) or
 				// stops at NBBO bid
-				for (int price = ask.getInTicks(); price <= sellMaxPrice.getInTicks(); price += stepSize)
+				for (int price = ask.intValue(); price <= sellMaxPrice.intValue(); price += stepSize)
 					acts.add(new SubmitOrder(this, primaryMarket, new Price(price), -1, TimeStamp.IMMEDIATE));
 
 				log(INFO, primaryMarket + " " + this + " " + getName()

@@ -89,8 +89,8 @@ public class PrivateValue implements Serializable {
 	 * @return The change resulting from modifying ones position by that amount.
 	 */
 	public Price getValueFromQuantity(int position, int quantity) {
-		return getValueAtPosition(position + quantity).minus(
-				getValueAtPosition(position));
+		return new Price(getValueAtPosition(position + quantity).intValue()
+				- getValueAtPosition(position).intValue());
 	}
 
 	/**

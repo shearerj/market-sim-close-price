@@ -74,7 +74,7 @@ public class AAAgent extends BackgroundAgent {
 		this.thetaMin = thetaMin;
 		this.thetaMax = thetaMax;
 		this.alphaMin = -1;
-		this.alphaMax = Price.INF.getInTicks();
+		this.alphaMax = Price.INF.intValue();
 		
 		//Initializing strategy variables
 		this.historical = historical;
@@ -178,7 +178,7 @@ public class AAAgent extends BackgroundAgent {
 		double num = 0;
 		// Iterate through past Quotes and use valid prices
 		for (int i = trans.size() - 1; i >= 0 && num < historical; i--) {
-			total += (double) trans.get(i).getPrice().getInTicks();
+			total += trans.get(i).getPrice().doubleValue();
 			num += 1;
 		}
 		if (num == 0) {
@@ -191,9 +191,9 @@ public class AAAgent extends BackgroundAgent {
 
 	
 	private Price determinePriceLimit(int quantity, TimeStamp ts) {
-		Price fundPrice = fundamental.getValueAt(ts);
-		Price deviation = privateValue.getValueAtPosition(positionBalance + quantity);
-		return fundPrice.plus(deviation);
+		int fundPrice = fundamental.getValueAt(ts).intValue();
+		int deviation = privateValue.getValueAtPosition(positionBalance + quantity).intValue();
+		return new Price(fundPrice + deviation);
 	}
 	
 	/**
@@ -207,10 +207,10 @@ public class AAAgent extends BackgroundAgent {
 		// Buyers
 		if (isBuyer) {
 			// Intramarginal - price limit is greater than p*
-			if (limit.getInTicks() > movingAverage) {
+			if (limit.doubleValue() > movingAverage) {
 				// passive
 				if(aggression == -1) 
-					tau = Price.ZERO.getInTicks(); 
+					tau = Price.ZERO.doubleValue(); 
 				else if(aggression < 0) {
 					tau = movingAverage
 							* (1 - (Math.exp(-aggression * theta) - 1)
@@ -221,38 +221,38 @@ public class AAAgent extends BackgroundAgent {
 					tau = movingAverage;
 				// aggressive
 				else if(aggression < 1){
-					tau = movingAverage + (limit.getInTicks() - movingAverage)
+					tau = movingAverage + (limit.doubleValue() - movingAverage)
 							* (Math.exp(aggression * theta) - 1)
 							/ (Math.exp(theta) - 1);
 				}
 				else
-					tau = limit.getInTicks();
+					tau = limit.doubleValue();
 			}
 			// Extramarginal - price limit is less than p*
 			else {
 				// passive
 				if(aggression == -1)
-					tau = Price.ZERO.getInTicks();
+					tau = Price.ZERO.doubleValue();
 				if (aggression < 0) {
-					tau = limit.getInTicks()
+					tau = limit.doubleValue()
 							* (1 - (Math.exp(-1 * aggression * theta) - 1)
 									/ (Math.exp(theta) - 1));
 				}
 				// aggressive
 				else
-					tau = limit.getInTicks();
+					tau = limit.doubleValue();
 			}
 		}
 		// Sellers
 		else {
 			// Intramarginal - cost is less than p*
-			if (limit.getInTicks() < movingAverage) {
+			if (limit.doubleValue() < movingAverage) {
 				// passive
 				if(aggression == -1)
-					tau = Price.INF.getInTicks();
+					tau = Price.INF.doubleValue();
 				else if(aggression < 0) {
 					tau = movingAverage
-							+ (Price.INF.getInTicks() - movingAverage)
+							+ (Price.INF.doubleValue() - movingAverage)
 							* (Math.exp(-1 * aggression * theta) - 1)
 							/ (Math.exp(theta) - 1);
 				}
@@ -262,27 +262,27 @@ public class AAAgent extends BackgroundAgent {
 				}
 				// aggressive
 				else if(aggression < 1){
-					tau = limit.getInTicks()
-							+ (movingAverage - limit.getInTicks())
+					tau = limit.doubleValue()
+							+ (movingAverage - limit.doubleValue())
 							* (1 - (Math.exp(aggression * theta) - 1)
 									/ (Math.exp(theta) - 1));
 				}
 				else
-					tau = limit.getInTicks();
+					tau = limit.doubleValue();
 			}
 			// Extramarginal - cost is greater than p*
 			else {
 				// passive
 				if(aggression == -1)
-					tau = Price.INF.getInTicks();
+					tau = Price.INF.doubleValue();
 				else if(aggression < 0) {
-					tau = limit.getInTicks() + Price.INF.minus(limit).getInTicks()
+					tau = limit.doubleValue() + (Price.INF.doubleValue() - limit.doubleValue())
 							* (Math.exp(-1 * aggression * theta) - 1)
 							/ (Math.exp(theta) - 1);
 				}
 				// aggressive
 				else
-					tau = limit.getInTicks();
+					tau = limit.doubleValue();
 			}
 		}
 		return new Price((int) Math.round(tau));
@@ -345,23 +345,23 @@ public class AAAgent extends BackgroundAgent {
 		// difference/eta computes to be zero
 		if (targetPrice.equals(new Price(-1))) {
 			if (isBuyer) {
-				Price offset = min(bestAsk, limit).minus(bestBid).times(1.0/eta);
-				price = bestBid.plus(offset).plus(new Price(1));
+				double offset = (min(bestAsk, limit).doubleValue() - bestBid.doubleValue()) / eta;
+				price = new Price(bestBid.doubleValue() + offset + 1);
 				price = min(price, limit);
 			} else {
-				Price offset = bestAsk.minus( max(bestBid, limit) ).times(1.0/eta);
-				price = bestAsk.minus(offset).minus(new Price(1));
+				double offset = (bestAsk.doubleValue() - max(bestBid, limit).doubleValue()) / eta;
+				price = new Price(bestAsk.doubleValue() - offset - 1);
 				price = max(price, limit);				
 			}
 		}
 		else {
 			if (isBuyer) {
-				Price offset = targetPrice.minus(bestBid).times(1.0/eta);
-				price = bestBid.plus(offset).plus(new Price(1));
+				double offset = (targetPrice.doubleValue() - bestBid.doubleValue()) /eta;
+				price = new Price(bestBid.doubleValue() + offset - 1);
 				price = min(price, limit);
 			} else {
-				Price offset = bestAsk.minus(targetPrice).times(1.0/eta);
-				price = bestAsk.minus(offset).minus(new Price(1));
+				double offset = (bestAsk.doubleValue() - targetPrice.doubleValue()) / eta;
+				price = new Price(bestAsk.doubleValue() - offset - 1);
 				price = max(price, limit);
 			}
 		}
@@ -434,12 +434,12 @@ public class AAAgent extends BackgroundAgent {
 	 */
 	private double determineAggression(Price limit, Price mostRecentPrice,
 			double movingAverage) {
-		double tau = mostRecentPrice.getInTicks();
+		double tau = mostRecentPrice.doubleValue();
 		double r_shout = 0;
 		// Buyers
 		if (isBuyer) {
 			// Intramarginal
-			if (limit.getInTicks() > movingAverage) {
+			if (limit.doubleValue() > movingAverage) {
 				if (tau == movingAverage)
 					return 0;
 				// r < 0
@@ -453,15 +453,15 @@ public class AAAgent extends BackgroundAgent {
 					r_shout = (1 / theta)
 							* Math.log((tau - movingAverage)
 									* (Math.exp(theta) - 1)
-									/ (limit.getInTicks() - movingAverage));
+									/ (limit.doubleValue() - movingAverage));
 				}
 			}
 			// Extramarginal
 			else {
-				if (tau < limit.getInTicks()) {
+				if (tau < limit.doubleValue()) {
 					
 					r_shout = (-1 / theta)
-							* Math.log((1 - tau / limit.getInTicks())
+							* Math.log((1 - tau / limit.doubleValue())
 									* (Math.exp(theta) - 1) + 1);
 				}
 				// TODO - SHOULD NOT REACH HERE
@@ -475,7 +475,7 @@ public class AAAgent extends BackgroundAgent {
 		// Sellers
 		else {
 			// Intramarginal
-			if (limit.getInTicks() < movingAverage) {
+			if (limit.doubleValue() < movingAverage) {
 				if (tau == movingAverage)
 					return 0;
 				// r < 0
@@ -484,25 +484,24 @@ public class AAAgent extends BackgroundAgent {
 					r_shout = (-1 / theta)
 							* Math.log((tau - movingAverage)
 									* (Math.exp(theta) - 1)
-									/ (Price.INF.getInTicks() - movingAverage)
-									+ 1);
+									/ (Price.INF.doubleValue() - movingAverage) + 1);
 				}
 				// r > 0
 				else {
 					if(theta == 0) return 0.5; //handling NaN exception
 					r_shout = (1 / theta)
-							* Math.log((1 - (tau - limit.getInTicks())
-									/ (movingAverage - limit.getInTicks()))
+							* Math.log((1 - (tau - limit.doubleValue())
+									/ (movingAverage - limit.doubleValue()))
 									* (Math.exp(theta) - 1) + 1);
 				}
 			}
 			// Extramarginal
 			else {
-				if (tau > limit.getInTicks()) {
+				if (tau > limit.doubleValue()) {
 					r_shout = (-1 / theta)
-							* Math.log((tau - limit.getInTicks())
+							* Math.log((tau - limit.doubleValue())
 									* (Math.exp(theta) - 1)
-									/ Price.INF.minus(limit).getInTicks() + 1);
+									/ (Price.INF.doubleValue() - limit.doubleValue() + 1));
 				}
 				// TODO - SHOULD NOT REACH HERE
 				else {
@@ -530,7 +529,7 @@ public class AAAgent extends BackgroundAgent {
 		double alpha = 0;
 		int num = 0;
 		for (int i = trans.size() - 1; i >= 0 && num < historical; i--) {
-			double price = trans.get(i).getPrice().getInTicks();
+			double price = trans.get(i).getPrice().doubleValue();
 			if (price != -1) {
 				alpha += Math.pow(price - movingAverage, 2);
 				num++;

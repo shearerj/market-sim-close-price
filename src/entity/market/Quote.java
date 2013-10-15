@@ -68,7 +68,7 @@ public class Quote implements Serializable {
 					+ "::quote: ERROR bid > ask");
 			return 0;
 		} else {
-			return ask.getInTicks() - bid.getInTicks();
+			return ask.doubleValue() - bid.doubleValue();
 		}
 	}
 	
@@ -79,7 +79,7 @@ public class Quote implements Serializable {
 		else if (ask.lessThan(bid))
 			log(ERROR, market.getClass().getSimpleName()
 					+ "::quote: ERROR bid > ask");
-		return (ask.getInTicks() + bid.getInTicks())/ 2d;
+		return (ask.doubleValue() + bid.doubleValue())/ 2;
 	}
 
 	@Override

@@ -329,13 +329,13 @@ public class AAAgentTest {
 		// Testing the Agent
 		AAAgent agent = addAgent(false);
 		Logger.log(Logger.Level.DEBUG,
-				"Price ~= " + (150000 + (Price.INF.getInTicks() - 150000) / 3));
+				"Price ~= " + (150000 + (Price.INF.intValue() - 150000) / 3));
 		agent.setAggression(-1.0);
 		executeAgentStrategy(agent, 100);
 
 		// Asserting the bid is correct
-		int low = 150000 + (Price.INF.getInTicks() - 150000) / 3 - 1000;
-		int high = 150000 + (Price.INF.getInTicks() - 150000) / 3 + 1000;
+		int low = 150000 + (Price.INF.intValue() - 150000) / 3 - 1000;
+		int high = 150000 + (Price.INF.intValue() - 150000) / 3 + 1000;
 		assertCorrectBid(agent, low, high, -1);
 	}
 
@@ -477,8 +477,8 @@ public class AAAgentTest {
 		executeAgentStrategy(agent, 100);
 		
 		// Asserting the bid is correct
-		int low = 95000 + (int) (Price.INF.getInTicks()/3d);
-		int high = 105000 + (int) (Price.INF.getInTicks()/3d);
+		int low = 95000 + (int) (Price.INF.doubleValue() / 3);
+		int high = 105000 + (int) (Price.INF.doubleValue() / 3);
 		assertCorrectBid(agent, low, high, -1);
 	}
 

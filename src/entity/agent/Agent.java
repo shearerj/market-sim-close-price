@@ -105,10 +105,10 @@ public abstract class Agent extends Entity {
 		preLiqRealizedProfit = (int) getSurplus(0); // XXX This is almost certainly wrong
 		if (positionBalance > 0) {
 			// need to sell
-			realizedProfit += positionBalance * price.getInTicks();
+			realizedProfit += positionBalance * price.intValue();
 		} else {
 			// need to buy
-			realizedProfit -= positionBalance * price.getInTicks();
+			realizedProfit -= positionBalance * price.intValue();
 		}
 		positionBalance = 0;
 
@@ -224,16 +224,12 @@ public abstract class Agent extends Entity {
 			}
 			TimeStamp timeToExecution = trans.getExecTime().minus(submissionTime);
 
-			Price fund = fundamental.getValueAt(trans.getExecTime()).times(
-					trans.getQuantity());
-			Price pv = privateValue.getValueFromQuantity(positionBalance,
-					trans.getQuantity());
-			Price cost = trans.getPrice().times(trans.getQuantity());
-			Price transactionSurplus = fund.plus(pv).minus(cost).times(
-					sign);
+			int fund = fundamental.getValueAt(trans.getExecTime()).intValue() * trans.getQuantity();
+			int pv = privateValue.getValueFromQuantity(positionBalance, trans.getQuantity()).intValue();
+			int cost = trans.getPrice().intValue() * trans.getQuantity();
+			int transactionSurplus = (fund + pv - cost) * sign;
 
-			surplus += Math.exp(rho * timeToExecution.getInTicks())
-					* transactionSurplus.getInTicks();
+			surplus += Math.exp(rho * timeToExecution.getInTicks()) * transactionSurplus;
 		}
 		return surplus;
 	}

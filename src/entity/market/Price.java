@@ -4,6 +4,7 @@ import java.io.Serializable;
 import static java.math.RoundingMode.HALF_EVEN;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.Ordering;
 import com.google.common.math.DoubleMath;
 import com.google.common.primitives.Ints;
 
@@ -15,7 +16,7 @@ import utils.MathUtils;
  * 
  * @author ewah
  */
-public class Price implements Comparable<Price>, Serializable {
+public class Price extends Number implements Comparable<Price>, Serializable {
 
 	private static final long serialVersionUID = 772101228717034473L;
 	
@@ -42,11 +43,31 @@ public class Price implements Comparable<Price>, Serializable {
 	public Price(double ticks) {
 		this(DoubleMath.roundToInt(ticks, HALF_EVEN));
 	}
-
-	public int getInTicks() {
+	
+	@Override
+	public int intValue() {
 		return ticks;
 	}
 
+	@Override
+	public long longValue() {
+		return ticks;
+	}
+
+	@Override
+	public float floatValue() {
+		return ticks;
+	}
+
+	@Override
+	public double doubleValue() {
+		return ticks;
+	}
+
+	public Price quantize(int quanta) {
+		return new Price(MathUtils.quantize(ticks, quanta));
+	}
+	
 	/**
 	 * @return price in dollars
 	 */
@@ -54,36 +75,12 @@ public class Price implements Comparable<Price>, Serializable {
 		return ticks / (double) TICKS_PER_DOLLAR;
 	}
 
-	public Price quantize(int quanta) {
-		return new Price(MathUtils.quantize(ticks, quanta));
-	}
-
 	/**
-	 * Add price to this object.
+	 * Return 0 if price is negative
+	 * @return Non-negative version of the price.
 	 */
-	public Price plus(Price p) {
-		return new Price(this.ticks + p.ticks);
-	}
-
-	/**
-	 * Subtract price from this object.
-	 */
-	public Price minus(Price p) {
-		return new Price(this.ticks - p.ticks);
-	}
-	
-	public Price times(double x) {
-		return new Price((int) (ticks * x));
-	}
-	
-	public Price times(int x) {
-		return new Price(ticks * x);
-	}
-
 	public Price nonnegative() {
-		if (ticks < 0)
-			return ZERO;
-		return this;
+		return Ordering.natural().max(this, ZERO);
 	}
 
 	/**

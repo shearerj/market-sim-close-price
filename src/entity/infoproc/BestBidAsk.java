@@ -34,7 +34,7 @@ public class BestBidAsk implements Serializable {
 	public double getSpread() {
 		if (bestAsk == null || bestBid == null || bestAsk.lessThan(bestBid))
 			return Double.POSITIVE_INFINITY;
-		return bestAsk.getInTicks() - bestBid.getInTicks();
+		return bestAsk.doubleValue() - bestBid.doubleValue();
 	}
 
 	public Market getBestBidMarket() {

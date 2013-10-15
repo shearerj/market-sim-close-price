@@ -84,16 +84,16 @@ public class LAAgent extends HFTAgent {
 		}
 
 		if (bestBid == null || bestAsk == null
-				|| bestAsk.getInTicks() * (1 + alpha) > bestBid.getInTicks())
+				|| bestAsk.doubleValue() * (1 + alpha) > bestBid.doubleValue())
 			return Collections.emptySet();
 
 		log(INFO, this + " detected arbitrage between " + bestBidMarket + " "
 				+ ips.get(bestBidMarket).getQuote() + " and " + bestAskMarket
 				+ " " + ips.get(bestAskMarket).getQuote());
-		Price midPoint = bestBid.plus(bestAsk).times(0.5).quantize(tickSize);
-		return ImmutableList.of(new SubmitOrder(this, bestBidMarket, midPoint,
-				-1, TimeStamp.IMMEDIATE), new SubmitOrder(this, bestAskMarket,
-				midPoint, 1, TimeStamp.IMMEDIATE));
+		Price midPoint = new Price((bestBid.doubleValue() + bestAsk.doubleValue()) * .5).quantize(tickSize);
+		return ImmutableList.of(
+				new SubmitOrder(this, bestBidMarket, midPoint, -1, TimeStamp.IMMEDIATE),
+				new SubmitOrder(this, bestAskMarket, midPoint, 1, TimeStamp.IMMEDIATE));
 	}
 
 	// This should be a natural extension of the arbitrage strategy extended to multi quantities,
@@ -122,9 +122,9 @@ public class LAAgent extends HFTAgent {
 		Builder<Activity> acts = ImmutableList.builder();
 		for (MatchedOrders<Price, Integer> trans : transactions) {
 			Order<Price, Integer> buy = trans.getBuy(), sell = trans.getSell();
-			if (sell.getPrice().getInTicks() * (1 + alpha) > buy.getPrice().getInTicks())
+			if (sell.getPrice().doubleValue() * (1 + alpha) > buy.getPrice().doubleValue())
 				continue;
-			double midPoint = .5 * (buy.getPrice().getInTicks() + sell.getPrice().getInTicks()); 
+			double midPoint = .5 * (buy.getPrice().doubleValue() + sell.getPrice().doubleValue()); 
 			Price midPrice = new Price(midPoint).quantize(tickSize);
 			
 			acts.add(new SubmitOrder(this, orderMap.get(sell), midPrice, trans.getQuantity(), TimeStamp.IMMEDIATE));
