@@ -163,10 +163,11 @@ An example can be found on lines 49 and 50 of the log file:
   propagate to the NBBO. This will look like:
 
 \begin{verbatim}
-<market> -> SIP quote (Bid: <nb bid>, Ask: <nb offer>)
+<market> -> SIP quote (Bid: <bid>, Ask: <offer>)
 \end{verbatim}
 
-An example can be found on line 77 of the log file:
+Where bid and offer are the updated values that the SIP is getting. An example
+can be found on line 77 of the log file:
 
 \lstinputlisting[firstline=77,lastline=77]{\logfile}
 
