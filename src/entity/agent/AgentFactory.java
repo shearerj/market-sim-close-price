@@ -36,6 +36,11 @@ public class AgentFactory {
 
 	/**
 	 * SMAgent factory with Poisson arrivals and round robin market selection.
+	 * @param fundamental
+	 * @param sip
+	 * @param markets
+	 * @param arrivalRate
+	 * @param rand
 	 */
 	public AgentFactory(FundamentalValue fundamental, SIP sip,
 			Collection<Market> markets, double arrivalRate, Random rand) {
