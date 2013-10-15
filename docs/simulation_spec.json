@@ -8,6 +8,7 @@
 	"presets" : "TWOMARKETLA",
 	"CDA" : "num_0",
 	"CALL" : "num_0",
+	"LA" : "num_0",
 	"BASICMM": "num_0_sleepTime_200_numRungs_10_rungSize_1000",
 	"ZI": "num_250_bidRangeMin_0_bidRangeMax_5000",
 	"ZIR": "num_0_maxqty_5",
