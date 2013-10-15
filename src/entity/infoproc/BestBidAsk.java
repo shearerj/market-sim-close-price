@@ -70,7 +70,17 @@ public class BestBidAsk implements Serializable {
 	}
 
 	public String toString() {
-		return "(Bid: " + bestBid + ", Ask: " + bestAsk + ")";
+		StringBuilder sb = new StringBuilder("(BestBid: ");
+		
+		if (bestBid == null) sb.append("- ");
+		else sb.append(bestBid).append(" from ").append(bestBidMarket);
+		
+		sb.append(", BestAsk: ");
+		
+		if (bestAsk == null) sb.append("- ");
+		else sb.append(bestAsk).append(" from ").append(bestAskMarket);
+		
+		return sb.append(')').toString();
 	}
 
 }

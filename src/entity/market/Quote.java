@@ -105,13 +105,13 @@ public class Quote implements Serializable {
 		
 		if (bid == null) sb.append("- ");
 		else if (bidQuantity == 1) sb.append(bid);
-		else sb.append(bid + " " + bidQuantity);
+		else sb.append(bid).append(' ').append(bidQuantity);
 		
 		sb.append(", Ask: ");
 		
 		if (ask == null) sb.append("- ");
 		else if (askQuantity == 1) sb.append(ask);
-		else sb.append(ask + " " + askQuantity);
+		else sb.append(ask).append(' ').append(askQuantity);
 		
 		return sb.append(')').toString();
 	}
