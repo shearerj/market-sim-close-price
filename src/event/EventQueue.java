@@ -12,7 +12,6 @@ import java.util.Random;
 
 import activity.Activity;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableListMultimap.Builder;
 import com.google.common.collect.Iterables;
@@ -26,8 +25,8 @@ import com.google.common.collect.Maps;
  * that should be used are "add," which adds a single activity to the queue,
  * "addAll," which adds a collection of activities to the queue, and "remove,"
  * which removes the activity at the head of the queue. Events that are added at
- * the same TimeStamp will be dequeued in a uniform random order. To make an event
- * occur instantaneously give it a time of Consts.INF_TIME.
+ * the same TimeStamp will be dequeued in a uniform random order. To make an
+ * event occur instantaneously give it a time of Consts.INF_TIME.
  * 
  * Note that because of the dequeuing mechanism, if Activity A is supposed to
  * happen after Activity B, Activity A should queue up Activity B. Anything else
@@ -36,8 +35,6 @@ import com.google.common.collect.Maps;
  * @author ebrink
  */
 public class EventQueue extends AbstractQueue<Activity> {
-	
-	Joiner joiner = Joiner.on(" -> ");
 	
 	// Invariant that no event is ever empty at the end of execution.
 	//
@@ -134,8 +131,7 @@ public class EventQueue extends AbstractQueue<Activity> {
 
 	@Override
 	public Activity poll() {
-		if (isEmpty())
-			return null;
+		if (isEmpty()) return null;
 		Activity act = eventQueue.element().remove();
 		if (eventQueue.element().isEmpty())
 			eventIndex.remove(eventQueue.remove().getTime());
@@ -161,6 +157,7 @@ public class EventQueue extends AbstractQueue<Activity> {
 	
 	// Add collections in reverse. This ensures invariant.
 	public boolean addAll(Iterable<? extends Activity> acts) {
+		// FIXME Don't properly check for nulls
 		if (Iterables.isEmpty(acts)) return false;
 		// Group Activities by Time
 		Builder<TimeStamp, Activity> build = ImmutableListMultimap.builder();
@@ -176,6 +173,7 @@ public class EventQueue extends AbstractQueue<Activity> {
 				eventQueue.add(e);
 			}
 			e.addAll(ent.getValue());
+			size += ent.getValue().size();
 		}
 		return true;
 	}

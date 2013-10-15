@@ -5,7 +5,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
@@ -16,10 +15,11 @@ import activity.Activity;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.collect.Iterators;
 
 public class EventQueueTest {
-	
+	// FIXME This is not thorough enough. Basically addAll didn't updated size!
+	// Bad testing!
+
 	@Test
 	public void basicUsageTest() {
 		EventQueue q = new EventQueue();
@@ -99,7 +99,7 @@ public class EventQueueTest {
 	}
 	
 	@Test
-	public void removeTest() {
+	public void pollTest() {
 		EventQueue q = new EventQueue();
 
 		Activity first = new DummyActivity(0);
@@ -107,37 +107,9 @@ public class EventQueueTest {
 		Activity third = new DummyActivity(2);
 
 		q.addAll(ImmutableList.of(first, second, third));
-		assertTrue(q.remove(second));
 		assertEquals(first, q.poll());
-		assertEquals(third, q.poll());
-		assertTrue(q.isEmpty());
-	}
-	
-	@Test
-	public void removeAllTest() {
-		EventQueue q = new EventQueue();
-
-		Activity first = new DummyActivity(0);
-		Activity second = new DummyActivity(1);
-		Activity third = new DummyActivity(2);
-
-		q.addAll(ImmutableList.of(first, second, third));
-		assertTrue(q.removeAll(ImmutableList.of(first, second)));
-		assertEquals(third, q.poll());
-		assertTrue(q.isEmpty());
-	}
-	
-	@Test
-	public void retainAllTest() {
-		EventQueue q = new EventQueue();
-
-		Activity first = new DummyActivity(0);
-		Activity second = new DummyActivity(1);
-		Activity third = new DummyActivity(2);
-
-		q.addAll(ImmutableList.of(first, second, third));
-		assertTrue(q.retainAll(ImmutableList.of(second)));
 		assertEquals(second, q.poll());
+		assertEquals(third, q.poll());
 		assertTrue(q.isEmpty());
 	}
 	
@@ -172,17 +144,6 @@ public class EventQueueTest {
 		}
 		
 		assertEquals(3, q.size());
-		for (Iterator<Activity> it = q.iterator(); it.hasNext();)
-			if (it.next() == second)
-				it.remove();
-		assertEquals(2, q.size());
-		assertFalse(q.contains(second));
-		
-		assertEquals(2, Iterators.size(q.iterator()));
-		
-		assertFalse(second == q.poll());
-		assertFalse(second == q.poll());
-		assertTrue(q.isEmpty());
 	}
 	
 	public void randomDeterminismTest() {
