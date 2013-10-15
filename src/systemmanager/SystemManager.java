@@ -146,6 +146,7 @@ public class SystemManager {
 		players = setupPlayers(simProps, playerConfig);
 
 		for (Market market : markets)
+			// TODO Log config somehow?
 			log(INFO, "Created Market: " + market);
 	}
 	

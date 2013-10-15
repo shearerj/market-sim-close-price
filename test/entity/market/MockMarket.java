@@ -36,4 +36,9 @@ public class MockMarket extends Market {
 				updateQuote(ImmutableList.<Transaction> of(), currentTime)).build();
 	}
 
+	@Override
+	public String toString() {
+		return "MockMarket " + super.toString();
+	}
+
 }

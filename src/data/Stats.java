@@ -13,7 +13,16 @@ import com.google.common.eventbus.Subscribe;
 
 import entity.market.Market;
 
-// TODO I think this should maybe be how observations works, but I can decided if they should be stand alone or not... 
+/**
+ * TODO I think this should maybe be how observations works, but I can decided
+ * if they should be stand alone or not...
+ * 
+ * Also, this is an unused test class for an EventBus. This may be how
+ * observations is implemented.
+ * 
+ * @author erik
+ * 
+ */
 public class Stats {
 
 	public static final EventBus BUS = new EventBus();

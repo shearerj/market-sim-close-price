@@ -19,7 +19,7 @@ public class MarketFactory {
 		switch (props.getMarketType()) {
 		case CDA:
 			return new CDAMarket(sip, new Random(rand.nextLong()), props);
-		case CALL:
+		case CALL: // TODO Do check here for 0 latency and somehow create CDA instead... 
 			return new CallMarket(sip, new Random(rand.nextLong()), props);
 		default:
 			throw new IllegalArgumentException("Can't create MarketType: " + props.getMarketType());
