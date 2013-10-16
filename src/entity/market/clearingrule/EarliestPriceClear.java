@@ -5,8 +5,8 @@ import java.util.Map;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
+import entity.market.MarketTime;
 import entity.market.Price;
-import event.TimeStamp;
 import fourheap.MatchedOrders;
 
 public class EarliestPriceClear implements ClearingRule {
@@ -20,11 +20,11 @@ public class EarliestPriceClear implements ClearingRule {
 	}
 	
 	@Override
-	public Map<MatchedOrders<Price, TimeStamp>, Price> pricing(
-			Iterable<MatchedOrders<Price, TimeStamp>> matchedOrders) {
-		Builder<MatchedOrders<Price, TimeStamp>, Price> prices = ImmutableMap.builder();
-		for (MatchedOrders<Price, TimeStamp> match : matchedOrders)
-			prices.put(match, match.getBuy().getSubmitTime().before(match.getSell().getSubmitTime())
+	public Map<MatchedOrders<Price, MarketTime>, Price> pricing(
+			Iterable<MatchedOrders<Price, MarketTime>> matchedOrders) {
+		Builder<MatchedOrders<Price, MarketTime>, Price> prices = ImmutableMap.builder();
+		for (MatchedOrders<Price, MarketTime> match : matchedOrders)
+			prices.put(match, match.getBuy().getSubmitTime().compareTo(match.getSell().getSubmitTime()) < 0
 					? match.getBuy().getPrice().quantize(tickSize)
 					: match.getSell().getPrice().quantize(tickSize));
 		// TODO will always pick seller's price when at the same time, is this correct? Probably not?

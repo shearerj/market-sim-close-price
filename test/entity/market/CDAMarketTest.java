@@ -188,8 +188,7 @@ public class CDAMarketTest {
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals("Incorrect Buyer", agent1, tr.getBuyer());
 		assertEquals("Incorrect Seller", agent4, tr.getSeller());
-		assertEquals("Incorrect Price", new Price(125), tr.getPrice());
-		// TODO what price to clear at when the two orders at diff prices at same time? Right now always seller's price
+		assertEquals("Incorrect Price", new Price(150), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		
 		// Creating and adding bids
@@ -236,12 +235,12 @@ public class CDAMarketTest {
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals("Incorrect Buyer", agent1, tr.getBuyer());
 		assertEquals("Incorrect Seller", agent2, tr.getSeller());
-		assertEquals("Incorrect Price", new Price(100), tr.getPrice()); // TODO should clear at 150 actually (incumbent order)
+		assertEquals("Incorrect Price", new Price(150), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		tr = market.getTransactions().get(1);
 		assertEquals("Incorrect Buyer", agent3, tr.getBuyer());
 		assertEquals("Incorrect Seller", agent4, tr.getSeller());
-		assertEquals("Incorrect Price", new Price(125), tr.getPrice()); // TODO should be 175 since first...
+		assertEquals("Incorrect Price", new Price(175), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 	}
 	

@@ -63,7 +63,7 @@ public class MarketTest {
 
 	@Test
 	public void AddAsk() {
-		TimeStamp time = new TimeStamp(0);
+		TimeStamp time = TimeStamp.ZERO;
 		Agent agent = new MockAgent(fundamental, sip, market);
 		market.submitOrder(agent, new Price(1), -1, time);
 

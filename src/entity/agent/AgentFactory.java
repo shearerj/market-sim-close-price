@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Random;
 
+import utils.Rands;
+
 import com.google.common.collect.Iterators;
 
 import data.AgentProperties;
@@ -36,6 +38,7 @@ public class AgentFactory {
 
 	/**
 	 * SMAgent factory with Poisson arrivals and round robin market selection.
+	 * 
 	 * @param fundamental
 	 * @param sip
 	 * @param markets
@@ -44,9 +47,15 @@ public class AgentFactory {
 	 */
 	public AgentFactory(FundamentalValue fundamental, SIP sip,
 			Collection<Market> markets, double arrivalRate, Random rand) {
-		this(fundamental, sip, new PoissonArrival(TimeStamp.ZERO,
-				arrivalRate, new Random(rand.nextLong())), markets,
-				Iterators.cycle(markets), rand);
+		this(fundamental,
+				sip,
+				new PoissonArrival(new TimeStamp((long)
+						Math.ceil(Rands.nextExponential(rand, arrivalRate))),
+				arrivalRate,
+				new Random(rand.nextLong())),
+				markets, 
+				Iterators.cycle(markets),
+				rand);
 	}
 
 	// XXX Not all agents advance all of the parameters like the market or the arrival process. One

@@ -64,9 +64,10 @@ public abstract class Market extends Entity {
 	private static final long serialVersionUID = 8806298743451593261L;
 	private static int nextID = 1;
 	
-	protected final FourHeap<Price, TimeStamp> orderbook;
+	protected final FourHeap<Price, MarketTime> orderbook;
 	protected final ClearingRule clearingRule;
 	protected final Random rand;
+	protected long marketTime; // keeps track of internal market actions
 
 	protected final SMIP ip;
 	protected final SIP sip;
@@ -75,7 +76,7 @@ public abstract class Market extends Entity {
 	protected Quote quote; // Current quote
 
 	// Book keeping
-	protected final Map<fourheap.Order<Price, TimeStamp>, Order> orderMapping; // How to get full orders from fourheap Orders
+	protected final Map<fourheap.Order<Price, MarketTime>, Order> orderMapping; // How to get full orders from fourheap Orders
 	protected final Multiset<Price> askPriceQuantity, bidPriceQuantity; // How many orders are at a specific price
 	protected final Collection<Order> orders; // All orders ever submitted to the market
 	protected final List<Transaction> allTransactions; // All successful transactions, implicitly time ordered
@@ -102,9 +103,10 @@ public abstract class Market extends Entity {
 	 */
 	public Market(SIP sip, TimeStamp latency, ClearingRule clearingRule, Random rand) {
 		super(nextID++);
-		this.orderbook = FourHeap.<Price, TimeStamp>create();
+		this.orderbook = FourHeap.create();
 		this.clearingRule = clearingRule;
 		this.rand = rand;
+		this.marketTime = 0;
 		this.quote = new Quote(this, null, 0, null, 0, TimeStamp.ZERO);
 
 		this.ips = Lists.newArrayList();
@@ -188,6 +190,7 @@ public abstract class Market extends Entity {
 	// XXX Should this actually require negative quantity for sell orders? or
 	// should the logic be in here?
 	public Iterable<? extends Activity> withdrawOrder(Order order, int quantity, TimeStamp currentTime) {
+		marketTime++;
 		if (order.getQuantity() == 0) return ImmutableList.of();
 		checkArgument(quantity != 0 && signum(order.getQuantity()) == signum(quantity),
 				"Improper quantity");
@@ -217,9 +220,10 @@ public abstract class Market extends Entity {
 	 * @return any side effect activities (base case SendToIP activities)
 	 */
 	public Iterable<? extends Activity> clear(TimeStamp currentTime) {
-		List<MatchedOrders<Price, TimeStamp>> matchedOrders = orderbook.clear();
+		marketTime++;
+		List<MatchedOrders<Price, MarketTime>> matchedOrders = orderbook.clear();
 		Builder<Transaction> transactions = ImmutableList.builder();
-		for (Entry<MatchedOrders<Price, TimeStamp>, Price> e : clearingRule.pricing(matchedOrders).entrySet()) {
+		for (Entry<MatchedOrders<Price, MarketTime>, Price> e : clearingRule.pricing(matchedOrders).entrySet()) {
 
 			Order buy = orderMapping.get(e.getKey().getBuy());
 			Order sell = orderMapping.get(e.getKey().getSell());
@@ -248,7 +252,7 @@ public abstract class Market extends Entity {
 		}
 		
 		// Remove fully transacted orders
-		for (MatchedOrders<Price, TimeStamp> match : matchedOrders) {
+		for (MatchedOrders<Price, MarketTime> match : matchedOrders) {
 			if (match.getBuy().getQuantity() == 0)
 				orderMapping.remove(match.getBuy());
 			if (match.getSell().getQuantity() == 0)
@@ -352,11 +356,12 @@ public abstract class Market extends Entity {
 	public Iterable<? extends Activity> submitOrder(Agent agent, Price price,
 			int quantity, TimeStamp currentTime, TimeStamp duration) {
 		checkArgument(quantity != 0, "Can't submit a 0 quantity order");
-
+		marketTime++;
+		
 		log(INFO, agent + " (" + price + ", " + quantity + ") -> " + this);
 
-		fourheap.Order<Price, TimeStamp> nativeOrder = fourheap.Order.create(
-				price, quantity, currentTime);
+		fourheap.Order<Price, MarketTime> nativeOrder = fourheap.Order.create(
+				price, quantity, new MarketTime(currentTime, marketTime));
 		Order order = new Order(agent, this, nativeOrder);
 
 		Multiset<Price> priceQuant = order.getQuantity() < 0 ? askPriceQuantity : bidPriceQuantity;

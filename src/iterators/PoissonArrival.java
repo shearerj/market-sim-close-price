@@ -3,8 +3,6 @@ package iterators;
 import java.io.Serializable;
 import java.util.Random;
 
-import utils.Rands;
-
 import com.google.common.collect.AbstractSequentialIterator;
 
 import event.TimeStamp;
@@ -16,7 +14,7 @@ public class PoissonArrival extends AbstractSequentialIterator<TimeStamp> implem
 	protected final ExpInterarrivals gen;
 
 	public PoissonArrival(TimeStamp initialTime, double rate, Random rand) {
-		super(initialTime.plus(new TimeStamp((long) Math.ceil(Rands.nextExponential(rand, rate)))));
+		super(initialTime);
 		gen = new ExpInterarrivals(rate, rand);
 	}
 

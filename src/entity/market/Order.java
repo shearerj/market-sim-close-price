@@ -20,9 +20,9 @@ public class Order implements Serializable {
 	
 	protected final Agent agent;
 	protected Market market;
-	protected final fourheap.Order<Price, TimeStamp> order;
+	protected final fourheap.Order<Price, MarketTime> order;
 	
-	public Order(Agent agent, Market market, fourheap.Order<Price, TimeStamp> order) {
+	public Order(Agent agent, Market market, fourheap.Order<Price, MarketTime> order) {
 		this.agent = agent;
 		this.market = market;
 		this.order = order;
@@ -37,7 +37,7 @@ public class Order implements Serializable {
 	}
 	
 	public TimeStamp getSubmitTime() {
-		return order.getSubmitTime();
+		return order.getSubmitTime().getTime();
 	}
 	
 	public Price getPrice() {
