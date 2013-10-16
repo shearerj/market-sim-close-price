@@ -115,7 +115,7 @@ public class CDAMarketTest {
 		market.submitOrder(agent1, new Price(150), 1, time0);
 		market.clear(time0);
 		
-		assertTrue(market.getTransactions().size() == 0);
+		assertEquals( 0, market.getTransactions().size() );
 	}
 
 	@Test
@@ -133,7 +133,7 @@ public class CDAMarketTest {
 
 		// Testing the market for the correct transaction
 		market.clear(time);
-		assertTrue(market.getTransactions().size() == 1);
+		assertEquals( 1, market.getTransactions().size() );
 		for (Transaction tr : market.getTransactions()) {
 			assertEquals("Incorrect Buyer", agent1, tr.getBuyer());
 			assertEquals("Incorrect Seller", agent2, tr.getSeller());
@@ -157,7 +157,7 @@ public class CDAMarketTest {
 
 		// Testing the market for the correct transaction
 		market.clear(time2);
-		assertTrue(market.getTransactions().size() == 1);
+		assertEquals( 1, market.getTransactions().size() );
 		for (Transaction tr : market.getTransactions()) {
 			assertEquals("Incorrect Buyer", agent1, tr.getBuyer());
 			assertEquals("Incorrect Seller", agent2, tr.getSeller());
@@ -184,7 +184,7 @@ public class CDAMarketTest {
 		market.clear(time);
 
 		// Testing the market for the correct transactions
-		assertTrue(market.getTransactions().size() == 1);
+		assertEquals( 1, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals("Incorrect Buyer", agent1, tr.getBuyer());
 		assertEquals("Incorrect Seller", agent4, tr.getSeller());
@@ -197,7 +197,7 @@ public class CDAMarketTest {
 		market.clear(time.plus(new TimeStamp(2)));
 		
 		// Testing the market for the correct transactions
-		assertTrue(market.getTransactions().size() == 2);
+		assertEquals( 2, market.getTransactions().size() );
 		tr = market.getTransactions().get(1);
 		assertEquals("Incorrect Buyer", agent1, tr.getBuyer());
 		assertEquals("Incorrect Seller", agent4, tr.getSeller());
@@ -231,7 +231,7 @@ public class CDAMarketTest {
 			if (act instanceof Clear) act.execute(time);
 		
 		// Testing the market for the correct transactions
-		assertTrue(market.getTransactions().size() == 2);
+		assertEquals( 2, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals("Incorrect Buyer", agent1, tr.getBuyer());
 		assertEquals("Incorrect Seller", agent2, tr.getSeller());
@@ -273,7 +273,7 @@ public class CDAMarketTest {
 		market.clear(time2);
 		
 		// Check that two units transact
-		assertTrue(market.getTransactions().size() == 1);
+		assertEquals( 1, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals("Incorrect Buyer", agent2, tr.getBuyer());
 		assertEquals("Incorrect Seller", agent1, tr.getSeller());
@@ -305,7 +305,7 @@ public class CDAMarketTest {
 		market.submitOrder(agent2, new Price(155), 2, time1);
 		market.clear(time1);	// TODO this throws a null pointer exception
 		// on second loop the buy order is null, as it gets removed from the data structure
-		assertTrue(market.getTransactions().size() == 2);
+		assertEquals( 2, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals("Incorrect Price", new Price(140), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
@@ -335,7 +335,7 @@ public class CDAMarketTest {
 		
 		// Check that no transaction, because agent1 withdrew its order
 		market.submitOrder(agent2, new Price(125), 1, time1);
-		assertTrue(market.getTransactions().size() == 0);
+		assertEquals( 0, market.getTransactions().size() );
 
 		market.submitOrder(agent2, new Price(110), 1, time1);
 		Collection<Order> orders = agent2.getOrders();
@@ -348,7 +348,7 @@ public class CDAMarketTest {
 		// Check that it transacts at 110, price of order that was not withdrawn
 		market.submitOrder(agent1, new Price(100), -1, time2);
 		market.clear(time2);
-		assertTrue(market.getTransactions().size() == 1);
+		assertEquals( 1, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals("Incorrect Price", new Price(110), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
@@ -376,7 +376,7 @@ public class CDAMarketTest {
 		market.clear(time1);
 		market.submitOrder(agent2, new Price(155), 1, time1);
 		market.clear(time1);
-		assertTrue(market.getTransactions().size() == 2);
+		assertEquals( 2, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals("Incorrect Price", new Price(140), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
@@ -409,7 +409,7 @@ public class CDAMarketTest {
 		
 		// Check that earlier agent (agent1) is trading with agent3
 		// Testing the market for the correct transactions
-		assertTrue(market.getTransactions().size() == 1);
+		assertEquals(1, market.getTransactions().size());
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals("Incorrect Buyer", agent3, tr.getBuyer());
 		assertEquals("Incorrect Seller", agent1, tr.getSeller());
@@ -424,10 +424,10 @@ public class CDAMarketTest {
 		market.clear(time2);
 		
 		// Check that the first submitted -1@100 transacts (from agent2)
-		assertTrue(market.getTransactions().size() == 2);
+		assertEquals( 2, market.getTransactions().size() );
 		tr = market.getTransactions().get(1);
 		assertEquals("Incorrect Buyer", agent0,  tr.getBuyer());
-		assertEquals("Incorrect Seller", agent2,  tr.getSeller()); // TODO is this correct behavior? or should it be agent1?
+		assertEquals("Incorrect Seller", agent2,  tr.getSeller());
 		assertEquals("Incorrect Price", new Price(100), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		
@@ -443,12 +443,12 @@ public class CDAMarketTest {
 		market.submitOrder(agent0, new Price(85), 1, time2);
 		market.submitOrder(agent0, new Price(80), 1, time2);
 		market.clear(time2);
-		assertTrue(market.getTransactions().size() == 2); // no change
+		assertEquals(2, market.getTransactions().size()); // no change
 
 		// Check basic overlap - between agent0 and agent2
 		market.submitOrder(agent2, new Price(125), 1, time2);
 		market.clear(time2);
-		assertTrue(market.getTransactions().size() == 3);
+		assertEquals(3, market.getTransactions().size());
 		tr = market.getTransactions().get(2);
 		assertEquals("Incorrect Buyer", agent2, tr.getBuyer());
 		assertEquals("Incorrect Seller", agent0, tr.getSeller());
@@ -459,43 +459,41 @@ public class CDAMarketTest {
 		// Check that the transaction was between agent1 (earliest @100) and agent2
 		market.submitOrder(agent2, new Price(105), 1, time2);
 		market.clear(time2);
-		assertTrue(market.getTransactions().size() == 4);
+		assertEquals(4, market.getTransactions().size());
 		tr = market.getTransactions().get(3);
 		assertEquals("Incorrect Buyer", agent2, tr.getBuyer());
 		assertEquals("Incorrect Seller", agent1, tr.getSeller());
 		assertEquals("Incorrect Price", new Price(100), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		
-		// Check that next earliest (agent1) although same price & time trades (vs. agent4 or 0)
-		// Check that the transaction was between agent1 (first submitted) and agent2
-		// TODO why does agent4 trade before agent3
+		// Check that next earliest (agent3) although same price & time trades (vs. agent4 or 0)
+		// Check that the transaction was between agent3 (first submitted) and agent2
 		market.submitOrder(agent2, new Price(105), 1, time2);
 		market.clear(time2);
-		assertTrue(market.getTransactions().size() == 5);
+		assertEquals(5, market.getTransactions().size());
 		tr = market.getTransactions().get(4);
+		assertEquals("Incorrect Buyer", agent2, tr.getBuyer());
+		assertEquals("Incorrect Seller", agent3, tr.getSeller());
+		assertEquals("Incorrect Price", new Price(100), tr.getPrice());
+		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
+		
+		// Check that next earliest (agent4) although same price & time trades (vs. agent0)
+		market.submitOrder(agent2, new Price(105), 1, time2);
+		market.clear(time2);
+		assertEquals(6, market.getTransactions().size());
+		tr = market.getTransactions().get(5);
 		assertEquals("Incorrect Buyer", agent2, tr.getBuyer());
 		assertEquals("Incorrect Seller", agent4, tr.getSeller());
 		assertEquals("Incorrect Price", new Price(100), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		
-		// Check that next earliest (agent4) although same price & time trades (vs. agent0)
-		// TODO why does agent0 trade before agent3?
+		// Check that final order (agent0) at -1@100 trades with agent2
 		market.submitOrder(agent2, new Price(105), 1, time2);
 		market.clear(time2);
-		assertTrue(market.getTransactions().size() == 6);
-		tr = market.getTransactions().get(5);
-		assertEquals("Incorrect Buyer", agent2, tr.getBuyer());
-		assertEquals("Incorrect Seller", agent0, tr.getSeller());
-		assertEquals("Incorrect Price", new Price(100), tr.getPrice());
-		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
-		
-		// Check that final order at -1@100 trades with agent2
-		market.submitOrder(agent2, new Price(105), 1, time2);
-		market.clear(time2);
-		assertTrue(market.getTransactions().size() == 7);
+		assertEquals(7, market.getTransactions().size());
 		tr = market.getTransactions().get(6);
 		assertEquals("Incorrect Buyer", agent2, tr.getBuyer());
-		assertEquals("Incorrect Seller", agent3, tr.getSeller());
+		assertEquals("Incorrect Seller", agent0, tr.getSeller());
 		assertEquals("Incorrect Price", new Price(100), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 	}
