@@ -188,12 +188,13 @@ public class CDAMarketTest {
 		assertEquals("Incorrect Price", new Price(150), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		
-		// Creating and adding bids
+		// Creating and adding bids (existing orders at buy@100, sell@175)
 		market.submitOrder(agent1, new Price(150), 1, time.plus(new TimeStamp(1)));
 		market.submitOrder(agent4, new Price(75), -1, time.plus(new TimeStamp(2)));
 		market.clear(time.plus(new TimeStamp(2)));
 		
 		// Testing the market for the correct transactions
+		// agent 1 and 4 still trade even though buy@100 also crosses sell@75 
 		assertEquals( 2, market.getTransactions().size() );
 		tr = market.getTransactions().get(1);
 		assertEquals("Incorrect Buyer", agent1, tr.getBuyer());
@@ -241,6 +242,7 @@ public class CDAMarketTest {
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 	}
 	
+	
 	@Test
 	public void extraTest() {
 		for(int i=0; i < 100; i++) {
@@ -249,7 +251,7 @@ public class CDAMarketTest {
 			setup();
 			multiOverlapClear();
 			setup();
-			priceTies();
+			priceTimeTest();
 		}
 	}
 	
@@ -301,8 +303,6 @@ public class CDAMarketTest {
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
 		Iterable<? extends Activity> acts = market.submitOrder(agent2, new Price(155), 2, time1);
 		for (Activity a : acts) a.execute(time1); // should execute clear
-		
-		// on second loop the buy order is null, as it gets removed from the data structure
 		assertEquals( 2, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals("Incorrect Price", new Price(140), tr.getPrice());
@@ -324,16 +324,24 @@ public class CDAMarketTest {
 		MockAgent agent1 = new MockAgent(fundamental, sip, market);
 		MockAgent agent2 = new MockAgent(fundamental, sip, market);
 
-		market.submitOrder(agent1, new Price(100), -1, time0);
-		market.clear(time0);
+		Iterable<? extends Activity> acts = market.submitOrder(agent1, new Price(100), -1, time0);
+		for (Activity a : acts) a.execute(time0); // should execute clear
+		
+		// Check that quotes are correct (no bid, ask @100)
+		Quote q = market.quote;
+		assertEquals("Incorrect ASK", new Price(100),  q.ask );
+		assertEquals("Incorrect BID", null,  q.bid);
+		assertEquals("Incorrect ASK quantity",  1,  q.askQuantity );
+		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
+				
+		// Withdraw order
 		Collection<Order> orders = agent1.getOrders();
 		Order toWithdraw = orders.iterator().next(); // get first (& only) order
-		Iterable<? extends Activity> acts = market.withdrawOrder(toWithdraw, time1);
+		acts = market.withdrawOrder(toWithdraw, time1);
 		for (Activity a : acts) a.execute(time1); // should update quotes
-//		market.updateQuote(ImmutableList.<Transaction> of(), time0);
 		
 		// Check that quotes are correct (no bid, no ask)
-		Quote q = market.quote;
+		q = market.quote;
 		assertEquals("Incorrect ASK", null,  q.ask );
 		assertEquals("Incorrect BID", null,  q.bid);
 		assertEquals("Incorrect ASK quantity",  0,  q.askQuantity );
@@ -350,8 +358,6 @@ public class CDAMarketTest {
 		assertEquals("Incorrect BID", new Price(125),  q.bid);
 		assertEquals("Incorrect ASK quantity",  0,  q.askQuantity );
 		assertEquals("Incorrect BID quantity",  1,  q.bidQuantity );
-		
-		
 	}
 	
 	/**
@@ -367,6 +373,15 @@ public class CDAMarketTest {
 		
 		market.submitOrder(agent2, new Price(105), 1, time1);
 		market.submitOrder(agent2, new Price(110), 1, time1);
+		market.clear(time1);
+		
+		// Check that quotes are correct (bid @110, no ask)
+		Quote q = market.quote;
+		assertEquals("Incorrect ASK", null,  q.ask );
+		assertEquals("Incorrect BID", new Price(110),  q.bid);
+		assertEquals("Incorrect ASK quantity",  0,  q.askQuantity );
+		assertEquals("Incorrect BID quantity",  1,  q.bidQuantity );
+				
 		Collection<Order> orders = agent2.getOrders();
 		Order toWithdraw = null;
 		for (Order o : orders)
@@ -375,7 +390,7 @@ public class CDAMarketTest {
 		for (Activity a : acts) a.execute(time1); // should update quotes
 		
 		// Check that quotes are correct (only a buy order @110)
-		Quote q = market.quote;
+		q = market.quote;
 		assertEquals("Incorrect ASK", null,  q.ask );
 		assertEquals("Incorrect BID", new Price(110),  q.bid);
 		assertEquals("Incorrect ASK quantity",  0,  q.askQuantity );
@@ -417,9 +432,9 @@ public class CDAMarketTest {
 		Order toWithdraw = null;
 		for (Order o : orders)
 			if (o.getPrice().equals(new Price(140))) toWithdraw = o;
-		acts = market.withdrawOrder(toWithdraw, -1, time0);
+		acts = market.withdrawOrder(toWithdraw, -1, time0); // TODO this is not returning an activity!
 		for (Activity a : acts) a.execute(time0); // should update quotes
-		// market.updateQuote(ImmutableList.<Transaction> of(), time0);
+		// market.updateQuote(ImmutableList.<Transaction> of(), time0); // XXX if uncommented, this passes
 		
 		// Check that quotes are correct (ask @140 at qty=1, no bid)
 		q = market.quote;
@@ -448,7 +463,7 @@ public class CDAMarketTest {
 	 * order that arrived first if there is a tie in price.
 	 */
 	@Test
-	public void priceTies() {
+	public void priceTimeTest() {
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 		TimeStamp time2 = new TimeStamp(2);
@@ -576,10 +591,10 @@ public class CDAMarketTest {
 		em.executeUntil(TimeStamp.ZERO);
 		
 		quote = market.getSMIP().getQuote();
-		assertEquals("Didn't update ask price", new Price(100), quote.getAskPrice());
-		assertEquals("Didn't update ask quantity", 1, quote.getAskQuantity());
-		assertEquals("Changed bid price unnecessarily", null, quote.getBidPrice());
-		assertEquals("Changed bid quantity unnecessarily", 0, quote.getBidQuantity());
+		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
+		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
+		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());
+		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
 	}
 	
 	@Test
@@ -603,9 +618,9 @@ public class CDAMarketTest {
 		em.executeUntil(new TimeStamp(101));
 		
 		quote = market.getSMIP().getQuote();
-		assertEquals("Didn't update ask price", new Price(100), quote.getAskPrice());
-		assertEquals("Didn't update ask quantity", 1, quote.getAskQuantity());
-		assertEquals("Changed bid price unnecessarily", null, quote.getBidPrice());
-		assertEquals("Changed bid quantity unnecessarily", 0, quote.getBidQuantity());
+		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
+		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
+		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());
+		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
 	}
 }
