@@ -42,10 +42,10 @@ public class CDAMarket extends Market {
 	}
 
 	@Override
-	public Iterable<? extends Activity> withdrawOrder(Order order,
+	public Iterable<? extends Activity> withdrawOrder(Order order, int quantity,
 			TimeStamp currentTime) {
 		return ImmutableList.<Activity> builder().addAll(
-				super.withdrawOrder(order, currentTime)).addAll(
+				super.withdrawOrder(order, quantity, currentTime)).addAll(
 				updateQuote(ImmutableList.<Transaction> of(), currentTime)).build();
 	}
 

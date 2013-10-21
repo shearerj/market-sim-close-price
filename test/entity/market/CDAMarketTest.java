@@ -417,7 +417,7 @@ public class CDAMarketTest {
 		MockAgent agent2 = new MockAgent(fundamental, sip, market);
 		
 		Iterable<? extends Activity> acts = market.submitOrder(agent1, new Price(150), -1, time0);
-		for (Activity a : acts) a.execute(time0);
+		for (Activity a : acts) a.execute(time0); // Shouldn't just blindly execute these at time 0
 		acts = market.submitOrder(agent1, new Price(140), -2, time0);
 		for (Activity a : acts) a.execute(time0);
 		
@@ -432,9 +432,8 @@ public class CDAMarketTest {
 		Order toWithdraw = null;
 		for (Order o : orders)
 			if (o.getPrice().equals(new Price(140))) toWithdraw = o;
-		acts = market.withdrawOrder(toWithdraw, -1, time0); // TODO this is not returning an activity!
+		acts = market.withdrawOrder(toWithdraw, -1, time0);
 		for (Activity a : acts) a.execute(time0); // should update quotes
-		// market.updateQuote(ImmutableList.<Transaction> of(), time0); // XXX if uncommented, this passes
 		
 		// Check that quotes are correct (ask @140 at qty=1, no bid)
 		q = market.quote;
