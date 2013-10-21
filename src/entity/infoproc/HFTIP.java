@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableList;
 
 import entity.agent.HFTAgent;
 import entity.market.Market;
+import entity.market.MarketTime;
 import entity.market.Quote;
 import entity.market.Transaction;
 import event.TimeStamp;
@@ -30,10 +31,10 @@ public class HFTIP extends SMIP {
 	}
 
 	@Override
-	public Iterable<? extends Activity> processQuote(Market market, Quote quote,
+	public Iterable<? extends Activity> processQuote(Market market, MarketTime quoteTime, Quote quote,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
 		return ImmutableList.<Activity> builder().addAll(
-				super.processQuote(market, quote, newTransactions, currentTime)).add(
+				super.processQuote(market, quoteTime, quote, newTransactions, currentTime)).add(
 				new AgentStrategy(hftAgent, TimeStamp.IMMEDIATE)).build();
 	}
 

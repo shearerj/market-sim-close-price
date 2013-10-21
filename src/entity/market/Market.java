@@ -301,9 +301,10 @@ public abstract class Market extends Entity {
 		spreads.add((int) currentTime.getInTicks(), quote.getSpread());
 		midQuotes.add((int) currentTime.getInTicks(), quote.getMidquote());
 		
+		MarketTime quoteTime = new MarketTime(currentTime, marketTime);
 		Builder<Activity> acts = ImmutableList.builder();
 		for (IP ip : Iterables2.randomOrder(ips, rand))
-			acts.add(new SendToIP(this, quote, transactions, ip, TimeStamp.IMMEDIATE));
+			acts.add(new SendToIP(this, quoteTime, quote, transactions, ip, TimeStamp.IMMEDIATE));
 		return acts.build();
 	}
 

@@ -15,6 +15,7 @@ import data.TimeSeries;
 import logger.Logger;
 import activity.Activity;
 import entity.market.Market;
+import entity.market.MarketTime;
 import entity.market.Price;
 import entity.market.Quote;
 import entity.market.Transaction;
@@ -31,7 +32,8 @@ public class SIP extends IP {
 
 	private static final long serialVersionUID = -4600049787044894823L;
 	
-	protected final Map<Market, Quote> marketQuotes; // hashed by market
+	protected final Map<Market, Quote> marketQuotes;
+	protected final Map<Market, MarketTime> quoteTimes;
 	protected final List<Transaction> transactions;
 	protected BestBidAsk nbbo;
 
@@ -40,15 +42,22 @@ public class SIP extends IP {
 	public SIP(TimeStamp latency) {
 		super(latency);
 		this.marketQuotes = Maps.newHashMap();
+		this.quoteTimes = Maps.newHashMap();
 		this.transactions = Lists.newArrayList();
 		this.nbbo = new BestBidAsk(null, null, null, null);
 
 		this.nbboSpreads = new TimeSeries();
 	}
 
-	public Iterable<Activity> processQuote(Market market, Quote quote,
+	public Iterable<Activity> processQuote(Market market, MarketTime quoteTime, Quote quote,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
+		MarketTime lastTime = quoteTimes.get(market);
+		// If we get a stale quote, ignore it.
+		if (lastTime != null && lastTime.compareTo(quoteTime) > 0)
+			return ImmutableList.of();
+
 		marketQuotes.put(market, quote);
+		quoteTimes.put(market, quoteTime);
 		transactions.addAll(newTransactions);
 		
 		Logger.log(INFO, market + " -> " + this + " quote " + quote);
