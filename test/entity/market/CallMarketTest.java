@@ -12,7 +12,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import systemmanager.Consts;
 import systemmanager.EventManager;
+import systemmanager.Keys;
 import activity.Activity;
 import activity.Clear;
 import activity.SubmitOrder;
@@ -22,6 +24,7 @@ import com.google.common.collect.Iterables;
 
 import data.DummyFundamental;
 import data.FundamentalValue;
+import data.MarketProperties;
 import entity.agent.MockAgent;
 import entity.infoproc.SIP;
 import entity.market.Market;
@@ -462,7 +465,7 @@ public class CallMarketTest {
 		market1.clear(time1);
 		assertEquals( 2, market1.getTransactions().size() );
 		Transaction tr = market1.getTransactions().get(0);
-		// Clearing price should be based on pricing policy=0.5 between 150 & 160 // XXX check this
+		// Clearing price should be based on pricing policy=0.5 between 150 & 160
 		assertEquals("Incorrect Price", new Price(155), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		tr = market1.getTransactions().get(1);
@@ -656,6 +659,22 @@ public class CallMarketTest {
 		assertEquals("Incorrect Seller", agent1, tr.getSeller());
 		assertEquals("Incorrect Price", new Price(115), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
+	}
+	
+	/**
+	 * Test that zero latency "call" market == CDA market
+	 */
+	@Test
+	public void testMarketTypeForLatency() {
+		MarketFactory mf = new MarketFactory(sip, new Random());
+		MarketProperties props = new MarketProperties(Consts.MarketType.CALL);
+		props.put(Keys.MARKET_LATENCY, 0);
+		Market market = mf.createMarket(props);
+		assertTrue("Incorrect market type at zero latency", market instanceof CDAMarket);
+		
+		props.put(Keys.MARKET_LATENCY, 100);
+		market = mf.createMarket(props);
+		assertTrue("Incorrect market type at nonzero latency", market instanceof CallMarket);
 	}
 	
 	public void quoteLatency() {
