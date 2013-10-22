@@ -9,6 +9,7 @@ import activity.Activity;
 import com.google.common.collect.ImmutableList;
 
 import entity.market.Market;
+import entity.market.MarketTime;
 import entity.market.Quote;
 import entity.market.Transaction;
 import event.TimeStamp;
@@ -25,6 +26,7 @@ public class SMIP extends IP {
 	
 	protected final Market associatedMarket;
 	protected Quote quote;
+	protected MarketTime lastQuoteTime;
 
 	/**
 	 * Constructor
@@ -39,13 +41,18 @@ public class SMIP extends IP {
 	}
 
 	@Override
-	public Iterable<? extends Activity> processQuote(Market market,
+	public Iterable<? extends Activity> processQuote(Market market, MarketTime quoteTime,
 			Quote quote, List<Transaction> newTransactions,
 			TimeStamp currentTime) {
 		checkArgument(market.equals(associatedMarket),
 				"Can't update an SM Market with anything but its market");
+		
+		// Do nothing for a stale quote
+		if (lastQuoteTime != null && lastQuoteTime.compareTo(quoteTime) > 0)
+			return ImmutableList.of();
 
 		this.quote = quote;
+		this.lastQuoteTime = quoteTime;
 		return ImmutableList.of();
 	}
 

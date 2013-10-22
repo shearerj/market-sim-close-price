@@ -432,7 +432,7 @@ public class CDAMarketTest {
 		Order toWithdraw = null;
 		for (Order o : orders)
 			if (o.getPrice().equals(new Price(140))) toWithdraw = o;
-		acts = market.withdrawOrder(toWithdraw, -1, time0);
+		acts = market.withdrawOrder(toWithdraw, 1, time0);
 		for (Activity a : acts) a.execute(time0); // should update quotes
 		
 		// Check that quotes are correct (ask @140 at qty=1, no bid)
