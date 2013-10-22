@@ -134,7 +134,41 @@ public abstract class Agent extends Entity {
 		activeOrders.remove(order);
 	}
 
-	// TODO how does agent remove a specific order? based on time?
+	/**
+	 * Withdraw most recent order.
+	 * @return
+	 */
+	public Iterable<? extends Activity> withdrawLastOrder() {
+		Collection<Activity> acts = new ArrayList<Activity>();
+		TimeStamp ts = TimeStamp.ZERO;
+		Order lastOrder = null;
+		for (Order order : activeOrders) {
+			if (order.getSubmitTime().after(ts)) {
+				ts = order.getSubmitTime();
+				lastOrder = order;
+			}
+		}
+		if (lastOrder != null) acts.add(new WithdrawOrder(lastOrder, TimeStamp.IMMEDIATE));
+		return acts;
+	}
+	
+	/**
+	 * Withdraw first (earliest) order.
+	 * @return
+	 */
+	public Iterable<? extends Activity> withdrawFirstOrder() {
+		Collection<Activity> acts = new ArrayList<Activity>();
+		TimeStamp ts = new TimeStamp(Long.MAX_VALUE); // infinity
+		Order lastOrder = null;
+		for (Order order : activeOrders) {
+			if (order.getSubmitTime().before(ts)) {
+				ts = order.getSubmitTime();
+				lastOrder = order;
+			}
+		}
+		if (lastOrder != null) acts.add(new WithdrawOrder(lastOrder, TimeStamp.IMMEDIATE));
+		return acts;
+	}
 	
 	/**
 	 * Withdraw all active orders.
