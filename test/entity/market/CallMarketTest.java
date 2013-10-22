@@ -60,20 +60,7 @@ public class CallMarketTest {
 				clearFreq100);
 		// no delay from SIP + clears every 100 with pricing policy=1
 		market2 = new CallMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1, 1, 
-				clearFreq100);
-		
-		// TODO need market with zero clear...
-		
-//		// no delay from SIP + clears every 100
-//		market2 = new CallMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1, 0.5,
-//				new TimeStamp(100));
-//		// delayed info + clears every 100
-//		market2 = new CallMarket(sip, new TimeStamp(100), new Random(), 1, 0.5,
-//				new TimeStamp(100));
-//		// delayed info + clears immediately
-//		market2 = new CallMarket(sip, new TimeStamp(100), new Random(), 1, 0.5,
-//				TimeStamp.ZERO);
-		
+				clearFreq100);		
 	}
 
 	@Test
@@ -318,8 +305,7 @@ public class CallMarketTest {
 		assertEquals("Incorrect Price", new Price(150), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 	}
-	
-	// TODO similar tests for the other market types (other clear freqs)
+
 	
 	@Test
 	public void extraTest() {
@@ -330,8 +316,8 @@ public class CallMarketTest {
 			multiOverlapClear();
 			setup();
 			partialOverlapClear();
-//			setup();
-//			priceTies();
+			setup();
+			priceTimeTest();
 		}
 	}
 	
@@ -677,8 +663,120 @@ public class CallMarketTest {
 		assertTrue("Incorrect market type at nonzero latency", market instanceof CallMarket);
 	}
 	
-	public void quoteLatency() {
-		// test that quotes are delayed
+	/**
+	 * Test that quotes are delayed for market with clears every 100 and zero 
+	 * information latency.
+	 */
+	@Test
+	public void quoteNoLatency() {		
+		Quote quote;
+		EventManager em = new EventManager(new Random());
+		em.addActivity(new Clear(market1, TimeStamp.IMMEDIATE)); // initialize clear manually
+
+		// Test that before Time 100 nothing has been updated
+		MockAgent agent = new MockAgent(fundamental, sip, market1);
+		em.addActivity(new SubmitOrder(agent, market1, new Price(100), -1, TimeStamp.ZERO));
+		em.executeUntil(new TimeStamp(100));
+		
+		quote = market1.getSMIP().getQuote();
+		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
+		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
+		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
+		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
+		
+		// Test that after clear at 100 quotes are updated
+		em.executeUntil(new TimeStamp(101));
+		quote = market1.getSMIP().getQuote();
+		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
+		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
+		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());
+		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
+		
+		// Test that no change in quotes given matched orders
+		em.addActivity(new SubmitOrder(agent, market1, new Price(150), 1, new TimeStamp(150)));
+		em.executeUntil(new TimeStamp(101));
+		quote = market1.getSMIP().getQuote();
+		assertEquals("Changed Ask price unnecessarily", new Price(100), quote.getAskPrice());
+		assertEquals("Changed Ask quantity unnecessarily", 1, quote.getAskQuantity());
+		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());
+		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
+		
+		// Now post-clear, orders are matched and removed and quote is updated
+		em.executeUntil(new TimeStamp(201));
+		quote = market1.getSMIP().getQuote();
+		assertEquals("Didn't update Ask price", null, quote.getAskPrice());
+		assertEquals("Didn't update Ask quantity", 0, quote.getAskQuantity());
+		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());
+		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());	
 	}
 	
+	/**
+	 * Test markets with nonzero clearing intervals and nonzero information latencies.
+	 */
+	@Test
+	public void quoteLatency() {		
+		Quote quote;
+		EventManager em = new EventManager(new Random());
+		
+		// delayed info by 50 + clears every 100
+		CallMarket market3 = new CallMarket(sip, new TimeStamp(50), new Random(), 1, 0.5,
+				clearFreq100);
+		// delayed info by 150 + clears every 100
+		CallMarket market4 = new CallMarket(sip, new TimeStamp(150), new Random(), 1, 0.5,
+				clearFreq100);
+		// Initialize first clears manually
+		em.addActivity(new Clear(market3, TimeStamp.IMMEDIATE));
+		em.addActivity(new Clear(market4, TimeStamp.IMMEDIATE));
+		
+		MockAgent agent1 = new MockAgent(fundamental, sip, market3);
+		MockAgent agent2 = new MockAgent(fundamental, sip, market4);
+		
+		em.addActivity(new SubmitOrder(agent1, market3, new Price(100), -1, TimeStamp.ZERO));
+		em.addActivity(new SubmitOrder(agent2, market4, new Price(100), 1, TimeStamp.ZERO));
+		
+		// Test that before Time 100 nothing has been updated for either market
+		quote = market3.getSMIP().getQuote();
+		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
+		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
+		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
+		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
+		quote = market4.getSMIP().getQuote();
+		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
+		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
+		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
+		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
+		
+		// Test that after clear at 100 quotes are still not updated
+		em.executeUntil(new TimeStamp(101));
+		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
+		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
+		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
+		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
+		quote = market4.getSMIP().getQuote();
+		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
+		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
+		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
+		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
+		
+		// Test that market3's quotes have now updated (but not market4's)
+		em.executeUntil(new TimeStamp(151));
+		quote = market3.getSMIP().getQuote();
+		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
+		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
+		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());
+		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
+		quote = market4.getSMIP().getQuote();
+		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
+		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
+		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
+		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
+		
+		// Test that market4's quotes have now updated (quote from first clear)
+		em.executeUntil(new TimeStamp(251));
+		quote = market4.getSMIP().getQuote();
+		assertEquals("Didn't update Bid price", new Price(100), quote.getBidPrice());
+		assertEquals("Didn't update Bid quantity", 1, quote.getBidQuantity());
+		assertEquals("Changed Ask price unnecessarily", null, quote.getAskPrice());
+		assertEquals("Changed Ask quantity unnecessarily", 0, quote.getAskQuantity());
+	}
 }
