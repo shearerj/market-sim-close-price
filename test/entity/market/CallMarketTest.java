@@ -456,7 +456,7 @@ public class CallMarketTest {
 		Order toWithdraw = null;
 		for (Order o : orders)
 			if (o.getPrice().equals(new Price(140))) toWithdraw = o;
-		market1.withdrawOrder(toWithdraw, -1, time0);
+		market1.withdrawOrder(toWithdraw, 1, time0);
 		market1.clear(time0);
 
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
@@ -478,7 +478,7 @@ public class CallMarketTest {
 		orders = agent1.getOrders();
 		toWithdraw = null;
 		for (Order o : orders) if (o.getPrice().equals(new Price(140))) toWithdraw = o;
-		market2.withdrawOrder(toWithdraw, -1, time0);
+		market2.withdrawOrder(toWithdraw, 1, time0);
 		market2.clear(time0);
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
 		market2.submitOrder(agent2, new Price(160), 1, time1);

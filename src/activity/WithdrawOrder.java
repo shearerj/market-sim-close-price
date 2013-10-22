@@ -18,12 +18,12 @@ public class WithdrawOrder extends Activity {
 	protected final int quantity;
 	
 	public WithdrawOrder(Order order, TimeStamp scheduledTime) {
-		this(order, order.getQuantity(), scheduledTime);
+		this(order, Math.abs(order.getQuantity()), scheduledTime);
 	}
 
 	public WithdrawOrder(Order order, int quantity, TimeStamp scheduledTime) {
 		super(scheduledTime);
-		checkArgument(quantity != 0, "Quantiy can't be 0");
+		checkArgument(quantity > 0, "Quantiy must be positive");
 		this.order = checkNotNull(order, "Order");
 		this.quantity = quantity;
 	}
