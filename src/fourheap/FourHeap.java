@@ -32,7 +32,13 @@ import com.google.common.collect.Ordering;
  *            Time class
  */
 /*
- * TODO Remove is slow, and changing to SortedSets will provide faster remove for large heaps, but probably slow everything else down by a constant.
+ * TODO Remove is slow, and changing to SortedSets will provide faster remove
+ * for large heaps, but probably slow everything else down by a constant.
+ * 
+ * TODO There's a lot of almost duplicate code about modifying matched and
+ * unmatched quantities, and then inserting and removing from heaps. There's got
+ * to be a way to generalize it.
+ * 
  */
 public class FourHeap<P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
 
@@ -43,9 +49,9 @@ public class FourHeap<P extends Comparable<? super P>, T extends Comparable<? su
 			buyUnmatched, buyMatched;
 	protected int size;
 
-	protected final Ordering<Order<P, T>> priceComp = new PriceOrdering(), timeComp = new TimeOrdering();
-
 	protected FourHeap() {
+		Ordering<Order<P, T>> priceComp = new PriceOrdering(), timeComp = new TimeOrdering();
+		
 		this.sellUnmatched = new PriorityQueue<Order<P, T>>(1, priceComp.compound(timeComp));
 		this.sellMatched   = new PriorityQueue<Order<P, T>>(1, priceComp.reverse().compound(timeComp));
 		this.buyUnmatched  = new PriorityQueue<Order<P, T>>(1, priceComp.reverse().compound(timeComp));
@@ -176,6 +182,22 @@ public class FourHeap<P extends Comparable<? super P>, T extends Comparable<? su
 			order.unmatchedQuantity -= qremove;
 			quantity -= t * qremove;
 			if (order.unmatchedQuantity == 0) orderUnmatchedHeap.remove(order);
+		}
+		
+		// Replace withdrawn quantity with viable orders from orderUnmatchedHeap
+		while (quantity > 0 // More to remove
+				&& !orderUnmatchedHeap.isEmpty() // Orders to replace
+				&& orderUnmatchedHeap.peek().price.compareTo(matchMatchedHeap.peek().price) * t >= 0) { // Valid to match
+			Order<P, T> match = orderUnmatchedHeap.peek();
+			if (match.matchedQuantity == 0) orderMatchedHeap.offer(match);
+			
+			int quantityMatched = t * Math.min(quantity, abs(match.unmatchedQuantity));
+			order.matchedQuantity -= quantityMatched;
+			match.matchedQuantity += quantityMatched;
+			match.unmatchedQuantity -= quantityMatched;
+			quantity -= t * quantityMatched;
+			
+			if (match.unmatchedQuantity == 0)orderUnmatchedHeap.poll();
 		}
 
 		// Remove any amount of matched orders

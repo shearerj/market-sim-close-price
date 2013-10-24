@@ -12,8 +12,6 @@ public class FourHeapTest {
 	
 	protected final static Random rand = new Random();
 	
-	// TODO test where you have a partially matched order, such that when you remove an order, you remove more than the partial match of the coresponding order.
-	
 	@Test
 	public void heapOrderTest() {
 		FourHeap<Integer, Integer> fh;
@@ -293,6 +291,70 @@ public class FourHeapTest {
 		assertEquals((Integer) 5, fh.bidQuote());
 		assertEquals((Integer) 5, fh.askQuote());
 		assertEquals(4, fh.size());
+		assertInvariants(fh);
+	}
+	
+	/**
+	 * Test that withdrawing with orders wating to get matched actually works
+	 * appropriately
+	 */
+	@Test
+	public void withdrawWithWaitingOrders() {
+		FourHeap<Integer, Integer> fh;
+		Order<Integer, Integer> o;
+
+		fh = FourHeap.create();
+		o = insertOrder(fh, 4, 3, 0);
+		insertOrder(fh, 1, -3, 1);
+		insertOrder(fh, 2, -2, 2);
+		insertOrder(fh, 3, 4, 3);
+		assertInvariants(fh);
+		fh.withdrawOrder(o);
+		assertInvariants(fh);
+		fh.clear();
+		assertInvariants(fh);
+
+		fh = FourHeap.create();
+		o = insertOrder(fh, 1, -3, 0);
+		insertOrder(fh, 4, 3, 1);
+		insertOrder(fh, 3, 2, 2);
+		insertOrder(fh, 2, -4, 3);
+		assertInvariants(fh);
+		fh.withdrawOrder(o);
+		assertInvariants(fh);
+		fh.clear();
+		assertInvariants(fh);
+	}
+	
+	/**
+	 * Test a strange edge case with withdrawing orders, where quantity may get
+	 * misinterpreted.
+	 */
+	@Test
+	public void strangeWithdrawEdgeCase() {
+		FourHeap<Integer, Integer> fh;
+		Order<Integer, Integer> o;
+
+		fh = FourHeap.create();
+		insertOrder(fh, 4, 3, 0);
+		o = insertOrder(fh, 1, -3, 1);
+		insertOrder(fh, 2, -2, 2);
+		insertOrder(fh, 3, 4, 3);
+		assertInvariants(fh);
+		fh.withdrawOrder(o);
+		assertInvariants(fh);
+		fh.clear();
+		assertInvariants(fh);
+
+		fh = FourHeap.create();
+		insertOrder(fh, 1, -3, 0);
+		o = insertOrder(fh, 4, 3, 1);
+		insertOrder(fh, 3, 2, 2);
+		insertOrder(fh, 2, -4, 3);
+		assertInvariants(fh);
+		fh.withdrawOrder(o);
+		assertInvariants(fh);
+		fh.clear();
 		assertInvariants(fh);
 	}
 	
