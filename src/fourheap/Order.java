@@ -2,8 +2,6 @@ package fourheap;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Math.abs;
-import static java.lang.Integer.signum;
 
 import java.io.Serializable;
 
@@ -12,15 +10,14 @@ public class Order<P extends Comparable<? super P>, T extends Comparable<? super
 	private static final long serialVersionUID = -3460176014871040729L;
 	
 	protected final P price;
-	protected int totalQuantity; // Negative to sell
-	protected int quantity;
+	protected int unmatchedQuantity, matchedQuantity; // Negative for sell order
 	protected final T submitTime;
 
 	protected Order(P price, int initialQuantity, T submitTime) {
 		checkArgument(initialQuantity != 0, "Initial Quantity can't be zero");
 		this.price = checkNotNull(price, "Price");
-		this.totalQuantity = initialQuantity;
-		this.quantity = initialQuantity;
+		this.unmatchedQuantity = initialQuantity;
+		this.matchedQuantity = 0;
 		this.submitTime = checkNotNull(submitTime, "Submit Time");
 	}
 	
@@ -29,21 +26,23 @@ public class Order<P extends Comparable<? super P>, T extends Comparable<? super
 		return new Order<P, T>(price, initialQuantity, submitTime);
 	}
 
-	MatchedOrders<P, T> transact(Order<P, T> other, int buyQuantity) {
-		Order<P, T> buy = this.totalQuantity > 0 ? this : other;
-		Order<P, T> sell = this.totalQuantity > 0 ? other : this;
+	/**
+	 * 
+	 * @param other The other order to match
+	 * @param quantity The number of orders that transact. Always positive
+	 * @return
+	 */
+	MatchedOrders<P, T> match(Order<P, T> other, int quantity) {
+		Order<P, T> buy  = (matchedQuantity + unmatchedQuantity) > 0 ? this  : other;
+		Order<P, T> sell = (matchedQuantity + unmatchedQuantity) > 0 ? other : this;
 		
 		checkArgument(sell.price.compareTo(buy.price) <= 0, "Invalid Price");
-		buy.quantity -= buyQuantity;
-		sell.quantity += buyQuantity;
-		return MatchedOrders.create(buy, sell, buyQuantity);
-	}
-	
-	void withdraw(int quantity) {
-		if (abs(quantity) > abs(this.quantity) || signum(quantity) != signum(this.quantity))
-			throw new IllegalArgumentException("Can't withdraw more than are in order");
-		this.totalQuantity -= quantity;
-		this.quantity -= quantity;
+		checkArgument(buy.matchedQuantity >= quantity, "Tried to transact with more than were matched");
+		checkArgument(sell.matchedQuantity <= -quantity, "Tried to transact with more than were matched");
+		
+		buy.matchedQuantity -= quantity;
+		sell.matchedQuantity += quantity;
+		return MatchedOrders.create(buy, sell, quantity);
 	}
 
 	public P getPrice() {
@@ -51,7 +50,7 @@ public class Order<P extends Comparable<? super P>, T extends Comparable<? super
 	}
 
 	public int getQuantity() {
-		return quantity;
+		return unmatchedQuantity + matchedQuantity;
 	}
 
 	public T getSubmitTime() {
@@ -70,7 +69,7 @@ public class Order<P extends Comparable<? super P>, T extends Comparable<? super
 
 	@Override
 	public String toString() {
-		return "(" + price + ", " + quantity + ", " + submitTime + ")";
+		return "(" + price + ", " + getQuantity() + ", " + submitTime + ")";
 	}
 	
 }

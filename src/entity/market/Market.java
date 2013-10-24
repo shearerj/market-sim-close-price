@@ -191,8 +191,7 @@ public abstract class Market extends Entity {
 		Multiset<Price> priceQuant = order.getQuantity() < 0 ? askPriceQuantity : bidPriceQuantity;
 		priceQuant.remove(order.getPrice(), quantity);
 		
-		// XXX Change fourheap to also take positive quantity for withdrawal?
-		orderbook.withdrawOrder(order.order, Integer.signum(order.getQuantity()) * quantity);
+		orderbook.withdrawOrder(order.order, quantity);
 		
 		if (order.getQuantity() == 0) {
 			order.agent.removeOrder(order);
