@@ -17,12 +17,13 @@ public class FourHeapTest {
 	@Test
 	public void heapOrderTest() {
 		FourHeap<Integer, Integer> fh;
+		Order<Integer, Integer> b1, b2, b3, s1, s2, s3;
 		
 		fh = FourHeap.create();
 		
-		Order<Integer, Integer> b1 = Order.create(5, 3, 5);
-		Order<Integer, Integer> b2 = Order.create(10, 3, 5);
-		Order<Integer, Integer> b3 = Order.create(5, 3, 4);
+		b1 = Order.create(5, 3, 5);
+		b2 = Order.create(10, 3, 5);
+		b3 = Order.create(5, 3, 4);
 		
 		fh.buyUnmatched.offer(b1);
 		fh.buyUnmatched.offer(b2);
@@ -36,9 +37,9 @@ public class FourHeapTest {
 		fh.buyMatched.offer(b3);
 		assertEquals(fh.buyMatched.poll(), b3);
 		
-		Order<Integer, Integer> s1 = Order.create(5, -3, 5);
-		Order<Integer, Integer> s2 = Order.create(10, -3, 5);
-		Order<Integer, Integer> s3 = Order.create(5, -3, 4);
+		s1 = Order.create(5, -3, 5);
+		s2 = Order.create(10, -3, 5);
+		s3 = Order.create(5, -3, 4);
 		
 		fh.sellUnmatched.offer(s1);
 		fh.sellUnmatched.offer(s2);

@@ -5,6 +5,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.Serializable;
 
+/**
+ * An order meant for use in a fourheap
+ * 
+ * @author ebrink
+ * 
+ * @param <P>
+ *            Price
+ * @param <T>
+ *            Time
+ */
 public class Order<P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
 
 	private static final long serialVersionUID = -3460176014871040729L;
@@ -21,38 +31,37 @@ public class Order<P extends Comparable<? super P>, T extends Comparable<? super
 		this.submitTime = checkNotNull(submitTime, "Submit Time");
 	}
 	
+	/**
+	 * Factory constructor
+	 */
 	public static <P extends Comparable<? super P>, T extends Comparable<? super T>> Order<P, T> create(
 			P price, int initialQuantity, T submitTime) {
 		return new Order<P, T>(price, initialQuantity, submitTime);
 	}
 
 	/**
+	 * Get the Price
 	 * 
-	 * @param other The other order to match
-	 * @param quantity The number of orders that transact. Always positive
-	 * @return
+	 * @return The price
 	 */
-	MatchedOrders<P, T> match(Order<P, T> other, int quantity) {
-		Order<P, T> buy  = (matchedQuantity + unmatchedQuantity) > 0 ? this  : other;
-		Order<P, T> sell = (matchedQuantity + unmatchedQuantity) > 0 ? other : this;
-		
-		checkArgument(sell.price.compareTo(buy.price) <= 0, "Invalid Price");
-		checkArgument(buy.matchedQuantity >= quantity, "Tried to transact with more than were matched");
-		checkArgument(sell.matchedQuantity <= -quantity, "Tried to transact with more than were matched");
-		
-		buy.matchedQuantity -= quantity;
-		sell.matchedQuantity += quantity;
-		return MatchedOrders.create(buy, sell, quantity);
-	}
-
 	public P getPrice() {
 		return price;
 	}
 
+	/**
+	 * Get the quantity. Negative for sell orders
+	 * 
+	 * @return The quantity
+	 */
 	public int getQuantity() {
 		return unmatchedQuantity + matchedQuantity;
 	}
 
+	/**
+	 * Get the submission Time of the order
+	 * 
+	 * @return The submission Time
+	 */
 	public T getSubmitTime() {
 		return submitTime;
 	}
@@ -63,13 +72,16 @@ public class Order<P extends Comparable<? super P>, T extends Comparable<? super
 	}
 
 	@Override
+	/**
+	 * All Orders are unique
+	 */
 	public final boolean equals(Object obj) {
 		return super.equals(obj);
 	}
 
 	@Override
 	public String toString() {
-		return "(" + price + ", " + getQuantity() + ", " + submitTime + ")";
+		return "<" + submitTime + "| " + (getQuantity() > 0 ? "BUY " : "SELL ") + Math.abs(getQuantity()) + " @ " + price + ">";
 	}
 	
 }
