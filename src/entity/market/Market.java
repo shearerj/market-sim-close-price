@@ -1,13 +1,11 @@
 package entity.market;
 
-import static logger.Logger.log;
-import static logger.Logger.Level.INFO;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Integer.signum;
-import static java.lang.Math.min;
-import static java.lang.Math.max;
 import static java.lang.Math.abs;
+import static java.lang.Math.min;
+import static logger.Logger.log;
+import static logger.Logger.Level.INFO;
 
 import java.util.Collection;
 import java.util.List;
@@ -16,6 +14,9 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 import utils.Iterables2;
+import activity.Activity;
+import activity.SendToIP;
+import activity.WithdrawOrder;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
@@ -24,9 +25,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 
-import activity.Activity;
-import activity.SendToIP;
-import activity.WithdrawOrder;
 import data.TimeSeries;
 import entity.Entity;
 import entity.agent.Agent;
@@ -164,15 +162,13 @@ public abstract class Market extends Entity {
 	 */
 	public Iterable<? extends Activity> withdrawOrder(Order order,
 			TimeStamp currentTime) {
-		return withdrawOrder(order, order.getQuantity(), currentTime);
+		return withdrawOrder(order, Math.abs(order.getQuantity()), currentTime);
 	}
 
 	/**
-	 * Method to withdraw specific quantity from an order. Quantity can be
-	 * thought of quantity and type of order. If withdrawing part of sell order,
-	 * quantity should be < 0.
+	 * Method to withdraw specific quantity from an order.
 	 * 
-	 * This will work even if quantity has "decreased" after order was
+	 * This will work even if quantity has decreased after order was
 	 * submitted. Trying to cancel a higher quantity than the order has to offer
 	 * will simply result in the entire order being cancelled.
 	 * 
@@ -181,24 +177,19 @@ public abstract class Market extends Entity {
 	 * @param order
 	 *            order to withdraw quantity from
 	 * @param quantity
-	 *            quantity to withdraw, should be negative when withdrawing sell
-	 *            orders
+	 *            quantity to withdraw, always positive
 	 * @param currentTime
 	 *            the current time
 	 * @return any side effect activities (base case none)
 	 */
-	// XXX Should this actually require negative quantity for sell orders? or
-	// should the logic be in here?
 	public Iterable<? extends Activity> withdrawOrder(Order order, int quantity, TimeStamp currentTime) {
 		marketTime++;
+		checkArgument(quantity >= 0, "Quantiy can't be negative");
 		if (order.getQuantity() == 0) return ImmutableList.of();
-		checkArgument(quantity != 0 && signum(order.getQuantity()) == signum(quantity),
-				"Improper quantity");
-		quantity = quantity < 0 ? max(quantity, order.getQuantity()) : 
-								  min(quantity, order.getQuantity());
+		quantity = min(quantity, Math.abs(order.getQuantity()));
 		
 		Multiset<Price> priceQuant = order.getQuantity() < 0 ? askPriceQuantity : bidPriceQuantity;
-		priceQuant.remove(order.getPrice(), abs(quantity));
+		priceQuant.remove(order.getPrice(), quantity);
 		
 		orderbook.withdrawOrder(order.order, quantity);
 		
@@ -301,9 +292,10 @@ public abstract class Market extends Entity {
 		spreads.add((int) currentTime.getInTicks(), quote.getSpread());
 		midQuotes.add((int) currentTime.getInTicks(), quote.getMidquote());
 		
+		MarketTime quoteTime = new MarketTime(currentTime, marketTime);
 		Builder<Activity> acts = ImmutableList.builder();
 		for (IP ip : Iterables2.randomOrder(ips, rand))
-			acts.add(new SendToIP(this, quote, transactions, ip, TimeStamp.IMMEDIATE));
+			acts.add(new SendToIP(this, quoteTime, quote, transactions, ip, TimeStamp.IMMEDIATE));
 		return acts.build();
 	}
 

@@ -1,11 +1,14 @@
-package entity.agent;
+package entity.infoproc;
 
 import static org.junit.Assert.*;
 
 import org.junit.Test;
 
 // TODO Implement
-public class LAAgentTest {
+
+// Make sure to test a market updating twice in the same TimeStamp.
+
+public class IPTest {
 
 	@Test
 	public void test() {
