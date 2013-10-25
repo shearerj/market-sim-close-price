@@ -153,7 +153,7 @@ public class AAAgentTest {
 				"\nTesting buyer on empty market: Result should be price=0");
 		// Creating a buyer
 		AAAgent agent = addAgent(true);
-		// Testing against an empty market
+		// Testing against asn empty market
 		executeAgentStrategy(agent, 100);
 
 		//Checking the bid

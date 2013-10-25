@@ -86,6 +86,8 @@ public class AgentFactory {
 		case LA:
 			return new LAAgent(markets, fundamental, sip, new Random(
 					rand.nextLong()), props);
+		case DA:
+			return new DummyAgent(fundamental,sip,marketAssignment.next());
 		default:
 			throw new IllegalArgumentException("Can't create AgentType: "
 					+ props.getAgentType());
