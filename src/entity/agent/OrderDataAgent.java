@@ -36,10 +36,10 @@ public class OrderDataAgent extends SMAgent {
 	protected static TreeMap<TimeStamp, OrderData> orderData = new TreeMap<TimeStamp, OrderData>();
 
 	public OrderDataAgent(FundamentalValue fundamental, SIP sip, Market market, 
-	        Random rand, PrivateValue privateValue, int tickSize, 
+	        Random rand, PrivateValue privateValue, 
 	        Iterator<OrderData> orderData) {
 	    super(new TimeStamp(0), fundamental, sip, market, new Random(),
-	                new PrivateValue(), tickSize);
+	                new PrivateValue(), 1);
 	    
 	    while(orderData.hasNext()){
 	        OrderData order = orderData.next();
