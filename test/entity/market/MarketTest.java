@@ -11,9 +11,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import systemmanager.Consts;
 import data.DummyFundamental;
 import data.FundamentalValue;
-
 import entity.agent.Agent;
 import entity.agent.MockAgent;
 import entity.infoproc.SIP;
@@ -31,7 +31,7 @@ public class MarketTest {
 
 	@BeforeClass
 	public static void setupClass() {
-		Logger.setup(3, new File("simulations/unit_testing/unit_tests.txt"));
+		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "MarketTest.log"));
 	}
 
 	@Before

@@ -45,7 +45,9 @@ public class SMIP extends IP {
 			Quote quote, List<Transaction> newTransactions,
 			TimeStamp currentTime) {
 		checkArgument(market.equals(associatedMarket),
-				"Can't update an SM Market with anything but its market");
+				"Can't update an SM IP with anything but its market");
+		checkArgument(quote.getMarket().equals(associatedMarket),
+				"Can't update an SM IP with quote from another market");
 		
 		// Do nothing for a stale quote
 		if (lastQuoteTime != null && lastQuoteTime.compareTo(quoteTime) > 0)

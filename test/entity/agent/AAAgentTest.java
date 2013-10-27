@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import systemmanager.Consts;
 import systemmanager.Keys;
 import activity.Activity;
 import activity.ProcessQuote;
@@ -45,7 +46,7 @@ public class AAAgentTest {
 	@BeforeClass
 	public static void setupClass() {
 		// Setting up the log file
-		Logger.setup(3, new File("simulations/unit_testing/AAAgentTest.log"));
+		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "AAAgentTest.log"));
 
 		// Creating the setup properties
 		rand = new Random(1);

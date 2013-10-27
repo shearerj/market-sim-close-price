@@ -12,6 +12,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import systemmanager.Consts;
 import systemmanager.EventManager;
 import activity.Activity;
 import activity.Clear;
@@ -37,7 +38,7 @@ public class CDAMarketTest {
 
 	@BeforeClass
 	public static void setupClass() {
-		Logger.setup(3, new File("simulations/unit_testing/CDAMarketTest.log"));
+		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "CDAMarketTest.log"));
 	}
 
 	@Before
@@ -215,18 +216,18 @@ public class CDAMarketTest {
 		// Creating and adding bids
 		// Added for-loop so market clear will happen appropriately
 		// Note: A clear should be inserted after EVERY order submitted
-		Iterable<? extends Activity> bidActs = market.submitOrder(agent1, new Price(150), 1, time);
-		for (Activity act : bidActs)
-			if (act instanceof Clear) act.execute(time);
-		bidActs = market.submitOrder(agent2, new Price(100), -1, time);
-		for (Activity act : bidActs)
-			if (act instanceof Clear) act.execute(time);
-		bidActs = market.submitOrder(agent3, new Price(175), 1, time);
-		for (Activity act : bidActs)
-			if (act instanceof Clear) act.execute(time);
-		bidActs = market.submitOrder(agent4, new Price(125), -1, time);
-		for (Activity act : bidActs)
-			if (act instanceof Clear) act.execute(time);
+		Iterable<? extends Activity> acts = market.submitOrder(agent1, new Price(150), 1, time);
+		for (Activity act : acts)
+			if (act instanceof Clear) act.execute(act.getTime());
+		acts = market.submitOrder(agent2, new Price(100), -1, time);
+		for (Activity act : acts)
+			if (act instanceof Clear) act.execute(act.getTime());
+		acts = market.submitOrder(agent3, new Price(175), 1, time);
+		for (Activity act : acts)
+			if (act instanceof Clear) act.execute(act.getTime());
+		acts = market.submitOrder(agent4, new Price(125), -1, time);
+		for (Activity act : acts)
+			if (act instanceof Clear) act.execute(act.getTime());
 		
 		// Testing the market for the correct transactions
 		assertEquals( 2, market.getTransactions().size() );
@@ -302,7 +303,7 @@ public class CDAMarketTest {
 
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
 		Iterable<? extends Activity> acts = market.submitOrder(agent2, new Price(155), 2, time1);
-		for (Activity a : acts) a.execute(time1); // should execute clear
+		for (Activity a : acts) a.execute(a.getTime()); // should execute clear
 		assertEquals( 2, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals("Incorrect Price", new Price(140), tr.getPrice());
@@ -325,7 +326,7 @@ public class CDAMarketTest {
 		MockAgent agent2 = new MockAgent(fundamental, sip, market);
 
 		Iterable<? extends Activity> acts = market.submitOrder(agent1, new Price(100), -1, time0);
-		for (Activity a : acts) a.execute(time0); // should execute clear
+		for (Activity a : acts) a.execute(a.getTime()); // should execute clear
 		
 		// Check that quotes are correct (no bid, ask @100)
 		Quote q = market.quote;
@@ -338,7 +339,7 @@ public class CDAMarketTest {
 		Collection<Order> orders = agent1.getOrders();
 		Order toWithdraw = orders.iterator().next(); // get first (& only) order
 		acts = market.withdrawOrder(toWithdraw, time1);
-		for (Activity a : acts) a.execute(time1); // should update quotes
+		for (Activity a : acts) a.execute(a.getTime()); // should update quotes
 		
 		// Check that quotes are correct (no bid, no ask)
 		q = market.quote;
@@ -349,7 +350,7 @@ public class CDAMarketTest {
 		
 		// Check that no transaction, because agent1 withdrew its order
 		acts = market.submitOrder(agent2, new Price(125), 1, time1);
-		for (Activity a : acts) a.execute(time1); // should clear / update quotes
+		for (Activity a : acts) a.execute(a.getTime()); // should clear / update quotes
 		assertEquals( 0, market.getTransactions().size() );
 
 		// Check that quotes are correct (bid @125)
@@ -387,7 +388,7 @@ public class CDAMarketTest {
 		for (Order o : orders)
 			if (o.getPrice().equals(new Price(105))) toWithdraw = o;
 		Iterable<? extends Activity> acts = market.withdrawOrder(toWithdraw, time1);
-		for (Activity a : acts) a.execute(time1); // should update quotes
+		for (Activity a : acts) a.execute(a.getTime()); // should update quotes
 		
 		// Check that quotes are correct (only a buy order @110)
 		q = market.quote;
@@ -398,7 +399,7 @@ public class CDAMarketTest {
 		
 		// Check that it transacts at 110, price of order that was not withdrawn
 		acts = market.submitOrder(agent1, new Price(100), -1, time2);
-		for (Activity a : acts) a.execute(time2); // should execute clear
+		for (Activity a : acts) a.execute(a.getTime()); // should execute clear
 		assertEquals( 1, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals("Incorrect Price", new Price(110), tr.getPrice());
@@ -417,9 +418,9 @@ public class CDAMarketTest {
 		MockAgent agent2 = new MockAgent(fundamental, sip, market);
 		
 		Iterable<? extends Activity> acts = market.submitOrder(agent1, new Price(150), -1, time0);
-		for (Activity a : acts) a.execute(time0); // Shouldn't just blindly execute these at time 0
+		for (Activity a : acts) a.execute(a.getTime());
 		acts = market.submitOrder(agent1, new Price(140), -2, time0);
-		for (Activity a : acts) a.execute(time0);
+		for (Activity a : acts) a.execute(a.getTime());
 		
 		// Check that quotes are correct (ask @140 at qty=2, no bid)
 		Quote q = market.quote;
@@ -433,7 +434,7 @@ public class CDAMarketTest {
 		for (Order o : orders)
 			if (o.getPrice().equals(new Price(140))) toWithdraw = o;
 		acts = market.withdrawOrder(toWithdraw, 1, time0);
-		for (Activity a : acts) a.execute(time0); // should update quotes
+		for (Activity a : acts) a.execute(a.getTime()); // should update quotes
 		
 		// Check that quotes are correct (ask @140 at qty=1, no bid)
 		q = market.quote;
@@ -444,9 +445,9 @@ public class CDAMarketTest {
 
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
 		acts = market.submitOrder(agent2, new Price(155), 1, time1);
-		for (Activity a : acts) a.execute(time1); // should execute clear
+		for (Activity a : acts) a.execute(a.getTime()); // should execute clear
 		acts = market.submitOrder(agent2, new Price(155), 1, time1);
-		for (Activity a : acts) a.execute(time1); // should execute clear
+		for (Activity a : acts) a.execute(a.getTime()); // should execute clear
 		assertEquals( 2, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals("Incorrect Price", new Price(140), tr.getPrice());

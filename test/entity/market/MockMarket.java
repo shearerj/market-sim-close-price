@@ -17,9 +17,13 @@ public class MockMarket extends Market {
 	private static final long serialVersionUID = 1L;
 
 	public MockMarket(SIP sip) {
-		super(sip, TimeStamp.IMMEDIATE, new UniformPriceClear(0.5, 1), new Random());
+		this(sip, TimeStamp.IMMEDIATE);
 	}
 
+	public MockMarket(SIP sip, TimeStamp latency) {
+		super(sip, latency, new UniformPriceClear(0.5, 1), new Random());
+	}
+	
 	@Override
 	public Collection<? extends Activity> submitOrder(Agent agent, Price price,
 			int quantity, TimeStamp currentTime) {
