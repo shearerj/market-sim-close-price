@@ -12,8 +12,8 @@ import entity.market.Transaction;
 import event.TimeStamp;
 
 /**
- * Class for Activity of sending new quote information to an information processor, including the
- * Security Information Processor (SIP).
+ * Class for Activity of sending new quote information to an information processor, 
+ * including the Security Information Processor (SIP).
  * 
  * @author ewah
  */
@@ -25,7 +25,8 @@ public class SendToIP extends Activity {
 	protected final Quote quote;
 	protected final List<Transaction> transactions;
 
-	public SendToIP(Market market, MarketTime quoteTime, Quote quote, List<Transaction> transactions, IP ip, TimeStamp scheduledTime) {
+	public SendToIP(Market market, MarketTime quoteTime, Quote quote, 
+			List<Transaction> transactions, IP ip, TimeStamp scheduledTime) {
 		super(scheduledTime);
 		this.market = checkNotNull(market, "Market");
 		this.ip = checkNotNull(ip, "IP");

@@ -17,7 +17,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
 public class EventQueueTest {
-	// FIXME This is not thorough enough. Basically addAll didn't updated size!
+	// FIXME This is not thorough enough. Basically addAll didn't update size!
 	// Bad testing!
 
 	@Test

@@ -21,6 +21,12 @@ public class MarketTime implements Comparable<MarketTime>, Serializable {
 		this.marketTime = marketTime;
 	}
 	
+	//XXX - Needed for ClearingRules testing - is this okay?
+	public static MarketTime create(TimeStamp time, long marketTime) {
+		MarketTime ret = new MarketTime(time, marketTime);
+		return ret;
+	}
+	
 	public TimeStamp getTime() {
 		return time;
 	}

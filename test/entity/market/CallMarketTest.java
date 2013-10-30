@@ -48,7 +48,7 @@ public class CallMarketTest {
 
 	@BeforeClass
 	public static void setupClass() {
-		Logger.setup(3, new File("simulations/unit_testing/CallMarketTest.log"));
+		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "CallMarketTest.log"));
 	}
 	
 	@Before
@@ -248,16 +248,16 @@ public class CallMarketTest {
 		// Creating and adding bids (clears are not returned by submitOrder)
 		Iterable<? extends Activity> bidActs = market1.submitOrder(agent1, new Price(150), 1, time);
 		for (Activity act : bidActs)
-			if (act instanceof Clear) act.execute(time);
+			if (act instanceof Clear) act.execute(act.getTime());
 		bidActs = market1.submitOrder(agent2, new Price(100), -1, time);
 		for (Activity act : bidActs)
-			if (act instanceof Clear) act.execute(time);
+			if (act instanceof Clear) act.execute(act.getTime());
 		bidActs = market1.submitOrder(agent3, new Price(200), 1, time);
 		for (Activity act : bidActs)
-			if (act instanceof Clear) act.execute(time);
+			if (act instanceof Clear) act.execute(act.getTime());
 		bidActs = market1.submitOrder(agent4, new Price(130), -1, time);
 		for (Activity act : bidActs)
-			if (act instanceof Clear) act.execute(time);
+			if (act instanceof Clear) act.execute(act.getTime());
 		assertEquals(0, market1.getTransactions().size());
 		
 		// Testing the market for the correct transactions (uniform price=140)
@@ -388,7 +388,7 @@ public class CallMarketTest {
 		MockAgent agent2 = new MockAgent(fundamental, sip, market1);
 
 		Iterable<? extends Activity> acts = market1.submitOrder(agent1, new Price(100), -1, time0);
-		for (Activity a : acts) a.execute(time0); // nothing added
+		for (Activity a : acts) a.execute(a.getTime()); // nothing added
 		// Check that quotes are correct (no bid, no ask)
 		Quote q = market1.quote;
 		assertEquals("Incorrect ASK", null,  q.ask );

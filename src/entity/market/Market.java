@@ -191,8 +191,7 @@ public abstract class Market extends Entity {
 		Multiset<Price> priceQuant = order.getQuantity() < 0 ? askPriceQuantity : bidPriceQuantity;
 		priceQuant.remove(order.getPrice(), quantity);
 		
-		// XXX Change fourheap to also take positive quantity for withdrawal?
-		orderbook.withdrawOrder(order.order, Integer.signum(order.getQuantity()) * quantity);
+		orderbook.withdrawOrder(order.order, quantity);
 		
 		if (order.getQuantity() == 0) {
 			order.agent.removeOrder(order);
@@ -285,7 +284,7 @@ public abstract class Market extends Entity {
 		 * this will only happen when there are matched orders when a quote is
 		 * generated, which is currently never possible
 		 */
-		quote = new Quote(this, ask, quantityAsk, bid, quantityBid, currentTime);
+		quote = new Quote(this, bid, quantityBid, ask, quantityAsk, currentTime);
 
 		log(INFO, this + " " + quote);
 

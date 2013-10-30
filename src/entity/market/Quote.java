@@ -23,8 +23,8 @@ public class Quote implements Serializable {
 	protected final Market market;
 	protected final TimeStamp quoteTime;
 
-	public Quote(Market market, Price ask, int askQuantity, Price bid,
-			int bidQuantity, TimeStamp currentTime) {
+	public Quote(Market market, Price bid, int bidQuantity, Price ask,
+			int askQuantity, TimeStamp currentTime) {
 		this.market = market;
 		this.ask = ask;
 		this.askQuantity = askQuantity;
@@ -49,6 +49,10 @@ public class Quote implements Serializable {
 		return askQuantity;
 	}
 
+	public Market getMarket() {
+		return market;
+	}
+	
 	/**
 	 * @return true if the quote is defined (has an ask and a bid price)
 	 */
