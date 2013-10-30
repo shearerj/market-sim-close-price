@@ -23,9 +23,8 @@ public class MathTest extends MathUtils {
 	
 	@Test
 	public void testingLogn() {
-		//boolean i = false;
-		//assertFalse(i);
 		
+		//standard inputs for logn
 		int number= 10;
 		int base = 10;
 		int result = logn(number, base);
@@ -46,20 +45,25 @@ public class MathTest extends MathUtils {
 		//number = .000000000000001; wouldnt apply as number is of type int
 		
 		
-		//fail("Not yet implemented");
+		
 	}
 
 	@Test
 	public void testingQuantizeInt()
-	{ 	int n = 1001;
+	{ 	
+		//standard input
+		int n = 1001;
 		int quanta= 10;
 		int q = quantize(n, quanta);
 		assertTrue(q==1000);
 		
+		//to verify function rounds down for negative numbers
 		n = -32; 
 		q = quantize(n, quanta);
 		assertTrue(q==-30);
 		
+		//verifies that when provided a value that is a multiple of the quanta
+		//the program will round to the same value
 		n=0;
 		q = quantize(n, quanta);
 		assertTrue(q==0);
@@ -67,23 +71,34 @@ public class MathTest extends MathUtils {
 	
 	@Test
 	public void testingQuantizeDouble()
-	{ 	double n = 100.003;
+	{ 	
+		//standard form of input for decimal variant of quantize function
+		double n = 100.003;
 		double quanta= 10;
 		double qresult = quantize(n, quanta);
 		assertTrue(qresult==100);
 		
+		//verifies that n is not rounded incorrectly
+		//verifies that  negative numbers below middle round down to negative quanta
 		n = -34.99999; 
 		qresult = quantize(n, quanta);
 		assertTrue(qresult==-30);
-		
-		n=-0.12345;
+
+		//checking that  when provided a value that is a multiple of the quanta
+		//the program will round to the same value
+		n=-0.000000000000000000;
 		qresult = quantize(n, quanta);
 		assertTrue(qresult==0);
+		//assertTrue(n==0)// also can be used to check floating point accuracy
+
 	}
 
 	@Test
 	public void testingBound()
 	{ 
+		//testing basic functionality of bound function
+		//verifies minimizes num and upper
+		//maximizes result and lower bound
 		int num = 0;
 		int lower = 1;
 		int upper = 2;
