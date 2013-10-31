@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableSet;
 import com.sun.org.apache.xpath.internal.operations.Or;
 
 import data.FundamentalValue;
-import data.OrderData;
+import data.OrderDatum;
 import activity.Activity;
 import activity.AgentStrategy;
 import activity.SubmitNMSOrder;
@@ -33,16 +33,16 @@ import event.TimeStamp;
 public class OrderDataAgent extends SMAgent {
 
 	private static final long serialVersionUID = 1L;
-	protected static TreeMap<TimeStamp, OrderData> orderData = new TreeMap<TimeStamp, OrderData>();
+	protected static TreeMap<TimeStamp, OrderDatum> orderData = new TreeMap<TimeStamp, OrderDatum>();
 
 	public OrderDataAgent(FundamentalValue fundamental, SIP sip, Market market, 
 	        Random rand,
-	        Iterator<OrderData> orderData) {
+	        Iterator<OrderDatum> orderData) {
 	    super(new TimeStamp(0), fundamental, sip, market, rand,
 	                new PrivateValue(), 1);
 	    
 	    while(orderData.hasNext()){
-	        OrderData order = orderData.next();
+	        OrderDatum order = orderData.next();
 	        this.orderData.put(order.getTimestamp(), order);
 	    }
 	}

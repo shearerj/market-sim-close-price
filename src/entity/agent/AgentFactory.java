@@ -89,9 +89,9 @@ public class AgentFactory {
 		case DA:
 			return new DummyAgent(fundamental,sip,marketAssignment.next());
 
-		case ODA:
+/*		case ODA:
 			return new OrderDataAgent(fundamental,sip,marketAssignment.next(), new Random(rand.nextLong()), );
-
+*/
 		default:
 			throw new IllegalArgumentException("Can't create AgentType: "
 					+ props.getAgentType());
