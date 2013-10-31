@@ -9,9 +9,14 @@ import com.google.common.collect.ImmutableList;
 
 import entity.agent.Agent;
 import entity.infoproc.SIP;
-import entity.market.clearingrule.UniformPriceClear;
+import entity.market.clearingrule.MockClearingRule;
 import event.TimeStamp;
 
+/**
+ * MockMarket for testing purposes.
+ * 
+ * NOTE: A market clear must be explicitly called or scheduled.
+ */
 public class MockMarket extends Market {
 
 	private static final long serialVersionUID = 1L;
@@ -21,7 +26,7 @@ public class MockMarket extends Market {
 	}
 
 	public MockMarket(SIP sip, TimeStamp latency) {
-		super(sip, latency, new UniformPriceClear(0.5, 1), new Random());
+		super(sip, latency, new MockClearingRule(Price.ZERO), new Random());
 	}
 	
 	@Override

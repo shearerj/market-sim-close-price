@@ -27,7 +27,6 @@ public class EarliestPriceClear implements ClearingRule {
 			prices.put(match, match.getBuy().getSubmitTime().compareTo(match.getSell().getSubmitTime()) < 0
 					? match.getBuy().getPrice().quantize(tickSize)
 					: match.getSell().getPrice().quantize(tickSize));
-		// TODO will always pick seller's price when at the same time, is this correct? Probably not?
 		return prices.build();
 	}
 

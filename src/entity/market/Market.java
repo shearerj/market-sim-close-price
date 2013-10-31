@@ -218,28 +218,23 @@ public abstract class Market extends Entity {
 
 			Order buy = orderMapping.get(e.getKey().getBuy());
 			Order sell = orderMapping.get(e.getKey().getSell());
-			
-			// FIXME We can't just ignore it. We have to remove them or something. This isn't the
-			// correct solution to this
 
-			if (!buy.getAgent().equals(sell.getAgent())) { // In case buyer == seller
-				Transaction trans = new Transaction(buy.getAgent(),
-						sell.getAgent(), this, buy, sell, e.getKey().getQuantity(),
-						e.getValue(), currentTime);
-				
-				askPriceQuantity.remove(sell.getPrice(), trans.getQuantity());
-				bidPriceQuantity.remove(buy.getPrice(), trans.getQuantity());
-				
-				transactions.add(trans);
-				allTransactions.add(trans);
-				// TODO add delay to agent facing actions...
-				buy.getAgent().addTransaction(trans);
-				if (buy.getQuantity() == 0)
-					buy.agent.removeOrder(buy);
-				sell.getAgent().addTransaction(trans);
-				if (sell.getQuantity() == 0)
-					sell.agent.removeOrder(sell);
-			}
+			Transaction trans = new Transaction(buy.getAgent(),
+					sell.getAgent(), this, buy, sell, e.getKey().getQuantity(),
+					e.getValue(), currentTime);
+			
+			askPriceQuantity.remove(sell.getPrice(), trans.getQuantity());
+			bidPriceQuantity.remove(buy.getPrice(), trans.getQuantity());
+			
+			transactions.add(trans);
+			allTransactions.add(trans);
+			// TODO add delay to agent facing actions...
+			buy.getAgent().addTransaction(trans);
+			if (buy.getQuantity() == 0)
+				buy.agent.removeOrder(buy);
+			sell.getAgent().addTransaction(trans);
+			if (sell.getQuantity() == 0)
+				sell.agent.removeOrder(sell);
 		}
 		
 		// Remove fully transacted orders
