@@ -35,9 +35,9 @@ public class CDAMarket extends Market {
 
 	@Override
 	public Iterable<? extends Activity> submitOrder(Agent agent, Price price,
-			int quantity, TimeStamp curentTime, TimeStamp duration) {
+			int quantity, TimeStamp currentTime, TimeStamp duration) {
 		return ImmutableList.<Activity> builder().addAll(
-				super.submitOrder(agent, price, quantity, curentTime, duration)).add(
+				super.submitOrder(agent, price, quantity, currentTime, duration)).add(
 				new Clear(this, TimeStamp.IMMEDIATE)).build();
 	}
 

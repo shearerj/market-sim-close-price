@@ -17,6 +17,7 @@ import systemmanager.EventManager;
 import systemmanager.Keys;
 import activity.Activity;
 import activity.Clear;
+import activity.SendToIP;
 import activity.SubmitOrder;
 
 import com.google.common.collect.ImmutableList;
@@ -141,6 +142,9 @@ public class CallMarketTest {
 			assertEquals("Incorrect Price", new Price(100), tr.getPrice());
 			assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		}
+		Quote quote = market1.quote;
+		assertEquals(null, quote.getAskPrice());
+		assertEquals(null, quote.getBidPrice());
 	}
 
 	@Test
@@ -177,6 +181,9 @@ public class CallMarketTest {
 			assertEquals("Incorrect Price", new Price(200), tr.getPrice());
 			assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		}
+		Quote quote = market1.quote;
+		assertEquals(null, quote.getAskPrice());
+		assertEquals(null, quote.getBidPrice());
 	}
 
 	@Test
@@ -388,7 +395,8 @@ public class CallMarketTest {
 		MockAgent agent2 = new MockAgent(fundamental, sip, market1);
 
 		Iterable<? extends Activity> acts = market1.submitOrder(agent1, new Price(100), -1, time0);
-		for (Activity a : acts) a.execute(a.getTime()); // nothing added
+		assertTrue(Iterables.isEmpty(acts)); // nothing added
+		
 		// Check that quotes are correct (no bid, no ask)
 		Quote q = market1.quote;
 		assertEquals("Incorrect ASK", null,  q.ask );
@@ -398,7 +406,12 @@ public class CallMarketTest {
 		
 		Collection<Order> orders = agent1.getOrders();
 		Order toWithdraw = orders.iterator().next(); // get first (& only) order
-		market1.withdrawOrder(toWithdraw, time0);
+		// Test that withdraw create SendToIP activities (updates quotes)
+		acts =  market1.withdrawOrder(toWithdraw, time0);
+		for (Activity act : acts) {
+			assertTrue(act instanceof SendToIP);
+			assertTrue(act.getTime().equals(TimeStamp.IMMEDIATE));
+		}
 		
 		// Check that quotes are correct (no bid, no ask)
 		q = market1.quote;
@@ -426,6 +439,12 @@ public class CallMarketTest {
 		Transaction tr = market1.getTransactions().get(0);
 		assertEquals("Incorrect Price", new Price(110), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
+		
+		q = market1.quote;
+		assertEquals("Incorrect ASK", null,  q.ask );
+		assertEquals("Incorrect BID", null,  q.bid);
+		assertEquals("Incorrect ASK quantity",  0,  q.askQuantity );
+		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
 	}
 	
 	@Test
@@ -445,9 +464,16 @@ public class CallMarketTest {
 		market1.withdrawOrder(toWithdraw, 1, time0);
 		market1.clear(time0);
 
+		// Check that quotes are correct (ask @140 at qty=2, no bid)
+		Quote q = market1.quote;
+		assertEquals("Incorrect ASK", new Price(140), q.ask);
+		assertEquals("Incorrect BID", null, q.bid);
+		assertEquals("Incorrect ASK quantity",  1,  q.askQuantity );
+		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
+		
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
 		market1.submitOrder(agent2, new Price(160), 1, time1);
-		market1.submitOrder(agent2, new Price(160), 1, time1);
+		market1.submitOrder(agent2, new Price(160), 2, time1);
 		market1.clear(time1);
 		assertEquals( 2, market1.getTransactions().size() );
 		Transaction tr = market1.getTransactions().get(0);
@@ -458,6 +484,13 @@ public class CallMarketTest {
 		assertEquals("Incorrect Price", new Price(155), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		
+		q = market1.quote;
+		assertEquals("Incorrect ASK", null, q.ask );
+		assertEquals("Incorrect BID", new Price(160), q.bid);
+		assertEquals("Incorrect ASK quantity",  0,  q.askQuantity );
+		assertEquals("Incorrect BID quantity",  1,  q.bidQuantity );
+		
+		///////////////////////
 		// Same test with market w/ different pricing policy
 		market2.submitOrder(agent1, new Price(150), -1, time0);
 		market2.submitOrder(agent1, new Price(140), -2, time0);
@@ -466,18 +499,33 @@ public class CallMarketTest {
 		for (Order o : orders) if (o.getPrice().equals(new Price(140))) toWithdraw = o;
 		market2.withdrawOrder(toWithdraw, 1, time0);
 		market2.clear(time0);
+		
+		// Check that quotes are correct (ask @140 at qty=2, no bid)
+		q = market2.quote;
+		assertEquals("Incorrect ASK", new Price(140), q.ask);
+		assertEquals("Incorrect BID", null, q.bid);
+		assertEquals("Incorrect ASK quantity",  1,  q.askQuantity );
+		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
+		
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
 		market2.submitOrder(agent2, new Price(160), 1, time1);
-		market2.submitOrder(agent2, new Price(160), 1, time1);
+		market2.submitOrder(agent2, new Price(160), 2, time1);
 		market2.clear(time1);
 		assertEquals( 2, market2.getTransactions().size() );
 		tr = market2.getTransactions().get(0);
+		
 		// Clearing price should be based on pricing policy=1 between 150 & 160
 		assertEquals("Incorrect Price", new Price(160), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		tr = market2.getTransactions().get(1);
 		assertEquals("Incorrect Price", new Price(160), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
+		
+		q = market2.quote;
+		assertEquals("Incorrect ASK", null, q.ask );
+		assertEquals("Incorrect BID", new Price(160), q.bid);
+		assertEquals("Incorrect ASK quantity",  0,  q.askQuantity );
+		assertEquals("Incorrect BID quantity",  1,  q.bidQuantity );
 	}
 	
 	
