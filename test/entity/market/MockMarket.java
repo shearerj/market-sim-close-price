@@ -12,6 +12,12 @@ import entity.infoproc.SIP;
 import entity.market.clearingrule.UniformPriceClear;
 import event.TimeStamp;
 
+/**
+ * MockMarket for testing purposes.
+ * 
+ * NOTE: A market clear must be explicitly called or scheduled. Orders match
+ * at a uniform price at the midpoint of the BID/ASK.
+ */
 public class MockMarket extends Market {
 
 	private static final long serialVersionUID = 1L;
