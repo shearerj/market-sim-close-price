@@ -1,12 +1,14 @@
 package entity.agent;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Random;
 
 import com.google.common.collect.ImmutableSet;
 
 import data.FundamentalValue;
 import activity.Activity;
+import activity.MockActivity;
 import entity.agent.BackgroundAgent;
 import entity.infoproc.SIP;
 import entity.market.Market;
@@ -27,6 +29,10 @@ public class MockAgent extends BackgroundAgent {
 		return ImmutableSet.of();
 	}
 
+	public Iterable<? extends Activity> addMockActivity(TimeStamp currentTime) {
+		return Collections.singleton(new MockActivity(currentTime));
+	}
+	
 	public Collection<Order> getOrders() {
 		return this.activeOrders;
 	}
