@@ -6,6 +6,10 @@ import event.TimeStamp;
 
 public class MockActivity extends Activity {
 
+	public MockActivity(long scheduledTime) {
+		this(new TimeStamp(scheduledTime));
+	}
+	
 	public MockActivity(TimeStamp scheduledTime) {
 		super(scheduledTime);
 	}

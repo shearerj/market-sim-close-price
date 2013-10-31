@@ -15,7 +15,7 @@ import activity.MockActivity;
 import activity.MockAgentActivity;
 import data.DummyFundamental;
 import data.FundamentalValue;
-import entity.agent.MockAgent;
+import entity.agent.MockBackgroundAgent;
 import entity.infoproc.SIP;
 import entity.market.MockMarket;
 import event.TimeStamp;
@@ -89,7 +89,7 @@ public class EventManagerTest {
 		// MockAgentActivity will insert a MockActivity
 		TimeStamp time = new TimeStamp(10);
 		
-		MockAgent agent = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
 		assertEquals(em.eventQueue.size(), 0 );
 		assertEquals(em.getCurrentTime(), TimeStamp.ZERO);
 		

@@ -21,14 +21,14 @@ import systemmanager.EventManager;
 import data.DummyFundamental;
 import data.FundamentalValue;
 import entity.agent.Agent;
-import entity.agent.MockAgent;
+import entity.agent.MockBackgroundAgent;
 import entity.infoproc.SIP;
 import event.TimeStamp;
 
 public class MarketTest {
 
 	private FundamentalValue fundamental = new DummyFundamental(100000);
-	private MockMarket market;
+	private Market market;
 	private SIP sip;
 
 	@BeforeClass
@@ -45,7 +45,7 @@ public class MarketTest {
 	@Test
 	public void addBid() {
 		TimeStamp time = new TimeStamp(0);
-		Agent agent = new MockAgent(fundamental, sip, market);
+		Agent agent = new MockBackgroundAgent(fundamental, sip, market);
 		market.submitOrder(agent, new Price(1), 1, time);
 
 		Collection<Order> orders = market.orderMapping.values();
@@ -66,7 +66,7 @@ public class MarketTest {
 	@Test
 	public void addAsk() {
 		TimeStamp time = TimeStamp.ZERO;
-		Agent agent = new MockAgent(fundamental, sip, market);
+		Agent agent = new MockBackgroundAgent(fundamental, sip, market);
 		market.submitOrder(agent, new Price(1), -1, time);
 
 		Collection<Order> orders = market.orderMapping.values();
@@ -89,8 +89,8 @@ public class MarketTest {
 		TimeStamp time = TimeStamp.ZERO;
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
 		// Creating and adding bids
 		market.submitOrder(agent1, new Price(100), 1, time);
@@ -116,8 +116,8 @@ public class MarketTest {
 		TimeStamp time = TimeStamp.ZERO;
 		
 		// Creating dummy agents
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		// Creating and adding bids
 		market.submitOrder(agent1, new Price(200), 1, time);
@@ -141,10 +141,10 @@ public class MarketTest {
 		TimeStamp time = TimeStamp.ZERO;
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
-		MockAgent agent3 = new MockAgent(fundamental, sip, market);
-		MockAgent agent4 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent3 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		// Creating and adding bids
 		market.submitOrder(agent1, new Price(150), 1, time);
@@ -171,10 +171,10 @@ public class MarketTest {
 	public void multiOverlapClear() {
 		TimeStamp time = TimeStamp.ZERO;
 		
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
-		MockAgent agent3 = new MockAgent(fundamental, sip, market);
-		MockAgent agent4 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent3 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		// Creating and adding bids
 		market.submitOrder(agent1, new Price(150), 1, time);
@@ -204,10 +204,10 @@ public class MarketTest {
 	public void partialOverlapClear() {
 		TimeStamp time = TimeStamp.ZERO;
 		
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
-		MockAgent agent3 = new MockAgent(fundamental, sip, market);
-		MockAgent agent4 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent3 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		// Creating and adding bids
 		market.submitOrder(agent3, new Price(200), 1, time);
@@ -252,8 +252,8 @@ public class MarketTest {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time2 = new TimeStamp(1);
 		
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		market.submitOrder(agent1, new Price(100),-2, time);
 		market.submitOrder(agent2, new Price(150), 5, time2);
@@ -280,8 +280,8 @@ public class MarketTest {
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
 		market.submitOrder(agent1, new Price(150), -1, time0);
 		market.submitOrder(agent1, new Price(140), -1, time0);
@@ -309,8 +309,8 @@ public class MarketTest {
 		TimeStamp time1 = new TimeStamp(1);
 		TimeStamp time2 = new TimeStamp(2);
 
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
 		market.submitOrder(agent1, new Price(100), -1, time0);
 		market.clear(time0); 
@@ -365,8 +365,8 @@ public class MarketTest {
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		market.submitOrder(agent1, new Price(150), -1, time0);
 		market.submitOrder(agent1, new Price(140), -2, time0);
@@ -402,7 +402,7 @@ public class MarketTest {
 		EventManager em = new EventManager(new Random());
 
 		// Forces execution of execution but none of the resulting activities
-		MockAgent agent = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
 		Iterable<? extends Activity> acts = market.submitOrder(agent, new Price(100), -1, TimeStamp.ZERO);
 		for (Activity a : acts)
 			em.addActivity(a);
@@ -430,7 +430,7 @@ public class MarketTest {
 		MockMarket market = new MockMarket(sip, new TimeStamp(100));
 
 		// Test that before Time 100 nothing has been updated
-		MockAgent agent = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
 		em.addActivity(new SubmitOrder(agent, market, new Price(100), -1, TimeStamp.ZERO));
 		em.executeUntil(new TimeStamp(100));
 		

@@ -25,7 +25,7 @@ import com.google.common.collect.Iterables;
 
 import data.DummyFundamental;
 import data.FundamentalValue;
-import entity.agent.MockAgent;
+import entity.agent.MockBackgroundAgent;
 import entity.infoproc.SIP;
 import entity.market.CDAMarket;
 import entity.market.Price;
@@ -54,7 +54,7 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 
 		// Creating the agent
-		MockAgent agent = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
 
 		// Creating and adding the bid
 		market.submitOrder(agent, new Price(1), 1, time);
@@ -82,7 +82,7 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating the agent
-		MockAgent agent = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
 		
 		// Creating and adding the bid
 		market.submitOrder(agent, new Price(1), -1, time);
@@ -124,8 +124,8 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
 		// Creating and adding bids
 		market.submitOrder(agent1, new Price(100), 1, time);
@@ -151,8 +151,8 @@ public class CDAMarketTest {
 		TimeStamp time2 = new TimeStamp(1);
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		// Creating and adding bids
 		market.submitOrder(agent1, new Price(200), 1, time);
@@ -177,10 +177,10 @@ public class CDAMarketTest {
 		TimeStamp time = TimeStamp.ZERO;
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
-		MockAgent agent3 = new MockAgent(fundamental, sip, market);
-		MockAgent agent4 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent3 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		// Creating and adding bids
 		// Also check that submitOrder returns a single immediate Clear activity
@@ -222,10 +222,10 @@ public class CDAMarketTest {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 		
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
-		MockAgent agent3 = new MockAgent(fundamental, sip, market);
-		MockAgent agent4 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent3 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		// Creating and adding bids
 		// Added for-loop so market clear will happen appropriately
@@ -276,8 +276,8 @@ public class CDAMarketTest {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 		
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		market.submitOrder(agent1, new Price(100), -2, time);
 		market.submitOrder(agent2, new Price(150), 5, time1);
@@ -305,8 +305,8 @@ public class CDAMarketTest {
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
 		market.submitOrder(agent1, new Price(150), -1, time0);
 		market.submitOrder(agent1, new Price(140), -1, time0);
@@ -333,8 +333,8 @@ public class CDAMarketTest {
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
 		market.submitOrder(agent1, new Price(100), -1, time0);
 		market.clear(time0);
@@ -385,8 +385,8 @@ public class CDAMarketTest {
 		TimeStamp time1 = new TimeStamp(1);
 		TimeStamp time2 = new TimeStamp(2);
 
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		market.submitOrder(agent2, new Price(105), 1, time1);
 		market.submitOrder(agent2, new Price(110), 1, time1);
@@ -437,8 +437,8 @@ public class CDAMarketTest {
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		EventManager em = new EventManager(new Random());
 		em.addActivity(new SubmitOrder(agent1, market, new Price(150), -1, time0));
@@ -498,11 +498,11 @@ public class CDAMarketTest {
 		TimeStamp time1 = new TimeStamp(1);
 		TimeStamp time2 = new TimeStamp(2);
 
-		MockAgent agent0 = new MockAgent(fundamental, sip, market);
-		MockAgent agent1 = new MockAgent(fundamental, sip, market);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
-		MockAgent agent3 = new MockAgent(fundamental, sip, market);
-		MockAgent agent4 = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent0 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent3 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		market.submitOrder(agent1, new Price(100), -1, time0);
 		market.submitOrder(agent2, new Price(100), -1, time1);
@@ -606,7 +606,7 @@ public class CDAMarketTest {
 		EventManager em = new EventManager(new Random());
 
 		// Forces execution of execution but none of the resulting activities
-		MockAgent agent = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
 		Iterable<? extends Activity> acts = market.submitOrder(agent, new Price(100), -1, TimeStamp.ZERO);
 		for (Activity a : acts)
 			em.addActivity(a);
@@ -634,7 +634,7 @@ public class CDAMarketTest {
 		CDAMarket market = new CDAMarket(sip, new TimeStamp(100), new Random(), 1);
 
 		// Test that before Time 100 nothing has been updated
-		MockAgent agent = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
 		em.addActivity(new SubmitOrder(agent, market, new Price(100), -1, TimeStamp.ZERO));
 		em.executeUntil(new TimeStamp(100));
 		

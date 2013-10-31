@@ -86,7 +86,7 @@ public class AAAgentTest {
 			int time) {
 		TimeStamp currentTime = new TimeStamp(time);
 		// creating a dummy agent
-		MockAgent agent = new MockAgent(fundamental, sip, market);
+		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
 		// Having the agent submit a bid to the market
 		Iterable<? extends Activity> bidActs = market.submitOrder(agent, new Price(price),
 				quantity, currentTime);
