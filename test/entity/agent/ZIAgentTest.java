@@ -1,10 +1,10 @@
 package entity.agent;
 
-import static logger.Logger.log;
 import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 import java.util.Random;
 
 import logger.Logger;
@@ -15,8 +15,6 @@ import org.junit.Test;
 
 import systemmanager.Keys;
 import activity.Activity;
-import activity.ProcessQuote;
-import activity.SendToIP;
 import activity.SubmitNMSOrder;
 
 import com.google.common.collect.ImmutableList;
@@ -65,7 +63,17 @@ private static Random rand;
 		market = new MockMarket(sip);
 	}
 	
-	private ZIAgent addAgent(int min, int max) {
+	private ZIAgent addAgent(int min, int max, Random rand, PrivateValue pv){
+		//Initialize ZIAgent with default properties:
+		//REENTRY_RATE, 0
+		//TICK_SIZE, 1
+		ZIAgent agent = new ZIAgent(new TimeStamp(0), fundamental, sip, market, rand, 0, pv, 1, min, max);
+		
+		return agent;
+	}
+	
+	
+	private ZIAgent addAgent(int min, int max, Random rand) {
 		//Initialize ZIAgent with default properties:
 		//REENTRY_RATE, 0
 		//PRIVATE_VALUE_VAR, 100000000
@@ -78,14 +86,24 @@ private static Random rand;
 		return agent;
 	}
 	
+	private ZIAgent addAgent(int min, int max){
+		//Initialize ZIAgent with default properties:
+		//REENTRY_RATE, 0
+		//PRIVATE_VALUE_VAR, 100000000 = +/- $10.00
+		//TICK_SIZE, 1
+		//Random rand
+		return addAgent(min, max, rand);
+	}
+	
 	private ZIAgent addAgent(){
 		//Initialize ZIAgent with default properties:
 		//REENTRY_RATE, 0
-		//PRIVATE_VALUE_VAR, 100000000
+		//PRIVATE_VALUE_VAR, 100000000 = +/- $10.00
 		//TICK_SIZE, 1
+		//Random rand
 		//BID_RANGE_MIN, 0
-		//BID_RANGE_MAX, 5000
-		return addAgent(0,5000);
+		//BID_RANGE_MAX, 1000 = +/- $1.00
+		return addAgent(0, 1000); 
 	}
 	
 	
@@ -128,9 +146,9 @@ private static Random rand;
 		Logger.log(Logger.Level.DEBUG, "Testing ZI submitted quantity is correct");
 		
 		// New ZIAgent
-		ZIAgent testAgent = addAgent(0,1000);
+		ZIAgent testAgent = addAgent();
 		
-		// Execute strategy
+		// Execute Strategy
 		executeAgentStrategy(testAgent, 100);
 		
 		assertCorrectBid(testAgent);
@@ -142,12 +160,96 @@ private static Random rand;
 		Logger.log(Logger.Level.DEBUG, "Testing ZI submitted bid range is correct");
 		
 		// New ZIAgent
-		ZIAgent testAgent = addAgent(0,1000);
+		ZIAgent testAgent = addAgent();
 		
-		// Execute strategy
+		// Execute Strategy
 		executeAgentStrategy(testAgent, 100);
 		
-		assertCorrectBid(testAgent, 80000, 120000);
+		//Fundamental = 100000 ($100.00), Stdev = sqrt(100000000) = 10000 ($10.000)
+		//Bid Range = 0, 1000 ($0.00, $1.00)
+		//99.7% of bids should fall between 100000 +/- (3*10000 + 1000)
+		// = 69999, 130001
+		assertCorrectBid(testAgent, 69999, 130001);
 		
+	}
+	
+	@Test
+	public void randQuantityZI(){
+		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 submitted quantities are correct");
+		for(int r = 0; r<100; r++){
+			// New ZIAgent
+			ZIAgent testAgent = addAgent(0,1000, new Random(r));
+			
+			// Execute Strategy
+			executeAgentStrategy(testAgent, r*100);
+			
+			assertCorrectBid(testAgent);
+
+			
+		}
+		
+	}
+	
+	@Test
+	public void randPriceZI(){
+		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 submitted bid ranges are correct");
+		for(int r = 0; r<100; r++){
+			// New ZIAgent
+			ZIAgent testAgent = addAgent(0,1000, new Random(r));
+			
+			// Execute Strategy
+			executeAgentStrategy(testAgent, r*100);
+			
+			assertCorrectBid(testAgent, 70000, 130000);
+
+			
+		}
+	}
+	
+	@Test
+	public void testPrivateValue(){
+		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 MockPrivateValue arguments are correct");
+		int offset = 1;
+		Builder<Price> builder = ImmutableList.builder();
+		builder.add(new Price(10000)); 			//$10.00
+		builder.add(new Price(0));     			//$0.00
+		builder.add(new Price(-10000));  		//$-10.00
+		List<Price> prices = builder.build();	//Prices = [$10, $0, $-10]
+		MockPrivateValue testpv = new MockPrivateValue(offset, prices);
+		
+		ZIAgent testAgent = addAgent(0, 1000, rand, testpv);
+		
+		for(int i = 0; i<100; i++){
+			
+			executeAgentStrategy(testAgent, 100);
+			
+			Collection<Order> orders = testAgent.activeOrders;
+			Order order = Iterables.getFirst(orders, null);
+			int quantity = order.getQuantity();
+			Price bidPrice = order.getPrice();
+			switch(quantity){
+			case -1:
+				assertTrue("Ask Price (" + bidPrice + ") less than $109.00", bidPrice.greaterThan(new Price(109000)));
+				assertTrue("Ask Price (" + bidPrice + ") greater than $110.00", bidPrice.lessThan(new Price(110000)));
+				//Expected ask range min = fundamental + (PV[-1] - PV[0]) - bidRangeMax
+				//Expected ask range max = fundamental + (PV[-1] - PV[0]) - bidRangeMin
+				//*Index values expressed relative to median index [1]
+				break;
+			case 1:
+				assertTrue("Bid Price (" + bidPrice + ") less than $90.00", bidPrice.greaterThan(new Price(90000)));
+				assertTrue("Bid Price (" + bidPrice + ") greater than $91.00", bidPrice.lessThan(new Price(91000)));
+				//Expected bid range min = fundamental + (PV[1] - PV[0]) + bidRangeMin
+				//Expected bid range max = fundamental + (PV[1] - PV[0]) + bidRangeMax
+				//*Index values expressed relative to median index [1]
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	
+	@Test
+	public void randTestZI(){
+		//TODO implement testPrivateValue with all inputs random; compared to theoretical expected bid range 
 	}
 }
