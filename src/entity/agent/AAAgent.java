@@ -325,7 +325,7 @@ public class AAAgent extends BackgroundAgent {
 		
 		// If best offer is outside of limit price, no bid is submitted
 		if ((isBuyer && limit.lessThanEqual(bestBid))
-			|| (!isBuyer && limit.greaterThanEquals(bestAsk))) {
+			|| (!isBuyer && limit.greaterThanEqual(bestAsk))) {
 			s += "best offer is outside of limit price: " + limit
 					+ "; no submission";
 			log(INFO, s);
@@ -376,7 +376,7 @@ public class AAAgent extends BackgroundAgent {
 		} else { // Seller
 			// If outstanding bid >= target price, submit ask at bid price
 			// else submit bid given by EQ 10/11
-			Price submitPrice = bestBid.greaterThanEquals(price) ? bestBid : price;
+			Price submitPrice = bestBid.greaterThanEqual(price) ? bestBid : price;
 			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, submitPrice, quantity, primaryMarket, TimeStamp.IMMEDIATE));
 		}
 	}

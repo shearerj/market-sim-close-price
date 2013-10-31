@@ -28,7 +28,7 @@ public class EarliestPriceClearTest {
 		Set<MatchedOrders<Price,MarketTime>> keySet = result.keySet();
 		for(MatchedOrders<Price,MarketTime> key : keySet) {
 			// Verify clears at the earlier price
-			assertEquals(result.get(key), new Price(110));
+			assertEquals(new Price(110), result.get(key));
 		}
 	}
 	
@@ -44,7 +44,7 @@ public class EarliestPriceClearTest {
 		Set<MatchedOrders<Price,MarketTime>> keySet = result.keySet();
 		for(MatchedOrders<Price,MarketTime> key : keySet) {
 			// Verify for tie at time, it clears at the better price ---------------FIXME
-			assertEquals(result.get(key), new Price(100));
+			assertEquals(new Price(110), result.get(key));
 		}
 	}
 	
@@ -66,8 +66,8 @@ public class EarliestPriceClearTest {
 		Map<MatchedOrders<Price,MarketTime>,Price> result = cr.pricing(list);
 
 		// Verify always clears at the earlier price (no time ties here)
-		assertEquals(result.get(match1),new Price(110));
-		assertEquals(result.get(match2),new Price(100));
+		assertEquals(new Price(110), result.get(match1));
+		assertEquals(new Price(100), result.get(match2));
 	}
 	
 	/**

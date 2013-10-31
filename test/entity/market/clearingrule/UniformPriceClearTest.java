@@ -28,7 +28,7 @@ public class UniformPriceClearTest {
 		Map<MatchedOrders<Price,MarketTime>,Price> result = cr.pricing(list);
 		
 		// Verify clearing at midpoint of the two orders (policy=0.5)
-		assertEquals(result.get(match1), new Price(105));
+		assertEquals(new Price(105), result.get(match1));
 	}
 	
 	@Test
@@ -43,12 +43,12 @@ public class UniformPriceClearTest {
 
 		Map<MatchedOrders<Price,MarketTime>,Price> result = cr.pricing(list);
 		// Verify clearing at the higher price of the two orders (policy=1)
-		assertEquals(result.get(match1), new Price(110));
+		assertEquals(new Price(110), result.get(match1));
 		
 		cr = new UniformPriceClear(0, 1);
 		result = cr.pricing(list);
 		// Verify clearing at the lower price of the two orders (policy=0)
-		assertEquals(result.get(match1), new Price(100));
+		assertEquals(new Price(100), result.get(match1));
 	}
 	
 	@Test
@@ -69,8 +69,8 @@ public class UniformPriceClearTest {
 				
 		Map<MatchedOrders<Price,MarketTime>,Price> result = cr.pricing(list);
 		// Verify that for multiple orders, clears at correct midpoint price (policy=0.5)
-		assertEquals(result.get(match1), new Price(105));
-		assertEquals(result.get(match2), new Price(105));
+		assertEquals(new Price(105), result.get(match1));
+		assertEquals(new Price(105), result.get(match2));
 		
 		// Testing second set of prices
 		list.clear();
@@ -83,8 +83,8 @@ public class UniformPriceClearTest {
 		result = cr.pricing(list);
 		// Verify that for multiple orders, clears at correct midpoint price (policy=0.5)
 		// midpoint between BID=max(matched sells), ASK=min(matched buys)
-		assertEquals(result.get(match1), new Price(106));
-		assertEquals(result.get(match2), new Price(106));
+		assertEquals(new Price(106), result.get(match1));
+		assertEquals(new Price(106), result.get(match2));
 	}
 	
 	

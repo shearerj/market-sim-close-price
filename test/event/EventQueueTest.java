@@ -124,18 +124,18 @@ public class EventQueueTest {
 		Activity second = new MockActivity(1);
 		Activity third = new MockActivity(2);
 		
-		assertEquals("Incorrect initial size", q.size(), 0);
+		assertEquals("Incorrect initial size", 0, q.size());
 		q.addAll(ImmutableList.of(first, second));
 		
 		// Verify activities added correctly
-		assertEquals("Size not updated", q.size(), 2);
+		assertEquals("Size not updated", 2, q.size());
 		assertEquals(first, q.poll());
 		assertEquals(second, q.poll());
 		assertTrue(q.isEmpty());
 		
 		// Verify correct order with list of activities not in chronological order
 		q.addAll(ImmutableList.of(third, second));
-		assertEquals("Size not updated", q.size(), 2);
+		assertEquals("Size not updated", 2, q.size());
 		assertEquals(second, q.poll());
 		assertEquals(third, q.poll());
 		assertTrue(q.isEmpty());
@@ -154,13 +154,13 @@ public class EventQueueTest {
 		
 		q.addAll(list);
 		// Verify that third always will be at top of queue, since immediate
-		assertEquals("Size not updated", q.size(), 2);
+		assertEquals("Size not updated", 2, q.size());
 		assertEquals(third, q.peek());
 				
 		q.add(second);
-		assertEquals("Size not updated", q.size(), 3);
+		assertEquals("Size not updated", 3, q.size());
 		q.add(fourth);
-		assertEquals("Size not updated", q.size(), 4);
+		assertEquals("Size not updated", 4, q.size());
 		
 		// Verify that order correct (LIFO for immediate)
 		assertEquals(second, q.poll());

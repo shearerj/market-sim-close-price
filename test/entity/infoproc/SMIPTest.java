@@ -52,7 +52,7 @@ public class SMIPTest {
 		MarketTime mktTime = MarketTime.create(time, 1);
 
 		// Check initial quote is null
-		assertEquals("Incorrect last quote time", smip1.lastQuoteTime, null);
+		assertEquals("Incorrect last quote time", null, smip1.lastQuoteTime);
 		q = smip1.quote;
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
@@ -64,15 +64,15 @@ public class SMIPTest {
 		Iterable<? extends Activity> acts = smip1.sendToIP(market1, mktTime, q, 
 				new ArrayList<Transaction>(), time);
 		for (Activity a : acts) { // Verify correct process quote activity added
-			assertEquals("Incorrect scheduled process quote time", 
-					a.getTime(), TimeStamp.IMMEDIATE);
+			assertEquals("Incorrect scheduled process quote time", TimeStamp.IMMEDIATE, 
+					a.getTime());
 			assertTrue("Incorrect activity type scheduled", 
 					a instanceof ProcessQuote);
 		}
 		for (Activity a : acts) a.execute(a.getTime());
 
 		// Check updated quote after process quote (specific to SMIP)
-		assertEquals("Last quote time not updated", smip1.lastQuoteTime, mktTime);
+		assertEquals("Last quote time not updated", mktTime, smip1.lastQuoteTime);
 		q = smip1.quote;
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
@@ -87,7 +87,7 @@ public class SMIPTest {
 		MarketTime mktTime = MarketTime.create(time, 1);
 		
 		// Check initial quote is null
-		assertEquals("Incorrect last quote time", smip2.lastQuoteTime, null);
+		assertEquals("Incorrect last quote time", null, smip2.lastQuoteTime);
 		q = smip2.quote;
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
@@ -99,15 +99,15 @@ public class SMIPTest {
 		Iterable<? extends Activity> acts = smip2.sendToIP(market2, mktTime, q, 
 				new ArrayList<Transaction>(), time);
 		for (Activity a : acts) { // Verify correct process quote activity added
-			assertEquals("Incorrect scheduled process quote time", 
-					a.getTime(), smip2.latency);
+			assertEquals("Incorrect scheduled process quote time", smip2.latency, 
+					a.getTime());
 			assertTrue("Incorrect activity type scheduled", 
 					a instanceof ProcessQuote);
 		}
 		for (Activity a : acts) a.execute(a.getTime());
 
 		// Check updated quote after process quote (specific to SMIP)
-		assertEquals("Last quote time not updated", smip2.lastQuoteTime, mktTime);
+		assertEquals("Last quote time not updated", mktTime, smip2.lastQuoteTime);
 		q = smip2.quote;
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
@@ -134,14 +134,14 @@ public class SMIPTest {
 		
 		em.executeUntil(time.plus(new TimeStamp(1)));
 		// Check SMIP for market 1 updated
-		assertEquals("Last quote time not updated", smipImmed.lastQuoteTime, mktTime);
+		assertEquals("Last quote time not updated", mktTime, smipImmed.lastQuoteTime);
 		q = smipImmed.quote;
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		// Check SMIP for market 2 not updated
-		assertEquals("Updated SMIP 2 too early", smip2.lastQuoteTime, null);
+		assertEquals("Updated SMIP 2 too early", null, smip2.lastQuoteTime);
 		q = smip2.quote;
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
@@ -170,13 +170,13 @@ public class SMIPTest {
 		// Check that no quotes have updated yet
 		em.executeUntil(time);
 		q = smip1.quote;
-		assertEquals("Updated SMIP 1 too early", smip1.lastQuoteTime, null);
+		assertEquals("Updated SMIP 1 too early", null, smip1.lastQuoteTime);
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 0, q.getBidQuantity());
 		q = smip2.quote;
-		assertEquals("Updated SMIP 2 too early", smip2.lastQuoteTime, null);
+		assertEquals("Updated SMIP 2 too early", null, smip2.lastQuoteTime);
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
@@ -185,14 +185,14 @@ public class SMIPTest {
 		em.executeUntil(time.plus(new TimeStamp(1)));
 		// Check SMIP for market 1 updated
 		q = smip1.quote;
-		assertEquals("Last quote time not updated", smip1.lastQuoteTime, mktTime);
+		assertEquals("Last quote time not updated", mktTime, smip1.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		// Check SMIP for market 2 not updated
 		q = smip2.quote;
-		assertEquals("Updated SMIP 2 too early", smip2.lastQuoteTime, null);
+		assertEquals("Updated SMIP 2 too early", null, smip2.lastQuoteTime);
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
@@ -201,7 +201,7 @@ public class SMIPTest {
 		em.executeUntil(smip2.latency.plus(new TimeStamp(1)));
 		// Check SMIP for market 2 updated
 		q = smip1.quote;
-		assertEquals("Last quote time not updated", smip2.lastQuoteTime, mktTime);
+		assertEquals("Last quote time not updated", mktTime, smip2.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -235,13 +235,13 @@ public class SMIPTest {
 		// Check that market1's SMIP has updated but not market2's after time2=50
 		em.executeUntil(time2.plus(new TimeStamp(1)));
 		q = smip1.quote;
-		assertEquals("Last quote time not updated", smip1.lastQuoteTime, mktTime2);
+		assertEquals("Last quote time not updated", mktTime2, smip1.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(95), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(75), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		q = smip2.quote;
-		assertEquals("Updated SMIP 2 too early", smip2.lastQuoteTime, null);
+		assertEquals("Updated SMIP 2 too early", null, smip2.lastQuoteTime);
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
@@ -250,7 +250,7 @@ public class SMIPTest {
 		// Check that market2's SMIP received (75,95) by time 101
 		em.executeUntil(new TimeStamp(101));
 		q = smip2.quote;
-		assertEquals("Incorrect last quote time", smip2.lastQuoteTime, mktTime1);
+		assertEquals("Incorrect last quote time", mktTime1, smip2.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(95), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(75), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -259,7 +259,7 @@ public class SMIPTest {
 		// Quote (80,100) is processed by market2's SMIP after time 150
 		em.executeUntil(new TimeStamp(151));
 		q = smip2.quote;
-		assertEquals("Last quote time not updated", smip2.lastQuoteTime, mktTime2);
+		assertEquals("Last quote time not updated", mktTime2, smip2.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -296,13 +296,13 @@ public class SMIPTest {
 		// Check market1's SMIP has updated but not market2's after time 0
 		em.executeUntil(new TimeStamp(1));
 		q = smip1.quote;
-		assertEquals("Last quote time not updated", smip1.lastQuoteTime, mktTime2);
+		assertEquals("Last quote time not updated", mktTime2, smip1.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(95), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(75), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		q = smip2.quote;
-		assertEquals("Updated SMIP 2 too early", smip2.lastQuoteTime, null);
+		assertEquals("Updated SMIP 2 too early", null, smip2.lastQuoteTime);
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
@@ -311,7 +311,7 @@ public class SMIPTest {
 		// Check market2's SMIP has received most recent quote(80,100) after time 100
 		em.executeUntil(new TimeStamp(101));
 		q = smip2.quote;
-		assertEquals("Incorrect last quote time", smip2.lastQuoteTime, mktTime2);
+		assertEquals("Incorrect last quote time", mktTime2, smip2.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -342,13 +342,13 @@ public class SMIPTest {
 		// Check market1's SMIP has updated but not market2's after time 0
 		em.executeUntil(new TimeStamp(1));
 		q = smip1.quote;
-		assertEquals("Last quote time not updated", smip1.lastQuoteTime, mktTime2);
+		assertEquals("Last quote time not updated", mktTime2, smip1.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		q = smip2.quote;
-		assertEquals("Updated SMIP 2 too early", smip2.lastQuoteTime, null);
+		assertEquals("Updated SMIP 2 too early", null, smip2.lastQuoteTime);
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
@@ -363,7 +363,7 @@ public class SMIPTest {
 		// Check that market1's SMIP quote doesn't change
 		em.executeUntil(new TimeStamp(1));
 		q = smip1.quote;
-		assertEquals("Incorrect last quote time", smip1.lastQuoteTime, mktTime2);
+		assertEquals("Incorrect last quote time", mktTime2, smip1.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -372,7 +372,7 @@ public class SMIPTest {
 		// Check market2's SMIP quote after time 100
 		em.executeUntil(new TimeStamp(101));
 		q = smip2.quote;
-		assertEquals("Incorrect last quote time", smip2.lastQuoteTime, mktTime2);
+		assertEquals("Incorrect last quote time", mktTime2, smip2.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(95), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(75), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -402,13 +402,13 @@ public class SMIPTest {
 		// Check market1's SMIP has updated but not market2's after time 0
 		em.executeUntil(new TimeStamp(1));
 		q = smip1.quote;
-		assertEquals("Last quote time not updated", smip1.lastQuoteTime, mktTime);
+		assertEquals("Incorrect last quote time", mktTime, smip1.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		q = smip2.quote;
-		assertEquals("Updated SMIP 2 too early", smip2.lastQuoteTime, null);
+		assertEquals("Updated SMIP 2 too early", null, smip2.lastQuoteTime);
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
@@ -423,7 +423,7 @@ public class SMIPTest {
 		// Check that market1's SMIP quote updates to most recent quote
 		em.executeUntil(new TimeStamp(1));
 		q = smip1.quote;
-		assertEquals("Incorrect last quote time", smip1.lastQuoteTime, mktTime);
+		assertEquals("Incorrect last quote time", mktTime, smip1.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(95), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(75), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -454,7 +454,7 @@ public class SMIPTest {
 				new ArrayList<Transaction>(), time);
 		for (Activity a : acts) { // Verify correct process quote activity added
 			assertEquals("Incorrect scheduled process quote time", 
-					a.getTime(), TimeStamp.ZERO); // not immediate
+					TimeStamp.ZERO, a.getTime()); // not immediate
 			assertTrue("Incorrect activity type scheduled", 
 					a instanceof ProcessQuote);
 		}
@@ -462,7 +462,7 @@ public class SMIPTest {
 
 		// Check updated quote after process quote
 		q = smip3.quote;
-		assertEquals("Last quote time not updated", smip3.lastQuoteTime, mktTime1);
+		assertEquals("Last quote time not updated", mktTime1, smip3.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -482,7 +482,7 @@ public class SMIPTest {
 		// Check market3's SMIP has updated after time 0
 		em.executeUntil(new TimeStamp(1));
 		q = smip3.quote;
-		assertEquals("Last quote time not updated", smip3.lastQuoteTime, mktTime3);
+		assertEquals("Last quote time not updated", mktTime3, smip3.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(90), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(60), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
