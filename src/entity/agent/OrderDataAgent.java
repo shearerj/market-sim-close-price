@@ -36,9 +36,9 @@ public class OrderDataAgent extends SMAgent {
 	protected static TreeMap<TimeStamp, OrderData> orderData = new TreeMap<TimeStamp, OrderData>();
 
 	public OrderDataAgent(FundamentalValue fundamental, SIP sip, Market market, 
-	        Random rand, PrivateValue privateValue, 
+	        Random rand,
 	        Iterator<OrderData> orderData) {
-	    super(new TimeStamp(0), fundamental, sip, market, new Random(),
+	    super(new TimeStamp(0), fundamental, sip, market, rand,
 	                new PrivateValue(), 1);
 	    
 	    while(orderData.hasNext()){
@@ -55,7 +55,7 @@ public class OrderDataAgent extends SMAgent {
 	
 	public Iterable<? extends Activity> executeODAStrategy(int quantity, TimeStamp currentTime) {
      return ImmutableList.of(new SubmitNMSOrder(this, orderData.get(currentTime).getPrice(), orderData.get(currentTime).getQuantity(), 
-             primaryMarket, TimeStamp.IMMEDIATE));
+             primaryMarket, currentTime));
 	}
 
 	/*public Collection<Order> getOrders() {
