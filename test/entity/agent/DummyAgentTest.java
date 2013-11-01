@@ -37,7 +37,6 @@ import event.TimeStamp;
 public class DummyAgentTest {
 
 	private static Random rand;
-
 	private FundamentalValue fundamental = new DummyFundamental(100000);
 	private Market market;
 	private SIP sip;
@@ -59,9 +58,7 @@ public class DummyAgentTest {
 	}
 
 	private DummyAgent addAgent() {
-
-		DummyAgent agent = new DummyAgent(new TimeStamp(0), fundamental, sip, market, rand,
-				testProps);
+		DummyAgent agent = new DummyAgent(fundamental, sip, market);
 
 		return agent;
 	}
