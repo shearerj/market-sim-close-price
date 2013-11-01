@@ -15,7 +15,7 @@ import activity.MockActivity;
 import activity.MockAgentActivity;
 import data.DummyFundamental;
 import data.FundamentalValue;
-import entity.agent.MockAgent;
+import entity.agent.MockBackgroundAgent;
 import entity.infoproc.SIP;
 import entity.market.MockMarket;
 import event.TimeStamp;
@@ -44,20 +44,20 @@ public class EventManagerTest {
 		TimeStamp time = new TimeStamp(10);
 		
 		// Initially empty, time 0
-		assertEquals(em.eventQueue.size(), 0 );
-		assertEquals(em.getCurrentTime(), TimeStamp.ZERO);
+		assertEquals(0, em.eventQueue.size());
+		assertEquals(TimeStamp.ZERO, em.getCurrentTime());
 		
 		em.addActivity(new MockActivity(time));
-		assertEquals(em.eventQueue.size(), 1 );
+		assertEquals(1, em.eventQueue.size());
 		assertTrue(em.eventQueue.peek() instanceof MockActivity);
-		assertEquals(em.eventQueue.peek().getTime(), time);
+		assertEquals(time, em.eventQueue.peek().getTime());
 		// Verify that current time is 0 until first activity is executed
-		assertEquals(em.getCurrentTime(), TimeStamp.ZERO);
+		assertEquals(TimeStamp.ZERO, em.getCurrentTime());
 		
 		em.executeNext();
 		// Check that activity did in fact execute
-		assertEquals(em.eventQueue.size(), 0 );
-		assertEquals(em.getCurrentTime(), time);
+		assertEquals(0, em.eventQueue.size());
+		assertEquals(time, em.getCurrentTime());
 	}
 	
 	@Test
@@ -66,20 +66,20 @@ public class EventManagerTest {
 		em.addActivity(new MockActivity(time));
 		em.addActivity(new MockActivity(time.plus(time)));
 		
-		assertEquals(em.eventQueue.size(), 2 );
-		assertEquals(em.getCurrentTime(), TimeStamp.ZERO);
+		assertEquals(2, em.eventQueue.size());
+		assertEquals(TimeStamp.ZERO, em.getCurrentTime());
 		
 		// Check that second activity hasn't executed yet
 		em.executeUntil(time.plus(time));
-		assertEquals(em.eventQueue.size(), 1 );
-		assertEquals(em.getCurrentTime(), time);
-		assertEquals(em.eventQueue.peek().getTime(), time.plus(time));
+		assertEquals(1, em.eventQueue.size());
+		assertEquals(time, em.getCurrentTime());
+		assertEquals(time.plus(time), em.eventQueue.peek().getTime());
 		
 		em.executeNext();
 		// Check that activity did in fact execute
-		assertEquals(em.eventQueue.size(), 0 );
-		assertEquals(em.getCurrentTime(), time.plus(time));	
-		assertEquals(em.eventQueue.peek(), null);
+		assertEquals(0, em.eventQueue.size());
+		assertEquals(time.plus(time), em.getCurrentTime());	
+		assertEquals(null, em.eventQueue.peek());
 	}
 	
 	
@@ -89,29 +89,29 @@ public class EventManagerTest {
 		// MockAgentActivity will insert a MockActivity
 		TimeStamp time = new TimeStamp(10);
 		
-		MockAgent agent = new MockAgent(fundamental, sip, market);
-		assertEquals(em.eventQueue.size(), 0 );
-		assertEquals(em.getCurrentTime(), TimeStamp.ZERO);
+		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
+		assertEquals(0, em.eventQueue.size());
+		assertEquals(TimeStamp.ZERO, em.getCurrentTime());
 		
 		em.addActivity(new MockAgentActivity(agent, time));
 		// Verify that new activity has been added correctly 
 		// and that current time is 0 until first activity is executed
-		assertEquals(em.eventQueue.size(), 1 );
+		assertEquals(1, em.eventQueue.size());
 		assertTrue(em.eventQueue.peek() instanceof MockAgentActivity);
-		assertEquals(em.eventQueue.peek().getTime(), time);
-		assertEquals(em.getCurrentTime(), TimeStamp.ZERO);
+		assertEquals(time, em.eventQueue.peek().getTime());
+		assertEquals(TimeStamp.ZERO, em.getCurrentTime());
 		
 		em.executeNext();
 		// Check that MockAgentActivity did in fact execute
-		assertEquals(em.eventQueue.size(), 1 );
+		assertEquals(1, em.eventQueue.size());
 		assertTrue(em.eventQueue.peek() instanceof MockActivity);
-		assertEquals(em.eventQueue.peek().getTime(), time);
-		assertEquals(em.getCurrentTime(), time);
+		assertEquals(time, em.eventQueue.peek().getTime());
+		assertEquals(time, em.getCurrentTime());
 
 		em.executeNext();
 		// Check that MockActivity did in fact execute
-		assertEquals(em.eventQueue.size(), 0 );
-		assertEquals(em.getCurrentTime(), time);
-		assertEquals(em.eventQueue.peek(), null);
+		assertEquals(0, em.eventQueue.size());
+		assertEquals(time, em.getCurrentTime());
+		assertEquals(null, em.eventQueue.peek());
 	}
 }

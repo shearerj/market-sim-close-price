@@ -133,7 +133,7 @@ public class AAAgent extends BackgroundAgent {
 		int quantity = isBuyer ? 1 : -1;
 
 		// Updating Price Limit
-		Price limit = determinePriceLimit(quantity, currentTime);
+		Price limit = getValuation(getOrderType(quantity), currentTime);
 
 		// Determine the Target Price
 		Price targetPrice = determinePriceTarget(limit, movingAverage);
@@ -187,13 +187,6 @@ public class AAAgent extends BackgroundAgent {
 		double movingAverage = total / num;
 		double mvgAvgNum = num;
 		return new MovingAverage(movingAverage, mvgAvgNum);
-	}
-
-	
-	private Price determinePriceLimit(int quantity, TimeStamp ts) {
-		int fundPrice = fundamental.getValueAt(ts).intValue();
-		int deviation = privateValue.getValueAtPosition(positionBalance + quantity).intValue();
-		return new Price(fundPrice + deviation);
 	}
 	
 	/**
@@ -325,7 +318,7 @@ public class AAAgent extends BackgroundAgent {
 		
 		// If best offer is outside of limit price, no bid is submitted
 		if ((isBuyer && limit.lessThanEqual(bestBid))
-			|| (!isBuyer && limit.greaterThanEquals(bestAsk))) {
+			|| (!isBuyer && limit.greaterThanEqual(bestAsk))) {
 			s += "best offer is outside of limit price: " + limit
 					+ "; no submission";
 			log(INFO, s);
@@ -376,7 +369,7 @@ public class AAAgent extends BackgroundAgent {
 		} else { // Seller
 			// If outstanding bid >= target price, submit ask at bid price
 			// else submit bid given by EQ 10/11
-			Price submitPrice = bestBid.greaterThanEquals(price) ? bestBid : price;
+			Price submitPrice = bestBid.greaterThanEqual(price) ? bestBid : price;
 			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, submitPrice, quantity, primaryMarket, TimeStamp.IMMEDIATE));
 		}
 	}

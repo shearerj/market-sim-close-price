@@ -1,14 +1,14 @@
 package activity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import entity.agent.MockAgent;
+import entity.agent.MockBackgroundAgent;
 import event.TimeStamp;
 
 public class MockAgentActivity extends Activity {
 
-	protected final MockAgent agent;
+	protected final MockBackgroundAgent agent;
 	
-	public MockAgentActivity(MockAgent agent, TimeStamp scheduledTime) {
+	public MockAgentActivity(MockBackgroundAgent agent, TimeStamp scheduledTime) {
 		super(scheduledTime);
 		this.agent = checkNotNull(agent, "Agent");
 	}

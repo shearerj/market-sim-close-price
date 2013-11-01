@@ -26,7 +26,7 @@ import com.google.common.collect.Maps;
  * "addAll," which adds a collection of activities to the queue, and "remove,"
  * which removes the activity at the head of the queue. Events that are added at
  * the same TimeStamp will be dequeued in a uniform random order. To make an
- * event occur instantaneously give it a time of Consts.INF_TIME.
+ * event occur instantaneously give it a time of TimeStamp.IMMEDIATE;
  * 
  * Note that because of the dequeuing mechanism, if Activity A is supposed to
  * happen after Activity B, Activity A should queue up Activity B. Anything else
@@ -157,10 +157,10 @@ public class EventQueue extends AbstractQueue<Activity> {
 	
 	// Add collections in reverse. This ensures invariant.
 	public boolean addAll(Iterable<? extends Activity> acts) {
-		// FIXME Don't properly check for nulls
+		checkNotNull(acts);
 		if (Iterables.isEmpty(acts)) return false;
 		// Group Activities by Time
-		Builder<TimeStamp, Activity> build = ImmutableListMultimap.builder();
+		Builder<TimeStamp, Activity> build = ImmutableListMultimap.builder();	// will not take nulls
 		for (Activity act : acts) build.put(act.getTime(), act);
 		
 		// Add them all to the appropriate event as a collection to maintain execution orders 

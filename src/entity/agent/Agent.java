@@ -11,6 +11,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import systemmanager.Consts.OrderType;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -258,14 +260,20 @@ public abstract class Agent extends Entity {
 			}
 			TimeStamp timeToExecution = trans.getExecTime().minus(submissionTime);
 
+			OrderType type = getOrderType(trans.getQuantity());
 			int fund = fundamental.getValueAt(trans.getExecTime()).intValue() * trans.getQuantity();
-			int pv = privateValue.getValueFromQuantity(positionBalance, trans.getQuantity()).intValue();
+			int pv = privateValue.getValueFromQuantity(positionBalance, type).intValue();
 			int cost = trans.getPrice().intValue() * trans.getQuantity();
 			int transactionSurplus = (fund + pv - cost) * sign;
 
 			surplus += Math.exp(rho * timeToExecution.getInTicks()) * transactionSurplus;
 		}
 		return surplus;
+	}
+	
+	protected OrderType getOrderType(int quantity) {
+		checkArgument(quantity != 0);
+		return quantity > 0 ? OrderType.BUY : OrderType.SELL;
 	}
 	
 	@Override
