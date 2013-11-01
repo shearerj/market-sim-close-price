@@ -50,8 +50,6 @@ private static Random rand;
 		// Creating the setup properties
 		rand = new Random(4);
 		
-		//Setting up properties
-
 
 		
 	}
@@ -168,8 +166,8 @@ private static Random rand;
 		//Fundamental = 100000 ($100.00), Stdev = sqrt(100000000) = 10000 ($10.000)
 		//Bid Range = 0, 1000 ($0.00, $1.00)
 		//99.7% of bids should fall between 100000 +/- (3*10000 + 1000)
-		// = 69999, 130001
-		assertCorrectBid(testAgent, 69999, 130001);
+		// = 70000, 13000
+		assertCorrectBid(testAgent, 70000, 130000);
 		
 	}
 	
@@ -215,7 +213,7 @@ private static Random rand;
 		builder.add(new Price(0));     			//$0.00
 		builder.add(new Price(-10000));  		//$-10.00
 		List<Price> prices = builder.build();	//Prices = [$10, $0, $-10]
-		MockPrivateValue testpv = new MockPrivateValue(offset, prices);
+		DummyPrivateValue testpv = new DummyPrivateValue(offset, prices);
 		
 		ZIAgent testAgent = addAgent(0, 1000, rand, testpv);
 		
@@ -250,6 +248,56 @@ private static Random rand;
 	
 	@Test
 	public void randTestZI(){
-		//TODO implement testPrivateValue with all inputs random; compared to theoretical expected bid range 
+		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 random argument bids are correct");
+
+		
+		for(int i = 0; i<100; i++){
+			
+			int offset = 1;
+		
+			Builder<Price> builder = ImmutableList.builder();
+			builder.add(new Price(rand.nextInt(90000))); 	//[$0.00, $90.00]	
+			builder.add(new Price(0));     						//[$0.00]
+			builder.add(new Price(-1*rand.nextInt(90000)));  	//[$0.00, -$90.00]
+			List<Price> prices = builder.build();	
+			DummyPrivateValue testpv = new DummyPrivateValue(offset, prices);
+			
+			int min = rand.nextInt(5000); 		//[$0.00, $5.00]
+			int max = min + rand.nextInt(5000);	//[min, $10.00]
+			
+			ZIAgent testAgent = addAgent(min, max, rand, testpv);
+			
+			Logger.log(Logger.Level.DEBUG, "Agent bid minimum: " + new Price(min) + ", maximum: " + new Price(max));
+			
+			executeAgentStrategy(testAgent, 100);
+			
+			Collection<Order> orders = testAgent.activeOrders;
+			Order order = Iterables.getFirst(orders, null);
+			int quantity = order.getQuantity();
+			Price bidPrice = order.getPrice();
+			switch(quantity){
+			case -1:
+				Price ask_min = new Price(100000 + (prices.get(0).intValue() - prices.get(1).intValue())- max);
+				Price ask_max = new Price(100000 + (prices.get(0).intValue() - prices.get(1).intValue())- min);
+				assertTrue("Ask Price (" + bidPrice + ") less than " + ask_min, bidPrice.greaterThan(ask_min));
+				assertTrue("Ask Price (" + bidPrice + ") greater than " + ask_max, bidPrice.lessThan(ask_max));
+				//Expected ask range min = fundamental + (PV[-1] - PV[0]) - bidRangeMax
+				//Expected ask range max = fundamental + (PV[-1] - PV[0]) - bidRangeMin
+				//*Index values expressed relative to median index [1]
+				break;
+			case 1:
+				Price bid_min = new Price(100000 + (prices.get(2).intValue() - prices.get(1).intValue()) + min);
+				Price bid_max = new Price(100000 + (prices.get(2).intValue() - prices.get(1).intValue()) + max);
+				assertTrue("Bid Price (" + bidPrice + ") less than " + bid_min, bidPrice.greaterThan(bid_min));
+				assertTrue("Bid Price (" + bidPrice + ") greater than " + bid_max, bidPrice.lessThan(bid_max));
+				//Expected bid range min = fundamental + (PV[1] - PV[0]) + bidRangeMin
+				//Expected bid range max = fundamental + (PV[1] - PV[0]) + bidRangeMax
+				//*Index values expressed relative to median index [1]
+				break;
+			default:
+				break;
+			}
+		
+		}
 	}
 }
