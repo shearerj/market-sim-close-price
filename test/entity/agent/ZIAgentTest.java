@@ -135,7 +135,6 @@ private static Random rand;
 
 	@Test
 	public void initialQuantityZI() {
-		Logger.log(Logger.Level.DEBUG, ">>initialQuantityZI:");
 		Logger.log(Logger.Level.DEBUG, "Testing ZI submitted quantity is correct");
 		
 		// New ZIAgent
@@ -150,7 +149,6 @@ private static Random rand;
 	
 	@Test
 	public void initialPriceZI() {
-		Logger.log(Logger.Level.DEBUG, ">>initialPriceZI:");
 		Logger.log(Logger.Level.DEBUG, "Testing ZI submitted bid range is correct");
 		
 		// New ZIAgent
@@ -169,7 +167,6 @@ private static Random rand;
 	
 	@Test
 	public void randQuantityZI(){
-		Logger.log(Logger.Level.DEBUG, ">>RandQuantityZI:");
 		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 submitted quantities are correct");
 		for(int r = 0; r<100; r++){
 			// New ZIAgent
@@ -187,7 +184,6 @@ private static Random rand;
 	
 	@Test
 	public void randPriceZI(){
-		Logger.log(Logger.Level.DEBUG, ">>RandPriceZI:");
 		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 submitted bid ranges are correct");
 		for(int r = 0; r<100; r++){
 			// New ZIAgent
@@ -204,12 +200,11 @@ private static Random rand;
 	
 	@Test
 	public void testPrivateValue(){
-		Logger.log(Logger.Level.DEBUG, ">>testPrivateValue:");
 		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 MockPrivateValue arguments are correct");
 		int offset = 1;
 		Builder<Price> builder = ImmutableList.builder();
 		builder.add(new Price(10000)); 			//$10.00
-		builder.add(new Price(0));     			//$0.00
+		//builder.add(new Price(0));     			//$0.00
 		builder.add(new Price(-10000));  		//$-10.00
 		List<Price> prices = builder.build();	//Prices = [$10, $0, $-10]
 		DummyPrivateValue testpv = new DummyPrivateValue(offset, prices);
@@ -247,7 +242,6 @@ private static Random rand;
 	
 	@Test
 	public void randTestZI(){
-		Logger.log(Logger.Level.DEBUG, ">>RandTestZI:");
 		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 random argument bids are correct");
 
 		
@@ -257,7 +251,7 @@ private static Random rand;
 		
 			Builder<Price> builder = ImmutableList.builder();
 			builder.add(new Price(rand.nextInt(90000))); 	//[$0.00, $90.00]	
-			builder.add(new Price(0));     						//[$0.00]
+			//builder.add(new Price(0));     						//[$0.00]
 			builder.add(new Price(-1*rand.nextInt(90000)));  	//[$0.00, -$90.00]
 			List<Price> prices = builder.build();	
 			DummyPrivateValue testpv = new DummyPrivateValue(offset, prices);
@@ -277,8 +271,8 @@ private static Random rand;
 			Price bidPrice = order.getPrice();
 			switch(quantity){
 			case -1:
-				Price ask_min = new Price(100000 + (prices.get(0).intValue() - prices.get(1).intValue())- max);
-				Price ask_max = new Price(100000 + (prices.get(0).intValue() - prices.get(1).intValue())- min);
+				Price ask_min = new Price(100000 + prices.get(0).intValue()- max);
+				Price ask_max = new Price(100000 + prices.get(0).intValue() - min);
 				assertTrue("Ask Price (" + bidPrice + ") less than " + ask_min, bidPrice.greaterThan(ask_min));
 				assertTrue("Ask Price (" + bidPrice + ") greater than " + ask_max, bidPrice.lessThan(ask_max));
 				//Expected ask range min = fundamental + (PV[-1] - PV[0]) - bidRangeMax
@@ -286,8 +280,8 @@ private static Random rand;
 				//*Index values expressed relative to median index [1]
 				break;
 			case 1:
-				Price bid_min = new Price(100000 + (prices.get(2).intValue() - prices.get(1).intValue()) + min);
-				Price bid_max = new Price(100000 + (prices.get(2).intValue() - prices.get(1).intValue()) + max);
+				Price bid_min = new Price(100000 + prices.get(1).intValue() + min);
+				Price bid_max = new Price(100000 + prices.get(1).intValue() + max);
 				assertTrue("Bid Price (" + bidPrice + ") less than " + bid_min, bidPrice.greaterThan(bid_min));
 				assertTrue("Bid Price (" + bidPrice + ") greater than " + bid_max, bidPrice.lessThan(bid_max));
 				//Expected bid range min = fundamental + (PV[1] - PV[0]) + bidRangeMin

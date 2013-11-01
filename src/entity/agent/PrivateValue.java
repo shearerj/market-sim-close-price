@@ -78,7 +78,7 @@ public class PrivateValue implements Serializable {
 	 */
 	
 	protected PrivateValue(int maxPosition, List<Price> prices){
-		checkArgument(((prices.size()-1)/2==maxPosition), "Incorrect number of entries in price list");
+		checkArgument((prices.size()/2==maxPosition), "Incorrect number of entries in price list");
 		this.prices = prices;
 		offset = maxPosition;
 	}
