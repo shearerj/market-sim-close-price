@@ -13,7 +13,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import systemmanager.Keys;
 import activity.Activity;
 import activity.SubmitNMSOrder;
 
@@ -22,7 +21,6 @@ import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
 
 import data.DummyFundamental;
-import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
@@ -76,12 +74,8 @@ private static Random rand;
 		//REENTRY_RATE, 0
 		//PRIVATE_VALUE_VAR, 100000000
 		//TICK_SIZE, 1
-		EntityProperties agentProperties = new EntityProperties();
-		agentProperties.put(Keys.BID_RANGE_MIN, min);
-		agentProperties.put(Keys.BID_RANGE_MAX, max);
-		ZIAgent agent = new ZIAgent(new TimeStamp(0), fundamental, sip, market, rand, agentProperties);
 		
-		return agent;
+		return addAgent(min, max, rand, new PrivateValue(1, 100000000, rand));
 	}
 	
 	private ZIAgent addAgent(int min, int max){
@@ -141,6 +135,7 @@ private static Random rand;
 
 	@Test
 	public void initialQuantityZI() {
+		Logger.log(Logger.Level.DEBUG, ">>initialQuantityZI:");
 		Logger.log(Logger.Level.DEBUG, "Testing ZI submitted quantity is correct");
 		
 		// New ZIAgent
@@ -155,6 +150,7 @@ private static Random rand;
 	
 	@Test
 	public void initialPriceZI() {
+		Logger.log(Logger.Level.DEBUG, ">>initialPriceZI:");
 		Logger.log(Logger.Level.DEBUG, "Testing ZI submitted bid range is correct");
 		
 		// New ZIAgent
@@ -173,6 +169,7 @@ private static Random rand;
 	
 	@Test
 	public void randQuantityZI(){
+		Logger.log(Logger.Level.DEBUG, ">>RandQuantityZI:");
 		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 submitted quantities are correct");
 		for(int r = 0; r<100; r++){
 			// New ZIAgent
@@ -190,6 +187,7 @@ private static Random rand;
 	
 	@Test
 	public void randPriceZI(){
+		Logger.log(Logger.Level.DEBUG, ">>RandPriceZI:");
 		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 submitted bid ranges are correct");
 		for(int r = 0; r<100; r++){
 			// New ZIAgent
@@ -206,6 +204,7 @@ private static Random rand;
 	
 	@Test
 	public void testPrivateValue(){
+		Logger.log(Logger.Level.DEBUG, ">>testPrivateValue:");
 		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 MockPrivateValue arguments are correct");
 		int offset = 1;
 		Builder<Price> builder = ImmutableList.builder();
@@ -248,6 +247,7 @@ private static Random rand;
 	
 	@Test
 	public void randTestZI(){
+		Logger.log(Logger.Level.DEBUG, ">>RandTestZI:");
 		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 random argument bids are correct");
 
 		
