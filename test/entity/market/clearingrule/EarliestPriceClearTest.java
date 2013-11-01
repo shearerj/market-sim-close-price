@@ -43,7 +43,7 @@ public class EarliestPriceClearTest {
 		
 		Set<MatchedOrders<Price,MarketTime>> keySet = result.keySet();
 		for(MatchedOrders<Price,MarketTime> key : keySet) {
-			// Verify for tie at time, it clears at the better price ---------------FIXME
+			// Verify for tie at time, it clears at the earlier price (because of MarketTime)
 			assertEquals(new Price(110), result.get(key));
 		}
 	}
@@ -82,8 +82,11 @@ public class EarliestPriceClearTest {
 	 */
 	public MatchedOrders<Price,MarketTime> createOrderPair(Price p1, int q1, 
 			TimeStamp t1, Price p2, int q2, TimeStamp t2){
-		Order<Price, MarketTime> a = Order.create(p1, q1, MarketTime.create(t1,t1.getInTicks()));
-		Order<Price, MarketTime> b = Order.create(p2, q2, MarketTime.create(t2,t2.getInTicks()));
+		// NOTE: the same MarketTime will never be created for two orders
+		// So if t1 == t2, t2 will be created at an incremented MarketTime
+		Order<Price, MarketTime> a = Order.create(p1, q1, MarketTime.create(t1, t1.getInTicks()));
+		Order<Price, MarketTime> b = Order.create(p2, q2, 
+				MarketTime.create(t2, t2.plus(new TimeStamp(t2.equals(t1) ? 1 : 0)).getInTicks()));
 		return MatchedOrders.create(a, b, Math.min(q1, q2));
 	}
 }

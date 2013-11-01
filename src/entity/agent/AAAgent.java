@@ -133,7 +133,7 @@ public class AAAgent extends BackgroundAgent {
 		int quantity = isBuyer ? 1 : -1;
 
 		// Updating Price Limit
-		Price limit = determinePriceLimit(quantity, currentTime);
+		Price limit = getValuation(getOrderType(quantity), currentTime);
 
 		// Determine the Target Price
 		Price targetPrice = determinePriceTarget(limit, movingAverage);
@@ -187,13 +187,6 @@ public class AAAgent extends BackgroundAgent {
 		double movingAverage = total / num;
 		double mvgAvgNum = num;
 		return new MovingAverage(movingAverage, mvgAvgNum);
-	}
-
-	
-	private Price determinePriceLimit(int quantity, TimeStamp ts) {
-		int fundPrice = fundamental.getValueAt(ts).intValue();
-		int deviation = privateValue.getValueAtPosition(positionBalance + quantity).intValue();
-		return new Price(fundPrice + deviation);
 	}
 	
 	/**

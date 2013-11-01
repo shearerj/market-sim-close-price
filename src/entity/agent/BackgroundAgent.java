@@ -8,6 +8,7 @@ import iterators.ExpInterarrivals;
 import java.util.Iterator;
 import java.util.Random;
 
+import systemmanager.Consts.OrderType;
 import utils.Rands;
 import activity.Activity;
 import activity.AgentStrategy;
@@ -81,7 +82,7 @@ public abstract class BackgroundAgent extends SMAgent {
 		if (newPosition <= privateValue.getMaxAbsPosition() &&
 				newPosition >= -privateValue.getMaxAbsPosition()) {
 			
-			Price val = getValuation(quantity, currentTime);
+			Price val = getValuation(getOrderType(quantity), currentTime);
 			Price price = new Price((val.doubleValue() + signum(quantity) * 
 					Rands.nextUniform(rand, bidRangeMin, bidRangeMax))).nonnegative().quantize(tickSize);
 			
@@ -89,7 +90,7 @@ public abstract class BackgroundAgent extends SMAgent {
 			sb.append(quantity).append(", value=");
 			sb.append(fundamental.getValueAt(currentTime)).append(" + ");
 			sb.append(privateValue.getValueFromQuantity(positionBalance,
-					quantity));
+					getOrderType(quantity)));
 			sb.append('=').append(val);
 			log(INFO, sb.toString());
 			
@@ -103,23 +104,21 @@ public abstract class BackgroundAgent extends SMAgent {
 			
 			return ImmutableList.of();
 		}
-		
-//		Price price = new Price((int) (val.getInTicks() - signum(quantity)
-//				* rand.nextDouble() * 2 * bidRangeMax)).nonnegative().quantize(tickSize);
 	}
 	
 	/**
 	 * Returns the limit price (i.e. valuation) for the agent.
 	 * 
-	 * @param quantity
+	 * valuation = fundamental + private_value
+	 * 
+	 * @param type
 	 * @param currentTime
 	 * @return
 	 */
-	public Price getValuation(int quantity, TimeStamp currentTime) {
+	public Price getValuation(OrderType type, TimeStamp currentTime) {
 		return new Price(
 				fundamental.getValueAt(currentTime).intValue()
 						+ privateValue.getValueFromQuantity(positionBalance,
-								quantity).intValue()).nonnegative();
+								type).intValue()).nonnegative();
 	}
-	
 }

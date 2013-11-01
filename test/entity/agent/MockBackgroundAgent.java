@@ -20,8 +20,13 @@ public class MockBackgroundAgent extends BackgroundAgent {
 	private static final long serialVersionUID = 1L;
 
 	public MockBackgroundAgent(FundamentalValue fundamental, SIP sip, Market market) {
+		this(fundamental, sip, market, new PrivateValue(), 0, 1000);
+	}
+	
+	public MockBackgroundAgent(FundamentalValue fundamental, SIP sip, Market market,
+			PrivateValue pv, int bidRangeMin, int bidRangeMax) {
 		super(new TimeStamp(0), fundamental, sip, market, new Random(), 0,
-				new PrivateValue(),	1, 0, 1000);
+				pv,	1, bidRangeMin, bidRangeMax);
 	}
 
 	@Override
@@ -39,6 +44,6 @@ public class MockBackgroundAgent extends BackgroundAgent {
 	
 	@Override
 	public String toString() {
-		return "MockAgent " + super.toString();
+		return "MockBackgroundAgent " + super.toString();
 	}
 }

@@ -65,13 +65,8 @@ public class ZIPAgent extends BackgroundAgent {
 		Collection<? extends Activity> acts = Lists.newArrayList(super.agentStrategy(currentTime));
 		
 		// 0.50% chance of being either long or short
-		int quantity = rand.nextBoolean() ? 1 : -1;
 		@SuppressWarnings("unused")
-		int val = Math.max(
-				0,
-				fundamental.getValueAt(currentTime).intValue()
-						+ privateValue.getValueFromQuantity(positionBalance,
-								quantity).intValue());
+		int quantity = rand.nextBoolean() ? 1 : -1;
 
 		// Insert events for the agent to sleep, then wake up again at timestamp
 		// tsNew
