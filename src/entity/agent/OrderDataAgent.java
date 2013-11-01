@@ -58,12 +58,10 @@ public class OrderDataAgent extends SMAgent {
              primaryMarket, currentTime));
 	}
 
-	/*public Collection<Order> getOrders() {
-		//String message = "PHAgent has no orders!";
-		//log(INFO, message);
+	public Collection<Order> getOrders() {
 		return this.activeOrders;
 	}
-	*/
+	
 	@Override
 	public String toString() {
 		
