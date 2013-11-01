@@ -1,5 +1,6 @@
 package data;
 
+import java.io.Serializable;
 import java.util.Random;
 
 import entity.agent.PrivateValue;
@@ -8,7 +9,11 @@ import entity.market.Market;
 import entity.market.Price;
 import event.TimeStamp;
 
-public class OrderDatum {
+public class OrderDatum <P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private TimeStamp timestamp;
 	private Price price;
 	private int quantity;

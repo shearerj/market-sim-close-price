@@ -30,11 +30,22 @@ import entity.market.Order;
 import entity.market.Price;
 import event.TimeStamp;
 
+import java.util.Comparator;
+import java.util.PriorityQueue;
+
 public class OrderDataAgent extends SMAgent {
 
 	private static final long serialVersionUID = 1L;
-	protected static TreeMap<TimeStamp, OrderDatum> orderData = new TreeMap<TimeStamp, OrderDatum>();
+	protected static PriorityQueue<OrderDatum> orderData = new PriorityQueue<OrderDatum>(11,new Comparator<OrderDatum>(){
 
+		@Override
+		public int compare(OrderDatum arg0, OrderDatum arg1) {
+			return arg0.getTimestamp().compareTo(arg1.getTimestamp());
+			
+		}
+			
+		}
+	);
 	public OrderDataAgent(FundamentalValue fundamental, SIP sip, Market market, 
 	        Random rand,
 	        Iterator<OrderDatum> orderData) {
@@ -43,19 +54,19 @@ public class OrderDataAgent extends SMAgent {
 	    
 	    while(orderData.hasNext()){
 	        OrderDatum order = orderData.next();
-	        this.orderData.put(order.getTimestamp(), order);
+	        this.orderData.add(order);
 	    }
 	}
 
 	@Override
 	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
-        TimeStamp nextStrategy = orderData.higherKey(currentTime);
-        return ImmutableList.of(new AgentStrategy(this, nextStrategy));
+        OrderDatum nextStrategy = orderData.element();
+        return ImmutableList.of(new AgentStrategy(this, nextStrategy.getTimestamp()));
 	}
 	
 	public Iterable<? extends Activity> executeODAStrategy(int quantity, TimeStamp currentTime) {
-     return ImmutableList.of(new SubmitNMSOrder(this, orderData.get(currentTime).getPrice(), orderData.get(currentTime).getQuantity(), 
-             primaryMarket, currentTime));
+		OrderDatum submitOrder = orderData.poll();
+     return ImmutableList.of(new SubmitNMSOrder(this, submitOrder.getPrice(), submitOrder.getQuantity(), primaryMarket, currentTime));
 	}
 
 	public Collection<Order> getOrders() {
