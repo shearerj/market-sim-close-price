@@ -1,6 +1,7 @@
 package entity.agent;
 
 import static logger.Logger.log;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -27,6 +28,7 @@ import activity.SubmitNMSOrder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 
 import data.DummyFundamental;
 import data.EntityProperties;
@@ -36,6 +38,7 @@ import data.OrderDatum;
 import entity.agent.DummyAgent;
 import entity.infoproc.SIP;
 import entity.market.Market;
+import entity.market.MarketTime;
 import entity.market.MockMarket;
 import entity.market.Order;
 import entity.market.Price;
@@ -116,13 +119,17 @@ public class OrderDataAgentTest {
         
 		OrderDataAgent agent = addAgent(orders.iterator());
 		market.submitNMSOrder(agent, new Price(75000), +1, new TimeStamp(15));
-	    market.submitNMSOrder(agent, new Price(75000), -1, new TimeStamp(18));
-        market.submitNMSOrder(agent, new Price(75000), +1, new TimeStamp(20));
 		
 		Collection<Order> orderCollection = agent.getOrders();
+	    Order order = Iterables.getFirst(orderCollection, null);
 		
 		Logger.log(Logger.Level.DEBUG, agent.getOrders());
-		//assertTrue("OrderDataAgent has Orders",agent.getOrders().);
+		assertTrue("OrderDataAgent active order have wrong agent",order.getAgent().equals(agent));
+	    assertTrue("OrderDataAgent active order have wrong market",order.getMarket().equals(market));
+	    assertTrue("OrderDataAgent active order have wrong price",order.getPrice().equals(new Price(75000)));
+	    assertTrue("OrderDataAgent active order have wrong price", order.getQuantity() == 1);
+	    assertTrue("OrderDataAgent active order have wrong timestamp",order.getSubmitTime().equals(new TimeStamp(15)));
+
 	}
 	
 }
