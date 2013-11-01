@@ -131,6 +131,30 @@ private static Random rand;
 	private void assertCorrectBid(Agent agent) {
 		assertCorrectBid(agent, -1, Integer.MAX_VALUE);
 	}
+	
+	@Test
+	public void initialActivityZI(){
+		Logger.log(Logger.Level.DEBUG, "Testing ZI Activity is correct");
+		//Counter
+		int act_counter = 0;
+		int submit_counter = 0;
+		// New ZIAgent
+		ZIAgent testAgent = addAgent();
+		TimeStamp currentTime = new TimeStamp(100);
+		Iterable<? extends Activity> test = testAgent.agentStrategy(currentTime);
+		for (Activity act : test){
+			act_counter++;
+			if (act instanceof SubmitNMSOrder){
+				submit_counter++;
+				assertTrue("ZI Activity time (" + act.getTime() + ") not equal to " + currentTime, 
+						act.getTime()==currentTime);
+				act.execute(currentTime);
+			}
+		}
+		assertTrue("ZI Activity quantity (" + act_counter + ") not equal to 1", act_counter == 1 );
+		assertTrue("ZI SubmitNMSOrder quantity (" + submit_counter + ") not equal to 1", submit_counter == 1 );
+
+	}
 
 
 	@Test
@@ -235,6 +259,7 @@ private static Random rand;
 				//*Index values expressed relative to median index [1]
 				break;
 			default:
+				fail("Quantity is not 1 or -1");
 				break;
 			}
 		}
@@ -289,6 +314,7 @@ private static Random rand;
 				//*Index values expressed relative to median index [1]
 				break;
 			default:
+				fail("Quantity is not 1 or -1");
 				break;
 			}
 		
