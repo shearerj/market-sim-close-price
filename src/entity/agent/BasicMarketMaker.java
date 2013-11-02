@@ -2,12 +2,12 @@ package entity.agent;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
-import static utils.Compare.max;
-import static utils.Compare.min;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
+
+import com.google.common.collect.Ordering;
 
 import systemmanager.Keys;
 import utils.MathUtils;
@@ -50,6 +50,8 @@ import event.TimeStamp;
 public class BasicMarketMaker extends MarketMaker {
 
 	private static final long serialVersionUID = 9057600979711100221L;
+	
+	private static final Ordering<Price> pcomp = Ordering.natural();
 	
 	protected final int stepSize;
 	protected final int rungSize;
@@ -105,9 +107,9 @@ public class BasicMarketMaker extends MarketMaker {
 				
 				int ct = numRungs * stepSize;
 				// min price for buy order in the ladder
-				Price buyMinPrice = min(new Price(bid.intValue() - ct), lastNBBOQuote.getBestAsk());
+				Price buyMinPrice = pcomp.min(new Price(bid.intValue() - ct), lastNBBOQuote.getBestAsk());
 				// max price for sell order in the ladder
-				Price sellMaxPrice = max(new Price(ask.intValue() - ct), lastNBBOQuote.getBestBid());
+				Price sellMaxPrice = pcomp.max(new Price(ask.intValue() - ct), lastNBBOQuote.getBestBid());
 
 				// check if the bid or ask crosses the NBBO
 				// FIXME I believe this will create orders that would transact on

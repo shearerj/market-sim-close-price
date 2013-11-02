@@ -2,8 +2,6 @@ package entity.agent;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
-import static utils.Compare.max;
-import static utils.Compare.min;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -11,6 +9,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 
 import systemmanager.Keys;
 import utils.Pair;
@@ -37,6 +36,7 @@ import event.TimeStamp;
 public class AAAgent extends BackgroundAgent {
 	
 	private static final long serialVersionUID = 2418819222375372886L;
+	private static final Ordering<Price> pcomp = Ordering.natural();
 	
 	// Agent market variables
 	private boolean isBuyer; // randomly assigned at initialization
@@ -328,8 +328,8 @@ public class AAAgent extends BackgroundAgent {
 		// Pricing - verifying targetPrice
 		Price price;
 		if(!targetPrice.equals(new Price(-1)))
-			targetPrice = isBuyer ? min(limit, targetPrice) : 
-			max(limit, targetPrice);
+			targetPrice = isBuyer ? pcomp.min(limit, targetPrice) : 
+			pcomp.max(limit, targetPrice);
 
 		// See equations 10 and 11 in Vytelingum paper section 4.4 - bidding
 		// layer
@@ -338,24 +338,24 @@ public class AAAgent extends BackgroundAgent {
 		// difference/eta computes to be zero
 		if (targetPrice.equals(new Price(-1))) {
 			if (isBuyer) {
-				double offset = (min(bestAsk, limit).doubleValue() - bestBid.doubleValue()) / eta;
+				double offset = (pcomp.min(bestAsk, limit).doubleValue() - bestBid.doubleValue()) / eta;
 				price = new Price(bestBid.doubleValue() + offset + 1);
-				price = min(price, limit);
+				price = pcomp.min(price, limit);
 			} else {
-				double offset = (bestAsk.doubleValue() - max(bestBid, limit).doubleValue()) / eta;
+				double offset = (bestAsk.doubleValue() - pcomp.max(bestBid, limit).doubleValue()) / eta;
 				price = new Price(bestAsk.doubleValue() - offset - 1);
-				price = max(price, limit);				
+				price = pcomp.max(price, limit);				
 			}
 		}
 		else {
 			if (isBuyer) {
 				double offset = (targetPrice.doubleValue() - bestBid.doubleValue()) /eta;
 				price = new Price(bestBid.doubleValue() + offset - 1);
-				price = min(price, limit);
+				price = pcomp.min(price, limit);
 			} else {
 				double offset = (bestAsk.doubleValue() - targetPrice.doubleValue()) / eta;
 				price = new Price(bestAsk.doubleValue() - offset - 1);
-				price = max(price, limit);
+				price = pcomp.max(price, limit);
 			}
 		}
 

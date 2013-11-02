@@ -79,33 +79,7 @@ public class ZIRAgent extends BackgroundAgent {
 		// 0.50% chance of being either long or short
 		int quantity = rand.nextBoolean() ? 1 : -1;
 		acts.addAll(executeZIStrategy(quantity, currentTime));
-		
-//		int newPosition = quantity + positionBalance;
-//		// check that will not exceed max absolute position
-//		if (newPosition <= maxAbsPosition && newPosition >= -maxAbsPosition) {
-//			Price val = fundamental.getValueAt(currentTime).plus(
-//					privateValue.getValueFromQuantity(positionBalance, quantity)).nonnegative();
-//			Price price = new Price(
-//					(int) (val.getInTicks() - Math.signum(quantity)
-//							* rand.nextDouble() * 2 * bidRange)).nonnegative();
-//
-//			sb.append(" position=").append(positionBalance).append(", for q=");
-//			sb.append(quantity).append(", value=");
-//			sb.append(fundamental.getValueAt(currentTime)).append(" + ");
-//			sb.append(privateValue.getValueFromQuantity(positionBalance,
-//					quantity));
-//			sb.append('=').append(val);
-//			log(INFO, sb.toString());
-//
-//			acts.add(new SubmitNMSOrder(this, price, quantity,
-//					primaryMarket, TimeStamp.IMMEDIATE));
-//		} else {
-//			// if exceed max position, then don't submit a new bid
-//			// TODO - stay the same for now (position balance)
-//			sb.append("new order would exceed max position ");
-//			sb.append(maxAbsPosition).append("; no submission");
-//			log(INFO, sb.toString());
-//		}
+
 		return acts.build();
 	}
 

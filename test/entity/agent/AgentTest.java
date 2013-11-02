@@ -37,5 +37,16 @@ public class AgentTest {
 	
 	// TODO basic agent functionality tests
 	
+	
+	// TODO getSurplus
+	
+	// TODO add/remove orders
+	
+	// TODO liquidate
+	
+	
+	// TODO withdraw order
+	
+	// TODO add transaction
 
 }

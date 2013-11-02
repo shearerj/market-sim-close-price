@@ -4,8 +4,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Random;
 
-import com.google.common.collect.ImmutableSet;
-
 import data.FundamentalValue;
 import activity.Activity;
 import activity.MockActivity;
@@ -27,11 +25,6 @@ public class MockBackgroundAgent extends BackgroundAgent {
 			PrivateValue pv, int bidRangeMin, int bidRangeMax) {
 		super(new TimeStamp(0), fundamental, sip, market, new Random(), 0,
 				pv,	1, bidRangeMin, bidRangeMax);
-	}
-
-	@Override
-	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
-		return ImmutableSet.of();
 	}
 
 	public Iterable<? extends Activity> addMockActivity(TimeStamp currentTime) {
