@@ -4,10 +4,9 @@ import java.util.Random;
 
 import com.google.common.collect.ImmutableList;
 
+import systemmanager.Consts.OrderType;
 import systemmanager.Keys;
-
 import data.EntityProperties;
-
 import activity.Activity;
 import activity.Clear;
 import entity.agent.Agent;
@@ -34,10 +33,10 @@ public class CDAMarket extends Market {
 	}
 
 	@Override
-	public Iterable<? extends Activity> submitOrder(Agent agent, Price price,
+	public Iterable<? extends Activity> submitOrder(Agent agent, OrderType type, Price price,
 			int quantity, TimeStamp currentTime, TimeStamp duration) {
 		return ImmutableList.<Activity> builder().addAll(
-				super.submitOrder(agent, price, quantity, currentTime, duration)).add(
+				super.submitOrder(agent, type, price, quantity, currentTime, duration)).add(
 				new Clear(this, TimeStamp.IMMEDIATE)).build();
 	}
 

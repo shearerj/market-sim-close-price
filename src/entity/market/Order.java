@@ -2,6 +2,8 @@ package entity.market;
 
 import java.io.Serializable;
 
+import systemmanager.Consts.OrderType;
+
 import com.google.common.base.Objects;
 
 import entity.agent.Agent;
@@ -20,9 +22,9 @@ public class Order implements Serializable {
 	
 	protected final Agent agent;
 	protected Market market;
-	protected final fourheap.Order<Price, MarketTime> order;
+	protected final fourheap.Order<OrderType, Price, MarketTime> order;
 	
-	public Order(Agent agent, Market market, fourheap.Order<Price, MarketTime> order) {
+	public Order(Agent agent, Market market, fourheap.Order<OrderType, Price, MarketTime> order) {
 		this.agent = agent;
 		this.market = market;
 		this.order = order;
@@ -38,6 +40,10 @@ public class Order implements Serializable {
 	
 	public TimeStamp getSubmitTime() {
 		return order.getSubmitTime().getTime();
+	}
+	
+	public OrderType getOrderType() {
+		return order.getOrderType();
 	}
 	
 	public Price getPrice() {

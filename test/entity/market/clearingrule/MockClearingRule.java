@@ -2,6 +2,8 @@ package entity.market.clearingrule;
 
 import java.util.Map;
 
+import systemmanager.Consts.OrderType;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.ImmutableMap.Builder;
@@ -21,12 +23,12 @@ public class MockClearingRule implements ClearingRule {
 	}
 	
 	@Override
-	public Map<MatchedOrders<Price, MarketTime>, Price> pricing(
-			Iterable<MatchedOrders<Price, MarketTime>> transactions) {
+	public Map<MatchedOrders<OrderType, Price, MarketTime>, Price> pricing(
+			Iterable<MatchedOrders<OrderType, Price, MarketTime>> transactions) {
 		if (Iterables.isEmpty(transactions)) return ImmutableMap.of();
 		
-		Builder<MatchedOrders<Price, MarketTime>, Price> prices = ImmutableMap.builder();
-		for (MatchedOrders<Price, MarketTime> trans : transactions)
+		Builder<MatchedOrders<OrderType, Price, MarketTime>, Price> prices = ImmutableMap.builder();
+		for (MatchedOrders<OrderType, Price, MarketTime> trans : transactions)
 			prices.put(trans, clearPrice);
 		return prices.build();
 	}

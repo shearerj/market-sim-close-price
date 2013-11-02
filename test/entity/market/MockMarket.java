@@ -3,6 +3,7 @@ package entity.market;
 import java.util.Collection;
 import java.util.Random;
 
+import systemmanager.Consts.OrderType;
 import activity.Activity;
 
 import com.google.common.collect.ImmutableList;
@@ -30,10 +31,10 @@ public class MockMarket extends Market {
 	}
 	
 	@Override
-	public Collection<? extends Activity> submitOrder(Agent agent, Price price,
-			int quantity, TimeStamp currentTime) {
+	public Collection<? extends Activity> submitOrder(Agent agent, OrderType type,
+			Price price, int quantity, TimeStamp currentTime) {
 		return ImmutableList.<Activity> builder().addAll(
-				super.submitOrder(agent, price, quantity, currentTime)).addAll(
+				super.submitOrder(agent, type, price, quantity, currentTime)).addAll(
 				updateQuote(ImmutableList.<Transaction> of(), currentTime)).build();
 	}
 
