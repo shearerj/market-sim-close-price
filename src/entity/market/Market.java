@@ -101,7 +101,7 @@ public abstract class Market extends Entity {
 	 */
 	public Market(SIP sip, TimeStamp latency, ClearingRule clearingRule, Random rand) {
 		super(nextID++);
-		this.orderbook = FourHeap.create();
+		this.orderbook = FourHeap.create(OrderType.class);
 		this.clearingRule = clearingRule;
 		this.rand = rand;
 		this.marketTime = 0;

@@ -58,13 +58,14 @@ public class CDAMarketTest {
 		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
 
 		// Creating and adding the bid
-		market.submitOrder(agent, null, new Price(1), 1, time);
+		market.submitOrder(agent, OrderType.BUY, new Price(1), 1, time);
 
 		Collection<Order> orders = market.orderMapping.values();
 		assertFalse(orders.isEmpty());
 		Order order = Iterables.getFirst(orders, null);
 		assertEquals(new Price(1), order.getPrice());
 		assertEquals(1, order.getQuantity());
+		assertEquals(OrderType.BUY, order.getOrderType());
 		assertEquals(time, order.getSubmitTime());
 		assertEquals(agent, order.getAgent());
 		assertEquals(market, order.getMarket());
@@ -86,13 +87,14 @@ public class CDAMarketTest {
 		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
 		
 		// Creating and adding the bid
-		market.submitOrder(agent, null, new Price(1), -1, time);
+		market.submitOrder(agent, OrderType.SELL, new Price(1), 1, time);
 
 		Collection<Order> orders = market.orderMapping.values();
 		assertFalse(orders.isEmpty());
 		Order order = Iterables.getFirst(orders, null);
 		assertEquals(new Price(1), order.getPrice());
-		assertEquals(-1, order.getQuantity());
+		assertEquals(1, order.getQuantity());
+		assertEquals(OrderType.SELL, order.getOrderType());
 		assertEquals(time, order.getSubmitTime());
 		assertEquals(agent, order.getAgent());
 		assertEquals(market, order.getMarket());
@@ -129,8 +131,8 @@ public class CDAMarketTest {
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
 		// Creating and adding bids
-		market.submitOrder(agent1, null, new Price(100), 1, time);
-		market.submitOrder(agent2, null, new Price(100), -1, time);
+		market.submitOrder(agent1, OrderType.BUY, new Price(100), 1, time);
+		market.submitOrder(agent2, OrderType.SELL, new Price(100), 1, time);
 
 		// Testing the market for the correct transaction
 		market.clear(time);
@@ -156,8 +158,8 @@ public class CDAMarketTest {
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		// Creating and adding bids
-		market.submitOrder(agent1, null, new Price(200), 1, time);
-		market.submitOrder(agent2, null, new Price(50), -1, time2);
+		market.submitOrder(agent1, OrderType.BUY, new Price(200), 1, time);
+		market.submitOrder(agent2, OrderType.SELL, new Price(50), 1, time2);
 
 		// Testing the market for the correct transaction
 		market.clear(time2);
@@ -185,14 +187,14 @@ public class CDAMarketTest {
 		
 		// Creating and adding bids
 		// Also check that submitOrder returns a single immediate Clear activity
-		Iterable<? extends Activity> acts = market.submitOrder(agent1, null, new Price(150), 1, time);
+		Iterable<? extends Activity> acts = market.submitOrder(agent1, OrderType.BUY, new Price(150), 1, time);
 		for (Activity act : acts) {
 			assertTrue(act instanceof Clear);
 			assertTrue(act.getTime().equals(TimeStamp.IMMEDIATE));
 		}
-		market.submitOrder(agent2, null, new Price(100), 1, time);
-		market.submitOrder(agent3, null, new Price(175), -1, time);
-		market.submitOrder(agent4, null, new Price(125), -1, time);
+		market.submitOrder(agent2, OrderType.BUY, new Price(100), 1, time);
+		market.submitOrder(agent3, OrderType.SELL, new Price(175), 1, time);
+		market.submitOrder(agent4, OrderType.SELL, new Price(125), 1, time);
 		market.clear(time);
 
 		// Testing the market for the correct transactions
@@ -204,8 +206,8 @@ public class CDAMarketTest {
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		
 		// Creating and adding bids (existing orders at buy@100, sell@175)
-		market.submitOrder(agent1, null, new Price(150), 1, time.plus(new TimeStamp(1)));
-		market.submitOrder(agent4, null, new Price(75), -1, time.plus(new TimeStamp(2)));
+		market.submitOrder(agent1, OrderType.BUY, new Price(150), 1, time.plus(new TimeStamp(1)));
+		market.submitOrder(agent4, OrderType.SELL, new Price(75), 1, time.plus(new TimeStamp(2)));
 		market.clear(time.plus(new TimeStamp(2)));
 		
 		// Testing the market for the correct transactions
@@ -280,8 +282,8 @@ public class CDAMarketTest {
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 		
-		market.submitOrder(agent1, null, new Price(100), -2, time);
-		market.submitOrder(agent2, null, new Price(150), 5, time1);
+		market.submitOrder(agent1, OrderType.SELL, new Price(100), 2, time);
+		market.submitOrder(agent2, OrderType.BUY, new Price(150), 5, time1);
 		market.clear(time1);
 		
 		// Check that two units transact
@@ -309,12 +311,12 @@ public class CDAMarketTest {
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
-		market.submitOrder(agent1, null, new Price(150), -1, time0);
-		market.submitOrder(agent1, null, new Price(140), -1, time0);
+		market.submitOrder(agent1, OrderType.SELL, new Price(150), 1, time0);
+		market.submitOrder(agent1, OrderType.SELL, new Price(140), 1, time0);
 		market.clear(time0);
 
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
-		market.submitOrder(agent2, null, new Price(155), 2, time1);
+		market.submitOrder(agent2, OrderType.BUY, new Price(155), 2, time1);
 		market.clear(time1);
 		assertEquals( 2, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
@@ -337,7 +339,7 @@ public class CDAMarketTest {
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
-		market.submitOrder(agent1, null, new Price(100), -1, time0);
+		market.submitOrder(agent1, OrderType.SELL, new Price(100), 1, time0);
 		market.clear(time0);
 		
 		// Check that quotes are correct (no bid, ask @100)
@@ -366,7 +368,7 @@ public class CDAMarketTest {
 		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
 		
 		// Check that no transaction, because agent1 withdrew its order
-		market.submitOrder(agent2, null, new Price(125), 1, time1);
+		market.submitOrder(agent2, OrderType.BUY, new Price(125), 1, time1);
 		market.clear(time1);
 		assertEquals( 0, market.getTransactions().size() );
 
@@ -389,8 +391,8 @@ public class CDAMarketTest {
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 		
-		market.submitOrder(agent2, null, new Price(105), 1, time1);
-		market.submitOrder(agent2, null, new Price(110), 1, time1);
+		market.submitOrder(agent2, OrderType.BUY, new Price(105), 1, time1);
+		market.submitOrder(agent2, OrderType.BUY, new Price(110), 1, time1);
 		market.clear(time1);
 		
 		// Check that quotes are correct (bid @110, no ask)
@@ -415,7 +417,7 @@ public class CDAMarketTest {
 		assertEquals("Incorrect BID quantity",  1,  q.bidQuantity );
 		
 		// Check that it transacts at 110, price of order that was not withdrawn
-		market.submitOrder(agent1, null, new Price(100), -1, time2);
+		market.submitOrder(agent1, OrderType.SELL, new Price(100), 1, time2);
 		market.clear(time2);
 		assertEquals( 1, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
@@ -505,9 +507,9 @@ public class CDAMarketTest {
 		MockBackgroundAgent agent3 = new MockBackgroundAgent(fundamental, sip, market);
 		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market);
 		
-		market.submitOrder(agent1, null, new Price(100), -1, time0);
-		market.submitOrder(agent2, null, new Price(100), -1, time1);
-		market.submitOrder(agent3, null, new Price(150), 1, time1);
+		market.submitOrder(agent1, OrderType.SELL, new Price(100), 1, time0);
+		market.submitOrder(agent2, OrderType.SELL, new Price(100), 1, time1);
+		market.submitOrder(agent3, OrderType.BUY, new Price(150), 1, time1);
 		market.clear(time1);
 		
 		// Check that earlier agent (agent1) is trading with agent3
@@ -519,11 +521,11 @@ public class CDAMarketTest {
 		assertEquals("Incorrect Price", new Price(100), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 
-		market.submitOrder(agent1, null, new Price(100), -1, time1);
-		market.submitOrder(agent3, null, new Price(100), -1, time2);
-		market.submitOrder(agent4, null, new Price(100), -1, time2);
+		market.submitOrder(agent1, OrderType.SELL, new Price(100), 1, time1);
+		market.submitOrder(agent3, OrderType.SELL, new Price(100), 1, time2);
+		market.submitOrder(agent4, OrderType.SELL, new Price(100), 1, time2);
 		market.clear(time2); // would be inserted onto Q, but hard-coded here
-		market.submitOrder(agent0, null, new Price(125), 1, time2);
+		market.submitOrder(agent0, OrderType.BUY, new Price(125), 1, time2);
 		market.clear(time2);
 		
 		// Check that the first submitted -1@100 transacts (from agent2)
@@ -538,18 +540,18 @@ public class CDAMarketTest {
 		// agent 1's order -1@100 at time1 remains
 		// agent 3's order -1@100 at time2 remains
 		// agent 4's order -1@100 at time2 remains
-		market.submitOrder(agent0, null, new Price(95), -1, time2);
-		market.submitOrder(agent0, null, new Price(100), -1, time2);
-		market.submitOrder(agent0, null, new Price(110), -1, time2);
-		market.submitOrder(agent0, null, new Price(115), -1, time2);
-		market.submitOrder(agent0, null, new Price(90), 1, time2);
-		market.submitOrder(agent0, null, new Price(85), 1, time2);
-		market.submitOrder(agent0, null, new Price(80), 1, time2);
+		market.submitOrder(agent0, OrderType.SELL, new Price(95), 1, time2);
+		market.submitOrder(agent0, OrderType.SELL, new Price(100), 1, time2);
+		market.submitOrder(agent0, OrderType.SELL, new Price(110), 1, time2);
+		market.submitOrder(agent0, OrderType.SELL, new Price(115), 1, time2);
+		market.submitOrder(agent0, OrderType.BUY, new Price(90), 1, time2);
+		market.submitOrder(agent0, OrderType.BUY, new Price(85), 1, time2);
+		market.submitOrder(agent0, OrderType.BUY, new Price(80), 1, time2);
 		market.clear(time2);
 		assertEquals(2, market.getTransactions().size()); // no change
 
 		// Check basic overlap - between agent0 and agent2
-		market.submitOrder(agent2, null, new Price(125), 1, time2);
+		market.submitOrder(agent2, OrderType.BUY, new Price(125), 1, time2);
 		market.clear(time2);
 		assertEquals(3, market.getTransactions().size());
 		tr = market.getTransactions().get(2);
@@ -560,7 +562,7 @@ public class CDAMarketTest {
 		
 		// Check that earliest time (agent1) at price 100 trades
 		// Check that the transaction was between agent1 (earliest @100) and agent2
-		market.submitOrder(agent2, null, new Price(105), 1, time2);
+		market.submitOrder(agent2, OrderType.BUY, new Price(105), 1, time2);
 		market.clear(time2);
 		assertEquals(4, market.getTransactions().size());
 		tr = market.getTransactions().get(3);
@@ -571,7 +573,7 @@ public class CDAMarketTest {
 		
 		// Check that next earliest (agent3) although same price & time trades (vs. agent4 or 0)
 		// Check that the transaction was between agent3 (first submitted) and agent2
-		market.submitOrder(agent2, null, new Price(105), 1, time2);
+		market.submitOrder(agent2, OrderType.BUY, new Price(105), 1, time2);
 		market.clear(time2);
 		assertEquals(5, market.getTransactions().size());
 		tr = market.getTransactions().get(4);
@@ -581,7 +583,7 @@ public class CDAMarketTest {
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		
 		// Check that next earliest (agent4) although same price & time trades (vs. agent0)
-		market.submitOrder(agent2, null, new Price(105), 1, time2);
+		market.submitOrder(agent2, OrderType.BUY, new Price(105), 1, time2);
 		market.clear(time2);
 		assertEquals(6, market.getTransactions().size());
 		tr = market.getTransactions().get(5);
@@ -591,7 +593,7 @@ public class CDAMarketTest {
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		
 		// Check that final order (agent0) at -1@100 trades with agent2
-		market.submitOrder(agent2, null, new Price(105), 1, time2);
+		market.submitOrder(agent2, OrderType.BUY, new Price(105), 1, time2);
 		market.clear(time2);
 		assertEquals(7, market.getTransactions().size());
 		tr = market.getTransactions().get(6);
@@ -608,7 +610,8 @@ public class CDAMarketTest {
 
 		// Forces execution of execution but none of the resulting activities
 		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
-		Iterable<? extends Activity> acts = market.submitOrder(agent, null, new Price(100), -1, TimeStamp.ZERO);
+		Iterable<? extends Activity> acts = market.submitOrder(agent, OrderType.SELL, 
+				new Price(100), 1, TimeStamp.ZERO);
 		for (Activity a : acts)
 			em.addActivity(a);
 		

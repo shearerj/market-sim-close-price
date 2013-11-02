@@ -102,7 +102,7 @@ public class LAAgent extends HFTAgent {
 	// the same as the above strategy, sometimes making more profit, sometimes less, and I'm unsure
 	// why.
 	public Iterable<? extends Activity> agentStrategy2(TimeStamp ts) {
-		FourHeap<OrderType, Price, Integer> fh = FourHeap.<OrderType, Price, Integer> create();
+		FourHeap<OrderType, Price, Integer> fh = FourHeap.<OrderType, Price, Integer> create(OrderType.class);
 		Map<Order<OrderType, Price, Integer>, Market> orderMap = Maps.newHashMap();
 		
 		for (Entry<Market, HFTIP> ipEntry : ips.entrySet()) {

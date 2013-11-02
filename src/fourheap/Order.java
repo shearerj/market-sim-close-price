@@ -17,7 +17,7 @@ import java.io.Serializable;
  * @param <T>
  *            Time
  */
-public class Order<BS, P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
+public class Order<BS extends Enum<BS>, P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
 
 	private static final long serialVersionUID = -3460176014871040729L;
 	
@@ -37,9 +37,8 @@ public class Order<BS, P extends Comparable<? super P>, T extends Comparable<? s
 	
 	/**
 	 * Factory constructor
-	 * @param type TODO
 	 */
-	public static <BS, P extends Comparable<? super P>, T extends Comparable<? super T>> Order<BS, P, T> create(
+	public static <BS extends Enum<BS>, P extends Comparable<? super P>, T extends Comparable<? super T>> Order<BS, P, T> create(
 			BS type, P price, int initialQuantity, T submitTime) {
 		return new Order<BS, P, T>(type, price, initialQuantity, submitTime);
 	}

@@ -2,7 +2,7 @@ package fourheap;
 
 import java.io.Serializable;
 
-public class MatchedOrders<BS, P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
+public class MatchedOrders<BS extends Enum<BS>, P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
 
 	private static final long serialVersionUID = -6073835626927361670L;
 	
@@ -16,7 +16,7 @@ public class MatchedOrders<BS, P extends Comparable<? super P>, T extends Compar
 		this.quantity = quantity;
 	}
 
-	public static <BS, P extends Comparable<? super P>, T extends Comparable<? super T>> MatchedOrders<BS, P, T> create(
+	public static <BS extends Enum<BS>, P extends Comparable<? super P>, T extends Comparable<? super T>> MatchedOrders<BS, P, T> create(
 			Order<BS, P, T> buy, Order<BS, P, T> sell, int quantity) {
 		return new MatchedOrders<BS, P, T>(buy, sell, quantity);
 	}

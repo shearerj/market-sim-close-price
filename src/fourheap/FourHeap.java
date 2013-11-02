@@ -39,18 +39,18 @@ import com.google.common.collect.Ordering;
  * to be a way to generalize it.
  * 
  */
-public class FourHeap<BS, P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
+public class FourHeap<BS extends Enum<BS>, P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
 
 	private static final long serialVersionUID = -7322375558427133915L;
 	protected final Ordering<P> pord = Ordering.natural();
 	
-	protected enum OrderType { BUY, SELL };
-	
+	private Class<BS> orderTypeClass;
+//	
 	protected final PriorityQueue<Order<BS, P, T>> sellUnmatched, sellMatched,
 			buyUnmatched, buyMatched;
 	protected int size;
 
-	protected FourHeap() {
+	protected FourHeap(Class<BS> orderTypeClass) {
 		Ordering<Order<BS, P, T>> priceComp = new PriceOrdering(), timeComp = new TimeOrdering();
 		
 		this.sellUnmatched = new PriorityQueue<Order<BS, P, T>>(1, priceComp.compound(timeComp));
@@ -58,13 +58,15 @@ public class FourHeap<BS, P extends Comparable<? super P>, T extends Comparable<
 		this.buyUnmatched  = new PriorityQueue<Order<BS, P, T>>(1, priceComp.reverse().compound(timeComp));
 		this.buyMatched    = new PriorityQueue<Order<BS, P, T>>(1, priceComp.compound(timeComp));
 		this.size = 0;
+		this.orderTypeClass = orderTypeClass;
 	}
 	
 	/**
 	 * Factory Method
 	 */
-	public static <BS, P extends Comparable<? super P>, T extends Comparable<? super T>> FourHeap<BS, P, T> create() {
-		return new FourHeap<BS, P, T>();
+	public static <BS extends Enum<BS>, P extends Comparable<? super P>, T extends Comparable<? super T>> FourHeap<BS, P, T> create(
+			Class<BS> orderTypeClass) {
+		return new FourHeap<BS, P, T>(orderTypeClass);
 	}
 
 	/**
@@ -78,10 +80,10 @@ public class FourHeap<BS, P extends Comparable<? super P>, T extends Comparable<
 	public void insertOrder(Order<BS, P, T> order) {
 		checkArgument(order.unmatchedQuantity > 0, "Orders must have positive quantity");
 
-		size += order.unmatchedQuantity;
-		int t = order.type.equals(OrderType.BUY) ? 1 : -1; // Sell or Buy
+		size += order.unmatchedQuantity;;
+		int t = order.type.equals(Enum.valueOf(orderTypeClass, "BUY")) ? 1 : -1; // Sell or Buy
 		PriorityQueue<Order<BS, P, T>> matchUnmatchedHeap, matchMatchedHeap, orderUnmatchedHeap, orderMatchedHeap;
-		if (order.type.equals(OrderType.BUY)) { // buy order
+		if (order.type.equals(Enum.valueOf(orderTypeClass, "BUY"))) { // buy order
 			orderUnmatchedHeap = buyUnmatched;
 			orderMatchedHeap = buyMatched;
 			matchUnmatchedHeap = sellUnmatched;
@@ -160,13 +162,13 @@ public class FourHeap<BS, P extends Comparable<? super P>, T extends Comparable<
 	 */
 	public void withdrawOrder(Order<BS, P, T> order, int quantity) {
 		checkArgument(quantity > 0, "Quantity must be positive");
-		int t = order.type.equals(OrderType.BUY) ? 1 : -1; // Sell or Buy
+		int t = order.type.equals(Enum.valueOf(orderTypeClass, "BUY")) ? 1 : -1; // Sell or Buy
 		checkArgument(quantity <= order.getQuantity() && quantity > 0,
 				"Can't withdraw more than in order");
 
 		size -= quantity;
 		PriorityQueue<Order<BS, P, T>> matchUnmatchedHeap, matchMatchedHeap, orderUnmatchedHeap, orderMatchedHeap;
-		if (order.type.equals(OrderType.BUY)) { // buy order
+		if (order.type.equals(Enum.valueOf(orderTypeClass, "BUY"))) { // buy order
 			orderUnmatchedHeap = buyUnmatched;
 			orderMatchedHeap = buyMatched;
 			matchUnmatchedHeap = sellUnmatched;
@@ -266,9 +268,9 @@ public class FourHeap<BS, P extends Comparable<? super P>, T extends Comparable<
 	 */
 	public boolean contains(Order<BS, P, T> order) {
 		if (order.matchedQuantity > 0) return buyMatched.contains(order);
-		else if (order.matchedQuantity < 0) return sellMatched.contains(order);
+		else if (order.matchedQuantity > 0) return sellMatched.contains(order);
 		else if (order.unmatchedQuantity > 0) return buyUnmatched.contains(order);
-		else if (order.unmatchedQuantity < 0) return sellUnmatched.contains(order);
+		else if (order.unmatchedQuantity > 0) return sellUnmatched.contains(order);
 		else return false;
 	}
 
@@ -366,5 +368,4 @@ public class FourHeap<BS, P extends Comparable<? super P>, T extends Comparable<
 			return first.submitTime.compareTo(second.submitTime);
 		}
 	}
-
 }
