@@ -10,11 +10,17 @@ import entity.market.Price;
 public class DummyPrivateValue extends PrivateValue {
 	
 	/**
-	 * Mock Private Value to make testing of ZIstrategy easier
+	 * DummyPrivateValue 
+	 * 
+	 * Helper class for ZIAgentTest
 	 * 
 	 * Initialized to all zero, so private value will equal fundamental
 	 * -OR-
-	 * Initialized with a list of values (Will check if maxPosition is correct)
+	 * Initialized with a list of predefined  values (Will check if maxPosition is correct)
+	 * 
+	 * Prints contents into log file. 
+	 * 
+	 * @author yngchen
 	 * 
 	 */
 	
@@ -28,7 +34,7 @@ public class DummyPrivateValue extends PrivateValue {
 	
 	public DummyPrivateValue(int maxPosition, List<Price> prices){
 		super(maxPosition, prices);
-		Logger.log(Logger.Level.DEBUG, "MockPrivateValue elements: " + Arrays.toString(prices.toArray()));
+		Logger.log(Logger.Level.DEBUG, "DummyPrivateValue elements: " + Arrays.toString(prices.toArray()));
 		
 	}
 	
