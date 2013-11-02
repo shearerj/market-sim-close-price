@@ -67,18 +67,19 @@ public abstract class BackgroundAgent extends SMAgent {
 	
 	/**
 	 * Submits a NMS-routed Zero-Intelligence limit order.
-	 * 
+	 * @param type
 	 * @param quantity
 	 * @param currentTime
+	 * 
 	 * @return
 	 */
-	public Iterable<? extends Activity> executeZIStrategy(int quantity, TimeStamp currentTime) {
+	public Iterable<? extends Activity> executeZIStrategy(OrderType type, int quantity, TimeStamp currentTime) {
 		
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append(':');
 		sb.append(" executing ZI strategy");
 		
-		int newPosition = quantity + positionBalance;
+		int newPosition = (type.equals(OrderType.BUY) ? 1 : -1) * quantity + positionBalance;
 		if (newPosition <= privateValue.getMaxAbsPosition() &&
 				newPosition >= -privateValue.getMaxAbsPosition()) {
 			
@@ -94,8 +95,8 @@ public abstract class BackgroundAgent extends SMAgent {
 			sb.append('=').append(val);
 			log(INFO, sb.toString());
 			
-			return ImmutableList.of(new SubmitNMSOrder(this, price, quantity,
-					primaryMarket, TimeStamp.IMMEDIATE));
+			return ImmutableList.of(new SubmitNMSOrder(this, type, price,
+					quantity, primaryMarket, TimeStamp.IMMEDIATE));
 		} else {
 			// if exceed max position, then don't submit a new bid
 			sb.append("new order would exceed max position ");

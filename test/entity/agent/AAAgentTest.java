@@ -88,8 +88,8 @@ public class AAAgentTest {
 		// creating a dummy agent
 		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
 		// Having the agent submit a bid to the market
-		Iterable<? extends Activity> bidActs = market.submitOrder(agent, new Price(price),
-				quantity, currentTime);
+		Iterable<? extends Activity> bidActs = market.submitOrder(agent, null,
+				new Price(price), quantity, currentTime);
 
 		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
 		// the transaction would work

@@ -5,6 +5,7 @@ import java.util.Random;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
+import systemmanager.Consts.OrderType;
 import systemmanager.Keys;
 import activity.Activity;
 import data.EntityProperties;
@@ -77,8 +78,8 @@ public class ZIRAgent extends BackgroundAgent {
 //		}
 
 		// 0.50% chance of being either long or short
-		int quantity = rand.nextBoolean() ? 1 : -1;
-		acts.addAll(executeZIStrategy(quantity, currentTime));
+		OrderType type = rand.nextBoolean() ? OrderType.BUY : OrderType.SELL;
+		acts.addAll(executeZIStrategy(type, 1, currentTime));
 
 		return acts.build();
 	}

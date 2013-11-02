@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import systemmanager.Consts.OrderType;
 import systemmanager.Keys;
 import activity.Activity;
 import activity.SubmitOrder;
@@ -92,8 +93,8 @@ public class LAAgent extends HFTAgent {
 				+ " " + ips.get(bestAskMarket).getQuote());
 		Price midPoint = new Price((bestBid.doubleValue() + bestAsk.doubleValue()) * .5).quantize(tickSize);
 		return ImmutableList.of(
-				new SubmitOrder(this, bestBidMarket, midPoint, -1, TimeStamp.IMMEDIATE),
-				new SubmitOrder(this, bestAskMarket, midPoint, 1, TimeStamp.IMMEDIATE));
+				new SubmitOrder(this, bestBidMarket, OrderType.SELL, midPoint, 1, TimeStamp.IMMEDIATE),
+				new SubmitOrder(this, bestAskMarket, OrderType.BUY, midPoint, 1, TimeStamp.IMMEDIATE));
 	}
 
 	// This should be a natural extension of the arbitrage strategy extended to multi quantities,
@@ -101,34 +102,34 @@ public class LAAgent extends HFTAgent {
 	// the same as the above strategy, sometimes making more profit, sometimes less, and I'm unsure
 	// why.
 	public Iterable<? extends Activity> agentStrategy2(TimeStamp ts) {
-		FourHeap<Price, Integer> fh = FourHeap.<Price, Integer> create();
-		Map<Order<Price, Integer>, Market> orderMap = Maps.newHashMap();
+		FourHeap<OrderType, Price, Integer> fh = FourHeap.<OrderType, Price, Integer> create(OrderType.class);
+		Map<Order<OrderType, Price, Integer>, Market> orderMap = Maps.newHashMap();
 		
 		for (Entry<Market, HFTIP> ipEntry : ips.entrySet()) {
 			Quote q = ipEntry.getValue().getQuote();
 			if (q.getBidPrice() != null && q.getBidQuantity() > 0) {
-				Order<Price, Integer> order = Order.create(q.getBidPrice(), q.getBidQuantity(), 0);
+				Order<OrderType, Price, Integer> order = Order.create(OrderType.BUY, q.getBidPrice(), q.getBidQuantity(), 0);
 				orderMap.put(order, ipEntry.getKey());
 				fh.insertOrder(order);
 			}
 			if (q.getAskPrice() != null && q.getAskQuantity() > 0) {
-				Order<Price, Integer> order = Order.create(q.getAskPrice(), -q.getAskQuantity(), 0);
+				Order<OrderType, Price, Integer> order = Order.create(OrderType.SELL, q.getAskPrice(), q.getAskQuantity(), 0);
 				orderMap.put(order, ipEntry.getKey());
 				fh.insertOrder(order);
 			}
 		}
 		
-		List<MatchedOrders<Price, Integer>> transactions = fh.clear();
+		List<MatchedOrders<OrderType, Price, Integer>> transactions = fh.clear();
 		Builder<Activity> acts = ImmutableList.builder();
-		for (MatchedOrders<Price, Integer> trans : transactions) {
-			Order<Price, Integer> buy = trans.getBuy(), sell = trans.getSell();
+		for (MatchedOrders<OrderType, Price, Integer> trans : transactions) {
+			Order<OrderType, Price, Integer> buy = trans.getBuy(), sell = trans.getSell();
 			if (sell.getPrice().doubleValue() * (1 + alpha) > buy.getPrice().doubleValue())
 				continue;
 			double midPoint = .5 * (buy.getPrice().doubleValue() + sell.getPrice().doubleValue()); 
 			Price midPrice = new Price(midPoint).quantize(tickSize);
 			
-			acts.add(new SubmitOrder(this, orderMap.get(sell), midPrice, trans.getQuantity(), TimeStamp.IMMEDIATE));
-			acts.add(new SubmitOrder(this, orderMap.get(buy), midPrice, -trans.getQuantity(), TimeStamp.IMMEDIATE));
+			acts.add(new SubmitOrder(this, orderMap.get(sell), OrderType.BUY, midPrice, trans.getQuantity(), TimeStamp.IMMEDIATE));
+			acts.add(new SubmitOrder(this, orderMap.get(buy), OrderType.SELL, midPrice, trans.getQuantity(), TimeStamp.IMMEDIATE));
 		}
 		return acts.build();
 	}

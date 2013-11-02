@@ -9,6 +9,7 @@ import java.util.Random;
 
 import com.google.common.collect.Ordering;
 
+import systemmanager.Consts.OrderType;
 import systemmanager.Keys;
 import utils.MathUtils;
 import activity.Activity;
@@ -129,12 +130,12 @@ public class BasicMarketMaker extends MarketMaker {
 				// build descending list of buy orders (yt, ..., yt - ct) or
 				// stops at NBBO ask
 				for (int price = bid.intValue(); price >= buyMinPrice.intValue(); price -= stepSize)
-					acts.add(new SubmitOrder(this, primaryMarket, new Price(price), 1, TimeStamp.IMMEDIATE));
+					acts.add(new SubmitOrder(this, primaryMarket, OrderType.BUY, new Price(price), 1, TimeStamp.IMMEDIATE));
 
 				// build ascending list of sell orders (xt, ..., xt + ct) or
 				// stops at NBBO bid
 				for (int price = ask.intValue(); price <= sellMaxPrice.intValue(); price += stepSize)
-					acts.add(new SubmitOrder(this, primaryMarket, new Price(price), -1, TimeStamp.IMMEDIATE));
+					acts.add(new SubmitOrder(this, primaryMarket, OrderType.SELL, new Price(price), -1, TimeStamp.IMMEDIATE));
 
 				log(INFO, primaryMarket + " " + this + " " + getName()
 						+ "::agentStrategy: ladder numRungs=" + numRungs
