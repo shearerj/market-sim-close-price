@@ -127,7 +127,7 @@ public class PrivateValueTest {
 		assertEquals(pv.prices.get(4), pv.getValueFromQuantity(1, 2, OrderType.SELL));
 		
 		// Checking buying and selling from current position = -1
-		assertEquals(pv.prices.get(8), pv.getValueFromQuantity(-1, 4, OrderType.BUY));
+		assertEquals(pv.prices.get(7), pv.getValueFromQuantity(-1, 4, OrderType.BUY));
 		assertEquals(pv.prices.get(1), pv.getValueFromQuantity(-1, 3, OrderType.SELL));
 		
 		// Checking buying and selling from current position = 5
@@ -145,6 +145,7 @@ public class PrivateValueTest {
 			buySellSingle();
 			buySellMulti();
 			getValueFromQuantity();
+			getValueFromMultiQuantity();
 		}
 	}
 }
