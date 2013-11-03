@@ -8,7 +8,7 @@ import java.util.Random;
 
 import org.junit.Test;
 
-import systemmanager.Consts.OrderType;
+import fourheap.Order.OrderType;
 
 public class FourHeapTest {
 	
@@ -16,10 +16,10 @@ public class FourHeapTest {
 	
 	@Test
 	public void heapOrderTest() {
-		FourHeap<OrderType, Integer, Integer> fh;
-		Order<OrderType, Integer, Integer> b1, b2, b3, s1, s2, s3;
+		FourHeap<Integer, Integer> fh;
+		Order<Integer, Integer> b1, b2, b3, s1, s2, s3;
 		
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		
 		b1 = Order.create(OrderType.BUY, 5, 3, 5);
 		b2 = Order.create(OrderType.BUY, 10, 3, 5);
@@ -56,9 +56,9 @@ public class FourHeapTest {
 	
 	@Test
 	public void insertOneBuyTest() {
-		FourHeap<OrderType, Integer, Integer> fh;
+		FourHeap<Integer, Integer> fh;
 		
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		insertOrder(fh, OrderType.BUY, 5, 3, 0);
 		
 		assertTrue(fh.buyMatched.isEmpty());
@@ -73,9 +73,9 @@ public class FourHeapTest {
 	
 	@Test
 	public void insertOneSellTest() {
-		FourHeap<OrderType, Integer, Integer> fh;
+		FourHeap<Integer, Integer> fh;
 		
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		insertOrder(fh, OrderType.SELL, 5, 3, 0);
 		
 		assertTrue(fh.buyMatched.isEmpty());
@@ -90,9 +90,9 @@ public class FourHeapTest {
 	
 	@Test
 	public void matchTest() {
-		FourHeap<OrderType, Integer, Integer> fh;
+		FourHeap<Integer, Integer> fh;
 		
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		insertOrder(fh, OrderType.SELL, 5, 3, 0);
 		insertOrder(fh, OrderType.BUY, 7, 3, 1);
 		
@@ -105,7 +105,7 @@ public class FourHeapTest {
 		assertEquals(6, fh.size());
 		assertInvariants(fh);
 		
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		insertOrder(fh, OrderType.SELL, 5, 5, 0);
 		insertOrder(fh, OrderType.BUY, 7, 3, 1);
 		
@@ -118,7 +118,7 @@ public class FourHeapTest {
 		assertEquals(8, fh.size());
 		assertInvariants(fh);
 		
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		insertOrder(fh, OrderType.SELL, 5, 3, 0);
 		insertOrder(fh, OrderType.BUY, 7, 5, 1);
 		
@@ -134,9 +134,9 @@ public class FourHeapTest {
 	
 	@Test
 	public void insertMatchedTest() {
-		FourHeap<OrderType, Integer, Integer> fh;
+		FourHeap<Integer, Integer> fh;
 		
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		insertOrder(fh, OrderType.SELL, 5, 3, 0);
 		insertOrder(fh, OrderType.BUY, 7, 3, 1);
 		insertOrder(fh, OrderType.BUY, 4, 1, 2);
@@ -145,7 +145,7 @@ public class FourHeapTest {
 		assertEquals(7, fh.size());
 		assertInvariants(fh);
 		
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		insertOrder(fh, OrderType.SELL, 5, 3, 0);
 		insertOrder(fh, OrderType.BUY, 7, 3, 1);
 		insertOrder(fh, OrderType.BUY, 6, 1, 2);
@@ -154,7 +154,7 @@ public class FourHeapTest {
 		assertEquals(7, fh.size());
 		assertInvariants(fh);
 
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		insertOrder(fh, OrderType.SELL, 5, 3, 0);
 		insertOrder(fh, OrderType.BUY, 7, 3, 1);
 		insertOrder(fh, OrderType.BUY, 8, 1, 2);
@@ -166,10 +166,10 @@ public class FourHeapTest {
 	
 	@Test
 	public void withdrawOneBuyTest() {
-		FourHeap<OrderType, Integer, Integer> fh;
+		FourHeap<Integer, Integer> fh;
 		
-		fh = FourHeap.create(OrderType.class);
-		Order<OrderType, Integer, Integer> o = insertOrder(fh, OrderType.BUY, 5, 3, 0);
+		fh = FourHeap.create();
+		Order<Integer, Integer> o = insertOrder(fh, OrderType.BUY, 5, 3, 0);
 		fh.withdrawOrder(o, 2);
 		
 		assertEquals(1, o.unmatchedQuantity);
@@ -197,10 +197,10 @@ public class FourHeapTest {
 	
 	@Test
 	public void withdrawOneSellTest() {
-		FourHeap<OrderType, Integer, Integer> fh;
+		FourHeap<Integer, Integer> fh;
 		
-		fh = FourHeap.create(OrderType.class);
-		Order<OrderType, Integer, Integer> o = insertOrder(fh, OrderType.SELL, 5, 3, 0);
+		fh = FourHeap.create();
+		Order<Integer, Integer> o = insertOrder(fh, OrderType.SELL, 5, 3, 0);
 		fh.withdrawOrder(o, 2);
 		
 		assertEquals(1, o.unmatchedQuantity);
@@ -228,10 +228,10 @@ public class FourHeapTest {
 	
 	@Test
 	public void withdrawMatchTest() {
-		FourHeap<OrderType, Integer, Integer> fh;
-		Order<OrderType, Integer, Integer> os, ob;
+		FourHeap<Integer, Integer> fh;
+		Order<Integer, Integer> os, ob;
 		
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		os = insertOrder(fh, OrderType.SELL, 5, 3, 0);
 		ob = insertOrder(fh, OrderType.BUY, 7, 3, 1);
 		fh.withdrawOrder(ob, 2);
@@ -256,7 +256,7 @@ public class FourHeapTest {
 		assertEquals(1, fh.size());
 		assertInvariants(fh);
 		
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		ob = insertOrder(fh, OrderType.BUY, 7, 3, 1);
 		os = insertOrder(fh, OrderType.SELL, 5, 5, 0);
 		fh.withdrawOrder(os, 3);
@@ -281,7 +281,7 @@ public class FourHeapTest {
 		assertEquals(2, fh.size());
 		assertInvariants(fh);
 
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		os = insertOrder(fh, OrderType.SELL, 5, 3, 0);
 		ob = insertOrder(fh, OrderType.BUY, 7, 5, 1);
 		fh.withdrawOrder(ob, 4);
@@ -302,10 +302,10 @@ public class FourHeapTest {
 	 */
 	@Test
 	public void withdrawWithWaitingOrders() {
-		FourHeap<OrderType, Integer, Integer> fh;
-		Order<OrderType, Integer, Integer> o;
+		FourHeap<Integer, Integer> fh;
+		Order<Integer, Integer> o;
 
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		o = insertOrder(fh, OrderType.BUY, 4, 3, 0);
 		insertOrder(fh, OrderType.SELL, 1, 3, 1);
 		insertOrder(fh, OrderType.SELL, 2, 2, 2);
@@ -316,7 +316,7 @@ public class FourHeapTest {
 		fh.clear();
 		assertInvariants(fh);
 
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		o = insertOrder(fh, OrderType.SELL, 1, 3, 0);
 		insertOrder(fh, OrderType.BUY, 4, 3, 1);
 		insertOrder(fh, OrderType.BUY, 3, 2, 2);
@@ -334,10 +334,10 @@ public class FourHeapTest {
 	 */
 	@Test
 	public void strangeWithdrawEdgeCase() {
-		FourHeap<OrderType, Integer, Integer> fh;
-		Order<OrderType, Integer, Integer> o;
+		FourHeap<Integer, Integer> fh;
+		Order<Integer, Integer> o;
 
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		insertOrder(fh, OrderType.BUY, 4, 3, 0);
 		o = insertOrder(fh, OrderType.SELL, 1, 3, 1);
 		insertOrder(fh, OrderType.SELL, 2, 2, 2);
@@ -348,7 +348,7 @@ public class FourHeapTest {
 		fh.clear();
 		assertInvariants(fh);
 
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		insertOrder(fh, OrderType.SELL, 1, 3, 0);
 		o = insertOrder(fh, OrderType.BUY, 4, 3, 1);
 		insertOrder(fh, OrderType.BUY, 3, 2, 2);
@@ -362,9 +362,9 @@ public class FourHeapTest {
 	
 	@Test
 	public void emptyClearTest() {
-		FourHeap<OrderType, Integer, Integer> fh;
+		FourHeap<Integer, Integer> fh;
 		
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		insertOrder(fh, OrderType.SELL, 7, 3, 0);
 		insertOrder(fh, OrderType.BUY, 5, 3, 1);
 		assertTrue(fh.clear().isEmpty());
@@ -372,12 +372,12 @@ public class FourHeapTest {
 	
 	@Test
 	public void clearTest() {
-		FourHeap<OrderType, Integer, Integer> fh;
-		Order<OrderType, Integer, Integer> os, ob;
-		List<MatchedOrders<OrderType, Integer, Integer>> transactions;
-		MatchedOrders<OrderType, Integer, Integer> trans;
+		FourHeap<Integer, Integer> fh;
+		Order<Integer, Integer> os, ob;
+		List<MatchedOrders<Integer, Integer>> transactions;
+		MatchedOrders<Integer, Integer> trans;
 		
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		os = insertOrder(fh, OrderType.SELL, 5, 2, 0);
 		ob = insertOrder(fh, OrderType.BUY, 7, 3, 1);
 		transactions = fh.clear();
@@ -396,12 +396,12 @@ public class FourHeapTest {
 	
 	@Test
 	public void multiOrderClearTest() {
-		FourHeap<OrderType, Integer, Integer> fh;
-		Order<OrderType, Integer, Integer> os, ob;
-		List<MatchedOrders<OrderType, Integer, Integer>> transactions;
-		MatchedOrders<OrderType, Integer, Integer> trans;
+		FourHeap<Integer, Integer> fh;
+		Order<Integer, Integer> os, ob;
+		List<MatchedOrders<Integer, Integer>> transactions;
+		MatchedOrders<Integer, Integer> trans;
 		
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		os = insertOrder(fh, OrderType.SELL, 5, 3, 0);
 		insertOrder(fh, OrderType.SELL, 6, 2, 0);
 		ob = insertOrder(fh, OrderType.BUY, 7, 4, 1);
@@ -423,9 +423,9 @@ public class FourHeapTest {
 	
 	@Test
 	public void specificInvariantTest() {
-		FourHeap<OrderType, Integer, Integer> fh;
+		FourHeap<Integer, Integer> fh;
 		
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		insertOrder(fh, OrderType.BUY, 2, 1, 0);
 		insertOrder(fh, OrderType.SELL, 1, 1, 1);
 		insertOrder(fh, OrderType.SELL, 4, 1, 2);
@@ -434,7 +434,7 @@ public class FourHeapTest {
 		
 		assertInvariants(fh);
 		
-		fh = FourHeap.create(OrderType.class);
+		fh = FourHeap.create();
 		insertOrder(fh, OrderType.SELL, 4, 1, 0);
 		insertOrder(fh, OrderType.BUY, 5, 1, 1);
 		insertOrder(fh, OrderType.BUY, 2, 1, 2);
@@ -446,7 +446,7 @@ public class FourHeapTest {
 	
 	@Test
 	public void quoteInvariantTest() {
-		FourHeap<OrderType, Integer, Integer> fh = FourHeap.<OrderType, Integer, Integer>create(OrderType.class);
+		FourHeap<Integer, Integer> fh = FourHeap.create();
 		for (int i = 0; i < 1000; i++) {
 			insertOrder(fh, rand.nextBoolean() ? OrderType.BUY : OrderType.SELL,
 					rand.nextInt(900000) + 100000, 1, i);
@@ -461,22 +461,22 @@ public class FourHeapTest {
 			quoteInvariantTest();
 	}
 	
-	protected static Order<OrderType, Integer, Integer> insertOrder(
-			FourHeap<OrderType, Integer, Integer> fh, OrderType type, int price, int quantity, int time) {
-		Order<OrderType, Integer, Integer> order = Order.create(type, price, quantity, time);
+	protected static Order<Integer, Integer> insertOrder(
+			FourHeap<Integer, Integer> fh, OrderType type, int price, int quantity, int time) {
+		Order<Integer, Integer> order = Order.create(type, price, quantity, time);
 		fh.insertOrder(order);
 		return order;
 	}
 	
-	protected static int matchedSize(PriorityQueue<Order<OrderType, Integer, Integer>> bh) {
+	protected static int matchedSize(PriorityQueue<Order<Integer, Integer>> bh) {
 		int size = 0;
-		for (Order<OrderType, Integer, Integer> so : bh)
+		for (Order<Integer, Integer> so : bh)
 			size += so.matchedQuantity;
 		return size;
 	}
 	
-	protected static void assertInvariants(FourHeap<OrderType, Integer, Integer> fh) {
-		Order<OrderType, Integer, Integer> bi, bo, si, so;
+	protected static void assertInvariants(FourHeap<Integer, Integer> fh) {
+		Order<Integer, Integer> bi, bo, si, so;
 		Integer bid, ask;
 		
 		bi = fh.buyMatched.peek();

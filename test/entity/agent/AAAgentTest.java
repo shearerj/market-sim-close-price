@@ -2,6 +2,7 @@ package entity.agent;
 
 import static logger.Logger.log;
 import static org.junit.Assert.assertTrue;
+import static systemmanager.Consts.OrderType.*;
 
 import java.io.File;
 import java.util.Collection;
@@ -14,6 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
+import systemmanager.Consts.OrderType;
 import systemmanager.Keys;
 import activity.Activity;
 import activity.ProcessQuote;
@@ -82,13 +84,13 @@ public class AAAgentTest {
 		return agent;
 	}
 
-	private void addBid(int price, int quantity,
+	private void addBid(OrderType type, int price, int quantity,
 			int time) {
 		TimeStamp currentTime = new TimeStamp(time);
 		// creating a dummy agent
 		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
 		// Having the agent submit a bid to the market
-		Iterable<? extends Activity> bidActs = market.submitOrder(agent, null,
+		Iterable<? extends Activity> bidActs = market.submitOrder(agent, type,
 				new Price(price), quantity, currentTime);
 
 		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
@@ -101,8 +103,8 @@ public class AAAgentTest {
 	}
 
 	private void addTransaction(int p, int q, int time) {
-		addBid(p, q, time);
-		addBid(p, -q, time);
+		addBid(BUY, p, q, time);
+		addBid(SELL, p, q, time);
 		TimeStamp currentTime = new TimeStamp(time);
 		Iterable<? extends Activity> clearActs = market.clear(currentTime);
 
@@ -181,8 +183,8 @@ public class AAAgentTest {
 		Logger.log(Logger.Level.DEBUG, "50000 < Bid price < 100000");
 
 		// Setting up the bids
-		addBid(50000, 1, 10);
-		addBid(200000, -1, 10);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 200000, 1, 10);
 
 		// Testing against a market with initial bids but no transaction history
 		AAAgent agent = addAgent(true);
@@ -199,8 +201,8 @@ public class AAAgentTest {
 		Logger.log(Logger.Level.DEBUG, "100000 < Ask price < 200000");
 
 		// Adding setup bids
-		addBid(50000, 1, 10);
-		addBid(200000, -1, 10);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 200000, 1, 10);
 
 		// Creating the agent and running the test
 		AAAgent agent = addAgent(false);
@@ -216,8 +218,8 @@ public class AAAgentTest {
 				"\nTesting passive buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(50000, 1, 10);
-		addBid(150000, -1, 10);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 150000, 1, 10);
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
@@ -235,8 +237,8 @@ public class AAAgentTest {
 				"\nTesting r = -0.5 buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(50000, 1, 10);
-		addBid(150000, -1, 10);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 150000, 1, 10);
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
@@ -259,8 +261,8 @@ public class AAAgentTest {
 				"\nTesting active buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(50000, 1, 10);
-		addBid(150000, -1, 15);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 150000, 1, 15);
 		addTransaction(75000, 1, 20);
 
 		AAAgent agent = addAgent(true);
@@ -282,8 +284,8 @@ public class AAAgentTest {
 				"\nTesting r = -0.5 buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(50000, 1, 10);
-		addBid(150000, -1, 10);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 150000, 1, 10);
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
@@ -303,8 +305,8 @@ public class AAAgentTest {
 				"Testing aggressive buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(50000, 1, 10);
-		addBid(150000, -1, 10);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 150000, 1, 10);
 		addTransaction(75000, 1, 20);
 
 		AAAgent agent = addAgent(true);
@@ -323,8 +325,8 @@ public class AAAgentTest {
 				"Testing passive seller on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(50000, 1, 10);
-		addBid(150000, -1, 10);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 150000, 1, 10);
 		addTransaction(125000, 1, 20);
 
 		// Testing the Agent
@@ -350,8 +352,8 @@ public class AAAgentTest {
 				"\nTesting active seller on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(50000, 1, 10);
-		addBid(150000, -1, 15);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 150000, 1, 15);
 		addTransaction(125000, 1, 20);
 
 		AAAgent agent = addAgent(false);
@@ -370,8 +372,8 @@ public class AAAgentTest {
 				"Testing aggressive seller on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(50000, 1, 10);
-		addBid(150000, -1, 10);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 150000, 1, 10);
 		addTransaction(125000, 1, 20);
 
 		AAAgent agent = addAgent(false);
@@ -389,8 +391,8 @@ public class AAAgentTest {
 				"\nTesting passive buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(50000, 1, 10);
-		addBid(150000, -1, 10);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 150000, 1, 10);
 		addTransaction(125000, 1, 15);
 
 		// Setting up the agent
@@ -408,8 +410,8 @@ public class AAAgentTest {
 				"\nTesting r = -0.5 buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(50000, 1, 10);
-		addBid(150000, -1, 10);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 150000, 1, 10);
 		addTransaction(125000, 1, 15);
 
 		// Setting up the agent
@@ -428,8 +430,8 @@ public class AAAgentTest {
 				"\nTesting r = 0 buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(50000, 1, 10);
-		addBid(150000, -1, 10);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 150000, 1, 10);
 		addTransaction(125000, 1, 15);
 
 		// Setting up the agent
@@ -448,8 +450,8 @@ public class AAAgentTest {
 				"\nTesting r = 0 buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(50000, 1, 10);
-		addBid(150000, -1, 10);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 150000, 1, 10);
 		addTransaction(125000, 1, 15);
 
 		// Setting up the agent
@@ -468,8 +470,8 @@ public class AAAgentTest {
 				"\nTesting passive buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(50000, 1, 10);
-		addBid(150000, -1, 10);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 150000, 1, 10);
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
@@ -489,8 +491,8 @@ public class AAAgentTest {
 				"\nTesting passive buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(50000, 1, 10);
-		addBid(150000, -1, 10);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 150000, 1, 10);
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
@@ -507,8 +509,8 @@ public class AAAgentTest {
 		Logger.log(Logger.Level.DEBUG, "\nTesting aggression learning");
 
 		// Adding Bids and Transactions
-		addBid(50000, 1, 10);
-		addBid(150000, -1, 10);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 150000, 1, 10);
 		addTransaction(95000, 1, 20);
 		addTransaction(100000, 1, 25);
 		addTransaction(100000, 1, 30);
@@ -526,8 +528,8 @@ public class AAAgentTest {
 		Logger.log(Logger.Level.DEBUG, "\nTesting aggression learning");
 
 		// Adding Bids and Transactions
-		addBid(50000, 1, 10);
-		addBid(150000, -1, 10);
+		addBid(BUY, 50000, 1, 10);
+		addBid(SELL, 150000, 1, 10);
 		addTransaction(105000, 1, 20);
 		addTransaction(100000, 1, 25);
 		addTransaction(100000, 1, 30);

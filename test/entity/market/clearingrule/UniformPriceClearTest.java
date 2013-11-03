@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import systemmanager.Consts.OrderType;
 import entity.market.MarketTime;
 import entity.market.Price;
 import event.TimeStamp;
@@ -18,15 +17,15 @@ public class UniformPriceClearTest {
 
 	@Test
 	public void UniformPriceBasic() {
-		ArrayList<MatchedOrders<OrderType, Price,MarketTime>> list = new ArrayList<MatchedOrders<OrderType, Price,MarketTime>>();
+		ArrayList<MatchedOrders<Price,MarketTime>> list = new ArrayList<MatchedOrders<Price,MarketTime>>();
 		ClearingRule cr = new UniformPriceClear(0.5, 1);
 		
-		MatchedOrders<OrderType, Price,MarketTime> match1 = createOrderPair(
+		MatchedOrders<Price,MarketTime> match1 = createOrderPair(
 				new Price(110), 1, new TimeStamp(100), 
 				new Price(100), 1, new TimeStamp(105));
 		list.add(match1);
 
-		Map<MatchedOrders<OrderType, Price,MarketTime>,Price> result = cr.pricing(list);
+		Map<MatchedOrders<Price,MarketTime>,Price> result = cr.pricing(list);
 		
 		// Verify clearing at midpoint of the two orders (policy=0.5)
 		assertEquals(new Price(105), result.get(match1));
@@ -34,15 +33,15 @@ public class UniformPriceClearTest {
 	
 	@Test
 	public void UniformPriceRatio() {
-		ArrayList<MatchedOrders<OrderType, Price,MarketTime>> list = new ArrayList<MatchedOrders<OrderType, Price,MarketTime>>();
+		ArrayList<MatchedOrders<Price,MarketTime>> list = new ArrayList<MatchedOrders<Price,MarketTime>>();
 		ClearingRule cr = new UniformPriceClear(1, 1);
 		
-		MatchedOrders<OrderType, Price,MarketTime> match1 = createOrderPair(
+		MatchedOrders<Price,MarketTime> match1 = createOrderPair(
 				new Price(110), 1, new TimeStamp(100), 
 				new Price(100), 1, new TimeStamp(105));
 		list.add(match1);
 
-		Map<MatchedOrders<OrderType, Price,MarketTime>,Price> result = cr.pricing(list);
+		Map<MatchedOrders<Price,MarketTime>,Price> result = cr.pricing(list);
 		// Verify clearing at the higher price of the two orders (policy=1)
 		assertEquals(new Price(110), result.get(match1));
 		
@@ -56,19 +55,19 @@ public class UniformPriceClearTest {
 	public void UniformPriceMulti() {
 		ClearingRule cr = new UniformPriceClear(0.5, 1);
 
-		ArrayList<MatchedOrders<OrderType, Price,MarketTime>> list = new ArrayList<MatchedOrders<OrderType, Price,MarketTime>>();
+		ArrayList<MatchedOrders<Price,MarketTime>> list = new ArrayList<MatchedOrders<Price,MarketTime>>();
 		
-		MatchedOrders<OrderType, Price,MarketTime> match1 = createOrderPair(
+		MatchedOrders<Price,MarketTime> match1 = createOrderPair(
 				new Price(110), 1, new TimeStamp(100), 
 				new Price(100), 1, new TimeStamp(105));
 		list.add(match1);
 		
-		MatchedOrders<OrderType, Price,MarketTime> match2 = createOrderPair(
+		MatchedOrders<Price,MarketTime> match2 = createOrderPair(
 				new Price(110), 1, new TimeStamp(105), 
 				new Price(100), 1, new TimeStamp(100));
 		list.add(match2);
 				
-		Map<MatchedOrders<OrderType, Price,MarketTime>,Price> result = cr.pricing(list);
+		Map<MatchedOrders<Price,MarketTime>,Price> result = cr.pricing(list);
 		// Verify that for multiple orders, clears at correct midpoint price (policy=0.5)
 		assertEquals(new Price(105), result.get(match1));
 		assertEquals(new Price(105), result.get(match2));
@@ -99,10 +98,10 @@ public class UniformPriceClearTest {
 	 * @param t2
 	 * @return
 	 */
-	public MatchedOrders<OrderType, Price,MarketTime> createOrderPair(Price p1, int q1, 
+	public MatchedOrders<Price,MarketTime> createOrderPair(Price p1, int q1, 
 			TimeStamp t1, Price p2, int q2, TimeStamp t2){
-		Order<OrderType, Price, MarketTime> a = Order.create(OrderType.BUY, p1, q1, MarketTime.create(t1,t1.getInTicks()));
-		Order<OrderType, Price, MarketTime> b = Order.create(OrderType.SELL, p2, q2, MarketTime.create(t2,t2.getInTicks()));
+		Order<Price, MarketTime> a = Order.create(fourheap.Order.OrderType.BUY, p1, q1, MarketTime.create(t1,t1.getInTicks()));
+		Order<Price, MarketTime> b = Order.create(fourheap.Order.OrderType.SELL, p2, q2, MarketTime.create(t2,t2.getInTicks()));
 		return MatchedOrders.create(a, b, Math.min(q1, q2));
 	}
 

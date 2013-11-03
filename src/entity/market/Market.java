@@ -62,7 +62,7 @@ public abstract class Market extends Entity {
 	private static final long serialVersionUID = 8806298743451593261L;
 	private static int nextID = 1;
 	
-	protected final FourHeap<OrderType, Price, MarketTime> orderbook;
+	protected final FourHeap<Price, MarketTime> orderbook;
 	protected final ClearingRule clearingRule;
 	protected final Random rand;
 	protected long marketTime; // keeps track of internal market actions
@@ -74,7 +74,7 @@ public abstract class Market extends Entity {
 	protected Quote quote; // Current quote
 
 	// Book keeping
-	protected final Map<fourheap.Order<OrderType, Price, MarketTime>, Order> orderMapping; // How to get full orders from fourheap Orders
+	protected final Map<fourheap.Order<Price, MarketTime>, Order> orderMapping; // How to get full orders from fourheap Orders
 	protected final Multiset<Price> askPriceQuantity, bidPriceQuantity; // How many orders are at a specific price
 	protected final Collection<Order> orders; // All orders ever submitted to the market
 	protected final List<Transaction> allTransactions; // All successful transactions, implicitly time ordered
@@ -101,7 +101,7 @@ public abstract class Market extends Entity {
 	 */
 	public Market(SIP sip, TimeStamp latency, ClearingRule clearingRule, Random rand) {
 		super(nextID++);
-		this.orderbook = FourHeap.create(OrderType.class);
+		this.orderbook = FourHeap.create();
 		this.clearingRule = clearingRule;
 		this.rand = rand;
 		this.marketTime = 0;
@@ -213,9 +213,9 @@ public abstract class Market extends Entity {
 	 */
 	public Iterable<? extends Activity> clear(TimeStamp currentTime) {
 		marketTime++;
-		List<MatchedOrders<OrderType, Price, MarketTime>> matchedOrders = orderbook.clear();
+		List<MatchedOrders<Price, MarketTime>> matchedOrders = orderbook.clear();
 		Builder<Transaction> transactions = ImmutableList.builder();
-		for (Entry<MatchedOrders<OrderType, Price, MarketTime>, Price> e : clearingRule.pricing(matchedOrders).entrySet()) {
+		for (Entry<MatchedOrders<Price, MarketTime>, Price> e : clearingRule.pricing(matchedOrders).entrySet()) {
 
 			Order buy = orderMapping.get(e.getKey().getBuy());
 			Order sell = orderMapping.get(e.getKey().getSell());
@@ -239,7 +239,7 @@ public abstract class Market extends Entity {
 		}
 		
 		// Remove fully transacted orders
-		for (MatchedOrders<OrderType, Price, MarketTime> match : matchedOrders) {
+		for (MatchedOrders<Price, MarketTime> match : matchedOrders) {
 			if (match.getBuy().getQuantity() == 0)
 				orderMapping.remove(match.getBuy());
 			if (match.getSell().getQuantity() == 0)
@@ -352,11 +352,22 @@ public abstract class Market extends Entity {
 		
 		log(INFO, agent + " " + type + "(" + quantity + "@" + price + ") -> " + this);
 
-		fourheap.Order<OrderType, Price, MarketTime> nativeOrder = fourheap.Order.create(
-				type, price, quantity, new MarketTime(currentTime, marketTime));
+		fourheap.Order<Price, MarketTime> nativeOrder;
+		switch (type) {
+		case BUY:
+			nativeOrder = fourheap.Order.create(fourheap.Order.OrderType.BUY,
+					price, quantity, new MarketTime(currentTime, marketTime));
+			break;
+		case SELL:
+			nativeOrder = fourheap.Order.create(fourheap.Order.OrderType.SELL,
+					price, quantity, new MarketTime(currentTime, marketTime));
+			break;
+		default:
+			throw new IllegalStateException("Impossible to get here");
+		}
 		Order order = new Order(agent, this, nativeOrder);
 
-		Multiset<Price> priceQuant = order.getOrderType().equals(OrderType.SELL) ? askPriceQuantity : bidPriceQuantity;
+		Multiset<Price> priceQuant = order.getOrderType() == OrderType.SELL ? askPriceQuantity : bidPriceQuantity;
 		priceQuant.add(order.getPrice(), quantity);
 		
 		orderbook.insertOrder(nativeOrder);

@@ -17,16 +17,18 @@ import java.io.Serializable;
  * @param <T>
  *            Time
  */
-public class Order<BS extends Enum<BS>, P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
+public class Order<P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
 
 	private static final long serialVersionUID = -3460176014871040729L;
 	
-	protected final BS type;
+	public enum OrderType { BUY, SELL };
+	
+	protected final OrderType type;
 	protected final P price;
 	protected int unmatchedQuantity, matchedQuantity; // Always positive
 	protected final T submitTime;
 
-	protected Order(BS type, P price, int initialQuantity, T submitTime) {
+	protected Order(OrderType type, P price, int initialQuantity, T submitTime) {
 		checkArgument(initialQuantity > 0, "Initial quantity must be positive");
 		this.price = checkNotNull(price, "Price");
 		this.unmatchedQuantity = initialQuantity;
@@ -38,12 +40,12 @@ public class Order<BS extends Enum<BS>, P extends Comparable<? super P>, T exten
 	/**
 	 * Factory constructor
 	 */
-	public static <BS extends Enum<BS>, P extends Comparable<? super P>, T extends Comparable<? super T>> Order<BS, P, T> create(
-			BS type, P price, int initialQuantity, T submitTime) {
-		return new Order<BS, P, T>(type, price, initialQuantity, submitTime);
+	public static <P extends Comparable<? super P>, T extends Comparable<? super T>> Order<P, T> create(
+			OrderType type, P price, int initialQuantity, T submitTime) {
+		return new Order<P, T>(type, price, initialQuantity, submitTime);
 	}
 
-	public BS getOrderType() {
+	public OrderType getOrderType() {
 		return type;
 	}
 	
@@ -89,7 +91,7 @@ public class Order<BS extends Enum<BS>, P extends Comparable<? super P>, T exten
 
 	@Override
 	public String toString() {
-		return "<" + submitTime + "| " + type + getQuantity() + " @ " + price + ">";
+		return "<" + submitTime + "| " + type + " " + getQuantity() + " @ " + price + ">";
 	}
 	
 }

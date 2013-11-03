@@ -102,27 +102,27 @@ public class LAAgent extends HFTAgent {
 	// the same as the above strategy, sometimes making more profit, sometimes less, and I'm unsure
 	// why.
 	public Iterable<? extends Activity> agentStrategy2(TimeStamp ts) {
-		FourHeap<OrderType, Price, Integer> fh = FourHeap.<OrderType, Price, Integer> create(OrderType.class);
-		Map<Order<OrderType, Price, Integer>, Market> orderMap = Maps.newHashMap();
+		FourHeap<Price, Integer> fh = FourHeap.create();
+		Map<Order<Price, Integer>, Market> orderMap = Maps.newHashMap();
 		
 		for (Entry<Market, HFTIP> ipEntry : ips.entrySet()) {
 			Quote q = ipEntry.getValue().getQuote();
 			if (q.getBidPrice() != null && q.getBidQuantity() > 0) {
-				Order<OrderType, Price, Integer> order = Order.create(OrderType.BUY, q.getBidPrice(), q.getBidQuantity(), 0);
+				Order<Price, Integer> order = Order.create(fourheap.Order.OrderType.BUY, q.getBidPrice(), q.getBidQuantity(), 0);
 				orderMap.put(order, ipEntry.getKey());
 				fh.insertOrder(order);
 			}
 			if (q.getAskPrice() != null && q.getAskQuantity() > 0) {
-				Order<OrderType, Price, Integer> order = Order.create(OrderType.SELL, q.getAskPrice(), q.getAskQuantity(), 0);
+				Order<Price, Integer> order = Order.create(fourheap.Order.OrderType.SELL, q.getAskPrice(), q.getAskQuantity(), 0);
 				orderMap.put(order, ipEntry.getKey());
 				fh.insertOrder(order);
 			}
 		}
 		
-		List<MatchedOrders<OrderType, Price, Integer>> transactions = fh.clear();
+		List<MatchedOrders<Price, Integer>> transactions = fh.clear();
 		Builder<Activity> acts = ImmutableList.builder();
-		for (MatchedOrders<OrderType, Price, Integer> trans : transactions) {
-			Order<OrderType, Price, Integer> buy = trans.getBuy(), sell = trans.getSell();
+		for (MatchedOrders<Price, Integer> trans : transactions) {
+			Order<Price, Integer> buy = trans.getBuy(), sell = trans.getSell();
 			if (sell.getPrice().doubleValue() * (1 + alpha) > buy.getPrice().doubleValue())
 				continue;
 			double midPoint = .5 * (buy.getPrice().doubleValue() + sell.getPrice().doubleValue()); 
