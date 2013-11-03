@@ -72,6 +72,16 @@ public class PrivateValue implements Serializable {
 		
 		this.prices = builder.build();
 	}
+	
+	/**
+	 * Protected constructor for testing purposes (MockPrivateValue)
+	 */
+	
+	protected PrivateValue(int maxPosition, List<Price> prices){
+		checkArgument((prices.size()/2==maxPosition), "Incorrect number of entries in price list");
+		this.prices = prices;
+		offset = maxPosition;
+	}
 
 	/**
 	 * @return offset (max absolute value position)
