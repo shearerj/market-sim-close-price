@@ -35,7 +35,7 @@ import event.TimeStamp;
 public abstract class Agent extends Entity {
 
 	private static final long serialVersionUID = 5363438238024144057L;
-	private static int nextID = 1;
+	public static int nextID = 1;
 	
 	protected final Random rand;
 	protected final FundamentalValue fundamental;

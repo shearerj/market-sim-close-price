@@ -24,7 +24,7 @@ import event.TimeStamp;
 public abstract class IP extends Entity {
 
 	private static final long serialVersionUID = -1150989788412631133L;
-	private static int nextID;
+	public static int nextID = 1;
 	
 	protected TimeStamp latency;
 

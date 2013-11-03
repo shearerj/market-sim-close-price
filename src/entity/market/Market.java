@@ -60,7 +60,7 @@ import fourheap.MatchedOrders;
 public abstract class Market extends Entity {
 
 	private static final long serialVersionUID = 8806298743451593261L;
-	private static int nextID = 1;
+	public static int nextID = 1;
 	
 	protected final FourHeap<Price, MarketTime> orderbook;
 	protected final ClearingRule clearingRule;

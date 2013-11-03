@@ -103,7 +103,7 @@ public class Observations {
 	public final static String RETURN = "return";
 	public final static String LOG = "log";
 
-	protected static transient final Gson gson = new Gson();
+	protected static final Gson gson = new Gson();
 
 	JsonObject observations;
 

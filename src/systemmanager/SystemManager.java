@@ -266,6 +266,11 @@ public class SystemManager {
 		obs.writeToFile(results);
 	}
 	
+	public Observations getObservations() {
+		return new Observations(spec, markets, agents, players,
+				fundamental, sip, modelName, obsNum);
+	}
+	
 	protected static class RoleStrat extends Pair<String, String> {
 		protected RoleStrat(String role, String strat) {
 			super(role, strat);
