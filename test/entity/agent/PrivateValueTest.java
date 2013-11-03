@@ -36,7 +36,7 @@ public class PrivateValueTest {
 	}
 	
 	@Test
-	public void buySellPV() {
+	public void buySellSingle() {
 		PrivateValue pv = new PrivateValue(1, 1000, new Random());
 		
 		assertEquals(pv.prices.get(1), pv.getValueFromQuantity(0, OrderType.BUY));
@@ -58,6 +58,37 @@ public class PrivateValueTest {
 		assertEquals(pv.prices.get(1), pv.getValueFromQuantity(1, OrderType.SELL));
 		assertEquals(pv.prices.get(1), pv.getValueFromQuantity(2, OrderType.SELL));
 		assertEquals(pv.prices.get(1), pv.getValueFromQuantity(10, OrderType.SELL));
+	}
+	
+	@Test
+	public void buySellMulti() {
+		PrivateValue pv = new PrivateValue(2, 1000, new Random());
+		// 0 1 2 3
+		assertEquals(pv.prices.get(2), pv.getValueFromQuantity(0, 1, OrderType.BUY));
+		assertEquals(pv.prices.get(1), pv.getValueFromQuantity(0, 1, OrderType.SELL));
+		assertEquals(2, pv.getMaxAbsPosition());
+		
+		// More detailed checks on buy, with boundary current position values
+		assertEquals(pv.prices.get(3), pv.getValueFromQuantity(0, 2, OrderType.BUY));
+		assertEquals(pv.prices.get(3), pv.getValueFromQuantity(0, 3, OrderType.BUY));
+		assertEquals(pv.prices.get(2), pv.getValueFromQuantity(0, 1, OrderType.BUY));
+		assertEquals(pv.prices.get(3), pv.getValueFromQuantity(1, 1, OrderType.BUY));
+		assertEquals(pv.prices.get(3), pv.getValueFromQuantity(2, 1, OrderType.BUY));
+		assertEquals(pv.prices.get(1), pv.getValueFromQuantity(-1, 1, OrderType.BUY));
+		assertEquals(pv.prices.get(0), pv.getValueFromQuantity(-2, 1, OrderType.BUY));
+		assertEquals(pv.prices.get(1), pv.getValueFromQuantity(-2, 2, OrderType.BUY));
+		assertEquals(pv.prices.get(2), pv.getValueFromQuantity(-1, 2, OrderType.BUY));
+		
+		// More detailed checks on sell, with boundary current position values
+		assertEquals(pv.prices.get(0), pv.getValueFromQuantity(0, 2, OrderType.SELL));
+		assertEquals(pv.prices.get(0), pv.getValueFromQuantity(0, 3, OrderType.SELL));
+		assertEquals(pv.prices.get(1), pv.getValueFromQuantity(0, 1, OrderType.SELL));
+		assertEquals(pv.prices.get(0), pv.getValueFromQuantity(-1, 1, OrderType.SELL));
+		assertEquals(pv.prices.get(0), pv.getValueFromQuantity(-2, 1, OrderType.SELL));
+		assertEquals(pv.prices.get(2), pv.getValueFromQuantity(1, 1, OrderType.SELL));
+		assertEquals(pv.prices.get(3), pv.getValueFromQuantity(2, 1, OrderType.SELL));
+		assertEquals(pv.prices.get(2), pv.getValueFromQuantity(2, 2, OrderType.SELL));
+		assertEquals(pv.prices.get(1), pv.getValueFromQuantity(1, 2, OrderType.SELL));
 	}
 	
 	@Test
@@ -85,9 +116,34 @@ public class PrivateValueTest {
 	}
 	
 	@Test
+	public void getValueFromMultiQuantity() {
+		PrivateValue pv = new PrivateValue(5, 1000, new Random());
+		
+		assertEquals(pv.prices.get(6), pv.getValueFromQuantity(0, 2, OrderType.BUY));
+		assertEquals(pv.prices.get(3), pv.getValueFromQuantity(0, 2, OrderType.SELL));
+		
+		// Checking buying and selling from current position = 1
+		assertEquals(pv.prices.get(8), pv.getValueFromQuantity(1, 3, OrderType.BUY));
+		assertEquals(pv.prices.get(4), pv.getValueFromQuantity(1, 2, OrderType.SELL));
+		
+		// Checking buying and selling from current position = -1
+		assertEquals(pv.prices.get(8), pv.getValueFromQuantity(-1, 4, OrderType.BUY));
+		assertEquals(pv.prices.get(1), pv.getValueFromQuantity(-1, 3, OrderType.SELL));
+		
+		// Checking buying and selling from current position = 5
+		assertEquals(pv.prices.get(9), pv.getValueFromQuantity(5, 2, OrderType.BUY));
+		assertEquals(pv.prices.get(8), pv.getValueFromQuantity(5, 2, OrderType.SELL));
+		
+		// Checking buying and selling from current position = -5
+		assertEquals(pv.prices.get(1), pv.getValueFromQuantity(-5, 2, OrderType.BUY));
+		assertEquals(pv.prices.get(0), pv.getValueFromQuantity(-5, 2, OrderType.SELL));
+	}
+	
+	@Test
 	public void extraTest() {
 		for (int i = 0; i < 100; i++) {
-			buySellPV();
+			buySellSingle();
+			buySellMulti();
 			getValueFromQuantity();
 		}
 	}

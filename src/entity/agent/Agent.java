@@ -40,7 +40,7 @@ public abstract class Agent extends Entity {
 	protected final Random rand;
 	protected final FundamentalValue fundamental;
 	protected final SIP sip;
-	// List of all transactions. Implicitly time ordered due to transactions
+	// List of all transactions for this agent. Implicitly time ordered due to transactions
 	// being created and assigned in time order.
 	protected final List<Transaction> transactions;
 	protected final Collection<Order> activeOrders;
@@ -232,7 +232,7 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * Iterates through the agent's transactions and calculates it's current discounted surplus with
+	 * Iterates through the agent's transactions and calculates its current discounted surplus with
 	 * the specified discount factor
 	 * 
 	 * @param rho
@@ -241,39 +241,33 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public double getSurplus(double rho) {
-		checkArgument(rho >= 0, "Can't have a negative discoutn factor");
+		checkArgument(rho >= 0, "Can't have a negative discount factor");
 		double surplus = 0;
 
 		for (Transaction trans : transactions) {
 			TimeStamp submissionTime;
-			int sign;
+			OrderType type;
 			
 			if (trans.getBuyer().equals(trans.getSeller())) {
 				// FIXME Handle appropriately...
 				continue;
 			} else if (trans.getBuyer().equals(this)) {
 				submissionTime = trans.getBuyBid().getSubmitTime();
-				sign = 1;
+				type = OrderType.BUY;
 			} else {
 				submissionTime = trans.getSellBid().getSubmitTime();
-				sign = -1;
+				type = OrderType.SELL;
 			}
 			TimeStamp timeToExecution = trans.getExecTime().minus(submissionTime);
 
-			OrderType type = getOrderType(trans.getQuantity());
 			int fund = fundamental.getValueAt(trans.getExecTime()).intValue() * trans.getQuantity();
 			int pv = privateValue.getValueFromQuantity(positionBalance, type).intValue();
 			int cost = trans.getPrice().intValue() * trans.getQuantity();
-			int transactionSurplus = (fund + pv - cost) * sign;
+			int transactionSurplus = (fund + pv - cost) * (type.equals(OrderType.BUY) ? 1 : -1) ;
 
 			surplus += Math.exp(rho * timeToExecution.getInTicks()) * transactionSurplus;
 		}
 		return surplus;
-	}
-	
-	protected OrderType getOrderType(int quantity) {
-		checkArgument(quantity != 0);
-		return quantity > 0 ? OrderType.BUY : OrderType.SELL;
 	}
 	
 	@Override

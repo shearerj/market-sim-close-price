@@ -95,18 +95,29 @@ public class PrivateValue implements Serializable {
 	 *            Agent's current position
 	 * @param type
 	 * 			  Buy or Sell
-	 * @return The new private value if modify one's position by that amount.
+	 * @return The new private value if buying or selling 1 unit
 	 */
 	public Price getValueFromQuantity(int currentPosition, OrderType type) {
+		return getValueFromQuantity(currentPosition, 1, type);
+	}
+	
+	/**
+	 * @param currentPosition
+	 * @param quantity
+	 * @param type
+	 * @return
+	 */
+	public Price getValueFromQuantity(int currentPosition, int quantity, OrderType type) {
+		checkArgument(quantity > 0, "Quantity must be positive");
 		switch (type) {
-			case BUY:
-				return prices.get(bound(currentPosition + offset, 0, prices.size() - 1));
-			case SELL:
-				return prices.get(bound(currentPosition + offset - 1, 0, prices.size() - 1));
-		
-			default:
-				return Price.ZERO;
-		}	
+		case BUY:
+			return prices.get(bound(currentPosition + offset + (quantity - 1), 0, prices.size() - 1));
+		case SELL:
+			return prices.get(bound(currentPosition + offset - 1 - (quantity - 1), 0, prices.size() - 1));
+
+		default:
+			return Price.ZERO;
+		}
 	}
 
 	@Override

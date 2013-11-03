@@ -132,10 +132,11 @@ public class AAAgent extends BackgroundAgent {
 			lastPrice = new Price(-1);
 		
 		// Determining Quantity
+		OrderType type = isBuyer ? OrderType.BUY : OrderType.SELL;
 		int quantity = isBuyer ? 1 : -1;
 
 		// Updating Price Limit
-		Price limit = getValuation(getOrderType(quantity), currentTime);
+		Price limit = getValuation(type, currentTime);
 
 		// Determine the Target Price
 		Price targetPrice = determinePriceTarget(limit, movingAverage);
