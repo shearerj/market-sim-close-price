@@ -12,6 +12,7 @@ import com.google.common.collect.Lists;
 
 import entity.market.MarketTime;
 import entity.market.Price;
+import entity.market.DummyMarketTime;
 import event.TimeStamp;
 import fourheap.MatchedOrders;
 import fourheap.Order;
@@ -84,11 +85,12 @@ public class EarliestPriceClearTest {
 	 */
 	public MatchedOrders<Price,MarketTime> createOrderPair(Price p1, int q1, 
 			TimeStamp t1, Price p2, int q2, TimeStamp t2){
-		// XXX NOTE: the same MarketTime will never be created for two orders
+		// NOTE: the same MarketTime will never be created for two orders
 		// So if t1 == t2, t2 will be created at an incremented MarketTime
-		Order<Price, MarketTime> a = Order.create(fourheap.Order.OrderType.BUY, p1, q1, MarketTime.create(t1, t1.getInTicks()));
-		Order<Price, MarketTime> b = Order.create(fourheap.Order.OrderType.SELL, p2, 
-				q2, MarketTime.create(t2, t2.plus(new TimeStamp(t2.equals(t1) ? 1 : 0)).getInTicks()));
+		MarketTime mt1 = new DummyMarketTime(t1, t1.getInTicks());
+		MarketTime mt2 = new DummyMarketTime(t2, t2.plus(new TimeStamp(t2.equals(t1) ? 1 : 0)).getInTicks());
+		Order<Price, MarketTime> a = Order.create(fourheap.Order.OrderType.BUY, p1, q1, mt1);
+		Order<Price, MarketTime> b = Order.create(fourheap.Order.OrderType.SELL, p2, q2, mt2);
 		return MatchedOrders.create(a, b, Math.min(q1, q2));
 	}
 }

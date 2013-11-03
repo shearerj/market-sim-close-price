@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import entity.market.DummyMarketTime;
 import entity.market.MarketTime;
 import entity.market.Price;
 import event.TimeStamp;
@@ -100,8 +101,10 @@ public class UniformPriceClearTest {
 	 */
 	public MatchedOrders<Price,MarketTime> createOrderPair(Price p1, int q1, 
 			TimeStamp t1, Price p2, int q2, TimeStamp t2){
-		Order<Price, MarketTime> a = Order.create(fourheap.Order.OrderType.BUY, p1, q1, MarketTime.create(t1,t1.getInTicks()));
-		Order<Price, MarketTime> b = Order.create(fourheap.Order.OrderType.SELL, p2, q2, MarketTime.create(t2,t2.getInTicks()));
+		MarketTime mt1 = new DummyMarketTime(t1, t1.getInTicks());
+		MarketTime mt2 = new DummyMarketTime(t2, t2.getInTicks());
+		Order<Price, MarketTime> a = Order.create(fourheap.Order.OrderType.BUY, p1, q1, mt1);
+		Order<Price, MarketTime> b = Order.create(fourheap.Order.OrderType.SELL, p2, q2, mt2);
 		return MatchedOrders.create(a, b, Math.min(q1, q2));
 	}
 

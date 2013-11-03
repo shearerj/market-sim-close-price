@@ -49,7 +49,7 @@ public class SMIPTest {
 	public void basicNoDelay() {
 		Quote q;
 		TimeStamp time = TimeStamp.ZERO;
-		MarketTime mktTime = MarketTime.create(time, 1);
+		MarketTime mktTime = new DummyMarketTime(time, 1);
 
 		// Check initial quote is null
 		assertEquals("Incorrect last quote time", null, smip1.lastQuoteTime);
@@ -84,7 +84,7 @@ public class SMIPTest {
 	public void basicDelay() {
 		Quote q;
 		TimeStamp time = TimeStamp.ZERO;
-		MarketTime mktTime = MarketTime.create(time, 1);
+		MarketTime mktTime = new DummyMarketTime(time, 1);
 		
 		// Check initial quote is null
 		assertEquals("Incorrect last quote time", null, smip2.lastQuoteTime);
@@ -121,7 +121,7 @@ public class SMIPTest {
 	@Test
 	public void alternateDelaySMIP() {
 		TimeStamp time = TimeStamp.ZERO;
-		MarketTime mktTime = MarketTime.create(time, 1);
+		MarketTime mktTime = new DummyMarketTime(time, 1);
 		Quote q = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
 		SMIP smipImmed = new SMIP(TimeStamp.IMMEDIATE, market2);
 		
@@ -156,7 +156,7 @@ public class SMIPTest {
 	public void eventManagerLatencyTest() {
 		Quote q;
 		TimeStamp time = TimeStamp.ZERO;
-		MarketTime mktTime = MarketTime.create(time, 1);
+		MarketTime mktTime = new DummyMarketTime(time, 1);
 		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
 		Quote q2 = new Quote(market2, new Price(75), 1, new Price(95), 1, time);
 		
@@ -213,8 +213,8 @@ public class SMIPTest {
 		Quote q;
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time2 = new TimeStamp(50);
-		MarketTime mktTime1 = MarketTime.create(time, 1);
-		MarketTime mktTime2 = MarketTime.create(time, 2);
+		MarketTime mktTime1 = new DummyMarketTime(time, 1);
+		MarketTime mktTime2 = new DummyMarketTime(time, 2);
 		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
 		Quote q2 = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
 		Quote q3 = new Quote(market1, new Price(75), 1, new Price(95), 1, time2);
@@ -274,8 +274,8 @@ public class SMIPTest {
 	public void multiQuoteUpdatesAtSameTime() {
 		Quote q;
 		TimeStamp time = TimeStamp.ZERO;
-		MarketTime mktTime1 = MarketTime.create(time, 1);
-		MarketTime mktTime2 = MarketTime.create(time, 2);
+		MarketTime mktTime1 = new DummyMarketTime(time, 1);
+		MarketTime mktTime2 = new DummyMarketTime(time, 2);
 		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
 		Quote q2 = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
 		Quote q3 = new Quote(market1, new Price(75), 1, new Price(95), 1, time);
@@ -325,8 +325,8 @@ public class SMIPTest {
 	public void staleQuotes() {
 		Quote q;
 		TimeStamp time = TimeStamp.ZERO;
-		MarketTime mktTime1 = MarketTime.create(time, 1);
-		MarketTime mktTime2 = MarketTime.create(time, 2);
+		MarketTime mktTime1 = new DummyMarketTime(time, 1);
+		MarketTime mktTime2 = new DummyMarketTime(time, 2);
 		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
 		Quote q2 = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
 		Quote q3 = new Quote(market1, new Price(75), 1, new Price(95), 1, time);
@@ -386,7 +386,7 @@ public class SMIPTest {
 	public void sameMarketTime() {
 		Quote q;
 		TimeStamp time = TimeStamp.ZERO;
-		MarketTime mktTime = MarketTime.create(time, 1);
+		MarketTime mktTime = new DummyMarketTime(time, 1);
 		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
 		Quote q2 = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
 		Quote q3 = new Quote(market1, new Price(75), 1, new Price(95), 1, time);
@@ -429,7 +429,7 @@ public class SMIPTest {
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		
-		// NOTE: cannot test market2's SMIP quote due to nondeterminism when market times same
+		// NOTE: cannot test market2's SMIP quote due to nondeterminism when market times are equal
 	}
 
 	
@@ -440,9 +440,9 @@ public class SMIPTest {
 	public void zeroNotImmedLatency() {
 		Quote q;
 		TimeStamp time = TimeStamp.ZERO;
-		MarketTime mktTime1 = MarketTime.create(time, 1);
-		MarketTime mktTime2 = MarketTime.create(time, 2);
-		MarketTime mktTime3 = MarketTime.create(time, 3);
+		MarketTime mktTime1 = new DummyMarketTime(time, 1);
+		MarketTime mktTime2 = new DummyMarketTime(time, 2);
+		MarketTime mktTime3 = new DummyMarketTime(time, 3);
 		
 		// Create market with latency 0
 		Market market3 = new MockMarket(sip, TimeStamp.ZERO);

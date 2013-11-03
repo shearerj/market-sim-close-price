@@ -114,7 +114,7 @@ public class MarketTest {
 		assertEquals(null, quote.getBidPrice());
 	}
 
-//	@Test
+	@Test
 	public void basicOverlapClear() {
 		TimeStamp time = TimeStamp.ZERO;
 		
@@ -139,7 +139,7 @@ public class MarketTest {
 		assertEquals(null, quote.getBidPrice());
 	}
 
-//	@Test
+	@Test
 	public void multiBidSingleClear() {
 		TimeStamp time = TimeStamp.ZERO;
 		
@@ -170,7 +170,7 @@ public class MarketTest {
 		assertEquals(1, quote.getAskQuantity());
 	}
 	
-//	@Test
+	@Test
 	public void multiOverlapClear() {
 		TimeStamp time = TimeStamp.ZERO;
 		
@@ -203,7 +203,7 @@ public class MarketTest {
 	 * Scenario with two possible matches, but only one pair transacts at the
 	 * uniform price.
 	 */
-//	@Test
+	@Test
 	public void partialOverlapClear() {
 		TimeStamp time = TimeStamp.ZERO;
 		
@@ -234,7 +234,7 @@ public class MarketTest {
 		assertEquals(1, quote.getAskQuantity());
 	}
 	
-//	@Test
+	@Test
 	public void extraTest() {
 		for(int i=0; i < 100; i++) {
 			setup();
@@ -250,7 +250,7 @@ public class MarketTest {
 	/**
 	 * Test quantities of partially transacted orders. 
 	 */
-//	@Test
+	@Test
 	public void partialQuantity() {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time2 = new TimeStamp(1);
@@ -278,7 +278,7 @@ public class MarketTest {
 		assertEquals("Incorrect BID quantity", 3, q.bidQuantity);
 	}
 	
-//	@Test
+	@Test
 	public void multiQuantity() {
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
@@ -306,7 +306,7 @@ public class MarketTest {
 		assertEquals("Incorrect BID quantity", 0, q.bidQuantity);
 	}
 	
-//	@Test
+	@Test
 	public void basicWithdraw() {
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
@@ -363,7 +363,7 @@ public class MarketTest {
 		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
 	}
 	
-//	@Test
+	@Test
 	public void multiQuantityWithdraw() {
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
@@ -452,4 +452,6 @@ public class MarketTest {
 		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());
 		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
 	}
+	
+	// TODO test invariant that no duplicate MarketTimes
 }
