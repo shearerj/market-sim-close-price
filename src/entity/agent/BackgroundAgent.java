@@ -1,6 +1,5 @@
 package entity.agent;
 
-import static java.lang.Math.signum;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 import iterators.ExpInterarrivals;
@@ -83,15 +82,14 @@ public abstract class BackgroundAgent extends SMAgent {
 		if (newPosition <= privateValue.getMaxAbsPosition() &&
 				newPosition >= -privateValue.getMaxAbsPosition()) {
 			
-			Price val = getValuation(getOrderType(quantity), currentTime);
-			Price price = new Price((val.doubleValue() + signum(quantity) * 
+			Price val = getValuation(type, currentTime);
+			Price price = new Price((val.doubleValue() + (type.equals(OrderType.SELL) ? 1 : -1) * 
 					Rands.nextUniform(rand, bidRangeMin, bidRangeMax))).nonnegative().quantize(tickSize);
 			
 			sb.append(" position=").append(positionBalance).append(", for q=");
 			sb.append(quantity).append(", value=");
 			sb.append(fundamental.getValueAt(currentTime)).append(" + ");
-			sb.append(privateValue.getValueFromQuantity(positionBalance,
-					getOrderType(quantity)));
+			sb.append(privateValue.getValueFromQuantity(positionBalance, type));
 			sb.append('=').append(val);
 			log(INFO, sb.toString());
 			

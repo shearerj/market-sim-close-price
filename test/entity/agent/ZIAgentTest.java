@@ -13,6 +13,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import systemmanager.Consts;
+import systemmanager.Consts.OrderType;
 import activity.Activity;
 import activity.SubmitNMSOrder;
 
@@ -29,14 +31,6 @@ import entity.market.Order;
 import entity.market.Price;
 import event.TimeStamp;
 
-public class ZIAgentTest {	
-	
-private FundamentalValue fundamental = new DummyFundamental(100000);
-private Market market;
-private SIP sip;
-private static Random rand;
-
-
 /**
  * ZIAgent Test
  * 
@@ -51,25 +45,27 @@ private static Random rand;
  * @author yngchen
  * 
  */
+public class ZIAgentTest {	
+
+	private FundamentalValue fundamental = new DummyFundamental(100000);
+	private Market market;
+	private SIP sip;
+	private static Random rand;
 
 	@BeforeClass
 	public static void setUpClass(){
 		// Setting up the log file
-		Logger.setup(3, new File("simulations/unit_testing/ZIAgentTest.log"));
+		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "ZIAgentTest.log"));
 
 		// Creating the setup properties
 		rand = new Random(1);
-		
-		
-		
 	}
 
 	@Before
-	public void setUpTest(){
+	public void setup(){
 		sip = new SIP(TimeStamp.IMMEDIATE);
 		// Creating the MockMarket
 		market = new MockMarket(sip);
-		
 	}
 	
 	//Agent Constructor methods====================================================================
@@ -118,19 +114,20 @@ private static Random rand;
 		Iterable<? extends Activity> test = agent.agentStrategy(currentTime);
 
 		// executing the bid submission - will go to the market
-		for (Activity act : test)
-			if (act instanceof SubmitNMSOrder)
-				act.execute(currentTime);
+		for (Activity act : test) {
+			assertTrue(act instanceof SubmitNMSOrder);
+			act.execute(currentTime);
+		}
 	}
 
 	private void assertCorrectBid(Agent agent, int low, int high) {
 		Collection<Order> orders = agent.activeOrders;
 		// Asserting the bid is correct
-		assertTrue("OrderSize is incorrect", !orders.isEmpty());
+		assertNotEquals("OrderSize is incorrect", 0, orders.size());
 		Order order = Iterables.getFirst(orders, null);
 
-		assertTrue("Order agent is null", order.getAgent() != null);
-		assertTrue("Order agent is incorrect", order.getAgent().equals(agent));
+		assertNotEquals("Order's agent is null", null, order.getAgent());
+		assertEquals("Order agent is incorrect", agent, order.getAgent());
 
 		Price bidPrice = order.getPrice();
 		assertTrue("Order price (" + bidPrice + ") less than " + low,
@@ -139,7 +136,7 @@ private static Random rand;
 				bidPrice.lessThan(new Price(high)));
 
 		// Quantity must be 1 or -1
-		assertTrue("Quantity is incorrect", order.getQuantity() == 1 || order.getQuantity() == -1);
+		assertEquals("Quantity is incorrect", 1, order.getQuantity());
 	}
 	
 	private void assertCorrectBid(Agent agent) {
@@ -167,9 +164,8 @@ private static Random rand;
 				act.execute(currentTime);
 			}
 		}
-		assertTrue("ZI Activity quantity (" + act_counter + ") not equal to 1", act_counter == 1 );
-		assertTrue("ZI SubmitNMSOrder quantity (" + submit_counter + ") not equal to 1", submit_counter == 1 );
-
+		assertEquals("ZI Activity quantity (" + act_counter + ") not equal to 1", 1, act_counter);
+		assertEquals("ZI SubmitNMSOrder quantity (" + submit_counter + ") not equal to 1", 1, submit_counter);
 	}
 
 
@@ -182,9 +178,7 @@ private static Random rand;
 		
 		// Execute Strategy
 		executeAgentStrategy(testAgent, 100);
-		
 		assertCorrectBid(testAgent);
-		
 	}
 	
 	@Test
@@ -202,7 +196,6 @@ private static Random rand;
 		//99.7% of bids should fall between 100000 +/- (3*10000 + 1000)
 		// = 70000, 13000
 		assertCorrectBid(testAgent, 70000, 130000);
-		
 	}
 	
 	@Test
@@ -214,12 +207,8 @@ private static Random rand;
 			
 			// Execute Strategy
 			executeAgentStrategy(testAgent, r*100);
-			
 			assertCorrectBid(testAgent);
-
-			
 		}
-		
 	}
 	
 	@Test
@@ -231,62 +220,66 @@ private static Random rand;
 			
 			// Execute Strategy
 			executeAgentStrategy(testAgent, r*100);
-			
-			assertCorrectBid(testAgent, 70000, 130000);
-
-			
+			assertCorrectBid(testAgent, 70000, 130000);	
 		}
 	}
 	
 	@Test
 	public void testPrivateValue(){
-		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 MockPrivateValue arguments are correct");
+		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 DummyPrivateValue arguments are correct");
 		
 		//Creating set private value
 		int offset = 1;
 		Builder<Price> builder = ImmutableList.builder();
 		builder.add(new Price(10000)); 			//$10.00
 		builder.add(new Price(-10000));  		//$-10.00
-		List<Price> prices = builder.build();	//Prices = [$10, $-10]
+		List<Price> prices = builder.build();	//PVs = [$10, $-10]
 		DummyPrivateValue testpv = new DummyPrivateValue(offset, prices);
 		
 		//Creating ZIAgent
-		ZIAgent testAgent = addAgent(0, 1000, rand, testpv);
-		
-		
-		//Testing 100 times
-		for(int i = 0; i<100; i++){
-			
-			//Executing agent strategy
-			executeAgentStrategy(testAgent, 100);
-			
-			//Retrieving orders
-			Collection<Order> orders = testAgent.activeOrders;
-			Order order = Iterables.getFirst(orders, null);
-			
-			//Extracting bid quantity and price
-			int quantity = order.getQuantity();
-			Price bidPrice = order.getPrice();
-			
-			//Checking bid quantity and price comply with set range
-			switch(quantity){
-			case -1:
-				assertTrue("Ask Price (" + bidPrice + ") less than $109.00", bidPrice.greaterThan(new Price(109000)));
-				assertTrue("Ask Price (" + bidPrice + ") greater than $110.00", bidPrice.lessThan(new Price(110000)));
-				//Expected ask range min = fundamental + PV[0] - bidRangeMax
-				//Expected ask range max = fundamental + PV[0] - bidRangeMin
-				break;
-			case 1:
-				assertTrue("Bid Price (" + bidPrice + ") less than $90.00", bidPrice.greaterThan(new Price(90000)));
-				assertTrue("Bid Price (" + bidPrice + ") greater than $91.00", bidPrice.lessThan(new Price(91000)));
-				//Expected bid range min = fundamental + PV[1] + bidRangeMin
-				//Expected bid range max = fundamental + PV[1]+ bidRangeMax
-				break;
-			default:
-				fail("Quantity is not 1 or -1");
-				break;
-			}
+		ZIAgent testAgent = addAgent(0, 1000, rand, testpv); 	// bid range [0, 1000]
+
+		//Executing agent strategy
+		executeAgentStrategy(testAgent, 100);
+
+		//Retrieving orders
+		Collection<Order> orders = testAgent.activeOrders;
+		assertEquals(1, orders.size());
+		Order order = Iterables.getFirst(orders, null);
+
+		//Extracting bid quantity and price
+		assertEquals("Incorrect order quantity", 1, order.getQuantity());
+		Price p = order.getPrice();
+
+		//Checking bid quantity and price comply with set private values
+		// Sellers always sell at price higher than valuation ($100 + sell PV = $110)
+		// Buyers always buy at price lower than valuation ($100 + buy PV = $90)
+		switch(order.getOrderType()){
+		case SELL:
+			assertTrue("Ask Price (" + p + ") less than $110.00", p.greaterThanEqual(new Price(110000)));
+			assertTrue("Ask Price (" + p + ") greater than $111.00", p.lessThan(new Price(111000)));
+			// Expected ask range min = fundamental + PV[0] + bidRangeMin
+			// Expected ask range max = fundamental + PV[0] + bidRangeMax
+			break;
+		case BUY:
+			assertTrue("Bid Price (" + p + ") less than $89.00", p.greaterThan(new Price(89000)));
+			assertTrue("Bid Price (" + p + ") greater than $90.00", p.lessThanEqual(new Price(90000)));
+			//Expected bid range min = fundamental + PV[1] - bidRangeMax
+			//Expected bid range max = fundamental + PV[1] - bidRangeMin
+			break;
+		default:
+			fail("Invalid order type");
+			break;
 		}
+	}
+	
+	@Test
+	public void extraTest() {
+		for(int i = 0; i<100; i++){
+			setup();
+			testPrivateValue();
+		}
+		
 	}
 	
 	@Test
@@ -300,53 +293,57 @@ private static Random rand;
 			
 			//Creating randomized private value
 			int offset = 1;
-			Builder<Price> builder = ImmutableList.builder();
-			builder.add(new Price(rand.nextInt(90000))); 	//[$0.00, $90.00]	
-			builder.add(new Price(-1*rand.nextInt(90000)));  	//[$0.00, -$90.00]
-			List<Price> prices = builder.build();	
-			DummyPrivateValue testpv = new DummyPrivateValue(offset, prices);
+			PrivateValue testpv = new PrivateValue(offset, 1000000, rand);
 			
 			//Creating randomized min and max bid range
-			int min = rand.nextInt(5000); 		//[$0.00, $5.00]
-			int max = min + rand.nextInt(5000);	//[min, $10.00]
+			int min = rand.nextInt(5000); 			//[$0.00, $5.00];
+			int max = 5000 + rand.nextInt(5000);	//[$5.00, $10.00];
 			
 			//Creating ZIAgent
 			ZIAgent testAgent = addAgent(min, max, rand, testpv);
 			
 			//Logging bid range min and max
-			Logger.log(Logger.Level.DEBUG, "Agent bid minimum: " + new Price(min) + ", maximum: " + new Price(max));
+			Logger.log(Logger.Level.DEBUG, "Agent bid range min: " + new Price(min) + ", maximum: " + new Price(max));
 			
 			//Execute strategy
 			executeAgentStrategy(testAgent, currentTime);
 			
 			//Retrieve orders
 			Collection<Order> orders = testAgent.activeOrders;
+			assertEquals(1, orders.size());
 			Order order = Iterables.getFirst(orders, null);
 			
 			//Extracting bid quantity and price
-			int quantity = order.getQuantity();
-			Price bidPrice = order.getPrice();
+			assertEquals("Incorrect order quantity", 1, order.getQuantity());
+			Price p = order.getPrice();
+			Price fund = fundamental.getValueAt(new TimeStamp(currentTime));
+			Price buyPV = testAgent.privateValue.getValueFromQuantity(0, OrderType.BUY);
+			Price sellPV = testAgent.privateValue.getValueFromQuantity(0, OrderType.SELL);
 			
 			//Checking bid quantity and price comply with randomized range
-			switch(quantity){
-			case -1:
-				Price ask_min = new Price(fundamental.getValueAt(new TimeStamp(currentTime)).intValue() + prices.get(0).intValue()- max);
-				Price ask_max = new Price(fundamental.getValueAt(new TimeStamp(currentTime)).intValue() + prices.get(0).intValue() - min);
-				assertTrue("Ask Price (" + bidPrice + ") less than " + ask_min, bidPrice.greaterThan(ask_min));
-				assertTrue("Ask Price (" + bidPrice + ") greater than " + ask_max, bidPrice.lessThan(ask_max));
-				//Expected ask range min = fundamental + PV[0] - bidRangeMax
-				//Expected ask range max = fundamental + PV[0] - bidRangeMin
+			// Sellers always sell at price higher than valuation ($100 + sell PV)
+			// Buyers always buy at price lower than valuation ($100 + buy PV)
+			switch(order.getOrderType()){
+			case SELL:
+				Price ask_min = new Price(fund.intValue() + sellPV.intValue() + min);
+				Price ask_max = new Price(fund.intValue() + sellPV.intValue() + max);
+				assertTrue(ask_min.lessThanEqual(ask_max));
+				assertTrue("Ask Price (" + p + ") less than " + ask_min, p.greaterThan(ask_min));
+				assertTrue("Ask Price (" + p + ") greater than " + ask_max, p.lessThan(ask_max));
+				//Expected ask range min = fundamental + PV[0] + bidRangeMin
+				//Expected ask range max = fundamental + PV[0] + bidRangeMax
 				break;
-			case 1:
-				Price bid_min = new Price(fundamental.getValueAt(new TimeStamp(currentTime)).intValue() + prices.get(1).intValue() + min);
-				Price bid_max = new Price(fundamental.getValueAt(new TimeStamp(currentTime)).intValue() + prices.get(1).intValue() + max);
-				assertTrue("Bid Price (" + bidPrice + ") less than " + bid_min, bidPrice.greaterThan(bid_min));
-				assertTrue("Bid Price (" + bidPrice + ") greater than " + bid_max, bidPrice.lessThan(bid_max));
-				//Expected bid range min = fundamental + PV[1] + bidRangeMin
-				//Expected bid range max = fundamental + PV[1]+ bidRangeMax
+			case BUY:
+				Price bid_min = new Price(fund.intValue() + buyPV.intValue() - max);
+				Price bid_max = new Price(fund.intValue() + buyPV.intValue() - min);
+				assertTrue(bid_min.lessThanEqual(bid_max));
+				assertTrue("Bid Price (" + p + ") less than " + bid_min, p.greaterThan(bid_min));
+				assertTrue("Bid Price (" + p + ") greater than " + bid_max, p.lessThan(bid_max));
+				//Expected bid range min = fundamental + PV[1] - bidRangeMax
+				//Expected bid range max = fundamental + PV[1] - bidRangeMin
 				break;
 			default:
-				fail("Quantity is not 1 or -1");
+				fail("Invalid order type");
 				break;
 			}
 		
