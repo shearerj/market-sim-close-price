@@ -265,11 +265,12 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * @return True if in the fourheap
 	 */
 	public boolean contains(Order<P, T> order) {
-		if (order.matchedQuantity > 0) return buyMatched.contains(order);
-		else if (order.matchedQuantity > 0) return sellMatched.contains(order);
-		else if (order.unmatchedQuantity > 0) return buyUnmatched.contains(order);
-		else if (order.unmatchedQuantity > 0) return sellUnmatched.contains(order);
-		else return false;
+		if (order.matchedQuantity > 0)
+			return buyMatched.contains(order) || sellMatched.contains(order);
+		else if (order.unmatchedQuantity > 0)
+			return buyUnmatched.contains(order) || sellUnmatched.contains(order);
+		else
+			return false;
 	}
 
 	/**

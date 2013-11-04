@@ -422,6 +422,22 @@ public class FourHeapTest {
 	}
 	
 	@Test
+	public void containsTest() {
+		FourHeap<Integer, Integer> fh;
+		fh = FourHeap.create();
+		
+		Order<Integer, Integer> os, ob;
+		ob = insertOrder(fh, OrderType.BUY, 5, 1, 0);
+		assertTrue(fh.contains(ob));
+		os = insertOrder(fh, OrderType.SELL, 6, 1, 0);
+		assertTrue(fh.contains(os));
+		os = insertOrder(fh, OrderType.SELL, 4, 1, 1);
+		// Verify that sell order @ 4 which has matched is still in FH
+		assertTrue(fh.contains(os)); 
+		assertTrue(fh.contains(ob));		
+	}
+	
+	@Test
 	public void specificInvariantTest() {
 		FourHeap<Integer, Integer> fh;
 		
