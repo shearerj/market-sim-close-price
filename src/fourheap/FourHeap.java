@@ -50,9 +50,13 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	protected FourHeap() {
 		Ordering<Order<P, T>> priceComp = new PriceOrdering(), timeComp = new TimeOrdering();
 		
+		// Sout: unmatched sells, min first
 		this.sellUnmatched = new PriorityQueue<Order<P, T>>(1, priceComp.compound(timeComp));
+		// Sin: matched sells, max first
 		this.sellMatched   = new PriorityQueue<Order<P, T>>(1, priceComp.reverse().compound(timeComp));
+		// Bout: unmatched buys, max first
 		this.buyUnmatched  = new PriorityQueue<Order<P, T>>(1, priceComp.reverse().compound(timeComp));
+		// Bin: matched buys, min first
 		this.buyMatched    = new PriorityQueue<Order<P, T>>(1, priceComp.compound(timeComp));
 		this.size = 0;
 	}
@@ -294,7 +298,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * Returns the ask quote for the fourheap. A buy order with a price above
 	 * this is guaranteed to get matched.
 	 * 
-	 * Cmoplexity: O(1)
+	 * Complexity: O(1)
 	 * 
 	 * @return The price of the bid quote.
 	 */

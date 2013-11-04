@@ -438,6 +438,78 @@ public class FourHeapTest {
 	}
 	
 	@Test
+	public void matchedQuoteTest() {
+		FourHeap<Integer, Integer> fh;
+		fh = FourHeap.create();
+		
+		// Test when only matched orders in order book
+		insertOrder(fh, OrderType.BUY, 10, 1, 0);
+		insertOrder(fh, OrderType.SELL, 5, 1, 0);
+		// BID=max{max(matched sells), max(unmatched buys)}
+		// ASK=min{min(matched buys), min(unmatched sells)}
+		assertEquals(new Integer(5), fh.bidQuote());
+		assertEquals(new Integer(10), fh.askQuote());
+	}
+	
+	@Test
+	public void askQuoteTest() {
+		FourHeap<Integer, Integer> fh;
+		fh = FourHeap.create();
+		
+		assertEquals(null, fh.bidQuote());
+		assertEquals(null, fh.askQuote());
+		
+		// Test when no matched orders
+		insertOrder(fh, OrderType.SELL, 10, 1, 0);
+		assertEquals(new Integer(10), fh.askQuote());
+		assertEquals(null, fh.bidQuote());
+		insertOrder(fh, OrderType.BUY, 5, 1, 0);
+		assertEquals(new Integer(5), fh.bidQuote());
+		
+		// Test when some orders matched
+		// BID=max{max(matched sells), max(unmatched buys)}	-> max(10, 5)
+		// ASK=min{min(matched buys), min(unmatched sells)} -> min(15, -)
+		insertOrder(fh, OrderType.BUY, 15, 1, 0);
+		assertEquals(new Integer(15), fh.askQuote());	// the matched buy at 15
+		assertEquals(new Integer(10), fh.bidQuote());
+		
+		// Now orders in each container in FH
+		insertOrder(fh, OrderType.SELL, 20, 1, 0);
+		assertEquals(new Integer(10), fh.bidQuote());	// max(10, 5)
+		assertEquals(new Integer(15), fh.askQuote());	// min(15, 20)
+		
+	}
+
+	
+	@Test
+	public void bidQuoteTest() {
+		FourHeap<Integer, Integer> fh;
+		fh = FourHeap.create();
+		
+		assertEquals(null, fh.bidQuote());
+		assertEquals(null, fh.askQuote());
+		
+		// Test when no matched orders
+		insertOrder(fh, OrderType.BUY, 15, 1, 0);
+		assertEquals(new Integer(15), fh.bidQuote());
+		assertEquals(null, fh.askQuote());
+		insertOrder(fh, OrderType.SELL, 20, 1, 0);
+		assertEquals(new Integer(20), fh.askQuote());
+		
+		// Test when some orders matched
+		// BID=max{max(matched sells), max(unmatched buys)} -> max(10, -)
+		// ASK=min{min(matched buys), min(unmatched sells)} -> min(15, 20)
+		insertOrder(fh, OrderType.SELL, 10, 1, 0);
+		assertEquals(new Integer(10), fh.bidQuote()); // the matched sell at 10
+		assertEquals(new Integer(15), fh.askQuote());
+		
+		// Now orders in each container in FH
+		insertOrder(fh, OrderType.BUY, 5, 1, 0);
+		assertEquals(new Integer(10), fh.bidQuote()); 	// max(10, 5)
+		assertEquals(new Integer(15), fh.askQuote());	// min(15, 20)
+	}
+	
+	@Test
 	public void specificInvariantTest() {
 		FourHeap<Integer, Integer> fh;
 		
@@ -468,7 +540,6 @@ public class FourHeapTest {
 					rand.nextInt(900000) + 100000, 1, i);
 			assertInvariants(fh);
 		}
-		
 	}
 	
 	@Test
