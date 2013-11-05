@@ -69,7 +69,7 @@ public class SMIPTest {
 			assertTrue("Incorrect activity type scheduled", 
 					a instanceof ProcessQuote);
 		}
-		for (Activity a : acts) a.execute(a.getTime());
+		for (Activity a : acts) a.execute(time);
 
 		// Check updated quote after process quote (specific to SMIP)
 		assertEquals("Last quote time not updated", mktTime, smip1.lastQuoteTime);
@@ -133,14 +133,14 @@ public class SMIPTest {
 				new ArrayList<Transaction>(), smipImmed, time));
 		
 		em.executeUntil(time.plus(new TimeStamp(1)));
-		// Check SMIP for market 1 updated
+		// Check immediate SMIP
 		assertEquals("Last quote time not updated", mktTime, smipImmed.lastQuoteTime);
 		q = smipImmed.quote;
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
-		// Check SMIP for market 2 not updated
+		// Check delayed SMIP
 		assertEquals("Updated SMIP 2 too early", null, smip2.lastQuoteTime);
 		q = smip2.quote;
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
@@ -380,7 +380,8 @@ public class SMIPTest {
 	}
 	
 	/**
-	 * Test scenario where marketTime of two quotes is the same.
+	 * Test scenario where marketTime of two quotes is the same. Only works for
+	 * markets with latency IMMEDIATE (otherwise will be nondeterministic).
 	 */
 	@Test
 	public void sameMarketTime() {
@@ -429,7 +430,7 @@ public class SMIPTest {
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		
-		// NOTE: cannot test market2's SMIP quote due to nondeterminism when market times are equal
+		// XXX NOTE: cannot test market2's SMIP quote due to nondeterminism when market times are equal
 	}
 
 	
