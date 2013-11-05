@@ -382,6 +382,10 @@ public class SMIPTest {
 	/**
 	 * Test scenario where marketTime of two quotes is the same. Only works for
 	 * markets with latency IMMEDIATE (otherwise will be nondeterministic).
+	 * 
+	 * XXX NOTE: cannot test market2's SMIP quote due to nondeterminism when market times are equal
+	 * 
+	 * It is an invariant that every quote in a market will have a unique MarketTime.
 	 */
 	@Test
 	public void sameMarketTime() {
@@ -429,8 +433,6 @@ public class SMIPTest {
 		assertEquals("Incorrect BID", new Price(75), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
-		
-		// XXX NOTE: cannot test market2's SMIP quote due to nondeterminism when market times are equal
 	}
 
 	

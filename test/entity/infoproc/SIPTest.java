@@ -199,7 +199,6 @@ public class SIPTest {
 		// XXX NOTE: if tie in price, nondeterminism in which market has best price
 	}
 	
-	
 	@Test
 	public void basicNoDelay() {
 		TimeStamp time = TimeStamp.ZERO;
@@ -244,11 +243,33 @@ public class SIPTest {
 			assertTrue("Incorrect activity type scheduled", 
 					a instanceof ProcessQuote);
 		}
-		for (Activity a : acts)
-			a.execute(a.getTime());
+		for (Activity a : acts) a.execute(a.getTime());
 
 		// Test that NBBO quote is correct
 		BestBidAsk nbbo = sip2.getNBBO();
+		assertEquals("Incorrect ASK", new Price(100), nbbo.bestAsk);
+		assertEquals("Incorrect BID", new Price(80), nbbo.bestBid);
+		assertEquals("Incorrect ASK quantity", 1, nbbo.bestAskQuantity);
+		assertEquals("Incorrect BID quantity", 1, nbbo.bestBidQuantity);
+		assertEquals("Incorrect ASK market", market1, nbbo.bestAskMarket);
+		assertEquals("Incorrect BID market", market1, nbbo.bestBidMarket);
+	}
+	
+	@Test
+	public void basicZeroDelay() {
+		// SIP with zero not immediate latency
+		SIP sip3 = new SIP(new TimeStamp(0));
+		TimeStamp time = TimeStamp.ZERO;
+		MarketTime mktTime = new DummyMarketTime(time, 1);
+		
+		// Check that process quote activity scheduled correctly
+		Quote q = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
+		EventManager em = new EventManager(new Random());
+		em.addActivity(new SendToIP(market1, mktTime, q, new ArrayList<Transaction>(), sip3, time));
+		
+		// Test that NBBO quote is correct after time 0
+		em.executeUntil(new TimeStamp(1));
+		BestBidAsk nbbo = sip3.getNBBO();
 		assertEquals("Incorrect ASK", new Price(100), nbbo.bestAsk);
 		assertEquals("Incorrect BID", new Price(80), nbbo.bestBid);
 		assertEquals("Incorrect ASK quantity", 1, nbbo.bestAskQuantity);
@@ -461,7 +482,6 @@ public class SIPTest {
 		assertEquals("Incorrect buyer", agent1, trans.get(0).getBuyer());
 		assertEquals("Incorrect buyer", agent2, trans.get(0).getSeller());
 	}
-
 	
 	public void priceDiscrepancies() {
 		// TODO price discrepancies in NBBO
