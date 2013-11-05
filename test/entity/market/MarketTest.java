@@ -5,6 +5,8 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.util.Collection;
 import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
 
 import logger.Logger;
 
@@ -155,7 +157,7 @@ public class MarketTest {
 		market.submitOrder(agent3, OrderType.SELL, new Price(180), 1, time);
 		market.submitOrder(agent4, OrderType.SELL, new Price(120), 1, time);
 		market.clear(time);
-		
+		;
 		// Testing the market for the correct transactions
 		assertEquals( 1, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
@@ -453,5 +455,54 @@ public class MarketTest {
 		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
 	}
 	
-	// TODO test invariant that no duplicate MarketTimes
+	@Test
+	public void marketTime() {
+		// verify that market time is always unique, despite number of submit/withdraw orders
+		Set<Long> marketTimes = new TreeSet<Long>();
+		
+		TimeStamp time0 = TimeStamp.ZERO;
+
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+
+		market.submitOrder(agent1, OrderType.SELL, new Price(100), 1, time0);
+		assertFalse(marketTimes.contains(market.marketTime));
+		marketTimes.add(market.marketTime);
+		market.clear(time0);
+
+		// Withdraw order
+		Collection<Order> orders = agent1.getOrders();
+		Order toWithdraw = orders.iterator().next(); // get first (& only) order
+		market.withdrawOrder(toWithdraw, time0);
+		market.clear(time0);
+		
+		// No transaction, because agent1 withdrew its order
+		market.submitOrder(agent2, OrderType.BUY, new Price(125), 1, time0);
+		market.clear(time0);
+		assertEquals( 0, market.getTransactions().size() );
+		assertFalse(marketTimes.contains(market.marketTime));
+		marketTimes.add(market.marketTime);
+
+		// Submit order, which should transact
+		market.submitOrder(agent1, OrderType.SELL, new Price(100), 1, time0);
+		market.clear(time0);
+		assertEquals( 1, market.getTransactions().size() );
+		assertFalse(marketTimes.contains(market.marketTime));
+		marketTimes.add(market.marketTime);
+
+		market.submitOrder(agent2, OrderType.BUY, new Price(115), 1, time0);
+		market.clear(time0);
+		assertFalse(marketTimes.contains(market.marketTime));
+		marketTimes.add(market.marketTime);
+
+		// Submit order, which should transact
+		market.submitOrder(agent1, OrderType.SELL, new Price(105), 1, time0);
+		market.clear(time0);
+		assertFalse(marketTimes.contains(market.marketTime));
+		marketTimes.add(market.marketTime);
+		assertEquals( 2, market.getTransactions().size() );
+		
+		// One market time added for each submit order
+		assertEquals(5, marketTimes.size());
+	}
 }
