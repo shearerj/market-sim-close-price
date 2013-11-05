@@ -18,7 +18,7 @@ public class MockBackgroundAgent extends BackgroundAgent {
 	private static final long serialVersionUID = 1L;
 
 	public MockBackgroundAgent(FundamentalValue fundamental, SIP sip, Market market) {
-		this(fundamental, sip, market, new PrivateValue(), 0, 1000);
+		this(fundamental, sip, market, new PrivateValue(), 0, 0);
 	}
 	
 	public MockBackgroundAgent(FundamentalValue fundamental, SIP sip, Market market,

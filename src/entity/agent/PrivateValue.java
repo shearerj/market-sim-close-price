@@ -6,6 +6,7 @@ import static utils.MathUtils.bound;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -34,7 +35,7 @@ public class PrivateValue implements Serializable {
 	private static final long serialVersionUID = -348702049295080442L;
 	
 	protected final int offset;
-	protected final List<Price> prices;
+	protected final List<Price> values;
 
 	/**
 	 * Constructor for an agent without private value. This will return
@@ -42,7 +43,7 @@ public class PrivateValue implements Serializable {
 	 */
 	public PrivateValue() {
 		offset = 0;
-		prices = Collections.singletonList(ZERO);
+		values = Collections.singletonList(ZERO);
 	}
 
 	/**
@@ -61,25 +62,26 @@ public class PrivateValue implements Serializable {
 		
 		// Identical to legacy generation in final output
 		this.offset = maxPosition;
-		double[] prices = new double[maxPosition * 2];
-		for (int i = 0; i < prices.length; i++)
-			prices[i] = Rands.nextGaussian(rand, 0, var);
-		Arrays.sort(prices);
+		double[] values = new double[maxPosition * 2];
+		for (int i = 0; i < values.length; i++)
+			values[i] = Rands.nextGaussian(rand, 0, var);
+		Arrays.sort(values);
 		
 		Builder<Price> builder = ImmutableList.builder();
-		for (double price : prices)
-			builder.add(new Price(price));
+		for (double value : values)
+			builder.add(new Price(value));
 		
-		this.prices = builder.build();
+		this.values = builder.build();
 	}
 	
 	/**
-	 * Protected constructor for testing purposes (MockPrivateValue)
+	 * Protected constructor for testing purposes (DummyPrivateValue)
 	 */
-	
-	protected PrivateValue(int maxPosition, List<Price> prices){
-		checkArgument((prices.size()/2==maxPosition), "Incorrect number of entries in price list");
-		this.prices = prices;
+	protected PrivateValue(int maxPosition, Collection<Price> values){
+		checkArgument(values.size() == 2*maxPosition, "Incorrect number of entries in list");
+		Builder<Price> builder = ImmutableList.builder();
+		builder.addAll(values);
+		this.values = builder.build();
 		offset = maxPosition;
 	}
 
@@ -111,9 +113,9 @@ public class PrivateValue implements Serializable {
 		checkArgument(quantity > 0, "Quantity must be positive");
 		switch (type) {
 		case BUY:
-			return prices.get(bound(currentPosition + offset + (quantity - 1), 0, prices.size() - 1));
+			return values.get(bound(currentPosition + offset + (quantity - 1), 0, values.size() - 1));
 		case SELL:
-			return prices.get(bound(currentPosition + offset - 1 - (quantity - 1), 0, prices.size() - 1));
+			return values.get(bound(currentPosition + offset - 1 - (quantity - 1), 0, values.size() - 1));
 
 		default:
 			return Price.ZERO;
@@ -122,7 +124,7 @@ public class PrivateValue implements Serializable {
 
 	@Override
 	public int hashCode() {
-		return Objects.hashCode(prices, offset);
+		return Objects.hashCode(values, offset);
 	}
 
 	@Override
@@ -130,12 +132,12 @@ public class PrivateValue implements Serializable {
 		if (obj == null || !(obj instanceof PrivateValue))
 			return false;
 		PrivateValue other = (PrivateValue) obj;
-		return other.offset == this.offset && other.prices.equals(prices);
+		return other.offset == this.offset && other.values.equals(values);
 	}
 
 	@Override
 	public String toString() {
-		return prices.toString();
+		return values.toString();
 	}
 
 }

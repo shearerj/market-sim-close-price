@@ -140,7 +140,7 @@ public abstract class Agent extends Entity {
 	 * Withdraw most recent order.
 	 * @return
 	 */
-	public Iterable<? extends Activity> withdrawLastOrder() {
+	public Iterable<? extends Activity> withdrawNewestOrder() {
 		Collection<Activity> acts = new ArrayList<Activity>();
 		TimeStamp ts = TimeStamp.ZERO;
 		Order lastOrder = null;
@@ -158,7 +158,7 @@ public abstract class Agent extends Entity {
 	 * Withdraw first (earliest) order.
 	 * @return
 	 */
-	public Iterable<? extends Activity> withdrawFirstOrder() {
+	public Iterable<? extends Activity> withdrawOldestOrder() {
 		Collection<Activity> acts = new ArrayList<Activity>();
 		TimeStamp ts = new TimeStamp(Long.MAX_VALUE); // infinity
 		Order lastOrder = null;

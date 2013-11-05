@@ -106,7 +106,7 @@ public abstract class BackgroundAgent extends SMAgent {
 	}
 	
 	/**
-	 * Returns the limit price (i.e. valuation) for the agent.
+	 * Returns the limit price (i.e. valuation) for the agent for buying/selling 1 unit.
 	 * 
 	 * valuation = fundamental + private_value
 	 * 
@@ -115,9 +115,23 @@ public abstract class BackgroundAgent extends SMAgent {
 	 * @return
 	 */
 	public Price getValuation(OrderType type, TimeStamp currentTime) {
+		return getValuation(type, 1, currentTime);
+	}
+	
+	/**
+	 * Returns the limit price (i.e. valuation) for the agent.
+	 * 
+	 * valuation = fundamental + private_value
+	 * 
+	 * @param type
+	 * @param quantity
+	 * @param currentTime
+	 * @return
+	 */
+	public Price getValuation(OrderType type, int quantity, TimeStamp currentTime) {
 		return new Price(
 				fundamental.getValueAt(currentTime).intValue()
 						+ privateValue.getValueFromQuantity(positionBalance,
-								type).intValue()).nonnegative();
+								quantity, type).intValue()).nonnegative();
 	}
 }

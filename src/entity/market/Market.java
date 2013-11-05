@@ -185,7 +185,7 @@ public abstract class Market extends Entity {
 	public Iterable<? extends Activity> withdrawOrder(Order order, int quantity, 
 			TimeStamp currentTime) {
 		marketTime++;
-		checkArgument(quantity >= 0, "Quantiy can't be negative");
+		checkArgument(quantity > 0, "Quantity must be positive");
 		if (order.getQuantity() == 0) return ImmutableList.of();
 		quantity = min(quantity, order.getQuantity());
 		

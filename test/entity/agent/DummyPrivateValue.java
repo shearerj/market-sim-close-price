@@ -1,10 +1,9 @@
 package entity.agent;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 
 import logger.Logger;
-
 import entity.market.Price;
 
 public class DummyPrivateValue extends PrivateValue {
@@ -26,12 +25,7 @@ public class DummyPrivateValue extends PrivateValue {
 	
 	private static final long serialVersionUID = 1L;
 	
-	public DummyPrivateValue(){
-		super();
-	}
-
-	
-	public DummyPrivateValue(int absMaxPosition, List<Price> prices){
+	public DummyPrivateValue(int absMaxPosition, Collection<Price> prices){
 		super(absMaxPosition, prices);
 		Logger.log(Logger.Level.DEBUG, "DummyPrivateValue elements: " + Arrays.toString(prices.toArray()));
 	}
