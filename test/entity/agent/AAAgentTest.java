@@ -1,7 +1,7 @@
 package entity.agent;
 
 import static logger.Logger.log;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static systemmanager.Consts.OrderType.*;
 
 import java.io.File;
@@ -52,7 +52,6 @@ public class AAAgentTest {
 
 		// Creating the setup properties
 		rand = new Random(1);
-//		fund = new DummyFundamental(100000);
 
 		// Setting up agentProperties
 		agentProperties = new EntityProperties();
@@ -74,18 +73,18 @@ public class AAAgentTest {
 		market = new MockMarket(sip);
 	}
 
-	private AAAgent addAgent(boolean isBuyer) {
+	private AAAgent addAgent(OrderType type) {
 		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.BUYER_STATUS, isBuyer);
-
+		testProps.put(Keys.BUYER_STATUS, type.equals(OrderType.BUY));
+		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);	// private values all 0
+		
 		AAAgent agent = new AAAgent(new TimeStamp(0), fundamental, sip, market, rand,
 				testProps);
 
 		return agent;
 	}
 
-	private void addBid(OrderType type, int price, int quantity,
-			int time) {
+	private void addOrder(OrderType type, int price, int quantity, int time) {
 		TimeStamp currentTime = new TimeStamp(time);
 		// creating a dummy agent
 		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
@@ -103,8 +102,8 @@ public class AAAgentTest {
 	}
 
 	private void addTransaction(int p, int q, int time) {
-		addBid(BUY, p, q, time);
-		addBid(SELL, p, q, time);
+		addOrder(BUY, p, q, time);
+		addOrder(SELL, p, q, time);
 		TimeStamp currentTime = new TimeStamp(time);
 		Iterable<? extends Activity> clearActs = market.clear(currentTime);
 
@@ -131,11 +130,11 @@ public class AAAgentTest {
 			int quantity) {
 		Collection<Order> orders = agent.activeOrders;
 		// Asserting the bid is correct
-		assertTrue("OrderSize is incorrect", !orders.isEmpty());
+		assertNotEquals("Num orders is incorrect", 0, orders.size());
 		Order order = Iterables.getFirst(orders, null);
 
-		assertTrue("Order agent is null", order.getAgent() != null);
-		assertTrue("Order agent is incorrect", order.getAgent().equals(agent));
+		assertNotEquals("Order agent is null", null, order.getAgent());
+		assertEquals("Order agent is incorrect", agent, order.getAgent());
 
 		Price bidPrice = order.getPrice();
 		assertTrue("Order price (" + bidPrice + ") less than " + low,
@@ -143,11 +142,11 @@ public class AAAgentTest {
 		assertTrue("Order price (" + bidPrice + ") greater than " + high,
 				bidPrice.lessThan(new Price(high)));
 
-		assertTrue("Quantity is incorrect", order.getQuantity() == quantity);
+		assertEquals("Quantity is incorrect", quantity, order.getQuantity());
 	}
 	
-	private void assertCorrectBid(Agent agent, int quantity) {
-		assertCorrectBid(agent, -1, Integer.MAX_VALUE, quantity);
+	private void assertCorrectBidQuantity(Agent agent, int quantity) {
+		assertCorrectBid(agent, 0, Integer.MAX_VALUE, quantity);
 	}
 
 	@Test
@@ -155,12 +154,12 @@ public class AAAgentTest {
 		Logger.log(Logger.Level.DEBUG,
 				"\nTesting buyer on empty market: Result should be price=0");
 		// Creating a buyer
-		AAAgent agent = addAgent(true);
+		AAAgent agent = addAgent(OrderType.BUY);
 		// Testing against an empty market
 		executeAgentStrategy(agent, 100);
 
 		//Checking the bid
-		assertCorrectBid(agent, 1);
+		assertCorrectBidQuantity(agent, 1);
 	}
 
 	@Test
@@ -169,11 +168,11 @@ public class AAAgentTest {
 				"\nTesting seller on empty market: Result should be price="
 						+ Price.INF);
 		// Creating a seller
-		AAAgent agent = addAgent(false);
+		AAAgent agent = addAgent(OrderType.SELL);
 		// Testing against an empty market
 		executeAgentStrategy(agent, 100);
 
-		assertCorrectBid(agent, -1);
+		assertCorrectBidQuantity(agent, 1);
 	}
 
 	@Test
@@ -183,11 +182,11 @@ public class AAAgentTest {
 		Logger.log(Logger.Level.DEBUG, "50000 < Bid price < 100000");
 
 		// Setting up the bids
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 200000, 1, 10);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 200000, 1, 10);
 
 		// Testing against a market with initial bids but no transaction history
-		AAAgent agent = addAgent(true);
+		AAAgent agent = addAgent(OrderType.BUY);
 		executeAgentStrategy(agent, 100);
 
 		// Asserting the bid is correct
@@ -201,15 +200,15 @@ public class AAAgentTest {
 		Logger.log(Logger.Level.DEBUG, "100000 < Ask price < 200000");
 
 		// Adding setup bids
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 200000, 1, 10);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 200000, 1, 10);
 
 		// Creating the agent and running the test
-		AAAgent agent = addAgent(false);
+		AAAgent agent = addAgent(OrderType.SELL);
 		executeAgentStrategy(agent, 100);
 
 		// Asserting the bid is correct
-		assertCorrectBid(agent, 165000, 170000, -1);
+		assertCorrectBid(agent, 165000, 170000, 1);
 	}
 
 	@Test
@@ -218,12 +217,12 @@ public class AAAgentTest {
 				"\nTesting passive buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 150000, 1, 10);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 10);
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(true);
+		AAAgent agent = addAgent(OrderType.BUY);
 		agent.setAggression(-1);
 		executeAgentStrategy(agent, 100);
 
@@ -237,12 +236,12 @@ public class AAAgentTest {
 				"\nTesting r = -0.5 buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 150000, 1, 10);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 10);
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(true);
+		AAAgent agent = addAgent(OrderType.BUY);
 		agent.setAggression(-0.5);
 		agent.setAdaptivness(-3.0);
 		executeAgentStrategy(agent, 100);
@@ -261,11 +260,11 @@ public class AAAgentTest {
 				"\nTesting active buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 150000, 1, 15);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 15);
 		addTransaction(75000, 1, 20);
 
-		AAAgent agent = addAgent(true);
+		AAAgent agent = addAgent(OrderType.BUY);
 		Logger.log(Logger.Level.DEBUG, "Price ~= 58333");
 		agent.setAggression(0);
 		executeAgentStrategy(agent, 100);
@@ -284,12 +283,12 @@ public class AAAgentTest {
 				"\nTesting r = -0.5 buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 150000, 1, 10);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 10);
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(true);
+		AAAgent agent = addAgent(OrderType.BUY);
 		agent.setAggression(0.5);
 		agent.setAdaptivness(-3.0);
 		executeAgentStrategy(agent, 100);
@@ -305,11 +304,11 @@ public class AAAgentTest {
 				"Testing aggressive buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 150000, 1, 10);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 10);
 		addTransaction(75000, 1, 20);
 
-		AAAgent agent = addAgent(true);
+		AAAgent agent = addAgent(OrderType.BUY);
 		Logger.log(Logger.Level.DEBUG, "Price ~= 66667");
 		agent.setAggression(1.0);
 		executeAgentStrategy(agent, 100);
@@ -325,12 +324,12 @@ public class AAAgentTest {
 				"Testing passive seller on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 150000, 1, 10);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 10);
 		addTransaction(125000, 1, 20);
 
 		// Testing the Agent
-		AAAgent agent = addAgent(false);
+		AAAgent agent = addAgent(OrderType.SELL);
 		Logger.log(Logger.Level.DEBUG,
 				"Price ~= " + (150000 + (Price.INF.intValue() - 150000) / 3));
 		agent.setAggression(-1.0);
@@ -339,7 +338,7 @@ public class AAAgentTest {
 		// Asserting the bid is correct
 		int low = 150000 + (Price.INF.intValue() - 150000) / 3 - 1000;
 		int high = 150000 + (Price.INF.intValue() - 150000) / 3 + 1000;
-		assertCorrectBid(agent, low, high, -1);
+		assertCorrectBid(agent, low, high, 1);
 	}
 
 	/**
@@ -352,17 +351,17 @@ public class AAAgentTest {
 				"\nTesting active seller on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 150000, 1, 15);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 15);
 		addTransaction(125000, 1, 20);
 
-		AAAgent agent = addAgent(false);
+		AAAgent agent = addAgent(OrderType.SELL);
 		log(Logger.Level.DEBUG, "Price ~= 141667");
 		agent.setAggression(0);
 		executeAgentStrategy(agent, 100);
 
 		// Asserting the bid is correct
-		assertCorrectBid(agent, 138000, 144000, -1);
+		assertCorrectBid(agent, 138000, 144000, 1);
 	}
 
 	@Test
@@ -372,16 +371,16 @@ public class AAAgentTest {
 				"Testing aggressive seller on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 150000, 1, 10);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 10);
 		addTransaction(125000, 1, 20);
 
-		AAAgent agent = addAgent(false);
+		AAAgent agent = addAgent(OrderType.SELL);
 		agent.setAggression(1);
 		executeAgentStrategy(agent, 100);
 
 		// Asserting the bid is correct
-		assertCorrectBid(agent, 130000, 135000, -1);
+		assertCorrectBid(agent, 130000, 135000, 1);
 	}
 
 	
@@ -391,12 +390,12 @@ public class AAAgentTest {
 				"\nTesting passive buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 150000, 1, 10);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 10);
 		addTransaction(125000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(true);
+		AAAgent agent = addAgent(OrderType.BUY);
 		agent.setAggression(-1);
 		executeAgentStrategy(agent, 100);
 		
@@ -410,12 +409,12 @@ public class AAAgentTest {
 				"\nTesting r = -0.5 buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 150000, 1, 10);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 10);
 		addTransaction(125000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(true);
+		AAAgent agent = addAgent(OrderType.BUY);
 		agent.setAggression(-0.5);
 		agent.setAdaptivness(-3.0);
 		executeAgentStrategy(agent, 100);
@@ -430,12 +429,12 @@ public class AAAgentTest {
 				"\nTesting r = 0 buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 150000, 1, 10);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 10);
 		addTransaction(125000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(true);
+		AAAgent agent = addAgent(OrderType.BUY);
 		agent.setAggression(0);
 		agent.setAdaptivness(-3.0);
 		executeAgentStrategy(agent, 100);
@@ -450,12 +449,12 @@ public class AAAgentTest {
 				"\nTesting r = 0 buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 150000, 1, 10);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 10);
 		addTransaction(125000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(true);
+		AAAgent agent = addAgent(OrderType.BUY);
 		agent.setAggression(0.5);
 		agent.setAdaptivness(-3.0);
 		executeAgentStrategy(agent, 100);
@@ -470,19 +469,19 @@ public class AAAgentTest {
 				"\nTesting passive buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 150000, 1, 10);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 10);
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(false);
+		AAAgent agent = addAgent(OrderType.SELL);
 		agent.setAggression(-1);
 		executeAgentStrategy(agent, 100);
 		
 		// Asserting the bid is correct
 		int low = 95000 + (int) (Price.INF.doubleValue() / 3);
 		int high = 105000 + (int) (Price.INF.doubleValue() / 3);
-		assertCorrectBid(agent, low, high, -1);
+		assertCorrectBid(agent, low, high, 1);
 	}
 
 	@Test
@@ -491,17 +490,17 @@ public class AAAgentTest {
 				"\nTesting passive buyer on market with transactions");
 
 		// Adding Transactions and Bids
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 150000, 1, 10);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 10);
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(false);
+		AAAgent agent = addAgent(OrderType.SELL);
 		agent.setAggression(0);
 		executeAgentStrategy(agent, 100);
 		
 		// Asserting the bid is correct
-		assertCorrectBid(agent, 132000, 135000, -1);
+		assertCorrectBid(agent, 132000, 135000, 1);
 	}
 
 	@Test
@@ -509,18 +508,18 @@ public class AAAgentTest {
 		Logger.log(Logger.Level.DEBUG, "\nTesting aggression learning");
 
 		// Adding Bids and Transactions
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 150000, 1, 10);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 10);
 		addTransaction(95000, 1, 20);
 		addTransaction(100000, 1, 25);
 		addTransaction(100000, 1, 30);
 		addTransaction(100000, 1, 35);
 		addTransaction(105000, 1, 40);
 
-		AAAgent agent = addAgent(true);
+		AAAgent agent = addAgent(OrderType.BUY);
 		executeAgentStrategy(agent, 100);
-		assertCorrectBid(agent, 50000, 100000, 1);
 		assertTrue(agent.getAggression() > 0);
+		assertCorrectBid(agent, 50000, 100000, 1);
 	}
 	
 	@Test
@@ -528,18 +527,19 @@ public class AAAgentTest {
 		Logger.log(Logger.Level.DEBUG, "\nTesting aggression learning");
 
 		// Adding Bids and Transactions
-		addBid(BUY, 50000, 1, 10);
-		addBid(SELL, 150000, 1, 10);
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 10);
 		addTransaction(105000, 1, 20);
 		addTransaction(100000, 1, 25);
 		addTransaction(100000, 1, 30);
 		addTransaction(100000, 1, 35);
 		addTransaction(95000, 1, 40);
 
-		AAAgent agent = addAgent(false);
+		AAAgent agent = addAgent(OrderType.SELL);
 		executeAgentStrategy(agent, 100);
-		assertCorrectBid(agent, 100000, 150000, -1);
 		assertTrue(agent.getAggression() > 0);
+		assertCorrectBid(agent, 100000, 150000, 1);
 	}
 	
+	// TODO testing of effects of varying parameters
 }
