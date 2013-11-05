@@ -108,14 +108,12 @@ public class Quote implements Serializable {
 		StringBuilder sb = new StringBuilder("(Bid: ");
 		
 		if (bid == null) sb.append("- ");
-		else if (bidQuantity == 1) sb.append(bid);
-		else sb.append(bid).append(' ').append(bidQuantity);
+		else sb.append(bidQuantity).append(" @ ").append(bid);
 		
 		sb.append(", Ask: ");
 		
 		if (ask == null) sb.append("- ");
-		else if (askQuantity == 1) sb.append(ask);
-		else sb.append(ask).append(' ').append(askQuantity);
+		else sb.append(askQuantity).append(" @ ").append(ask);
 		
 		return sb.append(')').toString();
 	}

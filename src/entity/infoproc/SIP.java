@@ -44,7 +44,7 @@ public class SIP extends IP {
 		this.marketQuotes = Maps.newHashMap();
 		this.quoteTimes = Maps.newHashMap();
 		this.transactions = Lists.newArrayList();
-		this.nbbo = new BestBidAsk(null, null, null, null);
+		this.nbbo = new BestBidAsk(null, null, 0, null, null, 0);
 
 		this.nbboSpreads = new TimeSeries();
 	}
@@ -63,16 +63,19 @@ public class SIP extends IP {
 		Logger.log(INFO, market + " -> " + this + " quote " + quote);
 
 		Price bestBid = null, bestAsk = null;
+		int bestBidQuantity = 0, bestAskQuantity = 0;
 		Market bestBidMkt = null, bestAskMkt = null;
 
 		for (Entry<Market, Quote> marketQuote : marketQuotes.entrySet()) {
 			Quote q = marketQuote.getValue();
 			if (q.getAskPrice() != null && q.getAskPrice().lessThan(bestAsk)) {
 				bestAsk = q.getAskPrice();
+				bestAskQuantity = q.getAskQuantity();
 				bestAskMkt = marketQuote.getKey();
 			}
 			if (q.getBidPrice() != null && q.getBidPrice().greaterThan(bestBid)) {
 				bestBid = q.getBidPrice();
+				bestBidQuantity = q.getBidQuantity();
 				bestBidMkt = marketQuote.getKey();
 			}
 		}
@@ -85,9 +88,11 @@ public class SIP extends IP {
 			// just the midpoint will work fine.
 			bestBid = new Price(mid);
 			bestAsk = new Price(mid);
+			// TODO how to address quantity?
 		}
 
-		nbbo = new BestBidAsk(bestBidMkt, bestBid, bestAskMkt, bestAsk);
+		nbbo = new BestBidAsk(bestBidMkt, bestBid, bestBidQuantity, 
+				bestAskMkt, bestAsk, bestAskQuantity);
 		nbboSpreads.add((int) currentTime.getInTicks(), nbbo.getSpread());
 		return ImmutableList.of();
 	}
