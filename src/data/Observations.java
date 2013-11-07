@@ -105,12 +105,11 @@ public class Observations {
 
 	protected static final Gson gson = new Gson();
 
-	JsonObject observations;
+	protected final JsonObject observations;
 
 	public Observations(SimulationSpec spec, Collection<Market> markets,
 			Collection<Agent> agents, Collection<Player> players,
-			FundamentalValue fundamental, SIP sip, String modelName,
-			int observationNum) {
+			FundamentalValue fundamental, SIP sip) {
 		
 		Builder<List<Transaction>> transactionLists = ImmutableList.builder();
 		for (Market market : markets)
@@ -133,7 +132,7 @@ public class Observations {
 		JsonObject features = new JsonObject();
 		observations.add(FEATURES, features);
 		
-		features.add("", getConfiguration(spec, observationNum, maxTime));
+		features.add("", getConfiguration(spec, maxTime));
 		features.add(SURPLUS, getSurplus(agents, players));
 		features.add(EXECTIME, getExecutionTime(transactions));
 		features.add(TRANSACTIONS, getTransactionInfo(agents, transactions, fundamental, maxTime));
@@ -158,11 +157,9 @@ public class Observations {
 	 * Data aggregation
 	 *******************************************/
 
-	protected static JsonObject getConfiguration(SimulationSpec spec,
-			int observationNum, long maxTime) {
+	protected static JsonObject getConfiguration(SimulationSpec spec, long maxTime) {
 		JsonObject config = new JsonObject();
 
-		config.addProperty(OBS_KEY, observationNum);
 		config.addProperty(TIMESERIES_MAXTIME, maxTime);
 		spec.getSimulationProps().copyToJson(config);
 		spec.getDefaultMarketProps().copyToJson(config);
