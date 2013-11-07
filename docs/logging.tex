@@ -14,7 +14,7 @@
 }
 
 \newcommand{\simspec}{simulation_spec.json}
-\newcommand{\logfile}{simulations_1_14-Oct-2013_15.56.06.txt}
+\newcommand{\logfile}{simulations_1_0_14-Oct-2013_15.56.06.txt}
 
 \begin{document}
 	
@@ -32,12 +32,14 @@ All log files are saved in the folder \path{logs} that is created in the
 directory that contains the \path{simulation_spec.json} file.  Logs (.txt
 files) are named according the following convention: There are four sections in
 the filename, each separated by underscores (examples refer to the filename
-\path{simulations_1_14-Oct-2013_15.56.06.txt}):
+\path{simulations_1_0_14-Oct-2013_15.56.06.txt}):
 
 \begin{description}
 \item[Directory or path] with the spec file, with forward slashes replaced by
   hyphens (e.g., the base directory is \path{simulations/test})
 \item[Observation number] (e.g., here it is observation \#2)
+\item[Simulation number] (e.g. here it is simulation \#0, simulation numbers
+  start at 0)
 \item[Date] (dd-MMM-YYYY format)
 \item[Time] (hh.mm.ss format, 24-hour clock, e.g., time here is 1:45:00 PM)
 \end{description}
