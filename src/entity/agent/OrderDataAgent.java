@@ -63,6 +63,7 @@ public class OrderDataAgent extends SMAgent {
 	@Override
 	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
         OrderDatum nextStrategy = orderData.peek();
+        System.out.println("func"+nextStrategy.getTimestamp());
         return ImmutableList.of(new AgentStrategy(this, nextStrategy.getTimestamp()));
 	}
 	

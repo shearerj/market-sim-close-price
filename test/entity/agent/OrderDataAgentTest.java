@@ -88,29 +88,31 @@ public class OrderDataAgentTest {
 		
 		//0->15
 		TimeStamp t1 = new TimeStamp(0);
-		// on any market , OrderDataAgent should follow order data as it inputs
+		// in any market , OrderDataAgent should follow order data as it inputs
 		Collection<? extends Activity> c = agent.agentStrategy(t1);
-	    TimeStamp t2 = new TimeStamp(15);
-	    Collection<? extends Activity> nextOrder = ImmutableList.of(new AgentStrategy(agent, t2));
-	    System.out.println(c.iterator().next().getTime() + " &|& " + nextOrder.iterator().next().getTime() );
-		assertTrue("OrderDataAgent Strategy is in order",c.iterator().next().getTime().equals(nextOrder.iterator().next().getTime()));
+		Activity nextOrder = Iterables.getOnlyElement(c);
+		TimeStamp t2 = new TimeStamp(15);
+		assertTrue("OrderDataAgent Strategy is in order",nextOrder.getTime().equals(t2));
+		
+		agent.executeODAStrategy(1, t2);
 	    
 		//15->18
         t1 = new TimeStamp(15);
         c = agent.agentStrategy(t1);
+        nextOrder = Iterables.getOnlyElement(c);
+        System.out.println(nextOrder.getTime());
         t2 = new TimeStamp(18);
-        nextOrder = ImmutableList.of(new AgentStrategy(agent, t2));
-        System.out.println( c.iterator().next().getTime() + " ^|^" +nextOrder.iterator().next().getTime());
-        assertTrue("OrderDataAgent Strategy is in order",c.iterator().next().getTime().equals(nextOrder.iterator().next().getTime()));
-	
+        assertTrue("OrderDataAgent Strategy is in order",nextOrder.getTime().equals(t2));
+        
+        agent.executeODAStrategy(1, t2);
+
         //18->20
         t1 = new TimeStamp(18);
         c = agent.agentStrategy(t1);
+        nextOrder = Iterables.getOnlyElement(c);
         t2 = new TimeStamp(20);
-        nextOrder = ImmutableList.of(new AgentStrategy(agent, t2));
-
-        assertTrue("OrderDataAgent Strategy is in order",c.iterator().next().getTime().equals(nextOrder.iterator().next().getTime()));
-	}
+        assertTrue("OrderDataAgent Strategy is in order",nextOrder.getTime().equals(t2));
+  	}
 	
 	@Test
 	public void ordersTest(){
