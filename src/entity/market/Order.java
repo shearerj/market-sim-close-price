@@ -2,6 +2,9 @@ package entity.market;
 
 import java.io.Serializable;
 
+import systemmanager.Consts;
+import systemmanager.Consts.OrderType;
+
 import com.google.common.base.Objects;
 
 import entity.agent.Agent;
@@ -38,6 +41,14 @@ public class Order implements Serializable {
 	
 	public TimeStamp getSubmitTime() {
 		return order.getSubmitTime().getTime();
+	}
+	
+	public OrderType getOrderType() {
+		switch (order.getOrderType()) {
+		case BUY:  return Consts.OrderType.BUY;
+		case SELL: return Consts.OrderType.SELL;
+		default:   return null;
+		}
 	}
 	
 	public Price getPrice() {

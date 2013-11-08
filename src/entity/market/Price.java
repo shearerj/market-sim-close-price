@@ -110,7 +110,7 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 	/**
 	 * True if p is null or this price is greater or equal
 	 */
-	public boolean greaterThanEquals(Price p) {
+	public boolean greaterThanEqual(Price p) {
 		return p == null || compareTo(p) >= 0;
 	}
 

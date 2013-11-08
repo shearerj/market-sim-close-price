@@ -6,10 +6,12 @@ import static utils.MathUtils.bound;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import systemmanager.Consts.OrderType;
 import utils.Rands;
 
 import com.google.common.base.Objects;
@@ -24,6 +26,8 @@ import entity.market.Price;
  * Encapsulation of an agent's private value. <code>getValueFromQuantity</code>
  * is the main method that should be used.
  * 
+ * NOTE: This private value model is only for single-unit limit orders.
+ * 
  * @author ewah
  */
 public class PrivateValue implements Serializable {
@@ -31,7 +35,7 @@ public class PrivateValue implements Serializable {
 	private static final long serialVersionUID = -348702049295080442L;
 	
 	protected final int offset;
-	protected final List<Price> prices;
+	protected final List<Price> values;
 
 	/**
 	 * Constructor for an agent without private value. This will return
@@ -39,15 +43,14 @@ public class PrivateValue implements Serializable {
 	 */
 	public PrivateValue() {
 		offset = 0;
-		prices = Collections.singletonList(ZERO);
+		values = Collections.singletonList(ZERO);
 	}
 
 	/**
 	 * Randomly generate private values for positional changes
 	 * 
 	 * @param maxPosition
-	 *            the maximum position the agent can take. Beyond max position
-	 *            the change in private value is zero.
+	 *            the maximum position the agent can take.
 	 * @param var
 	 *            Gaussian variance to use during random private value
 	 *            initialization.
@@ -59,19 +62,27 @@ public class PrivateValue implements Serializable {
 		
 		// Identical to legacy generation in final output
 		this.offset = maxPosition;
-		double[] prices = new double[maxPosition * 2 + 1];
-		for (int i = 0; i < prices.length; i++)
-			prices[i] = Rands.nextGaussian(rand, 0, var);
-		Arrays.sort(prices);
-		double median = prices[offset];
-		for (int i = 0; i < prices.length; i++)
-			prices[i] = prices[i] - median;
+		double[] values = new double[maxPosition * 2];
+		for (int i = 0; i < values.length; i++)
+			values[i] = Rands.nextGaussian(rand, 0, var);
+		Arrays.sort(values);
 		
 		Builder<Price> builder = ImmutableList.builder();
-		for (double price : prices)
-			builder.add(new Price(price));
+		for (double value : values)
+			builder.add(new Price(value));
 		
-		this.prices = builder.build();
+		this.values = builder.build();
+	}
+	
+	/**
+	 * Protected constructor for testing purposes (DummyPrivateValue)
+	 */
+	protected PrivateValue(int maxPosition, Collection<Price> values){
+		checkArgument(values.size() == 2*maxPosition, "Incorrect number of entries in list");
+		Builder<Price> builder = ImmutableList.builder();
+		builder.addAll(values);
+		this.values = builder.build();
+		offset = maxPosition;
 	}
 
 	/**
@@ -82,36 +93,38 @@ public class PrivateValue implements Serializable {
 	}
 	
 	/**
-	 * @param position
+	 * @param currentPosition
 	 *            Agent's current position
-	 * @param quantity
-	 *            Number of goods Agent will acquire from current position
-	 * @return The change resulting from modifying ones position by that amount.
+	 * @param type
+	 * 			  Buy or Sell
+	 * @return The new private value if buying or selling 1 unit
 	 */
-	public Price getValueFromQuantity(int position, int quantity) {
-		return new Price(getValueAtPosition(position + quantity).intValue()
-				- getValueAtPosition(position).intValue());
+	public Price getValueFromQuantity(int currentPosition, OrderType type) {
+		return getValueFromQuantity(currentPosition, 1, type);
 	}
-
+	
 	/**
-	 * Get a pseudo private value for the agent from holding a specific position.
-	 * This call is experimental and may be deprecated in the future.
-	 * 
-	 * @param position
-	 *            The position of the Agent
-	 * @return The pseudo private value of the Agent at the position. This is
-	 *         additive so
-	 *         <code> getValueAtPosition(newPos).minus(getValueAtPosition(currentPos)) </code>
-	 *         represents the change in value for going from position currentPos
-	 *         to position newPos.
+	 * @param currentPosition
+	 * @param quantity
+	 * @param type
+	 * @return
 	 */
-	public Price getValueAtPosition(int position) {
-		return prices.get(bound(position + offset, 0, prices.size() - 1));
+	public Price getValueFromQuantity(int currentPosition, int quantity, OrderType type) {
+		checkArgument(quantity > 0, "Quantity must be positive");
+		switch (type) {
+		case BUY:
+			return values.get(bound(currentPosition + offset + (quantity - 1), 0, values.size() - 1));
+		case SELL:
+			return values.get(bound(currentPosition + offset - 1 - (quantity - 1), 0, values.size() - 1));
+
+		default:
+			return Price.ZERO;
+		}
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hashCode(prices, offset);
+		return Objects.hashCode(values, offset);
 	}
 
 	@Override
@@ -119,12 +132,12 @@ public class PrivateValue implements Serializable {
 		if (obj == null || !(obj instanceof PrivateValue))
 			return false;
 		PrivateValue other = (PrivateValue) obj;
-		return other.offset == this.offset && other.prices.equals(prices);
+		return other.offset == this.offset && other.values.equals(values);
 	}
 
 	@Override
 	public String toString() {
-		return prices.toString();
+		return values.toString();
 	}
 
 }

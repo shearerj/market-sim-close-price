@@ -11,6 +11,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import systemmanager.Consts.OrderType;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -38,7 +40,7 @@ public abstract class Agent extends Entity {
 	protected final Random rand;
 	protected final FundamentalValue fundamental;
 	protected final SIP sip;
-	// List of all transactions. Implicitly time ordered due to transactions
+	// List of all transactions for this agent. Implicitly time ordered due to transactions
 	// being created and assigned in time order.
 	protected final List<Transaction> transactions;
 	protected final Collection<Order> activeOrders;
@@ -134,7 +136,41 @@ public abstract class Agent extends Entity {
 		activeOrders.remove(order);
 	}
 
-	// TODO how does agent remove a specific order? based on time?
+	/**
+	 * Withdraw most recent order.
+	 * @return
+	 */
+	public Iterable<? extends Activity> withdrawNewestOrder() {
+		Collection<Activity> acts = new ArrayList<Activity>();
+		TimeStamp ts = TimeStamp.ZERO;
+		Order lastOrder = null;
+		for (Order order : activeOrders) {
+			if (order.getSubmitTime().after(ts)) {
+				ts = order.getSubmitTime();
+				lastOrder = order;
+			}
+		}
+		if (lastOrder != null) acts.add(new WithdrawOrder(lastOrder, TimeStamp.IMMEDIATE));
+		return acts;
+	}
+	
+	/**
+	 * Withdraw first (earliest) order.
+	 * @return
+	 */
+	public Iterable<? extends Activity> withdrawOldestOrder() {
+		Collection<Activity> acts = new ArrayList<Activity>();
+		TimeStamp ts = new TimeStamp(Long.MAX_VALUE); // infinity
+		Order lastOrder = null;
+		for (Order order : activeOrders) {
+			if (order.getSubmitTime().before(ts)) {
+				ts = order.getSubmitTime();
+				lastOrder = order;
+			}
+		}
+		if (lastOrder != null) acts.add(new WithdrawOrder(lastOrder, TimeStamp.IMMEDIATE));
+		return acts;
+	}
 	
 	/**
 	 * Withdraw all active orders.
@@ -196,7 +232,7 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * Iterates through the agent's transactions and calculates it's current discounted surplus with
+	 * Iterates through the agent's transactions and calculates its current discounted surplus with
 	 * the specified discount factor
 	 * 
 	 * @param rho
@@ -205,29 +241,29 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public double getSurplus(double rho) {
-		checkArgument(rho >= 0, "Can't have a negative discoutn factor");
+		checkArgument(rho >= 0, "Can't have a negative discount factor");
 		double surplus = 0;
 
 		for (Transaction trans : transactions) {
 			TimeStamp submissionTime;
-			int sign;
+			OrderType type;
 			
 			if (trans.getBuyer().equals(trans.getSeller())) {
 				// FIXME Handle appropriately...
 				continue;
 			} else if (trans.getBuyer().equals(this)) {
 				submissionTime = trans.getBuyBid().getSubmitTime();
-				sign = 1;
+				type = OrderType.BUY;
 			} else {
 				submissionTime = trans.getSellBid().getSubmitTime();
-				sign = -1;
+				type = OrderType.SELL;
 			}
 			TimeStamp timeToExecution = trans.getExecTime().minus(submissionTime);
 
 			int fund = fundamental.getValueAt(trans.getExecTime()).intValue() * trans.getQuantity();
-			int pv = privateValue.getValueFromQuantity(positionBalance, trans.getQuantity()).intValue();
+			int pv = privateValue.getValueFromQuantity(positionBalance, type).intValue();
 			int cost = trans.getPrice().intValue() * trans.getQuantity();
-			int transactionSurplus = (fund + pv - cost) * sign;
+			int transactionSurplus = (fund + pv - cost) * (type.equals(OrderType.BUY) ? 1 : -1) ;
 
 			surplus += Math.exp(rho * timeToExecution.getInTicks()) * transactionSurplus;
 		}
