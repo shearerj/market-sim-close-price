@@ -40,6 +40,8 @@ public class OrderDataAgent extends SMAgent {
 
 		@Override
 		public int compare(OrderDatum arg0, OrderDatum arg1) {
+			System.out.println( "TS " + arg0.getTimestamp() + " | " + arg1.getTimestamp());
+			System.out.println(arg1.getTimestamp().compareTo(arg0.getTimestamp()));
 			return arg0.getTimestamp().compareTo(arg1.getTimestamp());
 			
 		}
@@ -60,7 +62,7 @@ public class OrderDataAgent extends SMAgent {
 
 	@Override
 	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
-        OrderDatum nextStrategy = orderData.element();
+        OrderDatum nextStrategy = orderData.peek();
         return ImmutableList.of(new AgentStrategy(this, nextStrategy.getTimestamp()));
 	}
 	

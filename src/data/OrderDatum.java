@@ -9,7 +9,7 @@ import entity.market.Market;
 import entity.market.Price;
 import event.TimeStamp;
 
-public class OrderDatum <P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
+public class OrderDatum {//<P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
 	/**
 	 * 
 	 */

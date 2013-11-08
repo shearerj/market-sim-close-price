@@ -92,7 +92,7 @@ public class OrderDataAgentTest {
 		Collection<? extends Activity> c = agent.agentStrategy(t1);
 	    TimeStamp t2 = new TimeStamp(15);
 	    Collection<? extends Activity> nextOrder = ImmutableList.of(new AgentStrategy(agent, t2));
-	    
+	    System.out.println(c.iterator().next().getTime() + " &|& " + nextOrder.iterator().next().getTime() );
 		assertTrue("OrderDataAgent Strategy is in order",c.iterator().next().getTime().equals(nextOrder.iterator().next().getTime()));
 	    
 		//15->18
@@ -100,7 +100,7 @@ public class OrderDataAgentTest {
         c = agent.agentStrategy(t1);
         t2 = new TimeStamp(18);
         nextOrder = ImmutableList.of(new AgentStrategy(agent, t2));
-
+        System.out.println( c.iterator().next().getTime() + " ^|^" +nextOrder.iterator().next().getTime());
         assertTrue("OrderDataAgent Strategy is in order",c.iterator().next().getTime().equals(nextOrder.iterator().next().getTime()));
 	
         //18->20
