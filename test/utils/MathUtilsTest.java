@@ -1,13 +1,8 @@
 package utils;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 import static org.junit.Assert.*;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class MathUtilsTest // extends MathUtils
@@ -22,7 +17,7 @@ public class MathUtilsTest // extends MathUtils
 		//standard inputs for logn
 		int number= 10;
 		int base = 10;
-		int result = logn(number, base);
+		int result = MathUtils.logn(number, base);
 		assert(result==1);//normal test case
 		//log base 10 of 10 is 1
 		
