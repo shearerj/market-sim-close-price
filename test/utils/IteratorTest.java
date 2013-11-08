@@ -18,9 +18,9 @@ public class IteratorTest {
 	public void emptyConstructorTest() {
 		Iterator<E> a = new Iterator<E>();
 		assertTrue(a.isEmpty());
-		bool testHasNext;
-		testHasNext=Iterator.hasNext();
-		Assert(testHasNext==0);
+		boolean testHasNext;
+		testHasNext= Iterator.hasNext();
+		assertFalse(testHasNext);
 
 		//if you attempt to use next()
 		//you should recieve a NoSuchElementException
