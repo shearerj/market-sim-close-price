@@ -43,27 +43,20 @@ public class LAAgent extends HFTAgent {
 	private static final long serialVersionUID = 1479379512311568959L;
 	
 	protected final double alpha; // LA profit gap
-	protected final Map<Market, HFTIP> ips;
 
 	public LAAgent(Collection<Market> markets, FundamentalValue fundamental,
-			SIP sip, double alpha, TimeStamp latency, Random rand,
-			int tickSize) {
-		super(TimeStamp.ZERO, markets, fundamental, sip, rand, tickSize);
+			SIP sip, TimeStamp latency, Random rand, int tickSize,
+			double alpha) {
+		super(latency, TimeStamp.ZERO, fundamental, sip, markets, rand, tickSize);
+		
 		this.alpha = alpha;
-		this.ips = Maps.newHashMap();
-
-		for (Market market : markets) {
-			HFTIP laip = new HFTIP(latency, market, this);
-			ips.put(market, laip);
-			market.addIP(laip);
-		}
 	}
 
 	public LAAgent(Collection<Market> markets, FundamentalValue fundamental,
 			SIP sip, Random rand, EntityProperties props) {
-		this(markets, fundamental, sip, props.getAsDouble(Keys.ALPHA, 0.001),
-				new TimeStamp(props.getAsLong(Keys.LA_LATENCY, -1)), rand,
-				props.getAsInt(Keys.TICK_SIZE, 1));
+		this(markets, fundamental, sip, new TimeStamp(props.getAsLong(Keys.LA_LATENCY, -1)),
+				rand, props.getAsInt(Keys.TICK_SIZE, 1),
+				props.getAsDouble(Keys.ALPHA, 0.001));
 	}
 
 	@Override

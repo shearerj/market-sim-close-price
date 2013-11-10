@@ -33,9 +33,9 @@ public abstract class MMAgent extends Agent {
 	protected final Collection<Market> markets; 
 	
 	// TODO Just keep the SMIPs and not the actual markets...
-	public MMAgent(TimeStamp arrivalTime, Collection<Market> markets,
-			FundamentalValue fundamental, SIP sip, PrivateValue pv,
-			Random rand, int tickSize) {
+	public MMAgent(TimeStamp arrivalTime, FundamentalValue fundamental,
+			SIP sip, Collection<Market> markets, Random rand,
+			PrivateValue pv, int tickSize) {
 		super(arrivalTime, fundamental, sip, rand, pv, tickSize);
 		this.markets = markets;
 	}
