@@ -15,12 +15,19 @@ using namespace std;
 int main(int argc, const char * argv[])
 {
   std::ios_base::sync_with_stdio(false);
- 
-  char c;
+  
+  if(argc != 3) {
+    cerr << "Incorrect number of args\n";
+    return 1;
+  }
+
+  istream  
+  char c = ' ';
   TimeStamp ts;
   
-  while(cin.good()){
+  while(!cin.eof()){
     cin >> c;
+    cerr << c << '\n';
     //determine message type, add to vector
     if(c == 'T') {
       cin >> ts;
@@ -128,12 +135,12 @@ int main(int argc, const char * argv[])
       cout << o;
     }
     else {
-      cerr << "Error in reading input, halting\n";
-      break;
+      cerr << "Error in reading input\n";
+      continue;
     }
   }
   
-  
+  cerr << "Finished reading\n";  
   return 0;
 }
 
