@@ -30,7 +30,7 @@ int main(int argc, const char * argv[])
     return 1;
   }
   
-  ofstream(argv[2], ios::out | ios::trunc);
+  ofstream output(argv[2], ios::out | ios::trunc);
   if(!output.is_open()){
     cerr << "Error opening output file";
     return 1;
@@ -40,7 +40,7 @@ int main(int argc, const char * argv[])
   TimeStamp ts;
   
   while(!input.eof()){
-    input >> c;
+    input.get(c);
     cerr << c << '\n';
     //determine message type, add to vector
     if(c == 'T') {
