@@ -36,12 +36,10 @@ int main(int argc, const char * argv[])
     return 1;
   }
   
-  char c = ' ';
+  char c;
   TimeStamp ts;
   
-  while(!input.eof()){
-    input >> c;
-    cerr << c << '\n';
+  while(input >> c){
     //determine message type, add to vector
     if(c == 'T') {
       input >> ts;

@@ -6,7 +6,27 @@
 //  Copyright (c) 2013 Dylan Hurd. All rights reserved.
 //
 
+#include <stdint.h>
 #include "Message.h"
+
+//
+// Data Types - DO NOT TOUCH
+//
+
+istream& operator>> (istream &input, uint32_t &n){
+  input.read(reinterpret_cast<char*>(&n), sizeof(n));
+  return input;
+}
+
+istream& operator>> (istream &input, uint64_t &n){
+  input.read(reinterpret_cast<char*>(&n), sizeof(n));
+  return input;
+}
+
+istream& operator>> (istream &input, char &c){
+  input.read(&c, sizeof(c));
+  return input;
+}
 
 //
 // Input
