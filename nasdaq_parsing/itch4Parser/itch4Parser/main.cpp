@@ -24,13 +24,13 @@ int main(int argc, const char * argv[])
   }
 
   // Opening input file in binary mode
-  ifstream input(argv[1], ios::in | ios::binary);
+  ifstream input(argv[1], ios::in);
   if(!input.is_open()){
     cerr << "Error opening input file";
     return 1;
   }
   
-  ofstream(argv[2], ios::out | ios::trunc);
+  ofstream output(argv[2], ios::out | ios::trunc);
   if(!output.is_open()){
     cerr << "Error opening output file";
     return 1;
