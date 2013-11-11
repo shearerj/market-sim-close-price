@@ -24,7 +24,7 @@ int main(int argc, const char * argv[])
   }
 
   // Opening input file in binary mode
-  ifstream input(argv[1], ios::in);
+  ifstream input(argv[1], ios::in | ios:binary);
   if(!input.is_open()){
     cerr << "Error opening input file";
     return 1;
