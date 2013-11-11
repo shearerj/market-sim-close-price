@@ -94,7 +94,6 @@ public abstract class Agent extends Entity {
 	/**
 	 * Liquidates an agent's position at the specified price.
 	 */
-	// TODO Unused
 	public Iterable<? extends Activity> liquidate(Price price, TimeStamp ts) {
 
 		log(INFO, this + " pre-liquidation: position="
@@ -104,15 +103,9 @@ public abstract class Agent extends Entity {
 		if (positionBalance == 0) return Collections.emptyList();
 
 		preLiqPosition = positionBalance;
-		preLiqRealizedProfit = (int) getSurplus(0); // XXX This is almost certainly wrong
-		if (positionBalance > 0) {
-			// need to sell
-			realizedProfit += positionBalance * price.intValue();
-		} else {
-			// need to buy
-			realizedProfit -= positionBalance * price.intValue();
-		}
-		positionBalance = 0;
+		preLiqRealizedProfit = (int) getSurplus(0);
+		realizedProfit += positionBalance * price.intValue();
+		positionBalance -= positionBalance;
 
 		log(INFO, this + " post-liquidation: position="
 				+ positionBalance + ", profit=" + realizedProfit + ", price="

@@ -27,6 +27,7 @@ import entity.market.Market;
 import entity.market.MockMarket;
 import entity.market.Order;
 import entity.market.Price;
+import entity.market.Transaction;
 import event.TimeStamp;
 
 public class AgentTest {
@@ -205,16 +206,57 @@ public class AgentTest {
 		assertEquals(0, orders.size());	
 	}
 	
+	@Test
 	public void addTransactionTest() {
-		// TODO
+		TimeStamp time = TimeStamp.ZERO;
+		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		
+		assertEquals( 0, agent.transactions.size());
+		
+		// Creating and adding bids
+		market.submitOrder(agent, OrderType.BUY, new Price(110), 1, time);
+		market.submitOrder(agent2, OrderType.SELL, new Price(100), 1, time);
+		assertEquals(0, market.getTransactions().size());
+		
+		// Testing the market for the correct transactions
+		market.clear(time);	// will call agent's addTransaction
+		assertEquals( 1, market.getTransactions().size() );
+		Transaction tr = market.getTransactions().get(0);
+		assertEquals( 1, agent.transactions.size());
+		assertEquals(tr, agent.transactions.get(0));
 	}
 	
 	public void surplusTest() {
 		// TODO verify computation, plus discount factor
 	}
 
+	@Test
 	public void liquidation() {
-		// TODO
+		TimeStamp time = new TimeStamp(100);
+		agent.realizedProfit = 5000;
+		
+		// Check that no change if position 0
+		agent.positionBalance = 0;
+		agent.liquidate(new Price(100000), time);
+		assertEquals(5000, agent.realizedProfit);
+		
+		// Check liquidation when position > 0 (sell 1 unit)
+		agent.realizedProfit = 5000;
+		agent.positionBalance = 1;
+		agent.liquidate(new Price(100000), time);
+		assertEquals(105000, agent.realizedProfit);
+		
+		// Check liquidation when position < 0 (buy 2 units)
+		agent.realizedProfit = 5000;
+		agent.positionBalance = -2;
+		agent.liquidate(new Price(100000), time);
+		assertEquals(-195000, agent.realizedProfit);
+		
+		// Check liquidation at fundamental
+		agent.realizedProfit = 5000;
+		agent.positionBalance = 1;
+		agent.liquidateAtFundamental(time);
+		assertEquals(fundamental.getValueAt(time).longValue() + 5000, agent.realizedProfit);
 	}
 	
 	@Test
