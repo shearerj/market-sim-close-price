@@ -13,9 +13,13 @@
 
 using namespace std;
 
+
 int main(int argc, const char * argv[])
 {
   std::ios_base::sync_with_stdio(false);
+ 
+  cout << "int size: " << sizeof(unsigned int) << '\n';
+  cout << "long size: " << sizeof(unsigned long) << '\n';  
   
   if(argc != 3) {
     cerr << "Incorrect number of args\n";
@@ -24,7 +28,7 @@ int main(int argc, const char * argv[])
   }
 
   // Opening input file in binary mode
-  ifstream input(argv[1], ios::in | ios::binary);
+  ifstream input(argv[1], ios::in );
   if(!input.is_open()){
     cerr << "Error opening input file";
     return 1;
@@ -39,7 +43,9 @@ int main(int argc, const char * argv[])
   char c;
   TimeStamp ts;
   
-  while(input >> c){
+  while(input.good()){
+    input >> c;
+    cout << c << ' ' << input.good() << '\n';
     //determine message type, add to vector
     if(c == 'T') {
       input >> ts;
@@ -151,7 +157,7 @@ int main(int argc, const char * argv[])
       continue;
     }
   }
-  
+ 
   cerr << "Finished reading\n";  
   return 0;
 }

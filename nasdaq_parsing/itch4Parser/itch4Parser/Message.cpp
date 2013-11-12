@@ -5,7 +5,7 @@
 //  Created by Dylan Hurd on 11/3/13.
 //  Copyright (c) 2013 Dylan Hurd. All rights reserved.
 //
-
+#include <ios>
 #include <stdint.h>
 #include "Message.h"
 
@@ -24,7 +24,7 @@
 //}
 
 istream& operator>> (istream &input, char &c){
-  input.read(&c, sizeof(unsigned char));
+  input.read(reinterpret_cast<char*>(&c), sizeof(unsigned char));
   return input;
 }
 
@@ -33,7 +33,8 @@ istream& operator>> (istream &input, char &c){
 //
 
 istream& operator>> (istream &input, TimeStamp &ts){
-  input >> ts.seconds;
+  input  >>  ts.seconds;
+  cerr << "After timestamp: " << input.good() << '\n';
   return input;
 }
 

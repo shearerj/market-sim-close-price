@@ -17,7 +17,7 @@ using namespace std;
 
 class TimeStamp {
 protected:
-  uint32_t seconds;
+  int seconds;
   
 public:
   friend istream& operator>> (istream &input,  TimeStamp &ts);
