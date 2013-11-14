@@ -9,36 +9,8 @@
 #include <stdint.h>
 #include "Message.h"
 
-//
-// Data Types - DO NOT TOUCH
-//
 
-//istream& operator>> (istream &input, uint32_t &n){
-//  input.read(reinterpret_cast<char*>(&n), sizeof(uint32_t));
-//  return input;
-//}
-
-//istream& operator>> (istream &input, uint64_t &n){
-//  input.read(reinterpret_cast<char*>(&n), sizeof(uint64_t));
-//  return input;
-//}
-
-//istream& operator>> (istream &input, char &c){
-//  input.read(reinterpret_cast<char*>(&c), sizeof(unsigned char));
-//  return input;
-//}
-//
-//istream& operator>> (istream &input, unsigned int &n){
-//  input.read(reinterpret_cast<char*>(&n), sizeof(unsigned int));
-//  return input;
-//}
-//
-//istream& operator>> (istream &input, unsigned long &n){
-//  input.read(reinterpret_cast<char*>(&n), sizeof(unsigned long));
-//  return input;
-//}
-
-//Reading strings
+//Reading input - use to read input from the istream - WORKS ON BINARY
 template <class T>
 void read(istream &input, T &object){
   T *ptr = &object;
@@ -51,164 +23,159 @@ void read(istream &input, T &object){
 //
 
 istream& operator>> (istream &input, TimeStamp &ts){
-//  unsigned int *ptr = &ts.seconds;
-//  input.read(reinterpret_cast<char*>(ptr), sizeof(unsigned int));
-//  cerr << "After timestamp: " << input.good() << '\n';
   read(input, ts.seconds);
   return input;
 }
 
 istream& operator>> (istream &input,  Message &o) {
-  input >> o.nanoseconds;
-  input >> o.eventCode;
+  read(input,o.nanoseconds);
+  read(input, o.eventCode);
   return input;
 }
 
 istream& operator>> (istream &input,  StockDirectory &o) {
-  input >> o.nanoseconds;
+  read(input,o.nanoseconds);
   input.get(o.ticker, 9);
-  input >> o.mktCategory;
-  input >> o.finStatus;
-  input >> o.roundLotSize;
-  input >> o.roundLotStatus;
+  read(input, o.mktCategory);
+  read(input, o.finStatus);
+  read(input, o.roundLotSize);
+  read(input, o.roundLotStatus);
   return input;
 }
 
 istream& operator>> (istream &input,  StockTradingAction &o) {
-  input >> o.nanoseconds;
+  read(input,o.nanoseconds);
   input.get(o.ticker, 9);
-  input >> o.tradingState;
+  read(input, o.tradingState);
   input.ignore();
   input.get(o.reason, 5);
   return input;
 }
 
 istream& operator>> (istream &input,  ShortSalePriceTest &o) {
-  input >> o.nanoseconds;
+  read(input,o.nanoseconds);
   input.get(o.ticker, 9);
-  input >> o.regSHOAction;
+  read(input, o.regSHOAction);
   return input;
 }
 
 istream& operator>> (istream &input,  MarketParticipantPosition &o) {
-  input >> o.nanoseconds;
+  read(input,o.nanoseconds);
   input.get(o.mpid, 5);
   input.get(o.ticker, 9);
-  input >> o.mmStatus;
-  input >> o.mmMode;
-  input >> o.mpStatus;
+  read(input, o.mmStatus);
+  read(input, o.mmMode);
+  read(input, o.mpStatus);
   return input;
 }
 
 istream& operator>> (istream &input,  BrokenTrade &o) {
-  input >> o.nanoseconds;
-  input >> o.matchNumber;
+  read(input,o.nanoseconds);
+  read(input, o.matchNumber);
   return input;
 }
 
 istream& operator>> (istream &input,  NetOrderImbalance &o) {
-  input >> o.nanoseconds;
-  input >> o.pairedShares;
-  input >> o.imbalanceShares;
-  input >> o.direction;
+  read(input,o.nanoseconds);
+  read(input, o.pairedShares);
+  read(input, o.imbalanceShares);
+  read(input, o.direction);
   input.get(o.ticker, 9);
-  input >> o.farPrice;
-  input >> o.nearPrice;
-  input >> o.currentPrice;
-  input >> o.crossType;
-  input >> o.priceVar;
+  read(input, o.farPrice);
+  read(input, o.nearPrice)
+  read(input, o.currentPrice);
+  read(input, o.crossType);
+  read(input, o.priceVar);
   return input;
 }
 
 istream& operator>> (istream &input,  RetailPriceImprovement &o) {
-  input >> o.nanoseconds;
+  read(input,o.nanoseconds);
   input.get(o.ticker, 9);
-  input >> o.interest;
+  read(input, o.interest);
   return input;
 }
 
 istream& operator>> (istream &input,  AddOrder &o) {
-  input >> o.nanoseconds;
-  input >> o.refNum;
-  input >> o.buyStatus;
-  input >> o.quantity;
-  // setting the ticker
+  read(input,o.nanoseconds);
+  read(input, o.refNum);
+  read(input, o.buyStatus);
+  read(input, o.quantity)
   input.get(o.ticker, 9);
-  input >> o.price;
+  read(input, o.price);
   return input;
 }
 
 istream& operator>> (istream &input,  AddMPIDOrder &o) {
-  input >> o.nanoseconds;
-  input >> o.refNum;
-  input >> o.buyStatus;
-  input >> o.quantity;
-  // setting the ticker
+  read(input,o.nanoseconds);
+  read(input, o.refNum);
+  read(input, o.buyStatus);
+  read(input, o.quantity)
   input.get(o.ticker, 9);
-  input >> o.price;
+  read(input, o.price);
   input.get(o.mpid, 5);
   return input;
 }
 
 istream& operator>> (istream &input,  ExecutedOrder &o) {
-  input >> o.nanoseconds;
-  input >> o.refNum;
-  input >> o.quantity;
-  input >> o.matchNumber;
+  read(input,o.nanoseconds);
+  read(input, o.refNum);
+  read(input, o.quantity);
+  read(input, o.matchNumber)
   return input;
 }
 
 istream& operator>> (istream &input,  ExecutedPriceOrder &o) {
-  input >> o.nanoseconds;
-  input >> o.refNum;
-  input >> o.quantity;
-  input >> o.matchNumber;
-  input >> o.printable;
-  input >> o.price;
+  read(input,o.nanoseconds);
+  read(input, o.refNum);
+  read(input, o.quantity);
+  read(input, o.matchNumber)
+  read(input, o.printable);
+  read(input, o.price);
   return input;
 }
 
 istream& operator>> (istream &input,  CancelOrder &order){
-  input >> order.nanoseconds;
-  input >> order.refNum;
-  input >> order.quantity;
+  read(input,o.nanoseconds);
+  read(input, o.refNum);
+  read(input, o.quantity);
   return input;
 }
 
 
 istream& operator>> (istream &input,  DeleteOrder &o){
-  input >> o.nanoseconds;
-  input >> o.refNum;
+  read(input,o.nanoseconds);
+  read(input, o.refNum);
   return input;
 }
 
 istream& operator>> (istream &input, ReplaceOrder &o){
-  input >> o.nanoseconds;
-  input >> o.oldRefNum;
-  input >> o.refNum;
-  input >> o.quantity;
-  input >> o.price;
+  read(input,o.nanoseconds);
+  read(input, o.oldRefNum);
+  read(input, o.refNum);
+  read(input, o.quantity);
+  read(input, o.price);
   return input;
 }
 
 istream& operator>> (istream &input,  TradeMessage &o) {
-  input >> o.nanoseconds;
-  input >> o.refNum;
-  input >> o.buyStatus;
-  input >> o.quantity;
+  read(input,o.nanoseconds);
+  read(input, o.refNum);
+  read(input, o.buyStatus);
+  read(input, o.quantity)
   input.get(o.ticker, 9);
-  input >> o.price;
-  input >> o.matchNumber;
+  read(input, o.price);
+  read(input, o.matchNumber);
   return input;
 }
 
 istream& operator>> (istream &input,  CrossTradeMessage &o) {
-  input >> o.nanoseconds;
-  input >> o.quantity;
+  read(input,o.nanoseconds);
+  read(input, o.quantity)
   input.get(o.ticker, 9);
-  input >> o.price;
-  input >> o.matchNumber;
-  input >> o.crossType;
+  read(input, o.price);
+  read(input, o.matchNumber);
+  read(input, o.crossType);
   return input;
 }
 
