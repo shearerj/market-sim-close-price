@@ -23,18 +23,38 @@
 //  return input;
 //}
 
-istream& operator>> (istream &input, char &c){
-  input.read(reinterpret_cast<char*>(&c), sizeof(unsigned char));
-  return input;
+//istream& operator>> (istream &input, char &c){
+//  input.read(reinterpret_cast<char*>(&c), sizeof(unsigned char));
+//  return input;
+//}
+//
+//istream& operator>> (istream &input, unsigned int &n){
+//  input.read(reinterpret_cast<char*>(&n), sizeof(unsigned int));
+//  return input;
+//}
+//
+//istream& operator>> (istream &input, unsigned long &n){
+//  input.read(reinterpret_cast<char*>(&n), sizeof(unsigned long));
+//  return input;
+//}
+
+//Reading strings
+template <class T>
+void read(istream &input, T &object){
+  T *ptr = &object;
+  input.read(reinterpret_cast<char*>(ptr), sizeof(T));
 }
+
 
 //
 // Input
 //
 
 istream& operator>> (istream &input, TimeStamp &ts){
-  input  >>  ts.seconds;
-  cerr << "After timestamp: " << input.good() << '\n';
+//  unsigned int *ptr = &ts.seconds;
+//  input.read(reinterpret_cast<char*>(ptr), sizeof(unsigned int));
+//  cerr << "After timestamp: " << input.good() << '\n';
+  read(input, ts.seconds);
   return input;
 }
 

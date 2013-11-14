@@ -11,13 +11,13 @@
 #define __itch4Parser__Message__
 
 #include <iostream>
-#include <stdint.h>
 
 using namespace std;
 
+
 class TimeStamp {
 protected:
-  int seconds;
+  unsigned int seconds;
   
 public:
   friend istream& operator>> (istream &input,  TimeStamp &ts);
@@ -31,7 +31,7 @@ class Message {
 public:
   TimeStamp ts;
 protected:
-  uint32_t nanoseconds;
+  unsigned int nanoseconds;
   char eventCode;
   
 public:
@@ -43,11 +43,11 @@ class StockDirectory {
 public:
   TimeStamp ts;
 protected:
-  uint32_t nanoseconds;
+  unsigned int nanoseconds;
   char ticker[8];
   char mktCategory;
   char finStatus;
-  uint32_t roundLotSize;
+  unsigned int roundLotSize;
   char roundLotStatus;
 public:
   friend istream& operator>> (istream &input,  StockDirectory &ts);
@@ -58,7 +58,7 @@ class StockTradingAction {
 public:
   TimeStamp ts;
 protected:
-  uint32_t nanoseconds;
+  unsigned int nanoseconds;
   char ticker[8];
   char tradingState;
   char reason[4];
@@ -71,7 +71,7 @@ class ShortSalePriceTest {
 public:
   TimeStamp ts;
 private:
-  uint32_t nanoseconds;
+  unsigned int nanoseconds;
   char ticker[8];
   char regSHOAction;
 public:
@@ -83,7 +83,7 @@ class MarketParticipantPosition {
 public:
   TimeStamp ts;
 protected:
-  uint32_t nanoseconds;
+  unsigned int nanoseconds;
   char mpid[4];
   char ticker[8];
   char mmStatus;
@@ -96,8 +96,8 @@ public:
 
 class BrokenTrade {
 protected:
-  uint32_t nanoseconds;
-  uint64_t matchNumber;
+  unsigned int nanoseconds;
+  unsigned long matchNumber;
 public:
   TimeStamp ts;
   friend istream& operator>> (istream &input,  BrokenTrade &ts);
@@ -106,14 +106,14 @@ public:
 
 class NetOrderImbalance {
 protected:
-  uint32_t nanoseconds;
-  uint64_t pairedShares;
-  uint64_t imbalanceShares;
+  unsigned int nanoseconds;
+  unsigned long pairedShares;
+  unsigned long imbalanceShares;
   char direction;
   char ticker[8];
-  uint32_t farPrice;
-  uint32_t nearPrice;
-  uint32_t currentPrice;
+  unsigned int farPrice;
+  unsigned int nearPrice;
+  unsigned int currentPrice;
   char crossType;
   char priceVar;
 public:
@@ -124,7 +124,7 @@ public:
 
 class RetailPriceImprovement {
 protected:
-  uint32_t nanoseconds;
+  unsigned int nanoseconds;
   char ticker[8];
   char interest;
 public:
@@ -138,8 +138,8 @@ public:
 //
 class Order {
 protected:
-  uint32_t nanoseconds; //nanoseconds since last timestamp
-  uint64_t refNum; //unique reference number
+  unsigned int nanoseconds; //nanoseconds since last timestamp
+  unsigned long refNum; //unique reference number
 public:
   TimeStamp ts; // last timestamp
 };
@@ -147,9 +147,9 @@ public:
 class AddOrder : public Order {
 protected:
   char buyStatus;
-  uint32_t quantity;
+  unsigned int quantity;
   char ticker[8];
-  uint32_t price;
+  unsigned int price;
   
 public:
   friend istream& operator>> (istream &input,  AddOrder &order);
@@ -167,8 +167,8 @@ public:
 
 class ExecutedOrder : public Order {
 protected:
-  uint32_t quantity;
-  uint64_t matchNumber;
+  unsigned int quantity;
+  unsigned long matchNumber;
 public:
   friend istream& operator>> (istream &input,  ExecutedOrder &order);
   friend ostream& operator<< (ostream &output, ExecutedOrder &order);
@@ -177,7 +177,7 @@ public:
 class ExecutedPriceOrder : public ExecutedOrder {
 protected:
   char printable;
-  uint32_t price;
+  unsigned int price;
 public:
   friend istream& operator>> (istream &input,  ExecutedPriceOrder &order);
   friend ostream& operator<< (ostream &output, ExecutedPriceOrder &order);
@@ -185,7 +185,7 @@ public:
 
 class CancelOrder : public Order{
 protected:
-  uint32_t quantity;
+  unsigned int quantity;
 public:
   friend istream& operator>> (istream &input,  CancelOrder &order);
   friend ostream& operator<< (ostream &output, CancelOrder &order);
@@ -200,9 +200,9 @@ public:
 
 class ReplaceOrder : public Order {
 protected:
-  uint64_t oldRefNum;
-  uint32_t quantity;
-  uint32_t price;
+  unsigned long oldRefNum;
+  unsigned int quantity;
+  unsigned int price;
   
 public:
   friend istream& operator>> (istream &input,  ReplaceOrder &order);
@@ -211,7 +211,7 @@ public:
 
 class TradeMessage : public AddOrder {
 protected:
-  uint64_t matchNumber;
+  unsigned long matchNumber;
 public:
   friend istream& operator>> (istream &input,  TradeMessage &order);
   friend ostream& operator<< (ostream &output, TradeMessage &order);
@@ -227,6 +227,8 @@ public:
 
 
 #endif /* defined(__itch4Parser__Message__) */
+
+
 
 
 
