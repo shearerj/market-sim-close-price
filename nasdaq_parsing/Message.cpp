@@ -82,7 +82,7 @@ istream& operator>> (istream &input,  NetOrderImbalance &o) {
   read(input, o.direction);
   input.get(o.ticker, 9);
   read(input, o.farPrice);
-  read(input, o.nearPrice)
+  read(input, o.nearPrice);
   read(input, o.currentPrice);
   read(input, o.crossType);
   read(input, o.priceVar);
@@ -100,7 +100,7 @@ istream& operator>> (istream &input,  AddOrder &o) {
   read(input,o.nanoseconds);
   read(input, o.refNum);
   read(input, o.buyStatus);
-  read(input, o.quantity)
+  read(input, o.quantity);
   input.get(o.ticker, 9);
   read(input, o.price);
   return input;
@@ -110,7 +110,7 @@ istream& operator>> (istream &input,  AddMPIDOrder &o) {
   read(input,o.nanoseconds);
   read(input, o.refNum);
   read(input, o.buyStatus);
-  read(input, o.quantity)
+  read(input, o.quantity);
   input.get(o.ticker, 9);
   read(input, o.price);
   input.get(o.mpid, 5);
@@ -121,7 +121,7 @@ istream& operator>> (istream &input,  ExecutedOrder &o) {
   read(input,o.nanoseconds);
   read(input, o.refNum);
   read(input, o.quantity);
-  read(input, o.matchNumber)
+  read(input, o.matchNumber);
   return input;
 }
 
@@ -129,13 +129,13 @@ istream& operator>> (istream &input,  ExecutedPriceOrder &o) {
   read(input,o.nanoseconds);
   read(input, o.refNum);
   read(input, o.quantity);
-  read(input, o.matchNumber)
+  read(input, o.matchNumber);
   read(input, o.printable);
   read(input, o.price);
   return input;
 }
 
-istream& operator>> (istream &input,  CancelOrder &order){
+istream& operator>> (istream &input,  CancelOrder &o){
   read(input,o.nanoseconds);
   read(input, o.refNum);
   read(input, o.quantity);
@@ -162,7 +162,7 @@ istream& operator>> (istream &input,  TradeMessage &o) {
   read(input,o.nanoseconds);
   read(input, o.refNum);
   read(input, o.buyStatus);
-  read(input, o.quantity)
+  read(input, o.quantity);
   input.get(o.ticker, 9);
   read(input, o.price);
   read(input, o.matchNumber);
@@ -171,7 +171,7 @@ istream& operator>> (istream &input,  TradeMessage &o) {
 
 istream& operator>> (istream &input,  CrossTradeMessage &o) {
   read(input,o.nanoseconds);
-  read(input, o.quantity)
+  read(input, o.quantity);
   input.get(o.ticker, 9);
   read(input, o.price);
   read(input, o.matchNumber);
