@@ -17,13 +17,30 @@ void read(istream &input, T &object){
   input.read(reinterpret_cast<char*>(ptr), sizeof(T));
 }
 
+void readInt(istream &input, unsigned int &n){
+  char c[4];
+  for(int i=3; i >= 0; i--) {
+    input.read(&c[i], 1);
+  }
+  unsigned int* ptr = reinterpret_cast<unsigned int*>(c);
+  n = *ptr;
+}
+
+void readLong(istream &input, unsigned long &n){
+  char c[8];
+  for(int i=7; i >= 0; i--) {
+    input.read(&c[i], 1);
+  }
+  unsigned long* ptr = reinterpret_cast<unsigned long*>(c);
+  n = *ptr;
+}
 
 //
 // Input
 //
 
 istream& operator>> (istream &input, TimeStamp &ts){
-  read(input, ts.seconds);
+  readInt(input, ts.seconds);
   return input;
 }
 

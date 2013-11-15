@@ -18,7 +18,6 @@ using namespace std;
 class TimeStamp {
 protected:
   unsigned int seconds;
-  
 public:
   friend istream& operator>> (istream &input,  TimeStamp &ts);
   friend ostream& operator<< (ostream &output, TimeStamp &ts);

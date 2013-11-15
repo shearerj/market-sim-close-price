@@ -18,9 +18,6 @@ int main(int argc, const char * argv[])
 {
   std::ios_base::sync_with_stdio(false);
  
-  cout << "int size: " << sizeof(unsigned int) << '\n';
-  cout << "long size: " << sizeof(unsigned long) << '\n';  
-  
   if(argc != 3) {
     cerr << "Incorrect number of args\n";
     cerr << "Correct usage: ./itch4parser [input file] [output file]";
@@ -45,7 +42,6 @@ int main(int argc, const char * argv[])
   
   while(input.good()){
     input >> c;
-    cout << c << ' ' << input.good() << '\n';
     //determine message type, add to vector
     if(c == 'T') {
       input >> ts;
@@ -153,7 +149,7 @@ int main(int argc, const char * argv[])
       output << o;
     }
     else {
-      cerr << "Error in reading input\n";
+      //cerr << "Error in reading input\n";
       continue;
     }
   }
