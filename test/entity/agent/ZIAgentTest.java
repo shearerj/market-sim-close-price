@@ -317,8 +317,8 @@ public class ZIAgentTest {
 			assertEquals("Incorrect order quantity", 1, order.getQuantity());
 			Price p = order.getPrice();
 			Price fund = fundamental.getValueAt(new TimeStamp(currentTime));
-			Price buyPV = testAgent.privateValue.getValueFromQuantity(0, OrderType.BUY);
-			Price sellPV = testAgent.privateValue.getValueFromQuantity(0, OrderType.SELL);
+			Price buyPV = testAgent.privateValue.getValue(0, OrderType.BUY);
+			Price sellPV = testAgent.privateValue.getValue(0, OrderType.SELL);
 			
 			//Checking bid quantity and price comply with randomized range
 			// Sellers always sell at price higher than valuation ($100 + sell PV)

@@ -103,7 +103,7 @@ public abstract class Agent extends Entity {
 		if (positionBalance == 0) return Collections.emptyList();
 
 		preLiqPosition = positionBalance;
-		preLiqRealizedProfit = (int) getSurplus(0);
+		preLiqRealizedProfit = realizedProfit;
 		realizedProfit += positionBalance * price.intValue();
 		positionBalance -= positionBalance;
 
@@ -254,7 +254,7 @@ public abstract class Agent extends Entity {
 			TimeStamp timeToExecution = trans.getExecTime().minus(submissionTime);
 
 			int fund = fundamental.getValueAt(trans.getExecTime()).intValue() * trans.getQuantity();
-			int pv = privateValue.getValueFromQuantity(positionBalance, type).intValue();
+			int pv = privateValue.getValue(positionBalance, type).intValue();
 			int cost = trans.getPrice().intValue() * trans.getQuantity();
 			int transactionSurplus = (fund + pv - cost) * (type.equals(OrderType.BUY) ? 1 : -1) ;
 

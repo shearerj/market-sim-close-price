@@ -89,7 +89,7 @@ public abstract class BackgroundAgent extends SMAgent {
 			sb.append(" position=").append(positionBalance).append(", for q=");
 			sb.append(quantity).append(", value=");
 			sb.append(fundamental.getValueAt(currentTime)).append(" + ");
-			sb.append(privateValue.getValueFromQuantity(positionBalance, type));
+			sb.append(privateValue.getValue(positionBalance, type));
 			sb.append('=').append(val);
 			log(INFO, sb.toString());
 			

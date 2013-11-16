@@ -85,26 +85,37 @@ public class BackgroundAgentTest {
 		BackgroundAgent agent = new MockBackgroundAgent(randFundamental, sip, market, pv, 0, 1000);
 		
 		// Verify valuation for various positionBalances
+		int pv0 = pv.values.get(0).intValue();
+		int pv1 = pv.values.get(1).intValue();
+		int pv2 = pv.values.get(2).intValue();
+		int pv3 = pv.values.get(3).intValue();
+		int pv4 = pv.values.get(4).intValue();
+		int pv5 = pv.values.get(5).intValue();
+		int pv6 = pv.values.get(6).intValue();
+		int pv7 = pv.values.get(7).intValue();
+		int pv8 = pv.values.get(8).intValue();
+		int pv9 = pv.values.get(9).intValue();
+		
 		agent.positionBalance = 3;
 		Price fund = randFundamental.getValueAt(time);
 		Price val = agent.getValuation(OrderType.BUY, time);
-		assertEquals(fund.intValue() + pv.values.get(8).intValue(), val.intValue());
-		assertEquals(fund.intValue() + pv.values.get(9).intValue(), 
+		assertEquals(fund.intValue() + pv8, val.intValue());
+		assertEquals(fund.intValue() + pv9 + pv8, 
 				agent.getValuation(OrderType.BUY, 2, time).intValue());
 		val = agent.getValuation(OrderType.SELL, time);
-		assertEquals(fund.intValue() + pv.values.get(7).intValue(), val.intValue());
-		assertEquals(fund.intValue() + pv.values.get(6).intValue(), 
+		assertEquals(fund.intValue() + pv7, val.intValue());
+		assertEquals(fund.intValue() + pv7 + pv6, 
 				agent.getValuation(OrderType.SELL, 2, time).intValue());
 		
 		agent.positionBalance = -2;
 		fund = randFundamental.getValueAt(time);
 		val = agent.getValuation(OrderType.BUY, time);
-		assertEquals(fund.intValue() + pv.values.get(3).intValue(), val.intValue());
-		assertEquals(fund.intValue() + pv.values.get(5).intValue(), 
+		assertEquals(fund.intValue() + pv3, val.intValue());
+		assertEquals(fund.intValue() + pv3 + pv4 + pv5, 
 				agent.getValuation(OrderType.BUY, 3, time).intValue());
 		val = agent.getValuation(OrderType.SELL, time);
-		assertEquals(fund.intValue() + pv.values.get(2).intValue(), val.intValue());
-		assertEquals(fund.intValue() + pv.values.get(0).intValue(), 
+		assertEquals(fund.intValue() + pv2, val.intValue());
+		assertEquals(fund.intValue() + pv2 + pv1 + pv0, 
 				agent.getValuation(OrderType.SELL, 3, time).intValue());
 	}
 	

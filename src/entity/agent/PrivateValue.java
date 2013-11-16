@@ -2,7 +2,6 @@ package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static entity.market.Price.ZERO;
-import static utils.MathUtils.bound;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -26,7 +25,16 @@ import entity.market.Price;
  * Encapsulation of an agent's private value. <code>getValueFromQuantity</code>
  * is the main method that should be used.
  * 
- * NOTE: This private value model is only for single-unit limit orders.
+ * For multi-unit orders, consecutive private value transitions are summed. If
+ * the quantity will exceed the maximum (offset), it will be summed up to the 
+ * last valid element in values, after which it adds zero for each additional 
+ * unit.
+ * 
+ * Note: A weird case is when the initial position is already outside the
+ * valid range, in which case it will return 0 for all transitions up to the
+ * valid range, after it sums as before. Agents, however, should always perform
+ * a check to verify that they will not exceed their max position, before
+ * submitting any orders.
  * 
  * @author ewah
  */
@@ -77,7 +85,7 @@ public class PrivateValue implements Serializable {
 	/**
 	 * Protected constructor for testing purposes (DummyPrivateValue)
 	 */
-	protected PrivateValue(int maxPosition, Collection<Price> values){
+	protected PrivateValue(int maxPosition, Collection<Price> values) {
 		checkArgument(values.size() == 2*maxPosition, "Incorrect number of entries in list");
 		Builder<Price> builder = ImmutableList.builder();
 		builder.addAll(values);
@@ -93,14 +101,28 @@ public class PrivateValue implements Serializable {
 	}
 	
 	/**
+	 * If new position (current position +/- 1) exceeds max position, return 0.
+	 * 
 	 * @param currentPosition
 	 *            Agent's current position
 	 * @param type
 	 * 			  Buy or Sell
 	 * @return The new private value if buying or selling 1 unit
 	 */
-	public Price getValueFromQuantity(int currentPosition, OrderType type) {
-		return getValueFromQuantity(currentPosition, 1, type);
+	public Price getValue(int currentPosition, OrderType type) {
+		switch (type) {
+		case BUY:
+			if (currentPosition + offset <= values.size() - 1 &&
+					currentPosition + offset >= 0)
+				return values.get(currentPosition + offset);
+			break;
+		case SELL:
+			if (currentPosition + offset - 1 <= values.size() - 1 && 
+					currentPosition + offset - 1 >= 0)
+				return values.get(currentPosition + offset - 1);
+			break;
+		}
+		return Price.ZERO;
 	}
 	
 	/**
@@ -111,15 +133,19 @@ public class PrivateValue implements Serializable {
 	 */
 	public Price getValueFromQuantity(int currentPosition, int quantity, OrderType type) {
 		checkArgument(quantity > 0, "Quantity must be positive");
+		int privateValue = 0;
+		
 		switch (type) {
 		case BUY:
-			return values.get(bound(currentPosition + offset + (quantity - 1), 0, values.size() - 1));
+			for (int i = 0; i < quantity; i++)
+				privateValue += getValue(currentPosition + i, type).intValue();
+			break;
 		case SELL:
-			return values.get(bound(currentPosition + offset - 1 - (quantity - 1), 0, values.size() - 1));
-
-		default:
-			return Price.ZERO;
+			for (int i = 0; i < quantity; i++)
+				privateValue += getValue(currentPosition - i, type).intValue();
+			break;
 		}
+		return new Price(privateValue);
 	}
 
 	@Override
