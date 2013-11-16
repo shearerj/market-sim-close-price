@@ -2,6 +2,7 @@ package entity.agent;
 
 import java.util.Random;
 
+import systemmanager.Consts.OrderType;
 import systemmanager.Keys;
 import activity.Activity;
 import data.EntityProperties;
@@ -49,12 +50,22 @@ public class ZIAgent extends BackgroundAgent {
 				props.getAsInt(Keys.BID_RANGE_MIN, 0),
 				props.getAsInt(Keys.BID_RANGE_MAX, 5000));
 	}
+	
+	/**
+	 * Constructor for testing purposes (ZIAgentTest)
+	 */
+	public ZIAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
+			Market market, Random rand, double reentryRate, PrivateValue pv,
+			int tickSize, int bidRangeMin, int bidRangeMax){
+		super(arrivalTime, fundamental, sip, market, rand, reentryRate,
+				pv, tickSize, bidRangeMin, bidRangeMax);
+	}
 
 	@Override
 	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
 		// 50% chance of being either long or short
-		int quantity = rand.nextBoolean() ? 1 : -1;
-		return this.executeZIStrategy(quantity, currentTime);
+		OrderType type = rand.nextBoolean() ? OrderType.BUY : OrderType.SELL;
+		return this.executeZIStrategy(type, 1, currentTime);
 	}
 
 	@Override

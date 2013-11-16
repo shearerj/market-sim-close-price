@@ -6,7 +6,8 @@ public class MatchedOrders<P extends Comparable<? super P>, T extends Comparable
 
 	private static final long serialVersionUID = -6073835626927361670L;
 	
-	protected final Order<P, T> buy, sell;
+	protected final Order<P, T> buy;
+	protected final Order<P, T> sell;
 	protected final int quantity;
 	
 	protected MatchedOrders(Order<P, T> buy, Order<P, T> sell, int quantity) {
@@ -15,7 +16,7 @@ public class MatchedOrders<P extends Comparable<? super P>, T extends Comparable
 		this.quantity = quantity;
 	}
 
-	public static <P extends Comparable<? super P>, T extends Comparable<? super T>> MatchedOrders<P, T> create(
+	public static <BS extends Enum<BS>, P extends Comparable<? super P>, T extends Comparable<? super T>> MatchedOrders<P, T> create(
 			Order<P, T> buy, Order<P, T> sell, int quantity) {
 		return new MatchedOrders<P, T>(buy, sell, quantity);
 	}

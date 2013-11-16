@@ -14,6 +14,8 @@ public interface Consts {
 	
 	public final static long upToTime = 3000;	// compute statistics up to this time
 	
+	public static enum OrderType { BUY, SELL };
+	
 	// **********************************************************
 	// Agent, market, and model types
 	// UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL
@@ -26,6 +28,7 @@ public interface Consts {
 	// FILENAMES
 	
 	// Directories
+	public final static String TEST_OUTPUT_DIR = "simulations/unit_testing/";
 	public final static String CONFIG_DIR = "config/";
 	public final static String LOG_DIR = "logs/";
 	

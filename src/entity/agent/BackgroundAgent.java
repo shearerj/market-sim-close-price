@@ -1,6 +1,5 @@
 package entity.agent;
 
-import static java.lang.Math.signum;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 import iterators.ExpInterarrivals;
@@ -8,6 +7,7 @@ import iterators.ExpInterarrivals;
 import java.util.Iterator;
 import java.util.Random;
 
+import systemmanager.Consts.OrderType;
 import utils.Rands;
 import activity.Activity;
 import activity.AgentStrategy;
@@ -66,35 +66,35 @@ public abstract class BackgroundAgent extends SMAgent {
 	
 	/**
 	 * Submits a NMS-routed Zero-Intelligence limit order.
-	 * 
+	 * @param type
 	 * @param quantity
 	 * @param currentTime
+	 * 
 	 * @return
 	 */
-	public Iterable<? extends Activity> executeZIStrategy(int quantity, TimeStamp currentTime) {
+	public Iterable<? extends Activity> executeZIStrategy(OrderType type, int quantity, TimeStamp currentTime) {
 		
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append(':');
 		sb.append(" executing ZI strategy");
 		
-		int newPosition = quantity + positionBalance;
+		int newPosition = (type.equals(OrderType.BUY) ? 1 : -1) * quantity + positionBalance;
 		if (newPosition <= privateValue.getMaxAbsPosition() &&
 				newPosition >= -privateValue.getMaxAbsPosition()) {
 			
-			Price val = getValuation(quantity, currentTime);
-			Price price = new Price((val.doubleValue() + signum(quantity) * 
+			Price val = getValuation(type, currentTime);
+			Price price = new Price((val.doubleValue() + (type.equals(OrderType.SELL) ? 1 : -1) * 
 					Rands.nextUniform(rand, bidRangeMin, bidRangeMax))).nonnegative().quantize(tickSize);
 			
 			sb.append(" position=").append(positionBalance).append(", for q=");
 			sb.append(quantity).append(", value=");
 			sb.append(fundamental.getValueAt(currentTime)).append(" + ");
-			sb.append(privateValue.getValueFromQuantity(positionBalance,
-					quantity));
+			sb.append(privateValue.getValueFromQuantity(positionBalance, type));
 			sb.append('=').append(val);
 			log(INFO, sb.toString());
 			
-			return ImmutableList.of(new SubmitNMSOrder(this, price, quantity,
-					primaryMarket, TimeStamp.IMMEDIATE));
+			return ImmutableList.of(new SubmitNMSOrder(this, type, price,
+					quantity, primaryMarket, TimeStamp.IMMEDIATE));
 		} else {
 			// if exceed max position, then don't submit a new bid
 			sb.append("new order would exceed max position ");
@@ -103,23 +103,35 @@ public abstract class BackgroundAgent extends SMAgent {
 			
 			return ImmutableList.of();
 		}
-		
-//		Price price = new Price((int) (val.getInTicks() - signum(quantity)
-//				* rand.nextDouble() * 2 * bidRangeMax)).nonnegative().quantize(tickSize);
+	}
+	
+	/**
+	 * Returns the limit price (i.e. valuation) for the agent for buying/selling 1 unit.
+	 * 
+	 * valuation = fundamental + private_value
+	 * 
+	 * @param type
+	 * @param currentTime
+	 * @return
+	 */
+	public Price getValuation(OrderType type, TimeStamp currentTime) {
+		return getValuation(type, 1, currentTime);
 	}
 	
 	/**
 	 * Returns the limit price (i.e. valuation) for the agent.
 	 * 
+	 * valuation = fundamental + private_value
+	 * 
+	 * @param type
 	 * @param quantity
 	 * @param currentTime
 	 * @return
 	 */
-	public Price getValuation(int quantity, TimeStamp currentTime) {
+	public Price getValuation(OrderType type, int quantity, TimeStamp currentTime) {
 		return new Price(
 				fundamental.getValueAt(currentTime).intValue()
 						+ privateValue.getValueFromQuantity(positionBalance,
-								quantity).intValue()).nonnegative();
+								quantity, type).intValue()).nonnegative();
 	}
-	
 }
