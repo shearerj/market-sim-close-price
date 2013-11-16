@@ -1,7 +1,5 @@
 package utils;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -10,7 +8,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-public class MathUtilsTest // extends MathUtils
+public class MathUtilsTest  extends MathUtils
 {
 	
 	
@@ -23,16 +21,16 @@ public class MathUtilsTest // extends MathUtils
 		int number= 10;
 		int base = 10;
 		int result = logn(number, base);
-		assert(result==1);//normal test case
+		assertTrue(result==1);//normal test case
 		//log base 10 of 10 is 1
 		
 		number = 0;
 		base = 10;
 		result = logn(number, base);
-		assert(result==-1);
+		assertTrue(result==-1);
 		number=-999;
 		result = logn(number,base);
-		assert(result==-1);
+		assertTrue(result==-1);
 		//boundry cases of number <= 0, as ln is undefined for those values
 		//ensure -1 is given where log n is undefined
 
@@ -44,23 +42,23 @@ public class MathUtilsTest // extends MathUtils
 		number = 10;
 		base = -1; 
 		result = logn(number, base);
-		assert(result==-1);
+		assertTrue(result!=-1);
 		number=-2;
 		result = logn(number,base);
-		assert(result==-1);
+		assertTrue(result==-1);
 		
 		number = 0;
 		base = 2;
 		result = logn(number, base);
-		assert(result==-1);
+		assertTrue(result==-1);
 		number=-98;
 		result = logn(number,base);
-		assert(result==-1);
+		assertTrue(result==-1);
 		
 		number = 5; base =3;
 		//if using double answer should be  0.69897000434
 		result = logn(number,base);
-		assert(result==1);
+		assertTrue(result==1);
 		
 		//7 log 9 is  0.69897000434
 		number =7; 
@@ -179,7 +177,7 @@ public class MathUtilsTest // extends MathUtils
 		assert(b==num);
 		upper = -numLargest;
 		b = bound(num,lower, upper);
-		assert(b==upper);
+		assertTrue(b==upper);
 		
 		
 	}
