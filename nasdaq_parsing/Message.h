@@ -157,7 +157,7 @@ protected:
   char ticker[TickerLength];
   unsigned int price;
   
-public:t
+public:
   friend istream& operator>> (istream &input,  AddOrder &order);
   friend ostream& operator<< (ostream &output, AddOrder &order);
 
@@ -165,7 +165,7 @@ public:t
 
 class AddMPIDOrder : public AddOrder {
 protected:
-  char mpid[MPIDLength]];
+  char mpid[MPIDLength];
 public:
   friend istream& operator>> (istream &input,  AddMPIDOrder &order);
   friend ostream& operator<< (ostream &output, AddMPIDOrder &order);
