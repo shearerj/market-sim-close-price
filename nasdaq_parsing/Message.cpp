@@ -35,13 +35,6 @@ void readLong(istream &input, unsigned long &n){
   n = *ptr;
 }
 
-//Size should be equal to array size, or # of chars to read + 1
-void readString(istream &input, char *c, int size){
-  input.get(c, size);
-  c[size-1] = '\0';
-  
-}
-
 //
 // Input
 //
@@ -59,7 +52,7 @@ istream& operator>> (istream &input,  Message &o) {
 
 istream& operator>> (istream &input,  StockDirectory &o) {
   readInt(input,o.nanoseconds);
-  readString(input, o.ticker, 9);
+  input.get(o.ticker, 9);
   read(input, o.mktCategory);
   read(input, o.finStatus);
   readInt(input, o.roundLotSize);
@@ -69,24 +62,24 @@ istream& operator>> (istream &input,  StockDirectory &o) {
 
 istream& operator>> (istream &input,  StockTradingAction &o) {
   readInt(input,o.nanoseconds);
-  readString(input, o.ticker, 9);
+  input.get(o.ticker, 9);
   read(input, o.tradingState);
   input.ignore();
-  readString(input, o.reason, 5);
+  input.get(o.reason, 5);
   return input;
 }
 
 istream& operator>> (istream &input,  ShortSalePriceTest &o) {
   readInt(input,o.nanoseconds);
-  readString(input, o.ticker, 9);
+  input.get(o.ticker, 9);
   read(input, o.regSHOAction);
   return input;
 }
 
 istream& operator>> (istream &input,  MarketParticipantPosition &o) {
   readInt(input,o.nanoseconds);
-  readString(input, o.mpid, 5);
-  readString(input, o.ticker, 9);
+  input.get(o.mpid, 5);
+  input.get(o.ticker, 9);
   read(input, o.mmStatus);
   read(input, o.mmMode);
   read(input, o.mpStatus);
@@ -104,7 +97,7 @@ istream& operator>> (istream &input,  NetOrderImbalance &o) {
   readLong(input, o.pairedShares);
   readLong(input, o.imbalanceShares);
   read(input, o.direction);
-  readString(input, o.ticker, 9);
+  input.get(o.ticker, 9);
   readInt(input, o.farPrice);
   readInt(input, o.nearPrice);
   readInt(input, o.currentPrice);
@@ -115,7 +108,7 @@ istream& operator>> (istream &input,  NetOrderImbalance &o) {
 
 istream& operator>> (istream &input,  RetailPriceImprovement &o) {
   readInt(input,o.nanoseconds);
-  readString(input, o.ticker, 9);
+  input.get(o.ticker, 9);
   read(input, o.interest);
   return input;
 }
@@ -125,7 +118,7 @@ istream& operator>> (istream &input,  AddOrder &o) {
   readLong(input, o.refNum);
   read(input, o.buyStatus);
   readInt(input, o.quantity);
-  readString(input, o.ticker, 9);
+  input.get(o.ticker, 9);
   readInt(input, o.price);
   return input;
 }
@@ -135,9 +128,9 @@ istream& operator>> (istream &input,  AddMPIDOrder &o) {
   readLong(input, o.refNum);
   read(input, o.buyStatus);
   readInt(input, o.quantity);
-  readString(input, o.ticker, 9);
+  input.get(o.ticker, 9);
   readInt(input, o.price);
-  readString(input, o.mpid, 5);
+  input.get(o.mpid, 5);
   return input;
 }
 
@@ -187,7 +180,7 @@ istream& operator>> (istream &input,  TradeMessage &o) {
   readLong(input, o.refNum);
   read(input, o.buyStatus);
   readInt(input, o.quantity);
-  readString(input, o.ticker, 9);
+  input.get(o.ticker, 9);
   readInt(input, o.price);
   readLong(input, o.matchNumber);
   return input;
@@ -196,7 +189,7 @@ istream& operator>> (istream &input,  TradeMessage &o) {
 istream& operator>> (istream &input,  CrossTradeMessage &o) {
   readInt(input,o.nanoseconds);
   readInt(input, o.quantity);
-  readString(input, o.ticker, 9);
+  input.get(o.ticker, 9);
   readInt(input, o.price);
   readLong(input, o.matchNumber);
   read(input, o.crossType);
@@ -218,22 +211,34 @@ ostream& operator<< (ostream &output, Message &o){
 }
 
 ostream& operator<< (ostream &output, StockDirectory &o){
-  output << "R," << o.ts << ',' << o.nanoseconds << ',' << o.ticker << ',' << o.mktCategory << ',' << o.finStatus << ',' << o.roundLotSize << ',' << o.roundLotStatus << '\n';
+  output << "R," << o.ts << ',' << o.nanoseconds << ',';
+  output.write(o.ticker, TickerLength);
+  output << ',' << o.mktCategory << ',' << o.finStatus << ',' << o.roundLotSize << ',' << o.roundLotStatus << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, StockTradingAction &o){
-  output << "H," << o.ts << ',' << o.nanoseconds << ',' << o.ticker << ',' << o.tradingState << ',' << o.reason << '\n';
+  output << "H," << o.ts << ',' << o.nanoseconds << ',';
+  output.write(o.ticker, TickerLength);
+  output << ',' << o.tradingState << ',';
+  output.write(o.reason, ReasonLength);
+  output << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, ShortSalePriceTest &o){
-  output << "Y," << o.ts << ',' << o.nanoseconds << ',' << o.ticker << ',' << o.regSHOAction << '\n';
+  output << "Y," << o.ts << ',' << o.nanoseconds << ',';
+  output.write(o.ticker, TickerLength);
+  output << ',' << o.regSHOAction << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, MarketParticipantPosition &o){
-  output << "L," << o.ts << ',' << o.nanoseconds << ',' << o.mpid << ',' << o.ticker << ',' << o.mmStatus << ',' << o.mmMode << ',' << o.mpStatus << '\n';
+  output << "L," << o.ts << ',' << o.nanoseconds << ',';
+  output.write(o.mpid, MPIDLength);
+  output << ',';
+  output.write(o.ticker, TickerLength);
+  output << ',' << o.mmStatus << ',' << o.mmMode << ',' << o.mpStatus << '\n';
   return output;
 }
 
@@ -243,23 +248,33 @@ ostream& operator<< (ostream &output, BrokenTrade &o){
 }
 
 ostream& operator<< (ostream &output, NetOrderImbalance &o){
-  output << "I," << o.ts << ',' << o.nanoseconds << ',' << o.pairedShares << ',' << o.imbalanceShares << ',' << o.direction << ',' << o.ticker << ',' << o.farPrice << ',' << o.nearPrice << ',' << o.currentPrice << ',' << o.crossType << ',' << o.priceVar << '\n';
+  output << "I," << o.ts << ',' << o.nanoseconds << ',' << o.pairedShares << ',' << o.imbalanceShares << ',' << o.direction << ',';
+  output.write(o.ticker, TickerLength);
+  output << ',' << o.farPrice << ',' << o.nearPrice << ',' << o.currentPrice << ',' << o.crossType << ',' << o.priceVar << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, RetailPriceImprovement &o){
-  output << "N," << o.ts << ',' << o.nanoseconds << ',' << o.ticker << ',' << o.interest << '\n';
+  output << "N," << o.ts << ',' << o.nanoseconds << ',';
+  output.write(o.ticker,TickerLength);
+  output << ',' << o.interest << '\n';
   return output;
 }
 
 
 ostream& operator<< (ostream &output, AddOrder &o) {
-  output << "A," << o.ts << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.buyStatus << ',' << o.quantity << ',' << o.ticker << ',' << o.price << '\n';
+  output << "A," << o.ts << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.buyStatus << ',' << o.quantity << ',';
+  output.write(o.ticker,TickerLength);
+  output << ',' << o.price << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, AddMPIDOrder &o) {
-  output << "F," << o.ts << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.buyStatus << ',' << o.quantity << ',' << o.ticker << ',' << o.price << ',' << o.mpid << '\n';
+  output << "F," << o.ts << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.buyStatus << ',' << o.quantity << ',';
+  output.write(o.ticker, TickerLength);
+  output << ',' << o.price << ',';
+  output.write(o.mpid, MPIDLength);
+  output << '\n';
   return output;
 }
 
@@ -289,12 +304,16 @@ ostream& operator<< (ostream &output, ReplaceOrder &o){
 }
 
 ostream& operator<< (ostream &output, TradeMessage &o){
-  output << "P," << o.ts << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.buyStatus << ',' << o.quantity << ',' << o.ticker << ',' << o.price << ',' << o.matchNumber << '\n';
+  output << "P," << o.ts << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.buyStatus << ',' << o.quantity << ',';
+  output.write(o.ticker, TickerLength);
+  output << ',' << o.price << ',' << o.matchNumber << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, CrossTradeMessage &o){
-  output << "Q," << o.ts << ',' << o.nanoseconds << ',' << o.quantity << ',' << o.ticker << ',' << o.price << ',' << o.matchNumber << ',' << o.crossType << '\n';
+  output << "Q," << o.ts << ',' << o.nanoseconds << ',' << o.quantity << ',';
+  output.write(o.ticker, TickerLength);
+  output << ',' << o.price << ',' << o.matchNumber << ',' << o.crossType << '\n';
   return output;
 }
 

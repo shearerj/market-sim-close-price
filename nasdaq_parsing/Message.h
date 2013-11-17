@@ -15,10 +15,10 @@
 using namespace std;
 
 //Consts
-// Lengths = (# of chars in spec) + (1 null char)
-const int TickerLength = 9;
-const int MPIDLength = 5;
-const int ReasonLength = 5;
+// Length = (# of chars in spec)
+const int TickerLength = 8;
+const int MPIDLength = 4;
+const int ReasonLength = 4;
 
 //Standard TimeStamp
 
