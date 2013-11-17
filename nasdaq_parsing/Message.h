@@ -14,6 +14,13 @@
 
 using namespace std;
 
+//Consts
+// Lengths = (# of chars in spec) + (1 null char)
+const int TickerLength = 9;
+const int MPIDLength = 5;
+const int ReasonLength = 5;
+
+//Standard TimeStamp
 
 class TimeStamp {
 protected:
@@ -43,7 +50,7 @@ public:
   TimeStamp ts;
 protected:
   unsigned int nanoseconds;
-  char ticker[8];
+  char ticker[TickerLength];
   char mktCategory;
   char finStatus;
   unsigned int roundLotSize;
@@ -58,9 +65,9 @@ public:
   TimeStamp ts;
 protected:
   unsigned int nanoseconds;
-  char ticker[8];
+  char ticker[TickerLength];
   char tradingState;
-  char reason[4];
+  char reason[ReasonLength];
 public:
   friend istream& operator>> (istream &input,  StockTradingAction &ts);
   friend ostream& operator<< (ostream &output, StockTradingAction &ts);
@@ -71,7 +78,7 @@ public:
   TimeStamp ts;
 private:
   unsigned int nanoseconds;
-  char ticker[8];
+  char ticker[TickerLength];
   char regSHOAction;
 public:
   friend istream& operator>> (istream &input,  ShortSalePriceTest &ts);
@@ -83,8 +90,8 @@ public:
   TimeStamp ts;
 protected:
   unsigned int nanoseconds;
-  char mpid[4];
-  char ticker[8];
+  char mpid[MPIDLength];
+  char ticker[TickerLength];
   char mmStatus;
   char mmMode;
   char mpStatus;
@@ -109,7 +116,7 @@ protected:
   unsigned long pairedShares;
   unsigned long imbalanceShares;
   char direction;
-  char ticker[8];
+  char ticker[TickerLength];
   unsigned int farPrice;
   unsigned int nearPrice;
   unsigned int currentPrice;
@@ -124,7 +131,7 @@ public:
 class RetailPriceImprovement {
 protected:
   unsigned int nanoseconds;
-  char ticker[8];
+  char ticker[TickerLength];
   char interest;
 public:
   TimeStamp ts;
@@ -147,10 +154,10 @@ class AddOrder : public Order {
 protected:
   char buyStatus;
   unsigned int quantity;
-  char ticker[8];
+  char ticker[TickerLength];
   unsigned int price;
   
-public:
+public:t
   friend istream& operator>> (istream &input,  AddOrder &order);
   friend ostream& operator<< (ostream &output, AddOrder &order);
 
@@ -158,7 +165,7 @@ public:
 
 class AddMPIDOrder : public AddOrder {
 protected:
-  char mpid[4];
+  char mpid[MPIDLength]];
 public:
   friend istream& operator>> (istream &input,  AddMPIDOrder &order);
   friend ostream& operator<< (ostream &output, AddMPIDOrder &order);
