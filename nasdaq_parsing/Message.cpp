@@ -138,7 +138,7 @@ istream& operator>> (istream &input,  ExecutedOrder &o) {
   readInt(input,o.nanoseconds);
   readLong(input, o.refNum);
   readInt(input, o.quantity);
-  readInt(input, o.matchNumber);
+  readLong(input, o.matchNumber);
   return input;
 }
 
