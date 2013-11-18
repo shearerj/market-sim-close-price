@@ -188,7 +188,7 @@ istream& operator>> (istream &input,  TradeMessage &o) {
 
 istream& operator>> (istream &input,  CrossTradeMessage &o) {
   readInt(input,o.nanoseconds);
-  readInt(input, o.quantity);
+  readLong(input, o.crossQuantity);
   input.get(o.ticker, 9);
   readInt(input, o.price);
   readLong(input, o.matchNumber);

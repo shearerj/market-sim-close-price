@@ -225,6 +225,7 @@ public:
 
 class CrossTradeMessage : public TradeMessage {
 protected:
+  unsigned long crossQuantity;
   char crossType;
 public:
   friend istream& operator>> (istream &input,  CrossTradeMessage &order);
