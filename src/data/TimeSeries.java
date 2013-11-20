@@ -36,13 +36,21 @@ public class TimeSeries implements Serializable {
 	protected final List<Point> points;
 	protected final double defaultValue;
 
-	public TimeSeries(double defaultValue) {
+	protected TimeSeries(double defaultValue) {
 		this.points = Lists.newArrayList();
 		this.defaultValue = defaultValue;
 	}
 	
-	public TimeSeries() {
+	protected TimeSeries() {
 		this(Double.NaN);
+	}
+	
+	public static TimeSeries create(double defaultValue) {
+		return new TimeSeries(defaultValue);
+	}
+
+	public static TimeSeries create() {
+		return new TimeSeries();
 	}
 
 	@Override

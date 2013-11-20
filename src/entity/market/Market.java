@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Math.min;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
+import static data.Observations.BUS;
 
 import java.util.Collection;
 import java.util.List;
@@ -25,7 +26,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 
-import data.Observations;
+import data.Observations.MidQuoteStatistic;
+import data.Observations.SpreadStatistic;
 import entity.Entity;
 import entity.agent.Agent;
 import entity.infoproc.BestBidAsk;
@@ -219,7 +221,7 @@ public abstract class Market extends Entity {
 			
 			transactions.add(trans);
 			allTransactions.add(trans);
-			Observations.BUS.post(trans);
+			BUS.post(trans);
 			// TODO add delay to agent facing actions...
 			buy.getAgent().processTransaction(trans);
 			if (buy.getQuantity() == 0)
@@ -275,8 +277,8 @@ public abstract class Market extends Entity {
 
 		log(INFO, this + " " + quote);
 
-		Observations.BUS.post(new Observations.MidQuoteStatistic(this, quote.getMidquote(), currentTime));
-		Observations.BUS.post(new Observations.SpreadStatistic(this, quote.getSpread(), currentTime));
+		BUS.post(new MidQuoteStatistic(this, quote.getMidquote(), currentTime));
+		BUS.post(new SpreadStatistic(this, quote.getSpread(), currentTime));
 		
 		MarketTime quoteTime = new MarketTime(currentTime, marketTime);
 		Builder<Activity> acts = ImmutableList.builder();

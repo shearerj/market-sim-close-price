@@ -35,6 +35,36 @@ import entity.market.Market;
 import entity.market.Transaction;
 import event.TimeStamp;
 
+/**
+ * This class represents the summary of statistics after a run of the
+ * simulation. The majority of the statistics that it collects are processed via
+ * the EventBus, which is a message passing interface that can handle any style
+ * of object. The rest, which mainly includes agent and player payoffs, is
+ * processed when the call to getFeatures or getPlayerObservations is made.
+ * 
+ * Because this uses message pasing, if you want the observation data structure
+ * to get data, you must make sure to "register" it with the EventBus by calling
+ * BUS.register(observations).
+ * 
+ * A single observation doesn't have that ability to save its results. Instead
+ * you need to add it to a MultiSimulationObservation and use that class to
+ * actually do the output.
+ * 
+ * To add statistics to the Observation:
+ * <ol>
+ * <li>Add the appropriate data structures to the object to record the
+ * information you're interested in.</li>
+ * <li>Create a listener method (located at the bottom, to tell what objects to
+ * handle, and what to do with them.</li>
+ * <li>Modify get features to take the aggregate data you stored, and turn it
+ * into a String, double pair.</li>
+ * <li>Wherever the relevant data is added simply add a line like
+ * "Observations.BUS.post(dataObj);" with your appropriate data</li>
+ * </ol>
+ * 
+ * @author erik
+ * 
+ */
 public class Observations {
 	
 	// static event bus to record statics messages during simulation
@@ -59,6 +89,10 @@ public class Observations {
 	protected final Set<Class<? extends Agent>> agentTypes;
 	protected final int maxTime;
 
+	/**
+	 * Constructor needs to be called before the simulation starts, but with the
+	 * final object collections.
+	 */
 	public Observations(SimulationSpec spec, Collection<Market> markets,
 			Collection<Agent> agents, Collection<Player> players,
 			FundamentalValue fundamental) {
@@ -68,11 +102,13 @@ public class Observations {
 		this.fundamental = fundamental;
 		this.spec = spec;
 		
-		// TODO Change this / remove?
+		// TODO Change this / remove? Do we need maxTime anymore?
 		double arrivalRate = spec.getDefaultAgentProps().getAsDouble(Keys.ARRIVAL_RATE, 0.075);
 		int maxTime = (int) Math.round(agents.size() / arrivalRate);
 		this.maxTime = Math.max(Consts.UP_TO_TIME, quantize(maxTime, 1000));
 		
+		// This is so that every agent type is output at the end, even if they
+		// completed no transactions
 		ImmutableSet.Builder<Class<? extends Agent>> agentTypesBuilder = ImmutableSet.builder();
 		for (Agent agent : agents)
 			agentTypesBuilder.add(agent.getClass());
@@ -81,8 +117,8 @@ public class Observations {
 		ImmutableMap.Builder<Market, TimeSeries> spreadsBuilder = ImmutableMap.builder();
 		ImmutableMap.Builder<Market, TimeSeries> midQuotesBuilder = ImmutableMap.builder();
 		for (Market market : markets) {
-			spreadsBuilder.put(market, new TimeSeries());
-			midQuotesBuilder.put(market, new TimeSeries());
+			spreadsBuilder.put(market, TimeSeries.create());
+			midQuotesBuilder.put(market, TimeSeries.create());
 		}
 		spreads = spreadsBuilder.build();
 		midQuotes = midQuotesBuilder.build();
@@ -90,11 +126,14 @@ public class Observations {
 		this.executionSpeeds = new SummaryStatistics();
 		this.numTrans = HashMultiset.create();
 		this.prices = new SummaryStatistics();
-		this.transPrices = new TimeSeries();
-		this.fundPrices = new TimeSeries();
-		this.nbboSpreads = new TimeSeries();
+		this.transPrices = TimeSeries.create();
+		this.fundPrices = TimeSeries.create();
+		this.nbboSpreads = TimeSeries.create();
 	}
 	
+	/**
+	 * Gets the player observations relevant to EGTA.
+	 */
 	public List<PlayerObservation> getPlayerObservations() {
 		Builder<PlayerObservation> playerObservations = ImmutableList.builder();
 		for (Player player : players)
@@ -102,6 +141,11 @@ public class Observations {
 		return playerObservations.build();
 	}
 	
+	/**
+	 * Gets the features, which are relevant to the non EGTA case. Features that
+	 * aren't aggregated by the EventBus, like the surplus ones, are calculated
+	 * at the current time, instead of beign summed during the simulation.
+	 */
 	public Map<String, Double> getFeatures() {
 		ImmutableMap.Builder<String, Double> features = ImmutableMap.builder();
 		
@@ -135,6 +179,9 @@ public class Observations {
 		return features.build();
 	}
 	
+	/**
+	 * Statistics that are based on the sampling period
+	 */
 	protected void periodBased(ImmutableMap.Builder<String, Double> features, int period) {
 		// Price discovery
 		String key = period == 1 ? "trans_rmsd" : "trans_freq_" + period + "_rmsd"; 
@@ -179,6 +226,9 @@ public class Observations {
 		features.put(prefix + "_mean_log_return", logRetVol.getMean());
 	}
 	
+	/**
+	 * Statistics that are based off of the discount rate.
+	 */
 	protected void discountBased(ImmutableMap.Builder<String, Double> features, double discount) {
 		String suffix = discount == 0 ? "no_disc" : "disc_" + discount;
 
@@ -209,6 +259,8 @@ public class Observations {
 		features.put("surplus_sum_marketmaker_" + suffix, marketMaker.getSum());
 		features.put("surplus_sum_hft_" + suffix, hft.getSum());
 	}
+	
+	// XXX Everything with an @Subscribe is a listener for objects that contain statistics.
 	
 	@Subscribe public void processSpread(SpreadStatistic statistic) {
 		TimeSeries series = spreads.get(statistic.owner);
@@ -246,6 +298,8 @@ public class Observations {
 	@Subscribe public void deadStat(DeadEvent d) {
 		Logger.log(Logger.Level.ERROR, "Unhandled Statistic: " + d);
 	}
+	
+	// These are all statistics classes that are listened for
 	
 	public static class NBBOStatistic {
 		protected final double val;

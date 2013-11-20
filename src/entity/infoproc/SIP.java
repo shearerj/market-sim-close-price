@@ -1,6 +1,7 @@
 package entity.infoproc;
 
 import static logger.Logger.Level.INFO;
+import static data.Observations.BUS;
 
 import java.util.List;
 import java.util.Map;
@@ -10,7 +11,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import data.TimeSeries;
+import data.Observations.NBBOStatistic;
 
 import logger.Logger;
 import activity.Activity;
@@ -37,16 +38,12 @@ public class SIP extends IP {
 	protected final List<Transaction> transactions;
 	protected BestBidAsk nbbo;
 
-	protected final TimeSeries nbboSpreads;
-
 	public SIP(TimeStamp latency) {
 		super(latency);
 		this.marketQuotes = Maps.newHashMap();
 		this.quoteTimes = Maps.newHashMap();
 		this.transactions = Lists.newArrayList();
 		this.nbbo = new BestBidAsk(null, null, 0, null, null, 0);
-
-		this.nbboSpreads = new TimeSeries();
 	}
 
 	public Iterable<Activity> processQuote(Market market, MarketTime quoteTime, Quote quote,
@@ -93,7 +90,7 @@ public class SIP extends IP {
 
 		nbbo = new BestBidAsk(bestBidMkt, bestBid, bestBidQuantity, 
 				bestAskMkt, bestAsk, bestAskQuantity);
-		nbboSpreads.add((int) currentTime.getInTicks(), nbbo.getSpread());
+		BUS.post(new NBBOStatistic(nbbo.getSpread(), currentTime));
 		return ImmutableList.of();
 	}
 
@@ -103,10 +100,6 @@ public class SIP extends IP {
 	
 	public List<Transaction> getTransactions() {
 		return ImmutableList.copyOf(transactions);
-	}
-
-	public TimeSeries getNBBOSpreads() {
-		return nbboSpreads;
 	}
 
 	public String toString() {
