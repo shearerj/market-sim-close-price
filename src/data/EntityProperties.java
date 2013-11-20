@@ -6,7 +6,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.common.base.Joiner;
@@ -14,7 +13,6 @@ import com.google.common.base.Joiner.MapJoiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import com.google.gson.JsonObject;
 
 public class EntityProperties implements Serializable {
 	
@@ -127,12 +125,6 @@ public class EntityProperties implements Serializable {
 
 	public void put(String key, boolean value) {
 		properties.put(key, Boolean.toString(value));
-	}
-	
-	public JsonObject copyToJson(JsonObject json) {
-		for (Entry<String, String> e : properties.entrySet())
-			json.addProperty(e.getKey(), e.getValue());
-		return json;
 	}
 
 	@Override

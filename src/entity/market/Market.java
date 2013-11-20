@@ -25,7 +25,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 
-import data.TimeSeries;
+import data.Observations;
 import entity.Entity;
 import entity.agent.Agent;
 import entity.infoproc.BestBidAsk;
@@ -77,13 +77,7 @@ public abstract class Market extends Entity {
 	protected final Map<fourheap.Order<Price, MarketTime>, Order> orderMapping; // How to get full orders from fourheap Orders
 	protected final Multiset<Price> askPriceQuantity, bidPriceQuantity; // How many orders are at a specific price
 	protected final Collection<Order> orders; // All orders ever submitted to the market
-	protected final List<Transaction> allTransactions; // All successful transactions, implicitly time ordered
-	
-	// depths: Number of orders in the orderBook
-	// spreads: Bid-ask spread value
-	// midQuotes: Midpoint of bid/ask values
-	protected final TimeSeries depths, spreads, midQuotes;
-
+	protected final List<Transaction> allTransactions; // All successful transactions, implicitly time ordered XXX Still necessary?
 
 	/**
 	 * Constructor
@@ -118,10 +112,6 @@ public abstract class Market extends Entity {
 		this.bidPriceQuantity = HashMultiset.create();
 		this.orders = Lists.newArrayList();
 		this.allTransactions = Lists.newArrayList();
-
-		this.depths = new TimeSeries();
-		this.spreads = new TimeSeries();
-		this.midQuotes = new TimeSeries();
 	}
 
 	/**
@@ -229,6 +219,7 @@ public abstract class Market extends Entity {
 			
 			transactions.add(trans);
 			allTransactions.add(trans);
+			Observations.BUS.post(trans);
 			// TODO add delay to agent facing actions...
 			buy.getAgent().addTransaction(trans);
 			if (buy.getQuantity() == 0)
@@ -284,9 +275,8 @@ public abstract class Market extends Entity {
 
 		log(INFO, this + " " + quote);
 
-		depths.add((int) currentTime.getInTicks(), orderbook.size());
-		spreads.add((int) currentTime.getInTicks(), quote.getSpread());
-		midQuotes.add((int) currentTime.getInTicks(), quote.getMidquote());
+		Observations.BUS.post(new Observations.MidQuoteStatistic(this, quote.getMidquote(), currentTime));
+		Observations.BUS.post(new Observations.SpreadStatistic(this, quote.getSpread(), currentTime));
 		
 		MarketTime quoteTime = new MarketTime(currentTime, marketTime);
 		Builder<Activity> acts = ImmutableList.builder();
@@ -374,7 +364,6 @@ public abstract class Market extends Entity {
 		orderMapping.put(nativeOrder, order);
 		orders.add(order);
 		agent.addOrder(order);
-		depths.add((int) currentTime.getInTicks(), orderbook.size());
 		
 		if (!duration.equals(TimeStamp.IMMEDIATE))
 			return ImmutableList.of(new WithdrawOrder(order, currentTime.plus(duration)));
@@ -458,7 +447,7 @@ public abstract class Market extends Entity {
 
 		if (!bestMarket.equals(this))
 			log(INFO, "Routing " + agent + " " + type + "(" +
-					+ quantity + "@" + price + ") -> " 
+					+ quantity + " @ " + price + ") -> " 
 					+ this + " " + quote + " to NBBO " + nbbo);
 
 		return bestMarket.submitOrder(agent, type, price, quantity, currentTime, duration);
@@ -472,33 +461,6 @@ public abstract class Market extends Entity {
 	 */
 	public List<Transaction> getTransactions() {
 		return ImmutableList.copyOf(allTransactions);
-	}
-
-	/**
-	 * Get the depths. Used for observations.
-	 * 
-	 * @return The depths of the Market
-	 */
-	public TimeSeries getDepth() {
-		return this.depths;
-	}
-
-	/**
-	 * Get the spreads. Used for observations.
-	 * 
-	 * @return The spreads of the Market
-	 */
-	public TimeSeries getSpread() {
-		return this.spreads;
-	}
-
-	/**
-	 * Get the mid quotes. Used for observations.
-	 * 
-	 * @return The mid quotes of the Market
-	 */
-	public TimeSeries getMidQuotes() {
-		return this.midQuotes;
 	}
 
 	/**

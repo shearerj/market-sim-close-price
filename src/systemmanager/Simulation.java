@@ -155,7 +155,7 @@ public class Simulation {
 	
 	public Observations getObservations() {
 		return new Observations(specification, markets, agents, players,
-				fundamental, sip);
+				fundamental);
 	}
 	
 	protected static class RoleStrat extends Pair<String, String> {

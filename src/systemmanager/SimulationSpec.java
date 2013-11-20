@@ -230,6 +230,10 @@ public class SimulationSpec implements Serializable {
 		return playerProps;
 	}
 	
+	public JsonObject getRawSpec() {
+		return rawSpec;
+	}
+	
 	@Override
 	public String toString() {
 		return rawSpec.toString();

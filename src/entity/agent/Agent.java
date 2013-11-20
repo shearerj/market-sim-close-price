@@ -242,7 +242,7 @@ public abstract class Agent extends Entity {
 			OrderType type;
 			
 			if (trans.getBuyer().equals(trans.getSeller())) {
-				// FIXME Handle appropriately...
+				// FIXME Handle appropriately... Maybe this is appropriate?
 				continue;
 			} else if (trans.getBuyer().equals(this)) {
 				submissionTime = trans.getBuyBid().getSubmitTime();
@@ -256,7 +256,7 @@ public abstract class Agent extends Entity {
 			int fund = fundamental.getValueAt(trans.getExecTime()).intValue() * trans.getQuantity();
 			int pv = privateValue.getValue(positionBalance, type).intValue();
 			int cost = trans.getPrice().intValue() * trans.getQuantity();
-			int transactionSurplus = (fund + pv - cost) * (type.equals(OrderType.BUY) ? 1 : -1) ;
+			int transactionSurplus = (fund + pv - cost) * (type == OrderType.BUY ? 1 : -1) ;
 
 			surplus += Math.exp(rho * timeToExecution.getInTicks()) * transactionSurplus;
 		}

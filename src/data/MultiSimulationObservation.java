@@ -5,67 +5,99 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+
+import systemmanager.SimulationSpec;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 
 public class MultiSimulationObservation {
 
 	protected static final Gson gson = new Gson();
-	JsonElement observations;
-	int n;
+	
+	protected final List<MultiPlayerObservation> playerObservations;
+	protected final Map<String, SummaryStatistics> features;
+	protected SimulationSpec spec;
 	
 	public MultiSimulationObservation() {
-		observations = null;
-		n = 0;
+		this.features = Maps.newHashMap();
+		this.playerObservations = Lists.newArrayList();
+		this.spec = null;
 	}
 	
 	public void addObservation(Observations obs) {
-		n++;
-		if (observations == null)
-			observations = obs.observations;
-		else
-			observations = mergeJson(observations, obs.observations);
+		if (spec == null) { // First observation
+			for (PlayerObservation po : obs.getPlayerObservations())
+				playerObservations.add(new MultiPlayerObservation(po.role, po.strategy, po.payoff));
+			for (Entry<String, Double> e : obs.getFeatures().entrySet()) {
+				SummaryStatistics sum = new SummaryStatistics();
+				sum.addValue(e.getValue());
+				features.put(e.getKey(), sum);
+			}
+			spec = obs.spec;
+		} else {
+			/*
+			 * XXX This is not super safe. It assumes that you will see the same
+			 * features every time, and it assumes that the players are in the
+			 * same order. Given the way the code is written, this should be the
+			 * case, but it's worth noting.
+			 */
+			Iterator<PlayerObservation> it = obs.getPlayerObservations().iterator();
+			for (MultiPlayerObservation mpo : playerObservations)
+				mpo.payoff.addValue(it.next().payoff);
+			for (Entry<String, Double> e : obs.getFeatures().entrySet())
+				features.get(e.getKey()).addValue(e.getValue());
+		}
 	}
 	
-	// Recursively merge json objects. This is super fragile! But will work if everything stays the same.	
-	protected JsonElement mergeJson(JsonElement agg, JsonElement add) {
-		if (agg.isJsonObject()) {
-			JsonObject obj = new JsonObject();
-			for (Entry<String, JsonElement> e : agg.getAsJsonObject().entrySet())
-				obj.add(e.getKey(), mergeJson(e.getValue(), add.getAsJsonObject().get(e.getKey())));
-			return obj;
-		} else if (agg.isJsonArray()) {
-			JsonArray arr = new JsonArray();
-			for (Iterator<JsonElement> itg = agg.getAsJsonArray().iterator(), itd = add.getAsJsonArray().iterator(); itg.hasNext();)
-				arr.add(mergeJson(itg.next(), itd.next()));
-			return arr;
-		} else if (agg.isJsonPrimitive()) {
-			JsonPrimitive aggp = agg.getAsJsonPrimitive();
-			if (aggp.isNumber()) {
-				return new JsonPrimitive((aggp.getAsDouble() * (n - 1) + add.getAsDouble())/ n);
-			} else if (aggp.isString()) {
-				return aggp; // FIXME Ignores strings beyond the first!
-			} else {
-				throw new IllegalArgumentException();
-			}
-		} else {
-			throw new IllegalArgumentException();
+	protected JsonElement toJson() {
+		JsonObject root = new JsonObject();
+		
+		// Write out features
+		JsonObject feats = new JsonObject();
+		root.add("features", feats);
+		for (Entry<String, SummaryStatistics> e : features.entrySet())
+			feats.addProperty(e.getKey(), e.getValue().getMean());
+		
+		// Add spec to config
+		feats.add("spec", spec.getRawSpec());
+		
+		// Write out players
+		JsonArray players = new JsonArray();
+		root.add("players", players);
+		for (MultiPlayerObservation mpo : playerObservations) {
+			JsonObject obs = new JsonObject();
+			players.add(obs);
+			obs.addProperty("role", mpo.role);
+			obs.addProperty("strategy", mpo.strategy);
+			obs.addProperty("payoff", mpo.payoff.getMean());
+			
+			// Record standard deviation for multi simulation
+			JsonObject playerFeatures = new JsonObject();
+			obs.add("features", playerFeatures);
+			playerFeatures.addProperty("payoff_stddev", mpo.payoff.getStandardDeviation());
 		}
+		
+		return feats;
 	}
 	
 	public void writeToFile(File observationsFile) throws IOException {
 		Writer writer = null;
 		try {
 			writer = new FileWriter(observationsFile);
-			gson.toJson(observations, writer);
+			gson.toJson(toJson(), writer);
 		} finally {
 			if (writer != null) writer.close();
 		}
 	}
-	
+
 }

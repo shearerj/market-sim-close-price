@@ -1,10 +1,6 @@
 package data;
 
-import static data.Observations.*;
-
 import java.io.Serializable;
-
-import com.google.gson.JsonObject;
 
 import entity.agent.Agent;
 
@@ -26,13 +22,9 @@ public class Player implements Serializable {
 		return agent;
 	}
 	
-	public JsonObject toJson() {
-		JsonObject observation = new JsonObject();
-		observation.addProperty(ROLE, role);
-		observation.addProperty(STRATEGY, strategy);
-		// FIXME Get surplus instead of realized profit?
-		observation.addProperty(PAYOFF, agent.getSurplus(0));
-		return observation;
+	public PlayerObservation getObservation() {
+		// FIXME Get payoff!
+		return new PlayerObservation(role, strategy, agent.getSurplus(0));
 	}
 
 }
