@@ -3,7 +3,6 @@ package activity;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import entity.agent.Agent;
-import entity.market.Price;
 import event.TimeStamp;
 
 /**
@@ -13,25 +12,23 @@ import event.TimeStamp;
  * @author ewah
  */
 // TODO Currently unused
-public class Liquidate extends Activity {
+public class LiquidateAtFundamental extends Activity {
 
 	protected final Agent agent;
-	protected final Price price;
 
-	public Liquidate(Agent agent, Price price, TimeStamp scheduledTime) {
+	public LiquidateAtFundamental(Agent agent, TimeStamp scheduledTime) {
 		super(scheduledTime);
 		this.agent = checkNotNull(agent, "Agent");
-		this.price = checkNotNull(price, "Price");
 	}
 
 	@Override
 	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return this.agent.liquidateAtPrice(this.price, currentTime);
+		return this.agent.liquidateAtFundamental(currentTime);
 	}
 	
 	@Override
 	public String toString() {
-		return super.toString() + agent + " @" + price;
+		return super.toString() + agent;
 	}
 	
 }

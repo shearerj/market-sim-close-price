@@ -23,8 +23,7 @@ public class Player implements Serializable {
 	}
 	
 	public PlayerObservation getObservation() {
-		// FIXME Get payoff!
-		return new PlayerObservation(role, strategy, agent.getSurplus(0));
+		return new PlayerObservation(role, strategy, agent.getPayoff());
 	}
 
 }

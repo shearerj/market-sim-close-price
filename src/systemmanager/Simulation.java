@@ -32,15 +32,6 @@ import entity.market.Market;
 import entity.market.MarketFactory;
 import event.TimeStamp;
 
-/**
- * This class serves the purpose of the Client in the Command pattern, in that
- * it instantiates the Activity objects and provides the methods to execute them
- * later.
- * 
- * Usage: java -jar hft.jar [simulation folder name] [sample #]
- * 
- * @author ewah
- */
 public class Simulation {
 
 	protected final EventManager eventManager;
@@ -52,6 +43,7 @@ public class Simulation {
 
 	protected final SimulationSpec specification;
 	protected final TimeStamp simulationLength;
+	protected final Observations observations;
 	
 	public Simulation(SimulationSpec spec, Random rand) {
 		this.specification = spec;
@@ -61,20 +53,22 @@ public class Simulation {
 		Collection<AgentProperties> agentProps = spec.getAgentProps();
 		JsonObject playerConfig = spec.getPlayerProps();
 
-		simulationLength = new TimeStamp(simProps.getAsLong(Keys.SIMULATION_LENGTH));
+		this.simulationLength = new TimeStamp(simProps.getAsLong(Keys.SIMULATION_LENGTH));
 
-		fundamental = new FundamentalValue(
+		this.fundamental = new FundamentalValue(
 				simProps.getAsDouble(Keys.FUNDAMENTAL_KAPPA),
 				simProps.getAsInt(Keys.FUNDAMENTAL_MEAN),
 				simProps.getAsDouble(Keys.FUNDAMENTAL_SHOCK_VAR),
 				new Random(rand.nextLong()));
-		sip = new SIP(new TimeStamp(simProps.getAsInt(Keys.NBBO_LATENCY)));
-		markets = setupMarkets(marketProps, rand);
-		agents = setupAgents(agentProps, rand);
-		players = setupPlayers(simProps, playerConfig, rand);
+		this.sip = new SIP(new TimeStamp(simProps.getAsInt(Keys.NBBO_LATENCY)));
+		this.markets = setupMarkets(marketProps, rand);
+		this.agents = setupAgents(agentProps, rand);
+		this.players = setupPlayers(simProps, playerConfig, rand);
+		this.observations = new Observations(specification, markets, agents,
+				players, fundamental);
 
 		// XXX Log markets and their configuration?
-		eventManager = new EventManager(new Random(rand.nextLong()));
+		this.eventManager = new EventManager(new Random(rand.nextLong()));
 		for (Market market : markets)
 			eventManager.addActivity(new Clear(market, TimeStamp.IMMEDIATE));
 		for (Agent agent : agents)
@@ -145,8 +139,10 @@ public class Simulation {
 	 * Method to execute all events in the Event Queue.
 	 */
 	public void executeEvents() {
+		Observations.BUS.register(observations);
 		eventManager.executeUntil(simulationLength);
 		log(INFO, "[[[ Simulation Over ]]]");
+		Observations.BUS.unregister(observations);
 	}
 	
 	public TimeStamp getCurrentTime() {
@@ -154,8 +150,7 @@ public class Simulation {
 	}
 	
 	public Observations getObservations() {
-		return new Observations(specification, markets, agents, players,
-				fundamental);
+		return observations;
 	}
 	
 	protected static class RoleStrat extends Pair<String, String> {

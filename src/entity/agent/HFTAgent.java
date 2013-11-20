@@ -29,8 +29,7 @@ public abstract class HFTAgent extends MMAgent {
 	public HFTAgent(TimeStamp latency, TimeStamp arrivalTime,
 			FundamentalValue fundamental, SIP sip, Collection<Market> markets, 
 			Random rand, int tickSize) {
-		super(arrivalTime, fundamental, sip, markets, rand, new PrivateValue(),
-				tickSize);
+		super(arrivalTime, fundamental, sip, markets, rand, tickSize);
 		this.ips = Maps.newHashMap();
 		
 		for (Market market : markets) {

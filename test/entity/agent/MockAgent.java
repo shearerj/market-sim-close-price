@@ -17,7 +17,7 @@ public class MockAgent extends Agent {
 	private static final long serialVersionUID = 1L;
 
 	public MockAgent(FundamentalValue fundamental, SIP sip, Market market) {
-		super(new TimeStamp(0), fundamental, sip, new Random(), new PrivateValue(),	1);
+		super(TimeStamp.ZERO, fundamental, sip, new Random(), 1);
 	}
 
 	@Override

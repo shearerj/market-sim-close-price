@@ -38,7 +38,7 @@ import entity.market.Price;
  * 
  * @author ewah
  */
-public class PrivateValue implements Serializable {
+class PrivateValue implements Serializable {
 
 	private static final long serialVersionUID = -348702049295080442L;
 	

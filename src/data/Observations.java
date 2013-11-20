@@ -31,9 +31,6 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import entity.agent.Agent;
-import entity.agent.BackgroundAgent;
-import entity.agent.HFTAgent;
-import entity.agent.MarketMaker;
 import entity.market.Market;
 import entity.market.Transaction;
 import event.TimeStamp;
@@ -96,9 +93,6 @@ public class Observations {
 		this.transPrices = new TimeSeries();
 		this.fundPrices = new TimeSeries();
 		this.nbboSpreads = new TimeSeries();
-		
-		BUS.register(this);
-//		BUS.unregister(this); FIXME This should happen somewhere!!!!
 	}
 	
 	public List<PlayerObservation> getPlayerObservations() {
@@ -188,27 +182,27 @@ public class Observations {
 	protected void discountBased(ImmutableMap.Builder<String, Double> features, double discount) {
 		String suffix = discount == 0 ? "no_disc" : "disc_" + discount;
 
-		DescriptiveStatistics modelSurplus, background, hft, marketMaker;
-		modelSurplus = DSPlus.from();
-		// sub-categories for surplus (roles)
-		background = DSPlus.from();
-		hft = DSPlus.from();
-		marketMaker = DSPlus.from();
+		SummaryStatistics 
+				modelSurplus = new SummaryStatistics(),
+				background = new SummaryStatistics(),
+				hft = new SummaryStatistics(),
+				marketMaker = new SummaryStatistics();
 
 		// go through all agents & update for each agent type
-		for (Agent agent : agents) {
-			double agentSurplus = agent.getSurplus(discount);
-			modelSurplus.addValue(agentSurplus);
-
-			if (agent instanceof BackgroundAgent) {
-				background.addValue(agentSurplus);
-			} else if (agent instanceof HFTAgent) {
-				// FIXME This is not necessarily correct if the agent has a net position at the end...
-				hft.addValue(agentSurplus);
-			} else if (agent instanceof MarketMaker) {
-				marketMaker.addValue(agentSurplus);
-			}
-		}
+//		for (Agent agent : agents) {
+//			FIXME Need a way that this makes sense with surplus and profit
+//			double agentSurplus = agent.getSurplus(discount);
+//			modelSurplus.addValue(agentSurplus);
+//
+//			if (agent instanceof BackgroundAgent) {
+//				background.addValue(agentSurplus);
+//			} else if (agent instanceof HFTAgent) {
+//				// FIXME This is not necessarily correct if the agent has a net position at the end...
+//				hft.addValue(agentSurplus);
+//			} else if (agent instanceof MarketMaker) {
+//				marketMaker.addValue(agentSurplus);
+//			}
+//		}
 
 		features.put("surplus_sum_total_" + suffix, modelSurplus.getSum());
 		features.put("surplus_sum_background_" + suffix, background.getSum());

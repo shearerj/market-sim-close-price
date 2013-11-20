@@ -221,10 +221,10 @@ public abstract class Market extends Entity {
 			allTransactions.add(trans);
 			Observations.BUS.post(trans);
 			// TODO add delay to agent facing actions...
-			buy.getAgent().addTransaction(trans);
+			buy.getAgent().processTransaction(trans);
 			if (buy.getQuantity() == 0)
 				buy.agent.removeOrder(buy);
-			sell.getAgent().addTransaction(trans);
+			sell.getAgent().processTransaction(trans);
 			if (sell.getQuantity() == 0)
 				sell.agent.removeOrder(sell);
 		}

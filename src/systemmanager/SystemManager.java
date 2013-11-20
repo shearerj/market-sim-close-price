@@ -23,6 +23,15 @@ import entity.agent.Agent;
 import entity.infoproc.IP;
 import entity.market.Market;
 
+/**
+ * This class serves the purpose of the Client in the Command pattern, in that
+ * it instantiates the Activity objects and provides the methods to execute them
+ * later.
+ * 
+ * Usage: java -jar hft.jar [simulation folder name] [sample #]
+ * 
+ * @author ewah
+ */
 public class SystemManager {
 
 	/**

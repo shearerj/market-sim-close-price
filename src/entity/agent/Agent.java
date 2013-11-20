@@ -11,8 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import systemmanager.Consts.OrderType;
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -46,31 +44,29 @@ public abstract class Agent extends Entity {
 	protected final Collection<Order> activeOrders;
 
 	// Agent parameters
-	protected final PrivateValue privateValue;
 	protected final TimeStamp arrivalTime;
 	protected final int tickSize;
 
+	// Tracking position and profit/cash
+	// XXX How to account for discounting?
 	protected int positionBalance;
-	// Tracking cash flow
-	protected int cashBalance;
-	protected int averageCost;
-	// for liquidation XXX Currently unused
-	protected int realizedProfit;
-	protected int preLiqPosition;
-	protected int preLiqRealizedProfit;
+	protected int cashBalance; // Before liquidation
+	protected int realizedProfit; // After liquidation
 
 	public Agent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			Random rand, PrivateValue privateValue, int tickSize) {
+			Random rand, int tickSize) {
 		super(nextID++);
 		this.fundamental = checkNotNull(fundamental);
-		this.rand = rand;
 		this.arrivalTime = checkNotNull(arrivalTime);
 		this.sip = sip;
-		this.privateValue = checkNotNull(privateValue);
 		this.tickSize = tickSize;
+		this.rand = rand;
 
 		this.transactions = Lists.newArrayList();
 		this.activeOrders = Sets.newHashSet();
+		this.positionBalance = 0;
+		this.cashBalance = 0;
+		this.realizedProfit = 0;
 	}
 
 	public abstract Iterable<? extends Activity> agentStrategy(
@@ -88,28 +84,21 @@ public abstract class Agent extends Entity {
 	public Iterable<? extends Activity> liquidateAtFundamental(
 			TimeStamp currentTime) {
 		log(INFO, this + " liquidating...");
-		return liquidate(fundamental.getValueAt(currentTime), currentTime);
+		return liquidateAtPrice(fundamental.getValueAt(currentTime), currentTime);
 	}
 
 	/**
 	 * Liquidates an agent's position at the specified price.
 	 */
-	public Iterable<? extends Activity> liquidate(Price price, TimeStamp ts) {
+	public Iterable<? extends Activity> liquidateAtPrice(Price price, TimeStamp ts) {
 
 		log(INFO, this + " pre-liquidation: position="
 				+ positionBalance);
 
-		// If no net position, no need to liquidate
-		if (positionBalance == 0) return Collections.emptyList();
+		realizedProfit = cashBalance + positionBalance * price.intValue();
 
-		preLiqPosition = positionBalance;
-		preLiqRealizedProfit = realizedProfit;
-		realizedProfit += positionBalance * price.intValue();
-		positionBalance -= positionBalance;
-
-		log(INFO, this + " post-liquidation: position="
-				+ positionBalance + ", profit=" + realizedProfit + ", price="
-				+ price);
+		log(INFO, this + " post-liquidation: profit=" + realizedProfit
+				+ ", price=" + price);
 		return Collections.emptyList();
 	}
 
@@ -176,91 +165,33 @@ public abstract class Agent extends Entity {
 		return acts;
 	}
 	
-	// TODO gives the agent instant data. Should instead process with delay
-	public void addTransaction(Transaction trans) {
+	// TODO gives the agent instant data. Should instead process with delay?
+	public void processTransaction(Transaction trans) {
 		checkArgument(trans.getBuyer().equals(this) || trans.getSeller().equals(this),
 				"Can only add a transaction that this agent participated in");
+		// Add to transactions data structure
 		transactions.add(trans);
+		
 		// Not an else if in case buyer and seller are the same
-		if (trans.getBuyer().equals(this))
+		if (trans.getBuyer().equals(this)) {
 			positionBalance += trans.getQuantity();
-		if (trans.getSeller().equals(this))
+			cashBalance -= trans.getQuantity() * trans.getPrice().intValue();
+		}
+		if (trans.getSeller().equals(this)) {
 			positionBalance -= trans.getQuantity();
+			cashBalance += trans.getQuantity() * trans.getPrice().intValue();
+		}
 
 		log(INFO, this + " transacted to position " + positionBalance);
 	}
 
-	/**
-	 * Computes any unrealized profit based on market bid/ask quotes.
-	 */
-	// TODO Implement this
-//	public Price getUnrealizedProfit() {
-//		throw new IllegalArgumentException();
-//		if (positionBalance == 0) return Price.ZERO;
-//
-//		Price p = null;
-//		if (positionBalance > 0) {
-//			// For long position, compare cost to bid quote (buys)
-//			for (Market market : model.getMarkets())
-//				if (market.getQuote().getBidPrice().greaterThan(p))
-//					p = market.getQuote().getBidPrice();
-//		} else {
-//			// For short position, compare cost to ask quote (sells)
-//			for (Market market : model.getMarkets()) {
-//				if (market.getQuote().getAskPrice().lessThan(p)) {
-//					p = market.getQuote().getAskPrice();
-//				}
-//			}
-//		}
-//
-//		log(DEBUG, model.getName() + ": " + this + " bal="
-//				+ positionBalance + ", p=" + p + ", avgCost=" + averageCost);
-//
-//		return p == null ? Price.ZERO : new Price(positionBalance
-//				* (p.getInTicks() - averageCost));
-//	}
-
 	public final TimeStamp getArrivalTime() {
 		return arrivalTime;
 	}
-
-	/**
-	 * Iterates through the agent's transactions and calculates its current discounted surplus with
-	 * the specified discount factor
-	 * 
-	 * @param rho
-	 *            Discount factor. 0 means no discounting, while larger positive numbers represent
-	 *            larger discounting
-	 * @return
-	 */
-	public double getSurplus(double rho) {
-		checkArgument(rho >= 0, "Can't have a negative discount factor");
-		double surplus = 0;
-
-		for (Transaction trans : transactions) {
-			TimeStamp submissionTime;
-			OrderType type;
-			
-			if (trans.getBuyer().equals(trans.getSeller())) {
-				// FIXME Handle appropriately... Maybe this is appropriate?
-				continue;
-			} else if (trans.getBuyer().equals(this)) {
-				submissionTime = trans.getBuyBid().getSubmitTime();
-				type = OrderType.BUY;
-			} else {
-				submissionTime = trans.getSellBid().getSubmitTime();
-				type = OrderType.SELL;
-			}
-			TimeStamp timeToExecution = trans.getExecTime().minus(submissionTime);
-
-			int fund = fundamental.getValueAt(trans.getExecTime()).intValue() * trans.getQuantity();
-			int pv = privateValue.getValue(positionBalance, type).intValue();
-			int cost = trans.getPrice().intValue() * trans.getQuantity();
-			int transactionSurplus = (fund + pv - cost) * (type == OrderType.BUY ? 1 : -1) ;
-
-			surplus += Math.exp(rho * timeToExecution.getInTicks()) * transactionSurplus;
-		}
-		return surplus;
+	
+	// TODO Can't take an argument until we can discount profit...
+	public double getPayoff() {
+		return realizedProfit;
 	}
 	
 	@Override

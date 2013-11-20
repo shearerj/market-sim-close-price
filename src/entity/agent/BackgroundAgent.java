@@ -1,5 +1,6 @@
 package entity.agent;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 import iterators.ExpInterarrivals;
@@ -19,6 +20,7 @@ import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
+import entity.market.Transaction;
 import event.TimeStamp;
 
 /**
@@ -32,6 +34,8 @@ public abstract class BackgroundAgent extends SMAgent {
 	
 	private static final long serialVersionUID = 7742389103679854398L;
 	
+	protected final PrivateValue privateValue;
+	protected final DiscountedValue surplus;
 	protected Iterator<TimeStamp> reentry; // re-entry times
 	
 	protected int bidRangeMax; 		// range for limit order
@@ -41,9 +45,11 @@ public abstract class BackgroundAgent extends SMAgent {
 			Market market, Random rand, Iterator<TimeStamp> reentry,
 			PrivateValue pv, int tickSize, int bidRangeMin,
 			int bidRangeMax) {
-		super(arrivalTime, fundamental, sip, market, rand, pv, tickSize);
+		super(arrivalTime, fundamental, sip, market, rand, tickSize);
 	
-		this.reentry = reentry;
+		this.privateValue = checkNotNull(pv);
+		this.surplus = DiscountedValue.create();
+		this.reentry = checkNotNull(reentry);
 		this.bidRangeMin = bidRangeMin;
 		this.bidRangeMax = bidRangeMax;
 	}
@@ -105,6 +111,38 @@ public abstract class BackgroundAgent extends SMAgent {
 		}
 	}
 	
+	@Override
+	public void processTransaction(Transaction trans) {
+		super.processTransaction(trans);
+		TimeStamp submissionTime;
+		OrderType type;
+		
+		if (trans.getBuyer().equals(trans.getSeller())) {
+			// FIXME Handle appropriately... Maybe this is appropriate?
+			return;
+		} else if (trans.getBuyer().equals(this)) {
+			submissionTime = trans.getBuyBid().getSubmitTime();
+			type = OrderType.BUY;
+		} else {
+			submissionTime = trans.getSellBid().getSubmitTime();
+			type = OrderType.SELL;
+		}
+		TimeStamp timeToExecution = trans.getExecTime().minus(submissionTime);
+
+		int value = getValuation(type, trans.getQuantity(), trans.getExecTime()).intValue();
+		int cost = trans.getPrice().intValue() * trans.getQuantity();
+		int transactionSurplus = (value - cost) * (type == OrderType.BUY ? 1 : -1) ;
+		
+		surplus.addValue(transactionSurplus, timeToExecution.getInTicks());
+	}
+
+	@Override
+	// TODO Returns undiscounted surplus. To get otherwise would require
+	// modifying this, or allowing discounted profit for all agents...
+	public double getPayoff() {
+		return surplus.getValueAtDiscount(0);
+	}
+
 	/**
 	 * Returns the limit price (i.e. valuation) for the agent for buying/selling 1 unit.
 	 * 
@@ -130,8 +168,8 @@ public abstract class BackgroundAgent extends SMAgent {
 	 */
 	public Price getValuation(OrderType type, int quantity, TimeStamp currentTime) {
 		return new Price(
-				fundamental.getValueAt(currentTime).intValue()
-						+ privateValue.getValueFromQuantity(positionBalance,
-								quantity, type).intValue()).nonnegative();
+				fundamental.getValueAt(currentTime).intValue() * quantity
+				+ privateValue.getValueFromQuantity(positionBalance, quantity, type).intValue()
+				).nonnegative();
 	}
 }
