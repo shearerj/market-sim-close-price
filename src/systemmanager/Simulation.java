@@ -72,6 +72,7 @@ public class Simulation {
 		for (Market market : markets)
 			eventManager.addActivity(new Clear(market, TimeStamp.IMMEDIATE));
 		for (Agent agent : agents)
+			// TODO Schedule LiquidateAtFundamental for non Background Agents.
 			eventManager.addActivity(new AgentArrival(agent, agent.getArrivalTime()));
 	}
 	
