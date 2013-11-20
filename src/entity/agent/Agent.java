@@ -50,8 +50,8 @@ public abstract class Agent extends Entity {
 	// Tracking position and profit/cash
 	// XXX How to account for discounting?
 	protected int positionBalance;
-	protected int cashBalance; // Before liquidation
-	protected int realizedProfit; // After liquidation
+	protected int profit;
+	protected int postLiquidationProfit;
 
 	public Agent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Random rand, int tickSize) {
@@ -65,8 +65,8 @@ public abstract class Agent extends Entity {
 		this.transactions = Lists.newArrayList();
 		this.activeOrders = Sets.newHashSet();
 		this.positionBalance = 0;
-		this.cashBalance = 0;
-		this.realizedProfit = 0;
+		this.profit = 0;
+		this.postLiquidationProfit = 0; // Initialize to some signal value to guarantee that it's not read incorrectly?
 	}
 
 	public abstract Iterable<? extends Activity> agentStrategy(
@@ -95,9 +95,9 @@ public abstract class Agent extends Entity {
 		log(INFO, this + " pre-liquidation: position="
 				+ positionBalance);
 
-		realizedProfit = cashBalance + positionBalance * price.intValue();
+		postLiquidationProfit = profit + positionBalance * price.intValue();
 
-		log(INFO, this + " post-liquidation: profit=" + realizedProfit
+		log(INFO, this + " post-liquidation: profit=" + postLiquidationProfit
 				+ ", price=" + price);
 		return Collections.emptyList();
 	}
@@ -175,11 +175,11 @@ public abstract class Agent extends Entity {
 		// Not an else if in case buyer and seller are the same
 		if (trans.getBuyer().equals(this)) {
 			positionBalance += trans.getQuantity();
-			cashBalance -= trans.getQuantity() * trans.getPrice().intValue();
+			profit -= trans.getQuantity() * trans.getPrice().intValue();
 		}
 		if (trans.getSeller().equals(this)) {
 			positionBalance -= trans.getQuantity();
-			cashBalance += trans.getQuantity() * trans.getPrice().intValue();
+			profit += trans.getQuantity() * trans.getPrice().intValue();
 		}
 
 		log(INFO, this + " transacted to position " + positionBalance);
@@ -191,7 +191,7 @@ public abstract class Agent extends Entity {
 	
 	// TODO Can't take an argument until we can discount profit...
 	public double getPayoff() {
-		return realizedProfit;
+		return postLiquidationProfit;
 	}
 	
 	@Override

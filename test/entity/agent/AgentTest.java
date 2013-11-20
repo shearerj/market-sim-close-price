@@ -233,30 +233,30 @@ public class AgentTest {
 	@Test
 	public void liquidation() {
 		TimeStamp time = new TimeStamp(100);
-		agent.cashBalance = 5000;
+		agent.profit = 5000;
 		
 		// Check that no change if position 0
 		agent.positionBalance = 0;
 		agent.liquidateAtPrice(new Price(100000), time);
-		assertEquals(5000, agent.realizedProfit);
+		assertEquals(5000, agent.postLiquidationProfit);
 		
 		// Check liquidation when position > 0 (sell 1 unit)
-		agent.cashBalance = 5000;
+		agent.profit = 5000;
 		agent.positionBalance = 1;
 		agent.liquidateAtPrice(new Price(100000), time);
-		assertEquals(105000, agent.realizedProfit);
+		assertEquals(105000, agent.postLiquidationProfit);
 		
 		// Check liquidation when position < 0 (buy 2 units)
-		agent.cashBalance = 5000;
+		agent.profit = 5000;
 		agent.positionBalance = -2;
 		agent.liquidateAtPrice(new Price(100000), time);
-		assertEquals(-195000, agent.realizedProfit);
+		assertEquals(-195000, agent.postLiquidationProfit);
 		
 		// Check liquidation at fundamental
-		agent.cashBalance = 5000;
+		agent.profit = 5000;
 		agent.positionBalance = 1;
 		agent.liquidateAtFundamental(time);
-		assertEquals(fundamental.getValueAt(time).longValue() + 5000, agent.realizedProfit);
+		assertEquals(fundamental.getValueAt(time).longValue() + 5000, agent.postLiquidationProfit);
 	}
 	
 	@Test
