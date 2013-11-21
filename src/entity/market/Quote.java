@@ -93,7 +93,7 @@ public class Quote implements Serializable {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj.getClass().equals(getClass())))
+		if (obj == null || !(obj instanceof Quote))
 			return false;
 		Quote that = (Quote) obj;
 		return Objects.equal(market, that.market)

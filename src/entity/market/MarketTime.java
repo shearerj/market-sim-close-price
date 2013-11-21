@@ -28,9 +28,10 @@ public class MarketTime extends TimeStamp implements Serializable {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !obj.getClass().equals(MarketTime.class)) return false;
-		MarketTime other = (MarketTime) obj;
-		return super.equals(obj) && marketTime == other.marketTime;
+		if (obj == null || !(obj instanceof TimeStamp)) return false;
+		if (obj instanceof MarketTime)
+			return super.equals(obj) && marketTime == ((MarketTime) obj).marketTime;
+		return super.equals(obj);
 	}
 
 	@Override

@@ -83,7 +83,7 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj.getClass().equals(TimeStamp.class))) return false;
+		if (obj == null || !(obj instanceof TimeStamp)) return false;
 		final TimeStamp other = (TimeStamp) obj;
 		return ticks == other.ticks;
 	}

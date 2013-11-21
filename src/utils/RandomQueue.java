@@ -89,7 +89,7 @@ public class RandomQueue<E> extends AbstractQueue<E> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj.getClass().equals(getClass()))) return false;
+		if (obj == null || !(obj instanceof RandomQueue)) return false;
 		return elements.equals(((RandomQueue<?>) obj).elements);
 	}
 

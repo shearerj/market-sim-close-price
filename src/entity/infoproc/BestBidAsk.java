@@ -73,7 +73,7 @@ public class BestBidAsk implements Serializable {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj.getClass().equals(getClass())))
+		if (obj == null || !(obj instanceof BestBidAsk))
 			return false;
 		BestBidAsk that = (BestBidAsk) obj;
 		return Objects.equal(bestBidMarket, that.bestBidMarket)
