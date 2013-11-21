@@ -253,7 +253,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 			int quantity = Math.min(buy.matchedQuantity, sell.matchedQuantity);
 			buy.matchedQuantity -= quantity;
 			sell.matchedQuantity -= quantity;
-			transactions.add(MatchedOrders.create(buy, sell, quantity));
+			transactions.add(MatchedOrders.<P, T, O> create(buy, sell, quantity));
 			size -= 2*quantity;
 		}
 		return transactions.build();

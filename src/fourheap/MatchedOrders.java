@@ -16,7 +16,7 @@ public class MatchedOrders<P extends Comparable<? super P>, T extends Comparable
 		this.quantity = quantity;
 	}
 
-	public static <BS extends Enum<BS>, P extends Comparable<? super P>, T extends Comparable<? super T>, O extends Order<? extends P, ? extends T>> MatchedOrders<P, T, O> create(
+	public static <P extends Comparable<? super P>, T extends Comparable<? super T>, O extends Order<? extends P, ? extends T>> MatchedOrders<P, T, O> create(
 			O buy, O sell, int quantity) {
 		return new MatchedOrders<P, T, O>(buy, sell, quantity);
 	}
