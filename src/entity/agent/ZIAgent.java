@@ -2,7 +2,8 @@ package entity.agent;
 
 import java.util.Random;
 
-import systemmanager.Consts.OrderType;
+import static fourheap.Order.OrderType.*;
+
 import systemmanager.Keys;
 import activity.Activity;
 import data.EntityProperties;
@@ -64,8 +65,7 @@ public class ZIAgent extends BackgroundAgent {
 	@Override
 	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
 		// 50% chance of being either long or short
-		OrderType type = rand.nextBoolean() ? OrderType.BUY : OrderType.SELL;
-		return this.executeZIStrategy(type, 1, currentTime);
+		return this.executeZIStrategy(rand.nextBoolean() ? BUY : SELL, 1, currentTime);
 	}
 
 	@Override

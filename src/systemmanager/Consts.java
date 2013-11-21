@@ -14,8 +14,6 @@ public interface Consts {
 	
 	public final static int UP_TO_TIME = 3000;	// compute statistics up to this time
 	
-	public static enum OrderType { BUY, SELL };
-	
 	// **********************************************************
 	// Agent, market, and model types
 	// UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL

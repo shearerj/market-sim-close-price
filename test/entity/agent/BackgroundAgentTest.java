@@ -1,6 +1,7 @@
 package entity.agent;
 
 import static org.junit.Assert.*;
+import static fourheap.Order.OrderType.*;
 
 import java.io.File;
 import java.util.Arrays;
@@ -18,7 +19,6 @@ import com.google.common.collect.Iterables;
 import activity.Activity;
 import activity.SubmitNMSOrder;
 import systemmanager.Consts;
-import systemmanager.Consts.OrderType;
 import data.DummyFundamental;
 import data.FundamentalValue;
 import entity.agent.BackgroundAgent;
@@ -52,9 +52,9 @@ public class BackgroundAgentTest {
 		BackgroundAgent agent = new MockBackgroundAgent(randFundamental, sip, market);
 		
 		// Verify valuation (where PV = 0)
-		Price val = agent.getValuation(OrderType.BUY, time);
+		Price val = agent.getValuation(BUY, time);
 		assertEquals(randFundamental.getValueAt(time), val);
-		val = agent.getValuation(OrderType.SELL, time);
+		val = agent.getValuation(SELL, time);
 		assertEquals(randFundamental.getValueAt(time), val);
 	}
 	
@@ -69,9 +69,9 @@ public class BackgroundAgentTest {
 		
 		// Verify valuation (current position of 0)
 		Price fund = fundamental.getValueAt(time);
-		Price val = agent.getValuation(OrderType.BUY, time);
+		Price val = agent.getValuation(BUY, time);
 		assertEquals(fund.intValue() + 10, val.intValue());
-		val = agent.getValuation(OrderType.SELL, time);
+		val = agent.getValuation(SELL, time);
 		assertEquals(fund.intValue() + 100, val.intValue());
 	}
 	
@@ -98,25 +98,25 @@ public class BackgroundAgentTest {
 		
 		agent.positionBalance = 3;
 		Price fund = randFundamental.getValueAt(time);
-		Price val = agent.getValuation(OrderType.BUY, time);
+		Price val = agent.getValuation(BUY, time);
 		assertEquals(fund.intValue() + pv8, val.intValue());
 		assertEquals(fund.intValue()*2 + pv9 + pv8, 
-				agent.getValuation(OrderType.BUY, 2, time).intValue());
-		val = agent.getValuation(OrderType.SELL, time);
+				agent.getValuation(BUY, 2, time).intValue());
+		val = agent.getValuation(SELL, time);
 		assertEquals(fund.intValue() + pv7, val.intValue());
 		assertEquals(fund.intValue()*2 + pv7 + pv6, 
-				agent.getValuation(OrderType.SELL, 2, time).intValue());
+				agent.getValuation(SELL, 2, time).intValue());
 		
 		agent.positionBalance = -2;
 		fund = randFundamental.getValueAt(time);
-		val = agent.getValuation(OrderType.BUY, time);
+		val = agent.getValuation(BUY, time);
 		assertEquals(fund.intValue() + pv3, val.intValue());
 		assertEquals(fund.intValue()*3 + pv3 + pv4 + pv5, 
-				agent.getValuation(OrderType.BUY, 3, time).intValue());
-		val = agent.getValuation(OrderType.SELL, time);
+				agent.getValuation(BUY, 3, time).intValue());
+		val = agent.getValuation(SELL, time);
 		assertEquals(fund.intValue() + pv2, val.intValue());
 		assertEquals(fund.intValue()*3 + pv2 + pv1 + pv0, 
-				agent.getValuation(OrderType.SELL, 3, time).intValue());
+				agent.getValuation(SELL, 3, time).intValue());
 	}
 	
 	@Test
@@ -136,13 +136,13 @@ public class BackgroundAgentTest {
 		BackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market, pv, 0, 1000);
 		
 		// Test that returns empty if exceed max position
-		Iterable<? extends Activity> acts = agent.executeZIStrategy(OrderType.BUY, 5, time);
+		Iterable<? extends Activity> acts = agent.executeZIStrategy(BUY, 5, time);
 		assertEquals(0, Iterables.size(acts));
-		acts = agent.executeZIStrategy(OrderType.SELL, 5, time);
+		acts = agent.executeZIStrategy(SELL, 5, time);
 		assertEquals(0, Iterables.size(acts));
 		
 		// Test ZI strategy
-		acts = agent.executeZIStrategy(OrderType.BUY, 1, time);
+		acts = agent.executeZIStrategy(BUY, 1, time);
 		assertTrue(Iterables.getOnlyElement(acts) instanceof SubmitNMSOrder);
 		
 		// XXX much of this is tested within ZIAgentTest, may want to move it here

@@ -2,7 +2,7 @@ package entity.agent;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
-import static systemmanager.Consts.OrderType.*;
+import static fourheap.Order.OrderType.*;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -12,7 +12,6 @@ import java.util.Random;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
-import systemmanager.Consts.OrderType;
 import systemmanager.Keys;
 import utils.Pair;
 import activity.Activity;
@@ -26,6 +25,7 @@ import entity.market.Price;
 import entity.market.Quote;
 import entity.market.Transaction;
 import event.TimeStamp;
+import fourheap.Order.OrderType;
 
 /**
  * This is the implementation of the Adaptive Aggressive strategy.
@@ -132,7 +132,7 @@ public class AAAgent extends BackgroundAgent {
 			lastPrice = new Price(-1);
 		
 		// Determining Quantity
-		OrderType type = isBuyer ? OrderType.BUY : OrderType.SELL;
+		OrderType type = isBuyer ? BUY : SELL;
 		int quantity = isBuyer ? 1 : -1;
 
 		// Updating Price Limit

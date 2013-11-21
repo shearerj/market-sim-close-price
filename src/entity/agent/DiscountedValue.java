@@ -16,7 +16,7 @@ class DiscountedValue {
 	
 	public void addValue(double value, double discountTime) {
 		for (int i = 0; i < values.length; i++)
-			values[i] += Math.exp(Consts.DISCOUNT_FACTORS[i] * discountTime) * value;
+			values[i] += Math.exp(-Consts.DISCOUNT_FACTORS[i] * discountTime) * value;
 	}
 	
 	public double[] getDiscountedValues() {

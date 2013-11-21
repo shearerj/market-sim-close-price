@@ -35,6 +35,10 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 		this((long) ticks);
 	}
 	
+	public TimeStamp(TimeStamp time) {
+		this.ticks = time.ticks;
+	}
+
 	public double getInSeconds() {
 		return ticks / (double) TICKS_PER_SECOND;
 	}

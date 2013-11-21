@@ -1,6 +1,7 @@
 package entity.agent;
 
 import static org.junit.Assert.*;
+import static fourheap.Order.OrderType.*;
 
 import java.io.File;
 import java.util.Collection;
@@ -14,7 +15,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.Consts.OrderType;
 import activity.Activity;
 import activity.SubmitNMSOrder;
 
@@ -317,8 +317,8 @@ public class ZIAgentTest {
 			assertEquals("Incorrect order quantity", 1, order.getQuantity());
 			Price p = order.getPrice();
 			Price fund = fundamental.getValueAt(new TimeStamp(currentTime));
-			Price buyPV = testAgent.privateValue.getValue(0, OrderType.BUY);
-			Price sellPV = testAgent.privateValue.getValue(0, OrderType.SELL);
+			Price buyPV = testAgent.privateValue.getValue(0, BUY);
+			Price sellPV = testAgent.privateValue.getValue(0, SELL);
 			
 			//Checking bid quantity and price comply with randomized range
 			// Sellers always sell at price higher than valuation ($100 + sell PV)

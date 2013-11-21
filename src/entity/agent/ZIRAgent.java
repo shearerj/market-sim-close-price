@@ -1,11 +1,12 @@
 package entity.agent;
 
+import static fourheap.Order.OrderType.*;
+
 import java.util.Random;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
-import systemmanager.Consts.OrderType;
 import systemmanager.Keys;
 import activity.Activity;
 import data.EntityProperties;
@@ -78,8 +79,7 @@ public class ZIRAgent extends BackgroundAgent {
 //		}
 
 		// 0.50% chance of being either long or short
-		OrderType type = rand.nextBoolean() ? OrderType.BUY : OrderType.SELL;
-		acts.addAll(executeZIStrategy(type, 1, currentTime));
+		acts.addAll(executeZIStrategy(rand.nextBoolean() ? BUY : SELL, 1, currentTime));
 
 		return acts.build();
 	}

@@ -2,30 +2,30 @@ package fourheap;
 
 import java.io.Serializable;
 
-public class MatchedOrders<P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
+public class MatchedOrders<P extends Comparable<? super P>, T extends Comparable<? super T>, O extends Order<? extends P, ? extends T>> implements Serializable {
 
 	private static final long serialVersionUID = -6073835626927361670L;
 	
-	protected final Order<P, T> buy;
-	protected final Order<P, T> sell;
+	protected final O buy;
+	protected final O sell;
 	protected final int quantity;
 	
-	protected MatchedOrders(Order<P, T> buy, Order<P, T> sell, int quantity) {
+	protected MatchedOrders(O buy, O sell, int quantity) {
 		this.buy = buy;
 		this.sell = sell;
 		this.quantity = quantity;
 	}
 
-	public static <BS extends Enum<BS>, P extends Comparable<? super P>, T extends Comparable<? super T>> MatchedOrders<P, T> create(
-			Order<P, T> buy, Order<P, T> sell, int quantity) {
-		return new MatchedOrders<P, T>(buy, sell, quantity);
+	public static <BS extends Enum<BS>, P extends Comparable<? super P>, T extends Comparable<? super T>, O extends Order<? extends P, ? extends T>> MatchedOrders<P, T, O> create(
+			O buy, O sell, int quantity) {
+		return new MatchedOrders<P, T, O>(buy, sell, quantity);
 	}
 
-	public Order<P, T> getBuy() {
+	public O getBuy() {
 		return buy;
 	}
 
-	public Order<P, T> getSell() {
+	public O getSell() {
 		return sell;
 	}
 

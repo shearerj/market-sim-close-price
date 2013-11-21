@@ -2,18 +2,18 @@ package entity.market;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static data.Observations.BUS;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
 import static java.lang.Math.min;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
-import static data.Observations.BUS;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import systemmanager.Consts.OrderType;
 import utils.Iterables2;
 import activity.Activity;
 import activity.SendToIP;
@@ -23,7 +23,6 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 
 import data.Observations.MidQuoteStatistic;
@@ -38,6 +37,7 @@ import entity.market.clearingrule.ClearingRule;
 import event.TimeStamp;
 import fourheap.FourHeap;
 import fourheap.MatchedOrders;
+import fourheap.Order.OrderType;
 
 /**
  * Base class for all markets. This class provides almost all market
@@ -64,7 +64,7 @@ public abstract class Market extends Entity {
 	private static final long serialVersionUID = 8806298743451593261L;
 	public static int nextID = 1;
 	
-	protected final FourHeap<Price, MarketTime> orderbook;
+	protected final FourHeap<Price, MarketTime, Order> orderbook;
 	protected final ClearingRule clearingRule;
 	protected final Random rand;
 	protected long marketTime; // keeps track of internal market actions
@@ -76,7 +76,6 @@ public abstract class Market extends Entity {
 	protected Quote quote; // Current quote
 
 	// Book keeping
-	protected final Map<fourheap.Order<Price, MarketTime>, Order> orderMapping; // How to get full orders from fourheap Orders
 	protected final Multiset<Price> askPriceQuantity, bidPriceQuantity; // How many orders are at a specific price
 	protected final Collection<Order> orders; // All orders ever submitted to the market
 	protected final List<Transaction> allTransactions; // All successful transactions, implicitly time ordered XXX Still necessary?
@@ -109,7 +108,6 @@ public abstract class Market extends Entity {
 		ips.add(sip);
 		ips.add(ip);
 
-		this.orderMapping = Maps.newHashMap();
 		this.askPriceQuantity = HashMultiset.create();
 		this.bidPriceQuantity = HashMultiset.create();
 		this.orders = Lists.newArrayList();
@@ -181,15 +179,13 @@ public abstract class Market extends Entity {
 		if (order.getQuantity() == 0) return ImmutableList.of();
 		quantity = min(quantity, order.getQuantity());
 		
-		Multiset<Price> priceQuant = order.getOrderType().equals(OrderType.SELL) ? askPriceQuantity : bidPriceQuantity;
+		Multiset<Price> priceQuant = order.getOrderType() == SELL ? askPriceQuantity : bidPriceQuantity;
 		priceQuant.remove(order.getPrice(), quantity);
 		
-		orderbook.withdrawOrder(order.order, quantity);
+		orderbook.withdrawOrder(order, quantity);
 		
-		if (order.getQuantity() == 0) {
+		if (order.getQuantity() == 0)
 			order.agent.removeOrder(order);
-			orderMapping.remove(order.order);
-		}
 		
 		return ImmutableList.of();
 	}
@@ -205,12 +201,12 @@ public abstract class Market extends Entity {
 	 */
 	public Iterable<? extends Activity> clear(TimeStamp currentTime) {
 		marketTime++;
-		List<MatchedOrders<Price, MarketTime>> matchedOrders = orderbook.clear();
+		List<MatchedOrders<Price, MarketTime, Order>> matchedOrders = orderbook.clear();
 		Builder<Transaction> transactions = ImmutableList.builder();
-		for (Entry<MatchedOrders<Price, MarketTime>, Price> e : clearingRule.pricing(matchedOrders).entrySet()) {
+		for (Entry<MatchedOrders<Price, MarketTime, Order>, Price> e : clearingRule.pricing(matchedOrders).entrySet()) {
 
-			Order buy = orderMapping.get(e.getKey().getBuy());
-			Order sell = orderMapping.get(e.getKey().getSell());
+			Order buy = e.getKey().getBuy();
+			Order sell = e.getKey().getSell();
 
 			Transaction trans = new Transaction(buy.getAgent(),
 					sell.getAgent(), this, buy, sell, e.getKey().getQuantity(),
@@ -229,14 +225,6 @@ public abstract class Market extends Entity {
 			sell.getAgent().processTransaction(trans);
 			if (sell.getQuantity() == 0)
 				sell.agent.removeOrder(sell);
-		}
-		
-		// Remove fully transacted orders
-		for (MatchedOrders<Price, MarketTime> match : matchedOrders) {
-			if (match.getBuy().getQuantity() == 0)
-				orderMapping.remove(match.getBuy());
-			if (match.getSell().getQuantity() == 0)
-				orderMapping.remove(match.getSell());
 		}
 
 		return updateQuote(transactions.build(), currentTime);
@@ -344,26 +332,12 @@ public abstract class Market extends Entity {
 		
 		log(INFO, agent + " " + type + "(" + quantity + "@" + price + ") -> " + this);
 
-		fourheap.Order<Price, MarketTime> nativeOrder;
-		switch (type) {
-		case BUY:
-			nativeOrder = fourheap.Order.create(fourheap.Order.OrderType.BUY,
-					price, quantity, new MarketTime(currentTime, marketTime));
-			break;
-		case SELL:
-			nativeOrder = fourheap.Order.create(fourheap.Order.OrderType.SELL,
-					price, quantity, new MarketTime(currentTime, marketTime));
-			break;
-		default:
-			throw new IllegalStateException("Impossible to get here");
-		}
-		Order order = new Order(agent, this, nativeOrder);
+		Order order = Order.create(type, agent, this, price, quantity, new MarketTime(currentTime, marketTime));
 
-		Multiset<Price> priceQuant = order.getOrderType() == OrderType.SELL ? askPriceQuantity : bidPriceQuantity;
+		Multiset<Price> priceQuant = order.getOrderType() == BUY ? bidPriceQuantity : askPriceQuantity;
 		priceQuant.add(order.getPrice(), quantity);
 		
-		orderbook.insertOrder(nativeOrder);
-		orderMapping.put(nativeOrder, order);
+		orderbook.insertOrder(order);
 		orders.add(order);
 		agent.addOrder(order);
 		

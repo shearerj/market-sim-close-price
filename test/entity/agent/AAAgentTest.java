@@ -2,7 +2,7 @@ package entity.agent;
 
 import static logger.Logger.log;
 import static org.junit.Assert.*;
-import static systemmanager.Consts.OrderType.*;
+import static fourheap.Order.OrderType.*;
 
 import java.io.File;
 import java.util.Collection;
@@ -15,7 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.Consts.OrderType;
+import fourheap.Order.OrderType;
 import systemmanager.Keys;
 import activity.Activity;
 import activity.ProcessQuote;

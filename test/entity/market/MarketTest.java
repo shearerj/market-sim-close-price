@@ -1,6 +1,7 @@
 package entity.market;
 
 import static org.junit.Assert.*;
+import static fourheap.Order.OrderType.*;
 
 import java.io.File;
 import java.util.Collection;
@@ -20,7 +21,6 @@ import activity.Activity;
 import activity.SubmitOrder;
 import systemmanager.Consts;
 import systemmanager.EventManager;
-import systemmanager.Consts.OrderType;
 import data.DummyFundamental;
 import data.FundamentalValue;
 import entity.agent.Agent;
@@ -49,13 +49,13 @@ public class MarketTest {
 	public void addBid() {
 		TimeStamp time = new TimeStamp(0);
 		Agent agent = new MockBackgroundAgent(fundamental, sip, market);
-		market.submitOrder(agent, OrderType.BUY, new Price(1), 1, time);
+		market.submitOrder(agent, BUY, new Price(1), 1, time);
 
-		Collection<Order> orders = market.orderMapping.values();
+		Collection<Order> orders = market.orders;
 		assertFalse(orders.isEmpty());
 		Order order = orders.iterator().next();
 		assertEquals(new Price(1), order.getPrice());
-		assertEquals(OrderType.BUY, order.getOrderType());
+		assertEquals(BUY, order.getOrderType());
 		assertEquals(1, order.getQuantity());
 		assertEquals(time, order.getSubmitTime());
 		assertEquals(agent, order.getAgent());
@@ -71,13 +71,13 @@ public class MarketTest {
 	public void addAsk() {
 		TimeStamp time = TimeStamp.ZERO;
 		Agent agent = new MockBackgroundAgent(fundamental, sip, market);
-		market.submitOrder(agent, OrderType.SELL, new Price(1), 1, time);
+		market.submitOrder(agent, SELL, new Price(1), 1, time);
 
-		Collection<Order> orders = market.orderMapping.values();
+		Collection<Order> orders = market.orders;
 		assertFalse(orders.isEmpty());
 		Order order = orders.iterator().next();
 		assertEquals(new Price(1), order.getPrice());
-		assertEquals(OrderType.SELL, order.getOrderType());
+		assertEquals(SELL, order.getOrderType());
 		assertEquals(1, order.getQuantity());
 		assertEquals(time, order.getSubmitTime());
 		assertEquals(agent, order.getAgent());
@@ -98,8 +98,8 @@ public class MarketTest {
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
 		// Creating and adding bids
-		market.submitOrder(agent1, OrderType.BUY, new Price(100), 1, time);
-		market.submitOrder(agent2, OrderType.SELL, new Price(100), 1, time);
+		market.submitOrder(agent1, BUY, new Price(100), 1, time);
+		market.submitOrder(agent2, SELL, new Price(100), 1, time);
 
 		// Testing the market for the correct transaction
 		market.clear(time);
@@ -125,8 +125,8 @@ public class MarketTest {
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		// Creating and adding bids
-		market.submitOrder(agent1, OrderType.BUY, new Price(200), 1, time);
-		market.submitOrder(agent2, OrderType.SELL, new Price(50), 1, time);
+		market.submitOrder(agent1, BUY, new Price(200), 1, time);
+		market.submitOrder(agent2, SELL, new Price(50), 1, time);
 
 		// Testing the market for the correct transaction
 		market.clear(time);
@@ -152,10 +152,10 @@ public class MarketTest {
 		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		// Creating and adding bids
-		market.submitOrder(agent1, OrderType.BUY, new Price(150), 1, time);
-		market.submitOrder(agent2, OrderType.BUY, new Price(100), 1, time);
-		market.submitOrder(agent3, OrderType.SELL, new Price(180), 1, time);
-		market.submitOrder(agent4, OrderType.SELL, new Price(120), 1, time);
+		market.submitOrder(agent1, BUY, new Price(150), 1, time);
+		market.submitOrder(agent2, BUY, new Price(100), 1, time);
+		market.submitOrder(agent3, SELL, new Price(180), 1, time);
+		market.submitOrder(agent4, SELL, new Price(120), 1, time);
 		market.clear(time);
 		;
 		// Testing the market for the correct transactions
@@ -182,10 +182,10 @@ public class MarketTest {
 		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		// Creating and adding bids
-		market.submitOrder(agent1, OrderType.BUY, new Price(150), 1, time);
-		market.submitOrder(agent2, OrderType.SELL, new Price(100), 1, time);
-		market.submitOrder(agent3, OrderType.BUY, new Price(200), 1, time);
-		market.submitOrder(agent4, OrderType.SELL, new Price(130), 1, time);
+		market.submitOrder(agent1, BUY, new Price(150), 1, time);
+		market.submitOrder(agent2, SELL, new Price(100), 1, time);
+		market.submitOrder(agent3, BUY, new Price(200), 1, time);
+		market.submitOrder(agent4, SELL, new Price(130), 1, time);
 		assertEquals(0, market.getTransactions().size());
 		
 		// Testing the market for the correct transactions
@@ -215,10 +215,10 @@ public class MarketTest {
 		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market);
 		
 		// Creating and adding bids
-		market.submitOrder(agent3, OrderType.BUY, new Price(200), 1, time);
-		market.submitOrder(agent4, OrderType.SELL, new Price(130), 1, time);
-		market.submitOrder(agent1, OrderType.BUY, new Price(110), 1, time);
-		market.submitOrder(agent2, OrderType.SELL, new Price(100), 1, time);
+		market.submitOrder(agent3, BUY, new Price(200), 1, time);
+		market.submitOrder(agent4, SELL, new Price(130), 1, time);
+		market.submitOrder(agent1, BUY, new Price(110), 1, time);
+		market.submitOrder(agent2, SELL, new Price(100), 1, time);
 		assertEquals(0, market.getTransactions().size());
 		
 		// Testing the market for the correct transactions
@@ -260,8 +260,8 @@ public class MarketTest {
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 		
-		market.submitOrder(agent1, OrderType.SELL, new Price(100), 2, time);
-		market.submitOrder(agent2, OrderType.BUY, new Price(150), 5, time2);
+		market.submitOrder(agent1, SELL, new Price(100), 2, time);
+		market.submitOrder(agent2, BUY, new Price(150), 5, time2);
 		market.clear(time2);
 		
 		// Check that two units transact
@@ -288,12 +288,12 @@ public class MarketTest {
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
-		market.submitOrder(agent1, OrderType.SELL, new Price(150), 1, time0);
-		market.submitOrder(agent1, OrderType.SELL, new Price(140), 1, time0);
+		market.submitOrder(agent1, SELL, new Price(150), 1, time0);
+		market.submitOrder(agent1, SELL, new Price(140), 1, time0);
 		market.clear(time0);
 
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
-		market.submitOrder(agent2, OrderType.BUY, new Price(160), 2, time1);
+		market.submitOrder(agent2, BUY, new Price(160), 2, time1);
 		market.clear(time1);
 		assertEquals( 2, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
@@ -317,7 +317,7 @@ public class MarketTest {
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
-		market.submitOrder(agent1, OrderType.SELL, new Price(100), 1, time0);
+		market.submitOrder(agent1, SELL, new Price(100), 1, time0);
 		market.clear(time0); 
 		// Check that quotes are correct (no bid, ask @100)
 		Quote q = market.quote;
@@ -340,10 +340,10 @@ public class MarketTest {
 		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
 		
 		// Check that no transaction, because agent1 withdrew its order
-		market.submitOrder(agent2, OrderType.BUY, new Price(125), 1, time1);
+		market.submitOrder(agent2, BUY, new Price(125), 1, time1);
 		assertEquals( 0, market.getTransactions().size() );
 
-		market.submitOrder(agent2, OrderType.BUY, new Price(115), 1, time1);
+		market.submitOrder(agent2, BUY, new Price(115), 1, time1);
 		orders = agent2.getOrders();
 		toWithdraw = null;
 		for (Order o : orders)
@@ -352,7 +352,7 @@ public class MarketTest {
 		market.clear(time1);
 
 		// Check that it transacts with order (@115) that was not withdrawn
-		market.submitOrder(agent1, OrderType.SELL, new Price(105), 1, time2);
+		market.submitOrder(agent1, SELL, new Price(105), 1, time2);
 		market.clear(time2);
 		assertEquals( 1, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
@@ -373,8 +373,8 @@ public class MarketTest {
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 		
-		market.submitOrder(agent1, OrderType.SELL, new Price(150), 1, time0);
-		market.submitOrder(agent1, OrderType.SELL, new Price(140), 2, time0);
+		market.submitOrder(agent1, SELL, new Price(150), 1, time0);
+		market.submitOrder(agent1, SELL, new Price(140), 2, time0);
 		market.clear(time0);
 		Collection<Order> orders = agent1.getOrders();
 		Order toWithdraw = null;
@@ -384,8 +384,8 @@ public class MarketTest {
 		market.clear(time0);
 
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
-		market.submitOrder(agent2, OrderType.BUY, new Price(160), 1, time1);
-		market.submitOrder(agent2, OrderType.BUY, new Price(160), 2, time1);
+		market.submitOrder(agent2, BUY, new Price(160), 1, time1);
+		market.submitOrder(agent2, BUY, new Price(160), 2, time1);
 		market.clear(time1);
 		assertEquals( 2, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
@@ -408,7 +408,7 @@ public class MarketTest {
 
 		// Forces execution of execution but none of the resulting activities
 		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
-		Iterable<? extends Activity> acts = market.submitOrder(agent, OrderType.SELL, new Price(100), 1, TimeStamp.ZERO);
+		Iterable<? extends Activity> acts = market.submitOrder(agent, SELL, new Price(100), 1, TimeStamp.ZERO);
 		for (Activity a : acts)
 			em.addActivity(a);
 		
@@ -436,7 +436,7 @@ public class MarketTest {
 
 		// Test that before Time 100 nothing has been updated
 		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
-		em.addActivity(new SubmitOrder(agent, market, OrderType.SELL, new Price(100), 1, TimeStamp.ZERO));
+		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1, TimeStamp.ZERO));
 		em.executeUntil(new TimeStamp(100));
 		
 		quote = market.getSMIP().getQuote();
@@ -465,7 +465,7 @@ public class MarketTest {
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
-		market.submitOrder(agent1, OrderType.SELL, new Price(100), 1, time0);
+		market.submitOrder(agent1, SELL, new Price(100), 1, time0);
 		assertFalse(marketTimes.contains(market.marketTime));
 		marketTimes.add(market.marketTime);
 		market.clear(time0);
@@ -477,26 +477,26 @@ public class MarketTest {
 		market.clear(time0);
 		
 		// No transaction, because agent1 withdrew its order
-		market.submitOrder(agent2, OrderType.BUY, new Price(125), 1, time0);
+		market.submitOrder(agent2, BUY, new Price(125), 1, time0);
 		market.clear(time0);
 		assertEquals( 0, market.getTransactions().size() );
 		assertFalse(marketTimes.contains(market.marketTime));
 		marketTimes.add(market.marketTime);
 
 		// Submit order, which should transact
-		market.submitOrder(agent1, OrderType.SELL, new Price(100), 1, time0);
+		market.submitOrder(agent1, SELL, new Price(100), 1, time0);
 		market.clear(time0);
 		assertEquals( 1, market.getTransactions().size() );
 		assertFalse(marketTimes.contains(market.marketTime));
 		marketTimes.add(market.marketTime);
 
-		market.submitOrder(agent2, OrderType.BUY, new Price(115), 1, time0);
+		market.submitOrder(agent2, BUY, new Price(115), 1, time0);
 		market.clear(time0);
 		assertFalse(marketTimes.contains(market.marketTime));
 		marketTimes.add(market.marketTime);
 
 		// Submit order, which should transact
-		market.submitOrder(agent1, OrderType.SELL, new Price(105), 1, time0);
+		market.submitOrder(agent1, SELL, new Price(105), 1, time0);
 		market.clear(time0);
 		assertFalse(marketTimes.contains(market.marketTime));
 		marketTimes.add(market.marketTime);
@@ -515,17 +515,17 @@ public class MarketTest {
 //		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
 //		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 //		
-//		market.submitOrder(agent1, OrderType.BUY, new Price(100), 1, time);
-//		market.submitOrder(agent1, OrderType.BUY, new Price(101), 1, time);
-//		market.submitOrder(agent1, OrderType.BUY, new Price(102), 1, time);
-//		market.submitOrder(agent1, OrderType.BUY, new Price(104), 1, time);
+//		market.submitOrder(agent1, BUY, new Price(100), 1, time);
+//		market.submitOrder(agent1, BUY, new Price(101), 1, time);
+//		market.submitOrder(agent1, BUY, new Price(102), 1, time);
+//		market.submitOrder(agent1, BUY, new Price(104), 1, time);
 //		assertEquals(new Double(4), market.depths.sample(1,1).get(0));
 //		
-//		market.submitOrder(agent2, OrderType.SELL, new Price(105), 1, time);
-//		market.submitOrder(agent2, OrderType.SELL, new Price(106), 1, time);
+//		market.submitOrder(agent2, SELL, new Price(105), 1, time);
+//		market.submitOrder(agent2, SELL, new Price(106), 1, time);
 //		assertEquals(new Double(6), market.depths.sample(1,1).get(0));
 //		
-//		market.submitOrder(agent2, OrderType.SELL, new Price(103), 1, time);
+//		market.submitOrder(agent2, SELL, new Price(103), 1, time);
 //		market.clear(time);
 //		assertEquals(new Double(5), market.depths.sample(1,1).get(0));
 //	}
@@ -537,15 +537,15 @@ public class MarketTest {
 //		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
 //		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 //		
-//		market.submitOrder(agent1, OrderType.BUY, new Price(102), 1, time);
-//		market.submitOrder(agent1, OrderType.BUY, new Price(104), 1, time);
+//		market.submitOrder(agent1, BUY, new Price(102), 1, time);
+//		market.submitOrder(agent1, BUY, new Price(104), 1, time);
 //		assertEquals(new Double(Double.POSITIVE_INFINITY), market.spreads.sample(1,1).get(0));
 //		
-//		market.submitOrder(agent2, OrderType.SELL, new Price(105), 1, time);
-//		market.submitOrder(agent2, OrderType.SELL, new Price(106), 1, time);
+//		market.submitOrder(agent2, SELL, new Price(105), 1, time);
+//		market.submitOrder(agent2, SELL, new Price(106), 1, time);
 //		assertEquals(new Double(1), market.spreads.sample(1,1).get(0));
 //		
-//		market.submitOrder(agent2, OrderType.SELL, new Price(103), 1, time);
+//		market.submitOrder(agent2, SELL, new Price(103), 1, time);
 //		market.clear(time);
 //		assertEquals(new Double(3), market.spreads.sample(1,1).get(0));
 //	}
@@ -557,15 +557,15 @@ public class MarketTest {
 //		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
 //		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 //		
-//		market.submitOrder(agent1, OrderType.BUY, new Price(102), 1, time);
-//		market.submitOrder(agent1, OrderType.BUY, new Price(104), 1, time);
+//		market.submitOrder(agent1, BUY, new Price(102), 1, time);
+//		market.submitOrder(agent1, BUY, new Price(104), 1, time);
 //		assertEquals(new Double(Double.NaN), market.midQuotes.sample(1,1).get(0));
 //		
-//		market.submitOrder(agent2, OrderType.SELL, new Price(106), 1, time);
-//		market.submitOrder(agent2, OrderType.SELL, new Price(107), 1, time);
+//		market.submitOrder(agent2, SELL, new Price(106), 1, time);
+//		market.submitOrder(agent2, SELL, new Price(107), 1, time);
 //		assertEquals(new Double(105), market.midQuotes.sample(1,1).get(0));
 //		
-//		market.submitOrder(agent2, OrderType.SELL, new Price(103), 1, time);
+//		market.submitOrder(agent2, SELL, new Price(103), 1, time);
 //		market.clear(time);
 //		assertEquals(new Double(104), market.midQuotes.sample(1,1).get(0));
 //	}

@@ -3,7 +3,6 @@ package entity.market;
 import java.util.Collection;
 import java.util.Random;
 
-import systemmanager.Consts.OrderType;
 import activity.Activity;
 
 import com.google.common.collect.ImmutableList;
@@ -12,6 +11,7 @@ import entity.agent.Agent;
 import entity.infoproc.SIP;
 import entity.market.clearingrule.MockClearingRule;
 import event.TimeStamp;
+import fourheap.Order.OrderType;
 
 /**
  * MockMarket for testing purposes.

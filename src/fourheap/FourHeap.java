@@ -39,33 +39,33 @@ import com.google.common.collect.Ordering;
  * to be a way to generalize it.
  * 
  */
-public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
+public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? super T>, O extends Order<? extends P, ? extends T>> implements Serializable {
 
 	private static final long serialVersionUID = -7322375558427133915L;
 	protected final Ordering<P> pord = Ordering.natural();
 		
-	protected final PriorityQueue<Order<P, T>> sellUnmatched, sellMatched, buyUnmatched, buyMatched;
+	protected final PriorityQueue<O> sellUnmatched, sellMatched, buyUnmatched, buyMatched;
 	protected int size;
 
 	protected FourHeap() {
-		Ordering<Order<P, T>> priceComp = new PriceOrdering(), timeComp = new TimeOrdering();
+		Ordering<O> priceComp = new PriceOrdering(), timeComp = new TimeOrdering();
 		
 		// Sout: unmatched sells, min first
-		this.sellUnmatched = new PriorityQueue<Order<P, T>>(1, priceComp.compound(timeComp));
+		this.sellUnmatched = new PriorityQueue<O>(1, priceComp.compound(timeComp));
 		// Sin: matched sells, max first
-		this.sellMatched   = new PriorityQueue<Order<P, T>>(1, priceComp.reverse().compound(timeComp));
+		this.sellMatched   = new PriorityQueue<O>(1, priceComp.reverse().compound(timeComp));
 		// Bout: unmatched buys, max first
-		this.buyUnmatched  = new PriorityQueue<Order<P, T>>(1, priceComp.reverse().compound(timeComp));
+		this.buyUnmatched  = new PriorityQueue<O>(1, priceComp.reverse().compound(timeComp));
 		// Bin: matched buys, min first
-		this.buyMatched    = new PriorityQueue<Order<P, T>>(1, priceComp.compound(timeComp));
+		this.buyMatched    = new PriorityQueue<O>(1, priceComp.compound(timeComp));
 		this.size = 0;
 	}
 	
 	/**
 	 * Factory Method
 	 */
-	public static <P extends Comparable<? super P>, T extends Comparable<? super T>> FourHeap<P, T> create() {
-		return new FourHeap<P, T>();
+	public static <P extends Comparable<? super P>, T extends Comparable<? super T>, O extends Order<? extends P, ? extends T>> FourHeap<P, T, O> create() {
+		return new FourHeap<P, T, O>();
 	}
 
 	/**
@@ -76,12 +76,12 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * 
 	 * @param order
 	 */
-	public void insertOrder(Order<P, T> order) {
+	public void insertOrder(O order) {
 		checkArgument(order.unmatchedQuantity > 0, "Orders must have positive quantity");
 
 		size += order.unmatchedQuantity;;
 		int t;
-		PriorityQueue<Order<P, T>> matchUnmatchedHeap, matchMatchedHeap, orderUnmatchedHeap, orderMatchedHeap;
+		PriorityQueue<O> matchUnmatchedHeap, matchMatchedHeap, orderUnmatchedHeap, orderMatchedHeap;
 		if (order.type == Order.OrderType.BUY) { // buy order
 			orderUnmatchedHeap = buyUnmatched;
 			orderMatchedHeap = buyMatched;
@@ -103,7 +103,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 				&& (orderMatchedHeap.isEmpty() || // Make sure it shouldn't kick out an order instead 
 						matchUnmatchedHeap.peek().price.compareTo(orderMatchedHeap.peek().price) * t <= 0)) {
 
-			Order<P, T> match = matchUnmatchedHeap.peek();
+			O match = matchUnmatchedHeap.peek();
 			if (match.matchedQuantity == 0) matchMatchedHeap.offer(match); // Will have nonzero matched after this
 			
 			int quantityMatched = Math.min(order.unmatchedQuantity, match.unmatchedQuantity);	//FIXME - will it still work if take out t here?
@@ -120,7 +120,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 				&& !orderMatchedHeap.isEmpty() // Orders to displace
 				&& orderMatchedHeap.comparator().compare(order, orderMatchedHeap.peek()) > 0) { // Should displace order
 
-			Order<P, T> match = orderMatchedHeap.peek();
+			O match = orderMatchedHeap.peek();
 			if (match.unmatchedQuantity == 0) orderUnmatchedHeap.offer(match);
 			
 			int quantityMatched = Math.min(order.unmatchedQuantity, match.matchedQuantity);	// XXX take out t here?
@@ -145,7 +145,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * @param order
 	 *            The order to withdraw
 	 */
-	public void withdrawOrder(Order<P, T> order) {
+	public void withdrawOrder(O order) {
 		withdrawOrder(order, order.getQuantity());
 	}
 
@@ -161,13 +161,13 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 *            The quantity to withdraw from order. Must be positive, even
 	 *            for sell orders.
 	 */
-	public void withdrawOrder(Order<P, T> order, int quantity) {
+	public void withdrawOrder(O order, int quantity) {
 		checkArgument(quantity > 0, "Quantity must be positive");
 		checkArgument(quantity <= order.getQuantity(), "Can't withdraw more than in order");
 
 		size -= quantity;
 		int t;
-		PriorityQueue<Order<P, T>> matchUnmatchedHeap, matchMatchedHeap, orderUnmatchedHeap, orderMatchedHeap;
+		PriorityQueue<O> matchUnmatchedHeap, matchMatchedHeap, orderUnmatchedHeap, orderMatchedHeap;
 		if (order.type == Order.OrderType.BUY) { // buy order
 			orderUnmatchedHeap = buyUnmatched;
 			orderMatchedHeap = buyMatched;
@@ -194,7 +194,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 		while (quantity > 0 // More to remove
 				&& !orderUnmatchedHeap.isEmpty() // Orders to replace
 				&& orderUnmatchedHeap.peek().price.compareTo(matchMatchedHeap.peek().price) * t >= 0) { // Valid to match
-			Order<P, T> match = orderUnmatchedHeap.peek();
+			O match = orderUnmatchedHeap.peek();
 			if (match.matchedQuantity == 0) orderMatchedHeap.offer(match);
 			
 			int quantityMatched = Math.min(quantity, match.unmatchedQuantity); // XXX take out t
@@ -208,7 +208,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 
 		// Remove any amount of matched orders
 		while (quantity > 0) {
-			Order<P, T> match = matchMatchedHeap.peek();
+			O match = matchMatchedHeap.peek();
 			if (match.unmatchedQuantity == 0) matchUnmatchedHeap.offer(match);
 			
 			int quantityMatched = Math.min(quantity, match.matchedQuantity);	 // XXX take out t
@@ -227,25 +227,25 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * Clears matched orders from the fourheap, and returns a List of
 	 * MatchedOrders, which contains the two matched orders, and the quantity
 	 * matched by that order.
-	 * 
+	 * rder<P, T>
 	 * Complexity: O(m) where m is the number of matched orders
 	 * 
 	 * @return The MatchedOrders
 	 */
-	public List<MatchedOrders<P, T>> clear() {
-		List<Order<P, T>> buys = Lists.newArrayList(buyMatched);
+	public List<MatchedOrders<P, T, O>> clear() {
+		List<O> buys = Lists.newArrayList(buyMatched);
 		Collections.sort(buys, buyUnmatched.comparator());
-		List<Order<P, T>> sells = Lists.newArrayList(sellMatched);
+		List<O> sells = Lists.newArrayList(sellMatched);
 		Collections.sort(sells, sellUnmatched.comparator());
 		
 		buyMatched.clear();
 		sellMatched.clear();
 
-		Order<P, T> buy = null, sell = null;
-		Iterator<Order<P, T>> buyIt = buys.iterator();
-		Iterator<Order<P, T>> sellIt = sells.iterator();
+		O buy = null, sell = null;
+		Iterator<O> buyIt = buys.iterator();
+		Iterator<O> sellIt = sells.iterator();
 		
-		Builder<MatchedOrders<P, T>> transactions = ImmutableList.builder();
+		Builder<MatchedOrders<P, T, O>> transactions = ImmutableList.builder();
 		while (buyIt.hasNext() || sellIt.hasNext()) {
 			if (buy == null || buy.matchedQuantity == 0) buy = buyIt.next();
 			if (sell == null || sell.matchedQuantity == 0) sell = sellIt.next();
@@ -268,7 +268,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 *            The order to check for containment
 	 * @return True if in the fourheap
 	 */
-	public boolean contains(Order<P, T> order) {
+	public boolean contains(O order) {
 		if (order.matchedQuantity > 0)
 			return buyMatched.contains(order) || sellMatched.contains(order);
 		else if (order.unmatchedQuantity > 0)
@@ -286,7 +286,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * @return The price of the bid quote.
 	 */
 	public P bidQuote() {
-		Order<P, T> sin = sellMatched.peek(), bout = buyUnmatched.peek();
+		O sin = sellMatched.peek(), bout = buyUnmatched.peek();
 		
 		if (sin == null && bout == null) return null;
 		else if (sin == null) return bout.price;
@@ -303,7 +303,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * @return The price of the bid quote.
 	 */
 	public P askQuote() {
-		Order<P, T> sout = sellUnmatched.peek(), bin = buyMatched.peek();
+		O sout = sellUnmatched.peek(), bin = buyMatched.peek();
 		
 		if (bin == null && sout == null) return null;
 		else if (bin == null) return sout.price;
@@ -350,10 +350,10 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * @author ebrink
 	 * 
 	 */
-	protected class PriceOrdering extends Ordering<Order<P, T>> implements Serializable {
+	protected class PriceOrdering extends Ordering<O> implements Serializable {
 		private static final long serialVersionUID = -6083048512440275282L;
 
-		public int compare(Order<P, T> first, Order<P, T> second) {
+		public int compare(O first, O second) {
 			return first.price.compareTo(second.price);
 		}
 	}
@@ -364,10 +364,10 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * @author ebrink
 	 * 
 	 */
-	protected class TimeOrdering extends Ordering<Order<P, T>> implements Serializable {
+	protected class TimeOrdering extends Ordering<O> implements Serializable {
 		private static final long serialVersionUID = -5355682963794695579L;
 		
-		public int compare(Order<P, T> first, Order<P, T> second) {
+		public int compare(O first, O second) {
 			return first.submitTime.compareTo(second.submitTime);
 		}
 	}

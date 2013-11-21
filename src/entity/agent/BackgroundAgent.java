@@ -4,11 +4,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 import iterators.ExpInterarrivals;
+import static fourheap.Order.OrderType.*;
 
 import java.util.Iterator;
 import java.util.Random;
 
-import systemmanager.Consts.OrderType;
 import utils.Rands;
 import activity.Activity;
 import activity.AgentStrategy;
@@ -22,6 +22,7 @@ import entity.market.Market;
 import entity.market.Price;
 import entity.market.Transaction;
 import event.TimeStamp;
+import fourheap.Order.OrderType;
 
 /**
  * Abstract class for background traders.
@@ -84,12 +85,12 @@ public abstract class BackgroundAgent extends SMAgent {
 		sb.append(getName()).append(':');
 		sb.append(" executing ZI strategy");
 		
-		int newPosition = (type.equals(OrderType.BUY) ? 1 : -1) * quantity + positionBalance;
+		int newPosition = (type.equals(BUY) ? 1 : -1) * quantity + positionBalance;
 		if (newPosition <= privateValue.getMaxAbsPosition() &&
 				newPosition >= -privateValue.getMaxAbsPosition()) {
 			
 			Price val = getValuation(type, currentTime);
-			Price price = new Price((val.doubleValue() + (type.equals(OrderType.SELL) ? 1 : -1) * 
+			Price price = new Price((val.doubleValue() + (type.equals(SELL) ? 1 : -1) * 
 					Rands.nextUniform(rand, bidRangeMin, bidRangeMax))).nonnegative().quantize(tickSize);
 			
 			sb.append(" position=").append(positionBalance).append(", for q=");

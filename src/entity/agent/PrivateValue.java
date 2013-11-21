@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import systemmanager.Consts.OrderType;
 import utils.Rands;
 
 import com.google.common.base.Objects;
@@ -18,6 +17,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
 import entity.market.Price;
+import fourheap.Order.OrderType;
 
 /**
  * PRIVATEVALUE

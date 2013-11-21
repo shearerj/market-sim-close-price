@@ -4,7 +4,6 @@ import java.util.Random;
 
 import com.google.common.collect.ImmutableList;
 
-import systemmanager.Consts.OrderType;
 import systemmanager.Keys;
 import data.EntityProperties;
 import activity.Activity;
@@ -13,6 +12,7 @@ import entity.agent.Agent;
 import entity.infoproc.SIP;
 import entity.market.clearingrule.EarliestPriceClear;
 import event.TimeStamp;
+import fourheap.Order.OrderType;
 
 /**
  * Class for a continuous double auction market.

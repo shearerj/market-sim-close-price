@@ -1,6 +1,7 @@
 package entity.market.clearingrule;
 
 import static org.junit.Assert.*;
+import static fourheap.Order.OrderType.*;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -11,25 +12,25 @@ import org.junit.Test;
 import com.google.common.collect.Lists;
 
 import entity.market.MarketTime;
+import entity.market.Order;
 import entity.market.Price;
 import entity.market.DummyMarketTime;
 import event.TimeStamp;
 import fourheap.MatchedOrders;
-import fourheap.Order;
 
 public class EarliestPriceClearTest {
 
 	@Test
 	public void Basic() {
-		ArrayList<MatchedOrders<Price, MarketTime>> list = Lists.newArrayList();
+		ArrayList<MatchedOrders<Price, MarketTime, Order>> list = Lists.newArrayList();
 		list.add(createOrderPair(new Price(110), 1, new TimeStamp(100), 
 								 new Price(100), 1, new TimeStamp(105)));
 		
 		ClearingRule cr = new EarliestPriceClear(1);
-		Map<MatchedOrders<Price,MarketTime>,Price> result = cr.pricing(list);
+		Map<MatchedOrders<Price,MarketTime, Order>,Price> result = cr.pricing(list);
 		
-		Set<MatchedOrders<Price,MarketTime>> keySet = result.keySet();
-		for(MatchedOrders<Price,MarketTime> key : keySet) {
+		Set<MatchedOrders<Price,MarketTime, Order>> keySet = result.keySet();
+		for(MatchedOrders<Price,MarketTime, Order> key : keySet) {
 			// Verify clears at the earlier price
 			assertEquals(new Price(110), result.get(key));
 		}
@@ -37,15 +38,15 @@ public class EarliestPriceClearTest {
 	
 	@Test
 	public void TimeMatch(){
-		ArrayList<MatchedOrders<Price, MarketTime>> list = Lists.newArrayList();
+		ArrayList<MatchedOrders<Price, MarketTime, Order>> list = Lists.newArrayList();
 		list.add(createOrderPair(new Price(110), 1, new TimeStamp(100), 
 								 new Price(100), 1, new TimeStamp(100)));
 		
 		ClearingRule cr = new EarliestPriceClear(1);
-		Map<MatchedOrders<Price, MarketTime>, Price> result = cr.pricing(list);
+		Map<MatchedOrders<Price, MarketTime, Order>, Price> result = cr.pricing(list);
 		
-		Set<MatchedOrders<Price, MarketTime>> keySet = result.keySet();
-		for(MatchedOrders<Price, MarketTime> key : keySet) {
+		Set<MatchedOrders<Price, MarketTime, Order>> keySet = result.keySet();
+		for(MatchedOrders<Price, MarketTime, Order> key : keySet) {
 			// Verify for tie at time, it clears at the earlier price (because of MarketTime)
 			assertEquals(new Price(110), result.get(key));
 		}
@@ -53,20 +54,20 @@ public class EarliestPriceClearTest {
 	
 	@Test
 	public void Multi() {
-		ArrayList<MatchedOrders<Price,MarketTime>> list = new ArrayList<MatchedOrders<Price,MarketTime>>();
+		ArrayList<MatchedOrders<Price, MarketTime, Order>> list = new ArrayList<MatchedOrders<Price, MarketTime, Order>>();
 		
-		MatchedOrders<Price,MarketTime> match1 = createOrderPair(
+		MatchedOrders<Price, MarketTime, Order> match1 = createOrderPair(
 				new Price(110), 1, new TimeStamp(100), 
 				new Price(100), 1, new TimeStamp(105));
 		list.add(match1);
 		
-		MatchedOrders<Price,MarketTime> match2 = createOrderPair(
+		MatchedOrders<Price, MarketTime, Order> match2 = createOrderPair(
 				new Price(110), 1, new TimeStamp(105), 
 				new Price(100), 1, new TimeStamp(100));
 		list.add(match2);
 				
 		ClearingRule cr = new EarliestPriceClear(1);
-		Map<MatchedOrders<Price,MarketTime>,Price> result = cr.pricing(list);
+		Map<MatchedOrders<Price, MarketTime, Order>, Price> result = cr.pricing(list);
 
 		// Verify always clears at the earlier price (no time ties here)
 		assertEquals(new Price(110), result.get(match1));
@@ -83,14 +84,14 @@ public class EarliestPriceClearTest {
 	 * @param t2
 	 * @return
 	 */
-	public MatchedOrders<Price,MarketTime> createOrderPair(Price p1, int q1, 
+	public MatchedOrders<Price, MarketTime, Order> createOrderPair(Price p1, int q1, 
 			TimeStamp t1, Price p2, int q2, TimeStamp t2){
 		// NOTE: the same MarketTime will never be created for two orders
 		// So if t1 == t2, t2 will be created at an incremented MarketTime
 		MarketTime mt1 = new DummyMarketTime(t1, t1.getInTicks());
 		MarketTime mt2 = new DummyMarketTime(t2, t2.plus(new TimeStamp(t2.equals(t1) ? 1 : 0)).getInTicks());
-		Order<Price, MarketTime> a = Order.create(fourheap.Order.OrderType.BUY, p1, q1, mt1);
-		Order<Price, MarketTime> b = Order.create(fourheap.Order.OrderType.SELL, p2, q2, mt2);
+		Order a = Order.create(BUY, null, null, p1, q1, mt1);
+		Order b = Order.create(SELL, null, null, p2, q2, mt2);
 		return MatchedOrders.create(a, b, Math.min(q1, q2));
 	}
 }

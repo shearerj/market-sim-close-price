@@ -1,6 +1,7 @@
 package entity.infoproc;
 
 import static org.junit.Assert.*;
+import static fourheap.Order.OrderType.*;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -21,7 +22,6 @@ import data.DummyFundamental;
 import data.FundamentalValue;
 import systemmanager.Consts;
 import systemmanager.EventManager;
-import systemmanager.Consts.OrderType;
 import entity.agent.MockBackgroundAgent;
 import entity.market.CDAMarket;
 import entity.market.DummyMarketTime;
@@ -452,7 +452,7 @@ public class SIPTest {
 
 		// Creating and adding bids		
 		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, OrderType.BUY, new Price(150), 2, time));
+		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 2, time));
 		em.executeUntil(time1); // should execute clear since CDA
 		
 		// Verify that NBBO quote has updated
@@ -464,7 +464,7 @@ public class SIPTest {
 		assertEquals("Incorrect ASK market", null, nbbo.bestAskMarket);
 		assertEquals("Incorrect BID market", market, nbbo.bestBidMarket);
 		
-		em.addActivity(new SubmitOrder(agent2, market, OrderType.SELL, new Price(140), 1, time));
+		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
 		em.executeUntil(time1); // should execute Clear-->SendToSIP-->ProcessQuotes
 		
 		// Verify that transactions has updated as well as NBBO

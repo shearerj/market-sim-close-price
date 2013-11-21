@@ -1,7 +1,5 @@
 package entity.market;
 
-import com.google.common.base.Objects;
-
 import event.TimeStamp;
 
 public class DummyMarketTime extends MarketTime {
@@ -14,8 +12,8 @@ public class DummyMarketTime extends MarketTime {
 	
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null) return false;
+		if (obj == null || !(obj instanceof MarketTime)) return false;
 		MarketTime other = (MarketTime) obj;
-		return Objects.equal(time, other.time) && marketTime == other.marketTime;
+		return ticks == other.getInTicks() && marketTime == other.marketTime;
 	}
 }

@@ -1,6 +1,7 @@
 package entity.agent;
 
 import static org.junit.Assert.*;
+import static fourheap.Order.OrderType.*;
 
 import java.io.File;
 import java.util.Collection;
@@ -19,7 +20,6 @@ import com.google.common.collect.Iterables;
 
 import systemmanager.Consts;
 import systemmanager.EventManager;
-import systemmanager.Consts.OrderType;
 import data.DummyFundamental;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
@@ -54,18 +54,18 @@ public class AgentTest {
 		TimeStamp time = TimeStamp.ZERO;
 		
 		// test adding and removing orders
-		market.submitOrder(agent, OrderType.BUY, new Price(100), 1, time);
-		market.submitOrder(agent, OrderType.SELL, new Price(50), 2, time.plus(new TimeStamp(1)));
+		market.submitOrder(agent, BUY, new Price(100), 1, time);
+		market.submitOrder(agent, SELL, new Price(50), 2, time.plus(new TimeStamp(1)));
 		Collection<Order> orders = agent.activeOrders;
 		Order order = Iterables.getFirst(orders, null);
 		// Note: nondeterministic which order is "first" so need to check
 		boolean buyRemoved = true;
 		if (order.getSubmitTime().equals(time)) {
-			assertEquals(OrderType.BUY, order.getOrderType());
+			assertEquals(BUY, order.getOrderType());
 			assertEquals(new Price(100), order.getPrice());
 			assertEquals(1, order.getQuantity());
 		} else if (order.getSubmitTime().equals(new TimeStamp(1))) {
-			assertEquals(OrderType.SELL, order.getOrderType());
+			assertEquals(SELL, order.getOrderType());
 			assertEquals(new Price(50), order.getPrice());
 			assertEquals(2, order.getQuantity());
 			buyRemoved = false;
@@ -82,11 +82,11 @@ public class AgentTest {
 		assertTrue("Order was not removed", !agent.activeOrders.contains(order));
 		order = Iterables.getFirst(orders, null);
 		if (buyRemoved) {
-			assertEquals(OrderType.SELL, order.getOrderType());
+			assertEquals(SELL, order.getOrderType());
 			assertEquals(new Price(50), order.getPrice());
 			assertEquals(2, order.getQuantity());
 		} else {
-			assertEquals(OrderType.BUY, order.getOrderType());
+			assertEquals(BUY, order.getOrderType());
 			assertEquals(new Price(100), order.getPrice());
 			assertEquals(1, order.getQuantity());
 		}
@@ -98,8 +98,8 @@ public class AgentTest {
 		TimeStamp time1 = new TimeStamp(1);
 		
 		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent, market, OrderType.BUY, new Price(100), 1, time0));
-		em.addActivity(new SubmitOrder(agent, market, OrderType.SELL, new Price(50), 1, time1));
+		em.addActivity(new SubmitOrder(agent, market, BUY, new Price(100), 1, time0));
+		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(50), 1, time1));
 		em.executeUntil(time1.plus(time1));
 		
 		// Verify orders added correctly
@@ -107,11 +107,11 @@ public class AgentTest {
 		assertEquals(2, orders.size());
 		Order orderToWithdraw = null;
 		for (Order o : orders) {
-			if (o.getOrderType() == OrderType.BUY) {
+			if (o.getOrderType() == BUY) {
 				assertEquals(new Price(100), o.getPrice());
 				assertEquals(time0, o.getSubmitTime());
 			}
-			if (o.getOrderType() == OrderType.SELL) {
+			if (o.getOrderType() == SELL) {
 				orderToWithdraw = o;
 				assertEquals(new Price(50), o.getPrice());
 				assertEquals(time1, o.getSubmitTime());
@@ -127,7 +127,7 @@ public class AgentTest {
 		orders = agent.activeOrders;
 		assertEquals(1, orders.size());
 		Order order = Iterables.getFirst(orders, null);
-		assertEquals(OrderType.BUY, order.getOrderType());
+		assertEquals(BUY, order.getOrderType());
 		assertEquals(new Price(100), order.getPrice());
 		assertEquals(1, order.getQuantity());
 		assertTrue("Order was not withdrawn", !agent.activeOrders.contains(orderToWithdraw));		
@@ -139,8 +139,8 @@ public class AgentTest {
 		TimeStamp time1 = new TimeStamp(1);
 		
 		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent, market, OrderType.BUY, new Price(100), 1, time0));
-		em.addActivity(new SubmitOrder(agent, market, OrderType.SELL, new Price(50), 1, time1));
+		em.addActivity(new SubmitOrder(agent, market, BUY, new Price(100), 1, time0));
+		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(50), 1, time1));
 		em.executeUntil(time1.plus(time1));
 		
 		// Verify orders added correctly
@@ -148,12 +148,12 @@ public class AgentTest {
 		assertEquals(2, orders.size());
 		Order orderToWithdraw = null;
 		for (Order o : orders) {
-			if (o.getOrderType() == OrderType.BUY) {
+			if (o.getOrderType() == BUY) {
 				orderToWithdraw = o;
 				assertEquals(new Price(100), o.getPrice());
 				assertEquals(time0, o.getSubmitTime());
 			}
-			if (o.getOrderType() == OrderType.SELL) {
+			if (o.getOrderType() == SELL) {
 				assertEquals(new Price(50), o.getPrice());
 				assertEquals(time1, o.getSubmitTime());
 			}
@@ -168,7 +168,7 @@ public class AgentTest {
 		orders = agent.activeOrders;
 		assertEquals(1, orders.size());
 		Order order = Iterables.getFirst(orders, null);
-		assertEquals(OrderType.SELL, order.getOrderType());
+		assertEquals(SELL, order.getOrderType());
 		assertEquals(new Price(50), order.getPrice());
 		assertEquals(1, order.getQuantity());
 		assertTrue("Order was not withdrawn", !agent.activeOrders.contains(orderToWithdraw));		
@@ -180,19 +180,19 @@ public class AgentTest {
 		TimeStamp time1 = new TimeStamp(1);
 		
 		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent, market, OrderType.BUY, new Price(100), 1, time0));
-		em.addActivity(new SubmitOrder(agent, market, OrderType.SELL, new Price(50), 1, time1));
+		em.addActivity(new SubmitOrder(agent, market, BUY, new Price(100), 1, time0));
+		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(50), 1, time1));
 		em.executeUntil(time1.plus(time1));
 		
 		// Verify orders added correctly
 		Collection<Order> orders = agent.activeOrders;
 		assertEquals(2, orders.size());
 		for (Order o : orders) {
-			if (o.getOrderType() == OrderType.BUY) {
+			if (o.getOrderType() == BUY) {
 				assertEquals(new Price(100), o.getPrice());
 				assertEquals(time0, o.getSubmitTime());
 			}
-			if (o.getOrderType() == OrderType.SELL) {
+			if (o.getOrderType() == SELL) {
 				assertEquals(new Price(50), o.getPrice());
 				assertEquals(time1, o.getSubmitTime());
 			}
@@ -214,8 +214,8 @@ public class AgentTest {
 		assertEquals( 0, agent.transactions.size());
 		
 		// Creating and adding bids
-		market.submitOrder(agent, OrderType.BUY, new Price(110), 1, time);
-		market.submitOrder(agent2, OrderType.SELL, new Price(100), 1, time);
+		market.submitOrder(agent, BUY, new Price(110), 1, time);
+		market.submitOrder(agent2, SELL, new Price(100), 1, time);
 		assertEquals(0, market.getTransactions().size());
 		
 		// Testing the market for the correct transactions
