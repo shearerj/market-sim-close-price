@@ -36,18 +36,23 @@ import com.google.common.collect.Maps;
  */
 public class EventQueue extends AbstractQueue<Activity> {
 	
-	// Invariant that no event is ever empty at the end of execution.
-	//
-	// Note: Current implementation means instantTime stuff gets executed in a
-	// random order as well... May not be what we want, but if it is it provides
-	// a much simpler implementation.
-	//
-	// In general the rule should be, if one activity comes logically after
-	// another activity it should be scheduled by the activity that always
-	// proceeds it. Activities scheduled at the same time (even infinitely fast)
-	// may occur in any order.
+	/*
+	 * Invariant that no event is ever empty at the end of execution.
+	 * 
+	 * Note: Current implementation means instantTime stuff gets executed in a
+	 * random order as well... May not be what we want, but if it is it provides
+	 * a much simpler implementation.
+	 * 
+	 * In general the rule should be, if one activity comes logically after
+	 * another activity it should be scheduled by the activity that always
+	 * proceeds it. Activities scheduled at the same time (even infinitely fast)
+	 * may occur in any order.
+	 */
 
-	// TODO Keep modCount to detect concurrent modification exception
+	/*
+	 * TODO Keep modCount to detect concurrent modification exception during
+	 * iteration. See java collections source code.
+	 */
 	
 	protected PriorityQueue<Event> eventQueue;
 	protected Map<TimeStamp, Event> eventIndex;

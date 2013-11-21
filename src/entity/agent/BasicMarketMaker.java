@@ -112,8 +112,6 @@ public class BasicMarketMaker extends MarketMaker {
 				Price sellMaxPrice = pcomp.max(new Price(ask.intValue() - ct), lastNBBOQuote.getBestBid());
 
 				// check if the bid or ask crosses the NBBO
-				// FIXME I believe this will create orders that would transact on
-				// another market. Wait to hear from Elaine.
 				if (lastNBBOQuote.getBestAsk().lessThan(ask)) {
 					// buy orders: If ASK_N < X_t, then [ASK_N, ..., Y_t]
 					buyMinPrice = lastNBBOQuote.getBestAsk();

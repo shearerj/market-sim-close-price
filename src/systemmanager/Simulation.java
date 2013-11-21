@@ -94,9 +94,6 @@ public class Simulation {
 			int number = agProps.getAsInt(Keys.NUM, 0);
 			double arrivalRate = agProps.getAsDouble(Keys.ARRIVAL_RATE, 0.075);
 			
-			// XXX In general the arrival process and market generation can be
-			// generic, but for now we'll stick with the original implementation which is round
-			// robin markets and poisson arrival
 			AgentFactory factory = new AgentFactory(fundamental, sip, markets,
 					arrivalRate, new Random(rand.nextLong()));
 
@@ -109,9 +106,11 @@ public class Simulation {
 	protected Collection<Player> setupPlayers(EntityProperties modelProps,
 			JsonObject playerConfig, Random rand) {
 		Builder<Player> players = ImmutableList.builder();
-		// First group by role and agentType for legacy reasons / arrival rate reasons
-		// XXX Re-think how to schedule player arrival rates. (Maybe be less important if agent's
-		// reenter)
+		/*
+		 * First group by role and agentType for legacy reasons / arrival rate
+		 * reasons XXX Re-think how to schedule player arrival rates. (Maybe be
+		 * less important if agent's reenter)
+		 */
 		double arrivalRate = modelProps.getAsDouble(Keys.ARRIVAL_RATE, 0.075);
 		
 		Multiset<RoleStrat> counts = HashMultiset.create();

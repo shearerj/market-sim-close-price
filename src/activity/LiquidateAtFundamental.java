@@ -11,7 +11,6 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-// TODO Currently unused
 public class LiquidateAtFundamental extends Activity {
 
 	protected final Agent agent;

@@ -194,8 +194,11 @@ public class SIPTest {
 		assertEquals("Incorrect BID market", market1, nbbo.bestBidMarket);
 		assertEquals(new DummyMarketTime(time, 2), sip.quoteTimes.get(market1));
 		assertEquals(new DummyMarketTime(time, 2), sip.quoteTimes.get(market2));
-		
-		// XXX NOTE: if tie in price, nondeterminism in which market has best price
+
+		/*
+		 * XXX NOTE: if tie in price, nondeterminism in which market has best
+		 * price.
+		 */
 	}
 	
 	@Test
@@ -486,6 +489,9 @@ public class SIPTest {
 	public void priceDiscrepancies() {
 		// TODO price discrepancies in NBBO
 	}
-	
-	// XXX SIP has uniform latency - would we ever want different latency from certain markets?
+
+	/*
+	 * XXX SIP has uniform latency - would we ever want different latency from
+	 * certain markets? Probably. This change shouldn't be too difficult.
+	 */
 }

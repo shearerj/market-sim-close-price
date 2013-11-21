@@ -47,8 +47,7 @@ public abstract class Agent extends Entity {
 	protected final TimeStamp arrivalTime;
 	protected final int tickSize;
 
-	// Tracking position and profit/cash
-	// XXX How to account for discounting?
+	// Tracking position and profit
 	protected int positionBalance;
 	protected int profit;
 	protected int postLiquidationProfit;
@@ -189,7 +188,6 @@ public abstract class Agent extends Entity {
 		return arrivalTime;
 	}
 	
-	// TODO Can't take an argument until we can discount profit...
 	public double getPayoff() {
 		return postLiquidationProfit;
 	}

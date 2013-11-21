@@ -247,7 +247,6 @@ public class Observations {
 //			if (agent instanceof BackgroundAgent) {
 //				background.addValue(agentSurplus);
 //			} else if (agent instanceof HFTAgent) {
-//				// FIXME This is not necessarily correct if the agent has a net position at the end...
 //				hft.addValue(agentSurplus);
 //			} else if (agent instanceof MarketMaker) {
 //				marketMaker.addValue(agentSurplus);
@@ -260,7 +259,7 @@ public class Observations {
 		features.put("surplus_sum_hft_" + suffix, hft.getSum());
 	}
 	
-	// XXX Everything with an @Subscribe is a listener for objects that contain statistics.
+	// Everything with an @Subscribe is a listener for objects that contain statistics.
 	
 	@Subscribe public void processSpread(SpreadStatistic statistic) {
 		TimeSeries series = spreads.get(statistic.owner);

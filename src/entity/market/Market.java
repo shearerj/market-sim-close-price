@@ -77,8 +77,9 @@ public abstract class Market extends Entity {
 
 	// Book keeping
 	protected final Multiset<Price> askPriceQuantity, bidPriceQuantity; // How many orders are at a specific price
+	// FIXME These two are used only for testing, and nothing else. Is there a better way?
 	protected final Collection<Order> orders; // All orders ever submitted to the market
-	protected final List<Transaction> allTransactions; // All successful transactions, implicitly time ordered XXX Still necessary?
+	protected final List<Transaction> allTransactions; // All successful transactions, implicitly time ordered
 
 	/**
 	 * Constructor
@@ -128,15 +129,6 @@ public abstract class Market extends Entity {
 
 	public SMIP getSMIP() {
 		return this.ip;
-	}
-
-	/**
-	 * Get all orders ever submitted to the market
-	 * 
-	 * @return All orders ever submitted to this market
-	 */
-	public Collection<Order> getAllOrders() {
-		return ImmutableList.copyOf(orders);
 	}
 	
 	/**

@@ -131,7 +131,7 @@ public class SimulationSpec implements Serializable {
 	/**
 	 * Set preset for standard simulations
 	 */
-	// XXX Just add a new case to add your own!
+	// Just add a new case to add your own!
 	protected void presets(JsonObject config) {
 		JsonPrimitive preset = config.getAsJsonPrimitive(Keys.PRESETS);
 		if (preset == null) return;

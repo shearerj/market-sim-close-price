@@ -106,7 +106,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 			O match = matchUnmatchedHeap.peek();
 			if (match.matchedQuantity == 0) matchMatchedHeap.offer(match); // Will have nonzero matched after this
 			
-			int quantityMatched = Math.min(order.unmatchedQuantity, match.unmatchedQuantity);	//FIXME - will it still work if take out t here?
+			int quantityMatched = Math.min(order.unmatchedQuantity, match.unmatchedQuantity);
 			order.unmatchedQuantity -= quantityMatched;
 			order.matchedQuantity += quantityMatched;
 			match.unmatchedQuantity -= quantityMatched;
@@ -123,7 +123,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 			O match = orderMatchedHeap.peek();
 			if (match.unmatchedQuantity == 0) orderUnmatchedHeap.offer(match);
 			
-			int quantityMatched = Math.min(order.unmatchedQuantity, match.matchedQuantity);	// XXX take out t here?
+			int quantityMatched = Math.min(order.unmatchedQuantity, match.matchedQuantity);
 			order.unmatchedQuantity -= quantityMatched;
 			order.matchedQuantity += quantityMatched;
 			match.unmatchedQuantity += quantityMatched;
@@ -197,11 +197,11 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 			O match = orderUnmatchedHeap.peek();
 			if (match.matchedQuantity == 0) orderMatchedHeap.offer(match);
 			
-			int quantityMatched = Math.min(quantity, match.unmatchedQuantity); // XXX take out t
+			int quantityMatched = Math.min(quantity, match.unmatchedQuantity);
 			order.matchedQuantity -= quantityMatched;
 			match.matchedQuantity += quantityMatched;
 			match.unmatchedQuantity -= quantityMatched;
-			quantity -= quantityMatched;  // XXX take out t
+			quantity -= quantityMatched;
 			
 			if (match.unmatchedQuantity == 0) orderUnmatchedHeap.poll();
 		}
@@ -211,11 +211,11 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 			O match = matchMatchedHeap.peek();
 			if (match.unmatchedQuantity == 0) matchUnmatchedHeap.offer(match);
 			
-			int quantityMatched = Math.min(quantity, match.matchedQuantity);	 // XXX take out t
+			int quantityMatched = Math.min(quantity, match.matchedQuantity);
 			order.matchedQuantity -= quantityMatched;
 			match.matchedQuantity -= quantityMatched;
 			match.unmatchedQuantity += quantityMatched;
-			quantity -= quantityMatched; // XXX take out t
+			quantity -= quantityMatched;
 			
 			if (match.matchedQuantity == 0) matchMatchedHeap.poll();
 		}

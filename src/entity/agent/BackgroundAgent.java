@@ -138,8 +138,6 @@ public abstract class BackgroundAgent extends SMAgent {
 	}
 
 	@Override
-	// TODO Returns undiscounted surplus. To get otherwise would require
-	// modifying this, or allowing discounted profit for all agents...
 	public double getPayoff() {
 		return surplus.getValueAtDiscount(0);
 	}

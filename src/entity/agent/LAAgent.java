@@ -90,10 +90,13 @@ public class LAAgent extends HFTAgent {
 				new SubmitOrder(this, bestAskMarket, BUY, midPoint, 1, TimeStamp.IMMEDIATE));
 	}
 
-	// This should be a natural extension of the arbitrage strategy extended to multi quantities,
-	// which should be necessary if the arbitrageur has a latency. FIXME For some reason this is not
-	// the same as the above strategy, sometimes making more profit, sometimes less, and I'm unsure
-	// why.
+	/*
+	 * This should be a natural extension of the arbitrage strategy extended to
+	 * multi quantities, which should be necessary if the arbitrageur has a
+	 * latency. FIXME For some reason this is not the same as the above
+	 * strategy, sometimes making more profit, sometimes less, and I'm unsure
+	 * why.
+	 */
 	public Iterable<? extends Activity> agentStrategy2(TimeStamp ts) {
 		FourHeap<Price, Integer, Order<Price, Integer>> fh = FourHeap.create();
 		Map<Order<Price, Integer>, Market> orderMap = Maps.newHashMap();
