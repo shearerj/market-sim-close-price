@@ -31,13 +31,12 @@ import fourheap.Order.OrderType;
  * 
  * @author ewah
  */
-public abstract class BackgroundAgent extends SMAgent {
+public abstract class BackgroundAgent extends ReentryAgent {
 	
 	private static final long serialVersionUID = 7742389103679854398L;
 	
 	protected final PrivateValue privateValue;
 	protected final DiscountedValue surplus;
-	protected Iterator<TimeStamp> reentry; // re-entry times
 	
 	protected int bidRangeMax; 		// range for limit order
 	protected int bidRangeMin;
@@ -46,11 +45,10 @@ public abstract class BackgroundAgent extends SMAgent {
 			Market market, Random rand, Iterator<TimeStamp> reentry,
 			PrivateValue pv, int tickSize, int bidRangeMin,
 			int bidRangeMax) {
-		super(arrivalTime, fundamental, sip, market, rand, tickSize);
+		super(arrivalTime, fundamental, sip, market, rand, reentry, tickSize);
 	
 		this.privateValue = checkNotNull(pv);
 		this.surplus = DiscountedValue.create();
-		this.reentry = checkNotNull(reentry);
 		this.bidRangeMin = bidRangeMin;
 		this.bidRangeMax = bidRangeMax;
 	}
