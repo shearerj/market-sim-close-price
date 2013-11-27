@@ -102,10 +102,14 @@ public class BackgroundAgentTest {
 		assertEquals(fund.intValue() + pv8, val.intValue());
 		assertEquals(fund.intValue()*2 + pv9 + pv8, 
 				agent.getValuation(BUY, 2, time).intValue());
+		assertEquals(new Price(((double) fund.intValue()*2 + pv9 + pv8) / 2),
+				agent.getLimitPrice(BUY, 2, time));
 		val = agent.getValuation(SELL, time);
 		assertEquals(fund.intValue() + pv7, val.intValue());
 		assertEquals(fund.intValue()*2 + pv7 + pv6, 
 				agent.getValuation(SELL, 2, time).intValue());
+		assertEquals(new Price(((double) fund.intValue()*2 + pv7 + pv6) / 2),
+				agent.getLimitPrice(SELL, 2, time));
 		
 		agent.positionBalance = -2;
 		fund = randFundamental.getValueAt(time);
@@ -113,10 +117,14 @@ public class BackgroundAgentTest {
 		assertEquals(fund.intValue() + pv3, val.intValue());
 		assertEquals(fund.intValue()*3 + pv3 + pv4 + pv5, 
 				agent.getValuation(BUY, 3, time).intValue());
+		assertEquals(new Price(((double) fund.intValue()*3 + pv3 + pv4 + pv5) / 3),
+				agent.getLimitPrice(BUY, 3, time));
 		val = agent.getValuation(SELL, time);
 		assertEquals(fund.intValue() + pv2, val.intValue());
 		assertEquals(fund.intValue()*3 + pv2 + pv1 + pv0, 
 				agent.getValuation(SELL, 3, time).intValue());
+		assertEquals(new Price(((double) fund.intValue()*3 + pv2 + pv1 + pv0) / 3),
+				agent.getLimitPrice(SELL, 3, time));
 	}
 	
 	@Test

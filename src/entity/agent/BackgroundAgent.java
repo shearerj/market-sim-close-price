@@ -154,9 +154,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	}
 	
 	/**
-	 * Returns the limit price (i.e. valuation) for the agent.
-	 * 
-	 * valuation = fundamental + private_value
+	 * Returns valuation = fundamental + private_value
 	 * 
 	 * @param type
 	 * @param quantity
@@ -168,5 +166,18 @@ public abstract class BackgroundAgent extends ReentryAgent {
 				fundamental.getValueAt(currentTime).intValue() * quantity
 				+ privateValue.getValueFromQuantity(positionBalance, quantity, type).intValue()
 				).nonnegative();
+	}
+
+	/**
+	 * Returns the limit price for the agent (valuation for 1 unit).
+	 * 
+	 * @param type
+	 * @param quantity
+	 * @param currentTime
+	 * @return
+	 */
+	public Price getLimitPrice(OrderType type, int quantity, TimeStamp currentTime) {
+		return new Price(getValuation(type, quantity, currentTime).doubleValue() 
+				/ quantity).nonnegative();
 	}
 }
