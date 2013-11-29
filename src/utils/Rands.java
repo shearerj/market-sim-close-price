@@ -9,7 +9,7 @@ public abstract class Rands {
 	}
 	
 	public static double nextExponential(Random rand, double rate) {
-		if (rate == 0) return Double.POSITIVE_INFINITY;	// TODO test this
+		if (rate == 0) return Double.POSITIVE_INFINITY;
 		return -Math.log(rand.nextDouble()) / rate;
 	}
 
