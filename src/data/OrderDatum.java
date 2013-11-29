@@ -23,7 +23,11 @@ public class OrderDatum {//<P extends Comparable<? super P>, T extends Comparabl
 	private String quoteId;
 	private Price price; // 10 bytes in nyse
 	private int quantity;//9 bytes in nyse
-	boolean isBuy;
+	private int totalImbalance;
+	private int marketImbalance;
+	private char auctionType;
+	private int auctionTime;
+	private boolean isBuy;
 	
 	
    public OrderDatum(char messageType, String sequenceNum,
@@ -159,4 +163,44 @@ public class OrderDatum {//<P extends Comparable<? super P>, T extends Comparabl
     public static long getSerialversionuid() {
         return serialVersionUID;
     }
+
+
+	public int getTotalImbalance() {
+		return totalImbalance;
+	}
+
+
+	public void setTotalImbalance(int totalImbalance) {
+		this.totalImbalance = totalImbalance;
+	}
+
+
+	public int getMarketImbalance() {
+		return marketImbalance;
+	}
+
+
+	public void setMarketImbalance(int marketImbalance) {
+		this.marketImbalance = marketImbalance;
+	}
+
+
+	public char getAuctionType() {
+		return auctionType;
+	}
+
+
+	public void setAuctionType(char auctionType) {
+		this.auctionType = auctionType;
+	}
+
+
+	public int getAuctionTime() {
+		return auctionTime;
+	}
+
+
+	public void setAuctionTime(int auctionTime) {
+		this.auctionTime = auctionTime;
+	}
 }

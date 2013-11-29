@@ -10,7 +10,7 @@ import event.TimeStamp;
 
 public class OrderParser {
 
-    void processNYSE(File inputFile) throws FileNotFoundException{
+    static void processNYSE(File inputFile) throws FileNotFoundException{
         Scanner scanner = new Scanner(inputFile);
         
         while(scanner.hasNextLine()){
@@ -21,11 +21,11 @@ public class OrderParser {
             switch (messageType){
             case 'A': parseNYSEAddOrder(lineScanner);// store this in a structure
                 break;
-            case 'D':
+            case 'D': parseNYSEDeleteOrder(lineScanner);
                 break;
-            case 'M': 
+            case 'M': parseNYSEModifyOrder(lineScanner);
                 break;
-            case 'I':
+            case 'I': parseNYSEImbalanceOrder(lineScanner);
                 break;
             default:
                 break;
@@ -36,7 +36,7 @@ public class OrderParser {
         
     }
     
-    OrderDatum parseNYSEAddOrder(Scanner lineScanner){
+    static OrderDatum parseNYSEAddOrder(Scanner lineScanner){
         String sequenceNum = lineScanner.next();
         String orderReferenceNum = lineScanner.next();
         char exchangeCode = lineScanner.next().charAt(0);
@@ -62,6 +62,93 @@ public class OrderParser {
         
         return orderData;
     }
+    
+    static OrderDatum parseNYSEDeleteOrder(Scanner lineScanner){
+    	 String sequenceNum = lineScanner.next();
+         String orderReferenceNum = lineScanner.next();
+         TimeStamp timestamp = new TimeStamp(lineScanner.nextInt()*1000 + lineScanner.nextInt());
+         String stockSymbol = lineScanner.next();
+         char exchangeCode = lineScanner.next().charAt(0);
+         char systemCode = lineScanner.next().charAt(0);
+         String quoteId = lineScanner.next();
+         boolean isBuy = (lineScanner.next().charAt(0) == 'B') ? true: false;
+             
+         OrderDatum orderData = new OrderDatum('D',
+                                               sequenceNum,
+                                               orderReferenceNum,
+                                               exchangeCode,
+                                               stockSymbol, 
+                                               timestamp,
+                                               systemCode,
+                                               quoteId,
+                                               new Price(0), // price doesnt matter since delete
+                                               0, //quantity as well
+                                               isBuy);
+         
+         return orderData;
+    
+    }
+    
+    static OrderDatum parseNYSEModifyOrder(Scanner lineScanner){
+    	 String sequenceNum = lineScanner.next();
+         String orderReferenceNum = lineScanner.next();
+         int quantity = lineScanner.nextInt();
+         Price price = new Price(lineScanner.nextDouble());
+         TimeStamp timestamp = new TimeStamp(lineScanner.nextInt()*1000 + lineScanner.nextInt());
+         String stockSymbol = lineScanner.next();
+         char exchangeCode = lineScanner.next().charAt(0);
+         char systemCode = lineScanner.next().charAt(0);
+         String quoteId = lineScanner.next();
+         boolean isBuy = (lineScanner.next().charAt(0) == 'B') ? true: false;
+             
+         OrderDatum orderData = new OrderDatum('M',
+                                               sequenceNum,
+                                               orderReferenceNum,
+                                               exchangeCode,
+                                               stockSymbol, 
+                                               timestamp,
+                                               systemCode,
+                                               quoteId,
+                                               price,
+                                               quantity,
+                                               isBuy);
+         
+         return orderData;
+   
+   }
+    
+    static OrderDatum parseNYSEImbalanceOrder(Scanner lineScanner){
+    	String sequenceNum = lineScanner.next();
+        String stockSymbol = lineScanner.next();
+        Price price = new Price(lineScanner.nextDouble());
+        int quantity = lineScanner.nextInt();
+        int totalImbalance = lineScanner.nextInt();
+        TimeStamp timestamp = new TimeStamp(lineScanner.nextInt()*1000 + lineScanner.nextInt());
+        int marketImbalance = lineScanner.nextInt();
+        char auctionType = lineScanner.next().charAt(0);
+        int auctionTime = lineScanner.nextInt();
+        char exchangeCode = lineScanner.next().charAt(0);
+        char systemCode = lineScanner.next().charAt(0);
+        String quoteId="" , orderReferenceNum = "";
+        boolean isBuy = false;
+        OrderDatum orderData = new OrderDatum('I',
+                                              sequenceNum,
+                                              orderReferenceNum,
+                                              exchangeCode,
+                                              stockSymbol, 
+                                              timestamp,
+                                              systemCode,
+                                              quoteId,
+                                              price,
+                                              quantity,
+                                              isBuy);
+        orderData.setAuctionTime(auctionTime);
+        orderData.setTotalImbalance(totalImbalance);
+        orderData.setAuctionType(auctionType);
+        orderData.setMarketImbalance(marketImbalance);
+        return orderData;
+  
+  }
     /**
      * @param args
      * @throws IOException 
@@ -78,7 +165,7 @@ public class OrderParser {
         
         String type = args[i++];
         if (type.equals("nyse")){
-            process(inputFile);
+            processNYSE(inputFile);
         }
         else{
             
