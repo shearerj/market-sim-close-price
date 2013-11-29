@@ -24,8 +24,8 @@ public class SubmitNMSOrder extends Activity {
 	protected final Market primaryMarket;
 	protected final TimeStamp duration;
 
-	public SubmitNMSOrder(Agent agent, OrderType type, Price price,
-			int quantity, Market primaryMarket, TimeStamp scheduledTime, TimeStamp duration) {
+	public SubmitNMSOrder(Agent agent, Market primaryMarket, OrderType type,
+			Price price, int quantity, TimeStamp scheduledTime, TimeStamp duration) {
 		super(scheduledTime);
 		checkArgument(quantity > 0, "Quantity must be positive");
 		this.agent = checkNotNull(agent, "Agent");
@@ -36,9 +36,9 @@ public class SubmitNMSOrder extends Activity {
 		this.duration = checkNotNull(duration, "Duration");
 	}
 
-	public SubmitNMSOrder(Agent agent, OrderType type, Price price,
-			int quantity, Market primaryMarket, TimeStamp scheduledTime) {
-		this(agent, type, price, quantity, primaryMarket, scheduledTime,
+	public SubmitNMSOrder(Agent agent, Market primaryMarket, OrderType type,
+			Price price, int quantity, TimeStamp scheduledTime) {
+		this(agent, primaryMarket, type, price, quantity, scheduledTime,
 				TimeStamp.IMMEDIATE);
 	}
 

@@ -14,9 +14,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.google.common.collect.Iterables;
+
 import activity.Activity;
 import activity.ProcessQuote;
 import activity.SendToIP;
+import activity.SubmitNMSOrder;
 import activity.SubmitOrder;
 import data.DummyFundamental;
 import data.FundamentalValue;
@@ -486,10 +489,131 @@ public class SIPTest {
 		assertEquals("Incorrect buyer", agent2, trans.get(0).getSeller());
 	}
 	
-	public void priceDiscrepancies() {
-		// TODO price discrepancies in NBBO
+	@Test
+	public void basicOrderRoutingNMS() {
+		EventManager em = new EventManager(new Random());
+		FundamentalValue fundamental = new DummyFundamental(100000);
+		TimeStamp time0 = TimeStamp.ZERO;
+		TimeStamp time = new TimeStamp(50);
+		
+		// Set up CDA markets and their quotes
+		Market nasdaq = new CDAMarket(sip2, time, new Random(), 1);
+		Market nyse = new CDAMarket(sip2, time, new Random(), 1);
+		MockBackgroundAgent background1 = new MockBackgroundAgent(fundamental, sip2, nyse);
+		MockBackgroundAgent background2 = new MockBackgroundAgent(fundamental, sip2, nasdaq);
+		em.addActivity(new SubmitOrder(background1, nyse, SELL, new Price(111), 1, time0));
+		em.addActivity(new SubmitOrder(background1, nasdaq, BUY, new Price(104), 1, time0));
+		em.addActivity(new SubmitOrder(background2, nasdaq, SELL, new Price(110), 1, time0));
+		em.addActivity(new SubmitOrder(background2, nyse, BUY, new Price(102), 1, time0));
+		em.executeUntil(time.plus(new TimeStamp(1)));
+
+		// Verify that NBBO quote is (104, 110) at time 50 (after quotes have been processed by SIP)
+		BestBidAsk nbbo = sip2.getNBBO();
+		assertEquals("Incorrect ASK", new Price(110), nbbo.bestAsk);
+		assertEquals("Incorrect BID", new Price(104), nbbo.bestBid);
+		assertEquals("Incorrect ASK quantity", 1, nbbo.bestAskQuantity);
+		assertEquals("Incorrect BID quantity", 1, nbbo.bestBidQuantity);
+		assertEquals("Incorrect ASK market", nasdaq, nbbo.bestAskMarket);
+		assertEquals("Incorrect BID market", nasdaq, nbbo.bestBidMarket);
+		
+		///////////////
+		// Creating dummy agent & submit sell order
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip2, nyse);
+		em.addActivity(new SubmitNMSOrder(agent1, nyse, SELL, new Price(105), 1, time));
+		em.executeUntil(new TimeStamp(100));
+		nbbo = sip2.getNBBO();
+		assertEquals("Incorrect ASK", new Price(110), nbbo.bestAsk);
+		assertEquals("Incorrect BID", new Price(104), nbbo.bestBid);
+		assertEquals("Incorrect ASK quantity", 1, nbbo.bestAskQuantity);
+		assertEquals("Incorrect BID quantity", 1, nbbo.bestBidQuantity);
+		assertEquals("Incorrect ASK market", nasdaq, nbbo.bestAskMarket);
+		assertEquals("Incorrect BID market", nasdaq, nbbo.bestBidMarket);
+		
+		// Verify that NBBO quote is (104, 105) at time 100 (after quotes have been processed by SIP)
+		em.executeUntil(new TimeStamp(101));
+		nbbo = sip2.getNBBO();
+		assertEquals("Incorrect ASK", new Price(105), nbbo.bestAsk);
+		assertEquals("Incorrect BID", new Price(104), nbbo.bestBid);
+		assertEquals("Incorrect ASK quantity", 1, nbbo.bestAskQuantity);
+		assertEquals("Incorrect BID quantity", 1, nbbo.bestBidQuantity);
+		assertEquals("Incorrect ASK market", nyse, nbbo.bestAskMarket);
+		assertEquals("Incorrect BID market", nasdaq, nbbo.bestBidMarket);
+		
+		// Another agent submits a buy order
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip2, nasdaq);
+		em.addActivity(new SubmitNMSOrder(agent2, nasdaq, BUY, new Price(109), 1, new TimeStamp(100)));
+		em.executeUntil(new TimeStamp(101));
+		
+		// Verify that order is routed to nyse and transacts immediately w/ agent1's order
+		assertEquals(1, nyse.getTransactions().size());
+		assertEquals(0, nasdaq.getTransactions().size());
+		Transaction t = Iterables.getFirst(nyse.getTransactions(), null);
+		assertEquals(nyse, t.getMarket());
+		assertEquals(new Price(105), t.getPrice());
+		assertEquals(agent1, t.getSeller());
+		assertEquals(agent2, t.getBuyer());
 	}
 
+	@Test
+	public void latencyArbRoutingNMS() {
+		EventManager em = new EventManager(new Random());
+		FundamentalValue fundamental = new DummyFundamental(100000);
+		TimeStamp time0 = TimeStamp.ZERO;
+		TimeStamp time = new TimeStamp(50);
+		
+		// Set up markets and their quotes
+		// both markets are undelayed, although SIP is delayed by 50
+		Market nasdaq = new CDAMarket(sip2, time, new Random(), 1);
+		Market nyse = new CDAMarket(sip2, time, new Random(), 1);
+		MockBackgroundAgent background1 = new MockBackgroundAgent(fundamental, sip2, nyse);
+		MockBackgroundAgent background2 = new MockBackgroundAgent(fundamental, sip2, nasdaq);
+		em.addActivity(new SubmitOrder(background1, nyse, SELL, new Price(111), 1, time0));
+		em.addActivity(new SubmitOrder(background1, nasdaq, BUY, new Price(104), 1, time0));
+		em.addActivity(new SubmitOrder(background2, nasdaq, SELL, new Price(110), 1, time0));
+		em.addActivity(new SubmitOrder(background2, nyse, BUY, new Price(102), 1, time0));
+		em.executeUntil(time.plus(new TimeStamp(1)));
+
+		///////////////
+		// Creating dummy agent & submit sell order
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip2, nyse);
+		em.addActivity(new SubmitNMSOrder(agent1, nyse, SELL, new Price(105), 1, time));
+
+		// Verify that NBBO quote is still (104, 110) (hasn't updated yet)
+		BestBidAsk nbbo = sip2.getNBBO();
+		assertEquals("Incorrect ASK", new Price(110), nbbo.bestAsk);
+		assertEquals("Incorrect BID", new Price(104), nbbo.bestBid);
+		assertEquals("Incorrect ASK quantity", 1, nbbo.bestAskQuantity);
+		assertEquals("Incorrect BID quantity", 1, nbbo.bestBidQuantity);
+		assertEquals("Incorrect ASK market", nasdaq, nbbo.bestAskMarket);
+		assertEquals("Incorrect BID market", nasdaq, nbbo.bestBidMarket);
+		
+		// Another agent submits a buy order
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip2, nasdaq);
+		em.addActivity(new SubmitNMSOrder(agent2, nasdaq, BUY, new Price(109), 1, time));
+		em.executeUntil(time.plus(time));
+		// Verify that NBBO quote is still (104, 110) (hasn't updated yet)
+		nbbo = sip2.getNBBO();
+		assertEquals("Incorrect ASK", new Price(110), nbbo.bestAsk);
+		assertEquals("Incorrect BID", new Price(104), nbbo.bestBid);
+		assertEquals("Incorrect ASK quantity", 1, nbbo.bestAskQuantity);
+		assertEquals("Incorrect BID quantity", 1, nbbo.bestBidQuantity);
+		assertEquals("Incorrect ASK market", nasdaq, nbbo.bestAskMarket);
+		assertEquals("Incorrect BID market", nasdaq, nbbo.bestBidMarket);
+		
+		// The buy order was still routed to Nasdaq, so the NBBO will cross and 
+		// there is a latency arbitrage opportunity
+		em.executeUntil(new TimeStamp(101));
+		// Verify that NBBO quote is now (109, 105)
+		nbbo = sip2.getNBBO();
+		assertEquals("Incorrect ASK", new Price(105), nbbo.bestAsk);
+		assertEquals("Incorrect BID", new Price(109), nbbo.bestBid);
+		assertEquals("Incorrect ASK quantity", 1, nbbo.bestAskQuantity);
+		assertEquals("Incorrect BID quantity", 1, nbbo.bestBidQuantity);
+		assertEquals("Incorrect ASK market", nyse, nbbo.bestAskMarket);
+		assertEquals("Incorrect BID market", nasdaq, nbbo.bestBidMarket);
+	}
+	
+	
 	/*
 	 * XXX SIP has uniform latency - would we ever want different latency from
 	 * certain markets? Probably. This change shouldn't be too difficult.

@@ -226,10 +226,6 @@ public class AgentTest {
 		assertEquals(tr, agent.transactions.get(0));
 	}
 	
-	public void surplusTest() {
-		// TODO verify computation, plus discount factor
-	}
-
 	@Test
 	public void liquidation() {
 		TimeStamp time = new TimeStamp(100);

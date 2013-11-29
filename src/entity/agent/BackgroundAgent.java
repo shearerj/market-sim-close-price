@@ -98,8 +98,8 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			sb.append('=').append(val);
 			log(INFO, sb.toString());
 			
-			return ImmutableList.of(new SubmitNMSOrder(this, type, price,
-					quantity, primaryMarket, TimeStamp.IMMEDIATE));
+			return ImmutableList.of(new SubmitNMSOrder(this, primaryMarket, type,
+					price, quantity, TimeStamp.IMMEDIATE));
 		} else {
 			// if exceed max position, then don't submit a new bid
 			sb.append("new order would exceed max position ");

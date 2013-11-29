@@ -317,7 +317,7 @@ public class AAAgent extends BackgroundAgent {
 				bestBid.equals(new Price(-1)) || bestAsk.equals(new Price(-1))) {
 			Price price = isBuyer ? Price.ZERO : Price.INF;
 			OrderType type = isBuyer ? BUY : SELL;
-			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, type, price, Math.abs(quantity), primaryMarket, TimeStamp.IMMEDIATE));
+			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, primaryMarket, type, price, Math.abs(quantity), TimeStamp.IMMEDIATE));
 		}
 		
 		// If best offer is outside of limit price, no bid is submitted
@@ -369,12 +369,12 @@ public class AAAgent extends BackgroundAgent {
 			// if bestAsk < targetPrice, accept bestAsk
 			// else submit bid given by EQ 10/11
 			Price submitPrice = bestAsk.lessThanEqual(price) ? bestAsk : price;
-			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, BUY, submitPrice, quantity, primaryMarket, TimeStamp.IMMEDIATE));
+			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, primaryMarket, BUY, submitPrice, quantity, TimeStamp.IMMEDIATE));
 		} else { // Seller
 			// If outstanding bid >= target price, submit ask at bid price
 			// else submit bid given by EQ 10/11
 			Price submitPrice = bestBid.greaterThanEqual(price) ? bestBid : price;
-			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, SELL, submitPrice, -quantity, primaryMarket, TimeStamp.IMMEDIATE));
+			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, primaryMarket, SELL, submitPrice, -quantity, TimeStamp.IMMEDIATE));
 		}
 	}
 	
