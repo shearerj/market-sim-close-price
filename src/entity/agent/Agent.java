@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 
 import data.FundamentalValue;
@@ -34,6 +35,8 @@ public abstract class Agent extends Entity {
 
 	private static final long serialVersionUID = 5363438238024144057L;
 	public static int nextID = 1;
+	
+	protected static final Ordering<Price> pcomp = Ordering.natural();
 	
 	protected final Random rand;
 	protected final FundamentalValue fundamental;

@@ -7,7 +7,6 @@ import static fourheap.Order.OrderType.*;
 import java.util.Random;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Ordering;
 import com.google.common.collect.ImmutableList.Builder;
 
 import systemmanager.Keys;
@@ -51,8 +50,6 @@ import event.TimeStamp;
 public class BasicMarketMaker extends MarketMaker {
 
 	private static final long serialVersionUID = 9057600979711100221L;
-	
-	private static final Ordering<Price> pcomp = Ordering.natural();
 	
 	private int stepSize;	// rung size is distance between adjacent rungs in ladder
 	private int numRungs;	// # of ladder rungs on one side (e.g., number of buy orders)

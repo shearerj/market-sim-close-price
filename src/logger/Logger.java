@@ -2,6 +2,7 @@ package logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 
 public class Logger {
 
@@ -10,6 +11,7 @@ public class Logger {
 	protected static Log logger;
 	protected static boolean outError = true;
 	protected static Prefix prefix = new EmptyPrefix();
+	protected static DecimalFormat format;
 	
 	public static void setup(int lev, File logFile, boolean outError, Prefix prefix) {
 		try {
@@ -18,6 +20,7 @@ public class Logger {
 			logger.setPrependDate(false);
 			Logger.outError = outError;
 			Logger.prefix = prefix;
+			format = new DecimalFormat("#.####");
 		} catch (IOException e) {
 			System.err.println("Couldn't create log file");
 			e.printStackTrace();
@@ -59,4 +62,7 @@ public class Logger {
 		public String getPrefix() { return ""; }
 	}
 
+	public static String format(double number) {
+		return format.format(number);
+	}
 }

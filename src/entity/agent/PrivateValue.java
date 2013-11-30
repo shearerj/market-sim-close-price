@@ -38,7 +38,7 @@ import fourheap.Order.OrderType;
  * 
  * @author ewah
  */
-class PrivateValue implements Serializable {
+class PrivateValue implements Serializable, QuantityIndexedValue<Price> {
 
 	private static final long serialVersionUID = -348702049295080442L;
 	
@@ -53,7 +53,7 @@ class PrivateValue implements Serializable {
 		offset = 0;
 		values = Collections.singletonList(ZERO);
 	}
-
+	
 	/**
 	 * Randomly generate private values for positional changes
 	 * 
@@ -96,6 +96,7 @@ class PrivateValue implements Serializable {
 	/**
 	 * @return offset (max absolute value position)
 	 */
+	@Override
 	public int getMaxAbsPosition() {
 		return offset;
 	}
@@ -109,6 +110,7 @@ class PrivateValue implements Serializable {
 	 * 			  Buy or Sell
 	 * @return The new private value if buying or selling 1 unit
 	 */
+	@Override
 	public Price getValue(int currentPosition, OrderType type) {
 		switch (type) {
 		case BUY:
@@ -131,6 +133,7 @@ class PrivateValue implements Serializable {
 	 * @param type
 	 * @return
 	 */
+	@Override
 	public Price getValueFromQuantity(int currentPosition, int quantity, OrderType type) {
 		checkArgument(quantity > 0, "Quantity must be positive");
 		int privateValue = 0;

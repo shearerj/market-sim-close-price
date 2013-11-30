@@ -13,6 +13,7 @@ public interface Keys {
 	public final static String ARRIVAL_RATE = "arrivalRate";
 	public final static String REENTRY_RATE = "reentryRate";
 
+	public final static String WINDOW_LENGTH = "windowLength";
 	public final static String BID_RANGE_MAX = "bidRangeMax";
 	public final static String BID_RANGE_MIN = "bidRangeMin";
 	public final static String MAX_QUANTITY = "maxqty";
@@ -62,12 +63,15 @@ public interface Keys {
 	public final static String DEBUG = "debug";
 	public final static String TEST = "AAtesting";
 	public final static String BUYER_STATUS = "buyerStatus";
-	
-	// ZIP
-	public final static String CR = "cR";
-	public final static String CA = "cA";
-	public final static String BETA = "beta";
-	public final static String BETA_VAR = "betaVar";
 	public final static String GAMMA = "gamma";
 	
+	// ZIPAgent
+	public final static String MARGIN_MIN = "marginMin";
+	public final static String MARGIN_MAX = "marginMax";
+	public final static String GAMMA_MIN = "gammaMin";
+	public final static String GAMMA_MAX = "gammaMax";
+	public final static String BETA_MIN = "betaMin";
+	public final static String BETA_MAX = "betaMax";
+	public final static String COEFF_R = "rangeR";
+	public final static String COEFF_A = "rangeA";
 }
