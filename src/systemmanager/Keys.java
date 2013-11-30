@@ -31,9 +31,9 @@ public interface Keys {
 	public final static String NUM = "num";
 	
 	// Market Maker
-	public final static String SLEEP_TIME = "sleepTime";
 	public final static String NUM_RUNGS = "numRungs";
 	public final static String RUNG_SIZE = "rungSize";
+	public final static String TRUNCATE_LADDER_KEY = "truncateLadder";
 	
 	// Latency
 	public final static String NBBO_LATENCY = "nbboLatency";
