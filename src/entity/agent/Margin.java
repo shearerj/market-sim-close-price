@@ -4,18 +4,32 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.Lists;
 
 import utils.Rands;
 import fourheap.Order.OrderType;
 
 /**
+ * Idea from: Tesauro & Das, "High-Performance Bidding Agents for the Continuous
+ * Double Auction," EC-01.
  * 
- * TODO check EC paper on the multi-quantity margins for ZIP
+ * When agents can trade multiple units, we use an array of profit margins
+ * of the size of the number of units. Different units have different
+ * limit prices, so they require different profit margins to trade at
+ * equilibrium. There is one margin per traded unit.
+ * 
+ * In the paper, the margins are not statistically independent; the limit prices
+ * of the less valuable units influence the initial margins of the more
+ * valuable units---how? TODO margins independent? 
+ * 
+ * Margins: <code>getValue</code> is based on current (or projected) position
+ * balance. <code>setValue</code> is similar.
+ * 
+ * NOTE: Margins only work with single quantity changes.
  * 
  * @author ewah
  *
@@ -26,6 +40,11 @@ class Margin implements Serializable, QuantityIndexedValue<Double> {
 	
 	protected final int offset;
 	protected List<Double> values;
+	
+	public Margin() {
+		this.offset = 0;
+		this.values = Collections.emptyList();
+	}
 	
 	/**
 	 * @param maxPosition
@@ -38,16 +57,15 @@ class Margin implements Serializable, QuantityIndexedValue<Double> {
 		
 		// Identical to legacy generation in final output
 		this.offset = maxPosition;
+		this.values = Lists.newArrayList();
+		
 		double[] values = new double[maxPosition * 2];
 		for (int i = 0; i < values.length; i++)
 			values[i] = Rands.nextUniform(rand, a, b) *	(i >= maxPosition ? -1 : 1);
 			// margins for buy orders are negative
 		
-		Builder<Double> builder = ImmutableList.builder();
 		for (double value : values)
-			builder.add(new Double(value));
-		
-		this.values = builder.build();
+			this.values.add(new Double(value));
 	}
 	
 	/**
@@ -58,9 +76,8 @@ class Margin implements Serializable, QuantityIndexedValue<Double> {
 	 */
 	protected Margin(int maxPosition, Collection<Double> values) {
 		checkArgument(values.size() == 2*maxPosition, "Incorrect number of entries in list");
-		Builder<Double> builder = ImmutableList.builder();
-		builder.addAll(values);
-		this.values = builder.build();
+		this.values = Lists.newArrayList();
+		this.values.addAll(values);
 		offset = maxPosition;
 	}
 	
@@ -69,10 +86,16 @@ class Margin implements Serializable, QuantityIndexedValue<Double> {
 		return offset;
 	}
 
+	/**
+	 * Gets margin for single-unit trades. If the projected position would
+	 * exceed the maximum, the profit margin is 0.
+	 * 
+	 * @param currentPosition
+	 * @param type
+	 * @return
+	 */
 	@Override
 	public Double getValue(int currentPosition, OrderType type) {
-		
-		// should return the max margin (in either direction)
 		switch (type) {
 		case BUY:
 			if (currentPosition + offset <= values.size() - 1 &&
@@ -88,8 +111,12 @@ class Margin implements Serializable, QuantityIndexedValue<Double> {
 		return 0.0;
 	}
 
-	// TODO need to test
-	public void setValue(int currentPosition, int quantity, OrderType type,
+	/**
+	 * @param currentPosition
+	 * @param type
+	 * @param value
+	 */
+	public void setValue(int currentPosition, OrderType type,
 			double value) {
 		switch (type) {
 		case BUY:
@@ -105,75 +132,12 @@ class Margin implements Serializable, QuantityIndexedValue<Double> {
 		}
 	}
 	
-	//FIXME this function is definitely wrong right now
 	@Override
 	public Double getValueFromQuantity(int currentPosition, int quantity,
 			OrderType type) {
 		checkArgument(quantity > 0, "Quantity must be positive");
-		int value = 0;
 		
-		switch (type) {
-		case BUY:
-			for (int i = 0; i < quantity; i++) // FIXME
-				value += getValue(currentPosition + i, type).intValue();
-			break;
-		case SELL:
-			for (int i = 0; i < quantity; i++)
-				value += getValue(currentPosition - i, type).intValue();
-			break;
-		}
-		return new Double(value);
+		// TODO need to implement for multiple units
+		return new Double(0);
 	}
-	
-//	private double getMarginAt(int quantity) {
-//		if (quantity > 0) {
-//			// if buying
-//			if (positionBalance >= 0) {
-//				// if nonnegative current position, look at next position (+q)
-//				return margin.getValueFromQuantity(positionBalance + quantity);
-//			} else {
-//				// if negative current position, look at current position
-//				return margin.getValueFromQuantity(positionBalance);
-//			}
-//
-//		} else if (quantity < 0){
-//			// if selling
-//			if (positionBalance > 0) {
-//				// if positive current position, look at current position
-//				return margin.getValueFromQuantity(positionBalance);
-//			} else {
-//				// if non-positive current position, look at next position (-|q|)
-//				return margin.getValueFromQuantity(positionBalance + quantity);
-//			}
-//
-//		} else {
-//			// not selling or buying
-//			return 0;
-//		}
-//	}
-
-//	private void setMarginAt(int q, double val) {
-//		if (q > 0) {
-//			// if buying
-//			if (positionBalance >= 0) {
-//				// if nonnegative current position, look at next position (+q)
-//				margins.setValueByQuantity(positionBalance + q, val);
-//			} else {
-//				// if negative current position, look at current position
-//				margins.setValueByQuantity(positionBalance, val);
-//			}
-//
-//		} else if (q < 0){
-//			// if selling
-//			if (positionBalance > 0) {
-//				// if positive current position, look at current position
-//				margins.setValueByQuantity(positionBalance, val);
-//			} else {
-//				// if non-positive current position, look at next position (-|q|)
-//				margins.setValueByQuantity(positionBalance + q, val);
-//			}	
-//		}
-//	}
-
-
 }
