@@ -8,7 +8,7 @@ import event.TimeStamp;
 
 /**
  * Class for Activity of withdrawing an agent's order in a given market. Used when bids expire as
- * well.
+ * well. Needs to be called with the order that is intended to be removed.
  * 
  * @author ewah
  */

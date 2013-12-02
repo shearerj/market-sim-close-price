@@ -2,6 +2,14 @@ package entity.agent;
 
 import systemmanager.Consts;
 
+/**
+ * This class represents any value that needs to be stored at all discount
+ * values for the simulation. Currently it's only used for background agent
+ * surplus.
+ * 
+ * @author erik
+ * 
+ */
 class DiscountedValue {
 
 	private double[] values;
@@ -23,6 +31,13 @@ class DiscountedValue {
 		return values;
 	}
 	
+	/**
+	 * This method is very inefficient. Much better to use the array of iterate
+	 * if you know which one.
+	 * 
+	 * @param discount
+	 * @return
+	 */
 	public double getValueAtDiscount(double discount) {
 		for (int i = 0; i < values.length; i++)
 			if (Consts.DISCOUNT_FACTORS[i] == discount)

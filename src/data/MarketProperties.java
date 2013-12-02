@@ -3,6 +3,16 @@ package data;
 import static com.google.common.base.Preconditions.checkNotNull;
 import systemmanager.Consts.MarketType;
 
+/**
+ * Entity properties bundled with MarketType
+ * 
+ * @author erik
+ * 
+ */
+/*
+ * XXX Thought, potentially instead of market and agent type, this could have a
+ * generic enum type
+ */
 public class MarketProperties extends EntityProperties {
 	
 	private static final long serialVersionUID = -8634339070031699521L;

@@ -1,7 +1,8 @@
 package systemmanager;
 
 /**
- * System-wide constants 
+ * System-wide constants
+ * 
  * @author ewah
  */
 public interface Consts {

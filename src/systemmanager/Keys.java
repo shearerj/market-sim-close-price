@@ -1,5 +1,11 @@
 package systemmanager;
 
+/**
+ * All of the keys for use in the simulation spec.
+ * 
+ * @author erik
+ * 
+ */
 public interface Keys {
 
 	public final static String MODEL_NAME = "modelName";

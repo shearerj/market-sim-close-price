@@ -1,5 +1,11 @@
 package data;
 
+/**
+ * The observation of a single player. It's generated in the player class.
+ * 
+ * @author erik
+ * 
+ */
 public class PlayerObservation {
 
 	public final String role;

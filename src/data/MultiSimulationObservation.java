@@ -20,11 +20,19 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+/**
+ * Class that represents the combined observations of several simulations.
+ * Contains a map from strings to summary statistics for random features, and a
+ * list of MutiSimPlayerObservations for the player observations.
+ * 
+ * @author erik
+ * 
+ */
 public class MultiSimulationObservation {
 
 	protected static final Gson gson = new Gson();
 	
-	protected final List<MultiPlayerObservation> playerObservations;
+	protected final List<MultiSimPlayerObservation> playerObservations;
 	protected final Map<String, SummaryStatistics> features;
 	protected SimulationSpec spec;
 	
@@ -37,7 +45,7 @@ public class MultiSimulationObservation {
 	public void addObservation(Observations obs) {
 		if (spec == null) { // First observation
 			for (PlayerObservation po : obs.getPlayerObservations())
-				playerObservations.add(new MultiPlayerObservation(po.role, po.strategy, po.payoff));
+				playerObservations.add(new MultiSimPlayerObservation(po.role, po.strategy, po.payoff));
 			for (Entry<String, Double> e : obs.getFeatures().entrySet()) {
 				SummaryStatistics sum = new SummaryStatistics();
 				sum.addValue(e.getValue());
@@ -52,7 +60,7 @@ public class MultiSimulationObservation {
 			 * case, but it's worth noting.
 			 */
 			Iterator<PlayerObservation> it = obs.getPlayerObservations().iterator();
-			for (MultiPlayerObservation mpo : playerObservations)
+			for (MultiSimPlayerObservation mpo : playerObservations)
 				mpo.payoff.addValue(it.next().payoff);
 			for (Entry<String, Double> e : obs.getFeatures().entrySet())
 				features.get(e.getKey()).addValue(e.getValue());
@@ -74,7 +82,7 @@ public class MultiSimulationObservation {
 		// Write out players
 		JsonArray players = new JsonArray();
 		root.add("players", players);
-		for (MultiPlayerObservation mpo : playerObservations) {
+		for (MultiSimPlayerObservation mpo : playerObservations) {
 			JsonObject obs = new JsonObject();
 			players.add(obs);
 			obs.addProperty("role", mpo.role);

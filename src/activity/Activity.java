@@ -37,11 +37,13 @@ public abstract class Activity {
 		return scheduledTime;
 	}
 	
+	// Every activity is unique
 	@Override
 	public final int hashCode() {
 		return super.hashCode();
 	}
 	
+	// Every activity is unique
 	@Override
 	public final boolean equals(Object obj) {
 		return super.equals(obj);

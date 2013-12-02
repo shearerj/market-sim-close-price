@@ -16,6 +16,16 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Doubles;
 
+/**
+ * Class with extra methods on DescriptiveStatistics Objects.
+ * 
+ * @author erik
+ * 
+ */
+/*
+ * XXX Erik: I'm not a huge fan of this class or the apache common math package,
+ * and would be in favor of using something else
+ */
 public abstract class DSPlus {
 
 	protected static final Median median = new Median();

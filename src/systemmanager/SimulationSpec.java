@@ -63,6 +63,17 @@ public class SimulationSpec implements Serializable {
 	protected final Collection<AgentProperties> agentProps;
 	protected transient final JsonObject playerProps; // TODO Change to properties object
 
+	public SimulationSpec() {
+		this.rawSpec = new JsonObject();
+		this.simulationProperties = new EntityProperties();
+		this.defaultMarketProperties = new EntityProperties();
+		this.defaultAgentProperties = new EntityProperties();
+
+		this.marketProps = ImmutableList.of();
+		this.agentProps = ImmutableList.of();
+		this.playerProps = new JsonObject();
+	}
+	
 	public SimulationSpec(File specFile) throws FileNotFoundException {
 		this(new FileReader(specFile));
 	}

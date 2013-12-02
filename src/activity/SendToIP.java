@@ -12,8 +12,9 @@ import entity.market.Transaction;
 import event.TimeStamp;
 
 /**
- * Class for Activity of sending new quote information to an information processor, 
- * including the Security Information Processor (SIP).
+ * Class for Activity of sending new quote information to an information
+ * processor, including the Security Information Processor (SIP). This should
+ * happen as soon as a quote is generated.
  * 
  * @author ewah
  */

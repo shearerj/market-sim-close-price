@@ -33,6 +33,7 @@ public class FundamentalValue implements Serializable {
 
 	/**
 	 * Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps
+	 * 
 	 * @param kap rate which the process reverts to the mean value
 	 * @param meanVal mean process
 	 * @param var Gaussian Process variance
@@ -49,6 +50,11 @@ public class FundamentalValue implements Serializable {
 		meanRevertProcess.add(Rands.nextGaussian(rand, meanValue, shockVar));
 	}
 
+	/**
+	 * Helper method to ensure that maxQuery exists in the data structure.
+	 * 
+	 * @param maxQuery
+	 */
 	protected void computeFundamentalTo(int maxQuery) {
 		for (int i = meanRevertProcess.size(); i <= maxQuery; i++) {
 			double prevValue = Iterables.getLast(meanRevertProcess);

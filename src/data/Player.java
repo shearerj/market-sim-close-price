@@ -4,6 +4,17 @@ import java.io.Serializable;
 
 import entity.agent.Agent;
 
+/**
+ * A class that represents a player. It contains a role, strategy, and a
+ * reference to the player.
+ * 
+ * It is accessed by getting a player observation. This calls the
+ * player.getPayoff function which can be overriden to return the correct thing
+ * for different agent types.
+ * 
+ * @author erik
+ * 
+ */
 public class Player implements Serializable {
 	
 	private static final long serialVersionUID = 7233996258432288503L;

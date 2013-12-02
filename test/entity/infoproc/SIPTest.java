@@ -422,29 +422,6 @@ public class SIPTest {
 		assertEquals("Incorrect BID market", market1, sip2.getNBBO().bestBidMarket);
 	}
 	
-	// TODO Move this to observations test
-//	@Test
-//	public void getNBBOSpreads() {
-//		TimeStamp time = TimeStamp.ZERO;
-//		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-//		sip.processQuote(market1, new DummyMarketTime(time, 1), q1, new ArrayList<Transaction>(), time);
-//		
-//		// Check that correct spread stored
-//		TimeSeries ts = sip.getNBBOSpreads();
-//		List<Double> list = ts.sample(1, 1);
-//		assertEquals(new Double(20), list.get(0));
-//		assertEquals(1, list.size());
-//		
-//		Quote q2 = new Quote(market2, new Price(70), 1, new Price(90), 1, time);
-//		sip.processQuote(market2, new DummyMarketTime(time, 2), q2, new ArrayList<Transaction>(), time);
-//		
-//		// Check that new quote overwrites the previously stored spread at time 0
-//		ts = sip.getNBBOSpreads();
-//		list = ts.sample(1, 1);
-//		assertEquals(new Double(10), list.get(0));
-//		assertEquals(1, list.size());
-//	}
-	
 	@Test
 	public void transactionsInSIP() {
 		TimeStamp time = TimeStamp.ZERO;

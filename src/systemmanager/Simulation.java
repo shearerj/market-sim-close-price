@@ -10,6 +10,7 @@ import java.util.Random;
 import utils.Pair;
 import activity.AgentArrival;
 import activity.Clear;
+import activity.LiquidateAtFundamental;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
@@ -27,11 +28,23 @@ import data.Observations;
 import data.Player;
 import entity.agent.Agent;
 import entity.agent.AgentFactory;
+import entity.agent.BackgroundAgent;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.MarketFactory;
 import event.TimeStamp;
 
+/**
+ * This class represents a single simulation. Standard usage is:
+ * <ol>
+ * <li>Create Simulation Object</li>
+ * <li>executeEvents</li>
+ * <li>getObservations</li>
+ * </ol>
+ * 
+ * @author erik
+ * 
+ */
 public class Simulation {
 
 	protected final EventManager eventManager;
@@ -45,6 +58,10 @@ public class Simulation {
 	protected final TimeStamp simulationLength;
 	protected final Observations observations;
 	
+	/**
+	 * Create the simulation with specified random seed and simulation spec
+	 * file.
+	 */
 	public Simulation(SimulationSpec spec, Random rand) {
 		this.specification = spec;
 
@@ -54,6 +71,7 @@ public class Simulation {
 		JsonObject playerConfig = spec.getPlayerProps();
 
 		this.simulationLength = new TimeStamp(simProps.getAsLong(Keys.SIMULATION_LENGTH));
+		TimeStamp lastTime = new TimeStamp(simulationLength.getInTicks() - 1); // Last time to schedule something.
 
 		this.fundamental = new FundamentalValue(
 				simProps.getAsDouble(Keys.FUNDAMENTAL_KAPPA),
@@ -71,11 +89,16 @@ public class Simulation {
 		this.eventManager = new EventManager(new Random(rand.nextLong()));
 		for (Market market : markets)
 			eventManager.addActivity(new Clear(market, TimeStamp.IMMEDIATE));
-		for (Agent agent : agents)
-			// TODO Schedule LiquidateAtFundamental for non Background Agents.
+		for (Agent agent : agents) {
 			eventManager.addActivity(new AgentArrival(agent, agent.getArrivalTime()));
+			if (!(agent instanceof BackgroundAgent))
+				eventManager.addActivity(new LiquidateAtFundamental(agent, lastTime));
+		}
 	}
 	
+	/**
+	 * Sets up the markets
+	 */
 	protected Collection<Market> setupMarkets(Collection<MarketProperties> marketProps, Random rand) {
 		Builder<Market> markets = ImmutableList.builder();
 		Random ran = new Random(rand.nextLong());
@@ -87,6 +110,9 @@ public class Simulation {
 		return markets.build();
 	}
 	
+	/**
+	 * Sets up non player agents
+	 */
 	protected Collection<Agent> setupAgents(Collection<AgentProperties> agentProps, Random rand) {
 		// Not immutable because players also adds agents
 		Collection<Agent> agents = Lists.newArrayList();
@@ -103,6 +129,9 @@ public class Simulation {
 		return agents;
 	}
 	
+	/**
+	 * Sets up player agents
+	 */
 	protected Collection<Player> setupPlayers(EntityProperties modelProps,
 			JsonObject playerConfig, Random rand) {
 		Builder<Player> players = ImmutableList.builder();
@@ -149,6 +178,9 @@ public class Simulation {
 		return eventManager.currentTime;
 	}
 	
+	/**
+	 * Gets the observations, which are only useful at the end of the simulation.
+	 */
 	public Observations getObservations() {
 		return observations;
 	}

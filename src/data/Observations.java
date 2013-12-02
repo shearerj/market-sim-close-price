@@ -42,7 +42,7 @@ import event.TimeStamp;
  * of object. The rest, which mainly includes agent and player payoffs, is
  * processed when the call to getFeatures or getPlayerObservations is made.
  * 
- * Because this uses message pasing, if you want the observation data structure
+ * Because this uses message passing, if you want the observation data structure
  * to get data, you must make sure to "register" it with the EventBus by calling
  * BUS.register(observations).
  * 
@@ -65,6 +65,10 @@ import event.TimeStamp;
  * @author erik
  * 
  */
+/*
+ * TODO At some point, we may want to be able to read an observation file into
+ * one of these
+ */
 public class Observations {
 	
 	// static event bus to record statics messages during simulation
@@ -81,9 +85,9 @@ public class Observations {
 	protected final Map<Market, TimeSeries> midQuotes;
 	
 	// Static information needed for observations
-	protected final Collection<Player> players;
-	protected final Collection<Agent> agents;
-	protected final Collection<Market> markets;
+	protected final Collection<? extends Player> players;
+	protected final Collection<? extends Agent> agents;
+	protected final Collection<? extends Market> markets;
 	protected final FundamentalValue fundamental;
 	protected final SimulationSpec spec;
 	protected final Set<Class<? extends Agent>> agentTypes;
@@ -93,8 +97,8 @@ public class Observations {
 	 * Constructor needs to be called before the simulation starts, but with the
 	 * final object collections.
 	 */
-	public Observations(SimulationSpec spec, Collection<Market> markets,
-			Collection<Agent> agents, Collection<Player> players,
+	public Observations(SimulationSpec spec, Collection<? extends Market> markets,
+			Collection<? extends Agent> agents, Collection<? extends Player> players,
 			FundamentalValue fundamental) {
 		this.players = players;
 		this.agents = agents;
