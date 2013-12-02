@@ -3,16 +3,17 @@ package entity.agent;
 import java.util.List;
 import java.util.Random;
 
+import com.google.common.collect.Lists;
+
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
-import entity.market.Price;
 import entity.market.Transaction;
 import event.TimeStamp;
 
 /**
- * This agent looks at the past window period at each reentry to
- * execute its agent strategy.
+ * This agent looks at the past window period at each reentry to execute its 
+ * agent strategy.
  * 
  * If current time is T, it looks at activities occurring in between
  * T-window+1 to T, inclusive.
@@ -23,7 +24,7 @@ import event.TimeStamp;
  * 
  * XXX Question: using windowing, should it use the same estimated values? Or reset
  * every time? Probably should reset every time...? Or can treat as initialized to 
- * those values?
+ * those values? (could try either way)
  * 
  * @author ewah
  *
@@ -32,9 +33,7 @@ public abstract class WindowAgent extends BackgroundAgent {
 	
 	private static final long serialVersionUID = -8112884516819617629L;
 
-	protected int windowLength;
-	protected TimeStamp lastTimeToCheck; // last time to include
-	protected Transaction lastSeenTrans; // last seen transaction to not include
+	protected TimeStamp windowLength;
 	
 	public WindowAgent(TimeStamp arrivalTime, FundamentalValue fundamental,
 			SIP sip, Market market, Random rand, double reentryRate,
@@ -43,35 +42,31 @@ public abstract class WindowAgent extends BackgroundAgent {
 		super(arrivalTime, fundamental, sip, market, rand, reentryRate, pv, tickSize,
 				bidRangeMin, bidRangeMax);
 		
-		this.windowLength = windowLength;
+		this.windowLength = new TimeStamp(windowLength);
 	}
-	
-	// TODO stuff for handling transactions
+
 	/**
-	 * Transactions within the window.
-	 *
+	 * Get all transactions (from SIP plus its own transactions) in the window
+	 * that is of period windowLength prior to currentTime, i.e. from
+	 * currentTime-windowLength+1 to currentTime, inclusive.
+	 * 
+	 * @param currentTime
 	 * @return
 	 */
-	public List<Transaction> getTransactionsInWindow(TimeStamp ts) {
-		return null;
+	public List<Transaction> getWindowTransactions(TimeStamp currentTime) {
+		TimeStamp firstTimeInWindow = currentTime.minus(new TimeStamp(windowLength));
+		
+		List<Transaction> allTransactions = Lists.newArrayList(); 
+		allTransactions.addAll(this.sip.getTransactions());
+		allTransactions.addAll(this.transactions);
+		
+		List<Transaction> windowTransactions = Lists.newArrayList();
+		for (Transaction trans : allTransactions) {
+			if (!windowTransactions.contains(trans) && 
+					trans.getExecTime().after(firstTimeInWindow)) {
+				windowTransactions.add(trans);
+			}
+		}
+		return windowTransactions;
 	}
-//		getLastTimeToCheck(ts);
-//		
-//		TreeSet<Transaction> trans = data.getTrans(modelID);
-//		List<PQTransaction> transInWindow = new ArrayList<PQTransaction>();
-//		
-//		// iterate through all trans and add the ones equal to or after lastTimeToCheck
-//		// and up to current time ts
-//		for (Transaction tr : trans) {
-//			if (tr.timestamp.compareTo(lastTimeToCheck) >= 0 &&
-//					tr.timestamp.compareTo(ts) <= 0) {
-//				transInWindow.add((PQTransaction) tr);
-//			}
-//		}
-//		return transInWindow;
-//	}
-//	
-//	protected void getLastTimeToCheck(TimeStamp currentTime) {
-//		lastTimeToCheck = new TimeStamp(Math.max(0, currentTime.longValue()-windowLength+1));
-//	}
 }

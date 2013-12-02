@@ -490,6 +490,54 @@ public class SIPTest {
 	}
 	
 	@Test
+	public void transactionsInDelayedSIP() {
+		TimeStamp time = TimeStamp.ZERO;
+		TimeStamp time1 = new TimeStamp(1);
+		FundamentalValue fundamental = new DummyFundamental(100000);
+		SIP sip = new SIP(new TimeStamp(100));
+		Market market = new CDAMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1);
+		
+		//Creating dummy agents
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+
+		// Creating and adding bids		
+		EventManager em = new EventManager(new Random());
+		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 2, time));
+		em.executeUntil(time1); // should execute clear since CDA
+		
+		// Verify that no NBBO quote yet
+		BestBidAsk nbbo = sip.getNBBO();
+		assertEquals(null, nbbo.bestAsk);
+		assertEquals(null, nbbo.bestBid);
+		assertEquals(0, nbbo.bestAskQuantity);
+		assertEquals(0, nbbo.bestBidQuantity);
+		assertEquals(null, nbbo.bestAskMarket);
+		assertEquals(null, nbbo.bestBidMarket);
+		assertEquals(0, sip.marketQuotes.size());
+		assertEquals(0, sip.quoteTimes.size());
+			
+		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
+		em.executeUntil(time1); // should execute Clear-->SendToSIP-->ProcessQuotes
+		
+		// Verify that transactions has updated as well as NBBO
+		em.executeUntil(new TimeStamp(101)); // because of SIP latency
+		nbbo = sip.getNBBO();
+		assertEquals("Incorrect ASK", null, nbbo.bestAsk);
+		assertEquals("Incorrect BID", new Price(150), nbbo.bestBid);
+		assertEquals("Incorrect ASK quantity", 0, nbbo.bestAskQuantity);
+		assertEquals("Incorrect BID quantity", 1, nbbo.bestBidQuantity);
+		assertEquals("Incorrect ASK market", null, nbbo.bestAskMarket);
+		assertEquals("Incorrect BID market", market, nbbo.bestBidMarket);
+		List<Transaction> trans = sip.getTransactions();
+		assertEquals("Incorrect number of transactions", 1, trans.size());
+		assertEquals("Incorrect transaction price", new Price(150), trans.get(0).getPrice());
+		assertEquals("Incorrect transaction quantity", 1, trans.get(0).getQuantity());
+		assertEquals("Incorrect buyer", agent1, trans.get(0).getBuyer());
+		assertEquals("Incorrect buyer", agent2, trans.get(0).getSeller());
+	}
+	
+	@Test
 	public void basicOrderRoutingNMS() {
 		EventManager em = new EventManager(new Random());
 		FundamentalValue fundamental = new DummyFundamental(100000);

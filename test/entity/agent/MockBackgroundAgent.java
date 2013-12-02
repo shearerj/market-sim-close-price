@@ -23,7 +23,7 @@ public class MockBackgroundAgent extends BackgroundAgent {
 	
 	public MockBackgroundAgent(FundamentalValue fundamental, SIP sip, Market market,
 			PrivateValue pv, int bidRangeMin, int bidRangeMax) {
-		super(new TimeStamp(0), fundamental, sip, market, new Random(), 0,
+		super(TimeStamp.ZERO, fundamental, sip, market, new Random(), 0,
 				pv,	1, bidRangeMin, bidRangeMax);
 	}
 
