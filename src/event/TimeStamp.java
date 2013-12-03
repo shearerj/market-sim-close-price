@@ -38,6 +38,10 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	public TimeStamp(TimeStamp time) {
 		this.ticks = time.ticks;
 	}
+	
+	public static TimeStamp create(int ticks) {
+		return new TimeStamp(ticks);
+	}
 
 	public double getInSeconds() {
 		return ticks / (double) TICKS_PER_SECOND;

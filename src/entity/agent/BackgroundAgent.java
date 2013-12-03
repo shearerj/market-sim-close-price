@@ -139,6 +139,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	public double getPayoff() {
 		return surplus.getValueAtDiscount(0);
 	}
+	
+	public double getDiscountedSurplus(double discount) {
+		return surplus.getValueAtDiscount(discount);
+	}
 
 	/**
 	 * Returns the limit price (i.e. valuation) for the agent for buying/selling 1 unit.

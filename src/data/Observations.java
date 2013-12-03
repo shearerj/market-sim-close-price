@@ -31,6 +31,9 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import entity.agent.Agent;
+import entity.agent.BackgroundAgent;
+import entity.agent.HFTAgent;
+import entity.agent.MarketMaker;
 import entity.market.Market;
 import entity.market.Transaction;
 import event.TimeStamp;
@@ -78,7 +81,6 @@ public class Observations {
 	protected final SummaryStatistics executionSpeeds;
 	protected final SummaryStatistics prices;
 	protected final TimeSeries transPrices;
-	protected final TimeSeries fundPrices;
 	protected final TimeSeries nbboSpreads;
 	protected final Multiset<Class<? extends Agent>> numTrans;
 	protected final Map<Market, TimeSeries> spreads;
@@ -131,7 +133,6 @@ public class Observations {
 		this.numTrans = HashMultiset.create();
 		this.prices = new SummaryStatistics();
 		this.transPrices = TimeSeries.create();
-		this.fundPrices = TimeSeries.create();
 		this.nbboSpreads = TimeSeries.create();
 	}
 	
@@ -174,11 +175,45 @@ public class Observations {
 		DescriptiveStatistics spreads = DSPlus.from(nbboSpreads.sample(1, (int) maxTime));
 		features.put("spreads_median_nbbo_to_maxtime", DSPlus.median(spreads));
 		
+		TimeSeries fundPrices = fundamental.asTimeSeries();
 		for (int period : Consts.PERIODS)
-			periodBased(features, period);
+			periodBased(features, fundPrices, period);
 		
-		for (double discount : Consts.DISCOUNT_FACTORS)
-			discountBased(features, discount);
+		// Profit and Surplus
+		SummaryStatistics 
+			modelProfit = new SummaryStatistics(),
+			backgroundAgentProfit = new SummaryStatistics(), // This does't quite make sense because backgroudn agents don't liquidate...
+			hftProfit = new SummaryStatistics(),
+			marketMakerProfit = new SummaryStatistics();
+		
+		for (Agent agent : agents) {
+			long profit = agent.getPostLiquidationProfit();
+			modelProfit.addValue(profit);
+			if (agent instanceof BackgroundAgent) {
+				backgroundAgentProfit.addValue(profit);
+			} else if (agent instanceof HFTAgent) {
+				hftProfit.addValue(profit);
+			} else if (agent instanceof MarketMaker) {
+				marketMakerProfit.addValue(profit);
+			}
+		}
+
+		features.put("profit_sum_total", modelProfit.getSum());
+		features.put("profit_sum_background", backgroundAgentProfit.getSum());
+		features.put("profit_sum_marketmaker", marketMakerProfit.getSum());
+		features.put("profit_sum_hft", hftProfit.getSum());
+		
+		for (double discount : Consts.DISCOUNT_FACTORS) {
+			String suffix = discount == 0 ? "no_disc" : "disc_" + discount;
+			SummaryStatistics surplus = new SummaryStatistics();
+
+			// go through all agents & update for each agent type
+			for (Agent agent : agents)
+				if (agent instanceof BackgroundAgent)
+					surplus.addValue(((BackgroundAgent) agent).getDiscountedSurplus(discount));
+
+			features.put("surplus_sum_" + suffix, surplus.getSum());
+		}
 		
 		return features.build();
 	}
@@ -186,7 +221,7 @@ public class Observations {
 	/**
 	 * Statistics that are based on the sampling period
 	 */
-	protected void periodBased(ImmutableMap.Builder<String, Double> features, int period) {
+	protected void periodBased(ImmutableMap.Builder<String, Double> features, TimeSeries fundPrices, int period) {
 		// Price discovery
 		String key = period == 1 ? "trans_rmsd" : "trans_freq_" + period + "_rmsd"; 
 		DescriptiveStatistics pr = DSPlus.from(transPrices.sample(period, (int) maxTime));
@@ -210,11 +245,11 @@ public class Observations {
 
 			stddev.addValue(stdev);
 			if (stdev != 0)
-				// don't add if stddev is 0
+				// XXX ?ideal? don't add if stddev is 0
 				logPriceVol.addValue(Math.log(stdev));
 
 			// compute log-return volatility for this market
-			// FIXME: Elaine - This changed from before. Before if the ratio was
+			// FIXME Elaine - This changed from before. Before if the ratio was
 			// NaN it go thrown out. Now the previous value is used. Not sure if
 			// this is correct
 			DescriptiveStatistics mktLogReturns = DSPlus.fromLogRatioOf(mq.sample(period, (int) maxTime));
@@ -228,39 +263,6 @@ public class Observations {
 		features.put(prefix + "_mean_stddev_price", stddev.getMean());
 		features.put(prefix + "_mean_log_price", logPriceVol.getMean());
 		features.put(prefix + "_mean_log_return", logRetVol.getMean());
-	}
-	
-	/**
-	 * Statistics that are based off of the discount rate.
-	 */
-	protected void discountBased(ImmutableMap.Builder<String, Double> features, double discount) {
-		String suffix = discount == 0 ? "no_disc" : "disc_" + discount;
-
-		SummaryStatistics 
-				modelSurplus = new SummaryStatistics(),
-				background = new SummaryStatistics(),
-				hft = new SummaryStatistics(),
-				marketMaker = new SummaryStatistics();
-
-		// go through all agents & update for each agent type
-//		for (Agent agent : agents) {
-//			FIXME Need a way that this makes sense with surplus and profit
-//			double agentSurplus = agent.getSurplus(discount);
-//			modelSurplus.addValue(agentSurplus);
-//
-//			if (agent instanceof BackgroundAgent) {
-//				background.addValue(agentSurplus);
-//			} else if (agent instanceof HFTAgent) {
-//				hft.addValue(agentSurplus);
-//			} else if (agent instanceof MarketMaker) {
-//				marketMaker.addValue(agentSurplus);
-//			}
-//		}
-
-		features.put("surplus_sum_total_" + suffix, modelSurplus.getSum());
-		features.put("surplus_sum_background_" + suffix, background.getSum());
-		features.put("surplus_sum_marketmaker_" + suffix, marketMaker.getSum());
-		features.put("surplus_sum_hft_" + suffix, hft.getSum());
 	}
 	
 	// Everything with an @Subscribe is a listener for objects that contain statistics.
@@ -288,11 +290,10 @@ public class Observations {
 			executionSpeeds.addValue((double) sellerExecTime);
 		}
 
-		prices.addValue(transaction.getPrice().intValue());
+		prices.addValue(transaction.getPrice().doubleValue());
 
-		transPrices.add((int) transaction.getExecTime().getInTicks(), transaction.getPrice().intValue());
-		fundPrices.add((int) transaction.getExecTime().getInTicks(), fundamental.getValueAt(transaction.getExecTime()).intValue());
-
+		transPrices.add((int) transaction.getExecTime().getInTicks(), transaction.getPrice().doubleValue());
+		
 		// update number of transactions
 		numTrans.add(transaction.getBuyer().getClass());
 		numTrans.add(transaction.getSeller().getClass());

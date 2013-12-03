@@ -6,6 +6,7 @@ import static fourheap.Order.OrderType.*;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import logger.Logger;
 
@@ -20,6 +21,7 @@ import systemmanager.Consts;
 import systemmanager.SimulationSpec;
 
 import entity.agent.Agent;
+import entity.agent.MockAgent;
 import entity.agent.MockBackgroundAgent;
 import entity.infoproc.SIP;
 import entity.market.DummyMarketTime;
@@ -56,67 +58,259 @@ public class ObservationsTest {
 	}
 	
 	@Test
-	public void depths() {
-		TimeStamp time = TimeStamp.ZERO;
-
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip,
-				market1);
+	public void spreadsTest() {
+		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
 		setupObservations(agent1, agent2);
 		
-		market1.submitOrder(agent1, BUY, new Price(102), 1, time);
-		market1.submitOrder(agent1, BUY, new Price(104), 1, time);
-		assertEquals(new Double(Double.POSITIVE_INFINITY), obs.spreads.get(market1).sample(1,1).get(0));
+		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent1, BUY, new Price(104), 1, TimeStamp.ZERO);
+		assertEquals(Double.POSITIVE_INFINITY, obs.spreads.get(market1).sample(1,1).get(0), 0.001);
 		
-		market1.submitOrder(agent2, SELL, new Price(105), 1, time);
-		market1.submitOrder(agent2, SELL, new Price(106), 1, time);
-		assertEquals(new Double(1), obs.spreads.get(market1).sample(1,1).get(0));
+		market1.submitOrder(agent2, SELL, new Price(105), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent2, SELL, new Price(106), 1, TimeStamp.ZERO);
+		assertEquals(1, obs.spreads.get(market1).sample(1,1).get(0), 0.001);
 		
-		market1.submitOrder(agent2, SELL, new Price(103), 1, time);
-		market1.clear(time);
-		assertEquals(new Double(3), obs.spreads.get(market1).sample(1,1).get(0));
+		// Also sets median for market1 to 3
+		market1.submitOrder(agent2, SELL, new Price(103), 1, TimeStamp.ZERO);
+		market1.clear(TimeStamp.ZERO);
+		assertEquals(3, obs.spreads.get(market1).sample(1,1).get(0), 0.001);
+		
+		// Sets median of market2 to 5
+		market2.submitOrder(agent2, SELL, new Price(103), 1, TimeStamp.ZERO);
+		market2.submitOrder(agent2, BUY, new Price(98), 1, TimeStamp.ZERO);
+		market2.clear(TimeStamp.ZERO);
+		assertEquals(5, obs.spreads.get(market2).sample(1,1).get(0), 0.001);
+		
+		// Mean of 3 and 5
+		assertEquals(4, obs.getFeatures().get("spreads_mean_markets_to_maxtime"), 0.001);
 	}
 	
 	@Test
-	public void midquotes() {
-		TimeStamp time = TimeStamp.ZERO;
-
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+	public void midquotesTest() {
+		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
 		setupObservations(agent1, agent2);
 		
-		market1.submitOrder(agent1, BUY, new Price(102), 1, time);
-		market1.submitOrder(agent1, BUY, new Price(104), 1, time);
-		assertEquals(new Double(Double.NaN), obs.midQuotes.get(market1).sample(1,1).get(0));
+		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent1, BUY, new Price(104), 1, TimeStamp.ZERO);
+		assertEquals(Double.NaN, obs.midQuotes.get(market1).sample(1,1).get(0), 0.001);
 		
-		market1.submitOrder(agent2, SELL, new Price(106), 1, time);
-		market1.submitOrder(agent2, SELL, new Price(107), 1, time);
-		assertEquals(new Double(105), obs.midQuotes.get(market1).sample(1,1).get(0));
+		market1.submitOrder(agent2, SELL, new Price(106), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent2, SELL, new Price(107), 1, TimeStamp.ZERO);
+		assertEquals(105, obs.midQuotes.get(market1).sample(1,1).get(0), 0.001);
 		
-		market1.submitOrder(agent2, SELL, new Price(103), 1, time);
-		market1.clear(time);
-		assertEquals(new Double(104), obs.midQuotes.get(market1).sample(1,1).get(0));
+		market1.submitOrder(agent2, SELL, new Price(103), 1, TimeStamp.ZERO);
+		market1.clear(TimeStamp.ZERO);
+		assertEquals(104, obs.midQuotes.get(market1).sample(1,1).get(0), 0.001);
 	}
 	
 	@Test
-	public void getNBBOSpreads() {
-		TimeStamp time = TimeStamp.ZERO;
+	public void nbboSpreadsTest() {
 		setupObservations();
-		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		sip.processQuote(market1, new DummyMarketTime(time, 1), q1, ImmutableList.<Transaction> of(), time);
+		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, TimeStamp.ZERO);
+		sip.processQuote(market1, new DummyMarketTime(TimeStamp.ZERO, 1), q1, ImmutableList.<Transaction> of(), TimeStamp.ZERO);
 		
 		// Check that correct spread stored
 		List<Double> list = obs.nbboSpreads.sample(1, 1);
-		assertEquals(new Double(20), list.get(0));
+		assertEquals(20, list.get(0), 0.001);
 		assertEquals(1, list.size());
 		
-		Quote q2 = new Quote(market2, new Price(70), 1, new Price(90), 1, time);
-		sip.processQuote(market2, new DummyMarketTime(time, 2), q2, ImmutableList.<Transaction> of(), time);
+		Quote q2 = new Quote(market2, new Price(70), 1, new Price(90), 1, TimeStamp.ZERO);
+		sip.processQuote(market2, new DummyMarketTime(TimeStamp.ZERO, 2), q2, ImmutableList.<Transaction> of(), TimeStamp.ZERO);
 		
 		// Check that new quote overwrites the previously stored spread at time 0
 		list = obs.nbboSpreads.sample(1, 1);
-		assertEquals(new Double(10), list.get(0));
+		assertEquals(10, list.get(0), 0.001);
 		assertEquals(1, list.size());
+	}
+	
+	@Test
+	public void numTransTest() {
+		Map<String, Double> features;
+		TimeStamp time = TimeStamp.ZERO;
+
+		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+		Agent agent3 = new MockAgent(fundamental, sip, market1);
+		
+		// Two orders from one agent
+		setupObservations(agent1);
+		market1.submitOrder(agent1, BUY, new Price(102), 1, time);
+		market1.submitOrder(agent1, SELL, new Price(102), 1, time);
+		market1.clear(time);
+		// One for each order type
+		features = obs.getFeatures();
+		assertEquals(2, obs.numTrans.count(MockBackgroundAgent.class));
+		assertEquals(0, obs.numTrans.count(MockAgent.class));
+		assertEquals(2, features.get("trans_mockbackgroundagent_num"), 0.001);
+
+		// Two orders from same agent type
+		setupObservations(agent1, agent2);
+		market1.submitOrder(agent1, BUY, new Price(102), 1, time);
+		market1.submitOrder(agent2, SELL, new Price(102), 1, time);
+		market1.clear(time);
+		// One for each agent
+		features = obs.getFeatures();
+		assertEquals(2, obs.numTrans.count(MockBackgroundAgent.class));
+		assertEquals(0, obs.numTrans.count(MockAgent.class));
+		assertEquals(2, features.get("trans_mockbackgroundagent_num"), 0.001);
+		
+		// Two orders from different agent types
+		setupObservations(agent1, agent3);
+		market1.submitOrder(agent1, BUY, new Price(102), 1, time);
+		market1.submitOrder(agent3, SELL, new Price(102), 1, time);
+		market1.clear(time);
+		// One for each agent
+		features = obs.getFeatures();
+		assertEquals(1, obs.numTrans.count(MockBackgroundAgent.class));
+		assertEquals(1, obs.numTrans.count(MockAgent.class));
+		assertEquals(1, features.get("trans_mockbackgroundagent_num"), 0.001);
+		assertEquals(1, features.get("trans_mockagent_num"), 0.001);
+		
+		// One order is split among two, so transactions is "doubled"
+		setupObservations(agent1, agent2, agent3);
+		market1.submitOrder(agent1, BUY, new Price(102), 2, time);
+		market1.submitOrder(agent2, SELL, new Price(102), 1, time);
+		market1.submitOrder(agent3, SELL, new Price(102), 1, time);
+		market1.clear(time);
+		// Two for agent 1's split order, 1 for each of the other agents
+		features = obs.getFeatures();
+		assertEquals(3, obs.numTrans.count(MockBackgroundAgent.class));
+		assertEquals(1, obs.numTrans.count(MockAgent.class));
+		assertEquals(3, features.get("trans_mockbackgroundagent_num"), 0.001);
+		assertEquals(1, features.get("trans_mockagent_num"), 0.001);
+	}
+	
+	@Test
+	public void executionSpeedsTest() {
+		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+		
+		// Same times
+		setupObservations(agent1, agent2);
+		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
+		market1.clear(TimeStamp.ZERO);
+		assertEquals(0, obs.executionSpeeds.getMean(), 0.001);
+		
+		// Same times
+		setupObservations(agent1, agent2);
+		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
+		market1.clear(TimeStamp.create(1));
+		assertEquals(1, obs.executionSpeeds.getMean(), 0.001);
+
+		// Quantity weighted
+		setupObservations(agent1, agent2);
+		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
+		market1.clear(TimeStamp.create(1));
+		market1.submitOrder(agent1, BUY, new Price(102), 3, TimeStamp.create(2));
+		market1.submitOrder(agent2, SELL, new Price(102), 3, TimeStamp.create(2));
+		market1.clear(TimeStamp.create(4));
+		assertEquals(1.75, obs.executionSpeeds.getMean(), 0.001);
+		
+		// Split order
+		setupObservations(agent1, agent2);
+		market1.submitOrder(agent1, BUY, new Price(102), 2, TimeStamp.ZERO);
+		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.create(1));
+		market1.clear(TimeStamp.create(1));
+		assertEquals(0.75, obs.executionSpeeds.getMean(), 0.001);
+
+		// Same agent
+		setupObservations(agent1, agent2);
+		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.create(0));
+		market1.submitOrder(agent1, SELL, new Price(102), 1, TimeStamp.create(1));
+		market1.clear(TimeStamp.create(2));
+		assertEquals(1.5, obs.executionSpeeds.getMean(), 0.001);
+	}
+	
+	@Test
+	public void pricesTest() {
+		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+		
+		// Basic case
+		setupObservations(agent1, agent2);
+		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
+		market1.clear(TimeStamp.ZERO);
+		assertEquals(102, obs.prices.getMean(), 0.001);
+
+		// Same agent
+		setupObservations(agent1);
+		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent1, SELL, new Price(102), 1, TimeStamp.ZERO);
+		market1.clear(TimeStamp.ZERO);
+		assertEquals(102, obs.prices.getMean(), 0.001);
+		
+		// Multi quantity XXX Elaine - Prices doesn't weight by quantity, correct?
+		setupObservations(agent1, agent2);
+		market1.submitOrder(agent1, BUY, new Price(100), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent2, SELL, new Price(100), 1, TimeStamp.ZERO);
+		market1.clear(TimeStamp.ZERO);
+		market1.submitOrder(agent1, BUY, new Price(200), 3, TimeStamp.ZERO);
+		market1.submitOrder(agent2, SELL, new Price(200), 3, TimeStamp.ZERO);
+		market1.clear(TimeStamp.ZERO);
+		assertEquals(150, obs.prices.getMean(), 0.001);
+		
+		// Split order NOTE: Clearing price is buy order
+		setupObservations(agent1, agent2);
+		market1.submitOrder(agent1, BUY, new Price(100), 4, TimeStamp.ZERO);
+		market1.submitOrder(agent2, SELL, new Price(80), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent2, SELL, new Price(60), 3, TimeStamp.ZERO);
+		market1.clear(TimeStamp.ZERO);
+		assertEquals(100, obs.prices.getMean(), 0.001);
+
+		// Split order NOTE: Clearing price is buy order
+		setupObservations(agent1, agent2);
+		market1.submitOrder(agent1, SELL, new Price(50), 4, TimeStamp.ZERO);
+		market1.submitOrder(agent2, BUY, new Price(80), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent2, BUY, new Price(60), 3, TimeStamp.ZERO);
+		market1.clear(TimeStamp.ZERO);
+		assertEquals(70, obs.prices.getMean(), 0.001);
+	}
+	
+	@Test
+	public void transPricesTest() {
+		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+		setupObservations(agent1, agent2);
+		
+		// Basic stuff from same agent 
+		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent1, SELL, new Price(102), 1, TimeStamp.ZERO);
+		assertEquals(Double.NaN, obs.transPrices.sample(1,1).get(0), 0.001);
+		market1.clear(TimeStamp.ZERO);
+		assertEquals(102, obs.transPrices.sample(1,1).get(0), 0.001);
+		
+		// Now with different agent, check overwriting
+		market1.submitOrder(agent1, BUY, new Price(104), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent2, SELL, new Price(104), 1, TimeStamp.ZERO);
+		market1.clear(TimeStamp.ZERO);
+		assertEquals(104, obs.transPrices.sample(1,1).get(0), 0.001);
+
+		/*
+		 * XXX What if two transactions happen at the same time with different
+		 * prices. What price should be reflected? I believe it will reflect the
+		 * last transaction to be matched, which ultimately depends on how the
+		 * fourheap matches orders
+		 */
+		
+		// Now add a transaction at a new time with multi quantity in a different market
+		market2.submitOrder(agent1, BUY, new Price(106), 2, TimeStamp.ZERO);
+		market2.submitOrder(agent2, SELL, new Price(106), 2, TimeStamp.ZERO);
+		market2.clear(TimeStamp.create(1));
+		assertEquals(ImmutableList.of(104d, 106d), obs.transPrices.sample(1,2));
+		
+		// Overwrite that with a split order
+		market1.submitOrder(agent1, BUY, new Price(108), 1, TimeStamp.create(1));
+		market1.submitOrder(agent2, SELL, new Price(108), 2, TimeStamp.create(1));
+		market1.submitOrder(agent2, BUY, new Price(108), 1, TimeStamp.create(1));
+		market1.clear(TimeStamp.create(1));
+		assertEquals(ImmutableList.of(104d, 108d), obs.transPrices.sample(1,2));
 	}
 	
 	private void setupObservations(Agent... agents) {

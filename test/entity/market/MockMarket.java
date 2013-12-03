@@ -27,7 +27,7 @@ public class MockMarket extends Market {
 	}
 
 	public MockMarket(SIP sip, TimeStamp latency) {
-		super(sip, latency, new MockClearingRule(Price.ZERO), new Random());
+		super(sip, latency, new MockClearingRule(), new Random());
 	}
 	
 	@Override

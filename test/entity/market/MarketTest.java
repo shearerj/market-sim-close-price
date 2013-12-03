@@ -107,7 +107,6 @@ public class MarketTest {
 		for (Transaction tr : market.getTransactions()) {
 			assertEquals("Incorrect Buyer", agent1, tr.getBuyer());
 			assertEquals("Incorrect Seller", agent2, tr.getSeller());
-			assertEquals("Incorrect Price", Price.ZERO, tr.getPrice());
 			assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		}
 		

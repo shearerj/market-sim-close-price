@@ -49,8 +49,8 @@ public abstract class Agent extends Entity {
 
 	// Tracking position and profit
 	protected int positionBalance;
-	protected int profit;
-	protected int postLiquidationProfit;
+	protected long profit;
+	protected long postLiquidationProfit;
 
 	public Agent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Random rand, int tickSize) {
@@ -189,6 +189,14 @@ public abstract class Agent extends Entity {
 	}
 	
 	public double getPayoff() {
+		return postLiquidationProfit;
+	}
+	
+	public long getPreLiquidationProfit() {
+		return profit;
+	}
+	
+	public long getPostLiquidationProfit() {
 		return postLiquidationProfit;
 	}
 	
