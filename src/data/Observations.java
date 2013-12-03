@@ -16,6 +16,7 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
 import systemmanager.Consts;
+import systemmanager.Consts.DiscountFactors;
 import systemmanager.Keys;
 import systemmanager.SimulationSpec;
 
@@ -203,16 +204,14 @@ public class Observations {
 		features.put("profit_sum_marketmaker", marketMakerProfit.getSum());
 		features.put("profit_sum_hft", hftProfit.getSum());
 		
-		for (double discount : Consts.DISCOUNT_FACTORS) {
-			String suffix = discount == 0 ? "no_disc" : "disc_" + discount;
+		for (DiscountFactors discount : DiscountFactors.values()) {
 			SummaryStatistics surplus = new SummaryStatistics();
-
 			// go through all agents & update for each agent type
 			for (Agent agent : agents)
 				if (agent instanceof BackgroundAgent)
 					surplus.addValue(((BackgroundAgent) agent).getDiscountedSurplus(discount));
 
-			features.put("surplus_sum_" + suffix, surplus.getSum());
+			features.put("surplus_sum_" + discount, surplus.getSum());
 		}
 		
 		return features.build();

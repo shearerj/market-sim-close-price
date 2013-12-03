@@ -1,6 +1,8 @@
 package entity.agent;
 
-import systemmanager.Consts;
+import java.util.EnumMap;
+
+import systemmanager.Consts.DiscountFactors;
 
 /**
  * This class represents any value that needs to be stored at all discount
@@ -12,10 +14,12 @@ import systemmanager.Consts;
  */
 class DiscountedValue {
 
-	private double[] values;
+	private EnumMap<DiscountFactors, Double> values;
 	
 	public DiscountedValue() {
-		values = new double[Consts.DISCOUNT_FACTORS.length];
+		values = new EnumMap<DiscountFactors, Double>(DiscountFactors.class);
+		for (DiscountFactors discount : DiscountFactors.values())
+			values.put(discount, 0d);
 	}
 	
 	public static DiscountedValue create() {
@@ -23,12 +27,8 @@ class DiscountedValue {
 	}
 	
 	public void addValue(double value, double discountTime) {
-		for (int i = 0; i < values.length; i++)
-			values[i] += Math.exp(-Consts.DISCOUNT_FACTORS[i] * discountTime) * value;
-	}
-	
-	public double[] getDiscountedValues() {
-		return values;
+		for (DiscountFactors discount : DiscountFactors.values())
+			values.put(discount, values.get(discount) + Math.exp(-discount.discount * discountTime) * value);
 	}
 	
 	/**
@@ -38,11 +38,8 @@ class DiscountedValue {
 	 * @param discount
 	 * @return
 	 */
-	public double getValueAtDiscount(double discount) {
-		for (int i = 0; i < values.length; i++)
-			if (Consts.DISCOUNT_FACTORS[i] == discount)
-				return values[i];
-		throw new IllegalArgumentException("Discount factor not found!");
+	public double getValueAtDiscount(DiscountFactors discount) {
+		return values.get(discount);
 	}
 	
 }

@@ -7,11 +7,25 @@ package systemmanager;
  */
 public interface Consts {
 	
-	// 0 indicates no surplus discounting
-	public final static double[] DISCOUNT_FACTORS = {0, 0.0006};
-	//	{0, 0.0001, 0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0007, 0.0008, 0.0009};
+	public enum DiscountFactors {
+		NO_DISC(0), MEDIUM(0.0006);
+		// SMALL(0.0003), LARGE(0.0009)
+
+		public final double discount;
+
+	    DiscountFactors(double discount) {
+	        this.discount = discount;
+	    }
+	    
+	    @Override
+	    public String toString() {
+	    	if (discount == 0)
+	    		return "no_disc";
+	    	return "disc_" + discount;
+	    }
+	}
 	
-	public final static int[] PERIODS = {1, 250};
+	public final static int[] PERIODS = { 1, 250 };
 	
 	public final static int UP_TO_TIME = 3000;	// compute statistics up to this time
 	
