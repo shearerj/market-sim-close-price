@@ -12,7 +12,6 @@ import java.util.Random;
 import systemmanager.Consts.DiscountFactor;
 import utils.Rands;
 import activity.Activity;
-import activity.AgentStrategy;
 import activity.SubmitNMSOrder;
 
 import com.google.common.collect.ImmutableList;
@@ -62,12 +61,6 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			int tickSize, int bidRangeMin, int bidRangeMax) {
 		this(arrivalTime, fundamental, sip, market, rand, new ExpInterarrivals(reentryRate, rand),
 				pv, tickSize, bidRangeMin, bidRangeMax);
-	}
-	
-	@Override
-	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
-		TimeStamp nextStrategy = currentTime.plus(reentry.next());
-		return ImmutableList.of(new AgentStrategy(this, nextStrategy));
 	}
 	
 	/**

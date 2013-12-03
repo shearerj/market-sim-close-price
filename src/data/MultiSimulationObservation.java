@@ -70,15 +70,6 @@ public class MultiSimulationObservation {
 	protected JsonElement toJson() {
 		JsonObject root = new JsonObject();
 		
-		// Write out features
-		JsonObject feats = new JsonObject();
-		root.add("features", feats);
-		for (Entry<String, SummaryStatistics> e : features.entrySet())
-			feats.addProperty(e.getKey(), e.getValue().getMean());
-		
-		// Add spec to config
-		feats.add("spec", spec.getRawSpec());
-		
 		// Write out players
 		JsonArray players = new JsonArray();
 		root.add("players", players);
@@ -95,7 +86,16 @@ public class MultiSimulationObservation {
 			playerFeatures.addProperty("payoff_stddev", mpo.payoff.getStandardDeviation());
 		}
 		
-		return feats;
+		// Write out features
+		JsonObject feats = new JsonObject();
+		root.add("features", feats);
+		for (Entry<String, SummaryStatistics> e : features.entrySet())
+			feats.addProperty(e.getKey(), e.getValue().getMean());
+		
+		// Add spec to config
+		feats.add("spec", spec.getRawSpec());
+		
+		return root;
 	}
 	
 	public void writeToFile(File observationsFile) throws IOException {

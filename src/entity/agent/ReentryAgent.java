@@ -5,6 +5,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Iterator;
 import java.util.Random;
 
+import activity.Activity;
+import activity.AgentStrategy;
+
+import com.google.common.collect.ImmutableList;
+
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
@@ -23,4 +28,11 @@ public abstract class ReentryAgent extends SMAgent {
 		
 		this.reentry = checkNotNull(reentry);
 	}
+	
+	@Override
+	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
+		TimeStamp nextStrategy = currentTime.plus(reentry.next());
+		return ImmutableList.of(new AgentStrategy(this, nextStrategy));
+	}
+	
 }

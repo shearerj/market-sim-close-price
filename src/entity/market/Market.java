@@ -322,7 +322,7 @@ public abstract class Market extends Entity {
 		checkArgument(quantity > 0, "Quantity must be positive");
 		marketTime++;
 		
-		log(INFO, agent + " " + type + "(" + quantity + "@" + price + ") -> " + this);
+		log(INFO, agent + " " + type + "(" + quantity + " @ " + price + ") -> " + this);
 
 		Order order = Order.create(type, agent, this, price, quantity, new MarketTime(currentTime, marketTime));
 
