@@ -28,6 +28,7 @@ import entity.market.Market;
  * it instantiates the Activity objects and provides the methods to execute them
  * later.
  * 
+ * TODO Correct this...
  * Usage: java -jar hft.jar [simulation folder name] [sample #]
  * 
  * @author ewah
@@ -73,6 +74,9 @@ public class SystemManager {
 	private final SimulationSpec specification;
 	private final MultiSimulationObservation observations;
 
+	/**
+	 * Constructor reads everything in and sets appropriate variables
+	 */
 	public SystemManager(File simFolder, int obsNum) throws IOException {
 		this.simulationFolder = simFolder;
 		this.observationNumber = obsNum;
@@ -92,6 +96,9 @@ public class SystemManager {
 		this.observations = new MultiSimulationObservation();
 	}
 	
+	/**
+	 * Runs all of the simulations
+	 */
 	public void executeSimulations() throws IOException {
 		Random rand = new Random();
 		for (int i = 0; i < totalSimulations; i++) {

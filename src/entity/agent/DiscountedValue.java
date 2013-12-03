@@ -2,7 +2,7 @@ package entity.agent;
 
 import java.util.EnumMap;
 
-import systemmanager.Consts.DiscountFactors;
+import systemmanager.Consts.DiscountFactor;
 
 /**
  * This class represents any value that needs to be stored at all discount
@@ -14,11 +14,11 @@ import systemmanager.Consts.DiscountFactors;
  */
 class DiscountedValue {
 
-	private EnumMap<DiscountFactors, Double> values;
+	private EnumMap<DiscountFactor, Double> values;
 	
 	public DiscountedValue() {
-		values = new EnumMap<DiscountFactors, Double>(DiscountFactors.class);
-		for (DiscountFactors discount : DiscountFactors.values())
+		values = new EnumMap<DiscountFactor, Double>(DiscountFactor.class);
+		for (DiscountFactor discount : DiscountFactor.values())
 			values.put(discount, 0d);
 	}
 	
@@ -27,7 +27,7 @@ class DiscountedValue {
 	}
 	
 	public void addValue(double value, double discountTime) {
-		for (DiscountFactors discount : DiscountFactors.values())
+		for (DiscountFactor discount : DiscountFactor.values())
 			values.put(discount, values.get(discount) + Math.exp(-discount.discount * discountTime) * value);
 	}
 	
@@ -38,7 +38,7 @@ class DiscountedValue {
 	 * @param discount
 	 * @return
 	 */
-	public double getValueAtDiscount(DiscountFactors discount) {
+	public double getValueAtDiscount(DiscountFactor discount) {
 		return values.get(discount);
 	}
 	

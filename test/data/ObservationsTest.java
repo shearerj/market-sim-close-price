@@ -16,6 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 
 import systemmanager.Consts;
 import systemmanager.SimulationSpec;
@@ -56,6 +57,13 @@ public class ObservationsTest {
 		if (obs != null)
 			Observations.BUS.unregister(obs);
 	}
+
+	/*
+	 * TODO Still have some hard things to test, that should for the most part
+	 * be correct. Most of these are basically fully tested elsewhere, but just
+	 * need to verify that they get written correctly. These tests seem tedious
+	 * and hard to write, so I'm not writing them for now.
+	 */
 	
 	@Test
 	public void spreadsTest() {
@@ -313,6 +321,109 @@ public class ObservationsTest {
 		assertEquals(ImmutableList.of(104d, 108d), obs.transPrices.sample(1,2));
 	}
 	
+	@Test
+	public void playerTest() {
+		Agent backgroundAgent, agent;
+		Player backgroundPlayer, player;
+		
+		// Basic case
+		backgroundAgent = new MockBackgroundAgent(fundamental, sip, market1);
+		agent = new MockAgent(fundamental, sip, market1);
+		backgroundPlayer = new Player("background", "a", backgroundAgent);
+		player = new Player("foreground", "b", agent);
+		setupObservations(backgroundPlayer, player);
+		
+		// Double fundamental
+		market1.submitOrder(agent, BUY, new Price(200000), 1, TimeStamp.ZERO);
+		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
+		market1.clear(TimeStamp.ZERO);
+		agent.liquidateAtFundamental(TimeStamp.ZERO);
+		for (PlayerObservation po : obs.getPlayerObservations()) {
+			if (po.role.equals("foreground")) {
+				assertEquals("b", po.strategy);
+				assertEquals(-100000, po.payoff, 0.001);
+			} else { // Background
+				assertEquals("a", po.strategy);
+				assertEquals(100000, po.payoff, 0.001);
+			}
+		}
+		
+		// Multiple Quantity
+		backgroundAgent = new MockBackgroundAgent(fundamental, sip, market1);
+		agent = new MockAgent(fundamental, sip, market1);
+		backgroundPlayer = new Player("background", "a", backgroundAgent);
+		player = new Player("foreground", "b", agent);
+		setupObservations(backgroundPlayer, player);
+		
+		market1.submitOrder(agent, BUY, new Price(200000), 2, TimeStamp.ZERO);
+		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 2, TimeStamp.ZERO);
+		market1.clear(TimeStamp.ZERO);
+		agent.liquidateAtFundamental(TimeStamp.ZERO);
+		for (PlayerObservation po : obs.getPlayerObservations()) {
+			if (po.role.equals("foreground")) {
+				assertEquals("b", po.strategy);
+				assertEquals(-200000, po.payoff, 0.001);
+			} else { // Background
+				assertEquals("a", po.strategy);
+				assertEquals(200000, po.payoff, 0.001);
+			}
+		}
+		
+		// Split Orders
+		backgroundAgent = new MockBackgroundAgent(fundamental, sip, market1);
+		agent = new MockAgent(fundamental, sip, market1);
+		backgroundPlayer = new Player("background", "a", backgroundAgent);
+		player = new Player("foreground", "b", agent);
+		setupObservations(backgroundPlayer, player);
+		
+		market1.submitOrder(agent, BUY, new Price(200000), 2, TimeStamp.ZERO);
+		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
+		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
+		market1.clear(TimeStamp.ZERO);
+		agent.liquidateAtFundamental(TimeStamp.ZERO);
+		for (PlayerObservation po : obs.getPlayerObservations()) {
+			if (po.role.equals("foreground")) {
+				assertEquals("b", po.strategy);
+				assertEquals(-200000, po.payoff, 0.001);
+			} else { // Background
+				assertEquals("a", po.strategy);
+				assertEquals(200000, po.payoff, 0.001);
+			}
+		}
+		
+		// Liquidate at different price
+		backgroundAgent = new MockBackgroundAgent(fundamental, sip, market1);
+		agent = new MockAgent(fundamental, sip, market1);
+		backgroundPlayer = new Player("background", "a", backgroundAgent);
+		player = new Player("foreground", "b", agent);
+		setupObservations(backgroundPlayer, player);
+		
+		market1.submitOrder(agent, BUY, new Price(200000), 1, TimeStamp.ZERO);
+		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
+		market1.clear(TimeStamp.ZERO);
+		agent.liquidateAtPrice(new Price(300000), TimeStamp.ZERO);
+		for (PlayerObservation po : obs.getPlayerObservations()) {
+			if (po.role.equals("foreground")) {
+				assertEquals("b", po.strategy);
+				assertEquals(100000, po.payoff, 0.001);
+			} else { // Background
+				assertEquals("a", po.strategy);
+				assertEquals(100000, po.payoff, 0.001);
+			}
+		}
+	}
+	
+	private void setupObservations() {
+		if (obs != null)
+			Observations.BUS.unregister(obs);
+		
+		obs = new Observations(new SimulationSpec(),
+				ImmutableList.of(market1, market2), ImmutableList.<Agent> of(),
+				ImmutableList.<Player> of(), fundamental);
+		
+		Observations.BUS.register(obs);
+	}
+	
 	private void setupObservations(Agent... agents) {
 		if (obs != null)
 			Observations.BUS.unregister(obs);
@@ -320,6 +431,21 @@ public class ObservationsTest {
 		obs = new Observations(new SimulationSpec(),
 				ImmutableList.of(market1, market2), Arrays.asList(agents),
 				ImmutableList.<Player> of(), fundamental);
+		
+		Observations.BUS.register(obs);
+	}
+	
+	private void setupObservations(Player... players) {
+		if (obs != null)
+			Observations.BUS.unregister(obs);
+		
+		Builder<Agent> agentList = ImmutableList.builder();
+		for (Player player : players)
+			agentList.add(player.getAgent());
+		
+		obs = new Observations(new SimulationSpec(),
+				ImmutableList.of(market1, market2), agentList.build(),
+				Arrays.asList(players), fundamental);
 		
 		Observations.BUS.register(obs);
 	}

@@ -16,7 +16,7 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
 import systemmanager.Consts;
-import systemmanager.Consts.DiscountFactors;
+import systemmanager.Consts.DiscountFactor;
 import systemmanager.Keys;
 import systemmanager.SimulationSpec;
 
@@ -204,7 +204,7 @@ public class Observations {
 		features.put("profit_sum_marketmaker", marketMakerProfit.getSum());
 		features.put("profit_sum_hft", hftProfit.getSum());
 		
-		for (DiscountFactors discount : DiscountFactors.values()) {
+		for (DiscountFactor discount : DiscountFactor.values()) {
 			SummaryStatistics surplus = new SummaryStatistics();
 			// go through all agents & update for each agent type
 			for (Agent agent : agents)

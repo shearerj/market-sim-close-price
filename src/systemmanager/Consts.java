@@ -7,13 +7,13 @@ package systemmanager;
  */
 public interface Consts {
 	
-	public enum DiscountFactors {
+	public enum DiscountFactor {
 		NO_DISC(0), MEDIUM(0.0006);
 		// SMALL(0.0003), LARGE(0.0009)
 
 		public final double discount;
 
-	    DiscountFactors(double discount) {
+	    DiscountFactor(double discount) {
 	        this.discount = discount;
 	    }
 	    
