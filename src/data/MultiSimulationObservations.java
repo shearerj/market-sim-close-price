@@ -28,7 +28,7 @@ import com.google.gson.JsonObject;
  * @author erik
  * 
  */
-public class MultiSimulationObservation {
+public class MultiSimulationObservations {
 
 	protected static final Gson gson = new Gson();
 	
@@ -36,7 +36,7 @@ public class MultiSimulationObservation {
 	protected final Map<String, SummaryStatistics> features;
 	protected SimulationSpec spec;
 	
-	public MultiSimulationObservation() {
+	public MultiSimulationObservations() {
 		this.features = Maps.newHashMap();
 		this.playerObservations = Lists.newArrayList();
 		this.spec = null;
@@ -93,7 +93,7 @@ public class MultiSimulationObservation {
 			feats.addProperty(e.getKey(), e.getValue().getMean());
 		
 		// Add spec to config
-		feats.add("spec", spec.getRawSpec());
+		feats.add("config", spec.getRawSpec().get("configuration"));
 		
 		return root;
 	}

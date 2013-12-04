@@ -21,7 +21,7 @@ import activity.Activity;
 import activity.SubmitOrder;
 import systemmanager.Consts;
 import systemmanager.EventManager;
-import data.DummyFundamental;
+import data.MockFundamental;
 import data.FundamentalValue;
 import entity.agent.Agent;
 import entity.agent.MockBackgroundAgent;
@@ -30,7 +30,7 @@ import event.TimeStamp;
 
 public class MarketTest {
 
-	private FundamentalValue fundamental = new DummyFundamental(100000);
+	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
 	private SIP sip;
 

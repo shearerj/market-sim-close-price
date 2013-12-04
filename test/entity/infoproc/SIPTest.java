@@ -21,7 +21,7 @@ import activity.ProcessQuote;
 import activity.SendToIP;
 import activity.SubmitNMSOrder;
 import activity.SubmitOrder;
-import data.DummyFundamental;
+import data.MockFundamental;
 import data.FundamentalValue;
 import systemmanager.Consts;
 import systemmanager.EventManager;
@@ -426,7 +426,7 @@ public class SIPTest {
 	public void transactionsInSIP() {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
-		FundamentalValue fundamental = new DummyFundamental(100000);
+		FundamentalValue fundamental = new MockFundamental(100000);
 		Market market = new CDAMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1);
 		
 		//Creating dummy agents
@@ -469,7 +469,7 @@ public class SIPTest {
 	@Test
 	public void basicOrderRoutingNMS() {
 		EventManager em = new EventManager(new Random());
-		FundamentalValue fundamental = new DummyFundamental(100000);
+		FundamentalValue fundamental = new MockFundamental(100000);
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time = new TimeStamp(50);
 		
@@ -534,7 +534,7 @@ public class SIPTest {
 	@Test
 	public void latencyArbRoutingNMS() {
 		EventManager em = new EventManager(new Random());
-		FundamentalValue fundamental = new DummyFundamental(100000);
+		FundamentalValue fundamental = new MockFundamental(100000);
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time = new TimeStamp(50);
 		

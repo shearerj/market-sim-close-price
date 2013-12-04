@@ -20,7 +20,7 @@ import com.google.common.collect.Iterables;
 
 import systemmanager.Consts;
 import systemmanager.EventManager;
-import data.DummyFundamental;
+import data.MockFundamental;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
@@ -32,7 +32,7 @@ import event.TimeStamp;
 
 public class AgentTest {
 
-	private FundamentalValue fundamental = new DummyFundamental(100000);
+	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
 	private Agent agent;
 	private SIP sip;

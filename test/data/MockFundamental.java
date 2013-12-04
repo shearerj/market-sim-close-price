@@ -12,11 +12,11 @@ import event.TimeStamp;
  * @author drhurd
  *
  */
-public class DummyFundamental extends FundamentalValue {
+public class MockFundamental extends FundamentalValue {
 	
 	private static final long serialVersionUID = 1L;
 
-	public DummyFundamental(int mean) {
+	public MockFundamental(int mean) {
 		super(0, mean, 0, new Random());
 	}
 	

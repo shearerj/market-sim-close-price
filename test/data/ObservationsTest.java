@@ -35,7 +35,7 @@ import event.TimeStamp;
 
 public class ObservationsTest {
 	
-	private FundamentalValue fundamental = new DummyFundamental(100000);
+	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market1, market2;
 	private SIP sip;
 	private Observations obs;

@@ -18,7 +18,7 @@ import logger.Logger.Prefix;
 import com.google.common.base.Objects;
 
 import data.EntityProperties;
-import data.MultiSimulationObservation;
+import data.MultiSimulationObservations;
 import entity.agent.Agent;
 import entity.infoproc.IP;
 import entity.market.Market;
@@ -72,7 +72,7 @@ public class SystemManager {
 	private final String modelName;
 	private final long baseRandomSeed;
 	private final SimulationSpec specification;
-	private final MultiSimulationObservation observations;
+	private final MultiSimulationObservations observations;
 
 	/**
 	 * Constructor reads everything in and sets appropriate variables
@@ -93,7 +93,7 @@ public class SystemManager {
 		props.load(new FileInputStream(new File(Consts.CONFIG_DIR, Consts.CONFIG_FILE)));
 		logLevel = Integer.parseInt(props.getProperty("logLevel"));
 		
-		this.observations = new MultiSimulationObservation();
+		this.observations = new MultiSimulationObservations();
 	}
 	
 	/**
