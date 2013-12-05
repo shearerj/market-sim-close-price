@@ -8,8 +8,9 @@ if [ $# -lt 2 ]; then
     echo
     echo "Creates a new directory for each preset, and runs the spec file num-obs times"
     echo "each, then merges each of the obsevations into a new directory called merged."
-    echo "Presets can be optionally specified after num-obs. If omitted this script will"
-    echo "use the default presets of CENTRALCALL, CENTRALCDA, TWOMARKET, and TWOMARKETLA."
+    echo "Logs are also merged and put in the logs director in merged. Presets can be"
+    echo "optionally specified after num-obs. If omitted this script will use the default"
+    echo "presets of CENTRALCALL, CENTRALCDA, TWOMARKET, and TWOMARKETLA."
     exit 1
 elif [ $# -lt 3 ]; then
     PRESETS=( CENTRALCALL CENTRALCDA TWOMARKET TWOMARKETLA )
@@ -18,6 +19,7 @@ else
 fi
 FILE=simulation_spec.json
 MERGED=merged
+LOGDIR=logs
 
 FOLDER=$1
 NUM=$2
@@ -37,4 +39,18 @@ mkdir -vp "$FOLDER/$MERGED"
 PRE=(${PRESETS[@]/#/"$FOLDER/"})
 for (( OBS=0; OBS < $NUM; ++OBS )); do
     ./merge-obs-presets.py ${PRE[@]/%//observation$OBS.json} > "$FOLDER/$MERGED/observation$OBS.json"
+done
+
+mkdir -vp "$FOLDER/$MERGED/$LOGDIR"
+
+NUMSIMS=$( cat "$FOLDER/$FILE" | grep -Eo '"numSims" *: *"[0-9]+"' | grep -Eo '[0-9]+' )
+
+for (( OBS=0; OBS < $NUM; ++OBS )); do
+    for (( SIM=0; SIM < $NUMSIMS; ++SIM )); do
+	LOGS=()
+	for PRESET in "${PRESETS[@]}"; do
+	    LOGS+=( $( ls "$FOLDER/$PRESET/$LOGDIR/"*"_${PRESET}_${OBS}_${SIM}_"*".txt" | sort | tail -n1 ) )
+	done
+	./merge-logs.py "${LOGS[@]}" > "$FOLDER/$MERGED/$LOGDIR/$( echo $FOLDER/$MERGED | tr '/' '_' | tr -d '.' | sed 's/__*/_/g' )_${OBS}_${SIM}_$( date '+%Y-%m-%d-%H-%M-%S' ).txt"
+    done
 done

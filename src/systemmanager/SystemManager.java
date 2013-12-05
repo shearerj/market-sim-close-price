@@ -65,7 +65,7 @@ public class SystemManager {
 		}
 	}
 	
-	protected static DateFormat LOG_DATE_FORMAT = new SimpleDateFormat("dd-MMM-yyyy_HH.mm.ss");
+	protected static DateFormat LOG_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
 	
 	private final File simulationFolder;
 	private final int observationNumber, totalSimulations, simulationLength, modelNumber, logLevel;
