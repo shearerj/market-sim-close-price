@@ -50,7 +50,7 @@ public abstract class Agent extends Entity {
 	// Tracking position and profit
 	protected int positionBalance;
 	protected long profit;
-	protected long postLiquidationProfit;
+	protected long preLiquidationProfit;
 
 	public Agent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Random rand, int tickSize) {
@@ -65,7 +65,7 @@ public abstract class Agent extends Entity {
 		this.activeOrders = Sets.newHashSet();
 		this.positionBalance = 0;
 		this.profit = 0;
-		this.postLiquidationProfit = 0; // Initialize to some signal value to guarantee that it's not read incorrectly?
+		this.preLiquidationProfit = 0;
 	}
 
 	public abstract Iterable<? extends Activity> agentStrategy(
@@ -94,9 +94,10 @@ public abstract class Agent extends Entity {
 		log(INFO, this + " pre-liquidation: position="
 				+ positionBalance);
 
-		postLiquidationProfit = profit + positionBalance * price.intValue();
+		preLiquidationProfit = profit;
+		profit += positionBalance * price.intValue();
 
-		log(INFO, this + " post-liquidation: profit=" + postLiquidationProfit
+		log(INFO, this + " post-liquidation: profit=" + profit
 				+ ", price=" + price);
 		return Collections.emptyList();
 	}
@@ -189,7 +190,7 @@ public abstract class Agent extends Entity {
 	}
 	
 	public double getPayoff() {
-		return postLiquidationProfit;
+		return preLiquidationProfit;
 	}
 	
 	public long getPreLiquidationProfit() {
@@ -197,7 +198,7 @@ public abstract class Agent extends Entity {
 	}
 	
 	public long getPostLiquidationProfit() {
-		return postLiquidationProfit;
+		return preLiquidationProfit;
 	}
 	
 	@Override

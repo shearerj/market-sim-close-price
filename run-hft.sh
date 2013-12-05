@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run a simulation a given number of times
 
-if [ $# -lt 1 ]; then
+if [[ $# -lt 1 || "$1" == "--help" || "$1" == "-h" ]]; then
     echo "Usage: $0 simulation-folder [num-of-obs]"
     echo
     echo "    num-of-obs defaults to 1 if not specified"

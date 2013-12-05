@@ -42,7 +42,7 @@ public class ObservationsTest {
 
 	@BeforeClass
 	public static void setupClass() {
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "MarketTest.log"));
+		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "ObservationsTest.log"));
 	}
 
 	@Before

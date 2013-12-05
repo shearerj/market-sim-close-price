@@ -62,6 +62,10 @@ public class LAAgent extends HFTAgent {
 	@Override
 	// TODO Need strategy for orders that don't execute
 	public Iterable<? extends Activity> agentStrategy(TimeStamp ts) {
+		if (positionBalance != 0 && activeOrders.isEmpty())
+			// Have pending submit order activities
+			return ImmutableList.of();
+		
 		Price bestBid = null, bestAsk = null;
 		Market bestBidMarket = null, bestAskMarket = null;
 
