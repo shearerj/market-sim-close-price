@@ -14,7 +14,9 @@ public class OrderParser {
         Scanner scanner = new Scanner(inputFile);
         
         while(scanner.hasNextLine()){
-            Scanner lineScanner = new Scanner(scanner.nextLine()).useDelimiter(",");
+            Scanner scanner2 = new Scanner(scanner.nextLine());
+			Scanner lineScanner = scanner2.useDelimiter(",");
+			scanner2.close();
 
             char messageType = lineScanner.next().charAt(0);
             
@@ -30,8 +32,11 @@ public class OrderParser {
             default:
                 break;
             }
-
+            
+            lineScanner.close();
         }
+        
+        scanner.close();
         
         
     }
