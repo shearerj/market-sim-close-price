@@ -9,7 +9,7 @@ import com.google.common.collect.ImmutableList;
 
 import activity.Activity;
 import data.FundamentalValue;
-import entity.infoproc.HFTIP;
+import entity.infoproc.HFTQuoteProcessor;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import event.TimeStamp;
@@ -33,7 +33,7 @@ public class MockHFTAgent extends HFTAgent {
 	 * @param market
 	 * @return
 	 */
-	public HFTIP getHFTIP(Market market) {
+	public HFTQuoteProcessor getHFTQuoteProcessor(Market market) {
 		checkNotNull(market);
 		if (ips.containsKey(market)) return ips.get(market);
 		return null;

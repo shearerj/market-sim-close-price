@@ -31,8 +31,8 @@ import entity.Entity;
 import entity.agent.Agent;
 import entity.infoproc.BestBidAsk;
 import entity.infoproc.IP;
+import entity.infoproc.QuoteProcessor;
 import entity.infoproc.SIP;
-import entity.infoproc.SMIP;
 import entity.market.clearingrule.ClearingRule;
 import event.TimeStamp;
 import fourheap.FourHeap;
@@ -69,7 +69,7 @@ public abstract class Market extends Entity {
 	protected final Random rand;
 	protected long marketTime; // keeps track of internal market actions
 
-	protected final SMIP ip;
+	protected final QuoteProcessor ip;
 	protected final SIP sip;
 	protected final Collection<IP> ips; // All the information processors that get data
 	
@@ -105,7 +105,7 @@ public abstract class Market extends Entity {
 
 		this.ips = Lists.newArrayList();
 		this.sip = sip;
-		this.ip = new SMIP(latency, this);
+		this.ip = new QuoteProcessor(latency, this);
 		ips.add(sip);
 		ips.add(ip);
 
@@ -127,9 +127,11 @@ public abstract class Market extends Entity {
 		ips.add(ip);
 	}
 
-	public SMIP getSMIP() {
+	public QuoteProcessor getQuoteProcessor() {
 		return this.ip;
 	}
+	
+	// TODO transaction processor?
 	
 	/**
 	 * Convenience method to fully remove an order.

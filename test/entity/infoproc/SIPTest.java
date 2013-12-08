@@ -17,7 +17,7 @@ import org.junit.Test;
 import com.google.common.collect.Iterables;
 
 import activity.Activity;
-import activity.ProcessQuote;
+import activity.ProcessInformation;
 import activity.SendToIP;
 import activity.SubmitNMSOrder;
 import activity.SubmitOrder;
@@ -74,7 +74,7 @@ public class SIPTest {
 		assertEquals(0, sip.quoteTimes.size());
 		
 		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		sip.processQuote(market1, new DummyMarketTime(time, 1), q1, new ArrayList<Transaction>(), time);
+		sip.processInformation(market1, new DummyMarketTime(time, 1), q1, new ArrayList<Transaction>(), time);
 		
 		// Test that NBBO quote is correct
 		nbbo = sip.getNBBO();
@@ -92,10 +92,10 @@ public class SIPTest {
 	public void multiQuote() {
 		TimeStamp time = TimeStamp.ZERO;
 		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		sip.processQuote(market1, new DummyMarketTime(time, 1), q1, new ArrayList<Transaction>(), time);
+		sip.processInformation(market1, new DummyMarketTime(time, 1), q1, new ArrayList<Transaction>(), time);
 		
 		Quote q2 = new Quote(market1, new Price(70), 1, new Price(90), 1, time);
-		sip.processQuote(market1, new DummyMarketTime(time, 2), q2, new ArrayList<Transaction>(), time);
+		sip.processInformation(market1, new DummyMarketTime(time, 2), q2, new ArrayList<Transaction>(), time);
 		
 		// Test that NBBO quote is correct (completely replaces old quote of [80, 100])
 		BestBidAsk nbbo = sip.getNBBO();
@@ -114,7 +114,7 @@ public class SIPTest {
 		TimeStamp time = new TimeStamp(10);
 		
 		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		sip.processQuote(market1, new DummyMarketTime(time, 2), q1, new ArrayList<Transaction>(), time);
+		sip.processInformation(market1, new DummyMarketTime(time, 2), q1, new ArrayList<Transaction>(), time);
 		
 		// Test that NBBO quote is correct
 		BestBidAsk nbbo = sip.getNBBO();
@@ -128,7 +128,7 @@ public class SIPTest {
 		
 		// Note that staleness is based solely on MarketTime (not timestamp)
 		Quote q2 = new Quote(market1, new Price(70), 1, new Price(90), 1, TimeStamp.ZERO);
-		sip.processQuote(market1, new DummyMarketTime(time, 1), q2, new ArrayList<Transaction>(), time);
+		sip.processInformation(market1, new DummyMarketTime(time, 1), q2, new ArrayList<Transaction>(), time);
 		
 		// Test that NBBO quote is correct (ignores stale quote q2)
 		nbbo = sip.getNBBO();
@@ -145,10 +145,10 @@ public class SIPTest {
 	public void twoMarketQuote() {
 		TimeStamp time = TimeStamp.ZERO;
 		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		sip.processQuote(market1, new DummyMarketTime(time, 1), q1, new ArrayList<Transaction>(), time);
+		sip.processInformation(market1, new DummyMarketTime(time, 1), q1, new ArrayList<Transaction>(), time);
 		
 		Quote q2 = new Quote(market2, new Price(70), 1, new Price(90), 1, time);
-		sip.processQuote(market2, new DummyMarketTime(time, 2), q2, new ArrayList<Transaction>(), time);
+		sip.processInformation(market2, new DummyMarketTime(time, 2), q2, new ArrayList<Transaction>(), time);
 		
 		// Test that NBBO quote is correct (computes best quote between both markets)
 		BestBidAsk nbbo = sip.getNBBO();
@@ -169,9 +169,9 @@ public class SIPTest {
 		Quote q2 = new Quote(market2, new Price(75), 1, new Price(95), 1, time);
 		Quote q3 = new Quote(market1, new Price(65), 1, new Price(90), 1, time);
 		
-		sip.processQuote(market1, new DummyMarketTime(time, 1), q1, new ArrayList<Transaction>(), time);
-		sip.processQuote(market2, new DummyMarketTime(time, 1), q2, new ArrayList<Transaction>(), time);
-		sip.processQuote(market1, new DummyMarketTime(time, 2), q3, new ArrayList<Transaction>(), time);
+		sip.processInformation(market1, new DummyMarketTime(time, 1), q1, new ArrayList<Transaction>(), time);
+		sip.processInformation(market2, new DummyMarketTime(time, 1), q2, new ArrayList<Transaction>(), time);
+		sip.processInformation(market1, new DummyMarketTime(time, 2), q3, new ArrayList<Transaction>(), time);
 				
 		// Test that NBBO quote is correct & that market 1's quote was replaced
 		BestBidAsk nbbo = sip.getNBBO();
@@ -185,7 +185,7 @@ public class SIPTest {
 		assertEquals(new DummyMarketTime(time, 1), sip.quoteTimes.get(market2));
 		
 		Quote q4 = new Quote(market2, new Price(60), 1, new Price(91), 1, time);
-		sip.processQuote(market2, new DummyMarketTime(time, 2), q4, new ArrayList<Transaction>(), time);
+		sip.processInformation(market2, new DummyMarketTime(time, 2), q4, new ArrayList<Transaction>(), time);
 		
 		// Test that NBBO quote is correct & that market 2's quote was replaced
 		nbbo = sip.getNBBO();
@@ -218,7 +218,7 @@ public class SIPTest {
 			assertEquals("Incorrect scheduled process quote time",
 					TimeStamp.IMMEDIATE, a.getTime());
 			assertTrue("Incorrect activity type scheduled", 
-					a instanceof ProcessQuote);
+					a instanceof ProcessInformation);
 		}
 		for (Activity a : acts) a.execute(time);	// can't execute at IMMED
 
@@ -246,7 +246,7 @@ public class SIPTest {
 			assertEquals("Incorrect scheduled process quote time",
 					new TimeStamp(50), a.getTime());
 			assertTrue("Incorrect activity type scheduled", 
-					a instanceof ProcessQuote);
+					a instanceof ProcessInformation);
 		}
 		for (Activity a : acts) a.execute(a.getTime());
 
@@ -448,7 +448,7 @@ public class SIPTest {
 		assertEquals("Incorrect BID market", market, nbbo.bestBidMarket);
 		
 		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
-		em.executeUntil(time1); // should execute Clear-->SendToSIP-->ProcessQuotes
+		em.executeUntil(time1); // should execute Clear-->SendToSIP-->processInformations
 		
 		// Verify that transactions has updated as well as NBBO
 		nbbo = sip.getNBBO();

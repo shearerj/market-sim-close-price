@@ -117,7 +117,7 @@ public class ObservationsTest {
 	public void nbboSpreadsTest() {
 		setupObservations();
 		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, TimeStamp.ZERO);
-		sip.processQuote(market1, new DummyMarketTime(TimeStamp.ZERO, 1), q1, ImmutableList.<Transaction> of(), TimeStamp.ZERO);
+		sip.processNewInformation(market1, new DummyMarketTime(TimeStamp.ZERO, 1), q1, ImmutableList.<Transaction> of(), TimeStamp.ZERO);
 		
 		// Check that correct spread stored
 		List<Double> list = obs.nbboSpreads.sample(1, 1);
@@ -125,7 +125,7 @@ public class ObservationsTest {
 		assertEquals(1, list.size());
 		
 		Quote q2 = new Quote(market2, new Price(70), 1, new Price(90), 1, TimeStamp.ZERO);
-		sip.processQuote(market2, new DummyMarketTime(TimeStamp.ZERO, 2), q2, ImmutableList.<Transaction> of(), TimeStamp.ZERO);
+		sip.processNewInformation(market2, new DummyMarketTime(TimeStamp.ZERO, 2), q2, ImmutableList.<Transaction> of(), TimeStamp.ZERO);
 		
 		// Check that new quote overwrites the previously stored spread at time 0
 		list = obs.nbboSpreads.sample(1, 1);

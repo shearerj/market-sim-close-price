@@ -8,7 +8,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.Maps;
 
 import data.FundamentalValue;
-import entity.infoproc.HFTIP;
+import entity.infoproc.HFTQuoteProcessor;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Quote;
@@ -24,7 +24,7 @@ public abstract class HFTAgent extends MMAgent {
 
 	private static final long serialVersionUID = -1483633963238206201L;
 	
-	protected final Map<Market, HFTIP> ips;
+	protected final Map<Market, HFTQuoteProcessor> ips;
 
 	public HFTAgent(TimeStamp latency, TimeStamp arrivalTime,
 			FundamentalValue fundamental, SIP sip, Collection<Market> markets, 
@@ -33,9 +33,9 @@ public abstract class HFTAgent extends MMAgent {
 		this.ips = Maps.newHashMap();
 		
 		for (Market market : markets) {
-			HFTIP laip = new HFTIP(latency, market, this);
-			ips.put(market, laip);
-			market.addIP(laip);
+			HFTQuoteProcessor hftip = new HFTQuoteProcessor(latency, market, this);
+			ips.put(market, hftip);
+			market.addIP(hftip);
 		}
 	}
 	

@@ -4,10 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
-
 import activity.Activity;
-import activity.ProcessQuote;
 import entity.Entity;
 import entity.market.Market;
 import entity.market.MarketTime;
@@ -32,16 +29,25 @@ public abstract class IP extends Entity {
 		super(nextID++);
 		this.latency = checkNotNull(latency, "Latency");
 	}
+	
+	public abstract Iterable<? extends Activity> sendToIP(Market market, MarketTime quoteTime, 
+			Quote quote, List<Transaction> newTransactions, TimeStamp currentTime);
 
-	public Iterable<? extends Activity> sendToIP(Market market, MarketTime quoteTime, 
-			Quote quote, List<Transaction> newTransactions, TimeStamp currentTime) {
-		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? TimeStamp.IMMEDIATE : currentTime.plus(latency); 
-		return ImmutableList.of(new ProcessQuote(this, market, quoteTime, quote,
-				newTransactions, nextTime));
-	}
-
-	public abstract Iterable<? extends Activity> processQuote(Market market, 
+	protected abstract Iterable<? extends Activity> processInformation(Market market,
 			MarketTime quoteTime, Quote quote, List<Transaction> newTransactions, 
 			TimeStamp currentTime);
+
+	
+//	public Iterable<? extends Activity> sendToIP(Market market, MarketTime quoteTime, 
+//			Quote quote, List<Transaction> newTransactions, TimeStamp currentTime) {
+//		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? TimeStamp.IMMEDIATE : currentTime.plus(latency);
+//		return ImmutableList.of(new ProcessQuote(this, market, quoteTime, quote,
+//				newTransactions, nextTime));
+//	}
+//
+//	public abstract Iterable<? extends Activity> processQuote(Market market, 
+//			MarketTime quoteTime, Quote quote, List<Transaction> newTransactions, 
+//			TimeStamp currentTime);
+
 
 }

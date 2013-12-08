@@ -21,7 +21,7 @@ import com.google.common.collect.Maps;
 
 import data.EntityProperties;
 import data.FundamentalValue;
-import entity.infoproc.HFTIP;
+import entity.infoproc.HFTQuoteProcessor;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
@@ -69,7 +69,7 @@ public class LAAgent extends HFTAgent {
 		Price bestBid = null, bestAsk = null;
 		Market bestBidMarket = null, bestAskMarket = null;
 
-		for (Entry<Market, HFTIP> ipEntry : ips.entrySet()) {
+		for (Entry<Market, HFTQuoteProcessor> ipEntry : ips.entrySet()) {
 			Quote q = ipEntry.getValue().getQuote();
 			if (q.getAskPrice() != null && q.getAskPrice().lessThan(bestAsk)) {
 				bestAsk = q.getAskPrice();
@@ -105,7 +105,7 @@ public class LAAgent extends HFTAgent {
 		FourHeap<Price, Integer, Order<Price, Integer>> fh = FourHeap.create();
 		Map<Order<Price, Integer>, Market> orderMap = Maps.newHashMap();
 		
-		for (Entry<Market, HFTIP> ipEntry : ips.entrySet()) {
+		for (Entry<Market, HFTQuoteProcessor> ipEntry : ips.entrySet()) {
 			Quote q = ipEntry.getValue().getQuote();
 			if (q.getBidPrice() != null && q.getBidQuantity() > 0) {
 				Order<Price, Integer> order = Order.create(BUY, q.getBidPrice(), q.getBidQuantity(), 0);

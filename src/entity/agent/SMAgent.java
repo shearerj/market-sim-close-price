@@ -6,7 +6,7 @@ import data.FundamentalValue;
 
 import activity.Activity;
 import entity.infoproc.SIP;
-import entity.infoproc.SMIP;
+import entity.infoproc.QuoteProcessor;
 import entity.market.Market;
 import event.TimeStamp;
 
@@ -38,13 +38,13 @@ public abstract class SMAgent extends Agent {
 	
 	// TODO Only store market ip and submit orders through it...?
 	protected final Market primaryMarket;
-	protected final SMIP marketIP;
+	protected final QuoteProcessor marketQuoteProcessor;
 
 	public SMAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, int tickSize) {
 		super(arrivalTime, fundamental, sip, rand, tickSize);
 		this.primaryMarket = market;
-		this.marketIP = market.getSMIP();
+		this.marketQuoteProcessor = market.getQuoteProcessor();
 	}
 
 	@Override
