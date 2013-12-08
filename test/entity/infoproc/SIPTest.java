@@ -470,7 +470,7 @@ public class SIPTest {
 	public void transactionsInDelayedSIP() {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
-		FundamentalValue fundamental = new DummyFundamental(100000);
+		FundamentalValue fundamental = new MockFundamental(100000);
 		SIP sip = new SIP(new TimeStamp(100));
 		Market market = new CDAMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1);
 		

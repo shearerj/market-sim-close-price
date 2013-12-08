@@ -17,7 +17,7 @@ import org.junit.Test;
 import activity.SubmitOrder;
 import systemmanager.Consts;
 import systemmanager.EventManager;
-import data.DummyFundamental;
+import data.MockFundamental;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.CDAMarket;
@@ -28,7 +28,7 @@ import event.TimeStamp;
 
 public class WindowAgentTest {
 
-	private FundamentalValue fundamental = new DummyFundamental(100000);
+	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
 	private SIP sip;
 	
