@@ -20,7 +20,7 @@ import activity.Activity;
 import activity.AgentStrategy;
 import activity.ProcessQuote;
 import activity.SendToIP;
-import data.DummyFundamental;
+import data.MockFundamental;
 import data.FundamentalValue;
 import entity.agent.MockHFTAgent;
 import entity.market.DummyMarketTime;
@@ -36,7 +36,7 @@ import systemmanager.EventManager;
 
 public class HFTIPTest {
 	
-	private FundamentalValue fundamental = new DummyFundamental(100000);
+	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market1;
 	private Market market2;
 	private SIP sip;

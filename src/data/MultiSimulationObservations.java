@@ -20,15 +20,23 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-public class MultiSimulationObservation {
+/**
+ * Class that represents the combined observations of several simulations.
+ * Contains a map from strings to summary statistics for random features, and a
+ * list of MutiSimPlayerObservations for the player observations.
+ * 
+ * @author erik
+ * 
+ */
+public class MultiSimulationObservations {
 
 	protected static final Gson gson = new Gson();
 	
-	protected final List<MultiPlayerObservation> playerObservations;
+	protected final List<MultiSimPlayerObservation> playerObservations;
 	protected final Map<String, SummaryStatistics> features;
 	protected SimulationSpec spec;
 	
-	public MultiSimulationObservation() {
+	public MultiSimulationObservations() {
 		this.features = Maps.newHashMap();
 		this.playerObservations = Lists.newArrayList();
 		this.spec = null;
@@ -37,7 +45,7 @@ public class MultiSimulationObservation {
 	public void addObservation(Observations obs) {
 		if (spec == null) { // First observation
 			for (PlayerObservation po : obs.getPlayerObservations())
-				playerObservations.add(new MultiPlayerObservation(po.role, po.strategy, po.payoff));
+				playerObservations.add(new MultiSimPlayerObservation(po.role, po.strategy, po.payoff));
 			for (Entry<String, Double> e : obs.getFeatures().entrySet()) {
 				SummaryStatistics sum = new SummaryStatistics();
 				sum.addValue(e.getValue());
@@ -52,7 +60,7 @@ public class MultiSimulationObservation {
 			 * case, but it's worth noting.
 			 */
 			Iterator<PlayerObservation> it = obs.getPlayerObservations().iterator();
-			for (MultiPlayerObservation mpo : playerObservations)
+			for (MultiSimPlayerObservation mpo : playerObservations)
 				mpo.payoff.addValue(it.next().payoff);
 			for (Entry<String, Double> e : obs.getFeatures().entrySet())
 				features.get(e.getKey()).addValue(e.getValue());
@@ -62,19 +70,10 @@ public class MultiSimulationObservation {
 	protected JsonElement toJson() {
 		JsonObject root = new JsonObject();
 		
-		// Write out features
-		JsonObject feats = new JsonObject();
-		root.add("features", feats);
-		for (Entry<String, SummaryStatistics> e : features.entrySet())
-			feats.addProperty(e.getKey(), e.getValue().getMean());
-		
-		// Add spec to config
-		feats.add("spec", spec.getRawSpec());
-		
 		// Write out players
 		JsonArray players = new JsonArray();
 		root.add("players", players);
-		for (MultiPlayerObservation mpo : playerObservations) {
+		for (MultiSimPlayerObservation mpo : playerObservations) {
 			JsonObject obs = new JsonObject();
 			players.add(obs);
 			obs.addProperty("role", mpo.role);
@@ -87,7 +86,16 @@ public class MultiSimulationObservation {
 			playerFeatures.addProperty("payoff_stddev", mpo.payoff.getStandardDeviation());
 		}
 		
-		return feats;
+		// Write out features
+		JsonObject feats = new JsonObject();
+		root.add("features", feats);
+		for (Entry<String, SummaryStatistics> e : features.entrySet())
+			feats.addProperty(e.getKey(), e.getValue().getMean());
+		
+		// Add spec to config
+		feats.add("config", spec.getRawSpec().get("configuration"));
+		
+		return root;
 	}
 	
 	public void writeToFile(File observationsFile) throws IOException {

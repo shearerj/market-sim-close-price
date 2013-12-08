@@ -2,6 +2,12 @@ package utils;
 
 import java.util.Random;
 
+/**
+ * Class with extra random methods
+ * 
+ * @author erik
+ * 
+ */
 public abstract class Rands {
 
 	public static synchronized double nextGaussian(Random rand, double mean, double variance) {

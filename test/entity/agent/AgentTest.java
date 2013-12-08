@@ -20,7 +20,7 @@ import com.google.common.collect.Iterables;
 
 import systemmanager.Consts;
 import systemmanager.EventManager;
-import data.DummyFundamental;
+import data.MockFundamental;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
@@ -32,7 +32,7 @@ import event.TimeStamp;
 
 public class AgentTest {
 
-	private FundamentalValue fundamental = new DummyFundamental(100000);
+	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
 	private Agent agent;
 	private SIP sip;
@@ -234,25 +234,25 @@ public class AgentTest {
 		// Check that no change if position 0
 		agent.positionBalance = 0;
 		agent.liquidateAtPrice(new Price(100000), time);
-		assertEquals(5000, agent.postLiquidationProfit);
+		assertEquals(5000, agent.preLiquidationProfit);
 		
 		// Check liquidation when position > 0 (sell 1 unit)
 		agent.profit = 5000;
 		agent.positionBalance = 1;
 		agent.liquidateAtPrice(new Price(100000), time);
-		assertEquals(105000, agent.postLiquidationProfit);
+		assertEquals(105000, agent.preLiquidationProfit);
 		
 		// Check liquidation when position < 0 (buy 2 units)
 		agent.profit = 5000;
 		agent.positionBalance = -2;
 		agent.liquidateAtPrice(new Price(100000), time);
-		assertEquals(-195000, agent.postLiquidationProfit);
+		assertEquals(-195000, agent.preLiquidationProfit);
 		
 		// Check liquidation at fundamental
 		agent.profit = 5000;
 		agent.positionBalance = 1;
 		agent.liquidateAtFundamental(time);
-		assertEquals(fundamental.getValueAt(time).longValue() + 5000, agent.postLiquidationProfit);
+		assertEquals(fundamental.getValueAt(time).longValue() + 5000, agent.preLiquidationProfit);
 	}
 	
 	@Test

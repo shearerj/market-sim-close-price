@@ -10,7 +10,7 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-// XXX Is this activity necessary?
+// XXX: Elaine Is this activity necessary?
 public class AgentArrival extends Activity {
 
 	protected final Agent agent;

@@ -1,0 +1,44 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1.2in]{geometry}
+\usepackage{color,soul,hyperref,url}
+\usepackage{graphicx,amstext}
+\usepackage{subfigure}
+\usepackage{amsmath}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{paralist}
+
+\lstset{
+  basicstyle=\ttfamily,
+  breaklines=true
+}
+
+\begin{document}
+	
+\title{Simulation Spec File}
+\author{
+  Erik Brinkman \\
+  \href{mailto:erik.brinkman@umich.edu}{erik.brinkman@umich.edu}
+  \and
+  Elaine Wah \\
+  \href{mailto:ewah@umich.edu}{ewah@umich.edu}
+}
+\date{Updated: \today}
+\maketitle
+
+\section{Introduction}
+
+The simulation spec file contains the entire configuration of a simulation. It
+is in \href{json}{https://en.wikipedia.org/wiki/Json} format and divided into
+two main sections: ``assignment,'' and ``configuration.''
+
+\section{Assignment}
+
+The assignment section is primarily relevant for use with EGTA. It contains a
+nested listing of player roles and strategies.
+
+\section{Configuration}
+
+
+
+\end{document}

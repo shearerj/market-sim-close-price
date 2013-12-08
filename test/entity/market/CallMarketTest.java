@@ -24,7 +24,7 @@ import activity.SubmitOrder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
-import data.DummyFundamental;
+import data.MockFundamental;
 import data.FundamentalValue;
 import data.MarketProperties;
 import entity.agent.MockBackgroundAgent;
@@ -42,7 +42,7 @@ import event.TimeStamp;
  */
 public class CallMarketTest {
 
-	private FundamentalValue fundamental = new DummyFundamental(100000);
+	private FundamentalValue fundamental = new MockFundamental(100000);
 	private SIP sip;
 	private Market market1;
 	private Market market2;

@@ -21,7 +21,7 @@ import activity.Activity;
 import activity.SubmitOrder;
 import systemmanager.Consts;
 import systemmanager.EventManager;
-import data.DummyFundamental;
+import data.MockFundamental;
 import data.FundamentalValue;
 import entity.agent.Agent;
 import entity.agent.MockBackgroundAgent;
@@ -30,7 +30,7 @@ import event.TimeStamp;
 
 public class MarketTest {
 
-	private FundamentalValue fundamental = new DummyFundamental(100000);
+	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
 	private SIP sip;
 
@@ -107,7 +107,6 @@ public class MarketTest {
 		for (Transaction tr : market.getTransactions()) {
 			assertEquals("Incorrect Buyer", agent1, tr.getBuyer());
 			assertEquals("Incorrect Seller", agent2, tr.getSeller());
-			assertEquals("Incorrect Price", Price.ZERO, tr.getPrice());
 			assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		}
 		
@@ -506,67 +505,4 @@ public class MarketTest {
 		assertEquals(5, marketTimes.size());
 	}
 	
-	// TODO Move these to Observations test. That is where these statistics
-	// should be evaluated. They currently result in compile errors.
-//	@Test
-//	public void depths() {
-//		TimeStamp time = TimeStamp.ZERO;
-//
-//		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-//		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
-//		
-//		market.submitOrder(agent1, BUY, new Price(100), 1, time);
-//		market.submitOrder(agent1, BUY, new Price(101), 1, time);
-//		market.submitOrder(agent1, BUY, new Price(102), 1, time);
-//		market.submitOrder(agent1, BUY, new Price(104), 1, time);
-//		assertEquals(new Double(4), market.depths.sample(1,1).get(0));
-//		
-//		market.submitOrder(agent2, SELL, new Price(105), 1, time);
-//		market.submitOrder(agent2, SELL, new Price(106), 1, time);
-//		assertEquals(new Double(6), market.depths.sample(1,1).get(0));
-//		
-//		market.submitOrder(agent2, SELL, new Price(103), 1, time);
-//		market.clear(time);
-//		assertEquals(new Double(5), market.depths.sample(1,1).get(0));
-//	}
-//	
-//	@Test
-//	public void spreads() {
-//		TimeStamp time = TimeStamp.ZERO;
-//
-//		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-//		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
-//		
-//		market.submitOrder(agent1, BUY, new Price(102), 1, time);
-//		market.submitOrder(agent1, BUY, new Price(104), 1, time);
-//		assertEquals(new Double(Double.POSITIVE_INFINITY), market.spreads.sample(1,1).get(0));
-//		
-//		market.submitOrder(agent2, SELL, new Price(105), 1, time);
-//		market.submitOrder(agent2, SELL, new Price(106), 1, time);
-//		assertEquals(new Double(1), market.spreads.sample(1,1).get(0));
-//		
-//		market.submitOrder(agent2, SELL, new Price(103), 1, time);
-//		market.clear(time);
-//		assertEquals(new Double(3), market.spreads.sample(1,1).get(0));
-//	}
-//	
-//	@Test
-//	public void midquotes() {
-//		TimeStamp time = TimeStamp.ZERO;
-//
-//		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-//		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
-//		
-//		market.submitOrder(agent1, BUY, new Price(102), 1, time);
-//		market.submitOrder(agent1, BUY, new Price(104), 1, time);
-//		assertEquals(new Double(Double.NaN), market.midQuotes.sample(1,1).get(0));
-//		
-//		market.submitOrder(agent2, SELL, new Price(106), 1, time);
-//		market.submitOrder(agent2, SELL, new Price(107), 1, time);
-//		assertEquals(new Double(105), market.midQuotes.sample(1,1).get(0));
-//		
-//		market.submitOrder(agent2, SELL, new Price(103), 1, time);
-//		market.clear(time);
-//		assertEquals(new Double(104), market.midQuotes.sample(1,1).get(0));
-//	}
 }

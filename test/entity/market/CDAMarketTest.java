@@ -24,7 +24,7 @@ import activity.WithdrawOrder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
-import data.DummyFundamental;
+import data.MockFundamental;
 import data.FundamentalValue;
 import entity.agent.MockBackgroundAgent;
 import entity.infoproc.SIP;
@@ -35,7 +35,7 @@ import event.TimeStamp;
 
 public class CDAMarketTest {
 
-	private FundamentalValue fundamental = new DummyFundamental(100000);
+	private FundamentalValue fundamental = new MockFundamental(100000);
 	private SIP sip;
 	private Market market;
 

@@ -14,6 +14,17 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
+/**
+ * Class that represents the properties of an entity. These are generally loaded
+ * from a simulation spec file.
+ * 
+ * Contains methods to get values as any type, potentially with a defautl value.
+ * If a default value isn't used, and the key doesn't exist, you'll get a null
+ * object, or a null pointer.
+ * 
+ * @author erik
+ * 
+ */
 public class EntityProperties implements Serializable {
 	
 	private static final long serialVersionUID = -7220533203495890410L;

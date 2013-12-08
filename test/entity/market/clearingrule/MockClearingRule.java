@@ -11,15 +11,16 @@ import entity.market.Order;
 import entity.market.Price;
 import fourheap.MatchedOrders;
 
+/**
+ * Always clears at the buy price. This was changed so that the affect of
+ * different clearing prices on the summary statistics could be tested.
+ * 
+ * @author erik
+ * 
+ */
 public class MockClearingRule implements ClearingRule {
 
 	private static final long serialVersionUID = 1L;
-	
-	protected final Price clearPrice;
-	
-	public MockClearingRule(Price clearPrice) {
-		this.clearPrice = clearPrice;
-	}
 	
 	@Override
 	public Map<MatchedOrders<Price, MarketTime, Order>, Price> pricing(
@@ -28,7 +29,7 @@ public class MockClearingRule implements ClearingRule {
 		
 		Builder<MatchedOrders<Price, MarketTime, Order>, Price> prices = ImmutableMap.builder();
 		for (MatchedOrders<Price, MarketTime, Order> trans : transactions)
-			prices.put(trans, clearPrice);
+			prices.put(trans, trans.getBuy().getPrice());
 		return prices.build();
 	}
 

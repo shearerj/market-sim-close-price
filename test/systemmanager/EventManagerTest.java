@@ -13,7 +13,7 @@ import org.junit.Test;
 
 import activity.MockActivity;
 import activity.MockAgentActivity;
-import data.DummyFundamental;
+import data.MockFundamental;
 import data.FundamentalValue;
 import entity.agent.MockBackgroundAgent;
 import entity.infoproc.SIP;
@@ -22,7 +22,7 @@ import event.TimeStamp;
 
 public class EventManagerTest {
 
-	private FundamentalValue fundamental = new DummyFundamental(100000);
+	private FundamentalValue fundamental = new MockFundamental(100000);
 	private EventManager em;
 	private MockMarket market;
 	private SIP sip;

@@ -18,7 +18,7 @@ import logger.Logger.Prefix;
 import com.google.common.base.Objects;
 
 import data.EntityProperties;
-import data.MultiSimulationObservation;
+import data.MultiSimulationObservations;
 import entity.agent.Agent;
 import entity.infoproc.IP;
 import entity.market.Market;
@@ -28,6 +28,7 @@ import entity.market.Market;
  * it instantiates the Activity objects and provides the methods to execute them
  * later.
  * 
+ * TODO Correct this...
  * Usage: java -jar hft.jar [simulation folder name] [sample #]
  * 
  * @author ewah
@@ -64,15 +65,18 @@ public class SystemManager {
 		}
 	}
 	
-	protected static DateFormat LOG_DATE_FORMAT = new SimpleDateFormat("dd-MMM-yyyy_HH.mm.ss");
+	protected static DateFormat LOG_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
 	
 	private final File simulationFolder;
 	private final int observationNumber, totalSimulations, simulationLength, modelNumber, logLevel;
 	private final String modelName;
 	private final long baseRandomSeed;
 	private final SimulationSpec specification;
-	private final MultiSimulationObservation observations;
+	private final MultiSimulationObservations observations;
 
+	/**
+	 * Constructor reads everything in and sets appropriate variables
+	 */
 	public SystemManager(File simFolder, int obsNum) throws IOException {
 		this.simulationFolder = simFolder;
 		this.observationNumber = obsNum;
@@ -89,9 +93,12 @@ public class SystemManager {
 		props.load(new FileInputStream(new File(Consts.CONFIG_DIR, Consts.CONFIG_FILE)));
 		logLevel = Integer.parseInt(props.getProperty("logLevel"));
 		
-		this.observations = new MultiSimulationObservation();
+		this.observations = new MultiSimulationObservations();
 	}
 	
+	/**
+	 * Runs all of the simulations
+	 */
 	public void executeSimulations() throws IOException {
 		Random rand = new Random();
 		for (int i = 0; i < totalSimulations; i++) {

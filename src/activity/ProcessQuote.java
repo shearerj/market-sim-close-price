@@ -13,6 +13,8 @@ import event.TimeStamp;
 
 /**
  * Class for Activity of SIP processing a quote received from a given Market.
+ * After a quote is processed it will be reflected in the getQuote method of the
+ * IP.
  * 
  * @author ewah
  */

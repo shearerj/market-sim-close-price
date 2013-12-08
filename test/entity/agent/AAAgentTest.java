@@ -26,7 +26,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
 
-import data.DummyFundamental;
+import data.MockFundamental;
 import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
@@ -41,7 +41,7 @@ public class AAAgentTest {
 	private static Random rand;
 	private static EntityProperties agentProperties;
 
-	private FundamentalValue fundamental = new DummyFundamental(100000);
+	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
 	private SIP sip;
 

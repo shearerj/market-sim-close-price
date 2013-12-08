@@ -9,6 +9,7 @@ import static fourheap.Order.OrderType.*;
 import java.util.Iterator;
 import java.util.Random;
 
+import systemmanager.Consts.DiscountFactor;
 import utils.Rands;
 import activity.Activity;
 import activity.SubmitNMSOrder;
@@ -130,7 +131,11 @@ public abstract class BackgroundAgent extends ReentryAgent {
 
 	@Override
 	public double getPayoff() {
-		return surplus.getValueAtDiscount(0);
+		return surplus.getValueAtDiscount(DiscountFactor.NO_DISC);
+	}
+	
+	public double getDiscountedSurplus(DiscountFactor discount) {
+		return surplus.getValueAtDiscount(discount);
 	}
 
 	/**

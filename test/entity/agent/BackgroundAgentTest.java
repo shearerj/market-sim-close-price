@@ -19,7 +19,7 @@ import com.google.common.collect.Iterables;
 import activity.Activity;
 import activity.SubmitNMSOrder;
 import systemmanager.Consts;
-import data.DummyFundamental;
+import data.MockFundamental;
 import data.FundamentalValue;
 import entity.agent.BackgroundAgent;
 import entity.infoproc.SIP;
@@ -63,7 +63,7 @@ public class BackgroundAgentTest {
 		TimeStamp time = TimeStamp.ZERO;
 		List<Price> values = Arrays.asList(new Price(100), new Price(10));
 		PrivateValue pv = new DummyPrivateValue(1, values);
-		FundamentalValue fundamental = new DummyFundamental(100000);
+		FundamentalValue fundamental = new MockFundamental(100000);
 		
 		BackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market, pv, 0, 1000);
 		
@@ -139,7 +139,7 @@ public class BackgroundAgentTest {
 		TimeStamp time = TimeStamp.ZERO;
 		List<Price> values = Arrays.asList(new Price(100), new Price(10));
 		PrivateValue pv = new DummyPrivateValue(1, values);
-		FundamentalValue fundamental = new DummyFundamental(100000);
+		FundamentalValue fundamental = new MockFundamental(100000);
 		
 		BackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market, pv, 0, 1000);
 		

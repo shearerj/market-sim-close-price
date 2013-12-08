@@ -1,13 +1,25 @@
 package entity.agent;
 
-import systemmanager.Consts;
+import java.util.EnumMap;
 
+import systemmanager.Consts.DiscountFactor;
+
+/**
+ * This class represents any value that needs to be stored at all discount
+ * values for the simulation. Currently it's only used for background agent
+ * surplus.
+ * 
+ * @author erik
+ * 
+ */
 class DiscountedValue {
 
-	private double[] values;
+	private EnumMap<DiscountFactor, Double> values;
 	
 	public DiscountedValue() {
-		values = new double[Consts.DISCOUNT_FACTORS.length];
+		values = new EnumMap<DiscountFactor, Double>(DiscountFactor.class);
+		for (DiscountFactor discount : DiscountFactor.values())
+			values.put(discount, 0d);
 	}
 	
 	public static DiscountedValue create() {
@@ -15,19 +27,19 @@ class DiscountedValue {
 	}
 	
 	public void addValue(double value, double discountTime) {
-		for (int i = 0; i < values.length; i++)
-			values[i] += Math.exp(-Consts.DISCOUNT_FACTORS[i] * discountTime) * value;
+		for (DiscountFactor discount : DiscountFactor.values())
+			values.put(discount, values.get(discount) + Math.exp(-discount.discount * discountTime) * value);
 	}
 	
-	public double[] getDiscountedValues() {
-		return values;
-	}
-	
-	public double getValueAtDiscount(double discount) {
-		for (int i = 0; i < values.length; i++)
-			if (Consts.DISCOUNT_FACTORS[i] == discount)
-				return values[i];
-		throw new IllegalArgumentException("Discount factor not found!");
+	/**
+	 * This method is very inefficient. Much better to use the array of iterate
+	 * if you know which one.
+	 * 
+	 * @param discount
+	 * @return
+	 */
+	public double getValueAtDiscount(DiscountFactor discount) {
+		return values.get(discount);
 	}
 	
 }
