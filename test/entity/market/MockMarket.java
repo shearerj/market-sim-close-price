@@ -39,7 +39,7 @@ public class MockMarket extends Market {
 			Price price, int quantity, TimeStamp currentTime) {
 		return ImmutableList.<Activity> builder().addAll(
 				super.submitOrder(agent, type, price, quantity, currentTime)).addAll(
-				updateQuote(ImmutableList.<Transaction> of(), currentTime)).build();
+				updateQuote(currentTime)).build();
 	}
 
 	@Override
@@ -47,7 +47,7 @@ public class MockMarket extends Market {
 			TimeStamp currentTime) {
 		return ImmutableList.<Activity> builder().addAll(
 				super.withdrawOrder(order, currentTime)).addAll(
-				updateQuote(ImmutableList.<Transaction> of(), currentTime)).build();
+				updateQuote(currentTime)).build();
 	}
 
 	@Override

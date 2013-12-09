@@ -79,15 +79,14 @@ public class LAAgentTest {
 		executeImmediateActivities(market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO), TimeStamp.ZERO);
 		executeImmediateActivities(market1.submitOrder(agent1, BUY, new Price(7), 1, TimeStamp.ZERO), TimeStamp.ZERO);
 		executeImmediateActivities(market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO), TimeStamp.ZERO);
-		// Don't need to explicitly call agentStrategy, as it's immediately added
-		// after any HFTQuoteProcessor's ProcessQuote activity.
+		
+		executeImmediateActivities(la.agentStrategy(TimeStamp.ZERO), TimeStamp.ZERO);
 		assertEquals(0, la.positionBalance);
-		assertEquals(3+3, la.profit);
 	}
 	
 	@Test
 	public void multiOneSidedArbitrageTest() {
-		for (int i = 0; i < 100; ++i) {
+		for (int i = 0; i < 1000; ++i) {
 			setup();
 			oneSidedArbitrageTest();
 		}

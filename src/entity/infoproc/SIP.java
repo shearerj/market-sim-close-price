@@ -2,7 +2,9 @@ package entity.infoproc;
 
 import static logger.Logger.Level.INFO;
 import static data.Observations.BUS;
+import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -14,7 +16,9 @@ import com.google.common.collect.Maps;
 import data.Observations.NBBOStatistic;
 import logger.Logger;
 import activity.Activity;
-import activity.ProcessInformation;
+import activity.ProcessQuote;
+import activity.ProcessTransactions;
+import entity.Entity;
 import entity.market.Market;
 import entity.market.MarketTime;
 import entity.market.Price;
@@ -30,40 +34,61 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-public class SIP extends IP {
+public class SIP extends Entity implements QuoteProcessor, TransactionProcessor {
 
 	private static final long serialVersionUID = -4600049787044894823L;
 	
+	protected TimeStamp latency;
 	protected final Map<Market, Quote> marketQuotes;
 	protected final Map<Market, MarketTime> quoteTimes;
 	protected final List<Transaction> transactions;
 	protected BestBidAsk nbbo;
 
 	public SIP(TimeStamp latency) {
-		super(latency);
+		super(0);
+		this.latency = checkNotNull(latency);
 		this.marketQuotes = Maps.newHashMap();
 		this.quoteTimes = Maps.newHashMap();
 		this.transactions = Lists.newArrayList();
 		this.nbbo = new BestBidAsk(null, null, 0, null, null, 0);
 	}
 
+	public BestBidAsk getNBBO() {
+		return nbbo;
+	}
+	
+	public List<Transaction> getTransactions() {
+		return Collections.unmodifiableList(transactions);
+	}
+
+	public String toString() {
+		return "SIP";
+	}
+
 	@Override
-	public Iterable<? extends Activity> sendToIP(Market market,
-			MarketTime quoteTime, Quote quote,
+	public Iterable<? extends Activity> sendToTP(Market market,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
 		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? TimeStamp.IMMEDIATE : currentTime.plus(latency);
-		return ImmutableList.of(new ProcessInformation(this, market, quoteTime, quote,
-				newTransactions, nextTime));
+		return ImmutableList.of(new ProcessTransactions(this, market, newTransactions, nextTime));
 	}
-	
-	public Iterable<Activity> processNewInformation(Market market, MarketTime quoteTime, 
-			Quote quote, List<Transaction> newTransactions, TimeStamp currentTime) {
-		return this.processInformation(market, quoteTime, quote, newTransactions, currentTime);
-	}
-	
+
 	@Override
-	protected Iterable<Activity> processInformation(Market market, MarketTime quoteTime, 
-			Quote quote, List<Transaction> newTransactions, TimeStamp currentTime) {
+	public Iterable<? extends Activity> processTransactions(Market market,
+			List<Transaction> newTransactions, TimeStamp currentTime) {
+		transactions.addAll(newTransactions);
+		return ImmutableList.of();
+	}
+
+	@Override
+	public Iterable<? extends Activity> sendToQP(Market market,
+			MarketTime quoteTime, Quote quote, TimeStamp currentTime) {
+		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? TimeStamp.IMMEDIATE : currentTime.plus(latency);
+		return ImmutableList.of(new ProcessQuote(this, market, quoteTime, quote, nextTime));
+	}
+
+	@Override
+	public Iterable<? extends Activity> processQuote(Market market,
+			MarketTime quoteTime, Quote quote, TimeStamp currentTime) {
 		MarketTime lastTime = quoteTimes.get(market);
 		// If we get a stale quote, ignore it.
 		if (lastTime != null && lastTime.compareTo(quoteTime) > 0)
@@ -71,7 +96,6 @@ public class SIP extends IP {
 
 		marketQuotes.put(market, quote);
 		quoteTimes.put(market, quoteTime);
-		transactions.addAll(newTransactions);
 		
 		Logger.log(INFO, market + " -> " + this + " quote " + quote);
 
@@ -99,15 +123,4 @@ public class SIP extends IP {
 		return ImmutableList.of();
 	}
 
-	public BestBidAsk getNBBO() {
-		return nbbo;
-	}
-	
-	public List<Transaction> getTransactions() {
-		return ImmutableList.copyOf(transactions);
-	}
-
-	public String toString() {
-		return "SIP";
-	}
 }

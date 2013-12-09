@@ -17,11 +17,10 @@ import systemmanager.Consts;
 import systemmanager.EventManager;
 import activity.Activity;
 import activity.Clear;
-import activity.SendToIP;
+import activity.SendToQP;
 import activity.SubmitOrder;
 import activity.WithdrawOrder;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
 import data.MockFundamental;
@@ -71,7 +70,7 @@ public class CDAMarketTest {
 		assertEquals(market, order.getMarket());
 		
 		// Check if market quote correct
-		market.updateQuote(ImmutableList.<Transaction> of(), time);
+		market.updateQuote(time);
 		Quote q = market.quote;
 		assertEquals("Incorrect ASK",  null,  q.ask );
 		assertEquals("Incorrect BID", new Price(1),  q.bid);
@@ -100,7 +99,7 @@ public class CDAMarketTest {
 		assertEquals(market, order.getMarket());
 		
 		// Check if market quote correct
-		market.updateQuote(ImmutableList.<Transaction> of(), time);
+		market.updateQuote(time);
 		Quote q = market.quote;
 		assertEquals("Incorrect ASK", new Price(1),  q.ask);
 		assertEquals("Incorrect BID",  null,  q.bid );
@@ -295,7 +294,7 @@ public class CDAMarketTest {
 		assertEquals("Incorrect Quantity", 2, tr.getQuantity());
 
 		// Check that post-trade BID is correct (3 buy units at 150)
-		market.updateQuote(ImmutableList.<Transaction> of(), time1);
+		market.updateQuote(time1);
 		Quote q = market.quote;
 		assertEquals("Incorrect ASK", null, q.ask);
 		assertEquals("Incorrect BID", new Price(150), q.bid);
@@ -355,7 +354,7 @@ public class CDAMarketTest {
 		// Test that withdraw create SendToIP activities (updates quotes)
 		Iterable<? extends Activity> acts =  market.withdrawOrder(toWithdraw, time1);
 		for (Activity act : acts) {
-			assertTrue(act instanceof SendToIP);
+			assertTrue(act instanceof SendToQP);
 			assertTrue(act.getTime().equals(TimeStamp.IMMEDIATE));
 			act.execute(act.getTime()); // should update quotes
 		}

@@ -5,8 +5,8 @@ import java.util.Random;
 import data.FundamentalValue;
 import activity.Activity;
 import entity.infoproc.SIP;
-import entity.infoproc.QuoteProcessor;
-import entity.infoproc.TransactionProcessor;
+import entity.infoproc.SMQuoteProcessor;
+import entity.infoproc.SMTransactionProcessor;
 import entity.market.Market;
 import event.TimeStamp;
 
@@ -37,8 +37,8 @@ public abstract class SMAgent extends Agent {
 	private static final long serialVersionUID = 3156640550886695881L;
 	
 	protected final Market primaryMarket;
-	protected final QuoteProcessor marketQuoteProcessor;
-	protected final TransactionProcessor marketTransactionProcessor;
+	protected final SMQuoteProcessor marketQuoteProcessor;
+	protected final SMTransactionProcessor marketTransactionProcessor;
 
 	public SMAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, int tickSize) {

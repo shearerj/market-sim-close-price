@@ -4,7 +4,7 @@ import entity.agent.HFTAgent;
 import entity.market.Market;
 import event.TimeStamp;
 
-public class HFTTransactionProcessor extends TransactionProcessor {
+public class HFTTransactionProcessor extends SMTransactionProcessor {
 
 	private static final long serialVersionUID = 2897824399529496851L;
 	
@@ -15,13 +15,18 @@ public class HFTTransactionProcessor extends TransactionProcessor {
 		this.hftAgent = hftAgent;
 	}
 
-	// XXX may need to have HFT agent who acts immediately upon getting new transaction info
+	/*
+	 * XXX may need to have HFT agent who acts immediately upon getting new
+	 * transaction info. I think we should just mandate / have mandated that if
+	 * Transactions are created, the quote will be updated. Thus, we only need
+	 * to execute strategy during quote update. With the separation of
+	 * transaction and quote processors, it is very clear that transactions are
+	 * processed first, and then quotes.
+	 */
 //	@Override
-//	public Iterable<? extends Activity> processTransaction(Market market, 
+//	public Iterable<? extends Activity> processTransactions(Market market, 
 //			List<Transaction> newTransactions, TimeStamp currentTime) {
-//		return ImmutableList.<Activity> builder().addAll(
-//				super.processTransaction(market, newTransactions, currentTime)).add(
-//				new AgentStrategy(hftAgent, TimeStamp.IMMEDIATE)).build();
+//		return super.processTransactions(market, newTransactions, currentTime);
 //	}
 
 	@Override
