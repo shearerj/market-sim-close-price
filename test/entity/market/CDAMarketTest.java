@@ -615,7 +615,7 @@ public class CDAMarketTest {
 		for (Activity a : acts)
 			em.addActivity(a);
 		
-		quote = market.getSMIP().getQuote();
+		quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
 		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
 		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
@@ -624,7 +624,7 @@ public class CDAMarketTest {
 		// This will execute all of the remaining activities
 		em.executeUntil(TimeStamp.ZERO);
 		
-		quote = market.getSMIP().getQuote();
+		quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
 		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
 		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());
@@ -642,7 +642,7 @@ public class CDAMarketTest {
 		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1, TimeStamp.ZERO));
 		em.executeUntil(new TimeStamp(100));
 		
-		quote = market.getSMIP().getQuote();
+		quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
 		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
 		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
@@ -651,7 +651,7 @@ public class CDAMarketTest {
 		// Test that after 100 they did get updated
 		em.executeUntil(new TimeStamp(101));
 		
-		quote = market.getSMIP().getQuote();
+		quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
 		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
 		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());

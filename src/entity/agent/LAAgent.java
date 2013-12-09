@@ -21,7 +21,7 @@ import com.google.common.collect.Maps;
 
 import data.EntityProperties;
 import data.FundamentalValue;
-import entity.infoproc.HFTIP;
+import entity.infoproc.HFTQuoteProcessor;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
@@ -44,17 +44,17 @@ public class LAAgent extends HFTAgent {
 	
 	protected final double alpha; // LA profit gap
 
-	public LAAgent(Collection<Market> markets, FundamentalValue fundamental,
-			SIP sip, TimeStamp latency, Random rand, int tickSize,
+	public LAAgent(TimeStamp latency, FundamentalValue fundamental,
+			SIP sip, Collection<Market> markets, Random rand, int tickSize,
 			double alpha) {
 		super(latency, TimeStamp.ZERO, fundamental, sip, markets, rand, tickSize);
 		
 		this.alpha = alpha;
 	}
 
-	public LAAgent(Collection<Market> markets, FundamentalValue fundamental,
-			SIP sip, Random rand, EntityProperties props) {
-		this(markets, fundamental, sip, new TimeStamp(props.getAsLong(Keys.LA_LATENCY, -1)),
+	public LAAgent(FundamentalValue fundamental, SIP sip,
+			Collection<Market> markets, Random rand, EntityProperties props) {
+		this(new TimeStamp(props.getAsLong(Keys.LA_LATENCY, -1)), fundamental, sip, markets,
 				rand, props.getAsInt(Keys.TICK_SIZE, 1),
 				props.getAsDouble(Keys.ALPHA, 0.001));
 	}
@@ -69,7 +69,7 @@ public class LAAgent extends HFTAgent {
 		Price bestBid = null, bestAsk = null;
 		Market bestBidMarket = null, bestAskMarket = null;
 
-		for (Entry<Market, HFTIP> ipEntry : ips.entrySet()) {
+		for (Entry<Market, HFTQuoteProcessor> ipEntry : quoteProcessors.entrySet()) {
 			Quote q = ipEntry.getValue().getQuote();
 			if (q.getAskPrice() != null && q.getAskPrice().lessThan(bestAsk)) {
 				bestAsk = q.getAskPrice();
@@ -86,8 +86,8 @@ public class LAAgent extends HFTAgent {
 			return Collections.emptySet();
 
 		log(INFO, this + " detected arbitrage between " + bestBidMarket + " "
-				+ ips.get(bestBidMarket).getQuote() + " and " + bestAskMarket
-				+ " " + ips.get(bestAskMarket).getQuote());
+				+ quoteProcessors.get(bestBidMarket).getQuote() + " and " + bestAskMarket
+				+ " " + quoteProcessors.get(bestAskMarket).getQuote());
 		Price midPoint = new Price((bestBid.doubleValue() + bestAsk.doubleValue()) * .5).quantize(tickSize);
 		return ImmutableList.of(
 				new SubmitOrder(this, bestBidMarket, SELL, midPoint, 1, TimeStamp.IMMEDIATE),
@@ -105,7 +105,7 @@ public class LAAgent extends HFTAgent {
 		FourHeap<Price, Integer, Order<Price, Integer>> fh = FourHeap.create();
 		Map<Order<Price, Integer>, Market> orderMap = Maps.newHashMap();
 		
-		for (Entry<Market, HFTIP> ipEntry : ips.entrySet()) {
+		for (Entry<Market, HFTQuoteProcessor> ipEntry : quoteProcessors.entrySet()) {
 			Quote q = ipEntry.getValue().getQuote();
 			if (q.getBidPrice() != null && q.getBidQuantity() > 0) {
 				Order<Price, Integer> order = Order.create(BUY, q.getBidPrice(), q.getBidQuantity(), 0);

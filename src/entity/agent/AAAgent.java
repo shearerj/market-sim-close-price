@@ -297,7 +297,7 @@ public class AAAgent extends BackgroundAgent {
 		String s = this + " " + getName() + ":";
 
 		// Determining the offer price to (possibly) submit
-		Quote quote = marketIP.getQuote();
+		Quote quote = marketQuoteProcessor.getQuote();
 		Price bestBid = quote.getBidPrice();
 		Price bestAsk = quote.getAskPrice();
 

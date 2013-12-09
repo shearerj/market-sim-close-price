@@ -87,7 +87,7 @@ public class BasicMarketMaker extends MarketMaker {
 		// update NBBO
 		BestBidAsk lastNBBOQuote = sip.getNBBO();
 
-		Quote quote = marketIP.getQuote();
+		Quote quote = marketQuoteProcessor.getQuote();
 		Price bid = quote.getBidPrice();
 		Price ask = quote.getAskPrice();
 		

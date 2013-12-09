@@ -12,9 +12,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import data.Observations.NBBOStatistic;
-
 import logger.Logger;
 import activity.Activity;
+import activity.ProcessInformation;
 import entity.market.Market;
 import entity.market.MarketTime;
 import entity.market.Price;
@@ -25,7 +25,8 @@ import event.TimeStamp;
 /**
  * Class that updates pertinent information for the system. Generally used for creating NBBO update
  * events. Serves the purpose of the Security Information Processor in Regulation NMS. Is the NBBO
- * for one market model
+ * for one market model. Also returns transactions, at the same latency
+ * as the NBBO updates.
  * 
  * @author ewah
  */
@@ -46,8 +47,23 @@ public class SIP extends IP {
 		this.nbbo = new BestBidAsk(null, null, 0, null, null, 0);
 	}
 
-	public Iterable<Activity> processQuote(Market market, MarketTime quoteTime, Quote quote,
+	@Override
+	public Iterable<? extends Activity> sendToIP(Market market,
+			MarketTime quoteTime, Quote quote,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
+		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? TimeStamp.IMMEDIATE : currentTime.plus(latency);
+		return ImmutableList.of(new ProcessInformation(this, market, quoteTime, quote,
+				newTransactions, nextTime));
+	}
+	
+	public Iterable<Activity> processNewInformation(Market market, MarketTime quoteTime, 
+			Quote quote, List<Transaction> newTransactions, TimeStamp currentTime) {
+		return this.processInformation(market, quoteTime, quote, newTransactions, currentTime);
+	}
+	
+	@Override
+	protected Iterable<Activity> processInformation(Market market, MarketTime quoteTime, 
+			Quote quote, List<Transaction> newTransactions, TimeStamp currentTime) {
 		MarketTime lastTime = quoteTimes.get(market);
 		// If we get a stale quote, ignore it.
 		if (lastTime != null && lastTime.compareTo(quoteTime) > 0)
