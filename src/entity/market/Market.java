@@ -312,6 +312,7 @@ public abstract class Market extends Entity {
 		BUS.post(new SpreadStatistic(this, quote.getSpread(), currentTime));
 		
 		MarketTime quoteTime = new MarketTime(currentTime, marketTime);
+		// TODO I removed random orders, and not HFT's behave properly. Make sure removing the randomness didn't fix this
 		Builder<Activity> acts = ImmutableList.builder();
 		for (QuoteProcessor qp : qps)
 			acts.add(new SendToQP(this, quoteTime, quote, qp, TimeStamp.IMMEDIATE));

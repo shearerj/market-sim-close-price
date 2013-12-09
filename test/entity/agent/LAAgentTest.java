@@ -93,6 +93,7 @@ public class LAAgentTest {
 	}
 
 	private void executeImmediateActivities(Iterable<? extends Activity> acts, TimeStamp time) {
+		// FIXME Change this to use event Manager 
 		ArrayList<Activity> queue = Lists.newArrayList(filterNonImmediateAndReverse(acts));
 		while (!queue.isEmpty()) {
 			Activity a = queue.get(queue.size() - 1);
