@@ -65,8 +65,6 @@ public class LAAgentTest {
 	 * then the first BUY @ 30 makes it market2 where it transacts. Finally the
 	 * BUY @ 20 makes it to market2, but there are no more orders, and so this
 	 * order sits while the LA holds a position.
-	 * 
-	 * FIXME this test still fails occasionally
 	 */
 	@Test
 	public void oneSidedArbitrageTest() {
@@ -81,9 +79,10 @@ public class LAAgentTest {
 		executeImmediateActivities(market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO), TimeStamp.ZERO);
 		executeImmediateActivities(market1.submitOrder(agent1, BUY, new Price(7), 1, TimeStamp.ZERO), TimeStamp.ZERO);
 		executeImmediateActivities(market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO), TimeStamp.ZERO);
-		
-		executeImmediateActivities(la.agentStrategy(TimeStamp.ZERO), TimeStamp.ZERO);
+		// Don't need to explicitly call agentStrategy, as it's immediately added
+		// after any HFTQuoteProcessor's ProcessQuote activity.
 		assertEquals(0, la.positionBalance);
+		assertEquals(3+3, la.profit);
 	}
 	
 	@Test
