@@ -1,5 +1,7 @@
 package entity.agent;
 
+import iterators.ExpInterarrivals;
+
 import java.util.Iterator;
 import java.util.Random;
 
@@ -12,11 +14,18 @@ public class MockReentryAgent extends ReentryAgent {
 
 	private static final long serialVersionUID = 1L;
 
-	public MockReentryAgent(TimeStamp arrivalTime,
-			FundamentalValue fundamental, SIP sip, Market market, Random rand,
-			Iterator<TimeStamp> reentry, int tickSize) {
-		super(arrivalTime, fundamental, sip, market, rand, reentry, tickSize);
-		// TODO Auto-generated constructor stub
+	public MockReentryAgent(FundamentalValue fundamental, SIP sip, Market market, 
+			Random rand, Iterator<TimeStamp> reentry, int tickSize) {
+		super(TimeStamp.ZERO, fundamental, sip, market, rand, reentry, tickSize);
+	}
+	
+	public MockReentryAgent(FundamentalValue fundamental, SIP sip, Market market, 
+			Random rand, double reentryRate, int tickSize) {
+		this(fundamental, sip, market, rand, new ExpInterarrivals(reentryRate, rand), 
+				tickSize);
 	}
 
+	public Iterator<TimeStamp> getReentryTimes() {
+		return reentry;
+	}
 }
