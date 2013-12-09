@@ -50,21 +50,23 @@ public class LAAgentTest {
 		market2 = new CDAMarket(sip, new Random(), new EntityProperties());
 		agent1 = new MockAgent(fundamental, sip, market1);
 		agent2 = new MockAgent(fundamental, sip, market2);
-		la = new LAAgent(ImmutableList.of(market1, market2),
-				fundamental, sip, TimeStamp.IMMEDIATE, new Random(), 1, 0.001);
+		la = new LAAgent(TimeStamp.IMMEDIATE,
+				fundamental, sip, ImmutableList.of(market1, market2), new Random(), 1, 0.001);
 	}
 	
 	/*
 	 * Bug in LA that occurred in very particular circumstances. Imagine market1
 	 * has BUY @ 30 and BUY @ 50. A SELL @ 10 arrives in market2. The LA submits
 	 * a SELL @ 30 -> market1 and schedules a BUY @ 30 for market2. After the
-	 * SELL clears, market1 has a BUY @ 30 left. There is still and arbitrage,
+	 * SELL clears, market1 has a BUY @ 30 left. There is still an arbitrage opp,
 	 * and the LA acts again for before its second order goes into market2. So
 	 * it submits a SELL @ 20 -> market1, and schedules a BUY @ 20 for market2.
 	 * This first SELL clears, and results in no arbitrage opportunities, so
 	 * then the first BUY @ 30 makes it market2 where it transacts. Finally the
 	 * BUY @ 20 makes it to market2, but there are no more orders, and so this
 	 * order sits while the LA holds a position.
+	 * 
+	 * FIXME this test still fails occasionally
 	 */
 	@Test
 	public void oneSidedArbitrageTest() {

@@ -34,7 +34,13 @@ public class CallMarket extends Market {
 
 	public CallMarket(SIP sip, TimeStamp latency, Random rand, int tickSize,
 			double pricingPolicy, TimeStamp clearFreq) {
-		super(sip, latency, new UniformPriceClear(pricingPolicy, tickSize), rand);
+		this(sip, latency, latency, rand, tickSize, pricingPolicy, clearFreq);
+	}
+	
+	public CallMarket(SIP sip, TimeStamp quoteLatency, TimeStamp transactionLatency, 
+			Random rand, int tickSize, double pricingPolicy, TimeStamp clearFreq) {
+		super(sip, quoteLatency, transactionLatency, new UniformPriceClear(pricingPolicy, tickSize), 
+				rand);
 		checkArgument(clearFreq.after(TimeStamp.ZERO),
 				"Can't create a call market with 0 clear frequency. Create a CDA instead.");
 

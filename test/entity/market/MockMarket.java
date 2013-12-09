@@ -30,6 +30,10 @@ public class MockMarket extends Market {
 		super(sip, latency, new MockClearingRule(), new Random());
 	}
 	
+	public MockMarket(SIP sip, TimeStamp quoteLatency, TimeStamp transactionLatency) {
+		super(sip, quoteLatency, transactionLatency, new MockClearingRule(), new Random());
+	}
+	
 	@Override
 	public Collection<? extends Activity> submitOrder(Agent agent, OrderType type,
 			Price price, int quantity, TimeStamp currentTime) {

@@ -33,6 +33,7 @@ import entity.infoproc.BestBidAsk;
 import entity.infoproc.IP;
 import entity.infoproc.QuoteProcessor;
 import entity.infoproc.SIP;
+import entity.infoproc.TransactionProcessor;
 import entity.market.clearingrule.ClearingRule;
 import event.TimeStamp;
 import fourheap.FourHeap;
@@ -69,7 +70,8 @@ public abstract class Market extends Entity {
 	protected final Random rand;
 	protected long marketTime; // keeps track of internal market actions
 
-	protected final QuoteProcessor ip;
+	protected final QuoteProcessor quoteProcessor;
+	protected final TransactionProcessor transactionProcessor;
 	protected final SIP sip;
 	protected final Collection<IP> ips; // All the information processors that get data
 	
@@ -96,6 +98,28 @@ public abstract class Market extends Entity {
 	 *            the random number generator to use
 	 */
 	public Market(SIP sip, TimeStamp latency, ClearingRule clearingRule, Random rand) {
+		this(sip, latency, latency, clearingRule, rand);
+	}
+	
+	/**
+	 * Constructor
+	 * 
+	 * @param sip
+	 *            the SIP for this simulation
+	 * @param quoteLatency
+	 *            how long it takes agents with market as a primary model get
+	 *            get notified of quote updates
+	 * @param transactionLatency
+	 *            how long it takes agents with market as a primary model get
+	 *            get notified of new transactions
+	 * @param clearingRule
+	 *            a class that dictates how the prices on matching orders are
+	 *            set
+	 * @param rand
+	 *            the random number generator to use
+	 */
+	public Market(SIP sip, TimeStamp quoteLatency, TimeStamp transactionLatency,
+			ClearingRule clearingRule, Random rand) {
 		super(nextID++);
 		this.orderbook = FourHeap.create();
 		this.clearingRule = clearingRule;
@@ -105,9 +129,11 @@ public abstract class Market extends Entity {
 
 		this.ips = Lists.newArrayList();
 		this.sip = sip;
-		this.ip = new QuoteProcessor(latency, this);
+		this.quoteProcessor = new QuoteProcessor(quoteLatency, this);
+		this.transactionProcessor = new TransactionProcessor(transactionLatency, this);
 		ips.add(sip);
-		ips.add(ip);
+		ips.add(quoteProcessor);
+		ips.add(transactionProcessor);
 
 		this.askPriceQuantity = HashMultiset.create();
 		this.bidPriceQuantity = HashMultiset.create();
@@ -128,10 +154,12 @@ public abstract class Market extends Entity {
 	}
 
 	public QuoteProcessor getQuoteProcessor() {
-		return this.ip;
+		return this.quoteProcessor;
 	}
 	
-	// TODO transaction processor?
+	public TransactionProcessor getTransactionProcessor() {
+		return this.transactionProcessor;
+	}
 	
 	/**
 	 * Convenience method to fully remove an order.

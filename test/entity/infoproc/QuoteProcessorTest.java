@@ -41,7 +41,7 @@ public class QuoteProcessorTest {
 		// market that updates immediately
 		market1 = new MockMarket(sip);
 		smip1 = market1.getQuoteProcessor();
-		// market with latency 100 (means that SM IP will have latency 100)
+		// market with latency 100 (means that QuoteProcessor will have latency 100)
 		market2 = new MockMarket(sip, new TimeStamp(100));
 		smip2 = market2.getQuoteProcessor();
 	}
@@ -69,8 +69,8 @@ public class QuoteProcessorTest {
 
 		// Test on undelayed market's QuoteProcessor
 		q = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		Iterable<? extends Activity> acts = smip1.processInformation(market1, mktTime, q, 
-				new ArrayList<Transaction>(), time);
+		Iterable<? extends Activity> acts = smip1.processQuote(market1, mktTime, q, 
+				time);
 		assertEquals(0, Iterables.size(acts));
 		
 		// Check updated quote after process quote (specific to QuoteProcessor)
@@ -83,7 +83,7 @@ public class QuoteProcessorTest {
 		
 		// Now test for delayed market's QuoteProcessor
 		q = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
-		acts = smip2.processInformation(market2, mktTime, q, new ArrayList<Transaction>(), time);
+		acts = smip2.processQuote(market2, mktTime, q, time);
 		assertEquals(0, Iterables.size(acts));
 		
 		// Check updated quote after process quote

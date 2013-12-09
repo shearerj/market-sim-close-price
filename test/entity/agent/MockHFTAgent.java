@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableList;
 import activity.Activity;
 import data.FundamentalValue;
 import entity.infoproc.HFTQuoteProcessor;
+import entity.infoproc.HFTTransactionProcessor;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import event.TimeStamp;
@@ -20,7 +21,13 @@ public class MockHFTAgent extends HFTAgent {
 
 	public MockHFTAgent(TimeStamp latency, FundamentalValue fundamental, 
 			SIP sip, Collection<Market> markets) {
-		super(latency, new TimeStamp(0), fundamental, sip, markets, new Random(), 1);
+		this(latency, latency, fundamental, sip, markets);
+	}
+	
+	public MockHFTAgent(TimeStamp quoteLatency, TimeStamp transactionLatency,
+			FundamentalValue fundamental, SIP sip, Collection<Market> markets) {
+		super(quoteLatency, transactionLatency, new TimeStamp(0), fundamental, 
+				sip, markets, new Random(), 1);
 	}
 
 	@Override
@@ -29,13 +36,24 @@ public class MockHFTAgent extends HFTAgent {
 	}
 
 	/**
-	 * Get HFTIP directly (for testing purposes)
+	 * Get HFTQuoteProcessor directly (for testing purposes)
 	 * @param market
 	 * @return
 	 */
 	public HFTQuoteProcessor getHFTQuoteProcessor(Market market) {
 		checkNotNull(market);
-		if (ips.containsKey(market)) return ips.get(market);
+		if (quoteProcessors.containsKey(market)) return quoteProcessors.get(market);
+		return null;
+	}
+	
+	/**
+	 * Get HFTTransactionProcessor directly (for testing purposes)
+	 * @param market
+	 * @return
+	 */
+	public HFTTransactionProcessor getHFTTransactionProcessor(Market market) {
+		checkNotNull(market);
+		if (transactionProcessors.containsKey(market)) return transactionProcessors.get(market);
 		return null;
 	}
 }

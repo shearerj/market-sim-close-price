@@ -36,18 +36,4 @@ public abstract class IP extends Entity {
 	protected abstract Iterable<? extends Activity> processInformation(Market market,
 			MarketTime quoteTime, Quote quote, List<Transaction> newTransactions, 
 			TimeStamp currentTime);
-
-	
-//	public Iterable<? extends Activity> sendToIP(Market market, MarketTime quoteTime, 
-//			Quote quote, List<Transaction> newTransactions, TimeStamp currentTime) {
-//		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? TimeStamp.IMMEDIATE : currentTime.plus(latency);
-//		return ImmutableList.of(new ProcessQuote(this, market, quoteTime, quote,
-//				newTransactions, nextTime));
-//	}
-//
-//	public abstract Iterable<? extends Activity> processQuote(Market market, 
-//			MarketTime quoteTime, Quote quote, List<Transaction> newTransactions, 
-//			TimeStamp currentTime);
-
-
 }
