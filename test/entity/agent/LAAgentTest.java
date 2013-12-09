@@ -85,6 +85,14 @@ public class LAAgentTest {
 		executeImmediateActivities(la.agentStrategy(TimeStamp.ZERO), TimeStamp.ZERO);
 		assertEquals(0, la.positionBalance);
 	}
+	
+	@Test
+	public void multiOneSidedArbitrageTest() {
+		for (int i = 0; i < 100; ++i) {
+			setup();
+			oneSidedArbitrageTest();
+		}
+	}
 
 	private void executeImmediateActivities(Iterable<? extends Activity> acts, TimeStamp time) {
 		ArrayList<Activity> queue = Lists.newArrayList(filterNonImmediateAndReverse(acts));

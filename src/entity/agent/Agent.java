@@ -193,15 +193,15 @@ public abstract class Agent extends Entity {
 	}
 	
 	public double getPayoff() {
-		return preLiquidationProfit;
-	}
-	
-	public long getPreLiquidationProfit() {
 		return profit;
 	}
 	
-	public long getPostLiquidationProfit() {
+	public long getPreLiquidationProfit() {
 		return preLiquidationProfit;
+	}
+	
+	public long getPostLiquidationProfit() {
+		return profit;
 	}
 	
 	@Override
