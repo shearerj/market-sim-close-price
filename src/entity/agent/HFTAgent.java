@@ -46,14 +46,14 @@ public abstract class HFTAgent extends MMAgent {
 		this.transactionProcessors = Maps.newHashMap();
 		
 		for (Market market : markets) {
-			HFTQuoteProcessor qp = new HFTQuoteProcessor(quoteLatency, market, this);
-			quoteProcessors.put(market, qp);
-			market.addIP(qp);
-			
 			HFTTransactionProcessor tp = new HFTTransactionProcessor(transactionLatency,
 					market, this);
 			transactionProcessors.put(market, tp);
 			market.addIP(tp);
+			
+			HFTQuoteProcessor qp = new HFTQuoteProcessor(quoteLatency, market, this);
+			quoteProcessors.put(market, qp);
+			market.addIP(qp);
 		}
 	}
 	

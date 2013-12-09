@@ -6,7 +6,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -17,12 +16,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import activity.Activity;
-import activity.AgentStrategy;
 import activity.SubmitOrder;
-
-import com.google.common.collect.Iterables;
-
 import systemmanager.Consts;
 import systemmanager.EventManager;
 import data.FundamentalValue;
@@ -92,13 +86,14 @@ public class HFTTransactionProcessorTest {
 		em.addActivity(new SubmitOrder(agent2, market1, SELL, new Price(140), 1, time));
 		em.executeUntil(time1); // should execute Clear-->SendToSIP-->processInformations
 
-		Iterable<? extends Activity> acts = tp1.processTransaction(market1,
-				new ArrayList<Transaction>(), time);
-		assertEquals(1, Iterables.size(acts));
-		assertEquals("Incorrect scheduled agent strategy time", TimeStamp.IMMEDIATE, 
-				Iterables.getFirst(acts, null).getTime());
-		assertTrue("Incorrect activity type scheduled", 
-				Iterables.getFirst(acts, null) instanceof AgentStrategy);
+		// for now, HFTTransactionProcessors do NOT insert AgentStrategy activities
+//		Iterable<? extends Activity> acts = tp1.processTransaction(market1,
+//				new ArrayList<Transaction>(), time);
+//		assertEquals(1, Iterables.size(acts));
+//		assertEquals("Incorrect scheduled agent strategy time", TimeStamp.IMMEDIATE, 
+//				Iterables.getFirst(acts, null).getTime());
+//		assertTrue("Incorrect activity type scheduled", 
+//				Iterables.getFirst(acts, null) instanceof AgentStrategy);
 
 		// Verify that transactions have updated
 		trans = hft.getTransactions(market1);
