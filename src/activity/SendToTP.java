@@ -4,10 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
 
-import entity.infoproc.IP;
+import entity.infoproc.TransactionProcessor;
 import entity.market.Market;
-import entity.market.MarketTime;
-import entity.market.Quote;
 import entity.market.Transaction;
 import event.TimeStamp;
 
@@ -18,31 +16,27 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-public class SendToIP extends Activity {
+public class SendToTP extends Activity {
 
 	protected final Market market;
-	protected final IP ip;
-	protected final MarketTime quoteTime;
-	protected final Quote quote;
+	protected final TransactionProcessor tp;
 	protected final List<Transaction> transactions;
 
-	public SendToIP(Market market, MarketTime quoteTime, Quote quote, 
-			List<Transaction> transactions, IP ip, TimeStamp scheduledTime) {
+	public SendToTP(Market market, List<Transaction> transactions,
+			TransactionProcessor ip, TimeStamp scheduledTime) {
 		super(scheduledTime);
 		this.market = checkNotNull(market, "Market");
-		this.ip = checkNotNull(ip, "IP");
-		this.quoteTime = checkNotNull(quoteTime, "Market Time");
-		this.quote = checkNotNull(quote, "Quote");
+		this.tp = checkNotNull(ip, "TP");
 		this.transactions = checkNotNull(transactions, "Transactions");
 	}
 
 	@Override
 	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return ip.sendToIP(market, this.quoteTime, quote, transactions, currentTime);
+		return tp.sendToTP(market, transactions, currentTime);
 	}
 	
 	@Override
 	public String toString() {
-		return super.toString() + market + " -> " + ip;
+		return super.toString() + market + " -> " + tp;
 	}
 }

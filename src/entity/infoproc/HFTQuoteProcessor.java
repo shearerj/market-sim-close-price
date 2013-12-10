@@ -16,7 +16,7 @@ import event.TimeStamp;
  * 
  * @author cnris
  */
-public class HFTQuoteProcessor extends QuoteProcessor {
+public class HFTQuoteProcessor extends SMQuoteProcessor {
 
 	private static final long serialVersionUID = -4104375974647291881L;
 	
@@ -39,4 +39,5 @@ public class HFTQuoteProcessor extends QuoteProcessor {
 	public String toString() {
 		return "(HFTQuoteProcessor " + id + " in " + associatedMarket + " for " + hftAgent + ")"; 
 	}
+	
 }

@@ -8,7 +8,8 @@ import java.util.Random;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 
 import data.FundamentalValue;
 import entity.infoproc.HFTQuoteProcessor;
@@ -42,19 +43,23 @@ public abstract class HFTAgent extends MMAgent {
 			TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
 			Collection<Market> markets,	Random rand, int tickSize) {
 		super(arrivalTime, fundamental, sip, markets, rand, tickSize);
-		this.quoteProcessors = Maps.newHashMap();
-		this.transactionProcessors = Maps.newHashMap();
+		
+		Builder<Market, HFTQuoteProcessor> quoteProcesserBuilder = ImmutableMap.builder(); 
+		Builder<Market, HFTTransactionProcessor> transactionProcesserBuilder = ImmutableMap.builder(); 
 		
 		for (Market market : markets) {
+			HFTQuoteProcessor qp = new HFTQuoteProcessor(quoteLatency, market, this);
+			quoteProcesserBuilder.put(market, qp);
+			market.addQP(qp); 
+			
 			HFTTransactionProcessor tp = new HFTTransactionProcessor(transactionLatency,
 					market, this);
-			transactionProcessors.put(market, tp);
-			market.addIP(tp);
-			
-			HFTQuoteProcessor qp = new HFTQuoteProcessor(quoteLatency, market, this);
-			quoteProcessors.put(market, qp);
-			market.addIP(qp);
+			transactionProcesserBuilder.put(market, tp);
+			market.addTP(tp);
 		}
+		
+		quoteProcessors = quoteProcesserBuilder.build();
+		transactionProcessors = transactionProcesserBuilder.build();
 	}
 	
 	/**

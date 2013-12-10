@@ -18,10 +18,10 @@ import systemmanager.EventManager;
 import systemmanager.Keys;
 import activity.Activity;
 import activity.Clear;
-import activity.SendToIP;
+import activity.SendToQP;
+import activity.SendToTP;
 import activity.SubmitOrder;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
 import data.MockFundamental;
@@ -86,7 +86,7 @@ public class CallMarketTest {
 		assertEquals(market1, order.getMarket());
 		
 		// Check if market quote correct
-		market1.updateQuote(ImmutableList.<Transaction> of(), time);
+		market1.updateQuote(time);
 		Quote q = market1.quote;
 		assertEquals("Incorrect ASK",  null,  q.ask );
 		assertEquals("Incorrect BID", new Price(1),  q.bid);
@@ -115,7 +115,7 @@ public class CallMarketTest {
 		assertEquals(market1, order.getMarket());
 		
 		// Check if market quote correct
-		market1.updateQuote(ImmutableList.<Transaction> of(), time);
+		market1.updateQuote(time);
 		Quote q = market1.quote;
 		assertEquals("Incorrect ASK", new Price(1), q.ask);
 		assertEquals("Incorrect BID", null, q.bid );
@@ -355,7 +355,7 @@ public class CallMarketTest {
 		assertEquals("Incorrect Quantity", 2, tr.getQuantity());
 
 		// Check that post-trade BID is correct (3 buy units at 150)
-		market1.updateQuote(ImmutableList.<Transaction> of(), time2);
+		market1.updateQuote(time2);
 		Quote q = market1.quote;
 		assertEquals("Incorrect ASK", null, q.ask);
 		assertEquals("Incorrect BID", new Price(150), q.bid);
@@ -412,7 +412,7 @@ public class CallMarketTest {
 		// Test that withdraw create SendToIP activities (updates quotes)
 		acts =  market1.withdrawOrder(toWithdraw, time0);
 		for (Activity act : acts) {
-			assertTrue(act instanceof SendToIP);
+			assertTrue(act instanceof SendToQP || act instanceof SendToTP);
 			assertTrue(act.getTime().equals(TimeStamp.IMMEDIATE));
 		}
 		

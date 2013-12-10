@@ -50,7 +50,7 @@ public class CDAMarket extends Market {
 			TimeStamp currentTime) {
 		return ImmutableList.<Activity> builder().addAll(
 				super.withdrawOrder(order, quantity, currentTime)).addAll(
-				updateQuote(ImmutableList.<Transaction> of(), currentTime)).build();
+				updateQuote(currentTime)).build();
 	}
 
 	@Override

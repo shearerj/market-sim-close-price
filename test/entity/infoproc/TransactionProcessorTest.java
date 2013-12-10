@@ -5,7 +5,6 @@ import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.*;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -18,6 +17,7 @@ import org.junit.Test;
 import activity.Activity;
 import activity.SubmitOrder;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
 import data.FundamentalValue;
@@ -53,7 +53,7 @@ public class TransactionProcessorTest {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 		Market market = new CDAMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1);
-		TransactionProcessor smip = market.getTransactionProcessor();
+		SMTransactionProcessor smip = market.getTransactionProcessor();
 
 		// Verify latency
 		assertEquals(TimeStamp.IMMEDIATE, smip.latency);
@@ -73,8 +73,8 @@ public class TransactionProcessorTest {
 		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
 		em.executeUntil(time1); // should execute Clear-->SendToSIP-->processInformation
 
-		Iterable<? extends Activity> acts = smip.processTransaction(market,
-				new ArrayList<Transaction>(), time);
+		Iterable<? extends Activity> acts = smip.processTransactions(market,
+				ImmutableList.<Transaction> of(), time);
 		assertEquals(0, Iterables.size(acts));
 
 		// Verify that transactions have updated
@@ -91,7 +91,7 @@ public class TransactionProcessorTest {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 		Market market = new CDAMarket(sip, new TimeStamp(100), new Random(), 1);
-		TransactionProcessor smip = market.getTransactionProcessor();
+		SMTransactionProcessor smip = market.getTransactionProcessor();
 
 		// Verify latency
 		assertEquals(new TimeStamp(100), smip.latency);
@@ -111,8 +111,8 @@ public class TransactionProcessorTest {
 		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
 		em.executeUntil(time1); // should execute Clear-->SendToSIP-->processInformation
 
-		Iterable<? extends Activity> acts = smip.processTransaction(market,
-				new ArrayList<Transaction>(), time);
+		Iterable<? extends Activity> acts = smip.processTransactions(market,
+				ImmutableList.<Transaction> of(), time);
 		assertEquals(0, Iterables.size(acts));
 
 		// Still haven't updated transactions list yet
@@ -138,8 +138,8 @@ public class TransactionProcessorTest {
 		TimeStamp time1 = new TimeStamp(1);
 		Market market = new CDAMarket(sip, TimeStamp.IMMEDIATE, new TimeStamp(100), 
 				new Random(), 1);
-		TransactionProcessor smip = market.getTransactionProcessor();
-		QuoteProcessor qp = market.getQuoteProcessor();
+		SMTransactionProcessor smip = market.getTransactionProcessor();
+		SMQuoteProcessor qp = market.getQuoteProcessor();
 
 		// Verify latency
 		assertEquals(TimeStamp.IMMEDIATE, qp.latency);

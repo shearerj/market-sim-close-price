@@ -14,9 +14,9 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import utils.Iterables2;
 import activity.Activity;
-import activity.SendToIP;
+import activity.SendToQP;
+import activity.SendToTP;
 import activity.WithdrawOrder;
 
 import com.google.common.collect.HashMultiset;
@@ -30,9 +30,10 @@ import data.Observations.SpreadStatistic;
 import entity.Entity;
 import entity.agent.Agent;
 import entity.infoproc.BestBidAsk;
-import entity.infoproc.IP;
 import entity.infoproc.QuoteProcessor;
+import entity.infoproc.SMQuoteProcessor;
 import entity.infoproc.SIP;
+import entity.infoproc.SMTransactionProcessor;
 import entity.infoproc.TransactionProcessor;
 import entity.market.clearingrule.ClearingRule;
 import event.TimeStamp;
@@ -70,10 +71,11 @@ public abstract class Market extends Entity {
 	protected final Random rand;
 	protected long marketTime; // keeps track of internal market actions
 
-	protected final QuoteProcessor quoteProcessor;
-	protected final TransactionProcessor transactionProcessor;
+	protected final SMQuoteProcessor quoteProcessor;
+	protected final SMTransactionProcessor transactionProcessor;
 	protected final SIP sip;
-	protected final Collection<IP> ips; // All the information processors that get data
+	protected final Collection<QuoteProcessor> qps;
+	protected final Collection<TransactionProcessor> tps;
 	
 	protected Quote quote; // Current quote
 
@@ -127,13 +129,15 @@ public abstract class Market extends Entity {
 		this.marketTime = 0;
 		this.quote = new Quote(this, null, 0, null, 0, TimeStamp.ZERO);
 
-		this.ips = Lists.newArrayList();
+		this.qps = Lists.newArrayList();
+		this.tps = Lists.newArrayList();
 		this.sip = sip;
-		this.quoteProcessor = new QuoteProcessor(quoteLatency, this);
-		this.transactionProcessor = new TransactionProcessor(transactionLatency, this);
-		ips.add(sip);
-		ips.add(quoteProcessor);
-		ips.add(transactionProcessor);
+		this.quoteProcessor = new SMQuoteProcessor(quoteLatency, this);
+		this.transactionProcessor = new SMTransactionProcessor(transactionLatency, this);
+		qps.add(sip);
+		tps.add(sip);
+		qps.add(quoteProcessor);
+		tps.add(transactionProcessor);
 
 		this.askPriceQuantity = HashMultiset.create();
 		this.bidPriceQuantity = HashMultiset.create();
@@ -148,16 +152,28 @@ public abstract class Market extends Entity {
 	 * @param ip
 	 *            the IP to add
 	 */
-	public void addIP(IP ip) {
-		checkNotNull(ip, "IP");
-		ips.add(ip);
+	public void addQP(QuoteProcessor qp) {
+		checkNotNull(qp, "QP");
+		qps.add(qp);
+	}
+	
+	/**
+	 * Add an IP to this market that will get notified when the market quote and
+	 * transactions change.
+	 * 
+	 * @param ip
+	 *            the IP to add
+	 */
+	public void addTP(TransactionProcessor tp) {
+		checkNotNull(tp, "TP");
+		tps.add(tp);
 	}
 
-	public QuoteProcessor getQuoteProcessor() {
+	public SMQuoteProcessor getQuoteProcessor() {
 		return this.quoteProcessor;
 	}
 	
-	public TransactionProcessor getTransactionProcessor() {
+	public SMTransactionProcessor getTransactionProcessor() {
 		return this.transactionProcessor;
 	}
 	
@@ -224,7 +240,7 @@ public abstract class Market extends Entity {
 	public Iterable<? extends Activity> clear(TimeStamp currentTime) {
 		marketTime++;
 		List<MatchedOrders<Price, MarketTime, Order>> matchedOrders = orderbook.clear();
-		Builder<Transaction> transactions = ImmutableList.builder();
+		Builder<Transaction> transactionBuilder = ImmutableList.builder();
 		for (Entry<MatchedOrders<Price, MarketTime, Order>, Price> e : clearingRule.pricing(matchedOrders).entrySet()) {
 
 			Order buy = e.getKey().getBuy();
@@ -237,7 +253,7 @@ public abstract class Market extends Entity {
 			askPriceQuantity.remove(sell.getPrice(), trans.getQuantity());
 			bidPriceQuantity.remove(buy.getPrice(), trans.getQuantity());
 			
-			transactions.add(trans);
+			transactionBuilder.add(trans);
 			allTransactions.add(trans);
 			BUS.post(trans);
 			// TODO add delay to agent facing actions...
@@ -248,8 +264,14 @@ public abstract class Market extends Entity {
 			if (sell.getQuantity() == 0)
 				sell.agent.removeOrder(sell);
 		}
-
-		return updateQuote(transactions.build(), currentTime);
+		
+		List<Transaction> transactions = transactionBuilder.build();
+		Builder<Activity> acts = ImmutableList.builder();
+		if (!transactions.isEmpty())
+			for (TransactionProcessor tp : tps)
+				acts.add(new SendToTP(this, transactions, tp, TimeStamp.IMMEDIATE));
+		acts.addAll(updateQuote(currentTime));
+		return acts.build();
 	}
 
 	/**
@@ -262,8 +284,7 @@ public abstract class Market extends Entity {
 	 *            the current time
 	 * @return the SendToIP activities required to propagate information
 	 */
-	protected Iterable<? extends Activity> updateQuote(
-			List<Transaction> transactions, TimeStamp currentTime) {
+	protected Iterable<? extends Activity> updateQuote(TimeStamp currentTime) {
 		Price ask = orderbook.askQuote();
 		Price bid = orderbook.bidQuote();
 		int quantityAsk = askPriceQuantity.count(ask);
@@ -291,9 +312,10 @@ public abstract class Market extends Entity {
 		BUS.post(new SpreadStatistic(this, quote.getSpread(), currentTime));
 		
 		MarketTime quoteTime = new MarketTime(currentTime, marketTime);
+		// TODO I removed random orders, and not HFT's behave properly. Make sure removing the randomness didn't fix this
 		Builder<Activity> acts = ImmutableList.builder();
-		for (IP ip : Iterables2.randomOrder(ips, rand))
-			acts.add(new SendToIP(this, quoteTime, quote, transactions, ip, TimeStamp.IMMEDIATE));
+		for (QuoteProcessor qp : qps)
+			acts.add(new SendToQP(this, quoteTime, quote, qp, TimeStamp.IMMEDIATE));
 		return acts.build();
 	}
 

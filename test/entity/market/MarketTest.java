@@ -15,8 +15,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableList;
-
 import activity.Activity;
 import activity.SubmitOrder;
 import systemmanager.Consts;
@@ -271,7 +269,7 @@ public class MarketTest {
 		assertEquals("Incorrect Quantity", 2, tr.getQuantity());
 
 		// Check that post-trade BID is correct (3 buy units at 150)
-		market.updateQuote(ImmutableList.<Transaction> of(), time2);
+		market.updateQuote(time2);
 		Quote q = market.quote;
 		assertEquals("Incorrect ASK", null, q.ask);
 		assertEquals("Incorrect BID", new Price(150), q.bid);

@@ -1,11 +1,16 @@
 package entity.agent;
 
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
 import static logger.Logger.log;
-import static org.junit.Assert.*;
-import static fourheap.Order.OrderType.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Random;
 
 import logger.Logger;
@@ -15,26 +20,23 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import fourheap.Order.OrderType;
 import systemmanager.Keys;
 import activity.Activity;
-import activity.ProcessQuote;
-import activity.SendToIP;
 import activity.SubmitNMSOrder;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 
-import data.MockFundamental;
 import data.EntityProperties;
 import data.FundamentalValue;
+import data.MockFundamental;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.MockMarket;
 import entity.market.Order;
 import entity.market.Price;
 import event.TimeStamp;
+import fourheap.Order.OrderType;
 
 public class AAAgentTest {
 
@@ -89,31 +91,22 @@ public class AAAgentTest {
 		// creating a dummy agent
 		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
 		// Having the agent submit a bid to the market
-		Iterable<? extends Activity> bidActs = market.submitOrder(agent, type,
-				new Price(price), quantity, currentTime);
+		executeImmediateActivities(market.submitOrder(agent, type,
+				new Price(price), quantity, currentTime), currentTime);
 
 		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
 		// the transaction would work
-		Builder<Activity> sendActs = ImmutableList.builder();
-		for (Activity act : bidActs)
-			if (act instanceof SendToIP) sendActs.addAll(act.execute(currentTime));
-		for (Activity act : sendActs.build())
-			if (act instanceof ProcessQuote) act.execute(currentTime);
+		
 	}
 
 	private void addTransaction(int p, int q, int time) {
 		addOrder(BUY, p, q, time);
 		addOrder(SELL, p, q, time);
 		TimeStamp currentTime = new TimeStamp(time);
-		Iterable<? extends Activity> clearActs = market.clear(currentTime);
+		executeImmediateActivities(market.clear(currentTime), currentTime);
 
 		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
 		// the transaction would work
-		Builder<Activity> sendActs = ImmutableList.builder();
-		for (Activity act : clearActs)
-			if (act instanceof SendToIP) sendActs.addAll(act.execute(currentTime));
-		for (Activity act : sendActs.build())
-			if (act instanceof ProcessQuote) act.execute(currentTime);
 	}
 	
 	private void executeAgentStrategy(Agent agent, int time) {
@@ -539,6 +532,25 @@ public class AAAgentTest {
 		executeAgentStrategy(agent, 100);
 		assertTrue(agent.getAggression() > 0);
 		assertCorrectBid(agent, 100000, 150000, 1);
+	}
+	
+	private void executeImmediateActivities(Iterable<? extends Activity> acts, TimeStamp time) {
+		// FIXME Change this to use EventManager
+		ArrayList<Activity> queue = Lists.newArrayList(filterNonImmediateAndReverse(acts));
+		while (!queue.isEmpty()) {
+			Activity a = queue.get(queue.size() - 1);
+			queue.remove(queue.size() - 1);
+			queue.addAll(filterNonImmediateAndReverse(a.execute(time)));
+		}
+	}
+	
+	private Collection<? extends Activity> filterNonImmediateAndReverse(Iterable<? extends Activity> acts) {
+		ArrayList<Activity> array = Lists.newArrayList();
+		for (Activity a : acts)
+			if (a.getTime() == TimeStamp.IMMEDIATE)
+				array.add(a);
+		Collections.reverse(array);
+		return array;
 	}
 	
 	// TODO testing of effects of varying parameters

@@ -17,6 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import activity.SubmitOrder;
+
 import systemmanager.Consts;
 import systemmanager.EventManager;
 import data.FundamentalValue;
@@ -37,8 +38,8 @@ public class HFTTransactionProcessorTest {
 	private Market market1;
 	private Market market2;
 	private MockHFTAgent hft;
-	private TransactionProcessor tp1;
-	private TransactionProcessor tp2;
+	private SMTransactionProcessor tp1;
+	private SMTransactionProcessor tp2;
 
 	@BeforeClass
 	public static void setupClass() {
@@ -84,7 +85,7 @@ public class HFTTransactionProcessorTest {
 		em.addActivity(new SubmitOrder(agent1, market1, BUY, new Price(150), 1, time));
 		em.executeUntil(time1);
 		em.addActivity(new SubmitOrder(agent2, market1, SELL, new Price(140), 1, time));
-		em.executeUntil(time1); // should execute Clear-->SendToSIP-->processInformations
+		em.executeUntil(time1); // should execute Clear-->SendToSIP-->processTransactions
 
 		// for now, HFTTransactionProcessors do NOT insert AgentStrategy activities
 //		Iterable<? extends Activity> acts = tp1.processTransaction(market1,
@@ -158,7 +159,7 @@ public class HFTTransactionProcessorTest {
 				fundamental, sip, Arrays.asList(market1, market2));
 
 		tp1 = hft.getHFTTransactionProcessor(market1);
-		QuoteProcessor qp = hft.getHFTQuoteProcessor(market2);
+		SMQuoteProcessor qp = hft.getHFTQuoteProcessor(market2);
 		tp2 = hft.getHFTTransactionProcessor(market2);
 
 		// Verify latency
