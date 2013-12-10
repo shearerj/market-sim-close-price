@@ -28,7 +28,7 @@ import data.Observations;
 import data.Player;
 import entity.agent.Agent;
 import entity.agent.AgentFactory;
-import entity.agent.BackgroundAgent;
+import entity.agent.MarketMaker;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.MarketFactory;
@@ -91,7 +91,7 @@ public class Simulation {
 			eventManager.addActivity(new Clear(market, TimeStamp.IMMEDIATE));
 		for (Agent agent : agents) {
 			eventManager.addActivity(new AgentArrival(agent, agent.getArrivalTime()));
-			if (!(agent instanceof BackgroundAgent))
+			if (agent instanceof MarketMaker)
 				eventManager.addActivity(new LiquidateAtFundamental(agent, lastTime));
 		}
 	}

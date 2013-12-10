@@ -9,7 +9,7 @@ import entity.agent.Agent;
  * reference to the player.
  * 
  * It is accessed by getting a player observation. This calls the
- * player.getPayoff function which can be overriden to return the correct thing
+ * player.getPayoff function which can be overridden to return the correct thing
  * for different agent types.
  * 
  * @author erik

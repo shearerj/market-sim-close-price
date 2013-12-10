@@ -40,7 +40,7 @@ public interface Keys {
 	// Market Maker
 	public final static String NUM_RUNGS = "numRungs";
 	public final static String RUNG_SIZE = "rungSize";
-	public final static String TRUNCATE_LADDER_KEY = "truncateLadder";
+	public final static String TRUNCATE_LADDER = "truncateLadder";
 	
 	// Latency
 	public final static String NBBO_LATENCY = "nbboLatency";
@@ -54,6 +54,7 @@ public interface Keys {
 	// SimulationSpec Keys
 	public final static String ASSIGN = "assignment";
 	public final static String CONFIG = "configuration";
+	public final static String NO_OP = "noOp";
 
 	// AAAgent
 	public final static String HISTORICAL = "historical";

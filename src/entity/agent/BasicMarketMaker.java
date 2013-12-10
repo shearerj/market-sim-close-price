@@ -38,6 +38,9 @@ import event.TimeStamp;
  * global fundamental at the end of the simulation (event is inserted in 
  * SystemSetup).
  * 
+ * The market maker will only submit a ladder if both the bid and the ask
+ * are defined.
+ * 
  * NOTE: The MarketMakerAgent will truncate the ladder when the price crosses
  * the NBBO, i.e., whenever one of the points in the bid would be routed to
  * the alternate market otherwise. This happens when:
@@ -54,12 +57,14 @@ public class BasicMarketMaker extends MarketMaker {
 	private int stepSize;	// rung size is distance between adjacent rungs in ladder
 	private int numRungs;	// # of ladder rungs on one side (e.g., number of buy orders)
 	private boolean truncateLadder; 	// true if truncate if NBBO crosses ladder
+	private boolean noOp;	// true if no-op strategy (never executes strategy)
 	protected Price lastAsk, lastBid; // stores the last ask/bid, respectively
 
 	public BasicMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, int numRungs, int rungSize, double reentryRate,
-			boolean truncateLadder, int tickSize) {
+			Random rand, double reentryRate, boolean noOp, int numRungs,
+			int rungSize, boolean truncateLadder, int tickSize) {
 		super(fundamental, sip, market, rand, reentryRate, tickSize);
+		this.noOp = noOp;
 		this.numRungs = numRungs;
 		this.stepSize = MathUtils.quantize(rungSize, tickSize);
 		this.truncateLadder = truncateLadder;
@@ -70,16 +75,17 @@ public class BasicMarketMaker extends MarketMaker {
 	public BasicMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, EntityProperties props) {
 		this(fundamental, sip, market, rand,
+				props.getAsDouble(Keys.REENTRY_RATE, 0.0005),
+				props.getAsBoolean(Keys.NO_OP, false),
 				props.getAsInt(Keys.NUM_RUNGS, 10),
 				props.getAsInt(Keys.RUNG_SIZE, 1000),
-				props.getAsDouble(Keys.REENTRY_RATE, 0.0005),
-				props.getAsBoolean(Keys.TRUNCATE_LADDER_KEY, true),
+				props.getAsBoolean(Keys.TRUNCATE_LADDER, true), 
 				props.getAsInt(Keys.TICK_SIZE, 1));
 	}
 
 	@Override
 	public Iterable<Activity> agentStrategy(TimeStamp currentTime) {
-		// TODO how to check if no-op strategy here...
+		if (noOp) return ImmutableList.of(); // no execution if no-op
 		
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));
@@ -94,8 +100,10 @@ public class BasicMarketMaker extends MarketMaker {
 		// Quote changed, withdraw all orders
 		if ((bid == null && lastBid != null)
 				|| (bid != null && !bid.equals(lastBid))
+				|| (bid != null && lastBid == null)
 				|| (ask == null && lastAsk != null)
-				|| (ask != null && !ask.equals(lastAsk))) {
+				|| (ask != null && !ask.equals(lastAsk))
+				|| (ask != null && lastAsk == null)) {
 			for (Order order : activeOrders)
 				acts.add(new WithdrawOrder(order, TimeStamp.IMMEDIATE));
 			
@@ -124,29 +132,14 @@ public class BasicMarketMaker extends MarketMaker {
 					// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
 					sellMinPrice = pcomp.max(ask, lastNBBOQuote.getBestBid());
 				}
-				
-				// check if the bid or ask crosses the NBBO
-				if (lastNBBOQuote.getBestAsk().lessThan(ask)) {
-					// buy orders: If ASK_N < X_t, then [ASK_N, ..., Y_t]
-					buyMaxPrice = lastNBBOQuote.getBestAsk();
-				}
-				if (lastNBBOQuote.getBestBid().greaterThan(bid)) {
-					// sell orders: If BID_N > Y_t, then [X_t, ..., BID_N]
-					sellMinPrice = lastNBBOQuote.getBestBid();
-				}
 
-				// submits only one side if either bid or ask is undefined
-				if (bid != null) {
-					// build ascending list of buy orders
-					for (int p = buyMinPrice.intValue(); p <= buyMaxPrice.intValue(); p += stepSize) {
-						acts.add(new SubmitOrder(this, primaryMarket, BUY, new Price(p), 1, TimeStamp.IMMEDIATE));
-					}
+				// build ascending list of buy orders
+				for (int p = buyMinPrice.intValue(); p <= buyMaxPrice.intValue(); p += stepSize) {
+					acts.add(new SubmitOrder(this, primaryMarket, BUY, new Price(p), 1, TimeStamp.IMMEDIATE));
 				}
-				if (ask != null) {
-					// build descending list of sell orders
-					for (int p = sellMaxPrice.intValue(); p >= sellMinPrice.intValue(); p -= stepSize) { 
-						acts.add(new SubmitOrder(this, primaryMarket, SELL, new Price(p), 1, TimeStamp.IMMEDIATE));
-					}
+				// build descending list of sell orders
+				for (int p = sellMaxPrice.intValue(); p >= sellMinPrice.intValue(); p -= stepSize) { 
+					acts.add(new SubmitOrder(this, primaryMarket, SELL, new Price(p), 1, TimeStamp.IMMEDIATE));
 				}
 				
 				log(INFO, primaryMarket + " " + this + " " + getName()
@@ -165,5 +158,10 @@ public class BasicMarketMaker extends MarketMaker {
 		lastBid = bid;
 
 		return acts.build();
+	}
+	
+	@Override
+	public String toString() {
+		return "BasicMarketMaker " + super.toString();
 	}
 }
