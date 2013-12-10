@@ -14,13 +14,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
 import activity.Activity;
 import activity.AgentStrategy;
 import activity.Clear;
-import activity.ProcessInformation;
+import activity.ProcessQuote;
 import activity.SubmitOrder;
 import data.EntityProperties;
 import data.FundamentalValue;
@@ -35,7 +34,6 @@ import entity.market.MockMarket;
 import entity.market.Order;
 import entity.market.Price;
 import entity.market.Quote;
-import entity.market.Transaction;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -300,8 +298,8 @@ public class BasicMarketMakerTest {
 		// Updating NBBO quote
 		MockMarket market2 = new MockMarket(sip);
 		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, time);
-		em.addActivity(new ProcessInformation(sip, market2, new DummyMarketTime(time, 1), q, 
-				ImmutableList.<Transaction> of(), time));
+		em.addActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q, 
+				time));
 		em.executeUntil(new TimeStamp(1));
 
 		// Just to check that NBBO correct (it crosses)
@@ -364,8 +362,8 @@ public class BasicMarketMakerTest {
 		// Updating NBBO quote
 		MockMarket market2 = new MockMarket(sip);
 		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, time);
-		em.addActivity(new ProcessInformation(sip, market2, new DummyMarketTime(time, 1), q, 
-				ImmutableList.<Transaction> of(), time));
+		em.addActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q, 
+				time));
 		em.executeUntil(new TimeStamp(1));
 
 		// Just to check that NBBO correct (it crosses)
