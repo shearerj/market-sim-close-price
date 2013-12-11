@@ -1,17 +1,9 @@
 package entity.agent;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import java.io.Serializable;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Random;
 
-import com.google.common.collect.Lists;
-
 import utils.Rands;
-import fourheap.Order.OrderType;
 
 /**
  * Idea from: Tesauro & Das, "High-Performance Bidding Agents for the Continuous
@@ -34,16 +26,12 @@ import fourheap.Order.OrderType;
  * @author ewah
  *
  */
-class Margin implements Serializable, QuantityIndexedValue<Double> {
-
+class Margin extends QuantityIndexedValue<Double> {
+	
 	private static final long serialVersionUID = -3749423779545857329L;
-	
-	protected final int offset;
-	protected List<Double> values;
-	
+
 	public Margin() {
-		this.offset = 0;
-		this.values = Collections.emptyList();
+		super();
 	}
 	
 	/**
@@ -53,21 +41,17 @@ class Margin implements Serializable, QuantityIndexedValue<Double> {
 	 * @param b
 	 */
 	public Margin(int maxPosition, Random rand, double a, double b) {
-		checkArgument(maxPosition > 0, "Max Position must be positive");
-		
-		// Identical to legacy generation in final output
-		this.offset = maxPosition;
-		this.values = Lists.newArrayList();
-		
+		super(maxPosition, 0.0);
+
 		double[] values = new double[maxPosition * 2];
 		for (int i = 0; i < values.length; i++)
 			values[i] = Rands.nextUniform(rand, a, b) *	(i >= maxPosition ? -1 : 1);
-			// margins for buy orders are negative
-		
+		// margins for buy orders are negative
+
 		for (double value : values)
 			this.values.add(new Double(value));
 	}
-	
+
 	/**
 	 * Protected constructor for testing purposes.
 	 * 
@@ -75,69 +59,7 @@ class Margin implements Serializable, QuantityIndexedValue<Double> {
 	 * @param values
 	 */
 	protected Margin(int maxPosition, Collection<Double> values) {
-		checkArgument(values.size() == 2*maxPosition, "Incorrect number of entries in list");
-		this.values = Lists.newArrayList();
-		this.values.addAll(values);
-		offset = maxPosition;
-	}
-	
-	@Override
-	public int getMaxAbsPosition() {
-		return offset;
+		super(maxPosition, 0.0, values);
 	}
 
-	/**
-	 * Gets margin for single-unit trades. If the projected position would
-	 * exceed the maximum, the profit margin is 0.
-	 * 
-	 * @param currentPosition
-	 * @param type
-	 * @return
-	 */
-	@Override
-	public Double getValue(int currentPosition, OrderType type) {
-		switch (type) {
-		case BUY:
-			if (currentPosition + offset <= values.size() - 1 &&
-					currentPosition + offset >= 0)
-				return values.get(currentPosition + offset);
-			break;
-		case SELL:
-			if (currentPosition + offset - 1 <= values.size() - 1 && 
-					currentPosition + offset - 1 >= 0)
-				return values.get(currentPosition + offset - 1);
-			break;
-		}
-		return 0.0;
-	}
-
-	/**
-	 * @param currentPosition
-	 * @param type
-	 * @param value
-	 */
-	public void setValue(int currentPosition, OrderType type,
-			double value) {
-		switch (type) {
-		case BUY:
-			if (currentPosition + offset <= values.size() - 1 &&
-					currentPosition + offset >= 0)
-				values.add(currentPosition + offset, value);
-			break;
-		case SELL:
-			if (currentPosition + offset - 1 <= values.size() - 1 && 
-					currentPosition + offset - 1 >= 0)
-				values.add(currentPosition + offset - 1, value);
-			break;
-		}
-	}
-	
-	@Override
-	public Double getValueFromQuantity(int currentPosition, int quantity,
-			OrderType type) {
-		checkArgument(quantity > 0, "Quantity must be positive");
-		
-		// TODO need to implement for multiple units
-		return new Double(0);
-	}
 }

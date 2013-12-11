@@ -3,6 +3,8 @@ package entity.agent;
 import java.util.List;
 import java.util.Random;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Lists;
 
 import data.FundamentalValue;
@@ -53,20 +55,20 @@ public abstract class WindowAgent extends BackgroundAgent {
 	 * @param currentTime
 	 * @return
 	 */
-	public List<Transaction> getWindowTransactions(TimeStamp currentTime) {
+	public ImmutableList<Transaction> getWindowTransactions(TimeStamp currentTime) {
 		TimeStamp firstTimeInWindow = currentTime.minus(new TimeStamp(windowLength));
 		
 		List<Transaction> allTransactions = Lists.newArrayList(); 
 		allTransactions.addAll(this.sip.getTransactions());
 		allTransactions.addAll(this.transactions);
 		
-		List<Transaction> windowTransactions = Lists.newArrayList();
+		Builder<Transaction> transactionBuilder = ImmutableList.builder();
 		for (Transaction trans : allTransactions) {
-			if (!windowTransactions.contains(trans) && 
+			if (!transactionBuilder.build().contains(trans) && 
 					trans.getExecTime().after(firstTimeInWindow)) {
-				windowTransactions.add(trans);
+				transactionBuilder.add(trans);
 			}
 		}
-		return windowTransactions;
+		return transactionBuilder.build();
 	}
 }

@@ -61,18 +61,19 @@ public interface Keys {
 	// AAAgent
 	public final static String HISTORICAL = "historical";
 	public final static String ETA = "eta";
-	public final static String AGGRESSION = "aggression";
 	public final static String LAMBDA_R = "lambdaR";
 	public final static String LAMBDA_A = "lambdaA";
+	public final static String GAMMA = "gamma";
 	public final static String BETA_R = "betaR";
 	public final static String BETA_T = "betaT";
+	public final static String AGGRESSION = "aggression";
 	public final static String THETA = "theta";
 	public final static String THETA_MAX = "thetaMax";
 	public final static String THETA_MIN = "thetaMin";
 	public final static String DEBUG = "debug";
 	public final static String TEST = "AAtesting";
 	public final static String BUYER_STATUS = "buyerStatus";
-	public final static String GAMMA = "gamma";
+	
 	
 	// ZIPAgent
 	public final static String MARGIN_MIN = "marginMin";

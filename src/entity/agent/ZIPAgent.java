@@ -108,10 +108,6 @@ public class ZIPAgent extends WindowAgent {
 		// update NBBO
 		BestBidAsk lastNBBOQuote = sip.getNBBO();
 
-//		Quote quote = marketIP.getQuote();
-//		Price bid = quote.getBidPrice();
-//		Price ask = quote.getAskPrice();
-
 		// can buy and sell
 		OrderType type = rand.nextBoolean() ? BUY : SELL;
 		
@@ -168,11 +164,6 @@ public class ZIPAgent extends WindowAgent {
 			log(INFO, sb.append("No transactions!"));
 			acts.addAll(executeZIStrategy(type, 1, currentTime));
 		}
-
-		// FIXME add these variables to background agent?
-//		lastPositionBalance = positionBalance;	// update position balance
-//		numEntries++;
-//		maxPositionHeld = Math.max(maxPositionHeld, lastPositionBalance);	// update max position held
 
 		return acts.build();
 	}
@@ -360,4 +351,5 @@ public class ZIPAgent extends WindowAgent {
 			return Rands.nextUniform(rand, -rangeCoeffA, 0);
 		}
 	}
+
 }

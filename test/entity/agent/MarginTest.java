@@ -10,6 +10,7 @@ import org.junit.Test;
 
 public class MarginTest {
 
+	
 	@Test
 	public void emptyMargin() {
 		Margin margin = new Margin();
