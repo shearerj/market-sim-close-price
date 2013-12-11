@@ -42,6 +42,8 @@ public interface Keys {
 	public final static String RUNG_SIZE = "rungSize";
 	
 	// Latency
+	public final static String QUOTE_LATENCY = "quoteLatency";
+	public final static String TRANSACTION_LATENCY = "transactionLatency";
 	public final static String NBBO_LATENCY = "nbboLatency";
 	public final static String MARKET_LATENCY = "mktLatency";
 	public final static String LA_LATENCY = "laLatency";
