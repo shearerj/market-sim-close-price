@@ -1,5 +1,6 @@
 package entity.agent;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
@@ -61,6 +62,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			int tickSize, int bidRangeMin, int bidRangeMax) {
 		this(arrivalTime, fundamental, sip, market, rand, new ExpInterarrivals(reentryRate, rand),
 				pv, tickSize, bidRangeMin, bidRangeMax);
+		checkArgument(reentryRate >= 0, "Agent reentry rate must be positive!");
 	}
 	
 	/**

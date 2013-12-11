@@ -41,7 +41,7 @@ public class WindowAgentTest {
 	@Before
 	public void setup(){
 		sip = new SIP(TimeStamp.IMMEDIATE);
-		market = new CDAMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1);
+		market = new CDAMarket(sip, new Random(), TimeStamp.IMMEDIATE, 1);
 	}
 	
 	@Test
@@ -86,7 +86,7 @@ public class WindowAgentTest {
 		TimeStamp time10 = new TimeStamp(10);
 		EventManager em = new EventManager(new Random());
 		SIP sipDelayed = new SIP(new TimeStamp(5));
-		Market market = new CDAMarket(sipDelayed, TimeStamp.IMMEDIATE, new Random(), 1);
+		Market market = new CDAMarket(sipDelayed, new Random(), TimeStamp.IMMEDIATE, 1);
 		
 		WindowAgent agent = new MockWindowAgent(fundamental, sipDelayed, market, 10);
 		
