@@ -479,7 +479,7 @@ public class SIPTest {
 		TimeStamp time1 = new TimeStamp(1);
 		FundamentalValue fundamental = new MockFundamental(100000);
 		SIP sip = new SIP(new TimeStamp(100));
-		Market market = new CDAMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1);
+		Market market = new CDAMarket(sip, new Random(), TimeStamp.IMMEDIATE, 1);
 		
 		//Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
