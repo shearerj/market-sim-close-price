@@ -31,7 +31,7 @@ class Margin extends QuantityIndexedValue<Double> {
 	private static final long serialVersionUID = -3749423779545857329L;
 
 	public Margin() {
-		super();
+		super(0, 0.0);
 	}
 	
 	/**

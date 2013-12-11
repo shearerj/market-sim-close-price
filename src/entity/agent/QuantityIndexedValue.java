@@ -7,8 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.Lists;
 
 import fourheap.Order.OrderType;
 
@@ -41,6 +40,7 @@ abstract class QuantityIndexedValue<T extends Number> implements Serializable {
 	protected QuantityIndexedValue(int offset, T defaultValue) {
 		this.offset = offset;
 		this.defaultValue = defaultValue;
+		this.values = Lists.newArrayList();
 	}
 	
 	/**
@@ -53,10 +53,7 @@ abstract class QuantityIndexedValue<T extends Number> implements Serializable {
 		this(maxPosition, defaultValue);
 		checkArgument(offset > 0, "Max Position must be positive");
 		checkArgument(values.size() == 2*maxPosition, "Incorrect number of entries in list");
-		Builder<T> builder = ImmutableList.builder();
-		builder.addAll(values);
-		this.values = builder.build();
-		
+		this.values.addAll(values);
 	}
 	
 	/**
