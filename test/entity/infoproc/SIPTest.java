@@ -434,7 +434,7 @@ public class SIPTest {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 		FundamentalValue fundamental = new MockFundamental(100000);
-		Market market = new CDAMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1);
+		Market market = new CDAMarket(sip, new Random(), TimeStamp.IMMEDIATE, 1);
 		
 		//Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
@@ -529,8 +529,8 @@ public class SIPTest {
 		TimeStamp time = new TimeStamp(50);
 		
 		// Set up CDA markets and their quotes
-		Market nasdaq = new CDAMarket(sip2, time, new Random(), 1);
-		Market nyse = new CDAMarket(sip2, time, new Random(), 1);
+		Market nasdaq = new CDAMarket(sip2, new Random(), time, 1);
+		Market nyse = new CDAMarket(sip2, new Random(), time, 1);
 		MockBackgroundAgent background1 = new MockBackgroundAgent(fundamental, sip2, nyse);
 		MockBackgroundAgent background2 = new MockBackgroundAgent(fundamental, sip2, nasdaq);
 		em.addActivity(new SubmitOrder(background1, nyse, SELL, new Price(111), 1, time0));
@@ -595,8 +595,8 @@ public class SIPTest {
 		
 		// Set up markets and their quotes
 		// both markets are undelayed, although SIP is delayed by 50
-		Market nasdaq = new CDAMarket(sip2, time, new Random(), 1);
-		Market nyse = new CDAMarket(sip2, time, new Random(), 1);
+		Market nasdaq = new CDAMarket(sip2, new Random(), time, 1);
+		Market nyse = new CDAMarket(sip2, new Random(), time, 1);
 		MockBackgroundAgent background1 = new MockBackgroundAgent(fundamental, sip2, nyse);
 		MockBackgroundAgent background2 = new MockBackgroundAgent(fundamental, sip2, nasdaq);
 		em.addActivity(new SubmitOrder(background1, nyse, SELL, new Price(111), 1, time0));

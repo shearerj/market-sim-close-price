@@ -51,8 +51,8 @@ public class HFTTransactionProcessorTest {
 		fundamental = new MockFundamental(100000);
 		sip = new SIP(TimeStamp.IMMEDIATE);
 
-		market1 = new CDAMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1);
-		market2 = new CDAMarket(sip, new TimeStamp(100), new Random(), 1);
+		market1 = new CDAMarket(sip, new Random(), TimeStamp.IMMEDIATE, 1);
+		market2 = new CDAMarket(sip, new Random(), new TimeStamp(100), 1);
 
 		hft = new MockHFTAgent(TimeStamp.IMMEDIATE, fundamental, sip, 
 				Arrays.asList(market1, market2));

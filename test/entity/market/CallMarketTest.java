@@ -58,10 +58,10 @@ public class CallMarketTest {
 		clearFreq100 = new TimeStamp(100);
 		sip = new SIP(TimeStamp.IMMEDIATE);
 		// no delay from SIP + clears every 100
-		market1 = new CallMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1, 0.5,
+		market1 = new CallMarket(sip, new Random(), TimeStamp.IMMEDIATE, 1, 0.5,
 				clearFreq100);
 		// no delay from SIP + clears every 100 with pricing policy=1
-		market2 = new CallMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1, 1, 
+		market2 = new CallMarket(sip, new Random(), TimeStamp.IMMEDIATE, 1, 1, 
 				clearFreq100);		
 	}
 
@@ -770,10 +770,10 @@ public class CallMarketTest {
 		EventManager em = new EventManager(new Random());
 		
 		// delayed info by 50 + clears every 100
-		CallMarket market3 = new CallMarket(sip, new TimeStamp(50), new Random(), 1, 0.5,
+		CallMarket market3 = new CallMarket(sip, new Random(), new TimeStamp(50), 1, 0.5,
 				clearFreq100);
 		// delayed info by 150 + clears every 100
-		CallMarket market4 = new CallMarket(sip, new TimeStamp(150), new Random(), 1, 0.5,
+		CallMarket market4 = new CallMarket(sip, new Random(), new TimeStamp(150), 1, 0.5,
 				clearFreq100);
 		// Initialize first clears manually
 		em.addActivity(new Clear(market3, TimeStamp.IMMEDIATE));

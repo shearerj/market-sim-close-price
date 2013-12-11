@@ -46,7 +46,7 @@ public class CDAMarketTest {
 	@Before
 	public void setup() {
 		sip = new SIP(TimeStamp.IMMEDIATE);
-		market = new CDAMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1);
+		market = new CDAMarket(sip, new Random(), TimeStamp.IMMEDIATE, 1);
 	}
 
 	@Test
@@ -634,7 +634,7 @@ public class CDAMarketTest {
 	public void latencyTest() {
 		Quote quote;
 		EventManager em = new EventManager(new Random());
-		CDAMarket market = new CDAMarket(sip, new TimeStamp(100), new Random(), 1);
+		CDAMarket market = new CDAMarket(sip, new Random(), new TimeStamp(100), 1);
 
 		// Test that before Time 100 nothing has been updated
 		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
