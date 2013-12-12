@@ -46,7 +46,7 @@ public class OrderParserNYSETest {
 		Logger.setup(3, new File("simulations/unit_testing/OrderParserTest.log"));		
 	}
 
-	private OrderParserNYSE addParser()) {
+	private OrderParserNYSE addParser() {
 		OrderParserNYSE parser = new OrderParserNYSE();
 		return parser;
 	}
@@ -61,8 +61,8 @@ public class OrderParserNYSETest {
 		OrderParserNYSE orderParser = addParser();
 		
 		String orderType = "A";
-		String sequenceNum = "1"
-		String orderReferenceNum = "123456789"
+		String sequenceNum = "1";
+		String orderReferenceNum = "123456789";
 		String exchangeCode = "B";
 		String buy = "B";
 		String quantity = "1000";
@@ -108,8 +108,8 @@ public class OrderParserNYSETest {
 		OrderParserNYSE orderParser = addParser();
 		
 		String orderType = "D";
-		String sequenceNum = "1"
-		String orderReferenceNum = "123456789"
+		String sequenceNum = "1";
+		String orderReferenceNum = "123456789";
 		String milliseconds = "1000";
 		String seconds = "1000";
 		String stockSymbol = "A";
@@ -154,8 +154,8 @@ public class OrderParserNYSETest {
 		OrderParserNYSE orderParser = addParser();
 		
 		String orderType = "M";
-		String sequenceNum = "1"
-		String orderReferenceNum = "123456789"
+		String sequenceNum = "1";
+		String orderReferenceNum = "123456789";
 		String quantity = "1000";
 		String price = "1000";
 		String milliseconds = "1000";
@@ -201,7 +201,7 @@ public class OrderParserNYSETest {
 		OrderParserNYSE orderParser = addParser();
 		
 		String orderType = "I";
-		String sequenceNum = "1"
+		String sequenceNum = "1";
 		String stockSymbol = "A";
 		String price = "1000";
 		String quantity = "1000";
@@ -209,7 +209,7 @@ public class OrderParserNYSETest {
 		String milliseconds = "1000";
 		String seconds = "1000";
 		String marketImbalance = "1000";
-		String auctionType = "O"
+		String auctionType = "O";
         String auctionTime = "0823";
 		String exchangeCode = "B";
 		String systemCode = "B";
