@@ -32,6 +32,8 @@ import event.TimeStamp;
 
 public class LAAgentTest {
 
+	// TODO Here or in HFT Test make sure it gets notified about transactions appropriately
+	
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market1, market2;
 	private Agent agent1, agent2;
