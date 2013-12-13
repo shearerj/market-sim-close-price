@@ -38,8 +38,8 @@ public class HFTTransactionProcessorTest {
 	private Market market1;
 	private Market market2;
 	private MockHFTAgent hft;
-	private SMTransactionProcessor tp1;
-	private SMTransactionProcessor tp2;
+	private AbstractTransactionProcessor tp1;
+	private AbstractTransactionProcessor tp2;
 
 	@BeforeClass
 	public static void setupClass() {
@@ -159,7 +159,7 @@ public class HFTTransactionProcessorTest {
 				fundamental, sip, Arrays.asList(market1, market2));
 
 		tp1 = hft.getHFTTransactionProcessor(market1);
-		SMQuoteProcessor qp = hft.getHFTQuoteProcessor(market2);
+		AbstractQuoteProcessor qp = hft.getHFTQuoteProcessor(market2);
 		tp2 = hft.getHFTTransactionProcessor(market2);
 
 		// Verify latency

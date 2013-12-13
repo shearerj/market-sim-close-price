@@ -218,7 +218,7 @@ public class SIPTest {
 
 		// Add new quote
 		Quote q = new Quote(market1, new Price(80), 1, new Price(100), 2, time);
-		Iterable<? extends Activity> acts = sip.sendToQP(market1, mktTime, q, 
+		Iterable<? extends Activity> acts = sip.sendToQuoteProcessor(market1, mktTime, q, 
 				time);
 		// Verify correct process quote activity inserted right after
 		for (Activity a : acts) {
@@ -246,7 +246,7 @@ public class SIPTest {
 		
 		// Check that process quote activity scheduled correctly
 		Quote q = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		Iterable<? extends Activity> acts = sip2.sendToQP(market1, mktTime, q, 
+		Iterable<? extends Activity> acts = sip2.sendToQuoteProcessor(market1, mktTime, q, 
 				time);
 		// Verify correct process quote activity added to execute at time 50
 		for (Activity a : acts) { 

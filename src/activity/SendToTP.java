@@ -32,7 +32,7 @@ public class SendToTP extends Activity {
 
 	@Override
 	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return tp.sendToTP(market, transactions, currentTime);
+		return tp.sendToTransactionProcessor(market, transactions, currentTime);
 	}
 	
 	@Override

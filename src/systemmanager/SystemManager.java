@@ -20,8 +20,7 @@ import com.google.common.base.Objects;
 import data.EntityProperties;
 import data.MultiSimulationObservations;
 import entity.agent.Agent;
-import entity.infoproc.SMQuoteProcessor;
-import entity.infoproc.SMTransactionProcessor;
+import entity.infoproc.ProcessorIDs;
 import entity.market.Market;
 
 /**
@@ -103,7 +102,7 @@ public class SystemManager {
 	public void executeSimulations() throws IOException {
 		Random rand = new Random();
 		for (int i = 0; i < totalSimulations; i++) {
-			Market.nextID = Agent.nextID = SMTransactionProcessor.nextID = SMQuoteProcessor.nextID = 1; // Reset ids
+			Market.nextID = Agent.nextID = ProcessorIDs.nextID = 1; // Reset ids
 			rand.setSeed(Objects.hashCode(baseRandomSeed, observationNumber * totalSimulations + i));
 			Simulation sim = new Simulation(specification, rand);
 			

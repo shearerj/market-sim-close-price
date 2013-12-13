@@ -16,7 +16,7 @@ import event.TimeStamp;
  * 
  * @author cnris
  */
-public class HFTQuoteProcessor extends SMQuoteProcessor {
+public class HFTQuoteProcessor extends AbstractQuoteProcessor {
 
 	private static final long serialVersionUID = -4104375974647291881L;
 	

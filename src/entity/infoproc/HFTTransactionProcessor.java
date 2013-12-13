@@ -4,7 +4,7 @@ import entity.agent.HFTAgent;
 import entity.market.Market;
 import event.TimeStamp;
 
-public class HFTTransactionProcessor extends SMTransactionProcessor {
+public class HFTTransactionProcessor extends AbstractTransactionProcessor {
 
 	private static final long serialVersionUID = 2897824399529496851L;
 	

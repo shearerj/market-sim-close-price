@@ -53,7 +53,7 @@ public class TransactionProcessorTest {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 		Market market = new CDAMarket(sip, new Random(), TimeStamp.IMMEDIATE, 1);
-		SMTransactionProcessor smip = market.getTransactionProcessor();
+		MarketTransactionProcessor smip = market.getTransactionProcessor();
 
 		// Verify latency
 		assertEquals(TimeStamp.IMMEDIATE, smip.latency);
@@ -91,7 +91,7 @@ public class TransactionProcessorTest {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 		Market market = new CDAMarket(sip, new Random(), new TimeStamp(100), 1);
-		SMTransactionProcessor smip = market.getTransactionProcessor();
+		MarketTransactionProcessor smip = market.getTransactionProcessor();
 
 		// Verify latency
 		assertEquals(new TimeStamp(100), smip.latency);
@@ -138,8 +138,8 @@ public class TransactionProcessorTest {
 		TimeStamp time1 = new TimeStamp(1);
 		Market market = new CDAMarket(sip, new Random(), TimeStamp.IMMEDIATE, 
 				new TimeStamp(100), 1);
-		SMTransactionProcessor smip = market.getTransactionProcessor();
-		SMQuoteProcessor qp = market.getQuoteProcessor();
+		MarketTransactionProcessor smip = market.getTransactionProcessor();
+		MarketQuoteProcessor qp = market.getQuoteProcessor();
 
 		// Verify latency
 		assertEquals(TimeStamp.IMMEDIATE, qp.latency);
