@@ -20,6 +20,7 @@ import com.google.common.collect.Iterables;
 
 import systemmanager.Consts;
 import systemmanager.EventManager;
+import systemmanager.MockEventManager;
 import data.MockFundamental;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
@@ -219,7 +220,7 @@ public class AgentTest {
 		assertEquals(0, market.getTransactions().size());
 		
 		// Testing the market for the correct transactions
-		market.clear(time);	// will call agent's addTransaction
+		MockEventManager.executeAll(market.clear(time));	// will call agent's addTransaction
 		assertEquals( 1, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals( 1, agent.transactions.size());

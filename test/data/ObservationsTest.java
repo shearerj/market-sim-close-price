@@ -7,6 +7,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import logger.Logger;
 
@@ -19,6 +20,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
 import systemmanager.Consts;
+import systemmanager.EventManager;
+import systemmanager.MockEventManager;
 import systemmanager.SimulationSpec;
 
 import entity.agent.Agent;
@@ -335,7 +338,8 @@ public class ObservationsTest {
 		// Double fundamental
 		market1.submitOrder(agent, BUY, new Price(200000), 1, TimeStamp.ZERO);
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
+		// To make sure agetn1 sees clear
+		MockEventManager.executeAll(market1.clear(TimeStamp.ZERO));
 		agent.liquidateAtFundamental(TimeStamp.ZERO);
 		for (PlayerObservation po : obs.getPlayerObservations()) {
 			if (po.role.equals("foreground")) {
@@ -356,7 +360,7 @@ public class ObservationsTest {
 		
 		market1.submitOrder(agent, BUY, new Price(200000), 2, TimeStamp.ZERO);
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 2, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
+		MockEventManager.executeAll(market1.clear(TimeStamp.ZERO));
 		agent.liquidateAtFundamental(TimeStamp.ZERO);
 		for (PlayerObservation po : obs.getPlayerObservations()) {
 			if (po.role.equals("foreground")) {
@@ -378,7 +382,7 @@ public class ObservationsTest {
 		market1.submitOrder(agent, BUY, new Price(200000), 2, TimeStamp.ZERO);
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
+		MockEventManager.executeAll(market1.clear(TimeStamp.ZERO));
 		agent.liquidateAtFundamental(TimeStamp.ZERO);
 		for (PlayerObservation po : obs.getPlayerObservations()) {
 			if (po.role.equals("foreground")) {
@@ -399,7 +403,7 @@ public class ObservationsTest {
 		
 		market1.submitOrder(agent, BUY, new Price(200000), 1, TimeStamp.ZERO);
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
+		MockEventManager.executeAll(market1.clear(TimeStamp.ZERO));
 		agent.liquidateAtPrice(new Price(300000), TimeStamp.ZERO);
 		for (PlayerObservation po : obs.getPlayerObservations()) {
 			if (po.role.equals("foreground")) {
