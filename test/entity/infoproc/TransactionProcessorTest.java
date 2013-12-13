@@ -35,6 +35,7 @@ import event.TimeStamp;
 public class TransactionProcessorTest {
 
 	private SIP sip;
+	// TODO May want to test AbstractTransactionProcessor instead
 	private FundamentalValue fundamental;
 
 	@BeforeClass

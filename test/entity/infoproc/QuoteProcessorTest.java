@@ -26,8 +26,9 @@ public class QuoteProcessorTest {
 	private Market market1;
 	private Market market2;
 	private SIP sip;
-	private AbstractQuoteProcessor smip1;
-	private AbstractQuoteProcessor smip2;
+	// TODO May want to test AbstractQuoteProcessor instead
+	private MarketQuoteProcessor smip1;
+	private MarketQuoteProcessor smip2;
 
 	@BeforeClass
 	public static void setupClass() {
@@ -172,7 +173,7 @@ public class QuoteProcessorTest {
 		TimeStamp time = TimeStamp.ZERO;
 		MarketTime mktTime = new DummyMarketTime(time, 1);
 		Quote q = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
-		AbstractQuoteProcessor smipImmed = new MarketQuoteProcessor(TimeStamp.IMMEDIATE, market2);
+		MarketQuoteProcessor smipImmed = new MarketQuoteProcessor(TimeStamp.IMMEDIATE, market2);
 		
 		// Send quotes to appropriate IPs
 		EventManager em = new EventManager(new Random());
@@ -484,7 +485,7 @@ public class QuoteProcessorTest {
 		
 		// Create market with latency 0
 		Market market3 = new MockMarket(sip, TimeStamp.ZERO);
-		AbstractQuoteProcessor smip3 = market3.getQuoteProcessor();
+		MarketQuoteProcessor smip3 = market3.getQuoteProcessor();
 		
 		// Add new quote
 		Quote q5 = new Quote(market3, new Price(80), 1, new Price(100), 1, time);
