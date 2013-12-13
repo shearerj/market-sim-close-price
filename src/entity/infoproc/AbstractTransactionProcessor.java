@@ -12,7 +12,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import entity.Entity;
+import entity.agent.Agent;
 import entity.market.Market;
+import entity.market.Order;
 import entity.market.Transaction;
 import event.TimeStamp;
 
@@ -46,6 +48,13 @@ abstract class AbstractTransactionProcessor extends Entity implements Transactio
 	public List<Transaction> getTransactions() {
 		// So that we don't copy the list a bunch of times
 		return Collections.unmodifiableList(transactions);
+	}
+	
+	// Tells an agent about a transaction and removes the order if everything has transacted
+	protected void updateAgent(Agent agent, Order order, Transaction transaction) {
+		if (order.getQuantity() == 0)
+			agent.removeOrder(order);
+		agent.processTransaction(transaction);
 	}
 
 }
