@@ -42,9 +42,9 @@ public class HFTTransactionProcessor extends AbstractTransactionProcessor {
 		for (Transaction trans : newTransactions) {
 			Order buy = trans.getBuyBid(), sell = trans.getSellBid();
 			
-			if (buy.getAgent().equals(this))
+			if (buy.getAgent().equals(hftAgent))
 				updateAgent(buy.getAgent(), buy, trans);
-			if (sell.getAgent().equals(this))
+			if (sell.getAgent().equals(hftAgent))
 				updateAgent(sell.getAgent(), sell, trans);
 		}
 		

@@ -1,12 +1,11 @@
 package entity.agent;
 
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.*;
-import static fourheap.Order.OrderType.*;
+import static systemmanager.Executer.execute;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Random;
 
 import logger.Logger;
@@ -15,12 +14,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import activity.Activity;
+import systemmanager.Consts;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 
-import systemmanager.Consts;
 import data.EntityProperties;
 import data.FundamentalValue;
 import data.MockFundamental;
@@ -78,12 +75,13 @@ public class LAAgentTest {
 		 * LAStrategy in order to trigger the next LAStrategy before the first
 		 * has finished executing.
 		 */
-		executeImmediateActivities(market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO), TimeStamp.ZERO);
-		executeImmediateActivities(market1.submitOrder(agent1, BUY, new Price(7), 1, TimeStamp.ZERO), TimeStamp.ZERO);
-		executeImmediateActivities(market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO), TimeStamp.ZERO);
-		
-		executeImmediateActivities(la.agentStrategy(TimeStamp.ZERO), TimeStamp.ZERO);
+		execute(market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO));
+		execute(market1.submitOrder(agent1, BUY, new Price(7), 1, TimeStamp.ZERO));
+		execute(market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO));
+		// LA Strategy get's called implicitly
+
 		assertEquals(0, la.positionBalance);
+		assertTrue(la.profit > 0);
 	}
 	
 	@Test
@@ -93,24 +91,15 @@ public class LAAgentTest {
 			oneSidedArbitrageTest();
 		}
 	}
-
-	private void executeImmediateActivities(Iterable<? extends Activity> acts, TimeStamp time) {
-		// FIXME Change this to use event Manager 
-		ArrayList<Activity> queue = Lists.newArrayList(filterNonImmediateAndReverse(acts));
-		while (!queue.isEmpty()) {
-			Activity a = queue.get(queue.size() - 1);
-			queue.remove(queue.size() - 1);
-			queue.addAll(filterNonImmediateAndReverse(a.execute(time)));
-		}
-	}
 	
-	private Collection<? extends Activity> filterNonImmediateAndReverse(Iterable<? extends Activity> acts) {
-		ArrayList<Activity> array = Lists.newArrayList();
-		for (Activity a : acts)
-			if (a.getTime() == TimeStamp.IMMEDIATE)
-				array.add(a);
-		Collections.reverse(array);
-		return array;
+	@Test
+	public void laProfitTest() {
+		execute(market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO));
+		execute(market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO));
+		// LA Strategy gets called implicitly 
+		
+		assertEquals(0, la.positionBalance);
+		assertEquals(4, la.profit);
 	}
 
 }
