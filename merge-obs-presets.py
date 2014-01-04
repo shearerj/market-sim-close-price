@@ -1,20 +1,13 @@
 #! /usr/bin/env python
-from sys import argv, stdout, exit
+import sys
 import json
+import argparse
 
-"""
-Merges observation files from different PRESET runs, although it will work for
-any that have different names
-"""
-
-def printUsage():
-    print "Merges observation files, and returns summary statistics"
-    print 
-    print "Usage:", argv[0], "obs-files > merged-obs-file"
-    print
-    print "       for OBS in {0..99}; do"
-    print "          ", argv[0], "directory/{CALL,CDA,TWOMARKET}/observation$OBS.json > directory/merged/observation$OBS.json"
-    print "       done"
+parser = argparse.ArgumentParser(description='Merges observation files from different preset runs and returns summary statistics. This is meant to account for past behavior where several presets were run at the same time. You may want to call something like "for OBS in {0..99}; do ' + sys.argv[0] + ' directory/{CALL,CDA,TWOMARKET}/observation$OBS.json > directory/merged/observation$OBS.json; done"')
+parser.add_argument('files', metavar='obs-file', nargs='+',
+                    help='An observation file to merge')
+parser.add_argument('-o', '--output', metavar='merged-obs-file', type=argparse.FileType('w'), default=sys.stdout,
+                    help='The merged observation file, defaults to stdout')
 
 def mergeObs(filenames):
     
@@ -23,7 +16,7 @@ def mergeObs(filenames):
     out['features'] = feats
 
     for filename in filenames:
-        with open(filenames[0], 'r') as first:
+        with open(filename, 'r') as first:
             obs = json.load(first)
 
         players = obs['players']
@@ -40,8 +33,7 @@ def mergeObs(filenames):
     return out
 
 if __name__ == "__main__":
-    if len(argv) < 2 or argv[1] == "-h" or argv[1] == "--help":
-        printUsage()
-        exit(1)
-    json.dump(mergeObs(argv[1:]), stdout)
-    stdout.write('\n')
+    args = parser.parse_args()
+    json.dump(mergeObs(args.files), args.output)
+    args.output.write('\n')
+    args.output.close()
