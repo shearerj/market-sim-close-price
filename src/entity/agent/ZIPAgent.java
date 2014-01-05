@@ -36,24 +36,21 @@ import fourheap.Order.OrderType;
  * 
  * @author ewah
  */
-/**
- * @author ewah
- *
- */
 public class ZIPAgent extends WindowAgent {
 
 	private static final long serialVersionUID = 8138883791556301413L;
 
-	private Margin margin;					// one for each position, mu in Cliff1997
-	private Price limitPrice;				// lambda in Cliff1997
-	private double momentumChange;			// momentum update, in Eq (15) of Cliff1997
-	private double beta;					// learning rate, beta in Cliff1997
-	private double gamma;					// momentum coefficient, gamma in Cliff1997
-	private Price lastPrice;				// for last order price, p_i in Cliff1997
+	protected OrderType type;				// buy or sell
+	protected Margin margin;				// one for each position, mu in Cliff1997
+	protected Price limitPrice;				// lambda in Cliff1997
+	protected double momentumChange;		// momentum update, in Eq (15) of Cliff1997
+	protected double beta;					// learning rate, beta in Cliff1997
+	protected double gamma;					// momentum coefficient, gamma in Cliff1997
+	protected Price lastPrice;				// for last order price, p_i in Cliff1997
 
 	// Strategy parameters (tunable)
-	private final double rangeCoeffA;	// range for A, coefficient of absolute perturbation
-	private final double rangeCoeffR;	// range for R, coefficient of relative perturbation
+	protected final double rangeCoeffA;	// range for A, coefficient of absolute perturbation
+	protected final double rangeCoeffR;	// range for R, coefficient of relative perturbation
 
 	public ZIPAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
 			Market market, Random rand, double reentryRate, double pvVar, 
@@ -113,7 +110,7 @@ public class ZIPAgent extends WindowAgent {
 //		Price ask = quote.getAskPrice();
 
 		// can buy and sell
-		OrderType type = rand.nextBoolean() ? BUY : SELL;
+		type = rand.nextBoolean() ? BUY : SELL;
 		
 		double currentMargin = getCurrentMargin(positionBalance, type, currentTime);
 		log(INFO, sb.append("initial mu=").append(format(currentMargin)));
@@ -312,6 +309,9 @@ public class ZIPAgent extends WindowAgent {
 	 * NOTE: this check only works if comparing last order price to last 
 	 * transaction price. When windowing, there will never be a last order price
 	 * to compare against. What to do?
+	 * 
+	 * FIXME perhaps ZIP should compute a hypothetical order price for every
+	 * possible position (in margin) that it can hold
 	 *  
 	 * @param lastTrans
 	 * @param ts
@@ -340,7 +340,7 @@ public class ZIPAgent extends WindowAgent {
 	 * @return
 	 */
 	public double computeRCoefficient(boolean increasing){
-		if(increasing){
+		if (increasing){
 			return Rands.nextUniform(rand, 1, 1+rangeCoeffR);
 		} else {
 			return Rands.nextUniform(rand, 1-rangeCoeffR, 1);
@@ -354,7 +354,7 @@ public class ZIPAgent extends WindowAgent {
 	 * @return
 	 */
 	public double computeACoefficient(boolean increasing){
-		if(increasing){
+		if (increasing){
 			return Rands.nextUniform(rand, 0, rangeCoeffA);
 		} else {
 			return Rands.nextUniform(rand, -rangeCoeffA, 0);
