@@ -133,7 +133,7 @@ public class HFTQuoteProcessorTest {
 
 		// Add new quote
 		q = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		Iterable<? extends Activity> acts = mktip1.sendToQP(market1, mktTime, q, time);
+		Iterable<? extends Activity> acts = mktip1.sendToQuoteProcessor(market1, mktTime, q, time);
 		// Verify correct process quote & agent strategy activity added
 		assertEquals(1, Iterables.size(acts));
 		assertEquals("Incorrect scheduled process quote time", TimeStamp.IMMEDIATE, 
@@ -167,7 +167,7 @@ public class HFTQuoteProcessorTest {
 		
 		// Check that process quote activity scheduled correctly
 		q = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
-		Iterable<? extends Activity> acts = mktip2.sendToQP(market2, mktTime, q, time);
+		Iterable<? extends Activity> acts = mktip2.sendToQuoteProcessor(market2, mktTime, q, time);
 		assertEquals(1, Iterables.size(acts));
 		assertEquals("Incorrect scheduled process quote time", TimeStamp.IMMEDIATE, 
 				Iterables.getFirst(acts, null).getTime());

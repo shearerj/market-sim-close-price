@@ -43,6 +43,8 @@ public interface Keys {
 	public final static String TRUNCATE_LADDER = "truncateLadder";
 	
 	// Latency
+	public final static String QUOTE_LATENCY = "quoteLatency";
+	public final static String TRANSACTION_LATENCY = "transactionLatency";
 	public final static String NBBO_LATENCY = "nbboLatency";
 	public final static String MARKET_LATENCY = "mktLatency";
 	public final static String LA_LATENCY = "laLatency";

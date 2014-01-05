@@ -38,8 +38,8 @@ public class HFTTransactionProcessorTest {
 	private Market market1;
 	private Market market2;
 	private MockHFTAgent hft;
-	private SMTransactionProcessor tp1;
-	private SMTransactionProcessor tp2;
+	private HFTTransactionProcessor tp1;
+	private HFTTransactionProcessor tp2;
 
 	@BeforeClass
 	public static void setupClass() {
@@ -51,8 +51,8 @@ public class HFTTransactionProcessorTest {
 		fundamental = new MockFundamental(100000);
 		sip = new SIP(TimeStamp.IMMEDIATE);
 
-		market1 = new CDAMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1);
-		market2 = new CDAMarket(sip, new TimeStamp(100), new Random(), 1);
+		market1 = new CDAMarket(sip, new Random(), TimeStamp.IMMEDIATE, 1);
+		market2 = new CDAMarket(sip, new Random(), new TimeStamp(100), 1);
 
 		hft = new MockHFTAgent(TimeStamp.IMMEDIATE, fundamental, sip, 
 				Arrays.asList(market1, market2));
@@ -159,7 +159,7 @@ public class HFTTransactionProcessorTest {
 				fundamental, sip, Arrays.asList(market1, market2));
 
 		tp1 = hft.getHFTTransactionProcessor(market1);
-		SMQuoteProcessor qp = hft.getHFTQuoteProcessor(market2);
+		HFTQuoteProcessor qp = hft.getHFTQuoteProcessor(market2);
 		tp2 = hft.getHFTTransactionProcessor(market2);
 
 		// Verify latency

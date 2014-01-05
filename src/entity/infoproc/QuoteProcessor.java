@@ -15,7 +15,7 @@ import event.TimeStamp;
  */
 public interface QuoteProcessor {
 
-	public Iterable<? extends Activity> sendToQP(Market market, MarketTime quoteTime, 
+	public Iterable<? extends Activity> sendToQuoteProcessor(Market market, MarketTime quoteTime, 
 			Quote quote, TimeStamp currentTime);
 
 	public Iterable<? extends Activity> processQuote(Market market,

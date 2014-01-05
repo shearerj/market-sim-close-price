@@ -1,7 +1,8 @@
 package data;
 
-import static org.junit.Assert.*;
-import static fourheap.Order.OrderType.*;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.util.Arrays;
@@ -15,11 +16,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import systemmanager.Consts;
+import systemmanager.Executer;
+import systemmanager.SimulationSpec;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
-
-import systemmanager.Consts;
-import systemmanager.SimulationSpec;
 
 import entity.agent.Agent;
 import entity.agent.MockAgent;
@@ -335,7 +337,8 @@ public class ObservationsTest {
 		// Double fundamental
 		market1.submitOrder(agent, BUY, new Price(200000), 1, TimeStamp.ZERO);
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
+		// To make sure agetn1 sees clear
+		Executer.execute(market1.clear(TimeStamp.ZERO));
 		agent.liquidateAtFundamental(TimeStamp.ZERO);
 		for (PlayerObservation po : obs.getPlayerObservations()) {
 			if (po.role.equals("foreground")) {
@@ -356,7 +359,7 @@ public class ObservationsTest {
 		
 		market1.submitOrder(agent, BUY, new Price(200000), 2, TimeStamp.ZERO);
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 2, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
+		Executer.execute(market1.clear(TimeStamp.ZERO));
 		agent.liquidateAtFundamental(TimeStamp.ZERO);
 		for (PlayerObservation po : obs.getPlayerObservations()) {
 			if (po.role.equals("foreground")) {
@@ -378,7 +381,7 @@ public class ObservationsTest {
 		market1.submitOrder(agent, BUY, new Price(200000), 2, TimeStamp.ZERO);
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
+		Executer.execute(market1.clear(TimeStamp.ZERO));
 		agent.liquidateAtFundamental(TimeStamp.ZERO);
 		for (PlayerObservation po : obs.getPlayerObservations()) {
 			if (po.role.equals("foreground")) {
@@ -399,7 +402,7 @@ public class ObservationsTest {
 		
 		market1.submitOrder(agent, BUY, new Price(200000), 1, TimeStamp.ZERO);
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
+		Executer.execute(market1.clear(TimeStamp.ZERO));
 		agent.liquidateAtPrice(new Price(300000), TimeStamp.ZERO);
 		for (PlayerObservation po : obs.getPlayerObservations()) {
 			if (po.role.equals("foreground")) {

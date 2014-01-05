@@ -1,10 +1,15 @@
 package entity.infoproc;
 
+import java.util.List;
+
+import activity.Activity;
 import entity.agent.HFTAgent;
 import entity.market.Market;
+import entity.market.Order;
+import entity.market.Transaction;
 import event.TimeStamp;
 
-public class HFTTransactionProcessor extends SMTransactionProcessor {
+public class HFTTransactionProcessor extends AbstractTransactionProcessor {
 
 	private static final long serialVersionUID = 2897824399529496851L;
 	
@@ -28,6 +33,23 @@ public class HFTTransactionProcessor extends SMTransactionProcessor {
 //			List<Transaction> newTransactions, TimeStamp currentTime) {
 //		return super.processTransactions(market, newTransactions, currentTime);
 //	}
+
+	@Override
+	public Iterable<? extends Activity> processTransactions(Market market,
+			List<Transaction> newTransactions, TimeStamp currentTime) {
+		Iterable<? extends Activity> superActs = super.processTransactions(market, newTransactions, currentTime);
+		
+		for (Transaction trans : newTransactions) {
+			Order buy = trans.getBuyBid(), sell = trans.getSellBid();
+			
+			if (buy.getAgent().equals(hftAgent))
+				updateAgent(buy.getAgent(), buy, trans);
+			if (sell.getAgent().equals(hftAgent))
+				updateAgent(sell.getAgent(), sell, trans);
+		}
+		
+		return superActs;
+	}
 
 	@Override
 	public String toString() {
