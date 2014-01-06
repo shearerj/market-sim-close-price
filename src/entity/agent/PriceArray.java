@@ -6,66 +6,46 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
 import com.google.common.collect.Lists;
 
-import utils.Rands;
+import entity.market.Price;
 import fourheap.Order.OrderType;
 
 /**
- * Idea from: Tesauro & Das, "High-Performance Bidding Agents for the Continuous
- * Double Auction," EC-01.
+ * For holding all order prices in an array.
  * 
- * When agents can trade multiple units, we use an array of profit margins
- * of the size of the number of units. Different units have different
- * limit prices, so they require different profit margins to trade at
- * equilibrium. There is one margin per traded unit.
- * 
- * In the paper, the margins are not statistically independent; the limit prices
- * of the less valuable units influence the initial margins of the more
- * valuable units---TODO how? or perhaps margins should be independent? 
- * 
- * Margins: <code>getValue</code> is based on current (or projected) position
- * balance. <code>setValue</code> is similar.
- * 
- * NOTE: Margins only work with single quantity changes.
+ * Used by ZIP Agents, which compute the order price for every quantity.
  * 
  * @author ewah
  *
  */
-class Margin implements Serializable, QuantityIndexedArray<Double> {
+public class PriceArray implements Serializable, QuantityIndexedArray<Price> {
 
-	private static final long serialVersionUID = -3749423779545857329L;
-	
+	private static final long serialVersionUID = 5529375650074829876L;
+
 	protected final int offset;
-	protected List<Double> values;
+	protected List<Price> values;
 	
-	public Margin() {
+	public PriceArray() {
 		this.offset = 0;
 		this.values = Collections.emptyList();
 	}
 	
 	/**
+	 * Initialize all values to -1.
 	 * @param maxPosition
-	 * @param rand
-	 * @param a
-	 * @param b
 	 */
-	public Margin(int maxPosition, Random rand, double a, double b) {
+	public PriceArray(int maxPosition) {
 		checkArgument(maxPosition > 0, "Max Position must be positive");
 		
 		// Identical to legacy generation in final output
 		this.offset = maxPosition;
 		this.values = Lists.newArrayList();
 		
-		double[] values = new double[maxPosition * 2];
-		for (int i = 0; i < values.length; i++)
-			values[i] = Rands.nextUniform(rand, a, b) *	(i >= maxPosition ? -1 : 1);
-			// margins for buy orders are negative
-		
-		for (double value : values)
-			this.values.add(new Double(value));
+		for (int i = 0; i < maxPosition * 2; i++) {
+			this.values.add(new Price(-1));
+		}
 	}
 	
 	/**
@@ -74,7 +54,7 @@ class Margin implements Serializable, QuantityIndexedArray<Double> {
 	 * @param maxPosition
 	 * @param values
 	 */
-	protected Margin(int maxPosition, Collection<Double> values) {
+	protected PriceArray(int maxPosition, Collection<Price> values) {
 		checkArgument(values.size() == 2*maxPosition, "Incorrect number of entries in list");
 		this.values = Lists.newArrayList();
 		this.values.addAll(values);
@@ -87,15 +67,14 @@ class Margin implements Serializable, QuantityIndexedArray<Double> {
 	}
 
 	/**
-	 * Gets margin for single-unit trades. If the projected position would
-	 * exceed the maximum, the profit margin is 0.
+	 * If the projected position would exceed the maximum, the price is 0.
 	 * 
 	 * @param currentPosition
 	 * @param type
 	 * @return
 	 */
 	@Override
-	public Double getValue(int currentPosition, OrderType type) {
+	public Price getValue(int currentPosition, OrderType type) {
 		switch (type) {
 		case BUY:
 			if (currentPosition + offset <= values.size() - 1 &&
@@ -108,7 +87,7 @@ class Margin implements Serializable, QuantityIndexedArray<Double> {
 				return values.get(currentPosition + offset - 1);
 			break;
 		}
-		return 0.0;
+		return Price.ZERO;
 	}
 
 	/**
@@ -117,7 +96,7 @@ class Margin implements Serializable, QuantityIndexedArray<Double> {
 	 * @param value
 	 */
 	public void setValue(int currentPosition, OrderType type,
-			double value) {
+			Price value) {
 		switch (type) {
 		case BUY:
 			if (currentPosition + offset <= values.size() - 1 &&
@@ -133,11 +112,11 @@ class Margin implements Serializable, QuantityIndexedArray<Double> {
 	}
 	
 	@Override
-	public Double getValueFromQuantity(int currentPosition, int quantity,
+	public Price getValueFromQuantity(int currentPosition, int quantity,
 			OrderType type) {
 		checkArgument(quantity > 0, "Quantity must be positive");
 		
 		// TODO need to implement for multiple units
-		return new Double(0);
+		return Price.ZERO;
 	}
 }

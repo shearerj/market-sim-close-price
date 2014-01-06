@@ -38,7 +38,7 @@ import fourheap.Order.OrderType;
  * 
  * @author ewah
  */
-class PrivateValue implements Serializable, QuantityIndexedValue<Price> {
+class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 
 	private static final long serialVersionUID = -348702049295080442L;
 	

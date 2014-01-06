@@ -12,7 +12,7 @@ import fourheap.Order.OrderType;
  *
  * @param <T>
  */
-public interface QuantityIndexedValue<T extends Number> extends Serializable {
+public interface QuantityIndexedArray<T extends Number> extends Serializable {
 
 	/**
 	 * @return offset
