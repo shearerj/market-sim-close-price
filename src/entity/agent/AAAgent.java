@@ -124,7 +124,7 @@ public class AAAgent extends WindowAgent {
 				props.getAsDouble(Keys.BETA_T, .4));
 		
 		//Determining whether agent is a buyer or a seller
-//		this.isBuyer = params.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean());		//TODO
+//		this.isBuyer = props.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean());		//TODO
 	}
 
 	@Override

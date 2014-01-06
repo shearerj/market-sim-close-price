@@ -31,9 +31,9 @@ import entity.Entity;
 import entity.agent.Agent;
 import entity.infoproc.BestBidAsk;
 import entity.infoproc.QuoteProcessor;
-import entity.infoproc.SMQuoteProcessor;
+import entity.infoproc.MarketQuoteProcessor;
 import entity.infoproc.SIP;
-import entity.infoproc.SMTransactionProcessor;
+import entity.infoproc.MarketTransactionProcessor;
 import entity.infoproc.TransactionProcessor;
 import entity.market.clearingrule.ClearingRule;
 import event.TimeStamp;
@@ -71,8 +71,8 @@ public abstract class Market extends Entity {
 	protected final Random rand;
 	protected long marketTime; // keeps track of internal market actions
 
-	protected final SMQuoteProcessor quoteProcessor;
-	protected final SMTransactionProcessor transactionProcessor;
+	protected final MarketQuoteProcessor quoteProcessor;
+	protected final MarketTransactionProcessor transactionProcessor;
 	protected final SIP sip;
 	protected final Collection<QuoteProcessor> qps;
 	protected final Collection<TransactionProcessor> tps;
@@ -132,8 +132,8 @@ public abstract class Market extends Entity {
 		this.qps = Lists.newArrayList();
 		this.tps = Lists.newArrayList();
 		this.sip = sip;
-		this.quoteProcessor = new SMQuoteProcessor(quoteLatency, this);
-		this.transactionProcessor = new SMTransactionProcessor(transactionLatency, this);
+		this.quoteProcessor = new MarketQuoteProcessor(quoteLatency, this);
+		this.transactionProcessor = new MarketTransactionProcessor(transactionLatency, this);
 		qps.add(sip);
 		tps.add(sip);
 		qps.add(quoteProcessor);
@@ -169,11 +169,11 @@ public abstract class Market extends Entity {
 		tps.add(tp);
 	}
 
-	public SMQuoteProcessor getQuoteProcessor() {
+	public MarketQuoteProcessor getQuoteProcessor() {
 		return this.quoteProcessor;
 	}
 	
-	public SMTransactionProcessor getTransactionProcessor() {
+	public MarketTransactionProcessor getTransactionProcessor() {
 		return this.transactionProcessor;
 	}
 	
@@ -256,13 +256,6 @@ public abstract class Market extends Entity {
 			transactionBuilder.add(trans);
 			allTransactions.add(trans);
 			BUS.post(trans);
-			// TODO add delay to agent facing actions...
-			buy.getAgent().processTransaction(trans);
-			if (buy.getQuantity() == 0)
-				buy.agent.removeOrder(buy);
-			sell.getAgent().processTransaction(trans);
-			if (sell.getQuantity() == 0)
-				sell.agent.removeOrder(sell);
 		}
 		
 		List<Transaction> transactions = transactionBuilder.build();

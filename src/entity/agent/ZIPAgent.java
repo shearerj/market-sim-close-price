@@ -17,7 +17,6 @@ import activity.Activity;
 import activity.SubmitNMSOrder;
 import data.EntityProperties;
 import data.FundamentalValue;
-import entity.infoproc.BestBidAsk;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
@@ -34,26 +33,27 @@ import fourheap.Order.OrderType;
  * intelligence for continuous double auction markets," HP Laboratories technical report,
  * HPL-97-141, 1997.
  * 
+ * Maintains array of last order prices for each position?
+ * TODO would make more sense to have one last order price for each buyer at position 0, etc
+ * and each seller at position 0, etc. as it's different going in other direction.
+ * 
  * @author ewah
- */
-/**
- * @author ewah
- *
  */
 public class ZIPAgent extends WindowAgent {
 
 	private static final long serialVersionUID = 8138883791556301413L;
 
-	private Margin margin;					// one for each position, mu in Cliff1997
-	private Price limitPrice;				// lambda in Cliff1997
-	private double momentumChange;			// momentum update, in Eq (15) of Cliff1997
-	private double beta;					// learning rate, beta in Cliff1997
-	private double gamma;					// momentum coefficient, gamma in Cliff1997
-	private Price lastPrice;				// for last order price, p_i in Cliff1997
+	protected OrderType type;				// buy or sell
+	protected Margin margin;				// one for each position, mu in Cliff1997
+	protected Price limitPrice;				// lambda in Cliff1997
+	protected double momentumChange;		// momentum update, in Eq (15) of Cliff1997
+	protected double beta;					// learning rate, beta in Cliff1997
+	protected double gamma;					// momentum coefficient, gamma in Cliff1997
+	protected PriceArray lastOrderPrice;	// for last order price, p_i in Cliff1997
 
 	// Strategy parameters (tunable)
-	private final double rangeCoeffA;	// range for A, coefficient of absolute perturbation
-	private final double rangeCoeffR;	// range for R, coefficient of relative perturbation
+	protected final double rangeCoeffA;	// range for A, coefficient of absolute perturbation
+	protected final double rangeCoeffR;	// range for R, coefficient of relative perturbation
 
 	public ZIPAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
 			Market market, Random rand, double reentryRate, double pvVar, 
@@ -70,7 +70,8 @@ public class ZIPAgent extends WindowAgent {
 
 		// Initializing variables
 		momentumChange = 0;	// initialized to 0
-		lastPrice = null;
+		lastOrderPrice = new PriceArray(maxAbsPosition);
+		limitPrice = null;
 		beta = Rands.nextUniform(rand, betaMin, betaMax);
 		gamma = Rands.nextUniform(rand, gammaMin, gammaMax);
 
@@ -104,26 +105,12 @@ public class ZIPAgent extends WindowAgent {
 
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append(':').append("::agentStrategy: ");
-		
-		// update NBBO
-		BestBidAsk lastNBBOQuote = sip.getNBBO();
 
 		// can buy and sell
-		OrderType type = rand.nextBoolean() ? BUY : SELL;
+		type = rand.nextBoolean() ? BUY : SELL;
 		
 		double currentMargin = getCurrentMargin(positionBalance, type, currentTime);
 		log(INFO, sb.append("initial mu=").append(format(currentMargin)));
-
-		if (lastPrice == null) {
-			switch (type) {
-			case BUY:
-				lastPrice = lastNBBOQuote.getBestBid(); // FIXME or just use quote from its own market?
-				break;
-			case SELL:
-				lastPrice = lastNBBOQuote.getBestAsk();
-				break;
-			}
-		}
 
 		// Check if there are any transactions in the market model yet
 		List<Transaction> pastTransactions = getWindowTransactions(currentTime);
@@ -135,29 +122,14 @@ public class ZIPAgent extends WindowAgent {
 			for (Transaction trans : pastTransactions) {
 				// Update margin
 				log(INFO, sb.append("mu=").append(format(currentMargin)));
-				updateMargin(type, trans, currentTime);
+				updateMargin(trans, currentTime);
 				currentMargin = getCurrentMargin(positionBalance, type, currentTime);
-
-//				double oldMargin = newMargin;
-//				Price lastTransPrice = trans.getPrice();
-//				// Asserting that margin updated correctly
-//				if (isBuyer) {
-//					if (lastTransPrice.lessThanEqual(lastPrice)) 
-//						assert Math.abs(oldMargin) <= Math.abs(margin); // raise margin
-//					else
-//						assert Math.abs(oldMargin) >= Math.abs(margin); // lower margin
-//				} else {
-//					if (lastTransPrice.greaterThanEqual(lastPrice))
-//						assert Math.abs(oldMargin) <= Math.abs(margin); // raise margin
-//					else
-//						assert Math.abs(oldMargin) >= Math.abs(margin); // lower margin
-//				}
 			}
 
 			// Even if no new transactions this round, will still submit a new order
 			Price orderPrice = pcomp.max(Price.ZERO, computeOrderPrice(currentMargin, currentTime));
 			acts.add(new SubmitNMSOrder(this, primaryMarket, type, orderPrice, 1, currentTime));
-			lastPrice = orderPrice;
+			lastOrderPrice.setValue(positionBalance, type, orderPrice);
 
 		} else {
 			// zero transactions
@@ -196,7 +168,8 @@ public class ZIPAgent extends WindowAgent {
 		}
 		log(INFO, sb.append("updated mu=").append(format(currentMargin)).
 				append("-->mu=").append(format(newMargin)));
-		// TODO does this new margin get assigned to the margins? (the initial one)
+		// set margin
+		margin.setValue(positionBalance, type, newMargin);
 		return newMargin;
 	}
 	
@@ -219,17 +192,16 @@ public class ZIPAgent extends WindowAgent {
 
 	/**
 	 * Update profit margin. Eq (12) in Cliff1997
-	 * 
-	 * @param type
 	 * @param lastTrans
 	 * @param currentTime
 	 */
-	public void updateMargin(OrderType type, Transaction lastTrans, TimeStamp currentTime) {
+	public void updateMargin(Transaction lastTrans, TimeStamp currentTime) {
 		StringBuilder sb = new StringBuilder().append(this).append(" ").append(getName()).
 				append("::updateMargin: ");
 		log(INFO, sb.append("lastTransPrice=").append(lastTrans.getPrice()));
 		updateMomentumChange(lastTrans, currentTime);
-		double newMargin = (lastPrice.intValue() + momentumChange) / limitPrice.intValue() - 1;
+		double newMargin = (lastOrderPrice.getValue(positionBalance, type).intValue() 
+				+ momentumChange) / limitPrice.intValue() - 1;
 		margin.setValue(positionBalance, type, newMargin);
 	}
 
@@ -267,12 +239,18 @@ public class ZIPAgent extends WindowAgent {
 	 */
 	public double computeDelta(Transaction lastTrans, TimeStamp currentTime){
 		Price tau = computeTargetPrice(lastTrans, currentTime);
-		return beta * (tau.intValue() - lastPrice.intValue());
+		return beta * (tau.intValue() - lastOrderPrice.getValue(positionBalance, type).intValue());
 	}
 
 
 	/**
 	 * Determine target price (tau). Eq (14) in Cliff1997
+	 * 
+	 * If wish to increase margin, then sellers will increase their target price
+	 * while buyers will decrease.
+	 * 
+	 * If wish to decrease margin, then buyers will increase their target price
+	 * while sellers will decrease.
 	 * 
 	 * @param lastTrans
 	 * @param currentTime
@@ -282,13 +260,17 @@ public class ZIPAgent extends WindowAgent {
 		StringBuilder sb = new StringBuilder().append(this).append(" ").append(getName()).
 				append("::computeTargetPrice: ");
 		Price lastTransPrice = lastTrans.getPrice();
-		log(INFO, sb.append("lastPrice=").append(lastPrice).append(", lastTransPrice=").
+		log(INFO, sb.append("lastPrice=").append(lastOrderPrice).append(", lastTransPrice=").
 				append(lastTransPrice));
 
-		boolean increasing = checkIncreasing(lastTrans, currentTime);
-		double R = computeRCoefficient(increasing);
-		double A = computeACoefficient(increasing);
-		log(INFO, sb.append("increasing? ").append(increasing). 
+		boolean increaseMargin = checkIncreaseMargin(lastTrans, currentTime);
+		boolean increaseTargetPrice = (type.equals(SELL) && increaseMargin) ||
+									  (type.equals(BUY) && !increaseMargin);
+		
+		double R = computeRCoefficient(increaseTargetPrice);
+		double A = computeACoefficient(increaseTargetPrice);
+		log(INFO, sb.append("increase margin? ").append(increaseMargin).
+				append(", increase target? ").append(increaseTargetPrice).
 				append(": R=").append(format(R)).append(", A=").append(format(A)));
 
 		double tau = R * lastTransPrice.intValue() + A;
@@ -298,40 +280,51 @@ public class ZIPAgent extends WindowAgent {
 	}
 
 	/**
-	 * Check if transaction prices have been increasing.
+	 * Check if should increase margin. Conditions for increase:
 	 * 
-	 * NOTE: this check only works if comparing last order price to last 
-	 * transaction price. When windowing, there will never be a last order price
-	 * to compare against. What to do?
+	 * Buyers:
+	 * - last transaction at price q
+	 * - any buyer for which order price p_i >= q should increase profit margin
+	 *   - buyer could have bought for even lower price and still traded
+	 * 
+	 * Sellers:
+	 * - last transaction at price q
+	 * - any seller for which its order price p_i <= q should increase (return TRUE)
+	 *   - seller could have asked for higher price and still traded
+	 * 
+	 * Note: order prices are assumed to have been submitted before any transactions
+	 * in the given window, so the agent updates its order price based on the
+	 * new transaction information.
 	 *  
 	 * @param lastTrans
-	 * @param ts
+	 * @param currentTime
 	 * @return
 	 */
-	protected boolean checkIncreasing(Transaction lastTrans, TimeStamp ts) {
+	protected boolean checkIncreaseMargin(Transaction lastTrans, TimeStamp currentTime) {
 		Price lastTransPrice = lastTrans.getPrice();
-
-		if (lastPrice == null) return true;
-		// always return true if no prior order price or NBBO 
-		// FIXME this may not be the best decision
-
-		boolean increasing = lastTransPrice.greaterThan(lastPrice);
-//		if (lastPrice == lastNBBOQuote.bestBid || lastPrice == lastNBBOQuote.bestAsk) {
-//			// otherwise, lastPrice probably happened more recently than the last 
-//			// transaction if using the NBBO quote as the price
-//			increasing = lastPrice.greaterThan(lastTransPrice);
-//		}
-		return increasing;
+		Price orderPrice = lastOrderPrice.getValue(positionBalance, type);
+		
+		// If no order price yet, compute based on current margin
+		if (orderPrice.equals(new Price(-1)))
+			orderPrice = computeOrderPrice(margin.getValue(positionBalance, type), currentTime);
+		
+		switch (type) {
+			case BUY:
+				return lastTransPrice.lessThanEqual(orderPrice);
+			case SELL:
+				return lastTransPrice.greaterThanEqual(orderPrice);
+		}
+		return false;
 	}
 
 	/**
 	 * Compute new coefficient of Relative Perturbation.
 	 * 
-	 * @param increasing
+	 * @param increaseTargetPrice
 	 * @return
 	 */
-	public double computeRCoefficient(boolean increasing){
-		if(increasing){
+	public double computeRCoefficient(boolean increaseTargetPrice){
+		if (increaseTargetPrice){
 			return Rands.nextUniform(rand, 1, 1+rangeCoeffR);
 		} else {
 			return Rands.nextUniform(rand, 1-rangeCoeffR, 1);
@@ -341,11 +334,11 @@ public class ZIPAgent extends WindowAgent {
 	/**
 	 * Compute new coefficient of Absolute Perturbation
 	 * 
-	 * @param increasing
+	 * @param increaseTargetPrice
 	 * @return
 	 */
-	public double computeACoefficient(boolean increasing){
-		if(increasing){
+	public double computeACoefficient(boolean increaseTargetPrice){
+		if (increaseTargetPrice){
 			return Rands.nextUniform(rand, 0, rangeCoeffA);
 		} else {
 			return Rands.nextUniform(rand, -rangeCoeffA, 0);

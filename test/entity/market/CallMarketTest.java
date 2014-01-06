@@ -497,7 +497,7 @@ public class CallMarketTest {
 		// Same test with market w/ different pricing policy
 		market2.submitOrder(agent1, SELL, new Price(150), 1, time0);
 		market2.submitOrder(agent1, SELL, new Price(140), 2, time0);
-		orders = agent1.getOrders();
+		orders = market2.orders; // Agent orders aren't updated due to delayed order processing. Need to use market instead
 		toWithdraw = null;
 		for (Order o : orders) if (o.getPrice().equals(new Price(140))) toWithdraw = o;
 		market2.withdrawOrder(toWithdraw, 1, time0);

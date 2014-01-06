@@ -66,7 +66,7 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 	}
 
 	@Override
-	public Iterable<? extends Activity> sendToTP(Market market,
+	public Iterable<? extends Activity> sendToTransactionProcessor(Market market,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
 		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? TimeStamp.IMMEDIATE : currentTime.plus(latency);
 		return ImmutableList.of(new ProcessTransactions(this, market, newTransactions, nextTime));
@@ -80,7 +80,7 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 	}
 
 	@Override
-	public Iterable<? extends Activity> sendToQP(Market market,
+	public Iterable<? extends Activity> sendToQuoteProcessor(Market market,
 			MarketTime quoteTime, Quote quote, TimeStamp currentTime) {
 		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? TimeStamp.IMMEDIATE : currentTime.plus(latency);
 		return ImmutableList.of(new ProcessQuote(this, market, quoteTime, quote, nextTime));

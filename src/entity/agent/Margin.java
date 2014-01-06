@@ -16,7 +16,7 @@ import utils.Rands;
  * 
  * In the paper, the margins are not statistically independent; the limit prices
  * of the less valuable units influence the initial margins of the more
- * valuable units---how? TODO margins independent? 
+ * valuable units---TODO how? or perhaps margins should be independent? 
  * 
  * Margins: <code>getValue</code> is based on current (or projected) position
  * balance. <code>setValue</code> is similar.
@@ -26,9 +26,12 @@ import utils.Rands;
  * @author ewah
  *
  */
-class Margin extends QuantityIndexedValue<Double> {
-	
+class Margin implements Serializable, QuantityIndexedArray<Double> {
+
 	private static final long serialVersionUID = -3749423779545857329L;
+	
+	protected final int offset;
+	protected List<Double> values;
 
 	public Margin() {
 		super(0, 0.0);
@@ -62,4 +65,33 @@ class Margin extends QuantityIndexedValue<Double> {
 		super(maxPosition, 0.0, values);
 	}
 
+	/**
+	 * @param currentPosition
+	 * @param type
+	 * @param value
+	 */
+	public void setValue(int currentPosition, OrderType type,
+			double value) {
+		switch (type) {
+		case BUY:
+			if (currentPosition + offset <= values.size() - 1 &&
+					currentPosition + offset >= 0)
+				values.set(currentPosition + offset, value);
+			break;
+		case SELL:
+			if (currentPosition + offset - 1 <= values.size() - 1 && 
+					currentPosition + offset - 1 >= 0)
+				values.set(currentPosition + offset - 1, value);
+			break;
+		}
+	}
+	
+	@Override
+	public Double getValueFromQuantity(int currentPosition, int quantity,
+			OrderType type) {
+		checkArgument(quantity > 0, "Quantity must be positive");
+		
+		// TODO need to implement for multiple units
+		return new Double(0);
+	}
 }

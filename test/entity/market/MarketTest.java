@@ -28,6 +28,8 @@ import event.TimeStamp;
 
 public class MarketTest {
 
+	// TODO Add test for inidividual agent transaction latency, maybe in AgentTest?
+	
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
 	private SIP sip;

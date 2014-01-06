@@ -32,7 +32,7 @@ public class SendToQP extends Activity {
 
 	@Override
 	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return qp.sendToQP(market, this.quoteTime, quote, currentTime);
+		return qp.sendToQuoteProcessor(market, this.quoteTime, quote, currentTime);
 	}
 	
 	@Override

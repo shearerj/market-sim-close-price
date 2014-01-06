@@ -26,8 +26,9 @@ public class QuoteProcessorTest {
 	private Market market1;
 	private Market market2;
 	private SIP sip;
-	private SMQuoteProcessor smip1;
-	private SMQuoteProcessor smip2;
+	// TODO May want to test AbstractQuoteProcessor instead
+	private MarketQuoteProcessor smip1;
+	private MarketQuoteProcessor smip2;
 
 	@BeforeClass
 	public static void setupClass() {
@@ -110,7 +111,7 @@ public class QuoteProcessorTest {
 
 		// Add new quote
 		q = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		Iterable<? extends Activity> acts = smip1.sendToQP(market1, mktTime, q, 
+		Iterable<? extends Activity> acts = smip1.sendToQuoteProcessor(market1, mktTime, q, 
 				time);
 		for (Activity a : acts) { // Verify correct process quote activity added
 			assertEquals("Incorrect scheduled process quote time", TimeStamp.IMMEDIATE, 
@@ -145,7 +146,7 @@ public class QuoteProcessorTest {
 		
 		// Check that process quote activity scheduled correctly
 		q = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
-		Iterable<? extends Activity> acts = smip2.sendToQP(market2, mktTime, q, 
+		Iterable<? extends Activity> acts = smip2.sendToQuoteProcessor(market2, mktTime, q, 
 				time);
 		for (Activity a : acts) { // Verify correct process quote activity added
 			assertEquals("Incorrect scheduled process quote time", smip2.latency, 
@@ -172,7 +173,7 @@ public class QuoteProcessorTest {
 		TimeStamp time = TimeStamp.ZERO;
 		MarketTime mktTime = new DummyMarketTime(time, 1);
 		Quote q = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
-		SMQuoteProcessor smipImmed = new SMQuoteProcessor(TimeStamp.IMMEDIATE, market2);
+		MarketQuoteProcessor smipImmed = new MarketQuoteProcessor(TimeStamp.IMMEDIATE, market2);
 		
 		// Send quotes to appropriate IPs
 		EventManager em = new EventManager(new Random());
@@ -484,11 +485,11 @@ public class QuoteProcessorTest {
 		
 		// Create market with latency 0
 		Market market3 = new MockMarket(sip, TimeStamp.ZERO);
-		SMQuoteProcessor smip3 = market3.getQuoteProcessor();
+		MarketQuoteProcessor smip3 = market3.getQuoteProcessor();
 		
 		// Add new quote
 		Quote q5 = new Quote(market3, new Price(80), 1, new Price(100), 1, time);
-		Iterable<? extends Activity> acts = smip3.sendToQP(market3, mktTime1, q5, 
+		Iterable<? extends Activity> acts = smip3.sendToQuoteProcessor(market3, mktTime1, q5, 
 				time);
 		for (Activity a : acts) { // Verify correct process quote activity added
 			assertEquals("Incorrect scheduled process quote time", 
