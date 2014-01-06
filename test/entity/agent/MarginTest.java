@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import java.util.Random;
 
+import static fourheap.Order.OrderType.SELL;
+import static fourheap.Order.OrderType.BUY;
 import fourheap.Order.OrderType;
 
 import org.junit.Test;
@@ -70,6 +72,28 @@ public class MarginTest {
 		margin.setValue(-2, OrderType.SELL, new Double(1));
 		assertNotEquals(new Double(1), margin.getValue(-2, OrderType.SELL));
 		assertEquals(zero, margin.getValue(-2, OrderType.SELL));
+	}
+	
+	@Test
+	public void setMultipleValueTest() {
+		Margin margin = new Margin(2, new Random(), 0, 1);
+		Double zero = new Double(0);
+		
+		// set
+		margin.setValue(0, BUY, new Double(1));
+		margin.setValue(1, BUY, new Double(2));
+		margin.setValue(0, SELL, new Double(-1));
+		margin.setValue(-1, SELL, zero);
+		
+		// check
+		Double[] trueValues = new Double[4];
+		trueValues[0] = zero;
+		trueValues[1] = new Double(-1);
+		trueValues[2] = new Double(1);
+		trueValues[3] = new Double(2);
+		for (int i = 0; i < 4; i++) {
+			assertEquals(trueValues[i], margin.values.get(i));
+		}
 	}
 	
 	@Test
