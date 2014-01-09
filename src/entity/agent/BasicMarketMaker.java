@@ -2,7 +2,6 @@ package entity.agent;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
-import static fourheap.Order.OrderType.*;
 
 import java.util.Random;
 
@@ -10,9 +9,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
 import systemmanager.Keys;
-import utils.MathUtils;
 import activity.Activity;
-import activity.SubmitOrder;
 import activity.WithdrawOrder;
 import data.EntityProperties;
 import data.FundamentalValue;
@@ -53,50 +50,38 @@ import event.TimeStamp;
 public class BasicMarketMaker extends MarketMaker {
 
 	private static final long serialVersionUID = 9057600979711100221L;
-	
-	private int stepSize;	// rung size is distance between adjacent rungs in ladder
-	private int numRungs;	// # of ladder rungs on one side (e.g., number of buy orders)
-	private boolean truncateLadder; 	// true if truncate if NBBO crosses ladder
-	private boolean noOp;	// true if no-op strategy (never executes strategy)
-	protected Price lastAsk, lastBid; // stores the last ask/bid, respectively
 
 	public BasicMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, double reentryRate, boolean noOp, int numRungs,
-			int rungSize, boolean truncateLadder, int tickSize) {
-		super(fundamental, sip, market, rand, reentryRate, tickSize);
-		this.noOp = noOp;
-		this.numRungs = numRungs;
-		this.stepSize = MathUtils.quantize(rungSize, tickSize);
-		this.truncateLadder = truncateLadder;
-		this.lastAsk = null;
-		this.lastBid = null;
+			Random rand, double reentryRate, int tickSize, boolean noOp,
+			int numRungs, int rungSize, boolean truncateLadder) {
+		super(fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
+				numRungs, rungSize, truncateLadder);	
 	}
 
 	public BasicMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, EntityProperties props) {
 		this(fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0.0005),
+				props.getAsInt(Keys.TICK_SIZE, 1),
 				props.getAsBoolean(Keys.NO_OP, false),
 				props.getAsInt(Keys.NUM_RUNGS, 10),
-				props.getAsInt(Keys.RUNG_SIZE, 1000),
-				props.getAsBoolean(Keys.TRUNCATE_LADDER, true), 
-				props.getAsInt(Keys.TICK_SIZE, 1));
+				props.getAsInt(Keys.RUNG_SIZE, 1000), 
+				props.getAsBoolean(Keys.TRUNCATE_LADDER, true));
 	}
 
 	@Override
 	public Iterable<Activity> agentStrategy(TimeStamp currentTime) {
 		if (noOp) return ImmutableList.of(); // no execution if no-op
-		
+
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));
 
-		// update NBBO
 		BestBidAsk lastNBBOQuote = sip.getNBBO();
 
 		Quote quote = marketQuoteProcessor.getQuote();
 		Price bid = quote.getBidPrice();
 		Price ask = quote.getAskPrice();
-		
+
 		// Quote changed, withdraw all orders
 		if ((bid == null && lastBid != null)
 				|| (bid != null && !bid.equals(lastBid))
@@ -106,20 +91,20 @@ public class BasicMarketMaker extends MarketMaker {
 				|| (ask != null && lastAsk == null)) {
 			for (Order order : activeOrders)
 				acts.add(new WithdrawOrder(order, TimeStamp.IMMEDIATE));
-			
+
 			if (!quote.isDefined()) {
 				log(INFO, this + " " + getName()
 						+ "::agentStrategy: undefined quote in market "
 						+ primaryMarket);
 			} else {
-				
+
 				int ct = (numRungs-1) * stepSize;
-				
+
 				// min price for buy order in the ladder
 				Price buyMinPrice = new Price(bid.intValue() - ct);
 				// max price for buy order in the ladder
 				Price buyMaxPrice = bid;
-				
+
 				// min price for sell order in the ladder
 				Price sellMinPrice = ask;
 				// max price for sell order in the ladder
@@ -132,22 +117,11 @@ public class BasicMarketMaker extends MarketMaker {
 					// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
 					sellMinPrice = pcomp.max(ask, lastNBBOQuote.getBestBid());
 				}
+				
+				// TODO if matches bid, then go one tick in				
+				acts.addAll(this.submitOrderLadder(buyMinPrice, buyMaxPrice, 
+						sellMinPrice, sellMaxPrice, currentTime));
 
-				// build ascending list of buy orders
-				for (int p = buyMinPrice.intValue(); p <= buyMaxPrice.intValue(); p += stepSize) {
-					acts.add(new SubmitOrder(this, primaryMarket, BUY, new Price(p), 1, TimeStamp.IMMEDIATE));
-				}
-				// build descending list of sell orders
-				for (int p = sellMaxPrice.intValue(); p >= sellMinPrice.intValue(); p -= stepSize) { 
-					acts.add(new SubmitOrder(this, primaryMarket, SELL, new Price(p), 1, TimeStamp.IMMEDIATE));
-				}
-				
-				log(INFO, primaryMarket + " " + this + " " + getName()
-						+ "::agentStrategy: ladder numRungs=" + numRungs
-						+ ", stepSize=" + stepSize + ": buys [" + buyMinPrice
-						+ ", " + buyMaxPrice + "] &" + " sells [" + sellMinPrice + ", "
-						+ sellMaxPrice + "]");
-				
 			}
 		} else {
 			log(INFO, currentTime + " | " + primaryMarket + " " + this + " " + getName()
@@ -159,7 +133,7 @@ public class BasicMarketMaker extends MarketMaker {
 
 		return acts.build();
 	}
-	
+
 	@Override
 	public String toString() {
 		return "BasicMarketMaker " + super.toString();
