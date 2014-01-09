@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Scanner;
 
 interface OrderParser {
-	List<OrderDatum> orderDataList = new ArrayList();
+	List<OrderDatum> orderDataList = new ArrayList<OrderDatum>();
 	
 	void process(File inputFile) throws FileNotFoundException;
 

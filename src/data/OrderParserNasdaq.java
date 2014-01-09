@@ -12,12 +12,12 @@ import event.TimeStamp;
 public class OrderParserNasdaq implements OrderParser {
 	OrderParserNasdaq() {
 	}
-	
+
 	OrderParserNasdaq(String filename) throws IOException {
 		File inputFile = readFile(filename);
 		process(inputFile);
 	}
-	
+
 	public void process(File inputFile) throws FileNotFoundException {
 		Scanner scanner = new Scanner(inputFile);
 
@@ -25,13 +25,13 @@ public class OrderParserNasdaq implements OrderParser {
 			Scanner scanner2 = new Scanner(scanner.nextLine());
 			Scanner lineScanner = scanner2.useDelimiter(",");
 			scanner2.close();
-			
+
 			char messageType = lineScanner.next().charAt(0);
 
 			switch (messageType) {
 			case 'A': // add order - no MPID attribution msg
 			case 'F': // add order with MPID attribution message TODO figure out
-						// what an MPID attribution message is
+				// what an MPID attribution message is
 				orderDataList.add(parseAddOrder(lineScanner));
 				break;
 			case 'D':
@@ -49,9 +49,9 @@ public class OrderParserNasdaq implements OrderParser {
 			case 'U': // order replace message
 				orderDataList.add(parseModifyOrder(lineScanner));
 				break;
-			/*
-			 * case 'I': parseNasdaqImbalanceOrder(lineScanner); break;
-			 */
+				/*
+				 * case 'I': parseNasdaqImbalanceOrder(lineScanner); break;
+				 */
 			case 'T': // standalone timestamp
 			case 'S': // systems event message
 			case 'R': // stock directory message
@@ -68,7 +68,7 @@ public class OrderParserNasdaq implements OrderParser {
 			lineScanner.close();
 
 		}
-		
+
 		scanner.close();
 
 	}
@@ -113,7 +113,7 @@ public class OrderParserNasdaq implements OrderParser {
 		OrderDatum orderData = new OrderDatum('D', sequenceNum,
 				orderReferenceNum, exchangeCode, stockSymbol, timestamp,
 				systemCode, quoteId, new Price(0), // price doesnt matter since
-													// delete
+				// delete
 				0, // quantity as well
 				isBuy);
 
@@ -124,7 +124,7 @@ public class OrderParserNasdaq implements OrderParser {
 		TimeStamp timestamp = new TimeStamp(lineScanner.nextInt() * 1000
 				+ lineScanner.nextInt());
 		String originalOrderReferenceNum = lineScanner.next();
-		String newOrderReferenceNum = lineScanner.next();
+		// String newOrderReferenceNum = lineScanner.next(); // XXX not used
 		int quantity = lineScanner.nextInt();
 		Price price = new Price(lineScanner.nextDouble());
 
@@ -172,7 +172,7 @@ public class OrderParserNasdaq implements OrderParser {
 		File inputFile = new File(filename).getCanonicalFile();
 		return inputFile;
 	}
-	
+
 	public List<OrderDatum> getOrderDataList() {
 		return orderDataList;
 	}

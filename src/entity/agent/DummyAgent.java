@@ -1,12 +1,9 @@
 package entity.agent;
 
-import static logger.Logger.log;
-import static logger.Logger.Level.INFO;
-
 import java.util.Collection;
 import java.util.Random;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 
 import data.FundamentalValue;
 import activity.Activity;
@@ -33,7 +30,7 @@ public class DummyAgent extends BackgroundAgent {
 		
 		/*String message = "PHAgent has no strategy!";
 		log(INFO, message);*/
-		return ImmutableSet.of(); // Returns an empty set. 
+		return ImmutableList.of();
 		
 	}
 
@@ -45,7 +42,6 @@ public class DummyAgent extends BackgroundAgent {
 	
 	@Override
 	public String toString() {
-		
 		return "DummyAgent " + super.toString();
 	}
 }

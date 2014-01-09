@@ -1,18 +1,14 @@
 package data;
 
 import java.io.Serializable;
-import java.math.BigInteger;
-import java.util.Random;
 
-import entity.agent.PrivateValue;
-import entity.infoproc.SIP;
-import entity.market.Market;
 import entity.market.Price;
 import event.TimeStamp;
 
-public class OrderDatum {//<P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
+public class OrderDatum implements Serializable {//<P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 6379805806017545016L;
+
 	private char messageType;
 	private String sequenceNum;
 	private String orderReferenceNum;
@@ -28,141 +24,143 @@ public class OrderDatum {//<P extends Comparable<? super P>, T extends Comparabl
 	private char auctionType;
 	private int auctionTime;
 	private boolean isBuy;
-	
-	
-   public OrderDatum(char messageType, String sequenceNum,
-            String orderReferenceNum, char exchangeCode, String stockSymbol,
-            TimeStamp timestamp, char systemCode, String quoteId, Price price,
-            int quantity, boolean isBuy)
-        {
-            super();
-            this.messageType = messageType;
-            this.sequenceNum = sequenceNum;
-            this.orderReferenceNum = orderReferenceNum;
-            this.exchangeCode = exchangeCode;
-            this.stockSymbol = stockSymbol;
-            this.timestamp = timestamp;
-            this.systemCode = systemCode;
-            this.quoteId = quoteId;
-            this.price = price;
-            this.quantity = quantity;
-            this.isBuy = isBuy;
-        }
 
 
-    public char getMessageType() {
-        return messageType;
-    }
+	public OrderDatum(char messageType, String sequenceNum,
+			String orderReferenceNum, char exchangeCode, String stockSymbol,
+			TimeStamp timestamp, char systemCode, String quoteId, Price price,
+			int quantity, boolean isBuy) {
+		this.messageType = messageType;
+		this.sequenceNum = sequenceNum;
+		this.orderReferenceNum = orderReferenceNum;
+		this.exchangeCode = exchangeCode;
+		this.stockSymbol = stockSymbol;
+		this.timestamp = timestamp;
+		this.systemCode = systemCode;
+		this.quoteId = quoteId;
+		this.price = price;
+		this.quantity = quantity;
+		this.isBuy = isBuy;
+	}
 
 
-    public void setMessageType(char messageType) {
-        this.messageType = messageType;
-    }
+	public char getMessageType() {
+		return messageType;
+	}
+
+	public String getMessageTypeAsString() {
+		return Character.toString(messageType);
+	}
 
 
-    public String getSequenceNum() {
-        return sequenceNum;
-    }
+	public void setMessageType(char messageType) {
+		this.messageType = messageType;
+	}
 
 
-    public void setSequenceNum(String sequenceNum) {
-        this.sequenceNum = sequenceNum;
-    }
+	public String getSequenceNum() {
+		return sequenceNum;
+	}
 
 
-    public String getOrderReferenceNum() {
-        return orderReferenceNum;
-    }
+	public void setSequenceNum(String sequenceNum) {
+		this.sequenceNum = sequenceNum;
+	}
 
 
-    public void setOrderReferenceNum(String orderReferenceNum) {
-        this.orderReferenceNum = orderReferenceNum;
-    }
+	public String getOrderReferenceNum() {
+		return orderReferenceNum;
+	}
 
 
-    public char getExchangeCode() {
-        return exchangeCode;
-    }
+	public void setOrderReferenceNum(String orderReferenceNum) {
+		this.orderReferenceNum = orderReferenceNum;
+	}
 
 
-    public void setExchangeCode(char exchangeCode) {
-        this.exchangeCode = exchangeCode;
-    }
+	public char getExchangeCode() {
+		return exchangeCode;
+	}
 
 
-    public String getStockSymbol() {
-        return stockSymbol;
-    }
+	public void setExchangeCode(char exchangeCode) {
+		this.exchangeCode = exchangeCode;
+	}
 
 
-    public void setStockSymbol(String stockSymbol) {
-        this.stockSymbol = stockSymbol;
-    }
+	public String getStockSymbol() {
+		return stockSymbol;
+	}
 
 
-    public TimeStamp getTimestamp() {
-        return timestamp;
-    }
+	public void setStockSymbol(String stockSymbol) {
+		this.stockSymbol = stockSymbol;
+	}
 
 
-    public void setTimestamp(TimeStamp timestamp) {
-        this.timestamp = timestamp;
-    }
+	public TimeStamp getTimestamp() {
+		return timestamp;
+	}
 
 
-    public char getSystemCode() {
-        return systemCode;
-    }
+	public void setTimestamp(TimeStamp timestamp) {
+		this.timestamp = timestamp;
+	}
 
 
-    public void setSystemCode(char systemCode) {
-        this.systemCode = systemCode;
-    }
+	public char getSystemCode() {
+		return systemCode;
+	}
 
 
-    public String getQuoteId() {
-        return quoteId;
-    }
+	public void setSystemCode(char systemCode) {
+		this.systemCode = systemCode;
+	}
 
 
-    public void setQuoteId(String quoteId) {
-        this.quoteId = quoteId;
-    }
+	public String getQuoteId() {
+		return quoteId;
+	}
 
 
-    public Price getPrice() {
-        return price;
-    }
+	public void setQuoteId(String quoteId) {
+		this.quoteId = quoteId;
+	}
 
 
-    public void setPrice(Price price) {
-        this.price = price;
-    }
+	public Price getPrice() {
+		return price;
+	}
 
 
-    public int getQuantity() {
-        return quantity;
-    }
+	public void setPrice(Price price) {
+		this.price = price;
+	}
 
 
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
+	public int getQuantity() {
+		return quantity;
+	}
 
 
-    public boolean isBuy() {
-        return isBuy;
-    }
+	public void setQuantity(int quantity) {
+		this.quantity = quantity;
+	}
 
 
-    public void setBuy(boolean isBuy) {
-        this.isBuy = isBuy;
-    }
+	public boolean isBuy() {
+		return isBuy;
+	}
 
 
-    public static long getSerialversionuid() {
-        return serialVersionUID;
-    }
+	public void setBuy(boolean isBuy) {
+		this.isBuy = isBuy;
+	}
+
+
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
 
 
 	public int getTotalImbalance() {

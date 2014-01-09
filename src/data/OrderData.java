@@ -1,10 +1,5 @@
 package data;
 
-import java.util.Random;
-
-import entity.agent.PrivateValue;
-import entity.infoproc.SIP;
-import entity.market.Market;
 import entity.market.Price;
 import event.TimeStamp;
 

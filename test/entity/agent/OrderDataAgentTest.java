@@ -1,12 +1,9 @@
 package entity.agent;
 
-import static logger.Logger.log;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,27 +15,16 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import systemmanager.Keys;
 import activity.Activity;
-import activity.AgentStrategy;
-import activity.ProcessQuote;
-import activity.SendToIP;
-import activity.SubmitNMSOrder;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 
 import data.DummyFundamental;
-import data.EntityProperties;
 import data.FundamentalValue;
-import data.OrderData;
+import data.MockOrderDatum;
 import data.OrderDatum;
-import entity.agent.DummyAgent;
 import entity.infoproc.SIP;
 import entity.market.Market;
-import entity.market.MarketTime;
 import entity.market.MockMarket;
 import entity.market.Order;
 import entity.market.Price;
@@ -48,7 +34,7 @@ public class OrderDataAgentTest {
 
 	private static Random rand;
 
-	private FundamentalValue fundamental = new DummyFundamental(100000);//?
+	private FundamentalValue fundamental = new DummyFundamental(100000);
 	private Market market;
 	private SIP sip;
 
@@ -77,12 +63,13 @@ public class OrderDataAgentTest {
 	
 	@Test
 	public void strategyTest(){
-		Logger.log(Logger.Level.DEBUG," \n Testing OrderDataAgent strategy , should return orderdata as what is passed in \n");
+		Logger.log(Logger.Level.DEBUG," \n Testing OrderDataAgent strategy, "
+				+ "should return orderdata as what is passed in \n");
 		List<OrderDatum> orders = new LinkedList<OrderDatum>();
 		
-		orders.add(new OrderDatum(new TimeStamp(15), new Price(75000), 1, true));
-		orders.add(new OrderDatum(new TimeStamp(20), new Price(60000), 1, false));
-	    orders.add(new OrderDatum(new TimeStamp(18), new Price(75000), 1, true));
+		orders.add(new MockOrderDatum(new TimeStamp(15), new Price(75000), 1, true));
+		orders.add(new MockOrderDatum(new TimeStamp(20), new Price(60000), 1, false));
+	    orders.add(new MockOrderDatum(new TimeStamp(18), new Price(75000), 1, true));
 
 		OrderDataAgent agent = addAgent(orders.iterator());
 		
@@ -92,7 +79,7 @@ public class OrderDataAgentTest {
 		Collection<? extends Activity> c = agent.agentStrategy(t1);
 		Activity nextOrder = Iterables.getOnlyElement(c);
 		TimeStamp t2 = new TimeStamp(15);
-		assertTrue("OrderDataAgent Strategy is in order",nextOrder.getTime().equals(t2));
+		assertEquals("OrderDataAgent Strategy is in order", t2, nextOrder.getTime());
 		
 		agent.executeODAStrategy(1, t2);
 	    
@@ -102,7 +89,7 @@ public class OrderDataAgentTest {
         nextOrder = Iterables.getOnlyElement(c);
         System.out.println(nextOrder.getTime());
         t2 = new TimeStamp(18);
-        assertTrue("OrderDataAgent Strategy is in order",nextOrder.getTime().equals(t2));
+        assertEquals("OrderDataAgent Strategy is in order", t2, nextOrder.getTime());
         
         agent.executeODAStrategy(1, t2);
 
@@ -111,7 +98,7 @@ public class OrderDataAgentTest {
         c = agent.agentStrategy(t1);
         nextOrder = Iterables.getOnlyElement(c);
         t2 = new TimeStamp(20);
-        assertTrue("OrderDataAgent Strategy is in order",nextOrder.getTime().equals(t2));
+        assertEquals("OrderDataAgent Strategy is in order", t2, nextOrder.getTime());
   	}
 	
 	@Test
@@ -126,12 +113,10 @@ public class OrderDataAgentTest {
 	    Order order = Iterables.getFirst(orderCollection, null);
 		
 		Logger.log(Logger.Level.DEBUG, agent.getOrders());
-		assertTrue("OrderDataAgent active order have wrong agent",order.getAgent().equals(agent));
-	    assertTrue("OrderDataAgent active order have wrong market",order.getMarket().equals(market));
-	    assertTrue("OrderDataAgent active order have wrong price",order.getPrice().equals(new Price(75000)));
-	    assertTrue("OrderDataAgent active order have wrong price", order.getQuantity() == 1);
-	    assertTrue("OrderDataAgent active order have wrong timestamp",order.getSubmitTime().equals(new TimeStamp(15)));
-
+		assertEquals("OrderDataAgent active order have wrong agent", agent, order.getAgent());
+	    assertEquals("OrderDataAgent active order have wrong market", market, order.getMarket());
+	    assertEquals("OrderDataAgent active order have wrong price", new Price(75000), order.getPrice());
+	    assertEquals("OrderDataAgent active order have wrong price", 1, order.getQuantity());
+	    assertEquals("OrderDataAgent active order have wrong timestamp", new TimeStamp(15), order.getSubmitTime());
 	}
-	
 }
