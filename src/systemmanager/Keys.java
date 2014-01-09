@@ -84,4 +84,7 @@ public interface Keys {
 	public final static String BETA_MAX = "betaMax";
 	public final static String COEFF_R = "rangeR";
 	public final static String COEFF_A = "rangeA";
+	
+	// MarketMakers
+	public final static String WEIGHT_FACTOR = "weightFactor";
 }

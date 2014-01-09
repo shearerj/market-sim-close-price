@@ -103,6 +103,8 @@ public class ZIPAgent extends WindowAgent {
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));
 
+		// XXX should ZIP withdraw orders upon each reentry?
+		
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append(':').append("::agentStrategy: ");
 

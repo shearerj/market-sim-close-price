@@ -17,6 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import activity.Activity;
+import activity.AgentStrategy;
 import activity.SubmitNMSOrder;
 
 import com.google.common.collect.Iterables;
@@ -170,11 +171,52 @@ public class ZIPAgentTest {
 		}
 	}
 
-	// TODO
+	
+	@Test
 	public void agentStrategyTest() {
-		// what happens if zero transactions
+		TimeStamp time = TimeStamp.ZERO;
+		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(Keys.MAX_QUANTITY, 1);
+		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);
+		testProps.put(Keys.BETA_MAX, 0.5);
+		testProps.put(Keys.BETA_MIN, 0.5);
+		testProps.put(Keys.GAMMA_MAX, 0.5);
+		testProps.put(Keys.GAMMA_MIN, 0.5);
+		testProps.put(Keys.COEFF_A, 0.3);
+		testProps.put(Keys.COEFF_R, 0.25);
+		testProps.put(Keys.MARGIN_MAX, 0.05);
+		testProps.put(Keys.MARGIN_MIN, 0.05);
+		
+		ZIPAgent agent = new ZIPAgent(TimeStamp.ZERO, fundamental, sip, market, rand,
+				testProps);
+
+		// Zero transactions initially
+		Iterable<? extends Activity> test = agent.agentStrategy(time);
 		// should execute NMS order as in ZI strategy
-		fail();
+		assertEquals(2, Iterables.size(test));
+		assertTrue(Iterables.getFirst(test, null) instanceof AgentStrategy);
+		assertTrue(Iterables.getLast(test, null) instanceof SubmitNMSOrder);
+		
+		// now with a dummy transaction and dummy order prices
+		addTransaction(95000, 1, 0);
+		addTransaction(90000, 1, 0);
+		agent.limitPrice = agent.getLimitPrice(BUY, 1, time);
+		// set the margins
+		agent.type = SELL;
+		agent.lastOrderPrice.setValue(0, SELL, new Price(105000));
+		agent.lastOrderPrice.setValue(0, BUY, new Price(95000));
+		
+		test = agent.agentStrategy(time);
+		assertEquals(2, Iterables.size(test));
+		assertTrue(Iterables.getFirst(test, null) instanceof AgentStrategy);
+		assertTrue(Iterables.getLast(test, null) instanceof SubmitNMSOrder);
+		Iterables.getLast(test).execute(time);
+		
+		// buyer reduces margins because transaction prices are less than order
+		// prices, submitted order price will be below the last order price
+		// should also be below the most recent transaction price
+		assertCorrectBid(agent, 85000, 95000, 1);
+		assertCorrectBid(agent, 85000, 90000, 1);
 	}
 	
 	@Test
@@ -327,7 +369,6 @@ public class ZIPAgentTest {
 		agent.updateMargin(lastTrans, time);
 		double newMargin = agent.margin.getValue(0, agent.type);
 		assertTrue(newMargin == agent.getCurrentMargin(0, agent.type, time));
-		//				double newMargin = agent.getCurrentMargin(0, agent.type, time);
 		checkMarginUpdate(BUY, lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
 	
@@ -709,17 +750,7 @@ public class ZIPAgentTest {
 		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
 		// the transaction would work
 	}
-	
-	private void executeAgentStrategy(Agent agent, int time) {
-		TimeStamp currentTime = new TimeStamp(time);
-		Iterable<? extends Activity> test = agent.agentStrategy(currentTime);
-
-		// executing the bid submission - will go to the market
-		for (Activity act : test)
-			if (act instanceof SubmitNMSOrder)
-				act.execute(currentTime);
-	}
-	
+		
 	private void assertCorrectBid(Agent agent, int low, int high,
 			int quantity) {
 		Collection<Order> orders = agent.activeOrders;
