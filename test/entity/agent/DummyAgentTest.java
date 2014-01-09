@@ -11,10 +11,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import systemmanager.Consts;
 import activity.Activity;
-
-import data.DummyFundamental;
 import data.FundamentalValue;
+import data.MockFundamental;
 import entity.agent.DummyAgent;
 import entity.infoproc.SIP;
 import entity.market.Market;
@@ -24,14 +24,14 @@ import event.TimeStamp;
 
 public class DummyAgentTest {
 
-	private FundamentalValue fundamental = new DummyFundamental(100000);
+	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
 	private SIP sip;
 
 	@BeforeClass
 	public static void setupClass() {
 		// Setting up the log file
-		Logger.setup(3, new File("simulations/unit_testing/DummyAgentTest.log"));
+		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "DummyAgentTest.log"));
 	}
 
 	@Before

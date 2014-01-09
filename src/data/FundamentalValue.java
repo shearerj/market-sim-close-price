@@ -33,6 +33,7 @@ public class FundamentalValue implements Serializable {
 
 	/**
 	 * Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps
+	 * 
 	 * @param kap rate which the process reverts to the mean value
 	 * @param meanVal mean process
 	 * @param var Gaussian Process variance
@@ -48,7 +49,16 @@ public class FundamentalValue implements Serializable {
 		meanRevertProcess = Lists.newArrayList();
 		meanRevertProcess.add(Rands.nextGaussian(rand, meanValue, shockVar));
 	}
+	
+	public static FundamentalValue create(double kap, int meanVal, double var, Random rand) {
+		return new FundamentalValue(kap, meanVal, var, rand);
+	}
 
+	/**
+	 * Helper method to ensure that maxQuery exists in the data structure.
+	 * 
+	 * @param maxQuery
+	 */
 	protected void computeFundamentalTo(int maxQuery) {
 		for (int i = meanRevertProcess.size(); i <= maxQuery; i++) {
 			double prevValue = Iterables.getLast(meanRevertProcess);
@@ -70,6 +80,20 @@ public class FundamentalValue implements Serializable {
 		}
 		computeFundamentalTo(index);
 		return new Price((int) (double) meanRevertProcess.get(index)).nonnegative();
+	}
+	
+	/**
+	 * Returns a TimeSeries copy of the fundamental data. This makes a copy, and
+	 * does not return a view into the FundamentalValue. This makes it
+	 * expensive, and not super great. This could be fixed if TimeSeries were an
+	 * interface, but that would require more thought.
+	 */
+	public TimeSeries asTimeSeries() {
+		TimeSeries copy = TimeSeries.create();
+		int time = 0;
+		for (double v : meanRevertProcess)
+			copy.add(time++, v);
+		return copy;
 	}
 
 }

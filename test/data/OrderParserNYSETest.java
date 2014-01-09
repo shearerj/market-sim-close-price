@@ -11,6 +11,7 @@ import logger.Logger;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import systemmanager.Consts;
 import data.OrderDatum;
 import data.OrderParserNYSE;
 import entity.market.Price;
@@ -21,7 +22,7 @@ public class OrderParserNYSETest {
 	@BeforeClass
 	public static void setupClass() {
 		// Setting up the log file
-		Logger.setup(3, new File("simulations/unit_testing/OrderParserTest.log"));		
+		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "OrderParserTest.log"));		
 	}
 
 	private OrderParserNYSE addParser() {

@@ -2,6 +2,7 @@ package entity.agent;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
+import static fourheap.Order.OrderType.*;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -20,7 +21,7 @@ import com.google.common.collect.Maps;
 
 import data.EntityProperties;
 import data.FundamentalValue;
-import entity.infoproc.HFTIP;
+import entity.infoproc.HFTQuoteProcessor;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
@@ -42,36 +43,33 @@ public class LAAgent extends HFTAgent {
 	private static final long serialVersionUID = 1479379512311568959L;
 	
 	protected final double alpha; // LA profit gap
-	protected final Map<Market, HFTIP> ips;
 
-	public LAAgent(Collection<Market> markets, FundamentalValue fundamental,
-			SIP sip, double alpha, TimeStamp latency, Random rand,
-			int tickSize) {
-		super(TimeStamp.ZERO, markets, fundamental, sip, rand, tickSize);
+	public LAAgent(TimeStamp latency, FundamentalValue fundamental,
+			SIP sip, Collection<Market> markets, Random rand, int tickSize,
+			double alpha) {
+		super(latency, TimeStamp.ZERO, fundamental, sip, markets, rand, tickSize);
+		
 		this.alpha = alpha;
-		this.ips = Maps.newHashMap();
-
-		for (Market market : markets) {
-			HFTIP laip = new HFTIP(latency, market, this);
-			ips.put(market, laip);
-			market.addIP(laip);
-		}
 	}
 
-	public LAAgent(Collection<Market> markets, FundamentalValue fundamental,
-			SIP sip, Random rand, EntityProperties props) {
-		this(markets, fundamental, sip, props.getAsDouble(Keys.ALPHA, 0.001),
-				new TimeStamp(props.getAsLong(Keys.LA_LATENCY, -1)), rand,
-				props.getAsInt(Keys.TICK_SIZE, 1));
+	public LAAgent(FundamentalValue fundamental, SIP sip,
+			Collection<Market> markets, Random rand, EntityProperties props) {
+		this(new TimeStamp(props.getAsLong(Keys.LA_LATENCY, -1)), fundamental, sip, markets,
+				rand, props.getAsInt(Keys.TICK_SIZE, 1),
+				props.getAsDouble(Keys.ALPHA, 0.001));
 	}
 
 	@Override
 	// TODO Need strategy for orders that don't execute
 	public Iterable<? extends Activity> agentStrategy(TimeStamp ts) {
+		if (positionBalance != 0 && activeOrders.isEmpty())
+			// Have pending submit order activities
+			return ImmutableList.of();
+		
 		Price bestBid = null, bestAsk = null;
 		Market bestBidMarket = null, bestAskMarket = null;
 
-		for (Entry<Market, HFTIP> ipEntry : ips.entrySet()) {
+		for (Entry<Market, HFTQuoteProcessor> ipEntry : quoteProcessors.entrySet()) {
 			Quote q = ipEntry.getValue().getQuote();
 			if (q.getAskPrice() != null && q.getAskPrice().lessThan(bestAsk)) {
 				bestAsk = q.getAskPrice();
@@ -88,47 +86,50 @@ public class LAAgent extends HFTAgent {
 			return Collections.emptySet();
 
 		log(INFO, this + " detected arbitrage between " + bestBidMarket + " "
-				+ ips.get(bestBidMarket).getQuote() + " and " + bestAskMarket
-				+ " " + ips.get(bestAskMarket).getQuote());
+				+ quoteProcessors.get(bestBidMarket).getQuote() + " and " + bestAskMarket
+				+ " " + quoteProcessors.get(bestAskMarket).getQuote());
 		Price midPoint = new Price((bestBid.doubleValue() + bestAsk.doubleValue()) * .5).quantize(tickSize);
 		return ImmutableList.of(
-				new SubmitOrder(this, bestBidMarket, midPoint, -1, TimeStamp.IMMEDIATE),
-				new SubmitOrder(this, bestAskMarket, midPoint, 1, TimeStamp.IMMEDIATE));
+				new SubmitOrder(this, bestBidMarket, SELL, midPoint, 1, TimeStamp.IMMEDIATE),
+				new SubmitOrder(this, bestAskMarket, BUY, midPoint, 1, TimeStamp.IMMEDIATE));
 	}
 
-	// This should be a natural extension of the arbitrage strategy extended to multi quantities,
-	// which should be necessary if the arbitrageur has a latency. FIXME For some reason this is not
-	// the same as the above strategy, sometimes making more profit, sometimes less, and I'm unsure
-	// why.
+	/*
+	 * This should be a natural extension of the arbitrage strategy extended to
+	 * multi quantities, which should be necessary if the arbitrageur has a
+	 * latency. FIXME For some reason this is not the same as the above
+	 * strategy, sometimes making more profit, sometimes less, and I'm unsure
+	 * why.
+	 */
 	public Iterable<? extends Activity> agentStrategy2(TimeStamp ts) {
-		FourHeap<Price, Integer> fh = FourHeap.<Price, Integer> create();
+		FourHeap<Price, Integer, Order<Price, Integer>> fh = FourHeap.create();
 		Map<Order<Price, Integer>, Market> orderMap = Maps.newHashMap();
 		
-		for (Entry<Market, HFTIP> ipEntry : ips.entrySet()) {
+		for (Entry<Market, HFTQuoteProcessor> ipEntry : quoteProcessors.entrySet()) {
 			Quote q = ipEntry.getValue().getQuote();
 			if (q.getBidPrice() != null && q.getBidQuantity() > 0) {
-				Order<Price, Integer> order = Order.create(q.getBidPrice(), q.getBidQuantity(), 0);
+				Order<Price, Integer> order = Order.create(BUY, q.getBidPrice(), q.getBidQuantity(), 0);
 				orderMap.put(order, ipEntry.getKey());
 				fh.insertOrder(order);
 			}
 			if (q.getAskPrice() != null && q.getAskQuantity() > 0) {
-				Order<Price, Integer> order = Order.create(q.getAskPrice(), -q.getAskQuantity(), 0);
+				Order<Price, Integer> order = Order.create(SELL, q.getAskPrice(), q.getAskQuantity(), 0);
 				orderMap.put(order, ipEntry.getKey());
 				fh.insertOrder(order);
 			}
 		}
 		
-		List<MatchedOrders<Price, Integer>> transactions = fh.clear();
+		List<MatchedOrders<Price, Integer, Order<Price, Integer>>> transactions = fh.clear();
 		Builder<Activity> acts = ImmutableList.builder();
-		for (MatchedOrders<Price, Integer> trans : transactions) {
+		for (MatchedOrders<Price, Integer, Order<Price, Integer>> trans : transactions) {
 			Order<Price, Integer> buy = trans.getBuy(), sell = trans.getSell();
 			if (sell.getPrice().doubleValue() * (1 + alpha) > buy.getPrice().doubleValue())
 				continue;
 			double midPoint = .5 * (buy.getPrice().doubleValue() + sell.getPrice().doubleValue()); 
 			Price midPrice = new Price(midPoint).quantize(tickSize);
 			
-			acts.add(new SubmitOrder(this, orderMap.get(sell), midPrice, trans.getQuantity(), TimeStamp.IMMEDIATE));
-			acts.add(new SubmitOrder(this, orderMap.get(buy), midPrice, -trans.getQuantity(), TimeStamp.IMMEDIATE));
+			acts.add(new SubmitOrder(this, orderMap.get(sell), BUY, midPrice, trans.getQuantity(), TimeStamp.IMMEDIATE));
+			acts.add(new SubmitOrder(this, orderMap.get(buy), SELL, midPrice, trans.getQuantity(), TimeStamp.IMMEDIATE));
 		}
 		return acts.build();
 	}

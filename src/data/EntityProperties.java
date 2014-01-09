@@ -6,7 +6,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.common.base.Joiner;
@@ -14,8 +13,18 @@ import com.google.common.base.Joiner.MapJoiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import com.google.gson.JsonObject;
 
+/**
+ * Class that represents the properties of an entity. These are generally loaded
+ * from a simulation spec file.
+ * 
+ * Contains methods to get values as any type, potentially with a defautl value.
+ * If a default value isn't used, and the key doesn't exist, you'll get a null
+ * object, or a null pointer.
+ * 
+ * @author erik
+ * 
+ */
 public class EntityProperties implements Serializable {
 	
 	private static final long serialVersionUID = -7220533203495890410L;
@@ -127,12 +136,6 @@ public class EntityProperties implements Serializable {
 
 	public void put(String key, boolean value) {
 		properties.put(key, Boolean.toString(value));
-	}
-	
-	public JsonObject copyToJson(JsonObject json) {
-		for (Entry<String, String> e : properties.entrySet())
-			json.addProperty(e.getKey(), e.getValue());
-		return json;
 	}
 
 	@Override

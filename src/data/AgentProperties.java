@@ -3,6 +3,12 @@ package data;
 import static com.google.common.base.Preconditions.checkNotNull;
 import systemmanager.Consts.AgentType;
 
+/**
+ * Entity properties that is bundeled with an AgentType.
+ * 
+ * @author erik
+ * 
+ */
 public class AgentProperties extends EntityProperties {
 
 	private static final long serialVersionUID = -8267036814743083118L;

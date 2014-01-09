@@ -2,6 +2,12 @@ package utils;
 
 import java.util.Random;
 
+/**
+ * Class with extra random methods
+ * 
+ * @author erik
+ * 
+ */
 public abstract class Rands {
 
 	public static synchronized double nextGaussian(Random rand, double mean, double variance) {
@@ -9,7 +15,7 @@ public abstract class Rands {
 	}
 	
 	public static double nextExponential(Random rand, double rate) {
-		if (rate == 0) return Double.POSITIVE_INFINITY;	// TODO test this
+		if (rate == 0) return Double.POSITIVE_INFINITY;
 		return -Math.log(rand.nextDouble()) / rate;
 	}
 

@@ -3,10 +3,10 @@ package entity.agent;
 import java.util.Random;
 
 import data.FundamentalValue;
-
 import activity.Activity;
+import entity.infoproc.MarketQuoteProcessor;
+import entity.infoproc.MarketTransactionProcessor;
 import entity.infoproc.SIP;
-import entity.infoproc.SMIP;
 import entity.market.Market;
 import event.TimeStamp;
 
@@ -36,15 +36,16 @@ public abstract class SMAgent extends Agent {
 
 	private static final long serialVersionUID = 3156640550886695881L;
 	
-	// TODO Only store market ip and submit orders through it...?
 	protected final Market primaryMarket;
-	protected final SMIP marketIP;
+	protected final MarketQuoteProcessor marketQuoteProcessor;
+	protected final MarketTransactionProcessor marketTransactionProcessor;
 
 	public SMAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			Market market, Random rand, PrivateValue pv, int tickSize) {
-		super(arrivalTime, fundamental, sip, rand, pv, tickSize);
+			Market market, Random rand, int tickSize) {
+		super(arrivalTime, fundamental, sip, rand, tickSize);
 		this.primaryMarket = market;
-		this.marketIP = market.getSMIP();
+		this.marketQuoteProcessor = market.getQuoteProcessor();
+		this.marketTransactionProcessor = market.getTransactionProcessor();
 	}
 
 	@Override

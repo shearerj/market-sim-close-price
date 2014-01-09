@@ -12,7 +12,6 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-// TODO Currently unused
 public class Liquidate extends Activity {
 
 	protected final Agent agent;
@@ -26,7 +25,7 @@ public class Liquidate extends Activity {
 
 	@Override
 	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return this.agent.liquidate(this.price, currentTime);
+		return this.agent.liquidateAtPrice(this.price, currentTime);
 	}
 	
 	@Override

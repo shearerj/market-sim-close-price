@@ -15,6 +15,7 @@ import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Order;
 import event.TimeStamp;
+import fourheap.Order.OrderType;
 
 import java.util.Comparator;
 import java.util.PriorityQueue;
@@ -27,8 +28,7 @@ public class OrderDataAgent extends SMAgent {
 	
 	public OrderDataAgent(FundamentalValue fundamental, SIP sip, Market market, 
 			Random rand, Iterator<OrderDatum> orderDataIterator) {
-		super(new TimeStamp(0), fundamental, sip, market, rand,
-				new PrivateValue(), 1);
+		super(new TimeStamp(0), fundamental, sip, market, rand, 1);
 
 		this.orderData = new PriorityQueue<OrderDatum>(11, new OrderDatumComparator() );
 		while(orderDataIterator.hasNext()){
@@ -40,14 +40,14 @@ public class OrderDataAgent extends SMAgent {
 	@Override
 	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
 		OrderDatum nextStrategy = orderData.peek();
-		System.out.println("func"+nextStrategy.getTimestamp());
+//		System.out.println("func"+nextStrategy.getTimestamp());
 		return ImmutableList.of(new AgentStrategy(this, nextStrategy.getTimestamp()));
 	}
 
 	public Iterable<? extends Activity> executeODAStrategy(int quantity, TimeStamp currentTime) {
 		OrderDatum submitOrder = orderData.poll();
-		return ImmutableList.of(new SubmitNMSOrder(this, submitOrder.getPrice(), 
-				submitOrder.getQuantity(), primaryMarket, currentTime));
+		return ImmutableList.of(new SubmitNMSOrder(this, primaryMarket, OrderType.BUY,	// FIXME
+				submitOrder.getPrice(), submitOrder.getQuantity(), currentTime));
 	}
 
 	public Collection<Order> getOrders() {

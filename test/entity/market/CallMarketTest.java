@@ -1,6 +1,7 @@
 package entity.market;
 
 import static org.junit.Assert.*;
+import static fourheap.Order.OrderType.*;
 
 import java.io.File;
 import java.util.Collection;
@@ -17,15 +18,16 @@ import systemmanager.EventManager;
 import systemmanager.Keys;
 import activity.Activity;
 import activity.Clear;
+import activity.SendToQP;
+import activity.SendToTP;
 import activity.SubmitOrder;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
-import data.DummyFundamental;
+import data.MockFundamental;
 import data.FundamentalValue;
 import data.MarketProperties;
-import entity.agent.MockAgent;
+import entity.agent.MockBackgroundAgent;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
@@ -40,7 +42,7 @@ import event.TimeStamp;
  */
 public class CallMarketTest {
 
-	private FundamentalValue fundamental = new DummyFundamental(100000);
+	private FundamentalValue fundamental = new MockFundamental(100000);
 	private SIP sip;
 	private Market market1;
 	private Market market2;
@@ -48,7 +50,7 @@ public class CallMarketTest {
 
 	@BeforeClass
 	public static void setupClass() {
-		Logger.setup(3, new File("simulations/unit_testing/CallMarketTest.log"));
+		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "CallMarketTest.log"));
 	}
 	
 	@Before
@@ -56,10 +58,10 @@ public class CallMarketTest {
 		clearFreq100 = new TimeStamp(100);
 		sip = new SIP(TimeStamp.IMMEDIATE);
 		// no delay from SIP + clears every 100
-		market1 = new CallMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1, 0.5,
+		market1 = new CallMarket(sip, new Random(), TimeStamp.IMMEDIATE, 1, 0.5,
 				clearFreq100);
 		// no delay from SIP + clears every 100 with pricing policy=1
-		market2 = new CallMarket(sip, TimeStamp.IMMEDIATE, new Random(), 1, 1, 
+		market2 = new CallMarket(sip, new Random(), TimeStamp.IMMEDIATE, 1, 1, 
 				clearFreq100);		
 	}
 
@@ -68,22 +70,23 @@ public class CallMarketTest {
 		TimeStamp time = new TimeStamp(0);
 
 		// Creating the agent
-		MockAgent agent = new MockAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market1);
 
 		// Creating and adding the bid
-		market1.submitOrder(agent, new Price(1), 1, time);
+		market1.submitOrder(agent, BUY, new Price(1), 1, time);
 
-		Collection<Order> orders = market1.orderMapping.values();
+		Collection<Order> orders = market1.orders;
 		assertFalse(orders.isEmpty());
 		Order order = Iterables.getFirst(orders, null);
 		assertEquals(new Price(1), order.getPrice());
 		assertEquals(1, order.getQuantity());
+		assertEquals(BUY, order.getOrderType());
 		assertEquals(time, order.getSubmitTime());
 		assertEquals(agent, order.getAgent());
 		assertEquals(market1, order.getMarket());
 		
 		// Check if market quote correct
-		market1.updateQuote(ImmutableList.<Transaction> of(), time);
+		market1.updateQuote(time);
 		Quote q = market1.quote;
 		assertEquals("Incorrect ASK",  null,  q.ask );
 		assertEquals("Incorrect BID", new Price(1),  q.bid);
@@ -96,22 +99,23 @@ public class CallMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating the agent
-		MockAgent agent = new MockAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market1);
 		
-		// Creating and adding the bid
-		market1.submitOrder(agent, new Price(1), -1, time);
+		// Creating and adding the ask
+		market1.submitOrder(agent, SELL, new Price(1), 1, time);
 
-		Collection<Order> orders = market1.orderMapping.values();
+		Collection<Order> orders = market1.orders;
 		assertFalse(orders.isEmpty());
 		Order order = Iterables.getFirst(orders, null);
 		assertEquals(new Price(1), order.getPrice());
-		assertEquals(-1, order.getQuantity());
+		assertEquals(1, order.getQuantity());
+		assertEquals(SELL, order.getOrderType());
 		assertEquals(time, order.getSubmitTime());
 		assertEquals(agent, order.getAgent());
 		assertEquals(market1, order.getMarket());
 		
 		// Check if market quote correct
-		market1.updateQuote(ImmutableList.<Transaction> of(), time);
+		market1.updateQuote(time);
 		Quote q = market1.quote;
 		assertEquals("Incorrect ASK", new Price(1), q.ask);
 		assertEquals("Incorrect BID", null, q.bid );
@@ -125,12 +129,12 @@ public class CallMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
 		
 		// Creating and adding bids
-		market1.submitOrder(agent1, new Price(100), 1, time);
-		market1.submitOrder(agent2, new Price(100), -1, time);
+		market1.submitOrder(agent1, BUY, new Price(100), 1, time);
+		market1.submitOrder(agent2, SELL, new Price(100), 1, time);
 
 		// Testing the market for the correct transaction
 		market1.clear(time);
@@ -141,6 +145,9 @@ public class CallMarketTest {
 			assertEquals("Incorrect Price", new Price(100), tr.getPrice());
 			assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		}
+		Quote quote = market1.quote;
+		assertEquals(null, quote.getAskPrice());
+		assertEquals(null, quote.getBidPrice());
 	}
 
 	@Test
@@ -149,14 +156,14 @@ public class CallMarketTest {
 		TimeStamp time2 = new TimeStamp(1);
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
 		
 		// Creating and adding bids
-		market1.submitOrder(agent1, new Price(200), 1, time);
-		market1.submitOrder(agent2, new Price(100), -1, time2);
-		market2.submitOrder(agent1, new Price(200), 1, time);
-		market2.submitOrder(agent2, new Price(100), -1, time2);
+		market1.submitOrder(agent1, BUY, new Price(200), 1, time);
+		market1.submitOrder(agent2, SELL, new Price(100), 1, time2);
+		market2.submitOrder(agent1, BUY, new Price(200), 1, time);
+		market2.submitOrder(agent2, SELL, new Price(100), 1, time2);
 		
 		// Testing market1 for the correct transaction
 		market1.clear(time2);
@@ -177,6 +184,9 @@ public class CallMarketTest {
 			assertEquals("Incorrect Price", new Price(200), tr.getPrice());
 			assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		}
+		Quote quote = market1.quote;
+		assertEquals(null, quote.getAskPrice());
+		assertEquals(null, quote.getBidPrice());
 	}
 
 	@Test
@@ -184,21 +194,21 @@ public class CallMarketTest {
 		TimeStamp time = TimeStamp.ZERO;
 		
 		//Creating dummy agents
-		MockAgent agent1 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent3 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent4 = new MockAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent3 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market1);
 		
 		// Creating and adding bids
-		market1.submitOrder(agent1, new Price(150), 1, time);
-		market1.submitOrder(agent2, new Price(100), 1, time);
-		market1.submitOrder(agent3, new Price(180), -1, time);
-		market1.submitOrder(agent4, new Price(120), -1, time);
+		market1.submitOrder(agent1, BUY, new Price(150), 1, time);
+		market1.submitOrder(agent2, BUY, new Price(100), 1, time);
+		market1.submitOrder(agent3, SELL, new Price(180), 1, time);
+		market1.submitOrder(agent4, SELL, new Price(120), 1, time);
 		market1.clear(time);
-		market2.submitOrder(agent1, new Price(150), 1, time);
-		market2.submitOrder(agent2, new Price(100), 1, time);
-		market2.submitOrder(agent3, new Price(180), -1, time);
-		market2.submitOrder(agent4, new Price(120), -1, time);
+		market2.submitOrder(agent1, BUY, new Price(150), 1, time);
+		market2.submitOrder(agent2, BUY, new Price(100), 1, time);
+		market2.submitOrder(agent3, SELL, new Price(180), 1, time);
+		market2.submitOrder(agent4, SELL, new Price(120), 1, time);
 		market2.clear(time);
 		
 		// Testing the market for the correct transactions
@@ -210,11 +220,11 @@ public class CallMarketTest {
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		
 		// Creating and adding bids (existing orders at buy@100, sell@175)
-		market1.submitOrder(agent1, new Price(150), 1, time.plus(new TimeStamp(1)));
-		market1.submitOrder(agent4, new Price(50), -1, time.plus(new TimeStamp(2)));
+		market1.submitOrder(agent1, BUY, new Price(150), 1, time.plus(new TimeStamp(1)));
+		market1.submitOrder(agent4, SELL, new Price(50), 1, time.plus(new TimeStamp(2)));
 		market1.clear(time.plus(new TimeStamp(2)));
-		market2.submitOrder(agent1, new Price(150), 1, time.plus(new TimeStamp(1)));
-		market2.submitOrder(agent4, new Price(50), -1, time.plus(new TimeStamp(2)));
+		market2.submitOrder(agent1, BUY, new Price(150), 1, time.plus(new TimeStamp(1)));
+		market2.submitOrder(agent4, SELL, new Price(50), 1, time.plus(new TimeStamp(2)));
 		market2.clear(time.plus(new TimeStamp(2)));
 		
 		// Testing the market for the correct transactions
@@ -240,24 +250,24 @@ public class CallMarketTest {
 	public void multiOverlapClear() {
 		TimeStamp time = TimeStamp.ZERO;
 		
-		MockAgent agent1 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent3 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent4 = new MockAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent3 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market1);
 		
 		// Creating and adding bids (clears are not returned by submitOrder)
-		Iterable<? extends Activity> bidActs = market1.submitOrder(agent1, new Price(150), 1, time);
+		Iterable<? extends Activity> bidActs = market1.submitOrder(agent1, BUY, new Price(150), 1, time);
 		for (Activity act : bidActs)
-			if (act instanceof Clear) act.execute(time);
-		bidActs = market1.submitOrder(agent2, new Price(100), -1, time);
+			if (act instanceof Clear) act.execute(act.getTime());
+		bidActs = market1.submitOrder(agent2, SELL, new Price(100), 1, time);
 		for (Activity act : bidActs)
-			if (act instanceof Clear) act.execute(time);
-		bidActs = market1.submitOrder(agent3, new Price(200), 1, time);
+			if (act instanceof Clear) act.execute(act.getTime());
+		bidActs = market1.submitOrder(agent3, BUY, new Price(200), 1, time);
 		for (Activity act : bidActs)
-			if (act instanceof Clear) act.execute(time);
-		bidActs = market1.submitOrder(agent4, new Price(130), -1, time);
+			if (act instanceof Clear) act.execute(act.getTime());
+		bidActs = market1.submitOrder(agent4, SELL, new Price(130), 1, time);
 		for (Activity act : bidActs)
-			if (act instanceof Clear) act.execute(time);
+			if (act instanceof Clear) act.execute(act.getTime());
 		assertEquals(0, market1.getTransactions().size());
 		
 		// Testing the market for the correct transactions (uniform price=140)
@@ -284,16 +294,16 @@ public class CallMarketTest {
 	public void partialOverlapClear() {
 		TimeStamp time = TimeStamp.ZERO;
 		
-		MockAgent agent1 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent3 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent4 = new MockAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent3 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market1);
 		
 		// Creating and adding bids
-		market1.submitOrder(agent3, new Price(200), 1, time);
-		market1.submitOrder(agent4, new Price(130), -1, time);
-		market1.submitOrder(agent1, new Price(110), 1, time);
-		market1.submitOrder(agent2, new Price(100), -1, time);
+		market1.submitOrder(agent3, BUY, new Price(200), 1, time);
+		market1.submitOrder(agent4, SELL, new Price(130), 1, time);
+		market1.submitOrder(agent1, BUY, new Price(110), 1, time);
+		market1.submitOrder(agent2, SELL, new Price(100), 1, time);
 		assertEquals(0, market1.getTransactions().size());
 		
 		// Testing the market for the correct transactions (uniform price=150)
@@ -329,11 +339,11 @@ public class CallMarketTest {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time2 = new TimeStamp(1);
 		
-		MockAgent agent1 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
 		
-		market1.submitOrder(agent1, new Price(100), -2, time);
-		market1.submitOrder(agent2, new Price(150), 5, time2);
+		market1.submitOrder(agent1, SELL, new Price(100), 2, time);
+		market1.submitOrder(agent2, BUY, new Price(150), 5, time2);
 		market1.clear(time2);
 		
 		// Check that two units transact
@@ -345,7 +355,7 @@ public class CallMarketTest {
 		assertEquals("Incorrect Quantity", 2, tr.getQuantity());
 
 		// Check that post-trade BID is correct (3 buy units at 150)
-		market1.updateQuote(ImmutableList.<Transaction> of(), time2);
+		market1.updateQuote(time2);
 		Quote q = market1.quote;
 		assertEquals("Incorrect ASK", null, q.ask);
 		assertEquals("Incorrect BID", new Price(150), q.bid);
@@ -358,15 +368,15 @@ public class CallMarketTest {
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 
-		MockAgent agent1 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
 
-		market1.submitOrder(agent1, new Price(150), -1, time0);
-		market1.submitOrder(agent1, new Price(140), -1, time0);
+		market1.submitOrder(agent1, SELL, new Price(150), 1, time0);
+		market1.submitOrder(agent1, SELL, new Price(140), 1, time0);
 		market1.clear(time0);
 
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
-		market1.submitOrder(agent2, new Price(160), 2, time1);
+		market1.submitOrder(agent2, BUY, new Price(160), 2, time1);
 		market1.clear(time1);
 		assertEquals( 2, market1.getTransactions().size() );
 		Transaction tr = market1.getTransactions().get(0);
@@ -384,11 +394,12 @@ public class CallMarketTest {
 		TimeStamp time1 = new TimeStamp(1);
 		TimeStamp time2 = new TimeStamp(2);
 
-		MockAgent agent1 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
 
-		Iterable<? extends Activity> acts = market1.submitOrder(agent1, new Price(100), -1, time0);
-		for (Activity a : acts) a.execute(time0); // nothing added
+		Iterable<? extends Activity> acts = market1.submitOrder(agent1, SELL, new Price(100), 1, time0);
+		assertTrue(Iterables.isEmpty(acts)); // nothing added
+		
 		// Check that quotes are correct (no bid, no ask)
 		Quote q = market1.quote;
 		assertEquals("Incorrect ASK", null,  q.ask );
@@ -398,7 +409,12 @@ public class CallMarketTest {
 		
 		Collection<Order> orders = agent1.getOrders();
 		Order toWithdraw = orders.iterator().next(); // get first (& only) order
-		market1.withdrawOrder(toWithdraw, time0);
+		// Test that withdraw create SendToIP activities (updates quotes)
+		acts =  market1.withdrawOrder(toWithdraw, time0);
+		for (Activity act : acts) {
+			assertTrue(act instanceof SendToQP || act instanceof SendToTP);
+			assertTrue(act.getTime().equals(TimeStamp.IMMEDIATE));
+		}
 		
 		// Check that quotes are correct (no bid, no ask)
 		q = market1.quote;
@@ -408,10 +424,10 @@ public class CallMarketTest {
 		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
 		
 		// Check that no transaction, because agent1 withdrew its order
-		market1.submitOrder(agent2, new Price(125), 1, time1);
+		market1.submitOrder(agent2, BUY, new Price(125), 1, time1);
 		assertEquals( 0, market1.getTransactions().size() );
 
-		market1.submitOrder(agent2, new Price(115), 1, time1);
+		market1.submitOrder(agent2, BUY, new Price(115), 1, time1);
 		orders = agent2.getOrders();
 		toWithdraw = null;
 		for (Order o : orders)
@@ -420,12 +436,18 @@ public class CallMarketTest {
 		market1.clear(time1);
 
 		// Check that it transacts at 110 with order (@115) that was not withdrawn
-		market1.submitOrder(agent1, new Price(105), -1, time2);
+		market1.submitOrder(agent1, SELL, new Price(105), 1, time2);
 		market1.clear(time2);
 		assertEquals( 1, market1.getTransactions().size() );
 		Transaction tr = market1.getTransactions().get(0);
 		assertEquals("Incorrect Price", new Price(110), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
+		
+		q = market1.quote;
+		assertEquals("Incorrect ASK", null,  q.ask );
+		assertEquals("Incorrect BID", null,  q.bid);
+		assertEquals("Incorrect ASK quantity",  0,  q.askQuantity );
+		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
 	}
 	
 	@Test
@@ -433,11 +455,11 @@ public class CallMarketTest {
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 
-		MockAgent agent1 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
 		
-		market1.submitOrder(agent1, new Price(150), -1, time0);
-		market1.submitOrder(agent1, new Price(140), -2, time0);
+		market1.submitOrder(agent1, SELL, new Price(150), 1, time0);
+		market1.submitOrder(agent1, SELL, new Price(140), 2, time0);
 		Collection<Order> orders = agent1.getOrders();
 		Order toWithdraw = null;
 		for (Order o : orders)
@@ -445,9 +467,16 @@ public class CallMarketTest {
 		market1.withdrawOrder(toWithdraw, 1, time0);
 		market1.clear(time0);
 
+		// Check that quotes are correct (ask @140 at qty=2, no bid)
+		Quote q = market1.quote;
+		assertEquals("Incorrect ASK", new Price(140), q.ask);
+		assertEquals("Incorrect BID", null, q.bid);
+		assertEquals("Incorrect ASK quantity",  1,  q.askQuantity );
+		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
+		
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
-		market1.submitOrder(agent2, new Price(160), 1, time1);
-		market1.submitOrder(agent2, new Price(160), 1, time1);
+		market1.submitOrder(agent2, BUY, new Price(160), 1, time1);
+		market1.submitOrder(agent2, BUY, new Price(160), 2, time1);
 		market1.clear(time1);
 		assertEquals( 2, market1.getTransactions().size() );
 		Transaction tr = market1.getTransactions().get(0);
@@ -458,26 +487,48 @@ public class CallMarketTest {
 		assertEquals("Incorrect Price", new Price(155), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		
+		q = market1.quote;
+		assertEquals("Incorrect ASK", null, q.ask );
+		assertEquals("Incorrect BID", new Price(160), q.bid);
+		assertEquals("Incorrect ASK quantity",  0,  q.askQuantity );
+		assertEquals("Incorrect BID quantity",  1,  q.bidQuantity );
+		
+		///////////////////////
 		// Same test with market w/ different pricing policy
-		market2.submitOrder(agent1, new Price(150), -1, time0);
-		market2.submitOrder(agent1, new Price(140), -2, time0);
-		orders = agent1.getOrders();
+		market2.submitOrder(agent1, SELL, new Price(150), 1, time0);
+		market2.submitOrder(agent1, SELL, new Price(140), 2, time0);
+		orders = market2.orders; // Agent orders aren't updated due to delayed order processing. Need to use market instead
 		toWithdraw = null;
 		for (Order o : orders) if (o.getPrice().equals(new Price(140))) toWithdraw = o;
 		market2.withdrawOrder(toWithdraw, 1, time0);
 		market2.clear(time0);
+		
+		// Check that quotes are correct (ask @140 at qty=2, no bid)
+		q = market2.quote;
+		assertEquals("Incorrect ASK", new Price(140), q.ask);
+		assertEquals("Incorrect BID", null, q.bid);
+		assertEquals("Incorrect ASK quantity",  1,  q.askQuantity );
+		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
+		
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
-		market2.submitOrder(agent2, new Price(160), 1, time1);
-		market2.submitOrder(agent2, new Price(160), 1, time1);
+		market2.submitOrder(agent2, BUY, new Price(160), 1, time1);
+		market2.submitOrder(agent2, BUY, new Price(160), 2, time1);
 		market2.clear(time1);
 		assertEquals( 2, market2.getTransactions().size() );
 		tr = market2.getTransactions().get(0);
+		
 		// Clearing price should be based on pricing policy=1 between 150 & 160
 		assertEquals("Incorrect Price", new Price(160), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		tr = market2.getTransactions().get(1);
 		assertEquals("Incorrect Price", new Price(160), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
+		
+		q = market2.quote;
+		assertEquals("Incorrect ASK", null, q.ask );
+		assertEquals("Incorrect BID", new Price(160), q.bid);
+		assertEquals("Incorrect ASK quantity",  0,  q.askQuantity );
+		assertEquals("Incorrect BID quantity",  1,  q.bidQuantity );
 	}
 	
 	
@@ -491,15 +542,15 @@ public class CallMarketTest {
 		TimeStamp time1 = new TimeStamp(1);
 		TimeStamp time2 = new TimeStamp(2);
 
-		MockAgent agent0 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent1 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent3 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent4 = new MockAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent0 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent3 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market1);
 		
-		market1.submitOrder(agent1, new Price(100), -1, time0);
-		market1.submitOrder(agent2, new Price(100), -1, time1);
-		market1.submitOrder(agent3, new Price(150), 1, time1);
+		market1.submitOrder(agent1, SELL, new Price(100), 1, time0);
+		market1.submitOrder(agent2, SELL, new Price(100), 1, time1);
+		market1.submitOrder(agent3, BUY, new Price(150), 1, time1);
 		market1.clear(time1);
 		
 		// Check that earlier agent (agent1) is trading with agent3
@@ -511,11 +562,11 @@ public class CallMarketTest {
 		assertEquals("Incorrect Price", new Price(125), tr.getPrice());
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 
-		market1.submitOrder(agent1, new Price(100), -1, time1);
-		market1.submitOrder(agent3, new Price(100), -1, time2);
-		market1.submitOrder(agent4, new Price(100), -1, time2);
+		market1.submitOrder(agent1, SELL, new Price(100), 1, time1);
+		market1.submitOrder(agent3, SELL, new Price(100), 1, time2);
+		market1.submitOrder(agent4, SELL, new Price(100), 1, time2);
 		market1.clear(time2); // would be inserted onto Q, but hard-coded here
-		market1.submitOrder(agent0, new Price(130), 1, time2);
+		market1.submitOrder(agent0, BUY, new Price(130), 1, time2);
 		market1.clear(time2);
 		
 		// Check that the first submitted -1@100 transacts (from agent2)
@@ -530,18 +581,18 @@ public class CallMarketTest {
 		// agent 1's order -1@100 at time1 remains
 		// agent 3's order -1@100 at time2 remains
 		// agent 4's order -1@100 at time2 remains
-		market1.submitOrder(agent0, new Price(90), -1, time2);
-		market1.submitOrder(agent0, new Price(100), -1, time2);
-		market1.submitOrder(agent0, new Price(110), -1, time2);
-		market1.submitOrder(agent0, new Price(120), -1, time2);
-		market1.submitOrder(agent0, new Price(80), 1, time2);
-		market1.submitOrder(agent0, new Price(70), 1, time2);
-		market1.submitOrder(agent0, new Price(60), 1, time2);
+		market1.submitOrder(agent0, SELL, new Price(90), 1, time2);
+		market1.submitOrder(agent0, SELL, new Price(100), 1, time2);
+		market1.submitOrder(agent0, SELL, new Price(110), 1, time2);
+		market1.submitOrder(agent0, SELL, new Price(120), 1, time2);
+		market1.submitOrder(agent0, BUY, new Price(80), 1, time2);
+		market1.submitOrder(agent0, BUY, new Price(70), 1, time2);
+		market1.submitOrder(agent0, BUY, new Price(60), 1, time2);
 		market1.clear(time2);
 		assertEquals(2, market1.getTransactions().size()); // no change
 
 		// Check basic overlap - between agent0 (@90) and agent2
-		market1.submitOrder(agent2, new Price(130), 1, time2);
+		market1.submitOrder(agent2, BUY, new Price(130), 1, time2);
 		market1.clear(time2);
 		assertEquals(3, market1.getTransactions().size());
 		tr = market1.getTransactions().get(2);
@@ -556,10 +607,10 @@ public class CallMarketTest {
 		// - agent 2 and agent 3
 		// - agent 2 and agent 4
 		// - agent 2 and agent 0
-		market1.submitOrder(agent2, new Price(110), 1, time2);
-		market1.submitOrder(agent2, new Price(110), 1, time2);
-		market1.submitOrder(agent2, new Price(110), 1, time2);
-		market1.submitOrder(agent2, new Price(110), 1, time2);
+		market1.submitOrder(agent2, BUY, new Price(110), 1, time2);
+		market1.submitOrder(agent2, BUY, new Price(110), 1, time2);
+		market1.submitOrder(agent2, BUY, new Price(110), 1, time2);
+		market1.submitOrder(agent2, BUY, new Price(110), 1, time2);
 		market1.clear(time2);
 		assertEquals(7, market1.getTransactions().size());
 		tr = market1.getTransactions().get(3);
@@ -592,23 +643,23 @@ public class CallMarketTest {
 	public void clearActivityInsertion() {
 		TimeStamp time = new TimeStamp(1);
 		EventManager em = new EventManager(new Random());
-		MockAgent agent1 = new MockAgent(fundamental, sip, market1);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
 		Quote quote;
 			
 		// Test that before time 100 quotes do not change
 		em.addActivity(new Clear(market1, TimeStamp.IMMEDIATE)); // initialize
-		quote = market1.getSMIP().getQuote();
+		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect Ask", null, quote.getAskPrice());
 		assertEquals("Incorrect Ask quantity", 0, quote.getAskQuantity());
 		assertEquals("Incorrect Bid", null, quote.getBidPrice());
 		assertEquals("Incorrect Bid quantity", 0, quote.getBidQuantity());
 		
 		// Quote still undefined before clear
-		em.addActivity(new SubmitOrder(agent1, market1, new Price(100),  1, time));
-		em.addActivity(new SubmitOrder(agent1, market1, new Price(110), -1, time));
+		em.addActivity(new SubmitOrder(agent1, market1, BUY, new Price(100),  1, time));
+		em.addActivity(new SubmitOrder(agent1, market1, SELL, new Price(110), 1, time));
 		em.executeUntil(clearFreq100);
-		quote = market1.getSMIP().getQuote();
+		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect Ask", null, quote.getAskPrice());
 		assertEquals("Incorrect Ask quantity", 0, quote.getAskQuantity());
 		assertEquals("Incorrect Bid", null, quote.getBidPrice());
@@ -616,25 +667,25 @@ public class CallMarketTest {
 		
 		// Now quote should be updated
 		em.executeUntil(clearFreq100.plus(new TimeStamp(1)));
-		quote = market1.getSMIP().getQuote();
+		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect Ask", new Price(110), quote.getAskPrice());
 		assertEquals("Incorrect Ask quantity", 1, quote.getAskQuantity());
 		assertEquals("Incorrect Bid", new Price(100), quote.getBidPrice());
 		assertEquals("Incorrect Bid quantity", 1, quote.getBidQuantity());
 		
 		// Now check that transactions are correct as well as quotes
-		em.addActivity(new SubmitOrder(agent2, market1, new Price(150), -1, time));
-		em.addActivity(new SubmitOrder(agent2, market1, new Price(120), 1, time));
+		em.addActivity(new SubmitOrder(agent2, market1, SELL, new Price(150), 1, time));
+		em.addActivity(new SubmitOrder(agent2, market1, BUY, new Price(120), 1, time));
 		// Before second clear interval ends, quote remains the same
 		em.executeUntil(clearFreq100.plus(clearFreq100));
-		quote = market1.getSMIP().getQuote();
+		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect Ask", new Price(110), quote.getAskPrice());
 		assertEquals("Incorrect Ask quantity", 1, quote.getAskQuantity());
 		assertEquals("Incorrect Bid", new Price(100), quote.getBidPrice());
 		assertEquals("Incorrect Bid quantity", 1, quote.getBidQuantity());
 		// Once clear interval ends, orders match and clear, and the quote updates
 		em.executeUntil(clearFreq100.plus(clearFreq100).plus(new TimeStamp(1)));
-		quote = market1.getSMIP().getQuote();
+		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect Ask", new Price(150), quote.getAskPrice());
 		assertEquals("Incorrect Ask quantity", 1, quote.getAskQuantity());
 		assertEquals("Incorrect Bid", new Price(100), quote.getBidPrice());
@@ -674,11 +725,11 @@ public class CallMarketTest {
 		em.addActivity(new Clear(market1, TimeStamp.IMMEDIATE)); // initialize clear manually
 
 		// Test that before Time 100 nothing has been updated
-		MockAgent agent = new MockAgent(fundamental, sip, market1);
-		em.addActivity(new SubmitOrder(agent, market1, new Price(100), -1, TimeStamp.ZERO));
+		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market1);
+		em.addActivity(new SubmitOrder(agent, market1, SELL, new Price(100), 1, TimeStamp.ZERO));
 		em.executeUntil(new TimeStamp(100));
 		
-		quote = market1.getSMIP().getQuote();
+		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
 		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
 		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
@@ -686,16 +737,16 @@ public class CallMarketTest {
 		
 		// Test that after clear at 100 quotes are updated
 		em.executeUntil(new TimeStamp(101));
-		quote = market1.getSMIP().getQuote();
+		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
 		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
 		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());
 		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
 		
 		// Test that no change in quotes given matched orders
-		em.addActivity(new SubmitOrder(agent, market1, new Price(150), 1, new TimeStamp(150)));
+		em.addActivity(new SubmitOrder(agent, market1, BUY, new Price(150), 1, new TimeStamp(150)));
 		em.executeUntil(new TimeStamp(101));
-		quote = market1.getSMIP().getQuote();
+		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Changed Ask price unnecessarily", new Price(100), quote.getAskPrice());
 		assertEquals("Changed Ask quantity unnecessarily", 1, quote.getAskQuantity());
 		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());
@@ -703,7 +754,7 @@ public class CallMarketTest {
 		
 		// Now post-clear, orders are matched and removed and quote is updated
 		em.executeUntil(new TimeStamp(201));
-		quote = market1.getSMIP().getQuote();
+		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", null, quote.getAskPrice());
 		assertEquals("Didn't update Ask quantity", 0, quote.getAskQuantity());
 		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());
@@ -719,28 +770,28 @@ public class CallMarketTest {
 		EventManager em = new EventManager(new Random());
 		
 		// delayed info by 50 + clears every 100
-		CallMarket market3 = new CallMarket(sip, new TimeStamp(50), new Random(), 1, 0.5,
+		CallMarket market3 = new CallMarket(sip, new Random(), new TimeStamp(50), 1, 0.5,
 				clearFreq100);
 		// delayed info by 150 + clears every 100
-		CallMarket market4 = new CallMarket(sip, new TimeStamp(150), new Random(), 1, 0.5,
+		CallMarket market4 = new CallMarket(sip, new Random(), new TimeStamp(150), 1, 0.5,
 				clearFreq100);
 		// Initialize first clears manually
 		em.addActivity(new Clear(market3, TimeStamp.IMMEDIATE));
 		em.addActivity(new Clear(market4, TimeStamp.IMMEDIATE));
 		
-		MockAgent agent1 = new MockAgent(fundamental, sip, market3);
-		MockAgent agent2 = new MockAgent(fundamental, sip, market4);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market3);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market4);
 		
-		em.addActivity(new SubmitOrder(agent1, market3, new Price(100), -1, TimeStamp.ZERO));
-		em.addActivity(new SubmitOrder(agent2, market4, new Price(100), 1, TimeStamp.ZERO));
+		em.addActivity(new SubmitOrder(agent1, market3, SELL, new Price(100), 1, TimeStamp.ZERO));
+		em.addActivity(new SubmitOrder(agent2, market4, BUY, new Price(100), 1, TimeStamp.ZERO));
 		
 		// Test that before Time 100 nothing has been updated for either market
-		quote = market3.getSMIP().getQuote();
+		quote = market3.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
 		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
 		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
 		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
-		quote = market4.getSMIP().getQuote();
+		quote = market4.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
 		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
 		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
@@ -752,7 +803,7 @@ public class CallMarketTest {
 		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
 		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
 		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
-		quote = market4.getSMIP().getQuote();
+		quote = market4.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
 		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
 		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
@@ -760,12 +811,12 @@ public class CallMarketTest {
 		
 		// Test that market3's quotes have now updated (but not market4's)
 		em.executeUntil(new TimeStamp(151));
-		quote = market3.getSMIP().getQuote();
+		quote = market3.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
 		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
 		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());
 		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
-		quote = market4.getSMIP().getQuote();
+		quote = market4.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
 		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
 		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
@@ -773,7 +824,7 @@ public class CallMarketTest {
 		
 		// Test that market4's quotes have now updated (quote from first clear)
 		em.executeUntil(new TimeStamp(251));
-		quote = market4.getSMIP().getQuote();
+		quote = market4.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Bid price", new Price(100), quote.getBidPrice());
 		assertEquals("Didn't update Bid quantity", 1, quote.getBidQuantity());
 		assertEquals("Changed Ask price unnecessarily", null, quote.getAskPrice());

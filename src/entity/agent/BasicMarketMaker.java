@@ -2,12 +2,12 @@ package entity.agent;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
-import static utils.Compare.max;
-import static utils.Compare.min;
-
+import static fourheap.Order.OrderType.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
+
+import com.google.common.collect.Ordering;
 
 import systemmanager.Keys;
 import utils.MathUtils;
@@ -51,6 +51,8 @@ public class BasicMarketMaker extends MarketMaker {
 
 	private static final long serialVersionUID = 9057600979711100221L;
 	
+	private static final Ordering<Price> pcomp = Ordering.natural();
+	
 	protected final int stepSize;
 	protected final int rungSize;
 	// # of ladder rungs on one side (e.g., number of buy orders)
@@ -85,7 +87,7 @@ public class BasicMarketMaker extends MarketMaker {
 		// update NBBO
 		BestBidAsk lastNBBOQuote = sip.getNBBO();
 
-		Quote quote = marketIP.getQuote();
+		Quote quote = marketQuoteProcessor.getQuote();
 		Price bid = quote.getBidPrice();
 		Price ask = quote.getAskPrice();
 		
@@ -105,13 +107,11 @@ public class BasicMarketMaker extends MarketMaker {
 				
 				int ct = numRungs * stepSize;
 				// min price for buy order in the ladder
-				Price buyMinPrice = min(new Price(bid.intValue() - ct), lastNBBOQuote.getBestAsk());
+				Price buyMinPrice = pcomp.min(new Price(bid.intValue() - ct), lastNBBOQuote.getBestAsk());
 				// max price for sell order in the ladder
-				Price sellMaxPrice = max(new Price(ask.intValue() - ct), lastNBBOQuote.getBestBid());
+				Price sellMaxPrice = pcomp.max(new Price(ask.intValue() - ct), lastNBBOQuote.getBestBid());
 
 				// check if the bid or ask crosses the NBBO
-				// FIXME I believe this will create orders that would transact on
-				// another market. Wait to hear from Elaine.
 				if (lastNBBOQuote.getBestAsk().lessThan(ask)) {
 					// buy orders: If ASK_N < X_t, then [ASK_N, ..., Y_t]
 					buyMinPrice = lastNBBOQuote.getBestAsk();
@@ -127,12 +127,12 @@ public class BasicMarketMaker extends MarketMaker {
 				// build descending list of buy orders (yt, ..., yt - ct) or
 				// stops at NBBO ask
 				for (int price = bid.intValue(); price >= buyMinPrice.intValue(); price -= stepSize)
-					acts.add(new SubmitOrder(this, primaryMarket, new Price(price), 1, TimeStamp.IMMEDIATE));
+					acts.add(new SubmitOrder(this, primaryMarket, BUY, new Price(price), 1, TimeStamp.IMMEDIATE));
 
 				// build ascending list of sell orders (xt, ..., xt + ct) or
 				// stops at NBBO bid
 				for (int price = ask.intValue(); price <= sellMaxPrice.intValue(); price += stepSize)
-					acts.add(new SubmitOrder(this, primaryMarket, new Price(price), -1, TimeStamp.IMMEDIATE));
+					acts.add(new SubmitOrder(this, primaryMarket, SELL, new Price(price), -1, TimeStamp.IMMEDIATE));
 
 				log(INFO, primaryMarket + " " + this + " " + getName()
 						+ "::agentStrategy: ladder numRungs=" + numRungs

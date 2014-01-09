@@ -109,7 +109,7 @@ public class Event extends AbstractQueue<Activity> implements Comparable<Event> 
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj.getClass().equals(getClass()))) return false;
+		if (obj == null || !(obj instanceof Event)) return false;
 		Event that = (Event) obj;
 		return backedQueue.equals(that.backedQueue) && eventTime.equals(that.eventTime);
 	}

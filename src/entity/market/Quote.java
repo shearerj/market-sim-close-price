@@ -23,8 +23,8 @@ public class Quote implements Serializable {
 	protected final Market market;
 	protected final TimeStamp quoteTime;
 
-	public Quote(Market market, Price ask, int askQuantity, Price bid,
-			int bidQuantity, TimeStamp currentTime) {
+	public Quote(Market market, Price bid, int bidQuantity, Price ask,
+			int askQuantity, TimeStamp currentTime) {
 		this.market = market;
 		this.ask = ask;
 		this.askQuantity = askQuantity;
@@ -49,6 +49,10 @@ public class Quote implements Serializable {
 		return askQuantity;
 	}
 
+	public Market getMarket() {
+		return market;
+	}
+	
 	/**
 	 * @return true if the quote is defined (has an ask and a bid price)
 	 */
@@ -89,7 +93,7 @@ public class Quote implements Serializable {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj.getClass().equals(getClass())))
+		if (obj == null || !(obj instanceof Quote))
 			return false;
 		Quote that = (Quote) obj;
 		return Objects.equal(market, that.market)
@@ -104,14 +108,12 @@ public class Quote implements Serializable {
 		StringBuilder sb = new StringBuilder("(Bid: ");
 		
 		if (bid == null) sb.append("- ");
-		else if (bidQuantity == 1) sb.append(bid);
-		else sb.append(bid).append(' ').append(bidQuantity);
+		else sb.append(bidQuantity).append(" @ ").append(bid);
 		
 		sb.append(", Ask: ");
 		
 		if (ask == null) sb.append("- ");
-		else if (askQuantity == 1) sb.append(ask);
-		else sb.append(ask).append(' ').append(askQuantity);
+		else sb.append(askQuantity).append(" @ ").append(ask);
 		
 		return sb.append(')').toString();
 	}

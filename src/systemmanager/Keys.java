@@ -1,5 +1,11 @@
 package systemmanager;
 
+/**
+ * All of the keys for use in the simulation spec.
+ * 
+ * @author erik
+ * 
+ */
 public interface Keys {
 
 	public final static String MODEL_NAME = "modelName";
@@ -8,6 +14,7 @@ public interface Keys {
 	public final static String PRESETS = "presets";
 	
 	public final static String RAND_SEED = "randomSeed";
+	public final static String NUM_SIMULATIONS = "numSims";
 	
 	public final static String ARRIVAL_RATE = "arrivalRate";
 	public final static String REENTRY_RATE = "reentryRate";
@@ -35,6 +42,8 @@ public interface Keys {
 	public final static String RUNG_SIZE = "rungSize";
 	
 	// Latency
+	public final static String QUOTE_LATENCY = "quoteLatency";
+	public final static String TRANSACTION_LATENCY = "transactionLatency";
 	public final static String NBBO_LATENCY = "nbboLatency";
 	public final static String MARKET_LATENCY = "mktLatency";
 	public final static String LA_LATENCY = "laLatency";

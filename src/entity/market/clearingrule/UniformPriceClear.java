@@ -8,6 +8,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 
 import entity.market.MarketTime;
+import entity.market.Order;
 import entity.market.Price;
 import fourheap.MatchedOrders;
 
@@ -25,13 +26,13 @@ public class UniformPriceClear implements ClearingRule {
 	}
 
 	@Override
-	public Map<MatchedOrders<Price, MarketTime>, Price> pricing(
-			Iterable<MatchedOrders<Price, MarketTime>> transactions) {
+	public Map<MatchedOrders<Price, MarketTime, Order>, Price> pricing(
+			Iterable<MatchedOrders<Price, MarketTime, Order>> transactions) {
 		if (Iterables.isEmpty(transactions)) return ImmutableMap.of();
 
 		Price minBuy = Iterables.getFirst(transactions, null).getBuy().getPrice();
 		Price maxSell = Iterables.getFirst(transactions, null).getSell().getPrice();
-		for (MatchedOrders<Price, MarketTime> trans : transactions) {
+		for (MatchedOrders<Price, MarketTime, Order> trans : transactions) {
 			minBuy = ord.min(minBuy, trans.getBuy().getPrice());
 			maxSell = ord.max(maxSell, trans.getSell().getPrice());
 		}
@@ -39,8 +40,8 @@ public class UniformPriceClear implements ClearingRule {
 		Price clearPrice = new Price(minBuy.doubleValue() * ratio
 				+ maxSell.doubleValue() * (1 - ratio)).quantize(tickSize);
 
-		Builder<MatchedOrders<Price, MarketTime>, Price> prices = ImmutableMap.builder();
-		for (MatchedOrders<Price, MarketTime> trans : transactions)
+		Builder<MatchedOrders<Price, MarketTime, Order>, Price> prices = ImmutableMap.builder();
+		for (MatchedOrders<Price, MarketTime, Order> trans : transactions)
 			prices.put(trans, clearPrice);
 		return prices.build();
 	}

@@ -35,6 +35,14 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 		this((long) ticks);
 	}
 	
+	public TimeStamp(TimeStamp time) {
+		this.ticks = time.ticks;
+	}
+	
+	public static TimeStamp create(int ticks) {
+		return new TimeStamp(ticks);
+	}
+
 	public double getInSeconds() {
 		return ticks / (double) TICKS_PER_SECOND;
 	}
@@ -79,7 +87,7 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj.getClass().equals(TimeStamp.class))) return false;
+		if (obj == null || !(obj instanceof TimeStamp)) return false;
 		final TimeStamp other = (TimeStamp) obj;
 		return ticks == other.ticks;
 	}

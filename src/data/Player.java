@@ -1,13 +1,20 @@
 package data;
 
-import static data.Observations.*;
-
 import java.io.Serializable;
-
-import com.google.gson.JsonObject;
 
 import entity.agent.Agent;
 
+/**
+ * A class that represents a player. It contains a role, strategy, and a
+ * reference to the player.
+ * 
+ * It is accessed by getting a player observation. This calls the
+ * player.getPayoff function which can be overriden to return the correct thing
+ * for different agent types.
+ * 
+ * @author erik
+ * 
+ */
 public class Player implements Serializable {
 	
 	private static final long serialVersionUID = 7233996258432288503L;
@@ -26,13 +33,8 @@ public class Player implements Serializable {
 		return agent;
 	}
 	
-	public JsonObject toJson() {
-		JsonObject observation = new JsonObject();
-		observation.addProperty(ROLE, role);
-		observation.addProperty(STRATEGY, strategy);
-		// FIXME Get surplus instead of realized profit?
-		observation.addProperty(PAYOFF, agent.getSurplus(0));
-		return observation;
+	public PlayerObservation getObservation() {
+		return new PlayerObservation(role, strategy, agent.getPayoff());
 	}
 
 }

@@ -2,8 +2,7 @@ package entity.agent;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
-import static utils.Compare.max;
-import static utils.Compare.min;
+import static fourheap.Order.OrderType.*;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -11,6 +10,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 
 import systemmanager.Keys;
 import utils.Pair;
@@ -25,6 +25,7 @@ import entity.market.Price;
 import entity.market.Quote;
 import entity.market.Transaction;
 import event.TimeStamp;
+import fourheap.Order.OrderType;
 
 /**
  * This is the implementation of the Adaptive Aggressive strategy.
@@ -37,6 +38,7 @@ import event.TimeStamp;
 public class AAAgent extends BackgroundAgent {
 	
 	private static final long serialVersionUID = 2418819222375372886L;
+	private static final Ordering<Price> pcomp = Ordering.natural();
 	
 	// Agent market variables
 	private boolean isBuyer; // randomly assigned at initialization
@@ -130,10 +132,11 @@ public class AAAgent extends BackgroundAgent {
 			lastPrice = new Price(-1);
 		
 		// Determining Quantity
+		OrderType type = isBuyer ? BUY : SELL;
 		int quantity = isBuyer ? 1 : -1;
 
 		// Updating Price Limit
-		Price limit = determinePriceLimit(quantity, currentTime);
+		Price limit = getValuation(type, currentTime);
 
 		// Determine the Target Price
 		Price targetPrice = determinePriceTarget(limit, movingAverage);
@@ -187,13 +190,6 @@ public class AAAgent extends BackgroundAgent {
 		double movingAverage = total / num;
 		double mvgAvgNum = num;
 		return new MovingAverage(movingAverage, mvgAvgNum);
-	}
-
-	
-	private Price determinePriceLimit(int quantity, TimeStamp ts) {
-		int fundPrice = fundamental.getValueAt(ts).intValue();
-		int deviation = privateValue.getValueAtPosition(positionBalance + quantity).intValue();
-		return new Price(fundPrice + deviation);
 	}
 	
 	/**
@@ -301,7 +297,7 @@ public class AAAgent extends BackgroundAgent {
 		String s = this + " " + getName() + ":";
 
 		// Determining the offer price to (possibly) submit
-		Quote quote = marketIP.getQuote();
+		Quote quote = marketQuoteProcessor.getQuote();
 		Price bestBid = quote.getBidPrice();
 		Price bestAsk = quote.getAskPrice();
 
@@ -320,12 +316,13 @@ public class AAAgent extends BackgroundAgent {
 		if (bestBid == null || bestAsk == null ||
 				bestBid.equals(new Price(-1)) || bestAsk.equals(new Price(-1))) {
 			Price price = isBuyer ? Price.ZERO : Price.INF;
-			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, price, quantity, primaryMarket, TimeStamp.IMMEDIATE));
+			OrderType type = isBuyer ? BUY : SELL;
+			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, primaryMarket, type, price, Math.abs(quantity), TimeStamp.IMMEDIATE));
 		}
 		
 		// If best offer is outside of limit price, no bid is submitted
 		if ((isBuyer && limit.lessThanEqual(bestBid))
-			|| (!isBuyer && limit.greaterThanEquals(bestAsk))) {
+			|| (!isBuyer && limit.greaterThanEqual(bestAsk))) {
 			s += "best offer is outside of limit price: " + limit
 					+ "; no submission";
 			log(INFO, s);
@@ -335,8 +332,8 @@ public class AAAgent extends BackgroundAgent {
 		// Pricing - verifying targetPrice
 		Price price;
 		if(!targetPrice.equals(new Price(-1)))
-			targetPrice = isBuyer ? min(limit, targetPrice) : 
-			max(limit, targetPrice);
+			targetPrice = isBuyer ? pcomp.min(limit, targetPrice) : 
+			pcomp.max(limit, targetPrice);
 
 		// See equations 10 and 11 in Vytelingum paper section 4.4 - bidding
 		// layer
@@ -345,24 +342,24 @@ public class AAAgent extends BackgroundAgent {
 		// difference/eta computes to be zero
 		if (targetPrice.equals(new Price(-1))) {
 			if (isBuyer) {
-				double offset = (min(bestAsk, limit).doubleValue() - bestBid.doubleValue()) / eta;
+				double offset = (pcomp.min(bestAsk, limit).doubleValue() - bestBid.doubleValue()) / eta;
 				price = new Price(bestBid.doubleValue() + offset + 1);
-				price = min(price, limit);
+				price = pcomp.min(price, limit);
 			} else {
-				double offset = (bestAsk.doubleValue() - max(bestBid, limit).doubleValue()) / eta;
+				double offset = (bestAsk.doubleValue() - pcomp.max(bestBid, limit).doubleValue()) / eta;
 				price = new Price(bestAsk.doubleValue() - offset - 1);
-				price = max(price, limit);				
+				price = pcomp.max(price, limit);				
 			}
 		}
 		else {
 			if (isBuyer) {
 				double offset = (targetPrice.doubleValue() - bestBid.doubleValue()) /eta;
 				price = new Price(bestBid.doubleValue() + offset - 1);
-				price = min(price, limit);
+				price = pcomp.min(price, limit);
 			} else {
 				double offset = (bestAsk.doubleValue() - targetPrice.doubleValue()) / eta;
 				price = new Price(bestAsk.doubleValue() - offset - 1);
-				price = max(price, limit);
+				price = pcomp.max(price, limit);
 			}
 		}
 
@@ -372,12 +369,12 @@ public class AAAgent extends BackgroundAgent {
 			// if bestAsk < targetPrice, accept bestAsk
 			// else submit bid given by EQ 10/11
 			Price submitPrice = bestAsk.lessThanEqual(price) ? bestAsk : price;
-			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, submitPrice, quantity, primaryMarket, TimeStamp.IMMEDIATE));
+			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, primaryMarket, BUY, submitPrice, quantity, TimeStamp.IMMEDIATE));
 		} else { // Seller
 			// If outstanding bid >= target price, submit ask at bid price
 			// else submit bid given by EQ 10/11
-			Price submitPrice = bestBid.greaterThanEquals(price) ? bestBid : price;
-			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, submitPrice, quantity, primaryMarket, TimeStamp.IMMEDIATE));
+			Price submitPrice = bestBid.greaterThanEqual(price) ? bestBid : price;
+			return Collections.singleton(new SubmitNMSOrder(AAAgent.this, primaryMarket, SELL, submitPrice, -quantity, TimeStamp.IMMEDIATE));
 		}
 	}
 	

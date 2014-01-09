@@ -32,18 +32,27 @@ public class CallMarket extends Market {
 	protected final TimeStamp clearFreq;
 	protected TimeStamp nextClearTime;
 
-	public CallMarket(SIP sip, TimeStamp latency, Random rand, int tickSize,
+	public CallMarket(SIP sip, Random rand, TimeStamp latency, int tickSize,
 			double pricingPolicy, TimeStamp clearFreq) {
-		super(sip, latency, new UniformPriceClear(pricingPolicy, tickSize), rand);
+		this(sip, rand, latency, latency, tickSize, pricingPolicy, clearFreq);
+	}
+	
+	public CallMarket(SIP sip, Random rand, TimeStamp quoteLatency, 
+			TimeStamp transactionLatency, int tickSize, double pricingPolicy, 
+			TimeStamp clearFreq) {
+		super(sip, quoteLatency, transactionLatency, new UniformPriceClear(pricingPolicy, tickSize), 
+				rand);
 		checkArgument(clearFreq.after(TimeStamp.ZERO),
-				"Can't create a call market with 0 clear frequency. Create a CDA instead.");	// TODO really? why not?
+				"Can't create a call market with 0 clear frequency. Create a CDA instead.");
 
 		this.clearFreq = clearFreq;
 		this.nextClearTime = TimeStamp.ZERO;
 	}
 	
 	public CallMarket(SIP sip, Random rand, EntityProperties props) {
-		this(sip, new TimeStamp(props.getAsInt(Keys.MARKET_LATENCY, -1)), rand,
+		this(sip, rand,
+				new TimeStamp(props.getAsInt(Keys.QUOTE_LATENCY, props.getAsInt(Keys.MARKET_LATENCY, -1))),
+				new TimeStamp(props.getAsInt(Keys.TRANSACTION_LATENCY, props.getAsInt(Keys.MARKET_LATENCY, -1))),
 				props.getAsInt(Keys.TICK_SIZE, 1),
 				props.getAsDouble(Keys.PRICING_POLICY, 0.5),
 				new TimeStamp(props.getAsInt(Keys.CLEAR_FREQ, 100)));

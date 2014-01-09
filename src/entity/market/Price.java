@@ -19,9 +19,11 @@ import utils.MathUtils;
 public class Price extends Number implements Comparable<Price>, Serializable {
 
 	private static final long serialVersionUID = 772101228717034473L;
-	
-	// XXX Take infinite price into account for subtraction, addition,
-	// toString, etc. Basically, should infinite price be special?
+
+	/*
+	 * XXX Take infinite price into account for subtraction, addition, toString,
+	 * etc. Basically, should infinite price be special?
+	 */
 	public static final Price INF = new Price(Integer.MAX_VALUE - 1);
 	public static final Price ZERO = new Price(0);
 
@@ -35,8 +37,6 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 	 * @param ticks
 	 */
 	public Price(int ticks) {
-		// XXX Decide if negative numbers should be allowed and how to include
-		// this in the "diff" function
 		this.ticks = ticks;
 	}
 	
@@ -110,7 +110,7 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 	/**
 	 * True if p is null or this price is greater or equal
 	 */
-	public boolean greaterThanEquals(Price p) {
+	public boolean greaterThanEqual(Price p) {
 		return p == null || compareTo(p) >= 0;
 	}
 

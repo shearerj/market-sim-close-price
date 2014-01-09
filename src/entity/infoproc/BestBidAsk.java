@@ -19,13 +19,16 @@ public class BestBidAsk implements Serializable {
 	
 	protected final Market bestBidMarket, bestAskMarket;
 	protected final Price bestBid, bestAsk;
+	protected final int bestBidQuantity, bestAskQuantity;
 
-	public BestBidAsk(Market bestBidMarket, Price bestBid,
-			Market bestAskMarket, Price bestAsk) {
+	public BestBidAsk(Market bestBidMarket, Price bestBid, int bestBidQuantity,
+			Market bestAskMarket, Price bestAsk, int bestAskQuantity) {
 		this.bestBidMarket = bestBidMarket;
 		this.bestBid = bestBid;
+		this.bestBidQuantity = bestBidQuantity;
 		this.bestAskMarket = bestAskMarket;
 		this.bestAsk = bestAsk;
+		this.bestAskQuantity = bestAskQuantity;
 	}
 
 	/**
@@ -52,33 +55,51 @@ public class BestBidAsk implements Serializable {
 	public Price getBestAsk() {
 		return bestAsk;
 	}
+	
+	public int getBestBidQuantity() {
+		return bestBidQuantity;
+	}
+
+	public int getBestAskQuantity() {
+		return bestAskQuantity;
+	}
+	
 
 	@Override
 	public int hashCode() {
-		return Objects.hashCode(bestBidMarket, bestBid, bestAskMarket, bestAsk);
+		return Objects.hashCode(bestBidMarket, bestBid, bestBidQuantity, 
+				bestAskMarket, bestAsk, bestAskQuantity);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj.getClass().equals(getClass())))
+		if (obj == null || !(obj instanceof BestBidAsk))
 			return false;
 		BestBidAsk that = (BestBidAsk) obj;
 		return Objects.equal(bestBidMarket, that.bestBidMarket)
 				&& Objects.equal(bestBid, that.bestBid)
+				&& Objects.equal(bestBidQuantity, that.bestBidQuantity)
 				&& Objects.equal(bestAskMarket, that.bestAskMarket)
-				&& Objects.equal(bestAsk, that.bestAsk);
+				&& Objects.equal(bestAsk, that.bestAsk)
+				&& Objects.equal(bestAskQuantity, that.bestAskQuantity);
 	}
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder("(BestBid: ");
 		
 		if (bestBid == null) sb.append("- ");
-		else sb.append(bestBid).append(" from ").append(bestBidMarket);
+		else { 
+			sb.append(bestBidQuantity).append(" @ ").append(bestBid);
+			sb.append(" from ").append(bestBidMarket);
+		}
 		
 		sb.append(", BestAsk: ");
 		
 		if (bestAsk == null) sb.append("- ");
-		else sb.append(bestAsk).append(" from ").append(bestAskMarket);
+		else {
+			sb.append(bestAskQuantity).append(" @ ").append(bestAsk);
+			sb.append(" from ").append(bestAskMarket);
+		}
 		
 		return sb.append(')').toString();
 	}

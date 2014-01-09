@@ -20,6 +20,7 @@ hft.jar
 *.aux
 *.bbl
 *.blg
+*.toc
 
 # Other #
 #########

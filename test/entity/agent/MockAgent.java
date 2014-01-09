@@ -5,28 +5,26 @@ import java.util.Random;
 
 import com.google.common.collect.ImmutableSet;
 
-import data.FundamentalValue;
 import activity.Activity;
-import entity.agent.BackgroundAgent;
+import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Order;
 import event.TimeStamp;
 
-public class MockAgent extends BackgroundAgent {
+public class MockAgent extends Agent {
 
 	private static final long serialVersionUID = 1L;
 
 	public MockAgent(FundamentalValue fundamental, SIP sip, Market market) {
-		super(new TimeStamp(0), fundamental, sip, market, new Random(), 0,
-				new PrivateValue(),	1, 0, 1000);
+		super(TimeStamp.ZERO, fundamental, sip, new Random(), 1);
 	}
 
 	@Override
-	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
+	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
 		return ImmutableSet.of();
 	}
-
+	
 	public Collection<Order> getOrders() {
 		return this.activeOrders;
 	}

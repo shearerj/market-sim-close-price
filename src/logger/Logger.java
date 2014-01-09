@@ -33,10 +33,8 @@ public class Logger {
 	}
 
 	public static void log(Level level, String message) {
-		if (logger == null) {
-			System.err.println("LNI: " + message);
+		if (getLevel() == Level.NO_LOGGING)
 			return;
-		}
 		message = prefix.getPrefix() + message;
 		logger.log(level.ordinal(), message);
 		if (level == Level.ERROR)

@@ -58,9 +58,11 @@ public class AgentFactory {
 				rand);
 	}
 
-	// XXX Not all agents advance all of the parameters like the market or the arrival process. One
-	// just has to be sure that this happens appropriately if one factory is creating several
-	// different classes of agents.
+	/*
+	 * XXX Not all agents advance all of the parameters like the market or the
+	 * arrival process. One just has to be sure that this happens appropriately
+	 * if one factory is creating several different classes of agents.
+	 */
 	public Agent createAgent(AgentProperties props) {
 		switch (props.getAgentType()) {
 		case AA:
@@ -84,7 +86,7 @@ public class AgentFactory {
 					marketAssignment.next(), new Random(rand.nextLong()),
 					props);
 		case LA:
-			return new LAAgent(markets, fundamental, sip, new Random(
+			return new LAAgent(fundamental, sip, markets, new Random(
 					rand.nextLong()), props);
 		case DA:
 			return new DummyAgent(fundamental,sip,marketAssignment.next());

@@ -2,40 +2,44 @@ package entity.market;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Math.abs;
+import static data.Observations.BUS;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
 import static java.lang.Math.min;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import utils.Iterables2;
 import activity.Activity;
-import activity.SendToIP;
+import activity.SendToQP;
+import activity.SendToTP;
 import activity.WithdrawOrder;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 
-import data.TimeSeries;
+import data.Observations.MidQuoteStatistic;
+import data.Observations.SpreadStatistic;
 import entity.Entity;
 import entity.agent.Agent;
 import entity.infoproc.BestBidAsk;
-import entity.infoproc.IP;
+import entity.infoproc.QuoteProcessor;
+import entity.infoproc.MarketQuoteProcessor;
 import entity.infoproc.SIP;
-import entity.infoproc.SMIP;
+import entity.infoproc.MarketTransactionProcessor;
+import entity.infoproc.TransactionProcessor;
 import entity.market.clearingrule.ClearingRule;
 import event.TimeStamp;
 import fourheap.FourHeap;
 import fourheap.MatchedOrders;
+import fourheap.Order.OrderType;
 
 /**
  * Base class for all markets. This class provides almost all market
@@ -52,7 +56,7 @@ import fourheap.MatchedOrders;
  * will trigger a SendToIP for every IP this Market knows about (via the method
  * updateQuote). Every other time another action needs to happen it needs to be
  * overridden by the subclass. For example, a CDA will trigger a Clear after a
- * SubmitOrder, and sendToIP activitites after a WithdrawOrder. A call market will
+ * SubmitOrder, and sendToIP activities after a WithdrawOrder. A call market will
  * schedule another Clear after an existing one.
  * 
  * @author ewah
@@ -60,30 +64,26 @@ import fourheap.MatchedOrders;
 public abstract class Market extends Entity {
 
 	private static final long serialVersionUID = 8806298743451593261L;
-	private static int nextID = 1;
+	public static int nextID = 1;
 	
-	protected final FourHeap<Price, MarketTime> orderbook;
+	protected final FourHeap<Price, MarketTime, Order> orderbook;
 	protected final ClearingRule clearingRule;
 	protected final Random rand;
 	protected long marketTime; // keeps track of internal market actions
 
-	protected final SMIP ip;
+	protected final MarketQuoteProcessor quoteProcessor;
+	protected final MarketTransactionProcessor transactionProcessor;
 	protected final SIP sip;
-	protected final Collection<IP> ips; // All the information processors that get data
+	protected final Collection<QuoteProcessor> qps;
+	protected final Collection<TransactionProcessor> tps;
 	
 	protected Quote quote; // Current quote
 
 	// Book keeping
-	protected final Map<fourheap.Order<Price, MarketTime>, Order> orderMapping; // How to get full orders from fourheap Orders
 	protected final Multiset<Price> askPriceQuantity, bidPriceQuantity; // How many orders are at a specific price
+	// FIXME These two are used only for testing, and nothing else. Is there a better way?
 	protected final Collection<Order> orders; // All orders ever submitted to the market
 	protected final List<Transaction> allTransactions; // All successful transactions, implicitly time ordered
-	
-	// depths: Number of orders in the orderBook
-	// spreads: Bid-ask spread value
-	// midQuotes: Midpoint of bid/ask values
-	protected final TimeSeries depths, spreads, midQuotes;
-
 
 	/**
 	 * Constructor
@@ -100,6 +100,28 @@ public abstract class Market extends Entity {
 	 *            the random number generator to use
 	 */
 	public Market(SIP sip, TimeStamp latency, ClearingRule clearingRule, Random rand) {
+		this(sip, latency, latency, clearingRule, rand);
+	}
+	
+	/**
+	 * Constructor
+	 * 
+	 * @param sip
+	 *            the SIP for this simulation
+	 * @param quoteLatency
+	 *            how long it takes agents with market as a primary model get
+	 *            get notified of quote updates
+	 * @param transactionLatency
+	 *            how long it takes agents with market as a primary model get
+	 *            get notified of new transactions
+	 * @param clearingRule
+	 *            a class that dictates how the prices on matching orders are
+	 *            set
+	 * @param rand
+	 *            the random number generator to use
+	 */
+	public Market(SIP sip, TimeStamp quoteLatency, TimeStamp transactionLatency,
+			ClearingRule clearingRule, Random rand) {
 		super(nextID++);
 		this.orderbook = FourHeap.create();
 		this.clearingRule = clearingRule;
@@ -107,21 +129,20 @@ public abstract class Market extends Entity {
 		this.marketTime = 0;
 		this.quote = new Quote(this, null, 0, null, 0, TimeStamp.ZERO);
 
-		this.ips = Lists.newArrayList();
+		this.qps = Lists.newArrayList();
+		this.tps = Lists.newArrayList();
 		this.sip = sip;
-		this.ip = new SMIP(latency, this);
-		ips.add(sip);
-		ips.add(ip);
+		this.quoteProcessor = new MarketQuoteProcessor(quoteLatency, this);
+		this.transactionProcessor = new MarketTransactionProcessor(transactionLatency, this);
+		qps.add(sip);
+		tps.add(sip);
+		qps.add(quoteProcessor);
+		tps.add(transactionProcessor);
 
-		this.orderMapping = Maps.newHashMap();
 		this.askPriceQuantity = HashMultiset.create();
 		this.bidPriceQuantity = HashMultiset.create();
 		this.orders = Lists.newArrayList();
 		this.allTransactions = Lists.newArrayList();
-
-		this.depths = new TimeSeries();
-		this.spreads = new TimeSeries();
-		this.midQuotes = new TimeSeries();
 	}
 
 	/**
@@ -131,22 +152,29 @@ public abstract class Market extends Entity {
 	 * @param ip
 	 *            the IP to add
 	 */
-	public void addIP(IP ip) {
-		checkNotNull(ip, "IP");
-		ips.add(ip);
+	public void addQP(QuoteProcessor qp) {
+		checkNotNull(qp, "QP");
+		qps.add(qp);
 	}
-
-	public SMIP getSMIP() {
-		return this.ip;
-	}
-
+	
 	/**
-	 * Get all orders ever submitted to the market
+	 * Add an IP to this market that will get notified when the market quote and
+	 * transactions change.
 	 * 
-	 * @return All orders ever submitted to this market
+	 * @param ip
+	 *            the IP to add
 	 */
-	public Collection<Order> getAllOrders() {
-		return ImmutableList.copyOf(orders);
+	public void addTP(TransactionProcessor tp) {
+		checkNotNull(tp, "TP");
+		tps.add(tp);
+	}
+
+	public MarketQuoteProcessor getQuoteProcessor() {
+		return this.quoteProcessor;
+	}
+	
+	public MarketTransactionProcessor getTransactionProcessor() {
+		return this.transactionProcessor;
 	}
 	
 	/**
@@ -162,7 +190,7 @@ public abstract class Market extends Entity {
 	 */
 	public Iterable<? extends Activity> withdrawOrder(Order order,
 			TimeStamp currentTime) {
-		return withdrawOrder(order, Math.abs(order.getQuantity()), currentTime);
+		return withdrawOrder(order, order.getQuantity(), currentTime);
 	}
 
 	/**
@@ -182,21 +210,20 @@ public abstract class Market extends Entity {
 	 *            the current time
 	 * @return any side effect activities (base case none)
 	 */
-	public Iterable<? extends Activity> withdrawOrder(Order order, int quantity, TimeStamp currentTime) {
+	public Iterable<? extends Activity> withdrawOrder(Order order, int quantity, 
+			TimeStamp currentTime) {
 		marketTime++;
-		checkArgument(quantity >= 0, "Quantiy can't be negative");
+		checkArgument(quantity > 0, "Quantity must be positive");
 		if (order.getQuantity() == 0) return ImmutableList.of();
-		quantity = min(quantity, Math.abs(order.getQuantity()));
+		quantity = min(quantity, order.getQuantity());
 		
-		Multiset<Price> priceQuant = order.getQuantity() < 0 ? askPriceQuantity : bidPriceQuantity;
+		Multiset<Price> priceQuant = order.getOrderType() == SELL ? askPriceQuantity : bidPriceQuantity;
 		priceQuant.remove(order.getPrice(), quantity);
 		
-		orderbook.withdrawOrder(order.order, quantity);
+		orderbook.withdrawOrder(order, quantity);
 		
-		if (order.getQuantity() == 0) {
+		if (order.getQuantity() == 0)
 			order.agent.removeOrder(order);
-			orderMapping.remove(order.order);
-		}
 		
 		return ImmutableList.of();
 	}
@@ -212,45 +239,32 @@ public abstract class Market extends Entity {
 	 */
 	public Iterable<? extends Activity> clear(TimeStamp currentTime) {
 		marketTime++;
-		List<MatchedOrders<Price, MarketTime>> matchedOrders = orderbook.clear();
-		Builder<Transaction> transactions = ImmutableList.builder();
-		for (Entry<MatchedOrders<Price, MarketTime>, Price> e : clearingRule.pricing(matchedOrders).entrySet()) {
+		List<MatchedOrders<Price, MarketTime, Order>> matchedOrders = orderbook.clear();
+		Builder<Transaction> transactionBuilder = ImmutableList.builder();
+		for (Entry<MatchedOrders<Price, MarketTime, Order>, Price> e : clearingRule.pricing(matchedOrders).entrySet()) {
 
-			Order buy = orderMapping.get(e.getKey().getBuy());
-			Order sell = orderMapping.get(e.getKey().getSell());
+			Order buy = e.getKey().getBuy();
+			Order sell = e.getKey().getSell();
+
+			Transaction trans = new Transaction(buy.getAgent(),
+					sell.getAgent(), this, buy, sell, e.getKey().getQuantity(),
+					e.getValue(), currentTime);
 			
-			// FIXME We can't just ignore it. We have to remove them or something. This isn't the
-			// correct solution to this
-
-			if (!buy.getAgent().equals(sell.getAgent())) { // In case buyer == seller
-				Transaction trans = new Transaction(buy.getAgent(),
-						sell.getAgent(), this, buy, sell, e.getKey().getQuantity(),
-						e.getValue(), currentTime);
-				
-				askPriceQuantity.remove(sell.getPrice(), trans.getQuantity());
-				bidPriceQuantity.remove(buy.getPrice(), trans.getQuantity());
-				
-				transactions.add(trans);
-				allTransactions.add(trans);
-				// TODO add delay to agent facing actions...
-				buy.getAgent().addTransaction(trans);
-				if (buy.getQuantity() == 0)
-					buy.agent.removeOrder(buy);
-				sell.getAgent().addTransaction(trans);
-				if (sell.getQuantity() == 0)
-					sell.agent.removeOrder(sell);
-			}
+			askPriceQuantity.remove(sell.getPrice(), trans.getQuantity());
+			bidPriceQuantity.remove(buy.getPrice(), trans.getQuantity());
+			
+			transactionBuilder.add(trans);
+			allTransactions.add(trans);
+			BUS.post(trans);
 		}
 		
-		// Remove fully transacted orders
-		for (MatchedOrders<Price, MarketTime> match : matchedOrders) {
-			if (match.getBuy().getQuantity() == 0)
-				orderMapping.remove(match.getBuy());
-			if (match.getSell().getQuantity() == 0)
-				orderMapping.remove(match.getSell());
-		}
-
-		return updateQuote(transactions.build(), currentTime);
+		List<Transaction> transactions = transactionBuilder.build();
+		Builder<Activity> acts = ImmutableList.builder();
+		if (!transactions.isEmpty())
+			for (TransactionProcessor tp : tps)
+				acts.add(new SendToTP(this, transactions, tp, TimeStamp.IMMEDIATE));
+		acts.addAll(updateQuote(currentTime));
+		return acts.build();
 	}
 
 	/**
@@ -263,8 +277,7 @@ public abstract class Market extends Entity {
 	 *            the current time
 	 * @return the SendToIP activities required to propagate information
 	 */
-	protected Iterable<? extends Activity> updateQuote(
-			List<Transaction> transactions, TimeStamp currentTime) {
+	protected Iterable<? extends Activity> updateQuote(TimeStamp currentTime) {
 		Price ask = orderbook.askQuote();
 		Price bid = orderbook.bidQuote();
 		int quantityAsk = askPriceQuantity.count(ask);
@@ -284,18 +297,18 @@ public abstract class Market extends Entity {
 		 * this will only happen when there are matched orders when a quote is
 		 * generated, which is currently never possible
 		 */
-		quote = new Quote(this, ask, quantityAsk, bid, quantityBid, currentTime);
+		quote = new Quote(this, bid, quantityBid, ask, quantityAsk, currentTime);
 
 		log(INFO, this + " " + quote);
 
-		depths.add((int) currentTime.getInTicks(), orderbook.size());
-		spreads.add((int) currentTime.getInTicks(), quote.getSpread());
-		midQuotes.add((int) currentTime.getInTicks(), quote.getMidquote());
+		BUS.post(new MidQuoteStatistic(this, quote.getMidquote(), currentTime));
+		BUS.post(new SpreadStatistic(this, quote.getSpread(), currentTime));
 		
 		MarketTime quoteTime = new MarketTime(currentTime, marketTime);
+		// TODO I removed random orders, and not HFT's behave properly. Make sure removing the randomness didn't fix this
 		Builder<Activity> acts = ImmutableList.builder();
-		for (IP ip : Iterables2.randomOrder(ips, rand))
-			acts.add(new SendToIP(this, quoteTime, quote, transactions, ip, TimeStamp.IMMEDIATE));
+		for (QuoteProcessor qp : qps)
+			acts.add(new SendToQP(this, quoteTime, quote, qp, TimeStamp.IMMEDIATE));
 		return acts.build();
 	}
 
@@ -312,6 +325,7 @@ public abstract class Market extends Entity {
 	 * 
 	 * @param agent
 	 *            The agent that's submitting the order
+	 * @param type TODO
 	 * @param price
 	 *            The price of the order
 	 * @param quantity
@@ -320,9 +334,9 @@ public abstract class Market extends Entity {
 	 *            The current time
 	 * @return any side effect activities (base case none)
 	 */
-	public Iterable<? extends Activity> submitOrder(Agent agent, Price price,
-			int quantity, TimeStamp currentTime) {
-		return submitOrder(agent, price, quantity, currentTime, TimeStamp.IMMEDIATE);
+	public Iterable<? extends Activity> submitOrder(Agent agent, OrderType type,
+			Price price, int quantity, TimeStamp currentTime) {
+		return submitOrder(agent, type, price, quantity, currentTime, TimeStamp.IMMEDIATE);
 	}
 
 	/**
@@ -333,6 +347,8 @@ public abstract class Market extends Entity {
 	 * 
 	 * @param agent
 	 *            The agent submitting the order
+	 * @param type
+	 * 			  The type of the order (BUY/SELL)
 	 * @param price
 	 *            The price of the order
 	 * @param quantity
@@ -345,25 +361,22 @@ public abstract class Market extends Entity {
 	 * @return The side effect activities (base case potentially a WithdrawOrder for this
 	 *         method)
 	 */
-	public Iterable<? extends Activity> submitOrder(Agent agent, Price price,
+	public Iterable<? extends Activity> submitOrder(Agent agent, OrderType type, Price price,
 			int quantity, TimeStamp currentTime, TimeStamp duration) {
-		checkArgument(quantity != 0, "Can't submit a 0 quantity order");
+		checkNotNull(type, "Order type");
+		checkArgument(quantity > 0, "Quantity must be positive");
 		marketTime++;
 		
-		log(INFO, agent + " (" + price + ", " + quantity + ") -> " + this);
+		log(INFO, agent + " " + type + "(" + quantity + " @ " + price + ") -> " + this);
 
-		fourheap.Order<Price, MarketTime> nativeOrder = fourheap.Order.create(
-				price, quantity, new MarketTime(currentTime, marketTime));
-		Order order = new Order(agent, this, nativeOrder);
+		Order order = Order.create(type, agent, this, price, quantity, new MarketTime(currentTime, marketTime));
 
-		Multiset<Price> priceQuant = order.getQuantity() < 0 ? askPriceQuantity : bidPriceQuantity;
-		priceQuant.add(order.getPrice(), abs(quantity));
+		Multiset<Price> priceQuant = order.getOrderType() == BUY ? bidPriceQuantity : askPriceQuantity;
+		priceQuant.add(order.getPrice(), quantity);
 		
-		orderbook.insertOrder(nativeOrder);
-		orderMapping.put(nativeOrder, order);
+		orderbook.insertOrder(order);
 		orders.add(order);
 		agent.addOrder(order);
-		depths.add((int) currentTime.getInTicks(), orderbook.size());
 		
 		if (!duration.equals(TimeStamp.IMMEDIATE))
 			return ImmutableList.of(new WithdrawOrder(order, currentTime.plus(duration)));
@@ -379,6 +392,8 @@ public abstract class Market extends Entity {
 	 * 
 	 * @param agent
 	 *            The agent that's submitting the order
+	 * @param type
+	 * 			  The type of the order (BUY/SELL)
 	 * @param price
 	 *            The price of the order
 	 * @param quantity
@@ -388,8 +403,8 @@ public abstract class Market extends Entity {
 	 * @return Any side effect activities (none in base case)
 	 */
 	public Iterable<? extends Activity> submitNMSOrder(Agent agent,
-			Price price, int quantity, TimeStamp currentTime) {
-		return submitNMSOrder(agent, price, quantity, currentTime, TimeStamp.IMMEDIATE);
+			OrderType type, Price price, int quantity, TimeStamp currentTime) {
+		return submitNMSOrder(agent, type, price, quantity, currentTime, TimeStamp.IMMEDIATE);
 	}
 
 	/**
@@ -402,6 +417,8 @@ public abstract class Market extends Entity {
 	 * 
 	 * @param agent
 	 *            The agent submitting the order
+	 * @param type
+	 * 			  The type of the order (BUY/SELL)
 	 * @param price
 	 *            The price of the order
 	 * @param quantity
@@ -419,8 +436,11 @@ public abstract class Market extends Entity {
 	 * to get immediate execution. NMSOrder will not route properly for a call
 	 * market if there is another market in the model
 	 */
-	public Iterable<? extends Activity> submitNMSOrder(Agent agent,
+	public Iterable<? extends Activity> submitNMSOrder(Agent agent, OrderType type,
 			Price price, int quantity, TimeStamp currentTime, TimeStamp duration) {
+		checkNotNull(type, "Order type");
+		checkArgument(quantity > 0, "Quantity must be positive");
+		
 		BestBidAsk nbbo = sip.getNBBO();
 		Market bestMarket = this;
 
@@ -439,10 +459,11 @@ public abstract class Market extends Entity {
 		}
 
 		if (!bestMarket.equals(this))
-			log(INFO, "Routing " + agent + " (" + price + ", " + quantity
-					+ ") -> " + this + " " + quote + " to NBBO " + nbbo);
+			log(INFO, "Routing " + agent + " " + type + "(" +
+					+ quantity + " @ " + price + ") -> " 
+					+ this + " " + quote + " to NBBO " + nbbo);
 
-		return bestMarket.submitOrder(agent, price, quantity, currentTime, duration);
+		return bestMarket.submitOrder(agent, type, price, quantity, currentTime, duration);
 	}
 	
 	/**
@@ -453,33 +474,6 @@ public abstract class Market extends Entity {
 	 */
 	public List<Transaction> getTransactions() {
 		return ImmutableList.copyOf(allTransactions);
-	}
-
-	/**
-	 * Get the depths. Used for observations.
-	 * 
-	 * @return The depths of the Market
-	 */
-	public TimeSeries getDepth() {
-		return this.depths;
-	}
-
-	/**
-	 * Get the spreads. Used for observations.
-	 * 
-	 * @return The spreads of the Market
-	 */
-	public TimeSeries getSpread() {
-		return this.spreads;
-	}
-
-	/**
-	 * Get the mid quotes. Used for observations.
-	 * 
-	 * @return The mid quotes of the Market
-	 */
-	public TimeSeries getMidQuotes() {
-		return this.midQuotes;
 	}
 
 	/**

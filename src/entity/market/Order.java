@@ -2,10 +2,7 @@ package entity.market;
 
 import java.io.Serializable;
 
-import com.google.common.base.Objects;
-
 import entity.agent.Agent;
-import event.TimeStamp;
 
 /**
  * Contains array of Points which can be evaluated independently by
@@ -14,18 +11,21 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-public class Order implements Serializable {
+public class Order extends fourheap.Order<Price, MarketTime> implements Serializable {
 
 	private static final long serialVersionUID = 4020465194816241014L;
 	
 	protected final Agent agent;
-	protected Market market;
-	protected final fourheap.Order<Price, MarketTime> order;
+	protected final Market market;
 	
-	public Order(Agent agent, Market market, fourheap.Order<Price, MarketTime> order) {
+	public Order(OrderType type, Agent agent, Market market, Price price, int quantity, MarketTime time) {
+		super(type, price, quantity, time);
 		this.agent = agent;
 		this.market = market;
-		this.order = order;
+	}
+	
+	public static Order create(OrderType type, Agent agent, Market market, Price price, int quantity, MarketTime time) {
+		return new Order(type, agent, market, price, quantity, time);
 	}
 	
 	public Agent getAgent() {
@@ -36,36 +36,9 @@ public class Order implements Serializable {
 		return market;
 	}
 	
-	public TimeStamp getSubmitTime() {
-		return order.getSubmitTime().getTime();
-	}
-	
-	public Price getPrice() {
-		return order.getPrice();
-	}
-	
-	public int getQuantity() {
-		return order.getQuantity();
-	}
-	
-	@Override
-	public int hashCode() {
-		return Objects.hashCode(agent, market, order);
-	}
-	
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj.getClass().equals(getClass())))
-			return false;
-		Order that = (Order) obj;
-		return Objects.equal(agent, that.agent)
-				&& Objects.equal(market, that.market)
-				&& Objects.equal(order, that.order);
-	}
-	
 	@Override
 	public String toString() {
-		return "<" + agent + " : " + market + " : " + order + ">";
+		return "<" + agent + " : " + market + " : " + super.toString() + ">";
 	}
 	
 }

@@ -15,12 +15,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import systemmanager.Consts;
 import activity.Activity;
 
 import com.google.common.collect.Iterables;
 
-import data.DummyFundamental;
 import data.FundamentalValue;
+import data.MockFundamental;
 import data.MockOrderDatum;
 import data.OrderDatum;
 import entity.infoproc.SIP;
@@ -29,19 +30,20 @@ import entity.market.MockMarket;
 import entity.market.Order;
 import entity.market.Price;
 import event.TimeStamp;
+import fourheap.Order.OrderType;
 
 public class OrderDataAgentTest {
 
 	private static Random rand;
 
-	private FundamentalValue fundamental = new DummyFundamental(100000);
+	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
 	private SIP sip;
 
 	@BeforeClass
 	public static void setupClass() {
 		// Setting up the log file
-		Logger.setup(3, new File("simulations/unit_testing/OrderDataAgentTest.log"));
+		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "OrderDataAgentTest.log"));
 
 		rand = new Random(1);
 	}
@@ -107,7 +109,7 @@ public class OrderDataAgentTest {
         List<OrderDatum> orders = new LinkedList<OrderDatum>();
         
 		OrderDataAgent agent = addAgent(orders.iterator());
-		market.submitNMSOrder(agent, new Price(75000), +1, new TimeStamp(15));
+		market.submitNMSOrder(agent, OrderType.BUY, new Price(75000), +1, new TimeStamp(15));
 		
 		Collection<Order> orderCollection = agent.getOrders();
 	    Order order = Iterables.getFirst(orderCollection, null);
