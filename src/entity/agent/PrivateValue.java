@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 import utils.Rands;
@@ -40,13 +41,16 @@ import fourheap.Order.OrderType;
 class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 
 	private static final long serialVersionUID = -348702049295080442L;
+	
+	protected final int offset;
+	protected final List<Price> values;
 
 	/**
 	 * Constructor for an agent without private value. This will return
 	 * Price.ZERO for every private value query.
 	 */
 	public PrivateValue() {
-		super(0, Price.ZERO);
+		offset = 0;
 		values = Collections.singletonList(ZERO);
 	}
 	
@@ -62,8 +66,10 @@ class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 	 *            The random number generator to use for random generation.
 	 */
 	public PrivateValue(int maxPosition, double var, Random rand) {
-		super(maxPosition, Price.ZERO);
-
+		checkArgument(maxPosition > 0, "Max Position must be positive");
+		
+		// Identical to legacy generation in final output
+		this.offset = maxPosition;
 		double[] values = new double[maxPosition * 2];
 		for (int i = 0; i < values.length; i++)
 			values[i] = Rands.nextGaussian(rand, 0, var);
@@ -80,9 +86,46 @@ class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 	 * Protected constructor for testing purposes (DummyPrivateValue)
 	 */
 	protected PrivateValue(int maxPosition, Collection<Price> values) {
-		super(maxPosition, Price.ZERO, values);
+		checkArgument(values.size() == 2*maxPosition, "Incorrect number of entries in list");
+		Builder<Price> builder = ImmutableList.builder();
+		builder.addAll(values);
+		this.values = builder.build();
+		offset = maxPosition;
+	}
+
+	/**
+	 * @return offset (max absolute value position)
+	 */
+	@Override
+	public int getMaxAbsPosition() {
+		return offset;
 	}
 	
+	/**
+	 * If new position (current position +/- 1) exceeds max position, return 0.
+	 * 
+	 * @param currentPosition
+	 *            Agent's current position
+	 * @param type
+	 * 			  Buy or Sell
+	 * @return The new private value if buying or selling 1 unit
+	 */
+	@Override
+	public Price getValue(int currentPosition, OrderType type) {
+		switch (type) {
+		case BUY:
+			if (currentPosition + offset <= values.size() - 1 &&
+					currentPosition + offset >= 0)
+				return values.get(currentPosition + offset);
+			break;
+		case SELL:
+			if (currentPosition + offset - 1 <= values.size() - 1 && 
+					currentPosition + offset - 1 >= 0)
+				return values.get(currentPosition + offset - 1);
+			break;
+		}
+		return Price.ZERO;
+	}
 	
 	/**
 	 * @param currentPosition
@@ -90,6 +133,7 @@ class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 	 * @param type
 	 * @return
 	 */
+	@Override
 	public Price getValueFromQuantity(int currentPosition, int quantity, OrderType type) {
 		checkArgument(quantity > 0, "Quantity must be positive");
 		int privateValue = 0;

@@ -3,15 +3,18 @@ package entity.agent;
 import static logger.Logger.log;
 import static logger.Logger.format;
 import static logger.Logger.Level.INFO;
+import static com.google.common.base.Preconditions.checkArgument;
 import static fourheap.Order.OrderType.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.ImmutableList.Builder;
 
@@ -529,6 +532,7 @@ public class AAAgent extends WindowAgent {
 	/**
 	 * Long-term learning. Section 4.3.2, Eq (8, 9) Vytelingum et al
 	 * 
+		protected final int offset;
 	 * @param equilibriumPrice
 	 * @param numTrans
 	 * @param transactions
@@ -636,16 +640,79 @@ public class AAAgent extends WindowAgent {
 	 * Holds aggression values for AA agents.
 	 *
 	 */
-	protected static class Aggression extends QuantityIndexedValue<Double> {
+	protected static class Aggression implements QuantityIndexedArray<Double> {
 
 		private static final long serialVersionUID = -8437580530274339226L;
 
+		protected final int offset;
+		protected List<Double> values;
+		
+		public Aggression() {
+			this.offset = 0;
+			this.values = Collections.emptyList();
+		}
+		
 		public Aggression(int maxPosition, double initialValue) {
-			super(maxPosition);
+			checkArgument(maxPosition > 0, "Max Position must be positive");
+			
+			// Identical to legacy generation in final output
+			this.offset = maxPosition;
+			this.values = Lists.newArrayList();
 			double[] values = new double[maxPosition * 2];
 			Arrays.fill(values, initialValue);
 			for (double value : values)
 				this.values.add(new Double(value));
+		}
+
+		@Override
+		public int getMaxAbsPosition() {
+			return offset;
+		}
+
+		@Override
+		public Double getValue(int currentPosition, OrderType type) {
+			switch (type) {
+			case BUY:
+				if (currentPosition + offset <= values.size() - 1 &&
+						currentPosition + offset >= 0)
+					return values.get(currentPosition + offset);
+				break;
+			case SELL:
+				if (currentPosition + offset - 1 <= values.size() - 1 && 
+						currentPosition + offset - 1 >= 0)
+					return values.get(currentPosition + offset - 1);
+				break;
+			}
+			return 0.0;
+		}
+		
+		/**
+		 * @param currentPosition
+		 * @param type
+		 * @param value
+		 */
+		public void setValue(int currentPosition, OrderType type,
+				double value) {
+			switch (type) {
+			case BUY:
+				if (currentPosition + offset <= values.size() - 1 &&
+						currentPosition + offset >= 0)
+					values.set(currentPosition + offset, value);
+				break;
+			case SELL:
+				if (currentPosition + offset - 1 <= values.size() - 1 && 
+						currentPosition + offset - 1 >= 0)
+					values.set(currentPosition + offset - 1, value);
+				break;
+			}
+		}
+
+		@Override
+		public Double getValueFromQuantity(int currentPosition, int quantity,
+				OrderType type) {
+			checkArgument(quantity > 0, "Quantity must be positive");
+			// TODO Auto-generated method stub
+			return null;
 		}
 	}
 }
