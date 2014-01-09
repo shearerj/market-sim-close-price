@@ -16,6 +16,8 @@ import data.OrderDatum;
 import data.OrderParserNYSE;
 import entity.market.Price;
 import event.TimeStamp;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
 
 public class OrderParserNYSETest {
 	
@@ -91,7 +93,7 @@ public class OrderParserNYSETest {
 		assertEquals(testType + " order quote id wrong", quoteId, orderData.getQuoteId());
 		assertEquals(testType + " order price wrong", new Price(Integer.parseInt(price)), orderData.getPrice());
 		assertEquals(testType + " order quantity wrong", Integer.parseInt(quantity), orderData.getQuantity());
-		assertEquals(testType + " order is buy wrong", true, orderData.isBuy());
+		assertEquals(testType + " order is buy wrong", BUY, orderData.getType());
 
 		lineScanner.close();
 	}
@@ -145,7 +147,7 @@ public class OrderParserNYSETest {
 		assertEquals(testType + " order quote id wrong", quoteId, orderData.getQuoteId());
 		assertEquals(testType + " order price wrong", new Price(Integer.parseInt(price)), orderData.getPrice());
 		assertEquals(testType + " order quantity wrong", Integer.parseInt(quantity), orderData.getQuantity());
-		assertEquals(testType + " order is buy wrong", false, orderData.isBuy());
+		assertEquals(testType + " order is buy wrong", SELL, orderData.getType());
 
 		lineScanner.close();
 	}
@@ -199,7 +201,7 @@ public class OrderParserNYSETest {
 		assertEquals(testType + " order quote id wrong", quoteId, orderData.getQuoteId());
 		assertEquals(testType + " order price wrong", new Price(Integer.parseInt(price)), orderData.getPrice());
 		assertEquals(testType + " order quantity wrong", Integer.parseInt(quantity), orderData.getQuantity());
-		assertEquals(testType + " order is buy wrong", true, orderData.isBuy());
+		assertEquals(testType + " order is buy wrong", BUY, orderData.getType());
 
 		lineScanner.close();
 	}
@@ -260,7 +262,7 @@ public class OrderParserNYSETest {
 		lineScanner.close();
 	}
 
-	@Test
+	
 	public void processTest(){
 		// TODO ????
 	}	

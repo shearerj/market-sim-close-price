@@ -8,6 +8,10 @@ import java.util.Scanner;
 
 import entity.market.Price;
 import event.TimeStamp;
+import fourheap.Order.OrderType;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+
 
 public class OrderParserNYSE implements OrderParser {
 	OrderParserNYSE() {
@@ -54,7 +58,7 @@ public class OrderParserNYSE implements OrderParser {
 		String sequenceNum = lineScanner.next();
 		String orderReferenceNum = lineScanner.next();
 		char exchangeCode = lineScanner.next().charAt(0);
-		boolean isBuy = (lineScanner.next().charAt(0) == 'B') ? true : false;
+		OrderType type = (lineScanner.next().charAt(0) == 'B') ? BUY : SELL;
 		int quantity = lineScanner.nextInt();
 		String stockSymbol = lineScanner.next();
 		Price price = new Price(lineScanner.nextDouble());
@@ -65,7 +69,7 @@ public class OrderParserNYSE implements OrderParser {
 
 		OrderDatum orderData = new OrderDatum('A', sequenceNum,
 				orderReferenceNum, exchangeCode, stockSymbol, timestamp,
-				systemCode, quoteId, price, quantity, isBuy);
+				systemCode, quoteId, price, quantity, type);
 
 		return orderData;
 	}
@@ -79,14 +83,14 @@ public class OrderParserNYSE implements OrderParser {
 		char exchangeCode = lineScanner.next().charAt(0);
 		char systemCode = lineScanner.next().charAt(0);
 		String quoteId = lineScanner.next();
-		boolean isBuy = (lineScanner.next().charAt(0) == 'B') ? true : false;
+		OrderType type = (lineScanner.next().charAt(0) == 'B') ? BUY : SELL;
 
 		OrderDatum orderData = new OrderDatum('D', sequenceNum,
 				orderReferenceNum, exchangeCode, stockSymbol, timestamp,
 				systemCode, quoteId, new Price(0), // price doesnt matter since
 													// delete
 				0, // quantity as well
-				isBuy);
+				type);
 
 		return orderData;
 
@@ -103,11 +107,11 @@ public class OrderParserNYSE implements OrderParser {
 		char exchangeCode = lineScanner.next().charAt(0);
 		char systemCode = lineScanner.next().charAt(0);
 		String quoteId = lineScanner.next();
-		boolean isBuy = (lineScanner.next().charAt(0) == 'B') ? true : false;
+		OrderType type = (lineScanner.next().charAt(0) == 'B') ? BUY : SELL;
 
 		OrderDatum orderData = new OrderDatum('M', sequenceNum,
 				orderReferenceNum, exchangeCode, stockSymbol, timestamp,
-				systemCode, quoteId, price, quantity, isBuy);
+				systemCode, quoteId, price, quantity, type);
 
 		return orderData;
 
@@ -127,10 +131,10 @@ public class OrderParserNYSE implements OrderParser {
 		char exchangeCode = lineScanner.next().charAt(0);
 		char systemCode = lineScanner.next().charAt(0);
 		String quoteId = "", orderReferenceNum = "";
-		boolean isBuy = false;
+		OrderType type = BUY; // doesn't matter because not used
 		OrderDatum orderData = new OrderDatum('I', sequenceNum,
 				orderReferenceNum, exchangeCode, stockSymbol, timestamp,
-				systemCode, quoteId, price, quantity, isBuy);
+				systemCode, quoteId, price, quantity, type);
 		orderData.setAuctionTime(auctionTime);
 		orderData.setTotalImbalance(totalImbalance);
 		orderData.setAuctionType(auctionType);

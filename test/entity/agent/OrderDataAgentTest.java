@@ -30,7 +30,8 @@ import entity.market.MockMarket;
 import entity.market.Order;
 import entity.market.Price;
 import event.TimeStamp;
-import fourheap.Order.OrderType;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
 
 public class OrderDataAgentTest {
 
@@ -69,9 +70,9 @@ public class OrderDataAgentTest {
 				+ "should return orderdata as what is passed in \n");
 		List<OrderDatum> orders = new LinkedList<OrderDatum>();
 		
-		orders.add(new MockOrderDatum(new TimeStamp(15), new Price(75000), 1, true));
-		orders.add(new MockOrderDatum(new TimeStamp(20), new Price(60000), 1, false));
-	    orders.add(new MockOrderDatum(new TimeStamp(18), new Price(75000), 1, true));
+		orders.add(new MockOrderDatum(new TimeStamp(15), new Price(75000), 1, BUY));
+		orders.add(new MockOrderDatum(new TimeStamp(20), new Price(60000), 1, SELL));
+	    orders.add(new MockOrderDatum(new TimeStamp(18), new Price(75000), 1, BUY));
 
 		OrderDataAgent agent = addAgent(orders.iterator());
 		
@@ -109,7 +110,7 @@ public class OrderDataAgentTest {
         List<OrderDatum> orders = new LinkedList<OrderDatum>();
         
 		OrderDataAgent agent = addAgent(orders.iterator());
-		market.submitNMSOrder(agent, OrderType.BUY, new Price(75000), +1, new TimeStamp(15));
+		market.submitNMSOrder(agent, BUY, new Price(75000), 1, new TimeStamp(15));
 		
 		Collection<Order> orderCollection = agent.getOrders();
 	    Order order = Iterables.getFirst(orderCollection, null);

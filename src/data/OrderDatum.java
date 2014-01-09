@@ -4,8 +4,9 @@ import java.io.Serializable;
 
 import entity.market.Price;
 import event.TimeStamp;
+import fourheap.Order.OrderType;
 
-public class OrderDatum implements Serializable {//<P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
+public class OrderDatum implements Serializable {
 
 	private static final long serialVersionUID = 6379805806017545016L;
 
@@ -23,13 +24,13 @@ public class OrderDatum implements Serializable {//<P extends Comparable<? super
 	private int marketImbalance;
 	private char auctionType;
 	private int auctionTime;
-	private boolean isBuy;
+	private OrderType type;
 
 
 	public OrderDatum(char messageType, String sequenceNum,
 			String orderReferenceNum, char exchangeCode, String stockSymbol,
 			TimeStamp timestamp, char systemCode, String quoteId, Price price,
-			int quantity, boolean isBuy) {
+			int quantity, OrderType type) {
 		this.messageType = messageType;
 		this.sequenceNum = sequenceNum;
 		this.orderReferenceNum = orderReferenceNum;
@@ -40,7 +41,7 @@ public class OrderDatum implements Serializable {//<P extends Comparable<? super
 		this.quoteId = quoteId;
 		this.price = price;
 		this.quantity = quantity;
-		this.isBuy = isBuy;
+		this.type = type;
 	}
 
 
@@ -148,13 +149,13 @@ public class OrderDatum implements Serializable {//<P extends Comparable<? super
 	}
 
 
-	public boolean isBuy() {
-		return isBuy;
+	public OrderType getType() {
+		return type;
 	}
 
 
-	public void setBuy(boolean isBuy) {
-		this.isBuy = isBuy;
+	public void setBuy(OrderType type) {
+		this.type = type;
 	}
 
 
