@@ -5,7 +5,6 @@ import java.util.Random;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.collect.Lists;
 
 import data.FundamentalValue;
 import entity.infoproc.SIP;
@@ -58,9 +57,7 @@ public abstract class WindowAgent extends BackgroundAgent {
 	public ImmutableList<Transaction> getWindowTransactions(TimeStamp currentTime) {
 		TimeStamp firstTimeInWindow = currentTime.minus(new TimeStamp(windowLength));
 		
-		List<Transaction> allTransactions = Lists.newArrayList(); 
-		allTransactions.addAll(this.sip.getTransactions());
-		allTransactions.addAll(this.transactions);
+		List<Transaction> allTransactions = this.marketTransactionProcessor.getTransactions();
 		
 		Builder<Transaction> transactionBuilder = ImmutableList.builder();
 		for (Transaction trans : allTransactions) {
@@ -70,5 +67,9 @@ public abstract class WindowAgent extends BackgroundAgent {
 			}
 		}
 		return transactionBuilder.build();
+	}
+	
+	public TimeStamp getWindowLength() {
+		return windowLength;
 	}
 }

@@ -1,13 +1,6 @@
 package entity.agent;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import com.google.common.collect.Lists;
 
 import fourheap.Order.OrderType;
 
