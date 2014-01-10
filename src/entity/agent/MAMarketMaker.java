@@ -3,13 +3,12 @@ package entity.agent;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Random;
 
 import activity.Activity;
 import activity.WithdrawOrder;
 
+import com.google.common.collect.EvictingQueue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
@@ -28,9 +27,9 @@ public class MAMarketMaker extends MarketMaker {
 
 	private static final long serialVersionUID = -4766539518925397355L;
 	
-	private int histosize;
-	private Queue<Price> histobids;
-	private Queue<Price> histoasks;
+	protected int numElements;					// number of prices to average
+	protected EvictingQueue<Price> bidQueue;
+	protected EvictingQueue<Price> askQueue;
 	
 	public MAMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, double reentryRate, int tickSize, boolean noOp,
@@ -38,10 +37,9 @@ public class MAMarketMaker extends MarketMaker {
 		super(fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
 				numRungs, rungSize, truncateLadder);
 
-		histosize = windowLength;
-		//		arrivalTime = new TimeStamp(0); XXX
-		histobids = new LinkedList<Price>(); // XXX change to Guava EvictingQueue
-		histoasks = new LinkedList<Price>();
+		numElements = windowLength;
+		bidQueue = EvictingQueue.create(windowLength);
+		askQueue = EvictingQueue.create(windowLength);
 	}
 	
 	public MAMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
@@ -85,54 +83,54 @@ public class MAMarketMaker extends MarketMaker {
 						+ primaryMarket);
 				// do nothing, wait until next re-entry
 			} else {
-				if (histobids.size() < histosize) {
-					histobids.add(bid);
-					histoasks.add(ask);
-					// XXX use all same bid/ask to slowly fill in / transition
-					
-				} else {
-					// get bid and ask price by averaging the 10 time stamp historical prices
-					int totalbids = 0;
-					int totalasks = 0;
-					for (Price x : histobids){
-						totalbids = totalbids+x.intValue();
-					}
-					for (Price y : histoasks){
-						totalasks = totalasks+y.intValue();
-					}
-					Price ladderbid = new Price(totalbids/histosize);
-					Price ladderask = new Price(totalasks/histosize);
 				
-					histobids.poll();
-					histoasks.poll();
-		
-					histobids.add(bid);
-					histoasks.add(ask);
-
-					int ct = (numRungs-1) * stepSize;
-
-					// min price for buy order in the ladder
-					Price buyMinPrice = new Price(ladderbid.intValue() - ct);
-					// max price for buy order in the ladder
-					Price buyMaxPrice = ladderbid;
-
-					// min price for sell order in the ladder
-					Price sellMinPrice = ladderask;
-					// max price for sell order in the ladder
-					Price sellMaxPrice = new Price(ladderask.intValue() + ct);
-					
-					// check if the bid or ask crosses the NBBO, if truncating ladder
-					if (truncateLadder) {
-						// buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N]
-						buyMaxPrice = pcomp.min(bid, lastNBBOQuote.getBestAsk());
-						// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
-						sellMinPrice = pcomp.max(ask, lastNBBOQuote.getBestBid());
+				if (bidQueue.isEmpty()) {
+					// if queues are empty, fill in all with the same bid/ask
+					for (int i = 0; i < numElements; i++) {
+						bidQueue.add(bid);
+						askQueue.add(ask);
 					}
-					
-					// TODO if matches bid, then go one tick in				
-					acts.addAll(this.submitOrderLadder(buyMinPrice, buyMaxPrice, 
-							sellMinPrice, sellMaxPrice, currentTime));
 				}
+				bidQueue.add(bid);
+				askQueue.add(ask);
+				
+				// Compute moving average
+				double sumBids = 0;
+				for (Price x : bidQueue) sumBids += x.intValue();
+				
+				double sumAsks = 0;
+				for (Price y : askQueue) sumAsks += y.intValue();
+				
+				Price ladderBid = new Price(sumBids / numElements);
+				Price ladderAsk = new Price(sumAsks / numElements);
+
+				bidQueue.add(bid);
+				askQueue.add(ask);
+
+				int ct = (numRungs-1) * stepSize;
+
+				// min price for buy order in the ladder
+				Price buyMinPrice = new Price(ladderBid.intValue() - ct);
+				// max price for buy order in the ladder
+				Price buyMaxPrice = ladderBid;
+
+				// min price for sell order in the ladder
+				Price sellMinPrice = ladderAsk;
+				// max price for sell order in the ladder
+				Price sellMaxPrice = new Price(ladderAsk.intValue() + ct);
+
+				// check if the bid or ask crosses the NBBO, if truncating ladder
+				if (truncateLadder) {
+					// buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N]
+					buyMaxPrice = pcomp.min(bid, lastNBBOQuote.getBestAsk());
+					// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
+					sellMinPrice = pcomp.max(ask, lastNBBOQuote.getBestBid());
+				}
+
+				// TODO if matches bid, then go one tick in				
+				acts.addAll(this.submitOrderLadder(buyMinPrice, buyMaxPrice, 
+						sellMinPrice, sellMaxPrice, currentTime));
+
 			} // if quote defined
 		} else {
 			log(INFO, currentTime + " | " + primaryMarket + " " + this + " " + getName()
