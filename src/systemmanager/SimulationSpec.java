@@ -93,7 +93,7 @@ public class SimulationSpec implements Serializable {
 		
 		getName(config, marketProps, agentProps);
 		
-		playerProps = players;
+		playerProps = players == null ? new JsonObject() : players;
 		simulationProperties = readProperties(config, simulationKeys);
 	}
 
