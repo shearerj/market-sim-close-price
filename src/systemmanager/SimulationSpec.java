@@ -147,6 +147,8 @@ public class SimulationSpec implements Serializable {
 		JsonPrimitive preset = config.getAsJsonPrimitive(Keys.PRESETS);
 		if (preset == null) return;
 		switch(Presets.valueOf(preset.getAsString())) {
+		case NONE:
+			break;
 		case TWOMARKET:
 			config.addProperty(CDA.toString(), NUM + "_2");
 			config.addProperty(CALL.toString(), NUM + "_0");
