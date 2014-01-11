@@ -263,7 +263,6 @@ public abstract class Market extends Entity {
 		if (!transactions.isEmpty())
 			for (TransactionProcessor tp : tps)
 				acts.addAll(updateTransactionProcessor(tp, transactions));
-//				acts.add(new SendToTP(this, transactions, tp, TimeStamp.IMMEDIATE));
 		acts.addAll(updateQuote(currentTime));
 		return acts.build();
 	}
@@ -331,7 +330,6 @@ public abstract class Market extends Entity {
 		Builder<Activity> acts = ImmutableList.builder();
 		for (QuoteProcessor qp : qps)
 			acts.addAll(updateQuoteProcessor(qp, quoteTime, quote));
-//			acts.add(new SendToQP(this, quoteTime, quote, qp, TimeStamp.IMMEDIATE));
 		return acts.build();
 	}
 
