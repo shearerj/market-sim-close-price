@@ -39,7 +39,7 @@ public class MockMarket extends Market {
 	}
 	
 	@Override
-	public Collection<? extends Activity> submitOrder(Agent agent, OrderType type,
+	public Iterable<? extends Activity> submitOrder(Agent agent, OrderType type,
 			Price price, int quantity, TimeStamp currentTime) {
 		return ImmutableList.<Activity> builder().addAll(
 				super.submitOrder(agent, type, price, quantity, currentTime)).addAll(
@@ -47,7 +47,7 @@ public class MockMarket extends Market {
 	}
 
 	@Override
-	public Collection<? extends Activity> withdrawOrder(Order order,
+	public Iterable<? extends Activity> withdrawOrder(Order order,
 			TimeStamp currentTime) {
 		return ImmutableList.<Activity> builder().addAll(
 				super.withdrawOrder(order, currentTime)).addAll(

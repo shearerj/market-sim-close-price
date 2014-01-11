@@ -31,7 +31,11 @@ public abstract class ReentryAgent extends SMAgent {
 	
 	@Override
 	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
-		TimeStamp nextStrategy = currentTime.plus(reentry.next());
+		TimeStamp waitTime = reentry.next();
+		if (waitTime.equals(TimeStamp.INFINITE))
+			return ImmutableList.of(new AgentStrategy(this, TimeStamp.INFINITE));
+		
+		TimeStamp nextStrategy = currentTime.plus(waitTime);
 		return ImmutableList.of(new AgentStrategy(this, nextStrategy));
 	}
 }

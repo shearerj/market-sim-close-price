@@ -71,11 +71,11 @@ public abstract class Market extends Entity {
 	protected final Random rand;
 	protected long marketTime; // keeps track of internal market actions
 
-	protected final MarketQuoteProcessor quoteProcessor;
-	protected final MarketTransactionProcessor transactionProcessor;
+	protected final MarketQuoteProcessor quoteProcessor;				// market QP, member of qps collection
+	protected final MarketTransactionProcessor transactionProcessor;	// market TP, member of tps collection
 	protected final SIP sip;
-	protected final Collection<QuoteProcessor> qps;
-	protected final Collection<TransactionProcessor> tps;
+	protected final Collection<QuoteProcessor> qps;			// agent QPs to update with this market's quotes
+	protected final Collection<TransactionProcessor> tps;	// agent TPs to update with this market's transactions
 	
 	protected Quote quote; // Current quote
 
@@ -192,7 +192,7 @@ public abstract class Market extends Entity {
 			TimeStamp currentTime) {
 		return withdrawOrder(order, order.getQuantity(), currentTime);
 	}
-
+	
 	/**
 	 * Method to withdraw specific quantity from an order.
 	 * 
@@ -262,9 +262,30 @@ public abstract class Market extends Entity {
 		Builder<Activity> acts = ImmutableList.builder();
 		if (!transactions.isEmpty())
 			for (TransactionProcessor tp : tps)
-				acts.add(new SendToTP(this, transactions, tp, TimeStamp.IMMEDIATE));
+				acts.addAll(updateTransactionProcessor(tp, transactions));
+//				acts.add(new SendToTP(this, transactions, tp, TimeStamp.IMMEDIATE));
 		acts.addAll(updateQuote(currentTime));
 		return acts.build();
+	}
+	
+	
+	/**
+	 * If TransactionProcessor tp latency is IMMEDIATE, then it directly executes it
+	 * as opposed to inserting it as an activity.
+	 * 
+	 * @param tp
+	 * @param transactions
+	 * @return
+	 */
+	protected Iterable<? extends Activity> updateTransactionProcessor(TransactionProcessor tp,
+			List<Transaction> transactions) {
+		if (tp.getLatency().equals(TimeStamp.IMMEDIATE)) {
+			return ImmutableList.<Activity> builder().addAll(
+					tp.sendToTransactionProcessor(this, transactions, TimeStamp.IMMEDIATE)).build();
+		}
+		// otherwise insert as activity
+		return ImmutableList.<Activity> builder().add(
+				new SendToTP(this, transactions, tp, TimeStamp.IMMEDIATE)).build();
 	}
 
 	/**
@@ -306,12 +327,40 @@ public abstract class Market extends Entity {
 		
 		MarketTime quoteTime = new MarketTime(currentTime, marketTime);
 		// TODO I removed random orders, and not HFT's behave properly. Make sure removing the randomness didn't fix this
+		
 		Builder<Activity> acts = ImmutableList.builder();
 		for (QuoteProcessor qp : qps)
-			acts.add(new SendToQP(this, quoteTime, quote, qp, TimeStamp.IMMEDIATE));
+			acts.addAll(updateQuoteProcessor(qp, quoteTime, quote));
+//			acts.add(new SendToQP(this, quoteTime, quote, qp, TimeStamp.IMMEDIATE));
 		return acts.build();
 	}
 
+	
+	/**
+	 * If QuoteProcessor qp latency is IMMEDIATE, then it directly executes it
+	 * as opposed to inserting it as an activity.
+	 * 
+	 * Note that this is necessary to ensure quotes are updated immediately
+	 * after an order is withdrawn.
+	 * 
+	 * @param qp
+	 * @param quoteTime
+	 * @param quote
+	 * @return
+	 */
+	protected Iterable<? extends Activity> updateQuoteProcessor(QuoteProcessor qp,
+			MarketTime quoteTime, Quote quote) {
+		
+		if (qp.getLatency().equals(TimeStamp.IMMEDIATE)) {
+			return ImmutableList.<Activity> builder().addAll(
+					qp.sendToQuoteProcessor(this, quoteTime, quote, TimeStamp.IMMEDIATE)).build();
+		}
+		// otherwise insert as activity
+		return ImmutableList.<Activity> builder().add(
+				new SendToQP(this, quoteTime, quote, qp, TimeStamp.IMMEDIATE)).build();
+	}
+	
+	
 	/*
 	 * TODO Add IOC / Fill or Kill Order (potentially change current syntax so
 	 * that a withdraw without a duration never expires, and one with duration

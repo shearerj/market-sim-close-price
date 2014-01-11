@@ -27,6 +27,10 @@ import entity.market.Price;
 import entity.market.Transaction;
 import event.TimeStamp;
 
+/**
+ * @author yngchen, ewah
+ *
+ */
 public class WindowAgentTest {
 
 	private FundamentalValue fundamental = new MockFundamental(100000);

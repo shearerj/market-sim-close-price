@@ -28,6 +28,7 @@ import entity.market.Market;
 import entity.market.MockMarket;
 import entity.market.Order;
 import entity.market.Price;
+import entity.market.Quote;
 import entity.market.Transaction;
 import event.TimeStamp;
 
@@ -94,13 +95,114 @@ public class AgentTest {
 	}
 	
 	@Test
-	public void withdrawNewestOrder() {
+	public void withdrawOrder() {
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 		
 		EventManager em = new EventManager(new Random());
 		em.addActivity(new SubmitOrder(agent, market, BUY, new Price(100), 1, time0));
-		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(50), 1, time1));
+		em.executeUntil(time1.plus(time1));
+		
+		// Verify orders added correctly
+		Collection<Order> orders = agent.activeOrders;
+		assertEquals(1, orders.size());
+		Order orderToWithdraw = null;
+		for (Order o : orders) {
+			orderToWithdraw = o;
+			assertEquals(new Price(100), o.getPrice());
+			assertEquals(time0, o.getSubmitTime());
+		}
+		assertNotNull(orderToWithdraw);
+		
+		Quote q = market.getQuoteProcessor().getQuote();
+		assertEquals("Incorrect ASK", null,  q.getAskPrice() );
+		assertEquals("Incorrect BID", new Price(100),  q.getBidPrice() );
+		assertEquals("Incorrect ASK quantity",  0,  q.getAskQuantity() );
+		assertEquals("Incorrect BID quantity",  1,  q.getBidQuantity() );
+		
+		// Withdraw order
+		Iterable<? extends Activity> acts = agent.withdrawOrder(orderToWithdraw, time1);
+		assertEquals(0, Iterables.size(acts));
+		
+		orders = agent.activeOrders;
+		assertEquals("Order was not withdrawn", 0, orders.size());
+		q = market.getQuoteProcessor().getQuote();
+		assertEquals("Incorrect ASK", null,  q.getAskPrice() );
+		assertEquals("Incorrect BID", null,  q.getBidPrice() );
+		assertEquals("Incorrect ASK quantity",  0,  q.getAskQuantity() );
+		assertEquals("Incorrect BID quantity",  0,  q.getBidQuantity() );
+	}
+	
+	@Test
+	public void withdrawOrderDelayed() {
+		// withdraw order when quotes are delayed
+		
+		TimeStamp time0 = TimeStamp.ZERO;
+		TimeStamp time1 = new TimeStamp(10);
+		
+		EventManager em = new EventManager(new Random());
+		
+		MockMarket market2 = new MockMarket(sip, new TimeStamp(10));
+		em.addActivity(new SubmitOrder(agent, market2, BUY, new Price(100), 1, time0));
+		em.executeUntil(new TimeStamp(1));
+		
+		// Verify orders added correctly
+		Collection<Order> orders = agent.activeOrders;
+		assertEquals(1, orders.size());
+		Order orderToWithdraw = null;
+		for (Order o : orders) {
+			orderToWithdraw = o;
+			assertEquals(new Price(100), o.getPrice());
+			assertEquals(time0, o.getSubmitTime());
+		}
+		assertNotNull(orderToWithdraw);
+		
+		Quote q = market2.getQuoteProcessor().getQuote();
+		assertEquals("Incorrect ASK", null,  q.getAskPrice() );
+		assertEquals("Incorrect BID", null,  q.getBidPrice() );
+		assertEquals("Incorrect ASK quantity",  0,  q.getAskQuantity() );
+		assertEquals("Incorrect BID quantity",  0,  q.getBidQuantity() );
+		
+		// After quotes have updated
+		em.executeUntil(new TimeStamp(11));
+		q = market2.getQuoteProcessor().getQuote();
+		assertEquals("Incorrect ASK", null,  q.getAskPrice() );
+		assertEquals("Incorrect BID", new Price(100),  q.getBidPrice() );
+		assertEquals("Incorrect ASK quantity",  0,  q.getAskQuantity() );
+		assertEquals("Incorrect BID quantity",  1,  q.getBidQuantity() );
+		
+		// Withdraw order
+		Iterable<? extends Activity> acts = agent.withdrawOrder(orderToWithdraw, time1);
+		assertEquals(1, Iterables.size(acts));	// ProcessQuote for QP since delayed
+		em.addActivity(Iterables.getOnlyElement(acts));
+		
+		orders = agent.activeOrders;
+		assertEquals("Order was not withdrawn", 0, orders.size());
+		assertTrue("Order was not removed", !agent.activeOrders.contains(orderToWithdraw));
+		// Verify that quote is now stale
+		q = market2.getQuoteProcessor().getQuote();
+		assertEquals("Incorrect ASK", null,  q.getAskPrice() );
+		assertEquals("Incorrect BID", new Price(100),  q.getBidPrice() );
+		assertEquals("Incorrect ASK quantity",  0,  q.getAskQuantity() );
+		assertEquals("Incorrect BID quantity",  1,  q.getBidQuantity() );
+		
+		// After quotes have updated
+		em.executeUntil(new TimeStamp(21));
+		q = market2.getQuoteProcessor().getQuote();
+		assertEquals("Incorrect ASK", null,  q.getAskPrice() );
+		assertEquals("Incorrect BID", null,  q.getBidPrice() );
+		assertEquals("Incorrect ASK quantity",  0,  q.getAskQuantity() );
+		assertEquals("Incorrect BID quantity",  0,  q.getBidQuantity() );
+	}
+	
+	@Test
+	public void withdrawNewestOrder() {
+		TimeStamp time0 = TimeStamp.ZERO;
+		TimeStamp time1 = new TimeStamp(1);
+		
+		EventManager em = new EventManager(new Random());
+		em.addActivity(new SubmitOrder(agent, market, BUY, new Price(50), 1, time0));
+		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1, time1));
 		em.executeUntil(time1.plus(time1));
 		
 		// Verify orders added correctly
@@ -109,29 +211,38 @@ public class AgentTest {
 		Order orderToWithdraw = null;
 		for (Order o : orders) {
 			if (o.getOrderType() == BUY) {
-				assertEquals(new Price(100), o.getPrice());
+				assertEquals(new Price(50), o.getPrice());
 				assertEquals(time0, o.getSubmitTime());
 			}
 			if (o.getOrderType() == SELL) {
 				orderToWithdraw = o;
-				assertEquals(new Price(50), o.getPrice());
+				assertEquals(new Price(100), o.getPrice());
 				assertEquals(time1, o.getSubmitTime());
 			}
 		}
 		assertNotNull(orderToWithdraw);
+		Quote q = market.getQuoteProcessor().getQuote();
+		assertEquals("Incorrect ASK", new Price(100),  q.getAskPrice() );
+		assertEquals("Incorrect BID", new Price(50),  q.getBidPrice() );
+		assertEquals("Incorrect ASK quantity",  1,  q.getAskQuantity() );
+		assertEquals("Incorrect BID quantity",  1,  q.getBidQuantity() );
 		
 		// Withdraw newest order (sell)
-		Iterable<? extends Activity> acts = agent.withdrawNewestOrder();
-		for (Activity a : acts)	em.addActivity(a);
-		em.executeUntil(time1.plus(time1));
+		Iterable<? extends Activity> acts = agent.withdrawNewestOrder(time1);
+		assertEquals(0, Iterables.size(acts));
 		
 		orders = agent.activeOrders;
 		assertEquals(1, orders.size());
 		Order order = Iterables.getFirst(orders, null);
 		assertEquals(BUY, order.getOrderType());
-		assertEquals(new Price(100), order.getPrice());
+		assertEquals(new Price(50), order.getPrice());
 		assertEquals(1, order.getQuantity());
-		assertTrue("Order was not withdrawn", !agent.activeOrders.contains(orderToWithdraw));		
+		assertTrue("Order was not withdrawn", !agent.activeOrders.contains(orderToWithdraw));
+		q = market.getQuoteProcessor().getQuote();
+		assertEquals("Incorrect ASK", null,  q.getAskPrice() );
+		assertEquals("Incorrect BID", new Price(50),  q.getBidPrice() );
+		assertEquals("Incorrect ASK quantity",  0,  q.getAskQuantity() );
+		assertEquals("Incorrect BID quantity",  1,  q.getBidQuantity() );
 	}
 	
 	@Test
@@ -140,8 +251,8 @@ public class AgentTest {
 		TimeStamp time1 = new TimeStamp(1);
 		
 		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent, market, BUY, new Price(100), 1, time0));
-		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(50), 1, time1));
+		em.addActivity(new SubmitOrder(agent, market, BUY, new Price(50), 1, time0));
+		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1, time1));
 		em.executeUntil(time1.plus(time1));
 		
 		// Verify orders added correctly
@@ -151,28 +262,39 @@ public class AgentTest {
 		for (Order o : orders) {
 			if (o.getOrderType() == BUY) {
 				orderToWithdraw = o;
-				assertEquals(new Price(100), o.getPrice());
+				assertEquals(new Price(50), o.getPrice());
 				assertEquals(time0, o.getSubmitTime());
 			}
 			if (o.getOrderType() == SELL) {
-				assertEquals(new Price(50), o.getPrice());
+				assertEquals(new Price(100), o.getPrice());
 				assertEquals(time1, o.getSubmitTime());
 			}
 		}
 		assertNotNull(orderToWithdraw);
+		// Verify quote correct
+		Quote q = market.getQuoteProcessor().getQuote();
+		assertEquals("Incorrect ASK", new Price(100),  q.getAskPrice() );
+		assertEquals("Incorrect BID", new Price(50),  q.getBidPrice() );
+		assertEquals("Incorrect ASK quantity",  1,  q.getAskQuantity() );
+		assertEquals("Incorrect BID quantity",  1,  q.getBidQuantity() );
 		
 		// Withdraw oldest order (buy)
-		Iterable<? extends Activity> acts = agent.withdrawOldestOrder();
-		for (Activity a : acts)	em.addActivity(a);
-		em.executeUntil(time1.plus(time1));
+		Iterable<? extends Activity> acts = agent.withdrawOldestOrder(time1);
+		assertEquals(0, Iterables.size(acts));
 		
 		orders = agent.activeOrders;
 		assertEquals(1, orders.size());
 		Order order = Iterables.getFirst(orders, null);
 		assertEquals(SELL, order.getOrderType());
-		assertEquals(new Price(50), order.getPrice());
+		assertEquals(new Price(100), order.getPrice());
 		assertEquals(1, order.getQuantity());
-		assertTrue("Order was not withdrawn", !agent.activeOrders.contains(orderToWithdraw));		
+		assertTrue("Order was not withdrawn", !agent.activeOrders.contains(orderToWithdraw));
+		// Verify quote correct
+		q = market.getQuoteProcessor().getQuote();
+		assertEquals("Incorrect ASK", new Price(100),  q.getAskPrice() );
+		assertEquals("Incorrect BID", null,  q.getBidPrice() );
+		assertEquals("Incorrect ASK quantity",  1,  q.getAskQuantity() );
+		assertEquals("Incorrect BID quantity",  0,  q.getBidQuantity() );
 	}
 	
 	@Test
@@ -181,8 +303,8 @@ public class AgentTest {
 		TimeStamp time1 = new TimeStamp(1);
 		
 		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent, market, BUY, new Price(100), 1, time0));
-		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(50), 1, time1));
+		em.addActivity(new SubmitOrder(agent, market, BUY, new Price(50), 1, time0));
+		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1, time1));
 		em.executeUntil(time1.plus(time1));
 		
 		// Verify orders added correctly
@@ -190,21 +312,32 @@ public class AgentTest {
 		assertEquals(2, orders.size());
 		for (Order o : orders) {
 			if (o.getOrderType() == BUY) {
-				assertEquals(new Price(100), o.getPrice());
+				assertEquals(new Price(50), o.getPrice());
 				assertEquals(time0, o.getSubmitTime());
 			}
 			if (o.getOrderType() == SELL) {
-				assertEquals(new Price(50), o.getPrice());
+				assertEquals(new Price(100), o.getPrice());
 				assertEquals(time1, o.getSubmitTime());
 			}
 		}
+		// Verify quote correct
+		Quote q = market.getQuoteProcessor().getQuote();
+		assertEquals("Incorrect ASK", new Price(100),  q.getAskPrice() );
+		assertEquals("Incorrect BID", new Price(50),  q.getBidPrice() );
+		assertEquals("Incorrect ASK quantity",  1,  q.getAskQuantity() );
+		assertEquals("Incorrect BID quantity",  1,  q.getBidQuantity() );
+		
 		// Withdraw all orders
-		Iterable<? extends Activity> acts = agent.withdrawAllOrders();
-		for (Activity a : acts)	em.addActivity(a);
-		em.executeUntil(time1.plus(time1));
-
-		orders = agent.activeOrders;
-		assertEquals(0, orders.size());	
+		Iterable<? extends Activity> acts = agent.withdrawAllOrders(time1);
+		assertEquals(0, Iterables.size(acts));
+		
+		assertEquals(0, agent.activeOrders.size());	
+		// Verify quote correct
+		q = market.getQuoteProcessor().getQuote();
+		assertEquals("Incorrect ASK", null,  q.getAskPrice() );
+		assertEquals("Incorrect BID", null,  q.getBidPrice() );
+		assertEquals("Incorrect ASK quantity",  0,  q.getAskQuantity() );
+		assertEquals("Incorrect BID quantity",  0,  q.getBidQuantity() );
 	}
 	
 	@Test

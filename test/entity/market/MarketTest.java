@@ -15,7 +15,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import activity.Activity;
 import activity.SubmitOrder;
 import systemmanager.Consts;
 import systemmanager.EventManager;
@@ -28,7 +27,7 @@ import event.TimeStamp;
 
 public class MarketTest {
 
-	// TODO Add test for inidividual agent transaction latency, maybe in AgentTest?
+	// TODO Add test for individual agent transaction latency, maybe in AgentTest?
 	
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
@@ -402,25 +401,11 @@ public class MarketTest {
 	
 	@Test
 	public void lackOfLatencyTest() {
-		Quote quote;
-		EventManager em = new EventManager(new Random());
-
-		// Forces execution of execution but none of the resulting activities
+		// With zero latency, appended activities all execute immediately
 		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
-		Iterable<? extends Activity> acts = market.submitOrder(agent, SELL, new Price(100), 1, TimeStamp.ZERO);
-		for (Activity a : acts)
-			em.addActivity(a);
+		market.submitOrder(agent, SELL, new Price(100), 1, TimeStamp.ZERO);
 		
-		quote = market.getQuoteProcessor().getQuote();
-		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
-		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
-		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
-		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
-		
-		// This will execute all of the remaining activities
-		em.executeUntil(TimeStamp.ZERO);
-		
-		quote = market.getQuoteProcessor().getQuote();
+		Quote quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
 		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
 		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());

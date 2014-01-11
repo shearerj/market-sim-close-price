@@ -7,8 +7,10 @@ import entity.market.Order;
 import event.TimeStamp;
 
 /**
- * Class for Activity of withdrawing an agent's order in a given market. Used when bids expire as
- * well. Needs to be called with the order that is intended to be removed.
+ * Class for Activity of withdrawing an agent's order in a given market. 
+ * Needs to be called with the order that is intended to be removed. Note that
+ * this is only necessary for <b>scheduled</b> order withdrawals. Immediate
+ * order withdrawals need to call the Agent class' withdrawOrder method directly.
  * 
  * @author ewah
  */
@@ -23,7 +25,7 @@ public class WithdrawOrder extends Activity {
 
 	public WithdrawOrder(Order order, int quantity, TimeStamp scheduledTime) {
 		super(scheduledTime);
-		checkArgument(quantity > 0, "Quantiy must be positive");
+		checkArgument(quantity > 0, "Quantity must be positive");
 		this.order = checkNotNull(order, "Order");
 		this.quantity = quantity;
 	}

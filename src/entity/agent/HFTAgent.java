@@ -44,22 +44,22 @@ public abstract class HFTAgent extends MMAgent {
 			Collection<Market> markets,	Random rand, int tickSize) {
 		super(arrivalTime, fundamental, sip, markets, rand, tickSize);
 		
-		Builder<Market, HFTQuoteProcessor> quoteProcesserBuilder = ImmutableMap.builder(); 
-		Builder<Market, HFTTransactionProcessor> transactionProcesserBuilder = ImmutableMap.builder(); 
+		Builder<Market, HFTQuoteProcessor> quoteProcessorBuilder = ImmutableMap.builder(); 
+		Builder<Market, HFTTransactionProcessor> transactionProcessorBuilder = ImmutableMap.builder(); 
 		
 		for (Market market : markets) {
 			HFTQuoteProcessor qp = new HFTQuoteProcessor(quoteLatency, market, this);
-			quoteProcesserBuilder.put(market, qp);
+			quoteProcessorBuilder.put(market, qp);
 			market.addQP(qp); 
 			
 			HFTTransactionProcessor tp = new HFTTransactionProcessor(transactionLatency,
 					market, this);
-			transactionProcesserBuilder.put(market, tp);
+			transactionProcessorBuilder.put(market, tp);
 			market.addTP(tp);
 		}
 		
-		quoteProcessors = quoteProcesserBuilder.build();
-		transactionProcessors = transactionProcesserBuilder.build();
+		quoteProcessors = quoteProcessorBuilder.build();
+		transactionProcessors = transactionProcessorBuilder.build();
 	}
 	
 	/**

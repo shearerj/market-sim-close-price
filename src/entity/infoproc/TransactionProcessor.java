@@ -25,4 +25,5 @@ public interface TransactionProcessor {
 	
 	public List<Transaction> getTransactions();
 
+	public TimeStamp getLatency();
 }

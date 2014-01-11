@@ -26,9 +26,8 @@ public class QuoteProcessorTest {
 	private Market market1;
 	private Market market2;
 	private SIP sip;
-	// TODO May want to test AbstractQuoteProcessor instead
-	private MarketQuoteProcessor smip1;
-	private MarketQuoteProcessor smip2;
+	private AbstractQuoteProcessor smip1;
+	private AbstractQuoteProcessor smip2;
 
 	@BeforeClass
 	public static void setupClass() {
@@ -51,6 +50,9 @@ public class QuoteProcessorTest {
 	public void basicProcessQuote() {
 		TimeStamp time = TimeStamp.ZERO;
 		MarketTime mktTime = new DummyMarketTime(time, 1);
+		
+		assertEquals(TimeStamp.IMMEDIATE, smip1.getLatency());
+		assertEquals(new TimeStamp(100), smip2.getLatency());
 		
 		// Check initial quote is null
 		Quote q = smip1.quote;

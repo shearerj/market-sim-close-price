@@ -20,5 +20,6 @@ public interface QuoteProcessor {
 
 	public Iterable<? extends Activity> processQuote(Market market,
 			MarketTime quoteTime, Quote quote, TimeStamp currentTime);
-
+	
+	public TimeStamp getLatency();
 }

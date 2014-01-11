@@ -34,9 +34,14 @@ abstract class AbstractTransactionProcessor extends Entity implements Transactio
 	}
 
 	@Override
-	public Iterable<? extends Activity> sendToTransactionProcessor(Market market, List<Transaction> newTransactions, TimeStamp currentTime) {
-		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? TimeStamp.IMMEDIATE : currentTime.plus(latency); 
-		return ImmutableList.of(new ProcessTransactions(this, market, newTransactions, nextTime));
+	public Iterable<? extends Activity> sendToTransactionProcessor(Market market, 
+			List<Transaction> newTransactions, TimeStamp currentTime) {
+		if (latency.equals(TimeStamp.IMMEDIATE)) {
+			return ImmutableList.<Activity> builder().addAll(
+					processTransactions(market, newTransactions, currentTime)).build();
+		}
+		return ImmutableList.of(new ProcessTransactions(this, market, 
+				newTransactions, currentTime.plus(latency)));
 	}
 
 	@Override
@@ -48,6 +53,11 @@ abstract class AbstractTransactionProcessor extends Entity implements Transactio
 	public List<Transaction> getTransactions() {
 		// So that we don't copy the list a bunch of times
 		return Collections.unmodifiableList(transactions);
+	}
+
+	@Override
+	public TimeStamp getLatency() {
+		return latency;
 	}
 	
 	// Tells an agent about a transaction and removes the order if everything has transacted

@@ -61,6 +61,28 @@ public class ReentryAgentTest {
 	}
 	
 	@Test
+	public void reentryRateZeroTest() {
+		TimeStamp time = new TimeStamp(100);
+		FundamentalValue fundamental = new MockFundamental(100000);
+		
+		// Test reentries - note should never iterate past INFINITE b/c it 
+		// will never execute
+		MockReentryAgent agent = new MockReentryAgent(fundamental, sip, market, new Random(), 0, 1);
+		Iterator<TimeStamp> reentries = agent.getReentryTimes(); 
+		assertTrue(reentries.hasNext());
+		TimeStamp next = reentries.next();
+		assertTrue(next.getInTicks() >= 0);
+		assertEquals(TimeStamp.INFINITE, next);
+
+		// Now test for agent, which should arrive at time 0
+		MockReentryAgent agent2 = new MockReentryAgent(fundamental, sip, market, new Random(), 0, 1);
+		Iterable<? extends Activity> acts = agent2.agentStrategy(time);
+		Activity act = Iterables.getFirst(acts, null);
+		assertTrue( act instanceof AgentStrategy );
+		assertEquals( TimeStamp.INFINITE, act.getTime());
+	}
+	
+	@Test
 	public void extraTest() {
 		for (int i = 0; i <= 100; i++) {
 			setup();

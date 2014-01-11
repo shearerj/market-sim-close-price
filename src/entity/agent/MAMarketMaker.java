@@ -6,7 +6,6 @@ import static logger.Logger.Level.INFO;
 import java.util.Random;
 
 import activity.Activity;
-import activity.WithdrawOrder;
 
 import com.google.common.collect.EvictingQueue;
 import com.google.common.collect.ImmutableList;
@@ -18,7 +17,6 @@ import data.FundamentalValue;
 import entity.infoproc.BestBidAsk;
 import entity.infoproc.SIP;
 import entity.market.Market;
-import entity.market.Order;
 import entity.market.Price;
 import entity.market.Quote;
 import event.TimeStamp;
@@ -74,8 +72,7 @@ public class MAMarketMaker extends MarketMaker {
 				|| (ask == null && lastAsk != null)
 				|| (ask != null && !ask.equals(lastAsk))
 				|| (ask != null && lastAsk == null)) {
-			for (Order order : activeOrders)
-				acts.add(new WithdrawOrder(order, TimeStamp.IMMEDIATE));
+			this.withdrawAllOrders(currentTime);
 
 			if (!quote.isDefined()) {
 				log(INFO, this + " " + getName()

@@ -33,13 +33,20 @@ import entity.market.Price;
 import entity.market.Quote;
 import event.TimeStamp;
 
+/**
+ * Note that it's necessary to create an HFT with latency in order to ensure
+ * that the agent's quotes and transactions are delayed.
+ * 
+ * @author ewah
+ *
+ */
 public class HFTQuoteProcessorTest {
 	
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market1;
 	private Market market2;
 	private SIP sip;
-	private MockHFTAgent hft;
+	private MockHFTAgent hft;	// necessary to access QP/TPs
 	private HFTQuoteProcessor mktip1;
 	private HFTQuoteProcessor mktip2;
 
@@ -123,6 +130,8 @@ public class HFTQuoteProcessorTest {
 		TimeStamp time = TimeStamp.ZERO;
 		MarketTime mktTime = new DummyMarketTime(time, 1);
 
+		assertEquals(TimeStamp.IMMEDIATE, mktip1.getLatency());
+		
 		// Check initial quote is null for both markets
 		q = hft.getQuote(market1);
 		assertEquals("Incorrect last quote time", null, mktip1.lastQuoteTime);
@@ -134,13 +143,12 @@ public class HFTQuoteProcessorTest {
 		// Add new quote
 		q = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
 		Iterable<? extends Activity> acts = mktip1.sendToQuoteProcessor(market1, mktTime, q, time);
-		// Verify correct process quote & agent strategy activity added
+		// Verify only agent strategy activity added
 		assertEquals(1, Iterables.size(acts));
-		assertEquals("Incorrect scheduled process quote time", TimeStamp.IMMEDIATE, 
-				Iterables.getFirst(acts, null).getTime());
+		assertEquals("Incorrect scheduled activity time", TimeStamp.IMMEDIATE, 
+				Iterables.getOnlyElement(acts).getTime());
 		assertTrue("Incorrect activity type scheduled", 
-				Iterables.getFirst(acts, null) instanceof ProcessQuote);
-		for (Activity a : acts) a.execute(time);
+				Iterables.getFirst(acts, null) instanceof AgentStrategy);
 
 		// Check updated quote after process quote
 		assertEquals("Last quote time not updated", mktTime, mktip1.lastQuoteTime);
@@ -157,6 +165,12 @@ public class HFTQuoteProcessorTest {
 		TimeStamp time = TimeStamp.ZERO;
 		MarketTime mktTime = new DummyMarketTime(time, 1);
 		
+		// set up delayed HFT agent (so QP, TP have non-immediate latency)
+		MockHFTAgent hft = new MockHFTAgent(new TimeStamp(100), fundamental, sip, 
+				Arrays.asList(market1, market2));
+		HFTQuoteProcessor mktip2 = hft.getHFTQuoteProcessor(market2);
+		assertEquals(new TimeStamp(100), mktip2.getLatency());
+		
 		// Check initial quote is null
 		assertEquals("Incorrect last quote time", null, mktip2.lastQuoteTime);
 		q = mktip2.quote;
@@ -169,7 +183,7 @@ public class HFTQuoteProcessorTest {
 		q = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
 		Iterable<? extends Activity> acts = mktip2.sendToQuoteProcessor(market2, mktTime, q, time);
 		assertEquals(1, Iterables.size(acts));
-		assertEquals("Incorrect scheduled process quote time", TimeStamp.IMMEDIATE, 
+		assertEquals("Incorrect scheduled activity time", new TimeStamp(100), 
 				Iterables.getFirst(acts, null).getTime());
 		assertTrue("Incorrect activity type scheduled", 
 				Iterables.getFirst(acts, null) instanceof ProcessQuote);

@@ -10,13 +10,11 @@ import com.google.common.collect.ImmutableList.Builder;
 
 import systemmanager.Keys;
 import activity.Activity;
-import activity.WithdrawOrder;
 import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.BestBidAsk;
 import entity.infoproc.SIP;
 import entity.market.Market;
-import entity.market.Order;
 import entity.market.Price;
 import entity.market.Quote;
 import event.TimeStamp;
@@ -89,8 +87,7 @@ public class BasicMarketMaker extends MarketMaker {
 				|| (ask == null && lastAsk != null)
 				|| (ask != null && !ask.equals(lastAsk))
 				|| (ask != null && lastAsk == null)) {
-			for (Order order : activeOrders)
-				acts.add(new WithdrawOrder(order, TimeStamp.IMMEDIATE));
+			this.withdrawAllOrders(currentTime);	
 
 			if (!quote.isDefined()) {
 				log(INFO, this + " " + getName()

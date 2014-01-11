@@ -68,8 +68,13 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 	@Override
 	public Iterable<? extends Activity> sendToTransactionProcessor(Market market,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
-		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? TimeStamp.IMMEDIATE : currentTime.plus(latency);
-		return ImmutableList.of(new ProcessTransactions(this, market, newTransactions, nextTime));
+		if (latency.equals(TimeStamp.IMMEDIATE)) {
+			return ImmutableList.<Activity> builder().addAll(
+					processTransactions(market, newTransactions, currentTime)).build();
+		}
+//		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? TimeStamp.IMMEDIATE : currentTime.plus(latency); 
+		return ImmutableList.of(new ProcessTransactions(this, market, 
+				newTransactions, currentTime.plus(latency)));
 	}
 
 	@Override
@@ -82,8 +87,14 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 	@Override
 	public Iterable<? extends Activity> sendToQuoteProcessor(Market market,
 			MarketTime quoteTime, Quote quote, TimeStamp currentTime) {
-		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? TimeStamp.IMMEDIATE : currentTime.plus(latency);
-		return ImmutableList.of(new ProcessQuote(this, market, quoteTime, quote, nextTime));
+		if (latency.equals(TimeStamp.IMMEDIATE)) {
+			return ImmutableList.<Activity> builder().addAll(
+					processQuote(market, quoteTime, quote, currentTime)).build();
+		}
+//		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? 
+//				TimeStamp.IMMEDIATE : currentTime.plus(latency);
+		return ImmutableList.of(new ProcessQuote(this, market, quoteTime, quote, 
+				currentTime.plus(latency)));
 	}
 
 	@Override
@@ -121,6 +132,11 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 				bestAskMkt, bestAsk, bestAskQuantity);
 		BUS.post(new NBBOStatistic(nbbo.getSpread(), currentTime));
 		return ImmutableList.of();
+	}
+
+	@Override
+	public TimeStamp getLatency() {
+		return latency;
 	}
 
 }

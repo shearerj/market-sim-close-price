@@ -138,7 +138,7 @@ public class AAAgent extends WindowAgent {
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append("::agentStrategy: ");
 
-		this.withdrawAllOrders(); // FIXME will this withdraw & update for future price computation?
+		this.withdrawAllOrders(null); // FIXME will this withdraw & update for future price computation?
 		
 		// Determining Quantity
 		type = rand.nextBoolean() ? BUY : SELL;

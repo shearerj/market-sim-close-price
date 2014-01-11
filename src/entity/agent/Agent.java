@@ -5,20 +5,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableList.Builder;
 
 import data.FundamentalValue;
 import activity.Activity;
 import activity.AgentStrategy;
-import activity.WithdrawOrder;
 import entity.Entity;
 import entity.infoproc.SIP;
 import entity.market.Order;
@@ -107,6 +107,7 @@ public abstract class Agent extends Entity {
 
 	/**
 	 * Adds an agent's order to its memory so it knows about it, and can cancel it
+	 * @param order
 	 */
 	public void addOrder(Order order) {
 		checkArgument(order.getAgent().equals(this),
@@ -116,59 +117,84 @@ public abstract class Agent extends Entity {
 	
 	/**
 	 * Removes order when it's no longer active
+	 * @param order
 	 */
 	public void removeOrder(Order order) {
 		activeOrders.remove(order);
 	}
 
+	
 	/**
-	 * Withdraw most recent order.
+	 * Withdraws an order (executes immediately, not inserted as an activity).
+	 * @param order
+	 * @param currentTime
 	 * @return
 	 */
-	public Iterable<? extends Activity> withdrawNewestOrder() {
-		Collection<Activity> acts = new ArrayList<Activity>();
-		TimeStamp ts = TimeStamp.ZERO;
+	public Iterable<? extends Activity> withdrawOrder(Order order, TimeStamp currentTime) {
+		return order.getMarket().withdrawOrder(order, currentTime);
+	}
+	
+	/**
+	 * Withdraw most recent order (executes immediately, not inserted as 
+	 * activity).
+	 * @param currentTime
+	 * @return
+	 */
+	public Iterable<? extends Activity> withdrawNewestOrder(TimeStamp currentTime) {
+		TimeStamp latestTime = TimeStamp.ZERO;
 		Order lastOrder = null;
 		for (Order order : activeOrders) {
-			if (order.getSubmitTime().after(ts)) {
-				ts = order.getSubmitTime();
+			if (order.getSubmitTime().after(latestTime)) {
+				latestTime = order.getSubmitTime();
 				lastOrder = order;
 			}
 		}
-		if (lastOrder != null) acts.add(new WithdrawOrder(lastOrder, TimeStamp.IMMEDIATE));
-		return acts;
+		if (lastOrder != null) 
+			return withdrawOrder(lastOrder, currentTime);
+		return ImmutableList.of();
 	}
 	
 	/**
-	 * Withdraw first (earliest) order.
+	 * Withdraw first (earliest) order (executes immediately, not inserted as 
+	 * activity).
+	 * @param currentTime
 	 * @return
 	 */
-	public Iterable<? extends Activity> withdrawOldestOrder() {
-		Collection<Activity> acts = new ArrayList<Activity>();
-		TimeStamp ts = new TimeStamp(Long.MAX_VALUE); // infinity
+	public Iterable<? extends Activity> withdrawOldestOrder(TimeStamp currentTime) {
 		Order lastOrder = null;
+		TimeStamp earliestTime = new TimeStamp(currentTime);
 		for (Order order : activeOrders) {
-			if (order.getSubmitTime().before(ts)) {
-				ts = order.getSubmitTime();
+			if (order.getSubmitTime().before(earliestTime)) {
+				earliestTime = order.getSubmitTime();
 				lastOrder = order;
 			}
 		}
-		if (lastOrder != null) acts.add(new WithdrawOrder(lastOrder, TimeStamp.IMMEDIATE));
-		return acts;
+		if (lastOrder != null) 
+			return withdrawOrder(lastOrder, currentTime);
+		return ImmutableList.of();
 	}
 	
 	/**
-	 * Withdraw all active orders.
+	 * Withdraw all active orders (executes immediately, not inserted as 
+	 * activity).
+	 * @param currentTime
 	 * @return
 	 */
-	public Iterable<? extends Activity> withdrawAllOrders() {
-		Collection<Activity> acts = new ArrayList<Activity>();
-		for (Order order : activeOrders)
-			acts.add(new WithdrawOrder(order, TimeStamp.IMMEDIATE));
-		return acts;
+	public Iterable<? extends Activity> withdrawAllOrders(TimeStamp currentTime) {
+		Builder<Activity> acts = ImmutableList.builder();
+		
+		Collection<Order> allOrders = Sets.newHashSet(activeOrders);
+		for (Order order : allOrders) 
+			acts.addAll(withdrawOrder(order, currentTime));
+		return acts.build();
 	}
 	
-	// TODO gives the agent instant data. Should instead process with delay?
+	
+	/**
+	 * Processes transaction and adds to internal data structure. Note that 
+	 * agents should access transactions via the TransactionProcessor.
+	 * @param trans
+	 */
 	public void processTransaction(Transaction trans) {
 		checkArgument(trans.getBuyer().equals(this) || trans.getSeller().equals(this),
 				"Can only add a transaction that this agent participated in");

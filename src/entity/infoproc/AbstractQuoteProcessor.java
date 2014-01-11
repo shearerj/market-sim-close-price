@@ -37,30 +37,39 @@ abstract class AbstractQuoteProcessor extends Entity implements QuoteProcessor {
 	private static final long serialVersionUID = 4487935082860406953L;
 
 	@Override
-	public Iterable<? extends Activity> sendToQuoteProcessor(Market market, MarketTime quoteTime, Quote quote, TimeStamp currentTime) {
-		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? TimeStamp.IMMEDIATE : currentTime.plus(latency);
-		return ImmutableList.of(new ProcessQuote(this, market, quoteTime, quote, nextTime));
+	public Iterable<? extends Activity> sendToQuoteProcessor(Market market, 
+			MarketTime quoteTime, Quote quote, TimeStamp currentTime) {
+		if (latency.equals(TimeStamp.IMMEDIATE)) {
+			return ImmutableList.<Activity> builder().addAll(
+					processQuote(market, quoteTime, quote, currentTime)).build();
+		}
+		return ImmutableList.of(new ProcessQuote(this, market, quoteTime, quote, 
+				currentTime.plus(latency)));
 	}
 
 	@Override
 	public Iterable<? extends Activity> processQuote(Market market, MarketTime quoteTime, Quote quote,
 			TimeStamp currentTime) {
-				checkArgument(market.equals(associatedMarket),
-						"Can't update a QuoteProcessor with anything but its market");
-				checkArgument(quote.getMarket().equals(associatedMarket),
-						"Can't update a QuoteProcessor with quote from another market");
-			
-				// Do nothing for a stale quote
-				if (lastQuoteTime != null && lastQuoteTime.compareTo(quoteTime) > 0)
-					return ImmutableList.of();
-			
-				this.quote = quote;
-				this.lastQuoteTime = quoteTime;
-				return ImmutableList.of();
-			}
+		checkArgument(market.equals(associatedMarket),
+				"Can't update a QuoteProcessor with anything but its market");
+		checkArgument(quote.getMarket().equals(associatedMarket),
+				"Can't update a QuoteProcessor with quote from another market");
+
+		// Do nothing for a stale quote
+		if (lastQuoteTime != null && lastQuoteTime.compareTo(quoteTime) > 0)
+			return ImmutableList.of();
+
+		this.quote = quote;
+		this.lastQuoteTime = quoteTime;
+		return ImmutableList.of();
+	}
 
 	public Quote getQuote() {
 		return quote;
 	}
 
+	@Override
+	public TimeStamp getLatency() {
+		return latency;
+	}
 }

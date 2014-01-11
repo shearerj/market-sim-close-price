@@ -35,7 +35,6 @@ import event.TimeStamp;
 public class TransactionProcessorTest {
 
 	private SIP sip;
-	// TODO May want to test AbstractTransactionProcessor instead
 	private FundamentalValue fundamental;
 
 	@BeforeClass
@@ -54,10 +53,10 @@ public class TransactionProcessorTest {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 		Market market = new CDAMarket(sip, new Random(), TimeStamp.IMMEDIATE, 1);
-		MarketTransactionProcessor smip = market.getTransactionProcessor();
+		AbstractTransactionProcessor smip = market.getTransactionProcessor();
 
 		// Verify latency
-		assertEquals(TimeStamp.IMMEDIATE, smip.latency);
+		assertEquals(TimeStamp.IMMEDIATE, smip.getLatency());
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
@@ -92,7 +91,7 @@ public class TransactionProcessorTest {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 		Market market = new CDAMarket(sip, new Random(), new TimeStamp(100), 1);
-		MarketTransactionProcessor smip = market.getTransactionProcessor();
+		AbstractTransactionProcessor smip = market.getTransactionProcessor();
 
 		// Verify latency
 		assertEquals(new TimeStamp(100), smip.latency);
@@ -139,8 +138,8 @@ public class TransactionProcessorTest {
 		TimeStamp time1 = new TimeStamp(1);
 		Market market = new CDAMarket(sip, new Random(), TimeStamp.IMMEDIATE, 
 				new TimeStamp(100), 1);
-		MarketTransactionProcessor smip = market.getTransactionProcessor();
-		MarketQuoteProcessor qp = market.getQuoteProcessor();
+		AbstractTransactionProcessor smip = market.getTransactionProcessor();
+		AbstractQuoteProcessor qp = market.getQuoteProcessor();
 
 		// Verify latency
 		assertEquals(TimeStamp.IMMEDIATE, qp.latency);

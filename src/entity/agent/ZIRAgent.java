@@ -72,12 +72,15 @@ public class ZIRAgent extends BackgroundAgent {
 		if (!currentTime.equals(arrivalTime)) {
 			sb.append(" wake up.");
 		}
+		// XXX should it go to sleep?
 //		if (!activeOrders.isEmpty()) {
 //			sb.append(" last order has not transacted, go back to sleep");
 //			log(INFO, sb.toString());
 //			return acts.build();
 //		}
 
+		// withdraw previous order
+		this.withdrawAllOrders(currentTime);
 		// 0.50% chance of being either long or short
 		acts.addAll(executeZIStrategy(rand.nextBoolean() ? BUY : SELL, 1, currentTime));
 

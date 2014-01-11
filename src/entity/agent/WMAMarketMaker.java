@@ -79,8 +79,7 @@ public class WMAMarketMaker extends MarketMaker {
 				|| (ask == null && lastAsk != null)
 				|| (ask != null && !ask.equals(lastAsk))
 				|| (ask != null && lastAsk == null)) {
-			for (Order order : activeOrders)
-				acts.add(new WithdrawOrder(order, TimeStamp.IMMEDIATE));
+			this.withdrawAllOrders(currentTime);
 
 			if (!quote.isDefined()) {
 				log(INFO, this + " " + getName()
