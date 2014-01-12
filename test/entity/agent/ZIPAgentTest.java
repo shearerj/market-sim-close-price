@@ -75,7 +75,28 @@ public class ZIPAgentTest {
 		market = new MockMarket(sip);
 	}
 	
-
+	/**
+	 * Check margin updating
+	 */
+	private void checkMarginUpdate(OrderType type, Price lastPrice, 
+			Price lastTransPrice, double oldMargin, double newMargin) {
+		
+		// Asserting that margin updated correctly
+		if (type == BUY) {
+			if (lastTransPrice.lessThanEqual(lastPrice)) 
+				assertTrue(oldMargin >= newMargin); // raise margin (more negative)
+			else
+				assertTrue(oldMargin <= newMargin); // lower margin
+		}
+		if (type == SELL) {
+			if (lastTransPrice.greaterThanEqual(lastPrice))
+				assertTrue(oldMargin <= newMargin); // raise margin (more positive)
+			else
+				assertTrue(oldMargin >= newMargin); // lower margin
+		}
+	}
+	
+	
 	@Test
 	public void initialMarginTest() {
 		EntityProperties testProps = new EntityProperties(agentProperties);
@@ -417,25 +438,6 @@ public class ZIPAgentTest {
 		assertTrue(newMargin == agent.getCurrentMargin(0, agent.type, time));
 		//				double newMargin = agent.getCurrentMargin(0, agent.type, time);
 		checkMarginUpdate(BUY, lastOrderPrice, lastTransPrice, oldMargin, newMargin);
-	}
-	
-	
-	private void checkMarginUpdate(OrderType type, Price lastPrice, 
-			Price lastTransPrice, double oldMargin, double newMargin) {
-		
-		// Asserting that margin updated correctly
-		if (type == BUY) {
-			if (lastTransPrice.lessThanEqual(lastPrice)) 
-				assertTrue(oldMargin >= newMargin); // raise margin (more negative)
-			else
-				assertTrue(oldMargin <= newMargin); // lower margin
-		}
-		if (type == SELL) {
-			if (lastTransPrice.greaterThanEqual(lastPrice))
-				assertTrue(oldMargin <= newMargin); // raise margin (more positive)
-			else
-				assertTrue(oldMargin >= newMargin); // lower margin
-		}
 	}
 
 	@Test

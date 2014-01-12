@@ -56,15 +56,22 @@ public class AAAgentTest {
 
 		// Setting up agentProperties
 		agentProperties = new EntityProperties();
-		agentProperties.put(Keys.REENTRY_RATE, 0.25);
+		agentProperties.put(Keys.REENTRY_RATE, 0);
 		agentProperties.put(Keys.MAX_QUANTITY, 10);
-		agentProperties.put(Keys.DEBUG, false);
 		agentProperties.put(Keys.ETA, 3);
-		agentProperties.put(Keys.HISTORICAL, 5);
+		agentProperties.put(Keys.WITHDRAW_ORDERS, false);
+		agentProperties.put(Keys.WINDOW_LENGTH, 5000);
 		agentProperties.put(Keys.AGGRESSION, 0);
 		agentProperties.put(Keys.THETA, 0);
-		agentProperties.put(Keys.THETA_MAX, 4);
 		agentProperties.put(Keys.THETA_MIN, -4);
+		agentProperties.put(Keys.THETA_MAX, 4);
+		agentProperties.put(Keys.HISTORICAL, 5);
+		agentProperties.put(Keys.ETA, 3);
+		agentProperties.put(Keys.LAMBDA_R, 0.05);
+		agentProperties.put(Keys.LAMBDA_A, 20);	// 0.02 in paper 
+		agentProperties.put(Keys.GAMMA, 2);
+		agentProperties.put(Keys.BETA_R, 0.4); 
+		agentProperties.put(Keys.BETA_T, 0.4); 
 	}
 
 	@Before
@@ -74,74 +81,29 @@ public class AAAgentTest {
 		market = new MockMarket(sip);
 	}
 
-	private AAAgent addAgent(OrderType type) {
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.BUYER_STATUS, type.equals(OrderType.BUY));
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);	// private values all 0
-		
-		AAAgent agent = new AAAgent(new TimeStamp(0), fundamental, sip, market, rand,
-				testProps);
+	/**
+	 * Check aggression updating
+	 */
+	private void checkAggressionUpdate(OrderType type, Price lastTransactionPrice,
+			Price targetPrice, double oldAggression, double aggression) {
 
-		return agent;
-	}
-
-	private void addOrder(OrderType type, int price, int quantity, int time) {
-		TimeStamp currentTime = new TimeStamp(time);
-		// creating a dummy agent
-		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
-		// Having the agent submit a bid to the market
-		executeImmediateActivities(market.submitOrder(agent, type,
-				new Price(price), quantity, currentTime), currentTime);
-
-		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
-		// the transaction would work
-		
-	}
-
-	private void addTransaction(int p, int q, int time) {
-		addOrder(BUY, p, q, time);
-		addOrder(SELL, p, q, time);
-		TimeStamp currentTime = new TimeStamp(time);
-		executeImmediateActivities(market.clear(currentTime), currentTime);
-
-		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
-		// the transaction would work
+		// Asserting that aggression updated correctly
+		if (type.equals(BUY)) {
+			if (lastTransactionPrice.compareTo(targetPrice) < 0) 
+				assertTrue(oldAggression >= aggression); // less aggressive
+			else
+				assertTrue(oldAggression <= aggression); // more aggressive
+		} else {
+			if (lastTransactionPrice.compareTo(targetPrice) > 0)
+				assertTrue(oldAggression >= aggression); // less aggressive
+			else
+				assertTrue(oldAggression <= aggression); // more aggressive
+		}
 	}
 	
-	private void executeAgentStrategy(Agent agent, int time) {
-		TimeStamp currentTime = new TimeStamp(time);
-		Iterable<? extends Activity> test = agent.agentStrategy(currentTime);
-
-		// executing the bid submission - will go to the market
-		for (Activity act : test)
-			if (act instanceof SubmitNMSOrder)
-				act.execute(currentTime);
-	}
+	// TODO testing of effects of varying parameters
 	
-	private void assertCorrectBid(Agent agent, int low, int high,
-			int quantity) {
-		Collection<Order> orders = agent.activeOrders;
-		// Asserting the bid is correct
-		assertNotEquals("Num orders is incorrect", 0, orders.size());
-		Order order = Iterables.getFirst(orders, null);
-
-		assertNotEquals("Order agent is null", null, order.getAgent());
-		assertEquals("Order agent is incorrect", agent, order.getAgent());
-
-		Price bidPrice = order.getPrice();
-		assertTrue("Order price (" + bidPrice + ") less than " + new Price(low),
-				bidPrice.greaterThan(new Price(low)));
-		assertTrue("Order price (" + bidPrice + ") greater than " + new Price(high),
-				bidPrice.lessThan(new Price(high)));
-
-		assertEquals("Quantity is incorrect", quantity, order.getQuantity());
-	}
-	
-	private void assertCorrectBidQuantity(Agent agent, int quantity) {
-		assertCorrectBid(agent, 0, Integer.MAX_VALUE, quantity);
-	}
-
-	// AAAgent tests
+	// TODO test each individual method as well
 	
 	@Test
 	public void initialBuyer() {
@@ -149,10 +111,10 @@ public class AAAgentTest {
 				"\nTesting buyer on empty market: Result should be price=0");
 		// Creating a buyer
 		AAAgent agent = addAgent(OrderType.BUY);
+		assertTrue(agent.type.equals(BUY));
 		// Testing against an empty market
 		executeAgentStrategy(agent, 100);
 
-		//Checking the bid
 		assertCorrectBidQuantity(agent, 1);
 	}
 
@@ -163,6 +125,7 @@ public class AAAgentTest {
 						+ Price.INF);
 		// Creating a seller
 		AAAgent agent = addAgent(OrderType.SELL);
+		assertTrue(agent.type.equals(SELL));
 		// Testing against an empty market
 		executeAgentStrategy(agent, 100);
 
@@ -180,11 +143,13 @@ public class AAAgentTest {
 		addOrder(SELL, 200000, 1, 10);
 
 		// Testing against a market with initial bids but no transaction history
-		AAAgent agent = addAgent(OrderType.BUY);
+		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(Keys.ETA, 4);
+		AAAgent agent = addAgent(OrderType.BUY, testProps);
 		executeAgentStrategy(agent, 100);
 
-		// Asserting the bid is correct
-		assertCorrectBid(agent, 65000, 70000, 1);
+		// Asserting the bid is correct (based on EQ 10/11)
+		assertCorrectBid(agent, 62500, 1);
 	}
 
 	@Test
@@ -197,12 +162,14 @@ public class AAAgentTest {
 		addOrder(BUY, 50000, 1, 10);
 		addOrder(SELL, 200000, 1, 10);
 
-		// Creating the agent and running the test
-		AAAgent agent = addAgent(OrderType.SELL);
+		// Testing against a market with initial bids but no transaction history
+		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(Keys.ETA, 4);
+		AAAgent agent = addAgent(OrderType.SELL, testProps);
 		executeAgentStrategy(agent, 100);
 
-		// Asserting the bid is correct
-		assertCorrectBid(agent, 165000, 170000, 1);
+		// Asserting the bid is correct (based on EQ 10/11)
+		assertCorrectBid(agent, 175000, 1);
 	}
 
 	@Test
@@ -235,9 +202,10 @@ public class AAAgentTest {
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(OrderType.BUY);
+		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(Keys.THETA, -3);
+		AAAgent agent = addAgent(OrderType.BUY, testProps);
 		agent.setAggression(-0.5);
-		agent.setAdaptivness(-3.0);
 		executeAgentStrategy(agent, 100);
 
 		// Asserting the bid is correct
@@ -282,9 +250,10 @@ public class AAAgentTest {
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(OrderType.BUY);
+		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(Keys.THETA, -3);
+		AAAgent agent = addAgent(OrderType.BUY, testProps);
 		agent.setAggression(0.5);
-		agent.setAdaptivness(-3.0);
 		executeAgentStrategy(agent, 100);
 
 		// Asserting the bid is correct
@@ -408,9 +377,10 @@ public class AAAgentTest {
 		addTransaction(125000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(OrderType.BUY);
+		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(Keys.THETA, -3);
+		AAAgent agent = addAgent(OrderType.BUY, testProps);
 		agent.setAggression(-0.5);
-		agent.setAdaptivness(-3.0);
 		executeAgentStrategy(agent, 100);
 
 		// Asserting the bid is correct
@@ -428,9 +398,10 @@ public class AAAgentTest {
 		addTransaction(125000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(OrderType.BUY);
+		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(Keys.THETA, -3);
+		AAAgent agent = addAgent(OrderType.BUY, testProps);
 		agent.setAggression(0);
-		agent.setAdaptivness(-3.0);
 		executeAgentStrategy(agent, 100);
 
 		// Asserting the bid is correct
@@ -448,9 +419,10 @@ public class AAAgentTest {
 		addTransaction(125000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(OrderType.BUY);
+		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(Keys.THETA, -3);
+		AAAgent agent = addAgent(OrderType.BUY, testProps);
 		agent.setAggression(0.5);
-		agent.setAdaptivness(-3.0);
 		executeAgentStrategy(agent, 100);
 
 		// Asserting the bid is correct
@@ -512,7 +484,7 @@ public class AAAgentTest {
 
 		AAAgent agent = addAgent(OrderType.BUY);
 		executeAgentStrategy(agent, 100);
-		assertTrue(agent.getAggression() > 0);
+		assertTrue(agent.aggression > 0);
 		assertCorrectBid(agent, 50000, 100000, 1);
 	}
 	
@@ -531,9 +503,22 @@ public class AAAgentTest {
 
 		AAAgent agent = addAgent(OrderType.SELL);
 		executeAgentStrategy(agent, 100);
-		assertTrue(agent.getAggression() > 0);
+		assertTrue(agent.aggression > 0);
 		assertCorrectBid(agent, 100000, 150000, 1);
 	}
+	
+//	@Test
+	// TODO
+	public void updateAggressionBuyer() {
+		AAAgent agent = addAgent(BUY);
+		
+		// need to have it update first, then get the old aggression and check the various cases
+		
+		checkAggressionUpdate(BUY, agent.lastTransactionPrice, agent.targetPrice,
+				agent.aggression, 0.0);
+	}
+	
+	// Helper methods
 	
 	private void executeImmediateActivities(Iterable<? extends Activity> acts, TimeStamp time) {
 		// FIXME Change this to use EventManager
@@ -554,5 +539,89 @@ public class AAAgentTest {
 		return array;
 	}
 	
-	// TODO testing of effects of varying parameters
+	private AAAgent addAgent(OrderType type) {
+		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(Keys.BUYER_STATUS, type.equals(OrderType.BUY));
+		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);	// private values all 0
+		
+		return new AAAgent(new TimeStamp(0), fundamental, sip, market, rand,
+				testProps);
+	}
+	
+	private AAAgent addAgent(OrderType type, EntityProperties testProps) {
+		testProps.put(Keys.BUYER_STATUS, type.equals(OrderType.BUY));
+		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);	// private values all 0
+		return new AAAgent(new TimeStamp(0), fundamental, sip, market, rand,
+				testProps);
+	}
+
+	private void addOrder(OrderType type, int price, int quantity, int time) {
+		TimeStamp currentTime = new TimeStamp(time);
+		// creating a dummy agent
+		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
+		// Having the agent submit a bid to the market
+		executeImmediateActivities(market.submitOrder(agent, type,
+				new Price(price), quantity, currentTime), currentTime);
+
+		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
+		// the transaction would work
+		
+	}
+
+	private void addTransaction(int p, int q, int time) {
+		addOrder(BUY, p, q, time);
+		addOrder(SELL, p, q, time);
+		TimeStamp currentTime = new TimeStamp(time);
+		executeImmediateActivities(market.clear(currentTime), currentTime);
+
+		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
+		// the transaction would work
+	}
+	
+	private void executeAgentStrategy(Agent agent, int time) {
+		TimeStamp currentTime = new TimeStamp(time);
+		Iterable<? extends Activity> test = agent.agentStrategy(currentTime);
+
+		// executing the bid submission - will go to the market
+		for (Activity act : test)
+			if (act instanceof SubmitNMSOrder)
+				act.execute(currentTime);
+	}
+	
+	private void assertCorrectBid(Agent agent, int price, int quantity) {
+		Collection<Order> orders = agent.activeOrders;
+		// Asserting the bid is correct
+		assertNotEquals("Num orders is incorrect", 0, orders.size());
+		Order order = Iterables.getFirst(orders, null);
+		
+		assertNotEquals("Order agent is null", null, order.getAgent());
+		assertEquals("Order agent is incorrect", agent, order.getAgent());
+		
+		Price bidPrice = order.getPrice();
+		assertEquals("Price is incorrect", new Price(price), bidPrice);
+		assertEquals("Quantity is incorrect", quantity, order.getQuantity());
+	}
+	
+	private void assertCorrectBid(Agent agent, int low, int high,
+			int quantity) {
+		Collection<Order> orders = agent.activeOrders;
+		// Asserting the bid is correct
+		assertNotEquals("Num orders is incorrect", 0, orders.size());
+		Order order = Iterables.getFirst(orders, null);
+
+		assertNotEquals("Order agent is null", null, order.getAgent());
+		assertEquals("Order agent is incorrect", agent, order.getAgent());
+
+		Price bidPrice = order.getPrice();
+		assertTrue("Order price (" + bidPrice + ") less than " + new Price(low),
+				bidPrice.greaterThan(new Price(low)));
+		assertTrue("Order price (" + bidPrice + ") greater than " + new Price(high),
+				bidPrice.lessThan(new Price(high)));
+
+		assertEquals("Quantity is incorrect", quantity, order.getQuantity());
+	}
+	
+	private void assertCorrectBidQuantity(Agent agent, int quantity) {
+		assertCorrectBid(agent, 0, Integer.MAX_VALUE, quantity);
+	}
 }

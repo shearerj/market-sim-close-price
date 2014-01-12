@@ -19,7 +19,6 @@ import com.google.common.collect.Ordering;
 import com.google.common.collect.ImmutableList.Builder;
 
 import systemmanager.Keys;
-import utils.Pair;
 import utils.Rands;
 import activity.Activity;
 import activity.SubmitNMSOrder;
@@ -48,24 +47,28 @@ public class AAAgent extends WindowAgent {
 	private static final Ordering<Price> pcomp = Ordering.natural();
 	
 	// Agent variables
-	private OrderType type; // randomly assigned at initialization
+	protected OrderType type; // randomly assigned at initialization
 	protected boolean withdrawOrders; 	// true if withdraw orders at each reentry
+	protected Price lastTransactionPrice;
+	protected Price equilibriumPrice;
+	protected Price targetPrice; 
+	protected int numTransactionsUsed;	// used in moving avg computation
 	
 	//Agent strategy variables
 	// Based on Vytelingum's sensitivity analysis, eta and N are most important
-	private double lambda_r; // coefficient of relative perturbation of delta, (0,1)?
-	private double lambda_a; // coefficient of absolute perturbation of delta (0,1)?
+	private double lambdaR; // coefficient of relative perturbation of delta, (0,1)?
+	private double lambdaA; // coefficient of absolute perturbation of delta, positive
 	private double gamma; // long term learning variable, set to 2
-	private double beta_r; // learning coefficient for r (short term) (0,1)
-	private double beta_t; // learning coefficient for theta (long term) (0,1)
+	private double betaR; // learning coefficient for r (short term) (0,1)
+	private double betaT; // learning coefficient for theta (long term) (0,1)
 	private int eta; // price determination coefficient. [1,inf)
 	private int historical; // number of historical prices to look at, N > 0
 	
 	//Agent parameters
 	private double rho;		// factor for weighted moving average
-	private Aggression aggressions;
-	private double aggression; // current short term learning variable, r in [-1,1]
-	private double theta; // long term learning variable
+	protected Aggression aggressions;
+	protected double aggression; // current short term learning variable, r in [-1,1]
+	protected double theta; // long term learning variable
 	private double thetaMax; // max possible value for theta
 	private double thetaMin; // min possible value for theta
 	private double alphaMax; // max experienced value for alpha (for theta, not PV)
@@ -75,16 +78,27 @@ public class AAAgent extends WindowAgent {
 	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
 			Market market, Random rand, double reentryRate, double pvVar,
 			int tickSize, int maxAbsPosition, int bidRangeMin, int bidRangeMax,
-			boolean withdrawOrders, int windowLength, double aggression, double theta, 
-			double thetaMin, double thetaMax, int historical, int eta, double lambdaR,
-			double lambdaA, double gamma, double betaR, double betaT) {
+			boolean withdrawOrders, int windowLength, double aggression, 
+			double theta, double thetaMin, double thetaMax, int historical, 
+			int eta, double lambdaR, int lambdaA, double gamma, double betaR, 
+			double betaT, boolean buyerStatus) {
 		super(arrivalTime, fundamental, sip, market, rand, reentryRate, 
 				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize, 
 				bidRangeMin, bidRangeMax, windowLength);
 		
-		this.type = rand.nextBoolean() ? BUY : SELL;
+		checkArgument(betaR > 0 && betaR < 1, "Beta for r must be in (0,1)");
+		checkArgument(betaT > 0 && betaT < 1, "Beta for theta must be in (0,1)");
+		checkArgument(eta >= 1, "Eta must be in [1, inf)");
+		checkArgument(historical > 0, "N (historical) must be positive");
+		checkArgument(lambdaA >= 0, "lambda_A must be positive");
+		checkArgument(lambdaR >= 0, "lambda_R must be positive");
 		
-		// TODO check arguments
+		this.type = buyerStatus ? BUY : SELL;	// for debugging
+		this.lastTransactionPrice = null;
+		this.equilibriumPrice = null;
+		this.targetPrice = null;
+		numTransactionsUsed = 0;
+		
 		//Initializing parameters
 		this.aggression = aggression;
 		this.theta = theta;
@@ -96,13 +110,13 @@ public class AAAgent extends WindowAgent {
 		
 		//Initializing strategy variables
 		this.historical = historical;
-		this.lambda_a = lambdaA;
-		this.lambda_r = lambdaR;
+		this.lambdaA = lambdaA;
+		this.lambdaR = lambdaR;
 		this.gamma = gamma;
 		this.eta = eta;
-		this.beta_r = betaR;		// paper randomizes to U[0.2, 0.6]
-		this.beta_t = betaT;		// paper randomizes to U[0.2, 0.6]
-		this.rho = 0.9; 			// from paper, to emphasize converging pattern
+		this.betaR = betaR;		// paper randomizes to U[0.2, 0.6]
+		this.betaT = betaT;		// paper randomizes to U[0.2, 0.6]
+		this.rho = 0.9; 		// from paper, to emphasize converging pattern
 	}
 	
 	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
@@ -123,13 +137,11 @@ public class AAAgent extends WindowAgent {
 				props.getAsInt(Keys.HISTORICAL, 5), 
 				props.getAsInt(Keys.ETA, 3),
 				props.getAsDouble(Keys.LAMBDA_R, 0.05),
-				props.getAsDouble(Keys.LAMBDA_A, 0.02), 
+				props.getAsInt(Keys.LAMBDA_A, 20),	// 0.02 in paper 
 				props.getAsDouble(Keys.GAMMA, 2),
 				props.getAsDouble(Keys.BETA_R, Rands.nextUniform(rand, 0.2, 0.6)), 
-				props.getAsDouble(Keys.BETA_T, Rands.nextUniform(rand, 0.2, 0.6)));
-		
-		//Determining whether agent is a buyer or a seller
-//		this.isBuyer = props.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean());		//TODO
+				props.getAsDouble(Keys.BETA_T, Rands.nextUniform(rand, 0.2, 0.6)), 
+				props.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean()));
 	}
 
 	@Override
@@ -143,58 +155,52 @@ public class AAAgent extends WindowAgent {
 		// withdraw previous orders
 		if (withdrawOrders) acts.addAll(withdrawAllOrders(currentTime));
 		
-		// Determining Quantity
-		type = rand.nextBoolean() ? BUY : SELL;
+		// re-initialize variables
+		lastTransactionPrice = null;
+		equilibriumPrice = null;
+		targetPrice = null;
+		numTransactionsUsed = 0;
+		
+		// update aggression
 		aggression = aggressions.getValue(positionBalance, type);
 
 		// Updating Price Limit (valuation of security)
-		Price limitPrice = getValuation(type, currentTime);
-		Price lastTransactionPrice = new Price(-1);
-		Price equilibriumPrice = new Price(-1);
+		Price limitPrice = this.getValuation(type, currentTime);
 		
-		ImmutableList<Transaction> trans = this.getWindowTransactions(currentTime);
-		if (!trans.isEmpty())
-			lastTransactionPrice = trans.get(trans.size()-1).getPrice();
+		ImmutableList<Transaction> transactions = this.getWindowTransactions(currentTime);
+		if (!transactions.isEmpty())
+			lastTransactionPrice = transactions.get(transactions.size()-1).getPrice();
 		
 		// Estimate equilibrium price using weighted moving average
-		MovingAverage avg = estimateEquilibrium(trans);
-		equilibriumPrice = new Price(avg.getMovingAverage());
-		double mvgAvgNum = avg.getMovingAverageNum();
+		equilibriumPrice = this.estimateEquilibrium(transactions);
 		log(INFO, sb.append("estimateEquilibrium: price=").append(equilibriumPrice));
 		
 		// Aggressiveness layer
+		// ----------------------
 		// Determine the target price tau using current r & theta
-		Price targetPrice = determineTargetPrice(limitPrice, equilibriumPrice);
+		targetPrice = this.determineTargetPrice(limitPrice, equilibriumPrice);
 		log(INFO, sb.append("determineTargetPrice: target=").append(targetPrice));
 		
 		// Adaptive layer
+		// ----------------------
 		// Update the short term learning variable (aggressiveness r)
 		double oldAggression = aggression;
-		updateAggression(limitPrice, targetPrice, equilibriumPrice, lastTransactionPrice);
+		this.updateAggression(limitPrice, targetPrice, equilibriumPrice, lastTransactionPrice);
 		log(INFO, sb.append("updateAggression: lastPrice=").append(lastTransactionPrice) 
 					.append(", r=").append(format(oldAggression))
 					.append("-->r_new=").append(format(aggression)));
+		
 		// Update long term learning variable (adaptiveness theta)
 		double oldTheta = theta;
-		updateTheta(equilibriumPrice, mvgAvgNum, trans);
+		theta = this.updateTheta(equilibriumPrice, numTransactionsUsed, transactions);
 		log(INFO, sb.append("updateTheta: theta=").append(format(oldTheta)) 
 					.append("-->theta_new=").append(format(theta)));
-		
-		// Asserting that aggression updated correctly
-		if (type.equals(BUY)) {
-			if(lastTransactionPrice.compareTo(targetPrice) < 0) 
-				assert(oldAggression >= aggression); // less aggressive
-			else
-				assert(oldAggression <= aggression); // more aggressive
-		} else {
-			if(lastTransactionPrice.compareTo(targetPrice) > 0)
-				assert(oldAggression >= aggression); // less aggressive
-			else
-				assert(oldAggression <= aggression); // more aggressive
-		}
 
 		// Bidding Layer
-		acts.addAll(biddingLayer(limitPrice, targetPrice, 1, currentTime));
+		acts.addAll(this.biddingLayer(limitPrice, targetPrice, 1, currentTime));
+		
+		// for next reentry (makes it easier to test)
+		type = rand.nextBoolean() ? BUY : SELL;
 		
 		return acts.build();
 	}
@@ -207,10 +213,10 @@ public class AAAgent extends WindowAgent {
 	 * @return price target according to the AA Strategy
 	 */
 	private Price determineTargetPrice(Price limitPrice, Price equilibriumPrice) {
-		//Error Checking - cannot compute if movingAverage is invalid
+		// Error Checking - cannot compute if movingAverage is invalid FIXME
 		// NOTE: equilibrium price should never be -1 because the target
 		// price will only be determined if there has been 1+ transactions
-		if (equilibriumPrice == null) return new Price(-1);
+		if (equilibriumPrice == null) return null;
 		
 		Price tau; // target price
 		double eqPrice = equilibriumPrice.intValue();
@@ -329,7 +335,7 @@ public class AAAgent extends WindowAgent {
 		// Pricing - verifying targetPrice
 		// when not first round, limit should never be less (greater) than the
 		// target price for buyers (sellers)
-		Price price;
+		Price orderPrice;
 		if (targetPrice != null) {
 			if ((type.equals(BUY) && limitPrice.lessThan(targetPrice)) 
 					|| (type.equals(SELL) && limitPrice.greaterThan(targetPrice)))
@@ -340,30 +346,28 @@ public class AAAgent extends WindowAgent {
 		if (targetPrice == null) {
 			// first arrival, where target price undetermined
 			if (type.equals(BUY)) {
-				Price askCeil = new Price((int) (ask.intValue() * 
-									(1 + lambda_r) + lambda_a));
-				Price offset = new Price((pcomp.min(askCeil, limitPrice).intValue() - bid.intValue())
-						* (1.0/eta));
-				price = new Price(bid.intValue() + offset.intValue());
-				price = pcomp.min(price, limitPrice);
+				Price askCeil = new Price((1 + lambdaR) * ask.intValue() + lambdaA);
+				Price offset = new Price( (pcomp.min(askCeil, limitPrice).intValue() - bid.intValue()) 
+									* (1.0/eta));
+				orderPrice = new Price(bid.intValue() + offset.intValue());
+				orderPrice = pcomp.min(orderPrice, limitPrice);
 			} else {
-				Price bidFloor = new Price((bid.intValue() * 
-									(1 - lambda_r) - lambda_a));
-				Price offset = new Price(ask.intValue() - 
-						(pcomp.max(bidFloor, limitPrice)).intValue() * (1.0/eta));
-				price = new Price(ask.intValue() - offset.intValue());
-				price = pcomp.max(price, limitPrice);				
+				Price bidFloor = new Price((1 - lambdaR) * bid.intValue() - lambdaA);
+				Price offset = new Price( (ask.intValue() - pcomp.max(bidFloor, limitPrice).intValue()) 
+									* (1.0/eta));
+				orderPrice = new Price(ask.intValue() - offset.intValue());
+				orderPrice = pcomp.max(orderPrice, limitPrice);				
 			}
 		} else {
 			// not first entry into market
 			if (type.equals(BUY)) {
 				Price offset = new Price((targetPrice.intValue() - bid.intValue()) * (1.0/eta));
-				price = new Price(bid.intValue() + offset.intValue());
-				price = pcomp.min(price, limitPrice);
+				orderPrice = new Price(bid.intValue() + offset.intValue());
+				orderPrice = pcomp.min(orderPrice, limitPrice);
 			} else {
 				Price offset = new Price((ask.intValue() - targetPrice.intValue()) * (1.0/eta));
-				price = new Price(ask.intValue() - offset.intValue());
-				price = pcomp.max(price, limitPrice);
+				orderPrice = new Price(ask.intValue() - offset.intValue());
+				orderPrice = pcomp.max(orderPrice, limitPrice);
 			}
 		}
 		
@@ -371,16 +375,18 @@ public class AAAgent extends WindowAgent {
 		if (type.equals(BUY)) { // Buyer
 			// if bestAsk < targetPrice, accept bestAsk
 			// else submit bid given by EQ 10/11
-			Price submitPrice = ask.lessThanEqual(targetPrice) ? ask : price;	
+			if (targetPrice != null)
+				orderPrice = ask.lessThanEqual(targetPrice) ? ask : orderPrice;
 			return ImmutableList.of(new SubmitNMSOrder(this, primaryMarket, type, 
-					submitPrice, 1, currentTime));
+					orderPrice, 1, currentTime));
 			
 		} else { // Seller
 			// If outstanding bid >= target price, submit ask at bid price
 			// else submit bid given by EQ 10/11
-			Price submitPrice = bid.greaterThanEqual(targetPrice) ? bid : price;
+			if (targetPrice != null)
+				orderPrice = bid.greaterThanEqual(targetPrice) ? bid : orderPrice;
 			return ImmutableList.of(new SubmitNMSOrder(this, primaryMarket, type, 
-					submitPrice, 1, currentTime));
+					orderPrice, 1, currentTime));
 		}
 	}	// end of bidding layer
 	
@@ -434,8 +440,8 @@ public class AAAgent extends WindowAgent {
 
 		// Updating delta(t), the desired aggressiveness, and r(t+1): Eq. (7)
 		// lambda_r and lambda_a are the relative & absolute inc/dec in r_shout
-		double delta = (1 + sign * lambda_r) * rShout + sign * lambda_a;	
-		aggression = aggression + beta_r * (delta - aggression);
+		double delta = (1 + sign * lambdaR) * rShout + sign * lambdaA;	
+		aggression = aggression + betaR * (delta - aggression);
 		aggressions.setValue(positionBalance, type, aggression);
 	}
 	
@@ -448,7 +454,8 @@ public class AAAgent extends WindowAgent {
 	 * @param equilibriumPrice
 	 * @return rShout
 	 */
-	private double computeRshout(Price limitPrice, Price lastPrice, Price equilibriumPrice) {
+	private double computeRshout(Price limitPrice, Price lastPrice, 
+			Price equilibriumPrice) {
 		double tau = lastPrice.intValue();
 		double limit = limitPrice.intValue();
 		double eqPrice = equilibriumPrice.intValue();
@@ -535,17 +542,17 @@ public class AAAgent extends WindowAgent {
 	/**
 	 * Long-term learning. Section 4.3.2, Eq (8, 9) Vytelingum et al
 	 * 
-		protected final int offset;
 	 * @param equilibriumPrice
-	 * @param numTrans
+	 * @param numTransactionsUsed
 	 * @param transactions
+	 * @return
 	 */
-	private void updateTheta(Price equilibriumPrice, double numTrans, 
+	private double updateTheta(Price equilibriumPrice, double numTransactionsUsed, 
 			ImmutableList<Transaction> transactions) {
-		//Error Checking, must have some transactions
-		if (equilibriumPrice == null) return;
+		
+		// Error Checking, must have some transactions
+		if (equilibriumPrice == null) return theta;
 
-		//Converting trans to an ArrayList
 		ArrayList<Transaction> transList = new ArrayList<Transaction>(transactions);
 		
 		// Determining alpha, Eq (8)
@@ -574,9 +581,10 @@ public class AAAgent extends WindowAgent {
 				+ thetaMin;
 
 		// If number of transactions < historical, do not update theta
-		if (numTrans < historical)
-			return;
-		theta = theta + beta_t * (thetaStar - theta);	// Eq (8)
+		if (numTransactionsUsed < historical)
+			return theta;
+		
+		return theta + betaT * (thetaStar - theta);	// Eq (8)
 	}
 
 	
@@ -589,9 +597,9 @@ public class AAAgent extends WindowAgent {
 	 * @param transactions
 	 * @return
 	 */
-	protected MovingAverage estimateEquilibrium(ImmutableList<Transaction> transactions) {
-		if (transactions == null) return new MovingAverage(-1, 0);
-		if (transactions.size() == 0) return new MovingAverage(-1, 0); //error checking
+	protected Price estimateEquilibrium(ImmutableList<Transaction> transactions) {
+		if (transactions == null) return null;
+		if (transactions.size() == 0) return null; //error checking
 		
 		// Computing the weights for the moving average
 		// normalize by dividing by sumWeights
@@ -604,41 +612,26 @@ public class AAAgent extends WindowAgent {
 			sumWeights += weights[i];
 		}
 		
-		//Computing the moving Average
+		// Computing the moving Average
 		double total = 0;
 		for(int i = 0; i < numTrans; i++) {
 			total += transactions.get(i).getPrice().intValue() * weights[i] / sumWeights; 
 		}
-		// double movingAverage = total / numTrans; // this is a bug in the paper
+		// double movingAverage = total / numTrans; // XXX this is a typo in the paper 
 		// return new MovingAverage(movingAverage, numTrans);
-		return new MovingAverage(total, numTrans);
+		numTransactionsUsed = numTrans;
+		return new Price(total);
 	}
 
-	double getAggression() {
-		return aggression;
-	}
-
+	/**
+	 * For debugging
+	 * @param in
+	 */
 	void setAggression(double in) {
+		aggressions.setValue(positionBalance, type, in);
 		aggression = in;
 	}
 
-	double getAdaptiveness() {
-		return theta;
-	}
-
-	void setAdaptivness(double in) {
-		theta = in;
-	}
-	
-	protected static class MovingAverage extends Pair<Double, Double> {
-		protected MovingAverage(double left, double right) {
-			super(left, right);
-		}
-		protected double getMovingAverage() { return left; }
-		protected double getMovingAverageNum() { return right; }
-	}
-
-	
 	/**
 	 * Holds aggression values for AA agents.
 	 *
