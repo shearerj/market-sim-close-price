@@ -85,6 +85,14 @@ public class AgentFactory {
 			return new BasicMarketMaker(fundamental, sip,
 					marketAssignment.next(), new Random(rand.nextLong()),
 					props);
+		case MAMM:
+			return new MAMarketMaker(fundamental, sip,
+					marketAssignment.next(), new Random(rand.nextLong()),
+					props);
+		case WMAMM:
+			return new WMAMarketMaker(fundamental, sip,
+					marketAssignment.next(), new Random(rand.nextLong()),
+					props);
 		case LA:
 			return new LAAgent(fundamental, sip, markets, new Random(
 					rand.nextLong()), props);

@@ -34,11 +34,10 @@ public abstract class MarketMaker extends ReentryAgent {
 
 	private static final long serialVersionUID = -782740037969385370L;
 	
-	protected int stepSize;	// rung size is distance between adjacent rungs in ladder
-	protected int numRungs;	// # of ladder rungs on one side (e.g., number of buy orders)
+	protected int stepSize;			// rung size is distance between adjacent rungs in ladder
+	protected int numRungs;			// # of ladder rungs on one side (e.g., number of buy orders)
 	protected boolean truncateLadder; 	// true if truncate if NBBO crosses ladder
-	protected boolean noOp;	// true if no-op strategy (never executes strategy)
-	
+	protected boolean noOp;				// true if no-op strategy (never executes strategy)
 	protected Price lastAsk, lastBid; // stores the last ask/bid, respectively
 	protected BestBidAsk lastNBBOQuote;
 

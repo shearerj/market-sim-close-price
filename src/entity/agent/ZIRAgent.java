@@ -43,12 +43,17 @@ public class ZIRAgent extends BackgroundAgent {
 
 	private static final long serialVersionUID = -1155740218390579581L;
 
+	protected boolean withdrawOrders; 	// true if withdraw orders at each reentry
+	
 	public ZIRAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
 			Market market, Random rand, double reentryRate, double pvVar,
-			int tickSize, int maxAbsPosition, int bidRangeMin, int bidRangeMax) {
+			int tickSize, int maxAbsPosition, int bidRangeMin, int bidRangeMax, 
+			boolean withdrawOrders) {
 		super(arrivalTime, fundamental, sip, market, rand, reentryRate, 
 				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize,
 				bidRangeMin, bidRangeMax);
+		
+		this.withdrawOrders = withdrawOrders;
 	}
 
 	public ZIRAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
@@ -59,7 +64,8 @@ public class ZIRAgent extends BackgroundAgent {
 				props.getAsInt(Keys.TICK_SIZE, 1),
 				props.getAsInt(Keys.MAX_QUANTITY, 10),
 				props.getAsInt(Keys.BID_RANGE_MIN, 0),
-				props.getAsInt(Keys.BID_RANGE_MAX, 5000));
+				props.getAsInt(Keys.BID_RANGE_MAX, 5000),
+				props.getAsBoolean(Keys.WITHDRAW_ORDERS, false));
 	}
 
 	@Override
@@ -79,8 +85,7 @@ public class ZIRAgent extends BackgroundAgent {
 //			return acts.build();
 //		}
 
-		// withdraw previous order
-		acts.addAll(withdrawAllOrders(currentTime));
+		if (withdrawOrders) acts.addAll(withdrawAllOrders(currentTime));
 		// 0.50% chance of being either long or short
 		acts.addAll(executeZIStrategy(rand.nextBoolean() ? BUY : SELL, 1, currentTime));
 

@@ -66,6 +66,7 @@ public class ZIRAgentTest {
 		EventManager em = new EventManager(rand);
 		
 		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(Keys.WITHDRAW_ORDERS, true);
 		
 		// verify that orders are correctly withdrawn at each re-entry
 		ZIRAgent agent = new ZIRAgent(TimeStamp.ZERO, fundamental, sip, market, 

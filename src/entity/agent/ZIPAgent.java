@@ -3,6 +3,7 @@ package entity.agent;
 import java.util.List;
 import java.util.Random;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
@@ -43,6 +44,8 @@ public class ZIPAgent extends WindowAgent {
 
 	private static final long serialVersionUID = 8138883791556301413L;
 
+	protected boolean withdrawOrders;
+	
 	protected OrderType type;				// buy or sell
 	protected Margin margin;				// one for each position, mu in Cliff1997
 	protected Price limitPrice;				// lambda in Cliff1997
@@ -58,13 +61,19 @@ public class ZIPAgent extends WindowAgent {
 	public ZIPAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
 			Market market, Random rand, double reentryRate, double pvVar, 
 			int tickSize, int maxAbsPosition, int bidRangeMin, int bidRangeMax, 
-			int windowLength, double marginMin, double marginMax, double gammaMin, 
-			double gammaMax, double betaMin, double betaMax, double rangeCoeffA, 
-			double rangeCoeffR) {
+			boolean withdrawOrders, int windowLength, double marginMin, double marginMax, 
+			double gammaMin, double gammaMax, double betaMin, double betaMax, 
+			double rangeCoeffA, double rangeCoeffR) {
 		super(arrivalTime, fundamental, sip, market, rand, reentryRate,
 				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize,
 				bidRangeMin, bidRangeMax, windowLength);
 
+		checkArgument(rangeCoeffA > 0, "Coefficient A's range must be positive");
+		checkArgument(rangeCoeffR > 0, "Coefficient A's range must be positive");
+		checkArgument(betaMin >= 0, "Min beta must be positive");
+		checkArgument(betaMax < 1, "Max beta must be less than 1"); // TODO check this
+		// TODO finish check arguments for the other values
+		
 		this.rangeCoeffA = rangeCoeffA;
 		this.rangeCoeffR = rangeCoeffR;
 
@@ -87,6 +96,7 @@ public class ZIPAgent extends WindowAgent {
 				props.getAsInt(Keys.MAX_QUANTITY, 10),
 				props.getAsInt(Keys.BID_RANGE_MIN, 0),
 				props.getAsInt(Keys.BID_RANGE_MAX, 5000), 
+				props.getAsBoolean(Keys.WITHDRAW_ORDERS, false),
 				props.getAsInt(Keys.WINDOW_LENGTH, 5000),
 				props.getAsDouble(Keys.MARGIN_MIN, 0.05),
 				props.getAsDouble(Keys.MARGIN_MAX, 0.35),
@@ -94,8 +104,7 @@ public class ZIPAgent extends WindowAgent {
 				props.getAsDouble(Keys.GAMMA_MAX, 0.1),
 				props.getAsDouble(Keys.BETA_MIN, 0.1),
 				props.getAsDouble(Keys.BETA_MAX, 0.5),
-				props.getAsDouble(Keys.COEFF_A, 0.05),
-				props.getAsDouble(Keys.COEFF_R, 0.05));
+				props.getAsDouble(Keys.COEFF_A, 0.05), props.getAsDouble(Keys.COEFF_R, 0.05));
 	}
 
 	@Override
@@ -103,7 +112,8 @@ public class ZIPAgent extends WindowAgent {
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));
 
-		// XXX should ZIP withdraw orders upon each reentry? (no, because
+		// withdrawOrders
+		if (withdrawOrders) acts.addAll(withdrawAllOrders(currentTime));
 		
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append(':').append("::agentStrategy: ");

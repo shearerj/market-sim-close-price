@@ -1,7 +1,6 @@
 package entity.agent;
 
-import static fourheap.Order.OrderType.BUY;
-import static fourheap.Order.OrderType.SELL;
+import static fourheap.Order.OrderType.*;
 import static logger.Logger.log;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -130,9 +129,9 @@ public class AAAgentTest {
 		assertEquals("Order agent is incorrect", agent, order.getAgent());
 
 		Price bidPrice = order.getPrice();
-		assertTrue("Order price (" + bidPrice + ") less than " + low,
+		assertTrue("Order price (" + bidPrice + ") less than " + new Price(low),
 				bidPrice.greaterThan(new Price(low)));
-		assertTrue("Order price (" + bidPrice + ") greater than " + high,
+		assertTrue("Order price (" + bidPrice + ") greater than " + new Price(high),
 				bidPrice.lessThan(new Price(high)));
 
 		assertEquals("Quantity is incorrect", quantity, order.getQuantity());
@@ -142,6 +141,8 @@ public class AAAgentTest {
 		assertCorrectBid(agent, 0, Integer.MAX_VALUE, quantity);
 	}
 
+	// AAAgent tests
+	
 	@Test
 	public void initialBuyer() {
 		Logger.log(Logger.Level.DEBUG,

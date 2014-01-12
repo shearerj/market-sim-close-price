@@ -37,11 +37,11 @@ public interface Keys {
 	public final static String NUM_LA = "numLA";
 	public final static String NUM = "num";
 	
-	// Market Maker
-	public final static String NUM_RUNGS = "numRungs";
-	public final static String RUNG_SIZE = "rungSize";
-	public final static String TRUNCATE_LADDER = "truncateLadder";
-	
+	// SimulationSpec Keys
+	public final static String ASSIGN = "assignment";
+	public final static String CONFIG = "configuration";
+	public final static String NO_OP = "noOp";
+
 	// Latency
 	public final static String QUOTE_LATENCY = "quoteLatency";
 	public final static String TRANSACTION_LATENCY = "transactionLatency";
@@ -53,10 +53,13 @@ public interface Keys {
 	public final static String CLEAR_FREQ = "clearFreq";
 	public final static String PRICING_POLICY = "pricingPolicy";
 
-	// SimulationSpec Keys
-	public final static String ASSIGN = "assignment";
-	public final static String CONFIG = "configuration";
-	public final static String NO_OP = "noOp";
+	// Agents
+	public final static String WITHDRAW_ORDERS = "withdrawOrders"; 
+
+	// Market Maker
+	public final static String NUM_RUNGS = "numRungs";
+	public final static String RUNG_SIZE = "rungSize";
+	public final static String TRUNCATE_LADDER = "truncateLadder";
 
 	// AAAgent
 	public final static String HISTORICAL = "historical";
@@ -73,7 +76,6 @@ public interface Keys {
 	public final static String DEBUG = "debug";
 	public final static String TEST = "AAtesting";
 	public final static String BUYER_STATUS = "buyerStatus";
-	
 	
 	// ZIPAgent
 	public final static String MARGIN_MIN = "marginMin";

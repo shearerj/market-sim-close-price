@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList.Builder;
 
 import systemmanager.Keys;
 import utils.Pair;
+import utils.Rands;
 import activity.Activity;
 import activity.SubmitNMSOrder;
 import data.EntityProperties;
@@ -46,10 +47,10 @@ public class AAAgent extends WindowAgent {
 	private static final long serialVersionUID = 2418819222375372886L;
 	private static final Ordering<Price> pcomp = Ordering.natural();
 	
-	// Agent market variables
-//	private boolean isBuyer; // randomly assigned at initialization
+	// Agent variables
 	private OrderType type; // randomly assigned at initialization
-
+	protected boolean withdrawOrders; 	// true if withdraw orders at each reentry
+	
 	//Agent strategy variables
 	// Based on Vytelingum's sensitivity analysis, eta and N are most important
 	private double lambda_r; // coefficient of relative perturbation of delta, (0,1)?
@@ -74,12 +75,16 @@ public class AAAgent extends WindowAgent {
 	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
 			Market market, Random rand, double reentryRate, double pvVar,
 			int tickSize, int maxAbsPosition, int bidRangeMin, int bidRangeMax,
-			int windowLength, double aggression, double theta, double thetaMin, 
-			double thetaMax, int historical, int eta, double lambdaR, double lambdaA,
-			double gamma, double betaR, double betaT) {
+			boolean withdrawOrders, int windowLength, double aggression, double theta, 
+			double thetaMin, double thetaMax, int historical, int eta, double lambdaR,
+			double lambdaA, double gamma, double betaR, double betaT) {
 		super(arrivalTime, fundamental, sip, market, rand, reentryRate, 
 				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize, 
 				bidRangeMin, bidRangeMax, windowLength);
+		
+		this.type = rand.nextBoolean() ? BUY : SELL;
+		
+		// TODO check arguments
 		//Initializing parameters
 		this.aggression = aggression;
 		this.theta = theta;
@@ -87,7 +92,6 @@ public class AAAgent extends WindowAgent {
 		this.thetaMax = thetaMax;
 		this.alphaMin = Price.INF.intValue();
 		this.alphaMax = -1;
-		
 		this.aggressions = new Aggression(privateValue.getMaxAbsPosition(), aggression);
 		
 		//Initializing strategy variables
@@ -96,12 +100,9 @@ public class AAAgent extends WindowAgent {
 		this.lambda_r = lambdaR;
 		this.gamma = gamma;
 		this.eta = eta;
-		this.beta_r = betaR;
-		this.beta_t = betaT;
-		//		beta_r = this.getUniformRV(0.2, 0.6);
-		//		beta_t = this.getUniformRV(0.2, 0.6);
-		
-		this.rho = 0.9; // from paper, to emphasize converging pattern
+		this.beta_r = betaR;		// paper randomizes to U[0.2, 0.6]
+		this.beta_t = betaT;		// paper randomizes to U[0.2, 0.6]
+		this.rho = 0.9; 			// from paper, to emphasize converging pattern
 	}
 	
 	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
@@ -113,18 +114,19 @@ public class AAAgent extends WindowAgent {
 				props.getAsInt(Keys.MAX_QUANTITY, 10),
 				props.getAsInt(Keys.BID_RANGE_MIN, 0),
 				props.getAsInt(Keys.BID_RANGE_MAX, 5000),
+				props.getAsBoolean(Keys.WITHDRAW_ORDERS, false),
 				props.getAsInt(Keys.WINDOW_LENGTH, 5000),
 				props.getAsDouble(Keys.AGGRESSION, 0),
 				props.getAsDouble(Keys.THETA, -8),
 				props.getAsDouble(Keys.THETA_MIN, -8),
 				props.getAsDouble(Keys.THETA_MAX, 2),
-				props.getAsInt(Keys.HISTORICAL, 5),
-				props.getAsInt(Keys.ETA, 3), 
+				props.getAsInt(Keys.HISTORICAL, 5), 
+				props.getAsInt(Keys.ETA, 3),
 				props.getAsDouble(Keys.LAMBDA_R, 0.05),
-				props.getAsDouble(Keys.LAMBDA_A, 0.02),
-				props.getAsDouble(Keys.GAMMA, 2), 
-				props.getAsDouble(Keys.BETA_R, .4),
-				props.getAsDouble(Keys.BETA_T, .4));
+				props.getAsDouble(Keys.LAMBDA_A, 0.02), 
+				props.getAsDouble(Keys.GAMMA, 2),
+				props.getAsDouble(Keys.BETA_R, Rands.nextUniform(rand, 0.2, 0.6)), 
+				props.getAsDouble(Keys.BETA_T, Rands.nextUniform(rand, 0.2, 0.6)));
 		
 		//Determining whether agent is a buyer or a seller
 //		this.isBuyer = props.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean());		//TODO
@@ -138,7 +140,8 @@ public class AAAgent extends WindowAgent {
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append("::agentStrategy: ");
 
-		this.withdrawAllOrders(null); // FIXME will this withdraw & update for future price computation?
+		// withdraw previous orders
+		if (withdrawOrders) acts.addAll(withdrawAllOrders(currentTime));
 		
 		// Determining Quantity
 		type = rand.nextBoolean() ? BUY : SELL;

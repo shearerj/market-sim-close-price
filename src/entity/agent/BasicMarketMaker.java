@@ -85,6 +85,7 @@ public class BasicMarketMaker extends MarketMaker {
 				|| (ask == null && lastAsk != null)
 				|| (ask != null && !ask.equals(lastAsk))
 				|| (ask != null && lastAsk == null)) {
+			
 			acts.addAll(withdrawAllOrders(currentTime));	
 
 			if (!quote.isDefined()) {
