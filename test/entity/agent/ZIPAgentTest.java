@@ -203,8 +203,8 @@ public class ZIPAgentTest {
 		agent.limitPrice = agent.getLimitPrice(BUY, 1, time);
 		// set the margins
 		agent.type = SELL;
-		agent.lastOrderPrice.setValue(0, SELL, new Price(105000));
-		agent.lastOrderPrice.setValue(0, BUY, new Price(95000));
+		agent.lastOrderPrice = new Price(105000);
+		agent.lastOrderPrice = new Price(95000);
 		
 		test = agent.agentStrategy(time);
 		assertEquals(2, Iterables.size(test));
@@ -269,8 +269,8 @@ public class ZIPAgentTest {
 		
 		// set the margins
 		agent.type = BUY;
-		agent.lastOrderPrice.setValue(0, BUY, new Price(99000));
-		Price lastOrderPrice = agent.lastOrderPrice.getValue(0, agent.type);
+		agent.lastOrderPrice = new Price(99000);
+		Price lastOrderPrice = agent.lastOrderPrice;
 		agent.updateMargin(firstTrans, time);
 		
 		// decrease target price; for buyer, means higher margin
@@ -313,8 +313,8 @@ public class ZIPAgentTest {
 		
 		// set the margins
 		agent.type = SELL;
-		agent.lastOrderPrice.setValue(0, SELL, new Price(105000));
-		Price lastOrderPrice = agent.lastOrderPrice.getValue(0, agent.type);
+		agent.lastOrderPrice = new Price(105000);
+		Price lastOrderPrice = agent.lastOrderPrice;
 		agent.updateMargin(firstTrans, time);
 		
 		// increase target price; for seller, means higher margin
@@ -359,8 +359,8 @@ public class ZIPAgentTest {
 		
 		// set the margins
 		agent.type = BUY;
-		agent.lastOrderPrice.setValue(0, BUY, new Price(95000));
-		Price lastOrderPrice = agent.lastOrderPrice.getValue(0, agent.type);
+		agent.lastOrderPrice = new Price(95000);
+		Price lastOrderPrice = agent.lastOrderPrice;
 		agent.updateMargin(firstTrans, time);
 		
 		// decrease target price; for buyer, means higher margin
@@ -405,8 +405,8 @@ public class ZIPAgentTest {
 		
 		// set the margins
 		agent.type = SELL;
-		agent.lastOrderPrice.setValue(0, SELL, new Price(101000));
-		Price lastOrderPrice = agent.lastOrderPrice.getValue(0, agent.type);
+		agent.lastOrderPrice = new Price(101000);
+		Price lastOrderPrice = agent.lastOrderPrice;
 		agent.updateMargin(firstTrans, time);
 		
 		// decrease target price; for buyer, means higher margin
@@ -494,21 +494,21 @@ public class ZIPAgentTest {
 		agent.momentumChange = 10;
 		
 		// increase target price
-		agent.lastOrderPrice.setValue(0, BUY, new Price(99000));
+		agent.lastOrderPrice = new Price(99000);
 		agent.type = BUY;
 		agent.updateMomentumChange(lastTrans, time);
 		assertTrue(10 == agent.momentumChange);
-		agent.lastOrderPrice.setValue(0, SELL, new Price(99000));
+		agent.lastOrderPrice = new Price(99000);
 		agent.type = SELL;
 		agent.updateMomentumChange(lastTrans, time);
 		assertTrue(10 == agent.momentumChange);
 		
 		// decrease target price
-		agent.lastOrderPrice.setValue(0, BUY, new Price(110000));
+		agent.lastOrderPrice = new Price(110000);
 		agent.type = BUY;
 		agent.updateMomentumChange(lastTrans, time);
 		assertTrue(10 == agent.momentumChange);
-		agent.lastOrderPrice.setValue(0, SELL, new Price(110000));
+		agent.lastOrderPrice = new Price(110000);
 		agent.type = SELL;
 		agent.updateMomentumChange(lastTrans, time);
 		assertTrue(10 == agent.momentumChange);
@@ -536,24 +536,24 @@ public class ZIPAgentTest {
 		Transaction lastTrans = market.getTransactions().get(0);
 		
 		// increase target price
-		agent.lastOrderPrice.setValue(0, BUY, new Price(99000));
+		agent.lastOrderPrice = new Price(99000);
 		agent.type = BUY;
 		agent.updateMomentumChange(lastTrans, time);
 		assertTrue(agent.momentumChange > 0);
 		assertTrue(agent.momentumChange < 0.5 * 99000);
-		agent.lastOrderPrice.setValue(0, SELL, new Price(99000));
+		agent.lastOrderPrice = new Price(99000);
 		agent.type = SELL;
 		agent.updateMomentumChange(lastTrans, time);
 		assertTrue(agent.momentumChange > 0);
 		assertTrue(agent.momentumChange < 0.5 * 99000);
 		
 		// decrease target price
-		agent.lastOrderPrice.setValue(0, BUY, new Price(110000));
+		agent.lastOrderPrice = new Price(110000);
 		agent.type = BUY;
 		agent.updateMomentumChange(lastTrans, time);
 		assertTrue(agent.momentumChange < 0);
 		assertTrue(-agent.momentumChange < 0.5 * 110000);
-		agent.lastOrderPrice.setValue(0, SELL, new Price(110000));
+		agent.lastOrderPrice = new Price(110000);
 		agent.type = SELL;
 		agent.updateMomentumChange(lastTrans, time);
 		assertTrue(agent.momentumChange < 0);
@@ -579,26 +579,26 @@ public class ZIPAgentTest {
 		Transaction lastTrans = market.getTransactions().get(0);
 
 		// increase target price, so delta positive & delta < 0.5*trans price
-		agent.lastOrderPrice.setValue(0, BUY, new Price(99000));
+		agent.lastOrderPrice = new Price(99000);
 		agent.type = BUY;
 		double delta = agent.computeDelta(lastTrans, time);
 		assertTrue(delta > 0);
 		assertTrue(delta < 0.5 * 99000);
 
-		agent.lastOrderPrice.setValue(0, SELL, new Price(99000));
+		agent.lastOrderPrice = new Price(99000);
 		agent.type = SELL;
 		delta = agent.computeDelta(lastTrans, time);
 		assertTrue(delta > 0);
 		assertTrue(delta < 0.5 * 99000);
 		
 		// decrease target price, so delta negative & |delta| < 0.5*trans price
-		agent.lastOrderPrice.setValue(0, BUY, new Price(110000));
+		agent.lastOrderPrice = new Price(110000);
 		agent.type = BUY;
 		delta = agent.computeDelta(lastTrans, time);
 		assertTrue(delta < 0);
 		assertTrue(Math.abs(delta) < 0.5 * 110000);
 
-		agent.lastOrderPrice.setValue(0, SELL, new Price(110000));
+		agent.lastOrderPrice = new Price(110000);
 		agent.type = SELL;
 		delta = agent.computeDelta(lastTrans, time);
 		assertTrue(delta < 0);
@@ -626,21 +626,21 @@ public class ZIPAgentTest {
 		// set order prices
 		// for increase target price, R & A will cause target price to exceed last trans
 		// buyer wants to decrease margin and therefore increase target price
-		agent.lastOrderPrice.setValue(0, BUY, new Price(99000));
+		agent.lastOrderPrice = new Price(99000);
 		agent.type = BUY;
 		assertTrue(agent.computeTargetPrice(lastTrans, time).greaterThan(lastTransPrice));
 		// seller wants to increase margin and therefore increase target price
-		agent.lastOrderPrice.setValue(0, SELL, new Price(99000));
+		agent.lastOrderPrice = new Price(99000);
 		agent.type = SELL;
 		assertTrue(agent.computeTargetPrice(lastTrans, time).greaterThan(lastTransPrice));		
 		
 		// for decrease target price, R & A will cause target price to be less than last trans
 		// buyer wants to increase margin and therefore decrease target price
-		agent.lastOrderPrice.setValue(0, BUY, new Price(110000));
+		agent.lastOrderPrice = new Price(110000);
 		agent.type = BUY;
 		assertTrue(agent.computeTargetPrice(lastTrans, time).lessThan(lastTransPrice));
 		// seller wants to decrease margin and therefore decrease target price
-		agent.lastOrderPrice.setValue(0, SELL, new Price(110000));
+		agent.lastOrderPrice = new Price(110000);
 		agent.type = SELL;
 		assertTrue(agent.computeTargetPrice(lastTrans, time).lessThan(lastTransPrice));		
 	}
@@ -658,9 +658,7 @@ public class ZIPAgentTest {
 				testProps);
 		
 		// check that initial order price array all -1
-		for (Price p : agent.lastOrderPrice.values) {
-			assertEquals(new Price(-1), p);
-		}
+		assertNull(agent.lastOrderPrice);
 		
 		// now test with a dummy transaction
 		addTransaction(100000, 1, 0);
@@ -704,29 +702,27 @@ public class ZIPAgentTest {
 		addTransaction(100000, 1, 0);
 		Transaction lastTrans = market.getTransactions().get(0);
 		// set order prices
-		agent.lastOrderPrice.setValue(0, BUY, new Price(99000));
-		agent.lastOrderPrice.setValue(0, SELL, new Price(110000));
-		assertEquals(new Price(99000), agent.lastOrderPrice.getValue(0, BUY));
-		assertEquals(new Price(110000), agent.lastOrderPrice.getValue(0, SELL));
+		agent.lastOrderPrice = new Price(99000);
+		assertEquals(new Price(99000), agent.lastOrderPrice);
 		
 		// buyer order price < trans price, therefore no increase
 		agent.type = BUY;
 		assertFalse(agent.checkIncreaseMargin(lastTrans, time));
-		// seller order price > trans price, therefore no increase
-		agent.type = SELL;
-		assertFalse(agent.checkIncreaseMargin(lastTrans, time));
-		
-		// different order prices
-		agent.lastOrderPrice.setValue(0, BUY, new Price(110000));
-		agent.lastOrderPrice.setValue(0, SELL, new Price(99000));
-		// buyer order price > trans price, therefore increase
-		agent.type = BUY;
-		assertTrue(agent.checkIncreaseMargin(lastTrans, time));
 		// seller order price < trans price, therefore increase
 		agent.type = SELL;
 		assertTrue(agent.checkIncreaseMargin(lastTrans, time));
+
+
+		// different order prices
+		agent.lastOrderPrice = new Price(110000);
+		// buyer order price > trans price, therefore increase
+		agent.type = BUY;
+		assertTrue(agent.checkIncreaseMargin(lastTrans, time));
+		// seller order price > trans price, therefore no increase
+		agent.type = SELL;
+		assertFalse(agent.checkIncreaseMargin(lastTrans, time));
+
 	}
-	
 	
 	private void addOrder(OrderType type, int price, int quantity, int time) {
 		TimeStamp currentTime = new TimeStamp(time);

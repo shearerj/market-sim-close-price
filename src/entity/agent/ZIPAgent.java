@@ -30,12 +30,12 @@ import fourheap.Order.OrderType;
  * Zero-Intelligence Plus Agent.
  *
  * Based on Cliff & Bruten, "Zero is Not Enough: On the lower limit of agent
- * intelligence for continuous double auction markets," HP Laboratories technical report,
- * HPL-97-141, 1997.
+ * intelligence for continuous double auction markets," HP Laboratories 
+ * technical report, HPL-97-141, 1997.
  * 
- * Maintains array of last order prices for each position?
- * TODO would make more sense to have one last order price for each buyer at position 0, etc
- * and each seller at position 0, etc. as it's different going in other direction.
+ * Since each reentry behaves like a "new" agent, lastOrderPrice does not need
+ * to be an array. Instead, it's reset at the beginning of each AgentStrategy
+ * execution.
  * 
  * @author ewah
  */
@@ -49,7 +49,7 @@ public class ZIPAgent extends WindowAgent {
 	protected double momentumChange;		// momentum update, in Eq (15) of Cliff1997
 	protected double beta;					// learning rate, beta in Cliff1997
 	protected double gamma;					// momentum coefficient, gamma in Cliff1997
-	protected PriceArray lastOrderPrice;	// for last order price, p_i in Cliff1997
+	protected Price lastOrderPrice;			// for last order price, p_i in Cliff1997
 
 	// Strategy parameters (tunable)
 	protected final double rangeCoeffA;	// range for A, coefficient of absolute perturbation
@@ -70,7 +70,7 @@ public class ZIPAgent extends WindowAgent {
 
 		// Initializing variables
 		momentumChange = 0;	// initialized to 0
-		lastOrderPrice = new PriceArray(maxAbsPosition);
+		lastOrderPrice = null;
 		limitPrice = null;
 		beta = Rands.nextUniform(rand, betaMin, betaMax);
 		gamma = Rands.nextUniform(rand, gammaMin, gammaMax);
@@ -103,7 +103,7 @@ public class ZIPAgent extends WindowAgent {
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));
 
-		// XXX should ZIP withdraw orders upon each reentry?
+		// XXX should ZIP withdraw orders upon each reentry? (no, because
 		
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append(':').append("::agentStrategy: ");
@@ -131,7 +131,7 @@ public class ZIPAgent extends WindowAgent {
 			// Even if no new transactions this round, will still submit a new order
 			Price orderPrice = pcomp.max(Price.ZERO, computeOrderPrice(currentMargin, currentTime));
 			acts.add(new SubmitNMSOrder(this, primaryMarket, type, orderPrice, 1, currentTime));
-			lastOrderPrice.setValue(positionBalance, type, orderPrice);
+			lastOrderPrice = orderPrice;
 
 		} else {
 			// zero transactions
@@ -202,8 +202,8 @@ public class ZIPAgent extends WindowAgent {
 				append("::updateMargin: ");
 		log(INFO, sb.append("lastTransPrice=").append(lastTrans.getPrice()));
 		updateMomentumChange(lastTrans, currentTime);
-		double newMargin = (lastOrderPrice.getValue(positionBalance, type).intValue() 
-				+ momentumChange) / limitPrice.intValue() - 1;
+		double newMargin = (lastOrderPrice.intValue() + momentumChange) 
+				/ limitPrice.intValue() - 1;
 		margin.setValue(positionBalance, type, newMargin);
 	}
 
@@ -241,7 +241,7 @@ public class ZIPAgent extends WindowAgent {
 	 */
 	public double computeDelta(Transaction lastTrans, TimeStamp currentTime){
 		Price tau = computeTargetPrice(lastTrans, currentTime);
-		return beta * (tau.intValue() - lastOrderPrice.getValue(positionBalance, type).intValue());
+		return beta * (tau.intValue() - lastOrderPrice.intValue());
 	}
 
 
@@ -304,10 +304,10 @@ public class ZIPAgent extends WindowAgent {
 	 */
 	protected boolean checkIncreaseMargin(Transaction lastTrans, TimeStamp currentTime) {
 		Price lastTransPrice = lastTrans.getPrice();
-		Price orderPrice = lastOrderPrice.getValue(positionBalance, type);
+		Price orderPrice = lastOrderPrice;
 		
 		// If no order price yet, compute based on current margin
-		if (orderPrice.equals(new Price(-1)))
+		if (orderPrice == null)
 			orderPrice = computeOrderPrice(margin.getValue(positionBalance, type), currentTime);
 		
 		switch (type) {
