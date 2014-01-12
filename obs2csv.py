@@ -1,17 +1,13 @@
 #! /usr/bin/env python
-from sys import argv, stdout, exit
+import sys
 import json
+import argparse
 
-"""
-Merges observation files into a csv
-"""
-
-def printUsage():
-    print "Merges observation files into a csv"
-    print 
-    print "Usage:", argv[0], "obs-files > csv-file"
-    print
-    print "This merges observation files into a csv. It only reports the \"features\""
+parser = argparse.ArgumentParser(description='Merge several observation files into a csv. It only reports the "features" and forgets about player information.')
+parser.add_argument('files', metavar='obs-file', nargs='+',
+                    help='An observation file to include in the final csv')
+parser.add_argument('-o', '--output', metavar='csv-file', type=argparse.FileType('w'), default=sys.stdout,
+                    help='The csv file to write to, defaults to stdout')
 
 def to_csv(out, filenames):
     with open(filenames[0], 'r') as first:
@@ -30,7 +26,5 @@ def to_csv(out, filenames):
         out.write('\n')
 
 if __name__ == "__main__":
-    if len(argv) < 2 or argv[1] == "-h" or argv[1] == "--help":
-        printUsage()
-        exit(1)
-    to_csv(stdout, argv[1:])
+    args = parser.parse_args()
+    to_csv(args.output, args.files)

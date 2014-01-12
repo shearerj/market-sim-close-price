@@ -1,34 +1,18 @@
 #! /usr/bin/env python
-from sys import argv, stdout, exit
-from math import sqrt
+import sys
+import math
 import json
+import argparse
 
-"""
-Merges observation files like egta
-"""
-
-def printUsage():
-    print "Merges observation files, and returns summary statistics"
-    print 
-    print "Usage:", argv[0], "obs-files > merged-obs-file"
-    print "      ", argv[0], "obs-dir/observation*.json > merged-obs-file"
-    print 
-    print "\"features\" will contain the mean of all of the features per observation\n\
-run. This could be changed in the future to also include standard\n\
-deviations. The \"config\" feature will be the config of the last observation,\n\
-but these should all be idential. The \"players\" object will contain an object\n\
-nested by role and then by strategy. The final object has three field. \"mean\"\n\
-which is simply the mean of all agent payoffs for that role and\n\
-strategy. \"true_sample_stddev\" is the sample standard deviation of every pay\n\
-off for every agent in every simulation. \"egta_sample_stddev\" is the sample\n\
-standard deviation of the mean of all agent payoffs of that role and strategy in\n\
-every observation. That is, payoffs are aggregated to a mean value for each role\n\
-and strategy for each observation, then this is the standard deviation of those\n\
-means across observations."
+parser = argparse.ArgumentParser(description='Merge successive observation files like egta. "features" will contain the mean of all of the features per observation run. This could be changed in the future to also include standard deviations. The "config" feature will be the config of the last observation, but these should all be idential. The "players" object will contain an object nested by role and then by strategy. The final object has three field. "mean" which is simply the mean of all agent payoffs for that role and strategy. "true_sample_stddev" is the sample standard deviation of every pay off for every agent in every simulation. "egta_sample_stddev" is the sample standard deviation of the mean of all agent payoffs of that role and strategy in every observation. That is, payoffs are aggregated to a mean value for each role and strategy for each observation, then this is the standard deviation of those means across observations.')
+parser.add_argument('files', metavar='obs-file', nargs='+',
+                    help='An observation file to merge')
+parser.add_argument('-o', '--output', metavar='merged-obs-file', type=argparse.FileType('w'), default=sys.stdout,
+                    help='The merged json file to write to, defaults to stdout')
 
 class SumStat:
     def __init__(self):
-        self.n, self.sum, self.sumsq = 0, 0, 0
+        self.n = self.sum = self.sumsq = 0.0
 
     def add_one(self, val):
         self.n += 1
@@ -43,11 +27,11 @@ class SumStat:
     def mean(self):
         return float(self.sum) / self.n;
 
-    def __sq_err(self):
-        return self.sumsq - self.mean() ** 2
+    def __sq_err__(self):
+        return self.sumsq - self.sum ** 2 / self.n
 
     def sample_stddev(self):
-        return sqrt(self.__sq_err() / (self.n - 1))
+        return math.sqrt(self.__sq_err__() / (self.n - 1))
 
 def mergeObs(filenames):
     
@@ -56,7 +40,7 @@ def mergeObs(filenames):
     feature_stats = {}
 
     for filename in filenames:
-        with open(filenames[0], 'r') as first:
+        with open(filename, 'r') as first:
             obs = json.load(first)
 
         players = obs['players']
@@ -74,7 +58,7 @@ def mergeObs(filenames):
             true_stat = true_player_stats.setdefault(player['role'], {}).setdefault(player['strategy'], SumStat())
             egta_stat = sim_egta_stats.setdefault(player['role'], {}).setdefault(player['strategy'], SumStat())
             mean = float(player['payoff'])
-            true_stat.add_many(n, mean, float(player['features']['payoff_stddev']) ** 2 * (n - 1) + mean ** 2)
+            true_stat.add_many(n, mean, float(player['features']['payoff_stddev']) ** 2 * (n - 1) + n * mean ** 2)
             egta_stat.add_one(mean)
 
         for role, rest in sim_egta_stats.iteritems():
@@ -97,8 +81,7 @@ def mergeObs(filenames):
     return { 'players': players, 'features': features }
 
 if __name__ == "__main__":
-    if len(argv) < 2 or argv[1] == "-h" or argv[1] == "--help":
-        printUsage()
-        exit(1)
-    json.dump(mergeObs(argv[1:]), stdout)
-    stdout.write('\n')
+    args = parser.parse_args()
+    json.dump(mergeObs(args.files), args.output)
+    args.output.write('\n')
+    args.output.close()

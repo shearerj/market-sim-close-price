@@ -1,21 +1,15 @@
 #! /usr/bin/env python
 import sys
-from sys import argv, stdout, exit
 import os.path
 import re
+import argparse
 from Queue import PriorityQueue
 
-"""
-Merges log files. This is very unsafe in terms of file handling (tries to open a
-lot of files, and will crash if want to merge more then the file system will
-allow), but if it's only used as a one time script it should work fine.
-"""
-
-def printUsage():
-    print "Merges various log files for easy comparison"
-    print ""
-    print "Usage:", argv[0], "log-files > merged-log-file"
-    print "      ", argv[0], "log-dir/* > merged-log-file"
+parser = argparse.ArgumentParser(description='Merges log files for easy comparison. This is very unsafe in terms of file handling (tries to open a lot of files, and will crash if want to merge more then the file system will allow), but if it\'s only used as a one time script it should work fine.')
+parser.add_argument('files', metavar='log-file', nargs='+', type=argparse.FileType('r'),
+                    help='A log file to merge')
+parser.add_argument('-o', '--output', metavar='merged-log-file', type=argparse.FileType('w'), default=sys.stdout,
+                    help='The log file to write to, defaults to stdout')
 
 # Regex for time of a line
 retime = re.compile(r'\d+\|\s*(\d+)')
@@ -42,7 +36,7 @@ class LogReader:
     def __eq__(self, other):
         return self.time == other.time
 
-def merge(logs):
+def merge(logs, output):
     """ Merges log files off of time. Takes a generator of file descriptors """
     queue = PriorityQueue()
     for log in logs:
@@ -55,13 +49,14 @@ def merge(logs):
             line = reader.nextline()
             if not line:
                 break
-            stdout.write(line)
+            output.write(line)
         if not line:
             continue
         queue.put(reader)
 
 if __name__ == "__main__":
-    if len(argv) < 2 or argv[1] == "-h" or argv[1] == "--help":
-        printUsage()
-        exit(1)
-    merge(open(f) for f in argv[1:])
+    args = parser.parse_args()
+    merge(args.files, args.output)
+    for file in args.files:
+        file.close()
+    args.output.close()
