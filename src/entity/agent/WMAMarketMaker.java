@@ -44,7 +44,7 @@ public class WMAMarketMaker extends MarketMaker {
 		super(fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
 				numRungs, rungSize, truncateLadder);
 
-		checkArgument(weightFactor > 0, "Weight factor must be positive!");
+		checkArgument(weightFactor >= 0, "Weight factor must be nonnegative!");
 		checkArgument(windowLength > 0, "Window length must be positive!");
 		
 		this.weightFactor = weightFactor;

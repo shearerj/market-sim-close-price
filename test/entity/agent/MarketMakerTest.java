@@ -1,13 +1,10 @@
 package entity.agent;
 
-import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Random;
 
 import logger.Logger;
 
@@ -16,13 +13,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.EventManager;
 import systemmanager.Keys;
 import activity.Activity;
 import activity.AgentStrategy;
-import activity.Clear;
-import activity.SubmitOrder;
-
 import com.google.common.collect.Iterables;
 
 import data.EntityProperties;
@@ -32,9 +25,7 @@ import entity.infoproc.SIP;
 import entity.market.MockMarket;
 import entity.market.Order;
 import entity.market.Price;
-import entity.market.Quote;
 import event.TimeStamp;
-import fourheap.Order.OrderType;
 
 public class MarketMakerTest {
 
@@ -77,62 +68,41 @@ public class MarketMakerTest {
 	}
 	
 	@Test
-	public void basicLadderTest() {
-		TimeStamp time = TimeStamp.ZERO;
-
+	public void submitOrderLadderTest() {
 		MarketMaker mm = new MockMarketMaker(fundamental, sip, market, 
-				setupProperties(2, 10, false));
-
-		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
-
-		// Creating and adding bids
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
-		em.executeUntil(new TimeStamp(1));
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1, time));
-		em.addActivity(new Clear(market, time));
-		em.executeUntil(new TimeStamp(1));
-		// Check market quote
-		Quote quote = market.getQuoteProcessor().getQuote();
-		assertEquals(new Price(50), quote.getAskPrice());
-		assertEquals(new Price(40), quote.getBidPrice());
-
-		// Check activities inserted (4 submit orders plus agent reentry)
-		Iterable<? extends Activity> acts = mm.agentStrategy(time);
-		assertEquals("Incorrect number of activities", 5, Iterables.size(acts));
-		for (Activity a : acts)	if (a instanceof SubmitOrder) a.execute(time);
-
-		// Check ladder of orders (use market's collection b/c ordering consistent)
-		ArrayList<Order> orders = new ArrayList<Order>(market.getOrders());
-		assertEquals("Incorrect number of orders", 6, orders.size());
-
-		assertEquals(agent1, orders.get(0).getAgent());
-		assertEquals(new Price(40), orders.get(0).getPrice());
-		assertEquals(agent2, orders.get(1).getAgent());
-		assertEquals(new Price(50), orders.get(1).getPrice());
-
-		assertEquals("Incorrect number of orders", 4, mm.activeOrders.size());
-
-		assertEquals(mm, orders.get(2).getAgent());
-		assertEquals(new Price(30), orders.get(2).getPrice());
-		assertEquals(OrderType.BUY, orders.get(2).getOrderType());
-		assertEquals(mm, orders.get(3).getAgent());
-		assertEquals(new Price(40), orders.get(3).getPrice());
-		assertEquals(OrderType.BUY, orders.get(3).getOrderType());
-
-		assertEquals(mm, orders.get(4).getAgent());
-		assertEquals(new Price(60), orders.get(4).getPrice());
-		assertEquals(OrderType.SELL, orders.get(4).getOrderType());
-		assertEquals(mm, orders.get(5).getAgent());
-		assertEquals(new Price(50), orders.get(5).getPrice());
-		assertEquals(OrderType.SELL, orders.get(5).getOrderType());
+				setupProperties(3, 5, false));
+		mm.stepSize = 5;
+		
+		Iterable<? extends Activity> acts = mm.submitOrderLadder(new Price(30), new Price(40), 
+				new Price(50), new Price(60), TimeStamp.ZERO);
+		for (Activity a : acts) a.execute(TimeStamp.ZERO);
+		assertEquals("Incorrect number of orders", 6, mm.activeOrders.size());
+		for (Order o : mm.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == SELL) 
+				assertTrue(price == 50 || price == 55 || price == 60);
+			else
+				assertTrue(price == 40 || price == 35 || price == 30);
+		}
 	}
 	
-	// TODO test submitOrderLadder only
-	
-	
-	// TODO test createOrderLadder as well
+	@Test
+	public void createOrderLadderTest() {
+		MarketMaker mm = new MockMarketMaker(fundamental, sip, market, 
+				setupProperties(2, 5, false));
+		mm.stepSize = 5;
+		
+		Iterable<? extends Activity> acts = mm.createOrderLadder(new Price(40),
+				new Price(50), TimeStamp.ZERO);
+		for (Activity a : acts) a.execute(TimeStamp.ZERO);
+		assertEquals("Incorrect number of orders", 4, mm.activeOrders.size());
+		for (Order o : mm.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == SELL) 
+				assertTrue(price == 50 || price == 55);
+			else
+				assertTrue(price == 40 || price == 35);
+		}
+	}
 	
 }

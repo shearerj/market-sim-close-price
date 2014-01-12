@@ -9,6 +9,7 @@ import iterators.ExpInterarrivals;
 import java.util.Iterator;
 import java.util.Random;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
@@ -45,6 +46,7 @@ public abstract class MarketMaker extends ReentryAgent {
 			Random rand, Iterator<TimeStamp> reentry, int tickSize, 
 			boolean noOp, int numRungs, int rungSize, boolean truncateLadder) {
 		super(TimeStamp.ZERO, fundamental, sip, market, rand, reentry, tickSize);
+		checkArgument(numRungs > 0, "Number of rungs must be positive!");
 		this.noOp = noOp;
 		this.numRungs = numRungs;
 		this.stepSize = MathUtils.quantize(rungSize, tickSize);
