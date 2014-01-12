@@ -2,6 +2,8 @@ package entity.agent;
 
 import java.util.Random;
 
+import systemmanager.Keys;
+import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
@@ -20,6 +22,15 @@ public class MockMarketMaker extends MarketMaker {
 			boolean truncateLadder) {
 		super(fundamental, sip, market, new Random(), 0, 1, noOp, 
 				numRungs, rungSize, truncateLadder);
+	}
+	
+	public MockMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
+			EntityProperties props) {
+		this(fundamental, sip, market, 
+				props.getAsBoolean(Keys.NO_OP, false),
+				props.getAsInt(Keys.NUM_RUNGS, 10),
+				props.getAsInt(Keys.RUNG_SIZE, 1000), 
+				props.getAsBoolean(Keys.TRUNCATE_LADDER, true));
 	}
 
 	@Override

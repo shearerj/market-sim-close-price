@@ -3,36 +3,40 @@ package entity.agent;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Random;
 
 import activity.Activity;
-import activity.WithdrawOrder;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import com.google.common.collect.EvictingQueue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
 import systemmanager.Keys;
 import data.EntityProperties;
 import data.FundamentalValue;
-import entity.infoproc.BestBidAsk;
 import entity.infoproc.SIP;
 import entity.market.Market;
-import entity.market.Order;
 import entity.market.Price;
 import entity.market.Quote;
 import event.TimeStamp;
 
+/**
+ * Computes either a linear weighted moving average or an exponential WMA.
+ * Linear is selected with a weight factor of 0.
+ * 
+ * @author ewah
+ *
+ */
 public class WMAMarketMaker extends MarketMaker {
 
 	private static final long serialVersionUID = -8566264088391504213L;
-	
-	private int histosize;
+
+	private int numElements;
 	private double weightFactor;	// for computing weighted MA
-	private Queue<Price> histobids;
-	private Queue<Price> histoasks;
-	
+	protected EvictingQueue<Price> bidQueue;
+	protected EvictingQueue<Price> askQueue;
+
 	protected WMAMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, double reentryRate, int tickSize, boolean noOp,
 			int numRungs, int rungSize, boolean truncateLadder, int windowLength, 
@@ -40,12 +44,15 @@ public class WMAMarketMaker extends MarketMaker {
 		super(fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
 				numRungs, rungSize, truncateLadder);
 
-		histosize = windowLength;
+		checkArgument(weightFactor > 0, "Weight factor must be positive!");
+		checkArgument(windowLength > 0, "Window length must be positive!");
+		
 		this.weightFactor = weightFactor;
-		histobids = new LinkedList<Price>(); // XXX change to Guava EvictingQueue
-		histoasks = new LinkedList<Price>();
+		numElements = windowLength; 
+		bidQueue = EvictingQueue.create(windowLength);
+		askQueue = EvictingQueue.create(windowLength);
 	}
-	
+
 	public WMAMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, EntityProperties props) {
 		this(fundamental, sip, market, rand,
@@ -56,18 +63,17 @@ public class WMAMarketMaker extends MarketMaker {
 				props.getAsInt(Keys.RUNG_SIZE, 1000), 
 				props.getAsBoolean(Keys.TRUNCATE_LADDER, true),
 				props.getAsInt(Keys.WINDOW_LENGTH, 5),
-				props.getAsDouble(Keys.WEIGHT_FACTOR, 0.9));
+				props.getAsDouble(Keys.WEIGHT_FACTOR, 0));
 	}
-	
+
 	@Override
 	public Iterable<Activity> agentStrategy(TimeStamp currentTime) {
 		if (noOp) return ImmutableList.of(); // no execution if no-op
-		
+
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));
-		
-		BestBidAsk lastNBBOQuote = sip.getNBBO();
 
+		lastNBBOQuote = sip.getNBBO();
 		Quote quote = marketQuoteProcessor.getQuote();
 		Price bid = quote.getBidPrice();
 		Price ask = quote.getAskPrice();
@@ -79,66 +85,61 @@ public class WMAMarketMaker extends MarketMaker {
 				|| (ask == null && lastAsk != null)
 				|| (ask != null && !ask.equals(lastAsk))
 				|| (ask != null && lastAsk == null)) {
-			this.withdrawAllOrders(currentTime);
+			acts.addAll(withdrawAllOrders(currentTime));	
 
 			if (!quote.isDefined()) {
 				log(INFO, this + " " + getName()
 						+ "::agentStrategy: undefined quote in market "
 						+ primaryMarket);
 			} else {
-				if (histobids.size() < histosize) {
-					histobids.add(bid);
-					histoasks.add(ask);
-					// XXX use all same bid/ask to slowly fill in / transition
-					
+				lastNBBOQuote = sip.getNBBO();
+				bid = marketQuoteProcessor.getQuote().getBidPrice();
+				ask = marketQuoteProcessor.getQuote().getAskPrice();
+
+				if (bidQueue.isEmpty()) {
+					// if queues are empty, fill in all with the same bid/ask
+					for (int i = 0; i < numElements; i++) {
+						bidQueue.add(bid);
+						askQueue.add(ask);
+					}
 				} else {
-					// get bid and ask price by averaging the 10 time stamp historical prices
-					int totalbids = 0;
-					int totalasks = 0;
-					int weight = 0;
-					//assume the prices in historical prices are loaded in time sequence
+					bidQueue.add(bid);
+					askQueue.add(ask);
+				}
+
+				// Compute weighted moving average
+				double sumBids = 0, sumAsks = 0;
+				double totalWeight = 0;
+				if (weightFactor == 0) {
+					// Linearly weighted moving average
 					int i = 0;
-					for (Price x : histobids) {
-						totalbids = totalbids + (++i)*x.intValue();
-						weight = weight+i;
+					for (Price x : bidQueue) {
+						sumBids += (++i) * x.intValue();
+						totalWeight += i;
 					}
 					i = 0;
-					for (Price y : histoasks){
-						totalasks = totalasks + (++i)*y.intValue();
+					for (Price y : askQueue) {
+						sumAsks += (++i) * y.intValue();
 					}
-					Price ladderbid = new Price(totalbids/weight);
-					Price ladderask = new Price(totalasks/weight);
-				
-					histobids.poll();
-					histoasks.poll();
-		
-					histobids.add(bid);
-					histoasks.add(ask);
-
-					int ct = (numRungs-1) * stepSize;
-
-					// min price for buy order in the ladder
-					Price buyMinPrice = new Price(ladderbid.intValue() - ct);
-					// max price for buy order in the ladder
-					Price buyMaxPrice = ladderbid;
-
-					// min price for sell order in the ladder
-					Price sellMinPrice = ladderask;
-					// max price for sell order in the ladder
-					Price sellMaxPrice = new Price(ladderask.intValue() + ct);
-					
-					// check if the bid or ask crosses the NBBO, if truncating ladder
-					if (truncateLadder) {
-						// buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N]
-						buyMaxPrice = pcomp.min(bid, lastNBBOQuote.getBestAsk());
-						// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
-						sellMinPrice = pcomp.max(ask, lastNBBOQuote.getBestBid());
+				} else {
+					// Exponential WMA
+					int i = 0;
+					for (Price x : bidQueue) {
+						double weight = weightFactor * Math.pow(1-weightFactor, i++);
+						sumBids += weight * x.intValue();
+						totalWeight += weight;
 					}
-					
-					// TODO if matches bid, then go one tick in				
-					acts.addAll(this.submitOrderLadder(buyMinPrice, buyMaxPrice, 
-							sellMinPrice, sellMaxPrice, currentTime));
+					i = 0;
+					for (Price y : askQueue) {
+						double weight = weightFactor * Math.pow(1-weightFactor, i++);
+						sumAsks += weight * y.intValue();
+					}
 				}
+				Price ladderBid = new Price(sumBids / totalWeight);
+				Price ladderAsk = new Price(sumAsks / totalWeight);
+
+				acts.addAll(this.createOrderLadder(ladderBid, ladderAsk, currentTime));
+
 			} // if quote defined
 		} else {
 			log(INFO, currentTime + " | " + primaryMarket + " " + this + " " + getName()
@@ -150,7 +151,7 @@ public class WMAMarketMaker extends MarketMaker {
 
 		return acts.build();
 	}
-	
+
 	@Override
 	public String toString() {
 		return "WMAMarketMaker " + super.toString();

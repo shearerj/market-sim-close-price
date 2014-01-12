@@ -12,7 +12,6 @@ import systemmanager.Keys;
 import activity.Activity;
 import data.EntityProperties;
 import data.FundamentalValue;
-import entity.infoproc.BestBidAsk;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
@@ -74,8 +73,7 @@ public class BasicMarketMaker extends MarketMaker {
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));
 
-		BestBidAsk lastNBBOQuote = sip.getNBBO();
-
+		lastNBBOQuote = sip.getNBBO();
 		Quote quote = marketQuoteProcessor.getQuote();
 		Price bid = quote.getBidPrice();
 		Price ask = quote.getAskPrice();
@@ -87,38 +85,18 @@ public class BasicMarketMaker extends MarketMaker {
 				|| (ask == null && lastAsk != null)
 				|| (ask != null && !ask.equals(lastAsk))
 				|| (ask != null && lastAsk == null)) {
-			this.withdrawAllOrders(currentTime);	
+			acts.addAll(withdrawAllOrders(currentTime));	
 
 			if (!quote.isDefined()) {
 				log(INFO, this + " " + getName()
 						+ "::agentStrategy: undefined quote in market "
 						+ primaryMarket);
 			} else {
-
-				int ct = (numRungs-1) * stepSize;
-
-				// min price for buy order in the ladder
-				Price buyMinPrice = new Price(bid.intValue() - ct);
-				// max price for buy order in the ladder
-				Price buyMaxPrice = bid;
-
-				// min price for sell order in the ladder
-				Price sellMinPrice = ask;
-				// max price for sell order in the ladder
-				Price sellMaxPrice = new Price(ask.intValue() + ct);
+				lastNBBOQuote = sip.getNBBO();
+				bid = marketQuoteProcessor.getQuote().getBidPrice();
+				ask = marketQuoteProcessor.getQuote().getAskPrice();
 				
-				// check if the bid or ask crosses the NBBO, if truncating ladder
-				if (truncateLadder) {
-					// buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N]
-					buyMaxPrice = pcomp.min(bid, lastNBBOQuote.getBestAsk());
-					// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
-					sellMinPrice = pcomp.max(ask, lastNBBOQuote.getBestBid());
-				}
-				
-				// TODO if matches bid, then go one tick in				
-				acts.addAll(this.submitOrderLadder(buyMinPrice, buyMaxPrice, 
-						sellMinPrice, sellMaxPrice, currentTime));
-
+				acts.addAll(this.createOrderLadder(bid, ask, currentTime));
 			}
 		} else {
 			log(INFO, currentTime + " | " + primaryMarket + " " + this + " " + getName()

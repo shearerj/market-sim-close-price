@@ -80,7 +80,7 @@ public class ZIRAgent extends BackgroundAgent {
 //		}
 
 		// withdraw previous order
-		this.withdrawAllOrders(currentTime);
+		acts.addAll(withdrawAllOrders(currentTime));
 		// 0.50% chance of being either long or short
 		acts.addAll(executeZIStrategy(rand.nextBoolean() ? BUY : SELL, 1, currentTime));
 

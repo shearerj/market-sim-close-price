@@ -406,6 +406,7 @@ public class BasicMarketMakerTest {
 	@Test
 	public void withdrawLadderTest() {
 		TimeStamp time = TimeStamp.ZERO;
+		TimeStamp time1 = new TimeStamp(1);
 
 		MarketMaker marketmaker = new BasicMarketMaker(fundamental, sip, market, 
 				new Random(), setupProperties(3, 5, true, 1));
@@ -424,31 +425,28 @@ public class BasicMarketMakerTest {
 		em.executeUntil(new TimeStamp(1));
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
 
-		// Withdraw other orders; bid/ask now null
+		// Withdraw other orders & submit new orders
 		agent1.withdrawAllOrders(time);
 		assertEquals(0, agent1.activeOrders.size());
 		agent2.withdrawAllOrders(time);
 		assertEquals(0, agent2.activeOrders.size());
-		// Quote not null yet, because of market maker's orders
-		// TODO test tick size changes on initial bid/ask submission (if inside by 1 tick)
-
-		// last bid is still market maker's just submitted bid/ask!
-		// Another MM strategy; should have no ladder now 
-		// FIXME - it will always have a bid/ask if the market maker is present
-		em.addActivity(new AgentStrategy(marketmaker, time));
-		em.executeUntil(new TimeStamp(1));
+		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(42), 1, time1));
+		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(49), 1, time1));
+		em.executeUntil(new TimeStamp(2));
+		
+		// Verify that it withdraws ladder entirely & submits new ladder
+		em.addActivity(new AgentStrategy(marketmaker, time1));
+		em.executeUntil(new TimeStamp(2));
 		assertNotNull(marketmaker.lastBid);
 		assertNotNull(marketmaker.lastAsk);
-		Quote quote = marketmaker.marketQuoteProcessor.getQuote();
-		assertNull(quote.getBidPrice());
-		assertNull(quote.getAskPrice());
-		assertEquals("Incorrect number of orders", 0, marketmaker.activeOrders.size());
-		// Check that quotes are correct (no bid, no ask)
-		Quote q = market.getQuoteProcessor().getQuote();
-		assertEquals("Incorrect ASK", null,  q.getAskPrice() );
-		assertEquals("Incorrect BID", null,  q.getBidPrice() );
-		assertEquals("Incorrect ASK quantity",  0,  q.getAskQuantity() );
-		assertEquals("Incorrect BID quantity",  0,  q.getBidQuantity() );
+		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
+		for (Order o : marketmaker.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == BUY) 
+				assertTrue(price == 42 || price == 37 || price == 32);
+			else
+				assertTrue(price == 49 || price == 54 || price == 59);
+		}
 	}
 
 	// TODO test tick size changes on initial bid/ask submission (if inside by 1 tick)

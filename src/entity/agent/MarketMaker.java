@@ -16,6 +16,7 @@ import utils.MathUtils;
 import activity.Activity;
 import activity.SubmitOrder;
 import data.FundamentalValue;
+import entity.infoproc.BestBidAsk;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
@@ -38,6 +39,7 @@ public abstract class MarketMaker extends ReentryAgent {
 	protected boolean noOp;	// true if no-op strategy (never executes strategy)
 	
 	protected Price lastAsk, lastBid; // stores the last ask/bid, respectively
+	protected BestBidAsk lastNBBOQuote;
 
 	public MarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, Iterator<TimeStamp> reentry, int tickSize, 
@@ -64,6 +66,9 @@ public abstract class MarketMaker extends ReentryAgent {
 	
 	/**
 	 * Method to create activities for submitting a ladder of orders.
+	 * 
+	 * XXX Note that these are regular orders, not NMS orders.
+	 * 
 	 * @param buyMinPrice
 	 * @param buyMaxPrice
 	 * @param sellMinPrice
@@ -92,6 +97,45 @@ public abstract class MarketMaker extends ReentryAgent {
 				+ ", " + buyMaxPrice + "] &" + " sells [" + sellMinPrice + ", "
 				+ sellMaxPrice + "]");
 		
+		return acts.build();
+	}
+	
+	/**
+	 * Given the prices (bid & ask) for the center of the ladder, compute the 
+	 * ladders prices and submit the order ladder.
+	 * 
+	 * @param ladderBid
+	 * @param ladderAsk
+	 * @param currentTime
+	 * @return
+	 */
+	public Iterable<? extends Activity> createOrderLadder(Price ladderBid, Price ladderAsk,
+			TimeStamp currentTime) {
+		Builder<Activity> acts = ImmutableList.<Activity> builder();
+		
+		int ct = (numRungs-1) * stepSize;
+
+		// min price for buy order in the ladder
+		Price buyMinPrice = new Price(ladderBid.intValue() - ct);
+		// max price for buy order in the ladder
+		Price buyMaxPrice = ladderBid;
+
+		// min price for sell order in the ladder
+		Price sellMinPrice = ladderAsk;
+		// max price for sell order in the ladder
+		Price sellMaxPrice = new Price(ladderAsk.intValue() + ct);
+		
+		// check if the bid or ask crosses the NBBO, if truncating ladder
+		if (truncateLadder) {
+			// buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N]
+			buyMaxPrice = pcomp.min(ladderBid, lastNBBOQuote.getBestAsk());
+			// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
+			sellMinPrice = pcomp.max(ladderAsk, lastNBBOQuote.getBestBid());
+		}
+		
+		// TODO if matches bid, then go one tick in				
+		acts.addAll(this.submitOrderLadder(buyMinPrice, buyMaxPrice, 
+				sellMinPrice, sellMaxPrice, currentTime));
 		return acts.build();
 	}
 }

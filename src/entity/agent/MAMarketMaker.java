@@ -1,5 +1,6 @@
 package entity.agent;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
@@ -14,7 +15,6 @@ import com.google.common.collect.ImmutableList.Builder;
 import systemmanager.Keys;
 import data.EntityProperties;
 import data.FundamentalValue;
-import entity.infoproc.BestBidAsk;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
@@ -35,6 +35,7 @@ public class MAMarketMaker extends MarketMaker {
 		super(fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
 				numRungs, rungSize, truncateLadder);
 
+		checkArgument(windowLength > 0, "Window length must be positive!");
 		numElements = windowLength;
 		bidQueue = EvictingQueue.create(windowLength);
 		askQueue = EvictingQueue.create(windowLength);
@@ -59,8 +60,7 @@ public class MAMarketMaker extends MarketMaker {
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));
 		
-		BestBidAsk lastNBBOQuote = sip.getNBBO();
-
+		lastNBBOQuote = sip.getNBBO();
 		Quote quote = marketQuoteProcessor.getQuote();
 		Price bid = quote.getBidPrice();
 		Price ask = quote.getAskPrice();
@@ -72,7 +72,7 @@ public class MAMarketMaker extends MarketMaker {
 				|| (ask == null && lastAsk != null)
 				|| (ask != null && !ask.equals(lastAsk))
 				|| (ask != null && lastAsk == null)) {
-			this.withdrawAllOrders(currentTime);
+			acts.addAll(withdrawAllOrders(currentTime));	
 
 			if (!quote.isDefined()) {
 				log(INFO, this + " " + getName()
@@ -80,53 +80,31 @@ public class MAMarketMaker extends MarketMaker {
 						+ primaryMarket);
 				// do nothing, wait until next re-entry
 			} else {
+				lastNBBOQuote = sip.getNBBO();
+				bid = marketQuoteProcessor.getQuote().getBidPrice();
+				ask = marketQuoteProcessor.getQuote().getAskPrice();
 				
-				if (bidQueue.isEmpty()) {
+				if (bidQueue.isEmpty() && askQueue.isEmpty()) {
 					// if queues are empty, fill in all with the same bid/ask
 					for (int i = 0; i < numElements; i++) {
 						bidQueue.add(bid);
 						askQueue.add(ask);
 					}
+				} else {
+					bidQueue.add(bid);
+					askQueue.add(ask);
 				}
-				bidQueue.add(bid);
-				askQueue.add(ask);
 				
 				// Compute moving average
 				double sumBids = 0;
 				for (Price x : bidQueue) sumBids += x.intValue();
+				Price ladderBid = new Price(sumBids / numElements);
 				
 				double sumAsks = 0;
 				for (Price y : askQueue) sumAsks += y.intValue();
-				
-				Price ladderBid = new Price(sumBids / numElements);
 				Price ladderAsk = new Price(sumAsks / numElements);
 
-				bidQueue.add(bid);
-				askQueue.add(ask);
-
-				int ct = (numRungs-1) * stepSize;
-
-				// min price for buy order in the ladder
-				Price buyMinPrice = new Price(ladderBid.intValue() - ct);
-				// max price for buy order in the ladder
-				Price buyMaxPrice = ladderBid;
-
-				// min price for sell order in the ladder
-				Price sellMinPrice = ladderAsk;
-				// max price for sell order in the ladder
-				Price sellMaxPrice = new Price(ladderAsk.intValue() + ct);
-
-				// check if the bid or ask crosses the NBBO, if truncating ladder
-				if (truncateLadder) {
-					// buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N]
-					buyMaxPrice = pcomp.min(bid, lastNBBOQuote.getBestAsk());
-					// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
-					sellMinPrice = pcomp.max(ask, lastNBBOQuote.getBestBid());
-				}
-
-				// TODO if matches bid, then go one tick in				
-				acts.addAll(this.submitOrderLadder(buyMinPrice, buyMaxPrice, 
-						sellMinPrice, sellMaxPrice, currentTime));
+				acts.addAll(this.createOrderLadder(ladderBid, ladderAsk, currentTime));
 
 			} // if quote defined
 		} else {
