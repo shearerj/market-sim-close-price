@@ -74,28 +74,7 @@ public class ZIPAgentTest {
 		// Creating the MockMarket
 		market = new MockMarket(sip);
 	}
-	
-	/**
-	 * Check margin updating
-	 */
-	private void checkMarginUpdate(OrderType type, Price lastPrice, 
-			Price lastTransPrice, double oldMargin, double newMargin) {
-		
-		// Asserting that margin updated correctly
-		if (type == BUY) {
-			if (lastTransPrice.lessThanEqual(lastPrice)) 
-				assertTrue(oldMargin >= newMargin); // raise margin (more negative)
-			else
-				assertTrue(oldMargin <= newMargin); // lower margin
-		}
-		if (type == SELL) {
-			if (lastTransPrice.greaterThanEqual(lastPrice))
-				assertTrue(oldMargin <= newMargin); // raise margin (more positive)
-			else
-				assertTrue(oldMargin >= newMargin); // lower margin
-		}
-	}
-	
+
 	
 	@Test
 	public void initialMarginTest() {
@@ -725,6 +704,31 @@ public class ZIPAgentTest {
 		assertFalse(agent.checkIncreaseMargin(lastTrans, time));
 
 	}
+	
+	
+	// Helper methods
+	
+	/**
+	 * Check margin updating
+	 */
+	private void checkMarginUpdate(OrderType type, Price lastPrice, 
+			Price lastTransPrice, double oldMargin, double newMargin) {
+		
+		// Asserting that margin updated correctly
+		if (type == BUY) {
+			if (lastTransPrice.lessThanEqual(lastPrice)) 
+				assertTrue(oldMargin >= newMargin); // raise margin (more negative)
+			else
+				assertTrue(oldMargin <= newMargin); // lower margin
+		}
+		if (type == SELL) {
+			if (lastTransPrice.greaterThanEqual(lastPrice))
+				assertTrue(oldMargin <= newMargin); // raise margin (more positive)
+			else
+				assertTrue(oldMargin >= newMargin); // lower margin
+		}
+	}
+	
 	
 	private void addOrder(OrderType type, int price, int quantity, int time) {
 		TimeStamp currentTime = new TimeStamp(time);

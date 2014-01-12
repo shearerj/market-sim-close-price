@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import systemmanager.Consts;
 import systemmanager.Keys;
+import utils.Rands;
 import activity.Activity;
 import activity.SubmitNMSOrder;
 
@@ -68,10 +69,12 @@ public class AAAgentTest {
 		agentProperties.put(Keys.HISTORICAL, 5);
 		agentProperties.put(Keys.ETA, 3);
 		agentProperties.put(Keys.LAMBDA_R, 0.05);
-		agentProperties.put(Keys.LAMBDA_A, 20);	// 0.02 in paper 
+		agentProperties.put(Keys.LAMBDA_A, 0.02);	// x ticks/$ for Eq 10/11 
 		agentProperties.put(Keys.GAMMA, 2);
 		agentProperties.put(Keys.BETA_R, 0.4); 
 		agentProperties.put(Keys.BETA_T, 0.4); 
+		
+		agentProperties.put(Keys.DEBUG, true);
 	}
 
 	@Before
@@ -80,30 +83,15 @@ public class AAAgentTest {
 		// Creating the MockMarket
 		market = new MockMarket(sip);
 	}
-
-	/**
-	 * Check aggression updating
-	 */
-	private void checkAggressionUpdate(OrderType type, Price lastTransactionPrice,
-			Price targetPrice, double oldAggression, double aggression) {
-
-		// Asserting that aggression updated correctly
-		if (type.equals(BUY)) {
-			if (lastTransactionPrice.compareTo(targetPrice) < 0) 
-				assertTrue(oldAggression >= aggression); // less aggressive
-			else
-				assertTrue(oldAggression <= aggression); // more aggressive
-		} else {
-			if (lastTransactionPrice.compareTo(targetPrice) > 0)
-				assertTrue(oldAggression >= aggression); // less aggressive
-			else
-				assertTrue(oldAggression <= aggression); // more aggressive
-		}
-	}
 	
 	// TODO testing of effects of varying parameters
 	
 	// TODO test each individual method as well
+	
+	// TODO test target price
+	
+	// TODO test moving average
+	
 	
 	@Test
 	public void initialBuyer() {
@@ -507,18 +495,158 @@ public class AAAgentTest {
 		assertCorrectBid(agent, 100000, 150000, 1);
 	}
 	
-//	@Test
-	// TODO
+	/**
+	 * Test short-term learning (EQ 7)
+	 */
+	@Test
 	public void updateAggressionBuyer() {
-		AAAgent agent = addAgent(BUY);
+		Logger.log(Logger.Level.DEBUG, "\nTesting aggression update (buyer)");
 		
-		// need to have it update first, then get the old aggression and check the various cases
+		// Adding Bids and Transactions
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 10);
+		addTransaction(105000, 1, 20);
+		addTransaction(100000, 1, 35);
+		addTransaction(95000, 1, 40);
+		
+		// Setting up the agent
+		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(Keys.THETA, -3);
+		AAAgent agent = addAgent(BUY, testProps);
+		double oldAggression = 0.5;
+		agent.setAggression(oldAggression);
+		executeAgentStrategy(agent, 100);
 		
 		checkAggressionUpdate(BUY, agent.lastTransactionPrice, agent.targetPrice,
-				agent.aggression, 0.0);
+				oldAggression, agent.aggression);
 	}
 	
+	/**
+	 * Test short-term learning (EQ 7)
+	 * Note that the value of theta affects whether or not this test will pass
+	 * (e.g. -3 causes a NaN in computeRShout)
+	 */
+	@Test
+	public void updateAggressionSeller() {
+		Logger.log(Logger.Level.DEBUG, "\nTesting aggression update (seller)");
+		
+		// Adding Bids and Transactions
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 10);
+		addTransaction(105000, 1, 20);
+		addTransaction(100000, 1, 25);
+		addTransaction(110000, 1, 30);
+		addTransaction(100000, 1, 35);
+		addTransaction(95000, 1, 40);
+		
+		// Setting up the agent
+		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(Keys.THETA, 2);
+		AAAgent agent = addAgent(SELL, testProps);
+		double oldAggression = 0.2;
+		agent.setAggression(oldAggression);
+		executeAgentStrategy(agent, 100);
+		
+		checkAggressionUpdate(SELL, agent.lastTransactionPrice, agent.targetPrice,
+				oldAggression, agent.aggression);
+	}
+	
+	/**
+	 * Note that for extramarginal buyer, must have last transaction price less
+	 * than the limit otherwise rShout gets set to 0.
+	 */
+	@Test
+	public void randomizedUpdateAggressionBuyer() {
+		Logger.log(Logger.Level.DEBUG, "\nTesting aggression update (buyer)");
+		
+		// Adding Bids and Transactions
+		addOrder(BUY, (int) Rands.nextUniform(rand, 25000, 75000), 1, 10);
+		addOrder(SELL, (int) Rands.nextUniform(rand, 125000, 175000), 1, 10);
+		addTransaction((int) Rands.nextUniform(rand, 100000, 110000), 1, 20);
+		addTransaction((int) Rands.nextUniform(rand, 50000, 150000), 1, 25);
+		addTransaction((int) Rands.nextUniform(rand, 100000, 120000), 1, 30);
+		addTransaction((int) Rands.nextUniform(rand, 750000, 150000), 1, 35);
+		addTransaction((int) Rands.nextUniform(rand, 80000, 100000), 1, 40);
+
+		// Setting up the agent
+		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(Keys.THETA, -2);
+		testProps.put(Keys.PRIVATE_VALUE_VAR, 5E7);
+		AAAgent agent = addAgent(BUY, testProps);
+		double oldAggression = 0.5;
+		agent.setAggression(oldAggression);
+		executeAgentStrategy(agent, 100);
+
+		checkAggressionUpdate(BUY, agent.lastTransactionPrice, agent.targetPrice,
+				oldAggression, agent.aggression);
+	}
+
+	/**
+	 * For intramarginal seller, want limit price less than equilibrium,
+	 * otherwise rShout clipped at 0.
+	 */
+	@Test
+	public void randomizedUpdateAggressionSeller() {
+		Logger.log(Logger.Level.DEBUG, "\nTesting aggression update (seller)");
+		
+		// Adding Bids and Transactions
+		addOrder(BUY, (int) Rands.nextUniform(rand, 25000, 75000), 1, 10);
+		addOrder(SELL, (int) Rands.nextUniform(rand, 125000, 175000), 1, 10);
+		addTransaction((int) Rands.nextUniform(rand, 100000, 110000), 1, 20);
+		addTransaction((int) Rands.nextUniform(rand, 500000, 150000), 1, 25);
+		addTransaction((int) Rands.nextUniform(rand, 500000, 120000), 1, 30);
+		addTransaction((int) Rands.nextUniform(rand, 100000, 150000), 1, 35);
+		addTransaction((int) Rands.nextUniform(rand, 100000, 110000), 1, 40);
+
+		// Setting up the agent
+		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(Keys.THETA, -3);
+		testProps.put(Keys.PRIVATE_VALUE_VAR, 5E7);
+		AAAgent agent = addAgent(SELL, testProps);
+		double oldAggression = 0.2;
+		agent.setAggression(oldAggression);
+		executeAgentStrategy(agent, 100);
+
+		checkAggressionUpdate(SELL, agent.lastTransactionPrice, agent.targetPrice,
+				oldAggression, agent.aggression);
+	}
+	
+	@Test
+	public void extraTest() {
+		for (int i = 0; i < 100; i++) {
+			setupTest();
+			randomizedUpdateAggressionBuyer();
+			setupTest();
+			randomizedUpdateAggressionSeller();
+		}
+	}
+
+	
 	// Helper methods
+	
+	/**
+	 * Check aggression updating
+	 */
+	private void checkAggressionUpdate(OrderType type, Price lastTransactionPrice,
+			Price targetPrice, double oldAggression, double aggression) {
+
+		// Asserting that aggression updated correctly
+		if (type.equals(BUY)) {
+			if (lastTransactionPrice.compareTo(targetPrice) < 0) 
+				assertTrue("r_old " + oldAggression + " less than " + aggression,
+						oldAggression >= aggression); // less aggressive
+			else
+				assertTrue("r_old " + oldAggression + " greater than " + aggression,
+						oldAggression <= aggression); // more aggressive
+		} else {
+			if (lastTransactionPrice.compareTo(targetPrice) > 0)
+				assertTrue("r_old " + oldAggression + " less than " + aggression,
+						oldAggression >= aggression); // less aggressive
+			else
+				assertTrue("r_old " + oldAggression + " greater than " + aggression,
+						oldAggression <= aggression); // more aggressive
+		}
+	}
 	
 	private void executeImmediateActivities(Iterable<? extends Activity> acts, TimeStamp time) {
 		// FIXME Change this to use EventManager

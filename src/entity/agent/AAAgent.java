@@ -53,6 +53,7 @@ public class AAAgent extends WindowAgent {
 	protected Price equilibriumPrice;
 	protected Price targetPrice; 
 	protected int numTransactionsUsed;	// used in moving avg computation
+	private boolean debug;
 	
 	//Agent strategy variables
 	// Based on Vytelingum's sensitivity analysis, eta and N are most important
@@ -80,7 +81,7 @@ public class AAAgent extends WindowAgent {
 			int tickSize, int maxAbsPosition, int bidRangeMin, int bidRangeMax,
 			boolean withdrawOrders, int windowLength, double aggression, 
 			double theta, double thetaMin, double thetaMax, int historical, 
-			int eta, double lambdaR, int lambdaA, double gamma, double betaR, 
+			int eta, double lambdaR, double lambdaA, double gamma, double betaR, 
 			double betaT, boolean buyerStatus) {
 		super(arrivalTime, fundamental, sip, market, rand, reentryRate, 
 				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize, 
@@ -137,11 +138,13 @@ public class AAAgent extends WindowAgent {
 				props.getAsInt(Keys.HISTORICAL, 5), 
 				props.getAsInt(Keys.ETA, 3),
 				props.getAsDouble(Keys.LAMBDA_R, 0.05),
-				props.getAsInt(Keys.LAMBDA_A, 20),	// 0.02 in paper 
+				props.getAsDouble(Keys.LAMBDA_A, 0.02),	// 0.02 in paper 
 				props.getAsDouble(Keys.GAMMA, 2),
 				props.getAsDouble(Keys.BETA_R, Rands.nextUniform(rand, 0.2, 0.6)), 
 				props.getAsDouble(Keys.BETA_T, Rands.nextUniform(rand, 0.2, 0.6)), 
 				props.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean()));
+		
+		debug = props.getAsBoolean(Keys.DEBUG, false);
 	}
 
 	@Override
@@ -160,8 +163,9 @@ public class AAAgent extends WindowAgent {
 		equilibriumPrice = null;
 		targetPrice = null;
 		numTransactionsUsed = 0;
+		if (!debug) type = rand.nextBoolean() ? BUY : SELL;
 		
-		// update aggression
+		// Update aggression
 		aggression = aggressions.getValue(positionBalance, type);
 
 		// Updating Price Limit (valuation of security)
@@ -198,10 +202,6 @@ public class AAAgent extends WindowAgent {
 
 		// Bidding Layer
 		acts.addAll(this.biddingLayer(limitPrice, targetPrice, 1, currentTime));
-		
-		// for next reentry (makes it easier to test)
-		type = rand.nextBoolean() ? BUY : SELL;
-		
 		return acts.build();
 	}
 	
@@ -346,13 +346,15 @@ public class AAAgent extends WindowAgent {
 		if (targetPrice == null) {
 			// first arrival, where target price undetermined
 			if (type.equals(BUY)) {
-				Price askCeil = new Price((1 + lambdaR) * ask.intValue() + lambdaA);
+				Price askCeil = new Price((1 + lambdaR) * ask.intValue() 
+									+ lambdaA * Price.TICKS_PER_DOLLAR);
 				Price offset = new Price( (pcomp.min(askCeil, limitPrice).intValue() - bid.intValue()) 
 									* (1.0/eta));
 				orderPrice = new Price(bid.intValue() + offset.intValue());
 				orderPrice = pcomp.min(orderPrice, limitPrice);
 			} else {
-				Price bidFloor = new Price((1 - lambdaR) * bid.intValue() - lambdaA);
+				Price bidFloor = new Price((1 - lambdaR) * bid.intValue() 
+									- lambdaA * Price.TICKS_PER_DOLLAR);
 				Price offset = new Price( (ask.intValue() - pcomp.max(bidFloor, limitPrice).intValue()) 
 									* (1.0/eta));
 				orderPrice = new Price(ask.intValue() - offset.intValue());
@@ -531,9 +533,9 @@ public class AAAgent extends WindowAgent {
 				}
 			}
 		}
-		if (rShout == Double.NaN 
-				|| rShout == Double.NEGATIVE_INFINITY
-				|| rShout == Double.POSITIVE_INFINITY)
+		if ((new Double(rShout)).equals(Double.NaN)
+				|| (new Double(rShout)).equals(Double.NEGATIVE_INFINITY)
+				|| (new Double(rShout)).equals(Double.POSITIVE_INFINITY))
 			return 0;
 		return rShout;
 	}
