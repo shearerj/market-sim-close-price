@@ -19,7 +19,7 @@ fi
 
 # Builder
 echo ">> Building..."
-ant -f "$LOC"
+ant -f "$LOC/build.xml"
 echo ">> Building... done"
 
 # Change to $LOC to run java, necessary for environment properties loading
