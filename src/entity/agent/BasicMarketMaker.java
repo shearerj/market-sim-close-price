@@ -19,7 +19,7 @@ import entity.market.Quote;
 import event.TimeStamp;
 
 /**
- * BasicMarketMaker
+ * BASICMARKETMAKER
  * 
  * Basic market maker. See description in (Chakraborty & Kearns, 2011).
  * Participates in only a single market at a time. Submits a ladder of bids

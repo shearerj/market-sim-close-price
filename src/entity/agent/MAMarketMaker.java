@@ -21,11 +21,17 @@ import entity.market.Price;
 import entity.market.Quote;
 import event.TimeStamp;
 
+/**
+ * MAMARKETMAKER
+ * 
+ * Moving Average Market Maker
+ * 
+ * @author zzy, ewah
+ */
 public class MAMarketMaker extends MarketMaker {
 
 	private static final long serialVersionUID = -4766539518925397355L;
 	
-	protected int numElements;					// number of prices to average
 	protected EvictingQueue<Price> bidQueue;
 	protected EvictingQueue<Price> askQueue;
 	
@@ -36,7 +42,6 @@ public class MAMarketMaker extends MarketMaker {
 				numRungs, rungSize, truncateLadder);
 
 		checkArgument(windowLength > 0, "Window length must be positive!");
-		numElements = windowLength;
 		bidQueue = EvictingQueue.create(windowLength);
 		askQueue = EvictingQueue.create(windowLength);
 	}
@@ -84,25 +89,17 @@ public class MAMarketMaker extends MarketMaker {
 				bid = marketQuoteProcessor.getQuote().getBidPrice();
 				ask = marketQuoteProcessor.getQuote().getAskPrice();
 				
-				if (bidQueue.isEmpty() && askQueue.isEmpty()) {
-					// if queues are empty, fill in all with the same bid/ask
-					for (int i = 0; i < numElements; i++) {
-						bidQueue.add(bid);
-						askQueue.add(ask);
-					}
-				} else {
-					bidQueue.add(bid);
-					askQueue.add(ask);
-				}
+				bidQueue.add(bid);
+				askQueue.add(ask);
 				
 				// Compute moving average
 				double sumBids = 0;
 				for (Price x : bidQueue) sumBids += x.intValue();
-				Price ladderBid = new Price(sumBids / numElements);
+				Price ladderBid = new Price(sumBids / bidQueue.size());
 				
 				double sumAsks = 0;
 				for (Price y : askQueue) sumAsks += y.intValue();
-				Price ladderAsk = new Price(sumAsks / numElements);
+				Price ladderAsk = new Price(sumAsks / askQueue.size());
 
 				acts.addAll(this.createOrderLadder(ladderBid, ladderAsk, currentTime));
 

@@ -173,11 +173,11 @@ public class MAMarketMakerTest {
 		assertEquals(new Price(50), mm.bidQueue.peek());
 		assertEquals(new Price(60), mm.askQueue.peek());
 		ArrayList<Price> list = new ArrayList<Price>(mm.bidQueue);
-		int [] bids = {50, 50, 52};
+		int [] bids = {50, 52};
 		int i = 0;
 		for (Price p : list) assertEquals(bids[i++], p.intValue());
 		list = new ArrayList<Price>(mm.askQueue);
-		int [] asks = {60, 60, 64};
+		int [] asks = {60, 64};
 		i = 0;
 		for (Price p : list) assertEquals(asks[i++], p.intValue());
 		
@@ -251,6 +251,56 @@ public class MAMarketMakerTest {
 		assertEquals(OrderType.SELL, orders.get(5).getOrderType());
 	}
 
+	
+	/**
+	 * When bid/ask queues are not full yet, test the computation of the
+	 * moving average
+	 */
+	@Test
+	public void partialQueueLadderTest() {
+		TimeStamp time = TimeStamp.ZERO;
+
+		MAMarketMaker mm = new MAMarketMaker(fundamental, sip, market, 
+				new Random(), setupProperties(1, 10, false, 1, 5));
+
+		QuoteProcessor qp = mm.marketQuoteProcessor;
+
+		// Add quotes & execute agent strategy in between (without actually submitting orders)
+		int mktTime = 0;
+		addQuote(qp, 50, 60, 0, mktTime++);
+		mm.agentStrategy(time);
+		addQuote(qp, 52, 64, 0, mktTime++);
+		mm.agentStrategy(time);
+		addQuote(qp, 54, 68, 0, mktTime++);
+		Iterable<? extends Activity> acts = mm.agentStrategy(time);
+
+		assertEquals(new Price(54), mm.lastBid);
+		assertEquals(new Price(68), mm.lastAsk);
+		for (Activity a : acts)	if (a instanceof SubmitOrder) a.execute(time);
+
+		// check queues
+		assertEquals(new Price(50), mm.bidQueue.peek());
+		assertEquals(new Price(60), mm.askQueue.peek());
+		ArrayList<Price> list = new ArrayList<Price>(mm.bidQueue);
+		int [] bids = {50, 52, 54};
+		int i = 0;
+		for (Price p : list) assertEquals(bids[i++], p.intValue());
+		list = new ArrayList<Price>(mm.askQueue);
+		int [] asks = {60, 64, 68};
+		i = 0;
+		for (Price p : list) assertEquals(asks[i++], p.intValue());
+
+		// check submitted orders
+		assertEquals("Incorrect number of orders", 2, mm.activeOrders.size());
+		for (Order o : mm.activeOrders) {
+			if (o.getOrderType() == BUY) {
+				assertEquals(new Price(52), o.getPrice());
+			} else {
+				assertEquals(new Price(64), o.getPrice());
+			}
+		}
+	}
+	
 
 	/**
 	 * Check changing numRungs, rungSize

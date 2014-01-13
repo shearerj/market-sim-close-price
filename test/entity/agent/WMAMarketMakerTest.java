@@ -147,7 +147,7 @@ public class WMAMarketMakerTest {
 	}
 	
 	@Test
-	public void computedExpWeightedMovingAverage() {
+	public void computeExpWeightedMovingAverage() {
 		TimeStamp time = TimeStamp.ZERO;
 
 		double factor = 0.5;
@@ -178,20 +178,20 @@ public class WMAMarketMakerTest {
 		assertEquals(new Price(60), mm.askQueue.peek());
 		ArrayList<Price> list = new ArrayList<Price>(mm.bidQueue);
 		int [] bids = {50, 52, 54, 56, 58};
-		int i = 0;
+		int i = 5;
 		double sumBids = 0, sumAsks = 0, totalWeight = 0;
 		for (Price p : list) {
-			assertEquals(bids[i], p.intValue());
-			double weight = factor * Math.pow(factor,i++);
+			assertEquals(bids[5-i], p.intValue());
+			double weight = factor * Math.pow(factor,--i);
 			sumBids += weight * p.intValue();
 			totalWeight += weight;
 		}
 		list = new ArrayList<Price>(mm.askQueue);
 		int [] asks = {60, 64, 68, 72, 76};
-		i = 0;
+		i = 5;
 		for (Price p : list) {
-			assertEquals(asks[i], p.intValue());
-			double weight = factor * Math.pow(factor,i++);
+			assertEquals(asks[5-i], p.intValue());
+			double weight = factor * Math.pow(factor,--i);
 			sumAsks += weight * p.intValue();
 		}
 		
@@ -216,7 +216,7 @@ public class WMAMarketMakerTest {
 	
 
 	/**
-	 * Verify that bids/asks are being evicted correctly TODO
+	 * Verify that bids/asks are being evicted correctly
 	 */
 	@Test
 	public void evictingQueueTest() {
@@ -244,11 +244,11 @@ public class WMAMarketMakerTest {
 		assertEquals(new Price(50), mm.bidQueue.peek());
 		assertEquals(new Price(60), mm.askQueue.peek());
 		ArrayList<Price> list = new ArrayList<Price>(mm.bidQueue);
-		int [] bids = {50, 50, 52};
+		int [] bids = {50, 52};
 		int i = 0;
 		for (Price p : list) assertEquals(bids[i++], p.intValue());
 		list = new ArrayList<Price>(mm.askQueue);
-		int [] asks = {60, 60, 64};
+		int [] asks = {60, 64};
 		i = 0;
 		for (Price p : list) assertEquals(asks[i++], p.intValue());
 		
@@ -320,6 +320,53 @@ public class WMAMarketMakerTest {
 		assertEquals(mm, orders.get(5).getAgent());
 		assertEquals(new Price(50), orders.get(5).getPrice());
 		assertEquals(OrderType.SELL, orders.get(5).getOrderType());
+	}
+
+	/**
+	 * When bid/ask queues are not full yet, test the computation of the
+	 * moving average
+	 */
+	@Test
+	public void partialQueueLadderTest() {
+		TimeStamp time = TimeStamp.ZERO;
+
+		WMAMarketMaker mm = new WMAMarketMaker(fundamental, sip, market, 
+				new Random(), setupProperties(1, 10, false, 1, 5, 0.9));
+
+		QuoteProcessor qp = mm.marketQuoteProcessor;
+
+		// Add quotes & execute agent strategy in between (without actually submitting orders)
+		int mktTime = 0;
+		addQuote(qp, 50000, 60000, 0, mktTime++);
+		mm.agentStrategy(time);
+		addQuote(qp, 52000, 64000, 0, mktTime++);
+		Iterable<? extends Activity> acts = mm.agentStrategy(time);
+
+		assertEquals(new Price(52000), mm.lastBid);
+		assertEquals(new Price(64000), mm.lastAsk);
+		for (Activity a : acts)	if (a instanceof SubmitOrder) a.execute(time);
+
+		// check queues
+		assertEquals(new Price(50000), mm.bidQueue.peek());
+		assertEquals(new Price(60000), mm.askQueue.peek());
+		ArrayList<Price> list = new ArrayList<Price>(mm.bidQueue);
+		int [] bids = {50000, 52000};
+		int i = 0;
+		for (Price p : list) assertEquals(bids[i++], p.intValue());
+		list = new ArrayList<Price>(mm.askQueue);
+		int [] asks = {60000, 64000};
+		i = 0;
+		for (Price p : list) assertEquals(asks[i++], p.intValue());
+
+		// check submitted orders
+		assertEquals("Incorrect number of orders", 2, mm.activeOrders.size());
+		for (Order o : mm.activeOrders) {
+			if (o.getOrderType() == BUY) {
+				assertEquals(new Price(51818), o.getPrice());
+			} else {
+				assertEquals(new Price(63636), o.getPrice());
+			}
+		}
 	}
 	
 	/**

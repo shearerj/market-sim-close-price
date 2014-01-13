@@ -22,17 +22,33 @@ import entity.market.Quote;
 import event.TimeStamp;
 
 /**
+ * WMAMARKETMAKER
+ * 
+ * Weighted Moving Average Market Maker
+ * 
  * Computes either a linear weighted moving average or an exponential WMA.
  * Linear is selected with a weight factor of 0.
  * 
- * @author ewah
+ * The computation of the exponential weighted moving average is parameterized
+ * by a weight factor w in range (0,1). The weight of a general data point with 
+ * lag i is, before normalization:
+ * 
+ * 		w * ( 1-w )^i
+ * 
+ * A weight factor of 0 reverts the weighting to a linear weighted moving
+ * average, which is computed with weight for a data point with lag i:
+ * 
+ * 		T-i
+ * 
+ * where T is the total number of elements being averaged.
+ * 
+ * @author zzy, ewah
  *
  */
 public class WMAMarketMaker extends MarketMaker {
 
 	private static final long serialVersionUID = -8566264088391504213L;
 
-	private int numElements;
 	private double weightFactor;	// for computing weighted MA
 	protected EvictingQueue<Price> bidQueue;
 	protected EvictingQueue<Price> askQueue;
@@ -44,11 +60,11 @@ public class WMAMarketMaker extends MarketMaker {
 		super(fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
 				numRungs, rungSize, truncateLadder);
 
-		checkArgument(weightFactor >= 0, "Weight factor must be nonnegative!");
+		checkArgument(weightFactor >= 0 && weightFactor < 1, 
+				"Weight factor must be in range (0,1)!");
 		checkArgument(windowLength > 0, "Window length must be positive!");
 		
 		this.weightFactor = weightFactor;
-		numElements = windowLength; 
 		bidQueue = EvictingQueue.create(windowLength);
 		askQueue = EvictingQueue.create(windowLength);
 	}
@@ -96,16 +112,8 @@ public class WMAMarketMaker extends MarketMaker {
 				bid = marketQuoteProcessor.getQuote().getBidPrice();
 				ask = marketQuoteProcessor.getQuote().getAskPrice();
 
-				if (bidQueue.isEmpty()) {
-					// if queues are empty, fill in all with the same bid/ask
-					for (int i = 0; i < numElements; i++) {
-						bidQueue.add(bid);
-						askQueue.add(ask);
-					}
-				} else {
-					bidQueue.add(bid);
-					askQueue.add(ask);
-				}
+				bidQueue.add(bid);
+				askQueue.add(ask);
 
 				// Compute weighted moving average
 				double sumBids = 0, sumAsks = 0;
@@ -123,15 +131,15 @@ public class WMAMarketMaker extends MarketMaker {
 					}
 				} else {
 					// Exponential WMA
-					int i = 0;
+					int i = bidQueue.size()-1;
 					for (Price x : bidQueue) {
-						double weight = weightFactor * Math.pow(1-weightFactor, i++);
+						double weight = weightFactor * Math.pow(1-weightFactor, i--);
 						sumBids += weight * x.intValue();
 						totalWeight += weight;
 					}
-					i = 0;
+					i = askQueue.size()-1;
 					for (Price y : askQueue) {
-						double weight = weightFactor * Math.pow(1-weightFactor, i++);
+						double weight = weightFactor * Math.pow(1-weightFactor, i--);
 						sumAsks += weight * y.intValue();
 					}
 				}

@@ -36,6 +36,7 @@ abstract class AbstractQuoteProcessor extends Entity implements QuoteProcessor {
 
 	private static final long serialVersionUID = 4487935082860406953L;
 
+	// TODO better way to handle immediate execution
 	@Override
 	public Iterable<? extends Activity> sendToQuoteProcessor(Market market, 
 			MarketTime quoteTime, Quote quote, TimeStamp currentTime) {
