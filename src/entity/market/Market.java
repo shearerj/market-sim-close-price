@@ -262,7 +262,7 @@ public abstract class Market extends Entity {
 		Builder<Activity> acts = ImmutableList.builder();
 		if (!transactions.isEmpty())
 			for (TransactionProcessor tp : tps)
-				acts.addAll(updateTransactionProcessor(tp, transactions));
+				acts.addAll(updateTransactionProcessor(tp, currentTime, transactions));
 		acts.addAll(updateQuote(currentTime));
 		return acts.build();
 	}
@@ -272,19 +272,19 @@ public abstract class Market extends Entity {
 	 * If TransactionProcessor tp latency is IMMEDIATE, then it directly executes it
 	 * as opposed to inserting it as an activity.
 	 * 
+	 * TODO find a better way than this check
+	 * 
 	 * @param tp
 	 * @param transactions
 	 * @return
 	 */
-	protected Iterable<? extends Activity> updateTransactionProcessor(TransactionProcessor tp,
+	protected Iterable<? extends Activity> updateTransactionProcessor(
+			TransactionProcessor tp, TimeStamp currentTime,
 			List<Transaction> transactions) {
-		if (tp.getLatency().equals(TimeStamp.IMMEDIATE)) {
-			return ImmutableList.<Activity> builder().addAll(
-					tp.sendToTransactionProcessor(this, transactions, TimeStamp.IMMEDIATE)).build();
-		}
-		// otherwise insert as activity
-		return ImmutableList.<Activity> builder().add(
-				new SendToTP(this, transactions, tp, TimeStamp.IMMEDIATE)).build();
+		if (tp.getLatency().equals(TimeStamp.IMMEDIATE))
+			return tp.sendToTransactionProcessor(this, transactions, currentTime);
+		else // otherwise insert as activity
+			return ImmutableList.of(new SendToTP(this, transactions, tp, TimeStamp.IMMEDIATE));
 	}
 
 	/**
@@ -341,6 +341,8 @@ public abstract class Market extends Entity {
 	 * Note that this is necessary to ensure quotes are updated immediately
 	 * after an order is withdrawn.
 	 * 
+	 * TODO: Ideally this would instead be done by "immediately" executing activities.
+	 * 
 	 * @param qp
 	 * @param quoteTime
 	 * @param quote
@@ -349,13 +351,10 @@ public abstract class Market extends Entity {
 	protected Iterable<? extends Activity> updateQuoteProcessor(QuoteProcessor qp,
 			MarketTime quoteTime, Quote quote) {
 		
-		if (qp.getLatency().equals(TimeStamp.IMMEDIATE)) {
-			return ImmutableList.<Activity> builder().addAll(
-					qp.sendToQuoteProcessor(this, quoteTime, quote, TimeStamp.IMMEDIATE)).build();
-		}
-		// otherwise insert as activity
-		return ImmutableList.<Activity> builder().add(
-				new SendToQP(this, quoteTime, quote, qp, TimeStamp.IMMEDIATE)).build();
+		if (qp.getLatency().equals(TimeStamp.IMMEDIATE))
+			return qp.sendToQuoteProcessor(this, quoteTime, quote, quoteTime);
+		else // otherwise insert as activity
+			return ImmutableList.of(new SendToQP(this, quoteTime, quote, qp, TimeStamp.IMMEDIATE));
 	}
 	
 	

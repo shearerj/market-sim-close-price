@@ -585,7 +585,7 @@ public class MarketTest {
 		assertEquals("Incorrect buyer", agent2, trans.get(0).getSeller());
 
 		// Update TP
-		Iterable<? extends Activity> acts = market.updateTransactionProcessor(tp, new ArrayList<Transaction>(trans));
+		Iterable<? extends Activity> acts = market.updateTransactionProcessor(tp, time, new ArrayList<Transaction>(trans));
 		assertEquals(0, Iterables.size(acts));
 		// Verify that transactions have updated
 		trans = tp.getTransactions();
@@ -616,7 +616,7 @@ public class MarketTest {
 		assertEquals(0, tp.getTransactions().size());
 
 		// Update TP
-		Iterable<? extends Activity> acts = market.updateTransactionProcessor(tp, trans);
+		Iterable<? extends Activity> acts = market.updateTransactionProcessor(tp, time, trans);
 		assertEquals(1, Iterables.size(acts));
 		assertTrue(Iterables.getOnlyElement(acts) instanceof SendToTP);
 		

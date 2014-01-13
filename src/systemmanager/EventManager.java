@@ -54,6 +54,13 @@ public class EventManager {
 		while (!isEmpty() && eventQueue.peek().getTime().before(time))
 			executeNext();
 	}
+	
+	/**
+	 * Executes next immediate activities
+	 */
+	public void executeImmediate() {
+		executeUntil(TimeStamp.ZERO);
+	}
 
 	/**
 	 * Executes next activity at head of Q. Removes from Q only when execution

@@ -3,6 +3,7 @@ package data;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
+import static systemmanager.Executer.executeImmediate;
 
 import java.io.File;
 import java.util.Arrays;
@@ -117,21 +118,31 @@ public class ObservationsTest {
 	@Test
 	public void nbboSpreadsTest() {
 		setupObservations();
-		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, TimeStamp.ZERO);
-		sip.processQuote(market1, new DummyMarketTime(TimeStamp.ZERO, 1), q1, TimeStamp.ZERO);
+		Quote q = new Quote(market1, new Price(80), 1, new Price(100), 1, TimeStamp.ZERO);
+		sip.processQuote(market1, new DummyMarketTime(TimeStamp.ZERO, -2), q, TimeStamp.ZERO);
 		
 		// Check that correct spread stored
 		List<Double> list = obs.nbboSpreads.sample(1, 1);
-		assertEquals(20, list.get(0), 0.001);
 		assertEquals(1, list.size());
+		assertEquals(20, list.get(0), 0.001);
 		
-		Quote q2 = new Quote(market2, new Price(70), 1, new Price(90), 1, TimeStamp.ZERO);
-		sip.processQuote(market2, new DummyMarketTime(TimeStamp.ZERO, 2), q2, TimeStamp.ZERO);
+		q = new Quote(market2, new Price(70), 1, new Price(90), 1, TimeStamp.ZERO);
+		sip.processQuote(market2, new DummyMarketTime(TimeStamp.ZERO, -1), q, TimeStamp.ZERO);
 		
 		// Check that new quote overwrites the previously stored spread at time 0
 		list = obs.nbboSpreads.sample(1, 1);
-		assertEquals(10, list.get(0), 0.001);
 		assertEquals(1, list.size());
+		assertEquals(10, list.get(0), 0.001);
+		
+		// Test with actual agents
+		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
+		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+		
+		executeImmediate(market1.submitOrder(agent1, BUY, new Price(80), 1, TimeStamp.ZERO));
+		executeImmediate(market2.submitOrder(agent2, SELL, new Price(100), 1, TimeStamp.ZERO));
+		list = obs.nbboSpreads.sample(1, 1);
+		assertEquals(1, list.size());
+		assertEquals(20, list.get(0), 0.001);
 	}
 	
 	@Test

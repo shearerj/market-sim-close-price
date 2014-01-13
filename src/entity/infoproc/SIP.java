@@ -84,17 +84,17 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 		return ImmutableList.of();
 	}
 
+	// TODO This check shouldn't be necessary if we allow agents to immediately execute activities.
 	@Override
 	public Iterable<? extends Activity> sendToQuoteProcessor(Market market,
 			MarketTime quoteTime, Quote quote, TimeStamp currentTime) {
-		if (latency.equals(TimeStamp.IMMEDIATE)) {
-			return ImmutableList.<Activity> builder().addAll(
-					processQuote(market, quoteTime, quote, currentTime)).build();
-		}
 //		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? 
-//				TimeStamp.IMMEDIATE : currentTime.plus(latency);
-		return ImmutableList.of(new ProcessQuote(this, market, quoteTime, quote, 
-				currentTime.plus(latency)));
+//		TimeStamp.IMMEDIATE : currentTime.plus(latency);
+		if (latency.equals(TimeStamp.IMMEDIATE))
+			return processQuote(market, quoteTime, quote, currentTime);
+		else
+			return ImmutableList.of(new ProcessQuote(this, market, quoteTime, quote, 
+					currentTime.plus(latency)));
 	}
 
 	@Override
