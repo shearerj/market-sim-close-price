@@ -65,7 +65,7 @@ public class ZIRAgent extends BackgroundAgent {
 				props.getAsInt(Keys.MAX_QUANTITY, 10),
 				props.getAsInt(Keys.BID_RANGE_MIN, 0),
 				props.getAsInt(Keys.BID_RANGE_MAX, 5000),
-				props.getAsBoolean(Keys.WITHDRAW_ORDERS, false));
+				props.getAsBoolean(Keys.WITHDRAW_ORDERS, true));
 	}
 
 	@Override
