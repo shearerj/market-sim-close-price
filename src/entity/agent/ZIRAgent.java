@@ -1,6 +1,8 @@
 package entity.agent;
 
 import static fourheap.Order.OrderType.*;
+import static logger.Logger.log;
+import static logger.Logger.Level.INFO;
 
 import java.util.Random;
 
@@ -14,6 +16,7 @@ import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import event.TimeStamp;
+import fourheap.Order.OrderType;
 
 /**
  * ZIRAGENT
@@ -87,8 +90,9 @@ public class ZIRAgent extends BackgroundAgent {
 
 		if (withdrawOrders) acts.addAll(withdrawAllOrders(currentTime));
 		// 0.50% chance of being either long or short
-		acts.addAll(executeZIStrategy(rand.nextBoolean() ? BUY : SELL, 1, currentTime));
-
+		OrderType type = rand.nextBoolean() ? BUY : SELL;
+		acts.addAll(executeZIStrategy(type, 1, currentTime));
+		log(INFO, sb.append(" Submit ").append(type).append(" order"));
 		return acts.build();
 	}
 

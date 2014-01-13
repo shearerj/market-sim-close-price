@@ -90,7 +90,7 @@ public class OrderDataAgentTest {
         t1 = new TimeStamp(15);
         c = agent.agentStrategy(t1);
         nextOrder = Iterables.getOnlyElement(c);
-        System.out.println(nextOrder.getTime());
+        Logger.log(Logger.Level.DEBUG," \nNext order time: " + nextOrder.getTime());
         t2 = new TimeStamp(18);
         assertEquals("OrderDataAgent Strategy is in order", t2, nextOrder.getTime());
         

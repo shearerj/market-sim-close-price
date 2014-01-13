@@ -1,5 +1,8 @@
 package entity.agent;
 
+import static logger.Logger.log;
+import static logger.Logger.Level.INFO;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Random;
@@ -40,8 +43,10 @@ public class OrderDataAgent extends SMAgent {
 	@Override
 	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
 		OrderDatum nextStrategy = orderData.peek();
-//		System.out.println("func"+nextStrategy.getTimestamp());
-		return ImmutableList.of(new AgentStrategy(this, nextStrategy.getTimestamp()));
+		StringBuilder sb = new StringBuilder().append(this).append(" ");
+		sb.append(getName()).append(':');
+		log(INFO, sb.append(" Next entry at ").append(nextStrategy.getTimeStamp()));
+		return ImmutableList.of(new AgentStrategy(this, nextStrategy.getTimeStamp()));
 	}
 
 	public Iterable<? extends Activity> executeODAStrategy(int quantity, TimeStamp currentTime) {
@@ -67,9 +72,11 @@ public class OrderDataAgent extends SMAgent {
 
 		@Override
 		public int compare(OrderDatum arg0, OrderDatum arg1) {
-			System.out.println( "TS " + arg0.getTimestamp() + " | " + arg1.getTimestamp());
-			System.out.println(arg1.getTimestamp().compareTo(arg0.getTimestamp()));
-			return arg0.getTimestamp().compareTo(arg1.getTimestamp());
+			StringBuilder sb = new StringBuilder();
+			sb.append("Time ").append(arg0.getTimeStamp());
+			sb.append(" | ").append(arg1.getTimeStamp()).append("\n");
+			sb.append("Output ").append(arg1.getTimeStamp().compareTo(arg0.getTimeStamp()));
+			return arg0.getTimeStamp().compareTo(arg1.getTimeStamp());
 		}
 	}
 }

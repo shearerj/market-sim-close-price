@@ -99,7 +99,7 @@ public class OrderDatum implements Serializable {
 	}
 
 
-	public TimeStamp getTimestamp() {
+	public TimeStamp getTimeStamp() {
 		return timestamp;
 	}
 
