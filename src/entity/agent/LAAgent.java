@@ -1,8 +1,9 @@
 package entity.agent;
 
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
-import static fourheap.Order.OrderType.*;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,8 +29,8 @@ import entity.market.Price;
 import entity.market.Quote;
 import event.TimeStamp;
 import fourheap.FourHeap;
-import fourheap.Order;
 import fourheap.MatchedOrders;
+import fourheap.Order;
 
 /**
  * LAAGENT
@@ -102,7 +103,7 @@ public class LAAgent extends HFTAgent {
 	 * why.
 	 */
 	public Iterable<? extends Activity> agentStrategy2(TimeStamp ts) {
-		FourHeap<Price, Integer, Order<Price, Integer>> fh = FourHeap.create();
+		FourHeap<Price, Integer, Order<Price, Integer>> fh = FourHeap.<Price, Integer, Order<Price, Integer>> create();
 		Map<Order<Price, Integer>, Market> orderMap = Maps.newHashMap();
 		
 		for (Entry<Market, HFTQuoteProcessor> ipEntry : quoteProcessors.entrySet()) {
