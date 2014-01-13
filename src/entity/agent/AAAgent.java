@@ -90,7 +90,7 @@ public class AAAgent extends WindowAgent {
 		checkArgument(betaR > 0 && betaR < 1, "Beta for r must be in (0,1)");
 		checkArgument(betaT > 0 && betaT < 1, "Beta for theta must be in (0,1)");
 		checkArgument(eta >= 1, "Eta must be in [1, inf)");
-		checkArgument(historical > 0, "N (historical) must be positive");
+		checkArgument(historical > 0, "Number of historical prices must be positive");
 		checkArgument(lambdaA >= 0, "lambda_A must be positive");
 		checkArgument(lambdaR >= 0, "lambda_R must be positive");
 		
@@ -135,7 +135,7 @@ public class AAAgent extends WindowAgent {
 				props.getAsDouble(Keys.THETA, -8),
 				props.getAsDouble(Keys.THETA_MIN, -8),
 				props.getAsDouble(Keys.THETA_MAX, 2),
-				props.getAsInt(Keys.HISTORICAL, 5), 
+				props.getAsInt(Keys.NUM_HISTORICAL, 5), 
 				props.getAsInt(Keys.ETA, 3),
 				props.getAsDouble(Keys.LAMBDA_R, 0.05),
 				props.getAsDouble(Keys.LAMBDA_A, 0.02),	// 0.02 in paper 

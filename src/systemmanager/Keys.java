@@ -55,14 +55,14 @@ public interface Keys {
 
 	// Agents
 	public final static String WITHDRAW_ORDERS = "withdrawOrders"; 
+	public final static String NUM_HISTORICAL = "numHistorical";
 
 	// Market Maker
 	public final static String NUM_RUNGS = "numRungs";
 	public final static String RUNG_SIZE = "rungSize";
 	public final static String TRUNCATE_LADDER = "truncateLadder";
-
+	
 	// AAAgent
-	public final static String HISTORICAL = "historical";
 	public final static String ETA = "eta";
 	public final static String LAMBDA_R = "lambdaR";
 	public final static String LAMBDA_A = "lambdaA";

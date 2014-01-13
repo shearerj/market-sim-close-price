@@ -59,7 +59,7 @@ public class WMAMarketMakerTest {
 	}
 
 	private EntityProperties setupProperties(int numRungs, int rungSize, 
-			boolean truncateLadder, int tickSize, int windowLength,
+			boolean truncateLadder, int tickSize, int numHistorical,
 			double weightFactor) {
 		EntityProperties agentProperties = new EntityProperties();
 		agentProperties.put(Keys.NUM_RUNGS, numRungs);
@@ -67,7 +67,7 @@ public class WMAMarketMakerTest {
 		agentProperties.put(Keys.TRUNCATE_LADDER, truncateLadder);
 		agentProperties.put(Keys.TICK_SIZE, tickSize);
 		agentProperties.put(Keys.REENTRY_RATE, 0.000001);
-		agentProperties.put(Keys.WINDOW_LENGTH, windowLength);
+		agentProperties.put(Keys.NUM_HISTORICAL, numHistorical);
 		agentProperties.put(Keys.WEIGHT_FACTOR, weightFactor);
 		return agentProperties;
 	}

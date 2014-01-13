@@ -37,13 +37,13 @@ public class MAMarketMaker extends MarketMaker {
 	
 	public MAMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, double reentryRate, int tickSize, boolean noOp,
-			int numRungs, int rungSize, boolean truncateLadder, int windowLength) {
+			int numRungs, int rungSize, boolean truncateLadder, int numHistorical) {
 		super(fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
 				numRungs, rungSize, truncateLadder);
 
-		checkArgument(windowLength > 0, "Window length must be positive!");
-		bidQueue = EvictingQueue.create(windowLength);
-		askQueue = EvictingQueue.create(windowLength);
+		checkArgument(numHistorical > 0, "Number of historical prices must be positive!");
+		bidQueue = EvictingQueue.create(numHistorical);
+		askQueue = EvictingQueue.create(numHistorical);
 	}
 	
 	public MAMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
@@ -55,7 +55,7 @@ public class MAMarketMaker extends MarketMaker {
 				props.getAsInt(Keys.NUM_RUNGS, 10),
 				props.getAsInt(Keys.RUNG_SIZE, 1000), 
 				props.getAsBoolean(Keys.TRUNCATE_LADDER, true),
-				props.getAsInt(Keys.WINDOW_LENGTH, 5));
+				props.getAsInt(Keys.NUM_HISTORICAL, 5));
 	}
 	
 	@Override

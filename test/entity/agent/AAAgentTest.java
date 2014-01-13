@@ -66,7 +66,7 @@ public class AAAgentTest {
 		agentProperties.put(Keys.THETA, 0);
 		agentProperties.put(Keys.THETA_MIN, -4);
 		agentProperties.put(Keys.THETA_MAX, 4);
-		agentProperties.put(Keys.HISTORICAL, 5);
+		agentProperties.put(Keys.NUM_HISTORICAL, 5);
 		agentProperties.put(Keys.ETA, 3);
 		agentProperties.put(Keys.LAMBDA_R, 0.05);
 		agentProperties.put(Keys.LAMBDA_A, 0.02);	// x ticks/$ for Eq 10/11 
