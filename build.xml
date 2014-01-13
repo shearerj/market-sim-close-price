@@ -28,7 +28,9 @@
     <delete dir="${build}"/>
     <mkdir dir="${build}"/>
     <!-- Compile the java code from ${src} into ${build} -->
-    <javac srcdir="${src}" destdir="${build}" debug="on" deprecation="on" optimize="on" includeantruntime="false">
+    <javac srcdir="${src}" destdir="${build}"
+	   debug="on" deprecation="on" optimize="on" includeantruntime="false"
+	   source="1.6" target="1.6">
       <classpath>
 	<fileset dir="${lib}">
 	  <include name="*.jar"/>
@@ -43,7 +45,9 @@
     <delete dir="${build-test}"/>
     <mkdir dir="${build-test}"/>
     <!-- Compile the java code from ${test} into ${build-test} -->
-    <javac srcdir="${test}" destdir="${build-test}" debug="on" deprecation="on" optimize="on" includeantruntime="false">
+    <javac srcdir="${test}" destdir="${build-test}"
+	   debug="on" deprecation="on" optimize="on" includeantruntime="false"
+	   source="1.6" target="1.6">
       <classpath>
 	<pathelement path="${build}"/>
 	<fileset dir="${lib}">
@@ -75,7 +79,7 @@
 
   <target name="test" depends="compile-test"
 	  description="runs junit tests">
-    <junit haltonerror="false" haltonfailure="false">
+    <junit haltonerror="false" haltonfailure="false" fork="true">
       <!-- Add compiled test, source files, and libs to classpath -->
       <classpath>
 	<pathelement path="${build}"/>
