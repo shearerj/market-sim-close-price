@@ -50,7 +50,7 @@ def mergeObs(filenames):
         n = int(config['numSims'])
 
         for feat, val in features.iteritems():
-            feature_stats.setdefault(feat, SumStat()).add_one(val)
+            feature_stats.setdefault(feat, SumStat()).add_one(float(val))
 
         sim_egta_stats = {}
 

@@ -26,7 +26,7 @@ def mergeObs(filenames):
         name = config['modelName']
 
         for feat, val in features.iteritems():
-            feats[name + '_' + feat] = val
+            feats[name + '_' + feat] = float(val)
         out[name + '_config'] = config
         out[name + '_players'] = players
 

@@ -19,7 +19,7 @@ def to_csv(out, filenames):
     out.write('\n')
 
     for filename in filenames:
-        with open(filenames[0], 'r') as f:
+        with open(filename, 'r') as f:
             obs = json.load(f)
         feats = obs['features']
         out.write(','.join(str(feats[k]) for k in keys))

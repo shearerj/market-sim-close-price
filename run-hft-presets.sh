@@ -34,23 +34,24 @@ for I in "${!PRESETS[@]}"; do
     "$LOC/run-hft.sh" "$FOLDER/$PRESET" $NUM
 done
 
-echo ">> Merging observations..."
-mkdir -vp "$FOLDER/$MERGED"
+# Removed because merge-obs-egta.py doesn't properly handle the renaming of players and config
+# echo -n ">> Merging preset observations..."
+# mkdir -vp "$FOLDER/$MERGED"
 
-PRE=(${PRESETS[@]/#/"$FOLDER/"})
-for (( OBS=0; OBS < $NUM; ++OBS )); do
-    "$LOC/merge-obs-presets.py" ${PRE[@]/%//observation$OBS.json} > "$FOLDER/$MERGED/observation$OBS.json"
-done
+# PRE=(${PRESETS[@]/#/"$FOLDER/"})
+# for (( OBS=0; OBS < $NUM; ++OBS )); do
+#     "$LOC/merge-obs-presets.py" ${PRE[@]/%//observation$OBS.json} > "$FOLDER/$MERGED/observation$OBS.json"
+# done
 
-OBSERVATIONS=()
-for (( OBS = 0; OBS < $NUM; ++OBS )); do
-    OBSERVATIONS+=( "$FOLDER/$MERGED/observation$OBS.json" )
-done
+# OBSERVATIONS=()
+# for (( OBS = 0; OBS < $NUM; ++OBS )); do
+#     OBSERVATIONS+=( "$FOLDER/$MERGED/observation$OBS.json" )
+# done
 
-"$LOC/merge-obs-egta.py" "${OBSERVATIONS[@]}" > "$FOLDER/$MERGED/observation$((${NUM} - 1))merged.json"
-echo " done"
+# "$LOC/merge-obs-egta.py" "${OBSERVATIONS[@]}" > "$FOLDER/$MERGED/observation$((${NUM} - 1))merged.json"
+# echo " done"
 
-echo ">> Merging the log files..."
+echo -n ">> Merging the log files..."
 mkdir -vp "$FOLDER/$MERGED/$LOGDIR"
 
 NUMSIMS=$( cat "$FOLDER/$FILE" | grep -Eo '"numSims" *: *"[0-9]+"' | grep -Eo '[0-9]+' )
