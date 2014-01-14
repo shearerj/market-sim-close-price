@@ -18,7 +18,7 @@ import com.google.common.collect.Maps;
  * Class that represents the properties of an entity. These are generally loaded
  * from a simulation spec file.
  * 
- * Contains methods to get values as any type, potentially with a defautl value.
+ * Contains methods to get values as any type, potentially with a default value.
  * If a default value isn't used, and the key doesn't exist, you'll get a null
  * object, or a null pointer.
  * 
@@ -87,7 +87,8 @@ public class EntityProperties implements Serializable {
 
 	public int getAsInt(String key, int def) {
 		String val = properties.get(key);
-		return val != null ? Integer.parseInt(val) : def;
+		if (val != null) return !val.isEmpty() ? Integer.parseInt(val) : def;
+		return def;
 	}
 
 	public double getAsDouble(String key) {
@@ -96,7 +97,8 @@ public class EntityProperties implements Serializable {
 
 	public double getAsDouble(String key, double def) {
 		String val = properties.get(key);
-		return val != null ? Double.parseDouble(val) : def;
+		if (val != null) return !val.isEmpty() ? Double.parseDouble(val) : def;
+		return def;
 	}
 
 	public float getAsFloat(String key) {
@@ -105,7 +107,8 @@ public class EntityProperties implements Serializable {
 
 	public float getAsFloat(String key, float def) {
 		String val = properties.get(key);
-		return val != null ? Float.parseFloat(val) : def;
+		if (val != null) return !val.isEmpty() ? Float.parseFloat(val) : def;
+		return def;
 	}
 
 	public long getAsLong(String key) {
@@ -114,7 +117,8 @@ public class EntityProperties implements Serializable {
 
 	public long getAsLong(String key, long def) {
 		String val = properties.get(key);
-		return val != null ? Long.parseLong(val) : def;
+		if (val != null) return !val.isEmpty() ? Long.parseLong(val) : def;
+		return def;
 	}
 
 	public boolean getAsBoolean(String key) {
@@ -123,7 +127,8 @@ public class EntityProperties implements Serializable {
 
 	public boolean getAsBoolean(String key, boolean def) {
 		String val = properties.get(key);
-		return val != null ? Boolean.parseBoolean(val) : def;
+		if (val != null) return !val.isEmpty() ? Boolean.parseBoolean(val) : def;
+		return def;
 	}
 
 	public void put(String key, String value) {

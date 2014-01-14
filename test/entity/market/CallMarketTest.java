@@ -705,7 +705,7 @@ public class CallMarketTest {
 	public void testMarketTypeForLatency() {
 		MarketFactory mf = new MarketFactory(sip, new Random());
 		MarketProperties props = new MarketProperties(Consts.MarketType.CALL);
-		props.put(Keys.MARKET_LATENCY, 0);
+		props.put(Keys.MARKET_LATENCY, -1);
 		Market market = mf.createMarket(props);
 		assertTrue("Incorrect market type at zero latency", market instanceof CDAMarket);
 		
