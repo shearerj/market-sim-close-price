@@ -35,6 +35,14 @@ import event.TimeStamp;
  * The market maker will only submit a ladder if both the bid and the ask
  * are defined.
  * 
+ * If, after it withdraws its orders, it notices that the quote is now 
+ * undefined, it will submit a ladder with either lastBid or lastAsk (or
+ * both) in lieu of the missing quote component. Notice that if
+ * lastBid/Ask crosses the current ASK/BID, truncation will handle this.
+ * 
+ * XXX MM will lose time priority if use last bid & ask, but may not be
+ * able to get around this
+ * 
  * NOTE: The MarketMakerAgent will truncate the ladder when the price crosses
  * the NBBO, i.e., whenever one of the points in the bid would be routed to
  * the alternate market otherwise. This happens when:
@@ -70,6 +78,9 @@ public class BasicMarketMaker extends MarketMaker {
 	public Iterable<Activity> agentStrategy(TimeStamp currentTime) {
 		if (noOp) return ImmutableList.of(); // no execution if no-op
 
+		StringBuilder sb = new StringBuilder().append(this).append(" ");
+		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
+		
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));
 
@@ -78,40 +89,46 @@ public class BasicMarketMaker extends MarketMaker {
 		Price bid = quote.getBidPrice();
 		Price ask = quote.getAskPrice();
 
-		// Quote changed, withdraw all orders
 		if ((bid == null && lastBid != null)
 				|| (bid != null && !bid.equals(lastBid))
 				|| (bid != null && lastBid == null)
 				|| (ask == null && lastAsk != null)
 				|| (ask != null && !ask.equals(lastAsk))
 				|| (ask != null && lastAsk == null)) {
-			
-			acts.addAll(withdrawAllOrders(currentTime));	
 
 			if (!quote.isDefined()) {
-				log(INFO, this + " " + getName()
-						+ "::agentStrategy: undefined quote in market "
-						+ primaryMarket);
+				log(INFO, sb.append(" Undefined quote in ").append(primaryMarket));
 			} else {
-				lastNBBOQuote = sip.getNBBO();
-				bid = marketQuoteProcessor.getQuote().getBidPrice();
-				ask = marketQuoteProcessor.getQuote().getAskPrice();
+				// Quote changed, still valid, withdraw all orders
+				log(INFO, sb.append(" Withdraw all orders."));
+				acts.addAll(withdrawAllOrders(currentTime));
 				
+				lastNBBOQuote = sip.getNBBO();
+				quote = marketQuoteProcessor.getQuote();
+				bid = quote.getBidPrice();
+				ask = quote.getAskPrice();
+				
+				// Use last known bid/ask if undefined post-withdrawal
+				if (!quote.isDefined()) {
+					sb.append(" Ladder MID (").append(bid).append(", ")
+							.append(ask).append(")-->(");
+					if (bid == null && lastBid != null) bid = lastBid;
+					if (ask == null && lastAsk != null) ask = lastAsk;
+					log(INFO, sb.append(bid).append(", ").append(ask).append(")"));
+				}
 				acts.addAll(this.createOrderLadder(bid, ask, currentTime));
 			}
 		} else {
-			log(INFO, currentTime + " | " + primaryMarket + " " + this + " " + getName()
-					+ "::agentStrategy: no change in submitted ladder.");
+			log(INFO, sb.append(" No change in submitted ladder"));
 		}
 		// update latest bid/ask prices
-		lastAsk = ask;
-		lastBid = bid;
+		lastAsk = ask; lastBid = bid;
 
 		return acts.build();
 	}
 
 	@Override
 	public String toString() {
-		return "BasicMarketMaker " + super.toString();
+		return "BasicMM " + super.toString();
 	}
 }

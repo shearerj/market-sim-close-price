@@ -79,6 +79,52 @@ public class BasicMarketMakerTest {
 		assertTrue(Iterables.getFirst(acts, null) instanceof AgentStrategy);
 	}
 
+	/**
+	 * When the quote is undefined (either bid or ask is null) but prior quote
+	 * was defined, then the market maker should not do anything.
+	 */
+	@Test
+	public void quoteUndefined() {
+		TimeStamp time = TimeStamp.ZERO;
+
+		MarketMaker mm = new BasicMarketMaker(fundamental, sip, market, 
+				new Random(), setupProperties(2, 10, false, 1));
+		mm.lastAsk = new Price(55);
+		mm.lastBid = new Price(45);
+
+		// Check market quote
+		Quote quote = market.getQuoteProcessor().getQuote();
+		assertEquals(null, quote.getAskPrice());
+		assertEquals(null, quote.getBidPrice());
+		
+		// Check activities inserted (none, other than reentry)
+		Iterable<? extends Activity> acts = mm.agentStrategy(time);
+		assertEquals("Incorrect number of activities", 1, Iterables.size(acts));
+		assertTrue(Iterables.getFirst(acts, null) instanceof AgentStrategy);
+		assertEquals(0, mm.activeOrders.size());
+		
+		// Creating dummy agents
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		
+		// Creating and adding bids
+		EventManager em = new EventManager(new Random());
+		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
+		em.executeUntil(new TimeStamp(1));
+		// Check market quote
+		quote = market.getQuoteProcessor().getQuote();
+		assertEquals(null, quote.getAskPrice());
+		assertEquals(new Price(40), quote.getBidPrice());
+		
+		// Check activities inserted (none, other than reentry)
+		mm.lastAsk = new Price(55);
+		mm.lastBid = new Price(45);
+		acts = mm.agentStrategy(time);
+		assertEquals("Incorrect number of activities", 1, Iterables.size(acts));
+		assertTrue(Iterables.getFirst(acts, null) instanceof AgentStrategy);
+		assertEquals(0, mm.activeOrders.size());
+	}
+	
+	
 	@Test
 	public void basicLadderTest() {
 		TimeStamp time = TimeStamp.ZERO;
@@ -446,6 +492,54 @@ public class BasicMarketMakerTest {
 				assertTrue(price == 42 || price == 37 || price == 32);
 			else
 				assertTrue(price == 49 || price == 54 || price == 59);
+		}
+	}
+	
+	/**
+	 * Case where withdrawing the ladder causes the quote to become undefined
+	 * (as well as the last NBBO quote)
+	 */
+	@Test
+	public void withdrawUndefinedTest() {
+		TimeStamp time = TimeStamp.ZERO;
+		TimeStamp time1 = new TimeStamp(1);
+
+		MarketMaker marketmaker = new BasicMarketMaker(fundamental, sip, market, 
+				new Random(), setupProperties(3, 5, true, 1));
+		// Creating dummy agents
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+
+		// Creating and adding bids
+		EventManager em = new EventManager(new Random());
+		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
+		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1, time));
+		em.executeUntil(new TimeStamp(1));
+
+		// Initial MM strategy; submits ladder with numRungs=3
+		em.addActivity(new AgentStrategy(marketmaker, time));
+		em.executeUntil(new TimeStamp(1));
+		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
+
+		// Withdraw other orders
+		agent1.withdrawAllOrders(time);
+		assertEquals(0, agent1.activeOrders.size());
+		marketmaker.lastBid = new Price(42); // to make sure MM will withdraw its orders
+		
+		// Verify that it withdraws ladder entirely
+		// Note that now the quote is undefined, after it withdraws its ladder
+		// so it will submit a ladder with the lastBid
+		em.addActivity(new AgentStrategy(marketmaker, time1));
+		em.executeUntil(new TimeStamp(2));
+		assertNotNull(marketmaker.lastBid);
+		assertNotNull(marketmaker.lastAsk);
+		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
+		for (Order o : marketmaker.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == BUY) 
+				assertTrue(price == 42 || price == 37 || price == 32);
+			else
+				assertTrue(price == 50 || price == 55 || price == 60);
 		}
 	}
 

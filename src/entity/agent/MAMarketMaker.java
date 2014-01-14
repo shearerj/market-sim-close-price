@@ -26,6 +26,10 @@ import event.TimeStamp;
  * 
  * Moving Average Market Maker
  * 
+ * NOTE: Because the prices are stored in an EvictingQueue, which does not
+ * accept null elements, the number of elements in the bid/ask queues may not
+ * be equivalent.
+ * 
  * @author zzy, ewah
  */
 public class MAMarketMaker extends MarketMaker {
@@ -62,6 +66,9 @@ public class MAMarketMaker extends MarketMaker {
 	public Iterable<Activity> agentStrategy(TimeStamp currentTime) {
 		if (noOp) return ImmutableList.of(); // no execution if no-op
 		
+		StringBuilder sb = new StringBuilder().append(this).append(" ");
+		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
+		
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));
 		
@@ -77,22 +84,33 @@ public class MAMarketMaker extends MarketMaker {
 				|| (ask == null && lastAsk != null)
 				|| (ask != null && !ask.equals(lastAsk))
 				|| (ask != null && lastAsk == null)) {
-			acts.addAll(withdrawAllOrders(currentTime));	
-
+			
 			if (!quote.isDefined()) {
-				log(INFO, this + " " + getName()
-						+ "::agentStrategy: undefined quote in market "
-						+ primaryMarket);
+				log(INFO, sb.append(" Undefined quote in ").append(primaryMarket));
 				// do nothing, wait until next re-entry
 			} else {
-				lastNBBOQuote = sip.getNBBO();
-				bid = marketQuoteProcessor.getQuote().getBidPrice();
-				ask = marketQuoteProcessor.getQuote().getAskPrice();
+				// Quote changed, still valid, withdraw all orders
+				log(INFO, sb.append(" Withdraw all orders"));
+				acts.addAll(withdrawAllOrders(currentTime));	
 				
+				lastNBBOQuote = sip.getNBBO();
+				quote = marketQuoteProcessor.getQuote();
+				bid = quote.getBidPrice();
+				ask = quote.getAskPrice();
+				
+				// Use last known bid/ask if undefined post-withdrawal
+				if (!quote.isDefined()) {
+					sb.append(" Ladder MID (").append(bid).append(",")
+						.append(ask).append(")-->(");
+					if (bid == null && lastBid != null) bid = lastBid;
+					if (ask == null && lastAsk != null) ask = lastAsk;
+					log(INFO, sb.append(bid).append(",").append(ask).append(")"));
+				}
+				
+				// Compute moving average
 				bidQueue.add(bid);
 				askQueue.add(ask);
 				
-				// Compute moving average
 				double sumBids = 0;
 				for (Price x : bidQueue) sumBids += x.intValue();
 				Price ladderBid = new Price(sumBids / bidQueue.size());
@@ -105,8 +123,7 @@ public class MAMarketMaker extends MarketMaker {
 
 			} // if quote defined
 		} else {
-			log(INFO, currentTime + " | " + primaryMarket + " " + this + " " + getName()
-					+ "::agentStrategy: no change in submitted ladder.");
+			log(INFO, sb.append(" No change in submitted ladder"));
 		}
 		// update latest bid/ask prices
 		lastAsk = ask;
@@ -117,7 +134,7 @@ public class MAMarketMaker extends MarketMaker {
 	
 	@Override
 	public String toString() {
-		return "MAMarketMaker " + super.toString();
+		return "MAMM " + super.toString();
 	}
 }
 

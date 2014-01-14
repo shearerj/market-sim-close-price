@@ -146,6 +146,7 @@ public class SimulationSpec implements Serializable {
 	protected void presets(JsonObject config) {
 		JsonPrimitive preset = config.getAsJsonPrimitive(Keys.PRESETS);
 		if (preset == null) return;
+		if (preset.getAsString().isEmpty()) return;
 		switch(Presets.valueOf(preset.getAsString())) {
 		case NONE:
 			break;

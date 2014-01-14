@@ -183,7 +183,7 @@ public class Observations {
 		// Profit and Surplus
 		SummaryStatistics 
 			modelProfit = new SummaryStatistics(),
-			backgroundAgentProfit = new SummaryStatistics(), // This does't quite make sense because backgroudn agents don't liquidate...
+			backgroundAgentProfit = new SummaryStatistics(), // This does't quite make sense because background agents don't liquidate...
 			hftProfit = new SummaryStatistics(),
 			marketMakerProfit = new SummaryStatistics();
 		

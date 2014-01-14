@@ -172,7 +172,7 @@ public class ZIRAgentTest {
 		assertEquals("Incorrect ASK market", nasdaq, nbbo.getBestAskMarket());
 		assertEquals("Incorrect BID market", nyse, nbbo.getBestBidMarket());
 	}
-
+	
 	/**
 	 * Specific scenario where not withdrawing order means that the order will
 	 * be routed and will transact immediately.

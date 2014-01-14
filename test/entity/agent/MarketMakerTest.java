@@ -87,6 +87,18 @@ public class MarketMakerTest {
 	}
 	
 	@Test
+	public void createOrderLadderNullTest() {
+		// if either ladder bid or ask is null, it needs to return
+		MarketMaker mm = new MockMarketMaker(fundamental, sip, market, 
+				setupProperties(2, 5, false));
+		mm.stepSize = 5;
+		
+		Iterable<? extends Activity> acts = mm.createOrderLadder(null,
+				new Price(50), TimeStamp.ZERO);
+		assertEquals(0, Iterables.size(acts));
+	}
+	
+	@Test
 	public void createOrderLadderTest() {
 		MarketMaker mm = new MockMarketMaker(fundamental, sip, market, 
 				setupProperties(2, 5, false));
@@ -104,5 +116,5 @@ public class MarketMakerTest {
 				assertTrue(price == 40 || price == 35);
 		}
 	}
-	
+
 }

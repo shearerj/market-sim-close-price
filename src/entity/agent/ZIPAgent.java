@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Random;
 
 import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
@@ -107,6 +108,11 @@ public class ZIPAgent extends WindowAgent {
 				props.getAsDouble(Keys.COEFF_A, 0.05), props.getAsDouble(Keys.COEFF_R, 0.05));
 	}
 
+	@Override
+	public String toString() {
+		return "ZIP " + super.toString();
+	}
+	
 	@Override
 	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(

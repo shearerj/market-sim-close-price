@@ -177,6 +177,12 @@ public abstract class Agent extends Entity {
 	/**
 	 * Withdraw all active orders (executes immediately, not inserted as 
 	 * activity).
+	 * 
+	 * TODO Is there a better way to withdraw all agent orders from a market,
+	 * other than iterating through all of the agent's orders? This seems
+	 * inefficient, but currently the OB does not facilitate pulling out all 
+	 * orders from a single agent for removal.
+	 * 
 	 * @param currentTime
 	 * @return
 	 */

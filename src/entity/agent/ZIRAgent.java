@@ -88,7 +88,10 @@ public class ZIRAgent extends BackgroundAgent {
 //			return acts.build();
 //		}
 
-		if (withdrawOrders) acts.addAll(withdrawAllOrders(currentTime));
+		if (withdrawOrders) {
+			log(INFO, sb.append(" Withdraw all orders"));
+			acts.addAll(withdrawAllOrders(currentTime));
+		}
 		// 0.50% chance of being either long or short
 		OrderType type = rand.nextBoolean() ? BUY : SELL;
 		acts.addAll(executeZIStrategy(type, 1, currentTime));
@@ -96,4 +99,8 @@ public class ZIRAgent extends BackgroundAgent {
 		return acts.build();
 	}
 
+	@Override
+	public String toString() {
+		return "ZIR " + super.toString();
+	}
 }

@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.Random;
 
 import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
@@ -80,38 +81,55 @@ public abstract class MarketMaker extends ReentryAgent {
 	 */
 	public Iterable<? extends Activity> submitOrderLadder(Price buyMinPrice,
 			Price buyMaxPrice, Price sellMinPrice, Price sellMaxPrice, 
-			TimeStamp currentTime) {		
+			TimeStamp currentTime) {
+		
+		StringBuilder sb = new StringBuilder().append(this).append(" ");
+		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
+		
 		Builder<Activity> acts = ImmutableList.<Activity> builder();
 
 		// build ascending list of buy orders
 		for (int p = buyMinPrice.intValue(); p <= buyMaxPrice.intValue(); p += stepSize) {
-			acts.add(new SubmitOrder(this, primaryMarket, BUY, new Price(p), 1, TimeStamp.IMMEDIATE));
+			acts.add(new SubmitOrder(this, primaryMarket, BUY, new Price(p), 1, 
+					TimeStamp.IMMEDIATE));
 		}
 		// build descending list of sell orders
 		for (int p = sellMaxPrice.intValue(); p >= sellMinPrice.intValue(); p -= stepSize) { 
-			acts.add(new SubmitOrder(this, primaryMarket, SELL, new Price(p), 1, TimeStamp.IMMEDIATE));
+			acts.add(new SubmitOrder(this, primaryMarket, SELL, new Price(p), 1, 
+					TimeStamp.IMMEDIATE));
 		}
-		
-		log(INFO, primaryMarket + " " + this + " " + getName()
-				+ "::agentStrategy: ladder numRungs=" + numRungs
-				+ ", stepSize=" + stepSize + ": buys [" + buyMinPrice
-				+ ", " + buyMaxPrice + "] &" + " sells [" + sellMinPrice + ", "
-				+ sellMaxPrice + "]");
-		
+		log(INFO, sb.append(" Submit ladder with #rungs ").append(numRungs)
+				.append(", step size ").append(stepSize).append(": buys [")
+				.append(buyMinPrice).append(" to ").append(buyMaxPrice)
+				.append("] & sells [").append(sellMinPrice).append(" to ")
+				.append(sellMaxPrice).append("]"));
 		return acts.build();
 	}
 	
 	/**
 	 * Given the prices (bid & ask) for the center of the ladder, compute the 
-	 * ladders prices and submit the order ladder.
+	 * ladders' prices and submit the order ladder.
+	 * 
+	 * If either ladderBid or ladder Ask is null, then use either lastBid or 
+	 * lastAsk (or both) in lieu of the missing quote component. This will be 
+	 * dealt with by truncation if lastBid/Ask will cross the current ASK/BID.
+	 * 
+	 * XXX MM will lose time priority if use last bid & ask, but may not be
+	 * able to get around this since it doesn't know what's in the order book.
 	 * 
 	 * @param ladderBid
 	 * @param ladderAsk
 	 * @param currentTime
 	 * @return
 	 */
-	public Iterable<? extends Activity> createOrderLadder(Price ladderBid, Price ladderAsk,
-			TimeStamp currentTime) {
+	public Iterable<? extends Activity> createOrderLadder(Price ladderBid, 
+			Price ladderAsk, TimeStamp currentTime) {
+		
+		if (ladderBid == null || ladderAsk == null) return ImmutableList.of();
+		
+		StringBuilder sb = new StringBuilder().append(this).append(" ");
+		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
+		
 		Builder<Activity> acts = ImmutableList.<Activity> builder();
 		
 		int ct = (numRungs-1) * stepSize;
@@ -128,10 +146,16 @@ public abstract class MarketMaker extends ReentryAgent {
 		
 		// check if the bid or ask crosses the NBBO, if truncating ladder
 		if (truncateLadder) {
+			sb.append(" Truncating ladder (").append(buyMaxPrice).append(", ")	
+					.append(sellMinPrice).append(")-->(");
 			// buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N]
-			buyMaxPrice = pcomp.min(ladderBid, lastNBBOQuote.getBestAsk());
+			if (lastNBBOQuote.getBestAsk() != null)
+				buyMaxPrice = pcomp.min(ladderBid, lastNBBOQuote.getBestAsk());
 			// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
-			sellMinPrice = pcomp.max(ladderAsk, lastNBBOQuote.getBestBid());
+			if (lastNBBOQuote.getBestBid() != null)
+				sellMinPrice = pcomp.max(ladderAsk, lastNBBOQuote.getBestBid());
+			log(INFO, sb.append(buyMaxPrice).append(", ").append(sellMinPrice)
+					.append(")"));
 		}
 		
 		// TODO if matches bid, then go one tick in				

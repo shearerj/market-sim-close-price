@@ -6,8 +6,8 @@ import static logger.Logger.Level.INFO;
 import java.util.Random;
 
 import activity.Activity;
-
 import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.common.collect.EvictingQueue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
@@ -41,6 +41,10 @@ import event.TimeStamp;
  * 		T-i
  * 
  * where T is the total number of elements being averaged.
+ * 
+ * NOTE: Because the prices are stored in an EvictingQueue, which does not
+ * accept null elements, the number of elements in the bid/ask queues may not
+ * be equivalent.
  * 
  * @author zzy, ewah
  *
@@ -86,6 +90,9 @@ public class WMAMarketMaker extends MarketMaker {
 	public Iterable<Activity> agentStrategy(TimeStamp currentTime) {
 		if (noOp) return ImmutableList.of(); // no execution if no-op
 
+		StringBuilder sb = new StringBuilder().append(this).append(" ");
+		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
+		
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));
 
@@ -94,28 +101,38 @@ public class WMAMarketMaker extends MarketMaker {
 		Price bid = quote.getBidPrice();
 		Price ask = quote.getAskPrice();
 
-		// Quote changed, withdraw all orders
 		if ((bid == null && lastBid != null)
 				|| (bid != null && !bid.equals(lastBid))
 				|| (bid != null && lastBid == null)
 				|| (ask == null && lastAsk != null)
 				|| (ask != null && !ask.equals(lastAsk))
-				|| (ask != null && lastAsk == null)) {
-			acts.addAll(withdrawAllOrders(currentTime));	
+				|| (ask != null && lastAsk == null)) {	
 
 			if (!quote.isDefined()) {
-				log(INFO, this + " " + getName()
-						+ "::agentStrategy: undefined quote in market "
-						+ primaryMarket);
+				log(INFO, sb.append(" Undefined quote in ").append(primaryMarket));
 			} else {
+				// Quote changed, still valid, withdraw all orders
+				log(INFO, sb.append(" Withdraw all orders"));
+				acts.addAll(withdrawAllOrders(currentTime));	
+				
 				lastNBBOQuote = sip.getNBBO();
-				bid = marketQuoteProcessor.getQuote().getBidPrice();
-				ask = marketQuoteProcessor.getQuote().getAskPrice();
+				quote = marketQuoteProcessor.getQuote();
+				bid = quote.getBidPrice();
+				ask = quote.getAskPrice();
 
+				// Use last known bid/ask if undefined post-withdrawal
+				if (!quote.isDefined()) {
+					sb.append(" Ladder MID (").append(bid).append(",")
+						.append(ask).append(")-->(");
+					if (bid == null && lastBid != null) bid = lastBid;
+					if (ask == null && lastAsk != null) ask = lastAsk;
+					log(INFO, sb.append(bid).append(",").append(ask).append(")"));
+				}
+				
+				// Compute weighted moving average
 				bidQueue.add(bid);
 				askQueue.add(ask);
-
-				// Compute weighted moving average
+				
 				double sumBids = 0, sumAsks = 0;
 				double totalWeight = 0;
 				if (weightFactor == 0) {
@@ -150,8 +167,7 @@ public class WMAMarketMaker extends MarketMaker {
 
 			} // if quote defined
 		} else {
-			log(INFO, currentTime + " | " + primaryMarket + " " + this + " " + getName()
-					+ "::agentStrategy: no change in submitted ladder.");
+			log(INFO, sb.append(" No change in submitted ladder"));
 		}
 		// update latest bid/ask prices
 		lastAsk = ask;
@@ -162,6 +178,6 @@ public class WMAMarketMaker extends MarketMaker {
 
 	@Override
 	public String toString() {
-		return "WMAMarketMaker " + super.toString();
+		return "WMAMM " + super.toString();
 	}
 }

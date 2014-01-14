@@ -148,6 +148,11 @@ public class AAAgent extends WindowAgent {
 	}
 
 	@Override
+	public String toString() {
+		return "AA " + super.toString();
+	}
+	
+	@Override
 	public Collection<Activity> agentStrategy(TimeStamp currentTime) {
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));

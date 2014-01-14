@@ -1,5 +1,6 @@
 package entity.infoproc;
 
+import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 import static data.Observations.BUS;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -14,7 +15,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import data.Observations.NBBOStatistic;
-import logger.Logger;
 import activity.Activity;
 import activity.ProcessQuote;
 import activity.ProcessTransactions;
@@ -61,6 +61,7 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 		return Collections.unmodifiableList(transactions);
 	}
 
+	@Override
 	public String toString() {
 		return "SIP";
 	}
@@ -108,7 +109,7 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 		marketQuotes.put(market, quote);
 		quoteTimes.put(market, quoteTime);
 		
-		Logger.log(INFO, market + " -> " + this + " quote " + quote);
+		log(INFO, market + " -> " + this + " quote " + quote);
 
 		Price bestBid = null, bestAsk = null;
 		int bestBidQuantity = 0, bestAskQuantity = 0;
