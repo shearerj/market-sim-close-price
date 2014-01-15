@@ -2,11 +2,15 @@
 import argparse
 import json
 import sys
+import textwrap
 
-parser = argparse.ArgumentParser(description='Select specific objects from a json file, e.g. "./jpath.py -i observation0.json features"')
+parser = argparse.ArgumentParser(description='\n'.join(textwrap.wrap('Select specific fields and indicies from a json file, and print with formatting.', width=78)),
+                                 epilog='''example usage:
+  ''' + sys.argv[0] + ''' -i observation0.json features''',
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument('fields', metavar='field', nargs='*',
                     help='A successive field to inspect in the json file, strings for objects or positive indices for arrays')
-parser.add_argument('-i', '--input', metavar='filename', type=argparse.FileType('r'), default=sys.stdin, 
+parser.add_argument('-i', '--input', '-f', '--file', metavar='filename', type=argparse.FileType('r'), default=sys.stdin, 
                     help='The json file to read from, defaults to stdin')
 
 if __name__ == '__main__':

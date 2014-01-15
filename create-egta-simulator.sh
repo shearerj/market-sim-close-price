@@ -2,6 +2,8 @@
 
 if [[ "$#" -lt 1 || "$1" == "-h" || "$1" == "--help" ]]; then
     echo "usage: $0 simulator-name"
+    echo
+    echo "Creates an EGTA simulator zip named simulator-name"
     exit 1
 fi
 

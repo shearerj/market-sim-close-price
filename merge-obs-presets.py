@@ -2,11 +2,16 @@
 import sys
 import json
 import argparse
+import textwrap
 
-parser = argparse.ArgumentParser(description='Merges observation files from different preset runs and returns summary statistics. This is meant to account for past behavior where several presets were run at the same time. You may want to call something like "for OBS in {0..99}; do ' + sys.argv[0] + ' directory/{CALL,CDA,TWOMARKET}/observation$OBS.json > directory/merged/observation$OBS.json; done"')
+parser = argparse.ArgumentParser(description='\n'.join(textwrap.wrap('Merges observation files from different preset runs and returns summary statistics. This is meant to account for past behavior where several presets were run at the same time. This requires that the simulations have different names. If they do not, there is no way to give labels to the different runs.', width=78)),
+                                 epilog='''example usage:
+  for OBS in {0..99}; do
+      ''' + sys.argv[0] + ''' directory/{CALL,CDA,TWOMARKET}/observation$OBS.json > directory/merged/observation$OBS.json
+  done''', formatter_class = argparse.RawTextHelpFormatter)
 parser.add_argument('files', metavar='obs-file', nargs='+',
                     help='An observation file to merge')
-parser.add_argument('-o', '--output', metavar='merged-obs-file', type=argparse.FileType('w'), default=sys.stdout,
+parser.add_argument('-o', '--output', '-f', '--file', metavar='merged-obs-file', type=argparse.FileType('w'), default=sys.stdout,
                     help='The merged observation file, defaults to stdout')
 
 def mergeObs(filenames):
