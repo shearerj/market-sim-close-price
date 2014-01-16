@@ -36,12 +36,12 @@ for I in "${!PRESETS[@]}"; do
     "$LOC/run-hft.sh" "$FOLDER/$PRESET" $NUM
 done
 
-echo -n ">> Merging preset observations..."
 mkdir -vp "$FOLDER/$MERGED"
+echo -n ">> Merging observations..."
 
-PRE=(${PRESETS[@]/#/"$FOLDER/"})
+PRE=( "${PRESETS[@]/#/$FOLDER/}" )
 for (( OBS=0; OBS < $NUM; ++OBS )); do
-    "$LOC/merge-obs-presets.py" ${PRE[@]/%//observation$OBS.json} > "$FOLDER/$MERGED/observation$OBS.json"
+    "$LOC/merge-obs-presets.py" "${PRE[@]/%//observation$OBS.json}" > "$FOLDER/$MERGED/observation$OBS.json"
 done
 
 # Removed because merge-obs-egta.py doesn't properly handle the renaming of players and config
@@ -51,10 +51,11 @@ done
 # done
 
 # "$LOC/merge-obs-egta.py" "${OBSERVATIONS[@]}" > "$FOLDER/$MERGED/observation$((${NUM} - 1))merged.json"
+
 echo " done"
 
-echo -n ">> Merging the log files..."
 mkdir -vp "$FOLDER/$MERGED/$LOGDIR"
+echo -n ">> Merging the log files..."
 
 NUMSIMS=$( cat "$FOLDER/$FILE" | grep -Eo '"numSims" *: *"[0-9]+"' | grep -Eo '[0-9]+' )
 
