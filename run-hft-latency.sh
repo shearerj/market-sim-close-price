@@ -1,6 +1,16 @@
 #!/bin/bash
 # Executes a different experiment for each sim spec file * presets
 
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "usage: $0 [-h] directory num-obs [max-latency [latency-step]]"
+    echo
+    echo "Run simulation spec with various slow LA latencies"
+    exit 0
+elif [ $# -lt 2 ]; then
+    echo "usage: $0 [-h] directory num-obs [max-latency [latency-step]]"
+    exit 1
+fi
+
 FILE=simulation_spec.json
 MERGED=merged
 LOGDIR=logs
@@ -11,12 +21,6 @@ NUM="$2"
 LAT_MAX=50
 LAT_STEP=10
 
-if [ $# -lt 2 ]; then
-    echo "Run simulation spec with various slow LA latencies"
-    echo
-    echo "Usage: $0 directory num-obs [max-latency [latency-step]]"
-    exit 1
-fi
 if [ $# -ge 3 ]; then
     LAT_MAX="$3"
 fi

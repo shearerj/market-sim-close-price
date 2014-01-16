@@ -1,16 +1,15 @@
 #!/bin/bash
 # Executes a different experiment for each sim spec file * presets
 
-if [ $# -lt 2 ]; then
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "usage: $0 [-h] directory num-obs preset [preset ...]"
+    echo
     echo "Run simulation spec with all of the specified presets"
     echo
-    echo "Usage: $0 directory num-obs preset [preset ...]"
-    echo
-    echo "Creates a new directory for each preset, and runs the spec file num-obs times"
-    echo "each, then merges each of the obsevations into a new directory called merged."
-    echo "Logs are also merged and put in the logs director in merged. Presets can be"
-    echo "optionally specified after num-obs. If omitted this script will use the default"
-    echo "presets of CENTRALCALL, CENTRALCDA, TWOMARKET, and TWOMARKETLA."
+    echo "Creates a new directory for each preset, and runs the spec file num-obs times each, then merges each of the obsevations into a new directory called merged. Logs are also merged and put in the logs director in merged. Presets can be optionally specified after num-obs. If omitted this script will use the default presets of CENTRALCALL, CENTRALCDA, TWOMARKET, and TWOMARKETLA." | fold -s
+    exit 0
+elif [ $# -lt 2 ]; then
+    echo "usage: $0 [-h] directory num-obs preset [preset ...]"
     exit 1
 elif [ $# -lt 3 ]; then
     PRESETS=( CENTRALCALL CENTRALCDA TWOMARKET TWOMARKETLA )
@@ -34,15 +33,15 @@ for I in "${!PRESETS[@]}"; do
     "$LOC/run-hft.sh" "$FOLDER/$PRESET" $NUM
 done
 
+echo -n ">> Merging preset observations..."
+mkdir -vp "$FOLDER/$MERGED"
+
+PRE=(${PRESETS[@]/#/"$FOLDER/"})
+for (( OBS=0; OBS < $NUM; ++OBS )); do
+    "$LOC/merge-obs-presets.py" ${PRE[@]/%//observation$OBS.json} > "$FOLDER/$MERGED/observation$OBS.json"
+done
+
 # Removed because merge-obs-egta.py doesn't properly handle the renaming of players and config
-# echo -n ">> Merging preset observations..."
-# mkdir -vp "$FOLDER/$MERGED"
-
-# PRE=(${PRESETS[@]/#/"$FOLDER/"})
-# for (( OBS=0; OBS < $NUM; ++OBS )); do
-#     "$LOC/merge-obs-presets.py" ${PRE[@]/%//observation$OBS.json} > "$FOLDER/$MERGED/observation$OBS.json"
-# done
-
 # OBSERVATIONS=()
 # for (( OBS = 0; OBS < $NUM; ++OBS )); do
 #     OBSERVATIONS+=( "$FOLDER/$MERGED/observation$OBS.json" )
