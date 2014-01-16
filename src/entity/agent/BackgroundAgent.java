@@ -149,7 +149,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * @param currentTime
 	 * @return
 	 */
-	public Price getValuation(OrderType type, TimeStamp currentTime) {
+	protected Price getValuation(OrderType type, TimeStamp currentTime) {
 		return getValuation(type, 1, currentTime);
 	}
 	
@@ -161,7 +161,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * @param currentTime
 	 * @return
 	 */
-	public Price getValuation(OrderType type, int quantity, TimeStamp currentTime) {
+	protected Price getValuation(OrderType type, int quantity, TimeStamp currentTime) {
 		return new Price(
 				fundamental.getValueAt(currentTime).intValue() * quantity
 				+ privateValue.getValueFromQuantity(positionBalance, quantity, type).intValue()
@@ -169,14 +169,26 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	}
 
 	/**
-	 * Returns the limit price for the agent (valuation for 1 unit).
+	 * Returns the limit price for a new order of quantity 1.
+	 * 
+	 * @param type
+	 * @param currentTime
+	 * @return
+	 */
+	protected Price getLimitPrice(OrderType type, TimeStamp currentTime) {
+		return getLimitPrice(type, 1, currentTime);
+	}
+	
+	/**
+	 * Returns the limit price for the agent given potential quantity for which
+	 * the agent plans to submit an order.
 	 * 
 	 * @param type
 	 * @param quantity
 	 * @param currentTime
 	 * @return
 	 */
-	public Price getLimitPrice(OrderType type, int quantity, TimeStamp currentTime) {
+	protected Price getLimitPrice(OrderType type, int quantity, TimeStamp currentTime) {
 		return new Price(getValuation(type, quantity, currentTime).doubleValue() 
 				/ quantity).nonnegative();
 	}

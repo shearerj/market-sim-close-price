@@ -174,7 +174,7 @@ public class AAAgent extends WindowAgent {
 		aggression = aggressions.getValue(positionBalance, type);
 
 		// Updating Price Limit (valuation of security)
-		Price limitPrice = this.getValuation(type, currentTime);
+		Price limitPrice = this.getLimitPrice(type, currentTime);
 		
 		ImmutableList<Transaction> transactions = this.getWindowTransactions(currentTime);
 		if (!transactions.isEmpty())
