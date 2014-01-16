@@ -40,4 +40,5 @@ for I in "${!PRESETS[@]}"; do
     "$LOC/run-hft.sh" "$FOLDER/$PRESET" "$NUM_OBS"
 done
 
-"$LOC/merge-simulation-runs.sh" "$FOLDER/$MERGED" "$NUM_OBS" "${PRESETS[@]/#/$FOLDER/}"
+"$LOC/merge-sim-obs.sh" "$FOLDER/$MERGED" "$NUM_OBS" "${PRESETS[@]/#/$FOLDER/}"
+#"$LOC/merge-sim-logs.sh" "$FOLDER/$MERGED" "$NUM_OBS" "${PRESETS[@]/#/$FOLDER/}"
