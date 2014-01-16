@@ -1,6 +1,12 @@
 #!/bin/bash
 # Executes a different experiment for each sim spec file * presets
 
+# NOTE TO ELAINE
+# Feel free to modify this as you like, I probably won't use it.
+#
+# A change you might want to make is to take arbitrary file paths instead of
+# requiring that they all be directories inside a root directory
+
 IFS='
 '
 FILE=simulation_spec.json
@@ -8,40 +14,41 @@ MERGED=merged
 LOGDIR=logs
 
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    echo "usage: $0 [-h] directory num-obs [preset ...]"
+    echo "usage: $0 [-h] directory num-obs [folder ...]"
     echo
-    echo "Run simulation spec with all of the specified presets"
+    echo "Merges several directories with comparable settings e.g. same simulation_spec.json but different presets" | fold -s
     echo
-    echo "Creates a new directory for each preset, and runs the spec file num-obs times each, then merges each of the obsevations into a new directory called merged. Logs are also merged and put in the logs director in merged. Presets can be optionally specified after num-obs. If omitted this script will use the default presets of CENTRALCALL, CENTRALCDA, TWOMARKET, and TWOMARKETLA." | fold -s
+    echo "This utility will create a new folder at <directory>/merged. That folder will be populated with the merged versions of the observations from each of the specified directories. Additionally a directory called <directory>/merged/logs will contain merged versions of the logs from each of those runs. If no folders are specified, this will use every folder in directory that doesn't have 'merged' in it's name." | fold -s
     exit 0
 elif [ $# -lt 2 ]; then
-    echo "usage: $0 [-h] directory num-obs preset [preset ...]"
+    echo "usage: $0 [-h] directory num-obs folder [folder ...]"
     exit 1
 elif [ $# -lt 3 ]; then
-    PRESETS=( CENTRALCALL CENTRALCDA TWOMARKET TWOMARKETLA )
+    # Scan directories and removes one named merged.
+    # TODO: Probably a better way to do this
+    PRESETS=( $(ls -1 "$1") )
+    PRESETS=( "${PRESETS[@]/*${MERGED}*/}" )
+    for I in "${!PRESETS[@]}"; do
+	if [ -z "${PRESETS[$I]}" ]; then
+	    unset PRESETS[$I]
+	fi
+    done
 else
     PRESETS=( "${@:3}" )
 fi
+
+echo "${PRESETS[@]}"
 
 LOC=$(dirname "$0")
 FOLDER="$1"
 NUM="$2"
 
-for I in "${!PRESETS[@]}"; do 
-    PRESET="${PRESETS[$I]}"
-    echo ">> Setting up ${PRESET,,}"
-    mkdir -vp "$FOLDER/$PRESET"
-    cp -v "$FOLDER/$FILE" "$FOLDER/$PRESET/$FILE"
-    sed -i -e 's/"presets" *: *"[^"]*"/"presets": "'"$PRESET"'"/g' -e 's/"modelName" *: *"[^"]*"/"modelName": "'"${PRESET,,}"'"/g' -e 's/"modelNum" *: *"[^"]*"/"modelNum": "'"${I}"'"/g' "$FOLDER/$PRESET/$FILE"
-    "$LOC/run-hft.sh" "$FOLDER/$PRESET" $NUM
-done
-
-echo -n ">> Merging preset observations..."
+echo -n ">> Merging observations..."
 mkdir -vp "$FOLDER/$MERGED"
 
-PRE=(${PRESETS[@]/#/"$FOLDER/"})
+PRE=( "${PRESETS[@]/#/$FOLDER/}" )
 for (( OBS=0; OBS < $NUM; ++OBS )); do
-    "$LOC/merge-obs-presets.py" ${PRE[@]/%//observation$OBS.json} > "$FOLDER/$MERGED/observation$OBS.json"
+    "$LOC/merge-obs-presets.py" "${PRE[@]/%//observation$OBS.json}" > "$FOLDER/$MERGED/observation$OBS.json"
 done
 
 # Removed because merge-obs-egta.py doesn't properly handle the renaming of players and config

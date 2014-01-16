@@ -1,6 +1,12 @@
 #!/bin/bash
 # Executes a different experiment for each sim spec file * presets
 
+IFS='
+'
+FILE=simulation_spec.json
+MERGED=merged
+LOGDIR=logs
+
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo "usage: $0 [-h] directory num-obs [max-latency [latency-step]]"
     echo
@@ -10,10 +16,6 @@ elif [ $# -lt 2 ]; then
     echo "usage: $0 [-h] directory num-obs [max-latency [latency-step]]"
     exit 1
 fi
-
-FILE=simulation_spec.json
-MERGED=merged
-LOGDIR=logs
 
 LOC=$(dirname "$0")
 FOLDER="$1"
