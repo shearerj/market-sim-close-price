@@ -59,7 +59,7 @@ public class MAMarketMaker extends MarketMaker {
 				props.getAsInt(Keys.NUM_RUNGS, 10),
 				props.getAsInt(Keys.RUNG_SIZE, 1000), 
 				props.getAsBoolean(Keys.TRUNCATE_LADDER, true),
-				props.getAsBoolean(Keys.TICK_IMPROVEMENT, false),
+				props.getAsBoolean(Keys.TICK_IMPROVEMENT, true),
 				props.getAsInt(Keys.NUM_HISTORICAL, 5));
 	}
 	
