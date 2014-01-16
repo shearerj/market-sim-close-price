@@ -17,8 +17,7 @@ import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
-import entity.market.Price;
-import entity.market.Quote;
+import entity.market.Price; 	
 import event.TimeStamp;
 
 /**
@@ -74,10 +73,8 @@ public class MAMarketMaker extends MarketMaker {
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));
 		
-		lastNBBOQuote = sip.getNBBO();
-		Quote quote = marketQuoteProcessor.getQuote();
-		Price bid = quote.getBidPrice();
-		Price ask = quote.getAskPrice();
+		Price bid = this.getQuote().getBidPrice();
+		Price ask = this.getQuote().getAskPrice();;
 
 		// Quote changed, withdraw all orders
 		if ((bid == null && lastBid != null)
@@ -87,7 +84,7 @@ public class MAMarketMaker extends MarketMaker {
 				|| (ask != null && !ask.equals(lastAsk))
 				|| (ask != null && lastAsk == null)) {
 			
-			if (!quote.isDefined()) {
+			if (!this.getQuote().isDefined()) {
 				log(INFO, sb.append(" Undefined quote in ").append(primaryMarket));
 				// do nothing, wait until next re-entry
 			} else {
@@ -95,13 +92,11 @@ public class MAMarketMaker extends MarketMaker {
 				log(INFO, sb.append(" Withdraw all orders"));
 				acts.addAll(withdrawAllOrders(currentTime));	
 				
-				lastNBBOQuote = sip.getNBBO();
-				quote = marketQuoteProcessor.getQuote();
-				bid = quote.getBidPrice();
-				ask = quote.getAskPrice();
+				bid = this.getQuote().getBidPrice();
+				ask = this.getQuote().getAskPrice();
 				
 				// Use last known bid/ask if undefined post-withdrawal
-				if (!quote.isDefined()) {
+				if (!this.getQuote().isDefined()) {
 					sb.append(" Ladder MID (").append(bid).append(",")
 						.append(ask).append(")-->(");
 					if (bid == null && lastBid != null) bid = lastBid;

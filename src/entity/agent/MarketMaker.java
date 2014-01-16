@@ -45,14 +45,13 @@ import event.TimeStamp;
 public abstract class MarketMaker extends ReentryAgent {
 
 	private static final long serialVersionUID = -782740037969385370L;
-	
+
 	protected int stepSize;			// rung size is distance between adjacent rungs in ladder
 	protected int numRungs;			// # of ladder rungs on one side (e.g., number of buy orders)
 	protected boolean truncateLadder; 	// true if truncate if NBBO crosses ladder
 	protected boolean tickImprovement;	// true if improves by a tick when mid-prices == bid/ask
 	protected boolean noOp;				// true if no-op strategy (never executes strategy)
 	protected Price lastAsk, lastBid; // stores the last ask/bid, respectively
-	protected BestBidAsk lastNBBOQuote;
 
 	public MarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, Iterator<TimeStamp> reentry, int tickSize, 
@@ -64,14 +63,13 @@ public abstract class MarketMaker extends ReentryAgent {
 		this.numRungs = numRungs;
 		this.stepSize = MathUtils.quantize(rungSize, tickSize);
 		this.truncateLadder = truncateLadder;
+		this.tickImprovement = tickImprovement;
 		this.lastAsk = null;
 		this.lastBid = null;
-	
 	}
-	
+
 	/**
 	 * Shortcut constructor for exponential interarrivals (e.g. Poisson reentries)
-	 * @param tickImprovement TODO
 	 */
 	public MarketMaker(FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, double reentryRate, int tickSize, 
@@ -80,7 +78,7 @@ public abstract class MarketMaker extends ReentryAgent {
 		this(fundamental, sip, market, rand, new ExpInterarrivals(reentryRate, rand),
 				tickSize, noOp, numRungs, rungSize, truncateLadder, tickImprovement);
 	}
-	
+
 	/**
 	 * Method to create activities for submitting a ladder of orders.
 	 * 
@@ -97,10 +95,10 @@ public abstract class MarketMaker extends ReentryAgent {
 	public Iterable<? extends Activity> submitOrderLadder(Price buyMinPrice,
 			Price buyMaxPrice, Price sellMinPrice, Price sellMaxPrice, 
 			TimeStamp currentTime) {
-		
+
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
-		
+
 		Builder<Activity> acts = ImmutableList.<Activity> builder();
 
 		// build ascending list of buy orders
@@ -120,7 +118,7 @@ public abstract class MarketMaker extends ReentryAgent {
 				.append(sellMaxPrice).append("]"));
 		return acts.build();
 	}
-	
+
 	/**
 	 * Given the prices (bid & ask) for the center of the ladder, compute the 
 	 * ladders' prices and submit the order ladder.
@@ -139,14 +137,24 @@ public abstract class MarketMaker extends ReentryAgent {
 	 */
 	public Iterable<? extends Activity> createOrderLadder(Price ladderBid, 
 			Price ladderAsk, TimeStamp currentTime) {
-		
+
 		if (ladderBid == null || ladderAsk == null) return ImmutableList.of();
-		
+
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
-		
+
 		Builder<Activity> acts = ImmutableList.<Activity> builder();
-		
+
+		// Tick improvement
+		if (this.getQuote().getBidPrice() != null)
+			ladderBid = new Price(ladderBid.intValue() - 
+					(getQuote().getBidPrice().equals(ladderBid) 
+							&& tickImprovement ? tickSize : 0));
+		if (this.getQuote().getAskPrice() != null)
+			ladderAsk = new Price(ladderAsk.intValue() + 
+					(getQuote().getAskPrice().equals(ladderAsk) 
+							&& tickImprovement ? tickSize: 0));
+
 		int ct = (numRungs-1) * stepSize;
 
 		// min price for buy order in the ladder
@@ -158,11 +166,14 @@ public abstract class MarketMaker extends ReentryAgent {
 		Price sellMinPrice = ladderAsk;
 		// max price for sell order in the ladder
 		Price sellMaxPrice = new Price(ladderAsk.intValue() + ct);
-		
+
 		// check if the bid or ask crosses the NBBO, if truncating ladder
 		if (truncateLadder) {
+			BestBidAsk lastNBBOQuote = this.getNBBO();
+			
 			sb.append(" Truncating ladder (").append(buyMaxPrice).append(", ")	
-					.append(sellMinPrice).append(")-->(");
+			.append(sellMinPrice).append(")-->(");
+			
 			// buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N]
 			if (lastNBBOQuote.getBestAsk() != null)
 				buyMaxPrice = pcomp.min(ladderBid, lastNBBOQuote.getBestAsk());
@@ -172,8 +183,7 @@ public abstract class MarketMaker extends ReentryAgent {
 			log(INFO, sb.append(buyMaxPrice).append(", ").append(sellMinPrice)
 					.append(")"));
 		}
-		
-		// TODO if matches bid, then go one tick in				
+
 		acts.addAll(this.submitOrderLadder(buyMinPrice, buyMaxPrice, 
 				sellMinPrice, sellMaxPrice, currentTime));
 		return acts.build();

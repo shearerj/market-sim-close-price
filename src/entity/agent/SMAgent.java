@@ -8,6 +8,7 @@ import entity.infoproc.MarketQuoteProcessor;
 import entity.infoproc.MarketTransactionProcessor;
 import entity.infoproc.SIP;
 import entity.market.Market;
+import entity.market.Quote;
 import event.TimeStamp;
 
 /**
@@ -53,4 +54,7 @@ public abstract class SMAgent extends Agent {
 		return super.agentArrival(currentTime);
 	}
 
+	public Quote getQuote() {
+		return marketQuoteProcessor.getQuote();
+	}
 }

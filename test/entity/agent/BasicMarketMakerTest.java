@@ -542,6 +542,4 @@ public class BasicMarketMakerTest {
 				assertTrue(price == 50 || price == 55 || price == 60);
 		}
 	}
-
-	// TODO test tick size changes on initial bid/ask submission (if inside by 1 tick)
 }

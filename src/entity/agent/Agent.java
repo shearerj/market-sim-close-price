@@ -20,6 +20,7 @@ import data.FundamentalValue;
 import activity.Activity;
 import activity.AgentStrategy;
 import entity.Entity;
+import entity.infoproc.BestBidAsk;
 import entity.infoproc.SIP;
 import entity.market.Order;
 import entity.market.Price;
@@ -41,8 +42,8 @@ public abstract class Agent extends Entity {
 	protected final Random rand;
 	protected final FundamentalValue fundamental;
 	protected final SIP sip;
-	// List of all transactions for this agent. Implicitly time ordered due to transactions
-	// being created and assigned in time order.
+	// List of all transactions for this agent. Implicitly time ordered due to 
+	// transactions being created and assigned in time order.
 	protected final List<Transaction> transactions;
 	protected final Collection<Order> activeOrders;
 
@@ -222,6 +223,10 @@ public abstract class Agent extends Entity {
 
 	public final TimeStamp getArrivalTime() {
 		return arrivalTime;
+	}
+	
+	public BestBidAsk getNBBO() {
+		return sip.getNBBO();
 	}
 	
 	public double getPayoff() {
