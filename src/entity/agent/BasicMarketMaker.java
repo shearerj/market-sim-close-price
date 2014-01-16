@@ -29,8 +29,7 @@ import event.TimeStamp;
  * sell orders: [X_t, X_t + C_1, ..., X_t + C_t]
  * 
  * The market maker liquidates its position at the price dictated by the
- * global fundamental at the end of the simulation (event is inserted in 
- * SystemSetup).
+ * global fundamental at the end of the simulation.
  * 
  * The market maker will only submit a ladder if both the bid and the ask
  * are defined.
@@ -43,13 +42,6 @@ import event.TimeStamp;
  * XXX MM will lose time priority if use last bid & ask, but may not be
  * able to get around this
  * 
- * NOTE: The MarketMakerAgent will truncate the ladder when the price crosses
- * the NBBO, i.e., whenever one of the points in the bid would be routed to
- * the alternate market otherwise. This happens when:
- * 
- * buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N] (ascending)
- * sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t] (ascending)
- * 
  * @author ewah
  */
 public class BasicMarketMaker extends MarketMaker {
@@ -58,9 +50,10 @@ public class BasicMarketMaker extends MarketMaker {
 
 	public BasicMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, double reentryRate, int tickSize, boolean noOp,
-			int numRungs, int rungSize, boolean truncateLadder) {
+			int numRungs, int rungSize, boolean truncateLadder, 
+			boolean tickImprovement) {
 		super(fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
-				numRungs, rungSize, truncateLadder);	
+				numRungs, rungSize, truncateLadder, false);	
 	}
 
 	public BasicMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
@@ -71,7 +64,8 @@ public class BasicMarketMaker extends MarketMaker {
 				props.getAsBoolean(Keys.NO_OP, false),
 				props.getAsInt(Keys.NUM_RUNGS, 10),
 				props.getAsInt(Keys.RUNG_SIZE, 1000), 
-				props.getAsBoolean(Keys.TRUNCATE_LADDER, true));
+				props.getAsBoolean(Keys.TRUNCATE_LADDER, true), 
+				props.getAsBoolean(Keys.TICK_IMPROVEMENT, false));
 	}
 
 	@Override
@@ -116,6 +110,17 @@ public class BasicMarketMaker extends MarketMaker {
 					if (ask == null && lastAsk != null) ask = lastAsk;
 					log(INFO, sb.append(bid).append(", ").append(ask).append(")"));
 				}
+				
+				// Tick improvement
+				if (quote.getBidPrice() != null)
+					bid = new Price(bid.intValue() - 
+								(quote.getBidPrice().equals(bid) && tickImprovement ? 
+										Price.TICKS_PER_DOLLAR : 0));
+				if (quote.getAskPrice() != null)
+					ask = new Price(ask.intValue() - 
+								(quote.getAskPrice().equals(ask) && tickImprovement ? 
+										Price.TICKS_PER_DOLLAR : 0));
+				
 				acts.addAll(this.createOrderLadder(bid, ask, currentTime));
 			}
 		} else {

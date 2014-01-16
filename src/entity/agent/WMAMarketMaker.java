@@ -59,10 +59,10 @@ public class WMAMarketMaker extends MarketMaker {
 
 	protected WMAMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, double reentryRate, int tickSize, boolean noOp,
-			int numRungs, int rungSize, boolean truncateLadder, int numHistorical, 
-			double weightFactor) {
+			int numRungs, int rungSize, boolean truncateLadder, 
+			boolean tickImprovement, int numHistorical, double weightFactor) {
 		super(fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
-				numRungs, rungSize, truncateLadder);
+				numRungs, rungSize, truncateLadder, tickImprovement);
 
 		checkArgument(weightFactor >= 0 && weightFactor < 1, 
 				"Weight factor must be in range (0,1)!");
@@ -82,7 +82,8 @@ public class WMAMarketMaker extends MarketMaker {
 				props.getAsInt(Keys.NUM_RUNGS, 10),
 				props.getAsInt(Keys.RUNG_SIZE, 1000), 
 				props.getAsBoolean(Keys.TRUNCATE_LADDER, true),
-				props.getAsInt(Keys.NUM_HISTORICAL, 5),
+				props.getAsBoolean(Keys.TICK_IMPROVEMENT, false),
+				props.getAsInt(Keys.NUM_HISTORICAL, 5), 
 				props.getAsDouble(Keys.WEIGHT_FACTOR, 0));
 	}
 

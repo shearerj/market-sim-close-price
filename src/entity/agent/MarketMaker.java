@@ -29,6 +29,17 @@ import event.TimeStamp;
  * 
  * All market makers submit a ladder of orders.
  * 
+ * If its ladder will start exactly at where the current bid/ask
+ * are, and it employs a "tick-improvement rule," it will submit a ladder with
+ * the ladder mid-prices offset by 1 tick.
+ * 
+ * NOTE: The MarketMaker will truncate the ladder when the price crosses
+ * the NBBO, i.e., whenever one of the points in the bid would be routed to
+ * the alternate market otherwise. This happens when:
+ * 
+ * buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N] (ascending)
+ * sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t] (ascending)
+ * 
  * @author ewah
  */
 public abstract class MarketMaker extends ReentryAgent {
@@ -38,13 +49,15 @@ public abstract class MarketMaker extends ReentryAgent {
 	protected int stepSize;			// rung size is distance between adjacent rungs in ladder
 	protected int numRungs;			// # of ladder rungs on one side (e.g., number of buy orders)
 	protected boolean truncateLadder; 	// true if truncate if NBBO crosses ladder
+	protected boolean tickImprovement;	// true if improves by a tick when mid-prices == bid/ask
 	protected boolean noOp;				// true if no-op strategy (never executes strategy)
 	protected Price lastAsk, lastBid; // stores the last ask/bid, respectively
 	protected BestBidAsk lastNBBOQuote;
 
 	public MarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, Iterator<TimeStamp> reentry, int tickSize, 
-			boolean noOp, int numRungs, int rungSize, boolean truncateLadder) {
+			boolean noOp, int numRungs, int rungSize, boolean truncateLadder, 
+			boolean tickImprovement) {
 		super(TimeStamp.ZERO, fundamental, sip, market, rand, reentry, tickSize);
 		checkArgument(numRungs > 0, "Number of rungs must be positive!");
 		this.noOp = noOp;
@@ -58,12 +71,14 @@ public abstract class MarketMaker extends ReentryAgent {
 	
 	/**
 	 * Shortcut constructor for exponential interarrivals (e.g. Poisson reentries)
+	 * @param tickImprovement TODO
 	 */
 	public MarketMaker(FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, double reentryRate, int tickSize, 
-			boolean noOp, int numRungs, int rungSize, boolean truncateLadder) {
+			boolean noOp, int numRungs, int rungSize, boolean truncateLadder,
+			boolean tickImprovement) {
 		this(fundamental, sip, market, rand, new ExpInterarrivals(reentryRate, rand),
-				tickSize, noOp, numRungs, rungSize, truncateLadder);
+				tickSize, noOp, numRungs, rungSize, truncateLadder, tickImprovement);
 	}
 	
 	/**
