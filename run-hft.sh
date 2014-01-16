@@ -20,11 +20,6 @@ else
     NUM="$2"
 fi
 
-# Builder
-echo ">> Building..."
-ant -f "$LOC/build.xml"
-echo ">> Building... done"
-
 # Change to $LOC to run java, necessary for environment properties loading
 cd "$LOC"
 
