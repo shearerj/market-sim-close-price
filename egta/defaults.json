@@ -1,10 +1,5 @@
 {
-    "assignment": {
-    },
     "configuration": {
-        "modelName": "mySimulation",
-        "modelNum": "1",
-        "randomSeed": "271828",
         "numSims": "1",
         "simLength": "60000",
         "presets": "NONE",
@@ -17,14 +12,14 @@
         "kappa": "0.05",
         "shockVar": "1E8",
         "privateValueVar": "1E8",
-        "CDA": "num_1",
+        "CDA": "num_0",
         "CALL": "num_0",
         "LA": "num_0",
         "BASICMM": "num_0_numRungs_10_rungSize_1000",
 	"MAMM": "num_0",
 	"WMAMM": "num_0",
         "ZI": "num_0_bidRangeMin_0_bidRangeMax_5000",
-        "ZIR": "num_61_maxqty_10",
+        "ZIR": "num_0_maxqty_10",
         "ZIP": "num_0",
         "AA": "num_0"
     }

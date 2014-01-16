@@ -3,11 +3,16 @@ import sys
 import math
 import json
 import argparse
+import textwrap
 
-parser = argparse.ArgumentParser(description='Merge successive observation files like egta. "features" will contain the mean of all of the features per observation run. This could be changed in the future to also include standard deviations. The "config" feature will be the config of the last observation, but these should all be idential. The "players" object will contain an object nested by role and then by strategy. The final object has three field. "mean" which is simply the mean of all agent payoffs for that role and strategy. "true_sample_stddev" is the sample standard deviation of every pay off for every agent in every simulation. "egta_sample_stddev" is the sample standard deviation of the mean of all agent payoffs of that role and strategy in every observation. That is, payoffs are aggregated to a mean value for each role and strategy for each observation, then this is the standard deviation of those means across observations.')
+parser = argparse.ArgumentParser(description='\n'.join(textwrap.wrap('Merge successive observation files like egta. "features" will contain the mean of all of the features per observation run. This could be changed in the future to also include standard deviations. The "config" feature will be the config of the last observation, but these should all be idential. The "players" object will contain an object nested by role and then by strategy. The final object has three field. "mean" which is simply the mean of all agent payoffs for that role and strategy. "true_sample_stddev" is the sample standard deviation of every pay off for every agent in every simulation. "egta_sample_stddev" is the sample standard deviation of the mean of all agent payoffs of that role and strategy in every observation. That is, payoffs are aggregated to a mean value for each role and strategy for each observation, then this is the standard deviation of those means across observations.', width=78)),
+                                 epilog='''example usage:
+  ''' + sys.argv[0] + ''' simulation_directory/observation*.json > simulation_directory/merged_observation.json
+  ''' + sys.argv[0] + ''' simulation_directory/observation*.json -o simulation_directory/merged_observation.json''',
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
 parser.add_argument('files', metavar='obs-file', nargs='+',
                     help='An observation file to merge')
-parser.add_argument('-o', '--output', metavar='merged-obs-file', type=argparse.FileType('w'), default=sys.stdout,
+parser.add_argument('-o', '--output', '-f', '--file', metavar='merged-obs-file', type=argparse.FileType('w'), default=sys.stdout,
                     help='The merged json file to write to, defaults to stdout')
 
 class SumStat:
@@ -50,7 +55,7 @@ def mergeObs(filenames):
         n = int(config['numSims'])
 
         for feat, val in features.iteritems():
-            feature_stats.setdefault(feat, SumStat()).add_one(val)
+            feature_stats.setdefault(feat, SumStat()).add_one(float(val))
 
         sim_egta_stats = {}
 

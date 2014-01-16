@@ -5,10 +5,10 @@ import re
 import argparse
 from Queue import PriorityQueue
 
-parser = argparse.ArgumentParser(description='Merges log files for easy comparison. This is very unsafe in terms of file handling (tries to open a lot of files, and will crash if want to merge more then the file system will allow), but if it\'s only used as a one time script it should work fine.')
+parser = argparse.ArgumentParser(description='''Merges log files for easy comparison. This is very unsafe in terms of file handling (tries to open a lot of files, and will crash if want to merge more then the file system will allow), but if it's only used as a one time script it should work fine.''')
 parser.add_argument('files', metavar='log-file', nargs='+', type=argparse.FileType('r'),
                     help='A log file to merge')
-parser.add_argument('-o', '--output', metavar='merged-log-file', type=argparse.FileType('w'), default=sys.stdout,
+parser.add_argument('-o', '--output', '-f', '--file', metavar='merged-log-file', type=argparse.FileType('w'), default=sys.stdout,
                     help='The log file to write to, defaults to stdout')
 
 # Regex for time of a line

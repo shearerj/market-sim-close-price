@@ -27,6 +27,8 @@ import com.google.gson.JsonObject;
  * 
  * @author erik
  * 
+ * TODO Integrate this into Json's Default object parsers so that I don't have to write manual parsing to json.
+ * 
  */
 public class MultiSimulationObservations {
 
@@ -89,10 +91,18 @@ public class MultiSimulationObservations {
 		// Write out features
 		JsonObject feats = new JsonObject();
 		root.add("features", feats);
-		for (Entry<String, SummaryStatistics> e : features.entrySet())
-			feats.addProperty(e.getKey(), e.getValue().getMean());
+		for (Entry<String, SummaryStatistics> e : features.entrySet()) {
+			// TODO Ben's JsonParser doesn't handle nans or inf. This does.
+			// Either make Ben's handle it, or make this handeling better
+			double mean = e.getValue().getMean();
+			if (Double.isInfinite(mean) || Double.isNaN(mean))
+				feats.addProperty(e.getKey(), Double.toString(mean));
+			else
+				feats.addProperty(e.getKey(), mean);
+		}
 		
 		// Add spec to config
+		// TODO Remove or change to save space in database
 		feats.add("config", spec.getRawSpec().get("configuration"));
 		
 		return root;
