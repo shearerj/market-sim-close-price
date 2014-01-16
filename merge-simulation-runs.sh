@@ -1,72 +1,59 @@
 #!/bin/bash
 # Executes a different experiment for each sim spec file * presets
 
-# NOTE TO ELAINE
-# Feel free to modify this as you like, I probably won't use it.
-#
-# A change you might want to make is to take arbitrary file paths instead of
-# requiring that they all be directories inside a root directory
-
 IFS='
 '
-FILE=simulation_spec.json
-MERGED=merged
+SPEC_FILE=simulation_spec.json
 LOGDIR=logs
 
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    echo "usage: $0 [-h] directory num-obs [folder ...]"
+    echo "usage: $0 [-h] output-directory num-obs input-directory input-directory [input-directory ...]"
     echo
-    echo "Merges several directories with comparable settings e.g. same simulation_spec.json but different presets" | fold -s
+    echo "Merges several directories with comparable settings e.g. same simulation_spec.json but different presets. This utility will merge all of the observations and logs in the input-directories, and store them in the output directory. If the output directory doesn't exist, it will be created. It is imperative that all input-directories have the same number of simulations." | fold -s
     echo
-    echo "This utility will create a new folder at <directory>/merged. That folder will be populated with the merged versions of the observations from each of the specified directories. Additionally a directory called <directory>/merged/logs will contain merged versions of the logs from each of those runs. If no folders are specified, this will use every folder in directory isn't names 'merged'." | fold -s
+    echo "example usage:"
+    echo "  $0 sim_dir/merged 10 sim_dir/{CENTRALCALL,CENTRALCDA,TWOMARKET,TWOMARKETLA}"
+    echo "  $0 sim_dir/merged 10 sim_dir/*/ # Only works if \"merged\" doesn't exist"
     exit 0
-elif [ $# -lt 2 ]; then
-    echo "usage: $0 [-h] directory num-obs folder [folder ...]"
+elif [[ $# -lt 4 || ! "$2" =~ ^[0-9]+$ ]]; then
+    echo "usage: $0 [-h] output-directory num-obs input-directory input-directory [input-directory ...]"
     exit 1
-elif [ $# -lt 3 ]; then
-    # Scan directories and removes one named merged.
-    # TODO: Probably a better way to do this
-    PRESETS=( $(ls -1F "$1" | grep '/$' | tr -d / | grep -v 'merged') )
-else
-    PRESETS=( "${@:3}" )
 fi
 
-echo "${PRESETS[@]}"
-
 LOC=$(dirname "$0")
-FOLDER="$1"
-NUM="$2"
+OUTPUT="$1"
+NUM_OBS="$2"
+INPUTS=( "${@:3}" )
+NUM_SIMS=$( "$LOC/jpath.py" -i "${INPUTS[0]}/$SPEC_FILE" configuration numSims | tr -d '"' )
 
-mkdir -vp "$FOLDER/$MERGED"
+mkdir -vp "$OUTPUT/$LOGDIR"
+
 echo -n ">> Merging observations..."
 
-PRE=( "${PRESETS[@]/#/$FOLDER/}" )
-for (( OBS=0; OBS < $NUM; ++OBS )); do
-    "$LOC/merge-obs-presets.py" "${PRE[@]/%//observation$OBS.json}" > "$FOLDER/$MERGED/observation$OBS.json"
+for (( OBS=0; OBS < $NUM_OBS; ++OBS )); do
+    "$LOC/merge-obs-presets.py" "${INPUTS[@]/%//observation$OBS.json}" > "$OUTPUT/observation$OBS.json"
 done
 
 # Removed because merge-obs-egta.py doesn't properly handle the renaming of players and config
 # OBSERVATIONS=()
-# for (( OBS = 0; OBS < $NUM; ++OBS )); do
+# for (( OBS = 0; OBS < $NUM_OBS; ++OBS )); do
 #     OBSERVATIONS+=( "$FOLDER/$MERGED/observation$OBS.json" )
 # done
 
-# "$LOC/merge-obs-egta.py" "${OBSERVATIONS[@]}" > "$FOLDER/$MERGED/observation$((${NUM} - 1))merged.json"
+# "$LOC/merge-obs-egta.py" "${OBSERVATIONS[@]}" > "$FOLDER/$MERGED/observation$((${NUM_OBS} - 1))merged.json"
 
 echo " done"
 
-mkdir -vp "$FOLDER/$MERGED/$LOGDIR"
 echo -n ">> Merging the log files..."
 
-NUMSIMS=$( cat "$FOLDER/$FILE" | grep -Eo '"numSims" *: *"[0-9]+"' | grep -Eo '[0-9]+' )
-
-for (( OBS=0; OBS < $NUM; ++OBS )); do
-    for (( SIM=0; SIM < $NUMSIMS; ++SIM )); do
+for (( OBS=0; OBS < $NUM_OBS; ++OBS )); do
+    for (( SIM=0; SIM < $NUM_SIMS; ++SIM )); do
 	LOGS=()
-	for PRESET in "${PRESETS[@]}"; do
-	    LOGS+=( $( ls "$FOLDER/$PRESET/$LOGDIR/"*"_${PRESET}_${OBS}_${SIM}_"*".txt" | sort | tail -n1 ) )
+	for INPUT in "${INPUTS[@]}"; do
+	    # NOTE: There may be a better way to grab the most recent / best log file
+	    LOGS+=( $( ls -1d "$INPUT/$LOGDIR/"*"_${OBS}_${SIM}_"*".txt" | sort | tail -n1 ) )
 	done
-	"$LOC/merge-logs.py" "${LOGS[@]}" > "$FOLDER/$MERGED/$LOGDIR/$( echo $FOLDER/$MERGED | tr '/' '_' | tr -d '.' | sed 's/__*/_/g' )_${OBS}_${SIM}_$( date '+%Y-%m-%d-%H-%M-%S' ).txt"
+	"$LOC/merge-logs.py" "${LOGS[@]}" > "$OUTPUT/$LOGDIR/$( echo $OUTPUT | tr '/' '_' | tr -d '.' | sed 's/__*/_/g' )_${OBS}_${SIM}_$( date '+%Y-%m-%d-%H-%M-%S' ).txt"
     done
 done
 echo " done"
