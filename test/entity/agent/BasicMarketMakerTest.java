@@ -60,6 +60,7 @@ public class BasicMarketMakerTest {
 		agentProperties.put(Keys.NUM_RUNGS, numRungs);
 		agentProperties.put(Keys.RUNG_SIZE, rungSize);
 		agentProperties.put(Keys.TRUNCATE_LADDER, truncateLadder);
+		agentProperties.put(Keys.TICK_IMPROVEMENT, false);
 		agentProperties.put(Keys.TICK_SIZE, tickSize);
 		agentProperties.put(Keys.REENTRY_RATE, 0.000001);
 		return agentProperties;
