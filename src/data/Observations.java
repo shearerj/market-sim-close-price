@@ -2,7 +2,6 @@ package data;
 
 import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.base.Predicates.not;
-import static utils.MathUtils.quantize;
 
 import java.util.Collection;
 import java.util.List;
@@ -86,6 +85,8 @@ public class Observations {
 	protected final Multiset<Class<? extends Agent>> numTrans;
 	protected final Map<Market, TimeSeries> spreads;
 	protected final Map<Market, TimeSeries> midQuotes;
+	protected final SummaryStatistics controlFundamental;
+	protected final SummaryStatistics controlPrivateValue;
 	
 	// Static information needed for observations
 	protected final Collection<? extends Player> players;
@@ -94,7 +95,7 @@ public class Observations {
 	protected final FundamentalValue fundamental;
 	protected final SimulationSpec spec;
 	protected final Set<Class<? extends Agent>> agentTypes;
-	protected final int maxTime;
+	protected final int simLength;
 
 	/**
 	 * Constructor needs to be called before the simulation starts, but with the
@@ -109,10 +110,7 @@ public class Observations {
 		this.fundamental = fundamental;
 		this.spec = spec;
 		
-		// TODO Change this / remove? Do we need maxTime anymore?
-		double arrivalRate = spec.getDefaultAgentProps().getAsDouble(Keys.ARRIVAL_RATE, 0.075);
-		int maxTime = (int) Math.round(agents.size() / arrivalRate);
-		this.maxTime = Math.max(Consts.UP_TO_TIME, quantize(maxTime, 1000));
+		this.simLength = spec.getSimulationProps().getAsInt(Keys.SIMULATION_LENGTH, 10000);
 		
 		// This is so that every agent type is output at the end, even if they
 		// completed no transactions
@@ -135,6 +133,8 @@ public class Observations {
 		this.prices = new SummaryStatistics();
 		this.transPrices = TimeSeries.create();
 		this.nbboSpreads = TimeSeries.create();
+		this.controlFundamental = new SummaryStatistics();
+		this.controlPrivateValue = new SummaryStatistics();
 	}
 	
 	/**
@@ -150,7 +150,7 @@ public class Observations {
 	/**
 	 * Gets the features, which are relevant to the non EGTA case. Features that
 	 * aren't aggregated by the EventBus, like the surplus ones, are calculated
-	 * at the current time, instead of beign summed during the simulation.
+	 * at the current time, instead of being summed during the simulation.
 	 */
 	public Map<String, Double> getFeatures() {
 		ImmutableMap.Builder<String, Double> features = ImmutableMap.builder();
@@ -160,11 +160,12 @@ public class Observations {
 		features.put("trans_stddev_price", prices.getStandardDeviation());
 		
 		for (Class<? extends Agent> type : agentTypes)
-			features.put("trans_" + type.getSimpleName().toLowerCase() + "_num", (double) numTrans.count(type));
+			features.put("trans_" + type.getSimpleName().toLowerCase() + "_num", 
+					(double) numTrans.count(type));
 		
 		SummaryStatistics medians = new SummaryStatistics();
 		for (Entry<Market, TimeSeries> entry : spreads.entrySet()) {
-			DescriptiveStatistics spreads = DSPlus.from(entry.getValue().sample(1, maxTime));
+			DescriptiveStatistics spreads = DSPlus.from(entry.getValue().sample(1, simLength));
 			double median = DSPlus.median(spreads);
 			
 			features.put("spreads_median_market_" + entry.getKey().getID() + "_to_maxtime", median);
@@ -173,7 +174,7 @@ public class Observations {
 		// average of median market spreads (for all markets in this model)
 		features.put("spreads_mean_markets_to_maxtime", medians.getMean());
 
-		DescriptiveStatistics spreads = DSPlus.from(nbboSpreads.sample(1, (int) maxTime));
+		DescriptiveStatistics spreads = DSPlus.from(nbboSpreads.sample(1, simLength));
 		features.put("spreads_median_nbbo_to_maxtime", DSPlus.median(spreads));
 		
 		TimeSeries fundPrices = fundamental.asTimeSeries();
@@ -181,9 +182,10 @@ public class Observations {
 			periodBased(features, fundPrices, period);
 		
 		// Profit and Surplus
+		// TODO remove refs to profit for background traders
 		SummaryStatistics 
 			modelProfit = new SummaryStatistics(),
-			backgroundAgentProfit = new SummaryStatistics(), // This does't quite make sense because background agents don't liquidate...
+//			backgroundAgentProfit = new SummaryStatistics(), // This does't quite make sense because background agents don't liquidate...
 			hftProfit = new SummaryStatistics(),
 			marketMakerProfit = new SummaryStatistics();
 		
@@ -191,7 +193,7 @@ public class Observations {
 			long profit = agent.getPostLiquidationProfit();
 			modelProfit.addValue(profit);
 			if (agent instanceof BackgroundAgent) {
-				backgroundAgentProfit.addValue(profit);
+//				backgroundAgentProfit.addValue(profit);
 			} else if (agent instanceof HFTAgent) {
 				hftProfit.addValue(profit);
 			} else if (agent instanceof MarketMaker) {
@@ -200,7 +202,7 @@ public class Observations {
 		}
 
 		features.put("profit_sum_total", modelProfit.getSum());
-		features.put("profit_sum_background", backgroundAgentProfit.getSum());
+//		features.put("profit_sum_background", backgroundAgentProfit.getSum());
 		features.put("profit_sum_marketmaker", marketMakerProfit.getSum());
 		features.put("profit_sum_hft", hftProfit.getSum());
 		
@@ -214,17 +216,22 @@ public class Observations {
 			features.put("surplus_sum_" + discount, surplus.getSum());
 		}
 		
+		// for control variates
+		features.put("control_common", controlFundamental.getMean());
+		
+		
 		return features.build();
 	}
 	
 	/**
 	 * Statistics that are based on the sampling period
 	 */
-	protected void periodBased(ImmutableMap.Builder<String, Double> features, TimeSeries fundPrices, int period) {
+	protected void periodBased(ImmutableMap.Builder<String, Double> features, 
+			TimeSeries fundPrices, int period) {
 		// Price discovery
 		String key = period == 1 ? "trans_rmsd" : "trans_freq_" + period + "_rmsd"; 
-		DescriptiveStatistics pr = DSPlus.from(transPrices.sample(period, (int) maxTime));
-		DescriptiveStatistics fundStat = DSPlus.from(fundPrices.sample(period, (int) maxTime));
+		DescriptiveStatistics pr = DSPlus.from(transPrices.sample(period, simLength));
+		DescriptiveStatistics fundStat = DSPlus.from(fundPrices.sample(period, simLength));
 		features.put(key, DSPlus.rmsd(pr, fundStat));
 
 		// Volatility
@@ -237,7 +244,8 @@ public class Observations {
 		for (Entry<Market, TimeSeries> entry : midQuotes.entrySet()) {
 			TimeSeries mq = entry.getValue();
 			// compute log price volatility for this market
-			Iterable<Double> filtered = Iterables.filter(mq.sample(period, (int) maxTime), not(equalTo(Double.NaN)));
+			Iterable<Double> filtered = Iterables.filter(mq.sample(period, simLength), 
+					not(equalTo(Double.NaN)));
 			double stdev = DSPlus.from(filtered).getStandardDeviation();
 
 			features.put(prefix + "_stddev_price_market_" + entry.getKey().getID(), stdev);
@@ -248,10 +256,10 @@ public class Observations {
 				logPriceVol.addValue(Math.log(stdev));
 
 			// compute log-return volatility for this market
-			// FIXME Elaine - This changed from before. Before if the ratio was
+			// XXX Note change in log-return vol from before. Before if the ratio was
 			// NaN it go thrown out. Now the previous value is used. Not sure if
 			// this is correct
-			DescriptiveStatistics mktLogReturns = DSPlus.fromLogRatioOf(mq.sample(period, (int) maxTime));
+			DescriptiveStatistics mktLogReturns = DSPlus.fromLogRatioOf(mq.sample(period, simLength));
 			double logStdev = mktLogReturns.getStandardDeviation();
 
 			features.put(prefix + "_stddev_log_return_market_" + entry.getKey().getID(), logStdev);

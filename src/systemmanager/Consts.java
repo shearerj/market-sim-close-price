@@ -27,8 +27,6 @@ public interface Consts {
 	
 	public final static int[] PERIODS = { 1, 250 };
 	
-	public final static int UP_TO_TIME = 3000;	// compute statistics up to this time
-	
 	// **********************************************************
 	// Agent, market, and model types
 	// XXX UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL

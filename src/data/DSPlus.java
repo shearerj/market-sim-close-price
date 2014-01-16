@@ -78,7 +78,7 @@ public abstract class DSPlus {
 	}
 
 	/**
-	 * Get's median without NaNs, because NaN's don't make sense for a median calculation.
+	 * Gets median without NaNs, because NaN's don't make sense for a median calculation.
 	 * Disregarding them is equivalent to alternatively making them positive and negative infinity.
 	 */
 	public static double median(DescriptiveStatistics ds) {
