@@ -134,7 +134,7 @@ public class ZIPAgent extends WindowAgent {
 		List<Transaction> pastTransactions = getWindowTransactions(currentTime);
 		if (!pastTransactions.isEmpty()) {
 			// Determine limit price or lambda
-			limitPrice = getLimitPrice(type, 1, currentTime);
+			limitPrice = this.getLimitPrice(type, currentTime);
 
 			log(INFO, sb.append("#new transactions=").append(pastTransactions.size()));
 			for (Transaction trans : pastTransactions) {
