@@ -12,7 +12,7 @@ public class MultiSimulationObservationsTest {
 
 	@Test
 	public void singlePlayerTest() {
-		MultiSimulationObservations obs = new MultiSimulationObservations();
+		MultiSimulationObservations obs = new MultiSimulationObservations(true, 1);
 		
 		obs.addObservation(new MockObservations(
 				ImmutableList.of(new PlayerObservation("back", "a", 5)),
@@ -35,7 +35,7 @@ public class MultiSimulationObservationsTest {
 	
 	@Test
 	public void twoPlayerTest() {
-		MultiSimulationObservations obs = new MultiSimulationObservations();
+		MultiSimulationObservations obs = new MultiSimulationObservations(true, 1);
 		
 		obs.addObservation(new MockObservations(
 				ImmutableList.of(

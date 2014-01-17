@@ -69,6 +69,7 @@ public class SystemManager {
 	
 	private final File simulationFolder;
 	private final int observationNumber, totalSimulations, simulationLength, modelNumber, logLevel;
+	private final boolean outputConfig;
 	private final String modelName;
 	private final long baseRandomSeed;
 	private final SimulationSpec specification;
@@ -91,9 +92,10 @@ public class SystemManager {
 		
 		Properties props = new Properties();
 		props.load(new FileInputStream(new File(Consts.CONFIG_DIR, Consts.CONFIG_FILE)));
-		logLevel = Integer.parseInt(props.getProperty("logLevel"));
+		this.logLevel = Integer.parseInt(props.getProperty("logLevel", "0"));
+		this.outputConfig = Boolean.parseBoolean(props.getProperty("outputConfig", "false"));
 		
-		this.observations = new MultiSimulationObservations();
+		this.observations = new MultiSimulationObservations(outputConfig, totalSimulations);
 	}
 	
 	/**
@@ -126,7 +128,7 @@ public class SystemManager {
 			return;
 		
 		StringBuilder logFileName = new StringBuilder(
-				simulationFolder.getPath().replace('/', '_'));
+				new File(".").toURI().relativize(simulationFolder.toURI()).getPath().replace('/', '_'));
 		logFileName.append('_').append(observationNumber).append('_');
 		logFileName.append(simulationNumber).append('_');
 		logFileName.append(LOG_DATE_FORMAT.format(new Date())).append(".txt");

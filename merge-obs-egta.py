@@ -50,8 +50,7 @@ def mergeObs(filenames):
 
         players = obs['players']
         features = obs['features']
-        config = features['config']
-        features.pop('config')
+        config = features.pop('config', features)
         n = int(config['numSims'])
 
         for feat, val in features.iteritems():

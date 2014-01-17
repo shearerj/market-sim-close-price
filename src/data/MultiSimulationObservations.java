@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
+import systemmanager.Keys;
 import systemmanager.SimulationSpec;
 
 import com.google.common.collect.Lists;
@@ -25,9 +26,13 @@ import com.google.gson.JsonObject;
  * Contains a map from strings to summary statistics for random features, and a
  * list of MutiSimPlayerObservations for the player observations.
  * 
- * @author erik
+ * TODO Integrate this into Json's Default object parsers so that I don't have
+ * to write manual parsing to json.
  * 
- * TODO Integrate this into Json's Default object parsers so that I don't have to write manual parsing to json.
+ * TODO: Clean up the dangling book keeping variables like numSims and
+ * outputConfig
+ * 
+ * @author erik
  * 
  */
 public class MultiSimulationObservations {
@@ -37,11 +42,15 @@ public class MultiSimulationObservations {
 	protected final List<MultiSimPlayerObservation> playerObservations;
 	protected final Map<String, SummaryStatistics> features;
 	protected SimulationSpec spec;
+	protected final boolean outputConfig;
+	protected final int totalSimulations;
 	
-	public MultiSimulationObservations() {
+	public MultiSimulationObservations(boolean outputConfig, int totalSimulations) {
 		this.features = Maps.newHashMap();
 		this.playerObservations = Lists.newArrayList();
 		this.spec = null;
+		this.outputConfig = outputConfig;
+		this.totalSimulations = totalSimulations;
 	}
 	
 	public void addObservation(Observations obs) {
@@ -101,9 +110,11 @@ public class MultiSimulationObservations {
 				feats.addProperty(e.getKey(), mean);
 		}
 		
-		// Add spec to config
-		// TODO Remove or change to save space in database
-		feats.add("config", spec.getRawSpec().get("configuration"));
+		// Add spec to config if necessary
+		if (outputConfig)
+			feats.add("config", spec.getRawSpec().get("configuration"));
+		else // Else just carry over numSims
+			feats.addProperty(Keys.NUM_SIMULATIONS, totalSimulations);
 		
 		return root;
 	}

@@ -68,13 +68,6 @@ cd hft_project
 git clone git@hft.eecs.umich.edu:hft.git
 \end{verbatim}
 
-\item Move to the repository directory and switch to the reorg branch
-
-\begin{verbatim}
-cd hft
-git checkout reorg
-\end{verbatim}
-
 \end{enumerate}
 
 \section{Setting up Eclipse}
@@ -97,7 +90,7 @@ somewhere else, make the necessary changes.
   \item Click OK
   \end{enumerate}
   
-\item From the File menu, select New Project.
+\item From the File menu, select New >> Project...
 \item Select ``Java Project from Existing Ant Buildfile.''
 \item Browse for the Ant buildfile; select the \path{build.xml} file located in
   the top level directory of the repository
@@ -106,13 +99,15 @@ somewhere else, make the necessary changes.
 \item At this point, the project will be imported automatically.
 \item Fix the project build path:
   \begin{enumerate}
-  \item Click File >> Properties.
+  \item Right click on the ``hft'' project and select Properties.
   \item Click Java Build Path in the left panel, then select Libraries (at the
-    top). Remove the JRE System Library.
+    top). Remove the JRE\_LIB Library.
   \item Click ``Add Library'' and add a JRE System Library (make sure you add a
     java 6 library!).
   \item Select Source at the top (next to libraries).
   \item Click Add Folder and select ``test.''
+  \item Select ``Output folder'' under hft/src and then click edit.
+  \item Select ``Project's default output folder'' and then OK to close the window.
   \item Click OK and close the window.
   \end{enumerate}
 
