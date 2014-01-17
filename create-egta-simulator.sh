@@ -13,7 +13,7 @@ fi
 SKELETON="egta"
 LIBS="lib"
 JAR="dist/hft.jar"
-NAME="$1"
+NAME="${1%.zip}"
 
 if [ -e "$NAME" ]; then
     echo "Error: Can't create a simulator with the same name as an existing directory"
