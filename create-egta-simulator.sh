@@ -22,6 +22,7 @@ fi
 
 ant
 cp -rv "$SKELETON" "$NAME"
+mkdir "$NAME/$LIBS"
 cp -v "$LIBS/"* "$NAME/$LIBS"
 cp -v "$JAR" "$NAME"
 zip -v -r "$NAME" "$NAME"
