@@ -189,10 +189,11 @@ public abstract class Agent extends Entity {
 	 */
 	public Iterable<? extends Activity> withdrawAllOrders(TimeStamp currentTime) {
 		Builder<Activity> acts = ImmutableList.builder();
-		
-		Collection<Order> allOrders = Sets.newHashSet(activeOrders);
-		for (Order order : allOrders) 
+		// activeOrders is copied, because these calls are happening instaniosuly and
+		// hence modifying active orders
+		for (Order order : ImmutableList.copyOf(activeOrders)) {
 			acts.addAll(withdrawOrder(order, currentTime));
+		}
 		return acts.build();
 	}
 	
