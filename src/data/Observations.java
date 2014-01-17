@@ -35,6 +35,7 @@ import entity.agent.BackgroundAgent;
 import entity.agent.HFTAgent;
 import entity.agent.MarketMaker;
 import entity.market.Market;
+import entity.market.Price;
 import entity.market.Transaction;
 import event.TimeStamp;
 
@@ -85,7 +86,8 @@ public class Observations {
 	protected final Multiset<Class<? extends Agent>> numTrans;
 	protected final Map<Market, TimeSeries> spreads;
 	protected final Map<Market, TimeSeries> midQuotes;
-	protected final SummaryStatistics controlFundamental;
+	protected final SummaryStatistics controlFundamentalChange;
+	protected final SummaryStatistics controlFundamentalValue;
 	protected final SummaryStatistics controlPrivateValue;
 	
 	// Static information needed for observations
@@ -133,8 +135,9 @@ public class Observations {
 		this.prices = new SummaryStatistics();
 		this.transPrices = TimeSeries.create();
 		this.nbboSpreads = TimeSeries.create();
-		this.controlFundamental = new SummaryStatistics();
 		this.controlPrivateValue = new SummaryStatistics();
+		this.controlFundamentalChange = new SummaryStatistics();
+		this.controlFundamentalValue = new SummaryStatistics();
 	}
 	
 	/**
@@ -168,14 +171,14 @@ public class Observations {
 			DescriptiveStatistics spreads = DSPlus.from(entry.getValue().sample(1, simLength));
 			double median = DSPlus.median(spreads);
 			
-			features.put("spreads_median_market_" + entry.getKey().getID() + "_to_maxtime", median);
+			features.put("spreads_median_market_" + entry.getKey().getID(), median);
 			medians.addValue(median);
 		}
 		// average of median market spreads (for all markets in this model)
-		features.put("spreads_mean_markets_to_maxtime", medians.getMean());
+		features.put("spreads_mean_markets", medians.getMean());
 
 		DescriptiveStatistics spreads = DSPlus.from(nbboSpreads.sample(1, simLength));
-		features.put("spreads_median_nbbo_to_maxtime", DSPlus.median(spreads));
+		features.put("spreads_median_nbbo", DSPlus.median(spreads));
 		
 		TimeSeries fundPrices = fundamental.asTimeSeries();
 		for (int period : Consts.PERIODS)
@@ -217,8 +220,9 @@ public class Observations {
 		}
 		
 		// for control variates
-		features.put("control_common", controlFundamental.getMean());
-		
+		features.put("control_common", controlFundamentalValue.getMean());
+		features.put("control_fund_change", controlFundamentalChange.getMean());
+		features.put("control_private", controlPrivateValue.getMean());
 		
 		return features.build();
 	}
@@ -272,6 +276,7 @@ public class Observations {
 		features.put(prefix + "_mean_log_return", logRetVol.getMean());
 	}
 	
+	// --------------------------------------
 	// Everything with an @Subscribe is a listener for objects that contain statistics.
 	
 	@Subscribe public void processSpread(SpreadStatistic statistic) {
@@ -299,17 +304,31 @@ public class Observations {
 
 		prices.addValue(transaction.getPrice().doubleValue());
 
-		transPrices.add((int) transaction.getExecTime().getInTicks(), transaction.getPrice().doubleValue());
+		transPrices.add((int) transaction.getExecTime().getInTicks(), 
+				transaction.getPrice().doubleValue());
 		
 		// update number of transactions
 		numTrans.add(transaction.getBuyer().getClass());
 		numTrans.add(transaction.getSeller().getClass());
 	}
 	
+	@Subscribe public void processPrivateValue(PrivateValueStatistic statistic) {
+		controlPrivateValue.addValue(statistic.val);
+	}
+
+	@Subscribe public void processFundamental(FundamentalChangeStatistic statistic) {
+		controlFundamentalChange.addValue(statistic.transactVal - statistic.submitVal);
+	}
+	
+	@Subscribe public void processFundamental(FundamentalValueStatistic statistic) {
+		controlFundamentalValue.addValue(statistic.val);
+	}
+	
 	@Subscribe public void deadStat(DeadEvent d) {
 		Logger.log(Logger.Level.ERROR, "Unhandled Statistic: " + d);
 	}
 	
+	// --------------------------------------
 	// These are all statistics classes that are listened for
 	
 	public static class NBBOStatistic {
@@ -346,4 +365,33 @@ public class Observations {
 		}
 	}
 
+	public static abstract class PriceStatistic {
+		protected final double val;
+		
+		public PriceStatistic(Price value) {
+			this.val = value.doubleValue();
+		}
+	}
+	
+	public static class PrivateValueStatistic extends PriceStatistic {
+		public PrivateValueStatistic(Price value) {
+			super(value);
+		}
+	}
+	
+	public static class FundamentalChangeStatistic {
+		protected final double submitVal;
+		protected final double transactVal;
+		
+		public FundamentalChangeStatistic(Price submitVal, Price transactVal) {
+			this.submitVal = submitVal.doubleValue();
+			this.transactVal = transactVal.doubleValue();
+		}
+	}
+	
+	public static class FundamentalValueStatistic extends PriceStatistic {
+		public FundamentalValueStatistic(Price value, int quantity) {
+			super(new Price(value.doubleValue() * quantity));
+		}
+	}
 }

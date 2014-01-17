@@ -65,7 +65,7 @@ public class MAMarketMakerTest {
 		agentProperties.put(Keys.TRUNCATE_LADDER, truncateLadder);
 		agentProperties.put(Keys.TICK_IMPROVEMENT, false);
 		agentProperties.put(Keys.TICK_SIZE, tickSize);
-		agentProperties.put(Keys.REENTRY_RATE, 0.000001);
+		agentProperties.put(Keys.REENTRY_RATE, 0);
 		agentProperties.put(Keys.NUM_HISTORICAL, numHistorical);
 		return agentProperties;
 	}

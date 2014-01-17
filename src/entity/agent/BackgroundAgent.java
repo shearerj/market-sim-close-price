@@ -2,6 +2,10 @@ package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static data.Observations.BUS;
+import static data.Observations.PrivateValueStatistic;
+import static data.Observations.FundamentalChangeStatistic;
+import static data.Observations.FundamentalValueStatistic;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 import iterators.ExpInterarrivals;
@@ -124,7 +128,8 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		}
 		TimeStamp timeToExecution = trans.getExecTime().minus(submissionTime);
 
-		int value = getValuation(type, trans.getQuantity(), trans.getExecTime()).intValue();
+		int value = getTransactionValuation(type, trans.getQuantity(), 
+				trans.getExecTime(), submissionTime).intValue();
 		int cost = trans.getPrice().intValue() * trans.getQuantity();
 		int transactionSurplus = (value - cost) * (type == OrderType.BUY ? 1 : -1) ;
 		
@@ -136,6 +141,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		return surplus.getValueAtDiscount(DiscountFactor.NO_DISC);
 	}
 	
+	/**
+	 * @param discount
+	 * @return
+	 */
 	public double getDiscountedSurplus(DiscountFactor discount) {
 		return surplus.getValueAtDiscount(discount);
 	}
@@ -154,7 +163,8 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	}
 	
 	/**
-	 * Returns valuation = fundamental + private_value
+	 * Returns valuation = fundamental + private value (value of cumulative
+	 * gain if over quantity > 1).
 	 * 
 	 * @param type
 	 * @param quantity
@@ -168,6 +178,49 @@ public abstract class BackgroundAgent extends ReentryAgent {
 				).nonnegative();
 	}
 
+	/**
+	 * Returns same as getValuation except also sends info on private value,
+	 * fundamental value to EventBus.
+	 * 
+	 * Note that this method has to subtract the transacted quantity from
+	 * position balance (using the pre-transaction balance to determine the
+	 * valuation).
+	 * 
+	 * @param type
+	 * @param quantity
+	 * @param currentTime
+	 * @param submissionTime
+	 * @return
+	 */
+	protected Price getTransactionValuation(OrderType type, int quantity, 
+			TimeStamp currentTime, TimeStamp submissionTime) {
+		
+		// Determine the pre-transaction balance
+		int originalBalance = this.positionBalance + (type.equals(BUY) ? -1 : 1) * quantity;
+		Price privateValue = this.privateValue.getValueFromQuantity(originalBalance, 
+				quantity, type);
+		Price executionFundamental = fundamental.getValueAt(currentTime);
+		Price submissionFundamental = fundamental.getValueAt(submissionTime);
+		
+		BUS.post(new PrivateValueStatistic(privateValue));
+		BUS.post(new FundamentalChangeStatistic(submissionFundamental, executionFundamental));
+		BUS.post(new FundamentalValueStatistic(executionFundamental, quantity));
+		
+		return new Price(executionFundamental.intValue() * quantity
+				+ privateValue.intValue()).nonnegative();
+	}
+	
+	/**
+	 * @param type
+	 * @param currentTime
+	 * @param submissionTime
+	 * @return
+	 */
+	protected Price getTransactionValuation(OrderType type, TimeStamp currentTime,
+			TimeStamp submissionTime) {
+		return getTransactionValuation(type, 1, currentTime, submissionTime);
+	}
+	
 	/**
 	 * Returns the limit price for a new order of quantity 1.
 	 * 

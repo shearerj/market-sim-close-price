@@ -9,6 +9,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import logger.Logger;
 
@@ -25,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
 import entity.agent.Agent;
+import entity.agent.DummyPrivateValue;
 import entity.agent.MockAgent;
 import entity.agent.MockBackgroundAgent;
 import entity.infoproc.SIP;
@@ -93,7 +95,7 @@ public class ObservationsTest {
 		assertEquals(5, obs.spreads.get(market2).sample(1,1).get(0), 0.001);
 		
 		// Mean of 3 and 5
-		assertEquals(4, obs.getFeatures().get("spreads_mean_markets_to_maxtime"), 0.001);
+		assertEquals(4, obs.getFeatures().get("spreads_mean_markets"), 0.001);
 	}
 	
 	@Test
@@ -266,7 +268,7 @@ public class ObservationsTest {
 		market1.clear(TimeStamp.ZERO);
 		assertEquals(102, obs.prices.getMean(), 0.001);
 		
-		// Multi quantity XXX Elaine - Prices doesn't weight by quantity, correct?
+		// Multi quantity
 		setupObservations(agent1, agent2);
 		market1.submitOrder(agent1, BUY, new Price(100), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent2, SELL, new Price(100), 1, TimeStamp.ZERO);
@@ -334,6 +336,44 @@ public class ObservationsTest {
 	}
 	
 	@Test
+	public void controlPVTest() {
+		DummyPrivateValue pv = new DummyPrivateValue(2, ImmutableList.of(
+				new Price(12), new Price(10), new Price(-2), new Price(-5)));
+		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1, pv, 0, 5000);
+		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1, pv, 0, 5000);
+		setupObservations(agent1, agent2);
+		
+		market1.submitOrder(agent1, BUY, new Price(105), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent2, SELL, new Price(104), 1, TimeStamp.create(1));
+		Executer.execute(market1.clear(TimeStamp.create(1)));
+		assertEquals(4, obs.controlPrivateValue.getMean(), 0.001);
+		assertEquals(2, obs.controlFundamentalChange.getN());
+	}
+	
+	@Test
+	public void controlFundamentalTest() {
+		Random rand = new Random(1);
+		FundamentalValue fund = FundamentalValue.create(0.5, 100000, 100000000, rand);
+		fund.computeFundamentalTo(5);
+		Price val1 = fund.getValueAt(TimeStamp.ZERO);
+		Price val2 = fund.getValueAt(TimeStamp.create(1));
+		double val = val2.doubleValue() - val1.doubleValue();
+		
+		Agent agent1 = new MockBackgroundAgent(fund, sip, market1);
+		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+		setupObservations(agent1, agent2);
+		
+		market1.submitOrder(agent1, BUY, new Price(105), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent2, SELL, new Price(104), 1, TimeStamp.create(1));
+		Executer.execute(market1.clear(TimeStamp.create(1)));
+		assertEquals(val/2, obs.controlFundamentalChange.getMean(), 0.001);
+		assertEquals(2, obs.controlFundamentalChange.getN());
+		
+		assertEquals(val2.doubleValue()/2 + 50000, obs.controlFundamentalValue.getMean(), 0.001);
+		assertEquals(2, obs.controlFundamentalValue.getN());
+	}
+	
+	@Test
 	public void playerTest() {
 		Agent backgroundAgent, agent;
 		Player backgroundPlayer, player;
@@ -348,7 +388,7 @@ public class ObservationsTest {
 		// Double fundamental
 		market1.submitOrder(agent, BUY, new Price(200000), 1, TimeStamp.ZERO);
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
-		// To make sure agetn1 sees clear
+		// To make sure agent1 sees clear
 		Executer.execute(market1.clear(TimeStamp.ZERO));
 		agent.liquidateAtFundamental(TimeStamp.ZERO);
 		for (PlayerObservation po : obs.getPlayerObservations()) {

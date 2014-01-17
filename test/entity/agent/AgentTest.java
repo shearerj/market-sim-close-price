@@ -341,7 +341,7 @@ public class AgentTest {
 	}
 	
 	@Test
-	public void addTransactionTest() {
+	public void processTransaction() {
 		TimeStamp time = TimeStamp.ZERO;
 		MockAgent agent2 = new MockAgent(fundamental, sip, market);
 		
@@ -351,13 +351,45 @@ public class AgentTest {
 		market.submitOrder(agent, BUY, new Price(110), 1, time);
 		market.submitOrder(agent2, SELL, new Price(100), 1, time);
 		assertEquals(0, market.getTransactions().size());
+		assertEquals(0, agent.positionBalance);
+		assertEquals(0, agent2.positionBalance);
 		
 		// Testing the market for the correct transactions
-		Executer.execute(market.clear(time));	// will call agent's addTransaction
+		Executer.execute(market.clear(time));	// will call processTransaction
 		assertEquals( 1, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals( 1, agent.transactions.size());
 		assertEquals(tr, agent.transactions.get(0));
+		assertEquals( 1, agent.positionBalance );
+		assertEquals( -110, agent.profit );
+		assertEquals( -1, agent2.positionBalance );
+		assertEquals( 110, agent2.profit );
+	}
+	
+	@Test
+	public void processTransactionMultiQuantity() {
+		TimeStamp time = TimeStamp.ZERO;
+		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		
+		assertEquals( 0, agent.transactions.size());
+		
+		// Creating and adding bids
+		market.submitOrder(agent, BUY, new Price(110), 3, time);
+		market.submitOrder(agent2, SELL, new Price(100), 2, time);
+		assertEquals(0, market.getTransactions().size());
+		assertEquals(0, agent.positionBalance);
+		assertEquals(0, agent2.positionBalance);
+		
+		// Testing the market for the correct transactions
+		Executer.execute(market.clear(time));	// will call processTransaction
+		assertEquals( 1, market.getTransactions().size() );
+		Transaction tr = market.getTransactions().get(0);
+		assertEquals( 1, agent.transactions.size());
+		assertEquals(tr, agent.transactions.get(0));
+		assertEquals( 2, agent.positionBalance );
+		assertEquals( -220, agent.profit );
+		assertEquals( -2, agent2.positionBalance );
+		assertEquals( 220, agent2.profit );
 	}
 	
 	@Test

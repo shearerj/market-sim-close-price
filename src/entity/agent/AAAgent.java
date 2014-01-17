@@ -27,7 +27,6 @@ import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
-import entity.market.Quote;
 import entity.market.Transaction;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
@@ -308,9 +307,8 @@ public class AAAgent extends WindowAgent {
 		
 		// Determining the offer price to (possibly) submit
 		// BestBidAsk lastNBBOQuote = sip.getNBBO(); // XXX use NBBO?
-		Quote quote = marketQuoteProcessor.getQuote();
-		Price bid = quote.getBidPrice();
-		Price ask = quote.getAskPrice();
+		Price bid = this.getQuote().getBidPrice();
+		Price ask = this.getQuote().getAskPrice();
 		
 		// if no bid or no ask, submit ZI strategy bid
 		if (bid == null || ask == null) {
