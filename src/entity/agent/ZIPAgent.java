@@ -105,7 +105,8 @@ public class ZIPAgent extends WindowAgent {
 				props.getAsDouble(Keys.GAMMA_MAX, 0.1),
 				props.getAsDouble(Keys.BETA_MIN, 0.1),
 				props.getAsDouble(Keys.BETA_MAX, 0.5),
-				props.getAsDouble(Keys.COEFF_A, 0.05), props.getAsDouble(Keys.COEFF_R, 0.05));
+				props.getAsDouble(Keys.COEFF_A, 0.05), 
+				props.getAsDouble(Keys.COEFF_R, 0.05));
 	}
 
 	@Override

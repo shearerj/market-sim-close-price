@@ -73,7 +73,7 @@ public class AAAgentTest {
 		agentProperties.put(Keys.GAMMA, 2);
 		agentProperties.put(Keys.BETA_R, 0.4); 
 		agentProperties.put(Keys.BETA_T, 0.4); 
-		
+
 		agentProperties.put(Keys.DEBUG, true);
 	}
 
@@ -83,16 +83,36 @@ public class AAAgentTest {
 		// Creating the MockMarket
 		market = new MockMarket(sip);
 	}
-	
-	// TODO testing of effects of varying parameters
-	
-	// TODO test each individual method as well
-	
+
 	// TODO test target price
-	
-	// TODO test moving average
-	
-	
+
+	@Test
+	public void tauChange() {
+		double r = 0.5;
+		AAAgent agent = addAgent(OrderType.BUY);
+		agent.theta = 2;
+
+		assertEquals(0.268, agent.tauChange(r), 0.001);
+	}
+
+	@Test
+	public void estimateEquilibrium() {
+		// this just computes a weighted moving average
+		// Adding Transactions and Bids
+		
+		addOrder(BUY, 50000, 1, 10);
+		addOrder(SELL, 150000, 1, 15);
+		addTransaction(75000, 1, 20);
+		addTransaction(90000, 1, 25);
+
+		// Creating a buyer
+		AAAgent agent = addAgent(OrderType.BUY);
+		
+		// not enough transactions, need to truncate
+		// TODO
+
+	}
+
 	@Test
 	public void initialBuyer() {
 		Logger.log(Logger.Level.DEBUG,
@@ -334,7 +354,7 @@ public class AAAgentTest {
 		assertCorrectBid(agent, 130000, 135000, 1);
 	}
 
-	
+
 	@Test
 	public void ExtraBuyerPassive() {
 		Logger.log(Logger.Level.DEBUG,
@@ -349,7 +369,7 @@ public class AAAgentTest {
 		AAAgent agent = addAgent(OrderType.BUY);
 		agent.setAggression(-1);
 		executeAgentStrategy(agent, 100);
-		
+
 		// Asserting the bid is correct
 		assertCorrectBid(agent, 30000, 35000, 1);
 	}
@@ -374,7 +394,7 @@ public class AAAgentTest {
 		// Asserting the bid is correct
 		assertCorrectBid(agent, 38000, 41000, 1);
 	}
-	
+
 	@Test
 	public void ExtraBuyerActive() {
 		Logger.log(Logger.Level.DEBUG,
@@ -431,7 +451,7 @@ public class AAAgentTest {
 		AAAgent agent = addAgent(OrderType.SELL);
 		agent.setAggression(-1);
 		executeAgentStrategy(agent, 100);
-		
+
 		// Asserting the bid is correct
 		int low = 95000 + (int) (Price.INF.doubleValue() / 3);
 		int high = 105000 + (int) (Price.INF.doubleValue() / 3);
@@ -452,7 +472,7 @@ public class AAAgentTest {
 		AAAgent agent = addAgent(OrderType.SELL);
 		agent.setAggression(0);
 		executeAgentStrategy(agent, 100);
-		
+
 		// Asserting the bid is correct
 		assertCorrectBid(agent, 132000, 135000, 1);
 	}
@@ -475,7 +495,7 @@ public class AAAgentTest {
 		assertTrue(agent.aggression > 0);
 		assertCorrectBid(agent, 50000, 100000, 1);
 	}
-	
+
 	@Test
 	public void SellerAggressionIncrease() {
 		Logger.log(Logger.Level.DEBUG, "\nTesting aggression learning");
@@ -494,21 +514,21 @@ public class AAAgentTest {
 		assertTrue(agent.aggression > 0);
 		assertCorrectBid(agent, 100000, 150000, 1);
 	}
-	
+
 	/**
 	 * Test short-term learning (EQ 7)
 	 */
 	@Test
 	public void updateAggressionBuyer() {
 		Logger.log(Logger.Level.DEBUG, "\nTesting aggression update (buyer)");
-		
+
 		// Adding Bids and Transactions
 		addOrder(BUY, 50000, 1, 10);
 		addOrder(SELL, 150000, 1, 10);
 		addTransaction(105000, 1, 20);
 		addTransaction(100000, 1, 35);
 		addTransaction(95000, 1, 40);
-		
+
 		// Setting up the agent
 		EntityProperties testProps = new EntityProperties(agentProperties);
 		testProps.put(Keys.THETA, -3);
@@ -516,11 +536,11 @@ public class AAAgentTest {
 		double oldAggression = 0.5;
 		agent.setAggression(oldAggression);
 		executeAgentStrategy(agent, 100);
-		
+
 		checkAggressionUpdate(BUY, agent.lastTransactionPrice, agent.targetPrice,
 				oldAggression, agent.aggression);
 	}
-	
+
 	/**
 	 * Test short-term learning (EQ 7)
 	 * Note that the value of theta affects whether or not this test will pass
@@ -529,7 +549,7 @@ public class AAAgentTest {
 	@Test
 	public void updateAggressionSeller() {
 		Logger.log(Logger.Level.DEBUG, "\nTesting aggression update (seller)");
-		
+
 		// Adding Bids and Transactions
 		addOrder(BUY, 50000, 1, 10);
 		addOrder(SELL, 150000, 1, 10);
@@ -538,7 +558,7 @@ public class AAAgentTest {
 		addTransaction(110000, 1, 30);
 		addTransaction(100000, 1, 35);
 		addTransaction(95000, 1, 40);
-		
+
 		// Setting up the agent
 		EntityProperties testProps = new EntityProperties(agentProperties);
 		testProps.put(Keys.THETA, 2);
@@ -546,11 +566,11 @@ public class AAAgentTest {
 		double oldAggression = 0.2;
 		agent.setAggression(oldAggression);
 		executeAgentStrategy(agent, 100);
-		
+
 		checkAggressionUpdate(SELL, agent.lastTransactionPrice, agent.targetPrice,
 				oldAggression, agent.aggression);
 	}
-	
+
 	/**
 	 * Note that for extramarginal buyer, must have last transaction price less
 	 * than the limit otherwise rShout gets set to 0.
@@ -558,7 +578,7 @@ public class AAAgentTest {
 	@Test
 	public void randomizedUpdateAggressionBuyer() {
 		Logger.log(Logger.Level.DEBUG, "\nTesting aggression update (buyer)");
-		
+
 		// Adding Bids and Transactions
 		addOrder(BUY, (int) Rands.nextUniform(rand, 25000, 75000), 1, 10);
 		addOrder(SELL, (int) Rands.nextUniform(rand, 125000, 175000), 1, 10);
@@ -588,7 +608,7 @@ public class AAAgentTest {
 	@Test
 	public void randomizedUpdateAggressionSeller() {
 		Logger.log(Logger.Level.DEBUG, "\nTesting aggression update (seller)");
-		
+
 		// Adding Bids and Transactions
 		addOrder(BUY, (int) Rands.nextUniform(rand, 25000, 75000), 1, 10);
 		addOrder(SELL, (int) Rands.nextUniform(rand, 125000, 175000), 1, 10);
@@ -610,7 +630,7 @@ public class AAAgentTest {
 		checkAggressionUpdate(SELL, agent.lastTransactionPrice, agent.targetPrice,
 				oldAggression, agent.aggression);
 	}
-	
+
 	@Test
 	public void extraTest() {
 		for (int i = 0; i < 100; i++) {
@@ -621,9 +641,9 @@ public class AAAgentTest {
 		}
 	}
 
-	
+
 	// Helper methods
-	
+
 	/**
 	 * Check aggression updating
 	 */
@@ -647,7 +667,7 @@ public class AAAgentTest {
 						oldAggression <= aggression); // more aggressive
 		}
 	}
-	
+
 	private void executeImmediateActivities(Iterable<? extends Activity> acts, TimeStamp time) {
 		// FIXME Change this to use EventManager
 		ArrayList<Activity> queue = Lists.newArrayList(filterNonImmediateAndReverse(acts));
@@ -657,7 +677,7 @@ public class AAAgentTest {
 			queue.addAll(filterNonImmediateAndReverse(a.execute(time)));
 		}
 	}
-	
+
 	private Collection<? extends Activity> filterNonImmediateAndReverse(Iterable<? extends Activity> acts) {
 		ArrayList<Activity> array = Lists.newArrayList();
 		for (Activity a : acts)
@@ -666,16 +686,16 @@ public class AAAgentTest {
 		Collections.reverse(array);
 		return array;
 	}
-	
+
 	private AAAgent addAgent(OrderType type) {
 		EntityProperties testProps = new EntityProperties(agentProperties);
 		testProps.put(Keys.BUYER_STATUS, type.equals(OrderType.BUY));
 		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);	// private values all 0
-		
+
 		return new AAAgent(new TimeStamp(0), fundamental, sip, market, rand,
 				testProps);
 	}
-	
+
 	private AAAgent addAgent(OrderType type, EntityProperties testProps) {
 		testProps.put(Keys.BUYER_STATUS, type.equals(OrderType.BUY));
 		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);	// private values all 0
@@ -693,7 +713,7 @@ public class AAAgentTest {
 
 		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
 		// the transaction would work
-		
+
 	}
 
 	private void addTransaction(int p, int q, int time) {
@@ -705,7 +725,7 @@ public class AAAgentTest {
 		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
 		// the transaction would work
 	}
-	
+
 	private void executeAgentStrategy(Agent agent, int time) {
 		TimeStamp currentTime = new TimeStamp(time);
 		Iterable<? extends Activity> test = agent.agentStrategy(currentTime);
@@ -715,21 +735,21 @@ public class AAAgentTest {
 			if (act instanceof SubmitNMSOrder)
 				act.execute(currentTime);
 	}
-	
+
 	private void assertCorrectBid(Agent agent, int price, int quantity) {
 		Collection<Order> orders = agent.activeOrders;
 		// Asserting the bid is correct
 		assertNotEquals("Num orders is incorrect", 0, orders.size());
 		Order order = Iterables.getFirst(orders, null);
-		
+
 		assertNotEquals("Order agent is null", null, order.getAgent());
 		assertEquals("Order agent is incorrect", agent, order.getAgent());
-		
+
 		Price bidPrice = order.getPrice();
 		assertEquals("Price is incorrect", new Price(price), bidPrice);
 		assertEquals("Quantity is incorrect", quantity, order.getQuantity());
 	}
-	
+
 	private void assertCorrectBid(Agent agent, int low, int high,
 			int quantity) {
 		Collection<Order> orders = agent.activeOrders;
@@ -748,7 +768,7 @@ public class AAAgentTest {
 
 		assertEquals("Quantity is incorrect", quantity, order.getQuantity());
 	}
-	
+
 	private void assertCorrectBidQuantity(Agent agent, int quantity) {
 		assertCorrectBid(agent, 0, Integer.MAX_VALUE, quantity);
 	}

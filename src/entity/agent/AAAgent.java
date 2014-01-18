@@ -62,7 +62,7 @@ public class AAAgent extends WindowAgent {
 	private double betaR; // learning coefficient for r (short term) (0,1)
 	private double betaT; // learning coefficient for theta (long term) (0,1)
 	private int eta; // price determination coefficient. [1,inf)
-	private int historical; // number of historical prices to look at, N > 0
+	private int numHistorical; // number of historical prices to look at, N > 0
 	
 	//Agent parameters
 	private double rho;		// factor for weighted moving average
@@ -90,8 +90,8 @@ public class AAAgent extends WindowAgent {
 		checkArgument(betaT > 0 && betaT < 1, "Beta for theta must be in (0,1)");
 		checkArgument(eta >= 1, "Eta must be in [1, inf)");
 		checkArgument(historical > 0, "Number of historical prices must be positive");
-		checkArgument(lambdaA >= 0, "lambda_A must be positive");
-		checkArgument(lambdaR >= 0, "lambda_R must be positive");
+		checkArgument(lambdaA >= 0, "lambdaA must be positive");
+		checkArgument(lambdaR >= 0, "lambdaR must be positive");
 		
 		this.type = buyerStatus ? BUY : SELL;	// for debugging
 		this.lastTransactionPrice = null;
@@ -109,7 +109,7 @@ public class AAAgent extends WindowAgent {
 		this.aggressions = new Aggression(privateValue.getMaxAbsPosition(), aggression);
 		
 		//Initializing strategy variables
-		this.historical = historical;
+		this.numHistorical = historical;
 		this.lambdaA = lambdaA;
 		this.lambdaR = lambdaR;
 		this.gamma = gamma;
@@ -217,7 +217,7 @@ public class AAAgent extends WindowAgent {
 	 * @return price target according to the AA Strategy
 	 */
 	private Price determineTargetPrice(Price limitPrice, Price equilibriumPrice) {
-		// Error Checking - cannot compute if movingAverage is invalid FIXME
+		// Error Checking - cannot compute this if movingAverage is invalid FIXME
 		// NOTE: equilibrium price should never be -1 because the target
 		// price will only be determined if there has been 1+ transactions
 		if (equilibriumPrice == null) return null;
@@ -291,8 +291,11 @@ public class AAAgent extends WindowAgent {
 	
 	/**
 	 * Bidding layer. Section 4.4, Eq (10, 11)
-	 * If buyer's (seller's) limit price is lower (higher) than the current bid/ask, cannot
-	 * submit any bid/ask and waits until next round.
+	 * If buyer's (seller's) limit price is lower (higher) than the current 
+	 * bid/ask, cannot submit any bid/ask and waits until next round.
+	 * 
+	 * Note that lambda A must be multiplied by TICKS_PER_DOLLAR, as the paper
+	 * adds it directly to the price.
 	 * 
 	 * @param limitPrice
 	 * @param targetPrice
@@ -396,6 +399,10 @@ public class AAAgent extends WindowAgent {
 	}	// end of bidding layer
 	
 
+	/**
+	 * @param r
+	 * @return
+	 */
 	protected double tauChange(double r) {
 		return (Math.exp(r * theta) - 1) / (Math.exp(theta) - 1);
 	}
@@ -563,7 +570,7 @@ public class AAAgent extends WindowAgent {
 		// Determining alpha, Eq (8)
 		double alpha = 0;
 		int num = 0;
-		for (int i = transactions.size() - 1; i >= 0 && num < historical; i--) {
+		for (int i = transactions.size() - 1; i >= 0 && num < numHistorical; i--) {
 			Price price = transList.get(i).getPrice();
 			if (price != null) {
 				alpha += Math.pow(price.intValue() - equilibriumPrice.intValue(), 2);
@@ -586,7 +593,7 @@ public class AAAgent extends WindowAgent {
 				+ thetaMin;
 
 		// If number of transactions < historical, do not update theta
-		if (numTransactionsUsed < historical)
+		if (numTransactionsUsed < numHistorical)
 			return theta;
 		
 		return theta + betaT * (thetaStar - theta);	// Eq (8)
@@ -594,8 +601,8 @@ public class AAAgent extends WindowAgent {
 
 	
 	/**
-	 * Computes weighted moving average. Truncates if fewer than required transactions
-	 * available.
+	 * Computes weighted moving average. Truncates if fewer than required 
+	 * number of transactions available.
 	 * 
 	 * Section 4.1, Eq. (2) in Vytelingum et al
 	 * 
@@ -608,7 +615,7 @@ public class AAAgent extends WindowAgent {
 		
 		// Computing the weights for the moving average
 		// normalize by dividing by sumWeights
-		int numTrans = Math.min(historical, transactions.size());
+		int numTrans = Math.min(numHistorical, transactions.size());
 		double[] weights = new double[numTrans];
 		weights[0] = 1; // just for computation purposes, will be normalized later
 		double sumWeights = weights[0];
@@ -623,7 +630,6 @@ public class AAAgent extends WindowAgent {
 			total += transactions.get(i).getPrice().intValue() * weights[i] / sumWeights; 
 		}
 		// double movingAverage = total / numTrans; // XXX this is a typo in the paper 
-		// return new MovingAverage(movingAverage, numTrans);
 		numTransactionsUsed = numTrans;
 		return new Price(total);
 	}
@@ -654,7 +660,7 @@ public class AAAgent extends WindowAgent {
 		}
 		
 		public Aggression(int maxPosition, double initialValue) {
-			checkArgument(maxPosition > 0, "Max Position must be positive");
+			checkArgument(maxPosition > 0, "Max position must be positive");
 			
 			// Identical to legacy generation in final output
 			this.offset = maxPosition;
