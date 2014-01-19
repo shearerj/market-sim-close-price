@@ -89,7 +89,7 @@ public class ZIRAgent extends BackgroundAgent {
 //		}
 
 		if (withdrawOrders) {
-			log(INFO, sb.append(" Withdraw all orders"));
+			log(INFO, sb.append(" Withdraw all orders."));
 			acts.addAll(withdrawAllOrders(currentTime));
 		}
 		// 0.50% chance of being either long or short
