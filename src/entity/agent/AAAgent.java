@@ -41,19 +41,18 @@ import fourheap.Order.OrderType;
  *
  */
 public class AAAgent extends WindowAgent {
-	
+
 	private static final long serialVersionUID = 2418819222375372886L;
 	private static final Ordering<Price> pcomp = Ordering.natural();
-	
+
 	// Agent variables
 	protected OrderType type; // randomly assigned at initialization
 	protected boolean withdrawOrders; 	// true if withdraw orders at each reentry
 	protected Price lastTransactionPrice;
 	protected Price equilibriumPrice;
 	protected Price targetPrice; 
-	protected int numTransactionsUsed;	// used in moving avg computation
 	private boolean debug;
-	
+
 	//Agent strategy variables
 	// Based on Vytelingum's sensitivity analysis, eta and N are most important
 	private double lambdaR; // coefficient of relative perturbation of delta, (0,1)?
@@ -63,9 +62,9 @@ public class AAAgent extends WindowAgent {
 	private double betaT; // learning coefficient for theta (long term) (0,1)
 	private int eta; // price determination coefficient. [1,inf)
 	private int numHistorical; // number of historical prices to look at, N > 0
-	
+
 	//Agent parameters
-	private double rho;		// factor for weighted moving average
+	private double rho;		// factor for weighted moving average (0.9 from paper)
 	protected Aggression aggressions;
 	protected double aggression; // current short term learning variable, r in [-1,1]
 	protected double theta; // long term learning variable
@@ -85,20 +84,19 @@ public class AAAgent extends WindowAgent {
 		super(arrivalTime, fundamental, sip, market, rand, reentryRate, 
 				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize, 
 				bidRangeMin, bidRangeMax, windowLength);
-		
+
 		checkArgument(betaR > 0 && betaR < 1, "Beta for r must be in (0,1)");
 		checkArgument(betaT > 0 && betaT < 1, "Beta for theta must be in (0,1)");
 		checkArgument(eta >= 1, "Eta must be in [1, inf)");
 		checkArgument(historical > 0, "Number of historical prices must be positive");
 		checkArgument(lambdaA >= 0, "lambdaA must be positive");
 		checkArgument(lambdaR >= 0, "lambdaR must be positive");
-		
+
 		this.type = buyerStatus ? BUY : SELL;	// for debugging
 		this.lastTransactionPrice = null;
 		this.equilibriumPrice = null;
 		this.targetPrice = null;
-		numTransactionsUsed = 0;
-		
+
 		//Initializing parameters
 		this.aggression = aggression;
 		this.theta = theta;
@@ -107,7 +105,7 @@ public class AAAgent extends WindowAgent {
 		this.alphaMin = Price.INF.intValue();
 		this.alphaMax = -1;
 		this.aggressions = new Aggression(privateValue.getMaxAbsPosition(), aggression);
-		
+
 		//Initializing strategy variables
 		this.numHistorical = historical;
 		this.lambdaA = lambdaA;
@@ -118,7 +116,7 @@ public class AAAgent extends WindowAgent {
 		this.betaT = betaT;		// paper randomizes to U[0.2, 0.6]
 		this.rho = 0.9; 		// from paper, to emphasize converging pattern
 	}
-	
+
 	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
 			Market market, Random rand, EntityProperties props) {
 		this(arrivalTime, fundamental, sip, market, rand,
@@ -131,7 +129,7 @@ public class AAAgent extends WindowAgent {
 				props.getAsBoolean(Keys.WITHDRAW_ORDERS, true),
 				props.getAsInt(Keys.WINDOW_LENGTH, 5000),
 				props.getAsDouble(Keys.AGGRESSION, 0),
-				props.getAsDouble(Keys.THETA, -8),
+				props.getAsDouble(Keys.THETA, -4),
 				props.getAsDouble(Keys.THETA_MIN, -8),
 				props.getAsDouble(Keys.THETA_MAX, 2),
 				props.getAsInt(Keys.NUM_HISTORICAL, 5), 
@@ -142,7 +140,7 @@ public class AAAgent extends WindowAgent {
 				props.getAsDouble(Keys.BETA_R, Rands.nextUniform(rand, 0.2, 0.6)), 
 				props.getAsDouble(Keys.BETA_T, Rands.nextUniform(rand, 0.2, 0.6)), 
 				props.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean()));
-		
+
 		debug = props.getAsBoolean(Keys.DEBUG, false);
 	}
 
@@ -150,65 +148,64 @@ public class AAAgent extends WindowAgent {
 	public String toString() {
 		return "AA " + super.toString();
 	}
-	
+
 	@Override
 	public Collection<Activity> agentStrategy(TimeStamp currentTime) {
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));
-		
+
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append("::agentStrategy: ");
 
 		// withdraw previous orders
 		if (withdrawOrders) acts.addAll(withdrawAllOrders(currentTime));
-		
+
 		// re-initialize variables
 		lastTransactionPrice = null;
 		equilibriumPrice = null;
 		targetPrice = null;
-		numTransactionsUsed = 0;
 		if (!debug) type = rand.nextBoolean() ? BUY : SELL;
-		
+
 		// Update aggression
 		aggression = aggressions.getValue(positionBalance, type);
 
 		// Updating Price Limit (valuation of security)
 		Price limitPrice = this.getLimitPrice(type, currentTime);
-		
+
 		ImmutableList<Transaction> transactions = this.getWindowTransactions(currentTime);
 		if (!transactions.isEmpty())
 			lastTransactionPrice = transactions.get(transactions.size()-1).getPrice();
-		
+
 		// Estimate equilibrium price using weighted moving average
 		equilibriumPrice = this.estimateEquilibrium(transactions);
 		log(INFO, sb.append("estimateEquilibrium: price=").append(equilibriumPrice));
-		
+
 		// Aggressiveness layer
 		// ----------------------
 		// Determine the target price tau using current r & theta
 		targetPrice = this.determineTargetPrice(limitPrice, equilibriumPrice);
 		log(INFO, sb.append("determineTargetPrice: target=").append(targetPrice));
-		
+
 		// Adaptive layer
 		// ----------------------
 		// Update the short term learning variable (aggressiveness r)
 		double oldAggression = aggression;
 		this.updateAggression(limitPrice, targetPrice, equilibriumPrice, lastTransactionPrice);
 		log(INFO, sb.append("updateAggression: lastPrice=").append(lastTransactionPrice) 
-					.append(", r=").append(format(oldAggression))
-					.append("-->r_new=").append(format(aggression)));
-		
+				.append(", r=").append(format(oldAggression))
+				.append("-->r_new=").append(format(aggression)));
+
 		// Update long term learning variable (adaptiveness theta)
 		double oldTheta = theta;
-		theta = this.updateTheta(equilibriumPrice, numTransactionsUsed, transactions);
+		this.updateTheta(equilibriumPrice, transactions);
 		log(INFO, sb.append("updateTheta: theta=").append(format(oldTheta)) 
-					.append("-->theta_new=").append(format(theta)));
+				.append("-->theta_new=").append(format(theta)));
 
 		// Bidding Layer
 		acts.addAll(this.biddingLayer(limitPrice, targetPrice, 1, currentTime));
 		return acts.build();
 	}
-	
+
 	/**
 	 * Section 4.2, Eq (3, 4, 5, 6) in Vytelingum et al
 	 * 
@@ -216,79 +213,78 @@ public class AAAgent extends WindowAgent {
 	 * @param equilibriumPrice
 	 * @return price target according to the AA Strategy
 	 */
-	private Price determineTargetPrice(Price limitPrice, Price equilibriumPrice) {
-		// Error Checking - cannot compute this if movingAverage is invalid FIXME
-		// NOTE: equilibrium price should never be -1 because the target
+	protected Price determineTargetPrice(Price limitPrice, Price equilibriumPrice) {
+		// NOTE: equilibrium price should never be null because the target
 		// price will only be determined if there has been 1+ transactions
 		if (equilibriumPrice == null) return null;
-		
-		Price tau; // target price
+
+		Price tau = null; // target price
 		double eqPrice = equilibriumPrice.intValue();
 		double limit = limitPrice.intValue();
-		
-		// Buyers
-		if (type.equals(BUY)) {
+
+		switch (type) {
+		case BUY:
 			// Intramarginal - price limit > p* (competitive equilibrium price)
 			if (limitPrice.greaterThan(equilibriumPrice)) {
-				if (aggression == -1) { // passive
+				if (aggression == -1) { 		// passive
 					tau = Price.ZERO;
 				} else if (aggression < 0) {
 					tau = new Price(eqPrice * (1 - tauChange(-aggression)));	// Eq (3)
-				} else if (aggression == 0) {	//active
+				} else if (aggression == 0) {	// active
 					tau = equilibriumPrice;
 				} else if (aggression < 1) {	// aggressive
 					tau = new Price(eqPrice + (limit - eqPrice) 
 							* tauChange(aggression));	// Eq (3)
-				} else { // completely aggressive, submits at limit
+				} else { 						// completely aggressive
 					tau = limitPrice;
 				}
 			}
 			// Extramarginal - price limit is less than p*
 			else {
-				if (aggression == -1) {	// passive
+				if (aggression == -1) {			// passive
 					tau = Price.ZERO;
-				} else if (aggression < 0) {
+				} else if (aggression < 0) {	// less aggressive on limit
 					tau = new Price(limit * (1 - tauChange(-aggression)));	// Eq (5)
 				} else {
-					// aggression clipped at 0
-					tau = limitPrice;
+					tau = limitPrice;			// aggression clipped at 0
 				}
 			}
-		}
-		// Sellers
-		else {
+			break;
+			
+		case SELL:
 			// Intramarginal - cost is less than p*
 			if (limitPrice.lessThan(equilibriumPrice)) {
-				if(aggression == -1) {	// passive
+				if (aggression == -1) {			// passive
 					tau = Price.INF;
 				} else if (aggression < 0) {
 					tau = new Price(eqPrice + (Price.INF.intValue() - eqPrice) 
 							* tauChange(-aggression)); // Eq (4)
-				} else if (aggression == 0) {	//active
+				} else if (aggression == 0) {	// active
 					tau = equilibriumPrice;
-				} else if (aggression < 1){	// aggressive
+				} else if (aggression < 1){		// aggressive
 					tau = new Price(limit + (eqPrice - limit) 
 							* (1 - tauChange(aggression)));	// Eq (4)
-				} else { // completely aggressive
+				} else { 						// completely aggressive
 					tau = limitPrice;
 				}
 			}
 			// Extramarginal - cost is greater than p*
 			else {
-				if (aggression == -1) { // passive
+				if (aggression == -1) { 		// passive
 					tau = Price.INF;
-				} else if (aggression < 0) {
+				} else if (aggression < 0) {	// less aggressive on limit
 					tau = new Price(limit + (Price.INF.intValue() - limit) *
 							tauChange(-aggression));	// Eq (6)
-				} else { // aggressive
+				} else { 						// aggressive
 					tau = limitPrice;
 				}
 			}
+			break;
 		}
 		return tau;
 	}
-	
-	
+
+
 	/**
 	 * Bidding layer. Section 4.4, Eq (10, 11)
 	 * If buyer's (seller's) limit price is lower (higher) than the current 
@@ -303,30 +299,31 @@ public class AAAgent extends WindowAgent {
 	 * @param currentTime
 	 * @return
 	 */
-	private Iterable<? extends Activity> biddingLayer(Price limitPrice, 
+	protected Iterable<? extends Activity> biddingLayer(Price limitPrice, 
 			Price targetPrice, int quantity, TimeStamp currentTime) {
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append("::biddingLayer: ");
-		
+
 		// Determining the offer price to (possibly) submit
-		// BestBidAsk lastNBBOQuote = sip.getNBBO(); // XXX use NBBO?
-		Price bid = this.getQuote().getBidPrice();
-		Price ask = this.getQuote().getAskPrice();
-		
+		//		Price bid = this.getQuote().getBidPrice();
+		//		Price ask = this.getQuote().getAskPrice();
+		Price bid = this.sip.getNBBO().getBestBid();
+		Price ask = this.sip.getNBBO().getBestAsk();
+
 		// if no bid or no ask, submit ZI strategy bid
 		if (bid == null || ask == null) {
 			log(INFO, sb.append("Bid/Ask undefined."));
 			return this.executeZIStrategy(type, quantity, currentTime);
 		}
-		
+
 		// If best offer is outside of limit price, no bid is submitted
 		if ((type.equals(BUY) && limitPrice.lessThanEqual(bid))
-			|| (type.equals(SELL) && limitPrice.greaterThan(ask))) {
+				|| (type.equals(SELL) && limitPrice.greaterThan(ask))) {
 			log(INFO, sb.append("Best price is outside of limit price: ")
 					.append(limitPrice).append("; no submission"));
 			return Collections.emptyList();
 		}
-		
+
 		// Can only submit offer if the offer would not cause position
 		// balance to exceed the agent's maximum position
 		int newPosBal = positionBalance + quantity;
@@ -339,65 +336,53 @@ public class AAAgent extends WindowAgent {
 		}
 
 		// Pricing - verifying targetPrice
-		// when not first round, limit should never be less (greater) than the
-		// target price for buyers (sellers)
-		Price orderPrice;
+		// Limit should never be less (greater) than the target price for buyers (sellers)
 		if (targetPrice != null) {
 			if ((type.equals(BUY) && limitPrice.lessThan(targetPrice)) 
 					|| (type.equals(SELL) && limitPrice.greaterThan(targetPrice)))
 				targetPrice = limitPrice;
+		
 		}
 
 		// See Eq 10 and 11 in section 4.4 - bidding layer
+		Price orderPrice = null;
 		if (targetPrice == null) {
-			// first arrival, where target price undetermined
+			// if no transactions, so cannot determine target price
 			if (type.equals(BUY)) {
 				Price askCeil = new Price((1 + lambdaR) * ask.intValue() 
-									+ lambdaA * Price.TICKS_PER_DOLLAR);
+						+ lambdaA * Price.TICKS_PER_DOLLAR);
 				Price offset = new Price( (pcomp.min(askCeil, limitPrice).intValue() - bid.intValue()) 
-									* (1.0/eta));
+						* (1.0/eta));
 				orderPrice = new Price(bid.intValue() + offset.intValue());
 				orderPrice = pcomp.min(orderPrice, limitPrice);
 			} else {
 				Price bidFloor = new Price((1 - lambdaR) * bid.intValue() 
-									- lambdaA * Price.TICKS_PER_DOLLAR);
+						- lambdaA * Price.TICKS_PER_DOLLAR);
 				Price offset = new Price( (ask.intValue() - pcomp.max(bidFloor, limitPrice).intValue()) 
-									* (1.0/eta));
+						* (1.0/eta));
 				orderPrice = new Price(ask.intValue() - offset.intValue());
 				orderPrice = pcomp.max(orderPrice, limitPrice);				
 			}
 		} else {
-			// not first entry into market
+			// can determine target price
 			if (type.equals(BUY)) {
 				Price offset = new Price((targetPrice.intValue() - bid.intValue()) * (1.0/eta));
 				orderPrice = new Price(bid.intValue() + offset.intValue());
 				orderPrice = pcomp.min(orderPrice, limitPrice);
+				// if bestAsk <= target, submit at bestAsk, else submit price given by EQ 10/11
+				orderPrice = ask.lessThanEqual(targetPrice) ? ask : orderPrice;
 			} else {
 				Price offset = new Price((ask.intValue() - targetPrice.intValue()) * (1.0/eta));
 				orderPrice = new Price(ask.intValue() - offset.intValue());
 				orderPrice = pcomp.max(orderPrice, limitPrice);
+				// If bestBid >= target, submit at bestBid, else submit price given by EQ 10/11
+				orderPrice = bid.greaterThanEqual(targetPrice) ? bid : orderPrice;
 			}
 		}
-		
-		// Submitting a bid
-		if (type.equals(BUY)) { // Buyer
-			// if bestAsk < targetPrice, accept bestAsk
-			// else submit bid given by EQ 10/11
-			if (targetPrice != null)
-				orderPrice = ask.lessThanEqual(targetPrice) ? ask : orderPrice;
-			return ImmutableList.of(new SubmitNMSOrder(this, primaryMarket, type, 
-					orderPrice, 1, currentTime));
-			
-		} else { // Seller
-			// If outstanding bid >= target price, submit ask at bid price
-			// else submit bid given by EQ 10/11
-			if (targetPrice != null)
-				orderPrice = bid.greaterThanEqual(targetPrice) ? bid : orderPrice;
-			return ImmutableList.of(new SubmitNMSOrder(this, primaryMarket, type, 
-					orderPrice, 1, currentTime));
-		}
-	}	// end of bidding layer
-	
+		return ImmutableList.of(new SubmitNMSOrder(this, primaryMarket, type, 
+				orderPrice, 1, currentTime));
+	}
+
 
 	/**
 	 * @param r
@@ -406,8 +391,8 @@ public class AAAgent extends WindowAgent {
 	protected double tauChange(double r) {
 		return (Math.exp(r * theta) - 1) / (Math.exp(theta) - 1);
 	}
-	
-	
+
+
 	/**
 	 * Short-term learning. Section 4.3.1, Fig 7, Eq (7) in Vytelingum et al.
 	 * Uses learning rules to update its aggressiveness whenever get new transaction.
@@ -417,37 +402,38 @@ public class AAAgent extends WindowAgent {
 	 * @param equilibriumPrice
 	 * @param lastPrice		most recent transaction price
 	 */
-	private void updateAggression(Price limit, Price tau, 
+	protected void updateAggression(Price limit, Price tau, 
 			Price equilibriumPrice,	Price lastPrice) {
-		
+
 		if (equilibriumPrice == null || lastPrice == null)
 			return; // If no transactions yet, cannot update
 
 		// Determining r_shout, the level of aggression that would form a price
 		// equal to most recent transaction price
-		double rShout = computeRshout(limit, lastPrice, equilibriumPrice);
+		double rShout = computeRShout(limit, lastPrice, equilibriumPrice);
 
 		// Determining whether agent must be more or less aggressive
 		// Differs from paper b/c we do not take into account the most
 		// recent bid/ask submitted, only transactions
 		int sign = 1;
-		// Buyers
-		if (type.equals(BUY)) {
+		switch (type) {
+		case BUY:
 			// if target price is greater, agent should be less aggressive
 			if (tau.compareTo(lastPrice) > 0)
 				sign = -1;
 			// if transaction price greater or equal, agent should be more aggressive
 			else
 				sign = 1;
-		}
-		// Sellers
-		else {
+			break;
+			
+		case SELL:
 			// if target price is less, agent should be less aggressive
 			if (tau.compareTo(lastPrice) < 0)
 				sign = -1;
 			// if target price is greater or equal, agent should be more aggressive
 			else
 				sign = 1;
+			break;
 		}
 
 		// Updating delta(t), the desired aggressiveness, and r(t+1): Eq. (7)
@@ -456,17 +442,19 @@ public class AAAgent extends WindowAgent {
 		aggression = aggression + betaR * (delta - aggression);
 		aggressions.setValue(positionBalance, type, aggression);
 	}
-	
+
 	/**
 	 * Given a price, returns the level of aggression that would result in
 	 * the agent submitting a bid/ask at the last transaction price.
+	 * 
+	 * XXX Is there a better way to handle when theta is 0?
 	 * 
 	 * @param limitPrice
 	 * @param lastPrice
 	 * @param equilibriumPrice
 	 * @return rShout
 	 */
-	private double computeRshout(Price limitPrice, Price lastPrice, 
+	protected double computeRShout(Price limitPrice, Price lastPrice, 
 			Price equilibriumPrice) {
 		double tau = lastPrice.intValue();
 		double limit = limitPrice.intValue();
@@ -476,130 +464,126 @@ public class AAAgent extends WindowAgent {
 		// handle theta = 0, can't divide by 0
 		if (theta == 0) return rShout;
 
-		// Buyers
-		if (type.equals(BUY)) {
+		switch (type) {
+		case BUY:
 			// Intramarginal
-			if (limitPrice.greaterThan(equilibriumPrice)) {
+			if (limitPrice.greaterThan(equilibriumPrice)) {			// r = 0
 				if (lastPrice.equals(equilibriumPrice))
 					return 0;
-				// r < 0
-				if (lastPrice.lessThan(equilibriumPrice)) {
+
+				if (lastPrice.lessThan(equilibriumPrice)) {			// r < 0
 					rShout = -Math.log( ((1 - tau / eqPrice)
 							* (Math.exp(theta) - 1)) + 1) / theta;
 				}
-				// r > 0
+
 				else {
-					rShout = Math.log( ((tau - eqPrice)
+					rShout = Math.log( ((tau - eqPrice)				// r > 0
 							* (Math.exp(theta) - 1)
 							/ (limit - eqPrice)) + 1) / theta;
 				}
 			}
 			// Extramarginal
 			else {
-				// r < 0
-				if (lastPrice.lessThan(limitPrice)) {
+
+				if (lastPrice.lessThan(limitPrice)) {				// r < 0
 					rShout = -Math.log( ((1 - tau / limit)
 							* (Math.exp(theta) - 1)) + 1) / theta;
 				}
-				// r clipped at 0
-				else {
+
+				else {												// r = 0
 					rShout = 0;
 				}
 			}
-		}
+			break;
 
-		// Sellers
-		else {
+		case SELL:
 			// Intramarginal
-			if (limitPrice.lessThan(equilibriumPrice)) {
+			if (limitPrice.lessThan(equilibriumPrice)) {			// r = 0
 				if (lastPrice.equals(equilibriumPrice))
 					return 0;
-				// r < 0
-				if (lastPrice.greaterThan(equilibriumPrice)) {
-					// if(theta == 0) return -0.5; //handling NaN exception
+
+				if (lastPrice.greaterThan(equilibriumPrice)) {		// r < 0
 					rShout = -Math.log( ((tau - eqPrice) 
-								* (Math.exp(theta) - 1)
-								/ (Price.INF.intValue() - eqPrice)) + 1)
-								/ theta;
+							* (Math.exp(theta) - 1)
+							/ (Price.INF.intValue() - eqPrice)) + 1)
+							/ theta;
 				}
-				// r > 0
-				else {
-					// if(theta == 0) return 0.5; //handling NaN exception
+
+				else {												// r > 0
 					rShout = Math.log( ((1 - (tau - limit) / (eqPrice - limit))
-								* (Math.exp(theta) - 1)) + 1) / theta;
+							* (Math.exp(theta) - 1)) + 1) / theta;
 				}
 			}
 			// Extramarginal
 			else {
-				// r < 0
-				if (lastPrice.greaterThan(limitPrice)) {
+
+				if (lastPrice.greaterThan(limitPrice)) {			// r < 0
 					rShout = -Math.log( ((tau - limit) * (Math.exp(theta) - 1)
-								/ (Price.INF.intValue() - limit)) + 1)
-								/ theta;
+							/ (Price.INF.intValue() - limit)) + 1)
+							/ theta;
 				}
-				// r clipped at 0
-				else {
+
+				else {												// r = 0
 					rShout = 0;
 				}
 			}
+			break;
 		}
+
 		if ((new Double(rShout)).equals(Double.NaN)
 				|| (new Double(rShout)).equals(Double.NEGATIVE_INFINITY)
 				|| (new Double(rShout)).equals(Double.POSITIVE_INFINITY))
 			return 0;
 		return rShout;
 	}
-	
-	
+
+
 	/**
 	 * Long-term learning. Section 4.3.2, Eq (8, 9) Vytelingum et al
 	 * 
 	 * @param equilibriumPrice
-	 * @param numTransactionsUsed
 	 * @param transactions
-	 * @return
 	 */
-	private double updateTheta(Price equilibriumPrice, double numTransactionsUsed, 
+	protected void updateTheta(Price equilibriumPrice, 
 			ImmutableList<Transaction> transactions) {
-		
-		// Error Checking, must have some transactions
-		if (equilibriumPrice == null) return theta;
+
+		// Error Checking, must have some transactions otherwise can't compute
+		// equilibrium price
+		if (equilibriumPrice == null) return;
 
 		ArrayList<Transaction> transList = new ArrayList<Transaction>(transactions);
-		
+
 		// Determining alpha, Eq (8)
 		double alpha = 0;
 		int num = 0;
-		for (int i = transactions.size() - 1; i >= 0 && num < numHistorical; i--) {
+		for (int i = transactions.size()-1; i >= 0 && num < numHistorical; i--) {
 			Price price = transList.get(i).getPrice();
 			if (price != null) {
 				alpha += Math.pow(price.intValue() - equilibriumPrice.intValue(), 2);
 				num++;
 			}
 		}
-		alpha = (1 / equilibriumPrice.intValue()) * Math.sqrt(alpha / num);
+		alpha = Math.sqrt(alpha / num) / equilibriumPrice.intValue();
 
 		// Determining alphaBar, updating range, Eq (9)
 		alphaMin = Math.min(alpha, alphaMin);
 		alphaMax = Math.max(alpha, alphaMax);
 		double alphaBar = (alpha - alphaMin) / (alphaMax - alphaMin);
-		if (alphaMin == alphaMax)
-			alphaBar = alpha - alphaMin;
-		// TODO though maybe doesn't matter because theta won't be updated for awhile...
+		if (alphaMin == alphaMax) alphaBar = alpha - alphaMin;
+		// FIXME is this the best way to handle when alphaMax = alphaMin?
+		// Will primarily only happen for the first update
 
-		// Determining theta star Eq (9)
+		// Determining thetaStar, Eq (9)
 		double thetaStar = (thetaMax - thetaMin)
 				* (1 - alphaBar * Math.exp(gamma * (alphaBar - 1)))
 				+ thetaMin;
 
-		// If number of transactions < historical, do not update theta
-		if (numTransactionsUsed < numHistorical)
-			return theta;
-		
-		return theta + betaT * (thetaStar - theta);	// Eq (8)
+		// If number of transactions so far < numHistorical, keep theta fixed
+		if (transactions.size() >= numHistorical)
+			theta = theta + betaT * (thetaStar - theta);	// Eq (8)
 	}
 
-	
+
 	/**
 	 * Computes weighted moving average. Truncates if fewer than required 
 	 * number of transactions available.
@@ -612,7 +596,7 @@ public class AAAgent extends WindowAgent {
 	protected Price estimateEquilibrium(ImmutableList<Transaction> transactions) {
 		if (transactions == null) return null;
 		if (transactions.size() == 0) return null; //error checking
-		
+
 		// Computing the weights for the moving average
 		// normalize by dividing by sumWeights
 		int numTrans = Math.min(numHistorical, transactions.size());
@@ -623,14 +607,12 @@ public class AAAgent extends WindowAgent {
 			weights[i] = rho * weights[i-1];
 			sumWeights += weights[i];
 		}
-		
+
 		// Computing the moving Average
 		double total = 0;
 		for(int i = 0; i < numTrans; i++) {
 			total += transactions.get(i).getPrice().intValue() * weights[i] / sumWeights; 
 		}
-		// double movingAverage = total / numTrans; // XXX this is a typo in the paper 
-		numTransactionsUsed = numTrans;
 		return new Price(total);
 	}
 
@@ -653,16 +635,15 @@ public class AAAgent extends WindowAgent {
 
 		protected final int offset;
 		protected List<Double> values;
-		
+
 		public Aggression() {
 			this.offset = 0;
 			this.values = Collections.emptyList();
 		}
-		
+
 		public Aggression(int maxPosition, double initialValue) {
 			checkArgument(maxPosition > 0, "Max position must be positive");
-			
-			// Identical to legacy generation in final output
+
 			this.offset = maxPosition;
 			this.values = Lists.newArrayList();
 			double[] values = new double[maxPosition * 2];
@@ -681,18 +662,18 @@ public class AAAgent extends WindowAgent {
 			switch (type) {
 			case BUY:
 				if (currentPosition + offset <= values.size() - 1 &&
-						currentPosition + offset >= 0)
+				currentPosition + offset >= 0)
 					return values.get(currentPosition + offset);
 				break;
 			case SELL:
 				if (currentPosition + offset - 1 <= values.size() - 1 && 
-						currentPosition + offset - 1 >= 0)
+				currentPosition + offset - 1 >= 0)
 					return values.get(currentPosition + offset - 1);
 				break;
 			}
 			return 0.0;
 		}
-		
+
 		/**
 		 * @param currentPosition
 		 * @param type
@@ -703,12 +684,12 @@ public class AAAgent extends WindowAgent {
 			switch (type) {
 			case BUY:
 				if (currentPosition + offset <= values.size() - 1 &&
-						currentPosition + offset >= 0)
+				currentPosition + offset >= 0)
 					values.set(currentPosition + offset, value);
 				break;
 			case SELL:
 				if (currentPosition + offset - 1 <= values.size() - 1 && 
-						currentPosition + offset - 1 >= 0)
+				currentPosition + offset - 1 >= 0)
 					values.set(currentPosition + offset - 1, value);
 				break;
 			}
@@ -718,7 +699,7 @@ public class AAAgent extends WindowAgent {
 		public Double getValueFromQuantity(int currentPosition, int quantity,
 				OrderType type) {
 			checkArgument(quantity > 0, "Quantity must be positive");
-			// TODO Auto-generated method stub
+			// TODO how to handle multi-quantity?
 			return null;
 		}
 	}

@@ -185,10 +185,10 @@ public class Observations {
 			periodBased(features, fundPrices, period);
 		
 		// Profit and Surplus
-		// TODO remove refs to profit for background traders
+		// XXX This does't quite make sense because background agents don't liquidate...
 		SummaryStatistics 
 			modelProfit = new SummaryStatistics(),
-//			backgroundAgentProfit = new SummaryStatistics(), // This does't quite make sense because background agents don't liquidate...
+			backgroundAgentProfit = new SummaryStatistics(),
 			hftProfit = new SummaryStatistics(),
 			marketMakerProfit = new SummaryStatistics();
 		
@@ -196,7 +196,7 @@ public class Observations {
 			long profit = agent.getPostLiquidationProfit();
 			modelProfit.addValue(profit);
 			if (agent instanceof BackgroundAgent) {
-//				backgroundAgentProfit.addValue(profit);
+				backgroundAgentProfit.addValue(profit);
 			} else if (agent instanceof HFTAgent) {
 				hftProfit.addValue(profit);
 			} else if (agent instanceof MarketMaker) {
@@ -205,7 +205,7 @@ public class Observations {
 		}
 
 		features.put("profit_sum_total", modelProfit.getSum());
-//		features.put("profit_sum_background", backgroundAgentProfit.getSum());
+		features.put("profit_sum_background", backgroundAgentProfit.getSum());
 		features.put("profit_sum_marketmaker", marketMakerProfit.getSum());
 		features.put("profit_sum_hft", hftProfit.getSum());
 		

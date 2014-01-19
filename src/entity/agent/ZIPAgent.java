@@ -130,6 +130,7 @@ public class ZIPAgent extends WindowAgent {
 		sb.append(getName()).append(':').append("::agentStrategy: ");
 
 		// can buy and sell
+		lastOrderPrice = null;
 		type = rand.nextBoolean() ? BUY : SELL;
 		
 		double currentMargin = getCurrentMargin(positionBalance, type, currentTime);

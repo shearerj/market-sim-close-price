@@ -2,9 +2,7 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.*;
 import static logger.Logger.log;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -19,6 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
+import systemmanager.EventManager;
 import systemmanager.Keys;
 import utils.Rands;
 import activity.Activity;
@@ -30,6 +29,7 @@ import com.google.common.collect.Lists;
 import data.EntityProperties;
 import data.FundamentalValue;
 import data.MockFundamental;
+import entity.agent.AAAgent.Aggression;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.MockMarket;
@@ -84,8 +84,6 @@ public class AAAgentTest {
 		market = new MockMarket(sip);
 	}
 
-	// TODO test target price
-
 	@Test
 	public void tauChange() {
 		double r = 0.5;
@@ -95,24 +93,287 @@ public class AAAgentTest {
 		assertEquals(0.268, agent.tauChange(r), 0.001);
 	}
 
+	/**
+	 * Computation of moving average for estimating the equilibrium price.
+	 */
 	@Test
 	public void estimateEquilibrium() {
-		// this just computes a weighted moving average
-		// Adding Transactions and Bids
+		TimeStamp time = TimeStamp.ZERO;
 		
-		addOrder(BUY, 50000, 1, 10);
-		addOrder(SELL, 150000, 1, 15);
+		// Creating a buyer
+		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(Keys.NUM_HISTORICAL, 3);
+		testProps.put(Keys.PRIVATE_VALUE_VAR, 5E7);
+		AAAgent agent = addAgent(BUY, testProps);
+		assertNull(agent.estimateEquilibrium(agent.getWindowTransactions(time)));
+		
+		// Adding Transactions and Bids
 		addTransaction(75000, 1, 20);
 		addTransaction(90000, 1, 25);
 
-		// Creating a buyer
-		AAAgent agent = addAgent(OrderType.BUY);
+		// not enough transactions, need to use only 2
+		double[] weights = {1/1.9, 0.9/1.9};
+		assertEquals(Math.round(weights[0]*75000 + weights[1]*90000),
+				agent.estimateEquilibrium(agent.getWindowTransactions(time)).intValue());
 		
-		// not enough transactions, need to truncate
-		// TODO
+		// sufficient transactions
+		addTransaction(100000, 1, 25);
+		double total = 2.71;
+		double[] weights2 = {1/total, 0.9/total, 0.81/total};
+		assertEquals(Math.round(weights2[0]*75000 + weights2[1]*90000 + weights2[2]*100000),
+				agent.estimateEquilibrium(agent.getWindowTransactions(time)).intValue());
+	}
+	
+	@Test
+	public void computeRShoutBuyer() {
+		AAAgent buyer = addAgent(BUY);
+		buyer.theta = -2;
+		
+		Price limit = new Price(110000);
+		Price last = new Price(105000);
+		Price equil = new Price(105000);
+		
+		// Intramarginal (limit > equil)
+		assertEquals(0, buyer.computeRShout(limit, last, equil), 0.001);
+		last = new Price(100000);	// less aggressive (higher margin)
+		assertEquals(-1, Math.signum(buyer.computeRShout(limit, last, equil)), 0.001);
+		last = new Price(109000);	// more aggressive (lower margin)
+		assertEquals(1, Math.signum(buyer.computeRShout(limit, last, equil)), 0.001);
+		
+		// Extramarginal
+		equil = new Price(111000);	// less aggressive (higher margin)
+		assertEquals(-1, Math.signum(buyer.computeRShout(limit, last, equil)), 0.001);
+		last = limit;
+		assertEquals(0, buyer.computeRShout(limit, last, equil), 0.001);
+	}
+	
+	@Test
+	public void computeRShoutSeller() {
+		AAAgent seller = addAgent(SELL);
+		seller.theta = -2;
 
+		Price limit = new Price(105000);
+		Price last = new Price(110000);
+		Price equil = new Price(110000);
+		
+		// Intramarginal (limit < equil)
+		assertEquals(0, seller.computeRShout(limit, last, equil), 0.001);
+		last = new Price(111000);	// less aggressive (higher margin)
+		assertEquals(-1, Math.signum(seller.computeRShout(limit, last, equil)), 0.001);
+		last = new Price(109000);	// more aggressive (lower margin)
+		assertEquals(1, Math.signum(seller.computeRShout(limit, last, equil)), 0.001);
+
+		// Extramarginal
+		equil = new Price(104000);	// less aggressive (higher margin)
+		assertEquals(-1, Math.signum(seller.computeRShout(limit, last, equil)), 0.001);
+		last = limit;
+		assertEquals(0, seller.computeRShout(limit, last, equil), 0.001);
 	}
 
+	@Test
+	public void determineTargetPriceBuyer() {
+		AAAgent buyer = addAgent(BUY);
+		buyer.theta = 2;
+		
+		Price limit = new Price(110000);
+		Price equil = new Price(105000);
+		
+		// Intramarginal (limit > equil)
+		buyer.aggression = -1;		// passive
+		assertEquals(Price.ZERO, buyer.determineTargetPrice(limit, equil));
+		buyer.aggression = -0.5;	// less aggressive, so lower target than equil
+		assertTrue(buyer.determineTargetPrice(limit, equil).lessThan(equil));
+		buyer.aggression = 0;		// active
+		assertEquals(equil, buyer.determineTargetPrice(limit, equil));
+		buyer.aggression = 0.5;		// aggressive, so target exceeds equil
+		assertTrue(buyer.determineTargetPrice(limit, equil).greaterThan(equil));
+		buyer.aggression = 1;		// most aggressive
+		assertEquals(limit, buyer.determineTargetPrice(limit, equil));
+		
+		// Extramarginal
+		limit = new Price(104000);
+		buyer.aggression = -1;		// passive
+		assertEquals(Price.ZERO, buyer.determineTargetPrice(limit, equil));
+		buyer.aggression = -0.5;	// less aggressive, so lower target than equil
+		assertTrue(buyer.determineTargetPrice(limit, equil).lessThan(equil));
+		buyer.aggression = 0.5;		// aggressiveness capped at 0
+		assertEquals(limit, buyer.determineTargetPrice(limit, equil));
+	}
+	
+	@Test
+	public void determineTargetPriceSeller() {
+		AAAgent seller = addAgent(SELL);
+		seller.theta = 2;
+		
+		Price limit = new Price(105000);
+		Price equil = new Price(110000);
+		
+		// Intramarginal (limit < equil)
+		seller.aggression = -1;		// passive
+		assertEquals(Price.INF, seller.determineTargetPrice(limit, equil));
+		seller.aggression = -0.5;	// less aggressive, so target exceeds equil
+		assertTrue(seller.determineTargetPrice(limit, equil).greaterThan(equil));
+		seller.aggression = 0;		// active
+		assertEquals(equil, seller.determineTargetPrice(limit, equil));
+		seller.aggression = 0.5;	// aggressive, so target less than equil
+		assertTrue(seller.determineTargetPrice(limit, equil).lessThan(equil));
+		seller.aggression = 1;		// most aggressive
+		assertEquals(limit, seller.determineTargetPrice(limit, equil));
+		
+		// Extramarginal
+		limit = new Price(111000);
+		seller.aggression = -1;		// passive
+		assertEquals(Price.INF, seller.determineTargetPrice(limit, equil));
+		seller.aggression = -0.5;	// less aggressive, so lower target than equil
+		assertTrue(seller.determineTargetPrice(limit, equil).greaterThan(equil));
+		seller.aggression = 0.5;	// aggressiveness capped at 0
+		assertEquals(limit, seller.determineTargetPrice(limit, equil));
+	}
+	
+	@Test
+	public void biddingLayerBuyer() {
+		TimeStamp time = TimeStamp.ZERO;
+		EventManager em = new EventManager(rand);
+		
+		Price limit = new Price(145000);
+		Price target = new Price(175000);
+		
+		AAAgent buyer = addAgent(BUY);
+		
+		Iterable<? extends Activity> acts = buyer.biddingLayer(limit, target, 1, time);
+		assertEquals(1, Iterables.size(acts));
+		assertTrue(Iterables.getOnlyElement(acts) instanceof SubmitNMSOrder); // ZI strat
+		
+		addOrder(BUY, 150000, 1, 10);
+		addOrder(SELL, 200000, 1, 10);
+		
+		buyer.positionBalance = buyer.privateValue.getMaxAbsPosition() + 1;
+		acts = buyer.biddingLayer(limit, target, 1, TimeStamp.create(20));
+		assertEquals(0, Iterables.size(acts));	// would exceed max position
+		
+		buyer.positionBalance = 0;
+		acts = buyer.biddingLayer(limit, target, 1, TimeStamp.create(20));
+		assertEquals(0, Iterables.size(acts));	// limit price < bid
+		
+		limit = new Price(211000);
+		acts = buyer.biddingLayer(limit, null, 1, TimeStamp.create(20));
+		em.addActivity(Iterables.getOnlyElement(acts));
+		em.executeUntil(new TimeStamp(21));
+		assertCorrectBid(buyer, 170007, 1);
+		
+		limit = new Price(210000);
+		target = new Price(180000);
+		buyer.withdrawAllOrders(TimeStamp.create(20));
+		acts = buyer.biddingLayer(limit, target, 1, TimeStamp.create(20));
+		em.addActivity(Iterables.getOnlyElement(acts));
+		em.executeUntil(new TimeStamp(21));
+		assertCorrectBid(buyer, 160000, 1);
+	}
+	
+	@Test
+	public void biddingLayerSeller() {
+		TimeStamp time = TimeStamp.ZERO;
+		EventManager em = new EventManager(rand);
+		
+		Price limit = new Price(210000);
+		Price target = new Price(175000);
+		
+		AAAgent seller = addAgent(SELL);
+		
+		Iterable<? extends Activity> acts = seller.biddingLayer(limit, target, 1, time);
+		assertEquals(1, Iterables.size(acts));
+		assertTrue(Iterables.getOnlyElement(acts) instanceof SubmitNMSOrder); // ZI strat
+		
+		addOrder(BUY, 150000, 1, 10);
+		addOrder(SELL, 200000, 1, 10);
+		
+		seller.positionBalance = seller.privateValue.getMaxAbsPosition() + 1;
+		acts = seller.biddingLayer(limit, target, 1, TimeStamp.create(20));
+		assertEquals(0, Iterables.size(acts));	// would exceed max position
+		
+		seller.positionBalance = 0;
+		acts = seller.biddingLayer(limit, target, 1, TimeStamp.create(20));
+		assertEquals(0, Iterables.size(acts));	// limit price > ask
+		
+		limit = new Price(170000);
+		acts = seller.biddingLayer(limit, null, 1, TimeStamp.create(20));
+		em.addActivity(Iterables.getOnlyElement(acts));
+		em.executeUntil(new TimeStamp(21));
+		assertCorrectBid(seller, 190000, 1);
+		
+		limit = new Price(165000);
+		target = new Price(170000);
+		seller.withdrawAllOrders(TimeStamp.create(20));
+		acts = seller.biddingLayer(limit, target, 1, TimeStamp.create(20));
+		em.addActivity(Iterables.getOnlyElement(acts));
+		em.executeUntil(new TimeStamp(21));
+		assertCorrectBid(seller, 190000, 1);
+	}
+	
+	@Test
+	public void updateTheta() {
+		TimeStamp time = TimeStamp.ZERO;
+		EntityProperties props = new EntityProperties();
+		props.put(Keys.NUM_HISTORICAL, 5);
+		props.put(Keys.THETA_MAX, 8);
+		props.put(Keys.THETA_MIN, -8);
+		props.put(Keys.BETA_T, 0.25);
+		props.put(Keys.GAMMA, 2);
+		AAAgent agent = addAgent(SELL, props);
+		agent.theta = -4;
+		
+		agent.updateTheta(null, agent.getWindowTransactions(time));
+		assertEquals(-4, agent.theta, 0.001);
+		
+		addTransaction(105000, 1, 20);
+		addTransaction(100000, 1, 25);
+		addTransaction(100000, 1, 30);
+		
+		Price equil = new Price(100000);
+		// haven't used 5 transactions yet, so keep theta fixed
+		agent.updateTheta(equil, agent.getWindowTransactions(new TimeStamp(20)));
+		assertEquals(-4, agent.theta, 0.001);
+		
+		addTransaction(110000, 1, 35);
+		addTransaction(111000, 1, 40);
+		agent.updateTheta(equil, agent.getWindowTransactions(new TimeStamp(40)));
+		assertTrue(agent.theta < -4);	// decreases because high price vol
+		assertEquals(-5, agent.theta, 0.001); 
+		
+		addTransaction(106000, 1, 45);
+		addTransaction(107000, 1, 50);
+		addTransaction(108000, 1, 50);
+		equil = new Price(108000);
+		agent.updateTheta(equil, agent.getWindowTransactions(new TimeStamp(50)));
+		assertTrue(agent.theta > -5);	// increases because lower price vol
+	}
+	
+	@Test
+	public void testAggressionDataStructure() {
+		Aggression agg = new Aggression();
+		assertEquals(0, agg.getMaxAbsPosition());
+		assertEquals(0, agg.values.size());
+		
+		agg = new Aggression(1, 0.5);
+		assertEquals(2, agg.values.size());
+		assertEquals(1, agg.getMaxAbsPosition());
+		assertEquals(0.5, agg.values.get(0), 0.001);
+		assertEquals(0.5, agg.values.get(1), 0.001);
+		
+		agg = new Aggression(2, 0.75);
+		assertEquals(0.75, agg.getValue(0, BUY), 0.001);
+		assertEquals(0.75, agg.getValue(-1, SELL), 0.001);
+		assertEquals(new Double(0), agg.getValue(-2, SELL));
+		assertEquals(new Double(0), agg.getValue(2, BUY));
+		
+		agg.setValue(0, BUY, 0.5);
+		assertEquals(0.5, agg.getValue(0, BUY), 0.001);
+		
+		agg.setValue(-2, SELL, -0.5);
+		// still 0 since outside max position
+		assertEquals(0, agg.getValue(-2, SELL), 0.001);
+	}
+	
 	@Test
 	public void initialBuyer() {
 		Logger.log(Logger.Level.DEBUG,
@@ -736,6 +997,12 @@ public class AAAgentTest {
 				act.execute(currentTime);
 	}
 
+	/**
+	 * Note this method only works if there's only one order
+	 * @param agent
+	 * @param price
+	 * @param quantity
+	 */
 	private void assertCorrectBid(Agent agent, int price, int quantity) {
 		Collection<Order> orders = agent.activeOrders;
 		// Asserting the bid is correct
