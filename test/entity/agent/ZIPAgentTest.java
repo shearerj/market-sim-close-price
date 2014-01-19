@@ -46,7 +46,7 @@ public class ZIPAgentTest {
 	private static EntityProperties agentProperties;
 	
 	@BeforeClass
-	public static void setUpClass(){
+	public static void setupClass(){
 		// Setting up the log file
 		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "ZIPAgentTest.log"));
 
@@ -239,6 +239,44 @@ public class ZIPAgentTest {
 	}
 	
 	@Test
+	public void updateMarginZeroLimit() {
+		Logger.log(Logger.Level.INFO, "Testing margin update when limit price is 0");
+		
+		// testing when limit price is 0
+		TimeStamp time = TimeStamp.ZERO;
+		EntityProperties testProps = new EntityProperties(agentProperties);
+		testProps.put(Keys.MAX_QUANTITY, 5);
+		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);
+		testProps.put(Keys.BETA_MAX, 0.5);
+		testProps.put(Keys.BETA_MIN, 0.5);
+		testProps.put(Keys.GAMMA_MAX, 0.5);
+		testProps.put(Keys.GAMMA_MIN, 0.5);
+		testProps.put(Keys.COEFF_A, 0.3);
+		testProps.put(Keys.COEFF_R, 0.25);
+		testProps.put(Keys.MARGIN_MAX, 0.05);
+		testProps.put(Keys.MARGIN_MIN, 0.05);
+		
+		ZIPAgent agent = new ZIPAgent(TimeStamp.ZERO, fundamental, sip, market, rand,
+				testProps);
+		
+		// add dummy transaction
+		addTransaction(95000, 1, 0);
+		Transaction firstTrans = market.getTransactions().get(0);
+
+		agent.limitPrice = Price.ZERO;
+		
+		// set the margins
+		agent.type = BUY;
+		agent.lastOrderPrice = new Price(99000);
+		
+		double oldMargin = agent.margin.getValue(0, agent.type);
+		assertTrue(oldMargin == agent.getCurrentMargin(0, agent.type, time));
+		agent.updateMargin(firstTrans, time);
+		double newMargin = agent.margin.getValue(0, agent.type);
+		assertEquals(newMargin, oldMargin, 0.001);
+	}
+	
+	@Test
 	public void checkIncreaseMarginBuyer() {
 		TimeStamp time = TimeStamp.ZERO;
 		EntityProperties testProps = new EntityProperties(agentProperties);
@@ -275,10 +313,10 @@ public class ZIPAgentTest {
 		
 		// decrease target price; for buyer, means higher margin
 		double oldMargin = agent.margin.getValue(0, agent.type);
-		assertTrue(oldMargin == agent.getCurrentMargin(0, agent.type, time));
+		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
 		agent.updateMargin(lastTrans, time);
 		double newMargin = agent.margin.getValue(0, agent.type);
-		assertTrue(newMargin == agent.getCurrentMargin(0, agent.type, time));
+		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
 		checkMarginUpdate(BUY, lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
 	
@@ -319,10 +357,10 @@ public class ZIPAgentTest {
 		
 		// increase target price; for seller, means higher margin
 		double oldMargin = agent.margin.getValue(0, agent.type);
-		assertTrue(oldMargin == agent.getCurrentMargin(0, agent.type, time));
+		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
 		agent.updateMargin(lastTrans, time);
 		double newMargin = agent.margin.getValue(0, agent.type);
-		assertTrue(newMargin == agent.getCurrentMargin(0, agent.type, time));
+		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
 		checkMarginUpdate(SELL, lastOrderPrice, lastTransPrice, oldMargin, newMargin);	
 	}
 
@@ -365,10 +403,10 @@ public class ZIPAgentTest {
 		
 		// decrease target price; for buyer, means higher margin
 		double oldMargin = agent.margin.getValue(0, agent.type);
-		assertTrue(oldMargin == agent.getCurrentMargin(0, agent.type, time));
+		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
 		agent.updateMargin(lastTrans, time);
 		double newMargin = agent.margin.getValue(0, agent.type);
-		assertTrue(newMargin == agent.getCurrentMargin(0, agent.type, time));
+		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
 		checkMarginUpdate(BUY, lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
 	
@@ -411,11 +449,10 @@ public class ZIPAgentTest {
 		
 		// decrease target price; for buyer, means higher margin
 		double oldMargin = agent.margin.getValue(0, agent.type);
-		assertTrue(oldMargin == agent.getCurrentMargin(0, agent.type, time));
+		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
 		agent.updateMargin(lastTrans, time);
 		double newMargin = agent.margin.getValue(0, agent.type);
-		assertTrue(newMargin == agent.getCurrentMargin(0, agent.type, time));
-		//				double newMargin = agent.getCurrentMargin(0, agent.type, time);
+		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
 		checkMarginUpdate(BUY, lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
 

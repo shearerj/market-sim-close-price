@@ -229,7 +229,9 @@ public class ZIPAgent extends WindowAgent {
 					/ limitPrice.intValue() - 1;
 			log(INFO, sb.append(", (lastOrderPrice + change)/limit - 1 = (")
 					.append(lastOrderPrice).append(" + ").append(momentumChange)
-					.append(") / ").append(limitPrice).append(" - 1"));
+					.append(") / ").append(limitPrice).append(" - 1 = ")
+					.append("new margin ").append(format(newMargin)));
+			
 			margin.setValue(positionBalance, type, newMargin);
 		} else {
 			log(INFO, sb.append(". No update to margin as limit price is 0"));
