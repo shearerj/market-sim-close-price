@@ -72,8 +72,13 @@ public class ZIPAgent extends WindowAgent {
 		checkArgument(rangeCoeffA > 0, "Coefficient A's range must be positive");
 		checkArgument(rangeCoeffR > 0, "Coefficient A's range must be positive");
 		checkArgument(betaMin >= 0, "Min beta must be positive");
-		checkArgument(betaMax < 1, "Max beta must be less than 1"); // TODO check this
-		// TODO finish check arguments for the other values
+		checkArgument(betaMax <= 1, "Max beta must be less than 1");
+		checkArgument(betaMax >= betaMin, "Max beta must be greater than min beta");
+		checkArgument(gammaMin >= 0, "Min gamma must be positive");
+		checkArgument(gammaMax <= 1, "Max gamma must be less than 1");
+		checkArgument(gammaMax >= gammaMin, "Max gamma must be greater than min gamma");
+		checkArgument(marginMin >= 0, "Min margin must be positive");
+		checkArgument(marginMax >= marginMin, "Max (initial) margin must be greater than min margin");
 		
 		this.rangeCoeffA = rangeCoeffA;
 		this.rangeCoeffR = rangeCoeffR;
@@ -84,7 +89,6 @@ public class ZIPAgent extends WindowAgent {
 		limitPrice = null;
 		beta = Rands.nextUniform(rand, betaMin, betaMax);
 		gamma = Rands.nextUniform(rand, gammaMin, gammaMax);
-
 		margin = new Margin(maxAbsPosition, rand, marginMin, marginMax);
 	}
 
