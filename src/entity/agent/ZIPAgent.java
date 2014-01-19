@@ -325,17 +325,16 @@ public class ZIPAgent extends WindowAgent {
 	 */
 	protected boolean checkIncreaseMargin(Transaction lastTrans, TimeStamp currentTime) {
 		Price lastTransPrice = lastTrans.getPrice();
-		Price orderPrice = lastOrderPrice;
 		
 		// If no order price yet, compute based on current margin
-		if (orderPrice == null)
-			orderPrice = computeOrderPrice(margin.getValue(positionBalance, type), currentTime);
+		if (lastOrderPrice == null)
+			lastOrderPrice = computeOrderPrice(margin.getValue(positionBalance, type), currentTime);
 		
 		switch (type) {
 			case BUY:
-				return lastTransPrice.lessThanEqual(orderPrice);
+				return lastTransPrice.lessThanEqual(lastOrderPrice);
 			case SELL:
-				return lastTransPrice.greaterThanEqual(orderPrice);
+				return lastTransPrice.greaterThanEqual(lastOrderPrice);
 		}
 		return false;
 	}

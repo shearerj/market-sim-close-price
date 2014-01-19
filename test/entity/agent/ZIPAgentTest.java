@@ -638,7 +638,7 @@ public class ZIPAgentTest {
 		ZIPAgent agent = new ZIPAgent(TimeStamp.ZERO, fundamental, sip, market, rand,
 				testProps);
 		
-		// check that initial order price array all -1
+		// check that initial order price null
 		assertNull(agent.lastOrderPrice);
 		
 		// now test with a dummy transaction
@@ -655,7 +655,9 @@ public class ZIPAgentTest {
 		// since window, assume order price is submitted before the window
 		// therefore buyer should not increase margin
 		assertFalse(agent.checkIncreaseMargin(lastTrans, TimeStamp.ZERO));
+		
 		// check for sell
+		agent.lastOrderPrice = null;
 		agent.type = SELL;
 		currentMargin = agent.margin.getValue(0, agent.type);
 		assertEquals(new Price(100000 * (1+currentMargin)), 
