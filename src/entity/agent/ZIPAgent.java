@@ -157,7 +157,7 @@ public class ZIPAgent extends WindowAgent {
 
 		} else {
 			// zero transactions
-			log(INFO, sb.append("No transactions!"));
+			log(INFO, sb.append(". No transactions!"));
 			acts.addAll(executeZIStrategy(type, 1, currentTime));
 		}
 

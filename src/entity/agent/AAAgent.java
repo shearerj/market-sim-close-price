@@ -53,7 +53,7 @@ public class AAAgent extends WindowAgent {
 	protected Price targetPrice; 
 	private boolean debug;
 
-	//Agent strategy variables
+	// Agent strategy variables
 	// Based on Vytelingum's sensitivity analysis, eta and N are most important
 	private double lambdaR; // coefficient of relative perturbation of delta, (0,1)?
 	private double lambdaA; // coefficient of absolute perturbation of delta, positive
@@ -63,7 +63,7 @@ public class AAAgent extends WindowAgent {
 	private int eta; // price determination coefficient. [1,inf)
 	private int numHistorical; // number of historical prices to look at, N > 0
 
-	//Agent parameters
+	// Agent parameters
 	private double rho;		// factor for weighted moving average (0.9 from paper)
 	protected Aggression aggressions;
 	protected double aggression; // current short term learning variable, r in [-1,1]
@@ -105,7 +105,8 @@ public class AAAgent extends WindowAgent {
 		this.alphaMin = Price.INF.intValue();
 		this.alphaMax = -1;
 		this.aggressions = new Aggression(privateValue.getMaxAbsPosition(), aggression);
-
+		this.rho = 0.9; 		// from paper, to emphasize converging pattern
+		
 		//Initializing strategy variables
 		this.numHistorical = historical;
 		this.lambdaA = lambdaA;
@@ -114,7 +115,6 @@ public class AAAgent extends WindowAgent {
 		this.eta = eta;
 		this.betaR = betaR;		// paper randomizes to U[0.2, 0.6]
 		this.betaT = betaT;		// paper randomizes to U[0.2, 0.6]
-		this.rho = 0.9; 		// from paper, to emphasize converging pattern
 	}
 
 	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 

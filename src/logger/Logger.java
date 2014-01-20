@@ -11,7 +11,7 @@ public class Logger {
 	protected static Log logger;
 	protected static boolean outError = true;
 	protected static Prefix prefix = new EmptyPrefix();
-	protected static DecimalFormat format;
+	protected static DecimalFormat format = new DecimalFormat("#.####");
 	
 	public static void setup(int lev, File logFile, boolean outError, Prefix prefix) {
 		try {
@@ -20,7 +20,6 @@ public class Logger {
 			logger.setPrependDate(false);
 			Logger.outError = outError;
 			Logger.prefix = prefix;
-			format = new DecimalFormat("#.####");
 		} catch (IOException e) {
 			System.err.println("Couldn't create log file");
 			e.printStackTrace();
