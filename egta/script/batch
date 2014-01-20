@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 if [ $# -ne 2 ]; then
    echo "Usage: $0 [simulation folder] [number of samples to gather]"
    exit 1
