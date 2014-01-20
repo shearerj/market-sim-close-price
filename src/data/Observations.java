@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 import com.google.common.eventbus.DeadEvent;
 import com.google.common.eventbus.EventBus;
@@ -209,16 +210,27 @@ public class Observations {
 		features.put("profit_sum_marketmaker", marketMakerProfit.getSum());
 		features.put("profit_sum_hft", hftProfit.getSum());
 		
+		Map<Class<? extends Agent>, SummaryStatistics> agentSurplus = Maps.newHashMap();
 		for (DiscountFactor discount : DiscountFactor.values()) {
 			SummaryStatistics surplus = new SummaryStatistics();
 			// go through all agents & update for each agent type
 			for (Agent agent : agents)
-				if (agent instanceof BackgroundAgent)
+				if (agent instanceof BackgroundAgent) {
 					surplus.addValue(((BackgroundAgent) agent).getDiscountedSurplus(discount));
+					if (!agentSurplus.containsKey(agent.getClass()))
+						agentSurplus.put(agent.getClass(), new SummaryStatistics());
 
+					agentSurplus.get(agent.getClass()).addValue(
+							((BackgroundAgent) agent).getDiscountedSurplus(discount));
+				}
+			
 			features.put("surplus_sum_" + discount, surplus.getSum());
+			for (Class<? extends Agent> type : agentTypes)
+				if (BackgroundAgent.class.isAssignableFrom(type))
+					features.put("surplus_" + type.getSimpleName().toLowerCase() 
+							+ "_sum_" + discount, agentSurplus.get(type).getSum());
 		}
-		
+				
 		// for control variates
 		features.put("control_common", controlFundamentalValue.getMean());
 		features.put("control_fund_change", controlFundamentalChange.getMean());
