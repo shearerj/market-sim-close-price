@@ -3,6 +3,7 @@ import sys
 import json
 import argparse
 import textwrap
+from os import path
 
 parser = argparse.ArgumentParser(description='\n'.join(textwrap.wrap('Merges observation files from different preset runs and returns summary statistics. This is meant to account for past behavior where several presets were run at the same time. This requires that the simulations have different names. If they do not, there is no way to give labels to the different runs.', width=78)),
                                  epilog='''example usage:
@@ -15,20 +16,21 @@ parser.add_argument('-o', '--output', '-f', '--file', metavar='merged-obs-file',
                     help='The merged observation file, defaults to stdout')
 
 def mergeObs(filenames):
+
+    names = map(path.dirname, map(path.abspath, filenames))
+    prefixLength = len(path.dirname(path.commonprefix(names))) + 1
     
     out = {}
     feats = {}
     out['features'] = feats
 
-    for filename in filenames:
+    for filename, name in zip(filenames, (n[prefixLength:] for n in names)):
         with open(filename, 'r') as first:
             obs = json.load(first)
 
         players = obs['players']
         features = obs['features']
-        config = features['config']
-        features.pop('config')
-        name = config['modelName']
+        config = features.pop('config')
 
         for feat, val in features.iteritems():
             feats[name + '_' + feat] = float(val)

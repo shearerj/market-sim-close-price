@@ -68,9 +68,8 @@ public class SystemManager {
 	protected static DateFormat LOG_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
 	
 	private final File simulationFolder;
-	private final int observationNumber, totalSimulations, simulationLength, modelNumber, logLevel;
+	private final int observationNumber, totalSimulations, simulationLength, logLevel;
 	private final boolean outputConfig;
-	private final String modelName;
 	private final long baseRandomSeed;
 	private final SimulationSpec specification;
 	private final MultiSimulationObservations observations;
@@ -87,8 +86,6 @@ public class SystemManager {
 		this.totalSimulations = simProps.getAsInt(Keys.NUM_SIMULATIONS, 1);
 		this.baseRandomSeed = simProps.getAsLong(Keys.RAND_SEED, System.currentTimeMillis());
 		this.simulationLength = simProps.getAsInt(Keys.SIMULATION_LENGTH, 10000);
-		this.modelNumber = simProps.getAsInt(Keys.MODEL_NUM);
-		this.modelName = simProps.getAsString(Keys.MODEL_NAME); // Generate name here?
 		
 		Properties props = new Properties();
 		props.load(new FileInputStream(new File(Consts.CONFIG_DIR, Consts.CONFIG_FILE)));
@@ -108,8 +105,7 @@ public class SystemManager {
 			rand.setSeed(Objects.hashCode(baseRandomSeed, observationNumber * totalSimulations + i));
 			Simulation sim = new Simulation(specification, rand);
 			
-			initializeLogger(logLevel, simulationFolder, observationNumber, i, sim, simulationLength, modelNumber);
-			log(INFO, modelName);
+			initializeLogger(logLevel, simulationFolder, observationNumber, i, sim, simulationLength);
 			log(INFO, "Random Seed: " + baseRandomSeed);
 			log(INFO, "Configuration: " + specification);
 			
@@ -123,10 +119,11 @@ public class SystemManager {
 	 */
 	protected static void initializeLogger(int logLevel, File simulationFolder,
 			int observationNumber, int simulationNumber, final Simulation simulation,
-			int simulationLength, final int modelNumber) throws IOException {
+			int simulationLength) throws IOException {
 		if (logLevel == 0) // No logging
 			return;
 		
+		// TODO This adds an extra underscore
 		StringBuilder logFileName = new StringBuilder(
 				new File(".").toURI().relativize(simulationFolder.toURI()).getPath().replace('/', '_'));
 		logFileName.append('_').append(observationNumber).append('_');
@@ -143,8 +140,8 @@ public class SystemManager {
 		Logger.setup(logLevel, logFile, true, new Prefix() {
 			@Override
 			public String getPrefix() {
-				return String.format("%" + digits + "d|%d| ",
-						simulation.getCurrentTime().getInTicks(), modelNumber);
+				return String.format("%" + digits + "d| ",
+						simulation.getCurrentTime().getInTicks());
 			}
 		});
 	}

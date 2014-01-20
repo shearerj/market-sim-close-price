@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 import sys
-import os.path
 import re
 import argparse
+from os import path
 from Queue import PriorityQueue
 
 parser = argparse.ArgumentParser(description='''Merges log files for easy comparison. This is very unsafe in terms of file handling (tries to open a lot of files, and will crash if want to merge more then the file system will allow), but if it's only used as a one time script it should work fine.''')
@@ -39,20 +39,21 @@ class LogReader:
 def merge(logs, output):
     """ Merges log files off of time. Takes a generator of file descriptors """
     queue = PriorityQueue()
-    for log in logs:
-        queue.put(LogReader(log))
+
+    names = [path.dirname(path.abspath(f.name)) for f in logs]
+    prefixLength = len(path.dirname(path.commonprefix(names))) + 1
+
+    for i, (log, name) in enumerate(zip(logs, names)):
+        output.writelines((str(i), '| ', name[prefixLength:-5], '\n'))
+        queue.put((LogReader(log), i))
 
     while not queue.empty():
-        reader = queue.get()
-        time = reader.time
-        while reader.time == time:
-            line = reader.nextline()
-            if not line:
-                break
-            output.write(line)
+        reader, i = queue.get()
+        line = reader.nextline()
         if not line:
             continue
-        queue.put(reader)
+        output.writelines((str(i), '|', line))
+        queue.put((reader, i))
 
 if __name__ == "__main__":
     args = parser.parse_args()

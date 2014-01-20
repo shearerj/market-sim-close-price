@@ -8,9 +8,6 @@ package systemmanager;
  */
 public interface Keys {
 
-	public final static String MODEL_NAME = "modelName";
-	public final static String MODEL_NUM = "modelNum";
-	
 	public final static String PRESETS = "presets";
 	
 	public final static String RAND_SEED = "randomSeed";

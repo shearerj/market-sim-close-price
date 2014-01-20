@@ -7,8 +7,6 @@ import java.io.StringReader;
 import org.junit.Test;
 
 import static systemmanager.Consts.Presets.*;
-import static systemmanager.Consts.MarketType.*;
-import static systemmanager.Consts.AgentType.*;
 
 import com.google.gson.JsonObject;
 
@@ -133,62 +131,6 @@ public class SimulationSpecTest {
 			default:
 			}
 		}
-	}
-	
-	@Test
-	public void givenNameAndNumberTest() {
-		JsonObject json = new JsonObject();
-		JsonObject config = new JsonObject();
-		json.add(Keys.CONFIG, config);
-		config.addProperty(Keys.MODEL_NAME, "TestName_WHY?NOT...");
-		
-		
-		SimulationSpec spec = new SimulationSpec(new StringReader(json.toString()));
-		assertEquals(1, spec.getSimulationProps().getAsInt(Keys.MODEL_NUM));
-		assertEquals("TestName_WHY?NOT...", spec.getSimulationProps().getAsString(Keys.MODEL_NAME));
-		
-		config.addProperty(Keys.MODEL_NUM, 6);
-		
-		spec = new SimulationSpec(new StringReader(json.toString()));
-		assertEquals(6, spec.getSimulationProps().getAsInt(Keys.MODEL_NUM));
-		assertEquals("TestName_WHY?NOT...", spec.getSimulationProps().getAsString(Keys.MODEL_NAME));
-	}
-	
-	@Test
-	public void presetNameAndNumberTest() {
-		JsonObject json = new JsonObject();
-		JsonObject config = new JsonObject();
-		json.add(Keys.CONFIG, config);
-		config.addProperty(Keys.PRESETS, TWOMARKETLA.toString());
-		
-		SimulationSpec spec = new SimulationSpec(new StringReader(json.toString()));
-		assertEquals(1, spec.getSimulationProps().getAsInt(Keys.MODEL_NUM));
-		assertEquals("TWOMARKETLA", spec.getSimulationProps().getAsString(Keys.MODEL_NAME));
-	}
-	
-	@Test
-	public void arbitraryNameAndNumberTest() {
-		JsonObject json = new JsonObject();
-		JsonObject config = new JsonObject();
-		json.add(Keys.CONFIG, config);
-		config.addProperty(CDA.toString(), Keys.NUM + "_1");
-		
-		SimulationSpec spec = new SimulationSpec(new StringReader(json.toString()));
-		assertEquals("1CDA_1", spec.getSimulationProps().getAsString(Keys.MODEL_NAME));
-		
-		config.addProperty(CALL.toString(), Keys.NUM + "_4");
-		
-		spec = new SimulationSpec(new StringReader(json.toString()));
-		String name = spec.getSimulationProps().getAsString(Keys.MODEL_NAME);
-		if (!(name.equals("4CALL_1CDA_1") || name.equals("1CDA_4CALL_1")))
-			fail();
-
-		config.addProperty(LA.toString(), Keys.NUM + "_51");
-
-		spec = new SimulationSpec(new StringReader(json.toString()));
-		name = spec.getSimulationProps().getAsString(Keys.MODEL_NAME);
-		if (!(name.equals("1CDA_4CALL_51LA_1") || name.equals("4CALL_1CDA_51LA_1")))
-			fail();
 	}
 
 }

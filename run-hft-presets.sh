@@ -3,7 +3,7 @@
 
 IFS='
 '
-FILE=simulation_spec.json
+SPEC_FILE=simulation_spec.json
 MERGED=merged
 LOGDIR=logs
 
@@ -16,7 +16,7 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo
     echo "example usage:"
     echo "  $0 sim_dir 100"
-    echo "  $0 sim_dir 100 CENTRALCDA CENTRALCALL"
+    echo "  $0 sim_dir 100 CENTRALCDA TWOMARKET"
     exit 0
 elif [[ $# -lt 2 || $# -eq 3 || ! "$2" =~ ^[0-9]+$ ]]; then
     echo "usage: $0 [-h] directory num-obs [preset preset [preset ...]]"
@@ -31,12 +31,11 @@ LOC=$(dirname "$0")
 FOLDER="$1"
 NUM_OBS="$2"
 
-for I in "${!PRESETS[@]}"; do 
-    PRESET="${PRESETS[$I]}"
-    echo ">> Setting up ${PRESET,,}"
-    mkdir -vp "$FOLDER/$PRESET"
-    cp -v "$FOLDER/$FILE" "$FOLDER/$PRESET/$FILE"
-    sed -i -e 's/"presets" *: *"[^"]*"/"presets": "'"$PRESET"'"/g' -e 's/"modelName" *: *"[^"]*"/"modelName": "'"${PRESET,,}"'"/g' -e 's/"modelNum" *: *"[^"]*"/"modelNum": "'"${I}"'"/g' "$FOLDER/$PRESET/$FILE"
+for PRESET in "${PRESETS[@]}"; do 
+    echo ">> Setting up $PRESET" >&2
+    mkdir -p "$FOLDER/$PRESET" &>/dev/null
+    cp -v "$FOLDER/$SPEC_FILE" "$FOLDER/$PRESET/$SPEC_FILE"
+    sed -i 's/"presets" *: *"[^"]*"/"presets": "'"$PRESET"'"/g' "$FOLDER/$PRESET/$SPEC_FILE"
     "$LOC/run-hft.sh" "$FOLDER/$PRESET" "$NUM_OBS"
 done
 

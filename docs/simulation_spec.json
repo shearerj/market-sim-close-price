@@ -2,8 +2,6 @@
     "assignment": {
     },
     "configuration": {
-        "modelName": "mySimulation",
-        "modelNum": "1",
         "randomSeed": "271828",
         "numSims": "1",
         "simLength": "60000",
