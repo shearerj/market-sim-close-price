@@ -17,8 +17,8 @@ parser.add_argument('-o', '--output', '-f', '--file', metavar='csv-file', type=a
 def to_csv(out, filenames):
     with open(filenames[0], 'r') as first:
         obs = json.load(first)
-    keys = set(obs['features'].keys())
-    keys.discard('config')
+    obs.pop('config', None)
+    keys = sorted(obs['features'].keys(), key=lambda s: s[::-1])
     
     out.write(','.join(keys))
     out.write('\n')
