@@ -236,8 +236,10 @@ public class Observations {
 		}
 				
 		// for control variates
-		features.put("control_common", controlFundamentalValue.getMean());
-		features.put("control_fund", controlFundamentalValue.getMean()); // TODO
+		List<Double> fundTimeSeries = fundPrices.sample(1, simLength);
+		for (double v : fundTimeSeries)
+			controlFundamentalValue.addValue(v);
+		features.put("control_fund", controlFundamentalValue.getMean());
 		features.put("control_private", controlPrivateValue.getMean());
 		
 		return features.build();
@@ -332,10 +334,6 @@ public class Observations {
 		controlPrivateValue.addValue(statistic.val);
 	}
 	
-	@Subscribe public void processFundamental(FundamentalValueStatistic statistic) {
-		controlFundamentalValue.addValue(statistic.val);
-	}
-	
 	@Subscribe public void deadStat(DeadEvent d) {
 		Logger.log(Logger.Level.ERROR, "Unhandled Statistic: " + d);
 	}
@@ -388,12 +386,6 @@ public class Observations {
 	public static class PrivateValueStatistic extends PriceStatistic {
 		public PrivateValueStatistic(PrivateValue value) {
 			super(value.getMean());
-		}
-	}
-	
-	public static class FundamentalValueStatistic extends PriceStatistic {
-		public FundamentalValueStatistic(Price value) {
-			super(value);
 		}
 	}
 }

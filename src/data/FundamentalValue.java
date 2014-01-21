@@ -2,7 +2,6 @@ package data;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.ERROR;
-import static data.Observations.BUS;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -11,7 +10,6 @@ import java.util.Random;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
-import data.Observations.FundamentalValueStatistic;
 import utils.Rands;
 import entity.market.Price;
 import event.TimeStamp;
@@ -52,6 +50,13 @@ public class FundamentalValue implements Serializable {
 		meanRevertProcess.add(Rands.nextGaussian(rand, meanValue, shockVar));
 	}
 	
+	/**
+	 * @param kap
+	 * @param meanVal
+	 * @param var
+	 * @param rand
+	 * @return
+	 */
 	public static FundamentalValue create(double kap, int meanVal, double var, Random rand) {
 		return new FundamentalValue(kap, meanVal, var, rand);
 	}
@@ -75,13 +80,12 @@ public class FundamentalValue implements Serializable {
 	 */
 	public Price getValueAt(TimeStamp t) {
 		int index = (int) t.getInTicks();
-		if (index < 0) { // Incase of overflow
+		if (index < 0) { // In case of overflow
 			log(ERROR, "Tried to access out of bounds TimeStamp: " + t + " ("
 					+ index + ")");
 			return new Price(0);
 		}
 		computeFundamentalTo(index);
-		BUS.post(new FundamentalValueStatistic(new Price((int) (double) meanRevertProcess.get(index)).nonnegative()));
 		return new Price((int) (double) meanRevertProcess.get(index)).nonnegative();
 	}
 	
@@ -98,5 +102,4 @@ public class FundamentalValue implements Serializable {
 			copy.add(time++, v);
 		return copy;
 	}
-
 }

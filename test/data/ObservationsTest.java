@@ -346,6 +346,7 @@ public class ObservationsTest {
 		agent1 = new MockBackgroundAgent(fundamental, sip, market1, pv, 0, 5000);
 		agent2 = new MockBackgroundAgent(fundamental, sip, market1, pv, 0, 5000);
 		assertEquals(375, obs.controlPrivateValue.getMean(), 0.001);
+		assertEquals(375, obs.getFeatures().get("control_private"), 0.001);
 	}
 	
 	@Test
@@ -353,19 +354,18 @@ public class ObservationsTest {
 		Random rand = new Random(1);
 		FundamentalValue fund = FundamentalValue.create(0.5, 100000, 100000000, rand);
 		fund.computeFundamentalTo(5);
-		Price val1 = fund.getValueAt(TimeStamp.ZERO);
-		Price val2 = fund.getValueAt(TimeStamp.create(1));
+		double tot = 0, lastVal = 0;
+		for (double v : fund.meanRevertProcess) {
+			tot += v;
+			lastVal = v;
+		}
 		
 		Agent agent1 = new MockBackgroundAgent(fund, sip, market1);
-		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
-		setupObservations(agent1, agent2);
+		Agent agent2 = new MockBackgroundAgent(fund, sip, market1);
+		setupObservations(fund, agent1, agent2);
 		
-		market1.submitOrder(agent1, BUY, new Price(105), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent2, SELL, new Price(104), 1, TimeStamp.create(1));
-		Executer.execute(market1.clear(TimeStamp.create(1)));
-		
-		assertEquals(val2.doubleValue()/2 + 50000, obs.controlFundamentalValue.getMean(), 0.001);
-		assertEquals(2, obs.controlFundamentalValue.getN());
+		assertEquals((tot + (obs.simLength-6)*lastVal) / obs.simLength, 
+				obs.getFeatures().get("control_fund"), 0.001);
 	}
 	
 	@Test
@@ -473,6 +473,17 @@ public class ObservationsTest {
 	}
 	
 	private void setupObservations(Agent... agents) {
+		if (obs != null)
+			Observations.BUS.unregister(obs);
+		
+		obs = new Observations(new SimulationSpec(),
+				ImmutableList.of(market1, market2), Arrays.asList(agents),
+				ImmutableList.<Player> of(), fundamental);
+		
+		Observations.BUS.register(obs);
+	}
+	
+	private void setupObservations(FundamentalValue fundamental, Agent... agents) {
 		if (obs != null)
 			Observations.BUS.unregister(obs);
 		
