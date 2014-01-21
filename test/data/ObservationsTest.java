@@ -338,16 +338,14 @@ public class ObservationsTest {
 	@Test
 	public void controlPVTest() {
 		DummyPrivateValue pv = new DummyPrivateValue(2, ImmutableList.of(
-				new Price(12), new Price(10), new Price(-2), new Price(-5)));
+				new Price(1200), new Price(1000), new Price(-200), new Price(-500)));
 		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1, pv, 0, 5000);
 		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1, pv, 0, 5000);
 		setupObservations(agent1, agent2);
-		
-		market1.submitOrder(agent1, BUY, new Price(105), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent2, SELL, new Price(104), 1, TimeStamp.create(1));
-		Executer.execute(market1.clear(TimeStamp.create(1)));
-		assertEquals(4, obs.controlPrivateValue.getMean(), 0.001);
-		assertEquals(2, obs.controlFundamentalChange.getN());
+		// necessary because the PVs are stored in the BackgroundAgent constructor
+		agent1 = new MockBackgroundAgent(fundamental, sip, market1, pv, 0, 5000);
+		agent2 = new MockBackgroundAgent(fundamental, sip, market1, pv, 0, 5000);
+		assertEquals(375, obs.controlPrivateValue.getMean(), 0.001);
 	}
 	
 	@Test
@@ -357,7 +355,6 @@ public class ObservationsTest {
 		fund.computeFundamentalTo(5);
 		Price val1 = fund.getValueAt(TimeStamp.ZERO);
 		Price val2 = fund.getValueAt(TimeStamp.create(1));
-		double val = val2.doubleValue() - val1.doubleValue();
 		
 		Agent agent1 = new MockBackgroundAgent(fund, sip, market1);
 		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
@@ -366,8 +363,6 @@ public class ObservationsTest {
 		market1.submitOrder(agent1, BUY, new Price(105), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent2, SELL, new Price(104), 1, TimeStamp.create(1));
 		Executer.execute(market1.clear(TimeStamp.create(1)));
-		assertEquals(val/2, obs.controlFundamentalChange.getMean(), 0.001);
-		assertEquals(2, obs.controlFundamentalChange.getN());
 		
 		assertEquals(val2.doubleValue()/2 + 50000, obs.controlFundamentalValue.getMean(), 0.001);
 		assertEquals(2, obs.controlFundamentalValue.getN());

@@ -2,6 +2,7 @@ package data;
 
 import static logger.Logger.log;
 import static logger.Logger.Level.ERROR;
+import static data.Observations.BUS;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.Random;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
+import data.Observations.FundamentalValueStatistic;
 import utils.Rands;
 import entity.market.Price;
 import event.TimeStamp;
@@ -79,6 +81,7 @@ public class FundamentalValue implements Serializable {
 			return new Price(0);
 		}
 		computeFundamentalTo(index);
+		BUS.post(new FundamentalValueStatistic(new Price((int) (double) meanRevertProcess.get(index)).nonnegative()));
 		return new Price((int) (double) meanRevertProcess.get(index)).nonnegative();
 	}
 	

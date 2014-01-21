@@ -35,6 +35,7 @@ import entity.agent.Agent;
 import entity.agent.BackgroundAgent;
 import entity.agent.HFTAgent;
 import entity.agent.MarketMaker;
+import entity.agent.PrivateValue;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Transaction;
@@ -87,7 +88,6 @@ public class Observations {
 	protected final Multiset<Class<? extends Agent>> numTrans;
 	protected final Map<Market, TimeSeries> spreads;
 	protected final Map<Market, TimeSeries> midQuotes;
-	protected final SummaryStatistics controlFundamentalChange;
 	protected final SummaryStatistics controlFundamentalValue;
 	protected final SummaryStatistics controlPrivateValue;
 	
@@ -137,7 +137,6 @@ public class Observations {
 		this.transPrices = TimeSeries.create();
 		this.nbboSpreads = TimeSeries.create();
 		this.controlPrivateValue = new SummaryStatistics();
-		this.controlFundamentalChange = new SummaryStatistics();
 		this.controlFundamentalValue = new SummaryStatistics();
 	}
 	
@@ -163,9 +162,14 @@ public class Observations {
 		features.put("trans_mean_price", prices.getMean());
 		features.put("trans_stddev_price", prices.getStandardDeviation());
 		
-		for (Class<? extends Agent> type : agentTypes)
+		double numAllTrans = 0;
+		for (Class<? extends Agent> type : agentTypes) {
+			double agentTrans = (double) numTrans.count(type);
 			features.put("trans_" + type.getSimpleName().toLowerCase() + "_num", 
-					(double) numTrans.count(type));
+					agentTrans);
+			numAllTrans += agentTrans;
+		}
+		features.put("trans_num", numAllTrans);
 		
 		SummaryStatistics medians = new SummaryStatistics();
 		for (Entry<Market, TimeSeries> entry : spreads.entrySet()) {
@@ -185,7 +189,7 @@ public class Observations {
 		for (int period : Consts.PERIODS)
 			periodBased(features, fundPrices, period);
 		
-		// Profit and Surplus
+		// Profit and Surplus (and Private Value)
 		// XXX This does't quite make sense because background agents don't liquidate...
 		SummaryStatistics 
 			modelProfit = new SummaryStatistics(),
@@ -233,7 +237,7 @@ public class Observations {
 				
 		// for control variates
 		features.put("control_common", controlFundamentalValue.getMean());
-		features.put("control_fund_change", controlFundamentalChange.getMean());
+		features.put("control_fund", controlFundamentalValue.getMean()); // TODO
 		features.put("control_private", controlPrivateValue.getMean());
 		
 		return features.build();
@@ -327,10 +331,6 @@ public class Observations {
 	@Subscribe public void processPrivateValue(PrivateValueStatistic statistic) {
 		controlPrivateValue.addValue(statistic.val);
 	}
-
-	@Subscribe public void processFundamental(FundamentalChangeStatistic statistic) {
-		controlFundamentalChange.addValue(statistic.transactVal - statistic.submitVal);
-	}
 	
 	@Subscribe public void processFundamental(FundamentalValueStatistic statistic) {
 		controlFundamentalValue.addValue(statistic.val);
@@ -386,24 +386,14 @@ public class Observations {
 	}
 	
 	public static class PrivateValueStatistic extends PriceStatistic {
-		public PrivateValueStatistic(Price value) {
-			super(value);
-		}
-	}
-	
-	public static class FundamentalChangeStatistic {
-		protected final double submitVal;
-		protected final double transactVal;
-		
-		public FundamentalChangeStatistic(Price submitVal, Price transactVal) {
-			this.submitVal = submitVal.doubleValue();
-			this.transactVal = transactVal.doubleValue();
+		public PrivateValueStatistic(PrivateValue value) {
+			super(value.getMean());
 		}
 	}
 	
 	public static class FundamentalValueStatistic extends PriceStatistic {
-		public FundamentalValueStatistic(Price value, int quantity) {
-			super(new Price(value.doubleValue() * quantity));
+		public FundamentalValueStatistic(Price value) {
+			super(value);
 		}
 	}
 }

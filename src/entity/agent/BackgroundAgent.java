@@ -4,8 +4,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static data.Observations.BUS;
 import static data.Observations.PrivateValueStatistic;
-import static data.Observations.FundamentalChangeStatistic;
-import static data.Observations.FundamentalValueStatistic;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 import iterators.ExpInterarrivals;
@@ -56,6 +54,8 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		this.surplus = DiscountedValue.create();
 		this.bidRangeMin = bidRangeMin;
 		this.bidRangeMax = bidRangeMax;
+		
+		BUS.post(new PrivateValueStatistic(privateValue));
 	}
 
 	/**
@@ -199,14 +199,9 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		int originalBalance = this.positionBalance + (type.equals(BUY) ? -1 : 1) * quantity;
 		Price privateValue = this.privateValue.getValueFromQuantity(originalBalance, 
 				quantity, type);
-		Price executionFundamental = fundamental.getValueAt(currentTime);
-		Price submissionFundamental = fundamental.getValueAt(submissionTime);
+		Price fundamentalValue = fundamental.getValueAt(currentTime);
 		
-		BUS.post(new PrivateValueStatistic(privateValue));
-		BUS.post(new FundamentalChangeStatistic(submissionFundamental, executionFundamental));
-		BUS.post(new FundamentalValueStatistic(executionFundamental, quantity));
-		
-		return new Price(executionFundamental.intValue() * quantity
+		return new Price(fundamentalValue.intValue() * quantity
 				+ privateValue.intValue()).nonnegative();
 	}
 	

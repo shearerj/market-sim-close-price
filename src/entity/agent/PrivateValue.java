@@ -3,6 +3,8 @@ package entity.agent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static entity.market.Price.ZERO;
 
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,7 +40,7 @@ import fourheap.Order.OrderType;
  * 
  * @author ewah
  */
-class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
+public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 
 	private static final long serialVersionUID = -348702049295080442L;
 	
@@ -151,6 +153,18 @@ class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 		return new Price(privateValue);
 	}
 
+	/**
+	 * For control variates.
+	 * @return
+	 */
+	public Price getMean() {
+		SummaryStatistics pv = new SummaryStatistics();
+		for (Price price : values) {
+			pv.addValue(price.doubleValue());
+		}
+		return new Price(pv.getMean());
+	}
+	
 	@Override
 	public int hashCode() {
 		return Objects.hashCode(values, offset);
