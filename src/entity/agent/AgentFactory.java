@@ -58,11 +58,7 @@ public class AgentFactory {
 				rand);
 	}
 
-	/*
-	 * XXX Not all agents advance all of the parameters like the market or the
-	 * arrival process. One just has to be sure that this happens appropriately
-	 * if one factory is creating several different classes of agents.
-	 */
+	// All Agents should advance rand, marketAssignment, and arrivlProcess
 	public Agent createAgent(AgentProperties props) {
 		switch (props.getAgentType()) {
 		case AA:
@@ -82,26 +78,35 @@ public class AgentFactory {
 					marketAssignment.next(), new Random(rand.nextLong()),
 					props);
 		case BASICMM:
+			arrivalProcess.next();
 			return new BasicMarketMaker(fundamental, sip,
 					marketAssignment.next(), new Random(rand.nextLong()),
 					props);
 		case MAMM:
+			arrivalProcess.next();
 			return new MAMarketMaker(fundamental, sip,
 					marketAssignment.next(), new Random(rand.nextLong()),
 					props);
 		case WMAMM:
+			arrivalProcess.next();
 			return new WMAMarketMaker(fundamental, sip,
 					marketAssignment.next(), new Random(rand.nextLong()),
 					props);
 		case LA:
+			arrivalProcess.next();
+			marketAssignment.next();
 			return new LAAgent(fundamental, sip, markets, new Random(
 					rand.nextLong()), props);
-		case DA:
-			return new DummyAgent(fundamental,sip,marketAssignment.next());
-
+			
 /*		case ODA:
 			return new OrderDataAgent(fundamental,sip,marketAssignment.next(), new Random(rand.nextLong()), );
 */
+		case NOOP:
+			arrivalProcess.next();
+			marketAssignment.next();
+			return new NoOpAgent(fundamental, sip, new Random(rand.nextLong()),
+					props);
+
 		default:
 			throw new IllegalArgumentException("Can't create AgentType: "
 					+ props.getAgentType());
