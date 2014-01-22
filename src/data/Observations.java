@@ -240,8 +240,9 @@ public class Observations {
 		List<Double> fundTimeSeries = fundPrices.sample(1, simLength);
 		for (double v : fundTimeSeries)
 			controlFundamentalValue.addValue(v);
-		features.put("control_fund", controlFundamentalValue.getMean());
-		features.put("control_private", controlPrivateValue.getMean());
+		features.put("control_mean_fund", controlFundamentalValue.getMean());
+		features.put("control_var_fund", controlFundamentalValue.getVariance());
+		features.put("control_mean_private", controlPrivateValue.getMean());
 		
 		return features.build();
 	}
