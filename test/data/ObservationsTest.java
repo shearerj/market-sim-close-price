@@ -342,7 +342,7 @@ public class ObservationsTest {
 		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1, pv, 0, 5000);
 		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1, pv, 0, 5000);
 		setupObservations(agent1, agent2);
-		assertEquals(375, obs.getFeatures().get("control_private"), 0.001);
+		assertEquals(375, obs.getFeatures().get("control_mean_private"), 0.001);
 	}
 	
 	@Test
@@ -361,7 +361,7 @@ public class ObservationsTest {
 		setupObservations(fund, agent1, agent2);
 		
 		assertEquals((tot + (obs.simLength-6)*lastVal) / obs.simLength, 
-				obs.getFeatures().get("control_fund"), 0.001);
+				obs.getFeatures().get("control_mean_fund"), 0.001);
 	}
 	
 	@Test
