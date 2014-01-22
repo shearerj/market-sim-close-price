@@ -30,7 +30,7 @@ public interface Consts {
 	// **********************************************************
 	// Agent, market, and model types
 	// XXX UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL
-	public static enum AgentType { AA, ZI, ZIP, ZIR, BASICMM, MAMM, WMAMM, LA, DA, ODA };
+	public static enum AgentType { NOOP, AA, ZI, ZIP, ZIR, BASICMM, MAMM, WMAMM, LA, ODA };
 	public static enum MarketType { CDA, CALL };
 	
 	public static enum Presets { NONE, TWOMARKET, TWOMARKETLA, CENTRALCDA, CENTRALCALL };

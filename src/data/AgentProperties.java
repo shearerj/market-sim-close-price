@@ -31,8 +31,8 @@ public class AgentProperties extends EntityProperties {
 	}
 
 	public AgentProperties(String config) {
-		this(AgentType.valueOf(config.substring(0, config.indexOf(':'))),
-				config.substring(config.indexOf(':') + 1));
+		this(config.indexOf(':') == -1 ? AgentType.valueOf(config) : AgentType.valueOf(config.substring(0, config.indexOf(':'))),
+				config.indexOf(':') == -1 ? "" : config.substring(config.indexOf(':') + 1));
 	}
 
 	public AgentProperties(AgentType type, EntityProperties def, String config) {
