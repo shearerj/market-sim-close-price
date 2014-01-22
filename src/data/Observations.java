@@ -35,7 +35,6 @@ import entity.agent.Agent;
 import entity.agent.BackgroundAgent;
 import entity.agent.HFTAgent;
 import entity.agent.MarketMaker;
-import entity.agent.PrivateValue;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Transaction;
@@ -220,6 +219,8 @@ public class Observations {
 			// go through all agents & update for each agent type
 			for (Agent agent : agents)
 				if (agent instanceof BackgroundAgent) {
+					controlPrivateValue.addValue(((BackgroundAgent) agent).getPrivateValueMean().doubleValue());
+					
 					surplus.addValue(((BackgroundAgent) agent).getDiscountedSurplus(discount));
 					if (!agentSurplus.containsKey(agent.getClass()))
 						agentSurplus.put(agent.getClass(), new SummaryStatistics());
@@ -330,10 +331,6 @@ public class Observations {
 		numTrans.add(transaction.getSeller().getClass());
 	}
 	
-	@Subscribe public void processPrivateValue(PrivateValueStatistic statistic) {
-		controlPrivateValue.addValue(statistic.val);
-	}
-	
 	@Subscribe public void deadStat(DeadEvent d) {
 		Logger.log(Logger.Level.ERROR, "Unhandled Statistic: " + d);
 	}
@@ -380,12 +377,6 @@ public class Observations {
 		
 		public PriceStatistic(Price value) {
 			this.val = value.doubleValue();
-		}
-	}
-	
-	public static class PrivateValueStatistic extends PriceStatistic {
-		public PrivateValueStatistic(PrivateValue value) {
-			super(value.getMean());
 		}
 	}
 }

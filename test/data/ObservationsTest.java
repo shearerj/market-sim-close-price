@@ -342,10 +342,6 @@ public class ObservationsTest {
 		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1, pv, 0, 5000);
 		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1, pv, 0, 5000);
 		setupObservations(agent1, agent2);
-		// necessary because the PVs are stored in the BackgroundAgent constructor
-		agent1 = new MockBackgroundAgent(fundamental, sip, market1, pv, 0, 5000);
-		agent2 = new MockBackgroundAgent(fundamental, sip, market1, pv, 0, 5000);
-		assertEquals(375, obs.controlPrivateValue.getMean(), 0.001);
 		assertEquals(375, obs.getFeatures().get("control_private"), 0.001);
 	}
 	

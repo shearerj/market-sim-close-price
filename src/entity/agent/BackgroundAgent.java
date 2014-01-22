@@ -2,8 +2,6 @@ package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static data.Observations.BUS;
-import static data.Observations.PrivateValueStatistic;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 import iterators.ExpInterarrivals;
@@ -54,8 +52,6 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		this.surplus = DiscountedValue.create();
 		this.bidRangeMin = bidRangeMin;
 		this.bidRangeMax = bidRangeMax;
-		
-		BUS.post(new PrivateValueStatistic(privateValue));
 	}
 
 	/**
@@ -149,6 +145,15 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		return surplus.getValueAtDiscount(discount);
 	}
 
+	
+	/**
+	 * For control variates
+	 * @return
+	 */
+	public Price getPrivateValueMean() {
+		return privateValue.getMean();
+	}
+	
 	/**
 	 * Returns the limit price (i.e. valuation) for the agent for buying/selling 1 unit.
 	 * 
