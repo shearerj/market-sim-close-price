@@ -5,10 +5,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collections;
 import java.util.List;
 
+import systemmanager.Scheduler;
+
 import activity.Activity;
 import activity.ProcessTransactions;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import entity.Entity;
@@ -22,32 +23,30 @@ abstract class AbstractTransactionProcessor extends Entity implements Transactio
 
 	private static final long serialVersionUID = -8130023032097833791L;
 	
-	protected TimeStamp latency;
+	protected final TimeStamp latency;
 	protected final Market associatedMarket;
 	protected final List<Transaction> transactions;
 
-	public AbstractTransactionProcessor(TimeStamp latency, Market associatedMarket) {
-		super(ProcessorIDs.nextID++);
+	public AbstractTransactionProcessor(Scheduler scheduler, TimeStamp latency, Market associatedMarket) {
+		super(ProcessorIDs.nextID++, scheduler);
 		this.latency = latency;
 		this.associatedMarket = checkNotNull(associatedMarket);
 		this.transactions = Lists.newArrayList();
 	}
 
 	@Override
-	public Iterable<? extends Activity> sendToTransactionProcessor(Market market, 
+	public void sendToTransactionProcessor(Market market, 
 			List<Transaction> newTransactions, TimeStamp currentTime) {
-		if (latency.equals(TimeStamp.IMMEDIATE)) {
-			return ImmutableList.<Activity> builder().addAll(
-					processTransactions(market, newTransactions, currentTime)).build();
-		}
-		return ImmutableList.of(new ProcessTransactions(this, market, 
-				newTransactions, currentTime.plus(latency)));
+		Activity act = new ProcessTransactions(this, market, newTransactions);
+		if (latency.equals(TimeStamp.IMMEDIATE))
+			scheduler.executeActivity(act);
+		else
+			scheduler.scheduleActivity(currentTime.plus(latency), act);
 	}
 
 	@Override
-	public Iterable<? extends Activity> processTransactions(Market market, List<Transaction> newTransactions, TimeStamp currentTime) {
+	public void processTransactions(Market market, List<Transaction> newTransactions, TimeStamp currentTime) {
 		transactions.addAll(newTransactions);
-		return ImmutableList.of();
 	}
 
 	public List<Transaction> getTransactions() {

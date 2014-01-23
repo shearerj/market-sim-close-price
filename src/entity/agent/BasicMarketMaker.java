@@ -5,11 +5,8 @@ import static logger.Logger.Level.INFO;
 
 import java.util.Random;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-
 import systemmanager.Keys;
-import activity.Activity;
+import systemmanager.Scheduler;
 import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
@@ -47,17 +44,17 @@ public class BasicMarketMaker extends MarketMaker {
 
 	private static final long serialVersionUID = 9057600979711100221L;
 
-	public BasicMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
+	public BasicMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, double reentryRate, int tickSize, boolean noOp,
 			int numRungs, int rungSize, boolean truncateLadder, 
 			boolean tickImprovement) {
-		super(fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
+		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
 				numRungs, rungSize, truncateLadder, tickImprovement);	
 	}
 
-	public BasicMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
+	public BasicMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, EntityProperties props) {
-		this(fundamental, sip, market, rand,
+		this(scheduler, fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0.0005),
 				props.getAsInt(Keys.TICK_SIZE, 1),
 				props.getAsBoolean(Keys.NO_OP, false),
@@ -68,14 +65,13 @@ public class BasicMarketMaker extends MarketMaker {
 	}
 
 	@Override
-	public Iterable<Activity> agentStrategy(TimeStamp currentTime) {
-		if (noOp) return ImmutableList.of(); // no execution if no-op
+	public void agentStrategy(TimeStamp currentTime) {
+		if (noOp) return; // no execution if no-op TODO Change to NoOpAgent
 
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
 		
-		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
-				super.agentStrategy(currentTime));
+		super.agentStrategy(currentTime);
 
 		Price bid = this.getQuote().getBidPrice();
 		Price ask = this.getQuote().getAskPrice();
@@ -92,7 +88,7 @@ public class BasicMarketMaker extends MarketMaker {
 			} else {
 				// Quote changed, still valid, withdraw all orders
 				log(INFO, sb.append(" Withdraw all orders."));
-				acts.addAll(withdrawAllOrders(currentTime));
+				withdrawAllOrders();
 				
 				bid = this.getQuote().getBidPrice();
 				ask = this.getQuote().getAskPrice();
@@ -106,19 +102,13 @@ public class BasicMarketMaker extends MarketMaker {
 					log(INFO, sb.append(bid).append(", ").append(ask).append(")"));
 				}
 				
-				acts.addAll(this.createOrderLadder(bid, ask, currentTime));
+				this.createOrderLadder(bid, ask);
 			}
 		} else {
 			log(INFO, sb.append(" No change in submitted ladder"));
 		}
 		// update latest bid/ask prices
 		lastAsk = ask; lastBid = bid;
-
-		return acts.build();
 	}
 
-	@Override
-	public String toString() {
-		return "BasicMM " + super.toString();
-	}
 }

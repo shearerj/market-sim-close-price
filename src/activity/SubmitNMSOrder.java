@@ -25,8 +25,7 @@ public class SubmitNMSOrder extends Activity {
 	protected final TimeStamp duration;
 
 	public SubmitNMSOrder(Agent agent, Market primaryMarket, OrderType type,
-			Price price, int quantity, TimeStamp scheduledTime, TimeStamp duration) {
-		super(scheduledTime);
+			Price price, int quantity, TimeStamp duration) {
 		checkArgument(quantity > 0, "Quantity must be positive");
 		this.agent = checkNotNull(agent, "Agent");
 		this.price = checkNotNull(price, "Price");
@@ -37,14 +36,13 @@ public class SubmitNMSOrder extends Activity {
 	}
 
 	public SubmitNMSOrder(Agent agent, Market primaryMarket, OrderType type,
-			Price price, int quantity, TimeStamp scheduledTime) {
-		this(agent, primaryMarket, type, price, quantity, scheduledTime,
-				TimeStamp.IMMEDIATE);
+			Price price, int quantity) {
+		this(agent, primaryMarket, type, price, quantity, TimeStamp.IMMEDIATE);
 	}
 
 	@Override
-	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return primaryMarket.submitNMSOrder(agent, type, price, quantity, currentTime);
+	public void execute(TimeStamp currentTime) {
+		primaryMarket.submitNMSOrder(agent, type, price, quantity, currentTime);
 	}
 	
 	@Override

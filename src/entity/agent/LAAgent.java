@@ -6,18 +6,15 @@ import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
 import systemmanager.Keys;
-import activity.Activity;
+import systemmanager.Scheduler;
 import activity.SubmitOrder;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Maps;
 
 import data.EntityProperties;
@@ -44,28 +41,28 @@ public class LAAgent extends HFTAgent {
 	private static final long serialVersionUID = 1479379512311568959L;
 	
 	protected final double alpha; // LA profit gap
+	protected boolean executingStrategy; // Lock during arbitrage
 
-	public LAAgent(TimeStamp latency, FundamentalValue fundamental,
+	public LAAgent(Scheduler scheduler, TimeStamp latency, FundamentalValue fundamental,
 			SIP sip, Collection<Market> markets, Random rand, int tickSize,
 			double alpha) {
-		super(latency, TimeStamp.ZERO, fundamental, sip, markets, rand, tickSize);
+		super(scheduler, latency, TimeStamp.ZERO, fundamental, sip, markets, rand, tickSize);
 		
 		this.alpha = alpha;
+		this.executingStrategy = false;
 	}
 
-	public LAAgent(FundamentalValue fundamental, SIP sip,
+	public LAAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
 			Collection<Market> markets, Random rand, EntityProperties props) {
-		this(new TimeStamp(props.getAsLong(Keys.LA_LATENCY, -1)), fundamental, sip, markets,
+		this(scheduler, new TimeStamp(props.getAsLong(Keys.LA_LATENCY, -1)), fundamental, sip, markets,
 				rand, props.getAsInt(Keys.TICK_SIZE, 1),
 				props.getAsDouble(Keys.ALPHA, 0.001));
 	}
 
 	@Override
 	// TODO Need strategy for orders that don't execute
-	public Iterable<? extends Activity> agentStrategy(TimeStamp ts) {
-		if (positionBalance != 0 && activeOrders.isEmpty())
-			// Have pending submit order activities
-			return ImmutableList.of();
+	public void agentStrategy(TimeStamp currentTime) {
+		if (executingStrategy) return; // Lock
 		
 		Price bestBid = null, bestAsk = null;
 		Market bestBidMarket = null, bestAskMarket = null;
@@ -84,15 +81,17 @@ public class LAAgent extends HFTAgent {
 
 		if (bestBid == null || bestAsk == null
 				|| bestAsk.doubleValue() * (1 + alpha) > bestBid.doubleValue())
-			return Collections.emptySet();
+			return;
 
 		log(INFO, this + " detected arbitrage between " + bestBidMarket + " "
 				+ quoteProcessors.get(bestBidMarket).getQuote() + " and " + bestAskMarket
 				+ " " + quoteProcessors.get(bestAskMarket).getQuote());
 		Price midPoint = new Price((bestBid.doubleValue() + bestAsk.doubleValue()) * .5).quantize(tickSize);
-		return ImmutableList.of(
-				new SubmitOrder(this, bestBidMarket, SELL, midPoint, 1, TimeStamp.IMMEDIATE),
-				new SubmitOrder(this, bestAskMarket, BUY, midPoint, 1, TimeStamp.IMMEDIATE));
+		
+		executingStrategy = true;
+		scheduler.executeActivity(new SubmitOrder(this, bestBidMarket, SELL, midPoint, 1));
+		scheduler.executeActivity(new SubmitOrder(this, bestBidMarket, BUY, midPoint, 1));
+		executingStrategy = false;
 	}
 
 	/*
@@ -102,7 +101,9 @@ public class LAAgent extends HFTAgent {
 	 * strategy, sometimes making more profit, sometimes less, and I'm unsure
 	 * why.
 	 */
-	public Iterable<? extends Activity> agentStrategy2(TimeStamp ts) {
+	public void agentStrategy2(TimeStamp currentTime) {
+		if (executingStrategy) return; // Lock
+		
 		FourHeap<Price, Integer, Order<Price, Integer>> fh = FourHeap.<Price, Integer, Order<Price, Integer>> create();
 		Map<Order<Price, Integer>, Market> orderMap = Maps.newHashMap();
 		
@@ -121,7 +122,6 @@ public class LAAgent extends HFTAgent {
 		}
 		
 		List<MatchedOrders<Price, Integer, Order<Price, Integer>>> transactions = fh.clear();
-		Builder<Activity> acts = ImmutableList.builder();
 		for (MatchedOrders<Price, Integer, Order<Price, Integer>> trans : transactions) {
 			Order<Price, Integer> buy = trans.getBuy(), sell = trans.getSell();
 			if (sell.getPrice().doubleValue() * (1 + alpha) > buy.getPrice().doubleValue())
@@ -129,15 +129,11 @@ public class LAAgent extends HFTAgent {
 			double midPoint = .5 * (buy.getPrice().doubleValue() + sell.getPrice().doubleValue()); 
 			Price midPrice = new Price(midPoint).quantize(tickSize);
 			
-			acts.add(new SubmitOrder(this, orderMap.get(sell), BUY, midPrice, trans.getQuantity(), TimeStamp.IMMEDIATE));
-			acts.add(new SubmitOrder(this, orderMap.get(buy), SELL, midPrice, trans.getQuantity(), TimeStamp.IMMEDIATE));
+			executingStrategy = true;
+			scheduler.executeActivity(new SubmitOrder(this, orderMap.get(sell), BUY, midPrice, trans.getQuantity()));
+			scheduler.executeActivity(new SubmitOrder(this, orderMap.get(buy), SELL, midPrice, trans.getQuantity()));
+			executingStrategy = false;
 		}
-		return acts.build();
-	}
-
-	@Override
-	public String toString() {
-		return "LA " + super.toString();
 	}
 
 }

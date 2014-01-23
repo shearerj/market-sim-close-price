@@ -3,18 +3,14 @@ package event;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.AbstractQueue;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.PriorityQueue;
 import java.util.Random;
+import java.util.SortedMap;
 
 import activity.Activity;
 
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.ImmutableListMultimap.Builder;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 
@@ -34,14 +30,10 @@ import com.google.common.collect.Maps;
  * 
  * @author ebrink
  */
-public class EventQueue extends AbstractQueue<Activity> {
+public class EventQueue extends AbstractQueue<TimedActivity> {
 	
 	/*
 	 * Invariant that no event is ever empty at the end of execution.
-	 * 
-	 * Note: Current implementation means instantTime stuff gets executed in a
-	 * random order as well... May not be what we want, but if it is it provides
-	 * a much simpler implementation.
 	 * 
 	 * In general the rule should be, if one activity comes logically after
 	 * another activity it should be scheduled by the activity that always
@@ -54,22 +46,12 @@ public class EventQueue extends AbstractQueue<Activity> {
 	 * iteration. See java collections source code.
 	 */
 	
-	protected PriorityQueue<Event> eventQueue;
-	protected Map<TimeStamp, Event> eventIndex;
+	protected SortedMap<TimeStamp, Event> eventQueue;
 	protected int size;
 	protected Random rand;
 
 	public EventQueue(Random seed) {
-		this(8, seed);
-	}
-
-	public EventQueue(int capacity) {
-		this(capacity, new Random());
-	}
-
-	public EventQueue(int capacity, Random seed) {
-		eventQueue = new PriorityQueue<Event>(capacity);
-		eventIndex = Maps.newHashMapWithExpectedSize(capacity);
+		eventQueue = Maps.newTreeMap();
 		size = 0;
 		rand = seed;
 	}
@@ -81,53 +63,38 @@ public class EventQueue extends AbstractQueue<Activity> {
 	@Override
 	public void clear() {
 		eventQueue.clear();
-		eventIndex.clear();
 		size = 0;
 	}
 
-	/**
-	 * This iterator is not sorted by time, but within a given time, the
-	 * activities are in the random order they will be drawn from.
-	 */
 	@Override
-	public Iterator<Activity> iterator() {
-		return new EventQueueIterator(eventQueue.iterator());
+	public Iterator<TimedActivity> iterator() {
+		return new EventQueueIterator(eventQueue.entrySet().iterator());
 	}
 
 	/**
-	 * This method can be very inefficient, and shouldn't be used if it can be
-	 * helped.
+	 * Remove is not supported
 	 */
 	@Override
 	public boolean remove(Object o) {
-		if (o == null || !(o instanceof Activity))
-			return false;
-		Activity act = (Activity) o;
-		Event e = eventIndex.get(act.getTime());
-		if (e == null)
-			return false;
-		boolean modified = e.remove(act);
-		if (modified)
-			size--;
-		if (e.isEmpty()) {
-			eventIndex.remove(act.getTime());
-			eventQueue.remove(e);
-		}
-		return modified;
+		throw new UnsupportedOperationException("Arbitrary remove is not supported");
 	}
 
 	@Override
-	public boolean offer(Activity act) {
+	public boolean offer(TimedActivity act) {
 		checkNotNull(act, "Activity");
-		TimeStamp t = act.getTime();
-		Event e = eventIndex.get(t);
+		return add(act.getTime(), act.getActivity());
+	}
+	
+	public boolean add(TimeStamp scheduledTime, Activity act) {
+		checkNotNull(scheduledTime);
+		checkNotNull(act);
+		Event e = eventQueue.get(scheduledTime);
 		if (e == null) {
 			// This makes all event's use the same random number generator. This
 			// may a little chaotic, but at the moment I can't think of a meaningful way
 			// around it.
-			e = new Event(t, rand);
-			eventIndex.put(t, e);
-			eventQueue.add(e);
+			e = new Event(scheduledTime, rand);
+			eventQueue.put(scheduledTime, e);
 		}
 		e.add(act);
 		size++;
@@ -135,13 +102,15 @@ public class EventQueue extends AbstractQueue<Activity> {
 	}
 
 	@Override
-	public Activity poll() {
+	public TimedActivity poll() {
 		if (isEmpty()) return null;
-		Activity act = eventQueue.element().remove();
-		if (eventQueue.element().isEmpty())
-			eventIndex.remove(eventQueue.remove().getTime());
+		
+		Iterator<Entry<TimeStamp, Event>> it = eventQueue.entrySet().iterator();
+		Entry<TimeStamp, Event> first = it.next();
+		it.remove();
 		size--;
-		return act;
+		
+		return new TimedActivity(first.getKey(), first.getValue().poll());
 	}
 
 	@Override
@@ -150,50 +119,39 @@ public class EventQueue extends AbstractQueue<Activity> {
 	}
 
 	@Override
-	public Activity peek() {
+	public TimedActivity peek() {
 		if (isEmpty()) return null;
-		return eventQueue.peek().peek();
-	}
-
-	@Override
-	public boolean addAll(Collection<? extends Activity> acts) {
-		return addAll((Iterable<? extends Activity>) acts);
+		Entry<TimeStamp, Event> first = eventQueue.entrySet().iterator().next();
+		return new TimedActivity(first.getKey(), first.getValue().peek());
 	}
 	
 	// Add collections in reverse. This ensures invariant.
-	public boolean addAll(Iterable<? extends Activity> acts) {
-		checkNotNull(acts);
-		if (Iterables.isEmpty(acts)) return false;
-		// Group Activities by Time
-		Builder<TimeStamp, Activity> build = ImmutableListMultimap.builder();	// will not take nulls
-		for (Activity act : acts) build.put(act.getTime(), act);
-		
-		// Add them all to the appropriate event as a collection to maintain execution orders 
-		for (Entry<TimeStamp, Collection<Activity>> ent : build.build().asMap().entrySet()) {
-			TimeStamp t = ent.getKey();
-			Event e = eventIndex.get(t);
-			if (e == null) {
-				e = new Event(t, rand);
-				eventIndex.put(t, e);
-				eventQueue.add(e);
-			}
-			e.addAll(ent.getValue());
-			size += ent.getValue().size();
+	public boolean addAllOrdered(TimeStamp scheduledTime, Activity... acts) {
+		if (acts.length == 0) return false;
+
+		Event e = eventQueue.get(scheduledTime);
+		if (e == null) {
+			e = new Event(scheduledTime, rand);
+			eventQueue.put(scheduledTime, e);
 		}
+		e.addAllOrderd(Arrays.asList(acts));
+		size += acts.length;
 		return true;
 	}
 
 	@Override
 	public String toString() {
 		if (isEmpty()) return "[]";
-		else if (eventQueue.size() == 1) return eventQueue.toString();
-		else return "[" + eventQueue.peek() + ", ...]";
+		Entry<TimeStamp, Event> first = eventQueue.entrySet().iterator().next();
+		if (eventQueue.size() == 1) return "[" + first.getKey() + " | " + first.getValue() + "]";
+		else return "[" + first.getKey() + " | " + first.getValue() + ", ...]";
 	}
 
-	protected class EventQueueIterator implements Iterator<Activity> {
+	private class EventQueueIterator implements Iterator<TimedActivity> {
 
-		protected Iterator<Event> eventIterator;
+		protected Iterator<Entry<TimeStamp, Event>> eventIterator;
 		protected Iterator<Activity> activityIterator;
+		protected TimeStamp currentTime;
 		// These two booleans keep track of whether every activity found in the
 		// event so far has been removed. If that's the case, and you remove an
 		// activity when there are no more activities left in the event, then it
@@ -202,9 +160,10 @@ public class EventQueue extends AbstractQueue<Activity> {
 		protected boolean removedEveryActivity;
 		protected boolean removedCurrentActivity;
 
-		protected EventQueueIterator(Iterator<Event> events) {
+		protected EventQueueIterator(Iterator<Entry<TimeStamp, Event>> events) {
 			eventIterator = events;
 			activityIterator = Iterators.emptyIterator();
+			currentTime = null;
 			removedEveryActivity = true;
 			removedCurrentActivity = false;
 		}
@@ -215,14 +174,16 @@ public class EventQueue extends AbstractQueue<Activity> {
 		}
 
 		@Override
-		public Activity next() {
+		public TimedActivity next() {
 			removedEveryActivity &= removedCurrentActivity;
 			removedCurrentActivity = false;
 			if (!activityIterator.hasNext()) {
-				activityIterator = eventIterator.next().iterator();
+				Entry<TimeStamp, Event> next = eventIterator.next();
+				activityIterator = next.getValue().iterator();
+				currentTime = next.getKey();
 				removedEveryActivity = true;
 			}
-			return activityIterator.next();
+			return new TimedActivity(currentTime, activityIterator.next());
 		}
 
 		@Override

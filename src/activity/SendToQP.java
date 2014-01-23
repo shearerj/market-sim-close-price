@@ -21,9 +21,8 @@ public class SendToQP extends Activity {
 	protected final MarketTime quoteTime;
 	protected final Quote quote;
 
-	public SendToQP(Market market, MarketTime quoteTime, Quote quote, 
-			QuoteProcessor qp, TimeStamp scheduledTime) {
-		super(scheduledTime);
+	public SendToQP(Market market, MarketTime quoteTime, Quote quote,
+			QuoteProcessor qp) {
 		this.market = checkNotNull(market, "Market");
 		this.qp = checkNotNull(qp, "QP");
 		this.quoteTime = checkNotNull(quoteTime, "Market Time");
@@ -31,8 +30,8 @@ public class SendToQP extends Activity {
 	}
 
 	@Override
-	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return qp.sendToQuoteProcessor(market, this.quoteTime, quote, currentTime);
+	public void execute(TimeStamp currentTime) {
+		qp.sendToQuoteProcessor(market, this.quoteTime, quote, currentTime);
 	}
 	
 	@Override

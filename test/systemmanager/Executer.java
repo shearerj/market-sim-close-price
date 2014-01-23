@@ -4,8 +4,6 @@ import java.util.Random;
 
 import event.TimeStamp;
 
-import activity.Activity;
-
 /**
  * Class that provides the ability to "simulate" an even manager. This
  * guarantees that residual effects of actions get propagated (such as
@@ -14,24 +12,17 @@ import activity.Activity;
  * @author erik
  * 
  */
-public abstract class Executer extends EventManager {
+public class Executer extends Scheduler {
 
 	private static final Random rand = new Random();
 	
-	private Executer() {
+	public Executer() {
 		super(rand);
 	}
-	
-	public static void execute(Iterable<? extends Activity> acts) {
-		EventManager m = new EventManager(rand);
-		m.eventQueue.addAll(acts);
-		m.executeUntil(new TimeStamp(Integer.MAX_VALUE));
-	}
-	
-	public static void executeImmediate(Iterable<? extends Activity> acts) {
-		EventManager m = new EventManager(rand);
-		m.eventQueue.addAll(acts);
-		m.executeUntil(TimeStamp.ZERO);
+
+	@Override
+	public void executeUntil(TimeStamp time) {
+		super.executeUntil(time);
 	}
 
 }

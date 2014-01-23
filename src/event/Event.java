@@ -1,23 +1,18 @@
 package event;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.AbstractQueue;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.Random;
 
-import com.google.common.base.Objects;
+import utils.RandomQueue;
+import activity.Activity;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Queues;
-
-import utils.RandomQueue;
-import activity.Activity;
 
 /**
  * Class representing an event in time. Each event is really a queue of queues of activities. The
@@ -29,41 +24,22 @@ import activity.Activity;
  * 
  * @author ebrink
  */
-public class Event extends AbstractQueue<Activity> implements Comparable<Event> {
+public class Event extends AbstractQueue<Activity> {
 
-	protected final TimeStamp eventTime;
 	// Is a LiFo queue for infinite time activities, and a random queue otherwise
 	protected final Queue<Queue<Activity>> backedQueue;
 	protected int size;
 
-	public Event(TimeStamp time) {
-		this(time, new Random());
-	}
-
 	public Event(TimeStamp time, Random seed) {
-		eventTime = checkNotNull(time, "Time");
 		size = 0;
 		if (time.equals(TimeStamp.IMMEDIATE))
 			backedQueue = Collections.asLifoQueue(Queues.<Queue<Activity>> newArrayDeque());
 		else
 			backedQueue = RandomQueue.create(seed);
 	}
-
-	public TimeStamp getTime() {
-		return eventTime;
-	}
-
-	@Override
-	public boolean addAll(Collection<? extends Activity> acts) {
-		return addAll((Iterable<? extends Activity>) acts);
-	}
 	
-	public boolean addAll(Iterable<? extends Activity> acts) {
-		if (Iterables.isEmpty(acts)) return false;
-		for (Activity act : acts)
-			checkArgument(eventTime.equals(act.getTime()),
-					"Can't add an activity that doesn't share the time of the event");
-		
+	public boolean addAllOrderd(Iterable<? extends Activity> acts) {
+		if (Iterables.isEmpty(acts)) return false;		
 		Queue<Activity> newQueue = Queues.newArrayDeque(acts);
 		size += newQueue.size();
 		return backedQueue.add(newQueue);
@@ -71,7 +47,7 @@ public class Event extends AbstractQueue<Activity> implements Comparable<Event> 
 
 	@Override
 	public boolean offer(Activity e) {
-		return addAll(ImmutableList.of(e));
+		return addAllOrderd(ImmutableList.of(e));
 	}
 
 	@Override
@@ -102,26 +78,8 @@ public class Event extends AbstractQueue<Activity> implements Comparable<Event> 
 	}
 
 	@Override
-	public int compareTo(Event e) {
-		checkNotNull(e, "Event");
-		return getTime().compareTo(e.getTime());
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof Event)) return false;
-		Event that = (Event) obj;
-		return backedQueue.equals(that.backedQueue) && eventTime.equals(that.eventTime);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hashCode(super.hashCode(), eventTime);
-	}
-
-	@Override
 	public String toString() {
-		return eventTime + " | " + super.toString();
+		return super.toString();
 	}	
 
 }

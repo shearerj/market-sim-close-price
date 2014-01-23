@@ -23,7 +23,7 @@ import activity.SubmitOrder;
 import data.MockFundamental;
 import data.FundamentalValue;
 import systemmanager.Consts;
-import systemmanager.EventManager;
+import systemmanager.Scheduler;
 import entity.agent.MockBackgroundAgent;
 import entity.market.CDAMarket;
 import entity.market.DummyMarketTime;
@@ -276,8 +276,8 @@ public class SIPTest {
 		
 		// Check that process quote activity scheduled correctly
 		Quote q = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SendToQP(market1, mktTime, q, sip3, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SendToQP(market1, mktTime, q, sip3, time));
 		
 		// Test that NBBO quote is correct after time 0
 		em.executeUntil(new TimeStamp(1));
@@ -297,10 +297,10 @@ public class SIPTest {
 		Quote q = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
 		
 		// Send quotes to SIP. Market 2 has a delay of 100, SIP2 has delay of 50
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SendToQP(market2, mktTime, q, 
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SendToQP(market2, mktTime, q, 
 				sip2, time));
-		em.addActivity(new SendToQP(market2, mktTime, q, 
+		em.scheduleActivity(new SendToQP(market2, mktTime, q, 
 				sip, time));
 		
 		em.executeUntil(time.plus(new TimeStamp(1)));
@@ -346,10 +346,10 @@ public class SIPTest {
 		Quote q2 = new Quote(market2, new Price(75), 1, new Price(95), 2, new TimeStamp(30));
 		
 		// Send quotes to both IPs
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SendToQP(market1, mktTime, q1, 
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SendToQP(market1, mktTime, q1, 
 				sip, time));
-		em.addActivity(new SendToQP(market1, mktTime, q1, 
+		em.scheduleActivity(new SendToQP(market1, mktTime, q1, 
 				sip2, time));
 		
 		// Check that no quotes have updated yet
@@ -390,9 +390,9 @@ public class SIPTest {
 		
 		// Send more quotes to SIPs but only execute up to SIP2 latency of 100
 		// so only first quote of [80, 100] should reach the delayed SIP
-		em.addActivity(new SendToQP(market2, mktTime2, q2, 
+		em.scheduleActivity(new SendToQP(market2, mktTime2, q2, 
 				sip, new TimeStamp(30)));
-		em.addActivity(new SendToQP(market2, mktTime2, q2, 
+		em.scheduleActivity(new SendToQP(market2, mktTime2, q2, 
 				sip2, new TimeStamp(30)));
 		em.executeUntil(sip2.latency.plus(new TimeStamp(1)));
 		// Check immediate SIP updated with quote 2
@@ -441,8 +441,8 @@ public class SIPTest {
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
 		// Creating and adding bids		
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 2, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 2, time));
 		em.executeUntil(time1); // should execute clear since CDA
 		
 		// Verify that NBBO quote has updated
@@ -454,7 +454,7 @@ public class SIPTest {
 		assertEquals("Incorrect ASK market", null, nbbo.bestAskMarket);
 		assertEquals("Incorrect BID market", market, nbbo.bestBidMarket);
 		
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
+		em.scheduleActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
 		em.executeUntil(time1); // should execute Clear-->SendToSIP-->processInformations
 		
 		// Verify that transactions has updated as well as NBBO
@@ -486,8 +486,8 @@ public class SIPTest {
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
 		// Creating and adding bids		
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 2, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 2, time));
 		em.executeUntil(time1); // should execute clear since CDA
 		
 		// Verify that no NBBO quote yet
@@ -501,7 +501,7 @@ public class SIPTest {
 		assertEquals(0, sip.marketQuotes.size());
 		assertEquals(0, sip.quoteTimes.size());
 			
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
+		em.scheduleActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
 		em.executeUntil(time1); // should execute Clear-->SendToSIP-->ProcessQuotes
 		
 		// Verify that transactions has updated as well as NBBO
@@ -523,7 +523,7 @@ public class SIPTest {
 	
 	@Test
 	public void basicOrderRoutingNMS() {
-		EventManager em = new EventManager(new Random());
+		Scheduler em = new Scheduler(new Random());
 		FundamentalValue fundamental = new MockFundamental(100000);
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time = new TimeStamp(50);
@@ -533,10 +533,10 @@ public class SIPTest {
 		Market nyse = new CDAMarket(sip2, new Random(), time, 1);
 		MockBackgroundAgent background1 = new MockBackgroundAgent(fundamental, sip2, nyse);
 		MockBackgroundAgent background2 = new MockBackgroundAgent(fundamental, sip2, nasdaq);
-		em.addActivity(new SubmitOrder(background1, nyse, SELL, new Price(111), 1, time0));
-		em.addActivity(new SubmitOrder(background1, nasdaq, BUY, new Price(104), 1, time0));
-		em.addActivity(new SubmitOrder(background2, nasdaq, SELL, new Price(110), 1, time0));
-		em.addActivity(new SubmitOrder(background2, nyse, BUY, new Price(102), 1, time0));
+		em.scheduleActivity(new SubmitOrder(background1, nyse, SELL, new Price(111), 1, time0));
+		em.scheduleActivity(new SubmitOrder(background1, nasdaq, BUY, new Price(104), 1, time0));
+		em.scheduleActivity(new SubmitOrder(background2, nasdaq, SELL, new Price(110), 1, time0));
+		em.scheduleActivity(new SubmitOrder(background2, nyse, BUY, new Price(102), 1, time0));
 		em.executeUntil(time.plus(new TimeStamp(1)));
 
 		// Verify that NBBO quote is (104, 110) at time 50 (after quotes have been processed by SIP)
@@ -551,7 +551,7 @@ public class SIPTest {
 		///////////////
 		// Creating dummy agent & submit sell order
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip2, nyse);
-		em.addActivity(new SubmitNMSOrder(agent1, nyse, SELL, new Price(105), 1, time));
+		em.scheduleActivity(new SubmitNMSOrder(agent1, nyse, SELL, new Price(105), 1, time));
 		em.executeUntil(new TimeStamp(100));
 		nbbo = sip2.getNBBO();
 		assertEquals("Incorrect ASK", new Price(110), nbbo.bestAsk);
@@ -573,7 +573,7 @@ public class SIPTest {
 		
 		// Another agent submits a buy order
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip2, nasdaq);
-		em.addActivity(new SubmitNMSOrder(agent2, nasdaq, BUY, new Price(109), 1, new TimeStamp(100)));
+		em.scheduleActivity(new SubmitNMSOrder(agent2, nasdaq, BUY, new Price(109), 1, new TimeStamp(100)));
 		em.executeUntil(new TimeStamp(101));
 		
 		// Verify that order is routed to nyse and transacts immediately w/ agent1's order
@@ -588,7 +588,7 @@ public class SIPTest {
 
 	@Test
 	public void latencyArbRoutingNMS() {
-		EventManager em = new EventManager(new Random());
+		Scheduler em = new Scheduler(new Random());
 		FundamentalValue fundamental = new MockFundamental(100000);
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time = new TimeStamp(50);
@@ -599,16 +599,16 @@ public class SIPTest {
 		Market nyse = new CDAMarket(sip2, new Random(), time, 1);
 		MockBackgroundAgent background1 = new MockBackgroundAgent(fundamental, sip2, nyse);
 		MockBackgroundAgent background2 = new MockBackgroundAgent(fundamental, sip2, nasdaq);
-		em.addActivity(new SubmitOrder(background1, nyse, SELL, new Price(111), 1, time0));
-		em.addActivity(new SubmitOrder(background1, nasdaq, BUY, new Price(104), 1, time0));
-		em.addActivity(new SubmitOrder(background2, nasdaq, SELL, new Price(110), 1, time0));
-		em.addActivity(new SubmitOrder(background2, nyse, BUY, new Price(102), 1, time0));
+		em.scheduleActivity(new SubmitOrder(background1, nyse, SELL, new Price(111), 1, time0));
+		em.scheduleActivity(new SubmitOrder(background1, nasdaq, BUY, new Price(104), 1, time0));
+		em.scheduleActivity(new SubmitOrder(background2, nasdaq, SELL, new Price(110), 1, time0));
+		em.scheduleActivity(new SubmitOrder(background2, nyse, BUY, new Price(102), 1, time0));
 		em.executeUntil(time.plus(new TimeStamp(1)));
 
 		///////////////
 		// Creating dummy agent & submit sell order
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip2, nyse);
-		em.addActivity(new SubmitNMSOrder(agent1, nyse, SELL, new Price(105), 1, time));
+		em.scheduleActivity(new SubmitNMSOrder(agent1, nyse, SELL, new Price(105), 1, time));
 
 		// Verify that NBBO quote is still (104, 110) (hasn't updated yet)
 		BestBidAsk nbbo = sip2.getNBBO();
@@ -621,7 +621,7 @@ public class SIPTest {
 		
 		// Another agent submits a buy order
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip2, nasdaq);
-		em.addActivity(new SubmitNMSOrder(agent2, nasdaq, BUY, new Price(109), 1, time));
+		em.scheduleActivity(new SubmitNMSOrder(agent2, nasdaq, BUY, new Price(109), 1, time));
 		em.executeUntil(time.plus(time));
 		// Verify that NBBO quote is still (104, 110) (hasn't updated yet)
 		nbbo = sip2.getNBBO();

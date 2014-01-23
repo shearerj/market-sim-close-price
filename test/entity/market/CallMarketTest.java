@@ -14,7 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.EventManager;
+import systemmanager.Scheduler;
 import systemmanager.Keys;
 import activity.Activity;
 import activity.Clear;
@@ -642,13 +642,13 @@ public class CallMarketTest {
 	@Test
 	public void clearActivityInsertion() {
 		TimeStamp time = new TimeStamp(1);
-		EventManager em = new EventManager(new Random());
+		Scheduler em = new Scheduler(new Random());
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
 		Quote quote;
 			
 		// Test that before time 100 quotes do not change
-		em.addActivity(new Clear(market1, TimeStamp.IMMEDIATE)); // initialize
+		em.scheduleActivity(new Clear(market1, TimeStamp.IMMEDIATE)); // initialize
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect Ask", null, quote.getAskPrice());
 		assertEquals("Incorrect Ask quantity", 0, quote.getAskQuantity());
@@ -656,8 +656,8 @@ public class CallMarketTest {
 		assertEquals("Incorrect Bid quantity", 0, quote.getBidQuantity());
 		
 		// Quote still undefined before clear
-		em.addActivity(new SubmitOrder(agent1, market1, BUY, new Price(100),  1, time));
-		em.addActivity(new SubmitOrder(agent1, market1, SELL, new Price(110), 1, time));
+		em.scheduleActivity(new SubmitOrder(agent1, market1, BUY, new Price(100),  1, time));
+		em.scheduleActivity(new SubmitOrder(agent1, market1, SELL, new Price(110), 1, time));
 		em.executeUntil(clearFreq100);
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect Ask", null, quote.getAskPrice());
@@ -674,8 +674,8 @@ public class CallMarketTest {
 		assertEquals("Incorrect Bid quantity", 1, quote.getBidQuantity());
 		
 		// Now check that transactions are correct as well as quotes
-		em.addActivity(new SubmitOrder(agent2, market1, SELL, new Price(150), 1, time));
-		em.addActivity(new SubmitOrder(agent2, market1, BUY, new Price(120), 1, time));
+		em.scheduleActivity(new SubmitOrder(agent2, market1, SELL, new Price(150), 1, time));
+		em.scheduleActivity(new SubmitOrder(agent2, market1, BUY, new Price(120), 1, time));
 		// Before second clear interval ends, quote remains the same
 		em.executeUntil(clearFreq100.plus(clearFreq100));
 		quote = market1.getQuoteProcessor().getQuote();
@@ -721,12 +721,12 @@ public class CallMarketTest {
 	@Test
 	public void quoteNoLatency() {		
 		Quote quote;
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new Clear(market1, TimeStamp.IMMEDIATE)); // initialize clear manually
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new Clear(market1, TimeStamp.IMMEDIATE)); // initialize clear manually
 
 		// Test that before Time 100 nothing has been updated
 		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market1);
-		em.addActivity(new SubmitOrder(agent, market1, SELL, new Price(100), 1, TimeStamp.ZERO));
+		em.scheduleActivity(new SubmitOrder(agent, market1, SELL, new Price(100), 1, TimeStamp.ZERO));
 		em.executeUntil(new TimeStamp(100));
 		
 		quote = market1.getQuoteProcessor().getQuote();
@@ -744,7 +744,7 @@ public class CallMarketTest {
 		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
 		
 		// Test that no change in quotes given matched orders
-		em.addActivity(new SubmitOrder(agent, market1, BUY, new Price(150), 1, new TimeStamp(150)));
+		em.scheduleActivity(new SubmitOrder(agent, market1, BUY, new Price(150), 1, new TimeStamp(150)));
 		em.executeUntil(new TimeStamp(101));
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Changed Ask price unnecessarily", new Price(100), quote.getAskPrice());
@@ -767,7 +767,7 @@ public class CallMarketTest {
 	@Test
 	public void quoteLatency() {		
 		Quote quote;
-		EventManager em = new EventManager(new Random());
+		Scheduler em = new Scheduler(new Random());
 		
 		// delayed info by 50 + clears every 100
 		CallMarket market3 = new CallMarket(sip, new Random(), new TimeStamp(50), 1, 0.5,
@@ -776,14 +776,14 @@ public class CallMarketTest {
 		CallMarket market4 = new CallMarket(sip, new Random(), new TimeStamp(150), 1, 0.5,
 				clearFreq100);
 		// Initialize first clears manually
-		em.addActivity(new Clear(market3, TimeStamp.IMMEDIATE));
-		em.addActivity(new Clear(market4, TimeStamp.IMMEDIATE));
+		em.scheduleActivity(new Clear(market3, TimeStamp.IMMEDIATE));
+		em.scheduleActivity(new Clear(market4, TimeStamp.IMMEDIATE));
 		
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market3);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market4);
 		
-		em.addActivity(new SubmitOrder(agent1, market3, SELL, new Price(100), 1, TimeStamp.ZERO));
-		em.addActivity(new SubmitOrder(agent2, market4, BUY, new Price(100), 1, TimeStamp.ZERO));
+		em.scheduleActivity(new SubmitOrder(agent1, market3, SELL, new Price(100), 1, TimeStamp.ZERO));
+		em.scheduleActivity(new SubmitOrder(agent2, market4, BUY, new Price(100), 1, TimeStamp.ZERO));
 		
 		// Test that before Time 100 nothing has been updated for either market
 		quote = market3.getQuoteProcessor().getQuote();

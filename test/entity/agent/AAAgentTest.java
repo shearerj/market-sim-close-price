@@ -17,7 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.EventManager;
+import systemmanager.Scheduler;
 import systemmanager.Keys;
 import utils.Rands;
 import activity.Activity;
@@ -233,7 +233,7 @@ public class AAAgentTest {
 	@Test
 	public void biddingLayerBuyer() {
 		TimeStamp time = TimeStamp.ZERO;
-		EventManager em = new EventManager(rand);
+		Scheduler em = new Scheduler(rand);
 		
 		Price limit = new Price(145000);
 		Price target = new Price(175000);
@@ -257,7 +257,7 @@ public class AAAgentTest {
 		
 		limit = new Price(211000);
 		acts = buyer.biddingLayer(limit, null, 1, TimeStamp.create(20));
-		em.addActivity(Iterables.getOnlyElement(acts));
+		em.scheduleActivity(Iterables.getOnlyElement(acts));
 		em.executeUntil(new TimeStamp(21));
 		assertCorrectBid(buyer, 170007, 1);
 		
@@ -265,7 +265,7 @@ public class AAAgentTest {
 		target = new Price(180000);
 		buyer.withdrawAllOrders(TimeStamp.create(20));
 		acts = buyer.biddingLayer(limit, target, 1, TimeStamp.create(20));
-		em.addActivity(Iterables.getOnlyElement(acts));
+		em.scheduleActivity(Iterables.getOnlyElement(acts));
 		em.executeUntil(new TimeStamp(21));
 		assertCorrectBid(buyer, 160000, 1);
 	}
@@ -273,7 +273,7 @@ public class AAAgentTest {
 	@Test
 	public void biddingLayerSeller() {
 		TimeStamp time = TimeStamp.ZERO;
-		EventManager em = new EventManager(rand);
+		Scheduler em = new Scheduler(rand);
 		
 		Price limit = new Price(210000);
 		Price target = new Price(175000);
@@ -297,7 +297,7 @@ public class AAAgentTest {
 		
 		limit = new Price(170000);
 		acts = seller.biddingLayer(limit, null, 1, TimeStamp.create(20));
-		em.addActivity(Iterables.getOnlyElement(acts));
+		em.scheduleActivity(Iterables.getOnlyElement(acts));
 		em.executeUntil(new TimeStamp(21));
 		assertCorrectBid(seller, 190000, 1);
 		
@@ -305,7 +305,7 @@ public class AAAgentTest {
 		target = new Price(170000);
 		seller.withdrawAllOrders(TimeStamp.create(20));
 		acts = seller.biddingLayer(limit, target, 1, TimeStamp.create(20));
-		em.addActivity(Iterables.getOnlyElement(acts));
+		em.scheduleActivity(Iterables.getOnlyElement(acts));
 		em.executeUntil(new TimeStamp(21));
 		assertCorrectBid(seller, 190000, 1);
 	}
@@ -935,7 +935,7 @@ public class AAAgentTest {
 		while (!queue.isEmpty()) {
 			Activity a = queue.get(queue.size() - 1);
 			queue.remove(queue.size() - 1);
-			queue.addAll(filterNonImmediateAndReverse(a.execute(time)));
+			queue.addAllOrderd(filterNonImmediateAndReverse(a.execute(time)));
 		}
 	}
 

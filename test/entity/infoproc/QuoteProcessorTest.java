@@ -17,7 +17,7 @@ import activity.Activity;
 import activity.ProcessQuote;
 import activity.SendToQP;
 import systemmanager.Consts;
-import systemmanager.EventManager;
+import systemmanager.Scheduler;
 import entity.market.*;
 import event.TimeStamp;
 
@@ -178,9 +178,9 @@ public class QuoteProcessorTest {
 		MarketQuoteProcessor smipImmed = new MarketQuoteProcessor(TimeStamp.IMMEDIATE, market2);
 		
 		// Send quotes to appropriate IPs
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SendToQP(market2, mktTime, q, smip2, time));
-		em.addActivity(new SendToQP(market2, mktTime, q, smipImmed, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SendToQP(market2, mktTime, q, smip2, time));
+		em.scheduleActivity(new SendToQP(market2, mktTime, q, smipImmed, time));
 		
 		em.executeUntil(time.plus(new TimeStamp(1)));
 		// Check immediate QuoteProcessor
@@ -211,9 +211,9 @@ public class QuoteProcessorTest {
 		Quote q2 = new Quote(market2, new Price(75), 1, new Price(95), 1, time);
 		
 		// Send quotes to appropriate IPs
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SendToQP(market1, mktTime, q1, smip1, time));
-		em.addActivity(new SendToQP(market2, mktTime, q2, smip2, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SendToQP(market1, mktTime, q1, smip1, time));
+		em.scheduleActivity(new SendToQP(market2, mktTime, q2, smip2, time));
 		
 		// Check that no quotes have updated yet
 		em.executeUntil(time);
@@ -269,12 +269,12 @@ public class QuoteProcessorTest {
 		Quote q4 = new Quote(market2, new Price(75), 1, new Price(95), 1, time2);
 		
 		// Send quotes to appropriate IPs
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SendToQP(market1, mktTime1, q1, smip1, time));
-		em.addActivity(new SendToQP(market2, mktTime1, q4, smip2, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SendToQP(market1, mktTime1, q1, smip1, time));
+		em.scheduleActivity(new SendToQP(market2, mktTime1, q4, smip2, time));
 		// Send updated quotes at time2
-		em.addActivity(new SendToQP(market1, mktTime2, q3, smip1, time2));
-		em.addActivity(new SendToQP(market2, mktTime2, q2, smip2, time2));
+		em.scheduleActivity(new SendToQP(market1, mktTime2, q3, smip1, time2));
+		em.scheduleActivity(new SendToQP(market2, mktTime2, q2, smip2, time2));
 		
 		// Check that market1's QuoteProcessor has updated but not market2's after time2=50
 		em.executeUntil(time2.plus(new TimeStamp(1)));
@@ -325,12 +325,12 @@ public class QuoteProcessorTest {
 		Quote q4 = new Quote(market2, new Price(75), 1, new Price(95), 1, time);
 		
 		// Send quotes to appropriate IPs
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SendToQP(market1, mktTime1, q1, smip1, time));
-		em.addActivity(new SendToQP(market2, mktTime1, q4, smip2, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SendToQP(market1, mktTime1, q1, smip1, time));
+		em.scheduleActivity(new SendToQP(market2, mktTime1, q4, smip2, time));
 		// Send updated quotes (also at time 0)
-		em.addActivity(new SendToQP(market1, mktTime2, q3, smip1, time));
-		em.addActivity(new SendToQP(market2, mktTime2, q2, smip2, time));
+		em.scheduleActivity(new SendToQP(market1, mktTime2, q3, smip1, time));
+		em.scheduleActivity(new SendToQP(market2, mktTime2, q2, smip2, time));
 		
 		// Check market1's QuoteProcessor has updated but not market2's after time 0
 		em.executeUntil(new TimeStamp(1));
@@ -372,9 +372,9 @@ public class QuoteProcessorTest {
 		Quote q4 = new Quote(market2, new Price(75), 1, new Price(95), 1, time);
 		
 		// Send quotes to appropriate IPs
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SendToQP(market1, mktTime2, q1, smip1, time));
-		em.addActivity(new SendToQP(market2, mktTime2, q4, smip2, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SendToQP(market1, mktTime2, q1, smip1, time));
+		em.scheduleActivity(new SendToQP(market2, mktTime2, q4, smip2, time));
 		
 		// Check market1's QuoteProcessor has updated but not market2's after time 0
 		em.executeUntil(new TimeStamp(1));
@@ -392,8 +392,8 @@ public class QuoteProcessorTest {
 		assertEquals("Incorrect BID quantity", 0, q.getBidQuantity());
 				
 		// Send stale quotes to QuoteProcessors
-		em.addActivity(new SendToQP(market1, mktTime1, q3, smip1, time));
-		em.addActivity(new SendToQP(market2, mktTime1, q2, smip2, time));
+		em.scheduleActivity(new SendToQP(market1, mktTime1, q3, smip1, time));
+		em.scheduleActivity(new SendToQP(market2, mktTime1, q2, smip2, time));
 		
 		// Check that market1's QuoteProcessor quote doesn't change
 		em.executeUntil(new TimeStamp(1));
@@ -440,9 +440,9 @@ public class QuoteProcessorTest {
 		Quote q4 = new Quote(market2, new Price(75), 1, new Price(95), 1, time);
 		
 		// Send quotes to appropriate IPs
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SendToQP(market1, mktTime, q1, smip1, time));
-		em.addActivity(new SendToQP(market2, mktTime, q4, smip2, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SendToQP(market1, mktTime, q1, smip1, time));
+		em.scheduleActivity(new SendToQP(market2, mktTime, q4, smip2, time));
 		
 		// Check market1's QuoteProcessor has updated but not market2's after time 0
 		em.executeUntil(new TimeStamp(1));
@@ -460,8 +460,8 @@ public class QuoteProcessorTest {
 		assertEquals("Incorrect BID quantity", 0, q.getBidQuantity());
 		
 		// Send stale quotes to QuoteProcessors
-		em.addActivity(new SendToQP(market1, mktTime, q3, smip1, time));
-		em.addActivity(new SendToQP(market2, mktTime, q2, smip2, time));
+		em.scheduleActivity(new SendToQP(market1, mktTime, q3, smip1, time));
+		em.scheduleActivity(new SendToQP(market2, mktTime, q2, smip2, time));
 		
 		// Check that market1's QuoteProcessor quote updates to most recent quote
 		em.executeUntil(new TimeStamp(1));
@@ -514,9 +514,9 @@ public class QuoteProcessorTest {
 		Quote q7 = new Quote(market3, new Price(60), 1, new Price(90), 1, time);
 		
 		// Send quotes to appropriate IPs
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SendToQP(market3, mktTime2, q6, smip3, time));
-		em.addActivity(new SendToQP(market3, mktTime3, q7, smip3, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SendToQP(market3, mktTime2, q6, smip3, time));
+		em.scheduleActivity(new SendToQP(market3, mktTime3, q7, smip3, time));
 		
 		// Check market3's QuoteProcessor has updated after time 0
 		em.executeUntil(new TimeStamp(1));

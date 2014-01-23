@@ -23,7 +23,7 @@ import com.google.common.collect.Iterables;
 import data.FundamentalValue;
 import data.MockFundamental;
 import systemmanager.Consts;
-import systemmanager.EventManager;
+import systemmanager.Scheduler;
 import entity.agent.MockBackgroundAgent;
 import entity.market.CDAMarket;
 import entity.market.Market;
@@ -67,10 +67,10 @@ public class TransactionProcessorTest {
 		assertTrue("Incorrect initial transaction list", trans.isEmpty());
 
 		// Creating and adding bids		
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 1, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 1, time));
 		em.executeUntil(time1);
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
+		em.scheduleActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
 		em.executeUntil(time1); // should execute Clear-->SendToSIP-->processInformation
 
 		Iterable<? extends Activity> acts = smip.processTransactions(market,
@@ -105,10 +105,10 @@ public class TransactionProcessorTest {
 		assertTrue("Incorrect initial transaction list", trans.isEmpty());
 
 		// Creating and adding bids		
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 1, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 1, time));
 		em.executeUntil(time1);
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
+		em.scheduleActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
 		em.executeUntil(time1); // should execute Clear-->SendToSIP-->processInformation
 
 		Iterable<? extends Activity> acts = smip.processTransactions(market,
@@ -160,8 +160,8 @@ public class TransactionProcessorTest {
 		assertEquals("Incorrect BID quantity", 0, q.getBidQuantity());
 
 		// Creating and adding bids		
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 2, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 2, time));
 		em.executeUntil(time1);
 
 		// Verify that quote has updated
@@ -177,7 +177,7 @@ public class TransactionProcessorTest {
 		assertTrue("Incorrect transaction list size", trans.isEmpty());
 
 		// Submit another order
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
+		em.scheduleActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
 		em.executeUntil(time1);
 
 		// Verify quote update, but not transactions

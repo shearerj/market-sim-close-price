@@ -2,8 +2,9 @@ package entity.agent;
 
 import java.util.Random;
 
+import systemmanager.Scheduler;
+
 import data.FundamentalValue;
-import activity.Activity;
 import entity.infoproc.MarketQuoteProcessor;
 import entity.infoproc.MarketTransactionProcessor;
 import entity.infoproc.SIP;
@@ -41,20 +42,16 @@ public abstract class SMAgent extends Agent {
 	protected final MarketQuoteProcessor marketQuoteProcessor;
 	protected final MarketTransactionProcessor marketTransactionProcessor;
 
-	public SMAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
+	public SMAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, int tickSize) {
-		super(arrivalTime, fundamental, sip, rand, tickSize);
+		super(scheduler, arrivalTime, fundamental, sip, rand, tickSize);
 		this.primaryMarket = market;
 		this.marketQuoteProcessor = market.getQuoteProcessor();
 		this.marketTransactionProcessor = market.getTransactionProcessor();
 	}
 
-	@Override
-	public Iterable<? extends Activity> agentArrival(TimeStamp currentTime) {
-		return super.agentArrival(currentTime);
-	}
-
 	public Quote getQuote() {
 		return marketQuoteProcessor.getQuote();
 	}
+	
 }

@@ -1,8 +1,6 @@
 package activity;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import event.*;
+import event.TimeStamp;
 
 /**
  * Base class for any method that Entities may invoke. Includes abstract
@@ -17,25 +15,12 @@ import event.*;
  */
 public abstract class Activity {
 
-	protected final TimeStamp scheduledTime;
-	
-	public Activity(TimeStamp scheduledTime) {
-		this.scheduledTime = checkNotNull(scheduledTime, "Scheduled Time");
-	}
-
 	/**
 	 * Executes the activity on the given Entity.
 	 * 
 	 * @return hash table of generated Activity vectors, hashed by TimeStamp
 	 */
-	public abstract Iterable<? extends Activity> execute(TimeStamp currentTime);
-
-	/**
-	 * @return time of activity
-	 */
-	public final TimeStamp getTime() {
-		return scheduledTime;
-	}
+	public abstract void execute(TimeStamp currentTime);
 	
 	// Every activity is unique
 	@Override

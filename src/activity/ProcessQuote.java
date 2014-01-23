@@ -20,9 +20,7 @@ public class ProcessQuote extends Activity {
 	protected final MarketTime quoteTime;
 	protected final Quote quote;
 
-	public ProcessQuote(QuoteProcessor ip, Market market, MarketTime quoteTime, Quote quote,
-			TimeStamp scheduledTime) {
-		super(scheduledTime);
+	public ProcessQuote(QuoteProcessor ip, Market market, MarketTime quoteTime, Quote quote) {
 		this.ip = checkNotNull(ip, "IP");
 		this.quoteTime = checkNotNull(quoteTime, "Market Time");
 		this.market = checkNotNull(market, "Market");
@@ -30,8 +28,8 @@ public class ProcessQuote extends Activity {
 	}
 
 	@Override
-	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return this.ip.processQuote(market, quoteTime, quote, currentTime);
+	public void execute(TimeStamp currentTime) {
+		this.ip.processQuote(market, quoteTime, quote, currentTime);
 	}
 	
 	@Override

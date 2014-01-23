@@ -5,11 +5,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.util.Random;
 
 import systemmanager.Keys;
-import activity.Activity;
+import systemmanager.Scheduler;
 import activity.Clear;
-
-import com.google.common.collect.ImmutableList;
-
 import data.EntityProperties;
 import entity.infoproc.SIP;
 import entity.market.clearingrule.UniformPriceClear;
@@ -32,15 +29,15 @@ public class CallMarket extends Market {
 	protected final TimeStamp clearFreq;
 	protected TimeStamp nextClearTime;
 
-	public CallMarket(SIP sip, Random rand, TimeStamp latency, int tickSize,
+	public CallMarket(Scheduler scheduler, SIP sip, Random rand, TimeStamp latency, int tickSize,
 			double pricingPolicy, TimeStamp clearFreq) {
-		this(sip, rand, latency, latency, tickSize, pricingPolicy, clearFreq);
+		this(scheduler, sip, rand, latency, latency, tickSize, pricingPolicy, clearFreq);
 	}
 	
-	public CallMarket(SIP sip, Random rand, TimeStamp quoteLatency, 
+	public CallMarket(Scheduler scheduler, SIP sip, Random rand, TimeStamp quoteLatency, 
 			TimeStamp transactionLatency, int tickSize, double pricingPolicy, 
 			TimeStamp clearFreq) {
-		super(sip, quoteLatency, transactionLatency, new UniformPriceClear(pricingPolicy, tickSize), 
+		super(scheduler, sip, quoteLatency, transactionLatency, new UniformPriceClear(pricingPolicy, tickSize), 
 				rand);
 		checkArgument(clearFreq.after(TimeStamp.ZERO),
 				"Can't create a call market with 0 clear frequency. Create a CDA instead.");
@@ -49,8 +46,8 @@ public class CallMarket extends Market {
 		this.nextClearTime = TimeStamp.ZERO;
 	}
 	
-	public CallMarket(SIP sip, Random rand, EntityProperties props) {
-		this(sip, rand,
+	public CallMarket(Scheduler scheduler, SIP sip, Random rand, EntityProperties props) {
+		this(scheduler, sip, rand,
 				new TimeStamp(props.getAsInt(Keys.QUOTE_LATENCY, props.getAsInt(Keys.MARKET_LATENCY, -1))),
 				new TimeStamp(props.getAsInt(Keys.TRANSACTION_LATENCY, props.getAsInt(Keys.MARKET_LATENCY, -1))),
 				props.getAsInt(Keys.TICK_SIZE, 1),
@@ -59,10 +56,10 @@ public class CallMarket extends Market {
 	}
 
 	@Override
-	public Iterable<? extends Activity> clear(TimeStamp currentTime) {
+	public void clear(TimeStamp currentTime) {
 		nextClearTime = currentTime.plus(clearFreq);
-		return ImmutableList.<Activity> builder().addAll(
-				super.clear(currentTime)).add(new Clear(this, nextClearTime)).build();
+		super.clear(currentTime);
+		scheduler.scheduleActivity(nextClearTime, new Clear(this));
 	}
 
 	@Override

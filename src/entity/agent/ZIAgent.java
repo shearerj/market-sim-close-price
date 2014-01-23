@@ -5,7 +5,7 @@ import java.util.Random;
 import static fourheap.Order.OrderType.*;
 
 import systemmanager.Keys;
-import activity.Activity;
+import systemmanager.Scheduler;
 import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
@@ -34,17 +34,17 @@ public class ZIAgent extends BackgroundAgent {
 
 	private static final long serialVersionUID = 1148707664467962927L;
 
-	public ZIAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
+	public ZIAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, double reentryRate, double pvVar,
 			int tickSize, int bidRangeMin, int bidRangeMax) {
-		super(arrivalTime, fundamental, sip, market, rand, reentryRate, 
+		super(scheduler, arrivalTime, fundamental, sip, market, rand, reentryRate, 
 				new PrivateValue(1, pvVar, rand), tickSize, 
 				bidRangeMin, bidRangeMax);
 	}
 
-	public ZIAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
+	public ZIAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, EntityProperties props) {
-		this(arrivalTime, fundamental, sip, market, rand,
+		this(scheduler, arrivalTime, fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0),
 				props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000), 
 				props.getAsInt(Keys.TICK_SIZE, 1),
@@ -54,23 +54,19 @@ public class ZIAgent extends BackgroundAgent {
 	
 	/**
 	 * Constructor for testing purposes (ZIAgentTest)
+	 * TODO This shouldn't exist. It should be in the test classs or somewhere else.
 	 */
-	public ZIAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
+	public ZIAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, double reentryRate, PrivateValue pv,
 			int tickSize, int bidRangeMin, int bidRangeMax){
-		super(arrivalTime, fundamental, sip, market, rand, reentryRate,
+		super(scheduler, arrivalTime, fundamental, sip, market, rand, reentryRate,
 				pv, tickSize, bidRangeMin, bidRangeMax);
 	}
 
 	@Override
-	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
+	public void agentStrategy(TimeStamp currentTime) {
 		// 50% chance of being either long or short
-		return this.executeZIStrategy(rand.nextBoolean() ? BUY : SELL, 1, currentTime);
-	}
-
-	@Override
-	public String toString() {
-		return "ZI " + super.toString();
+		this.executeZIStrategy(rand.nextBoolean() ? BUY : SELL, 1, currentTime);
 	}
 	
 }

@@ -15,7 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.EventManager;
+import systemmanager.Scheduler;
 import systemmanager.Keys;
 import activity.Activity;
 import activity.AgentStrategy;
@@ -85,7 +85,7 @@ public class MarketMakerTest {
 		mm.stepSize = 5;
 
 		Iterable<? extends Activity> acts = mm.submitOrderLadder(new Price(30), new Price(40), 
-				new Price(50), new Price(60), TimeStamp.ZERO);
+				new Price(50), new Price(60));
 		for (Activity a : acts) a.execute(TimeStamp.ZERO);
 		assertEquals("Incorrect number of orders", 6, mm.activeOrders.size());
 		for (Order o : mm.activeOrders) {
@@ -105,7 +105,7 @@ public class MarketMakerTest {
 		mm.stepSize = 5;
 
 		Iterable<? extends Activity> acts = mm.createOrderLadder(null,
-				new Price(50), TimeStamp.ZERO);
+				new Price(50));
 		assertEquals(0, Iterables.size(acts));
 	}
 
@@ -116,7 +116,7 @@ public class MarketMakerTest {
 		mm.stepSize = 5;
 
 		Iterable<? extends Activity> acts = mm.createOrderLadder(new Price(40),
-				new Price(50), TimeStamp.ZERO);
+				new Price(50));
 		for (Activity a : acts) a.execute(TimeStamp.ZERO);
 		assertEquals("Incorrect number of orders", 4, mm.activeOrders.size());
 		for (Order o : mm.activeOrders) {
@@ -142,15 +142,15 @@ public class MarketMakerTest {
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
 		// Creating and adding bids
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
 		em.executeUntil(new TimeStamp(1));
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1, time));
-		em.addActivity(new Clear(market, time));
+		em.scheduleActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1, time));
+		em.scheduleActivity(new Clear(market, time));
 		em.executeUntil(new TimeStamp(1));
 
 		Iterable<? extends Activity> acts = mm.createOrderLadder(new Price(40),
-				new Price(50), TimeStamp.ZERO);
+				new Price(50));
 		for (Activity a : acts) a.execute(TimeStamp.ZERO);
 		assertEquals("Incorrect number of orders", 4, mm.activeOrders.size());
 		for (Order o : mm.activeOrders) {
@@ -176,22 +176,22 @@ public class MarketMakerTest {
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 
 		// Creating and adding bids
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
 		em.executeUntil(new TimeStamp(1));
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1, time));
-		em.addActivity(new Clear(market, time));
+		em.scheduleActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1, time));
+		em.scheduleActivity(new Clear(market, time));
 		em.executeUntil(new TimeStamp(1));
 
 		// Updating NBBO quote (this will update immed, although SIP is delayed)
 		MockMarket market2 = new MockMarket(sip);
 		Quote q = new Quote(market2, new Price(30), 1, new Price(38), 1, time);
-		em.addActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q, 
+		em.scheduleActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q, 
 				time));
 		em.executeUntil(new TimeStamp(1));
 
 		Iterable<? extends Activity> acts = mm.createOrderLadder(new Price(40),
-				new Price(50), TimeStamp.ZERO);
+				new Price(50));
 		for (Activity a : acts) a.execute(TimeStamp.ZERO);
 		assertEquals("Incorrect number of orders", 3, mm.activeOrders.size());
 		for (Order o : mm.activeOrders) {

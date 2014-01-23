@@ -23,8 +23,7 @@ public class SubmitOrder extends Activity {
 	protected final OrderType type;
 
 	public SubmitOrder(Agent agent, Market market, OrderType type, Price price,
-			int quantity, TimeStamp scheduledTime) {
-		super(scheduledTime);
+			int quantity) {
 		checkArgument(quantity > 0, "Quantity must be positive");
 		this.agent = checkNotNull(agent, "Agent");
 		this.market = checkNotNull(market, "Market");
@@ -34,8 +33,8 @@ public class SubmitOrder extends Activity {
 	}
 
 	@Override
-	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return market.submitOrder(agent, type, price, quantity, currentTime);
+	public void execute(TimeStamp currentTime) {
+		market.submitOrder(agent, type, price, quantity, currentTime);
 	}
 	
 	@Override

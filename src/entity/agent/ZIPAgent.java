@@ -1,21 +1,18 @@
 package entity.agent;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+import static logger.Logger.format;
+import static logger.Logger.log;
+import static logger.Logger.Level.INFO;
+
 import java.util.List;
 import java.util.Random;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-
 import systemmanager.Keys;
-import static fourheap.Order.OrderType.BUY;
-import static fourheap.Order.OrderType.SELL;
-import static logger.Logger.log;
-import static logger.Logger.format;
-import static logger.Logger.Level.INFO;
+import systemmanager.Scheduler;
 import utils.Rands;
-import activity.Activity;
 import activity.SubmitNMSOrder;
 import data.EntityProperties;
 import data.FundamentalValue;
@@ -59,13 +56,13 @@ public class ZIPAgent extends WindowAgent {
 	protected final double rangeCoeffA;	// range for A, coefficient of absolute perturbation
 	protected final double rangeCoeffR;	// range for R, coefficient of relative perturbation
 
-	public ZIPAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
+	public ZIPAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
 			Market market, Random rand, double reentryRate, double pvVar, 
 			int tickSize, int maxAbsPosition, int bidRangeMin, int bidRangeMax, 
 			boolean withdrawOrders, int windowLength, double marginMin, double marginMax, 
 			double gammaMin, double gammaMax, double betaMin, double betaMax, 
 			double rangeCoeffA, double rangeCoeffR) {
-		super(arrivalTime, fundamental, sip, market, rand, reentryRate,
+		super(scheduler, arrivalTime, fundamental, sip, market, rand, reentryRate,
 				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize,
 				bidRangeMin, bidRangeMax, windowLength);
 
@@ -92,9 +89,9 @@ public class ZIPAgent extends WindowAgent {
 		margin = new Margin(maxAbsPosition, rand, marginMin, marginMax);
 	}
 
-	public ZIPAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
+	public ZIPAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, EntityProperties props) {
-		this(arrivalTime, fundamental, sip, market, rand,
+		this(scheduler, arrivalTime, fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0.005), 
 				props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),
 				props.getAsInt(Keys.TICK_SIZE, 1),
@@ -112,19 +109,13 @@ public class ZIPAgent extends WindowAgent {
 				props.getAsDouble(Keys.COEFF_A, 0.05), 
 				props.getAsDouble(Keys.COEFF_R, 0.05));
 	}
-
-	@Override
-	public String toString() {
-		return "ZIP " + super.toString();
-	}
 	
 	@Override
-	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
-		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
-				super.agentStrategy(currentTime));
+	public void agentStrategy(TimeStamp currentTime) {
+		super.agentStrategy(currentTime);
 
 		// withdrawOrders
-		if (withdrawOrders) acts.addAll(withdrawAllOrders(currentTime));
+		if (withdrawOrders) withdrawAllOrders();
 		
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append(':').append("::agentStrategy: ");
@@ -152,16 +143,16 @@ public class ZIPAgent extends WindowAgent {
 
 			// Even if no new transactions this round, will still submit a new order
 			Price orderPrice = pcomp.max(Price.ZERO, computeOrderPrice(currentMargin, currentTime));
-			acts.add(new SubmitNMSOrder(this, primaryMarket, type, orderPrice, 1, currentTime));
+			
+			scheduler.executeActivity(new SubmitNMSOrder(this, primaryMarket, type, orderPrice, 1));
 			lastOrderPrice = orderPrice;
 
 		} else {
 			// zero transactions
 			log(INFO, sb.append(". No transactions!"));
-			acts.addAll(executeZIStrategy(type, 1, currentTime));
+			executeZIStrategy(type, 1, currentTime);
 		}
 
-		return acts.build();
 	}
 
 	

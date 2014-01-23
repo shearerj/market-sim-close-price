@@ -14,7 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.EventManager;
+import systemmanager.Scheduler;
 import activity.Activity;
 import activity.Clear;
 import activity.SendToQP;
@@ -232,14 +232,14 @@ public class CDAMarketTest {
 		// Creating and adding bids
 		// Added for-loop so market clear will happen appropriately
 		// Note: A clear should be inserted after EVERY order submitted
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 1, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 1, time));
 		em.executeUntil(time1);
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(100), 1, time));
+		em.scheduleActivity(new SubmitOrder(agent2, market, SELL, new Price(100), 1, time));
 		em.executeUntil(time1);
-		em.addActivity(new SubmitOrder(agent3, market, BUY, new Price(175), 1, time));
+		em.scheduleActivity(new SubmitOrder(agent3, market, BUY, new Price(175), 1, time));
 		em.executeUntil(time1);
-		em.addActivity(new SubmitOrder(agent4, market, SELL, new Price(125), 1, time));
+		em.scheduleActivity(new SubmitOrder(agent4, market, SELL, new Price(125), 1, time));
 		em.executeUntil(time1);
 		
 		// Testing the market for the correct transactions
@@ -442,10 +442,10 @@ public class CDAMarketTest {
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
 		
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, SELL, new Price(150), 1, time0));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SubmitOrder(agent1, market, SELL, new Price(150), 1, time0));
 		em.executeUntil(time1); // should execute clear
-		em.addActivity(new SubmitOrder(agent1,market, SELL, new Price(140), 2, time0));
+		em.scheduleActivity(new SubmitOrder(agent1,market, SELL, new Price(140), 2, time0));
 		em.executeUntil(time1); // should execute clear
 		
 		// Check that quotes are correct (ask @140 at qty=2, no bid)
@@ -459,7 +459,7 @@ public class CDAMarketTest {
 		Order toWithdraw = null;
 		for (Order o : orders)
 			if (o.getPrice().equals(new Price(140))) toWithdraw = o;
-		em.addActivity(new WithdrawOrder(toWithdraw, 1, time0));
+		em.scheduleActivity(new WithdrawOrder(toWithdraw, 1, time0));
 		em.executeUntil(time1);
 		
 		// Check that quotes are correct (ask @140 at qty=1, no bid)
@@ -470,9 +470,9 @@ public class CDAMarketTest {
 		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
 
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
-		em.addActivity(new SubmitOrder(agent2, market, BUY, new Price(155), 1, time1));
+		em.scheduleActivity(new SubmitOrder(agent2, market, BUY, new Price(155), 1, time1));
 		em.executeUntil(time1.plus(time1)); // should execute clear
-		em.addActivity(new SubmitOrder(agent2, market, BUY, new Price(155), 2, time1));
+		em.scheduleActivity(new SubmitOrder(agent2, market, BUY, new Price(155), 2, time1));
 		em.executeUntil(time1.plus(time1)); // should execute clear
 		assertEquals( 2, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
@@ -605,14 +605,14 @@ public class CDAMarketTest {
 	@Test
 	public void lackOfLatencyTest() {
 		Quote quote;
-		EventManager em = new EventManager(new Random());
+		Scheduler em = new Scheduler(new Random());
 
 		// Forces execution of execution but none of the resulting activities
 		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
 		Iterable<? extends Activity> acts = market.submitOrder(agent, SELL, 
 				new Price(100), 1, TimeStamp.ZERO);
 		for (Activity a : acts)
-			em.addActivity(a);
+			em.scheduleActivity(a);
 		
 		quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
@@ -633,12 +633,12 @@ public class CDAMarketTest {
 	@Test
 	public void latencyTest() {
 		Quote quote;
-		EventManager em = new EventManager(new Random());
+		Scheduler em = new Scheduler(new Random());
 		CDAMarket market = new CDAMarket(sip, new Random(), new TimeStamp(100), 1);
 
 		// Test that before Time 100 nothing has been updated
 		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
-		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1, TimeStamp.ZERO));
+		em.scheduleActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1, TimeStamp.ZERO));
 		em.executeUntil(new TimeStamp(100));
 		
 		quote = market.getQuoteProcessor().getQuote();

@@ -1,6 +1,10 @@
 package entity;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.Serializable;
+
+import systemmanager.Scheduler;
 
 /**
  * This class is the base for all things that may perform an action/activity 
@@ -14,10 +18,12 @@ public abstract class Entity implements Serializable {
 
 	private static final long serialVersionUID = -7406324829959902527L;
 	
+	protected final Scheduler scheduler;
 	protected final int id;
 	
-	public Entity(int agentID) {
-		id = agentID;
+	public Entity(int agentID, Scheduler scheduler) {
+		this.id = agentID;
+		this.scheduler = checkNotNull(scheduler);
 	}
 	
 	public final int getID() {

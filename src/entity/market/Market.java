@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import activity.Activity;
+import systemmanager.Scheduler;
 import activity.SendToQP;
 import activity.SendToTP;
 import activity.WithdrawOrder;
@@ -30,10 +30,10 @@ import data.Observations.SpreadStatistic;
 import entity.Entity;
 import entity.agent.Agent;
 import entity.infoproc.BestBidAsk;
-import entity.infoproc.QuoteProcessor;
 import entity.infoproc.MarketQuoteProcessor;
-import entity.infoproc.SIP;
 import entity.infoproc.MarketTransactionProcessor;
+import entity.infoproc.QuoteProcessor;
+import entity.infoproc.SIP;
 import entity.infoproc.TransactionProcessor;
 import entity.market.clearingrule.ClearingRule;
 import event.TimeStamp;
@@ -99,8 +99,8 @@ public abstract class Market extends Entity {
 	 * @param rand
 	 *            the random number generator to use
 	 */
-	public Market(SIP sip, TimeStamp latency, ClearingRule clearingRule, Random rand) {
-		this(sip, latency, latency, clearingRule, rand);
+	public Market(Scheduler scheduler, SIP sip, TimeStamp latency, ClearingRule clearingRule, Random rand) {
+		this(scheduler, sip, latency, latency, clearingRule, rand);
 	}
 	
 	/**
@@ -120,9 +120,9 @@ public abstract class Market extends Entity {
 	 * @param rand
 	 *            the random number generator to use
 	 */
-	public Market(SIP sip, TimeStamp quoteLatency, TimeStamp transactionLatency,
+	public Market(Scheduler scheduler, SIP sip, TimeStamp quoteLatency, TimeStamp transactionLatency,
 			ClearingRule clearingRule, Random rand) {
-		super(nextID++);
+		super(nextID++, scheduler);
 		this.orderbook = FourHeap.<Price, MarketTime, Order> create();
 		this.clearingRule = clearingRule;
 		this.rand = rand;
@@ -132,8 +132,8 @@ public abstract class Market extends Entity {
 		this.qps = Lists.newArrayList();
 		this.tps = Lists.newArrayList();
 		this.sip = sip;
-		this.quoteProcessor = new MarketQuoteProcessor(quoteLatency, this);
-		this.transactionProcessor = new MarketTransactionProcessor(transactionLatency, this);
+		this.quoteProcessor = new MarketQuoteProcessor(scheduler, quoteLatency, this);
+		this.transactionProcessor = new MarketTransactionProcessor(scheduler, transactionLatency, this);
 		qps.add(sip);
 		tps.add(sip);
 		qps.add(quoteProcessor);
@@ -188,9 +188,9 @@ public abstract class Market extends Entity {
 	 *            the current time
 	 * @return any side effect activities (base case none)
 	 */
-	public Iterable<? extends Activity> withdrawOrder(Order order,
+	public void withdrawOrder(Order order,
 			TimeStamp currentTime) {
-		return withdrawOrder(order, order.getQuantity(), currentTime);
+		withdrawOrder(order, order.getQuantity(), currentTime);
 	}
 	
 	/**
@@ -210,12 +210,11 @@ public abstract class Market extends Entity {
 	 *            the current time
 	 * @return any side effect activities (base case none)
 	 */
-	public Iterable<? extends Activity> withdrawOrder(Order order, int quantity, 
-			TimeStamp currentTime) {
+	public void withdrawOrder(Order order, int quantity, TimeStamp currentTime) {
 		marketTime++;
 		// XXX Best way to handle 0 quantity orders (orders that have fully transacted)
 		checkArgument(quantity >= 0, "Quantity must be non negative");
-		if (order.getQuantity() == 0) return ImmutableList.of();
+		if (order.getQuantity() == 0) return;
 		quantity = min(quantity, order.getQuantity());
 		
 		Multiset<Price> priceQuant = order.getOrderType() == SELL ? askPriceQuantity : bidPriceQuantity;
@@ -225,8 +224,6 @@ public abstract class Market extends Entity {
 		
 		if (order.getQuantity() == 0)
 			order.agent.removeOrder(order);
-		
-		return ImmutableList.of();
 	}
 
 	/**
@@ -238,7 +235,7 @@ public abstract class Market extends Entity {
 	 *            the current time
 	 * @return any side effect activities (base case SendToIP activities)
 	 */
-	public Iterable<? extends Activity> clear(TimeStamp currentTime) {
+	public void clear(TimeStamp currentTime) {
 		marketTime++;
 		List<MatchedOrders<Price, MarketTime, Order>> matchedOrders = orderbook.clear();
 		Builder<Transaction> transactionBuilder = ImmutableList.builder();
@@ -260,32 +257,10 @@ public abstract class Market extends Entity {
 		}
 		
 		List<Transaction> transactions = transactionBuilder.build();
-		Builder<Activity> acts = ImmutableList.builder();
 		if (!transactions.isEmpty())
 			for (TransactionProcessor tp : tps)
-				acts.addAll(updateTransactionProcessor(tp, currentTime, transactions));
-		acts.addAll(updateQuote(currentTime));
-		return acts.build();
-	}
-	
-	
-	/**
-	 * If TransactionProcessor tp latency is IMMEDIATE, then it directly executes it
-	 * as opposed to inserting it as an activity.
-	 * 
-	 * TODO find a better way than this check
-	 * 
-	 * @param tp
-	 * @param transactions
-	 * @return
-	 */
-	protected Iterable<? extends Activity> updateTransactionProcessor(
-			TransactionProcessor tp, TimeStamp currentTime,
-			List<Transaction> transactions) {
-		if (tp.getLatency().equals(TimeStamp.IMMEDIATE))
-			return tp.sendToTransactionProcessor(this, transactions, currentTime);
-		else // otherwise insert as activity
-			return ImmutableList.of(new SendToTP(this, transactions, tp, TimeStamp.IMMEDIATE));
+				scheduler.executeActivity(new SendToTP(this, transactions, tp));
+		updateQuote(currentTime);
 	}
 
 	/**
@@ -298,7 +273,7 @@ public abstract class Market extends Entity {
 	 *            the current time
 	 * @return the SendToIP activities required to propagate information
 	 */
-	protected Iterable<? extends Activity> updateQuote(TimeStamp currentTime) {
+	protected void updateQuote(TimeStamp currentTime) {
 		Price ask = orderbook.askQuote();
 		Price bid = orderbook.bidQuote();
 		int quantityAsk = askPriceQuantity.count(ask);
@@ -326,38 +301,12 @@ public abstract class Market extends Entity {
 		BUS.post(new SpreadStatistic(this, quote.getSpread(), currentTime));
 		
 		MarketTime quoteTime = new MarketTime(currentTime, marketTime);
-		// TODO I removed random orders, and not HFT's behave properly. Make sure removing the randomness didn't fix this
-		
-		Builder<Activity> acts = ImmutableList.builder();
-		for (QuoteProcessor qp : qps)
-			acts.addAll(updateQuoteProcessor(qp, quoteTime, quote));
-		return acts.build();
-	}
+		// TODO I removed random orders, and got HFT's behave properly. Make
+		// sure removing the randomness didn't fix this
 
-	
-	/**
-	 * If QuoteProcessor qp latency is IMMEDIATE, then it directly executes it
-	 * as opposed to inserting it as an activity.
-	 * 
-	 * Note that this is necessary to ensure quotes are updated immediately
-	 * after an order is withdrawn.
-	 * 
-	 * TODO: Ideally this would instead be done by "immediately" executing activities.
-	 * 
-	 * @param qp
-	 * @param quoteTime
-	 * @param quote
-	 * @return
-	 */
-	protected Iterable<? extends Activity> updateQuoteProcessor(QuoteProcessor qp,
-			MarketTime quoteTime, Quote quote) {
-		
-		if (qp.getLatency().equals(TimeStamp.IMMEDIATE))
-			return qp.sendToQuoteProcessor(this, quoteTime, quote, quoteTime);
-		else // otherwise insert as activity
-			return ImmutableList.of(new SendToQP(this, quoteTime, quote, qp, TimeStamp.IMMEDIATE));
+		for (QuoteProcessor qp : qps)
+			scheduler.executeActivity(new SendToQP(this, quoteTime, quote, qp));
 	}
-	
 	
 	/*
 	 * TODO Add IOC / Fill or Kill Order (potentially change current syntax so
@@ -372,7 +321,8 @@ public abstract class Market extends Entity {
 	 * 
 	 * @param agent
 	 *            The agent that's submitting the order
-	 * @param type TODO
+	 * @param type
+	 *            TODO
 	 * @param price
 	 *            The price of the order
 	 * @param quantity
@@ -381,9 +331,9 @@ public abstract class Market extends Entity {
 	 *            The current time
 	 * @return any side effect activities (base case none)
 	 */
-	public Iterable<? extends Activity> submitOrder(Agent agent, OrderType type,
-			Price price, int quantity, TimeStamp currentTime) {
-		return submitOrder(agent, type, price, quantity, currentTime, TimeStamp.IMMEDIATE);
+	public void submitOrder(Agent agent, OrderType type, Price price, int quantity,
+			TimeStamp currentTime) {
+		submitOrder(agent, type, price, quantity, currentTime, TimeStamp.IMMEDIATE);
 	}
 
 	/**
@@ -408,7 +358,7 @@ public abstract class Market extends Entity {
 	 * @return The side effect activities (base case potentially a WithdrawOrder for this
 	 *         method)
 	 */
-	public Iterable<? extends Activity> submitOrder(Agent agent, OrderType type, Price price,
+	public void submitOrder(Agent agent, OrderType type, Price price,
 			int quantity, TimeStamp currentTime, TimeStamp duration) {
 		checkNotNull(type, "Order type");
 		checkArgument(quantity > 0, "Quantity must be positive");
@@ -426,8 +376,7 @@ public abstract class Market extends Entity {
 		agent.addOrder(order);
 		
 		if (!duration.equals(TimeStamp.IMMEDIATE))
-			return ImmutableList.of(new WithdrawOrder(order, currentTime.plus(duration)));
-		return ImmutableList.of();
+			scheduler.scheduleActivity(currentTime.plus(duration), new WithdrawOrder(order));
 	}
 
 	/**
@@ -449,9 +398,9 @@ public abstract class Market extends Entity {
 	 *            The currentTime
 	 * @return Any side effect activities (none in base case)
 	 */
-	public Iterable<? extends Activity> submitNMSOrder(Agent agent,
+	public void submitNMSOrder(Agent agent,
 			OrderType type, Price price, int quantity, TimeStamp currentTime) {
-		return submitNMSOrder(agent, type, price, quantity, currentTime, TimeStamp.IMMEDIATE);
+		submitNMSOrder(agent, type, price, quantity, currentTime, TimeStamp.IMMEDIATE);
 	}
 
 	/**
@@ -483,7 +432,7 @@ public abstract class Market extends Entity {
 	 * to get immediate execution. NMSOrder will not route properly for a call
 	 * market if there is another market in the model
 	 */
-	public Iterable<? extends Activity> submitNMSOrder(Agent agent, OrderType type,
+	public void submitNMSOrder(Agent agent, OrderType type,
 			Price price, int quantity, TimeStamp currentTime, TimeStamp duration) {
 		checkNotNull(type, "Order type");
 		checkArgument(quantity > 0, "Quantity must be positive");
@@ -510,7 +459,7 @@ public abstract class Market extends Entity {
 					+ quantity + " @ " + price + ") -> " 
 					+ this + " " + quote + " to NBBO " + nbbo);
 
-		return bestMarket.submitOrder(agent, type, price, quantity, currentTime, duration);
+		bestMarket.submitOrder(agent, type, price, quantity, currentTime, duration);
 	}
 	
 	/**

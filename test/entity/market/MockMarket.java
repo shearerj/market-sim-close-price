@@ -3,9 +3,7 @@ package entity.market;
 import java.util.Collection;
 import java.util.Random;
 
-import activity.Activity;
-
-import com.google.common.collect.ImmutableList;
+import systemmanager.Scheduler;
 
 import entity.agent.Agent;
 import entity.infoproc.SIP;
@@ -22,16 +20,16 @@ public class MockMarket extends Market {
 
 	private static final long serialVersionUID = 1L;
 
-	public MockMarket(SIP sip) {
-		this(sip, TimeStamp.IMMEDIATE);
+	public MockMarket(Scheduler scheduler, SIP sip) {
+		this(scheduler, sip, TimeStamp.IMMEDIATE);
 	}
 
-	public MockMarket(SIP sip, TimeStamp latency) {
-		super(sip, latency, new MockClearingRule(), new Random());
+	public MockMarket(Scheduler scheduler, SIP sip, TimeStamp latency) {
+		super(scheduler, sip, latency, new MockClearingRule(), new Random());
 	}
 	
-	public MockMarket(SIP sip, TimeStamp quoteLatency, TimeStamp transactionLatency) {
-		super(sip, quoteLatency, transactionLatency, new MockClearingRule(), new Random());
+	public MockMarket(Scheduler scheduler, SIP sip, TimeStamp quoteLatency, TimeStamp transactionLatency) {
+		super(scheduler, sip, quoteLatency, transactionLatency, new MockClearingRule(), new Random());
 	}
 	
 	public Collection<Order> getOrders() {
@@ -39,19 +37,17 @@ public class MockMarket extends Market {
 	}
 	
 	@Override
-	public Iterable<? extends Activity> submitOrder(Agent agent, OrderType type,
+	public void submitOrder(Agent agent, OrderType type,
 			Price price, int quantity, TimeStamp currentTime) {
-		return ImmutableList.<Activity> builder().addAll(
-				super.submitOrder(agent, type, price, quantity, currentTime)).addAll(
-				updateQuote(currentTime)).build();
+		super.submitOrder(agent, type, price, quantity, currentTime);
+		updateQuote(currentTime);
 	}
 
 	@Override
-	public Iterable<? extends Activity> withdrawOrder(Order order,
+	public void withdrawOrder(Order order,
 			TimeStamp currentTime) {
-		return ImmutableList.<Activity> builder().addAll(
-				super.withdrawOrder(order, currentTime)).addAll(
-				updateQuote(currentTime)).build();
+		super.withdrawOrder(order, currentTime);
+		updateQuote(currentTime);
 	}
 
 	@Override

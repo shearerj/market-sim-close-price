@@ -6,19 +6,19 @@ import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+
+import systemmanager.Scheduler;
+import activity.AgentStrategy;
+import activity.WithdrawOrder;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
-import com.google.common.collect.ImmutableList.Builder;
 
 import data.FundamentalValue;
-import activity.Activity;
-import activity.AgentStrategy;
 import entity.Entity;
 import entity.infoproc.BestBidAsk;
 import entity.infoproc.SIP;
@@ -56,9 +56,9 @@ public abstract class Agent extends Entity {
 	protected long profit;
 	protected long preLiquidationProfit;
 
-	public Agent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
+	public Agent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Random rand, int tickSize) {
-		super(nextID++);
+		super(nextID++, scheduler);
 		this.fundamental = checkNotNull(fundamental);
 		this.arrivalTime = checkNotNull(arrivalTime);
 		this.sip = sip;
@@ -72,11 +72,11 @@ public abstract class Agent extends Entity {
 		this.preLiquidationProfit = 0;
 	}
 
-	public abstract Iterable<? extends Activity> agentStrategy(
+	public abstract void agentStrategy(
 			TimeStamp currentTime);
 
-	public Iterable<? extends Activity> agentArrival(TimeStamp currentTime) {
-		return Collections.singleton(new AgentStrategy(this, TimeStamp.IMMEDIATE));
+	public void agentArrival(TimeStamp currentTime) {
+		scheduler.executeActivity(new AgentStrategy(this));
 	}
 
 	/**
@@ -84,16 +84,15 @@ public abstract class Agent extends Entity {
 	 * Price is determined by the fundamental at the time of liquidation.
 	 */
 	
-	public Iterable<? extends Activity> liquidateAtFundamental(
-			TimeStamp currentTime) {
+	public void liquidateAtFundamental(TimeStamp currentTime) {
 		log(INFO, this + " liquidating...");
-		return liquidateAtPrice(fundamental.getValueAt(currentTime), currentTime);
+		liquidateAtPrice(fundamental.getValueAt(currentTime), currentTime);
 	}
 
 	/**
 	 * Liquidates an agent's position at the specified price.
 	 */
-	public Iterable<? extends Activity> liquidateAtPrice(Price price, TimeStamp ts) {
+	public void liquidateAtPrice(Price price, TimeStamp ts) {
 
 		log(INFO, this + " pre-liquidation: position="
 				+ positionBalance);
@@ -103,7 +102,6 @@ public abstract class Agent extends Entity {
 
 		log(INFO, this + " post-liquidation: profit=" + profit
 				+ ", price=" + price);
-		return Collections.emptyList();
 	}
 
 	/**
@@ -123,26 +121,14 @@ public abstract class Agent extends Entity {
 	public void removeOrder(Order order) {
 		activeOrders.remove(order);
 	}
-
 	
 	/**
-	 * Withdraws an order (executes immediately, not inserted as an activity).
-	 * @param order
+	 * Withdraw most recent order (executes immediately).
 	 * @param currentTime
 	 * @return
 	 */
-	public Iterable<? extends Activity> withdrawOrder(Order order, TimeStamp currentTime) {
-		return order.getMarket().withdrawOrder(order, currentTime);
-	}
-	
-	/**
-	 * Withdraw most recent order (executes immediately, not inserted as 
-	 * activity).
-	 * @param currentTime
-	 * @return
-	 */
-	public Iterable<? extends Activity> withdrawNewestOrder(TimeStamp currentTime) {
-		TimeStamp latestTime = TimeStamp.ZERO;
+	public void withdrawNewestOrder() {
+		TimeStamp latestTime = new TimeStamp(-1);
 		Order lastOrder = null;
 		for (Order order : activeOrders) {
 			if (order.getSubmitTime().after(latestTime)) {
@@ -151,19 +137,17 @@ public abstract class Agent extends Entity {
 			}
 		}
 		if (lastOrder != null) 
-			return withdrawOrder(lastOrder, currentTime);
-		return ImmutableList.of();
+			scheduler.executeActivity(new WithdrawOrder(lastOrder));
 	}
 	
 	/**
-	 * Withdraw first (earliest) order (executes immediately, not inserted as 
-	 * activity).
+	 * Withdraw first (earliest) order (executes immediately).
 	 * @param currentTime
 	 * @return
 	 */
-	public Iterable<? extends Activity> withdrawOldestOrder(TimeStamp currentTime) {
+	public void withdrawOldestOrder() {
 		Order lastOrder = null;
-		TimeStamp earliestTime = new TimeStamp(currentTime);
+		TimeStamp earliestTime = new TimeStamp(Long.MAX_VALUE);
 		for (Order order : activeOrders) {
 			if (order.getSubmitTime().before(earliestTime)) {
 				earliestTime = order.getSubmitTime();
@@ -171,8 +155,7 @@ public abstract class Agent extends Entity {
 			}
 		}
 		if (lastOrder != null) 
-			return withdrawOrder(lastOrder, currentTime);
-		return ImmutableList.of();
+			scheduler.executeActivity(new WithdrawOrder(lastOrder));
 	}
 	
 	/**
@@ -187,14 +170,11 @@ public abstract class Agent extends Entity {
 	 * @param currentTime
 	 * @return
 	 */
-	public Iterable<? extends Activity> withdrawAllOrders(TimeStamp currentTime) {
-		Builder<Activity> acts = ImmutableList.builder();
+	public void withdrawAllOrders() {
 		// activeOrders is copied, because these calls are happening instaniosuly and
 		// hence modifying active orders
-		for (Order order : ImmutableList.copyOf(activeOrders)) {
-			acts.addAll(withdrawOrder(order, currentTime));
-		}
-		return acts.build();
+		for (Order order : ImmutableList.copyOf(activeOrders))
+			scheduler.executeActivity(new WithdrawOrder(order));
 	}
 	
 	
@@ -254,6 +234,6 @@ public abstract class Agent extends Entity {
 
 	@Override
 	public String toString() {
-		return "(" + id + ")";
+		return getClass().getSimpleName() + " (" + id + ")";
 	}
 }

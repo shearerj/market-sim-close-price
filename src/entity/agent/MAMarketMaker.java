@@ -6,18 +6,16 @@ import static logger.Logger.Level.INFO;
 
 import java.util.Random;
 
-import activity.Activity;
+import systemmanager.Keys;
+import systemmanager.Scheduler;
 
 import com.google.common.collect.EvictingQueue;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 
-import systemmanager.Keys;
 import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
-import entity.market.Price; 	
+import entity.market.Price;
 import event.TimeStamp;
 
 /**
@@ -38,11 +36,11 @@ public class MAMarketMaker extends MarketMaker {
 	protected EvictingQueue<Price> bidQueue;
 	protected EvictingQueue<Price> askQueue;
 	
-	public MAMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
+	public MAMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, double reentryRate, int tickSize, boolean noOp,
 			int numRungs, int rungSize, boolean truncateLadder, 
 			boolean tickImprovement, int numHistorical) {
-		super(fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
+		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
 				numRungs, rungSize, truncateLadder, tickImprovement);
 
 		checkArgument(numHistorical > 0, "Number of historical prices must be positive!");
@@ -50,9 +48,9 @@ public class MAMarketMaker extends MarketMaker {
 		askQueue = EvictingQueue.create(numHistorical);
 	}
 	
-	public MAMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
+	public MAMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, EntityProperties props) {
-		this(fundamental, sip, market, rand,
+		this(scheduler, fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0.0005),
 				props.getAsInt(Keys.TICK_SIZE, 1),
 				props.getAsBoolean(Keys.NO_OP, false),
@@ -64,14 +62,13 @@ public class MAMarketMaker extends MarketMaker {
 	}
 	
 	@Override
-	public Iterable<Activity> agentStrategy(TimeStamp currentTime) {
-		if (noOp) return ImmutableList.of(); // no execution if no-op
+	public void agentStrategy(TimeStamp currentTime) {
+		if (noOp) return; // no execution if no-op TODO Change to NoOpAgent
 		
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
 		
-		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
-				super.agentStrategy(currentTime));
+		super.agentStrategy(currentTime);
 		
 		Price bid = this.getQuote().getBidPrice();
 		Price ask = this.getQuote().getAskPrice();;
@@ -90,7 +87,7 @@ public class MAMarketMaker extends MarketMaker {
 			} else {
 				// Quote changed, still valid, withdraw all orders
 				log(INFO, sb.append(" Withdraw all orders"));
-				acts.addAll(withdrawAllOrders(currentTime));	
+				withdrawAllOrders();	
 				
 				bid = this.getQuote().getBidPrice();
 				ask = this.getQuote().getAskPrice();
@@ -116,7 +113,7 @@ public class MAMarketMaker extends MarketMaker {
 				for (Price y : askQueue) sumAsks += y.intValue();
 				Price ladderAsk = new Price(sumAsks / askQueue.size());
 
-				acts.addAll(this.createOrderLadder(ladderBid, ladderAsk, currentTime));
+				this.createOrderLadder(ladderBid, ladderAsk);
 
 			} // if quote defined
 		} else {
@@ -125,13 +122,7 @@ public class MAMarketMaker extends MarketMaker {
 		// update latest bid/ask prices
 		lastAsk = ask;
 		lastBid = bid;
-
-		return acts.build();
 	}
 	
-	@Override
-	public String toString() {
-		return "MAMM " + super.toString();
-	}
 }
 

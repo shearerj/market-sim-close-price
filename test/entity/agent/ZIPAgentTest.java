@@ -817,7 +817,7 @@ public class ZIPAgentTest {
 		while (!queue.isEmpty()) {
 			Activity a = queue.get(queue.size() - 1);
 			queue.remove(queue.size() - 1);
-			queue.addAll(filterNonImmediateAndReverse(a.execute(time)));
+			queue.addAllOrderd(filterNonImmediateAndReverse(a.execute(time)));
 		}
 	}
 	

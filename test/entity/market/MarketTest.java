@@ -26,7 +26,7 @@ import activity.SendToQP;
 import activity.SendToTP;
 import activity.SubmitOrder;
 import systemmanager.Consts;
-import systemmanager.EventManager;
+import systemmanager.Scheduler;
 import data.MockFundamental;
 import data.FundamentalValue;
 import entity.agent.Agent;
@@ -426,12 +426,12 @@ public class MarketTest {
 	@Test
 	public void latencyTest() {
 		Quote quote;
-		EventManager em = new EventManager(new Random());
+		Scheduler em = new Scheduler(new Random());
 		MockMarket market = new MockMarket(sip, new TimeStamp(100));
 
 		// Test that before Time 100 nothing has been updated
 		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
-		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1, TimeStamp.ZERO));
+		em.scheduleActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1, TimeStamp.ZERO));
 		em.executeUntil(new TimeStamp(100));
 
 		quote = market.getQuoteProcessor().getQuote();
@@ -525,13 +525,13 @@ public class MarketTest {
 	@Test
 	public void updateQPDelay() {
 		Quote q;
-		EventManager em = new EventManager(new Random());
+		Scheduler em = new Scheduler(new Random());
 		MockMarket market = new MockMarket(sip, new TimeStamp(100));
 		QuoteProcessor qp = market.getQuoteProcessor();
 
 		// Test that before Time 100 nothing has been updated
 		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
-		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1, TimeStamp.ZERO));
+		em.scheduleActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1, TimeStamp.ZERO));
 		em.executeUntil(new TimeStamp(100));
 
 		q = market.getQuoteProcessor().getQuote();
@@ -548,7 +548,7 @@ public class MarketTest {
 		assertTrue(Iterables.getOnlyElement(acts) instanceof SendToQP);
 
 		// Test that after 101 new quote did get updated
-		em.addActivity(Iterables.getOnlyElement(acts));
+		em.scheduleActivity(Iterables.getOnlyElement(acts));
 		em.executeUntil(new TimeStamp(102));
 		q = market.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect ASK", new Price(100), q.ask );
@@ -563,16 +563,16 @@ public class MarketTest {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 		TransactionProcessor tp = market.getTransactionProcessor();
-		EventManager em = new EventManager(new Random());
+		Scheduler em = new Scheduler(new Random());
 
 		// Creating dummy agents & transaction list
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 1, time));
+		em.scheduleActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 1, time));
 		em.executeUntil(time1);
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
+		em.scheduleActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
 		em.executeUntil(time1);
-		em.addActivity(new Clear(market, time));
+		em.scheduleActivity(new Clear(market, time));
 		em.executeUntil(time1);
 
 		// Verify that transactions have updated
@@ -601,7 +601,7 @@ public class MarketTest {
 		TimeStamp time = TimeStamp.ZERO;
 		Market market = new MockMarket(sip, new TimeStamp(100));
 		TransactionProcessor tp = market.getTransactionProcessor();
-		EventManager em = new EventManager(new Random());
+		Scheduler em = new Scheduler(new Random());
 		
 		// Creating dummy agents & transaction list
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
@@ -621,7 +621,7 @@ public class MarketTest {
 		assertTrue(Iterables.getOnlyElement(acts) instanceof SendToTP);
 		
 		// Test that after 100 new transaction did get updated
-		em.addActivity(Iterables.getOnlyElement(acts));
+		em.scheduleActivity(Iterables.getOnlyElement(acts));
 		em.executeUntil(new TimeStamp(101));
 		trans = tp.getTransactions();
 		assertEquals("Incorrect number of transactions", 1, trans.size());

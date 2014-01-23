@@ -2,7 +2,6 @@ package entity.infoproc;
 
 import java.util.List;
 
-import activity.Activity;
 import entity.market.Market;
 import entity.market.Transaction;
 import event.TimeStamp;
@@ -17,12 +16,16 @@ public interface TransactionProcessor {
 	 * measurement, so maybe it doesn't make sense?
 	 */
 	/* TODO Maybe these methods don't need the associatedMarket? */
-	public Iterable<? extends Activity> sendToTransactionProcessor(Market market,
+	public void sendToTransactionProcessor(Market market,
 			List<Transaction> newTransactions, TimeStamp currentTime);
 	
-	public Iterable<? extends Activity> processTransactions(Market market, 
+	public void processTransactions(Market market, 
 			List<Transaction> newTransactions, TimeStamp currentTime);
 	
+	/**
+	 * Transaction times are guaranteed to be in ascending order.
+	 * @return
+	 */
 	public List<Transaction> getTransactions();
 
 	public TimeStamp getLatency();

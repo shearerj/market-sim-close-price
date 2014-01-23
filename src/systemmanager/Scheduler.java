@@ -1,16 +1,18 @@
 package systemmanager;
 
 import static logger.Logger.log;
-import static logger.Logger.Level.*;
+import static logger.Logger.Level.DEBUG;
+import static logger.Logger.Level.ERROR;
 
 import java.util.Random;
+
+import activity.Activity;
 
 import com.google.common.collect.Ordering;
 
 import event.EventQueue;
 import event.TimeStamp;
-
-import activity.Activity;
+import event.TimedActivity;
 
 /**
  * EVENTMANAGER
@@ -21,19 +23,19 @@ import activity.Activity;
  * 
  * @author ewah
  */
-public class EventManager {
+public class Scheduler {
 	
 	protected static final Ordering<TimeStamp> ord = Ordering.natural();
 
 	protected EventQueue eventQueue;
 	protected TimeStamp currentTime;
 
-	public EventManager(Random rand) {
+	public Scheduler(Random rand) {
 		eventQueue = new EventQueue(rand);
 		currentTime = TimeStamp.ZERO;
 	}
 
-	public boolean isEmpty() {
+	protected boolean isEmpty() {
 		return eventQueue.isEmpty();
 	}
 
@@ -50,15 +52,12 @@ public class EventManager {
 	 * Executes activities until (not including) time
 	 * @param time
 	 */
-	public void executeUntil(TimeStamp time) {
+	protected void executeUntil(TimeStamp time) {
 		while (!isEmpty() && eventQueue.peek().getTime().before(time))
 			executeNext();
 	}
 	
-	/**
-	 * Executes next immediate activities
-	 */
-	public void executeImmediate() {
+	protected void executeImmediate() {
 		executeUntil(TimeStamp.ZERO);
 	}
 
@@ -68,10 +67,10 @@ public class EventManager {
 	 */
 	protected void executeNext() {
 		try {
-			Activity act = eventQueue.remove();
+			TimedActivity act = eventQueue.remove();
 			currentTime = ord.max(currentTime, act.getTime());
 			log(DEBUG, act + " then " + eventQueue);
-			eventQueue.addAll(act.execute(currentTime));
+			act.getActivity().execute(currentTime);
 			
 		} catch (Exception e) {
 			log(ERROR, "Error executing activity");
@@ -79,8 +78,17 @@ public class EventManager {
 		}
 	}
 
-	public void addActivity(Activity act) {
-		eventQueue.add(act);
+	public void scheduleActivity(TimeStamp scheduledTime, Activity act) {
+		eventQueue.add(scheduledTime, act);
+	}
+	
+	public void scheduleActivities(TimeStamp scheduledTime, Activity... acts) {
+		eventQueue.addAllOrdered(scheduledTime, acts);
+	}
+	
+	public void executeActivity(Activity act) {
+		eventQueue.add(TimeStamp.IMMEDIATE, act);
+		executeImmediate(); // Execute all Immediate activities
 	}
 
 }

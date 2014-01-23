@@ -1,27 +1,27 @@
 package entity.agent;
 
-import static logger.Logger.log;
-import static logger.Logger.format;
-import static logger.Logger.Level.INFO;
 import static com.google.common.base.Preconditions.checkArgument;
-import static fourheap.Order.OrderType.*;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+import static logger.Logger.format;
+import static logger.Logger.log;
+import static logger.Logger.Level.INFO;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import systemmanager.Keys;
+import systemmanager.Scheduler;
+import utils.Rands;
+import activity.SubmitNMSOrder;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
-import com.google.common.collect.ImmutableList.Builder;
 
-import systemmanager.Keys;
-import utils.Rands;
-import activity.Activity;
-import activity.SubmitNMSOrder;
 import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
@@ -74,14 +74,14 @@ public class AAAgent extends WindowAgent {
 	private double alphaMin; // min experienced value for alpha
 
 
-	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
+	public AAAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
 			Market market, Random rand, double reentryRate, double pvVar,
 			int tickSize, int maxAbsPosition, int bidRangeMin, int bidRangeMax,
 			boolean withdrawOrders, int windowLength, double aggression, 
 			double theta, double thetaMin, double thetaMax, int historical, 
 			int eta, double lambdaR, double lambdaA, double gamma, double betaR, 
 			double betaT, boolean buyerStatus) {
-		super(arrivalTime, fundamental, sip, market, rand, reentryRate, 
+		super(scheduler, arrivalTime, fundamental, sip, market, rand, reentryRate, 
 				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize, 
 				bidRangeMin, bidRangeMax, windowLength);
 
@@ -117,9 +117,9 @@ public class AAAgent extends WindowAgent {
 		this.betaT = betaT;		// paper randomizes to U[0.2, 0.6]
 	}
 
-	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
+	public AAAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
 			Market market, Random rand, EntityProperties props) {
-		this(arrivalTime, fundamental, sip, market, rand,
+		this(scheduler, arrivalTime, fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0.005), 
 				props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),
 				props.getAsInt(Keys.TICK_SIZE, 1),
@@ -145,20 +145,14 @@ public class AAAgent extends WindowAgent {
 	}
 
 	@Override
-	public String toString() {
-		return "AA " + super.toString();
-	}
-
-	@Override
-	public Collection<Activity> agentStrategy(TimeStamp currentTime) {
-		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
-				super.agentStrategy(currentTime));
+	public void agentStrategy(TimeStamp currentTime) {
+		super.agentStrategy(currentTime);
 
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append("::agentStrategy: ");
 
 		// withdraw previous orders
-		if (withdrawOrders) acts.addAll(withdrawAllOrders(currentTime));
+		if (withdrawOrders) withdrawAllOrders();
 
 		// re-initialize variables
 		lastTransactionPrice = null;
@@ -202,8 +196,7 @@ public class AAAgent extends WindowAgent {
 				.append("-->theta_new=").append(format(theta)));
 
 		// Bidding Layer
-		acts.addAll(this.biddingLayer(limitPrice, targetPrice, 1, currentTime));
-		return acts.build();
+		this.biddingLayer(limitPrice, targetPrice, 1, currentTime);
 	}
 
 	/**
@@ -299,7 +292,7 @@ public class AAAgent extends WindowAgent {
 	 * @param currentTime
 	 * @return
 	 */
-	protected Iterable<? extends Activity> biddingLayer(Price limitPrice, 
+	protected void biddingLayer(Price limitPrice, 
 			Price targetPrice, int quantity, TimeStamp currentTime) {
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append("::biddingLayer: ");
@@ -313,7 +306,7 @@ public class AAAgent extends WindowAgent {
 		// if no bid or no ask, submit ZI strategy bid
 		if (bid == null || ask == null) {
 			log(INFO, sb.append("Bid/Ask undefined."));
-			return this.executeZIStrategy(type, quantity, currentTime);
+			this.executeZIStrategy(type, quantity, currentTime);
 		}
 
 		// If best offer is outside of limit price, no bid is submitted
@@ -321,7 +314,7 @@ public class AAAgent extends WindowAgent {
 				|| (type.equals(SELL) && limitPrice.greaterThan(ask))) {
 			log(INFO, sb.append("Best price is outside of limit price: ")
 					.append(limitPrice).append("; no submission"));
-			return Collections.emptyList();
+			return;
 		}
 
 		// Can only submit offer if the offer would not cause position
@@ -332,7 +325,7 @@ public class AAAgent extends WindowAgent {
 			log(INFO, sb.append("New order would exceed max position ")
 					.append(privateValue.getMaxAbsPosition())
 					.append("; no submission"));
-			return Collections.emptyList();
+			return;
 		}
 
 		// Pricing - verifying targetPrice
@@ -379,8 +372,9 @@ public class AAAgent extends WindowAgent {
 				orderPrice = bid.greaterThanEqual(targetPrice) ? bid : orderPrice;
 			}
 		}
-		return ImmutableList.of(new SubmitNMSOrder(this, primaryMarket, type, 
-				orderPrice, 1, currentTime));
+		
+		scheduler.executeActivity(new SubmitNMSOrder(this, primaryMarket, type,
+				orderPrice, 1));
 	}
 
 

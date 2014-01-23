@@ -17,7 +17,7 @@ import org.junit.Test;
 
 import activity.SubmitOrder;
 import systemmanager.Consts;
-import systemmanager.EventManager;
+import systemmanager.Scheduler;
 import data.MockFundamental;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
@@ -57,7 +57,7 @@ public class WindowAgentTest {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 		TimeStamp time10 = new TimeStamp(10);
-		EventManager em = new EventManager(new Random());
+		Scheduler em = new Scheduler(new Random());
 		
 		WindowAgent agent = new MockWindowAgent(fundamental, sip, market, 10);
 		
@@ -67,8 +67,8 @@ public class WindowAgentTest {
 		// populate market with a transaction
 		MockBackgroundAgent background1 = new MockBackgroundAgent(fundamental, sip, market);
 		MockBackgroundAgent background2 = new MockBackgroundAgent(fundamental, sip, market);
-		em.addActivity(new SubmitOrder(background1, market, BUY, new Price(111), 1, time));
-		em.addActivity(new SubmitOrder(background2, market, SELL, new Price(110), 1, time));
+		em.scheduleActivity(new SubmitOrder(background1, market, BUY, new Price(111), 1, time));
+		em.scheduleActivity(new SubmitOrder(background2, market, SELL, new Price(110), 1, time));
 		em.executeUntil(time.plus(new TimeStamp(1)));
 		
 		// basic window check
@@ -92,7 +92,7 @@ public class WindowAgentTest {
 		TimeStamp time1 = new TimeStamp(1);
 		TimeStamp time5 = new TimeStamp(5);
 		TimeStamp time10 = new TimeStamp(10);
-		EventManager em = new EventManager(new Random());
+		Scheduler em = new Scheduler(new Random());
 		Market market = new CDAMarket(sip, new Random(), new TimeStamp(5), 1);
 		
 		WindowAgent agent = new MockWindowAgent(fundamental, sip, market, 10);
@@ -100,14 +100,14 @@ public class WindowAgentTest {
 		// populate market with a transaction
 		MockBackgroundAgent background1 = new MockBackgroundAgent(fundamental, sip, market);
 		MockBackgroundAgent background2 = new MockBackgroundAgent(fundamental, sip, market);
-		em.addActivity(new SubmitOrder(background1, market, BUY, new Price(111), 1, time));
+		em.scheduleActivity(new SubmitOrder(background1, market, BUY, new Price(111), 1, time));
 		em.executeUntil(time1);
-		em.addActivity(new SubmitOrder(background2, market, SELL, new Price(110), 1, time));
+		em.scheduleActivity(new SubmitOrder(background2, market, SELL, new Price(110), 1, time));
 		em.executeUntil(time1);
 		
-		em.addActivity(new SubmitOrder(background1, market, BUY, new Price(104), 1, time1));
+		em.scheduleActivity(new SubmitOrder(background1, market, BUY, new Price(104), 1, time1));
 		em.executeUntil(time1.plus(time1));
-		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(102), 1, time1));
+		em.scheduleActivity(new SubmitOrder(agent, market, SELL, new Price(102), 1, time1));
 		em.executeUntil(time1.plus(time1));
 		
 		// test getting transactions at time 5 - should be missing the second transaction
@@ -209,20 +209,20 @@ public class WindowAgentTest {
 		TimeStamp t_301 = new TimeStamp(301);
 
 		
-		EventManager em = new EventManager(new Random());
+		Scheduler em = new Scheduler(new Random());
 		//Execute first transaction
-		em.addActivity(new SubmitOrder(agent_S, market, SELL, new Price(40), 1, t_50));
+		em.scheduleActivity(new SubmitOrder(agent_S, market, SELL, new Price(40), 1, t_50));
 		em.executeUntil(t_51);
-		em.addActivity(new SubmitOrder(agent_B, market, BUY, new Price(40), 1, t_50));
+		em.scheduleActivity(new SubmitOrder(agent_B, market, BUY, new Price(40), 1, t_50));
 		em.executeUntil(t_51);
 		//Assert that the agent can't see the transaction due to latency
 		windowTransactions = myAgent.getWindowTransactions(t_51);
 		assertTrue("Window Transactions should be empty", windowTransactions.isEmpty());
 		
 		//Execute second transaction
-		em.addActivity(new SubmitOrder(agent_S, market, SELL, new Price(60), 1, t_100));
+		em.scheduleActivity(new SubmitOrder(agent_S, market, SELL, new Price(60), 1, t_100));
 		em.executeUntil(t_101);
-		em.addActivity(new SubmitOrder(agent_B, market, BUY, new Price(60), 1, t_100));
+		em.scheduleActivity(new SubmitOrder(agent_B, market, BUY, new Price(60), 1, t_100));
 		em.executeUntil(t_101);
 		//Assert that the agent can't see the transaction due to latency
 		windowTransactions = myAgent.getWindowTransactions(t_101);
@@ -299,10 +299,10 @@ public class WindowAgentTest {
 		MockBackgroundAgent agent_S = new MockBackgroundAgent(fundamental, sip, m);
 		MockBackgroundAgent agent_B = new MockBackgroundAgent(fundamental, sip, m);
 
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent_S, m, SELL, new Price(p), q, t));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SubmitOrder(agent_S, m, SELL, new Price(p), q, t));
 		em.executeUntil(t_exec);
-		em.addActivity(new SubmitOrder(agent_B, m, BUY, new Price(p), q, t));
+		em.scheduleActivity(new SubmitOrder(agent_B, m, BUY, new Price(p), q, t));
 		em.executeUntil(t_exec);
 	}
 	

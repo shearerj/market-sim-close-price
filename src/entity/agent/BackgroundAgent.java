@@ -2,21 +2,19 @@ package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 import iterators.ExpInterarrivals;
-import static fourheap.Order.OrderType.*;
 
 import java.util.Iterator;
 import java.util.Random;
 
 import systemmanager.Consts.DiscountFactor;
+import systemmanager.Scheduler;
 import utils.Rands;
-import activity.Activity;
 import activity.SubmitNMSOrder;
-
-import com.google.common.collect.ImmutableList;
-
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
@@ -42,11 +40,11 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	protected int bidRangeMax; 		// range for limit order
 	protected int bidRangeMin;
 	
-	public BackgroundAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
+	public BackgroundAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, Iterator<TimeStamp> reentry,
 			PrivateValue pv, int tickSize, int bidRangeMin,
 			int bidRangeMax) {
-		super(arrivalTime, fundamental, sip, market, rand, reentry, tickSize);
+		super(scheduler, arrivalTime, fundamental, sip, market, rand, reentry, tickSize);
 	
 		this.privateValue = checkNotNull(pv);
 		this.surplus = DiscountedValue.create();
@@ -57,10 +55,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	/**
 	 * Shortcut constructor for exponential interarrivals (e.g. Poisson reentries)
 	 */
-	public BackgroundAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
+	public BackgroundAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, double reentryRate, PrivateValue pv,
 			int tickSize, int bidRangeMin, int bidRangeMax) {
-		this(arrivalTime, fundamental, sip, market, rand, new ExpInterarrivals(reentryRate, rand),
+		this(scheduler, arrivalTime, fundamental, sip, market, rand, new ExpInterarrivals(reentryRate, rand),
 				pv, tickSize, bidRangeMin, bidRangeMax);
 		checkArgument(reentryRate >= 0, "Agent reentry rate must be positive!");
 	}
@@ -73,7 +71,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * 
 	 * @return
 	 */
-	public Iterable<? extends Activity> executeZIStrategy(OrderType type, int quantity, TimeStamp currentTime) {
+	public void executeZIStrategy(OrderType type, int quantity, TimeStamp currentTime) {
 		
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append(':');
@@ -94,15 +92,13 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			sb.append('=').append(val);
 			log(INFO, sb.toString());
 			
-			return ImmutableList.of(new SubmitNMSOrder(this, primaryMarket, type,
-					price, quantity, TimeStamp.IMMEDIATE));
+			scheduler.executeActivity(new SubmitNMSOrder(this, primaryMarket,
+					type, price, quantity));
 		} else {
 			// if exceed max position, then don't submit a new bid
 			sb.append("new order would exceed max position ");
 			sb.append(privateValue.getMaxAbsPosition()).append("; no submission");
 			log(INFO, sb.toString());
-			
-			return ImmutableList.of();
 		}
 	}
 	

@@ -19,20 +19,19 @@ public class WithdrawOrder extends Activity {
 	protected final Order order;
 	protected final int quantity;
 	
-	public WithdrawOrder(Order order, TimeStamp scheduledTime) {
-		this(order, Math.abs(order.getQuantity()), scheduledTime);
+	public WithdrawOrder(Order order) {
+		this(order, Math.abs(order.getQuantity()));
 	}
 
-	public WithdrawOrder(Order order, int quantity, TimeStamp scheduledTime) {
-		super(scheduledTime);
+	public WithdrawOrder(Order order, int quantity) {
 		checkArgument(quantity > 0, "Quantity must be positive");
 		this.order = checkNotNull(order, "Order");
 		this.quantity = quantity;
 	}
 
 	@Override
-	public Iterable<? extends Activity> execute(TimeStamp time) {
-		return order.getMarket().withdrawOrder(order, quantity, time);
+	public void execute(TimeStamp time) {
+		order.getMarket().withdrawOrder(order, quantity, time);
 	}
 	
 	@Override

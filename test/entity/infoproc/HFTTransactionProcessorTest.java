@@ -19,7 +19,7 @@ import org.junit.Test;
 import activity.SubmitOrder;
 
 import systemmanager.Consts;
-import systemmanager.EventManager;
+import systemmanager.Scheduler;
 import data.FundamentalValue;
 import data.MockFundamental;
 import entity.agent.MockBackgroundAgent;
@@ -81,10 +81,10 @@ public class HFTTransactionProcessorTest {
 		assertTrue("Incorrect initial transaction list", trans.isEmpty());
 
 		// Creating and adding bids		
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market1, BUY, new Price(150), 1, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SubmitOrder(agent1, market1, BUY, new Price(150), 1, time));
 		em.executeUntil(time1);
-		em.addActivity(new SubmitOrder(agent2, market1, SELL, new Price(140), 1, time));
+		em.scheduleActivity(new SubmitOrder(agent2, market1, SELL, new Price(140), 1, time));
 		em.executeUntil(time1); // should execute Clear-->SendToSIP-->processTransactions
 
 		// for now, HFTTransactionProcessors do NOT insert AgentStrategy activities
@@ -122,10 +122,10 @@ public class HFTTransactionProcessorTest {
 		tp2 = hft.getHFTTransactionProcessor(market2);
 
 		// Creating and adding bids		
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market2, BUY, new Price(150), 1, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SubmitOrder(agent1, market2, BUY, new Price(150), 1, time));
 		em.executeUntil(time1);
-		em.addActivity(new SubmitOrder(agent2, market2, SELL, new Price(140), 1, time));
+		em.scheduleActivity(new SubmitOrder(agent2, market2, SELL, new Price(140), 1, time));
 		em.executeUntil(time1); // should execute Clear-->SendToSIP-->processInformations
 
 		// Verify no update yet
@@ -176,10 +176,10 @@ public class HFTTransactionProcessorTest {
 		assertEquals("Incorrect BID quantity", 0, q.getBidQuantity());
 
 		// Creating and adding bids		
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market2, BUY, new Price(150), 2, time));
+		Scheduler em = new Scheduler(new Random());
+		em.scheduleActivity(new SubmitOrder(agent1, market2, BUY, new Price(150), 2, time));
 		em.executeUntil(time1);
-		em.addActivity(new SubmitOrder(agent2, market2, SELL, new Price(140), 1, time));
+		em.scheduleActivity(new SubmitOrder(agent2, market2, SELL, new Price(140), 1, time));
 		em.executeUntil(time1);
 		
 		// Verify no transaction update yet

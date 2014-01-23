@@ -2,9 +2,7 @@ package entity.infoproc;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.google.common.collect.ImmutableList;
-
+import systemmanager.Scheduler;
 import activity.Activity;
 import activity.ProcessQuote;
 import entity.Entity;
@@ -22,13 +20,13 @@ import event.TimeStamp;
  */
 abstract class AbstractQuoteProcessor extends Entity implements QuoteProcessor {
 
-	protected TimeStamp latency;
+	protected final TimeStamp latency;
 	protected final Market associatedMarket;
 	protected Quote quote;
 	protected MarketTime lastQuoteTime;
 
-	public AbstractQuoteProcessor(TimeStamp latency, Market associatedMarket) {
-		super(ProcessorIDs.nextID++);
+	public AbstractQuoteProcessor(Scheduler scheduler, TimeStamp latency, Market associatedMarket) {
+		super(ProcessorIDs.nextID++, scheduler);
 		this.latency = checkNotNull(latency);
 		this.associatedMarket = checkNotNull(associatedMarket);
 		this.quote = new Quote(null, null, 0, null, 0, TimeStamp.ZERO);
@@ -38,18 +36,17 @@ abstract class AbstractQuoteProcessor extends Entity implements QuoteProcessor {
 
 	// TODO better way to handle immediate execution
 	@Override
-	public Iterable<? extends Activity> sendToQuoteProcessor(Market market, 
+	public void sendToQuoteProcessor(Market market, 
 			MarketTime quoteTime, Quote quote, TimeStamp currentTime) {
-		if (latency.equals(TimeStamp.IMMEDIATE)) {
-			return ImmutableList.<Activity> builder().addAll(
-					processQuote(market, quoteTime, quote, currentTime)).build();
-		}
-		return ImmutableList.of(new ProcessQuote(this, market, quoteTime, quote, 
-				currentTime.plus(latency)));
+		Activity act = new ProcessQuote(this, market, quoteTime, quote);
+		if (latency.equals(TimeStamp.IMMEDIATE))
+			scheduler.executeActivity(act);
+		else
+			scheduler.scheduleActivity(currentTime.plus(latency), act);
 	}
 
 	@Override
-	public Iterable<? extends Activity> processQuote(Market market, MarketTime quoteTime, Quote quote,
+	public void processQuote(Market market, MarketTime quoteTime, Quote quote,
 			TimeStamp currentTime) {
 		checkArgument(market.equals(associatedMarket),
 				"Can't update a QuoteProcessor with anything but its market");
@@ -58,11 +55,10 @@ abstract class AbstractQuoteProcessor extends Entity implements QuoteProcessor {
 
 		// Do nothing for a stale quote
 		if (lastQuoteTime != null && lastQuoteTime.compareTo(quoteTime) > 0)
-			return ImmutableList.of();
+			return;
 
 		this.quote = quote;
 		this.lastQuoteTime = quoteTime;
-		return ImmutableList.of();
 	}
 
 	public Quote getQuote() {

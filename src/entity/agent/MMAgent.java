@@ -3,11 +3,12 @@ package entity.agent;
 import java.util.Collection;
 import java.util.Random;
 
+import systemmanager.Scheduler;
+
 import com.google.common.base.Joiner;
 
 import data.FundamentalValue;
 
-import activity.Activity;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import event.TimeStamp;
@@ -33,15 +34,10 @@ public abstract class MMAgent extends Agent {
 	protected final Collection<Market> markets; 
 	
 	// TODO Just keep the SMIPs and not the actual markets...
-	public MMAgent(TimeStamp arrivalTime, FundamentalValue fundamental,
+	public MMAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental,
 			SIP sip, Collection<Market> markets, Random rand, int tickSize) {
-		super(arrivalTime, fundamental, sip, rand, tickSize);
+		super(scheduler, arrivalTime, fundamental, sip, rand, tickSize);
 		this.markets = markets;
-	}
-
-	@Override
-	public Iterable<? extends Activity> agentArrival(TimeStamp currentTime) {
-		return super.agentArrival(currentTime);
 	}
 
 }

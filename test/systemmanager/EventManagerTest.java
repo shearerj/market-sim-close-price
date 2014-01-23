@@ -23,7 +23,7 @@ import event.TimeStamp;
 public class EventManagerTest {
 
 	private FundamentalValue fundamental = new MockFundamental(100000);
-	private EventManager em;
+	private Scheduler em;
 	private MockMarket market;
 	private SIP sip;
 	
@@ -34,7 +34,7 @@ public class EventManagerTest {
 
 	@Before
 	public void setup() {
-		em = new EventManager(new Random());
+		em = new Scheduler(new Random());
 		sip = new SIP(TimeStamp.IMMEDIATE);
 		market = new MockMarket(sip, TimeStamp.IMMEDIATE);
 	}
@@ -47,7 +47,7 @@ public class EventManagerTest {
 		assertEquals(0, em.eventQueue.size());
 		assertEquals(TimeStamp.ZERO, em.getCurrentTime());
 		
-		em.addActivity(new MockActivity(time));
+		em.scheduleActivity(new MockActivity(time));
 		assertEquals(1, em.eventQueue.size());
 		assertTrue(em.eventQueue.peek() instanceof MockActivity);
 		assertEquals(time, em.eventQueue.peek().getTime());
@@ -63,8 +63,8 @@ public class EventManagerTest {
 	@Test
 	public void executeUntilTest() {
 		TimeStamp time = new TimeStamp(100);
-		em.addActivity(new MockActivity(time));
-		em.addActivity(new MockActivity(time.plus(time)));
+		em.scheduleActivity(new MockActivity(time));
+		em.scheduleActivity(new MockActivity(time.plus(time)));
 		
 		assertEquals(2, em.eventQueue.size());
 		assertEquals(TimeStamp.ZERO, em.getCurrentTime());
@@ -93,7 +93,7 @@ public class EventManagerTest {
 		assertEquals(0, em.eventQueue.size());
 		assertEquals(TimeStamp.ZERO, em.getCurrentTime());
 		
-		em.addActivity(new MockAgentActivity(agent, time));
+		em.scheduleActivity(new MockAgentActivity(agent, time));
 		// Verify that new activity has been added correctly 
 		// and that current time is 0 until first activity is executed
 		assertEquals(1, em.eventQueue.size());
