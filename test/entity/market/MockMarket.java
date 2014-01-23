@@ -44,15 +44,13 @@ public class MockMarket extends Market {
 	}
 
 	@Override
-	public void withdrawOrder(Order order,
-			TimeStamp currentTime) {
-		super.withdrawOrder(order, currentTime);
+	public void withdrawOrder(Order order, int quantity, TimeStamp currentTime) {
+		super.withdrawOrder(order, quantity, currentTime);
 		updateQuote(currentTime);
 	}
 
-	@Override
-	public String toString() {
-		return "MockMarket " + super.toString();
+	public Collection<Order> getActiveOrders() {
+		return this.orders;
 	}
 
 }

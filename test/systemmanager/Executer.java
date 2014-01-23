@@ -24,5 +24,9 @@ public class Executer extends Scheduler {
 	public void executeUntil(TimeStamp time) {
 		super.executeUntil(time);
 	}
+	
+	public void setTime(TimeStamp time) {
+		this.currentTime = time;
+	}
 
 }

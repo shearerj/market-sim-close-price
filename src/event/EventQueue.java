@@ -107,10 +107,11 @@ public class EventQueue extends AbstractQueue<TimedActivity> {
 		
 		Iterator<Entry<TimeStamp, Event>> it = eventQueue.entrySet().iterator();
 		Entry<TimeStamp, Event> first = it.next();
-		it.remove();
-		size--;
-		
-		return new TimedActivity(first.getKey(), first.getValue().poll());
+		TimedActivity head = new TimedActivity(first.getKey(), first.getValue().poll());
+		--size;
+		if (first.getValue().isEmpty()) // no empty Events
+			it.remove();
+		return head;
 	}
 
 	@Override

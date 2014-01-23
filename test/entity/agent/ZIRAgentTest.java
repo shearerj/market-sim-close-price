@@ -2,7 +2,7 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.util.Random;
@@ -13,14 +13,15 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.common.collect.Iterables;
-
+import systemmanager.Consts;
+import systemmanager.Executer;
+import systemmanager.Keys;
 import activity.AgentStrategy;
 import activity.SubmitNMSOrder;
 import activity.SubmitOrder;
-import systemmanager.Consts;
-import systemmanager.Scheduler;
-import systemmanager.Keys;
+
+import com.google.common.collect.Iterables;
+
 import data.EntityProperties;
 import data.FundamentalValue;
 import data.MockFundamental;
@@ -42,6 +43,7 @@ import event.TimeStamp;
  */
 public class ZIRAgentTest {
 
+	private Executer exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
 	private SIP sip;
@@ -65,33 +67,28 @@ public class ZIRAgentTest {
 
 	@Before
 	public void setup(){
-		sip = new SIP(TimeStamp.IMMEDIATE);
+		exec = new Executer();
+		sip = new SIP(exec, TimeStamp.IMMEDIATE);
 		// Creating the MockMarket
-		market = new MockMarket(sip);
+		market = new MockMarket(exec, sip);
 	}
 
 	@Test
 	public void withdrawTest() {
-		TimeStamp time = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
-		Scheduler em = new Scheduler(rand);
-
 		EntityProperties testProps = new EntityProperties(agentProperties);
 		testProps.put(Keys.WITHDRAW_ORDERS, true);
 
 		// verify that orders are correctly withdrawn at each re-entry
-		ZIRAgent agent = new ZIRAgent(TimeStamp.ZERO, fundamental, sip, market, 
+		ZIRAgent agent = new ZIRAgent(exec, TimeStamp.ZERO, fundamental, sip, market, 
 				rand, testProps);
 
 		// execute strategy once; then before reenter, change the position balance
 		// that way, when execute strategy again, it won't submit new orders
-		em.scheduleActivity(new AgentStrategy(agent, time));
-		em.executeUntil(time1);
+		exec.executeActivity(new AgentStrategy(agent));
 		// verify that order submitted
 		assertEquals(1, agent.activeOrders.size());
 		agent.positionBalance = 10;
-		em.scheduleActivity(new AgentStrategy(agent, time));
-		em.executeUntil(time1);
+		exec.executeActivity(new AgentStrategy(agent));
 		// verify that order withdrawn
 		assertEquals(0, agent.activeOrders.size());
 	}
@@ -104,19 +101,18 @@ public class ZIRAgentTest {
 	public void withdrawQuoteUpdateTest() {
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time50 = new TimeStamp(50);
-		Scheduler em = new Scheduler(rand);
-		SIP sip = new SIP(new TimeStamp(50));
+		SIP sip = new SIP(exec, new TimeStamp(50));
 
 		// Set up CDA markets (market quote latency = 0) and their quotes
-		Market nasdaq = new CDAMarket(sip, rand, time0, 1);
-		Market nyse = new CDAMarket(sip, rand, time0, 1);
-		MockBackgroundAgent background1 = new MockBackgroundAgent(fundamental, sip, nyse);
-		MockBackgroundAgent background2 = new MockBackgroundAgent(fundamental, sip, nasdaq);
-		em.scheduleActivity(new SubmitOrder(background1, nyse, SELL, new Price(111000), 1, time0));
-		em.scheduleActivity(new SubmitOrder(background1, nasdaq, BUY, new Price(104000), 1, time0));
-		em.scheduleActivity(new SubmitOrder(background2, nasdaq, SELL, new Price(108000), 1, time0));
-		em.scheduleActivity(new SubmitOrder(background2, nyse, BUY, new Price(102000), 1, time0));
-		em.executeUntil(new TimeStamp(51));
+		Market nasdaq = new CDAMarket(exec, sip, rand, time0, 1);
+		Market nyse = new CDAMarket(exec, sip, rand, time0, 1);
+		MockBackgroundAgent background1 = new MockBackgroundAgent(exec, fundamental, sip, nyse);
+		MockBackgroundAgent background2 = new MockBackgroundAgent(exec, fundamental, sip, nasdaq);
+		exec.executeActivity(new SubmitOrder(background1, nyse, SELL, new Price(111000), 1));
+		exec.executeActivity(new SubmitOrder(background1, nasdaq, BUY, new Price(104000), 1));
+		exec.executeActivity(new SubmitOrder(background2, nasdaq, SELL, new Price(108000), 1));
+		exec.executeActivity(new SubmitOrder(background2, nyse, BUY, new Price(102000), 1));
+		exec.executeUntil(new TimeStamp(51));
 		// Verify that NBBO quote is (104, 108) at time 50 (after quotes have been processed by SIP)
 		BestBidAsk nbbo = sip.getNBBO();
 		assertEquals("Incorrect ASK", new Price(108000), nbbo.getBestAsk());
@@ -133,13 +129,13 @@ public class ZIRAgentTest {
 		testProps.put(Keys.BID_RANGE_MAX, 1000);
 		testProps.put(Keys.BID_RANGE_MIN, 1000);
 		testProps.put(Keys.MAX_QUANTITY, 1);
-		ZIRAgent agent1 = new ZIRAgent(TimeStamp.ZERO, fundamental2, sip, nasdaq, 
+		ZIRAgent agent1 = new ZIRAgent(exec, TimeStamp.ZERO, fundamental2, sip, nasdaq, 
 				new Random(4), testProps);	// rand seed selected to insert BUY
 
 		// ZIR submits sell at 105 (is routed to nyse)
 		// Verify that NBBO quote is (104, 105) at time 100
-		em.scheduleActivity(new SubmitNMSOrder(agent1, nyse, SELL, new Price(105000), 1, time50));
-		em.executeUntil(new TimeStamp(101));
+		exec.scheduleActivity(time50, new SubmitNMSOrder(agent1, nyse, SELL, new Price(105000), 1));
+		exec.executeUntil(new TimeStamp(101));
 		nbbo = sip.getNBBO();
 		assertEquals("Incorrect ASK", new Price(105000), nbbo.getBestAsk());
 		assertEquals("Incorrect BID", new Price(104000), nbbo.getBestBid());
@@ -148,24 +144,23 @@ public class ZIRAgentTest {
 
 		// Execute ZIR agent strategy
 		// ZIR agent should withdraw its order and submit a buy @ 109 to nasdaq
-		em.scheduleActivity(new AgentStrategy(agent1, new TimeStamp(100)));
-		em.executeUntil(new TimeStamp(101));
+		exec.scheduleActivity(new TimeStamp(100), new AgentStrategy(agent1));
+		exec.executeUntil(new TimeStamp(101));
 
 		// Verify that order submitted with correct price (109)
 		// Order is routed to NYSE because of out of date SIP (104, 105) even
 		// though it is really (104, 111) because the SELL @ 105 was withdrawn
 		assertEquals(1, agent1.activeOrders.size());
-		for (Order o : agent1.activeOrders) {
-			assertEquals(new Price(109000), o.getPrice());
-			assertEquals(BUY, o.getOrderType());
-			assertEquals(nyse, o.getMarket());
-		}
+		Order o = Iterables.getOnlyElement(agent1.activeOrders);
+		assertEquals(new Price(109000), o.getPrice());
+		assertEquals(BUY, o.getOrderType());
+		assertEquals(nyse, o.getMarket());
 
 		// Verify NBBO quote is (104, 111)
 		// Notice that the BID/ASK cross; if the SIP had been immediate, then
 		// the BUY order at 109 would have been routed to Nasdaq and it
 		// would have transacted immediately
-		em.executeUntil(new TimeStamp(151));
+		exec.executeUntil(new TimeStamp(151));
 		nbbo = sip.getNBBO();
 		assertEquals("Incorrect ASK", new Price(108000), nbbo.getBestAsk());
 		assertEquals("Incorrect BID", new Price(109000), nbbo.getBestBid());
@@ -180,19 +175,18 @@ public class ZIRAgentTest {
 	@Test
 	public void noWithdrawQuoteUpdateTest() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		Scheduler em = new Scheduler(rand);
-		SIP sip = new SIP(new TimeStamp(50));
+		SIP sip = new SIP(exec, new TimeStamp(50));
 
 		// Set up CDA markets (market quote latency = 0) and their quotes
-		Market nasdaq = new CDAMarket(sip, rand, time0, 1);
-		Market nyse = new CDAMarket(sip, rand, time0, 1);
-		MockBackgroundAgent background1 = new MockBackgroundAgent(fundamental, sip, nyse);
-		MockBackgroundAgent background2 = new MockBackgroundAgent(fundamental, sip, nasdaq);
-		em.scheduleActivity(new SubmitOrder(background1, nyse, SELL, new Price(111000), 1, time0));
-		em.scheduleActivity(new SubmitOrder(background1, nasdaq, BUY, new Price(104000), 1, time0));
-		em.scheduleActivity(new SubmitOrder(background2, nasdaq, SELL, new Price(108000), 1, time0));
-		em.scheduleActivity(new SubmitOrder(background2, nyse, BUY, new Price(102000), 1, time0));
-		em.executeUntil(new TimeStamp(51));
+		Market nasdaq = new CDAMarket(exec, sip, rand, time0, 1);
+		Market nyse = new CDAMarket(exec, sip, rand, time0, 1);
+		MockBackgroundAgent background1 = new MockBackgroundAgent(exec, fundamental, sip, nyse);
+		MockBackgroundAgent background2 = new MockBackgroundAgent(exec, fundamental, sip, nasdaq);
+		exec.executeActivity(new SubmitOrder(background1, nyse, SELL, new Price(111000), 1));
+		exec.executeActivity(new SubmitOrder(background1, nasdaq, BUY, new Price(104000), 1));
+		exec.executeActivity(new SubmitOrder(background2, nasdaq, SELL, new Price(108000), 1));
+		exec.executeActivity(new SubmitOrder(background2, nyse, BUY, new Price(102000), 1));
+		exec.executeUntil(new TimeStamp(51));
 		// Verify that NBBO quote is (104, 108) at time 50 (after quotes have been processed by SIP)
 		BestBidAsk nbbo = sip.getNBBO();
 		assertEquals("Incorrect ASK", new Price(108000), nbbo.getBestAsk());
@@ -209,14 +203,13 @@ public class ZIRAgentTest {
 		testProps.put(Keys.BID_RANGE_MAX, 1000);
 		testProps.put(Keys.BID_RANGE_MIN, 1000);
 		testProps.put(Keys.MAX_QUANTITY, 1);
-		ZIRAgent agent1 = new ZIRAgent(TimeStamp.ZERO, fundamental2, sip, nasdaq, 
+		ZIRAgent agent1 = new ZIRAgent(exec, TimeStamp.ZERO, fundamental2, sip, nasdaq, 
 				new Random(4), testProps);	// rand seed selected to insert BUY
 
 		// ZIR submits sell at 105 (is routed to nyse)
 		// Verify that NBBO quote is (104, 105) at time 100
-		em.scheduleActivity(new SubmitNMSOrder(agent1, nyse, SELL, new Price(105000), 1, time0));
-		em.executeUntil(new TimeStamp(101));
-		nbbo = sip.getNBBO();
+		exec.executeActivity(new SubmitNMSOrder(agent1, nyse, SELL, new Price(105000), 1));
+		exec.executeUntil(new TimeStamp(101));
 		nbbo = sip.getNBBO();
 		assertEquals("Incorrect ASK", new Price(105000), nbbo.getBestAsk());
 		assertEquals("Incorrect BID", new Price(104000), nbbo.getBestBid());
@@ -225,8 +218,8 @@ public class ZIRAgentTest {
 
 		// Execute ZIR agent strategy
 		// ZIR agent should withdraw its order and submit a sell @ 109
-		em.scheduleActivity(new AgentStrategy(agent1, new TimeStamp(100)));
-		em.executeUntil(new TimeStamp(101));
+		exec.scheduleActivity(new TimeStamp(100), new AgentStrategy(agent1));
+		exec.executeUntil(new TimeStamp(101));
 
 		// Verify that order submitted with correct price (109)
 		// Order is routed to NYSE but can't trade with itself
@@ -243,7 +236,7 @@ public class ZIRAgentTest {
 		assertEquals(agent1, t.getBuyer());
 		
 		// Verify NBBO quote is (104, 111)
-		em.executeUntil(new TimeStamp(151));
+		exec.executeUntil(new TimeStamp(151));
 		nbbo = sip.getNBBO();
 		assertEquals("Incorrect ASK", new Price(108000), nbbo.getBestAsk());
 		assertEquals("Incorrect BID", new Price(104000), nbbo.getBestBid());

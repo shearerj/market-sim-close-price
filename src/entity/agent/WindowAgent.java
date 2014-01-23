@@ -5,8 +5,6 @@ import java.util.Random;
 
 import systemmanager.Scheduler;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Lists;
 
 import data.FundamentalValue;
@@ -57,21 +55,28 @@ public abstract class WindowAgent extends BackgroundAgent {
 	 * @param currentTime
 	 * @return
 	 */
-	public ImmutableList<Transaction> getWindowTransactions(TimeStamp currentTime) {
+	public List<Transaction> getWindowTransactions(TimeStamp currentTime) {
 		TimeStamp firstTimeInWindow = currentTime.minus(new TimeStamp(windowLength));
 
 		// XXX To add more transaction sources that are also sorted, google has
-		// a function in Iterables to do that.
-		List<Transaction> allTransactions = Lists
-				.reverse(marketTransactionProcessor.getTransactions());
-		Builder<Transaction> transactionBuilder = ImmutableList.builder();
-		for (Transaction trans : allTransactions) {
+		// Iterables.mergeSorted(iterables, comparator) that can merge sorted
+		// iterables. The best way would probably to iterate over something like
+		//
+		// Iterables.mergeSorted(ImmutableList.of(Lists.reverse(marketTransactionProcessor.getTransactions())), Ordering.<Transaction> natural().reverse());
+		//
+		// This will return transactions in reverse order to be copied into a
+		// list. They could be deduped as they're read off. This will avoid most
+		// unnecessary copying.
+		List<Transaction> allTransactions = marketTransactionProcessor
+				.getTransactions();
+		
+		int startIndex = allTransactions.size();
+		for (Transaction trans : Lists.reverse(allTransactions)) {
 			if (!trans.getExecTime().after(firstTimeInWindow))
 				break;
-			transactionBuilder.add(trans);
+			--startIndex;
 		}
-		
-		return transactionBuilder.build().reverse();
+		return allTransactions.subList(startIndex, allTransactions.size());
 	}
 	
 	public TimeStamp getWindowLength() {

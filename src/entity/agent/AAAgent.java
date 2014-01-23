@@ -18,7 +18,6 @@ import systemmanager.Scheduler;
 import utils.Rands;
 import activity.SubmitNMSOrder;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
@@ -166,7 +165,7 @@ public class AAAgent extends WindowAgent {
 		// Updating Price Limit (valuation of security)
 		Price limitPrice = this.getLimitPrice(type, currentTime);
 
-		ImmutableList<Transaction> transactions = this.getWindowTransactions(currentTime);
+		List<Transaction> transactions = this.getWindowTransactions(currentTime);
 		if (!transactions.isEmpty())
 			lastTransactionPrice = transactions.get(transactions.size()-1).getPrice();
 
@@ -538,8 +537,8 @@ public class AAAgent extends WindowAgent {
 	 * @param equilibriumPrice
 	 * @param transactions
 	 */
-	protected void updateTheta(Price equilibriumPrice, 
-			ImmutableList<Transaction> transactions) {
+	protected void updateTheta(Price equilibriumPrice,
+			List<Transaction> transactions) {
 
 		// Error Checking, must have some transactions otherwise can't compute
 		// equilibrium price
@@ -587,7 +586,7 @@ public class AAAgent extends WindowAgent {
 	 * @param transactions
 	 * @return
 	 */
-	protected Price estimateEquilibrium(ImmutableList<Transaction> transactions) {
+	protected Price estimateEquilibrium(List<Transaction> transactions) {
 		if (transactions == null) return null;
 		if (transactions.size() == 0) return null; //error checking
 

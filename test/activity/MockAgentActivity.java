@@ -8,13 +8,12 @@ public class MockAgentActivity extends Activity {
 
 	protected final MockBackgroundAgent agent;
 	
-	public MockAgentActivity(MockBackgroundAgent agent, TimeStamp scheduledTime) {
-		super(scheduledTime);
+	public MockAgentActivity(MockBackgroundAgent agent) {
 		this.agent = checkNotNull(agent, "Agent");
 	}
 
 	@Override
-	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return this.agent.addMockActivity(currentTime);
+	public void execute(TimeStamp currentTime) {
+		this.agent.addMockActivity(currentTime);
 	}
 }

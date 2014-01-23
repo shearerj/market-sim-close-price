@@ -110,12 +110,9 @@ public class AgentTest {
 		// Verify orders added correctly
 		Collection<Order> orders = agent.activeOrders;
 		assertEquals(1, orders.size());
-		Order orderToWithdraw = null;
-		for (Order o : orders) {
-			orderToWithdraw = o;
-			assertEquals(new Price(100), o.getPrice());
-			assertEquals(time0, o.getSubmitTime());
-		}
+		Order orderToWithdraw = Iterables.getOnlyElement(orders);
+		assertEquals(new Price(100), orderToWithdraw.getPrice());
+		assertEquals(time0, orderToWithdraw.getSubmitTime());
 		assertNotNull(orderToWithdraw);
 		
 		Quote q = market.getQuoteProcessor().getQuote();

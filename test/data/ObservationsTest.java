@@ -3,7 +3,6 @@ package data;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
-import static systemmanager.Executer.executeImmediate;
 
 import java.io.File;
 import java.util.Arrays;
@@ -39,6 +38,7 @@ import event.TimeStamp;
 
 public class ObservationsTest {
 	
+	private Executer exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market1, market2;
 	private SIP sip;
@@ -51,9 +51,10 @@ public class ObservationsTest {
 
 	@Before
 	public void setup() {
-		sip = new SIP(TimeStamp.IMMEDIATE);
-		market1 = new MockMarket(sip);
-		market2 = new MockMarket(sip);
+		exec = new Executer();
+		sip = new SIP(exec, TimeStamp.IMMEDIATE);
+		market1 = new MockMarket(exec, sip);
+		market2 = new MockMarket(exec, sip);
 	}
 	
 	@After
@@ -71,8 +72,8 @@ public class ObservationsTest {
 	
 	@Test
 	public void spreadsTest() {
-		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
-		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		setupObservations(agent1, agent2);
 		
 		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
@@ -100,8 +101,8 @@ public class ObservationsTest {
 	
 	@Test
 	public void midquotesTest() {
-		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
-		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		setupObservations(agent1, agent2);
 		
 		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
@@ -137,11 +138,11 @@ public class ObservationsTest {
 		assertEquals(10, list.get(0), 0.001);
 		
 		// Test with actual agents
-		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
-		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		
-		executeImmediate(market1.submitOrder(agent1, BUY, new Price(80), 1, TimeStamp.ZERO));
-		executeImmediate(market2.submitOrder(agent2, SELL, new Price(100), 1, TimeStamp.ZERO));
+		market1.submitOrder(agent1, BUY, new Price(80), 1, TimeStamp.ZERO);
+		market2.submitOrder(agent2, SELL, new Price(100), 1, TimeStamp.ZERO);
 		list = obs.nbboSpreads.sample(1, 1);
 		assertEquals(1, list.size());
 		assertEquals(20, list.get(0), 0.001);
@@ -152,9 +153,9 @@ public class ObservationsTest {
 		Map<String, Double> features;
 		TimeStamp time = TimeStamp.ZERO;
 
-		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
-		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
-		Agent agent3 = new MockAgent(fundamental, sip, market1);
+		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		Agent agent3 = new MockAgent(exec, fundamental, sip, market1);
 		
 		// Two orders from one agent
 		setupObservations(agent1);
@@ -206,8 +207,8 @@ public class ObservationsTest {
 	
 	@Test
 	public void executionSpeedsTest() {
-		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
-		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		
 		// Same times
 		setupObservations(agent1, agent2);
@@ -251,8 +252,8 @@ public class ObservationsTest {
 	
 	@Test
 	public void pricesTest() {
-		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
-		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		
 		// Basic case
 		setupObservations(agent1, agent2);
@@ -297,8 +298,8 @@ public class ObservationsTest {
 	
 	@Test
 	public void transPricesTest() {
-		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1);
-		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1);
+		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		setupObservations(agent1, agent2);
 		
 		// Basic stuff from same agent 
@@ -339,8 +340,8 @@ public class ObservationsTest {
 	public void controlPVTest() {
 		DummyPrivateValue pv = new DummyPrivateValue(2, ImmutableList.of(
 				new Price(1200), new Price(1000), new Price(-200), new Price(-500)));
-		Agent agent1 = new MockBackgroundAgent(fundamental, sip, market1, pv, 0, 5000);
-		Agent agent2 = new MockBackgroundAgent(fundamental, sip, market1, pv, 0, 5000);
+		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1, pv, 0, 5000);
+		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1, pv, 0, 5000);
 		setupObservations(agent1, agent2);
 		assertEquals(375, obs.getFeatures().get("control_mean_private"), 0.001);
 	}
@@ -356,8 +357,8 @@ public class ObservationsTest {
 			lastVal = v;
 		}
 		
-		Agent agent1 = new MockBackgroundAgent(fund, sip, market1);
-		Agent agent2 = new MockBackgroundAgent(fund, sip, market1);
+		Agent agent1 = new MockBackgroundAgent(exec, fund, sip, market1);
+		Agent agent2 = new MockBackgroundAgent(exec, fund, sip, market1);
 		setupObservations(fund, agent1, agent2);
 		
 		assertEquals((tot + (obs.simLength-6)*lastVal) / obs.simLength, 
@@ -370,8 +371,8 @@ public class ObservationsTest {
 		Player backgroundPlayer, player;
 		
 		// Basic case
-		backgroundAgent = new MockBackgroundAgent(fundamental, sip, market1);
-		agent = new MockAgent(fundamental, sip, market1);
+		backgroundAgent = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		agent = new MockAgent(exec, fundamental, sip, market1);
 		backgroundPlayer = new Player("background", "a", backgroundAgent);
 		player = new Player("foreground", "b", agent);
 		setupObservations(backgroundPlayer, player);
@@ -380,7 +381,7 @@ public class ObservationsTest {
 		market1.submitOrder(agent, BUY, new Price(200000), 1, TimeStamp.ZERO);
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
 		// To make sure agent1 sees clear
-		Executer.execute(market1.clear(TimeStamp.ZERO));
+		market1.clear(TimeStamp.ZERO);
 		agent.liquidateAtFundamental(TimeStamp.ZERO);
 		for (PlayerObservation po : obs.getPlayerObservations()) {
 			if (po.role.equals("foreground")) {
@@ -393,15 +394,15 @@ public class ObservationsTest {
 		}
 		
 		// Multiple Quantity
-		backgroundAgent = new MockBackgroundAgent(fundamental, sip, market1);
-		agent = new MockAgent(fundamental, sip, market1);
+		backgroundAgent = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		agent = new MockAgent(exec, fundamental, sip, market1);
 		backgroundPlayer = new Player("background", "a", backgroundAgent);
 		player = new Player("foreground", "b", agent);
 		setupObservations(backgroundPlayer, player);
 		
 		market1.submitOrder(agent, BUY, new Price(200000), 2, TimeStamp.ZERO);
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 2, TimeStamp.ZERO);
-		Executer.execute(market1.clear(TimeStamp.ZERO));
+		market1.clear(TimeStamp.ZERO);
 		agent.liquidateAtFundamental(TimeStamp.ZERO);
 		for (PlayerObservation po : obs.getPlayerObservations()) {
 			if (po.role.equals("foreground")) {
@@ -414,8 +415,8 @@ public class ObservationsTest {
 		}
 		
 		// Split Orders
-		backgroundAgent = new MockBackgroundAgent(fundamental, sip, market1);
-		agent = new MockAgent(fundamental, sip, market1);
+		backgroundAgent = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		agent = new MockAgent(exec, fundamental, sip, market1);
 		backgroundPlayer = new Player("background", "a", backgroundAgent);
 		player = new Player("foreground", "b", agent);
 		setupObservations(backgroundPlayer, player);
@@ -423,7 +424,7 @@ public class ObservationsTest {
 		market1.submitOrder(agent, BUY, new Price(200000), 2, TimeStamp.ZERO);
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
-		Executer.execute(market1.clear(TimeStamp.ZERO));
+		market1.clear(TimeStamp.ZERO);
 		agent.liquidateAtFundamental(TimeStamp.ZERO);
 		for (PlayerObservation po : obs.getPlayerObservations()) {
 			if (po.role.equals("foreground")) {
@@ -436,15 +437,15 @@ public class ObservationsTest {
 		}
 		
 		// Liquidate at different price
-		backgroundAgent = new MockBackgroundAgent(fundamental, sip, market1);
-		agent = new MockAgent(fundamental, sip, market1);
+		backgroundAgent = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		agent = new MockAgent(exec, fundamental, sip, market1);
 		backgroundPlayer = new Player("background", "a", backgroundAgent);
 		player = new Player("foreground", "b", agent);
 		setupObservations(backgroundPlayer, player);
 		
 		market1.submitOrder(agent, BUY, new Price(200000), 1, TimeStamp.ZERO);
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
-		Executer.execute(market1.clear(TimeStamp.ZERO));
+		market1.clear(TimeStamp.ZERO);
 		agent.liquidateAtPrice(new Price(300000), TimeStamp.ZERO);
 		for (PlayerObservation po : obs.getPlayerObservations()) {
 			if (po.role.equals("foreground")) {

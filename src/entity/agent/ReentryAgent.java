@@ -29,10 +29,11 @@ public abstract class ReentryAgent extends SMAgent {
 	@Override
 	public void agentStrategy(TimeStamp currentTime) {
 		TimeStamp waitTime = reentry.next();
-		// XXX Erik: The below line doesn't make sense. An agent can't just keep
-		// repeatedly acting. You may want it to be using a time of 1.
-//		if (waitTime.equals(TimeStamp.INFINITE))
-//			return ImmutableList.of(new AgentStrategy(this, TimeStamp.INFINITE));
+		// XXX Erik: This si super awkward. There's got to be a better way to do
+		// this. This is essentially ZI. Also, TimeStamp.INFINITE is pretty
+		// hacky and probably shouldn't be used.
+		if (waitTime.equals(TimeStamp.INFINITE))
+			return;
 		
 		scheduler.scheduleActivity(currentTime.plus(waitTime),
 				new AgentStrategy(this));

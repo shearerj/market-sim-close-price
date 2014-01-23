@@ -3,6 +3,8 @@ package entity.agent;
 import java.util.Collection;
 import java.util.Random;
 
+import activity.MockActivity;
+
 import systemmanager.Scheduler;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
@@ -26,6 +28,10 @@ public class MockBackgroundAgent extends BackgroundAgent {
 	
 	public Collection<Order> getOrders() {
 		return this.activeOrders;
+	}
+
+	public void addMockActivity(TimeStamp currentTime) {
+		scheduler.scheduleActivity(currentTime, new MockActivity());
 	}
 
 }

@@ -92,9 +92,7 @@ public class Simulation {
 			scheduler.executeActivity(new Clear(market));
 		for (Agent agent : agents) {
 			scheduler.scheduleActivity(agent.getArrivalTime(), new AgentArrival(agent));
-			if (agent instanceof MarketMaker)
-				scheduler.scheduleActivity(lastTime, new LiquidateAtFundamental(agent));
-			if (agent instanceof HFTAgent)
+			if ((agent instanceof MarketMaker) || (agent instanceof HFTAgent))
 				scheduler.scheduleActivity(lastTime, new LiquidateAtFundamental(agent));
 		}
 	}

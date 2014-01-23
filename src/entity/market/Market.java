@@ -182,6 +182,8 @@ public abstract class Market extends Entity {
 	 * 
 	 * NOTE: This should only be called by the corresponding activity
 	 * 
+	 * NOTE: Don't subclass this method, subclass the main one
+	 * 
 	 * @param order
 	 *            order to remove
 	 * @param currentTime
@@ -318,6 +320,8 @@ public abstract class Market extends Entity {
 	 * Submit an order that doesn't expire
 	 * 
 	 * NOTE: This should only be called by the corresponding activity
+	 * 
+	 * NOTE: Don't subclass this method, subclass the main one.
 	 * 
 	 * @param agent
 	 *            The agent that's submitting the order
@@ -478,7 +482,7 @@ public abstract class Market extends Entity {
 	 */
 	@Override
 	public String toString() {
-		return new String("[" + id + "]");
+		return getClass().getSimpleName() + " [" + id + "]";
 	}
 	
 }

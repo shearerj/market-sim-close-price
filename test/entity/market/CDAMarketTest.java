@@ -14,10 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.Scheduler;
-import activity.Activity;
-import activity.Clear;
-import activity.SendToQP;
+import systemmanager.Executer;
 import activity.SubmitOrder;
 import activity.WithdrawOrder;
 
@@ -34,6 +31,7 @@ import event.TimeStamp;
 
 public class CDAMarketTest {
 
+	private Executer exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private SIP sip;
 	private Market market;
@@ -45,8 +43,9 @@ public class CDAMarketTest {
 
 	@Before
 	public void setup() {
-		sip = new SIP(TimeStamp.IMMEDIATE);
-		market = new CDAMarket(sip, new Random(), TimeStamp.IMMEDIATE, 1);
+		exec = new Executer();
+		sip = new SIP(exec, TimeStamp.IMMEDIATE);
+		market = new CDAMarket(exec, sip, new Random(), TimeStamp.IMMEDIATE, 1);
 	}
 
 	@Test
@@ -54,7 +53,7 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 
 		// Creating the agent
-		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		// Creating and adding the bid
 		market.submitOrder(agent, BUY, new Price(1), 1, time);
@@ -83,7 +82,7 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating the agent
-		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
 		
 		// Creating and adding the bid
 		market.submitOrder(agent, SELL, new Price(1), 1, time);
@@ -112,7 +111,7 @@ public class CDAMarketTest {
 //		// Verify that agent can't trade with itself
 //		TimeStamp time0 = TimeStamp.ZERO;
 //		
-//		MockAgent agent1 = new MockAgent(fundamental, sip, market);
+//		MockAgent agent1 = new MockAgent(exec, fundamental, sip, market);
 //		
 //		market.submitOrder(agent1, new Price(100),-1, time0);
 //		market.submitOrder(agent1, new Price(150), 1, time0);
@@ -126,8 +125,8 @@ public class CDAMarketTest {
 		TimeStamp time = new TimeStamp(0);
 		
 		//Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		// Creating and adding bids
 		market.submitOrder(agent1, BUY, new Price(100), 1, time);
@@ -153,8 +152,8 @@ public class CDAMarketTest {
 		TimeStamp time2 = new TimeStamp(1);
 		
 		//Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		
 		// Creating and adding bids
 		market.submitOrder(agent1, BUY, new Price(200), 1, time);
@@ -179,18 +178,14 @@ public class CDAMarketTest {
 		TimeStamp time = TimeStamp.ZERO;
 		
 		//Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent3 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent3 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent4 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		
 		// Creating and adding bids
 		// Also check that submitOrder returns a single immediate Clear activity
-		Iterable<? extends Activity> acts = market.submitOrder(agent1, BUY, new Price(150), 1, time);
-		for (Activity act : acts) {
-			assertTrue(act instanceof Clear);
-			assertTrue(act.getTime().equals(TimeStamp.IMMEDIATE));
-		}
+		market.submitOrder(agent1, BUY, new Price(150), 1, time);
 		market.submitOrder(agent2, BUY, new Price(100), 1, time);
 		market.submitOrder(agent3, SELL, new Price(175), 1, time);
 		market.submitOrder(agent4, SELL, new Price(125), 1, time);
@@ -221,26 +216,18 @@ public class CDAMarketTest {
 	
 	@Test
 	public void multiOverlapClear() {
-		TimeStamp time = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
-		
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent3 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent3 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent4 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		
 		// Creating and adding bids
 		// Added for-loop so market clear will happen appropriately
 		// Note: A clear should be inserted after EVERY order submitted
-		Scheduler em = new Scheduler(new Random());
-		em.scheduleActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 1, time));
-		em.executeUntil(time1);
-		em.scheduleActivity(new SubmitOrder(agent2, market, SELL, new Price(100), 1, time));
-		em.executeUntil(time1);
-		em.scheduleActivity(new SubmitOrder(agent3, market, BUY, new Price(175), 1, time));
-		em.executeUntil(time1);
-		em.scheduleActivity(new SubmitOrder(agent4, market, SELL, new Price(125), 1, time));
-		em.executeUntil(time1);
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(100), 1));
+		exec.executeActivity(new SubmitOrder(agent3, market, BUY, new Price(175), 1));
+		exec.executeActivity(new SubmitOrder(agent4, market, SELL, new Price(125), 1));
 		
 		// Testing the market for the correct transactions
 		assertEquals( 2, market.getTransactions().size() );
@@ -278,8 +265,8 @@ public class CDAMarketTest {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 		
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		
 		market.submitOrder(agent1, SELL, new Price(100), 2, time);
 		market.submitOrder(agent2, BUY, new Price(150), 5, time1);
@@ -307,8 +294,8 @@ public class CDAMarketTest {
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		market.submitOrder(agent1, SELL, new Price(150), 1, time0);
 		market.submitOrder(agent1, SELL, new Price(140), 1, time0);
@@ -335,8 +322,8 @@ public class CDAMarketTest {
 		TimeStamp time0 = TimeStamp.ZERO;
 		TimeStamp time1 = new TimeStamp(1);
 
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		market.submitOrder(agent1, SELL, new Price(100), 1, time0);
 		market.clear(time0);
@@ -352,12 +339,7 @@ public class CDAMarketTest {
 		Collection<Order> orders = agent1.getOrders();
 		Order toWithdraw = orders.iterator().next(); // get first (& only) order
 		// Test that withdraw create SendToIP activities (updates quotes)
-		Iterable<? extends Activity> acts =  market.withdrawOrder(toWithdraw, time1);
-		for (Activity act : acts) {
-			assertTrue(act instanceof SendToQP);
-			assertTrue(act.getTime().equals(TimeStamp.IMMEDIATE));
-			act.execute(act.getTime()); // should update quotes
-		}
+		market.withdrawOrder(toWithdraw, time1);
 		
 		// Check that quotes are correct (no bid, no ask)
 		q = market.quote;
@@ -387,8 +369,8 @@ public class CDAMarketTest {
 		TimeStamp time1 = new TimeStamp(1);
 		TimeStamp time2 = new TimeStamp(2);
 
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		
 		market.submitOrder(agent2, BUY, new Price(105), 1, time1);
 		market.submitOrder(agent2, BUY, new Price(110), 1, time1);
@@ -405,8 +387,7 @@ public class CDAMarketTest {
 		Order toWithdraw = null;
 		for (Order o : orders)
 			if (o.getPrice().equals(new Price(105))) toWithdraw = o;
-		Iterable<? extends Activity> acts = market.withdrawOrder(toWithdraw, time1);
-		for (Activity a : acts) a.execute(a.getTime()); // should update quotes
+		market.withdrawOrder(toWithdraw, time1);
 		
 		// Check that quotes are correct (only a buy order @110)
 		q = market.quote;
@@ -436,17 +417,11 @@ public class CDAMarketTest {
 	 */
 	@Test
 	public void multiQuantityWithdraw() {
-		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
-
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		
-		Scheduler em = new Scheduler(new Random());
-		em.scheduleActivity(new SubmitOrder(agent1, market, SELL, new Price(150), 1, time0));
-		em.executeUntil(time1); // should execute clear
-		em.scheduleActivity(new SubmitOrder(agent1,market, SELL, new Price(140), 2, time0));
-		em.executeUntil(time1); // should execute clear
+		exec.executeActivity(new SubmitOrder(agent1, market, SELL, new Price(150), 1));
+		exec.executeActivity(new SubmitOrder(agent1,market, SELL, new Price(140), 2));
 		
 		// Check that quotes are correct (ask @140 at qty=2, no bid)
 		Quote q = market.quote;
@@ -459,8 +434,7 @@ public class CDAMarketTest {
 		Order toWithdraw = null;
 		for (Order o : orders)
 			if (o.getPrice().equals(new Price(140))) toWithdraw = o;
-		em.scheduleActivity(new WithdrawOrder(toWithdraw, 1, time0));
-		em.executeUntil(time1);
+		exec.executeActivity(new WithdrawOrder(toWithdraw, 1));
 		
 		// Check that quotes are correct (ask @140 at qty=1, no bid)
 		q = market.quote;
@@ -469,11 +443,10 @@ public class CDAMarketTest {
 		assertEquals("Incorrect ASK quantity",  1,  q.askQuantity );
 		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
 
+		exec.setTime(new TimeStamp(1));
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
-		em.scheduleActivity(new SubmitOrder(agent2, market, BUY, new Price(155), 1, time1));
-		em.executeUntil(time1.plus(time1)); // should execute clear
-		em.scheduleActivity(new SubmitOrder(agent2, market, BUY, new Price(155), 2, time1));
-		em.executeUntil(time1.plus(time1)); // should execute clear
+		exec.executeActivity(new SubmitOrder(agent2, market, BUY, new Price(155), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, BUY, new Price(155), 2));
 		assertEquals( 2, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals("Incorrect Price", new Price(140), tr.getPrice());
@@ -500,11 +473,11 @@ public class CDAMarketTest {
 		TimeStamp time1 = new TimeStamp(1);
 		TimeStamp time2 = new TimeStamp(2);
 
-		MockBackgroundAgent agent0 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent3 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent4 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent0 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent3 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent4 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		
 		market.submitOrder(agent1, SELL, new Price(100), 1, time0);
 		market.submitOrder(agent2, SELL, new Price(100), 1, time1);
@@ -602,44 +575,41 @@ public class CDAMarketTest {
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 	}
 	
-	@Test
-	public void lackOfLatencyTest() {
-		Quote quote;
-		Scheduler em = new Scheduler(new Random());
-
-		// Forces execution of execution but none of the resulting activities
-		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
-		Iterable<? extends Activity> acts = market.submitOrder(agent, SELL, 
-				new Price(100), 1, TimeStamp.ZERO);
-		for (Activity a : acts)
-			em.scheduleActivity(a);
-		
-		quote = market.getQuoteProcessor().getQuote();
-		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
-		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
-		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
-		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
-		
-		// This will execute all of the remaining activities
-		em.executeUntil(TimeStamp.ZERO);
-		
-		quote = market.getQuoteProcessor().getQuote();
-		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
-		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
-		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());
-		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
-	}
+	// XXX This test no long works, because submitting the order automatically
+	// executes any instantanious activities.
+//	@Test
+//	public void lackOfLatencyTest() {
+//		Quote quote;
+//
+//		// Forces execution of execution but none of the resulting activities
+//		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
+//		market.submitOrder(agent, SELL, new Price(100), 1, TimeStamp.ZERO);
+//		
+//		quote = market.getQuoteProcessor().getQuote();
+//		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
+//		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
+//		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
+//		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
+//		
+//		// This will execute all of the remaining activities
+//		exec.executeUntil(TimeStamp.ZERO);
+//		
+//		quote = market.getQuoteProcessor().getQuote();
+//		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
+//		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
+//		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());
+//		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
+//	}
 	
 	@Test
 	public void latencyTest() {
 		Quote quote;
-		Scheduler em = new Scheduler(new Random());
-		CDAMarket market = new CDAMarket(sip, new Random(), new TimeStamp(100), 1);
+		CDAMarket market = new CDAMarket(exec, sip, new Random(), new TimeStamp(100), 1);
 
 		// Test that before Time 100 nothing has been updated
-		MockBackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market);
-		em.scheduleActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1, TimeStamp.ZERO));
-		em.executeUntil(new TimeStamp(100));
+		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
+		exec.executeActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1));
+		exec.executeUntil(new TimeStamp(100));
 		
 		quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
@@ -648,7 +618,7 @@ public class CDAMarketTest {
 		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
 		
 		// Test that after 100 they did get updated
-		em.executeUntil(new TimeStamp(101));
+		exec.executeUntil(new TimeStamp(101));
 		
 		quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
