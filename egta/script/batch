@@ -13,5 +13,5 @@ for i in $FILES; do
 done
 
 for (( I=0; I<$2; ++I )); do
-    java -Xms128M -Xmx512M -cp ${CLASSPATH} systemmanager.SystemManager $1 $I
+    java -Xms128M -Xmx2G -cp ${CLASSPATH} systemmanager.SystemManager $1 $I
 done
