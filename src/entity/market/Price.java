@@ -41,7 +41,10 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 	}
 	
 	public Price(double ticks) {
-		this(DoubleMath.roundToInt(ticks, HALF_EVEN));
+		if (ticks >= Integer.MAX_VALUE) 
+			this.ticks = INF.ticks;
+		else 
+			this.ticks = DoubleMath.roundToInt(ticks, HALF_EVEN);
 	}
 	
 	@Override
