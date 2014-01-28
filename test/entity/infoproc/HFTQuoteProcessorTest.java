@@ -1,11 +1,10 @@
 package entity.infoproc;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Random;
 
 import logger.Logger;
 
@@ -14,13 +13,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.Scheduler;
-import activity.Activity;
-import activity.AgentStrategy;
+import systemmanager.Executor;
 import activity.ProcessQuote;
 import activity.SendToQP;
 
-import com.google.common.collect.Iterables;
+import com.google.common.collect.ImmutableList;
 
 import data.FundamentalValue;
 import data.MockFundamental;
@@ -32,6 +29,7 @@ import entity.market.MockMarket;
 import entity.market.Price;
 import entity.market.Quote;
 import event.TimeStamp;
+import event.TimedActivity;
 
 /**
  * Note that it's necessary to create an HFT with latency in order to ensure
@@ -42,6 +40,9 @@ import event.TimeStamp;
  */
 public class HFTQuoteProcessorTest {
 	
+	private static final TimeStamp one = new TimeStamp(1);
+	
+	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market1;
 	private Market market2;
@@ -57,14 +58,15 @@ public class HFTQuoteProcessorTest {
 	
 	@Before
 	public void setup() {
-		sip = new SIP(TimeStamp.IMMEDIATE);
+		exec = new Executor();
+		sip = new SIP(exec, TimeStamp.IMMEDIATE);
 		// market that updates immediately
-		market1 = new MockMarket(sip);
+		market1 = new MockMarket(exec, sip);
 		// market with latency 100
-		market2 = new MockMarket(sip, new TimeStamp(100));
+		market2 = new MockMarket(exec, sip, new TimeStamp(100));
 		
-		hft = new MockHFTAgent(TimeStamp.IMMEDIATE, fundamental, sip, 
-				Arrays.asList(market1, market2));
+		hft = new MockHFTAgent(exec, TimeStamp.IMMEDIATE, fundamental, sip, 
+				ImmutableList.of(market1, market2));
 		mktip1 = hft.getHFTQuoteProcessor(market1);
 		mktip2 = hft.getHFTQuoteProcessor(market2);
 	}
@@ -95,12 +97,7 @@ public class HFTQuoteProcessorTest {
 
 		// Test on undelayed market's HFTQuoteProcessor
 		q = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		Iterable<? extends Activity> acts = mktip1.processQuote(market1, mktTime, q, 
-				time);
-		assertEquals("Incorrect scheduled agent strategy time", TimeStamp.IMMEDIATE, 
-				Iterables.getFirst(acts, null).getTime());
-		assertTrue("Incorrect activity type scheduled", 
-				Iterables.getFirst(acts, null) instanceof AgentStrategy);
+		mktip1.processQuote(market1, mktTime, q, time);
 		
 		// Check updated quote after process quote
 		assertEquals("Last quote time not updated", mktTime, mktip1.lastQuoteTime);
@@ -112,8 +109,8 @@ public class HFTQuoteProcessorTest {
 
 		// Now test for delayed market's SMIP
 		q = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
-		acts = mktip2.processQuote(market2, mktTime, q, time);
-		assertEquals(1, Iterables.size(acts)); // agent strategy method added
+		mktip2.processQuote(market2, mktTime, q, time);
+		// agent strategy method added
 
 		// Check second market correct
 		q = hft.getQuote(market2);
@@ -142,13 +139,7 @@ public class HFTQuoteProcessorTest {
 
 		// Add new quote
 		q = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		Iterable<? extends Activity> acts = mktip1.sendToQuoteProcessor(market1, mktTime, q, time);
-		// Verify only agent strategy activity added
-		assertEquals(1, Iterables.size(acts));
-		assertEquals("Incorrect scheduled activity time", TimeStamp.IMMEDIATE, 
-				Iterables.getOnlyElement(acts).getTime());
-		assertTrue("Incorrect activity type scheduled", 
-				Iterables.getFirst(acts, null) instanceof AgentStrategy);
+		mktip1.sendToQuoteProcessor(market1, mktTime, q, time);
 
 		// Check updated quote after process quote
 		assertEquals("Last quote time not updated", mktTime, mktip1.lastQuoteTime);
@@ -166,8 +157,8 @@ public class HFTQuoteProcessorTest {
 		MarketTime mktTime = new DummyMarketTime(time, 1);
 		
 		// set up delayed HFT agent (so QP, TP have non-immediate latency)
-		MockHFTAgent hft = new MockHFTAgent(new TimeStamp(100), fundamental, sip, 
-				Arrays.asList(market1, market2));
+		MockHFTAgent hft = new MockHFTAgent(exec, new TimeStamp(100), fundamental, sip, 
+				ImmutableList.of(market1, market2));
 		HFTQuoteProcessor mktip2 = hft.getHFTQuoteProcessor(market2);
 		assertEquals(new TimeStamp(100), mktip2.getLatency());
 		
@@ -181,13 +172,14 @@ public class HFTQuoteProcessorTest {
 		
 		// Check that process quote activity scheduled correctly
 		q = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
-		Iterable<? extends Activity> acts = mktip2.sendToQuoteProcessor(market2, mktTime, q, time);
-		assertEquals(1, Iterables.size(acts));
-		assertEquals("Incorrect scheduled activity time", new TimeStamp(100), 
-				Iterables.getFirst(acts, null).getTime());
-		assertTrue("Incorrect activity type scheduled", 
-				Iterables.getFirst(acts, null) instanceof ProcessQuote);
-		for (Activity a : acts) a.execute(a.getTime());
+		mktip2.sendToQuoteProcessor(market2, mktTime, q, time);
+		assertFalse(exec.isEmpty());
+		TimedActivity act = exec.peek();
+		assertEquals("Incorrect scheduled activity time", new TimeStamp(100),
+				act.getTime());
+		assertTrue("Incorrect activity type scheduled",
+				act.getActivity() instanceof ProcessQuote);
+		exec.executeUntil(new TimeStamp(101));
 
 		// Check updated quote after process quote (specific to SMIP)
 		assertEquals("Last quote time not updated", mktTime, mktip2.lastQuoteTime);
@@ -207,17 +199,15 @@ public class HFTQuoteProcessorTest {
 		MarketTime mktTime = new DummyMarketTime(time, 1);
 		Quote q = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
 		
-		MockHFTAgent hft2 = new MockHFTAgent(TimeStamp.IMMEDIATE, fundamental, sip, 
-				Arrays.asList(market1, market2));
+		MockHFTAgent hft2 = new MockHFTAgent(exec, TimeStamp.IMMEDIATE, fundamental, sip, 
+				ImmutableList.of(market1, market2));
 		HFTQuoteProcessor hftip = hft2.getHFTQuoteProcessor(market2);
 		assertEquals(TimeStamp.IMMEDIATE, hftip.latency);
 		
 		// Send quotes to appropriate IPs
-		Scheduler em = new Scheduler(new Random());
-		em.scheduleActivity(new SendToQP(market2, mktTime, q, hftip, time));
-		em.scheduleActivity(new SendToQP(market2, mktTime, q, hftip, time));
+		exec.executeActivity(new SendToQP(market2, mktTime, q, hftip));
+		exec.executeActivity(new SendToQP(market2, mktTime, q, hftip));
 		
-		em.executeUntil(time.plus(new TimeStamp(1)));
 		// Check HFTQuoteProcessor, which should be immediate
 		q = hftip.quote;
 		assertEquals("Last quote time not updated", mktTime, hftip.lastQuoteTime);
@@ -239,26 +229,9 @@ public class HFTQuoteProcessorTest {
 		Quote q2 = new Quote(market2, new Price(75), 1, new Price(95), 1, time);
 		
 		// Send quotes to appropriate IPs
-		Scheduler em = new Scheduler(new Random());
-		em.scheduleActivity(new SendToQP(market1, mktTime, q1, mktip1, time));
-		em.scheduleActivity(new SendToQP(market2, mktTime, q2, mktip2, time));
+		exec.executeActivity(new SendToQP(market1, mktTime, q1, mktip1));
+		exec.executeActivity(new SendToQP(market2, mktTime, q2, mktip2));
 		
-		// Check that no quotes have updated yet
-		em.executeUntil(time);
-		q = mktip1.quote;
-		assertEquals("Updated HFT IP 1 too early", null, mktip1.lastQuoteTime);
-		assertEquals("Incorrect ASK", null, q.getAskPrice());
-		assertEquals("Incorrect BID", null, q.getBidPrice());
-		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
-		assertEquals("Incorrect BID quantity", 0, q.getBidQuantity());
-		q = mktip2.quote;
-		assertEquals("Updated HFT IP 2 too early", null, mktip2.lastQuoteTime);
-		assertEquals("Incorrect ASK", null, q.getAskPrice());
-		assertEquals("Incorrect BID", null, q.getBidPrice());
-		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
-		assertEquals("Incorrect BID quantity", 0, q.getBidQuantity());
-		
-		em.executeUntil(time.plus(new TimeStamp(1)));
 		// Check HFT IP for market 1 updated
 		q = mktip1.quote;
 		assertEquals("Last quote time not updated", mktTime, mktip1.lastQuoteTime);
@@ -287,16 +260,14 @@ public class HFTQuoteProcessorTest {
 		Quote q3 = new Quote(market1, new Price(75), 1, new Price(95), 1, time2);
 		Quote q4 = new Quote(market2, new Price(75), 1, new Price(95), 1, time2);
 		
-		// Send quotes to appropriate IPs
-		Scheduler em = new Scheduler(new Random());
-		em.scheduleActivity(new SendToQP(market1, mktTime1, q1, mktip1, time));
-		em.scheduleActivity(new SendToQP(market2, mktTime1, q4, mktip2, time));
+		exec.executeActivity(new SendToQP(market1, mktTime1, q1, mktip1));
+		exec.executeActivity(new SendToQP(market2, mktTime1, q4, mktip2));
 		// Send updated quotes at time2
-		em.scheduleActivity(new SendToQP(market1, mktTime2, q3, mktip1, time2));
-		em.scheduleActivity(new SendToQP(market2, mktTime2, q2, mktip2, time2));
+		exec.scheduleActivity(time2, new SendToQP(market1, mktTime2, q3, mktip1));
+		exec.scheduleActivity(time2, new SendToQP(market2, mktTime2, q2, mktip2));
 		
 		// Check that both HFT IPs have updated after time2=50
-		em.executeUntil(time2.plus(new TimeStamp(1)));
+		exec.executeUntil(time2.plus(one));
 		q = mktip1.quote;
 		assertEquals("Incorrect last quote time", mktTime2, mktip1.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(95), q.getAskPrice());
@@ -325,16 +296,13 @@ public class HFTQuoteProcessorTest {
 		Quote q3 = new Quote(market1, new Price(75), 1, new Price(95), 1, time);
 		Quote q4 = new Quote(market2, new Price(75), 1, new Price(95), 1, time);
 		
-		// Send quotes to appropriate IPs
-		Scheduler em = new Scheduler(new Random());
-		em.scheduleActivity(new SendToQP(market1, mktTime1, q1, mktip1, time));
-		em.scheduleActivity(new SendToQP(market2, mktTime1, q4, mktip2, time));
+		exec.executeActivity(new SendToQP(market1, mktTime1, q1, mktip1));
+		exec.executeActivity(new SendToQP(market2, mktTime1, q4, mktip2));
 		// Send updated quotes (also at time 0)
-		em.scheduleActivity(new SendToQP(market1, mktTime2, q3, mktip1, time));
-		em.scheduleActivity(new SendToQP(market2, mktTime2, q2, mktip2, time));
+		exec.executeActivity(new SendToQP(market1, mktTime2, q3, mktip1));
+		exec.executeActivity(new SendToQP(market2, mktTime2, q2, mktip2));
 		
 		// Check market1's SMIP has updated but not market2's after time 0
-		em.executeUntil(new TimeStamp(1));
 		q = mktip1.quote;
 		assertEquals("Incorrect last quote time", mktTime2, mktip1.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(95), q.getAskPrice());
@@ -363,13 +331,11 @@ public class HFTQuoteProcessorTest {
 		Quote q3 = new Quote(market1, new Price(75), 1, new Price(95), 1, time);
 		Quote q4 = new Quote(market2, new Price(75), 1, new Price(95), 1, time);
 		
-		// Send quotes to appropriate IPs
-		Scheduler em = new Scheduler(new Random());
-		em.scheduleActivity(new SendToQP(market1, mktTime2, q1, mktip1, time));
-		em.scheduleActivity(new SendToQP(market2, mktTime2, q4, mktip2, time));
+		exec.executeActivity(new SendToQP(market1, mktTime2, q1, mktip1));
+		exec.executeActivity(new SendToQP(market2, mktTime2, q4, mktip2));
 		
 		// Check market1's HFT IP has updated but not market2's after time 0
-		em.executeUntil(new TimeStamp(1));
+		exec.executeUntil(new TimeStamp(1));
 		q = mktip1.quote;
 		assertEquals("Incorrect last quote time", mktTime2, mktip1.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
@@ -384,11 +350,10 @@ public class HFTQuoteProcessorTest {
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 				
 		// Send stale quotes to HFT IPs
-		em.scheduleActivity(new SendToQP(market1, mktTime1, q3, mktip1, time));
-		em.scheduleActivity(new SendToQP(market2, mktTime1, q2, mktip2, time));
+		exec.executeActivity(new SendToQP(market1, mktTime1, q3, mktip1));
+		exec.executeActivity(new SendToQP(market2, mktTime1, q2, mktip2));
 		
 		// Check that market1's HFT IP quote doesn't change
-		em.executeUntil(new TimeStamp(1));
 		q = mktip1.quote;
 		assertEquals("Incorrect last quote time", mktTime2, mktip1.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
@@ -419,13 +384,10 @@ public class HFTQuoteProcessorTest {
 		Quote q3 = new Quote(market1, new Price(75), 1, new Price(95), 1, time);
 		Quote q4 = new Quote(market2, new Price(75), 1, new Price(95), 1, time);
 		
-		// Send quotes to appropriate IPs
-		Scheduler em = new Scheduler(new Random());
-		em.scheduleActivity(new SendToQP(market1, mktTime, q1, mktip1, time));
-		em.scheduleActivity(new SendToQP(market2, mktTime, q4, mktip2, time));
+		exec.executeActivity(new SendToQP(market1, mktTime, q1, mktip1));
+		exec.executeActivity(new SendToQP(market2, mktTime, q4, mktip2));
 		
 		// Check market1's SMIP has updated but not market2's after time 0
-		em.executeUntil(new TimeStamp(1));
 		q = mktip1.quote;
 		assertEquals("Incorrect last quote time", mktTime, mktip1.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
@@ -440,11 +402,10 @@ public class HFTQuoteProcessorTest {
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		
 		// Send stale quotes to SMIPs
-		em.scheduleActivity(new SendToQP(market1, mktTime, q3, mktip1, time));
-		em.scheduleActivity(new SendToQP(market2, mktTime, q2, mktip2, time));
+		exec.executeActivity(new SendToQP(market1, mktTime, q3, mktip1));
+		exec.executeActivity(new SendToQP(market2, mktTime, q2, mktip2));
 		
 		// Check that market1's SMIP quote updates to most recent quote (of same market time)
-		em.executeUntil(new TimeStamp(1));
 		q = mktip1.quote;
 		assertEquals("Incorrect last quote time", mktTime, mktip1.lastQuoteTime);
 		assertEquals("Incorrect ASK", new Price(95), q.getAskPrice());

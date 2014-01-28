@@ -21,7 +21,6 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	
 	private static final long serialVersionUID = -2109498445060507654L;
 	
-	public static final TimeStamp INFINITE = new TimeStamp(Long.MAX_VALUE);
 	public static final TimeStamp IMMEDIATE = new TimeStamp(-1);
 	public static final TimeStamp ZERO = new TimeStamp(0);
 	public static final int TICKS_PER_SECOND = 1000000;

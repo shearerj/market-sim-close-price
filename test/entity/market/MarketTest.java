@@ -18,7 +18,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.Executer;
+import systemmanager.Executor;
 import activity.Clear;
 import activity.SendToQP;
 import activity.SendToTP;
@@ -39,7 +39,7 @@ public class MarketTest {
 
 	// TODO Add test for individual agent transaction latency, maybe in AgentTest?
 
-	private Executer exec;
+	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
 	private SIP sip;
@@ -51,7 +51,7 @@ public class MarketTest {
 
 	@Before
 	public void setup() {
-		exec = new Executer();
+		exec = new Executor();
 		sip = new SIP(exec, TimeStamp.IMMEDIATE);
 		market = new MockMarket(exec, sip);
 	}

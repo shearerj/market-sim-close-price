@@ -1,6 +1,5 @@
 package entity.agent;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
@@ -15,6 +14,9 @@ import systemmanager.Consts.DiscountFactor;
 import systemmanager.Scheduler;
 import utils.Rands;
 import activity.SubmitNMSOrder;
+
+import com.google.common.collect.Iterators;
+
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
@@ -60,7 +62,16 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			int tickSize, int bidRangeMin, int bidRangeMax) {
 		this(scheduler, arrivalTime, fundamental, sip, market, rand, new ExpInterarrivals(reentryRate, rand),
 				pv, tickSize, bidRangeMin, bidRangeMax);
-		checkArgument(reentryRate >= 0, "Agent reentry rate must be positive!");
+	}
+	
+	/**
+	 * Shortcut constructor for Backgroudn agent that doesn't reenter.
+	 */
+	BackgroundAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
+			Market market, Random rand, PrivateValue pv,
+			int tickSize, int bidRangeMin, int bidRangeMax) {
+		this(scheduler, arrivalTime, fundamental, sip, market, rand, Iterators.<TimeStamp> emptyIterator(),
+				pv, tickSize, bidRangeMin, bidRangeMax);
 	}
 	
 	/**

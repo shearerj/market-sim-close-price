@@ -17,7 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.Executer;
+import systemmanager.Executor;
 import systemmanager.Keys;
 import activity.Clear;
 import activity.SubmitOrder;
@@ -39,7 +39,7 @@ import event.TimeStamp;
  */
 public class CallMarketTest {
 
-	private Executer exec;
+	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private SIP sip;
 	private Market market1;
@@ -53,7 +53,7 @@ public class CallMarketTest {
 	
 	@Before
 	public void setup() {
-		exec = new Executer();
+		exec = new Executor();
 		sip = new SIP(exec, TimeStamp.IMMEDIATE);
 		// no delay from SIP + clears every 100
 		market1 = new CallMarket(exec, sip, new Random(), TimeStamp.IMMEDIATE, 1, 0.5,

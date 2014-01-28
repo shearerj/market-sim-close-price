@@ -3,6 +3,7 @@ package systemmanager;
 import java.util.Random;
 
 import event.TimeStamp;
+import event.TimedActivity;
 
 /**
  * Class that provides the ability to "simulate" an even manager. This
@@ -12,11 +13,11 @@ import event.TimeStamp;
  * @author erik
  * 
  */
-public class Executer extends Scheduler {
+public class Executor extends Scheduler {
 
 	private static final Random rand = new Random();
 	
-	public Executer() {
+	public Executor() {
 		super(rand);
 	}
 
@@ -27,6 +28,14 @@ public class Executer extends Scheduler {
 	
 	public void setTime(TimeStamp time) {
 		this.currentTime = time;
+	}
+	
+	public TimedActivity peek() {
+		return eventQueue.peek();
+	}
+	
+	public boolean isEmpty() {
+		return eventQueue.isEmpty();
 	}
 
 }

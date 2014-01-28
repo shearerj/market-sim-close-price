@@ -14,7 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.Executer;
+import systemmanager.Executor;
 import activity.SubmitOrder;
 import activity.WithdrawOrder;
 
@@ -31,7 +31,7 @@ import event.TimeStamp;
 
 public class CDAMarketTest {
 
-	private Executer exec;
+	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private SIP sip;
 	private Market market;
@@ -43,7 +43,7 @@ public class CDAMarketTest {
 
 	@Before
 	public void setup() {
-		exec = new Executer();
+		exec = new Executor();
 		sip = new SIP(exec, TimeStamp.IMMEDIATE);
 		market = new CDAMarket(exec, sip, new Random(), TimeStamp.IMMEDIATE, 1);
 	}

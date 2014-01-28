@@ -3,7 +3,6 @@ package entity.agent;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.*;
-import static systemmanager.Executer.execute;
 
 import java.io.File;
 import java.util.Random;
@@ -15,6 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
+import systemmanager.Executor;
 
 import com.google.common.collect.ImmutableList;
 
@@ -31,6 +31,7 @@ public class LAAgentTest {
 
 	// TODO Here or in HFT Test make sure it gets notified about transactions appropriately
 	
+	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market1, market2;
 	private Agent agent1, agent2;
@@ -44,13 +45,14 @@ public class LAAgentTest {
 
 	@Before
 	public void setup() {
-		sip = new SIP(TimeStamp.IMMEDIATE);
-		market1 = new CDAMarket(sip, new Random(), new EntityProperties());
-		market2 = new CDAMarket(sip, new Random(), new EntityProperties());
-		agent1 = new MockAgent(fundamental, sip, market1);
-		agent2 = new MockAgent(fundamental, sip, market2);
-		la = new LAAgent(TimeStamp.IMMEDIATE,
-				fundamental, sip, ImmutableList.of(market1, market2), new Random(), 1, 0.001);
+		exec = new Executor();
+		sip = new SIP(exec, TimeStamp.IMMEDIATE);
+		market1 = new CDAMarket(exec, sip, new Random(), new EntityProperties());
+		market2 = new CDAMarket(exec, sip, new Random(), new EntityProperties());
+		agent1 = new MockAgent(exec, fundamental, sip, market1);
+		agent2 = new MockAgent(exec, fundamental, sip, market2);
+		la = new LAAgent(exec, TimeStamp.IMMEDIATE, fundamental, sip,
+				ImmutableList.of(market1, market2), new Random(), 1, 0.001);
 	}
 	
 	/*
@@ -75,9 +77,9 @@ public class LAAgentTest {
 		 * LAStrategy in order to trigger the next LAStrategy before the first
 		 * has finished executing.
 		 */
-		execute(market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO));
-		execute(market1.submitOrder(agent1, BUY, new Price(7), 1, TimeStamp.ZERO));
-		execute(market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO));
+		market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent1, BUY, new Price(7), 1, TimeStamp.ZERO);
+		market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO);
 		// LA Strategy get's called implicitly
 
 		assertEquals(0, la.positionBalance);
@@ -94,8 +96,8 @@ public class LAAgentTest {
 	
 	@Test
 	public void laProfitTest() {
-		execute(market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO));
-		execute(market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO));
+		market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO);
+		market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO);
 		// LA Strategy gets called implicitly 
 		
 		assertEquals(0, la.positionBalance);

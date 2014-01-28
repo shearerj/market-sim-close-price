@@ -2,7 +2,8 @@ package entity.infoproc;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.List;
@@ -14,16 +15,14 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import activity.Activity;
+import systemmanager.Consts;
+import systemmanager.Executor;
 import activity.SubmitOrder;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 
 import data.FundamentalValue;
 import data.MockFundamental;
-import systemmanager.Consts;
-import systemmanager.Scheduler;
 import entity.agent.MockBackgroundAgent;
 import entity.market.CDAMarket;
 import entity.market.Market;
@@ -34,8 +33,9 @@ import event.TimeStamp;
 
 public class TransactionProcessorTest {
 
+	private Executor exec;
 	private SIP sip;
-	private FundamentalValue fundamental;
+	private FundamentalValue fundamental = new MockFundamental(100000);
 
 	@BeforeClass
 	public static void setupClass() {
@@ -44,38 +44,33 @@ public class TransactionProcessorTest {
 
 	@Before
 	public void setup() {
-		fundamental = new MockFundamental(100000);
-		sip = new SIP(TimeStamp.IMMEDIATE);
+		exec = new Executor();
+		sip = new SIP(exec, TimeStamp.IMMEDIATE);
 	}
 
 	@Test
 	public void basicProcessTransaction() {
 		TimeStamp time = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
-		Market market = new CDAMarket(sip, new Random(), TimeStamp.IMMEDIATE, 1);
+		Market market = new CDAMarket(exec, sip, new Random(), TimeStamp.IMMEDIATE, 1);
 		AbstractTransactionProcessor smip = market.getTransactionProcessor();
 
 		// Verify latency
 		assertEquals(TimeStamp.IMMEDIATE, smip.getLatency());
 
 		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		// Check initial transaction list empty
 		List<Transaction> trans = smip.getTransactions();
 		assertTrue("Incorrect initial transaction list", trans.isEmpty());
 
-		// Creating and adding bids		
-		Scheduler em = new Scheduler(new Random());
-		em.scheduleActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 1, time));
-		em.executeUntil(time1);
-		em.scheduleActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
-		em.executeUntil(time1); // should execute Clear-->SendToSIP-->processInformation
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1));
+		// should execute Clear-->SendToSIP-->processInformation
 
-		Iterable<? extends Activity> acts = smip.processTransactions(market,
-				ImmutableList.<Transaction> of(), time);
-		assertEquals(0, Iterables.size(acts));
+		smip.processTransactions(market, ImmutableList.<Transaction> of(), time);
+		assertTrue(exec.isEmpty());
 
 		// Verify that transactions have updated
 		trans = smip.getTransactions();
@@ -89,38 +84,32 @@ public class TransactionProcessorTest {
 	@Test
 	public void basicDelayProcessTransaction() {
 		TimeStamp time = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
-		Market market = new CDAMarket(sip, new Random(), new TimeStamp(100), 1);
+		Market market = new CDAMarket(exec, sip, new Random(), new TimeStamp(100), 1);
 		AbstractTransactionProcessor smip = market.getTransactionProcessor();
 
 		// Verify latency
 		assertEquals(new TimeStamp(100), smip.latency);
 
 		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		// Check initial transaction list empty
 		List<Transaction> trans = smip.getTransactions();
 		assertTrue("Incorrect initial transaction list", trans.isEmpty());
 
-		// Creating and adding bids		
-		Scheduler em = new Scheduler(new Random());
-		em.scheduleActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 1, time));
-		em.executeUntil(time1);
-		em.scheduleActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
-		em.executeUntil(time1); // should execute Clear-->SendToSIP-->processInformation
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1));
+		// should execute Clear-->SendToSIP-->processInformation
 
-		Iterable<? extends Activity> acts = smip.processTransactions(market,
-				ImmutableList.<Transaction> of(), time);
-		assertEquals(0, Iterables.size(acts));
+		smip.processTransactions(market, ImmutableList.<Transaction> of(), time);
 
 		// Still haven't updated transactions list yet
 		trans = smip.getTransactions();
 		assertTrue("Incorrect transaction list size", trans.isEmpty());
 
 		// Verify that transactions have updated
-		em.executeUntil(new TimeStamp(101));
+		exec.executeUntil(new TimeStamp(101));
 		trans = smip.getTransactions();
 		assertEquals("Incorrect number of transactions", 1, trans.size());
 		assertEquals("Incorrect transaction price", new Price(150), trans.get(0).getPrice());
@@ -135,8 +124,7 @@ public class TransactionProcessorTest {
 	@Test
 	public void diffQuoteTransLatency() {
 		TimeStamp time = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
-		Market market = new CDAMarket(sip, new Random(), TimeStamp.IMMEDIATE, 
+		Market market = new CDAMarket(exec, sip, new Random(), TimeStamp.IMMEDIATE, 
 				new TimeStamp(100), 1);
 		AbstractTransactionProcessor smip = market.getTransactionProcessor();
 		AbstractQuoteProcessor qp = market.getQuoteProcessor();
@@ -146,8 +134,8 @@ public class TransactionProcessorTest {
 		assertEquals(new TimeStamp(100), smip.latency);
 
 		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		// Check initial transaction list empty, quote null
 		List<Transaction> trans = smip.getTransactions();
@@ -159,10 +147,8 @@ public class TransactionProcessorTest {
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 0, q.getBidQuantity());
 
-		// Creating and adding bids		
-		Scheduler em = new Scheduler(new Random());
-		em.scheduleActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 2, time));
-		em.executeUntil(time1);
+		// Creating and adding bids
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 2));
 
 		// Verify that quote has updated
 		q = qp.quote;
@@ -177,8 +163,7 @@ public class TransactionProcessorTest {
 		assertTrue("Incorrect transaction list size", trans.isEmpty());
 
 		// Submit another order
-		em.scheduleActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1, time));
-		em.executeUntil(time1);
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1));
 
 		// Verify quote update, but not transactions
 		trans = smip.getTransactions();
@@ -191,7 +176,7 @@ public class TransactionProcessorTest {
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 
 		// Verify that transactions have updated as well as NBBO
-		em.executeUntil(new TimeStamp(101));
+		exec.executeUntil(new TimeStamp(101));
 		trans = smip.getTransactions();
 		assertEquals("Incorrect number of transactions", 1, trans.size());
 		assertEquals("Incorrect transaction price", new Price(150), trans.get(0).getPrice());

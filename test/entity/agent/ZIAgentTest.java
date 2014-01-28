@@ -15,7 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.Executer;
+import systemmanager.Executor;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
@@ -45,7 +45,7 @@ import event.TimeStamp;
  */
 public class ZIAgentTest {	
 
-	private Executer exec;
+	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private MockMarket market;
 	private SIP sip;
@@ -62,7 +62,7 @@ public class ZIAgentTest {
 
 	@Before
 	public void setup(){
-		exec = new Executer();
+		exec = new Executor();
 		sip = new SIP(exec, TimeStamp.IMMEDIATE);
 		// Creating the MockMarket
 		market = new MockMarket(exec, sip);

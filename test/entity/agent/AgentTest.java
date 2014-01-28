@@ -17,7 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.Executer;
+import systemmanager.Executor;
 import activity.Clear;
 import activity.SubmitOrder;
 import activity.WithdrawOrder;
@@ -37,7 +37,7 @@ import event.TimeStamp;
 
 public class AgentTest {
 
-	private Executer exec;
+	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
 	private Agent agent;
@@ -50,7 +50,7 @@ public class AgentTest {
 
 	@Before
 	public void setup() {
-		exec = new Executer();
+		exec = new Executor();
 		sip = new SIP(exec, TimeStamp.IMMEDIATE);
 		market = new MockMarket(exec, sip);
 		agent = new MockAgent(exec, fundamental, sip, market);

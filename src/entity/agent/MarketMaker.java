@@ -10,6 +10,8 @@ import iterators.ExpInterarrivals;
 import java.util.Iterator;
 import java.util.Random;
 
+import com.google.common.collect.Iterators;
+
 import systemmanager.Scheduler;
 import utils.MathUtils;
 import activity.SubmitOrder;
@@ -46,7 +48,7 @@ public abstract class MarketMaker extends ReentryAgent {
 	protected int numRungs;			// # of ladder rungs on one side (e.g., number of buy orders)
 	protected boolean truncateLadder; 	// true if truncate if NBBO crosses ladder
 	protected boolean tickImprovement;	// true if improves by a tick when mid-prices == bid/ask
-	protected boolean noOp;				// true if no-op strategy (never executes strategy)
+	protected boolean noOp;				// FIXME, this should ne NoOpAgent instead - true if no-op strategy (never executes strategy)
 	protected Price lastAsk, lastBid; // stores the last ask/bid, respectively
 
 	public MarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
@@ -72,6 +74,17 @@ public abstract class MarketMaker extends ReentryAgent {
 			boolean noOp, int numRungs, int rungSize, boolean truncateLadder,
 			boolean tickImprovement) {
 		this(scheduler, fundamental, sip, market, rand, new ExpInterarrivals(reentryRate, rand),
+				tickSize, noOp, numRungs, rungSize, truncateLadder, tickImprovement);
+	}
+	
+	/**
+	 * Shortcut constructor for MarketMaker that only acts once
+	 */
+	MarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
+			Market market, Random rand, int tickSize, 
+			boolean noOp, int numRungs, int rungSize, boolean truncateLadder,
+			boolean tickImprovement) {
+		this(scheduler, fundamental, sip, market, rand, Iterators.<TimeStamp> emptyIterator(),
 				tickSize, noOp, numRungs, rungSize, truncateLadder, tickImprovement);
 	}
 

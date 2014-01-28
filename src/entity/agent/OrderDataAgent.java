@@ -29,7 +29,8 @@ public class OrderDataAgent extends SMAgent {
 	// XXX Erik: This is pretty inefficient. Why is it using an iterator? Why do
 	// you need a priority queue? Shouldn't you have some notion of how it's
 	// sorted? Also, instead of making a comparator, orderData should probably
-	// be comaprable.
+	// be comaprable. If You're not certain if it's sorted, a linear time check
+	// is much better than just trying to sort in the beginning.
 	public OrderDataAgent(Scheduler scheduler, FundamentalValue fundamental,
 			SIP sip, Market market,
 			Random rand, Iterator<OrderDatum> orderDataIterator) {
@@ -50,7 +51,7 @@ public class OrderDataAgent extends SMAgent {
 	}
 
 	// XXX Erik: Why is quantity part of this? Shouldn't that be encoded in
-	// OrderDatum?
+	// OrderDatum? Also, shouldn't this be called in agent Strategy?
 	public void executeODAStrategy(int quantity, TimeStamp currentTime) {
 		OrderDatum submitOrder = orderData.poll();
 		scheduler.executeActivity(new SubmitNMSOrder(this, primaryMarket, OrderType.BUY,	// FIXME

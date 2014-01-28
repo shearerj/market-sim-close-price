@@ -18,7 +18,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.Executer;
+import systemmanager.Executor;
 import systemmanager.SimulationSpec;
 
 import com.google.common.collect.ImmutableList;
@@ -38,7 +38,7 @@ import event.TimeStamp;
 
 public class ObservationsTest {
 	
-	private Executer exec;
+	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market1, market2;
 	private SIP sip;
@@ -51,7 +51,7 @@ public class ObservationsTest {
 
 	@Before
 	public void setup() {
-		exec = new Executer();
+		exec = new Executor();
 		sip = new SIP(exec, TimeStamp.IMMEDIATE);
 		market1 = new MockMarket(exec, sip);
 		market2 = new MockMarket(exec, sip);

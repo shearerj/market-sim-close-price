@@ -16,7 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import activity.Activity;
+import systemmanager.Executor;
 
 import com.google.common.collect.Iterables;
 
@@ -30,6 +30,7 @@ import entity.market.MockMarket;
 import entity.market.Order;
 import entity.market.Price;
 import event.TimeStamp;
+import event.TimedActivity;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 
@@ -37,6 +38,7 @@ public class OrderDataAgentTest {
 
 	private static Random rand;
 
+	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
 	private SIP sip;
@@ -51,13 +53,14 @@ public class OrderDataAgentTest {
 
 	@Before
 	public void setupTest() {
-		sip = new SIP(TimeStamp.IMMEDIATE);
+		exec = new Executor();
+		sip = new SIP(exec, TimeStamp.IMMEDIATE);
 		// Creating the MockMarket
-		market = new MockMarket(sip);
+		market = new MockMarket(exec, sip);
 	}
 
 	private OrderDataAgent addAgent(Iterator<OrderDatum> orderDataIt) {
-		OrderDataAgent agent = new OrderDataAgent(fundamental, sip, market, rand,
+		OrderDataAgent agent = new OrderDataAgent(exec, fundamental, sip, market, rand,
 				orderDataIt);
 
 		return agent;
@@ -70,38 +73,31 @@ public class OrderDataAgentTest {
 				+ "should return orderdata as what is passed in \n");
 		List<OrderDatum> orders = new LinkedList<OrderDatum>();
 		
-		orders.add(new MockOrderDatum(new TimeStamp(15), new Price(75000), 1, BUY));
-		orders.add(new MockOrderDatum(new TimeStamp(20), new Price(60000), 1, SELL));
-	    orders.add(new MockOrderDatum(new TimeStamp(18), new Price(75000), 1, BUY));
+		TimeStamp t1 = new TimeStamp(15), t1_ = new TimeStamp(16);
+		TimeStamp t2 = new TimeStamp(18), t2_ = new TimeStamp(19);
+		TimeStamp t3 = new TimeStamp(20);
+		
+		orders.add(new MockOrderDatum(t1, new Price(75000), 1, BUY));
+		orders.add(new MockOrderDatum(t3, new Price(60000), 1, SELL));
+	    orders.add(new MockOrderDatum(t2, new Price(75000), 1, BUY));
 
 		OrderDataAgent agent = addAgent(orders.iterator());
-		
-		//0->15
-		TimeStamp t1 = new TimeStamp(0);
+
 		// in any market , OrderDataAgent should follow order data as it inputs
-		Collection<? extends Activity> c = agent.agentStrategy(t1);
-		Activity nextOrder = Iterables.getOnlyElement(c);
-		TimeStamp t2 = new TimeStamp(15);
-		assertEquals("OrderDataAgent Strategy is in order", t2, nextOrder.getTime());
-		
+		agent.agentStrategy(TimeStamp.ZERO);
+		assertEquals("OrderDataAgent Strategy is in order", t1, exec.peek().getTime());
 		agent.executeODAStrategy(1, t2);
 	    
 		//15->18
-        t1 = new TimeStamp(15);
-        c = agent.agentStrategy(t1);
-        nextOrder = Iterables.getOnlyElement(c);
+        exec.executeUntil(t1_);
+        TimedActivity nextOrder = exec.peek();
         Logger.log(Logger.Level.DEBUG," \nNext order time: " + nextOrder.getTime());
-        t2 = new TimeStamp(18);
         assertEquals("OrderDataAgent Strategy is in order", t2, nextOrder.getTime());
-        
         agent.executeODAStrategy(1, t2);
 
         //18->20
-        t1 = new TimeStamp(18);
-        c = agent.agentStrategy(t1);
-        nextOrder = Iterables.getOnlyElement(c);
-        t2 = new TimeStamp(20);
-        assertEquals("OrderDataAgent Strategy is in order", t2, nextOrder.getTime());
+        exec.executeUntil(t2_);
+        assertEquals("OrderDataAgent Strategy is in order", t3, exec.peek().getTime());
   	}
 	
 	@Test

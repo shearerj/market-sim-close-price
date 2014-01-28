@@ -14,7 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.Executer;
+import systemmanager.Executor;
 import systemmanager.Keys;
 import activity.AgentStrategy;
 import activity.SubmitNMSOrder;
@@ -43,7 +43,7 @@ import event.TimeStamp;
  */
 public class ZIRAgentTest {
 
-	private Executer exec;
+	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
 	private SIP sip;
@@ -67,7 +67,7 @@ public class ZIRAgentTest {
 
 	@Before
 	public void setup(){
-		exec = new Executer();
+		exec = new Executor();
 		sip = new SIP(exec, TimeStamp.IMMEDIATE);
 		// Creating the MockMarket
 		market = new MockMarket(exec, sip);

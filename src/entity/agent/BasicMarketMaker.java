@@ -51,6 +51,17 @@ public class BasicMarketMaker extends MarketMaker {
 		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
 				numRungs, rungSize, truncateLadder, tickImprovement);	
 	}
+	
+	/**
+	 * Shortcut constructor for agent that doesn't reenter.
+	 */
+	BasicMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
+			Random rand, int tickSize, boolean noOp,
+			int numRungs, int rungSize, boolean truncateLadder, 
+			boolean tickImprovement) {
+		super(scheduler, fundamental, sip, market, rand, tickSize, noOp, 
+				numRungs, rungSize, truncateLadder, tickImprovement);	
+	}
 
 	public BasicMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, EntityProperties props) {

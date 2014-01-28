@@ -1,5 +1,7 @@
 package iterators;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.io.Serializable;
 import java.util.Random;
 
@@ -16,16 +18,15 @@ public class ExpInterarrivals extends AbstractIterator<TimeStamp> implements Ser
 	protected final double rate;
 
 	public ExpInterarrivals(double rate, Random rand) {
+		checkArgument(rate > 0);
 		this.rand = rand;
 		this.rate = rate;
 	}
 
 	@Override
 	protected TimeStamp computeNext() {
-		if (rate > 0)
-			return new TimeStamp((long) Math.ceil(Rands.nextExponential(rand, rate)));
-		else 
-			return TimeStamp.INFINITE;
+		return new TimeStamp(
+				(long) Math.ceil(Rands.nextExponential(rand, rate)));
 	}
 
 }

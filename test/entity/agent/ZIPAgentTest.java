@@ -2,12 +2,14 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Random;
 
 import logger.Logger;
@@ -16,16 +18,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import activity.Activity;
-import activity.AgentStrategy;
-import activity.SubmitNMSOrder;
+import systemmanager.Consts;
+import systemmanager.Executor;
+import systemmanager.Keys;
 
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 
-import systemmanager.Consts;
-import systemmanager.Executer;
-import systemmanager.Keys;
 import data.EntityProperties;
 import data.FundamentalValue;
 import data.MockFundamental;
@@ -40,7 +38,7 @@ import fourheap.Order.OrderType;
 
 public class ZIPAgentTest {
 
-	private Executer exec;
+	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
 	private SIP sip;
@@ -72,7 +70,7 @@ public class ZIPAgentTest {
 	
 	@Before
 	public void setup(){
-		exec = new Executer();
+		exec = new Executor();
 		sip = new SIP(exec, TimeStamp.IMMEDIATE);
 		// Creating the MockMarket
 		market = new MockMarket(exec, sip);
@@ -207,6 +205,14 @@ public class ZIPAgentTest {
 		// prices, submitted order price will be below the last order price
 		// should also be below the most recent transaction price
 		assertCorrectBid(agent, 85000, 95000, 1);
+		// FIXME This seems to be based off of the specific initialization of
+		// the random generator. This made it very fragile and it broke on
+		// update. This seems like a bad testing practice. Potentially we can
+		// just seed the generator right before this call to avoid other
+		// effects? Also, if you are accounting for the setting of the random
+		// generator, then perhaps we should just use assert equals, since you
+		// know exactly what it should be?
+		
 		assertCorrectBid(agent, 85000, 90000, 1);
 	}
 	

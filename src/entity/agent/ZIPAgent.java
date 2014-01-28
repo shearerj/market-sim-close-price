@@ -289,8 +289,7 @@ public class ZIPAgent extends WindowAgent {
 				append(lastTransPrice));
 
 		boolean increaseMargin = this.checkIncreaseMargin(lastTrans, currentTime);
-		boolean increaseTargetPrice = (type.equals(SELL) && increaseMargin) ||
-									  (type.equals(BUY) && !increaseMargin);
+		boolean increaseTargetPrice = type == BUY ^ increaseMargin;
 		
 		double R = this.computeRCoefficient(increaseTargetPrice);
 		double A = this.computeACoefficient(increaseTargetPrice);

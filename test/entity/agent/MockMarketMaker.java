@@ -21,7 +21,7 @@ public class MockMarketMaker extends MarketMaker {
 	public MockMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
 			Market market, boolean noOp, int numRungs, int rungSize, 
 			boolean truncateLadder) {
-		super(scheduler, fundamental, sip, market, new Random(), 0, 1, noOp, 
+		super(scheduler, fundamental, sip, market, new Random(), 1, noOp, 
 				numRungs, rungSize, truncateLadder, false);
 	}
 	

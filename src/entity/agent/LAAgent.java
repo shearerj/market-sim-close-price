@@ -90,7 +90,7 @@ public class LAAgent extends HFTAgent {
 		
 		executingStrategy = true;
 		scheduler.executeActivity(new SubmitOrder(this, bestBidMarket, SELL, midPoint, 1));
-		scheduler.executeActivity(new SubmitOrder(this, bestBidMarket, BUY, midPoint, 1));
+		scheduler.executeActivity(new SubmitOrder(this, bestAskMarket, BUY, midPoint, 1));
 		executingStrategy = false;
 	}
 

@@ -28,14 +28,8 @@ public abstract class ReentryAgent extends SMAgent {
 	
 	@Override
 	public void agentStrategy(TimeStamp currentTime) {
+		if (!reentry.hasNext()) return;
 		TimeStamp waitTime = reentry.next();
-		// XXX Erik: This si super awkward. There's got to be a better way to do
-		// this. This is essentially ZI. Also, TimeStamp.INFINITE is pretty
-		// hacky and probably shouldn't be used.
-		if (waitTime.equals(TimeStamp.INFINITE))
-			return;
-		
-		scheduler.scheduleActivity(currentTime.plus(waitTime),
-				new AgentStrategy(this));
+		scheduler.scheduleActivity(currentTime.plus(waitTime), new AgentStrategy(this));
 	}
 }
