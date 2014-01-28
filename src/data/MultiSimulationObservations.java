@@ -56,7 +56,8 @@ public class MultiSimulationObservations {
 	public void addObservation(Observations obs) {
 		if (spec == null) { // First observation
 			for (PlayerObservation po : obs.getPlayerObservations())
-				playerObservations.add(new MultiSimPlayerObservation(po.role, po.strategy, po.payoff));
+				playerObservations.add(new MultiSimPlayerObservation(po.role, 
+						po.strategy, po.payoff, po.features));
 			for (Entry<String, Double> e : obs.getFeatures().entrySet()) {
 				SummaryStatistics sum = new SummaryStatistics();
 				sum.addValue(e.getValue());

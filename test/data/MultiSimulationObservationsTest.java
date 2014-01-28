@@ -15,13 +15,13 @@ public class MultiSimulationObservationsTest {
 		MultiSimulationObservations obs = new MultiSimulationObservations(true, 1);
 		
 		obs.addObservation(new MockObservations(
-				ImmutableList.of(new PlayerObservation("back", "a", 5)),
+				ImmutableList.of(new PlayerObservation("back", "a", 5, ImmutableMap.<String, Double> of())),
 				ImmutableMap.<String, Double> of()));
 		obs.addObservation(new MockObservations(
-				ImmutableList.of(new PlayerObservation("back", "a", 10)),
+				ImmutableList.of(new PlayerObservation("back", "a", 10, ImmutableMap.<String, Double> of())),
 				ImmutableMap.<String, Double> of()));
 		obs.addObservation(new MockObservations(
-				ImmutableList.of(new PlayerObservation("back", "a", 21)),
+				ImmutableList.of(new PlayerObservation("back", "a", 21, ImmutableMap.<String, Double> of())),
 				ImmutableMap.<String, Double> of()));
 		
 		assertEquals(12, obs.playerObservations.get(0).payoff.getMean(), 0.001);
@@ -39,13 +39,13 @@ public class MultiSimulationObservationsTest {
 		
 		obs.addObservation(new MockObservations(
 				ImmutableList.of(
-						new PlayerObservation("back", "a", 5),
-						new PlayerObservation("back", "b", 10)),
+						new PlayerObservation("back", "a", 5, ImmutableMap.<String, Double> of()),
+						new PlayerObservation("back", "b", 10, ImmutableMap.<String, Double> of())),
 				ImmutableMap.<String, Double> of()));
 		obs.addObservation(new MockObservations(
 				ImmutableList.of(
-						new PlayerObservation("back", "a", 10),
-						new PlayerObservation("back", "b", 20)),
+						new PlayerObservation("back", "a", 10, ImmutableMap.<String, Double> of()),
+						new PlayerObservation("back", "b", 20, ImmutableMap.<String, Double> of())),
 				ImmutableMap.<String, Double> of()));
 		
 		assertEquals(7.5, obs.playerObservations.get(0).payoff.getMean(), 0.001);
