@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import systemmanager.Consts;
 import systemmanager.Executer;
+import systemmanager.Keys;
 import systemmanager.SimulationSpec;
 
 import com.google.common.collect.ImmutableList;
@@ -473,10 +474,10 @@ public class ObservationsTest {
 		setupObservations(backgroundPlayer);
 		
 		for (PlayerObservation po : obs.getPlayerObservations()) {
-			assertEquals(new Double(pv1), po.features.get("pv_buy1"));
-			assertEquals(new Double(pv_1), po.features.get("pv_sell1"));
+			assertEquals(new Double(pv1), po.features.get(Keys.PV_BUY1));
+			assertEquals(new Double(pv_1), po.features.get(Keys.PV_SELL1));
 			assertEquals(new Double(Math.max(Math.abs(pv1), Math.abs(pv_1))), 
-					po.features.get("pv_position1_max_abs"));
+					po.features.get(Keys.PV_POSITION1_MAX_ABS));
 		}
 	}
 	

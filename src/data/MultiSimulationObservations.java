@@ -55,9 +55,10 @@ public class MultiSimulationObservations {
 	
 	public void addObservation(Observations obs) {
 		if (spec == null) { // First observation
-			for (PlayerObservation po : obs.getPlayerObservations())
+			for (PlayerObservation po : obs.getPlayerObservations()) {
 				playerObservations.add(new MultiSimPlayerObservation(po.role, 
 						po.strategy, po.payoff, po.features));
+			}
 			for (Entry<String, Double> e : obs.getFeatures().entrySet()) {
 				SummaryStatistics sum = new SummaryStatistics();
 				sum.addValue(e.getValue());
@@ -72,8 +73,14 @@ public class MultiSimulationObservations {
 			 * case, but it's worth noting.
 			 */
 			Iterator<PlayerObservation> it = obs.getPlayerObservations().iterator();
-			for (MultiSimPlayerObservation mpo : playerObservations)
-				mpo.payoff.addValue(it.next().payoff);
+			for (MultiSimPlayerObservation mpo : playerObservations) {
+				PlayerObservation playerObs = it.next();
+				mpo.payoff.addValue(playerObs.payoff);
+				// player-specific PV control variables
+				mpo.features.get(Keys.PV_BUY1).addValue(playerObs.features.get(Keys.PV_BUY1).doubleValue());
+				mpo.features.get(Keys.PV_SELL1).addValue(playerObs.features.get(Keys.PV_SELL1).doubleValue());
+				mpo.features.get(Keys.PV_POSITION1_MAX_ABS).addValue(playerObs.features.get(Keys.PV_POSITION1_MAX_ABS).doubleValue());
+			}
 			for (Entry<String, Double> e : obs.getFeatures().entrySet())
 				features.get(e.getKey()).addValue(e.getValue());
 		}
@@ -96,6 +103,7 @@ public class MultiSimulationObservations {
 			JsonObject playerFeatures = new JsonObject();
 			obs.add("features", playerFeatures);
 			playerFeatures.addProperty("payoff_stddev", mpo.payoff.getStandardDeviation());
+			// Record player-specific PV control variables
 			for (String property : mpo.features.keySet()) {
 				playerFeatures.addProperty(property, mpo.features.get(property).getMean());
 			}
@@ -106,7 +114,7 @@ public class MultiSimulationObservations {
 		root.add("features", feats);
 		for (Entry<String, SummaryStatistics> e : features.entrySet()) {
 			// TODO Ben's JsonParser doesn't handle nans or inf. This does.
-			// Either make Ben's handle it, or make this handeling better
+			// Either make Ben's handle it, or make this handling better
 			double mean = e.getValue().getMean();
 			if (Double.isInfinite(mean) || Double.isNaN(mean))
 				feats.addProperty(e.getKey(), Double.toString(mean));

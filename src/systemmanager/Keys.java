@@ -39,6 +39,11 @@ public interface Keys {
 	public final static String CONFIG = "configuration";
 	public final static String NO_OP = "noOp";
 
+	// Observation Keys
+	public final static String PV_BUY1 = "pv_buy1";
+	public final static String PV_SELL1 = "pv_sell1";
+	public final static String PV_POSITION1_MAX_ABS = "pv_position_max_abs1";
+	
 	// Latency
 	public final static String QUOTE_LATENCY = "quoteLatency";
 	public final static String TRANSACTION_LATENCY = "transactionLatency";
