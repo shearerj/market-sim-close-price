@@ -79,8 +79,8 @@ public class WMAMarketMakerTest {
 		// testing when no bid/ask, does not submit any orders
 		TimeStamp time = TimeStamp.ZERO;
 
-		MarketMaker mm = new MAMarketMaker(fundamental, sip, market, 
-				new Random(), setupProperties(2, 10, false, 1, 5, 1));
+		MarketMaker mm = new WMAMarketMaker(fundamental, sip, market, 
+				new Random(), setupProperties(2, 10, false, 1, 5, 0));
 		
 		// Check activities inserted (none, other than reentry)
 		Iterable<? extends Activity> acts = mm.agentStrategy(time);
