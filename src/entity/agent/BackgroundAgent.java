@@ -8,6 +8,7 @@ import iterators.ExpInterarrivals;
 import static fourheap.Order.OrderType.*;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 
 import systemmanager.Consts.DiscountFactor;
@@ -16,6 +17,7 @@ import activity.Activity;
 import activity.SubmitNMSOrder;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 import data.FundamentalValue;
 import entity.infoproc.SIP;
@@ -132,9 +134,26 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		surplus.addValue(transactionSurplus, timeToExecution.getInTicks());
 	}
 
+	/**
+	 * @return undiscounted surplus for player observation
+	 */
 	@Override
 	public double getPayoff() {
 		return surplus.getValueAtDiscount(DiscountFactor.NO_DISC);
+	}
+	
+	/**
+	 * @return private-value control variables for player features
+	 */
+	@Override
+	public Map<String, Double> getFeatures() {
+		ImmutableMap.Builder<String, Double> features = ImmutableMap.builder();
+		Price buyPV = privateValue.getValue(0, BUY);
+		Price sellPV = privateValue.getValue(0, SELL);
+		features.put("pv_position1_max_abs", pcomp.max(buyPV, sellPV).doubleValue());
+		features.put("pv_buy1", buyPV.doubleValue());
+		features.put("pv_sell1", sellPV.doubleValue());
+		return features.build();
 	}
 	
 	/**

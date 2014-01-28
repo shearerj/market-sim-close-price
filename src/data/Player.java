@@ -34,7 +34,6 @@ public class Player implements Serializable {
 	}
 	
 	public PlayerObservation getObservation() {
-		return new PlayerObservation(role, strategy, agent.getPayoff());
+		return new PlayerObservation(role, strategy, agent.getPayoff(), agent.getFeatures());
 	}
-
 }

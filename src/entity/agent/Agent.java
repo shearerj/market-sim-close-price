@@ -8,9 +8,11 @@ import static logger.Logger.Level.INFO;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
@@ -230,8 +232,18 @@ public abstract class Agent extends Entity {
 		return sip.getNBBO();
 	}
 	
+	/**
+	 * @return payoff for player observation
+	 */
 	public double getPayoff() {
 		return profit;
+	}
+	
+	/**
+	 * @return list of player-specific features, can be overridden
+	 */
+	public Map<String, Double> getFeatures() {
+		return ImmutableMap.of();
 	}
 	
 	public long getPreLiquidationProfit() {
