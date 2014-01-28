@@ -26,9 +26,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
 import entity.agent.Agent;
+import entity.agent.BackgroundAgent;
 import entity.agent.DummyPrivateValue;
 import entity.agent.MockAgent;
 import entity.agent.MockBackgroundAgent;
+import entity.agent.PrivateValue;
 import entity.infoproc.SIP;
 import entity.market.DummyMarketTime;
 import entity.market.Market;
@@ -454,6 +456,27 @@ public class ObservationsTest {
 				assertEquals("a", po.strategy);
 				assertEquals(100000, po.payoff, 0.001);
 			}
+		}
+	}
+	
+	@Test
+	public void privateValueFeatureTest() {
+		PrivateValue pv = new PrivateValue(5, 1000000, new Random());
+		FundamentalValue randFundamental = new FundamentalValue(0.2, 100000, 10000, new Random());
+		BackgroundAgent backgroundAgent = new MockBackgroundAgent(randFundamental, sip, market1, pv, 0, 1000);
+
+		// Get valuation for various positionBalances
+		int pv1 = pv.getValue(0, BUY).intValue();
+		int pv_1 = pv.getValue(0, SELL).intValue();
+		
+		Player backgroundPlayer = new Player("background", "a", backgroundAgent);
+		setupObservations(backgroundPlayer);
+		
+		for (PlayerObservation po : obs.getPlayerObservations()) {
+			assertEquals(new Double(pv1), po.features.get("pv_buy1"));
+			assertEquals(new Double(pv_1), po.features.get("pv_sell1"));
+			assertEquals(new Double(Math.max(Math.abs(pv1), Math.abs(pv_1))), 
+					po.features.get("pv_position1_max_abs"));
 		}
 	}
 	

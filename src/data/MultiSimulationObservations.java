@@ -96,6 +96,9 @@ public class MultiSimulationObservations {
 			JsonObject playerFeatures = new JsonObject();
 			obs.add("features", playerFeatures);
 			playerFeatures.addProperty("payoff_stddev", mpo.payoff.getStandardDeviation());
+			for (String property : mpo.features.keySet()) {
+				playerFeatures.addProperty(property, mpo.features.get(property).getMean());
+			}
 		}
 		
 		// Write out features

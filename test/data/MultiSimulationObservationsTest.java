@@ -57,4 +57,5 @@ public class MultiSimulationObservationsTest {
 		assertEquals(15, players.get(1).getAsJsonObject().get("payoff").getAsDouble(), 0.001);
 	}
 
+	// TODO tests for averaging player-level features
 }
