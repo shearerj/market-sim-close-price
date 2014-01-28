@@ -20,7 +20,7 @@ public class PrivateValueTest {
 	
 	@Test
 	public void basicPV() {
-		PrivateValue pv = new PrivateValue(10, 0, new Random());
+		PrivateValue pv = new PrivateValue(10, 1000, new Random());
 		
 		// Verify correct number of elements
 		assertEquals(10, pv.getMaxAbsPosition());
@@ -30,7 +30,6 @@ public class PrivateValueTest {
 		Price prevPrice = Price.INF;
 		for (Price p : pv.values) {
 			assertTrue(p.lessThanEqual(prevPrice));
-			assertEquals(Price.ZERO, p);
 			prevPrice = p;
 		}
 	}

@@ -136,7 +136,8 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		ImmutableMap.Builder<String, Double> features = ImmutableMap.builder();
 		Price buyPV = privateValue.getValue(0, BUY);
 		Price sellPV = privateValue.getValue(0, SELL);
-		features.put("pv_position1_max_abs", pcomp.max(buyPV, sellPV).doubleValue());
+		features.put("pv_position1_max_abs", Math.max(Math.abs(buyPV.doubleValue()), 
+				Math.abs(sellPV.doubleValue())));
 		features.put("pv_buy1", buyPV.doubleValue());
 		features.put("pv_sell1", sellPV.doubleValue());
 		return features.build();

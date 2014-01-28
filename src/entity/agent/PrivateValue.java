@@ -3,6 +3,7 @@ package entity.agent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static entity.market.Price.ZERO;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
 import java.io.Serializable;
@@ -76,6 +77,7 @@ public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 		for (int i = 0; i < values.length; i++)
 			values[i] = Rands.nextGaussian(rand, 0, var);
 		Arrays.sort(values);
+		ArrayUtils.reverse(values);
 		
 		Builder<Price> builder = ImmutableList.builder();
 		for (double value : values)
