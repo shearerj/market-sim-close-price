@@ -31,8 +31,9 @@ public class MultiSimPlayerObservation {
 		this(role, strategy);
 		payoff.addValue(firstValue);
 		for (String key : features.keySet()) {
-			this.features.put(key, new SummaryStatistics());
-			this.features.get(key).addValue(features.get(key).doubleValue());
+			SummaryStatistics summ = new SummaryStatistics();
+			summ.addValue(features.get(key).doubleValue());
+			this.features.put(key, summ);
 		}
 	}
 	

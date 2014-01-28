@@ -139,7 +139,7 @@ public class Simulation {
 		/*
 		 * First group by role and agentType for legacy reasons / arrival rate
 		 * reasons XXX Re-think how to schedule player arrival rates. (Maybe be
-		 * less important if agent's reenter)
+		 * less important if agents reenter)
 		 */
 		double arrivalRate = modelProps.getAsDouble(Keys.ARRIVAL_RATE, 0.075);
 		

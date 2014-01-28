@@ -12,6 +12,7 @@ import java.util.Random;
 
 import systemmanager.Consts.DiscountFactor;
 import systemmanager.Scheduler;
+import systemmanager.Keys;
 import utils.Rands;
 import activity.SubmitNMSOrder;
 
@@ -136,10 +137,12 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		ImmutableMap.Builder<String, Double> features = ImmutableMap.builder();
 		Price buyPV = privateValue.getValue(0, BUY);
 		Price sellPV = privateValue.getValue(0, SELL);
-		features.put("pv_position1_max_abs", Math.max(Math.abs(buyPV.doubleValue()), 
+		
+		features.put(Keys.PV_POSITION1_MAX_ABS, Math.max(Math.abs(buyPV.doubleValue()), 
 				Math.abs(sellPV.doubleValue())));
-		features.put("pv_buy1", buyPV.doubleValue());
-		features.put("pv_sell1", sellPV.doubleValue());
+		features.put(Keys.PV_BUY1, buyPV.doubleValue());
+		features.put(Keys.PV_SELL1, sellPV.doubleValue());
+		
 		return features.build();
 	}
 	
