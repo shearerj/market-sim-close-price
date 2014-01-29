@@ -1,5 +1,6 @@
 package entity.agent;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -38,10 +39,10 @@ public abstract class WindowAgent extends BackgroundAgent {
 	protected TimeStamp windowLength;
 	
 	public WindowAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental,
-			SIP sip, Market market, Random rand, double reentryRate,
+			SIP sip, Market market, Random rand, Iterator<TimeStamp> interarrivalTimes,
 			PrivateValue pv, int tickSize, int bidRangeMin, int bidRangeMax,
 			int windowLength) {
-		super(scheduler, arrivalTime, fundamental, sip, market, rand, reentryRate, pv, tickSize,
+		super(scheduler, arrivalTime, fundamental, sip, market, rand, interarrivalTimes, pv, tickSize,
 				bidRangeMin, bidRangeMax);
 		
 		this.windowLength = new TimeStamp(windowLength);

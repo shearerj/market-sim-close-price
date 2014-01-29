@@ -3,6 +3,8 @@ package entity.agent;
 import java.util.Collection;
 import java.util.Random;
 
+import com.google.common.collect.Iterators;
+
 import activity.MockActivity;
 
 import systemmanager.Scheduler;
@@ -16,14 +18,17 @@ public class MockBackgroundAgent extends BackgroundAgent {
 
 	private static final long serialVersionUID = 1L;
 
-	public MockBackgroundAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market) {
+	public MockBackgroundAgent(Scheduler scheduler,
+			FundamentalValue fundamental, SIP sip, Market market) {
 		this(scheduler, fundamental, sip, market, new PrivateValue(), 0, 0);
 	}
 	
-	public MockBackgroundAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
+	public MockBackgroundAgent(Scheduler scheduler,
+			FundamentalValue fundamental, SIP sip, Market market,
 			PrivateValue pv, int bidRangeMin, int bidRangeMax) {
-		super(scheduler, TimeStamp.ZERO, fundamental, sip, market, new Random(),
-				pv,	1, bidRangeMin, bidRangeMax);
+		super(scheduler, TimeStamp.ZERO, fundamental, sip, market,
+				new Random(), Iterators.<TimeStamp> emptyIterator(), pv, 1,
+				bidRangeMin, bidRangeMax);
 	}
 	
 	public Collection<Order> getOrders() {

@@ -5,7 +5,12 @@ import static fourheap.Order.OrderType.SELL;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
+import iterators.ExpInterarrivals;
+
+import java.util.Iterator;
 import java.util.Random;
+
+import com.google.common.collect.Iterators;
 
 import systemmanager.Keys;
 import systemmanager.Scheduler;
@@ -46,15 +51,34 @@ public class ZIRAgent extends BackgroundAgent {
 
 	protected boolean withdrawOrders; 	// true if withdraw orders at each reentry
 	
-	public ZIRAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
-			Market market, Random rand, double reentryRate, double pvVar,
-			int tickSize, int maxAbsPosition, int bidRangeMin, int bidRangeMax, 
+	ZIRAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			Iterator<TimeStamp> interarrivals, double pvVar, int tickSize,
+			int maxAbsPosition, int bidRangeMin, int bidRangeMax,
 			boolean withdrawOrders) {
-		super(scheduler, arrivalTime, fundamental, sip, market, rand, reentryRate, 
-				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize,
-				bidRangeMin, bidRangeMax);
-		
+		super(scheduler, arrivalTime, fundamental, sip, market, rand,
+				interarrivals, new PrivateValue(maxAbsPosition, pvVar, rand),
+				tickSize, bidRangeMin, bidRangeMax);
+
 		this.withdrawOrders = withdrawOrders;
+	}
+
+	public ZIRAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			double reentryRate, double pvVar, int tickSize, int maxAbsPosition,
+			int bidRangeMin, int bidRangeMax, boolean withdrawOrders) {
+		this(scheduler, arrivalTime, fundamental, sip, market, rand,
+				new ExpInterarrivals(reentryRate, rand), pvVar, tickSize,
+				maxAbsPosition, bidRangeMin, bidRangeMax, withdrawOrders);
+	}
+	
+	public ZIRAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			double pvVar, int tickSize, int maxAbsPosition, int bidRangeMin,
+			int bidRangeMax, boolean withdrawOrders) {
+		this(scheduler, arrivalTime, fundamental, sip, market, rand, Iterators
+				.<TimeStamp> emptyIterator(), pvVar, tickSize, maxAbsPosition,
+				bidRangeMin, bidRangeMax, withdrawOrders);
 	}
 
 	public ZIRAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,

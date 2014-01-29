@@ -75,12 +75,9 @@ public class ZIRAgentTest {
 
 	@Test
 	public void withdrawTest() {
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.WITHDRAW_ORDERS, true);
-
 		// verify that orders are correctly withdrawn at each re-entry
-		ZIRAgent agent = new ZIRAgent(exec, TimeStamp.ZERO, fundamental, sip, market, 
-				rand, testProps);
+		ZIRAgent agent = new ZIRAgent(exec, TimeStamp.ZERO, fundamental, sip,
+				market, rand, 0, 1, 2, 0, 5000, true);
 
 		// execute strategy once; then before reenter, change the position balance
 		// that way, when execute strategy again, it won't submit new orders
@@ -129,8 +126,9 @@ public class ZIRAgentTest {
 		testProps.put(Keys.BID_RANGE_MAX, 1000);
 		testProps.put(Keys.BID_RANGE_MIN, 1000);
 		testProps.put(Keys.MAX_QUANTITY, 1);
-		ZIRAgent agent1 = new ZIRAgent(exec, TimeStamp.ZERO, fundamental2, sip, nasdaq, 
-				new Random(4), testProps);	// rand seed selected to insert BUY
+		ZIRAgent agent1 = new ZIRAgent(exec, TimeStamp.ZERO, fundamental2, sip,
+				nasdaq, new Random(4), 0, 1, 1, 1000, 1000, true);
+		// rand seed selected to insert BUY
 
 		// ZIR submits sell at 105 (is routed to nyse)
 		// Verify that NBBO quote is (104, 105) at time 100
@@ -197,15 +195,10 @@ public class ZIRAgentTest {
 		///////////////
 		// Creating ZIR agent that WILL NOT withdraw its orders; & submit buy order
 		FundamentalValue fundamental2 = new MockFundamental(110000);
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.WITHDRAW_ORDERS, false);
-		testProps.put(Keys.REENTRY_RATE, 0);
-		testProps.put(Keys.BID_RANGE_MAX, 1000);
-		testProps.put(Keys.BID_RANGE_MIN, 1000);
-		testProps.put(Keys.MAX_QUANTITY, 1);
-		ZIRAgent agent1 = new ZIRAgent(exec, TimeStamp.ZERO, fundamental2, sip, nasdaq, 
-				new Random(4), testProps);	// rand seed selected to insert BUY
-
+		ZIRAgent agent1 = new ZIRAgent(exec, TimeStamp.ZERO, fundamental2, sip,
+				nasdaq, new Random(4), 0, 1, 1, 1000, 1000, false);
+		// rand seed selected to insert BUY
+		
 		// ZIR submits sell at 105 (is routed to nyse)
 		// Verify that NBBO quote is (104, 105) at time 100
 		exec.executeActivity(new SubmitNMSOrder(agent1, nyse, SELL, new Price(105000), 1));

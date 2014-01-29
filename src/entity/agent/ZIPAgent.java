@@ -7,6 +7,8 @@ import static logger.Logger.format;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
+import iterators.ExpInterarrivals;
+
 import java.util.List;
 import java.util.Random;
 
@@ -62,9 +64,10 @@ public class ZIPAgent extends WindowAgent {
 			boolean withdrawOrders, int windowLength, double marginMin, double marginMax, 
 			double gammaMin, double gammaMax, double betaMin, double betaMax, 
 			double rangeCoeffA, double rangeCoeffR) {
-		super(scheduler, arrivalTime, fundamental, sip, market, rand, reentryRate,
-				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize,
-				bidRangeMin, bidRangeMax, windowLength);
+		super(scheduler, arrivalTime, fundamental, sip, market, rand,
+				new ExpInterarrivals(reentryRate, rand),
+				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize, bidRangeMin,
+				bidRangeMax, windowLength);
 
 		checkArgument(rangeCoeffA > 0, "Coefficient A's range must be positive");
 		checkArgument(rangeCoeffR > 0, "Coefficient A's range must be positive");

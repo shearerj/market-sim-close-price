@@ -74,7 +74,7 @@ public class ZIAgentTest {
 		//Initialize ZIAgent with default properties:
 		//REENTRY_RATE, 0
 		//TICK_SIZE, 1
-		return new ZIAgent(exec, new TimeStamp(0), fundamental, sip, market, rand, 0, pv, 1, min, max);
+		return new ZIAgent(exec, new TimeStamp(0), fundamental, sip, market, rand, pv, 1, min, max);
 	}
 	
 	

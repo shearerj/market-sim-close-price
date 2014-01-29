@@ -175,15 +175,15 @@ public class MAMarketMakerTest {
 
 		// Add quotes & execute agent strategy in between (without actually submitting orders)
 		int mktTime = 0;
-		addQuote(qp, 50, 60, 0, mktTime++);
+		addQuote(qp, 50, 60, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 52, 64, 0, mktTime++);
+		addQuote(qp, 52, 64, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 54, 68, 0, mktTime++);
+		addQuote(qp, 54, 68, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 56, 72, 0, mktTime++);
+		addQuote(qp, 56, 72, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 58, 76, 0, mktTime++);
+		addQuote(qp, 58, 76, 0, mktTime += 5);
 		mm.agentStrategy(time);
 
 		assertEquals(new Price(58), mm.lastBid);
@@ -336,11 +336,11 @@ public class MAMarketMakerTest {
 		// Add quotes & execute agent strategy in between (without actually submitting orders)
 		// FIXME This is not possible in the new system
 		int mktTime = 0;
-		addQuote(qp, 50, 60, 0, mktTime++);
+		addQuote(qp, 50, 60, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 52, 64, 0, mktTime++);
+		addQuote(qp, 52, 64, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 54, 68, 0, mktTime++);
+		addQuote(qp, 54, 68, 0, mktTime += 5);
 		mm.agentStrategy(time);
 
 		assertEquals(new Price(54), mm.lastBid);

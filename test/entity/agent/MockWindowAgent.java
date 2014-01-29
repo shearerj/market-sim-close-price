@@ -2,6 +2,8 @@ package entity.agent;
 
 import java.util.Random;
 
+import com.google.common.collect.Iterators;
+
 import systemmanager.Scheduler;
 
 import data.FundamentalValue;
@@ -11,18 +13,20 @@ import event.TimeStamp;
 
 public class MockWindowAgent extends WindowAgent {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -3770040793738482441L;
 
-	public MockWindowAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
-			int windowLength) {
-		this(scheduler, fundamental, sip, market, new PrivateValue(), 0, 0, windowLength);
+	public MockWindowAgent(Scheduler scheduler, FundamentalValue fundamental,
+			SIP sip, Market market, int windowLength) {
+		this(scheduler, fundamental, sip, market, new PrivateValue(), 0, 0,
+				windowLength);
 	}
-	
-	public MockWindowAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market, 
-			PrivateValue pv, int bidRangeMin, int bidRangeMax,
-			int windowLength) {
-		super(scheduler, TimeStamp.ZERO, fundamental, sip, market, new Random(), 0, 
-				pv, 1, bidRangeMin, bidRangeMax, windowLength);
+
+	public MockWindowAgent(Scheduler scheduler, FundamentalValue fundamental,
+			SIP sip, Market market, PrivateValue pv, int bidRangeMin,
+			int bidRangeMax, int windowLength) {
+		super(scheduler, TimeStamp.ZERO, fundamental, sip, market,
+				new Random(), Iterators.<TimeStamp> emptyIterator(), pv, 1,
+				bidRangeMin, bidRangeMax, windowLength);
 	}
 	
 }

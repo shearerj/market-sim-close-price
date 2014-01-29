@@ -7,9 +7,12 @@ import static logger.Logger.format;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
+import iterators.ExpInterarrivals;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -18,6 +21,7 @@ import systemmanager.Scheduler;
 import utils.Rands;
 import activity.SubmitNMSOrder;
 
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
@@ -72,16 +76,17 @@ public class AAAgent extends WindowAgent {
 	private double alphaMax; // max experienced value for alpha (for theta, not PV)
 	private double alphaMin; // min experienced value for alpha
 
-
-	public AAAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
-			Market market, Random rand, double reentryRate, double pvVar,
-			int tickSize, int maxAbsPosition, int bidRangeMin, int bidRangeMax,
-			boolean withdrawOrders, int windowLength, double aggression, 
-			double theta, double thetaMin, double thetaMax, int historical, 
-			int eta, double lambdaR, double lambdaA, double gamma, double betaR, 
-			double betaT, boolean buyerStatus) {
-		super(scheduler, arrivalTime, fundamental, sip, market, rand, reentryRate, 
-				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize, 
+	protected AAAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			Iterator<TimeStamp> interarrivalTimes, double pvVar, int tickSize,
+			int maxAbsPosition, int bidRangeMin, int bidRangeMax,
+			boolean withdrawOrders, int windowLength, double aggression,
+			double theta, double thetaMin, double thetaMax, int historical,
+			int eta, double lambdaR, double lambdaA, double gamma,
+			double betaR, double betaT, boolean buyerStatus) {
+		super(scheduler, arrivalTime, fundamental, sip, market, rand,
+				interarrivalTimes,
+				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize,
 				bidRangeMin, bidRangeMax, windowLength);
 
 		checkArgument(betaR > 0 && betaR < 1, "Beta for r must be in (0,1)");
@@ -114,6 +119,45 @@ public class AAAgent extends WindowAgent {
 		this.eta = eta;
 		this.betaR = betaR;		// paper randomizes to U[0.2, 0.6]
 		this.betaT = betaT;		// paper randomizes to U[0.2, 0.6]
+	}
+	
+	public AAAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			double reentryRate, double pvVar, int tickSize, int maxAbsPosition,
+			int bidRangeMin, int bidRangeMax, boolean withdrawOrders,
+			int windowLength, double aggression, double theta, double thetaMin,
+			double thetaMax, int historical, int eta, double lambdaR,
+			double lambdaA, double gamma, double betaR, double betaT,
+			boolean buyerStatus) {
+
+		this(scheduler, arrivalTime, fundamental, sip, market, rand,
+				new ExpInterarrivals(reentryRate, rand), pvVar, tickSize,
+				maxAbsPosition, bidRangeMin, bidRangeMax, withdrawOrders,
+				windowLength, aggression, theta, thetaMin, thetaMax,
+				historical, eta, lambdaR, lambdaA, gamma, betaR, betaT,
+				buyerStatus);
+
+	}
+
+	/**
+	 * AA that doesn't reenter
+	 */
+	AAAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			double pvVar, int tickSize, int maxAbsPosition,
+			int bidRangeMin, int bidRangeMax, boolean withdrawOrders,
+			int windowLength, double aggression, double theta, double thetaMin,
+			double thetaMax, int historical, int eta, double lambdaR,
+			double lambdaA, double gamma, double betaR, double betaT,
+			boolean buyerStatus) {
+
+		this(scheduler, arrivalTime, fundamental, sip, market, rand,
+				Iterators.<TimeStamp> emptyIterator(), pvVar, tickSize,
+				maxAbsPosition, bidRangeMin, bidRangeMax, withdrawOrders,
+				windowLength, aggression, theta, thetaMin, thetaMax,
+				historical, eta, lambdaR, lambdaA, gamma, betaR, betaT,
+				buyerStatus);
+
 	}
 
 	public AAAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 

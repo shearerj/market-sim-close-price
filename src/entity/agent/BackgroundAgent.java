@@ -5,7 +5,6 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
-import iterators.ExpInterarrivals;
 
 import java.util.Iterator;
 import java.util.Random;
@@ -14,9 +13,6 @@ import systemmanager.Consts.DiscountFactor;
 import systemmanager.Scheduler;
 import utils.Rands;
 import activity.SubmitNMSOrder;
-
-import com.google.common.collect.Iterators;
-
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
@@ -52,26 +48,6 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		this.surplus = DiscountedValue.create();
 		this.bidRangeMin = bidRangeMin;
 		this.bidRangeMax = bidRangeMax;
-	}
-
-	/**
-	 * Shortcut constructor for exponential interarrivals (e.g. Poisson reentries)
-	 */
-	public BackgroundAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			Market market, Random rand, double reentryRate, PrivateValue pv,
-			int tickSize, int bidRangeMin, int bidRangeMax) {
-		this(scheduler, arrivalTime, fundamental, sip, market, rand, new ExpInterarrivals(reentryRate, rand),
-				pv, tickSize, bidRangeMin, bidRangeMax);
-	}
-	
-	/**
-	 * Shortcut constructor for Backgroudn agent that doesn't reenter.
-	 */
-	BackgroundAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			Market market, Random rand, PrivateValue pv,
-			int tickSize, int bidRangeMin, int bidRangeMax) {
-		this(scheduler, arrivalTime, fundamental, sip, market, rand, Iterators.<TimeStamp> emptyIterator(),
-				pv, tickSize, bidRangeMin, bidRangeMax);
 	}
 	
 	/**

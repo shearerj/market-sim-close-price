@@ -3,7 +3,6 @@ package entity.agent;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -18,20 +17,15 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import activity.Activity;
+import systemmanager.Consts;
+import systemmanager.Executor;
 import activity.AgentStrategy;
 import activity.Clear;
 import activity.ProcessQuote;
 import activity.SubmitOrder;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 
-import systemmanager.Consts;
-import systemmanager.Executor;
-import systemmanager.Scheduler;
-import systemmanager.Keys;
-import data.EntityProperties;
 import data.FundamentalValue;
 import data.MockFundamental;
 import entity.infoproc.BestBidAsk;
@@ -79,11 +73,11 @@ public class WMAMarketMakerTest {
 	public void nullBidAsk() {
 		// testing when no bid/ask, does not submit any orders
 		TimeStamp time = TimeStamp.ZERO;
-		MarketMaker mm = createWMAMM(2, 10, false, 1, 5, 0.99);
+		MarketMaker mm = createWMAMM(2, 10, false, 1, 5, 0);
 		
 		// Check activities inserted (none, other than reentry)
 		mm.agentStrategy(time);
-		assertFalse(exec.isEmpty()); // I don't think this is a valid test
+		assertTrue(exec.isEmpty());
 	}
 	
 	/**
@@ -130,16 +124,11 @@ public class WMAMarketMakerTest {
 	 */
 	@Test
 	public void withdrawUndefinedTest() {
-		TimeStamp time = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
-
 		MarketMaker marketmaker = createWMAMM(3, 5, true, 1, 5, 0);
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
-		// Creating and adding bids
-		Scheduler em = new Scheduler(new Random());
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
 
@@ -192,15 +181,15 @@ public class WMAMarketMakerTest {
 		
 		// Add quotes & execute agent strategy in between (without actually submitting orders)
 		int mktTime = 0;
-		addQuote(qp, 50, 60, 0, mktTime++);
+		addQuote(qp, 50, 60, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 52, 64, 0, mktTime++);
+		addQuote(qp, 52, 64, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 54, 68, 0, mktTime++);
+		addQuote(qp, 54, 68, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 56, 72, 0, mktTime++);
+		addQuote(qp, 56, 72, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 58, 76, 0, mktTime++);
+		addQuote(qp, 58, 76, 0, mktTime += 5);
 		mm.agentStrategy(time);
 		
 		assertEquals(new Price(58), mm.lastBid);
@@ -247,15 +236,15 @@ public class WMAMarketMakerTest {
 		
 		// Add quotes & execute agent strategy in between (without actually submitting orders)
 		int mktTime = 0;
-		addQuote(qp, 50, 60, 0, mktTime++);
+		addQuote(qp, 50, 60, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 52, 64, 0, mktTime++);
+		addQuote(qp, 52, 64, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 54, 68, 0, mktTime++);
+		addQuote(qp, 54, 68, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 56, 72, 0, mktTime++);
+		addQuote(qp, 56, 72, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 58, 76, 0, mktTime++);
+		addQuote(qp, 58, 76, 0, mktTime += 5);
 		mm.agentStrategy(time);
 		
 		assertEquals(new Price(58), mm.lastBid);
@@ -365,8 +354,6 @@ public class WMAMarketMakerTest {
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
-		// Creating and adding bids
-		Scheduler em = new Scheduler(new Random());
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
 		exec.executeActivity(new Clear(market));
@@ -418,9 +405,9 @@ public class WMAMarketMakerTest {
 
 		// Add quotes & execute agent strategy in between (without actually submitting orders)
 		int mktTime = 0;
-		addQuote(qp, 50000, 60000, 0, mktTime++);
+		addQuote(qp, 50000, 60000, 0, mktTime += 3);
 		mm.agentStrategy(time);
-		addQuote(qp, 52000, 64000, 0, mktTime++);
+		addQuote(qp, 52000, 64000, 0, mktTime += 3);
 		mm.agentStrategy(time);
 
 		assertEquals(new Price(52000), mm.lastBid);
@@ -454,16 +441,12 @@ public class WMAMarketMakerTest {
 	 */
 	@Test
 	public void rungsTest() {
-		TimeStamp time = TimeStamp.ZERO;
-
 		MarketMaker marketmaker = createWMAMM(3, 12, false, 5, 5, 0.9);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
-		// Creating and adding bids
-		Scheduler em = new Scheduler(new Random());
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
 		exec.executeActivity(new Clear(market));
@@ -526,8 +509,6 @@ public class WMAMarketMakerTest {
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
-		Scheduler em = new Scheduler(new Random());
-
 		// Creating and adding bids
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(102), 1));
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(105), 1));
@@ -584,8 +565,6 @@ public class WMAMarketMakerTest {
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
-
-		Scheduler em = new Scheduler(new Random());
 
 		// Creating and adding bids
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(70), 1));
