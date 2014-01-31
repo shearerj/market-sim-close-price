@@ -14,14 +14,14 @@ public class MockMarketMaker extends MarketMaker {
 
 	public MockMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			int numRungs, int rungSize) {
-		this(fundamental, sip, market, false, numRungs, rungSize, false);
+		this(fundamental, sip, market, false, numRungs, rungSize, false, false, true);
 	}
 	
 	public MockMarketMaker(FundamentalValue fundamental, SIP sip,
 			Market market, boolean noOp, int numRungs, int rungSize, 
-			boolean truncateLadder) {
+			boolean truncateLadder, boolean tickImprovement, boolean tickInside) {
 		super(fundamental, sip, market, new Random(), 0, 1, noOp, 
-				numRungs, rungSize, truncateLadder, false);
+				numRungs, rungSize, truncateLadder, tickImprovement, tickInside);
 	}
 	
 	public MockMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
@@ -30,7 +30,9 @@ public class MockMarketMaker extends MarketMaker {
 				props.getAsBoolean(Keys.NO_OP, false),
 				props.getAsInt(Keys.NUM_RUNGS, 10),
 				props.getAsInt(Keys.RUNG_SIZE, 1000), 
-				props.getAsBoolean(Keys.TRUNCATE_LADDER, true));
+				props.getAsBoolean(Keys.TRUNCATE_LADDER, true),
+				props.getAsBoolean(Keys.TICK_IMPROVEMENT, false),
+				props.getAsBoolean(Keys.TICK_INSIDE, true));
 	}
 
 	@Override

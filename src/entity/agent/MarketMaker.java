@@ -31,7 +31,11 @@ import event.TimeStamp;
  * 
  * If its ladder will start exactly at where the current bid/ask
  * are, and it employs a "tick-improvement rule," it will submit a ladder with
- * the ladder mid-prices offset by 1 tick.
+ * the ladder mid-prices offset by 1 tick. If tickImprovement is true, it will
+ * check tickInside as well.
+ * 
+ * Inside the quote means buy > BID, sell < ASK. Note that tickInside will be 
+ * ignored if there tickImprovement is false.
  * 
  * NOTE: The MarketMaker will truncate the ladder when the price crosses
  * the NBBO, i.e., whenever one of the points in the bid would be routed to
@@ -46,17 +50,18 @@ public abstract class MarketMaker extends ReentryAgent {
 
 	private static final long serialVersionUID = -782740037969385370L;
 
-	protected int stepSize;			// rung size is distance between adjacent rungs in ladder
-	protected int numRungs;			// # of ladder rungs on one side (e.g., number of buy orders)
+	protected int stepSize;				// rung size is distance between adjacent rungs in ladder
+	protected int numRungs;				// # of ladder rungs on one side (e.g., number of buy orders)
 	protected boolean truncateLadder; 	// true if truncate if NBBO crosses ladder
 	protected boolean tickImprovement;	// true if improves by a tick when mid-prices == bid/ask
+	protected boolean tickInside;		// true if improve tick inside the quote (default outside)
 	protected boolean noOp;				// true if no-op strategy (never executes strategy)
-	protected Price lastAsk, lastBid; // stores the last ask/bid, respectively
+	protected Price lastAsk, lastBid; 	// stores the last ask/bid, respectively
 
 	public MarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, Iterator<TimeStamp> reentry, int tickSize, 
 			boolean noOp, int numRungs, int rungSize, boolean truncateLadder, 
-			boolean tickImprovement) {
+			boolean tickImprovement, boolean tickInside) {
 		super(TimeStamp.ZERO, fundamental, sip, market, rand, reentry, tickSize);
 		checkArgument(numRungs > 0, "Number of rungs must be positive!");
 		this.noOp = noOp;
@@ -64,6 +69,7 @@ public abstract class MarketMaker extends ReentryAgent {
 		this.stepSize = MathUtils.quantize(rungSize, tickSize);
 		this.truncateLadder = truncateLadder;
 		this.tickImprovement = tickImprovement;
+		this.tickInside = tickInside;
 		this.lastAsk = null;
 		this.lastBid = null;
 	}
@@ -74,9 +80,10 @@ public abstract class MarketMaker extends ReentryAgent {
 	public MarketMaker(FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, double reentryRate, int tickSize, 
 			boolean noOp, int numRungs, int rungSize, boolean truncateLadder,
-			boolean tickImprovement) {
+			boolean tickImprovement, boolean tickInside) {
 		this(fundamental, sip, market, rand, new ExpInterarrivals(reentryRate, rand),
-				tickSize, noOp, numRungs, rungSize, truncateLadder, tickImprovement);
+				tickSize, noOp, numRungs, rungSize, truncateLadder, 
+				tickImprovement, tickInside);
 	}
 
 	/**
@@ -89,7 +96,6 @@ public abstract class MarketMaker extends ReentryAgent {
 	 * @param sellMinPrice
 	 * @param sellMaxPrice
 	 * @param currentTime
-	 * 
 	 * @return
 	 */
 	public Iterable<? extends Activity> submitOrderLadder(Price buyMinPrice,
@@ -146,14 +152,18 @@ public abstract class MarketMaker extends ReentryAgent {
 		Builder<Activity> acts = ImmutableList.<Activity> builder();
 
 		// Tick improvement
-		if (this.getQuote().getBidPrice() != null)
-			ladderBid = new Price(ladderBid.intValue() - 
-					(getQuote().getBidPrice().equals(ladderBid) 
-							&& tickImprovement ? tickSize : 0));
-		if (this.getQuote().getAskPrice() != null)
-			ladderAsk = new Price(ladderAsk.intValue() + 
-					(getQuote().getAskPrice().equals(ladderAsk) 
-							&& tickImprovement ? tickSize: 0));
+		if (this.getQuote().getBidPrice() != null) {
+			Price bid = getQuote().getBidPrice();
+			ladderBid = new Price(ladderBid.intValue() + 
+					(bid.equals(ladderBid) && tickImprovement ? 
+							(tickInside ? -1 : 1) * tickSize : 0));
+		}
+		if (this.getQuote().getAskPrice() != null) {
+			Price ask = getQuote().getAskPrice();
+			ladderAsk = new Price(ladderAsk.intValue() +  
+					(ask.equals(ladderAsk) && tickImprovement ? 
+							(tickInside ? 1 : -1) * tickSize: 0));
+		}
 
 		int ct = (numRungs-1) * stepSize;
 
@@ -170,10 +180,10 @@ public abstract class MarketMaker extends ReentryAgent {
 		// check if the bid or ask crosses the NBBO, if truncating ladder
 		if (truncateLadder) {
 			BestBidAsk lastNBBOQuote = this.getNBBO();
-			
+
 			sb.append(" Truncating ladder (").append(buyMaxPrice).append(", ")	
 			.append(sellMinPrice).append(")-->(");
-			
+
 			// buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N]
 			if (lastNBBOQuote.getBestAsk() != null)
 				buyMaxPrice = pcomp.min(ladderBid, lastNBBOQuote.getBestAsk());

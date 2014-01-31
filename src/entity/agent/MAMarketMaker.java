@@ -41,9 +41,9 @@ public class MAMarketMaker extends MarketMaker {
 	public MAMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, double reentryRate, int tickSize, boolean noOp,
 			int numRungs, int rungSize, boolean truncateLadder, 
-			boolean tickImprovement, int numHistorical) {
+			boolean tickImprovement, boolean tickInside, int numHistorical) {
 		super(fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
-				numRungs, rungSize, truncateLadder, tickImprovement);
+				numRungs, rungSize, truncateLadder, tickImprovement, tickInside);
 
 		checkArgument(numHistorical > 0, "Number of historical prices must be positive!");
 		bidQueue = EvictingQueue.create(numHistorical);
@@ -60,6 +60,7 @@ public class MAMarketMaker extends MarketMaker {
 				props.getAsInt(Keys.RUNG_SIZE, 1000), 
 				props.getAsBoolean(Keys.TRUNCATE_LADDER, true),
 				props.getAsBoolean(Keys.TICK_IMPROVEMENT, true),
+				props.getAsBoolean(Keys.TICK_INSIDE, true),
 				props.getAsInt(Keys.NUM_HISTORICAL, 5));
 	}
 	

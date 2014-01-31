@@ -50,9 +50,9 @@ public class BasicMarketMaker extends MarketMaker {
 	public BasicMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, double reentryRate, int tickSize, boolean noOp,
 			int numRungs, int rungSize, boolean truncateLadder, 
-			boolean tickImprovement) {
+			boolean tickImprovement, boolean tickInside) {
 		super(fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
-				numRungs, rungSize, truncateLadder, tickImprovement);	
+				numRungs, rungSize, truncateLadder, tickImprovement, tickInside);	
 	}
 
 	public BasicMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
@@ -64,7 +64,8 @@ public class BasicMarketMaker extends MarketMaker {
 				props.getAsInt(Keys.NUM_RUNGS, 10),
 				props.getAsInt(Keys.RUNG_SIZE, 1000), 
 				props.getAsBoolean(Keys.TRUNCATE_LADDER, true), 
-				props.getAsBoolean(Keys.TICK_IMPROVEMENT, true));
+				props.getAsBoolean(Keys.TICK_IMPROVEMENT, true),
+				props.getAsBoolean(Keys.TICK_INSIDE, true));
 	}
 
 	@Override

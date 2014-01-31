@@ -64,6 +64,7 @@ public interface Keys {
 	public final static String RUNG_SIZE = "rungSize";
 	public final static String TRUNCATE_LADDER = "truncateLadder";
 	public final static String TICK_IMPROVEMENT = "tickImprovement";
+	public final static String TICK_INSIDE = "tickInside";
 	
 	// AAAgent
 	public final static String ETA = "eta";
