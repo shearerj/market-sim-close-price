@@ -124,6 +124,7 @@ public class MarketMakerTest {
 				setupProperties(2, 5, false));
 		mm.stepSize = 5;
 		mm.tickImprovement = true;
+		mm.tickInside = true; // default
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -175,7 +176,83 @@ public class MarketMakerTest {
 			if (o.getOrderType() == SELL) 
 				assertTrue(price == 51 || price == 56);
 			else
-				assertTrue(price == 34 || price == 34);
+				assertEquals(34, price);
+		}
+	}
+	
+	@Test
+	public void tickOutside() {
+		TimeStamp time = TimeStamp.ZERO;
+		MarketMaker mm = new MockMarketMaker(fundamental, sip, market, 
+				setupProperties(2, 5, false));
+		mm.stepSize = 5;
+		mm.tickImprovement = true;
+		mm.tickInside = false;
+
+		// Creating dummy agents
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+
+		// Creating and adding bids
+		EventManager em = new EventManager(new Random());
+		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
+		em.executeUntil(new TimeStamp(1));
+		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1, time));
+		em.addActivity(new Clear(market, time));
+		em.executeUntil(new TimeStamp(1));
+
+		Iterable<? extends Activity> acts = mm.createOrderLadder(new Price(40),
+				new Price(50), TimeStamp.ZERO);
+		for (Activity a : acts) a.execute(TimeStamp.ZERO);
+		assertEquals("Incorrect number of orders", 4, mm.activeOrders.size());
+		for (Order o : mm.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == SELL) 
+				assertTrue(price == 49 || price == 54);
+			else
+				assertTrue(price == 41 || price == 36);
+		}
+	}
+	
+	@Test
+	public void truncateLadderTickImprovementOutside() {
+		TimeStamp time = TimeStamp.ZERO;
+		SIP sip = new SIP(new TimeStamp(10));
+		MarketMaker mm = new MockMarketMaker(fundamental, sip, market, 
+				setupProperties(2, 5, true));
+		mm.stepSize = 5;
+		mm.tickImprovement = true;
+		mm.tickInside = false;
+
+		// Creating dummy agents
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+
+		// Creating and adding bids
+		EventManager em = new EventManager(new Random());
+		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
+		em.executeUntil(new TimeStamp(1));
+		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1, time));
+		em.addActivity(new Clear(market, time));
+		em.executeUntil(new TimeStamp(1));
+
+		// Updating NBBO quote (this will update immed, although SIP is delayed)
+		MockMarket market2 = new MockMarket(sip);
+		Quote q = new Quote(market2, new Price(30), 1, new Price(38), 1, time);
+		em.addActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q, 
+				time));
+		em.executeUntil(new TimeStamp(1));
+
+		Iterable<? extends Activity> acts = mm.createOrderLadder(new Price(40),
+				new Price(50), TimeStamp.ZERO);
+		for (Activity a : acts) a.execute(TimeStamp.ZERO);
+		assertEquals("Incorrect number of orders", 3, mm.activeOrders.size());
+		for (Order o : mm.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == SELL) 
+				assertTrue(price == 49 || price == 54);
+			else
+				assertEquals(36, price);
 		}
 	}
 }

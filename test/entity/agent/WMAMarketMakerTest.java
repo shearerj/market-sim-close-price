@@ -65,7 +65,7 @@ public class WMAMarketMakerTest {
 			boolean truncateLadder, int tickSize, int numHistorical,
 			double weightFactor) {
 		return new WMAMarketMaker(exec, fundamental, sip, market, new Random(),
-				tickSize, false, numRungs, rungSize, truncateLadder, false,
+				tickSize, false, numRungs, rungSize, truncateLadder, false, true,
 				numHistorical, weightFactor);
 	}
 	

@@ -46,10 +46,10 @@ public class BasicMarketMaker extends MarketMaker {
 
 	public BasicMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, double reentryRate, int tickSize, boolean noOp,
-			int numRungs, int rungSize, boolean truncateLadder, 
-			boolean tickImprovement) {
+			int numRungs, int rungSize, boolean truncateLadder,
+			boolean tickImprovement, boolean tickInside) {
 		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
-				numRungs, rungSize, truncateLadder, tickImprovement);	
+				numRungs, rungSize, truncateLadder, tickImprovement, tickInside);	
 	}
 	
 	/**
@@ -58,9 +58,9 @@ public class BasicMarketMaker extends MarketMaker {
 	BasicMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, int tickSize, boolean noOp,
 			int numRungs, int rungSize, boolean truncateLadder, 
-			boolean tickImprovement) {
+			boolean tickImprovement, boolean tickInside) {
 		super(scheduler, fundamental, sip, market, rand, tickSize, noOp, 
-				numRungs, rungSize, truncateLadder, tickImprovement);	
+				numRungs, rungSize, truncateLadder, tickImprovement, tickInside);
 	}
 
 	public BasicMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
@@ -72,7 +72,8 @@ public class BasicMarketMaker extends MarketMaker {
 				props.getAsInt(Keys.NUM_RUNGS, 10),
 				props.getAsInt(Keys.RUNG_SIZE, 1000), 
 				props.getAsBoolean(Keys.TRUNCATE_LADDER, true), 
-				props.getAsBoolean(Keys.TICK_IMPROVEMENT, true));
+				props.getAsBoolean(Keys.TICK_IMPROVEMENT, true),
+				props.getAsBoolean(Keys.TICK_INSIDE, true));
 	}
 
 	@Override

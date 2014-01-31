@@ -60,7 +60,7 @@ public class BasicMarketMakerTest {
 			boolean truncateLadder, int tickSize) {
 		return new BasicMarketMaker(exec, fundamental, sip, market,
 				new Random(), tickSize, false, numRungs, rungSize,
-				truncateLadder, false);
+				truncateLadder, false, true);
 	}
 
 	@Test
