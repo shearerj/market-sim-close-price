@@ -43,7 +43,7 @@ public class ReentryAgentTest {
 	
 	@Test
 	public void reentryTest() {
-		TimeStamp time = new TimeStamp(100);
+		TimeStamp time = TimeStamp.create(100);
 		FundamentalValue fundamental = new MockFundamental(100000);
 		
 		MockReentryAgent agent = new MockReentryAgent(exec, fundamental, sip, market, new Random(), 0.1, 1);
@@ -64,7 +64,7 @@ public class ReentryAgentTest {
 	// FIXME This test doesn't make sense. Rate 0 shouldn't be allowed.
 //	@Test
 //	public void reentryRateZeroTest() {
-//		TimeStamp time = new TimeStamp(100);
+//		TimeStamp time = TimeStamp.create(100);
 //		FundamentalValue fundamental = new MockFundamental(100000);
 //		
 //		// Test reentries - note should never iterate past INFINITE b/c it 

@@ -62,7 +62,7 @@ public class OrderParserNYSE implements OrderParser {
 		int quantity = lineScanner.nextInt();
 		String stockSymbol = lineScanner.next();
 		Price price = new Price(lineScanner.nextDouble());
-		TimeStamp timestamp = new TimeStamp(lineScanner.nextInt() + 
+		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() + 
 				lineScanner.nextInt() * 1000);
 		char systemCode = lineScanner.next().charAt(0);
 		String quoteId = lineScanner.next();
@@ -77,7 +77,7 @@ public class OrderParserNYSE implements OrderParser {
 	public OrderDatum parseDeleteOrder(Scanner lineScanner) {
 		String sequenceNum = lineScanner.next();
 		String orderReferenceNum = lineScanner.next();
-		TimeStamp timestamp = new TimeStamp(lineScanner.nextInt() + 
+		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() + 
 				lineScanner.nextInt() * 1000);
 		String stockSymbol = lineScanner.next();
 		char exchangeCode = lineScanner.next().charAt(0);
@@ -101,7 +101,7 @@ public class OrderParserNYSE implements OrderParser {
 		String orderReferenceNum = lineScanner.next();
 		int quantity = lineScanner.nextInt();
 		Price price = new Price(lineScanner.nextDouble());
-		TimeStamp timestamp = new TimeStamp(lineScanner.nextInt() + 
+		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() + 
 				lineScanner.nextInt() * 1000);
 		String stockSymbol = lineScanner.next();
 		char exchangeCode = lineScanner.next().charAt(0);
@@ -123,7 +123,7 @@ public class OrderParserNYSE implements OrderParser {
 		Price price = new Price(lineScanner.nextDouble());
 		int quantity = lineScanner.nextInt();
 		int totalImbalance = lineScanner.nextInt();
-		TimeStamp timestamp = new TimeStamp(lineScanner.nextInt() + 
+		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() + 
 				lineScanner.nextInt() * 1000);
 		int marketImbalance = lineScanner.nextInt();
 		char auctionType = lineScanner.next().charAt(0);

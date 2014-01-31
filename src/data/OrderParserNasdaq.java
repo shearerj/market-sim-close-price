@@ -78,7 +78,7 @@ public class OrderParserNasdaq implements OrderParser {
 	}
 
 	public OrderDatum parseAddOrder(Scanner lineScanner) {
-		TimeStamp timestamp = new TimeStamp(lineScanner.nextInt() * 1000
+		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() * 1000
 				+ lineScanner.nextInt());
 		String orderReferenceNum = lineScanner.next();
 		OrderType type = (lineScanner.next().charAt(0) == 'B') ? BUY : SELL;
@@ -102,7 +102,7 @@ public class OrderParserNasdaq implements OrderParser {
 	}
 
 	public OrderDatum parseDeleteOrder(Scanner lineScanner) {
-		TimeStamp timestamp = new TimeStamp(lineScanner.nextInt() * 1000
+		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() * 1000
 				+ lineScanner.nextInt());
 		String orderReferenceNum = lineScanner.next();
 
@@ -125,7 +125,7 @@ public class OrderParserNasdaq implements OrderParser {
 	}
 
 	public OrderDatum parseModifyOrder(Scanner lineScanner) {
-		TimeStamp timestamp = new TimeStamp(lineScanner.nextInt() * 1000
+		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() * 1000
 				+ lineScanner.nextInt());
 		String originalOrderReferenceNum = lineScanner.next();
 		// String newOrderReferenceNum = lineScanner.next(); // XXX not used
@@ -152,7 +152,7 @@ public class OrderParserNasdaq implements OrderParser {
 		Price price = new Price(lineScanner.nextDouble());
 		int quantity = lineScanner.nextInt();
 		int totalImbalance = lineScanner.nextInt();
-		TimeStamp timestamp = new TimeStamp(lineScanner.nextInt() * 1000
+		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() * 1000
 				+ lineScanner.nextInt());
 		int marketImbalance = lineScanner.nextInt();
 		char auctionType = lineScanner.next().charAt(0);

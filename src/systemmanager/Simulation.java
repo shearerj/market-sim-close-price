@@ -71,8 +71,8 @@ public class Simulation {
 		Collection<AgentProperties> agentProps = spec.getAgentProps();
 		JsonObject playerConfig = spec.getPlayerProps();
 
-		this.simulationLength = new TimeStamp(simProps.getAsLong(Keys.SIMULATION_LENGTH));
-		TimeStamp lastTime = new TimeStamp(simulationLength.getInTicks() - 1); // Last time to schedule something.
+		this.simulationLength = TimeStamp.create(simProps.getAsLong(Keys.SIMULATION_LENGTH));
+		TimeStamp lastTime = TimeStamp.create(simulationLength.getInTicks() - 1); // Last time to schedule something.
 
 		this.fundamental = new FundamentalValue(
 				simProps.getAsDouble(Keys.FUNDAMENTAL_KAPPA),
@@ -80,7 +80,7 @@ public class Simulation {
 				simProps.getAsDouble(Keys.FUNDAMENTAL_SHOCK_VAR),
 				new Random(rand.nextLong()));
 		this.scheduler = new Scheduler(new Random(rand.nextLong()));
-		this.sip = new SIP(scheduler, new TimeStamp(simProps.getAsInt(Keys.NBBO_LATENCY)));
+		this.sip = new SIP(scheduler, TimeStamp.create(simProps.getAsInt(Keys.NBBO_LATENCY)));
 		this.markets = setupMarkets(marketProps, rand);
 		this.agents = setupAgents(agentProps, rand);
 		this.players = setupPlayers(simProps, playerConfig, rand);

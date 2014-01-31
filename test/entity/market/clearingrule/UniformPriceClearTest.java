@@ -23,8 +23,8 @@ public class UniformPriceClearTest {
 		ClearingRule cr = new UniformPriceClear(0.5, 1);
 		
 		MatchedOrders<Price, MarketTime, Order> match1 = createOrderPair(
-				new Price(110), 1, new TimeStamp(100), 
-				new Price(100), 1, new TimeStamp(105));
+				new Price(110), 1, TimeStamp.create(100), 
+				new Price(100), 1, TimeStamp.create(105));
 		list.add(match1);
 
 		Map<MatchedOrders<Price, MarketTime, Order>, Price> result = cr.pricing(list);
@@ -39,8 +39,8 @@ public class UniformPriceClearTest {
 		ClearingRule cr = new UniformPriceClear(1, 1);
 		
 		MatchedOrders<Price, MarketTime, Order> match1 = createOrderPair(
-				new Price(110), 1, new TimeStamp(100), 
-				new Price(100), 1, new TimeStamp(105));
+				new Price(110), 1, TimeStamp.create(100), 
+				new Price(100), 1, TimeStamp.create(105));
 		list.add(match1);
 
 		Map<MatchedOrders<Price, MarketTime, Order>,Price> result = cr.pricing(list);
@@ -60,13 +60,13 @@ public class UniformPriceClearTest {
 		ArrayList<MatchedOrders<Price, MarketTime, Order>> list = new ArrayList<MatchedOrders<Price, MarketTime, Order>>();
 		
 		MatchedOrders<Price, MarketTime, Order> match1 = createOrderPair(
-				new Price(110), 1, new TimeStamp(100), 
-				new Price(100), 1, new TimeStamp(105));
+				new Price(110), 1, TimeStamp.create(100), 
+				new Price(100), 1, TimeStamp.create(105));
 		list.add(match1);
 		
 		MatchedOrders<Price, MarketTime, Order> match2 = createOrderPair(
-				new Price(110), 1, new TimeStamp(105), 
-				new Price(100), 1, new TimeStamp(100));
+				new Price(110), 1, TimeStamp.create(105), 
+				new Price(100), 1, TimeStamp.create(100));
 		list.add(match2);
 				
 		Map<MatchedOrders<Price, MarketTime, Order>,Price> result = cr.pricing(list);
@@ -76,11 +76,11 @@ public class UniformPriceClearTest {
 		
 		// Testing second set of prices
 		list.clear();
-		match1 = createOrderPair(new Price(110), 1, new TimeStamp(100), 
-								 new Price(105), 1, new TimeStamp(105));
+		match1 = createOrderPair(new Price(110), 1, TimeStamp.create(100), 
+								 new Price(105), 1, TimeStamp.create(105));
 		list.add(match1);
-		match2 = createOrderPair(new Price(104), 1, new TimeStamp(101), 
-								 new Price(108), 1, new TimeStamp(102));
+		match2 = createOrderPair(new Price(104), 1, TimeStamp.create(101), 
+								 new Price(108), 1, TimeStamp.create(102));
 		list.add(match2);
 		result = cr.pricing(list);
 		// Verify that for multiple orders, clears at correct midpoint price (policy=0.5)

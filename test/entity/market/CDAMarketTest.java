@@ -50,7 +50,7 @@ public class CDAMarketTest {
 
 	@Test
 	public void addBid() {
-		TimeStamp time = new TimeStamp(0);
+		TimeStamp time = TimeStamp.create(0);
 
 		// Creating the agent
 		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -79,7 +79,7 @@ public class CDAMarketTest {
 
 	@Test
 	public void addAsk() {
-		TimeStamp time = new TimeStamp(0);
+		TimeStamp time = TimeStamp.create(0);
 		
 		//Creating the agent
 		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -122,7 +122,7 @@ public class CDAMarketTest {
 
 	@Test
 	public void basicEqualClear() {
-		TimeStamp time = new TimeStamp(0);
+		TimeStamp time = TimeStamp.create(0);
 		
 		//Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -148,8 +148,8 @@ public class CDAMarketTest {
 
 	@Test
 	public void basicOverlapClear() {
-		TimeStamp time = new TimeStamp(0);
-		TimeStamp time2 = new TimeStamp(1);
+		TimeStamp time = TimeStamp.create(0);
+		TimeStamp time2 = TimeStamp.create(1);
 		
 		//Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -200,9 +200,9 @@ public class CDAMarketTest {
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		
 		// Creating and adding bids (existing orders at buy@100, sell@175)
-		market.submitOrder(agent1, BUY, new Price(150), 1, time.plus(new TimeStamp(1)));
-		market.submitOrder(agent4, SELL, new Price(75), 1, time.plus(new TimeStamp(2)));
-		market.clear(time.plus(new TimeStamp(2)));
+		market.submitOrder(agent1, BUY, new Price(150), 1, time.plus(TimeStamp.create(1)));
+		market.submitOrder(agent4, SELL, new Price(75), 1, time.plus(TimeStamp.create(2)));
+		market.clear(time.plus(TimeStamp.create(2)));
 		
 		// Testing the market for the correct transactions
 		// agent 1 and 4 still trade even though buy@100 also crosses sell@75 
@@ -263,7 +263,7 @@ public class CDAMarketTest {
 	@Test
 	public void partialQuantity() {
 		TimeStamp time = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
+		TimeStamp time1 = TimeStamp.create(1);
 		
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -292,7 +292,7 @@ public class CDAMarketTest {
 	@Test
 	public void multiQuantity() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
+		TimeStamp time1 = TimeStamp.create(1);
 
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -320,7 +320,7 @@ public class CDAMarketTest {
 	@Test
 	public void basicWithdraw() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
+		TimeStamp time1 = TimeStamp.create(1);
 
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -366,8 +366,8 @@ public class CDAMarketTest {
 	 */
 	@Test
 	public void basicWithdrawClear() {
-		TimeStamp time1 = new TimeStamp(1);
-		TimeStamp time2 = new TimeStamp(2);
+		TimeStamp time1 = TimeStamp.create(1);
+		TimeStamp time2 = TimeStamp.create(2);
 
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -443,7 +443,7 @@ public class CDAMarketTest {
 		assertEquals("Incorrect ASK quantity",  1,  q.askQuantity );
 		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
 
-		exec.setTime(new TimeStamp(1));
+		exec.setTime(TimeStamp.create(1));
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
 		exec.executeActivity(new SubmitOrder(agent2, market, BUY, new Price(155), 1));
 		exec.executeActivity(new SubmitOrder(agent2, market, BUY, new Price(155), 2));
@@ -470,8 +470,8 @@ public class CDAMarketTest {
 	@Test
 	public void priceTimeTest() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
-		TimeStamp time2 = new TimeStamp(2);
+		TimeStamp time1 = TimeStamp.create(1);
+		TimeStamp time2 = TimeStamp.create(2);
 
 		MockBackgroundAgent agent0 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -604,12 +604,12 @@ public class CDAMarketTest {
 	@Test
 	public void latencyTest() {
 		Quote quote;
-		CDAMarket market = new CDAMarket(exec, sip, new Random(), new TimeStamp(100), 1);
+		CDAMarket market = new CDAMarket(exec, sip, new Random(), TimeStamp.create(100), 1);
 
 		// Test that before Time 100 nothing has been updated
 		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
 		exec.executeActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1));
-		exec.executeUntil(new TimeStamp(100));
+		exec.executeUntil(TimeStamp.create(100));
 		
 		quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
@@ -618,7 +618,7 @@ public class CDAMarketTest {
 		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
 		
 		// Test that after 100 they did get updated
-		exec.executeUntil(new TimeStamp(101));
+		exec.executeUntil(TimeStamp.create(101));
 		
 		quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());

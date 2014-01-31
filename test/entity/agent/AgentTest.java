@@ -62,7 +62,7 @@ public class AgentTest {
 		
 		// test adding and removing orders
 		market.submitOrder(agent, BUY, new Price(100), 1, time);
-		market.submitOrder(agent, SELL, new Price(50), 2, time.plus(new TimeStamp(1)));
+		market.submitOrder(agent, SELL, new Price(50), 2, time.plus(TimeStamp.create(1)));
 		Collection<Order> orders = agent.activeOrders;
 		Order order = Iterables.getFirst(orders, null);
 		// Note: nondeterministic which order is "first" so need to check
@@ -71,7 +71,7 @@ public class AgentTest {
 			assertEquals(BUY, order.getOrderType());
 			assertEquals(new Price(100), order.getPrice());
 			assertEquals(1, order.getQuantity());
-		} else if (order.getSubmitTime().equals(new TimeStamp(1))) {
+		} else if (order.getSubmitTime().equals(TimeStamp.create(1))) {
 			assertEquals(SELL, order.getOrderType());
 			assertEquals(new Price(50), order.getPrice());
 			assertEquals(2, order.getQuantity());
@@ -83,7 +83,7 @@ public class AgentTest {
 		assertTrue("Agent does not know about buy order", agent.activeOrders.contains(order));
 		
 		// Test that remove works correctly
-		market.withdrawOrder(order, new TimeStamp(1));
+		market.withdrawOrder(order, TimeStamp.create(1));
 		orders = agent.activeOrders;
 		assertEquals(1, orders.size());
 		assertTrue("Order was not removed", !agent.activeOrders.contains(order));
@@ -102,7 +102,7 @@ public class AgentTest {
 	@Test
 	public void withdrawOrder() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
+		TimeStamp time1 = TimeStamp.create(1);
 		
 		exec.scheduleActivity(time0, new SubmitOrder(agent, market, BUY, new Price(100), 1));
 		exec.executeUntil(time1.plus(time1));
@@ -138,11 +138,11 @@ public class AgentTest {
 		// withdraw order when quotes are delayed
 		
 		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(10);
+		TimeStamp time1 = TimeStamp.create(10);
 		
 		MockMarket market2 = new MockMarket(exec, sip, time1);
 		exec.scheduleActivity(time0, new SubmitOrder(agent, market2, BUY, new Price(100), 1));
-		exec.executeUntil(new TimeStamp(1));
+		exec.executeUntil(TimeStamp.create(1));
 		
 		// Verify orders added correctly
 		Collection<Order> orders = agent.activeOrders;
@@ -162,7 +162,7 @@ public class AgentTest {
 		assertEquals("Incorrect BID quantity",  0,  q.getBidQuantity() );
 		
 		// After quotes have updated
-		exec.executeUntil(new TimeStamp(11));
+		exec.executeUntil(TimeStamp.create(11));
 		q = market2.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect ASK", null,  q.getAskPrice() );
 		assertEquals("Incorrect BID", new Price(100),  q.getBidPrice() );
@@ -183,7 +183,7 @@ public class AgentTest {
 		assertEquals("Incorrect BID quantity",  1,  q.getBidQuantity() );
 		
 		// After quotes have updated
-		exec.executeUntil(new TimeStamp(21));
+		exec.executeUntil(TimeStamp.create(21));
 		q = market2.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect ASK", null,  q.getAskPrice() );
 		assertEquals("Incorrect BID", null,  q.getBidPrice() );
@@ -194,7 +194,7 @@ public class AgentTest {
 	@Test
 	public void withdrawNewestOrder() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
+		TimeStamp time1 = TimeStamp.create(1);
 		
 		exec.scheduleActivity(time0, new SubmitOrder(agent, market, BUY, new Price(50), 1));
 		exec.scheduleActivity(time1, new SubmitOrder(agent, market, SELL, new Price(100), 1));
@@ -242,7 +242,7 @@ public class AgentTest {
 	@Test
 	public void withdrawOldestOrder() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
+		TimeStamp time1 = TimeStamp.create(1);
 		
 		exec.scheduleActivity(time0, new SubmitOrder(agent, market, BUY, new Price(50), 1));
 		exec.scheduleActivity(time1, new SubmitOrder(agent, market, SELL, new Price(100), 1));
@@ -292,7 +292,7 @@ public class AgentTest {
 	@Test
 	public void withdrawAllOrders() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
+		TimeStamp time1 = TimeStamp.create(1);
 		
 		exec.scheduleActivity(time0, new SubmitOrder(agent, market, BUY, new Price(50), 1));
 		exec.scheduleActivity(time1, new SubmitOrder(agent, market, SELL, new Price(100), 1));
@@ -384,7 +384,7 @@ public class AgentTest {
 	
 	@Test
 	public void liquidation() {
-		TimeStamp time = new TimeStamp(100);
+		TimeStamp time = TimeStamp.create(100);
 		agent.profit = 5000;
 		
 		// Check that no change if position 0

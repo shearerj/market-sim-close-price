@@ -25,7 +25,7 @@ public class ExpInterarrivals extends AbstractIterator<TimeStamp> implements Ser
 
 	@Override
 	protected TimeStamp computeNext() {
-		return new TimeStamp(
+		return TimeStamp.create(
 				(long) Math.ceil(Rands.nextExponential(rand, rate)));
 	}
 

@@ -128,7 +128,7 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public void withdrawNewestOrder() {
-		TimeStamp latestTime = new TimeStamp(-1);
+		TimeStamp latestTime = TimeStamp.create(-1);
 		Order lastOrder = null;
 		for (Order order : activeOrders) {
 			if (order.getSubmitTime().after(latestTime)) {
@@ -147,7 +147,7 @@ public abstract class Agent extends Entity {
 	 */
 	public void withdrawOldestOrder() {
 		Order lastOrder = null;
-		TimeStamp earliestTime = new TimeStamp(Long.MAX_VALUE);
+		TimeStamp earliestTime = TimeStamp.create(Long.MAX_VALUE);
 		for (Order order : activeOrders) {
 			if (order.getSubmitTime().before(earliestTime)) {
 				earliestTime = order.getSubmitTime();

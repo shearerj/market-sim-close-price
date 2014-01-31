@@ -118,7 +118,7 @@ public class MAMarketMakerTest {
 	 */
 	@Test
 	public void withdrawUndefinedTest() {
-		TimeStamp time1 = new TimeStamp(1);
+		TimeStamp time1 = TimeStamp.create(1);
 
 		MarketMaker marketmaker = createMAMM(3, 5, true, 1, 5);
 		// Creating dummy agents
@@ -213,7 +213,7 @@ public class MAMarketMakerTest {
 	}
 
 	private void addQuote(QuoteProcessor qp, int buy, int sell, int time, int marketTime) {
-		TimeStamp ts = new TimeStamp(time);
+		TimeStamp ts = TimeStamp.create(time);
 		MarketTime mktTime = new DummyMarketTime(ts, marketTime);
 		Quote q = new Quote(market, new Price(buy), 1, new Price(sell), 1, ts);
 		sip.processQuote(market, mktTime, q, ts);

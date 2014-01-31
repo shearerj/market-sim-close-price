@@ -54,7 +54,7 @@ public class LAAgent extends HFTAgent {
 
 	public LAAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
 			Collection<Market> markets, Random rand, EntityProperties props) {
-		this(scheduler, new TimeStamp(props.getAsLong(Keys.LA_LATENCY, -1)), fundamental, sip, markets,
+		this(scheduler, TimeStamp.create(props.getAsLong(Keys.LA_LATENCY, -1)), fundamental, sip, markets,
 				rand, props.getAsInt(Keys.TICK_SIZE, 1),
 				props.getAsDouble(Keys.ALPHA, 0.001));
 	}

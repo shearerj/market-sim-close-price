@@ -56,7 +56,7 @@ public class HFTTransactionProcessorTest {
 		sip = new SIP(exec, TimeStamp.IMMEDIATE);
 
 		market1 = new CDAMarket(exec, sip, new Random(), TimeStamp.IMMEDIATE, 1);
-		market2 = new CDAMarket(exec, sip, new Random(), new TimeStamp(100), 1);
+		market2 = new CDAMarket(exec, sip, new Random(), TimeStamp.create(100), 1);
 
 		hft = new MockHFTAgent(exec, TimeStamp.IMMEDIATE, fundamental, sip,
 				Arrays.asList(market1, market2));
@@ -111,7 +111,7 @@ public class HFTTransactionProcessorTest {
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market2);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market2);
-		MockHFTAgent hft = new MockHFTAgent(exec, new TimeStamp(100), fundamental, sip, 
+		MockHFTAgent hft = new MockHFTAgent(exec, TimeStamp.create(100), fundamental, sip, 
 				ImmutableList.of(market1, market2));
 
 		tp1 = hft.getHFTTransactionProcessor(market1);
@@ -126,7 +126,7 @@ public class HFTTransactionProcessorTest {
 		assertEquals("Incorrect number of transactions", 0, trans.size());
 
 		// Verify that transactions have updated
-		exec.executeUntil(new TimeStamp(101));
+		exec.executeUntil(TimeStamp.create(101));
 		trans = hft.getTransactions(market2);
 		assertEquals("Incorrect number of transactions", 1, trans.size());
 		assertEquals("Incorrect transaction price", new Price(150), trans.get(0).getPrice());
@@ -145,7 +145,7 @@ public class HFTTransactionProcessorTest {
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market2);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market2);
-		MockHFTAgent hft = new MockHFTAgent(exec, TimeStamp.IMMEDIATE, new TimeStamp(100), 
+		MockHFTAgent hft = new MockHFTAgent(exec, TimeStamp.IMMEDIATE, TimeStamp.create(100), 
 				fundamental, sip, ImmutableList.of(market1, market2));
 
 		tp1 = hft.getHFTTransactionProcessor(market1);
@@ -153,9 +153,9 @@ public class HFTTransactionProcessorTest {
 		tp2 = hft.getHFTTransactionProcessor(market2);
 
 		// Verify latency
-		assertEquals(new TimeStamp(100), tp1.latency);
+		assertEquals(TimeStamp.create(100), tp1.latency);
 		assertEquals(TimeStamp.IMMEDIATE, qp.latency);
-		assertEquals(new TimeStamp(100), tp2.latency);
+		assertEquals(TimeStamp.create(100), tp2.latency);
 		
 		// Verify quote null
 		Quote q = hft.getQuote(market2);
@@ -181,7 +181,7 @@ public class HFTTransactionProcessorTest {
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		
 		// Verify that transactions have updated
-		exec.executeUntil(new TimeStamp(101));
+		exec.executeUntil(TimeStamp.create(101));
 		trans = hft.getTransactions(market2);
 		assertEquals("Incorrect number of transactions", 1, trans.size());
 		assertEquals("Incorrect transaction price", new Price(150), trans.get(0).getPrice());

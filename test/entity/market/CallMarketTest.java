@@ -44,7 +44,7 @@ public class CallMarketTest {
 	private SIP sip;
 	private Market market1;
 	private Market market2;
-	private TimeStamp clearFreq100 = new TimeStamp(100);
+	private TimeStamp clearFreq100 = TimeStamp.create(100);
 
 	@BeforeClass
 	public static void setupClass() {
@@ -65,7 +65,7 @@ public class CallMarketTest {
 
 	@Test
 	public void addBid() {
-		TimeStamp time = new TimeStamp(0);
+		TimeStamp time = TimeStamp.create(0);
 
 		// Creating the agent
 		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market1);
@@ -94,7 +94,7 @@ public class CallMarketTest {
 
 	@Test
 	public void addAsk() {
-		TimeStamp time = new TimeStamp(0);
+		TimeStamp time = TimeStamp.create(0);
 		
 		//Creating the agent
 		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market1);
@@ -124,7 +124,7 @@ public class CallMarketTest {
 	
 	@Test
 	public void basicEqualClear() {
-		TimeStamp time = new TimeStamp(0);
+		TimeStamp time = TimeStamp.create(0);
 		
 		//Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
@@ -150,8 +150,8 @@ public class CallMarketTest {
 
 	@Test
 	public void basicOverlapClear() {
-		TimeStamp time = new TimeStamp(0);
-		TimeStamp time2 = new TimeStamp(1);
+		TimeStamp time = TimeStamp.create(0);
+		TimeStamp time2 = TimeStamp.create(1);
 		
 		//Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
@@ -218,12 +218,12 @@ public class CallMarketTest {
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 		
 		// Creating and adding bids (existing orders at buy@100, sell@175)
-		market1.submitOrder(agent1, BUY, new Price(150), 1, time.plus(new TimeStamp(1)));
-		market1.submitOrder(agent4, SELL, new Price(50), 1, time.plus(new TimeStamp(2)));
-		market1.clear(time.plus(new TimeStamp(2)));
-		market2.submitOrder(agent1, BUY, new Price(150), 1, time.plus(new TimeStamp(1)));
-		market2.submitOrder(agent4, SELL, new Price(50), 1, time.plus(new TimeStamp(2)));
-		market2.clear(time.plus(new TimeStamp(2)));
+		market1.submitOrder(agent1, BUY, new Price(150), 1, time.plus(TimeStamp.create(1)));
+		market1.submitOrder(agent4, SELL, new Price(50), 1, time.plus(TimeStamp.create(2)));
+		market1.clear(time.plus(TimeStamp.create(2)));
+		market2.submitOrder(agent1, BUY, new Price(150), 1, time.plus(TimeStamp.create(1)));
+		market2.submitOrder(agent4, SELL, new Price(50), 1, time.plus(TimeStamp.create(2)));
+		market2.clear(time.plus(TimeStamp.create(2)));
 		
 		// Testing the market for the correct transactions
 		// agent 1 and 4 still trade even though buy@100 also crosses sell@75 
@@ -327,7 +327,7 @@ public class CallMarketTest {
 	@Test
 	public void partialQuantity() {
 		TimeStamp time = TimeStamp.ZERO;
-		TimeStamp time2 = new TimeStamp(1);
+		TimeStamp time2 = TimeStamp.create(1);
 		
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
@@ -356,7 +356,7 @@ public class CallMarketTest {
 	@Test
 	public void multiQuantity() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
+		TimeStamp time1 = TimeStamp.create(1);
 
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
@@ -381,8 +381,8 @@ public class CallMarketTest {
 	@Test
 	public void basicWithdraw() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
-		TimeStamp time2 = new TimeStamp(2);
+		TimeStamp time1 = TimeStamp.create(1);
+		TimeStamp time2 = TimeStamp.create(2);
 
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
@@ -438,7 +438,7 @@ public class CallMarketTest {
 	@Test
 	public void multiQuantityWithdraw() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
+		TimeStamp time1 = TimeStamp.create(1);
 
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
@@ -524,8 +524,8 @@ public class CallMarketTest {
 	@Test
 	public void priceTimeTest() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
-		TimeStamp time2 = new TimeStamp(2);
+		TimeStamp time1 = TimeStamp.create(1);
+		TimeStamp time2 = TimeStamp.create(2);
 
 		MockBackgroundAgent agent0 = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
@@ -626,7 +626,7 @@ public class CallMarketTest {
 	 */
 	@Test
 	public void clearActivityInsertion() {
-		TimeStamp time = new TimeStamp(1);
+		TimeStamp time = TimeStamp.create(1);
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		Quote quote;
@@ -650,7 +650,7 @@ public class CallMarketTest {
 		assertEquals("Incorrect Bid quantity", 0, quote.getBidQuantity());
 		
 		// Now quote should be updated
-		exec.executeUntil(clearFreq100.plus(new TimeStamp(1)));
+		exec.executeUntil(clearFreq100.plus(TimeStamp.create(1)));
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect Ask", new Price(110), quote.getAskPrice());
 		assertEquals("Incorrect Ask quantity", 1, quote.getAskQuantity());
@@ -668,7 +668,7 @@ public class CallMarketTest {
 		assertEquals("Incorrect Bid", new Price(100), quote.getBidPrice());
 		assertEquals("Incorrect Bid quantity", 1, quote.getBidQuantity());
 		// Once clear interval ends, orders match and clear, and the quote updates
-		exec.executeUntil(clearFreq100.plus(clearFreq100).plus(new TimeStamp(1)));
+		exec.executeUntil(clearFreq100.plus(clearFreq100).plus(TimeStamp.create(1)));
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect Ask", new Price(150), quote.getAskPrice());
 		assertEquals("Incorrect Ask quantity", 1, quote.getAskQuantity());
@@ -710,7 +710,7 @@ public class CallMarketTest {
 		// Test that before Time 100 nothing has been updated
 		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		exec.scheduleActivity(TimeStamp.ZERO, new SubmitOrder(agent, market1, SELL, new Price(100), 1));
-		exec.executeUntil(new TimeStamp(100));
+		exec.executeUntil(TimeStamp.create(100));
 		
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
@@ -719,7 +719,7 @@ public class CallMarketTest {
 		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
 		
 		// Test that after clear at 100 quotes are updated
-		exec.executeUntil(new TimeStamp(101));
+		exec.executeUntil(TimeStamp.create(101));
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
 		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
@@ -727,8 +727,8 @@ public class CallMarketTest {
 		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
 		
 		// Test that no change in quotes given matched orders
-		exec.scheduleActivity(new TimeStamp(150), new SubmitOrder(agent, market1, BUY, new Price(150), 1));
-		exec.executeUntil(new TimeStamp(101));
+		exec.scheduleActivity(TimeStamp.create(150), new SubmitOrder(agent, market1, BUY, new Price(150), 1));
+		exec.executeUntil(TimeStamp.create(101));
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Changed Ask price unnecessarily", new Price(100), quote.getAskPrice());
 		assertEquals("Changed Ask quantity unnecessarily", 1, quote.getAskQuantity());
@@ -736,7 +736,7 @@ public class CallMarketTest {
 		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
 		
 		// Now post-clear, orders are matched and removed and quote is updated
-		exec.executeUntil(new TimeStamp(201));
+		exec.executeUntil(TimeStamp.create(201));
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", null, quote.getAskPrice());
 		assertEquals("Didn't update Ask quantity", 0, quote.getAskQuantity());
@@ -752,10 +752,10 @@ public class CallMarketTest {
 		Quote quote;
 		
 		// delayed info by 50 + clears every 100
-		CallMarket market3 = new CallMarket(exec, sip, new Random(), new TimeStamp(50), 1, 0.5,
+		CallMarket market3 = new CallMarket(exec, sip, new Random(), TimeStamp.create(50), 1, 0.5,
 				clearFreq100);
 		// delayed info by 150 + clears every 100
-		CallMarket market4 = new CallMarket(exec, sip, new Random(), new TimeStamp(150), 1, 0.5,
+		CallMarket market4 = new CallMarket(exec, sip, new Random(), TimeStamp.create(150), 1, 0.5,
 				clearFreq100);
 		// Initialize first clears manually
 		exec.executeActivity(new Clear(market3));
@@ -768,7 +768,7 @@ public class CallMarketTest {
 		exec.executeActivity(new SubmitOrder(agent2, market4, BUY, new Price(100), 1));
 		
 		// Test that before Time 100 nothing has been updated for either market
-		exec.executeUntil(new TimeStamp(100));
+		exec.executeUntil(TimeStamp.create(100));
 		quote = market3.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
 		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
@@ -781,7 +781,7 @@ public class CallMarketTest {
 		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
 		
 		// Test that after clear at 100 quotes are still not updated
-		exec.executeUntil(new TimeStamp(101));
+		exec.executeUntil(TimeStamp.create(101));
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
 		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
 		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
@@ -793,7 +793,7 @@ public class CallMarketTest {
 		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
 		
 		// Test that market3's quotes have now updated (but not market4's)
-		exec.executeUntil(new TimeStamp(151));
+		exec.executeUntil(TimeStamp.create(151));
 		quote = market3.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
 		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
@@ -806,7 +806,7 @@ public class CallMarketTest {
 		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
 		
 		// Test that market4's quotes have now updated (quote from first clear)
-		exec.executeUntil(new TimeStamp(251));
+		exec.executeUntil(TimeStamp.create(251));
 		quote = market4.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Bid price", new Price(100), quote.getBidPrice());
 		assertEquals("Didn't update Bid quantity", 1, quote.getBidQuantity());

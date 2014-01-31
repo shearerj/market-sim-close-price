@@ -23,7 +23,7 @@ public class EventTest {
 	
 	@Test
 	public void orderInvariantTest() {
-		TimeStamp time = new TimeStamp(rand.nextInt(3) - 1);
+		TimeStamp time = TimeStamp.create(rand.nextInt(3) - 1);
 		Event e = new Event(time, rand);
 		List<List<Activity>> order = Lists.newArrayList();
 		for (int i = 0; i < rand.nextInt(8) + 2; i++) {

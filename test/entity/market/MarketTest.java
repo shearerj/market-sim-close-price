@@ -58,7 +58,7 @@ public class MarketTest {
 
 	@Test
 	public void addBid() {
-		TimeStamp time = new TimeStamp(0);
+		TimeStamp time = TimeStamp.create(0);
 		Agent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
 		market.submitOrder(agent, BUY, new Price(1), 1, time);
 
@@ -265,7 +265,7 @@ public class MarketTest {
 	@Test
 	public void partialQuantity() {
 		TimeStamp time = TimeStamp.ZERO;
-		TimeStamp time2 = new TimeStamp(1);
+		TimeStamp time2 = TimeStamp.create(1);
 
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -293,7 +293,7 @@ public class MarketTest {
 	@Test
 	public void multiQuantity() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
+		TimeStamp time1 = TimeStamp.create(1);
 
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -321,8 +321,8 @@ public class MarketTest {
 	@Test
 	public void basicWithdraw() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
-		TimeStamp time2 = new TimeStamp(2);
+		TimeStamp time1 = TimeStamp.create(1);
+		TimeStamp time2 = TimeStamp.create(2);
 
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -378,7 +378,7 @@ public class MarketTest {
 	@Test
 	public void multiQuantityWithdraw() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
+		TimeStamp time1 = TimeStamp.create(1);
 
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -427,12 +427,12 @@ public class MarketTest {
 	@Test
 	public void latencyTest() {
 		Quote quote;
-		MockMarket market = new MockMarket(exec, sip, new TimeStamp(100));
+		MockMarket market = new MockMarket(exec, sip, TimeStamp.create(100));
 
 		// Test that before Time 100 nothing has been updated
 		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
 		exec.scheduleActivity(TimeStamp.ZERO, new SubmitOrder(agent, market, SELL, new Price(100), 1));
-		exec.executeUntil(new TimeStamp(100));
+		exec.executeUntil(TimeStamp.create(100));
 
 		quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
@@ -441,7 +441,7 @@ public class MarketTest {
 		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
 
 		// Test that after 100 they did get updated
-		exec.executeUntil(new TimeStamp(101));
+		exec.executeUntil(TimeStamp.create(101));
 
 		quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
@@ -525,13 +525,13 @@ public class MarketTest {
 	@Test
 	public void updateQPDelay() {
 		Quote q;
-		MockMarket market = new MockMarket(exec, sip, new TimeStamp(100));
+		MockMarket market = new MockMarket(exec, sip, TimeStamp.create(100));
 		QuoteProcessor qp = market.getQuoteProcessor();
 
 		// Test that before Time 100 nothing has been updated
 		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
 		exec.executeActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1));
-		exec.executeUntil(new TimeStamp(100));
+		exec.executeUntil(TimeStamp.create(100));
 
 		q = market.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, q.getAskPrice());
@@ -540,7 +540,7 @@ public class MarketTest {
 		assertEquals("Incorrect Bid quantity initialization", 0, q.getBidQuantity());
 
 		// Update QP
-		exec.executeUntil(new TimeStamp(101));
+		exec.executeUntil(TimeStamp.create(101));
 		q = market.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect ASK", new Price(100), q.ask );
 		assertEquals("Incorrect BID", null, q.bid);
@@ -548,13 +548,13 @@ public class MarketTest {
 		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
 		
 		// Add new quote
-		q = new Quote(market, new Price(80), 1, new Price(100), 1, new TimeStamp(1));
-		MarketTime quoteTime = new DummyMarketTime(new TimeStamp(1), 1);
+		q = new Quote(market, new Price(80), 1, new Price(100), 1, TimeStamp.create(1));
+		MarketTime quoteTime = new DummyMarketTime(TimeStamp.create(1), 1);
 		exec.executeActivity(new SendToQP(market, quoteTime, q, qp)); // This happens at time 100
 		
 		// Update QP
 		// Test that after 101 new quote did get updated
-		exec.executeUntil(new TimeStamp(201));
+		exec.executeUntil(TimeStamp.create(201));
 		q = market.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect ASK", new Price(100), q.ask );
 		assertEquals("Incorrect BID", new Price(80), q.bid);
@@ -566,7 +566,7 @@ public class MarketTest {
 	@Test
 	public void updateTPNoDelay() {
 		TimeStamp time = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
+		TimeStamp time1 = TimeStamp.create(1);
 		TransactionProcessor tp = market.getTransactionProcessor();
 
 		// Creating dummy agents & transaction list
@@ -602,7 +602,7 @@ public class MarketTest {
 	@Test
 	public void updateTPDelay() {
 		TimeStamp time = TimeStamp.ZERO;
-		Market market = new MockMarket(exec, sip, new TimeStamp(100));
+		Market market = new MockMarket(exec, sip, TimeStamp.create(100));
 		TransactionProcessor tp = market.getTransactionProcessor();
 		
 		// Creating dummy agents & transaction list
@@ -618,7 +618,7 @@ public class MarketTest {
 		assertEquals(0, tp.getTransactions().size());
 		
 		// Test that after 100 new transaction did get updated
-		exec.executeUntil(new TimeStamp(101));
+		exec.executeUntil(TimeStamp.create(101));
 		trans = tp.getTransactions();
 		assertEquals("Incorrect number of transactions", 1, trans.size());
 		assertEquals("Incorrect transaction price", new Price(150), trans.get(0).getPrice());

@@ -53,7 +53,7 @@ public class AgentFactory {
 		this(scheduler,
 				fundamental,
 				sip,
-				new PoissonArrival(new TimeStamp((long)
+				new PoissonArrival(TimeStamp.create((long)
 						Math.ceil(Rands.nextExponential(rand, arrivalRate))),
 				arrivalRate,
 				new Random(rand.nextLong())),

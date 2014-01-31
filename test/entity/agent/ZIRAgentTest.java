@@ -97,8 +97,8 @@ public class ZIRAgentTest {
 	@Test
 	public void withdrawQuoteUpdateTest() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time50 = new TimeStamp(50);
-		SIP sip = new SIP(exec, new TimeStamp(50));
+		TimeStamp time50 = TimeStamp.create(50);
+		SIP sip = new SIP(exec, TimeStamp.create(50));
 
 		// Set up CDA markets (market quote latency = 0) and their quotes
 		Market nasdaq = new CDAMarket(exec, sip, rand, time0, 1);
@@ -109,7 +109,7 @@ public class ZIRAgentTest {
 		exec.executeActivity(new SubmitOrder(background1, nasdaq, BUY, new Price(104000), 1));
 		exec.executeActivity(new SubmitOrder(background2, nasdaq, SELL, new Price(108000), 1));
 		exec.executeActivity(new SubmitOrder(background2, nyse, BUY, new Price(102000), 1));
-		exec.executeUntil(new TimeStamp(51));
+		exec.executeUntil(TimeStamp.create(51));
 		// Verify that NBBO quote is (104, 108) at time 50 (after quotes have been processed by SIP)
 		BestBidAsk nbbo = sip.getNBBO();
 		assertEquals("Incorrect ASK", new Price(108000), nbbo.getBestAsk());
@@ -133,7 +133,7 @@ public class ZIRAgentTest {
 		// ZIR submits sell at 105 (is routed to nyse)
 		// Verify that NBBO quote is (104, 105) at time 100
 		exec.scheduleActivity(time50, new SubmitNMSOrder(agent1, nyse, SELL, new Price(105000), 1));
-		exec.executeUntil(new TimeStamp(101));
+		exec.executeUntil(TimeStamp.create(101));
 		nbbo = sip.getNBBO();
 		assertEquals("Incorrect ASK", new Price(105000), nbbo.getBestAsk());
 		assertEquals("Incorrect BID", new Price(104000), nbbo.getBestBid());
@@ -142,8 +142,8 @@ public class ZIRAgentTest {
 
 		// Execute ZIR agent strategy
 		// ZIR agent should withdraw its order and submit a buy @ 109 to nasdaq
-		exec.scheduleActivity(new TimeStamp(100), new AgentStrategy(agent1));
-		exec.executeUntil(new TimeStamp(101));
+		exec.scheduleActivity(TimeStamp.create(100), new AgentStrategy(agent1));
+		exec.executeUntil(TimeStamp.create(101));
 
 		// Verify that order submitted with correct price (109)
 		// Order is routed to NYSE because of out of date SIP (104, 105) even
@@ -158,7 +158,7 @@ public class ZIRAgentTest {
 		// Notice that the BID/ASK cross; if the SIP had been immediate, then
 		// the BUY order at 109 would have been routed to Nasdaq and it
 		// would have transacted immediately
-		exec.executeUntil(new TimeStamp(151));
+		exec.executeUntil(TimeStamp.create(151));
 		nbbo = sip.getNBBO();
 		assertEquals("Incorrect ASK", new Price(108000), nbbo.getBestAsk());
 		assertEquals("Incorrect BID", new Price(109000), nbbo.getBestBid());
@@ -173,7 +173,7 @@ public class ZIRAgentTest {
 	@Test
 	public void noWithdrawQuoteUpdateTest() {
 		TimeStamp time0 = TimeStamp.ZERO;
-		SIP sip = new SIP(exec, new TimeStamp(50));
+		SIP sip = new SIP(exec, TimeStamp.create(50));
 
 		// Set up CDA markets (market quote latency = 0) and their quotes
 		Market nasdaq = new CDAMarket(exec, sip, rand, time0, 1);
@@ -184,7 +184,7 @@ public class ZIRAgentTest {
 		exec.executeActivity(new SubmitOrder(background1, nasdaq, BUY, new Price(104000), 1));
 		exec.executeActivity(new SubmitOrder(background2, nasdaq, SELL, new Price(108000), 1));
 		exec.executeActivity(new SubmitOrder(background2, nyse, BUY, new Price(102000), 1));
-		exec.executeUntil(new TimeStamp(51));
+		exec.executeUntil(TimeStamp.create(51));
 		// Verify that NBBO quote is (104, 108) at time 50 (after quotes have been processed by SIP)
 		BestBidAsk nbbo = sip.getNBBO();
 		assertEquals("Incorrect ASK", new Price(108000), nbbo.getBestAsk());
@@ -202,7 +202,7 @@ public class ZIRAgentTest {
 		// ZIR submits sell at 105 (is routed to nyse)
 		// Verify that NBBO quote is (104, 105) at time 100
 		exec.executeActivity(new SubmitNMSOrder(agent1, nyse, SELL, new Price(105000), 1));
-		exec.executeUntil(new TimeStamp(101));
+		exec.executeUntil(TimeStamp.create(101));
 		nbbo = sip.getNBBO();
 		assertEquals("Incorrect ASK", new Price(105000), nbbo.getBestAsk());
 		assertEquals("Incorrect BID", new Price(104000), nbbo.getBestBid());
@@ -211,8 +211,8 @@ public class ZIRAgentTest {
 
 		// Execute ZIR agent strategy
 		// ZIR agent should withdraw its order and submit a sell @ 109
-		exec.scheduleActivity(new TimeStamp(100), new AgentStrategy(agent1));
-		exec.executeUntil(new TimeStamp(101));
+		exec.scheduleActivity(TimeStamp.create(100), new AgentStrategy(agent1));
+		exec.executeUntil(TimeStamp.create(101));
 
 		// Verify that order submitted with correct price (109)
 		// Order is routed to NYSE but can't trade with itself
@@ -229,7 +229,7 @@ public class ZIRAgentTest {
 		assertEquals(agent1, t.getBuyer());
 		
 		// Verify NBBO quote is (104, 111)
-		exec.executeUntil(new TimeStamp(151));
+		exec.executeUntil(TimeStamp.create(151));
 		nbbo = sip.getNBBO();
 		assertEquals("Incorrect ASK", new Price(108000), nbbo.getBestAsk());
 		assertEquals("Incorrect BID", new Price(104000), nbbo.getBestBid());

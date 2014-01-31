@@ -171,7 +171,7 @@ public class BasicMarketMakerTest {
 	 */
 	@Test
 	public void quoteChangeTest() {
-		TimeStamp time1 = new TimeStamp(10);
+		TimeStamp time1 = TimeStamp.create(10);
 
 		MarketMaker marketmaker = createBMM(2, 10, false, 1);
 
@@ -204,7 +204,7 @@ public class BasicMarketMakerTest {
 		exec.setTime(time1);
 		// Next MM strategy execution
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		exec.executeUntil(new TimeStamp(11));
+		exec.executeUntil(TimeStamp.create(11));
 
 		// Check ladder of orders, previous orders withdrawn
 		// market's orders contains all orders ever submitted
@@ -442,14 +442,14 @@ public class BasicMarketMakerTest {
 		assertEquals(0, agent1.activeOrders.size());
 		agent2.withdrawAllOrders();
 		assertEquals(0, agent2.activeOrders.size());
-		exec.setTime(new TimeStamp(1));
+		exec.setTime(TimeStamp.create(1));
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(42), 1));
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(49), 1));
-		exec.executeUntil(new TimeStamp(2));
+		exec.executeUntil(TimeStamp.create(2));
 		
 		// Verify that it withdraws ladder entirely & submits new ladder
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		exec.executeUntil(new TimeStamp(2));
+		exec.executeUntil(TimeStamp.create(2));
 		assertNotNull(marketmaker.lastBid);
 		assertNotNull(marketmaker.lastAsk);
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
@@ -468,7 +468,7 @@ public class BasicMarketMakerTest {
 	 */
 	@Test
 	public void withdrawUndefinedTest() {
-		TimeStamp time1 = new TimeStamp(1);
+		TimeStamp time1 = TimeStamp.create(1);
 
 		MarketMaker marketmaker = createBMM(3, 5, true, 1);
 		// Creating dummy agents
@@ -495,7 +495,7 @@ public class BasicMarketMakerTest {
 		// so it will submit a ladder with the lastBid
 		exec.setTime(time1);
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		exec.executeUntil(new TimeStamp(2));
+		exec.executeUntil(TimeStamp.create(2));
 		assertNotNull(marketmaker.lastBid);
 		assertNotNull(marketmaker.lastAsk);
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());

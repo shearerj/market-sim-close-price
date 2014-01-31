@@ -73,9 +73,9 @@ public class OrderDataAgentTest {
 				+ "should return orderdata as what is passed in \n");
 		List<OrderDatum> orders = new LinkedList<OrderDatum>();
 		
-		TimeStamp t1 = new TimeStamp(15), t1_ = new TimeStamp(16);
-		TimeStamp t2 = new TimeStamp(18), t2_ = new TimeStamp(19);
-		TimeStamp t3 = new TimeStamp(20);
+		TimeStamp t1 = TimeStamp.create(15), t1_ = TimeStamp.create(16);
+		TimeStamp t2 = TimeStamp.create(18), t2_ = TimeStamp.create(19);
+		TimeStamp t3 = TimeStamp.create(20);
 		
 		orders.add(new MockOrderDatum(t1, new Price(75000), 1, BUY));
 		orders.add(new MockOrderDatum(t3, new Price(60000), 1, SELL));
@@ -106,7 +106,7 @@ public class OrderDataAgentTest {
         List<OrderDatum> orders = new LinkedList<OrderDatum>();
         
 		OrderDataAgent agent = addAgent(orders.iterator());
-		market.submitNMSOrder(agent, BUY, new Price(75000), 1, new TimeStamp(15));
+		market.submitNMSOrder(agent, BUY, new Price(75000), 1, TimeStamp.create(15));
 		
 		Collection<Order> orderCollection = agent.getOrders();
 	    Order order = Iterables.getFirst(orderCollection, null);
@@ -116,6 +116,6 @@ public class OrderDataAgentTest {
 	    assertEquals("OrderDataAgent active order have wrong market", market, order.getMarket());
 	    assertEquals("OrderDataAgent active order have wrong price", new Price(75000), order.getPrice());
 	    assertEquals("OrderDataAgent active order have wrong price", 1, order.getQuantity());
-	    assertEquals("OrderDataAgent active order have wrong timestamp", new TimeStamp(15), order.getSubmitTime());
+	    assertEquals("OrderDataAgent active order have wrong timestamp", TimeStamp.create(15), order.getSubmitTime());
 	}
 }

@@ -1,5 +1,6 @@
 package systemmanager;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static logger.Logger.log;
 import static logger.Logger.Level.DEBUG;
 import static logger.Logger.Level.ERROR;
@@ -79,16 +80,20 @@ public class Scheduler {
 	}
 
 	public void scheduleActivity(TimeStamp scheduledTime, Activity act) {
+		checkArgument(!scheduledTime.isImmediate());
 		eventQueue.add(scheduledTime, act);
 	}
 	
 	public void scheduleActivities(TimeStamp scheduledTime, Activity... acts) {
+		checkArgument(!scheduledTime.isImmediate());
 		eventQueue.addAllOrdered(scheduledTime, acts);
 	}
 	
 	public void executeActivity(Activity act) {
-		eventQueue.add(TimeStamp.IMMEDIATE, act);
-		executeImmediate(); // Execute all Immediate activities
+		// XXX The commendted out way is more "proper" but this way is likely (untested) more efficient
+		act.execute(currentTime);
+//		eventQueue.add(TimeStamp.IMMEDIATE, act);
+//		executeImmediate(); // Execute all Immediate activities
 	}
 
 }

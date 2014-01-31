@@ -42,7 +42,7 @@ import fourheap.Order.OrderType;
 
 public class WMAMarketMakerTest {
 
-	private static final TimeStamp one = new TimeStamp(1);
+	private static final TimeStamp one = TimeStamp.create(1);
 	
 	private Executor exec;
 	private MockMarket market;
@@ -134,7 +134,7 @@ public class WMAMarketMakerTest {
 
 		// Initial MM strategy; submits ladder with numRungs=3
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		exec.executeUntil(new TimeStamp(1));
+		exec.executeUntil(TimeStamp.create(1));
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
 		
 		// To change the bid stored in the MM
@@ -154,7 +154,7 @@ public class WMAMarketMakerTest {
 		exec.executeUntil(one);
 		exec.setTime(one);
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		exec.executeUntil(new TimeStamp(2));
+		exec.executeUntil(TimeStamp.create(2));
 		assertNotNull(marketmaker.lastBid);
 		assertNotNull(marketmaker.lastAsk);
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
@@ -284,7 +284,7 @@ public class WMAMarketMakerTest {
 	}
 	
 	private void addQuote(QuoteProcessor qp, int buy, int sell, int time, int marketTime) {
-		TimeStamp ts = new TimeStamp(time);
+		TimeStamp ts = TimeStamp.create(time);
 		MarketTime mktTime = new DummyMarketTime(ts, marketTime);
 		Quote q = new Quote(market, new Price(buy), 1, new Price(sell), 1, ts);
 		sip.processQuote(market, mktTime, q, ts);
@@ -453,7 +453,7 @@ public class WMAMarketMakerTest {
 
 		// Initial MM strategy
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		exec.executeUntil(new TimeStamp(1));
+		exec.executeUntil(TimeStamp.create(1));
 
 		// Check ladder of orders
 		// market's orders contains all orders ever submitted
@@ -518,7 +518,7 @@ public class WMAMarketMakerTest {
 		MockMarket market2 = new MockMarket(exec, sip);
 		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, time);
 		exec.executeActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q));
-		exec.executeUntil(new TimeStamp(1));
+		exec.executeUntil(TimeStamp.create(1));
 
 		// Just to check that NBBO correct (it crosses)
 		BestBidAsk nbbo = sip.getNBBO();

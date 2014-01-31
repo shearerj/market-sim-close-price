@@ -24,7 +24,7 @@ public class EventQueueTest {
 		assertEquals(0, q.size());
 		
 		Activity first = new MockActivity();
-		q.add(new TimeStamp(1), first);
+		q.add(TimeStamp.create(1), first);
 		assertFalse(q.isEmpty());
 		assertEquals(1, q.size());
 		assertEquals(first, q.peek().getActivity());
@@ -35,8 +35,8 @@ public class EventQueueTest {
 		
 		Activity second = new MockActivity();
 		Activity third = new MockActivity();
-		q.add(new TimeStamp(3), third);
-		q.add(new TimeStamp(2), second);
+		q.add(TimeStamp.create(3), third);
+		q.add(TimeStamp.create(2), second);
 		assertEquals(second, q.peek().getActivity());
 		assertEquals(2, q.size());
 		
@@ -103,9 +103,9 @@ public class EventQueueTest {
 		Activity second = new MockActivity();
 		Activity third = new MockActivity();
 
-		q.add(new TimeStamp(1), first);
-		q.add(new TimeStamp(2), second);
-		q.add(new TimeStamp(3), third);
+		q.add(TimeStamp.create(1), first);
+		q.add(TimeStamp.create(2), second);
+		q.add(TimeStamp.create(3), third);
 		
 		// Check that poll will return activities in correct order & update size
 		assertEquals(first, q.poll().getActivity());
@@ -126,8 +126,8 @@ public class EventQueueTest {
 		Activity third = new MockActivity();
 		
 		assertEquals("Incorrect initial size", 0, q.size());
-		q.add(new TimeStamp(1), first);
-		q.add(new TimeStamp(2), second);
+		q.add(TimeStamp.create(1), first);
+		q.add(TimeStamp.create(2), second);
 		
 		// Verify activities added correctly
 		assertEquals("Size not updated", 2, q.size());
@@ -136,8 +136,8 @@ public class EventQueueTest {
 		assertTrue(q.isEmpty());
 		
 		// Verify correct order with list of activities not in chronological order
-		q.add(new TimeStamp(3), third);
-		q.add(new TimeStamp(2), second);
+		q.add(TimeStamp.create(3), third);
+		q.add(TimeStamp.create(2), second);
 		assertEquals("Size not updated", 2, q.size());
 		assertEquals(second, q.poll().getActivity());
 		assertEquals(third, q.poll().getActivity());
@@ -185,7 +185,7 @@ public class EventQueueTest {
 		List<? extends Activity> acts = ImmutableList.of(new MockActivity(),
 				new MockActivity(), new MockActivity());
 		for (int i = 0; i < acts.size(); ++i)
-			q.add(new TimeStamp(i), acts.get(i));
+			q.add(TimeStamp.create(i), acts.get(i));
 		
 		for (Object o : q.toArray())
 			assertTrue(acts.contains(((TimedActivity) o).getActivity()));
@@ -218,7 +218,7 @@ public class EventQueueTest {
 		
 		for (int i = 0; i < 1000; i++) {
 			Activity a = new MockActivity();
-			TimeStamp t = new TimeStamp(rand.nextInt(100));
+			TimeStamp t = TimeStamp.create(rand.nextInt(100));
 			q1.add(t, a);
 			q2.add(t, a);
 		}

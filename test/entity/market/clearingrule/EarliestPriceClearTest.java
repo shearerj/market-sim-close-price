@@ -23,8 +23,8 @@ public class EarliestPriceClearTest {
 	@Test
 	public void Basic() {
 		ArrayList<MatchedOrders<Price, MarketTime, Order>> list = Lists.newArrayList();
-		list.add(createOrderPair(new Price(110), 1, new TimeStamp(100), 
-								 new Price(100), 1, new TimeStamp(105)));
+		list.add(createOrderPair(new Price(110), 1, TimeStamp.create(100), 
+								 new Price(100), 1, TimeStamp.create(105)));
 		
 		ClearingRule cr = new EarliestPriceClear(1);
 		Map<MatchedOrders<Price,MarketTime, Order>,Price> result = cr.pricing(list);
@@ -39,8 +39,8 @@ public class EarliestPriceClearTest {
 	@Test
 	public void TimeMatch(){
 		ArrayList<MatchedOrders<Price, MarketTime, Order>> list = Lists.newArrayList();
-		list.add(createOrderPair(new Price(110), 1, new TimeStamp(100), 
-								 new Price(100), 1, new TimeStamp(100)));
+		list.add(createOrderPair(new Price(110), 1, TimeStamp.create(100), 
+								 new Price(100), 1, TimeStamp.create(100)));
 		
 		ClearingRule cr = new EarliestPriceClear(1);
 		Map<MatchedOrders<Price, MarketTime, Order>, Price> result = cr.pricing(list);
@@ -57,13 +57,13 @@ public class EarliestPriceClearTest {
 		ArrayList<MatchedOrders<Price, MarketTime, Order>> list = new ArrayList<MatchedOrders<Price, MarketTime, Order>>();
 		
 		MatchedOrders<Price, MarketTime, Order> match1 = createOrderPair(
-				new Price(110), 1, new TimeStamp(100), 
-				new Price(100), 1, new TimeStamp(105));
+				new Price(110), 1, TimeStamp.create(100), 
+				new Price(100), 1, TimeStamp.create(105));
 		list.add(match1);
 		
 		MatchedOrders<Price, MarketTime, Order> match2 = createOrderPair(
-				new Price(110), 1, new TimeStamp(105), 
-				new Price(100), 1, new TimeStamp(100));
+				new Price(110), 1, TimeStamp.create(105), 
+				new Price(100), 1, TimeStamp.create(100));
 		list.add(match2);
 				
 		ClearingRule cr = new EarliestPriceClear(1);
@@ -89,7 +89,7 @@ public class EarliestPriceClearTest {
 		// NOTE: the same MarketTime will never be created for two orders
 		// So if t1 == t2, t2 will be created at an incremented MarketTime
 		MarketTime mt1 = new DummyMarketTime(t1, t1.getInTicks());
-		MarketTime mt2 = new DummyMarketTime(t2, t2.plus(new TimeStamp(t2.equals(t1) ? 1 : 0)).getInTicks());
+		MarketTime mt2 = new DummyMarketTime(t2, t2.plus(TimeStamp.create(t2.equals(t1) ? 1 : 0)).getInTicks());
 		Order a = Order.create(BUY, null, null, p1, q1, mt1);
 		Order b = Order.create(SELL, null, null, p2, q2, mt2);
 		return MatchedOrders.create(a, b, Math.min(q1, q2));

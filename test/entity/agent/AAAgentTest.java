@@ -256,14 +256,14 @@ public class AAAgentTest {
 		
 		limit = new Price(211000);
 		buyer.biddingLayer(limit, null, 1, TimeStamp.create(20));
-		exec.executeUntil(new TimeStamp(21));
+		exec.executeUntil(TimeStamp.create(21));
 		assertCorrectBid(buyer, 170007, 1);
 		
 		limit = new Price(210000);
 		target = new Price(180000);
 		buyer.withdrawAllOrders();
 		buyer.biddingLayer(limit, target, 1, TimeStamp.create(20));
-		exec.executeUntil(new TimeStamp(21));
+		exec.executeUntil(TimeStamp.create(21));
 		assertCorrectBid(buyer, 160000, 1);
 	}
 	
@@ -292,14 +292,14 @@ public class AAAgentTest {
 		
 		limit = new Price(170000);
 		seller.biddingLayer(limit, null, 1, TimeStamp.create(20));
-		exec.executeUntil(new TimeStamp(21));
+		exec.executeUntil(TimeStamp.create(21));
 		assertCorrectBid(seller, 190000, 1);
 		
 		limit = new Price(165000);
 		target = new Price(170000);
 		seller.withdrawAllOrders();
 		seller.biddingLayer(limit, target, 1, TimeStamp.create(20));
-		exec.executeUntil(new TimeStamp(21));
+		exec.executeUntil(TimeStamp.create(21));
 		assertCorrectBid(seller, 190000, 1);
 	}
 	
@@ -324,12 +324,12 @@ public class AAAgentTest {
 		
 		Price equil = new Price(100000);
 		// haven't used 5 transactions yet, so keep theta fixed
-		agent.updateTheta(equil, agent.getWindowTransactions(new TimeStamp(20)));
+		agent.updateTheta(equil, agent.getWindowTransactions(TimeStamp.create(20)));
 		assertEquals(-4, agent.theta, 0.001);
 		
 		addTransaction(110000, 1, 35);
 		addTransaction(111000, 1, 40);
-		agent.updateTheta(equil, agent.getWindowTransactions(new TimeStamp(40)));
+		agent.updateTheta(equil, agent.getWindowTransactions(TimeStamp.create(40)));
 		assertTrue(agent.theta < -4);	// decreases because high price vol
 		assertEquals(-5, agent.theta, 0.001); 
 		
@@ -337,7 +337,7 @@ public class AAAgentTest {
 		addTransaction(107000, 1, 50);
 		addTransaction(108000, 1, 50);
 		equil = new Price(108000);
-		agent.updateTheta(equil, agent.getWindowTransactions(new TimeStamp(50)));
+		agent.updateTheta(equil, agent.getWindowTransactions(TimeStamp.create(50)));
 		assertTrue(agent.theta > -5);	// increases because lower price vol
 	}
 	
@@ -953,7 +953,7 @@ public class AAAgentTest {
 	}
 
 	private void addOrder(OrderType type, int price, int quantity, int time) {
-		TimeStamp currentTime = new TimeStamp(time);
+		TimeStamp currentTime = TimeStamp.create(time);
 		// creating a dummy agent
 		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
 		// Having the agent submit a bid to the market

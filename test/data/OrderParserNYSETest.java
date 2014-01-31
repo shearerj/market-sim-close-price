@@ -86,7 +86,7 @@ public class OrderParserNYSETest {
 				Character.toString(orderData.getExchangeCode()));
 		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getStockSymbol());
 		assertEquals(testType + " order time stamp wrong", 
-				new TimeStamp(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
+				TimeStamp.create(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
 				orderData.getTimeStamp());
 		assertEquals(testType + " order system code wrong", systemCode, 
 				Character.toString(orderData.getSystemCode()));
@@ -140,7 +140,7 @@ public class OrderParserNYSETest {
 				Character.toString(orderData.getExchangeCode()));
 		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getStockSymbol());
 		assertEquals(testType + " order time stamp wrong", 
-				new TimeStamp(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
+				TimeStamp.create(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
 				orderData.getTimeStamp());
 		assertEquals(testType + " order system code wrong", systemCode, 
 				Character.toString(orderData.getSystemCode()));
@@ -194,7 +194,7 @@ public class OrderParserNYSETest {
 				Character.toString(orderData.getExchangeCode()));
 		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getStockSymbol());
 		assertEquals(testType + " order time stamp wrong", 
-				new TimeStamp(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
+				TimeStamp.create(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
 				orderData.getTimeStamp());
 		assertEquals(testType + " order system code wrong", systemCode, 
 				Character.toString(orderData.getSystemCode()));
@@ -252,7 +252,7 @@ public class OrderParserNYSETest {
 				Character.toString(orderData.getExchangeCode()));
 		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getStockSymbol());
 		assertEquals(testType + " order time stamp wrong", 
-				new TimeStamp(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
+				TimeStamp.create(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
 				orderData.getTimeStamp());
 		assertEquals(testType + " order system code wrong", systemCode, 
 				Character.toString(orderData.getSystemCode()));

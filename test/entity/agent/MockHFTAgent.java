@@ -24,7 +24,7 @@ public class MockHFTAgent extends HFTAgent {
 	
 	public MockHFTAgent(Scheduler scheduler, TimeStamp quoteLatency, TimeStamp transactionLatency,
 			FundamentalValue fundamental, SIP sip, Collection<Market> markets) {
-		super(scheduler, quoteLatency, transactionLatency, new TimeStamp(0), fundamental, 
+		super(scheduler, quoteLatency, transactionLatency, TimeStamp.create(0), fundamental, 
 				sip, markets, new Random(), 1);
 	}
 

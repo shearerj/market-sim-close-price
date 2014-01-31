@@ -149,7 +149,7 @@ public class MarketMakerTest {
 	@Test
 	public void truncateLadderTickImprovement() {
 		TimeStamp time = TimeStamp.ZERO;
-		SIP sip = new SIP(exec, new TimeStamp(10));
+		SIP sip = new SIP(exec, TimeStamp.create(10));
 		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, 
 				setupProperties(2, 5, true));
 		mm.stepSize = 5;

@@ -200,20 +200,18 @@ public class ZIPAgentTest {
 		agent.lastOrderPrice = new Price(105000);
 		agent.lastOrderPrice = new Price(95000);
 		
+		agent.rand.setSeed(1234); // XXX Change seed to test specific execution
 		agent.agentStrategy(time);		
 		// buyer reduces margins because transaction prices are less than order
 		// prices, submitted order price will be below the last order price
 		// should also be below the most recent transaction price
 		assertCorrectBid(agent, 85000, 95000, 1);
-		// FIXME This seems to be based off of the specific initialization of
-		// the random generator. This made it very fragile and it broke on
-		// update. This seems like a bad testing practice. Potentially we can
-		// just seed the generator right before this call to avoid other
-		// effects? Also, if you are accounting for the setting of the random
-		// generator, then perhaps we should just use assert equals, since you
-		// know exactly what it should be?
 		
-		assertCorrectBid(agent, 85000, 90000, 1);
+		// XXX This current test is based off the random seed. Currently this means that
+		// Type: BUY
+		// R, A: 0.81, -0.20
+		// R, A: 0.89, -0.27
+		assertEquals(88953, Iterables.getOnlyElement(agent.activeOrders).getPrice().intValue());
 	}
 	
 	@Test
@@ -767,7 +765,7 @@ public class ZIPAgentTest {
 	
 	
 	private void addOrder(OrderType type, int price, int quantity, int time) {
-		TimeStamp currentTime = new TimeStamp(time);
+		TimeStamp currentTime = TimeStamp.create(time);
 		// creating a dummy agent
 		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
 		// Having the agent submit a bid to the market
@@ -781,7 +779,7 @@ public class ZIPAgentTest {
 	private void addTransaction(int p, int q, int time) {
 		addOrder(BUY, p, q, time);
 		addOrder(SELL, p, q, time);
-		TimeStamp currentTime = new TimeStamp(time);
+		TimeStamp currentTime = TimeStamp.create(time);
 		market.clear(currentTime);
 
 		// Added this so that the SIP would updated with the transactions, so expecting knowledge of

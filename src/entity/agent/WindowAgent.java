@@ -45,7 +45,7 @@ public abstract class WindowAgent extends BackgroundAgent {
 		super(scheduler, arrivalTime, fundamental, sip, market, rand, interarrivalTimes, pv, tickSize,
 				bidRangeMin, bidRangeMax);
 		
-		this.windowLength = new TimeStamp(windowLength);
+		this.windowLength = TimeStamp.create(windowLength);
 	}
 
 	/**
@@ -57,7 +57,7 @@ public abstract class WindowAgent extends BackgroundAgent {
 	 * @return
 	 */
 	public List<Transaction> getWindowTransactions(TimeStamp currentTime) {
-		TimeStamp firstTimeInWindow = currentTime.minus(new TimeStamp(windowLength));
+		TimeStamp firstTimeInWindow = currentTime.minus(windowLength);
 
 		// XXX To add more transaction sources that are also sorted, google has
 		// Iterables.mergeSorted(iterables, comparator) that can merge sorted

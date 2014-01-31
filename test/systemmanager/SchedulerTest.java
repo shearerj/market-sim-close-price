@@ -41,7 +41,7 @@ public class SchedulerTest {
 	
 	@Test
 	public void basicExecution() {
-		TimeStamp time = new TimeStamp(10);
+		TimeStamp time = TimeStamp.create(10);
 		
 		// Initially empty, time 0
 		assertEquals(0, scheduler.eventQueue.size());
@@ -62,7 +62,7 @@ public class SchedulerTest {
 	
 	@Test
 	public void executeUntilTest() {
-		TimeStamp time = new TimeStamp(100);
+		TimeStamp time = TimeStamp.create(100);
 		scheduler.scheduleActivity(time, new MockActivity());
 		scheduler.scheduleActivity(time.plus(time), new MockActivity());
 		
@@ -87,7 +87,7 @@ public class SchedulerTest {
 	public void chainingActivityExecution() {
 		// testing activities that insert further activities
 		// MockAgentActivity will insert a MockActivity
-		TimeStamp time = new TimeStamp(10);
+		TimeStamp time = TimeStamp.create(10);
 		
 		MockBackgroundAgent agent = new MockBackgroundAgent(scheduler, fundamental, sip, market);
 		assertEquals(0, scheduler.eventQueue.size());

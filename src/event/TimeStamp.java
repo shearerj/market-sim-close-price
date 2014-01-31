@@ -22,24 +22,17 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	private static final long serialVersionUID = -2109498445060507654L;
 	
 	public static final TimeStamp IMMEDIATE = new TimeStamp(-1);
-	public static final TimeStamp ZERO = new TimeStamp(0);
+	public static final TimeStamp ZERO = TimeStamp.create(0);
 	public static final int TICKS_PER_SECOND = 1000000;
 	
 	protected final long ticks;
 
-	public TimeStamp(long ticks) {
+	protected TimeStamp(long ticks) {
 		this.ticks = ticks;
 	}
-
-	public TimeStamp(int ticks) {
-		this((long) ticks);
-	}
 	
-	public TimeStamp(TimeStamp time) {
-		this.ticks = time.ticks;
-	}
-	
-	public static TimeStamp create(int ticks) {
+	public static TimeStamp create(long ticks) {
+		if (ticks < 0) return TimeStamp.IMMEDIATE;
 		return new TimeStamp(ticks);
 	}
 
@@ -51,14 +44,14 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	 * Subtract two TimeStamps
 	 */
 	public TimeStamp minus(TimeStamp other) {
-		return new TimeStamp(this.ticks - other.ticks);
+		return TimeStamp.create(this.ticks - other.ticks);
 	}
 
 	/**
 	 * Add two TimeStamps together
 	 */
 	public TimeStamp plus(TimeStamp other) {
-		return new TimeStamp(this.ticks + other.ticks);
+		return TimeStamp.create(this.ticks + other.ticks);
 	}
 
 	public long getInTicks() {
@@ -80,7 +73,12 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	public boolean after(TimeStamp other) {
 		return other == null || this.compareTo(other) > 0;
 	}
+	
+	public boolean isImmediate() {
+		return this == TimeStamp.IMMEDIATE;
+	}
 
+	@Override
 	public int compareTo(TimeStamp other) {
 		return Longs.compare(ticks, other.ticks);
 	}

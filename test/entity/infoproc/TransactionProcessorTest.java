@@ -84,11 +84,11 @@ public class TransactionProcessorTest {
 	@Test
 	public void basicDelayProcessTransaction() {
 		TimeStamp time = TimeStamp.ZERO;
-		Market market = new CDAMarket(exec, sip, new Random(), new TimeStamp(100), 1);
+		Market market = new CDAMarket(exec, sip, new Random(), TimeStamp.create(100), 1);
 		AbstractTransactionProcessor smip = market.getTransactionProcessor();
 
 		// Verify latency
-		assertEquals(new TimeStamp(100), smip.latency);
+		assertEquals(TimeStamp.create(100), smip.latency);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -109,7 +109,7 @@ public class TransactionProcessorTest {
 		assertTrue("Incorrect transaction list size", trans.isEmpty());
 
 		// Verify that transactions have updated
-		exec.executeUntil(new TimeStamp(101));
+		exec.executeUntil(TimeStamp.create(101));
 		trans = smip.getTransactions();
 		assertEquals("Incorrect number of transactions", 1, trans.size());
 		assertEquals("Incorrect transaction price", new Price(150), trans.get(0).getPrice());
@@ -125,13 +125,13 @@ public class TransactionProcessorTest {
 	public void diffQuoteTransLatency() {
 		TimeStamp time = TimeStamp.ZERO;
 		Market market = new CDAMarket(exec, sip, new Random(), TimeStamp.IMMEDIATE, 
-				new TimeStamp(100), 1);
+				TimeStamp.create(100), 1);
 		AbstractTransactionProcessor smip = market.getTransactionProcessor();
 		AbstractQuoteProcessor qp = market.getQuoteProcessor();
 
 		// Verify latency
 		assertEquals(TimeStamp.IMMEDIATE, qp.latency);
-		assertEquals(new TimeStamp(100), smip.latency);
+		assertEquals(TimeStamp.create(100), smip.latency);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -176,7 +176,7 @@ public class TransactionProcessorTest {
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 
 		// Verify that transactions have updated as well as NBBO
-		exec.executeUntil(new TimeStamp(101));
+		exec.executeUntil(TimeStamp.create(101));
 		trans = smip.getTransactions();
 		assertEquals("Incorrect number of transactions", 1, trans.size());
 		assertEquals("Incorrect transaction price", new Price(150), trans.get(0).getPrice());
