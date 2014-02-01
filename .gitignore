@@ -29,6 +29,7 @@ hft.jar
 .metadata
 .project
 .settings
+.DS_Store
 
 # Directories #
 ###############
