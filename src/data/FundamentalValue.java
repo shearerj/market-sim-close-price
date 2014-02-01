@@ -1,90 +1,105 @@
 package data;
 
-import java.util.Random;
-import java.util.ArrayList;
+import static logger.Logger.log;
+import static logger.Logger.Level.ERROR;
 
-import market.Price;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Random;
+
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+
+import utils.Rands;
+import entity.market.Price;
+import event.TimeStamp;
 
 /**
- * Class to store and compute a stochastic process used as a base to determine the
- * private valuations of background agents.
+ * Class to store and compute a stochastic process used as a base to determine
+ * the private valuations of background agents.
  * 
  * @author ewah
  */
-public class FundamentalValue {
+// XXX Potentially move this to another package?
+public class FundamentalValue implements Serializable {
+
+	private static final long serialVersionUID = 6764216196138108452L;
 	
-	private ArrayList<Price> meanRevertProcess;
-	private double kappa;
-	private int meanValue;
-	private double shockVar;
-	private int length;			// length of random process (in time-steps)
-	private Random rand;
-	
+	protected final ArrayList<Double> meanRevertProcess;
+	protected final double kappa;
+	protected final int meanValue;
+	protected final double shockVar;
+	protected final Random rand;
+
 	/**
-	 * Constructor
-	 * @param meanVal
-	 * @param var
-	 * @param k
+	 * Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps
+	 * 
+	 * @param kap rate which the process reverts to the mean value
+	 * @param meanVal mean process
+	 * @param var Gaussian Process variance
+	 * @param rand Random generator
 	 */
-	public FundamentalValue(double kap, int meanVal, double var, int l) {
-		rand = new Random();
-		kappa = kap;
-		meanValue = meanVal;
-		shockVar = var;
-		length = l;
-		
+	public FundamentalValue(double kap, int meanVal, double var, Random rand) {
+		this.rand = rand;
+		this.kappa = kap;
+		this.meanValue = meanVal;
+		this.shockVar = var;
+
 		// stochastic initial conditions for random process
-		meanRevertProcess = new ArrayList<Price>();
-		meanRevertProcess.add(new Price((int) getNormalRV(meanValue, shockVar)));
-		computeAllFundamentalValues();
+		meanRevertProcess = Lists.newArrayList();
+		meanRevertProcess.add(Rands.nextGaussian(rand, meanValue, shockVar));
 	}
 	
 	/**
-	 * Compute global fundamental values across entire time horizon.
+	 * @param kap
+	 * @param meanVal
+	 * @param var
+	 * @param rand
+	 * @return
 	 */
-	public void computeAllFundamentalValues() {
-		// iterate through all the time steps & generate
-		for (int i = 1; i <= length; i++) {
-			int prevValue = meanRevertProcess.get(i-1).getPrice();
-			int nextValue = (int) (getNormalRV(0, shockVar) + (meanValue * kappa) +
-					((1 - kappa) *	prevValue));
-			// truncate at zero
-			nextValue = Math.max(nextValue, 0);
-			meanRevertProcess.add(new Price(nextValue));
+	public static FundamentalValue create(double kap, int meanVal, double var, Random rand) {
+		return new FundamentalValue(kap, meanVal, var, rand);
+	}
+
+	/**
+	 * Helper method to ensure that maxQuery exists in the data structure.
+	 * 
+	 * @param maxQuery
+	 */
+	protected void computeFundamentalTo(int maxQuery) {
+		for (int i = meanRevertProcess.size(); i <= maxQuery; i++) {
+			double prevValue = Iterables.getLast(meanRevertProcess);
+			double nextValue = Rands.nextGaussian(rand, meanValue * kappa
+					+ (1 - kappa) * prevValue, shockVar);
+			meanRevertProcess.add(nextValue);
 		}
 	}
 
 	/**
-	 * @return list of all private values in the stochastic process
+	 * Returns the global fundamental value at time ts. If undefined, return 0.
 	 */
-	public ArrayList<Price> getProcess() {
-		return meanRevertProcess;
+	public Price getValueAt(TimeStamp t) {
+		int index = (int) t.getInTicks();
+		if (index < 0) { // In case of overflow
+			log(ERROR, "Tried to access out of bounds TimeStamp: " + t + " ("
+					+ index + ")");
+			return new Price(0);
+		}
+		computeFundamentalTo(index);
+		return new Price((int) (double) meanRevertProcess.get(index)).nonnegative();
 	}
 	
 	/**
-	 * Returns the global fundamental value at time ts. If undefined, return 0.
-	 * 
-	 * @param ts
-	 * @return
+	 * Returns a TimeSeries copy of the fundamental data. This makes a copy, and
+	 * does not return a view into the FundamentalValue. This makes it
+	 * expensive, and not super great. This could be fixed if TimeSeries were an
+	 * interface, but that would require more thought.
 	 */
-	public Price getValueAt(int t) {
-		// for positive time stamp that is a valid index
-		if (meanRevertProcess.size() >= t && t > 0) {
-			return meanRevertProcess.get(t);
-		}
-		return new Price(0);
-	}
-	
-	/** 
-	 * Generate normal random variable
-	 * @param mu
-	 * @param var
-	 * @return
-	 */
-	private double getNormalRV(double mu, double var) {
-	    double r1 = rand.nextDouble();
-	    double r2 = rand.nextDouble();
-	    double z = Math.sqrt(-2*Math.log(r1))*Math.cos(2*Math.PI*r2);
-	    return mu + z * Math.sqrt(var);
+	public TimeSeries asTimeSeries() {
+		TimeSeries copy = TimeSeries.create();
+		int time = 0;
+		for (double v : meanRevertProcess)
+			copy.add(time++, v);
+		return copy;
 	}
 }

@@ -1,9 +1,8 @@
 package activity;
 
-import java.util.Collection;
-import org.apache.commons.lang3.builder.*;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import entity.*;
+import entity.market.Market;
 import event.TimeStamp;
 
 /**
@@ -13,45 +12,21 @@ import event.TimeStamp;
  */
 public class Clear extends Activity {
 
-	private Market mkt;
+	protected final Market market;
 
-	public Clear(Market mkt, TimeStamp t) {
-		super(t);
-		this.mkt = mkt;
-	}
-
-	public Clear deepCopy() {
-		return new Clear(this.mkt, this.time);
-	}
-
-	public Collection<Activity> execute(TimeStamp currentTime) {
-		return this.mkt.clear(currentTime);
-	}
-
-	public String toString() {
-		return new String(getName() + "::" + mkt);
+	public Clear(Market market, TimeStamp scheduledTime) {
+		super(scheduledTime);
+		this.market = checkNotNull(market, "Market");
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (obj == this)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Clear other = (Clear) obj;
-		return new EqualsBuilder().
-				append(mkt.getID(), other.mkt.getID()).
-				append(time.longValue(), other.time.longValue()).
-				isEquals();
+	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
+		return this.market.clear(currentTime);
+	}
+
+	@Override
+	public String toString() {
+		return super.toString() + market;
 	}
 	
-	@Override
-	public int hashCode() {
-		return new HashCodeBuilder(19, 37).
-				append(mkt.getID()).
-				append(time.longValue()).
-				toHashCode();
-	}
 }

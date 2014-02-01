@@ -1,8 +1,6 @@
 package entity;
 
-import data.ObjectProperties;
-import data.SystemData;
-import systemmanager.*;
+import java.io.Serializable;
 
 /**
  * This class is the base for all things that may perform an action/activity 
@@ -12,43 +10,27 @@ import systemmanager.*;
  * 
  * @author ewah
  */
-public abstract class Entity {
+public abstract class Entity implements Serializable {
 
-	public Log log;
-	public SystemData data;
-	protected final int id;
-	protected ObjectProperties params;		// stores all parameters
+	private static final long serialVersionUID = -7406324829959902527L;
 	
-//	public Entity(int agentID) {
-//		id = agentID;
-//	}
-
-	/**
-	 * Constructor
-	 * @param ID
-	 * @param l
-	 * @param d
-	 */
-	public Entity(int agentID, SystemData d, ObjectProperties ep, Log l) {
-		this.id = agentID;
-		this.data = d;
-		this.params = ep;
-		this.log = l;
+	protected final int id;
+	
+	public Entity(int agentID) {
+		id = agentID;
 	}
 	
-	/**
-	 * Gets Entity's ID.
-	 * @return ID
-	 */
 	public final int getID() {
 		return this.id;
 	}
 	
-	/**
-	 * @return simple class name
-	 */
-	public String getName() {
-		return this.getClass().getSimpleName();
+	public final String getName() {
+		return getClass().getSimpleName();
+	}
+
+	@Override
+	public String toString() {
+		return "(" + id + ")";
 	}
 	
 }

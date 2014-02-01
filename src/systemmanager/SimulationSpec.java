@@ -1,230 +1,221 @@
 package systemmanager;
 
-import data.*;
-import entity.Agent;
-import event.TimeStamp;
+import static systemmanager.Consts.AgentType.LA;
+import static systemmanager.Consts.MarketType.CALL;
+import static systemmanager.Consts.MarketType.CDA;
+import static systemmanager.Keys.ARRIVAL_RATE;
+import static systemmanager.Keys.CLEAR_FREQ;
+import static systemmanager.Keys.FUNDAMENTAL_KAPPA;
+import static systemmanager.Keys.FUNDAMENTAL_MEAN;
+import static systemmanager.Keys.FUNDAMENTAL_SHOCK_VAR;
+import static systemmanager.Keys.MARKET_LATENCY;
+import static systemmanager.Keys.NBBO_LATENCY;
+import static systemmanager.Keys.NUM;
+import static systemmanager.Keys.NUM_SIMULATIONS;
+import static systemmanager.Keys.PRIVATE_VALUE_VAR;
+import static systemmanager.Keys.RAND_SEED;
+import static systemmanager.Keys.REENTRY_RATE;
+import static systemmanager.Keys.SIMULATION_LENGTH;
+import static systemmanager.Keys.TICK_SIZE;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.Reader;
+import java.io.Serializable;
+import java.util.Collection;
 
-import org.json.simple.*;
-import org.json.simple.parser.*;
+import systemmanager.Consts.AgentType;
+import systemmanager.Consts.MarketType;
+import systemmanager.Consts.Presets;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.gson.Gson;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSyntaxException;
+
+import data.AgentProperties;
+import data.EntityProperties;
+import data.MarketProperties;
 
 /**
- * Stores list of parameters used in the simulation_spec.json file.
+ * Stores list of web parameters used in EGTAOnline.
  * 
- * NOTE: All MarketModel types in the spec file must match the 
- * corresponding class name.
+ * NOTE: All MarketModel types in the spec file must match the corresponding
+ * class name.
  * 
  * @author ewah
  */
-public class SimulationSpec {
+public class SimulationSpec implements Serializable {
 
-	private Log log;
-	private SystemData data;
-	private JSONObject params;
-	private JSONObject assignments;
-	private JSONParser parser;
+	private static final long serialVersionUID = 5646083286397841102L;
+	protected static final Splitter split = Splitter.on(';');
+	protected static final Gson gson = new Gson();
 	
-	public final static String ASSIGN_KEY = "assignment";
-	public final static String CONFIG_KEY = "configuration";
-	
-	// Parameters in spec file
-	public final static String SIMULATION_LENGTH = "sim_length";
-	public final static String TICK_SIZE = "tick_size";
-	public final static String LATENCY = "nbbo_latency";
-	public final static String ARRIVAL_RATE = "arrival_rate";
-	public final static String REENTRY_RATE = "reentry_rate";
-	public final static String FUNDAMENTAL_MEAN = "mean_value";
-	public final static String FUNDAMENTAL_KAPPA = "kappa";
-	public final static String FUNDAMENTAL_SHOCK_VAR = "shock_var";
-	public final static String PRIVATE_VALUE_VAR = "private_value_var";
-	public final static String PRIMARY_MODEL = "primary_model";
-	
-	/**
-	 * Constructor
-	 * @param file
-	 * @param l
-	 */
-	public SimulationSpec(String file, Log l, SystemData d) {
-		log = l;
-		data = d;
-		parser = new JSONParser();
-		loadFile(file);
-		readParams();
-	}
-	
-	/**
-	 * Load the simulation specification file.
-	 * @param specFile
-	 */
-	public void loadFile(String specFile) {
-		try {
-			FileInputStream is = new FileInputStream(new File(specFile));
-			InputStreamReader isr = new InputStreamReader(is);
-			Object obj = parser.parse(isr);
-			JSONObject array = (JSONObject) obj;
-			assignments = (JSONObject) array.get(ASSIGN_KEY);
-			params = (JSONObject) array.get(CONFIG_KEY);
-			isr.close();
-			is.close();
-		} catch (IOException e) {
-			System.err.println(this.getClass().getSimpleName() + 
-					"::loadFile(String): error opening/processing spec file: " +
-					specFile);
-			e.printStackTrace();
-		} catch (ParseException e) {
-			System.err.println(this.getClass().getSimpleName() + 
-					"::loadFile(String): JSON parsing error");
-		}
-	}
-	
-	
-	/**
-	 * Parses the spec file for config parameters. Overrides settings 
-	 * in environment properties file & agent properties config.
-	 */
-	public void readParams() {
-		
-		data.simLength = new TimeStamp(Integer.parseInt(getValue(SIMULATION_LENGTH)));
-		data.tickSize = Integer.parseInt(getValue(TICK_SIZE));	
-		data.nbboLatency = new TimeStamp(Integer.parseInt(getValue(LATENCY)));
-		data.arrivalRate = Double.parseDouble(getValue(ARRIVAL_RATE));
-		data.reentryRate = Double.parseDouble(getValue(REENTRY_RATE));
-		data.meanValue = Integer.parseInt(getValue(FUNDAMENTAL_MEAN));
-		data.kappa = Double.parseDouble(getValue(FUNDAMENTAL_KAPPA));
-		data.shockVar = Double.parseDouble(getValue(FUNDAMENTAL_SHOCK_VAR));
-		data.pvVar = Double.parseDouble(getValue(PRIVATE_VALUE_VAR));
-		data.primaryModelDesc = getValue(PRIMARY_MODEL);
-		
-		/*******************
-		 * MARKET MODELS
-		 *******************/
-		for (String modelType : Consts.MARKETMODEL_TYPES) {
-			// models here is a comma-separated list
-			String models = getValue(modelType);
-			if (models != null) {
-				if (!models.isEmpty()) {
-					if (models.endsWith(",")) {
-						// remove any extra appended commas
-						models = models.substring(0, models.length() - 1);
-					}
-					String[] configs = models.split("[,]+");
-					
-					if (configs.length > 1) {
-						// if > 1, # model type = # of items in the list
-						// check if there are NONE or 0 of this model
-						data.numModelType.put(modelType, configs.length);
-					} else if (!models.equals(Consts.MODEL_CONFIG_NONE) && 
-							!models.equals("0")) {
-						data.numModelType.put(modelType, configs.length);
-					} else {
-						data.numModelType.put(modelType, 0);
-					}
-				}
-			}
-		}
-		
-		/*******************
-		 * CONFIGURATION - add environment agents
-		 *******************/
-		for (String agentType : Consts.SM_AGENT_TYPES) {
-			String num = getValue(agentType);
-			String setup = getValue(agentType + Consts.setupSuffix);
-			if (num != null) {
-				int n = Integer.parseInt(num);
-				ObjectProperties op = getStrategyParameters(agentType, setup);
-				AgentPropsPair a = new AgentPropsPair(agentType, op);
-				data.addEnvAgentNumber(a, n);
-			}
-		}
+	protected static final String[] simulationKeys = { SIMULATION_LENGTH,
+			FUNDAMENTAL_MEAN, FUNDAMENTAL_KAPPA, FUNDAMENTAL_SHOCK_VAR,
+			RAND_SEED, NBBO_LATENCY, NUM_SIMULATIONS };
+	protected static final String[] marketKeys = { MARKET_LATENCY, TICK_SIZE };
+	protected static final String[] agentKeys = { TICK_SIZE, ARRIVAL_RATE,
+			REENTRY_RATE, PRIVATE_VALUE_VAR };
 
-		/*******************
-		 * ASSIGNMENT - add players
-		 *******************/
-		for (String role : Consts.roles) {
-			Object strats = assignments.get(role);
-			if (strats != null) {			
-				@SuppressWarnings("unchecked")
-				ArrayList<String> strategies = (ArrayList<String>) strats;
-				for (String strat : strategies) {
-					if (!strat.equals("")) {
-						String[] as = strat.split("[:]+");	// split on colon
-						if (as.length != 2) {
-							log.log(Log.ERROR, this.getClass().getSimpleName() + 
-									"::setRolePlayers: " + "incorrect strategy string");
-						} else {
-							// first elt is agent type, second elt is strategy
-							ObjectProperties op = getStrategyParameters(as[0], as[1]);
-							data.addPlayerProperties(new AgentPropsPair(as[0], op));
-						}
-					}
-				}
-			}
-		}
+	protected transient final JsonObject rawSpec;
+	protected final EntityProperties simulationProperties;
+	protected final EntityProperties defaultMarketProperties;
+	protected final EntityProperties defaultAgentProperties;
+
+	protected final Collection<MarketProperties> marketProps;
+	protected final Collection<AgentProperties> agentProps;
+	protected transient final JsonObject playerProps; // TODO Change to properties object
+
+	public SimulationSpec() {
+		this.rawSpec = new JsonObject();
+		this.simulationProperties = new EntityProperties();
+		this.defaultMarketProperties = new EntityProperties();
+		this.defaultAgentProperties = new EntityProperties();
+
+		this.marketProps = ImmutableList.of();
+		this.agentProps = ImmutableList.of();
+		this.playerProps = new JsonObject();
 	}
 	
-	/**
-	 * Gets the value associated with a given key in the JSONObject.
-	 * 
-	 * @param key
-	 * @return
-	 */
-	public String getValue(String key) {
-		if (params.containsKey(key)) {
-			return (String) params.get(key);
-		} else {
-			return null;
-		}
+	public SimulationSpec(File specFile) throws FileNotFoundException {
+		this(new FileReader(specFile));
+	}
+	
+	public SimulationSpec(Reader reader) {
+		rawSpec = gson.fromJson(reader, JsonObject.class);
+		JsonObject config = rawSpec.getAsJsonObject(Keys.CONFIG);
+		JsonObject players = rawSpec.getAsJsonObject(Keys.ASSIGN);
+
+		presets(config);
+		
+		defaultMarketProperties = readProperties(config, marketKeys);
+		marketProps = markets(config, defaultMarketProperties);
+		
+		defaultAgentProperties = readProperties(config, agentKeys);
+		agentProps = agents(config, defaultAgentProperties);
+		
+		playerProps = players == null ? new JsonObject() : players;
+		simulationProperties = readProperties(config, simulationKeys);
 	}
 
-	/**
-	 * Wrapper method because log is not static.
-	 * 
-	 * @param type
-	 * @param strategy
-	 * @return
-	 */
-	private ObjectProperties getStrategyParameters(String type, String strategy) {
-		ObjectProperties op = SimulationSpec.getAgentProperties(type, strategy);
-		
-		if (op == null) {
-			log.log(Log.ERROR, this.getClass().getSimpleName() + 
-					"::getStrategyParameters: error parsing " + strategy.split("[_]+"));
+	public SimulationSpec(String specFileName) throws JsonSyntaxException,
+			JsonIOException, FileNotFoundException {
+		this(new File(specFileName));
+	}
+
+	protected static EntityProperties readProperties(JsonObject config,
+			String... keys) {
+		EntityProperties props = new EntityProperties();
+		for (String key : keys) {
+			JsonPrimitive value = config.getAsJsonPrimitive(key);
+			if (value == null) continue;
+			props.put(key, value.getAsString());
 		}
-		return op;
+		return props;
+	}
+
+	protected Collection<MarketProperties> markets(
+			JsonObject config, EntityProperties def) {
+		Builder<MarketProperties> markets = ImmutableList.builder();
+
+		for (MarketType marketType : MarketType.values()) {
+			JsonPrimitive configJson = config.getAsJsonPrimitive(marketType.toString());
+			if (configJson == null) continue;
+			for (String marketConfig : split.split(configJson.getAsString()))
+				markets.add(new MarketProperties(marketType, def, marketConfig));
+		}
+		return markets.build();
+	}
+
+	protected Collection<AgentProperties> agents(JsonObject config,
+			EntityProperties def) {
+		Builder<AgentProperties> backgroundAgents = ImmutableList.builder();
+
+		for (AgentType agentType : Consts.AgentType.values()) {
+			JsonPrimitive configJson = config.getAsJsonPrimitive(agentType.toString());
+			if (configJson == null) continue;
+			for (String agentConfig : split.split(configJson.getAsString()))
+				backgroundAgents.add(new AgentProperties(agentType, def, agentConfig));
+		}
+		return backgroundAgents.build();
 	}
 	
-	
 	/**
-	 * Gets properties for an entity. Will overwrite default ObjectProperties set in
-	 * Consts. If the entity type indicates that the entity is a player in a role, 
-	 * this method parses the strategy, if any, in the simulation spec file.
-	 *
-	 * @param type
-	 * @param strategy
-	 * @return ObjectProperties
+	 * Set preset for standard simulations
 	 */
-	public static ObjectProperties getAgentProperties(String type, String strategy) {
-		ObjectProperties p = new ObjectProperties(Consts.getProperties(type));
-		p.put(Agent.STRATEGY_KEY, strategy);
-		
-		if (strategy == null) return p;
-		
-		// Check that strategy is not blank
-		if (!strategy.equals("") && !type.equals(Consts.DUMMY)) {
-			String[] stratParams = strategy.split("[_]+");
-			if (stratParams.length % 2 != 0) {
-				return null;
-			}
-			for (int j = 0; j < stratParams.length; j += 2) {
-				p.put(stratParams[j], stratParams[j+1]);
-			}
+	// Just add a new case to add your own!
+	protected void presets(JsonObject config) {
+		JsonPrimitive preset = config.getAsJsonPrimitive(Keys.PRESETS);
+		if (preset == null) return;
+		if (preset.getAsString().isEmpty()) return;
+		switch(Presets.valueOf(preset.getAsString())) {
+		case NONE:
+			break;
+		case TWOMARKET:
+			config.addProperty(CDA.toString(), NUM + "_2");
+			config.addProperty(CALL.toString(), NUM + "_0");
+			config.addProperty(LA.toString(), NUM + "_0");
+			break;
+		case TWOMARKETLA:
+			config.addProperty(CDA.toString(), NUM + "_2");
+			config.addProperty(CALL.toString(), NUM + "_0");
+			config.addProperty(LA.toString(), NUM + "_1");
+			break;
+		case CENTRALCDA:
+			config.addProperty(CDA.toString(), NUM + "_1");
+			config.addProperty(CALL.toString(), NUM + "_0");
+			config.addProperty(LA.toString(), NUM + "_0");
+			break;
+		case CENTRALCALL:
+			int nbboLatency = config.getAsJsonPrimitive(NBBO_LATENCY).getAsInt();
+			config.addProperty(CDA.toString(), NUM + "_0");
+			config.addProperty(CALL.toString(), NUM + "_1_" + CLEAR_FREQ + "_" + nbboLatency);
+			config.addProperty(LA.toString(), NUM + "_0");
+			break;
+		default:
+			// Should be impossible to reach here
+			throw new IllegalArgumentException("Unknown Preset");
 		}
-		return p;
+		
 	}
+
+	public EntityProperties getSimulationProps() {
+		return simulationProperties;
+	}
+	
+	public EntityProperties getDefaultMarketProps() {
+		return defaultMarketProperties;
+	}
+	
+	public EntityProperties getDefaultAgentProps() {
+		return defaultAgentProperties;
+	}
+
+	public Collection<MarketProperties> getMarketProps() {
+		return ImmutableList.copyOf(marketProps);
+	}
+
+	public Collection<AgentProperties> getAgentProps() {
+		return ImmutableList.copyOf(agentProps);
+	}
+
+	public JsonObject getPlayerProps() {
+		return playerProps;
+	}
+	
+	public JsonObject getRawSpec() {
+		return rawSpec;
+	}
+	
+	@Override
+	public String toString() {
+		return rawSpec.toString();
+	}
+
 }

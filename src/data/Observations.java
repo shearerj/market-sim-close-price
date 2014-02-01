@@ -1,794 +1,383 @@
 package data;
 
-import model.*;
-import entity.*;
-import market.*;
-import systemmanager.*;
+import static com.google.common.base.Predicates.equalTo;
+import static com.google.common.base.Predicates.not;
 
-// import java.io.BufferedWriter;
-// import java.io.File;
-// import java.io.FileWriter;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.TreeSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
-import org.json.simple.*;
-import org.apache.commons.math3.stat.descriptive.*;
-import org.apache.commons.lang3.ArrayUtils;
+import logger.Logger;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+
+import systemmanager.Consts;
+import systemmanager.Consts.DiscountFactor;
+import systemmanager.Keys;
+import systemmanager.SimulationSpec;
+
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multiset;
+import com.google.common.eventbus.DeadEvent;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+
+import entity.agent.Agent;
+import entity.agent.BackgroundAgent;
+import entity.agent.HFTAgent;
+import entity.agent.MarketMaker;
+import entity.market.Market;
+import entity.market.Price;
+import entity.market.Transaction;
+import event.TimeStamp;
 
 /**
- * Contains payoff data and features for all players in the simulation. Computes
- * metrics to output to the observation file.
+ * This class represents the summary of statistics after a run of the
+ * simulation. The majority of the statistics that it collects are processed via
+ * the EventBus, which is a message passing interface that can handle any style
+ * of object. The rest, which mainly includes agent and player payoffs, is
+ * processed when the call to getFeatures or getPlayerObservations is made.
  * 
- * @author ewah, drhurd
+ * Because this uses message passing, if you want the observation data structure
+ * to get data, you must make sure to "register" it with the EventBus by calling
+ * BUS.register(observations).
+ * 
+ * A single observation doesn't have that ability to save its results. Instead
+ * you need to add it to a MultiSimulationObservation and use that class to
+ * actually do the output.
+ * 
+ * To add statistics to the Observation:
+ * <ol>
+ * <li>Add the appropriate data structures to the object to record the
+ * information you're interested in.</li>
+ * <li>Create a listener method (located at the bottom, to tell what objects to
+ * handle, and what to do with them.</li>
+ * <li>Modify get features to take the aggregate data you stored, and turn it
+ * into a String, double pair.</li>
+ * <li>Wherever the relevant data is added simply add a line like
+ * "Observations.BUS.post(dataObj);" with your appropriate data</li>
+ * </ol>
+ * 
+ * @author erik
+ * 
+ */
+/*
+ * TODO At some point, we may want to be able to read an observation file into
+ * one of these
  */
 public class Observations {
 	
-	private SystemData data;
-	private HashMap<String, Object> observations;
-	private long maxTime;
+	// static event bus to record statics messages during simulation
+	public static final EventBus BUS = new EventBus();
 	
-	// for truncated series
-	public final static String TIMESERIES_MAXTIME = "up_to_maxtime";
+	// Statistics objects filled during execution
+	protected final SummaryStatistics executionSpeeds;
+	protected final SummaryStatistics prices;
+	protected final TimeSeries transPrices;
+	protected final TimeSeries nbboSpreads;
+	protected final Multiset<Class<? extends Agent>> numTrans;
+	protected final Map<Market, TimeSeries> spreads;
+	protected final Map<Market, TimeSeries> midQuotes;
+	protected final SummaryStatistics controlFundamentalValue;
+	protected final SummaryStatistics controlPrivateValue;
 	
-	// Constants in observation file
-	public final static String PLAYERS_KEY = "players";
-	public final static String FEATURES_KEY = "features";
-	public final static String ROLE_KEY = "role";
-	public final static String PAYOFF_KEY = "payoff";
-	public final static String STRATEGY_KEY = "strategy";
-	public final static String OBS_KEY = "obs";
-	
-	// Descriptors
-	public final static String PRICE = "price";
-	public final static String QUANTITY = "quantity";
-	public final static String SURPLUS = "surplus";
-	public final static String EXECTIME = "exectime";
-	public final static String TRANSACTIONS = "trans";
-	public final static String ROUTING = "routing";
-	public final static String SPREADS = "spreads";
-	public final static String RETURN = "return";
-	public final static String VOL = "vol";
-	public final static String PRIVATEVALUES = "pv";
-	public final static String LOG = "log";
-	public final static String NUM = "num";
-	public final static String MARKET = "mkt";
-	public final static String BUYS = "buys";
-	public final static String SELLS = "sells";
-	public final static String ALL = "all";
-	public final static String POSITION = "position";
-	public final static String PROFIT = "profit";
-	public final static String LIQUIDATION = "liq";
-	
-	// Prefixes
-	public final static String PRE = "pre";
-	public final static String POST = "post";
-	public final static String MAIN = "main";
-	public final static String ALTERNATE = "alt";
-	public final static String TRANSACT = "transact";
-	public final static String NO_TRANSACT = "notrans";
-	public final static String PERIODICITY = "freq";
-	
-	// Suffixes
-	public final static String AGENTSETUP = "setup";
-	public final static String DISCOUNTED = "disc";
-	public final static String UNDISCOUNTED = "no" + DISCOUNTED;
-	public final static String TOTAL = "total";
-	public final static String NBBO = "nbbo";
-	
-	
-	/**
-	 * Constructor
-	 */
-	public Observations(SystemData d) {
-		observations = new HashMap<String, Object>();
-		data = d;
-	}
+	// Static information needed for observations
+	protected final Collection<? extends Player> players;
+	protected final Collection<? extends Agent> agents;
+	protected final Collection<? extends Market> markets;
+	protected final FundamentalValue fundamental;
+	protected final SimulationSpec spec;
+	protected final Set<Class<? extends Agent>> agentTypes;
+	protected final int simLength;
 
 	/**
-	 * Writes observations to the JSON file.
+	 * Constructor needs to be called before the simulation starts, but with the
+	 * final object collections.
 	 */
-	public String generateObservationFile() {
-		try {
-			computeAll();
-			return JSONObject.toJSONString(observations);
-		} catch (Exception e) {
-			System.err.println(this.getClass().getSimpleName() + 
-					"::generateObservationFile error");
-			e.printStackTrace();
+	public Observations(SimulationSpec spec, Collection<? extends Market> markets,
+			Collection<? extends Agent> agents, Collection<? extends Player> players,
+			FundamentalValue fundamental) {
+		this.players = players;
+		this.agents = agents;
+		this.markets = markets;
+		this.fundamental = fundamental;
+		this.spec = spec;
+		
+		this.simLength = spec.getSimulationProps().getAsInt(Keys.SIMULATION_LENGTH, 10000);
+		
+		// This is so that every agent type is output at the end, even if they
+		// completed no transactions
+		ImmutableSet.Builder<Class<? extends Agent>> agentTypesBuilder = ImmutableSet.builder();
+		for (Agent agent : agents)
+			agentTypesBuilder.add(agent.getClass());
+		agentTypes = agentTypesBuilder.build();
+		
+		ImmutableMap.Builder<Market, TimeSeries> spreadsBuilder = ImmutableMap.builder();
+		ImmutableMap.Builder<Market, TimeSeries> midQuotesBuilder = ImmutableMap.builder();
+		for (Market market : markets) {
+			spreadsBuilder.put(market, TimeSeries.create());
+			midQuotesBuilder.put(market, TimeSeries.create());
 		}
-		return null;
+		spreads = spreadsBuilder.build();
+		midQuotes = midQuotesBuilder.build();
+		
+		this.executionSpeeds = new SummaryStatistics();
+		this.numTrans = HashMultiset.create();
+		this.prices = new SummaryStatistics();
+		this.transPrices = TimeSeries.create();
+		this.nbboSpreads = TimeSeries.create();
+		this.controlPrivateValue = new SummaryStatistics();
+		this.controlFundamentalValue = new SummaryStatistics();
 	}
-
 	
 	/**
-	 * Compute all features for observation file.
+	 * Gets the player observations relevant to EGTA.
 	 */
-	public void computeAll() {
+	public List<PlayerObservation> getPlayerObservations() {
+		Builder<PlayerObservation> playerObservations = ImmutableList.builder();
+		for (Player player : players)
+			playerObservations.add(player.getObservation());
+		return playerObservations.build();
+	}
+	
+	/**
+	 * Gets the features, which are relevant to the non EGTA case. Features that
+	 * aren't aggregated by the EventBus, like the surplus ones, are calculated
+	 * at the current time, instead of being summed during the simulation.
+	 */
+	public Map<String, Double> getFeatures() {
+		ImmutableMap.Builder<String, Double> features = ImmutableMap.builder();
 		
-		// log observations for players
-		for (Integer id : data.getPlayerIDs()) {
-			addObservation(id);
+		features.put("exectime_mean", executionSpeeds.getMean());
+		features.put("trans_mean_price", prices.getMean());
+		features.put("trans_stddev_price", prices.getStandardDeviation());
+		
+		double numAllTrans = 0;
+		for (Class<? extends Agent> type : agentTypes) {
+			double agentTrans = (double) numTrans.count(type);
+			features.put("trans_" + type.getSimpleName().toLowerCase() + "_num", 
+					agentTrans);
+			numAllTrans += agentTrans;
 		}
+		features.put("trans_num", numAllTrans);
 		
-		// set up max time (where most agents have arrived)
-		long time = Math.round(data.getNumEnvAgents() / data.arrivalRate);
-		maxTime = Math.max(Consts.upToTime, Market.quantize((int) time, 1000));
-		
-		addFeature("", getConfiguration());
-		
-		// iterate through all models
-		for (MarketModel model : data.getModels().values()) {
-			String modelName = model.getLogName() + "_";
-
-			addFeature(modelName + SURPLUS, getSurplus(model));
-			addFeature(modelName + EXECTIME, getExecutionTime(model));
-			addFeature(modelName + TRANSACTIONS, getTransactionInfo(model));
-			addFeature(modelName + SPREADS, getSpread(model, maxTime));
-			for (int period : Consts.periods) {
-				addFeature(modelName + VOL, getVolatility(model, period, maxTime));
-			}
-			addFeature(modelName + Consts.ROLE_MARKETMAKER.toLowerCase(), 
-					getMarketMakerInfo(model));
+		SummaryStatistics medians = new SummaryStatistics();
+		for (Entry<Market, TimeSeries> entry : spreads.entrySet()) {
+			DescriptiveStatistics spreads = DSPlus.from(entry.getValue().sample(1, simLength));
+			double median = DSPlus.median(spreads);
 			
-			// TODO - need to remove the position balance hack
-			// addFeature(modelName + ROUTING, getRegNMSRoutingInfo(model));
-		}
-	}
-	
-	/**
-	 * Adds a feature to the observation file. Only add if ft is non-empty.
-	 * 
-	 * @param description 	key for list of features to insert
-	 * @param ft			Feature to add
-	 */
-	@SuppressWarnings("unchecked")
-	public void addFeature(String description, Feature ft) {
-		if (ft.isEmpty()) return;
-		
-		if (!observations.containsKey(FEATURES_KEY)) {
-			HashMap<String,Object> feats = new HashMap<String,Object>();
-			feats.put(description.toLowerCase(), ft.get());
-			observations.put(FEATURES_KEY, feats);
-		} else {
-			((HashMap<String,Object>) observations.get(FEATURES_KEY)).put(
-					description.toLowerCase(), ft.get());
-		}
-	}
-	
-	/**
-	 * Adds the player's observation.
-	 * 
-	 * @param agentID
-	 */
-	@SuppressWarnings("unchecked")
-	public void addObservation(int agentID) {
-		
-		// Don't add observation if agent is not a player in the game
-		if (!data.isPlayer(agentID)) return;
-		
-		HashMap<String, Object> obs = data.getAgent(agentID).getObservation();
-		if (obs == null || obs.isEmpty()) return;
-		
-		// Add agent to list of player observations
-		if (!observations.containsKey(PLAYERS_KEY)) {
-			ArrayList<Object> array = new ArrayList<Object>();
-			array.add(obs);
-			observations.put(PLAYERS_KEY, array);
-		} else {
-			((ArrayList<Object>) observations.get(PLAYERS_KEY)).add(obs);
-		}
-	}
-	
-	
-	/**
-	 * For testing: output a TimeSeries object's generated series.
-	 * 
-	 * @param s
-	 * @param type
-	 */
-	public void outputSeries(TimeSeries s, String type) {
-		s.writeSeriesToFile(SystemData.simDir + Consts.logDir + type + ".txt");
-	}
-
-	/**
-	 * For testing: output a sampled TimeSeries object: points, and sampled arrays.
-	 * 
-	 * @param s
-	 * @param type
-	 */
-	public void outputSampledSeries(TimeSeries s, String type) {
-		
-		s.writePointsToCSFile(SystemData.simDir + Consts.logDir + type + "points.csv");
-		for (int period : Consts.periods) {
-			s.writeSampledSeriesToFile(period, data.simLength.longValue(),
-					SystemData.simDir + Consts.logDir + type + "_" + period + ".csv");
-		}
-	}
-	
-	public void outputSampledSeries(int period, long maxTime, TimeSeries s, String type) {
-		s.writeSampledSeriesToFile(period, maxTime,
-				SystemData.simDir + Consts.logDir + type + "_period" + period + ".csv");
-	}
-	
-	
-	/********************************************
-	 * Data aggregation
-	 *******************************************/
-	
-	/**
-	 * @return HashMap of configuration parameters.
-	 */
-	public Feature getConfiguration() {
-		Feature config = new Feature();
-		config.put(OBS_KEY, data.num);
-		config.put(SimulationSpec.SIMULATION_LENGTH, data.simLength);
-		config.put(SimulationSpec.TICK_SIZE, data.tickSize);
-		config.put(SimulationSpec.LATENCY, data.nbboLatency);
-		config.put(SimulationSpec.ARRIVAL_RATE, data.arrivalRate);
-		config.put(SimulationSpec.REENTRY_RATE, data.reentryRate);
-		config.put(SimulationSpec.FUNDAMENTAL_KAPPA, data.kappa);
-		config.put(SimulationSpec.FUNDAMENTAL_MEAN, data.meanValue);
-		config.put(SimulationSpec.FUNDAMENTAL_SHOCK_VAR, data.shockVar);
-		config.put(SimulationSpec.PRIVATE_VALUE_VAR, data.pvVar);
-
-		config.put(TIMESERIES_MAXTIME, maxTime);
-		
-		for (AgentPropsPair app : data.getEnvAgentMap().keySet()) {
-			String agType = app.getAgentType();
-			config.put(agType + "_" + NUM, data.getEnvAgentMap().get(app));
-			config.put(agType + "_" + AGENTSETUP, 
-					app.getProperties().toStrategyString());
-		}
-		return config;
-	}
-
-	
-	/**
-	 * Execution time metrics.
-	 * 
-	 * @param model
-	 * @return
-	 */
-	public Feature getExecutionTime(MarketModel model) {
-		Feature feat = new Feature();
-		ArrayList<Integer> ids = model.getMarketIDs();
-		DescriptiveStatistics speeds = new DescriptiveStatistics();
-		for (Integer bidID : data.executionTime.keySet()) {
-			PQBid b = data.getBid(bidID);
-			if (ids.contains(b.getMarketID())) {
-				speeds.addValue((double) data.executionTime.get(bidID).longValue());
-			}
-		}
-//		feat.addMax(speeds);
-//		feat.addMin(speeds);
-		feat.addMean(speeds);
-		return feat;
-	}
-	
-	/**
-	 * Extract discounted surplus for background agents, including those
-	 * that are players (in the EGTA use case).
-	 * 
-	 * @param model
-	 * @return
-	 */
-	public Feature getSurplus(MarketModel model) {
-		Feature feat = new Feature();
-		
-		for (double rho : Consts.rhos) {
-			String suffix = "";
-			if (rho != 0) {
-				suffix += "_" + DISCOUNTED + rho;
-			} else {
-				suffix += "_" + UNDISCOUNTED;
-			}
-			
-			Surplus surplus = data.getSurplus(model.getID(), rho);
-			if (surplus != null) {
-				DescriptiveStatistics total = new DescriptiveStatistics(
-						ArrayUtils.toPrimitive(surplus.values().toArray(new 
-								Double[surplus.size()])));
-				feat.addSum("", TOTAL + suffix, total);
-
-				// sub-categories for surplus (roles)
-				DescriptiveStatistics bkgrd = new DescriptiveStatistics();
-				DescriptiveStatistics hft = new DescriptiveStatistics();
-				DescriptiveStatistics mm = new DescriptiveStatistics();
-				DescriptiveStatistics env = new DescriptiveStatistics();
-
-				// go through all agents & update for each agent type
-				for (Integer agentID : surplus.agents()) {
-					Agent ag = data.getAgent(agentID);
-					double val = surplus.get(agentID);
-
-					if (ag instanceof BackgroundAgent) {
-						bkgrd.addValue(val);
-					} else if (ag instanceof HFTAgent) {
-						val = ag.getRealizedProfit();
-						hft.addValue(val);
-					} else if (ag instanceof MarketMaker) {
-						mm.addValue(val);
-					}
-					if (data.isEnvironmentAgent(agentID)) {
-						env.addValue(val);
-					}
-				}
-
-				feat.addSum("", Consts.ROLE_BACKGROUND.toLowerCase() + suffix, bkgrd);
-				feat.addSum("", Consts.ROLE_MARKETMAKER.toLowerCase() + suffix, mm);
-				feat.addSum("", Consts.ROLE_HFT.toLowerCase(), hft);
-				if (data.isEGTAUseCase()) {	// only add if EGTA use case
-					feat.addSum("", Consts.TYPE_ENVIRONMENT.toLowerCase(), env);
-				}
-			} else {
-				System.err.println(this.getClass().getSimpleName() + "::getSurplus: " +
-						"no surplus records found for rho=" + rho);
-			}
-		}
-		return feat;
-	}
-	
-	
-	/**
-	 * Transaction statistics.
-	 * 
-	 * Note that the DescriptiveStatistics prices object is NOT comparable
-	 * to the TimeSeries transPrices; the latter does not allow more than one
-	 * value for each TimeStamp and thus it only gives the most recent transaction
-	 * at any given time.
-	 * 
-	 * @param model
-	 * @return
-	 */
-	public Feature getTransactionInfo(MarketModel model) {
-		Feature feat = new Feature();
-
-		TreeSet<Transaction> tset = data.getTrans(model.getID());
-		
-		if (tset != null && !tset.isEmpty()) {
-			List<Transaction> trans = new ArrayList<Transaction>(tset);
-
-			DescriptiveStatistics prices = new DescriptiveStatistics();
-			DescriptiveStatistics quantity = new DescriptiveStatistics();
-			DescriptiveStatistics fundamental = new DescriptiveStatistics();
-			TimeSeries transPrices = new TimeSeries();
-			TimeSeries fundPrices = new TimeSeries();
-
-			// number of transactions, hashed by agent type
-			HashMap<String,Integer> numTrans = new HashMap<String,Integer>();
-			
-			// initialize for every agent type; otherwise will not log those w/o transactions
-			List<String> allAgentTypes = new ArrayList<String>(Consts.HFT_AGENT_TYPES);
-			allAgentTypes.addAll(Consts.BACKGROUND_AGENT_TYPES);
-			allAgentTypes.addAll(Consts.MARKETMAKER_AGENT_TYPES);
-			for (String s : allAgentTypes) {
-				numTrans.put(s, 0);
-			}
-
-			for (Transaction t : trans) {
-				PQTransaction tr = (PQTransaction) t;
-				prices.addValue(tr.price.getPrice());
-				quantity.addValue(tr.quantity);
-				fundamental.addValue(data.getFundamentalAt(tr.timestamp).getPrice());
-
-				transPrices.add(tr.timestamp, new Double(tr.price.getPrice()));
-				fundPrices.add(tr.timestamp, new Double(data.getFundamentalAt(tr.timestamp).getPrice()));
-
-				// update number of transactions
-				for (int id : Arrays.asList(tr.buyerID, tr.sellerID)) {
-					if (model.getAgentIDs().contains(id)) {
-						String type = data.getAgent(id).getType();
-						int num = 0;
-						if (numTrans.containsKey(type)) {
-							num += numTrans.get(type);
-						}
-						numTrans.put(type, ++num);
-					}
-				}
-			}
-			feat.addMean(PRICE, "", prices);
-			feat.addStdDev(PRICE, "", prices);
-
-			// number of transactions for each agent type
-			for (String type : numTrans.keySet()) {
-				feat.put(type.toLowerCase() + "_" + NUM, numTrans.get(type));
-			}
-
-			// compute RMSD (for price discovery) at different sampling frequencies
-			for (int period : Consts.periods) {
-				String prefix = "";
-				if (period > 1) {
-					prefix += PERIODICITY + period;
-				}
-				double[] pr = transPrices.getSampledArray(period, data.simLength.longValue());
-				double[] fund = fundPrices.getSampledArray(period, data.simLength.longValue());
-				feat.addRMSD(prefix, "", new DescriptiveStatistics(pr), 
-						new DescriptiveStatistics(fund));
-			}
-		} else {
-			System.err.println(this.getClass().getSimpleName() + "::getTransactionInfo: " +
-					"no transactions found");
-		}
-		return feat;
-	}
-	
-	
-	/**
-	 * Computes spread metrics for the given model.
-	 * 
-	 * NOTE: The computed median will include NaNs in the list of numbers.
-	 * 
-	 * @param model
-	 * @param maxTime
-	 * @return
-	 */
-	public Feature getSpread(MarketModel model, long maxTime) {
-		Feature feat = new Feature();
-		
-		DescriptiveStatistics medians = new DescriptiveStatistics();
-		for (int mktID : model.getMarketIDs()) {
-			TimeSeries s = data.marketSpread.get(mktID);
-			if (s != null) {
-				double[] array = s.getSampledArray(0, maxTime);
-				DescriptiveStatistics spreads = new DescriptiveStatistics(array);
-				double med = feat.addMedian("", MARKET + (-mktID) + 
-						"_" + TIMESERIES_MAXTIME, spreads);
-				medians.addValue(med);
-			}
+			features.put("spreads_median_market_" + entry.getKey().getID(), median);
+			medians.addValue(median);
 		}
 		// average of median market spreads (for all markets in this model)
-		feat.addMean("", MARKET + "_" + TIMESERIES_MAXTIME, medians);
+		features.put("spreads_mean_markets", medians.getMean());
+
+		DescriptiveStatistics spreads = DSPlus.from(nbboSpreads.sample(1, simLength));
+		features.put("spreads_median_nbbo", DSPlus.median(spreads));
 		
-		TimeSeries nbbo = data.NBBOSpread.get(model.getID());
-		if (nbbo != null) {
-			double[] array = nbbo.getSampledArray(0, maxTime);
-			DescriptiveStatistics spreads = new DescriptiveStatistics(array);
-			feat.addMedian("", NBBO + "_" + TIMESERIES_MAXTIME, spreads);
+		TimeSeries fundPrices = fundamental.asTimeSeries();
+		for (int period : Consts.PERIODS)
+			periodBased(features, fundPrices, period);
+		
+		// Profit and Surplus (and Private Value)
+		// XXX This does't quite make sense because background agents don't liquidate...
+		SummaryStatistics 
+			modelProfit = new SummaryStatistics(),
+			backgroundAgentProfit = new SummaryStatistics(),
+			hftProfit = new SummaryStatistics(),
+			marketMakerProfit = new SummaryStatistics();
+		
+		for (Agent agent : agents) {
+			long profit = agent.getPostLiquidationProfit();
+			modelProfit.addValue(profit);
+			if (agent instanceof BackgroundAgent) {
+				backgroundAgentProfit.addValue(profit);
+			} else if (agent instanceof HFTAgent) {
+				hftProfit.addValue(profit);
+			} else if (agent instanceof MarketMaker) {
+				marketMakerProfit.addValue(profit);
+			}
 		}
-		return feat;
-	}
-	
-	
-	/**
-	 * Computes volatility metrics for time 0 to maxTime, sampled at interval
-	 * specified by period. Volatility is measured as:
-	 * 
-	 * - log of standard deviation of time series of mid-quote prices
-	 * - standard deviation of log returns
-	 * 
-	 * @param model
-	 * @param period
-	 * @param maxTime (inclusive)
-	 * @return
-	 */
-	public Feature getVolatility(MarketModel model, int period, long maxTime) {
-		Feature feat = new Feature();
-		String prefix = "";
-		if (period > 1) prefix += PERIODICITY + period;
+
+		features.put("profit_sum_total", modelProfit.getSum());
+		features.put("profit_sum_background", backgroundAgentProfit.getSum());
+		features.put("profit_sum_marketmaker", marketMakerProfit.getSum());
+		features.put("profit_sum_hft", hftProfit.getSum());
 		
-		DescriptiveStatistics stddev = new DescriptiveStatistics();
-		DescriptiveStatistics logPriceVol = new DescriptiveStatistics();
-		DescriptiveStatistics logRetVol = new DescriptiveStatistics();
-		for (int mktID : model.getMarketIDs()) {
-			String suffix = "_" + MARKET + (-mktID);
+		Map<Class<? extends Agent>, SummaryStatistics> agentSurplus = Maps.newHashMap();
+		for (DiscountFactor discount : DiscountFactor.values()) {
+			SummaryStatistics surplus = new SummaryStatistics();
+			// go through all agents & update for each agent type
+			for (Agent agent : agents)
+				if (agent instanceof BackgroundAgent) {
+					controlPrivateValue.addValue(((BackgroundAgent) agent).getPrivateValueMean().doubleValue());
+					
+					surplus.addValue(((BackgroundAgent) agent).getDiscountedSurplus(discount));
+					if (!agentSurplus.containsKey(agent.getClass()))
+						agentSurplus.put(agent.getClass(), new SummaryStatistics());
+
+					agentSurplus.get(agent.getClass()).addValue(
+							((BackgroundAgent) agent).getDiscountedSurplus(discount));
+				}
 			
-			TimeSeries mq = data.marketMidQuote.get(mktID);
-			if (mq != null) {
-				double[] mid = mq.getSampledArrayWithoutNaNs(period, maxTime);
-				
-				// compute log price volatility for this market
-				DescriptiveStatistics mktPrices = new DescriptiveStatistics(mid);
-				double s = feat.addStdDev(prefix, PRICE + suffix, mktPrices);
-				stddev.addValue(s);
-				if (s != 0) {
-					logPriceVol.addValue(Math.log(s));
-				} // don't add if stddev is 0
-				
-				// compute log-return volatility for this market
-				double[] midquote = mq.getSampledArray(period, maxTime);
-				int size = midquote.length;
-				if (midquote.length > 0) size = midquote.length - 1;
-				
-				double[] logReturns = new double[size];
-				DescriptiveStatistics mktLogReturns = new DescriptiveStatistics();
-				for (int i = 1; i < midquote.length; i++) {
-					logReturns[i-1] = Math.log(midquote[i] / midquote[i-1]);
-					if (!Double.isNaN(logReturns[i-1])) {
-						mktLogReturns.addValue(logReturns[i-1]);
-					}
-				}
-				logRetVol.addValue(feat.addStdDev(prefix, LOG + RETURN + suffix, 
-						mktLogReturns));
-			}
+			features.put("surplus_sum_" + discount, surplus.getSum());
+			for (Class<? extends Agent> type : agentTypes)
+				if (BackgroundAgent.class.isAssignableFrom(type))
+					features.put("surplus_" + type.getSimpleName().toLowerCase() 
+							+ "_sum_" + discount, agentSurplus.get(type).getSum());
 		}
+				
+		// for control variates
+		List<Double> fundTimeSeries = fundPrices.sample(1, simLength);
+		for (double v : fundTimeSeries)
+			controlFundamentalValue.addValue(v);
+		features.put("control_mean_fund", controlFundamentalValue.getMean());
+		features.put("control_var_fund", controlFundamentalValue.getVariance());
+		features.put("control_mean_private", controlPrivateValue.getMean());
+		
+		return features.build();
+	}
+	
+	/**
+	 * Statistics that are based on the sampling period
+	 */
+	protected void periodBased(ImmutableMap.Builder<String, Double> features, 
+			TimeSeries fundPrices, int period) {
+		// Price discovery
+		String key = period == 1 ? "trans_rmsd" : "trans_freq_" + period + "_rmsd"; 
+		DescriptiveStatistics pr = DSPlus.from(transPrices.sample(period, simLength));
+		DescriptiveStatistics fundStat = DSPlus.from(fundPrices.sample(period, simLength));
+		features.put(key, DSPlus.rmsd(pr, fundStat));
+
+		// Volatility
+		String prefix = period == 1 ? "vol" : "vol_freq_" + period;
+
+		SummaryStatistics stddev = new SummaryStatistics();
+		SummaryStatistics logPriceVol = new SummaryStatistics();
+		SummaryStatistics logRetVol = new SummaryStatistics();
+
+		for (Entry<Market, TimeSeries> entry : midQuotes.entrySet()) {
+			TimeSeries mq = entry.getValue();
+			// compute log price volatility for this market
+			Iterable<Double> filtered = Iterables.filter(mq.sample(period, simLength), 
+					not(equalTo(Double.NaN)));
+			double stdev = DSPlus.from(filtered).getStandardDeviation();
+
+			features.put(prefix + "_stddev_price_market_" + entry.getKey().getID(), stdev);
+
+			stddev.addValue(stdev);
+			if (stdev != 0)
+				// XXX ?ideal? don't add if stddev is 0
+				logPriceVol.addValue(Math.log(stdev));
+
+			// compute log-return volatility for this market
+			// XXX Note change in log-return vol from before. Before if the ratio was
+			// NaN it go thrown out. Now the previous value is used. Not sure if
+			// this is correct
+			DescriptiveStatistics mktLogReturns = DSPlus.fromLogRatioOf(mq.sample(period, simLength));
+			double logStdev = mktLogReturns.getStandardDeviation();
+
+			features.put(prefix + "_stddev_log_return_market_" + entry.getKey().getID(), logStdev);
+			logRetVol.addValue(logStdev);
+		}
+
 		// average measures across all markets in this model
-		feat.addMean(prefix, Feature.STDDEV + PRICE, stddev);
-		feat.addMean(prefix, LOG + PRICE, logPriceVol);
-		feat.addMean(prefix, LOG + RETURN, logRetVol);
-		return feat;
+		features.put(prefix + "_mean_stddev_price", stddev.getMean());
+		features.put(prefix + "_mean_log_price", logPriceVol.getMean());
+		features.put(prefix + "_mean_log_return", logRetVol.getMean());
 	}
 	
-	/**
-	 * TODO remove hack to determine if its bid transacted or not
-	 * 
-	 * @return HashMap of order routing info
-	 */
-	public Feature getRegNMSRoutingInfo(MarketModel model) {
-		Feature feat = new Feature();
-		
-		int numAlt = 0;
-		int numMain = 0;
-		int numAltTrans = 0;
-		int numAltNoTrans = 0;
-		int numMainTrans = 0;
-		int numMainNoTrans = 0;
-		
-		for (Integer agentID : model.getAgentIDs()) {
-			Agent ag = data.getAgent(agentID);
-			// must check that background agent (affected by routing)
-			if (ag instanceof BackgroundAgent) {
-				BackgroundAgent b = (BackgroundAgent) ag;
-				if (b.getMarketID() != b.getMarketIDSubmittedBid()) {
-					// order routed to alternate market
-					numAlt++;
-					if (b.getPositionBalance() == 0) numAltNoTrans++;
-					else numAltTrans++;
-				} else {
-					// order was not routed
-					numMain++;
-					if (b.getPositionBalance() == 0) numMainNoTrans++;
-					else numMainTrans++;
-				}
-			}
+	// --------------------------------------
+	// Everything with an @Subscribe is a listener for objects that contain statistics.
+	
+	@Subscribe public void processSpread(SpreadStatistic statistic) {
+		TimeSeries series = spreads.get(statistic.owner);
+		series.add(statistic.time.getInTicks(), statistic.val);
+	}
+	
+	@Subscribe public void processMidQuote(MidQuoteStatistic statistic) {
+		TimeSeries series = midQuotes.get(statistic.owner);
+		series.add(statistic.time.getInTicks(), statistic.val);
+	}
+	
+	@Subscribe public void processNBBOSpread(NBBOStatistic statistic) {
+		nbboSpreads.add(statistic.time.getInTicks(), statistic.val);
+	}
+	
+	@Subscribe public void processTransaction(Transaction transaction) {
+		long execTime = transaction.getExecTime().getInTicks();
+		long buyerExecTime = execTime - transaction.getBuyBid().getSubmitTime().getInTicks();
+		long sellerExecTime = execTime - transaction.getSellBid().getSubmitTime().getInTicks();
+		for (int quantity = 0; quantity < transaction.getQuantity(); quantity++) {
+			executionSpeeds.addValue((double) buyerExecTime);
+			executionSpeeds.addValue((double) sellerExecTime);
 		}
-		feat.put(MAIN, numMain);	
-		feat.put(ALTERNATE, numAlt);	
-		feat.put(ALTERNATE + "_" + TRANSACT, numAltTrans);
-		feat.put(ALTERNATE + "_" + NO_TRANSACT, numAltNoTrans);
-		feat.put(MAIN + "_" + TRANSACT, numMainTrans);
-		feat.put(MAIN + "_" + NO_TRANSACT, numMainNoTrans);
-		return feat;
+
+		prices.addValue(transaction.getPrice().doubleValue());
+
+		transPrices.add((int) transaction.getExecTime().getInTicks(), 
+				transaction.getPrice().doubleValue());
+		
+		// update number of transactions
+		numTrans.add(transaction.getBuyer().getClass());
+		numTrans.add(transaction.getSeller().getClass());
 	}
 	
+	@Subscribe public void deadStat(DeadEvent d) {
+		Logger.log(Logger.Level.ERROR, "Unhandled Statistic: " + d);
+	}
 	
-	/**
-	 * Track liquidation-related features & profit for market makers.
-	 * 
-	 * @param model
-	 * @return
-	 */
-	public Feature getMarketMakerInfo(MarketModel model) {
-		Feature feat = new Feature();
-		for (Integer agentID : model.getAgentIDs()) {
-			if (data.getAgent(agentID) instanceof MarketMaker) {
-				Agent ag = data.getAgent(agentID);
-				// append the agentID in case more than one of this type
-				String suffix = Integer.toString(agentID);				
-				
-				feat.put(POSITION + "_" + PRE + "_" + LIQUIDATION + suffix, 
-						ag.getPreLiquidationPosition());
-				// just to double-check, should be 0 position after liquidation
-				feat.put(POSITION + "_" + POST + "_" + LIQUIDATION + suffix, 
-						ag.getPositionBalance());
-				feat.put(PROFIT + "_" + PRE + "_" + LIQUIDATION + suffix, 
-						ag.getPreLiquidationProfit());
-				feat.put(PROFIT + "_" + POST + "_" + LIQUIDATION + suffix,
-						ag.getRealizedProfit());
-			}
+	// --------------------------------------
+	// These are all statistics classes that are listened for
+	
+	public static class NBBOStatistic {
+		protected final double val;
+		protected final TimeStamp time;
+
+		public NBBOStatistic(double val, TimeStamp time) {
+			this.val = val;
+			this.time = time;
 		}
-		return feat;
+	}
+	
+	public static abstract class MarketStatistic {
+		protected final double val;
+		protected final Market owner;
+		protected final TimeStamp time;
+
+		public MarketStatistic(Market owner, double val, TimeStamp time) {
+			this.owner = owner;
+			this.val = val;
+			this.time = time;
+		}
+	}
+	
+	public static class SpreadStatistic extends MarketStatistic {
+		public SpreadStatistic(Market market, double val, TimeStamp time) {
+			super(market, val, time);
+		}
+	}
+	
+	public static class MidQuoteStatistic extends MarketStatistic {
+		public MidQuoteStatistic(Market market, double val, TimeStamp time) {
+			super(market, val, time);
+		}
 	}
 
-
-
-	
-	
-//	/**
-//	 * Computes depth metrics the given market IDs.
-//	 * 
-//	 * @param model
-//	 * @return
-//	 */
-//	public HashMap<String, Object> getDepthInfo(MarketModel model) {
-//		HashMap<String, Object> feat = new HashMap<String, Object>();
-//
-//		ArrayList<Integer> ids = model.getMarketIDs();
-//
-//		for (Iterator<Integer> it = ids.iterator(); it.hasNext();) {
-//			int mktID = it.next();
-//			HashMap<TimeStamp, Double> marketDepth = data.marketDepth
-//					.get(mktID);
-//			if (marketDepth != null) {
-//				double[] depths = extractTimeSeries(marketDepth);
-//				addStatistics(feat, depths, "mkt" + (-mktID), true);
-//			}
-//		}
-//		return feat;
-//	}
-//
-//	/**
-//	 * Extracts features of a list of times (e.g. intervals, arrival times).
-//	 * 
-//	 * @param allTimes
-//	 *            ArrayList of TimeStamps
-//	 * @return
-//	 */
-//	public HashMap<String, Object> getTimeStampFeatures(
-//			ArrayList<TimeStamp> allTimes) {
-//		HashMap<String, Object> feat = new HashMap<String, Object>();
-//
-//		Object[] times = allTimes.toArray();
-//		double[] values = new double[times.length];
-//		for (int i = 0; i < values.length; i++) {
-//			TimeStamp tmp = (TimeStamp) times[i];
-//			values[i] = (double) tmp.longValue();
-//		}
-//		addAllStatistics(feat, values, "");
-//		return feat;
-//	}
-//	
-//	/**
-//	 * Buckets based on comparison with the performance in the centralized call
-//	 * market model. For each non-CentralCall model, checks if a transaction
-//	 * occurred in that model and whether or not it occurred in the CentralCall
-//	 * model.
-//	 * 
-//	 * Adds features directly to the Observations object.
-//	 */
-//	public void addTransactionComparison() {
-//
-//		// set as baseline the centralized call market model
-//		int baseID = 0;
-//
-//		// hashed by modelID
-//		HashMap<Integer, ModelComparison> bucketMap = new HashMap<Integer, ModelComparison>();
-//		HashMap<Integer, ArrayList<PQTransaction>> transMap = new HashMap<Integer, ArrayList<PQTransaction>>();
-//		for (Map.Entry<Integer, MarketModel> entry : data.getModels()
-//				.entrySet()) {
-//			MarketModel model = entry.getValue();
-//			int modelID = entry.getKey();
-//			// Set base (centralized call market) model ID
-//			if (model instanceof CentralCall) {
-//				baseID = modelID;
-//			}
-//			transMap.put(modelID, data.getComparableTrans(model.getID()));
-//			bucketMap.put(modelID, new ModelComparison());
-//		}
-//
-//		// iterate through all transactions, and identify the model
-//		ArrayList<PQTransaction> uniqueTrans = data.getUniqueComparableTrans();
-//		for (Iterator<PQTransaction> it = uniqueTrans.iterator(); it.hasNext();) {
-//			PQTransaction trans = it.next();
-//
-//			for (Iterator<Integer> id = data.getModelIDs().iterator(); id
-//					.hasNext();) {
-//				int modelID = id.next();
-//
-//				ArrayList<PQTransaction> baseTrans = transMap.get(baseID);
-//				ArrayList<PQTransaction> modelTrans = transMap.get(modelID);
-//
-//				if (modelTrans.contains(trans) && baseTrans.contains(trans)) {
-//					bucketMap.get(modelID).YY++;
-//				} else if (!modelTrans.contains(trans)
-//						&& baseTrans.contains(trans)) {
-//					bucketMap.get(modelID).NY++;
-//				} else if (modelTrans.contains(trans)
-//						&& !baseTrans.contains(trans)) {
-//					bucketMap.get(modelID).YN++;
-//				} else if (!modelTrans.contains(trans)
-//						&& !baseTrans.contains(trans)) {
-//					bucketMap.get(modelID).NN++;
-//				}
-//			}
-//
-//		}
-//		// add as feature
-//		for (Iterator<Integer> id = data.getModelIDs().iterator(); id.hasNext();) {
-//			int modelID = id.next();
-//			String prefix = data.getModel(modelID).getLogName() + "_";
-//			HashMap<String, Object> feat = new HashMap<String, Object>();
-//
-//			ModelComparison mc = bucketMap.get(modelID);
-//			feat.put("YY", mc.YY);
-//			feat.put("YN", mc.YN);
-//			feat.put("NY", mc.NY);
-//			feat.put("NN", mc.NN);
-//			this.addFeature(prefix + "compare", feat);
-//		}
-//	}
-
-	
-	
-//	/**
-//	 * Modifies transactions for the given model by setting TimeStamp to be constant, 
-//	 * and using agent log IDs rather than agent IDs for indicating buyer or seller.
-//	 * Also sets constant price (because surplus will be same regardless of price), as
-//	 * well as constant bid IDs since different bids are submitted to each model.
-//	 * 
-//	 * @param modelID
-//	 * @return
-//	 */
-//	public ArrayList<PQTransaction> getComparableTrans(int modelID) {
-//		ArrayList<Integer> mktIDs = getModel(modelID).getMarketIDs();
-//				
-//		ArrayList<PQTransaction> trans = new ArrayList<PQTransaction>();
-//		for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
-//			if (mktIDs.contains(entry.getValue().marketID)) {
-//				PQTransaction tr = entry.getValue();
-//				
-//				// Modify values to be comparable between models
-//				// - Use logID rather than agentID
-//				// - Set constant TimeStamp
-//				// - Set constant marketID
-//				// - Set constant price
-//				// - Set constant bid IDs
-//				// todo for now, ignore quantity
-//				int bID = getAgent(tr.buyerID).getLogID();
-//				int sID = getAgent(tr.sellerID).getLogID();
-//				Price p = new Price(0);
-//				TimeStamp ts = new TimeStamp(-1);
-//				int mktID = 0;
-//				int bBidID = 0;
-//				int sBidID = 0;
-//				
-//				PQTransaction trNew = new PQTransaction(tr.quantity, p, bID, sID, bBidID, sBidID, ts, mktID);
-//				trans.add(trNew);
-//			}
-//		}
-//		return trans;
-//	}
-	
-//	/**
-//	 * Modifies all transactions in transData to be comparable between models.
-//	 * 
-//	 * @return
-//	 */
-//	public ArrayList<PQTransaction> getUniqueComparableTrans() {
-//		Set<PQTransaction> trans = new HashSet<PQTransaction>();
-//		
-//		for (Map.Entry<Integer,PQTransaction> entry : transactions.entrySet()) {
-//			PQTransaction tr = entry.getValue();
-//			
-//			// Modify values to be comparable between models
-//			// - Use logID rather than agentID
-//			// - Set constant TimeStamp
-//			// - Set constant marketID
-//			// - Set constant price
-//			// - Set constant bid IDs
-//			// - for now, ignore quantity
-//			int bID = getAgent(tr.buyerID).getLogID();
-//			int sID = getAgent(tr.sellerID).getLogID();
-//			Price p = new Price(0);
-//			TimeStamp ts = new TimeStamp(-1);
-//			int mktID = 0;
-//			int bBidID = 0;
-//			int sBidID = 0;
-//			
-//			PQTransaction trNew = new PQTransaction(tr.quantity, p, bID, sID, bBidID, sBidID, ts, mktID);
-//			trans.add(trNew);
-//		}
-//		ArrayList<PQTransaction> uniqueTrans = new ArrayList<PQTransaction>();
-//		uniqueTrans.addAll(trans);
-//		return uniqueTrans;
-//	}
-	
-//	/**
-//	 * @return list of actual private values of all agents
-//	 */
-//	public ArrayList<Price> getPrivateValues() {
-//		ArrayList<Price> pvs = new ArrayList<Price>(numAgents);
-//		for (Iterator<Integer> ag = getAgentIDs().iterator(); ag.hasNext(); ) {
-//			Price val = agents.get(ag.next()).getPrivateValue();
-//			// PV will be null if it doesn't exist for the agent
-//			if (val != null) {
-//				pvs.add(val);
-//			}
-//		}
-//		return pvs;
-//	}
-	
+	public static abstract class PriceStatistic {
+		protected final double val;
+		
+		public PriceStatistic(Price value) {
+			this.val = value.doubleValue();
+		}
+	}
 }

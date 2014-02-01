@@ -1,0 +1,116 @@
+2|    0|1| mySimulation
+2|    0|1| Random Seed: -1198902552
+2|    0|1| Configuration: {"assignment":{},"configuration":{"modelName":"mySimulation","modelNum":"1","simLength":"15000","presets":"TWOMARKETLA","CDA":"num_2","CALL":"num_0","BASICMM":"num_0_sleepTime_200_numRungs_10_rungSize_1000","ZI":"num_250_bidRangeMin_0_bidRangeMax_5000","ZIR":"num_0_maxqty_5","ZIP":"num_0","AA":"num_0","tickSize":"1","nbboLatency":"100","arrivalRate":"0.075","reentryRate":"0.005","meanValue":"100000","kappa":"0.05","shockVar":"150000000","privateValueVar":"100000000","LA":"num_1"}}
+2|    0|1| Created Market: CDA [1]
+2|    0|1| Created Market: CDA [2]
+2|    0|1| CDA [2] (Bid: - , Ask: - )
+2|    0|1| CDA [1] (Bid: - , Ask: - )
+2|    0|1| ZI (1) ZIAgent: executing ZI strategy position=0, for q=1, value=$98.905 + $0.091=$98.996
+2|    0|1| ZI (1) ($100.152, 1) -> CDA [1]
+2|    0|1| CDA [1] (Bid: $100.152, Ask: - )
+2|    4|1| ZI (2) ZIAgent: executing ZI strategy position=0, for q=-1, value=$109.584 + $-9.-163=$100.421
+2|    4|1| ZI (2) ($99.979, -1) -> CDA [2]
+2|    4|1| CDA [2] (Bid: - , Ask: $99.979)
+2|    4|1| LA (251) detected arbitrage between CDA [1] (Bid: $100.152, Ask: - ) and CDA [2] (Bid: - , Ask: $99.979)
+2|    4|1| LA (251) ($100.065, -1) -> CDA [1]
+2|    4|1| ZI (1) transacted to position 1
+2|    4|1| LA (251) transacted to position -1
+2|    4|1| CDA [1] (Bid: - , Ask: - )
+2|    4|1| LA (251) ($100.065, 1) -> CDA [2]
+2|    4|1| LA (251) transacted to position 0
+2|    4|1| ZI (2) transacted to position -1
+2|    4|1| CDA [2] (Bid: - , Ask: - )
+2|   15|1| ZI (3) ZIAgent: executing ZI strategy position=0, for q=1, value=$144.874 + $1.673=$146.547
+2|   15|1| ZI (3) ($151.518, 1) -> CDA [1]
+2|   15|1| CDA [1] (Bid: $151.518, Ask: - )
+2|   22|1| ZI (4) ZIAgent: executing ZI strategy position=0, for q=-1, value=$143.791 + $-12.-352=$131.439
+2|   22|1| ZI (4) ($127.839, -1) -> CDA [2]
+2|   22|1| CDA [2] (Bid: - , Ask: $127.839)
+2|   22|1| LA (251) detected arbitrage between CDA [1] (Bid: $151.518, Ask: - ) and CDA [2] (Bid: - , Ask: $127.839)
+2|   22|1| LA (251) ($139.678, -1) -> CDA [1]
+2|   22|1| ZI (3) transacted to position 1
+2|   22|1| LA (251) transacted to position -1
+2|   22|1| CDA [1] (Bid: - , Ask: - )
+2|   22|1| LA (251) ($139.678, 1) -> CDA [2]
+2|   22|1| LA (251) transacted to position 0
+2|   22|1| ZI (4) transacted to position -1
+2|   22|1| CDA [2] (Bid: - , Ask: - )
+2|   30|1| ZI (5) ZIAgent: executing ZI strategy position=0, for q=1, value=$97.267 + $1.662=$98.929
+2|   30|1| ZI (5) ($101.64, 1) -> CDA [1]
+2|   30|1| CDA [1] (Bid: $101.64, Ask: - )
+2|   31|1| ZI (6) ZIAgent: executing ZI strategy position=0, for q=1, value=$109.267 + $5.022=$114.289
+2|   31|1| ZI (6) ($117.324, 1) -> CDA [2]
+2|   31|1| CDA [2] (Bid: $117.324, Ask: - )
+2|   42|1| ZI (7) ZIAgent: executing ZI strategy position=0, for q=1, value=$117.866 + $9.795=$127.661
+2|   42|1| ZI (7) ($129.358, 1) -> CDA [1]
+2|   42|1| CDA [1] (Bid: $129.358, Ask: - )
+2|   49|1| ZI (8) ZIAgent: executing ZI strategy position=0, for q=-1, value=$75.643 + $-5.-128=$70.515
+2|   49|1| ZI (8) ($68.136, -1) -> CDA [2]
+2|   49|1| ZI (6) transacted to position 1
+2|   49|1| ZI (8) transacted to position -1
+2|   49|1| CDA [2] (Bid: - , Ask: - )
+2|   65|1| ZI (9) ZIAgent: executing ZI strategy position=0, for q=1, value=$148.859 + $8.326=$157.185
+2|   65|1| ZI (9) ($157.84, 1) -> CDA [1]
+2|   65|1| CDA [1] (Bid: $157.84, Ask: - )
+2|   94|1| ZI (10) ZIAgent: executing ZI strategy position=0, for q=-1, value=$161.379 + $-6.-67=$154.709
+2|   94|1| ZI (10) ($151.921, -1) -> CDA [2]
+2|   94|1| CDA [2] (Bid: - , Ask: $151.921)
+2|   94|1| LA (251) detected arbitrage between CDA [1] (Bid: $157.84, Ask: - ) and CDA [2] (Bid: - , Ask: $151.921)
+2|   94|1| LA (251) ($154.88, -1) -> CDA [1]
+2|   94|1| ZI (9) transacted to position 1
+2|   94|1| LA (251) transacted to position -1
+2|   94|1| CDA [1] (Bid: $129.358, Ask: - )
+2|   94|1| LA (251) ($154.88, 1) -> CDA [2]
+2|   94|1| LA (251) transacted to position 0
+2|   94|1| ZI (10) transacted to position -1
+2|   94|1| CDA [2] (Bid: - , Ask: - )
+2|  100|1| CDA [1] -> SIP quote (Bid: - , Ask: - )
+2|  100|1| CDA [2] -> SIP quote (Bid: - , Ask: - )
+2|  100|1| CDA [1] -> SIP quote (Bid: $100.152, Ask: - )
+2|  104|1| CDA [2] -> SIP quote (Bid: - , Ask: - )
+2|  104|1| CDA [2] -> SIP quote (Bid: - , Ask: $99.979)
+2|  104|1| CDA [1] -> SIP quote (Bid: - , Ask: - )
+2|  115|1| CDA [1] -> SIP quote (Bid: $151.518, Ask: - )
+2|  122|1| CDA [1] -> SIP quote (Bid: - , Ask: - )
+2|  122|1| CDA [2] -> SIP quote (Bid: - , Ask: - )
+2|  122|1| CDA [2] -> SIP quote (Bid: - , Ask: $127.839)
+2|  130|1| CDA [1] -> SIP quote (Bid: $101.64, Ask: - )
+2|  131|1| CDA [2] -> SIP quote (Bid: $117.324, Ask: - )
+2|  141|1| ZI (11) ZIAgent: executing ZI strategy position=0, for q=1, value=$92.956 + $10.273=$103.229
+2|  141|1| ZI (11) ($108.122, 1) -> CDA [1]
+2|  141|1| CDA [1] (Bid: $129.358, Ask: - )
+2|  142|1| CDA [1] -> SIP quote (Bid: $129.358, Ask: - )
+2|  149|1| CDA [2] -> SIP quote (Bid: - , Ask: - )
+2|  152|1| ZI (12) ZIAgent: executing ZI strategy position=0, for q=1, value=$97.406 + $27.103=$124.509
+2|  152|1| ZI (12) ($127.735, 1) -> CDA [2]
+2|  152|1| CDA [2] (Bid: $127.735, Ask: - )
+2|  165|1| CDA [1] -> SIP quote (Bid: $157.84, Ask: - )
+2|  194|1| CDA [1] -> SIP quote (Bid: $129.358, Ask: - )
+2|  194|1| CDA [2] -> SIP quote (Bid: - , Ask: $151.921)
+2|  194|1| CDA [2] -> SIP quote (Bid: - , Ask: - )
+2|  201|1| ZI (13) ZIAgent: executing ZI strategy position=0, for q=-1, value=$19.291 + $-2.-53=$16.761
+2|  201|1| ZI (13) ($14.285, -1) -> CDA [1]
+2|  201|1| ZI (7) transacted to position 1
+2|  201|1| ZI (13) transacted to position -1
+2|  201|1| CDA [1] (Bid: $108.122, Ask: - )
+2|  205|1| ZI (14) ZIAgent: executing ZI strategy position=0, for q=-1, value=$12.358 + $-8.-305=$4.053
+2|  205|1| Routing ZI (14) ($0.00, -1) -> CDA [2] (Bid: $127.735, Ask: - ) to NBBO (Bid: $129.358, Ask: null)
+2|  205|1| ZI (14) ($0.00, -1) -> CDA [1]
+2|  205|1| ZI (11) transacted to position 1
+2|  205|1| ZI (14) transacted to position -1
+2|  205|1| CDA [1] (Bid: $101.64, Ask: - )
+2|  221|1| ZI (15) ZIAgent: executing ZI strategy position=0, for q=1, value=$70.642 + $2.069=$72.711
+2|  221|1| ZI (15) ($77.543, 1) -> CDA [1]
+2|  221|1| CDA [1] (Bid: $101.64, Ask: - )
+2|  229|1| ZI (16) ZIAgent: executing ZI strategy position=0, for q=-1, value=$69.482 + $-12.-755=$56.727
+2|  229|1| Routing ZI (16) ($55.021, -1) -> CDA [2] (Bid: $127.735, Ask: - ) to NBBO (Bid: $129.358, Ask: null)
+2|  229|1| ZI (16) ($55.021, -1) -> CDA [1]
+2|  229|1| ZI (5) transacted to position 1
+2|  229|1| ZI (16) transacted to position -1
+2|  229|1| CDA [1] (Bid: $77.543, Ask: - )
+2|  241|1| CDA [1] -> SIP quote (Bid: $129.358, Ask: - )
+2|  252|1| CDA [2] -> SIP quote (Bid: $127.735, Ask: - )
+2|  265|1| ZI (17) ZIAgent: executing ZI strategy position=0, for q=1, value=$57.091 + $14.306=$71.397
+2|  265|1| ZI (17) ($75.952, 1) -> CDA [1]
+2|  265|1| CDA [1] (Bid: $77.543, Ask: - )
+2|  265|1| [[[ Simulation Over ]]]

@@ -6,6 +6,7 @@
 *.exe
 *.o
 *.so
+*.pyc
 hft.jar
 
 # Logs #
@@ -15,8 +16,11 @@ hft.jar
 # Documentation #
 #################
 .synctex.gz
-.out
-.aux
+*.out
+*.aux
+*.bbl
+*.blg
+*.toc
 
 # Other #
 #########
@@ -33,6 +37,10 @@ build/*
 simulations/*
 logs/*
 .settings/*
+
+# OSX Setting #
+###############
+.DS_Store
 
 # Emacs #
 #########

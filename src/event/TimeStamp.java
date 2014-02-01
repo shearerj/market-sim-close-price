@@ -6,175 +6,110 @@
  */
 package event;
 
-import java.util.*;
+import java.io.Serializable;
 
-import systemmanager.Consts;
+import com.google.common.base.Objects;
+import com.google.common.primitives.Longs;
 
-import activity.Activity;
+import utils.MathUtils;
 
 /**
- * The TimeStamp class is just a wrapper around java.lang.Long.
- * This *must* remain an immutable object
+ * The TimeStamp class is just a wrapper around java.lang.Long. This *must*
+ * remain an immutable object
  */
-public class TimeStamp implements Comparable<TimeStamp>
-{
-	private final long ts;
+public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	
-	public TimeStamp(Date d)    { ts = d.getTime();}
-	public TimeStamp(Long l)    { ts = l;}
-	public TimeStamp(Integer i) { ts = (long) i;}
-	public TimeStamp(long l)    { ts = l;}
-	public TimeStamp(int i)     { ts = (long) i;}
-	public TimeStamp(String s)  { ts = Long.parseLong(s);}
+	private static final long serialVersionUID = -2109498445060507654L;
+	
+	public static final TimeStamp INFINITE = new TimeStamp(Long.MAX_VALUE);
+	public static final TimeStamp IMMEDIATE = new TimeStamp(-1);
+	public static final TimeStamp ZERO = new TimeStamp(0);
+	public static final int TICKS_PER_SECOND = 1000000;
+	
+	protected final long ticks;
 
-	public TimeStamp(TimeStamp ts) {
-		this.ts = new Long(ts.longValue());
+	public TimeStamp(long ticks) {
+		this.ticks = ticks;
 	}
-	
-	/**
-	 * @return true if TimeStamp is infinitely fast.
-	 */
-	public boolean isInfinitelyFast() {
-		return this.equals(Consts.INF_TIME); // TODO change to reference check?
+
+	public TimeStamp(int ticks) {
+		this((long) ticks);
 	}
 	
-	/**
-	 * Get the timestamp.
-	 * @return the TimeStamp's receipt timestamp in microseconds
-	 */
-	public Long getLongValue() {
-		return ts;
+	public TimeStamp(TimeStamp time) {
+		this.ticks = time.ticks;
+	}
+	
+	public static TimeStamp create(int ticks) {
+		return new TimeStamp(ticks);
+	}
+
+	public double getInSeconds() {
+		return ticks / (double) TICKS_PER_SECOND;
 	}
 
 	/**
-	 * Convert the timestamp to seconds
-	 * @return the TimeStamp's receipt timestamp in seconds
+	 * Subtract two TimeStamps
 	 */
-	public long getTimeStampInSecs() {
-		return ts/1000000;
+	public TimeStamp minus(TimeStamp other) {
+		return new TimeStamp(this.ticks - other.ticks);
 	}
 
 	/**
-	 * Diff the object's timestamp with the specified value.
-	 * @param other the comparison timestamp
-	 * @return the difference
+	 * Add two TimeStamps together
 	 */
-	public TimeStamp diff(TimeStamp other) {
-		return diff(this, other);
+	public TimeStamp plus(TimeStamp other) {
+		return new TimeStamp(this.ticks + other.ticks);
+	}
+
+	public long getInTicks() {
+		return ticks;
 	}
 
 	/**
-	 * Diff the timestamp.
-	 * @param t1 the comparison timestamp
-	 * @param t2 the comparison timestamp
-	 * @return the difference
-	 */
-	public static TimeStamp diff(TimeStamp t1, TimeStamp t2) {
-		return new TimeStamp(t1.ts - t2.ts);
-	}
-
-	/**
-	 * Sum the timestamp.
-	 * @param t1 the comparison timestamp
-	 * @param t2 the comparison timestamp
-	 * @return the sum
-	 */
-	public static TimeStamp sum(TimeStamp t1, TimeStamp t2) {
-		return new TimeStamp(t1.ts + t2.ts);
-	}
-
-	/**
-	 * Sum the object's timestamp with the specified value.
-	 * @param other the comparison timestamp
-	 * @return the sum
-	 */
-	public TimeStamp sum(TimeStamp other) {
-		return sum(this, other);
-	}
-
-	/**
-	 * Convert the timestamp to a long.
-	 * @return the converted timestamp
-	 */
-	public long longValue() {
-		return ts;
-	}
-
-	/**
-	 * Convert the timestamp to a string.
-	 * @return the converted timestamp
-	 */
-	public String toString() {
-		return Long.toString(ts);
-	}
-
-	/**
-	 * Determines if the timestamp is before the specified timestamp.
-	 * @param other the comparison timestamp
-	 * @return true if other is before, otherwise false
+	 * @param other
+	 * @return true if other is before or null
 	 */
 	public boolean before(TimeStamp other) {
-		return ts < other.ts;
+		return other == null || this.compareTo(other) < 0;
 	}
 
 	/**
-	 * Determines if the timestamp is after the specified timestamp.
-	 * @param other the comparison timestamp
-	 * @return true if other is after, otherwise false
+	 * @param other
+	 * @return true if other is after or null
 	 */
 	public boolean after(TimeStamp other) {
-		return ts > other.ts;
+		return other == null || this.compareTo(other) > 0;
 	}
 
-	/**
-	 * Compares two timestamps.
-	 * @param other the comparison timestamp
-	 * @return 0 if equal, <0 if invoking timestamp is less, >0 if greater
-	 */
 	public int compareTo(TimeStamp other) {
-		return (int) Long.signum(ts - other.ts);
+		return Longs.compare(ticks, other.ticks);
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-	        return true;
-	    if (obj == null)
-	        return false;
-	    if (getClass() != obj.getClass())
-	        return false;
-	    final TimeStamp other = (TimeStamp) obj;
-	    return ts == other.ts;
+		if (obj == null || !(obj instanceof TimeStamp)) return false;
+		final TimeStamp other = (TimeStamp) obj;
+		return ticks == other.ticks;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(ticks);
 	}
 	
 	@Override
-	public int hashCode() {
-		return (int) ts;
-	}
-	
-	/**
-	 * Verifies whether or not the Activity's TimeStamp matches the given one.
-	 * 
-	 * @param act
-	 * @return true if matches, false otherwise.
-	 */
-	public boolean checkActivityTimeStamp(Activity act) {
-		return equals(act.getTime());
+	public String toString() {
+		if (equals(TimeStamp.IMMEDIATE)) return "immediate";
+		
+		long seconds = Long.signum(ticks) * Math.abs(ticks / TICKS_PER_SECOND);
+		int digits = MathUtils.logn(TICKS_PER_SECOND, 10);
+		long microseconds = Math.abs(ticks % TICKS_PER_SECOND);
+		while (digits > 3 && microseconds % 10 == 0) {
+			microseconds /= 10;
+			digits--;
+		}
+		return String.format("%d.%0" + digits + "ds", seconds, microseconds);
 	}
 
-	/**
-	 * Verifies whether or not the Activities in the list match the given TimeStamp.
-	 * 
-	 * @param acts
-	 * @return true if matches, false otherwise.
-	 */
-//	public boolean checkActivityTimeStamp(Collection<Activity> acts) {
-//		for (Activity act : acts) {
-//			if (!checkActivityTimeStamp(act)) {
-//				System.err.println("TimeStamp::checkActivityTimeStamp::ERROR: activities do not match the timestamp");
-//				return false;
-//			}
-//		}
-//		return true;
-//	}
 }

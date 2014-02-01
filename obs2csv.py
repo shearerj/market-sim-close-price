@@ -1,40 +1,35 @@
-from sys import argv, stdout
-from os import listdir
+#! /usr/bin/env python
+import sys
 import json
+import argparse
+import textwrap
 
-def feat2dict(feat):
-    dic = {}
-    for model, data in feat.iteritems():
-        # Add underscore for non configurations
-        model = model + '_' if model else model
-        for key, value in data.iteritems():
-            key = model + key
-            dic[key] = value
-    return dic
+parser = argparse.ArgumentParser(description='\n'.join(textwrap.wrap('Merge several observation files into a csv. It only reports the "features" and forgets about player information.', width=78)),
+                                 epilog='''example usage:
+  ''' + sys.argv[0] + ''' simulation_directory/observation*.json > merged.csv
+  ''' + sys.argv[0] + ''' simulation_directory/observation*.json -o merged.csv''',
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+parser.add_argument('files', metavar='obs-file', nargs='+',
+                    help='An observation file to include in the final csv')
+parser.add_argument('-o', '--output', '-f', '--file', metavar='csv-file', type=argparse.FileType('w'), default=sys.stdout,
+                    help='The csv file to write to, defaults to stdout')
 
-if len(argv) < 2:
-    print 'Usage python obs2csv.py [sim directory] > [result].csv'
-    print '      python obs2csv.py [sim directory] [result].csv'
-    quit(1)
+def to_csv(out, filenames):
+    with open(filenames[0], 'r') as first:
+        obs = json.load(first)
+    obs.pop('config', None)
+    keys = sorted(obs['features'].keys(), key=lambda s: s[::-1])
+    
+    out.write(','.join(keys))
+    out.write('\n')
 
-fol = argv[1]
-out = stdout if len(argv) == 2 else open(argv[2], 'w')
-order = []
-
-for obs in (o for o in listdir(fol) if 'observation' in o):
-    f = open(fol + '/' + obs)
-    j = json.load(f)
-    f.close()
-    feat = feat2dict(j['features'])
-    if not order:
-        order = j['features'][''].keys()
-        order += sorted([k for k in feat.keys() if k not in order])
-        for field in order:
-            out.write(field)
-            out.write(',')
+    for filename in filenames:
+        with open(filename, 'r') as f:
+            obs = json.load(f)
+        feats = obs['features']
+        out.write(','.join(str(feats[k]) for k in keys))
         out.write('\n')
 
-    for k in order:
-        out.write(str(feat[k]))
-        out.write(',')
-    out.write('\n')
+if __name__ == "__main__":
+    args = parser.parse_args()
+    to_csv(args.output, args.files)

@@ -1,0 +1,221 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1.2in]{geometry}
+\usepackage{color,soul,hyperref,url}
+\usepackage{graphicx,amstext}
+\usepackage{subfigure}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{listings}
+
+\lstset{
+  basicstyle=\ttfamily,
+  breaklines=true
+}
+
+\title{Overview}
+\author{
+  Elaine Wah \\
+  \href{mailto:ewah@umich.edu}{ewah@umich.edu}
+}
+\date{Updated: \today}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+The HFT simulation system employs agent-based modeling and discrete-event
+simulation to model communication latencies and current U.S. securities
+regulations.
+
+\section{Overview}
+
+The simulation system consists of:
+\begin{description}
+\item[\textsc{Markets}:] Two types of markets are implemented in the system, a
+  continuous double auction (CDA) market and a call market (which matches orders at regular, fixed
+  intervals).
+
+\item[\textsc{Agents}:] There are two general types of agents in the system,
+  which are distinguished by whether or not they have fast access to more than
+  one market.
+
+\begin{description}
+\item[\textsc{Background agents}:] These agents have fast (potentially
+  undelayed) access to only a single market (which is specified at agent
+  creation as their primary market). See
+  \href{../src/entity/agent/ZIAgent.java}{\textsf{ZIAgent}}.
+
+\item[\textsc{High-frequency trading agents}:] These agents have access to
+  multiple markets (usually every market), which models the
+  direct feeds that many HFTs have to exchanges. See \href{../src/entity/agent/LAAgent.java}{\textsf{LAAgent}}.
+\end{description}
+\end{description}
+
+\section{Discrete-Event Simulation}
+
+In our system, we employ \emph{discrete-event simulation}, a paradigm that
+allows the precise specification of event occurrences. It is particularly
+effective for modeling current U.S. securities regulation, specifically
+Regulation NMS---which led to the creation of the Security Information Processor
+(SIP) and which mandates the routing of orders for best execution.  Components
+of the simulation system include:
+
+\begin{description}
+\item[Entity:] Objects present in the simulation system, e.g., traders, markets,
+  and the SIP, that perform actions that effects on other entities.
+
+\item[Activity:] Actions that entities can execute.
+
+\item[Event:] A sequence of activities happening at the same time. Maintains the
+  order in which they occur.
+
+\item[Event Queue:] Queue ordered by activity time that executes activities in
+  the ``proper'' order, sequentially until empty. Multiple activities may occur
+  during the same time step, and in most circumstances the order they are
+  executed in is psedo-random according to the random number generator of the
+  simulation. The random nature is meant to simulate the slight timing
+  differences that occur in real life i.e. nothing actually occurs at the same
+  time.
+\end{description}
+
+To summarize, an \emph{event} consists of a sequence of \emph{activities} that
+are to be executed by various \emph{entities} (traders, markets, and the SIP).
+
+
+\subsection{Activities}
+
+Each activity has a timestamp and each is associated with at least one entity
+present in the simulation system. Note that activities are chained (the next
+immediate activity is inserted at the end of the current one). See
+Table~\ref{tab:activity} for a partial list of activities within the system.
+
+\begin{table}
+\centering
+\begin{tabular}{l l} \toprule
+\textbf{Activity} 	& \textbf{Description} \\ \midrule
+\textsf{AgentArrival} 	& agent arrives in a market (or markets) \\
+\textsf{AgentStrategy} 	& agent executes its trading strategy \\
+\textsf{Clear} 		& market clears any matching orders \\
+\textsf{Liquidate}	& agent liquidates any net position \\
+\textsf{ProcessQuote} 	& IP (or SIP) updates its best market quotes \\
+\textsf{SendToIP} 	& market sends a new quote to an IP (SIP) \\
+\textsf{SubmitOrder} 	& agent submits a single-point order to a market \\
+\textsf{SubmitNMSOrder} 	& agent submits single-point order, routed for best execution \\
+\textsf{WithdrawOrder} 	& agent withdraws a specific order from a market \\ \bottomrule
+\end{tabular}
+\caption{List of activities in the simulation system.}
+\label{tab:activity}
+\end{table}
+
+\subsection{Example}
+
+To control the latency of the SIP as well as general market access, we specify
+two activities: \textsf{SendToIP} and \textsf{ProcessQuote}.  The
+\textsf{SendToIP} activity is inserted when a market updates its quote at time
+$t$. Once the information processor (IP) gets the information it inserts a
+\textsf{ProcessQuote} activity to execute at time $t + \delta$ in the future to
+account for the delay caused by processing the information.
+%
+When \textsf{ProcessQuote} is executed, the IP updates its stored information on
+the best market quotes. When agent's query the SIP for market information they
+will only get the most recent information that it's processed after $t+\delta$,
+not all of the market quotes at the current time.
+
+\section{Simulation Specification File}
+
+The parameters in the specification file are those that can be adjusted in
+simulations. Below is the ``default'' \path{simulation_spec.json} file found in
+the docs folder:
+
+\lstinputlisting{../simulation_spec.json}
+
+An explanation of select parameters follows:
+\begin{description}
+\item[\texttt{assignment}:] Assignment of strategies to players. Relevant only
+  for EGTA
+\item[\texttt{configuration}:] Specify simulation configuration.
+\item[\texttt{modelName}:] The name of the model. This is only used in the
+  output file.
+\item[\texttt{modelNum}:] The model number. This is output in the log file and
+  can be used to merge several log files.
+\item[\texttt{simLength}:] Length of simulation in time ticks (usually
+  milliseconds).
+\item[\texttt{presets}:] This is a way to get easy access to ``standard'' market
+  configurations. Currently there are four options:
+  \begin{description}
+  \item[\texttt{CENTRALCDA}:] A single CDA Market.
+  \item[\texttt{CENTRALCALL}:] A single CALL Market that clears at the \texttt{nbboLatency}.
+  \item[\texttt{TWOMARKET}:] Two CDA markets and no latency arbitrageur.
+  \item[\texttt{TWOMARKETLA}:] Two CDA markets and a latency arbitrageur.
+  \end{description}
+\item[Markets:] The next set of options allow manually specifying market configurations
+  if a preset is not used. Currently there are two markets you can set
+  configurations for and those are \texttt{CDA} and \texttt{CALL}. The string
+  after is a configuration string which takes the format
+  \texttt{<key1>\_<value1>\_<key>\_<value2>\_}..., and can contain several comma
+  separated configurations. The following entry would create three CALL
+  markets. Two will clear every tenth of a second, and one will clear every
+  second:
+
+\begin{verbatim}
+"CALL" : "num_2_clearFreq_100,num_1_clearFreq_1000"
+\end{verbatim}
+
+\item[Agents:] The next set of options allow manually specifying agent
+  configurations (NOTE: LA configurations can only be set if a \texttt{preset}
+  is not being used). The current agents you can create are \texttt{BASICMM},
+  \texttt{ZI}, \texttt{ZIR}, \texttt{ZIP}, \texttt{AA}, and \texttt{LA}. Each
+  agent takes a configuration string identical in style to a market only agents
+  will use different parameters.
+
+\item[\texttt{tickSize}:] Tick size of pricing. Prices are integers, so the
+  smallest tick size is $1$.
+
+\item[\texttt{nbboLatency}:] The latency of the nbbo in time ticks (usually
+  milliseconds).
+
+\end{description}
+
+\section{Running a Simulation}
+
+\begin{enumerate}
+\item To run a basic simulation, create a directory to store all of your
+  simulations (e.g. \path{simulations}) and then create a directory for this
+  specific simulation inside it:
+
+\begin{verbatim}
+pwd # should print your hft folder
+mkdir simulations
+mkdir simulations/test
+\end{verbatim}
+
+\item Then copy the default \path{simulation_spec.json} file into the folder you
+  just created:
+
+\begin{verbatim}
+cp docs/simulation_spec.json simulations/test/
+\end{verbatim}
+
+\item Make any tweaks to the specification you want using your favorite text
+  editor.
+
+\item Use the following command to run your simulation:
+
+\begin{verbatim}
+./run_hft.sh simulations/test <number of simulations to run>
+\end{verbatim}
+
+For example:
+
+\begin{verbatim}
+./run_hft.sh simulations/test 100
+\end{verbatim}
+
+\item All simulations should be saved within subfolders in the \path{simulations/test}
+(or other) directory!
+
+\end{enumerate}
+
+\end{document}
