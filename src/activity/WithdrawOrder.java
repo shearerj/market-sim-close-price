@@ -25,7 +25,7 @@ public class WithdrawOrder extends Activity {
 
 	public WithdrawOrder(Order order, int quantity, TimeStamp scheduledTime) {
 		super(scheduledTime);
-		checkArgument(quantity > 0, "Quantity must be positive");
+		checkArgument(quantity >= 0, "Quantity must be nonnegative");
 		this.order = checkNotNull(order, "Order");
 		this.quantity = quantity;
 	}
