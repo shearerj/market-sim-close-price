@@ -219,7 +219,7 @@ public abstract class Agent extends Entity {
 			profit += trans.getQuantity() * trans.getPrice().intValue();
 		}
 
-		logger.log(INFO, "$s transacted to position %d", this, positionBalance);
+		logger.log(INFO, "%s transacted to position %d", this, positionBalance);
 	}
 
 	public final TimeStamp getArrivalTime() {

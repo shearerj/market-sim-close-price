@@ -6,7 +6,7 @@ import static data.Observations.BUS;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static java.lang.Math.min;
-import static logger.Logger.log;
+import static logger.Logger.logger;
 import static logger.Logger.Level.INFO;
 
 import java.util.Collection;
@@ -250,6 +250,7 @@ public abstract class Market extends Entity {
 			Transaction trans = new Transaction(buy.getAgent(),
 					sell.getAgent(), this, buy, sell, e.getKey().getQuantity(),
 					e.getValue(), currentTime);
+			logger.log(INFO, "%s", trans);
 			
 			askPriceQuantity.remove(sell.getPrice(), trans.getQuantity());
 			bidPriceQuantity.remove(buy.getPrice(), trans.getQuantity());
@@ -320,7 +321,7 @@ public abstract class Market extends Entity {
 		 */
 		quote = new Quote(this, bid, quantityBid, ask, quantityAsk, currentTime);
 
-		log(INFO, this + " " + quote);
+		logger.log(INFO, "%s %s", this, quote);
 
 		BUS.post(new MidQuoteStatistic(this, quote.getMidquote(), currentTime));
 		BUS.post(new SpreadStatistic(this, quote.getSpread(), currentTime));
@@ -413,10 +414,9 @@ public abstract class Market extends Entity {
 		checkNotNull(type, "Order type");
 		checkArgument(quantity > 0, "Quantity must be positive");
 		marketTime++;
-		
-		log(INFO, agent + " " + type + "(" + quantity + " @ " + price + ") -> " + this);
 
 		Order order = Order.create(type, agent, this, price, quantity, new MarketTime(currentTime, marketTime));
+		logger.log(INFO, "%s", order);
 
 		Multiset<Price> priceQuant = order.getOrderType() == BUY ? bidPriceQuantity : askPriceQuantity;
 		priceQuant.add(order.getPrice(), quantity);
@@ -506,9 +506,8 @@ public abstract class Market extends Entity {
 		}
 
 		if (!bestMarket.equals(this))
-			log(INFO, "Routing " + agent + " " + type + "(" +
-					+ quantity + " @ " + price + ") -> " 
-					+ this + " " + quote + " to NBBO " + nbbo);
+			logger.log(INFO, "Routing %s %s %d @ %s from %s %s to NBBO %s %s",
+					agent, type, quantity, price, this, quote, bestMarket, nbbo);
 
 		return bestMarket.submitOrder(agent, type, price, quantity, currentTime, duration);
 	}

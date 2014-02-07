@@ -1,6 +1,6 @@
 package systemmanager;
 
-import static logger.Logger.log;
+import static logger.Logger.logger;
 import static logger.Logger.Level.*;
 
 import java.util.Random;
@@ -70,11 +70,10 @@ public class EventManager {
 		try {
 			Activity act = eventQueue.remove();
 			currentTime = ord.max(currentTime, act.getTime());
-			log(DEBUG, act + " then " + eventQueue);
+			logger.log(DEBUG, "%s then %s", act, eventQueue);
 			eventQueue.addAll(act.execute(currentTime));
 			
 		} catch (Exception e) {
-			log(ERROR, "Error executing activity");
 			e.printStackTrace();
 		}
 	}

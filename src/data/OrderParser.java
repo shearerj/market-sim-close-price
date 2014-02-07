@@ -2,7 +2,6 @@ package data;
 
 import java.io.FileNotFoundException;
 import java.util.List;
-import java.util.Scanner;
 
 public interface OrderParser {
 		

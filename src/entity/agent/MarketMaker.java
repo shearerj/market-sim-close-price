@@ -2,7 +2,7 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Logger.log;
+import static logger.Logger.logger;
 import static logger.Logger.Level.INFO;
 import iterators.ExpInterarrivals;
 
@@ -101,10 +101,6 @@ public abstract class MarketMaker extends ReentryAgent {
 	public Iterable<? extends Activity> submitOrderLadder(Price buyMinPrice,
 			Price buyMaxPrice, Price sellMinPrice, Price sellMaxPrice, 
 			TimeStamp currentTime) {
-
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
-
 		Builder<Activity> acts = ImmutableList.<Activity> builder();
 
 		// build ascending list of buy orders
@@ -117,11 +113,8 @@ public abstract class MarketMaker extends ReentryAgent {
 			acts.add(new SubmitOrder(this, primaryMarket, SELL, new Price(p), 1, 
 					TimeStamp.IMMEDIATE));
 		}
-		log(INFO, sb.append(" Submit ladder with #rungs ").append(numRungs)
-				.append(", step size ").append(stepSize).append(": buys [")
-				.append(buyMinPrice).append(" to ").append(buyMaxPrice)
-				.append("] & sells [").append(sellMinPrice).append(" to ")
-				.append(sellMaxPrice).append("]"));
+		logger.log(INFO, "%s in %s: Submit ladder with #rungs %d, step size %d: buys [%s to %s] & sells [%s to %s]",
+				this, primaryMarket, numRungs, stepSize, buyMinPrice, buyMaxPrice, sellMinPrice, sellMaxPrice);
 		return acts.build();
 	}
 
@@ -145,9 +138,6 @@ public abstract class MarketMaker extends ReentryAgent {
 			Price ladderAsk, TimeStamp currentTime) {
 
 		if (ladderBid == null || ladderAsk == null) return ImmutableList.of();
-
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
 
 		Builder<Activity> acts = ImmutableList.<Activity> builder();
 
@@ -180,18 +170,14 @@ public abstract class MarketMaker extends ReentryAgent {
 		// check if the bid or ask crosses the NBBO, if truncating ladder
 		if (truncateLadder) {
 			BestBidAsk lastNBBOQuote = this.getNBBO();
-
-			sb.append(" Truncating ladder (").append(buyMaxPrice).append(", ")	
-			.append(sellMinPrice).append(")-->(");
-
+			Price oldBuyMaxPrice = buyMaxPrice, oldSellMinPrice = sellMinPrice;
 			// buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N]
 			if (lastNBBOQuote.getBestAsk() != null)
 				buyMaxPrice = pcomp.min(ladderBid, lastNBBOQuote.getBestAsk());
 			// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
 			if (lastNBBOQuote.getBestBid() != null)
 				sellMinPrice = pcomp.max(ladderAsk, lastNBBOQuote.getBestBid());
-			log(INFO, sb.append(buyMaxPrice).append(", ").append(sellMinPrice)
-					.append(")"));
+			logger.log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)", this, primaryMarket, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
 		}
 
 		acts.addAll(this.submitOrderLadder(buyMinPrice, buyMaxPrice, 

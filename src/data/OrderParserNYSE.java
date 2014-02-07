@@ -1,20 +1,19 @@
 package data;
 
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Scanner;
-import java.util.Collection;
 
 import com.google.common.collect.Lists;
 
 import entity.market.Price;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
-import static fourheap.Order.OrderType.BUY;
-import static fourheap.Order.OrderType.SELL;
 
 
 public class OrderParserNYSE implements OrderParser {

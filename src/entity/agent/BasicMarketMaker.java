@@ -1,6 +1,6 @@
 package entity.agent;
 
-import static logger.Logger.log;
+import static logger.Logger.logger;
 import static logger.Logger.Level.INFO;
 
 import java.util.Random;
@@ -71,9 +71,6 @@ public class BasicMarketMaker extends MarketMaker {
 	@Override
 	public Iterable<Activity> agentStrategy(TimeStamp currentTime) {
 		if (noOp) return ImmutableList.of(); // no execution if no-op
-
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
 		
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));
@@ -89,10 +86,10 @@ public class BasicMarketMaker extends MarketMaker {
 				|| (ask != null && lastAsk == null)) {
 
 			if (!this.getQuote().isDefined()) {
-				log(INFO, sb.append(" Undefined quote in ").append(primaryMarket));
+				logger.log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
 			} else {
 				// Quote changed, still valid, withdraw all orders
-				log(INFO, sb.append(" Withdraw all orders."));
+				logger.log(INFO, "%s in %s: Withdraw all orders.", this, primaryMarket);
 				acts.addAll(withdrawAllOrders(currentTime));
 				
 				bid = this.getQuote().getBidPrice();
@@ -100,17 +97,16 @@ public class BasicMarketMaker extends MarketMaker {
 				
 				// Use last known bid/ask if undefined post-withdrawal
 				if (!this.getQuote().isDefined()) {
-					sb.append(" Ladder MID (").append(bid).append(", ")
-							.append(ask).append(")-->(");
+					Price oldBid = bid, oldAsk = ask;
 					if (bid == null && lastBid != null) bid = lastBid;
 					if (ask == null && lastAsk != null) ask = lastAsk;
-					log(INFO, sb.append(bid).append(", ").append(ask).append(")"));
+					logger.log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", this, primaryMarket, oldBid, oldAsk, bid, ask);
 				}
 				
 				acts.addAll(this.createOrderLadder(bid, ask, currentTime));
 			}
 		} else {
-			log(INFO, sb.append(" No change in submitted ladder"));
+			logger.log(INFO, "%s in %s: No change in submitted ladder", this, primaryMarket);
 		}
 		// update latest bid/ask prices
 		lastAsk = ask; lastBid = bid;

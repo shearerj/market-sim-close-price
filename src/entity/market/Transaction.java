@@ -82,9 +82,7 @@ public class Transaction implements Serializable {
 
 	@Override
 	public String toString() {
-		return "(mkt=" + market + ", buyer="
-				+ buyer + ", seller=" + seller + ", price=" + price
-				+ ", quantity=" + quantity + ", timeStamp=" + execTime + ")";
-	}
+		return "(" + buyer + " bought " + quantity + " from " + seller + " @ " + price + " in " + market + ')';
+		}
 
 }

@@ -1,7 +1,6 @@
 package entity.agent;
 
 import java.io.FileNotFoundException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 

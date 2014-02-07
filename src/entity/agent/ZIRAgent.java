@@ -1,7 +1,7 @@
 package entity.agent;
 
 import static fourheap.Order.OrderType.*;
-import static logger.Logger.log;
+import static logger.Logger.logger;
 import static logger.Logger.Level.INFO;
 
 import java.util.Random;
@@ -75,11 +75,8 @@ public class ZIRAgent extends BackgroundAgent {
 	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));
-
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append(':');
 		if (!currentTime.equals(arrivalTime)) {
-			sb.append(" wake up.");
+			logger.log(INFO, "%s: wake up.", this);
 		}
 		// XXX should it go to sleep?
 //		if (!activeOrders.isEmpty()) {
@@ -89,13 +86,13 @@ public class ZIRAgent extends BackgroundAgent {
 //		}
 
 		if (withdrawOrders) {
-			log(INFO, sb.append(" Withdraw all orders."));
+			logger.log(INFO, "%s: Withdraw all orders.", this);
 			acts.addAll(withdrawAllOrders(currentTime));
 		}
 		// 0.50% chance of being either long or short
 		OrderType type = rand.nextBoolean() ? BUY : SELL;
 		acts.addAll(executeZIStrategy(type, 1, currentTime));
-		log(INFO, sb.append(" Submit ").append(type).append(" order"));
+		logger.log(INFO, "%s: Submit %s order", this, type);
 		return acts.build();
 	}
 
