@@ -214,7 +214,7 @@ public abstract class Market extends Entity {
 	 */
 	public void withdrawOrder(Order order, int quantity, TimeStamp currentTime) {
 		marketTime++;
-		// XXX Best way to handle 0 quantity orders (orders that have fully transacted)
+		// XXX Best way to handle 0 quantity orders (orders that have fully transacted)?
 		checkArgument(quantity >= 0, "Quantity must be non negative");
 		if (order.getQuantity() == 0) return;
 		quantity = min(quantity, order.getQuantity());

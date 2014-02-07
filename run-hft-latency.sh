@@ -32,10 +32,12 @@ fi
 
 #TODO Read simspec file, and modify nbbo and market latency if too low
 
-for (( LAT=$LAT_STEP; LAT<=$LAT_MAX; LAT+=$LAT_STEP )); do
-    echo ">> Setting up latency $LAT"
-    mkdir -vp "$FOLDER/$LAT"
-    cp -v "$FOLDER/$FILE" "$FOLDER/$LAT/$FILE"
-    sed -i -e 's/"LA:laLatency_0"/"LA:laLatency_'"${LAT}"'"/g' -e 's/"modelName" *: *"[^"]*"/"modelName": "'"lat${LAT}"'"/g' -e 's/"modelNum" *: *"[^"]*"/"modelNum": "'"${LAT}"'"/g' "$FOLDER/$LAT/$FILE"
-    "$LOC/run-hft.sh" "$FOLDER/$LAT" $NUM
+for (( LAT1=$LAT_STEP; LAT1<=$LAT_MAX; LAT1+=$LAT_STEP )); do
+    for (( LAT2=$LAT_STEP; LAT2<=$LAT1; LAT2+=$LAT_STEP )); do
+	echo ">> Setting up latencies $LAT1 and $LAT2"
+	mkdir -vp "$FOLDER/${LAT1}_${LAT2}"
+	cp -v "$FOLDER/$FILE" "$FOLDER/${LAT1}_${LAT2}/$FILE"
+	sed -i -e 's/"la_1"/"LA:laLatency_'"${LAT1}"'"/g' -e 's/"la_2"/"LA:laLatency_'"${LAT2}"'"/g' "$FOLDER/${LAT1}_${LAT2}/$FILE"
+	time "$LOC/run-hft.sh" "$FOLDER/${LAT1}_${LAT2}" $NUM
+    done
 done
