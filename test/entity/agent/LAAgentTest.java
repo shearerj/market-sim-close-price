@@ -30,12 +30,12 @@ import event.TimeStamp;
 public class LAAgentTest {
 
 	// TODO Here or in HFT Test make sure it gets notified about transactions appropriately
+	private static final TimeStamp one = TimeStamp.create(1);
 	
 	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market1, market2;
 	private Agent agent1, agent2;
-	private LAAgent la;
 	private SIP sip;
 
 	@BeforeClass
@@ -51,8 +51,6 @@ public class LAAgentTest {
 		market2 = new CDAMarket(exec, sip, new Random(), new EntityProperties());
 		agent1 = new MockAgent(exec, fundamental, sip, market1);
 		agent2 = new MockAgent(exec, fundamental, sip, market2);
-		la = new LAAgent(exec, TimeStamp.IMMEDIATE, fundamental, sip,
-				ImmutableList.of(market1, market2), new Random(), 1, 0.001);
 	}
 	
 	/*
@@ -77,6 +75,8 @@ public class LAAgentTest {
 		 * LAStrategy in order to trigger the next LAStrategy before the first
 		 * has finished executing.
 		 */
+		LAAgent la = new LAAgent(exec, TimeStamp.IMMEDIATE, fundamental, sip,
+				ImmutableList.of(market1, market2), new Random(), 1, 0.001);
 		market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent1, BUY, new Price(7), 1, TimeStamp.ZERO);
 		market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO);
@@ -96,12 +96,65 @@ public class LAAgentTest {
 	
 	@Test
 	public void laProfitTest() {
+		LAAgent la = new LAAgent(exec, TimeStamp.IMMEDIATE, fundamental, sip,
+				ImmutableList.of(market1, market2), new Random(), 1, 0.001);
 		market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO);
 		market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO);
 		// LA Strategy gets called implicitly 
 		
 		assertEquals(0, la.positionBalance);
 		assertEquals(4, la.profit);
+	}
+	
+	@Test
+	/**
+	 * This test verifies that an LA with latency doesn't submit new orders until it's sure it's old orders are reflected in its quote.
+	 */
+	public void laLatencyNoRepeatOrdersTest() {
+		TimeStamp latency = TimeStamp.create(10);
+		LAAgent la = new LAAgent(exec, latency, fundamental, sip,
+				ImmutableList.of(market1, market2), new Random(), 1, 0.001);
+		
+		market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO);
+		market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO);
+		market1.submitOrder(agent1, BUY, new Price(2), 1, TimeStamp.create(5)); // Used to cause LA to submit extra orders
+		exec.executeUntil(latency.plus(one)); // LA has submitted orders (and they've transacted)
+		// LA Strategy gets called implicitly 
+		
+		assertEquals(0, la.positionBalance);
+		assertEquals(0, la.profit);
+		assertEquals(2, la.activeOrders.size());
+		
+		exec.executeUntil(latency.plus(latency).plus(one)); // Takes this long for the LA to find out about it
+		assertEquals(0, la.positionBalance);
+		assertEquals(4, la.profit);
+		assertTrue(la.activeOrders.isEmpty());
+	}
+	
+	@Test
+	/**
+	 * This test makes sure the fix for the previous test doesn't effect infinitely fast LAs.
+	 */
+	public void laNoLatencySeveralOrders() {
+		LAAgent la = new LAAgent(exec, TimeStamp.IMMEDIATE, fundamental, sip,
+				ImmutableList.of(market1, market2), new Random(), 1, 0.001);
+		
+		market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO);
+		market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO);
+		// LA Strategy gets called implicitly
+		
+		assertEquals(0, la.positionBalance);
+		assertEquals(4, la.profit);
+		assertTrue(la.activeOrders.isEmpty());
+		
+		market1.submitOrder(agent1, BUY, new Price(10), 1, TimeStamp.ZERO);
+		market2.submitOrder(agent2, SELL, new Price(6), 1, TimeStamp.ZERO);
+		// LA Strategy gets called implicitly 
+		// The fix might have stopped the LA from acting a second time at TimeStamp 0
+
+		assertEquals(0, la.positionBalance);
+		assertEquals(8, la.profit);
+		assertTrue(la.activeOrders.isEmpty());
 	}
 
 }

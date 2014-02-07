@@ -13,8 +13,10 @@ import java.util.Random;
 
 import systemmanager.Keys;
 import systemmanager.Scheduler;
+import utils.Pair;
 import activity.SubmitOrder;
 
+import com.google.common.base.Functions;
 import com.google.common.collect.Maps;
 
 import data.EntityProperties;
@@ -42,6 +44,7 @@ public class LAAgent extends HFTAgent {
 	
 	protected final double alpha; // LA profit gap
 	protected boolean executingStrategy; // Lock during arbitrage
+	protected final Map<Market, SafeTimes> safeTime; // This map indicates when it's safe to look at a market for arbitrage
 
 	public LAAgent(Scheduler scheduler, TimeStamp latency, FundamentalValue fundamental,
 			SIP sip, Collection<Market> markets, Random rand, int tickSize,
@@ -50,6 +53,7 @@ public class LAAgent extends HFTAgent {
 		
 		this.alpha = alpha;
 		this.executingStrategy = false;
+		this.safeTime = Maps.toMap(markets, Functions.constant(new SafeTimes(TimeStamp.ZERO, TimeStamp.ZERO)));
 	}
 
 	public LAAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
@@ -61,21 +65,35 @@ public class LAAgent extends HFTAgent {
 
 	@Override
 	// TODO Need strategy for orders that don't execute
+	// TODO Currently schedules safeTime at currentTime + latency. We may
+	// instead want it to be plus one. At the current setting, if an order came
+	// in before (but with the same timestamp) of a delayed LA action, then the
+	// the LA will consider the market valid to act upon even though its order
+	// hasn't really taken place. This even seems pretty rare. This could be
+	// changed by making !before -> after, and chanigng the initial timeStamps
+	// to -1.
 	public void agentStrategy(TimeStamp currentTime) {
-		if (executingStrategy) return; // Lock
+		if (executingStrategy)
+			return; // Lock
 		
 		Price bestBid = null, bestAsk = null;
 		Market bestBidMarket = null, bestAskMarket = null;
+		TimeStamp bestBidLatency = null, bestAskLatency = null;
 
 		for (Entry<Market, HFTQuoteProcessor> ipEntry : quoteProcessors.entrySet()) {
 			Quote q = ipEntry.getValue().getQuote();
-			if (q.getAskPrice() != null && q.getAskPrice().lessThan(bestAsk)) {
+			Market market = ipEntry.getKey();
+			SafeTimes st = safeTime.get(market);
+			
+			if (q.getAskPrice() != null && q.getAskPrice().lessThan(bestAsk) && !q.getQuoteTime().before(st.getAskTime())) {
 				bestAsk = q.getAskPrice();
-				bestAskMarket = ipEntry.getKey();
+				bestAskMarket = market;
+				bestAskLatency = ipEntry.getValue().getLatency();
 			}
-			if (q.getBidPrice() != null && q.getBidPrice().greaterThan(bestBid)) {
+			if (q.getBidPrice() != null && q.getBidPrice().greaterThan(bestBid) && !q.getQuoteTime().before(st.getBidTime())) {
 				bestBid = q.getBidPrice();
-				bestBidMarket = ipEntry.getKey();
+				bestBidMarket = market;
+				bestBidLatency = ipEntry.getValue().getLatency();
 			}
 		}
 
@@ -87,6 +105,9 @@ public class LAAgent extends HFTAgent {
 				+ quoteProcessors.get(bestBidMarket).getQuote() + " and " + bestAskMarket
 				+ " " + quoteProcessors.get(bestAskMarket).getQuote());
 		Price midPoint = new Price((bestBid.doubleValue() + bestAsk.doubleValue()) * .5).quantize(tickSize);
+		
+		safeTime.get(bestAskMarket).setAskTime(currentTime.plus(bestAskLatency));
+		safeTime.get(bestBidMarket).setBidTime(currentTime.plus(bestBidLatency));
 		
 		executingStrategy = true;
 		scheduler.executeActivity(new SubmitOrder(this, bestBidMarket, SELL, midPoint, 1));
@@ -134,6 +155,30 @@ public class LAAgent extends HFTAgent {
 			scheduler.executeActivity(new SubmitOrder(this, orderMap.get(buy), SELL, midPrice, trans.getQuantity()));
 			executingStrategy = false;
 		}
+	}
+	
+	protected static class SafeTimes extends Pair<TimeStamp, TimeStamp> {
+
+		protected SafeTimes(TimeStamp bidTime, TimeStamp askTime) {
+			super(bidTime, askTime);
+		}
+		
+		public void setBidTime(TimeStamp bidTime) {
+			this.left = bidTime;
+		}
+		
+		public void setAskTime(TimeStamp askTime) {
+			this.right = askTime;
+		}
+		
+		public TimeStamp getBidTime() {
+			return this.left;
+		}
+		
+		public TimeStamp getAskTime() {
+			return this.right;
+		}
+		
 	}
 
 }
