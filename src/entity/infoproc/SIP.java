@@ -1,6 +1,6 @@
 package entity.infoproc;
 
-import static logger.Logger.log;
+import static logger.Logger.logger;
 import static logger.Logger.Level.INFO;
 import static data.Observations.BUS;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -101,7 +101,7 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 
 		marketQuotes.put(market, quote);
 		
-		log(INFO, market + " -> " + this + " quote " + quote);
+		logger.log(INFO, "%s -> %s quote %s", market, this, quote);
 
 		Price bestBid = null, bestAsk = null;
 		int bestBidQuantity = 0, bestAskQuantity = 0;

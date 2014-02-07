@@ -1,6 +1,6 @@
 package entity.agent;
 
-import static logger.Logger.log;
+import static logger.Logger.logger;
 import static logger.Logger.Level.INFO;
 
 import java.io.IOException;
@@ -61,9 +61,7 @@ public class OrderDataAgent extends SMAgent {
 	@Override
 	public void agentStrategy(TimeStamp currentTime) {
 		OrderDatum nextStrategy = orderDatumList.get(0);
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append(':');
-		log(INFO, sb.append(" Next entry at ").append(nextStrategy.getTimeStamp()));
+		logger.log(INFO, "%s: Next entry at %s", this, nextStrategy.getTimeStamp());
 		scheduler.scheduleActivity(nextStrategy.getTimeStamp(),  new AgentStrategy(this));
 	}
 

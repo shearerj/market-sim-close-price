@@ -1,7 +1,6 @@
 package entity.market;
 
-import static logger.Logger.log;
-import static logger.Logger.Level.ERROR;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Serializable;
 
@@ -69,24 +68,17 @@ public class Quote implements Serializable {
 	 */
 	public double getSpread() {
 		// XXX Are these the best way to handle these cases?
-		if (ask == null || bid == null) {
+		if (ask == null || bid == null)
 			return Double.POSITIVE_INFINITY;
-		} else if (ask.lessThan(bid)) {
-			log(ERROR, market.getClass().getSimpleName()
-					+ "::quote: ERROR bid > ask");
-			return 0;
-		} else {
-			return ask.doubleValue() - bid.doubleValue();
-		}
+		checkArgument(ask.greaterThanEqual(bid), "%s::quote: ERROR bid > ask", market);
+		return ask.doubleValue() - bid.doubleValue();
 	}
 	
 	public double getMidquote() {
 		// XXX Are these the best way to handle these cases?
 		if (ask == null || bid == null)
 			return Double.NaN;
-		else if (ask.lessThan(bid))
-			log(ERROR, market.getClass().getSimpleName()
-					+ "::quote: ERROR bid > ask");
+		checkArgument(ask.greaterThanEqual(bid), "%s::quote: ERROR bid > ask", market);
 		return (ask.doubleValue() + bid.doubleValue())/ 2;
 	}
 

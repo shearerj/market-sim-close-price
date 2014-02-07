@@ -2,7 +2,7 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Logger.log;
+import static logger.Logger.logger;
 import static logger.Logger.Level.INFO;
 
 import java.util.Collection;
@@ -101,9 +101,9 @@ public class LAAgent extends HFTAgent {
 				|| bestAsk.doubleValue() * (1 + alpha) > bestBid.doubleValue())
 			return;
 
-		log(INFO, this + " detected arbitrage between " + bestBidMarket + " "
-				+ quoteProcessors.get(bestBidMarket).getQuote() + " and " + bestAskMarket
-				+ " " + quoteProcessors.get(bestAskMarket).getQuote());
+		logger.log(INFO, "%s detected arbirage between %s %s and %s %s", this, 
+				bestBidMarket, quoteProcessors.get(bestBidMarket).getQuote(),
+				bestAskMarket, quoteProcessors.get(bestAskMarket).getQuote());
 		Price midPoint = new Price((bestBid.doubleValue() + bestAsk.doubleValue()) * .5).quantize(tickSize);
 		
 		safeTime.get(bestAskMarket).setAskTime(currentTime.plus(bestAskLatency));

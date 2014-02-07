@@ -3,7 +3,7 @@ package entity.agent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Logger.log;
+import static logger.Logger.logger;
 import static logger.Logger.Level.INFO;
 import iterators.ExpInterarrivals;
 
@@ -104,17 +104,10 @@ public abstract class MarketMaker extends ReentryAgent {
 	 * @param buyMaxPrice
 	 * @param sellMinPrice
 	 * @param sellMaxPrice
-<<<<<<< HEAD
-=======
-	 * @param currentTime
->>>>>>> Adding tick improvement outside
 	 * @return
 	 */
 	public void submitOrderLadder(Price buyMinPrice,
 			Price buyMaxPrice, Price sellMinPrice, Price sellMaxPrice) {
-
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
 
 		// build ascending list of buy orders
 		for (int p = buyMinPrice.intValue(); p <= buyMaxPrice.intValue(); p += stepSize) {
@@ -124,11 +117,8 @@ public abstract class MarketMaker extends ReentryAgent {
 		for (int p = sellMaxPrice.intValue(); p >= sellMinPrice.intValue(); p -= stepSize) {
 			scheduler.executeActivity(new SubmitOrder(this, primaryMarket, SELL, new Price(p), 1));
 		}
-		log(INFO, sb.append(" Submit ladder with #rungs ").append(numRungs)
-				.append(", step size ").append(stepSize).append(": buys [")
-				.append(buyMinPrice).append(" to ").append(buyMaxPrice)
-				.append("] & sells [").append(sellMinPrice).append(" to ")
-				.append(sellMaxPrice).append("]"));
+		logger.log(INFO, "%s in %s: Submit ladder with #rungs %d, step size %d: buys [%s to %s] & sells [%s to %s]",
+				this, primaryMarket, numRungs, stepSize, buyMinPrice, buyMaxPrice, sellMinPrice, sellMaxPrice);
 	}
 
 	/**
@@ -150,9 +140,6 @@ public abstract class MarketMaker extends ReentryAgent {
 			Price ladderAsk) {
 
 		if (ladderBid == null || ladderAsk == null) return;
-
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
 
 		// Tick improvement
 		if (this.getQuote().getBidPrice() != null) {
@@ -183,18 +170,14 @@ public abstract class MarketMaker extends ReentryAgent {
 		// check if the bid or ask crosses the NBBO, if truncating ladder
 		if (truncateLadder) {
 			BestBidAsk lastNBBOQuote = this.getNBBO();
-
-			sb.append(" Truncating ladder (").append(buyMaxPrice).append(", ")	
-			.append(sellMinPrice).append(")-->(");
-
+			Price oldBuyMaxPrice = buyMaxPrice, oldSellMinPrice = sellMinPrice;
 			// buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N]
 			if (lastNBBOQuote.getBestAsk() != null)
 				buyMaxPrice = pcomp.min(ladderBid, lastNBBOQuote.getBestAsk());
 			// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
 			if (lastNBBOQuote.getBestBid() != null)
 				sellMinPrice = pcomp.max(ladderAsk, lastNBBOQuote.getBestBid());
-			log(INFO, sb.append(buyMaxPrice).append(", ").append(sellMinPrice)
-					.append(")"));
+			logger.log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)", this, primaryMarket, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
 		}
 
 		this.submitOrderLadder(buyMinPrice, buyMaxPrice, sellMinPrice,

@@ -1,6 +1,8 @@
 package systemmanager;
 
 import static logger.Logger.Level.INFO;
+import static logger.Logger.logger;
+
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,8 +13,8 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.Random;
 
-import logger.Logger;
 import logger.Logger.Prefix;
+import logger.Logger;
 
 import com.google.common.base.Objects;
 
@@ -105,8 +107,8 @@ public class SystemManager {
 			Simulation sim = new Simulation(specification, rand);
 			
 			initializeLogger(logLevel, simulationFolder, observationNumber, i, sim, simulationLength);
-			log(INFO, "Random Seed: " + baseRandomSeed);
-			log(INFO, "Configuration: " + specification);
+			logger.log(INFO, "Random Seed: %d", baseRandomSeed);
+			logger.log(INFO, "Configuration: %s", specification);
 			
 			sim.executeEvents();
 			observations.addObservation(sim.getObservations());
@@ -136,11 +138,10 @@ public class SystemManager {
 		final int digits = Integer.toString(simulationLength).length();
 
 		// Create log file
-		Logger.setup(logLevel, logFile, true, new Prefix() {
+		logger = new Logger(Logger.Level.values()[logLevel], logFile, new Prefix() {
 			@Override
 			public String getPrefix() {
-				return String.format("%" + digits + "d| ",
-						simulation.getCurrentTime().getInTicks());
+				return String.format("%" + digits + "d| ", simulation.getCurrentTime().getInTicks());
 			}
 		});
 	}

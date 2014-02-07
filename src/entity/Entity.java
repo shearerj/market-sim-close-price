@@ -29,14 +29,10 @@ public abstract class Entity implements Serializable {
 	public final int getID() {
 		return this.id;
 	}
-	
-	public final String getName() {
-		return getClass().getSimpleName();
-	}
 
 	@Override
 	public String toString() {
-		return getName() + " (" + id + ')';
+		return getClass().getSimpleName() + " (" + id + ')';
 	}
 	
 }
