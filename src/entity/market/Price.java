@@ -139,7 +139,10 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 	
 	@Override
 	public String toString() {
-		
+		return '$' + Long.toString(ticks);
+	}
+	
+	public String toDollarString() {
 		int absTicks = Math.abs(ticks); 
 		int dollars = absTicks / TICKS_PER_DOLLAR;
 		int digits = MathUtils.logn(TICKS_PER_DOLLAR, 10);

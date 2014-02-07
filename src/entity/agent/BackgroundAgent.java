@@ -77,11 +77,6 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * @return
 	 */
 	public Iterable<? extends Activity> executeZIStrategy(OrderType type, int quantity, TimeStamp currentTime) {
-		
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append(':');
-		sb.append(" executing ZI strategy");
-		
 		int newPosition = (type.equals(BUY) ? 1 : -1) * quantity + positionBalance;
 		if (newPosition <= privateValue.getMaxAbsPosition() &&
 				newPosition >= -privateValue.getMaxAbsPosition()) {
@@ -90,20 +85,16 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			Price price = new Price((val.doubleValue() + (type.equals(SELL) ? 1 : -1) * 
 					Rands.nextUniform(rand, bidRangeMin, bidRangeMax))).nonnegative().quantize(tickSize);
 			
-			sb.append(" position=").append(positionBalance).append(", for q=");
-			sb.append(quantity).append(", value=");
-			sb.append(fundamental.getValueAt(currentTime)).append(" + ");
-			sb.append(privateValue.getValue(positionBalance, type));
-			sb.append('=').append(val);
-			log(INFO, sb.toString());
+			logger.log(INFO, "%s: executing ZI strategy position=%d, for q=%d, value=%s + %s=%s",
+					this, positionBalance, quantity, fundamental.getValueAt(currentTime),
+					privateValue.getValue(positionBalance, type), val);
 			
 			return ImmutableList.of(new SubmitNMSOrder(this, primaryMarket, type,
 					price, quantity, TimeStamp.IMMEDIATE));
 		} else {
 			// if exceed max position, then don't submit a new bid
-			sb.append("new order would exceed max position ");
-			sb.append(privateValue.getMaxAbsPosition()).append("; no submission");
-			log(INFO, sb.toString());
+			logger.log(INFO, "%s: executing ZI strategy new order would exceed max position %d ; no submission",
+					this, privateValue.getMaxAbsPosition());
 			
 			return ImmutableList.of();
 		}
