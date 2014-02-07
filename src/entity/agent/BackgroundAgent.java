@@ -3,7 +3,7 @@ package entity.agent;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Logger.log;
+import static logger.Logger.logger;
 import static logger.Logger.Level.INFO;
 
 import java.util.Iterator;

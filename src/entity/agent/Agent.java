@@ -2,7 +2,7 @@ package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static logger.Logger.log;
+import static logger.Logger.logger;
 import static logger.Logger.Level.INFO;
 
 import java.util.Collection;
@@ -87,7 +87,7 @@ public abstract class Agent extends Entity {
 	 */
 	
 	public void liquidateAtFundamental(TimeStamp currentTime) {
-		log(INFO, this + " liquidating...");
+		logger.log(INFO, "%s liquidating...", this);
 		liquidateAtPrice(fundamental.getValueAt(currentTime), currentTime);
 	}
 
@@ -96,14 +96,12 @@ public abstract class Agent extends Entity {
 	 */
 	public void liquidateAtPrice(Price price, TimeStamp ts) {
 
-		log(INFO, this + " pre-liquidation: position="
-				+ positionBalance);
+		logger.log(INFO, "%s pre-liquidation: position=%d", this, positionBalance);
 
 		preLiquidationProfit = profit;
 		profit += positionBalance * price.intValue();
 
-		log(INFO, this + " post-liquidation: profit=" + profit
-				+ ", price=" + price);
+		logger.log(INFO, "%s post-liquidation: profit=%d, price=%s", this, profit, price);
 	}
 
 	/**
@@ -201,7 +199,7 @@ public abstract class Agent extends Entity {
 			profit += trans.getQuantity() * trans.getPrice().intValue();
 		}
 
-		log(INFO, this + " transacted to position " + positionBalance);
+		logger.log(INFO, "$s transacted to position %d", this, positionBalance);
 	}
 
 	public final TimeStamp getArrivalTime() {
@@ -248,4 +246,5 @@ public abstract class Agent extends Entity {
 	public String toString() {
 		return getClass().getSimpleName() + " (" + id + ")";
 	}
+
 }

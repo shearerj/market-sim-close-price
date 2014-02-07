@@ -3,8 +3,6 @@ package entity.agent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Logger.format;
-import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
 import iterators.ExpInterarrivals;
@@ -15,6 +13,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+
+import static logger.Logger.logger;
 
 import systemmanager.Keys;
 import systemmanager.Scheduler;
@@ -191,9 +191,6 @@ public class AAAgent extends WindowAgent {
 	public void agentStrategy(TimeStamp currentTime) {
 		super.agentStrategy(currentTime);
 
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append("::agentStrategy: ");
-
 		// withdraw previous orders
 		if (withdrawOrders) withdrawAllOrders();
 
@@ -215,28 +212,26 @@ public class AAAgent extends WindowAgent {
 
 		// Estimate equilibrium price using weighted moving average
 		equilibriumPrice = this.estimateEquilibrium(transactions);
-		log(INFO, sb.append("estimateEquilibrium: price=").append(equilibriumPrice));
+		
+		logger.log(INFO, "%s::agentStrategy: estimateEquilibrium: price=%s", this, equilibriumPrice);
 
 		// Aggressiveness layer
 		// ----------------------
 		// Determine the target price tau using current r & theta
 		targetPrice = this.determineTargetPrice(limitPrice, equilibriumPrice);
-		log(INFO, sb.append("determineTargetPrice: target=").append(targetPrice));
+		logger.log(INFO, "%s::agentStrategy: determineTargetPrice: target=%s", this, targetPrice);
 
 		// Adaptive layer
 		// ----------------------
 		// Update the short term learning variable (aggressiveness r)
 		double oldAggression = aggression;
 		this.updateAggression(limitPrice, targetPrice, equilibriumPrice, lastTransactionPrice);
-		log(INFO, sb.append("updateAggression: lastPrice=").append(lastTransactionPrice) 
-				.append(", r=").append(format(oldAggression))
-				.append("-->r_new=").append(format(aggression)));
+		logger.log(INFO, "%s::agentStrategy: updateAggression: lastPrice=%s, r=%.4f-->r_new=%.4f", this, lastTransactionPrice, oldAggression, aggression);
 
 		// Update long term learning variable (adaptiveness theta)
 		double oldTheta = theta;
 		this.updateTheta(equilibriumPrice, transactions);
-		log(INFO, sb.append("updateTheta: theta=").append(format(oldTheta)) 
-				.append("-->theta_new=").append(format(theta)));
+		logger.log(INFO, "%s::agentStrategy: updateTheta: theta=%.4f-->theta_new=%.4f", this, lastTransactionPrice, oldTheta, theta);
 
 		// Bidding Layer
 		this.biddingLayer(limitPrice, targetPrice, 1, currentTime);
@@ -337,9 +332,6 @@ public class AAAgent extends WindowAgent {
 	 */
 	protected void biddingLayer(Price limitPrice, 
 			Price targetPrice, int quantity, TimeStamp currentTime) {
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append("::biddingLayer: ");
-
 		// Determining the offer price to (possibly) submit
 		//		Price bid = this.getQuote().getBidPrice();
 		//		Price ask = this.getQuote().getAskPrice();
@@ -348,15 +340,14 @@ public class AAAgent extends WindowAgent {
 
 		// if no bid or no ask, submit ZI strategy bid
 		if (bid == null || ask == null) {
-			log(INFO, sb.append("Bid/Ask undefined."));
+			logger.log(INFO, "%s::biddingLayer: Bid/Ask undefined.", this);
 			this.executeZIStrategy(type, quantity, currentTime);
 		}
 
 		// If best offer is outside of limit price, no bid is submitted
 		if ((type.equals(BUY) && limitPrice.lessThanEqual(bid))
 				|| (type.equals(SELL) && limitPrice.greaterThan(ask))) {
-			log(INFO, sb.append("Best price is outside of limit price: ")
-					.append(limitPrice).append("; no submission"));
+			logger.log(INFO, "%s::biddingLayer: Best price is outside of limit price: %s; no submission", this, limitPrice);
 			return;
 		}
 
@@ -365,9 +356,7 @@ public class AAAgent extends WindowAgent {
 		int newPosBal = positionBalance + quantity;
 		if (newPosBal < -privateValue.getMaxAbsPosition() 
 				|| newPosBal > privateValue.getMaxAbsPosition() ) {
-			log(INFO, sb.append("New order would exceed max position ")
-					.append(privateValue.getMaxAbsPosition())
-					.append("; no submission"));
+			logger.log(INFO, "%s::biddingLayer: New order would exceed max position: %d; no submission", this, privateValue.getMaxAbsPosition());
 			return;
 		}
 
