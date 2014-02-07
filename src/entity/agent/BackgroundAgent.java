@@ -2,7 +2,7 @@ package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static logger.Logger.log;
+import static logger.Logger.logger;
 import static logger.Logger.Level.INFO;
 import iterators.ExpInterarrivals;
 import static fourheap.Order.OrderType.*;

@@ -1,67 +1,45 @@
 package logger;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.text.DecimalFormat;
+import java.io.Writer;
 
 public class Logger {
 
 	public static enum Level { NO_LOGGING, ERROR, INFO, DEBUG };
+	public static Logger logger;
 
-	protected static Log logger;
-	protected static boolean outError = true;
-	protected static Prefix prefix = new EmptyPrefix();
-	protected static DecimalFormat format = new DecimalFormat("#.####");
+	private Writer writer;
+	private Prefix prefix;
+	private Level level;
 	
-	public static void setup(int lev, File logFile, boolean outError, Prefix prefix) {
+	public Logger(Level level, Writer writer, Prefix prefix) {
+		this.level = level;
+		this.writer = writer;
+		this.prefix = prefix;
+	}
+	
+	public Logger(Level level, File logFile, Prefix prefix) throws IOException {
+		logFile.getParentFile().mkdirs();
+		this.level = level;
+		this.prefix = prefix;
+		this.writer = new FileWriter(logFile);
+	}
+	
+	public void log(Level level, String format, Object... parameters) {
+		if (level.ordinal() > this.level.ordinal())
+			return;
+		String message = prefix.getPrefix() + level.ordinal() + '|' + String.format(format, parameters) + '\n';
 		try {
-			logFile.getParentFile().mkdirs();
-			logger = new Log(lev, ".", logFile.getPath(), true);
-			logger.setPrependDate(false);
-			Logger.outError = outError;
-			Logger.prefix = prefix;
+			writer.append(message);
 		} catch (IOException e) {
-			System.err.println("Couldn't create log file");
 			e.printStackTrace();
 		}
-	}
-	
-	public static void setup(int lev, File logFile, boolean outError) {
-		setup(lev, logFile, outError, prefix);
-	}
-	
-	public static void setup(int lev, File logFile) {
-		setup(lev, logFile, outError, prefix);
-	}
-
-	public static void log(Level level, String message) {
-		if (getLevel() == Level.NO_LOGGING)
-			return;
-		message = prefix.getPrefix() + message;
-		logger.log(level.ordinal(), message);
-		if (level == Level.ERROR)
-			System.err.println(message);
-	}
-	
-	public static void log(Level level, Object message) {
-		log(level, message.toString());
-	}
-
-	public static Level getLevel() {
-		return logger == null ? Level.NO_LOGGING
-				: Level.values()[logger.getLevel()];
 	}
 	
 	public static interface Prefix {
 		public String getPrefix();
 	}
-	
-	private static class EmptyPrefix implements Prefix {
-		@Override
-		public String getPrefix() { return ""; }
-	}
 
-	public static String format(double number) {
-		return format.format(number);
-	}
 }

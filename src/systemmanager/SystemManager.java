@@ -1,6 +1,5 @@
 package systemmanager;
 
-import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
 import java.io.File;
