@@ -53,6 +53,10 @@ public class Quote implements Serializable {
 		return market;
 	}
 	
+	public TimeStamp getQuoteTime() {
+		return quoteTime;
+	}
+	
 	/**
 	 * @return true if the quote is defined (has an ask and a bid price)
 	 */

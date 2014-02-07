@@ -23,7 +23,6 @@ import data.EntityProperties;
 import data.FundamentalValue;
 import data.MockFundamental;
 import entity.infoproc.SIP;
-import entity.market.DummyMarketTime;
 import entity.market.MockMarket;
 import entity.market.Order;
 import entity.market.Price;
@@ -167,7 +166,7 @@ public class MarketMakerTest {
 		// Updating NBBO quote (this will update immed, although SIP is delayed)
 		MockMarket market2 = new MockMarket(exec, sip);
 		Quote q = new Quote(market2, new Price(30), 1, new Price(38), 1, time);
-		exec.executeActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q));
+		exec.executeActivity(new ProcessQuote(sip, market2, q));
 
 		mm.createOrderLadder(new Price(40), new Price(50));
 		assertEquals("Incorrect number of orders", 3, mm.activeOrders.size());

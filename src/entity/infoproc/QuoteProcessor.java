@@ -1,7 +1,6 @@
 package entity.infoproc;
 
 import entity.market.Market;
-import entity.market.MarketTime;
 import entity.market.Quote;
 import event.TimeStamp;
 
@@ -14,11 +13,11 @@ import event.TimeStamp;
  */
 public interface QuoteProcessor {
 
-	public void sendToQuoteProcessor(Market market, MarketTime quoteTime, 
-			Quote quote, TimeStamp currentTime);
+	public void sendToQuoteProcessor(Market market, Quote quote, 
+			TimeStamp currentTime);
 
 	public void processQuote(Market market,
-			MarketTime quoteTime, Quote quote, TimeStamp currentTime);
+			Quote quote, TimeStamp currentTime);
 	
 	public TimeStamp getLatency();
 }

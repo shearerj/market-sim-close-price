@@ -7,7 +7,6 @@ import activity.Activity;
 import activity.ProcessQuote;
 import entity.Entity;
 import entity.market.Market;
-import entity.market.MarketTime;
 import entity.market.Quote;
 import event.TimeStamp;
 
@@ -23,7 +22,6 @@ abstract class AbstractQuoteProcessor extends Entity implements QuoteProcessor {
 	protected final TimeStamp latency;
 	protected final Market associatedMarket;
 	protected Quote quote;
-	protected MarketTime lastQuoteTime;
 
 	public AbstractQuoteProcessor(Scheduler scheduler, TimeStamp latency, Market associatedMarket) {
 		super(ProcessorIDs.nextID++, scheduler);
@@ -37,8 +35,8 @@ abstract class AbstractQuoteProcessor extends Entity implements QuoteProcessor {
 	// TODO better way to handle immediate execution
 	@Override
 	public void sendToQuoteProcessor(Market market, 
-			MarketTime quoteTime, Quote quote, TimeStamp currentTime) {
-		Activity act = new ProcessQuote(this, market, quoteTime, quote);
+			Quote quote, TimeStamp currentTime) {
+		Activity act = new ProcessQuote(this, market, quote);
 		if (latency.equals(TimeStamp.IMMEDIATE))
 			scheduler.executeActivity(act);
 		else
@@ -46,19 +44,17 @@ abstract class AbstractQuoteProcessor extends Entity implements QuoteProcessor {
 	}
 
 	@Override
-	public void processQuote(Market market, MarketTime quoteTime, Quote quote,
-			TimeStamp currentTime) {
+	public void processQuote(Market market, Quote quote, TimeStamp currentTime) {
 		checkArgument(market.equals(associatedMarket),
 				"Can't update a QuoteProcessor with anything but its market");
 		checkArgument(quote.getMarket().equals(associatedMarket),
 				"Can't update a QuoteProcessor with quote from another market");
 
 		// Do nothing for a stale quote
-		if (lastQuoteTime != null && lastQuoteTime.compareTo(quoteTime) > 0)
+		if (this.quote != null && this.quote.getQuoteTime().compareTo(quote.getQuoteTime()) > 0)
 			return;
 
 		this.quote = quote;
-		this.lastQuoteTime = quoteTime;
 	}
 
 	public Quote getQuote() {

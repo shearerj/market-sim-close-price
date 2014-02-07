@@ -30,7 +30,6 @@ import data.FundamentalValue;
 import data.MockFundamental;
 import entity.infoproc.BestBidAsk;
 import entity.infoproc.SIP;
-import entity.market.DummyMarketTime;
 import entity.market.MockMarket;
 import entity.market.Order;
 import entity.market.Price;
@@ -301,8 +300,6 @@ public class BasicMarketMakerTest {
 
 	@Test
 	public void truncateBidTest() {
-		TimeStamp time = TimeStamp.ZERO;
-
 		MarketMaker marketmaker = createBMM(3, 5, true, 1);
 
 		// Creating dummy agents
@@ -319,7 +316,7 @@ public class BasicMarketMakerTest {
 		// Updating NBBO quote
 		MockMarket market2 = new MockMarket(exec, sip);
 		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, TimeStamp.ZERO);
-		exec.executeActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q));
+		exec.executeActivity(new ProcessQuote(sip, market2, q));
 		
 
 		// Just to check that NBBO correct (it crosses)
@@ -361,8 +358,6 @@ public class BasicMarketMakerTest {
 
 	@Test
 	public void truncateAskTest() {
-		TimeStamp time = TimeStamp.ZERO;
-
 		MarketMaker marketmaker = createBMM(3, 5, true, 1);
 
 		// Creating dummy agents
@@ -379,7 +374,7 @@ public class BasicMarketMakerTest {
 		// Updating NBBO quote
 		MockMarket market2 = new MockMarket(exec, sip);
 		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, TimeStamp.ZERO);
-		exec.executeActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q));
+		exec.executeActivity(new ProcessQuote(sip, market2, q));
 		
 
 		// Just to check that NBBO correct (it crosses)

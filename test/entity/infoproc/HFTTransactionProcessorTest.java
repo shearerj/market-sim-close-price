@@ -159,7 +159,7 @@ public class HFTTransactionProcessorTest {
 		
 		// Verify quote null
 		Quote q = hft.getQuote(market2);
-		assertEquals("Incorrect last quote time", null, qp.lastQuoteTime);
+		assertEquals("Incorrect last quote time", TimeStamp.ZERO, q.getQuoteTime());
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
@@ -174,7 +174,7 @@ public class HFTTransactionProcessorTest {
 		
 		// Verify that quote has updated
 		q = hft.getQuote(market2);
-		assertEquals("Incorrect last quote time", TimeStamp.ZERO, qp.lastQuoteTime);
+		assertEquals("Incorrect last quote time", TimeStamp.ZERO, q.getQuoteTime());
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(150), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());

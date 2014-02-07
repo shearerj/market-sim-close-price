@@ -21,7 +21,6 @@ import activity.ProcessQuote;
 import activity.ProcessTransactions;
 import entity.Entity;
 import entity.market.Market;
-import entity.market.MarketTime;
 import entity.market.Price;
 import entity.market.Quote;
 import entity.market.Transaction;
@@ -41,7 +40,6 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 	
 	protected final TimeStamp latency;
 	protected final Map<Market, Quote> marketQuotes;
-	protected final Map<Market, MarketTime> quoteTimes;
 	protected final List<Transaction> transactions;
 	protected BestBidAsk nbbo;
 
@@ -49,7 +47,6 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 		super(0, scheduler);
 		this.latency = checkNotNull(latency);
 		this.marketQuotes = Maps.newHashMap();
-		this.quoteTimes = Maps.newHashMap();
 		this.transactions = Lists.newArrayList();
 		this.nbbo = new BestBidAsk(null, null, 0, null, null, 0);
 	}
@@ -85,8 +82,8 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 
 	@Override
 	public void sendToQuoteProcessor(Market market,
-			MarketTime quoteTime, Quote quote, TimeStamp currentTime) {
-		Activity act = new ProcessQuote(this, market, quoteTime, quote);
+			Quote quote, TimeStamp currentTime) {
+		Activity act = new ProcessQuote(this, market, quote);
 		if (latency.equals(TimeStamp.IMMEDIATE))
 			scheduler.executeActivity(act);
 		else
@@ -95,14 +92,14 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 
 	@Override
 	public void processQuote(Market market,
-			MarketTime quoteTime, Quote quote, TimeStamp currentTime) {
-		MarketTime lastTime = quoteTimes.get(market);
+			Quote quote, TimeStamp currentTime) {
+		Quote oldQuote = marketQuotes.get(market);
 		// If we get a stale quote, ignore it.
-		if (lastTime != null && lastTime.compareTo(quoteTime) > 0)
+		if (oldQuote != null && oldQuote.getQuoteTime() != null
+				&& oldQuote.getQuoteTime().compareTo(quote.getQuoteTime()) > 0)
 			return;
 
 		marketQuotes.put(market, quote);
-		quoteTimes.put(market, quoteTime);
 		
 		log(INFO, market + " -> " + this + " quote " + quote);
 

@@ -82,10 +82,9 @@ public class SIPTest {
 		assertEquals(null, nbbo.bestAskMarket);
 		assertEquals(null, nbbo.bestBidMarket);
 		assertEquals(0, sip.marketQuotes.size());
-		assertEquals(0, sip.quoteTimes.size());
 		
 		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		sip.processQuote(market1, new DummyMarketTime(time, 1), q1, time);
+		sip.processQuote(market1, q1, time);
 		
 		// Test that NBBO quote is correct
 		nbbo = sip.getNBBO();
@@ -96,17 +95,16 @@ public class SIPTest {
 		assertEquals("Incorrect ASK market", market1, nbbo.bestAskMarket);
 		assertEquals("Incorrect BID market", market1, nbbo.bestBidMarket);
 		assertEquals(1, sip.marketQuotes.size());
-		assertEquals(1, sip.quoteTimes.size());
 	}
 	
 	@Test
 	public void multiQuote() {
 		TimeStamp time = TimeStamp.ZERO;
 		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		sip.processQuote(market1, new DummyMarketTime(time, 1), q1, time);
+		sip.processQuote(market1, q1, time);
 		
 		Quote q2 = new Quote(market1, new Price(70), 1, new Price(90), 1, time);
-		sip.processQuote(market1, new DummyMarketTime(time, 2), q2, time);
+		sip.processQuote(market1, q2, time);
 		
 		// Test that NBBO quote is correct (completely replaces old quote of [80, 100])
 		BestBidAsk nbbo = sip.getNBBO();
@@ -117,15 +115,14 @@ public class SIPTest {
 		assertEquals("Incorrect ASK market", market1, nbbo.bestAskMarket);
 		assertEquals("Incorrect BID market", market1, nbbo.bestBidMarket);
 		assertEquals(1, sip.marketQuotes.size());
-		assertEquals(1, sip.quoteTimes.size());
 	}
 	
 	@Test
 	public void staleQuote() {
 		TimeStamp time = TimeStamp.create(10);
 		
-		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		sip.processQuote(market1, new DummyMarketTime(time, 2), q1, time);
+		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, new DummyMarketTime(time, 2));
+		sip.processQuote(market1, q1, time);
 		
 		// Test that NBBO quote is correct
 		BestBidAsk nbbo = sip.getNBBO();
@@ -135,11 +132,11 @@ public class SIPTest {
 		assertEquals("Incorrect BID quantity", 1, nbbo.bestBidQuantity);
 		assertEquals("Incorrect ASK market", market1, nbbo.bestAskMarket);
 		assertEquals("Incorrect BID market", market1, nbbo.bestBidMarket);
-		assertEquals(new DummyMarketTime(time, 2), sip.quoteTimes.get(market1));
+		assertEquals(new DummyMarketTime(time, 2), sip.marketQuotes.get(market1).getQuoteTime());
 		
 		// Note that staleness is based solely on MarketTime (not timestamp)
 		Quote q2 = new Quote(market1, new Price(70), 1, new Price(90), 1, TimeStamp.ZERO);
-		sip.processQuote(market1, new DummyMarketTime(time, 1), q2, time);
+		sip.processQuote(market1, q2, time);
 		
 		// Test that NBBO quote is correct (ignores stale quote q2)
 		nbbo = sip.getNBBO();
@@ -149,17 +146,17 @@ public class SIPTest {
 		assertEquals("Incorrect BID quantity", 1, nbbo.bestBidQuantity);
 		assertEquals("Incorrect ASK market", market1, nbbo.bestAskMarket);
 		assertEquals("Incorrect BID market", market1, nbbo.bestBidMarket);
-		assertEquals(new DummyMarketTime(time, 2), sip.quoteTimes.get(market1));
+		assertEquals(new DummyMarketTime(time, 2), sip.marketQuotes.get(market1).getQuoteTime());
 	}
 	
 	@Test
 	public void twoMarketQuote() {
 		TimeStamp time = TimeStamp.ZERO;
 		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		sip.processQuote(market1, new DummyMarketTime(time, 1), q1, time);
+		sip.processQuote(market1, q1, time);
 		
 		Quote q2 = new Quote(market2, new Price(70), 1, new Price(90), 1, time);
-		sip.processQuote(market2, new DummyMarketTime(time, 2), q2, time);
+		sip.processQuote(market2, q2, time);
 		
 		// Test that NBBO quote is correct (computes best quote between both markets)
 		BestBidAsk nbbo = sip.getNBBO();
@@ -170,19 +167,18 @@ public class SIPTest {
 		assertEquals("Incorrect ASK market", market2, nbbo.bestAskMarket);
 		assertEquals("Incorrect BID market", market1, nbbo.bestBidMarket);
 		assertEquals(2, sip.marketQuotes.size());
-		assertEquals(2, sip.quoteTimes.size());
 	}
 	
 	@Test
 	public void twoMarketMultiQuote() {
 		TimeStamp time = TimeStamp.ZERO;
-		Quote q1 = new Quote(market1, new Price(85), 1, new Price(100), 1, time);
-		Quote q2 = new Quote(market2, new Price(75), 1, new Price(95), 1, time);
-		Quote q3 = new Quote(market1, new Price(65), 1, new Price(90), 1, time);
+		Quote q1 = new Quote(market1, new Price(85), 1, new Price(100), 1, new DummyMarketTime(time, 1));
+		Quote q2 = new Quote(market2, new Price(75), 1, new Price(95), 1, new DummyMarketTime(time, 2));
+		Quote q3 = new Quote(market1, new Price(65), 1, new Price(90), 1, new DummyMarketTime(time, 3));
 		
-		sip.processQuote(market1, new DummyMarketTime(time, 1), q1, time);
-		sip.processQuote(market2, new DummyMarketTime(time, 1), q2, time);
-		sip.processQuote(market1, new DummyMarketTime(time, 2), q3, time);
+		sip.processQuote(market1, q1, time);
+		sip.processQuote(market2, q2, time);
+		sip.processQuote(market1, q3, time);
 				
 		// Test that NBBO quote is correct & that market 1's quote was replaced
 		BestBidAsk nbbo = sip.getNBBO();
@@ -192,11 +188,11 @@ public class SIPTest {
 		assertEquals("Incorrect BID quantity", 1, nbbo.bestBidQuantity);
 		assertEquals("Incorrect ASK market", market1, nbbo.bestAskMarket);
 		assertEquals("Incorrect BID market", market2, nbbo.bestBidMarket);
-		assertEquals(new DummyMarketTime(time, 2), sip.quoteTimes.get(market1));
-		assertEquals(new DummyMarketTime(time, 1), sip.quoteTimes.get(market2));
+		assertEquals(new DummyMarketTime(time, 3), sip.marketQuotes.get(market1).getQuoteTime());
+		assertEquals(new DummyMarketTime(time, 2), sip.marketQuotes.get(market2).getQuoteTime());
 		
-		Quote q4 = new Quote(market2, new Price(60), 1, new Price(91), 1, time);
-		sip.processQuote(market2, new DummyMarketTime(time, 2), q4, time);
+		Quote q4 = new Quote(market2, new Price(60), 1, new Price(91), 1, new DummyMarketTime(time, 4));
+		sip.processQuote(market2, q4, time);
 		
 		// Test that NBBO quote is correct & that market 2's quote was replaced
 		nbbo = sip.getNBBO();
@@ -206,8 +202,8 @@ public class SIPTest {
 		assertEquals("Incorrect BID quantity", 1, nbbo.bestBidQuantity);
 		assertEquals("Incorrect ASK market", market1, nbbo.bestAskMarket);
 		assertEquals("Incorrect BID market", market1, nbbo.bestBidMarket);
-		assertEquals(new DummyMarketTime(time, 2), sip.quoteTimes.get(market1));
-		assertEquals(new DummyMarketTime(time, 2), sip.quoteTimes.get(market2));
+		assertEquals(new DummyMarketTime(time, 3), sip.marketQuotes.get(market1).getQuoteTime());
+		assertEquals(new DummyMarketTime(time, 4), sip.marketQuotes.get(market2).getQuoteTime());
 
 		/*
 		 * XXX NOTE: if tie in price, nondeterminism in which market has best
@@ -221,8 +217,8 @@ public class SIPTest {
 		MarketTime mktTime = new DummyMarketTime(time, 1);
 
 		// Add new quote
-		Quote q = new Quote(market1, new Price(80), 1, new Price(100), 2, time);
-		sip.sendToQuoteProcessor(market1, mktTime, q, time);
+		Quote q = new Quote(market1, new Price(80), 1, new Price(100), 2, mktTime);
+		sip.sendToQuoteProcessor(market1, q, time);
 		// Verify correct process quote activity inserted right after
 		assertTrue(exec.isEmpty());
 
@@ -242,8 +238,8 @@ public class SIPTest {
 		MarketTime mktTime = new DummyMarketTime(time, 1);
 		
 		// Check that process quote activity scheduled correctly
-		Quote q = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		sip2.sendToQuoteProcessor(market1, mktTime, q, time);
+		Quote q = new Quote(market1, new Price(80), 1, new Price(100), 1, mktTime);
+		sip2.sendToQuoteProcessor(market1, q, time);
 		// Verify correct process quote activity added to execute at time 50
 		exec.executeUntil(TimeStamp.create(50));
 		TimedActivity act = exec.peek();
@@ -266,11 +262,9 @@ public class SIPTest {
 		// SIP with zero not immediate latency
 		SIP sip3 = new SIP(exec, TimeStamp.create(0));
 		TimeStamp time = TimeStamp.ZERO;
-		MarketTime mktTime = new DummyMarketTime(time, 1);
-		
 		// Check that process quote activity scheduled correctly
 		Quote q = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		exec.executeActivity(new SendToQP(market1, mktTime, q, sip3));
+		exec.executeActivity(new SendToQP(market1, q, sip3));
 		BestBidAsk nbbo = sip3.getNBBO();
 		assertEquals("Incorrect ASK", null, nbbo.bestAsk);
 		assertEquals("Incorrect BID", null, nbbo.bestBid);
@@ -294,14 +288,14 @@ public class SIPTest {
 	public void alternateDelay() {
 		TimeStamp time = TimeStamp.ZERO;
 		MarketTime mktTime = new DummyMarketTime(time, 1);
-		Quote q = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
+		Quote q = new Quote(market2, new Price(80), 1, new Price(100), 1, mktTime);
 		
 		// Send quotes to SIP. Market 2 has a delay of 100, SIP2 has delay of 50
-		exec.executeActivity(new SendToQP(market2, mktTime, q, sip2));
-		exec.executeActivity(new SendToQP(market2, mktTime, q, sip));
+		exec.executeActivity(new SendToQP(market2, q, sip2));
+		exec.executeActivity(new SendToQP(market2, q, sip));
 		
 		// Check immediate SIP
-		assertEquals("Last quote time not updated", mktTime, sip.quoteTimes.get(market2));
+		assertEquals("Last quote time not updated", mktTime, sip.marketQuotes.get(market2).getQuoteTime());
 		BestBidAsk nbbo = sip.getNBBO();
 		assertEquals("Incorrect ASK", q.getAskPrice(), nbbo.bestAsk);
 		assertEquals("Incorrect BID", q.getBidPrice(), nbbo.bestBid);
@@ -310,7 +304,7 @@ public class SIPTest {
 		assertEquals("Incorrect ASK market", market2, nbbo.bestAskMarket);
 		assertEquals("Incorrect BID market", market2, nbbo.bestBidMarket);
 		// Check delayed SIP not updated
-		assertEquals("Updated delayed SIP too early", null, sip2.quoteTimes.get(market2));
+		assertEquals("Updated delayed SIP too early", null, sip2.marketQuotes.get(market2));
 		assertEquals("Incorrect ASK", null, sip2.getNBBO().bestAsk);
 		assertEquals("Incorrect BID", null, sip2.getNBBO().bestBid);
 		assertEquals("Incorrect ASK quantity", 0, sip2.getNBBO().bestAskQuantity);
@@ -318,11 +312,10 @@ public class SIPTest {
 		assertEquals("Incorrect ASK market", null, sip2.getNBBO().bestAskMarket);
 		assertEquals("Incorrect BID market", null, sip2.getNBBO().bestBidMarket);
 		assertEquals(0, sip2.marketQuotes.size());
-		assertEquals(0, sip2.quoteTimes.size());
 		
 		exec.executeUntil(sip2.latency.plus(TimeStamp.create(1)));
 		// Check delayed SIP has been updated
-		assertEquals("Last quote time not updated", mktTime, sip2.quoteTimes.get(market2));
+		assertEquals("Last quote time not updated", mktTime, sip2.marketQuotes.get(market2).getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(100), sip2.getNBBO().bestAsk);
 		assertEquals("Incorrect BID", new Price(80), sip2.getNBBO().bestBid);
 		assertEquals("Incorrect ASK quantity", 1, sip2.getNBBO().bestAskQuantity);
@@ -330,23 +323,22 @@ public class SIPTest {
 		assertEquals("Incorrect ASK market", market2, sip2.getNBBO().bestAskMarket);
 		assertEquals("Incorrect BID market", market2, sip2.getNBBO().bestBidMarket);
 		assertEquals(1, sip2.marketQuotes.size());
-		assertEquals(1, sip2.quoteTimes.size());
 	}
 	
 	@Test
 	public void eventManagerLatencyTest() {
 		TimeStamp time = TimeStamp.ZERO;
 		MarketTime mktTime = new DummyMarketTime(time, 1);
-		MarketTime mktTime2 = new DummyMarketTime(time, 2);
-		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		Quote q2 = new Quote(market2, new Price(75), 1, new Price(95), 2, TimeStamp.create(30));
+		MarketTime mktTime2 = new DummyMarketTime(TimeStamp.create(30), 2);
+		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, mktTime);
+		Quote q2 = new Quote(market2, new Price(75), 1, new Price(95), 2, mktTime2);
 		
 		// Send quotes to both IPs
-		exec.executeActivity(new SendToQP(market1, mktTime, q1, sip));
-		exec.executeActivity(new SendToQP(market1, mktTime, q1, sip2));
+		exec.executeActivity(new SendToQP(market1, q1, sip));
+		exec.executeActivity(new SendToQP(market1, q1, sip2));
 		
 		// Check that no quotes have updated in slow sip yet (fast sip should update)
-		assertEquals("Updated delayed SIP too early", null, sip2.quoteTimes.get(market2));
+		assertEquals("Updated delayed SIP too early", null, sip2.marketQuotes.get(market2));
 		assertEquals("Incorrect ASK", null, sip2.getNBBO().bestAsk);
 		assertEquals("Incorrect BID", null, sip2.getNBBO().bestBid);
 		assertEquals("Incorrect ASK quantity", 0, sip2.getNBBO().bestAskQuantity);
@@ -356,7 +348,7 @@ public class SIPTest {
 		
 		
 		// Check immediate SIP updated with quote 1
-		assertEquals("Last quote time not updated", mktTime, sip.quoteTimes.get(market1));
+		assertEquals("Last quote time not updated", mktTime, sip.marketQuotes.get(market1).getQuoteTime());
 		BestBidAsk nbbo = sip.getNBBO();
 		assertEquals("Incorrect ASK", q1.getAskPrice(), nbbo.bestAsk);
 		assertEquals("Incorrect BID", q1.getBidPrice(), nbbo.bestBid);
@@ -365,7 +357,7 @@ public class SIPTest {
 		assertEquals("Incorrect ASK market", market1, nbbo.bestAskMarket);
 		assertEquals("Incorrect BID market", market1, nbbo.bestBidMarket);
 		// Check delayed SIP not updated
-		assertEquals("Updated delayed SIP too early", null, sip2.quoteTimes.get(market1));
+		assertEquals("Updated delayed SIP too early", null, sip2.marketQuotes.get(market1));
 		assertEquals("Incorrect ASK", null, sip2.getNBBO().bestAsk);
 		assertEquals("Incorrect BID", null, sip2.getNBBO().bestBid);
 		assertEquals("Incorrect ASK quantity", 0, sip2.getNBBO().bestAskQuantity);
@@ -377,12 +369,12 @@ public class SIPTest {
 		// so only first quote of [80, 100] should reach the delayed SIP
 		exec.executeUntil(TimeStamp.create(30));
 		exec.setTime(TimeStamp.create(30));
-		exec.executeActivity(new SendToQP(market2, mktTime2, q2, sip));
-		exec.executeActivity(new SendToQP(market2, mktTime2, q2, sip2));
+		exec.executeActivity(new SendToQP(market2, q2, sip));
+		exec.executeActivity(new SendToQP(market2, q2, sip2));
 		exec.executeUntil(sip2.latency.plus(TimeStamp.create(1)));
 		// Check immediate SIP updated with quote 2
-		assertEquals("Last quote time not updated", mktTime, sip.quoteTimes.get(market1));
-		assertEquals("Last quote time not updated", mktTime2, sip.quoteTimes.get(market2));
+		assertEquals("Last quote time not updated", mktTime, sip.marketQuotes.get(market1).getQuoteTime());
+		assertEquals("Last quote time not updated", mktTime2, sip.marketQuotes.get(market2).getQuoteTime());
 		nbbo = sip.getNBBO();
 		assertEquals("Incorrect ASK", q2.getAskPrice(), nbbo.bestAsk);
 		assertEquals("Incorrect BID", q1.getBidPrice(), nbbo.bestBid);
@@ -391,8 +383,8 @@ public class SIPTest {
 		assertEquals("Incorrect ASK market", market2, nbbo.bestAskMarket);
 		assertEquals("Incorrect BID market", market1, nbbo.bestBidMarket);
 		// Check delayed SIP updated only with quote 1
-		assertEquals("Last quote time not updated", mktTime, sip2.quoteTimes.get(market1));
-		assertEquals("Updated delayed SIP too early", null, sip2.quoteTimes.get(market2));
+		assertEquals("Last quote time not updated", mktTime, sip2.marketQuotes.get(market1).getQuoteTime());
+		assertEquals("Updated delayed SIP too early", null, sip2.marketQuotes.get(market2));
 		assertEquals("Incorrect ASK", q1.getAskPrice(), sip2.getNBBO().bestAsk);
 		assertEquals("Incorrect BID", q1.getBidPrice(), sip2.getNBBO().bestBid);
 		assertEquals("Incorrect ASK quantity", 1, sip2.getNBBO().bestAskQuantity);
@@ -404,8 +396,8 @@ public class SIPTest {
 		// quote was submitted (which was at time 30), so need to execute up to time 130
 		exec.executeUntil(sip2.latency.plus(TimeStamp.create(31)));
 		// Check delayed SIP updated finally with quote 2
-		assertEquals("Last quote time not updated", mktTime, sip2.quoteTimes.get(market1));
-		assertEquals("Last quote time not updated", mktTime2, sip2.quoteTimes.get(market2));
+		assertEquals("Last quote time not updated", mktTime, sip2.marketQuotes.get(market1).getQuoteTime());
+		assertEquals("Last quote time not updated", mktTime2, sip2.marketQuotes.get(market2).getQuoteTime());
 		assertEquals("Incorrect ASK", q2.getAskPrice(), sip2.getNBBO().bestAsk);
 		assertEquals("Incorrect BID", q1.getBidPrice(), sip2.getNBBO().bestBid);
 		assertEquals("Incorrect ASK quantity", 2, sip2.getNBBO().bestAskQuantity);
@@ -478,7 +470,6 @@ public class SIPTest {
 		assertEquals(null, nbbo.bestAskMarket);
 		assertEquals(null, nbbo.bestBidMarket);
 		assertEquals(0, sip.marketQuotes.size());
-		assertEquals(0, sip.quoteTimes.size());
 			
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1));
 		// should execute Clear-->SendToSIP-->ProcessQuotes

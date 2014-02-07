@@ -4,7 +4,6 @@ import systemmanager.Scheduler;
 import activity.AgentStrategy;
 import entity.agent.HFTAgent;
 import entity.market.Market;
-import entity.market.MarketTime;
 import entity.market.Quote;
 import event.TimeStamp;
 
@@ -25,9 +24,9 @@ public class HFTQuoteProcessor extends AbstractQuoteProcessor {
 	}
 
 	@Override
-	public void processQuote(Market market, MarketTime quoteTime, 
-			Quote quote, TimeStamp currentTime) {
-		super.processQuote(market, quoteTime, quote, currentTime);
+	public void processQuote(Market market, Quote quote, 
+			TimeStamp currentTime) {
+		super.processQuote(market, quote, currentTime);
 		scheduler.executeActivity(new AgentStrategy(hftAgent));
 	}
 

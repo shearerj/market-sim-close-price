@@ -215,9 +215,9 @@ public class MAMarketMakerTest {
 	private void addQuote(QuoteProcessor qp, int buy, int sell, int time, int marketTime) {
 		TimeStamp ts = TimeStamp.create(time);
 		MarketTime mktTime = new DummyMarketTime(ts, marketTime);
-		Quote q = new Quote(market, new Price(buy), 1, new Price(sell), 1, ts);
-		sip.processQuote(market, mktTime, q, ts);
-		qp.processQuote(market, mktTime, q, ts);
+		Quote q = new Quote(market, new Price(buy), 1, new Price(sell), 1, mktTime);
+		sip.processQuote(market, q, ts);
+		qp.processQuote(market, q, ts);
 	}
 
 	/**
@@ -434,8 +434,6 @@ public class MAMarketMakerTest {
 
 	@Test
 	public void truncateBidTest() {
-		TimeStamp time = TimeStamp.ZERO;
-
 		MarketMaker marketmaker = createMAMM(3, 5, true, 1, 5);
 
 		// Creating dummy agents
@@ -450,7 +448,7 @@ public class MAMarketMakerTest {
 		// Updating NBBO quote
 		MockMarket market2 = new MockMarket(exec, sip);
 		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, TimeStamp.ZERO);
-		exec.executeActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q));
+		exec.executeActivity(new ProcessQuote(sip, market2, q));
 
 		// Just to check that NBBO correct (it crosses)
 		BestBidAsk nbbo = sip.getNBBO();
@@ -490,8 +488,6 @@ public class MAMarketMakerTest {
 
 	@Test
 	public void truncateAskTest() {
-		TimeStamp time = TimeStamp.ZERO;
-
 		MarketMaker marketmaker = createMAMM(3, 5, true, 1, 5);
 
 		// Creating dummy agents
@@ -506,7 +502,7 @@ public class MAMarketMakerTest {
 		// Updating NBBO quote
 		MockMarket market2 = new MockMarket(exec, sip);
 		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, TimeStamp.ZERO);
-		exec.executeActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q));
+		exec.executeActivity(new ProcessQuote(sip, market2, q));
 
 		// Just to check that NBBO correct (it crosses)
 		BestBidAsk nbbo = sip.getNBBO();

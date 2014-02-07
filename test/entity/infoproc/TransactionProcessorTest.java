@@ -141,7 +141,7 @@ public class TransactionProcessorTest {
 		List<Transaction> trans = smip.getTransactions();
 		assertTrue("Incorrect initial transaction list", trans.isEmpty());
 		Quote q = qp.quote;
-		assertEquals("Incorrect last quote time", null, qp.lastQuoteTime);
+		assertEquals("Incorrect last quote time", TimeStamp.ZERO, qp.getQuote().getQuoteTime());
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
@@ -152,7 +152,7 @@ public class TransactionProcessorTest {
 
 		// Verify that quote has updated
 		q = qp.quote;
-		assertEquals("Incorrect last quote time", time, qp.lastQuoteTime);
+		assertEquals("Incorrect last quote time", time, qp.getQuote().getQuoteTime());
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(150), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
@@ -169,7 +169,7 @@ public class TransactionProcessorTest {
 		trans = smip.getTransactions();
 		assertTrue("Incorrect transaction list size", trans.isEmpty());
 		q = qp.quote;
-		assertEquals("Incorrect last quote time", time, qp.lastQuoteTime);
+		assertEquals("Incorrect last quote time", time, qp.getQuote().getQuoteTime());
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(150), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
