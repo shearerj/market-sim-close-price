@@ -1,8 +1,8 @@
 package entity.agent;
 
 import static org.junit.Assert.*;
-import static logger.Logger.Level.*;
-import static logger.Logger.logger;
+import static logger.Log.Level.*;
+import static logger.Log.log;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,7 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-import logger.Logger;
+import logger.Log;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -47,7 +47,7 @@ public class OrderDataAgentTest {
 	@BeforeClass
 	public static void setupClass() throws IOException {
 		// Setting up the log file
-		logger = Logger.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "OrderDataAgentTest.log"));
+		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "OrderDataAgentTest.log"));
 
 		rand = new Random(1);
 	}
@@ -69,7 +69,7 @@ public class OrderDataAgentTest {
 	
 	@Test
 	public void strategyTest(){
-		logger.log(DEBUG, "\n Testing OrderDataAgent strategy, should return orderdata as what is passed in \n");
+		log.log(DEBUG, "\n Testing OrderDataAgent strategy, should return orderdata as what is passed in \n");
 		List<OrderDatum> orders = new LinkedList<OrderDatum>();
 		
 		orders.add(new MockOrderDatum(new TimeStamp(15), new Price(75000), 1, BUY));
@@ -92,7 +92,7 @@ public class OrderDataAgentTest {
         t1 = new TimeStamp(15);
         c = agent.agentStrategy(t1);
         nextOrder = Iterables.getOnlyElement(c);
-        logger.log(DEBUG, "\nNext order time: %s", nextOrder.getTime());
+        log.log(DEBUG, "\nNext order time: %s", nextOrder.getTime());
         t2 = new TimeStamp(18);
         assertEquals("OrderDataAgent Strategy is in order", t2, nextOrder.getTime());
         
@@ -108,7 +108,7 @@ public class OrderDataAgentTest {
 	
 	@Test
 	public void ordersTest(){
-		logger.log(DEBUG, "\n Testing OrderDataAgent Orders , should be identical to input values\n");
+		log.log(DEBUG, "\n Testing OrderDataAgent Orders , should be identical to input values\n");
         List<OrderDatum> orders = new LinkedList<OrderDatum>();
         
 		OrderDataAgent agent = addAgent(orders.iterator());
@@ -117,7 +117,7 @@ public class OrderDataAgentTest {
 		Collection<Order> orderCollection = agent.getOrders();
 	    Order order = Iterables.getFirst(orderCollection, null);
 		
-		logger.log(DEBUG, "%s", agent.getOrders());
+		log.log(DEBUG, "%s", agent.getOrders());
 		assertEquals("OrderDataAgent active order have wrong agent", agent, order.getAgent());
 	    assertEquals("OrderDataAgent active order have wrong market", market, order.getMarket());
 	    assertEquals("OrderDataAgent active order have wrong price", new Price(75000), order.getPrice());

@@ -1,7 +1,7 @@
 package entity.agent;
 
-import static logger.Logger.logger;
-import static logger.Logger.Level.INFO;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 import static com.google.common.base.Preconditions.checkArgument;
 import static fourheap.Order.OrderType.*;
 
@@ -144,11 +144,6 @@ public class AAAgent extends WindowAgent {
 	}
 
 	@Override
-	public String toString() {
-		return "AA " + super.toString();
-	}
-
-	@Override
 	public Collection<Activity> agentStrategy(TimeStamp currentTime) {
 		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
 				super.agentStrategy(currentTime));
@@ -174,25 +169,25 @@ public class AAAgent extends WindowAgent {
 		// Estimate equilibrium price using weighted moving average
 		equilibriumPrice = this.estimateEquilibrium(transactions);
 		
-		logger.log(INFO, "%s::agentStrategy: estimateEquilibrium: price=%s", this, equilibriumPrice);
+		log.log(INFO, "%s::agentStrategy: estimateEquilibrium: price=%s", this, equilibriumPrice);
 
 		// Aggressiveness layer
 		// ----------------------
 		// Determine the target price tau using current r & theta
 		targetPrice = this.determineTargetPrice(limitPrice, equilibriumPrice);
-		logger.log(INFO, "%s::agentStrategy: determineTargetPrice: target=%s", this, targetPrice);
+		log.log(INFO, "%s::agentStrategy: determineTargetPrice: target=%s", this, targetPrice);
 
 		// Adaptive layer
 		// ----------------------
 		// Update the short term learning variable (aggressiveness r)
 		double oldAggression = aggression;
 		this.updateAggression(limitPrice, targetPrice, equilibriumPrice, lastTransactionPrice);
-		logger.log(INFO, "%s::agentStrategy: updateAggression: lastPrice=%s, r=%.4f-->r_new=%.4f", this, lastTransactionPrice, oldAggression, aggression);
+		log.log(INFO, "%s::agentStrategy: updateAggression: lastPrice=%s, r=%.4f-->r_new=%.4f", this, lastTransactionPrice, oldAggression, aggression);
 
 		// Update long term learning variable (adaptiveness theta)
 		double oldTheta = theta;
 		this.updateTheta(equilibriumPrice, transactions);
-		logger.log(INFO, "%s::agentStrategy: updateTheta: theta=%.4f-->theta_new=%.4f", this, oldTheta, theta);
+		log.log(INFO, "%s::agentStrategy: updateTheta: theta=%.4f-->theta_new=%.4f", this, oldTheta, theta);
 
 		// Bidding Layer
 		acts.addAll(this.biddingLayer(limitPrice, targetPrice, 1, currentTime));
@@ -302,14 +297,14 @@ public class AAAgent extends WindowAgent {
 
 		// if no bid or no ask, submit ZI strategy bid
 		if (bid == null || ask == null) {
-			logger.log(INFO, "%s::biddingLayer: Bid/Ask undefined.", this);
+			log.log(INFO, "%s::biddingLayer: Bid/Ask undefined.", this);
 			return this.executeZIStrategy(type, quantity, currentTime);
 		}
 
 		// If best offer is outside of limit price, no bid is submitted
 		if ((type.equals(BUY) && limitPrice.lessThanEqual(bid))
 				|| (type.equals(SELL) && limitPrice.greaterThan(ask))) {
-			logger.log(INFO, "%s::biddingLayer: Best price is outside of limit price: %s; no submission", this, limitPrice);
+			log.log(INFO, "%s::biddingLayer: Best price is outside of limit price: %s; no submission", this, limitPrice);
 			return Collections.emptyList();
 		}
 
@@ -318,7 +313,7 @@ public class AAAgent extends WindowAgent {
 		int newPosBal = positionBalance + quantity;
 		if (newPosBal < -privateValue.getMaxAbsPosition() 
 				|| newPosBal > privateValue.getMaxAbsPosition() ) {
-			logger.log(INFO, "%s::biddingLayer: New order would exceed max position: %d; no submission", this, privateValue.getMaxAbsPosition());
+			log.log(INFO, "%s::biddingLayer: New order would exceed max position: %d; no submission", this, privateValue.getMaxAbsPosition());
 			return Collections.emptyList();
 		}
 

@@ -65,9 +65,4 @@ public class CallMarket extends Market {
 				super.clear(currentTime)).add(new Clear(this, nextClearTime)).build();
 	}
 
-	@Override
-	public String toString() {
-		return "Call " + super.toString();
-	}
-
 }

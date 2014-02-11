@@ -31,10 +31,5 @@ public class NoOpAgent extends Agent {
 	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
 		return ImmutableList.of();
 	}
-
-	@Override
-	public String toString() {
-		return "NoOpAgent " + super.toString();
-	}
 	
 }

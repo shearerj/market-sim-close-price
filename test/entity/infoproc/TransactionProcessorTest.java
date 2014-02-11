@@ -3,15 +3,15 @@ package entity.infoproc;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.*;
-import static logger.Logger.Level.*;
-import static logger.Logger.logger;
+import static logger.Log.Level.*;
+import static logger.Log.log;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 
-import logger.Logger;
+import logger.Log;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -42,7 +42,7 @@ public class TransactionProcessorTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		logger = Logger.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "TransactionProcessorTest.log"));
+		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "TransactionProcessorTest.log"));
 	}
 
 	@Before

@@ -1,14 +1,18 @@
 package entity.agent;
 
-import static logger.Logger.logger;
-import static logger.Logger.Level.INFO;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+
+import activity.Activity;
+import activity.AgentStrategy;
 
 import com.google.common.collect.ImmutableList;
 
@@ -17,17 +21,10 @@ import data.OrderDatum;
 import data.OrderParser;
 import data.OrderParserNYSE;
 import data.OrderParserNasdaq;
-import activity.Activity;
-import activity.AgentStrategy;
-import activity.SubmitNMSOrder;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Order;
 import event.TimeStamp;
-import fourheap.Order.OrderType;
-
-import java.util.Comparator;
-import java.util.PriorityQueue;
 
 public class OrderDataAgent extends SMAgent {
 
@@ -67,7 +64,7 @@ public class OrderDataAgent extends SMAgent {
 	@Override
 	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
 		OrderDatum nextStrategy = orderDatumList.get(0);
-		logger.log(INFO, "%s: Next entry at %s", this, nextStrategy.getTimeStamp());
+		log.log(INFO, "%s: Next entry at %s", this, nextStrategy.getTimeStamp());
 		return ImmutableList.of(new AgentStrategy(this, nextStrategy.getTimeStamp()));
 	}
 
@@ -79,11 +76,6 @@ public class OrderDataAgent extends SMAgent {
 
 	public Collection<Order> getOrders() {
 		return this.activeOrders;
-	}
-
-	@Override
-	public String toString() {
-		return "OrderDataAgent " + super.toString();
 	}
 	
 	/**

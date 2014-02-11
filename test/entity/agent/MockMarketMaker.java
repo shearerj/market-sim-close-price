@@ -35,8 +35,4 @@ public class MockMarketMaker extends MarketMaker {
 				props.getAsBoolean(Keys.TICK_INSIDE, true));
 	}
 
-	@Override
-	public String toString() {
-		return "MockMarketMaker " + super.toString();
-	}
 }

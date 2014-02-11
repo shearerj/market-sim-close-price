@@ -2,8 +2,8 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Logger.logger;
-import static logger.Logger.Level.INFO;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 import iterators.ExpInterarrivals;
 
 import java.util.Iterator;
@@ -113,7 +113,7 @@ public abstract class MarketMaker extends ReentryAgent {
 			acts.add(new SubmitOrder(this, primaryMarket, SELL, new Price(p), 1, 
 					TimeStamp.IMMEDIATE));
 		}
-		logger.log(INFO, "%s in %s: Submit ladder with #rungs %d, step size %d: buys [%s to %s] & sells [%s to %s]",
+		log.log(INFO, "%s in %s: Submit ladder with #rungs %d, step size %d: buys [%s to %s] & sells [%s to %s]",
 				this, primaryMarket, numRungs, stepSize, buyMinPrice, buyMaxPrice, sellMinPrice, sellMaxPrice);
 		return acts.build();
 	}
@@ -177,11 +177,18 @@ public abstract class MarketMaker extends ReentryAgent {
 			// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
 			if (lastNBBOQuote.getBestBid() != null)
 				sellMinPrice = pcomp.max(ladderAsk, lastNBBOQuote.getBestBid());
-			logger.log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)", this, primaryMarket, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
+			log.log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)", this, primaryMarket, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
 		}
 
 		acts.addAll(this.submitOrderLadder(buyMinPrice, buyMaxPrice, 
 				sellMinPrice, sellMaxPrice, currentTime));
 		return acts.build();
 	}
+
+	@Override
+	protected String name() {
+		String oldName = super.name();
+		return oldName.substring(0, oldName.length() - 6) + "MM";
+	}
+	
 }

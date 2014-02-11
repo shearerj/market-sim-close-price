@@ -23,8 +23,4 @@ public class MockWindowAgent extends WindowAgent {
 				pv, 1, bidRangeMin, bidRangeMax, windowLength);
 	}
 	
-	@Override
-	public String toString() {
-		return "MockWindowAgent " + super.toString();
-	}
 }

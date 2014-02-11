@@ -29,8 +29,4 @@ public class MockAgent extends Agent {
 		return this.activeOrders;
 	}
 	
-	@Override
-	public String toString() {
-		return "MockAgent " + super.toString();
-	}
 }

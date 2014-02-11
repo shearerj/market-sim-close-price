@@ -1,14 +1,14 @@
 package entity.agent;
 
 import static org.junit.Assert.assertTrue;
-import static logger.Logger.Level.*;
-import static logger.Logger.logger;
+import static logger.Log.Level.*;
+import static logger.Log.log;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Random;
 
-import logger.Logger;
+import logger.Log;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -32,7 +32,7 @@ public class NoOpAgentTest {
 	@BeforeClass
 	public static void setupClass() throws IOException {
 		// Setting up the log file
-		logger = Logger.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "NoOpAgentTest.log"));
+		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "NoOpAgentTest.log"));
 	}
 
 	@Before

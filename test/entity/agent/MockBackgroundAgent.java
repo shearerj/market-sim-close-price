@@ -35,8 +35,4 @@ public class MockBackgroundAgent extends BackgroundAgent {
 		return this.activeOrders;
 	}
 	
-	@Override
-	public String toString() {
-		return "MockBackgroundAgent " + super.toString();
-	}
 }

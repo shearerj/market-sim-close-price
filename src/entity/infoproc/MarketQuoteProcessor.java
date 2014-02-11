@@ -19,7 +19,7 @@ public class MarketQuoteProcessor extends AbstractQuoteProcessor {
 	}
 
 	public String toString() {
-		return "(QuoteProcessor " + id + " in " + associatedMarket + ")";
+		return "(QuoteProcessor " + id + " in " + associatedMarket + ')';
 	}
 
 }

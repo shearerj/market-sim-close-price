@@ -54,9 +54,4 @@ public class MockMarket extends Market {
 				updateQuote(currentTime)).build();
 	}
 
-	@Override
-	public String toString() {
-		return "MockMarket " + super.toString();
-	}
-
 }

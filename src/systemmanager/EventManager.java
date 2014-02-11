@@ -1,7 +1,7 @@
 package systemmanager;
 
-import static logger.Logger.logger;
-import static logger.Logger.Level.*;
+import static logger.Log.log;
+import static logger.Log.Level.*;
 
 import java.util.Random;
 
@@ -70,7 +70,7 @@ public class EventManager {
 		try {
 			Activity act = eventQueue.remove();
 			currentTime = ord.max(currentTime, act.getTime());
-			logger.log(DEBUG, "%s then %s", act, eventQueue);
+			log.log(DEBUG, "%s then %s", act, eventQueue);
 			eventQueue.addAll(act.execute(currentTime));
 			
 		} catch (Exception e) {

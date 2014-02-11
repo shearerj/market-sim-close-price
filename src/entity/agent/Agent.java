@@ -2,8 +2,8 @@ package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static logger.Logger.logger;
-import static logger.Logger.Level.INFO;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -88,7 +88,7 @@ public abstract class Agent extends Entity {
 	
 	public Iterable<? extends Activity> liquidateAtFundamental(
 			TimeStamp currentTime) {
-		logger.log(INFO, "%s liquidating...", this);
+		log.log(INFO, "%s liquidating...", this);
 		return liquidateAtPrice(fundamental.getValueAt(currentTime), currentTime);
 	}
 
@@ -97,12 +97,12 @@ public abstract class Agent extends Entity {
 	 */
 	public Iterable<? extends Activity> liquidateAtPrice(Price price, TimeStamp ts) {
 
-		logger.log(INFO, "%s pre-liquidation: position=%d", this, positionBalance);
+		log.log(INFO, "%s pre-liquidation: position=%d", this, positionBalance);
 
 		preLiquidationProfit = profit;
 		profit += positionBalance * price.intValue();
 
-		logger.log(INFO, "%s post-liquidation: profit=%d, price=%s", this, profit, price);
+		log.log(INFO, "%s post-liquidation: profit=%d, price=%s", this, profit, price);
 		return Collections.emptyList();
 	}
 
@@ -219,7 +219,7 @@ public abstract class Agent extends Entity {
 			profit += trans.getQuantity() * trans.getPrice().intValue();
 		}
 
-		logger.log(INFO, "%s transacted to position %d", this, positionBalance);
+		log.log(INFO, "%s transacted to position %d", this, positionBalance);
 	}
 
 	public final TimeStamp getArrivalTime() {
@@ -260,6 +260,17 @@ public abstract class Agent extends Entity {
 	@Override
 	public final boolean equals(Object obj) {
 		return super.equals(obj);
+	}
+	
+	@Override
+	protected String name() {
+		String oldName = super.name();
+		return oldName.substring(0, oldName.length() - 5); // Remove agent
+	}
+
+	@Override
+	public String toString() {
+		return name() + " (" + id + ')';
 	}
 	
 }

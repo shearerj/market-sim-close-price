@@ -67,10 +67,5 @@ public class ZIAgent extends BackgroundAgent {
 		// 50% chance of being either long or short
 		return this.executeZIStrategy(rand.nextBoolean() ? BUY : SELL, 1, currentTime);
 	}
-
-	@Override
-	public String toString() {
-		return "ZI " + super.toString();
-	}
 	
 }

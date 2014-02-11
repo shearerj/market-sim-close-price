@@ -23,10 +23,14 @@ public abstract class Entity implements Serializable {
 	public final int getID() {
 		return this.id;
 	}
+	
+	protected String name() {
+		return getClass().getSimpleName();
+	}
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + " (" + id + ')';
+		return "(" + id + ')';
 	}
 	
 }

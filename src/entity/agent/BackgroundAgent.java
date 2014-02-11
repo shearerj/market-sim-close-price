@@ -2,8 +2,8 @@ package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static logger.Logger.logger;
-import static logger.Logger.Level.INFO;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 import iterators.ExpInterarrivals;
 import static fourheap.Order.OrderType.*;
 
@@ -85,7 +85,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			Price price = new Price((val.doubleValue() + (type.equals(SELL) ? 1 : -1) * 
 					Rands.nextUniform(rand, bidRangeMin, bidRangeMax))).nonnegative().quantize(tickSize);
 			
-			logger.log(INFO, "%s: executing ZI strategy position=%d, for q=%d, value=%s + %s=%s",
+			log.log(INFO, "%s: executing ZI strategy position=%d, for q=%d, value=%s + %s=%s",
 					this, positionBalance, quantity, fundamental.getValueAt(currentTime),
 					privateValue.getValue(positionBalance, type), val);
 			
@@ -93,7 +93,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					price, quantity, TimeStamp.IMMEDIATE));
 		} else {
 			// if exceed max position, then don't submit a new bid
-			logger.log(INFO, "%s: executing ZI strategy new order would exceed max position %d ; no submission",
+			log.log(INFO, "%s: executing ZI strategy new order would exceed max position %d ; no submission",
 					this, privateValue.getMaxAbsPosition());
 			
 			return ImmutableList.of();

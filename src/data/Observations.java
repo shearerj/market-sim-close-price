@@ -3,7 +3,7 @@ package data;
 import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.base.Predicates.not;
 
-import static logger.Logger.logger;
+import static logger.Log.log;
 
 import java.util.Collection;
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import logger.Logger;
+import logger.Log;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
@@ -335,7 +335,7 @@ public class Observations {
 	}
 	
 	@Subscribe public void deadStat(DeadEvent d) {
-		logger.log(Logger.Level.ERROR, "Unhandled Statistic: %s", d);
+		log.log(Log.Level.ERROR, "Unhandled Statistic: %s", d);
 	}
 	
 	// --------------------------------------
