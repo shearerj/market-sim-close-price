@@ -34,7 +34,7 @@ public class MarketTransactionProcessor extends AbstractTransactionProcessor {
 	}
 
 	public String toString() {
-		return "(TransactionProcessor " + id + " in " + associatedMarket + ")";
+		return "(TransactionProcessor " + id + " in " + associatedMarket + ')';
 	}
 
 }

@@ -1,8 +1,8 @@
 package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static logger.Logger.logger;
-import static logger.Logger.Level.INFO;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 
 import java.util.Random;
 
@@ -123,10 +123,10 @@ public class WMAMarketMaker extends MarketMaker {
 				|| (ask != null && lastAsk == null)) {	
 
 			if (!this.getQuote().isDefined()) {
-				logger.log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
+				log.log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
 			} else {
 				// Quote changed, still valid, withdraw all orders
-				logger.log(INFO, "%s in %s: Withdraw all orders", this, primaryMarket);
+				log.log(INFO, "%s in %s: Withdraw all orders", this, primaryMarket);
 				withdrawAllOrders();	
 				
 				bid = this.getQuote().getBidPrice();
@@ -137,7 +137,7 @@ public class WMAMarketMaker extends MarketMaker {
 					Price oldBid = bid, oldAsk = ask;
 					if (bid == null && lastBid != null) bid = lastBid;
 					if (ask == null && lastAsk != null) ask = lastAsk;
-					logger.log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", this, primaryMarket, oldBid, oldAsk, bid, ask);
+					log.log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", this, primaryMarket, oldBid, oldAsk, bid, ask);
 				}
 				
 				// Compute weighted moving average
@@ -178,11 +178,10 @@ public class WMAMarketMaker extends MarketMaker {
 
 			} // if quote defined
 		} else {
-			logger.log(INFO, "%s in %s: No change in submitted ladder", this, primaryMarket);
+			log.log(INFO, "%s in %s: No change in submitted ladder", this, primaryMarket);
 		}
 		// update latest bid/ask prices
 		lastAsk = ask;
 		lastBid = bid;
 	}
-	
 }

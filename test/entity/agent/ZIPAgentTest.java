@@ -10,8 +10,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import static org.junit.Assert.*;
-import static logger.Logger.Level.*;
-import static logger.Logger.logger;
+import static logger.Log.Level.*;
+import static logger.Log.log;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
 
-import logger.Logger;
+import logger.Log;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -55,7 +55,7 @@ public class ZIPAgentTest {
 	@BeforeClass
 	public static void setupClass() throws IOException{
 		// Setting up the log file
-		logger = Logger.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIPAgentTest.log"));
+		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIPAgentTest.log"));
 
 		// Creating the setup properties
 		rand = new Random(1);
@@ -242,7 +242,7 @@ public class ZIPAgentTest {
 	
 	@Test
 	public void updateMarginZeroLimit() {
-		logger.log(INFO, "Testing margin update when limit price is 0");
+		log.log(INFO, "Testing margin update when limit price is 0");
 		
 		// testing when limit price is 0
 		TimeStamp time = TimeStamp.ZERO;

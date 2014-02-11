@@ -1,7 +1,7 @@
 package systemmanager;
 
-import static logger.Logger.logger;
-import static logger.Logger.Level.INFO;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -171,7 +171,7 @@ public class Simulation {
 	public void executeEvents() {
 		Observations.BUS.register(observations);
 		scheduler.executeUntil(simulationLength);
-		logger.log(INFO, "[[[ Simulation Over ]]]");
+		log.log(INFO, "[[[ Simulation Over ]]]");
 		Observations.BUS.unregister(observations);
 	}
 	

@@ -3,8 +3,8 @@ package entity.agent;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static fourheap.Order.OrderType.*;
-import static logger.Logger.logger;
-import static logger.Logger.Level.INFO;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 
 import iterators.ExpInterarrivals;
 
@@ -99,7 +99,7 @@ public class ZIRAgent extends BackgroundAgent {
 		super.agentStrategy(currentTime);
 
 		if (!currentTime.equals(arrivalTime)) {
-			logger.log(INFO, "%s: wake up.", this);
+			log.log(INFO, "%s: wake up.", this);
 		}
 		// XXX should it go to sleep?
 //		if (!activeOrders.isEmpty()) {
@@ -109,13 +109,13 @@ public class ZIRAgent extends BackgroundAgent {
 //		}
 
 		if (withdrawOrders) {
-			logger.log(INFO, "%s: Withdraw all orders.", this);
+			log.log(INFO, "%s: Withdraw all orders.", this);
 			withdrawAllOrders();
 		}
 		// 0.50% chance of being either long or short
 		OrderType type = rand.nextBoolean() ? BUY : SELL;
 		executeZIStrategy(type, 1, currentTime);
-		logger.log(INFO, "%s: Submit %s order", this, type);
+		log.log(INFO, "%s: Submit %s order", this, type);
 	}
 	
 }

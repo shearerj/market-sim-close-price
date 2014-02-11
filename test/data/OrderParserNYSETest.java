@@ -6,7 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
 
-import logger.Logger;
+import logger.Log;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -24,7 +24,7 @@ public class OrderParserNYSETest {
 	@BeforeClass
 	public static void setupClass() throws IOException {
 		// Setting up the log file
-		Logger.logger = Logger.create(Logger.Level.DEBUG, new File(Consts.TEST_OUTPUT_DIR + "OrderParserTest.log"));		
+		Log.log = Log.create(Log.Level.DEBUG, new File(Consts.TEST_OUTPUT_DIR + "OrderParserTest.log"));		
 	}
 
 	private OrderParserNYSE addParser() {

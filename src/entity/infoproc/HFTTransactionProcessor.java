@@ -53,7 +53,7 @@ public class HFTTransactionProcessor extends AbstractTransactionProcessor {
 
 	@Override
 	public String toString() {
-		return "(HFTTransactionProcessor " + id + " in " + associatedMarket + " for " + hftAgent + ")"; 
+		return "(HFTTransactionProcessor " + id + " in " + associatedMarket + " for " + hftAgent + ')'; 
 	}
 
 }

@@ -1,7 +1,7 @@
 package entity.agent;
 
-import static logger.Logger.logger;
-import static logger.Logger.Level.INFO;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,6 +13,11 @@ import java.util.Random;
 
 import systemmanager.Scheduler;
 import activity.AgentStrategy;
+import activity.Activity;
+import activity.AgentStrategy;
+
+import com.google.common.collect.ImmutableList;
+
 import data.FundamentalValue;
 import data.OrderDatum;
 import data.OrderParser;
@@ -61,7 +66,7 @@ public class OrderDataAgent extends SMAgent {
 	@Override
 	public void agentStrategy(TimeStamp currentTime) {
 		OrderDatum nextStrategy = orderDatumList.get(0);
-		logger.log(INFO, "%s: Next entry at %s", this, nextStrategy.getTimeStamp());
+		log.log(INFO, "%s: Next entry at %s", this, nextStrategy.getTimeStamp());
 		scheduler.scheduleActivity(nextStrategy.getTimeStamp(),  new AgentStrategy(this));
 	}
 
@@ -73,11 +78,6 @@ public class OrderDataAgent extends SMAgent {
 
 	public Collection<Order> getOrders() {
 		return this.activeOrders;
-	}
-
-	@Override
-	public String toString() {
-		return "OrderDataAgent " + super.toString();
 	}
 	
 	/**

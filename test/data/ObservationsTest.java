@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import logger.Logger;
+import logger.Log;
 
 import org.junit.After;
 import org.junit.Before;
@@ -49,7 +49,7 @@ public class ObservationsTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		Logger.logger = Logger.create(Logger.Level.DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ObservationsTest.log"));
+		Log.log = Log.create(Log.Level.DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ObservationsTest.log"));
 	}
 
 	@Before

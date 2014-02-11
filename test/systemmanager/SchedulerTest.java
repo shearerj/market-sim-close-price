@@ -1,11 +1,15 @@
 package systemmanager;
 
 import static org.junit.Assert.*;
+import static logger.Log.Level.*;
+import static logger.Log.log;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Random;
 
-import logger.Logger;
+import logger.Log;
+
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -28,8 +32,8 @@ public class SchedulerTest {
 	private SIP sip;
 	
 	@BeforeClass
-	public static void setupClass() {
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "EventManagerTest.log"));
+	public static void setupClass() throws IOException {
+		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "EventManagerTest.log"));
 	}
 
 	@Before

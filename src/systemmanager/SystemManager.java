@@ -1,7 +1,7 @@
 package systemmanager;
 
-import static logger.Logger.Level.INFO;
-import static logger.Logger.logger;
+import static logger.Log.Level.INFO;
+import static logger.Log.log;
 
 
 import java.io.File;
@@ -13,8 +13,8 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.Random;
 
-import logger.Logger.Prefix;
-import logger.Logger;
+import logger.Log.Prefix;
+import logger.Log;
 
 import com.google.common.base.Objects;
 
@@ -107,8 +107,8 @@ public class SystemManager {
 			Simulation sim = new Simulation(specification, rand);
 			
 			initializeLogger(logLevel, simulationFolder, observationNumber, i, sim, simulationLength);
-			logger.log(INFO, "Random Seed: %d", baseRandomSeed);
-			logger.log(INFO, "Configuration: %s", specification);
+			log.log(INFO, "Random Seed: %d", baseRandomSeed);
+			log.log(INFO, "Configuration: %s", specification);
 			
 			sim.executeEvents();
 			observations.addObservation(sim.getObservations());
@@ -121,8 +121,10 @@ public class SystemManager {
 	protected static void initializeLogger(int logLevel, File simulationFolder,
 			int observationNumber, int simulationNumber, final Simulation simulation,
 			int simulationLength) throws IOException {
-		if (logLevel == 0) // No logging
+		if (logLevel == 0) { // No logging
+			log = Log.nullLogger();
 			return;
+		}
 		
 		// TODO This adds an extra underscore
 		StringBuilder logFileName = new StringBuilder(
@@ -138,7 +140,7 @@ public class SystemManager {
 		final int digits = Integer.toString(simulationLength).length();
 
 		// Create log file
-		logger = Logger.create(Logger.Level.values()[logLevel], logFile, new Prefix() {
+		log = Log.create(Log.Level.values()[logLevel], logFile, new Prefix() {
 			@Override
 			public String getPrefix() {
 				return String.format("%" + digits + "d| ", simulation.getCurrentTime().getInTicks());

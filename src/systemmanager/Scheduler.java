@@ -1,10 +1,8 @@
 package systemmanager;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static logger.Logger.Level.DEBUG;
-import static logger.Logger.Level.ERROR;
-import static logger.Logger.logger;
-import static logger.Logger.Level.*;
+import static logger.Log.log;
+import static logger.Log.Level.*;
 
 import java.util.Random;
 
@@ -71,7 +69,7 @@ public class Scheduler {
 		try {
 			TimedActivity act = eventQueue.remove();
 			currentTime = ord.max(currentTime, act.getTime());
-			logger.log(DEBUG, "%s then %s", act, eventQueue);
+			log.log(DEBUG, "%s then %s", act, eventQueue);
 			act.getActivity().execute(currentTime);
 			
 		} catch (Exception e) {

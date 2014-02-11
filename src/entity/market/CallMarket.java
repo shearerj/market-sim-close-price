@@ -62,9 +62,4 @@ public class CallMarket extends Market {
 		scheduler.scheduleActivity(nextClearTime, new Clear(this));
 	}
 
-	@Override
-	public String toString() {
-		return "Call " + super.toString();
-	}
-
 }

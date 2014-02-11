@@ -1,7 +1,7 @@
 package data;
 
-import static logger.Logger.Level.ERROR;
-import static logger.Logger.logger;
+import static logger.Log.Level.ERROR;
+import static logger.Log.log;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -81,7 +81,7 @@ public class FundamentalValue implements Serializable {
 	public Price getValueAt(TimeStamp t) {
 		int index = (int) t.getInTicks();
 		if (index < 0) { // In case of overflow
-			logger.log(ERROR, "Tried to access out of bounds TimeStamp: %s (%d)", t, index);
+			log.log(ERROR, "Tried to access out of bounds TimeStamp: %s (%d)", t, index);
 			return new Price(0);
 		}
 		computeFundamentalTo(index);

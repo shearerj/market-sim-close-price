@@ -32,7 +32,7 @@ public class HFTQuoteProcessor extends AbstractQuoteProcessor {
 
 	@Override
 	public String toString() {
-		return "(HFTQuoteProcessor " + id + " in " + associatedMarket + " for " + hftAgent + ")"; 
+		return "(HFTQuoteProcessor " + id + " in " + associatedMarket + " for " + hftAgent + ')'; 
 	}
 	
 }

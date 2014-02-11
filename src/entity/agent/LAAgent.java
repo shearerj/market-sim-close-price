@@ -2,8 +2,8 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Logger.logger;
-import static logger.Logger.Level.INFO;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 
 import java.util.Collection;
 import java.util.List;
@@ -101,7 +101,7 @@ public class LAAgent extends HFTAgent {
 				|| bestAsk.doubleValue() * (1 + alpha) > bestBid.doubleValue())
 			return;
 
-		logger.log(INFO, "%s detected arbirage between %s %s and %s %s", this, 
+		log.log(INFO, "%s detected arbirage between %s %s and %s %s", this, 
 				bestBidMarket, quoteProcessors.get(bestBidMarket).getQuote(),
 				bestAskMarket, quoteProcessors.get(bestAskMarket).getQuote());
 		Price midPoint = new Price((bestBid.doubleValue() + bestAsk.doubleValue()) * .5).quantize(tickSize);
@@ -180,5 +180,4 @@ public class LAAgent extends HFTAgent {
 		}
 		
 	}
-
 }

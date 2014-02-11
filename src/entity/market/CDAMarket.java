@@ -51,9 +51,4 @@ public class CDAMarket extends Market {
 		updateQuote(currentTime);
 	}
 
-	@Override
-	public String toString() {
-		return "CDA " + super.toString();
-	}
-
 }
