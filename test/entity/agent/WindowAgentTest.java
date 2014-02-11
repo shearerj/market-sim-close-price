@@ -3,8 +3,11 @@ package entity.agent;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.*;
+import static logger.Logger.Level.*;
+import static logger.Logger.logger;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -39,9 +42,9 @@ public class WindowAgentTest {
 	private static Random rand;
 	
 	@BeforeClass
-	public static void setUpClass(){
+	public static void setUpClass() throws IOException{
 		// Setting up the log file
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "WindowAgentTest.log"));
+		logger = Logger.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "WindowAgentTest.log"));
 	}
 
 	@Before
@@ -276,14 +279,11 @@ public class WindowAgentTest {
 			}
 		}
 		//Sort transaction times into ascending order so we can add transactions in the proper order
-		Arrays.sort(transactionTimes); 
-		String transaction_list = "";
-		for(int t : transactionTimes){
-			transaction_list+= t + " ";
+		Arrays.sort(transactionTimes);
+		for(int t : transactionTimes)
 			addTransaction(market, 100, 1, t);
-		}
-		Logger.log(Logger.Level.DEBUG, "Transaction times: " + transaction_list + 
-				" Window Length: " + windowLength + " Re entry Time " + reentryTime );
+		
+		logger.log(DEBUG, "Transaction times: %s Window Length: %d Re entry Time %d", Arrays.toString(transactionTimes), windowLength, reentryTime);
 
 		List<Transaction> windowTransactions = myAgent.getWindowTransactions(new TimeStamp(reentryTime));
 		assertEquals("Number of transactions is not correct", numWindow, windowTransactions.size());
