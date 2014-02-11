@@ -22,9 +22,9 @@ import static fourheap.Order.OrderType.SELL;
 public class OrderParserNYSETest {
 	
 	@BeforeClass
-	public static void setupClass() {
+	public static void setupClass() throws IOException {
 		// Setting up the log file
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "OrderParserTest.log"));		
+		Logger.logger = Logger.create(Logger.Level.DEBUG, new File(Consts.TEST_OUTPUT_DIR + "OrderParserTest.log"));		
 	}
 
 	private OrderParserNYSE addParser() {

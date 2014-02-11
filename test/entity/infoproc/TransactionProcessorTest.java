@@ -4,8 +4,12 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
+import static logger.Logger.Level.*;
+import static logger.Logger.logger;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 
@@ -38,8 +42,8 @@ public class TransactionProcessorTest {
 	private FundamentalValue fundamental = new MockFundamental(100000);
 
 	@BeforeClass
-	public static void setupClass() {
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "TransactionProcessorTest.log"));
+	public static void setupClass() throws IOException {
+		logger = Logger.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "TransactionProcessorTest.log"));
 	}
 
 	@Before

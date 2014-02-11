@@ -138,7 +138,7 @@ public class SystemManager {
 		final int digits = Integer.toString(simulationLength).length();
 
 		// Create log file
-		logger = new Logger(Logger.Level.values()[logLevel], logFile, new Prefix() {
+		logger = Logger.create(Logger.Level.values()[logLevel], logFile, new Prefix() {
 			@Override
 			public String getPrefix() {
 				return String.format("%" + digits + "d| ", simulation.getCurrentTime().getInTicks());

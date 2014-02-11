@@ -3,8 +3,13 @@ package entity.infoproc;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static logger.Logger.Level.*;
+import static logger.Logger.logger;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Random;
 
 import logger.Logger;
 
@@ -52,8 +57,8 @@ public class HFTQuoteProcessorTest {
 	private HFTQuoteProcessor mktip2;
 
 	@BeforeClass
-	public static void setupClass() {
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "HFTQuoteProcessorTest.log"));
+	public static void setupClass() throws IOException {
+		logger = Logger.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "HFTQuoteProcessorTest.log"));
 	}
 	
 	@Before

@@ -3,8 +3,12 @@ package entity.agent;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
+import static logger.Logger.Level.*;
+import static logger.Logger.logger;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Random;
 
 import logger.Logger;
@@ -51,9 +55,9 @@ public class ZIRAgentTest {
 	private static EntityProperties agentProperties;
 
 	@BeforeClass
-	public static void setUpClass(){
+	public static void setUpClass() throws IOException{
 		// Setting up the log file
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "ZIRAgentTest.log"));
+		logger = Logger.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIRAgentTest.log"));
 
 		// Creating the setup properties
 		rand = new Random(1);

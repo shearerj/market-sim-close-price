@@ -5,8 +5,11 @@ import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
+import static logger.Logger.Level.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -45,8 +48,8 @@ public class BasicMarketMakerTest {
 	private FundamentalValue fundamental = new MockFundamental(100000);
 
 	@BeforeClass
-	public static void setupClass() {
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "BasicMarketMakerTest.log"));
+	public static void setupClass() throws IOException {
+		Logger.logger = Logger.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "BasicMarketMakerTest.log"));
 	}
 
 	@Before

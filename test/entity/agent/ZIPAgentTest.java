@@ -9,6 +9,13 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import static org.junit.Assert.*;
+import static logger.Logger.Level.*;
+import static logger.Logger.logger;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
 
@@ -46,9 +53,9 @@ public class ZIPAgentTest {
 	private static EntityProperties agentProperties;
 	
 	@BeforeClass
-	public static void setupClass(){
+	public static void setupClass() throws IOException{
 		// Setting up the log file
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "ZIPAgentTest.log"));
+		logger = Logger.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIPAgentTest.log"));
 
 		// Creating the setup properties
 		rand = new Random(1);
@@ -235,7 +242,7 @@ public class ZIPAgentTest {
 	
 	@Test
 	public void updateMarginZeroLimit() {
-		Logger.log(Logger.Level.INFO, "Testing margin update when limit price is 0");
+		logger.log(INFO, "Testing margin update when limit price is 0");
 		
 		// testing when limit price is 0
 		TimeStamp time = TimeStamp.ZERO;

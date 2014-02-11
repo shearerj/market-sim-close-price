@@ -1,8 +1,11 @@
 package entity.agent;
 
 import static org.junit.Assert.*;
+import static logger.Logger.Level.*;
+import static logger.Logger.logger;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.Random;
 
@@ -30,8 +33,8 @@ public class ReentryAgentTest {
 	private SIP sip;
 	
 	@BeforeClass
-	public static void setupClass() {
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "ReentryAgentTest.log"));
+	public static void setupClass() throws IOException {
+		logger = Logger.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ReentryAgentTest.log"));
 	}
 	
 	@Before

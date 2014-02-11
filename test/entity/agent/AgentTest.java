@@ -6,8 +6,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
+import static fourheap.Order.OrderType.*;
+import static logger.Logger.Level.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 import logger.Logger;
@@ -44,8 +48,8 @@ public class AgentTest {
 	private SIP sip;
 
 	@BeforeClass
-	public static void setupClass() {
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "AgentTest.log"));
+	public static void setupClass() throws IOException {
+		Logger.logger = Logger.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "AgentTest.log"));
 	}
 
 	@Before

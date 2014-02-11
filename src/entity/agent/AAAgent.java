@@ -231,7 +231,7 @@ public class AAAgent extends WindowAgent {
 		// Update long term learning variable (adaptiveness theta)
 		double oldTheta = theta;
 		this.updateTheta(equilibriumPrice, transactions);
-		logger.log(INFO, "%s::agentStrategy: updateTheta: theta=%.4f-->theta_new=%.4f", this, lastTransactionPrice, oldTheta, theta);
+		logger.log(INFO, "%s::agentStrategy: updateTheta: theta=%.4f-->theta_new=%.4f", this, oldTheta, theta);
 
 		// Bidding Layer
 		this.biddingLayer(limitPrice, targetPrice, 1, currentTime);

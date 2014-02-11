@@ -5,6 +5,7 @@ import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -47,8 +48,8 @@ public class ObservationsTest {
 	private Observations obs;
 
 	@BeforeClass
-	public static void setupClass() {
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "ObservationsTest.log"));
+	public static void setupClass() throws IOException {
+		Logger.logger = Logger.create(Logger.Level.DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ObservationsTest.log"));
 	}
 
 	@Before
