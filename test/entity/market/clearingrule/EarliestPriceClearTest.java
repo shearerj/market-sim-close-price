@@ -92,6 +92,7 @@ public class EarliestPriceClearTest {
 		MarketTime mt2 = new DummyMarketTime(t2, t2.plus(new TimeStamp(t2.equals(t1) ? 1 : 0)).getInTicks());
 		Order a = Order.create(BUY, null, null, p1, q1, mt1);
 		Order b = Order.create(SELL, null, null, p2, q2, mt2);
-		return MatchedOrders.create(a, b, Math.min(q1, q2));
+		// Generic for compartability with 1.6 compiler / non eclipse
+		return MatchedOrders.<Price, MarketTime, Order> create(a, b, Math.min(q1, q2));
 	}
 }
