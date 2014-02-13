@@ -925,27 +925,10 @@ public class AAAgentTest {
 	private AAAgent addAgent(OrderType type, EntityProperties testProps) {
 		testProps.put(Keys.BUYER_STATUS, type == OrderType.BUY);
 		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);	// private values all 0
+		testProps.put(Keys.DEBUG, true);
 
 		return new AAAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-					testProps.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),
-					testProps.getAsInt(Keys.TICK_SIZE, 1),
-					testProps.getAsInt(Keys.MAX_QUANTITY, 10),
-					testProps.getAsInt(Keys.BID_RANGE_MIN, 0),
-					testProps.getAsInt(Keys.BID_RANGE_MAX, 5000),
-					testProps.getAsBoolean(Keys.WITHDRAW_ORDERS, true),
-					testProps.getAsInt(Keys.WINDOW_LENGTH, 5000),
-					testProps.getAsDouble(Keys.AGGRESSION, 0),
-					testProps.getAsDouble(Keys.THETA, -4),
-					testProps.getAsDouble(Keys.THETA_MIN, -8),
-					testProps.getAsDouble(Keys.THETA_MAX, 2),
-					testProps.getAsInt(Keys.NUM_HISTORICAL, 5), 
-					testProps.getAsInt(Keys.ETA, 3),
-					testProps.getAsDouble(Keys.LAMBDA_R, 0.05),
-					testProps.getAsDouble(Keys.LAMBDA_A, 0.02),	// 0.02 in paper 
-					testProps.getAsDouble(Keys.GAMMA, 2),
-					testProps.getAsDouble(Keys.BETA_R, Rands.nextUniform(rand, 0.2, 0.6)), 
-					testProps.getAsDouble(Keys.BETA_T, Rands.nextUniform(rand, 0.2, 0.6)), 
-					testProps.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean()));
+					testProps);
 	}
 
 	private AAAgent addAgent(OrderType type) {
