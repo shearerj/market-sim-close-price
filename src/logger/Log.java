@@ -7,6 +7,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 
+/**
+ * A simple logger that just allows writing structured messages to a stream with
+ * some filtering. This is not meant to log long running processes.
+ * 
+ * @author erik
+ * 
+ */
 public final class Log {
 
 	public static enum Level { NO_LOGGING, ERROR, INFO, DEBUG };
@@ -24,6 +31,9 @@ public final class Log {
 		public void write(char[] cbuf, int off, int len) throws IOException { }
 	}), emptyPrefix);
 	
+	/**
+	 * Use this as the global default logger to log any/all messages. Defaults to a nullLogger
+	 */
 	public static Log log = nullLogger;
 
 	private PrintWriter printwriter;
@@ -49,14 +59,44 @@ public final class Log {
 		return create(level, logFile, emptyPrefix);
 	}
 	
+	/**
+	 * Creates a logger that prints everything to System.err
+	 * @param level
+	 * @param prefix
+	 * @return
+	 */
 	public static Log createStderrLogger(Level level, Prefix prefix) {
 		return Log.create(level, new PrintWriter(System.err), prefix);
 	}
 	
+	/**
+	 * Creates a logger that ignores all logging
+	 * @return
+	 */
 	public static Log nullLogger() {
 		return nullLogger;
 	}
 
+	/**
+	 * Method to log a message. This should be used in a very strict way, that
+	 * is format should be a static string (not one that you build), and all of
+	 * the paramaterised options should be stuck in parameters. An example call
+	 * is
+	 * 
+	 * log(INFO, "Object %s, Int %d, Float %.4f", new Object(), 5, 6.7)
+	 * 
+	 * By calling log like this you can avoid expensive logging operations when
+	 * you're not actually logging, and use the fact that the strings are
+	 * written directly to the file without having to build a large string in
+	 * memory first.
+	 * 
+	 * For more information on how to properly format strings you can look at
+	 * the String.format method, or the PrintWriter.format method.
+	 * 
+	 * @param level
+	 * @param format
+	 * @param parameters
+	 */
 	public void log(Level level, String format, Object... parameters) {
 		if (level.ordinal() > this.level.ordinal())
 			return;
@@ -66,6 +106,14 @@ public final class Log {
 		printwriter.append('\n');
 	}
 	
+	/**
+	 * An interface to allow an arbitrary prefix before every logged method. An
+	 * example prefix might generate the system time so that you know when a
+	 * line is logged.
+	 * 
+	 * @author erik
+	 * 
+	 */
 	public static interface Prefix {
 		public String getPrefix();
 	}
