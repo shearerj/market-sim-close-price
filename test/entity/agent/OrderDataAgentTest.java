@@ -86,14 +86,12 @@ public class OrderDataAgentTest {
 		// in any market , OrderDataAgent should follow order data as it inputs
 		agent.agentStrategy(TimeStamp.ZERO);
 		assertEquals("OrderDataAgent Strategy is in order", t1, exec.peek().getTime());
-		agent.executeODAStrategy(1, t2);
 	    
 		//15->18
         exec.executeUntil(t1_);
         TimedActivity nextOrder = exec.peek();
         Logger.log(Logger.Level.DEBUG," \nNext order time: " + nextOrder.getTime());
         assertEquals("OrderDataAgent Strategy is in order", t2, nextOrder.getTime());
-        agent.executeODAStrategy(1, t2);
 
         //18->20
         exec.executeUntil(t2_);

@@ -32,16 +32,15 @@ public class OrderParserNYSETest {
 		return parser;
 	}
 
-	@SuppressWarnings("unused")
-	private OrderParserNYSE addParser(String filename) {
-		OrderParserNYSE parser = null;
+//	private OrderParserNYSE addParser(String filename) {
+//		OrderParserNYSE parser = null;
 //		try {
-//			parser = new OrderParserNYSE(filename);
+//			parser = new OrderParserNYSE();
 //		} catch (IOException e) {
 //			e.printStackTrace();
 //		}
-		return parser;
-	}
+//		return parser;
+//	}
 
 	@Test
 	public void parseAddOrderTest(){
