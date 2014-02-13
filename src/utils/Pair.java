@@ -12,8 +12,8 @@ import com.google.common.base.Objects;
  */
 public abstract class Pair<A, B> {
 
-	protected final A left;
-	protected final B right;
+	protected A left;
+	protected B right;
 
 	protected Pair(A left, B right) {
 		this.left = left;

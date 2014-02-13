@@ -511,9 +511,7 @@ public class MarketTest {
 
 		// Update QP
 		q = new Quote(market, new Price(80), 1, new Price(100), 1, TimeStamp.ZERO);
-		MarketTime quoteTime = new DummyMarketTime(TimeStamp.ZERO, 1);
-		
-		exec.executeActivity(new SendToQP(market, quoteTime, q, qp));
+		exec.executeActivity(new SendToQP(market, q, qp));
 		// Verify quote
 		q = market.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect ASK", new Price(100), q.ask );
@@ -549,8 +547,7 @@ public class MarketTest {
 		
 		// Add new quote
 		q = new Quote(market, new Price(80), 1, new Price(100), 1, TimeStamp.create(1));
-		MarketTime quoteTime = new DummyMarketTime(TimeStamp.create(1), 1);
-		exec.executeActivity(new SendToQP(market, quoteTime, q, qp)); // This happens at time 100
+		exec.executeActivity(new SendToQP(market, q, qp)); // This happens at time 100
 		
 		// Update QP
 		// Test that after 101 new quote did get updated

@@ -63,40 +63,41 @@ public class QuoteProcessorTest {
 		
 		// Check initial quote is null
 		Quote q = smip1.quote;
-		assertEquals("Incorrect last quote time", null, smip1.lastQuoteTime);
+		assertEquals("Incorrect last quote time", TimeStamp.ZERO, q.getQuoteTime());
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 0, q.getBidQuantity());
 		// Check initial quote is null
 		q = smip2.quote;
-		assertEquals("Incorrect last quote time", null, smip2.lastQuoteTime);
+		assertEquals("Incorrect last quote time", TimeStamp.ZERO, q.getQuoteTime());
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 0, q.getBidQuantity());
 
 		// Test on undelayed market's QuoteProcessor
-		q = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		smip1.processQuote(market1, mktTime, q, time);
+		q = new Quote(market1, new Price(80), 1, new Price(100), 1, mktTime);
+		smip1.processQuote(market1, q, time);
 		assertTrue(exec.isEmpty());
 		
 		// Check updated quote after process quote (specific to QuoteProcessor)
-		assertEquals("Last quote time not updated", mktTime, smip1.lastQuoteTime);
 		q = smip1.quote;
+		assertEquals("Last quote time not updated", mktTime, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		
 		// Now test for delayed market's QuoteProcessor
-		q = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
-		smip2.processQuote(market2, mktTime, q, time);
+		q = new Quote(market2, new Price(80), 1, new Price(100), 1, mktTime);
+		smip2.processQuote(market2, q, time);
 		assertTrue(exec.isEmpty());
 		
 		// Check updated quote after process quote
-		assertEquals("Last quote time not updated", mktTime, smip2.lastQuoteTime);
+
 		q = smip2.quote;
+		assertEquals("Last quote time not updated", mktTime, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -106,24 +107,26 @@ public class QuoteProcessorTest {
 	@Test
 	public void basicNoDelay() {
 		Quote q;
-		TimeStamp time = TimeStamp.ZERO;
+		TimeStamp time = TimeStamp.create(1);
 		MarketTime mktTime = new DummyMarketTime(time, 1);
 
 		// Check initial quote is null
-		assertEquals("Incorrect last quote time", null, smip1.lastQuoteTime);
+
 		q = smip1.quote;
+		assertEquals("Incorrect last quote time", TimeStamp.ZERO, q.getQuoteTime());
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 0, q.getBidQuantity());
 
 		// Add new quote
-		q = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		smip1.sendToQuoteProcessor(market1, mktTime, q, time);
+		q = new Quote(market1, new Price(80), 1, new Price(100), 1, mktTime);
+		smip1.sendToQuoteProcessor(market1, q, time);
 
 		// Check updated quote after process quote (specific to QuoteProcessor)
-		assertEquals("Last quote time not updated", mktTime, smip1.lastQuoteTime);
+
 		q = smip1.quote;
+		assertEquals("Last quote time not updated", mktTime, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -137,16 +140,17 @@ public class QuoteProcessorTest {
 		MarketTime mktTime = new DummyMarketTime(time, 1);
 		
 		// Check initial quote is null
-		assertEquals("Incorrect last quote time", null, smip2.lastQuoteTime);
+
 		q = smip2.quote;
+		assertEquals("Incorrect last quote time", TimeStamp.ZERO, q.getQuoteTime());
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 0, q.getBidQuantity());
 		
 		// Check that process quote activity scheduled correctly
-		q = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
-		smip2.sendToQuoteProcessor(market2, mktTime, q, time);
+		q = new Quote(market2, new Price(80), 1, new Price(100), 1, mktTime);
+		smip2.sendToQuoteProcessor(market2, q, time);
 		TimedActivity act = exec.peek();
 		assertEquals("Incorrect scheduled process quote time", smip2.latency,
 				act.getTime());
@@ -156,8 +160,8 @@ public class QuoteProcessorTest {
 		exec.executeUntil(smip2.latency.plus(one));
 
 		// Check updated quote after process quote (specific to QuoteProcessor)
-		assertEquals("Last quote time not updated", mktTime, smip2.lastQuoteTime);
 		q = smip2.quote;
+		assertEquals("Last quote time not updated", mktTime, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -171,22 +175,22 @@ public class QuoteProcessorTest {
 	public void alternateDelayQuoteProcessor() {
 		TimeStamp time = TimeStamp.ZERO;
 		MarketTime mktTime = new DummyMarketTime(time, 1);
-		Quote q = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
+		Quote q = new Quote(market2, new Price(80), 1, new Price(100), 1, mktTime);
 		MarketQuoteProcessor smipImmed = new MarketQuoteProcessor(exec, TimeStamp.IMMEDIATE, market2);
 		
-		exec.executeActivity(new SendToQP(market2, mktTime, q, smip2));
-		exec.executeActivity(new SendToQP(market2, mktTime, q, smipImmed));
+		exec.executeActivity(new SendToQP(market2, q, smip2));
+		exec.executeActivity(new SendToQP(market2, q, smipImmed));
 
 		// Check immediate QuoteProcessor
-		assertEquals("Last quote time not updated", mktTime, smipImmed.lastQuoteTime);
 		q = smipImmed.quote;
+		assertEquals("Last quote time not updated", mktTime, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		// Check delayed QuoteProcessor
-		assertEquals("Updated QuoteProcessor 2 too early", null, smip2.lastQuoteTime);
 		q = smip2.quote;
+		assertEquals("Updated QuoteProcessor 2 too early", TimeStamp.ZERO, q.getQuoteTime());
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
@@ -201,22 +205,22 @@ public class QuoteProcessorTest {
 		Quote q;
 		TimeStamp time = TimeStamp.ZERO;
 		MarketTime mktTime = new DummyMarketTime(time, 1);
-		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		Quote q2 = new Quote(market2, new Price(75), 1, new Price(95), 1, time);
+		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, mktTime);
+		Quote q2 = new Quote(market2, new Price(75), 1, new Price(95), 1, mktTime);
 		
-		exec.executeActivity(new SendToQP(market1, mktTime, q1, smip1));
-		exec.executeActivity(new SendToQP(market2, mktTime, q2, smip2));
+		exec.executeActivity(new SendToQP(market1, q1, smip1));
+		exec.executeActivity(new SendToQP(market2, q2, smip2));
 		
 		// Check QuoteProcessor for market 1 updated
 		q = smip1.quote;
-		assertEquals("Last quote time not updated", mktTime, smip1.lastQuoteTime);
+		assertEquals("Last quote time not updated", mktTime, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		// Check QuoteProcessor for market 2 not updated
 		q = smip2.quote;
-		assertEquals("Updated QuoteProcessor 2 too early", null, smip2.lastQuoteTime);
+		assertEquals("Updated QuoteProcessor 2 too early", TimeStamp.ZERO, q.getQuoteTime());
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
@@ -225,7 +229,7 @@ public class QuoteProcessorTest {
 		exec.executeUntil(smip2.latency.plus(TimeStamp.create(1)));
 		// Check QuoteProcessor for market 2 updated
 		q = smip2.quote;
-		assertEquals("Last quote time not updated", mktTime, smip2.lastQuoteTime);
+		assertEquals("Last quote time not updated", mktTime, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(95), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(75), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -239,27 +243,27 @@ public class QuoteProcessorTest {
 		TimeStamp time2 = TimeStamp.create(50);
 		MarketTime mktTime1 = new DummyMarketTime(time, 1);
 		MarketTime mktTime2 = new DummyMarketTime(time, 2);
-		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		Quote q2 = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
-		Quote q3 = new Quote(market1, new Price(75), 1, new Price(95), 1, time2);
-		Quote q4 = new Quote(market2, new Price(75), 1, new Price(95), 1, time2);
+		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, mktTime1);
+		Quote q2 = new Quote(market2, new Price(80), 1, new Price(100), 1, mktTime2);
+		Quote q3 = new Quote(market1, new Price(75), 1, new Price(95), 1, mktTime2);
+		Quote q4 = new Quote(market2, new Price(75), 1, new Price(95), 1, mktTime1);
 		
-		exec.executeActivity(new SendToQP(market1, mktTime1, q1, smip1));
-		exec.executeActivity(new SendToQP(market2, mktTime1, q4, smip2));
+		exec.executeActivity(new SendToQP(market1, q1, smip1));
+		exec.executeActivity(new SendToQP(market2, q4, smip2));
 		// Send updated quotes at time2
-		exec.scheduleActivity(time2, new SendToQP(market1, mktTime2, q3, smip1));
-		exec.scheduleActivity(time2, new SendToQP(market2, mktTime2, q2, smip2));
+		exec.scheduleActivity(time2, new SendToQP(market1, q3, smip1));
+		exec.scheduleActivity(time2, new SendToQP(market2, q2, smip2));
 		
 		// Check that market1's QuoteProcessor has updated but not market2's after time2=50
 		exec.executeUntil(time2.plus(one));
 		q = smip1.quote;
-		assertEquals("Last quote time not updated", mktTime2, smip1.lastQuoteTime);
+		assertEquals("Last quote time not updated", mktTime2, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(95), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(75), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		q = smip2.quote;
-		assertEquals("Updated QuoteProcessor 2 too early", null, smip2.lastQuoteTime);
+		assertEquals("Updated QuoteProcessor 2 too early", TimeStamp.ZERO, q.getQuoteTime());
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
@@ -268,7 +272,7 @@ public class QuoteProcessorTest {
 		// Check that market2's QuoteProcessor received (75,95) by time 101
 		exec.executeUntil(TimeStamp.create(101));
 		q = smip2.quote;
-		assertEquals("Incorrect last quote time", mktTime1, smip2.lastQuoteTime);
+		assertEquals("Incorrect last quote time", mktTime1, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(95), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(75), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -277,7 +281,7 @@ public class QuoteProcessorTest {
 		// Quote (80,100) is processed by market2's QuoteProcessor after time 150
 		exec.executeUntil(TimeStamp.create(151));
 		q = smip2.quote;
-		assertEquals("Last quote time not updated", mktTime2, smip2.lastQuoteTime);
+		assertEquals("Last quote time not updated", mktTime2, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -293,27 +297,27 @@ public class QuoteProcessorTest {
 		TimeStamp time = TimeStamp.ZERO;
 		MarketTime mktTime1 = new DummyMarketTime(time, 1);
 		MarketTime mktTime2 = new DummyMarketTime(time, 2);
-		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		Quote q2 = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
-		Quote q3 = new Quote(market1, new Price(75), 1, new Price(95), 1, time);
-		Quote q4 = new Quote(market2, new Price(75), 1, new Price(95), 1, time);
+		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, mktTime1);
+		Quote q2 = new Quote(market2, new Price(80), 1, new Price(100), 1, mktTime2);
+		Quote q3 = new Quote(market1, new Price(75), 1, new Price(95), 1, mktTime2);
+		Quote q4 = new Quote(market2, new Price(75), 1, new Price(95), 1, mktTime1);
 		
-		exec.executeActivity(new SendToQP(market1, mktTime1, q1, smip1));
-		exec.executeActivity(new SendToQP(market2, mktTime1, q4, smip2));
+		exec.executeActivity(new SendToQP(market1, q1, smip1));
+		exec.executeActivity(new SendToQP(market2, q4, smip2));
 		// Send updated quotes (also at time 0)
-		exec.executeActivity(new SendToQP(market1, mktTime2, q3, smip1));
-		exec.executeActivity(new SendToQP(market2, mktTime2, q2, smip2));
+		exec.executeActivity(new SendToQP(market1, q3, smip1));
+		exec.executeActivity(new SendToQP(market2, q2, smip2));
 		
 		// Check market1's QuoteProcessor has updated but not market2's after time 0
 		exec.executeUntil(one);
 		q = smip1.quote;
-		assertEquals("Last quote time not updated", mktTime2, smip1.lastQuoteTime);
+		assertEquals("Last quote time not updated", mktTime2, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(95), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(75), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		q = smip2.quote;
-		assertEquals("Updated QuoteProcessor 2 too early", null, smip2.lastQuoteTime);
+		assertEquals("Updated QuoteProcessor 2 too early", TimeStamp.ZERO, q.getQuoteTime());
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
@@ -322,7 +326,7 @@ public class QuoteProcessorTest {
 		// Check market2's QuoteProcessor has received most recent quote(80,100) after time 100
 		exec.executeUntil(TimeStamp.create(101));
 		q = smip2.quote;
-		assertEquals("Incorrect last quote time", mktTime2, smip2.lastQuoteTime);
+		assertEquals("Incorrect last quote time", mktTime2, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -338,42 +342,42 @@ public class QuoteProcessorTest {
 		TimeStamp time = TimeStamp.ZERO;
 		MarketTime mktTime1 = new DummyMarketTime(time, 1);
 		MarketTime mktTime2 = new DummyMarketTime(time, 2);
-		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		Quote q2 = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
-		Quote q3 = new Quote(market1, new Price(75), 1, new Price(95), 1, time);
-		Quote q4 = new Quote(market2, new Price(75), 1, new Price(95), 1, time);
+		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, mktTime2);
+		Quote q2 = new Quote(market2, new Price(80), 1, new Price(100), 1, mktTime1);
+		Quote q3 = new Quote(market1, new Price(75), 1, new Price(95), 1, mktTime1);
+		Quote q4 = new Quote(market2, new Price(75), 1, new Price(95), 1, mktTime2);
 		
-		exec.executeActivity(new SendToQP(market1, mktTime2, q1, smip1));
-		exec.executeActivity(new SendToQP(market2, mktTime2, q4, smip2));
+		exec.executeActivity(new SendToQP(market1, q1, smip1));
+		exec.executeActivity(new SendToQP(market2, q4, smip2));
 		
 		// Check market1's QuoteProcessor has updated but not market2's after time 0
 		q = smip1.quote;
-		assertEquals("Last quote time not updated", mktTime2, smip1.lastQuoteTime);
+		assertEquals("Last quote time not updated", mktTime2, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		q = smip2.quote;
-		assertEquals("Updated QuoteProcessor 2 too early", null, smip2.lastQuoteTime);
+		assertEquals("Updated QuoteProcessor 2 too early", TimeStamp.ZERO, q.getQuoteTime());
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 0, q.getBidQuantity());
 				
 		// Send stale quotes to QuoteProcessors
-		exec.executeActivity(new SendToQP(market1, mktTime1, q3, smip1));
-		exec.executeActivity(new SendToQP(market2, mktTime1, q2, smip2));
+		exec.executeActivity(new SendToQP(market1, q3, smip1));
+		exec.executeActivity(new SendToQP(market2, q2, smip2));
 		
 		// Check that market1's QuoteProcessor quote doesn't change
 		q = smip1.quote;
-		assertEquals("Incorrect last quote time", mktTime2, smip1.lastQuoteTime);
+		assertEquals("Incorrect last quote time", mktTime2, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		// Check that market2's QuoteProcessor hasn't updated yet
 		q = smip2.quote;
-		assertEquals("Incorrect last quote time", null, smip2.lastQuoteTime);
+		assertEquals("Incorrect last quote time", TimeStamp.ZERO, q.getQuoteTime());
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
@@ -382,7 +386,7 @@ public class QuoteProcessorTest {
 		// Check market2's QuoteProcessor quote after time 100
 		exec.executeUntil(TimeStamp.create(101));
 		q = smip2.quote;
-		assertEquals("Incorrect last quote time", mktTime2, smip2.lastQuoteTime);
+		assertEquals("Incorrect last quote time", mktTime2, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(95), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(75), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -402,36 +406,36 @@ public class QuoteProcessorTest {
 		Quote q;
 		TimeStamp time = TimeStamp.ZERO;
 		MarketTime mktTime = new DummyMarketTime(time, 1);
-		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, time);
-		Quote q2 = new Quote(market2, new Price(80), 1, new Price(100), 1, time);
-		Quote q3 = new Quote(market1, new Price(75), 1, new Price(95), 1, time);
-		Quote q4 = new Quote(market2, new Price(75), 1, new Price(95), 1, time);
+		Quote q1 = new Quote(market1, new Price(80), 1, new Price(100), 1, mktTime);
+		Quote q2 = new Quote(market2, new Price(80), 1, new Price(100), 1, mktTime);
+		Quote q3 = new Quote(market1, new Price(75), 1, new Price(95), 1, mktTime);
+		Quote q4 = new Quote(market2, new Price(75), 1, new Price(95), 1, mktTime);
 		
-		exec.executeActivity(new SendToQP(market1, mktTime, q1, smip1));
-		exec.executeActivity(new SendToQP(market2, mktTime, q4, smip2));
+		exec.executeActivity(new SendToQP(market1, q1, smip1));
+		exec.executeActivity(new SendToQP(market2, q4, smip2));
 		
 		// Check market1's QuoteProcessor has updated but not market2's after time 0
 		q = smip1.quote;
-		assertEquals("Incorrect last quote time", mktTime, smip1.lastQuoteTime);
+		assertEquals("Incorrect last quote time", mktTime, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		q = smip2.quote;
-		assertEquals("Updated QuoteProcessor 2 too early", null, smip2.lastQuoteTime);
+		assertEquals("Updated QuoteProcessor 2 too early", TimeStamp.ZERO, q.getQuoteTime());
 		assertEquals("Incorrect ASK", null, q.getAskPrice());
 		assertEquals("Incorrect BID", null, q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 0, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 0, q.getBidQuantity());
 		
 		// Send stale quotes to QuoteProcessors
-		exec.executeActivity(new SendToQP(market1, mktTime, q3, smip1));
-		exec.executeActivity(new SendToQP(market2, mktTime, q2, smip2));
+		exec.executeActivity(new SendToQP(market1, q3, smip1));
+		exec.executeActivity(new SendToQP(market2, q2, smip2));
 		
 		// Check that market1's QuoteProcessor quote updates to most recent quote
-		exec.executeUntil(TimeStamp.create(1));
+		exec.executeUntil(TimeStamp.ZERO);
 		q = smip1.quote;
-		assertEquals("Incorrect last quote time", mktTime, smip1.lastQuoteTime);
+		assertEquals("Incorrect last quote time", mktTime, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(95), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(75), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
@@ -455,8 +459,8 @@ public class QuoteProcessorTest {
 		MarketQuoteProcessor smip3 = market3.getQuoteProcessor();
 		
 		// Add new quote
-		Quote q5 = new Quote(market3, new Price(80), 1, new Price(100), 1, time);
-		smip3.sendToQuoteProcessor(market3, mktTime1, q5, time);
+		Quote q5 = new Quote(market3, new Price(80), 1, new Price(100), 1, mktTime1);
+		smip3.sendToQuoteProcessor(market3, q5, time);
 		TimedActivity act = exec.peek();
 		assertEquals("Incorrect scheduled process quote time", TimeStamp.ZERO,
 				act.getTime()); // not immediate
@@ -466,23 +470,23 @@ public class QuoteProcessorTest {
 
 		// Check updated quote after process quote
 		q = smip3.quote;
-		assertEquals("Last quote time not updated", mktTime1, smip3.lastQuoteTime);
+		assertEquals("Last quote time not updated", mktTime1, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(80), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		
 		// Now try inserting multiple quotes all at the same time, but different marketTimes
-		Quote q6 = new Quote(market3, new Price(75), 1, new Price(95), 1, time);
-		Quote q7 = new Quote(market3, new Price(60), 1, new Price(90), 1, time);
+		Quote q6 = new Quote(market3, new Price(75), 1, new Price(95), 1, mktTime2);
+		Quote q7 = new Quote(market3, new Price(60), 1, new Price(90), 1, mktTime3);
 		
-		exec.executeActivity(new SendToQP(market3, mktTime2, q6, smip3));
-		exec.executeActivity(new SendToQP(market3, mktTime3, q7, smip3));
+		exec.executeActivity(new SendToQP(market3, q6, smip3));
+		exec.executeActivity(new SendToQP(market3, q7, smip3));
 		
 		// Check market3's QuoteProcessor has updated after time 0
 		exec.executeUntil(one);
 		q = smip3.quote;
-		assertEquals("Last quote time not updated", mktTime3, smip3.lastQuoteTime);
+		assertEquals("Last quote time not updated", mktTime3, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(90), q.getAskPrice());
 		assertEquals("Incorrect BID", new Price(60), q.getBidPrice());
 		assertEquals("Incorrect ASK quantity", 1, q.getAskQuantity());

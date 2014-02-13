@@ -29,7 +29,6 @@ import entity.agent.DummyPrivateValue;
 import entity.agent.MockAgent;
 import entity.agent.MockBackgroundAgent;
 import entity.infoproc.SIP;
-import entity.market.DummyMarketTime;
 import entity.market.Market;
 import entity.market.MockMarket;
 import entity.market.Price;
@@ -122,7 +121,7 @@ public class ObservationsTest {
 	public void nbboSpreadsTest() {
 		setupObservations();
 		Quote q = new Quote(market1, new Price(80), 1, new Price(100), 1, TimeStamp.ZERO);
-		sip.processQuote(market1, new DummyMarketTime(TimeStamp.ZERO, -2), q, TimeStamp.ZERO);
+		sip.processQuote(market1, q, TimeStamp.ZERO);
 		
 		// Check that correct spread stored
 		List<Double> list = obs.nbboSpreads.sample(1, 1);
@@ -130,7 +129,7 @@ public class ObservationsTest {
 		assertEquals(20, list.get(0), 0.001);
 		
 		q = new Quote(market2, new Price(70), 1, new Price(90), 1, TimeStamp.ZERO);
-		sip.processQuote(market2, new DummyMarketTime(TimeStamp.ZERO, -1), q, TimeStamp.ZERO);
+		sip.processQuote(market2, q, TimeStamp.ZERO);
 		
 		// Check that new quote overwrites the previously stored spread at time 0
 		list = obs.nbboSpreads.sample(1, 1);

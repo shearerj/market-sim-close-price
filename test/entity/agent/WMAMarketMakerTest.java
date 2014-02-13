@@ -286,9 +286,9 @@ public class WMAMarketMakerTest {
 	private void addQuote(QuoteProcessor qp, int buy, int sell, int time, int marketTime) {
 		TimeStamp ts = TimeStamp.create(time);
 		MarketTime mktTime = new DummyMarketTime(ts, marketTime);
-		Quote q = new Quote(market, new Price(buy), 1, new Price(sell), 1, ts);
-		sip.processQuote(market, mktTime, q, ts);
-		qp.processQuote(market, mktTime, q, ts);
+		Quote q = new Quote(market, new Price(buy), 1, new Price(sell), 1, mktTime);
+		sip.processQuote(market, q, ts);
+		qp.processQuote(market, q, ts);
 	}
 	
 
@@ -517,7 +517,7 @@ public class WMAMarketMakerTest {
 		// Updating NBBO quote
 		MockMarket market2 = new MockMarket(exec, sip);
 		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, time);
-		exec.executeActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q));
+		exec.executeActivity(new ProcessQuote(sip, market2, q));
 		exec.executeUntil(TimeStamp.create(1));
 
 		// Just to check that NBBO correct (it crosses)
@@ -574,7 +574,7 @@ public class WMAMarketMakerTest {
 		// Updating NBBO quote
 		MockMarket market2 = new MockMarket(exec, sip);
 		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, time);
-		exec.executeActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q));
+		exec.executeActivity(new ProcessQuote(sip, market2, q));
 
 		// Just to check that NBBO correct (it crosses)
 		BestBidAsk nbbo = sip.getNBBO();

@@ -295,19 +295,18 @@ public abstract class Market extends Entity {
 		 * this will only happen when there are matched orders when a quote is
 		 * generated, which is currently never possible
 		 */
-		quote = new Quote(this, bid, quantityBid, ask, quantityAsk, currentTime);
+		MarketTime quoteTime = new MarketTime(currentTime, marketTime);
+		quote = new Quote(this, bid, quantityBid, ask, quantityAsk, quoteTime);
 
 		log(INFO, this + " " + quote);
 
 		BUS.post(new MidQuoteStatistic(this, quote.getMidquote(), currentTime));
 		BUS.post(new SpreadStatistic(this, quote.getSpread(), currentTime));
-		
-		MarketTime quoteTime = new MarketTime(currentTime, marketTime);
 		// TODO I removed random orders, and got HFT's behave properly. Make
 		// sure removing the randomness didn't fix this
 
 		for (QuoteProcessor qp : qps)
-			scheduler.executeActivity(new SendToQP(this, quoteTime, quote, qp));
+			scheduler.executeActivity(new SendToQP(this, quote, qp));
 	}
 	
 	/*

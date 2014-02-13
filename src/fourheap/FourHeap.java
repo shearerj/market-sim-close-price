@@ -231,6 +231,8 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * Complexity: O(m) where m is the number of matched orders
 	 * 
 	 * @return The MatchedOrders
+	 * 
+	 * TODO Change to Collection
 	 */
 	public List<MatchedOrders<P, T, O>> clear() {
 		List<O> buys = Lists.newArrayList(buyMatched);
