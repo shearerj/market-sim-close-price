@@ -2,6 +2,7 @@ package entity.agent;
 
 import iterators.PoissonArrival;
 
+import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Random;
@@ -75,6 +76,10 @@ public class AgentFactory {
 					props);
 		case ZI:
 			return new ZIAgent(arrivalProcess.next(), fundamental, sip,
+					marketAssignment.next(), new Random(rand.nextLong()),
+					props);
+		case MARKETDATA:
+			return new MarketDataAgent(fundamental, sip, 
 					marketAssignment.next(), new Random(rand.nextLong()),
 					props);
 		case BASICMM:

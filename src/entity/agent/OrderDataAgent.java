@@ -3,14 +3,20 @@ package entity.agent;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 import com.google.common.collect.ImmutableList;
 
 import data.FundamentalValue;
 import data.OrderDatum;
+import data.OrderParser;
+import data.OrderParserNYSE;
+import data.OrderParserNasdaq;
 import activity.Activity;
 import activity.AgentStrategy;
 import activity.SubmitNMSOrder;
@@ -27,33 +33,51 @@ public class OrderDataAgent extends SMAgent {
 
 	private static final long serialVersionUID = -8572291999924780979L;
 	
-	protected PriorityQueue<OrderDatum> orderData;
+	protected List<OrderDatum> orderDatumList;
+	
+	public OrderDataAgent(FundamentalValue fundamental, SIP sip, Market market,
+			Random rand, String filename) throws IOException {
+		super(new TimeStamp(0), fundamental, sip, market, rand, 1);
+		
+		// Opening the orderParser
+		OrderParser orderParser;
+		if (filename.contains("nyse")) {
+			orderParser = new OrderParserNYSE();
+		}
+		else {
+			orderParser = new OrderParserNasdaq();
+		}
+		
+//		this.orderDatumList = orderParser.process();
+		
+	}
+	
 	
 	public OrderDataAgent(FundamentalValue fundamental, SIP sip, Market market, 
 			Random rand, Iterator<OrderDatum> orderDataIterator) {
 		super(new TimeStamp(0), fundamental, sip, market, rand, 1);
 
-		this.orderData = new PriorityQueue<OrderDatum>(11, new OrderDatumComparator() );
+		this.orderDatumList = new ArrayList<OrderDatum>();
 		while(orderDataIterator.hasNext()){
 			OrderDatum order = orderDataIterator.next();
-			this.orderData.add(order);
+			this.orderDatumList.add(order);
 		}
 	}
-
+	
 	@Override
 	public Collection<? extends Activity> agentStrategy(TimeStamp currentTime) {
-		OrderDatum nextStrategy = orderData.peek();
+		OrderDatum nextStrategy = orderDatumList.get(0);
 		StringBuilder sb = new StringBuilder().append(this).append(" ");
 		sb.append(getName()).append(':');
 		log(INFO, sb.append(" Next entry at ").append(nextStrategy.getTimeStamp()));
 		return ImmutableList.of(new AgentStrategy(this, nextStrategy.getTimeStamp()));
 	}
 
-	public Iterable<? extends Activity> executeODAStrategy(int quantity, TimeStamp currentTime) {
-		OrderDatum submitOrder = orderData.poll();
-		return ImmutableList.of(new SubmitNMSOrder(this, primaryMarket, OrderType.BUY,	// FIXME
-				submitOrder.getPrice(), submitOrder.getQuantity(), currentTime));
-	}
+//	public Iterable<? extends Activity> executeODAStrategy(int quantity, TimeStamp currentTime) {
+//		OrderDatum submitOrder = orderDatumList.
+//		return ImmutableList.of(new SubmitNMSOrder(this, primaryMarket, OrderType.BUY,	// FIXME
+//				submitOrder.getPrice(), submitOrder.getQuantity(), currentTime));
+//	}
 
 	public Collection<Order> getOrders() {
 		return this.activeOrders;

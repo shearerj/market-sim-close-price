@@ -3,8 +3,12 @@ package data;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Collection;
+
+import com.google.common.collect.Lists;
 
 import entity.market.Price;
 import event.TimeStamp;
@@ -14,45 +18,69 @@ import static fourheap.Order.OrderType.SELL;
 
 
 public class OrderParserNYSE implements OrderParser {
-	OrderParserNYSE() {
+	
+	public OrderParserNYSE() {
 	}
 	
-	OrderParserNYSE(String filename) throws IOException {
-		File inputFile = readFile(filename);
-		process(inputFile);
-	}
-
-	public void process(File inputFile) throws FileNotFoundException {
+	public List<OrderDatum> process(String fileName) throws FileNotFoundException {
+		// Creating the List
+		List<OrderDatum> orderDatumList = Lists.newArrayList();
+		
+		// Opening the file
+		File inputFile = new File(fileName);
 		Scanner scanner = new Scanner(inputFile);
-
+				
 		while (scanner.hasNextLine()) {
-			Scanner scanner2 = new Scanner(scanner.nextLine());
-			Scanner lineScanner = scanner2.useDelimiter(",");
-			scanner2.close();
-			
+			Scanner lineScanner = new Scanner(scanner.nextLine());
+			lineScanner.useDelimiter(",");
+		
 			char messageType = lineScanner.next().charAt(0);
-
 			switch (messageType) {
 			case 'A':
-				orderDataList.add(parseAddOrder(lineScanner));// store this in a structure
-				break;
-			case 'D':
-				orderDataList.add(parseDeleteOrder(lineScanner));
-				break;
-			case 'M':
-				orderDataList.add(parseModifyOrder(lineScanner));
-				break;
-			case 'I':
-				orderDataList.add(parseImbalanceOrder(lineScanner));
-				break;
+				orderDatumList.add(parseAddOrder(lineScanner));
 			default:
 				break;
 			}
 			lineScanner.close();
-
 		}
 		scanner.close();
+		
+		return orderDatumList;
 	}
+	
+//	public void process(File inputFile) throws FileNotFoundException {
+//		Scanner scanner = new Scanner(inputFile);
+//
+//		while (scanner.hasNextLine()) {
+//			Scanner scanner2 = new Scanner(scanner.nextLine());
+//			Scanner lineScanner = scanner2.useDelimiter(",");
+//			scanner2.close();
+//			
+//			Collection<OrderDatum> orderDataList = Lists.newArrayList();
+//			
+//			char messageType = lineScanner.next().charAt(0);
+//
+//			switch (messageType) {
+//			case 'A':
+//				orderDataList.add(parseAddOrder(lineScanner));// store this in a structure
+//				break;
+//			case 'D':
+//				orderDataList.add(parseDeleteOrder(lineScanner));
+//				break;
+//			case 'M':
+//				orderDataList.add(parseModifyOrder(lineScanner));
+//				break;
+//			case 'I':
+//				orderDataList.add(parseImbalanceOrder(lineScanner));
+//				break;
+//			default:
+//				break;
+//			}
+//			lineScanner.close();
+//
+//		}
+//		scanner.close();
+//	}
 
 	public OrderDatum parseAddOrder(Scanner lineScanner) {
 		String sequenceNum = lineScanner.next();
@@ -148,7 +176,4 @@ public class OrderParserNYSE implements OrderParser {
 		return inputFile;
 	}
 	
-	public List<OrderDatum> getOrderDataList() {
-		return orderDataList;
-	}
 }
