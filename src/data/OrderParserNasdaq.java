@@ -6,76 +6,103 @@ import static fourheap.Order.OrderType.SELL;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+
+import com.google.common.collect.Lists;
 
 import entity.market.Price;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
 public class OrderParserNasdaq implements OrderParser {
-	OrderParserNasdaq() {
+	
+	public OrderParserNasdaq() {
+
 	}
 
-	OrderParserNasdaq(String filename) throws IOException {
-		File inputFile = readFile(filename);
-		process(inputFile);
-	}
-
-	public void process(File inputFile) throws FileNotFoundException {
+	public List<OrderDatum> process(String fileName) throws FileNotFoundException {
+		// Creating the List
+		List<OrderDatum> orderDatumList = Lists.newArrayList();
+		
+		// Opening the file
+		File inputFile = new File(fileName);
 		Scanner scanner = new Scanner(inputFile);
-
+				
 		while (scanner.hasNextLine()) {
-			Scanner scanner2 = new Scanner(scanner.nextLine());
-			Scanner lineScanner = scanner2.useDelimiter(",");
-			scanner2.close();
-
+			Scanner lineScanner = new Scanner(scanner.nextLine());
+			lineScanner.useDelimiter(",");
+		
 			char messageType = lineScanner.next().charAt(0);
-
 			switch (messageType) {
-			case 'A': // add order - no MPID attribution msg
-			case 'F': // add order with MPID attribution message TODO figure out
-				// what an MPID attribution message is
-				orderDataList.add(parseAddOrder(lineScanner));
-				break;
-			case 'D':
-				orderDataList.add(parseDeleteOrder(lineScanner));
-				break;
-			case 'E': // modify order executed message
-				// parseNasdaqModifyOrderExecuted(lineScanner);
-				break;
-			case 'C': // modify order executed with price message
-				// parseNasdaqModifyOrderExecutedPrice(lineScanner);
-				break;
-			case 'X': // order cancel message
-				// parseNasdaqModifyOrderCancel(lineScanner);
-				break;
-			case 'U': // order replace message
-				orderDataList.add(parseModifyOrder(lineScanner));
-				break;
-				/*
-				 * case 'I': parseNasdaqImbalanceOrder(lineScanner); break;
-				 */
-			case 'T': // standalone timestamp
-			case 'S': // systems event message
-			case 'R': // stock directory message
-			case 'H': // stock trading action message
-			case 'Y': // Reg SHO short sale price test restricted indicator
-			case 'L': // market participant position message
-			case 'P': // trade message
-			case 'Q': // cross trade message
-			case 'B': // broken trade message
-			case 'N': // retail interest message
+			case 'A':
+				orderDatumList.add(parseAddOrder(lineScanner));
 			default:
 				break;
 			}
 			lineScanner.close();
-
 		}
-
 		scanner.close();
-
+		
+		return orderDatumList;
 	}
+	
+//	public void process(File inputFile) throws FileNotFoundException {
+//		List<OrderDatum> orderDatumList = new ArrayList<OrderDatum>();
+//		Scanner scanner = new Scanner(inputFile);
+//
+//		while (scanner.hasNextLine()) {
+//			Scanner scanner2 = new Scanner(scanner.nextLine());
+//			Scanner lineScanner = scanner2.useDelimiter(",");
+//			scanner2.close();
+//
+//			char messageType = lineScanner.next().charAt(0);
+//
+//			switch (messageType) {
+//			case 'A': // add order - no MPID attribution msg
+//			case 'F': // add order with MPID attribution message TODO figure out
+//				// what an MPID attribution message is
+//				orderDatumList.add(parseAddOrder(lineScanner));
+//				break;
+//			case 'D':
+//				orderDatumList.add(parseDeleteOrder(lineScanner));
+//				break;
+//			case 'E': // modify order executed message
+//				// parseNasdaqModifyOrderExecuted(lineScanner);
+//				break;
+//			case 'C': // modify order executed with price message
+//				// parseNasdaqModifyOrderExecutedPrice(lineScanner);
+//				break;
+//			case 'X': // order cancel message
+//				// parseNasdaqModifyOrderCancel(lineScanner);
+//				break;
+//			case 'U': // order replace message
+//				orderDatumList.add(parseModifyOrder(lineScanner));
+//				break;
+//				/*
+//				 * case 'I': parseNasdaqImbalanceOrder(lineScanner); break;
+//				 */
+//			case 'T': // standalone timestamp
+//			case 'S': // systems event message
+//			case 'R': // stock directory message
+//			case 'H': // stock trading action message
+//			case 'Y': // Reg SHO short sale price test restricted indicator
+//			case 'L': // market participant position message
+//			case 'P': // trade message
+//			case 'Q': // cross trade message
+//			case 'B': // broken trade message
+//			case 'N': // retail interest message
+//			default:
+//				break;
+//			}
+//			lineScanner.close();
+//
+//		}
+//
+//		scanner.close();
+//
+//	}
 
 	public OrderDatum parseAddOrder(Scanner lineScanner) {
 		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() * 1000
@@ -177,7 +204,7 @@ public class OrderParserNasdaq implements OrderParser {
 		return inputFile;
 	}
 
-	public List<OrderDatum> getOrderDataList() {
-		return orderDataList;
-	}
+//	public List<OrderDatum> getOrderDataList() {
+//		return orderDataList;
+//	}
 }

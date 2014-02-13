@@ -35,11 +35,11 @@ public class OrderParserNYSETest {
 	@SuppressWarnings("unused")
 	private OrderParserNYSE addParser(String filename) {
 		OrderParserNYSE parser = null;
-		try {
-			parser = new OrderParserNYSE(filename);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+//		try {
+//			parser = new OrderParserNYSE(filename);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 		return parser;
 	}
 

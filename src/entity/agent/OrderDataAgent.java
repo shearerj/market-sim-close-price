@@ -3,60 +3,75 @@ package entity.agent;
 import static logger.Logger.log;
 import static logger.Logger.Level.INFO;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.PriorityQueue;
+import java.util.List;
 import java.util.Random;
 
 import systemmanager.Scheduler;
 import activity.AgentStrategy;
-import activity.SubmitNMSOrder;
 import data.FundamentalValue;
 import data.OrderDatum;
+import data.OrderParser;
+import data.OrderParserNYSE;
+import data.OrderParserNasdaq;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Order;
 import event.TimeStamp;
-import fourheap.Order.OrderType;
 
 public class OrderDataAgent extends SMAgent {
 
 	private static final long serialVersionUID = -8572291999924780979L;
 	
-	protected PriorityQueue<OrderDatum> orderData;
-
-	// XXX Erik: This is pretty inefficient. Why is it using an iterator? Why do
-	// you need a priority queue? Shouldn't you have some notion of how it's
-	// sorted? Also, instead of making a comparator, orderData should probably
-	// be comaprable. If You're not certain if it's sorted, a linear time check
-	// is much better than just trying to sort in the beginning.
-	public OrderDataAgent(Scheduler scheduler, FundamentalValue fundamental,
-			SIP sip, Market market,
-			Random rand, Iterator<OrderDatum> orderDataIterator) {
+	protected List<OrderDatum> orderDatumList;
+	
+	public OrderDataAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
+			Random rand, String filename) throws IOException {
 		super(scheduler, TimeStamp.ZERO, fundamental, sip, market, rand, 1);
 		
-		this.orderData = new PriorityQueue<OrderDatum>(11, new OrderDatumComparator() );
+		// Opening the orderParser
+		OrderParser orderParser;
+		if (filename.contains("nyse")) {
+			orderParser = new OrderParserNYSE();
+		}
+		else {
+			orderParser = new OrderParserNasdaq();
+		}
+		
+//		this.orderDatumList = orderParser.process();
+		
+	}
+	
+	
+	public OrderDataAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market, 
+			Random rand, Iterator<OrderDatum> orderDataIterator) {
+		super(scheduler, TimeStamp.ZERO, fundamental, sip, market, rand, 1);
+
+		this.orderDatumList = new ArrayList<OrderDatum>();
 		while(orderDataIterator.hasNext()){
 			OrderDatum order = orderDataIterator.next();
-			this.orderData.add(order);
+			this.orderDatumList.add(order);
 		}
 	}
-
+	
 	@Override
 	public void agentStrategy(TimeStamp currentTime) {
-		OrderDatum nextStrategy = orderData.peek();
-		log(INFO, this + ": Next entry at " + nextStrategy.getTimeStamp());
-		scheduler.scheduleActivity(nextStrategy.getTimeStamp(), new AgentStrategy(this));
+		OrderDatum nextStrategy = orderDatumList.get(0);
+		StringBuilder sb = new StringBuilder().append(this).append(" ");
+		sb.append(getName()).append(':');
+		log(INFO, sb.append(" Next entry at ").append(nextStrategy.getTimeStamp()));
+		scheduler.scheduleActivity(nextStrategy.getTimeStamp(),  new AgentStrategy(this));
 	}
 
-	// XXX Erik: Why is quantity part of this? Shouldn't that be encoded in
-	// OrderDatum? Also, shouldn't this be called in agent Strategy?
-	public void executeODAStrategy(int quantity, TimeStamp currentTime) {
-		OrderDatum submitOrder = orderData.poll();
-		scheduler.executeActivity(new SubmitNMSOrder(this, primaryMarket, OrderType.BUY,	// FIXME
-				submitOrder.getPrice(), submitOrder.getQuantity()));
-	}
+//	public Iterable<? extends Activity> executeODAStrategy(int quantity, TimeStamp currentTime) {
+//		OrderDatum submitOrder = orderDatumList.
+//		return ImmutableList.of(new SubmitNMSOrder(this, primaryMarket, OrderType.BUY,	// FIXME
+//				submitOrder.getPrice(), submitOrder.getQuantity(), currentTime));
+//  }
 
 	public Collection<Order> getOrders() {
 		return this.activeOrders;

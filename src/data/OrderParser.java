@@ -1,28 +1,15 @@
 package data;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-interface OrderParser {
-	List<OrderDatum> orderDataList = new ArrayList<OrderDatum>();
-	
-	void process(File inputFile) throws FileNotFoundException;
-
-	OrderDatum parseAddOrder(Scanner lineScanner);
-
-	OrderDatum parseDeleteOrder(Scanner lineScanner);
-
-	OrderDatum parseModifyOrder(Scanner lineScanner);
-
-	OrderDatum parseImbalanceOrder(Scanner lineScanner);
-
-	File readFile(String filename) throws IOException;
-
-	List<OrderDatum> getOrderDataList();
+public interface OrderParser {
+		
+	/*
+	 * Processes the file pointed to by fileName and returns a list of OrderDatums
+	 */
+	abstract List<OrderDatum> process(String fileName) throws FileNotFoundException;
 	
 	/**
 	 * @param args

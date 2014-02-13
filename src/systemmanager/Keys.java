@@ -13,6 +13,8 @@ public interface Keys {
 	public final static String RAND_SEED = "randomSeed";
 	public final static String NUM_SIMULATIONS = "numSims";
 	
+	public final static String FILENAME = "fileName";
+	
 	public final static String ARRIVAL_RATE = "arrivalRate";
 	public final static String REENTRY_RATE = "reentryRate";
 
