@@ -86,7 +86,7 @@ public class LAAgent extends HFTAgent {
 				|| bestAsk.doubleValue() * (1 + alpha) > bestBid.doubleValue())
 			return Collections.emptySet();
 
-		log.log(INFO, "%s detected arbirage between %s %s and %s %s", this, 
+		log.log(INFO, "%s detected arbitrage between %s %s and %s %s", this, 
 				bestBidMarket, quoteProcessors.get(bestBidMarket).getQuote(),
 				bestAskMarket, quoteProcessors.get(bestAskMarket).getQuote());
 		Price midPoint = new Price((bestBid.doubleValue() + bestAsk.doubleValue()) * .5).quantize(tickSize);
