@@ -84,7 +84,7 @@ public class OrderDataAgentTest {
 		TimeStamp t2 = new TimeStamp(15);
 		assertEquals("OrderDataAgent Strategy is in order", t2, nextOrder.getTime());
 		
-		agent.executeODAStrategy(1, t2);
+//		agent.executeODAStrategy(1, t2);
 	    
 		//15->18
         t1 = new TimeStamp(15);
@@ -94,7 +94,7 @@ public class OrderDataAgentTest {
         t2 = new TimeStamp(18);
         assertEquals("OrderDataAgent Strategy is in order", t2, nextOrder.getTime());
         
-        agent.executeODAStrategy(1, t2);
+//        agent.executeODAStrategy(1, t2);
 
         //18->20
         t1 = new TimeStamp(18);
