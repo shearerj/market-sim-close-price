@@ -74,9 +74,9 @@ public class SimulationSpec implements Serializable {
 
 	public SimulationSpec() {
 		this.rawSpec = new JsonObject();
-		this.simulationProperties = new EntityProperties();
-		this.defaultMarketProperties = new EntityProperties();
-		this.defaultAgentProperties = new EntityProperties();
+		this.simulationProperties = EntityProperties.empty();
+		this.defaultMarketProperties = EntityProperties.empty();
+		this.defaultAgentProperties = EntityProperties.empty();
 
 		this.marketProps = ImmutableList.of();
 		this.agentProps = ImmutableList.of();
@@ -111,7 +111,7 @@ public class SimulationSpec implements Serializable {
 
 	protected static EntityProperties readProperties(JsonObject config,
 			String... keys) {
-		EntityProperties props = new EntityProperties();
+		EntityProperties props = EntityProperties.empty();
 		for (String key : keys) {
 			JsonPrimitive value = config.getAsJsonPrimitive(key);
 			if (value == null) continue;

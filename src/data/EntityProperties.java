@@ -33,11 +33,12 @@ public class EntityProperties implements Serializable {
 
 	protected Map<String, String> properties;
 
-	public EntityProperties() {
+	// FIXME Change protected constructor to only takea map of values and create static methods for everything
+	protected EntityProperties() {
 		this.properties = Maps.newHashMap();
 	}
 
-	public EntityProperties(EntityProperties def) {
+	protected EntityProperties(EntityProperties def) {
 		this.properties = Maps.newHashMap(checkNotNull(def.properties));
 	}
 
@@ -50,8 +51,28 @@ public class EntityProperties implements Serializable {
 		this(def);
 		addConfig(config);
 	}
+	
+	public static EntityProperties empty() {
+		return new EntityProperties();
+	}
+	
+	public static EntityProperties copy(EntityProperties from) {
+		return new EntityProperties(from);
+	}
+	
+	public static EntityProperties fromPairs(Object... keysAndValues) {
+		EntityProperties created = EntityProperties.empty();
+		created.putPairs(keysAndValues);
+		return created;
+	}
+	
+	public static EntityProperties copyFromPairs(EntityProperties from, Object... keysAndValues) {
+		EntityProperties created = EntityProperties.copy(from);
+		created.putPairs(keysAndValues);
+		return created;
+	}
 
-	public void addConfig(String config) {
+	protected void addConfig(String config) {
 		checkNotNull(config, "Config String");
 		ImmutableList<String> args = ImmutableList.copyOf(configSplitter.split(config));
 		checkArgument(args.size() % 2 == 0, "Not key value pair");
@@ -141,6 +162,12 @@ public class EntityProperties implements Serializable {
 
 	public void put(String key, boolean value) {
 		properties.put(key, Boolean.toString(value));
+	}
+	
+	public void putPairs(Object... keysAndValues) {
+		checkArgument(keysAndValues.length % 2 == 0);
+		for (int i = 0; i < keysAndValues.length; i+=2)
+			put(keysAndValues[i].toString(), keysAndValues[i+1].toString());
 	}
 
 	@Override

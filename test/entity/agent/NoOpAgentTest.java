@@ -1,8 +1,7 @@
 package entity.agent;
 
-import static org.junit.Assert.assertTrue;
-import static logger.Log.Level.*;
 import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
 
 import java.io.File;
 import java.io.IOException;

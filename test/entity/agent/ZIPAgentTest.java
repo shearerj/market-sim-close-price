@@ -2,6 +2,9 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
+import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
+import static logger.Log.Level.INFO;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -9,13 +12,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import static org.junit.Assert.*;
-import static logger.Log.Level.*;
-import static logger.Log.log;
-
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
 
@@ -50,7 +47,18 @@ public class ZIPAgentTest {
 	private Market market;
 	private SIP sip;
 	private static Random rand;
-	private static EntityProperties agentProperties;
+	private static EntityProperties agentProperties = EntityProperties.fromPairs(
+			Keys.REENTRY_RATE, 0.05,
+			Keys.MAX_QUANTITY, 10,
+			Keys.MARGIN_MIN, 0.05,
+			Keys.MARGIN_MAX, 0.35,
+			Keys.GAMMA_MIN, 0,
+			Keys.GAMMA_MAX, 0.1,
+			Keys.BETA_MIN, 0.1,
+			Keys.BETA_MAX, 0.5,
+			Keys.COEFF_A, 0.05,
+			Keys.COEFF_R, 0.05,
+			Keys.PRIVATE_VALUE_VAR, 0);
 	
 	@BeforeClass
 	public static void setupClass() throws IOException{
@@ -58,21 +66,7 @@ public class ZIPAgentTest {
 		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIPAgentTest.log"));
 
 		// Creating the setup properties
-		rand = new Random(1);
-		
-		// Setting up agentProperties
-		agentProperties = new EntityProperties();
-		agentProperties.put(Keys.REENTRY_RATE, 0.05);
-		agentProperties.put(Keys.MAX_QUANTITY, 10);
-		agentProperties.put(Keys.MARGIN_MIN, 0.05);
-		agentProperties.put(Keys.MARGIN_MAX, 0.35);
-		agentProperties.put(Keys.GAMMA_MIN, 0);
-		agentProperties.put(Keys.GAMMA_MAX, 0.1);
-		agentProperties.put(Keys.BETA_MIN, 0.1);
-		agentProperties.put(Keys.BETA_MAX, 0.5);
-		agentProperties.put(Keys.COEFF_A, 0.05);
-		agentProperties.put(Keys.COEFF_R, 0.05);
-		agentProperties.put(Keys.PRIVATE_VALUE_VAR, 0); // set as 0 for easier testing
+		rand = new Random();
 	}
 	
 	@Before
@@ -83,13 +77,14 @@ public class ZIPAgentTest {
 		market = new MockMarket(exec, sip);
 	}
 
+	private ZIPAgent createAgent(Object... parameters) {
+		return new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market,
+				rand, EntityProperties.copyFromPairs(agentProperties, parameters));
+	}
 	
 	@Test
 	public void initialMarginTest() {
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.MARGIN_MIN, 0.35);
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
+		ZIPAgent agent = createAgent(Keys.MARGIN_MIN, 0.35);
 
 		// if no transactions, margin should be initialized to properties setting
 		Margin margin = agent.margin;
@@ -107,10 +102,7 @@ public class ZIPAgentTest {
 	
 	@Test
 	public void marginRangeTest() {
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.MARGIN_MIN, 0.25);
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
+		ZIPAgent agent = createAgent(Keys.MARGIN_MIN, 0.25);
 
 		// if no transactions, margin should be initialized to properties setting
 		Margin margin = agent.margin;
@@ -122,12 +114,7 @@ public class ZIPAgentTest {
 	
 	@Test
 	public void initialZIP() {
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.BETA_MAX, 0.5);
-		testProps.put(Keys.BETA_MIN, 0.4);
-		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
+		ZIPAgent agent = createAgent(Keys.BETA_MAX, 0.5, Keys.BETA_MIN, 0.4);
 
 		// verify beta in correct range
 		assertTrue(agent.beta <= 0.5 && agent.beta >= 0.4);
@@ -137,11 +124,7 @@ public class ZIPAgentTest {
 	
 	@Test
 	public void computeRTest() {
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.COEFF_R, 0.1);
-		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
+		ZIPAgent agent = createAgent(Keys.COEFF_R, 0.1);
 
 		double testR = agent.computeRCoefficient(true);
 		assertTrue("Increasing R outside correct range",
@@ -153,11 +136,7 @@ public class ZIPAgentTest {
 	
 	@Test
 	public void computeATest() {
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.COEFF_A, 0.1);
-		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
+		ZIPAgent agent = createAgent(Keys.COEFF_A, 0.1);
 
 		double testA = agent.computeACoefficient(true);
 		assertTrue("Increasing R outside correct range",
@@ -183,20 +162,16 @@ public class ZIPAgentTest {
 	@Test
 	public void agentStrategyTest() {
 		TimeStamp time = TimeStamp.ZERO;
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.MAX_QUANTITY, 1);
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);
-		testProps.put(Keys.BETA_MAX, 0.5);
-		testProps.put(Keys.BETA_MIN, 0.5);
-		testProps.put(Keys.GAMMA_MAX, 0.5);
-		testProps.put(Keys.GAMMA_MIN, 0.5);
-		testProps.put(Keys.COEFF_A, 0.3);
-		testProps.put(Keys.COEFF_R, 0.25);
-		testProps.put(Keys.MARGIN_MAX, 0.05);
-		testProps.put(Keys.MARGIN_MIN, 0.05);
-		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
+		ZIPAgent agent = createAgent(Keys.MAX_QUANTITY, 1,
+				Keys.PRIVATE_VALUE_VAR, 0,
+				Keys.BETA_MAX, 0.5,
+				Keys.BETA_MIN, 0.5,
+				Keys.GAMMA_MAX, 0.5,
+				Keys.GAMMA_MIN, 0.5,
+				Keys.COEFF_A, 0.3,
+				Keys.COEFF_R, 0.25,
+				Keys.MARGIN_MAX, 0.05,
+				Keys.MARGIN_MIN, 0.05);
 		
 		// now with a dummy transaction and dummy order prices
 		addTransaction(95000, 1, 0);
@@ -223,13 +198,10 @@ public class ZIPAgentTest {
 	
 	@Test
 	public void getCurrentMarginTest() {
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.MAX_QUANTITY, 1);
-		testProps.put(Keys.MARGIN_MAX, 1.5);
-		testProps.put(Keys.MARGIN_MIN, 1.2);
-		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
+		ZIPAgent agent = createAgent(
+				Keys.MAX_QUANTITY, 1,
+				Keys.MARGIN_MAX, 1.5,
+				Keys.MARGIN_MIN, 1.2);
 
 		// verify buyer margin within [-1, 0]
 		double currentMargin = agent.getCurrentMargin(0, BUY, TimeStamp.ZERO);
@@ -243,24 +215,20 @@ public class ZIPAgentTest {
 	@Test
 	public void updateMarginZeroLimit() {
 		log.log(INFO, "Testing margin update when limit price is 0");
-		
-		// testing when limit price is 0
 		TimeStamp time = TimeStamp.ZERO;
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.MAX_QUANTITY, 5);
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);
-		testProps.put(Keys.BETA_MAX, 0.5);
-		testProps.put(Keys.BETA_MIN, 0.5);
-		testProps.put(Keys.GAMMA_MAX, 0.5);
-		testProps.put(Keys.GAMMA_MIN, 0.5);
-		testProps.put(Keys.COEFF_A, 0.3);
-		testProps.put(Keys.COEFF_R, 0.25);
-		testProps.put(Keys.MARGIN_MAX, 0.05);
-		testProps.put(Keys.MARGIN_MIN, 0.05);
-		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
-		
+		// testing when limit price is 0
+		ZIPAgent agent = createAgent(
+				Keys.MAX_QUANTITY, 5,
+				Keys.PRIVATE_VALUE_VAR, 0,
+				Keys.BETA_MAX, 0.5,
+				Keys.BETA_MIN, 0.5,
+				Keys.GAMMA_MAX, 0.5,
+				Keys.GAMMA_MIN, 0.5,
+				Keys.COEFF_A, 0.3,
+				Keys.COEFF_R, 0.25,
+				Keys.MARGIN_MAX, 0.05,
+				Keys.MARGIN_MIN, 0.05);
+
 		// add dummy transaction
 		addTransaction(95000, 1, 0);
 		Transaction firstTrans = market.getTransactions().get(0);
@@ -281,20 +249,17 @@ public class ZIPAgentTest {
 	@Test
 	public void checkIncreaseMarginBuyer() {
 		TimeStamp time = TimeStamp.ZERO;
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.MAX_QUANTITY, 5);
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);
-		testProps.put(Keys.BETA_MAX, 0.5);
-		testProps.put(Keys.BETA_MIN, 0.5);
-		testProps.put(Keys.GAMMA_MAX, 0.5);
-		testProps.put(Keys.GAMMA_MIN, 0.5);
-		testProps.put(Keys.COEFF_A, 0.3);
-		testProps.put(Keys.COEFF_R, 0.25);
-		testProps.put(Keys.MARGIN_MAX, 0.05);
-		testProps.put(Keys.MARGIN_MIN, 0.05);
-		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
+		ZIPAgent agent = createAgent(
+				Keys.MAX_QUANTITY, 5,
+				Keys.PRIVATE_VALUE_VAR, 0,
+				Keys.BETA_MAX, 0.5,
+				Keys.BETA_MIN, 0.5,
+				Keys.GAMMA_MAX, 0.5,
+				Keys.GAMMA_MIN, 0.5,
+				Keys.COEFF_A, 0.3,
+				Keys.COEFF_R, 0.25,
+				Keys.MARGIN_MAX, 0.05,
+				Keys.MARGIN_MIN, 0.05);
 
 		// add dummy transaction
 		addTransaction(95000, 1, 0);
@@ -325,20 +290,17 @@ public class ZIPAgentTest {
 	@Test
 	public void checkIncreaseMarginSeller() {
 		TimeStamp time = TimeStamp.ZERO;
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.MAX_QUANTITY, 5);
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);
-		testProps.put(Keys.BETA_MAX, 0.5);
-		testProps.put(Keys.BETA_MIN, 0.5);
-		testProps.put(Keys.GAMMA_MAX, 0.5);
-		testProps.put(Keys.GAMMA_MIN, 0.5);
-		testProps.put(Keys.COEFF_A, 0.3);
-		testProps.put(Keys.COEFF_R, 0.25);
-		testProps.put(Keys.MARGIN_MAX, 0.05);
-		testProps.put(Keys.MARGIN_MIN, 0.05);
-		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
+		ZIPAgent agent = createAgent(
+				Keys.MAX_QUANTITY, 5,
+				Keys.PRIVATE_VALUE_VAR, 0,
+				Keys.BETA_MAX, 0.5,
+				Keys.BETA_MIN, 0.5,
+				Keys.GAMMA_MAX, 0.5,
+				Keys.GAMMA_MIN, 0.5,
+				Keys.COEFF_A, 0.3,
+				Keys.COEFF_R, 0.25,
+				Keys.MARGIN_MAX, 0.05,
+				Keys.MARGIN_MIN, 0.05);
 
 		// add dummy transaction
 		addTransaction(105000, 1, 0);
@@ -369,22 +331,21 @@ public class ZIPAgentTest {
 	@Test
 	public void checkDecreaseMarginBuyer() {
 		TimeStamp time = TimeStamp.ZERO;
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.MAX_QUANTITY, 5);
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);
-		testProps.put(Keys.BETA_MAX, 0.5);
-		testProps.put(Keys.BETA_MIN, 0.5);
-		testProps.put(Keys.GAMMA_MAX, 0.5);
-		testProps.put(Keys.GAMMA_MIN, 0.5);
-		testProps.put(Keys.COEFF_A, 0.3);
-		testProps.put(Keys.COEFF_R, 0.25);
-		testProps.put(Keys.MARGIN_MAX, 0.05);
-		testProps.put(Keys.MARGIN_MIN, 0.05);
+
+		ZIPAgent agent = createAgent(
+				Keys.MAX_QUANTITY, 5,
+				Keys.PRIVATE_VALUE_VAR, 0,
+				Keys.BETA_MAX, 0.5,
+				Keys.BETA_MIN, 0.5,
+				Keys.GAMMA_MAX, 0.5,
+				Keys.GAMMA_MIN, 0.5,
+				Keys.COEFF_A, 0.3,
+				Keys.COEFF_R, 0.25,
+				Keys.MARGIN_MAX, 0.05,
+				Keys.MARGIN_MIN, 0.05);
 		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
-		assertEquals(new Double(0.5), new Double(agent.beta));
-		assertTrue(0 == agent.momentumChange);
+		assertEquals(0.5, agent.beta, 0);
+		assertEquals(agent.momentumChange, 0, 0);
 		
 		// add dummy transaction
 		addTransaction(95000, 1, 0);
@@ -415,22 +376,21 @@ public class ZIPAgentTest {
 	@Test
 	public void checkDecreaseMarginSeller() {
 		TimeStamp time = TimeStamp.ZERO;
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.MAX_QUANTITY, 5);
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);
-		testProps.put(Keys.BETA_MAX, 0.5);
-		testProps.put(Keys.BETA_MIN, 0.5);
-		testProps.put(Keys.GAMMA_MAX, 0.5);
-		testProps.put(Keys.GAMMA_MIN, 0.5);
-		testProps.put(Keys.COEFF_A, 0.3);
-		testProps.put(Keys.COEFF_R, 0.25);
-		testProps.put(Keys.MARGIN_MAX, 0.05);
-		testProps.put(Keys.MARGIN_MIN, 0.05);
+
+		ZIPAgent agent = createAgent(
+				Keys.MAX_QUANTITY, 5,
+				Keys.PRIVATE_VALUE_VAR, 0,
+				Keys.BETA_MAX, 0.5,
+				Keys.BETA_MIN, 0.5,
+				Keys.GAMMA_MAX, 0.5,
+				Keys.GAMMA_MIN, 0.5,
+				Keys.COEFF_A, 0.3,
+				Keys.COEFF_R, 0.25,
+				Keys.MARGIN_MAX, 0.05,
+				Keys.MARGIN_MIN, 0.05);
 		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
-		assertEquals(new Double(0.5), new Double(agent.beta));
-		assertTrue(0 == agent.momentumChange);
+		assertEquals(0.5, agent.beta, 0);
+		assertEquals(0, agent.momentumChange, 0);
 		
 		// add dummy transaction
 		addTransaction(101000, 1, 0);
@@ -461,14 +421,12 @@ public class ZIPAgentTest {
 	@Test
 	public void computeOrderPrice() {
 		TimeStamp time = TimeStamp.ZERO;
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.MAX_QUANTITY, 5);
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);
-		testProps.put(Keys.MARGIN_MAX, 0.35);
-		testProps.put(Keys.MARGIN_MIN, 0.25);
-		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
+
+		ZIPAgent agent = createAgent(
+				Keys.MAX_QUANTITY, 5,
+				Keys.PRIVATE_VALUE_VAR, 0,
+				Keys.MARGIN_MAX, 0.35,
+				Keys.MARGIN_MIN, 0.25);
 		
 		// test for buy
 		agent.type = BUY;
@@ -493,18 +451,17 @@ public class ZIPAgentTest {
 	public void updateMomentumBasicTest() {
 		// gamma fixed at 1
 		TimeStamp time = TimeStamp.ZERO;
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.MAX_QUANTITY, 5);
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);
-		testProps.put(Keys.BETA_MAX, 0.5);
-		testProps.put(Keys.BETA_MIN, 0.5);
-		testProps.put(Keys.GAMMA_MAX, 1);
-		testProps.put(Keys.GAMMA_MIN, 1);
 		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
-		assertEquals(new Double(0.5), new Double(agent.beta));
-		assertTrue(0 == agent.momentumChange);
+		ZIPAgent agent = createAgent(
+				Keys.MAX_QUANTITY, 5,
+				Keys.PRIVATE_VALUE_VAR, 0,
+				Keys.BETA_MAX, 0.5,
+				Keys.BETA_MIN, 0.5,
+				Keys.GAMMA_MAX, 1,
+				Keys.GAMMA_MIN, 1);
+
+		assertEquals(0.5, agent.beta, 0);
+		assertEquals(0, agent.momentumChange, 0);
 		
 		// add dummy transaction
 		addTransaction(100000, 1, 0);
@@ -538,18 +495,16 @@ public class ZIPAgentTest {
 	public void updateMomentumAdvancedTest() {
 		// gamma fixed at 1, update entirely to delta
 		TimeStamp time = TimeStamp.ZERO;
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.MAX_QUANTITY, 5);
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);
-		testProps.put(Keys.BETA_MAX, 0.5);
-		testProps.put(Keys.BETA_MIN, 0.5);
-		testProps.put(Keys.GAMMA_MAX, 0);
-		testProps.put(Keys.GAMMA_MIN, 0);
 		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
-		assertEquals(new Double(0.5), new Double(agent.beta));
-		assertTrue(0 == agent.momentumChange);
+		ZIPAgent agent = createAgent(Keys.MAX_QUANTITY, 5,
+				Keys.PRIVATE_VALUE_VAR, 0,
+				Keys.BETA_MAX, 0.5,
+				Keys.BETA_MIN, 0.5,
+				Keys.GAMMA_MAX, 0,
+				Keys.GAMMA_MIN, 0);
+
+		assertEquals(0.5, agent.beta, 0);
+		assertEquals(0, agent.momentumChange, 0);
 		
 		// add dummy transaction
 		addTransaction(100000, 1, 0);
@@ -584,15 +539,14 @@ public class ZIPAgentTest {
 	@Test
 	public void computeDeltaTest() {
 		TimeStamp time = TimeStamp.ZERO;
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.MAX_QUANTITY, 5);
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);
-		testProps.put(Keys.BETA_MAX, 0.5);
-		testProps.put(Keys.BETA_MIN, 0.5);
 		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
-		assertEquals(new Double(0.5), new Double(agent.beta));
+		ZIPAgent agent = createAgent(
+				Keys.MAX_QUANTITY, 5,
+				Keys.PRIVATE_VALUE_VAR, 0,
+				Keys.BETA_MAX, 0.5,
+				Keys.BETA_MIN, 0.5);
+		
+		assertEquals(0.5, agent.beta, 0);
 		
 		// add dummy transaction
 		addTransaction(100000, 1, 0);
@@ -629,14 +583,12 @@ public class ZIPAgentTest {
 	@Test
 	public void computeTargetPriceTest() {
 		TimeStamp time = TimeStamp.ZERO;
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.MAX_QUANTITY, 5);
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);
-		testProps.put(Keys.MARGIN_MAX, 0.35);
-		testProps.put(Keys.MARGIN_MIN, 0.25);
 		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
+		ZIPAgent agent = createAgent(
+				Keys.MAX_QUANTITY, 5,
+				Keys.PRIVATE_VALUE_VAR, 0,
+				Keys.MARGIN_MAX, 0.35,
+				Keys.MARGIN_MIN, 0.25);
 
 		// add dummy transaction
 		addTransaction(100000, 1, 0);
@@ -668,14 +620,12 @@ public class ZIPAgentTest {
 	@Test
 	public void checkIncreaseMarginInitialTest() {
 		TimeStamp time = TimeStamp.ZERO;
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.MAX_QUANTITY, 5);
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);
-		testProps.put(Keys.MARGIN_MAX, 0.35);
-		testProps.put(Keys.MARGIN_MIN, 0.25);
 		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
+		ZIPAgent agent = createAgent(
+				Keys.MAX_QUANTITY, 5,
+				Keys.PRIVATE_VALUE_VAR, 0,
+				Keys.MARGIN_MAX, 0.35,
+				Keys.MARGIN_MIN, 0.25);
 		
 		// check that initial order price null
 		assertNull(agent.lastOrderPrice);
@@ -710,14 +660,12 @@ public class ZIPAgentTest {
 	public void advancedIncreaseMarginTest() {
 		// test with other order prices already set
 		TimeStamp time = TimeStamp.ZERO;
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.MAX_QUANTITY, 5);
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 0);
-		testProps.put(Keys.MARGIN_MAX, 0.35);
-		testProps.put(Keys.MARGIN_MIN, 0.25);
 		
-		ZIPAgent agent = new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
-				testProps);
+		ZIPAgent agent = createAgent(
+				Keys.MAX_QUANTITY, 5,
+				Keys.PRIVATE_VALUE_VAR, 0,
+				Keys.MARGIN_MAX, 0.35,
+				Keys.MARGIN_MIN, 0.25);
 		
 		// now test with a dummy transaction
 		agent.positionBalance = 0;

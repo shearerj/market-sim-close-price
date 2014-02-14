@@ -1,16 +1,12 @@
 package entity.infoproc;
 
+import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import static org.junit.Assert.*;
-import static logger.Log.Level.*;
-import static logger.Log.log;
-
-import java.io.File;
 import java.io.IOException;
-import java.util.Random;
 
 import logger.Log;
 

@@ -2,11 +2,10 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
+import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.*;
-import static logger.Log.Level.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +21,7 @@ import org.junit.Test;
 
 import systemmanager.Consts;
 import systemmanager.Executor;
+import systemmanager.Keys;
 import activity.AgentStrategy;
 import activity.Clear;
 import activity.ProcessQuote;
@@ -29,6 +29,7 @@ import activity.SubmitOrder;
 
 import com.google.common.collect.ImmutableList;
 
+import data.EntityProperties;
 import data.FundamentalValue;
 import data.MockFundamental;
 import entity.infoproc.BestBidAsk;
@@ -59,11 +60,9 @@ public class BasicMarketMakerTest {
 		market = new MockMarket(exec, sip);
 	}
 	
-	private BasicMarketMaker createBMM(int numRungs, int rungSize,
-			boolean truncateLadder, int tickSize) {
+	private BasicMarketMaker createBMM(Object... parameters) {
 		return new BasicMarketMaker(exec, fundamental, sip, market,
-				new Random(), tickSize, false, numRungs, rungSize,
-				truncateLadder, false, true);
+				new Random(), EntityProperties.fromPairs(parameters));
 	}
 
 	@Test
@@ -71,7 +70,11 @@ public class BasicMarketMakerTest {
 		// testing when no bid/ask, does not submit any orders
 		TimeStamp time = TimeStamp.ZERO;
 
-		MarketMaker mm = createBMM(2, 10, false, 1);
+		MarketMaker mm = createBMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1);
 
 		// Check activities inserted (none, other than reentry)
 		mm.agentStrategy(time);
@@ -86,7 +89,11 @@ public class BasicMarketMakerTest {
 	public void quoteUndefined() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		MarketMaker mm = createBMM(2, 10, false, 1);
+		MarketMaker mm = createBMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1);
 		mm.lastAsk = new Price(55);
 		mm.lastBid = new Price(45);
 
@@ -122,7 +129,11 @@ public class BasicMarketMakerTest {
 	public void basicLadderTest() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		MarketMaker mm = createBMM(2, 10, false, 1);
+		MarketMaker mm = createBMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -175,7 +186,11 @@ public class BasicMarketMakerTest {
 	public void quoteChangeTest() {
 		TimeStamp time1 = TimeStamp.create(10);
 
-		MarketMaker marketmaker = createBMM(2, 10, false, 1);
+		MarketMaker marketmaker = createBMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -241,7 +256,11 @@ public class BasicMarketMakerTest {
 	 */
 	@Test
 	public void rungsTest() {
-		MarketMaker marketmaker = createBMM(3, 12, false, 5);
+		MarketMaker marketmaker = createBMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 12,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 5);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -293,7 +312,11 @@ public class BasicMarketMakerTest {
 
 	@Test
 	public void noOpTest() {
-		MarketMaker mm = createBMM(2, 10, false, 1);
+		MarketMaker mm = createBMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1);
 		mm.noOp = true;
 
 		// Check activities inserted (none, since no-op)
@@ -303,7 +326,11 @@ public class BasicMarketMakerTest {
 
 	@Test
 	public void truncateBidTest() {
-		MarketMaker marketmaker = createBMM(3, 5, true, 1);
+		MarketMaker marketmaker = createBMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -361,7 +388,11 @@ public class BasicMarketMakerTest {
 
 	@Test
 	public void truncateAskTest() {
-		MarketMaker marketmaker = createBMM(3, 5, true, 1);
+		MarketMaker marketmaker = createBMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -420,7 +451,11 @@ public class BasicMarketMakerTest {
 	@Test
 	public void withdrawLadderTest() {
 
-		MarketMaker marketmaker = createBMM(3, 5, true, 1);
+		MarketMaker marketmaker = createBMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1);
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -468,7 +503,11 @@ public class BasicMarketMakerTest {
 	public void withdrawUndefinedTest() {
 		TimeStamp time1 = TimeStamp.create(1);
 
-		MarketMaker marketmaker = createBMM(3, 5, true, 1);
+		MarketMaker marketmaker = createBMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1);
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);

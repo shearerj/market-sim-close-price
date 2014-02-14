@@ -23,7 +23,7 @@ public class MockReentryAgent extends ReentryAgent {
 	
 	public MockReentryAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market, 
 			Random rand, double reentryRate, int tickSize) {
-		this(scheduler, fundamental, sip, market, rand, new ExpInterarrivals(reentryRate, rand), 
+		this(scheduler, fundamental, sip, market, rand, ExpInterarrivals.create(reentryRate, rand), 
 				tickSize);
 	}
 

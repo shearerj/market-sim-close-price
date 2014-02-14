@@ -2,10 +2,8 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
+import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.*;
-import static fourheap.Order.OrderType.*;
-import static logger.Log.Level.*;
 
 import java.io.File;
 import java.io.IOException;

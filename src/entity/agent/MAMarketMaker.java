@@ -48,21 +48,6 @@ public class MAMarketMaker extends MarketMaker {
 		askQueue = EvictingQueue.create(numHistorical);
 	}
 	
-	/**
-	 * Shortcut constructor for MAMM that doesn't reenter.
-	 */
-	MAMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, int tickSize, boolean noOp,
-			int numRungs, int rungSize, boolean truncateLadder, 
-			boolean tickImprovement, boolean tickInside, int numHistorical) {
-		super(scheduler, fundamental, sip, market, rand, tickSize, noOp, 
-				numRungs, rungSize, truncateLadder, tickImprovement, tickInside);
-
-		checkArgument(numHistorical > 0, "Number of historical prices must be positive!");
-		bidQueue = EvictingQueue.create(numHistorical);
-		askQueue = EvictingQueue.create(numHistorical);
-	}
-	
 	public MAMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, EntityProperties props) {
 		this(scheduler, fundamental, sip, market, rand,

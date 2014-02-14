@@ -2,12 +2,11 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
+import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.*;
-import static logger.Log.Level.*;
-import static logger.Log.log;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,10 +21,12 @@ import org.junit.Test;
 
 import systemmanager.Consts;
 import systemmanager.Executor;
+import systemmanager.Keys;
 import activity.AgentStrategy;
 import activity.Clear;
 import activity.ProcessQuote;
 import activity.SubmitOrder;
+import data.EntityProperties;
 import data.FundamentalValue;
 import data.MockFundamental;
 import entity.infoproc.BestBidAsk;
@@ -59,11 +60,9 @@ public class MAMarketMakerTest {
 		market = new MockMarket(exec, sip);
 	}
 	
-	private MAMarketMaker createMAMM(int numRungs, int rungSize, 
-			boolean truncateLadder, int tickSize, int numHistorical) {
+	private MAMarketMaker createMAMM(Object... parameters) {
 		return new MAMarketMaker(exec, fundamental, sip, market, new Random(),
-				tickSize, false, numRungs, rungSize, truncateLadder, false, true,
-				numHistorical);
+				EntityProperties.fromPairs(parameters));
 	}
 
 	@Test
@@ -71,7 +70,12 @@ public class MAMarketMakerTest {
 		// testing when no bid/ask, does not submit any orders
 		TimeStamp time = TimeStamp.ZERO;
 
-		MarketMaker mm = createMAMM(2, 10, false, 1, 5);
+		MarketMaker mm = createMAMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5);
 
 		// Check activities inserted (none, other than reentry)
 		mm.agentStrategy(time);
@@ -86,7 +90,12 @@ public class MAMarketMakerTest {
 	public void quoteUndefined() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		MarketMaker mm = createMAMM(2, 10, false, 1, 5);
+		MarketMaker mm = createMAMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5);
 		mm.lastAsk = new Price(55);
 		mm.lastBid = new Price(45);
 
@@ -124,7 +133,12 @@ public class MAMarketMakerTest {
 	public void withdrawUndefinedTest() {
 		TimeStamp time1 = TimeStamp.create(1);
 
-		MarketMaker marketmaker = createMAMM(3, 5, true, 1, 5);
+		MarketMaker marketmaker = createMAMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5);
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -173,7 +187,12 @@ public class MAMarketMakerTest {
 	public void computeMovingAverage() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		MAMarketMaker mm = createMAMM(1, 10, false, 1, 5);
+		MAMarketMaker mm = createMAMM(
+				Keys.NUM_RUNGS, 1,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5);
 
 		QuoteProcessor qp = mm.marketQuoteProcessor;
 
@@ -231,7 +250,12 @@ public class MAMarketMakerTest {
 	public void evictingQueueTest() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		MAMarketMaker mm = createMAMM(2, 10, false, 1, 3);
+		MAMarketMaker mm = createMAMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 3);
 
 		QuoteProcessor qp = mm.marketQuoteProcessor;
 
@@ -280,7 +304,12 @@ public class MAMarketMakerTest {
 	public void basicLadderTest() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		MarketMaker mm = createMAMM(2, 10, false, 1, 5);
+		MarketMaker mm = createMAMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -333,7 +362,12 @@ public class MAMarketMakerTest {
 	public void partialQueueLadderTest() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		MAMarketMaker mm = createMAMM(1, 10, false, 1, 5);
+		MAMarketMaker mm = createMAMM(
+				Keys.NUM_RUNGS, 1,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5);
 
 		QuoteProcessor qp = mm.marketQuoteProcessor;
 
@@ -379,7 +413,12 @@ public class MAMarketMakerTest {
 	 */
 	@Test
 	public void rungsTest() {
-		MarketMaker marketmaker = createMAMM(3, 12, false, 5, 5);
+		MarketMaker marketmaker = createMAMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 12,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 5,
+				Keys.NUM_HISTORICAL, 5);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -428,8 +467,13 @@ public class MAMarketMakerTest {
 
 	@Test
 	public void noOpTest() {
-		MarketMaker mm = createMAMM(2, 10, false, 1, 5);
-		mm.noOp = true;
+		MarketMaker mm = createMAMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5,
+				Keys.NO_OP, true);
 
 		// Check activities inserted (none, since no-op)
 		mm.agentStrategy(TimeStamp.ZERO);
@@ -438,7 +482,12 @@ public class MAMarketMakerTest {
 
 	@Test
 	public void truncateBidTest() {
-		MarketMaker marketmaker = createMAMM(3, 5, true, 1, 5);
+		MarketMaker marketmaker = createMAMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -475,7 +524,8 @@ public class MAMarketMakerTest {
 		assertEquals(marketmaker, order.getAgent());
 		assertEquals(new Price(97), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
-		// 3 rungs on sell side
+		// 3 rungs on sell sideprops.getAsDouble(Keys.REENTRY_RATE, 0.005), 
+
 		order = orders.get(4);
 		assertEquals(marketmaker, order.getAgent());
 		assertEquals(new Price(115), order.getPrice());
@@ -492,7 +542,12 @@ public class MAMarketMakerTest {
 
 	@Test
 	public void truncateAskTest() {
-		MarketMaker marketmaker = createMAMM(3, 5, true, 1, 5);
+		MarketMaker marketmaker = createMAMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);

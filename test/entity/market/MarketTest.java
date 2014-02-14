@@ -2,18 +2,13 @@ package entity.market;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
+import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 import java.io.File;
-import static org.junit.Assert.*;
-import static fourheap.Order.OrderType.*;
-import static logger.Log.Level.*;
-import static logger.Log.log;
-
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;

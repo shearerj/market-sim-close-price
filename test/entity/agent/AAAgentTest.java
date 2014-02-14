@@ -2,20 +2,15 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
+import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import static fourheap.Order.OrderType.*;
-import static logger.Log.log;
-import static logger.Log.Level.*;
-import static org.junit.Assert.*;
-
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
 
@@ -60,44 +55,41 @@ public class AAAgentTest {
 		Log.log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "AAAgentTest.log"));
 
 		// Creating the setup properties
-		rand = new Random(1);
+		rand = new Random();
 
 		// Setting up agentProperties
-		agentProperties = new EntityProperties();
-		agentProperties.put(Keys.REENTRY_RATE, 0);
-		agentProperties.put(Keys.MAX_QUANTITY, 10);
-		agentProperties.put(Keys.ETA, 3);
-		agentProperties.put(Keys.WITHDRAW_ORDERS, false);
-		agentProperties.put(Keys.WINDOW_LENGTH, 5000);
-		agentProperties.put(Keys.AGGRESSION, 0);
-		agentProperties.put(Keys.THETA, 0);
-		agentProperties.put(Keys.THETA_MIN, -4);
-		agentProperties.put(Keys.THETA_MAX, 4);
-		agentProperties.put(Keys.NUM_HISTORICAL, 5);
-		agentProperties.put(Keys.ETA, 3);
-		agentProperties.put(Keys.LAMBDA_R, 0.05);
-		agentProperties.put(Keys.LAMBDA_A, 0.02);	// x ticks/$ for Eq 10/11 
-		agentProperties.put(Keys.GAMMA, 2);
-		agentProperties.put(Keys.BETA_R, 0.4); 
-		agentProperties.put(Keys.BETA_T, 0.4); 
-
-		agentProperties.put(Keys.DEBUG, true);
+		agentProperties = EntityProperties.fromPairs(
+				Keys.REENTRY_RATE, 0,
+				Keys.MAX_QUANTITY, 10,
+				Keys.ETA, 3,
+				Keys.WITHDRAW_ORDERS, false,
+				Keys.WINDOW_LENGTH, 5000,
+				Keys.AGGRESSION, 0,
+				Keys.THETA, 0,
+				Keys.THETA_MIN, -4,
+				Keys.THETA_MAX, 4,
+				Keys.NUM_HISTORICAL, 5,
+				Keys.ETA, 3,
+				Keys.LAMBDA_R, 0.05,
+				Keys.LAMBDA_A, 0.02,	// x ticks/$ for Eq 10/11 
+				Keys.GAMMA, 2,
+				Keys.BETA_R, 0.4,
+				Keys.BETA_T, 0.4,
+				Keys.DEBUG, true);
 	}
 
 	@Before
 	public void setupTest() {
 		exec = new Executor();
 		sip = new SIP(exec, TimeStamp.IMMEDIATE);
-		// Creating the MockMarket
 		market = new MockMarket(exec, sip);
 	}
 
 	@Test
 	public void tauChange() {
 		double r = 0.5;
-		AAAgent agent = addAgent(OrderType.BUY);
+		AAAgent agent = addAgent(BUY);
 		agent.theta = 2;
-
 		assertEquals(0.268, agent.tauChange(r), 0.001);
 	}
 
@@ -109,10 +101,10 @@ public class AAAgentTest {
 		TimeStamp time = TimeStamp.ZERO;
 		
 		// Creating a buyer
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.NUM_HISTORICAL, 3);
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 5E7);
-		AAAgent agent = addAgent(BUY, testProps);
+		AAAgent agent = addAgent(BUY, EntityProperties.copyFromPairs(agentProperties,
+				Keys.NUM_HISTORICAL, 3,
+				Keys.PRIVATE_VALUE_VAR, 5E7));
+		
 		assertNull(agent.estimateEquilibrium(agent.getWindowTransactions(time)));
 		
 		// Adding Transactions and Bids
@@ -134,8 +126,7 @@ public class AAAgentTest {
 	
 	@Test
 	public void computeRShoutBuyer() {
-		AAAgent buyer = addAgent(BUY);
-		buyer.theta = -2;
+		AAAgent buyer = addAgent(BUY, EntityProperties.fromPairs(Keys.THETA, -2));
 		
 		Price limit = new Price(110000);
 		Price last = new Price(105000);
@@ -157,8 +148,7 @@ public class AAAgentTest {
 	
 	@Test
 	public void computeRShoutSeller() {
-		AAAgent seller = addAgent(SELL);
-		seller.theta = -2;
+		AAAgent seller = addAgent(SELL, EntityProperties.fromPairs(Keys.THETA, -2));
 
 		Price limit = new Price(105000);
 		Price last = new Price(110000);
@@ -180,8 +170,7 @@ public class AAAgentTest {
 
 	@Test
 	public void determineTargetPriceBuyer() {
-		AAAgent buyer = addAgent(BUY);
-		buyer.theta = 2;
+		AAAgent buyer = addAgent(BUY, EntityProperties.fromPairs(Keys.THETA, 2));
 		
 		Price limit = new Price(110000);
 		Price equil = new Price(105000);
@@ -210,8 +199,7 @@ public class AAAgentTest {
 	
 	@Test
 	public void determineTargetPriceSeller() {
-		AAAgent seller = addAgent(SELL);
-		seller.theta = 2;
+		AAAgent seller = addAgent(SELL, EntityProperties.fromPairs(Keys.THETA, 2));
 		
 		Price limit = new Price(105000);
 		Price equil = new Price(110000);
@@ -313,14 +301,13 @@ public class AAAgentTest {
 	@Test
 	public void updateTheta() {
 		TimeStamp time = TimeStamp.ZERO;
-		EntityProperties props = new EntityProperties();
-		props.put(Keys.NUM_HISTORICAL, 5);
-		props.put(Keys.THETA_MAX, 8);
-		props.put(Keys.THETA_MIN, -8);
-		props.put(Keys.BETA_T, 0.25);
-		props.put(Keys.GAMMA, 2);
-		AAAgent agent = addAgent(SELL, props);
-		agent.theta = -4;
+		AAAgent agent = addAgent(SELL, EntityProperties.fromPairs(
+				Keys.NUM_HISTORICAL, 5,
+				Keys.THETA_MAX, 8,
+				Keys.THETA_MIN, -8,
+				Keys.BETA_T, 0.25,
+				Keys.GAMMA, 2,
+				Keys.THETA, -4));
 		
 		agent.updateTheta(null, agent.getWindowTransactions(time));
 		assertEquals(-4, agent.theta, 0.001);
@@ -378,7 +365,7 @@ public class AAAgentTest {
 	public void initialBuyer() {
 		log.log(DEBUG, "\nTesting buyer on empty market: Result should be price=0");
 		// Creating a buyer
-		AAAgent agent = addAgent(OrderType.BUY);
+		AAAgent agent = addAgent(BUY);
 		assertTrue(agent.type.equals(BUY));
 		// Testing against an empty market
 		agent.agentStrategy(TimeStamp.create(100));
@@ -390,7 +377,7 @@ public class AAAgentTest {
 	public void initialSeller() {
 		log.log(DEBUG, "\nTesting seller on empty market: Result should be price=%s", Price.INF);
 		// Creating a seller
-		AAAgent agent = addAgent(OrderType.SELL);
+		AAAgent agent = addAgent(SELL);
 		assertTrue(agent.type.equals(SELL));
 		// Testing against an empty market
 		agent.agentStrategy(TimeStamp.create(100));
@@ -408,9 +395,7 @@ public class AAAgentTest {
 		addOrder(SELL, 200000, 1, 10);
 
 		// Testing against a market with initial bids but no transaction history
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.ETA, 4);
-		AAAgent agent = addAgent(OrderType.BUY, testProps);
+		AAAgent agent = addAgent(OrderType.BUY, EntityProperties.copyFromPairs(agentProperties, Keys.ETA, 4));
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct (based on EQ 10/11)
@@ -427,9 +412,7 @@ public class AAAgentTest {
 		addOrder(SELL, 200000, 1, 10);
 
 		// Testing against a market with initial bids but no transaction history
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.ETA, 4);
-		AAAgent agent = addAgent(OrderType.SELL, testProps);
+		AAAgent agent = addAgent(OrderType.SELL, EntityProperties.copyFromPairs(agentProperties, Keys.ETA, 4));
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct (based on EQ 10/11)
@@ -446,8 +429,7 @@ public class AAAgentTest {
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(OrderType.BUY);
-		agent.setAggression(-1);
+		AAAgent agent = addAgent(BUY, EntityProperties.fromPairs(Keys.AGGRESSION, -1));
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -464,10 +446,9 @@ public class AAAgentTest {
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.THETA, -3);
-		AAAgent agent = addAgent(OrderType.BUY, testProps);
-		agent.setAggression(-0.5);
+		AAAgent agent = addAgent(OrderType.BUY, EntityProperties.copyFromPairs(agentProperties,
+				Keys.THETA, -3,
+				Keys.AGGRESSION, -0.5));
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -487,9 +468,8 @@ public class AAAgentTest {
 		addOrder(SELL, 150000, 1, 15);
 		addTransaction(75000, 1, 20);
 
-		AAAgent agent = addAgent(OrderType.BUY);
+		AAAgent agent = addAgent(BUY, EntityProperties.fromPairs(Keys.AGGRESSION, 0));
 		log.log(DEBUG, "Price ~= 58333");
-		agent.setAggression(0);
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -510,10 +490,9 @@ public class AAAgentTest {
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.THETA, -3);
-		AAAgent agent = addAgent(OrderType.BUY, testProps);
-		agent.setAggression(0.5);
+		AAAgent agent = addAgent(OrderType.BUY, EntityProperties.copyFromPairs(agentProperties,
+				Keys.THETA, -3,
+				Keys.AGGRESSION, 0.5));
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -530,9 +509,8 @@ public class AAAgentTest {
 		addOrder(SELL, 150000, 1, 10);
 		addTransaction(75000, 1, 20);
 
-		AAAgent agent = addAgent(OrderType.BUY);
+		AAAgent agent = addAgent(BUY, EntityProperties.fromPairs(Keys.AGGRESSION, 1));
 		log.log(DEBUG, "Price ~= 66667");
-		agent.setAggression(1.0);
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -550,10 +528,8 @@ public class AAAgentTest {
 		addTransaction(125000, 1, 20);
 
 		// Testing the Agent
-		AAAgent agent = addAgent(OrderType.SELL);
-		log.log(DEBUG,
-				"Price ~= " + (150000 + (Price.INF.intValue() - 150000) / 3));
-		agent.setAggression(-1.0);
+		AAAgent agent = addAgent(SELL, EntityProperties.fromPairs(Keys.AGGRESSION, -1));
+		log.log(DEBUG, "Price ~= %d", 150000 + (Price.INF.intValue() - 150000) / 3);
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -575,9 +551,8 @@ public class AAAgentTest {
 		addOrder(SELL, 150000, 1, 15);
 		addTransaction(125000, 1, 20);
 
-		AAAgent agent = addAgent(OrderType.SELL);
+		AAAgent agent = addAgent(SELL, EntityProperties.fromPairs(Keys.AGGRESSION, 0));
 		log.log(DEBUG, "Price ~= 141667");
-		agent.setAggression(0);
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -594,8 +569,7 @@ public class AAAgentTest {
 		addOrder(SELL, 150000, 1, 10);
 		addTransaction(125000, 1, 20);
 
-		AAAgent agent = addAgent(OrderType.SELL);
-		agent.setAggression(1);
+		AAAgent agent = addAgent(SELL, EntityProperties.fromPairs(Keys.AGGRESSION, 1));
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -613,8 +587,7 @@ public class AAAgentTest {
 		addTransaction(125000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(OrderType.BUY);
-		agent.setAggression(-1);
+		AAAgent agent = addAgent(BUY, EntityProperties.fromPairs(Keys.AGGRESSION, -1));
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -631,10 +604,9 @@ public class AAAgentTest {
 		addTransaction(125000, 1, 15);
 
 		// Setting up the agent
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.THETA, -3);
-		AAAgent agent = addAgent(OrderType.BUY, testProps);
-		agent.setAggression(-0.5);
+		AAAgent agent = addAgent(OrderType.BUY, EntityProperties.copyFromPairs(agentProperties,
+				Keys.THETA, -3,
+				Keys.AGGRESSION, -0.5));
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -651,10 +623,9 @@ public class AAAgentTest {
 		addTransaction(125000, 1, 15);
 
 		// Setting up the agent
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.THETA, -3);
-		AAAgent agent = addAgent(OrderType.BUY, testProps);
-		agent.setAggression(0);
+		AAAgent agent = addAgent(OrderType.BUY, EntityProperties.copyFromPairs(agentProperties,
+				Keys.THETA, -3,
+				Keys.AGGRESSION, 0));
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -671,10 +642,9 @@ public class AAAgentTest {
 		addTransaction(125000, 1, 15);
 
 		// Setting up the agent
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.THETA, -3);
-		AAAgent agent = addAgent(OrderType.BUY, testProps);
-		agent.setAggression(0.5);
+		AAAgent agent = addAgent(OrderType.BUY, EntityProperties.copyFromPairs(agentProperties,
+				Keys.THETA, -3,
+				Keys.AGGRESSION, 0.5));
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -691,8 +661,7 @@ public class AAAgentTest {
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(OrderType.SELL);
-		agent.setAggression(-1);
+		AAAgent agent = addAgent(SELL, EntityProperties.fromPairs(Keys.AGGRESSION, -1));
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -711,8 +680,7 @@ public class AAAgentTest {
 		addTransaction(75000, 1, 15);
 
 		// Setting up the agent
-		AAAgent agent = addAgent(OrderType.SELL);
-		agent.setAggression(0);
+		AAAgent agent = addAgent(SELL, EntityProperties.fromPairs(Keys.AGGRESSION, 0));
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -732,7 +700,7 @@ public class AAAgentTest {
 		addTransaction(100000, 1, 35);
 		addTransaction(105000, 1, 40);
 
-		AAAgent agent = addAgent(OrderType.BUY);
+		AAAgent agent = addAgent(BUY);
 		agent.agentStrategy(TimeStamp.create(100));
 		assertTrue(agent.aggression > 0);
 		assertCorrectBid(agent, 50000, 100000, 1);
@@ -751,7 +719,7 @@ public class AAAgentTest {
 		addTransaction(100000, 1, 35);
 		addTransaction(95000, 1, 40);
 
-		AAAgent agent = addAgent(OrderType.SELL);
+		AAAgent agent = addAgent(SELL);
 		agent.agentStrategy(TimeStamp.create(100));
 		assertTrue(agent.aggression > 0);
 		assertCorrectBid(agent, 100000, 150000, 1);
@@ -772,11 +740,10 @@ public class AAAgentTest {
 		addTransaction(95000, 1, 40);
 
 		// Setting up the agent
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.THETA, -3);
-		AAAgent agent = addAgent(BUY, testProps);
 		double oldAggression = 0.5;
-		agent.setAggression(oldAggression);
+		AAAgent agent = addAgent(BUY, EntityProperties.copyFromPairs(agentProperties,
+				Keys.THETA, -3,
+				Keys.AGGRESSION, oldAggression));
 		agent.agentStrategy(TimeStamp.create(100));
 
 		checkAggressionUpdate(BUY, agent.lastTransactionPrice, agent.targetPrice,
@@ -802,11 +769,10 @@ public class AAAgentTest {
 		addTransaction(95000, 1, 40);
 
 		// Setting up the agent
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.THETA, 2);
-		AAAgent agent = addAgent(SELL, testProps);
 		double oldAggression = 0.2;
-		agent.setAggression(oldAggression);
+		AAAgent agent = addAgent(SELL, EntityProperties.copyFromPairs(agentProperties,
+				Keys.THETA, 2,
+				Keys.AGGRESSION, oldAggression));
 		agent.agentStrategy(TimeStamp.create(100));
 
 		checkAggressionUpdate(SELL, agent.lastTransactionPrice, agent.targetPrice,
@@ -831,12 +797,11 @@ public class AAAgentTest {
 		addTransaction((int) Rands.nextUniform(rand, 80000, 100000), 1, 40);
 
 		// Setting up the agent
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.THETA, -2);
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 5E7);
-		AAAgent agent = addAgent(BUY, testProps);
 		double oldAggression = 0.5;
-		agent.setAggression(oldAggression);
+		AAAgent agent = addAgent(BUY, EntityProperties.copyFromPairs(agentProperties,
+				Keys.THETA, -2,
+				Keys.PRIVATE_VALUE_VAR, 5E7,
+				Keys.AGGRESSION, oldAggression));
 		agent.agentStrategy(TimeStamp.create(100));
 
 		checkAggressionUpdate(BUY, agent.lastTransactionPrice, agent.targetPrice,
@@ -861,12 +826,11 @@ public class AAAgentTest {
 		addTransaction((int) Rands.nextUniform(rand, 100000, 110000), 1, 40);
 
 		// Setting up the agent
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.THETA, -3);
-		testProps.put(Keys.PRIVATE_VALUE_VAR, 5E7);
-		AAAgent agent = addAgent(SELL, testProps);
 		double oldAggression = 0.2;
-		agent.setAggression(oldAggression);
+		AAAgent agent = addAgent(SELL, EntityProperties.copyFromPairs(agentProperties,
+				Keys.THETA, -3,
+				Keys.PRIVATE_VALUE_VAR, 5E7,
+				Keys.AGGRESSION, oldAggression));
 		agent.agentStrategy(TimeStamp.create(100));
 
 		checkAggressionUpdate(SELL, agent.lastTransactionPrice, agent.targetPrice,
@@ -920,7 +884,7 @@ public class AAAgentTest {
 	}
 
 	private AAAgent addAgent(OrderType type) {
-		return addAgent(type, new EntityProperties(agentProperties));
+		return addAgent(type, EntityProperties.copy(agentProperties));
 	}
 
 	private void addOrder(OrderType type, int price, int quantity, int time) {
@@ -979,4 +943,5 @@ public class AAAgentTest {
 	private void assertCorrectBidQuantity(Agent agent, int quantity) {
 		assertCorrectBid(agent, 0, Integer.MAX_VALUE, quantity);
 	}
+	
 }

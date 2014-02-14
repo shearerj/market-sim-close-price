@@ -2,16 +2,12 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static fourheap.Order.OrderType.*;
 import static logger.Log.log;
 import static logger.Log.Level.INFO;
-
 import iterators.ExpInterarrivals;
 
 import java.util.Iterator;
 import java.util.Random;
-
-import com.google.common.collect.Iterators;
 
 import systemmanager.Keys;
 import systemmanager.Scheduler;
@@ -52,7 +48,7 @@ public class ZIRAgent extends BackgroundAgent {
 
 	protected boolean withdrawOrders; 	// true if withdraw orders at each reentry
 	
-	ZIRAgent(Scheduler scheduler, TimeStamp arrivalTime,
+	protected ZIRAgent(Scheduler scheduler, TimeStamp arrivalTime,
 			FundamentalValue fundamental, SIP sip, Market market, Random rand,
 			Iterator<TimeStamp> interarrivals, double pvVar, int tickSize,
 			int maxAbsPosition, int bidRangeMin, int bidRangeMax,
@@ -69,17 +65,8 @@ public class ZIRAgent extends BackgroundAgent {
 			double reentryRate, double pvVar, int tickSize, int maxAbsPosition,
 			int bidRangeMin, int bidRangeMax, boolean withdrawOrders) {
 		this(scheduler, arrivalTime, fundamental, sip, market, rand,
-				new ExpInterarrivals(reentryRate, rand), pvVar, tickSize,
+				ExpInterarrivals.create(reentryRate, rand), pvVar, tickSize,
 				maxAbsPosition, bidRangeMin, bidRangeMax, withdrawOrders);
-	}
-	
-	public ZIRAgent(Scheduler scheduler, TimeStamp arrivalTime,
-			FundamentalValue fundamental, SIP sip, Market market, Random rand,
-			double pvVar, int tickSize, int maxAbsPosition, int bidRangeMin,
-			int bidRangeMax, boolean withdrawOrders) {
-		this(scheduler, arrivalTime, fundamental, sip, market, rand, Iterators
-				.<TimeStamp> emptyIterator(), pvVar, tickSize, maxAbsPosition,
-				bidRangeMin, bidRangeMax, withdrawOrders);
 	}
 
 	public ZIRAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
@@ -102,11 +89,7 @@ public class ZIRAgent extends BackgroundAgent {
 			log.log(INFO, "%s: wake up.", this);
 		}
 		// XXX should it go to sleep?
-//		if (!activeOrders.isEmpty()) {
-//			sb.append(" last order has not transacted, go back to sleep");
-//			log(INFO, sb.toString());
-//			return acts.build();
-//		}
+//		if (!activeOrders.isEmpty()) return;
 
 		if (withdrawOrders) {
 			log.log(INFO, "%s: Withdraw all orders.", this);

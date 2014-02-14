@@ -6,12 +6,8 @@ import java.util.Random;
 
 import systemmanager.Keys;
 import systemmanager.Scheduler;
-import activity.Activity;
 import activity.AgentStrategy;
 import activity.SubmitOrder;
-
-import com.google.common.collect.ImmutableList;
-
 import data.AgentProperties;
 import data.FundamentalValue;
 import data.OrderDatum;
@@ -77,7 +73,6 @@ public class MarketDataAgent extends SMAgent {
 				nextOrder.getPrice(), nextOrder.getQuantity()));
 		
 		// Schedule reentry
-		AgentStrategy reentry;
 		if(!orderDatumList.isEmpty())
 			scheduler.scheduleActivity(orderDatumList.get(0).getTimeStamp(),  new AgentStrategy(this));
 	}

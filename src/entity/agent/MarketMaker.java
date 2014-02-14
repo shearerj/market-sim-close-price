@@ -10,8 +10,6 @@ import iterators.ExpInterarrivals;
 import java.util.Iterator;
 import java.util.Random;
 
-import com.google.common.collect.Iterators;
-
 import systemmanager.Scheduler;
 import utils.MathUtils;
 import activity.SubmitOrder;
@@ -80,18 +78,7 @@ public abstract class MarketMaker extends ReentryAgent {
 			Market market, Random rand, double reentryRate, int tickSize, 
 			boolean noOp, int numRungs, int rungSize, boolean truncateLadder,
 			boolean tickImprovement, boolean tickInside) {
-		this(scheduler, fundamental, sip, market, rand, new ExpInterarrivals(reentryRate, rand),
-				tickSize, noOp, numRungs, rungSize, truncateLadder, tickImprovement, tickInside);
-	}
-	
-	/**
-	 * Shortcut constructor for MarketMaker that only acts once
-	 */
-	MarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
-			Market market, Random rand, int tickSize, 
-			boolean noOp, int numRungs, int rungSize, boolean truncateLadder,
-			boolean tickImprovement, boolean tickInside) {
-		this(scheduler, fundamental, sip, market, rand, Iterators.<TimeStamp> emptyIterator(),
+		this(scheduler, fundamental, sip, market, rand, ExpInterarrivals.create(reentryRate, rand),
 				tickSize, noOp, numRungs, rungSize, truncateLadder, tickImprovement, tickInside);
 	}
 

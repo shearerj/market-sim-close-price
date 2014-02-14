@@ -1,9 +1,13 @@
 package entity.agent;
 
-import static org.junit.Assert.*;
-import static fourheap.Order.OrderType.*;
-import static logger.Log.Level.*;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
 import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,13 +23,15 @@ import org.junit.Test;
 
 import systemmanager.Consts;
 import systemmanager.Executor;
+import systemmanager.Keys;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
 
-import data.MockFundamental;
+import data.EntityProperties;
 import data.FundamentalValue;
+import data.MockFundamental;
 import entity.infoproc.SIP;
 import entity.market.MockMarket;
 import entity.market.Order;
@@ -53,6 +59,12 @@ public class ZIAgentTest {
 	private MockMarket market;
 	private SIP sip;
 	private static Random rand;
+	
+	private static EntityProperties defaults = EntityProperties.fromPairs(
+			Keys.PRIVATE_VALUE_VAR, 1e8,
+			Keys.TICK_SIZE, 1,
+			Keys.BID_RANGE_MIN, 0,
+			Keys.BID_RANGE_MAX, 1000);
 
 	@BeforeClass
 	public static void setUpClass() throws IOException{
@@ -73,40 +85,18 @@ public class ZIAgentTest {
 	
 	//Agent Constructor methods====================================================================
 	
-	private ZIAgent addAgent(int min, int max, Random rand, PrivateValue pv){
-		//Initialize ZIAgent with default properties:
-		//REENTRY_RATE, 0
-		//TICK_SIZE, 1
-		return new ZIAgent(exec, TimeStamp.create(0), fundamental, sip, market, rand, pv, 1, min, max);
+	private ZIAgent addAgent(int min, int max, Random rand, PrivateValue pv) {
+		return new ZIAgent(exec, TimeStamp.ZERO, fundamental, sip, market,
+				rand, pv, 1, min, max);
 	}
 	
-	
-	private ZIAgent addAgent(int min, int max, Random rand) {
-		//Initialize ZIAgent with default properties:
-		//REENTRY_RATE, 0
-		//PRIVATE_VALUE_VAR, 100000000
-		//TICK_SIZE, 1
-		return addAgent(min, max, rand, new PrivateValue(1, 100000000, rand));
+	private ZIAgent addAgent(Object... parameters){
+		return addAgent(rand, parameters);
 	}
 	
-	private ZIAgent addAgent(int min, int max){
-		//Initialize ZIAgent with default properties:
-		//REENTRY_RATE, 0
-		//PRIVATE_VALUE_VAR, 100000000 = +/- $10.00
-		//TICK_SIZE, 1
-		//Random rand
-		return addAgent(min, max, rand);
-	}
-	
-	private ZIAgent addAgent(){
-		//Initialize ZIAgent with default properties:
-		//REENTRY_RATE, 0
-		//PRIVATE_VALUE_VAR, 100000000 = +/- $10.00
-		//TICK_SIZE, 1
-		//Random rand
-		//BID_RANGE_MIN, 0
-		//BID_RANGE_MAX, 1000 = +/- $1.00
-		return addAgent(0, 1000); 
+	private ZIAgent addAgent(Random rand, Object... parameters){
+		return new ZIAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
+				EntityProperties.copyFromPairs(defaults, parameters));
 	}
 	
 	//Testing methods==============================================================================
@@ -138,7 +128,6 @@ public class ZIAgentTest {
 	@Test
 	public void initialActivityZI(){
 		log.log(DEBUG, "Testing ZI Activity is correct");
-		// New ZIAgent
 		ZIAgent testAgent = addAgent();
 		TimeStamp currentTime = TimeStamp.create(100);
 		testAgent.agentStrategy(currentTime);
@@ -181,7 +170,7 @@ public class ZIAgentTest {
 		log.log(DEBUG, "Testing ZI 100 submitted quantities are correct");
 		for(int r = 0; r<100; r++){
 			// New ZIAgent
-			ZIAgent testAgent = addAgent(0,1000, new Random(r));
+			ZIAgent testAgent = addAgent(new Random(r));
 			
 			// Execute Strategy
 			testAgent.agentStrategy(TimeStamp.create(r*100));
@@ -194,7 +183,7 @@ public class ZIAgentTest {
 		log.log(DEBUG, "Testing ZI 100 submitted bid ranges are correct");
 		for(int r = 0; r<100; r++){
 			// New ZIAgent
-			ZIAgent testAgent = addAgent(0,1000, new Random(r));
+			ZIAgent testAgent = addAgent(new Random(r));
 			
 			// Execute Strategy
 			testAgent.agentStrategy(TimeStamp.create(r*100));

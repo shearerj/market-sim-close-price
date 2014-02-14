@@ -13,11 +13,6 @@ import java.util.Random;
 
 import systemmanager.Scheduler;
 import activity.AgentStrategy;
-import activity.Activity;
-import activity.AgentStrategy;
-
-import com.google.common.collect.ImmutableList;
-
 import data.FundamentalValue;
 import data.OrderDatum;
 import data.OrderParser;
@@ -28,6 +23,7 @@ import entity.market.Market;
 import entity.market.Order;
 import event.TimeStamp;
 
+// FIXME Delete
 public class OrderDataAgent extends SMAgent {
 
 	private static final long serialVersionUID = -8572291999924780979L;
@@ -39,7 +35,7 @@ public class OrderDataAgent extends SMAgent {
 		super(scheduler, TimeStamp.ZERO, fundamental, sip, market, rand, 1);
 		
 		// Opening the orderParser
-		OrderParser orderParser;
+		@SuppressWarnings("unused") OrderParser orderParser;
 		if (filename.contains("nyse")) {
 			orderParser = new OrderParserNYSE();
 		}
@@ -66,6 +62,7 @@ public class OrderDataAgent extends SMAgent {
 	@Override
 	public void agentStrategy(TimeStamp currentTime) {
 		OrderDatum nextStrategy = orderDatumList.get(0);
+		orderDatumList.remove(0); // FIXME Super inefficient
 		log.log(INFO, "%s: Next entry at %s", this, nextStrategy.getTimeStamp());
 		scheduler.scheduleActivity(nextStrategy.getTimeStamp(),  new AgentStrategy(this));
 	}

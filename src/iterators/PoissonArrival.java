@@ -1,6 +1,7 @@
 package iterators;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.Random;
 
 import com.google.common.collect.AbstractSequentialIterator;
@@ -11,11 +12,11 @@ public class PoissonArrival extends AbstractSequentialIterator<TimeStamp> implem
 	
 	private static final long serialVersionUID = -999049122857549847L;
 	
-	protected final ExpInterarrivals gen;
+	protected final Iterator<TimeStamp> gen;
 
 	public PoissonArrival(TimeStamp initialTime, double rate, Random rand) {
 		super(initialTime);
-		gen = new ExpInterarrivals(rate, rand);
+		gen = ExpInterarrivals.create(rate, rand);
 	}
 
 	@Override

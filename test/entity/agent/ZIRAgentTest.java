@@ -2,10 +2,9 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.*;
-import static logger.Log.Level.*;
 import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,7 +51,10 @@ public class ZIRAgentTest {
 	private Market market;
 	private SIP sip;
 	private static Random rand;
-	private static EntityProperties agentProperties;
+	private static EntityProperties agentProperties = EntityProperties.fromPairs(
+			Keys.REENTRY_RATE, 0,
+			Keys.MAX_QUANTITY, 2,
+			Keys.PRIVATE_VALUE_VAR, 0);
 
 	@BeforeClass
 	public static void setUpClass() throws IOException{
@@ -60,13 +62,7 @@ public class ZIRAgentTest {
 		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIRAgentTest.log"));
 
 		// Creating the setup properties
-		rand = new Random(1);
-
-		// Setting up agentProperties
-		agentProperties = new EntityProperties();
-		agentProperties.put(Keys.REENTRY_RATE, 0);
-		agentProperties.put(Keys.MAX_QUANTITY, 2);
-		agentProperties.put(Keys.PRIVATE_VALUE_VAR, 0);
+		rand = new Random();
 	}
 
 	@Before
@@ -77,11 +73,26 @@ public class ZIRAgentTest {
 		market = new MockMarket(exec, sip);
 	}
 
+	public ZIRAgent createAgent(Object... parameters) {
+		return createAgent(fundamental, market, rand, parameters);
+	}
+	
+	public ZIRAgent createAgent(FundamentalValue fundamental, Market market, Random rand, Object... parameters) {
+		return new ZIRAgent(exec, TimeStamp.ZERO, fundamental, sip, market,
+				rand, EntityProperties.copyFromPairs(agentProperties,
+						parameters));
+	}
+
 	@Test
 	public void withdrawTest() {
 		// verify that orders are correctly withdrawn at each re-entry
-		ZIRAgent agent = new ZIRAgent(exec, TimeStamp.ZERO, fundamental, sip,
-				market, rand, 0, 1, 2, 0, 5000, true);
+		ZIRAgent agent = createAgent(
+				Keys.PRIVATE_VALUE_VAR, 0,
+				Keys.TICK_SIZE, 1,
+				Keys.MAX_QUANTITY, 2,
+				Keys.BID_RANGE_MIN, 0,
+				Keys.BID_RANGE_MAX, 5000,
+				Keys.WITHDRAW_ORDERS, true);
 
 		// execute strategy once; then before reenter, change the position balance
 		// that way, when execute strategy again, it won't submit new orders
@@ -124,15 +135,13 @@ public class ZIRAgentTest {
 		///////////////
 		// Creating ZIR agent that WILL withdraw its orders; & submit buy order
 		FundamentalValue fundamental2 = new MockFundamental(110000);
-		EntityProperties testProps = new EntityProperties(agentProperties);
-		testProps.put(Keys.WITHDRAW_ORDERS, true);
-		testProps.put(Keys.REENTRY_RATE, 0);
-		testProps.put(Keys.BID_RANGE_MAX, 1000);
-		testProps.put(Keys.BID_RANGE_MIN, 1000);
-		testProps.put(Keys.MAX_QUANTITY, 1);
-		ZIRAgent agent1 = new ZIRAgent(exec, TimeStamp.ZERO, fundamental2, sip,
-				nasdaq, new Random(4), 0, 1, 1, 1000, 1000, true);
-		// rand seed selected to insert BUY
+		ZIRAgent agent1 = createAgent(fundamental2, nasdaq, new Random(4), // rand seed selected to insert BUY
+				Keys.PRIVATE_VALUE_VAR, 0,
+				Keys.TICK_SIZE, 1,
+				Keys.MAX_QUANTITY, 1,
+				Keys.BID_RANGE_MIN, 1000,
+				Keys.BID_RANGE_MAX, 1000,
+				Keys.WITHDRAW_ORDERS, true);
 
 		// ZIR submits sell at 105 (is routed to nyse)
 		// Verify that NBBO quote is (104, 105) at time 100
@@ -199,9 +208,13 @@ public class ZIRAgentTest {
 		///////////////
 		// Creating ZIR agent that WILL NOT withdraw its orders; & submit buy order
 		FundamentalValue fundamental2 = new MockFundamental(110000);
-		ZIRAgent agent1 = new ZIRAgent(exec, TimeStamp.ZERO, fundamental2, sip,
-				nasdaq, new Random(4), 0, 1, 1, 1000, 1000, false);
-		// rand seed selected to insert BUY
+		ZIRAgent agent1 = createAgent(fundamental2, nasdaq, new Random(4), // rand seed selected to insert BUY
+				Keys.PRIVATE_VALUE_VAR, 0,
+				Keys.TICK_SIZE, 1,
+				Keys.MAX_QUANTITY, 1,
+				Keys.BID_RANGE_MIN, 1000,
+				Keys.BID_RANGE_MAX, 1000,
+				Keys.WITHDRAW_ORDERS, false);
 		
 		// ZIR submits sell at 105 (is routed to nyse)
 		// Verify that NBBO quote is (104, 105) at time 100

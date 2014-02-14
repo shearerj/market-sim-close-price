@@ -38,35 +38,21 @@ public class ZIAgent extends BackgroundAgent {
 
 	public ZIAgent(Scheduler scheduler, TimeStamp arrivalTime,
 			FundamentalValue fundamental, SIP sip, Market market, Random rand,
-			double pvVar, int tickSize, int bidRangeMin, int bidRangeMax) {
+			PrivateValue privateValue, int tickSize, int bidRangeMin, int bidRangeMax) {
 		super(scheduler, arrivalTime, fundamental, sip, market, rand, Iterators
-				.<TimeStamp> emptyIterator(), new PrivateValue(1, pvVar, rand),
+				.<TimeStamp> emptyIterator(), privateValue,
 				tickSize, bidRangeMin, bidRangeMax);
 	}
 
 	public ZIAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, EntityProperties props) {
 		this(scheduler, arrivalTime, fundamental, sip, market, rand,
-				props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000), 
+				new PrivateValue(1, props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000), rand), 
 				props.getAsInt(Keys.TICK_SIZE, 1),
 				props.getAsInt(Keys.BID_RANGE_MIN, 0),
 				props.getAsInt(Keys.BID_RANGE_MAX, 5000));
 	}
 	
-	/**
-	 * Constructor for testing purposes (ZIAgentTest)
-	 * 
-	 * TODO This shouldn't exist. It should be in the test classs or somewhere
-	 * else.
-	 */
-	ZIAgent(Scheduler scheduler, TimeStamp arrivalTime,
-			FundamentalValue fundamental, SIP sip, Market market, Random rand,
-			PrivateValue pv, int tickSize, int bidRangeMin, int bidRangeMax) {
-		super(scheduler, arrivalTime, fundamental, sip, market, rand, Iterators
-				.<TimeStamp> emptyIterator(), pv, tickSize, bidRangeMin,
-				bidRangeMax);
-	}
-
 	@Override
 	public void agentStrategy(TimeStamp currentTime) {
 		// 50% chance of being either long or short

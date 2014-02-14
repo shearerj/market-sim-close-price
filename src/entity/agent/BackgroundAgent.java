@@ -5,20 +5,17 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static logger.Log.log;
 import static logger.Log.Level.INFO;
-import iterators.ExpInterarrivals;
-import static fourheap.Order.OrderType.*;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 
 import systemmanager.Consts.DiscountFactor;
-import systemmanager.Scheduler;
 import systemmanager.Keys;
+import systemmanager.Scheduler;
 import utils.Rands;
 import activity.SubmitNMSOrder;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import data.FundamentalValue;

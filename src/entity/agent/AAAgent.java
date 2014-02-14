@@ -1,16 +1,14 @@
 package entity.agent;
 
-import static logger.Log.log;
-import static logger.Log.Level.INFO;
 import static com.google.common.base.Preconditions.checkArgument;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 import iterators.ExpInterarrivals;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -20,7 +18,7 @@ import systemmanager.Scheduler;
 import utils.Rands;
 import activity.SubmitNMSOrder;
 
-import com.google.common.collect.Iterators;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
@@ -83,6 +81,7 @@ public class AAAgent extends WindowAgent {
 			double theta, double thetaMin, double thetaMax, int historical,
 			int eta, double lambdaR, double lambdaA, double gamma,
 			double betaR, double betaT, boolean buyerStatus) {
+		
 		super(scheduler, arrivalTime, fundamental, sip, market, rand,
 				interarrivalTimes,
 				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize,
@@ -130,28 +129,7 @@ public class AAAgent extends WindowAgent {
 			boolean buyerStatus) {
 
 		this(scheduler, arrivalTime, fundamental, sip, market, rand,
-				new ExpInterarrivals(reentryRate, rand), pvVar, tickSize,
-				maxAbsPosition, bidRangeMin, bidRangeMax, withdrawOrders,
-				windowLength, aggression, theta, thetaMin, thetaMax,
-				historical, eta, lambdaR, lambdaA, gamma, betaR, betaT,
-				buyerStatus);
-
-	}
-
-	/**
-	 * AA that doesn't reenter
-	 */
-	AAAgent(Scheduler scheduler, TimeStamp arrivalTime,
-			FundamentalValue fundamental, SIP sip, Market market, Random rand,
-			double pvVar, int tickSize, int maxAbsPosition,
-			int bidRangeMin, int bidRangeMax, boolean withdrawOrders,
-			int windowLength, double aggression, double theta, double thetaMin,
-			double thetaMax, int historical, int eta, double lambdaR,
-			double lambdaA, double gamma, double betaR, double betaT,
-			boolean buyerStatus) {
-
-		this(scheduler, arrivalTime, fundamental, sip, market, rand,
-				Iterators.<TimeStamp> emptyIterator(), pvVar, tickSize,
+				ExpInterarrivals.create(reentryRate, rand), pvVar, tickSize,
 				maxAbsPosition, bidRangeMin, bidRangeMax, withdrawOrders,
 				windowLength, aggression, theta, thetaMin, thetaMax,
 				historical, eta, lambdaR, lambdaA, gamma, betaR, betaT,
@@ -183,7 +161,7 @@ public class AAAgent extends WindowAgent {
 				props.getAsDouble(Keys.BETA_T, Rands.nextUniform(rand, 0.2, 0.6)), 
 				props.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean()));
 
-		debug = props.getAsBoolean(Keys.DEBUG, false);
+		debug = props.getAsBoolean(Keys.DEBUG, false); // FIXME
 	}
 
 	@Override
@@ -574,6 +552,7 @@ public class AAAgent extends WindowAgent {
 
 		// Error Checking, must have some transactions otherwise can't compute
 		// equilibrium price
+		// XXX Shouldn't this check the length of transactions instead?
 		if (equilibriumPrice == null) return;
 
 		ArrayList<Transaction> transList = new ArrayList<Transaction>(transactions);
@@ -642,15 +621,6 @@ public class AAAgent extends WindowAgent {
 	}
 
 	/**
-	 * For debugging
-	 * @param in
-	 */
-	void setAggression(double in) {
-		aggressions.setValue(positionBalance, type, in);
-		aggression = in;
-	}
-
-	/**
 	 * Holds aggression values for AA agents.
 	 *
 	 */
@@ -663,7 +633,7 @@ public class AAAgent extends WindowAgent {
 
 		public Aggression() {
 			this.offset = 0;
-			this.values = Collections.emptyList();
+			this.values = ImmutableList.of();
 		}
 
 		public Aggression(int maxPosition, double initialValue) {

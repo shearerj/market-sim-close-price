@@ -62,8 +62,9 @@ public class ZIPAgent extends WindowAgent {
 			boolean withdrawOrders, int windowLength, double marginMin, double marginMax, 
 			double gammaMin, double gammaMax, double betaMin, double betaMax, 
 			double rangeCoeffA, double rangeCoeffR) {
+		
 		super(scheduler, arrivalTime, fundamental, sip, market, rand,
-				new ExpInterarrivals(reentryRate, rand),
+				ExpInterarrivals.create(reentryRate, rand),
 				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize, bidRangeMin,
 				bidRangeMax, windowLength);
 

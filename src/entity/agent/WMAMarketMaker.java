@@ -70,26 +70,6 @@ public class WMAMarketMaker extends MarketMaker {
 		bidQueue = EvictingQueue.create(numHistorical);
 		askQueue = EvictingQueue.create(numHistorical);
 	}
-	
-	/**
-	 * Shortcut constructor for agent that doesn't reenter
-	 */
-	WMAMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
-			Market market, Random rand, int tickSize, boolean noOp,
-			int numRungs, int rungSize, boolean truncateLadder,
-			boolean tickImprovement, boolean tickInside, int numHistorical, double weightFactor) {
-		super(scheduler, fundamental, sip, market, rand, tickSize, noOp,
-				numRungs, rungSize, truncateLadder, tickImprovement, tickInside);
-
-		checkArgument(weightFactor >= 0 && weightFactor < 1,
-				"Weight factor must be in range (0,1)!");
-		checkArgument(numHistorical > 0,
-				"Number of historical prices must be positive!");
-
-		this.weightFactor = weightFactor;
-		bidQueue = EvictingQueue.create(numHistorical);
-		askQueue = EvictingQueue.create(numHistorical);
-	}
 
 	public WMAMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
 			Random rand, EntityProperties props) {

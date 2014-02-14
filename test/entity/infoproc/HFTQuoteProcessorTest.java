@@ -8,8 +8,6 @@ import static logger.Log.log;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Random;
 
 import logger.Log;
 
@@ -44,7 +42,7 @@ import event.TimedActivity;
  *
  */
 public class HFTQuoteProcessorTest {
-	
+
 	private static final TimeStamp one = TimeStamp.create(1);
 	
 	private Executor exec;
@@ -341,6 +339,7 @@ public class HFTQuoteProcessorTest {
 		
 		// Check market1's HFT IP has updated but not market2's after time 0
 		exec.executeUntil(TimeStamp.create(1));
+		
 		q = mktip1.quote;
 		assertEquals("Incorrect last quote time", mktTime2, q.getQuoteTime());
 		assertEquals("Incorrect ASK", new Price(100), q.getAskPrice());

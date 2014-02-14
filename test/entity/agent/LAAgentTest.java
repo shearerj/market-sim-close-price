@@ -50,8 +50,8 @@ public class LAAgentTest {
 	public void setup() {
 		exec = new Executor();
 		sip = new SIP(exec, TimeStamp.IMMEDIATE);
-		market1 = new CDAMarket(exec, sip, new Random(), new EntityProperties());
-		market2 = new CDAMarket(exec, sip, new Random(), new EntityProperties());
+		market1 = new CDAMarket(exec, sip, new Random(), EntityProperties.empty());
+		market2 = new CDAMarket(exec, sip, new Random(), EntityProperties.empty());
 		agent1 = new MockAgent(exec, fundamental, sip, market1);
 		agent2 = new MockAgent(exec, fundamental, sip, market2);
 	}

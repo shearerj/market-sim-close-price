@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import systemmanager.Consts;
 import systemmanager.Executor;
+import systemmanager.Keys;
 import activity.AgentStrategy;
 import activity.Clear;
 import activity.ProcessQuote;
@@ -29,6 +30,7 @@ import activity.SubmitOrder;
 
 import com.google.common.collect.ImmutableList;
 
+import data.EntityProperties;
 import data.FundamentalValue;
 import data.MockFundamental;
 import entity.infoproc.BestBidAsk;
@@ -64,19 +66,23 @@ public class WMAMarketMakerTest {
 		market = new MockMarket(exec, sip);
 	}
 
-	private WMAMarketMaker createWMAMM(int numRungs, int rungSize, 
-			boolean truncateLadder, int tickSize, int numHistorical,
-			double weightFactor) {
+	private WMAMarketMaker createWMAMM(Object... parameters) {
 		return new WMAMarketMaker(exec, fundamental, sip, market, new Random(),
-				tickSize, false, numRungs, rungSize, truncateLadder, false, true,
-				numHistorical, weightFactor);
+				EntityProperties.fromPairs(parameters));
 	}
 	
 	@Test
 	public void nullBidAsk() {
 		// testing when no bid/ask, does not submit any orders
 		TimeStamp time = TimeStamp.ZERO;
-		MarketMaker mm = createWMAMM(2, 10, false, 1, 5, 0);
+		
+		MarketMaker mm = createWMAMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5,
+				Keys.WEIGHT_FACTOR, 0);
 		
 		// Check activities inserted (none, other than reentry)
 		mm.agentStrategy(time);
@@ -91,7 +97,13 @@ public class WMAMarketMakerTest {
 	public void quoteUndefined() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		MarketMaker mm = createWMAMM(2, 10, false, 1, 5, 0.9);
+		MarketMaker mm = createWMAMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5,
+				Keys.WEIGHT_FACTOR, 0.9);
 		mm.lastAsk = new Price(55);
 		mm.lastBid = new Price(45);
 
@@ -127,7 +139,13 @@ public class WMAMarketMakerTest {
 	 */
 	@Test
 	public void withdrawUndefinedTest() {
-		MarketMaker marketmaker = createWMAMM(3, 5, true, 1, 5, 0);
+		MarketMaker marketmaker = createWMAMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5,
+				Keys.WEIGHT_FACTOR, 0);
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -178,7 +196,13 @@ public class WMAMarketMakerTest {
 	public void computeLinearWeightedMovingAverage() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		WMAMarketMaker mm = createWMAMM(1, 10, false, 1, 5, 0);
+		WMAMarketMaker mm = createWMAMM(
+				Keys.NUM_RUNGS, 1,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5,
+				Keys.WEIGHT_FACTOR, 0);
 		
 		QuoteProcessor qp = mm.marketQuoteProcessor;
 		
@@ -233,7 +257,13 @@ public class WMAMarketMakerTest {
 		TimeStamp time = TimeStamp.ZERO;
 
 		double factor = 0.5;
-		WMAMarketMaker mm = createWMAMM(1, 10, false, 1, 5, factor);
+		WMAMarketMaker mm = createWMAMM(
+				Keys.NUM_RUNGS, 1,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5,
+				Keys.WEIGHT_FACTOR, factor);
 		
 		QuoteProcessor qp = mm.marketQuoteProcessor;
 		
@@ -302,7 +332,13 @@ public class WMAMarketMakerTest {
 	public void evictingQueueTest() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		WMAMarketMaker mm = createWMAMM(2, 10, false, 1, 3, 0.9);
+		WMAMarketMaker mm = createWMAMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 3,
+				Keys.WEIGHT_FACTOR, 0.9);
 
 		QuoteProcessor qp = mm.marketQuoteProcessor;
 
@@ -351,7 +387,13 @@ public class WMAMarketMakerTest {
 	public void basicLadderTest() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		MarketMaker mm = createWMAMM(2, 10, false, 1, 5, 0.9);
+		MarketMaker mm = createWMAMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5,
+				Keys.WEIGHT_FACTOR, 0.9);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -402,7 +444,13 @@ public class WMAMarketMakerTest {
 	public void partialQueueLadderTest() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		WMAMarketMaker mm = createWMAMM(1, 10, false, 1, 5, 0.9);
+		WMAMarketMaker mm = createWMAMM(
+				Keys.NUM_RUNGS, 1,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5,
+				Keys.WEIGHT_FACTOR, 0.9);
 
 		QuoteProcessor qp = mm.marketQuoteProcessor;
 
@@ -444,7 +492,13 @@ public class WMAMarketMakerTest {
 	 */
 	@Test
 	public void rungsTest() {
-		MarketMaker marketmaker = createWMAMM(3, 12, false, 5, 5, 0.9);
+		MarketMaker marketmaker = createWMAMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 12,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 5,
+				Keys.NUM_HISTORICAL, 5,
+				Keys.WEIGHT_FACTOR, 0.9);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -493,8 +547,14 @@ public class WMAMarketMakerTest {
 
 	@Test
 	public void noOpTest() {
-		MarketMaker mm = createWMAMM(2, 10, false, 1, 5, 0.9);
-		mm.noOp = true;
+		MarketMaker mm = createWMAMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5,
+				Keys.WEIGHT_FACTOR, 0.9,
+				Keys.NO_OP, true);
 
 		// Check activities inserted (none, since no-op)
 		mm.agentStrategy(TimeStamp.ZERO);
@@ -506,7 +566,13 @@ public class WMAMarketMakerTest {
 	public void truncateBidTest() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		MarketMaker marketmaker = createWMAMM(3, 5, true, 1, 5, 0.9);
+		MarketMaker marketmaker = createWMAMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5,
+				Keys.WEIGHT_FACTOR, 0.9);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -563,7 +629,13 @@ public class WMAMarketMakerTest {
 	public void truncateAskTest() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		MarketMaker marketmaker = createWMAMM(3, 5, true, 1, 5, 0.9);
+		MarketMaker marketmaker = createWMAMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5,
+				Keys.WEIGHT_FACTOR, 0.9);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
