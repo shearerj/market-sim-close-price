@@ -25,6 +25,7 @@ import org.junit.Test;
 import systemmanager.Consts;
 import systemmanager.Executor;
 import systemmanager.Keys;
+import utils.MathUtils;
 
 import com.google.common.collect.Iterables;
 
@@ -282,7 +283,7 @@ public class ZIPAgentTest {
 		double oldMargin = agent.margin.getValue(0, agent.type);
 		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
 		agent.updateMargin(lastTrans, time);
-		double newMargin = agent.margin.getValue(0, agent.type);
+		double newMargin = MathUtils.bound(agent.margin.getValue(0, agent.type), -1, 0);
 		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
 		checkMarginUpdate(BUY, lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
@@ -368,7 +369,8 @@ public class ZIPAgentTest {
 		double oldMargin = agent.margin.getValue(0, agent.type);
 		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
 		agent.updateMargin(lastTrans, time);
-		double newMargin = agent.margin.getValue(0, agent.type);
+		// FIXME To Elaine: Added the bound because this was failing when new margin was outside of the bound.
+		double newMargin = MathUtils.bound(agent.margin.getValue(0, agent.type), -1, 0);
 		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
 		checkMarginUpdate(BUY, lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}

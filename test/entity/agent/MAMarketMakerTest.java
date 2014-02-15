@@ -46,7 +46,10 @@ public class MAMarketMakerTest {
 	private Executor exec;
 	private MockMarket market;
 	private SIP sip;
-	private FundamentalValue fundamental = new MockFundamental(100000);
+	private static final FundamentalValue fundamental = new MockFundamental(100000);
+	private static final EntityProperties agentProperties = EntityProperties.fromPairs(
+			Keys.REENTRY_RATE, 0,
+			Keys.TICK_IMPROVEMENT, false);
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
@@ -62,7 +65,7 @@ public class MAMarketMakerTest {
 	
 	private MAMarketMaker createMAMM(Object... parameters) {
 		return new MAMarketMaker(exec, fundamental, sip, market, new Random(),
-				EntityProperties.fromPairs(parameters));
+				EntityProperties.copyFromPairs(agentProperties, parameters));
 	}
 
 	@Test

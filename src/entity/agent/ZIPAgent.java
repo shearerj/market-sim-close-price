@@ -12,6 +12,7 @@ import systemmanager.Keys;
 import systemmanager.Scheduler;
 import static logger.Log.log;
 import static logger.Log.Level.INFO;
+import utils.MathUtils;
 import utils.Rands;
 import activity.SubmitNMSOrder;
 import data.EntityProperties;
@@ -171,7 +172,7 @@ public class ZIPAgent extends WindowAgent {
 		switch (type) {
 		case BUY:
 			// buyer margin constrained to in [-1, 0]
-			newMargin = Math.min(0, Math.max(-1, currentMargin));
+			newMargin = MathUtils.bound(currentMargin, -1, 0);
 			break;
 		case SELL:
 			// seller margin constrained to in [0, inf)
