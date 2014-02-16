@@ -1,6 +1,11 @@
 package data;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.Map;
+
+import com.google.common.collect.Maps;
+
 import systemmanager.Consts.MarketType;
 
 /**
@@ -19,25 +24,40 @@ public class MarketProperties extends EntityProperties {
 	
 	protected final MarketType type;
 	
-	public MarketProperties(MarketType type) {
-		super();
-		this.type = checkNotNull(type, "Market Type");
-	}
-
-	public MarketProperties(MarketProperties copy) {
-		super(copy);
-		this.type = copy.type;
-	}
-
-	public MarketProperties(MarketType type, String config) {
-		super(config);
+	protected MarketProperties(MarketType type, Map<String, String> properties) {
+		super(properties);
 		this.type = type;
 	}
 	
-	public MarketProperties(MarketType type, EntityProperties def, String config) {
-		super(def, config);
-		this.type = type;
+	public static MarketProperties empty(MarketType type) {
+		return new MarketProperties(type, Maps.<String, String> newHashMap());
 	}
+	
+	public static MarketProperties create(MarketType type, EntityProperties defaults, String configString) {
+		Map<String, String> props = Maps.newHashMap(checkNotNull(defaults).properties);
+		props.putAll(parseConfigString(configString));
+		return new MarketProperties(type, props);
+	}
+	
+//	public MarketProperties(MarketType type) {
+//		super();
+//		this.type = checkNotNull(type, "Market Type");
+//	}
+//
+//	public MarketProperties(MarketProperties copy) {
+//		super(copy);
+//		this.type = copy.type;
+//	}
+//
+//	public MarketProperties(MarketType type, String config) {
+//		super(config);
+//		this.type = type;
+//	}
+//	
+//	public MarketProperties(MarketType type, EntityProperties def, String config) {
+//		super(def, config);
+//		this.type = type;
+//	}
 	
 	public MarketType getMarketType() {
 		return type;

@@ -128,7 +128,7 @@ public class SimulationSpec implements Serializable {
 			JsonPrimitive configJson = config.getAsJsonPrimitive(marketType.toString());
 			if (configJson == null) continue;
 			for (String marketConfig : split.split(configJson.getAsString()))
-				markets.add(new MarketProperties(marketType, def, marketConfig));
+				markets.add(MarketProperties.create(marketType, def, marketConfig));
 		}
 		return markets.build();
 	}
@@ -141,7 +141,7 @@ public class SimulationSpec implements Serializable {
 			JsonPrimitive configJson = config.getAsJsonPrimitive(agentType.toString());
 			if (configJson == null) continue;
 			for (String agentConfig : split.split(configJson.getAsString()))
-				backgroundAgents.add(new AgentProperties(agentType, def, agentConfig));
+				backgroundAgents.add(AgentProperties.create(agentType, def, agentConfig));
 		}
 		return backgroundAgents.build();
 	}

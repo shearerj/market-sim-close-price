@@ -11,7 +11,7 @@ import java.util.Set;
 import com.google.common.base.Joiner;
 import com.google.common.base.Joiner.MapJoiner;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
 /**
@@ -34,30 +34,26 @@ public class EntityProperties implements Serializable {
 	protected Map<String, String> properties;
 
 	// FIXME Change protected constructor to only takea map of values and create static methods for everything
-	protected EntityProperties() {
-		this.properties = Maps.newHashMap();
+	protected EntityProperties(Map<String, String> backedProperties) {
+		this.properties = backedProperties;
 	}
 
-	protected EntityProperties(EntityProperties def) {
-		this.properties = Maps.newHashMap(checkNotNull(def.properties));
-	}
-
-	public EntityProperties(String config) {
-		this();
-		addConfig(config);
-	}
-
-	public EntityProperties(EntityProperties def, String config) {
-		this(def);
-		addConfig(config);
-	}
+//	public EntityProperties(String config) {
+//		this();
+//		addConfig(config);
+//	}
+//
+//	public EntityProperties(EntityProperties def, String config) {
+//		this(def);
+//		addConfig(config);
+//	}
 	
 	public static EntityProperties empty() {
-		return new EntityProperties();
+		return new EntityProperties(Maps.<String, String> newHashMap());
 	}
 	
 	public static EntityProperties copy(EntityProperties from) {
-		return new EntityProperties(from);
+		return new EntityProperties(Maps.newHashMap(from.properties));
 	}
 	
 	public static EntityProperties fromPairs(Object... keysAndValues) {
@@ -71,14 +67,20 @@ public class EntityProperties implements Serializable {
 		created.putPairs(keysAndValues);
 		return created;
 	}
+	
+	public static EntityProperties fromConfigString(String configString) {
+		EntityProperties created = EntityProperties.empty();
+		created.properties.putAll(parseConfigString(configString));
+		return created;
+	}
 
-	protected void addConfig(String config) {
-		checkNotNull(config, "Config String");
-		ImmutableList<String> args = ImmutableList.copyOf(configSplitter.split(config));
-		checkArgument(args.size() % 2 == 0, "Not key value pair");
-		for (Iterator<String> it = args.iterator(); it.hasNext();) {
-			properties.put(it.next(), it.next());
-		}
+	protected static Map<String, String> parseConfigString(String configString) {
+		Iterable<String> args = configSplitter.split(checkNotNull(configString, "Config String"));
+		checkArgument(Iterables.size(args) % 2 == 0, "Not key value pair");
+		Map<String, String> parsed = Maps.newHashMap();
+		for (Iterator<String> it = args.iterator(); it.hasNext();)
+			parsed.put(it.next(), it.next());
+		return parsed;
 	}
 
 	public Set<String> keys() {

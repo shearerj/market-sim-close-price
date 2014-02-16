@@ -156,7 +156,7 @@ public class Simulation {
 			AgentFactory factory = new AgentFactory(scheduler, fundamental, sip, markets,
 					arrivalRate, new Random(rand.nextLong()));
 			for (int i = 0; i < roleEnt.getCount(); i++) {
-				Agent agent = factory.createAgent(new AgentProperties(strat));
+				Agent agent = factory.createAgent(AgentProperties.fromConfigString(strat));
 				agents.add(agent);
 				Player player = new Player(role, strat, agent);
 				players.add(player);
