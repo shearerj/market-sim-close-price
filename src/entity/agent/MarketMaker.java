@@ -54,12 +54,14 @@ public abstract class MarketMaker extends ReentryAgent {
 	protected boolean tickInside;		// true if improve tick inside the quote (default outside)
 	protected Price lastAsk, lastBid; 	// stores the last ask/bid, respectively
 
-	public MarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, Iterator<TimeStamp> reentry, int tickSize, 
-			boolean noOp, int numRungs, int rungSize, boolean truncateLadder, 
-			boolean tickImprovement, boolean tickInside) {
-		super(scheduler, TimeStamp.ZERO, fundamental, sip, market, rand, reentry, tickSize);
+	public MarketMaker(Scheduler scheduler, FundamentalValue fundamental,
+			SIP sip, Market market, Random rand, Iterator<TimeStamp> reentry,
+			int tickSize, boolean noOp, int numRungs, int rungSize,
+			boolean truncateLadder, boolean tickImprovement, boolean tickInside) {
 		
+		super(scheduler, TimeStamp.ZERO, fundamental, sip, market, rand,
+				reentry, tickSize);
+
 		checkArgument(numRungs > 0, "Number of rungs must be positive!");
 		this.noOp = noOp;
 		this.numRungs = numRungs;

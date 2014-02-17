@@ -57,16 +57,17 @@ public class ZIPAgent extends WindowAgent {
 	protected final double rangeCoeffA;	// range for A, coefficient of absolute perturbation
 	protected final double rangeCoeffR;	// range for R, coefficient of relative perturbation
 
-	public ZIPAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
-			Market market, Random rand, double reentryRate, double pvVar, 
-			int tickSize, int maxAbsPosition, int bidRangeMin, int bidRangeMax, 
-			boolean withdrawOrders, int windowLength, double marginMin, double marginMax, 
-			double gammaMin, double gammaMax, double betaMin, double betaMax, 
+	public ZIPAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			double reentryRate, double pvVar, int tickSize, int maxAbsPosition,
+			int bidRangeMin, int bidRangeMax, boolean withdrawOrders,
+			int windowLength, double marginMin, double marginMax,
+			double gammaMin, double gammaMax, double betaMin, double betaMax,
 			double rangeCoeffA, double rangeCoeffR) {
-		
+
 		super(scheduler, arrivalTime, fundamental, sip, market, rand,
-				ExpInterarrivals.create(reentryRate, rand),
-				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize, bidRangeMin,
+				ExpInterarrivals.create(reentryRate, rand), new PrivateValue(
+						maxAbsPosition, pvVar, rand), tickSize, bidRangeMin,
 				bidRangeMax, windowLength);
 
 		checkArgument(rangeCoeffA > 0, "Coefficient A's range must be positive");
@@ -92,8 +93,9 @@ public class ZIPAgent extends WindowAgent {
 		margin = new Margin(maxAbsPosition, rand, marginMin, marginMax);
 	}
 
-	public ZIPAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, EntityProperties props) {
+	public ZIPAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			EntityProperties props) {
 		this(scheduler, arrivalTime, fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0.005), 
 				props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),

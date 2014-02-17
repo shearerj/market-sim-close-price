@@ -34,8 +34,9 @@ public abstract class MMAgent extends Agent {
 	protected final Collection<Market> markets; 
 	
 	// TODO Just keep the SMIPs and not the actual markets...
-	public MMAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental,
-			SIP sip, Collection<Market> markets, Random rand, int tickSize) {
+	public MMAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Collection<Market> markets,
+			Random rand, int tickSize) {
 		super(scheduler, arrivalTime, fundamental, sip, rand, tickSize);
 		this.markets = markets;
 	}

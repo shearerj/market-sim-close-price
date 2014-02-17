@@ -38,6 +38,9 @@ import entity.market.Transaction;
 import event.TimeStamp;
 
 public class AgentTest {
+	
+	private static final TimeStamp time0 = TimeStamp.ZERO;
+	private static final TimeStamp time1 = TimeStamp.create(1);
 
 	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
@@ -103,9 +106,6 @@ public class AgentTest {
 	
 	@Test
 	public void withdrawOrder() {
-		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = TimeStamp.create(1);
-		
 		exec.scheduleActivity(time0, new SubmitOrder(agent, market, BUY, new Price(100), 1));
 		exec.executeUntil(time1.plus(time1));
 		
@@ -138,11 +138,9 @@ public class AgentTest {
 	@Test
 	public void withdrawOrderDelayed() {
 		// withdraw order when quotes are delayed
+		TimeStamp time10 = TimeStamp.create(10);
 		
-		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = TimeStamp.create(10);
-		
-		MockMarket market2 = new MockMarket(exec, sip, time1);
+		MockMarket market2 = new MockMarket(exec, sip, time10);
 		exec.scheduleActivity(time0, new SubmitOrder(agent, market2, BUY, new Price(100), 1));
 		exec.executeUntil(TimeStamp.create(1));
 		
@@ -195,9 +193,6 @@ public class AgentTest {
 	
 	@Test
 	public void withdrawNewestOrder() {
-		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = TimeStamp.create(1);
-		
 		exec.scheduleActivity(time0, new SubmitOrder(agent, market, BUY, new Price(50), 1));
 		exec.scheduleActivity(time1, new SubmitOrder(agent, market, SELL, new Price(100), 1));
 		exec.executeUntil(time1.plus(time1));
@@ -243,9 +238,6 @@ public class AgentTest {
 	
 	@Test
 	public void withdrawOldestOrder() {
-		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = TimeStamp.create(1);
-		
 		exec.scheduleActivity(time0, new SubmitOrder(agent, market, BUY, new Price(50), 1));
 		exec.scheduleActivity(time1, new SubmitOrder(agent, market, SELL, new Price(100), 1));
 		exec.executeUntil(time1.plus(time1));
@@ -293,9 +285,6 @@ public class AgentTest {
 	
 	@Test
 	public void withdrawAllOrders() {
-		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = TimeStamp.create(1);
-		
 		exec.scheduleActivity(time0, new SubmitOrder(agent, market, BUY, new Price(50), 1));
 		exec.scheduleActivity(time1, new SubmitOrder(agent, market, SELL, new Price(100), 1));
 		exec.executeUntil(time1.plus(time1));

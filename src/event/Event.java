@@ -1,11 +1,11 @@
 package event;
 
 import java.util.AbstractQueue;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.Random;
 
+import utils.Collections3;
 import utils.RandomQueue;
 import activity.Activity;
 
@@ -33,7 +33,7 @@ public class Event extends AbstractQueue<Activity> {
 	public Event(TimeStamp time, Random seed) {
 		size = 0;
 		if (time.equals(TimeStamp.IMMEDIATE))
-			backedQueue = Collections.asLifoQueue(Queues.<Queue<Activity>> newArrayDeque());
+			backedQueue = Collections3.newArrayStack();
 		else
 			backedQueue = RandomQueue.create(seed);
 	}

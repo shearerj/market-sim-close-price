@@ -28,6 +28,7 @@ public class UniformPriceClear implements ClearingRule {
 	@Override
 	public Map<MatchedOrders<Price, MarketTime, Order>, Price> pricing(
 			Iterable<MatchedOrders<Price, MarketTime, Order>> transactions) {
+		
 		if (Iterables.isEmpty(transactions)) return ImmutableMap.of();
 
 		Price minBuy = Iterables.getFirst(transactions, null).getBuy().getPrice();

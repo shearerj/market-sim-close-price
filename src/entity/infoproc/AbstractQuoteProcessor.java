@@ -23,7 +23,8 @@ abstract class AbstractQuoteProcessor extends Entity implements QuoteProcessor {
 	protected final Market associatedMarket;
 	protected Quote quote;
 
-	public AbstractQuoteProcessor(Scheduler scheduler, TimeStamp latency, Market associatedMarket) {
+	public AbstractQuoteProcessor(Scheduler scheduler, TimeStamp latency,
+			Market associatedMarket) {
 		super(ProcessorIDs.nextID++, scheduler);
 		this.latency = checkNotNull(latency);
 		this.associatedMarket = checkNotNull(associatedMarket);
@@ -34,8 +35,8 @@ abstract class AbstractQuoteProcessor extends Entity implements QuoteProcessor {
 
 	// TODO better way to handle immediate execution
 	@Override
-	public void sendToQuoteProcessor(Market market, 
-			Quote quote, TimeStamp currentTime) {
+	public void sendToQuoteProcessor(Market market, Quote quote,
+			TimeStamp currentTime) {
 		Activity act = new ProcessQuote(this, market, quote);
 		if (latency.equals(TimeStamp.IMMEDIATE))
 			scheduler.executeActivity(act);

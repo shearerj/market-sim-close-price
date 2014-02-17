@@ -57,7 +57,7 @@ public class AAAgentTest {
 		// Creating the setup properties
 		rand = new Random();
 
-		// Setting up agentProperties
+		// Setting up default agentProperties
 		agentProperties = EntityProperties.fromPairs(
 				Keys.REENTRY_RATE, 0,
 				Keys.MAX_QUANTITY, 10,

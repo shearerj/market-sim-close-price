@@ -65,27 +65,22 @@ public class ReentryAgentTest {
 	}
 	
 	// FIXME This test doesn't make sense. Rate 0 shouldn't be allowed.
-//	@Test
-//	public void reentryRateZeroTest() {
-//		TimeStamp time = TimeStamp.create(100);
-//		FundamentalValue fundamental = new MockFundamental(100000);
-//		
-//		// Test reentries - note should never iterate past INFINITE b/c it 
-//		// will never execute
-//		MockReentryAgent agent = new MockReentryAgent(exec, fundamental, sip, market, new Random(), 0, 1);
-//		Iterator<TimeStamp> reentries = agent.getReentryTimes(); 
-//		assertTrue(reentries.hasNext());
-//		TimeStamp next = reentries.next();
-//		assertTrue(next.getInTicks() >= 0);
-//		assertEquals(TimeStamp.INFINITE, next);
-//
-//		// Now test for agent, which should arrive at time 0
-//		MockReentryAgent agent2 = new MockReentryAgent(exec, fundamental, sip, market, new Random(), 0, 1);
-//		agent2.agentStrategy(time);
-//		TimedActivity act = exec.peek();
-//		assertTrue( act.getActivity() instanceof AgentStrategy );
-//		assertEquals( TimeStamp.INFINITE, act.getTime());
-//	}
+	@Test
+	public void reentryRateZeroTest() {
+		TimeStamp time = TimeStamp.create(100);
+		FundamentalValue fundamental = new MockFundamental(100000);
+		
+		// Test reentries - note should never iterate past INFINITE b/c it 
+		// will never execute
+		MockReentryAgent agent = new MockReentryAgent(exec, fundamental, sip, market, new Random(), 0, 1);
+		Iterator<TimeStamp> reentries = agent.getReentryTimes(); 
+		assertFalse(reentries.hasNext());
+
+		// Now test for agent, which should arrive at time 0
+		MockReentryAgent agent2 = new MockReentryAgent(exec, fundamental, sip, market, new Random(), 0, 1);
+		agent2.agentStrategy(time);
+		assertTrue(exec.isEmpty());
+	}
 	
 	@Test
 	public void extraTest() {

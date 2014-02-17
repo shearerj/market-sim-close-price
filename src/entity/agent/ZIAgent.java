@@ -38,14 +38,18 @@ public class ZIAgent extends BackgroundAgent {
 
 	public ZIAgent(Scheduler scheduler, TimeStamp arrivalTime,
 			FundamentalValue fundamental, SIP sip, Market market, Random rand,
-			PrivateValue privateValue, int tickSize, int bidRangeMin, int bidRangeMax) {
+			PrivateValue privateValue, int tickSize, int bidRangeMin,
+			int bidRangeMax) {
+		
 		super(scheduler, arrivalTime, fundamental, sip, market, rand, Iterators
-				.<TimeStamp> emptyIterator(), privateValue,
-				tickSize, bidRangeMin, bidRangeMax);
+				.<TimeStamp> emptyIterator(), privateValue, tickSize,
+				bidRangeMin, bidRangeMax);
 	}
 
-	public ZIAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			Market market, Random rand, EntityProperties props) {
+	public ZIAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			EntityProperties props) {
+		
 		this(scheduler, arrivalTime, fundamental, sip, market, rand,
 				new PrivateValue(1, props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000), rand), 
 				props.getAsInt(Keys.TICK_SIZE, 1),

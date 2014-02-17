@@ -49,7 +49,7 @@ public class BackgroundAgentTest {
 	@Test
 	public void getValuationBasic() {
 		TimeStamp time = TimeStamp.ZERO;
-		FundamentalValue randFundamental = new FundamentalValue(0.2, 100000, 10000, new Random());
+		FundamentalValue randFundamental = FundamentalValue.create(0.2, 100000, 10000, new Random());
 
 		BackgroundAgent agent = new MockBackgroundAgent(exec, randFundamental, sip, market);
 
@@ -82,7 +82,7 @@ public class BackgroundAgentTest {
 	public void getValuationRand() {
 		// Testing with randomized values
 		TimeStamp time = TimeStamp.ZERO;
-		FundamentalValue randFundamental = new FundamentalValue(0.2, 100000, 10000, new Random());
+		FundamentalValue randFundamental = FundamentalValue.create(0.2, 100000, 10000, new Random());
 		PrivateValue pv = new PrivateValue(5, 1000000, new Random());
 
 		BackgroundAgent agent = new MockBackgroundAgent(exec, randFundamental, sip, market, pv, 0, 1000);
@@ -126,7 +126,7 @@ public class BackgroundAgentTest {
 	public void getLimitPriceRand() {
 		// Testing with randomized values
 		TimeStamp time = TimeStamp.ZERO;
-		FundamentalValue randFundamental = new FundamentalValue(0.2, 100000, 10000, new Random());
+		FundamentalValue randFundamental = FundamentalValue.create(0.2, 100000, 10000, new Random());
 		PrivateValue pv = new PrivateValue(5, 1000000, new Random());
 
 		BackgroundAgent agent = new MockBackgroundAgent(exec, randFundamental, sip, market, pv, 0, 1000);
@@ -162,7 +162,7 @@ public class BackgroundAgentTest {
 	public void processTransaction() {
 		TimeStamp time = TimeStamp.ZERO;
 		FundamentalValue fundamental = new MockFundamental(100000);
-		FundamentalValue randFundamental = new FundamentalValue(0.2, 100000, 10000, new Random());
+		FundamentalValue randFundamental = FundamentalValue.create(0.2, 100000, 10000, new Random());
 		PrivateValue pv = new PrivateValue(5, 1000000, new Random());
 
 		MockAgent agent2 = new MockAgent(exec, fundamental, sip, market);
@@ -196,7 +196,7 @@ public class BackgroundAgentTest {
 	public void processTransactionMultiQuantity() {
 		TimeStamp time = TimeStamp.ZERO;
 		FundamentalValue fundamental = new MockFundamental(100000);
-		FundamentalValue randFundamental = new FundamentalValue(0.2, 100000, 10000, new Random());
+		FundamentalValue randFundamental = FundamentalValue.create(0.2, 100000, 10000, new Random());
 		PrivateValue pv = new PrivateValue(5, 1000000, new Random());
 
 		MockAgent agent2 = new MockAgent(exec, fundamental, sip, market);
@@ -231,7 +231,7 @@ public class BackgroundAgentTest {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time1 = TimeStamp.create(1);
 		FundamentalValue fundamental = new MockFundamental(100000);
-		FundamentalValue randFundamental = new FundamentalValue(0.2, 100000, 10000, new Random());
+		FundamentalValue randFundamental = FundamentalValue.create(0.2, 100000, 10000, new Random());
 		PrivateValue pv = new PrivateValue(5, 1000000, new Random());
 
 		MockAgent agent2 = new MockAgent(exec, fundamental, sip, market);

@@ -3,6 +3,12 @@ package event;
 import activity.Activity;
 import utils.Pair;
 
+/**
+ * Assigns an execution time to an activity
+ * 
+ * @author erik
+ * 
+ */
 public class TimedActivity extends Pair<TimeStamp, Activity> implements Comparable<TimedActivity> {
 
 	protected TimedActivity(TimeStamp time, Activity act) {

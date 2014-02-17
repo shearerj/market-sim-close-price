@@ -172,8 +172,7 @@ public class WMAMarketMakerTest {
 		
 		// Note that now the quote is undefined, after it withdraws its ladder
 		// so it will insert lastBid/Ask into the queues so the ladder changes
-		exec.executeUntil(one);
-		exec.setTime(one);
+		exec.executeUntil(one.plus(one));
 		exec.executeActivity(new AgentStrategy(marketmaker));
 		exec.executeUntil(TimeStamp.create(2));
 		assertNotNull(marketmaker.lastBid);

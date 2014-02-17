@@ -37,13 +37,14 @@ public abstract class WindowAgent extends BackgroundAgent {
 	private static final long serialVersionUID = -8112884516819617629L;
 
 	protected TimeStamp windowLength;
-	
-	public WindowAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental,
-			SIP sip, Market market, Random rand, Iterator<TimeStamp> interarrivalTimes,
-			PrivateValue pv, int tickSize, int bidRangeMin, int bidRangeMax,
-			int windowLength) {
-		super(scheduler, arrivalTime, fundamental, sip, market, rand, interarrivalTimes, pv, tickSize,
-				bidRangeMin, bidRangeMax);
+
+	public WindowAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			Iterator<TimeStamp> interarrivalTimes, PrivateValue pv,
+			int tickSize, int bidRangeMin, int bidRangeMax, int windowLength) {
+		
+		super(scheduler, arrivalTime, fundamental, sip, market, rand,
+				interarrivalTimes, pv, tickSize, bidRangeMin, bidRangeMax);
 		
 		this.windowLength = TimeStamp.create(windowLength);
 	}

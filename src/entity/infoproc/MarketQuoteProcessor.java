@@ -14,8 +14,9 @@ import event.TimeStamp;
 public class MarketQuoteProcessor extends AbstractQuoteProcessor {
 
 	private static final long serialVersionUID = 827960237754648780L;
-	
-	public MarketQuoteProcessor(Scheduler scheduler, TimeStamp latency, Market associatedMarket) {
+
+	public MarketQuoteProcessor(Scheduler scheduler, TimeStamp latency,
+			Market associatedMarket) {
 		super(scheduler, latency, associatedMarket);
 	}
 

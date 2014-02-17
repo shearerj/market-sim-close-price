@@ -13,14 +13,20 @@ public class NoOpAgent extends Agent {
 	
 	private static final long serialVersionUID = -7232513254416667984L;
 
-	public NoOpAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Random rand,
-			int tickSize) {
+	public NoOpAgent(Scheduler scheduler, FundamentalValue fundamental,
+			SIP sip, Random rand, int tickSize) {
 		super(scheduler, TimeStamp.ZERO, fundamental, sip, rand, tickSize);
 	}
 
-	public NoOpAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Random rand,
-			EntityProperties props) {
-		this(scheduler, fundamental, sip, rand, props.getAsInt(Keys.TICK_SIZE, 1));
+	public NoOpAgent(Scheduler scheduler, FundamentalValue fundamental,
+			SIP sip, Random rand, EntityProperties props) {
+		this(scheduler, fundamental, sip, rand,
+				props.getAsInt(Keys.TICK_SIZE, 1));
+	}
+
+	@Override
+	public void agentArrival(TimeStamp currentTime) {
+		
 	}
 
 	@Override

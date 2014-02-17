@@ -78,8 +78,8 @@ public class LAAgentTest {
 		 * LAStrategy in order to trigger the next LAStrategy before the first
 		 * has finished executing.
 		 */
-		LAAgent la = new LAAgent(exec, TimeStamp.IMMEDIATE, fundamental, sip,
-				ImmutableList.of(market1, market2), new Random(), 1, 0.001);
+		LAAgent la = new LAAgent(exec, fundamental, sip, ImmutableList.of(market1, market2),
+				new Random(), TimeStamp.IMMEDIATE, 1, 0.001);
 		market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent1, BUY, new Price(7), 1, TimeStamp.ZERO);
 		market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO);
@@ -99,8 +99,8 @@ public class LAAgentTest {
 	
 	@Test
 	public void laProfitTest() {
-		LAAgent la = new LAAgent(exec, TimeStamp.IMMEDIATE, fundamental, sip,
-				ImmutableList.of(market1, market2), new Random(), 1, 0.001);
+		LAAgent la = new LAAgent(exec, fundamental, sip, ImmutableList.of(market1, market2),
+				new Random(), TimeStamp.IMMEDIATE, 1, 0.001);
 		market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO);
 		market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO);
 		// LA Strategy gets called implicitly 
@@ -115,8 +115,8 @@ public class LAAgentTest {
 	 */
 	public void laLatencyNoRepeatOrdersTest() {
 		TimeStamp latency = TimeStamp.create(10);
-		LAAgent la = new LAAgent(exec, latency, fundamental, sip,
-				ImmutableList.of(market1, market2), new Random(), 1, 0.001);
+		LAAgent la = new LAAgent(exec, fundamental, sip, ImmutableList.of(market1, market2),
+				new Random(), latency, 1, 0.001);
 		
 		market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO);
 		market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO);
@@ -139,8 +139,8 @@ public class LAAgentTest {
 	 * This test makes sure the fix for the previous test doesn't effect infinitely fast LAs.
 	 */
 	public void laNoLatencySeveralOrders() {
-		LAAgent la = new LAAgent(exec, TimeStamp.IMMEDIATE, fundamental, sip,
-				ImmutableList.of(market1, market2), new Random(), 1, 0.001);
+		LAAgent la = new LAAgent(exec, fundamental, sip, ImmutableList.of(market1, market2),
+				new Random(), TimeStamp.IMMEDIATE, 1, 0.001);
 		
 		market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO);
 		market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO);

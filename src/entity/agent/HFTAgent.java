@@ -40,10 +40,12 @@ public abstract class HFTAgent extends MMAgent {
 			Random rand, int tickSize) {
 		this(scheduler, latency, latency, arrivalTime, fundamental, sip, markets, rand, tickSize);
 	}
-	
-	public HFTAgent(Scheduler scheduler, TimeStamp quoteLatency, TimeStamp transactionLatency, 
-			TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
-			Collection<Market> markets,	Random rand, int tickSize) {
+
+	public HFTAgent(Scheduler scheduler, TimeStamp quoteLatency,
+			TimeStamp transactionLatency, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Collection<Market> markets,
+			Random rand, int tickSize) {
+		
 		super(scheduler, arrivalTime, fundamental, sip, markets, rand, tickSize);
 		
 		Builder<Market, HFTQuoteProcessor> quoteProcessorBuilder = ImmutableMap.builder(); 

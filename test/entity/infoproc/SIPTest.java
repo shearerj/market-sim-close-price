@@ -370,8 +370,7 @@ public class SIPTest {
 		
 		// Send more quotes to SIPs but only execute up to SIP2 latency of 100
 		// so only first quote of [80, 100] should reach the delayed SIP
-		exec.executeUntil(TimeStamp.create(30));
-		exec.setTime(TimeStamp.create(30));
+		exec.executeUntil(TimeStamp.create(31));
 		exec.executeActivity(new SendToQP(market2, q2, sip));
 		exec.executeActivity(new SendToQP(market2, q2, sip2));
 		exec.executeUntil(sip2.latency.plus(TimeStamp.create(1)));
@@ -544,7 +543,6 @@ public class SIPTest {
 		
 		// Another agent submits a buy order
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip2, nasdaq);
-		exec.setTime(TimeStamp.create(100));
 		exec.executeActivity(new SubmitNMSOrder(agent2, nasdaq, BUY, new Price(109), 1));
 		
 		// Verify that order is routed to nyse and transacts immediately w/ agent1's order
@@ -573,7 +571,6 @@ public class SIPTest {
 		exec.executeActivity(new SubmitOrder(background2, nasdaq, SELL, new Price(110), 1));
 		exec.executeActivity(new SubmitOrder(background2, nyse, BUY, new Price(102), 1));
 		exec.executeUntil(time.plus(TimeStamp.create(1)));
-		exec.setTime(time);
 		
 		///////////////
 		// Creating dummy agent & submit sell order

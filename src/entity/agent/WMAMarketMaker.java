@@ -54,13 +54,15 @@ public class WMAMarketMaker extends MarketMaker {
 	protected EvictingQueue<Price> bidQueue;
 	protected EvictingQueue<Price> askQueue;
 
-	protected WMAMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, double reentryRate, int tickSize, boolean noOp,
-			int numRungs, int rungSize, boolean truncateLadder, 
-			boolean tickImprovement, boolean tickInside, int numHistorical, 
-			double weightFactor) {
-		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
-				numRungs, rungSize, truncateLadder, tickImprovement, tickInside);
+	protected WMAMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
+			SIP sip, Market market, Random rand, double reentryRate,
+			int tickSize, boolean noOp, int numRungs, int rungSize,
+			boolean truncateLadder, boolean tickImprovement,
+			boolean tickInside, int numHistorical, double weightFactor) {
+		
+		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
+				noOp, numRungs, rungSize, truncateLadder, tickImprovement,
+				tickInside);
 
 		checkArgument(weightFactor >= 0 && weightFactor < 1, 
 				"Weight factor must be in range (0,1)!");
@@ -71,8 +73,8 @@ public class WMAMarketMaker extends MarketMaker {
 		askQueue = EvictingQueue.create(numHistorical);
 	}
 
-	public WMAMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, EntityProperties props) {
+	public WMAMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
+			SIP sip, Market market, Random rand, EntityProperties props) {
 		this(scheduler, fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0.0005),
 				props.getAsInt(Keys.TICK_SIZE, 1),

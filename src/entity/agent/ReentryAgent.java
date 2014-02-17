@@ -16,13 +16,13 @@ public abstract class ReentryAgent extends SMAgent {
 
 	private static final long serialVersionUID = 4722377972197300345L;
 
-	protected Iterator<TimeStamp> reentry; // re-entry times
-	
-	public ReentryAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental,
-			SIP sip, Market market, Random rand, Iterator<TimeStamp> reentry,
-			int tickSize) {
+	protected Iterator<TimeStamp> reentry; // wait times between reentry
+
+	public ReentryAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			Iterator<TimeStamp> reentry, int tickSize) {
 		super(scheduler, arrivalTime, fundamental, sip, market, rand, tickSize);
-		
+
 		this.reentry = checkNotNull(reentry);
 	}
 	

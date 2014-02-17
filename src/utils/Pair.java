@@ -3,7 +3,7 @@ package utils;
 import com.google.common.base.Objects;
 
 /**
- * Simple immutable pair implementation
+ * Simple pair implementation
  * 
  * @author drhurd
  * 

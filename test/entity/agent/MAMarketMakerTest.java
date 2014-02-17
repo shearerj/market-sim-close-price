@@ -134,8 +134,6 @@ public class MAMarketMakerTest {
 	 */
 	@Test
 	public void withdrawUndefinedTest() {
-		TimeStamp time1 = TimeStamp.create(1);
-
 		MarketMaker marketmaker = createMAMM(
 				Keys.NUM_RUNGS, 3,
 				Keys.RUNG_SIZE, 5,
@@ -166,7 +164,7 @@ public class MAMarketMakerTest {
 		agent1.withdrawAllOrders();
 		agent2.withdrawAllOrders();
 		
-		exec.setTime(time1);
+		exec.executeUntil(TimeStamp.create(2));
 		// Note that now the quote is undefined, after it withdraws its ladder
 		// so it will insert lastBid/Ask into the queues so the ladder changes
 		exec.executeActivity(new AgentStrategy(marketmaker));

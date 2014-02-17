@@ -1,14 +1,14 @@
-package data;
+package entity.agent;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-public class OrderParserNasdaqTest {
+public class MarketDataAgentTest {
 
 	@Test
 	public void test() {
 		fail("Not yet implemented");
 	}
-	
+
 }

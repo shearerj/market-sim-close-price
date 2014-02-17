@@ -13,11 +13,10 @@ import event.TimeStamp;
  */
 public interface QuoteProcessor {
 
-	public void sendToQuoteProcessor(Market market, Quote quote, 
+	public void sendToQuoteProcessor(Market market, Quote quote,
 			TimeStamp currentTime);
 
-	public void processQuote(Market market,
-			Quote quote, TimeStamp currentTime);
-	
+	public void processQuote(Market market, Quote quote, TimeStamp currentTime);
+
 	public TimeStamp getLatency();
 }

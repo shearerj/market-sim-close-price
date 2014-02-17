@@ -20,7 +20,7 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-// XXX Potentially move this to another package?
+// XXX Erik: Potentially move this to another package?
 public class FundamentalValue implements Serializable {
 
 	private static final long serialVersionUID = 6764216196138108452L;
@@ -32,14 +32,12 @@ public class FundamentalValue implements Serializable {
 	protected final Random rand;
 
 	/**
-	 * Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps
-	 * 
 	 * @param kap rate which the process reverts to the mean value
 	 * @param meanVal mean process
 	 * @param var Gaussian Process variance
 	 * @param rand Random generator
 	 */
-	public FundamentalValue(double kap, int meanVal, double var, Random rand) {
+	protected FundamentalValue(double kap, int meanVal, double var, Random rand) {
 		this.rand = rand;
 		this.kappa = kap;
 		this.meanValue = meanVal;
@@ -51,6 +49,8 @@ public class FundamentalValue implements Serializable {
 	}
 	
 	/**
+	 * Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps
+	 * 
 	 * @param kap
 	 * @param meanVal
 	 * @param var

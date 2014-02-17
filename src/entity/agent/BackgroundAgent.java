@@ -43,10 +43,11 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	protected int bidRangeMax; 		// range for limit order
 	protected int bidRangeMin;
 	
-	public BackgroundAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			Market market, Random rand, Iterator<TimeStamp> reentry,
-			PrivateValue pv, int tickSize, int bidRangeMin,
-			int bidRangeMax) {
+	public BackgroundAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			Iterator<TimeStamp> reentry, PrivateValue pv, int tickSize,
+			int bidRangeMin, int bidRangeMax) {
+		
 		super(scheduler, arrivalTime, fundamental, sip, market, rand, reentry, tickSize);
 	
 		this.privateValue = checkNotNull(pv);
@@ -88,6 +89,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	
 	@Override
 	public void processTransaction(Transaction trans) {
+		
 		super.processTransaction(trans);
 		TimeStamp submissionTime;
 		OrderType type;
@@ -177,8 +179,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * @return
 	 */
 	protected Price getValuation(OrderType type, int quantity, TimeStamp currentTime) {
-		return new Price(
-				fundamental.getValueAt(currentTime).intValue() * quantity
+		return new Price(fundamental.getValueAt(currentTime).intValue() * quantity
 				+ privateValue.getValueFromQuantity(positionBalance, quantity, type).intValue()
 				).nonnegative();
 	}
@@ -197,7 +198,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * @param submissionTime
 	 * @return
 	 */
-	protected Price getTransactionValuation(OrderType type, int quantity, 
+	protected Price getTransactionValuation(OrderType type, int quantity,
 			TimeStamp currentTime, TimeStamp submissionTime) {
 		
 		// Determine the pre-transaction balance
@@ -216,8 +217,8 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * @param submissionTime
 	 * @return
 	 */
-	protected Price getTransactionValuation(OrderType type, TimeStamp currentTime,
-			TimeStamp submissionTime) {
+	protected Price getTransactionValuation(OrderType type,
+			TimeStamp currentTime, TimeStamp submissionTime) {
 		return getTransactionValuation(type, 1, currentTime, submissionTime);
 	}
 	

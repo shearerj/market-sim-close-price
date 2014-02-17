@@ -74,7 +74,7 @@ public class Simulation {
 		this.simulationLength = TimeStamp.create(simProps.getAsLong(Keys.SIMULATION_LENGTH));
 		TimeStamp lastTime = TimeStamp.create(simulationLength.getInTicks() - 1); // Last time to schedule something.
 
-		this.fundamental = new FundamentalValue(
+		this.fundamental = FundamentalValue.create(
 				simProps.getAsDouble(Keys.FUNDAMENTAL_KAPPA),
 				simProps.getAsInt(Keys.FUNDAMENTAL_MEAN),
 				simProps.getAsDouble(Keys.FUNDAMENTAL_SHOCK_VAR),

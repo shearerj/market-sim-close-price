@@ -189,7 +189,7 @@ public class ZIPAgentTest {
 		// should also be below the most recent transaction price
 		assertCorrectBid(agent, 85000, 95000, 1);
 		
-		// XXX This current test is based off the random seed. Currently this means that
+		// This current test is based off the random seed. Currently this means that
 		// Type: BUY
 		// R, A: 0.81, -0.20
 		// R, A: 0.89, -0.27
@@ -713,8 +713,7 @@ public class ZIPAgentTest {
 				assertTrue(oldMargin >= newMargin); // raise margin (more negative)
 			else
 				assertTrue(oldMargin <= newMargin); // lower margin
-		}
-		if (type == SELL) {
+		} else { // type == SELL
 			if (lastTransPrice.greaterThanEqual(lastPrice))
 				assertTrue(oldMargin <= newMargin); // raise margin (more positive)
 			else

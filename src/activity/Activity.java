@@ -8,9 +8,6 @@ import event.TimeStamp;
  * 
  * Based on the Command Pattern.
  * 
- * NOTE: If Activity has a negative scheduledTime, then it an "infinitely fast"
- * activity and will be executed immediately
- * 
  * @author ewah
  */
 public abstract class Activity {

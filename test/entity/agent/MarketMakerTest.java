@@ -95,7 +95,7 @@ public class MarketMakerTest {
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, false));
-		mm.stepSize = 5;
+		assertEquals(5, mm.stepSize);
 
 		mm.createOrderLadder(null, new Price(50));
 		assertTrue(mm.activeOrders.isEmpty());
@@ -107,7 +107,7 @@ public class MarketMakerTest {
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, false));
-		mm.stepSize = 5;
+		assertEquals(5, mm.stepSize);
 
 		mm.createOrderLadder(new Price(40), new Price(50));
 		assertEquals("Incorrect number of orders", 4, mm.activeOrders.size());
@@ -126,10 +126,10 @@ public class MarketMakerTest {
 		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 5,
-				Keys.TRUNCATE_LADDER, false));
-		mm.stepSize = 5;
-		mm.tickImprovement = true;
-		mm.tickInside = true; // default
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_INSIDE, true)); // default
+		assertEquals(5, mm.stepSize);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -158,9 +158,9 @@ public class MarketMakerTest {
 		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 5,
-				Keys.TRUNCATE_LADDER, true));
-		mm.stepSize = 5;
-		mm.tickImprovement = true;
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_IMPROVEMENT, true));
+		assertEquals(5, mm.stepSize);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -192,10 +192,10 @@ public class MarketMakerTest {
 		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 5,
-				Keys.TRUNCATE_LADDER, false));
-		mm.stepSize = 5;
-		mm.tickImprovement = true;
-		mm.tickInside = false;
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_INSIDE, false));
+		assertEquals(5, mm.stepSize);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -223,10 +223,10 @@ public class MarketMakerTest {
 		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 5,
-				Keys.TRUNCATE_LADDER, true));
-		mm.stepSize = 5;
-		mm.tickImprovement = true;
-		mm.tickInside = false;
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_INSIDE, false));
+		assertEquals(5, mm.stepSize);
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);

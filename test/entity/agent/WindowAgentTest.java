@@ -35,6 +35,8 @@ import event.TimeStamp;
  *
  */
 public class WindowAgentTest {
+	
+	private static final TimeStamp one = TimeStamp.create(1);
 
 	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
@@ -103,7 +105,7 @@ public class WindowAgentTest {
 		MockBackgroundAgent background2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		exec.executeActivity(new SubmitOrder(background1, market, BUY, new Price(111), 1));
 		exec.executeActivity(new SubmitOrder(background2, market, SELL, new Price(110), 1));
-		exec.setTime(time1);
+		exec.executeUntil(TimeStamp.create(2));
 		exec.executeActivity(new SubmitOrder(background1, market, BUY, new Price(104), 1));
 		exec.executeActivity(new SubmitOrder(agent, market, SELL, new Price(102), 1));
 		
@@ -194,10 +196,8 @@ public class WindowAgentTest {
 		MockBackgroundAgent agent_B = new MockBackgroundAgent(exec, fundamental, sip, market);
 		
 		//Timestamps for the first transaction and the time to execute up to
-		TimeStamp t_50 = TimeStamp.create(50);
 		TimeStamp t_51 = TimeStamp.create(51);
 		//Timestamps for the second transaction and the time to execute up to
-		TimeStamp t_100 = TimeStamp.create(100);
 		TimeStamp t_101 = TimeStamp.create(101);
 		//Timestamps for important intervals to check the window
 		TimeStamp t_151 = TimeStamp.create(151);
@@ -206,8 +206,7 @@ public class WindowAgentTest {
 		TimeStamp t_301 = TimeStamp.create(301);
 
 		//Execute first transaction
-		exec.executeUntil(t_50);
-		exec.setTime(t_50);
+		exec.executeUntil(t_51);
 		exec.executeActivity(new SubmitOrder(agent_S, market, SELL, new Price(40), 1));
 		exec.executeActivity(new SubmitOrder(agent_B, market, BUY, new Price(40), 1));
 		//Assert that the agent can't see the transaction due to latency
@@ -215,8 +214,7 @@ public class WindowAgentTest {
 		assertTrue("Window Transactions should be empty", windowTransactions.isEmpty());
 		
 		//Execute second transaction
-		exec.executeUntil(t_100);
-		exec.setTime(t_100);
+		exec.executeUntil(t_101);
 		exec.executeActivity(new SubmitOrder(agent_S, market, SELL, new Price(60), 1));
 		exec.executeActivity(new SubmitOrder(agent_B, market, BUY, new Price(60), 1));
 		//Assert that the agent can't see the transaction due to latency
@@ -290,8 +288,7 @@ public class WindowAgentTest {
 		MockBackgroundAgent agent_S = new MockBackgroundAgent(exec, fundamental, sip, m);
 		MockBackgroundAgent agent_B = new MockBackgroundAgent(exec, fundamental, sip, m);
 
-		exec.executeUntil(t);
-		exec.setTime(t);
+		exec.executeUntil(t.plus(one));
 		exec.executeActivity(new SubmitOrder(agent_S, m, SELL, new Price(p), q));
 		exec.executeActivity(new SubmitOrder(agent_B, m, BUY, new Price(p), q));
 	}

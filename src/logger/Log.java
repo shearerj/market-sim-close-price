@@ -60,7 +60,10 @@ public final class Log {
 	}
 	
 	/**
-	 * Creates a logger that prints everything to System.err
+	 * Creates a logger that prints everything to System.err.
+	 * 
+	 * Potentially useful for tests
+	 * 
 	 * @param level
 	 * @param prefix
 	 * @return
@@ -83,7 +86,7 @@ public final class Log {
 	 * the paramaterised options should be stuck in parameters. An example call
 	 * is
 	 * 
-	 * log(INFO, "Object %s, Int %d, Float %.4f", new Object(), 5, 6.7)
+	 * <code>log(INFO, "Object %s, Int %d, Float %.4f", new Object(), 5, 6.7)</code>
 	 * 
 	 * By calling log like this you can avoid expensive logging operations when
 	 * you're not actually logging, and use the fact that the strings are

@@ -47,12 +47,13 @@ public class ZIRAgent extends BackgroundAgent {
 	private static final long serialVersionUID = -1155740218390579581L;
 
 	protected boolean withdrawOrders; 	// true if withdraw orders at each reentry
-	
+
 	protected ZIRAgent(Scheduler scheduler, TimeStamp arrivalTime,
 			FundamentalValue fundamental, SIP sip, Market market, Random rand,
 			Iterator<TimeStamp> interarrivals, double pvVar, int tickSize,
 			int maxAbsPosition, int bidRangeMin, int bidRangeMax,
 			boolean withdrawOrders) {
+		
 		super(scheduler, arrivalTime, fundamental, sip, market, rand,
 				interarrivals, new PrivateValue(maxAbsPosition, pvVar, rand),
 				tickSize, bidRangeMin, bidRangeMax);
@@ -64,13 +65,16 @@ public class ZIRAgent extends BackgroundAgent {
 			FundamentalValue fundamental, SIP sip, Market market, Random rand,
 			double reentryRate, double pvVar, int tickSize, int maxAbsPosition,
 			int bidRangeMin, int bidRangeMax, boolean withdrawOrders) {
+		
 		this(scheduler, arrivalTime, fundamental, sip, market, rand,
 				ExpInterarrivals.create(reentryRate, rand), pvVar, tickSize,
 				maxAbsPosition, bidRangeMin, bidRangeMax, withdrawOrders);
 	}
 
-	public ZIRAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			Market market, Random rand, EntityProperties props) {
+	public ZIRAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			EntityProperties props) {
+		
 		this(scheduler, arrivalTime, fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0.005),
 				props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),

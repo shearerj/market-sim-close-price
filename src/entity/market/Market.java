@@ -99,7 +99,9 @@ public abstract class Market extends Entity {
 	 * @param rand
 	 *            the random number generator to use
 	 */
-	public Market(Scheduler scheduler, SIP sip, TimeStamp latency, ClearingRule clearingRule, Random rand) {
+	public Market(Scheduler scheduler, SIP sip, TimeStamp latency,
+			ClearingRule clearingRule, Random rand) {
+		
 		this(scheduler, sip, latency, latency, clearingRule, rand);
 	}
 	
@@ -120,8 +122,8 @@ public abstract class Market extends Entity {
 	 * @param rand
 	 *            the random number generator to use
 	 */
-	public Market(Scheduler scheduler, SIP sip, TimeStamp quoteLatency, TimeStamp transactionLatency,
-			ClearingRule clearingRule, Random rand) {
+	public Market(Scheduler scheduler, SIP sip, TimeStamp quoteLatency,
+			TimeStamp transactionLatency, ClearingRule clearingRule, Random rand) {
 		super(nextID++, scheduler);
 		this.orderbook = FourHeap.<Price, MarketTime, Order> create();
 		this.clearingRule = clearingRule;
@@ -190,17 +192,16 @@ public abstract class Market extends Entity {
 	 *            the current time
 	 * @return any side effect activities (base case none)
 	 */
-	public void withdrawOrder(Order order,
-			TimeStamp currentTime) {
+	public void withdrawOrder(Order order, TimeStamp currentTime) {
 		withdrawOrder(order, order.getQuantity(), currentTime);
 	}
 	
 	/**
 	 * Method to withdraw specific quantity from an order.
 	 * 
-	 * This will work even if quantity has decreased after order was
-	 * submitted. Trying to cancel a higher quantity than the order has to offer
-	 * will simply result in the entire order being cancelled.
+	 * This will work even if quantity has decreased after order was submitted.
+	 * Trying to cancel a higher quantity than the order has to offer will
+	 * simply result in the entire order being cancelled.
 	 * 
 	 * NOTE: This should only be called by the corresponding activity
 	 * 
@@ -349,7 +350,7 @@ public abstract class Market extends Entity {
 	 * @param agent
 	 *            The agent submitting the order
 	 * @param type
-	 * 			  The type of the order (BUY/SELL)
+	 *            The type of the order (BUY/SELL)
 	 * @param price
 	 *            The price of the order
 	 * @param quantity
@@ -359,8 +360,8 @@ public abstract class Market extends Entity {
 	 * @param duration
 	 *            The amount of time to wait before canceling the order. Use
 	 *            TimeStamp.IMMEDIATE for an order that doesn't expire.
-	 * @return The side effect activities (base case potentially a WithdrawOrder for this
-	 *         method)
+	 * @return The side effect activities (base case potentially a WithdrawOrder
+	 *         for this method)
 	 */
 	public void submitOrder(Agent agent, OrderType type, Price price,
 			int quantity, TimeStamp currentTime, TimeStamp duration) {
@@ -392,7 +393,7 @@ public abstract class Market extends Entity {
 	 * @param agent
 	 *            The agent that's submitting the order
 	 * @param type
-	 * 			  The type of the order (BUY/SELL)
+	 *            The type of the order (BUY/SELL)
 	 * @param price
 	 *            The price of the order
 	 * @param quantity
@@ -401,8 +402,8 @@ public abstract class Market extends Entity {
 	 *            The currentTime
 	 * @return Any side effect activities (none in base case)
 	 */
-	public void submitNMSOrder(Agent agent,
-			OrderType type, Price price, int quantity, TimeStamp currentTime) {
+	public void submitNMSOrder(Agent agent, OrderType type, Price price,
+			int quantity, TimeStamp currentTime) {
 		submitNMSOrder(agent, type, price, quantity, currentTime, TimeStamp.IMMEDIATE);
 	}
 
@@ -435,8 +436,8 @@ public abstract class Market extends Entity {
 	 * to get immediate execution. NMSOrder will not route properly for a call
 	 * market if there is another market in the model
 	 */
-	public void submitNMSOrder(Agent agent, OrderType type,
-			Price price, int quantity, TimeStamp currentTime, TimeStamp duration) {
+	public void submitNMSOrder(Agent agent, OrderType type, Price price,
+			int quantity, TimeStamp currentTime, TimeStamp duration) {
 		checkNotNull(type, "Order type");
 		checkArgument(quantity > 0, "Quantity must be positive");
 		

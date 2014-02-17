@@ -42,6 +42,8 @@ import event.TimeStamp;
  */
 public class CallMarketTest {
 
+	private static final TimeStamp one = TimeStamp.create(1);
+	
 	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private SIP sip;
@@ -653,7 +655,7 @@ public class CallMarketTest {
 		assertEquals("Incorrect Bid quantity", 0, quote.getBidQuantity());
 		
 		// Now quote should be updated
-		exec.executeUntil(clearFreq100.plus(TimeStamp.create(1)));
+		exec.executeUntil(clearFreq100.plus(one));
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect Ask", new Price(110), quote.getAskPrice());
 		assertEquals("Incorrect Ask quantity", 1, quote.getAskQuantity());
@@ -661,8 +663,8 @@ public class CallMarketTest {
 		assertEquals("Incorrect Bid quantity", 1, quote.getBidQuantity());
 		
 		// Now check that transactions are correct as well as quotes
-		exec.scheduleActivity(time, new SubmitOrder(agent2, market1, SELL, new Price(150), 1));
-		exec.scheduleActivity(time, new SubmitOrder(agent2, market1, BUY, new Price(120), 1));
+		exec.scheduleActivity(clearFreq100, new SubmitOrder(agent2, market1, SELL, new Price(150), 1));
+		exec.scheduleActivity(clearFreq100, new SubmitOrder(agent2, market1, BUY, new Price(120), 1));
 		// Before second clear interval ends, quote remains the same
 		exec.executeUntil(clearFreq100.plus(clearFreq100));
 		quote = market1.getQuoteProcessor().getQuote();

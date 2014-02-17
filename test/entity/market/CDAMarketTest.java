@@ -446,7 +446,7 @@ public class CDAMarketTest {
 		assertEquals("Incorrect ASK quantity",  1,  q.askQuantity );
 		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
 
-		exec.setTime(TimeStamp.create(1));
+		exec.executeUntil(TimeStamp.create(2));
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
 		exec.executeActivity(new SubmitOrder(agent2, market, BUY, new Price(155), 1));
 		exec.executeActivity(new SubmitOrder(agent2, market, BUY, new Price(155), 2));

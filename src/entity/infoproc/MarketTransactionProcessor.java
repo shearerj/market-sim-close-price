@@ -12,8 +12,9 @@ import event.TimeStamp;
 public class MarketTransactionProcessor extends AbstractTransactionProcessor {
 
 	private static final long serialVersionUID = 4550103178485854572L;
-	
-	public MarketTransactionProcessor(Scheduler scheduler, TimeStamp latency, Market market) {
+
+	public MarketTransactionProcessor(Scheduler scheduler, TimeStamp latency,
+			Market market) {
 		super(scheduler, latency, market);
 	}
 

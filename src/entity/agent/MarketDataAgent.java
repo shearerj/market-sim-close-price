@@ -69,6 +69,11 @@ public class MarketDataAgent extends SMAgent {
 		// Creating the order to submit
 		OrderDatum nextOrder = orderDatumList.get(0);
 		orderDatumList.remove(0); // FIXME This is super slow. The list should probably be reversed or better yet, put in a queue data structure
+		// If you have a list that sorted in order, you could do the following to get a queue that works properly
+		// Collections3.asLifoQueue(Lists.newArrayList(Lists.reverse(orderData)))
+		// This will first reverse the list, but it's only a view, so you need to copy it to a new list, finally the last wraps it as a queue so you can use pretty
+		// ADT syntax
+		
 		scheduler.executeActivity(new SubmitOrder(this, primaryMarket, nextOrder.getType(),
 				nextOrder.getPrice(), nextOrder.getQuantity()));
 		

@@ -29,24 +29,30 @@ public class CallMarket extends Market {
 	protected final TimeStamp clearFreq;
 	protected TimeStamp nextClearTime;
 
-	public CallMarket(Scheduler scheduler, SIP sip, Random rand, TimeStamp latency, int tickSize,
-			double pricingPolicy, TimeStamp clearFreq) {
-		this(scheduler, sip, rand, latency, latency, tickSize, pricingPolicy, clearFreq);
-	}
-	
-	public CallMarket(Scheduler scheduler, SIP sip, Random rand, TimeStamp quoteLatency, 
-			TimeStamp transactionLatency, int tickSize, double pricingPolicy, 
+	public CallMarket(Scheduler scheduler, SIP sip, Random rand,
+			TimeStamp latency, int tickSize, double pricingPolicy,
 			TimeStamp clearFreq) {
-		super(scheduler, sip, quoteLatency, transactionLatency, new UniformPriceClear(pricingPolicy, tickSize), 
-				rand);
+		
+		this(scheduler, sip, rand, latency, latency, tickSize, pricingPolicy,
+				clearFreq);
+	}
+
+	public CallMarket(Scheduler scheduler, SIP sip, Random rand,
+			TimeStamp quoteLatency, TimeStamp transactionLatency, int tickSize,
+			double pricingPolicy, TimeStamp clearFreq) {
+		
+		super(scheduler, sip, quoteLatency, transactionLatency,
+				new UniformPriceClear(pricingPolicy, tickSize), rand);
 		checkArgument(clearFreq.after(TimeStamp.ZERO),
 				"Can't create a call market with 0 clear frequency. Create a CDA instead.");
 
 		this.clearFreq = clearFreq;
 		this.nextClearTime = TimeStamp.ZERO;
 	}
-	
-	public CallMarket(Scheduler scheduler, SIP sip, Random rand, EntityProperties props) {
+
+	public CallMarket(Scheduler scheduler, SIP sip, Random rand,
+			EntityProperties props) {
+		
 		this(scheduler, sip, rand,
 				TimeStamp.create(props.getAsInt(Keys.QUOTE_LATENCY, props.getAsInt(Keys.MARKET_LATENCY, -1))),
 				TimeStamp.create(props.getAsInt(Keys.TRANSACTION_LATENCY, props.getAsInt(Keys.MARKET_LATENCY, -1))),

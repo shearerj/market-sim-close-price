@@ -21,16 +21,21 @@ public class CDAMarket extends Market {
 
 	private static final long serialVersionUID = -6780130359417129449L;
 
-	public CDAMarket(Scheduler scheduler, SIP sip, Random rand, TimeStamp latency, int tickSize) {
+	public CDAMarket(Scheduler scheduler, SIP sip, Random rand,
+			TimeStamp latency, int tickSize) {
+		
 		this(scheduler, sip, rand, latency, latency, tickSize);
 	}
 	
-	public CDAMarket(Scheduler scheduler, SIP sip, Random rand, TimeStamp quoteLatency, 
-			TimeStamp transactionLatency, int tickSize) {
-		super(scheduler, sip, quoteLatency, transactionLatency, new EarliestPriceClear(tickSize), rand);
+	public CDAMarket(Scheduler scheduler, SIP sip, Random rand,
+			TimeStamp quoteLatency, TimeStamp transactionLatency, int tickSize) {
+		
+		super(scheduler, sip, quoteLatency, transactionLatency,
+				new EarliestPriceClear(tickSize), rand);
 	}
-	
-	public CDAMarket(Scheduler scheduler, SIP sip, Random rand, EntityProperties props) {
+
+	public CDAMarket(Scheduler scheduler, SIP sip, Random rand,
+			EntityProperties props) {
 		this(scheduler, sip, rand,
 				TimeStamp.create(props.getAsInt(Keys.QUOTE_LATENCY, props.getAsInt(Keys.MARKET_LATENCY, -1))),
 				TimeStamp.create(props.getAsInt(Keys.TRANSACTION_LATENCY, props.getAsInt(Keys.MARKET_LATENCY, -1))),
@@ -40,13 +45,13 @@ public class CDAMarket extends Market {
 	@Override
 	public void submitOrder(Agent agent, OrderType type, Price price,
 			int quantity, TimeStamp currentTime, TimeStamp duration) {
+		
 		super.submitOrder(agent, type, price, quantity, currentTime, duration);
 		scheduler.executeActivity(new Clear(this));
 	}
 
 	@Override
-	public void withdrawOrder(Order order, int quantity,
-			TimeStamp currentTime) {
+	public void withdrawOrder(Order order, int quantity, TimeStamp currentTime) {
 		super.withdrawOrder(order, quantity, currentTime);
 		updateQuote(currentTime);
 	}

@@ -35,21 +35,25 @@ public class MAMarketMaker extends MarketMaker {
 	
 	protected EvictingQueue<Price> bidQueue;
 	protected EvictingQueue<Price> askQueue;
-	
-	public MAMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, double reentryRate, int tickSize, boolean noOp,
-			int numRungs, int rungSize, boolean truncateLadder, 
-			boolean tickImprovement, boolean tickInside, int numHistorical) {
-		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
-				numRungs, rungSize, truncateLadder, tickImprovement, tickInside);
+
+	public MAMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
+			SIP sip, Market market, Random rand, double reentryRate,
+			int tickSize, boolean noOp, int numRungs, int rungSize,
+			boolean truncateLadder, boolean tickImprovement,
+			boolean tickInside, int numHistorical) {
+
+		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
+				noOp, numRungs, rungSize, truncateLadder, tickImprovement,
+				tickInside);
 
 		checkArgument(numHistorical > 0, "Number of historical prices must be positive!");
 		bidQueue = EvictingQueue.create(numHistorical);
 		askQueue = EvictingQueue.create(numHistorical);
 	}
-	
-	public MAMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, EntityProperties props) {
+
+	public MAMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
+			SIP sip, Market market, Random rand, EntityProperties props) {
+
 		this(scheduler, fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0.0005),
 				props.getAsInt(Keys.TICK_SIZE, 1),

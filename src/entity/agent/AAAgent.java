@@ -81,7 +81,7 @@ public class AAAgent extends WindowAgent {
 			double theta, double thetaMin, double thetaMax, int historical,
 			int eta, double lambdaR, double lambdaA, double gamma,
 			double betaR, double betaT, boolean buyerStatus) {
-		
+
 		super(scheduler, arrivalTime, fundamental, sip, market, rand,
 				interarrivalTimes,
 				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize,
@@ -118,7 +118,7 @@ public class AAAgent extends WindowAgent {
 		this.betaR = betaR;		// paper randomizes to U[0.2, 0.6]
 		this.betaT = betaT;		// paper randomizes to U[0.2, 0.6]
 	}
-	
+
 	public AAAgent(Scheduler scheduler, TimeStamp arrivalTime,
 			FundamentalValue fundamental, SIP sip, Market market, Random rand,
 			double reentryRate, double pvVar, int tickSize, int maxAbsPosition,
@@ -137,8 +137,10 @@ public class AAAgent extends WindowAgent {
 
 	}
 
-	public AAAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
-			Market market, Random rand, EntityProperties props) {
+	public AAAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			EntityProperties props) {
+		
 		this(scheduler, arrivalTime, fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0.005), 
 				props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),

@@ -42,6 +42,8 @@ import event.TimeStamp;
 import fourheap.Order.OrderType;
 
 public class BasicMarketMakerTest {
+	
+	public static final TimeStamp one = TimeStamp.create(1);
 
 	private Executor exec;
 	private MockMarket market;
@@ -187,8 +189,6 @@ public class BasicMarketMakerTest {
 	 */
 	@Test
 	public void quoteChangeTest() {
-		TimeStamp time1 = TimeStamp.create(10);
-
 		MarketMaker marketmaker = createBMM(
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 10,
@@ -221,10 +221,9 @@ public class BasicMarketMakerTest {
 		assertEquals(new Price(48), quote.getAskPrice());
 		assertEquals(new Price(42), quote.getBidPrice());
 
-		exec.setTime(time1);
+		exec.executeUntil(TimeStamp.create(11));
 		// Next MM strategy execution
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		exec.executeUntil(TimeStamp.create(11));
 
 		// Check ladder of orders, previous orders withdrawn
 		// market's orders contains all orders ever submitted
@@ -319,8 +318,8 @@ public class BasicMarketMakerTest {
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 10,
 				Keys.TRUNCATE_LADDER, false,
-				Keys.TICK_SIZE, 1);
-		mm.noOp = true;
+				Keys.TICK_SIZE, 1,
+				Keys.NO_OP, true);
 
 		// Check activities inserted (none, since no-op)
 		mm.agentStrategy(TimeStamp.ZERO);
@@ -478,10 +477,9 @@ public class BasicMarketMakerTest {
 		assertEquals(0, agent1.activeOrders.size());
 		agent2.withdrawAllOrders();
 		assertEquals(0, agent2.activeOrders.size());
-		exec.setTime(TimeStamp.create(1));
+		exec.executeUntil(TimeStamp.create(2));
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(42), 1));
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(49), 1));
-		exec.executeUntil(TimeStamp.create(2));
 		
 		// Verify that it withdraws ladder entirely & submits new ladder
 		exec.executeActivity(new AgentStrategy(marketmaker));
@@ -504,8 +502,6 @@ public class BasicMarketMakerTest {
 	 */
 	@Test
 	public void withdrawUndefinedTest() {
-		TimeStamp time1 = TimeStamp.create(1);
-
 		MarketMaker marketmaker = createBMM(
 				Keys.NUM_RUNGS, 3,
 				Keys.RUNG_SIZE, 5,
@@ -533,9 +529,9 @@ public class BasicMarketMakerTest {
 		// Verify that it withdraws ladder entirely
 		// Note that now the quote is undefined, after it withdraws its ladder
 		// so it will submit a ladder with the lastBid
-		exec.setTime(time1);
-		exec.executeActivity(new AgentStrategy(marketmaker));
 		exec.executeUntil(TimeStamp.create(2));
+		exec.executeActivity(new AgentStrategy(marketmaker));
+		
 		assertNotNull(marketmaker.lastBid);
 		assertNotNull(marketmaker.lastAsk);
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());

@@ -42,8 +42,9 @@ public abstract class SMAgent extends Agent {
 	protected final MarketQuoteProcessor marketQuoteProcessor;
 	protected final MarketTransactionProcessor marketTransactionProcessor;
 
-	public SMAgent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			Market market, Random rand, int tickSize) {
+	public SMAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			int tickSize) {
 		super(scheduler, arrivalTime, fundamental, sip, rand, tickSize);
 		this.primaryMarket = market;
 		this.marketQuoteProcessor = market.getQuoteProcessor();

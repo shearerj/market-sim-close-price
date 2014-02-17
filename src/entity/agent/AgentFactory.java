@@ -27,9 +27,11 @@ public class AgentFactory {
 	protected final Iterator<TimeStamp> arrivalProcess;
 	protected final Iterator<Market> marketAssignment;
 
-	public AgentFactory(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
-			Iterator<TimeStamp> arrivalProcess, Collection<Market> markets,
-			Iterator<Market> marketProcess, Random rand) {
+	public AgentFactory(Scheduler scheduler, FundamentalValue fundamental,
+			SIP sip, Iterator<TimeStamp> arrivalProcess,
+			Collection<Market> markets, Iterator<Market> marketProcess,
+			Random rand) {
+		
 		this.scheduler = scheduler;
 		this.rand = rand;
 		this.fundamental = fundamental;
@@ -48,48 +50,41 @@ public class AgentFactory {
 	 * @param arrivalRate
 	 * @param rand
 	 */
-	public AgentFactory(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
-			Collection<Market> markets, double arrivalRate, Random rand) {
-		this(scheduler,
-				fundamental,
-				sip,
-				new PoissonArrival(TimeStamp.create((long)
-						Math.ceil(Rands.nextExponential(rand, arrivalRate))),
-				arrivalRate,
-				new Random(rand.nextLong())),
-				markets, 
-				Iterators.cycle(markets),
-				rand);
+	public AgentFactory(Scheduler scheduler, FundamentalValue fundamental,
+			SIP sip, Collection<Market> markets, double arrivalRate, Random rand) {
+		
+		this(scheduler, fundamental, sip, new PoissonArrival(
+				TimeStamp.create((long) Math.ceil(Rands.nextExponential(rand, arrivalRate))),
+				arrivalRate, new Random(rand.nextLong())), markets,
+				Iterators.cycle(markets), rand);
 	}
 
 	// All Agents should advance rand, marketAssignment, and arrivlProcess
 	public Agent createAgent(AgentProperties props) {
 		switch (props.getAgentType()) {
 		case AA:
-			return new AAAgent(scheduler, arrivalProcess.next(), fundamental, sip,
-					marketAssignment.next(), new Random(rand.nextLong()),
+			return new AAAgent(scheduler, arrivalProcess.next(), fundamental,
+					sip, marketAssignment.next(), new Random(rand.nextLong()),
 					props);
 		case ZIP:
-			return new ZIPAgent(scheduler, arrivalProcess.next(), fundamental, sip,
-					marketAssignment.next(), new Random(rand.nextLong()),
+			return new ZIPAgent(scheduler, arrivalProcess.next(), fundamental,
+					sip, marketAssignment.next(), new Random(rand.nextLong()),
 					props);
 		case ZIR:
-			return new ZIRAgent(scheduler, arrivalProcess.next(), fundamental, sip,
-					marketAssignment.next(), new Random(rand.nextLong()),
+			return new ZIRAgent(scheduler, arrivalProcess.next(), fundamental,
+					sip, marketAssignment.next(), new Random(rand.nextLong()),
 					props);
 		case ZI:
-			return new ZIAgent(scheduler, arrivalProcess.next(), fundamental, sip,
-					marketAssignment.next(), new Random(rand.nextLong()),
+			return new ZIAgent(scheduler, arrivalProcess.next(), fundamental,
+					sip, marketAssignment.next(), new Random(rand.nextLong()),
 					props);
 		case MARKETDATA:
-			return new MarketDataAgent(scheduler, fundamental, sip, 
-					marketAssignment.next(), new Random(rand.nextLong()),
-					props);
+			return new MarketDataAgent(scheduler, fundamental, sip,
+					marketAssignment.next(), new Random(rand.nextLong()), props);
 		case BASICMM:
 			arrivalProcess.next();
 			return new BasicMarketMaker(scheduler, fundamental, sip,
-					marketAssignment.next(), new Random(rand.nextLong()),
-					props);
+					marketAssignment.next(), new Random(rand.nextLong()), props);
 		case MAMM:
 			arrivalProcess.next();
 			return new MAMarketMaker(scheduler, fundamental, sip,
@@ -105,10 +100,6 @@ public class AgentFactory {
 			marketAssignment.next();
 			return new LAAgent(scheduler, fundamental, sip, markets, new Random(
 					rand.nextLong()), props);
-			
-/*		case ODA:
-			return new OrderDataAgent(fundamental,sip,marketAssignment.next(), new Random(rand.nextLong()), );
-*/
 		case NOOP:
 			arrivalProcess.next();
 			marketAssignment.next();

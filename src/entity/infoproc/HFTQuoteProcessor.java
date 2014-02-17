@@ -18,14 +18,14 @@ public class HFTQuoteProcessor extends AbstractQuoteProcessor {
 	
 	protected final HFTAgent hftAgent;
 
-	public HFTQuoteProcessor(Scheduler scheduler, TimeStamp latency, Market mkt, HFTAgent hftAgent) {
+	public HFTQuoteProcessor(Scheduler scheduler, TimeStamp latency,
+			Market mkt, HFTAgent hftAgent) {
 		super(scheduler, latency, mkt);
 		this.hftAgent = hftAgent;
 	}
 
 	@Override
-	public void processQuote(Market market, Quote quote, 
-			TimeStamp currentTime) {
+	public void processQuote(Market market, Quote quote, TimeStamp currentTime) {
 		super.processQuote(market, quote, currentTime);
 		scheduler.executeActivity(new AgentStrategy(hftAgent));
 	}

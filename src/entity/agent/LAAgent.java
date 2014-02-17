@@ -46,11 +46,12 @@ public class LAAgent extends HFTAgent {
 	protected boolean executingStrategy; // Lock during arbitrage
 	protected final Map<Market, SafeTimes> safeTime; // This map indicates when it's safe to look at a market for arbitrage
 
-	public LAAgent(Scheduler scheduler, TimeStamp latency, FundamentalValue fundamental,
-			SIP sip, Collection<Market> markets, Random rand, int tickSize,
-			double alpha) {
-		super(scheduler, latency, TimeStamp.ZERO, fundamental, sip, markets, rand, tickSize);
-		
+	public LAAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
+			Collection<Market> markets, Random rand, TimeStamp latency,
+			int tickSize, double alpha) {
+		super(scheduler, latency, TimeStamp.ZERO, fundamental, sip, markets,
+				rand, tickSize);
+
 		this.alpha = alpha;
 		this.executingStrategy = false;
 		this.safeTime = Maps.toMap(markets, Functions.constant(new SafeTimes(TimeStamp.ZERO, TimeStamp.ZERO)));
@@ -58,8 +59,10 @@ public class LAAgent extends HFTAgent {
 
 	public LAAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
 			Collection<Market> markets, Random rand, EntityProperties props) {
-		this(scheduler, TimeStamp.create(props.getAsLong(Keys.LA_LATENCY, -1)), fundamental, sip, markets,
-				rand, props.getAsInt(Keys.TICK_SIZE, 1),
+
+		this(scheduler, fundamental, sip, markets, rand,
+				TimeStamp.create(props.getAsLong(Keys.LA_LATENCY, -1)),
+				props.getAsInt(Keys.TICK_SIZE, 1),
 				props.getAsDouble(Keys.ALPHA, 0.001));
 	}
 

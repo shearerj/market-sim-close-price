@@ -27,7 +27,8 @@ abstract class AbstractTransactionProcessor extends Entity implements Transactio
 	protected final Market associatedMarket;
 	protected final List<Transaction> transactions;
 
-	public AbstractTransactionProcessor(Scheduler scheduler, TimeStamp latency, Market associatedMarket) {
+	public AbstractTransactionProcessor(Scheduler scheduler, TimeStamp latency,
+			Market associatedMarket) {
 		super(ProcessorIDs.nextID++, scheduler);
 		this.latency = latency;
 		this.associatedMarket = checkNotNull(associatedMarket);
@@ -35,7 +36,7 @@ abstract class AbstractTransactionProcessor extends Entity implements Transactio
 	}
 
 	@Override
-	public void sendToTransactionProcessor(Market market, 
+	public void sendToTransactionProcessor(Market market,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
 		Activity act = new ProcessTransactions(this, market, newTransactions);
 		if (latency.equals(TimeStamp.IMMEDIATE))
@@ -45,7 +46,8 @@ abstract class AbstractTransactionProcessor extends Entity implements Transactio
 	}
 
 	@Override
-	public void processTransactions(Market market, List<Transaction> newTransactions, TimeStamp currentTime) {
+	public void processTransactions(Market market,
+			List<Transaction> newTransactions, TimeStamp currentTime) {
 		transactions.addAll(newTransactions);
 	}
 

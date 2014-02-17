@@ -16,7 +16,8 @@ public class HFTTransactionProcessor extends AbstractTransactionProcessor {
 	
 	protected final HFTAgent hftAgent;
 
-	public HFTTransactionProcessor(Scheduler scheduler, TimeStamp latency, Market mkt, HFTAgent hftAgent) {
+	public HFTTransactionProcessor(Scheduler scheduler, TimeStamp latency,
+			Market mkt, HFTAgent hftAgent) {
 		super(scheduler, latency, mkt);
 		this.hftAgent = hftAgent;
 	}

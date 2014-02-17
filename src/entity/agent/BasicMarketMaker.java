@@ -44,16 +44,19 @@ public class BasicMarketMaker extends MarketMaker {
 
 	private static final long serialVersionUID = 9057600979711100221L;
 
-	public BasicMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, double reentryRate, int tickSize, boolean noOp,
-			int numRungs, int rungSize, boolean truncateLadder,
-			boolean tickImprovement, boolean tickInside) {
-		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
-				numRungs, rungSize, truncateLadder, tickImprovement, tickInside);	
+	public BasicMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
+			SIP sip, Market market, Random rand, double reentryRate,
+			int tickSize, boolean noOp, int numRungs, int rungSize,
+			boolean truncateLadder, boolean tickImprovement, boolean tickInside) {
+
+		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
+				noOp, numRungs, rungSize, truncateLadder, tickImprovement,
+				tickInside);
 	}
 
-	public BasicMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, EntityProperties props) {
+	public BasicMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
+			SIP sip, Market market, Random rand, EntityProperties props) {
+
 		this(scheduler, fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0.0005),
 				props.getAsInt(Keys.TICK_SIZE, 1),
