@@ -25,7 +25,6 @@ import org.junit.Test;
 import systemmanager.Consts;
 import systemmanager.Executor;
 import systemmanager.Keys;
-import utils.MathUtils;
 
 import com.google.common.collect.Iterables;
 
@@ -261,11 +260,12 @@ public class ZIPAgentTest {
 				Keys.COEFF_R, 0.25,
 				Keys.MARGIN_MAX, 0.05,
 				Keys.MARGIN_MIN, 0.05);
-
+		agent.rand.setSeed(1);
+		
 		// add dummy transaction
-		addTransaction(95000, 1, 0);
+		addTransaction(99000, 1, 0);
 		Transaction firstTrans = market.getTransactions().get(0);
-		addTransaction(97000, 1, 0);
+		addTransaction(80000, 1, 0);
 		Transaction lastTrans = market.getTransactions().get(1);
 		Price lastTransPrice = lastTrans.getPrice();
 		
@@ -283,7 +283,7 @@ public class ZIPAgentTest {
 		double oldMargin = agent.margin.getValue(0, agent.type);
 		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
 		agent.updateMargin(lastTrans, time);
-		double newMargin = MathUtils.bound(agent.margin.getValue(0, agent.type), -1, 0);
+		double newMargin = agent.margin.getValue(0, agent.type);
 		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
 		checkMarginUpdate(BUY, lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
@@ -302,6 +302,7 @@ public class ZIPAgentTest {
 				Keys.COEFF_R, 0.25,
 				Keys.MARGIN_MAX, 0.05,
 				Keys.MARGIN_MIN, 0.05);
+		agent.rand.setSeed(1);
 
 		// add dummy transaction
 		addTransaction(105000, 1, 0);
@@ -344,14 +345,15 @@ public class ZIPAgentTest {
 				Keys.COEFF_R, 0.25,
 				Keys.MARGIN_MAX, 0.05,
 				Keys.MARGIN_MIN, 0.05);
+		agent.rand.setSeed(1);
 		
 		assertEquals(0.5, agent.beta, 0);
 		assertEquals(agent.momentumChange, 0, 0);
 		
 		// add dummy transaction
-		addTransaction(95000, 1, 0);
+		addTransaction(90000, 1, 0);
 		Transaction firstTrans = market.getTransactions().get(0);
-		addTransaction(100000, 1, 0);
+		addTransaction(105000, 1, 0);
 		Transaction lastTrans = market.getTransactions().get(1);
 		Price lastTransPrice = lastTrans.getPrice();
 		
@@ -361,7 +363,7 @@ public class ZIPAgentTest {
 		
 		// set the margins
 		agent.type = BUY;
-		agent.lastOrderPrice = new Price(95000);
+		agent.lastOrderPrice = new Price(90000);
 		Price lastOrderPrice = agent.lastOrderPrice;
 		agent.updateMargin(firstTrans, time);
 		
@@ -369,8 +371,7 @@ public class ZIPAgentTest {
 		double oldMargin = agent.margin.getValue(0, agent.type);
 		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
 		agent.updateMargin(lastTrans, time);
-		// FIXME To Elaine: Added the bound because this was failing when new margin was outside of the bound.
-		double newMargin = MathUtils.bound(agent.margin.getValue(0, agent.type), -1, 0);
+		double newMargin = agent.margin.getValue(0, agent.type);
 		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
 		checkMarginUpdate(BUY, lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
@@ -390,6 +391,7 @@ public class ZIPAgentTest {
 				Keys.COEFF_R, 0.25,
 				Keys.MARGIN_MAX, 0.05,
 				Keys.MARGIN_MIN, 0.05);
+		agent.rand.setSeed(1);
 		
 		assertEquals(0.5, agent.beta, 0);
 		assertEquals(0, agent.momentumChange, 0);

@@ -230,13 +230,16 @@ public class ZIPAgent extends WindowAgent {
 	public void updateMomentumChange(Transaction lastTrans, TimeStamp currentTime) {
 		double originalChange = momentumChange;
 		double delta = this.computeDelta(lastTrans, currentTime);
-		log.log(INFO, "%s::updateMomentumChange: original change=%.4f, delta=%.4f", this, momentumChange, delta);
+		log.log(INFO, "%s::updateMomentumChange: original change=%.4f, delta=%.4f", 
+				this, momentumChange, delta);
 		momentumChange = gamma * momentumChange + (1-gamma) * delta;
 
 		if (originalChange != 0) {
-			log.log(INFO, "%s::updateMomentumChange: new change=%.4f, using %.4f%%", this, momentumChange, 100*(momentumChange-originalChange)/originalChange);
+			log.log(INFO, "%s::updateMomentumChange: new change=%.4f, using %.4f%%", 
+					this, momentumChange, 100*(momentumChange-originalChange)/originalChange);
 		} else {
-			log.log(INFO, "%s::updateMomentumChange: first update, change=%.4f", this, momentumChange);
+			log.log(INFO, "%s::updateMomentumChange: first update, change=%.4f", 
+					this, momentumChange);
 		}
 	}
 
@@ -276,7 +279,7 @@ public class ZIPAgent extends WindowAgent {
 		double R = this.computeRCoefficient(increaseTargetPrice);
 		double A = this.computeACoefficient(increaseTargetPrice);
 		Price tau = new Price(R * lastTransPrice.intValue() + A);
-		log.log(INFO, "%s::computeTargetPrice: Increase margine? %b, increase target? %b: R=%.4f, A=%.4f, targetPrice=%s",
+		log.log(INFO, "%s::computeTargetPrice: Increase margin? %b, increase target? %b: R=%.4f, A=%.4f, targetPrice=%s",
 				this, increaseMargin, increaseTargetPrice, R, A, tau);
 
 		return tau;
