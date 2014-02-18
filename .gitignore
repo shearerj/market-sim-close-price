@@ -45,3 +45,7 @@ logs/*
 # Emacs #
 #########
 *~
+
+# Project Specific #
+####################
+/defaults.json
