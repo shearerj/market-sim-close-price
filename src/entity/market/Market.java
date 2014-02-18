@@ -239,6 +239,7 @@ public abstract class Market extends Entity {
 	 */
 	public void clear(TimeStamp currentTime) {
 		marketTime++;
+		MarketTime transactionTime = new MarketTime(currentTime, marketTime);
 		Collection<MatchedOrders<Price, MarketTime, Order>> matchedOrders = orderbook.clear();
 		Builder<Transaction> transactionBuilder = ImmutableList.builder();
 		for (Entry<MatchedOrders<Price, MarketTime, Order>, Price> e : clearingRule.pricing(matchedOrders).entrySet()) {
@@ -248,7 +249,7 @@ public abstract class Market extends Entity {
 
 			Transaction trans = new Transaction(buy.getAgent(),
 					sell.getAgent(), this, buy, sell, e.getKey().getQuantity(),
-					e.getValue(), currentTime);
+					e.getValue(), transactionTime);
 			log.log(INFO, "%s", trans);
 			
 			askPriceQuantity.remove(sell.getPrice(), trans.getQuantity());

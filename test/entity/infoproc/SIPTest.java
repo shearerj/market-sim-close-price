@@ -1,11 +1,13 @@
 package entity.infoproc;
 
+import static event.TimeStamp.ZERO;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static logger.Log.log;
 import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +31,8 @@ import com.google.common.collect.Iterables;
 
 import data.FundamentalValue;
 import data.MockFundamental;
+import entity.agent.Agent;
+import entity.agent.MockAgent;
 import entity.agent.MockBackgroundAgent;
 import entity.market.CDAMarket;
 import entity.market.DummyMarketTime;
@@ -44,21 +48,16 @@ import event.TimedActivity;
 public class SIPTest {
 
 	/*
-	 * TODO There are no tests which work with processing transactions.
-	 * Particularly, I think that there is undefined behavior in terms of
-	 * transactions orders for TimeStamps with the same "Time" but different
-	 * MarketTime. To elicit this, you'd need to have two clears in a single
-	 * TimeStamp.
-	 * 
-	 * This potential behavior is also noted in the transaction processor. This
-	 * may be irrelevant? But might effect window agents. This effect may also
-	 * extend to market time for general transaction processors.
+	 * TODO Undefined order between markets? Transactions for a market should be
+	 * in proper order, but if several markets had a transaction at the same
+	 * time, the order will be undefined / random
 	 */
 	private Executor exec;
 	private Market market1;
 	private Market market2;
 	private SIP sip;
 	private SIP sip2;
+	private FundamentalValue fundamental;
 	
 	@BeforeClass
 	public static void setupClass() throws IOException {
@@ -74,6 +73,7 @@ public class SIPTest {
 		market1 = new MockMarket(exec, sip);
 		// market with latency 100
 		market2 = new MockMarket(exec, sip, TimeStamp.create(100));
+		fundamental = new MockFundamental(10000);
 	}
 	
 	@Test
@@ -616,6 +616,114 @@ public class SIPTest {
 		assertEquals("Incorrect BID market", nasdaq, nbbo.bestBidMarket);
 	}
 	
+	@Test
+	public void transactionOrderingTest() {
+		SIP sip = new SIP(exec, ZERO); // ZERO not IMMEDIATE
+		Market market = new CDAMarket(exec, sip, new Random(), TimeStamp.IMMEDIATE, 
+				TimeStamp.IMMEDIATE, 1);
+		
+		Agent one = new MockAgent(exec, fundamental, sip, market);
+		Agent two = new MockAgent(exec, fundamental, sip, market);
+		
+		// First order
+		market.submitOrder(one, BUY, new Price(100), 1, ZERO);
+		market.submitOrder(two, SELL, new Price(100), 1, ZERO);
+		
+		// Second order
+		market.submitOrder(two, BUY, new Price(200), 2, ZERO);
+		market.submitOrder(one, SELL, new Price(200), 2, ZERO);
+		
+		// Hasn't propogated to transaction processor yet
+		assertTrue(sip.getTransactions().isEmpty());
+		
+		// Execute until proper time
+		exec.executeUntil(sip.getLatency().plus(TimeStamp.create(1)));
+		// Now both transactions should show up
+		assertEquals(2, sip.getTransactions().size());
+		
+		// The real test is to check that they're in the proper order
+		Transaction first = sip.getTransactions().get(0);
+		assertEquals(1, first.getQuantity());
+		assertEquals(new Price(100), first.getPrice());
+		assertEquals(one, first.getBuyer());
+		assertEquals(two, first.getSeller());
+		
+		Transaction second = sip.getTransactions().get(1);
+		assertEquals(2, second.getQuantity());
+		assertEquals(new Price(200), second.getPrice());
+		assertEquals(two, second.getBuyer());
+		assertEquals(one, second.getSeller());
+	}
+	
+	@Test
+	public void repeatTransactionOrderingTest() {
+		for (int i = 0; i < 1000; ++i) {
+			setup();
+			transactionOrderingTest();
+		}
+	}
+	
+	@Test
+	public void transactionOrderingOtherMarketTest() {
+		SIP sip = new SIP(exec, ZERO); // ZERO not IMMEDIATE
+		Market market = new CDAMarket(exec, sip, new Random(), TimeStamp.IMMEDIATE, 
+				TimeStamp.IMMEDIATE, 1);
+		Market other = new CDAMarket(exec, sip, new Random(), TimeStamp.IMMEDIATE, 
+				TimeStamp.IMMEDIATE, 1);
+		
+		Agent one = new MockAgent(exec, fundamental, sip, market);
+		Agent two = new MockAgent(exec, fundamental, sip, market);
+		
+		// First order
+		market.submitOrder(one, BUY, new Price(100), 1, ZERO);
+		market.submitOrder(two, SELL, new Price(100), 1, ZERO);
+		
+		// Second order
+		market.submitOrder(two, BUY, new Price(200), 2, ZERO);
+		market.submitOrder(one, SELL, new Price(200), 2, ZERO);
+
+		// Other
+		other.submitOrder(two, BUY, new Price(300), 3, ZERO);
+		other.submitOrder(one, SELL, new Price(300), 3, ZERO);
+
+		// Hasn't propogated to transaction processor yet
+		assertTrue(sip.getTransactions().isEmpty());
+		
+		// Execute until proper time
+		exec.executeUntil(sip.getLatency().plus(TimeStamp.create(1)));
+		// Now both transactions should show up
+		assertEquals(3, sip.getTransactions().size());
+		
+		int index = 0, firstIndex = Integer.MAX_VALUE, secondIndex = Integer.MIN_VALUE;
+		for (Transaction trans : sip.getTransactions()) {
+			++index;
+			switch (trans.getQuantity()) {
+			case 1:
+				assertEquals(new Price(100), trans.getPrice());
+				assertEquals(one, trans.getBuyer());
+				assertEquals(two, trans.getSeller());
+				firstIndex = index;
+				break;
+			case 2:
+				assertEquals(new Price(200), trans.getPrice());
+				assertEquals(two, trans.getBuyer());
+				assertEquals(one, trans.getSeller());
+				secondIndex = index;
+				break;
+			case 3:
+				assertEquals(new Price(300), trans.getPrice());
+				assertEquals(two, trans.getBuyer());
+				assertEquals(one, trans.getSeller());
+				break;
+			default:
+				fail();
+			}
+		}
+		
+		// Assert that the first order came in first. Don't care about the actual order
+		assertTrue(firstIndex < secondIndex);
+		// XXX This should be 1 2, 1 3, 2 3, but for some reason, I don't see 1 2. Not sure why
+	}
 	
 	/*
 	 * XXX SIP has uniform latency - would we ever want different latency from

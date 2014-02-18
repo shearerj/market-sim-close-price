@@ -1,5 +1,6 @@
 package entity.infoproc;
 
+import static event.TimeStamp.ZERO;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static logger.Log.log;
@@ -26,6 +27,8 @@ import com.google.common.collect.ImmutableList;
 
 import data.FundamentalValue;
 import data.MockFundamental;
+import entity.agent.Agent;
+import entity.agent.MockAgent;
 import entity.agent.MockBackgroundAgent;
 import entity.market.CDAMarket;
 import entity.market.Market;
@@ -186,6 +189,52 @@ public class TransactionProcessorTest {
 		assertEquals("Incorrect transaction quantity", 1, trans.get(0).getQuantity());
 		assertEquals("Incorrect buyer", agent1, trans.get(0).getBuyer());
 		assertEquals("Incorrect buyer", agent2, trans.get(0).getSeller());	
+	}
+	
+	@Test
+	public void transactionOrderingTest() {
+		Market market = new CDAMarket(exec, sip, new Random(), TimeStamp.IMMEDIATE, 
+				TimeStamp.create(0), 1);
+		TransactionProcessor tp = market.getTransactionProcessor();
+		Agent one = new MockAgent(exec, fundamental, sip, market);
+		Agent two = new MockAgent(exec, fundamental, sip, market);
+		
+		// First order
+		market.submitOrder(one, BUY, new Price(100), 1, ZERO);
+		market.submitOrder(two, SELL, new Price(100), 1, ZERO);
+		
+		// Second order
+		market.submitOrder(two, BUY, new Price(200), 2, ZERO);
+		market.submitOrder(one, SELL, new Price(200), 2, ZERO);
+		
+		// Hasn't propogated to transaction processor yet
+		assertTrue(tp.getTransactions().isEmpty());
+		
+		// Execute until proper time
+		exec.executeUntil(TimeStamp.create(1));
+		// Now both transactions should show up
+		assertEquals(2, tp.getTransactions().size());
+		
+		// The real test is to check that they're in the proper order
+		Transaction first = tp.getTransactions().get(0);
+		assertEquals(1, first.getQuantity());
+		assertEquals(new Price(100), first.getPrice());
+		assertEquals(one, first.getBuyer());
+		assertEquals(two, first.getSeller());
+		
+		Transaction second = tp.getTransactions().get(1);
+		assertEquals(2, second.getQuantity());
+		assertEquals(new Price(200), second.getPrice());
+		assertEquals(two, second.getBuyer());
+		assertEquals(one, second.getSeller());
+	}
+	
+	@Test
+	public void repeatTransactionOrderingTest() {
+		for (int i = 0; i < 1000; ++i) {
+			setup();
+			transactionOrderingTest();
+		}
 	}
 
 	// XXX will the transaction processor ever receive redundant/duplicate transactions?

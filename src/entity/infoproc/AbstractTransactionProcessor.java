@@ -48,7 +48,17 @@ abstract class AbstractTransactionProcessor extends Entity implements Transactio
 	@Override
 	public void processTransactions(Market market,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
-		transactions.addAll(newTransactions);
+		if (newTransactions.isEmpty()) return;
+		TimeStamp transactionTime = newTransactions.get(0).getExecTime();
+		// Find the proper insertion index (likely at the end of the list)
+		int insertionIndex = transactions.size();
+		for (Transaction trans : Lists.reverse(transactions)) {
+			if (trans.getExecTime().before(transactionTime))
+				break;
+			--insertionIndex;
+		}
+		// Insert at appropriate location
+		transactions.addAll(insertionIndex, newTransactions);
 	}
 
 	public List<Transaction> getTransactions() {
