@@ -20,11 +20,15 @@ import event.TimeStamp;
 
 public class MarketDataAgent extends SMAgent {
 	
-	/**
-	 * TODO - what does this thing do?
+	/*
+	 * When building from eclipse you should use the generated serialVersionUID
+	 * (which generates a random long) instead of the default 1. serialization
+	 * is a java interface that allows all objects to be saved. This random
+	 * number essentially says what version this object is, so it knows when it
+	 * trys to load an object if its actually trying to load the same object.
 	 */
-	private static final long serialVersionUID = 1L;
-	
+	private static final long serialVersionUID = 7690956351534734324L;
+
 	protected OrderParser orderParser;
 	protected List<OrderDatum> orderDatumList;
 
@@ -44,7 +48,6 @@ public class MarketDataAgent extends SMAgent {
 		try {
 			this.orderDatumList = orderParser.process(fileName);
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			System.out.println("Error: could not open file: " + fileName);
 			System.exit(1);

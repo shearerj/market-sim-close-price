@@ -19,6 +19,8 @@ import event.TimeStamp;
  */
 abstract class AbstractQuoteProcessor extends Entity implements QuoteProcessor {
 
+	private static final long serialVersionUID = 4487935082860406953L;
+	
 	protected final TimeStamp latency;
 	protected final Market associatedMarket;
 	protected Quote quote;
@@ -31,9 +33,6 @@ abstract class AbstractQuoteProcessor extends Entity implements QuoteProcessor {
 		this.quote = new Quote(null, null, 0, null, 0, TimeStamp.ZERO);
 	}
 
-	private static final long serialVersionUID = 4487935082860406953L;
-
-	// TODO better way to handle immediate execution
 	@Override
 	public void sendToQuoteProcessor(Market market, Quote quote,
 			TimeStamp currentTime) {

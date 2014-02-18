@@ -3,11 +3,13 @@ package fourheap;
 import static org.junit.Assert.*;
 import static fourheap.Order.OrderType.*;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.PriorityQueue;
 import java.util.Random;
 
 import org.junit.Test;
+
+import com.google.common.collect.Iterables;
 
 import fourheap.Order.OrderType;
 
@@ -375,7 +377,7 @@ public class FourHeapTest {
 	public void clearTest() {
 		FourHeap<Integer, Integer, Order<Integer, Integer>> fh;
 		Order<Integer, Integer> os, ob;
-		List<MatchedOrders<Integer, Integer, Order<Integer, Integer>>> transactions;
+		Collection<MatchedOrders<Integer, Integer, Order<Integer, Integer>>> transactions;
 		MatchedOrders<Integer, Integer, Order<Integer, Integer>> trans;
 		
 		fh = FourHeap.<Integer, Integer, Order<Integer, Integer>> create();
@@ -384,7 +386,7 @@ public class FourHeapTest {
 		transactions = fh.clear();
 		
 		assertEquals(1, transactions.size());
-		trans = transactions.get(0);
+		trans = Iterables.getOnlyElement(transactions);
 		assertEquals(os, trans.getSell());
 		assertEquals(ob, trans.getBuy());
 		assertEquals(2, trans.getQuantity());
@@ -399,8 +401,8 @@ public class FourHeapTest {
 	public void multiOrderClearTest() {
 		FourHeap<Integer, Integer, Order<Integer, Integer>> fh;
 		Order<Integer, Integer> os, ob;
-		List<MatchedOrders<Integer, Integer, Order<Integer, Integer>>> transactions;
-		MatchedOrders<Integer, Integer, Order<Integer, Integer>> trans;
+		Collection<MatchedOrders<Integer, Integer, Order<Integer, Integer>>> transactions;
+//		MatchedOrders<Integer, Integer, Order<Integer, Integer>> trans;
 		
 		fh = FourHeap.<Integer, Integer, Order<Integer, Integer>> create();
 		os = insertOrder(fh, SELL, 5, 3, 0);
@@ -409,17 +411,30 @@ public class FourHeapTest {
 		transactions = fh.clear();
 		
 		assertEquals(2, transactions.size());
-		trans = transactions.get(0);
-		assertEquals(os, trans.getSell());
-		assertEquals(ob, trans.getBuy());
-		assertEquals(3, trans.getQuantity());
-		trans = transactions.get(1);
-		assertEquals(ob, trans.getBuy());
-		assertEquals(1, trans.getQuantity());
+		assertInvariants(fh);
 		assertEquals(1, fh.size());
 		assertFalse(fh.contains(os));
 		assertFalse(fh.contains(ob));
-		assertInvariants(fh);
+		
+		boolean one = false, three = false;
+		for (MatchedOrders<Integer, Integer, Order<Integer, Integer>> trans : transactions) {
+			switch (trans.getQuantity()) {
+			case 1:
+				assertEquals(ob, trans.getBuy());
+				assertNotEquals(os, trans.getSell());
+				one = true;
+				break;
+			case 3:
+				assertEquals(os, trans.getSell());
+				assertEquals(ob, trans.getBuy());
+				three = true;
+				break;
+			default:
+				fail("Incorrect transaction quantities");
+			}
+		}
+		assertTrue(one);
+		assertTrue(three);
 	}
 	
 	@Test

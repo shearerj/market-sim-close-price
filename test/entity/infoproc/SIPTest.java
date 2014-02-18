@@ -49,6 +49,10 @@ public class SIPTest {
 	 * transactions orders for TimeStamps with the same "Time" but different
 	 * MarketTime. To elicit this, you'd need to have two clears in a single
 	 * TimeStamp.
+	 * 
+	 * This potential behavior is also noted in the transaction processor. This
+	 * may be irrelevant? But might effect window agents. This effect may also
+	 * extend to market time for general transaction processors.
 	 */
 	private Executor exec;
 	private Market market1;

@@ -30,11 +30,6 @@ public class HFTTransactionProcessor extends AbstractTransactionProcessor {
 	 * transaction and quote processors, it is very clear that transactions are
 	 * processed first, and then quotes.
 	 */
-//	@Override
-//	public Iterable<? extends Activity> processTransactions(Market market, 
-//			List<Transaction> newTransactions, TimeStamp currentTime) {
-//		return super.processTransactions(market, newTransactions, currentTime);
-//	}
 
 	@Override
 	public void processTransactions(Market market,

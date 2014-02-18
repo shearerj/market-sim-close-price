@@ -64,7 +64,6 @@ public class ReentryAgentTest {
 		assertTrue( act.getTime().getInTicks() >= time.getInTicks());
 	}
 	
-	// FIXME This test doesn't make sense. Rate 0 shouldn't be allowed.
 	@Test
 	public void reentryRateZeroTest() {
 		TimeStamp time = TimeStamp.create(100);

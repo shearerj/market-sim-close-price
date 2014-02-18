@@ -80,7 +80,7 @@ public class AAAgent extends WindowAgent {
 			boolean withdrawOrders, int windowLength, double aggression,
 			double theta, double thetaMin, double thetaMax, int historical,
 			int eta, double lambdaR, double lambdaA, double gamma,
-			double betaR, double betaT, boolean buyerStatus) {
+			double betaR, double betaT, boolean buyerStatus, boolean debug) {
 
 		super(scheduler, arrivalTime, fundamental, sip, market, rand,
 				interarrivalTimes,
@@ -117,6 +117,9 @@ public class AAAgent extends WindowAgent {
 		this.eta = eta;
 		this.betaR = betaR;		// paper randomizes to U[0.2, 0.6]
 		this.betaT = betaT;		// paper randomizes to U[0.2, 0.6]
+		
+		// Debugging
+		this.debug = debug;
 	}
 
 	public AAAgent(Scheduler scheduler, TimeStamp arrivalTime,
@@ -126,14 +129,14 @@ public class AAAgent extends WindowAgent {
 			int windowLength, double aggression, double theta, double thetaMin,
 			double thetaMax, int historical, int eta, double lambdaR,
 			double lambdaA, double gamma, double betaR, double betaT,
-			boolean buyerStatus) {
+			boolean buyerStatus, boolean debug) {
 
 		this(scheduler, arrivalTime, fundamental, sip, market, rand,
 				ExpInterarrivals.create(reentryRate, rand), pvVar, tickSize,
 				maxAbsPosition, bidRangeMin, bidRangeMax, withdrawOrders,
 				windowLength, aggression, theta, thetaMin, thetaMax,
 				historical, eta, lambdaR, lambdaA, gamma, betaR, betaT,
-				buyerStatus);
+				buyerStatus, debug);
 
 	}
 
@@ -161,9 +164,8 @@ public class AAAgent extends WindowAgent {
 				props.getAsDouble(Keys.GAMMA, 2),
 				props.getAsDouble(Keys.BETA_R, Rands.nextUniform(rand, 0.2, 0.6)), 
 				props.getAsDouble(Keys.BETA_T, Rands.nextUniform(rand, 0.2, 0.6)), 
-				props.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean()));
-
-		debug = props.getAsBoolean(Keys.DEBUG, false); // FIXME
+				props.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean()),
+				props.getAsBoolean(Keys.DEBUG, false));
 	}
 
 	@Override
@@ -576,7 +578,7 @@ public class AAAgent extends WindowAgent {
 		alphaMax = Math.max(alpha, alphaMax);
 		double alphaBar = (alpha - alphaMin) / (alphaMax - alphaMin);
 		if (alphaMin == alphaMax) alphaBar = alpha - alphaMin;
-		// FIXME is this the best way to handle when alphaMax = alphaMin?
+		// FIXME Erik: is this the best way to handle when alphaMax = alphaMin?
 		// Will primarily only happen for the first update
 
 		// Determining thetaStar, Eq (9)

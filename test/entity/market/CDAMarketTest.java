@@ -578,31 +578,29 @@ public class CDAMarketTest {
 		assertEquals("Incorrect Quantity", 1, tr.getQuantity());
 	}
 	
-	// XXX This test no long works, because submitting the order automatically
-	// executes any instantanious activities.
-//	@Test
-//	public void lackOfLatencyTest() {
-//		Quote quote;
-//
-//		// Forces execution of execution but none of the resulting activities
-//		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
-//		market.submitOrder(agent, SELL, new Price(100), 1, TimeStamp.ZERO);
-//		
-//		quote = market.getQuoteProcessor().getQuote();
-//		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
-//		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
-//		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
-//		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
-//		
-//		// This will execute all of the remaining activities
-//		exec.executeUntil(TimeStamp.ZERO);
-//		
-//		quote = market.getQuoteProcessor().getQuote();
-//		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
-//		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
-//		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());
-//		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
-//	}
+	@Test
+	public void lackOfLatencyTest() {
+		Quote quote;
+
+		// Submit Order doesn't happen
+		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
+		exec.scheduleActivities(TimeStamp.ZERO, new SubmitOrder(agent, market, SELL, new Price(100), 1));
+		
+		quote = market.getQuoteProcessor().getQuote();
+		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
+		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
+		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
+		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
+		
+		// This will execute all of the remaining activities
+		exec.executeUntil(TimeStamp.create(1));
+		
+		quote = market.getQuoteProcessor().getQuote();
+		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
+		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
+		assertEquals("Changed Bid price unnecessarily", null, quote.getBidPrice());
+		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
+	}
 	
 	@Test
 	public void latencyTest() {

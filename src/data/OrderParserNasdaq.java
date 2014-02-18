@@ -115,6 +115,7 @@ public class OrderParserNasdaq implements OrderParser {
 		// These values are not available for nasdaq
 		// no such thing as a sequence number in nasdaq, set it to 0 for now
 		// TODO figure out what we want to do with this discrepency
+		// XXX Erik: Sequentially increment sequence number?
 		String sequenceNum = "";
 		char exchangeCode = ' ';
 		char systemCode = ' ';

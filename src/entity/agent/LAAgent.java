@@ -6,7 +6,6 @@ import static logger.Log.log;
 import static logger.Log.Level.INFO;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -68,13 +67,15 @@ public class LAAgent extends HFTAgent {
 
 	@Override
 	// TODO Need strategy for orders that don't execute
-	// TODO Currently schedules safeTime at currentTime + latency. We may
-	// instead want it to be plus one. At the current setting, if an order came
-	// in before (but with the same timestamp) of a delayed LA action, then the
-	// the LA will consider the market valid to act upon even though its order
-	// hasn't really taken place. This even seems pretty rare. This could be
-	// changed by making !before -> after, and chanigng the initial timeStamps
-	// to -1.
+	/*
+	 * TODO Currently schedules safeTime at currentTime + latency. We may
+	 * instead want it to be plus one. At the current setting, if an order came
+	 * in before (but with the same timestamp) of a delayed LA action, then the
+	 * the LA will consider the market valid to act upon even though its order
+	 * hasn't really taken place. This even seems pretty rare. This could be
+	 * changed by making !before -> after, and chanigng the initial timeStamps
+	 * to -1.
+	 */
 	public void agentStrategy(TimeStamp currentTime) {
 		if (executingStrategy)
 			return; // Lock
@@ -145,8 +146,8 @@ public class LAAgent extends HFTAgent {
 			}
 		}
 		
-		List<MatchedOrders<Price, Integer, Order<Price, Integer>>> transactions = fh.clear();
-		for (MatchedOrders<Price, Integer, Order<Price, Integer>> trans : transactions) {
+		Collection<MatchedOrders<Price, Integer, Order<Price, Integer>>> matchedOrders = fh.clear();
+		for (MatchedOrders<Price, Integer, Order<Price, Integer>> trans : matchedOrders) {
 			Order<Price, Integer> buy = trans.getBuy(), sell = trans.getSell();
 			if (sell.getPrice().doubleValue() * (1 + alpha) > buy.getPrice().doubleValue())
 				continue;

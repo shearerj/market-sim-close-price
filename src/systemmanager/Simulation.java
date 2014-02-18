@@ -87,7 +87,6 @@ public class Simulation {
 		this.observations = new Observations(specification, markets, agents,
 				players, fundamental);
 
-		// XXX Log markets and their configuration?
 		for (Market market : markets)
 			scheduler.executeActivity(new Clear(market));
 		for (Agent agent : agents) {

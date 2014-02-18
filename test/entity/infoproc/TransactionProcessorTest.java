@@ -189,4 +189,9 @@ public class TransactionProcessorTest {
 	}
 
 	// XXX will the transaction processor ever receive redundant/duplicate transactions?
+	// It shouldn't, but this is never tested
+	/*
+	 * TODO Test Idea. Run random simulations, then make sure there are no
+	 * duplicates but checking that Sets.newHashSet(transactions).size() == transactions.size()
+	 */
 }

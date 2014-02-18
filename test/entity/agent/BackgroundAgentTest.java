@@ -3,7 +3,7 @@ package entity.agent;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static logger.Log.Level.DEBUG;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -303,25 +303,26 @@ public class BackgroundAgentTest {
 	}
 
 	// Test that returns empty if exceed max position
-	// FIXME No good way to test this
-//	@Test
-//	public void testZIStrat() {
-//		TimeStamp time = TimeStamp.ZERO;
-//		List<Price> values = Arrays.asList(new Price(100), new Price(10));
-//		PrivateValue pv = new DummyPrivateValue(1, values);
-//		FundamentalValue fundamental = new MockFundamental(100000);
-//
-//		BackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market, pv, 0, 1000);
-//
-//		Iterable<? extends Activity> acts = agent.executeZIStrategy(BUY, 5, time);
-//		assertEquals(0, Iterables.size(acts));
-//		acts = agent.executeZIStrategy(SELL, 5, time);
-//		assertEquals(0, Iterables.size(acts));
-//
-//		// Test ZI strategy
-//		acts = agent.executeZIStrategy(BUY, 1, time);
-//		assertTrue(Iterables.getOnlyElement(acts) instanceof SubmitNMSOrder);
-//
-//		// XXX much of this is tested within ZIAgentTest, may want to move it here
-//	}
+	@Test
+	public void testZIStrat() {
+		TimeStamp time = TimeStamp.ZERO;
+		List<Price> values = Arrays.asList(new Price(100), new Price(10));
+		PrivateValue pv = new DummyPrivateValue(1, values);
+		FundamentalValue fundamental = new MockFundamental(100000);
+
+		BackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market, pv, 0, 1000);
+
+		agent.executeZIStrategy(BUY, 5, time);
+		assertTrue(agent.activeOrders.isEmpty());
+		assertTrue(agent.transactions.isEmpty());
+		agent.executeZIStrategy(SELL, 5, time);
+		assertTrue(agent.activeOrders.isEmpty());
+		assertTrue(agent.transactions.isEmpty());
+
+		// Test ZI strategy
+		agent.executeZIStrategy(BUY, 1, time);
+		assertEquals(1, agent.activeOrders.size());
+
+		// XXX much of this is tested within ZIAgentTest, may want to move it here
+	}
 }

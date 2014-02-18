@@ -72,10 +72,6 @@ import event.TimeStamp;
  * @author erik
  * 
  */
-/*
- * TODO At some point, we may want to be able to read an observation file into
- * one of these
- */
 public class Observations {
 	
 	// static event bus to record statics messages during simulation

@@ -29,8 +29,7 @@ import entity.market.Market;
  * it instantiates the Activity objects and provides the methods to execute them
  * later.
  * 
- * TODO Correct this...
- * Usage: java -jar hft.jar [simulation folder name] [sample #]
+ * Usage: java -cp "$(ls lib/*.jar | tr '\n' :)dist/hft.jar" systemmanager.SystemManager [simulation folder name] [sample #]
  * 
  * @author ewah
  */
@@ -126,10 +125,9 @@ public class SystemManager {
 			return;
 		}
 		
-		// TODO This adds an extra underscore
 		StringBuilder logFileName = new StringBuilder(
 				new File(".").toURI().relativize(simulationFolder.toURI()).getPath().replace('/', '_'));
-		logFileName.append('_').append(observationNumber).append('_');
+		logFileName.append(observationNumber).append('_');
 		logFileName.append(simulationNumber).append('_');
 		logFileName.append(LOG_DATE_FORMAT.format(new Date())).append(".txt");
 

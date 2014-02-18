@@ -372,8 +372,7 @@ public class MAMarketMakerTest {
 
 		QuoteProcessor qp = mm.marketQuoteProcessor;
 
-		// Add quotes & execute agent strategy in between (without actually submitting orders)
-		// FIXME This is not possible in the new system
+		// Add quotes & execute agent strategy in between
 		int mktTime = 0;
 		addQuote(qp, 50, 60, 0, mktTime += 5);
 		mm.agentStrategy(time);

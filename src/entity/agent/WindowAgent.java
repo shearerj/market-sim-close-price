@@ -50,7 +50,7 @@ public abstract class WindowAgent extends BackgroundAgent {
 	}
 
 	/**
-	 * Get all transactions (from SIP [XXX not true] plus its own transactions)
+	 * Get all transactions (from SIP [XXX not true, but intended?] plus its own transactions)
 	 * in the window that is of period windowLength prior to currentTime, i.e.
 	 * from currentTime-windowLength+1 to currentTime, inclusive.
 	 * 
@@ -60,17 +60,18 @@ public abstract class WindowAgent extends BackgroundAgent {
 	public List<Transaction> getWindowTransactions(TimeStamp currentTime) {
 		TimeStamp firstTimeInWindow = currentTime.minus(windowLength);
 
-		// XXX To add more transaction sources that are also sorted, google has
-		// Iterables.mergeSorted(iterables, comparator) that can merge sorted
-		// iterables. The best way would probably to iterate over something like
-		//
-		// Iterables.mergeSorted(ImmutableList.of(Lists.reverse(marketTransactionProcessor.getTransactions())), Ordering.<Transaction> natural().reverse());
-		//
-		// This will return transactions in reverse order to be copied into a
-		// list. They could be deduped as they're read off. This will avoid most
-		// unnecessary copying.
-		List<Transaction> allTransactions = marketTransactionProcessor
-				.getTransactions();
+		/*
+		 * XXX To add more transaction sources that are also sorted, google has
+		 * Iterables.mergeSorted(iterables, comparator) that can merge sorted
+		 * iterables. The best way would probably to iterate over something like
+		 * 
+		 * Iterables.mergeSorted(ImmutableList.of(Lists.reverse(marketTransactionProcessor.getTransactions())), Ordering.<Transaction> natural().reverse());
+		 * 
+		 * This will return transactions in reverse order to be copied into a
+		 * list. They could be deduped as they're read off. This will avoid most
+		 * unnecessary copying.
+		 */
+		List<Transaction> allTransactions = marketTransactionProcessor.getTransactions();
 		
 		int startIndex = allTransactions.size();
 		for (Transaction trans : Lists.reverse(allTransactions)) {

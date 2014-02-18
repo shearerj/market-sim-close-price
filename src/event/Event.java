@@ -80,6 +80,6 @@ public class Event extends AbstractQueue<Activity> {
 	@Override
 	public String toString() {
 		return super.toString();
-	}	
+	}
 
 }

@@ -81,7 +81,7 @@ public abstract class Market extends Entity {
 
 	// Book keeping
 	protected final Multiset<Price> askPriceQuantity, bidPriceQuantity; // How many orders are at a specific price
-	// FIXME These two are used only for testing, and nothing else. Is there a better way?
+	// FIXME These two are used only for testing, and nothing else. Is there a better way? This could be a lot of extra memory
 	protected final Collection<Order> orders; // All orders ever submitted to the market
 	protected final List<Transaction> allTransactions; // All successful transactions, implicitly time ordered
 
@@ -215,7 +215,6 @@ public abstract class Market extends Entity {
 	 */
 	public void withdrawOrder(Order order, int quantity, TimeStamp currentTime) {
 		marketTime++;
-		// XXX Best way to handle 0 quantity orders (orders that have fully transacted)?
 		checkArgument(quantity >= 0, "Quantity must be non negative");
 		if (order.getQuantity() == 0) return;
 		quantity = min(quantity, order.getQuantity());
@@ -240,7 +239,7 @@ public abstract class Market extends Entity {
 	 */
 	public void clear(TimeStamp currentTime) {
 		marketTime++;
-		List<MatchedOrders<Price, MarketTime, Order>> matchedOrders = orderbook.clear();
+		Collection<MatchedOrders<Price, MarketTime, Order>> matchedOrders = orderbook.clear();
 		Builder<Transaction> transactionBuilder = ImmutableList.builder();
 		for (Entry<MatchedOrders<Price, MarketTime, Order>, Price> e : clearingRule.pricing(matchedOrders).entrySet()) {
 
@@ -304,8 +303,6 @@ public abstract class Market extends Entity {
 
 		BUS.post(new MidQuoteStatistic(this, quote.getMidquote(), currentTime));
 		BUS.post(new SpreadStatistic(this, quote.getSpread(), currentTime));
-		// TODO I removed random orders, and got HFT's behave properly. Make
-		// sure removing the randomness didn't fix this
 
 		for (QuoteProcessor qp : qps)
 			scheduler.executeActivity(new SendToQP(this, quote, qp));
@@ -327,7 +324,7 @@ public abstract class Market extends Entity {
 	 * @param agent
 	 *            The agent that's submitting the order
 	 * @param type
-	 *            TODO
+	 *            The order type (BUY or SELL) from fourheap
 	 * @param price
 	 *            The price of the order
 	 * @param quantity

@@ -36,7 +36,6 @@ public class EntityProperties implements Serializable {
 	 */
 	protected Map<String, String> properties;
 
-	// FIXME Change protected constructor to only takea map of values and create static methods for everything
 	protected EntityProperties(Map<String, String> backedProperties) {
 		this.properties = backedProperties;
 	}

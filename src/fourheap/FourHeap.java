@@ -3,6 +3,7 @@ package fourheap;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -31,7 +32,7 @@ import com.google.common.collect.Ordering;
  *            Time class
  */
 /*
- * TODO Remove is slow, and changing to SortedSets will provide faster remove
+ * XXX Remove is slow, and changing to SortedSets will provide faster remove
  * for large heaps, but probably slow everything else down by a constant.
  * 
  * TODO There's a lot of almost duplicate code about modifying matched and
@@ -231,10 +232,8 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * Complexity: O(m) where m is the number of matched orders
 	 * 
 	 * @return The MatchedOrders
-	 * 
-	 * TODO Change to Collection
 	 */
-	public List<MatchedOrders<P, T, O>> clear() {
+	public Collection<MatchedOrders<P, T, O>> clear() {
 		List<O> buys = Lists.newArrayList(buyMatched);
 		Collections.sort(buys, buyUnmatched.comparator());
 		List<O> sells = Lists.newArrayList(sellMatched);
