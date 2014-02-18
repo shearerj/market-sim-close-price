@@ -124,5 +124,6 @@ public class MAMarketMaker extends MarketMaker {
 		lastAsk = ask;
 		lastBid = bid;
 	}
+	
 }
 

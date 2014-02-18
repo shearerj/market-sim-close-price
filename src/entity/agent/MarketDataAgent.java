@@ -8,6 +8,7 @@ import systemmanager.Keys;
 import systemmanager.Scheduler;
 import activity.AgentStrategy;
 import activity.SubmitOrder;
+
 import data.AgentProperties;
 import data.FundamentalValue;
 import data.OrderDatum;
@@ -19,7 +20,7 @@ import entity.market.Market;
 import event.TimeStamp;
 
 public class MarketDataAgent extends SMAgent {
-	
+
 	/*
 	 * When building from eclipse you should use the generated serialVersionUID
 	 * (which generates a random long) instead of the default 1. serialization
@@ -61,9 +62,7 @@ public class MarketDataAgent extends SMAgent {
 	}
 	
 	public void agentStrategy(TimeStamp currentTime) {
-//		TimeStamp waitTime = reentry.next();
-//		if (waitTime.equals(TimeStamp.INFINITE))
-//		return ImmutableList.of(new AgentStrategy(this, TimeStamp.INFINITE));
+		
 		// If there are no orders on the list, sleep forever
 		if (this.orderDatumList.isEmpty()) {
 			return;

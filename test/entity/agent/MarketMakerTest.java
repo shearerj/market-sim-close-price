@@ -128,7 +128,7 @@ public class MarketMakerTest {
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, false,
 				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_INSIDE, true)); // default
+				Keys.TICK_INSIDE, true));
 		assertEquals(5, mm.stepSize);
 
 		// Creating dummy agents
@@ -206,6 +206,7 @@ public class MarketMakerTest {
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
 		
 		mm.createOrderLadder(new Price(40), new Price(50));
+
 		assertEquals("Incorrect number of orders", 4, mm.activeOrders.size());
 		for (Order o : mm.activeOrders) {
 			int price = o.getPrice().intValue();
@@ -219,6 +220,7 @@ public class MarketMakerTest {
 	@Test
 	public void truncateLadderTickImprovementOutside() {
 		TimeStamp time = TimeStamp.ZERO;
+
 		SIP sip = new SIP(exec, TimeStamp.create(10));
 		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
 				Keys.NUM_RUNGS, 2,
@@ -242,6 +244,7 @@ public class MarketMakerTest {
 		exec.executeActivity(new ProcessQuote(sip, market2, q));
 
 		mm.createOrderLadder(new Price(40), new Price(50));
+
 		assertEquals("Incorrect number of orders", 3, mm.activeOrders.size());
 		for (Order o : mm.activeOrders) {
 			int price = o.getPrice().intValue();

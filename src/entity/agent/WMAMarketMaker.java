@@ -109,7 +109,7 @@ public class WMAMarketMaker extends MarketMaker {
 			} else {
 				// Quote changed, still valid, withdraw all orders
 				log.log(INFO, "%s in %s: Withdraw all orders", this, primaryMarket);
-				withdrawAllOrders();	
+				withdrawAllOrders();
 				
 				bid = this.getQuote().getBidPrice();
 				ask = this.getQuote().getAskPrice();

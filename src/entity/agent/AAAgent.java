@@ -1,10 +1,10 @@
 package entity.agent;
 
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 import static com.google.common.base.Preconditions.checkArgument;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Log.log;
-import static logger.Log.Level.INFO;
 import iterators.ExpInterarrivals;
 
 import java.util.ArrayList;

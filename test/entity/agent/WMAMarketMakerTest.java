@@ -1,5 +1,6 @@
 package entity.agent;
 
+import static event.TimeStamp.ZERO;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
@@ -47,7 +48,6 @@ import fourheap.Order.OrderType;
 
 public class WMAMarketMakerTest {
 
-	private static final TimeStamp zero = TimeStamp.ZERO;
 	private static final TimeStamp one = TimeStamp.create(1);
 	
 	private Executor exec;
@@ -87,7 +87,7 @@ public class WMAMarketMakerTest {
 				Keys.WEIGHT_FACTOR, 0);
 		
 		// Check activities inserted (none, other than reentry)
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 		assertTrue(exec.isEmpty());
 	}
 	
@@ -113,7 +113,7 @@ public class WMAMarketMakerTest {
 		assertEquals(null, quote.getBidPrice());
 		
 		// Check activities inserted (none, other than reentry)
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 		assertEquals(0, mm.activeOrders.size());
 		
 		// Creating dummy agents
@@ -129,7 +129,7 @@ public class WMAMarketMakerTest {
 		// Check activities inserted (none, other than reentry)
 		mm.lastAsk = new Price(55);
 		mm.lastBid = new Price(45);
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 		assertEquals(0, mm.activeOrders.size());
 	}
 	
@@ -206,15 +206,15 @@ public class WMAMarketMakerTest {
 		// Add quotes & execute agent strategy in between (without actually submitting orders)
 		int mktTime = 0;
 		addQuote(qp, 50, 60, 0, mktTime += 5);
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 		addQuote(qp, 52, 64, 0, mktTime += 5);
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 		addQuote(qp, 54, 68, 0, mktTime += 5);
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 		addQuote(qp, 56, 72, 0, mktTime += 5);
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 		addQuote(qp, 58, 76, 0, mktTime += 5);
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 		
 		assertEquals(new Price(58), mm.lastBid);
 		assertEquals(new Price(76), mm.lastAsk);
@@ -265,15 +265,15 @@ public class WMAMarketMakerTest {
 		// Add quotes & execute agent strategy in between (without actually submitting orders)
 		int mktTime = 0;
 		addQuote(qp, 50, 60, 0, mktTime += 5);
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 		addQuote(qp, 52, 64, 0, mktTime += 5);
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 		addQuote(qp, 54, 68, 0, mktTime += 5);
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 		addQuote(qp, 56, 72, 0, mktTime += 5);
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 		addQuote(qp, 58, 76, 0, mktTime += 5);
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 		
 		assertEquals(new Price(58), mm.lastBid);
 		assertEquals(new Price(76), mm.lastAsk);
@@ -338,7 +338,7 @@ public class WMAMarketMakerTest {
 		// Add quotes & execute agent strategy in between (without actually submitting orders)
 		int mktTime = 0;
 		addQuote(qp, 50, 60, 0, mktTime++);
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 
 		// check queues
 		assertEquals(new Price(50), mm.bidQueue.peek());
@@ -347,7 +347,7 @@ public class WMAMarketMakerTest {
 		for (Price p : mm.askQueue) assertEquals(60, p.intValue());
 
 		addQuote(qp, 52, 64, 0, mktTime++);
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 		// check queues
 		assertEquals(new Price(50), mm.bidQueue.peek());
 		assertEquals(new Price(60), mm.askQueue.peek());
@@ -361,7 +361,7 @@ public class WMAMarketMakerTest {
 		for (Price p : list) assertEquals(asks[i++], p.intValue());
 		
 		addQuote(qp, 53, 69, 0, mktTime++);
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 		// check queues
 		assertEquals(new Price(50), mm.bidQueue.peek());
 		assertEquals(new Price(60), mm.askQueue.peek());
@@ -399,7 +399,7 @@ public class WMAMarketMakerTest {
 		assertEquals(new Price(40), quote.getBidPrice());
 
 		// Check activities inserted (4 submit orders plus agent reentry)
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 
 		// Check ladder of orders (use market's collection b/c ordering consistent)
 		ArrayList<Order> orders = new ArrayList<Order>(market.getOrders());
@@ -446,9 +446,9 @@ public class WMAMarketMakerTest {
 		// Add quotes & execute agent strategy in between (without actually submitting orders)
 		int mktTime = 0;
 		addQuote(qp, 50000, 60000, 0, mktTime += 3);
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 		addQuote(qp, 52000, 64000, 0, mktTime += 3);
-		mm.agentStrategy(zero);
+		mm.agentStrategy(ZERO);
 
 		assertEquals(new Price(52000), mm.lastBid);
 		assertEquals(new Price(64000), mm.lastAsk);
@@ -572,7 +572,7 @@ public class WMAMarketMakerTest {
 
 		// Updating NBBO quote
 		MockMarket market2 = new MockMarket(exec, sip);
-		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, zero);
+		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, ZERO);
 		exec.executeActivity(new ProcessQuote(sip, market2, q));
 		exec.executeUntil(TimeStamp.create(1));
 
@@ -633,7 +633,7 @@ public class WMAMarketMakerTest {
 
 		// Updating NBBO quote
 		MockMarket market2 = new MockMarket(exec, sip);
-		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, zero);
+		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, ZERO);
 		exec.executeActivity(new ProcessQuote(sip, market2, q));
 
 		// Just to check that NBBO correct (it crosses)

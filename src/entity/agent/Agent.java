@@ -85,7 +85,6 @@ public abstract class Agent extends Entity {
 	 * Liquidate agent's position at the the value of the global fundamental at the specified time.
 	 * Price is determined by the fundamental at the time of liquidation.
 	 */
-	
 	public void liquidateAtFundamental(TimeStamp currentTime) {
 		log.log(INFO, "%s liquidating...", this);
 		liquidateAtPrice(fundamental.getValueAt(currentTime), currentTime);

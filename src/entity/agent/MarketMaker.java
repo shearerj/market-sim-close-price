@@ -80,6 +80,7 @@ public abstract class MarketMaker extends ReentryAgent {
 			Market market, Random rand, double reentryRate, int tickSize, 
 			boolean noOp, int numRungs, int rungSize, boolean truncateLadder,
 			boolean tickImprovement, boolean tickInside) {
+
 		this(scheduler, fundamental, sip, market, rand, ExpInterarrivals.create(reentryRate, rand),
 				tickSize, noOp, numRungs, rungSize, truncateLadder, tickImprovement, tickInside);
 	}
