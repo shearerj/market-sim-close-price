@@ -51,14 +51,12 @@ public class Scheduler {
 	}
 
 	/**
-	 * Executes activities until (not including) time
-	 * 
-	 * TODO Change back to including. Makes more sense with testing
+	 * Executes activities until (including) time
 	 * 
 	 * @param time
 	 */
 	protected void executeUntil(TimeStamp time) {
-		while (!isEmpty() && eventQueue.peek().getTime().before(time))
+		while (!isEmpty() && !eventQueue.peek().getTime().after(time))
 			executeNext();
 	}
 
@@ -67,7 +65,7 @@ public class Scheduler {
 	 * implementation, these should never get scheduled.
 	 */
 	protected void executeImmediate() {
-		executeUntil(TimeStamp.ZERO);
+		executeUntil(TimeStamp.IMMEDIATE);
 	}
 
 	/**

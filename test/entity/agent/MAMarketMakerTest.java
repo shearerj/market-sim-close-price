@@ -164,7 +164,7 @@ public class MAMarketMakerTest {
 		agent1.withdrawAllOrders();
 		agent2.withdrawAllOrders();
 		
-		exec.executeUntil(TimeStamp.create(2));
+		exec.executeUntil(TimeStamp.create(1));
 		// Note that now the quote is undefined, after it withdraws its ladder
 		// so it will insert lastBid/Ask into the queues so the ladder changes
 		exec.executeActivity(new AgentStrategy(marketmaker));

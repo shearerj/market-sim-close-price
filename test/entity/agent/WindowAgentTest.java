@@ -35,8 +35,6 @@ import event.TimeStamp;
  *
  */
 public class WindowAgentTest {
-	
-	private static final TimeStamp one = TimeStamp.create(1);
 
 	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
@@ -105,18 +103,18 @@ public class WindowAgentTest {
 		MockBackgroundAgent background2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		exec.executeActivity(new SubmitOrder(background1, market, BUY, new Price(111), 1));
 		exec.executeActivity(new SubmitOrder(background2, market, SELL, new Price(110), 1));
-		exec.executeUntil(TimeStamp.create(2));
+		exec.executeUntil(time1);
 		exec.executeActivity(new SubmitOrder(background1, market, BUY, new Price(104), 1));
 		exec.executeActivity(new SubmitOrder(agent, market, SELL, new Price(102), 1));
 		
 		// test getting transactions at time 5 - should be missing the second transaction
-		exec.executeUntil(time5.plus(time1));
+		exec.executeUntil(time5);
 		assertEquals("Incorrect # transactions", 1, agent.getWindowTransactions(time5).size());
 		List<Transaction> trans = agent.getWindowTransactions(time5);
 		assertTrue("Transaction incorrect", trans.contains(market.getTransactions().get(0)));
 		
 		// check time 10
-		exec.executeUntil(time10.plus(time1));
+		exec.executeUntil(time10);
 		trans = agent.getWindowTransactions(time10);
 		assertEquals("Incorrect # transactions", 1, trans.size());
 		assertEquals("Transaction price incorrect", new Price(104), trans.get(0).getPrice());
@@ -124,7 +122,7 @@ public class WindowAgentTest {
 		assertEquals("Transaction buyer incorrect", background1, trans.get(0).getBuyer());
 		
 		// check outside window (at time 11)
-		exec.executeUntil(TimeStamp.create(12));
+		exec.executeUntil(TimeStamp.create(11));
 		trans = agent.getWindowTransactions(time10.plus(time1));
 		assertEquals("Incorrect # transactions", 0, trans.size());
 	}
@@ -196,53 +194,53 @@ public class WindowAgentTest {
 		MockBackgroundAgent agent_B = new MockBackgroundAgent(exec, fundamental, sip, market);
 		
 		//Timestamps for the first transaction and the time to execute up to
-		TimeStamp t_51 = TimeStamp.create(51);
+		TimeStamp t_50 = TimeStamp.create(50);
 		//Timestamps for the second transaction and the time to execute up to
-		TimeStamp t_101 = TimeStamp.create(101);
+		TimeStamp t_100 = TimeStamp.create(100);
 		//Timestamps for important intervals to check the window
-		TimeStamp t_151 = TimeStamp.create(151);
-		TimeStamp t_201 = TimeStamp.create(201);
-		TimeStamp t_251 = TimeStamp.create(251);
-		TimeStamp t_301 = TimeStamp.create(301);
+		TimeStamp t_150 = TimeStamp.create(150);
+		TimeStamp t_200 = TimeStamp.create(200);
+		TimeStamp t_250 = TimeStamp.create(250);
+		TimeStamp t_300 = TimeStamp.create(300);
 
 		//Execute first transaction
-		exec.executeUntil(t_51);
+		exec.executeUntil(t_50);
 		exec.executeActivity(new SubmitOrder(agent_S, market, SELL, new Price(40), 1));
 		exec.executeActivity(new SubmitOrder(agent_B, market, BUY, new Price(40), 1));
 		//Assert that the agent can't see the transaction due to latency
-		windowTransactions = myAgent.getWindowTransactions(t_51);
+		windowTransactions = myAgent.getWindowTransactions(t_50);
 		assertTrue("Window Transactions should be empty", windowTransactions.isEmpty());
 		
 		//Execute second transaction
-		exec.executeUntil(t_101);
+		exec.executeUntil(t_100);
 		exec.executeActivity(new SubmitOrder(agent_S, market, SELL, new Price(60), 1));
 		exec.executeActivity(new SubmitOrder(agent_B, market, BUY, new Price(60), 1));
 		//Assert that the agent can't see the transaction due to latency
-		windowTransactions = myAgent.getWindowTransactions(t_101);
+		windowTransactions = myAgent.getWindowTransactions(t_100);
 		assertTrue("Window Transactions should be empty", windowTransactions.isEmpty());
 		
 		//Execute up to when the first transaction comes into the window
-		exec.executeUntil(t_151);
+		exec.executeUntil(t_150);
 		//Assert that the window returns one transaction
-		windowTransactions = myAgent.getWindowTransactions(t_151);
+		windowTransactions = myAgent.getWindowTransactions(t_150);
 		assertEquals("Window Transactions should be size 1", 1, windowTransactions.size());
 		
 		//Execute up to when the second transaction comes into the window
-		exec.executeUntil(t_201);
+		exec.executeUntil(t_200);
 		//Assert that the window returns two transactions
-		windowTransactions = myAgent.getWindowTransactions(t_201);
+		windowTransactions = myAgent.getWindowTransactions(t_200);
 		assertEquals("Window Transactions should be size 2", 2, windowTransactions.size());
 		
 		//Execute up to when the first transaction leaves the window
-		exec.executeUntil(t_251);
+		exec.executeUntil(t_250);
 		//Assert that the window returns one transaction
-		windowTransactions = myAgent.getWindowTransactions(t_251);
+		windowTransactions = myAgent.getWindowTransactions(t_250);
 		assertEquals("Window Transactions should be size 1", 1, windowTransactions.size());
 		
 		//Execute up to when all transactions leave the window
-		exec.executeUntil(t_301);
+		exec.executeUntil(t_300);
 		//Assert that the window returns no transactions
-		windowTransactions = myAgent.getWindowTransactions(t_301);
+		windowTransactions = myAgent.getWindowTransactions(t_300);
 		assertTrue("Window Transactions should be empty", windowTransactions.isEmpty());
 	}
 	
@@ -288,7 +286,7 @@ public class WindowAgentTest {
 		MockBackgroundAgent agent_S = new MockBackgroundAgent(exec, fundamental, sip, m);
 		MockBackgroundAgent agent_B = new MockBackgroundAgent(exec, fundamental, sip, m);
 
-		exec.executeUntil(t.plus(one));
+		exec.executeUntil(t);
 		exec.executeActivity(new SubmitOrder(agent_S, m, SELL, new Price(p), q));
 		exec.executeActivity(new SubmitOrder(agent_B, m, BUY, new Price(p), q));
 	}

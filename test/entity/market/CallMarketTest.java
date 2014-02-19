@@ -647,7 +647,7 @@ public class CallMarketTest {
 		// Quote still undefined before clear
 		exec.scheduleActivity(time, new SubmitOrder(agent1, market1, BUY, new Price(100),  1));
 		exec.scheduleActivity(time, new SubmitOrder(agent1, market1, SELL, new Price(110), 1));
-		exec.executeUntil(clearFreq100);
+		exec.executeUntil(clearFreq100.minus(one));
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect Ask", null, quote.getAskPrice());
 		assertEquals("Incorrect Ask quantity", 0, quote.getAskQuantity());
@@ -655,7 +655,7 @@ public class CallMarketTest {
 		assertEquals("Incorrect Bid quantity", 0, quote.getBidQuantity());
 		
 		// Now quote should be updated
-		exec.executeUntil(clearFreq100.plus(one));
+		exec.executeUntil(clearFreq100);
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect Ask", new Price(110), quote.getAskPrice());
 		assertEquals("Incorrect Ask quantity", 1, quote.getAskQuantity());
@@ -663,17 +663,17 @@ public class CallMarketTest {
 		assertEquals("Incorrect Bid quantity", 1, quote.getBidQuantity());
 		
 		// Now check that transactions are correct as well as quotes
-		exec.scheduleActivity(clearFreq100, new SubmitOrder(agent2, market1, SELL, new Price(150), 1));
-		exec.scheduleActivity(clearFreq100, new SubmitOrder(agent2, market1, BUY, new Price(120), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market1, SELL, new Price(150), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market1, BUY, new Price(120), 1));
 		// Before second clear interval ends, quote remains the same
-		exec.executeUntil(clearFreq100.plus(clearFreq100));
+		exec.executeUntil(clearFreq100.plus(clearFreq100).minus(one));
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect Ask", new Price(110), quote.getAskPrice());
 		assertEquals("Incorrect Ask quantity", 1, quote.getAskQuantity());
 		assertEquals("Incorrect Bid", new Price(100), quote.getBidPrice());
 		assertEquals("Incorrect Bid quantity", 1, quote.getBidQuantity());
 		// Once clear interval ends, orders match and clear, and the quote updates
-		exec.executeUntil(clearFreq100.plus(clearFreq100).plus(TimeStamp.create(1)));
+		exec.executeUntil(clearFreq100.plus(clearFreq100));
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect Ask", new Price(150), quote.getAskPrice());
 		assertEquals("Incorrect Ask quantity", 1, quote.getAskQuantity());
@@ -715,7 +715,7 @@ public class CallMarketTest {
 		// Test that before Time 100 nothing has been updated
 		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		exec.scheduleActivity(TimeStamp.ZERO, new SubmitOrder(agent, market1, SELL, new Price(100), 1));
-		exec.executeUntil(TimeStamp.create(100));
+		exec.executeUntil(TimeStamp.create(99));
 		
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
@@ -724,7 +724,7 @@ public class CallMarketTest {
 		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
 		
 		// Test that after clear at 100 quotes are updated
-		exec.executeUntil(TimeStamp.create(101));
+		exec.executeUntil(TimeStamp.create(100));
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
 		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
@@ -733,7 +733,7 @@ public class CallMarketTest {
 		
 		// Test that no change in quotes given matched orders
 		exec.scheduleActivity(TimeStamp.create(150), new SubmitOrder(agent, market1, BUY, new Price(150), 1));
-		exec.executeUntil(TimeStamp.create(101));
+		exec.executeUntil(TimeStamp.create(100));
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Changed Ask price unnecessarily", new Price(100), quote.getAskPrice());
 		assertEquals("Changed Ask quantity unnecessarily", 1, quote.getAskQuantity());
@@ -741,7 +741,7 @@ public class CallMarketTest {
 		assertEquals("Changed Bid quantity unnecessarily", 0, quote.getBidQuantity());
 		
 		// Now post-clear, orders are matched and removed and quote is updated
-		exec.executeUntil(TimeStamp.create(201));
+		exec.executeUntil(TimeStamp.create(200));
 		quote = market1.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", null, quote.getAskPrice());
 		assertEquals("Didn't update Ask quantity", 0, quote.getAskQuantity());
@@ -773,7 +773,7 @@ public class CallMarketTest {
 		exec.executeActivity(new SubmitOrder(agent2, market4, BUY, new Price(100), 1));
 		
 		// Test that before Time 100 nothing has been updated for either market
-		exec.executeUntil(TimeStamp.create(100));
+		exec.executeUntil(TimeStamp.create(99));
 		quote = market3.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
 		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
@@ -786,7 +786,7 @@ public class CallMarketTest {
 		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
 		
 		// Test that after clear at 100 quotes are still not updated
-		exec.executeUntil(TimeStamp.create(101));
+		exec.executeUntil(TimeStamp.create(100));
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
 		assertEquals("Updated Ask quantity too early", 0, quote.getAskQuantity());
 		assertEquals("Incorrect Bid price initialization", null, quote.getBidPrice());
@@ -798,7 +798,7 @@ public class CallMarketTest {
 		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
 		
 		// Test that market3's quotes have now updated (but not market4's)
-		exec.executeUntil(TimeStamp.create(151));
+		exec.executeUntil(TimeStamp.create(150));
 		quote = market3.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
 		assertEquals("Didn't update Ask quantity", 1, quote.getAskQuantity());
@@ -811,7 +811,7 @@ public class CallMarketTest {
 		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
 		
 		// Test that market4's quotes have now updated (quote from first clear)
-		exec.executeUntil(TimeStamp.create(251));
+		exec.executeUntil(TimeStamp.create(250));
 		quote = market4.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Bid price", new Price(100), quote.getBidPrice());
 		assertEquals("Didn't update Bid quantity", 1, quote.getBidQuantity());

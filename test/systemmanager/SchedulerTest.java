@@ -74,7 +74,7 @@ public class SchedulerTest {
 		assertEquals(TimeStamp.ZERO, scheduler.getCurrentTime());
 		
 		// Check that second activity hasn't executed yet
-		scheduler.executeUntil(time.plus(time));
+		scheduler.executeUntil(time);
 		assertEquals(1, scheduler.eventQueue.size());
 		assertEquals(time, scheduler.getCurrentTime());
 		assertEquals(time.plus(time), scheduler.eventQueue.peek().getTime());

@@ -1,5 +1,6 @@
 package entity.market;
 
+import static event.TimeStamp.ZERO;
 import static org.junit.Assert.*;
 import static fourheap.Order.OrderType.*;
 import static logger.Log.Level.*;
@@ -446,7 +447,7 @@ public class CDAMarketTest {
 		assertEquals("Incorrect ASK quantity",  1,  q.askQuantity );
 		assertEquals("Incorrect BID quantity",  0,  q.bidQuantity );
 
-		exec.executeUntil(TimeStamp.create(2));
+		exec.executeUntil(TimeStamp.create(1));
 		// Both agents' sell orders should transact b/c partial quantity withdrawn
 		exec.executeActivity(new SubmitOrder(agent2, market, BUY, new Price(155), 1));
 		exec.executeActivity(new SubmitOrder(agent2, market, BUY, new Price(155), 2));
@@ -593,7 +594,7 @@ public class CDAMarketTest {
 		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
 		
 		// This will execute all of the remaining activities
-		exec.executeUntil(TimeStamp.create(1));
+		exec.executeUntil(ZERO);
 		
 		quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
@@ -610,7 +611,7 @@ public class CDAMarketTest {
 		// Test that before Time 100 nothing has been updated
 		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
 		exec.executeActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1));
-		exec.executeUntil(TimeStamp.create(100));
+		exec.executeUntil(TimeStamp.create(99));
 		
 		quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
@@ -619,7 +620,7 @@ public class CDAMarketTest {
 		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
 		
 		// Test that after 100 they did get updated
-		exec.executeUntil(TimeStamp.create(101));
+		exec.executeUntil(TimeStamp.create(100));
 		
 		quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());

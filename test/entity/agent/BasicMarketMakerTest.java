@@ -221,7 +221,7 @@ public class BasicMarketMakerTest {
 		assertEquals(new Price(48), quote.getAskPrice());
 		assertEquals(new Price(42), quote.getBidPrice());
 
-		exec.executeUntil(TimeStamp.create(11));
+		exec.executeUntil(TimeStamp.create(10));
 		// Next MM strategy execution
 		exec.executeActivity(new AgentStrategy(marketmaker));
 
@@ -477,13 +477,13 @@ public class BasicMarketMakerTest {
 		assertEquals(0, agent1.activeOrders.size());
 		agent2.withdrawAllOrders();
 		assertEquals(0, agent2.activeOrders.size());
-		exec.executeUntil(TimeStamp.create(2));
+		exec.executeUntil(one);
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(42), 1));
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(49), 1));
 		
 		// Verify that it withdraws ladder entirely & submits new ladder
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		exec.executeUntil(TimeStamp.create(2));
+		exec.executeUntil(one);
 		assertNotNull(marketmaker.lastBid);
 		assertNotNull(marketmaker.lastAsk);
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
@@ -529,7 +529,7 @@ public class BasicMarketMakerTest {
 		// Verify that it withdraws ladder entirely
 		// Note that now the quote is undefined, after it withdraws its ladder
 		// so it will submit a ladder with the lastBid
-		exec.executeUntil(TimeStamp.create(2));
+		exec.executeUntil(one);
 		exec.executeActivity(new AgentStrategy(marketmaker));
 		
 		assertNotNull(marketmaker.lastBid);

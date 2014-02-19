@@ -33,7 +33,6 @@ import event.TimeStamp;
 public class LAAgentTest {
 
 	// TODO Here or in HFT Test make sure it gets notified about transactions appropriately
-	private static final TimeStamp one = TimeStamp.create(1);
 	
 	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
@@ -121,14 +120,14 @@ public class LAAgentTest {
 		market1.submitOrder(agent1, BUY, new Price(5), 1, TimeStamp.ZERO);
 		market2.submitOrder(agent2, SELL, new Price(1), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent1, BUY, new Price(2), 1, TimeStamp.create(5)); // Used to cause LA to submit extra orders
-		exec.executeUntil(latency.plus(one)); // LA has submitted orders (and they've transacted)
+		exec.executeUntil(latency); // LA has submitted orders (and they've transacted)
 		// LA Strategy gets called implicitly 
 		
 		assertEquals(0, la.positionBalance);
 		assertEquals(0, la.profit);
 		assertEquals(2, la.activeOrders.size());
 		
-		exec.executeUntil(latency.plus(latency).plus(one)); // Takes this long for the LA to find out about it
+		exec.executeUntil(latency.plus(latency)); // Takes this long for the LA to find out about it
 		assertEquals(0, la.positionBalance);
 		assertEquals(4, la.profit);
 		assertTrue(la.activeOrders.isEmpty());

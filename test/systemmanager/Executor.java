@@ -16,7 +16,6 @@ import event.TimedActivity;
 public class Executor extends Scheduler {
 
 	private static final Random rand = new Random();
-	private static final TimeStamp one = TimeStamp.create(1);
 	
 	public Executor() {
 		super(rand);
@@ -28,7 +27,7 @@ public class Executor extends Scheduler {
 	@Override
 	public void executeUntil(TimeStamp time) {
 		super.executeUntil(time);
-		this.currentTime = time.minus(one);
+		this.currentTime = time;
 	}
 	
 	public TimedActivity peek() {

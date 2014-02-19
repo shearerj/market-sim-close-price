@@ -251,14 +251,14 @@ public class AAAgentTest {
 		
 		limit = new Price(211000);
 		buyer.biddingLayer(limit, null, 1, TimeStamp.create(20));
-		exec.executeUntil(TimeStamp.create(21));
+		exec.executeUntil(TimeStamp.create(20));
 		assertCorrectBid(buyer, 170007, 1);
 		
 		limit = new Price(210000);
 		target = new Price(180000);
 		buyer.withdrawAllOrders();
 		buyer.biddingLayer(limit, target, 1, TimeStamp.create(20));
-		exec.executeUntil(TimeStamp.create(21));
+		exec.executeUntil(TimeStamp.create(20));
 		assertCorrectBid(buyer, 160000, 1);
 	}
 	
@@ -287,14 +287,14 @@ public class AAAgentTest {
 		
 		limit = new Price(170000);
 		seller.biddingLayer(limit, null, 1, TimeStamp.create(20));
-		exec.executeUntil(TimeStamp.create(21));
+		exec.executeUntil(TimeStamp.create(20));
 		assertCorrectBid(seller, 190000, 1);
 		
 		limit = new Price(165000);
 		target = new Price(170000);
 		seller.withdrawAllOrders();
 		seller.biddingLayer(limit, target, 1, TimeStamp.create(20));
-		exec.executeUntil(TimeStamp.create(21));
+		exec.executeUntil(TimeStamp.create(20));
 		assertCorrectBid(seller, 190000, 1);
 	}
 	

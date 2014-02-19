@@ -1,5 +1,6 @@
 package entity.market;
 
+import static event.TimeStamp.ZERO;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static logger.Log.log;
@@ -435,7 +436,7 @@ public class MarketTest {
 		// Test that before Time 100 nothing has been updated
 		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
 		exec.scheduleActivity(TimeStamp.ZERO, new SubmitOrder(agent, market, SELL, new Price(100), 1));
-		exec.executeUntil(TimeStamp.create(100));
+		exec.executeUntil(TimeStamp.create(99));
 
 		quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, quote.getAskPrice());
@@ -444,7 +445,7 @@ public class MarketTest {
 		assertEquals("Incorrect Bid quantity initialization", 0, quote.getBidQuantity());
 
 		// Test that after 100 they did get updated
-		exec.executeUntil(TimeStamp.create(101));
+		exec.executeUntil(TimeStamp.create(100));
 
 		quote = market.getQuoteProcessor().getQuote();
 		assertEquals("Didn't update Ask price", new Price(100), quote.getAskPrice());
@@ -532,7 +533,7 @@ public class MarketTest {
 		// Test that before Time 100 nothing has been updated
 		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
 		exec.executeActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1));
-		exec.executeUntil(TimeStamp.create(100));
+		exec.executeUntil(TimeStamp.create(99));
 
 		q = market.getQuoteProcessor().getQuote();
 		assertEquals("Updated Ask price too early", null, q.getAskPrice());
@@ -541,7 +542,7 @@ public class MarketTest {
 		assertEquals("Incorrect Bid quantity initialization", 0, q.getBidQuantity());
 
 		// Update QP
-		exec.executeUntil(TimeStamp.create(101));
+		exec.executeUntil(TimeStamp.create(100));
 		q = market.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect ASK", new Price(100), q.ask );
 		assertEquals("Incorrect BID", null, q.bid);
@@ -554,7 +555,7 @@ public class MarketTest {
 		
 		// Update QP
 		// Test that after 101 new quote did get updated
-		exec.executeUntil(TimeStamp.create(201));
+		exec.executeUntil(TimeStamp.create(200));
 		q = market.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect ASK", new Price(100), q.ask );
 		assertEquals("Incorrect BID", new Price(80), q.bid);
@@ -565,22 +566,17 @@ public class MarketTest {
 
 	@Test
 	public void updateTPNoDelay() {
-		TimeStamp time = TimeStamp.ZERO;
-		TimeStamp time1 = TimeStamp.create(1);
 		TransactionProcessor tp = market.getTransactionProcessor();
 
 		// Creating dummy agents & transaction list
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(150), 1));
-		exec.executeUntil(time1);
-		exec.scheduleActivity(time, new SubmitOrder(agent2, market, SELL, new Price(140), 1));
-		exec.executeUntil(time1);
-		exec.scheduleActivity(time, new Clear(market));
-		exec.executeUntil(time1);
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(140), 1));
+		exec.executeActivity(new Clear(market));
 
 		// Verify that transactions have updated
-		tp.processTransactions(market, ImmutableList.<Transaction> of(), time);
+		tp.processTransactions(market, ImmutableList.<Transaction> of(), ZERO);
 		List<Transaction> trans = tp.getTransactions();
 		assertEquals("Incorrect number of transactions", 1, trans.size());
 		assertEquals("Incorrect transaction price", new Price(150), trans.get(0).getPrice());
@@ -601,16 +597,15 @@ public class MarketTest {
 
 	@Test
 	public void updateTPDelay() {
-		TimeStamp time = TimeStamp.ZERO;
 		Market market = new MockMarket(exec, sip, TimeStamp.create(100));
 		TransactionProcessor tp = market.getTransactionProcessor();
 		
 		// Creating dummy agents & transaction list
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
-		market.submitOrder(agent1, BUY, new Price(150), 1, time);
-		market.submitOrder(agent2, SELL, new Price(140), 1, time);
-		market.clear(time);
+		market.submitOrder(agent1, BUY, new Price(150), 1, ZERO);
+		market.submitOrder(agent2, SELL, new Price(140), 1, ZERO);
+		market.clear(ZERO);
 
 		// Verify that transactions have not updated yet
 		List<Transaction> trans = market.getTransactions();
@@ -618,7 +613,7 @@ public class MarketTest {
 		assertEquals(0, tp.getTransactions().size());
 		
 		// Test that after 100 new transaction did get updated
-		exec.executeUntil(TimeStamp.create(101));
+		exec.executeUntil(TimeStamp.create(100));
 		trans = tp.getTransactions();
 		assertEquals("Incorrect number of transactions", 1, trans.size());
 		assertEquals("Incorrect transaction price", new Price(150), trans.get(0).getPrice());

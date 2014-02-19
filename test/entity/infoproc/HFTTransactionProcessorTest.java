@@ -129,7 +129,7 @@ public class HFTTransactionProcessorTest {
 		assertEquals("Incorrect number of transactions", 0, trans.size());
 
 		// Verify that transactions have updated
-		exec.executeUntil(TimeStamp.create(101));
+		exec.executeUntil(TimeStamp.create(100));
 		trans = hft.getTransactions(market2);
 		assertEquals("Incorrect number of transactions", 1, trans.size());
 		assertEquals("Incorrect transaction price", new Price(150), trans.get(0).getPrice());
@@ -184,7 +184,7 @@ public class HFTTransactionProcessorTest {
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 		
 		// Verify that transactions have updated
-		exec.executeUntil(TimeStamp.create(101));
+		exec.executeUntil(TimeStamp.create(100));
 		trans = hft.getTransactions(market2);
 		assertEquals("Incorrect number of transactions", 1, trans.size());
 		assertEquals("Incorrect transaction price", new Price(150), trans.get(0).getPrice());

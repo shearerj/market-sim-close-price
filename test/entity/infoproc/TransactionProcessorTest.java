@@ -115,7 +115,7 @@ public class TransactionProcessorTest {
 		assertTrue("Incorrect transaction list size", trans.isEmpty());
 
 		// Verify that transactions have updated
-		exec.executeUntil(TimeStamp.create(101));
+		exec.executeUntil(TimeStamp.create(100));
 		trans = smip.getTransactions();
 		assertEquals("Incorrect number of transactions", 1, trans.size());
 		assertEquals("Incorrect transaction price", new Price(150), trans.get(0).getPrice());
@@ -182,7 +182,7 @@ public class TransactionProcessorTest {
 		assertEquals("Incorrect BID quantity", 1, q.getBidQuantity());
 
 		// Verify that transactions have updated as well as NBBO
-		exec.executeUntil(TimeStamp.create(101));
+		exec.executeUntil(TimeStamp.create(100));
 		trans = smip.getTransactions();
 		assertEquals("Incorrect number of transactions", 1, trans.size());
 		assertEquals("Incorrect transaction price", new Price(150), trans.get(0).getPrice());
@@ -194,7 +194,7 @@ public class TransactionProcessorTest {
 	@Test
 	public void transactionOrderingTest() {
 		Market market = new CDAMarket(exec, sip, new Random(), TimeStamp.IMMEDIATE, 
-				TimeStamp.create(0), 1);
+				ZERO, 1);
 		TransactionProcessor tp = market.getTransactionProcessor();
 		Agent one = new MockAgent(exec, fundamental, sip, market);
 		Agent two = new MockAgent(exec, fundamental, sip, market);
@@ -211,7 +211,7 @@ public class TransactionProcessorTest {
 		assertTrue(tp.getTransactions().isEmpty());
 		
 		// Execute until proper time
-		exec.executeUntil(TimeStamp.create(1));
+		exec.executeUntil(ZERO);
 		// Now both transactions should show up
 		assertEquals(2, tp.getTransactions().size());
 		

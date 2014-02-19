@@ -155,7 +155,7 @@ public class WMAMarketMakerTest {
 
 		// Initial MM strategy; submits ladder with numRungs=3
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		exec.executeUntil(TimeStamp.create(1));
+		exec.executeUntil(ZERO);
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
 		
 		// To change the bid stored in the MM
@@ -172,9 +172,8 @@ public class WMAMarketMakerTest {
 		
 		// Note that now the quote is undefined, after it withdraws its ladder
 		// so it will insert lastBid/Ask into the queues so the ladder changes
-		exec.executeUntil(one.plus(one));
+		exec.executeUntil(one);
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		exec.executeUntil(TimeStamp.create(2));
 		assertNotNull(marketmaker.lastBid);
 		assertNotNull(marketmaker.lastAsk);
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
@@ -499,7 +498,7 @@ public class WMAMarketMakerTest {
 
 		// Initial MM strategy
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		exec.executeUntil(TimeStamp.create(1));
+		exec.executeUntil(ZERO);
 
 		// Check ladder of orders
 		// market's orders contains all orders ever submitted
@@ -574,7 +573,7 @@ public class WMAMarketMakerTest {
 		MockMarket market2 = new MockMarket(exec, sip);
 		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, ZERO);
 		exec.executeActivity(new ProcessQuote(sip, market2, q));
-		exec.executeUntil(TimeStamp.create(1));
+		exec.executeUntil(ZERO);
 
 		// Just to check that NBBO correct (it crosses)
 		BestBidAsk nbbo = sip.getNBBO();
