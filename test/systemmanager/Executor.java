@@ -22,7 +22,8 @@ public class Executor extends Scheduler {
 	}
 
 	/**
-	 * Also sets the time to be time - 1
+	 * Also sets the time to "time." Thus after you call executeUntil(x), you
+	 * can now call executeActivity(a) to have a execute immediately at time x.
 	 */
 	@Override
 	public void executeUntil(TimeStamp time) {
