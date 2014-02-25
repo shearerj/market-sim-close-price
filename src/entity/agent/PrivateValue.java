@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static entity.market.Price.ZERO;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -13,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import sumstats.SumStats;
 import utils.Rands;
 
 import com.google.common.base.Objects;
@@ -160,11 +160,11 @@ public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 	 * @return
 	 */
 	public Price getMean() {
-		SummaryStatistics pv = new SummaryStatistics();
+		SumStats pv = SumStats.create();
 		for (Price price : values) {
-			pv.addValue(price.doubleValue());
+			pv.add(price.doubleValue());
 		}
-		return new Price(pv.getMean());
+		return new Price(pv.mean());
 	}
 	
 	@Override

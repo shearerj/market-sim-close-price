@@ -2,7 +2,7 @@ package data;
 
 import java.util.Map;
 
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import sumstats.SumStats;
 
 import com.google.common.collect.Maps;
 
@@ -16,23 +16,23 @@ public class MultiSimPlayerObservation {
 
 	public final String role;
 	public final String strategy;
-	public final SummaryStatistics payoff;
-	public final Map<String, SummaryStatistics> features;
+	public final SumStats payoff;
+	public final Map<String, SumStats> features;
 	
 	public MultiSimPlayerObservation(String role, String strategy) {
 		this.role = role;
 		this.strategy = strategy;
-		this.payoff = new SummaryStatistics();
+		this.payoff = SumStats.create();
 		this.features = Maps.newHashMap();
 	}
 	
 	public MultiSimPlayerObservation(String role, String strategy, double firstValue,
 			Map<String, Double> features) {
 		this(role, strategy);
-		payoff.addValue(firstValue);
+		payoff.add(firstValue);
 		for (String key : features.keySet()) {
-			SummaryStatistics summ = new SummaryStatistics();
-			summ.addValue(features.get(key).doubleValue());
+			SumStats summ = SumStats.create();
+			summ.add(features.get(key).doubleValue());
 			this.features.put(key, summ);
 		}
 	}
