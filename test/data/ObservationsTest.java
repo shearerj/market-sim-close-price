@@ -218,14 +218,14 @@ public class ObservationsTest {
 		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
 		market1.clear(TimeStamp.ZERO);
-		assertEquals(0, obs.executionSpeeds.getMean(), 0.001);
+		assertEquals(0, obs.executionSpeeds.mean(), 0.001);
 		
 		// Same times
 		setupObservations(agent1, agent2);
 		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
 		market1.clear(TimeStamp.create(1));
-		assertEquals(1, obs.executionSpeeds.getMean(), 0.001);
+		assertEquals(1, obs.executionSpeeds.mean(), 0.001);
 
 		// Quantity weighted
 		setupObservations(agent1, agent2);
@@ -235,7 +235,7 @@ public class ObservationsTest {
 		market1.submitOrder(agent1, BUY, new Price(102), 3, TimeStamp.create(2));
 		market1.submitOrder(agent2, SELL, new Price(102), 3, TimeStamp.create(2));
 		market1.clear(TimeStamp.create(4));
-		assertEquals(1.75, obs.executionSpeeds.getMean(), 0.001);
+		assertEquals(1.75, obs.executionSpeeds.mean(), 0.001);
 		
 		// Split order
 		setupObservations(agent1, agent2);
@@ -243,14 +243,14 @@ public class ObservationsTest {
 		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.create(1));
 		market1.clear(TimeStamp.create(1));
-		assertEquals(0.75, obs.executionSpeeds.getMean(), 0.001);
+		assertEquals(0.75, obs.executionSpeeds.mean(), 0.001);
 
 		// Same agent
 		setupObservations(agent1, agent2);
 		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.create(0));
 		market1.submitOrder(agent1, SELL, new Price(102), 1, TimeStamp.create(1));
 		market1.clear(TimeStamp.create(2));
-		assertEquals(1.5, obs.executionSpeeds.getMean(), 0.001);
+		assertEquals(1.5, obs.executionSpeeds.mean(), 0.001);
 	}
 	
 	@Test
@@ -263,14 +263,14 @@ public class ObservationsTest {
 		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
 		market1.clear(TimeStamp.ZERO);
-		assertEquals(102, obs.prices.getMean(), 0.001);
+		assertEquals(102, obs.prices.mean(), 0.001);
 
 		// Same agent
 		setupObservations(agent1);
 		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent1, SELL, new Price(102), 1, TimeStamp.ZERO);
 		market1.clear(TimeStamp.ZERO);
-		assertEquals(102, obs.prices.getMean(), 0.001);
+		assertEquals(102, obs.prices.mean(), 0.001);
 		
 		// Multi quantity
 		setupObservations(agent1, agent2);
@@ -280,7 +280,7 @@ public class ObservationsTest {
 		market1.submitOrder(agent1, BUY, new Price(200), 3, TimeStamp.ZERO);
 		market1.submitOrder(agent2, SELL, new Price(200), 3, TimeStamp.ZERO);
 		market1.clear(TimeStamp.ZERO);
-		assertEquals(150, obs.prices.getMean(), 0.001);
+		assertEquals(150, obs.prices.mean(), 0.001);
 		
 		// Split order NOTE: Clearing price is buy order
 		setupObservations(agent1, agent2);
@@ -288,7 +288,7 @@ public class ObservationsTest {
 		market1.submitOrder(agent2, SELL, new Price(80), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent2, SELL, new Price(60), 3, TimeStamp.ZERO);
 		market1.clear(TimeStamp.ZERO);
-		assertEquals(100, obs.prices.getMean(), 0.001);
+		assertEquals(100, obs.prices.mean(), 0.001);
 
 		// Split order NOTE: Clearing price is buy order
 		setupObservations(agent1, agent2);
@@ -296,7 +296,7 @@ public class ObservationsTest {
 		market1.submitOrder(agent2, BUY, new Price(80), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent2, BUY, new Price(60), 3, TimeStamp.ZERO);
 		market1.clear(TimeStamp.ZERO);
-		assertEquals(70, obs.prices.getMean(), 0.001);
+		assertEquals(70, obs.prices.mean(), 0.001);
 	}
 	
 	@Test

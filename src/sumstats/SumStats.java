@@ -1,5 +1,7 @@
 package sumstats;
 
+import com.google.common.primitives.Doubles;
+
 /**
  * Compact Summary Statistics Class meant to only calculate sum and standard
  * deviation. This generally has more accuracy than the Apache Commons Math
@@ -40,12 +42,37 @@ public class SumStats {
 	}
 	
 	/**
+	 * Create a SumStats object with initial data
+	 */
+	public static SumStats fromData(Iterable<Double> data) {
+		SumStats stats = SumStats.create();
+		for (double d : data)
+			stats.add(d);
+		return stats;
+	}
+	
+	/**
+	 * Create a SumStats object with initial data
+	 */
+	public static SumStats fromData(double[] data) {
+		return fromData(Doubles.asList(data));
+	}
+	
+	/**
 	 * Add a data point
 	 */
 	public void add(double val) {
 		++n;
 		sum.add(val);
 		sumsq.add(val * val);
+	}
+	
+	/**
+	 * Return the summ of all of the data added so far
+	 * @return
+	 */
+	public double sum() {
+		return sum.sum();
 	}
 	
 	/**
@@ -56,10 +83,18 @@ public class SumStats {
 	}
 	
 	/**
+	 * Return the sample variance of all data added so far
+	 * @return
+	 */
+	public double variance() {
+		return (sumsq.sum() - (sum.sum() * sum.sum()) / n) / (n - 1);
+	}
+	
+	/**
 	 * Return the sample statndard deviation of all data added so far
 	 */
 	public double stddev() {
-		return Math.sqrt((sumsq.sum() - (sum.sum() * sum.sum()) / n) / (n - 1));
+		return Math.sqrt(variance());
 	}
 	
 }

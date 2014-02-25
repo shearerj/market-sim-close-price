@@ -25,7 +25,9 @@ import com.google.common.collect.PeekingIterator;
  * When filling in values, a new element is added to series if the time for the
  * new data point is different from the most recent time recorded.
  * 
- * TODO Would like to have the methods just return views instead of copying the data :(
+ * TODO Would like to have the methods just return views instead of copying the
+ * data :( This shouldn't be too hard. Methods should just return Iterables
+ * instead of Lists
  * 
  * @author ewah
  * 
