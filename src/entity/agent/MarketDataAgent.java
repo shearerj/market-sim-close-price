@@ -1,6 +1,10 @@
 package entity.agent;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -33,11 +37,11 @@ public class MarketDataAgent extends SMAgent {
 	protected List<OrderDatum> orderDatumList;
 
 	public MarketDataAgent(FundamentalValue fundamental, SIP sip, Market market, 
-			Random rand, String fileName) {
+			Random rand, String filePath) {
 		super(new TimeStamp(0), fundamental, sip, market, rand, 1);
 		
 		// Determining the market file type
-		if(fileName.toLowerCase().contains("nyse")){
+		if(filePath.toString().toLowerCase().contains("nyse")){
 			this.orderParser = new OrderParserNYSE();
 		}
 		else {
@@ -46,11 +50,11 @@ public class MarketDataAgent extends SMAgent {
 		
 		// Processing the file
 		try {
-			this.orderDatumList = orderParser.process(fileName);
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
+			
+			this.orderDatumList = orderParser.process(Paths.get(filePath));
+		} catch (IOException e) {
 			e.printStackTrace();
-			System.out.println("Error: could not open file: " + fileName);
+			System.out.println("Error: could not open file: " + filePath.toString());
 			System.exit(1);
 		}
 		
@@ -73,7 +77,7 @@ public class MarketDataAgent extends SMAgent {
 		// Creating the order to submit
 		OrderDatum nextOrder = orderDatumList.get(0);
 		orderDatumList.remove(0);
-		SubmitOrder order = new SubmitOrder(this, primaryMarket, nextOrder.getType(),
+		SubmitOrder order = new SubmitOrder(this, primaryMarket, nextOrder.getOrderType(),
 				nextOrder.getPrice(), nextOrder.getQuantity(), nextOrder.getTimeStamp());
 		
 		// Schedule reentry
@@ -86,6 +90,10 @@ public class MarketDataAgent extends SMAgent {
 		}
 		
 		return ImmutableList.of(order, reentry);
+	}
+	
+	public List<OrderDatum> getOrderDatumList() {
+		return orderDatumList;
 	}
 
 }

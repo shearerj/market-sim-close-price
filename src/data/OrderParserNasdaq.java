@@ -6,6 +6,7 @@ import static fourheap.Order.OrderType.SELL;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -21,14 +22,13 @@ public class OrderParserNasdaq implements OrderParser {
 	public OrderParserNasdaq() {
 
 	}
-
-	public List<OrderDatum> process(String fileName) throws FileNotFoundException {
+	
+	public List<OrderDatum> process(Path path) throws IOException {
 		// Creating the List
 		List<OrderDatum> orderDatumList = Lists.newArrayList();
 		
 		// Opening the file
-		File inputFile = new File(fileName);
-		Scanner scanner = new Scanner(inputFile);
+		Scanner scanner = new Scanner(path);
 				
 		while (scanner.hasNextLine()) {
 			Scanner lineScanner = new Scanner(scanner.nextLine());
@@ -45,7 +45,7 @@ public class OrderParserNasdaq implements OrderParser {
 		}
 		scanner.close();
 		
-		return orderDatumList;
+		return orderDatumList;		
 	}
 	
 //	public void process(File inputFile) throws FileNotFoundException {

@@ -1,16 +1,17 @@
 package data;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Scanner;
 
 public interface OrderParser {
 		
 	/*
 	 * Processes the file pointed to by fileName and returns a list of OrderDatums
 	 */
-	abstract List<OrderDatum> process(String fileName) throws FileNotFoundException;
-	
+	abstract List<OrderDatum> process(Path path) throws IOException;
 	/**
 	 * @param args
 	 * @throws IOException

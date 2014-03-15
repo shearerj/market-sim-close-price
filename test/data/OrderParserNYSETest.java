@@ -4,12 +4,15 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Scanner;
 
 import logger.Logger;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.google.common.collect.Lists;
 
 import systemmanager.Consts;
 import data.OrderDatum;
@@ -24,24 +27,19 @@ public class OrderParserNYSETest {
 	@BeforeClass
 	public static void setupClass() {
 		// Setting up the log file
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "OrderParserTest.log"));		
 	}
 
 	private OrderParserNYSE addParser() {
 		OrderParserNYSE parser = new OrderParserNYSE();
 		return parser;
 	}
-
-//	@SuppressWarnings("unused")
-//	private OrderParserNYSE addParser(String filename) {
-//		OrderParserNYSE parser = null;
-//		try {
-//			parser = new OrderParserNYSE();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//		return parser;
-//	}
+	
+	@Test
+	public void parseAddOrderTest2() {
+		OrderParserNYSE orderParser = new OrderParserNYSE();
+		String line = "A,1,123456789,B,B,1000,A,0,1000,10,B,A\n";
+		
+	}
 
 	@Test
 	public void parseAddOrderTest(){
@@ -60,7 +58,7 @@ public class OrderParserNYSETest {
 		String systemCode = "B";
 		String quoteId = "A";
 
-		String addOrderTest = orderType + "," +
+		String addOrderString = orderType + "," +
 				sequenceNum + "," +
 				orderReferenceNum + "," +
 				exchangeCode + "," +
@@ -71,31 +69,28 @@ public class OrderParserNYSETest {
 				seconds + "," +
 				milliseconds + "," +
 				systemCode + "," +
-				quoteId + ",";
+				quoteId + ",        ";
 
 
 		String testType = "Add";
-		Scanner lineScanner = new Scanner(addOrderTest);
-		lineScanner.useDelimiter(",");
-		assertEquals(testType + " order message type wrong", orderType, lineScanner.next());
-		OrderDatum orderData = orderParser.parseAddOrder(lineScanner);
+		List<String> testString = Lists.newArrayList(addOrderString.split(","));
+		OrderDatum orderData = orderParser.parseAddOrder(testString);
 
 		assertEquals(testType + " order sequence num wrong", sequenceNum, orderData.getSequenceNum());
 		assertEquals(testType + " order reference num wrong", orderReferenceNum, orderData.getOrderReferenceNum());
 		assertEquals(testType + " order exchange code wrong", exchangeCode, 
 				Character.toString(orderData.getExchangeCode()));
-		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getStockSymbol());
+		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getSymbol());
 		assertEquals(testType + " order time stamp wrong", 
-				new TimeStamp(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
+				new TimeStamp(Integer.parseInt(milliseconds) + Integer.parseInt(seconds)*1000),
 				orderData.getTimeStamp());
 		assertEquals(testType + " order system code wrong", systemCode, 
 				Character.toString(orderData.getSystemCode()));
 		assertEquals(testType + " order quote id wrong", quoteId, orderData.getQuoteId());
 		assertEquals(testType + " order price wrong", new Price(Integer.parseInt(price)), orderData.getPrice());
 		assertEquals(testType + " order quantity wrong", Integer.parseInt(quantity), orderData.getQuantity());
-		assertEquals(testType + " order is buy wrong", BUY, orderData.getType());
+		assertEquals(testType + " order is buy wrong", BUY, orderData.getOrderType());
 
-		lineScanner.close();
 	}
 
 	@Test
@@ -138,7 +133,7 @@ public class OrderParserNYSETest {
 		assertEquals(testType + " order reference num wrong", orderReferenceNum, orderData.getOrderReferenceNum());
 		assertEquals(testType + " order exchange code wrong", exchangeCode, 
 				Character.toString(orderData.getExchangeCode()));
-		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getStockSymbol());
+		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getSymbol());
 		assertEquals(testType + " order time stamp wrong", 
 				new TimeStamp(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
 				orderData.getTimeStamp());
@@ -147,7 +142,7 @@ public class OrderParserNYSETest {
 		assertEquals(testType + " order quote id wrong", quoteId, orderData.getQuoteId());
 		assertEquals(testType + " order price wrong", new Price(Integer.parseInt(price)), orderData.getPrice());
 		assertEquals(testType + " order quantity wrong", Integer.parseInt(quantity), orderData.getQuantity());
-		assertEquals(testType + " order is buy wrong", SELL, orderData.getType());
+		assertEquals(testType + " order is buy wrong", SELL, orderData.getOrderType());
 
 		lineScanner.close();
 	}
@@ -192,7 +187,7 @@ public class OrderParserNYSETest {
 		assertEquals(testType + " order reference num wrong", orderReferenceNum, orderData.getOrderReferenceNum());
 		assertEquals(testType + " order exchange code wrong", exchangeCode, 
 				Character.toString(orderData.getExchangeCode()));
-		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getStockSymbol());
+		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getSymbol());
 		assertEquals(testType + " order time stamp wrong", 
 				new TimeStamp(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
 				orderData.getTimeStamp());
@@ -201,7 +196,7 @@ public class OrderParserNYSETest {
 		assertEquals(testType + " order quote id wrong", quoteId, orderData.getQuoteId());
 		assertEquals(testType + " order price wrong", new Price(Integer.parseInt(price)), orderData.getPrice());
 		assertEquals(testType + " order quantity wrong", Integer.parseInt(quantity), orderData.getQuantity());
-		assertEquals(testType + " order is buy wrong", BUY, orderData.getType());
+		assertEquals(testType + " order is buy wrong", BUY, orderData.getOrderType());
 
 		lineScanner.close();
 	}
@@ -250,7 +245,7 @@ public class OrderParserNYSETest {
 		assertEquals(testType + " market imbalance wrong", Integer.parseInt(marketImbalance), orderData.getMarketImbalance());
 		assertEquals(testType + " order exchange code wrong", exchangeCode, 
 				Character.toString(orderData.getExchangeCode()));
-		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getStockSymbol());
+		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getSymbol());
 		assertEquals(testType + " order time stamp wrong", 
 				new TimeStamp(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
 				orderData.getTimeStamp());
