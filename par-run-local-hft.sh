@@ -21,7 +21,7 @@ fi
 
 # Parse Arguments
 LOC=$(dirname "$0")
-CLASSPATH=$(readlink -m "$1")
+CLASSPATH=$(ls lib/*.jar | tr '\n' :)$(readlink -m "$1")
 FOLDER=$(readlink -m "$2") # Convert to absolute path
 NUM="$3"
 NUM_PROC="$4"
@@ -37,11 +37,6 @@ PER_PROC=$(( $NUM / $NUM_PROC ))
 
 # Change to $LOC to run java, necessary for environment properties loading
 cd "$LOC"
-
-# Set up class path
-for i in lib/*.jar; do
-  CLASSPATH="${CLASSPATH}:${i}"
-done
 
 # Run parllely
 parfor () { # OUTPUT_FILE FOLDER START END+1

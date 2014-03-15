@@ -1,8 +1,6 @@
 package entity.infoproc;
 
-import activity.Activity;
 import entity.market.Market;
-import entity.market.MarketTime;
 import entity.market.Quote;
 import event.TimeStamp;
 
@@ -15,11 +13,10 @@ import event.TimeStamp;
  */
 public interface QuoteProcessor {
 
-	public Iterable<? extends Activity> sendToQuoteProcessor(Market market, MarketTime quoteTime, 
-			Quote quote, TimeStamp currentTime);
+	public void sendToQuoteProcessor(Market market, Quote quote,
+			TimeStamp currentTime);
 
-	public Iterable<? extends Activity> processQuote(Market market,
-			MarketTime quoteTime, Quote quote, TimeStamp currentTime);
-	
+	public void processQuote(Market market, Quote quote, TimeStamp currentTime);
+
 	public TimeStamp getLatency();
 }

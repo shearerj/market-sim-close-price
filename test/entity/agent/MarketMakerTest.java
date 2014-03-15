@@ -4,27 +4,24 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static logger.Log.Level.*;
+import static logger.Log.log;
 
 import java.io.File;
-import java.util.Random;
+import java.io.IOException;
 
-import logger.Logger;
+import logger.Log;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.EventManager;
+import systemmanager.Executor;
 import systemmanager.Keys;
-import activity.Activity;
-import activity.AgentStrategy;
 import activity.Clear;
 import activity.ProcessQuote;
 import activity.SubmitOrder;
-
-import com.google.common.collect.Iterables;
-
 import data.EntityProperties;
 import data.FundamentalValue;
 import data.MockFundamental;
@@ -38,28 +35,21 @@ import event.TimeStamp;
 
 public class MarketMakerTest {
 
+	private Executor exec;
 	private MockMarket market;
 	private SIP sip;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 
 	@BeforeClass
-	public static void setupClass() {
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "MarketMakerTest.log"));
+	public static void setupClass() throws IOException {
+		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "MarketMakerTest.log"));
 	}
 
 	@Before
 	public void setup() {
-		sip = new SIP(TimeStamp.IMMEDIATE);
-		market = new MockMarket(sip);
-	}
-
-	private EntityProperties setupProperties(int numRungs, int rungSize, 
-			boolean truncateLadder) {
-		EntityProperties agentProperties = new EntityProperties();
-		agentProperties.put(Keys.NUM_RUNGS, numRungs);
-		agentProperties.put(Keys.RUNG_SIZE, rungSize);
-		agentProperties.put(Keys.TRUNCATE_LADDER, truncateLadder);
-		return agentProperties;
+		exec = new Executor();
+		sip = new SIP(exec, TimeStamp.IMMEDIATE);
+		market = new MockMarket(exec, sip);
 	}
 
 	// TODO test different tick size & subsequent step/rung size difference
@@ -69,24 +59,25 @@ public class MarketMakerTest {
 		// testing when no bid/ask, does not submit any orders
 		TimeStamp time = TimeStamp.ZERO;
 
-		MarketMaker mm = new MockMarketMaker(fundamental, sip, market, 
-				setupProperties(2, 10, false));
+		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false));
 
 		// Check activities inserted (none, other than reentry)
-		Iterable<? extends Activity> acts = mm.agentStrategy(time);
-		assertEquals("Incorrect number of activities", 1, Iterables.size(acts));
-		assertTrue(Iterables.getFirst(acts, null) instanceof AgentStrategy);
+		mm.agentStrategy(time);
+		assertTrue(mm.activeOrders.isEmpty());
 	}
 
 	@Test
 	public void submitOrderLadderTest() {
-		MarketMaker mm = new MockMarketMaker(fundamental, sip, market, 
-				setupProperties(3, 5, false));
+		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, false));
 		mm.stepSize = 5;
 
-		Iterable<? extends Activity> acts = mm.submitOrderLadder(new Price(30), new Price(40), 
-				new Price(50), new Price(60), TimeStamp.ZERO);
-		for (Activity a : acts) a.execute(TimeStamp.ZERO);
+		mm.submitOrderLadder(new Price(30), new Price(40), new Price(50), new Price(60));
 		assertEquals("Incorrect number of orders", 6, mm.activeOrders.size());
 		for (Order o : mm.activeOrders) {
 			int price = o.getPrice().intValue();
@@ -100,24 +91,25 @@ public class MarketMakerTest {
 	@Test
 	public void createOrderLadderNullTest() {
 		// if either ladder bid or ask is null, it needs to return
-		MarketMaker mm = new MockMarketMaker(fundamental, sip, market, 
-				setupProperties(2, 5, false));
-		mm.stepSize = 5;
+		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, false));
+		assertEquals(5, mm.stepSize);
 
-		Iterable<? extends Activity> acts = mm.createOrderLadder(null,
-				new Price(50), TimeStamp.ZERO);
-		assertEquals(0, Iterables.size(acts));
+		mm.createOrderLadder(null, new Price(50));
+		assertTrue(mm.activeOrders.isEmpty());
 	}
 
 	@Test
 	public void createOrderLadderTest() {
-		MarketMaker mm = new MockMarketMaker(fundamental, sip, market, 
-				setupProperties(2, 5, false));
-		mm.stepSize = 5;
+		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, false));
+		assertEquals(5, mm.stepSize);
 
-		Iterable<? extends Activity> acts = mm.createOrderLadder(new Price(40),
-				new Price(50), TimeStamp.ZERO);
-		for (Activity a : acts) a.execute(TimeStamp.ZERO);
+		mm.createOrderLadder(new Price(40), new Price(50));
 		assertEquals("Incorrect number of orders", 4, mm.activeOrders.size());
 		for (Order o : mm.activeOrders) {
 			int price = o.getPrice().intValue();
@@ -131,28 +123,24 @@ public class MarketMakerTest {
 
 	@Test
 	public void tickImprovement() {
-		TimeStamp time = TimeStamp.ZERO;
-		MarketMaker mm = new MockMarketMaker(fundamental, sip, market, 
-				setupProperties(2, 5, false));
-		mm.stepSize = 5;
-		mm.tickImprovement = true;
-		mm.tickInside = true; // default
+		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_INSIDE, true));
+		assertEquals(5, mm.stepSize);
 
 		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		// Creating and adding bids
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
-		em.executeUntil(new TimeStamp(1));
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1, time));
-		em.addActivity(new Clear(market, time));
-		em.executeUntil(new TimeStamp(1));
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
+		exec.executeActivity(new Clear(market));
 
-		Iterable<? extends Activity> acts = mm.createOrderLadder(new Price(40),
-				new Price(50), TimeStamp.ZERO);
-		for (Activity a : acts) a.execute(TimeStamp.ZERO);
+		mm.createOrderLadder(new Price(40), new Price(50));
 		assertEquals("Incorrect number of orders", 4, mm.activeOrders.size());
 		for (Order o : mm.activeOrders) {
 			int price = o.getPrice().intValue();
@@ -166,34 +154,29 @@ public class MarketMakerTest {
 	@Test
 	public void truncateLadderTickImprovement() {
 		TimeStamp time = TimeStamp.ZERO;
-		SIP sip = new SIP(new TimeStamp(10));
-		MarketMaker mm = new MockMarketMaker(fundamental, sip, market, 
-				setupProperties(2, 5, true));
-		mm.stepSize = 5;
-		mm.tickImprovement = true;
+		SIP sip = new SIP(exec, TimeStamp.create(10));
+		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_IMPROVEMENT, true));
+		assertEquals(5, mm.stepSize);
 
 		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		// Creating and adding bids
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
-		em.executeUntil(new TimeStamp(1));
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1, time));
-		em.addActivity(new Clear(market, time));
-		em.executeUntil(new TimeStamp(1));
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
+		exec.executeActivity(new Clear(market));
 
 		// Updating NBBO quote (this will update immed, although SIP is delayed)
-		MockMarket market2 = new MockMarket(sip);
+		MockMarket market2 = new MockMarket(exec, sip);
 		Quote q = new Quote(market2, new Price(30), 1, new Price(38), 1, time);
-		em.addActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q, 
-				time));
-		em.executeUntil(new TimeStamp(1));
+		exec.executeActivity(new ProcessQuote(sip, market2, q));
 
-		Iterable<? extends Activity> acts = mm.createOrderLadder(new Price(40),
-				new Price(50), TimeStamp.ZERO);
-		for (Activity a : acts) a.execute(TimeStamp.ZERO);
+		mm.createOrderLadder(new Price(40), new Price(50));
 		assertEquals("Incorrect number of orders", 3, mm.activeOrders.size());
 		for (Order o : mm.activeOrders) {
 			int price = o.getPrice().intValue();
@@ -206,28 +189,24 @@ public class MarketMakerTest {
 	
 	@Test
 	public void tickOutside() {
-		TimeStamp time = TimeStamp.ZERO;
-		MarketMaker mm = new MockMarketMaker(fundamental, sip, market, 
-				setupProperties(2, 5, false));
-		mm.stepSize = 5;
-		mm.tickImprovement = true;
-		mm.tickInside = false;
+		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_INSIDE, false));
+		assertEquals(5, mm.stepSize);
 
 		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		// Creating and adding bids
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
-		em.executeUntil(new TimeStamp(1));
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1, time));
-		em.addActivity(new Clear(market, time));
-		em.executeUntil(new TimeStamp(1));
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
+		
+		mm.createOrderLadder(new Price(40), new Price(50));
 
-		Iterable<? extends Activity> acts = mm.createOrderLadder(new Price(40),
-				new Price(50), TimeStamp.ZERO);
-		for (Activity a : acts) a.execute(TimeStamp.ZERO);
 		assertEquals("Incorrect number of orders", 4, mm.activeOrders.size());
 		for (Order o : mm.activeOrders) {
 			int price = o.getPrice().intValue();
@@ -241,35 +220,31 @@ public class MarketMakerTest {
 	@Test
 	public void truncateLadderTickImprovementOutside() {
 		TimeStamp time = TimeStamp.ZERO;
-		SIP sip = new SIP(new TimeStamp(10));
-		MarketMaker mm = new MockMarketMaker(fundamental, sip, market, 
-				setupProperties(2, 5, true));
-		mm.stepSize = 5;
-		mm.tickImprovement = true;
-		mm.tickInside = false;
+
+		SIP sip = new SIP(exec, TimeStamp.create(10));
+		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_INSIDE, false));
+		assertEquals(5, mm.stepSize);
 
 		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		// Creating and adding bids
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
-		em.executeUntil(new TimeStamp(1));
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1, time));
-		em.addActivity(new Clear(market, time));
-		em.executeUntil(new TimeStamp(1));
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
 
 		// Updating NBBO quote (this will update immed, although SIP is delayed)
-		MockMarket market2 = new MockMarket(sip);
-		Quote q = new Quote(market2, new Price(30), 1, new Price(38), 1, time);
-		em.addActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q, 
-				time));
-		em.executeUntil(new TimeStamp(1));
+		MockMarket market2 = new MockMarket(exec, sip);
+		Quote q = new Quote(market2, new Price(30), 1, new Price(38), 1, new DummyMarketTime(time, 1));
+		exec.executeActivity(new ProcessQuote(sip, market2, q));
 
-		Iterable<? extends Activity> acts = mm.createOrderLadder(new Price(40),
-				new Price(50), TimeStamp.ZERO);
-		for (Activity a : acts) a.execute(TimeStamp.ZERO);
+		mm.createOrderLadder(new Price(40), new Price(50));
+
 		assertEquals("Incorrect number of orders", 3, mm.activeOrders.size());
 		for (Order o : mm.activeOrders) {
 			int price = o.getPrice().intValue();

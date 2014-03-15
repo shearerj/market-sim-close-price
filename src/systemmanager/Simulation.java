@@ -1,7 +1,7 @@
 package systemmanager;
 
-import static logger.Logger.log;
-import static logger.Logger.Level.INFO;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 
 import java.util.Collection;
 import java.util.Map.Entry;
@@ -28,6 +28,7 @@ import data.Observations;
 import data.Player;
 import entity.agent.Agent;
 import entity.agent.AgentFactory;
+import entity.agent.HFTAgent;
 import entity.agent.MarketMaker;
 import entity.infoproc.SIP;
 import entity.market.Market;
@@ -47,7 +48,7 @@ import event.TimeStamp;
  */
 public class Simulation {
 
-	protected final EventManager eventManager;
+	protected final Scheduler scheduler;
 	protected final FundamentalValue fundamental;
 	protected final SIP sip;
 	protected final Collection<Market> markets;
@@ -70,29 +71,28 @@ public class Simulation {
 		Collection<AgentProperties> agentProps = spec.getAgentProps();
 		JsonObject playerConfig = spec.getPlayerProps();
 
-		this.simulationLength = new TimeStamp(simProps.getAsLong(Keys.SIMULATION_LENGTH));
-		TimeStamp lastTime = new TimeStamp(simulationLength.getInTicks() - 1); // Last time to schedule something.
+		this.simulationLength = TimeStamp.create(simProps.getAsLong(Keys.SIMULATION_LENGTH));
+		TimeStamp lastTime = TimeStamp.create(simulationLength.getInTicks() - 1); // Last time to schedule something.
 
-		this.fundamental = new FundamentalValue(
+		this.fundamental = FundamentalValue.create(
 				simProps.getAsDouble(Keys.FUNDAMENTAL_KAPPA),
 				simProps.getAsInt(Keys.FUNDAMENTAL_MEAN),
 				simProps.getAsDouble(Keys.FUNDAMENTAL_SHOCK_VAR),
 				new Random(rand.nextLong()));
-		this.sip = new SIP(new TimeStamp(simProps.getAsInt(Keys.NBBO_LATENCY)));
+		this.scheduler = new Scheduler(new Random(rand.nextLong()));
+		this.sip = new SIP(scheduler, TimeStamp.create(simProps.getAsInt(Keys.NBBO_LATENCY)));
 		this.markets = setupMarkets(marketProps, rand);
 		this.agents = setupAgents(agentProps, rand);
 		this.players = setupPlayers(simProps, playerConfig, rand);
 		this.observations = new Observations(specification, markets, agents,
 				players, fundamental);
 
-		// XXX Log markets and their configuration?
-		this.eventManager = new EventManager(new Random(rand.nextLong()));
 		for (Market market : markets)
-			eventManager.addActivity(new Clear(market, TimeStamp.IMMEDIATE));
+			scheduler.executeActivity(new Clear(market));
 		for (Agent agent : agents) {
-			eventManager.addActivity(new AgentArrival(agent, agent.getArrivalTime()));
-			if (agent instanceof MarketMaker)
-				eventManager.addActivity(new LiquidateAtFundamental(agent, lastTime));
+			scheduler.scheduleActivity(agent.getArrivalTime(), new AgentArrival(agent));
+			if ((agent instanceof MarketMaker) || (agent instanceof HFTAgent))
+				scheduler.scheduleActivity(lastTime, new LiquidateAtFundamental(agent));
 		}
 	}
 	
@@ -103,7 +103,7 @@ public class Simulation {
 		Builder<Market> markets = ImmutableList.builder();
 		Random ran = new Random(rand.nextLong());
 		for (MarketProperties mktProps : marketProps) {
-			MarketFactory factory = new MarketFactory(sip, ran);
+			MarketFactory factory = new MarketFactory(scheduler, sip, ran);
 			for (int i = 0; i < mktProps.getAsInt(Keys.NUM, 1); i++)
 				markets.add(factory.createMarket(mktProps));
 		}
@@ -120,7 +120,7 @@ public class Simulation {
 			int number = agProps.getAsInt(Keys.NUM, 0);
 			double arrivalRate = agProps.getAsDouble(Keys.ARRIVAL_RATE, 0.075);
 			
-			AgentFactory factory = new AgentFactory(fundamental, sip, markets,
+			AgentFactory factory = new AgentFactory(scheduler, fundamental, sip, markets,
 					arrivalRate, new Random(rand.nextLong()));
 
 			for (int i = 0; i < number; i++)
@@ -152,10 +152,10 @@ public class Simulation {
 			String role = roleEnt.getElement().role();
 			String strat = roleEnt.getElement().strat();
 
-			AgentFactory factory = new AgentFactory(fundamental, sip, markets,
+			AgentFactory factory = new AgentFactory(scheduler, fundamental, sip, markets,
 					arrivalRate, new Random(rand.nextLong()));
 			for (int i = 0; i < roleEnt.getCount(); i++) {
-				Agent agent = factory.createAgent(new AgentProperties(strat));
+				Agent agent = factory.createAgent(AgentProperties.fromConfigString(strat));
 				agents.add(agent);
 				Player player = new Player(role, strat, agent);
 				players.add(player);
@@ -169,13 +169,13 @@ public class Simulation {
 	 */
 	public void executeEvents() {
 		Observations.BUS.register(observations);
-		eventManager.executeUntil(simulationLength);
-		log(INFO, "[[[ Simulation Over ]]]");
+		scheduler.executeUntil(simulationLength);
+		log.log(INFO, "[[[ Simulation Over ]]]");
 		Observations.BUS.unregister(observations);
 	}
 	
 	public TimeStamp getCurrentTime() {
-		return eventManager.currentTime;
+		return scheduler.currentTime;
 	}
 	
 	/**

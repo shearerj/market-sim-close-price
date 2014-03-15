@@ -1,23 +1,21 @@
 package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static logger.Logger.log;
-import static logger.Logger.Level.INFO;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 
 import java.util.Random;
 
-import activity.Activity;
+import systemmanager.Keys;
+import systemmanager.Scheduler;
 
 import com.google.common.collect.EvictingQueue;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 
-import systemmanager.Keys;
 import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
-import entity.market.Price; 	
+import entity.market.Price;
 import event.TimeStamp;
 
 /**
@@ -37,22 +35,26 @@ public class MAMarketMaker extends MarketMaker {
 	
 	protected EvictingQueue<Price> bidQueue;
 	protected EvictingQueue<Price> askQueue;
-	
-	public MAMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, double reentryRate, int tickSize, boolean noOp,
-			int numRungs, int rungSize, boolean truncateLadder, 
-			boolean tickImprovement, boolean tickInside, int numHistorical) {
-		super(fundamental, sip, market, rand, reentryRate, tickSize, noOp, 
-				numRungs, rungSize, truncateLadder, tickImprovement, tickInside);
+
+	public MAMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
+			SIP sip, Market market, Random rand, double reentryRate,
+			int tickSize, boolean noOp, int numRungs, int rungSize,
+			boolean truncateLadder, boolean tickImprovement,
+			boolean tickInside, int numHistorical) {
+
+		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
+				noOp, numRungs, rungSize, truncateLadder, tickImprovement,
+				tickInside);
 
 		checkArgument(numHistorical > 0, "Number of historical prices must be positive!");
 		bidQueue = EvictingQueue.create(numHistorical);
 		askQueue = EvictingQueue.create(numHistorical);
 	}
-	
-	public MAMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, EntityProperties props) {
-		this(fundamental, sip, market, rand,
+
+	public MAMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
+			SIP sip, Market market, Random rand, EntityProperties props) {
+
+		this(scheduler, fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0.0005),
 				props.getAsInt(Keys.TICK_SIZE, 1),
 				props.getAsBoolean(Keys.NO_OP, false),
@@ -65,14 +67,10 @@ public class MAMarketMaker extends MarketMaker {
 	}
 	
 	@Override
-	public Iterable<Activity> agentStrategy(TimeStamp currentTime) {
-		if (noOp) return ImmutableList.of(); // no execution if no-op
+	public void agentStrategy(TimeStamp currentTime) {
+		if (noOp) return; // no execution if no-op TODO Change to NoOpAgent
 		
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
-		
-		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
-				super.agentStrategy(currentTime));
+		super.agentStrategy(currentTime);
 		
 		Price bid = this.getQuote().getBidPrice();
 		Price ask = this.getQuote().getAskPrice();;
@@ -86,23 +84,22 @@ public class MAMarketMaker extends MarketMaker {
 				|| (ask != null && lastAsk == null)) {
 			
 			if (!this.getQuote().isDefined()) {
-				log(INFO, sb.append(" Undefined quote in ").append(primaryMarket));
+				log.log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
 				// do nothing, wait until next re-entry
 			} else {
 				// Quote changed, still valid, withdraw all orders
-				log(INFO, sb.append(" Withdraw all orders"));
-				acts.addAll(withdrawAllOrders(currentTime));	
+				log.log(INFO, "%s in %s: Withdraw all orders", this, primaryMarket);
+				withdrawAllOrders();	
 				
 				bid = this.getQuote().getBidPrice();
 				ask = this.getQuote().getAskPrice();
 				
 				// Use last known bid/ask if undefined post-withdrawal
 				if (!this.getQuote().isDefined()) {
-					sb.append(" Ladder MID (").append(bid).append(",")
-						.append(ask).append(")-->(");
+					Price oldBid = bid, oldAsk = ask;
 					if (bid == null && lastBid != null) bid = lastBid;
 					if (ask == null && lastAsk != null) ask = lastAsk;
-					log(INFO, sb.append(bid).append(",").append(ask).append(")"));
+					log.log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", this, primaryMarket, oldBid, oldAsk, bid, ask);
 				}
 				
 				// Compute moving average
@@ -117,22 +114,16 @@ public class MAMarketMaker extends MarketMaker {
 				for (Price y : askQueue) sumAsks += y.intValue();
 				Price ladderAsk = new Price(sumAsks / askQueue.size());
 
-				acts.addAll(this.createOrderLadder(ladderBid, ladderAsk, currentTime));
+				this.createOrderLadder(ladderBid, ladderAsk);
 
 			} // if quote defined
 		} else {
-			log(INFO, sb.append(" No change in submitted ladder"));
+			log.log(INFO, "%s in %s: No change in submitted ladder", this, primaryMarket);
 		}
 		// update latest bid/ask prices
 		lastAsk = ask;
 		lastBid = bid;
-
-		return acts.build();
 	}
 	
-	@Override
-	public String toString() {
-		return "MAMM " + super.toString();
-	}
 }
 

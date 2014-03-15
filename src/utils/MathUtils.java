@@ -25,6 +25,10 @@ public class MathUtils {
 		return Math.max(Math.min(num, upper), lower);
 	}
 	
+	public static double bound(double num, double lower, double upper) {
+		return Math.max(Math.min(num, upper), lower);
+	}
+	
 	/**
 	 * @param number
 	 * @param base

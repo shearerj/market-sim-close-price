@@ -1,21 +1,19 @@
 package entity.agent;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+import iterators.ExpInterarrivals;
+
 import java.util.List;
 import java.util.Random;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-
 import systemmanager.Keys;
-import static fourheap.Order.OrderType.BUY;
-import static fourheap.Order.OrderType.SELL;
-import static logger.Logger.log;
-import static logger.Logger.format;
-import static logger.Logger.Level.INFO;
+import systemmanager.Scheduler;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
+import utils.MathUtils;
 import utils.Rands;
-import activity.Activity;
 import activity.SubmitNMSOrder;
 import data.EntityProperties;
 import data.FundamentalValue;
@@ -59,15 +57,18 @@ public class ZIPAgent extends WindowAgent {
 	protected final double rangeCoeffA;	// range for A, coefficient of absolute perturbation
 	protected final double rangeCoeffR;	// range for R, coefficient of relative perturbation
 
-	public ZIPAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
-			Market market, Random rand, double reentryRate, double pvVar, 
-			int tickSize, int maxAbsPosition, int bidRangeMin, int bidRangeMax, 
-			boolean withdrawOrders, int windowLength, double marginMin, double marginMax, 
-			double gammaMin, double gammaMax, double betaMin, double betaMax, 
+	public ZIPAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			double reentryRate, double pvVar, int tickSize, int maxAbsPosition,
+			int bidRangeMin, int bidRangeMax, boolean withdrawOrders,
+			int windowLength, double marginMin, double marginMax,
+			double gammaMin, double gammaMax, double betaMin, double betaMax,
 			double rangeCoeffA, double rangeCoeffR) {
-		super(arrivalTime, fundamental, sip, market, rand, reentryRate,
-				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize,
-				bidRangeMin, bidRangeMax, windowLength);
+
+		super(scheduler, arrivalTime, fundamental, sip, market, rand,
+				ExpInterarrivals.create(reentryRate, rand), new PrivateValue(
+						maxAbsPosition, pvVar, rand), tickSize, bidRangeMin,
+				bidRangeMax, windowLength);
 
 		checkArgument(rangeCoeffA > 0, "Coefficient A's range must be positive");
 		checkArgument(rangeCoeffR > 0, "Coefficient A's range must be positive");
@@ -92,9 +93,10 @@ public class ZIPAgent extends WindowAgent {
 		margin = new Margin(maxAbsPosition, rand, marginMin, marginMax);
 	}
 
-	public ZIPAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, EntityProperties props) {
-		this(arrivalTime, fundamental, sip, market, rand,
+	public ZIPAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			EntityProperties props) {
+		this(scheduler, arrivalTime, fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0.005), 
 				props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),
 				props.getAsInt(Keys.TICK_SIZE, 1),
@@ -112,29 +114,20 @@ public class ZIPAgent extends WindowAgent {
 				props.getAsDouble(Keys.COEFF_A, 0.05), 
 				props.getAsDouble(Keys.COEFF_R, 0.05));
 	}
-
-	@Override
-	public String toString() {
-		return "ZIP " + super.toString();
-	}
 	
 	@Override
-	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
-		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
-				super.agentStrategy(currentTime));
+	public void agentStrategy(TimeStamp currentTime) {
+		super.agentStrategy(currentTime);
 
 		// withdrawOrders
-		if (withdrawOrders) acts.addAll(withdrawAllOrders(currentTime));
+		if (withdrawOrders) withdrawAllOrders();
 		
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append(':').append("::agentStrategy: ");
-
 		// can buy and sell
 		lastOrderPrice = null;
 		type = rand.nextBoolean() ? BUY : SELL;
 		
 		double currentMargin = getCurrentMargin(positionBalance, type, currentTime);
-		log(INFO, sb.append("initial mu=").append(format(currentMargin)));
+		log.log(INFO, "%s::agentStrategy: initial mu=%.4f", this, currentMargin);
 
 		// Check if there are any transactions in the market model yet
 		List<Transaction> pastTransactions = getWindowTransactions(currentTime);
@@ -142,26 +135,26 @@ public class ZIPAgent extends WindowAgent {
 			// Determine limit price or lambda
 			limitPrice = this.getLimitPrice(type, currentTime);
 
-			log(INFO, sb.append(", #new transactions=").append(pastTransactions.size()));
+			log.log(INFO, "%s::agentStrategy: #new transactions=", this, pastTransactions.size());
 			for (Transaction trans : pastTransactions) {
 				// Update margin
-				log(INFO, sb.append(", mu=").append(format(currentMargin)));
 				this.updateMargin(trans, currentTime);
 				currentMargin = this.getCurrentMargin(positionBalance, type, currentTime);
+				log.log(INFO, "%s::agentStrategy: mu=%.4f", this, currentMargin);
 			}
 
 			// Even if no new transactions this round, will still submit a new order
 			Price orderPrice = pcomp.max(Price.ZERO, computeOrderPrice(currentMargin, currentTime));
-			acts.add(new SubmitNMSOrder(this, primaryMarket, type, orderPrice, 1, currentTime));
+			
+			scheduler.executeActivity(new SubmitNMSOrder(this, primaryMarket, type, orderPrice, 1));
 			lastOrderPrice = orderPrice;
 
 		} else {
 			// zero transactions
-			log(INFO, sb.append(". No transactions!"));
-			acts.addAll(executeZIStrategy(type, 1, currentTime));
+			log.log(INFO, "%s::agentStrategy: No transactions!", this);
+			executeZIStrategy(type, 1, currentTime);
 		}
 
-		return acts.build();
 	}
 
 	
@@ -173,8 +166,6 @@ public class ZIPAgent extends WindowAgent {
 	 */
 	protected double getCurrentMargin(int positionBalance, OrderType type, 
 			TimeStamp currentTime) {
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append(':').append("::agentStrategy: ");
 		
 		double currentMargin = margin.getValue(positionBalance, type);
 
@@ -183,15 +174,14 @@ public class ZIPAgent extends WindowAgent {
 		switch (type) {
 		case BUY:
 			// buyer margin constrained to in [-1, 0]
-			newMargin = Math.min(0, Math.max(-1, currentMargin));
+			newMargin = MathUtils.bound(currentMargin, -1, 0);
 			break;
 		case SELL:
 			// seller margin constrained to in [0, inf)
 			newMargin = Math.max(0, currentMargin);
 			break;
 		}
-		log(INFO, sb.append("updated mu=").append(format(currentMargin)).
-				append("-->mu=").append(format(newMargin)));
+		log.log(INFO, "%s::agentStrategy: updated mu=%.4f-->mu=%.4f", this, currentMargin, newMargin);
 		// set margin
 		margin.setValue(positionBalance, type, newMargin);
 		return newMargin;
@@ -205,13 +195,10 @@ public class ZIPAgent extends WindowAgent {
 	 * @return order price p_i
 	 */
 	public Price computeOrderPrice(double currentMargin, TimeStamp currentTime) {
-		StringBuilder sb = new StringBuilder().append(this).append(" ").append(getName()).
-				append("::computeOrderPrice: ");
-		double orderPrice = limitPrice.intValue() * (1 + currentMargin);
-		log(INFO, sb.append("limitPrice=").append(limitPrice).append(" * (1+mu)=")
-				 .append(format(1 + currentMargin)).append(", returns ")
-				 .append(new Price(orderPrice)));
-		return new Price(orderPrice);
+		Price orderPrice = new Price(limitPrice.intValue() * (1 + currentMargin));
+		log.log(INFO, "%s::computeOrderPrice: limitPrice=%s * (1+mu)=%.4f, returns %s",
+				this, limitPrice, 1 + currentMargin, orderPrice);
+		return orderPrice;
 	}
 
 
@@ -221,21 +208,17 @@ public class ZIPAgent extends WindowAgent {
 	 * @param currentTime
 	 */
 	public void updateMargin(Transaction lastTrans, TimeStamp currentTime) {
-		StringBuilder sb = new StringBuilder().append(this).append(" ").append(getName()).
-				append("::updateMargin: ");
-		log(INFO, sb.append("lastTransPrice=").append(lastTrans.getPrice()));
+		log.log(INFO, "%s::updateMargin: lastTransPrice=%s", this, lastTrans.getPrice());
 		this.updateMomentumChange(lastTrans, currentTime);
 		if (limitPrice.intValue() > 0) {
 			double newMargin = (lastOrderPrice.intValue() + momentumChange) 
 					/ limitPrice.intValue() - 1;
-			log(INFO, sb.append(", (lastOrderPrice + change)/limit - 1 = (")
-					.append(lastOrderPrice).append(" + ").append(momentumChange)
-					.append(") / ").append(limitPrice).append(" - 1 = ")
-					.append("new margin ").append(format(newMargin)));
+			log.log(INFO, "%s::updateMargin: (lastOrderPrice + change)/limit - 1 = (%s + %f) / %s - 1 = new margin %.4f",
+					this, lastOrderPrice, momentumChange, limitPrice, newMargin);
 			
 			margin.setValue(positionBalance, type, newMargin);
 		} else {
-			log(INFO, sb.append(". No update to margin as limit price is 0"));
+			log.log(INFO, "%s::updateMargin: No update to margin as limit price is 0", this);
 		}
 	}
 
@@ -247,20 +230,18 @@ public class ZIPAgent extends WindowAgent {
 	 * @param currentTime
 	 */
 	public void updateMomentumChange(Transaction lastTrans, TimeStamp currentTime) {
-		StringBuilder sb = new StringBuilder().append(this).append(" ").append(getName()).
-				append("::updateMomentumChange: ");
-		log(INFO, sb.append("original change=").append(format(momentumChange)));
-
 		double originalChange = momentumChange;
 		double delta = this.computeDelta(lastTrans, currentTime);
-		log(INFO, sb.append(", delta=").append(format(delta)));
+		log.log(INFO, "%s::updateMomentumChange: original change=%.4f, delta=%.4f", 
+				this, momentumChange, delta);
 		momentumChange = gamma * momentumChange + (1-gamma) * delta;
 
 		if (originalChange != 0) {
-			log(INFO, sb.append(", new change=").append(format(momentumChange)).append(", using "). 
-					append(format(100*(momentumChange-originalChange)/originalChange) + "%"));
+			log.log(INFO, "%s::updateMomentumChange: new change=%.4f, using %.4f%%", 
+					this, momentumChange, 100*(momentumChange-originalChange)/originalChange);
 		} else {
-			log(INFO, sb.append(", first update, change=").append(format(momentumChange)));
+			log.log(INFO, "%s::updateMomentumChange: first update, change=%.4f", 
+					this, momentumChange);
 		}
 	}
 
@@ -291,26 +272,19 @@ public class ZIPAgent extends WindowAgent {
 	 * @return
 	 */
 	public Price computeTargetPrice(Transaction lastTrans, TimeStamp currentTime){
-		StringBuilder sb = new StringBuilder().append(this).append(" ").append(getName()).
-				append("::computeTargetPrice: ");
 		Price lastTransPrice = lastTrans.getPrice();
-		log(INFO, sb.append("lastPrice=").append(lastOrderPrice).append(", lastTransPrice=").
-				append(lastTransPrice));
+		log.log(INFO, "%s::computeTargetPrice: lastPrice=%s, lastTransPrice=%s", this, lastOrderPrice, lastTransPrice);
 
 		boolean increaseMargin = this.checkIncreaseMargin(lastTrans, currentTime);
-		boolean increaseTargetPrice = (type.equals(SELL) && increaseMargin) ||
-									  (type.equals(BUY) && !increaseMargin);
+		boolean increaseTargetPrice = type == BUY ^ increaseMargin;
 		
 		double R = this.computeRCoefficient(increaseTargetPrice);
 		double A = this.computeACoefficient(increaseTargetPrice);
-		log(INFO, sb.append(". Increase margin? ").append(increaseMargin).
-				append(", increase target? ").append(increaseTargetPrice).
-				append(": R=").append(format(R)).append(", A=").append(format(A)));
+		Price tau = new Price(R * lastTransPrice.intValue() + A);
+		log.log(INFO, "%s::computeTargetPrice: Increase margin? %b, increase target? %b: R=%.4f, A=%.4f, targetPrice=%s",
+				this, increaseMargin, increaseTargetPrice, R, A, tau);
 
-		double tau = R * lastTransPrice.intValue() + A;
-		log(INFO, sb.append(", targetPrice=").append(new Price(tau)));
-
-		return new Price(tau);
+		return tau;
 	}
 
 	/**

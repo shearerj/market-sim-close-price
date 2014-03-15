@@ -11,7 +11,7 @@ import java.util.Set;
 import com.google.common.base.Joiner;
 import com.google.common.base.Joiner.MapJoiner;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
 /**
@@ -31,33 +31,92 @@ public class EntityProperties implements Serializable {
 	private final static Splitter configSplitter = Splitter.on('_');
 	private final static MapJoiner configJoiner = Joiner.on('_').withKeyValueSeparator("_");
 
+	/**
+	 * Store everything as strings, and convert out when called
+	 */
 	protected Map<String, String> properties;
 
-	public EntityProperties() {
-		this.properties = Maps.newHashMap();
+	protected EntityProperties(Map<String, String> backedProperties) {
+		this.properties = backedProperties;
+	}
+	
+	/**
+	 * Create an empty EntityProperties
+	 * 
+	 * @return
+	 */
+	public static EntityProperties empty() {
+		return new EntityProperties(Maps.<String, String> newHashMap());
+	}
+	
+	/**
+	 * Make a deep copy of another entity properties
+	 * 
+	 * @param from
+	 * @return
+	 */
+	public static EntityProperties copy(EntityProperties from) {
+		return new EntityProperties(Maps.newHashMap(from.properties));
+	}
+	
+	/**
+	 * Make an entity properties from pairs of strings and objects. There must
+	 * be an even number of parameters, and every other parameter, including the
+	 * first, must be a string.
+	 * 
+	 * @param keysAndValues
+	 * @return
+	 */
+	public static EntityProperties fromPairs(Object... keysAndValues) {
+		EntityProperties created = EntityProperties.empty();
+		created.putPairs(keysAndValues);
+		return created;
+	}
+	
+	/**
+	 * Same as fromPairs, but with a default entity properties that the initial
+	 * configuration is coppied from. If a key appears in both from and
+	 * keysAndValues, the value in keysAndValues will be used.
+	 * 
+	 * @param from
+	 * @param keysAndValues
+	 * @return
+	 */
+	public static EntityProperties copyFromPairs(EntityProperties from, Object... keysAndValues) {
+		EntityProperties created = EntityProperties.copy(from);
+		created.putPairs(keysAndValues);
+		return created;
+	}
+	
+	/**
+	 * Parse an entity properties from a config string where keys and values are
+	 * underscore delimited.
+	 * 
+	 * <code>fromPairs(pairs...)</code> and
+	 * <code>fromConfigString(Joiner.on('_').join(pairs...))</code> will have
+	 * the same result.
+	 * 
+	 * @param configString
+	 * @return
+	 */
+	public static EntityProperties fromConfigString(String configString) {
+		EntityProperties created = EntityProperties.empty();
+		created.properties.putAll(parseConfigString(configString));
+		return created;
 	}
 
-	public EntityProperties(EntityProperties def) {
-		this.properties = Maps.newHashMap(checkNotNull(def.properties));
-	}
-
-	public EntityProperties(String config) {
-		this();
-		addConfig(config);
-	}
-
-	public EntityProperties(EntityProperties def, String config) {
-		this(def);
-		addConfig(config);
-	}
-
-	public void addConfig(String config) {
-		checkNotNull(config, "Config String");
-		ImmutableList<String> args = ImmutableList.copyOf(configSplitter.split(config));
-		checkArgument(args.size() % 2 == 0, "Not key value pair");
-		for (Iterator<String> it = args.iterator(); it.hasNext();) {
-			properties.put(it.next(), it.next());
-		}
+	/**
+	 * Parses a config string into a map from keys to values
+	 * @param configString
+	 * @return
+	 */
+	protected static Map<String, String> parseConfigString(String configString) {
+		Iterable<String> args = configSplitter.split(checkNotNull(configString, "Config String"));
+		checkArgument(Iterables.size(args) % 2 == 0, "Not key value pair");
+		Map<String, String> parsed = Maps.newHashMap();
+		for (Iterator<String> it = args.iterator(); it.hasNext();)
+			parsed.put(it.next(), it.next());
+		return parsed;
 	}
 
 	public Set<String> keys() {
@@ -141,6 +200,12 @@ public class EntityProperties implements Serializable {
 
 	public void put(String key, boolean value) {
 		properties.put(key, Boolean.toString(value));
+	}
+	
+	public void putPairs(Object... keysAndValues) {
+		checkArgument(keysAndValues.length % 2 == 0);
+		for (int i = 0; i < keysAndValues.length; i+=2)
+			put((String) keysAndValues[i], keysAndValues[i+1].toString());
 	}
 
 	@Override

@@ -3,17 +3,19 @@ package data;
 import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.base.Predicates.not;
 
+import static logger.Log.log;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import logger.Logger;
+import logger.Log;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
+import sumstats.SumStats;
 import systemmanager.Consts;
 import systemmanager.Consts.DiscountFactor;
 import systemmanager.Keys;
@@ -70,25 +72,21 @@ import event.TimeStamp;
  * @author erik
  * 
  */
-/*
- * TODO At some point, we may want to be able to read an observation file into
- * one of these
- */
 public class Observations {
 	
 	// static event bus to record statics messages during simulation
 	public static final EventBus BUS = new EventBus();
 	
 	// Statistics objects filled during execution
-	protected final SummaryStatistics executionSpeeds;
-	protected final SummaryStatistics prices;
+	protected final SumStats executionSpeeds;
+	protected final SumStats prices;
 	protected final TimeSeries transPrices;
 	protected final TimeSeries nbboSpreads;
 	protected final Multiset<Class<? extends Agent>> numTrans;
 	protected final Map<Market, TimeSeries> spreads;
 	protected final Map<Market, TimeSeries> midQuotes;
-	protected final SummaryStatistics controlFundamentalValue;
-	protected final SummaryStatistics controlPrivateValue;
+	protected final SumStats controlFundamentalValue;
+	protected final SumStats controlPrivateValue;
 	
 	// Static information needed for observations
 	protected final Collection<? extends Player> players;
@@ -130,13 +128,13 @@ public class Observations {
 		spreads = spreadsBuilder.build();
 		midQuotes = midQuotesBuilder.build();
 		
-		this.executionSpeeds = new SummaryStatistics();
+		this.executionSpeeds = SumStats.create();
 		this.numTrans = HashMultiset.create();
-		this.prices = new SummaryStatistics();
+		this.prices = SumStats.create();
 		this.transPrices = TimeSeries.create();
 		this.nbboSpreads = TimeSeries.create();
-		this.controlPrivateValue = new SummaryStatistics();
-		this.controlFundamentalValue = new SummaryStatistics();
+		this.controlPrivateValue = SumStats.create();
+		this.controlFundamentalValue = SumStats.create();
 	}
 	
 	/**
@@ -157,9 +155,9 @@ public class Observations {
 	public Map<String, Double> getFeatures() {
 		ImmutableMap.Builder<String, Double> features = ImmutableMap.builder();
 		
-		features.put("exectime_mean", executionSpeeds.getMean());
-		features.put("trans_mean_price", prices.getMean());
-		features.put("trans_stddev_price", prices.getStandardDeviation());
+		features.put("exectime_mean", executionSpeeds.mean());
+		features.put("trans_mean_price", prices.mean());
+		features.put("trans_stddev_price", prices.stddev());
 		
 		double numAllTrans = 0;
 		for (Class<? extends Agent> type : agentTypes) {
@@ -170,16 +168,16 @@ public class Observations {
 		}
 		features.put("trans_num", numAllTrans);
 		
-		SummaryStatistics medians = new SummaryStatistics();
+		SumStats medians = SumStats.create();
 		for (Entry<Market, TimeSeries> entry : spreads.entrySet()) {
 			DescriptiveStatistics spreads = DSPlus.from(entry.getValue().sample(1, simLength));
 			double median = DSPlus.median(spreads);
 			
 			features.put("spreads_median_market_" + entry.getKey().getID(), median);
-			medians.addValue(median);
+			medians.add(median);
 		}
 		// average of median market spreads (for all markets in this model)
-		features.put("spreads_mean_markets", medians.getMean());
+		features.put("spreads_mean_markets", medians.mean());
 
 		DescriptiveStatistics spreads = DSPlus.from(nbboSpreads.sample(1, simLength));
 		features.put("spreads_median_nbbo", DSPlus.median(spreads));
@@ -190,59 +188,59 @@ public class Observations {
 		
 		// Profit and Surplus (and Private Value)
 		// XXX This does't quite make sense because background agents don't liquidate...
-		SummaryStatistics 
-			modelProfit = new SummaryStatistics(),
-			backgroundAgentProfit = new SummaryStatistics(),
-			hftProfit = new SummaryStatistics(),
-			marketMakerProfit = new SummaryStatistics();
+		SumStats 
+			modelProfit = SumStats.create(),
+			backgroundAgentProfit = SumStats.create(),
+			hftProfit = SumStats.create(),
+			marketMakerProfit = SumStats.create();
 		
 		for (Agent agent : agents) {
 			long profit = agent.getPostLiquidationProfit();
-			modelProfit.addValue(profit);
+			modelProfit.add(profit);
 			if (agent instanceof BackgroundAgent) {
-				backgroundAgentProfit.addValue(profit);
+				backgroundAgentProfit.add(profit);
 			} else if (agent instanceof HFTAgent) {
-				hftProfit.addValue(profit);
+				hftProfit.add(profit);
 			} else if (agent instanceof MarketMaker) {
-				marketMakerProfit.addValue(profit);
+				marketMakerProfit.add(profit);
 			}
 		}
 
-		features.put("profit_sum_total", modelProfit.getSum());
-		features.put("profit_sum_background", backgroundAgentProfit.getSum());
-		features.put("profit_sum_marketmaker", marketMakerProfit.getSum());
-		features.put("profit_sum_hft", hftProfit.getSum());
+		features.put("profit_sum_total", modelProfit.sum());
+		features.put("profit_sum_background", backgroundAgentProfit.sum());
+		features.put("profit_sum_marketmaker", marketMakerProfit.sum());
+		features.put("profit_sum_hft", hftProfit.sum());
 		
-		Map<Class<? extends Agent>, SummaryStatistics> agentSurplus = Maps.newHashMap();
+		Map<Class<? extends Agent>, SumStats> agentSurplus = Maps.newHashMap();
 		for (DiscountFactor discount : DiscountFactor.values()) {
-			SummaryStatistics surplus = new SummaryStatistics();
+			SumStats surplus = SumStats.create();
 			// go through all agents & update for each agent type
 			for (Agent agent : agents)
 				if (agent instanceof BackgroundAgent) {
-					controlPrivateValue.addValue(((BackgroundAgent) agent).getPrivateValueMean().doubleValue());
+					controlPrivateValue.add(((BackgroundAgent) agent).getPrivateValueMean().doubleValue());
 					
-					surplus.addValue(((BackgroundAgent) agent).getDiscountedSurplus(discount));
+					surplus.add(((BackgroundAgent) agent).getDiscountedSurplus(discount));
 					if (!agentSurplus.containsKey(agent.getClass()))
-						agentSurplus.put(agent.getClass(), new SummaryStatistics());
+						agentSurplus.put(agent.getClass(), SumStats.create());
 
-					agentSurplus.get(agent.getClass()).addValue(
+					agentSurplus.get(agent.getClass()).add(
 							((BackgroundAgent) agent).getDiscountedSurplus(discount));
 				}
 			
-			features.put("surplus_sum_" + discount, surplus.getSum());
+			features.put("surplus_sum_" + discount, surplus.sum());
 			for (Class<? extends Agent> type : agentTypes)
 				if (BackgroundAgent.class.isAssignableFrom(type))
 					features.put("surplus_" + type.getSimpleName().toLowerCase() 
-							+ "_sum_" + discount, agentSurplus.get(type).getSum());
+							+ "_sum_" + discount, agentSurplus.get(type).sum());
 		}
 				
 		// for control variates
 		List<Double> fundTimeSeries = fundPrices.sample(1, simLength);
 		for (double v : fundTimeSeries)
-			controlFundamentalValue.addValue(v);
-		features.put("control_mean_fund", controlFundamentalValue.getMean());
-		features.put("control_var_fund", controlFundamentalValue.getVariance());
-		features.put("control_mean_private", controlPrivateValue.getMean());
+			controlFundamentalValue.add(v);
+		features.put("control_mean_fund", controlFundamentalValue.mean());
+		features.put("control_var_fund", controlFundamentalValue.variance());
+		features.put("control_mean_private", controlPrivateValue.mean());
 		
 		return features.build();
 	}
@@ -261,23 +259,23 @@ public class Observations {
 		// Volatility
 		String prefix = period == 1 ? "vol" : "vol_freq_" + period;
 
-		SummaryStatistics stddev = new SummaryStatistics();
-		SummaryStatistics logPriceVol = new SummaryStatistics();
-		SummaryStatistics logRetVol = new SummaryStatistics();
+		SumStats stddev = SumStats.create();
+		SumStats logPriceVol = SumStats.create();
+		SumStats logRetVol = SumStats.create();
 
 		for (Entry<Market, TimeSeries> entry : midQuotes.entrySet()) {
 			TimeSeries mq = entry.getValue();
 			// compute log price volatility for this market
 			Iterable<Double> filtered = Iterables.filter(mq.sample(period, simLength), 
 					not(equalTo(Double.NaN)));
-			double stdev = DSPlus.from(filtered).getStandardDeviation();
+			double stdev = SumStats.fromData(filtered).stddev();
 
 			features.put(prefix + "_stddev_price_market_" + entry.getKey().getID(), stdev);
 
-			stddev.addValue(stdev);
+			stddev.add(stdev);
 			if (stdev != 0)
 				// XXX ?ideal? don't add if stddev is 0
-				logPriceVol.addValue(Math.log(stdev));
+				logPriceVol.add(Math.log(stdev));
 
 			// compute log-return volatility for this market
 			// XXX Note change in log-return vol from before. Before if the ratio was
@@ -287,13 +285,13 @@ public class Observations {
 			double logStdev = mktLogReturns.getStandardDeviation();
 
 			features.put(prefix + "_stddev_log_return_market_" + entry.getKey().getID(), logStdev);
-			logRetVol.addValue(logStdev);
+			logRetVol.add(logStdev);
 		}
 
 		// average measures across all markets in this model
-		features.put(prefix + "_mean_stddev_price", stddev.getMean());
-		features.put(prefix + "_mean_log_price", logPriceVol.getMean());
-		features.put(prefix + "_mean_log_return", logRetVol.getMean());
+		features.put(prefix + "_mean_stddev_price", stddev.mean());
+		features.put(prefix + "_mean_log_price", logPriceVol.mean());
+		features.put(prefix + "_mean_log_return", logRetVol.mean());
 	}
 	
 	// --------------------------------------
@@ -318,11 +316,11 @@ public class Observations {
 		long buyerExecTime = execTime - transaction.getBuyBid().getSubmitTime().getInTicks();
 		long sellerExecTime = execTime - transaction.getSellBid().getSubmitTime().getInTicks();
 		for (int quantity = 0; quantity < transaction.getQuantity(); quantity++) {
-			executionSpeeds.addValue((double) buyerExecTime);
-			executionSpeeds.addValue((double) sellerExecTime);
+			executionSpeeds.add((double) buyerExecTime);
+			executionSpeeds.add((double) sellerExecTime);
 		}
 
-		prices.addValue(transaction.getPrice().doubleValue());
+		prices.add(transaction.getPrice().doubleValue());
 
 		transPrices.add((int) transaction.getExecTime().getInTicks(), 
 				transaction.getPrice().doubleValue());
@@ -333,7 +331,7 @@ public class Observations {
 	}
 	
 	@Subscribe public void deadStat(DeadEvent d) {
-		Logger.log(Logger.Level.ERROR, "Unhandled Statistic: " + d);
+		log.log(Log.Level.ERROR, "Unhandled Statistic: %s", d);
 	}
 	
 	// --------------------------------------

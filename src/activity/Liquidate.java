@@ -17,15 +17,14 @@ public class Liquidate extends Activity {
 	protected final Agent agent;
 	protected final Price price;
 
-	public Liquidate(Agent agent, Price price, TimeStamp scheduledTime) {
-		super(scheduledTime);
+	public Liquidate(Agent agent, Price price) {
 		this.agent = checkNotNull(agent, "Agent");
 		this.price = checkNotNull(price, "Price");
 	}
 
 	@Override
-	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return this.agent.liquidateAtPrice(this.price, currentTime);
+	public void execute(TimeStamp currentTime) {
+		this.agent.liquidateAtPrice(this.price, currentTime);
 	}
 	
 	@Override

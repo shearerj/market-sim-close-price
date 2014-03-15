@@ -1,16 +1,16 @@
 package entity.agent;
 
-import static fourheap.Order.OrderType.*;
-import static logger.Logger.log;
-import static logger.Logger.Level.INFO;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
+import iterators.ExpInterarrivals;
 
+import java.util.Iterator;
 import java.util.Random;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-
 import systemmanager.Keys;
-import activity.Activity;
+import systemmanager.Scheduler;
 import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
@@ -47,21 +47,35 @@ public class ZIRAgent extends BackgroundAgent {
 	private static final long serialVersionUID = -1155740218390579581L;
 
 	protected boolean withdrawOrders; 	// true if withdraw orders at each reentry
-	
-	public ZIRAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
-			Market market, Random rand, double reentryRate, double pvVar,
-			int tickSize, int maxAbsPosition, int bidRangeMin, int bidRangeMax, 
+
+	protected ZIRAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			Iterator<TimeStamp> interarrivals, double pvVar, int tickSize,
+			int maxAbsPosition, int bidRangeMin, int bidRangeMax,
 			boolean withdrawOrders) {
-		super(arrivalTime, fundamental, sip, market, rand, reentryRate, 
-				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize,
-				bidRangeMin, bidRangeMax);
 		
+		super(scheduler, arrivalTime, fundamental, sip, market, rand,
+				interarrivals, new PrivateValue(maxAbsPosition, pvVar, rand),
+				tickSize, bidRangeMin, bidRangeMax);
+
 		this.withdrawOrders = withdrawOrders;
 	}
 
-	public ZIRAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
-			Market market, Random rand, EntityProperties props) {
-		this(arrivalTime, fundamental, sip, market, rand,
+	public ZIRAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			double reentryRate, double pvVar, int tickSize, int maxAbsPosition,
+			int bidRangeMin, int bidRangeMax, boolean withdrawOrders) {
+		
+		this(scheduler, arrivalTime, fundamental, sip, market, rand,
+				ExpInterarrivals.create(reentryRate, rand), pvVar, tickSize,
+				maxAbsPosition, bidRangeMin, bidRangeMax, withdrawOrders);
+	}
+
+	public ZIRAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			EntityProperties props) {
+		
+		this(scheduler, arrivalTime, fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0.005),
 				props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),
 				props.getAsInt(Keys.TICK_SIZE, 1),
@@ -72,35 +86,23 @@ public class ZIRAgent extends BackgroundAgent {
 	}
 
 	@Override
-	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
-		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
-				super.agentStrategy(currentTime));
+	public void agentStrategy(TimeStamp currentTime) {
+		super.agentStrategy(currentTime);
 
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append(':');
 		if (!currentTime.equals(arrivalTime)) {
-			sb.append(" wake up.");
+			log.log(INFO, "%s: wake up.", this);
 		}
 		// XXX should it go to sleep?
-//		if (!activeOrders.isEmpty()) {
-//			sb.append(" last order has not transacted, go back to sleep");
-//			log(INFO, sb.toString());
-//			return acts.build();
-//		}
+//		if (!activeOrders.isEmpty()) return;
 
 		if (withdrawOrders) {
-			log(INFO, sb.append(" Withdraw all orders."));
-			acts.addAll(withdrawAllOrders(currentTime));
+			log.log(INFO, "%s: Withdraw all orders.", this);
+			withdrawAllOrders();
 		}
 		// 0.50% chance of being either long or short
 		OrderType type = rand.nextBoolean() ? BUY : SELL;
-		acts.addAll(executeZIStrategy(type, 1, currentTime));
-		log(INFO, sb.append(" Submit ").append(type).append(" order"));
-		return acts.build();
+		executeZIStrategy(type, 1, currentTime);
+		log.log(INFO, "%s: Submit %s order", this, type);
 	}
-
-	@Override
-	public String toString() {
-		return "ZIR " + super.toString();
-	}
+	
 }

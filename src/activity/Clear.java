@@ -14,14 +14,13 @@ public class Clear extends Activity {
 
 	protected final Market market;
 
-	public Clear(Market market, TimeStamp scheduledTime) {
-		super(scheduledTime);
+	public Clear(Market market) {
 		this.market = checkNotNull(market, "Market");
 	}
 
 	@Override
-	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return this.market.clear(currentTime);
+	public void execute(TimeStamp currentTime) {
+		this.market.clear(currentTime);
 	}
 
 	@Override

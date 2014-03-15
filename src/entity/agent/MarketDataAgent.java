@@ -10,11 +10,9 @@ import java.util.List;
 import java.util.Random;
 
 import systemmanager.Keys;
-import activity.Activity;
+import systemmanager.Scheduler;
 import activity.AgentStrategy;
 import activity.SubmitOrder;
-
-import com.google.common.collect.ImmutableList;
 
 import data.AgentProperties;
 import data.FundamentalValue;
@@ -27,21 +25,26 @@ import entity.market.Market;
 import event.TimeStamp;
 
 public class MarketDataAgent extends SMAgent {
-	
-	/**
-	 * TODO - what does this thing do?
+
+	/*
+	 * When building from eclipse you should use the generated serialVersionUID
+	 * (which generates a random long) instead of the default 1. serialization
+	 * is a java interface that allows all objects to be saved. This random
+	 * number essentially says what version this object is, so it knows when it
+	 * trys to load an object if its actually trying to load the same object.
 	 */
-	private static final long serialVersionUID = 1L;
-	
+	private static final long serialVersionUID = 7690956351534734324L;
+
 	protected OrderParser orderParser;
 	protected List<OrderDatum> orderDatumList;
 
-	public MarketDataAgent(FundamentalValue fundamental, SIP sip, Market market, 
-			Random rand, String filePath) {
-		super(new TimeStamp(0), fundamental, sip, market, rand, 1);
+
+	public MarketDataAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market, 
+			Random rand, String fileName) {
+		super(scheduler, TimeStamp.ZERO, fundamental, sip, market, rand, 1);
 		
 		// Determining the market file type
-		if(filePath.toString().toLowerCase().contains("nyse")){
+		if(fileName.toString().toLowerCase().contains("nyse")){
 			this.orderParser = new OrderParserNYSE();
 		}
 		else {
@@ -50,46 +53,41 @@ public class MarketDataAgent extends SMAgent {
 		
 		// Processing the file
 		try {
-			
-			this.orderDatumList = orderParser.process(Paths.get(filePath));
+			this.orderDatumList = orderParser.process(fileName);
 		} catch (IOException e) {
 			e.printStackTrace();
-			System.out.println("Error: could not open file: " + filePath.toString());
+			System.out.println("Error: could not open file: " + fileName.toString());
 			System.exit(1);
 		}
 		
 	}
 	
-	public MarketDataAgent(FundamentalValue fundamental, SIP sip, Market market, 
+	public MarketDataAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market, 
 			Random rand, AgentProperties props) {
-		this(fundamental, sip, market, rand, props.getAsString(Keys.FILENAME));
+		this(scheduler, fundamental, sip, market, rand, props.getAsString(Keys.FILENAME));
 	}
 	
-	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
-//		TimeStamp waitTime = reentry.next();
-//		if (waitTime.equals(TimeStamp.INFINITE))
-//		return ImmutableList.of(new AgentStrategy(this, TimeStamp.INFINITE));
+	public void agentStrategy(TimeStamp currentTime) {
+		
 		// If there are no orders on the list, sleep forever
-		if (this.orderDatumList.size() == 0) {
-			return ImmutableList.of(new AgentStrategy(this, TimeStamp.INFINITE));
+		if (this.orderDatumList.isEmpty()) {
+			return;
 		}
 		
 		// Creating the order to submit
 		OrderDatum nextOrder = orderDatumList.get(0);
 		orderDatumList.remove(0);
-		SubmitOrder order = new SubmitOrder(this, primaryMarket, nextOrder.getOrderType(),
-				nextOrder.getPrice(), nextOrder.getQuantity(), nextOrder.getTimeStamp());
+		SubmitOrder act = new SubmitOrder(this, primaryMarket, nextOrder.getOrderType(), nextOrder.getPrice(), nextOrder.getQuantity());
+		// FIXME This is super slow. The list should probably be reversed or better yet, put in a queue data structure
+		// If you have a list that sorted in order, you could do the following to get a queue that works properly
+		// Collections3.asLifoQueue(Lists.newArrayList(Lists.reverse(orderData)))
+		// This will first reverse the list, but it's only a view, so you need to copy it to a new list, finally the last wraps it as a queue so you can use pretty
+		// ADT syntax
+		scheduler.scheduleActivity(nextOrder.getTimeStamp(), act);
 		
 		// Schedule reentry
-		AgentStrategy reentry;
-		if(orderDatumList.size() > 0) {
-			reentry = new AgentStrategy(this, orderDatumList.get(0).getTimeStamp());
-		}
-		else {
-			reentry = new AgentStrategy(this, TimeStamp.INFINITE);
-		}
-		
-		return ImmutableList.of(order, reentry);
+		if(!orderDatumList.isEmpty())
+			scheduler.scheduleActivity(orderDatumList.get(0).getTimeStamp(),  new AgentStrategy(this));
 	}
 	
 	public List<OrderDatum> getOrderDatumList() {

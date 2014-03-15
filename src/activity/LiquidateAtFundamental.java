@@ -15,14 +15,13 @@ public class LiquidateAtFundamental extends Activity {
 
 	protected final Agent agent;
 
-	public LiquidateAtFundamental(Agent agent, TimeStamp scheduledTime) {
-		super(scheduledTime);
+	public LiquidateAtFundamental(Agent agent) {
 		this.agent = checkNotNull(agent, "Agent");
 	}
 
 	@Override
-	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return this.agent.liquidateAtFundamental(currentTime);
+	public void execute(TimeStamp currentTime) {
+		this.agent.liquidateAtFundamental(currentTime);
 	}
 	
 	@Override

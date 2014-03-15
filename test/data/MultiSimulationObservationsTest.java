@@ -29,9 +29,9 @@ public class MultiSimulationObservationsTest {
 						ImmutableMap.of(Keys.PV_BUY1, -11.0, Keys.PV_SELL1, 10.0, Keys.PV_POSITION1_MAX_ABS, 11.0))),
 				ImmutableMap.<String, Double> of()));
 		
-		assertEquals(12, obs.playerObservations.get(0).payoff.getMean(), 0.001);
+		assertEquals(12, obs.playerObservations.get(0).payoff.mean(), 0.001);
 		// Sample Standard Deviation...
-		assertEquals(8.185, obs.playerObservations.get(0).payoff.getStandardDeviation(), 0.001);
+		assertEquals(8.185, obs.playerObservations.get(0).payoff.stddev(), 0.001);
 		
 		JsonArray players = obs.toJson().getAsJsonObject().get("players").getAsJsonArray();
 		assertEquals(12, players.get(0).getAsJsonObject().get("payoff").getAsDouble(), 0.001);
@@ -60,8 +60,8 @@ public class MultiSimulationObservationsTest {
 								ImmutableMap.of(Keys.PV_BUY1, -24.0, Keys.PV_SELL1, 20.0, Keys.PV_POSITION1_MAX_ABS, 24.0))),
 				ImmutableMap.<String, Double> of()));
 		
-		assertEquals(7.5, obs.playerObservations.get(0).payoff.getMean(), 0.001);
-		assertEquals(15, obs.playerObservations.get(1).payoff.getMean(), 0.001);
+		assertEquals(7.5, obs.playerObservations.get(0).payoff.mean(), 0.001);
+		assertEquals(15, obs.playerObservations.get(1).payoff.mean(), 0.001);
 		
 		JsonArray players = obs.toJson().getAsJsonObject().get("players").getAsJsonArray();
 		assertEquals(7.5, players.get(0).getAsJsonObject().get("payoff").getAsDouble(), 0.001);

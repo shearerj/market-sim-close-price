@@ -23,14 +23,14 @@ public class EventTest {
 	
 	@Test
 	public void orderInvariantTest() {
-		TimeStamp time = new TimeStamp(rand.nextInt(3) - 1);
-		Event e = new Event(time);
+		TimeStamp time = TimeStamp.create(rand.nextInt(3) - 1);
+		Event e = new Event(time, rand);
 		List<List<Activity>> order = Lists.newArrayList();
 		for (int i = 0; i < rand.nextInt(8) + 2; i++) {
 			List<Activity> acts = Lists.newArrayList();
 			for (int j = 0; j < rand.nextInt(9) + 1; j++)
-				acts.add(new MockActivity(time));
-			e.addAll(acts);
+				acts.add(new MockActivity());
+			e.addAllOrderd(acts);
 			order.add(acts);
 		}
 		
@@ -53,13 +53,13 @@ public class EventTest {
 	
 	@Test
 	public void orderLifoTest() {
-		Event e = new Event(TimeStamp.IMMEDIATE);
+		Event e = new Event(TimeStamp.IMMEDIATE, rand);
 		List<List<Activity>> order = Lists.newArrayList();
 		for (int i = 0; i < rand.nextInt(8) + 2; i++) {
 			List<Activity> acts = Lists.newArrayList();
 			for (int j = 0; j < rand.nextInt(9) + 1; j++)
-				acts.add(new MockActivity(TimeStamp.IMMEDIATE));
-			e.addAll(acts);
+				acts.add(new MockActivity());
+			e.addAllOrderd(acts);
 			order.add(acts);
 		}
 		Collections.reverse(order);

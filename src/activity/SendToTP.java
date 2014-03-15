@@ -23,16 +23,15 @@ public class SendToTP extends Activity {
 	protected final List<Transaction> transactions;
 
 	public SendToTP(Market market, List<Transaction> transactions,
-			TransactionProcessor ip, TimeStamp scheduledTime) {
-		super(scheduledTime);
+			TransactionProcessor ip) {
 		this.market = checkNotNull(market, "Market");
 		this.tp = checkNotNull(ip, "TP");
 		this.transactions = checkNotNull(transactions, "Transactions");
 	}
 
 	@Override
-	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return tp.sendToTransactionProcessor(market, transactions, currentTime);
+	public void execute(TimeStamp currentTime) {
+		tp.sendToTransactionProcessor(market, transactions, currentTime);
 	}
 	
 	@Override

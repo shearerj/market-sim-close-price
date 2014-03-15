@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
 
-import logger.Logger;
+import logger.Log;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -25,14 +25,19 @@ import static fourheap.Order.OrderType.SELL;
 public class OrderParserNYSETest {
 	
 	@BeforeClass
-	public static void setupClass() {
+	public static void setupClass() throws IOException {
 		// Setting up the log file
+<<<<<<< HEAD
+=======
+		Log.log = Log.create(Log.Level.DEBUG, new File(Consts.TEST_OUTPUT_DIR + "OrderParserTest.log"));		
+>>>>>>> c2ec2fc595f0d27d3d90c28940ea2439acabad24
 	}
 
 	private OrderParserNYSE addParser() {
 		OrderParserNYSE parser = new OrderParserNYSE();
 		return parser;
 	}
+<<<<<<< HEAD
 	
 	@Test
 	public void parseAddOrderTest2() {
@@ -40,6 +45,18 @@ public class OrderParserNYSETest {
 		String line = "A,1,123456789,B,B,1000,A,0,1000,10,B,A\n";
 		
 	}
+=======
+
+//	private OrderParserNYSE addParser(String filename) {
+//		OrderParserNYSE parser = null;
+//		try {
+//			parser = new OrderParserNYSE();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//		return parser;
+//	}
+>>>>>>> c2ec2fc595f0d27d3d90c28940ea2439acabad24
 
 	@Test
 	public void parseAddOrderTest(){
@@ -82,7 +99,11 @@ public class OrderParserNYSETest {
 				Character.toString(orderData.getExchangeCode()));
 		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getSymbol());
 		assertEquals(testType + " order time stamp wrong", 
+<<<<<<< HEAD
 				new TimeStamp(Integer.parseInt(milliseconds) + Integer.parseInt(seconds)*1000),
+=======
+				TimeStamp.create(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
+>>>>>>> c2ec2fc595f0d27d3d90c28940ea2439acabad24
 				orderData.getTimeStamp());
 		assertEquals(testType + " order system code wrong", systemCode, 
 				Character.toString(orderData.getSystemCode()));
@@ -135,7 +156,7 @@ public class OrderParserNYSETest {
 				Character.toString(orderData.getExchangeCode()));
 		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getSymbol());
 		assertEquals(testType + " order time stamp wrong", 
-				new TimeStamp(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
+				TimeStamp.create(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
 				orderData.getTimeStamp());
 		assertEquals(testType + " order system code wrong", systemCode, 
 				Character.toString(orderData.getSystemCode()));
@@ -189,7 +210,7 @@ public class OrderParserNYSETest {
 				Character.toString(orderData.getExchangeCode()));
 		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getSymbol());
 		assertEquals(testType + " order time stamp wrong", 
-				new TimeStamp(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
+				TimeStamp.create(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
 				orderData.getTimeStamp());
 		assertEquals(testType + " order system code wrong", systemCode, 
 				Character.toString(orderData.getSystemCode()));
@@ -247,7 +268,7 @@ public class OrderParserNYSETest {
 				Character.toString(orderData.getExchangeCode()));
 		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getSymbol());
 		assertEquals(testType + " order time stamp wrong", 
-				new TimeStamp(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
+				TimeStamp.create(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
 				orderData.getTimeStamp());
 		assertEquals(testType + " order system code wrong", systemCode, 
 				Character.toString(orderData.getSystemCode()));

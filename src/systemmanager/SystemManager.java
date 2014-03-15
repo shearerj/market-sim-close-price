@@ -1,7 +1,8 @@
 package systemmanager;
 
-import static logger.Logger.log;
-import static logger.Logger.Level.INFO;
+import static logger.Log.Level.INFO;
+import static logger.Log.log;
+
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,8 +13,8 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.Random;
 
-import logger.Logger;
-import logger.Logger.Prefix;
+import logger.Log.Prefix;
+import logger.Log;
 
 import com.google.common.base.Objects;
 
@@ -28,8 +29,7 @@ import entity.market.Market;
  * it instantiates the Activity objects and provides the methods to execute them
  * later.
  * 
- * TODO Correct this...
- * Usage: java -jar hft.jar [simulation folder name] [sample #]
+ * Usage: java -cp "$(ls lib/*.jar | tr '\n' :)dist/hft.jar" systemmanager.SystemManager [simulation folder name] [sample #]
  * 
  * @author ewah
  */
@@ -106,8 +106,8 @@ public class SystemManager {
 			Simulation sim = new Simulation(specification, rand);
 			
 			initializeLogger(logLevel, simulationFolder, observationNumber, i, sim, simulationLength);
-			log(INFO, "Random Seed: " + baseRandomSeed);
-			log(INFO, "Configuration: " + specification);
+			log.log(INFO, "Random Seed: %d", baseRandomSeed);
+			log.log(INFO, "Configuration: %s", specification);
 			
 			sim.executeEvents();
 			observations.addObservation(sim.getObservations());
@@ -120,13 +120,14 @@ public class SystemManager {
 	protected static void initializeLogger(int logLevel, File simulationFolder,
 			int observationNumber, int simulationNumber, final Simulation simulation,
 			int simulationLength) throws IOException {
-		if (logLevel == 0) // No logging
+		if (logLevel == 0) { // No logging
+			log = Log.nullLogger();
 			return;
+		}
 		
-		// TODO This adds an extra underscore
 		StringBuilder logFileName = new StringBuilder(
 				new File(".").toURI().relativize(simulationFolder.toURI()).getPath().replace('/', '_'));
-		logFileName.append('_').append(observationNumber).append('_');
+		logFileName.append(observationNumber).append('_');
 		logFileName.append(simulationNumber).append('_');
 		logFileName.append(LOG_DATE_FORMAT.format(new Date())).append(".txt");
 
@@ -137,11 +138,10 @@ public class SystemManager {
 		final int digits = Integer.toString(simulationLength).length();
 
 		// Create log file
-		Logger.setup(logLevel, logFile, true, new Prefix() {
+		log = Log.create(Log.Level.values()[logLevel], logFile, new Prefix() {
 			@Override
 			public String getPrefix() {
-				return String.format("%" + digits + "d| ",
-						simulation.getCurrentTime().getInTicks());
+				return String.format("%" + digits + "d| ", simulation.getCurrentTime().getInTicks());
 			}
 		});
 	}

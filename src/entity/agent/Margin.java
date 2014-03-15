@@ -94,6 +94,7 @@ class Margin implements Serializable, QuantityIndexedArray<Double> {
 	 * @param type
 	 * @return
 	 */
+	// XXX Erik: Is there a reason this is a Double instead of a double?
 	@Override
 	public Double getValue(int currentPosition, OrderType type) {
 		switch (type) {
@@ -108,7 +109,7 @@ class Margin implements Serializable, QuantityIndexedArray<Double> {
 				return values.get(currentPosition + offset - 1);
 			break;
 		}
-		return 0.0;
+		return 0d;
 	}
 
 	/**
@@ -138,6 +139,6 @@ class Margin implements Serializable, QuantityIndexedArray<Double> {
 		checkArgument(quantity > 0, "Quantity must be positive");
 		
 		// TODO need to implement for multiple units
-		return new Double(0);
+		return 0d;
 	}
 }

@@ -1,5 +1,8 @@
 package data;
 
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -8,15 +11,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Scanner;
-import java.util.Collection;
 
 import com.google.common.collect.Lists;
 
 import entity.market.Price;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
-import static fourheap.Order.OrderType.BUY;
-import static fourheap.Order.OrderType.SELL;
 
 
 public class OrderParserNYSE implements OrderParser {
@@ -24,12 +24,12 @@ public class OrderParserNYSE implements OrderParser {
 	public OrderParserNYSE() {
 	}
 	
-	public List<OrderDatum> process(Path path) throws IOException {
+	public List<OrderDatum> process(String fileName) throws IOException {
 		// Creating the List
 		List<OrderDatum> orderDatumList = Lists.newArrayList();
 		
 		// Opening the file
-		Scanner scanner = new Scanner(path);
+		Scanner scanner = new Scanner(fileName);
 				
 		int x =0;
 		while (scanner.hasNextLine()) {
@@ -63,7 +63,7 @@ public class OrderParserNYSE implements OrderParser {
 		Price price = new Price(new Double(elements.get(7)));
 		int seconds = new Integer(elements.get(8));
 		int milliseconds = new Integer(elements.get(9));
-		TimeStamp timestamp = new TimeStamp(seconds*1000 + milliseconds);
+		TimeStamp timestamp = TimeStamp.create(seconds*1000 + milliseconds);
 		char systemCode = elements.get(10).charAt(0);
 		String quoteID = elements.get(11);
 		
@@ -92,10 +92,30 @@ public class OrderParserNYSE implements OrderParser {
 //		return orderData;
 //	}
 
+	public OrderDatum parseAddOrder(Scanner lineScanner) {
+		String sequenceNum = lineScanner.next();
+		String orderReferenceNum = lineScanner.next();
+		char exchangeCode = lineScanner.next().charAt(0);
+		OrderType type = (lineScanner.next().charAt(0) == 'B') ? BUY : SELL;
+		int quantity = lineScanner.nextInt();
+		String stockSymbol = lineScanner.next();
+		Price price = new Price(lineScanner.nextDouble());
+		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() + 
+				lineScanner.nextInt() * 1000);
+		char systemCode = lineScanner.next().charAt(0);
+		String quoteId = lineScanner.next();
+
+		OrderDatum orderData = new OrderDatum('A', sequenceNum,
+				orderReferenceNum, exchangeCode, stockSymbol, timestamp,
+				systemCode, quoteId, price, quantity, type);
+
+		return orderData;
+	}
+
 	public OrderDatum parseDeleteOrder(Scanner lineScanner) {
 		String sequenceNum = lineScanner.next();
 		String orderReferenceNum = lineScanner.next();
-		TimeStamp timestamp = new TimeStamp(lineScanner.nextInt() + 
+		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() + 
 				lineScanner.nextInt() * 1000);
 		String stockSymbol = lineScanner.next();
 		char exchangeCode = lineScanner.next().charAt(0);
@@ -119,7 +139,7 @@ public class OrderParserNYSE implements OrderParser {
 		String orderReferenceNum = lineScanner.next();
 		int quantity = lineScanner.nextInt();
 		Price price = new Price(lineScanner.nextDouble());
-		TimeStamp timestamp = new TimeStamp(lineScanner.nextInt() + 
+		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() + 
 				lineScanner.nextInt() * 1000);
 		String stockSymbol = lineScanner.next();
 		char exchangeCode = lineScanner.next().charAt(0);
@@ -141,7 +161,7 @@ public class OrderParserNYSE implements OrderParser {
 		Price price = new Price(lineScanner.nextDouble());
 		int quantity = lineScanner.nextInt();
 		int totalImbalance = lineScanner.nextInt();
-		TimeStamp timestamp = new TimeStamp(lineScanner.nextInt() + 
+		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() + 
 				lineScanner.nextInt() * 1000);
 		int marketImbalance = lineScanner.nextInt();
 		char auctionType = lineScanner.next().charAt(0);

@@ -24,6 +24,7 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 	 * XXX Take infinite price into account for subtraction, addition, toString,
 	 * etc. Basically, should infinite price be special?
 	 */
+	// MAX_VALUE - 1 so that -(-INF) = INF
 	public static final Price INF = new Price(Integer.MAX_VALUE - 1);
 	public static final Price ZERO = new Price(0);
 
@@ -139,7 +140,10 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 	
 	@Override
 	public String toString() {
-		
+		return '$' + Long.toString(ticks);
+	}
+	
+	public String toDollarString() {
 		int absTicks = Math.abs(ticks); 
 		int dollars = absTicks / TICKS_PER_DOLLAR;
 		int digits = MathUtils.logn(TICKS_PER_DOLLAR, 10);

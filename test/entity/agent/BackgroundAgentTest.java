@@ -1,28 +1,26 @@
 package entity.agent;
 
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.*;
-import static fourheap.Order.OrderType.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-import logger.Logger;
+import logger.Log;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.common.collect.Iterables;
-
-import activity.Activity;
-import activity.SubmitNMSOrder;
 import systemmanager.Consts;
-import systemmanager.Executer;
-import data.MockFundamental;
+import systemmanager.Executor;
 import data.FundamentalValue;
-import entity.agent.BackgroundAgent;
+import data.MockFundamental;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.MockMarket;
@@ -32,26 +30,28 @@ import event.TimeStamp;
 
 public class BackgroundAgentTest {
 
+	private Executor exec;
 	private Market market;
 	private SIP sip;
 
 	@BeforeClass
-	public static void setupClass() {
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "BackgroundAgentTest.log"));
+	public static void setupClass() throws IOException {
+		Log.log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "BackgroundAgentTest.log"));
 	}
 
 	@Before
 	public void setup() {
-		sip = new SIP(TimeStamp.IMMEDIATE);
-		market = new MockMarket(sip);
+		exec = new Executor();
+		sip = new SIP(exec, TimeStamp.IMMEDIATE);
+		market = new MockMarket(exec, sip);
 	}
 
 	@Test
 	public void getValuationBasic() {
 		TimeStamp time = TimeStamp.ZERO;
-		FundamentalValue randFundamental = new FundamentalValue(0.2, 100000, 10000, new Random());
+		FundamentalValue randFundamental = FundamentalValue.create(0.2, 100000, 10000, new Random());
 
-		BackgroundAgent agent = new MockBackgroundAgent(randFundamental, sip, market);
+		BackgroundAgent agent = new MockBackgroundAgent(exec, randFundamental, sip, market);
 
 		// Verify valuation (where PV = 0)
 		Price val = agent.getValuation(BUY, time);
@@ -67,7 +67,7 @@ public class BackgroundAgentTest {
 		PrivateValue pv = new DummyPrivateValue(1, values);
 		FundamentalValue fundamental = new MockFundamental(100000);
 
-		BackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market, pv, 0, 1000);
+		BackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market, pv, 0, 1000);
 
 		// Verify valuation (current position of 0)
 		Price fund = fundamental.getValueAt(time);
@@ -82,10 +82,10 @@ public class BackgroundAgentTest {
 	public void getValuationRand() {
 		// Testing with randomized values
 		TimeStamp time = TimeStamp.ZERO;
-		FundamentalValue randFundamental = new FundamentalValue(0.2, 100000, 10000, new Random());
+		FundamentalValue randFundamental = FundamentalValue.create(0.2, 100000, 10000, new Random());
 		PrivateValue pv = new PrivateValue(5, 1000000, new Random());
 
-		BackgroundAgent agent = new MockBackgroundAgent(randFundamental, sip, market, pv, 0, 1000);
+		BackgroundAgent agent = new MockBackgroundAgent(exec, randFundamental, sip, market, pv, 0, 1000);
 
 		// Get valuation for various positionBalances
 		int pv0 = pv.values.get(0).intValue();
@@ -126,10 +126,10 @@ public class BackgroundAgentTest {
 	public void getLimitPriceRand() {
 		// Testing with randomized values
 		TimeStamp time = TimeStamp.ZERO;
-		FundamentalValue randFundamental = new FundamentalValue(0.2, 100000, 10000, new Random());
+		FundamentalValue randFundamental = FundamentalValue.create(0.2, 100000, 10000, new Random());
 		PrivateValue pv = new PrivateValue(5, 1000000, new Random());
 
-		BackgroundAgent agent = new MockBackgroundAgent(randFundamental, sip, market, pv, 0, 1000);
+		BackgroundAgent agent = new MockBackgroundAgent(exec, randFundamental, sip, market, pv, 0, 1000);
 
 		// Get valuation for various positionBalances
 		int pv0 = pv.values.get(0).intValue();
@@ -162,11 +162,11 @@ public class BackgroundAgentTest {
 	public void processTransaction() {
 		TimeStamp time = TimeStamp.ZERO;
 		FundamentalValue fundamental = new MockFundamental(100000);
-		FundamentalValue randFundamental = new FundamentalValue(0.2, 100000, 10000, new Random());
+		FundamentalValue randFundamental = FundamentalValue.create(0.2, 100000, 10000, new Random());
 		PrivateValue pv = new PrivateValue(5, 1000000, new Random());
 
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
-		BackgroundAgent agent = new MockBackgroundAgent(randFundamental, sip, market, pv, 0, 1000);
+		MockAgent agent2 = new MockAgent(exec, fundamental, sip, market);
+		BackgroundAgent agent = new MockBackgroundAgent(exec, randFundamental, sip, market, pv, 0, 1000);
 		assertEquals( 0, agent.transactions.size());
 		assertEquals(0, agent.positionBalance);
 		assertEquals(0, agent2.positionBalance);
@@ -177,7 +177,7 @@ public class BackgroundAgentTest {
 		assertEquals(0, market.getTransactions().size());
 
 		// Testing the market for the correct transactions
-		Executer.execute(market.clear(time));
+		market.clear(time);
 		assertEquals( 1, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals( 1, agent.transactions.size());
@@ -196,11 +196,11 @@ public class BackgroundAgentTest {
 	public void processTransactionMultiQuantity() {
 		TimeStamp time = TimeStamp.ZERO;
 		FundamentalValue fundamental = new MockFundamental(100000);
-		FundamentalValue randFundamental = new FundamentalValue(0.2, 100000, 10000, new Random());
+		FundamentalValue randFundamental = FundamentalValue.create(0.2, 100000, 10000, new Random());
 		PrivateValue pv = new PrivateValue(5, 1000000, new Random());
 
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
-		BackgroundAgent agent = new MockBackgroundAgent(randFundamental, sip, market, pv, 0, 1000);
+		MockAgent agent2 = new MockAgent(exec, fundamental, sip, market);
+		BackgroundAgent agent = new MockBackgroundAgent(exec, randFundamental, sip, market, pv, 0, 1000);
 		assertEquals( 0, agent.transactions.size());
 		assertEquals(0, agent.positionBalance);
 		assertEquals(0, agent2.positionBalance);
@@ -211,7 +211,7 @@ public class BackgroundAgentTest {
 		assertEquals(0, market.getTransactions().size());
 
 		// Testing the market for the correct transactions
-		Executer.execute(market.clear(time));
+		market.clear(time);
 		assertEquals( 1, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals( 1, agent.transactions.size());
@@ -231,11 +231,11 @@ public class BackgroundAgentTest {
 		TimeStamp time = TimeStamp.ZERO;
 		TimeStamp time1 = TimeStamp.create(1);
 		FundamentalValue fundamental = new MockFundamental(100000);
-		FundamentalValue randFundamental = new FundamentalValue(0.2, 100000, 10000, new Random());
+		FundamentalValue randFundamental = FundamentalValue.create(0.2, 100000, 10000, new Random());
 		PrivateValue pv = new PrivateValue(5, 1000000, new Random());
 
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
-		BackgroundAgent agent = new MockBackgroundAgent(randFundamental, sip, market, pv, 0, 1000);
+		MockAgent agent2 = new MockAgent(exec, fundamental, sip, market);
+		BackgroundAgent agent = new MockBackgroundAgent(exec, randFundamental, sip, market, pv, 0, 1000);
 		assertEquals( 0, agent.transactions.size());
 
 		// Get valuation for various positionBalances
@@ -302,7 +302,7 @@ public class BackgroundAgentTest {
 		getTransactionValuationRand();
 	}
 
-
+	// Test that returns empty if exceed max position
 	@Test
 	public void testZIStrat() {
 		TimeStamp time = TimeStamp.ZERO;
@@ -310,17 +310,18 @@ public class BackgroundAgentTest {
 		PrivateValue pv = new DummyPrivateValue(1, values);
 		FundamentalValue fundamental = new MockFundamental(100000);
 
-		BackgroundAgent agent = new MockBackgroundAgent(fundamental, sip, market, pv, 0, 1000);
+		BackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market, pv, 0, 1000);
 
-		// Test that returns empty if exceed max position
-		Iterable<? extends Activity> acts = agent.executeZIStrategy(BUY, 5, time);
-		assertEquals(0, Iterables.size(acts));
-		acts = agent.executeZIStrategy(SELL, 5, time);
-		assertEquals(0, Iterables.size(acts));
+		agent.executeZIStrategy(BUY, 5, time);
+		assertTrue(agent.activeOrders.isEmpty());
+		assertTrue(agent.transactions.isEmpty());
+		agent.executeZIStrategy(SELL, 5, time);
+		assertTrue(agent.activeOrders.isEmpty());
+		assertTrue(agent.transactions.isEmpty());
 
 		// Test ZI strategy
-		acts = agent.executeZIStrategy(BUY, 1, time);
-		assertTrue(Iterables.getOnlyElement(acts) instanceof SubmitNMSOrder);
+		agent.executeZIStrategy(BUY, 1, time);
+		assertEquals(1, agent.activeOrders.size());
 
 		// XXX much of this is tested within ZIAgentTest, may want to move it here
 	}

@@ -1,7 +1,7 @@
 package entity.infoproc;
 
-import static logger.Logger.log;
-import static logger.Logger.Level.INFO;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 import static data.Observations.BUS;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -10,7 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.common.collect.ImmutableList;
+import systemmanager.Scheduler;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -20,7 +21,6 @@ import activity.ProcessQuote;
 import activity.ProcessTransactions;
 import entity.Entity;
 import entity.market.Market;
-import entity.market.MarketTime;
 import entity.market.Price;
 import entity.market.Quote;
 import entity.market.Transaction;
@@ -38,17 +38,15 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 
 	private static final long serialVersionUID = -4600049787044894823L;
 	
-	protected TimeStamp latency;
+	protected final TimeStamp latency;
 	protected final Map<Market, Quote> marketQuotes;
-	protected final Map<Market, MarketTime> quoteTimes;
 	protected final List<Transaction> transactions;
 	protected BestBidAsk nbbo;
 
-	public SIP(TimeStamp latency) {
-		super(0);
+	public SIP(Scheduler scheduler, TimeStamp latency) {
+		super(0, scheduler);
 		this.latency = checkNotNull(latency);
 		this.marketQuotes = Maps.newHashMap();
-		this.quoteTimes = Maps.newHashMap();
 		this.transactions = Lists.newArrayList();
 		this.nbbo = new BestBidAsk(null, null, 0, null, null, 0);
 	}
@@ -67,49 +65,53 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 	}
 
 	@Override
-	public Iterable<? extends Activity> sendToTransactionProcessor(Market market,
+	public void sendToTransactionProcessor(Market market,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
-		if (latency.equals(TimeStamp.IMMEDIATE)) {
-			return ImmutableList.<Activity> builder().addAll(
-					processTransactions(market, newTransactions, currentTime)).build();
-		}
-//		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? TimeStamp.IMMEDIATE : currentTime.plus(latency); 
-		return ImmutableList.of(new ProcessTransactions(this, market, 
-				newTransactions, currentTime.plus(latency)));
-	}
-
-	@Override
-	public Iterable<? extends Activity> processTransactions(Market market,
-			List<Transaction> newTransactions, TimeStamp currentTime) {
-		transactions.addAll(newTransactions);
-		return ImmutableList.of();
-	}
-
-	// TODO This check shouldn't be necessary if we allow agents to immediately execute activities.
-	@Override
-	public Iterable<? extends Activity> sendToQuoteProcessor(Market market,
-			MarketTime quoteTime, Quote quote, TimeStamp currentTime) {
-//		TimeStamp nextTime = latency.equals(TimeStamp.IMMEDIATE) ? 
-//		TimeStamp.IMMEDIATE : currentTime.plus(latency);
+		Activity act = new ProcessTransactions(this, market, newTransactions);
 		if (latency.equals(TimeStamp.IMMEDIATE))
-			return processQuote(market, quoteTime, quote, currentTime);
+			scheduler.executeActivity(act);
 		else
-			return ImmutableList.of(new ProcessQuote(this, market, quoteTime, quote, 
-					currentTime.plus(latency)));
+			scheduler.scheduleActivity(currentTime.plus(latency), act);
 	}
 
 	@Override
-	public Iterable<? extends Activity> processQuote(Market market,
-			MarketTime quoteTime, Quote quote, TimeStamp currentTime) {
-		MarketTime lastTime = quoteTimes.get(market);
+	public void processTransactions(Market market,
+			List<Transaction> newTransactions, TimeStamp currentTime) {
+		if (newTransactions.isEmpty()) return;
+		TimeStamp transactionTime = newTransactions.get(0).getExecTime();
+		// Find the proper insertion index (likely at the end of the list)
+		int insertionIndex = transactions.size();
+		for (Transaction trans : Lists.reverse(transactions)) {
+			if (trans.getExecTime().before(transactionTime))
+				break;
+			--insertionIndex;
+		}
+		// Insert at appropriate location
+		transactions.addAll(insertionIndex, newTransactions);
+	}
+
+	@Override
+	public void sendToQuoteProcessor(Market market,
+			Quote quote, TimeStamp currentTime) {
+		Activity act = new ProcessQuote(this, market, quote);
+		if (latency.equals(TimeStamp.IMMEDIATE))
+			scheduler.executeActivity(act);
+		else
+			scheduler.scheduleActivity(currentTime.plus(latency), act);
+	}
+
+	@Override
+	public void processQuote(Market market,
+			Quote quote, TimeStamp currentTime) {
+		Quote oldQuote = marketQuotes.get(market);
 		// If we get a stale quote, ignore it.
-		if (lastTime != null && lastTime.compareTo(quoteTime) > 0)
-			return ImmutableList.of();
+		if (oldQuote != null && oldQuote.getQuoteTime() != null
+				&& oldQuote.getQuoteTime().compareTo(quote.getQuoteTime()) > 0)
+			return;
 
 		marketQuotes.put(market, quote);
-		quoteTimes.put(market, quoteTime);
 		
-		log(INFO, market + " -> " + this + " quote " + quote);
+		log.log(INFO, "%s -> %s quote %s", market, this, quote);
 
 		Price bestBid = null, bestAsk = null;
 		int bestBidQuantity = 0, bestAskQuantity = 0;
@@ -132,7 +134,6 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 		nbbo = new BestBidAsk(bestBidMkt, bestBid, bestBidQuantity, 
 				bestAskMkt, bestAsk, bestAskQuantity);
 		BUS.post(new NBBOStatistic(nbbo.getSpread(), currentTime));
-		return ImmutableList.of();
 	}
 
 	@Override

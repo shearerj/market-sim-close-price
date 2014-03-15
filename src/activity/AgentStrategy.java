@@ -14,14 +14,13 @@ public class AgentStrategy extends Activity {
 
 	protected final Agent agent;
 
-	public AgentStrategy(Agent agent, TimeStamp scheduledTime) {
-		super(scheduledTime);
+	public AgentStrategy(Agent agent) {
 		this.agent = checkNotNull(agent, "Agent");
 	}
 
 	@Override
-	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return agent.agentStrategy(currentTime);
+	public void execute(TimeStamp currentTime) {
+		agent.agentStrategy(currentTime);
 	}
 
 	@Override

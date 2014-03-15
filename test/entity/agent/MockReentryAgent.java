@@ -5,6 +5,8 @@ import iterators.ExpInterarrivals;
 import java.util.Iterator;
 import java.util.Random;
 
+import systemmanager.Scheduler;
+
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
@@ -14,14 +16,14 @@ public class MockReentryAgent extends ReentryAgent {
 
 	private static final long serialVersionUID = 1L;
 
-	public MockReentryAgent(FundamentalValue fundamental, SIP sip, Market market, 
+	public MockReentryAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market, 
 			Random rand, Iterator<TimeStamp> reentry, int tickSize) {
-		super(TimeStamp.ZERO, fundamental, sip, market, rand, reentry, tickSize);
+		super(scheduler, TimeStamp.ZERO, fundamental, sip, market, rand, reentry, tickSize);
 	}
 	
-	public MockReentryAgent(FundamentalValue fundamental, SIP sip, Market market, 
+	public MockReentryAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market, 
 			Random rand, double reentryRate, int tickSize) {
-		this(fundamental, sip, market, rand, new ExpInterarrivals(reentryRate, rand), 
+		this(scheduler, fundamental, sip, market, rand, ExpInterarrivals.create(reentryRate, rand), 
 				tickSize);
 	}
 

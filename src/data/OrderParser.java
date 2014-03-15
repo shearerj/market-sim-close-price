@@ -11,7 +11,7 @@ public interface OrderParser {
 	/*
 	 * Processes the file pointed to by fileName and returns a list of OrderDatums
 	 */
-	abstract List<OrderDatum> process(Path path) throws IOException;
+	abstract List<OrderDatum> process(String FileName) throws IOException;
 	/**
 	 * @param args
 	 * @throws IOException

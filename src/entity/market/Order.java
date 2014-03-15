@@ -17,14 +17,16 @@ public class Order extends fourheap.Order<Price, MarketTime> implements Serializ
 	
 	protected final Agent agent;
 	protected final Market market;
-	
-	public Order(OrderType type, Agent agent, Market market, Price price, int quantity, MarketTime time) {
+
+	public Order(OrderType type, Agent agent, Market market, Price price,
+			int quantity, MarketTime time) {
 		super(type, price, quantity, time);
 		this.agent = agent;
 		this.market = market;
 	}
-	
-	public static Order create(OrderType type, Agent agent, Market market, Price price, int quantity, MarketTime time) {
+
+	public static Order create(OrderType type, Agent agent, Market market,
+			Price price, int quantity, MarketTime time) {
 		return new Order(type, agent, market, price, quantity, time);
 	}
 	
@@ -38,7 +40,7 @@ public class Order extends fourheap.Order<Price, MarketTime> implements Serializ
 	
 	@Override
 	public String toString() {
-		return "<" + agent + " : " + market + " : " + super.toString() + ">";
+		return agent + " " + type + ' ' + getQuantity() + " @ " + price + " from " + market;
 	}
 	
 }

@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Random;
@@ -15,7 +14,6 @@ import activity.Activity;
 import activity.MockActivity;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 
 public class EventQueueTest {
 
@@ -25,44 +23,44 @@ public class EventQueueTest {
 		assertTrue(q.isEmpty());
 		assertEquals(0, q.size());
 		
-		Activity first = new MockActivity(0);
-		q.add(first);
+		Activity first = new MockActivity();
+		q.add(TimeStamp.create(1), first);
 		assertFalse(q.isEmpty());
 		assertEquals(1, q.size());
-		assertEquals(first, q.peek());
+		assertEquals(first, q.peek().getActivity());
 		
-		assertEquals(first, q.remove());
+		assertEquals(first, q.remove().getActivity());
 		assertTrue(q.isEmpty());
 		assertEquals(0, q.size());
 		
-		Activity second = new MockActivity(1);
-		Activity third = new MockActivity(2);
-		q.add(third);
-		q.add(second);
-		assertEquals(second, q.peek());
+		Activity second = new MockActivity();
+		Activity third = new MockActivity();
+		q.add(TimeStamp.create(3), third);
+		q.add(TimeStamp.create(2), second);
+		assertEquals(second, q.peek().getActivity());
 		assertEquals(2, q.size());
 		
-		Activity inf1 = new MockActivity(TimeStamp.IMMEDIATE);
-		Activity inf2 = new MockActivity(TimeStamp.IMMEDIATE);
-		q.add(inf1);
+		Activity inf1 = new MockActivity();
+		Activity inf2 = new MockActivity();
+		q.add(TimeStamp.IMMEDIATE, inf1);
 		assertEquals(3, q.size());
-		assertEquals(inf1, q.poll());
+		assertEquals(inf1, q.poll().getActivity());
 		assertEquals(2, q.size());
-		q.add(inf2);
+		q.add(TimeStamp.IMMEDIATE, inf2);
 		assertEquals(3, q.size());
-		assertEquals(inf2, q.poll());
+		assertEquals(inf2, q.poll().getActivity());
 		assertEquals(2, q.size());
 		
-		assertEquals(second, q.peek());
-		q.addAll(ImmutableList.of(inf1, inf2));
+		assertEquals(second, q.peek().getActivity());
+		q.addAllOrdered(TimeStamp.IMMEDIATE, inf1, inf2);
 		assertEquals(4, q.size());
 		q.poll();
 		q.poll();
-		assertEquals(second, q.peek());
+		assertEquals(second, q.peek().getActivity());
 		assertEquals(2, q.size());
 		
-		assertEquals(second, q.poll());
-		assertEquals(third, q.poll());
+		assertEquals(second, q.poll().getActivity());
+		assertEquals(third, q.poll().getActivity());
 		assertTrue(q.isEmpty());
 		assertEquals(0, q.size());
 	}
@@ -90,8 +88,8 @@ public class EventQueueTest {
 	@Test
 	public void clearTest() {
 		EventQueue q = new EventQueue();
-		q.addAll(ImmutableList.of(new MockActivity(0), new MockActivity(1),
-				new MockActivity(2)));
+		q.addAllOrdered(TimeStamp.ZERO, new MockActivity(), new MockActivity(),
+				new MockActivity());
 		assertFalse(q.isEmpty());
 		q.clear();
 		assertTrue(q.isEmpty());
@@ -101,17 +99,20 @@ public class EventQueueTest {
 	public void pollTest() {
 		EventQueue q = new EventQueue();
 
-		Activity first = new MockActivity(0);
-		Activity second = new MockActivity(1);
-		Activity third = new MockActivity(2);
+		Activity first = new MockActivity();
+		Activity second = new MockActivity();
+		Activity third = new MockActivity();
 
-		q.addAll(ImmutableList.of(first, second, third));
+		q.add(TimeStamp.create(1), first);
+		q.add(TimeStamp.create(2), second);
+		q.add(TimeStamp.create(3), third);
+		
 		// Check that poll will return activities in correct order & update size
-		assertEquals(first, q.poll());
+		assertEquals(first, q.poll().getActivity());
 		assertEquals(2, q.size());
-		assertEquals(second, q.poll());
+		assertEquals(second, q.poll().getActivity());
 		assertEquals(1, q.size());
-		assertEquals(third, q.poll());
+		assertEquals(third, q.poll().getActivity());
 		assertTrue(q.isEmpty());
 		assertEquals(null, q.poll());
 	}
@@ -120,24 +121,26 @@ public class EventQueueTest {
 	public void addAllTest() {
 		EventQueue q = new EventQueue();
 			
-		Activity first = new MockActivity(0);
-		Activity second = new MockActivity(1);
-		Activity third = new MockActivity(2);
+		Activity first = new MockActivity();
+		Activity second = new MockActivity();
+		Activity third = new MockActivity();
 		
 		assertEquals("Incorrect initial size", 0, q.size());
-		q.addAll(ImmutableList.of(first, second));
+		q.add(TimeStamp.create(1), first);
+		q.add(TimeStamp.create(2), second);
 		
 		// Verify activities added correctly
 		assertEquals("Size not updated", 2, q.size());
-		assertEquals(first, q.poll());
-		assertEquals(second, q.poll());
+		assertEquals(first, q.poll().getActivity());
+		assertEquals(second, q.poll().getActivity());
 		assertTrue(q.isEmpty());
 		
 		// Verify correct order with list of activities not in chronological order
-		q.addAll(ImmutableList.of(third, second));
+		q.add(TimeStamp.create(3), third);
+		q.add(TimeStamp.create(2), second);
 		assertEquals("Size not updated", 2, q.size());
-		assertEquals(second, q.poll());
-		assertEquals(third, q.poll());
+		assertEquals(second, q.poll().getActivity());
+		assertEquals(third, q.poll().getActivity());
 		assertTrue(q.isEmpty());
 	}
 	
@@ -145,28 +148,26 @@ public class EventQueueTest {
 	public void addImmediateTest() {
 		EventQueue q = new EventQueue();
 		
-		Activity first = new MockActivity(TimeStamp.IMMEDIATE);
-		Activity second = new MockActivity(TimeStamp.IMMEDIATE);
-		Activity third = new MockActivity(TimeStamp.IMMEDIATE);
-		Activity fourth = new MockActivity(TimeStamp.ZERO);
+		Activity first = new MockActivity();
+		Activity second = new MockActivity();
+		Activity third = new MockActivity();
+		Activity zero = new MockActivity();
 		
-		List<Activity> list = Arrays.asList(third, first);
-		
-		q.addAll(list);
+		q.addAllOrdered(TimeStamp.IMMEDIATE, third, first);
 		// Verify that third always will be at top of queue, since immediate
 		assertEquals("Size not updated", 2, q.size());
-		assertEquals(third, q.peek());
+		assertEquals(third, q.peek().getActivity());
 				
-		q.add(second);
+		q.add(TimeStamp.IMMEDIATE, second);
 		assertEquals("Size not updated", 3, q.size());
-		q.add(fourth);
+		q.add(TimeStamp.ZERO, zero);
 		assertEquals("Size not updated", 4, q.size());
 		
-		// Verify that order correct (LIFO for immediate)
-		assertEquals(second, q.poll());
-		assertEquals(third, q.poll());
-		assertEquals(first, q.poll());
-		assertEquals(fourth, q.poll());
+		// Verify that order correct (LIFO for immediate) but in order of insertion
+		assertEquals(second, q.poll().getActivity());
+		assertEquals(third, q.poll().getActivity());
+		assertEquals(first, q.poll().getActivity());
+		assertEquals(zero, q.poll().getActivity());
 	}
 	
 	@Test
@@ -181,30 +182,29 @@ public class EventQueueTest {
 	public void toArrayTest() {
 		EventQueue q = new EventQueue();
 
-		List<? extends Activity> acts = ImmutableList.of(new MockActivity(0),
-				new MockActivity(1), new MockActivity(2));
-		q.addAll(acts);
-		for (Object o : q.toArray()) {
-			assertTrue(acts.contains(o));
-		}
+		List<? extends Activity> acts = ImmutableList.of(new MockActivity(),
+				new MockActivity(), new MockActivity());
+		for (int i = 0; i < acts.size(); ++i)
+			q.add(TimeStamp.create(i), acts.get(i));
 		
-		for (Activity a : q.toArray(new Activity[0])) {
-			assertTrue(acts.contains(a));
-		}
+		for (Object o : q.toArray())
+			assertTrue(acts.contains(((TimedActivity) o).getActivity()));
+		for (TimedActivity a : q.toArray(new TimedActivity[0]))
+			assertTrue(acts.contains(a.getActivity()));
 	}
 	
 	@Test
 	public void iteratorTest() {
 		EventQueue q = new EventQueue();
 
-		Activity first = new MockActivity(0);
-		Activity second = new MockActivity(1);
-		Activity third = new MockActivity(2);
+		Activity first = new MockActivity();
+		Activity second = new MockActivity();
+		Activity third = new MockActivity();
 		List<Activity> acts = ImmutableList.of(first, second, third);
 
-		q.addAll(acts);
-		for (Activity a : q) {
-			assertTrue(acts.contains(a));
+		q.addAllOrdered(TimeStamp.ZERO, acts.toArray(new Activity[3]));
+		for (TimedActivity a : q) {
+			assertTrue(acts.contains(a.getActivity()));
 		}
 		
 		assertEquals(3, q.size());
@@ -216,13 +216,12 @@ public class EventQueueTest {
 		EventQueue q1 = new EventQueue(new Random(seed));
 		EventQueue q2 = new EventQueue(new Random(seed));
 		
-		Builder<Activity> builder = ImmutableList.builder();
 		for (int i = 0; i < 1000; i++) {
-			builder.add(new MockActivity(rand.nextInt(100)));
+			Activity a = new MockActivity();
+			TimeStamp t = TimeStamp.create(rand.nextInt(100));
+			q1.add(t, a);
+			q2.add(t, a);
 		}
-		List<Activity> acts = builder.build();
-		q1.addAll(acts);
-		q2.addAll(acts);
 		
 		while (!q1.isEmpty())
 			assertEquals(q1.remove(), q2.remove());

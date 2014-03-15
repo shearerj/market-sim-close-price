@@ -15,25 +15,40 @@ parser.add_argument('files', metavar='obs-file', nargs='+',
 parser.add_argument('-o', '--output', '-f', '--file', metavar='merged-obs-file', type=argparse.FileType('w'), default=sys.stdout,
                     help='The merged json file to write to, defaults to stdout')
 
-class SumStat:
+class KahanSum(object):
     def __init__(self):
-        self.n = self.sum = self.sumsq = 0.0
+        self.__sum = self.__c = 0.0
+
+    def add(self, val):
+        y = val - self.__c
+        t = self.__sum + y
+        c = (t - self.__sum) - y
+        self.__sum = t
+
+    def sum(self):
+        return self.__sum
+
+class SumStats(object):
+    def __init__(self):
+        self.n = 0
+        self.sum = KahanSum()
+        self.sumsq = KahanSum();
 
     def add_one(self, val):
         self.n += 1
-        self.sum += val
-        self.sumsq += val ** 2
+        self.sum.add(val)
+        self.sumsq.add(val * val)
 
     def add_many(self, n, sum, sumsq):
         self.n += n
-        self.sum += sum
-        self.sumsq += sumsq
+        self.sum.add(sum)
+        self.sumsq.add(sumsq)
 
     def mean(self):
-        return float(self.sum) / self.n;
+        return float(self.sum.sum()) / self.n;
 
     def __sq_err__(self):
-        return self.sumsq - self.sum ** 2 / self.n
+        return self.sumsq.sum() - self.sum.sum() ** 2 / self.n
 
     def sample_stddev(self):
         return math.sqrt(self.__sq_err__() / (self.n - 1))
@@ -54,20 +69,20 @@ def mergeObs(filenames):
         n = int(config['numSims'])
 
         for feat, val in features.iteritems():
-            feature_stats.setdefault(feat, SumStat()).add_one(float(val))
+            feature_stats.setdefault(feat, SumStats()).add_one(float(val))
 
         sim_egta_stats = {}
 
         for player in players:
-            true_stat = true_player_stats.setdefault(player['role'], {}).setdefault(player['strategy'], SumStat())
-            egta_stat = sim_egta_stats.setdefault(player['role'], {}).setdefault(player['strategy'], SumStat())
+            true_stat = true_player_stats.setdefault(player['role'], {}).setdefault(player['strategy'], SumStats())
+            egta_stat = sim_egta_stats.setdefault(player['role'], {}).setdefault(player['strategy'], SumStats())
             mean = float(player['payoff'])
             true_stat.add_many(n, mean, float(player['features']['payoff_stddev']) ** 2 * (n - 1) + n * mean ** 2)
             egta_stat.add_one(mean)
 
         for role, rest in sim_egta_stats.iteritems():
             for strat, stat in rest.iteritems():
-                egta_player_stats.setdefault(role, {}).setdefault(strat, SumStat()).add_one(stat.mean())
+                egta_player_stats.setdefault(role, {}).setdefault(strat, SumStats()).add_one(stat.mean())
                 
     players = {}
     for role, rest in true_player_stats.iteritems():

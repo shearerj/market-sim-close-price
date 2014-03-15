@@ -1,21 +1,17 @@
 package entity.agent;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Logger.log;
-import static logger.Logger.Level.INFO;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 import iterators.ExpInterarrivals;
 
 import java.util.Iterator;
 import java.util.Random;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-
+import systemmanager.Scheduler;
 import utils.MathUtils;
-import activity.Activity;
 import activity.SubmitOrder;
 import data.FundamentalValue;
 import entity.infoproc.BestBidAsk;
@@ -54,15 +50,18 @@ public abstract class MarketMaker extends ReentryAgent {
 	protected int numRungs;				// # of ladder rungs on one side (e.g., number of buy orders)
 	protected boolean truncateLadder; 	// true if truncate if NBBO crosses ladder
 	protected boolean tickImprovement;	// true if improves by a tick when mid-prices == bid/ask
+	protected boolean noOp;				// FIXME, this should ne NoOpAgent instead - true if no-op strategy (never executes strategy)
 	protected boolean tickInside;		// true if improve tick inside the quote (default outside)
-	protected boolean noOp;				// true if no-op strategy (never executes strategy)
 	protected Price lastAsk, lastBid; 	// stores the last ask/bid, respectively
 
-	public MarketMaker(FundamentalValue fundamental, SIP sip, Market market,
-			Random rand, Iterator<TimeStamp> reentry, int tickSize, 
-			boolean noOp, int numRungs, int rungSize, boolean truncateLadder, 
-			boolean tickImprovement, boolean tickInside) {
-		super(TimeStamp.ZERO, fundamental, sip, market, rand, reentry, tickSize);
+	public MarketMaker(Scheduler scheduler, FundamentalValue fundamental,
+			SIP sip, Market market, Random rand, Iterator<TimeStamp> reentry,
+			int tickSize, boolean noOp, int numRungs, int rungSize,
+			boolean truncateLadder, boolean tickImprovement, boolean tickInside) {
+		
+		super(scheduler, TimeStamp.ZERO, fundamental, sip, market, rand,
+				reentry, tickSize);
+
 		checkArgument(numRungs > 0, "Number of rungs must be positive!");
 		this.noOp = noOp;
 		this.numRungs = numRungs;
@@ -77,13 +76,13 @@ public abstract class MarketMaker extends ReentryAgent {
 	/**
 	 * Shortcut constructor for exponential interarrivals (e.g. Poisson reentries)
 	 */
-	public MarketMaker(FundamentalValue fundamental, SIP sip,
+	public MarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, double reentryRate, int tickSize, 
 			boolean noOp, int numRungs, int rungSize, boolean truncateLadder,
 			boolean tickImprovement, boolean tickInside) {
-		this(fundamental, sip, market, rand, new ExpInterarrivals(reentryRate, rand),
-				tickSize, noOp, numRungs, rungSize, truncateLadder, 
-				tickImprovement, tickInside);
+
+		this(scheduler, fundamental, sip, market, rand, ExpInterarrivals.create(reentryRate, rand),
+				tickSize, noOp, numRungs, rungSize, truncateLadder, tickImprovement, tickInside);
 	}
 
 	/**
@@ -95,34 +94,21 @@ public abstract class MarketMaker extends ReentryAgent {
 	 * @param buyMaxPrice
 	 * @param sellMinPrice
 	 * @param sellMaxPrice
-	 * @param currentTime
 	 * @return
 	 */
-	public Iterable<? extends Activity> submitOrderLadder(Price buyMinPrice,
-			Price buyMaxPrice, Price sellMinPrice, Price sellMaxPrice, 
-			TimeStamp currentTime) {
-
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
-
-		Builder<Activity> acts = ImmutableList.<Activity> builder();
+	public void submitOrderLadder(Price buyMinPrice,
+			Price buyMaxPrice, Price sellMinPrice, Price sellMaxPrice) {
 
 		// build ascending list of buy orders
 		for (int p = buyMinPrice.intValue(); p <= buyMaxPrice.intValue(); p += stepSize) {
-			acts.add(new SubmitOrder(this, primaryMarket, BUY, new Price(p), 1, 
-					TimeStamp.IMMEDIATE));
+			scheduler.executeActivity(new SubmitOrder(this, primaryMarket, BUY, new Price(p), 1));
 		}
 		// build descending list of sell orders
-		for (int p = sellMaxPrice.intValue(); p >= sellMinPrice.intValue(); p -= stepSize) { 
-			acts.add(new SubmitOrder(this, primaryMarket, SELL, new Price(p), 1, 
-					TimeStamp.IMMEDIATE));
+		for (int p = sellMaxPrice.intValue(); p >= sellMinPrice.intValue(); p -= stepSize) {
+			scheduler.executeActivity(new SubmitOrder(this, primaryMarket, SELL, new Price(p), 1));
 		}
-		log(INFO, sb.append(" Submit ladder with #rungs ").append(numRungs)
-				.append(", step size ").append(stepSize).append(": buys [")
-				.append(buyMinPrice).append(" to ").append(buyMaxPrice)
-				.append("] & sells [").append(sellMinPrice).append(" to ")
-				.append(sellMaxPrice).append("]"));
-		return acts.build();
+		log.log(INFO, "%s in %s: Submit ladder with #rungs %d, step size %d: buys [%s to %s] & sells [%s to %s]",
+				this, primaryMarket, numRungs, stepSize, buyMinPrice, buyMaxPrice, sellMinPrice, sellMaxPrice);
 	}
 
 	/**
@@ -138,18 +124,12 @@ public abstract class MarketMaker extends ReentryAgent {
 	 * 
 	 * @param ladderBid
 	 * @param ladderAsk
-	 * @param currentTime
 	 * @return
 	 */
-	public Iterable<? extends Activity> createOrderLadder(Price ladderBid, 
-			Price ladderAsk, TimeStamp currentTime) {
+	public void createOrderLadder(Price ladderBid, 
+			Price ladderAsk) {
 
-		if (ladderBid == null || ladderAsk == null) return ImmutableList.of();
-
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append(" in ").append(primaryMarket).append(':');
-
-		Builder<Activity> acts = ImmutableList.<Activity> builder();
+		if (ladderBid == null || ladderAsk == null) return;
 
 		// Tick improvement
 		if (this.getQuote().getBidPrice() != null) {
@@ -180,22 +160,24 @@ public abstract class MarketMaker extends ReentryAgent {
 		// check if the bid or ask crosses the NBBO, if truncating ladder
 		if (truncateLadder) {
 			BestBidAsk lastNBBOQuote = this.getNBBO();
-
-			sb.append(" Truncating ladder (").append(buyMaxPrice).append(", ")	
-			.append(sellMinPrice).append(")-->(");
-
+			Price oldBuyMaxPrice = buyMaxPrice, oldSellMinPrice = sellMinPrice;
 			// buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N]
 			if (lastNBBOQuote.getBestAsk() != null)
 				buyMaxPrice = pcomp.min(ladderBid, lastNBBOQuote.getBestAsk());
 			// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
 			if (lastNBBOQuote.getBestBid() != null)
 				sellMinPrice = pcomp.max(ladderAsk, lastNBBOQuote.getBestBid());
-			log(INFO, sb.append(buyMaxPrice).append(", ").append(sellMinPrice)
-					.append(")"));
+			log.log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)", this, primaryMarket, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
 		}
 
-		acts.addAll(this.submitOrderLadder(buyMinPrice, buyMaxPrice, 
-				sellMinPrice, sellMaxPrice, currentTime));
-		return acts.build();
+		this.submitOrderLadder(buyMinPrice, buyMaxPrice, sellMinPrice,
+				sellMaxPrice);
 	}
+
+	@Override
+	protected String name() {
+		String oldName = super.name();
+		return oldName.substring(0, oldName.length() - 6) + "MM";
+	}
+	
 }

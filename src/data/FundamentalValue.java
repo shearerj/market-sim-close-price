@@ -1,7 +1,7 @@
 package data;
 
-import static logger.Logger.log;
-import static logger.Logger.Level.ERROR;
+import static logger.Log.Level.ERROR;
+import static logger.Log.log;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -20,7 +20,7 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-// XXX Potentially move this to another package?
+// XXX Erik: Potentially move this to another package?
 public class FundamentalValue implements Serializable {
 
 	private static final long serialVersionUID = 6764216196138108452L;
@@ -32,14 +32,12 @@ public class FundamentalValue implements Serializable {
 	protected final Random rand;
 
 	/**
-	 * Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps
-	 * 
 	 * @param kap rate which the process reverts to the mean value
 	 * @param meanVal mean process
 	 * @param var Gaussian Process variance
 	 * @param rand Random generator
 	 */
-	public FundamentalValue(double kap, int meanVal, double var, Random rand) {
+	protected FundamentalValue(double kap, int meanVal, double var, Random rand) {
 		this.rand = rand;
 		this.kappa = kap;
 		this.meanValue = meanVal;
@@ -51,6 +49,8 @@ public class FundamentalValue implements Serializable {
 	}
 	
 	/**
+	 * Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps
+	 * 
 	 * @param kap
 	 * @param meanVal
 	 * @param var
@@ -81,8 +81,7 @@ public class FundamentalValue implements Serializable {
 	public Price getValueAt(TimeStamp t) {
 		int index = (int) t.getInTicks();
 		if (index < 0) { // In case of overflow
-			log(ERROR, "Tried to access out of bounds TimeStamp: " + t + " ("
-					+ index + ")");
+			log.log(ERROR, "Tried to access out of bounds TimeStamp: %s (%d)", t, index);
 			return new Price(0);
 		}
 		computeFundamentalTo(index);

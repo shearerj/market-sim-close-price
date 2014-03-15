@@ -1,28 +1,34 @@
 package entity.agent;
 
-import static org.junit.Assert.*;
-import static fourheap.Order.OrderType.*;
+import static event.TimeStamp.ZERO;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+import static logger.Log.Level.DEBUG;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
-import java.util.Random;
 
-import logger.Logger;
+import logger.Log;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import activity.Activity;
+import systemmanager.Consts;
+import systemmanager.Executor;
+import activity.Clear;
 import activity.SubmitOrder;
+import activity.WithdrawOrder;
 
 import com.google.common.collect.Iterables;
 
-import systemmanager.Consts;
-import systemmanager.EventManager;
-import systemmanager.Executer;
-import data.MockFundamental;
 import data.FundamentalValue;
+import data.MockFundamental;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.MockMarket;
@@ -33,22 +39,26 @@ import entity.market.Transaction;
 import event.TimeStamp;
 
 public class AgentTest {
+	
+	private static final TimeStamp time1 = TimeStamp.create(1);
 
+	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
 	private Market market;
 	private Agent agent;
 	private SIP sip;
 
 	@BeforeClass
-	public static void setupClass() {
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "AgentTest.log"));
+	public static void setupClass() throws IOException {
+		Log.log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "AgentTest.log"));
 	}
 
 	@Before
 	public void setup() {
-		sip = new SIP(TimeStamp.IMMEDIATE);
-		market = new MockMarket(sip);
-		agent = new MockAgent(fundamental, sip, market);
+		exec = new Executor();
+		sip = new SIP(exec, TimeStamp.IMMEDIATE);
+		market = new MockMarket(exec, sip);
+		agent = new MockAgent(exec, fundamental, sip, market);
 	}
 
 	@Test
@@ -57,7 +67,7 @@ public class AgentTest {
 		
 		// test adding and removing orders
 		market.submitOrder(agent, BUY, new Price(100), 1, time);
-		market.submitOrder(agent, SELL, new Price(50), 2, time.plus(new TimeStamp(1)));
+		market.submitOrder(agent, SELL, new Price(50), 2, time.plus(TimeStamp.create(1)));
 		Collection<Order> orders = agent.activeOrders;
 		Order order = Iterables.getFirst(orders, null);
 		// Note: nondeterministic which order is "first" so need to check
@@ -66,7 +76,7 @@ public class AgentTest {
 			assertEquals(BUY, order.getOrderType());
 			assertEquals(new Price(100), order.getPrice());
 			assertEquals(1, order.getQuantity());
-		} else if (order.getSubmitTime().equals(new TimeStamp(1))) {
+		} else if (order.getSubmitTime().equals(TimeStamp.create(1))) {
 			assertEquals(SELL, order.getOrderType());
 			assertEquals(new Price(50), order.getPrice());
 			assertEquals(2, order.getQuantity());
@@ -78,7 +88,7 @@ public class AgentTest {
 		assertTrue("Agent does not know about buy order", agent.activeOrders.contains(order));
 		
 		// Test that remove works correctly
-		market.withdrawOrder(order, new TimeStamp(1));
+		market.withdrawOrder(order, TimeStamp.create(1));
 		orders = agent.activeOrders;
 		assertEquals(1, orders.size());
 		assertTrue("Order was not removed", !agent.activeOrders.contains(order));
@@ -96,22 +106,15 @@ public class AgentTest {
 	
 	@Test
 	public void withdrawOrder() {
-		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
-		
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent, market, BUY, new Price(100), 1, time0));
-		em.executeUntil(time1.plus(time1));
+		exec.scheduleActivity(ZERO, new SubmitOrder(agent, market, BUY, new Price(100), 1));
+		exec.executeUntil(time1);
 		
 		// Verify orders added correctly
 		Collection<Order> orders = agent.activeOrders;
 		assertEquals(1, orders.size());
-		Order orderToWithdraw = null;
-		for (Order o : orders) {
-			orderToWithdraw = o;
-			assertEquals(new Price(100), o.getPrice());
-			assertEquals(time0, o.getSubmitTime());
-		}
+		Order orderToWithdraw = Iterables.getOnlyElement(orders);
+		assertEquals(new Price(100), orderToWithdraw.getPrice());
+		assertEquals(ZERO, orderToWithdraw.getSubmitTime());
 		assertNotNull(orderToWithdraw);
 		
 		Quote q = market.getQuoteProcessor().getQuote();
@@ -121,8 +124,7 @@ public class AgentTest {
 		assertEquals("Incorrect BID quantity",  1,  q.getBidQuantity() );
 		
 		// Withdraw order
-		Iterable<? extends Activity> acts = agent.withdrawOrder(orderToWithdraw, time1);
-		assertEquals(0, Iterables.size(acts));
+		exec.executeActivity(new WithdrawOrder(orderToWithdraw));
 		
 		orders = agent.activeOrders;
 		assertEquals("Order was not withdrawn", 0, orders.size());
@@ -136,15 +138,11 @@ public class AgentTest {
 	@Test
 	public void withdrawOrderDelayed() {
 		// withdraw order when quotes are delayed
+		TimeStamp time10 = TimeStamp.create(10);
 		
-		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(10);
-		
-		EventManager em = new EventManager(new Random());
-		
-		MockMarket market2 = new MockMarket(sip, new TimeStamp(10));
-		em.addActivity(new SubmitOrder(agent, market2, BUY, new Price(100), 1, time0));
-		em.executeUntil(new TimeStamp(1));
+		MockMarket market2 = new MockMarket(exec, sip, time10);
+		exec.scheduleActivity(ZERO, new SubmitOrder(agent, market2, BUY, new Price(100), 1));
+		exec.executeUntil(ZERO);
 		
 		// Verify orders added correctly
 		Collection<Order> orders = agent.activeOrders;
@@ -153,7 +151,7 @@ public class AgentTest {
 		for (Order o : orders) {
 			orderToWithdraw = o;
 			assertEquals(new Price(100), o.getPrice());
-			assertEquals(time0, o.getSubmitTime());
+			assertEquals(ZERO, o.getSubmitTime());
 		}
 		assertNotNull(orderToWithdraw);
 		
@@ -164,7 +162,7 @@ public class AgentTest {
 		assertEquals("Incorrect BID quantity",  0,  q.getBidQuantity() );
 		
 		// After quotes have updated
-		em.executeUntil(new TimeStamp(11));
+		exec.executeUntil(time10);
 		q = market2.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect ASK", null,  q.getAskPrice() );
 		assertEquals("Incorrect BID", new Price(100),  q.getBidPrice() );
@@ -172,9 +170,7 @@ public class AgentTest {
 		assertEquals("Incorrect BID quantity",  1,  q.getBidQuantity() );
 		
 		// Withdraw order
-		Iterable<? extends Activity> acts = agent.withdrawOrder(orderToWithdraw, time1);
-		assertEquals(1, Iterables.size(acts));	// ProcessQuote for QP since delayed
-		em.addActivity(Iterables.getOnlyElement(acts));
+		exec.executeActivity(new WithdrawOrder(orderToWithdraw));
 		
 		orders = agent.activeOrders;
 		assertEquals("Order was not withdrawn", 0, orders.size());
@@ -187,7 +183,7 @@ public class AgentTest {
 		assertEquals("Incorrect BID quantity",  1,  q.getBidQuantity() );
 		
 		// After quotes have updated
-		em.executeUntil(new TimeStamp(21));
+		exec.executeUntil(TimeStamp.create(20));
 		q = market2.getQuoteProcessor().getQuote();
 		assertEquals("Incorrect ASK", null,  q.getAskPrice() );
 		assertEquals("Incorrect BID", null,  q.getBidPrice() );
@@ -197,13 +193,9 @@ public class AgentTest {
 	
 	@Test
 	public void withdrawNewestOrder() {
-		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
-		
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent, market, BUY, new Price(50), 1, time0));
-		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1, time1));
-		em.executeUntil(time1.plus(time1));
+		exec.scheduleActivity(ZERO, new SubmitOrder(agent, market, BUY, new Price(50), 1));
+		exec.scheduleActivity(time1, new SubmitOrder(agent, market, SELL, new Price(100), 1));
+		exec.executeUntil(time1);
 		
 		// Verify orders added correctly
 		Collection<Order> orders = agent.activeOrders;
@@ -212,7 +204,7 @@ public class AgentTest {
 		for (Order o : orders) {
 			if (o.getOrderType() == BUY) {
 				assertEquals(new Price(50), o.getPrice());
-				assertEquals(time0, o.getSubmitTime());
+				assertEquals(ZERO, o.getSubmitTime());
 			}
 			if (o.getOrderType() == SELL) {
 				orderToWithdraw = o;
@@ -228,8 +220,7 @@ public class AgentTest {
 		assertEquals("Incorrect BID quantity",  1,  q.getBidQuantity() );
 		
 		// Withdraw newest order (sell)
-		Iterable<? extends Activity> acts = agent.withdrawNewestOrder(time1);
-		assertEquals(0, Iterables.size(acts));
+		exec.executeActivity(new WithdrawOrder(orderToWithdraw));
 		
 		orders = agent.activeOrders;
 		assertEquals(1, orders.size());
@@ -247,13 +238,9 @@ public class AgentTest {
 	
 	@Test
 	public void withdrawOldestOrder() {
-		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
-		
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent, market, BUY, new Price(50), 1, time0));
-		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1, time1));
-		em.executeUntil(time1.plus(time1));
+		exec.scheduleActivity(ZERO, new SubmitOrder(agent, market, BUY, new Price(50), 1));
+		exec.scheduleActivity(time1, new SubmitOrder(agent, market, SELL, new Price(100), 1));
+		exec.executeUntil(time1);
 		
 		// Verify orders added correctly
 		Collection<Order> orders = agent.activeOrders;
@@ -263,7 +250,7 @@ public class AgentTest {
 			if (o.getOrderType() == BUY) {
 				orderToWithdraw = o;
 				assertEquals(new Price(50), o.getPrice());
-				assertEquals(time0, o.getSubmitTime());
+				assertEquals(ZERO, o.getSubmitTime());
 			}
 			if (o.getOrderType() == SELL) {
 				assertEquals(new Price(100), o.getPrice());
@@ -279,8 +266,7 @@ public class AgentTest {
 		assertEquals("Incorrect BID quantity",  1,  q.getBidQuantity() );
 		
 		// Withdraw oldest order (buy)
-		Iterable<? extends Activity> acts = agent.withdrawOldestOrder(time1);
-		assertEquals(0, Iterables.size(acts));
+		agent.withdrawOldestOrder();
 		
 		orders = agent.activeOrders;
 		assertEquals(1, orders.size());
@@ -299,13 +285,9 @@ public class AgentTest {
 	
 	@Test
 	public void withdrawAllOrders() {
-		TimeStamp time0 = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
-		
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent, market, BUY, new Price(50), 1, time0));
-		em.addActivity(new SubmitOrder(agent, market, SELL, new Price(100), 1, time1));
-		em.executeUntil(time1.plus(time1));
+		exec.scheduleActivity(ZERO, new SubmitOrder(agent, market, BUY, new Price(50), 1));
+		exec.scheduleActivity(time1, new SubmitOrder(agent, market, SELL, new Price(100), 1));
+		exec.executeUntil(time1);
 		
 		// Verify orders added correctly
 		Collection<Order> orders = agent.activeOrders;
@@ -313,7 +295,7 @@ public class AgentTest {
 		for (Order o : orders) {
 			if (o.getOrderType() == BUY) {
 				assertEquals(new Price(50), o.getPrice());
-				assertEquals(time0, o.getSubmitTime());
+				assertEquals(ZERO, o.getSubmitTime());
 			}
 			if (o.getOrderType() == SELL) {
 				assertEquals(new Price(100), o.getPrice());
@@ -328,8 +310,7 @@ public class AgentTest {
 		assertEquals("Incorrect BID quantity",  1,  q.getBidQuantity() );
 		
 		// Withdraw all orders
-		Iterable<? extends Activity> acts = agent.withdrawAllOrders(time1);
-		assertEquals(0, Iterables.size(acts));
+		agent.withdrawAllOrders();
 		
 		assertEquals(0, agent.activeOrders.size());	
 		// Verify quote correct
@@ -343,7 +324,7 @@ public class AgentTest {
 	@Test
 	public void processTransaction() {
 		TimeStamp time = TimeStamp.ZERO;
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockAgent agent2 = new MockAgent(exec, fundamental, sip, market);
 		
 		assertEquals( 0, agent.transactions.size());
 		
@@ -355,7 +336,7 @@ public class AgentTest {
 		assertEquals(0, agent2.positionBalance);
 		
 		// Testing the market for the correct transactions
-		Executer.execute(market.clear(time));	// will call processTransaction
+		exec.executeActivity(new Clear(market));	// will call processTransaction
 		assertEquals( 1, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals( 1, agent.transactions.size());
@@ -369,7 +350,7 @@ public class AgentTest {
 	@Test
 	public void processTransactionMultiQuantity() {
 		TimeStamp time = TimeStamp.ZERO;
-		MockAgent agent2 = new MockAgent(fundamental, sip, market);
+		MockAgent agent2 = new MockAgent(exec, fundamental, sip, market);
 		
 		assertEquals( 0, agent.transactions.size());
 		
@@ -381,7 +362,7 @@ public class AgentTest {
 		assertEquals(0, agent2.positionBalance);
 		
 		// Testing the market for the correct transactions
-		Executer.execute(market.clear(time));	// will call processTransaction
+		exec.executeActivity(new Clear(market));	// will call processTransaction
 		assertEquals( 1, market.getTransactions().size() );
 		Transaction tr = market.getTransactions().get(0);
 		assertEquals( 1, agent.transactions.size());
@@ -394,7 +375,7 @@ public class AgentTest {
 	
 	@Test
 	public void liquidation() {
-		TimeStamp time = new TimeStamp(100);
+		TimeStamp time = TimeStamp.create(100);
 		agent.profit = 5000;
 		
 		// Check that no change if position 0

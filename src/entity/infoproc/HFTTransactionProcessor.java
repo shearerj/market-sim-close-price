@@ -2,7 +2,8 @@ package entity.infoproc;
 
 import java.util.List;
 
-import activity.Activity;
+import systemmanager.Scheduler;
+
 import entity.agent.HFTAgent;
 import entity.market.Market;
 import entity.market.Order;
@@ -15,8 +16,9 @@ public class HFTTransactionProcessor extends AbstractTransactionProcessor {
 	
 	protected final HFTAgent hftAgent;
 
-	public HFTTransactionProcessor(TimeStamp latency, Market mkt, HFTAgent hftAgent) {
-		super(latency, mkt);
+	public HFTTransactionProcessor(Scheduler scheduler, TimeStamp latency,
+			Market mkt, HFTAgent hftAgent) {
+		super(scheduler, latency, mkt);
 		this.hftAgent = hftAgent;
 	}
 
@@ -28,16 +30,11 @@ public class HFTTransactionProcessor extends AbstractTransactionProcessor {
 	 * transaction and quote processors, it is very clear that transactions are
 	 * processed first, and then quotes.
 	 */
-//	@Override
-//	public Iterable<? extends Activity> processTransactions(Market market, 
-//			List<Transaction> newTransactions, TimeStamp currentTime) {
-//		return super.processTransactions(market, newTransactions, currentTime);
-//	}
 
 	@Override
-	public Iterable<? extends Activity> processTransactions(Market market,
+	public void processTransactions(Market market,
 			List<Transaction> newTransactions, TimeStamp currentTime) {
-		Iterable<? extends Activity> superActs = super.processTransactions(market, newTransactions, currentTime);
+		super.processTransactions(market, newTransactions, currentTime);
 		
 		for (Transaction trans : newTransactions) {
 			Order buy = trans.getBuyBid(), sell = trans.getSellBid();
@@ -47,13 +44,12 @@ public class HFTTransactionProcessor extends AbstractTransactionProcessor {
 			if (sell.getAgent().equals(hftAgent))
 				updateAgent(sell.getAgent(), sell, trans);
 		}
-		
-		return superActs;
+
 	}
 
 	@Override
 	public String toString() {
-		return "(HFTTransactionProcessor " + id + " in " + associatedMarket + " for " + hftAgent + ")"; 
+		return "(HFTTransactionProcessor " + id + " in " + associatedMarket + " for " + hftAgent + ')'; 
 	}
 
 }

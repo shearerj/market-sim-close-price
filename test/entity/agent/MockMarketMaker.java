@@ -3,6 +3,7 @@ package entity.agent;
 import java.util.Random;
 
 import systemmanager.Keys;
+import systemmanager.Scheduler;
 import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
@@ -12,21 +13,21 @@ public class MockMarketMaker extends MarketMaker {
 
 	private static final long serialVersionUID = 1L;
 
-	public MockMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
+	public MockMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
 			int numRungs, int rungSize) {
-		this(fundamental, sip, market, false, numRungs, rungSize, false, false, true);
+		this(scheduler, fundamental, sip, market, false, numRungs, rungSize, false, false, true);
 	}
 	
-	public MockMarketMaker(FundamentalValue fundamental, SIP sip,
+	public MockMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
 			Market market, boolean noOp, int numRungs, int rungSize, 
 			boolean truncateLadder, boolean tickImprovement, boolean tickInside) {
-		super(fundamental, sip, market, new Random(), 0, 1, noOp, 
+		super(scheduler, fundamental, sip, market, new Random(), 0, 1, noOp, 
 				numRungs, rungSize, truncateLadder, tickImprovement, tickInside);
 	}
 	
-	public MockMarketMaker(FundamentalValue fundamental, SIP sip, Market market,
+	public MockMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
 			EntityProperties props) {
-		this(fundamental, sip, market, 
+		this(scheduler, fundamental, sip, market, 
 				props.getAsBoolean(Keys.NO_OP, false),
 				props.getAsInt(Keys.NUM_RUNGS, 10),
 				props.getAsInt(Keys.RUNG_SIZE, 1000), 
@@ -35,8 +36,4 @@ public class MockMarketMaker extends MarketMaker {
 				props.getAsBoolean(Keys.TICK_INSIDE, true));
 	}
 
-	@Override
-	public String toString() {
-		return "MockMarketMaker " + super.toString();
-	}
 }

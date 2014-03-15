@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import systemmanager.Scheduler;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
@@ -33,26 +35,28 @@ public abstract class HFTAgent extends MMAgent {
 	protected final Map<Market, HFTQuoteProcessor> quoteProcessors;
 	protected final Map<Market, HFTTransactionProcessor> transactionProcessors;
 
-	public HFTAgent(TimeStamp latency, TimeStamp arrivalTime,
+	public HFTAgent(Scheduler scheduler, TimeStamp latency, TimeStamp arrivalTime,
 			FundamentalValue fundamental, SIP sip, Collection<Market> markets, 
 			Random rand, int tickSize) {
-		this(latency, latency, arrivalTime, fundamental, sip, markets, rand, tickSize);
+		this(scheduler, latency, latency, arrivalTime, fundamental, sip, markets, rand, tickSize);
 	}
-	
-	public HFTAgent(TimeStamp quoteLatency, TimeStamp transactionLatency, 
-			TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
-			Collection<Market> markets,	Random rand, int tickSize) {
-		super(arrivalTime, fundamental, sip, markets, rand, tickSize);
+
+	public HFTAgent(Scheduler scheduler, TimeStamp quoteLatency,
+			TimeStamp transactionLatency, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Collection<Market> markets,
+			Random rand, int tickSize) {
+		
+		super(scheduler, arrivalTime, fundamental, sip, markets, rand, tickSize);
 		
 		Builder<Market, HFTQuoteProcessor> quoteProcessorBuilder = ImmutableMap.builder(); 
 		Builder<Market, HFTTransactionProcessor> transactionProcessorBuilder = ImmutableMap.builder(); 
 		
 		for (Market market : markets) {
-			HFTQuoteProcessor qp = new HFTQuoteProcessor(quoteLatency, market, this);
+			HFTQuoteProcessor qp = new HFTQuoteProcessor(scheduler, quoteLatency, market, this);
 			quoteProcessorBuilder.put(market, qp);
 			market.addQP(qp); 
 			
-			HFTTransactionProcessor tp = new HFTTransactionProcessor(transactionLatency,
+			HFTTransactionProcessor tp = new HFTTransactionProcessor(scheduler, transactionLatency,
 					market, this);
 			transactionProcessorBuilder.put(market, tp);
 			market.addTP(tp);

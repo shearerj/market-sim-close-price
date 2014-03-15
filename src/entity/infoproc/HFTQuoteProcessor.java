@@ -1,13 +1,9 @@
 package entity.infoproc;
 
-import activity.Activity;
+import systemmanager.Scheduler;
 import activity.AgentStrategy;
-
-import com.google.common.collect.ImmutableList;
-
 import entity.agent.HFTAgent;
 import entity.market.Market;
-import entity.market.MarketTime;
 import entity.market.Quote;
 import event.TimeStamp;
 
@@ -22,22 +18,21 @@ public class HFTQuoteProcessor extends AbstractQuoteProcessor {
 	
 	protected final HFTAgent hftAgent;
 
-	public HFTQuoteProcessor(TimeStamp latency, Market mkt, HFTAgent hftAgent) {
-		super(latency, mkt);
+	public HFTQuoteProcessor(Scheduler scheduler, TimeStamp latency,
+			Market mkt, HFTAgent hftAgent) {
+		super(scheduler, latency, mkt);
 		this.hftAgent = hftAgent;
 	}
 
 	@Override
-	public Iterable<? extends Activity> processQuote(Market market, MarketTime quoteTime, 
-			Quote quote, TimeStamp currentTime) {
-		return ImmutableList.<Activity> builder().addAll(
-				super.processQuote(market, quoteTime, quote, currentTime)).add(
-				new AgentStrategy(hftAgent, TimeStamp.IMMEDIATE)).build();
+	public void processQuote(Market market, Quote quote, TimeStamp currentTime) {
+		super.processQuote(market, quote, currentTime);
+		scheduler.executeActivity(new AgentStrategy(hftAgent));
 	}
 
 	@Override
 	public String toString() {
-		return "(HFTQuoteProcessor " + id + " in " + associatedMarket + " for " + hftAgent + ")"; 
+		return "(HFTQuoteProcessor " + id + " in " + associatedMarket + " for " + hftAgent + ')'; 
 	}
 	
 }

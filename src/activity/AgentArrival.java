@@ -10,19 +10,18 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-// XXX: Elaine Is this activity necessary?
+// XXX: To Elaine: Is this activity necessary?
 public class AgentArrival extends Activity {
 
 	protected final Agent agent;
 
-	public AgentArrival(Agent agent, TimeStamp currentTime) {
-		super(currentTime);
+	public AgentArrival(Agent agent) {
 		this.agent = checkNotNull(agent, "Agent");
 	}
 
 	@Override
-	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return agent.agentArrival(currentTime);
+	public void execute(TimeStamp currentTime) {
+		agent.agentArrival(currentTime);
 	}
 
 	@Override

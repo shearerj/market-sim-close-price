@@ -70,8 +70,8 @@ public abstract class DSPlus {
 		// iterate through number of elements in shorter array
 		for (int i = 0; i < len; i++) {
 			if (!Double.isNaN(x1[i]) && !Double.isNaN(x2[i])) {
-				rmsd += Math.pow(x1[i] - x2[i], 2);
-				n++;
+				rmsd += (x1[i] - x2[i]) * (x1[i] - x2[i]);
+				++n;
 			}
 		}
 		return Math.sqrt(rmsd / n);

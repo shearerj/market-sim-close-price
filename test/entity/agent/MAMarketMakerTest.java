@@ -2,29 +2,30 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static org.junit.Assert.*;
+import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
-import logger.Logger;
+import logger.Log;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import activity.Activity;
+import systemmanager.Consts;
+import systemmanager.Executor;
+import systemmanager.Keys;
 import activity.AgentStrategy;
 import activity.Clear;
 import activity.ProcessQuote;
 import activity.SubmitOrder;
-
-import com.google.common.collect.Iterables;
-
-import systemmanager.Consts;
-import systemmanager.EventManager;
-import systemmanager.Keys;
 import data.EntityProperties;
 import data.FundamentalValue;
 import data.MockFundamental;
@@ -42,32 +43,29 @@ import fourheap.Order.OrderType;
 
 public class MAMarketMakerTest {
 
+	private Executor exec;
 	private MockMarket market;
 	private SIP sip;
-	private FundamentalValue fundamental = new MockFundamental(100000);
+	private static final FundamentalValue fundamental = new MockFundamental(100000);
+	private static final EntityProperties agentProperties = EntityProperties.fromPairs(
+			Keys.REENTRY_RATE, 0,
+			Keys.TICK_IMPROVEMENT, false);
 
 	@BeforeClass
-	public static void setupClass() {
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "MAMarketMakerTest.log"));
+	public static void setupClass() throws IOException {
+		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "MAMarketMakerTest.log"));
 	}
 
 	@Before
 	public void setup() {
-		sip = new SIP(TimeStamp.IMMEDIATE);
-		market = new MockMarket(sip);
+		exec = new Executor();
+		sip = new SIP(exec, TimeStamp.IMMEDIATE);
+		market = new MockMarket(exec, sip);
 	}
-
-	private EntityProperties setupProperties(int numRungs, int rungSize, 
-			boolean truncateLadder, int tickSize, int numHistorical) {
-		EntityProperties agentProperties = new EntityProperties();
-		agentProperties.put(Keys.NUM_RUNGS, numRungs);
-		agentProperties.put(Keys.RUNG_SIZE, rungSize);
-		agentProperties.put(Keys.TRUNCATE_LADDER, truncateLadder);
-		agentProperties.put(Keys.TICK_IMPROVEMENT, false);
-		agentProperties.put(Keys.TICK_SIZE, tickSize);
-		agentProperties.put(Keys.REENTRY_RATE, 0);
-		agentProperties.put(Keys.NUM_HISTORICAL, numHistorical);
-		return agentProperties;
+	
+	private MAMarketMaker createMAMM(Object... parameters) {
+		return new MAMarketMaker(exec, fundamental, sip, market, new Random(),
+				EntityProperties.copyFromPairs(agentProperties, parameters));
 	}
 
 	@Test
@@ -75,13 +73,16 @@ public class MAMarketMakerTest {
 		// testing when no bid/ask, does not submit any orders
 		TimeStamp time = TimeStamp.ZERO;
 
-		MarketMaker mm = new MAMarketMaker(fundamental, sip, market, 
-				new Random(), setupProperties(2, 10, false, 1, 5));
+		MarketMaker mm = createMAMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5);
 
 		// Check activities inserted (none, other than reentry)
-		Iterable<? extends Activity> acts = mm.agentStrategy(time);
-		assertEquals("Incorrect number of activities", 1, Iterables.size(acts));
-		assertTrue(Iterables.getFirst(acts, null) instanceof AgentStrategy);
+		mm.agentStrategy(time);
+		assertTrue(mm.activeOrders.isEmpty());
 	}
 
 	/**
@@ -92,8 +93,12 @@ public class MAMarketMakerTest {
 	public void quoteUndefined() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		MarketMaker mm = new MAMarketMaker(fundamental, sip, market, 
-				new Random(), setupProperties(2, 10, false, 1, 5));
+		MarketMaker mm = createMAMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5);
 		mm.lastAsk = new Price(55);
 		mm.lastBid = new Price(45);
 
@@ -103,18 +108,14 @@ public class MAMarketMakerTest {
 		assertEquals(null, quote.getBidPrice());
 		
 		// Check activities inserted (none, other than reentry)
-		Iterable<? extends Activity> acts = mm.agentStrategy(time);
-		assertEquals("Incorrect number of activities", 1, Iterables.size(acts));
-		assertTrue(Iterables.getFirst(acts, null) instanceof AgentStrategy);
-		assertEquals(0, mm.activeOrders.size());
+		mm.agentStrategy(time);
+		assertTrue(mm.activeOrders.isEmpty());
 		
 		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		
 		// Creating and adding bids
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
-		em.executeUntil(new TimeStamp(1));
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
 		// Check market quote
 		quote = market.getQuoteProcessor().getQuote();
 		assertEquals(null, quote.getAskPrice());
@@ -123,10 +124,8 @@ public class MAMarketMakerTest {
 		// Check activities inserted (none, other than reentry)
 		mm.lastAsk = new Price(55);
 		mm.lastBid = new Price(45);
-		acts = mm.agentStrategy(time);
-		assertEquals("Incorrect number of activities", 1, Iterables.size(acts));
-		assertTrue(Iterables.getFirst(acts, null) instanceof AgentStrategy);
-		assertEquals(0, mm.activeOrders.size());
+		mm.agentStrategy(time);
+		assertTrue(mm.activeOrders.isEmpty());
 	}
 	
 	/**
@@ -135,44 +134,40 @@ public class MAMarketMakerTest {
 	 */
 	@Test
 	public void withdrawUndefinedTest() {
-		TimeStamp time = TimeStamp.ZERO;
-		TimeStamp time1 = new TimeStamp(1);
-
-		MarketMaker marketmaker = new MAMarketMaker(fundamental, sip, market, 
-				new Random(), setupProperties(3, 5, true, 1, 5));
+		MarketMaker marketmaker = createMAMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5);
 		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		// Creating and adding bids
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1, time));
-		em.executeUntil(new TimeStamp(1));
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
 
 		// Initial MM strategy; submits ladder with numRungs=3
-		em.addActivity(new AgentStrategy(marketmaker, time));
-		em.executeUntil(new TimeStamp(1));
+		exec.executeActivity(new AgentStrategy(marketmaker));
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
 		
 		// To change the bid stored in the MM
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(48), 1, time));
-		em.executeUntil(new TimeStamp(1));
-		em.addActivity(new AgentStrategy(marketmaker, time));
-		em.executeUntil(new TimeStamp(1));
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(48), 1));
+		exec.executeActivity(new AgentStrategy(marketmaker));
 		for (Order o : marketmaker.activeOrders) {
 			int price = o.getPrice().intValue();
 			if (o.getOrderType() == BUY) 
 				assertTrue(price == 44 || price == 39 || price == 34);
 		}
 		// Withdraw other orders (now quote is (41, 50) from MM)
-		agent1.withdrawAllOrders(time);
-		agent2.withdrawAllOrders(time);
+		agent1.withdrawAllOrders();
+		agent2.withdrawAllOrders();
 		
+		exec.executeUntil(TimeStamp.create(1));
 		// Note that now the quote is undefined, after it withdraws its ladder
 		// so it will insert lastBid/Ask into the queues so the ladder changes
-		em.addActivity(new AgentStrategy(marketmaker, time1));
-		em.executeUntil(new TimeStamp(2));
+		exec.executeActivity(new AgentStrategy(marketmaker));
 		assertNotNull(marketmaker.lastBid);
 		assertNotNull(marketmaker.lastAsk);
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
@@ -193,27 +188,30 @@ public class MAMarketMakerTest {
 	public void computeMovingAverage() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		MAMarketMaker mm = new MAMarketMaker(fundamental, sip, market, 
-				new Random(), setupProperties(1, 10, false, 1, 5));
+		MAMarketMaker mm = createMAMM(
+				Keys.NUM_RUNGS, 1,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5);
 
 		QuoteProcessor qp = mm.marketQuoteProcessor;
 
 		// Add quotes & execute agent strategy in between (without actually submitting orders)
 		int mktTime = 0;
-		addQuote(qp, 50, 60, 0, mktTime++);
+		addQuote(qp, 50, 60, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 52, 64, 0, mktTime++);
+		addQuote(qp, 52, 64, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 54, 68, 0, mktTime++);
+		addQuote(qp, 54, 68, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 56, 72, 0, mktTime++);
+		addQuote(qp, 56, 72, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 58, 76, 0, mktTime++);
-		Iterable<? extends Activity> acts = mm.agentStrategy(time);
+		addQuote(qp, 58, 76, 0, mktTime += 5);
+		mm.agentStrategy(time);
 
 		assertEquals(new Price(58), mm.lastBid);
 		assertEquals(new Price(76), mm.lastAsk);
-		for (Activity a : acts) if (a instanceof SubmitOrder) a.execute(time);
 
 		// check queues
 		assertEquals(new Price(50), mm.bidQueue.peek());
@@ -238,12 +236,12 @@ public class MAMarketMakerTest {
 		}
 	}
 
-	Iterable<? extends Activity> addQuote(QuoteProcessor qp, int buy, int sell, int time, int marketTime) {
-		TimeStamp ts = new TimeStamp(time);
+	private void addQuote(QuoteProcessor qp, int buy, int sell, int time, int marketTime) {
+		TimeStamp ts = TimeStamp.create(time);
 		MarketTime mktTime = new DummyMarketTime(ts, marketTime);
-		Quote q = new Quote(market, new Price(buy), 1, new Price(sell), 1, ts);
-		sip.processQuote(market, mktTime, q, ts);
-		return qp.processQuote(market, mktTime, q, ts);
+		Quote q = new Quote(market, new Price(buy), 1, new Price(sell), 1, mktTime);
+		sip.processQuote(market, q, ts);
+		qp.processQuote(market, q, ts);
 	}
 
 	/**
@@ -253,8 +251,12 @@ public class MAMarketMakerTest {
 	public void evictingQueueTest() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		MAMarketMaker mm = new MAMarketMaker(fundamental, sip, market, 
-				new Random(), setupProperties(2, 10, false, 1, 3));
+		MAMarketMaker mm = createMAMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 3);
 
 		QuoteProcessor qp = mm.marketQuoteProcessor;
 
@@ -303,29 +305,28 @@ public class MAMarketMakerTest {
 	public void basicLadderTest() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		MarketMaker mm = new MAMarketMaker(fundamental, sip, market, 
-				new Random(), setupProperties(2, 10, false, 1, 5));
+		MarketMaker mm = createMAMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5);
 
 		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		// Creating and adding bids
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
-		em.executeUntil(new TimeStamp(1));
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1, time));
-		em.addActivity(new Clear(market, time));
-		em.executeUntil(new TimeStamp(1));
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
+		exec.executeActivity(new Clear(market));
 		// Check market quote
 		Quote quote = market.getQuoteProcessor().getQuote();
 		assertEquals(new Price(50), quote.getAskPrice());
 		assertEquals(new Price(40), quote.getBidPrice());
 
 		// Check activities inserted (4 submit orders plus agent reentry)
-		Iterable<? extends Activity> acts = mm.agentStrategy(time);
-		assertEquals("Incorrect number of activities", 5, Iterables.size(acts));
-		for (Activity a : acts)	if (a instanceof SubmitOrder) a.execute(time);
+		mm.agentStrategy(time);
 
 		// Check ladder of orders (use market's collection b/c ordering consistent)
 		ArrayList<Order> orders = new ArrayList<Order>(market.getOrders());
@@ -362,23 +363,26 @@ public class MAMarketMakerTest {
 	public void partialQueueLadderTest() {
 		TimeStamp time = TimeStamp.ZERO;
 
-		MAMarketMaker mm = new MAMarketMaker(fundamental, sip, market, 
-				new Random(), setupProperties(1, 10, false, 1, 5));
+		MAMarketMaker mm = createMAMM(
+				Keys.NUM_RUNGS, 1,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5);
 
 		QuoteProcessor qp = mm.marketQuoteProcessor;
 
-		// Add quotes & execute agent strategy in between (without actually submitting orders)
+		// Add quotes & execute agent strategy in between
 		int mktTime = 0;
-		addQuote(qp, 50, 60, 0, mktTime++);
+		addQuote(qp, 50, 60, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 52, 64, 0, mktTime++);
+		addQuote(qp, 52, 64, 0, mktTime += 5);
 		mm.agentStrategy(time);
-		addQuote(qp, 54, 68, 0, mktTime++);
-		Iterable<? extends Activity> acts = mm.agentStrategy(time);
+		addQuote(qp, 54, 68, 0, mktTime += 5);
+		mm.agentStrategy(time);
 
 		assertEquals(new Price(54), mm.lastBid);
 		assertEquals(new Price(68), mm.lastAsk);
-		for (Activity a : acts)	if (a instanceof SubmitOrder) a.execute(time);
 
 		// check queues
 		assertEquals(new Price(50), mm.bidQueue.peek());
@@ -409,26 +413,24 @@ public class MAMarketMakerTest {
 	 */
 	@Test
 	public void rungsTest() {
-		TimeStamp time = TimeStamp.ZERO;
-
-		MarketMaker marketmaker = new MAMarketMaker(fundamental, sip, market, 
-				new Random(), setupProperties(3, 12, false, 5, 5));
+		MarketMaker marketmaker = createMAMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 12,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 5,
+				Keys.NUM_HISTORICAL, 5);
 
 		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		// Creating and adding bids
-		EventManager em = new EventManager(new Random());
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1, time));
-		em.executeUntil(new TimeStamp(1));
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1, time));
-		em.addActivity(new Clear(market, time));
-		em.executeUntil(new TimeStamp(1));
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
+		exec.executeActivity(new Clear(market));
 
 		// Initial MM strategy
-		em.addActivity(new AgentStrategy(marketmaker, time));
-		em.executeUntil(new TimeStamp(1));
+		exec.executeActivity(new AgentStrategy(marketmaker));
 
 		// Check ladder of orders
 		// market's orders contains all orders ever submitted
@@ -465,43 +467,41 @@ public class MAMarketMakerTest {
 
 	@Test
 	public void noOpTest() {
-		EntityProperties agentProperties = setupProperties(2, 10, false, 1, 5);
-		agentProperties.put(Keys.NO_OP, true);
-
-		MarketMaker mm = new MAMarketMaker(fundamental, sip, market, 
-				new Random(), agentProperties);
+		MarketMaker mm = createMAMM(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5,
+				Keys.NO_OP, true);
 
 		// Check activities inserted (none, since no-op)
-		Iterable<? extends Activity> acts = mm.agentStrategy(TimeStamp.ZERO);
-		assertEquals("Incorrect number of activities", 0, Iterables.size(acts));
+		mm.agentStrategy(TimeStamp.ZERO);
+		assertTrue(mm.activeOrders.isEmpty());
 	}
 
 	@Test
 	public void truncateBidTest() {
-		TimeStamp time = TimeStamp.ZERO;
-
-		MarketMaker marketmaker = new MAMarketMaker(fundamental, sip, market, 
-				new Random(), setupProperties(3, 5, true, 1, 5));
+		MarketMaker marketmaker = createMAMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5);
 
 		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
-
-		EventManager em = new EventManager(new Random());
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		// Creating and adding bids
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(102), 1, time));
-		em.executeUntil(new TimeStamp(1));
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(105), 1, time));
-		em.addActivity(new Clear(market, time));
-		em.executeUntil(new TimeStamp(1));
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(102), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(105), 1));
+		exec.executeActivity(new Clear(market));
 
 		// Updating NBBO quote
-		MockMarket market2 = new MockMarket(sip);
-		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, time);
-		em.addActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q, 
-				time));
-		em.executeUntil(new TimeStamp(1));
+		MockMarket market2 = new MockMarket(exec, sip);
+		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, TimeStamp.ZERO);
+		exec.executeActivity(new ProcessQuote(sip, market2, q));
 
 		// Just to check that NBBO correct (it crosses)
 		BestBidAsk nbbo = sip.getNBBO();
@@ -509,8 +509,7 @@ public class MAMarketMakerTest {
 		assertEquals("Incorrect BID", new Price(102), nbbo.getBestBid());
 
 		// MM strategy
-		em.addActivity(new AgentStrategy(marketmaker, time));
-		em.executeUntil(new TimeStamp(1));
+		exec.executeActivity(new AgentStrategy(marketmaker));
 
 		// Check ladder of orders
 		// market's orders contains all orders ever submitted
@@ -525,7 +524,8 @@ public class MAMarketMakerTest {
 		assertEquals(marketmaker, order.getAgent());
 		assertEquals(new Price(97), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
-		// 3 rungs on sell side
+		// 3 rungs on sell sideprops.getAsDouble(Keys.REENTRY_RATE, 0.005), 
+
 		order = orders.get(4);
 		assertEquals(marketmaker, order.getAgent());
 		assertEquals(new Price(115), order.getPrice());
@@ -542,30 +542,26 @@ public class MAMarketMakerTest {
 
 	@Test
 	public void truncateAskTest() {
-		TimeStamp time = TimeStamp.ZERO;
-
-		MarketMaker marketmaker = new MAMarketMaker(fundamental, sip, market, 
-				new Random(), setupProperties(3, 5, true, 1, 5));
+		MarketMaker marketmaker = createMAMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5);
 
 		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(fundamental, sip, market);
-
-		EventManager em = new EventManager(new Random());
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		// Creating and adding bids
-		em.addActivity(new SubmitOrder(agent1, market, BUY, new Price(70), 1, time));
-		em.executeUntil(new TimeStamp(1));
-		em.addActivity(new SubmitOrder(agent2, market, SELL, new Price(89), 1, time));
-		em.addActivity(new Clear(market, time));
-		em.executeUntil(new TimeStamp(1));
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(70), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(89), 1));
+		exec.executeActivity(new Clear(market));
 
 		// Updating NBBO quote
-		MockMarket market2 = new MockMarket(sip);
-		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, time);
-		em.addActivity(new ProcessQuote(sip, market2, new DummyMarketTime(time, 1), q, 
-				time));
-		em.executeUntil(new TimeStamp(1));
+		MockMarket market2 = new MockMarket(exec, sip);
+		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, TimeStamp.ZERO);
+		exec.executeActivity(new ProcessQuote(sip, market2, q));
 
 		// Just to check that NBBO correct (it crosses)
 		BestBidAsk nbbo = sip.getNBBO();
@@ -573,8 +569,7 @@ public class MAMarketMakerTest {
 		assertEquals("Incorrect BID", new Price(90), nbbo.getBestBid());
 
 		// MM strategy
-		em.addActivity(new AgentStrategy(marketmaker, time));
-		em.executeUntil(new TimeStamp(1));
+		exec.executeActivity(new AgentStrategy(marketmaker));
 
 		// Check ladder of orders
 		// market's orders contains all orders ever submitted

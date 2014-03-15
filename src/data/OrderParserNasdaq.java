@@ -23,12 +23,12 @@ public class OrderParserNasdaq implements OrderParser {
 
 	}
 	
-	public List<OrderDatum> process(Path path) throws IOException {
+	public List<OrderDatum> process(String fileName) throws IOException {
 		// Creating the List
 		List<OrderDatum> orderDatumList = Lists.newArrayList();
 		
 		// Opening the file
-		Scanner scanner = new Scanner(path);
+		Scanner scanner = new Scanner(fileName);
 				
 		while (scanner.hasNextLine()) {
 			Scanner lineScanner = new Scanner(scanner.nextLine());
@@ -105,7 +105,7 @@ public class OrderParserNasdaq implements OrderParser {
 //	}
 
 	public OrderDatum parseAddOrder(Scanner lineScanner) {
-		TimeStamp timestamp = new TimeStamp(lineScanner.nextInt() * 1000
+		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() * 1000
 				+ lineScanner.nextInt());
 		String orderReferenceNum = lineScanner.next();
 		OrderType type = (lineScanner.next().charAt(0) == 'B') ? BUY : SELL;
@@ -116,6 +116,7 @@ public class OrderParserNasdaq implements OrderParser {
 		// These values are not available for nasdaq
 		// no such thing as a sequence number in nasdaq, set it to 0 for now
 		// TODO figure out what we want to do with this discrepency
+		// XXX Erik: Sequentially increment sequence number?
 		String sequenceNum = "";
 		char exchangeCode = ' ';
 		char systemCode = ' ';
@@ -129,7 +130,7 @@ public class OrderParserNasdaq implements OrderParser {
 	}
 
 	public OrderDatum parseDeleteOrder(Scanner lineScanner) {
-		TimeStamp timestamp = new TimeStamp(lineScanner.nextInt() * 1000
+		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() * 1000
 				+ lineScanner.nextInt());
 		String orderReferenceNum = lineScanner.next();
 
@@ -152,7 +153,7 @@ public class OrderParserNasdaq implements OrderParser {
 	}
 
 	public OrderDatum parseModifyOrder(Scanner lineScanner) {
-		TimeStamp timestamp = new TimeStamp(lineScanner.nextInt() * 1000
+		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() * 1000
 				+ lineScanner.nextInt());
 		String originalOrderReferenceNum = lineScanner.next();
 		// String newOrderReferenceNum = lineScanner.next(); // XXX not used
@@ -179,7 +180,7 @@ public class OrderParserNasdaq implements OrderParser {
 		Price price = new Price(lineScanner.nextDouble());
 		int quantity = lineScanner.nextInt();
 		int totalImbalance = lineScanner.nextInt();
-		TimeStamp timestamp = new TimeStamp(lineScanner.nextInt() * 1000
+		TimeStamp timestamp = TimeStamp.create(lineScanner.nextInt() * 1000
 				+ lineScanner.nextInt());
 		int marketImbalance = lineScanner.nextInt();
 		char auctionType = lineScanner.next().charAt(0);

@@ -5,9 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Collection;
 import java.util.Random;
 
-import com.google.common.collect.ImmutableList;
-
-import activity.Activity;
+import systemmanager.Scheduler;
 import data.FundamentalValue;
 import entity.infoproc.HFTQuoteProcessor;
 import entity.infoproc.HFTTransactionProcessor;
@@ -19,20 +17,20 @@ public class MockHFTAgent extends HFTAgent {
 
 	private static final long serialVersionUID = 1L;
 
-	public MockHFTAgent(TimeStamp latency, FundamentalValue fundamental, 
+	public MockHFTAgent(Scheduler scheduler, TimeStamp latency, FundamentalValue fundamental, 
 			SIP sip, Collection<Market> markets) {
-		this(latency, latency, fundamental, sip, markets);
+		this(scheduler, latency, latency, fundamental, sip, markets);
 	}
 	
-	public MockHFTAgent(TimeStamp quoteLatency, TimeStamp transactionLatency,
+	public MockHFTAgent(Scheduler scheduler, TimeStamp quoteLatency, TimeStamp transactionLatency,
 			FundamentalValue fundamental, SIP sip, Collection<Market> markets) {
-		super(quoteLatency, transactionLatency, new TimeStamp(0), fundamental, 
+		super(scheduler, quoteLatency, transactionLatency, TimeStamp.create(0), fundamental, 
 				sip, markets, new Random(), 1);
 	}
 
 	@Override
-	public Iterable<? extends Activity> agentStrategy(TimeStamp currentTime) {
-		return ImmutableList.of();
+	public void agentStrategy(TimeStamp currentTime) {
+		
 	}
 
 	/**

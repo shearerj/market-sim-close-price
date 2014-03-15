@@ -3,7 +3,6 @@ package activity;
 import static com.google.common.base.Preconditions.checkNotNull;
 import entity.infoproc.QuoteProcessor;
 import entity.market.Market;
-import entity.market.MarketTime;
 import entity.market.Quote;
 import event.TimeStamp;
 
@@ -18,21 +17,17 @@ public class SendToQP extends Activity {
 
 	protected final Market market;
 	protected final QuoteProcessor qp;
-	protected final MarketTime quoteTime;
 	protected final Quote quote;
 
-	public SendToQP(Market market, MarketTime quoteTime, Quote quote, 
-			QuoteProcessor qp, TimeStamp scheduledTime) {
-		super(scheduledTime);
+	public SendToQP(Market market, Quote quote, QuoteProcessor qp) {
 		this.market = checkNotNull(market, "Market");
 		this.qp = checkNotNull(qp, "QP");
-		this.quoteTime = checkNotNull(quoteTime, "Market Time");
 		this.quote = checkNotNull(quote, "Quote");
 	}
 
 	@Override
-	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return qp.sendToQuoteProcessor(market, this.quoteTime, quote, currentTime);
+	public void execute(TimeStamp currentTime) {
+		qp.sendToQuoteProcessor(market, quote, currentTime);
 	}
 	
 	@Override

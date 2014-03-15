@@ -18,18 +18,17 @@ public class ProcessTransactions extends Activity {
 	protected final TransactionProcessor tp;
 	protected final Market market;
 	protected final List<Transaction> newTransactions;
-	
-	public ProcessTransactions(TransactionProcessor ip, Market market, 
-			List<Transaction> newTransactions, TimeStamp scheduledTime) {
-		super(scheduledTime);
+
+	public ProcessTransactions(TransactionProcessor ip, Market market,
+			List<Transaction> newTransactions) {
 		this.tp = checkNotNull(ip, "TP");
 		this.market = checkNotNull(market, "Market");
 		this.newTransactions = checkNotNull(newTransactions, "New Transactions");
 	}
 
 	@Override
-	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return this.tp.processTransactions(market, newTransactions, currentTime);
+	public void execute(TimeStamp currentTime) {
+		this.tp.processTransactions(market, newTransactions, currentTime);
 	}
 	
 	@Override

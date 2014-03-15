@@ -1,31 +1,38 @@
 package entity.agent;
 
-import static org.junit.Assert.*;
-import static fourheap.Order.OrderType.*;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
-import logger.Logger;
+import logger.Log;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import activity.Activity;
-import activity.SubmitNMSOrder;
+import systemmanager.Executor;
+import systemmanager.Keys;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
 
-import data.MockFundamental;
+import data.EntityProperties;
 import data.FundamentalValue;
+import data.MockFundamental;
 import entity.infoproc.SIP;
-import entity.market.Market;
 import entity.market.MockMarket;
 import entity.market.Order;
 import entity.market.Price;
@@ -47,15 +54,22 @@ import event.TimeStamp;
  */
 public class ZIAgentTest {	
 
+	private Executor exec;
 	private FundamentalValue fundamental = new MockFundamental(100000);
-	private Market market;
+	private MockMarket market;
 	private SIP sip;
 	private static Random rand;
+	
+	private static EntityProperties defaults = EntityProperties.fromPairs(
+			Keys.PRIVATE_VALUE_VAR, 1e8,
+			Keys.TICK_SIZE, 1,
+			Keys.BID_RANGE_MIN, 0,
+			Keys.BID_RANGE_MAX, 1000);
 
 	@BeforeClass
-	public static void setUpClass(){
+	public static void setUpClass() throws IOException{
 		// Setting up the log file
-		Logger.setup(3, new File(Consts.TEST_OUTPUT_DIR + "ZIAgentTest.log"));
+		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIAgentTest.log"));
 
 		// Creating the setup properties
 		rand = new Random(1);
@@ -63,63 +77,29 @@ public class ZIAgentTest {
 
 	@Before
 	public void setup(){
-		sip = new SIP(TimeStamp.IMMEDIATE);
+		exec = new Executor();
+		sip = new SIP(exec, TimeStamp.IMMEDIATE);
 		// Creating the MockMarket
-		market = new MockMarket(sip);
+		market = new MockMarket(exec, sip);
 	}
 	
 	//Agent Constructor methods====================================================================
 	
-	private ZIAgent addAgent(int min, int max, Random rand, PrivateValue pv){
-		//Initialize ZIAgent with default properties:
-		//REENTRY_RATE, 0
-		//TICK_SIZE, 1
-		return new ZIAgent(new TimeStamp(0), fundamental, sip, market, rand, 0, pv, 1, min, max);
+	private ZIAgent addAgent(int min, int max, Random rand, PrivateValue pv) {
+		return new ZIAgent(exec, TimeStamp.ZERO, fundamental, sip, market,
+				rand, pv, 1, min, max);
 	}
 	
-	
-	private ZIAgent addAgent(int min, int max, Random rand) {
-		//Initialize ZIAgent with default properties:
-		//REENTRY_RATE, 0
-		//PRIVATE_VALUE_VAR, 100000000
-		//TICK_SIZE, 1
-		return addAgent(min, max, rand, new PrivateValue(1, 100000000, rand));
+	private ZIAgent addAgent(Object... parameters){
+		return addAgent(rand, parameters);
 	}
 	
-	private ZIAgent addAgent(int min, int max){
-		//Initialize ZIAgent with default properties:
-		//REENTRY_RATE, 0
-		//PRIVATE_VALUE_VAR, 100000000 = +/- $10.00
-		//TICK_SIZE, 1
-		//Random rand
-		return addAgent(min, max, rand);
-	}
-	
-	private ZIAgent addAgent(){
-		//Initialize ZIAgent with default properties:
-		//REENTRY_RATE, 0
-		//PRIVATE_VALUE_VAR, 100000000 = +/- $10.00
-		//TICK_SIZE, 1
-		//Random rand
-		//BID_RANGE_MIN, 0
-		//BID_RANGE_MAX, 1000 = +/- $1.00
-		return addAgent(0, 1000); 
+	private ZIAgent addAgent(Random rand, Object... parameters){
+		return new ZIAgent(exec, TimeStamp.ZERO, fundamental, sip, market, rand,
+				EntityProperties.copyFromPairs(defaults, parameters));
 	}
 	
 	//Testing methods==============================================================================
-	
-	
-	private void executeAgentStrategy(Agent agent, int time) {
-		TimeStamp currentTime = new TimeStamp(time);
-		Iterable<? extends Activity> test = agent.agentStrategy(currentTime);
-
-		// executing the bid submission - will go to the market
-		for (Activity act : test) {
-			assertTrue(act instanceof SubmitNMSOrder);
-			act.execute(currentTime);
-		}
-	}
-
 	private void assertCorrectBid(Agent agent, int low, int high) {
 		Collection<Order> orders = agent.activeOrders;
 		// Asserting the bid is correct
@@ -147,49 +127,36 @@ public class ZIAgentTest {
 	
 	@Test
 	public void initialActivityZI(){
-		Logger.log(Logger.Level.DEBUG, "Testing ZI Activity is correct");
-		//Counter
-		int act_counter = 0;
-		int submit_counter = 0;
-		// New ZIAgent
+		log.log(DEBUG, "Testing ZI Activity is correct");
 		ZIAgent testAgent = addAgent();
-		TimeStamp currentTime = new TimeStamp(100);
-		Iterable<? extends Activity> test = testAgent.agentStrategy(currentTime);
-		for (Activity act : test){
-			act_counter++;
-			if (act instanceof SubmitNMSOrder){
-				submit_counter++;
-				//assertTrue("ZI Activity time (" + act.getTime() + ") not equal to " + currentTime, 
-				//		act.getTime()==currentTime);
-				act.execute(currentTime);
-			}
-		}
-		assertEquals("ZI Activity quantity (" + act_counter + ") not equal to 1", 1, act_counter);
+		TimeStamp currentTime = TimeStamp.create(100);
+		testAgent.agentStrategy(currentTime);
+		int submit_counter = market.getActiveOrders().size();
 		assertEquals("ZI SubmitNMSOrder quantity (" + submit_counter + ") not equal to 1", 1, submit_counter);
 	}
 
 
 	@Test
 	public void initialQuantityZI() {
-		Logger.log(Logger.Level.DEBUG, "Testing ZI submitted quantity is correct");
+		log.log(DEBUG, "Testing ZI submitted quantity is correct");
 		
 		// New ZIAgent
 		ZIAgent testAgent = addAgent();
 		
 		// Execute Strategy
-		executeAgentStrategy(testAgent, 100);
+		testAgent.agentStrategy(TimeStamp.create(100));
 		assertCorrectBid(testAgent);
 	}
 	
 	@Test
 	public void initialPriceZI() {
-		Logger.log(Logger.Level.DEBUG, "Testing ZI submitted bid range is correct");
+		log.log(DEBUG, "Testing ZI submitted bid range is correct");
 		
 		// New ZIAgent
 		ZIAgent testAgent = addAgent();
 		
 		// Execute Strategy
-		executeAgentStrategy(testAgent, 100);
+		testAgent.agentStrategy(TimeStamp.create(100));
 		
 		//Fundamental = 100000 ($100.00), Stdev = sqrt(100000000) = 10000 ($10.000)
 		//Bid Range = 0, 1000 ($0.00, $1.00)
@@ -200,33 +167,33 @@ public class ZIAgentTest {
 	
 	@Test
 	public void randQuantityZI(){
-		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 submitted quantities are correct");
+		log.log(DEBUG, "Testing ZI 100 submitted quantities are correct");
 		for(int r = 0; r<100; r++){
 			// New ZIAgent
-			ZIAgent testAgent = addAgent(0,1000, new Random(r));
+			ZIAgent testAgent = addAgent(new Random(r));
 			
 			// Execute Strategy
-			executeAgentStrategy(testAgent, r*100);
+			testAgent.agentStrategy(TimeStamp.create(r*100));
 			assertCorrectBid(testAgent);
 		}
 	}
 	
 	@Test
 	public void randPriceZI(){
-		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 submitted bid ranges are correct");
+		log.log(DEBUG, "Testing ZI 100 submitted bid ranges are correct");
 		for(int r = 0; r<100; r++){
 			// New ZIAgent
-			ZIAgent testAgent = addAgent(0,1000, new Random(r));
+			ZIAgent testAgent = addAgent(new Random(r));
 			
 			// Execute Strategy
-			executeAgentStrategy(testAgent, r*100);
+			testAgent.agentStrategy(TimeStamp.create(r*100));
 			assertCorrectBid(testAgent, 70000, 130000);	
 		}
 	}
 	
 	@Test
 	public void testPrivateValue(){
-		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 DummyPrivateValue arguments are correct");
+		log.log(DEBUG, "Testing ZI 100 DummyPrivateValue arguments are correct");
 		
 		//Creating set private value
 		int offset = 1;
@@ -240,7 +207,7 @@ public class ZIAgentTest {
 		ZIAgent testAgent = addAgent(0, 1000, rand, testpv); 	// bid range [0, 1000]
 
 		//Executing agent strategy
-		executeAgentStrategy(testAgent, 100);
+		testAgent.agentStrategy(TimeStamp.create(100));
 
 		//Retrieving orders
 		Collection<Order> orders = testAgent.activeOrders;
@@ -284,7 +251,7 @@ public class ZIAgentTest {
 	
 	@Test
 	public void randTestZI(){
-		Logger.log(Logger.Level.DEBUG, "Testing ZI 100 random argument bids are correct");
+		log.log(DEBUG, "Testing ZI 100 random argument bids are correct");
 
 		//Testing 100 times
 		for(int i = 0; i<100; i++){
@@ -303,10 +270,10 @@ public class ZIAgentTest {
 			ZIAgent testAgent = addAgent(min, max, rand, testpv);
 			
 			//Logging bid range min and max
-			Logger.log(Logger.Level.DEBUG, "Agent bid range min: " + new Price(min) + ", maximum: " + new Price(max));
+			log.log(DEBUG, "Agent bid range min: %d, maximum: %d", min, max);
 			
 			//Execute strategy
-			executeAgentStrategy(testAgent, currentTime);
+			testAgent.agentStrategy(TimeStamp.create(currentTime));
 			
 			//Retrieve orders
 			Collection<Order> orders = testAgent.activeOrders;
@@ -316,7 +283,7 @@ public class ZIAgentTest {
 			//Extracting bid quantity and price
 			assertEquals("Incorrect order quantity", 1, order.getQuantity());
 			Price p = order.getPrice();
-			Price fund = fundamental.getValueAt(new TimeStamp(currentTime));
+			Price fund = fundamental.getValueAt(TimeStamp.create(currentTime));
 			Price buyPV = testAgent.privateValue.getValue(0, BUY);
 			Price sellPV = testAgent.privateValue.getValue(0, SELL);
 			

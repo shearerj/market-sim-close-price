@@ -1,27 +1,27 @@
 package entity.agent;
 
-import static logger.Logger.log;
-import static logger.Logger.format;
-import static logger.Logger.Level.INFO;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 import static com.google.common.base.Preconditions.checkArgument;
-import static fourheap.Order.OrderType.*;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+import iterators.ExpInterarrivals;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+
+import systemmanager.Keys;
+import systemmanager.Scheduler;
+import utils.Rands;
+import activity.SubmitNMSOrder;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
-import com.google.common.collect.ImmutableList.Builder;
 
-import systemmanager.Keys;
-import utils.Rands;
-import activity.Activity;
-import activity.SubmitNMSOrder;
 import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
@@ -73,16 +73,18 @@ public class AAAgent extends WindowAgent {
 	private double alphaMax; // max experienced value for alpha (for theta, not PV)
 	private double alphaMin; // min experienced value for alpha
 
+	protected AAAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			Iterator<TimeStamp> interarrivalTimes, double pvVar, int tickSize,
+			int maxAbsPosition, int bidRangeMin, int bidRangeMax,
+			boolean withdrawOrders, int windowLength, double aggression,
+			double theta, double thetaMin, double thetaMax, int historical,
+			int eta, double lambdaR, double lambdaA, double gamma,
+			double betaR, double betaT, boolean buyerStatus, boolean debug) {
 
-	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
-			Market market, Random rand, double reentryRate, double pvVar,
-			int tickSize, int maxAbsPosition, int bidRangeMin, int bidRangeMax,
-			boolean withdrawOrders, int windowLength, double aggression, 
-			double theta, double thetaMin, double thetaMax, int historical, 
-			int eta, double lambdaR, double lambdaA, double gamma, double betaR, 
-			double betaT, boolean buyerStatus) {
-		super(arrivalTime, fundamental, sip, market, rand, reentryRate, 
-				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize, 
+		super(scheduler, arrivalTime, fundamental, sip, market, rand,
+				interarrivalTimes,
+				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize,
 				bidRangeMin, bidRangeMax, windowLength);
 
 		checkArgument(betaR > 0 && betaR < 1, "Beta for r must be in (0,1)");
@@ -115,11 +117,34 @@ public class AAAgent extends WindowAgent {
 		this.eta = eta;
 		this.betaR = betaR;		// paper randomizes to U[0.2, 0.6]
 		this.betaT = betaT;		// paper randomizes to U[0.2, 0.6]
+		
+		// Debugging
+		this.debug = debug;
 	}
 
-	public AAAgent(TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip, 
-			Market market, Random rand, EntityProperties props) {
-		this(arrivalTime, fundamental, sip, market, rand,
+	public AAAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			double reentryRate, double pvVar, int tickSize, int maxAbsPosition,
+			int bidRangeMin, int bidRangeMax, boolean withdrawOrders,
+			int windowLength, double aggression, double theta, double thetaMin,
+			double thetaMax, int historical, int eta, double lambdaR,
+			double lambdaA, double gamma, double betaR, double betaT,
+			boolean buyerStatus, boolean debug) {
+
+		this(scheduler, arrivalTime, fundamental, sip, market, rand,
+				ExpInterarrivals.create(reentryRate, rand), pvVar, tickSize,
+				maxAbsPosition, bidRangeMin, bidRangeMax, withdrawOrders,
+				windowLength, aggression, theta, thetaMin, thetaMax,
+				historical, eta, lambdaR, lambdaA, gamma, betaR, betaT,
+				buyerStatus, debug);
+
+	}
+
+	public AAAgent(Scheduler scheduler, TimeStamp arrivalTime,
+			FundamentalValue fundamental, SIP sip, Market market, Random rand,
+			EntityProperties props) {
+		
+		this(scheduler, arrivalTime, fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0.005), 
 				props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),
 				props.getAsInt(Keys.TICK_SIZE, 1),
@@ -139,26 +164,16 @@ public class AAAgent extends WindowAgent {
 				props.getAsDouble(Keys.GAMMA, 2),
 				props.getAsDouble(Keys.BETA_R, Rands.nextUniform(rand, 0.2, 0.6)), 
 				props.getAsDouble(Keys.BETA_T, Rands.nextUniform(rand, 0.2, 0.6)), 
-				props.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean()));
-
-		debug = props.getAsBoolean(Keys.DEBUG, false);
+				props.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean()),
+				props.getAsBoolean(Keys.DEBUG, false));
 	}
 
 	@Override
-	public String toString() {
-		return "AA " + super.toString();
-	}
-
-	@Override
-	public Collection<Activity> agentStrategy(TimeStamp currentTime) {
-		Builder<Activity> acts = ImmutableList.<Activity> builder().addAll(
-				super.agentStrategy(currentTime));
-
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append("::agentStrategy: ");
+	public void agentStrategy(TimeStamp currentTime) {
+		super.agentStrategy(currentTime);
 
 		// withdraw previous orders
-		if (withdrawOrders) acts.addAll(withdrawAllOrders(currentTime));
+		if (withdrawOrders) withdrawAllOrders();
 
 		// re-initialize variables
 		lastTransactionPrice = null;
@@ -172,38 +187,35 @@ public class AAAgent extends WindowAgent {
 		// Updating Price Limit (valuation of security)
 		Price limitPrice = this.getLimitPrice(type, currentTime);
 
-		ImmutableList<Transaction> transactions = this.getWindowTransactions(currentTime);
+		List<Transaction> transactions = this.getWindowTransactions(currentTime);
 		if (!transactions.isEmpty())
 			lastTransactionPrice = transactions.get(transactions.size()-1).getPrice();
 
 		// Estimate equilibrium price using weighted moving average
 		equilibriumPrice = this.estimateEquilibrium(transactions);
-		log(INFO, sb.append("estimateEquilibrium: price=").append(equilibriumPrice));
+		
+		log.log(INFO, "%s::agentStrategy: estimateEquilibrium: price=%s", this, equilibriumPrice);
 
 		// Aggressiveness layer
 		// ----------------------
 		// Determine the target price tau using current r & theta
 		targetPrice = this.determineTargetPrice(limitPrice, equilibriumPrice);
-		log(INFO, sb.append("determineTargetPrice: target=").append(targetPrice));
+		log.log(INFO, "%s::agentStrategy: determineTargetPrice: target=%s", this, targetPrice);
 
 		// Adaptive layer
 		// ----------------------
 		// Update the short term learning variable (aggressiveness r)
 		double oldAggression = aggression;
 		this.updateAggression(limitPrice, targetPrice, equilibriumPrice, lastTransactionPrice);
-		log(INFO, sb.append("updateAggression: lastPrice=").append(lastTransactionPrice) 
-				.append(", r=").append(format(oldAggression))
-				.append("-->r_new=").append(format(aggression)));
+		log.log(INFO, "%s::agentStrategy: updateAggression: lastPrice=%s, r=%.4f-->r_new=%.4f", this, lastTransactionPrice, oldAggression, aggression);
 
 		// Update long term learning variable (adaptiveness theta)
 		double oldTheta = theta;
 		this.updateTheta(equilibriumPrice, transactions);
-		log(INFO, sb.append("updateTheta: theta=").append(format(oldTheta)) 
-				.append("-->theta_new=").append(format(theta)));
+		log.log(INFO, "%s::agentStrategy: updateTheta: theta=%.4f-->theta_new=%.4f", this, oldTheta, theta);
 
 		// Bidding Layer
-		acts.addAll(this.biddingLayer(limitPrice, targetPrice, 1, currentTime));
-		return acts.build();
+		this.biddingLayer(limitPrice, targetPrice, 1, currentTime);
 	}
 
 	/**
@@ -299,11 +311,8 @@ public class AAAgent extends WindowAgent {
 	 * @param currentTime
 	 * @return
 	 */
-	protected Iterable<? extends Activity> biddingLayer(Price limitPrice, 
+	protected void biddingLayer(Price limitPrice, 
 			Price targetPrice, int quantity, TimeStamp currentTime) {
-		StringBuilder sb = new StringBuilder().append(this).append(" ");
-		sb.append(getName()).append("::biddingLayer: ");
-
 		// Determining the offer price to (possibly) submit
 		//		Price bid = this.getQuote().getBidPrice();
 		//		Price ask = this.getQuote().getAskPrice();
@@ -312,16 +321,15 @@ public class AAAgent extends WindowAgent {
 
 		// if no bid or no ask, submit ZI strategy bid
 		if (bid == null || ask == null) {
-			log(INFO, sb.append("Bid/Ask undefined."));
-			return this.executeZIStrategy(type, quantity, currentTime);
+			log.log(INFO, "%s::biddingLayer: Bid/Ask undefined.", this);
+			this.executeZIStrategy(type, quantity, currentTime);
 		}
 
 		// If best offer is outside of limit price, no bid is submitted
 		if ((type.equals(BUY) && limitPrice.lessThanEqual(bid))
 				|| (type.equals(SELL) && limitPrice.greaterThan(ask))) {
-			log(INFO, sb.append("Best price is outside of limit price: ")
-					.append(limitPrice).append("; no submission"));
-			return Collections.emptyList();
+			log.log(INFO, "%s::biddingLayer: Best price is outside of limit price: %s; no submission", this, limitPrice);
+			return;
 		}
 
 		// Can only submit offer if the offer would not cause position
@@ -329,10 +337,8 @@ public class AAAgent extends WindowAgent {
 		int newPosBal = positionBalance + quantity;
 		if (newPosBal < -privateValue.getMaxAbsPosition() 
 				|| newPosBal > privateValue.getMaxAbsPosition() ) {
-			log(INFO, sb.append("New order would exceed max position ")
-					.append(privateValue.getMaxAbsPosition())
-					.append("; no submission"));
-			return Collections.emptyList();
+			log.log(INFO, "%s::biddingLayer: New order would exceed max position: %d; no submission", this, privateValue.getMaxAbsPosition());
+			return;
 		}
 
 		// Pricing - verifying targetPrice
@@ -379,8 +385,9 @@ public class AAAgent extends WindowAgent {
 				orderPrice = bid.greaterThanEqual(targetPrice) ? bid : orderPrice;
 			}
 		}
-		return ImmutableList.of(new SubmitNMSOrder(this, primaryMarket, type, 
-				orderPrice, 1, currentTime));
+		
+		scheduler.executeActivity(new SubmitNMSOrder(this, primaryMarket, type,
+				orderPrice, 1));
 	}
 
 
@@ -544,11 +551,12 @@ public class AAAgent extends WindowAgent {
 	 * @param equilibriumPrice
 	 * @param transactions
 	 */
-	protected void updateTheta(Price equilibriumPrice, 
-			ImmutableList<Transaction> transactions) {
+	protected void updateTheta(Price equilibriumPrice,
+			List<Transaction> transactions) {
 
 		// Error Checking, must have some transactions otherwise can't compute
 		// equilibrium price
+		// XXX Shouldn't this check the length of transactions instead?
 		if (equilibriumPrice == null) return;
 
 		ArrayList<Transaction> transList = new ArrayList<Transaction>(transactions);
@@ -570,7 +578,7 @@ public class AAAgent extends WindowAgent {
 		alphaMax = Math.max(alpha, alphaMax);
 		double alphaBar = (alpha - alphaMin) / (alphaMax - alphaMin);
 		if (alphaMin == alphaMax) alphaBar = alpha - alphaMin;
-		// FIXME is this the best way to handle when alphaMax = alphaMin?
+		// FIXME Erik: is this the best way to handle when alphaMax = alphaMin?
 		// Will primarily only happen for the first update
 
 		// Determining thetaStar, Eq (9)
@@ -593,7 +601,7 @@ public class AAAgent extends WindowAgent {
 	 * @param transactions
 	 * @return
 	 */
-	protected Price estimateEquilibrium(ImmutableList<Transaction> transactions) {
+	protected Price estimateEquilibrium(List<Transaction> transactions) {
 		if (transactions == null) return null;
 		if (transactions.size() == 0) return null; //error checking
 
@@ -617,15 +625,6 @@ public class AAAgent extends WindowAgent {
 	}
 
 	/**
-	 * For debugging
-	 * @param in
-	 */
-	void setAggression(double in) {
-		aggressions.setValue(positionBalance, type, in);
-		aggression = in;
-	}
-
-	/**
 	 * Holds aggression values for AA agents.
 	 *
 	 */
@@ -638,7 +637,7 @@ public class AAAgent extends WindowAgent {
 
 		public Aggression() {
 			this.offset = 0;
-			this.values = Collections.emptyList();
+			this.values = ImmutableList.of();
 		}
 
 		public Aggression(int maxPosition, double initialValue) {

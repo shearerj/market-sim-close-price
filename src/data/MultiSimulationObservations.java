@@ -9,8 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-
+import sumstats.SumStats;
 import systemmanager.Keys;
 import systemmanager.SimulationSpec;
 
@@ -40,7 +39,7 @@ public class MultiSimulationObservations {
 	protected static final Gson gson = new Gson();
 	
 	protected final List<MultiSimPlayerObservation> playerObservations;
-	protected final Map<String, SummaryStatistics> features;
+	protected final Map<String, SumStats> features;
 	protected SimulationSpec spec;
 	protected final boolean outputConfig;
 	protected final int totalSimulations;
@@ -60,8 +59,8 @@ public class MultiSimulationObservations {
 						po.strategy, po.payoff, po.features));
 			}
 			for (Entry<String, Double> e : obs.getFeatures().entrySet()) {
-				SummaryStatistics sum = new SummaryStatistics();
-				sum.addValue(e.getValue());
+				SumStats sum = SumStats.create();
+				sum.add(e.getValue());
 				features.put(e.getKey(), sum);
 			}
 			spec = obs.spec;
@@ -75,14 +74,14 @@ public class MultiSimulationObservations {
 			Iterator<PlayerObservation> it = obs.getPlayerObservations().iterator();
 			for (MultiSimPlayerObservation mpo : playerObservations) {
 				PlayerObservation playerObs = it.next();
-				mpo.payoff.addValue(playerObs.payoff);
+				mpo.payoff.add(playerObs.payoff);
 				// player-specific PV control variables
-				mpo.features.get(Keys.PV_BUY1).addValue(playerObs.features.get(Keys.PV_BUY1).doubleValue());
-				mpo.features.get(Keys.PV_SELL1).addValue(playerObs.features.get(Keys.PV_SELL1).doubleValue());
-				mpo.features.get(Keys.PV_POSITION1_MAX_ABS).addValue(playerObs.features.get(Keys.PV_POSITION1_MAX_ABS).doubleValue());
+				mpo.features.get(Keys.PV_BUY1).add(playerObs.features.get(Keys.PV_BUY1).doubleValue());
+				mpo.features.get(Keys.PV_SELL1).add(playerObs.features.get(Keys.PV_SELL1).doubleValue());
+				mpo.features.get(Keys.PV_POSITION1_MAX_ABS).add(playerObs.features.get(Keys.PV_POSITION1_MAX_ABS).doubleValue());
 			}
 			for (Entry<String, Double> e : obs.getFeatures().entrySet())
-				features.get(e.getKey()).addValue(e.getValue());
+				features.get(e.getKey()).add(e.getValue());
 		}
 	}
 	
@@ -97,25 +96,25 @@ public class MultiSimulationObservations {
 			players.add(obs);
 			obs.addProperty("role", mpo.role);
 			obs.addProperty("strategy", mpo.strategy);
-			obs.addProperty("payoff", mpo.payoff.getMean());
+			obs.addProperty("payoff", mpo.payoff.mean());
 			
 			// Record standard deviation for multi simulation
 			JsonObject playerFeatures = new JsonObject();
 			obs.add("features", playerFeatures);
-			playerFeatures.addProperty("payoff_stddev", mpo.payoff.getStandardDeviation());
+			playerFeatures.addProperty("payoff_stddev", mpo.payoff.stddev());
 			// Record player-specific PV control variables
 			for (String property : mpo.features.keySet()) {
-				playerFeatures.addProperty(property, mpo.features.get(property).getMean());
+				playerFeatures.addProperty(property, mpo.features.get(property).mean());
 			}
 		}
 		
 		// Write out features
 		JsonObject feats = new JsonObject();
 		root.add("features", feats);
-		for (Entry<String, SummaryStatistics> e : features.entrySet()) {
+		for (Entry<String, SumStats> e : features.entrySet()) {
 			// TODO Ben's JsonParser doesn't handle nans or inf. This does.
 			// Either make Ben's handle it, or make this handling better
-			double mean = e.getValue().getMean();
+			double mean = e.getValue().mean();
 			if (Double.isInfinite(mean) || Double.isNaN(mean))
 				feats.addProperty(e.getKey(), Double.toString(mean));
 			else

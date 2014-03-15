@@ -2,6 +2,7 @@ package entity.agent;
 
 import static org.junit.Assert.*;
 
+<<<<<<< HEAD
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -93,4 +94,15 @@ public class MarketDataAgentTest {
 		assertEquals("Incorrect quantity", x.getQuantity(), y.getQuantity());
 		assertEquals("Incorrect order type", x.getOrderType(), y.getOrderType());
 	}
+=======
+import org.junit.Test;
+
+public class MarketDataAgentTest {
+
+	@Test
+	public void test() {
+		fail("Not yet implemented");
+	}
+
+>>>>>>> c2ec2fc595f0d27d3d90c28940ea2439acabad24
 }

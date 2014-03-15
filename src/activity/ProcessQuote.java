@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import entity.infoproc.QuoteProcessor;
 import entity.market.Market;
-import entity.market.MarketTime;
 import entity.market.Quote;
 import event.TimeStamp;
 
@@ -17,21 +16,17 @@ public class ProcessQuote extends Activity {
 
 	protected final QuoteProcessor ip;
 	protected final Market market;
-	protected final MarketTime quoteTime;
 	protected final Quote quote;
 
-	public ProcessQuote(QuoteProcessor ip, Market market, MarketTime quoteTime, Quote quote,
-			TimeStamp scheduledTime) {
-		super(scheduledTime);
+	public ProcessQuote(QuoteProcessor ip, Market market, Quote quote) {
 		this.ip = checkNotNull(ip, "IP");
-		this.quoteTime = checkNotNull(quoteTime, "Market Time");
 		this.market = checkNotNull(market, "Market");
 		this.quote = checkNotNull(quote, "Quote");
 	}
 
 	@Override
-	public Iterable<? extends Activity> execute(TimeStamp currentTime) {
-		return this.ip.processQuote(market, quoteTime, quote, currentTime);
+	public void execute(TimeStamp currentTime) {
+		this.ip.processQuote(market, quote, currentTime);
 	}
 	
 	@Override

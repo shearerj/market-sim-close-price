@@ -45,3 +45,10 @@ logs/*
 # Emacs #
 #########
 *~
+
+# Project Specific #
+####################
+# For custom defaults on root directory
+/defaults.json
+# For simulators on root director
+/*.zip
