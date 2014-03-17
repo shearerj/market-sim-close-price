@@ -93,7 +93,7 @@ public class OrderParserNYSETest {
 				Character.toString(orderData.getExchangeCode()));
 		assertEquals(testType + " order stock symbol wrong", stockSymbol, orderData.getSymbol());
 		assertEquals(testType + " order time stamp wrong", 
-				TimeStamp.create(Integer.parseInt(milliseconds) * 1000 + Integer.parseInt(seconds)),
+				TimeStamp.create(Integer.parseInt(milliseconds) + Integer.parseInt(seconds)*1000),
 				orderData.getTimeStamp());
 		assertEquals(testType + " order system code wrong", systemCode, 
 				Character.toString(orderData.getSystemCode()));

@@ -47,7 +47,7 @@ public class MarketDataAgentTest {
 				sip, market, rand, "test_files/nyseSimpleTest.csv");
 		Iterator<OrderDatum> orderDatumItr = agent.getOrderDatumList().iterator();
 		
-		assertTrue("Too few orders", orderDatumItr.hasNext());
+		assertTrue("No orders", orderDatumItr.hasNext());
 		OrderDatum orderDatum = orderDatumItr.next();
 		OrderDatum correctOrderDatum = new OrderDatum('A', "0", "1", 'P', "SRG1",
 				TimeStamp.create(88), 'O', "AARCA", new Price(3249052), 5742346, BUY);
@@ -58,9 +58,9 @@ public class MarketDataAgentTest {
 	@Test
 	public void nyseTest() {
 		MarketDataAgent agent = new MarketDataAgent(scheduler, fundamental,
-				sip, market, rand, "test_files/nyseSimpleTest.csv");
+				sip, market, rand, "test_files/nyseTest.csv");
 		Iterator<OrderDatum> orderDatumItr = agent.getOrderDatumList().iterator();
-		
+				
 		assertTrue("Too few orders", orderDatumItr.hasNext());		
 		OrderDatum orderDatum = orderDatumItr.next();
 		OrderDatum correct1 = new OrderDatum('A', "1", "1", 'B', "SRG2",

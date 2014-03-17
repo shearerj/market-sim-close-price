@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -29,7 +30,7 @@ public class OrderParserNYSE implements OrderParser {
 		List<OrderDatum> orderDatumList = Lists.newArrayList();
 		
 		// Opening the file
-		Scanner scanner = new Scanner(fileName);
+		Scanner scanner = new Scanner(Paths.get(fileName));
 				
 		int x =0;
 		while (scanner.hasNextLine()) {

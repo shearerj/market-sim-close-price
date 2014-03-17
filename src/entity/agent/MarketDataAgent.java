@@ -9,11 +9,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import logger.Log;
 import systemmanager.Keys;
 import systemmanager.Scheduler;
+import systemmanager.Consts.AgentType;
 import activity.AgentStrategy;
 import activity.SubmitOrder;
-
 import data.AgentProperties;
 import data.FundamentalValue;
 import data.OrderDatum;
@@ -44,7 +45,7 @@ public class MarketDataAgent extends SMAgent {
 		super(scheduler, TimeStamp.ZERO, fundamental, sip, market, rand, 1);
 		
 		// Determining the market file type
-		if(fileName.toString().toLowerCase().contains("nyse")){
+		if(fileName.toLowerCase().contains("nyse")){
 			this.orderParser = new OrderParserNYSE();
 		}
 		else {
@@ -60,6 +61,8 @@ public class MarketDataAgent extends SMAgent {
 			System.exit(1);
 		}
 		
+		scheduler.scheduleActivity(TimeStamp.create(0), new AgentStrategy(this));
+//		scheduler.executeActivity(new AgentStrategy(this));
 	}
 	
 	public MarketDataAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market, 
