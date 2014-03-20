@@ -13,9 +13,16 @@
 
 import random
 import sys
+import pprint
 
+# Checking for input
+if (len(sys.argv) != 3):
+	print "Incorrect # of arguments"
+	print "Usage: python gen_rand_nyse.py [number_of_securities] [number_of_orders_to_print]"
+	sys.exit(1)
 
-numOrders = int(sys.argv[1]);
+numSecurities = int(sys.argv[1])
+numOrders = int(sys.argv[2]) % 100
 
 msg_type = ['A','F','E','C','X','D','U'];
 Timestamp_nanoseconds = 0;
@@ -26,52 +33,72 @@ stock_sym = 'SRG';
 price =1;
 seconds=0;
 milliseconds=0;
-#sys_code = ['L','O','E','B'];
-#quote_id =1; 
-#total_imbalance = 1;
-#market_imbalance = 1;
-#auction_type = ['O','M','H','C'];
-#auction_time = 1;
 printable = ['N', 'Y'];
+
 
 for x in range(0,numOrders):
 
+	#incrementing the time
+	next_nsec = random.choice([True,False])
+	if (next_nsec):
+		Timestamp_nanoseconds += 1;
+
+	ord_ref_num += 1
+
 	#generate random values for variables
-	m = random.choice(msg_type);
+	m = str(random.choice(msg_type))
+	ref_num_str = str(ord_ref_num)
+	buy_str = random.choice(buy_or_sell)
+	shares_str = str(random.randint(0,9999999))
+	symbol_str = 'SRG' + str(random.randint(1,numSecurities))
+	price_str = str(random.randint(1,9999999))
+	sec_str = str(seconds)
+	msec_str = str(milliseconds)
+	quote_id = "AARCA"
+	filler = " "*8
 	pick_printable = random.choice(printable);
+	time = str(Timestamp_nanoseconds)
 
-	shares = random.randint(0,1000);
-	stock_sym = 'SRGSRGS' + str(random.randint(0,9)); #needs to be 8 bytes
-	price = random.randint(1,9999);
+	#makes sequential data
 
-	#go without modify, make sequential data 
-	if(m == 'A'):
-		print m , Timestamp_nanoseconds , ord_ref_num , random.choice(buy_or_sell) , shares , stock_sym , price; 
+	if (m == 'A' or m == 'F'): #F needs a market identifier
+		order_str = m + ','
+		order_str += time + ','
+		order_str += ref_num_str + ','
+		order_str += buy_str + ','
+		order_str += shares_str + ','
+		order_str += symbol_str + ','
+		order_str += price_str + ','
+		print order_str
 
-	if(m == 'F'):
-		print m , Timestamp_nanoseconds , ord_ref_num , random.choice(buy_or_sell) , shares , stock_sym , price; #needs a market identifier
+	if (m == 'E' or m == 'X'): #E needs match number
+		order_str = m + ','
+		order_str += time + ','
+		order_str += ref_num_str + ','
+		order_str += shares_str + ','
+		print order_str
+	
+	if (m == 'U'): #new order reference number
+		order_str = m + ','
+		order_str += time + ','
+		order_str += ref_num_str + ','
+		order_str += shares_str + ','
+		order_str += price_str + ','
+		print order_str
 
-	if(m == 'E'):
-		print m , Timestamp_nanoseconds , ord_ref_num , shares #needs match number
 
-	if(m == 'C'):
-		print m , Timestamp_nanoseconds , ord_ref_num , shares , pick_printable , price; 
-
-	if(m == 'X'):
-		print m , Timestamp_nanoseconds , ord_ref_num , shares; 
+	if (m == 'C'):
+		order_str = m + ','
+		order_str += time + ','
+		order_str += ref_num_str + ','
+		order_str += shares_str + ','
+		order_str += pick_printable + ','
+		order_str += price_str + ','
 
 	if(m == 'D'):
-		print m , Timestamp_nanoseconds , ord_ref_num; 
+		order_str = m + ','
+		order_str += time + ','
+		order_str += ref_num_str + ','
+		print order_str
 
-	if(m == 'U'):
-		print m , Timestamp_nanoseconds , ord_ref_num ,  shares ,  price; #new order reference number
-
-
-
-	Timestamp_nanoseconds = (Timestamp_nanoseconds + 1);
-
-	milliseconds+=random.randint(0,999);
-	if(milliseconds >= 1000):
-	 	seconds+= milliseconds/1000;
-	 	milliseconds = milliseconds % 1000;
-	ord_ref_num+=1;
+#endfor
