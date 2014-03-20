@@ -4,12 +4,8 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -30,12 +26,13 @@ public class OrderParserNYSE implements OrderParser {
 		List<OrderDatum> orderDatumList = Lists.newArrayList();
 		
 		// Opening the file
-		Scanner scanner = new Scanner(Paths.get(fileName));
+		Scanner scanner = new Scanner(new File(fileName));
 				
-		int x =0;
+		@SuppressWarnings("unused")
+		int x = 0;
 		while (scanner.hasNextLine()) {
 			String line = scanner.nextLine();
-			List<String> elements = Lists.newArrayList(line.split(","));
+			List<String> elements = Arrays.asList(line.split(","));
 		
 			char messageType = elements.get(0).charAt(0);
 			switch (messageType) {

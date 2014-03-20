@@ -1,18 +1,11 @@
 package entity.agent;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import logger.Log;
 import systemmanager.Keys;
 import systemmanager.Scheduler;
-import systemmanager.Consts.AgentType;
 import activity.AgentStrategy;
 import activity.SubmitOrder;
 import data.AgentProperties;
@@ -57,7 +50,7 @@ public class MarketDataAgent extends SMAgent {
 			this.orderDatumList = orderParser.process(fileName);
 		} catch (IOException e) {
 			e.printStackTrace();
-			System.out.println("Error: could not open file: " + fileName.toString());
+			System.err.println("Error: could not open file: " + fileName.toString());
 			System.exit(1);
 		}
 		

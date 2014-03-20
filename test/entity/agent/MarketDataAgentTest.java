@@ -1,9 +1,11 @@
 package entity.agent;
 
-import static org.junit.Assert.*;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.Random;
 
 import org.junit.Before;
@@ -16,11 +18,8 @@ import data.OrderDatum;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.MockMarket;
-import entity.market.Order;
 import entity.market.Price;
 import event.TimeStamp;
-import static fourheap.Order.OrderType.BUY;
-import static fourheap.Order.OrderType.SELL;
 
 
 public class MarketDataAgentTest {
@@ -30,7 +29,14 @@ public class MarketDataAgentTest {
 	private Scheduler scheduler;
 	private SIP sip;
 	private Market market;
-	
+
+	/*
+	 * TODO: The files loaded are small. Probably better to allow market data
+	 * agents to take a "Reader" instead of just a file name. That way you can
+	 * just pass in the text that would be in a file, without having to have a
+	 * separate file that needs to be loaded. e.g. everything can be present in
+	 * the text
+	 */
 
 	@Before
 	public void setupTest() {
@@ -44,7 +50,7 @@ public class MarketDataAgentTest {
 	@Test
 	public void nyseSimpleTest() {
 		MarketDataAgent agent = new MarketDataAgent(scheduler, fundamental,
-				sip, market, rand, "test_files/nyseSimpleTest.csv");
+				sip, market, rand, "dataTests/nyseSimpleTest.csv");
 		Iterator<OrderDatum> orderDatumItr = agent.getOrderDatumList().iterator();
 		
 		assertTrue("No orders", orderDatumItr.hasNext());
@@ -58,7 +64,7 @@ public class MarketDataAgentTest {
 	@Test
 	public void nyseTest() {
 		MarketDataAgent agent = new MarketDataAgent(scheduler, fundamental,
-				sip, market, rand, "test_files/nyseTest.csv");
+				sip, market, rand, "dataTests/nyseTest.csv");
 		Iterator<OrderDatum> orderDatumItr = agent.getOrderDatumList().iterator();
 				
 		assertTrue("Too few orders", orderDatumItr.hasNext());		

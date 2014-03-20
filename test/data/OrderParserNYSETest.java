@@ -34,7 +34,7 @@ public class OrderParserNYSETest {
 		OrderParserNYSE parser = new OrderParserNYSE();
 		return parser;
 	}
-	
+
 	@Test
 	public void parseAddOrderTest2() {
 		OrderParserNYSE orderParser = new OrderParserNYSE();
