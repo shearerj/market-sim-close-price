@@ -51,7 +51,7 @@ for x in range(0,numOrders):
 
 	#go without modify, make sequential data 
 	if(m == 'A'):
-		print m , seq_num , ord_ref_num , random.choice(exchg_code) , random.choice(buy_or_sell) , shares , stock_sym , price , seconds , milliseconds , random.choice(sys_code), quote_id , filler;
+		print m,",",seq_num , ord_ref_num , random.choice(exchg_code) , random.choice(buy_or_sell) , shares , stock_sym , price , seconds , milliseconds , random.choice(sys_code), quote_id , filler;
 
 	if(m == 'M'):
 		print m , seq_num , ord_ref_num ,  shares ,  price , seconds , milliseconds , stock_sym ,random.choice(exchg_code) , random.choice(sys_code), quote_id, random.choice(buy_or_sell) , filler;
