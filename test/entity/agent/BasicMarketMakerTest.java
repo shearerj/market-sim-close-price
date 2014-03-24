@@ -15,6 +15,7 @@ import java.util.Random;
 
 import logger.Log;
 
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -42,7 +43,7 @@ import event.TimeStamp;
 import fourheap.Order.OrderType;
 
 public class BasicMarketMakerTest {
-	
+
 	public static final TimeStamp one = TimeStamp.create(1);
 
 	private Executor exec;
@@ -64,7 +65,7 @@ public class BasicMarketMakerTest {
 		sip = new SIP(exec, TimeStamp.IMMEDIATE);
 		market = new MockMarket(exec, sip);
 	}
-	
+
 	private BasicMarketMaker createBMM(Object... parameters) {
 		return new BasicMarketMaker(exec, fundamental, sip, market,
 				new Random(), EntityProperties.copyFromPairs(agentProperties, parameters));
@@ -106,30 +107,30 @@ public class BasicMarketMakerTest {
 		Quote quote = market.getQuoteProcessor().getQuote();
 		assertEquals(null, quote.getAskPrice());
 		assertEquals(null, quote.getBidPrice());
-		
+
 		// Check activities inserted (none, other than reentry)
 		mm.agentStrategy(time);
 		assertTrue(mm.activeOrders.isEmpty());
-		
+
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
-		
+
 		// Creating and adding bids
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-		
+
 		// Check market quote
 		quote = market.getQuoteProcessor().getQuote();
 		assertEquals(null, quote.getAskPrice());
 		assertEquals(new Price(40), quote.getBidPrice());
-		
+
 		// Check activities inserted (none, other than reentry)
 		mm.lastAsk = new Price(55);
 		mm.lastBid = new Price(45);
 		mm.agentStrategy(time);
 		assertTrue(mm.activeOrders.isEmpty());
 	}
-	
-	
+
+
 	@Test
 	public void basicLadderTest() {
 		TimeStamp time = TimeStamp.ZERO;
@@ -146,10 +147,10 @@ public class BasicMarketMakerTest {
 
 		// Creating and adding bids
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-		
+
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
 		exec.executeActivity(new Clear(market));
-		
+
 		// Check market quote
 		Quote quote = market.getQuoteProcessor().getQuote();
 		assertEquals(new Price(50), quote.getAskPrice());
@@ -201,21 +202,21 @@ public class BasicMarketMakerTest {
 
 		// Creating and adding bids
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-		
+
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
 		exec.executeActivity(new Clear(market));
-		
+
 
 		// Initial MM strategy
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		
+
 
 		// Quote change
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(42), 1));
-		
+
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(48), 1));
 		exec.executeActivity(new Clear(market));
-		
+
 		// Check market quote
 		Quote quote = market.getQuoteProcessor().getQuote();
 		assertEquals(new Price(48), quote.getAskPrice());
@@ -270,14 +271,14 @@ public class BasicMarketMakerTest {
 
 		// Creating and adding bids
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-		
+
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
 		exec.executeActivity(new Clear(market));
-		
+
 
 		// Initial MM strategy
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		
+
 
 		// Check ladder of orders
 		// market's orders contains all orders ever submitted
@@ -340,16 +341,16 @@ public class BasicMarketMakerTest {
 
 		// Creating and adding bids
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(102), 1));
-		
+
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(105), 1));
 		exec.executeActivity(new Clear(market));
-		
+
 
 		// Updating NBBO quote
 		MockMarket market2 = new MockMarket(exec, sip);
 		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, TimeStamp.ZERO);
 		exec.executeActivity(new ProcessQuote(sip, market2, q));
-		
+
 
 		// Just to check that NBBO correct (it crosses)
 		BestBidAsk nbbo = sip.getNBBO();
@@ -358,7 +359,7 @@ public class BasicMarketMakerTest {
 
 		// MM strategy
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		
+
 
 		// Check ladder of orders
 		// market's orders contains all orders ever submitted
@@ -402,16 +403,16 @@ public class BasicMarketMakerTest {
 
 		// Creating and adding bids
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(70), 1));
-		
+
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(89), 1));
 		exec.executeActivity(new Clear(market));
-		
+
 
 		// Updating NBBO quote
 		MockMarket market2 = new MockMarket(exec, sip);
 		Quote q = new Quote(market2, new Price(90), 1, new Price(100), 1, TimeStamp.ZERO);
 		exec.executeActivity(new ProcessQuote(sip, market2, q));
-		
+
 
 		// Just to check that NBBO correct (it crosses)
 		BestBidAsk nbbo = sip.getNBBO();
@@ -420,7 +421,7 @@ public class BasicMarketMakerTest {
 
 		// MM strategy
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		
+
 
 		// Check ladder of orders
 		// market's orders contains all orders ever submitted
@@ -465,11 +466,11 @@ public class BasicMarketMakerTest {
 		// Creating and adding bids
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
-		
+
 
 		// Initial MM strategy; submits ladder with numRungs=3
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		
+
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
 
 		// Withdraw other orders & submit new orders
@@ -480,7 +481,7 @@ public class BasicMarketMakerTest {
 		exec.executeUntil(one);
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(42), 1));
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(49), 1));
-		
+
 		// Verify that it withdraws ladder entirely & submits new ladder
 		exec.executeActivity(new AgentStrategy(marketmaker));
 		exec.executeUntil(one);
@@ -495,7 +496,7 @@ public class BasicMarketMakerTest {
 				assertTrue(price == 49 || price == 54 || price == 59);
 		}
 	}
-	
+
 	/**
 	 * Case where withdrawing the ladder causes the quote to become undefined
 	 * (as well as the last NBBO quote)
@@ -514,24 +515,23 @@ public class BasicMarketMakerTest {
 		// Creating and adding bids
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
-		
 
 		// Initial MM strategy; submits ladder with numRungs=3
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		
+
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
 
 		// Withdraw other orders
 		agent1.withdrawAllOrders();
 		assertTrue(agent1.activeOrders.isEmpty());
 		marketmaker.lastBid = new Price(42); // to make sure MM will withdraw its orders
-		
+
 		// Verify that it withdraws ladder entirely
 		// Note that now the quote is undefined, after it withdraws its ladder
 		// so it will submit a ladder with the lastBid
 		exec.executeUntil(one);
 		exec.executeActivity(new AgentStrategy(marketmaker));
-		
+
 		assertNotNull(marketmaker.lastBid);
 		assertNotNull(marketmaker.lastAsk);
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
@@ -541,6 +541,135 @@ public class BasicMarketMakerTest {
 				assertTrue(price == 42 || price == 37 || price == 32);
 			else
 				assertTrue(price == 50 || price == 55 || price == 60);
+		}
+	}
+
+
+	@Test
+	public void nullBidAskLadder() {
+		MarketMaker marketmaker = createBMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1,
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_INSIDE, true,
+				Keys.INITIAL_LADDER_MEAN, 50,
+				Keys.INITIAL_LADDER_RANGE, 10);
+		
+		// Creating dummy agents
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
+
+		// Creating and adding bids
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
+		
+		exec.executeActivity(new Clear(market));
+
+		// Initial MM strategy
+		exec.executeActivity(new AgentStrategy(marketmaker));
+
+		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
+		
+		// Quote change
+		// Withdraw other orders
+		agent1.withdrawAllOrders();
+		assertTrue(agent1.activeOrders.isEmpty());
+		agent2.withdrawAllOrders();
+		assertEquals(0, agent2.activeOrders.size());
+		assertTrue(marketmaker.lastAsk != null);
+		assertTrue(marketmaker.lastBid != null);
+		
+		// Note that now the quote is undefined, after it withdraws its ladder
+		exec.executeUntil(one);
+		
+		// Next MM strategy execution
+		exec.executeActivity(new AgentStrategy(marketmaker));
+
+		// Check ladder of orders, previous orders withdrawn
+		// market's orders contains all orders ever submitted (include background traders)
+		ArrayList<Order> orders = new ArrayList<Order>(market.getOrders());
+		assertEquals("Incorrect number of orders", 14, orders.size());
+		
+		// Storing buy/sell orders
+		SummaryStatistics buys = new SummaryStatistics();
+		SummaryStatistics sells = new SummaryStatistics();
+		for (Order o : marketmaker.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == BUY)
+				buys.addValue(price);
+			else
+				sells.addValue(price);
+		}
+		
+		// Checking randomly generated ladder
+		int ladderCenter = ((int) (buys.getMax() + sells.getMin()) / 2);
+		assertTrue("ladder center outside range", ladderCenter <= 60 && ladderCenter >= 40);
+		assertEquals(ladderCenter + 5, (int) sells.getMin());
+		assertEquals(ladderCenter - 5, (int) buys.getMax());
+		assertEquals(5, sells.getMax() - sells.getMean(), 0.0001);
+		assertEquals(5, buys.getMax() - buys.getMean(), 0.0001);
+		assertEquals(5, sells.getMax() - sells.getMean(), 0.0001);
+		assertEquals(5, buys.getMax() - buys.getMean(), 0.0001);
+		assertEquals(5, sells.getMean() - sells.getMin(), 0.0001);
+		assertEquals(5, buys.getMean() - buys.getMin(), 0.0001);
+	}
+	
+	@Test
+	public void oneBackgroundTrader() {
+		MarketMaker marketmaker = createBMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1,
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_INSIDE, true,
+				Keys.INITIAL_LADDER_MEAN, 50,
+				Keys.INITIAL_LADDER_RANGE, 10);
+		
+		// Creating dummy agents
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+
+		// Creating and adding bids
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
+		exec.executeActivity(new Clear(market));
+
+		// Initial MM strategy
+		exec.executeActivity(new AgentStrategy(marketmaker));
+
+		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
+		
+		// Storing buy/sell orders
+		SummaryStatistics buys = new SummaryStatistics();
+		SummaryStatistics sells = new SummaryStatistics();
+		for (Order o : marketmaker.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == BUY)
+				buys.addValue(price);
+			else
+				sells.addValue(price);
+		}
+		
+		// Checking one-sided ladder
+		int ladderCenter = ((int) (buys.getMax() + sells.getMin()) / 2);
+		// XXX need to fix following section
+		assertTrue("ladder center outside range", ladderCenter <= 60 && ladderCenter >= 40);
+		assertEquals(ladderCenter + 5, (int) sells.getMin());
+		assertEquals(ladderCenter - 5, (int) buys.getMax());
+		assertEquals(5, sells.getMax() - sells.getMean(), 0.0001);
+		assertEquals(5, buys.getMax() - buys.getMean(), 0.0001);
+		assertEquals(5, sells.getMax() - sells.getMean(), 0.0001);
+		assertEquals(5, buys.getMax() - buys.getMean(), 0.0001);
+		assertEquals(5, sells.getMean() - sells.getMin(), 0.0001);
+		assertEquals(5, buys.getMean() - buys.getMin(), 0.0001);
+	}
+	
+	@Test
+	public void extraTest() {
+		for (int i = 0; i < 100; i++) {
+			setup();
+			nullBidAskLadder();
 		}
 	}
 }

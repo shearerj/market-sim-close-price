@@ -82,8 +82,8 @@ public class BasicMarketMaker extends MarketMaker {
 
 		if (bid == null && lastBid == null && ask == null && lastAsk == null) {
 			this.createOrderLadder(bid, ask);	
-		}
-		else if ((bid == null && lastBid != null)
+			
+		} else if ((bid == null && lastBid != null)
 				|| (bid != null && !bid.equals(lastBid))
 				|| (bid != null && lastBid == null)
 				|| (ask == null && lastAsk != null)
@@ -107,10 +107,10 @@ public class BasicMarketMaker extends MarketMaker {
 					if (ask == null && lastAsk != null) ask = lastAsk;
 					log.log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", 
 							this, primaryMarket, oldBid, oldAsk, bid, ask);
-				}
-				
-				this.createOrderLadder(bid, ask);
+				}	
 			} // if quote defined
+			this.createOrderLadder(bid, ask);
+			
 		} else {
 			log.log(INFO, "%s in %s: No change in submitted ladder", this, primaryMarket);
 		}

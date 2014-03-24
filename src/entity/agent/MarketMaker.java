@@ -142,15 +142,34 @@ public abstract class MarketMaker extends ReentryAgent {
 	public void createOrderLadder(Price ladderBid, Price ladderAsk) {
 
 		if (ladderBid == null || ladderAsk == null) {
-			if (initLadderMean == 0)
-				return;
+			if (initLadderMean == 0) return;
 			else {
-				// initialize ladder prices
-				double ladderMeanMin = initLadderMean - initLadderRange / 2.0;
-				double ladderMeanMax = initLadderMean + initLadderRange / 2.0;
-				int ladderCenter = (int) Rands.nextUniform(rand, ladderMeanMin, ladderMeanMax);
-				ladderBid = new Price(ladderCenter - this.stepSize / 2.0);
-				ladderAsk = new Price(ladderCenter + this.stepSize / 2.0);
+				if (ladderBid != null && ladderAsk == null) {
+					if (initLadderRange > stepSize) {
+						ladderAsk = new Price(Rands.nextUniform(rand, ladderBid.intValue() + stepSize, 
+								ladderBid.intValue() + initLadderRange));
+					} else {
+						ladderAsk = new Price(Rands.nextUniform(rand, ladderBid.intValue() + initLadderRange, 
+								ladderBid.intValue() + stepSize));
+					}
+					
+				} else if (ladderBid == null && ladderAsk != null) {
+					if (initLadderRange > stepSize) {
+						ladderBid = new Price(Rands.nextUniform(rand, ladderAsk.intValue() - stepSize, 
+								ladderAsk.intValue() - initLadderRange));
+					} else {
+						ladderBid = new Price(Rands.nextUniform(rand, ladderAsk.intValue() - initLadderRange, 
+								ladderAsk.intValue() - stepSize));
+					}
+					
+				} else if (ladderBid == null && ladderAsk == null) {
+					// initialize ladder prices
+					double ladderMeanMin = initLadderMean - initLadderRange;
+					double ladderMeanMax = initLadderMean + initLadderRange;
+					int ladderCenter = (int) Rands.nextUniform(rand, ladderMeanMin, ladderMeanMax);
+					ladderBid = new Price(ladderCenter - stepSize);
+					ladderAsk = new Price(ladderCenter + stepSize);
+				}
 				log.log(INFO, "%s in %s: Randomized Ladder MID (%s, %s)", 
 						this, primaryMarket, ladderBid, ladderAsk);
 			}
@@ -192,7 +211,8 @@ public abstract class MarketMaker extends ReentryAgent {
 			// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
 			if (lastNBBOQuote.getBestBid() != null)
 				sellMinPrice = pcomp.max(ladderAsk, lastNBBOQuote.getBestBid());
-			log.log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)", this, primaryMarket, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
+			log.log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)", 
+					this, primaryMarket, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
 		}
 
 		this.submitOrderLadder(buyMinPrice, buyMaxPrice, sellMinPrice,
