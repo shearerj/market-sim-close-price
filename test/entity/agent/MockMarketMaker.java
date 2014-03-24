@@ -22,7 +22,16 @@ public class MockMarketMaker extends MarketMaker {
 			Market market, boolean noOp, int numRungs, int rungSize, 
 			boolean truncateLadder, boolean tickImprovement, boolean tickInside) {
 		super(scheduler, fundamental, sip, market, new Random(), 0, 1, noOp, 
-				numRungs, rungSize, truncateLadder, tickImprovement, tickInside);
+				numRungs, rungSize, truncateLadder, tickImprovement, tickInside, 0, 0);
+	}
+	
+	public MockMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
+			Market market, boolean noOp, int numRungs, int rungSize, 
+			boolean truncateLadder, boolean tickImprovement, boolean tickInside,
+			int initLadderMean, int initLadderRange) {
+		super(scheduler, fundamental, sip, market, new Random(), 0, 1, noOp, 
+				numRungs, rungSize, truncateLadder, tickImprovement, tickInside,
+				initLadderMean, initLadderRange);
 	}
 	
 	public MockMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,

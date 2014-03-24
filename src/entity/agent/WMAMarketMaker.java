@@ -58,11 +58,12 @@ public class WMAMarketMaker extends MarketMaker {
 			SIP sip, Market market, Random rand, double reentryRate,
 			int tickSize, boolean noOp, int numRungs, int rungSize,
 			boolean truncateLadder, boolean tickImprovement,
-			boolean tickInside, int numHistorical, double weightFactor) {
+			boolean tickInside, int initLadderMean, int initLadderRange, 
+			int numHistorical, double weightFactor) {
 		
 		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
 				noOp, numRungs, rungSize, truncateLadder, tickImprovement,
-				tickInside);
+				tickInside, initLadderMean, initLadderRange);
 
 		checkArgument(weightFactor >= 0 && weightFactor < 1, 
 				"Weight factor must be in range (0,1)!");
@@ -84,7 +85,9 @@ public class WMAMarketMaker extends MarketMaker {
 				props.getAsBoolean(Keys.TRUNCATE_LADDER, true),
 				props.getAsBoolean(Keys.TICK_IMPROVEMENT, true),
 				props.getAsBoolean(Keys.TICK_INSIDE, true),
-				props.getAsInt(Keys.NUM_HISTORICAL, 5),
+				props.getAsInt(Keys.INITIAL_LADDER_MEAN, 0),
+				props.getAsInt(Keys.INITIAL_LADDER_RANGE, 0), 
+				props.getAsInt(Keys.NUM_HISTORICAL, 5), 
 				props.getAsDouble(Keys.WEIGHT_FACTOR, 0));
 	}
 
@@ -106,6 +109,7 @@ public class WMAMarketMaker extends MarketMaker {
 
 			if (!this.getQuote().isDefined()) {
 				log.log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
+				// Do nothing, wait until next re-entry
 			} else {
 				// Quote changed, still valid, withdraw all orders
 				log.log(INFO, "%s in %s: Withdraw all orders", this, primaryMarket);
@@ -119,7 +123,8 @@ public class WMAMarketMaker extends MarketMaker {
 					Price oldBid = bid, oldAsk = ask;
 					if (bid == null && lastBid != null) bid = lastBid;
 					if (ask == null && lastAsk != null) ask = lastAsk;
-					log.log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", this, primaryMarket, oldBid, oldAsk, bid, ask);
+					log.log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", 
+							this, primaryMarket, oldBid, oldAsk, bid, ask);
 				}
 				
 				// Compute weighted moving average

@@ -12,6 +12,7 @@ import java.util.Random;
 
 import systemmanager.Scheduler;
 import utils.MathUtils;
+import utils.Rands;
 import activity.SubmitOrder;
 import data.FundamentalValue;
 import entity.infoproc.BestBidAsk;
@@ -31,7 +32,12 @@ import event.TimeStamp;
  * check tickInside as well.
  * 
  * Inside the quote means buy > BID, sell < ASK. Note that tickInside will be 
- * ignored if there tickImprovement is false.
+ * ignored if tickImprovement is false.
+ * 
+ * Added March 22, 2014: Market makers will randomly initialize a ladder given 
+ * a meanLadderCenter and rangeLadderCenter (this will ensure ladder center is
+ * uniformly random in the range of specified length centered around the mean),
+ * and the spread of the ladder center is given by the ladder stepSize.
  * 
  * NOTE: The MarketMaker will truncate the ladder when the price crosses
  * the NBBO, i.e., whenever one of the points in the bid would be routed to
@@ -50,14 +56,17 @@ public abstract class MarketMaker extends ReentryAgent {
 	protected int numRungs;				// # of ladder rungs on one side (e.g., number of buy orders)
 	protected boolean truncateLadder; 	// true if truncate if NBBO crosses ladder
 	protected boolean tickImprovement;	// true if improves by a tick when mid-prices == bid/ask
-	protected boolean noOp;				// FIXME, this should ne NoOpAgent instead - true if no-op strategy (never executes strategy)
+	protected boolean noOp;				// FIXME, this should be NoOpAgent instead - true if no-op strategy (never executes strategy)
 	protected boolean tickInside;		// true if improve tick inside the quote (default outside)
 	protected Price lastAsk, lastBid; 	// stores the last ask/bid, respectively
-
+	protected int initLadderMean;		// for initializing ladder center
+	protected int initLadderRange;	// for initializing ladder center
+	
 	public MarketMaker(Scheduler scheduler, FundamentalValue fundamental,
 			SIP sip, Market market, Random rand, Iterator<TimeStamp> reentry,
 			int tickSize, boolean noOp, int numRungs, int rungSize,
-			boolean truncateLadder, boolean tickImprovement, boolean tickInside) {
+			boolean truncateLadder, boolean tickImprovement, boolean tickInside, 
+			int initLadderMean, int initLadderRange) {
 		
 		super(scheduler, TimeStamp.ZERO, fundamental, sip, market, rand,
 				reentry, tickSize);
@@ -71,6 +80,8 @@ public abstract class MarketMaker extends ReentryAgent {
 		this.tickInside = tickInside;
 		this.lastAsk = null;
 		this.lastBid = null;
+		this.initLadderMean = initLadderMean;
+		this.initLadderRange = initLadderRange;
 	}
 
 	/**
@@ -79,10 +90,12 @@ public abstract class MarketMaker extends ReentryAgent {
 	public MarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, double reentryRate, int tickSize, 
 			boolean noOp, int numRungs, int rungSize, boolean truncateLadder,
-			boolean tickImprovement, boolean tickInside) {
+			boolean tickImprovement, boolean tickInside, int initLadderMean, 
+			int initLadderRange) {
 
 		this(scheduler, fundamental, sip, market, rand, ExpInterarrivals.create(reentryRate, rand),
-				tickSize, noOp, numRungs, rungSize, truncateLadder, tickImprovement, tickInside);
+				tickSize, noOp, numRungs, rungSize, truncateLadder, 
+				tickImprovement, tickInside, initLadderMean, initLadderRange);
 	}
 
 	/**
@@ -96,8 +109,8 @@ public abstract class MarketMaker extends ReentryAgent {
 	 * @param sellMaxPrice
 	 * @return
 	 */
-	public void submitOrderLadder(Price buyMinPrice,
-			Price buyMaxPrice, Price sellMinPrice, Price sellMaxPrice) {
+	public void submitOrderLadder(Price buyMinPrice, Price buyMaxPrice, 
+			Price sellMinPrice, Price sellMaxPrice) {
 
 		// build ascending list of buy orders
 		for (int p = buyMinPrice.intValue(); p <= buyMaxPrice.intValue(); p += stepSize) {
@@ -126,10 +139,22 @@ public abstract class MarketMaker extends ReentryAgent {
 	 * @param ladderAsk
 	 * @return
 	 */
-	public void createOrderLadder(Price ladderBid, 
-			Price ladderAsk) {
+	public void createOrderLadder(Price ladderBid, Price ladderAsk) {
 
-		if (ladderBid == null || ladderAsk == null) return;
+		if (ladderBid == null || ladderAsk == null) {
+			if (initLadderMean == 0)
+				return;
+			else {
+				// initialize ladder prices
+				double ladderMeanMin = initLadderMean - initLadderRange / 2.0;
+				double ladderMeanMax = initLadderMean + initLadderRange / 2.0;
+				int ladderCenter = (int) Rands.nextUniform(rand, ladderMeanMin, ladderMeanMax);
+				ladderBid = new Price(ladderCenter - this.stepSize / 2.0);
+				ladderAsk = new Price(ladderCenter + this.stepSize / 2.0);
+				log.log(INFO, "%s in %s: Randomized Ladder MID (%s, %s)", 
+						this, primaryMarket, ladderBid, ladderAsk);
+			}
+		}
 
 		// Tick improvement
 		if (this.getQuote().getBidPrice() != null) {

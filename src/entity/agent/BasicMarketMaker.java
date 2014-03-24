@@ -47,11 +47,12 @@ public class BasicMarketMaker extends MarketMaker {
 	public BasicMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
 			SIP sip, Market market, Random rand, double reentryRate,
 			int tickSize, boolean noOp, int numRungs, int rungSize,
-			boolean truncateLadder, boolean tickImprovement, boolean tickInside) {
+			boolean truncateLadder, boolean tickImprovement, boolean tickInside, 
+			int initLadderMean, int initLadderRange) {
 
 		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
 				noOp, numRungs, rungSize, truncateLadder, tickImprovement,
-				tickInside);
+				tickInside, initLadderMean, initLadderRange);
 	}
 
 	public BasicMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
@@ -65,7 +66,9 @@ public class BasicMarketMaker extends MarketMaker {
 				props.getAsInt(Keys.RUNG_SIZE, 1000), 
 				props.getAsBoolean(Keys.TRUNCATE_LADDER, true), 
 				props.getAsBoolean(Keys.TICK_IMPROVEMENT, true),
-				props.getAsBoolean(Keys.TICK_INSIDE, true));
+				props.getAsBoolean(Keys.TICK_INSIDE, true),
+				props.getAsInt(Keys.INITIAL_LADDER_MEAN, 0),
+				props.getAsInt(Keys.INITIAL_LADDER_RANGE, 0));
 	}
 
 	@Override
@@ -77,7 +80,10 @@ public class BasicMarketMaker extends MarketMaker {
 		Price bid = this.getQuote().getBidPrice();
 		Price ask = this.getQuote().getAskPrice();
 
-		if ((bid == null && lastBid != null)
+		if (bid == null && lastBid == null && ask == null && lastAsk == null) {
+			this.createOrderLadder(bid, ask);	
+		}
+		else if ((bid == null && lastBid != null)
 				|| (bid != null && !bid.equals(lastBid))
 				|| (bid != null && lastBid == null)
 				|| (ask == null && lastAsk != null)
@@ -99,11 +105,12 @@ public class BasicMarketMaker extends MarketMaker {
 					Price oldBid = bid, oldAsk = ask;
 					if (bid == null && lastBid != null) bid = lastBid;
 					if (ask == null && lastAsk != null) ask = lastAsk;
-					log.log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", this, primaryMarket, oldBid, oldAsk, bid, ask);
+					log.log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", 
+							this, primaryMarket, oldBid, oldAsk, bid, ask);
 				}
 				
 				this.createOrderLadder(bid, ask);
-			}
+			} // if quote defined
 		} else {
 			log.log(INFO, "%s in %s: No change in submitted ladder", this, primaryMarket);
 		}
