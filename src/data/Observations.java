@@ -78,7 +78,7 @@ public class Observations {
 	public static final EventBus BUS = new EventBus();
 	
 	// Statistics objects filled during execution
-	protected final SumStats executionSpeeds;
+	protected final SumStats executionTimes;
 	protected final SumStats prices;
 	protected final TimeSeries transPrices;
 	protected final TimeSeries nbboSpreads;
@@ -128,7 +128,7 @@ public class Observations {
 		spreads = spreadsBuilder.build();
 		midQuotes = midQuotesBuilder.build();
 		
-		this.executionSpeeds = SumStats.create();
+		this.executionTimes = SumStats.create();
 		this.numTrans = HashMultiset.create();
 		this.prices = SumStats.create();
 		this.transPrices = TimeSeries.create();
@@ -155,7 +155,7 @@ public class Observations {
 	public Map<String, Double> getFeatures() {
 		ImmutableMap.Builder<String, Double> features = ImmutableMap.builder();
 		
-		features.put("exectime_mean", executionSpeeds.mean());
+		features.put("exectime_mean", executionTimes.mean());
 		features.put("trans_mean_price", prices.mean());
 		features.put("trans_stddev_price", prices.stddev());
 		
@@ -316,8 +316,10 @@ public class Observations {
 		long buyerExecTime = execTime - transaction.getBuyBid().getSubmitTime().getInTicks();
 		long sellerExecTime = execTime - transaction.getSellBid().getSubmitTime().getInTicks();
 		for (int quantity = 0; quantity < transaction.getQuantity(); quantity++) {
-			executionSpeeds.add((double) buyerExecTime);
-			executionSpeeds.add((double) sellerExecTime);
+			if (transaction.getBuyer() instanceof BackgroundAgent)
+				executionTimes.add((double) buyerExecTime);
+			if (transaction.getSeller() instanceof BackgroundAgent)
+				executionTimes.add((double) sellerExecTime);
 		}
 
 		prices.add(transaction.getPrice().doubleValue());
