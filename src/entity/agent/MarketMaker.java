@@ -145,7 +145,7 @@ public abstract class MarketMaker extends ReentryAgent {
 			if (initLadderMean == 0) return;
 			else {
 				if (ladderBid != null && ladderAsk == null) {
-					if (initLadderRange > stepSize) {
+					if (initLadderRange > 2 * stepSize) {
 						ladderAsk = new Price(Rands.nextUniform(rand, ladderBid.intValue() + 2 * stepSize, 
 								ladderBid.intValue() + initLadderRange));
 					} else {
@@ -154,7 +154,7 @@ public abstract class MarketMaker extends ReentryAgent {
 					}
 					
 				} else if (ladderBid == null && ladderAsk != null) {
-					if (initLadderRange > stepSize) {
+					if (initLadderRange > 2 * stepSize) {
 						ladderBid = new Price(Rands.nextUniform(rand, ladderAsk.intValue() - 2 * stepSize, 
 								ladderAsk.intValue() - initLadderRange));
 					} else {
