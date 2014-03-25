@@ -92,6 +92,7 @@ public class BasicMarketMaker extends MarketMaker {
 
 			if (!this.getQuote().isDefined()) {
 				log.log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
+				
 			} else {
 				// Quote changed, still valid, withdraw all orders
 				log.log(INFO, "%s in %s: Withdraw all orders.", this, primaryMarket);

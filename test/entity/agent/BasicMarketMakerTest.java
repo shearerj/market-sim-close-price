@@ -624,7 +624,7 @@ public class BasicMarketMakerTest {
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_SIZE, 1,
 				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_INSIDE, true,
+				Keys.TICK_INSIDE, false,
 				Keys.INITIAL_LADDER_MEAN, 50,
 				Keys.INITIAL_LADDER_RANGE, 10);
 		
@@ -653,10 +653,9 @@ public class BasicMarketMakerTest {
 		
 		// Checking one-sided ladder
 		int ladderCenter = ((int) (buys.getMax() + sells.getMin()) / 2);
-		// XXX need to fix following section
 		assertTrue("ladder center outside range", ladderCenter <= 60 && ladderCenter >= 40);
 		assertEquals(ladderCenter + 5, (int) sells.getMin());
-		assertEquals(ladderCenter - 5, (int) buys.getMax());
+		assertEquals(40 + 1, (int) buys.getMax()); // tick improvement outside
 		assertEquals(5, sells.getMax() - sells.getMean(), 0.0001);
 		assertEquals(5, buys.getMax() - buys.getMean(), 0.0001);
 		assertEquals(5, sells.getMax() - sells.getMean(), 0.0001);
@@ -670,6 +669,8 @@ public class BasicMarketMakerTest {
 		for (int i = 0; i < 100; i++) {
 			setup();
 			nullBidAskLadder();
+			setup();
+			oneBackgroundTrader();
 		}
 	}
 }

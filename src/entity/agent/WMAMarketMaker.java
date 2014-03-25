@@ -100,7 +100,10 @@ public class WMAMarketMaker extends MarketMaker {
 		Price bid = this.getQuote().getBidPrice();
 		Price ask = this.getQuote().getAskPrice();
 
-		if ((bid == null && lastBid != null)
+		if (bid == null && lastBid == null && ask == null && lastAsk == null) {
+			this.createOrderLadder(bid, ask);
+			
+		} else if ((bid == null && lastBid != null)
 				|| (bid != null && !bid.equals(lastBid))
 				|| (bid != null && lastBid == null)
 				|| (ask == null && lastAsk != null)
@@ -109,7 +112,8 @@ public class WMAMarketMaker extends MarketMaker {
 
 			if (!this.getQuote().isDefined()) {
 				log.log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
-				// Do nothing, wait until next re-entry
+				this.createOrderLadder(bid, ask);
+				
 			} else {
 				// Quote changed, still valid, withdraw all orders
 				log.log(INFO, "%s in %s: Withdraw all orders", this, primaryMarket);
@@ -162,8 +166,8 @@ public class WMAMarketMaker extends MarketMaker {
 				Price ladderAsk = new Price(sumAsks / totalWeight);
 
 				this.createOrderLadder(ladderBid, ladderAsk);
-
 			} // if quote defined
+			
 		} else {
 			log.log(INFO, "%s in %s: No change in submitted ladder", this, primaryMarket);
 		}
