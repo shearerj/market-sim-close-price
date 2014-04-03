@@ -15,7 +15,7 @@
 using namespace std;
 
 //Consts
-// Length = (# of chars in spec)
+// Length = (# of bytes/chars in spec)
 const int TickerLength = 8;
 const int MPIDLength = 4;
 const int ReasonLength = 4;
@@ -34,8 +34,6 @@ public:
 // Messages
 //
 class Message {
-public:
-  TimeStamp ts;
 protected:
   unsigned int nanoseconds;
   char eventCode;
@@ -46,8 +44,6 @@ public:
 };
 
 class StockDirectory {
-public:
-  TimeStamp ts;
 protected:
   unsigned int nanoseconds;
   char ticker[TickerLength];
@@ -61,8 +57,6 @@ public:
 };
 
 class StockTradingAction {
-public:
-  TimeStamp ts;
 protected:
   unsigned int nanoseconds;
   char ticker[TickerLength];
@@ -74,8 +68,6 @@ public:
 };
 
 class ShortSalePriceTest {
-public:
-  TimeStamp ts;
 private:
   unsigned int nanoseconds;
   char ticker[TickerLength];
@@ -86,8 +78,6 @@ public:
 };
 
 class MarketParticipantPosition {
-public:
-  TimeStamp ts;
 protected:
   unsigned int nanoseconds;
   char mpid[MPIDLength];
@@ -105,7 +95,6 @@ protected:
   unsigned int nanoseconds;
   unsigned long matchNumber;
 public:
-  TimeStamp ts;
   friend istream& operator>> (istream &input,  BrokenTrade &ts);
   friend ostream& operator<< (ostream &output, BrokenTrade &ts);
 };
@@ -123,7 +112,6 @@ protected:
   char crossType;
   char priceVar;
 public:
-  TimeStamp ts;
   friend istream& operator>> (istream &input,  NetOrderImbalance &ts);
   friend ostream& operator<< (ostream &output, NetOrderImbalance &ts);
 };
@@ -134,7 +122,6 @@ protected:
   char ticker[TickerLength];
   char interest;
 public:
-  TimeStamp ts;
   friend istream& operator>> (istream &input,  RetailPriceImprovement &ts);
   friend ostream& operator<< (ostream &output, RetailPriceImprovement &ts);
 };
@@ -147,7 +134,6 @@ protected:
   unsigned int nanoseconds; //nanoseconds since last timestamp
   unsigned long refNum; //unique reference number
 public:
-  TimeStamp ts; // last timestamp
 };
 
 class AddOrder : public Order {

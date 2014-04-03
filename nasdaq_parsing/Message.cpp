@@ -201,24 +201,24 @@ istream& operator>> (istream &input,  CrossTradeMessage &o) {
 //
 
 ostream& operator<< (ostream &output, TimeStamp &ts){
-  output << ts.seconds;
+  output << "T," << ts.seconds << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, Message &o){
-  output << "S," << o.ts << ',' << o.nanoseconds << ',' << o.eventCode << '\n';
+  output << "S," << ',' << o.nanoseconds << ',' << o.eventCode << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, StockDirectory &o){
-  output << "R," << o.ts << ',' << o.nanoseconds << ',';
+  output << "R," << ',' << o.nanoseconds << ',';
   output.write(o.ticker, TickerLength);
   output << ',' << o.mktCategory << ',' << o.finStatus << ',' << o.roundLotSize << ',' << o.roundLotStatus << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, StockTradingAction &o){
-  output << "H," << o.ts << ',' << o.nanoseconds << ',';
+  output << "H," << ',' << o.nanoseconds << ',';
   output.write(o.ticker, TickerLength);
   output << ',' << o.tradingState << ',';
   output.write(o.reason, ReasonLength);
@@ -227,14 +227,14 @@ ostream& operator<< (ostream &output, StockTradingAction &o){
 }
 
 ostream& operator<< (ostream &output, ShortSalePriceTest &o){
-  output << "Y," << o.ts << ',' << o.nanoseconds << ',';
+  output << "Y," << ',' << o.nanoseconds << ',';
   output.write(o.ticker, TickerLength);
   output << ',' << o.regSHOAction << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, MarketParticipantPosition &o){
-  output << "L," << o.ts << ',' << o.nanoseconds << ',';
+  output << "L," << ',' << o.nanoseconds << ',';
   output.write(o.mpid, MPIDLength);
   output << ',';
   output.write(o.ticker, TickerLength);
@@ -243,19 +243,19 @@ ostream& operator<< (ostream &output, MarketParticipantPosition &o){
 }
 
 ostream& operator<< (ostream &output, BrokenTrade &o){
-  output << "B," << o.ts << ',' << o.nanoseconds << ',' << o.matchNumber << '\n';
+  output << "B," << ',' << o.nanoseconds << ',' << o.matchNumber << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, NetOrderImbalance &o){
-  output << "I," << o.ts << ',' << o.nanoseconds << ',' << o.pairedShares << ',' << o.imbalanceShares << ',' << o.direction << ',';
+  output << "I," << ',' << o.nanoseconds << ',' << o.pairedShares << ',' << o.imbalanceShares << ',' << o.direction << ',';
   output.write(o.ticker, TickerLength);
   output << ',' << o.farPrice << ',' << o.nearPrice << ',' << o.currentPrice << ',' << o.crossType << ',' << o.priceVar << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, RetailPriceImprovement &o){
-  output << "N," << o.ts << ',' << o.nanoseconds << ',';
+  output << "N," << ',' << o.nanoseconds << ',';
   output.write(o.ticker,TickerLength);
   output << ',' << o.interest << '\n';
   return output;
@@ -263,14 +263,14 @@ ostream& operator<< (ostream &output, RetailPriceImprovement &o){
 
 
 ostream& operator<< (ostream &output, AddOrder &o) {
-  output << "A," << o.ts << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.buyStatus << ',' << o.quantity << ',';
+  output << "A," << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.buyStatus << ',' << o.quantity << ',';
   output.write(o.ticker,TickerLength);
   output << ',' << o.price << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, AddMPIDOrder &o) {
-  output << "F," << o.ts << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.buyStatus << ',' << o.quantity << ',';
+  output << "F," << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.buyStatus << ',' << o.quantity << ',';
   output.write(o.ticker, TickerLength);
   output << ',' << o.price << ',';
   output.write(o.mpid, MPIDLength);
@@ -279,39 +279,39 @@ ostream& operator<< (ostream &output, AddMPIDOrder &o) {
 }
 
 ostream& operator<< (ostream &output, ExecutedOrder &o){
-  output << "E," << o.ts << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.quantity << ',' << o.matchNumber << '\n';
+  output << "E," << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.quantity << ',' << o.matchNumber << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, ExecutedPriceOrder &o){
-  output << "C," << o.ts << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.quantity << ',' << o.matchNumber << ',' << o.printable << ',' << o.price << '\n';
+  output << "C," << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.quantity << ',' << o.matchNumber << ',' << o.printable << ',' << o.price << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, CancelOrder &o){
-  output << "X," << o.ts << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.quantity << '\n';
+  output << "X," << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.quantity << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, DeleteOrder &o){
-  output << "D," << o.ts << ',' << o.nanoseconds << ',' << o.refNum <<'\n';
+  output << "D," << ',' << o.nanoseconds << ',' << o.refNum <<'\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, ReplaceOrder &o){
-  output << "U," << o.ts << ',' << o.nanoseconds << ',' << o.oldRefNum << ',' << ',' << o.refNum << ',' << o.quantity << ',' << o.price << '\n';
+  output << "U," << ',' << o.nanoseconds << ',' << o.oldRefNum << ',' << ',' << o.refNum << ',' << o.quantity << ',' << o.price << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, TradeMessage &o){
-  output << "P," << o.ts << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.buyStatus << ',' << o.quantity << ',';
+  output << "P," << ',' << o.nanoseconds << ',' << o.refNum << ',' << o.buyStatus << ',' << o.quantity << ',';
   output.write(o.ticker, TickerLength);
   output << ',' << o.price << ',' << o.matchNumber << '\n';
   return output;
 }
 
 ostream& operator<< (ostream &output, CrossTradeMessage &o){
-  output << "Q," << o.ts << ',' << o.nanoseconds << ',' << o.quantity << ',';
+  output << "Q," << ',' << o.nanoseconds << ',' << o.quantity << ',';
   output.write(o.ticker, TickerLength);
   output << ',' << o.price << ',' << o.matchNumber << ',' << o.crossType << '\n';
   return output;

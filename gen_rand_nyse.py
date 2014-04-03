@@ -25,7 +25,7 @@ if (len(sys.argv) != 3):
 	sys.exit(1)
 
 numSecurities = int(sys.argv[1])
-numOrders = int(sys.argv[2]) % 100
+numOrders = int(sys.argv[2])
 
 msg_type = ['A','M','D']
 seq_num = 0

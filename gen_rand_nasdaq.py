@@ -22,26 +22,34 @@ if (len(sys.argv) != 3):
 	sys.exit(1)
 
 numSecurities = int(sys.argv[1])
-numOrders = int(sys.argv[2]) % 100
+numOrders = int(sys.argv[2])
 
 msg_type = ['A','F','E','C','X','D','U'];
-Timestamp_nanoseconds = 0;
+nanoseconds = 0;
 ord_ref_num = 0; 				# can be upped from 1 (not really important)
 buy_or_sell = ['B','S'];
-shares = 3000;
 stock_sym = 'SRG';
 price =1;
 seconds=0;
-milliseconds=0;
 printable = ['N', 'Y'];
 
 
 for x in range(0,numOrders):
 
+	#initial time message
+	if x == 0:
+		time_msg = "T," + str(seconds)
+		print time_msg
+
 	#incrementing the time
-	next_nsec = random.choice([True,False])
-	if (next_nsec):
-		Timestamp_nanoseconds += 1;
+	nanoseconds += random.randint(0, (10**8));
+	if (nanoseconds > 10**9):
+		nanoseconds -= 10**9
+		seconds += 1
+		#Printing the time message
+		time_msg = "T," + str(seconds)
+		print time_msg
+
 
 	ord_ref_num += 1
 
@@ -53,11 +61,10 @@ for x in range(0,numOrders):
 	symbol_str = 'SRG' + str(random.randint(1,numSecurities))
 	price_str = str(random.randint(1,9999999))
 	sec_str = str(seconds)
-	msec_str = str(milliseconds)
 	quote_id = "AARCA"
 	filler = " "*8
 	pick_printable = random.choice(printable);
-	time = str(Timestamp_nanoseconds)
+	time = str(nanoseconds)
 
 	#makes sequential data
 
@@ -68,14 +75,14 @@ for x in range(0,numOrders):
 		order_str += buy_str + ','
 		order_str += shares_str + ','
 		order_str += symbol_str + ','
-		order_str += price_str + ','
+		order_str += price_str
 		print order_str
 
 	if (m == 'E' or m == 'X'): #E needs match number
 		order_str = m + ','
 		order_str += time + ','
 		order_str += ref_num_str + ','
-		order_str += shares_str + ','
+		order_str += shares_str
 		print order_str
 	
 	if (m == 'U'): #new order reference number
@@ -83,7 +90,7 @@ for x in range(0,numOrders):
 		order_str += time + ','
 		order_str += ref_num_str + ','
 		order_str += shares_str + ','
-		order_str += price_str + ','
+		order_str += price_str
 		print order_str
 
 
@@ -93,12 +100,12 @@ for x in range(0,numOrders):
 		order_str += ref_num_str + ','
 		order_str += shares_str + ','
 		order_str += pick_printable + ','
-		order_str += price_str + ','
+		order_str += price_str
 
 	if(m == 'D'):
 		order_str = m + ','
 		order_str += time + ','
-		order_str += ref_num_str + ','
+		order_str += ref_num_str
 		print order_str
 
 #endfor

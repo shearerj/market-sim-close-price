@@ -38,113 +38,97 @@ int main(int argc, const char * argv[])
   }
   
   char c;
-  TimeStamp ts;
   
   while(input.good()){
     input >> c;
     //determine message type, add to vector
     if(c == 'T') {
+      TimeStamp ts;
       input >> ts;
+      output << ts;
     }
     else if(c == 'S'){
       Message o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
     else if(c == 'R'){
       StockDirectory o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
     else if(c == 'H'){
       StockTradingAction o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
     else if(c == 'Y'){
       ShortSalePriceTest o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
     else if(c == 'L'){
       MarketParticipantPosition o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
     else if(c == 'A'){
       AddOrder o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
     else if(c == 'F'){
       AddMPIDOrder o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
     else if(c == 'E'){
       ExecutedOrder o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
     else if(c == 'C'){
       ExecutedPriceOrder o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
     else if(c == 'X'){
       CancelOrder o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
     else if(c == 'D'){
       DeleteOrder o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
     else if(c == 'U'){
       ReplaceOrder o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
     else if(c == 'P'){
       TradeMessage o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
     else if(c == 'Q'){
       CrossTradeMessage o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
     else if(c == 'B'){
       BrokenTrade o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
     else if(c == 'I'){
       NetOrderImbalance o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
     else if(c == 'N'){
       RetailPriceImprovement o;
-      o.ts = ts;
       input >> o;
       output << o;
     }
