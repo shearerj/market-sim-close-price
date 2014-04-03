@@ -10,76 +10,47 @@ public class OrderDatum implements Serializable {
 
 	private static final long serialVersionUID = 6379805806017545016L;
 
-	private char messageType;
-	private String sequenceNum;
-	private String orderReferenceNum;
-	private char exchangeCode;
-	private String symbol;
+	private int orderRefNum;
+	private int sequenceNum;
 	private TimeStamp timestamp;
-	private char systemCode;
-	private String quoteId;
+	private TimeStamp duration;
 	private Price price; // 10 bytes in nyse
 	private int quantity;//9 bytes in nyse
-	private int totalImbalance;
-	private int marketImbalance;
-	private char auctionType;
-	private int auctionTime;
-	private OrderType type;
+	private OrderType orderType;
 
-
-	public OrderDatum(char messageType, String sequenceNum,
-			String orderReferenceNum, char exchangeCode, String symbol,
-			TimeStamp timestamp, char systemCode, String quoteId, Price price,
-			int quantity, OrderType type) {
-		this.messageType = messageType;
-		this.sequenceNum = sequenceNum;
-		this.orderReferenceNum = orderReferenceNum;
-		this.exchangeCode = exchangeCode;
-		this.symbol = symbol;
-		this.timestamp = timestamp;
-		this.systemCode = systemCode;
-		this.quoteId = quoteId;
+	
+	public OrderDatum(int orderRefNumber, TimeStamp timeStamp, Price price,
+			int quantity, OrderType orderType) {
+		this.orderRefNum = orderRefNumber;
+		this.timestamp = timeStamp;
 		this.price = price;
 		this.quantity = quantity;
-		this.type = type;
+		this.orderType = orderType;
+		this.duration = TimeStamp.IMMEDIATE;
+	}
+	
+	public OrderDatum(int orderRefNumber, TimeStamp timeStamp, Price price,
+			int quantity, OrderType orderType, TimeStamp duration) {
+		this(orderRefNumber, timeStamp, price, quantity, orderType);
+		this.duration = duration;
+	}
+	
+	public OrderDatum(int orderRefNumber, TimeStamp timeStamp, Price price,
+			int quantity, OrderType orderType, int sequenceNum) {
+		this(orderRefNumber, timeStamp, price, quantity, orderType);
+		this.sequenceNum = sequenceNum;
 	}
 
-
-	public char getMessageType() {
-		return messageType;
-	}
-
-	public String getMessageTypeAsString() {
-		return Character.toString(messageType);
-	}
-
-	public String getSequenceNum() {
+	public int getSequenceNum() {
 		return sequenceNum;
 	}
 
-	public String getOrderReferenceNum() {
-		return orderReferenceNum;
-	}
-
-	public char getExchangeCode() {
-		return exchangeCode;
-	}
-
-	public String getSymbol() {
-		return symbol;
+	public int getOrderRefNum() {
+		return orderRefNum;
 	}
 
 	public TimeStamp getTimeStamp() {
 		return timestamp;
-	}
-
-	public char getSystemCode() {
-		return systemCode;
-	}
-
-
-	public String getQuoteId() {
-		return quoteId;
 	}
 
 	public Price getPrice() {
@@ -91,47 +62,14 @@ public class OrderDatum implements Serializable {
 	}
 
 	public OrderType getOrderType() {
-		return type;
+		return orderType;
 	}
-
-	public void setTotalImbalance(int totalImbalance) {
-		this.totalImbalance = totalImbalance;
+	
+	public TimeStamp getDuration() {
+		return duration;
 	}
-
-
-	public void setMarketImbalance(int marketImbalance) {
-		this.marketImbalance = marketImbalance;
-	}
-
-
-	public void setAuctionType(char auctionType) {
-		this.auctionType = auctionType;
-	}
-
-
-	public void setAuctionTime(int auctionTime) {
-		this.auctionTime = auctionTime;
-	}
-
-
-	public static long getSerialversionuid() {
-		return serialVersionUID;
-	}
-
-	public int getTotalImbalance() {
-		return totalImbalance;
-	}
-
-	public int getMarketImbalance() {
-		return marketImbalance;
-	}
-
-	public char getAuctionType() {
-		return auctionType;
-	}
-
-
-	public int getAuctionTime() {
-		return auctionTime;
+	
+	public void setDuration(TimeStamp duration) {
+		this.duration = duration;
 	}
 }
