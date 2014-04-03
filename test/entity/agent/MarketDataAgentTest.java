@@ -1,34 +1,23 @@
 package entity.agent;
 
-import static org.junit.Assert.*;
+import static fourheap.Order.OrderType.BUY;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Random;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import activity.Activity;
-import activity.SubmitNMSOrder;
 import systemmanager.Executor;
-import systemmanager.Scheduler;
 import data.FundamentalValue;
 import data.MockFundamental;
-import data.OrderDatum;
-import entity.infoproc.MarketQuoteProcessor;
 import entity.infoproc.SIP;
-import entity.market.Market;
 import entity.market.MockMarket;
 import entity.market.Order;
 import entity.market.Price;
-import entity.market.Quote;
 import event.TimeStamp;
-import event.TimedActivity;
-import fourheap.Order.OrderType;
-import static fourheap.Order.OrderType.BUY;
-import static fourheap.Order.OrderType.SELL;
 
 
 public class MarketDataAgentTest {
@@ -37,8 +26,16 @@ public class MarketDataAgentTest {
 	private FundamentalValue fundamental;
 	private Executor exec;
 	private SIP sip;
-	private MockMarket market;
-	
+	private MockMarket market;	
+
+	/*
+	 * TODO: The files loaded are small. Probably better to allow market data
+	 * agents to take a "Reader" instead of just a file name. That way you can
+	 * just pass in the text that would be in a file, without having to have a
+	 * separate file that needs to be loaded. e.g. everything can be present in
+	 * the text
+	 *
+	 */
 
 	@Before
 	public void setupTest() {
@@ -119,7 +116,6 @@ public class MarketDataAgentTest {
 //		OrderDatum correct3 = new OrderDatum('A', "0", "10", 'B', "SRG4", 
 //				TimeStamp.create(192), 'O', "AARCA", new Price(5223572), 3921581, SELL);
 //		compareOrderDatums(orderDatum, correct3);
-		
 	}
 	
 	@Test

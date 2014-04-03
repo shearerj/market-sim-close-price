@@ -51,7 +51,7 @@ public class MarketDataAgent extends SMAgent {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-			System.out.println("Error: could not open file: " + fileName.toString());
+			System.err.println("Error: could not open file: " + fileName.toString());
 			System.exit(1);
 		}
 		
