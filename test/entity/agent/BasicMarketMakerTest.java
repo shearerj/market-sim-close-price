@@ -628,7 +628,7 @@ public class BasicMarketMakerTest {
 				Keys.INITIAL_LADDER_MEAN, 50,
 				Keys.INITIAL_LADDER_RANGE, 10);
 		
-		// Creating dummy agents
+		// Creating dummy agent
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 
 		// Creating and adding bids
@@ -653,7 +653,7 @@ public class BasicMarketMakerTest {
 		
 		// Checking one-sided ladder
 		int ladderCenter = ((int) (buys.getMax() + sells.getMin()) / 2);
-		assertTrue("ladder center outside range", ladderCenter <= 60 && ladderCenter >= 40);
+		assertTrue("ladder center outside range", ladderCenter >= 40 && ladderCenter <= 60);
 		assertEquals(ladderCenter + 5, (int) sells.getMin());
 		assertEquals(40 + 1, (int) buys.getMax()); // tick improvement outside
 		assertEquals(5, sells.getMax() - sells.getMean(), 0.0001);
@@ -662,6 +662,13 @@ public class BasicMarketMakerTest {
 		assertEquals(5, buys.getMax() - buys.getMean(), 0.0001);
 		assertEquals(5, sells.getMean() - sells.getMin(), 0.0001);
 		assertEquals(5, buys.getMean() - buys.getMin(), 0.0001);
+		assertEquals(0, market.getTransactions().size());
+		
+		// Verify that single background trader will transact with the MM
+		market.submitOrder(agent1, BUY, new Price(80), 1, TimeStamp.create(10));
+		market.clear(TimeStamp.create(10));
+		assertEquals(1, market.getTransactions().size());
+		// because MockMarket, cannot test price of transaction
 	}
 	
 	@Test

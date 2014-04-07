@@ -316,14 +316,15 @@ public class Observations {
 		long buyerExecTime = execTime - transaction.getBuyBid().getSubmitTime().getInTicks();
 		long sellerExecTime = execTime - transaction.getSellBid().getSubmitTime().getInTicks();
 		for (int quantity = 0; quantity < transaction.getQuantity(); quantity++) {
-			executionTimes.add((double) buyerExecTime);
-			executionTimes.add((double) sellerExecTime);
+			// only measure execution time for background traders
+			if (transaction.getBuyer() instanceof BackgroundAgent) {
+				executionTimes.add((double) buyerExecTime);
+			}
+			if (transaction.getSeller() instanceof BackgroundAgent) {
+				executionTimes.add((double) sellerExecTime);
+			}
 		}
 
-		// XXX
-		if (transaction.getBuyer() instanceof BackgroundAgent) {
-			
-		}
 		prices.add(transaction.getPrice().doubleValue());
 
 		transPrices.add((int) transaction.getExecTime().getInTicks(), 
