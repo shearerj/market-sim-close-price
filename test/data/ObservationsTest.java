@@ -222,7 +222,10 @@ public class ObservationsTest {
 		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
 		market1.clear(TimeStamp.ZERO);
 		assertEquals(0, obs.executionTimes.mean(), 0.001);
+<<<<<<< HEAD
 		assertEquals(2, obs.executionTimes.getN());
+=======
+>>>>>>> bc4884df82287eb7f25851565dfdce0e49694fdd
 		
 		// Same times
 		setupObservations(agent1, agent2);
@@ -230,7 +233,10 @@ public class ObservationsTest {
 		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
 		market1.clear(TimeStamp.create(1));
 		assertEquals(1, obs.executionTimes.mean(), 0.001);
+<<<<<<< HEAD
 		assertEquals(2, obs.executionTimes.getN()); 	// because obs setup again
+=======
+>>>>>>> bc4884df82287eb7f25851565dfdce0e49694fdd
 
 		// Quantity weighted
 		setupObservations(agent1, agent2);

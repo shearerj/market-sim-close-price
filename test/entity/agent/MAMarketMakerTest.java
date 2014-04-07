@@ -674,7 +674,7 @@ public class MAMarketMakerTest {
 	}
 	
 	@Test
-	public void oneBackgroundTrader() {
+	public void oneBackgroundBuyer() {
 		MarketMaker marketmaker = createMAMM(
 				Keys.NUM_RUNGS, 3,
 				Keys.RUNG_SIZE, 5,
@@ -711,7 +711,8 @@ public class MAMarketMakerTest {
 		// Checking one-sided ladder
 		int ladderCenter = ((int) (buys.getMax() + sells.getMin()) / 2);
 		assertTrue("ladder center outside range", ladderCenter <= 60 && ladderCenter >= 40);
-		assertEquals(ladderCenter + 5, (int) sells.getMin());
+		assertTrue("ladder sell outside range", sells.getMin() <= 60 && sells.getMin() >= 50);
+		assertEquals(50, (int) sells.getMin());	// no need for tick improvement
 		assertEquals(40 + 1, (int) buys.getMax()); // tick improvement outside
 		assertEquals(5, sells.getMax() - sells.getMean(), 0.0001);
 		assertEquals(5, buys.getMax() - buys.getMean(), 0.0001);
@@ -722,12 +723,109 @@ public class MAMarketMakerTest {
 	}
 	
 	@Test
+	public void oneBackgroundSeller() {
+		MarketMaker marketmaker = createMAMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1,
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_INSIDE, false,
+				Keys.INITIAL_LADDER_MEAN, 50,
+				Keys.INITIAL_LADDER_RANGE, 10);
+		
+		// Creating dummy agents
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+
+		// Creating and adding bids
+		exec.executeActivity(new SubmitOrder(agent1, market, SELL, new Price(60), 1));
+		exec.executeActivity(new Clear(market));
+
+		// Initial MM strategy
+		exec.executeActivity(new AgentStrategy(marketmaker));
+
+		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
+		
+		// Storing buy/sell orders
+		SummaryStatistics buys = new SummaryStatistics();
+		SummaryStatistics sells = new SummaryStatistics();
+		for (Order o : marketmaker.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == BUY)
+				buys.addValue(price);
+			else
+				sells.addValue(price);
+		}
+		
+		// Checking one-sided ladder
+		int ladderCenter = ((int) (buys.getMax() + sells.getMin()) / 2);
+		assertTrue("ladder center outside range", ladderCenter <= 60 && ladderCenter >= 40);
+		assertTrue("ladder buy outside range", buys.getMin() <= 50 && buys.getMin() >= 40);
+		assertEquals(60 - 1, (int) sells.getMin());
+		assertEquals(50, (int) buys.getMax()); // tick improvement outside
+		assertEquals(5, sells.getMax() - sells.getMean(), 0.0001);
+		assertEquals(5, buys.getMax() - buys.getMean(), 0.0001);
+		assertEquals(5, sells.getMax() - sells.getMean(), 0.0001);
+		assertEquals(5, buys.getMax() - buys.getMean(), 0.0001);
+		assertEquals(5, sells.getMean() - sells.getMin(), 0.0001);
+		assertEquals(5, buys.getMean() - buys.getMin(), 0.0001);
+	}
+	
+	@Test
+	public void oneBackgroundTraderLadderRange() {
+		// testing where 2*rungSize (step size) is larger than initial range
+		
+		MarketMaker marketmaker = createMAMM(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_SIZE, 1,
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_INSIDE, false,
+				Keys.INITIAL_LADDER_MEAN, 50,
+				Keys.INITIAL_LADDER_RANGE, 7);
+		
+		// Creating dummy agents
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+
+		// Creating and adding bids
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
+		exec.executeActivity(new Clear(market));
+
+		// Initial MM strategy
+		exec.executeActivity(new AgentStrategy(marketmaker));
+
+		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
+		
+		// Storing buy/sell orders
+		SummaryStatistics buys = new SummaryStatistics();
+		SummaryStatistics sells = new SummaryStatistics();
+		for (Order o : marketmaker.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == BUY)
+				buys.addValue(price);
+			else
+				sells.addValue(price);
+		}
+		
+		// Checking one-sided ladder
+		int ladderCenter = ((int) (buys.getMax() + sells.getMin()) / 2);
+		assertTrue("ladder center outside range", ladderCenter <= 60 && ladderCenter >= 40);
+		assertTrue("ladder sell outside range", sells.getMin() <= 60 && sells.getMin() >= 47);
+	}
+
+
+	@Test
 	public void extraTest() {
 		for (int i = 0; i < 100; i++) {
 			setup();
 			nullBidAskLadder();
 			setup();
-			oneBackgroundTrader();
+			oneBackgroundBuyer();
+			setup();
+			oneBackgroundSeller();
+			setup();
+			oneBackgroundTraderLadderRange();
 		}
 	}
 }
