@@ -101,7 +101,10 @@ public class MultiSimulationObservations {
 			// Record standard deviation for multi simulation
 			JsonObject playerFeatures = new JsonObject();
 			obs.add("features", playerFeatures);
-			playerFeatures.addProperty("payoff_stddev", mpo.payoff.stddev());
+			// Otherwise NaNs are not handled in EGTAOnline
+			if (!Double.isNaN(mpo.payoff.stddev())) {
+				playerFeatures.addProperty("payoff_stddev", mpo.payoff.stddev());
+			}
 			// Record player-specific PV control variables
 			for (String property : mpo.features.keySet()) {
 				playerFeatures.addProperty(property, mpo.features.get(property).mean());
