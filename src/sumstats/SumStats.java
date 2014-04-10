@@ -68,7 +68,7 @@ public class SumStats {
 	}
 	
 	/**
-	 * Return the summ of all of the data added so far
+	 * Return the sum of all of the data added so far
 	 * @return
 	 */
 	public double sum() {
@@ -97,4 +97,10 @@ public class SumStats {
 		return Math.sqrt(variance());
 	}
 	
+	/**
+	 * @return n	for testing purposes primarily
+	 */
+	public long getN() {
+		return n;
+	}
 }

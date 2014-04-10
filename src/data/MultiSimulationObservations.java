@@ -101,7 +101,10 @@ public class MultiSimulationObservations {
 			// Record standard deviation for multi simulation
 			JsonObject playerFeatures = new JsonObject();
 			obs.add("features", playerFeatures);
-			playerFeatures.addProperty("payoff_stddev", mpo.payoff.stddev());
+			// Note NaNs are not handled in EGTAOnline
+			if (!Double.isNaN(mpo.payoff.stddev())) {
+				playerFeatures.addProperty("payoff_stddev", mpo.payoff.stddev());
+			}
 			// Record player-specific PV control variables
 			for (String property : mpo.features.keySet()) {
 				playerFeatures.addProperty(property, mpo.features.get(property).mean());
@@ -116,7 +119,7 @@ public class MultiSimulationObservations {
 			// Either make Ben's handle it, or make this handling better
 			double mean = e.getValue().mean();
 			if (Double.isInfinite(mean) || Double.isNaN(mean))
-				feats.addProperty(e.getKey(), Double.toString(mean));
+				feats.addProperty(e.getKey(), Double.toString(mean)); // FIXME EGTA won't handle strings, must be numeric
 			else
 				feats.addProperty(e.getKey(), mean);
 		}

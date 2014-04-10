@@ -52,8 +52,6 @@ public class MarketMakerTest {
 		market = new MockMarket(exec, sip);
 	}
 
-	// TODO test different tick size & subsequent step/rung size difference
-
 	@Test
 	public void nullBidAsk() {
 		// testing when no bid/ask, does not submit any orders
@@ -66,6 +64,9 @@ public class MarketMakerTest {
 
 		// Check activities inserted (none, other than reentry)
 		mm.agentStrategy(time);
+		assertTrue(mm.activeOrders.isEmpty());
+		
+		mm.createOrderLadder(null,  null);
 		assertTrue(mm.activeOrders.isEmpty());
 	}
 
@@ -252,6 +253,159 @@ public class MarketMakerTest {
 				assertTrue(price == 49 || price == 54);
 			else
 				assertEquals(36, price);
+		}
+	}
+	
+	/**
+	 * Creating ladder without bid/ask quote
+	 */
+	@Test
+	public void initRandLadder() {
+		SIP sip = new SIP(exec, TimeStamp.create(10));
+		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_INSIDE, false,
+				Keys.INITIAL_LADDER_MEAN, 100,
+				Keys.INITIAL_LADDER_RANGE, 10));
+		
+		mm.createOrderLadder(null, null);
+		
+		assertEquals("Incorrect number of orders", 4, mm.activeOrders.size());
+		int sellPrice = Price.INF.intValue(), buyPrice = 0;
+		int sellPrice2 = sellPrice, buyPrice2 = buyPrice;
+		for (Order o : mm.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == SELL) {
+				sellPrice = Math.min(price, sellPrice);
+			} else {
+				buyPrice = Math.max(price, buyPrice);
+			}
+		}
+		for (Order o : mm.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == SELL) {
+				if (price != sellPrice) sellPrice2 = price;
+			} else {
+				if (price != buyPrice) buyPrice2 = price;
+			}
+		}
+		int ladderCenter = (sellPrice + buyPrice) / 2; 
+		assertTrue("ladder center " + ladderCenter + " is outside range",
+				ladderCenter <= 110 && ladderCenter >= 90);
+		assertEquals(ladderCenter + 5, sellPrice);
+		assertEquals(ladderCenter - 5, buyPrice);
+		assertEquals(sellPrice + 5, sellPrice2);
+		assertEquals(buyPrice - 5, buyPrice2);
+	}
+
+	/**
+	 * One side of ladder is undefined
+	 */
+	@Test
+	public void oneSidedLadderBuy() {
+		SIP sip = new SIP(exec, TimeStamp.create(10));
+		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_INSIDE, false,
+				Keys.INITIAL_LADDER_MEAN, 100,
+				Keys.INITIAL_LADDER_RANGE, 10));
+		
+		// Creating dummy agents
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+
+		// Creating and adding bids
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
+		
+		mm.createOrderLadder(new Price(40), null);
+		
+		assertEquals("Incorrect number of orders", 4, mm.activeOrders.size());
+		int sellPrice = Price.INF.intValue(), buyPrice = 0;
+		int sellPrice2 = sellPrice, buyPrice2 = buyPrice;
+		for (Order o : mm.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == SELL) {
+				sellPrice = Math.min(price, sellPrice);
+			} else {
+				buyPrice = Math.max(price, buyPrice);
+			}
+		}
+		for (Order o : mm.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == SELL) {
+				if (price != sellPrice) sellPrice2 = price;
+			} else {
+				if (price != buyPrice) buyPrice2 = price;
+			}
+		}
+		assertTrue(sellPrice >= 45 && sellPrice <= 50);
+		assertEquals(41, buyPrice); // because tick improvement, outside quote
+		assertEquals(sellPrice + 5, sellPrice2);
+		assertEquals(buyPrice - 5, buyPrice2);
+	}
+	
+	/**
+	 * One side of ladder is undefined
+	 */
+	@Test
+	public void oneSidedLadderSell() {
+		SIP sip = new SIP(exec, TimeStamp.create(10));
+		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_INSIDE, false,
+				Keys.INITIAL_LADDER_MEAN, 100,
+				Keys.INITIAL_LADDER_RANGE, 10));
+		
+		// Creating dummy agents
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+
+		// Creating and adding bids
+		exec.executeActivity(new SubmitOrder(agent1, market, SELL, new Price(50), 1));
+		
+		mm.createOrderLadder(null, new Price(50));
+		
+		assertEquals("Incorrect number of orders", 4, mm.activeOrders.size());
+		int sellPrice = Price.INF.intValue(), buyPrice = 0;
+		int sellPrice2 = sellPrice, buyPrice2 = buyPrice;
+		for (Order o : mm.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == SELL) {
+				sellPrice = Math.min(price, sellPrice);
+			} else {
+				buyPrice = Math.max(price, buyPrice);
+			}
+		}
+		for (Order o : mm.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == SELL) {
+				if (price != sellPrice) sellPrice2 = price;
+			} else {
+				if (price != buyPrice) buyPrice2 = price;
+			}
+		}
+		assertTrue(buyPrice >= 40 && buyPrice <= 45);
+		assertEquals(49, sellPrice); // because tick improvement, outside quote
+		assertEquals(sellPrice + 5, sellPrice2);
+		assertEquals(buyPrice - 5, buyPrice2);
+	}
+	
+	@Test
+	public void extraTest() {
+		for (int i = 0; i < 100; i++) {
+			setup();
+			initRandLadder();
+			setup();
+			oneSidedLadderBuy();
+			setup();
+			oneSidedLadderSell();
 		}
 	}
 }

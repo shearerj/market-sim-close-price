@@ -58,11 +58,12 @@ public class WMAMarketMaker extends MarketMaker {
 			SIP sip, Market market, Random rand, double reentryRate,
 			int tickSize, boolean noOp, int numRungs, int rungSize,
 			boolean truncateLadder, boolean tickImprovement,
-			boolean tickInside, int numHistorical, double weightFactor) {
+			boolean tickInside, int initLadderMean, int initLadderRange, 
+			int numHistorical, double weightFactor) {
 		
 		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
 				noOp, numRungs, rungSize, truncateLadder, tickImprovement,
-				tickInside);
+				tickInside, initLadderMean, initLadderRange);
 
 		checkArgument(weightFactor >= 0 && weightFactor < 1, 
 				"Weight factor must be in range (0,1)!");
@@ -84,7 +85,9 @@ public class WMAMarketMaker extends MarketMaker {
 				props.getAsBoolean(Keys.TRUNCATE_LADDER, true),
 				props.getAsBoolean(Keys.TICK_IMPROVEMENT, true),
 				props.getAsBoolean(Keys.TICK_INSIDE, true),
-				props.getAsInt(Keys.NUM_HISTORICAL, 5),
+				props.getAsInt(Keys.INITIAL_LADDER_MEAN, 0),
+				props.getAsInt(Keys.INITIAL_LADDER_RANGE, 0), 
+				props.getAsInt(Keys.NUM_HISTORICAL, 5), 
 				props.getAsDouble(Keys.WEIGHT_FACTOR, 0));
 	}
 
@@ -97,7 +100,10 @@ public class WMAMarketMaker extends MarketMaker {
 		Price bid = this.getQuote().getBidPrice();
 		Price ask = this.getQuote().getAskPrice();
 
-		if ((bid == null && lastBid != null)
+		if (bid == null && lastBid == null && ask == null && lastAsk == null) {
+			this.createOrderLadder(bid, ask);
+			
+		} else if ((bid == null && lastBid != null)
 				|| (bid != null && !bid.equals(lastBid))
 				|| (bid != null && lastBid == null)
 				|| (ask == null && lastAsk != null)
@@ -106,6 +112,8 @@ public class WMAMarketMaker extends MarketMaker {
 
 			if (!this.getQuote().isDefined()) {
 				log.log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
+				this.createOrderLadder(bid, ask);
+				
 			} else {
 				// Quote changed, still valid, withdraw all orders
 				log.log(INFO, "%s in %s: Withdraw all orders", this, primaryMarket);
@@ -119,25 +127,28 @@ public class WMAMarketMaker extends MarketMaker {
 					Price oldBid = bid, oldAsk = ask;
 					if (bid == null && lastBid != null) bid = lastBid;
 					if (ask == null && lastAsk != null) ask = lastAsk;
-					log.log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", this, primaryMarket, oldBid, oldAsk, bid, ask);
+					log.log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", 
+							this, primaryMarket, oldBid, oldAsk, bid, ask);
 				}
 				
 				// Compute weighted moving average
-				bidQueue.add(bid);
-				askQueue.add(ask);
+				if (bid != null) bidQueue.add(bid);
+				if (ask != null) askQueue.add(ask);
 				
+				Price ladderBid = null, ladderAsk = null;
 				double sumBids = 0, sumAsks = 0;
-				double totalWeight = 0;
+				double bidTotalWeight = 0, askTotalWeight = 0;
 				if (weightFactor == 0) {
 					// Linearly weighted moving average
 					int i = 0;
 					for (Price x : bidQueue) {
 						sumBids += (++i) * x.intValue();
-						totalWeight += i;
+						bidTotalWeight += i;
 					}
 					i = 0;
 					for (Price y : askQueue) {
 						sumAsks += (++i) * y.intValue();
+						askTotalWeight += i;
 					}
 				} else {
 					// Exponential WMA
@@ -145,20 +156,21 @@ public class WMAMarketMaker extends MarketMaker {
 					for (Price x : bidQueue) {
 						double weight = weightFactor * Math.pow(1-weightFactor, i--);
 						sumBids += weight * x.intValue();
-						totalWeight += weight;
+						bidTotalWeight += weight;
 					}
 					i = askQueue.size()-1;
 					for (Price y : askQueue) {
 						double weight = weightFactor * Math.pow(1-weightFactor, i--);
 						sumAsks += weight * y.intValue();
+						askTotalWeight += weight;
 					}
 				}
-				Price ladderBid = new Price(sumBids / totalWeight);
-				Price ladderAsk = new Price(sumAsks / totalWeight);
+				if (!bidQueue.isEmpty()) ladderBid = new Price(sumBids / bidTotalWeight);
+				if (!askQueue.isEmpty()) ladderAsk = new Price(sumAsks / askTotalWeight);
 
 				this.createOrderLadder(ladderBid, ladderAsk);
-
 			} // if quote defined
+			
 		} else {
 			log.log(INFO, "%s in %s: No change in submitted ladder", this, primaryMarket);
 		}

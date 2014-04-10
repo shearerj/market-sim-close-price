@@ -4,10 +4,10 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 
 import java.io.IOException;
-import java.nio.file.Paths;
+//import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Scanner;
+//import java.util.Scanner;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;

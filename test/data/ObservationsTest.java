@@ -28,9 +28,12 @@ import com.google.common.collect.ImmutableList.Builder;
 
 import entity.agent.Agent;
 import entity.agent.BackgroundAgent;
+import entity.agent.BasicMarketMaker;
 import entity.agent.DummyPrivateValue;
+import entity.agent.MarketMaker;
 import entity.agent.MockAgent;
 import entity.agent.MockBackgroundAgent;
+import entity.agent.MockMarketMaker;
 import entity.agent.PrivateValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
@@ -209,7 +212,7 @@ public class ObservationsTest {
 	}
 	
 	@Test
-	public void executionSpeedsTest() {
+	public void executionTimesTest() {
 		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		
@@ -218,14 +221,16 @@ public class ObservationsTest {
 		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
 		market1.clear(TimeStamp.ZERO);
-		assertEquals(0, obs.executionSpeeds.mean(), 0.001);
+		assertEquals(0, obs.executionTimes.mean(), 0.001);
+		assertEquals(2, obs.executionTimes.getN());
 		
 		// Same times
 		setupObservations(agent1, agent2);
 		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
 		market1.clear(TimeStamp.create(1));
-		assertEquals(1, obs.executionSpeeds.mean(), 0.001);
+		assertEquals(1, obs.executionTimes.mean(), 0.001);
+		assertEquals(2, obs.executionTimes.getN()); 	// because obs setup again
 
 		// Quantity weighted
 		setupObservations(agent1, agent2);
@@ -235,7 +240,7 @@ public class ObservationsTest {
 		market1.submitOrder(agent1, BUY, new Price(102), 3, TimeStamp.create(2));
 		market1.submitOrder(agent2, SELL, new Price(102), 3, TimeStamp.create(2));
 		market1.clear(TimeStamp.create(4));
-		assertEquals(1.75, obs.executionSpeeds.mean(), 0.001);
+		assertEquals(1.75, obs.executionTimes.mean(), 0.001);
 		
 		// Split order
 		setupObservations(agent1, agent2);
@@ -243,14 +248,60 @@ public class ObservationsTest {
 		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.create(1));
 		market1.clear(TimeStamp.create(1));
-		assertEquals(0.75, obs.executionSpeeds.mean(), 0.001);
+		assertEquals(0.75, obs.executionTimes.mean(), 0.001);
 
 		// Same agent
 		setupObservations(agent1, agent2);
 		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.create(0));
 		market1.submitOrder(agent1, SELL, new Price(102), 1, TimeStamp.create(1));
 		market1.clear(TimeStamp.create(2));
-		assertEquals(1.5, obs.executionSpeeds.mean(), 0.001);
+		assertEquals(1.5, obs.executionTimes.mean(), 0.001);
+	}
+	
+	/**
+	 * Test that only background trader execution times are measured.
+	 */
+	@Test
+	public void backgroundExecutionTimesTest() {
+		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market1, 2, 10);
+		
+		// Same times
+		setupObservations(agent1, mm);
+		market1.submitOrder(agent1, BUY, new Price(100), 1, TimeStamp.ZERO);
+		mm.submitOrderLadder(new Price(75), new Price(85), new Price(95), new Price(105));
+		market1.clear(TimeStamp.ZERO);
+		assertEquals(1, market1.getTransactions().size());
+		assertEquals(0, obs.executionTimes.mean(), 0.001);
+		assertEquals(1, obs.executionTimes.getN());
+		
+		// Another transaction (still 0 because executes instantly)
+		market1.submitOrder(agent1, BUY, new Price(110), 1, TimeStamp.create(3));
+		market1.clear(TimeStamp.create(3));
+		assertEquals(2, market1.getTransactions().size());
+		assertEquals(0, obs.executionTimes.mean(), 0.001);
+		assertEquals(2, obs.executionTimes.getN());	// adds on to previous
+		
+		// MM ladder submitted later
+		EntityProperties agentProperties = EntityProperties.fromPairs(
+				Keys.REENTRY_RATE, 0,
+				Keys.TICK_IMPROVEMENT, false,
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.INITIAL_LADDER_MEAN, 85,
+				Keys.INITIAL_LADDER_RANGE, 10);
+		mm = new BasicMarketMaker(exec, fundamental, sip, market1,
+				new Random(), agentProperties);
+		setupObservations(agent1, mm);
+		
+		market1.submitOrder(agent1, BUY, new Price(200), 1, TimeStamp.ZERO);
+		mm.agentStrategy(TimeStamp.create(10));
+		market1.clear(TimeStamp.create(10));
+		assertEquals(3, market1.getTransactions().size());
+		assertEquals(10, obs.executionTimes.mean(), 0.001);
+		assertEquals(1, obs.executionTimes.getN());	// MM time not included
 	}
 	
 	@Test
