@@ -50,12 +50,12 @@ public class NYSEParser extends MarketDataParser {
 
 	private OrderDatum parseAddOrder(List<String> elements) {
 		// Need to check number of columns
-		int orderReferenceNumber = new Integer(elements.get(2));
+		long orderReferenceNumber = new Long(elements.get(2));
 		OrderType type = (elements.get(4).charAt(0) == 'B') ? BUY : SELL;
 		int quantity = new Integer(elements.get(5));
 		Price price = new Price(new Double(elements.get(7)));
-		int seconds = new Integer(elements.get(8));
-		int milliseconds = new Integer(elements.get(9));
+		long seconds = new Long(elements.get(8));
+		long milliseconds = new Long(elements.get(9));
 		TimeStamp timestamp = TimeStamp.create(seconds*1000 + milliseconds);
 		
 		return new OrderDatum(orderReferenceNumber, timestamp, price, quantity, 

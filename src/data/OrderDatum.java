@@ -10,8 +10,8 @@ public class OrderDatum implements Serializable {
 
 	private static final long serialVersionUID = 6379805806017545016L;
 
-	private int orderRefNum;
-	private int sequenceNum;
+	private long orderRefNum;
+	private long sequenceNum;
 	private TimeStamp timestamp;
 	private TimeStamp duration;
 	private Price price; // 10 bytes in nyse
@@ -19,7 +19,7 @@ public class OrderDatum implements Serializable {
 	private OrderType orderType;
 
 	
-	public OrderDatum(int orderRefNumber, TimeStamp timeStamp, Price price,
+	public OrderDatum(long orderRefNumber, TimeStamp timeStamp, Price price,
 			int quantity, OrderType orderType) {
 		this.orderRefNum = orderRefNumber;
 		this.timestamp = timeStamp;
@@ -29,23 +29,23 @@ public class OrderDatum implements Serializable {
 		this.duration = TimeStamp.IMMEDIATE;
 	}
 	
-	public OrderDatum(int orderRefNumber, TimeStamp timeStamp, Price price,
+	public OrderDatum(long orderRefNumber, TimeStamp timeStamp, Price price,
 			int quantity, OrderType orderType, TimeStamp duration) {
 		this(orderRefNumber, timeStamp, price, quantity, orderType);
 		this.duration = duration;
 	}
 	
-	public OrderDatum(int orderRefNumber, TimeStamp timeStamp, Price price,
-			int quantity, OrderType orderType, int sequenceNum) {
+	public OrderDatum(long orderRefNumber, TimeStamp timeStamp, Price price,
+			int quantity, OrderType orderType, long sequenceNum) {
 		this(orderRefNumber, timeStamp, price, quantity, orderType);
 		this.sequenceNum = sequenceNum;
 	}
 
-	public int getSequenceNum() {
+	public long getSequenceNum() {
 		return sequenceNum;
 	}
 
-	public int getOrderRefNum() {
+	public long getOrderRefNum() {
 		return orderRefNum;
 	}
 

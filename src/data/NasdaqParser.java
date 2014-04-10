@@ -44,22 +44,22 @@ public class NasdaqParser extends MarketDataParser {
 		return Iterators.peekingIterator(orderDatumList.iterator());
 	}
 
-	private int curSeconds = 0;
-	private int parseTimeStamp(List<String> elements) {
-		return new Integer(elements.get(1));
+	private long curSeconds = 0;
+	private long parseTimeStamp(List<String> elements) {
+		return new Long(elements.get(1));
 	}
 	
 	private OrderDatum parseAddOrder(List<String> elements) {
-		int milliseconds = new Integer(elements.get(1)) / 1000000;
+		long milliseconds = new Long(elements.get(1)) / 1000000;
 		TimeStamp timeStamp = TimeStamp.create(curSeconds + milliseconds);
 
-		int orderRefNumber = new Integer(elements.get(2));
+		long orderRefNumber = new Long(elements.get(2));
 		
 		char buyIndicator = elements.get(3).charAt(0);
 		OrderType orderType = (buyIndicator == 'B') ? OrderType.BUY : OrderType.SELL;
 		
 		int quantity = new Integer(elements.get(4));
-		Price price = new Price(new Integer(elements.get(6)));
+		Price price = new Price(new Long(elements.get(6)));
 		
 		return new OrderDatum(orderRefNumber, timeStamp, price, quantity, orderType);
 	}
