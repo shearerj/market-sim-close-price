@@ -110,16 +110,21 @@ public class MAMarketMaker extends MarketMaker {
 				}
 				
 				// Compute moving average
-				bidQueue.add(bid);
-				askQueue.add(ask);
+				if (bid != null) bidQueue.add(bid);
+				if (ask != null) askQueue.add(ask);
 				
-				double sumBids = 0;
-				for (Price x : bidQueue) sumBids += x.intValue();
-				Price ladderBid = new Price(sumBids / bidQueue.size());
+				Price ladderBid = null, ladderAsk = null;
 				
-				double sumAsks = 0;
-				for (Price y : askQueue) sumAsks += y.intValue();
-				Price ladderAsk = new Price(sumAsks / askQueue.size());
+				if (!bidQueue.isEmpty()) {
+					double sumBids = 0;
+					for (Price x : bidQueue) sumBids += x.intValue();
+					ladderBid = new Price(sumBids / bidQueue.size());
+				}
+				if (!askQueue.isEmpty()) {
+					double sumAsks = 0;
+					for (Price y : askQueue) sumAsks += y.intValue();
+					ladderAsk = new Price(sumAsks / askQueue.size());
+				}
 
 				this.createOrderLadder(ladderBid, ladderAsk);
 

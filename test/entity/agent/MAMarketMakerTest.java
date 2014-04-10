@@ -828,4 +828,7 @@ public class MAMarketMakerTest {
 			oneBackgroundTraderLadderRange();
 		}
 	}
+	
+	// TODO add test to check adding to EvictingQ when bid/ask is null
+	// TODO add test to check that won't compute MA when bid/ask Qs are empty
 }
