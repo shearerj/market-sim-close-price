@@ -132,21 +132,23 @@ public class WMAMarketMaker extends MarketMaker {
 				}
 				
 				// Compute weighted moving average
-				bidQueue.add(bid);
-				askQueue.add(ask);
+				if (bid != null) bidQueue.add(bid);
+				if (ask != null) askQueue.add(ask);
 				
+				Price ladderBid = null, ladderAsk = null;
 				double sumBids = 0, sumAsks = 0;
-				double totalWeight = 0;
+				double bidTotalWeight = 0, askTotalWeight = 0;
 				if (weightFactor == 0) {
 					// Linearly weighted moving average
 					int i = 0;
 					for (Price x : bidQueue) {
 						sumBids += (++i) * x.intValue();
-						totalWeight += i;
+						bidTotalWeight += i;
 					}
 					i = 0;
 					for (Price y : askQueue) {
 						sumAsks += (++i) * y.intValue();
+						askTotalWeight += i;
 					}
 				} else {
 					// Exponential WMA
@@ -154,16 +156,17 @@ public class WMAMarketMaker extends MarketMaker {
 					for (Price x : bidQueue) {
 						double weight = weightFactor * Math.pow(1-weightFactor, i--);
 						sumBids += weight * x.intValue();
-						totalWeight += weight;
+						bidTotalWeight += weight;
 					}
 					i = askQueue.size()-1;
 					for (Price y : askQueue) {
 						double weight = weightFactor * Math.pow(1-weightFactor, i--);
 						sumAsks += weight * y.intValue();
+						askTotalWeight += weight;
 					}
 				}
-				Price ladderBid = new Price(sumBids / totalWeight);
-				Price ladderAsk = new Price(sumAsks / totalWeight);
+				if (!bidQueue.isEmpty()) ladderBid = new Price(sumBids / bidTotalWeight);
+				if (!askQueue.isEmpty()) ladderAsk = new Price(sumAsks / askTotalWeight);
 
 				this.createOrderLadder(ladderBid, ladderAsk);
 			} // if quote defined
