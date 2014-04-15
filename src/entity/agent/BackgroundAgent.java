@@ -98,10 +98,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			// FIXME Handle buyer = seller appropriately... Maybe this is appropriate?
 			return;
 		} else if (trans.getBuyer().equals(this)) {
-			submissionTime = trans.getBuyBid().getSubmitTime();
+			submissionTime = trans.getBuyOrder().getSubmitTime();
 			type = OrderType.BUY;
 		} else {
-			submissionTime = trans.getSellBid().getSubmitTime();
+			submissionTime = trans.getSellOrder().getSubmitTime();
 			type = OrderType.SELL;
 		}
 		TimeStamp timeToExecution = trans.getExecTime().minus(submissionTime);

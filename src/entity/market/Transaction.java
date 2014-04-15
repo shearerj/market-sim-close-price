@@ -51,11 +51,11 @@ public class Transaction implements Serializable {
 		return market;
 	}
 
-	public final Order getBuyBid() {
+	public final Order getBuyOrder() {
 		return buyOrder;
 	}
 
-	public final Order getSellBid() {
+	public final Order getSellOrder() {
 		return sellOrder;
 	}
 

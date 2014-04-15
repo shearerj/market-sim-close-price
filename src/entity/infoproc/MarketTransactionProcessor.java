@@ -24,7 +24,7 @@ public class MarketTransactionProcessor extends AbstractTransactionProcessor {
 		super.processTransactions(market, newTransactions, currentTime);
 		
 		for (Transaction trans : newTransactions) {
-			Order buy = trans.getBuyBid(), sell = trans.getSellBid();
+			Order buy = trans.getBuyOrder(), sell = trans.getSellOrder();
 			// XXX Right now every agent but HFT's should function this way
 			// (e.g. Market makers). Maybe this will change
 			if (!(buy.getAgent() instanceof HFTAgent))

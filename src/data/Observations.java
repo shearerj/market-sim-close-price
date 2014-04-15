@@ -313,8 +313,8 @@ public class Observations {
 	
 	@Subscribe public void processTransaction(Transaction transaction) {
 		long execTime = transaction.getExecTime().getInTicks();
-		long buyerExecTime = execTime - transaction.getBuyBid().getSubmitTime().getInTicks();
-		long sellerExecTime = execTime - transaction.getSellBid().getSubmitTime().getInTicks();
+		long buyerExecTime = execTime - transaction.getBuyOrder().getSubmitTime().getInTicks();
+		long sellerExecTime = execTime - transaction.getSellOrder().getSubmitTime().getInTicks();
 		for (int quantity = 0; quantity < transaction.getQuantity(); quantity++) {
 			// only measure execution time for background traders
 			if (transaction.getBuyer() instanceof BackgroundAgent) {
