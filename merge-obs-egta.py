@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser(description='\n'.join(textwrap.wrap('Merge succ
   ''' + sys.argv[0] + ''' simulation_directory/observation*.json > simulation_directory/merged_observation.json
   ''' + sys.argv[0] + ''' simulation_directory/observation*.json -o simulation_directory/merged_observation.json''',
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-parser.add_argument('files', metavar='obs-file', nargs='+',
+parser.add_argument('files', metavar='obs-file', nargs='+', type=argparse.FileType('r'),
                     help='An observation file to merge')
 parser.add_argument('-o', '--output', '-f', '--file', metavar='merged-obs-file', type=argparse.FileType('w'), default=sys.stdout,
                     help='The merged json file to write to, defaults to stdout')
@@ -19,11 +19,12 @@ class KahanSum(object):
     def __init__(self):
         self.__sum = self.__c = 0.0
 
-    def add(self, val):
+    def __add__(self, val):
         y = val - self.__c
         t = self.__sum + y
         c = (t - self.__sum) - y
         self.__sum = t
+        return self
 
     def sum(self):
         return self.__sum
@@ -34,15 +35,22 @@ class SumStats(object):
         self.sum = KahanSum()
         self.sumsq = KahanSum();
 
-    def add_one(self, val):
+    def __add__(self, val):
         self.n += 1
-        self.sum.add(val)
-        self.sumsq.add(val * val)
+        self.sum += val
+        self.sumsq += val * val
+        return self
+
+    def add_one(self, val):
+        self += val
 
     def add_many(self, n, sum, sumsq):
         self.n += n
-        self.sum.add(sum)
-        self.sumsq.add(sumsq)
+        self.sum += sum
+        self.sumsq += sumsq
+
+    def add_mean_stddev(self, n, mean, stddev):
+        add_many(self, n, n * mean, stddev * stddev * (n - 1) + n * mean * mean)
 
     def mean(self):
         return float(self.sum.sum()) / self.n;
@@ -53,15 +61,17 @@ class SumStats(object):
     def sample_stddev(self):
         return math.sqrt(self.__sq_err__() / (self.n - 1))
 
-def mergeObs(filenames):
+def mergeObs(filelike):
     
     true_player_stats = {}
     egta_player_stats = {}
     feature_stats = {}
+    player_feature_stats = {}
 
-    for filename in filenames:
-        with open(filename, 'r') as first:
-            obs = json.load(first)
+    true_stddev = True
+
+    for file in filelike:
+        obs = json.load(file)
 
         players = obs['players']
         features = obs['features']
@@ -71,14 +81,20 @@ def mergeObs(filenames):
         for feat, val in features.iteritems():
             feature_stats.setdefault(feat, SumStats()).add_one(float(val))
 
+        true_stddev &= 'payoff_stddev' in players[0]['features']
+            
         sim_egta_stats = {}
 
         for player in players:
             true_stat = true_player_stats.setdefault(player['role'], {}).setdefault(player['strategy'], SumStats())
             egta_stat = sim_egta_stats.setdefault(player['role'], {}).setdefault(player['strategy'], SumStats())
             mean = float(player['payoff'])
-            true_stat.add_many(n, mean, float(player['features']['payoff_stddev']) ** 2 * (n - 1) + n * mean ** 2)
+            true_stat.add_many(n, n * mean, float(player['features'].get('payoff_stddev', 0)) ** 2 * (n - 1) + n * mean ** 2)
             egta_stat.add_one(mean)
+
+            pf_stats = player_feature_stats.setdefault(player['role'], {}).setdefault(player['strategy'], {})
+            for feat, val in player['features'].iteritems():
+                pf_stats.setdefault(feat, SumStats()).add_one(val)
 
         for role, rest in sim_egta_stats.iteritems():
             for strat, stat in rest.iteritems():
@@ -87,11 +103,15 @@ def mergeObs(filenames):
     players = {}
     for role, rest in true_player_stats.iteritems():
         for strat, stat in rest.iteritems():
-            players.setdefault(role, {})[strat] = {
+            agg = {
                 'mean': stat.mean(),
-                'true_sample_stddev': stat.sample_stddev(),
-                'egta_sample_stddev': egta_player_stats[role][strat].sample_stddev()
-                }
+                'egta_sample_stddev': egta_player_stats[role][strat].sample_stddev(),
+                'features': {feat: stat.mean() for feat, stat in player_feature_stats[role][strat].iteritems()}
+            }
+            if true_stddev: # Don't include if missing data
+                agg['true_sample_stddev'] = stat.sample_stddev()
+
+            players.setdefault(role, {})[strat] = agg
 
     features = { 'config': config }
     for feat, stat in feature_stats.iteritems():
