@@ -24,6 +24,8 @@ import java.io.FileReader;
 import java.io.Reader;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.MarketType;
@@ -32,7 +34,11 @@ import systemmanager.Consts.Presets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultiset;
+import com.google.common.collect.Multiset;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -70,7 +76,7 @@ public class SimulationSpec implements Serializable {
 
 	protected final Collection<MarketProperties> marketProps;
 	protected final Collection<AgentProperties> agentProps;
-	protected transient final JsonObject playerProps; // TODO Change to properties object
+	protected final Map<String, Multiset<AgentProperties>> playerProps; // This probably makes more sense as a Multimap, but I couldn't make it as efficient
 
 	public SimulationSpec() {
 		this.rawSpec = new JsonObject();
@@ -80,7 +86,7 @@ public class SimulationSpec implements Serializable {
 
 		this.marketProps = ImmutableList.of();
 		this.agentProps = ImmutableList.of();
-		this.playerProps = new JsonObject();
+		this.playerProps = ImmutableMap.of();
 	}
 	
 	public SimulationSpec(File specFile) throws FileNotFoundException {
@@ -100,7 +106,7 @@ public class SimulationSpec implements Serializable {
 		defaultAgentProperties = readProperties(config, agentKeys);
 		agentProps = agents(config, defaultAgentProperties);
 		
-		playerProps = players == null ? new JsonObject() : players;
+		playerProps = players(players == null ? new JsonObject() : players, defaultAgentProperties);
 		simulationProperties = readProperties(config, simulationKeys);
 	}
 
@@ -144,6 +150,17 @@ public class SimulationSpec implements Serializable {
 				backgroundAgents.add(AgentProperties.create(agentType, def, agentConfig));
 		}
 		return backgroundAgents.build();
+	}
+	
+	protected Map<String, Multiset<AgentProperties>> players(JsonObject config, EntityProperties defaults) {
+		ImmutableMap.Builder<String, Multiset<AgentProperties>> mapBuilder = ImmutableMap.builder();
+		for (Entry<String, JsonElement> e : config.entrySet()) {
+			ImmutableMultiset.Builder<AgentProperties> multisetBuilder = ImmutableMultiset.builder();
+			for (JsonElement stratString : e.getValue().getAsJsonArray())
+				multisetBuilder.add(AgentProperties.fromConfigString(stratString.getAsString(), defaults));
+			mapBuilder.put(e.getKey(), multisetBuilder.build());
+		}
+		return mapBuilder.build();
 	}
 	
 	/**
@@ -205,7 +222,7 @@ public class SimulationSpec implements Serializable {
 		return ImmutableList.copyOf(agentProps);
 	}
 
-	public JsonObject getPlayerProps() {
+	public Map<String, Multiset<AgentProperties>> getPlayerProps() {
 		return playerProps;
 	}
 	

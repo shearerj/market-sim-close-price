@@ -34,10 +34,12 @@ public class EntityProperties implements Serializable {
 	/**
 	 * Store everything as strings, and convert out when called
 	 */
-	protected Map<String, String> properties;
+	protected final Map<String, String> properties;
+	protected final String configString;
 
-	protected EntityProperties(Map<String, String> backedProperties) {
+	protected EntityProperties(Map<String, String> backedProperties, String configString) {
 		this.properties = backedProperties;
+		this.configString = configString;
 	}
 	
 	/**
@@ -46,7 +48,7 @@ public class EntityProperties implements Serializable {
 	 * @return
 	 */
 	public static EntityProperties empty() {
-		return new EntityProperties(Maps.<String, String> newHashMap());
+		return new EntityProperties(Maps.<String, String> newHashMap(), "");
 	}
 	
 	/**
@@ -56,7 +58,7 @@ public class EntityProperties implements Serializable {
 	 * @return
 	 */
 	public static EntityProperties copy(EntityProperties from) {
-		return new EntityProperties(Maps.newHashMap(from.properties));
+		return new EntityProperties(Maps.newHashMap(from.properties), from.configString);
 	}
 	
 	/**
@@ -100,9 +102,8 @@ public class EntityProperties implements Serializable {
 	 * @return
 	 */
 	public static EntityProperties fromConfigString(String configString) {
-		EntityProperties created = EntityProperties.empty();
-		created.properties.putAll(parseConfigString(configString));
-		return created;
+		Map<String, String> properties = parseConfigString(configString);
+		return new EntityProperties(properties, configString);
 	}
 
 	/**
@@ -206,6 +207,10 @@ public class EntityProperties implements Serializable {
 		checkArgument(keysAndValues.length % 2 == 0);
 		for (int i = 0; i < keysAndValues.length; i+=2)
 			put((String) keysAndValues[i], keysAndValues[i+1].toString());
+	}
+	
+	public String getConfigString() {
+		return configString;
 	}
 
 	@Override

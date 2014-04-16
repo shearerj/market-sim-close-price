@@ -4,21 +4,18 @@ import static logger.Log.log;
 import static logger.Log.Level.INFO;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import utils.Pair;
 import activity.AgentArrival;
 import activity.Clear;
 import activity.LiquidateAtFundamental;
 
-import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 
 import data.AgentProperties;
 import data.EntityProperties;
@@ -69,7 +66,7 @@ public class Simulation {
 		EntityProperties simProps = spec.getSimulationProps();
 		Collection<MarketProperties> marketProps = spec.getMarketProps();
 		Collection<AgentProperties> agentProps = spec.getAgentProps();
-		JsonObject playerConfig = spec.getPlayerProps();
+		Map<String, Multiset<AgentProperties>> playerConfig = spec.getPlayerProps();
 
 		this.simulationLength = TimeStamp.create(simProps.getAsLong(Keys.SIMULATION_LENGTH));
 		TimeStamp lastTime = TimeStamp.create(simulationLength.getInTicks() - 1); // Last time to schedule something.
@@ -83,7 +80,7 @@ public class Simulation {
 		this.sip = new SIP(scheduler, TimeStamp.create(simProps.getAsInt(Keys.NBBO_LATENCY)));
 		this.markets = setupMarkets(marketProps, rand);
 		this.agents = setupAgents(agentProps, rand);
-		this.players = setupPlayers(simProps, playerConfig, rand);
+		this.players = setupPlayers(playerConfig, simProps, rand);
 		this.observations = new Observations(specification, markets, agents,
 				players, fundamental);
 
@@ -132,33 +129,25 @@ public class Simulation {
 	/**
 	 * Sets up player agents
 	 */
-	protected Collection<Player> setupPlayers(EntityProperties modelProps,
-			JsonObject playerConfig, Random rand) {
+	protected Collection<Player> setupPlayers(Map<String, Multiset<AgentProperties>> playerConfig,
+			EntityProperties modelProps, Random rand) {
 		Builder<Player> players = ImmutableList.builder();
-		/*
-		 * First group by role and agentType for legacy reasons / arrival rate
-		 * reasons XXX Re-think how to schedule player arrival rates. (Maybe be
-		 * less important if agents reenter)
-		 */
 		double arrivalRate = modelProps.getAsDouble(Keys.ARRIVAL_RATE, 0.075);
-		
-		Multiset<RoleStrat> counts = HashMultiset.create();
-		for (Entry<String, JsonElement> role : playerConfig.entrySet())
-			for (JsonElement strat : role.getValue().getAsJsonArray())
-				counts.add(new RoleStrat(role.getKey(), strat.getAsString()));
 
 		// Generate Players
-		for (Multiset.Entry<RoleStrat> roleEnt : counts.entrySet()) {
-			String role = roleEnt.getElement().role();
-			String strat = roleEnt.getElement().strat();
-
-			AgentFactory factory = new AgentFactory(scheduler, fundamental, sip, markets,
-					arrivalRate, new Random(rand.nextLong()));
-			for (int i = 0; i < roleEnt.getCount(); i++) {
-				Agent agent = factory.createAgent(AgentProperties.fromConfigString(strat));
-				agents.add(agent);
-				Player player = new Player(role, strat, agent);
-				players.add(player);
+		for (Entry<String, Multiset<AgentProperties>> e : playerConfig.entrySet()) {
+			String role = e.getKey();
+			for (Multiset.Entry<AgentProperties> propCounts : e.getValue().entrySet()) {
+				AgentProperties agProp = propCounts.getElement();
+				AgentFactory factory = new AgentFactory(scheduler, fundamental, sip, markets,
+						arrivalRate, new Random(rand.nextLong()));
+				
+				for (int i = 0; i < propCounts.getCount(); i++) {
+					Agent agent = factory.createAgent(propCounts.getElement());
+					agents.add(agent);
+					Player player = new Player(role, agProp.getConfigString(), agent);
+					players.add(player);
+				}
 			}
 		}
 		return players.build();
@@ -183,15 +172,6 @@ public class Simulation {
 	 */
 	public Observations getObservations() {
 		return observations;
-	}
-	
-	protected static class RoleStrat extends Pair<String, String> {
-		protected RoleStrat(String role, String strat) {
-			super(role, strat);
-		}
-	
-		protected String role() { return left; }
-		protected String strat() { return right; }
 	}
 
 }
