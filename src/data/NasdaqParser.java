@@ -65,7 +65,7 @@ public class NasdaqParser extends MarketDataParser {
 	}
 	
 	private void parseDeleteOrder(List<String> elements) {
-		int orderRefNum = new Integer(elements.get(2));
+		long orderRefNum = new Long(elements.get(2));
 		int milliseconds = new Integer(elements.get(1)) / 1000000;
 		TimeStamp deleteTime = TimeStamp.create(curSeconds + milliseconds);
 		
