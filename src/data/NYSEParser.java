@@ -63,7 +63,7 @@ public class NYSEParser extends MarketDataParser {
 	}
 
 	private void parseDeleteOrder(List<String> elements) {
-		int orderRefNum = new Integer(elements.get(2));
+		long orderRefNum = new Long(elements.get(2));
 		int seconds = new Integer(elements.get(3));
 		int milliseconds = new Integer(elements.get(4));
 		
