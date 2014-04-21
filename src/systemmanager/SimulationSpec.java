@@ -71,8 +71,6 @@ public class SimulationSpec implements Serializable {
 
 	protected transient final JsonObject rawSpec;
 	protected final EntityProperties simulationProperties;
-	protected final EntityProperties defaultMarketProperties;
-	protected final EntityProperties defaultAgentProperties;
 
 	protected final Collection<MarketProperties> marketProps;
 	protected final Collection<AgentProperties> agentProps;
@@ -81,8 +79,6 @@ public class SimulationSpec implements Serializable {
 	public SimulationSpec() {
 		this.rawSpec = new JsonObject();
 		this.simulationProperties = EntityProperties.empty();
-		this.defaultMarketProperties = EntityProperties.empty();
-		this.defaultAgentProperties = EntityProperties.empty();
 
 		this.marketProps = ImmutableList.of();
 		this.agentProps = ImmutableList.of();
@@ -98,16 +94,16 @@ public class SimulationSpec implements Serializable {
 		JsonObject config = rawSpec.getAsJsonObject(Keys.CONFIG);
 		JsonObject players = rawSpec.getAsJsonObject(Keys.ASSIGN);
 
-		presets(config);
+		handlePresets(config);
 		
-		defaultMarketProperties = readProperties(config, marketKeys);
+		simulationProperties = readProperties(config, simulationKeys);
+		
+		EntityProperties defaultMarketProperties = readProperties(config, marketKeys);
 		marketProps = markets(config, defaultMarketProperties);
 		
-		defaultAgentProperties = readProperties(config, agentKeys);
+		EntityProperties defaultAgentProperties = readProperties(config, agentKeys);
 		agentProps = agents(config, defaultAgentProperties);
-		
 		playerProps = players(players == null ? new JsonObject() : players, defaultAgentProperties);
-		simulationProperties = readProperties(config, simulationKeys);
 	}
 
 	public SimulationSpec(String specFileName) throws JsonSyntaxException,
@@ -167,7 +163,7 @@ public class SimulationSpec implements Serializable {
 	 * Set preset for standard simulations
 	 */
 	// Just add a new case to add your own!
-	protected void presets(JsonObject config) {
+	protected void handlePresets(JsonObject config) {
 		JsonPrimitive preset = config.getAsJsonPrimitive(Keys.PRESETS);
 		if (preset == null) return;
 		if (preset.getAsString().isEmpty()) return;
@@ -204,14 +200,6 @@ public class SimulationSpec implements Serializable {
 
 	public EntityProperties getSimulationProps() {
 		return simulationProperties;
-	}
-	
-	public EntityProperties getDefaultMarketProps() {
-		return defaultMarketProperties;
-	}
-	
-	public EntityProperties getDefaultAgentProps() {
-		return defaultAgentProperties;
 	}
 
 	public Collection<MarketProperties> getMarketProps() {
