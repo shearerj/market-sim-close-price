@@ -13,19 +13,10 @@
   <property name="name"  value="HFT Simulation System"/>
   <property name="main-class" value="systemmanager/SystemManager"/>
   
-  <target name="check-for-changes" unless="force"
-	  description="checks compiled jar for changes with source file">
-    <uptodate property="no-changes" targetfile="${dist}/hft.jar">
-      <srcfiles dir="${src}"  includes="**/*.java"/> 
-    </uptodate>
-  </target>
-
-  <target name="compile-src" depends="check-for-changes" unless="no-changes"
-	  description="compile the source" >
+  <target name="compile-src" description="compile the source" >
     <!-- Create the time stamp -->
     <tstamp/>
-    <!-- Clean build directory -->
-    <delete dir="${build}"/>
+    <!-- Create build directory if it doesn't exist -->
     <mkdir dir="${build}"/>
     <!-- Compile the java code from ${src} into ${build} -->
     <javac srcdir="${src}" destdir="${build}"
@@ -41,8 +32,7 @@
 
   <target name="compile-test" depends="compile-src"
 	  description="compile test code" >
-    <!-- Clean build_test directory -->
-    <delete dir="${build-test}"/>
+    <!-- Make build_test directory -->
     <mkdir dir="${build-test}"/>
     <!-- Compile the java code from ${test} into ${build-test} -->
     <javac srcdir="${test}" destdir="${build-test}"
@@ -59,8 +49,7 @@
   
   <target name="build-jar" depends="compile-src" unless="no-changes"
 	  description="generate the distribution" >
-    <!-- Clean distribution directory -->
-    <delete dir="${dist}"/>
+    <!-- Make distribution directory -->
     <mkdir dir="${dist}"/>
     <!-- Put everything in ${build} into the jar file -->
     <jar jarfile="${dist}/hft.jar" basedir="${build}">
@@ -70,11 +59,6 @@
 	<attribute name="Main-Class" value="${main-class}"/>
       </manifest>
     </jar>
-  </target>
-
-  <target name="force"
-	  description="flags build so everything is forced to recompile">
-    <property name="force" value="true"/>
   </target>
 
   <target name="test" depends="compile-test"
@@ -95,9 +79,6 @@
       </batchtest>
     </junit>
   </target>
-
-  <target name="test-build" depends="test, build-jar"
-	  description="runs junit tests before compiling a jar"/>
 
   <target name="clean"
 	  description="clean up build and distribution files" >
