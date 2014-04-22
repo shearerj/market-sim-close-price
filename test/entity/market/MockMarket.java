@@ -49,8 +49,8 @@ public class MockMarket extends Market {
 		updateQuote(currentTime);
 	}
 
-	public Collection<Order> getActiveOrders() {
-		return this.orders;
+	public boolean containsOrder(Order order) {
+		return orderbook.contains(order);
 	}
 
 }

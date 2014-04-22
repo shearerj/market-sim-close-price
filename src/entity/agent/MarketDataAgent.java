@@ -55,6 +55,7 @@ public class MarketDataAgent extends SMAgent {
 			System.exit(1);
 		}
 		
+		// FIXME Shouldn't it schedule the first time, not automatically submit a bid?
 		scheduler.executeActivity(new AgentStrategy(this));
 	}
 	

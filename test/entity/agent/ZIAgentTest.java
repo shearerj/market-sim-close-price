@@ -131,7 +131,7 @@ public class ZIAgentTest {
 		ZIAgent testAgent = addAgent();
 		TimeStamp currentTime = TimeStamp.create(100);
 		testAgent.agentStrategy(currentTime);
-		int submit_counter = market.getActiveOrders().size();
+		int submit_counter = market.getOrders().size(); // XXX Used to be active orders, but that method didn't work
 		assertEquals("ZI SubmitNMSOrder quantity (" + submit_counter + ") not equal to 1", 1, submit_counter);
 	}
 

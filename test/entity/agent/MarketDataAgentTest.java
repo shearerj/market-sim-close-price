@@ -1,14 +1,15 @@
 package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.Collection;
 import java.util.Random;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import com.google.common.collect.Iterables;
 
 import systemmanager.Executor;
 import data.FundamentalValue;
@@ -53,16 +54,15 @@ public class MarketDataAgentTest {
 		exec.executeUntil(TimeStamp.create(88));
 
 		Collection<Order> orders = market.getOrders();
-		assertTrue(orders.size() > 0);
-		
-		for (Order order : orders) {
-			assertEquals(agent, order.getAgent());
-			assertEquals(new Price(3249052), order.getPrice());
-			assertTrue(5742346 == order.getQuantity());
-			assertEquals(TimeStamp.create(88), order.getSubmitTime());
-			assertEquals(BUY, order.getOrderType());
-			assertEquals(market, order.getMarket());
-		}
+		assertEquals(1, orders.size());
+		Order order = Iterables.getOnlyElement(orders);
+
+		assertEquals(agent, order.getAgent());
+		assertEquals(new Price(3249052), order.getPrice());
+		assertTrue(5742346 == order.getQuantity());
+		assertEquals(TimeStamp.create(88), order.getSubmitTime());
+		assertEquals(BUY, order.getOrderType());
+		assertEquals(market, order.getMarket());
 	}
 	
 	@Test
@@ -72,24 +72,18 @@ public class MarketDataAgentTest {
 		exec.executeUntil(TimeStamp.create(88));
 		
 		Collection<Order> orders = market.getOrders();
-		assertTrue(orders.size() > 0);
+		assertEquals(1, orders.size());
+		Order order = Iterables.getOnlyElement(orders);
 		
-		for (Order order : orders) {
-			assertEquals(agent, order.getAgent());
-			assertEquals(new Price(5516081), order.getPrice());
-			assertTrue(981477 == order.getQuantity());
-			assertEquals(TimeStamp.create(0), order.getSubmitTime());
-			assertEquals(BUY, order.getOrderType());
-			assertEquals(market, order.getMarket());
-		}
-		
+		assertEquals(agent, order.getAgent());
+		assertEquals(new Price(5516081), order.getPrice());
+		assertTrue(981477 == order.getQuantity());
+		assertEquals(TimeStamp.create(0), order.getSubmitTime());
+		assertEquals(BUY, order.getOrderType());
+		assertEquals(market, order.getMarket());
+
 		exec.executeUntil(TimeStamp.create(2001));
-		orders = market.getActiveOrders();
-		// FIXME why isn't the order getting removed?
-//		assertTrue(orders.size() == 0);		
-		for (Order order : orders) {
-			System.out.println(order.toString());
-		}
+		assertFalse(market.containsOrder(order));
 	}
 	
 	@Test
