@@ -40,7 +40,7 @@ public class Order extends fourheap.Order<Price, MarketTime> implements Serializ
 	
 	@Override
 	public String toString() {
-		return agent + " " + type + ' ' + getQuantity() + " @ " + price + " from " + market;
+		return agent + " " + type + ' ' + getQuantity() + " @ " + price + " in " + market;
 	}
 	
 }

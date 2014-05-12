@@ -74,7 +74,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			Price price = new Price((val.doubleValue() + (type.equals(SELL) ? 1 : -1) * 
 					Rands.nextUniform(rand, bidRangeMin, bidRangeMax))).nonnegative().quantize(tickSize);
 			
-			log.log(INFO, "%s: executing ZI strategy position=%d, for q=%d, value=%s + %s=%s",
+			log.log(INFO, "%s executing ZI strategy position=%d, for q=%d, value=%s + %s=%s",
 					this, positionBalance, quantity, fundamental.getValueAt(currentTime),
 					privateValue.getValue(positionBalance, type), val);
 			
@@ -82,7 +82,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					type, price, quantity));
 		} else {
 			// if exceed max position, then don't submit a new bid
-			log.log(INFO, "%s: executing ZI strategy new order would exceed max position %d ; no submission",
+			log.log(INFO, "%s executing ZI strategy new order would exceed max position %d ; no submission",
 					this, privateValue.getMaxAbsPosition());
 		}
 	}

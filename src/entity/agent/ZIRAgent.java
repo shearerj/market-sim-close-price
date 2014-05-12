@@ -90,19 +90,19 @@ public class ZIRAgent extends BackgroundAgent {
 		super.agentStrategy(currentTime);
 
 		if (!currentTime.equals(arrivalTime)) {
-			log.log(INFO, "%s: wake up.", this);
+			log.log(INFO, "%s wake up.", this);
 		}
 		// XXX should it go to sleep?
 //		if (!activeOrders.isEmpty()) return;
 
 		if (withdrawOrders) {
-			log.log(INFO, "%s: Withdraw all orders.", this);
+			log.log(INFO, "%s Withdraw all orders.", this);
 			withdrawAllOrders();
 		}
 		// 0.50% chance of being either long or short
 		OrderType type = rand.nextBoolean() ? BUY : SELL;
+		log.log(INFO, "%s Submit %s order", this, type);
 		executeZIStrategy(type, 1, currentTime);
-		log.log(INFO, "%s: Submit %s order", this, type);
 	}
 	
 }
