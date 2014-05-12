@@ -75,8 +75,8 @@ of the simulation system include:
 
 \item[Event Queue:] Queue ordered by activity time that executes activities in
   the ``proper'' order, sequentially until empty. Multiple activities may occur
-  during the same time step, and in most circumstances the order they are
-  executed in is pseudo-random according to the random number generator of the
+  during the same time step, and in most circumstances they
+  execute in pseudo-random order according to the random number generator of the
   simulation. The random nature is meant to simulate the slight timing
   differences that occur in real life (nothing actually occurs at the same
   time).
@@ -89,9 +89,9 @@ are to be executed by various \emph{entities} (traders, markets, and the SIP).
 \subsection{Activities}
 
 Each activity has a timestamp and each is associated with at least one entity
-present in the simulation system. Note that activities may be chained (the next
-immediate activity is inserted at the end of the current one). See
-Table~\ref{tab:activity} for a partial list of activities within the system.
+present in the simulation system. Note that activities may be chained (the next activity is inserted at the end of the current one).
+Activities may also be executely immediately, as each entity has a reference to the event scheduler (responsible for inserting activities). See
+Table~\ref{tab:activity} for a list of activities in the system.
 
 \begin{table}
 \centering
@@ -116,60 +116,68 @@ Table~\ref{tab:activity} for a partial list of activities within the system.
 
 \subsection{Example}
 
-To control the latency of the SIP as well as general market access, we specify
-two activities: \textsf{SendToIP} and \textsf{ProcessQuote}.  The
-\textsf{SendToIP} activity is inserted when a market updates its quote at time
-$t$. Once the information processor (IP) gets the information it inserts a
+To control the latency of the SIP as well as general market access to quote and transaction information, we specify
+a set of activities: \textsf{SendToQP}, \textsf{SendToTP}, \textsf{ProcessQuote}, and \textsf{ProcessTransactions}.
+%
+Two of these activities can be seen in Figure \ref{fig:sim-sys}.  The
+\textsf{SendToQP} activity is inserted when a market updates its quote at time
+$t$. Once the quote processor (QP) within the SIP gets the information it inserts a
 \textsf{ProcessQuote} activity to execute at time $t + \delta$ in the future to
 account for the delay caused by processing the information.
 %
-When \textsf{ProcessQuote} is executed, the IP updates its stored information on
-the best market quotes. When agent's query the SIP for market information they
-will only get the most recent information that it's processed after $t+\delta$,
+When \textsf{ProcessQuote} is executed, the QP updates its stored information on
+the best market quotes. When agents query the SIP for market information, they
+will only get the most recent information that the SIP has processed after $t+\delta$,
 not all of the market quotes at the current time.
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figs/sip_simulation_example_new}
+\caption{Event queue with an example sequence of activities to update the NBBO quote, in which the quote processor in question is the one in the SIP.}
+\label{fig:sim-sys}
+\end{figure}
 
 \section{Simulation Specification File}
 
-See the \path{simulation_spec.pdf} file for details on specifying the simulation and environment parameters.
+See the \href{../simulation_spec.pdf}{simulation spec documentation} for details on specifying the simulation and environment parameters.
 
 \section{Running a Simulation}
 
 \begin{enumerate}
-\item To run a basic simulation, create a directory to store all of your
-  simulations (e.g. \path{simulations}) and then create a directory for this
-  specific simulation inside it:
-
+\item To run a basic simulation, create a directory to store the
+  simulations (e.g. \path{simulations}) and then create a directory for your
+  specific environment configuration inside it:
+%
 \begin{verbatim}
-pwd # should print your hft folder
-mkdir simulations
+pwd                 # should print your hft folder
+mkdir simulations   # should be already created in the repo
 mkdir simulations/test
 \end{verbatim}
 
-\item Then copy the default \path{simulation_spec.json} file into the folder you
-  just created:
-
+\item Then copy the default \path{simulation_spec.json} file into the folder you just created:
+%
 \begin{verbatim}
 cp docs/simulation_spec.json simulations/test/
 \end{verbatim}
 
-\item Make any tweaks to the specification you want using your favorite text
-  editor.
+\item Make any tweaks to the specification you want using your favorite text editor.
 
 \item Use the following command to run your simulation:
-
+%
 \begin{verbatim}
-./run_hft.sh simulations/test <number of simulations to run>
+./run-hft.sh simulations/test <number of simulations to run>
 \end{verbatim}
 
 For example:
-
 \begin{verbatim}
-./run_hft.sh simulations/test 100
+./run-hft.sh simulations/test 100
 \end{verbatim}
 
-\item All simulations should be saved within subfolders in the \path{simulations/test}
-(or other) directory!
+\item The generated observations from 100 simulation runs should be saved within the \path{simulations/test} directory. All log files, if logging is enabled, will be saved in the \path{simulations/test/logs} directory.
 
 \end{enumerate}
 
-\end{document}
+Refer to the \href{../observations.pdf}{observation file documentation} for details on interpreting the generated observation files and the \href{../logging.pdf}{logging documentation} for reading the log files.
+
+More advanced users can use \verb|run-local-hft.sh| which permits specifying the jar with which you wish to run simulations.
+
+\end{document} 
