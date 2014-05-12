@@ -14,7 +14,7 @@
 }
 
 \newcommand{\simspec}{../simulation_spec.json}
-\newcommand{\logfile}{../simulations_1_0_14-Oct-2013_15.56.06.txt}
+\newcommand{\logfile}{../simulations_test_0_0_2014-05-12-13-36-04.txt}
 
 \begin{document}
 	
@@ -30,18 +30,16 @@
 
 All log files are saved in the folder \path{logs} that is created in the
 directory that contains the \path{simulation_spec.json} file.  Logs (.txt
-files) are named according the following convention: There are four sections in
+files) are named according the following convention: There are four main sections in
 the filename, each separated by underscores (examples refer to the filename
-\path{simulations_1_0_14-Oct-2013_15.56.06.txt}):
+\path{simulations_test_0_0_2014-05-12-13-36-04.txt}):
 
 \begin{description}
-\item[Directory or path] with the spec file, with forward slashes replaced by
-  hyphens (e.g., the base directory is \path{simulations/test})
-\item[Observation number] (e.g., here it is observation \#2)
-\item[Simulation number] (e.g. here it is simulation \#0, simulation numbers
-  start at 0)
-\item[Date] (dd-MMM-YYYY format)
-\item[Time] (hh.mm.ss format, 24-hour clock, e.g., time here is 1:45:00 PM)
+\item[Directory or path] The location of spec file, with forward slashes replaced by
+  underscores (e.g., the base directory here is \path{simulations/test})
+\item[Observation number] (e.g., here it is observation \#0)
+\item[Simulation number] (e.g. here it is simulation \#0, simulation numbers start at 0)
+\item[Date and time] Format YYYY-MM-DD for date, followed by hyphen then time in HH-mm-ss format, 24-hour clock
 \end{description}
 
 \section{Reading Lines}
@@ -49,42 +47,39 @@ the filename, each separated by underscores (examples refer to the filename
 A line in a log file will look like
 
 \begin{verbatim}
-<message type>| <simulator time>|<model num>| <message>
+<simulator time>| <message type>| <message>
 \end{verbatim}
 
 \begin{description}
-\item[message type] is the level of the logging message. It can be one of three things
+\item[simulator time] is the current time in ticks of the simulator when the
+  message was produced.
+\item[message type] is the level of the logging message. It can be one of three numbers:
   \begin{enumerate}[1)]
     \item Error
     \item Info
     \item Debug
   \end{enumerate}
-\item[simulator time] is the current time in ticks of the simulator when the
-  message was produced.
-\item[model num] is the model number of the simulation. The default value
-  is 0, but it can be set to other numbers for merging log files.
-\item[message] This is the actual debug message which can be a number of
+
+\item[message] This is the actual log message which can be a number of
   different things about the progression of the simulation. Two useful things to
   be aware of are:
   \begin{description}
-  \item[Market ID]s are within square brackets, e.g., \texttt{[1]}.
-  \item[Agent ID]s are positive, and are within parentheses, e.g., \texttt{(1)};
+  \item[Market IDs] are within square brackets, e.g., \texttt{[1]}.
+  \item[Agent IDs] are within parentheses, e.g., \texttt{(1)};
     each agent has a \emph{unique} agent ID.
   \end{description}
 \end{description}
 
 Note that within the \path{config} directory there is a file called
-\path{env.properties}, which is used to specify the logging level. Log level 2
-will be adequate for most debugging purposes.
+\path{env.properties}, which is used to specify the logging level. Log level 2 will be adequate for most debugging purposes.
 %
 While printing to \texttt{System.out} will be useful for initial debugging,
-looking at the logs and observation files will be necessary in order to verify
-that agents are behaving as expected.
+looking at the logs and observation files will be necessary in order to verify that agents are interacting and behaving as expected.
 
 \section{Configuration File}
 
-The log file excerpted in the following sections is located at
-\path{simulations_1_14-Oct-2013_15.56.06.txt}, and was generated using the
+The log file excerpted in the following sections is located within the \path{docs} folder 
+(\path{simulations_test_0_0_2014-05-12-13-36-04.txt}), and was generated using the
 following \path{simulation_spec.json} file:
 
 \lstinputlisting{\simspec}
@@ -92,104 +87,90 @@ following \path{simulation_spec.json} file:
 \section{Simulation Initialization}
 
 When a simulation is initialized, the following items are
-specified: \begin{inparaenum}[1)] \item the name of the simulation, \item the
-  random seed used to run the simulation, \item the full configuration, \item
-  number and type of each market, and \item market ID. \end{inparaenum} For
+specified: \begin{inparaenum}[1)] \item the
+  random seed used to run the simulation, and \item the full configuration.
+   % \item number and type of each market, and \item market ID. 
+   \end{inparaenum} For
 example:
 
-\lstinputlisting[lastline=5]{\logfile}
+\lstinputlisting[lastline=2]{\logfile}
 
-In the previous file each lines means:
+In the previous file each line means:
 \begin{description}
-\item[\texttt{mySimulation}:] Is the name of the simulation. This is used in the
-  observation file and give a unique name to a specific simulation.
-\item[\texttt{Random Seed : -1282951707}:] This prints out the random seed used
-  to generate this simulation.
-\item[\texttt{Configuration :...}:] Is the entire \path{simulation_spec.json}
-  file for this simulation.
-\item[\texttt{Created Market : CDA [1]}:] Specifies that market 1 is a CDA
-  market.
+%\item[\texttt{mySimulation}:] Is the name of the simulation. This is used in the observation file and give a unique name to a specific simulation.
+\item[\texttt{Random Seed : 271828}:] The random seed used to generate this simulation run.
+\item[\texttt{Configuration :...}:] The full \path{simulation_spec.json} file for this simulation.
+%\item[\texttt{Created Market : CDA [1]}:] Specifies that market 1 is a CDA  market.
 \end{description}
 
 \section{Market simulation}
 
 After markets are created the simulation begins running.
 \begin{description}
-\item[Agent Strategy:] An example of an agent strategy is present in line 8 of
-  the log file:
+\item[Agent Strategy:] An example of an agent strategy is present in line 5 of the log file:
 
-  \lstinputlisting[firstline=8,lastline=8]{\logfile}
+  \lstinputlisting[firstline=5,lastline=5]{\logfile}
   
-  Agent strategies can take many forms depending on the agent, but they'll
-  mostly look something like the preceding line.
+  Agent strategies can take many forms depending on the agent, but they will generally look similar to the preceding line.
 
 \item[Agent Submit Order:] When an agent submits a order it will take the form of:
 
 \begin{verbatim}
-<agent> (<price>, <quantity>) -> <market>
+<agent> <order type> <quantity> @ <price> in <market>
 \end{verbatim}
 
-where a negative quantity is used to indicate sell orders. An example can be found
-on line 9 of the log file:
+where order type is either \verb|BUY| or \verb|SELL|. An example can be found on line 6 of the log file:
 
-\lstinputlisting[firstline=9,lastline=9]{\logfile}
+\lstinputlisting[firstline=6,lastline=6]{\logfile}
 
-\item[Market Quote Update:] When a market updates its internal quote you'll see
-  a line like the following:
+
+\item[Market Quote Update:] When a market updates its internal quote it will be reflected in the log as:
 
 \begin{verbatim}
 <market> (Bid: <bid price>, Ask: <ask price>)
 \end{verbatim}
 
-If a bid or ask doesn't exist than instead of seeing a price you'll see a hyphen
-(\texttt{-}). An example can be found in line 10 of the log file:
+If a bid or ask doesn't exist than instead of a price there will be a hyphen
+(\texttt{-}). An example can be found in line 7 of the log file:
 
-\lstinputlisting[firstline=10,lastline=10]{\logfile}
+\lstinputlisting[firstline=7,lastline=7]{\logfile}
 
-Note this is the markets internal quote, and may not available to every agent
-immediately.
+Note this is the market's internal quote, and may not available to every agent immediately.
 
-\item[Transaction:] When two agents transact you'll see two lines like the
-  following:
+\item[Transaction:] When two agents transact the quantity and price are indicated as well as the new positions of the traders involved:
 
 \begin{verbatim}
+<buyer> bought <quantity> from <seller> @ <price> in <market>
 <agent1> transacted to position <position1>
 <agent2> transacted to position <position2>
 \end{verbatim}
 
-An example can be found on lines 49 and 50 of the log file:
+An example can be found on lines 32 and 34 of the log file:
 
-\lstinputlisting[firstline=49,lastline=50]{\logfile}
+\lstinputlisting[firstline=32,lastline=34]{\logfile}
 
-\item[NBBO Update:] After enough time has a passed a market's quote update will
-  propagate to the NBBO. This will look like:
+\item[NBBO Update:] After enough time has a passed a market's quote update will propagate to the NBBO. This will look like:
 
 \begin{verbatim}
 <market> -> SIP quote (Bid: <bid>, Ask: <offer>)
 \end{verbatim}
 
-Where bid and offer are the updated values that the SIP is getting. An example
-can be found on line 77 of the log file:
+Where bid and offer are the updated values that the SIP is getting. An example can be found on line 67 of the log file:
 
-\lstinputlisting[firstline=77,lastline=77]{\logfile}
+\lstinputlisting[firstline=69,lastline=69]{\logfile}
 
-\item[SIP Order Routing:] When an order comes in that can be routed for better
-  execution at another market according to the NBBO you'll see a line like line
-  97 in the log file:
+\item[Reg NMS Order Routing:] When an order comes in that can be routed for better execution at another market according to the NBBO you'll see a line such as the following, from line 89 in the log file:
 
-  \lstinputlisting[firstline=97,lastline=97]{\logfile}
+  \lstinputlisting[firstline=89,lastline=89]{\logfile}
 
-  which indicates the price disparities that caused the routing.
+  which indicates the price disparities in market quotes that led to the routing.
 
-\item[Latency Arbitrage:] When latency arbitrage exists you'll see a series of
-  log messages like the following output from like 13 to line 22 in the log file:
+\item[Latency Arbitrage:] When a latency arbitrage opportunity is found by a latency arbitrageur (LA) there will be a series of log messages similar to the following output from line 260 to line 270 in the log file:
 
-  \lstinputlisting[firstline=13,lastline=22]{\logfile}
+  \lstinputlisting[firstline=260,lastline=270]{\logfile}
 
   It starts with a market updating its quote and exposing an arbitrage
-  opportunity. The Latency Arbitrageur (LA) will then announce that it detected
-  the arbitrage and what follows is subsequent bids being placed and
-  transactions that will leave the LA at net position 0.
+  opportunity. The LA will then announce that it detected the arbitrage opportunity. It then submits orders to each market, resulting in two transactions that leave LA at net position 0.
 
 \end{description}
 

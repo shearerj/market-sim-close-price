@@ -42,17 +42,15 @@ The simulation system consists of:
 
 \begin{description}
 \item[Background traders:] These agents have (potentially
-  undelayed) access to only a single market (which is specified at agent creation as their primary market). See
-  \href{../src/entity/agent/ZIAgent.java}{\textsf{ZIAgent}}, \href{../src/entity/agent/ZIRAgent.java}{\textsf{ZIRAgent}}, \href{../src/entity/agent/ZIPAgent.java}{\textsf{ZIPAgent}}, and \href{../src/entity/agent/AAAgent.java}{\textsf{AAAgent}}.
+  undelayed) access to only a single market (which is specified at agent creation as their primary market). 
+  % See \href{file:../../src/entity/agent/ZIAgent.java}{\textsf{ZIAgent}}, \href{../src/entity/agent/ZIRAgent.java}{\textsf{ZIRAgent}}, \href{../src/entity/agent/ZIPAgent.java}{\textsf{ZIPAgent}}, anlsd \href{../src/entity/agent/AAAgent.java}{\textsf{AAAgent}}.
 
-\item[Market makers (MM):] These agents submit a ladder of buy and sell orders upon each reentry. See
-  \href{../src/entity/agent/BasicMarketMaker.java}{\textsf{BasicMM}},
-  \href{../src/entity/agent/MAMarketMaker.java}{\textsf{MAMM}}, and
-  \href{../src/entity/agent/WMAMarketMaker.java}{\textsf{WMAMM}}.
+\item[Market makers (MM):] These agents submit a ladder of buy and sell orders upon each reentry. 
+  % See \href{../src/entity/agent/BasicMarketMaker.java}{\textsf{BasicMM}}, \href{../src/entity/agent/MAMarketMaker.java}{\textsf{MAMM}}, and \href{../src/entity/agent/WMAMarketMaker.java}{\textsf{WMAMM}}.
 
 \item[High-frequency traders (HFT):] These agents have access to
-  multiple markets (usually every market), which models the
-  direct feeds that many HFTs have to exchanges. See \href{../src/entity/agent/LAAgent.java}{\textsf{LAAgent}}.
+  multiple markets (usually every market). 
+  % See \href{../src/entity/agent/LAAgent.java}{\textsf{LAAgent}}.
 \end{description}
 \end{description}
 
@@ -60,10 +58,8 @@ The simulation system consists of:
 
 In our system, we employ \emph{discrete-event simulation}, a paradigm that
 allows the precise specification of event occurrences. It is particularly
-effective for modeling current U.S. securities regulation, specifically
-Regulation NMS---which led to the creation of the Security Information Processor
-(SIP) and which mandates the routing of orders for best execution.  Components
-of the simulation system include:
+effective for modeling communication latencies in the propagation of information between markets and participants.
+Components of the simulation system include:
 
 \begin{description}
 \item[Entity:] Objects present in the simulation system, e.g., traders, markets, quote processors (QP), transaction processors (TP), and the SIP, that perform actions that effects on other entities.
@@ -138,7 +134,7 @@ not all of the market quotes at the current time.
 
 \section{Simulation Specification File}
 
-See the \href{../simulation_spec.pdf}{simulation spec documentation} for details on specifying the simulation and environment parameters.
+See the \href{simulation_spec.pdf}{simulation spec documentation} for details on specifying the simulation and environment parameters.
 
 \section{Running a Simulation}
 
@@ -176,7 +172,7 @@ For example:
 
 \end{enumerate}
 
-Refer to the \href{../observations.pdf}{observation file documentation} for details on interpreting the generated observation files and the \href{../logging.pdf}{logging documentation} for reading the log files.
+Refer to the \href{observations.pdf}{\texttt{observations.pdf}} file for details on interpreting the generated observation files and \href{logging.pdf}{\texttt{logging.pdf}} for reading the log files.
 
 More advanced users can use \verb|run-local-hft.sh| which permits specifying the jar with which you wish to run simulations.
 
