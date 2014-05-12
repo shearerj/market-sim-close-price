@@ -29,16 +29,108 @@
 \section{Introduction}
 
 The simulation spec file contains the entire configuration of a simulation. It
-is in \href{json}{https://en.wikipedia.org/wiki/Json} format and divided into
+is in \href{https://en.wikipedia.org/wiki/Json}{json} format and divided into
 two main sections: ``assignment,'' and ``configuration.''
+
+The parameters in the specification file are those that can be adjusted in
+simulations. Below is the example \path{simulation_spec.json} file found in
+the \path{docs} folder:
+
+\lstinputlisting{../simulation_spec.json}
 
 \section{Assignment}
 
-The assignment section is primarily relevant for use with EGTA. It contains a
-nested listing of player roles and strategies.
+The ``assignment'' section is primarily for use with EGTA. It contains a
+nested listing of player roles with strategies assigned to players. 
+%
+There are currently three agent roles:
+ \begin{description}
+  \item[\texttt{BACKGROUND}:] Background traders, who possess a private valuation for the security.
+  \item[\texttt{MARKETMAKER}:] Marker makers, who do not have private values.
+  \item[\texttt{HFT}:] High-frequency traders.
+  \end{description}
+
+Each role used in the simulation is followed by a list of agent-strategy pairs, which take the format \texttt{<agentType>:<key>\_<value1>\_<key>\_<value2>...}. Each agent present in the simulation is specified on its own line.
+%
+For example, the segment below specifies two background traders, one with range $[0, 5000]$ and one with range $[0, 1000]$, and a single market maker employing the \textsc{BasicMM} strategy:
+%
+\begin{verbatim}
+{
+    "assignment": {
+        "BACKGROUND": [
+            "ZIR:bidRangeMin_0_bidRangeMax_1000",
+            "ZIR:bidRangeMin_0_bidRangeMax_5000"
+        ],
+        "MARKETMAKER": [
+            "BASICMM:numRungs_100"
+        ]
+    }
+    ...
+}
+\end{verbatim}
 
 \section{Configuration}
 
+The ``configuration'' section specifies the parameters for the market environment as well as the agent population present.
+%
+An explanation of select parameters follows:
+\begin{description}
+\item[\texttt{randomSeed}:] The seed for the pseudorandom number generator. Random number generation is also linked to the observation number, therefore a sequence of observations 0 to N will have different random numbers even when run with the same simulation spec file (and thus the same seed). Entering the same random seed for different models allows comparison with simulations run with common random numbers.
 
+\item[\texttt{numSims}:] Number of simulations to pre-aggregate; for example, setting this parameter to 5 will generate observation files containing the mean values from 5 simulation runs.
+\item[\texttt{modelName}:] The name of the market model. This is only used in the
+  output file and can be used to merge several log files, as the model name will be prepended to all observation metrics in the final merged observation file.
+
+\item[\texttt{presets}:] This is a way to get easy access to ``standard'' market
+  configurations. Currently there are four options:
+  \begin{description}
+  \item[\texttt{CENTRALCDA}:] A single CDA Market.
+  \item[\texttt{CENTRALCALL}:] A single CALL Market that clears at the \texttt{nbboLatency}.
+  \item[\texttt{TWOMARKET}:] Two CDA markets and no latency arbitrageur.
+  \item[\texttt{TWOMARKETLA}:] Two CDA markets and a single latency arbitrageur.
+  \end{description}
+
+  \item[\texttt{simLength}:] Length of simulation in time ticks (usually interpreted as milliseconds).
+
+  \item[\texttt{tickSize}:] Tick size of pricing. Prices are integers, so the
+  smallest tick size is $1$.
+
+  \item[\texttt{nbboLatency}:] Latency to update both the NBBO quote through the SIP in time steps (usually interpreted in milliseconds).
+
+  \item[\texttt{mktLatency}:] Latency to update quotes and transactions for all markets.
+
+  \item[\texttt{arrivalRate}:] Rate for the Poisson process of agent arrival times (background traders only; market makers and HFTs arrive at time 0).
+
+  \item[\texttt{reentryRate}:] Rate of reentry for all agents. Can also be set for an agent individually.
+
+  \item[\texttt{meanValue}:] Mean for the public global fundamental value.
+
+  \item[\texttt{kappa}:] Mean-reversion parameter for the fundamental; higher kappa indicates greater degree of mean-reversion.
+
+  \item[\texttt{shockVar}:] Variance of shock to global fundamental (which is normally distributed around mean 0).
+
+  \item[\texttt{privateValueVar}:] Variance of normally distributed i.i.d. elements of private value array; only applicable to background agents.
+
+
+\item[Markets:] The next set of options allow manually specifying market configurations
+  if a preset is not used. Currently, there are two types of markets: \texttt{CDA} and \texttt{CALL}. The configuration string takes the format
+  \texttt{<key1>\_<value1>\_<key>\_<value2>\_...}, and can contain several comma-separated configurations. The following entry would create three CALL
+  markets. Two of these will clear every 100 ms, and one will clear every
+  second:
+
+\begin{verbatim}
+"CALL" : "num_2_clearFreq_100,num_1_clearFreq_1000"
+\end{verbatim}
+
+  Other keys include \texttt{quoteLatency} and \texttt{transactionLatency}, which specify the market's latency in receiving updated quote and transaction information, respectively.
+
+\item[Agents:] The next set of options allow manually specifying agent
+  configurations (NOTE: LA configurations can only be set if a \texttt{preset}
+  is not being used). The current agents available are \texttt{BASICMM}, \texttt{MAMM}, \texttt{WMAMM},
+  \texttt{ZI}, \texttt{ZIR}, \texttt{ZIP}, \texttt{AA}, and \texttt{LA}. Each
+  agent takes a configuration string identical in style to a market, except agents
+  will take different parameters.
+
+\end{description}
 
 \end{document}

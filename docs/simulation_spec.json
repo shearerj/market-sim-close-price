@@ -4,8 +4,9 @@
     "configuration": {
         "randomSeed": "271828",
         "numSims": "1",
-        "simLength": "60000",
+        "modelName": "default",
         "presets": "NONE",
+        "simLength": "60000",
         "tickSize": "1",
         "nbboLatency": "1000",
         "mktLatency": "-1",

@@ -6,13 +6,14 @@
 \usepackage{amsmath}
 \usepackage{booktabs}
 \usepackage{listings}
+\usepackage{paralist}
 
 \lstset{
   basicstyle=\ttfamily,
   breaklines=true
 }
 
-\title{Overview}
+\title{Simulation System Overview}
 \author{
   Elaine Wah \\
   \href{mailto:ewah@umich.edu}{ewah@umich.edu}
@@ -25,29 +26,31 @@
 
 \section{Introduction}
 
-The HFT simulation system employs agent-based modeling and discrete-event
-simulation to model communication latencies and current U.S. securities
-regulations.
+The HFT simulation system employs agent-based modeling and discrete-event simulation to model algorithmic trading in financial markets.
 
 \section{Overview}
 
 The simulation system consists of:
 \begin{description}
-\item[\textsc{Markets}:] Two types of markets are implemented in the system, a
+\item[Markets:] Two types of markets are implemented in the system, a
   continuous double auction (CDA) market and a call market (which matches orders at regular, fixed
   intervals).
 
-\item[\textsc{Agents}:] There are two general types of agents in the system,
+\item[Agents:] There are three general types (i.e. roles) of agents in the system,
   which are distinguished by whether or not they have fast access to more than
-  one market.
+  one market and whether or not they possess private valuations for the security.
 
 \begin{description}
-\item[\textsc{Background agents}:] These agents have fast (potentially
-  undelayed) access to only a single market (which is specified at agent
-  creation as their primary market). See
-  \href{../src/entity/agent/ZIAgent.java}{\textsf{ZIAgent}}.
+\item[Background traders:] These agents have (potentially
+  undelayed) access to only a single market (which is specified at agent creation as their primary market). See
+  \href{../src/entity/agent/ZIAgent.java}{\textsf{ZIAgent}}, \href{../src/entity/agent/ZIRAgent.java}{\textsf{ZIRAgent}}, \href{../src/entity/agent/ZIPAgent.java}{\textsf{ZIPAgent}}, and \href{../src/entity/agent/AAAgent.java}{\textsf{AAAgent}}.
 
-\item[\textsc{High-frequency trading agents}:] These agents have access to
+\item[Market makers (MM):] These agents submit a ladder of buy and sell orders upon each reentry. See
+  \href{../src/entity/agent/BasicMarketMaker.java}{\textsf{BasicMM}},
+  \href{../src/entity/agent/MAMarketMaker.java}{\textsf{MAMM}}, and
+  \href{../src/entity/agent/WMAMarketMaker.java}{\textsf{WMAMM}}.
+
+\item[High-frequency traders (HFT):] These agents have access to
   multiple markets (usually every market), which models the
   direct feeds that many HFTs have to exchanges. See \href{../src/entity/agent/LAAgent.java}{\textsf{LAAgent}}.
 \end{description}
@@ -63,8 +66,7 @@ Regulation NMS---which led to the creation of the Security Information Processor
 of the simulation system include:
 
 \begin{description}
-\item[Entity:] Objects present in the simulation system, e.g., traders, markets,
-  and the SIP, that perform actions that effects on other entities.
+\item[Entity:] Objects present in the simulation system, e.g., traders, markets, quote processors (QP), transaction processors (TP), and the SIP, that perform actions that effects on other entities.
 
 \item[Activity:] Actions that entities can execute.
 
@@ -74,10 +76,10 @@ of the simulation system include:
 \item[Event Queue:] Queue ordered by activity time that executes activities in
   the ``proper'' order, sequentially until empty. Multiple activities may occur
   during the same time step, and in most circumstances the order they are
-  executed in is psedo-random according to the random number generator of the
+  executed in is pseudo-random according to the random number generator of the
   simulation. The random nature is meant to simulate the slight timing
-  differences that occur in real life i.e. nothing actually occurs at the same
-  time.
+  differences that occur in real life (nothing actually occurs at the same
+  time).
 \end{description}
 
 To summarize, an \emph{event} consists of a sequence of \emph{activities} that
@@ -87,7 +89,7 @@ are to be executed by various \emph{entities} (traders, markets, and the SIP).
 \subsection{Activities}
 
 Each activity has a timestamp and each is associated with at least one entity
-present in the simulation system. Note that activities are chained (the next
+present in the simulation system. Note that activities may be chained (the next
 immediate activity is inserted at the end of the current one). See
 Table~\ref{tab:activity} for a partial list of activities within the system.
 
@@ -99,10 +101,13 @@ Table~\ref{tab:activity} for a partial list of activities within the system.
 \textsf{AgentStrategy} 	& agent executes its trading strategy \\
 \textsf{Clear} 		& market clears any matching orders \\
 \textsf{Liquidate}	& agent liquidates any net position \\
-\textsf{ProcessQuote} 	& IP (or SIP) updates its best market quotes \\
-\textsf{SendToIP} 	& market sends a new quote to an IP (SIP) \\
-\textsf{SubmitOrder} 	& agent submits a single-point order to a market \\
-\textsf{SubmitNMSOrder} 	& agent submits single-point order, routed for best execution \\
+\textsf{LiquidateAtFundamental}   & agent liquidates inventory at fundamental value \\
+\textsf{ProcessQuote} 	& QP (or SIP) updates its best market quotes \\
+\textsf{ProcessTransactions}  & TP (or SIP) updates its list of transactions \\
+\textsf{SendToQP} 	& market sends a new quote to QP (or SIP) \\
+\textsf{SendToTP}   & market sends list of new transactions to TP (or SIP) \\
+\textsf{SubmitOrder} 	& agent submits a limit order to a market \\
+\textsf{SubmitNMSOrder} 	& agent submits a limit order, routed for best execution \\
 \textsf{WithdrawOrder} 	& agent withdraws a specific order from a market \\ \bottomrule
 \end{tabular}
 \caption{List of activities in the simulation system.}
@@ -125,58 +130,7 @@ not all of the market quotes at the current time.
 
 \section{Simulation Specification File}
 
-The parameters in the specification file are those that can be adjusted in
-simulations. Below is the ``default'' \path{simulation_spec.json} file found in
-the docs folder:
-
-\lstinputlisting{../simulation_spec.json}
-
-An explanation of select parameters follows:
-\begin{description}
-\item[\texttt{assignment}:] Assignment of strategies to players. Relevant only
-  for EGTA
-\item[\texttt{configuration}:] Specify simulation configuration.
-\item[\texttt{modelName}:] The name of the model. This is only used in the
-  output file.
-\item[\texttt{modelNum}:] The model number. This is output in the log file and
-  can be used to merge several log files.
-\item[\texttt{simLength}:] Length of simulation in time ticks (usually
-  milliseconds).
-\item[\texttt{presets}:] This is a way to get easy access to ``standard'' market
-  configurations. Currently there are four options:
-  \begin{description}
-  \item[\texttt{CENTRALCDA}:] A single CDA Market.
-  \item[\texttt{CENTRALCALL}:] A single CALL Market that clears at the \texttt{nbboLatency}.
-  \item[\texttt{TWOMARKET}:] Two CDA markets and no latency arbitrageur.
-  \item[\texttt{TWOMARKETLA}:] Two CDA markets and a latency arbitrageur.
-  \end{description}
-\item[Markets:] The next set of options allow manually specifying market configurations
-  if a preset is not used. Currently there are two markets you can set
-  configurations for and those are \texttt{CDA} and \texttt{CALL}. The string
-  after is a configuration string which takes the format
-  \texttt{<key1>\_<value1>\_<key>\_<value2>\_}..., and can contain several comma
-  separated configurations. The following entry would create three CALL
-  markets. Two will clear every tenth of a second, and one will clear every
-  second:
-
-\begin{verbatim}
-"CALL" : "num_2_clearFreq_100,num_1_clearFreq_1000"
-\end{verbatim}
-
-\item[Agents:] The next set of options allow manually specifying agent
-  configurations (NOTE: LA configurations can only be set if a \texttt{preset}
-  is not being used). The current agents you can create are \texttt{BASICMM},
-  \texttt{ZI}, \texttt{ZIR}, \texttt{ZIP}, \texttt{AA}, and \texttt{LA}. Each
-  agent takes a configuration string identical in style to a market only agents
-  will use different parameters.
-
-\item[\texttt{tickSize}:] Tick size of pricing. Prices are integers, so the
-  smallest tick size is $1$.
-
-\item[\texttt{nbboLatency}:] The latency of the nbbo in time ticks (usually
-  milliseconds).
-
-\end{description}
+See the \path{simulation_spec.pdf} file for details on specifying the simulation and environment parameters.
 
 \section{Running a Simulation}
 
