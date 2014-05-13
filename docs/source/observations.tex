@@ -48,32 +48,44 @@ As such, be sure to save different environment configurations in different direc
 
 Depending on the use case (\emph{EGTA} vs. \emph{Market Model}), the observation file will differ. Parsing observation files (and converting to CSV) is currently only supported for the \emph{Market Model} use case.
 
+To format the observation file for easier viewing, use the following command:
+\begin{verbatim}
+./jpath.py < [observation file]
+\end{verbatim}
+
 Descriptions for the various types of features (statistics) are listed in Table~\ref{tab:obs}.
 %
 Note that features must be numeric; $NaN$s are not permitted.
 
 \subsection{EGTA}
 
-In the \emph{EGTA} use case, there is a section in the json file called ``players'' containing the player's role, strategy, payoff (i.e., surplus), and any player-specific features, such as those for control variates:
+In the \emph{EGTA} use case, there is a section in the json file called ``players'' containing the player's role, strategy, payoff (i.e., surplus), and any player-specific features, such as those for control variates. See the following for an example which represents the format that would arise from specifying player-strategy assignments as in the example provided in \path{simulation_spec.pdf}, where there are two background traders and a single market maker employing the \textsc{BasicMM} strategy:
 
 \begin{verbatim}
 "players": [
     {
-        "payoff":0,
-        "role":"BACKGROUND",
+        "payoff": 13354.12,
+        "role": "BACKGROUND",
         "features": {
-            "control_var": 0
+            "control_var": 0.12323
         },    
-        "strategy":"NOOP"  
+        "strategy": "ZIR:bidRangeMin_0_bidRangeMax_1000"  
     },
     {
-        "payoff":121208,
-        "role":"MARKETMAKER",
+        "payoff": 5642.776,
+        "role": "BACKGROUND",
+        "features": {
+            "control_var": 0.56184
+        },    
+        "strategy": "ZIR:bidRangeMin_0_bidRangeMax_5000"  
+    },
+    {
+        "payoff": 1212.089,
+        "role": "MARKETMAKER",
         "features": {},
         "strategy": "BASICMM:rungSize_100"
     }
-    ],
- ...
+],
 \end{verbatim}
 
 The other section in the json file will be ``features'' which will include information on the simulation configuration and aggregate statistics computed at the end of the simulation. This is discussed in depth in the following section.
@@ -134,7 +146,7 @@ Merging is different for each use case, as outlined below. For more details, the
 \subsection{EGTA}
 To merge, which means finding the mean for each feature across all observations and the mean payoff for each unique role-strategy setting, use the following command:
 \begin{verbatim}
-./merge-obs-egta.py <list of observation files> -o <merged observation file>
+./merge-obs-egta.py [list of observation files] -o [merged observation file]
 \end{verbatim}
 For example,
 \begin{verbatim}
@@ -150,7 +162,7 @@ The \path{merge-sim-obs.sh} script can also be used for observations generated w
 %
 To merge, use the following command:
 \begin{verbatim}
-./merge-sim-obs.sh <merged directory> <# of observations> <input directories>
+./merge-sim-obs.sh [merged directory] [# of observations] [input directories]
 \end{verbatim}
 For example, 
 \begin{verbatim}
@@ -170,7 +182,7 @@ When parsing observation files, the JSON headers are flattened (in the JSON file
 
 To merge a directory of observations into a CSV, use the following command:
 \begin{verbatim}
-./obs2csv.py <list of observation files> -o <csv-file>
+./obs2csv.py [list of observation files] -o [csv-file]
 \end{verbatim}
 For example,
 \begin{verbatim}
