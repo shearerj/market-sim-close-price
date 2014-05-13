@@ -24,7 +24,7 @@ public class MarketFactory {
 		case CDA:
 			return new CDAMarket(scheduler, sip, new Random(rand.nextLong()), props);
 		case CALL:
-			if (props.getAsInt(Keys.MARKET_LATENCY) == -1)
+			if (props.getAsInt(Keys.CLEAR_FREQ) <= 0)
 				return new CDAMarket(scheduler, sip, new Random(rand.nextLong()), props);
 			else
 				return new CallMarket(scheduler, sip, new Random(rand.nextLong()), props);

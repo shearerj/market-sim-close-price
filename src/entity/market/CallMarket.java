@@ -58,7 +58,7 @@ public class CallMarket extends Market {
 				TimeStamp.create(props.getAsInt(Keys.TRANSACTION_LATENCY, props.getAsInt(Keys.MARKET_LATENCY, -1))),
 				props.getAsInt(Keys.TICK_SIZE, 1),
 				props.getAsDouble(Keys.PRICING_POLICY, 0.5),
-				TimeStamp.create(props.getAsInt(Keys.CLEAR_FREQ, 100)));
+				TimeStamp.create(props.getAsInt(Keys.CLEAR_FREQ, 1000)));
 	}
 
 	@Override
