@@ -1,5 +1,6 @@
 package entity.agent;
 
+import static event.TimeStamp.ZERO;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static logger.Log.log;
@@ -246,6 +247,14 @@ public class MAMarketMakerTest {
 		sip.processQuote(market, q, ts);
 		qp.processQuote(market, q, ts);
 	}
+	
+	private void addQuote(QuoteProcessor qp, Price buy, Price sell, int time, int marketTime) {
+		TimeStamp ts = TimeStamp.create(time);
+		MarketTime mktTime = new DummyMarketTime(ts, marketTime);
+		Quote q = new Quote(market, buy, 1, sell, 1, mktTime);
+		sip.processQuote(market, q, ts);
+		qp.processQuote(market, q, ts);
+	}
 
 	/**
 	 * Verify that bids/asks are being evicted correctly
@@ -410,7 +419,73 @@ public class MAMarketMakerTest {
 		}
 	}
 	
+	/**
+	 * Verify queue updates when quotes are undefined.
+	 */
+	@Test
+	public void nullBidAskInQueue() {
+		MAMarketMaker mm = createMAMM(
+				Keys.NUM_RUNGS, 1,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5,
+				Keys.INITIAL_LADDER_MEAN, 50,
+				Keys.INITIAL_LADDER_RANGE, 7);
 
+		QuoteProcessor qp = mm.marketQuoteProcessor;
+
+		// Add quotes & execute agent strategy in between
+		// Verify that if quote undefined, nothing is added to the queues
+		int mktTime = 0;
+		addQuote(qp, new Price(50), null, 0, mktTime += 5);
+		mm.agentStrategy(ZERO);
+		assertEquals(null, mm.lastAsk);
+		assertEquals(new Price(50), mm.lastBid);
+		assertTrue(mm.bidQueue.isEmpty());
+		assertTrue(mm.askQueue.isEmpty());
+		assertEquals("Incorrect number of orders", 2, mm.activeOrders.size());
+		
+		// Adding a new quote
+		addQuote(qp, null, new Price(60), 0, mktTime += 5);
+		mm.agentStrategy(ZERO);
+		assertEquals(null, mm.lastBid);
+		assertEquals(new Price(60), mm.lastAsk);
+		assertTrue(mm.bidQueue.isEmpty());
+		assertTrue(mm.askQueue.isEmpty());
+		
+		// Adding a new quote
+		addQuote(qp, 52, 64, 0, mktTime += 5);
+		mm.agentStrategy(ZERO);
+		assertEquals(new Price(52), mm.lastBid);
+		assertEquals(new Price(64), mm.lastAsk);
+		addQuote(qp, 54, 68, 0, mktTime += 5);
+		mm.agentStrategy(ZERO);
+		
+		// check queues
+		assertEquals(new Price(52), mm.bidQueue.peek());
+		assertEquals(new Price(64), mm.askQueue.peek());
+		ArrayList<Price> list = new ArrayList<Price>(mm.bidQueue);
+		int [] bids = {52, 54};
+		int i = 0;
+		for (Price p : list) assertEquals(bids[i++], p.intValue());
+		list = new ArrayList<Price>(mm.askQueue);
+		int [] asks = {64, 68};
+		i = 0;
+		for (Price p : list) assertEquals(asks[i++], p.intValue());
+
+		// check submitted orders
+		assertEquals("Incorrect number of orders", 2, mm.activeOrders.size());
+		for (Order o : mm.activeOrders) {
+			if (o.getOrderType() == BUY) {
+				assertEquals(new Price(53), o.getPrice());
+			} else {
+				assertEquals(new Price(66), o.getPrice());
+			}
+		}
+	}
+	
+	
 	/**
 	 * Check changing numRungs, rungSize
 	 */
@@ -828,7 +903,4 @@ public class MAMarketMakerTest {
 			oneBackgroundTraderLadderRange();
 		}
 	}
-	
-	// TODO add test to check adding to EvictingQ when bid/ask is null
-	// TODO add test to check that won't compute MA when bid/ask Qs are empty
 }

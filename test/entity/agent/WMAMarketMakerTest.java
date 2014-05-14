@@ -319,6 +319,13 @@ public class WMAMarketMakerTest {
 		qp.processQuote(market, q, ts);
 	}
 	
+	private void addQuote(QuoteProcessor qp, Price buy, Price sell, int time, int marketTime) {
+		TimeStamp ts = TimeStamp.create(time);
+		MarketTime mktTime = new DummyMarketTime(ts, marketTime);
+		Quote q = new Quote(market, buy, 1, sell, 1, mktTime);
+		sip.processQuote(market, q, ts);
+		qp.processQuote(market, q, ts);
+	}
 
 	/**
 	 * Verify that bids/asks are being evicted correctly
@@ -472,6 +479,69 @@ public class WMAMarketMakerTest {
 				assertEquals(new Price(51818), o.getPrice());
 			} else {
 				assertEquals(new Price(63636), o.getPrice());
+			}
+		}
+	}
+	
+	/**
+	 * Verify queue updates when quotes are undefined.
+	 */
+	@Test
+	public void nullBidAskInQueue() {		
+		WMAMarketMaker mm = createWMAMM(
+				Keys.NUM_RUNGS, 1,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_SIZE, 1,
+				Keys.NUM_HISTORICAL, 5,
+				Keys.WEIGHT_FACTOR, 0.9,
+				Keys.INITIAL_LADDER_MEAN, 50000,
+				Keys.INITIAL_LADDER_RANGE, 7000);
+
+		QuoteProcessor qp = mm.marketQuoteProcessor;
+
+		// Add quotes & execute agent strategy in between (without actually submitting orders)
+		int mktTime = 0;
+		addQuote(qp, new Price(50000), null, 0, mktTime += 3);
+		mm.agentStrategy(ZERO);
+		assertEquals(null, mm.lastAsk);
+		assertEquals(new Price(50000), mm.lastBid);
+		assertTrue(mm.bidQueue.isEmpty());
+		assertTrue(mm.askQueue.isEmpty());
+		assertEquals("Incorrect number of orders", 2, mm.activeOrders.size());
+		
+		// Adding a new quote
+		addQuote(qp, null, new Price(60000), 0, mktTime += 5);
+		mm.agentStrategy(ZERO);
+		assertEquals(null, mm.lastBid);
+		assertEquals(new Price(60000), mm.lastAsk);
+		assertTrue(mm.bidQueue.isEmpty());
+		assertTrue(mm.askQueue.isEmpty());
+
+		addQuote(qp, 52000, 64000, 0, mktTime += 3);
+		mm.agentStrategy(ZERO);
+		addQuote(qp, 55000, 64000, 0, mktTime += 3);
+		mm.agentStrategy(ZERO);
+		
+		// check queues
+		assertEquals(new Price(52000), mm.bidQueue.peek());
+		assertEquals(new Price(64000), mm.askQueue.peek());
+		ArrayList<Price> list = new ArrayList<Price>(mm.bidQueue);
+		int [] bids = {52000, 55000};
+		int i = 0;
+		for (Price p : list) assertEquals(bids[i++], p.intValue());
+		list = new ArrayList<Price>(mm.askQueue);
+		int [] asks = {64000, 64000};
+		i = 0;
+		for (Price p : list) assertEquals(asks[i++], p.intValue());
+
+		// check submitted orders
+		assertEquals("Incorrect number of orders", 2, mm.activeOrders.size());
+		for (Order o : mm.activeOrders) {
+			if (o.getOrderType() == BUY) {
+				assertEquals(new Price(54727), o.getPrice());
+			} else {
+				assertEquals(new Price(64000), o.getPrice());
 			}
 		}
 	}
@@ -898,7 +968,4 @@ public class WMAMarketMakerTest {
 			oneBackgroundTraderLadderRange();
 		}
 	}
-	
-	// TODO add test to check adding to EvictingQ when bid/ask is null
-	// TODO add test to check that won't compute MA when bid/ask Qs are empty
 }
