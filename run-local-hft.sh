@@ -35,8 +35,8 @@ done
 # Change back after finished running
 cd - > /dev/null
 
-if [[ $NUM -gt 1 ]]; then
-    echo -n ">> Merging the observations..."
-    "$LOC/merge-obs-egta.py" "${OBSERVATIONS[@]}" > "$FOLDER/merged_observation${NUM}.json"
-    echo " done"
-fi
+#if [[ $NUM -gt 1 ]]; then
+#    echo -n ">> Merging the observations..."
+#    "$LOC/merge-obs-egta.py" "${OBSERVATIONS[@]}" > "$FOLDER/merged_observation${NUM}.json"
+#    echo " done"
+#fi
