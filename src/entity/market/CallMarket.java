@@ -44,7 +44,7 @@ public class CallMarket extends Market {
 		super(scheduler, sip, quoteLatency, transactionLatency,
 				new UniformPriceClear(pricingPolicy, tickSize), rand);
 		checkArgument(clearFreq.after(TimeStamp.ZERO),
-				"Can't create a call market with 0 clear frequency. Create a CDA instead.");
+				"Can't create a call market with clear frequency 0. Create a CDA instead.");
 
 		this.clearFreq = clearFreq;
 		this.nextClearTime = TimeStamp.ZERO;
