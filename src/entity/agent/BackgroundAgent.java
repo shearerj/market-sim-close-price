@@ -107,7 +107,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		TimeStamp timeToExecution = trans.getExecTime().minus(submissionTime);
 
 		int value = getTransactionValuation(type, trans.getQuantity(), 
-				trans.getExecTime(), submissionTime).intValue();
+				trans.getExecTime()).intValue();
 		int cost = trans.getPrice().intValue() * trans.getQuantity();
 		int transactionSurplus = (value - cost) * (type == OrderType.BUY ? 1 : -1) ;
 		
@@ -195,11 +195,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * @param type
 	 * @param quantity
 	 * @param currentTime
-	 * @param submissionTime
 	 * @return
 	 */
 	protected Price getTransactionValuation(OrderType type, int quantity,
-			TimeStamp currentTime, TimeStamp submissionTime) {
+			TimeStamp currentTime) {
 		
 		// Determine the pre-transaction balance
 		int originalBalance = this.positionBalance + (type.equals(BUY) ? -1 : 1) * quantity;
@@ -214,12 +213,11 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	/**
 	 * @param type
 	 * @param currentTime
-	 * @param submissionTime
 	 * @return
 	 */
 	protected Price getTransactionValuation(OrderType type,
-			TimeStamp currentTime, TimeStamp submissionTime) {
-		return getTransactionValuation(type, 1, currentTime, submissionTime);
+			TimeStamp currentTime) {
+		return getTransactionValuation(type, 1, currentTime);
 	}
 	
 	/**

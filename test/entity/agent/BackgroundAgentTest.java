@@ -188,7 +188,7 @@ public class BackgroundAgentTest {
 		assertEquals( 110000, agent2.profit );
 
 		// Check surplus
-		int val = agent.getTransactionValuation(BUY, time, time).intValue();
+		int val = agent.getTransactionValuation(BUY, time).intValue();
 		assertEquals(val - 110000, agent.surplus.getValueAtDiscount(Consts.DiscountFactor.NO_DISC), 0.001);
 	}
 
@@ -222,7 +222,7 @@ public class BackgroundAgentTest {
 		assertEquals( 220000, agent2.profit );
 
 		// Check surplus
-		int val = agent.getTransactionValuation(BUY, 2, time, time).intValue();
+		int val = agent.getTransactionValuation(BUY, 2, time).intValue();
 		assertEquals(val - 220000, agent.surplus.getValueAtDiscount(Consts.DiscountFactor.NO_DISC), 0.001);
 	}
 
@@ -258,38 +258,38 @@ public class BackgroundAgentTest {
 		// Post-trans balance is 4 or 5 but before the buy transacted it was 3
 		Price fund = randFundamental.getValueAt(time1);
 		agent.positionBalance = 4;
-		Price val = agent.getTransactionValuation(BUY, time1, time);
-		Price val2 = agent.getTransactionValuation(BUY, time1, time1);
+		Price val = agent.getTransactionValuation(BUY, time1);
+		Price val2 = agent.getTransactionValuation(BUY, time1);
 		assertEquals(fund.intValue() + pv8, val.intValue());
 		assertEquals(fund.intValue() + pv8, val2.intValue());
 		assertEquals(4, agent.positionBalance);
 		agent.positionBalance = 5;
 		assertEquals(fund.intValue()*2 + pv9 + pv8, 
-				agent.getTransactionValuation(BUY, 2, time1, time).intValue());
+				agent.getTransactionValuation(BUY, 2, time1).intValue());
 		assertEquals(5, agent.positionBalance);
 		// Post-trans balance is 2 or 1 but before the sell transacted it was 3
 		agent.positionBalance = 2;
-		val = agent.getTransactionValuation(SELL, time1, time1);
+		val = agent.getTransactionValuation(SELL, time1);
 		assertEquals(fund.intValue() + pv7, val.intValue());
 		agent.positionBalance = 1;
 		assertEquals(fund.intValue()*2 + pv7 + pv6, 
-				agent.getTransactionValuation(SELL, 2, time1, time1).intValue());
+				agent.getTransactionValuation(SELL, 2, time1).intValue());
 
 		// Post-trans balance is -1 or 1 but before the buy transacted it was -2
 		agent.positionBalance = -1;
 		fund = randFundamental.getValueAt(time1);
-		val = agent.getTransactionValuation(BUY, time1, time);
+		val = agent.getTransactionValuation(BUY, time1);
 		assertEquals(fund.intValue() + pv3, val.intValue());
 		agent.positionBalance = 1;
 		assertEquals(fund.intValue()*3 + pv3 + pv4 + pv5, 
-				agent.getTransactionValuation(BUY, 3, time1, time).intValue());
+				agent.getTransactionValuation(BUY, 3, time1).intValue());
 		// Post-trans balance is -3 or -5 but before the sell transacted it was -2
 		agent.positionBalance = -3;
-		val = agent.getTransactionValuation(SELL, time1, time1);
+		val = agent.getTransactionValuation(SELL, time1);
 		assertEquals(fund.intValue() + pv2, val.intValue());
 		agent.positionBalance = -5;
 		assertEquals(fund.intValue()*3 + pv2 + pv1 + pv0, 
-				agent.getTransactionValuation(SELL, 3, time1, time1).intValue());
+				agent.getTransactionValuation(SELL, 3, time1).intValue());
 	}
 
 	@Test

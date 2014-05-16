@@ -37,7 +37,7 @@ public class RandsTest {
 		
 		assertEquals(Double.POSITIVE_INFINITY, Rands.nextExponential(rand, 0), 0);
 		
-		for (int i = 0; i < 100000; i++) {
+		for (int i = 0; i < 1000000; i++) {
 			ds.add(Rands.nextExponential(rand, rate));
 		}
 		
