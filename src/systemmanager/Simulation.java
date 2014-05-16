@@ -25,8 +25,6 @@ import data.Observations;
 import data.Player;
 import entity.agent.Agent;
 import entity.agent.AgentFactory;
-import entity.agent.HFTAgent;
-import entity.agent.MarketMaker;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.MarketFactory;
@@ -88,8 +86,7 @@ public class Simulation {
 			scheduler.executeActivity(new Clear(market));
 		for (Agent agent : agents) {
 			scheduler.scheduleActivity(agent.getArrivalTime(), new AgentArrival(agent));
-			if ((agent instanceof MarketMaker) || (agent instanceof HFTAgent))
-				scheduler.scheduleActivity(lastTime, new LiquidateAtFundamental(agent));
+			scheduler.scheduleActivity(lastTime, new LiquidateAtFundamental(agent));
 		}
 	}
 	
