@@ -38,14 +38,13 @@ public class MAMarketMaker extends MarketMaker {
 
 	public MAMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
 			SIP sip, Market market, Random rand, double reentryRate,
-			int tickSize, boolean noOp, int numRungs, int rungSize,
-			boolean truncateLadder, boolean tickImprovement,
-			boolean tickInside, int initLadderMean, int initLadderRange, 
-			int numHistorical) {
+			int tickSize, int numRungs, int rungSize, boolean truncateLadder,
+			boolean tickImprovement, boolean tickInside,
+			int initLadderMean, int initLadderRange, int numHistorical) {
 
 		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
-				noOp, numRungs, rungSize, truncateLadder, tickImprovement,
-				tickInside, initLadderMean, initLadderRange);
+				numRungs, rungSize, truncateLadder, tickImprovement, tickInside,
+				initLadderMean, initLadderRange);
 
 		checkArgument(numHistorical > 0, "Number of historical prices must be positive!");
 		bidQueue = EvictingQueue.create(numHistorical);
@@ -58,10 +57,9 @@ public class MAMarketMaker extends MarketMaker {
 		this(scheduler, fundamental, sip, market, rand,
 				props.getAsDouble(Keys.REENTRY_RATE, 0.0005),
 				props.getAsInt(Keys.TICK_SIZE, 1),
-				props.getAsBoolean(Keys.NO_OP, false),
 				props.getAsInt(Keys.NUM_RUNGS, 10),
-				props.getAsInt(Keys.RUNG_SIZE, 1000), 
-				props.getAsBoolean(Keys.TRUNCATE_LADDER, true),
+				props.getAsInt(Keys.RUNG_SIZE, 1000),
+				props.getAsBoolean(Keys.TRUNCATE_LADDER, true), 
 				props.getAsBoolean(Keys.TICK_IMPROVEMENT, true),
 				props.getAsBoolean(Keys.TICK_INSIDE, true),
 				props.getAsInt(Keys.INITIAL_LADDER_MEAN, 0),
@@ -71,8 +69,6 @@ public class MAMarketMaker extends MarketMaker {
 	
 	@Override
 	public void agentStrategy(TimeStamp currentTime) {
-		if (noOp) return; // no execution if no-op TODO Change to NoOpAgent
-		
 		super.agentStrategy(currentTime);
 		
 		Price bid = this.getQuote().getBidPrice();

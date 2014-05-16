@@ -56,7 +56,6 @@ public abstract class MarketMaker extends ReentryAgent {
 	protected int numRungs;				// # of ladder rungs on one side (e.g., number of buy orders)
 	protected boolean truncateLadder; 	// true if truncate if NBBO crosses ladder
 	protected boolean tickImprovement;	// true if improves by a tick when mid-prices == bid/ask
-	protected boolean noOp;				// FIXME, this should be NoOpAgent instead - true if no-op strategy (never executes strategy)
 	protected boolean tickInside;		// true if improve tick inside the quote (default outside)
 	protected Price lastAsk, lastBid; 	// stores the last ask/bid, respectively
 	protected int initLadderMean;		// for initializing ladder center
@@ -64,15 +63,14 @@ public abstract class MarketMaker extends ReentryAgent {
 	
 	public MarketMaker(Scheduler scheduler, FundamentalValue fundamental,
 			SIP sip, Market market, Random rand, Iterator<TimeStamp> reentry,
-			int tickSize, boolean noOp, int numRungs, int rungSize,
-			boolean truncateLadder, boolean tickImprovement, boolean tickInside, 
-			int initLadderMean, int initLadderRange) {
+			int tickSize, int numRungs, int rungSize, boolean truncateLadder,
+			boolean tickImprovement, boolean tickInside, int initLadderMean, 
+			int initLadderRange) {
 		
 		super(scheduler, TimeStamp.ZERO, fundamental, sip, market, rand,
 				reentry, tickSize);
 
 		checkArgument(numRungs > 0, "Number of rungs must be positive!");
-		this.noOp = noOp;
 		this.numRungs = numRungs;
 		this.stepSize = MathUtils.quantize(rungSize, tickSize);
 		this.truncateLadder = truncateLadder;
@@ -89,13 +87,12 @@ public abstract class MarketMaker extends ReentryAgent {
 	 */
 	public MarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, double reentryRate, int tickSize, 
-			boolean noOp, int numRungs, int rungSize, boolean truncateLadder,
-			boolean tickImprovement, boolean tickInside, int initLadderMean, 
-			int initLadderRange) {
+			int numRungs, int rungSize, boolean truncateLadder, boolean tickImprovement,
+			boolean tickInside, int initLadderMean, int initLadderRange) {
 
 		this(scheduler, fundamental, sip, market, rand, ExpInterarrivals.create(reentryRate, rand),
-				tickSize, noOp, numRungs, rungSize, truncateLadder, 
-				tickImprovement, tickInside, initLadderMean, initLadderRange);
+				tickSize, numRungs, rungSize, truncateLadder, tickImprovement, 
+				tickInside, initLadderMean, initLadderRange);
 	}
 
 	/**
