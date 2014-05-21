@@ -1,4 +1,4 @@
-<project name="hft" default="build-jar" basedir=".">
+<project name="hft-sim" default="build-jar" basedir=".">
   <description>
     hft build file
   </description>
