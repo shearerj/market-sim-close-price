@@ -119,13 +119,17 @@ The game analysis scripts are maintained by \href{mailto:btwied@umich.edu}{Bryce
 \begin{verbatim}
 git clone https://github.com/egtaonline/GameAnalysis.git
 \end{verbatim}
+This should clone the GameAnalysis repository at the same level as the hft repo.
 Be sure to pull periodically to ensure that the game analysis code is up to date.
 
 To reduce the game and then analyze it:
 \begin{enumerate}
-\item First create a directory \path{hft_project/games}. 
-\item Download your relevant game file (click ``Download JSON'' from the specific game's page and save it within a new folder in games. For example, if I downlaod the summary of game 178 from the Games page (\path{178-summary.json}) and saved it in \path{hft_project/games/mmgame}. 
-\item Reduce the game to $N_1$, ..., $N_r$, where $N_i$ indicates the number of players in the $i$-th role (when roles are sorted in alphabetical order). Use the following command to generate the reduced game:
+\item First create a directory \path{games} in \path{hft_project}:
+\begin{verbatim}
+mkdir games
+\end{verbatim}
+\item Download your relevant game file: Click ``Download JSON'' from the specific game's page and move the resulting file (file name format will be \path{#-summary.json}) to a new folder in \path{games}. For example, if I download the summary of game 178 from the Games page, I move the resulting \path{178-summary.json} file from my default \path{Downloads} directory to \path{games/mmgame}. 
+\item Reduce the game to $N_1$, ..., $N_r$, where $N_i$ indicates the number of players in the $i$-th role (when roles are sorted in alphabetical order). From the \path{hft_project} directory, use the following command to generate the reduced game:
 \begin{verbatim}
 ./GameAnalysis/Reductions.py -input [summary game file] -output [reduced game file] 
     DPR [N_1] [N_2] ... [N_r]
@@ -136,13 +140,17 @@ For example, if I have two roles, BACKGROUND and MARKETMAKER, and I would like t
     games/mmgame/178-reduced.json DPR 6 1
 \end{verbatim}
 
-\item The game analysis script can be executed as:
+\item Copy the game analysis script from the \path{GameAnalysis/scripts} directory to the \path{GameAnalysis} directory with the command:
 \begin{verbatim}
-./GameAnalysis/scripts/AnalysisScript.py [arguments] [reduced game file]
+cp GameAnalysis/scripts/AnalysisScript.py GameAnalysis/
+\end{verbatim}
+The game analysis script can then be executed as:
+\begin{verbatim}
+./GameAnalysis/AnalysisScript.py [arguments] [reduced game file]
 \end{verbatim}
 For example,
 \begin{verbatim}
-./GameAnalysis/scripts/AnalysisScript.py -c 1e-10 games/mmgame/178-reduced-json
+./GameAnalysis/AnalysisScript.py -c 1e-10 games/mmgame/178-reduced-json
 \end{verbatim}
 Add \verb|> [output file name]| to the end of the command to pipe the output into a separate text file.
 \end{enumerate}
@@ -150,7 +158,7 @@ Add \verb|> [output file name]| to the end of the command to pipe the output int
 When analyzing your game, if 0 approximate equilibria are found, try ramping up regret (e.g., use arguments `-r 1' or `-r 1000') first.
 Another option is to change the convergence threshold to something smaller (e.g., `-c 1e-10' or `-c 1e-12').
 
-More profiles are needed when you see observe either of the following scenarios:
+More profiles are needed whenever you observe either of the following scenarios within the output of the analysis script:
 \begin{description}
 \item[\texttt{Deviation subgame UNEXPLORED!}:] This indicates that a subgame needs to be explored.
 For example, given the following output for a subgame:
