@@ -36,6 +36,7 @@ import entity.market.Market;
 import entity.market.MockMarket;
 import entity.market.Order;
 import entity.market.Price;
+import entity.market.Quote;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -224,6 +225,26 @@ public class AAAgentTest {
 		assertTrue(seller.determineTargetPrice(limit, equil).greaterThan(equil));
 		seller.aggression = 0.5;	// aggressiveness capped at 0
 		assertEquals(limit, seller.determineTargetPrice(limit, equil));
+	}
+	
+	@Test
+	public void biddingLayerNoTarget() {
+		TimeStamp time = TimeStamp.ZERO;
+		Price limit = new Price(145000);
+		
+		Quote q1 = new Quote(market, new Price(Rands.nextUniform(rand, 75000, 80000)), 1, 
+				new Price(Rands.nextUniform(rand, 81000, 100000)), 1, time);
+		sip.processQuote(market, q1, time);
+		
+		AAAgent buyer = addAgent(BUY);
+		buyer.biddingLayer(limit, null, 1, time);
+		assertEquals(1, buyer.activeOrders.size());
+		assertCorrectBid(buyer, 75000, 100000, 1);
+		
+		AAAgent seller = addAgent(SELL);
+		seller.biddingLayer(limit, null, 1, time);
+		assertEquals(1, buyer.activeOrders.size());
+		assertCorrectBid(buyer, 75000, 100000, 1);
 	}
 	
 	@Test
@@ -538,10 +559,6 @@ public class AAAgentTest {
 		assertCorrectBid(agent, low, high, 1);
 	}
 
-	/**
-	 * Currently fails due to incorrect market behavior,
-	 * but AAAgent acts correctly based on the information it receives
-	 */
 	@Test
 	public void IntraSellerActive() {
 		log.log(DEBUG, "\nTesting active seller on market with transactions");
@@ -844,6 +861,8 @@ public class AAAgentTest {
 			randomizedUpdateAggressionBuyer();
 			setupTest();
 			randomizedUpdateAggressionSeller();
+			setupTest();
+			biddingLayerNoTarget();
 		}
 	}
 
@@ -902,7 +921,9 @@ public class AAAgentTest {
 	}
 
 	/**
-	 * Note this method only works if there's only one order
+	 * Note this method only works if there's only one order. Verifies that
+	 * order price is equal to the specified price.
+	 * 
 	 * @param agent
 	 * @param price
 	 * @param quantity
@@ -921,6 +942,15 @@ public class AAAgentTest {
 		assertEquals("Quantity is incorrect", quantity, order.getQuantity());
 	}
 
+	/**
+	 * Only works if there's only one order. Verifies that order price is
+	 * between the range specified.
+	 * 
+	 * @param agent
+	 * @param low
+	 * @param high
+	 * @param quantity
+	 */
 	private void assertCorrectBid(Agent agent, int low, int high,
 			int quantity) {
 		Collection<Order> orders = agent.activeOrders;

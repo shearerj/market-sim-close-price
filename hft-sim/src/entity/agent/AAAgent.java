@@ -207,7 +207,8 @@ public class AAAgent extends WindowAgent {
 		// Update the short term learning variable (aggressiveness r)
 		double oldAggression = aggression;
 		this.updateAggression(limitPrice, targetPrice, equilibriumPrice, lastTransactionPrice);
-		log.log(INFO, "%s::agentStrategy: updateAggression: lastPrice=%s, r=%.4f-->r_new=%.4f", this, lastTransactionPrice, oldAggression, aggression);
+		log.log(INFO, "%s::agentStrategy: updateAggression: lastPrice=%s, r=%.4f-->r_new=%.4f", 
+				this, lastTransactionPrice, oldAggression, aggression);
 
 		// Update long term learning variable (adaptiveness theta)
 		double oldTheta = theta;
@@ -226,8 +227,6 @@ public class AAAgent extends WindowAgent {
 	 * @return price target according to the AA Strategy
 	 */
 	protected Price determineTargetPrice(Price limitPrice, Price equilibriumPrice) {
-		// NOTE: equilibrium price should never be null because the target
-		// price will only be determined if there has been 1+ transactions
 		if (equilibriumPrice == null) return null;
 
 		Price tau = null; // target price
@@ -311,24 +310,24 @@ public class AAAgent extends WindowAgent {
 	 * @param currentTime
 	 * @return
 	 */
-	protected void biddingLayer(Price limitPrice, 
-			Price targetPrice, int quantity, TimeStamp currentTime) {
+	protected void biddingLayer(Price limitPrice, Price targetPrice, 
+			int quantity, TimeStamp currentTime) {
 		// Determining the offer price to (possibly) submit
-		//		Price bid = this.getQuote().getBidPrice();
-		//		Price ask = this.getQuote().getAskPrice();
 		Price bid = this.sip.getNBBO().getBestBid();
 		Price ask = this.sip.getNBBO().getBestAsk();
 
-		// if no bid or no ask, submit ZI strategy bid
+		// if no bid or no ask, submit ZI strategy bid & exit bidding layer
 		if (bid == null || ask == null) {
 			log.log(INFO, "%s::biddingLayer: Bid/Ask undefined.", this);
 			this.executeZIStrategy(type, quantity, currentTime);
+			return;
 		}
 
 		// If best offer is outside of limit price, no bid is submitted
 		if ((type.equals(BUY) && limitPrice.lessThanEqual(bid))
 				|| (type.equals(SELL) && limitPrice.greaterThan(ask))) {
-			log.log(INFO, "%s::biddingLayer: Best price is outside of limit price: %s; no submission", this, limitPrice);
+			log.log(INFO, "%s::biddingLayer: Best price is outside of limit price: %s; no submission", 
+					this, limitPrice);
 			return;
 		}
 
@@ -337,7 +336,8 @@ public class AAAgent extends WindowAgent {
 		int newPosBal = positionBalance + quantity;
 		if (newPosBal < -privateValue.getMaxAbsPosition() 
 				|| newPosBal > privateValue.getMaxAbsPosition() ) {
-			log.log(INFO, "%s::biddingLayer: New order would exceed max position: %d; no submission", this, privateValue.getMaxAbsPosition());
+			log.log(INFO, "%s::biddingLayer: New order would exceed max position: %d; no submission", 
+					this, privateValue.getMaxAbsPosition());
 			return;
 		}
 
@@ -347,7 +347,6 @@ public class AAAgent extends WindowAgent {
 			if ((type.equals(BUY) && limitPrice.lessThan(targetPrice)) 
 					|| (type.equals(SELL) && limitPrice.greaterThan(targetPrice)))
 				targetPrice = limitPrice;
-		
 		}
 
 		// See Eq 10 and 11 in section 4.4 - bidding layer
@@ -369,6 +368,7 @@ public class AAAgent extends WindowAgent {
 				orderPrice = new Price(ask.intValue() - offset.intValue());
 				orderPrice = pcomp.max(orderPrice, limitPrice);				
 			}
+			
 		} else {
 			// can determine target price
 			if (type.equals(BUY)) {
@@ -412,7 +412,7 @@ public class AAAgent extends WindowAgent {
 	protected void updateAggression(Price limit, Price tau, 
 			Price equilibriumPrice,	Price lastPrice) {
 
-		if (equilibriumPrice == null || lastPrice == null)
+		if (equilibriumPrice == null || lastPrice == null || tau == null)
 			return; // If no transactions yet, cannot update
 
 		// Determining r_shout, the level of aggression that would form a price
@@ -554,10 +554,8 @@ public class AAAgent extends WindowAgent {
 	protected void updateTheta(Price equilibriumPrice,
 			List<Transaction> transactions) {
 
-		// Error Checking, must have some transactions otherwise can't compute
-		// equilibrium price
-		// XXX Shouldn't this check the length of transactions instead?
-		if (equilibriumPrice == null) return;
+		// Error Checking, must have some transactions
+		if (equilibriumPrice == null || transactions.isEmpty()) return;
 
 		ArrayList<Transaction> transList = new ArrayList<Transaction>(transactions);
 
