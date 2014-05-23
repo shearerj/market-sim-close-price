@@ -79,10 +79,10 @@ Setting up the configurations is the same; the two types of schedulers differ pr
 To \href{http://egtaonline.eecs.umich.edu/dpr_schedulers/new}{create a new DPR scheduler}, the following fields need to be completed:
 \begin{description}
 \item[\texttt{Name}:] Scheduler name (you will have many schedulers, so a naming system that includes short descriptors for the simulator, environment, and some numbering is recommended)
-\item[\texttt{Size}:] Number of agents (across all roles) in this scheduler
+\item[\texttt{Size}:] Number of agents (across all roles) in this scheduler. This is the number of players in the \emph{full} game, not the reduced game
 \item[\texttt{Default observation requirement}:] Number of observations the scheduler will obtain for each profile; minimum of 100 is recommended, but more is generally better
-\item[\texttt{Observations per simulation}:] Recommend 25
-\item[\texttt{Process memory}:] Recommend values 3600 to 4000
+\item[\texttt{Observations per simulation}:] Recommended value of 25
+\item[\texttt{Process memory}:] Recommended values of 3600 to 4000
 \item[\texttt{Time per observation (in seconds)}:] Depends on the strategies you plan to include, but note that flux will oftentimes be much slower than your own machine; for the purposes of the market maker simulations, for example, 500 is sufficient
 \item[\texttt{Nodes required}:] For the HFT simulation system, 1 is sufficient
 \item[\texttt{Active}:] Check box to activate the scheduler (and start running simulations). Leave this box unchecked for now.
@@ -93,7 +93,9 @@ The fields following \texttt{Simulator} will automatically update with the field
 After you set up the scheduler's strategies (see below), edit the simulator and check the \texttt{Active} box to start scheduling simulations.
 
 \begin{paragraph}{DPR scheduler}
-After creating a scheduler, you will need to specify the roles, strategies, and number of agents. Select the role from the drop-down, the number of players in this role in the full game, then the number of players in this role in the reduced game. Once the role is added, you can select the strategies to include in this scheduler. The scheduler will determine what profiles are needed based on the strategies selected for each role.
+After creating a scheduler, you will need to specify the roles, strategies, and number of agents. Select the role from the drop-down. The next two text boxes on the right allow you to specify the number of players in this role in the full game (``Count''), then the number of players in this role in the reduced game (``Reduced Count''). 
+
+Once you've added a role, you can select the strategies to include in this scheduler. The scheduler will determine what profiles are needed based on the strategies selected for each role.
 The number of profiles needed grows exponentially with the number of strategies, so a general rule for the simulation system is to avoid including more than 3 trading strategies in any role with more than 1 player.
 \end{paragraph}
 
@@ -160,10 +162,14 @@ For example,
 \begin{verbatim}
 ./GameAnalysis/AnalysisScript.py -r 1 games/mmgame/178-reduced-json
 \end{verbatim}
-Add \verb|> [output file name]| to the end of the command to pipe the output into a separate text file.
+Add \verb|> [output file name]| to the end of the command to pipe the output into a separate text file, such as:
+\begin{verbatim}
+./GameAnalysis/AnalysisScript.py -r 1 games/mmgame/178-reduced-json
+    > games/mmgame/analysis_output.txt
+\end{verbatim}
 \end{enumerate}
 
-When analyzing your game, if 0 approximate equilibria are found, try ramping up regret (e.g., use arguments \verb|-r 1| or \verb|r 1000|) first.
+When analyzing your game, if 0 approximate mixed strategy Nash equilibria are found, try ramping up regret (e.g., use arguments \verb|-r 1| or \verb|-r 1000|) first.
 Another option is to change the convergence threshold to something smaller (e.g., \verb|-c 1e-10| or \verb|-c 1e-12|). You may have to try a variety of parameters before candidate equilibria are found.
 
 More profiles are needed whenever you observe either of the following scenarios within the output of the analysis script:
@@ -182,7 +188,8 @@ Deviation subgame UNEXPLORED!
 you will need to set up a DPR scheduler with two BACKGROUND strategies, \\
 \verb|ZIR:bidRangeMin_0_bidRangeMax_5000| and \verb|ZIR:bidRangeMin_0_bidRangeMax_1000|, as well as the MARKETMAKER strategy \verb|NOOP|.
 
-\item[\texttt{regret >= $\epsilon$}:] Candidate equilibria still need to be confirmed or refuted when you do not see \verb|regret = 0.0|, but rather some small $\epsilon$ close to 0. In such cases, you will need to set up a DPR deviation scheduler with the candidate equilibrium in the \emph{Roles and Strategies} section and with all other strategies available in that game in the \emph{Deviating Roles and Strategies} section.
+\item[\texttt{regret >= $\epsilon$}:] A candidate equilibrium still needs to be confirmed or refuted it is lower bounded by some small $\epsilon$ close to 0, instead of \verb|regret = 0.0| or \verb|regret = |$\epsilon$.  In such cases, you will need to set up a DPR deviation scheduler with the candidate equilibrium in the \emph{Roles and Strategies} section and with all other strategies available in that game in the \emph{Deviating Roles and Strategies} section.
+For instance, \verb|regret >= 0.0023| means the candidate equilibrium is unconfirmed, but \verb|regret = 0.0023| means that it has been confirmed (even though it's not exactly 0).
 
 \end{description}
 
