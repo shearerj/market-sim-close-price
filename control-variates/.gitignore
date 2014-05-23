@@ -30,10 +30,12 @@ hft.jar
 .project
 .settings
 .DS_Store
+.externalToolBuilders
 
 # Directories #
 ###############
 build/*
+dist/*
 simulations/*
 logs/*
 .settings/*
@@ -48,8 +50,6 @@ logs/*
 
 # Project Specific #
 ####################
-# For custom defaults on root directory
-/defaults.json
-# For simulators on root directory
+# For simulators on root director
 /*.zip
 /bin
