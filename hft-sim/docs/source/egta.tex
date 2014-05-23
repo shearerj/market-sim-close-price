@@ -65,6 +65,9 @@ After uploading the simulator, add the roles and corresponding strategies. These
 
 \subsection{Create a scheduler}
 
+Schedulers are responsible for determining the profiles you need, given available strategies specified for each role, and acquiring the number of observations requested.
+A \emph{profile} is an assignment of strategies to each player in a game.\footnote{For example, in the game of rock-paper-scissors, one profile may be represented as $(R,P)$; this specifies the profile in which the first player plays `Rock' and the second plays `Paper'}
+
 As it is computational infeasible to analyze games with even 50+ traders, given the exponential growth in game size with the number of players, we employ \emph{deviation-preserving reduction} or DPR \citep{Wiedenbeck2012}.
 Generally, player reduction is an aggregation technique that enables the approximation of games with many players via smaller games.
 
@@ -115,6 +118,8 @@ For example, to examine the welfare effects of market making, we can construct t
 In EGTA, a profile is confirmed when all possible deviations have been examined, and no beneficial deviation exists.
 As the observed payoffs from our simulator for a given profile are incrementally added, we analyze each successive intermediate game model and continue to refine the empirical game with the estimated payoffs until all candidate Nash equilibria are refuted or confirmed.
 
+We look at \emph{regret} in the analysis script output to determine when a candidate equilibrium has been confirmed. Regret of an equilibrium profile is the maximum amount of additional payoff that any player can gain from switching to a different strategy.
+
 The game analysis scripts are maintained by \href{mailto:btwied@umich.edu}{Bryce Wiedenbeck}. To clone the repository for game analysis, navigate to the directory which holds the simulation system repository (e.g., \path{hft_project}), then execute the following command:
 \begin{verbatim}
 git clone https://github.com/egtaonline/GameAnalysis.git
@@ -150,13 +155,13 @@ The game analysis script can then be executed as:
 \end{verbatim}
 For example,
 \begin{verbatim}
-./GameAnalysis/AnalysisScript.py -c 1e-10 games/mmgame/178-reduced-json
+./GameAnalysis/AnalysisScript.py -r 1 games/mmgame/178-reduced-json
 \end{verbatim}
 Add \verb|> [output file name]| to the end of the command to pipe the output into a separate text file.
 \end{enumerate}
 
-When analyzing your game, if 0 approximate equilibria are found, try ramping up regret (e.g., use arguments `-r 1' or `-r 1000') first.
-Another option is to change the convergence threshold to something smaller (e.g., `-c 1e-10' or `-c 1e-12').
+When analyzing your game, if 0 approximate equilibria are found, try ramping up regret (e.g., use arguments \verb|-r 1| or \verb|r 1000|) first.
+Another option is to change the convergence threshold to something smaller (e.g., \verb|-c 1e-10| or \verb|-c 1e-12|). You may have to try a variety of parameters before candidate equilibria are found.
 
 More profiles are needed whenever you observe either of the following scenarios within the output of the analysis script:
 \begin{description}
