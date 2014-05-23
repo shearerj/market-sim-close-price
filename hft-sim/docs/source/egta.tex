@@ -28,6 +28,9 @@
 
 The methodology of \emph{empirical game theoretic analysis} (EGTA) \citep{Wellman2006} facilitates strategy selection for traders by comparing the payoffs (total surplus) of different combinations of traders and strategy assignments. EGTA is an iterative process to guide exploration of the strategy space, in which the goal is to confirm or refute equilibrium candidates.
 
+We focus on \emph{role-symmetric games}, in which agents' strategy sets are symmetric within a role, but may differ across roles.
+Payoffs in a role-symmetric game depends solely on role membership, strategy, and the number of agents playing the strategy. This permits us to exploit symmetry in certain types of agents in order to achieve a more compact game model.
+
 To conduct and manage experiments, we use the \href{http://egtaonline.eecs.umich.edu}{EGTAOnline} simulation manager, which allows us to generate simulation data for a variety of strategy profiles \citep{Cassell2013}.
 The testbed runs on the CAEN cluster flux. You can request access to flux by filling out this \href{https://docs.google.com/a/umich.edu/forms/d/1u9hdqdinnNC9iF6If2xV0C06knbP_TKJBIzfCSnWw6I/viewform}{form}.
 The process of uploading a version of the simulation system and scheduling simulations is described in Section \ref{sec:egta}.
@@ -118,7 +121,7 @@ For example, to examine the welfare effects of market making, we can construct t
 In EGTA, a profile is confirmed when all possible deviations have been examined, and no beneficial deviation exists.
 As the observed payoffs from our simulator for a given profile are incrementally added, we analyze each successive intermediate game model and continue to refine the empirical game with the estimated payoffs until all candidate Nash equilibria are refuted or confirmed.
 
-We look at \emph{regret} in the analysis script output to determine when a candidate equilibrium has been confirmed. Regret of an equilibrium profile is the maximum amount of additional payoff that any player can gain from switching to a different strategy.
+We look at \emph{regret} in the analysis script output to determine when a candidate equilibrium has been confirmed. Regret of a profile is the maximum amount of additional payoff that any player can gain from switching to a different strategy.
 
 The game analysis scripts are maintained by \href{mailto:btwied@umich.edu}{Bryce Wiedenbeck}. To clone the repository for game analysis, navigate to the directory which holds the simulation system repository (e.g., \path{hft_project}), then execute the following command:
 \begin{verbatim}
