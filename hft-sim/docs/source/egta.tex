@@ -107,7 +107,8 @@ The \emph{Deviating Roles and Strategies} section indicates the deviating strate
 
 
 \subsection{Monitoring simulations}
-You can monitor your individual schedulers to see how many observations are still needed.
+You can monitor your individual schedulers to see how many observations are still needed. The bottom of each scheduler's page will have a section called \emph{Profiles} which indicates the strategy profiles that are combinations of the allowed strategy sets for each role. The ``Requested Observations'' column will match the \texttt{Default observation requirement}, and ``Observation Count'' indicates the number of observations you've collected so far for a given profile. You can click on the column header to sort.
+
 Monitoring your experiments from the \href{http://egtaonline.eecs.umich.edu/simulations}{Simulations} page is also necessary to ensure that your simulations are running as expected.
 There are a number of possible states you might see; if you see ``failed'' for any of your profiles, click the state to determine what the error message is. If you see an error message with ``Java,'' this indicates that there is most likely an error within the simulation system.
 
@@ -192,6 +193,9 @@ you will need to set up a DPR scheduler with two BACKGROUND strategies, \\
 For instance, \verb|regret >= 0.0023| means the candidate equilibrium is unconfirmed, but \verb|regret = 0.0023| means that it has been confirmed (even though it's not exactly 0).
 
 \end{description}
+You can verify to some degree that your new scheduler has been set up correctly by sorting by the number of observations (``Observation Count''). You should see at least one profile with 0 observations (indicating that you need to collect data for this profile).
+
+After you've set up any new schedulers as needed and have collected data for additional profiles, repeat this entire procedure (starting with downloading the game) and repeat until the game has reached quiescence and all equilibrium candidates have been either confirmed or refuted.
 
 \bibliographystyle{plain}
 \bibliography{docs}
