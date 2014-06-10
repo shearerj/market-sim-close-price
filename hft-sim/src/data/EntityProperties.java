@@ -191,6 +191,19 @@ public class EntityProperties implements Serializable {
 		return def;
 	}
 
+	public int[] getAsIntArray(String key){
+		String[] vals = properties.get(key).split(",");
+		int[] result = new int[vals.length];
+		for(int i = 0; i < vals.length; i++)
+			{ result[i] = Integer.parseInt(vals[i]); }
+		return result;
+	}
+
+	public int[] getAsIntArray(String key, int[] def){
+		String val = properties.get(key);
+		return (val != null && !val.isEmpty()) ? getAsIntArray(key) : def;
+	}
+
 	public void put(String key, String value) {
 		properties.put(key, value);
 	}

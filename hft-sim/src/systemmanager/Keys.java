@@ -97,4 +97,6 @@ public interface Keys {
 	
 	// MarketMakers
 	public final static String WEIGHT_FACTOR = "weightFactor";
+	public final static String SPREADS = "spreads";
+	public final static String USE_MEDIAN_SPREAD = "useMedianSpread";
 }

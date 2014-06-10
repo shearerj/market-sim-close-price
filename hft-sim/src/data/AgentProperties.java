@@ -10,7 +10,7 @@ import com.google.common.collect.Maps;
 import systemmanager.Consts.AgentType;
 
 /**
- * Entity properties that is bundeled with an AgentType.
+ * Entity properties that is bundled with an AgentType.
  * 
  * @author erik
  * 

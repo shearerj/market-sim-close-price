@@ -72,7 +72,7 @@ public class MAMarketMaker extends MarketMaker {
 		super.agentStrategy(currentTime);
 		
 		Price bid = this.getQuote().getBidPrice();
-		Price ask = this.getQuote().getAskPrice();;
+		Price ask = this.getQuote().getAskPrice();
 
 		if (bid == null && lastBid == null && ask == null && lastAsk == null) {
 			this.createOrderLadder(bid, ask);	
