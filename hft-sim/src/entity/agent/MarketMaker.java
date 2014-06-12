@@ -121,6 +121,7 @@ public abstract class MarketMaker extends ReentryAgent {
 				this, primaryMarket, numRungs, stepSize, buyMinPrice, buyMaxPrice, sellMinPrice, sellMaxPrice);
 	}
 
+
 	/**
 	 * Given the prices (bid & ask) for the center of the ladder, compute the 
 	 * ladders' prices and submit the order ladder.
@@ -134,9 +135,11 @@ public abstract class MarketMaker extends ReentryAgent {
 	 * 
 	 * @param ladderBid
 	 * @param ladderAsk
+	 * @param spread (default 0)
 	 * @return
 	 */
-	public void createOrderLadder(Price ladderBid, Price ladderAsk) {
+	public void createOrderLadder(Price ladderBid, Price ladderAsk) { createOrderLadder(ladderBid, ladderAsk, 0); }
+	public void createOrderLadder(Price ladderBid, Price ladderAsk, int spread) {
 
 		if (ladderBid == null || ladderAsk == null) {
 			if (initLadderMean == 0) return;
@@ -189,14 +192,14 @@ public abstract class MarketMaker extends ReentryAgent {
 		int ct = (numRungs-1) * stepSize;
 
 		// min price for buy order in the ladder
-		Price buyMinPrice = new Price(ladderBid.intValue() - ct);
+		Price buyMinPrice = new Price(ladderBid.intValue() - ct - spread);
 		// max price for buy order in the ladder
-		Price buyMaxPrice = ladderBid;
+		Price buyMaxPrice = new Price(ladderBid.intValue() - spread);
 
 		// min price for sell order in the ladder
-		Price sellMinPrice = ladderAsk;
+		Price sellMinPrice = new Price(ladderAsk.intValue() + spread);
 		// max price for sell order in the ladder
-		Price sellMaxPrice = new Price(ladderAsk.intValue() + ct);
+		Price sellMaxPrice = new Price(ladderAsk.intValue() + ct + spread);
 
 		// check if the bid or ask crosses the NBBO, if truncating ladder
 		if (truncateLadder) {

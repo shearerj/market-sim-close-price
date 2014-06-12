@@ -95,6 +95,11 @@ public class AgentFactory {
 			return new WMAMarketMaker(scheduler, fundamental, sip,
 					marketAssignment.next(), new Random(rand.nextLong()),
 					props);
+		case AMM:
+			arrivalProcess.next();
+			return new AdaptiveMarketMaker(scheduler, fundamental, sip,
+					marketAssignment.next(), new Random(rand.nextLong()),
+					props);
 		case LA:
 			arrivalProcess.next();
 			marketAssignment.next();
