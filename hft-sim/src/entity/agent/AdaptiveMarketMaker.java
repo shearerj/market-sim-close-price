@@ -11,11 +11,11 @@ import entity.market.Market;
 import entity.market.Price;
 import event.TimeStamp;
 
-import java.util.Arrays;
 import java.util.Map;
 
 import static logger.Log.log;
 import static logger.Log.Level.INFO;
+import static logger.Log.Level.DEBUG;
 
 import com.google.common.collect.Maps;
 
@@ -46,10 +46,9 @@ public class AdaptiveMarketMaker extends MarketMaker {
 
 		this.useMedianSpread = useMedianSpread;
 
-		//Initialize weights, mapping b-values to their corresponding weights, initially all equal.
+		//Initialize weights, mapping spread b-values to their corresponding weights, initially all equal.
 		weights = Maps.newHashMapWithExpectedSize(spreads.length);
 		double initial_weight = 1.0 / spreads.length;
-		Arrays.sort(spreads);
 		for (int i : spreads)
 			{ weights.put(i, initial_weight); }
 	}
@@ -73,8 +72,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	}
 
 	/**
-	 * @param use_median If true, chooses the median spread value; if false, chooses randomly according to weights
-	 * @return a spread value
+	 * @return a spread value: either the median or one chosen at random according to the current weights, depending on "useMedianSpread" parameter
 	 */
 	protected int getSpread(){
 		double r = useMedianSpread ? 0.5 : rand.nextDouble();
@@ -83,7 +81,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 			p_sum += e.getValue();
 			if (p_sum >= r) { return e.getKey(); }
 		}
-		// This return is never reached, because r <= 1 and p_sum == 1 at end of for loop
+		// This return will only be reached if r is very(!) close to 1 and rounding errors make the sum of the weights less than 1. Extremely unlikely. 
 		return 0;
 	}
 	/**
@@ -102,9 +100,9 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		int lastBidPrice = lastBid.intValue(), lastAskPrice = lastAsk.intValue();
 		for(int rung = 0; rung < numRungs; rung++){
 			int offset = spread + rung * stepSize;
-			if(lastBidPrice - offset > askPrice) 		//If this bid would have transacted
+			if(lastBidPrice - offset >= askPrice) 		//If this bid would have transacted
 				{ delta_h += 1; delta_c -= (lastBid.intValue() - offset);}
-			if(lastAskPrice + offset < bidPrice) 		//If this ask would have transacted
+			if(lastAskPrice + offset <= bidPrice) 		//If this ask would have transacted
 				{ delta_h -= 1; delta_c += (lastAsk.intValue() + offset);}
 		}
 		return new int[]{delta_h, delta_c};
@@ -141,17 +139,19 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		// From Abernethy + Kale Theorem 3.  Leaving out constant factor of 1/(2G), which would require knowledge of
 		// the maximum amount the fundamental can change by in one time step.
 		//TODO(benno) Is it okay to leave out that factor of 1/(2G)?  (G is defined in Lemma 4 of Abernethy's paper)
-		// my hunch is yes - it's a constant factor that will disapper after normalization
+		// my hunch is yes - it's a constant factor that will disappear after normalization
 		double eta_t = Math.min(Math.sqrt(Math.log(weights.size())/currentTime.getInTicks()), 1.0);
 
 		for(int spread : weights.keySet()){
 			weights.put(spread, weights.get(spread) * Math.exp(eta_t * valueDeltas.get(spread)));
 		}
 		normalizeWeights();
-
+		log.log(DEBUG, "%s in %s: Current spread weights: %s", 
+				this, primaryMarket, weights.toString());
 
 		//Submit updated order ladder, using the spread chosen by the multiplicative weights algorithm
 		//TODO(benno) This doesn't put any limit on long/short positions.  How to go about doing that?  Make more aggressive buy(sell) offers when you're short(long)? 
+		//NOTE: Other (MAMM, BasicMM, WMAMM) market makers also don't appear to put any limit... Either I'm missing something or a limit isn't necessary.
 		int spread = getSpread();
 		withdrawAllOrders();
 		createOrderLadder(bid, ask, spread);
