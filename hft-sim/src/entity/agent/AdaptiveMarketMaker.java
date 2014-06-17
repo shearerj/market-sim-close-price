@@ -1,5 +1,6 @@
 package entity.agent;
 
+import java.util.Arrays;
 import java.util.Random;
 
 import systemmanager.Keys;
@@ -17,6 +18,7 @@ import static logger.Log.log;
 import static logger.Log.Level.INFO;
 import static logger.Log.Level.DEBUG;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 /**
@@ -33,18 +35,20 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	private static final long serialVersionUID = 4228181375500843232L;
 	protected Map<Integer, Double> weights;
 	protected final boolean useMedianSpread;
+	protected final int volatilityBound;
 
 	public AdaptiveMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
 			SIP sip, Market market, Random rand, double reentryRate,
 			int tickSize, int numRungs, int rungSize, boolean truncateLadder,
 			boolean tickImprovement, boolean tickInside, int initLadderMean,
-			int initLadderRange, int[] spreads, boolean useMedianSpread) {
+			int initLadderRange, int[] spreads, boolean useMedianSpread, int volatilityBound) {
 
 		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
 				numRungs, rungSize, truncateLadder, tickImprovement, tickInside,
 				initLadderMean, initLadderRange);
 
 		this.useMedianSpread = useMedianSpread;
+		this.volatilityBound = volatilityBound;
 
 		//Initialize weights, mapping spread b-values to their corresponding weights, initially all equal.
 		weights = Maps.newHashMapWithExpectedSize(spreads.length);
@@ -66,11 +70,12 @@ public class AdaptiveMarketMaker extends MarketMaker {
 				props.getAsBoolean(Keys.TICK_INSIDE, true),
 				props.getAsInt(Keys.INITIAL_LADDER_MEAN, 0),
 				props.getAsInt(Keys.INITIAL_LADDER_RANGE, 0),
-				props.getAsIntArray(Keys.SPREADS, new int[]{0,10,20,30,40}),//TODO(benno): These are just placeholder values - still have to figure out reasonable defaults.  Maybe some should be negative, for more aggressive behavior?
-				// XXX Erik: Seems like a fine default, although you may just
-				// not want to have a defauklt. If you leave it off an error
-				// will be thrown if it doesn't exist.
-				props.getAsBoolean(Keys.USE_MEDIAN_SPREAD, true)
+				props.getAsIntArray(Keys.SPREADS, new int[]{200,400,800,1600,3200}),
+				props.getAsBoolean(Keys.USE_MEDIAN_SPREAD, true),
+				//To approximate volatility bound, use the fact that next = prev + kappa(mean-prev) + nextGaussian(0,1)*sqrt(shock)
+				//conservatively estimate |mean-prev|<= 0.5mean; 98% confidence |nextGaussian| <= 2
+				//so, delta ~= kappa * 1/2 * mean + 2sqrt(shock)
+				(int) Math.round(0.5 * props.getAsDouble(Keys.FUNDAMENTAL_KAPPA) * props.getAsInt(Keys.FUNDAMENTAL_MEAN) + 2 * Math.sqrt(props.getAsInt(Keys.FUNDAMENTAL_SHOCK_VAR)))
 			);
 	}
 
@@ -80,9 +85,11 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	protected int getSpread(){
 		double r = useMedianSpread ? 0.5 : rand.nextDouble();
 		double p_sum = 0.0;
-		for(Map.Entry<Integer,Double> e : weights.entrySet()){
-			p_sum += e.getValue();
-			if (p_sum >= r) { return e.getKey(); }
+		Integer[] spreads = (Integer[]) (weights.keySet().toArray());
+		Arrays.sort(spreads);
+		for(Integer spread : spreads){
+			p_sum += weights.get(spread);
+			if (p_sum >= r) { return spread; }
 		}
 		// This return will only be reached if r is very(!) close to 1 and rounding errors make the sum of the weights less than 1. Extremely unlikely. 
 		return 0;
@@ -96,12 +103,9 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	 * @param bid The current bid price.
 	 * @param ask The current ask price.
 	 *
-	 * @return An int array of length 2: [<net holdings change> , <net cash change>]
-	 * XXX ERIK: Stylistically and for clarity, you should subclass the pair data type (as is done elsewhere) to make it clear what this is returning
+	 * @return a TransactionResult: a pair of integers (netHoldingsChange, netCashChange)
 	 */
-	//TODO(benno):  This method could be more efficient; it would lose some clarity though, and it's relatively small anyway - linear in the size of the ladder.  Worth refactoring?
-	// XXX Erik: I like it the way it is. Clear functions are much nicer than super efficient code that doesn't speed up execution
-	protected int[] lastTransactionResult(int spread, int bidPrice, int askPrice){
+	protected TransactionResult lastTransactionResult(int spread, int bidPrice, int askPrice){
 		int delta_h = 0, delta_c = 0; //changes in holdings / cash, respectively
 		int lastBidPrice = lastBid.intValue(), lastAskPrice = lastAsk.intValue();
 		for(int rung = 0; rung < numRungs; rung++){
@@ -111,7 +115,30 @@ public class AdaptiveMarketMaker extends MarketMaker {
 			if(lastAskPrice + offset <= bidPrice) 		//If this ask would have transacted
 				{ delta_h -= 1; delta_c += (lastAsk.intValue() + offset);}
 		}
-		return new int[]{delta_h, delta_c};
+		return new TransactionResult(delta_h, delta_c);
+	}
+
+
+	/**
+	 * Recalculate weights based on their hypothetical performance in the last timestep
+	 * In this case, use Multiplicative Weights.  Can be subclassed and overridden to implement other learning algorithms.
+	 * @param valueDeltas: a mapping of spread values to the net change in their portfolio value over the last time step
+	 * @param currentTime
+	 */
+	protected void recalculateWeights(Map<Integer, Integer> valueDeltas, TimeStamp currentTime){
+
+		int maxSpread = 0;
+		for(int spread : weights.keySet()){
+			maxSpread = Math.max( maxSpread, spread * 2 );
+		}
+		//Compute G as per Abernethy & Kale Lemma 4
+		int G = 2 * volatilityBound * maxSpread + volatilityBound * volatilityBound;
+		double eta_t = Math.min(Math.sqrt(Math.log(weights.size())/currentTime.getInTicks()), 1.0) / (2 * G);
+
+		for(Map.Entry<Integer,Double> e : weights.entrySet()){
+			e.setValue(e.getValue() * Math.exp(eta_t * valueDeltas.get(e.getKey())));
+		}
+		normalizeWeights();
 	}
 
 	/**
@@ -130,71 +157,40 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		Price bid = this.getQuote().getBidPrice();
 		Price ask = this.getQuote().getAskPrice();
 
-		//TODO(benno) There's gotta be a more sophisticated way to approximate this.
-		// XXX Erik: The midpoind (what you calculated) is reasonable. You can also look at the last transaction price, which is often used.
-		int approximateUnitPrice = (bid.intValue() + ask.intValue()) / 2; //Approximate the price of a single unit as the midpoint between the quoted bid and ask prices
+		//Approximate the price of a single unit as the midpoint between the quoted bid and ask prices
+		int approximateUnitPrice = (bid.intValue() + ask.intValue()) / 2;
 
 		//For each spread, determine how it would have performed in the last round.
-		Map<Integer,Integer> valueDeltas = Maps.newHashMapWithExpectedSize(weights.size()); //XXX This can be an "ImmutableMap"
+		ImmutableMap.Builder<Integer,Integer> builder = new ImmutableMap.Builder<Integer,Integer>();
 		for(int spread : weights.keySet()){
-			int[] transaction = lastTransactionResult(spread, bid.intValue(), ask.intValue());
-			valueDeltas.put(spread, transaction[1] + (approximateUnitPrice * transaction[0]));//<change_in_cash> + <change_in_holdings>*<approximate_unit_value>
+			TransactionResult transaction = lastTransactionResult(spread, bid.intValue(), ask.intValue());
+			builder.put(spread, transaction.getNetCashChange() + (approximateUnitPrice * transaction.getNetHoldingsChange()));//<change_in_cash> + <change_in_holdings>*<approximate_unit_value>
 		}
+		ImmutableMap<Integer,Integer> valueDeltas = builder.build();
 
 		//Recalculate weights based on performances from the last timestep, using Multiplicative Weights (Abernethy&Kale 4.1)
+		recalculateWeights(valueDeltas, currentTime);
 
-		// From Abernethy + Kale Theorem 3.  Leaving out constant factor of 1/(2G), which would require knowledge of
-		// the maximum amount the fundamental can change by in one time step.
-		//TODO(benno) Is it okay to leave out that factor of 1/(2G)?  (G is defined in Lemma 4 of Abernethy's paper)
-		// my hunch is yes - it's a constant factor that will disappear after normalization
-		// XXX Erik: The 1/(2G) in the exponential, so it doesn't factor out.
-		// You should be able to calculate a proxy for G from the parameters of
-		// the simulation. e.g. (with ZIR agents) if you know their arrival rate
-		// and distribution of shading and private value distribution.
-		// Alternatively, you can just make G a parameter.
-		// XXX Erik: Alternatively given the weighting problem, you can also
-		// experiment with FTPL. This basically says you always play the ones
-		// that's doing best, but with a random perturbation. I'm sure I can
-		// find litarature for you if you need it.
-		double eta_t = Math.min(Math.sqrt(Math.log(weights.size())/currentTime.getInTicks()), 1.0);
-
-		for(int spread : weights.keySet()){ // XXX Erik: You can iterate over the entrySet here, and just use setValue. Slightly more efficient 
-			weights.put(spread, weights.get(spread) * Math.exp(eta_t * valueDeltas.get(spread)));
-		}
-		normalizeWeights();
 		log.log(DEBUG, "%s in %s: Current spread weights: %s", 
 				this, primaryMarket, weights.toString());
 
-		//Submit updated order ladder, using the spread chosen by the multiplicative weights algorithm
-		//TODO(benno) This doesn't put any limit on long/short positions.  How to go about doing that?  Make more aggressive buy(sell) offers when you're short(long)? 
-		// NOTE: Other (MAMM, BasicMM, WMAMM) market makers also don't appear to
-		// put any limit... Either I'm missing something or a limit isn't
-		// necessary.
-		// XXX Erik: Currently none of the market makers put any limit. It
-		// shouldn't really be necessary, because if we run our simulation long
-		// enough, it should end up being profitable. However, if you want to
-		// put a flag in for maximum position, and start dropping the ladder
-		// beyond the threshold, you can do that. You'll loose theoretical
-		// guaranetees, but those were already lost anyways.
+		//Submit updated order ladder, using the spread chosen by the learning algorithm
 		int spread = getSpread();
+		int ladderSize = stepSize * numRungs;
 		withdrawAllOrders();
-		createOrderLadder(bid, ask, spread);
-		// XXX Erik: I know the method says bid and ask (maybe you should change
-		// that), but really what it means is the lowest sell and the highest
-		// bid for the ladder. Instead of doing createOrderLadder(bid, ask,
-		// spread), you should do createOrderLadder(bid - spread, ask + spread).
-		// XXX Erik: Also, in Jake's paper, the bid and the ask that the MM
-		// supplied are independent of the markets current bid and ask. If the
-		// MM calculates a spread of 0, then the ladders should start at the
-		// same position. Thus, instead of the current bid and ask, you should
-		// center around the midpoint or the last transaction price aka:
-		// createOrderLadder(unitPrice - spread, unitPrice + spread)
+		submitOrderLadder(new Price(approximateUnitPrice - spread - ladderSize),  //minimum buy
+						  new Price(approximateUnitPrice - spread), 			  //maximum buy
+						  new Price(approximateUnitPrice + spread),				  //minimum sell
+						  new Price(approximateUnitPrice + spread + ladderSize)); //maximum sell
 		log.log(INFO, "%s in %s: submitting ladder with spread %d",
 				this, primaryMarket, spread);
+	}
 
-
-		// update latest bid/ask prices
-		lastAsk = ask; lastBid = bid;
+	protected static class TransactionResult extends utils.Pair<Integer, Integer>{
+		protected TransactionResult(Integer netHoldingsChange, Integer netCashChange)
+			{ super(netHoldingsChange, netCashChange); }
+		public Integer getNetHoldingsChange() { return this.left;  }
+		public Integer getNetCashChange()	  { return this.right; }
 	}
 
 }

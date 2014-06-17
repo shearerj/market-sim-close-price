@@ -121,7 +121,6 @@ public abstract class MarketMaker extends ReentryAgent {
 				this, primaryMarket, numRungs, stepSize, buyMinPrice, buyMaxPrice, sellMinPrice, sellMaxPrice);
 	}
 
-
 	/**
 	 * Given the prices (bid & ask) for the center of the ladder, compute the 
 	 * ladders' prices and submit the order ladder.
@@ -135,11 +134,9 @@ public abstract class MarketMaker extends ReentryAgent {
 	 * 
 	 * @param ladderBid
 	 * @param ladderAsk
-	 * @param spread (default 0)
 	 * @return
 	 */
-	public void createOrderLadder(Price ladderBid, Price ladderAsk) { createOrderLadder(ladderBid, ladderAsk, 0); }
-	public void createOrderLadder(Price ladderBid, Price ladderAsk, int spread) {
+	public void createOrderLadder(Price ladderBid, Price ladderAsk) {
 
 		if (ladderBid == null || ladderAsk == null) {
 			if (initLadderMean == 0) return;
@@ -192,14 +189,14 @@ public abstract class MarketMaker extends ReentryAgent {
 		int ct = (numRungs-1) * stepSize;
 
 		// min price for buy order in the ladder
-		Price buyMinPrice = new Price(ladderBid.intValue() - ct - spread);
+		Price buyMinPrice = new Price(ladderBid.intValue() - ct);
 		// max price for buy order in the ladder
-		Price buyMaxPrice = new Price(ladderBid.intValue() - spread);
+		Price buyMaxPrice = ladderBid;
 
 		// min price for sell order in the ladder
-		Price sellMinPrice = new Price(ladderAsk.intValue() + spread);
+		Price sellMinPrice = ladderAsk;
 		// max price for sell order in the ladder
-		Price sellMaxPrice = new Price(ladderAsk.intValue() + ct + spread);
+		Price sellMaxPrice = new Price(ladderAsk.intValue() + ct);
 
 		// check if the bid or ask crosses the NBBO, if truncating ladder
 		if (truncateLadder) {
@@ -211,7 +208,7 @@ public abstract class MarketMaker extends ReentryAgent {
 			// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
 			if (lastNBBOQuote.getBestBid() != null)
 				sellMinPrice = pcomp.max(ladderAsk, lastNBBOQuote.getBestBid());
-			log.log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)",
+			log.log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)", 
 					this, primaryMarket, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
 		}
 
