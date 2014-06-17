@@ -211,7 +211,7 @@ public abstract class MarketMaker extends ReentryAgent {
 			// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
 			if (lastNBBOQuote.getBestBid() != null)
 				sellMinPrice = pcomp.max(ladderAsk, lastNBBOQuote.getBestBid());
-			log.log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)", 
+			log.log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)",
 					this, primaryMarket, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
 		}
 
