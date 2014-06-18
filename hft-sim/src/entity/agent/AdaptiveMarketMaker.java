@@ -129,7 +129,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 
 		int maxSpread = 0;
 		for(int spread : weights.keySet()){
-			maxSpread = Math.max( maxSpread, spread * 2 );
+			maxSpread = Math.max( maxSpread, spread);
 		}
 		//Compute G as per Abernethy & Kale Lemma 4
 		int G = 2 * volatilityBound * maxSpread + volatilityBound * volatilityBound;
@@ -175,15 +175,15 @@ public class AdaptiveMarketMaker extends MarketMaker {
 				this, primaryMarket, weights.toString());
 
 		//Submit updated order ladder, using the spread chosen by the learning algorithm
-		int spread = getSpread();
+		int offset = getSpread() / 2;
 		int ladderSize = stepSize * numRungs;
 		withdrawAllOrders();
-		submitOrderLadder(new Price(approximateUnitPrice - spread - ladderSize),  //minimum buy
-						  new Price(approximateUnitPrice - spread), 			  //maximum buy
-						  new Price(approximateUnitPrice + spread),				  //minimum sell
-						  new Price(approximateUnitPrice + spread + ladderSize)); //maximum sell
+		submitOrderLadder(new Price(approximateUnitPrice - offset - ladderSize),  //minimum buy
+						  new Price(approximateUnitPrice - offset), 			  //maximum buy
+						  new Price(approximateUnitPrice + offset),				  //minimum sell
+						  new Price(approximateUnitPrice + offset + ladderSize)); //maximum sell
 		log.log(INFO, "%s in %s: submitting ladder with spread %d",
-				this, primaryMarket, spread);
+				this, primaryMarket, offset * 2);
 	}
 
 	protected static class TransactionResult extends utils.Pair<Integer, Integer>{
