@@ -34,6 +34,8 @@ public class AdaptiveMarketMaker extends MarketMaker {
 
 	private static final long serialVersionUID = 4228181375500843232L;
 	protected Map<Integer, Double> weights;
+
+	protected final int ticksPerReentry;
 	protected final boolean useMedianSpread;
 	protected final int volatilityBound;
 
@@ -50,6 +52,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 
 		this.useMedianSpread = useMedianSpread;
 		this.volatilityBound = volatilityBound;
+		this.ticksPerReentry = (int) Math.round( 1 / reentryRate);
 
 		//Initialize weights, mapping spread b-values to their corresponding weights, initially all equal.
 		weights = Maps.newHashMapWithExpectedSize(spreads.length);
@@ -75,9 +78,9 @@ public class AdaptiveMarketMaker extends MarketMaker {
 				props.getAsIntArray(Keys.SPREADS, new int[]{200,400,800,1600,3200}),
 				props.getAsBoolean(Keys.USE_MEDIAN_SPREAD, true),
 				//To approximate volatility bound, use the fact that next = prev + kappa(mean-prev) + nextGaussian(0,1)*sqrt(shock)
-				//conservatively estimate |mean-prev|<= 0.5mean; 98% confidence |nextGaussian| <= 2
-				//so, delta ~= kappa * 1/2 * mean + 2sqrt(shock)
-				(int) Math.round(0.5 * props.getAsDouble(Keys.FUNDAMENTAL_KAPPA) * props.getAsInt(Keys.FUNDAMENTAL_MEAN) + 2 * Math.sqrt(props.getAsInt(Keys.FUNDAMENTAL_SHOCK_VAR)))
+				//conservatively estimate |mean-prev|<= 0.25*mean; 98% confidence |nextGaussian| <= 2
+				//so, delta ~= kappa * 0.25 * mean + 2sqrt(shock)
+				(int) Math.round(0.25 * props.getAsDouble(Keys.FUNDAMENTAL_KAPPA,0.05) * props.getAsInt(Keys.FUNDAMENTAL_MEAN,100000) + 2 * Math.sqrt(props.getAsInt(Keys.FUNDAMENTAL_SHOCK_VAR,1000000)))
 			);
 	}
 
@@ -87,9 +90,11 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	protected int getSpread(){
 		double r = useMedianSpread ? 0.5 : rand.nextDouble();
 		double p_sum = 0.0;
+
 		Integer[] spreads = new Integer[weights.size()];
 		weights.keySet().toArray(spreads);
 		Arrays.sort(spreads);
+
 		for(Integer spread : spreads){
 			p_sum += weights.get(spread);
 			if (p_sum >= r) { return (int) spread; }
@@ -111,7 +116,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	protected TransactionResult lastTransactionResult(int spread, int bidPrice, int askPrice){
 		int delta_h = 0, delta_c = 0; //changes in holdings / cash, respectively
 		try{
-			int lastUnitPrice = (lastBid.intValue() + lastAsk.intValue())/2;
+			int lastUnitPrice = (lastBid.intValue() + lastAsk.intValue()) / 2;
 			for(int rung = 0; rung < numRungs; rung++){
 				int offset = spread/2 + rung * stepSize;
 				if(lastUnitPrice - offset >= askPrice) 		//If this bid would have transacted
@@ -136,9 +141,10 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		for(int spread : weights.keySet()){
 			maxSpread = Math.max( maxSpread, spread);
 		}
-		//Compute G as per Abernethy & Kale Lemma 4
-		int G = 2 * volatilityBound * maxSpread + volatilityBound * volatilityBound;
-		double eta_t = Math.min( Math.sqrt( Math.log( weights.size() ) / (currentTime.getInTicks() + 1)), 1.0) / (2 * G);
+		// Use G = delta / 10 rather than G = delta*B*2 + delta^2
+		// in order to have agent learn more aggressively/quickly
+		int G = volatilityBound / 10;// * maxSpread * 2 + volatilityBound * volatilityBound;
+		double eta_t = Math.min( Math.sqrt( Math.log( weights.size() ) / ((currentTime.getInTicks() + 1)/ticksPerReentry)), 1.0) / (2 * G);
 		for(Map.Entry<Integer,Double> e : weights.entrySet()){
 			e.setValue(e.getValue() * Math.exp(eta_t * valueDeltas.get(e.getKey())));
 		}
@@ -151,12 +157,12 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	protected void normalizeWeights(){
 		double total = 0;
 		for(double w : weights.values()) { total += w; }
-		for(int s : weights.keySet()) { weights.put(s, weights.get(s) / total); }
+		for(Map.Entry<Integer,Double> e : weights.entrySet()) { e.setValue(e.getValue() / total); }
 	}
 
 	// Using this for testing.  No real reason not to expose this method, anyway.
 	public Map<Integer, Double> getWeights()
-	{ return weights; }
+		{ return weights; }
 
 	@Override
 	public void agentStrategy(TimeStamp currentTime) {
