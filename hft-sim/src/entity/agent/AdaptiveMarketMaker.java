@@ -100,7 +100,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		// This return will only be reached if r is very(!) close to 1 and rounding errors make the sum of the weights less than 1. Extremely unlikely.
 		return 0;
 	}
-	
+
 	/**
 	 * Given a spread, computes the transactions that would have been made during the last time step
 	 * had that spread been chosen.
@@ -184,7 +184,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		ImmutableMap<Integer,Integer> valueDeltas = builder.build();
 		//Recalculate weights based on performances from the last timestep, using Multiplicative Weights (Abernethy&Kale 4.1)
 		recalculateWeights(valueDeltas, currentTime);
-		log.log(DEBUG, "%s in %s: Current spread weights: %s", 
+		log.log(DEBUG, "%s in %s: Current spread weights: %s",
 				this, primaryMarket, weights.toString());
 		//Submit updated order ladder, using the spread chosen by the learning algorithm
 		int offset = getSpread() / 2;
