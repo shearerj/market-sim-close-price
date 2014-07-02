@@ -600,6 +600,6 @@ public class AdaptiveMarketMakerTest {
 				assertTrue(weights.get(2) > weights.get(50));
 				
 				//check that the other two spreads, neither of which transacted, still have same weight
-				assertEquals(weights.get(4), weights.get(50), 0.0001);
+				assertEquals(weights.get(40), weights.get(50), 0.0001);
 	}
 }

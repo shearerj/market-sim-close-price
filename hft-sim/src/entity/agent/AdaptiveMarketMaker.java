@@ -35,9 +35,10 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	private static final long serialVersionUID = 4228181375500843232L;
 	protected Map<Integer, Double> weights;
 
-	protected final int ticksPerReentry;
 	protected final boolean useMedianSpread;
 	protected final int volatilityBound;
+
+	protected int counter = 0;
 
 
 	public AdaptiveMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
@@ -52,7 +53,6 @@ public class AdaptiveMarketMaker extends MarketMaker {
 
 		this.useMedianSpread = useMedianSpread;
 		this.volatilityBound = volatilityBound;
-		this.ticksPerReentry = (int) Math.round( 1 / reentryRate);
 
 		//Initialize weights, mapping spread b-values to their corresponding weights, initially all equal.
 		weights = Maps.newHashMapWithExpectedSize(spreads.length);
@@ -90,11 +90,9 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	protected int getSpread(){
 		double r = useMedianSpread ? 0.5 : rand.nextDouble();
 		double p_sum = 0.0;
-
 		Integer[] spreads = new Integer[weights.size()];
 		weights.keySet().toArray(spreads);
 		Arrays.sort(spreads);
-
 		for(Integer spread : spreads){
 			p_sum += weights.get(spread);
 			if (p_sum >= r) { return (int) spread; }
@@ -141,10 +139,10 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		for(int spread : weights.keySet()){
 			maxSpread = Math.max( maxSpread, spread);
 		}
-		// Use G = delta / 10 rather than G = delta*B*2 + delta^2
+		// Use G = delta / 5 rather than G = delta*B*2 + delta^2
 		// in order to have agent learn more aggressively/quickly
-		int G = volatilityBound / 10;// * maxSpread * 2 + volatilityBound * volatilityBound;
-		double eta_t = Math.min( Math.sqrt( Math.log( weights.size() ) / ((currentTime.getInTicks() + 1)/ticksPerReentry)), 1.0) / (2 * G);
+		int G = volatilityBound / 5;// * maxSpread * 2 + volatilityBound * volatilityBound;
+		double eta_t = Math.min( Math.sqrt( Math.log( weights.size() ) / counter), 1.0) / (2 * G);
 		for(Map.Entry<Integer,Double> e : weights.entrySet()){
 			e.setValue(e.getValue() * Math.exp(eta_t * valueDeltas.get(e.getKey())));
 		}
@@ -167,6 +165,8 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	@Override
 	public void agentStrategy(TimeStamp currentTime) {
 		super.agentStrategy(currentTime);
+		counter += 1;
+
 
 		Price bid = this.getQuote().getBidPrice();
 		Price ask = this.getQuote().getAskPrice();
