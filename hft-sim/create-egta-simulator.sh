@@ -20,6 +20,10 @@ if [[ -e "$NAME" ]]; then
     echo "Error: Can't create a simulator with the same name as an existing directory"
     exit 1
 fi
+if [[ ! -e "$JAR" ]]; then
+	echo "Error: Can't find hft.jar in /dist directory.  Run build-jar from /build.xml to generate it."
+	exit 1
+fi
 if [[ -n "$2" ]]; then
     DEFAULTS="$2"
 fi

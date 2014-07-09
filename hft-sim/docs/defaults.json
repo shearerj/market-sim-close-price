@@ -18,7 +18,7 @@
         "BASICMM": "num_0_numRungs_10_rungSize_1000",
 	"MAMM": "num_0",
 	"WMAMM": "num_0",
-        "AMM": "num_0",
+        "ADAPTIVEMM": "num_0",
         "ZI": "num_0_bidRangeMin_0_bidRangeMax_5000",
         "ZIR": "num_0_maxqty_10",
         "ZIP": "num_0",
