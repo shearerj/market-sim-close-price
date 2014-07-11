@@ -16,7 +16,6 @@ import java.util.Map;
 
 import static logger.Log.log;
 import static logger.Log.Level.INFO;
-import static logger.Log.Level.DEBUG;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -24,7 +23,7 @@ import com.google.common.collect.Maps;
 /**
  * ADAPTIVEMARKETMAKER
  *
- * Meta Market Maker
+ * Adaptive Market Maker
  *
  * Based on Abernethy & Kale, "Adaptive Market Making via Online Learning", PNIPS 2013
  *
@@ -39,7 +38,6 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	protected final int volatilityBound;
 
 	protected int counter = 0;
-
 
 	public AdaptiveMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
 			SIP sip, Market market, Random rand, double reentryRate,
@@ -75,7 +73,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 				props.getAsBoolean(Keys.TICK_INSIDE, true),
 				props.getAsInt(Keys.INITIAL_LADDER_MEAN, 0),
 				props.getAsInt(Keys.INITIAL_LADDER_RANGE, 0),
-				props.getAsIntArray(Keys.SPREADS, new int[]{100,200,400,800,1600,3200}),
+				props.getAsIntArray(Keys.SPREADS, new int[]{200,400,800,1600,3200}),
 				props.getAsBoolean(Keys.USE_MEDIAN_SPREAD, true),
 				//To approximate volatility bound, use the fact that next = prev + kappa(mean-prev) + nextGaussian(0,1)*sqrt(shock)
 				//conservatively estimate |mean-prev|<= 0.25*mean; 98% confidence |nextGaussian| <= 2
@@ -136,13 +134,16 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	 */
 	protected void recalculateWeights(Map<Integer, Integer> valueDeltas, TimeStamp currentTime){
 		int maxSpread = 0;
+
 		for(int spread : weights.keySet()){
 			maxSpread = Math.max( maxSpread, spread);
 		}
+
 		// Use G = delta / 5 rather than G = delta*B*2 + delta^2
 		// in order to have agent learn more aggressively/quickly
-		int G = volatilityBound / 5;// * maxSpread * 2 + volatilityBound * volatilityBound;
+		int G = volatilityBound / 5;
 		double eta_t = Math.min( Math.sqrt( Math.log( weights.size() ) / counter), 1.0) / (2 * G);
+
 		for(Map.Entry<Integer,Double> e : weights.entrySet()){
 			e.setValue(e.getValue() * Math.exp(eta_t * valueDeltas.get(e.getKey())));
 		}
@@ -158,24 +159,24 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		for(Map.Entry<Integer,Double> e : weights.entrySet()) { e.setValue(e.getValue() / total); }
 	}
 
-	// Using this for testing.  No real reason not to expose this method, anyway.
+	// Using this for junit testing.  No real reason not to expose this method, anyway.
 	public Map<Integer, Double> getWeights()
-		{ return weights; }
+		{ return ImmutableMap.copyOf(weights); }
 
 	@Override
 	public void agentStrategy(TimeStamp currentTime) {
 		super.agentStrategy(currentTime);
 		counter += 1;
 
-
 		Price bid = this.getQuote().getBidPrice();
 		Price ask = this.getQuote().getAskPrice();
-		if( bid == null  || ask == null)
+		if(bid == null || ask == null)
 			{ return; }
 		//Approximate the price of a single unit as the midpoint between the quoted bid and ask prices
 		int approximateUnitPrice = (bid.intValue() + ask.intValue()) / 2;
 
 		//For each spread, determine how it would have performed in the last round.
+
 		ImmutableMap.Builder<Integer,Integer> builder = new ImmutableMap.Builder<Integer,Integer>();
 		for(int spread : weights.keySet()){
 			TransactionResult transaction = lastTransactionResult(spread, bid.intValue(), ask.intValue());
@@ -184,7 +185,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		ImmutableMap<Integer,Integer> valueDeltas = builder.build();
 		//Recalculate weights based on performances from the last timestep, using Multiplicative Weights (Abernethy&Kale 4.1)
 		recalculateWeights(valueDeltas, currentTime);
-		log.log(DEBUG, "%s in %s: Current spread weights: %s",
+		log.log(INFO, "%s in %s: Current spread weights: %s",
 				this, primaryMarket, weights.toString());
 		//Submit updated order ladder, using the spread chosen by the learning algorithm
 		int offset = getSpread() / 2;
