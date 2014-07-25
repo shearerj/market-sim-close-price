@@ -17,6 +17,7 @@ import java.util.Map;
 import static logger.Log.log;
 import static logger.Log.Level.INFO;
 
+import com.google.common.collect.EvictingQueue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
@@ -36,6 +37,8 @@ public class AdaptiveMarketMaker extends MarketMaker {
 
 	protected final boolean useMedianSpread;
 	protected final int volatilityBound;
+	protected EvictingQueue<Integer> priceQueue;
+	protected int lastPrice;
 
 	protected int counter = 0;
 
@@ -43,7 +46,8 @@ public class AdaptiveMarketMaker extends MarketMaker {
 			SIP sip, Market market, Random rand, double reentryRate,
 			int tickSize, int numRungs, int rungSize, boolean truncateLadder,
 			boolean tickImprovement, boolean tickInside, int initLadderMean,
-			int initLadderRange, int[] spreads, boolean useMedianSpread, int volatilityBound) {
+			int initLadderRange, int[] spreads, boolean useMedianSpread, int volatilityBound,
+			boolean movingAveragePrice) {
 
 		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
 				numRungs, rungSize, truncateLadder, tickImprovement, tickInside,
@@ -51,6 +55,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 
 		this.useMedianSpread = useMedianSpread;
 		this.volatilityBound = volatilityBound;
+		priceQueue = EvictingQueue.create(movingAveragePrice ? 8 : 1); // If movingAveragePrice is false, queue has size 1; effectively not doing any averaging.
 
 		//Initialize weights, mapping spread b-values to their corresponding weights, initially all equal.
 		weights = Maps.newHashMapWithExpectedSize(spreads.length);
@@ -78,7 +83,8 @@ public class AdaptiveMarketMaker extends MarketMaker {
 				//To approximate volatility bound, use the fact that next = prev + kappa(mean-prev) + nextGaussian(0,1)*sqrt(shock)
 				//conservatively estimate |mean-prev|<= 0.25*mean; 98% confidence |nextGaussian| <= 2
 				//so, delta ~= kappa * 0.25 * mean + 2sqrt(shock)
-				(int) Math.round(0.25 * props.getAsDouble(Keys.FUNDAMENTAL_KAPPA,0.05) * props.getAsInt(Keys.FUNDAMENTAL_MEAN,100000) + 2 * Math.sqrt(props.getAsInt(Keys.FUNDAMENTAL_SHOCK_VAR,1000000)))
+				(int) Math.round(0.25 * props.getAsDouble(Keys.FUNDAMENTAL_KAPPA,0.05) * props.getAsInt(Keys.FUNDAMENTAL_MEAN,100000) + 2 * Math.sqrt(props.getAsInt(Keys.FUNDAMENTAL_SHOCK_VAR,1000000))),
+				props.getAsBoolean(Keys.MOVING_AVERAGE_PRICE, false)
 			);
 	}
 
@@ -109,16 +115,15 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	 *
 	 * @return a TransactionResult: a pair of integers (netHoldingsChange, netCashChange)
 	 */
-	protected TransactionResult lastTransactionResult(int spread, int bidPrice, int askPrice){
+	protected TransactionResult lastTransactionResult(int spread, int bidPrice, int askPrice, int lastPrice){
 		int delta_h = 0, delta_c = 0; //changes in holdings / cash, respectively
 		try{
-			int lastUnitPrice = (lastBid.intValue() + lastAsk.intValue()) / 2;
 			for(int rung = 0; rung < numRungs; rung++){
 				int offset = spread/2 + rung * stepSize;
-				if(lastUnitPrice - offset >= askPrice) 		//If this bid would have transacted
-					{ delta_h += 1; delta_c -= (lastBid.intValue() - offset);}
-				if(lastUnitPrice + offset <= bidPrice) 		//If this ask would have transacted
-					{ delta_h -= 1; delta_c += (lastAsk.intValue() + offset);}
+				if(lastPrice - offset >= askPrice) 		//If this bid would have transacted
+					{ delta_h += 1; delta_c -= (lastPrice - offset);}
+				if(lastPrice + offset <= bidPrice) 		//If this ask would have transacted
+					{ delta_h -= 1; delta_c += (lastPrice + offset);}
 			}
 		} catch(NullPointerException e)
 		{ /*If lastBid or lastAsk is null, just return the default delta_h=delta_c=0 so weights don't readjust */}
@@ -173,14 +178,22 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		if(bid == null || ask == null)
 			{ return; }
 		//Approximate the price of a single unit as the midpoint between the quoted bid and ask prices
-		int approximateUnitPrice = (bid.intValue() + ask.intValue()) / 2;
 
+		int approximateUnitPrice = (bid.intValue() + ask.intValue()) / 2;
+		priceQueue.add(approximateUnitPrice);
+
+		int averagePrice = -1; // placeholder; will be overwritten momentarily
+		if (!priceQueue.isEmpty()) {
+			double priceSum = 0;
+			for (int x : priceQueue) priceSum += x;
+			averagePrice = (int) Math.round(priceSum / priceQueue.size());
+		}
 		//For each spread, determine how it would have performed in the last round.
 
 		ImmutableMap.Builder<Integer,Integer> builder = new ImmutableMap.Builder<Integer,Integer>();
 		for(int spread : weights.keySet()){
-			TransactionResult transaction = lastTransactionResult(spread, bid.intValue(), ask.intValue());
-			builder.put(spread, transaction.getNetCashChange() + (approximateUnitPrice * transaction.getNetHoldingsChange()));//<change_in_cash> + <change_in_holdings>*<approximate_unit_value>
+			TransactionResult transaction = lastTransactionResult(spread, bid.intValue(), ask.intValue(), lastPrice);
+			builder.put(spread, transaction.getNetCashChange() + (averagePrice * transaction.getNetHoldingsChange()));//<change_in_cash> + <change_in_holdings>*<approximate_unit_value>
 		}
 		ImmutableMap<Integer,Integer> valueDeltas = builder.build();
 		//Recalculate weights based on performances from the last timestep, using Multiplicative Weights (Abernethy&Kale 4.1)
@@ -191,13 +204,13 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		int offset = getSpread() / 2;
 		int ladderSize = stepSize * (numRungs - 1);
 		withdrawAllOrders();
-		submitOrderLadder(new Price(approximateUnitPrice - offset - ladderSize),  //minimum buy
-						  new Price(approximateUnitPrice - offset), 			  //maximum buy
-						  new Price(approximateUnitPrice + offset),				  //minimum sell
-						  new Price(approximateUnitPrice + offset + ladderSize)); //maximum sell
+		submitOrderLadder(new Price(averagePrice - offset - ladderSize),  //minimum buy
+						  new Price(averagePrice - offset), 			  //maximum buy
+						  new Price(averagePrice + offset),				  //minimum sell
+						  new Price(averagePrice + offset + ladderSize)); //maximum sell
 		log.log(INFO, "%s in %s: submitting ladder with spread %d",
 				this, primaryMarket, offset * 2);
-		lastBid = bid; lastAsk = ask;
+		lastBid = bid; lastAsk = ask; lastPrice = averagePrice;
 	}
 
 	protected static class TransactionResult extends utils.Pair<Integer, Integer>{

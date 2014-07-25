@@ -99,4 +99,5 @@ public interface Keys {
 	public final static String WEIGHT_FACTOR = "weightFactor";
 	public final static String SPREADS = "spreads";
 	public final static String USE_MEDIAN_SPREAD = "useMedianSpread";
+	public final static String MOVING_AVERAGE_PRICE = "movingAveragePrice";
 }
