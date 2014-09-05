@@ -58,7 +58,7 @@ public class AdaptiveMarketMakerTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		Log.log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "BasicMarketMakerTest.log"));
+		Log.log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "AdaptiveMarketMakerTest.log"));
 	}
 
 	@Before
@@ -83,7 +83,7 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 10,
 				Keys.TRUNCATE_LADDER, false,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2,4,6,8");
+				Keys.SPREADS, "2/4/6/8");
 
 		// Check activities inserted (none, other than reentry)
 		mm.agentStrategy(time);
@@ -103,7 +103,7 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 10,
 				Keys.TRUNCATE_LADDER, false,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2,4,6,8");
+				Keys.SPREADS, "2/4/6/8");
 		mm.lastAsk = new Price(55);
 		mm.lastBid = new Price(45);
 
@@ -144,7 +144,7 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 10,
 				Keys.TRUNCATE_LADDER, false,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2,4,6,8");
+				Keys.SPREADS, "2/4/6/8");
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -325,7 +325,7 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 10,
 				Keys.TRUNCATE_LADDER, false,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2,4,6,8",
+				Keys.SPREADS, "2/4/6/8",
 				Keys.NO_OP, true);
 
 		// Check activities inserted (none, since no-op)
@@ -508,7 +508,7 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2,4,6",
+				Keys.SPREADS, "2/4/6",
 				Keys.USE_MEDIAN_SPREAD, true);
 		
 				// Creating dummy agents
@@ -549,7 +549,7 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2,40,50",
+				Keys.SPREADS, "2/40/50",
 				Keys.USE_MEDIAN_SPREAD, true);
 		
 				// Creating dummy agents
