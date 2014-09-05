@@ -106,26 +106,26 @@ public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 	}
 	
 	/**
-	 * If new position (current position +/- 1) exceeds max position, return 0.
+	 * If position (e.g. current position +/- 1) exceeds max position, return 0.
 	 * 
-	 * @param newPosition
-	 *            Agent's new position (current position +/- 1)
+	 * @param position
+	 *            Agent's position (e.g. current position +/- 1)
 	 * @param type
 	 * 			  Buy or Sell
-	 * @return The new private value if buying or selling 1 unit
+	 * @return The private value 
 	 */
 	@Override
-	public Price getValue(int newPosition, OrderType type) {
+	public Price getValue(int position, OrderType type) {
 		switch (type) {
 		case BUY:
-			if (newPosition + offset <= values.size() - 1 &&
-					newPosition + offset >= 0)
-				return values.get(newPosition + offset);
+			if (position + offset <= values.size() - 1 &&
+					position + offset >= 0)
+				return values.get(position + offset);
 			break;
 		case SELL:
-			if (newPosition + offset - 1 <= values.size() - 1 && 
-					newPosition + offset - 1 >= 0)
-				return values.get(newPosition + offset - 1);
+			if (position + offset - 1 <= values.size() - 1 && 
+					position + offset - 1 >= 0)
+				return values.get(position + offset - 1);
 			break;
 		}
 		return Price.ZERO;
