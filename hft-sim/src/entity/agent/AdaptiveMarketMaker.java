@@ -55,7 +55,10 @@ public class AdaptiveMarketMaker extends MarketMaker {
 
 		this.useMedianSpread = useMedianSpread;
 		this.volatilityBound = volatilityBound;
-		priceQueue = EvictingQueue.create(movingAveragePrice ? 8 : 1); // If movingAveragePrice is false, queue has size 1; effectively not doing any averaging.
+
+		// If movingAveragePrice is false, queue has size 1; effectively not doing any averaging.
+		// If true, queue has size 8, which EGTA of MAMM has shown to be a reasonable size.
+		priceQueue = EvictingQueue.create(movingAveragePrice ? 8 : 1);
 
 		//Initialize weights, mapping spread b-values to their corresponding weights, initially all equal.
 		weights = Maps.newHashMapWithExpectedSize(spreads.length);
@@ -177,23 +180,21 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		Price ask = this.getQuote().getAskPrice();
 		if(bid == null || ask == null)
 			{ return; }
-		//Approximate the price of a single unit as the midpoint between the quoted bid and ask prices
 
+		//Approximate the price of a single unit as the midpoint between the quoted bid and ask prices
 		int approximateUnitPrice = (bid.intValue() + ask.intValue()) / 2;
 		priceQueue.add(approximateUnitPrice);
 
-		int averagePrice = -1; // placeholder; will be overwritten momentarily
-		if (!priceQueue.isEmpty()) {
-			double priceSum = 0;
-			for (int x : priceQueue) priceSum += x;
-			averagePrice = (int) Math.round(priceSum / priceQueue.size());
-		}
+		double priceSum = 0;
+		for (int x : priceQueue) priceSum += x;
+		int averagePrice = (int) Math.round(priceSum / priceQueue.size());
+
 		//For each spread, determine how it would have performed in the last round.
 
 		ImmutableMap.Builder<Integer,Integer> builder = new ImmutableMap.Builder<Integer,Integer>();
 		for(int spread : weights.keySet()){
 			TransactionResult transaction = lastTransactionResult(spread, bid.intValue(), ask.intValue(), lastPrice);
-			builder.put(spread, transaction.getNetCashChange() + (averagePrice * transaction.getNetHoldingsChange()));//<change_in_cash> + <change_in_holdings>*<approximate_unit_value>
+			builder.put(spread, transaction.getNetCashChange() + (approximateUnitPrice * transaction.getNetHoldingsChange()));//<change_in_cash> + <change_in_holdings>*<approximate_unit_value>
 		}
 		ImmutableMap<Integer,Integer> valueDeltas = builder.build();
 		//Recalculate weights based on performances from the last timestep, using Multiplicative Weights (Abernethy&Kale 4.1)
