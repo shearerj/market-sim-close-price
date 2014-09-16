@@ -1,111 +1,53 @@
 package data;
 
-import static com.google.common.base.Predicates.equalTo;
-import static com.google.common.base.Predicates.not;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
+import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
-
 import org.junit.Test;
 
+import utils.Iterables2;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.primitives.Doubles;
 
 public class TimeSeriesTest {
 	
-	protected final static Random rand = new Random();
-
-	@Test
-	public void lengthTest() {
-		TimeSeries t;
-		List<Double> values;
-		
-		t = new TimeSeries();
-		values = t.sample(1, 100);
-		assertEquals(100, values.size());
-		
-		t = new TimeSeries();
-		values = t.sample(2, 100);
-		assertEquals(50, values.size());
-		
-		t = new TimeSeries();
-		values = t.sample(3, 100);
-		assertEquals(33, values.size());
-		
-		for (int i = 0; i < 100; i++) {
-			int length = rand.nextInt(500) + 100;
-			int period = rand.nextInt(length) + 1;
-			t = new TimeSeries();
-			values = t.sample(period, length);
-			assertEquals(length / period, values.size());
-		}
-	}
-	
-	@Test
-	public void duplicateTest() {
-		TimeSeries t;
-		List<Double> values;
-		
-		t = new TimeSeries();
-		values = t.sample(1, 100);
-		for (double d : values)
-			assertTrue(Double.isNaN(d));
-		
-		t = new TimeSeries();
-		t.add(0, 5.6);
-		values = t.sample(1, 100);
-		for (double d : values)
-			assertEquals(5.6, d, 0);
-	}
-	
-	@Test
-	public void truncationTest() {
-		TimeSeries t;
-		List<Double> values;
-		
-		t = new TimeSeries();
-		t.add(0, 5.6);
-		t.add(101, 3.6);
-		values = t.sample(1, 100);
-		for (double d : values)
-			assertEquals(5.6, d, 0);
-		
-		t = new TimeSeries();
-		t.add(0, 5.6);
-		t.add(99, 3.6);
-		values = t.sample(1, 100);
-		for (double d : values.subList(0, 99))
-			assertEquals(5.6, d, 0);
-		assertEquals(3.6, values.get(99), 0);
+	@Test(expected=UnsupportedOperationException.class)
+	public void immutableTest() {
+		TimeSeries ts = TimeSeries.create();
+		ts.add(10, 5);
+		Iterator<Double> it = ts.iterator();
+		it.next();
+		it.remove();
+		fail();
 	}
 	
 	@Test
 	public void filterTest() {
-		TimeSeries t;
-		List<Double> values;
+		TimeSeries ts;
+		List<Double> test;
 		
-		t = new TimeSeries();
-		t.add(0, 4.5);
-		t.add(50, Double.NaN);
-		values = t.sample(2, 100, not(equalTo(Double.NaN)));
-		assertEquals(50, values.size());
-		for (double d : values)
+		ts = TimeSeries.create();
+		ts.add(0, 4.5);
+		ts.add(50, Double.NaN);
+		for (double d : Iterables.limit(ts.removeNans(), 100))
 			assertEquals(4.5, d, 0);
 		
-		t = new TimeSeries();
-		t.add(0, 5.6);
-		t.add(25, 7.4);
-		t.add(30, Double.NaN);
-		t.add(50, 3.9);
+		ts = TimeSeries.create();
+		ts.add(0, 5.6);
+		ts.add(25, 7.4);
+		ts.add(30, Double.NaN);
+		ts.add(50, 3.9);
 		
-		values = t.sample(25, 75);
-		assertEquals(3, values.size());
-		assertEquals(Doubles.asList(5.6, Double.NaN, 3.9), values);
+		test = ImmutableList.copyOf(Iterables.limit(Iterables2.sample(ts, 25, -1), 3));
+		assertEquals(3, test.size());
+		assertEquals(Doubles.asList(5.6, Double.NaN, 3.9), test);
 		
-		values = t.sample(25, 75, not(equalTo(Double.NaN)));
-		assertEquals(3, values.size());
-		assertEquals(Doubles.asList(5.6, 7.4, 3.9), values);
+		test = ImmutableList.copyOf(Iterables.limit(Iterables2.sample(ts.removeNans(), 25, -1), 3));
+		assertEquals(3, Iterables.size(test));
+		assertEquals(Doubles.asList(5.6, 7.4, 3.9), test);
 	}
 
 }

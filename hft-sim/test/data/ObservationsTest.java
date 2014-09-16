@@ -7,7 +7,6 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -25,6 +24,7 @@ import systemmanager.SimulationSpec;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.Iterables;
 
 import entity.agent.Agent;
 import entity.agent.BackgroundAgent;
@@ -84,22 +84,22 @@ public class ObservationsTest {
 		
 		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent1, BUY, new Price(104), 1, TimeStamp.ZERO);
-		assertEquals(Double.POSITIVE_INFINITY, obs.spreads.get(market1).sample(1,1).get(0), 0.001);
+		assertEquals(Double.POSITIVE_INFINITY, Iterables.getFirst(obs.spreads.get(market1), null), 0.001);
 		
 		market1.submitOrder(agent2, SELL, new Price(105), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent2, SELL, new Price(106), 1, TimeStamp.ZERO);
-		assertEquals(1, obs.spreads.get(market1).sample(1,1).get(0), 0.001);
+		assertEquals(1, Iterables.getFirst(obs.spreads.get(market1), null), 0.001);
 		
 		// Also sets median for market1 to 3
 		market1.submitOrder(agent2, SELL, new Price(103), 1, TimeStamp.ZERO);
 		market1.clear(TimeStamp.ZERO);
-		assertEquals(3, obs.spreads.get(market1).sample(1,1).get(0), 0.001);
+		assertEquals(3, Iterables.getFirst(obs.spreads.get(market1), null), 0.001);
 		
 		// Sets median of market2 to 5
 		market2.submitOrder(agent2, SELL, new Price(103), 1, TimeStamp.ZERO);
 		market2.submitOrder(agent2, BUY, new Price(98), 1, TimeStamp.ZERO);
 		market2.clear(TimeStamp.ZERO);
-		assertEquals(5, obs.spreads.get(market2).sample(1,1).get(0), 0.001);
+		assertEquals(5, Iterables.getFirst(obs.spreads.get(market2), null), 0.001);
 		
 		// Mean of 3 and 5
 		assertEquals(4, obs.getFeatures().get("spreads_mean_markets"), 0.001);
@@ -113,15 +113,15 @@ public class ObservationsTest {
 		
 		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent1, BUY, new Price(104), 1, TimeStamp.ZERO);
-		assertEquals(Double.NaN, obs.midQuotes.get(market1).sample(1,1).get(0), 0.001);
+		assertEquals(Double.NaN, Iterables.getFirst(obs.midQuotes.get(market1), null), 0.001);
 		
 		market1.submitOrder(agent2, SELL, new Price(106), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent2, SELL, new Price(107), 1, TimeStamp.ZERO);
-		assertEquals(105, obs.midQuotes.get(market1).sample(1,1).get(0), 0.001);
+		assertEquals(105, Iterables.getFirst(obs.midQuotes.get(market1), null), 0.001);
 		
 		market1.submitOrder(agent2, SELL, new Price(103), 1, TimeStamp.ZERO);
 		market1.clear(TimeStamp.ZERO);
-		assertEquals(104, obs.midQuotes.get(market1).sample(1,1).get(0), 0.001);
+		assertEquals(104, Iterables.getFirst(obs.midQuotes.get(market1), null), 0.001);
 	}
 	
 	@Test
@@ -131,17 +131,13 @@ public class ObservationsTest {
 		sip.processQuote(market1, q, TimeStamp.ZERO);
 		
 		// Check that correct spread stored
-		List<Double> list = obs.nbboSpreads.sample(1, 1);
-		assertEquals(1, list.size());
-		assertEquals(20, list.get(0), 0.001);
+		assertEquals(20, Iterables.getFirst(obs.nbboSpreads, null), 0.001);
 		
 		q = new Quote(market2, new Price(70), 1, new Price(90), 1, TimeStamp.ZERO);
 		sip.processQuote(market2, q, TimeStamp.ZERO);
 		
 		// Check that new quote overwrites the previously stored spread at time 0
-		list = obs.nbboSpreads.sample(1, 1);
-		assertEquals(1, list.size());
-		assertEquals(10, list.get(0), 0.001);
+		assertEquals(10, Iterables.getFirst(obs.nbboSpreads, null), 0.001);
 		
 		// Test with actual agents
 		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
@@ -149,9 +145,7 @@ public class ObservationsTest {
 		
 		market1.submitOrder(agent1, BUY, new Price(80), 1, TimeStamp.ZERO);
 		market2.submitOrder(agent2, SELL, new Price(100), 1, TimeStamp.ZERO);
-		list = obs.nbboSpreads.sample(1, 1);
-		assertEquals(1, list.size());
-		assertEquals(20, list.get(0), 0.001);
+		assertEquals(20, Iterables.getFirst(obs.nbboSpreads, null), 0.001);
 	}
 	
 	@Test
@@ -403,15 +397,15 @@ public class ObservationsTest {
 		// Basic stuff from same agent 
 		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent1, SELL, new Price(102), 1, TimeStamp.ZERO);
-		assertEquals(Double.NaN, obs.transPrices.sample(1,1).get(0), 0.001);
+		assertEquals(Double.NaN, Iterables.getFirst(obs.transPrices, null), 0.001);
 		market1.clear(TimeStamp.ZERO);
-		assertEquals(102, obs.transPrices.sample(1,1).get(0), 0.001);
+		assertEquals(102, Iterables.getFirst(obs.transPrices, null), 0.001);
 		
 		// Now with different agent, check overwriting
 		market1.submitOrder(agent1, BUY, new Price(104), 1, TimeStamp.ZERO);
 		market1.submitOrder(agent2, SELL, new Price(104), 1, TimeStamp.ZERO);
 		market1.clear(TimeStamp.ZERO);
-		assertEquals(104, obs.transPrices.sample(1,1).get(0), 0.001);
+		assertEquals(104, Iterables.getFirst(obs.transPrices, null), 0.001);
 
 		/*
 		 * XXX What if two transactions happen at the same time with different
@@ -424,14 +418,14 @@ public class ObservationsTest {
 		market2.submitOrder(agent1, BUY, new Price(106), 2, TimeStamp.ZERO);
 		market2.submitOrder(agent2, SELL, new Price(106), 2, TimeStamp.ZERO);
 		market2.clear(TimeStamp.create(1));
-		assertEquals(ImmutableList.of(104d, 106d), obs.transPrices.sample(1,2));
+		assertEquals(ImmutableList.of(104d, 106d), ImmutableList.copyOf(Iterables.limit(obs.transPrices, 2)));
 		
 		// Overwrite that with a split order
 		market1.submitOrder(agent1, BUY, new Price(108), 1, TimeStamp.create(1));
 		market1.submitOrder(agent2, SELL, new Price(108), 2, TimeStamp.create(1));
 		market1.submitOrder(agent2, BUY, new Price(108), 1, TimeStamp.create(1));
 		market1.clear(TimeStamp.create(1));
-		assertEquals(ImmutableList.of(104d, 108d), obs.transPrices.sample(1,2));
+		assertEquals(ImmutableList.of(104d, 108d), ImmutableList.copyOf(Iterables.limit(obs.transPrices, 2)));
 	}
 	
 	@Test

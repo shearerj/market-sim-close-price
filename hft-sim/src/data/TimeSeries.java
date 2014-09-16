@@ -3,9 +3,13 @@ package data;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Serializable;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
+
+import utils.Iterables2;
+import utils.Iterators2;
+import utils.SparseIterable;
+import utils.SparseIterator;
+import utils.SparseIterator.SparseElement;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -13,7 +17,6 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
-import com.google.common.collect.PeekingIterator;
 
 /**
  * Storage for time series objects.
@@ -32,25 +35,17 @@ import com.google.common.collect.PeekingIterator;
  * @author ewah
  * 
  */
-public class TimeSeries implements Serializable {
+public class TimeSeries implements Serializable, SparseIterable<Double> {
 	
 	private static final long serialVersionUID = 7835744389750549565L;
 	private static final Joiner joiner = Joiner.on(", ");
+	private static final SparseElement<Double> zero = SparseElement.create(0, Double.NaN);
 	
-	protected final List<Point> points;
-	protected final double defaultValue;
+	protected final List<SparseElement<Double>> points;
 
-	protected TimeSeries(double defaultValue) {
-		this.points = Lists.newArrayList();
-		this.defaultValue = defaultValue;
-	}
-	
 	protected TimeSeries() {
-		this(Double.NaN);
-	}
-	
-	public static TimeSeries create(double defaultValue) {
-		return new TimeSeries(defaultValue);
+		this.points = Lists.newArrayList();
+		add(0, Double.NaN);
 	}
 
 	public static TimeSeries create() {
@@ -66,91 +61,39 @@ public class TimeSeries implements Serializable {
 	 * Add a data point (int, double) to container
 	 */
 	public void add(long time, double value) {
-		long lastTime = Iterables.getLast(points, new Point(0, Double.NaN)).time;
+		long lastTime = Iterables.getLast(points, zero).index;
 		checkArgument(time >= lastTime, "Can't add time before last time");
 		
-		points.add(new Point(time, value));
+		points.add(SparseElement.create(time, value));
 	}
 	
 	/**
-	 * Sample values according to specified period and maximum time. Returns value at the END of
-	 * each period. Example: For sampling interval of 100, the first item in the sampled array would
-	 * be the 100th element (index 99).
+	 * Returns an iterable view backed by the underlying data, but without any
+	 * nans.
 	 * 
-	 * Will also fill in values up to (not including) maxTime, if the last time stored is before
-	 * maxTime.
-	 * 
-	 * If period == 1, then will include every time stamp.
+	 * Note, this can cause issues, as the default value is nan, and so can
+	 * result in null elements as you sample with no data.
 	 */
-	public List<Double> sample(long period, long maxTime) {
-		return sample(period, maxTime, Predicates.<Long> alwaysTrue(), Predicates.<Double> alwaysTrue());
+	public Iterable<Double> removeNans() {
+		return filter(Predicates.not(Predicates.equalTo(Double.NaN)));
 	}
 	
-	public List<Double> sample(long period, long maxTime, Predicate<Double> valuePred) {
-		return sample(period, maxTime, Predicates.<Long> alwaysTrue(), valuePred);
+	/**
+	 * Same as removeNans, but with an arbitrary predicate.
+	 */
+	public Iterable<Double> filter(final Predicate<Double> predicate) {
+		return Iterables2.fromSparse(Iterables.unmodifiableIterable(
+				Iterables.filter(points, new Predicate<SparseElement<Double>>() {
+					@Override
+					public boolean apply(SparseElement<Double> input) {
+						return predicate.apply(input.element);
+					}
+				})));
 	}
-	
-	public List<Double> sample(long period, long maxTime, Predicate<Long> timePred, Predicate<Double> valuePred) {
-		return sample(period, maxTime, Iterables.filter(points, pointPredicate(timePred, valuePred)));
-	}
-	
-	protected List<Double> sample(long period, long maxTime, Iterable<Point> toSample) {
-		return sample(period, maxTime, toSample.iterator());
-	}
-	
-	protected List<Double> sample(long period, long maxTime, Iterator<Point> toSample) {
-		checkArgument(period > 0, "Period must be positive");
-		
-		List<Double> sampled = Lists.newArrayList();
-		PeekingIterator<Point> it = Iterators.peekingIterator(toSample);
-		Point current = new Point(0, defaultValue);
-		
-		for (long time = period - 1; time < maxTime; time += period) {
-			while (it.hasNext() && it.peek().time <= time)
-				current = it.next();
-			sampled.add(current.value);
-		}
-		return sampled;
-	}
-	
-	protected static Predicate<Point> pointPredicate(final Predicate<Long> timePred, final Predicate<Double> valuePred) {
-		return new Predicate<Point>() {
-			@Override
-			public boolean apply(Point arg0) {
-				return timePred.apply(arg0.time) && valuePred.apply(arg0.value);
-			}
-		};
-	}
-	
-	protected static final class Point implements Entry<Long, Double>, Serializable {
-		private static final long serialVersionUID = 8793011684140207592L;
-		protected final long time;
-		protected final double value;
-		
-		protected Point(long time, double value) {
-			this.time = time;
-			this.value = value;
-		}
-		
-		@Override
-		public String toString() {
-			return "(" + time + ": " + value + ")";
-		}
 
-		@Override
-		public Long getKey() {
-			return time;
-		}
-
-		@Override
-		public Double getValue() {
-			return value;
-		}
-
-		@Override
-		public Double setValue(Double value) {
-			throw new UnsupportedOperationException();
-		}
+	@Override
+	public SparseIterator<Double> iterator() {
+		return Iterators2.fromSparse(Iterators.unmodifiableIterator(points.iterator()));
 	}
 
 }

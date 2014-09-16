@@ -5,11 +5,13 @@ import static logger.Log.Level.ERROR;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Random;
 
 import utils.Rands;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 
 import entity.market.Price;
@@ -22,7 +24,7 @@ import event.TimeStamp;
  * @author ewah
  */
 // XXX Erik: Potentially move this to another package?
-public class FundamentalValue implements Serializable {
+public class FundamentalValue implements Iterable<Double>, Serializable {
 
 	private static final long serialVersionUID = 6764216196138108452L;
 	
@@ -88,19 +90,10 @@ public class FundamentalValue implements Serializable {
 		computeFundamentalTo(index);
 		return new Price((int) (double) meanRevertProcess.get(index)).nonnegative();
 	}
-	
-	/**
-	 * Returns a TimeSeries copy of the fundamental data. This makes a copy, and
-	 * does not return a view into the FundamentalValue. This makes it
-	 * expensive, and not super great. This could be fixed if TimeSeries were an
-	 * interface, but that would require more thought.
-	 */
-	public TimeSeries asTimeSeries() {
-		TimeSeries copy = TimeSeries.create();
-		int time = 0;
-		for (double v : meanRevertProcess)
-			copy.add(time++, v);
-		return copy;
+
+	@Override
+	public Iterator<Double> iterator() {
+		return Iterators.unmodifiableIterator(meanRevertProcess.iterator());
 	}
 	
 	/**

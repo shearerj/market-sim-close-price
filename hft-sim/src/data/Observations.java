@@ -1,7 +1,5 @@
 package data;
 
-import static com.google.common.base.Predicates.equalTo;
-import static com.google.common.base.Predicates.not;
 import static logger.Log.log;
 
 import java.util.Collection;
@@ -19,7 +17,9 @@ import systemmanager.Consts;
 import systemmanager.Consts.DiscountFactor;
 import systemmanager.Keys;
 import systemmanager.SimulationSpec;
+import utils.Iterables2;
 
+import com.google.common.base.Predicates;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
@@ -179,7 +179,7 @@ public class Observations {
 		
 		SumStats medians = SumStats.create();
 		for (Entry<Market, TimeSeries> entry : spreads.entrySet()) {
-			DescriptiveStatistics spreads = DSPlus.from(entry.getValue().sample(1, simLength));
+			DescriptiveStatistics spreads = DSPlus.from(Iterables.limit(entry.getValue(), simLength));
 			double median = DSPlus.median(spreads);
 			
 			features.put("spreads_median_market_" + entry.getKey().getID(), median);
@@ -188,12 +188,11 @@ public class Observations {
 		// average of median market spreads (for all markets in this model)
 		features.put("spreads_mean_markets", medians.mean());
 
-		DescriptiveStatistics spreads = DSPlus.from(nbboSpreads.sample(1, simLength));
+		DescriptiveStatistics spreads = DSPlus.from(Iterables.limit(nbboSpreads, simLength));
 		features.put("spreads_median_nbbo", DSPlus.median(spreads));
 		
-		TimeSeries fundPrices = fundamental.asTimeSeries();
 		for (int period : Consts.PERIODS)
-			periodBased(features, fundPrices, period);
+			periodBased(features, fundamental, period);
 		
 		// Market maker
 		features.put("mm_spreads_mean", marketmakerSpreads.mean());
@@ -252,9 +251,7 @@ public class Observations {
 		}
 				
 		// for control variates
-		List<Double> fundTimeSeries = fundPrices.sample(1, simLength);
-		for (double v : fundTimeSeries)
-			controlFundamentalValue.add(v);
+		controlFundamentalValue.addAll(Iterables.limit(fundamental, simLength));
 		features.put("control_mean_fund", controlFundamentalValue.mean());
 		features.put("control_var_fund", controlFundamentalValue.variance());
 		features.put("control_mean_private", controlPrivateValue.mean());
@@ -266,11 +263,11 @@ public class Observations {
 	 * Statistics that are based on the sampling period
 	 */
 	protected void periodBased(ImmutableMap.Builder<String, Double> features, 
-			TimeSeries fundPrices, int period) {
+			Iterable<Double> fundPrices, int period) {
 		// Price discovery
-		String key = period == 1 ? "trans_rmsd" : "trans_freq_" + period + "_rmsd"; 
-		DescriptiveStatistics pr = DSPlus.from(transPrices.sample(period, simLength));
-		DescriptiveStatistics fundStat = DSPlus.from(fundPrices.sample(period, simLength));
+		String key = period == 1 ? "trans_rmsd" : "trans_freq_" + period + "_rmsd";
+		DescriptiveStatistics pr = DSPlus.from(Iterables.limit(Iterables2.sample(transPrices, period, -1), simLength / period));
+		DescriptiveStatistics fundStat = DSPlus.from(Iterables.limit(Iterables2.sample(fundPrices, period, -1), simLength / period));
 		features.put(key, DSPlus.rmsd(pr, fundStat));
 
 		// Volatility
@@ -282,9 +279,10 @@ public class Observations {
 
 		for (Entry<Market, TimeSeries> entry : midQuotes.entrySet()) {
 			TimeSeries mq = entry.getValue();
+			// FIXME instead of removing Nan's, just don't insert them?
+			// FIXME Assumption makes no claims about what the first data points are... Right now we just remove them. Is that appropraite.
 			// compute log price volatility for this market
-			Iterable<Double> filtered = Iterables.filter(mq.sample(period, simLength), 
-					not(equalTo(Double.NaN)));
+			Iterable<Double> filtered = Iterables.filter(Iterables.limit(Iterables2.sample(mq.removeNans(), period, -1), simLength / period), Predicates.notNull());
 			double stdev = SumStats.fromData(filtered).stddev();
 
 			features.put(prefix + "_stddev_price_market_" + entry.getKey().getID(), stdev);
@@ -298,7 +296,7 @@ public class Observations {
 			// XXX Note change in log-return vol from before. Before if the ratio was
 			// NaN it go thrown out. Now the previous value is used. Not sure if
 			// this is correct
-			DescriptiveStatistics mktLogReturns = DSPlus.fromLogRatioOf(mq.sample(period, simLength));
+			DescriptiveStatistics mktLogReturns = DSPlus.fromLogRatioOf(filtered);
 			double logStdev = mktLogReturns.getStandardDeviation();
 
 			features.put(prefix + "_stddev_log_return_market_" + entry.getKey().getID(), logStdev);

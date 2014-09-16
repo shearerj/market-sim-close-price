@@ -67,6 +67,15 @@ public class SumStats {
 		sumsq.add(val * val);
 	}
 	
+	public void addAll(Iterable<Double> values) {
+		for (double d : values)
+			add(d);
+	}
+	
+	public void addAll(double[] data) {
+		addAll(Doubles.asList(data));
+	}
+	
 	/**
 	 * Return the sum of all of the data added so far
 	 * @return
