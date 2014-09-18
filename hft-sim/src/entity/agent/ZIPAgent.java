@@ -60,7 +60,7 @@ public class ZIPAgent extends WindowAgent {
 	public ZIPAgent(Scheduler scheduler, TimeStamp arrivalTime,
 			FundamentalValue fundamental, SIP sip, Market market, Random rand,
 			double reentryRate, double pvVar, int tickSize, int maxAbsPosition,
-			int bidRangeMin, int bidRangeMax, boolean withdrawOrders,
+			int bidRangeMin, int bidRangeMax,
 			int windowLength, double marginMin, double marginMax,
 			double gammaMin, double gammaMax, double betaMin, double betaMax,
 			double rangeCoeffA, double rangeCoeffR) {
@@ -103,7 +103,6 @@ public class ZIPAgent extends WindowAgent {
 				props.getAsInt(Keys.MAX_QUANTITY, 10),
 				props.getAsInt(Keys.BID_RANGE_MIN, 0),
 				props.getAsInt(Keys.BID_RANGE_MAX, 5000), 
-				props.getAsBoolean(Keys.WITHDRAW_ORDERS, true),
 				props.getAsInt(Keys.WINDOW_LENGTH, 5000),
 				props.getAsDouble(Keys.MARGIN_MIN, 0.05),
 				props.getAsDouble(Keys.MARGIN_MAX, 0.35),
@@ -159,19 +158,19 @@ public class ZIPAgent extends WindowAgent {
 
 	
 	/**
-	 * @param positionBalance
-	 * @param type
+	 * @param aPositionBalance
+	 * @param aType
 	 * @param currentTime
 	 * @return
 	 */
-	protected double getCurrentMargin(int positionBalance, OrderType type, 
+	protected double getCurrentMargin(int aPositionBalance, OrderType aType, 
 			TimeStamp currentTime) {
 		
-		double currentMargin = margin.getValue(positionBalance, type);
+		double currentMargin = margin.getValue(aPositionBalance, aType);
 
 		// Ensures margin is within the correct range for buyer or seller
 		double newMargin = currentMargin; 
-		switch (type) {
+		switch (aType) {
 		case BUY:
 			// buyer margin constrained to in [-1, 0]
 			newMargin = MathUtils.bound(currentMargin, -1, 0);
@@ -183,7 +182,7 @@ public class ZIPAgent extends WindowAgent {
 		}
 		log.log(INFO, "%s::agentStrategy: updated mu=%.4f-->mu=%.4f", this, currentMargin, newMargin);
 		// set margin
-		margin.setValue(positionBalance, type, newMargin);
+		margin.setValue(aPositionBalance, aType, newMargin);
 		return newMargin;
 	}
 	
@@ -333,9 +332,9 @@ public class ZIPAgent extends WindowAgent {
 	public double computeRCoefficient(boolean increaseTargetPrice){
 		if (increaseTargetPrice){
 			return Rands.nextUniform(rand, 1, 1+rangeCoeffR);
-		} else {
-			return Rands.nextUniform(rand, 1-rangeCoeffR, 1);
-		}
+		} 
+		
+		return Rands.nextUniform(rand, 1-rangeCoeffR, 1);
 	}
 
 	/**
@@ -347,9 +346,8 @@ public class ZIPAgent extends WindowAgent {
 	public double computeACoefficient(boolean increaseTargetPrice){
 		if (increaseTargetPrice){
 			return Rands.nextUniform(rand, 0, rangeCoeffA);
-		} else {
-			return Rands.nextUniform(rand, -rangeCoeffA, 0);
-		}
-	}
+		} 
 
+		return Rands.nextUniform(rand, -rangeCoeffA, 0);
+	}
 }
