@@ -87,6 +87,29 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		}
 	}
 	
+	public void executeZIRPStrategy(OrderType type, int quantity, TimeStamp currentTime) {
+		
+		int newPosition = (type.equals(BUY) ? 1 : -1) * quantity + positionBalance;
+		if (newPosition <= privateValue.getMaxAbsPosition() &&
+				newPosition >= -privateValue.getMaxAbsPosition()) {
+			
+			Price val = getEstimatedValuation(type, currentTime);
+			Price price = new Price((val.doubleValue() + (type.equals(SELL) ? 1 : -1) * 
+					Rands.nextUniform(rand, bidRangeMin, bidRangeMax))).nonnegative().quantize(tickSize);
+			
+			log.log(INFO, "%s executing ZI strategy position=%d, for q=%d, value=%s + %s=%s",
+					this, positionBalance, quantity, fundamental.getValueAt(currentTime),
+					privateValue.getValue(positionBalance, type), val);
+			
+			scheduler.executeActivity(new SubmitNMSOrder(this, primaryMarket,
+					type, price, quantity));
+		} else {
+			// if exceed max position, then don't submit a new bid
+			log.log(INFO, "%s executing ZI strategy new order would exceed max position %d ; no submission",
+					this, privateValue.getMaxAbsPosition());
+		}
+	}
+	
 	@Override
 	public void processTransaction(Transaction trans) {
 		
@@ -167,6 +190,17 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 */
 	protected Price getValuation(OrderType type, TimeStamp currentTime) {
 		return getValuation(type, 1, currentTime);
+	}
+	
+	protected Price getEstimatedValuation(OrderType type, TimeStamp currentTime) {
+		return getEstimatedValuation(type, 1, currentTime);
+	}
+	
+	protected Price getEstimatedValuation(OrderType type, int quantity, TimeStamp currentTime) {
+		final int rHat = 0;
+		return new Price(rHat * quantity
+				+ privateValue.getValueFromQuantity(positionBalance, quantity, type).intValue()
+				).nonnegative();
 	}
 	
 	/**
