@@ -74,8 +74,7 @@ public abstract class Agent extends Entity {
 		this.preLiquidationProfit = 0;
 	}
 
-	public abstract void agentStrategy(
-			TimeStamp currentTime);
+	public abstract void agentStrategy(TimeStamp currentTime);
 
 	public void agentArrival(TimeStamp currentTime) {
 		scheduler.executeActivity(new AgentStrategy(this));

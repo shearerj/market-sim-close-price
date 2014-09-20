@@ -14,6 +14,7 @@ import event.TimeStamp;
 
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static logger.Log.log;
 import static logger.Log.Level.INFO;
 
@@ -33,38 +34,44 @@ import com.google.common.collect.Maps;
 public class AdaptiveMarketMaker extends MarketMaker {
 
 	private static final long serialVersionUID = 4228181375500843232L;
-	protected Map<Integer, Double> weights;
 
+	protected Map<Integer, Double> weights;			// key = spread, value = weight
 	protected final boolean useMedianSpread;
-	protected final int volatilityBound;
+	protected final int volatilityBound;			// Delta in paper
 	protected EvictingQueue<Integer> priceQueue;
-	protected int lastPrice;
-
-	protected int counter = 0;
+	protected Price lastPrice;						// track price in previous reentry (period)
+	protected int numReentries = 0;					// tracks num reentries
+	protected final boolean useLastPrice;			// use prices from last period o/w use current reentry prices // XXX to maintain compatibility with previous version
+	protected final boolean fastLearning;			// XXX to maintain compatibility with previous version
 
 	public AdaptiveMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
 			SIP sip, Market market, Random rand, double reentryRate,
 			int tickSize, int numRungs, int rungSize, boolean truncateLadder,
 			boolean tickImprovement, boolean tickInside, int initLadderMean,
-			int initLadderRange, int[] spreads, boolean useMedianSpread, int volatilityBound,
-			boolean movingAveragePrice) {
+			int initLadderRange, int numHistorical, int[] spreads, boolean useMedianSpread,
+			int volatilityBound, boolean movingAveragePrice, boolean fastLearning, 
+			boolean useLastPrice) {
 
 		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
 				numRungs, rungSize, truncateLadder, tickImprovement, tickInside,
 				initLadderMean, initLadderRange);
 
+		checkArgument(numHistorical > 0, "Number of historical prices must be positive!");
 		this.useMedianSpread = useMedianSpread;
 		this.volatilityBound = volatilityBound;
 
-		// If movingAveragePrice is false, queue has size 1; effectively not doing any averaging.
-		// If true, queue has size 8, which EGTA of MAMM has shown to be a reasonable size.
-		priceQueue = EvictingQueue.create(movingAveragePrice ? 8 : 1);
+		// XXX to maintain compatibility with previous version
+		this.fastLearning = fastLearning;
+		this.useLastPrice = useLastPrice;
+		if (movingAveragePrice) numHistorical = 8;
+		priceQueue = EvictingQueue.create(numHistorical);
 
-		//Initialize weights, mapping spread b-values to their corresponding weights, initially all equal.
+		// Initialize weights, initially all equal = 1/N, where N = # windows
+		// spreads = windows in paper, variable b
 		weights = Maps.newHashMapWithExpectedSize(spreads.length);
 		double initial_weight = 1.0 / spreads.length;
 		for (int i : spreads)
-			{ weights.put(i, initial_weight); }
+		{ weights.put(i, initial_weight); }
 	}
 
 
@@ -81,80 +88,119 @@ public class AdaptiveMarketMaker extends MarketMaker {
 				props.getAsBoolean(Keys.TICK_INSIDE, true),
 				props.getAsInt(Keys.INITIAL_LADDER_MEAN, 0),
 				props.getAsInt(Keys.INITIAL_LADDER_RANGE, 0),
+				props.getAsInt(Keys.NUM_HISTORICAL, 8), 	// set default to 8 to maintain compatibility with previous version
 				props.getAsIntArray(Keys.SPREADS, new int[]{200,400,800,1600,3200}),
 				props.getAsBoolean(Keys.USE_MEDIAN_SPREAD, true),
-				//To approximate volatility bound, use the fact that next = prev + kappa(mean-prev) + nextGaussian(0,1)*sqrt(shock)
+				//To approximate volatility bound, use the fact that 
+				//		next = prev + kappa(mean-prev) + nextGaussian(0,1)*sqrt(shock)
 				//conservatively estimate |mean-prev|<= 0.25*mean; 98% confidence |nextGaussian| <= 2
 				//so, delta ~= kappa * 0.25 * mean + 2sqrt(shock)
-				(int) Math.round(0.25 * props.getAsDouble(Keys.FUNDAMENTAL_KAPPA,0.05) * props.getAsInt(Keys.FUNDAMENTAL_MEAN,100000) + 2 * Math.sqrt(props.getAsInt(Keys.FUNDAMENTAL_SHOCK_VAR,1000000))),
-				props.getAsBoolean(Keys.MOVING_AVERAGE_PRICE, false)
+				(int) Math.round(0.25 * props.getAsDouble(Keys.FUNDAMENTAL_KAPPA,0.05) 
+						* props.getAsInt(Keys.FUNDAMENTAL_MEAN,100000) 
+						+ 2 * Math.sqrt(props.getAsInt(Keys.FUNDAMENTAL_SHOCK_VAR,1000000))),
+				props.getAsBoolean(Keys.MOVING_AVERAGE_PRICE, false), // XXX set default to false to maintain compatibility with previous version
+				props.getAsBoolean(Keys.FAST_LEARNING, true), // XXX set default to true to maintain compatibility with previous version
+				props.getAsBoolean(Keys.USE_LAST_PRICE, false) // XXX set default to false to maintain compatibility with previous version
 			);
 	}
 
 	/**
-	 * @return a spread value: either the median or one chosen at random according to the current weights, depending on "useMedianSpread" parameter
+	 * Returns the spread to be used by the MM. If "useMedianSpread" parameter
+	 * is true, then uses the median spread (based on distribution of weights). 
+	 * Otherwise uses one at random.
+	 *
+	 * @return a spread value: either the median or one chosen at random.
 	 */
 	protected int getSpread(){
 		double r = useMedianSpread ? 0.5 : rand.nextDouble();
-		double p_sum = 0.0;
+		double sum = 0.0;
+
 		Integer[] spreads = new Integer[weights.size()];
 		weights.keySet().toArray(spreads);
 		Arrays.sort(spreads);
+
 		for(Integer spread : spreads){
-			p_sum += weights.get(spread);
-			if (p_sum >= r) { return (int) spread; }
+			sum += weights.get(spread);
+			if (sum >= r) { return (int) spread; }
 		}
-		// This return will only be reached if r is very(!) close to 1 and rounding errors make the sum of the weights less than 1. Extremely unlikely.
+		// This return will only be reached if r is very(!) close to 1 and 
+		// rounding errors make the sum of the weights less than 1. Extremely unlikely.
 		return 0;
 	}
 
 	/**
-	 * Given a spread, computes the transactions that would have been made during the last time step
-	 * had that spread been chosen.
+	 * Given a spread, determines the transactions that would have executed 
+	 * during the last time step had that spread been chosen.
 	 *
-	 * @param spread The spread value for which to calculate transactions from the last time step
-	 * @param bid The current bid price.
-	 * @param ask The current ask price.
+	 * @param spread 	spread to use for result computation
+	 * @param bid 		The current bid price.
+	 * @param ask 		The current ask price.
 	 *
-	 * @return a TransactionResult: a pair of integers (netHoldingsChange, netCashChange)
+	 * @return TransactionResult: a pair of integers (holdingsChange, cashChange)
 	 */
-	protected TransactionResult lastTransactionResult(int spread, int bidPrice, int askPrice, int lastPrice){
+	protected TransactionResult lastTransactionResult(int spread, Price bid, Price ask){
 		int delta_h = 0, delta_c = 0; //changes in holdings / cash, respectively
-		try{
-			for(int rung = 0; rung < numRungs; rung++){
+		if (lastBid != null && lastAsk != null && lastPrice != null) {
+			for(int rung = 0; rung < numRungs; rung++) {
 				int offset = spread/2 + rung * stepSize;
-				if(lastPrice - offset >= askPrice) 		//If this bid would have transacted
-					{ delta_h += 1; delta_c -= (lastPrice - offset);}
-				if(lastPrice + offset <= bidPrice) 		//If this ask would have transacted
-					{ delta_h -= 1; delta_c += (lastPrice + offset);}
+				// Step through prices in ladder
+				if (lastPrice.intValue() - offset >= ask.intValue()) {
+					//If this buy order would have transacted
+					delta_h++; 
+					delta_c -= (lastPrice.intValue() - offset);
+				}
+				if (lastPrice.intValue() + offset <= bid.intValue()) {
+					//If this sell order would have transacted
+					delta_h--;
+					delta_c += (lastPrice.intValue() + offset);
+				}
 			}
-		} catch(NullPointerException e)
-		{ /*If lastBid or lastAsk is null, just return the default delta_h=delta_c=0 so weights don't readjust */}
+		}
+		/*If lastBid or lastAsk is null, just return the default delta_h=delta_c=0 so weights don't readjust */
 		return new TransactionResult(delta_h, delta_c);
 	}
 
-
 	/**
 	 * Recalculate weights based on their hypothetical performance in the last timestep
-	 * In this case, use Multiplicative Weights.  Can be subclassed and overridden to implement other learning algorithms.
-	 * @param valueDeltas: a mapping of spread values to the net change in their portfolio value over the last time step
+	 * In this case, use Multiplicative Weights.  Can be subclassed and overridden 
+	 * to implement other learning algorithms.
+	 * 
+	 * In round t, updates using rule:
+	 * 		w_next(b) = w_curr(b) * exp(eta_t * V_next(b) - V_curr(b))
+	 * with w_next normalized. 
+	 * 
+	 * eta_t is set to bound the algorithm's regret by 13G sqrt(log(N) * T)
+	 * 		G = 2B * volatilityBound + volatilityBound^2
+	 * 		B = maximum window size/spread given.
+	 * 
+	 * XXX Use G = delta / 5 rather than G = delta*B*2 + delta^2 to have agent
+	 * 		learn more aggressively/quickly
+	 * 
+	 * @param valueDeltas: a mapping of spread values to the net change in their 
+	 * 		portfolio value over the last time step
 	 * @param currentTime
 	 */
 	protected void recalculateWeights(Map<Integer, Integer> valueDeltas, TimeStamp currentTime){
-		int maxSpread = 0;
-
-		for(int spread : weights.keySet()){
-			maxSpread = Math.max( maxSpread, spread);
+		int maxSpread = 0;						// B = upper bound of spread sizes
+		for(int spread : weights.keySet()) {
+			maxSpread = Math.max( maxSpread, spread );
 		}
-
-		// Use G = delta / 5 rather than G = delta*B*2 + delta^2
-		// in order to have agent learn more aggressively/quickly
-		int G = volatilityBound / 5;
-		double eta_t = Math.min( Math.sqrt( Math.log( weights.size() ) / counter), 1.0) / (2 * G);
-
-		for(Map.Entry<Integer,Double> e : weights.entrySet()){
-			e.setValue(e.getValue() * Math.exp(eta_t * valueDeltas.get(e.getKey())));
+		
+		double G = 2 * maxSpread * volatilityBound + volatilityBound^2; 	
+		if (fastLearning) {	// XXX just to make this backwards compatible
+			G = (int) (volatilityBound / 5);
 		}
+		
+		double eta = Math.min( Math.sqrt( Math.log(weights.size()) / numReentries ), 1.0) 
+							/ (2 * G);
+
+		for (int spread : weights.keySet()) {
+			double newWeight = Math.exp(eta * valueDeltas.get(spread));
+			weights.put(spread, weights.get(spread) * newWeight);
+		}
+		//		for(Map.Entry<Integer,Double> e : weights.entrySet()){
+		//			e.setValue(e.getValue() * Math.exp(eta * valueDeltas.get(e.getKey())));
+		//		}
 		normalizeWeights();
 	}
 
@@ -164,61 +210,77 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	protected void normalizeWeights(){
 		double total = 0;
 		for(double w : weights.values()) { total += w; }
-		for(Map.Entry<Integer,Double> e : weights.entrySet()) { e.setValue(e.getValue() / total); }
+		for(Map.Entry<Integer,Double> e : weights.entrySet()) { 
+			e.setValue(e.getValue() / total); 
+		}
 	}
-
-	// Using this for junit testing.  No real reason not to expose this method, anyway.
-	public Map<Integer, Double> getWeights()
-		{ return ImmutableMap.copyOf(weights); }
 
 	@Override
 	public void agentStrategy(TimeStamp currentTime) {
 		super.agentStrategy(currentTime);
-		counter += 1;
+		numReentries++;
 
 		Price bid = this.getQuote().getBidPrice();
 		Price ask = this.getQuote().getAskPrice();
-		if(bid == null || ask == null)
-			{ return; }
+		if (bid == null || ask == null) return;
 
-		//Approximate the price of a single unit as the midpoint between the quoted bid and ask prices
-		int approximateUnitPrice = (bid.intValue() + ask.intValue()) / 2;
-		priceQueue.add(approximateUnitPrice);
+		// Approximate the price as the midquote price
+		int midQuotePrice = (bid.intValue() + ask.intValue()) / 2;
+		priceQueue.add(midQuotePrice);
 
-		double priceSum = 0;
-		for (int x : priceQueue) priceSum += x;
-		int averagePrice = (int) Math.round(priceSum / priceQueue.size());
+		double sumPrices = 0;
+		for (int x : priceQueue) sumPrices += x;
+		Price avgPrice = new Price(sumPrices / priceQueue.size());
 
-		//For each spread, determine how it would have performed in the last round.
-
-		ImmutableMap.Builder<Integer,Integer> builder = new ImmutableMap.Builder<Integer,Integer>();
+		//For each spread, determine how it would have performed in the last round. (XXX current round?)
+		ImmutableMap.Builder<Integer,Integer> value = new ImmutableMap.Builder<Integer,Integer>();
 		for(int spread : weights.keySet()){
-			TransactionResult transaction = lastTransactionResult(spread, bid.intValue(), ask.intValue(), lastPrice);
-			builder.put(spread, transaction.getNetCashChange() + (approximateUnitPrice * transaction.getNetHoldingsChange()));//<change_in_cash> + <change_in_holdings>*<approximate_unit_value>
+			TransactionResult result = lastTransactionResult(spread, bid, ask);
+			// Value(t+1) = Cash(t+1) + price(t) * Holdings(t+1)
+			
+			if (!useLastPrice) {	// XXX for compatibility purposes
+				value.put(spread, result.getCashChange() + (avgPrice.intValue() * result.getHoldingsChange()));
+			} else {
+				// XXX new version using last average price, not current (evaluate for last period)
+				if (lastPrice != null)
+					value.put(spread, result.getCashChange() + (lastPrice.intValue() * result.getHoldingsChange()));
+				else {
+					// XXX use midQuotePrice if lastPrice not defined
+					value.put(spread, result.getCashChange() + (midQuotePrice * result.getHoldingsChange()));
+				}
+			}
 		}
-		ImmutableMap<Integer,Integer> valueDeltas = builder.build();
-		//Recalculate weights based on performances from the last timestep, using Multiplicative Weights (Abernethy&Kale 4.1)
+		ImmutableMap<Integer,Integer> valueDeltas = value.build();
+
+		// Recalculate weights based on performances from the last timestep, 
+		// using Multiplicative Weights (Abernethy&Kale 4.1)
 		recalculateWeights(valueDeltas, currentTime);
 		log.log(INFO, "%s in %s: Current spread weights: %s",
 				this, primaryMarket, weights.toString());
+
 		//Submit updated order ladder, using the spread chosen by the learning algorithm
-		int offset = getSpread() / 2;
+		int offset = this.getSpread() / 2;
 		int ladderSize = stepSize * (numRungs - 1);
 		withdrawAllOrders();
-		submitOrderLadder(new Price(averagePrice - offset - ladderSize),  //minimum buy
-						  new Price(averagePrice - offset), 			  //maximum buy
-						  new Price(averagePrice + offset),				  //minimum sell
-						  new Price(averagePrice + offset + ladderSize)); //maximum sell
+		submitOrderLadder(new Price(avgPrice.intValue() - offset - ladderSize),  //minimum buy
+				new Price(avgPrice.intValue() - offset), 			 	 //maximum buy
+				new Price(avgPrice.intValue() + offset),				 //minimum sell
+				new Price(avgPrice.intValue() + offset + ladderSize)); //maximum sell
 		log.log(INFO, "%s in %s: submitting ladder with spread %d",
 				this, primaryMarket, offset * 2);
-		lastBid = bid; lastAsk = ask; lastPrice = averagePrice;
+		lastBid = bid; lastAsk = ask; lastPrice = avgPrice;
 	}
 
+	/**
+	 * Stores net change in holdings & cash
+	 * 
+	 * TODO get rid of this class?
+	 */
 	protected static class TransactionResult extends utils.Pair<Integer, Integer>{
-		protected TransactionResult(Integer netHoldingsChange, Integer netCashChange)
-			{ super(netHoldingsChange, netCashChange); }
-		public Integer getNetHoldingsChange() { return this.left;  }
-		public Integer getNetCashChange()	  { return this.right; }
+		protected TransactionResult(Integer holdingsChange, Integer cashChange)
+		{ super(holdingsChange, cashChange); }
+		public Integer getHoldingsChange() 	{ return this.left;  }
+		public Integer getCashChange()	  	{ return this.right; }
 	}
 
 }
