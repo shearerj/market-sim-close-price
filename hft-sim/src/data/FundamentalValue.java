@@ -101,4 +101,11 @@ public class FundamentalValue implements Serializable {
 			copy.add(time++, v);
 		return copy;
 	}
+	
+	/**
+	 * @return mean value of fundamental
+	 */
+	public int getMeanValue() {
+		return this.meanValue;
+	}
 }
