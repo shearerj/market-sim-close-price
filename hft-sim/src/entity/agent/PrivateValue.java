@@ -106,7 +106,8 @@ public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 	}
 	
 	/**
-	 * If position (e.g. current position +/- 1) exceeds max position, return 0.
+	 * If position (e.g. current position +/- 1) exceeds max position, return
+	 * +/- infinity, depending on which side.
 	 * 
 	 * @param position
 	 *            Agent's position (e.g. current position +/- 1)
@@ -118,20 +119,23 @@ public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 	public Price getValue(int position, OrderType type) {
 		switch (type) {
 		case BUY:
-			if (position + offset <= values.size() - 1 &&
-					position + offset >= 0)
+			if (position + offset <= values.size() - 1 && position + offset >= 0)
 				return values.get(position + offset);
-			break;
+			if (position + offset > values.size() - 1) return Price.NEG_INF;
+			if (position + offset < 0) return Price.INF;
 		case SELL:
-			if (position + offset - 1 <= values.size() - 1 && 
-					position + offset - 1 >= 0)
+			if (position + offset - 1 <= values.size() - 1 && position + offset - 1 >= 0)
 				return values.get(position + offset - 1);
-			break;
+			if (position + offset - 1 > values.size() - 1) return Price.NEG_INF;
+			if (position + offset - 1 < 0) return Price.INF;
+		default:
+			return Price.ZERO;	// should never be reached
 		}
-		return Price.ZERO;
 	}
 	
 	/**
+	 * Checks that the quantities are within the range to add; otherwise ignores.
+	 * 
 	 * @param currentPosition
 	 * @param quantity
 	 * @param type
@@ -145,11 +149,15 @@ public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 		switch (type) {
 		case BUY:
 			for (int i = 0; i < quantity; i++)
-				privateValue += getValue(currentPosition + i, type).intValue();
+				if (currentPosition + i + offset <= values.size() - 1 &&
+						currentPosition + i + offset >= 0)
+					privateValue += getValue(currentPosition + i, type).intValue();
 			break;
 		case SELL:
 			for (int i = 0; i < quantity; i++)
-				privateValue += getValue(currentPosition - i, type).intValue();
+				if (currentPosition - i + offset - 1 >= 0 &&
+						currentPosition - i + offset - 1 <= values.size() - 1)
+					privateValue += getValue(currentPosition - i, type).intValue();
 			break;
 		}
 		return new Price(privateValue);
