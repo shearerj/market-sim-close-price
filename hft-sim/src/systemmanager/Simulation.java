@@ -153,11 +153,11 @@ public class Simulation {
 	 */
 	public void executeEvents() {
 		Observations.BUS.register(observations);
-		scheduler.executeUntil(simulationLength.minus(TimeStamp.create(1)));
-		for (Agent agent : agents) {
+		scheduler.executeUntil(simulationLength);
+		for (Agent agent : agents) { // FIXME This should be done in a different way...
 			scheduler.executeActivity(new LiquidateAtFundamental(agent));
 		}
-		log.log(INFO, "[[[ Simulation Over ]]]");
+		log(INFO, "[[[ Simulation Over ]]]");
 		Observations.BUS.unregister(observations);
 	}
 	

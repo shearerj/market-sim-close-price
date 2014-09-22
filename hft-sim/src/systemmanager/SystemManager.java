@@ -1,11 +1,16 @@
 package systemmanager;
 
-import static logger.Log.log;
+import static com.google.common.base.Preconditions.checkArgument;
 import static logger.Log.Level.INFO;
+import static logger.Log.log;
 
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -13,7 +18,7 @@ import java.util.Properties;
 import java.util.Random;
 
 import logger.Log;
-import logger.Log.Prefix;
+import logger.Log.Clock;
 
 import com.google.common.base.Objects;
 
@@ -32,7 +37,7 @@ import entity.market.Market;
  * 
  * @author ewah
  */
-public class SystemManager {
+public abstract class SystemManager {
 
 	/**
 	 * Two input arguments: first is simulation folder, second is sample number
@@ -52,10 +57,7 @@ public class SystemManager {
 		}
 
 		try {
-			SystemManager manager = new SystemManager(simulationFolder, observationNumber);
-			manager.executeSimulations();
-			manager.writeResults();
-			log.closeLogger();
+			execute(simulationFolder, observationNumber);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -66,89 +68,85 @@ public class SystemManager {
 	}
 	
 	protected static DateFormat LOG_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
-	
-	private final File simulationFolder;
-	private final int observationNumber, totalSimulations, simulationLength, logLevel;
-	private final boolean outputConfig;
-	private final long baseRandomSeed;
-	private final SimulationSpec specification;
-	private final MultiSimulationObservations observations;
 
-	/**
-	 * Constructor reads everything in and sets appropriate variables
-	 */
-	public SystemManager(File simFolder, int obsNum) throws IOException {
-		this.simulationFolder = simFolder;
-		this.observationNumber = obsNum;
-		this.specification = new SimulationSpec(new File(simFolder, Consts.SIM_SPEC_FILE));
-		
-		EntityProperties simProps = specification.getSimulationProps();
-		this.totalSimulations = simProps.getAsInt(Keys.NUM_SIMULATIONS);
-		this.baseRandomSeed = simProps.getAsLong(Keys.RAND_SEED);
-		this.simulationLength = simProps.getAsInt(Keys.SIMULATION_LENGTH);
-		
-		Properties props = new Properties();
-		props.load(new FileInputStream(new File(Consts.CONFIG_DIR, Consts.CONFIG_FILE)));
-		this.logLevel = Integer.parseInt(props.getProperty("logLevel", "0"));
-		this.outputConfig = Boolean.parseBoolean(props.getProperty("outputConfig", "false"));
-		
-		this.observations = new MultiSimulationObservations(outputConfig, totalSimulations);
+	public static void execute(File simFolder, int obsNum) throws IOException {
+		// Check Directory
+		checkArgument(simFolder.exists(), "Simulation folder must exist");
+		checkArgument(simFolder.isDirectory(), "Simulation folder must be a directory");
+		checkArgument(simFolder.canWrite(), "Simulation folder must be writable");
+		// Check Spec File
+		File simSpecFile = new File(simFolder, "simulation_spec.json");
+		checkArgument(simSpecFile.exists(), "SimulationSpec file must exist in root directory");
+		checkArgument(simSpecFile.canRead(), "SimulationSpec file must be readable");
+		Reader specReader = new FileReader(simSpecFile);
+		// Check Properties File
+		File propsFile = new File("config", "env.properties");
+		checkArgument(simSpecFile.exists(), "Properties file must exist in config/env.properties");
+		checkArgument(simSpecFile.canRead(), "Properties file must be readable");
+		Reader propsReader = new FileReader(propsFile);
+		// Observation File
+		File obsFile = new File(simFolder, "observation" + obsNum + ".json");
+		checkArgument(simSpecFile.canWrite(), "Observations file must be writable");
+		Writer obsWriter = new FileWriter(obsFile);
+		// Log File
+		StringBuilder logFileName = new StringBuilder(
+				new File(".").toURI().relativize(simFolder.toURI()).getPath().replace('/', '_'));
+		logFileName.append(obsNum).append('_');
+		logFileName.append(LOG_DATE_FORMAT.format(new Date())).append(".txt");
+		File logDir = new File(simFolder, "logs");
+		logDir.mkdirs();
+		Writer logWriter = new FileWriter(new File(logDir, logFileName.toString()));
+		// Execute
+		execute(specReader, propsReader, obsWriter, logWriter, obsNum);
+		// Close and flush
+		specReader.close();
+		propsReader.close();
+		obsWriter.close();
+		logWriter.close();
 	}
 	
-	/**
-	 * Runs all of the simulations
-	 */
-	public void executeSimulations() throws IOException {
+	public static void execute(Reader simSpecIn, Reader propIn, Writer obsOut, Writer logOut, int observationNumber) throws IOException {
+		SimulationSpec specification = SimulationSpec.read(simSpecIn);
+		Properties props = new Properties();
+		props.load(propIn);
+
+		EntityProperties simProps = specification.getSimulationProps();
+		int totalSimulations = simProps.getAsInt(Keys.NUM_SIMULATIONS);
+		long baseRandomSeed = simProps.getAsLong(Keys.RAND_SEED);
+		
+		int logLevel = Integer.parseInt(props.getProperty("logLevel", "0"));
+		boolean outputConfig = Boolean.parseBoolean(props.getProperty("outputConfig", "false"));
+		
+		MultiSimulationObservations observations = new MultiSimulationObservations(outputConfig, totalSimulations);
+		
 		Random rand = new Random();
 		for (int i = 0; i < totalSimulations; i++) {
 			Market.nextID = Agent.nextID = ProcessorIDs.nextID = 1; // Reset ids
 			rand.setSeed(Objects.hashCode(baseRandomSeed, observationNumber * totalSimulations + i));
 			Simulation sim = new Simulation(specification, rand);
 			
-			initializeLogger(logLevel, simulationFolder, observationNumber, i, sim, simulationLength);
-			log.log(INFO, "Random Seed: %d", baseRandomSeed);
-			log.log(INFO, "Configuration: %s", specification);
+			initializeLogger(logLevel, logOut, sim);
+			log(INFO, "Random Seed: %d", baseRandomSeed);
+			log(INFO, "Configuration: %s", specification);
 			
 			sim.executeEvents();
 			observations.addObservation(sim.getObservations());
 		}
+		observations.write(new PrintWriter(System.err));
+		observations.write(obsOut);
 	}
-	
-	/**
-	 * Must be done after "envProps" exists
-	 */
-	protected static void initializeLogger(int logLevel, File simulationFolder,
-			int observationNumber, int simulationNumber, final Simulation simulation,
-			int simulationLength) throws IOException {
+
+	protected static void initializeLogger(int logLevel, Writer logWriter, final Simulation simulation) {
 		if (logLevel == 0) { // No logging
-			log = Log.nullLogger();
-			return;
+			Log.setLogger(Log.nullLogger());
+		} else {
+			Log.setLogger(Log.create(Log.Level.values()[logLevel], logWriter, new Clock() {
+				@Override
+				public long getTime() { return simulation.getCurrentTime().getInTicks(); }
+				@Override
+				public int getPadding() { return 6; }
+			}));
 		}
-		
-		StringBuilder logFileName = new StringBuilder(
-				new File(".").toURI().relativize(simulationFolder.toURI()).getPath().replace('/', '_'));
-		logFileName.append(observationNumber).append('_');
-		logFileName.append(simulationNumber).append('_');
-		logFileName.append(LOG_DATE_FORMAT.format(new Date())).append(".txt");
-
-		File logDir = new File(simulationFolder, Consts.LOG_DIR);
-		logDir.mkdirs();
-
-		File logFile = new File(logDir, logFileName.toString());
-		final int digits = Integer.toString(simulationLength).length();
-
-		// Create log file
-		log = Log.create(Log.Level.values()[logLevel], logFile, new Prefix() {
-			@Override
-			public String getPrefix() {
-				return String.format("%" + digits + "d| ", simulation.getCurrentTime().getInTicks());
-			}
-		});
-	}
-	
-	public void writeResults() throws IOException {
-		File results = new File(simulationFolder, Consts.OBS_FILE_PREFIX + observationNumber + ".json");
-		observations.writeToFile(results);
 	}
 	
 }

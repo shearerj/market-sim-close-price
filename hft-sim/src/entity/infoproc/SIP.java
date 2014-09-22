@@ -111,7 +111,7 @@ public class SIP extends Entity implements QuoteProcessor, TransactionProcessor 
 
 		marketQuotes.put(market, quote);
 		
-		log.log(INFO, "%s -> %s quote %s", market, this, quote);
+		log(INFO, "%s -> %s quote %s", market, this, quote);
 
 		Price bestBid = null, bestAsk = null;
 		int bestBidQuantity = 0, bestAskQuantity = 0;

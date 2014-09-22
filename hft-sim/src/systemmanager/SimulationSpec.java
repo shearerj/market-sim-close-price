@@ -93,7 +93,7 @@ public class SimulationSpec implements Serializable {
 		this(new FileReader(specFile));
 	}
 	
-	public SimulationSpec(Reader reader) {
+	protected SimulationSpec(Reader reader) {
 		rawSpec = gson.fromJson(reader, JsonObject.class);
 		JsonObject config = rawSpec.getAsJsonObject(Keys.CONFIG);
 		JsonObject players = rawSpec.getAsJsonObject(Keys.ASSIGN);
@@ -113,6 +113,10 @@ public class SimulationSpec implements Serializable {
 	public SimulationSpec(String specFileName) throws JsonSyntaxException,
 			JsonIOException, FileNotFoundException {
 		this(new File(specFileName));
+	}
+	
+	public static SimulationSpec read(Reader reader) {
+		return new SimulationSpec(reader);
 	}
 
 	protected static EntityProperties readProperties(JsonObject config,

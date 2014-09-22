@@ -76,7 +76,7 @@ public class Scheduler {
 		try {
 			TimedActivity act = eventQueue.remove();
 			currentTime = ord.max(currentTime, act.getTime());
-			log.log(DEBUG, "%s then %s", act, eventQueue);
+			log(DEBUG, "%s then %s", act, eventQueue);
 			act.getActivity().execute(currentTime);
 			
 		} catch (Exception e) {

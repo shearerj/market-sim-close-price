@@ -52,7 +52,7 @@ public class ObservationsTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		Log.log = Log.create(Log.Level.DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ObservationsTest.log"));
+		Log.setLogger(Log.create(Log.Level.DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ObservationsTest.log")));
 	}
 
 	@Before

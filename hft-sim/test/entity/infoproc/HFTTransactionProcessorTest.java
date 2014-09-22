@@ -2,7 +2,6 @@ package entity.infoproc;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Log.log;
 import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -49,7 +48,7 @@ public class HFTTransactionProcessorTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "HFTTransactionProcessorTest.log"));
+		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "HFTTransactionProcessorTest.log")));
 	}
 
 	@Before

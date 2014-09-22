@@ -84,7 +84,7 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 	public Price getValueAt(TimeStamp t) {
 		int index = (int) t.getInTicks();
 		if (index < 0) { // In case of overflow
-			log.log(ERROR, "Tried to access out of bounds TimeStamp: %s (%d)", t, index);
+			log(ERROR, "Tried to access out of bounds TimeStamp: %s (%d)", t, index);
 			return new Price(0);
 		}
 		computeFundamentalTo(index);

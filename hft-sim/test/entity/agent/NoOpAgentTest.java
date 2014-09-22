@@ -1,6 +1,5 @@
 package entity.agent;
 
-import static logger.Log.log;
 import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -38,7 +37,7 @@ public class NoOpAgentTest {
 	public static void setupClass() throws IOException {
 		
 		// Setting up the log file
-		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "NoOpAgentTest.log"));
+		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "NoOpAgentTest.log")));
 	}
 
 	@Before

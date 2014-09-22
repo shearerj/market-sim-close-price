@@ -53,7 +53,7 @@ public class AAAgentTest {
 	@BeforeClass
 	public static void setupClass() throws IOException {
 		// Setting up the log file
-		Log.log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "AAAgentTest.log"));
+		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "AAAgentTest.log")));
 
 		// Creating the setup properties
 		rand = new Random();
@@ -383,7 +383,7 @@ public class AAAgentTest {
 	
 	@Test
 	public void initialBuyer() {
-		log.log(DEBUG, "\nTesting buyer on empty market: Result should be price=0");
+		log(DEBUG, "\nTesting buyer on empty market: Result should be price=0");
 		// Creating a buyer
 		AAAgent agent = addAgent(BUY);
 		assertTrue(agent.type.equals(BUY));
@@ -395,7 +395,7 @@ public class AAAgentTest {
 
 	@Test
 	public void initialSeller() {
-		log.log(DEBUG, "\nTesting seller on empty market: Result should be price=%s", Price.INF);
+		log(DEBUG, "\nTesting seller on empty market: Result should be price=%s", Price.INF);
 		// Creating a seller
 		AAAgent agent = addAgent(SELL);
 		assertTrue(agent.type.equals(SELL));
@@ -407,8 +407,8 @@ public class AAAgentTest {
 
 	@Test
 	public void noTransactionsBuyer() {
-		log.log(DEBUG, "\nTesting buyer on market with bids/asks but no transactions");
-		log.log(DEBUG, "50000 < Bid price < 100000");
+		log(DEBUG, "\nTesting buyer on market with bids/asks but no transactions");
+		log(DEBUG, "50000 < Bid price < 100000");
 
 		// Setting up the bids
 		addOrder(BUY, 50000, 1, 10);
@@ -424,8 +424,8 @@ public class AAAgentTest {
 
 	@Test
 	public void noTransactionsSeller() {
-		log.log(DEBUG, "\nTesting seller on market with bids/asks but no transactions");
-		log.log(DEBUG, "100000 < Ask price < 200000");
+		log(DEBUG, "\nTesting seller on market with bids/asks but no transactions");
+		log(DEBUG, "100000 < Ask price < 200000");
 
 		// Adding setup bids
 		addOrder(BUY, 50000, 1, 10);
@@ -441,7 +441,7 @@ public class AAAgentTest {
 
 	@Test
 	public void IntraBuyerPassive() {
-		log.log(DEBUG, "\nTesting passive buyer on market with transactions");
+		log(DEBUG, "\nTesting passive buyer on market with transactions");
 
 		// Adding Transactions and Bids
 		addOrder(BUY, 50000, 1, 10);
@@ -458,7 +458,7 @@ public class AAAgentTest {
 
 	@Test
 	public void IntraBuyerNegative() {
-		log.log(DEBUG, "\nTesting r = -0.5 buyer on market with transactions");
+		log(DEBUG, "\nTesting r = -0.5 buyer on market with transactions");
 
 		// Adding Transactions and Bids
 		addOrder(BUY, 50000, 1, 10);
@@ -481,7 +481,7 @@ public class AAAgentTest {
 	 */
 	@Test
 	public void IntraBuyerActive() {
-		log.log(DEBUG, "\nTesting active buyer on market with transactions");
+		log(DEBUG, "\nTesting active buyer on market with transactions");
 
 		// Adding Transactions and Bids
 		addOrder(BUY, 50000, 1, 10);
@@ -489,7 +489,7 @@ public class AAAgentTest {
 		addTransaction(75000, 1, 20);
 
 		AAAgent agent = addAgent(BUY, EntityProperties.fromPairs(Keys.AGGRESSION, 0));
-		log.log(DEBUG, "Price ~= 58333");
+		log(DEBUG, "Price ~= 58333");
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -502,7 +502,7 @@ public class AAAgentTest {
 	 */
 	@Test
 	public void IntraBuyerPositive() {
-		log.log(DEBUG, "\nTesting r = -0.5 buyer on market with transactions");
+		log(DEBUG, "\nTesting r = -0.5 buyer on market with transactions");
 
 		// Adding Transactions and Bids
 		addOrder(BUY, 50000, 1, 10);
@@ -521,8 +521,8 @@ public class AAAgentTest {
 
 	@Test
 	public void IntraBuyerAggressive() {
-		log.log(DEBUG, "");
-		log.log(DEBUG, "Testing aggressive buyer on market with transactions");
+		log(DEBUG, "");
+		log(DEBUG, "Testing aggressive buyer on market with transactions");
 
 		// Adding Transactions and Bids
 		addOrder(BUY, 50000, 1, 10);
@@ -530,7 +530,7 @@ public class AAAgentTest {
 		addTransaction(75000, 1, 20);
 
 		AAAgent agent = addAgent(BUY, EntityProperties.fromPairs(Keys.AGGRESSION, 1));
-		log.log(DEBUG, "Price ~= 66667");
+		log(DEBUG, "Price ~= 66667");
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -539,8 +539,8 @@ public class AAAgentTest {
 
 	@Test
 	public void IntraSellerPassive() { // Check Aggression
-		log.log(DEBUG, "");
-		log.log(DEBUG, "Testing passive seller on market with transactions");
+		log(DEBUG, "");
+		log(DEBUG, "Testing passive seller on market with transactions");
 
 		// Adding Transactions and Bids
 		addOrder(BUY, 50000, 1, 10);
@@ -549,7 +549,7 @@ public class AAAgentTest {
 
 		// Testing the Agent
 		AAAgent agent = addAgent(SELL, EntityProperties.fromPairs(Keys.AGGRESSION, -1));
-		log.log(DEBUG, "Price ~= %d", 150000 + (Price.INF.intValue() - 150000) / 3);
+		log(DEBUG, "Price ~= %d", 150000 + (Price.INF.intValue() - 150000) / 3);
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -560,7 +560,7 @@ public class AAAgentTest {
 
 	@Test
 	public void IntraSellerActive() {
-		log.log(DEBUG, "\nTesting active seller on market with transactions");
+		log(DEBUG, "\nTesting active seller on market with transactions");
 
 		// Adding Transactions and Bids
 		addOrder(BUY, 50000, 1, 10);
@@ -568,7 +568,7 @@ public class AAAgentTest {
 		addTransaction(125000, 1, 20);
 
 		AAAgent agent = addAgent(SELL, EntityProperties.fromPairs(Keys.AGGRESSION, 0));
-		log.log(DEBUG, "Price ~= 141667");
+		log(DEBUG, "Price ~= 141667");
 		agent.agentStrategy(TimeStamp.create(100));
 
 		// Asserting the bid is correct
@@ -577,8 +577,8 @@ public class AAAgentTest {
 
 	@Test
 	public void IntraSellerAggressive() { // Check Aggression
-		log.log(DEBUG, "");
-		log.log(DEBUG, "Testing aggressive seller on market with transactions");
+		log(DEBUG, "");
+		log(DEBUG, "Testing aggressive seller on market with transactions");
 
 		// Adding Transactions and Bids
 		addOrder(BUY, 50000, 1, 10);
@@ -595,7 +595,7 @@ public class AAAgentTest {
 
 	@Test
 	public void ExtraBuyerPassive() {
-		log.log(DEBUG, "\nTesting passive buyer on market with transactions");
+		log(DEBUG, "\nTesting passive buyer on market with transactions");
 
 		// Adding Transactions and Bids
 		addOrder(BUY, 50000, 1, 10);
@@ -612,7 +612,7 @@ public class AAAgentTest {
 
 	@Test
 	public void ExtraBuyerNegative() {
-		log.log(DEBUG, "\nTesting r = -0.5 buyer on market with transactions");
+		log(DEBUG, "\nTesting r = -0.5 buyer on market with transactions");
 
 		// Adding Transactions and Bids
 		addOrder(BUY, 50000, 1, 10);
@@ -631,7 +631,7 @@ public class AAAgentTest {
 
 	@Test
 	public void ExtraBuyerActive() {
-		log.log(DEBUG, "\nTesting r = 0 buyer on market with transactions");
+		log(DEBUG, "\nTesting r = 0 buyer on market with transactions");
 
 		// Adding Transactions and Bids
 		addOrder(BUY, 50000, 1, 10);
@@ -650,7 +650,7 @@ public class AAAgentTest {
 
 	@Test
 	public void ExtraBuyerPositive() {
-		log.log(DEBUG, "\nTesting r = 0 buyer on market with transactions");
+		log(DEBUG, "\nTesting r = 0 buyer on market with transactions");
 
 		// Adding Transactions and Bids
 		addOrder(BUY, 50000, 1, 10);
@@ -669,7 +669,7 @@ public class AAAgentTest {
 
 	@Test
 	public void ExtraSellerPassive() {
-		log.log(DEBUG, "\nTesting passive buyer on market with transactions");
+		log(DEBUG, "\nTesting passive buyer on market with transactions");
 
 		// Adding Transactions and Bids
 		addOrder(BUY, 50000, 1, 10);
@@ -688,7 +688,7 @@ public class AAAgentTest {
 
 	@Test
 	public void ExtraSellerActive() {
-		log.log(DEBUG, "\nTesting passive buyer on market with transactions");
+		log(DEBUG, "\nTesting passive buyer on market with transactions");
 
 		// Adding Transactions and Bids
 		addOrder(BUY, 50000, 1, 10);
@@ -705,7 +705,7 @@ public class AAAgentTest {
 
 	@Test
 	public void BuyerAggressionIncrease() {
-		log.log(DEBUG, "\nTesting aggression learning");
+		log(DEBUG, "\nTesting aggression learning");
 
 		// Adding Bids and Transactions
 		addOrder(BUY, 50000, 1, 10);
@@ -724,7 +724,7 @@ public class AAAgentTest {
 
 	@Test
 	public void SellerAggressionIncrease() {
-		log.log(DEBUG, "\nTesting aggression learning");
+		log(DEBUG, "\nTesting aggression learning");
 
 		// Adding Bids and Transactions
 		addOrder(BUY, 50000, 1, 10);
@@ -746,7 +746,7 @@ public class AAAgentTest {
 	 */
 	@Test
 	public void updateAggressionBuyer() {
-		log.log(DEBUG, "\nTesting aggression update (buyer)");
+		log(DEBUG, "\nTesting aggression update (buyer)");
 
 		// Adding Bids and Transactions
 		addOrder(BUY, 50000, 1, 10);
@@ -773,7 +773,7 @@ public class AAAgentTest {
 	 */
 	@Test
 	public void updateAggressionSeller() {
-		log.log(DEBUG, "\nTesting aggression update (seller)");
+		log(DEBUG, "\nTesting aggression update (seller)");
 
 		// Adding Bids and Transactions
 		addOrder(BUY, 50000, 1, 10);
@@ -801,7 +801,7 @@ public class AAAgentTest {
 	 */
 	@Test
 	public void randomizedUpdateAggressionBuyer() {
-		log.log(DEBUG, "\nTesting aggression update (buyer)");
+		log(DEBUG, "\nTesting aggression update (buyer)");
 
 		// Adding Bids and Transactions
 		addOrder(BUY, (int) Rands.nextUniform(rand, 25000, 75000), 1, 10);
@@ -830,7 +830,7 @@ public class AAAgentTest {
 	 */
 	@Test
 	public void randomizedUpdateAggressionSeller() {
-		log.log(DEBUG, "\nTesting aggression update (seller)");
+		log(DEBUG, "\nTesting aggression update (seller)");
 
 		// Adding Bids and Transactions
 		addOrder(BUY, (int) Rands.nextUniform(rand, 25000, 75000), 1, 10);

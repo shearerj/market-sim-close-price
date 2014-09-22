@@ -42,13 +42,8 @@ public interface Consts {
 	
 	// Directories
 	public final static String TEST_OUTPUT_DIR = "simulations/unit_testing/";
-	public final static String CONFIG_DIR = "config/";
-	public final static String LOG_DIR = "logs/";
 	
 	// Config/spec file names
-	public final static String SIM_SPEC_FILE = "simulation_spec.json";
-	public final static String CONFIG_FILE = "env.properties";
-	public final static String OBS_FILE_PREFIX = "observation";
 	public final static String OBJS_FILE_PREFIX = "objects";
 
 	// Constants in simulation_spec file

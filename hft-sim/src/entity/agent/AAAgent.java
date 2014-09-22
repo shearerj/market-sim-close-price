@@ -193,26 +193,26 @@ public class AAAgent extends WindowAgent {
 		// Estimate equilibrium price using weighted moving average
 		equilibriumPrice = this.estimateEquilibrium(transactions);
 		
-		log.log(INFO, "%s::agentStrategy: estimateEquilibrium: price=%s", this, equilibriumPrice);
+		log(INFO, "%s::agentStrategy: estimateEquilibrium: price=%s", this, equilibriumPrice);
 
 		// Aggressiveness layer
 		// ----------------------
 		// Determine the target price tau using current r & theta
 		targetPrice = this.determineTargetPrice(limitPrice, equilibriumPrice);
-		log.log(INFO, "%s::agentStrategy: determineTargetPrice: target=%s", this, targetPrice);
+		log(INFO, "%s::agentStrategy: determineTargetPrice: target=%s", this, targetPrice);
 
 		// Adaptive layer
 		// ----------------------
 		// Update the short term learning variable (aggressiveness r)
 		double oldAggression = aggression;
 		this.updateAggression(limitPrice, targetPrice, equilibriumPrice, lastTransactionPrice);
-		log.log(INFO, "%s::agentStrategy: updateAggression: lastPrice=%s, r=%.4f-->r_new=%.4f", 
+		log(INFO, "%s::agentStrategy: updateAggression: lastPrice=%s, r=%.4f-->r_new=%.4f", 
 				this, lastTransactionPrice, oldAggression, aggression);
 
 		// Update long term learning variable (adaptiveness theta)
 		double oldTheta = theta;
 		this.updateTheta(equilibriumPrice, transactions);
-		log.log(INFO, "%s::agentStrategy: updateTheta: theta=%.4f-->theta_new=%.4f", this, oldTheta, theta);
+		log(INFO, "%s::agentStrategy: updateTheta: theta=%.4f-->theta_new=%.4f", this, oldTheta, theta);
 
 		// Bidding Layer
 		this.biddingLayer(limitPrice, targetPrice, 1, currentTime);
@@ -317,7 +317,7 @@ public class AAAgent extends WindowAgent {
 
 		// if no bid or no ask, submit ZI strategy bid & exit bidding layer
 		if (bid == null || ask == null) {
-			log.log(INFO, "%s::biddingLayer: Bid/Ask undefined.", this);
+			log(INFO, "%s::biddingLayer: Bid/Ask undefined.", this);
 			this.executeZIStrategy(type, quantity, currentTime);
 			return;
 		}
@@ -325,7 +325,7 @@ public class AAAgent extends WindowAgent {
 		// If best offer is outside of limit price, no bid is submitted
 		if ((type.equals(BUY) && limitPrice.lessThanEqual(bid))
 				|| (type.equals(SELL) && limitPrice.greaterThan(ask))) {
-			log.log(INFO, "%s::biddingLayer: Best price is outside of limit price: %s; no submission", 
+			log(INFO, "%s::biddingLayer: Best price is outside of limit price: %s; no submission", 
 					this, limitPrice);
 			return;
 		}
@@ -335,7 +335,7 @@ public class AAAgent extends WindowAgent {
 		int newPosBal = positionBalance + quantity;
 		if (newPosBal < -privateValue.getMaxAbsPosition() 
 				|| newPosBal > privateValue.getMaxAbsPosition() ) {
-			log.log(INFO, "%s::biddingLayer: New order would exceed max position: %d; no submission", 
+			log(INFO, "%s::biddingLayer: New order would exceed max position: %d; no submission", 
 					this, privateValue.getMaxAbsPosition());
 			return;
 		}

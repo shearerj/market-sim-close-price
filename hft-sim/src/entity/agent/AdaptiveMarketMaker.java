@@ -225,7 +225,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		
 		// if no orders in the market yet
 		if (!this.getQuote().isDefined()) {
-			log.log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
+			log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
 			this.createOrderLadder(bid, ask);
 			return;
 		}
@@ -261,7 +261,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		// Recalculate weights based on performances from the last timestep, 
 		// using Multiplicative Weights (Abernethy&Kale 4.1)
 		recalculateWeights(valueDeltas, currentTime);
-		log.log(INFO, "%s in %s: Current spread weights: %s",
+		log(INFO, "%s in %s: Current spread weights: %s",
 				this, primaryMarket, weights.toString());
 
 		//Submit updated order ladder, using the spread chosen by the learning algorithm
@@ -272,7 +272,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 				new Price(avgPrice.intValue() - offset), 			 	 //maximum buy
 				new Price(avgPrice.intValue() + offset),				 //minimum sell
 				new Price(avgPrice.intValue() + offset + ladderSize)); //maximum sell
-		log.log(INFO, "%s in %s: submitting ladder with spread %d",
+		log(INFO, "%s in %s: submitting ladder with spread %d",
 				this, primaryMarket, offset * 2);
 		lastBid = bid; lastAsk = ask; lastPrice = avgPrice;
 	}

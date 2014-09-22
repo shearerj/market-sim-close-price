@@ -2,7 +2,6 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Log.log;
 import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -19,6 +18,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import systemmanager.Consts;
+import systemmanager.Executor;
+import systemmanager.Keys;
+import activity.AgentStrategy;
+import activity.Clear;
+import activity.SubmitOrder;
+
 import com.google.common.collect.Iterables;
 
 import data.EntityProperties;
@@ -34,12 +40,6 @@ import entity.market.MockMarket;
 import entity.market.Price;
 import entity.market.Quote;
 import event.TimeStamp;
-import systemmanager.Consts;
-import systemmanager.Executor;
-import systemmanager.Keys;
-import activity.AgentStrategy;
-import activity.Clear;
-import activity.SubmitOrder;
 
 public class ZIRPAgentTest {
 
@@ -93,7 +93,7 @@ public class ZIRPAgentTest {
 	@BeforeClass
 	public static void setUpClass() throws IOException{
 		// Setting up the log file
-		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIRPAgentTest.log"));
+		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIRPAgentTest.log")));
 
 		// Creating the setup properties
 		rand = new Random();

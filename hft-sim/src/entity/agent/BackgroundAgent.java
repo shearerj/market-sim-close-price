@@ -72,7 +72,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			Price price = new Price((val.doubleValue() + (type.equals(SELL) ? 1 : -1) * 
 					Rands.nextUniform(rand, bidRangeMin, bidRangeMax))).nonnegative().quantize(tickSize);
 			
-			log.log(INFO, "%s executing ZI strategy position=%d, for q=%d, value=%s + %s=%s",
+			log(INFO, "%s executing ZI strategy position=%d, for q=%d, value=%s + %s=%s",
 					this, positionBalance, quantity, fundamental.getValueAt(currentTime),
 					privateValue.getValue(positionBalance, type), val);
 			
@@ -93,7 +93,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		int newPosition = (type.equals(BUY) ? 1 : -1) * quantity + positionBalance;
 		if (Math.abs(newPosition) > privateValue.getMaxAbsPosition()) {
 			// if exceed max position, then don't submit a new bid
-			log.log(INFO, "%s submitting new order would exceed max position %d ; no submission",
+			log(INFO, "%s submitting new order would exceed max position %d ; no submission",
 					this, privateValue.getMaxAbsPosition());
 			return false;
 		}
@@ -124,7 +124,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			final Price rHat = this.getEstimatedFundamental(type, currentTime, 
 					simulationLength, fundamentalKappa, fundamentalMean);  
 			
-			log.log(INFO, "%s executing ZIRP strategy position=%d, for q=%d, fund=%s value=%s + %s=%s stepsLeft=%s pv=%s",
+			log(INFO, "%s executing ZIRP strategy position=%d, for q=%d, fund=%s value=%s + %s=%s stepsLeft=%s pv=%s",
 				this, positionBalance, quantity, fundamental.getValueAt(currentTime).intValue(),
 				rHat, privateValue.getValue(positionBalance, type),	val, 
 				simulationLength - currentTime.getInTicks(), 
@@ -149,10 +149,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					if (shading * acceptableProfitFraction <= bidMarkup) {
 						price = new Price(val.doubleValue() / quantity).quantize(tickSize).nonnegative();
 						
-						log.log(INFO, "%s executing ZIRP strategy GREEDY SELL, markup=%s, bid=%s, bidMarkup=%s, price=%s",
+						log(INFO, "%s executing ZIRP strategy GREEDY SELL, markup=%s, bid=%s, bidMarkup=%s, price=%s",
 							this, shading, bidPrice, bidMarkup, price.intValue());
 					} else {
-						log.log(INFO, "%s no g.s. opportunity, markup=%s, bidMarkup=%s, desiredFrac=%s, threshold=%s",
+						log(INFO, "%s no g.s. opportunity, markup=%s, bidMarkup=%s, desiredFrac=%s, threshold=%s",
 							this, shading, bidMarkup, acceptableProfitFraction, 
 							(shading * acceptableProfitFraction)
 						); 
@@ -170,10 +170,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					if (shading * acceptableProfitFraction <= askMarkup) {
 						price = new Price(val.doubleValue() / quantity).quantize(tickSize).nonnegative();
 						
-						log.log(INFO, "%s executing ZIRP strategy GREEDY BUY, markup=%s, ask=%s, askMarkup=%s, price=%s",
+						log(INFO, "%s executing ZIRP strategy GREEDY BUY, markup=%s, ask=%s, askMarkup=%s, price=%s",
 								this, shading, askPrice,	askMarkup, price.intValue());
 					} else {
-						log.log(INFO, "%s no g.b. opportunity, markup=%s, askMarkup=%s, desiredFrac=%s, threshold=%s",
+						log(INFO, "%s no g.b. opportunity, markup=%s, askMarkup=%s, desiredFrac=%s, threshold=%s",
 							this, shading, askMarkup, acceptableProfitFraction,
 							shading * acceptableProfitFraction); 
 					}
@@ -184,7 +184,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					price, quantity));
 		} else {
 			// if exceed max position, then don't submit a new bid
-			log.log(INFO, "%s executing ZIRP strategy new order would exceed max position %d ; no submission",
+			log(INFO, "%s executing ZIRP strategy new order would exceed max position %d ; no submission",
 					this, privateValue.getMaxAbsPosition());
 		}
 	}

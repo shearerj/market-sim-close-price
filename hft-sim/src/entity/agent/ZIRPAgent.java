@@ -97,11 +97,11 @@ public final class ZIRPAgent extends BackgroundAgent {
 		super.agentStrategy(currentTime);
 
 		if (!currentTime.equals(arrivalTime)) {
-			log.log(INFO, "%s wake up.", this);
+			log(INFO, "%s wake up.", this);
 		}
 
 		if (withdrawOrders) {
-			log.log(INFO, "%s Withdraw all orders.", this);
+			log(INFO, "%s Withdraw all orders.", this);
 			withdrawAllOrders();
 		}
 		
@@ -110,7 +110,7 @@ public final class ZIRPAgent extends BackgroundAgent {
 		if (rand.nextBoolean()) {
 			orderType = SELL;
 		}
-		log.log(INFO, "%s Submit %s order", this, orderType);
+		log(INFO, "%s Submit %s order", this, orderType);
 		executeZIRPStrategy(
 			orderType, 
 			1, 

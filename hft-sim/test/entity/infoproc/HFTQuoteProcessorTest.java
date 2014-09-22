@@ -1,7 +1,6 @@
 package entity.infoproc;
 
 import static event.TimeStamp.ZERO;
-import static logger.Log.log;
 import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -55,7 +54,7 @@ public class HFTQuoteProcessorTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "HFTQuoteProcessorTest.log"));
+		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "HFTQuoteProcessorTest.log")));
 	}
 	
 	@Before

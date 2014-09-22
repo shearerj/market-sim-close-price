@@ -56,8 +56,7 @@ public class BasicMarketMakerTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		
-		Log.log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "BasicMarketMakerTest.log"));
+		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "BasicMarketMakerTest.log")));
 	}
 
 	@Before

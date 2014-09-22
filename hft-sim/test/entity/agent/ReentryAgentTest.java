@@ -1,6 +1,5 @@
 package entity.agent;
 
-import static logger.Log.log;
 import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -35,8 +34,7 @@ public class ReentryAgentTest {
 	
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		
-		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ReentryAgentTest.log"));
+		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ReentryAgentTest.log")));
 	}
 	
 	@Before

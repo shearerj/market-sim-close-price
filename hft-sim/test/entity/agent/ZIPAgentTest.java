@@ -65,7 +65,7 @@ public class ZIPAgentTest {
 		
 		
 		// Setting up the log file
-		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIPAgentTest.log"));
+		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIPAgentTest.log")));
 
 		// Creating the setup properties
 		rand = new Random();
@@ -216,7 +216,7 @@ public class ZIPAgentTest {
 	
 	@Test
 	public void updateMarginZeroLimit() {
-		log.log(INFO, "Testing margin update when limit price is 0");
+		log(INFO, "Testing margin update when limit price is 0");
 		TimeStamp time = TimeStamp.ZERO;
 		// testing when limit price is 0
 		ZIPAgent agent = createAgent(

@@ -3,7 +3,6 @@ package entity.agent;
 import static event.TimeStamp.ZERO;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Log.log;
 import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -61,8 +60,7 @@ public class WMAMarketMakerTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		
-		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "WMAMarketMakerTest.log"));
+		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "WMAMarketMakerTest.log")));
 	}
 
 	@Before

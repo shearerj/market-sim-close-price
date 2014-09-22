@@ -45,8 +45,7 @@ public class BackgroundAgentTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		
-		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "BackgroundAgentTest.log"));
+		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "BackgroundAgentTest.log")));
 	}
 
 	@Before
@@ -388,7 +387,7 @@ public class BackgroundAgentTest {
 	 */
 	@Test
 	public void testZIStrat() {
-		log.log(DEBUG, "Testing execution of ZI strategy");
+		log(DEBUG, "Testing execution of ZI strategy");
 		TimeStamp time = TimeStamp.ZERO;
 		List<Price> values = Arrays.asList(new Price(100), new Price(10));
 		PrivateValue pv = new DummyPrivateValue(1, values);

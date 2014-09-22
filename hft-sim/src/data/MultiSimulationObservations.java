@@ -143,4 +143,8 @@ public class MultiSimulationObservations {
 		}
 	}
 
+	public void write(Writer writer) {
+		gson.toJson(toJson(), writer);
+	}
+	
 }

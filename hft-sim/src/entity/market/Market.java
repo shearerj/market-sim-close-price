@@ -251,7 +251,7 @@ public abstract class Market extends Entity {
 			Transaction trans = new Transaction(buy.getAgent(),
 					sell.getAgent(), this, buy, sell, e.getKey().getQuantity(),
 					e.getValue(), transactionTime);
-			log.log(INFO, "%s", trans);
+			log(INFO, "%s", trans);
 			
 			askPriceQuantity.remove(sell.getPrice(), trans.getQuantity());
 			bidPriceQuantity.remove(buy.getPrice(), trans.getQuantity());
@@ -301,7 +301,7 @@ public abstract class Market extends Entity {
 		MarketTime quoteTime = new MarketTime(currentTime, marketTime);
 		quote = new Quote(this, bid, quantityBid, ask, quantityAsk, quoteTime);
 
-		log.log(INFO, "%s %s", this, quote);
+		log(INFO, "%s %s", this, quote);
 
 		BUS.post(new MidQuoteStatistic(this, quote.getMidquote(), currentTime));
 		BUS.post(new SpreadStatistic(this, quote.getSpread(), currentTime));
@@ -373,7 +373,7 @@ public abstract class Market extends Entity {
 			if (!((BackgroundAgent) agent).withinMaxPosition(type, quantity)) return;
 		
 		Order order = Order.create(type, agent, this, price, quantity, new MarketTime(currentTime, marketTime));
-		log.log(INFO, "%s", order);
+		log(INFO, "%s", order);
 
 		Multiset<Price> priceQuant = order.getOrderType() == BUY ? bidPriceQuantity : askPriceQuantity;
 		priceQuant.add(order.getPrice(), quantity);
@@ -462,7 +462,7 @@ public abstract class Market extends Entity {
 		}
 
 		if (!bestMarket.equals(this))
-			log.log(INFO, "Routing %s %s %d @ %s from %s %s to NBBO %s %s",
+			log(INFO, "Routing %s %s %d @ %s from %s %s to NBBO %s %s",
 					agent, type, quantity, price, this, quote, bestMarket, nbbo);
 
 		bestMarket.submitOrder(agent, type, price, quantity, currentTime, duration);

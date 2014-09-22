@@ -47,7 +47,7 @@ public class WindowAgentTest {
 	public static void setUpClass() throws IOException{
 		
 		// Setting up the log file
-		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "WindowAgentTest.log"));
+		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "WindowAgentTest.log")));
 	}
 
 	@Before
@@ -273,7 +273,7 @@ public class WindowAgentTest {
 		for(int t : transactionTimes)
 			addTransaction(market, 100, 1, t);
 		
-		log.log(DEBUG, "Transaction times: %s Window Length: %d Re entry Time %d", Arrays.toString(transactionTimes), windowLength, reentryTime);
+		log(DEBUG, "Transaction times: %s Window Length: %d Re entry Time %d", Arrays.toString(transactionTimes), windowLength, reentryTime);
 
 		List<Transaction> windowTransactions = myAgent.getWindowTransactions(TimeStamp.create(reentryTime));
 		assertEquals("Number of transactions is not correct", numWindow, windowTransactions.size());

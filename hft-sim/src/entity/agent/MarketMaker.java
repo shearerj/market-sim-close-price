@@ -127,7 +127,7 @@ public abstract class MarketMaker extends ReentryAgent {
 		for (int p = sellMaxPrice.intValue(); p >= sellMinPrice.intValue(); p -= stepSize) {
 			scheduler.executeActivity(new SubmitOrder(this, primaryMarket, SELL, new Price(p), 1));
 		}
-		log.log(INFO, "%s in %s: Submit ladder with #rungs %d, step size %d: buys [%s to %s] & sells [%s to %s]",
+		log(INFO, "%s in %s: Submit ladder with #rungs %d, step size %d: buys [%s to %s] & sells [%s to %s]",
 				this, primaryMarket, numRungs, stepSize, buyMinPrice, buyMaxPrice, sellMinPrice, sellMaxPrice);
 		
 		BUS.post(new MarketMakerStatistic(this, buyMaxPrice, sellMinPrice));
@@ -182,7 +182,7 @@ public abstract class MarketMaker extends ReentryAgent {
 					ladderBid = new Price(ladderCenter - stepSize);
 					ladderAsk = new Price(ladderCenter + stepSize);
 				}
-				log.log(INFO, "%s in %s: Randomized Ladder MID (%s, %s)", 
+				log(INFO, "%s in %s: Randomized Ladder MID (%s, %s)", 
 						this, primaryMarket, ladderBid, ladderAsk);
 			}
 		}
@@ -223,7 +223,7 @@ public abstract class MarketMaker extends ReentryAgent {
 			// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
 			if (lastNBBOQuote.getBestBid() != null)
 				sellMinPrice = pcomp.max(ladderAsk, lastNBBOQuote.getBestBid());
-			log.log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)", 
+			log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)", 
 					this, primaryMarket, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
 		}
 

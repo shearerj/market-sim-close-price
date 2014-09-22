@@ -2,7 +2,6 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Log.log;
 import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
 
@@ -61,7 +60,7 @@ public class ZIRAgentTest {
 		
 		
 		// Setting up the log file
-		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIRAgentTest.log"));
+		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIRAgentTest.log")));
 
 		// Creating the setup properties
 		rand = new Random();

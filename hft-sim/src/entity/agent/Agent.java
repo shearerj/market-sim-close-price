@@ -85,7 +85,7 @@ public abstract class Agent extends Entity {
 	 * Price is determined by the fundamental at the time of liquidation.
 	 */
 	public void liquidateAtFundamental(TimeStamp currentTime) {
-		log.log(INFO, "%s liquidating...", this);
+		log(INFO, "%s liquidating...", this);
 		liquidateAtPrice(fundamental.getValueAt(currentTime), currentTime);
 	}
 
@@ -94,12 +94,12 @@ public abstract class Agent extends Entity {
 	 */
 	public void liquidateAtPrice(Price price, TimeStamp ts) {
 
-		log.log(INFO, "%s pre-liquidation: position=%d", this, positionBalance);
+		log(INFO, "%s pre-liquidation: position=%d", this, positionBalance);
 
 		liquidationProfit = positionBalance * price.intValue();
 		profit += liquidationProfit;
 
-		log.log(INFO, "%s post-liquidation: liquidation profit=%d, profit=%d, price=%s", 
+		log(INFO, "%s post-liquidation: liquidation profit=%d, profit=%d, price=%s", 
 				this, liquidationProfit, profit, price);
 	}
 
@@ -198,7 +198,7 @@ public abstract class Agent extends Entity {
 			profit += trans.getQuantity() * trans.getPrice().intValue();
 		}
 
-		log.log(INFO, "%s transacted to position %d", this, positionBalance);
+		log(INFO, "%s transacted to position %d", this, positionBalance);
 	}
 
 	public final TimeStamp getArrivalTime() {

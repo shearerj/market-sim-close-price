@@ -363,7 +363,7 @@ public class Observations {
 	}
 	
 	@Subscribe public void deadStat(DeadEvent d) {
-		log.log(Log.Level.ERROR, "Unhandled Statistic: %s", d);
+		log(Log.Level.ERROR, "Unhandled Statistic: %s", d);
 	}
 	
 	// --------------------------------------

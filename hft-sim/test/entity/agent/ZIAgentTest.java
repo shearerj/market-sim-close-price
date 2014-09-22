@@ -71,7 +71,7 @@ public class ZIAgentTest {
 		
 		
 		// Setting up the log file
-		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIAgentTest.log"));
+		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIAgentTest.log")));
 
 		// Creating the setup properties
 		rand = new Random(1);
@@ -129,7 +129,7 @@ public class ZIAgentTest {
 	
 	@Test
 	public void initialActivityZI(){
-		log.log(DEBUG, "Testing ZI Activity is correct");
+		log(DEBUG, "Testing ZI Activity is correct");
 		ZIAgent testAgent = addAgent();
 		TimeStamp currentTime = TimeStamp.create(100);
 		testAgent.agentStrategy(currentTime);
@@ -140,7 +140,7 @@ public class ZIAgentTest {
 
 	@Test
 	public void initialQuantityZI() {
-		log.log(DEBUG, "Testing ZI submitted quantity is correct");
+		log(DEBUG, "Testing ZI submitted quantity is correct");
 		
 		// New ZIAgent
 		ZIAgent testAgent = addAgent();
@@ -152,7 +152,7 @@ public class ZIAgentTest {
 	
 	@Test
 	public void initialPriceZI() {
-		log.log(DEBUG, "Testing ZI submitted bid range is correct");
+		log(DEBUG, "Testing ZI submitted bid range is correct");
 		
 		// New ZIAgent
 		ZIAgent testAgent = addAgent();
@@ -169,7 +169,7 @@ public class ZIAgentTest {
 	
 	@Test
 	public void randQuantityZI(){
-		log.log(DEBUG, "Testing ZI 100 submitted quantities are correct");
+		log(DEBUG, "Testing ZI 100 submitted quantities are correct");
 		for(int r = 0; r<100; r++){
 			// New ZIAgent
 			ZIAgent testAgent = addAgent(new Random(r));
@@ -182,7 +182,7 @@ public class ZIAgentTest {
 	
 	@Test
 	public void randPriceZI(){
-		log.log(DEBUG, "Testing ZI 100 submitted bid ranges are correct");
+		log(DEBUG, "Testing ZI 100 submitted bid ranges are correct");
 		for(int r = 0; r<100; r++){
 			// New ZIAgent
 			ZIAgent testAgent = addAgent(new Random(r));
@@ -195,7 +195,7 @@ public class ZIAgentTest {
 	
 	@Test
 	public void testPrivateValue(){
-		log.log(DEBUG, "Testing ZI 100 DummyPrivateValue arguments are correct");
+		log(DEBUG, "Testing ZI 100 DummyPrivateValue arguments are correct");
 		
 		//Creating set private value
 		int offset = 1;
@@ -253,7 +253,7 @@ public class ZIAgentTest {
 	
 	@Test
 	public void randTestZI(){
-		log.log(DEBUG, "Testing ZI 100 random argument bids are correct");
+		log(DEBUG, "Testing ZI 100 random argument bids are correct");
 
 		//Testing 100 times
 		for(int i = 0; i<100; i++){
@@ -272,7 +272,7 @@ public class ZIAgentTest {
 			ZIAgent testAgent = addAgent(min, max, rand, testpv);
 			
 			//Logging bid range min and max
-			log.log(DEBUG, "Agent bid range min: %d, maximum: %d", min, max);
+			log(DEBUG, "Agent bid range min: %d, maximum: %d", min, max);
 			
 			//Execute strategy
 			testAgent.agentStrategy(TimeStamp.create(currentTime));

@@ -50,8 +50,7 @@ public class AgentTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		
-		Log.log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "AgentTest.log"));
+		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "AgentTest.log")));
 	}
 
 	@Before

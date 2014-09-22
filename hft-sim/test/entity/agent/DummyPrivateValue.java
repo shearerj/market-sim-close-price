@@ -28,6 +28,6 @@ public class DummyPrivateValue extends PrivateValue {
 	
 	public DummyPrivateValue(int absMaxPosition, Collection<Price> prices){
 		super(absMaxPosition, prices);
-		log.log(DEBUG, "DummyPrivateValue elements: " + Arrays.toString(prices.toArray()));
+		log(DEBUG, "DummyPrivateValue elements: " + Arrays.toString(prices.toArray()));
 	}
 }
