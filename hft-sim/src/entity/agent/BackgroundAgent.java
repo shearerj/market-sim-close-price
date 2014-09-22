@@ -65,10 +65,6 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * @return
 	 */
 	public void executeZIStrategy(OrderType type, int quantity, TimeStamp currentTime) {
-	
-//		int newPosition = (type.equals(BUY) ? 1 : -1) * quantity + positionBalance;
-//		if (newPosition <= privateValue.getMaxAbsPosition() &&
-//				newPosition >= -privateValue.getMaxAbsPosition()) {
 		if (this.withinMaxPosition(type, quantity)) {
 			
 			Price val = getValuation(type, currentTime);
@@ -82,11 +78,6 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			scheduler.executeActivity(new SubmitNMSOrder(this, primaryMarket,
 					type, price, quantity));
 		}
-//		else {
-//			// if exceed max position, then don't submit a new bid
-//			log.log(INFO, "%s executing ZI strategy new order would exceed max position %d ; no submission",
-//					this, privateValue.getMaxAbsPosition());
-//		}
 	}
 	
 	/**
