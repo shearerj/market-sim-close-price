@@ -2,6 +2,7 @@ package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static entity.market.Price.ZERO;
+import static fourheap.Order.OrderType.BUY;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -106,11 +107,17 @@ public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 	}
 	
 	/**
-	 * If position (e.g. current position +/- 1) exceeds max position, return
-	 * +/- infinity, depending on which side.
+	 * Returns the private benefit of either buying or selling 1 unit 
+	 * (indicated by type) when starting at the specified current position.
+	 * 
+	 * If current position is already at the max allowed, or if the
+	 * position exceeds the max position allowed, return +/- infinity, 
+	 * depending on whether long/short (negative infinity for long positions, 
+	 * positive infinity for short positions, since private values are
+	 * sorted in decreasing order).
 	 * 
 	 * @param position
-	 *            Agent's position (e.g. current position +/- 1)
+	 *            Agent's position
 	 * @param type
 	 * 			  Buy or Sell
 	 * @return The private value 
@@ -144,8 +151,13 @@ public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 	@Override
 	public Price getValueFromQuantity(int currentPosition, int quantity, OrderType type) {
 		checkArgument(quantity > 0, "Quantity must be positive");
-		int privateValue = 0;
+		checkArgument(Math.abs(currentPosition) <= offset, "Current position cannot exceed max");
+		int nextPosition = currentPosition + quantity * (type.equals(BUY) ? 1 : -1);
+		//checkArgument(Math.abs(nextPosition) <= offset, "Future position cannot exceed max");
+		if (nextPosition > offset) return Price.NEG_INF;
+		if (nextPosition < -offset) return Price.INF;
 		
+		int privateValue = 0;
 		switch (type) {
 		case BUY:
 			for (int i = 0; i < quantity; i++)

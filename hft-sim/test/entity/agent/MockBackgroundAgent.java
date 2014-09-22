@@ -20,7 +20,7 @@ public class MockBackgroundAgent extends BackgroundAgent {
 
 	public MockBackgroundAgent(Scheduler scheduler,
 			FundamentalValue fundamental, SIP sip, Market market) {
-		this(scheduler, fundamental, sip, market, new PrivateValue(), 0, 0);
+		this(scheduler, fundamental, sip, market, new MockPrivateValue(), 0, 0);
 	}
 	
 	public MockBackgroundAgent(Scheduler scheduler,

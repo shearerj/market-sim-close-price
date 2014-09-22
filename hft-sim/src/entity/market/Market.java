@@ -29,6 +29,7 @@ import data.Observations.MidQuoteStatistic;
 import data.Observations.SpreadStatistic;
 import entity.Entity;
 import entity.agent.Agent;
+import entity.agent.BackgroundAgent;
 import entity.infoproc.BestBidAsk;
 import entity.infoproc.MarketQuoteProcessor;
 import entity.infoproc.MarketTransactionProcessor;
@@ -367,6 +368,10 @@ public abstract class Market extends Entity {
 		checkArgument(quantity > 0, "Quantity must be positive");
 		marketTime++;
 
+		// Check that within position limits for background agent
+		if (agent instanceof BackgroundAgent)
+			if (!((BackgroundAgent) agent).withinMaxPosition(type, quantity)) return;
+		
 		Order order = Order.create(type, agent, this, price, quantity, new MarketTime(currentTime, marketTime));
 		log.log(INFO, "%s", order);
 
