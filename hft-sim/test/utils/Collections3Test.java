@@ -10,11 +10,14 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.Random;
+import java.util.SortedMap;
 
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 public class Collections3Test {
 
@@ -164,6 +167,23 @@ public class Collections3Test {
 			backedArrayTest();
 			emptyTest();
 		}
+	}
+	
+	@Test
+	public void mapPrefixTest() {
+		SortedMap<String, Integer> map = Maps.newTreeMap();
+		map.put("holla_a", 1);
+		map.put("holla_b", 2);
+		map.put("holla_c", 3);
+		map.put("hollz", 5);
+		map.put("a", 7);
+		map.put("z", 20);
+		
+		assertEquals(ImmutableMap.of(), Collections3.mapPrefix(map, "b"));
+		assertEquals(map, Collections3.mapPrefix(map, ""));
+		assertEquals(ImmutableMap.of("holla_a", 1, "holla_b", 2, "holla_c", 3, "hollz", 5), Collections3.mapPrefix(map, "holl"));
+		assertEquals(ImmutableMap.of("holla_a", 1, "holla_b", 2, "holla_c", 3), Collections3.mapPrefix(map, "holla_"));
+
 	}
 
 }
