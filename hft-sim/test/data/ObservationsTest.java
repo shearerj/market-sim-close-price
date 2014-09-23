@@ -3,71 +3,60 @@ package data;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static utils.Tests.j;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.Iterator;
 import java.util.Random;
 
 import logger.Log;
 
-import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import systemmanager.Consts;
-import systemmanager.Executor;
+import systemmanager.Consts.AgentType;
+import systemmanager.Consts.MarketType;
 import systemmanager.Keys;
-import systemmanager.SimulationSpec;
+import systemmanager.MockSim;
+import systemmanager.SimulationSpec.PlayerSpec;
 
+import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.ObjectArrays;
+import com.google.common.util.concurrent.AtomicDouble;
 
+import data.Observations.PlayerObservation;
 import entity.agent.Agent;
 import entity.agent.BackgroundAgent;
-import entity.agent.BasicMarketMaker;
-import entity.agent.DummyPrivateValue;
-import entity.agent.MarketMaker;
-import entity.agent.MockAgent;
-import entity.agent.MockBackgroundAgent;
-import entity.agent.MockMarketMaker;
-import entity.agent.PrivateValue;
-import entity.infoproc.SIP;
 import entity.market.Market;
-import entity.market.MockMarket;
-import entity.market.Price;
-import entity.market.Quote;
 import event.TimeStamp;
 
 public class ObservationsTest {
+	private static final double eps = 1e-6;
+	private static final Random rand = new Random();
+	private MockSim sim;
+	private Market one, two;
 	
-	private Executor exec;
-	private FundamentalValue fundamental = new MockFundamental(100000);
-	private Market market1, market2;
-	private SIP sip;
-	private Observations obs;
-
-	@BeforeClass
-	public static void setupClass() throws IOException {
-		Log.setLogger(Log.create(Log.Level.DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ObservationsTest.log")));
-	}
-
 	@Before
-	public void setup() {
-		exec = new Executor();
-		sip = new SIP(exec, TimeStamp.IMMEDIATE);
-		market1 = new MockMarket(exec, sip);
-		market2 = new MockMarket(exec, sip);
+	public void defaultSetup() throws IOException {
+		setup();
 	}
 	
-	@After
-	public void tearDown() {
-		if (obs != null)
-			Observations.BUS.unregister(obs);
+	public void setup(Object... parameters) throws IOException {
+		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING, ObjectArrays.concat(parameters,
+				new Object[] { MarketType.CDA, j.join(Keys.NUM_MARKETS, 2) }, Object.class));
+		Iterator<Market> markets = sim.getMarkets().iterator();
+		one = markets.next();
+		two = markets.next();
+		assertFalse(markets.hasNext());
 	}
+	
+	// FIXME General test for summary stats + whitelist
+	// FIXME Fundamental test
+	// FIXME Players Test
+	// FIXME Test that sampling actually happens at the end of the interval, for all period tests
 
 	/*
 	 * TODO Still have some hard things to test, that should for the most part
@@ -77,587 +66,202 @@ public class ObservationsTest {
 	 */
 	
 	@Test
-	public void spreadsTest() {
-		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
-		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
-		setupObservations(agent1, agent2);
+	public void meanSpreadTest() {
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create());
 		
-		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent1, BUY, new Price(104), 1, TimeStamp.ZERO);
-		assertEquals(Double.POSITIVE_INFINITY, Iterables.getFirst(obs.spreads.get(market1), null), 0.001);
+		sim.postTimedStat(TimeStamp.ZERO, Stats.SPREAD + one, 1);
+		sim.postTimedStat(TimeStamp.of(1), Stats.SPREAD + one, 3);
+		sim.postTimedStat(TimeStamp.of(2), Stats.SPREAD + one, 6);
 		
-		market1.submitOrder(agent2, SELL, new Price(105), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent2, SELL, new Price(106), 1, TimeStamp.ZERO);
-		assertEquals(1, Iterables.getFirst(obs.spreads.get(market1), null), 0.001);
+		sim.postTimedStat(TimeStamp.ZERO, Stats.SPREAD + two, 5);
 		
-		// Also sets median for market1 to 3
-		market1.submitOrder(agent2, SELL, new Price(103), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
-		assertEquals(3, Iterables.getFirst(obs.spreads.get(market1), null), 0.001);
+		// To verify NBBO spread doesn't affect mean spread
+		sim.postTimedStat(TimeStamp.ZERO, Stats.NBBO_SPREAD, 100);
 		
-		// Sets median of market2 to 5
-		market2.submitOrder(agent2, SELL, new Price(103), 1, TimeStamp.ZERO);
-		market2.submitOrder(agent2, BUY, new Price(98), 1, TimeStamp.ZERO);
-		market2.clear(TimeStamp.ZERO);
-		assertEquals(5, Iterables.getFirst(obs.spreads.get(market2), null), 0.001);
+		obs.add(sim.getStats(), ImmutableList.<Agent> of(), ImmutableList.<Player> of(), 3);
 		
-		// Mean of 3 and 5
-		assertEquals(4, obs.getFeatures().get("spreads_mean_markets"), 0.001);
+		assertEquals(3, obs.features.get(Stats.SPREAD + one + "_median").mean(), eps);
+		assertEquals(5, obs.features.get(Stats.SPREAD + two + "_median").mean(), eps);
+		assertEquals(4, obs.features.get("spreads_mean").mean(), eps);
 	}
-	
+
+	// TODO This could probably test better numbers for volatility
+	// TODO There are a lot of conditionals for "bad" data that also need to be tested
 	@Test
-	public void midquotesTest() {
-		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
-		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
-		setupObservations(agent1, agent2);
+	public void volitilityTest() {
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create());
+
+		sim.postTimedStat(TimeStamp.ZERO, Stats.MIDQUOTE + one, 103);
+		sim.postTimedStat(TimeStamp.of(1000), Stats.MIDQUOTE + one, 106.5);
+		sim.postTimedStat(TimeStamp.of(2000), Stats.MIDQUOTE + one, 104);
 		
-		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent1, BUY, new Price(104), 1, TimeStamp.ZERO);
-		assertEquals(Double.NaN, Iterables.getFirst(obs.midQuotes.get(market1), null), 0.001);
+		sim.postTimedStat(TimeStamp.ZERO, Stats.MIDQUOTE + two, 50);
+		sim.postTimedStat(TimeStamp.of(1000), Stats.MIDQUOTE + two, 100);
+		sim.postTimedStat(TimeStamp.of(2000), Stats.MIDQUOTE + two, 20);
 		
-		market1.submitOrder(agent2, SELL, new Price(106), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent2, SELL, new Price(107), 1, TimeStamp.ZERO);
-		assertEquals(105, Iterables.getFirst(obs.midQuotes.get(market1), null), 0.001);
+		obs.add(sim.getStats(), ImmutableList.<Agent> of(), ImmutableList.<Player> of(), 3000);
 		
-		market1.submitOrder(agent2, SELL, new Price(103), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
-		assertEquals(104, Iterables.getFirst(obs.midQuotes.get(market1), null), 0.001);
+		assertEquals(1.4722055324274199, obs.features.get("vol_freq_1_" + Stats.MIDQUOTE + one + "_stddev").mean(), eps);
+		assertEquals(1.5374122295716148, obs.features.get("vol_freq_250_" + Stats.MIDQUOTE + one + "_stddev").mean(), eps);
+		assertEquals(33.003817550093338, obs.features.get("vol_freq_1_" + Stats.MIDQUOTE + two + "_stddev").mean(), eps);
+		assertEquals(34.465617474213168, obs.features.get("vol_freq_250_" + Stats.MIDQUOTE + two + "_stddev").mean(), eps);
+		
+		assertEquals(17.238011541260377, obs.features.get("vol_freq_1_mean_stddev_price").mean(), eps);
+		assertEquals(18.001514851892392, obs.features.get("vol_freq_250_mean_stddev_price").mean(), eps);
+		
+		assertEquals(1.9416924383396004, obs.features.get("vol_freq_1_mean_log_price").mean(), eps);
+		assertEquals(1.9850314323837965, obs.features.get("vol_freq_250_mean_log_price").mean(), eps);
+		
+		assertEquals(0.00074877135839063094, obs.features.get("vol_freq_1_log_return_" + Stats.MIDQUOTE + one + "_stddev").mean(), eps);
+		assertEquals(0.012932126117835861, obs.features.get("vol_freq_250_log_return_" + Stats.MIDQUOTE + one + "_stddev").mean(), eps);
+		assertEquals(0.032002665476869134, obs.features.get("vol_freq_1_log_return_" + Stats.MIDQUOTE + two + "_stddev").mean(), eps);
+		assertEquals(0.54721267912580351, obs.features.get("vol_freq_250_log_return_" + Stats.MIDQUOTE + two + "_stddev").mean(), eps);
+
+		assertEquals(0.016375718417629883, obs.features.get("vol_freq_1_mean_log_return").mean(), eps);
+		assertEquals(0.2800724026218197, obs.features.get("vol_freq_250_mean_log_return").mean(), eps);
 	}
 	
 	@Test
 	public void nbboSpreadsTest() {
-		setupObservations();
-		Quote q = new Quote(market1, new Price(80), 1, new Price(100), 1, TimeStamp.ZERO);
-		sip.processQuote(market1, q, TimeStamp.ZERO);
-		
-		// Check that correct spread stored
-		assertEquals(20, Iterables.getFirst(obs.nbboSpreads, null), 0.001);
-		
-		q = new Quote(market2, new Price(70), 1, new Price(90), 1, TimeStamp.ZERO);
-		sip.processQuote(market2, q, TimeStamp.ZERO);
-		
-		// Check that new quote overwrites the previously stored spread at time 0
-		assertEquals(10, Iterables.getFirst(obs.nbboSpreads, null), 0.001);
-		
-		// Test with actual agents
-		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
-		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
-		
-		market1.submitOrder(agent1, BUY, new Price(80), 1, TimeStamp.ZERO);
-		market2.submitOrder(agent2, SELL, new Price(100), 1, TimeStamp.ZERO);
-		assertEquals(20, Iterables.getFirst(obs.nbboSpreads, null), 0.001);
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create());
+
+		sim.postTimedStat(TimeStamp.ZERO, Stats.NBBO_SPREAD, 1);
+		sim.postTimedStat(TimeStamp.of(1), Stats.NBBO_SPREAD, 3);
+		sim.postTimedStat(TimeStamp.of(2), Stats.NBBO_SPREAD, 6);
+
+		obs.add(sim.getStats(), ImmutableList.<Agent> of(), ImmutableList.<Player> of(), 3);
+
+		assertEquals(3, obs.features.get(Stats.NBBO_SPREAD + "_median").mean(), eps);
 	}
 	
-	@Test
-	public void numTransTest() {
-		Map<String, Double> features;
-		TimeStamp time = TimeStamp.ZERO;
-
-		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
-		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
-		Agent agent3 = new MockAgent(exec, fundamental, sip, market1);
-		
-		// Two orders from one agent
-		setupObservations(agent1);
-		market1.submitOrder(agent1, BUY, new Price(102), 1, time);
-		market1.submitOrder(agent1, SELL, new Price(102), 1, time);
-		market1.clear(time);
-		// One for each order type
-		features = obs.getFeatures();
-		assertEquals(2, obs.numTrans.count(MockBackgroundAgent.class));
-		assertEquals(0, obs.numTrans.count(MockAgent.class));
-		assertEquals(2, features.get("trans_mockbackgroundagent_num"), 0.001);
-
-		// Two orders from same agent type
-		setupObservations(agent1, agent2);
-		market1.submitOrder(agent1, BUY, new Price(102), 1, time);
-		market1.submitOrder(agent2, SELL, new Price(102), 1, time);
-		market1.clear(time);
-		// One for each agent
-		features = obs.getFeatures();
-		assertEquals(2, obs.numTrans.count(MockBackgroundAgent.class));
-		assertEquals(0, obs.numTrans.count(MockAgent.class));
-		assertEquals(2, features.get("trans_mockbackgroundagent_num"), 0.001);
-		
-		// Two orders from different agent types
-		setupObservations(agent1, agent3);
-		market1.submitOrder(agent1, BUY, new Price(102), 1, time);
-		market1.submitOrder(agent3, SELL, new Price(102), 1, time);
-		market1.clear(time);
-		// One for each agent
-		features = obs.getFeatures();
-		assertEquals(1, obs.numTrans.count(MockBackgroundAgent.class));
-		assertEquals(1, obs.numTrans.count(MockAgent.class));
-		assertEquals(1, features.get("trans_mockbackgroundagent_num"), 0.001);
-		assertEquals(1, features.get("trans_mockagent_num"), 0.001);
-		
-		// One order is split among two, so transactions is "doubled"
-		setupObservations(agent1, agent2, agent3);
-		market1.submitOrder(agent1, BUY, new Price(102), 2, time);
-		market1.submitOrder(agent2, SELL, new Price(102), 1, time);
-		market1.submitOrder(agent3, SELL, new Price(102), 1, time);
-		market1.clear(time);
-		// Two for agent 1's split order, 1 for each of the other agents
-		features = obs.getFeatures();
-		assertEquals(3, obs.numTrans.count(MockBackgroundAgent.class));new MockBackgroundAgent(exec, fundamental, sip, market1);
-		assertEquals(1, obs.numTrans.count(MockAgent.class));
-		assertEquals(3, features.get("trans_mockbackgroundagent_num"), 0.001);
-		assertEquals(1, features.get("trans_mockagent_num"), 0.001);
-	}
-	
-	@Test
-	public void executionTimesTest() {
-		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
-		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
-		
-		// Same times
-		setupObservations(agent1, agent2);
-		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
-		assertEquals(0, obs.executionTimes.mean(), 0.001);
-		assertEquals(2, obs.executionTimes.getN());
-		
-		// Same times
-		setupObservations(agent1, agent2);
-		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.create(1));
-		assertEquals(1, obs.executionTimes.mean(), 0.001);
-		assertEquals(2, obs.executionTimes.getN()); 	// because obs setup again
-
-		// Quantity weighted
-		setupObservations(agent1, agent2);
-		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.create(1));
-		market1.submitOrder(agent1, BUY, new Price(102), 3, TimeStamp.create(2));
-		market1.submitOrder(agent2, SELL, new Price(102), 3, TimeStamp.create(2));
-		market1.clear(TimeStamp.create(4));
-		assertEquals(1.75, obs.executionTimes.mean(), 0.001);
-		
-		// Split order
-		setupObservations(agent1, agent2);
-		market1.submitOrder(agent1, BUY, new Price(102), 2, TimeStamp.ZERO);
-		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.create(1));
-		market1.clear(TimeStamp.create(1));
-		assertEquals(0.75, obs.executionTimes.mean(), 0.001);
-
-		// Same agent
-		setupObservations(agent1, agent2);
-		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.create(0));
-		market1.submitOrder(agent1, SELL, new Price(102), 1, TimeStamp.create(1));
-		market1.clear(TimeStamp.create(2));
-		assertEquals(1.5, obs.executionTimes.mean(), 0.001);
-	}
-	
-	/**
-	 * Test that only background trader execution times are measured.
+	/*
+	 * XXX If two transactions happen at the same time with different
+	 * prices, this will reflect the last transaction to be matched, which
+	 * ultimately depends on how the fourheap matches orders
 	 */
 	@Test
-	public void backgroundExecutionTimesTest() {
-		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
-		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market1, 2, 10);
+	public void transPricesTest() throws IOException {
+		setup(
+				Keys.FUNDAMENTAL_MEAN, 100,
+				Keys.FUNDAMENTAL_SHOCK_VAR, 0);
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create());
 		
-		// Same times
-		setupObservations(agent1, mm);
-		market1.submitOrder(agent1, BUY, new Price(100), 1, TimeStamp.ZERO);
-		mm.submitOrderLadder(new Price(75), new Price(85), new Price(95), new Price(105));
-		market1.clear(TimeStamp.ZERO);
-		assertEquals(1, market1.getTransactions().size());
-		assertEquals(0, obs.executionTimes.mean(), 0.001);
-		assertEquals(1, obs.executionTimes.getN());
+		sim.postTimedStat(TimeStamp.ZERO, Stats.TRANSACTION_PRICE, 102);
+		sim.postTimedStat(TimeStamp.ZERO, Stats.TRANSACTION_PRICE, 104);
+		sim.postTimedStat(TimeStamp.of(1000), Stats.TRANSACTION_PRICE, 106);
+		sim.postTimedStat(TimeStamp.of(2000), Stats.TRANSACTION_PRICE, 108);
 		
-		// Another transaction (still 0 because executes instantly)
-		market1.submitOrder(agent1, BUY, new Price(110), 1, TimeStamp.create(3));
-		market1.clear(TimeStamp.create(3));
-		assertEquals(2, market1.getTransactions().size());
-		assertEquals(0, obs.executionTimes.mean(), 0.001);
-		assertEquals(2, obs.executionTimes.getN());	// adds on to previous
+		obs.add(sim.getStats(), ImmutableList.<Agent> of(), ImmutableList.<Player> of(), 3000);
 		
-		// MM ladder submitted later
-		EntityProperties agentProperties = EntityProperties.fromPairs(
-				Keys.REENTRY_RATE, 0,
-				Keys.TICK_IMPROVEMENT, false,
-				Keys.NUM_RUNGS, 2,
-				Keys.RUNG_SIZE, 10,
-				Keys.TRUNCATE_LADDER, false,
-				Keys.TICK_SIZE, 1,
-				Keys.INITIAL_LADDER_MEAN, 85,
-				Keys.INITIAL_LADDER_RANGE, 10);
-		mm = new BasicMarketMaker(exec, fundamental, sip, market1,
-				new Random(), agentProperties);
-		setupObservations(agent1, mm);
+		assertEquals(6.2182527020592095, obs.features.get("trans_freq_1_rmsd").mean(), eps);
+		assertEquals(6.2182527020592095, obs.features.get("trans_freq_250_rmsd").mean(), eps);
 		
-		market1.submitOrder(agent1, BUY, new Price(200), 1, TimeStamp.ZERO);
-		mm.agentStrategy(TimeStamp.create(10));
-		market1.clear(TimeStamp.create(10));
-		assertEquals(3, market1.getTransactions().size());
-		assertEquals(10, obs.executionTimes.mean(), 0.001);
-		assertEquals(1, obs.executionTimes.getN());	// MM time not included
 	}
-	
-	@Test
-	public void marketmakerExecutionTimesTest() {
-		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
-		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market1, 2, 10);
-
-		// Same times
-		setupObservations(agent1, mm);
-		market1.submitOrder(agent1, BUY, new Price(100), 1, TimeStamp.ZERO);
-		mm.submitOrderLadder(new Price(75), new Price(85), new Price(95), new Price(105));
-		market1.clear(TimeStamp.ZERO);
-		assertEquals(0, obs.marketmakerExecutionTimes.mean(), 0.001);
-		assertEquals(1, obs.marketmakerExecutionTimes.getN());
-
-		// Another transaction (still 0 because executes instantly)
-		market1.submitOrder(agent1, BUY, new Price(110), 1, TimeStamp.create(4));
-		market1.clear(TimeStamp.create(4));
-		assertEquals(0, obs.executionTimes.mean(), 0.001);
-		assertEquals(2, obs.marketmakerExecutionTimes.mean(), 0.001);
-		assertEquals(2, obs.marketmakerExecutionTimes.getN());	// adds on to previous
-	}
-	
-	/**
-	 * Test collection of market maker data
-	 */
-	@Test
-	public void marketmakerSpreadsTest() {		
-		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market1, 2, 10);
-		
-		setupObservations(mm);
-		mm.submitOrderLadder(new Price(75), new Price(85), new Price(95), new Price(105));
-		
-		assertEquals(10, obs.marketmakerSpreads.mean(), 0.001);
-		assertEquals(90, obs.marketmakerLadderCenter.mean(), 0.001);
-		
-		mm.withdrawAllOrders();
-		mm.submitOrderLadder(new Price(79), new Price(89), new Price(95), new Price(105));
-		
-		assertEquals(8, obs.marketmakerSpreads.mean(), 0.001);
-		assertEquals(91, obs.marketmakerLadderCenter.mean(), 0.001);
-		assertEquals(2, obs.marketmakerSpreads.getN());
-		assertEquals(2, obs.marketmakerLadderCenter.getN());
-	}
-	
-	
-	@Test
-	public void pricesTest() {
-		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
-		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
-		
-		// Basic case
-		setupObservations(agent1, agent2);
-		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent2, SELL, new Price(102), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
-		assertEquals(102, obs.prices.mean(), 0.001);
-
-		// Same agent
-		setupObservations(agent1);
-		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent1, SELL, new Price(102), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
-		assertEquals(102, obs.prices.mean(), 0.001);
-		
-		// Multi quantity
-		setupObservations(agent1, agent2);
-		market1.submitOrder(agent1, BUY, new Price(100), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent2, SELL, new Price(100), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
-		market1.submitOrder(agent1, BUY, new Price(200), 3, TimeStamp.ZERO);
-		market1.submitOrder(agent2, SELL, new Price(200), 3, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
-		assertEquals(150, obs.prices.mean(), 0.001);
-		
-		// Split order NOTE: Clearing price is buy order
-		setupObservations(agent1, agent2);
-		market1.submitOrder(agent1, BUY, new Price(100), 4, TimeStamp.ZERO);
-		market1.submitOrder(agent2, SELL, new Price(80), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent2, SELL, new Price(60), 3, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
-		assertEquals(100, obs.prices.mean(), 0.001);
-
-		// Split order NOTE: Clearing price is buy order
-		setupObservations(agent1, agent2);
-		market1.submitOrder(agent1, SELL, new Price(50), 4, TimeStamp.ZERO);
-		market1.submitOrder(agent2, BUY, new Price(80), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent2, BUY, new Price(60), 3, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
-		assertEquals(70, obs.prices.mean(), 0.001);
-	}
-	
-	@Test
-	public void transPricesTest() {
-		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
-		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);
-		setupObservations(agent1, agent2);
-		
-		// Basic stuff from same agent 
-		market1.submitOrder(agent1, BUY, new Price(102), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent1, SELL, new Price(102), 1, TimeStamp.ZERO);
-		assertEquals(Double.NaN, Iterables.getFirst(obs.transPrices, null), 0.001);
-		market1.clear(TimeStamp.ZERO);
-		assertEquals(102, Iterables.getFirst(obs.transPrices, null), 0.001);
-		
-		// Now with different agent, check overwriting
-		market1.submitOrder(agent1, BUY, new Price(104), 1, TimeStamp.ZERO);
-		market1.submitOrder(agent2, SELL, new Price(104), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
-		assertEquals(104, Iterables.getFirst(obs.transPrices, null), 0.001);
-
-		/*
-		 * XXX What if two transactions happen at the same time with different
-		 * prices. What price should be reflected? I believe it will reflect the
-		 * last transaction to be matched, which ultimately depends on how the
-		 * fourheap matches orders
-		 */
-		
-		// Now add a transaction at a new time with multi quantity in a different market
-		market2.submitOrder(agent1, BUY, new Price(106), 2, TimeStamp.ZERO);
-		market2.submitOrder(agent2, SELL, new Price(106), 2, TimeStamp.ZERO);
-		market2.clear(TimeStamp.create(1));
-		assertEquals(ImmutableList.of(104d, 106d), ImmutableList.copyOf(Iterables.limit(obs.transPrices, 2)));
-		
-		// Overwrite that with a split order
-		market1.submitOrder(agent1, BUY, new Price(108), 1, TimeStamp.create(1));
-		market1.submitOrder(agent2, SELL, new Price(108), 2, TimeStamp.create(1));
-		market1.submitOrder(agent2, BUY, new Price(108), 1, TimeStamp.create(1));
-		market1.clear(TimeStamp.create(1));
-		assertEquals(ImmutableList.of(104d, 108d), ImmutableList.copyOf(Iterables.limit(obs.transPrices, 2)));
-	}
-	
-	@Test
-	public void controlPVTest() {
-		DummyPrivateValue pv = new DummyPrivateValue(2, ImmutableList.of(
-				new Price(1200), new Price(1000), new Price(-200), new Price(-500)));
-		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1, pv, 0, 5000);
-		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1, pv, 0, 5000);
-		setupObservations(agent1, agent2);
-		assertEquals(375, obs.getFeatures().get("control_mean_private"), 0.001);
-	}
-	
-//	@Test
-//	public void controlFundamentalTest() {
-//		Random rand = new Random(1);
-//		FundamentalValue fund = FundamentalValue.create(0.5, 100000, 100000000, rand);
-//		fund.computeFundamentalTo(5);
-//		double tot = 0, lastVal = 0;
-//		for (double v : fund.meanRevertProcess) {
-//			tot += v;
-//			lastVal = v;
-//		}
-//		
-//		Agent agent1 = new MockBackgroundAgent(exec, fund, sip, market1);
-//		Agent agent2 = new MockBackgroundAgent(exec, fund, sip, market1);
-//		setupObservations(fund, agent1, agent2);
-//		
-//		assertEquals((tot + (obs.simLength-6)*lastVal) / (obs.simLength-1), 
-//				obs.getFeatures().get("control_mean_fund"), 0.001);
-//	}
 	
 	@Test
 	public void playerTest() {
-		Agent backgroundAgent, agent;
-		Player backgroundPlayer, player;
-		PrivateValue pv = new DummyPrivateValue(1, ImmutableList.of(
-				new Price(1000), new Price(-2000)));
+		PlayerSpec spec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(ImmutableList.of(spec)));
 		
-		// Basic case
-		backgroundAgent = new MockBackgroundAgent(exec, fundamental, sip, market1, pv, 0, 1000);
-		agent = new MockAgent(exec, fundamental, sip, market1);
-		backgroundPlayer = new Player("background", "a", backgroundAgent);
-		player = new Player("foreground", "b", agent);
-		setupObservations(backgroundPlayer, player);
-		
-		// Double fundamental
-		market1.submitOrder(agent, BUY, new Price(200000), 1, TimeStamp.ZERO);
-		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
-		// To make sure agent1 sees clear
-		market1.clear(TimeStamp.ZERO);
-		agent.liquidateAtFundamental(TimeStamp.ZERO);
-		backgroundAgent.liquidateAtFundamental(TimeStamp.ZERO);
-		assertEquals(-100000, backgroundAgent.getLiquidationProfit());
-		for (PlayerObservation po : obs.getPlayerObservations()) {
-			if (po.role.equals("foreground")) {
-				assertEquals("b", po.strategy);
-				// payoff is profit (buy @ 200000) minus liquidate @ 100000
-				// ie pay 200000 then sell at 100000
-				assertEquals(-100000, po.payoff, 0.001);
-			} else { // Background
-				assertEquals("a", po.strategy);
-				// payoff is (price - PV) + (position * fundamental)
-				assertEquals(200000 - 1000 - 100000, po.payoff, 0.001);
+		Agent agent = new Agent(sim, TimeStamp.ZERO, rand, Props.fromPairs()) {			
+			private static final long serialVersionUID = 1L;
+			@Override public void agentStrategy() { }
+			@Override public String toString() { return "TestAgent " + id; }
+			private Agent setProfit() {
+				profit = -100000;
+				return this;
 			}
-		}
-	}
-	
-	@Test
-	public void playerMultiQuantityTest() {
-		Agent backgroundAgent, agent;
-		Player backgroundPlayer, player;
-		PrivateValue pv = new DummyPrivateValue(2, ImmutableList.of(
-				new Price(2000), new Price(1000), new Price(-2000), new Price(4000)));
+		}.setProfit();
+		Player player = new Player(spec.descriptor, agent);
 		
-		// Multiple Quantity
-		backgroundAgent = new MockBackgroundAgent(exec, fundamental, sip, market1, pv, 0, 1000);
-		agent = new MockAgent(exec, fundamental, sip, market1);
-		backgroundPlayer = new Player("background", "a", backgroundAgent);
-		player = new Player("foreground", "b", agent);
-		setupObservations(backgroundPlayer, player);
+		obs.add(sim.getStats(), ImmutableList.of(agent), ImmutableList.of(player), 1);
 		
-		market1.submitOrder(agent, BUY, new Price(200000), 2, TimeStamp.ZERO);
-		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 2, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
-		agent.liquidateAtFundamental(TimeStamp.ZERO);
-		backgroundAgent.liquidateAtFundamental(TimeStamp.ZERO);
-		assertEquals(-2*100000, backgroundAgent.getLiquidationProfit());
-		for (PlayerObservation po : obs.getPlayerObservations()) {
-			if (po.role.equals("foreground")) {
-				assertEquals("b", po.strategy);
-				// payoff is profit (buy 2 @ 200000) minus liquidate 2 @ 100000
-				// ie pay 2*200000 then sell 2@100000
-				assertEquals(-200000, po.payoff, 0.001);
-			} else { // Background
-				assertEquals("a", po.strategy);
-				// payoff is (price - PV) + (position * price)
-				assertEquals((200000-2000) + (200000-1000) + (-2*100000), po.payoff, 0.001);
-			}
-		}
+		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(spec.descriptor));
+		
+		assertEquals(-100000, pobs.payoff.mean(), eps);
 	}
-	
-	@Test
-	public void playerSplitOrdersTest() {
-		Agent backgroundAgent, agent;
-		Player backgroundPlayer, player;
-		PrivateValue pv = new DummyPrivateValue(2, ImmutableList.of(
-				new Price(2000), new Price(1000), new Price(-2000), new Price(4000)));
 
-		// Split Orders
-		backgroundAgent = new MockBackgroundAgent(exec, fundamental, sip, market1, pv, 0, 1000);
-		agent = new MockAgent(exec, fundamental, sip, market1);
-		backgroundPlayer = new Player("background", "a", backgroundAgent);
-		player = new Player("foreground", "b", agent);
-		setupObservations(backgroundPlayer, player);
-		
-		market1.submitOrder(agent, BUY, new Price(200000), 2, TimeStamp.ZERO);
-		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
-		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
-		agent.liquidateAtFundamental(TimeStamp.ZERO);
-		backgroundAgent.liquidateAtFundamental(TimeStamp.ZERO);
-		for (PlayerObservation po : obs.getPlayerObservations()) {
-			if (po.role.equals("foreground")) {
-				assertEquals("b", po.strategy);
-				assertEquals(-200000, po.payoff, 0.001);
-			} else { // Background
-				assertEquals("a", po.strategy);
-				// payoff is (price - PV) + (position * price)
-				assertEquals((200000-2000) + (200000-1000) + (-2*100000), po.payoff, 0.001);
-			}
-		}
-	}
-	
-	@Test
-	public void playerLiquidationTest() {
-		Agent backgroundAgent, agent;
-		Player backgroundPlayer, player;
-		PrivateValue pv = new DummyPrivateValue(1, ImmutableList.of(
-				new Price(1000), new Price(-2000)));
-		
-		// Liquidate at different price
-		backgroundAgent = new MockBackgroundAgent(exec, fundamental, sip, market1, pv, 0, 1000);
-		agent = new MockAgent(exec, fundamental, sip, market1);
-		backgroundPlayer = new Player("background", "a", backgroundAgent);
-		player = new Player("foreground", "b", agent);
-		setupObservations(backgroundPlayer, player);
-		
-		market1.submitOrder(agent, BUY, new Price(200000), 1, TimeStamp.ZERO);
-		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
-		market1.clear(TimeStamp.ZERO);
-		agent.liquidateAtPrice(new Price(300000), TimeStamp.ZERO);
-		backgroundAgent.liquidateAtPrice(new Price(300000), TimeStamp.ZERO);
-		for (PlayerObservation po : obs.getPlayerObservations()) {
-			if (po.role.equals("foreground")) {
-				assertEquals("b", po.strategy);
-				assertEquals(100000, po.payoff, 0.001);
-			} else { // Background
-				assertEquals("a", po.strategy);
-				// payoff is (price - PV) + (position * price)
-				assertEquals(200000-1000 + -1*300000, po.payoff, 0.001);
-			}
-		}
-	}
-	
+	// FIXME Change from BackgroundAgent to Agent once private value is moved
 	@Test
 	public void privateValueFeatureTest() {
-		PrivateValue pv = new PrivateValue(5, 1000000, new Random());
-		FundamentalValue randFundamental = new FundamentalValue(0.2, 100000, 10000, new Random());
-		BackgroundAgent backgroundAgent = new MockBackgroundAgent(exec, randFundamental, sip, market1, pv, 0, 1000);
-
-		// Get valuation for various positionBalances
-		int pv1 = pv.getValue(0, BUY).intValue();
-		int pv_1 = pv.getValue(0, SELL).intValue();
+		PlayerSpec spec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(ImmutableList.of(spec)));
 		
-		Player backgroundPlayer = new Player("background", "a", backgroundAgent);
-		setupObservations(backgroundPlayer);
+		final AtomicDouble pv1 = new AtomicDouble();
+		final AtomicDouble pv_1 = new AtomicDouble();
 		
-		for (PlayerObservation po : obs.getPlayerObservations()) {
-			assertEquals(new Double(pv1), po.features.get(Keys.PV_BUY1));
-			assertEquals(new Double(pv_1), po.features.get(Keys.PV_SELL1));
-			assertEquals(new Double(Math.max(Math.abs(pv1), Math.abs(pv_1))), 
-					po.features.get(Keys.PV_POSITION1_MAX_ABS));
-		}
+		Agent agent = new BackgroundAgent(sim, TimeStamp.ZERO, one, rand, Props.fromPairs()) {
+			private static final long serialVersionUID = 1L;
+			@Override public String toString() { return "TestAgent " + id; }
+			private Agent setup() {
+				pv1.set(this.privateValue.getValue(0, BUY).doubleValue());
+				pv_1.set(this.privateValue.getValue(0, SELL).doubleValue());
+				return this;
+			}
+		}.setup();
+		Player player = new Player(spec.descriptor, agent);
+		
+		double maxAbsPos = Math.max(Math.abs(pv1.get()), Math.abs(pv_1.get()));
+		
+		obs.add(sim.getStats(), ImmutableList.of(agent), ImmutableList.of(player), 1);
+		
+		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(spec.descriptor));
+		
+		assertEquals(pv1.get(), pobs.features.get(Keys.PV_BUY1).mean(), eps);
+		assertEquals(pv_1.get(), pobs.features.get(Keys.PV_SELL1).mean(), eps);
+		assertEquals(maxAbsPos, pobs.features.get(Keys.PV_POSITION1_MAX_ABS).mean(), eps);
 	}
 	
-	private void setupObservations() {
-		if (obs != null)
-			Observations.BUS.unregister(obs);
+	// FIXME Change from BackgroundAgent to Agent once private value is moved
+	@Test
+	public void playerFeatureMeanTest() {
+		PlayerSpec spec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(ImmutableList.of(spec)));
 		
-		obs = new Observations(new SimulationSpec(),
-				ImmutableList.of(market1, market2), ImmutableList.<Agent> of(),
-				ImmutableList.<Player> of(), fundamental);
+		// Set up the first agent (a) and record their private values
+		final AtomicDouble a_pv1 = new AtomicDouble();
+		final AtomicDouble a_pv_1 = new AtomicDouble();
 		
-		Observations.BUS.register(obs);
-	}
-	
-	private void setupObservations(Agent... agents) {
-		if (obs != null)
-			Observations.BUS.unregister(obs);
+		Agent agent = new BackgroundAgent(sim, TimeStamp.ZERO, one, rand, Props.fromPairs()) {
+			private static final long serialVersionUID = 1L;
+			@Override public String toString() { return "TestAgent " + id; }
+			private Agent setup() {
+				a_pv1.set(this.privateValue.getValue(0, BUY).doubleValue());
+				a_pv_1.set(this.privateValue.getValue(0, SELL).doubleValue());
+				return this;
+			}
+		}.setup();
+		Player player = new Player(spec.descriptor, agent);
 		
-		obs = new Observations(new SimulationSpec(),
-				ImmutableList.of(market1, market2), Arrays.asList(agents),
-				ImmutableList.<Player> of(), fundamental);
+		double a_maxAbsPos = Math.max(Math.abs(a_pv1.get()), Math.abs(a_pv_1.get()));
 		
-		Observations.BUS.register(obs);
-	}
-	
-	@SuppressWarnings("unused")
-	private void setupObservations(FundamentalValue fundamental, Agent... agents) {
-		if (obs != null)
-			Observations.BUS.unregister(obs);
+		obs.add(sim.getStats(), ImmutableList.of(agent), ImmutableList.of(player), 1);
 		
-		obs = new Observations(new SimulationSpec(),
-				ImmutableList.of(market1, market2), Arrays.asList(agents),
-				ImmutableList.<Player> of(), fundamental);
+		// Set up the second agent (b) and record their private values
+		final AtomicDouble b_pv1 = new AtomicDouble();
+		final AtomicDouble b_pv_1 = new AtomicDouble();
 		
-		Observations.BUS.register(obs);
-	}
-	
-	private void setupObservations(Player... players) {
-		if (obs != null)
-			Observations.BUS.unregister(obs);
+		agent = new BackgroundAgent(sim, TimeStamp.ZERO, one, rand, Props.fromPairs()) {
+			private static final long serialVersionUID = 1L;
+			@Override public String toString() { return "TestAgent " + id; }
+			private Agent setup() {
+				b_pv1.set(this.privateValue.getValue(0, BUY).doubleValue());
+				b_pv_1.set(this.privateValue.getValue(0, SELL).doubleValue());
+				return this;
+			}
+		}.setup();
+		player = new Player(spec.descriptor, agent);
 		
-		Builder<Agent> agentList = ImmutableList.builder();
-		for (Player player : players)
-			agentList.add(player.getAgent());
+		double b_maxAbsPos = Math.max(Math.abs(b_pv1.get()), Math.abs(b_pv_1.get()));
 		
-		obs = new Observations(new SimulationSpec(),
-				ImmutableList.of(market1, market2), agentList.build(),
-				Arrays.asList(players), fundamental);
+		obs.add(sim.getStats(), ImmutableList.of(agent), ImmutableList.of(player), 1);
 		
-		Observations.BUS.register(obs);
+		// Test
+		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(spec.descriptor));
+		
+		assertEquals((a_pv1.get() + b_pv1.get()) / 2, pobs.features.get(Keys.PV_BUY1).mean(), eps);
+		assertEquals((a_pv_1.get() + b_pv_1.get()) / 2, pobs.features.get(Keys.PV_SELL1).mean(), eps);
+		assertEquals((a_maxAbsPos + b_maxAbsPos) / 2, pobs.features.get(Keys.PV_POSITION1_MAX_ABS).mean(), eps);
 	}
 
 }

@@ -2,7 +2,6 @@ package entity.market;
 
 import java.io.Serializable;
 
-import entity.agent.Agent;
 import event.TimeStamp;
 
 /**
@@ -14,49 +13,16 @@ import event.TimeStamp;
 public class Transaction implements Serializable {
 
 	private static final long serialVersionUID = 8420827805792281642L;
-	
-	protected final Agent buyer;
-	protected final Agent seller;
-	protected final Market market;
-	protected final Order buyOrder;
-	protected final Order sellOrder;
 
 	// Transaction Info
-	protected final int quantity;
-	protected final Price price;
-	protected final TimeStamp execTime;
+	private final int quantity;
+	private final Price price;
+	private final TimeStamp execTime;
 
-	public Transaction(Agent buyer, Agent seller, Market market,
-			Order buyOrder, Order sellOrder, int quantity, Price price,
-			TimeStamp execTime) {
-		this.buyer = buyer;
-		this.seller = seller;
-		this.market = market;
-		this.buyOrder = buyOrder;
-		this.sellOrder = sellOrder;
+	protected Transaction(int quantity, Price price, TimeStamp execTime) {
 		this.quantity = quantity;
 		this.price = price;
 		this.execTime = execTime;
-	}
-
-	public final Agent getBuyer() {
-		return buyer;
-	}
-
-	public final Agent getSeller() {
-		return seller;
-	}
-
-	public final Market getMarket() {
-		return market;
-	}
-
-	public final Order getBuyOrder() {
-		return buyOrder;
-	}
-
-	public final Order getSellOrder() {
-		return sellOrder;
 	}
 
 	public final int getQuantity() {
@@ -83,7 +49,7 @@ public class Transaction implements Serializable {
 
 	@Override
 	public String toString() {
-		return buyer + " bought " + quantity + " from " + seller + " @ " + price + " in " + market;
-		}
+		return quantity + " @ " + price;
+	}
 
 }

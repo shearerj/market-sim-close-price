@@ -7,10 +7,10 @@
 package event;
 
 import java.io.Serializable;
-
-import utils.MathUtils;
+import java.math.RoundingMode;
 
 import com.google.common.base.Objects;
+import com.google.common.math.IntMath;
 import com.google.common.primitives.Longs;
 
 /**
@@ -22,7 +22,7 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	private static final long serialVersionUID = -2109498445060507654L;
 	
 	public static final TimeStamp IMMEDIATE = new TimeStamp(-1);
-	public static final TimeStamp ZERO = TimeStamp.create(0);
+	public static final TimeStamp ZERO = TimeStamp.of(0);
 	public static final int TICKS_PER_SECOND = 1000000;
 	
 	protected final long ticks;
@@ -31,7 +31,7 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 		this.ticks = ticks;
 	}
 	
-	public static TimeStamp create(long ticks) {
+	public static TimeStamp of(long ticks) {
 		if (ticks < 0) return TimeStamp.IMMEDIATE;
 		return new TimeStamp(ticks);
 	}
@@ -44,14 +44,14 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	 * Subtract two TimeStamps
 	 */
 	public TimeStamp minus(TimeStamp other) {
-		return TimeStamp.create(this.ticks - other.ticks);
+		return TimeStamp.of(this.ticks - other.ticks);
 	}
 
 	/**
 	 * Add two TimeStamps together
 	 */
 	public TimeStamp plus(TimeStamp other) {
-		return TimeStamp.create(this.ticks + other.ticks);
+		return TimeStamp.of(this.ticks + other.ticks);
 	}
 
 	public long getInTicks() {
@@ -106,7 +106,7 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 		if (equals(TimeStamp.IMMEDIATE)) return "immediate";
 		
 		long seconds = Long.signum(ticks) * Math.abs(ticks / TICKS_PER_SECOND);
-		int digits = MathUtils.logn(TICKS_PER_SECOND, 10);
+		int digits = IntMath.log10(TICKS_PER_SECOND, RoundingMode.HALF_EVEN);
 		long microseconds = Math.abs(ticks % TICKS_PER_SECOND);
 		while (digits > 3 && microseconds % 10 == 0) {
 			microseconds /= 10;

@@ -1,22 +1,19 @@
 package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static logger.Log.log;
-import static logger.Log.Level.INFO;
 
 import java.util.Random;
 
 import systemmanager.Keys;
-import systemmanager.Scheduler;
+import systemmanager.Simulation;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.EvictingQueue;
+import com.google.common.math.DoubleMath;
 
-import data.EntityProperties;
-import data.FundamentalValue;
-import entity.infoproc.SIP;
+import data.Props;
 import entity.market.Market;
 import entity.market.Price;
-import event.TimeStamp;
 
 /**
  * MAMARKETMAKER
@@ -24,115 +21,49 @@ import event.TimeStamp;
  * Moving Average Market Maker
  * 
  * NOTE: Because the prices are stored in an EvictingQueue, which does not
- * accept null elements, the number of elements in the bid/ask queues may not
- * be equivalent.
+ * accept null elements, the number of elements in the bid/ask queues may not be
+ * equivalent.
  * 
  * @author zzy, ewah
  */
-public class MAMarketMaker extends MarketMaker {
+/*
+ * TODO I think class would make more sense if it were abstract, and took
+ * average function as an input parameter. Then instead of WMA there's
+ * exponential weighted and linear weighted that pass in different functions.
+ */
+public class MAMarketMaker extends BasicMarketMaker {
 
 	private static final long serialVersionUID = -4766539518925397355L;
-	
-	protected EvictingQueue<Price> bidQueue;
-	protected EvictingQueue<Price> askQueue;
 
-	public MAMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
-			SIP sip, Market market, Random rand, double reentryRate,
-			int tickSize, int numRungs, int rungSize, boolean truncateLadder,
-			boolean tickImprovement, boolean tickOutside,
-			int initLadderMean, int initLadderRange, int numHistorical) {
+	protected final EvictingQueue<Price> bidQueue, askQueue;
 
-		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
-				numRungs, rungSize, truncateLadder, tickImprovement, tickOutside,
-				initLadderMean, initLadderRange);
-
+	protected MAMarketMaker(Simulation sim, Market market, Random rand, Props props) {
+		super(sim, market, rand, props);
+		int numHistorical = props.getAsInt(Keys.NUM_HISTORICAL);
 		checkArgument(numHistorical > 0, "Number of historical prices must be positive!");
 		bidQueue = EvictingQueue.create(numHistorical);
 		askQueue = EvictingQueue.create(numHistorical);
 	}
 
-	public MAMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
-			SIP sip, Market market, Random rand, EntityProperties props) {
-
-		this(scheduler, fundamental, sip, market, rand,
-				props.getAsDouble(Keys.MARKETMAKER_REENTRY_RATE, Keys.REENTRY_RATE),
-				props.getAsInt(Keys.AGENT_TICK_SIZE, Keys.TICK_SIZE),
-				props.getAsInt(Keys.NUM_RUNGS),
-				props.getAsInt(Keys.RUNG_SIZE),
-				props.getAsBoolean(Keys.TRUNCATE_LADDER), 
-				props.getAsBoolean(Keys.TICK_IMPROVEMENT),
-				props.getAsBoolean(Keys.TICK_OUTSIDE),
-				props.getAsInt(Keys.INITIAL_LADDER_MEAN, Keys.FUNDAMENTAL_MEAN),
-				props.getAsInt(Keys.INITIAL_LADDER_RANGE),
-				props.getAsInt(Keys.NUM_HISTORICAL));
+	public static MAMarketMaker create(Simulation sim, Market market, Random rand, Props props) {
+		return new MAMarketMaker(sim, market, rand, props);
 	}
-	
+
 	@Override
-	public void agentStrategy(TimeStamp currentTime) {
-		super.agentStrategy(currentTime);
+	protected void submitCalculatedSpread(Optional<Price> bid, Optional<Price> ask) {
+		if (bid.isPresent())
+			bidQueue.add(bid.get());
+		if (ask.isPresent())
+			askQueue.add(ask.get());
 		
-		Price bid = this.getQuote().getBidPrice();
-		Price ask = this.getQuote().getAskPrice();
-
-		if (bid == null && lastBid == null && ask == null && lastAsk == null) {
-			log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
-			this.createOrderLadder(bid, ask);	
-			
-		} else if ((bid == null && lastBid != null)
-				|| (bid != null && !bid.equals(lastBid))
-				|| (bid != null && lastBid == null)
-				|| (ask == null && lastAsk != null)
-				|| (ask != null && !ask.equals(lastAsk))
-				|| (ask != null && lastAsk == null)) {
-			
-			if (!this.getQuote().isDefined()) {
-				log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
-				this.createOrderLadder(bid, ask);
-				
-			} else {
-				// Quote changed, still valid, withdraw all orders
-				log(INFO, "%s in %s: Withdraw all orders", this, primaryMarket);
-				withdrawAllOrders();	
-				
-				bid = this.getQuote().getBidPrice();
-				ask = this.getQuote().getAskPrice();
-				
-				// Use last known bid/ask if undefined post-withdrawal
-				if (!this.getQuote().isDefined()) {
-					Price oldBid = bid, oldAsk = ask;
-					if (bid == null && lastBid != null) bid = lastBid;
-					if (ask == null && lastAsk != null) ask = lastAsk;
-					log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", 
-							this, primaryMarket, oldBid, oldAsk, bid, ask);
-				}
-				
-				// Compute moving average
-				if (bid != null) bidQueue.add(bid);
-				if (ask != null) askQueue.add(ask);
-				
-				Price ladderBid = null, ladderAsk = null;
-				
-				if (!bidQueue.isEmpty()) {
-					double sumBids = 0;
-					for (Price x : bidQueue) sumBids += x.intValue();
-					ladderBid = new Price(sumBids / bidQueue.size());
-				}
-				if (!askQueue.isEmpty()) {
-					double sumAsks = 0;
-					for (Price y : askQueue) sumAsks += y.intValue();
-					ladderAsk = new Price(sumAsks / askQueue.size());
-				}
-
-				this.createOrderLadder(ladderBid, ladderAsk);
-
-			} // if quote defined
-			
-		} else {
-			log(INFO, "%s in %s: No change in submitted ladder", this, primaryMarket);
-		}
-		// update latest bid/ask prices
-		lastAsk = ask; lastBid = bid;
+		createOrderLadder(
+				(bidQueue.isEmpty() ? Optional.<Price> absent() : Optional.of(Price.of(average(bidQueue)))),
+				(askQueue.isEmpty() ? Optional.<Price> absent() : Optional.of(Price.of(average(askQueue)))));
 	}
 	
+	protected double average(Iterable<? extends Number> numbers) {
+		return DoubleMath.mean(numbers);
+	}
+
 }
 

@@ -1,15 +1,11 @@
 package entity.agent;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import systemmanager.Scheduler;
-
-import com.google.common.collect.Lists;
-
-import data.FundamentalValue;
-import entity.infoproc.SIP;
+import systemmanager.Keys;
+import systemmanager.Simulation;
+import data.Props;
 import entity.market.Market;
 import entity.market.Transaction;
 import event.TimeStamp;
@@ -38,15 +34,10 @@ public abstract class WindowAgent extends BackgroundAgent {
 
 	protected TimeStamp windowLength;
 
-	public WindowAgent(Scheduler scheduler, TimeStamp arrivalTime,
-			FundamentalValue fundamental, SIP sip, Market market, Random rand,
-			Iterator<TimeStamp> interarrivalTimes, PrivateValue pv,
-			int tickSize, int bidRangeMin, int bidRangeMax, int windowLength) {
+	protected WindowAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
+		super(sim, arrivalTime, market, rand, props);
 		
-		super(scheduler, arrivalTime, fundamental, sip, market, rand,
-				interarrivalTimes, pv, tickSize, bidRangeMin, bidRangeMax);
-		
-		this.windowLength = TimeStamp.create(windowLength);
+		this.windowLength = TimeStamp.of(props.getAsLong(Keys.WINDOW_LENGTH));
 	}
 
 	/**
@@ -57,29 +48,22 @@ public abstract class WindowAgent extends BackgroundAgent {
 	 * @param currentTime
 	 * @return
 	 */
-	public List<Transaction> getWindowTransactions(TimeStamp currentTime) {
-		TimeStamp firstTimeInWindow = currentTime.minus(windowLength);
+	// FIXME Assert that the ording and searching are correct
+	// FIXME Should this take into account latency? Latency is effectively limitng size of window...
+	// Maybe get window from latest transaction time backwards?
+	public List<Transaction> getWindowTransactions() {
+		TimeStamp firstTimeInWindow = currentTime().minus(windowLength);
 
-		/*
-		 * XXX To add more transaction sources that are also sorted, google has
-		 * Iterables.mergeSorted(iterables, comparator) that can merge sorted
-		 * iterables. The best way would probably to iterate over something like
-		 * 
-		 * Iterables.mergeSorted(ImmutableList.of(Lists.reverse(marketTransactionProcessor.getTransactions())), Ordering.<Transaction> natural().reverse());
-		 * 
-		 * This will return transactions in reverse order to be copied into a
-		 * list. They could be deduped as they're read off. This will avoid most
-		 * unnecessary copying.
-		 */
-		List<Transaction> allTransactions = marketTransactionProcessor.getTransactions();
+		List<Transaction> allTransactions = primaryMarket.getTransactions();
 		
-		int startIndex = allTransactions.size();
-		for (Transaction trans : Lists.reverse(allTransactions)) {
+		// TODO Binary Search?
+		int limit = 0;
+		for (Transaction trans : allTransactions) {
 			if (!trans.getExecTime().after(firstTimeInWindow))
 				break;
-			--startIndex;
+			++limit;
 		}
-		return allTransactions.subList(startIndex, allTransactions.size());
+		return allTransactions.subList(0, limit);
 	}
 	
 	public TimeStamp getWindowLength() {

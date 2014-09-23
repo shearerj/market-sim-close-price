@@ -3,13 +3,9 @@ package entity.agent;
 import java.util.Collection;
 import java.util.Random;
 
-import systemmanager.Scheduler;
-
-import com.google.common.base.Joiner;
-
-import data.FundamentalValue;
-import entity.infoproc.SIP;
-import entity.market.Market;
+import systemmanager.Simulation;
+import data.Props;
+import entity.market.Market.MarketView;
 import event.TimeStamp;
 
 /**
@@ -28,15 +24,12 @@ import event.TimeStamp;
 public abstract class MMAgent extends Agent {
 
 	private static final long serialVersionUID = 2297636044775909734L;
-	protected final static Joiner marketJoiner = Joiner.on(',');
 	
-	protected final Collection<Market> markets; 
+	protected final Collection<MarketView> markets; 
 	
-	// TODO Just keep the SMIPs and not the actual markets...
-	public MMAgent(Scheduler scheduler, TimeStamp arrivalTime,
-			FundamentalValue fundamental, SIP sip, Collection<Market> markets,
-			Random rand, int tickSize) {
-		super(scheduler, arrivalTime, fundamental, sip, rand, tickSize);
+	protected MMAgent(Simulation sim, TimeStamp arrivalTime, Collection<MarketView> markets,
+			Random rand, Props props) {
+		super(sim, arrivalTime, rand, props);
 		this.markets = markets;
 	}
 

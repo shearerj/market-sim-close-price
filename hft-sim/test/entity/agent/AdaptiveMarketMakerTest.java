@@ -1,545 +1,268 @@
 package entity.agent;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static utils.Tests.checkOrderLadder;
+import static utils.Tests.checkRandomOrderLadder;
+import static utils.Tests.j;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 
 import logger.Log;
 
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import systemmanager.Consts;
-import systemmanager.Executor;
+import systemmanager.Consts.MarketType;
 import systemmanager.Keys;
-import activity.AgentStrategy;
-import activity.Clear;
-import activity.SubmitOrder;
+import systemmanager.MockSim;
 
+import com.google.common.base.Optional;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
+import com.google.common.collect.Range;
 
-import data.EntityProperties;
-import data.FundamentalValue;
-import data.MockFundamental;
+import data.Props;
 import entity.agent.AdaptiveMarketMaker.TransactionResult;
-import entity.infoproc.SIP;
-import entity.market.MockMarket;
-import entity.market.Order;
+import entity.market.Market;
+import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.market.Quote;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
+// TODO Weights should be moved out to an expert object and tested separately.
+
 public class AdaptiveMarketMakerTest {
-
-	public static final TimeStamp one = TimeStamp.create(1);
-
-	private Executor exec;
-	private MockMarket market;
-	private SIP sip;
-	private static final FundamentalValue fundamental = new MockFundamental(100000);
-	private static final EntityProperties agentProperties = EntityProperties.fromPairs(
+	private static final Random rand = new Random();
+	private static final Props defaults = Props.fromPairs(
+			Keys.NUM_RUNGS, 2,
+			Keys.RUNG_SIZE, 10,
 			Keys.REENTRY_RATE, 0,
+			Keys.SPREADS, "2-4-6-8",
+			Keys.TRUNCATE_LADDER, false,
 			Keys.TICK_IMPROVEMENT, false,
-			Keys.FUNDAMENTAL_KAPPA, 0.05,
-			Keys.FUNDAMENTAL_MEAN, 50,
-			Keys.FUNDAMENTAL_SHOCK_VAR, 10);
-
-	@BeforeClass
-	public static void setupClass() throws IOException {
-		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "AdaptiveMarketMakerTest.log")));
-	}
+			Keys.INITIAL_LADDER_RANGE, 0,
+			Keys.INITIAL_LADDER_MEAN, 0);
+	
+	private MockSim sim;
+	private Market actualMarket;
+	private MarketView market;
+	private Agent mockAgent;
 
 	@Before
-	public void setup() {
-		exec = new Executor();
-		sip = new SIP(exec, TimeStamp.IMMEDIATE);
-		market = new MockMarket(exec, sip);
-	}
-
-	private AdaptiveMarketMaker createAMM(Object... parameters) {
-		return new AdaptiveMarketMaker(exec, fundamental, sip, market,
-				new Random(), EntityProperties.copyFromPairs(agentProperties, parameters));
+	public void setup() throws IOException {
+		sim = MockSim.create(getClass(),
+				Log.Level.NO_LOGGING, Keys.FUNDAMENTAL_MEAN,
+				100000, Keys.FUNDAMENTAL_SHOCK_VAR,
+				0, MarketType.CDA, j.join(Keys.NUM_MARKETS, 1));
+		actualMarket = Iterables.getOnlyElement(sim.getMarkets());
+		market = actualMarket.getPrimaryView();
+		mockAgent = mockAgent();
 	}
 
 	@Test
 	public void nullBidAsk() {
-		// testing when no bid/ask, does not submit any orders
-		TimeStamp time = TimeStamp.ZERO;
-
-		MarketMaker mm = createAMM(
-				Keys.NUM_RUNGS, 2,
-				Keys.RUNG_SIZE, 10,
-				Keys.TRUNCATE_LADDER, false,
-				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2-4-6-8",
-				Keys.INITIAL_LADDER_MEAN, 0,
-				Keys.INITIAL_LADDER_RANGE, 0);
-
-		// Check activities inserted (none, other than reentry)
-		mm.agentStrategy(time);
+		AdaptiveMarketMaker mm = aMarketMaker();
+		mm.agentStrategy();
 		assertTrue(mm.activeOrders.isEmpty());
 	}
 
-	/**
-	 * When the quote is undefined (either bid or ask is null) but prior quote
-	 * was defined, then the market maker should not do anything.
-	 */
+	/** Was defined, then the market maker should not do anything. */
 	@Test
 	public void quoteUndefined() {
-		TimeStamp time = TimeStamp.ZERO;
-
-		MarketMaker mm = createAMM(
-				Keys.NUM_RUNGS, 2,
-				Keys.RUNG_SIZE, 10,
+		AdaptiveMarketMaker mm = aMarketMaker(
 				Keys.TRUNCATE_LADDER, false,
-				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2-4-6-8",
 				Keys.INITIAL_LADDER_MEAN, 0,
 				Keys.INITIAL_LADDER_RANGE, 0);
-		mm.lastAsk = new Price(55);
-		mm.lastBid = new Price(45);
+		mm.lastAsk = Optional.of(Price.of(55));
+		mm.lastBid = Optional.of(Price.of(45));
 
-		// Check market quote
-		Quote quote = market.getQuoteProcessor().getQuote();
-		assertNull(quote.getAskPrice());
-		assertNull(quote.getBidPrice());
-
-		// Check activities inserted (none, other than reentry)
-		mm.agentStrategy(time);
+		// Both sides undefined
+		mm.agentStrategy();
 		assertTrue(mm.activeOrders.isEmpty());
 
-		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		// One side undefined
+		submitOrder(mockAgent, BUY, Price.of(40));
 
-		// Creating and adding bids
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-
-		// Check market quote
-		quote = market.getQuoteProcessor().getQuote();
-		assertNull(quote.getAskPrice());
-		assertEquals(new Price(40), quote.getBidPrice());
-
-		// Check activities inserted (none, other than reentry)
-		mm.lastAsk = new Price(55);
-		mm.lastBid = new Price(45);
-		mm.agentStrategy(time);
+		mm.lastAsk = Optional.of(Price.of(55));
+		mm.lastBid = Optional.of(Price.of(45));
+		mm.agentStrategy();
 		assertTrue(mm.activeOrders.isEmpty());
 	}
-
 
 	@Test
 	public void basicLadderTest() {
-		TimeStamp time = TimeStamp.ZERO;
-
-		MarketMaker mm = createAMM(
+		AdaptiveMarketMaker mm = aMarketMaker(
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 10,
 				Keys.TRUNCATE_LADDER, false,
-				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2-4-6-8");
+				Keys.SPREADS, 10);
 
-		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		setQuote(Price.of(40), Price.of(50));
 
-		// Creating and adding bids
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-
-		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
-		exec.executeActivity(new Clear(market));
-
-		// Check market quote
-		Quote quote = market.getQuoteProcessor().getQuote();
-		assertEquals(new Price(50), quote.getAskPrice());
-		assertEquals(new Price(40), quote.getBidPrice());
-
-		// Check activities inserted (4 submit orders plus agent reentry)
-		mm.agentStrategy(time);
-
-		// Check ladder of orders (use market's collection b/c ordering consistent)
-		List<Order> orders = ImmutableList.copyOf(market.getOrders());
-		assertEquals("Incorrect number of orders", 6, orders.size());
-
-		assertEquals(agent1, orders.get(0).getAgent());
-		assertEquals(new Price(40), orders.get(0).getPrice());
-		assertEquals(agent2, orders.get(1).getAgent());
-		assertEquals(new Price(50), orders.get(1).getPrice());
-
-		assertEquals("Incorrect number of orders", 4, mm.activeOrders.size());
-
-		assertEquals(mm, orders.get(2).getAgent());
-		assertEquals(mm, orders.get(3).getAgent());
-		assertEquals(mm, orders.get(4).getAgent());
-		assertEquals(mm, orders.get(5).getAgent());
-		assertEquals(OrderType.BUY, orders.get(2).getOrderType());
-		assertEquals(OrderType.BUY, orders.get(3).getOrderType());
-		assertEquals(OrderType.SELL, orders.get(4).getOrderType());
-		assertEquals(OrderType.SELL, orders.get(5).getOrderType());
-
-		int approxUnitPrice = 45;
-		assertEquals(orders.get(5).getPrice().intValue() - approxUnitPrice,
-				approxUnitPrice - orders.get(3).getPrice().intValue());
-		assertEquals(orders.get(4).getPrice().intValue() - approxUnitPrice,
-				approxUnitPrice - orders.get(2).getPrice().intValue());		
+		mm.agentStrategy();
+		sim.executeImmediate();
+		assertTrue(market.getTransactions().isEmpty());
+		checkOrderLadder(mm.activeOrders,
+				Price.of(30), Price.of(40),
+				Price.of(50), Price.of(60));
 	}
 
-	/**
-	 * Check when quote changes in between reentries
-	 */
+	/** Check when quote changes in between reentries */
 	@Test
 	public void quoteChangeTest() {
-		AdaptiveMarketMaker marketmaker = createAMM(
+		AdaptiveMarketMaker marketmaker = aMarketMaker(
+				Keys.SPREADS, 2,
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 10,
-				Keys.TRUNCATE_LADDER, false,
-				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2");
+				Keys.TRUNCATE_LADDER, false);
 
-		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
-
-		// Creating and adding bids
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-
-		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
-		exec.executeActivity(new Clear(market));
-
+		setQuote(Price.of(40), Price.of(50));
 
 		// Initial MM strategy
-		exec.executeActivity(new AgentStrategy(marketmaker));
-
+		marketmaker.agentStrategy();
 
 		// Quote change
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(42), 1));
+		setQuote(Price.of(42), Price.of(48));
 
-		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(48), 1));
-		exec.executeActivity(new Clear(market));
-
-		// Check market quote
-		Quote quote = market.getQuoteProcessor().getQuote();
-		assertEquals(new Price(46), quote.getAskPrice());
-		assertEquals(new Price(44), quote.getBidPrice());
-
-		exec.executeUntil(TimeStamp.create(10));
-		// Next MM strategy execution
-		exec.executeActivity(new AgentStrategy(marketmaker));
-
-		// Check ladder of orders, previous orders withdrawn
-		// market's orders contains all orders ever submitted
-		ArrayList<Order> orders = new ArrayList<Order>(market.getOrders());
-		assertEquals("Incorrect number of orders", 12, orders.size());
-		assertEquals(agent1, orders.get(6).getAgent());
-		assertEquals(new Price(42), orders.get(6).getPrice());
-		assertEquals(agent2, orders.get(7).getAgent());
-		assertEquals(new Price(48), orders.get(7).getPrice());
-
-		Order order = orders.get(10);
-		assertEquals(marketmaker, order.getAgent());
-		assertEquals(OrderType.SELL, order.getOrderType());
-		order = orders.get(11);
-		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(46), order.getPrice());
-		assertEquals(OrderType.SELL, order.getOrderType());
-
-		order = orders.get(8);
-		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(34), order.getPrice());
-		assertEquals(OrderType.BUY, order.getOrderType());
-		order = orders.get(9);
-		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(44), order.getPrice());
-		assertEquals(OrderType.BUY, order.getOrderType());
-
+		marketmaker.agentStrategy();
+		checkOrderLadder(marketmaker.activeOrders,
+				Price.of(34), Price.of(44),
+				Price.of(46), Price.of(56));
 	}
-
-	/**
-	 * Check changing numRungs, rungSize
-	 */
-	@Test
-	public void rungsTest() {
-		MarketMaker marketmaker = createAMM(
-				Keys.NUM_RUNGS, 3,
-				Keys.RUNG_SIZE, 12,
-				Keys.TRUNCATE_LADDER, false,
-				Keys.TICK_SIZE, 5,
-				Keys.SPREADS, "10");
-
-		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
-
-		// Creating and adding bids
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-
-		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
-		exec.executeActivity(new Clear(market));
-		// Initial MM strategy
-		exec.executeActivity(new AgentStrategy(marketmaker));
-
-		// Check ladder of orders
-		// market's orders contains all orders ever submitted
-		ArrayList<Order> orders = new ArrayList<Order>(market.getOrders());
-		assertEquals("Incorrect number of orders", 8, orders.size());
-		// Verify that 3 rungs on each side
-		// Rung size was 12 quantized by tick size 5
-		Order order = orders.get(2);
-		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(20), order.getPrice());
-		assertEquals(OrderType.BUY, order.getOrderType());
-		order = orders.get(3);
-		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(30), order.getPrice());
-		assertEquals(OrderType.BUY, order.getOrderType());
-		order = orders.get(4);
-		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(40), order.getPrice());
-		assertEquals(OrderType.BUY, order.getOrderType());
-
-		order = orders.get(5);
-		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(70), order.getPrice());
-		assertEquals(OrderType.SELL, order.getOrderType());
-		order = orders.get(6);
-		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(60), order.getPrice());
-		assertEquals(OrderType.SELL, order.getOrderType());
-		order = orders.get(7);
-		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(50), order.getPrice());
-		assertEquals(OrderType.SELL, order.getOrderType());
-	}
-
 	@Test
 	public void withdrawLadderTest() {
-
-		MarketMaker marketmaker = createAMM(
+		AdaptiveMarketMaker marketmaker = aMarketMaker(
 				Keys.NUM_RUNGS, 3,
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2");
-		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
-
-		// Creating and adding bids
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
-
+				Keys.SPREADS, 2);
+		
+		setQuote(Price.of(40), Price.of(50));
 
 		// Initial MM strategy; submits ladder with numRungs=3
-		exec.executeActivity(new AgentStrategy(marketmaker));
-
+		marketmaker.agentStrategy();
+		sim.executeImmediate();
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
 
-		// Withdraw other orders & submit new orders
-		agent1.withdrawAllOrders();
-		assertEquals(0, agent1.activeOrders.size());
-		agent2.withdrawAllOrders();
-		assertEquals(0, agent2.activeOrders.size());
-		exec.executeUntil(one);
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(42), 1));
-		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(49), 1));
+		setQuote(Price.of(42), Price.of(49));
 
 		// Verify that it withdraws ladder entirely & submits new ladder
-		exec.executeActivity(new AgentStrategy(marketmaker));
-		exec.executeUntil(one);
-		assertNotNull(marketmaker.lastBid);
-		assertNotNull(marketmaker.lastAsk);
-		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
-		for (Order o : marketmaker.activeOrders) {
-			int price = o.getPrice().intValue();
-			if (o.getOrderType() == BUY) 
-				assertTrue(price == 44 || price == 39 || price == 34);
-			else
-				assertTrue(price == 46 || price == 51 || price == 56);
-		}
+		marketmaker.agentStrategy();
+		assertTrue(marketmaker.lastBid.isPresent());
+		assertTrue(marketmaker.lastAsk.isPresent());
+		
+		checkOrderLadder(marketmaker.activeOrders,
+				Price.of(34), Price.of(39), Price.of(44),
+				Price.of(46), Price.of(51), Price.of(56));
 	}
 
 	/**
 	 * Case where withdrawing the ladder causes the quote to become undefined
 	 * (as well as the last NBBO quote)
 	 */
+	// FIXME This fails because the market maker is not waiting for the quote to update after withdrawing the orders...
 	@Test
 	public void withdrawUndefinedTest() {
-		MarketMaker marketmaker = createAMM(
+		AdaptiveMarketMaker marketmaker = aMarketMaker(
 				Keys.NUM_RUNGS, 3,
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_SIZE, 1,
 				Keys.SPREADS, "2");
-		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		
+		setQuote(Price.of(40), Price.of(50));
 
-		// Creating and adding bids
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
-
-		// Initial MM strategy; submits ladder with numRungs=3
-		exec.executeActivity(new AgentStrategy(marketmaker));
-
+		// Submits ladder with numRungs=3
+		marketmaker.agentStrategy();
+		sim.executeImmediate();
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
 
-		// Withdraw other orders
-		agent1.withdrawAllOrders();
-		assertTrue(agent1.activeOrders.isEmpty());
-		marketmaker.lastBid = new Price(42); // to make sure MM will withdraw its orders
+		for (OrderRecord order : ImmutableList.copyOf(mockAgent.activeOrders))
+			if (order.getOrderType() == BUY)
+				mockAgent.withdrawOrder(order);
+		sim.executeImmediate();
+		
+		marketmaker.lastBid = Optional.of(Price.of(42)); // FIXME necessary? to make sure MM will withdraw its orders
 
 		// Verify that it withdraws ladder entirely
 		// Note that now the quote is undefined, after it withdraws its ladder
 		// so it will submit a ladder with the lastBid
-		exec.executeUntil(one);
-		exec.executeActivity(new AgentStrategy(marketmaker));
+		marketmaker.agentStrategy();
 
-		assertNotNull(marketmaker.lastBid);
-		assertNotNull(marketmaker.lastAsk);
-		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
-		for (Order o : marketmaker.activeOrders) {
-			int price = o.getPrice().intValue();
-			if (o.getOrderType() == BUY) 
-				assertTrue(price == 44 || price == 39 || price == 34);
-			else
-				assertTrue(price == 46 || price == 51 || price == 56);
-		}
+		assertTrue(marketmaker.lastBid.isPresent());
+		assertTrue(marketmaker.lastAsk.isPresent());
+		checkOrderLadder(marketmaker.activeOrders,
+				Price.of(34), Price.of(39), Price.of(44),
+				Price.of(46), Price.of(51), Price.of(56));
 	}
-
 
 	@Test
 	public void nullBidAskLadder() {
-		MarketMaker marketmaker = createAMM(
+		AdaptiveMarketMaker marketmaker = aMarketMaker(
 				Keys.NUM_RUNGS, 3,
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_SIZE, 1,
 				Keys.SPREADS, "2",
 				Keys.TICK_IMPROVEMENT, true,
 				Keys.TICK_OUTSIDE, true,
 				Keys.INITIAL_LADDER_MEAN, 50,
 				Keys.INITIAL_LADDER_RANGE, 10);
+		
+		setQuote(Price.of(40), Price.of(50));
 
-		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
-
-		// Creating and adding bids
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
-
-		exec.executeActivity(new Clear(market));
-
-		// Initial MM strategy
-		exec.executeActivity(new AgentStrategy(marketmaker));
+		marketmaker.agentStrategy();
 
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
-
+		
 		// Quote change
 		// Withdraw other orders
-		agent1.withdrawAllOrders();
-		assertTrue(agent1.activeOrders.isEmpty());
-		agent2.withdrawAllOrders();
-		assertEquals(0, agent2.activeOrders.size());
-		assertTrue(marketmaker.lastAsk != null);
-		assertTrue(marketmaker.lastBid != null);
-
 		// Note that now the quote is undefined, after it withdraws its ladder
-		exec.executeUntil(one);
-
-		// Next MM strategy execution
-		exec.executeActivity(new AgentStrategy(marketmaker));
-
-		// Check ladder of orders, previous orders withdrawn
-		// market's orders contains all orders ever submitted (include background traders)
-		ArrayList<Order> orders = new ArrayList<Order>(market.getOrders());
-		assertEquals("Incorrect number of orders", 14, orders.size());
-
-		// Storing buy/sell orders
-		SummaryStatistics buys = new SummaryStatistics();
-		SummaryStatistics sells = new SummaryStatistics();
-		for (Order o : marketmaker.activeOrders) {
-			int price = o.getPrice().intValue();
-			if (o.getOrderType() == BUY)
-				buys.addValue(price);
-			else
-				sells.addValue(price);
-		}
-
-		// Checking randomly generated ladder
-		int ladderCenter = ((int) (buys.getMax() + sells.getMin()) / 2);
-		assertTrue("ladder center outside range", ladderCenter <= 60 && ladderCenter >= 40);
-		assertEquals(ladderCenter + 1, (int) sells.getMin());
-		assertEquals(ladderCenter - 1, (int) buys.getMax());
-		assertEquals(5, sells.getMax() - sells.getMean(), 0.0001);
-		assertEquals(5, buys.getMax() - buys.getMean(), 0.0001);
-		assertEquals(5, sells.getMax() - sells.getMean(), 0.0001);
-		assertEquals(5, buys.getMax() - buys.getMean(), 0.0001);
-		assertEquals(5, sells.getMean() - sells.getMin(), 0.0001);
-		assertEquals(5, buys.getMean() - buys.getMin(), 0.0001);
-	}
-
-	@Test
-	public void chooseMedianWeight() {
-		MarketMaker marketmaker = createAMM(
-				Keys.NUM_RUNGS, 3,
-				Keys.RUNG_SIZE, 5,
-				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2-4-6",
-				Keys.USE_MEDIAN_SPREAD, true);
-
-		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
-
-		// Creating and adding bids
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
-		exec.executeActivity(new Clear(market));
-
-		// Check market quote
-		Quote quote = market.getQuoteProcessor().getQuote();
-		assertEquals(new Price(50), quote.getAskPrice());
-		assertEquals(new Price(40), quote.getBidPrice());
-
-		//Run agent strategy
-		marketmaker.agentStrategy(TimeStamp.ZERO);
-
-		//Check correct number of orders
-		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
-
-		//Check orders submitted using median spread of 4
-		for(Order o : marketmaker.activeOrders){
-			int price = o.getPrice().intValue();
-			if (o.getOrderType() == BUY) 
-				assertTrue(price == 43 || price == 38 || price == 33);
-			else
-				assertTrue(price == 47 || price == 52 || price == 57);
-		}
+		mockAgent.withdrawAllOrders();
+		sim.executeImmediate();
+		assertTrue(marketmaker.lastAsk.isPresent());
+		assertTrue(marketmaker.lastBid.isPresent());
+		
+		marketmaker.agentStrategy();
+		checkRandomOrderLadder(marketmaker.activeOrders, 6, Range.closed(Price.of(40), Price.of(60)), 5);
 	}
 	
 	@Test
-	public void recalculateWeights(){
-		AdaptiveMarketMaker marketmaker = createAMM(
+	public void chooseMedianWeight() {
+		MarketMaker marketmaker = aMarketMaker(
 				Keys.NUM_RUNGS, 3,
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_SIZE, 1,
+				Keys.SPREADS, "2-4-6",
+				Keys.USE_MEDIAN_SPREAD, true);
+
+		setQuote(Price.of(40), Price.of(50));
+
+		marketmaker.agentStrategy();
+
+		//Check orders submitted using median spread of 4
+		checkOrderLadder(marketmaker.activeOrders,
+				Price.of(33), Price.of(38), Price.of(43),
+				Price.of(47), Price.of(52), Price.of(57));
+	}
+
+	@Test
+	public void recalculateWeights(){
+		AdaptiveMarketMaker marketmaker = aMarketMaker(
+				Keys.NUM_RUNGS, 3,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
 				Keys.SPREADS, "2-40-50",
 				Keys.NUM_HISTORICAL, 1,
 				Keys.MOVING_AVERAGE_PRICE, false,
@@ -547,71 +270,41 @@ public class AdaptiveMarketMakerTest {
 				Keys.FAST_LEARNING, true,
 				Keys.USE_MEDIAN_SPREAD, true);
 
-		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		setQuote(Price.of(80), Price.of(120));
 
-		// Creating and adding bids
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(80), 1));
-		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(120), 1));
-		exec.executeActivity(new Clear(market));
+		// Run agent strategy; check that lastPrice updates
+		assertFalse(marketmaker.lastPrice.isPresent());
+		marketmaker.agentStrategy();
+		assertEquals(Optional.of(Price.of(100)), marketmaker.lastPrice);
 
-		// Check market quote
-		Quote quote = market.getQuoteProcessor().getQuote();
-		assertEquals(new Price(120), quote.getAskPrice());
-		assertEquals(new Price(80), quote.getBidPrice());
-
-		//Run agent strategy; check that lastPrice updates
-		assertNull(marketmaker.lastPrice);
-		marketmaker.agentStrategy(TimeStamp.ZERO);
-		assertEquals(new Price(100), marketmaker.lastPrice);
-
-		//Check weights initially equal
-		Map<Integer,Double> weights = ImmutableMap.copyOf(marketmaker.weights);
-		assertEquals(weights.get(2),  weights.get(40), 0.0001);
-		assertEquals(weights.get(40), weights.get(50), 0.0001);
-		assertEquals(weights.get(50), weights.get(2),  0.0001);
-		assertEquals(1, weights.get(2) + weights.get(40) + weights.get(50), 0.001);
-
-		//Check correct number of orders
-		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
+		// Check weights initially equal FIXME Implementation dependent
+		checkEqualWeights(marketmaker.weights);
 
 		//Check orders submitted using median spread of 40
 		assertEquals(40, marketmaker.getSpread());
-		for(Order o : marketmaker.activeOrders){
-			int price = o.getPrice().intValue();
-			if (o.getOrderType() == BUY) 
-				assertTrue(price == 80 || price == 75 || price == 70);
-			else
-				assertTrue(price == 120 || price == 125 || price == 130);
-		}
+		checkOrderLadder(marketmaker.activeOrders,
+				Price.of(70), Price.of(75), Price.of(80),
+				Price.of(120), Price.of(125), Price.of(130));
 
 		//Make a trade that yields profit for one of the spreads(2) and is useless for the other two(40,50)
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(118), 1));
-		exec.executeActivity(new Clear(market));
-		assertEquals(0, agent1.positionBalance);
-		quote = market.getQuoteProcessor().getQuote();
-		assertEquals(new Price(120), quote.getAskPrice());
-		assertEquals(new Price(118), quote.getBidPrice());
+		submitOrder(mockAgent, BUY, Price.of(118));
+		assertEquals(0, mockAgent.positionBalance);
 		
-		//check that spread = 2 is now weighted slightly higher
-		marketmaker.agentStrategy(one);
-		weights = ImmutableMap.copyOf(marketmaker.weights);
-		assertEquals(1, weights.get(2) + weights.get(40) + weights.get(50), 0.001);
-		assertTrue(weights.get(2) > weights.get(40));
-		assertTrue(weights.get(2) > weights.get(50));
+		Quote quote = market.getQuote();
+		assertEquals(Optional.of(Price.of(120)), quote.getAskPrice());
+		assertEquals(Optional.of(Price.of(118)), quote.getBidPrice());
 
-		//check that the other two spreads, neither of which transacted, still have same weight
-		assertEquals(weights.get(40), weights.get(50), 0.0001);
+		//check that spread = 2 is now weighted slightly higher
+		marketmaker.agentStrategy();
+		checkHigherWeight(marketmaker.weights, 2);
 	}
-	
+
 	@Test
 	public void movingAverage() {
-		AdaptiveMarketMaker marketmaker = createAMM(
+		AdaptiveMarketMaker marketmaker = aMarketMaker(
 				Keys.NUM_RUNGS, 3,
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_SIZE, 1,
 				Keys.SPREADS, "2-30-50",
 				Keys.NUM_HISTORICAL, 5,
 				Keys.MOVING_AVERAGE_PRICE, false,
@@ -619,146 +312,183 @@ public class AdaptiveMarketMakerTest {
 				Keys.FAST_LEARNING, true,
 				Keys.USE_MEDIAN_SPREAD, true);
 
-		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
-
-		// Creating and adding bids
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(80), 1));
-		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(120), 1));
-		exec.executeActivity(new Clear(market));
-
-		// Check market quote
-		Quote quote = market.getQuoteProcessor().getQuote();
-		assertEquals(new Price(120), quote.getAskPrice());
-		assertEquals(new Price(80), quote.getBidPrice());
-
+		setQuote(Price.of(80), Price.of(120));
+		
 		//Run agent strategy;
-		marketmaker.agentStrategy(TimeStamp.ZERO);
-		assertEquals(new Price(100), marketmaker.lastPrice);
-
-		//Check weights initially equal
-		Map<Integer,Double> weights = ImmutableMap.copyOf(marketmaker.weights);
-		assertEquals(weights.get(2),  weights.get(30), 0.0001);
-		assertEquals(weights.get(30), weights.get(50), 0.0001);
-		assertEquals(weights.get(50), weights.get(2),  0.0001);
-		assertEquals(1, weights.get(2) + weights.get(30) + weights.get(50), 0.001);
-
-		//Check correct number of orders
-		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
+		marketmaker.agentStrategy();
+		assertEquals(Optional.of(Price.of(100)), marketmaker.lastPrice);
+		checkEqualWeights(marketmaker.weights);
 
 		//Check orders submitted using median spread of 30
 		assertEquals(30, marketmaker.getSpread());
-		for(Order o : marketmaker.activeOrders){
-			int price = o.getPrice().intValue();
-			if (o.getOrderType() == BUY) 
-				assertTrue(price == 75 || price == 80 || price == 85);
-			else
-				assertTrue(price == 115 || price == 120 || price == 125);
-		}
+		checkOrderLadder(marketmaker.activeOrders,
+				Price.of(75), Price.of(80), Price.of(85),
+				Price.of(115), Price.of(120), Price.of(125));
 
 		//Make a trade that yields profit for one of the spreads(2) and is useless for the other two(30,40)
-		agent1.withdrawAllOrders();
-		agent2.withdrawAllOrders();
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(116), 2));
-		exec.executeActivity(new Clear(market));
-		assertEquals(1, agent1.positionBalance);
-		quote = market.getQuoteProcessor().getQuote();
-		 // $115 traded with agent1 buying at $116, so ASK now 120
-		assertEquals(new Price(120), quote.getAskPrice());
-		assertEquals(new Price(116), quote.getBidPrice());
+		sim.executeImmediate();
+		mockAgent.withdrawAllOrders();
+		sim.executeImmediate();
+		submitOrder(mockAgent, BUY, Price.of(116), 2);
 		
+		assertEquals(1, mockAgent.positionBalance);
+		Quote quote = market.getQuote();
+		// $115 traded with agent1 buying at $116, so ASK now 120
+		assertEquals(Optional.of(Price.of(120)), quote.getAskPrice());
+		assertEquals(Optional.of(Price.of(116)), quote.getBidPrice());
+
 		// Check that spread = 2 is now weighted slightly higher
 		// check that spread = 30 also now has more weight
-		marketmaker.agentStrategy(one);
+		marketmaker.agentStrategy();
 		assertEquals(2, marketmaker.getSpread());
-		// generates ladder centered around lastPrice of 109, with spread 2
-		for(Order o : marketmaker.activeOrders){
-			int price = o.getPrice().intValue();
-			if (o.getOrderType() == BUY) 
-				assertTrue(price == 98 || price == 103 || price == 108);
-			else
-				assertTrue(price == 110 || price == 115 || price == 120);
-		}
-		weights = ImmutableMap.copyOf(marketmaker.weights);
-		assertEquals(1, weights.get(2) + weights.get(30) + weights.get(50), 0.001);
-		assertTrue(weights.get(2) > weights.get(30));
-		assertTrue(weights.get(2) > weights.get(50));
-		assertTrue(weights.get(30) > weights.get(50));
-		double weight2 = weights.get(2);
-		double weight30 = weights.get(30);
+		checkOrderLadder(marketmaker.activeOrders,
+				Price.of(98), Price.of(103), Price.of(108),
+				Price.of(110), Price.of(115), Price.of(120));
+
+		checkOrderedWeights(marketmaker.weights, ImmutableList.of(50, 30, 2));
 
 		// check moving average price stored as last price
-		assertEquals(new Price(109), marketmaker.lastPrice);
+		assertEquals(Optional.of(Price.of(109)), marketmaker.lastPrice);
 		
+		double weight2 = marketmaker.weights.get(2);
+		double weight30 = marketmaker.weights.get(30);
+
+
 		// Third test: only spread = 2 should get more weight
 		// $116 from agent1 executes with $110 MM
-		exec.executeActivity(new Clear(market));
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(118), 2));
-		// $118 from agent1 executes with $115 MM
-		exec.executeActivity(new Clear(market));
-		quote = market.getQuoteProcessor().getQuote();
-		assertEquals(new Price(120), quote.getAskPrice());
-		assertEquals(new Price(118), quote.getBidPrice()); 
+		sim.executeImmediate();
+		submitOrder(mockAgent, BUY, Price.of(118), 2);
 		
+		quote = market.getQuote();
+		assertEquals(Optional.of(Price.of(120)), quote.getAskPrice());
+		assertEquals(Optional.of(Price.of(118)), quote.getBidPrice()); 
+
 		// check that spread = 2 is now weighted slightly higher than before
 		// check that spread = 30 is less weight than prior iteration, but still > weight for 50
-		marketmaker.agentStrategy(one);
-		weights = ImmutableMap.copyOf(marketmaker.weights);
-		assertEquals(1, weights.get(2) + weights.get(30) + weights.get(50), 0.001);
-		assertTrue(weights.get(2) > weights.get(30));
-		assertTrue(weights.get(2) > weight2);
-		assertTrue(weights.get(2) > weights.get(50));
-		assertTrue(weights.get(30) > weights.get(50));
-		assertTrue(weights.get(30) < weight30);
-		
-		assertEquals(new Price(112), marketmaker.lastPrice);
+		marketmaker.agentStrategy();
+		assertEquals(1, marketmaker.weights.get(2) + marketmaker.weights.get(30) + marketmaker.weights.get(50), 0.001);
+		assertTrue(marketmaker.weights.get(2) > marketmaker.weights.get(30));
+		assertTrue(marketmaker.weights.get(2) > weight2);
+		assertTrue(marketmaker.weights.get(2) > marketmaker.weights.get(50));
+		assertTrue(marketmaker.weights.get(30) > marketmaker.weights.get(50));
+		assertTrue(marketmaker.weights.get(30) < weight30);
+
+		assertEquals(Optional.of(Price.of(112)), marketmaker.lastPrice);
 	}
-	
+
 	@Test
 	public void lastTransactionResult() {
-		AdaptiveMarketMaker marketmaker = createAMM(
+		AdaptiveMarketMaker marketmaker = aMarketMaker(
 				Keys.NUM_RUNGS, 3,
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_SIZE, 1,
 				Keys.SPREADS, "2-40-50",
 				Keys.USE_MEDIAN_SPREAD, true);
 
-		marketmaker.lastAsk = new Price(100);
-		marketmaker.lastBid = new Price(80);
-		marketmaker.lastPrice = new Price(90);
-		
-		TransactionResult test = marketmaker.lastTransactionResult(10, new Price(81), new Price(91));
+		marketmaker.lastAsk = Optional.of(Price.of(100));
+		marketmaker.lastBid = Optional.of(Price.of(80));
+		marketmaker.lastPrice = Optional.of(Price.of(90));
+
+		TransactionResult test = marketmaker.lastTransactionResult(10, Price.of(81), Price.of(91));
 		// rungs generated should be SELL(95,100,105), BUY(85,80,75)
 		// nothing should trade in this scenario
 		assertEquals(0, (int) test.getCashChange());
 		assertEquals(0, (int) test.getHoldingsChange());
-		
-		test = marketmaker.lastTransactionResult(2, new Price(81), new Price(83));
+
+		test = marketmaker.lastTransactionResult(2, Price.of(81), Price.of(83));
 		// rungs generated should be SELL(91,96,101), BUY(89,84,81)
 		// two orders should trade, a buy rung at price 89 & one at 84 
 		assertEquals(2, (int) test.getHoldingsChange());
 		assertEquals(-(90-1)-(90-6), (int) test.getCashChange());
-		
-		test = marketmaker.lastTransactionResult(2, new Price(97), new Price(99));
+
+		test = marketmaker.lastTransactionResult(2, Price.of(97), Price.of(99));
 		// rungs generated should be SELL(91,96,101), BUY(89,84,81)
 		// two orders should trade, a sell rung at price 91 & one at 96 
 		assertEquals(-2, (int) test.getHoldingsChange());
 		assertEquals((90+1)+(90+6), (int) test.getCashChange());
-		
-		marketmaker.lastPrice = new Price(83);
-		test = marketmaker.lastTransactionResult(2, new Price(81), new Price(83));
+
+		marketmaker.lastPrice = Optional.of(Price.of(83));
+		test = marketmaker.lastTransactionResult(2, Price.of(81), Price.of(83));
 		// rungs generated should be SELL(91,96,101), BUY(89,84,81)
 		// two orders should trade, a buy rung at price 89 & one at 84 
 		assertEquals(0, (int) test.getHoldingsChange());
 		assertEquals(0, (int) test.getCashChange());
-		
-		marketmaker.lastPrice = new Price(95);
-		test = marketmaker.lastTransactionResult(2, new Price(97), new Price(99));
+
+		marketmaker.lastPrice = Optional.of(Price.of(95));
+		test = marketmaker.lastTransactionResult(2, Price.of(97), Price.of(99));
 		// rungs generated should be SELL(91,96,101), BUY(89,84,81)
 		// two orders should trade, a sell rung at price 91 & one at 96 
 		assertEquals(-1, (int) test.getHoldingsChange());
 		assertEquals((95+1), (int) test.getCashChange());
 	}
+	
+	/** Check that all weights are the same and ad to 1 */
+	private static double checkEqualWeights(Map<?, Double> weights) {
+		double weight = Iterables.getFirst(weights.values(), null);
+		double total = 0;
+		for (double w : weights.values()) {
+			assertEquals(weight, w, 0.0001);
+			total += w;
+		}
+		assertEquals(1, total, 0.0001);
+		return weight;
+	}
+	
+	/** Check that higher is higher than the other weights, and other weights are equal */
+	private static <K> void checkHigherWeight(Map<K, Double> weights, K higher) {
+		double higherWeight = weights.get(higher);
+		double otherWeight = Iterables.getFirst(Iterables.filter(weights.values(), Predicates.not(Predicates.equalTo(higherWeight))), null);
+		double total = 0;
+		for (Entry<K, Double> e : weights.entrySet()) {
+			if (!e.getKey().equals(higher)) {
+				assertEquals(otherWeight, e.getValue(), 0.0001);
+				assertTrue(higherWeight > e.getValue());
+			}
+			total += e.getValue();
+		}
+		assertEquals(1, total, 0.0001);
+	}
+	
+	/** Checks that all of the weights are ordered by the keys */
+	private static <K> void checkOrderedWeights(Map<K, Double> weights, List<K> order) {
+		checkArgument(weights.size() == order.size(), "Order must be the same size as weights");
+		List<Double> orderedWeights = Lists.newArrayListWithCapacity(order.size());
+		double total = 0;
+		for (K key : order) {
+			double w = weights.get(key);
+			orderedWeights.add(w);
+			total += w;
+		}
+		assertTrue("Weights were not ordered by ordering", Ordering.natural().isOrdered(orderedWeights));
+		assertEquals(1, total, 0.0001);
+	}
+	
+
+	private AdaptiveMarketMaker aMarketMaker(Object... parameters) {
+		return AdaptiveMarketMaker.create(sim, actualMarket, rand, Props.withDefaults(defaults, parameters));
+	}
+
+	private void setQuote(Price bid, Price ask) {
+		submitOrder(mockAgent, BUY, bid);
+		submitOrder(mockAgent, SELL, ask);
+	}
+	
+	private OrderRecord submitOrder(Agent agent, OrderType buyOrSell, Price price) {
+		return submitOrder(agent, buyOrSell, price, 1);
+	}
+
+	private OrderRecord submitOrder(Agent agent, OrderType buyOrSell, Price price, int quantity) {
+		OrderRecord order = agent.submitOrder(market, buyOrSell, price, quantity);
+		sim.executeImmediate();
+		return order;
+	}
+	
+	private Agent mockAgent() {
+		return new Agent(sim, TimeStamp.ZERO, rand, Props.fromPairs()) {
+			private static final long serialVersionUID = 1L;
+			@Override public void agentStrategy() { }
+			@Override public String toString() { return "TestAgent " + id; }
+		};
+	}
+
 }

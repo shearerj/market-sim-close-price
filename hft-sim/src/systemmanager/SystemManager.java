@@ -2,13 +2,11 @@ package systemmanager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static logger.Log.Level.INFO;
-import static logger.Log.log;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.text.DateFormat;
@@ -18,15 +16,14 @@ import java.util.Properties;
 import java.util.Random;
 
 import logger.Log;
-import logger.Log.Clock;
+import systemmanager.SimulationSpec.SimSpecDeserializer;
 
 import com.google.common.base.Objects;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
-import data.EntityProperties;
-import data.MultiSimulationObservations;
-import entity.agent.Agent;
-import entity.infoproc.ProcessorIDs;
-import entity.market.Market;
+import data.Observations;
+import data.Props;
 
 /**
  * This class serves the purpose of the Client in the Command pattern, in that
@@ -38,11 +35,16 @@ import entity.market.Market;
  * @author ewah
  */
 public abstract class SystemManager {
+	
+	protected static final DateFormat LOG_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+	// XXX This will allow serializing NaNs for testing, but will cause errors for EGTA which doesn't like NaNs...
+	protected static final Gson gson = new GsonBuilder()
+	.serializeSpecialFloatingPointValues()
+	.registerTypeAdapter(SimulationSpec.class, new SimSpecDeserializer())
+	.create();
 
 	/**
 	 * Two input arguments: first is simulation folder, second is sample number
-	 * 
-	 * @param args
 	 */
 	public static void main(String... args) {
 
@@ -66,8 +68,6 @@ public abstract class SystemManager {
 			System.exit(1);
 		}
 	}
-	
-	protected static DateFormat LOG_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
 
 	public static void execute(File simFolder, int obsNum) throws IOException {
 		// Check Directory
@@ -106,47 +106,34 @@ public abstract class SystemManager {
 	}
 	
 	public static void execute(Reader simSpecIn, Reader propIn, Writer obsOut, Writer logOut, int observationNumber) throws IOException {
-		SimulationSpec specification = SimulationSpec.read(simSpecIn);
+		SimulationSpec specification = gson.fromJson(simSpecIn, SimulationSpec.class);
 		Properties props = new Properties();
 		props.load(propIn);
 
-		EntityProperties simProps = specification.getSimulationProps();
+		Props simProps = specification.getSimulationProps();
 		int totalSimulations = simProps.getAsInt(Keys.NUM_SIMULATIONS);
 		long baseRandomSeed = simProps.getAsLong(Keys.RAND_SEED);
 		
 		int logLevel = Integer.parseInt(props.getProperty("logLevel", "0"));
-		boolean outputConfig = Boolean.parseBoolean(props.getProperty("outputConfig", "false"));
+		// FIXME Decide how to handle this
+//		boolean outputConfig = Boolean.parseBoolean(props.getProperty("outputConfig", "false"));
 		
-		MultiSimulationObservations observations = new MultiSimulationObservations(outputConfig, totalSimulations);
-		
+		Observations observations = Observations.create(specification.getPlayerProps());
 		Random rand = new Random();
+		
 		for (int i = 0; i < totalSimulations; i++) {
-			Market.nextID = Agent.nextID = ProcessorIDs.nextID = 1; // Reset ids
+			// This formula means that you'll get the same simulations regardless of the number of observations or simulations
 			rand.setSeed(Objects.hashCode(baseRandomSeed, observationNumber * totalSimulations + i));
-			Simulation sim = new Simulation(specification, rand);
+			Simulation sim = Simulation.create(specification, rand, logOut, Log.Level.values()[logLevel]);
 			
-			initializeLogger(logLevel, logOut, sim);
-			log(INFO, "Random Seed: %d", baseRandomSeed);
-			log(INFO, "Configuration: %s", specification);
+			sim.log(INFO, "Random Seed: %d", baseRandomSeed);
+			sim.log(INFO, "Configuration: %s", specification);
 			
 			sim.executeEvents();
-			observations.addObservation(sim.getObservations());
+			observations.add(sim.statistics, sim.agents, sim.players, sim.simLength);
 		}
-		observations.write(new PrintWriter(System.err));
-		observations.write(obsOut);
-	}
-
-	protected static void initializeLogger(int logLevel, Writer logWriter, final Simulation simulation) {
-		if (logLevel == 0) { // No logging
-			Log.setLogger(Log.nullLogger());
-		} else {
-			Log.setLogger(Log.create(Log.Level.values()[logLevel], logWriter, new Clock() {
-				@Override
-				public long getTime() { return simulation.getCurrentTime().getInTicks(); }
-				@Override
-				public int getPadding() { return 6; }
-			}));
-		}
+		
+		gson.toJson(observations, obsOut);
 	}
 	
 }

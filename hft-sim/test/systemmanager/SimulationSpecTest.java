@@ -6,14 +6,16 @@ import static systemmanager.Consts.Presets.CENTRALCDA;
 import static systemmanager.Consts.Presets.TWOMARKET;
 import static systemmanager.Consts.Presets.TWOMARKETLA;
 
-import java.io.StringReader;
+import java.util.Map.Entry;
 
 import org.junit.Test;
 
+import systemmanager.Consts.AgentType;
+import systemmanager.Consts.MarketType;
+
 import com.google.gson.JsonObject;
 
-import data.AgentProperties;
-import data.MarketProperties;
+import data.Props;
 
 public class SimulationSpecTest {
 
@@ -23,29 +25,29 @@ public class SimulationSpecTest {
 		JsonObject config = new JsonObject();
 		json.add(Keys.CONFIG, config);
 		config.addProperty(Keys.PRESETS, CENTRALCDA.toString());
-		
-		SimulationSpec spec = new SimulationSpec(new StringReader(json.toString()));
-		for (MarketProperties mp : spec.getMarketProps()) {
-			switch (mp.getMarketType()) {
+
+		SimulationSpec spec = new SimulationSpec(json);
+		for (Entry<MarketType, Props> mp : spec.getMarketProps().entries()) {
+			switch (mp.getKey()) {
 			case CDA:
-				assertEquals(1, mp.getAsInt(Keys.NUM));
+				assertEquals(1, mp.getValue().getAsInt(Keys.NUM_MARKETS, Keys.NUM));
 				break;
 			case CALL:
-				assertEquals(0, mp.getAsInt(Keys.NUM));
+				assertEquals(0, mp.getValue().getAsInt(Keys.NUM_MARKETS, Keys.NUM));
 				break;
 			default:
 			}
 		}
-		for (AgentProperties mp : spec.getAgentProps()) {
-			switch (mp.getAgentType()) {
+		for (Entry<AgentType, Props> mp : spec.getAgentProps().entries()) {
+			switch (mp.getKey()) {
 			case LA:
-				assertEquals(0, mp.getAsInt(Keys.NUM));
+				assertEquals(0, mp.getValue().getAsInt(Keys.NUM_AGENTS, Keys.NUM));
 				break;
 			default:
 			}
 		}
 	}
-	
+
 	@Test
 	public void centralCallPresetTest() {
 		JsonObject json = new JsonObject();
@@ -54,23 +56,23 @@ public class SimulationSpecTest {
 		config.addProperty(Keys.PRESETS, CENTRALCALL.toString());
 		config.addProperty(Keys.NBBO_LATENCY, 1337);
 		
-		SimulationSpec spec = new SimulationSpec(new StringReader(json.toString()));
-		for (MarketProperties mp : spec.getMarketProps()) {
-			switch (mp.getMarketType()) {
+		SimulationSpec spec = new SimulationSpec(json);
+		for (Entry<MarketType, Props> mp : spec.getMarketProps().entries()) {
+			switch (mp.getKey()) {
 			case CDA:
-				assertEquals(0, mp.getAsInt(Keys.NUM));
+				assertEquals(0, mp.getValue().getAsInt(Keys.NUM_MARKETS, Keys.NUM));
 				break;
 			case CALL:
-				assertEquals(1, mp.getAsInt(Keys.NUM));
-				assertEquals(1337, mp.getAsInt(Keys.CLEAR_FREQ));
+				assertEquals(1, mp.getValue().getAsInt(Keys.NUM_MARKETS, Keys.NUM));
+				assertEquals(1337, mp.getValue().getAsInt(Keys.CLEAR_FREQ));
 				break;
 			default:
 			}
 		}
-		for (AgentProperties mp : spec.getAgentProps()) {
-			switch (mp.getAgentType()) {
+		for (Entry<AgentType, Props> mp : spec.getAgentProps().entries()) {
+			switch (mp.getKey()) {
 			case LA:
-				assertEquals(0, mp.getAsInt(Keys.NUM));
+				assertEquals(0, mp.getValue().getAsInt(Keys.NUM_AGENTS, Keys.NUM));
 				break;
 			default:
 			}
@@ -84,22 +86,22 @@ public class SimulationSpecTest {
 		json.add(Keys.CONFIG, config);
 		config.addProperty(Keys.PRESETS, TWOMARKET.toString());
 		
-		SimulationSpec spec = new SimulationSpec(new StringReader(json.toString()));
-		for (MarketProperties mp : spec.getMarketProps()) {
-			switch (mp.getMarketType()) {
+		SimulationSpec spec = new SimulationSpec(json);
+		for (Entry<MarketType, Props> mp : spec.getMarketProps().entries()) {
+			switch (mp.getKey()) {
 			case CDA:
-				assertEquals(2, mp.getAsInt(Keys.NUM));
+				assertEquals(2, mp.getValue().getAsInt(Keys.NUM_MARKETS, Keys.NUM));
 				break;
 			case CALL:
-				assertEquals(0, mp.getAsInt(Keys.NUM));
+				assertEquals(0, mp.getValue().getAsInt(Keys.NUM_MARKETS, Keys.NUM));
 				break;
 			default:
 			}
 		}
-		for (AgentProperties mp : spec.getAgentProps()) {
-			switch (mp.getAgentType()) {
+		for (Entry<AgentType, Props> mp : spec.getAgentProps().entries()) {
+			switch (mp.getKey()) {
 			case LA:
-				assertEquals(0, mp.getAsInt(Keys.NUM));
+				assertEquals(0, mp.getValue().getAsInt(Keys.NUM_AGENTS, Keys.NUM));
 				break;
 			default:
 			}
@@ -113,22 +115,22 @@ public class SimulationSpecTest {
 		json.add(Keys.CONFIG, config);
 		config.addProperty(Keys.PRESETS, TWOMARKETLA.toString());
 		
-		SimulationSpec spec = new SimulationSpec(new StringReader(json.toString()));
-		for (MarketProperties mp : spec.getMarketProps()) {
-			switch (mp.getMarketType()) {
+		SimulationSpec spec = new SimulationSpec(json);
+		for (Entry<MarketType, Props> mp : spec.getMarketProps().entries()) {
+			switch (mp.getKey()) {
 			case CDA:
-				assertEquals(2, mp.getAsInt(Keys.NUM));
+				assertEquals(2, mp.getValue().getAsInt(Keys.NUM_MARKETS, Keys.NUM));
 				break;
 			case CALL:
-				assertEquals(0, mp.getAsInt(Keys.NUM));
+				assertEquals(0, mp.getValue().getAsInt(Keys.NUM_MARKETS, Keys.NUM));
 				break;
 			default:
 			}
 		}
-		for (AgentProperties mp : spec.getAgentProps()) {
-			switch (mp.getAgentType()) {
+		for (Entry<AgentType, Props> mp : spec.getAgentProps().entries()) {
+			switch (mp.getKey()) {
 			case LA:
-				assertEquals(1, mp.getAsInt(Keys.NUM));
+				assertEquals(1, mp.getValue().getAsInt(Keys.NUM_AGENTS, Keys.NUM));
 				break;
 			default:
 			}

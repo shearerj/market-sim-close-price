@@ -1,25 +1,23 @@
 package entity.agent;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkArgument;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Log.log;
 import static logger.Log.Level.INFO;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 
 import systemmanager.Consts.DiscountFactor;
 import systemmanager.Keys;
-import systemmanager.Scheduler;
+import systemmanager.Simulation;
 import utils.Rands;
-import activity.SubmitNMSOrder;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Range;
 
-import data.FundamentalValue;
-import entity.infoproc.SIP;
+import data.Props;
+import data.Stats;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Quote;
@@ -41,22 +39,59 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	protected final PrivateValue privateValue;
 	protected final DiscountedValue surplus;
 	
-	protected int bidRangeMax; 		// range for limit order
-	protected int bidRangeMin;
+	protected final int bidRangeMax; 		// range for limit order
+	protected final int bidRangeMin;
 	
-	public BackgroundAgent(Scheduler scheduler, TimeStamp arrivalTime,
-			FundamentalValue fundamental, SIP sip, Market market, Random rand,
-			Iterator<TimeStamp> reentry, PrivateValue pv, int tickSize,
-			int bidRangeMin, int bidRangeMax) {
+	protected final boolean withdrawOrders;	// Withdraw orders each reentry
+	
+	// For ZIRP Strategy
+	protected final int simulationLength;
+	protected final double fundamentalKappa;
+	protected final double fundamentalMean;
+	protected final double acceptableProfitFraction;
+	
+	/**
+	 * Constructor for custom private valuation 
+	 */
+	protected BackgroundAgent(Simulation sim, TimeStamp arrivalTime, Market market, PrivateValue privateValue, Random rand, Props props) {
+		super(sim, arrivalTime, market, rand,
+				AgentFactory.exponentials(props.getAsDouble(Keys.BACKGROUND_REENTRY_RATE, Keys.REENTRY_RATE), rand),
+				props);
+		this.privateValue = privateValue;
+		this.bidRangeMin = props.getAsInt(Keys.BID_RANGE_MIN);
+		this.bidRangeMax = props.getAsInt(Keys.BID_RANGE_MAX);
+		this.withdrawOrders = props.getAsBoolean(Keys.WITHDRAW_ORDERS);
 		
-		super(scheduler, arrivalTime, fundamental, sip, market, rand, reentry, tickSize);
-	
-		this.privateValue = checkNotNull(pv);
+		this.simulationLength = props.getAsInt(Keys.SIMULATION_LENGTH);
+		this.fundamentalKappa = props.getAsDouble(Keys.FUNDAMENTAL_KAPPA);
+		this.fundamentalMean = props.getAsDouble(Keys.FUNDAMENTAL_MEAN);
+		this.acceptableProfitFraction = props.getAsDouble(Keys.ACCEPTABLE_PROFIT_FRACTION);
+		checkArgument(Range.closed(0d, 1d).contains(acceptableProfitFraction), "Acceptable profit fraction must be in [0, 1]: %f", acceptableProfitFraction);
+		
 		this.surplus = DiscountedValue.create();
-		this.bidRangeMin = bidRangeMin;
-		this.bidRangeMax = bidRangeMax;
+		
+		postStat(Stats.CONTROL_PRIVATE_VALUE, this.privateValue.getMean().doubleValue());
 	}
 	
+	/**
+	 * Default constructor with standard valuation model
+	 */
+	protected BackgroundAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
+		this(sim, arrivalTime, market,
+				new PrivateValue(props.getAsInt(Keys.MAX_QUANTITY), props.getAsDouble(Keys.PRIVATE_VALUE_VAR), rand),
+				rand, props);
+	}
+	
+	@Override
+	public void agentStrategy() {
+		super.agentStrategy();
+		
+		if (withdrawOrders) {
+			log(INFO, "%s Withdraw all orders.", this);
+			withdrawAllOrders();
+		}
+	}
+
 	/**
 	 * Submits a NMS-routed Zero-Intelligence limit order.
 	 * @param type
@@ -65,19 +100,18 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * 
 	 * @return
 	 */
-	public void executeZIStrategy(OrderType type, int quantity, TimeStamp currentTime) {
+	protected void executeZIStrategy(OrderType type, int quantity) {
 		if (this.withinMaxPosition(type, quantity)) {
 			
-			Price val = getValuation(type, currentTime);
-			Price price = new Price((val.doubleValue() + (type.equals(SELL) ? 1 : -1) * 
+			Price val = getValuation(type);
+			Price price = Price.of((val.doubleValue() + (type.equals(SELL) ? 1 : -1) * 
 					Rands.nextUniform(rand, bidRangeMin, bidRangeMax))).nonnegative().quantize(tickSize);
 			
 			log(INFO, "%s executing ZI strategy position=%d, for q=%d, value=%s + %s=%s",
-					this, positionBalance, quantity, fundamental.getValueAt(currentTime),
+					this, positionBalance, quantity, fundamental.getValue(),
 					privateValue.getValue(positionBalance, type), val);
 			
-			scheduler.executeActivity(new SubmitNMSOrder(this, primaryMarket,
-					type, price, quantity));
+			submitNMSOrder(type, price, quantity);
 		}
 	}
 	
@@ -100,46 +134,32 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		return true;
 	}
 	
-	public final void executeZIRPStrategy(
-		final OrderType type, 
-		final int quantity, 
-		final TimeStamp currentTime,
-		final int simulationLength,
-		final double fundamentalKappa,
-		final double fundamentalMean,
-		final double acceptableProfitFraction
-	) {		
+	protected final void executeZIRPStrategy(OrderType type, int quantity) {
 		int newPosition = quantity + positionBalance;
 		if (type.equals(SELL)) newPosition *= -1;
 		
 		if (newPosition <= privateValue.getMaxAbsPosition() 
 			&& newPosition >= -privateValue.getMaxAbsPosition()) {
 			
-			Price val = getEstimatedValuation(type, currentTime, 
-				simulationLength, fundamentalKappa, fundamentalMean);
-			Price price = new Price((val.doubleValue() + (type.equals(SELL) ? 1 : -1) 
+			Price val = getEstimatedValuation(type);
+			Price price = Price.of((val.doubleValue() + (type.equals(SELL) ? 1 : -1) 
 					* Rands.nextUniform(rand, bidRangeMin, bidRangeMax
 					))).nonnegative().quantize(tickSize);
 
-			final Price rHat = this.getEstimatedFundamental(type, currentTime, 
-					simulationLength, fundamentalKappa, fundamentalMean);  
+			final Price rHat = this.getEstimatedFundamental(type);  
 			
 			log(INFO, "%s executing ZIRP strategy position=%d, for q=%d, fund=%s value=%s + %s=%s stepsLeft=%s pv=%s",
-				this, positionBalance, quantity, fundamental.getValueAt(currentTime).intValue(),
+				this, positionBalance, quantity, fundamental.getValue().intValue(),
 				rHat, privateValue.getValue(positionBalance, type),	val, 
-				simulationLength - currentTime.getInTicks(), 
+				simulationLength - currentTime().getInTicks(), 
 				privateValue.getValueFromQuantity(positionBalance, quantity, type));
 			
-			Quote quote = marketQuoteProcessor.getQuote();
-			if (
-				quote != null 
-				&& quote.getBidPrice() != null 
-				&& quote.getAskPrice() != null
-			) {
+			Quote quote = getQuote();
+			if (quote.isDefined()) {
 				if (type.equals(SELL)) {
 					// estimated surplus from selling at the above price
 					final int shading = price.intValue() - val.intValue();
-					final int bidPrice = quote.getBidPrice().intValue();
+					final int bidPrice = quote.getBidPrice().get().intValue();
 					
 					// estimated surplus from selling all units at the bid price
 					final int bidMarkup = bidPrice * quantity - val.intValue();
@@ -147,7 +167,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					// if you would make at least acceptableProfitFraction of your
 					// markup at the bid, submit order at estimated fundamental
 					if (shading * acceptableProfitFraction <= bidMarkup) {
-						price = new Price(val.doubleValue() / quantity).quantize(tickSize).nonnegative();
+						price = Price.of(val.doubleValue() / quantity).quantize(tickSize).nonnegative();
 						
 						log(INFO, "%s executing ZIRP strategy GREEDY SELL, markup=%s, bid=%s, bidMarkup=%s, price=%s",
 							this, shading, bidPrice, bidMarkup, price.intValue());
@@ -160,7 +180,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 				} else {
 					// estimated surplus from buying at the above price
 					final int shading = val.intValue() - price.intValue();
-					final int askPrice = quote.getAskPrice().intValue();
+					final int askPrice = quote.getAskPrice().get().intValue();
 					
 					// estimated surplus from buying all units at the ask price
 					final int askMarkup = val.intValue() - askPrice * quantity;
@@ -168,7 +188,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					// if you would make at least acceptableProfitFraction of your 
 					// markup at the ask, submit order at estimated fundamental
 					if (shading * acceptableProfitFraction <= askMarkup) {
-						price = new Price(val.doubleValue() / quantity).quantize(tickSize).nonnegative();
+						price = Price.of(val.doubleValue() / quantity).quantize(tickSize).nonnegative();
 						
 						log(INFO, "%s executing ZIRP strategy GREEDY BUY, markup=%s, ask=%s, askMarkup=%s, price=%s",
 								this, shading, askPrice,	askMarkup, price.intValue());
@@ -180,8 +200,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 				}
 			}
 			
-			scheduler.executeActivity(new SubmitNMSOrder( this,	primaryMarket,type, 
-					price, quantity));
+			submitNMSOrder(type, price, quantity);
 		} else {
 			// if exceed max position, then don't submit a new bid
 			log(INFO, "%s executing ZIRP strategy new order would exceed max position %d ; no submission",
@@ -189,24 +208,15 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		}
 	}
 	
+	
+	
 	@Override
-	public void processTransaction(Transaction trans) {
+	protected void processTransaction(TimeStamp submitTime, OrderType type, Transaction trans) {
+		super.processTransaction(submitTime, type, trans);
 		
-		super.processTransaction(trans);
-		TimeStamp submissionTime;
-		OrderType type;
-		
-		if (trans.getBuyer().equals(trans.getSeller())) {
-			// FIXME Handle buyer = seller appropriately... Maybe this is appropriate?
-			return;
-		} else if (trans.getBuyer().equals(this)) {
-			submissionTime = trans.getBuyOrder().getSubmitTime();
-			type = OrderType.BUY;
-		} else {
-			submissionTime = trans.getSellOrder().getSubmitTime();
-			type = OrderType.SELL;
-		}
-		TimeStamp timeToExecution = trans.getExecTime().minus(submissionTime);
+		TimeStamp timeToExecution = trans.getExecTime().minus(submitTime);
+		for (int i = 0; i < trans.getQuantity(); ++i)
+			postStat(Stats.EXECUTION_TIME, timeToExecution.getInTicks());
 
 		int privateValue = getTransactionValuation(type, trans.getQuantity(), 
 				trans.getExecTime()).intValue();
@@ -230,6 +240,8 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	@Override
 	public Map<String, Double> getFeatures() {
 		ImmutableMap.Builder<String, Double> features = ImmutableMap.builder();
+		features.putAll(super.getFeatures());
+		
 		Price buyPV = privateValue.getValue(0, BUY);
 		Price sellPV = privateValue.getValue(0, SELL);
 		
@@ -267,43 +279,28 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * @param currentTime
 	 * @return
 	 */
-	protected Price getValuation(OrderType type, TimeStamp currentTime) {
-		return getValuation(type, 1, currentTime);
+	protected Price getValuation(OrderType type) {
+		return getValuation(type, 1);
 	}
 	
-	protected Price getEstimatedValuation(
-		final OrderType type, 
-		final TimeStamp currentTime,
-		final int simulationLength,
-		final double fundamentalKappa,
-		final double fundamentalMean
-	) {
-		return getEstimatedValuation(type, 1, currentTime, 
-			simulationLength, fundamentalKappa, fundamentalMean);
+	protected Price getEstimatedValuation(OrderType type) {
+		return getEstimatedValuation(type, 1);
 	}
 	
-	protected Price getEstimatedValuation(
-		OrderType type, 
-		int quantity, 
-		TimeStamp currentTime,
-		final int simLength,
-		final double fundamentalKappa,
-		final double fundamentalMean
-	) {
-		final Price rHat = this.getEstimatedFundamental(type, currentTime, simLength, 
-				fundamentalKappa, fundamentalMean); 
+	protected Price getEstimatedValuation(OrderType type, int quantity) {
+		
+		Price rHat = this.getEstimatedFundamental(type); 
 			
-		return new Price(rHat.intValue() * quantity
+		return Price.of(rHat.intValue() * quantity
 				+ privateValue.getValueFromQuantity(positionBalance, quantity, type).intValue()
 				).nonnegative();
 	}
 	
-	protected Price getEstimatedFundamental(OrderType type, TimeStamp time, 
-			int simLength, double kappa, double fundamentalMean) {
-		
-		final int stepsLeft = (int) (simLength - time.getInTicks());
-		final double kappaCompToPower = Math.pow(1 - kappa, stepsLeft);
-		return new Price(fundamental.getValueAt(time).intValue() * kappaCompToPower 
+	protected Price getEstimatedFundamental(OrderType type) {
+		// FIXME If delayed fundamental, this will be innacurate. Should account for latency...
+		final int stepsLeft = (int) (simulationLength - currentTime().getInTicks());
+		final double kappaCompToPower = Math.pow(1 - fundamentalKappa, stepsLeft);
+		return Price.of(fundamental.getValue().intValue() * kappaCompToPower 
 			+ fundamentalMean * (1 - kappaCompToPower));
 	}
 	
@@ -316,8 +313,8 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * @param currentTime
 	 * @return
 	 */
-	protected Price getValuation(OrderType type, int quantity, TimeStamp currentTime) {
-		return new Price(fundamental.getValueAt(currentTime).intValue() * quantity
+	protected Price getValuation(OrderType type, int quantity) {
+		return Price.of(fundamental.getValue().intValue() * quantity
 				+ privateValue.getValueFromQuantity(positionBalance, quantity, type).intValue()
 				).nonnegative();
 	}
@@ -335,6 +332,8 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * @param currentTime
 	 * @return
 	 */
+	// FIXME This may not work as it was intended
+	// FIXME Time should probably be removed, and current time should be referenced.
 	protected Price getTransactionValuation(OrderType type, int quantity,
 			TimeStamp currentTime) {
 		
@@ -342,6 +341,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		int originalBalance = this.positionBalance + (type.equals(BUY) ? -1 : 1) * quantity;
 		return this.privateValue.getValueFromQuantity(originalBalance, 
 				quantity, type);
+		// FIXME Not sure about how to resolve this conflic, so it's commented
+//		Price fundamentalValue = fundamental.getValue();
+//		return Price.of(fundamentalValue.intValue() * quantity
+//				+ privateValue.intValue()).nonnegative();
 	}
 	
 	/**
@@ -374,7 +377,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 //		final double fundamentalKappa,
 //		final double fundamentalMean
 //	) {
-//		return new Price(
+//		return Price.of(
 //			getEstimatedValuation(
 //				type, 
 //				quantity, 
@@ -393,8 +396,8 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * @param currentTime
 	 * @return
 	 */
-	protected Price getLimitPrice(OrderType type, TimeStamp currentTime) {
-		return getLimitPrice(type, 1, currentTime);
+	protected Price getLimitPrice(OrderType type) {
+		return getLimitPrice(type, 1);
 	}
 	
 	/**
@@ -406,8 +409,15 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * @param currentTime
 	 * @return
 	 */
-	protected Price getLimitPrice(OrderType type, int quantity, TimeStamp currentTime) {
-		return new Price(getValuation(type, quantity, currentTime).doubleValue() 
+	protected Price getLimitPrice(OrderType type, int quantity) {
+		return Price.of(getValuation(type, quantity).doubleValue() 
 				/ quantity).nonnegative();
+	}
+
+	@Override
+	public void liquidateAtPrice(Price price) {
+		super.liquidateAtPrice(price);
+		
+		sim.postStat(Stats.CLASS_PROFIT + "background", profit);
 	}
 }

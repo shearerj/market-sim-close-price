@@ -7,6 +7,7 @@ package systemmanager;
  */
 public interface Consts {
 	
+	// FIXME Move these to the spec
 	public enum DiscountFactor {
 		NO_DISC(0), MEDIUM(0.0006);
 		// SMALL(0.0003), LARGE(0.0009)

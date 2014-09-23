@@ -1,87 +1,99 @@
 package entity.agent;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Random;
 
 import systemmanager.Consts;
 import systemmanager.Keys;
-import systemmanager.Scheduler;
-import activity.AgentStrategy;
-import activity.SubmitNMSOrder;
+import systemmanager.Simulation;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 
-import data.AgentProperties;
-import data.FundamentalValue;
-import data.MarketDataParser;
-import data.NYSEParser;
-import data.NasdaqParser;
-import data.OrderDatum;
-import entity.infoproc.SIP;
+import data.Props;
+import entity.agent.MarketDataParser.MarketAction;
 import entity.market.Market;
+import entity.market.Price;
 import event.TimeStamp;
+import fourheap.Order.OrderType;
 
 public class MarketDataAgent extends SMAgent {
+	protected final PeekingIterator<MarketAction> orderDatumIterator;
+	protected final BiMap<Long, OrderRecord> refNumbers;
 
-	/*
-	 * When building from eclipse you should use the generated serialVersionUID
-	 * (which generates a random long) instead of the default 1. serialization
-	 * is a java interface that allows all objects to be saved. This random
-	 * number essentially says what version this object is, so it knows when it
-	 * tries to load an object if its actually trying to load the same object.
-	 */
-	private static final long serialVersionUID = 7690956351534734324L;
-
-	protected MarketDataParser marketDataParser;
-	protected PeekingIterator<OrderDatum> orderDatumIterator;
-
-	public MarketDataAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market, 
-			Random rand, String fileName) {
-		super(scheduler, TimeStamp.ZERO, fundamental, sip, market, rand, 1);
-
-		// Processing the file 
+	protected MarketDataAgent(Simulation sim, TimeStamp arrivalTime, Market market, 
+			Random rand, Iterator<MarketAction> orderDatumIterator, Props props) {
+		super(sim, arrivalTime, rand, market, props);
+		this.orderDatumIterator = Iterators.peekingIterator(checkNotNull(orderDatumIterator));
+		refNumbers = HashBiMap.create();
+	}
+	
+	public static MarketDataAgent create(Simulation sim, Market market, Random rand, Props props) {
+		Iterator<MarketAction> actions = ImmutableList.<MarketAction> of().iterator();
+		String fileName = props.getAsString(Keys.FILENAME);
+		
+		FileReader reader = null;
 		try {
-			// Determining the market file type
-			if(fileName.toLowerCase().contains(Consts.NYSE)){
-				this.marketDataParser = new NYSEParser(fileName);
-				this.orderDatumIterator = this.marketDataParser.getIterator();
-			}
-			else if(fileName.toLowerCase().contains(Consts.NASDAQ)) {
-				this.marketDataParser = new NasdaqParser(fileName);
-				this.orderDatumIterator = this.marketDataParser.getIterator();
-			}
+			reader = new FileReader(new File(fileName));
+			
+			if(fileName.toLowerCase().contains(Consts.NYSE))
+				actions = MarketDataParser.parseNYSE(reader);
+			else if(fileName.toLowerCase().contains(Consts.NASDAQ))
+				actions = MarketDataParser.parseNasdaq(reader);
+			
 		} catch (IOException e) {
 			e.printStackTrace();
-			System.err.println("Error: could not open file: " + fileName.toString());
-			System.exit(1);
+		} finally {
+			try {
+				if (reader != null)
+					reader.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		
-		// FIXME Shouldn't it schedule the first time, not automatically submit a bid?
-		scheduler.executeActivity(new AgentStrategy(this));
+		PeekingIterator<MarketAction> peekable = Iterators.peekingIterator(actions);
+		TimeStamp arrivalTime = peekable.hasNext() ? peekable.peek().getScheduledTime() : TimeStamp.ZERO;
+		return new MarketDataAgent(sim, arrivalTime, market, rand, peekable, props);
 	}
 	
-	public MarketDataAgent(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market, 
-			Random rand, AgentProperties props) {
-		this(scheduler, fundamental, sip, market, rand, props.getAsString(Keys.FILENAME));
-	}
-	
-	public void agentStrategy(TimeStamp currentTime) {
-		
-		if (!orderDatumIterator.hasNext()) {
+	public void agentStrategy() {
+		if (!orderDatumIterator.hasNext())
 			return;
-		}
 		
-		OrderDatum nextOrder = orderDatumIterator.next();
-		SubmitNMSOrder act = new SubmitNMSOrder(this, primaryMarket,
-				nextOrder.getOrderType(), nextOrder.getPrice(),
-				nextOrder.getQuantity(), nextOrder.getDuration());
-		scheduler.scheduleActivity(nextOrder.getTimeStamp(), act);
+		orderDatumIterator.next().executeFor(this);
 		
-		// Schedule reentry
-		if (orderDatumIterator.hasNext()) {
-			scheduler.scheduleActivity(orderDatumIterator.peek().getTimeStamp(), new AgentStrategy(this));
-		}
-		
+		if (orderDatumIterator.hasNext())
+			reenterIn(orderDatumIterator.peek().getScheduledTime().minus(currentTime()));
 	}
+	
+	protected OrderRecord submitRefOrder(OrderType type, Price price, int quantity, long refNum) {
+		OrderRecord order = submitOrder(type, price, quantity);
+		refNumbers.put(refNum, order);
+		return order;
+	}
+	
+	@Override
+	protected void withdrawOrder(OrderRecord order) {
+		super.withdrawOrder(order);
+		refNumbers.inverse().remove(order);
+	}
+
+	@Override
+	protected void orderTransacted(OrderRecord order, int removedQuantity) {
+		super.orderTransacted(order, removedQuantity);
+		if (order.getQuantity() == 0)
+			refNumbers.inverse().remove(order);
+	}
+
+	private static final long serialVersionUID = 7690956351534734324L;
 
 }

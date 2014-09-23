@@ -1,46 +1,41 @@
 package entity.market;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.util.Random;
+
+import logger.Log;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Consts.MarketType;
 import systemmanager.Keys;
-import systemmanager.Scheduler;
-import data.MarketProperties;
-import entity.infoproc.SIP;
-import event.TimeStamp;
+import systemmanager.MockSim;
+import data.Props;
 
 public class MarketFactoryTest {
-	
-	private Scheduler scheduler;
-	private SIP sip;
+
+	private static final Random rand = new Random();
+	private MockSim sim;
 	private MarketFactory factory;
-	
+
 	@Before
-	public void setup() {
-		this.scheduler = new Scheduler(new Random());
-		this.factory = new MarketFactory(scheduler, sip, new Random());
+	public void setup() throws IOException {
+		this.sim = MockSim.create(getClass(), Log.Level.NO_LOGGING);
+		this.factory = MarketFactory.create(sim, rand);
 	}
-	
+
 	@Test
-	public void createCallMarket() {
-		MarketProperties props = MarketProperties.empty(MarketType.CALL);
-		props.put(Keys.CLEAR_FREQ, 100);
-		Market mkt = factory.createMarket(props);
+	public void createMarkets() {
+		Market mkt;
+
+		mkt = factory.createMarket(MarketType.CALL, Props.fromPairs(Keys.CLEAR_FREQ, 100));
 		assertTrue(mkt instanceof CallMarket);
-		assertEquals(TimeStamp.create(100), ((CallMarket) mkt).clearFreq);
-	}
-	
-	@Test
-	public void createZeroLatencyCallMarket() {
-		MarketProperties props = MarketProperties.empty(MarketType.CALL);
-		props.put(Keys.CLEAR_FREQ, 0);
-		Market mkt = factory.createMarket(props);
+		mkt = factory.createMarket(MarketType.CALL, Props.fromPairs(Keys.CLEAR_FREQ, 0));
+		assertTrue(mkt instanceof CDAMarket);
+		mkt = factory.createMarket(MarketType.CDA, Props.fromPairs());
 		assertTrue(mkt instanceof CDAMarket);
 	}
 }

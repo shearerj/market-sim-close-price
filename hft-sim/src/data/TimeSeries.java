@@ -39,17 +39,23 @@ public class TimeSeries implements Serializable, SparseIterable<Double> {
 	
 	private static final long serialVersionUID = 7835744389750549565L;
 	private static final Joiner joiner = Joiner.on(", ");
-	private static final SparseElement<Double> zero = SparseElement.create(0, Double.NaN);
 	
 	protected final List<SparseElement<Double>> points;
 
 	protected TimeSeries() {
 		this.points = Lists.newArrayList();
-		add(0, Double.NaN);
+		points.add(SparseElement.create(0, Double.NaN));
 	}
 
 	public static TimeSeries create() {
 		return new TimeSeries();
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (o == null || !(o instanceof TimeSeries))
+			return false;
+		return this.points.equals(((TimeSeries) o).points);
 	}
 
 	@Override
@@ -61,10 +67,12 @@ public class TimeSeries implements Serializable, SparseIterable<Double> {
 	 * Add a data point (int, double) to container
 	 */
 	public void add(long time, double value) {
-		long lastTime = Iterables.getLast(points, zero).index;
+		long lastTime = Iterables.getLast(points).index;
 		checkArgument(time >= lastTime, "Can't add time before last time");
-		
-		points.add(SparseElement.create(time, value));
+		if (time == lastTime)
+			Iterables.getLast(points).element = value;
+		else
+			points.add(SparseElement.create(time, value));
 	}
 	
 	/**
@@ -82,7 +90,7 @@ public class TimeSeries implements Serializable, SparseIterable<Double> {
 	 * Same as removeNans, but with an arbitrary predicate.
 	 */
 	public Iterable<Double> filter(final Predicate<Double> predicate) {
-		return Iterables2.fromSparse(Iterables.unmodifiableIterable(
+		return Iterables2.toSparse(Iterables.unmodifiableIterable(
 				Iterables.filter(points, new Predicate<SparseElement<Double>>() {
 					@Override
 					public boolean apply(SparseElement<Double> input) {

@@ -2,8 +2,10 @@ package logger;
 
 import static logger.Log.Level.NO_LOGGING;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.Flushable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -15,67 +17,72 @@ import java.io.Writer;
  * @author erik
  * 
  */
-public final class Log {
+public final class Log implements Closeable, Flushable {
 
 	public static enum Level { NO_LOGGING, ERROR, INFO, DEBUG };
 	
-	private static final Clock secondClock = new Clock() {
+	private static final LogClock secondClock = new LogClock() {
 		@Override
-		public long getTime() { return System.nanoTime() / 1000 % 1000000; }
+		public long getLogTime() { return System.nanoTime() / 1000 % 1000000; }
 		@Override
-		public int getPadding() { return 6; }
+		public int getLogTimePadding() { return 6; }
 	};
 	
-	public static Clock milliClock() {
+	public static LogClock milliClock() {
 		return secondClock;
 	}
 	
-	private static Log nullLogger = Log.create(NO_LOGGING, new Writer() {
+	private static Log nullLogger = new Log(NO_LOGGING, new Writer() {
 		@Override
 		public void close() throws IOException { }
 		@Override
 		public void flush() throws IOException { }
 		@Override
 		public void write(char[] cbuf, int off, int len) throws IOException { }
-	}, new Clock() {
+	}, new LogClock() {
 		@Override
-		public long getTime() { return 0; }
+		public long getLogTime() { return 0; }
 		@Override
-		public int getPadding() { return 0; }
+		public int getLogTimePadding() { return 0; }
 	});
-	
-	/**
-	 * Use this as the global default logger to log any/all messages. Defaults to a nullLogger
-	 */
-	private static Log log = nullLogger;
 
 	private PrintWriter printwriter;
-	private Clock clock;
+	private LogClock clock;
 	private Level level;
 	
-	private Log(Level level, Writer out, Clock clock) {
+	protected Log(Level level, Writer out, LogClock clock) {
 		this.level = level;
 		this.printwriter = new PrintWriter(out);
 		this.clock = clock;
 	}
 	
-	public static Log create(Level level, Writer writer, Clock clock) {
-		return new Log(level, writer, clock);
+	public static Log create(Level level, Writer writer, LogClock clock) {
+		if (level == NO_LOGGING)
+			return nullLogger;
+		else
+			return new Log(level, writer, clock);
 	}
 	
-	public static Log create(Level level, File logFile, Clock clock) throws IOException {
+	public static Log create(Level level, File logFile, LogClock clock) throws IOException {
+		if (level == NO_LOGGING)
+			return nullLogger;
 		logFile.getParentFile().mkdirs();
-		return new Log(level, new FileWriter(logFile), clock);
+		return create(level, new FileWriter(logFile), clock);
 	}
 	
 	public static Log create(Level level, File logFile) throws IOException {
 		logFile.getParentFile().mkdirs();
-		return new Log(level, new FileWriter(logFile), secondClock);
+		return create(level, logFile, secondClock);
 	}
 	
-	public void closeLogger() throws IOException {
-		printwriter.flush();
+	@Override
+	public void close() throws IOException {
 		printwriter.close();
+	}
+	
+	@Override
+	public void flush() {
+		printwriter.flush();
 	}
 	
 	/**
@@ -83,7 +90,7 @@ public final class Log {
 	 * 
 	 * Potentially useful for tests
 	 */
-	public static Log createStderrLogger(Level level, Clock clock) {
+	public static Log createStderrLogger(Level level, LogClock clock) {
 		return Log.create(level, new PrintWriter(System.err), clock);
 	}
 	
@@ -93,14 +100,6 @@ public final class Log {
 	 */
 	public static Log nullLogger() {
 		return nullLogger;
-	}
-
-	public static void setLogger(Log logger) {
-		Log.log = logger;
-	}
-	
-	public static void log(Level level, String format, Object... parameters) {
-		Log.log.logf(level, format, parameters);
 	}
 	
 	/**
@@ -123,10 +122,10 @@ public final class Log {
 	 * @param format
 	 * @param parameters
 	 */
-	public void logf(Level level, String format, Object... parameters) {
+	public void log(Level level, String format, Object... parameters) {
 		if (level.ordinal() > this.level.ordinal())
 			return;
-		printwriter.format("%" + clock.getPadding() + "d", clock.getTime()).append("| ");
+		printwriter.format("%" + clock.getLogTimePadding() + "d", clock.getLogTime()).append("| ");
 		printwriter.append(Integer.toString(level.ordinal())).append("| ");
 		printwriter.format(format, parameters);
 		printwriter.append('\n');
@@ -135,9 +134,9 @@ public final class Log {
 	/**
 	 * An interface to allow arbitrary nulltimes for the logged entries
 	 */
-	public static interface Clock {
-		public long getTime();
-		public int getPadding();
+	public static interface LogClock {
+		public long getLogTime();
+		public int getLogTimePadding();
 	}
 
 }

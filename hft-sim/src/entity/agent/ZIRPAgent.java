@@ -2,19 +2,12 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Log.log;
 import static logger.Log.Level.INFO;
 
-import iterators.ExpInterarrivals;
-
-import java.util.Iterator;
 import java.util.Random;
 
-import systemmanager.Keys;
-import systemmanager.Scheduler;
-import data.EntityProperties;
-import data.FundamentalValue;
-import entity.infoproc.SIP;
+import systemmanager.Simulation;
+import data.Props;
 import entity.market.Market;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
@@ -23,102 +16,21 @@ public final class ZIRPAgent extends BackgroundAgent {
 	
 	private static final long serialVersionUID = -8805640643365079141L;
 	
-	private final int simulationLength;
-	private final double fundamentalKappa;
-	private final double fundamentalMean;
-	private final boolean withdrawOrders;
-	private final double acceptableProfitFraction;
-	
-	public ZIRPAgent(
-		final Scheduler scheduler, 
-		final TimeStamp arrivalTime,
-		final FundamentalValue fundamental, 
-		final SIP sip, 
-		final Market market, 
-		final Random rand,
-		final EntityProperties props
-	) {
-		this(scheduler,	arrivalTime, fundamental, sip, market, rand,
-			ExpInterarrivals.create(props.getAsDouble(Keys.BACKGROUND_REENTRY_RATE, Keys.REENTRY_RATE),	rand),
-			props.getAsDouble(Keys.PRIVATE_VALUE_VAR),
-			props.getAsInt(Keys.AGENT_TICK_SIZE, Keys.TICK_SIZE),
-			props.getAsInt(Keys.MAX_QUANTITY),
-			props.getAsInt(Keys.BID_RANGE_MIN),
-			props.getAsInt(Keys.BID_RANGE_MAX),
-			props.getAsBoolean(Keys.WITHDRAW_ORDERS),
-			props.getAsInt(Keys.SIMULATION_LENGTH),
-			props.getAsDouble(Keys.FUNDAMENTAL_KAPPA),
-			props.getAsDouble(Keys.FUNDAMENTAL_MEAN),
-			props.getAsDouble(Keys.ACCEPTABLE_PROFIT_FRACTION)
-		);
-		
+	protected ZIRPAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
+		super(sim, arrivalTime, market, rand, props);
 	}
-
-	private ZIRPAgent(
-		final Scheduler scheduler, 
-		final TimeStamp arrivalTime,
-		final FundamentalValue fundamental, 
-		final SIP sip,
-		final Market market, 
-		final Random rand,
-		final Iterator<TimeStamp> interarrivals, 
-		final double pvVar, 
-		final int tickSize,
-		final int maxAbsPosition, 
-		final int bidRangeMin, 
-		final int bidRangeMax,
-		final boolean aWithdrawOrders,
-		final int aSimulationLength, 
-		final double aFundamentalKappa,
-		final double aFundamentalMean,
-		final double aAcceptableProfitFraction
-	) {
-		
-		super(scheduler, arrivalTime, fundamental, sip, market, rand,
-				interarrivals, new PrivateValue(maxAbsPosition, pvVar, rand),
-				tickSize, bidRangeMin, bidRangeMax);
-		
-		if (aAcceptableProfitFraction < 0 || aAcceptableProfitFraction > 1) {
-			throw new IllegalArgumentException(
-				"Acceptable profit fraction must be in [0, 1]. " 
-					+ aAcceptableProfitFraction
-			);
-		}
-		
-		simulationLength = aSimulationLength;
-		fundamentalKappa = aFundamentalKappa;
-		fundamentalMean = aFundamentalMean;
-		withdrawOrders = aWithdrawOrders;
-		acceptableProfitFraction = aAcceptableProfitFraction;
+	
+	public static ZIRPAgent create(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
+		return new ZIRPAgent(sim, arrivalTime, market, rand, props);
 	}
 
 	@Override
-	public void agentStrategy(final TimeStamp currentTime) {
-		super.agentStrategy(currentTime);
-
-		if (!currentTime.equals(arrivalTime)) {
-			log(INFO, "%s wake up.", this);
-		}
-
-		if (withdrawOrders) {
-			log(INFO, "%s Withdraw all orders.", this);
-			withdrawAllOrders();
-		}
+	public void agentStrategy() {
+		super.agentStrategy();
 		
 		// 50% chance of being either long or short
-		OrderType orderType = BUY;
-		if (rand.nextBoolean()) {
-			orderType = SELL;
-		}
+		OrderType orderType = rand.nextBoolean() ? BUY : SELL;
 		log(INFO, "%s Submit %s order", this, orderType);
-		executeZIRPStrategy(
-			orderType, 
-			1, 
-			currentTime, 
-			simulationLength, 
-			fundamentalKappa, 
-			fundamentalMean,
-			acceptableProfitFraction
-		);
+		executeZIRPStrategy(orderType, 1);
 	}
 }

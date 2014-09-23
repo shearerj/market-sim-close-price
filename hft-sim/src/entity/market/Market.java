@@ -1,46 +1,41 @@
 package entity.market;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static data.Observations.BUS;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static java.lang.Math.min;
-import static logger.Log.log;
 import static logger.Log.Level.INFO;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import systemmanager.Scheduler;
-import activity.SendToQP;
-import activity.SendToTP;
-import activity.WithdrawOrder;
+import systemmanager.Keys;
+import systemmanager.Simulation;
+import utils.Iterables2;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.HashMultiset;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 
-import data.Observations.MidQuoteStatistic;
-import data.Observations.SpreadStatistic;
+import data.Props;
+import data.Stats;
 import entity.Entity;
+import entity.View;
 import entity.agent.Agent;
-import entity.agent.BackgroundAgent;
+import entity.agent.Agent.AgentView;
+import entity.agent.HFTAgent;
+import entity.agent.HFTAgent.HFTAgentView;
+import entity.agent.OrderRecord;
 import entity.infoproc.BestBidAsk;
-import entity.infoproc.MarketQuoteProcessor;
-import entity.infoproc.MarketTransactionProcessor;
-import entity.infoproc.QuoteProcessor;
-import entity.infoproc.SIP;
-import entity.infoproc.TransactionProcessor;
-import entity.market.clearingrule.ClearingRule;
+import event.Activity;
 import event.TimeStamp;
 import fourheap.FourHeap;
 import fourheap.MatchedOrders;
-import fourheap.Order.OrderType;
 
 /**
  * Base class for all markets. This class provides almost all market
@@ -48,241 +43,172 @@ import fourheap.Order.OrderType;
  * 
  * A market needs two things to function appropriately. First is a latency. This
  * represents how long it takes background agents (with only one primary market)
- * to get information from the market. A latency of TimeStamp.IMMEDIATE makes
- * this immediate. The second thing they need is a ClearingRule. A ClearingRule
- * is a class that takes a set of MatchedOrders and assigns a price to them.
- * This facilitates the difference in pricing between a call market and a CDA.
+ * to talk to the market. A latency of TimeStamp.IMMEDIATE makes this immediate
+ * in terms of scheduling. The second thing they need is a ClearingRule. A
+ * ClearingRule is a class that takes a set of MatchedOrders and assigns a price
+ * to them. This facilitates the difference in pricing between a call market and
+ * a CDA.
  * 
- * By default the only method that schedules more activities is a Clear. A clear
- * will trigger a SendToIP for every IP this Market knows about (via the method
- * updateQuote). Every other time another action needs to happen it needs to be
- * overridden by the subclass. For example, a CDA will trigger a Clear after a
- * SubmitOrder, and sendToIP activities after a WithdrawOrder. A call market will
- * schedule another Clear after an existing one.
+ * By default the only methods that schedules more activities is a Clear and a
+ * quoteUpdate.
  * 
  * @author ewah
+ * @author ebrink
  */
 public abstract class Market extends Entity {
 
-	private static final long serialVersionUID = 8806298743451593261L;
-	public static int nextID = 1;
+	private final Random rand;
 	
-	protected final FourHeap<Price, MarketTime, Order> orderbook;
-	protected final ClearingRule clearingRule;
-	protected final Random rand;
-	protected long marketTime; // keeps track of internal market actions
+	private final FourHeap<Price, MarketTime, Order> orderbook;
+	private final ClearingRule clearingRule;
+	private long marketTime; // keeps track of internal market actions
 
-	protected final MarketQuoteProcessor quoteProcessor;				// market QP, member of qps collection
-	protected final MarketTransactionProcessor transactionProcessor;	// market TP, member of tps collection
-	protected final SIP sip;
-	protected final Collection<QuoteProcessor> qps;			// agent QPs to update with this market's quotes
-	protected final Collection<TransactionProcessor> tps;	// agent TPs to update with this market's transactions
+	private final Map<HFTAgentView, MarketView> notified;
+	private final Collection<MarketView> views;
+	private final MarketView primaryView; // Default View
 	
-	protected Quote quote; // Current quote
+	private Quote quote; // Current quote
 
 	// Book keeping
-	protected final Multiset<Price> askPriceQuantity, bidPriceQuantity; // How many orders are at a specific price
-	// FIXME These two are used only for testing, and nothing else. Is there a better way? This could be a lot of extra memory
-	protected final Collection<Order> orders; // All orders ever submitted to the market
-	protected final List<Transaction> allTransactions; // All successful transactions, implicitly time ordered
-
-	/**
-	 * Constructor
-	 * 
-	 * @param sip
-	 *            the SIP for this simulation
-	 * @param latency
-	 *            how long it takes agents with market as a primary model get
-	 *            get notified of market changes
-	 * @param clearingRule
-	 *            a class that dictates how the prices on matching orders are
-	 *            set
-	 * @param rand
-	 *            the random number generator to use
-	 */
-	public Market(Scheduler scheduler, SIP sip, TimeStamp latency,
-			ClearingRule clearingRule, Random rand) {
-		
-		this(scheduler, sip, latency, latency, clearingRule, rand);
-	}
+	private final Map<OrderRecord, MarketView> routedOrders; // Maps all routed orders to the appropriate market
+	private final Map<OrderRecord, Order> orderMapping; // Maps active records to their order object
+	private final Multiset<Price> askPriceQuantity, bidPriceQuantity; // How many orders are at a specific price
 	
-	/**
-	 * Constructor
-	 * 
-	 * @param sip
-	 *            the SIP for this simulation
-	 * @param quoteLatency
-	 *            how long it takes agents with market as a primary model get
-	 *            get notified of quote updates
-	 * @param transactionLatency
-	 *            how long it takes agents with market as a primary model get
-	 *            get notified of new transactions
-	 * @param clearingRule
-	 *            a class that dictates how the prices on matching orders are
-	 *            set
-	 * @param rand
-	 *            the random number generator to use
-	 */
-	public Market(Scheduler scheduler, SIP sip, TimeStamp quoteLatency,
-			TimeStamp transactionLatency, ClearingRule clearingRule, Random rand) {
-		super(nextID++, scheduler);
+	protected Market(Simulation sim, ClearingRule clearingRule, Random rand, Props props) {
+		super(sim.nextMarketId(), sim);
+		this.rand = rand;
 		this.orderbook = FourHeap.<Price, MarketTime, Order> create();
 		this.clearingRule = clearingRule;
-		this.rand = rand;
 		this.marketTime = 0;
-		this.quote = new Quote(this, null, 0, null, 0, TimeStamp.ZERO);
-
-		this.qps = Lists.newArrayList();
-		this.tps = Lists.newArrayList();
-		this.sip = sip;
-		this.quoteProcessor = new MarketQuoteProcessor(scheduler, quoteLatency, this);
-		this.transactionProcessor = new MarketTransactionProcessor(scheduler, transactionLatency, this);
-		qps.add(sip);
-		tps.add(sip);
-		qps.add(quoteProcessor);
-		tps.add(transactionProcessor);
-
+		this.quote = new Quote(this, Optional.<Price> absent(), 0, Optional.<Price> absent(), 0, TimeStamp.ZERO);
+		
+		this.notified = Maps.newHashMap();
+		this.views = Lists.newArrayList();
+		this.primaryView = getView(TimeStamp.of(props.getAsLong(Keys.MARKET_LATENCY)));
+		
+		this.orderMapping = Maps.newHashMap();
+		this.routedOrders = Maps.newHashMap();
 		this.askPriceQuantity = HashMultiset.create();
 		this.bidPriceQuantity = HashMultiset.create();
-		this.orders = Lists.newArrayList();
-		this.allTransactions = Lists.newArrayList();
-	}
-
-	/**
-	 * Add an IP to this market that will get notified when the market quote and
-	 * transactions change.
-	 * 
-	 * @param ip
-	 *            the IP to add
-	 */
-	public void addQP(QuoteProcessor qp) {
-		checkNotNull(qp, "QP");
-		qps.add(qp);
 	}
 	
-	/**
-	 * Add an IP to this market that will get notified when the market quote and
-	 * transactions change.
-	 * 
-	 * @param ip
-	 *            the IP to add
-	 */
-	public void addTP(TransactionProcessor tp) {
-		checkNotNull(tp, "TP");
-		tps.add(tp);
-	}
-
-	public MarketQuoteProcessor getQuoteProcessor() {
-		return this.quoteProcessor;
-	}
-	
-	public MarketTransactionProcessor getTransactionProcessor() {
-		return this.transactionProcessor;
-	}
-	
-	/**
-	 * Convenience method to fully remove an order.
-	 * 
-	 * NOTE: This should only be called by the corresponding activity
-	 * 
-	 * NOTE: Don't subclass this method, subclass the main one
-	 * 
-	 * @param order
-	 *            order to remove
-	 * @param currentTime
-	 *            the current time
-	 * @return any side effect activities (base case none)
-	 */
-	public void withdrawOrder(Order order, TimeStamp currentTime) {
-		withdrawOrder(order, order.getQuantity(), currentTime);
-	}
-	
-	/**
-	 * Method to withdraw specific quantity from an order.
-	 * 
-	 * This will work even if quantity has decreased after order was submitted.
-	 * Trying to cancel a higher quantity than the order has to offer will
-	 * simply result in the entire order being cancelled.
-	 * 
-	 * NOTE: This should only be called by the corresponding activity
-	 * 
-	 * @param order
-	 *            order to withdraw quantity from
-	 * @param quantity
-	 *            quantity to withdraw, always positive
-	 * @param currentTime
-	 *            the current time
-	 * @return any side effect activities (base case none)
-	 */
-	public void withdrawOrder(Order order, int quantity, TimeStamp currentTime) {
+	// This is only intended to be called by a market view
+	protected void submitOrder(MarketView thisView, AgentView agent, OrderRecord orderRecord) {
 		marketTime++;
-		checkArgument(quantity >= 0, "Quantity must be non negative");
-		if (order.getQuantity() == 0) return;
-		quantity = min(quantity, order.getQuantity());
 		
+		final Order order = Order.create(agent, orderRecord, new MarketTime(currentTime(), marketTime));
+		log(INFO, "%s", order);
+	
+		Multiset<Price> priceQuant = order.getOrderType() == BUY ? bidPriceQuantity : askPriceQuantity;
+		priceQuant.add(orderRecord.getPrice(), orderRecord.getQuantity());
+		
+		orderbook.add(order);
+		orderMapping.put(orderRecord, order);
+		agent.orderSubmitted(orderRecord, thisView, sim.getCurrentTime());
+	}
+
+	/**
+	 * The placed bid will be routed to the Market that appears to offer the
+	 * best execution according to the NBBO and this market's current up to date
+	 * quote.
+	 * 
+	 * If the quote is routed, the market and agent will communicated with the
+	 * other markets primary latency.
+	 * @param thisView TODO
+	 */
+	// This is only intended to be called by a market view
+	// This needs the appropriate view if it goes unrouted, and the agent if it does route 
+	protected void submitNMSOrder(MarketView thisView, Agent agent, AgentView view, OrderRecord order) {
+		marketTime++;
+		
+		BestBidAsk nbbo = sim.getSIP().getNBBO();
+		Market bestMarket = this;
+	
+		if (order.getOrderType() == BUY) {
+			boolean nbboBetter = nbbo.getBestAsk().or(Price.INF).lessThan(quote.getAskPrice().or(Price.INF));
+			boolean willTransact = order.getPrice().greaterThanEqual(nbbo.getBestAsk().or(Price.INF));
+			if (nbboBetter && willTransact)
+				bestMarket = nbbo.getBestAskMarket().get();
+		} else {
+			boolean nbboBetter = nbbo.getBestBid().or(Price.NEG_INF).greaterThan(quote.getBidPrice().or(Price.NEG_INF));
+			boolean willTransact = order.getPrice().lessThanEqual(nbbo.getBestBid().or(Price.NEG_INF));
+			if (nbboBetter && willTransact)
+				bestMarket = nbbo.getBestBidMarket().get();
+		}
+	
+		if (bestMarket.equals(this)) {
+			submitOrder(thisView, view, order);
+		} else {
+			log(INFO, "Routing %s %s %d @ %s from %s %s to NBBO %s %s",
+					agent, order.getOrderType(), order.getQuantity(), order.getPrice(), this, quote, bestMarket, nbbo);
+			MarketView routedTo = bestMarket.getPrimaryView();
+			routedOrders.put(order, routedTo);
+			routedTo.submitOrder(agent, order);
+		}
+	}
+
+	protected void withdrawOrder(OrderRecord orderRecord, int quantity) {
+		marketTime++;
+		
+		// Check if we routed it due to NMS
+		MarketView routedTo = routedOrders.get(orderRecord);
+		if (routedTo != null ) {
+			routedTo.withdrawOrder(orderRecord, quantity);
+			return;
+		}
+		
+		// Find the appropriate order object
+		Order order = orderMapping.get(orderRecord);
+		if (order == null)
+			return;
+		
+		checkArgument(quantity > 0, "Quantity must be positive");
+		quantity = Math.min(quantity, order.getQuantity());
+
 		Multiset<Price> priceQuant = order.getOrderType() == SELL ? askPriceQuantity : bidPriceQuantity;
 		priceQuant.remove(order.getPrice(), quantity);
-		
-		orderbook.withdrawOrder(order, quantity);
-		
+
+		orderbook.remove(order, quantity);
 		if (order.getQuantity() == 0)
-			order.agent.removeOrder(order);
+			orderMapping.remove(orderRecord);
 	}
 
-	/**
-	 * Clears the order book.
-	 * 
-	 * NOTE: This should only be called by the corresponding activity
-	 * 
-	 * @param currentTime
-	 *            the current time
-	 * @return any side effect activities (base case SendToIP activities)
-	 */
-	public void clear(TimeStamp currentTime) {
+	protected void clear() {
 		marketTime++;
-		MarketTime transactionTime = new MarketTime(currentTime, marketTime);
-		Collection<MatchedOrders<Price, MarketTime, Order>> matchedOrders = orderbook.clear();
-		Builder<Transaction> transactionBuilder = ImmutableList.builder();
+		MarketTime transactionTime = new MarketTime(currentTime(), marketTime);
+		
+		Collection<MatchedOrders<Price, MarketTime, Order>> matchedOrders = orderbook.marketClear();
 		for (Entry<MatchedOrders<Price, MarketTime, Order>, Price> e : clearingRule.pricing(matchedOrders).entrySet()) {
 
 			Order buy = e.getKey().getBuy();
 			Order sell = e.getKey().getSell();
 
-			Transaction trans = new Transaction(buy.getAgent(),
-					sell.getAgent(), this, buy, sell, e.getKey().getQuantity(),
-					e.getValue(), transactionTime);
-			log(INFO, "%s", trans);
+			Transaction transaction = new Transaction(e.getKey().getQuantity(), e.getValue(), transactionTime);
+			log(INFO, "%s", transaction);
 			
-			askPriceQuantity.remove(sell.getPrice(), trans.getQuantity());
-			bidPriceQuantity.remove(buy.getPrice(), trans.getQuantity());
+			askPriceQuantity.remove(sell.getPrice(), transaction.getQuantity());
+			bidPriceQuantity.remove(buy.getPrice(), transaction.getQuantity());
 			
-			transactionBuilder.add(trans);
-			allTransactions.add(trans);
-			BUS.post(trans);
+			// Views
+			for (MarketView view : views)
+				view.addTransaction(transaction);
+			buy.getAgent().orderTransacted(buy.getOrderRecord(), transaction.getQuantity());
+			buy.getAgent().processTransaction(buy.getSubmitTime(), BUY, transaction);
+			sell.getAgent().orderTransacted(sell.getOrderRecord(), transaction.getQuantity());
+			sell.getAgent().processTransaction(sell.getSubmitTime(), SELL, transaction);
+			
+			// Statistics
+			postStat(Stats.PRICE, e.getValue().doubleValue()); // XXX Not robust to quantity?
+			postTimedStat(Stats.TRANSACTION_PRICE, e.getValue().doubleValue());
 		}
-		
-		List<Transaction> transactions = transactionBuilder.build();
-		if (!transactions.isEmpty())
-			for (TransactionProcessor tp : tps)
-				scheduler.executeActivity(new SendToTP(this, transactions, tp));
-		updateQuote(currentTime);
+		updateQuote();
 	}
 
-	/**
-	 * Updates the Markets current quote and returns a set of SendToIP
-	 * activities for every IP the market "knows" about
-	 * 
-	 * @param transactions
-	 *            the transactions that are new since the last quote update
-	 * @param currentTime
-	 *            the current time
-	 * @return the SendToIP activities required to propagate information
-	 */
-	protected void updateQuote(TimeStamp currentTime) {
-		Price ask = orderbook.askQuote();
-		Price bid = orderbook.bidQuote();
-		int quantityAsk = askPriceQuantity.count(ask);
-		int quantityBid = bidPriceQuantity.count(bid);
+	protected void updateQuote() {
+		Optional<Price> ask = Optional.fromNullable(orderbook.askQuote());
+		Optional<Price> bid = Optional.fromNullable(orderbook.bidQuote());
+		int quantityAsk = askPriceQuantity.count(ask.orNull());
+		int quantityBid = bidPriceQuantity.count(bid.orNull());
 		/*
 		 * TODO In certain circumstances, there will be no orders with the
 		 * current ask or bid price in the market. This is a result of the ask
@@ -298,198 +224,130 @@ public abstract class Market extends Entity {
 		 * this will only happen when there are matched orders when a quote is
 		 * generated, which is currently never possible
 		 */
-		MarketTime quoteTime = new MarketTime(currentTime, marketTime);
+		MarketTime quoteTime = new MarketTime(currentTime(), marketTime);
 		quote = new Quote(this, bid, quantityBid, ask, quantityAsk, quoteTime);
 
 		log(INFO, "%s %s", this, quote);
 
-		BUS.post(new MidQuoteStatistic(this, quote.getMidquote(), currentTime));
-		BUS.post(new SpreadStatistic(this, quote.getSpread(), currentTime));
+		postTimedStat(Stats.MIDQUOTE + this, quote.getMidquote());
+		postTimedStat(Stats.SPREAD + this, quote.getSpread());
 
-		for (QuoteProcessor qp : qps)
-			scheduler.executeActivity(new SendToQP(this, quote, qp));
-	}
-	
-	/*
-	 * TODO Add IOC / Fill or Kill Order (potentially change current syntax so
-	 * that a withdraw without a duration never expires, and one with duration
-	 * IMMEDIATE is a Fill or Kill. Not sure if this will work / make sense.
-	 */
-
-	/**
-	 * Submit an order that doesn't expire
-	 * 
-	 * NOTE: This should only be called by the corresponding activity
-	 * 
-	 * NOTE: Don't subclass this method, subclass the main one.
-	 * 
-	 * @param agent
-	 *            The agent that's submitting the order
-	 * @param type
-	 *            The order type (BUY or SELL) from fourheap
-	 * @param price
-	 *            The price of the order
-	 * @param quantity
-	 *            The quantity of the order (negative for sell orders)
-	 * @param currentTime
-	 *            The current time
-	 * @return any side effect activities (base case none)
-	 */
-	public void submitOrder(Agent agent, OrderType type, Price price, int quantity,
-			TimeStamp currentTime) {
-		submitOrder(agent, type, price, quantity, currentTime, TimeStamp.IMMEDIATE);
+		// Update quite happens first so hfts will have access to fully updated quote
+		for (MarketView view : views)
+			view.updateQuote(quote);
+		for (Entry<HFTAgentView, MarketView> hft : Iterables2.shuffle(notified.entrySet(), rand))
+			hft.getKey().quoteUpdate(hft.getValue());
 	}
 
-	/**
-	 * Submit an order that will "expire." An order expires by returning a
-	 * withdrawOrder activity scheduled at currentTime + duration in the future.
-	 * 
-	 * NOTE: This should only be called by the corresponding activity
-	 * 
-	 * @param agent
-	 *            The agent submitting the order
-	 * @param type
-	 *            The type of the order (BUY/SELL)
-	 * @param price
-	 *            The price of the order
-	 * @param quantity
-	 *            The quantity of the order, negative for sell orders
-	 * @param currentTime
-	 *            The current time
-	 * @param duration
-	 *            The amount of time to wait before canceling the order. Use
-	 *            TimeStamp.IMMEDIATE for an order that doesn't expire.
-	 * @return The side effect activities (base case potentially a WithdrawOrder
-	 *         for this method)
-	 */
-	public void submitOrder(Agent agent, OrderType type, Price price,
-			int quantity, TimeStamp currentTime, TimeStamp duration) {
-		checkNotNull(type, "Order type");
-		checkArgument(quantity > 0, "Quantity must be positive");
-		marketTime++;
-
-		// Check that within position limits for background agent
-		if (agent instanceof BackgroundAgent)
-			if (!((BackgroundAgent) agent).withinMaxPosition(type, quantity)) return;
-		
-		Order order = Order.create(type, agent, this, price, quantity, new MarketTime(currentTime, marketTime));
-		log(INFO, "%s", order);
-
-		Multiset<Price> priceQuant = order.getOrderType() == BUY ? bidPriceQuantity : askPriceQuantity;
-		priceQuant.add(order.getPrice(), quantity);
-		
-		orderbook.insertOrder(order);
-		orders.add(order);
-		agent.addOrder(order);
-		
-		if (!duration.equals(TimeStamp.IMMEDIATE))
-			scheduler.scheduleActivity(currentTime.plus(duration), new WithdrawOrder(order));
-	}
-
-	/**
-	 * Submit a routed order that doesn't expire. The placed bid will be routed
-	 * to the Market that appears to offer the best execution according to the
-	 * NBBO and this market's current up to date quote.
-	 * 
-	 * NOTE: This should only be called by the corresponding activity
-	 * 
-	 * @param agent
-	 *            The agent that's submitting the order
-	 * @param type
-	 *            The type of the order (BUY/SELL)
-	 * @param price
-	 *            The price of the order
-	 * @param quantity
-	 *            The quantity of the order, negative for sell orders
-	 * @param currentTime
-	 *            The currentTime
-	 * @return Any side effect activities (none in base case)
-	 */
-	public void submitNMSOrder(Agent agent, OrderType type, Price price,
-			int quantity, TimeStamp currentTime) {
-		submitNMSOrder(agent, type, price, quantity, currentTime, TimeStamp.IMMEDIATE);
-	}
-
-	/**
-	 * Submit a routed order that "expires" after duration. The placed bid will
-	 * be routed to the Market that appears to offer the best execution
-	 * according to the NBBO and this market's current up to date quote. If
-	 * duration is TimeStamp.IMMEDIATE than the order will not expire.
-	 * 
-	 * NOTE: This should only be called by the corresponding activity
-	 * 
-	 * @param agent
-	 *            The agent submitting the order
-	 * @param type
-	 * 			  The type of the order (BUY/SELL)
-	 * @param price
-	 *            The price of the order
-	 * @param quantity
-	 *            The quantity of the order, negative for sell orders
-	 * @param currentTime
-	 *            The current time
-	 * @param duration
-	 *            The duration before the bid should expire. If duration =
-	 *            TimeStamp(1), the bid will expire after 1 millisecond. To make
-	 *            an order that doesn't expire use TimeStamp.IMMEDIATE.
-	 * @return Any side effect activities (base case possibly a withdraw order)
-	 */
-	/*
-	 * TODO How should call markets handle Reg NMS. Can't route to call market
-	 * to get immediate execution. NMSOrder will not route properly for a call
-	 * market if there is another market in the model
-	 */
-	public void submitNMSOrder(Agent agent, OrderType type, Price price,
-			int quantity, TimeStamp currentTime, TimeStamp duration) {
-		checkNotNull(type, "Order type");
-		checkArgument(quantity > 0, "Quantity must be positive");
-		
-		BestBidAsk nbbo = sip.getNBBO();
-		Market bestMarket = this;
-
-		if (quantity > 0) { // buy
-			boolean nbboBetter = nbbo.getBestAsk() != null
-					&& nbbo.getBestAsk().lessThan(quote.getAskPrice());
-			boolean willTransact = price.greaterThan(nbbo.getBestAsk());
-			if (nbboBetter && willTransact)
-				bestMarket = nbbo.getBestAskMarket();
-		} else { // sell
-			boolean nbboBetter = nbbo.getBestBid() != null
-					&& nbbo.getBestBid().greaterThan(quote.getBidPrice());
-			boolean willTransact = price.lessThan(nbbo.getBestBid());
-			if (nbboBetter && willTransact)
-				bestMarket = nbbo.getBestBidMarket();
-		}
-
-		if (!bestMarket.equals(this))
-			log(INFO, "Routing %s %s %d @ %s from %s %s to NBBO %s %s",
-					agent, type, quantity, price, this, quote, bestMarket, nbbo);
-
-		bestMarket.submitOrder(agent, type, price, quantity, currentTime, duration);
-	}
-	
-	/**
-	 * Get a list of all transactions in the market. This should NOT be used by
-	 * agents to get transaction lists.
-	 * 
-	 * @return An immutable list of Transactions.
-	 */
-	public List<Transaction> getTransactions() {
-		return ImmutableList.copyOf(allTransactions);
-	}
-	
+	@Override
 	protected String name() {
 		String oldName = super.name();
-		return oldName.substring(0, oldName.length() - 6);
+		return oldName.endsWith("Market") ? oldName.substring(0, oldName.length() - 6) : oldName;
 	}
-
+	
 	/**
 	 * Base Market just returns the id in []. Subclasses should override to also
 	 * add information about the type of market.
 	 */
 	@Override
 	public String toString() {
-		return name() + " [" + id + "]";
+		return name() + "[" + id + "]";
 	}
+
+	public MarketView getView(TimeStamp latency) {
+		MarketView view = new MarketView(latency);
+		views.add(view);
+		return view;
+	}
+	
+	public MarketView getPrimaryView() {
+		return primaryView;
+	}
+
+	// FIXME Have market keep transactions, and just return sublist...
+	public class MarketView implements View {
+		protected final TimeStamp latency;
+		
+		protected final List<Transaction> transactions;
+		protected Quote quote;
+		
+		protected MarketView(TimeStamp latency) {
+			this.latency = latency;
+			this.quote = Quote.create(Market.this, Optional.<Price> absent(), 0, Optional.<Price> absent(), 0, TimeStamp.ZERO);
+			this.transactions = Lists.newArrayList();
+		}
+		
+		protected void addTransaction(final Transaction transaction) {
+			Market.this.sim.scheduleActivityIn(latency, new Activity() {
+				@Override public void execute() {
+					MarketView.this.transactions.add(transaction);
+				}
+				@Override public String toString() { return "Add Transaction"; }
+			});
+		}
+		
+		protected void updateQuote(final Quote quote) {
+			Market.this.sim.scheduleActivityIn(latency, new Activity() {
+				@Override public void execute() {
+					if (MarketView.this.quote.getQuoteTime().compareTo(quote.getQuoteTime()) <= 0)
+						MarketView.this.quote = quote;
+				}
+				@Override public String toString() { return "Update Quote"; }
+			});
+		}
+		
+		public List<Transaction> getTransactions() {
+			return Collections.unmodifiableList(Lists.reverse(transactions));
+		}
+		
+		public Quote getQuote() {
+			return quote;
+		}
+
+		public OrderRecord submitNMSOrder(final Agent agent, final OrderRecord order) {
+			final AgentView view = agent.getView(latency);
+			Market.this.sim.scheduleActivityIn(latency, new Activity() {
+				@Override public void execute() { Market.this.submitNMSOrder(MarketView.this, agent, view, order); }
+				@Override public String toString() { return "Submit NMS Order"; }
+			});
+			return order;
+		}
+
+		public void submitOrder(final Agent agent, final OrderRecord order) {
+			final AgentView view = agent.getView(latency);
+			Market.this.sim.scheduleActivityIn(latency, new Activity() {
+				@Override public void execute() { Market.this.submitOrder(MarketView.this, view, order); }
+				@Override public String toString() { return "Submit Order"; }
+			});
+		}
+		
+		public void withdrawOrder(final OrderRecord order, final int quantity) {
+			Market.this.sim.scheduleActivityIn(latency, new Activity() {
+				@Override public void execute() { Market.this.withdrawOrder(order, quantity); }
+				@Override public String toString() { return "Withdraw Order"; }
+			});
+		}
+		
+		public void withdrawOrder(OrderRecord order) {
+			withdrawOrder(order, order.getQuantity());
+		}
+		
+		public void notify(HFTAgent agent) {
+			Market.this.notified.put(agent.getView(latency), this);
+		}
+
+		@Override
+		public TimeStamp getLatency() {
+			return latency;
+		}
+
+		@Override
+		public String toString() {
+			return Market.this.toString() + '*';
+		}
+		
+	}
+
+	private static final long serialVersionUID = 8806298743451593261L;
 	
 }

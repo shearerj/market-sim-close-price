@@ -11,11 +11,15 @@ public class MarketTime extends TimeStamp implements Serializable {
 
 	private static final long serialVersionUID = 2228639267105816484L;
 	
-	protected final long marketTime;
+	private final long marketTime;
 
 	protected MarketTime(TimeStamp time, long marketTime) {
 		super(time.getInTicks());
 		this.marketTime = marketTime;
+	}
+	
+	protected static MarketTime from(TimeStamp time, long marketTime) {
+		return new MarketTime(time, marketTime);
 	}
 	
 	@Override

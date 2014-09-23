@@ -1,26 +1,25 @@
 package entity.infoproc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static data.Observations.BUS;
-import static logger.Log.log;
-import static logger.Log.Level.INFO;
 
-import java.util.Collections;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
-import systemmanager.Scheduler;
-import activity.Activity;
-import activity.ProcessQuote;
-import activity.ProcessTransactions;
+import systemmanager.Simulation;
+import utils.Orderings;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Ordering;
 
-import data.Observations.NBBOStatistic;
 import entity.Entity;
 import entity.market.Market;
+import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.market.Quote;
 import entity.market.Transaction;
@@ -34,111 +33,60 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-public class SIP extends Entity implements QuoteProcessor, TransactionProcessor {
+public class SIP extends Entity {
 
 	private static final long serialVersionUID = -4600049787044894823L;
+	protected static final Ordering<Optional<Price>> bidOrder = Orderings.optionalOrdering(Ordering.<Price> natural());
+	protected static final Ordering<Optional<Price>> askOrder = Orderings.optionalOrdering(Ordering.<Price> natural().reverse());
 	
-	protected final TimeStamp latency;
-	protected final Map<Market, Quote> marketQuotes;
-	protected final List<Transaction> transactions;
-	protected BestBidAsk nbbo;
+	protected final Collection<MarketView> views;
 
-	public SIP(Scheduler scheduler, TimeStamp latency) {
-		super(0, scheduler);
-		this.latency = checkNotNull(latency);
-		this.marketQuotes = Maps.newHashMap();
-		this.transactions = Lists.newArrayList();
-		this.nbbo = new BestBidAsk(null, null, 0, null, null, 0);
+	protected SIP(Simulation sim, TimeStamp latency, Iterable<Market> markets) {
+		super(0, sim);
+		checkNotNull(latency);
+		Builder<MarketView> builder = ImmutableList.builder();
+		for (Market market : markets)
+			builder.add(market.getView(latency));
+		this.views = builder.build();
+	}
+	
+	public static SIP create(Simulation sim, TimeStamp latency, Iterable<Market> markets) {
+		return new SIP(sim, latency, markets);
 	}
 
 	public BestBidAsk getNBBO() {
-		return nbbo;
+		Optional<Market> bestBidMarket = Optional.absent(), bestAskMarket = Optional.absent();
+		Optional<Price> bestBidPrice = Optional.absent(), bestAskPrice = Optional.absent();
+		int bestAskQuantity = 0, bestBidQuantity = 0;
+		for (MarketView market : views) {
+			Quote quote = market.getQuote();
+			if (bidOrder.compare(quote.getBidPrice(), bestBidPrice) > 0) {
+				bestBidPrice = quote.getBidPrice();
+				bestBidMarket = Optional.of(quote.getMarket());
+				bestBidQuantity = quote.getBidQuantity();
+			}
+			if (askOrder.compare(quote.getAskPrice(), bestAskPrice) > 0) {
+				bestAskPrice = quote.getAskPrice();
+				bestAskMarket = Optional.of(quote.getMarket());
+				bestAskQuantity = quote.getAskQuantity();
+			}
+		}
+		return BestBidAsk.create(bestBidMarket, bestBidPrice, bestBidQuantity, bestAskMarket, bestAskPrice, bestAskQuantity);
 	}
 	
-	public List<Transaction> getTransactions() {
-		return Collections.unmodifiableList(transactions);
+	public Iterable<Transaction> getTransactions() {
+		return Iterables.unmodifiableIterable(Iterables.mergeSorted(Collections2.transform(views, new Function<MarketView, List<Transaction>>() {
+			@Override public List<Transaction> apply(MarketView marketView) { return marketView.getTransactions(); }
+		}), new Comparator<Transaction>() {
+			@Override public int compare(Transaction arg0, Transaction arg1) {
+				// FIXME may be reverse
+				return arg0.getExecTime().compareTo(arg1.getExecTime()); }
+		}));
 	}
 
 	@Override
 	public String toString() {
 		return "SIP";
-	}
-
-	@Override
-	public void sendToTransactionProcessor(Market market,
-			List<Transaction> newTransactions, TimeStamp currentTime) {
-		Activity act = new ProcessTransactions(this, market, newTransactions);
-		if (latency.equals(TimeStamp.IMMEDIATE))
-			scheduler.executeActivity(act);
-		else
-			scheduler.scheduleActivity(currentTime.plus(latency), act);
-	}
-
-	@Override
-	public void processTransactions(Market market,
-			List<Transaction> newTransactions, TimeStamp currentTime) {
-		if (newTransactions.isEmpty()) return;
-		TimeStamp transactionTime = newTransactions.get(0).getExecTime();
-		// Find the proper insertion index (likely at the end of the list)
-		int insertionIndex = transactions.size();
-		for (Transaction trans : Lists.reverse(transactions)) {
-			if (trans.getExecTime().before(transactionTime))
-				break;
-			--insertionIndex;
-		}
-		// Insert at appropriate location
-		transactions.addAll(insertionIndex, newTransactions);
-	}
-
-	@Override
-	public void sendToQuoteProcessor(Market market,
-			Quote quote, TimeStamp currentTime) {
-		Activity act = new ProcessQuote(this, market, quote);
-		if (latency.equals(TimeStamp.IMMEDIATE))
-			scheduler.executeActivity(act);
-		else
-			scheduler.scheduleActivity(currentTime.plus(latency), act);
-	}
-
-	@Override
-	public void processQuote(Market market,
-			Quote quote, TimeStamp currentTime) {
-		Quote oldQuote = marketQuotes.get(market);
-		// If we get a stale quote, ignore it.
-		if (oldQuote != null && oldQuote.getQuoteTime() != null
-				&& oldQuote.getQuoteTime().compareTo(quote.getQuoteTime()) > 0)
-			return;
-
-		marketQuotes.put(market, quote);
-		
-		log(INFO, "%s -> %s quote %s", market, this, quote);
-
-		Price bestBid = null, bestAsk = null;
-		int bestBidQuantity = 0, bestAskQuantity = 0;
-		Market bestBidMkt = null, bestAskMkt = null;
-
-		for (Entry<Market, Quote> marketQuote : marketQuotes.entrySet()) {
-			Quote q = marketQuote.getValue();
-			if (q.getAskPrice() != null && q.getAskPrice().lessThan(bestAsk)) {
-				bestAsk = q.getAskPrice();
-				bestAskQuantity = q.getAskQuantity();
-				bestAskMkt = marketQuote.getKey();
-			}
-			if (q.getBidPrice() != null && q.getBidPrice().greaterThan(bestBid)) {
-				bestBid = q.getBidPrice();
-				bestBidQuantity = q.getBidQuantity();
-				bestBidMkt = marketQuote.getKey();
-			}
-		}
-
-		nbbo = new BestBidAsk(bestBidMkt, bestBid, bestBidQuantity, 
-				bestAskMkt, bestAsk, bestAskQuantity);
-		BUS.post(new NBBOStatistic(nbbo.getSpread(), currentTime));
-	}
-
-	@Override
-	public TimeStamp getLatency() {
-		return latency;
 	}
 
 }

@@ -1,18 +1,17 @@
 package entity.agent;
 
-import static logger.Log.log;
 import static logger.Log.Level.INFO;
 
 import java.util.Random;
 
-import systemmanager.Keys;
-import systemmanager.Scheduler;
-import data.EntityProperties;
-import data.FundamentalValue;
-import entity.infoproc.SIP;
+import systemmanager.Simulation;
+
+import com.google.common.base.Optional;
+
+import data.Props;
 import entity.market.Market;
 import entity.market.Price;
-import event.TimeStamp;
+import entity.market.Quote;
 
 /**
  * BASICMARKETMAKER
@@ -43,77 +42,66 @@ import event.TimeStamp;
 public class BasicMarketMaker extends MarketMaker {
 
 	private static final long serialVersionUID = 9057600979711100221L;
+	
+	protected Optional<Price> lastAsk, lastBid; // stores the ask/bid at last entry
 
-	public BasicMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
-			SIP sip, Market market, Random rand, double reentryRate,
-			int tickSize, int numRungs, int rungSize, boolean truncateLadder,
-			boolean tickImprovement, boolean tickOutside, int initLadderMean, 
-			int initLadderRange) {
+	protected BasicMarketMaker(Simulation sim, Market market, Random rand, Props props) {
+		super(sim, market, rand, props);
 
-		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
-				numRungs, rungSize, truncateLadder, tickImprovement, tickOutside,
-				initLadderMean, initLadderRange);
+		this.lastAsk = Optional.absent();
+		this.lastBid = Optional.absent();
 	}
 
-	public BasicMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
-			SIP sip, Market market, Random rand, EntityProperties props) {
-
-		this(scheduler, fundamental, sip, market, rand,
-				props.getAsDouble(Keys.MARKETMAKER_REENTRY_RATE, Keys.REENTRY_RATE),
-				props.getAsInt(Keys.AGENT_TICK_SIZE, Keys.TICK_SIZE),
-				props.getAsInt(Keys.NUM_RUNGS),
-				props.getAsInt(Keys.RUNG_SIZE),
-				props.getAsBoolean(Keys.TRUNCATE_LADDER), 
-				props.getAsBoolean(Keys.TICK_IMPROVEMENT), 
-				props.getAsBoolean(Keys.TICK_OUTSIDE),
-				props.getAsInt(Keys.INITIAL_LADDER_MEAN, Keys.FUNDAMENTAL_MEAN),
-				props.getAsInt(Keys.INITIAL_LADDER_RANGE));
+	public static BasicMarketMaker create(Simulation sim, Market market, Random rand, Props props) {
+		return new BasicMarketMaker(sim, market, rand, props);
 	}
 
 	@Override
-	public void agentStrategy(TimeStamp currentTime) {
-		super.agentStrategy(currentTime);
+	public void agentStrategy() {
+		super.agentStrategy();
 
-		Price bid = this.getQuote().getBidPrice();
-		Price ask = this.getQuote().getAskPrice();
+		Quote quote = getQuote();
+		Optional<Price> bid = quote.getBidPrice();
+		Optional<Price> ask = quote.getAskPrice();
 
-		if (bid == null && lastBid == null && ask == null && lastAsk == null) {
-			this.createOrderLadder(bid, ask);	
+		if (!bid.isPresent() && !lastBid.isPresent() && !ask.isPresent() && !lastAsk.isPresent()) {
+			createOrderLadder(bid, ask);
 			
-		} else if ((bid == null && lastBid != null)
-				|| (bid != null && !bid.equals(lastBid))
-				|| (bid != null && lastBid == null)
-				|| (ask == null && lastAsk != null)
-				|| (ask != null && !ask.equals(lastAsk))
-				|| (ask != null && lastAsk == null)) {
-
-			if (!this.getQuote().isDefined()) {
+		} else if (bid.equals(lastBid) && ask.equals(lastAsk)) {
+			log(INFO, "%s in %s: No change in submitted ladder", this, primaryMarket);
+			
+		} else {
+			if (!getQuote().isDefined()) {
 				log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
+				createOrderLadder(bid, ask);
 				
 			} else {
 				// Quote changed, still valid, withdraw all orders
 				log(INFO, "%s in %s: Withdraw all orders.", this, primaryMarket);
 				withdrawAllOrders();
 				
-				bid = this.getQuote().getBidPrice();
-				ask = this.getQuote().getAskPrice();
+				// XXX This will only update if market maker is instantaneous
+				bid = getQuote().getBidPrice();
+				ask = getQuote().getAskPrice();
 				
 				// Use last known bid/ask if undefined post-withdrawal
-				if (!this.getQuote().isDefined()) {
-					Price oldBid = bid, oldAsk = ask;
-					if (bid == null && lastBid != null) bid = lastBid;
-					if (ask == null && lastAsk != null) ask = lastAsk;
+				if (!getQuote().isDefined()) {
+					Optional<Price> oldBid = bid, oldAsk = ask;
+					bid = bid.or(lastBid);
+					ask = bid.or(lastAsk);
 					log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", 
 							this, primaryMarket, oldBid, oldAsk, bid, ask);
-				}	
-			} // if quote defined
-			this.createOrderLadder(bid, ask);
-			
-		} else {
-			log(INFO, "%s in %s: No change in submitted ladder", this, primaryMarket);
+				}
+				
+				submitCalculatedSpread(bid, ask);
+			}
 		}
-		// update latest bid/ask prices
-		lastAsk = ask; lastBid = bid;
+		lastBid = bid;
+		lastAsk = ask;
 	}
-
+	
+	/** method to calculate spread when quote is definied */
+	protected void submitCalculatedSpread(Optional<Price> bid, Optional<Price> ask) {
+		createOrderLadder(bid, ask);
+	}
 }

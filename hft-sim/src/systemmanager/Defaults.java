@@ -45,6 +45,7 @@ public class Defaults implements Serializable {
 		Keys.MARKET_LATENCY,		-1,
 		Keys.QUOTE_LATENCY,			-1,
 		Keys.TRANSACTION_LATENCY,	-1,		
+		Keys.FUNDAMENTAL_LATENCY,	-1,
 
 		Keys.PRICING_POLICY,		0.5,
 		Keys.CLEAR_FREQ,			1000,

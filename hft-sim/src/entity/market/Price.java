@@ -1,14 +1,17 @@
 package entity.market;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.math.RoundingMode.HALF_EVEN;
 
 import java.io.Serializable;
+import java.math.RoundingMode;
 
-import utils.MathUtils;
+import utils.Maths;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.Ordering;
 import com.google.common.math.DoubleMath;
+import com.google.common.math.IntMath;
 import com.google.common.primitives.Ints;
 
 /**
@@ -20,14 +23,26 @@ import com.google.common.primitives.Ints;
 public class Price extends Number implements Comparable<Price>, Serializable {
 
 	private static final long serialVersionUID = 772101228717034473L;
+	protected static final Ordering<Price> ord = Ordering.natural();
 
-	/*
-	 * XXX Take infinite price into account for subtraction, addition, toString,
-	 * etc. Basically, should infinite price be special?
-	 */
-	// MIN_VALUE + 1 so that -(-INF) = INF
-	public static final Price INF = new Price(Integer.MAX_VALUE);
-	public static final Price NEG_INF = new Price(Integer.MIN_VALUE + 1);
+	public static final Price INF = new Price(Integer.MAX_VALUE) {
+		private static final long serialVersionUID = 1849387089333514388L;
+		@Override public float floatValue() { return Float.POSITIVE_INFINITY; }
+		@Override public double doubleValue() { return Double.POSITIVE_INFINITY; }
+		@Override public Price quantize(int quanta) { return this; }
+		@Override public int hashCode() { return System.identityHashCode(this); }
+		@Override public String toString() { return "$" + doubleValue(); }
+		@Override public String toDollarString() { return "$" + doubleValue(); }
+	};
+	public static final Price NEG_INF = new Price(Integer.MIN_VALUE) {
+		private static final long serialVersionUID = -2568290536011656239L;
+		@Override public float floatValue() { return Float.NEGATIVE_INFINITY; }
+		@Override public double doubleValue() { return Double.NEGATIVE_INFINITY; }
+		@Override public Price quantize(int quanta) { return this; }
+		@Override public int hashCode() { return System.identityHashCode(this); }
+		@Override public String toString() { return "$" + doubleValue(); }
+		@Override public String toDollarString() { return "-$" + (-doubleValue()); }
+	};
 	public static final Price ZERO = new Price(0);
 
 	public static int TICKS_PER_DOLLAR = 1000;
@@ -39,15 +54,23 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 	 * 
 	 * @param ticks
 	 */
-	public Price(int ticks) {
+	// FIXME change to protected
+	private Price(int ticks) {
 		this.ticks = ticks;
 	}
 	
-	public Price(double ticks) {
-		if (ticks >= Integer.MAX_VALUE) 
-			this.ticks = INF.ticks;
+	public static Price of(int ticks) {
+		return new Price(ticks);
+	}
+	
+	public static Price of(double ticks) {
+		checkArgument(!Double.isNaN(ticks));
+		if (ticks > Integer.MAX_VALUE) 
+			return INF;
+		else if (ticks < Integer.MIN_VALUE)
+			return NEG_INF;
 		else 
-			this.ticks = DoubleMath.roundToInt(ticks, HALF_EVEN);
+			return new Price(DoubleMath.roundToInt(ticks, HALF_EVEN));
 	}
 	
 	@Override
@@ -71,14 +94,14 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 	}
 
 	public Price quantize(int quanta) {
-		return new Price(MathUtils.quantize(ticks, quanta));
+		return new Price(Maths.quantize(ticks, quanta));
 	}
 	
 	/**
 	 * @return price in dollars
 	 */
 	public double getInDollars() {
-		return ticks / (double) TICKS_PER_DOLLAR;
+		return doubleValue() / (double) TICKS_PER_DOLLAR;
 	}
 
 	/**
@@ -86,7 +109,7 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 	 * @return Non-negative version of the price.
 	 */
 	public Price nonnegative() {
-		return Ordering.natural().max(this, ZERO);
+		return ord.max(this, ZERO);
 	}
 
 	/**
@@ -94,37 +117,49 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 	 */
 	@Override
 	public int compareTo(Price o) {
-		if (o == null)
+		if (o == null) {
 			return 1;
-		return Ints.compare(ticks, o.ticks);
+		} else if (this == INF) {
+			if (o == INF)
+				return 0;
+			else
+				return 1;
+		} else if (this == NEG_INF) {
+			if (o == NEG_INF)
+				return 0;
+			else
+				return -1;
+		} else {
+			return Ints.compare(ticks, o.ticks);
+		}
 	}
 
 	/**
 	 * True if p is null or this price is strictly greater
 	 */
 	public boolean greaterThan(Price p) {
-		return p == null || compareTo(p) > 0;
+		return ord.compare(this, p) > 0;
 	}
 
 	/**
 	 * True if p is null or this price is strictly less
 	 */
 	public boolean lessThan(Price p) {
-		return p == null || compareTo(p) < 0;
+		return ord.compare(this, p) < 0;
 	}
 
 	/**
 	 * True if p is null or this price is greater or equal
 	 */
 	public boolean greaterThanEqual(Price p) {
-		return p == null || compareTo(p) >= 0;
+		return ord.compare(this, p) >= 0;
 	}
 
 	/**
 	 * True if p is null or this price is less or equal
 	 */
 	public boolean lessThanEqual(Price p) {
-		return p == null || compareTo(p) <= 0;
+		return ord.compare(this, p) <= 0;
 	}
 
 	@Override
@@ -137,7 +172,12 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 		if (obj == null || !(obj instanceof Price))
 			return false;
 		Price other = (Price) obj;
-		return ticks == other.ticks;
+		if (this == INF)
+			return other == INF;
+		else if (this == NEG_INF)
+			return other == NEG_INF;
+		else
+			return ticks == other.ticks;
 	}
 	
 	@Override
@@ -148,7 +188,7 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 	public String toDollarString() {
 		int absTicks = Math.abs(ticks); 
 		int dollars = absTicks / TICKS_PER_DOLLAR;
-		int digits = MathUtils.logn(TICKS_PER_DOLLAR, 10);
+		int digits = IntMath.log10(TICKS_PER_DOLLAR, RoundingMode.HALF_EVEN);
 		int cents = absTicks % TICKS_PER_DOLLAR;
 		while (digits > 2 && cents % 10 == 0) {
 			cents /= 10;

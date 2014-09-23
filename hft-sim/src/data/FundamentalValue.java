@@ -1,6 +1,5 @@
 package data;
 
-import static logger.Log.log;
 import static logger.Log.Level.ERROR;
 
 import java.io.Serializable;
@@ -8,12 +7,16 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
 
+import systemmanager.Simulation;
 import utils.Rands;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 
+import entity.Entity;
+import entity.View;
 import entity.market.Price;
 import event.TimeStamp;
 
@@ -23,10 +26,10 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-// XXX Erik: Potentially move this to another package?
-public class FundamentalValue implements Iterable<Double>, Serializable {
+public class FundamentalValue extends Entity implements Iterable<Double>, Serializable {
 
 	private static final long serialVersionUID = 6764216196138108452L;
+	protected static final Ordering<TimeStamp> ord = Ordering.natural();
 	
 	protected final ArrayList<Double> meanRevertProcess;
 	protected final double kappa;
@@ -40,7 +43,8 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 	 * @param var Gaussian Process variance
 	 * @param rand Random generator
 	 */
-	protected FundamentalValue(double kap, int meanVal, double var, Random rand) {
+	protected FundamentalValue(Simulation sim, double kap, int meanVal, double var, Random rand) {
+		super(0, sim);
 		this.rand = rand;
 		this.kappa = kap;
 		this.meanValue = meanVal;
@@ -49,6 +53,7 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 		// stochastic initial conditions for random process
 		meanRevertProcess = Lists.newArrayList();
 		meanRevertProcess.add(Rands.nextGaussian(rand, meanValue, shockVar));
+		postStat(0, Iterables.getOnlyElement(meanRevertProcess));
 	}
 	
 	/**
@@ -60,8 +65,8 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 	 * @param rand
 	 * @return
 	 */
-	public static FundamentalValue create(double kap, int meanVal, double var, Random rand) {
-		return new FundamentalValue(kap, meanVal, var, rand);
+	public static FundamentalValue create(Simulation sim, double kap, int meanVal, double var, Random rand) {
+		return new FundamentalValue(sim, kap, meanVal, var, rand);
 	}
 
 	/**
@@ -72,9 +77,9 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 	protected void computeFundamentalTo(int maxQuery) {
 		for (int i = meanRevertProcess.size(); i <= maxQuery; i++) {
 			double prevValue = Iterables.getLast(meanRevertProcess);
-			double nextValue = Rands.nextGaussian(rand, meanValue * kappa
-					+ (1 - kappa) * prevValue, shockVar);
+			double nextValue = Rands.nextGaussian(rand, meanValue * kappa + (1 - kappa) * prevValue, shockVar);
 			meanRevertProcess.add(nextValue);
+			postStat(i, nextValue);
 		}
 	}
 
@@ -84,11 +89,12 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 	public Price getValueAt(TimeStamp t) {
 		int index = (int) t.getInTicks();
 		if (index < 0) { // In case of overflow
-			log(ERROR, "Tried to access out of bounds TimeStamp: %s (%d)", t, index);
-			return new Price(0);
+			sim.log(ERROR, "Tried to access out of bounds TimeStamp: %s (%d)", t, index);
+			return Price.ZERO;
+		} else {
+			computeFundamentalTo(index);
+			return Price.of(meanRevertProcess.get(index)).nonnegative();
 		}
-		computeFundamentalTo(index);
-		return new Price((int) (double) meanRevertProcess.get(index)).nonnegative();
 	}
 
 	@Override
@@ -96,10 +102,31 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 		return Iterators.unmodifiableIterator(meanRevertProcess.iterator());
 	}
 	
-	/**
-	 * @return mean value of fundamental
-	 */
-	public int getMeanValue() {
-		return this.meanValue;
+	// XXX These aren't rounded the way the price will be
+	protected void postStat(int index, double value) {
+		sim.postTimedStat(TimeStamp.of(index), Stats.FUNDAMENTAL, value);
+		sim.postStat(Stats.CONTROL_FUNDAMENTAL, value);
+	}
+
+	public FundamentalValueView getView(final TimeStamp latency) {
+		// TODO memeoize?
+		return new FundamentalValueView(ord.max(latency, TimeStamp.ZERO));
+	}
+	
+	public class FundamentalValueView implements View {
+		private TimeStamp latency;
+		
+		protected FundamentalValueView(TimeStamp latency) {
+			this.latency = latency;
+		}
+		
+		public Price getValue() {
+			return FundamentalValue.this.getValueAt(ord.max(FundamentalValue.this.currentTime().minus(latency), TimeStamp.ZERO));
+		}
+		
+		@Override
+		public TimeStamp getLatency() {
+			return latency;
+		}
 	}
 }

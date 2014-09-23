@@ -2,14 +2,14 @@ package entity.agent;
 
 import java.util.Random;
 
-import systemmanager.Scheduler;
-import data.FundamentalValue;
-import entity.infoproc.MarketQuoteProcessor;
-import entity.infoproc.MarketTransactionProcessor;
-import entity.infoproc.SIP;
+import systemmanager.Simulation;
+import data.Props;
 import entity.market.Market;
+import entity.market.Market.MarketView;
+import entity.market.Price;
 import entity.market.Quote;
 import event.TimeStamp;
+import fourheap.Order.OrderType;
 
 /**
  * SMAGENT
@@ -37,21 +37,23 @@ public abstract class SMAgent extends Agent {
 
 	private static final long serialVersionUID = 3156640550886695881L;
 	
-	protected final Market primaryMarket;
-	protected final MarketQuoteProcessor marketQuoteProcessor;
-	protected final MarketTransactionProcessor marketTransactionProcessor;
+	protected final MarketView primaryMarket;
 
-	public SMAgent(Scheduler scheduler, TimeStamp arrivalTime,
-			FundamentalValue fundamental, SIP sip, Market market, Random rand,
-			int tickSize) {
-		super(scheduler, arrivalTime, fundamental, sip, rand, tickSize);
-		this.primaryMarket = market;
-		this.marketQuoteProcessor = market.getQuoteProcessor();
-		this.marketTransactionProcessor = market.getTransactionProcessor();
+	protected SMAgent(Simulation sim, TimeStamp arrivalTime, Random rand, Market market, Props props) {
+		super(sim, arrivalTime, rand, props);
+		this.primaryMarket = market.getPrimaryView();
+	}
+	
+	protected OrderRecord submitOrder(OrderType type, Price price, int quantity) {
+		return submitOrder(primaryMarket, type, price, quantity);
+	}
+	
+	protected OrderRecord submitNMSOrder(OrderType type, Price price, int quantity) {
+		return submitNMSOrder(primaryMarket, type, price, quantity);
 	}
 
-	public Quote getQuote() {
-		return marketQuoteProcessor.getQuote();
+	protected Quote getQuote() {
+		return primaryMarket.getQuote();
 	}
 	
 }

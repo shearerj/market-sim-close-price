@@ -2,22 +2,34 @@ package utils;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.Collections;
 import java.util.Iterator;
-
-import com.google.common.collect.Iterators;
-import com.google.common.collect.PeekingIterator;
-import com.google.common.math.IntMath;
+import java.util.List;
+import java.util.Random;
 
 import utils.SparseIterator.SparseElement;
 
+import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.AbstractSequentialIterator;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.common.collect.PeekingIterator;
+import com.google.common.collect.UnmodifiableIterator;
+import com.google.common.math.IntMath;
+
 
 public class Iterators2 {
+	
+	private static final Random rand = new Random();
 
 	public static <E> SparseIterator<E> fromSparse(final Iterator<SparseElement<E>> iter) {
 		return new SparseIterator<E>() {
-
 			PeekingIterator<SparseElement<E>> backing = Iterators.peekingIterator(iter);
-			long index = 0; // Index of next returned element
+			long index = 0; // Index of the next returned element
 			E currentElement = null;
 			
 			@Override
@@ -27,16 +39,16 @@ public class Iterators2 {
 
 			@Override
 			public E next() {
-				while (backing.hasNext() && backing.peek().index <= index)
+				if (backing.hasNext() && backing.peek().index == index) {
 					currentElement = backing.next().element;
+				}
 				index += 1;
 				return currentElement;
 			}
 
 			@Override
 			public void remove() {
-				// XXX Unsure what this would do
-				throw new UnsupportedOperationException("Remove is not defined for an IndexedIterator");
+				throw new UnsupportedOperationException("Remove is not defined for a SparseIterator");
 			}
 
 			@Override
@@ -47,7 +59,7 @@ public class Iterators2 {
 			@Override
 			public SparseElement<E> nextSparse() {
 				SparseElement<E> next = backing.next();
-				index = next.index;
+				index = next.index + 1;
 				currentElement = next.element;
 				return next;
 			}
@@ -56,7 +68,7 @@ public class Iterators2 {
 	}
 	
 	public static <E> Iterator<SparseElement<E>> toSparse(final SparseIterator<E> iter) {
-		return new Iterator<SparseElement<E>>() {
+		return new UnmodifiableIterator<SparseElement<E>>() {
 
 			@Override
 			public boolean hasNext() {
@@ -67,13 +79,6 @@ public class Iterators2 {
 			public SparseElement<E> next() {
 				return iter.nextSparse();
 			}
-
-			@Override
-			public void remove() {
-				// XXX Also unsure what this would do
-				throw new UnsupportedOperationException("Remove not supported");
-			}
-			
 		};
 	}
 	
@@ -81,7 +86,7 @@ public class Iterators2 {
 		checkArgument(skip >= 1, "Skip must be at least one");
 		final int trueOffset = offset < 0 ? IntMath.mod(offset, skip) : offset;
 		if (iter instanceof SparseIterator) {
-			return new Iterator<E>() {
+			return new UnmodifiableIterator<E>() {
 
 				PeekingIterator<SparseElement<E>> backing = Iterators.peekingIterator(toSparse((SparseIterator<E>) iter));
 				long index = trueOffset; // Index of next returned element
@@ -98,18 +103,11 @@ public class Iterators2 {
 						currentElement = backing.next().element;
 					index += skip;
 					return currentElement;
-				}
-
-				@Override
-				public void remove() {
-					// XXX Unsure what this would do
-					throw new UnsupportedOperationException("Remove is not defined for an IndexedIterator");
-				}
-				
+				}				
 			};
 		} else {
 			Iterators.advance(iter, trueOffset);
-			return new Iterator<E>() {
+			return new UnmodifiableIterator<E>() {
 
 				@Override
 				public boolean hasNext() {
@@ -122,15 +120,61 @@ public class Iterators2 {
 					Iterators.advance(iter, skip - 1);
 					return next;
 				}
-
-				@Override
-				public void remove() {
-					// XXX Implementing the proper remove would be difficult, and doesn't really make sense.
-					throw new UnsupportedOperationException("Remove not supported");
-				}
-				
 			};
 		}
+	}
+	
+	public static Iterator<Integer> counter() {
+		return new AbstractSequentialIterator<Integer>(1) {
+			@Override protected Integer computeNext(Integer previous) { return previous + 1; }
+		};
+	}
+
+	public static Iterator<Double> exponentials(final double rate, final Random rand) {
+		if (rate == 0)
+			return ImmutableList.<Double> of().iterator();
+		return new AbstractIterator<Double>() {
+			@Override protected Double computeNext() {
+				return Rands.nextExponential(rand, rate);
+			}
+		};
+	}
+	
+	public static Iterator<String> lineIterator(Reader reader) {
+		final BufferedReader lineReader = new BufferedReader(reader);
+		try {
+			return new UnmodifiableIterator<String>() {
+				String line = lineReader.readLine();
+
+				@Override
+				public boolean hasNext() {
+					return line != null;
+				}
+
+				@Override
+				public String next() {
+					String lastLine = line;
+					try {
+						line = lineReader.readLine();
+					} catch (IOException e) {
+						line = null;
+					}
+					return lastLine;
+				}
+			};
+		} catch (IOException e) {
+			return ImmutableList.<String> of().iterator();
+		}
+	}
+	
+	public static <E> Iterator<E> shuffle(Iterator<E> iter, Random rand) {
+		List<E> copy = Lists.newArrayList(iter);
+		Collections.shuffle(copy, rand);
+		return Collections.unmodifiableList(copy).iterator();
+	}
+	
+	public static <E> Iterator<E> shuffle(Iterator<E> iter) {
+		return shuffle(iter, rand);
 	}
 	
 }

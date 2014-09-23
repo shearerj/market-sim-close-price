@@ -3,14 +3,10 @@ package entity.market;
 import java.util.Random;
 
 import systemmanager.Keys;
-import systemmanager.Scheduler;
-import activity.Clear;
-import data.EntityProperties;
-import entity.agent.Agent;
-import entity.infoproc.SIP;
-import entity.market.clearingrule.EarliestPriceClear;
-import event.TimeStamp;
-import fourheap.Order.OrderType;
+import systemmanager.Simulation;
+import data.Props;
+import entity.agent.Agent.AgentView;
+import entity.agent.OrderRecord;
 
 /**
  * Class for a continuous double auction market.
@@ -21,39 +17,24 @@ public class CDAMarket extends Market {
 
 	private static final long serialVersionUID = -6780130359417129449L;
 
-	public CDAMarket(Scheduler scheduler, SIP sip, Random rand,
-			TimeStamp latency, int tickSize) {
-		
-		this(scheduler, sip, rand, latency, latency, tickSize);
-	}
-	
-	public CDAMarket(Scheduler scheduler, SIP sip, Random rand,
-			TimeStamp quoteLatency, TimeStamp transactionLatency, int tickSize) {
-		
-		super(scheduler, sip, quoteLatency, transactionLatency,
-				new EarliestPriceClear(tickSize), rand);
+	protected CDAMarket(Simulation sim, Random rand, Props props) {
+		super(sim, new EarliestPriceClear(props.getAsInt(Keys.MARKET_TICK_SIZE, Keys.TICK_SIZE)), rand, props);
 	}
 
-	public CDAMarket(Scheduler scheduler, SIP sip, Random rand,
-			EntityProperties props) {
-		this(scheduler, sip, rand,
-				TimeStamp.create(props.getAsInt(Keys.QUOTE_LATENCY, Keys.MARKET_LATENCY)),
-				TimeStamp.create(props.getAsInt(Keys.TRANSACTION_LATENCY, Keys.MARKET_LATENCY)),
-				props.getAsInt(Keys.MARKET_TICK_SIZE, Keys.TICK_SIZE));
+	public static CDAMarket create(Simulation sim, Random rand, Props props) {
+		return new CDAMarket(sim, rand, props);
 	}
 
 	@Override
-	public void submitOrder(Agent agent, OrderType type, Price price,
-			int quantity, TimeStamp currentTime, TimeStamp duration) {
-		
-		super.submitOrder(agent, type, price, quantity, currentTime, duration);
-		scheduler.executeActivity(new Clear(this));
+	protected void submitOrder(MarketView view, AgentView agent, OrderRecord order) {
+		super.submitOrder(view, agent, order);
+		clear();
 	}
 
 	@Override
-	public void withdrawOrder(Order order, int quantity, TimeStamp currentTime) {
-		super.withdrawOrder(order, quantity, currentTime);
-		updateQuote(currentTime);
+	protected void withdrawOrder(OrderRecord order, int quantity) {
+		super.withdrawOrder(order, quantity);
+		updateQuote();
 	}
 
 }

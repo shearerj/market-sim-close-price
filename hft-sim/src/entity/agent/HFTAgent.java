@@ -1,25 +1,21 @@
 package entity.agent;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 
-import systemmanager.Scheduler;
+import systemmanager.Simulation;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.ImmutableList.Builder;
 
-import data.FundamentalValue;
-import entity.infoproc.HFTQuoteProcessor;
-import entity.infoproc.HFTTransactionProcessor;
-import entity.infoproc.SIP;
+import data.Props;
+import data.Stats;
 import entity.market.Market;
-import entity.market.Quote;
-import entity.market.Transaction;
+import entity.market.Market.MarketView;
+import entity.market.Price;
+import event.Activity;
 import event.TimeStamp;
 
 /**
@@ -31,62 +27,50 @@ import event.TimeStamp;
 public abstract class HFTAgent extends MMAgent {
 
 	private static final long serialVersionUID = -1483633963238206201L;
-	
-	protected final Map<Market, HFTQuoteProcessor> quoteProcessors;
-	protected final Map<Market, HFTTransactionProcessor> transactionProcessors;
 
-	public HFTAgent(Scheduler scheduler, TimeStamp latency, TimeStamp arrivalTime,
-			FundamentalValue fundamental, SIP sip, Collection<Market> markets, 
-			Random rand, int tickSize) {
-		this(scheduler, latency, latency, arrivalTime, fundamental, sip, markets, rand, tickSize);
+	protected HFTAgent(final Simulation sim, TimeStamp arrivalTime, Map<Market, TimeStamp> marketLatencies,
+			Random rand, Props props) {
+		super(sim, arrivalTime, toViews(marketLatencies), rand, props);
+		for (MarketView market : markets)
+			market.notify(this);
+	}
+	
+	@Override
+	public HFTAgentView getView(TimeStamp latency) {
+		return new HFTAgentView(latency);
+	}
+	
+	protected void quoteUpdate(MarketView market) {
+		agentStrategy();
 	}
 
-	public HFTAgent(Scheduler scheduler, TimeStamp quoteLatency,
-			TimeStamp transactionLatency, TimeStamp arrivalTime,
-			FundamentalValue fundamental, SIP sip, Collection<Market> markets,
-			Random rand, int tickSize) {
-		
-		super(scheduler, arrivalTime, fundamental, sip, markets, rand, tickSize);
-		
-		Builder<Market, HFTQuoteProcessor> quoteProcessorBuilder = ImmutableMap.builder(); 
-		Builder<Market, HFTTransactionProcessor> transactionProcessorBuilder = ImmutableMap.builder(); 
-		
-		for (Market market : markets) {
-			HFTQuoteProcessor qp = new HFTQuoteProcessor(scheduler, quoteLatency, market, this);
-			quoteProcessorBuilder.put(market, qp);
-			market.addQP(qp); 
-			
-			HFTTransactionProcessor tp = new HFTTransactionProcessor(scheduler, transactionLatency,
-					market, this);
-			transactionProcessorBuilder.put(market, tp);
-			market.addTP(tp);
+	public class HFTAgentView extends AgentView {
+		protected HFTAgentView(TimeStamp latency) {
+			super(latency);
 		}
 		
-		quoteProcessors = quoteProcessorBuilder.build();
-		transactionProcessors = transactionProcessorBuilder.build();
+		public void quoteUpdate(final MarketView market) {
+			sim.scheduleActivityIn(getLatency(), new Activity() {
+				@Override public void execute() {
+					HFTAgent.this.quoteUpdate(market);
+				}
+				@Override public String toString() { return "Quote Update"; }
+			});
+		}
+		
 	}
 	
-	/**
-	 * Get quote in the specified market.
-	 * @param market
-	 * @return
-	 */
-	public Quote getQuote(Market market) {
-		checkNotNull(market);
-		if (quoteProcessors.containsKey(market))
-			return quoteProcessors.get(market).getQuote();
-		return new Quote(null, null, 0, null, 0, TimeStamp.ZERO);
+	private static Collection<MarketView> toViews(Map<Market, TimeStamp> marketLatencies) {
+		Builder<MarketView> builder = ImmutableList.builder();
+		for (Entry<Market, TimeStamp> marketLatency : marketLatencies.entrySet())
+			builder.add(marketLatency.getKey().getView(marketLatency.getValue()));
+		return builder.build();
+	}
+
+	@Override
+	public void liquidateAtPrice(Price price) {
+		super.liquidateAtPrice(price);
+		sim.postStat(Stats.CLASS_PROFIT + "hft", profit);
 	}
 	
-	/**
-	 * Get transactions in the specified market.
-	 * @param market
-	 * @return
-	 */
-	public List<Transaction> getTransactions(Market market) {
-		checkNotNull(market);
-		if (quoteProcessors.containsKey(market))
-			return transactionProcessors.get(market).getTransactions();
-		return ImmutableList.<Transaction> of();
-	}
 }

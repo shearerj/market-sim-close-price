@@ -1,148 +1,128 @@
 package entity.agent;
 
-import static fourheap.Order.OrderType.BUY;
-import static logger.Log.Level.DEBUG;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static utils.Tests.checkSingleOrder;
+import static utils.Tests.j;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
+import java.io.StringReader;
+import java.util.Iterator;
 import java.util.Random;
 
 import logger.Log;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import systemmanager.Consts;
-import systemmanager.Executor;
+import systemmanager.Consts.MarketType;
+import systemmanager.Keys;
+import systemmanager.MockSim;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.PeekingIterator;
 
-import data.FundamentalValue;
-import data.MockFundamental;
-import entity.infoproc.SIP;
-import entity.market.MockMarket;
-import entity.market.Order;
+import data.Props;
+import entity.agent.MarketDataParser.MarketAction;
+import entity.market.Market;
 import entity.market.Price;
+import event.Activity;
 import event.TimeStamp;
 
+// TODO More complicated tests
 
 public class MarketDataAgentTest {
-	
-	private Random rand;
-	private FundamentalValue fundamental;
-	private Executor exec;
-	private SIP sip;
-	private MockMarket market;	
-
-	/*
-	 * TODO: The files loaded are small. Probably better to allow market data
-	 * agents to take a "Reader" instead of just a file name. That way you can
-	 * just pass in the text that would be in a file, without having to have a
-	 * separate file that needs to be loaded. e.g. everything can be present in
-	 * the text
-	 *
-	 */
-	@BeforeClass
-	public static void setupClass() throws IOException {
-		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "MarketDataAgentTest.log")));
-	}
+	private static final Random rand = new Random();
+	private MockSim sim;
+	private Market market;
 
 	@Before
-	public void setupTest() {
-		rand = new Random();
-		fundamental = new MockFundamental(100000);
-		exec = new Executor();
-		sip = new SIP(exec, TimeStamp.create(0));
-		market = new MockMarket(exec, sip);
+	public void setupTest() throws IOException {
+		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING, MarketType.CDA, j.join(Keys.NUM_MARKETS, 1));
+		market = Iterables.getOnlyElement(sim.getMarkets());
 	}
 
 	@Test
 	public void nyseSimpleTest() {
-		MarketDataAgent agent = new MarketDataAgent(exec, fundamental,
-				sip, market, rand, "dataTests/nyseSimpleTest.csv");		
-		exec.executeUntil(TimeStamp.create(88));
-
-		Collection<Order> orders = market.getOrders();
-		assertEquals(1, orders.size());
-		Order order = Iterables.getOnlyElement(orders);
-
-		assertEquals(agent, order.getAgent());
-		assertEquals(new Price(3249052), order.getPrice());
-		assertTrue(5742346 == order.getQuantity());
-		assertEquals(TimeStamp.create(88), order.getSubmitTime());
-		assertEquals(BUY, order.getOrderType());
-		assertEquals(market, order.getMarket());
+		Iterator<MarketAction> actions = MarketDataParser.parseNYSE(new StringReader("A,0,1,P,B,5742346,SRG1,3249052,0,88,O,AARCA,\n"));
+		MarketDataAgent agent = marketDataAgent(actions);
+		
+		sim.executeUntil(TimeStamp.of(87));
+		assertTrue(agent.activeOrders.isEmpty());
+		
+		sim.executeUntil(TimeStamp.of(88));
+		checkSingleOrder(agent.activeOrders, Price.of(3249052), 5742346, TimeStamp.of(88), TimeStamp.of(88));
 	}
+	
+	
 	
 	@Test
 	public void nyseDeleteTest() {
-		MarketDataAgent agent = new MarketDataAgent(exec, fundamental,
-				sip, market, rand, "dataTests/nyseDeleteTest.csv");		
-		exec.executeUntil(TimeStamp.create(88));
+		Iterator<MarketAction> actions = MarketDataParser.parseNYSE(new StringReader(
+				"A,0,1,B,B,981477,SRG2,5516081,0,0,L,AARCA,\n" +
+				"D,0,1,2,0,SRG2,B,L,AARCA,B,\n"));
+		MarketDataAgent agent = marketDataAgent(actions);
 		
-		Collection<Order> orders = market.getOrders();
-		assertEquals(1, orders.size());
-		Order order = Iterables.getOnlyElement(orders);
+		sim.executeUntil(TimeStamp.IMMEDIATE);
+		assertTrue(agent.activeOrders.isEmpty());
 		
-		assertEquals(agent, order.getAgent());
-		assertEquals(new Price(5516081), order.getPrice());
-		assertTrue(981477 == order.getQuantity());
-		assertEquals(TimeStamp.create(0), order.getSubmitTime());
-		assertEquals(BUY, order.getOrderType());
-		assertEquals(market, order.getMarket());
+		sim.executeUntil(TimeStamp.ZERO);
+		checkSingleOrder(agent.activeOrders, Price.of(5516081), 981477, TimeStamp.ZERO, TimeStamp.ZERO);
+		
+		sim.executeUntil(TimeStamp.of(1999));
+		checkSingleOrder(agent.activeOrders, Price.of(5516081), 981477, TimeStamp.ZERO, TimeStamp.ZERO);
 
-		exec.executeUntil(TimeStamp.create(2001));
-		// FIXME This fails, and removes build certainty
-//		assertFalse(market.containsOrder(order));
-	}
-	
-	@Test
-	public void nyseTest() {
-//		MarketDataAgent agent = new MarketDataAgent(scheduler, fundamental,
-//				sip, market, rand, "test_files/nyseTest.csv");
-//		Iterator<OrderDatum> orderDatumItr = agent.getOrderDatumList().iterator();
-//				
-//		assertTrue("Too few orders", orderDatumItr.hasNext());		
-//		OrderDatum orderDatum = orderDatumItr.next();
-//		OrderDatum correct1 = new OrderDatum('A', "1", "1", 'B', "SRG2",
-//				TimeStamp.create(0), 'L', "AARCA", new Price(5516081), 981477, BUY);
-//		compareOrderDatums(orderDatum, correct1);
-//
-//		assertTrue("Too few orders", orderDatumItr.hasNext());
-//		orderDatum = orderDatumItr.next();
-//		OrderDatum correct2 = new OrderDatum('A', "4", "4", 'P', "SRG3", 
-//				TimeStamp.create(0), 'B', "AARCA", new Price(1177542), 1747834, SELL);
-//		compareOrderDatums(orderDatum, correct2);
-//
-//
-//		assertTrue("Too few orders", orderDatumItr.hasNext());
-//		orderDatum = orderDatumItr.next();
-//		OrderDatum correct3 = new OrderDatum('A', "0", "10", 'B', "SRG4", 
-//				TimeStamp.create(192), 'O', "AARCA", new Price(5223572), 3921581, SELL);
-//		compareOrderDatums(orderDatum, correct3);
+		sim.executeUntil(TimeStamp.of(2000));
+		assertTrue(agent.activeOrders.isEmpty());
+		assertTrue(agent.refNumbers.isEmpty()); // Implementation dependent, but no way to tell other than checking
 	}
 	
 	@Test
 	public void nasdaqAddTest() {
-		MarketDataAgent agent = new MarketDataAgent(exec, fundamental,
-				sip, market, rand, "dataTests/nasdaqAddTest.csv");		
-		exec.executeUntil(TimeStamp.create(16));
-
-		Collection<Order> orders = market.getOrders();
-		assertTrue(orders.size() > 0);
+		Iterator<MarketAction> actions = MarketDataParser.parseNasdaq(new StringReader(
+				"T,0\n" +
+				"A,16382751,1,B,3748742,SRG1,5630815\n"));
+		MarketDataAgent agent = marketDataAgent(actions);
 		
-		for (Order order : orders) {
-			assertEquals(agent, order.getAgent());
-			assertEquals(new Price(5630815), order.getPrice());
-			assertTrue(3748742 == order.getQuantity());
-			assertEquals(TimeStamp.create(16), order.getSubmitTime());
-			assertEquals(BUY, order.getOrderType());
-			assertEquals(market, order.getMarket());
-		}
+		sim.executeUntil(TimeStamp.of(15));
+		assertTrue(agent.activeOrders.isEmpty());
+
+		sim.executeUntil(TimeStamp.of(16));
+		checkSingleOrder(agent.activeOrders, Price.of(5630815), 3748742, TimeStamp.of(16), TimeStamp.of(16));
+	}
+	
+	@Test
+	public void nasdaqDeleteTest() {
+		Iterator<MarketAction> actions = MarketDataParser.parseNasdaq(new StringReader(
+				"T,0\n" +
+				"A,16382751,1,B,3748742,SRG1,5630815\n" +
+				"D,20000000,1\n"));
+		MarketDataAgent agent = marketDataAgent(actions);
+		
+		sim.executeUntil(TimeStamp.of(15));
+		assertTrue(agent.activeOrders.isEmpty());
+		
+		sim.executeUntil(TimeStamp.of(16));
+		checkSingleOrder(agent.activeOrders, Price.of(5630815), 3748742, TimeStamp.of(16), TimeStamp.of(16));
+		
+		sim.executeUntil(TimeStamp.of(19));
+		checkSingleOrder(agent.activeOrders, Price.of(5630815), 3748742, TimeStamp.of(16), TimeStamp.of(16));
+
+		sim.executeUntil(TimeStamp.of(20));
+		assertTrue(agent.activeOrders.isEmpty());
+		assertTrue(agent.refNumbers.isEmpty()); // Implementation dependent, but no way to tell other than checking
+		
+	}
+	
+	private MarketDataAgent marketDataAgent(Iterator<MarketAction> actions) {
+		PeekingIterator<MarketAction> peekable = Iterators.peekingIterator(actions);
+		TimeStamp arrivalTime = peekable.hasNext() ? peekable.peek().getScheduledTime() : TimeStamp.ZERO;
+		final MarketDataAgent agent = new MarketDataAgent(sim, arrivalTime, market, rand, peekable,
+				Props.fromPairs());
+		sim.scheduleActivityIn(agent.getArrivalTime(), new Activity() {
+			@Override public void execute() { agent.agentStrategy(); }
+		});
+		return agent;
 	}
 }
 

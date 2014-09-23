@@ -1,40 +1,34 @@
 package entity.agent;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Log.log;
-import static logger.Log.Level.DEBUG;
 import static logger.Log.Level.INFO;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static utils.Tests.checkSingleOrderRange;
+import static utils.Tests.j;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Random;
 
 import logger.Log;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import systemmanager.Consts;
-import systemmanager.Executor;
+import systemmanager.Consts.MarketType;
 import systemmanager.Keys;
+import systemmanager.MockSim;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Range;
 
-import data.EntityProperties;
-import data.FundamentalValue;
-import data.MockFundamental;
-import entity.infoproc.SIP;
+import data.Props;
 import entity.market.Market;
-import entity.market.MockMarket;
-import entity.market.Order;
+import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.market.Transaction;
 import event.TimeStamp;
@@ -42,12 +36,9 @@ import fourheap.Order.OrderType;
 
 public class ZIPAgentTest {
 
-	private Executor exec;
-	private FundamentalValue fundamental = new MockFundamental(100000);
-	private Market market;
-	private SIP sip;
-	private static Random rand;
-	private static EntityProperties agentProperties = EntityProperties.fromPairs(
+	private static final Random rand = new Random();
+	private static final double eps = 1e-6;
+	private static final Props defaults = Props.fromPairs(
 			Keys.REENTRY_RATE, 0.05,
 			Keys.MAX_QUANTITY, 10,
 			Keys.MARGIN_MIN, 0.05,
@@ -60,73 +51,62 @@ public class ZIPAgentTest {
 			Keys.COEFF_R, 0.05,
 			Keys.PRIVATE_VALUE_VAR, 0);
 	
-	@BeforeClass
-	public static void setupClass() throws IOException{
-		
-		
-		// Setting up the log file
-		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIPAgentTest.log")));
-
-		// Creating the setup properties
-		rand = new Random();
-	}
+	private MockSim sim;
+	private Market market;
+	private MarketView view;
+	private Agent mockAgent;
 	
 	@Before
-	public void setup(){
-		exec = new Executor();
-		sip = new SIP(exec, TimeStamp.IMMEDIATE);
-		// Creating the MockMarket
-		market = new MockMarket(exec, sip);
+	public void setup() throws IOException{
+		sim = MockSim.create(getClass(),
+				Log.Level.NO_LOGGING, Keys.FUNDAMENTAL_MEAN,
+				100000, Keys.FUNDAMENTAL_SHOCK_VAR,
+				0, MarketType.CDA, j.join(Keys.NUM_MARKETS, 1));
+		market = Iterables.getOnlyElement(sim.getMarkets());
+		view = market.getPrimaryView();
+		mockAgent = mockAgent();
 	}
 
-	private ZIPAgent createAgent(Object... parameters) {
-		return new ZIPAgent(exec, TimeStamp.ZERO, fundamental, sip, market,
-				rand, EntityProperties.copyFromPairs(agentProperties, parameters));
-	}
-	
 	@Test
 	public void initialMarginTest() {
-		ZIPAgent agent = createAgent(Keys.MARGIN_MIN, 0.35);
+		ZIPAgent agent = zipAgent(Keys.MARGIN_MIN, 0.35);
 
 		// if no transactions, margin should be initialized to properties setting
 		Margin margin = agent.margin;
 		assertEquals(10, margin.getMaxAbsPosition());
-		int i = 0;
-		for (Double value : margin.values) {
-			if (i < 10)
-				assertEquals(new Double(0.35), value);
-			else
-				assertEquals(new Double(-0.35), value);
-				// buyer margins are negative
-			i++;
-		}
+		for (double value : margin.values.subList(0, 10))
+			assertEquals(0.35, value, eps);
+		for (double value : margin.values.subList(10, margin.values.size()))
+			assertEquals(-0.35, value, eps);
 	}
 	
 	@Test
 	public void marginRangeTest() {
-		ZIPAgent agent = createAgent(Keys.MARGIN_MIN, 0.25);
+		ZIPAgent agent = zipAgent(Keys.MARGIN_MIN, 0.25);
 
 		// if no transactions, margin should be initialized to properties setting
 		Margin margin = agent.margin;
 		assertEquals(10, margin.getMaxAbsPosition());
-		for (Double value : margin.values) {
-			assertTrue(Math.abs(value) <= 0.35 && Math.abs(value) >= 0.25);
-		}
+		Range<Double> range = Range.closed(0.25, 0.35);
+		for (double value : margin.values.subList(0, 10))
+			assertTrue(range.contains(value));
+		for (double value : margin.values.subList(10, margin.values.size()))
+			assertTrue(range.contains(-value));
 	}
 	
 	@Test
 	public void initialZIP() {
-		ZIPAgent agent = createAgent(Keys.BETA_MAX, 0.5, Keys.BETA_MIN, 0.4);
+		ZIPAgent agent = zipAgent(Keys.BETA_MAX, 0.5, Keys.BETA_MIN, 0.4);
 
 		// verify beta in correct range
-		assertTrue(agent.beta <= 0.5 && agent.beta >= 0.4);
-		assertEquals(0, agent.momentumChange, 0.001);
+		assertTrue(Range.closed(0.4, 0.5).contains(agent.beta));
+		assertEquals(0, agent.momentumChange, eps);
 		assertNull(agent.limitPrice);
 	}
 	
 	@Test
 	public void computeRTest() {
-		ZIPAgent agent = createAgent(Keys.COEFF_R, 0.1);
+		ZIPAgent agent = zipAgent(Keys.COEFF_R, 0.1);
 
 		double testR = agent.computeRCoefficient(true);
 		assertTrue("Increasing R outside correct range",
@@ -138,7 +118,7 @@ public class ZIPAgentTest {
 	
 	@Test
 	public void computeATest() {
-		ZIPAgent agent = createAgent(Keys.COEFF_A, 0.1);
+		ZIPAgent agent = zipAgent(Keys.COEFF_A, 0.1);
 
 		double testA = agent.computeACoefficient(true);
 		assertTrue("Increasing R outside correct range",
@@ -149,22 +129,25 @@ public class ZIPAgentTest {
 	}
 	
 	@Test
-	public void extraTest() {
+	public void extraTest() throws IOException {
 		for (int i = 0; i < 100; i++) {
 			setup();
 			computeRTest();
+			setup();
 			computeATest();
+			setup();
 			computeTargetPriceTest();
+			setup();
 			computeDeltaTest();
+			setup();
 			updateMomentumAdvancedTest();
 		}
 	}
-
 	
 	@Test
-	public void agentStrategyTest() {
-		TimeStamp time = TimeStamp.ZERO;
-		ZIPAgent agent = createAgent(Keys.MAX_QUANTITY, 1,
+	public void agentStrategyTest() throws IOException {
+		ZIPAgent agent = zipAgent(
+				Keys.MAX_QUANTITY, 1,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
 				Keys.BETA_MIN, 0.5,
@@ -174,52 +157,52 @@ public class ZIPAgentTest {
 				Keys.COEFF_R, 0.25,
 				Keys.MARGIN_MAX, 0.05,
 				Keys.MARGIN_MIN, 0.05);
-		
+
 		// now with a dummy transaction and dummy order prices
-		addTransaction(95000, 1, 0);
-		addTransaction(90000, 1, 0);
-		agent.limitPrice = agent.getLimitPrice(BUY, 1, time);
+		addTransaction(Price.of(95000), 1);
+		addTransaction(Price.of(90000), 1);
+		agent.limitPrice = agent.getLimitPrice(BUY, 1);
 		// set the margins
 		agent.type = SELL;
-		agent.lastOrderPrice = new Price(105000);
-		agent.lastOrderPrice = new Price(95000);
-		
-		agent.rand.setSeed(1234); // XXX Change seed to test specific execution
-		agent.agentStrategy(time);		
+		agent.lastOrderPrice = Price.of(105000);
+		agent.lastOrderPrice = Price.of(95000);
+
+		/* 
+		 * This current test is based off the random seed. Currently this means that
+		 * Type: BUY
+		 * Trans1: R 0.96, A -0.18
+		 * Trans2: R 0.79, A -0.07
+		 */
+		agent.rand.setSeed(7221);
+		agent.agentStrategy();
 		// buyer reduces margins because transaction prices are less than order
 		// prices, submitted order price will be below the last order price
 		// should also be below the most recent transaction price
-		assertCorrectBid(agent, 85000, 95000, 1);
-		
-		// This current test is based off the random seed. Currently this means that
-		// Type: BUY
-		// R, A: 0.81, -0.20
-		// R, A: 0.89, -0.27
-		assertEquals(88953, Iterables.getOnlyElement(agent.activeOrders).getPrice().intValue());
+		assertEquals("Incorrect random seed", BUY, Iterables.getOnlyElement(agent.activeOrders).getOrderType());
+		checkSingleOrderRange(agent.activeOrders, Price.of(85000), Price.of(95000), 1);
+
+		assertEquals(Price.of(88953), Iterables.getOnlyElement(agent.activeOrders).getPrice());
 	}
 	
 	@Test
 	public void getCurrentMarginTest() {
-		ZIPAgent agent = createAgent(
+		ZIPAgent agent = zipAgent(
 				Keys.MAX_QUANTITY, 1,
 				Keys.MARGIN_MAX, 1.5,
 				Keys.MARGIN_MIN, 1.2);
 
-		// verify buyer margin within [-1, 0]
-		double currentMargin = agent.getCurrentMargin(0, BUY, TimeStamp.ZERO);
-		assertEquals(new Double(-1.0), new Double(currentMargin));
+		// FIXME verify buyer margin within [-1, 0]
+		assertEquals(-1.0, agent.getCurrentMargin(0, BUY), eps);
+		
 		// check seller margin
-		currentMargin = agent.getCurrentMargin(0, SELL, TimeStamp.ZERO);
-		assertTrue("Current margin outside range", 
-				currentMargin <= 1.5 && currentMargin >= 1.2);
+		assertTrue("Current margin outside range", Range.closed(1.2, 1.5).contains(agent.getCurrentMargin(0, BUY)));
 	}
 	
 	@Test
 	public void updateMarginZeroLimit() {
-		log(INFO, "Testing margin update when limit price is 0");
-		TimeStamp time = TimeStamp.ZERO;
+		sim.log(INFO, "Testing margin update when limit price is 0");
 		// testing when limit price is 0
-		ZIPAgent agent = createAgent(
+		ZIPAgent agent = zipAgent(
 				Keys.MAX_QUANTITY, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
@@ -232,26 +215,26 @@ public class ZIPAgentTest {
 				Keys.MARGIN_MIN, 0.05);
 
 		// add dummy transaction
-		addTransaction(95000, 1, 0);
-		Transaction firstTrans = market.getTransactions().get(0);
+		addTransaction(Price.of(95000), 1);
+		Transaction firstTrans = Iterables.getOnlyElement(view.getTransactions());
 
 		agent.limitPrice = Price.ZERO;
 		
 		// set the margins
 		agent.type = BUY;
-		agent.lastOrderPrice = new Price(99000);
+		agent.lastOrderPrice = Price.of(99000);
 		
 		double oldMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(oldMargin,agent.getCurrentMargin(0, agent.type, time), 0.001);
-		agent.updateMargin(firstTrans, time);
+		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type), eps);
+		
+		agent.updateMargin(firstTrans);
 		double newMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(newMargin, oldMargin, 0.001);
+		assertEquals(newMargin, oldMargin, eps);
 	}
 	
 	@Test
 	public void checkIncreaseMarginBuyer() {
-		TimeStamp time = TimeStamp.ZERO;
-		ZIPAgent agent = createAgent(
+		ZIPAgent agent = zipAgent(
 				Keys.MAX_QUANTITY, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
@@ -262,38 +245,35 @@ public class ZIPAgentTest {
 				Keys.COEFF_R, 0.25,
 				Keys.MARGIN_MAX, 0.05,
 				Keys.MARGIN_MIN, 0.05);
-		agent.rand.setSeed(1);
+		agent.rand.setSeed(1); // FIXME Seed set for some reason
 		
 		// add dummy transaction
-		addTransaction(99000, 1, 0);
-		Transaction firstTrans = market.getTransactions().get(0);
-		addTransaction(80000, 1, 0);
-		Transaction lastTrans = market.getTransactions().get(1);
+		Transaction firstTrans = addTransaction(Price.of(99000), 1);
+		Transaction lastTrans = addTransaction(Price.of(80000), 1);
 		Price lastTransPrice = lastTrans.getPrice();
 		
-		agent.limitPrice = agent.getLimitPrice(BUY, 1, time);
+		agent.limitPrice = agent.getLimitPrice(BUY, 1);
 		// verify limit price is constant 100000
-		assertEquals(new Price(100000), agent.limitPrice);
+		assertEquals(Price.of(100000), agent.limitPrice);
 		
 		// set the margins
 		agent.type = BUY;
-		agent.lastOrderPrice = new Price(99000);
+		agent.lastOrderPrice = Price.of(99000);
 		Price lastOrderPrice = agent.lastOrderPrice;
-		agent.updateMargin(firstTrans, time);
+		agent.updateMargin(firstTrans);
 		
 		// decrease target price; for buyer, means higher margin
 		double oldMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
-		agent.updateMargin(lastTrans, time);
+		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type), 0.001);
+		agent.updateMargin(lastTrans);
 		double newMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
-		checkMarginUpdate(BUY, lastOrderPrice, lastTransPrice, oldMargin, newMargin);
+		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type), 0.001);
+		checkMarginUpdate(lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
 	
 	@Test
 	public void checkIncreaseMarginSeller() {
-		TimeStamp time = TimeStamp.ZERO;
-		ZIPAgent agent = createAgent(
+		ZIPAgent agent = zipAgent(
 				Keys.MAX_QUANTITY, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
@@ -307,36 +287,32 @@ public class ZIPAgentTest {
 		agent.rand.setSeed(1);
 
 		// add dummy transaction
-		addTransaction(105000, 1, 0);
-		Transaction firstTrans = market.getTransactions().get(0);
-		addTransaction(110000, 1, 0);
-		Transaction lastTrans = market.getTransactions().get(1);
+		Transaction firstTrans = addTransaction(Price.of(105000), 1);
+		Transaction lastTrans = addTransaction(Price.of(110000), 1);
 		Price lastTransPrice = lastTrans.getPrice();
 		
-		agent.limitPrice = agent.getLimitPrice(BUY, 1, time);
+		agent.limitPrice = agent.getLimitPrice(BUY, 1);
 		// verify limit price is constant 100000
-		assertEquals(new Price(100000), agent.limitPrice);
+		assertEquals(Price.of(100000), agent.limitPrice);
 		
 		// set the margins
 		agent.type = SELL;
-		agent.lastOrderPrice = new Price(105000);
+		agent.lastOrderPrice = Price.of(105000);
 		Price lastOrderPrice = agent.lastOrderPrice;
-		agent.updateMargin(firstTrans, time);
+		agent.updateMargin(firstTrans);
 		
 		// increase target price; for seller, means higher margin
 		double oldMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
-		agent.updateMargin(lastTrans, time);
+		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type), 0.001);
+		agent.updateMargin(lastTrans);
 		double newMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
-		checkMarginUpdate(SELL, lastOrderPrice, lastTransPrice, oldMargin, newMargin);	
+		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type), 0.001);
+		checkMarginUpdate(lastOrderPrice, lastTransPrice, oldMargin, newMargin);	
 	}
 
 	@Test
 	public void checkDecreaseMarginBuyer() {
-		TimeStamp time = TimeStamp.ZERO;
-
-		ZIPAgent agent = createAgent(
+		ZIPAgent agent = zipAgent(
 				Keys.MAX_QUANTITY, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
@@ -353,36 +329,32 @@ public class ZIPAgentTest {
 		assertEquals(agent.momentumChange, 0, 0);
 		
 		// add dummy transaction
-		addTransaction(90000, 1, 0);
-		Transaction firstTrans = market.getTransactions().get(0);
-		addTransaction(105000, 1, 0);
-		Transaction lastTrans = market.getTransactions().get(1);
+		Transaction firstTrans = addTransaction(Price.of(90000), 1);
+		Transaction lastTrans = addTransaction(Price.of(105000), 1);
 		Price lastTransPrice = lastTrans.getPrice();
 		
-		agent.limitPrice = agent.getLimitPrice(BUY, 1, time);
+		agent.limitPrice = agent.getLimitPrice(BUY, 1);
 		// verify limit price is constant 100000
-		assertEquals(new Price(100000), agent.limitPrice);
+		assertEquals(Price.of(100000), agent.limitPrice);
 		
 		// set the margins
 		agent.type = BUY;
-		agent.lastOrderPrice = new Price(90000);
+		agent.lastOrderPrice = Price.of(90000);
 		Price lastOrderPrice = agent.lastOrderPrice;
-		agent.updateMargin(firstTrans, time);
+		agent.updateMargin(firstTrans);
 		
 		// decrease target price; for buyer, means higher margin
 		double oldMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
-		agent.updateMargin(lastTrans, time);
+		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type), 0.001);
+		agent.updateMargin(lastTrans);
 		double newMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
-		checkMarginUpdate(BUY, lastOrderPrice, lastTransPrice, oldMargin, newMargin);
+		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type), 0.001);
+		checkMarginUpdate(lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
 	
 	@Test
 	public void checkDecreaseMarginSeller() {
-		TimeStamp time = TimeStamp.ZERO;
-
-		ZIPAgent agent = createAgent(
+		ZIPAgent agent = zipAgent(
 				Keys.MAX_QUANTITY, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
@@ -399,36 +371,32 @@ public class ZIPAgentTest {
 		assertEquals(0, agent.momentumChange, 0);
 		
 		// add dummy transaction
-		addTransaction(101000, 1, 0);
-		Transaction firstTrans = market.getTransactions().get(0);
-		addTransaction(110000, 1, 0);
-		Transaction lastTrans = market.getTransactions().get(1);
+		Transaction firstTrans = addTransaction(Price.of(101000), 1);
+		Transaction lastTrans = addTransaction(Price.of(110000), 1);
 		Price lastTransPrice = lastTrans.getPrice();
 		
-		agent.limitPrice = agent.getLimitPrice(BUY, 1, time);
+		agent.limitPrice = agent.getLimitPrice(BUY, 1);
 		// verify limit price is constant 100000
-		assertEquals(new Price(100000), agent.limitPrice);
+		assertEquals(Price.of(100000), agent.limitPrice);
 		
 		// set the margins
 		agent.type = SELL;
-		agent.lastOrderPrice = new Price(101000);
+		agent.lastOrderPrice = Price.of(101000);
 		Price lastOrderPrice = agent.lastOrderPrice;
-		agent.updateMargin(firstTrans, time);
+		agent.updateMargin(firstTrans);
 		
 		// decrease target price; for buyer, means higher margin
 		double oldMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
-		agent.updateMargin(lastTrans, time);
+		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type), 0.001);
+		agent.updateMargin(lastTrans);
 		double newMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type, time), 0.001);
-		checkMarginUpdate(BUY, lastOrderPrice, lastTransPrice, oldMargin, newMargin);
+		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type), 0.001);
+		checkMarginUpdate(lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
 
 	@Test
 	public void computeOrderPrice() {
-		TimeStamp time = TimeStamp.ZERO;
-
-		ZIPAgent agent = createAgent(
+		ZIPAgent agent = zipAgent(
 				Keys.MAX_QUANTITY, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.MARGIN_MAX, 0.35,
@@ -436,29 +404,27 @@ public class ZIPAgentTest {
 		
 		// test for buy
 		agent.type = BUY;
-		agent.limitPrice = agent.getLimitPrice(BUY, 1, time);
+		agent.limitPrice = agent.getLimitPrice(BUY, 1);
 		// verify limit price is constant 100000
-		assertEquals(new Price(100000), agent.limitPrice);
+		assertEquals(Price.of(100000), agent.limitPrice);
 		double currentMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(new Price(100000 * (1+currentMargin)), 
-				agent.computeOrderPrice(currentMargin, TimeStamp.ZERO));
+		assertEquals(Price.of(100000 * (1+currentMargin)), 
+				agent.computeOrderPrice(currentMargin));
 		
 		// test for sell
 		agent.type = BUY;
-		agent.limitPrice = agent.getLimitPrice(BUY, 1, time);
+		agent.limitPrice = agent.getLimitPrice(BUY, 1);
 		// verify limit price is constant 100000
-		assertEquals(new Price(100000), agent.limitPrice);
+		assertEquals(Price.of(100000), agent.limitPrice);
 		currentMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(new Price(100000 * (1+currentMargin)), 
-				agent.computeOrderPrice(currentMargin, TimeStamp.ZERO));
+		assertEquals(Price.of(100000 * (1+currentMargin)), 
+				agent.computeOrderPrice(currentMargin));
 	}
 
 	@Test
 	public void updateMomentumBasicTest() {
 		// gamma fixed at 1
-		TimeStamp time = TimeStamp.ZERO;
-		
-		ZIPAgent agent = createAgent(
+		ZIPAgent agent = zipAgent(
 				Keys.MAX_QUANTITY, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
@@ -470,39 +436,36 @@ public class ZIPAgentTest {
 		assertEquals(0, agent.momentumChange, 0);
 		
 		// add dummy transaction
-		addTransaction(100000, 1, 0);
-		Transaction lastTrans = market.getTransactions().get(0);
+		Transaction transaction = addTransaction(Price.of(100000), 1);
 		
 		// change initial momentum
 		agent.momentumChange = 10;
 		
 		// increase target price
-		agent.lastOrderPrice = new Price(99000);
+		agent.lastOrderPrice = Price.of(99000);
 		agent.type = BUY;
-		agent.updateMomentumChange(lastTrans, time);
+		agent.updateMomentumChange(transaction);
 		assertTrue(10 == agent.momentumChange);
-		agent.lastOrderPrice = new Price(99000);
+		agent.lastOrderPrice = Price.of(99000);
 		agent.type = SELL;
-		agent.updateMomentumChange(lastTrans, time);
+		agent.updateMomentumChange(transaction);
 		assertTrue(10 == agent.momentumChange);
 		
 		// decrease target price
-		agent.lastOrderPrice = new Price(110000);
+		agent.lastOrderPrice = Price.of(110000);
 		agent.type = BUY;
-		agent.updateMomentumChange(lastTrans, time);
+		agent.updateMomentumChange(transaction);
 		assertTrue(10 == agent.momentumChange);
-		agent.lastOrderPrice = new Price(110000);
+		agent.lastOrderPrice = Price.of(110000);
 		agent.type = SELL;
-		agent.updateMomentumChange(lastTrans, time);
+		agent.updateMomentumChange(transaction);
 		assertTrue(10 == agent.momentumChange);
 	}
 
 	@Test
 	public void updateMomentumAdvancedTest() {
 		// gamma fixed at 1, update entirely to delta
-		TimeStamp time = TimeStamp.ZERO;
-		
-		ZIPAgent agent = createAgent(Keys.MAX_QUANTITY, 5,
+		ZIPAgent agent = zipAgent(Keys.MAX_QUANTITY, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
 				Keys.BETA_MIN, 0.5,
@@ -513,30 +476,29 @@ public class ZIPAgentTest {
 		assertEquals(0, agent.momentumChange, 0);
 		
 		// add dummy transaction
-		addTransaction(100000, 1, 0);
-		Transaction lastTrans = market.getTransactions().get(0);
+		Transaction transaction = addTransaction(Price.of(100000), 1);
 		
 		// increase target price
-		agent.lastOrderPrice = new Price(99000);
+		agent.lastOrderPrice = Price.of(99000);
 		agent.type = BUY;
-		agent.updateMomentumChange(lastTrans, time);
+		agent.updateMomentumChange(transaction);
 		assertTrue(agent.momentumChange > 0);
 		assertTrue(agent.momentumChange < 0.5 * 99000);
-		agent.lastOrderPrice = new Price(99000);
+		agent.lastOrderPrice = Price.of(99000);
 		agent.type = SELL;
-		agent.updateMomentumChange(lastTrans, time);
+		agent.updateMomentumChange(transaction);
 		assertTrue(agent.momentumChange > 0);
 		assertTrue(agent.momentumChange < 0.5 * 99000);
 		
 		// decrease target price
-		agent.lastOrderPrice = new Price(110000);
+		agent.lastOrderPrice = Price.of(110000);
 		agent.type = BUY;
-		agent.updateMomentumChange(lastTrans, time);
+		agent.updateMomentumChange(transaction);
 		assertTrue(agent.momentumChange < 0);
 		assertTrue(-agent.momentumChange < 0.5 * 110000);
-		agent.lastOrderPrice = new Price(110000);
+		agent.lastOrderPrice = Price.of(110000);
 		agent.type = SELL;
-		agent.updateMomentumChange(lastTrans, time);
+		agent.updateMomentumChange(transaction);
 		assertTrue(agent.momentumChange < 0);
 		assertTrue(-agent.momentumChange < 0.5 * 110000);
 	}
@@ -544,9 +506,7 @@ public class ZIPAgentTest {
 	
 	@Test
 	public void computeDeltaTest() {
-		TimeStamp time = TimeStamp.ZERO;
-		
-		ZIPAgent agent = createAgent(
+		ZIPAgent agent = zipAgent(
 				Keys.MAX_QUANTITY, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
@@ -555,32 +515,31 @@ public class ZIPAgentTest {
 		assertEquals(0.5, agent.beta, 0);
 		
 		// add dummy transaction
-		addTransaction(100000, 1, 0);
-		Transaction lastTrans = market.getTransactions().get(0);
+		Transaction transaction = addTransaction(Price.of(100000), 1);
 
 		// increase target price, so delta positive & delta < 0.5*trans price
-		agent.lastOrderPrice = new Price(99000);
+		agent.lastOrderPrice = Price.of(99000);
 		agent.type = BUY;
-		double delta = agent.computeDelta(lastTrans, time);
+		double delta = agent.computeDelta(transaction);
 		assertTrue(delta > 0);
 		assertTrue(delta < 0.5 * 99000);
 
-		agent.lastOrderPrice = new Price(99000);
+		agent.lastOrderPrice = Price.of(99000);
 		agent.type = SELL;
-		delta = agent.computeDelta(lastTrans, time);
+		delta = agent.computeDelta(transaction);
 		assertTrue(delta > 0);
 		assertTrue(delta < 0.5 * 99000);
 		
 		// decrease target price, so delta negative & |delta| < 0.5*trans price
-		agent.lastOrderPrice = new Price(110000);
+		agent.lastOrderPrice = Price.of(110000);
 		agent.type = BUY;
-		delta = agent.computeDelta(lastTrans, time);
+		delta = agent.computeDelta(transaction);
 		assertTrue(delta < 0);
 		assertTrue(Math.abs(delta) < 0.5 * 110000);
 
-		agent.lastOrderPrice = new Price(110000);
+		agent.lastOrderPrice = Price.of(110000);
 		agent.type = SELL;
-		delta = agent.computeDelta(lastTrans, time);
+		delta = agent.computeDelta(transaction);
 		assertTrue(delta < 0);
 		assertTrue(Math.abs(delta) < 0.5 * 110000);
 	}
@@ -588,46 +547,41 @@ public class ZIPAgentTest {
 	
 	@Test
 	public void computeTargetPriceTest() {
-		TimeStamp time = TimeStamp.ZERO;
-		
-		ZIPAgent agent = createAgent(
+		ZIPAgent agent = zipAgent(
 				Keys.MAX_QUANTITY, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.MARGIN_MAX, 0.35,
 				Keys.MARGIN_MIN, 0.25);
 
 		// add dummy transaction
-		addTransaction(100000, 1, 0);
-		Transaction lastTrans = market.getTransactions().get(0);
-		Price lastTransPrice = lastTrans.getPrice();
+		Transaction transaction = addTransaction(Price.of(100000), 1);
+		Price transactionPrice = transaction.getPrice();
 		
 		// set order prices
 		// for increase target price, R & A will cause target price to exceed last trans
 		// buyer wants to decrease margin and therefore increase target price
-		agent.lastOrderPrice = new Price(99000);
+		agent.lastOrderPrice = Price.of(99000);
 		agent.type = BUY;
-		assertTrue(agent.computeTargetPrice(lastTrans, time).greaterThan(lastTransPrice));
+		assertTrue(agent.computeTargetPrice(transaction).greaterThan(transactionPrice));
 		// seller wants to increase margin and therefore increase target price
-		agent.lastOrderPrice = new Price(99000);
+		agent.lastOrderPrice = Price.of(99000);
 		agent.type = SELL;
-		assertTrue(agent.computeTargetPrice(lastTrans, time).greaterThan(lastTransPrice));		
+		assertTrue(agent.computeTargetPrice(transaction).greaterThan(transactionPrice));		
 		
 		// for decrease target price, R & A will cause target price to be less than last trans
 		// buyer wants to increase margin and therefore decrease target price
-		agent.lastOrderPrice = new Price(110000);
+		agent.lastOrderPrice = Price.of(110000);
 		agent.type = BUY;
-		assertTrue(agent.computeTargetPrice(lastTrans, time).lessThan(lastTransPrice));
+		assertTrue(agent.computeTargetPrice(transaction).lessThan(transactionPrice));
 		// seller wants to decrease margin and therefore decrease target price
-		agent.lastOrderPrice = new Price(110000);
+		agent.lastOrderPrice = Price.of(110000);
 		agent.type = SELL;
-		assertTrue(agent.computeTargetPrice(lastTrans, time).lessThan(lastTransPrice));		
+		assertTrue(agent.computeTargetPrice(transaction).lessThan(transactionPrice));		
 	}
 	
 	@Test
 	public void checkIncreaseMarginInitialTest() {
-		TimeStamp time = TimeStamp.ZERO;
-		
-		ZIPAgent agent = createAgent(
+		ZIPAgent agent = zipAgent(
 				Keys.MAX_QUANTITY, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.MARGIN_MAX, 0.35,
@@ -637,130 +591,94 @@ public class ZIPAgentTest {
 		assertNull(agent.lastOrderPrice);
 		
 		// now test with a dummy transaction
-		addTransaction(100000, 1, 0);
-		Transaction lastTrans = market.getTransactions().get(0);
+		Transaction transaction = addTransaction(Price.of(100000), 1);
+
 		agent.type = BUY;
-		agent.limitPrice = agent.getLimitPrice(BUY, 1, time);
+		agent.limitPrice = agent.getLimitPrice(BUY, 1);
 		// verify limit price is constant 100000
-		assertEquals(new Price(100000), agent.limitPrice);
+		assertEquals(Price.of(100000), agent.limitPrice);
 		double currentMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(new Price(100000 * (1+currentMargin)), 
-				agent.computeOrderPrice(currentMargin, TimeStamp.ZERO));
+		assertEquals(Price.of(100000 * (1+currentMargin)), 
+				agent.computeOrderPrice(currentMargin));
 		// check that last trans of 100000 must be greater than order price
 		// since window, assume order price is submitted before the window
 		// therefore buyer should not increase margin
-		assertFalse(agent.checkIncreaseMargin(lastTrans, TimeStamp.ZERO));
+		assertFalse(agent.checkIncreaseMargin(transaction));
 		
 		// check for sell
 		agent.lastOrderPrice = null;
 		agent.type = SELL;
 		currentMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(new Price(100000 * (1+currentMargin)), 
-				agent.computeOrderPrice(currentMargin, TimeStamp.ZERO));
+		assertEquals(Price.of(100000 * (1+currentMargin)), 
+				agent.computeOrderPrice(currentMargin));
 		// last trans price of 100000 must be less than the sell order price
 		// since always sell above limit price; seller should not increase margin
-		assertFalse(agent.checkIncreaseMargin(lastTrans, TimeStamp.ZERO));
+		assertFalse(agent.checkIncreaseMargin(transaction));
 	}
 	
 	@Test
 	public void advancedIncreaseMarginTest() {
 		// test with other order prices already set
-		TimeStamp time = TimeStamp.ZERO;
-		
-		ZIPAgent agent = createAgent(
+		ZIPAgent agent = zipAgent(
 				Keys.MAX_QUANTITY, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.MARGIN_MAX, 0.35,
 				Keys.MARGIN_MIN, 0.25);
 		
 		// now test with a dummy transaction
-		agent.positionBalance = 0;
-		addTransaction(100000, 1, 0);
-		Transaction lastTrans = market.getTransactions().get(0);
+		Transaction transaction = addTransaction(Price.of(100000), 1);
+		
 		// set order prices
-		agent.lastOrderPrice = new Price(99000);
-		assertEquals(new Price(99000), agent.lastOrderPrice);
+		agent.lastOrderPrice = Price.of(99000);
+		assertEquals(Price.of(99000), agent.lastOrderPrice);
 		
 		// buyer order price < trans price, therefore no increase
 		agent.type = BUY;
-		assertFalse(agent.checkIncreaseMargin(lastTrans, time));
+		assertFalse(agent.checkIncreaseMargin(transaction));
 		// seller order price < trans price, therefore increase
 		agent.type = SELL;
-		assertTrue(agent.checkIncreaseMargin(lastTrans, time));
+		assertTrue(agent.checkIncreaseMargin(transaction));
 
 
 		// different order prices
-		agent.lastOrderPrice = new Price(110000);
+		agent.lastOrderPrice = Price.of(110000);
 		// buyer order price > trans price, therefore increase
 		agent.type = BUY;
-		assertTrue(agent.checkIncreaseMargin(lastTrans, time));
+		assertTrue(agent.checkIncreaseMargin(transaction));
 		// seller order price > trans price, therefore no increase
 		agent.type = SELL;
-		assertFalse(agent.checkIncreaseMargin(lastTrans, time));
+		assertFalse(agent.checkIncreaseMargin(transaction));
 
 	}
 	
-	
-	// Helper methods
-	
-	/**
-	 * Check margin updating
-	 */
-	private void checkMarginUpdate(OrderType type, Price lastPrice, 
-			Price lastTransPrice, double oldMargin, double newMargin) {
-		
-		// Asserting that margin updated correctly
-		if (type == BUY) {
-			if (lastTransPrice.lessThanEqual(lastPrice)) 
-				assertTrue(oldMargin >= newMargin); // raise margin (more negative)
-			else
-				assertTrue(oldMargin <= newMargin); // lower margin
-		} else { // type == SELL
-			if (lastTransPrice.greaterThanEqual(lastPrice))
-				assertTrue(oldMargin <= newMargin); // raise margin (more positive)
-			else
-				assertTrue(oldMargin >= newMargin); // lower margin
-		}
+	/** Check margin updating correctly */
+	private static void checkMarginUpdate(Price lastPrice, Price lastTransPrice, double oldMargin, double newMargin) {
+		assertEquals(lastPrice.compareTo(lastTransPrice), Double.compare(oldMargin, newMargin));
 	}
 	
 	
-	private void addOrder(OrderType type, int price, int quantity, int time) {
-		TimeStamp currentTime = TimeStamp.create(time);
-		// creating a dummy agent
-		MockBackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market);
-		// Having the agent submit a bid to the market
-		market.submitOrder(agent, type, new Price(price), quantity, currentTime);
-
-		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
-		// the transaction would work
-		
+	private void addOrder(OrderType type, Price price, int quantity) {
+		mockAgent.submitOrder(view, type, price, quantity);
+		sim.executeImmediate();
 	}
 
-	private void addTransaction(int p, int q, int time) {
-		addOrder(BUY, p, q, time);
-		addOrder(SELL, p, q, time);
-		TimeStamp currentTime = TimeStamp.create(time);
-		market.clear(currentTime);
-
-		// Added this so that the SIP would updated with the transactions, so expecting knowledge of
-		// the transaction would work
+	private Transaction addTransaction(Price price, int quantity) {
+		addOrder(BUY, price, quantity);
+		addOrder(SELL, price, quantity);
+		return checkNotNull(Iterables.getFirst(view.getTransactions(), null));
 	}
-		
-	private void assertCorrectBid(Agent agent, int low, int high,
-			int quantity) {
-		Collection<Order> orders = agent.activeOrders;
-		// Asserting the bid is correct
-		assertNotEquals("Num orders is incorrect", 0, orders.size());
-		Order order = Iterables.getOnlyElement(orders);
-		assertEquals("Order agent is incorrect", agent, order.getAgent());
 
-		Price bidPrice = order.getPrice();
-		assertTrue("Order price (" + bidPrice + ") less than " + low,
-				bidPrice.greaterThan(new Price(low)));
-		assertTrue("Order price (" + bidPrice + ") greater than " + high,
-				bidPrice.lessThan(new Price(high)));
-
-		assertEquals("Quantity is incorrect", quantity, order.getQuantity());
+	private ZIPAgent zipAgent(Object... parameters) {
+		return ZIPAgent.create(sim, TimeStamp.ZERO, market, new Random(rand.nextLong()),
+				Props.withDefaults(defaults, parameters));
+	}
+	
+	private Agent mockAgent() {
+		return new Agent(sim, TimeStamp.ZERO, rand, Props.fromPairs()) {
+			private static final long serialVersionUID = 1L;
+			@Override public void agentStrategy() { }
+			@Override public String toString() { return "TestAgent " + id; }
+		};
 	}
 
 }

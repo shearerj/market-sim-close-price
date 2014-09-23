@@ -6,7 +6,6 @@ import java.util.AbstractQueue;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
-import java.util.SortedMap;
 
 import com.google.common.collect.Lists;
 
@@ -68,18 +67,6 @@ public class Collections3 {
 			return backingList.size();
 		}
 		
-	}
-	
-	public static <V> SortedMap<String, V> mapPrefix(SortedMap<String, V> map, String prefix) {
-		int index = prefix.length() - 1;
-		for (; index >= 0; index--)
-			if (prefix.charAt(index) < Character.MAX_VALUE)
-				break;
-		if (index < 0) {
-			return map.tailMap(prefix);
-		} else {
-			return map.subMap(prefix, prefix.substring(0, index) + (char) (1 + prefix.charAt(index)));
-		}
 	}
 	
 }

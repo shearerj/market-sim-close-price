@@ -1,6 +1,8 @@
 package utils;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Iterator;
 import java.util.List;
@@ -20,7 +22,7 @@ public class Iterables2Test {
 	@Test
 	public void duplicateTest() {
 		List<SparseElement<Integer>> base = Lists.newArrayList();
-		Iterable<Integer> test = Iterables.limit(Iterables2.fromSparse(base), 100);
+		Iterable<Integer> test = Iterables.limit(Iterables2.toSparse(base), 100);
 		
 		for (Integer i : test)
 			assertTrue(i == null);
@@ -33,7 +35,7 @@ public class Iterables2Test {
 	@Test
 	public void truncationTest() {
 		List<SparseElement<Integer>> base = Lists.newArrayList();
-		Iterable<Integer> test = Iterables2.fromSparse(base);
+		Iterable<Integer> test = Iterables2.toSparse(base);
 		
 		base.add(SparseElement.create(0, 153));
 		base.add(SparseElement.create(100, 370));

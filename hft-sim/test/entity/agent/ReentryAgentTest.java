@@ -1,10 +1,9 @@
 package entity.agent;
 
-import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static utils.Tests.j;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Random;
@@ -12,80 +11,76 @@ import java.util.Random;
 import logger.Log;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import systemmanager.Consts;
-import systemmanager.Executor;
-import activity.AgentStrategy;
-import data.FundamentalValue;
-import data.MockFundamental;
-import entity.infoproc.SIP;
+import systemmanager.Consts.MarketType;
+import systemmanager.Keys;
+import systemmanager.MockSim;
+
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.PeekingIterator;
+
+import data.Props;
 import entity.market.Market;
-import entity.market.MockMarket;
 import event.TimeStamp;
-import event.TimedActivity;
 
 public class ReentryAgentTest {
 
-	private Executor exec;
+	private static final Random rand = new Random();
+	private MockSim sim;
 	private Market market;
-	private SIP sip;
-	
-	@BeforeClass
-	public static void setupClass() throws IOException {
-		Log.setLogger(Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ReentryAgentTest.log")));
-	}
 	
 	@Before
-	public void setup() {
-		exec = new Executor();
-		sip = new SIP(exec, TimeStamp.IMMEDIATE);
-		market = new MockMarket(exec, sip);
+	public void setup() throws IOException {
+		sim = MockSim.create(getClass(),
+				Log.Level.NO_LOGGING, Keys.FUNDAMENTAL_MEAN,
+				100000, Keys.FUNDAMENTAL_SHOCK_VAR,
+				0, MarketType.CDA, j.join(Keys.NUM_MARKETS, 1));
+		market = Iterables.getOnlyElement(sim.getMarkets());
 	}
 	
 	@Test
 	public void reentryTest() {
-		TimeStamp time = TimeStamp.create(100);
-		FundamentalValue fundamental = new MockFundamental(100000);
-		
-		MockReentryAgent agent = new MockReentryAgent(exec, fundamental, sip, market, new Random(), 0.1, 1);
+		PeekingIterator<TimeStamp> reentries = Iterators.peekingIterator(AgentFactory.exponentials(0.1, rand));
+		ReentryAgent agent = reentryAgent(reentries);
 		
 		// Test reentries
-		Iterator<TimeStamp> reentries = agent.getReentryTimes(); 
 		assertTrue(reentries.hasNext());
-		TimeStamp next = reentries.next();
+		TimeStamp next = reentries.peek();
 		assertTrue(next.getInTicks() >= 0);
 		
 		// Test agent strategy
-		agent.agentStrategy(time);
-		TimedActivity act = exec.peek();
-		assertTrue( act.getActivity() instanceof AgentStrategy );
-		assertTrue( act.getTime().getInTicks() >= time.getInTicks());
+		sim.executeUntil(TimeStamp.of(100));
+		agent.agentStrategy();
+		assertTrue(reentries.hasNext());
 	}
 	
 	@Test
 	public void reentryRateZeroTest() {
-		TimeStamp time = TimeStamp.create(100);
-		FundamentalValue fundamental = new MockFundamental(100000);
-		
 		// Test reentries - note should never iterate past INFINITE b/c it 
 		// will never execute
-		MockReentryAgent agent = new MockReentryAgent(exec, fundamental, sip, market, new Random(), 0, 1);
-		Iterator<TimeStamp> reentries = agent.getReentryTimes(); 
+		ReentryAgent agent = reentryAgent(AgentFactory.exponentials(0, rand));
+		Iterator<TimeStamp> reentries = agent.reentry;
 		assertFalse(reentries.hasNext());
 
-		// Now test for agent, which should arrive at time 0
-		MockReentryAgent agent2 = new MockReentryAgent(exec, fundamental, sip, market, new Random(), 0, 1);
-		agent2.agentStrategy(time);
-		assertTrue(exec.isEmpty());
+		// Now test for agent, which should not arrive at time 0
+		sim.executeUntil(TimeStamp.of(100));
+		agent.agentStrategy();
+		assertFalse(reentries.hasNext());
 	}
 	
 	@Test
-	public void extraTest() {
-		for (int i = 0; i <= 100; i++) {
+	public void extraTest() throws IOException {
+		for (int i = 0; i <= 1000; i++) {
 			setup();
 			reentryTest();
 		}
+	}
+	
+	private ReentryAgent reentryAgent(Iterator<TimeStamp> reentry, Object... properties) {
+		return new ReentryAgent(sim, TimeStamp.ZERO, market, rand, reentry, Props.fromPairs(properties)) {
+			private static final long serialVersionUID = 1L;
+		};
 	}
 }

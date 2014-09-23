@@ -1,6 +1,7 @@
 package data;
 
 import java.io.Serializable;
+import java.util.Map;
 
 import entity.agent.Agent;
 
@@ -19,13 +20,11 @@ public class Player implements Serializable {
 	
 	private static final long serialVersionUID = 7233996258432288503L;
 	
-	protected final String role;
-	protected final String strategy;
+	protected final String descriptor;
 	protected final Agent agent;
 
-	public Player(String role, String strategy, Agent agent) {
-		this.role = role;
-		this.strategy = strategy;
+	public Player(String descriptor, Agent agent) {
+		this.descriptor = descriptor;
 		this.agent = agent;
 	}
 
@@ -33,7 +32,15 @@ public class Player implements Serializable {
 		return agent;
 	}
 	
-	public PlayerObservation getObservation() {
-		return new PlayerObservation(role, strategy, agent.getPayoff(), agent.getFeatures());
+	public String getDescriptor() {
+		return descriptor;
+	}
+	
+	public double getPayoff() {
+		return agent.getPayoff();
+	}
+	
+	public Map<String, Double> getFeatures() {
+		return agent.getFeatures();
 	}
 }

@@ -2,34 +2,36 @@ package entity.market;
 
 import java.util.Random;
 
+import systemmanager.Consts.MarketType;
 import systemmanager.Keys;
-import systemmanager.Scheduler;
-import data.MarketProperties;
-import entity.infoproc.SIP;
+import systemmanager.Simulation;
+import data.Props;
 
 public class MarketFactory {
+	
+	private final Simulation sim;
+	private final Random rand;
 
-	protected final Scheduler scheduler;
-	protected final SIP sip;
-	protected final Random rand;
-
-	public MarketFactory(Scheduler scheduler, SIP sip, Random rand) {
-		this.scheduler = scheduler;
-		this.sip = sip;
+	protected MarketFactory(Simulation sim, Random rand) {
+		this.sim = sim;
 		this.rand = rand;
 	}
+	
+	public static MarketFactory create(Simulation sim, Random rand) {
+		return new MarketFactory(sim, rand);
+	}
 
-	public Market createMarket(MarketProperties props) {
-		switch (props.getMarketType()) {
+	public Market createMarket(MarketType type, Props props) {
+		switch (type) {
 		case CDA:
-			return new CDAMarket(scheduler, sip, new Random(rand.nextLong()), props);
+			return CDAMarket.create(sim, new Random(rand.nextLong()), props);
 		case CALL:
 			if (props.getAsInt(Keys.CLEAR_FREQ) <= 0)
-				return new CDAMarket(scheduler, sip, new Random(rand.nextLong()), props);
+				return CDAMarket.create(sim, new Random(rand.nextLong()), props);
 			else
-				return new CallMarket(scheduler, sip, new Random(rand.nextLong()), props);
+				return CallMarket.create(sim, new Random(rand.nextLong()), props);
 		default:
-			throw new IllegalArgumentException("Can't create MarketType: " + props.getMarketType());
+			throw new IllegalArgumentException("Can't create MarketType: " + type);
 		}
 	}
 

@@ -1,8 +1,11 @@
 package entity.infoproc;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.Serializable;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Optional;
 
 import entity.market.Market;
 import entity.market.Price;
@@ -16,43 +19,49 @@ import entity.market.Price;
 public class BestBidAsk implements Serializable {
 	
 	private static final long serialVersionUID = -7312167969610706296L;
-	
-	protected final Market bestBidMarket, bestAskMarket;
-	protected final Price bestBid, bestAsk;
+
+	protected final Optional<Market> bestBidMarket, bestAskMarket;
+	protected final Optional<Price> bestBid, bestAsk;
 	protected final int bestBidQuantity, bestAskQuantity;
 
-	public BestBidAsk(Market bestBidMarket, Price bestBid, int bestBidQuantity,
-			Market bestAskMarket, Price bestAsk, int bestAskQuantity) {
-		this.bestBidMarket = bestBidMarket;
-		this.bestBid = bestBid;
+	protected BestBidAsk(Optional<Market> bestBidMarket, Optional<Price> bestBid, int bestBidQuantity,
+			Optional<Market> bestAskMarket, Optional<Price> bestAsk, int bestAskQuantity) {
+		this.bestBidMarket = checkNotNull(bestBidMarket);
+		this.bestBid = checkNotNull(bestBid);
 		this.bestBidQuantity = bestBidQuantity;
-		this.bestAskMarket = bestAskMarket;
-		this.bestAsk = bestAsk;
+		this.bestAskMarket = checkNotNull(bestAskMarket);
+		this.bestAsk = checkNotNull(bestAsk);
 		this.bestAskQuantity = bestAskQuantity;
+	}
+	
+	public static BestBidAsk create(Optional<Market> bestBidMarket, Optional<Price> bestBid, int bestBidQuantity,
+			Optional<Market> bestAskMarket, Optional<Price> bestAsk, int bestAskQuantity) {
+		return new BestBidAsk(bestBidMarket, bestBid, bestBidQuantity, bestAskMarket, bestAsk, bestAskQuantity);
 	}
 
 	/**
 	 * @return bid-ask spread of the quote (double)
 	 */
 	public double getSpread() {
-		if (bestAsk == null || bestBid == null || bestAsk.lessThan(bestBid))
+		if (bestAsk.isPresent() && bestBid.isPresent() && bestAsk.get().greaterThanEqual(bestBid.get()))
+			return bestAsk.get().doubleValue() - bestBid.get().doubleValue();
+		else
 			return Double.POSITIVE_INFINITY;
-		return bestAsk.doubleValue() - bestBid.doubleValue();
 	}
 
-	public Market getBestBidMarket() {
+	public Optional<Market> getBestBidMarket() {
 		return bestBidMarket;
 	}
 
-	public Market getBestAskMarket() {
+	public Optional<Market> getBestAskMarket() {
 		return bestAskMarket;
 	}
 
-	public Price getBestBid() {
+	public Optional<Price> getBestBid() {
 		return bestBid;
 	}
 
-	public Price getBestAsk() {
+	public Optional<Price> getBestAsk() {
 		return bestAsk;
 	}
 	
@@ -87,18 +96,20 @@ public class BestBidAsk implements Serializable {
 	public String toString() {
 		StringBuilder sb = new StringBuilder("(BestBid: ");
 		
-		if (bestBid == null) sb.append("- ");
-		else { 
-			sb.append(bestBidQuantity).append(" @ ").append(bestBid);
-			sb.append(" from ").append(bestBidMarket);
+		if (bestBid.isPresent()) { 
+			sb.append(bestBidQuantity).append(" @ ").append(bestBid.get());
+			sb.append(" from ").append(bestBidMarket.get());
+		} else {
+			sb.append("- ");
 		}
 		
 		sb.append(", BestAsk: ");
 		
-		if (bestAsk == null) sb.append("- ");
-		else {
-			sb.append(bestAskQuantity).append(" @ ").append(bestAsk);
-			sb.append(" from ").append(bestAskMarket);
+		if (bestAsk.isPresent()) {
+			sb.append(bestAskQuantity).append(" @ ").append(bestAsk.get());
+			sb.append(" from ").append(bestAskMarket.get());
+		} else {
+			sb.append("- ");
 		}
 		
 		return sb.append(')').toString();

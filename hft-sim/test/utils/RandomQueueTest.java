@@ -77,8 +77,7 @@ public class RandomQueueTest {
 	
 	@Test
 	public void permutationTest() {
-		// Note, this test could fail due to inconceivably small random chance ~1/1000! (that's factorial,
-		// not an exclamation)
+		// Note, this test could fail due to inconceivably small random chance ~1/1000!
 		Collection<Integer> numbers = randomNumbers(1000);
 		RandomQueue<Integer> a = RandomQueue.create(numbers);
 		

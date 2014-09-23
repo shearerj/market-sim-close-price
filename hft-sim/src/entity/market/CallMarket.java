@@ -5,11 +5,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.util.Random;
 
 import systemmanager.Keys;
-import systemmanager.Scheduler;
-import activity.Clear;
-import data.EntityProperties;
-import entity.infoproc.SIP;
-import entity.market.clearingrule.UniformPriceClear;
+import systemmanager.Simulation;
+import data.Props;
+import event.Activity;
 import event.TimeStamp;
 
 /**
@@ -23,49 +21,33 @@ import event.TimeStamp;
  * @author ewah
  */
 public class CallMarket extends Market {
-	
+
 	private static final long serialVersionUID = -1736458709580878467L;
-	
-	protected final TimeStamp clearFreq;
-	protected TimeStamp nextClearTime;
 
-	public CallMarket(Scheduler scheduler, SIP sip, Random rand,
-			TimeStamp latency, int tickSize, double pricingPolicy,
-			TimeStamp clearFreq) {
-		
-		this(scheduler, sip, rand, latency, latency, tickSize, pricingPolicy,
-				clearFreq);
+	private final TimeStamp clearFreq;
+
+	protected CallMarket(Simulation sim, Random rand, Props props) {
+		super(sim, new UniformPriceClear(props.getAsDouble(Keys.PRICING_POLICY), props.getAsInt(Keys.MARKET_TICK_SIZE, Keys.TICK_SIZE)),
+				rand, props);
+		this.clearFreq = TimeStamp.of(props.getAsInt(Keys.CLEAR_FREQ));
+		checkArgument(clearFreq.after(TimeStamp.ZERO), "Can't clear at frequency zero");
+		sim.scheduleActivityIn(TimeStamp.IMMEDIATE, new Activity() {
+			@Override public void execute() { CallMarket.this.clear(); }
+			@Override public String toString() { return "First Clear"; }
+		});
 	}
 
-	public CallMarket(Scheduler scheduler, SIP sip, Random rand,
-			TimeStamp quoteLatency, TimeStamp transactionLatency, int tickSize,
-			double pricingPolicy, TimeStamp clearFreq) {
-		
-		super(scheduler, sip, quoteLatency, transactionLatency,
-				new UniformPriceClear(pricingPolicy, tickSize), rand);
-		checkArgument(clearFreq.after(TimeStamp.ZERO),
-				"Can't create a call market with clear frequency 0. Create a CDA instead.");
-
-		this.clearFreq = clearFreq;
-		this.nextClearTime = TimeStamp.ZERO;
-	}
-
-	public CallMarket(Scheduler scheduler, SIP sip, Random rand,
-			EntityProperties props) {
-		
-		this(scheduler, sip, rand,
-				TimeStamp.create(props.getAsInt(Keys.QUOTE_LATENCY, Keys.MARKET_LATENCY)),
-				TimeStamp.create(props.getAsInt(Keys.TRANSACTION_LATENCY, Keys.MARKET_LATENCY)),
-				props.getAsInt(Keys.MARKET_TICK_SIZE, Keys.TICK_SIZE),
-				props.getAsDouble(Keys.PRICING_POLICY),
-				TimeStamp.create(props.getAsInt(Keys.CLEAR_FREQ)));
+	public static CallMarket create(Simulation sim, Random rand, Props props) {
+		return new CallMarket(sim, rand, props);
 	}
 
 	@Override
-	public void clear(TimeStamp currentTime) {
-		nextClearTime = currentTime.plus(clearFreq);
-		super.clear(currentTime);
-		scheduler.scheduleActivity(nextClearTime, new Clear(this));
+	protected void clear() {
+		super.clear();
+		sim.scheduleActivityIn(clearFreq, new Activity() {
+			@Override public void execute() { CallMarket.this.clear(); }
+			@Override public String toString() { return "Clear"; }
+		});
 	}
 
 }

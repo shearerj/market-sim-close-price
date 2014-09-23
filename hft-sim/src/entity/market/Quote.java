@@ -1,10 +1,12 @@
 package entity.market;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.Serializable;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Optional;
 
 import event.TimeStamp;
 
@@ -17,26 +19,31 @@ public class Quote implements Serializable {
 
 	private static final long serialVersionUID = 3842989596948215994L;
 	
-	protected final Price ask, bid;
-	protected final int askQuantity, bidQuantity;
-	protected final Market market;
-	protected final TimeStamp quoteTime;
+	private final Optional<Price> ask, bid;
+	private final int askQuantity, bidQuantity;
+	private final Market market;
+	private final TimeStamp quoteTime;
 
-	public Quote(Market market, Price bid, int bidQuantity, Price ask,
-			int askQuantity, TimeStamp currentTime) {
-		this.market = market;
-		this.ask = ask;
+	protected Quote(Market market, Optional<Price> bid, int bidQuantity,
+			Optional<Price> ask, int askQuantity, TimeStamp currentTime) {
+		this.market = checkNotNull(market);
+		this.ask = checkNotNull(ask);
 		this.askQuantity = askQuantity;
-		this.bid = bid;
+		this.bid = checkNotNull(bid);
 		this.bidQuantity = bidQuantity;
-		this.quoteTime = currentTime;
+		this.quoteTime = checkNotNull(currentTime);
+	}
+	
+	public static Quote create(Market market, Optional<Price> bid, int bidQuantity,
+			Optional<Price> ask, int askQuantity, TimeStamp currentTime) {
+		return new Quote(market, bid, bidQuantity, ask, askQuantity, currentTime);
 	}
 
-	public Price getAskPrice() {
+	public Optional<Price> getAskPrice() {
 		return ask;
 	}
 
-	public Price getBidPrice() {
+	public Optional<Price> getBidPrice() {
 		return bid;
 	}
 	
@@ -60,7 +67,7 @@ public class Quote implements Serializable {
 	 * @return true if the quote is defined (has an ask and a bid price)
 	 */
 	public boolean isDefined() {
-		return ask != null && bid != null;
+		return ask.isPresent() && bid.isPresent();
 	}
 
 	/**
@@ -68,18 +75,18 @@ public class Quote implements Serializable {
 	 */
 	public double getSpread() {
 		// XXX Are these the best way to handle these cases?
-		if (ask == null || bid == null)
+		if (!ask.isPresent() || !bid.isPresent())
 			return Double.POSITIVE_INFINITY;
-		checkArgument(ask.greaterThanEqual(bid), "%s::quote: ERROR bid > ask", market);
-		return ask.doubleValue() - bid.doubleValue();
+		checkArgument(ask.get().greaterThanEqual(bid.get()), "%s::quote: ERROR bid > ask", market);
+		return ask.get().doubleValue() - bid.get().doubleValue();
 	}
 	
 	public double getMidquote() {
 		// XXX Are these the best way to handle these cases?
-		if (ask == null || bid == null)
+		if (!ask.isPresent() || !bid.isPresent())
 			return Double.NaN;
-		checkArgument(ask.greaterThanEqual(bid), "%s::quote: ERROR bid > ask", market);
-		return (ask.doubleValue() + bid.doubleValue())/ 2;
+		checkArgument(ask.get().greaterThanEqual(bid.get()), "%s::quote: ERROR bid > ask", market);
+		return (ask.get().doubleValue() + bid.get().doubleValue())/ 2;
 	}
 
 	@Override
@@ -100,18 +107,10 @@ public class Quote implements Serializable {
 				&& bidQuantity == that.bidQuantity;
 	}
 
+	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder("(Bid: ");
-		
-		if (bid == null) sb.append("- ");
-		else sb.append(bidQuantity).append(" @ ").append(bid);
-		
-		sb.append(", Ask: ");
-		
-		if (ask == null) sb.append("- ");
-		else sb.append(askQuantity).append(" @ ").append(ask);
-		
-		return sb.append(')').toString();
+		return "(Bid: " + (bid.isPresent() ? bidQuantity + " @ " + bid.get() : "- ") +
+				", Ask: " + (ask.isPresent() ? askQuantity + " @ " + ask.get() : "- ") + ')';
 	}
 
 }

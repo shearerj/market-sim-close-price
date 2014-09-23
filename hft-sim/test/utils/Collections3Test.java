@@ -179,10 +179,10 @@ public class Collections3Test {
 		map.put("a", 7);
 		map.put("z", 20);
 		
-		assertEquals(ImmutableMap.of(), Collections3.mapPrefix(map, "b"));
-		assertEquals(map, Collections3.mapPrefix(map, ""));
-		assertEquals(ImmutableMap.of("holla_a", 1, "holla_b", 2, "holla_c", 3, "hollz", 5), Collections3.mapPrefix(map, "holl"));
-		assertEquals(ImmutableMap.of("holla_a", 1, "holla_b", 2, "holla_c", 3), Collections3.mapPrefix(map, "holla_"));
+		assertEquals(ImmutableMap.of(), Maps2.prefix("b", map));
+		assertEquals(map, Maps2.prefix("", map));
+		assertEquals(ImmutableMap.of("holla_a", 1, "holla_b", 2, "holla_c", 3, "hollz", 5), Maps2.prefix("holl", map));
+		assertEquals(ImmutableMap.of("holla_a", 1, "holla_b", 2, "holla_c", 3), Maps2.prefix("holla_", map));
 
 	}
 

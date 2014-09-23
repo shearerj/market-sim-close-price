@@ -75,7 +75,7 @@ public class FourHeapTest {
 		assertTrue(fh.sellUnmatched.isEmpty());
 		assertEquals((Integer) 5, fh.bidQuote());
 		assertEquals(null, fh.askQuote());
-		assertEquals(3, fh.size());
+		assertEquals(3, fh.numberOfUnits());
 		assertInvariants(fh);
 	}
 	
@@ -92,7 +92,7 @@ public class FourHeapTest {
 		assertFalse(fh.sellUnmatched.isEmpty());
 		assertEquals(null, fh.bidQuote());
 		assertEquals((Integer) 5, fh.askQuote());
-		assertEquals(3, fh.size());
+		assertEquals(3, fh.numberOfUnits());
 		assertInvariants(fh);
 	}
 	
@@ -110,7 +110,7 @@ public class FourHeapTest {
 		assertTrue(fh.sellUnmatched.isEmpty());
 		assertEquals((Integer) 5, fh.bidQuote());
 		assertEquals((Integer) 7, fh.askQuote());
-		assertEquals(6, fh.size());
+		assertEquals(6, fh.numberOfUnits());
 		assertInvariants(fh);
 		
 		fh = FourHeap.<Integer, Integer, Order<Integer, Integer>> create();
@@ -123,7 +123,7 @@ public class FourHeapTest {
 		assertFalse(fh.sellUnmatched.isEmpty());
 		assertEquals((Integer) 5, fh.bidQuote());
 		assertEquals((Integer) 5, fh.askQuote());
-		assertEquals(8, fh.size());
+		assertEquals(8, fh.numberOfUnits());
 		assertInvariants(fh);
 		
 		fh = FourHeap.<Integer, Integer, Order<Integer, Integer>> create();
@@ -136,7 +136,7 @@ public class FourHeapTest {
 		assertTrue(fh.sellUnmatched.isEmpty());
 		assertEquals((Integer) 7, fh.bidQuote());
 		assertEquals((Integer) 7, fh.askQuote());
-		assertEquals(8, fh.size());
+		assertEquals(8, fh.numberOfUnits());
 		assertInvariants(fh);
 	}
 	
@@ -150,7 +150,7 @@ public class FourHeapTest {
 		insertOrder(fh, BUY, 4, 1, 2);
 		assertEquals((Integer) 5, fh.bidQuote());
 		assertEquals((Integer) 7, fh.askQuote());
-		assertEquals(7, fh.size());
+		assertEquals(7, fh.numberOfUnits());
 		assertInvariants(fh);
 		
 		fh = FourHeap.<Integer, Integer, Order<Integer, Integer>> create();
@@ -159,7 +159,7 @@ public class FourHeapTest {
 		insertOrder(fh, BUY, 6, 1, 2);
 		assertEquals((Integer) 6, fh.bidQuote());
 		assertEquals((Integer) 7, fh.askQuote());
-		assertEquals(7, fh.size());
+		assertEquals(7, fh.numberOfUnits());
 		assertInvariants(fh);
 
 		fh = FourHeap.<Integer, Integer, Order<Integer, Integer>> create();
@@ -168,7 +168,7 @@ public class FourHeapTest {
 		insertOrder(fh, BUY, 8, 1, 2);
 		assertEquals((Integer) 7, fh.bidQuote());
 		assertEquals((Integer) 7, fh.askQuote());
-		assertEquals(7, fh.size());
+		assertEquals(7, fh.numberOfUnits());
 		assertInvariants(fh);
 	}
 	
@@ -178,7 +178,7 @@ public class FourHeapTest {
 		
 		fh = FourHeap.<Integer, Integer, Order<Integer, Integer>> create();
 		Order<Integer, Integer> o = insertOrder(fh, BUY, 5, 3, 0);
-		fh.withdrawOrder(o, 2);
+		fh.remove(o, 2);
 		
 		assertEquals(1, o.unmatchedQuantity);
 		assertTrue(fh.buyMatched.isEmpty());
@@ -187,10 +187,10 @@ public class FourHeapTest {
 		assertTrue(fh.sellUnmatched.isEmpty());
 		assertEquals((Integer) 5, fh.bidQuote());
 		assertEquals(null, fh.askQuote());
-		assertEquals(1, fh.size());
+		assertEquals(1, fh.numberOfUnits());
 		assertInvariants(fh);
 		
-		fh.withdrawOrder(o);
+		fh.remove(o);
 		
 		assertFalse(fh.contains(o));
 		assertTrue(fh.buyMatched.isEmpty());
@@ -199,7 +199,7 @@ public class FourHeapTest {
 		assertTrue(fh.sellUnmatched.isEmpty());
 		assertEquals(null, fh.bidQuote());
 		assertEquals(null, fh.askQuote());
-		assertEquals(0, fh.size());
+		assertEquals(0, fh.numberOfUnits());
 		assertInvariants(fh);
 	}
 	
@@ -209,7 +209,7 @@ public class FourHeapTest {
 		
 		fh = FourHeap.<Integer, Integer, Order<Integer, Integer>> create();
 		Order<Integer, Integer> o = insertOrder(fh, SELL, 5, 3, 0);
-		fh.withdrawOrder(o, 2);
+		fh.remove(o, 2);
 		
 		assertEquals(1, o.unmatchedQuantity);
 		assertTrue(fh.buyMatched.isEmpty());
@@ -218,10 +218,10 @@ public class FourHeapTest {
 		assertFalse(fh.sellUnmatched.isEmpty());
 		assertEquals(null, fh.bidQuote());
 		assertEquals((Integer) 5, fh.askQuote());
-		assertEquals(1, fh.size());
+		assertEquals(1, fh.numberOfUnits());
 		assertInvariants(fh);
 		
-		fh.withdrawOrder(o);
+		fh.remove(o);
 		
 		assertFalse(fh.contains(o));
 		assertTrue(fh.buyMatched.isEmpty());
@@ -230,7 +230,7 @@ public class FourHeapTest {
 		assertTrue(fh.sellUnmatched.isEmpty());
 		assertEquals(null, fh.bidQuote());
 		assertEquals(null, fh.askQuote());
-		assertEquals(0, fh.size());
+		assertEquals(0, fh.numberOfUnits());
 		assertInvariants(fh);
 	}
 	
@@ -242,7 +242,7 @@ public class FourHeapTest {
 		fh = FourHeap.<Integer, Integer, Order<Integer, Integer>> create();
 		os = insertOrder(fh, SELL, 5, 3, 0);
 		ob = insertOrder(fh, BUY, 7, 3, 1);
-		fh.withdrawOrder(ob, 2);
+		fh.remove(ob, 2);
 		
 		assertFalse(fh.buyMatched.isEmpty());
 		assertTrue(fh.buyUnmatched.isEmpty());
@@ -250,10 +250,10 @@ public class FourHeapTest {
 		assertFalse(fh.sellUnmatched.isEmpty());
 		assertEquals((Integer) 5, fh.bidQuote());
 		assertEquals((Integer) 5, fh.askQuote());
-		assertEquals(4, fh.size());
+		assertEquals(4, fh.numberOfUnits());
 		assertInvariants(fh);
 		
-		fh.withdrawOrder(os);
+		fh.remove(os);
 		
 		assertTrue(fh.buyMatched.isEmpty());
 		assertFalse(fh.buyUnmatched.isEmpty());
@@ -261,13 +261,13 @@ public class FourHeapTest {
 		assertTrue(fh.sellUnmatched.isEmpty());
 		assertEquals((Integer) 7, fh.bidQuote());
 		assertEquals(null, fh.askQuote());
-		assertEquals(1, fh.size());
+		assertEquals(1, fh.numberOfUnits());
 		assertInvariants(fh);
 		
 		fh = FourHeap.<Integer, Integer, Order<Integer, Integer>> create();
 		ob = insertOrder(fh, BUY, 7, 3, 1);
 		os = insertOrder(fh, SELL, 5, 5, 0);
-		fh.withdrawOrder(os, 3);
+		fh.remove(os, 3);
 		
 		assertFalse(fh.buyMatched.isEmpty());
 		assertFalse(fh.buyUnmatched.isEmpty());
@@ -275,10 +275,10 @@ public class FourHeapTest {
 		assertTrue(fh.sellUnmatched.isEmpty());
 		assertEquals((Integer) 7, fh.bidQuote());
 		assertEquals((Integer) 7, fh.askQuote());
-		assertEquals(5, fh.size());
+		assertEquals(5, fh.numberOfUnits());
 		assertInvariants(fh);
 		
-		fh.withdrawOrder(ob);
+		fh.remove(ob);
 		
 		assertTrue(fh.buyMatched.isEmpty());
 		assertTrue(fh.buyUnmatched.isEmpty());
@@ -286,13 +286,13 @@ public class FourHeapTest {
 		assertFalse(fh.sellUnmatched.isEmpty());
 		assertEquals(null, fh.bidQuote());
 		assertEquals((Integer) 5, fh.askQuote());
-		assertEquals(2, fh.size());
+		assertEquals(2, fh.numberOfUnits());
 		assertInvariants(fh);
 
 		fh = FourHeap.<Integer, Integer, Order<Integer, Integer>> create();
 		os = insertOrder(fh, SELL, 5, 3, 0);
 		ob = insertOrder(fh, BUY, 7, 5, 1);
-		fh.withdrawOrder(ob, 4);
+		fh.remove(ob, 4);
 		
 		assertFalse(fh.buyMatched.isEmpty());
 		assertTrue(fh.buyUnmatched.isEmpty());
@@ -300,7 +300,7 @@ public class FourHeapTest {
 		assertFalse(fh.sellUnmatched.isEmpty());
 		assertEquals((Integer) 5, fh.bidQuote());
 		assertEquals((Integer) 5, fh.askQuote());
-		assertEquals(4, fh.size());
+		assertEquals(4, fh.numberOfUnits());
 		assertInvariants(fh);
 	}
 	
@@ -319,9 +319,9 @@ public class FourHeapTest {
 		insertOrder(fh, SELL, 2, 2, 2);
 		insertOrder(fh, BUY, 3, 4, 3);
 		assertInvariants(fh);
-		fh.withdrawOrder(o);
+		fh.remove(o);
 		assertInvariants(fh);
-		fh.clear();
+		fh.marketClear();
 		assertInvariants(fh);
 
 		fh = FourHeap.<Integer, Integer, Order<Integer, Integer>> create();
@@ -330,9 +330,9 @@ public class FourHeapTest {
 		insertOrder(fh, BUY, 3, 2, 2);
 		insertOrder(fh, SELL, 2, 4, 3);
 		assertInvariants(fh);
-		fh.withdrawOrder(o);
+		fh.remove(o);
 		assertInvariants(fh);
-		fh.clear();
+		fh.marketClear();
 		assertInvariants(fh);
 	}
 	
@@ -351,9 +351,9 @@ public class FourHeapTest {
 		insertOrder(fh, SELL, 2, 2, 2);
 		insertOrder(fh, BUY, 3, 4, 3);
 		assertInvariants(fh);
-		fh.withdrawOrder(o);
+		fh.remove(o);
 		assertInvariants(fh);
-		fh.clear();
+		fh.marketClear();
 		assertInvariants(fh);
 
 		fh = FourHeap.<Integer, Integer, Order<Integer, Integer>> create();
@@ -362,9 +362,9 @@ public class FourHeapTest {
 		insertOrder(fh, BUY, 3, 2, 2);
 		insertOrder(fh, SELL, 2, 4, 3);
 		assertInvariants(fh);
-		fh.withdrawOrder(o);
+		fh.remove(o);
 		assertInvariants(fh);
-		fh.clear();
+		fh.marketClear();
 		assertInvariants(fh);
 	}
 	
@@ -375,7 +375,7 @@ public class FourHeapTest {
 		fh = FourHeap.<Integer, Integer, Order<Integer, Integer>> create();
 		insertOrder(fh, SELL, 7, 3, 0);
 		insertOrder(fh, BUY, 5, 3, 1);
-		assertTrue(fh.clear().isEmpty());
+		assertTrue(fh.marketClear().isEmpty());
 	}
 	
 	@Test
@@ -388,7 +388,7 @@ public class FourHeapTest {
 		fh = FourHeap.<Integer, Integer, Order<Integer, Integer>> create();
 		os = insertOrder(fh, SELL, 5, 2, 0);
 		ob = insertOrder(fh, BUY, 7, 3, 1);
-		transactions = fh.clear();
+		transactions = fh.marketClear();
 		
 		assertEquals(1, transactions.size());
 		trans = Iterables.getOnlyElement(transactions);
@@ -396,7 +396,7 @@ public class FourHeapTest {
 		assertEquals(ob, trans.getBuy());
 		assertEquals(2, trans.getQuantity());
 		assertEquals(1, ob.unmatchedQuantity);
-		assertEquals(1, fh.size());
+		assertEquals(1, fh.numberOfUnits());
 		assertFalse(fh.contains(os));
 		assertTrue(fh.contains(ob));
 		assertInvariants(fh);
@@ -413,11 +413,11 @@ public class FourHeapTest {
 		os = insertOrder(fh, SELL, 5, 3, 0);
 		insertOrder(fh, SELL, 6, 2, 0);
 		ob = insertOrder(fh, BUY, 7, 4, 1);
-		transactions = fh.clear();
+		transactions = fh.marketClear();
 		
 		assertEquals(2, transactions.size());
 		assertInvariants(fh);
-		assertEquals(1, fh.size());
+		assertEquals(1, fh.numberOfUnits());
 		assertFalse(fh.contains(os));
 		assertFalse(fh.contains(ob));
 		
@@ -572,7 +572,7 @@ public class FourHeapTest {
 	protected static Order<Integer, Integer> insertOrder(
 			FourHeap<Integer, Integer, Order<Integer, Integer>> fh, OrderType type, int price, int quantity, int time) {
 		Order<Integer, Integer> order = Order.create(type, price, quantity, time);
-		fh.insertOrder(order);
+		fh.add(order);
 		return order;
 	}
 	

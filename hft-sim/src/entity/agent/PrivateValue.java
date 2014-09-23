@@ -6,15 +6,15 @@ import static fourheap.Order.OrderType.BUY;
 
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-import sumstats.SumStats;
+import utils.QuantityIndexedArray;
 import utils.Rands;
+import utils.SummStats;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -82,7 +82,7 @@ public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 		
 		Builder<Price> builder = ImmutableList.builder();
 		for (double value : values)
-			builder.add(new Price(value));
+			builder.add(Price.of(value));
 		
 		this.values = builder.build();
 	}
@@ -90,7 +90,7 @@ public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 	/**
 	 * Protected constructor for testing purposes (DummyPrivateValue)
 	 */
-	protected PrivateValue(int maxPosition, Collection<Price> values) {
+	protected PrivateValue(int maxPosition, List<Price> values) {
 		checkArgument(values.size() == 2*maxPosition, "Incorrect number of entries in list");
 		Builder<Price> builder = ImmutableList.builder();
 		builder.addAll(values);
@@ -172,7 +172,7 @@ public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 					privateValue += getValue(currentPosition - i, type).intValue();
 			break;
 		}
-		return new Price(privateValue);
+		return Price.of(privateValue);
 	}
 
 	/**
@@ -180,11 +180,11 @@ public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 	 * @return
 	 */
 	public Price getMean() {
-		SumStats pv = SumStats.create();
+		SummStats pv = SummStats.on();
 		for (Price price : values) {
 			pv.add(price.doubleValue());
 		}
-		return new Price(pv.mean());
+		return Price.of(pv.mean());
 	}
 	
 	@Override

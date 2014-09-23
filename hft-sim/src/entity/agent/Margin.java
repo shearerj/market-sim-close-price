@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import utils.QuantityIndexedArray;
 import utils.Rands;
 
 import com.google.common.collect.Lists;

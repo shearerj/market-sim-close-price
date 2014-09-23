@@ -3,6 +3,7 @@ package fourheap;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Serializable;
+import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -11,6 +12,7 @@ import java.util.PriorityQueue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
@@ -40,13 +42,13 @@ import com.google.common.collect.Ordering;
  * to be a way to generalize it.
  * 
  */
-public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? super T>, O extends Order<? extends P, ? extends T>> implements Serializable {
+public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? super T>, O extends Order<? extends P, ? extends T>> extends AbstractCollection<O> implements Serializable {
 
 	private static final long serialVersionUID = -7322375558427133915L;
 	protected final Ordering<P> pord = Ordering.natural();
 		
 	protected final PriorityQueue<O> sellUnmatched, sellMatched, buyUnmatched, buyMatched;
-	protected int size;
+	protected int numUnits;
 
 	protected FourHeap() {
 		Ordering<O> priceComp = new PriceOrdering(), timeComp = new TimeOrdering();
@@ -59,7 +61,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 		this.buyUnmatched  = new PriorityQueue<O>(1, priceComp.reverse().compound(timeComp));
 		// Bin: matched buys, min first
 		this.buyMatched    = new PriorityQueue<O>(1, priceComp.compound(timeComp));
-		this.size = 0;
+		this.numUnits = 0;
 	}
 	
 	/**
@@ -76,11 +78,12 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * Complexity: O(log n)
 	 * 
 	 * @param order
+	 * @return 
 	 */
-	public void insertOrder(O order) {
+	public boolean add(O order) {
 		checkArgument(order.unmatchedQuantity > 0, "Orders must have positive quantity");
 
-		size += order.unmatchedQuantity;;
+		numUnits += order.unmatchedQuantity;;
 		int t;
 		PriorityQueue<O> matchUnmatchedHeap, matchMatchedHeap, orderUnmatchedHeap, orderMatchedHeap;
 		if (order.type == Order.OrderType.BUY) { // buy order
@@ -136,6 +139,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 		// Put order in necessary heaps
 		if (order.unmatchedQuantity != 0) orderUnmatchedHeap.offer(order);
 		if (order.matchedQuantity != 0) orderMatchedHeap.offer(order);
+		return true;
 	}
 
 	/**
@@ -146,8 +150,8 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * @param order
 	 *            The order to withdraw
 	 */
-	public void withdrawOrder(O order) {
-		withdrawOrder(order, order.getQuantity());
+	public void remove(O order) {
+		remove(order, order.getQuantity());
 	}
 
 	/**
@@ -162,11 +166,11 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 *            The quantity to withdraw from order. Must be positive, even
 	 *            for sell orders.
 	 */
-	public void withdrawOrder(O order, int quantity) {
+	public void remove(O order, int quantity) {
 		checkArgument(quantity > 0, "Quantity must be positive");
 		checkArgument(quantity <= order.getQuantity(), "Can't withdraw more than in order");
 
-		size -= quantity;
+		numUnits -= quantity;
 		int t;
 		PriorityQueue<O> matchUnmatchedHeap, matchMatchedHeap, orderUnmatchedHeap, orderMatchedHeap;
 		if (order.type == Order.OrderType.BUY) { // buy order
@@ -233,7 +237,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * 
 	 * @return The MatchedOrders
 	 */
-	public Collection<MatchedOrders<P, T, O>> clear() {
+	public Collection<MatchedOrders<P, T, O>> marketClear() {
 		List<O> buys = Lists.newArrayList(buyMatched);
 		Collections.sort(buys, buyUnmatched.comparator());
 		List<O> sells = Lists.newArrayList(sellMatched);
@@ -255,27 +259,18 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 			buy.matchedQuantity -= quantity;
 			sell.matchedQuantity -= quantity;
 			transactions.add(MatchedOrders.<P, T, O> create(buy, sell, quantity));
-			size -= 2*quantity;
+			numUnits -= 2*quantity;
 		}
 		return transactions.build();
 	}
-
-	/**
-	 * Check if an order is in the fourheap.
-	 * 
-	 * Complexity: O(n)
-	 * 
-	 * @param order
-	 *            The order to check for containment
-	 * @return True if in the fourheap
-	 */
-	public boolean contains(O order) {
-		if (order.matchedQuantity > 0)
-			return buyMatched.contains(order) || sellMatched.contains(order);
-		else if (order.unmatchedQuantity > 0)
-			return buyUnmatched.contains(order) || sellUnmatched.contains(order);
-		else
-			return false;
+	
+	@Override
+	public void clear() {
+		this.numUnits = 0;
+		sellUnmatched.clear();
+		sellMatched.clear();
+		buyUnmatched.clear();
+		buyMatched.clear();
 	}
 
 	/**
@@ -319,25 +314,24 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * 
 	 * @return total quantity of every order in the Fourheap
 	 */
+	@Override
 	public int size() {
-		return size;
+		return sellUnmatched.size() + sellMatched.size() + buyUnmatched.size() + buyMatched.size();
 	}
 	
-	/**
-	 * Return whether the fourheap is empty.
-	 * 
-	 * Complexity: O(1)
-	 * 
-	 * @return True if there are no orders in the fourheap
-	 */
-	public boolean isEmpty() {
-		return size == 0;
+	public int numberOfUnits() {
+		return numUnits;
+	}
+	
+	@Override
+	public Iterator<O> iterator() {
+		return Iterators.concat(sellUnmatched.iterator(), sellMatched.iterator(), buyUnmatched.iterator(), buyMatched.iterator());
 	}
 
-	@Override
 	/**
 	 * Complexity: O(n)
 	 */
+	@Override
 	public String toString() {
 		return "<Bo: " + buyUnmatched + ", So: " + sellUnmatched + ", Bi: "
 				+ buyMatched + ", Si: " + sellMatched + ">";
@@ -372,4 +366,5 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 			return first.submitTime.compareTo(second.submitTime);
 		}
 	}
+	
 }

@@ -3,27 +3,23 @@ package entity.agent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Log.log;
 import static logger.Log.Level.INFO;
-import iterators.ExpInterarrivals;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
 import systemmanager.Keys;
-import systemmanager.Scheduler;
-import activity.SubmitNMSOrder;
+import systemmanager.Simulation;
+import utils.QuantityIndexedArray;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
-import data.EntityProperties;
-import data.FundamentalValue;
-import entity.infoproc.SIP;
+import data.Props;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Transaction;
@@ -44,9 +40,10 @@ public class AAAgent extends WindowAgent {
 	private static final long serialVersionUID = 2418819222375372886L;
 	private static final Ordering<Price> pcomp = Ordering.natural();
 
+	// TODO Make the variables that don't change final
+	
 	// Agent variables
 	protected OrderType type; // randomly assigned at initialization
-	protected boolean withdrawOrders; 	// true if withdraw orders at each reentry
 	protected Price lastTransactionPrice;
 	protected Price equilibriumPrice;
 	protected Price targetPrice; 
@@ -72,107 +69,52 @@ public class AAAgent extends WindowAgent {
 	private double alphaMax; // max experienced value for alpha (for theta, not PV)
 	private double alphaMin; // min experienced value for alpha
 
-	protected AAAgent(Scheduler scheduler, TimeStamp arrivalTime,
-			FundamentalValue fundamental, SIP sip, Market market, Random rand,
-			Iterator<TimeStamp> interarrivalTimes, double pvVar, int tickSize,
-			int maxAbsPosition, int bidRangeMin, int bidRangeMax,
-			boolean withdrawOrders, int windowLength, double aggression,
-			double theta, double thetaMin, double thetaMax, int historical,
-			int eta, double lambdaR, double lambdaA, double gamma,
-			double betaR, double betaT, boolean buyerStatus, boolean debug) {
+	protected AAAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
+		super(sim, arrivalTime, market, rand, props);
 
-		super(scheduler, arrivalTime, fundamental, sip, market, rand,
-				interarrivalTimes,
-				new PrivateValue(maxAbsPosition, pvVar, rand), tickSize,
-				bidRangeMin, bidRangeMax, windowLength);
-
-		checkArgument(betaR > 0 && betaR < 1, "Beta for r must be in (0,1)");
-		checkArgument(betaT > 0 && betaT < 1, "Beta for theta must be in (0,1)");
-		checkArgument(eta >= 1, "Eta must be in [1, inf)");
-		checkArgument(historical > 0, "Number of historical prices must be positive");
-		checkArgument(lambdaA >= 0, "lambdaA must be positive");
-		checkArgument(lambdaR >= 0, "lambdaR must be positive");
-
-		this.type = buyerStatus ? BUY : SELL;	// for debugging
+		this.type = props.getAsBoolean(Keys.BUYER_STATUS) ? BUY : SELL;	// for debugging
 		this.lastTransactionPrice = null;
 		this.equilibriumPrice = null;
 		this.targetPrice = null;
 
 		//Initializing parameters
-		this.aggression = aggression;
-		this.theta = theta;
-		this.thetaMin = thetaMin;
-		this.thetaMax = thetaMax;
+		this.aggression = props.getAsDouble(Keys.AGGRESSION);
+		this.theta = props.getAsDouble(Keys.THETA);
+		this.thetaMin = props.getAsDouble(Keys.THETA_MIN);
+		this.thetaMax = props.getAsDouble(Keys.THETA_MAX);
 		this.alphaMin = Price.INF.intValue();
 		this.alphaMax = -1;
 		this.aggressions = new Aggression(privateValue.getMaxAbsPosition(), aggression);
 		this.rho = 0.9; 		// from paper, to emphasize converging pattern
 		
 		//Initializing strategy variables
-		this.numHistorical = historical;
-		this.lambdaA = lambdaA;
-		this.lambdaR = lambdaR;
-		this.gamma = gamma;
-		this.eta = eta;
-		this.betaR = betaR;		// paper randomizes to U[0.2, 0.6]
-		this.betaT = betaT;		// paper randomizes to U[0.2, 0.6]
+		this.numHistorical = props.getAsInt(Keys.NUM_HISTORICAL);
+		this.lambdaA = props.getAsDouble(Keys.LAMBDA_A);
+		this.lambdaR = props.getAsDouble(Keys.LAMBDA_R);
+		this.gamma = props.getAsDouble(Keys.GAMMA);
+		this.eta = props.getAsInt(Keys.ETA);
+		this.betaR = props.getAsDouble(Keys.BETA_R);		// paper randomizes to U[0.2, 0.6]
+		this.betaT = props.getAsDouble(Keys.BETA_T);		// paper randomizes to U[0.2, 0.6]
 		
 		// Debugging
-		this.debug = debug;
-	}
-
-	public AAAgent(Scheduler scheduler, TimeStamp arrivalTime,
-			FundamentalValue fundamental, SIP sip, Market market, Random rand,
-			double reentryRate, double pvVar, int tickSize, int maxAbsPosition,
-			int bidRangeMin, int bidRangeMax, boolean withdrawOrders,
-			int windowLength, double aggression, double theta, double thetaMin,
-			double thetaMax, int historical, int eta, double lambdaR,
-			double lambdaA, double gamma, double betaR, double betaT,
-			boolean buyerStatus, boolean debug) {
-
-		this(scheduler, arrivalTime, fundamental, sip, market, rand,
-				ExpInterarrivals.create(reentryRate, rand), pvVar, tickSize,
-				maxAbsPosition, bidRangeMin, bidRangeMax, withdrawOrders,
-				windowLength, aggression, theta, thetaMin, thetaMax,
-				historical, eta, lambdaR, lambdaA, gamma, betaR, betaT,
-				buyerStatus, debug);
-
-	}
-
-	public AAAgent(Scheduler scheduler, TimeStamp arrivalTime,
-			FundamentalValue fundamental, SIP sip, Market market, Random rand,
-			EntityProperties props) {
+		this.debug = props.getAsBoolean(Keys.DEBUG);
 		
-		this(scheduler, arrivalTime, fundamental, sip, market, rand,
-				props.getAsDouble(Keys.BACKGROUND_REENTRY_RATE, Keys.REENTRY_RATE), 
-				props.getAsDouble(Keys.PRIVATE_VALUE_VAR),
-				props.getAsInt(Keys.AGENT_TICK_SIZE, Keys.TICK_SIZE),
-				props.getAsInt(Keys.MAX_QUANTITY),
-				props.getAsInt(Keys.BID_RANGE_MIN),
-				props.getAsInt(Keys.BID_RANGE_MAX),
-				props.getAsBoolean(Keys.WITHDRAW_ORDERS),
-				props.getAsInt(Keys.WINDOW_LENGTH),
-				props.getAsDouble(Keys.AGGRESSION),
-				props.getAsDouble(Keys.THETA),
-				props.getAsDouble(Keys.THETA_MIN),
-				props.getAsDouble(Keys.THETA_MAX),
-				props.getAsInt(Keys.NUM_HISTORICAL), 
-				props.getAsInt(Keys.ETA),
-				props.getAsDouble(Keys.LAMBDA_R),
-				props.getAsDouble(Keys.LAMBDA_A),	// 0.02 in paper 
-				props.getAsDouble(Keys.GAMMA),
-				props.getAsDouble(Keys.BETA_R),	// Rands.nextUniform(rand, 0.2, 0.6)) 
-				props.getAsDouble(Keys.BETA_T), // Rands.nextUniform(rand, 0.2, 0.6)), 
-				props.getAsBoolean(Keys.BUYER_STATUS), // rand.nextBoolean()),
-				props.getAsBoolean(Keys.DEBUG));
+		// Check arguments
+		checkArgument(betaR > 0 && betaR < 1, "Beta for r must be in (0,1)");
+		checkArgument(betaT > 0 && betaT < 1, "Beta for theta must be in (0,1)");
+		checkArgument(eta >= 1, "Eta must be in [1, inf)");
+		checkArgument(numHistorical > 0, "Number of historical prices must be positive");
+		checkArgument(lambdaA >= 0, "lambdaA must be positive");
+		checkArgument(lambdaR >= 0, "lambdaR must be positive");
+	}
+
+	public static AAAgent create(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
+		return new AAAgent(sim, arrivalTime, market, rand, props);
 	}
 
 	@Override
-	public void agentStrategy(TimeStamp currentTime) {
-		super.agentStrategy(currentTime);
-
-		// withdraw previous orders
-		if (withdrawOrders) withdrawAllOrders();
+	public void agentStrategy() {
+		super.agentStrategy();
 
 		// re-initialize variables
 		lastTransactionPrice = null;
@@ -184,9 +126,9 @@ public class AAAgent extends WindowAgent {
 		aggression = aggressions.getValue(positionBalance, type);
 
 		// Updating Price Limit (valuation of security)
-		Price limitPrice = this.getLimitPrice(type, currentTime);
+		Price limitPrice = getLimitPrice(type);
 
-		List<Transaction> transactions = this.getWindowTransactions(currentTime);
+		List<Transaction> transactions = getWindowTransactions();
 		if (!transactions.isEmpty())
 			lastTransactionPrice = transactions.get(transactions.size()-1).getPrice();
 
@@ -215,7 +157,7 @@ public class AAAgent extends WindowAgent {
 		log(INFO, "%s::agentStrategy: updateTheta: theta=%.4f-->theta_new=%.4f", this, oldTheta, theta);
 
 		// Bidding Layer
-		this.biddingLayer(limitPrice, targetPrice, 1, currentTime);
+		biddingLayer(limitPrice, targetPrice, 1);
 	}
 
 	/**
@@ -239,11 +181,11 @@ public class AAAgent extends WindowAgent {
 				if (aggression == -1) { 		// passive
 					tau = Price.ZERO;
 				} else if (aggression < 0) {
-					tau = new Price(eqPrice * (1 - tauChange(-aggression)));	// Eq (3)
+					tau = Price.of(eqPrice * (1 - tauChange(-aggression)));	// Eq (3)
 				} else if (aggression == 0) {	// active
 					tau = equilibriumPrice;
 				} else if (aggression < 1) {	// aggressive
-					tau = new Price(eqPrice + (limit - eqPrice) 
+					tau = Price.of(eqPrice + (limit - eqPrice) 
 							* tauChange(aggression));	// Eq (3)
 				} else { 						// completely aggressive
 					tau = limitPrice;
@@ -254,7 +196,7 @@ public class AAAgent extends WindowAgent {
 				if (aggression == -1) {			// passive
 					tau = Price.ZERO;
 				} else if (aggression < 0) {	// less aggressive on limit
-					tau = new Price(limit * (1 - tauChange(-aggression)));	// Eq (5)
+					tau = Price.of(limit * (1 - tauChange(-aggression)));	// Eq (5)
 				} else {
 					tau = limitPrice;			// aggression clipped at 0
 				}
@@ -267,12 +209,12 @@ public class AAAgent extends WindowAgent {
 				if (aggression == -1) {			// passive
 					tau = Price.INF;
 				} else if (aggression < 0) {
-					tau = new Price(eqPrice + (Price.INF.intValue() - eqPrice) 
+					tau = Price.of(eqPrice + (Price.INF.intValue() - eqPrice) 
 							* tauChange(-aggression)); // Eq (4)
 				} else if (aggression == 0) {	// active
 					tau = equilibriumPrice;
 				} else if (aggression < 1){		// aggressive
-					tau = new Price(limit + (eqPrice - limit) 
+					tau = Price.of(limit + (eqPrice - limit) 
 							* (1 - tauChange(aggression)));	// Eq (4)
 				} else { 						// completely aggressive
 					tau = limitPrice;
@@ -283,7 +225,7 @@ public class AAAgent extends WindowAgent {
 				if (aggression == -1) { 		// passive
 					tau = Price.INF;
 				} else if (aggression < 0) {	// less aggressive on limit
-					tau = new Price(limit + (Price.INF.intValue() - limit) *
+					tau = Price.of(limit + (Price.INF.intValue() - limit) *
 							tauChange(-aggression));	// Eq (6)
 				} else { 						// aggressive
 					tau = limitPrice;
@@ -310,18 +252,20 @@ public class AAAgent extends WindowAgent {
 	 * @return
 	 */
 	protected void biddingLayer(Price limitPrice, Price targetPrice, 
-			int quantity, TimeStamp currentTime) {
+			int quantity) {
 		// Determining the offer price to (possibly) submit
-		Price bid = this.sip.getNBBO().getBestBid();
-		Price ask = this.sip.getNBBO().getBestAsk();
+		Optional<Price> obid = getNBBO().getBestBid(),
+			oask = getNBBO().getBestAsk();
 
 		// if no bid or no ask, submit ZI strategy bid & exit bidding layer
-		if (bid == null || ask == null) {
+		if (!obid.isPresent() || !oask.isPresent()) {
 			log(INFO, "%s::biddingLayer: Bid/Ask undefined.", this);
-			this.executeZIStrategy(type, quantity, currentTime);
+			executeZIStrategy(type, quantity);
 			return;
 		}
-
+		Price bid = obid.get(),
+			ask = oask.get();
+		
 		// If best offer is outside of limit price, no bid is submitted
 		if ((type.equals(BUY) && limitPrice.lessThanEqual(bid))
 				|| (type.equals(SELL) && limitPrice.greaterThan(ask))) {
@@ -353,40 +297,39 @@ public class AAAgent extends WindowAgent {
 		if (targetPrice == null) {
 			// if no transactions, so cannot determine target price
 			if (type.equals(BUY)) {
-				Price askCeil = new Price((1 + lambdaR) * ask.intValue() 
+				Price askCeil = Price.of((1 + lambdaR) * ask.intValue() 
 						+ lambdaA * Price.TICKS_PER_DOLLAR);
-				Price offset = new Price( (pcomp.min(askCeil, limitPrice).intValue() - bid.intValue()) 
+				Price offset = Price.of( (pcomp.min(askCeil, limitPrice).intValue() - bid.intValue()) 
 						* (1.0/eta));
-				orderPrice = new Price(bid.intValue() + offset.intValue());
+				orderPrice = Price.of(bid.intValue() + offset.intValue());
 				orderPrice = pcomp.min(orderPrice, limitPrice);
 			} else {
-				Price bidFloor = new Price((1 - lambdaR) * bid.intValue() 
+				Price bidFloor = Price.of((1 - lambdaR) * bid.intValue() 
 						- lambdaA * Price.TICKS_PER_DOLLAR);
-				Price offset = new Price( (ask.intValue() - pcomp.max(bidFloor, limitPrice).intValue()) 
+				Price offset = Price.of( (ask.intValue() - pcomp.max(bidFloor, limitPrice).intValue()) 
 						* (1.0/eta));
-				orderPrice = new Price(ask.intValue() - offset.intValue());
+				orderPrice = Price.of(ask.intValue() - offset.intValue());
 				orderPrice = pcomp.max(orderPrice, limitPrice);				
 			}
 			
 		} else {
 			// can determine target price
 			if (type.equals(BUY)) {
-				Price offset = new Price((targetPrice.intValue() - bid.intValue()) * (1.0/eta));
-				orderPrice = new Price(bid.intValue() + offset.intValue());
+				Price offset = Price.of((targetPrice.intValue() - bid.intValue()) * (1.0/eta));
+				orderPrice = Price.of(bid.intValue() + offset.intValue());
 				orderPrice = pcomp.min(orderPrice, limitPrice);
 				// if bestAsk <= target, submit at bestAsk, else submit price given by EQ 10/11
 				orderPrice = ask.lessThanEqual(targetPrice) ? ask : orderPrice;
 			} else {
-				Price offset = new Price((ask.intValue() - targetPrice.intValue()) * (1.0/eta));
-				orderPrice = new Price(ask.intValue() - offset.intValue());
+				Price offset = Price.of((ask.intValue() - targetPrice.intValue()) * (1.0/eta));
+				orderPrice = Price.of(ask.intValue() - offset.intValue());
 				orderPrice = pcomp.max(orderPrice, limitPrice);
 				// If bestBid >= target, submit at bestBid, else submit price given by EQ 10/11
 				orderPrice = bid.greaterThanEqual(targetPrice) ? bid : orderPrice;
 			}
 		}
 		
-		scheduler.executeActivity(new SubmitNMSOrder(this, primaryMarket, type,
-				orderPrice, 1));
+		submitNMSOrder(type, orderPrice, 1);
 	}
 
 
@@ -618,7 +561,7 @@ public class AAAgent extends WindowAgent {
 		for(int i = 0; i < numTrans; i++) {
 			total += transactions.get(i).getPrice().intValue() * weights[i] / sumWeights; 
 		}
-		return new Price(total);
+		return Price.of(total);
 	}
 
 	/**
@@ -699,4 +642,5 @@ public class AAAgent extends WindowAgent {
 			return null;
 		}
 	}
+	
 }
