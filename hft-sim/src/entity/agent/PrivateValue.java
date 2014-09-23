@@ -2,6 +2,7 @@ package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static entity.market.Price.ZERO;
+import static fourheap.Order.OrderType.BUY;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -106,10 +107,17 @@ public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 	}
 	
 	/**
-	 * If position (e.g. current position +/- 1) exceeds max position, return 0.
+	 * Returns the private benefit of either buying or selling 1 unit 
+	 * (indicated by type) when starting at the specified current position.
+	 * 
+	 * If current position is already at the max allowed, or if the
+	 * position exceeds the max position allowed, return +/- infinity, 
+	 * depending on whether long/short (negative infinity for long positions, 
+	 * positive infinity for short positions, since private values are
+	 * sorted in decreasing order).
 	 * 
 	 * @param position
-	 *            Agent's position (e.g. current position +/- 1)
+	 *            Agent's position
 	 * @param type
 	 * 			  Buy or Sell
 	 * @return The private value 
@@ -118,20 +126,23 @@ public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 	public Price getValue(int position, OrderType type) {
 		switch (type) {
 		case BUY:
-			if (position + offset <= values.size() - 1 &&
-					position + offset >= 0)
+			if (position + offset <= values.size() - 1 && position + offset >= 0)
 				return values.get(position + offset);
-			break;
+			if (position + offset > values.size() - 1) return Price.NEG_INF;
+			if (position + offset < 0) return Price.INF;
 		case SELL:
-			if (position + offset - 1 <= values.size() - 1 && 
-					position + offset - 1 >= 0)
+			if (position + offset - 1 <= values.size() - 1 && position + offset - 1 >= 0)
 				return values.get(position + offset - 1);
-			break;
+			if (position + offset - 1 > values.size() - 1) return Price.NEG_INF;
+			if (position + offset - 1 < 0) return Price.INF;
+		default:
+			return Price.ZERO;	// should never be reached
 		}
-		return Price.ZERO;
 	}
 	
 	/**
+	 * Checks that the quantities are within the range to add; otherwise ignores.
+	 * 
 	 * @param currentPosition
 	 * @param quantity
 	 * @param type
@@ -140,16 +151,25 @@ public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 	@Override
 	public Price getValueFromQuantity(int currentPosition, int quantity, OrderType type) {
 		checkArgument(quantity > 0, "Quantity must be positive");
-		int privateValue = 0;
+		checkArgument(Math.abs(currentPosition) <= offset, "Current position cannot exceed max");
+		int nextPosition = currentPosition + quantity * (type.equals(BUY) ? 1 : -1);
+		//checkArgument(Math.abs(nextPosition) <= offset, "Future position cannot exceed max");
+		if (nextPosition > offset) return Price.NEG_INF;
+		if (nextPosition < -offset) return Price.INF;
 		
+		int privateValue = 0;
 		switch (type) {
 		case BUY:
 			for (int i = 0; i < quantity; i++)
-				privateValue += getValue(currentPosition + i, type).intValue();
+				if (currentPosition + i + offset <= values.size() - 1 &&
+						currentPosition + i + offset >= 0)
+					privateValue += getValue(currentPosition + i, type).intValue();
 			break;
 		case SELL:
 			for (int i = 0; i < quantity; i++)
-				privateValue += getValue(currentPosition - i, type).intValue();
+				if (currentPosition - i + offset - 1 >= 0 &&
+						currentPosition - i + offset - 1 <= values.size() - 1)
+					privateValue += getValue(currentPosition - i, type).intValue();
 			break;
 		}
 		return new Price(privateValue);

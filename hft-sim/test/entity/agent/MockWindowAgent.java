@@ -17,7 +17,7 @@ public class MockWindowAgent extends WindowAgent {
 
 	public MockWindowAgent(Scheduler scheduler, FundamentalValue fundamental,
 			SIP sip, Market market, int windowLength) {
-		this(scheduler, fundamental, sip, market, new PrivateValue(), 0, 0,
+		this(scheduler, fundamental, sip, market, new MockPrivateValue(), 0, 0,
 				windowLength);
 	}
 

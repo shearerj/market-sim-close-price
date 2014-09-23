@@ -2,6 +2,7 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
+import static logger.Log.log;
 import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.*;
 
@@ -17,6 +18,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import activity.Clear;
+import activity.SubmitOrder;
 import systemmanager.Consts;
 import systemmanager.Executor;
 import data.FundamentalValue;
@@ -36,7 +39,7 @@ public class BackgroundAgentTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		Log.log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "BackgroundAgentTest.log"));
+		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "BackgroundAgentTest.log"));
 	}
 
 	@Before
@@ -302,9 +305,14 @@ public class BackgroundAgentTest {
 		getTransactionValuationRand();
 	}
 
-	// Test that returns empty if exceed max position
+	/**
+	 * Verify do not submit order if exceed max position allowed.
+	 * 
+	 * XXX much of this is tested within ZIAgentTest, may want to move it here
+	 */
 	@Test
 	public void testZIStrat() {
+		log.log(DEBUG, "Testing execution of ZI strategy");
 		TimeStamp time = TimeStamp.ZERO;
 		List<Price> values = Arrays.asList(new Price(100), new Price(10));
 		PrivateValue pv = new DummyPrivateValue(1, values);
@@ -323,6 +331,67 @@ public class BackgroundAgentTest {
 		agent.executeZIStrategy(BUY, 1, time);
 		assertEquals(1, agent.activeOrders.size());
 
-		// XXX much of this is tested within ZIAgentTest, may want to move it here
+		// Verify that no other buy orders submitted, because would exceed max position
+		agent.positionBalance = 1;
+		agent.executeZIStrategy(BUY, 1, TimeStamp.create(1));
+		assertEquals(1, agent.activeOrders.size());
+		agent.executeZIStrategy(SELL, 1, TimeStamp.create(1));
+		assertEquals(2, agent.activeOrders.size());
+	}
+	
+	@Test
+	public void testSubmitBuyOrder() {
+		// Verify that when submit order, if would exceed position limits, then
+		// do not submit the order
+		PrivateValue pv = new MockPrivateValue(1);
+		FundamentalValue fundamental = new MockFundamental(100000);
+		
+		MockAgent agent2 = new MockAgent(exec, fundamental, sip, market);
+		BackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market, pv, 0, 1000);
+		
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(50), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(40), 1));
+		exec.executeActivity(new Clear(market));
+		
+		assertEquals(0, agent1.activeOrders.size());
+		assertEquals(1, agent1.positionBalance);
+		
+		// Verify that a new buy order can't be submitted
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(50), 1));
+		assertEquals(0, agent1.activeOrders.size());
+		assertEquals(1, agent1.positionBalance);
+		
+		// Verify that a new sell order CAN be submitted
+		exec.executeActivity(new SubmitOrder(agent1, market, SELL, new Price(45), 1));
+		assertEquals(1, agent1.activeOrders.size());
+		assertEquals(1, agent1.positionBalance);
+	}
+	
+	@Test
+	public void testSubmitSellOrder() {
+		// Verify that when submit order, if would exceed position limits, then
+		// do not submit the order
+		PrivateValue pv = new MockPrivateValue(1);
+		FundamentalValue fundamental = new MockFundamental(100000);
+		
+		MockAgent agent2 = new MockAgent(exec, fundamental, sip, market);
+		BackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market, pv, 0, 1000);
+		
+		exec.executeActivity(new SubmitOrder(agent2, market, BUY, new Price(50), 1));
+		exec.executeActivity(new SubmitOrder(agent1, market, SELL, new Price(40), 1));
+		exec.executeActivity(new Clear(market));
+		
+		assertEquals(0, agent1.activeOrders.size());
+		assertEquals(-1, agent1.positionBalance);
+		
+		// Verify that a new sell order can't be submitted
+		exec.executeActivity(new SubmitOrder(agent1, market, SELL, new Price(50), 1));
+		assertEquals(0, agent1.activeOrders.size());
+		assertEquals(-1, agent1.positionBalance);
+		
+		// Verify that a new buy order CAN be submitted
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(45), 1));
+		assertEquals(1, agent1.activeOrders.size());
+		assertEquals(-1, agent1.positionBalance);
 	}
 }

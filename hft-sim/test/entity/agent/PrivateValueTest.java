@@ -44,20 +44,20 @@ public class PrivateValueTest {
 		assertEquals(1, pv.getMaxAbsPosition());
 		
 		// More detailed checks on buy, with boundary current position values
-		assertEquals(Price.ZERO, pv.getValue(1, BUY));
-		assertEquals(Price.ZERO, pv.getValue(2, BUY));
-		assertEquals(Price.ZERO, pv.getValue(10, BUY));
+		assertEquals(Price.NEG_INF, pv.getValue(1, BUY));
+		assertEquals(Price.NEG_INF, pv.getValue(2, BUY));
+		assertEquals(Price.NEG_INF, pv.getValue(10, BUY));
 		assertEquals(pv.values.get(0), pv.getValue(-1, BUY));
-		assertEquals(Price.ZERO, pv.getValue(-2, BUY));
-		assertEquals(Price.ZERO, pv.getValue(-10, BUY));
+		assertEquals(Price.INF, pv.getValue(-2, BUY));
+		assertEquals(Price.INF, pv.getValue(-10, BUY));
 		
 		// More detailed checks on sell, with boundary current position values
-		assertEquals(Price.ZERO, pv.getValue(-1, SELL));
-		assertEquals(Price.ZERO, pv.getValue(-2, SELL));
-		assertEquals(Price.ZERO, pv.getValue(-10, SELL));
+		assertEquals(Price.INF, pv.getValue(-1, SELL));
+		assertEquals(Price.INF, pv.getValue(-2, SELL));
+		assertEquals(Price.INF, pv.getValue(-10, SELL));
 		assertEquals(pv.values.get(1), pv.getValue(1, SELL));
-		assertEquals(Price.ZERO, pv.getValue(2, SELL));
-		assertEquals(Price.ZERO, pv.getValue(10, SELL));
+		assertEquals(Price.NEG_INF, pv.getValue(2, SELL));
+		assertEquals(Price.NEG_INF, pv.getValue(10, SELL));
 	}
 	
 	@Test
@@ -75,10 +75,10 @@ public class PrivateValueTest {
 		
 		// More detailed checks on buy, with boundary current position values
 		assertEquals(new Price(pv2 + pv3), pv.getValueFromQuantity(0, 2, BUY));
-		assertEquals(new Price(pv2 + pv3), pv.getValueFromQuantity(0, 3, BUY));
+		assertEquals(Price.NEG_INF, pv.getValueFromQuantity(0, 3, BUY));
 		assertEquals(new Price(pv2), pv.getValueFromQuantity(0, 1, BUY));
 		assertEquals(new Price(pv3), pv.getValueFromQuantity(1, 1, BUY));
-		assertEquals(Price.ZERO, pv.getValueFromQuantity(2, 1, BUY));
+		assertEquals(Price.NEG_INF, pv.getValueFromQuantity(2, 1, BUY));
 		assertEquals(new Price(pv1), pv.getValueFromQuantity(-1, 1, BUY));
 		assertEquals(new Price(pv0), pv.getValueFromQuantity(-2, 1, BUY));
 		assertEquals(new Price(pv0 + pv1), pv.getValueFromQuantity(-2, 2, BUY));
@@ -86,10 +86,10 @@ public class PrivateValueTest {
 		
 		// More detailed checks on sell, with boundary current position values
 		assertEquals(new Price(pv1 + pv0), pv.getValueFromQuantity(0, 2, SELL));
-		assertEquals(new Price(pv1 + pv0), pv.getValueFromQuantity(0, 3, SELL));
+		assertEquals(Price.INF, pv.getValueFromQuantity(0, 3, SELL));
 		assertEquals(new Price(pv1), pv.getValueFromQuantity(0, 1, SELL));
 		assertEquals(new Price(pv0), pv.getValueFromQuantity(-1, 1, SELL));
-		assertEquals(Price.ZERO, pv.getValueFromQuantity(-2, 1, SELL));
+		assertEquals(Price.INF, pv.getValueFromQuantity(-2, 1, SELL));
 		assertEquals(new Price(pv2), pv.getValueFromQuantity(1, 1, SELL));
 		assertEquals(new Price(pv3), pv.getValueFromQuantity(2, 1, SELL));
 		assertEquals(new Price(pv3 + pv2), pv.getValueFromQuantity(2, 2, SELL));
@@ -112,12 +112,12 @@ public class PrivateValueTest {
 		assertEquals(pv.values.get(3), pv.getValue(-1, SELL));
 		
 		// Checking buying and selling from current position = 5
-		assertEquals(Price.ZERO, pv.getValue(5, BUY));
+		assertEquals(Price.NEG_INF, pv.getValue(5, BUY));
 		assertEquals(pv.values.get(9), pv.getValue(5, SELL));
 		
 		// Checking buying and selling from current position = -5
 		assertEquals(pv.values.get(0), pv.getValue(-5, BUY));
-		assertEquals(Price.ZERO, pv.getValue(-5, SELL));
+		assertEquals(Price.INF, pv.getValue(-5, SELL));
 	}
 	
 	@Test
@@ -147,16 +147,17 @@ public class PrivateValueTest {
 		assertEquals(new Price(pv3 + pv2 + pv1), pv.getValueFromQuantity(-1, 3, SELL));
 		
 		// Checking buying and selling from current position = 5
-		assertEquals(Price.ZERO, pv.getValueFromQuantity(5, 2, BUY));
+		assertEquals(Price.NEG_INF, pv.getValueFromQuantity(5, 2, BUY));
 		assertEquals(new Price(pv9 + pv8), pv.getValueFromQuantity(5, 2, SELL));
 		
 		// Checking buying and selling from current position = -5
 		assertEquals(new Price(pv0 + pv1), pv.getValueFromQuantity(-5, 2, BUY));
-		assertEquals(Price.ZERO, pv.getValueFromQuantity(-5, 2, SELL));
+		assertEquals(Price.INF, pv.getValueFromQuantity(-5, 2, SELL));
 		
-		// Checking buying and selling from current position = 6 & -6
-		assertEquals(new Price(pv9), pv.getValueFromQuantity(6, 2, SELL));
-		assertEquals(new Price(pv0), pv.getValueFromQuantity(-6, 2, BUY));
+		// Checking buying and selling from current position = 6 & -6 (out of bounds)
+		// current position can never exceed max position allowed
+//		assertEquals(new Price(pv9), pv.getValueFromQuantity(6, 2, SELL));
+//		assertEquals(new Price(pv0), pv.getValueFromQuantity(-6, 2, BUY));
 	}
 	
 	@Test
@@ -167,5 +168,62 @@ public class PrivateValueTest {
 			getValueFromQuantity();
 			getValueFromMultiQuantity();
 		}
+	}
+	
+	@Test
+	public void testBounds() {
+		PrivateValue pv = new PrivateValue(5, 1000, new Random());
+		Price pv0 = new Price(pv.values.get(0).intValue());
+		Price pv9 = new Price(pv.values.get(9).intValue());
+		
+		assertEquals(Price.NEG_INF, pv.getValue(6, BUY));
+		assertEquals(Price.INF, pv.getValue(-6, SELL));
+		
+		assertEquals(Price.NEG_INF, pv.getValue(5, BUY));
+		assertEquals(Price.INF, pv.getValue(-5, SELL));
+		
+		assertEquals(Price.INF, pv.getValue(-6, BUY));
+		assertEquals(Price.NEG_INF, pv.getValue(6, SELL));
+		
+		assertEquals(0, pv.getValue(5, BUY).intValue() + pv.getValue(-5, SELL).intValue());
+		
+		assertEquals(pv0, pv.getValue(-5, BUY));
+		assertEquals(pv9, pv.getValue(5, SELL));
+		
+		assertEquals(pv9, pv.getValue(4, BUY));
+		assertEquals(pv0, pv.getValue(-4, SELL));
+		
+		assertEquals(pv9, pv.getValueFromQuantity(4, 1, BUY));
+		assertEquals(pv0, pv.getValueFromQuantity(-4, 1, SELL));
+		
+		assertEquals(pv0, pv.getValueFromQuantity(-5, 1, BUY));
+		assertEquals(pv9, pv.getValueFromQuantity(5, 1, SELL));
+		
+		assertEquals(Price.NEG_INF, pv.getValueFromQuantity(5, 1, BUY));
+		assertEquals(Price.INF, pv.getValueFromQuantity(-5, 1, SELL));
+		
+		// current position cannot exceed max
+//		assertEquals(Price.NEG_INF, pv.getValueFromQuantity(6, 1, BUY));
+//		assertEquals(Price.INF, pv.getValueFromQuantity(-6, 1, SELL));
+//		
+//		assertEquals(Price.NEG_INF, pv.getValueFromQuantity(-6, 1, BUY));
+//		assertEquals(Price.INF, pv.getValueFromQuantity(6, 1, SELL));
+//		
+//		assertEquals(Price.NEG_INF, pv.getValueFromQuantity(-6, 2, BUY));
+//		assertEquals(Price.INF, pv.getValueFromQuantity(6, 2, SELL));
+	}
+	
+	@Test
+	public void testMultiQuantityBounds() {
+		PrivateValue pv = new PrivateValue(5, 1000, new Random());
+		
+		assertEquals(Price.NEG_INF, pv.getValueFromQuantity(4, 2, BUY));
+		assertEquals(Price.INF, pv.getValueFromQuantity(-4, 2, SELL));
+		
+		assertNotEquals(Price.NEG_INF, pv.getValueFromQuantity(-5, 10, BUY));
+		assertNotEquals(Price.INF, pv.getValueFromQuantity(5, 10, SELL));
+		
+		assertEquals(Price.NEG_INF, pv.getValueFromQuantity(-5, 11, BUY));
+		assertEquals(Price.INF, pv.getValueFromQuantity(5, 11, SELL));
 	}
 }

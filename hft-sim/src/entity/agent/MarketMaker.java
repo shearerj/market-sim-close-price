@@ -78,8 +78,14 @@ public abstract class MarketMaker extends ReentryAgent {
 		this.tickInside = tickInside;
 		this.lastAsk = null;
 		this.lastBid = null;
+		checkArgument(initLadderMean >= 0, "Ladder initialization mean must be positive!");
+		checkArgument(initLadderRange >= 0, "Ladder initialization range must be positive!");
 		this.initLadderMean = initLadderMean;
 		this.initLadderRange = initLadderRange;
+		if (initLadderRange > 0 && initLadderMean == 0) {
+			// initialize using mean fundamental value if ladder range defined
+			 this.initLadderMean = fundamental.getMeanValue();
+		}
 	}
 
 	/**
