@@ -67,14 +67,17 @@ public class SimulationSpec implements Serializable {
 			RAND_SEED, NBBO_LATENCY, NUM_SIMULATIONS };
 	protected static final String[] marketKeys = { MARKET_LATENCY, TICK_SIZE };
 	protected static final String[] agentKeys = { TICK_SIZE, ARRIVAL_RATE,
-			REENTRY_RATE, PRIVATE_VALUE_VAR };
+			REENTRY_RATE, PRIVATE_VALUE_VAR, SIMULATION_LENGTH, FUNDAMENTAL_KAPPA, 
+			FUNDAMENTAL_MEAN };
 
 	protected transient final JsonObject rawSpec;
 	protected final EntityProperties simulationProperties;
 
 	protected final Collection<MarketProperties> marketProps;
 	protected final Collection<AgentProperties> agentProps;
-	protected final Map<String, Multiset<AgentProperties>> playerProps; // This probably makes more sense as a Multimap, but I couldn't make it as efficient
+	
+	// This probably makes more sense as a Multimap, but I couldn't make it as efficient
+	protected final Map<String, Multiset<AgentProperties>> playerProps; 
 
 	public SimulationSpec() {
 		this.rawSpec = new JsonObject();

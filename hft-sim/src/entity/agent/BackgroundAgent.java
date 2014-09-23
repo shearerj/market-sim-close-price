@@ -87,26 +87,61 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		}
 	}
 	
-	public void executeZIRPStrategy(OrderType type, int quantity, TimeStamp currentTime) {
+	public final void executeZIRPStrategy(
+		final OrderType type, 
+		final int quantity, 
+		final TimeStamp currentTime,
+		final int simulationLength,
+		final double fundamentalKappa,
+		final double fundamentalMean
+	) {
 		
-		int newPosition = (type.equals(BUY) ? 1 : -1) * quantity + positionBalance;
-		if (newPosition <= privateValue.getMaxAbsPosition() &&
-				newPosition >= -privateValue.getMaxAbsPosition()) {
+		int newPosition = quantity + positionBalance;
+		if (type == SELL) {
+			newPosition *= -1;
+		}
+		if (
+			newPosition <= privateValue.getMaxAbsPosition() 
+			&& newPosition >= -privateValue.getMaxAbsPosition()
+		) {
+			Price val = getEstimatedValuation(type, currentTime, 
+				simulationLength, fundamentalKappa, fundamentalMean);
+			Price price = 
+				new Price(
+					(val.doubleValue() + (type.equals(SELL) ? 1 : -1) 
+					* Rands.nextUniform(
+						rand, bidRangeMin, bidRangeMax
+					))).nonnegative().quantize(tickSize);
 			
-			Price val = getEstimatedValuation(type, currentTime);
-			Price price = new Price((val.doubleValue() + (type.equals(SELL) ? 1 : -1) * 
-					Rands.nextUniform(rand, bidRangeMin, bidRangeMax))).nonnegative().quantize(tickSize);
+			log.log(
+				INFO, 
+				"%s executing ZIRP strategy position=%d, " 
+					+ "for q=%d, value=%s + %s=%s",
+				this, 
+				positionBalance, 
+				quantity, 
+				fundamental.getValueAt(currentTime),
+				privateValue.getValue(positionBalance, type), 
+				val
+			);
 			
-			log.log(INFO, "%s executing ZI strategy position=%d, for q=%d, value=%s + %s=%s",
-					this, positionBalance, quantity, fundamental.getValueAt(currentTime),
-					privateValue.getValue(positionBalance, type), val);
-			
-			scheduler.executeActivity(new SubmitNMSOrder(this, primaryMarket,
-					type, price, quantity));
+			scheduler.executeActivity(
+				new SubmitNMSOrder(
+					this, 
+					primaryMarket,
+					type, 
+					price, 
+					quantity
+			));
 		} else {
 			// if exceed max position, then don't submit a new bid
-			log.log(INFO, "%s executing ZI strategy new order would exceed max position %d ; no submission",
-					this, privateValue.getMaxAbsPosition());
+			log.log(
+				INFO, 
+				"%s executing ZIRP strategy new order " 
+					+ "would exceed max position %d ; no submission",
+				this, 
+				privateValue.getMaxAbsPosition()
+			);
 		}
 	}
 	
@@ -192,12 +227,30 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		return getValuation(type, 1, currentTime);
 	}
 	
-	protected Price getEstimatedValuation(OrderType type, TimeStamp currentTime) {
-		return getEstimatedValuation(type, 1, currentTime);
+	protected Price getEstimatedValuation(
+		final OrderType type, 
+		final TimeStamp currentTime,
+		final int simulationLength,
+		final double fundamentalKappa,
+		final double fundamentalMean
+	) {
+		return getEstimatedValuation(type, 1, currentTime, 
+			simulationLength, fundamentalKappa, fundamentalMean);
 	}
 	
-	protected Price getEstimatedValuation(OrderType type, int quantity, TimeStamp currentTime) {
-		final int rHat = 0;
+	protected Price getEstimatedValuation(
+		OrderType type, 
+		int quantity, 
+		TimeStamp currentTime,
+		final int simulationLength,
+		final double fundamentalKappa,
+		final double fundamentalMean
+	) {
+		final int stepsLeft = (int) (simulationLength - currentTime.getInSeconds());
+		final double kappaToPower = Math.pow(fundamentalKappa, stepsLeft);
+		final double rHat = 
+			fundamental.getValueAt(currentTime).intValue() * kappaToPower 
+			+ fundamentalMean * (1 - kappaToPower);
 		return new Price(rHat * quantity
 				+ privateValue.getValueFromQuantity(positionBalance, quantity, type).intValue()
 				).nonnegative();

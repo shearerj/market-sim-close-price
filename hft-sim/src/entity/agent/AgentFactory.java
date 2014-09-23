@@ -70,6 +70,10 @@ public class AgentFactory {
 			return new ZIPAgent(scheduler, arrivalProcess.next(), fundamental,
 					sip, marketAssignment.next(), new Random(rand.nextLong()),
 					props);
+		case ZIRP:
+			return new ZIRPAgent(scheduler, arrivalProcess.next(), fundamental,
+				sip, marketAssignment.next(), new Random(rand.nextLong()),
+				props);
 		case ZIR:
 			return new ZIRAgent(scheduler, arrivalProcess.next(), fundamental,
 					sip, marketAssignment.next(), new Random(rand.nextLong()),
