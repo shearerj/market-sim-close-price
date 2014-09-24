@@ -27,11 +27,13 @@ public final class ZIRPAgent extends BackgroundAgent {
 	private final double fundamentalKappa;
 	private final double fundamentalMean;
 	private final boolean withdrawOrders;
+	private final double acceptableProfitFraction;
 	
 	private static final double DEFAULT_REENTRY_RATE = 0.005;
 	private static final double DEFAULT_PRIVATE_VALUE = 100000000;
 	private static final int DEFAULT_MAX_QUANTITY = 10;
 	private static final int DEFAULT_BID_RANGE_MAX = 5000;
+	private static final double DEFAULT_ACCEPTABLE_PROFIT_FRACTION = 0.8;
 	
 	public ZIRPAgent(
 		final Scheduler scheduler, 
@@ -61,7 +63,12 @@ public final class ZIRPAgent extends BackgroundAgent {
 			props.getAsBoolean(Keys.WITHDRAW_ORDERS, true),
 			props.getAsInt(Keys.SIMULATION_LENGTH),
 			props.getAsDouble(Keys.FUNDAMENTAL_KAPPA),
-			props.getAsDouble(Keys.FUNDAMENTAL_MEAN));
+			props.getAsDouble(Keys.FUNDAMENTAL_MEAN),
+			props.getAsDouble(
+				Keys.ACCEPTABLE_PROFIT_FRACTION, 
+				DEFAULT_ACCEPTABLE_PROFIT_FRACTION
+			)
+		);
 		
 	}
 
@@ -81,7 +88,9 @@ public final class ZIRPAgent extends BackgroundAgent {
 		final boolean aWithdrawOrders,
 		final int aSimulationLength, 
 		final double aFundamentalKappa,
-		final double aFundamentalMean) {
+		final double aFundamentalMean,
+		final double aAcceptableProfitFraction
+	) {
 		
 		super(scheduler, arrivalTime, fundamental, sip, market, rand,
 				interarrivals, new PrivateValue(maxAbsPosition, pvVar, rand),
@@ -91,6 +100,7 @@ public final class ZIRPAgent extends BackgroundAgent {
 		fundamentalKappa = aFundamentalKappa;
 		fundamentalMean = aFundamentalMean;
 		withdrawOrders = aWithdrawOrders;
+		acceptableProfitFraction = aAcceptableProfitFraction;
 	}
 
 	@Override
@@ -118,7 +128,8 @@ public final class ZIRPAgent extends BackgroundAgent {
 			currentTime, 
 			simulationLength, 
 			fundamentalKappa, 
-			fundamentalMean
+			fundamentalMean,
+			acceptableProfitFraction
 		);
 	}
 }

@@ -22,6 +22,7 @@ import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
+import entity.market.Quote;
 import entity.market.Transaction;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
@@ -93,9 +94,9 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		final TimeStamp currentTime,
 		final int simulationLength,
 		final double fundamentalKappa,
-		final double fundamentalMean
-	) {
-		
+		final double fundamentalMean,
+		final double acceptableProfitFraction
+	) {		
 		int newPosition = quantity + positionBalance;
 		if (type == SELL) {
 			newPosition *= -1;
@@ -112,6 +113,37 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					* Rands.nextUniform(
 						rand, bidRangeMin, bidRangeMax
 					))).nonnegative().quantize(tickSize);
+			
+			Quote quote = marketQuoteProcessor.getQuote();
+			if (
+				quote != null 
+				&& quote.getBidPrice() != null 
+				&& quote.getAskPrice() != null
+			) {
+				if (type == SELL) {
+					// how much you'd profit from selling at the above price
+					final int markup = price.intValue() - val.intValue();
+					final int bidPrice = quote.getBidPrice().intValue();
+					// how much you'd profit from selling at the bid price
+					final int bidMarkup = bidPrice - val.intValue();
+					// if you would make acceptableProfitFraction of your
+					// markup at the bid
+					if (markup * acceptableProfitFraction <= bidMarkup) {
+						price = new Price(bidPrice);
+					}
+				} else {
+					// how much you'd profit from buying at the above price
+					final int markup = val.intValue() - price.intValue();
+					final int askPrice = quote.getAskPrice().intValue();
+					// how much you'd profit from buying at the ask price
+					final int askMarkup = val.intValue() - askPrice;
+					// if you would make acceptableProfitFraction of your 
+					// markup at the ask
+					if (markup * acceptableProfitFraction <= askMarkup) {
+						price = new Price(askPrice);
+					}
+				}
+			}
 			
 			log.log(
 				INFO, 

@@ -95,6 +95,9 @@ public interface Keys {
 	public final static String COEFF_R = "rangeR";
 	public final static String COEFF_A = "rangeA";
 	
+	// ZIRPAgent
+	public final static String ACCEPTABLE_PROFIT_FRACTION = "acceptableProfFrac";
+	
 	// MarketMakers
 	public final static String WEIGHT_FACTOR = "weightFactor";
 }
