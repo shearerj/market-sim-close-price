@@ -39,11 +39,11 @@ public class MAMarketMaker extends MarketMaker {
 	public MAMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
 			SIP sip, Market market, Random rand, double reentryRate,
 			int tickSize, int numRungs, int rungSize, boolean truncateLadder,
-			boolean tickImprovement, boolean tickInside,
+			boolean tickImprovement, boolean tickOutside,
 			int initLadderMean, int initLadderRange, int numHistorical) {
 
 		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
-				numRungs, rungSize, truncateLadder, tickImprovement, tickInside,
+				numRungs, rungSize, truncateLadder, tickImprovement, tickOutside,
 				initLadderMean, initLadderRange);
 
 		checkArgument(numHistorical > 0, "Number of historical prices must be positive!");
@@ -61,7 +61,7 @@ public class MAMarketMaker extends MarketMaker {
 				props.getAsInt(Keys.RUNG_SIZE, 1000),
 				props.getAsBoolean(Keys.TRUNCATE_LADDER, true), 
 				props.getAsBoolean(Keys.TICK_IMPROVEMENT, true),
-				props.getAsBoolean(Keys.TICK_INSIDE, true),
+				props.getAsBoolean(Keys.TICK_OUTSIDE, true),
 				props.getAsInt(Keys.INITIAL_LADDER_MEAN, 0),
 				props.getAsInt(Keys.INITIAL_LADDER_RANGE, 0),
 				props.getAsInt(Keys.NUM_HISTORICAL, 5));

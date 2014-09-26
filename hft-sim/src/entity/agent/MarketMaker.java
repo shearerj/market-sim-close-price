@@ -56,7 +56,7 @@ public abstract class MarketMaker extends ReentryAgent {
 	protected int numRungs;				// # of ladder rungs on one side (e.g., number of buy orders)
 	protected boolean truncateLadder; 	// true if truncate if NBBO crosses ladder
 	protected boolean tickImprovement;	// true if improves by a tick when mid-prices == bid/ask
-	protected boolean tickInside;		// true if improve tick inside the quote (default outside)
+	protected boolean tickOutside;		// true if improve tick outside the quote (default inside, bid<p<ask)
 	protected Price lastAsk, lastBid; 	// stores the last ask/bid, respectively
 	protected int initLadderMean;		// for initializing ladder center
 	protected int initLadderRange;	// for initializing ladder center
@@ -64,7 +64,7 @@ public abstract class MarketMaker extends ReentryAgent {
 	public MarketMaker(Scheduler scheduler, FundamentalValue fundamental,
 			SIP sip, Market market, Random rand, Iterator<TimeStamp> reentry,
 			int tickSize, int numRungs, int rungSize, boolean truncateLadder,
-			boolean tickImprovement, boolean tickInside, int initLadderMean, 
+			boolean tickImprovement, boolean tickOutside, int initLadderMean, 
 			int initLadderRange) {
 		
 		super(scheduler, TimeStamp.ZERO, fundamental, sip, market, rand,
@@ -75,7 +75,7 @@ public abstract class MarketMaker extends ReentryAgent {
 		this.stepSize = MathUtils.quantize(rungSize, tickSize);
 		this.truncateLadder = truncateLadder;
 		this.tickImprovement = tickImprovement;
-		this.tickInside = tickInside;
+		this.tickOutside = tickOutside;
 		this.lastAsk = null;
 		this.lastBid = null;
 		checkArgument(initLadderMean >= 0, "Ladder initialization mean must be positive!");
@@ -183,13 +183,13 @@ public abstract class MarketMaker extends ReentryAgent {
 			Price bid = getQuote().getBidPrice();
 			ladderBid = new Price(ladderBid.intValue() + 
 					(bid.equals(ladderBid) && tickImprovement ? 
-							(tickInside ? -1 : 1) * tickSize : 0));
+							(tickOutside ? -1 : 1) * tickSize : 0));
 		}
 		if (this.getQuote().getAskPrice() != null) {
 			Price ask = getQuote().getAskPrice();
 			ladderAsk = new Price(ladderAsk.intValue() +  
 					(ask.equals(ladderAsk) && tickImprovement ? 
-							(tickInside ? 1 : -1) * tickSize: 0));
+							(tickOutside ? 1 : -1) * tickSize: 0));
 		}
 
 		int ct = (numRungs-1) * stepSize;
