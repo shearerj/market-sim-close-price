@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import re
 import sys
 import json
 import argparse
@@ -19,14 +20,26 @@ def to_csv(out, filenames):
         obs = json.load(first)
     obs.pop('config', None)
     keys = sorted(obs['features'].keys(), key=lambda s: s[::-1])
-    
+    out.write('obs,')
+    if 'config' in keys:
+	keys.remove('config')
+        config = sorted(obs['features']['config'].keys())
+        out.write(','.join(config))
+	out.write(',')
+
     out.write(','.join(keys))
     out.write('\n')
 
     for filename in filenames:
         with open(filename, 'r') as f:
             obs = json.load(f)
+	out.write(re.search('\d+', filename).group())
+	out.write(',')
         feats = obs['features']
+	if 'config' in obs['features'].keys():
+	    configs = obs['features']['config']
+	    out.write(','.join(str(configs[c]) for c in config))
+	    out.write(',')
         out.write(','.join(str(feats[k]) for k in keys))
         out.write('\n')
 

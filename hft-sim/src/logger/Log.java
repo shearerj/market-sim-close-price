@@ -59,6 +59,11 @@ public final class Log {
 		return create(level, logFile, emptyPrefix);
 	}
 	
+	public void closeLogger() throws IOException {
+		printwriter.flush();
+		printwriter.close();
+	}
+	
 	/**
 	 * Creates a logger that prints everything to System.err.
 	 * 
