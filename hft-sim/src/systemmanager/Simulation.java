@@ -67,8 +67,7 @@ public class Simulation {
 		Map<String, Multiset<AgentProperties>> playerConfig = spec.getPlayerProps();
 
 		this.simulationLength = TimeStamp.create(simProps.getAsLong(Keys.SIMULATION_LENGTH));
-		TimeStamp lastTime = TimeStamp.create(simulationLength.getInTicks() - 1); // Last time to schedule something.
-
+		
 		this.fundamental = FundamentalValue.create(
 				simProps.getAsDouble(Keys.FUNDAMENTAL_KAPPA),
 				simProps.getAsInt(Keys.FUNDAMENTAL_MEAN),
@@ -86,7 +85,6 @@ public class Simulation {
 			scheduler.executeActivity(new Clear(market));
 		for (Agent agent : agents) {
 			scheduler.scheduleActivity(agent.getArrivalTime(), new AgentArrival(agent));
-			scheduler.scheduleActivity(lastTime, new LiquidateAtFundamental(agent));
 		}
 	}
 	
@@ -155,7 +153,10 @@ public class Simulation {
 	 */
 	public void executeEvents() {
 		Observations.BUS.register(observations);
-		scheduler.executeUntil(simulationLength);
+		scheduler.executeUntil(simulationLength.minus(TimeStamp.create(1)));
+		for (Agent agent : agents) {
+			scheduler.executeActivity(new LiquidateAtFundamental(agent));
+		}
 		log.log(INFO, "[[[ Simulation Over ]]]");
 		Observations.BUS.unregister(observations);
 	}
