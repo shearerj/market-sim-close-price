@@ -129,7 +129,7 @@ public class MarketMakerTest {
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, false,
 				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_INSIDE, true));
+				Keys.TICK_OUTSIDE, true));
 		assertEquals(5, mm.stepSize);
 
 		// Creating dummy agents
@@ -195,7 +195,7 @@ public class MarketMakerTest {
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, false,
 				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_INSIDE, false));
+				Keys.TICK_OUTSIDE, false));
 		assertEquals(5, mm.stepSize);
 
 		// Creating dummy agents
@@ -228,7 +228,7 @@ public class MarketMakerTest {
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_INSIDE, false));
+				Keys.TICK_OUTSIDE, false));
 		assertEquals(5, mm.stepSize);
 
 		// Creating dummy agents
@@ -267,7 +267,7 @@ public class MarketMakerTest {
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_INSIDE, false,
+				Keys.TICK_OUTSIDE, false,
 				Keys.INITIAL_LADDER_MEAN, 100,
 				Keys.INITIAL_LADDER_RANGE, 10));
 		
@@ -312,7 +312,7 @@ public class MarketMakerTest {
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_INSIDE, false,
+				Keys.TICK_OUTSIDE, false,
 				Keys.INITIAL_LADDER_MEAN, 100,
 				Keys.INITIAL_LADDER_RANGE, 10));
 		
@@ -360,7 +360,7 @@ public class MarketMakerTest {
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_INSIDE, false,
+				Keys.TICK_OUTSIDE, false,
 				Keys.INITIAL_LADDER_MEAN, 100,
 				Keys.INITIAL_LADDER_RANGE, 10));
 		

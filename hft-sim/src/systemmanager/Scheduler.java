@@ -101,9 +101,9 @@ public class Scheduler {
 	
 	/**
 	 * Schedule several activities to happen at some point in the future with a
-	 * deterministic ordering. The first activitiy listed will occur first,
+	 * deterministic ordering. The first activity listed will occur first,
 	 * followed by the next activity, etc. There may still be activities that
-	 * happen between the first and secon scheduled activity. The only guarantee
+	 * happen between the first and second scheduled activity. The only guarantee
 	 * is that activities that occur in the beginning of the list will be
 	 * executed before any that occur after them in the list.
 	 * 
@@ -116,17 +116,17 @@ public class Scheduler {
 	}
 
 	/**
-	 * Executes the activity immediately. This execution happens instantaniously
-	 * and takes prescedence over any other event in the event queue. This is
+	 * Executes the activity immediately. This execution happens instantaneously
+	 * and takes precedence over any other event in the event queue. This is
 	 * different than scheduling an activity to happen at the current time,
 	 * because an activity scheduled at the current time could still be executed
 	 * after other activities that are also scheduled for the current time. This
-	 * will happen immediatly.
+	 * will happen immediately.
 	 * 
 	 * @param act
 	 */
 	public void executeActivity(Activity act) {
-		// XXX The commendted out way is more "proper" but this way is likely (untested) more efficient
+		// XXX The commented out way is more "proper" but this way is likely (untested) more efficient
 		act.execute(currentTime);
 //		eventQueue.add(TimeStamp.IMMEDIATE, act);
 //		executeImmediate(); // Execute all Immediate activities

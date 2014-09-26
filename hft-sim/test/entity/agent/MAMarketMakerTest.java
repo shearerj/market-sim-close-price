@@ -685,7 +685,7 @@ public class MAMarketMakerTest {
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_SIZE, 1,
 				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_INSIDE, true,
+				Keys.TICK_OUTSIDE, true,
 				Keys.INITIAL_LADDER_MEAN, 50,
 				Keys.INITIAL_LADDER_RANGE, 10);
 		
@@ -756,7 +756,7 @@ public class MAMarketMakerTest {
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_SIZE, 1,
 				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_INSIDE, false,
+				Keys.TICK_OUTSIDE, false,
 				Keys.INITIAL_LADDER_MEAN, 50,
 				Keys.INITIAL_LADDER_RANGE, 10);
 		
@@ -805,7 +805,7 @@ public class MAMarketMakerTest {
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_SIZE, 1,
 				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_INSIDE, false,
+				Keys.TICK_OUTSIDE, false,
 				Keys.INITIAL_LADDER_MEAN, 50,
 				Keys.INITIAL_LADDER_RANGE, 10);
 		
@@ -856,7 +856,7 @@ public class MAMarketMakerTest {
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_SIZE, 1,
 				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_INSIDE, false,
+				Keys.TICK_OUTSIDE, false,
 				Keys.INITIAL_LADDER_MEAN, 50,
 				Keys.INITIAL_LADDER_RANGE, 7);
 		

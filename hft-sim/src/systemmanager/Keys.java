@@ -66,7 +66,7 @@ public interface Keys {
 	public final static String RUNG_SIZE = "rungSize";
 	public final static String TRUNCATE_LADDER = "truncateLadder";
 	public final static String TICK_IMPROVEMENT = "tickImprovement";
-	public final static String TICK_INSIDE = "tickInside";
+	public final static String TICK_OUTSIDE = "tickOutside";
 	public final static String INITIAL_LADDER_MEAN = "initLadderMean";
 	public final static String INITIAL_LADDER_RANGE = "initLadderRange";
 	
