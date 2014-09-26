@@ -441,7 +441,7 @@ public class AdaptiveMarketMakerTest {
 				Keys.TICK_SIZE, 1,
 				Keys.SPREADS, "2",
 				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_INSIDE, true,
+				Keys.TICK_OUTSIDE, true,
 				Keys.INITIAL_LADDER_MEAN, 50,
 				Keys.INITIAL_LADDER_RANGE, 10);
 
