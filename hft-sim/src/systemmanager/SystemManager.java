@@ -56,6 +56,7 @@ public class SystemManager {
 			SystemManager manager = new SystemManager(simulationFolder, observationNumber);
 			manager.executeSimulations();
 			manager.writeResults();
+			log.closeLogger();
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);

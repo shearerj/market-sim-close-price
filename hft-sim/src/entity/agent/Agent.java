@@ -56,7 +56,7 @@ public abstract class Agent extends Entity {
 	// Tracking position and profit
 	protected int positionBalance;
 	protected long profit;
-	protected long preLiquidationProfit;
+	protected long liquidationProfit;
 
 	public Agent(Scheduler scheduler, TimeStamp arrivalTime, FundamentalValue fundamental, SIP sip,
 			Random rand, int tickSize) {
@@ -71,7 +71,7 @@ public abstract class Agent extends Entity {
 		this.activeOrders = Sets.newHashSet();
 		this.positionBalance = 0;
 		this.profit = 0;
-		this.preLiquidationProfit = 0;
+		this.liquidationProfit = 0;
 	}
 
 	public abstract void agentStrategy(
@@ -97,10 +97,11 @@ public abstract class Agent extends Entity {
 
 		log.log(INFO, "%s pre-liquidation: position=%d", this, positionBalance);
 
-		preLiquidationProfit = profit;
-		profit += positionBalance * price.intValue();
+		liquidationProfit = positionBalance * price.intValue();
+		profit += liquidationProfit;
 
-		log.log(INFO, "%s post-liquidation: profit=%d, price=%s", this, profit, price);
+		log.log(INFO, "%s post-liquidation: liquidation profit=%d, profit=%d, price=%s", 
+				this, liquidationProfit, profit, price);
 	}
 
 	/**
@@ -223,8 +224,8 @@ public abstract class Agent extends Entity {
 		return ImmutableMap.of();
 	}
 	
-	public long getPreLiquidationProfit() {
-		return preLiquidationProfit;
+	public long getLiquidationProfit() {
+		return liquidationProfit;
 	}
 	
 	public long getPostLiquidationProfit() {
