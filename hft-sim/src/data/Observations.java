@@ -187,10 +187,10 @@ public class Observations {
 			periodBased(features, fundPrices, period);
 		
 		// Profit and Surplus (and Private Value)
-		// XXX This does't quite make sense because background agents don't liquidate...
 		SumStats 
 			modelProfit = SumStats.create(),
 			backgroundAgentProfit = SumStats.create(),
+			backgroundLiquidation = SumStats.create(),
 			hftProfit = SumStats.create(),
 			marketMakerProfit = SumStats.create();
 		
@@ -199,6 +199,7 @@ public class Observations {
 			modelProfit.add(profit);
 			if (agent instanceof BackgroundAgent) {
 				backgroundAgentProfit.add(profit);
+				backgroundLiquidation.add(agent.getLiquidationProfit());
 			} else if (agent instanceof HFTAgent) {
 				hftProfit.add(profit);
 			} else if (agent instanceof MarketMaker) {
@@ -208,6 +209,7 @@ public class Observations {
 
 		features.put("profit_sum_total", modelProfit.sum());
 		features.put("profit_sum_background", backgroundAgentProfit.sum());
+		features.put("profit_sum_liquidation", backgroundLiquidation.sum());
 		features.put("profit_sum_marketmaker", marketMakerProfit.sum());
 		features.put("profit_sum_hft", hftProfit.sum());
 		

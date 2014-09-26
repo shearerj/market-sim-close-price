@@ -21,6 +21,7 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 
 import activity.Clear;
+import activity.LiquidateAtFundamental;
 import activity.SubmitOrder;
 import systemmanager.Consts;
 import systemmanager.Executor;
@@ -399,7 +400,6 @@ public class BackgroundAgentTest {
 	
 	@Test
 	public void testPayoff() {
-		// Verify that post-liquidation, payoff includes liquidation
 		PrivateValue pv = new DummyPrivateValue(1, ImmutableList.of(
 				new Price(1000), new Price(-1000)));
 		FundamentalValue fundamental = new MockFundamental(100000);
@@ -428,5 +428,30 @@ public class BackgroundAgentTest {
 		assertEquals(-50000 + 6000, agent1.getPayoff(), 0.001);
 		// mock agent payoff is just profit
 		assertEquals(-51000 + 95000, agent2.getPayoff(), 0.001);
+	}
+	
+	@Test
+	public void testLiquidation() {
+		// Verify that post-liquidation, payoff includes liquidation
+		PrivateValue pv = new DummyPrivateValue(1, ImmutableList.of(
+				new Price(1000), new Price(-1000)));
+		FundamentalValue fundamental = new MockFundamental(100000);
+		
+		MockAgent agent2 = new MockAgent(exec, fundamental, sip, market);
+		BackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market, pv, 0, 1000);
+		
+		exec.executeActivity(new SubmitOrder(agent2, market, BUY, new Price(51000), 1));
+		exec.executeActivity(new SubmitOrder(agent1, market, SELL, new Price(41000), 1));
+		exec.executeActivity(new Clear(market));
+		
+		// background agent sells 1 @ 51
+		assertEquals(-1, agent1.positionBalance);
+		assertEquals(51000, agent1.profit);
+		assertEquals(-50000, agent1.getPayoff(), 0.001);
+		
+		exec.executeActivity(new LiquidateAtFundamental(agent1));
+		// background agent liquidates to buy 1 @ 100
+		assertEquals(-100000, agent1.getLiquidationProfit());
+		assertEquals(-100000 - 50000, agent1.getPayoff(), 0.001);
 	}
 }

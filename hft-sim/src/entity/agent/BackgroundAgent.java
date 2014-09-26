@@ -131,7 +131,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 */
 	@Override
 	public double getPayoff() {
-		return surplus.getValueAtDiscount(DiscountFactor.NO_DISC);
+		return this.getLiquidationProfit() + surplus.getValueAtDiscount(DiscountFactor.NO_DISC);
 	}
 	
 	/**
