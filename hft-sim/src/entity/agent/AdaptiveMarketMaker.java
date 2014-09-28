@@ -222,8 +222,13 @@ public class AdaptiveMarketMaker extends MarketMaker {
 
 		Price bid = this.getQuote().getBidPrice();
 		Price ask = this.getQuote().getAskPrice();
-		if (bid == null || ask == null) return;
-
+		
+		// if no orders in the market yet
+		if (bid == null && lastBid == null && ask == null && lastAsk == null) {
+			this.createOrderLadder(bid, ask);
+			return;
+		}
+		
 		// Approximate the price as the midquote price
 		int midQuotePrice = (bid.intValue() + ask.intValue()) / 2;
 		priceQueue.add(midQuotePrice);
