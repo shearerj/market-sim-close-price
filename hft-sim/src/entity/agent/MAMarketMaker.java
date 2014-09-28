@@ -75,6 +75,7 @@ public class MAMarketMaker extends MarketMaker {
 		Price ask = this.getQuote().getAskPrice();
 
 		if (bid == null && lastBid == null && ask == null && lastAsk == null) {
+			log.log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
 			this.createOrderLadder(bid, ask);	
 			
 		} else if ((bid == null && lastBid != null)

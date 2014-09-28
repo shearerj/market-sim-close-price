@@ -224,7 +224,8 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		Price ask = this.getQuote().getAskPrice();
 		
 		// if no orders in the market yet
-		if (bid == null && lastBid == null && ask == null && lastAsk == null) {
+		if (!this.getQuote().isDefined()) {
+			log.log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
 			this.createOrderLadder(bid, ask);
 			return;
 		}
