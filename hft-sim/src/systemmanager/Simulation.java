@@ -134,9 +134,8 @@ public class Simulation {
 			String role = e.getKey();
 			for (Multiset.Entry<AgentProperties> propCounts : e.getValue().entrySet()) {
 				AgentProperties agProp = propCounts.getElement();
-				long seed = rand.nextLong();
 				AgentFactory factory = new AgentFactory(scheduler, fundamental, sip, markets,
-						arrivalRate, new Random(seed));
+						arrivalRate, new Random(rand.nextLong()));
 				
 				for (int i = 0; i < propCounts.getCount(); i++) {
 					Agent agent = factory.createAgent(propCounts.getElement());
