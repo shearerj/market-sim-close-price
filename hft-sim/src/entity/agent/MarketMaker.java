@@ -5,6 +5,7 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static logger.Log.log;
 import static logger.Log.Level.INFO;
+import static data.Observations.BUS;
 import iterators.ExpInterarrivals;
 
 import java.util.Iterator;
@@ -20,6 +21,7 @@ import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
 import event.TimeStamp;
+import data.Observations.MarketMakerStatistic;
 
 /**
  * Abstract class for MarketMakers.
@@ -59,7 +61,7 @@ public abstract class MarketMaker extends ReentryAgent {
 	protected boolean tickOutside;		// true if improve tick outside the quote (default inside, bid<p<ask)
 	protected Price lastAsk, lastBid; 	// stores the last ask/bid, respectively
 	protected int initLadderMean;		// for initializing ladder center
-	protected int initLadderRange;	// for initializing ladder center
+	protected int initLadderRange;		// for initializing ladder center
 	
 	public MarketMaker(Scheduler scheduler, FundamentalValue fundamental,
 			SIP sip, Market market, Random rand, Iterator<TimeStamp> reentry,
@@ -106,6 +108,8 @@ public abstract class MarketMaker extends ReentryAgent {
 	 * 
 	 * XXX Note that these are regular orders, not NMS orders.
 	 * 
+	 * buyMin < buyMax < sellMin < sellMax
+	 * 
 	 * @param buyMinPrice
 	 * @param buyMaxPrice
 	 * @param sellMinPrice
@@ -125,6 +129,11 @@ public abstract class MarketMaker extends ReentryAgent {
 		}
 		log.log(INFO, "%s in %s: Submit ladder with #rungs %d, step size %d: buys [%s to %s] & sells [%s to %s]",
 				this, primaryMarket, numRungs, stepSize, buyMinPrice, buyMaxPrice, sellMinPrice, sellMaxPrice);
+		
+		BUS.post(new MarketMakerStatistic(this, buyMaxPrice, sellMinPrice));
+		// XXX for evaluating strategies
+		// System.out.println((buyMaxPrice.doubleValue() + sellMinPrice.doubleValue())/2 + "," + 
+		//		(sellMinPrice.intValue() - buyMaxPrice.intValue()));
 	}
 
 	/**
