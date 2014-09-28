@@ -88,6 +88,10 @@ public class Observations {
 	protected final SumStats controlFundamentalValue;
 	protected final SumStats controlPrivateValue;
 	
+	protected final SumStats marketmakerSpreads;
+	protected final SumStats marketmakerLadderCenter;
+	protected final SumStats marketmakerExecutionTimes;
+	
 	// Static information needed for observations
 	protected final Collection<? extends Player> players;
 	protected final Collection<? extends Agent> agents;
@@ -135,6 +139,10 @@ public class Observations {
 		this.nbboSpreads = TimeSeries.create();
 		this.controlPrivateValue = SumStats.create();
 		this.controlFundamentalValue = SumStats.create();
+		
+		this.marketmakerExecutionTimes = SumStats.create();
+		this.marketmakerLadderCenter = SumStats.create();
+		this.marketmakerSpreads = SumStats.create();
 	}
 	
 	/**
@@ -185,6 +193,12 @@ public class Observations {
 		TimeSeries fundPrices = fundamental.asTimeSeries();
 		for (int period : Consts.PERIODS)
 			periodBased(features, fundPrices, period);
+		
+		// Market maker
+		features.put("mm_spreads_mean", marketmakerSpreads.mean());
+		features.put("mm_ladder_mean", marketmakerLadderCenter.mean());
+		features.put("mm_spreads_stddev", marketmakerSpreads.stddev());
+		features.put("mm_exectime_mean", marketmakerExecutionTimes.mean());
 		
 		// Profit and Surplus (and Private Value)
 		// XXX This does't quite make sense because background agents don't liquidate...
@@ -297,6 +311,11 @@ public class Observations {
 	// --------------------------------------
 	// Everything with an @Subscribe is a listener for objects that contain statistics.
 	
+	@Subscribe public void processMarketMaker(MarketMakerStatistic statistic) {
+		marketmakerLadderCenter.add((statistic.ask.doubleValue() + statistic.bid.doubleValue())/2);
+		marketmakerSpreads.add(statistic.ask.doubleValue() - statistic.bid.doubleValue());
+	}
+	
 	@Subscribe public void processSpread(SpreadStatistic statistic) {
 		TimeSeries series = spreads.get(statistic.owner);
 		series.add(statistic.time.getInTicks(), statistic.val);
@@ -323,6 +342,13 @@ public class Observations {
 			if (transaction.getSeller() instanceof BackgroundAgent) {
 				executionTimes.add((double) sellerExecTime);
 			}
+			// Also measure for market makers
+			if (transaction.getBuyer() instanceof MarketMaker) {
+				marketmakerExecutionTimes.add((double) buyerExecTime);
+			}
+			if (transaction.getSeller() instanceof MarketMaker) {
+				marketmakerExecutionTimes.add((double) sellerExecTime);
+			}
 		}
 
 		prices.add(transaction.getPrice().doubleValue());
@@ -341,6 +367,18 @@ public class Observations {
 	
 	// --------------------------------------
 	// These are all statistics classes that are listened for
+	
+	public static class MarketMakerStatistic {
+		protected final MarketMaker mm;
+		protected final Price bid;
+		protected final Price ask;
+		
+		public MarketMakerStatistic(MarketMaker mm, Price ladderBid, Price ladderAsk) {
+			this.mm = mm;
+			this.bid = ladderBid;
+			this.ask = ladderAsk;
+		}
+	}
 	
 	public static class NBBOStatistic {
 		protected final double val;

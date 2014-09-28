@@ -305,6 +305,50 @@ public class ObservationsTest {
 	}
 	
 	@Test
+	public void marketmakerExecutionTimesTest() {
+		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market1, 2, 10);
+
+		// Same times
+		setupObservations(agent1, mm);
+		market1.submitOrder(agent1, BUY, new Price(100), 1, TimeStamp.ZERO);
+		mm.submitOrderLadder(new Price(75), new Price(85), new Price(95), new Price(105));
+		market1.clear(TimeStamp.ZERO);
+		assertEquals(0, obs.marketmakerExecutionTimes.mean(), 0.001);
+		assertEquals(1, obs.marketmakerExecutionTimes.getN());
+
+		// Another transaction (still 0 because executes instantly)
+		market1.submitOrder(agent1, BUY, new Price(110), 1, TimeStamp.create(4));
+		market1.clear(TimeStamp.create(4));
+		assertEquals(0, obs.executionTimes.mean(), 0.001);
+		assertEquals(2, obs.marketmakerExecutionTimes.mean(), 0.001);
+		assertEquals(2, obs.marketmakerExecutionTimes.getN());	// adds on to previous
+	}
+	
+	/**
+	 * Test collection of market maker data
+	 */
+	@Test
+	public void marketmakerSpreadsTest() {		
+		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market1, 2, 10);
+		
+		setupObservations(mm);
+		mm.submitOrderLadder(new Price(75), new Price(85), new Price(95), new Price(105));
+		
+		assertEquals(10, obs.marketmakerSpreads.mean(), 0.001);
+		assertEquals(90, obs.marketmakerLadderCenter.mean(), 0.001);
+		
+		mm.withdrawAllOrders();
+		mm.submitOrderLadder(new Price(79), new Price(89), new Price(95), new Price(105));
+		
+		assertEquals(8, obs.marketmakerSpreads.mean(), 0.001);
+		assertEquals(91, obs.marketmakerLadderCenter.mean(), 0.001);
+		assertEquals(2, obs.marketmakerSpreads.getN());
+		assertEquals(2, obs.marketmakerLadderCenter.getN());
+	}
+	
+	
+	@Test
 	public void pricesTest() {
 		Agent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market1);
 		Agent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market1);

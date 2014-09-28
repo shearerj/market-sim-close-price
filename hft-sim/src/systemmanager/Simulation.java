@@ -106,7 +106,7 @@ public class Simulation {
 	 * Sets up non player agents
 	 */
 	protected Collection<Agent> setupAgents(Collection<AgentProperties> agentProps, Random rand) {
-		// Not immutable because players also adds agents
+		// Not immutable because players also add agents
 		Collection<Agent> agents = Lists.newArrayList();
 		for (AgentProperties agProps : agentProps) {
 			int number = agProps.getAsInt(Keys.NUM, 0);
@@ -134,8 +134,9 @@ public class Simulation {
 			String role = e.getKey();
 			for (Multiset.Entry<AgentProperties> propCounts : e.getValue().entrySet()) {
 				AgentProperties agProp = propCounts.getElement();
+				long seed = rand.nextLong();
 				AgentFactory factory = new AgentFactory(scheduler, fundamental, sip, markets,
-						arrivalRate, new Random(rand.nextLong()));
+						arrivalRate, new Random(seed));
 				
 				for (int i = 0; i < propCounts.getCount(); i++) {
 					Agent agent = factory.createAgent(propCounts.getElement());
