@@ -129,7 +129,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					// if you would make acceptableProfitFraction of your
 					// markup at the bid
 					if (markup * acceptableProfitFraction <= bidMarkup) {
-						price = new Price(bidPrice);
+						price = getEstimatedLimitPrice(
+							type, currentTime, simulationLength, 
+							fundamentalKappa, fundamentalMean
+						);
 					}
 				} else {
 					// how much you'd profit from buying at the above price
@@ -140,7 +143,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					// if you would make acceptableProfitFraction of your 
 					// markup at the ask
 					if (markup * acceptableProfitFraction <= askMarkup) {
-						price = new Price(askPrice);
+						price = getEstimatedLimitPrice(
+							type, currentTime, simulationLength, 
+							fundamentalKappa, fundamentalMean
+						);
 					}
 				}
 			}
@@ -321,12 +327,12 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		
 		// Determine the pre-transaction balance
 		int originalBalance = this.positionBalance + (type.equals(BUY) ? -1 : 1) * quantity;
-		Price privateValue = this.privateValue.getValueFromQuantity(originalBalance, 
+		Price myPrivateValue = this.privateValue.getValueFromQuantity(originalBalance, 
 				quantity, type);
 		Price fundamentalValue = fundamental.getValueAt(currentTime);
 		
 		return new Price(fundamentalValue.intValue() * quantity
-				+ privateValue.intValue()).nonnegative();
+				+ myPrivateValue.intValue()).nonnegative();
 	}
 	
 	/**
@@ -337,6 +343,38 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	protected Price getTransactionValuation(OrderType type,
 			TimeStamp currentTime) {
 		return getTransactionValuation(type, 1, currentTime);
+	}
+	
+	protected Price getEstimatedLimitPrice(
+		final OrderType type, 
+		final TimeStamp currentTime,
+		final int simulationLength,
+		final double fundamentalKappa,
+		final double fundamentalMean
+	) {
+		return getEstimatedLimitPrice(
+			type, 1, currentTime, simulationLength, fundamentalKappa, fundamentalMean
+		);
+	}
+	
+	protected Price getEstimatedLimitPrice(
+		final OrderType type, 
+		final int quantity, 
+		final TimeStamp currentTime,
+		final int simulationLength,
+		final double fundamentalKappa,
+		final double fundamentalMean
+	) {
+		return new Price(
+			getEstimatedValuation(
+				type, 
+				quantity, 
+				currentTime, 
+				simulationLength, 
+				fundamentalKappa, 
+				fundamentalMean
+			).doubleValue() / quantity
+		).nonnegative();
 	}
 	
 	/**
