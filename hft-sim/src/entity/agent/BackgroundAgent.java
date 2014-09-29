@@ -124,13 +124,13 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					// how much you'd profit from selling at the above price
 					final int markup = price.intValue() - val.intValue();
 					final int bidPrice = quote.getBidPrice().intValue();
-					// how much you'd profit from selling at the bid price
-					final int bidMarkup = bidPrice - val.intValue();
+					// how much you'd profit from selling all units at the bid price
+					final int bidMarkup = bidPrice * quantity - val.intValue();
 					// if you would make acceptableProfitFraction of your
 					// markup at the bid
 					if (markup * acceptableProfitFraction <= bidMarkup) {
 						price = getEstimatedLimitPrice(
-							type, currentTime, simulationLength, 
+							type, quantity, currentTime, simulationLength, 
 							fundamentalKappa, fundamentalMean
 						);
 					}
@@ -138,13 +138,13 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					// how much you'd profit from buying at the above price
 					final int markup = val.intValue() - price.intValue();
 					final int askPrice = quote.getAskPrice().intValue();
-					// how much you'd profit from buying at the ask price
-					final int askMarkup = val.intValue() - askPrice;
+					// how much you'd profit from buying all units at the ask price
+					final int askMarkup = val.intValue() - askPrice * quantity;
 					// if you would make acceptableProfitFraction of your 
 					// markup at the ask
 					if (markup * acceptableProfitFraction <= askMarkup) {
 						price = getEstimatedLimitPrice(
-							type, currentTime, simulationLength, 
+							type, quantity, currentTime, simulationLength, 
 							fundamentalKappa, fundamentalMean
 						);
 					}
