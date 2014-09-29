@@ -7,6 +7,7 @@ import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -80,6 +81,26 @@ public class BackgroundAgentTest {
 		assertEquals(rHat, val.intValue(), epsilon);
 		val = agent.getEstimatedValuation(SELL, time, simulationLength, kappa, meanValue);
 		assertEquals(rHat, val.intValue(), epsilon);
+
+		final int iterations = 1000;
+		for (int i = 0; i < iterations; i++) {
+			final TimeStamp timeIter = TimeStamp.create(i);
+			final double value = randFundamental.getValueAt(timeIter).doubleValue();
+			final double rHatIter = agent.getEstimatedValuation(
+					SELL, timeIter, simulationLength, kappa, meanValue
+				).doubleValue();
+			if (value > meanValue) {
+				// rHat should be between current fundamental and mean,
+				// but closer to the mean this early in the run.
+				assertTrue(rHatIter < value);
+				assertTrue(rHatIter >= meanValue);
+				assertTrue(Math.abs(rHatIter - meanValue) < Math.abs(rHatIter - value));
+			} else if (value < meanValue) {
+				assertTrue(rHatIter > value);
+				assertTrue(rHatIter <= meanValue);
+				assertTrue(Math.abs(rHatIter - meanValue) < Math.abs(rHatIter - value));
+			}
+		}
 	}
 
 	@Test
