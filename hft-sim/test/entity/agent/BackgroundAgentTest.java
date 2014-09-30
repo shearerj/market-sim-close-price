@@ -262,39 +262,37 @@ public class BackgroundAgentTest {
 		assertEquals(0, market.getTransactions().size());
 		
 		// Post-trans balance is 4 or 5 but before the buy transacted it was 3
-		Price fund = randFundamental.getValueAt(time1);
 		agent.positionBalance = 4;
 		Price val = agent.getTransactionValuation(BUY, time1);
 		Price val2 = agent.getTransactionValuation(BUY, time1);
-		assertEquals(fund.intValue() + pv8, val.intValue());
-		assertEquals(fund.intValue() + pv8, val2.intValue());
+		assertEquals(pv8, val.intValue());
+		assertEquals(pv8, val2.intValue());
 		assertEquals(4, agent.positionBalance);
 		agent.positionBalance = 5;
-		assertEquals(fund.intValue()*2 + pv9 + pv8, 
+		assertEquals(pv9 + pv8, 
 				agent.getTransactionValuation(BUY, 2, time1).intValue());
 		assertEquals(5, agent.positionBalance);
 		// Post-trans balance is 2 or 1 but before the sell transacted it was 3
 		agent.positionBalance = 2;
 		val = agent.getTransactionValuation(SELL, time1);
-		assertEquals(fund.intValue() + pv7, val.intValue());
+		assertEquals(pv7, val.intValue());
 		agent.positionBalance = 1;
-		assertEquals(fund.intValue()*2 + pv7 + pv6, 
+		assertEquals(pv7 + pv6, 
 				agent.getTransactionValuation(SELL, 2, time1).intValue());
 
 		// Post-trans balance is -1 or 1 but before the buy transacted it was -2
 		agent.positionBalance = -1;
-		fund = randFundamental.getValueAt(time1);
 		val = agent.getTransactionValuation(BUY, time1);
-		assertEquals(fund.intValue() + pv3, val.intValue());
+		assertEquals(pv3, val.intValue());
 		agent.positionBalance = 1;
-		assertEquals(fund.intValue()*3 + pv3 + pv4 + pv5, 
+		assertEquals(pv3 + pv4 + pv5, 
 				agent.getTransactionValuation(BUY, 3, time1).intValue());
 		// Post-trans balance is -3 or -5 but before the sell transacted it was -2
 		agent.positionBalance = -3;
 		val = agent.getTransactionValuation(SELL, time1);
-		assertEquals(fund.intValue() + pv2, val.intValue());
+		assertEquals(pv2, val.intValue());
 		agent.positionBalance = -5;
-		assertEquals(fund.intValue()*3 + pv2 + pv1 + pv0, 
+		assertEquals(pv2 + pv1 + pv0, 
 				agent.getTransactionValuation(SELL, 3, time1).intValue());
 	}
 
@@ -401,7 +399,7 @@ public class BackgroundAgentTest {
 	@Test
 	public void testPayoff() {
 		PrivateValue pv = new DummyPrivateValue(1, ImmutableList.of(
-				new Price(1000), new Price(-1000)));
+				new Price(1000), new Price(-2000)));
 		FundamentalValue fundamental = new MockFundamental(100000);
 		
 		MockAgent agent2 = new MockAgent(exec, fundamental, sip, market);
@@ -413,8 +411,8 @@ public class BackgroundAgentTest {
 		
 		assertEquals(0, agent1.activeOrders.size());
 		assertEquals(-1, agent1.positionBalance);
-		// background agent sells at 51, valuation is 101, surplus is (51 - 101)
-		assertEquals(-50000, agent1.getPayoff(), 0.001);
+		// background agent sells at 51, surplus from PV is 51-1
+		assertEquals(50000, agent1.getPayoff(), 0.001);
 		// mock agent payoff is just profit
 		assertEquals(-51000, agent2.getPayoff(), 0.001);
 		
@@ -424,10 +422,14 @@ public class BackgroundAgentTest {
 		exec.executeActivity(new Clear(market));
 		assertEquals(0, agent1.activeOrders.size());
 		assertEquals(0, agent1.positionBalance);
-		// background agent buys at 95, valuation is 101, surplus is (101 - 95)
-		assertEquals(-50000 + 6000, agent1.getPayoff(), 0.001);
+		// background agent buys at 95, surplus is 1-95 + (50 from previous)
+		assertEquals(50000 + (1000 - 95000), agent1.getPayoff(), 0.001);
 		// mock agent payoff is just profit
 		assertEquals(-51000 + 95000, agent2.getPayoff(), 0.001);
+		
+		// after liquidate, should have no change because net position is 0
+		exec.executeActivity(new LiquidateAtFundamental(agent1));
+		assertEquals(50000 + (1000 - 95000), agent1.getPayoff(), 0.001);
 	}
 	
 	@Test
@@ -444,14 +446,42 @@ public class BackgroundAgentTest {
 		exec.executeActivity(new SubmitOrder(agent1, market, SELL, new Price(41000), 1));
 		exec.executeActivity(new Clear(market));
 		
-		// background agent sells 1 @ 51
+		// background agent sells 1 @ 51 (only private value portion counted)
 		assertEquals(-1, agent1.positionBalance);
 		assertEquals(51000, agent1.profit);
-		assertEquals(-50000, agent1.getPayoff(), 0.001);
+		assertEquals(51000-1000, agent1.getPayoff(), 0.001);
 		
 		exec.executeActivity(new LiquidateAtFundamental(agent1));
-		// background agent liquidates to buy 1 @ 100
+		// background agent liquidates to account for short position of 1
 		assertEquals(-100000, agent1.getLiquidationProfit());
-		assertEquals(-100000 - 50000, agent1.getPayoff(), 0.001);
+		assertEquals(50000 - 100000, agent1.getPayoff(), 0.001);
+	}
+	
+	@Test
+	public void testMovingFundamentalLiquidation() {
+		// Verify that post-liquidation, payoff includes liquidation
+		PrivateValue pv = new DummyPrivateValue(1, ImmutableList.of(
+				new Price(1000), new Price(-1000)));
+		FundamentalValue fundamental = FundamentalValue.create(0.05, 100000, 10000000, new Random());
+
+		MockAgent agent2 = new MockAgent(exec, fundamental, sip, market);
+		BackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market, pv, 0, 1000);
+
+		exec.executeActivity(new SubmitOrder(agent2, market, BUY, new Price(51000), 1));
+		exec.executeActivity(new SubmitOrder(agent1, market, SELL, new Price(41000), 1));
+		exec.executeActivity(new Clear(market));
+
+		// background agent sells 1 @ 51 (only private value portion counted)
+		assertEquals(-1, agent1.positionBalance);
+		assertEquals(51000, agent1.profit);
+		assertEquals(51000-1000, agent1.getPayoff(), 0.001);
+
+		Price endTimeFundamental = fundamental.getValueAt(TimeStamp.create(1000));
+		exec.executeUntil(TimeStamp.create(1000));
+		exec.executeActivity(new LiquidateAtFundamental(agent1));
+		// background agent liquidates to account for short position of 1
+		assertEquals(endTimeFundamental.intValue() * agent1.positionBalance, agent1.getLiquidationProfit());
+		assertEquals(50000 - endTimeFundamental.intValue(), agent1.getPayoff(), 0.001);
+		assertNotEquals(50000 - 100000, agent1.getPayoff(), 0.001);
 	}
 }

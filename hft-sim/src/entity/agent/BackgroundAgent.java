@@ -118,10 +118,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		}
 		TimeStamp timeToExecution = trans.getExecTime().minus(submissionTime);
 
-		int value = getTransactionValuation(type, trans.getQuantity(), 
+		int privateValue = getTransactionValuation(type, trans.getQuantity(), 
 				trans.getExecTime()).intValue();
 		int cost = trans.getPrice().intValue() * trans.getQuantity();
-		int transactionSurplus = (value - cost) * (type == OrderType.BUY ? 1 : -1) ;
+		int transactionSurplus = (privateValue - cost) * (type.equals(BUY) ? 1 : -1) ;
 		
 		surplus.addValue(transactionSurplus, timeToExecution.getInTicks());
 	}
@@ -197,9 +197,6 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	}
 
 	/**
-	 * Returns same as getValuation except also sends info on private value,
-	 * fundamental value to EventBus.
-	 * 
 	 * Note that this method has to subtract the transacted quantity from
 	 * position balance (using the pre-transaction balance to determine the
 	 * valuation).
@@ -214,12 +211,14 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		
 		// Determine the pre-transaction balance
 		int originalBalance = this.positionBalance + (type.equals(BUY) ? -1 : 1) * quantity;
-		Price privateValue = this.privateValue.getValueFromQuantity(originalBalance, 
+		return this.privateValue.getValueFromQuantity(originalBalance, 
 				quantity, type);
-		Price fundamentalValue = fundamental.getValueAt(currentTime);
-		
-		return new Price(fundamentalValue.intValue() * quantity
-				+ privateValue.intValue()).nonnegative();
+//		Price fundamentalValue = fundamental.getValueAt(currentTime);
+//		TimeStamp simulationLength = props.getAsInt(Keys.SIMULATION_LENGTH,120000);
+//		Price fundamentalValue = fundamental.getValueAt(simulationLength.minus(TimeStamp.create(1)));
+//		
+//		return new Price(fundamentalValue.intValue() * quantity
+//				+ privateValue.intValue()).nonnegative();
 	}
 	
 	/**

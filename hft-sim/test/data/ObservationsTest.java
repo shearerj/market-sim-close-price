@@ -205,7 +205,7 @@ public class ObservationsTest {
 		market1.clear(time);
 		// Two for agent 1's split order, 1 for each of the other agents
 		features = obs.getFeatures();
-		assertEquals(3, obs.numTrans.count(MockBackgroundAgent.class));
+		assertEquals(3, obs.numTrans.count(MockBackgroundAgent.class));new MockBackgroundAgent(exec, fundamental, sip, market1);
 		assertEquals(1, obs.numTrans.count(MockAgent.class));
 		assertEquals(3, features.get("trans_mockbackgroundagent_num"), 0.001);
 		assertEquals(1, features.get("trans_mockagent_num"), 0.001);
@@ -467,9 +467,11 @@ public class ObservationsTest {
 	public void playerTest() {
 		Agent backgroundAgent, agent;
 		Player backgroundPlayer, player;
+		PrivateValue pv = new DummyPrivateValue(1, ImmutableList.of(
+				new Price(1000), new Price(-2000)));
 		
 		// Basic case
-		backgroundAgent = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		backgroundAgent = new MockBackgroundAgent(exec, fundamental, sip, market1, pv, 0, 1000);
 		agent = new MockAgent(exec, fundamental, sip, market1);
 		backgroundPlayer = new Player("background", "a", backgroundAgent);
 		player = new Player("foreground", "b", agent);
@@ -481,18 +483,31 @@ public class ObservationsTest {
 		// To make sure agent1 sees clear
 		market1.clear(TimeStamp.ZERO);
 		agent.liquidateAtFundamental(TimeStamp.ZERO);
+		backgroundAgent.liquidateAtFundamental(TimeStamp.ZERO);
+		assertEquals(-100000, backgroundAgent.getLiquidationProfit());
 		for (PlayerObservation po : obs.getPlayerObservations()) {
 			if (po.role.equals("foreground")) {
 				assertEquals("b", po.strategy);
+				// payoff is profit (buy @ 200000) minus liquidate @ 100000
+				// ie pay 200000 then sell at 100000
 				assertEquals(-100000, po.payoff, 0.001);
 			} else { // Background
 				assertEquals("a", po.strategy);
-				assertEquals(100000, po.payoff, 0.001);
+				// payoff is (price - PV) + (position * fundamental)
+				assertEquals(200000 - 1000 - 100000, po.payoff, 0.001);
 			}
 		}
+	}
+	
+	@Test
+	public void playerMultiQuantityTest() {
+		Agent backgroundAgent, agent;
+		Player backgroundPlayer, player;
+		PrivateValue pv = new DummyPrivateValue(2, ImmutableList.of(
+				new Price(2000), new Price(1000), new Price(-2000), new Price(4000)));
 		
 		// Multiple Quantity
-		backgroundAgent = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		backgroundAgent = new MockBackgroundAgent(exec, fundamental, sip, market1, pv, 0, 1000);
 		agent = new MockAgent(exec, fundamental, sip, market1);
 		backgroundPlayer = new Player("background", "a", backgroundAgent);
 		player = new Player("foreground", "b", agent);
@@ -502,18 +517,31 @@ public class ObservationsTest {
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 2, TimeStamp.ZERO);
 		market1.clear(TimeStamp.ZERO);
 		agent.liquidateAtFundamental(TimeStamp.ZERO);
+		backgroundAgent.liquidateAtFundamental(TimeStamp.ZERO);
+		assertEquals(-2*100000, backgroundAgent.getLiquidationProfit());
 		for (PlayerObservation po : obs.getPlayerObservations()) {
 			if (po.role.equals("foreground")) {
 				assertEquals("b", po.strategy);
+				// payoff is profit (buy 2 @ 200000) minus liquidate 2 @ 100000
+				// ie pay 2*200000 then sell 2@100000
 				assertEquals(-200000, po.payoff, 0.001);
 			} else { // Background
 				assertEquals("a", po.strategy);
-				assertEquals(200000, po.payoff, 0.001);
+				// payoff is (price - PV) + (position * price)
+				assertEquals((200000-2000) + (200000-1000) + (-2*100000), po.payoff, 0.001);
 			}
 		}
-		
+	}
+	
+	@Test
+	public void playerSplitOrdersTest() {
+		Agent backgroundAgent, agent;
+		Player backgroundPlayer, player;
+		PrivateValue pv = new DummyPrivateValue(2, ImmutableList.of(
+				new Price(2000), new Price(1000), new Price(-2000), new Price(4000)));
+
 		// Split Orders
-		backgroundAgent = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		backgroundAgent = new MockBackgroundAgent(exec, fundamental, sip, market1, pv, 0, 1000);
 		agent = new MockAgent(exec, fundamental, sip, market1);
 		backgroundPlayer = new Player("background", "a", backgroundAgent);
 		player = new Player("foreground", "b", agent);
@@ -524,18 +552,28 @@ public class ObservationsTest {
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
 		market1.clear(TimeStamp.ZERO);
 		agent.liquidateAtFundamental(TimeStamp.ZERO);
+		backgroundAgent.liquidateAtFundamental(TimeStamp.ZERO);
 		for (PlayerObservation po : obs.getPlayerObservations()) {
 			if (po.role.equals("foreground")) {
 				assertEquals("b", po.strategy);
 				assertEquals(-200000, po.payoff, 0.001);
 			} else { // Background
 				assertEquals("a", po.strategy);
-				assertEquals(200000, po.payoff, 0.001);
+				// payoff is (price - PV) + (position * price)
+				assertEquals((200000-2000) + (200000-1000) + (-2*100000), po.payoff, 0.001);
 			}
 		}
+	}
+	
+	@Test
+	public void playerLiquidationTest() {
+		Agent backgroundAgent, agent;
+		Player backgroundPlayer, player;
+		PrivateValue pv = new DummyPrivateValue(1, ImmutableList.of(
+				new Price(1000), new Price(-2000)));
 		
 		// Liquidate at different price
-		backgroundAgent = new MockBackgroundAgent(exec, fundamental, sip, market1);
+		backgroundAgent = new MockBackgroundAgent(exec, fundamental, sip, market1, pv, 0, 1000);
 		agent = new MockAgent(exec, fundamental, sip, market1);
 		backgroundPlayer = new Player("background", "a", backgroundAgent);
 		player = new Player("foreground", "b", agent);
@@ -545,13 +583,15 @@ public class ObservationsTest {
 		market1.submitOrder(backgroundAgent, SELL, new Price(200000), 1, TimeStamp.ZERO);
 		market1.clear(TimeStamp.ZERO);
 		agent.liquidateAtPrice(new Price(300000), TimeStamp.ZERO);
+		backgroundAgent.liquidateAtPrice(new Price(300000), TimeStamp.ZERO);
 		for (PlayerObservation po : obs.getPlayerObservations()) {
 			if (po.role.equals("foreground")) {
 				assertEquals("b", po.strategy);
 				assertEquals(100000, po.payoff, 0.001);
 			} else { // Background
 				assertEquals("a", po.strategy);
-				assertEquals(100000, po.payoff, 0.001);
+				// payoff is (price - PV) + (position * price)
+				assertEquals(200000-1000 + -1*300000, po.payoff, 0.001);
 			}
 		}
 	}
