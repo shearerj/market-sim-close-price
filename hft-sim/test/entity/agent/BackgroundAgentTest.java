@@ -196,6 +196,13 @@ public class BackgroundAgentTest {
 		// Check surplus
 		int val = agent.getTransactionValuation(BUY, time).intValue();
 		assertEquals(val - 110000, agent.surplus.getValueAtDiscount(Consts.DiscountFactor.NO_DISC), 0.001);
+		assertEquals(val - 110000, agent.getPayoff(), 0.001);
+		
+		// Check payoff
+		agent.liquidateAtFundamental(TimeStamp.ZERO);
+		Price endTimeFundamental = randFundamental.getValueAt(TimeStamp.ZERO);
+		assertEquals(endTimeFundamental.intValue(), agent.getLiquidationProfit());
+		assertEquals(val - 110000 + endTimeFundamental.intValue(), agent.getPayoff(), 0.001);
 	}
 
 	@Test

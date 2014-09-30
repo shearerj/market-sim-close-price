@@ -197,6 +197,9 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	}
 
 	/**
+	 * Returns only the private value for trading (assuming agents all liquidate
+	 * at the end).
+	 * 
 	 * Note that this method has to subtract the transacted quantity from
 	 * position balance (using the pre-transaction balance to determine the
 	 * valuation).
@@ -213,12 +216,6 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		int originalBalance = this.positionBalance + (type.equals(BUY) ? -1 : 1) * quantity;
 		return this.privateValue.getValueFromQuantity(originalBalance, 
 				quantity, type);
-//		Price fundamentalValue = fundamental.getValueAt(currentTime);
-//		TimeStamp simulationLength = props.getAsInt(Keys.SIMULATION_LENGTH,120000);
-//		Price fundamentalValue = fundamental.getValueAt(simulationLength.minus(TimeStamp.create(1)));
-//		
-//		return new Price(fundamentalValue.intValue() * quantity
-//				+ privateValue.intValue()).nonnegative();
 	}
 	
 	/**

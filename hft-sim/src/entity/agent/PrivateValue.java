@@ -151,7 +151,7 @@ public class PrivateValue implements Serializable, QuantityIndexedArray<Price> {
 	@Override
 	public Price getValueFromQuantity(int currentPosition, int quantity, OrderType type) {
 		checkArgument(quantity > 0, "Quantity must be positive");
-		checkArgument(Math.abs(currentPosition) <= offset, "Current position cannot exceed max");
+		// checkArgument(Math.abs(currentPosition) <= offset, "Current position cannot exceed max");
 		int nextPosition = currentPosition + quantity * (type.equals(BUY) ? 1 : -1);
 		//checkArgument(Math.abs(nextPosition) <= offset, "Future position cannot exceed max");
 		if (nextPosition > offset) return Price.NEG_INF;
