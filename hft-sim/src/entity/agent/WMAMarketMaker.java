@@ -77,17 +77,17 @@ public class WMAMarketMaker extends MarketMaker {
 	public WMAMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
 			SIP sip, Market market, Random rand, EntityProperties props) {
 		this(scheduler, fundamental, sip, market, rand,
-				props.getAsDouble(Keys.REENTRY_RATE, 0.0005),
-				props.getAsInt(Keys.TICK_SIZE, 1),
-				props.getAsInt(Keys.NUM_RUNGS, 10),
-				props.getAsInt(Keys.RUNG_SIZE, 1000),
-				props.getAsBoolean(Keys.TRUNCATE_LADDER, true), 
-				props.getAsBoolean(Keys.TICK_IMPROVEMENT, true),
-				props.getAsBoolean(Keys.TICK_OUTSIDE, true),
-				props.getAsInt(Keys.INITIAL_LADDER_MEAN, 0),
-				props.getAsInt(Keys.INITIAL_LADDER_RANGE, 0),
-				props.getAsInt(Keys.NUM_HISTORICAL, 5), 
-				props.getAsDouble(Keys.WEIGHT_FACTOR, 0));
+				props.getAsDouble(Keys.MARKETMAKER_REENTRY_RATE, Keys.REENTRY_RATE),
+				props.getAsInt(Keys.AGENT_TICK_SIZE, Keys.TICK_SIZE),
+				props.getAsInt(Keys.NUM_RUNGS),
+				props.getAsInt(Keys.RUNG_SIZE),
+				props.getAsBoolean(Keys.TRUNCATE_LADDER), 
+				props.getAsBoolean(Keys.TICK_IMPROVEMENT),
+				props.getAsBoolean(Keys.TICK_OUTSIDE),
+				props.getAsInt(Keys.INITIAL_LADDER_MEAN),
+				props.getAsInt(Keys.INITIAL_LADDER_RANGE),
+				props.getAsInt(Keys.NUM_HISTORICAL), 
+				props.getAsDouble(Keys.WEIGHT_FACTOR));
 	}
 
 	@Override

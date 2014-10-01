@@ -3,6 +3,7 @@ package entity.agent;
 import java.io.IOException;
 import java.util.Random;
 
+import systemmanager.Consts;
 import systemmanager.Keys;
 import systemmanager.Scheduler;
 import activity.AgentStrategy;
@@ -41,11 +42,11 @@ public class MarketDataAgent extends SMAgent {
 		// Processing the file 
 		try {
 			// Determining the market file type
-			if(fileName.toLowerCase().contains("nyse")){
+			if(fileName.toLowerCase().contains(Consts.NYSE)){
 				this.marketDataParser = new NYSEParser(fileName);
 				this.orderDatumIterator = this.marketDataParser.getIterator();
 			}
-			else if(fileName.toLowerCase().contains("nasdaq")) {
+			else if(fileName.toLowerCase().contains(Consts.NASDAQ)) {
 				this.marketDataParser = new NasdaqParser(fileName);
 				this.orderDatumIterator = this.marketDataParser.getIterator();
 			}

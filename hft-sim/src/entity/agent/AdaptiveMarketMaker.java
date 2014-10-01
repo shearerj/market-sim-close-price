@@ -79,28 +79,28 @@ public class AdaptiveMarketMaker extends MarketMaker {
 			SIP sip, Market market, Random rand, EntityProperties props) {
 
 		this(scheduler, fundamental, sip, market, rand,
-				props.getAsDouble(Keys.REENTRY_RATE, 0.0005),
-				props.getAsInt(Keys.TICK_SIZE, 1),
-				props.getAsInt(Keys.NUM_RUNGS, 10),
-				props.getAsInt(Keys.RUNG_SIZE, 1000),
-				props.getAsBoolean(Keys.TRUNCATE_LADDER, true),
-				props.getAsBoolean(Keys.TICK_IMPROVEMENT, true),
-				props.getAsBoolean(Keys.TICK_OUTSIDE, true),
-				props.getAsInt(Keys.INITIAL_LADDER_MEAN, 0),
-				props.getAsInt(Keys.INITIAL_LADDER_RANGE, 0),
-				props.getAsInt(Keys.NUM_HISTORICAL, 8), 	// set default to 8 to maintain compatibility with previous version
-				props.getAsIntArray(Keys.SPREADS, new int[]{200,400,800,1600,3200}),
-				props.getAsBoolean(Keys.USE_MEDIAN_SPREAD, true),
+				props.getAsDouble(Keys.MARKETMAKER_REENTRY_RATE, Keys.REENTRY_RATE),
+				props.getAsInt(Keys.AGENT_TICK_SIZE, Keys.TICK_SIZE),
+				props.getAsInt(Keys.NUM_RUNGS),
+				props.getAsInt(Keys.RUNG_SIZE),
+				props.getAsBoolean(Keys.TRUNCATE_LADDER),
+				props.getAsBoolean(Keys.TICK_IMPROVEMENT),
+				props.getAsBoolean(Keys.TICK_OUTSIDE),
+				props.getAsInt(Keys.INITIAL_LADDER_MEAN),
+				props.getAsInt(Keys.INITIAL_LADDER_RANGE),
+				props.getAsInt(Keys.NUM_HISTORICAL), 	// set default to 8 to maintain compatibility with previous version
+				props.getAsIntArray(Keys.SPREADS),
+				props.getAsBoolean(Keys.USE_MEDIAN_SPREAD),
 				//To approximate volatility bound, use the fact that 
 				//		next = prev + kappa(mean-prev) + nextGaussian(0,1)*sqrt(shock)
 				//conservatively estimate |mean-prev|<= 0.25*mean; 98% confidence |nextGaussian| <= 2
 				//so, delta ~= kappa * 0.25 * mean + 2sqrt(shock)
-				(int) Math.round(0.25 * props.getAsDouble(Keys.FUNDAMENTAL_KAPPA,0.05) 
-						* props.getAsInt(Keys.FUNDAMENTAL_MEAN,100000) 
-						+ 2 * Math.sqrt(props.getAsInt(Keys.FUNDAMENTAL_SHOCK_VAR,1000000))),
-				props.getAsBoolean(Keys.MOVING_AVERAGE_PRICE, false), // XXX set default to false to maintain compatibility with previous version
-				props.getAsBoolean(Keys.FAST_LEARNING, true), // XXX set default to true to maintain compatibility with previous version
-				props.getAsBoolean(Keys.USE_LAST_PRICE, false) // XXX set default to false to maintain compatibility with previous version
+				(int) Math.round(0.25 * props.getAsDouble(Keys.FUNDAMENTAL_KAPPA) 
+						* props.getAsInt(Keys.FUNDAMENTAL_MEAN) 
+						+ 2 * Math.sqrt(props.getAsInt(Keys.FUNDAMENTAL_SHOCK_VAR))),
+				props.getAsBoolean(Keys.MOVING_AVERAGE_PRICE), // XXX set default to false to maintain compatibility with previous version
+				props.getAsBoolean(Keys.FAST_LEARNING), // XXX set default to true to maintain compatibility with previous version
+				props.getAsBoolean(Keys.USE_LAST_PRICE) // XXX set default to false to maintain compatibility with previous version
 			);
 	}
 

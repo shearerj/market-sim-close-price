@@ -114,7 +114,7 @@ public class Observations {
 		this.fundamental = fundamental;
 		this.spec = spec;
 		
-		this.simLength = spec.getSimulationProps().getAsInt(Keys.SIMULATION_LENGTH, 10000);
+		this.simLength = spec.getSimulationProps().getAsInt(Keys.SIMULATION_LENGTH);
 		
 		// This is so that every agent type is output at the end, even if they
 		// completed no transactions

@@ -24,6 +24,7 @@ import entity.market.MockMarket;
 import event.TimeStamp;
 import event.TimedActivity;
 import systemmanager.Consts;
+import systemmanager.Defaults;
 import systemmanager.Executor;
 
 public class ReentryAgentTest {
@@ -34,6 +35,7 @@ public class ReentryAgentTest {
 	
 	@BeforeClass
 	public static void setupClass() throws IOException {
+		Defaults.initialize();
 		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ReentryAgentTest.log"));
 	}
 	

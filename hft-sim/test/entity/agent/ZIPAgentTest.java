@@ -23,6 +23,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
+import systemmanager.Defaults;
 import systemmanager.Executor;
 import systemmanager.Keys;
 
@@ -62,6 +63,8 @@ public class ZIPAgentTest {
 	
 	@BeforeClass
 	public static void setupClass() throws IOException{
+		Defaults.initialize();
+		
 		// Setting up the log file
 		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIPAgentTest.log"));
 
@@ -118,7 +121,7 @@ public class ZIPAgentTest {
 
 		// verify beta in correct range
 		assertTrue(agent.beta <= 0.5 && agent.beta >= 0.4);
-		assertTrue(0 == agent.momentumChange);
+		assertEquals(0, agent.momentumChange, 0.001);
 		assertNull(agent.limitPrice);
 	}
 	
@@ -240,7 +243,7 @@ public class ZIPAgentTest {
 		agent.lastOrderPrice = new Price(99000);
 		
 		double oldMargin = agent.margin.getValue(0, agent.type);
-		assertTrue(oldMargin == agent.getCurrentMargin(0, agent.type, time));
+		assertEquals(oldMargin,agent.getCurrentMargin(0, agent.type, time), 0.001);
 		agent.updateMargin(firstTrans, time);
 		double newMargin = agent.margin.getValue(0, agent.type);
 		assertEquals(newMargin, oldMargin, 0.001);

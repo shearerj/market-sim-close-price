@@ -79,14 +79,16 @@ public class SystemManager {
 	 * Constructor reads everything in and sets appropriate variables
 	 */
 	public SystemManager(File simFolder, int obsNum) throws IOException {
+		Defaults.initialize();
+		
 		this.simulationFolder = simFolder;
 		this.observationNumber = obsNum;
 		this.specification = new SimulationSpec(new File(simFolder, Consts.SIM_SPEC_FILE));
 		
 		EntityProperties simProps = specification.getSimulationProps();
-		this.totalSimulations = simProps.getAsInt(Keys.NUM_SIMULATIONS, 1);
-		this.baseRandomSeed = simProps.getAsLong(Keys.RAND_SEED, System.currentTimeMillis());
-		this.simulationLength = simProps.getAsInt(Keys.SIMULATION_LENGTH, 10000);
+		this.totalSimulations = simProps.getAsInt(Keys.NUM_SIMULATIONS);
+		this.baseRandomSeed = simProps.getAsLong(Keys.RAND_SEED);
+		this.simulationLength = simProps.getAsInt(Keys.SIMULATION_LENGTH);
 		
 		Properties props = new Properties();
 		props.load(new FileInputStream(new File(Consts.CONFIG_DIR, Consts.CONFIG_FILE)));

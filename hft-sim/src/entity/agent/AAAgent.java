@@ -15,7 +15,6 @@ import java.util.Random;
 
 import systemmanager.Keys;
 import systemmanager.Scheduler;
-import utils.Rands;
 import activity.SubmitNMSOrder;
 
 import com.google.common.collect.ImmutableList;
@@ -145,27 +144,27 @@ public class AAAgent extends WindowAgent {
 			EntityProperties props) {
 		
 		this(scheduler, arrivalTime, fundamental, sip, market, rand,
-				props.getAsDouble(Keys.REENTRY_RATE, 0.005), 
-				props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),
-				props.getAsInt(Keys.TICK_SIZE, 1),
-				props.getAsInt(Keys.MAX_QUANTITY, 10),
-				props.getAsInt(Keys.BID_RANGE_MIN, 0),
-				props.getAsInt(Keys.BID_RANGE_MAX, 5000),
-				props.getAsBoolean(Keys.WITHDRAW_ORDERS, true),
-				props.getAsInt(Keys.WINDOW_LENGTH, 5000),
-				props.getAsDouble(Keys.AGGRESSION, 0),
-				props.getAsDouble(Keys.THETA, -4),
-				props.getAsDouble(Keys.THETA_MIN, -8),
-				props.getAsDouble(Keys.THETA_MAX, 2),
-				props.getAsInt(Keys.NUM_HISTORICAL, 5), 
-				props.getAsInt(Keys.ETA, 3),
-				props.getAsDouble(Keys.LAMBDA_R, 0.05),
-				props.getAsDouble(Keys.LAMBDA_A, 0.02),	// 0.02 in paper 
-				props.getAsDouble(Keys.GAMMA, 2),
-				props.getAsDouble(Keys.BETA_R, Rands.nextUniform(rand, 0.2, 0.6)), 
-				props.getAsDouble(Keys.BETA_T, Rands.nextUniform(rand, 0.2, 0.6)), 
-				props.getAsBoolean(Keys.BUYER_STATUS, rand.nextBoolean()),
-				props.getAsBoolean(Keys.DEBUG, false));
+				props.getAsDouble(Keys.BACKGROUND_REENTRY_RATE, Keys.REENTRY_RATE), 
+				props.getAsDouble(Keys.PRIVATE_VALUE_VAR),
+				props.getAsInt(Keys.AGENT_TICK_SIZE, Keys.TICK_SIZE),
+				props.getAsInt(Keys.MAX_QUANTITY),
+				props.getAsInt(Keys.BID_RANGE_MIN),
+				props.getAsInt(Keys.BID_RANGE_MAX),
+				props.getAsBoolean(Keys.WITHDRAW_ORDERS),
+				props.getAsInt(Keys.WINDOW_LENGTH),
+				props.getAsDouble(Keys.AGGRESSION),
+				props.getAsDouble(Keys.THETA),
+				props.getAsDouble(Keys.THETA_MIN),
+				props.getAsDouble(Keys.THETA_MAX),
+				props.getAsInt(Keys.NUM_HISTORICAL), 
+				props.getAsInt(Keys.ETA),
+				props.getAsDouble(Keys.LAMBDA_R),
+				props.getAsDouble(Keys.LAMBDA_A),	// 0.02 in paper 
+				props.getAsDouble(Keys.GAMMA),
+				props.getAsDouble(Keys.BETA_R),	// Rands.nextUniform(rand, 0.2, 0.6)) 
+				props.getAsDouble(Keys.BETA_T), // Rands.nextUniform(rand, 0.2, 0.6)), 
+				props.getAsBoolean(Keys.BUYER_STATUS), // rand.nextBoolean()),
+				props.getAsBoolean(Keys.DEBUG));
 	}
 
 	@Override

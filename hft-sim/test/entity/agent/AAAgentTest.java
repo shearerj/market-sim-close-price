@@ -21,6 +21,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
+import systemmanager.Defaults;
 import systemmanager.Executor;
 import systemmanager.Keys;
 import utils.Rands;
@@ -52,6 +53,8 @@ public class AAAgentTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
+		Defaults.initialize();
+		
 		// Setting up the log file
 		Log.log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "AAAgentTest.log"));
 

@@ -17,6 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
+import systemmanager.Defaults;
 import systemmanager.Executor;
 import activity.AgentArrival;
 import data.EntityProperties;
@@ -36,6 +37,7 @@ public class NoOpAgentTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
+		Defaults.initialize();
 		// Setting up the log file
 		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "NoOpAgentTest.log"));
 	}

@@ -17,6 +17,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
+import systemmanager.Defaults;
 import systemmanager.Executor;
 import systemmanager.Keys;
 import activity.Clear;
@@ -42,6 +43,7 @@ public class MarketMakerTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
+		Defaults.initialize();
 		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "MarketMakerTest.log"));
 	}
 
@@ -60,7 +62,9 @@ public class MarketMakerTest {
 		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 10,
-				Keys.TRUNCATE_LADDER, false));
+				Keys.TRUNCATE_LADDER, false,
+				Keys.INITIAL_LADDER_MEAN, 0,
+				Keys.INITIAL_LADDER_RANGE, 0));
 
 		// Check activities inserted (none, other than reentry)
 		mm.agentStrategy(time);
@@ -95,7 +99,9 @@ public class MarketMakerTest {
 		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 5,
-				Keys.TRUNCATE_LADDER, false));
+				Keys.TRUNCATE_LADDER, false,
+				Keys.INITIAL_LADDER_MEAN, 0,
+				Keys.INITIAL_LADDER_RANGE, 0));
 		assertEquals(5, mm.stepSize);
 
 		mm.createOrderLadder(null, new Price(50));
@@ -160,7 +166,8 @@ public class MarketMakerTest {
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_IMPROVEMENT, true));
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_OUTSIDE, true));
 		assertEquals(5, mm.stepSize);
 
 		// Creating dummy agents

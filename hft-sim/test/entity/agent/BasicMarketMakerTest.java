@@ -21,6 +21,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
+import systemmanager.Defaults;
 import systemmanager.Executor;
 import systemmanager.Keys;
 import activity.AgentStrategy;
@@ -56,6 +57,7 @@ public class BasicMarketMakerTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
+		Defaults.initialize();
 		Log.log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "BasicMarketMakerTest.log"));
 	}
 
@@ -80,7 +82,9 @@ public class BasicMarketMakerTest {
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 10,
 				Keys.TRUNCATE_LADDER, false,
-				Keys.TICK_SIZE, 1);
+				Keys.TICK_SIZE, 1,
+				Keys.INITIAL_LADDER_MEAN, 0,
+				Keys.INITIAL_LADDER_RANGE, 0);
 
 		// Check activities inserted (none, other than reentry)
 		mm.agentStrategy(time);
@@ -99,7 +103,9 @@ public class BasicMarketMakerTest {
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 10,
 				Keys.TRUNCATE_LADDER, false,
-				Keys.TICK_SIZE, 1);
+				Keys.TICK_SIZE, 1,
+				Keys.INITIAL_LADDER_MEAN, 0,
+				Keys.INITIAL_LADDER_RANGE, 0);
 		mm.lastAsk = new Price(55);
 		mm.lastBid = new Price(45);
 
@@ -311,20 +317,6 @@ public class BasicMarketMakerTest {
 		assertEquals(marketmaker, order.getAgent());
 		assertEquals(new Price(50), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
-	}
-
-	@Test
-	public void noOpTest() {
-		MarketMaker mm = createBMM(
-				Keys.NUM_RUNGS, 2,
-				Keys.RUNG_SIZE, 10,
-				Keys.TRUNCATE_LADDER, false,
-				Keys.TICK_SIZE, 1,
-				Keys.NO_OP, true);
-
-		// Check activities inserted (none, since no-op)
-		mm.agentStrategy(TimeStamp.ZERO);
-		assertTrue("Incorrect number of orders", mm.activeOrders.isEmpty());
 	}
 
 	@Test

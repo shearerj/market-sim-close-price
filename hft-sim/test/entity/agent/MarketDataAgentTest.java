@@ -1,16 +1,25 @@
 package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
+import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.*;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Random;
 
+import logger.Log;
+
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.collect.Iterables;
 
+import systemmanager.Consts;
+import systemmanager.Defaults;
 import systemmanager.Executor;
 import data.FundamentalValue;
 import data.MockFundamental;
@@ -37,6 +46,11 @@ public class MarketDataAgentTest {
 	 * the text
 	 *
 	 */
+	@BeforeClass
+	public static void setupClass() throws IOException {
+		Defaults.initialize();
+		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "MarketDataAgentTest.log"));
+	}
 
 	@Before
 	public void setupTest() {

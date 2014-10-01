@@ -51,10 +51,10 @@ public class ZIAgent extends BackgroundAgent {
 			EntityProperties props) {
 		
 		this(scheduler, arrivalTime, fundamental, sip, market, rand,
-				new PrivateValue(1, props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000), rand), 
-				props.getAsInt(Keys.TICK_SIZE, 1),
-				props.getAsInt(Keys.BID_RANGE_MIN, 0),
-				props.getAsInt(Keys.BID_RANGE_MAX, 5000));
+				new PrivateValue(1, props.getAsDouble(Keys.PRIVATE_VALUE_VAR), rand), 
+				props.getAsInt(Keys.AGENT_TICK_SIZE, Keys.TICK_SIZE),
+				props.getAsInt(Keys.BID_RANGE_MIN),
+				props.getAsInt(Keys.BID_RANGE_MAX));
 	}
 	
 	@Override

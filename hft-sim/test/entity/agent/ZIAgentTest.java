@@ -22,6 +22,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
+import systemmanager.Defaults;
 import systemmanager.Executor;
 import systemmanager.Keys;
 
@@ -68,6 +69,8 @@ public class ZIAgentTest {
 
 	@BeforeClass
 	public static void setUpClass() throws IOException{
+		Defaults.initialize();
+		
 		// Setting up the log file
 		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ZIAgentTest.log"));
 

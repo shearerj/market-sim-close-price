@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import activity.SubmitOrder;
 import systemmanager.Consts;
+import systemmanager.Defaults;
 import systemmanager.Executor;
 import data.MockFundamental;
 import data.FundamentalValue;
@@ -44,6 +45,7 @@ public class WindowAgentTest {
 	
 	@BeforeClass
 	public static void setUpClass() throws IOException{
+		Defaults.initialize();
 		// Setting up the log file
 		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "WindowAgentTest.log"));
 	}

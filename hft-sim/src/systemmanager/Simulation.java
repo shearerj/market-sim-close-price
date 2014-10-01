@@ -96,7 +96,7 @@ public class Simulation {
 		Random ran = new Random(rand.nextLong());
 		for (MarketProperties mktProps : marketProps) {
 			MarketFactory factory = new MarketFactory(scheduler, sip, ran);
-			for (int i = 0; i < mktProps.getAsInt(Keys.NUM, 1); i++)
+			for (int i = 0; i < mktProps.getAsInt(Keys.NUM_MARKETS, Keys.NUM); i++)
 				markets.add(factory.createMarket(mktProps));
 		}
 		return markets.build();
@@ -109,8 +109,8 @@ public class Simulation {
 		// Not immutable because players also add agents
 		Collection<Agent> agents = Lists.newArrayList();
 		for (AgentProperties agProps : agentProps) {
-			int number = agProps.getAsInt(Keys.NUM, 0);
-			double arrivalRate = agProps.getAsDouble(Keys.ARRIVAL_RATE, 0.075);
+			int number = agProps.getAsInt(Keys.NUM_AGENTS, Keys.NUM);
+			double arrivalRate = agProps.getAsDouble(Keys.ARRIVAL_RATE);
 			
 			AgentFactory factory = new AgentFactory(scheduler, fundamental, sip, markets,
 					arrivalRate, new Random(rand.nextLong()));
@@ -127,7 +127,7 @@ public class Simulation {
 	protected Collection<Player> setupPlayers(Map<String, Multiset<AgentProperties>> playerConfig,
 			EntityProperties modelProps, Random rand) {
 		Builder<Player> players = ImmutableList.builder();
-		double arrivalRate = modelProps.getAsDouble(Keys.ARRIVAL_RATE, 0.075);
+		double arrivalRate = modelProps.getAsDouble(Keys.ARRIVAL_RATE);
 
 		// Generate Players
 		for (Entry<String, Multiset<AgentProperties>> e : playerConfig.entrySet()) {

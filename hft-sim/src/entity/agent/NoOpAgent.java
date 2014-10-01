@@ -21,7 +21,7 @@ public class NoOpAgent extends Agent {
 	public NoOpAgent(Scheduler scheduler, FundamentalValue fundamental,
 			SIP sip, Random rand, EntityProperties props) {
 		this(scheduler, fundamental, sip, rand,
-				props.getAsInt(Keys.TICK_SIZE, 1));
+				props.getAsInt(Keys.AGENT_TICK_SIZE, Keys.TICK_SIZE));
 	}
 
 	@Override

@@ -23,6 +23,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
+import systemmanager.Defaults;
 import systemmanager.Executor;
 import systemmanager.Keys;
 import activity.AgentStrategy;
@@ -61,6 +62,7 @@ public class WMAMarketMakerTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
+		Defaults.initialize();
 		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "WMAMarketMakerTest.log"));
 	}
 
@@ -104,7 +106,9 @@ public class WMAMarketMakerTest {
 				Keys.TRUNCATE_LADDER, false,
 				Keys.TICK_SIZE, 1,
 				Keys.NUM_HISTORICAL, 5,
-				Keys.WEIGHT_FACTOR, 0.9);
+				Keys.WEIGHT_FACTOR, 0.9,
+				Keys.INITIAL_LADDER_MEAN, 0,
+				Keys.INITIAL_LADDER_RANGE, 0);
 		mm.lastAsk = new Price(55);
 		mm.lastBid = new Price(45);
 
@@ -602,23 +606,6 @@ public class WMAMarketMakerTest {
 		assertEquals(marketmaker, order.getAgent());
 		assertEquals(new Price(50), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
-	}
-
-	@Test
-	public void noOpTest() {
-		MarketMaker mm = createWMAMM(
-				Keys.NUM_RUNGS, 2,
-				Keys.RUNG_SIZE, 10,
-				Keys.TRUNCATE_LADDER, false,
-				Keys.TICK_SIZE, 1,
-				Keys.NUM_HISTORICAL, 5,
-				Keys.WEIGHT_FACTOR, 0.9,
-				Keys.NO_OP, true);
-
-		// Check activities inserted (none, since no-op)
-		mm.agentStrategy(TimeStamp.ZERO);
-		assertTrue(exec.isEmpty());
-		assertTrue(mm.activeOrders.isEmpty());
 	}
 
 	@Test

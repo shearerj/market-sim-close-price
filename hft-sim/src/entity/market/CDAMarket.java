@@ -37,9 +37,9 @@ public class CDAMarket extends Market {
 	public CDAMarket(Scheduler scheduler, SIP sip, Random rand,
 			EntityProperties props) {
 		this(scheduler, sip, rand,
-				TimeStamp.create(props.getAsInt(Keys.QUOTE_LATENCY, props.getAsInt(Keys.MARKET_LATENCY, -1))),
-				TimeStamp.create(props.getAsInt(Keys.TRANSACTION_LATENCY, props.getAsInt(Keys.MARKET_LATENCY, -1))),
-				props.getAsInt(Keys.TICK_SIZE, 1));
+				TimeStamp.create(props.getAsInt(Keys.QUOTE_LATENCY, Keys.MARKET_LATENCY)),
+				TimeStamp.create(props.getAsInt(Keys.TRANSACTION_LATENCY, Keys.MARKET_LATENCY)),
+				props.getAsInt(Keys.MARKET_TICK_SIZE, Keys.TICK_SIZE));
 	}
 
 	@Override

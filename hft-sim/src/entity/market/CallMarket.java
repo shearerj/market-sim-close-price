@@ -54,11 +54,11 @@ public class CallMarket extends Market {
 			EntityProperties props) {
 		
 		this(scheduler, sip, rand,
-				TimeStamp.create(props.getAsInt(Keys.QUOTE_LATENCY, props.getAsInt(Keys.MARKET_LATENCY, -1))),
-				TimeStamp.create(props.getAsInt(Keys.TRANSACTION_LATENCY, props.getAsInt(Keys.MARKET_LATENCY, -1))),
-				props.getAsInt(Keys.TICK_SIZE, 1),
-				props.getAsDouble(Keys.PRICING_POLICY, 0.5),
-				TimeStamp.create(props.getAsInt(Keys.CLEAR_FREQ, 1000)));
+				TimeStamp.create(props.getAsInt(Keys.QUOTE_LATENCY, Keys.MARKET_LATENCY)),
+				TimeStamp.create(props.getAsInt(Keys.TRANSACTION_LATENCY, Keys.MARKET_LATENCY)),
+				props.getAsInt(Keys.MARKET_TICK_SIZE, Keys.TICK_SIZE),
+				props.getAsDouble(Keys.PRICING_POLICY),
+				TimeStamp.create(props.getAsInt(Keys.CLEAR_FREQ)));
 	}
 
 	@Override

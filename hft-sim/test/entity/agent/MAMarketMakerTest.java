@@ -22,6 +22,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
+import systemmanager.Defaults;
 import systemmanager.Executor;
 import systemmanager.Keys;
 import activity.AgentStrategy;
@@ -57,6 +58,7 @@ public class MAMarketMakerTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
+		Defaults.initialize();
 		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "MAMarketMakerTest.log"));
 	}
 
@@ -82,7 +84,9 @@ public class MAMarketMakerTest {
 				Keys.RUNG_SIZE, 10,
 				Keys.TRUNCATE_LADDER, false,
 				Keys.TICK_SIZE, 1,
-				Keys.NUM_HISTORICAL, 5);
+				Keys.NUM_HISTORICAL, 5,
+				Keys.INITIAL_LADDER_MEAN, 0,
+				Keys.INITIAL_LADDER_RANGE, 0);
 
 		// Check activities inserted (none, other than reentry)
 		mm.agentStrategy(time);
@@ -102,7 +106,9 @@ public class MAMarketMakerTest {
 				Keys.RUNG_SIZE, 10,
 				Keys.TRUNCATE_LADDER, false,
 				Keys.TICK_SIZE, 1,
-				Keys.NUM_HISTORICAL, 5);
+				Keys.NUM_HISTORICAL, 5,
+				Keys.INITIAL_LADDER_MEAN, 0,
+				Keys.INITIAL_LADDER_RANGE, 0);
 		mm.lastAsk = new Price(55);
 		mm.lastBid = new Price(45);
 
@@ -541,21 +547,6 @@ public class MAMarketMakerTest {
 		assertEquals(marketmaker, order.getAgent());
 		assertEquals(new Price(50), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
-	}
-
-	@Test
-	public void noOpTest() {
-		MarketMaker mm = createMAMM(
-				Keys.NUM_RUNGS, 2,
-				Keys.RUNG_SIZE, 10,
-				Keys.TRUNCATE_LADDER, false,
-				Keys.TICK_SIZE, 1,
-				Keys.NUM_HISTORICAL, 5,
-				Keys.NO_OP, true);
-
-		// Check activities inserted (none, since no-op)
-		mm.agentStrategy(TimeStamp.ZERO);
-		assertTrue(mm.activeOrders.isEmpty());
 	}
 
 	@Test

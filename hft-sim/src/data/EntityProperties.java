@@ -8,6 +8,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import systemmanager.Consts;
+import systemmanager.Defaults;
+
 import com.google.common.base.Joiner;
 import com.google.common.base.Joiner.MapJoiner;
 import com.google.common.base.Splitter;
@@ -133,66 +136,75 @@ public class EntityProperties implements Serializable {
 	}
 
 	public String getAsString(String key) {
-		return properties.get(key);
-	}
-
-	public String getAsString(String key, String def) {
 		String val = properties.get(key);
-		return val != null ? val : def;
+		return val != null ? val : Defaults.getAsString(key);
 	}
 
 	public int getAsInt(String key) {
-		return Integer.parseInt(properties.get(key));
+		String val = properties.get(key);
+		if (val != null) return !val.isEmpty() ? Integer.parseInt(val) : Defaults.getAsInt(key);
+		return Defaults.getAsInt(key);
 	}
 
-	public int getAsInt(String key, int def) {
+	public int getAsInt(String key, String defaultKey) {
 		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? Integer.parseInt(val) : def;
-		return def;
+		if (val != null) return !val.isEmpty() ? Integer.parseInt(val) : getAsInt(defaultKey);
+		return getAsInt(defaultKey);
 	}
 
 	public double getAsDouble(String key) {
-		return Double.parseDouble(properties.get(key));
+		String val = properties.get(key);
+		if (val != null) return !val.isEmpty() ? Double.parseDouble(val) : Defaults.getAsDouble(key);
+		return Defaults.getAsDouble(key);
 	}
 
-	public double getAsDouble(String key, double def) {
+	public double getAsDouble(String key, String defaultKey) {
 		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? Double.parseDouble(val) : def;
-		return def;
+		if (val != null) return !val.isEmpty() ? Double.parseDouble(val) : getAsDouble(defaultKey);
+		return getAsDouble(defaultKey);
 	}
 
 	public float getAsFloat(String key) {
-		return Float.parseFloat(properties.get(key));
-	}
-
-	public float getAsFloat(String key, float def) {
 		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? Float.parseFloat(val) : def;
-		return def;
+		if (val != null) return !val.isEmpty() ? Float.parseFloat(val) : Defaults.getAsFloat(key);
+		return Defaults.getAsFloat(key);
+	}
+	
+	public float getAsFloat(String key, String defaultKey) {
+		String val = properties.get(key);
+		if (val != null) return !val.isEmpty() ? Float.parseFloat(val) : getAsFloat(defaultKey);
+		return getAsFloat(defaultKey);
 	}
 
 	public long getAsLong(String key) {
-		return Long.parseLong(properties.get(key));
-	}
-
-	public long getAsLong(String key, long def) {
 		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? Long.parseLong(val) : def;
-		return def;
+		if (val != null) return !val.isEmpty() ? Long.parseLong(val) : Defaults.getAsLong(key);
+		return Defaults.getAsLong(key);
 	}
 
+	public long getAsLong(String key, String defaultKey) {
+		String val = properties.get(key);
+		if (val != null) return !val.isEmpty() ? Long.parseLong(val) : getAsLong(defaultKey);
+		return getAsLong(defaultKey);
+	}
+	
 	public boolean getAsBoolean(String key) {
-		return Boolean.parseBoolean(properties.get(key));
-	}
-
-	public boolean getAsBoolean(String key, boolean def) {
 		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? Boolean.parseBoolean(val) : def;
-		return def;
+		if (val != null) return !val.isEmpty() ? Boolean.parseBoolean(val) : Defaults.getAsBoolean(key);
+		return Defaults.getAsBoolean(key);
 	}
 
-	public int[] getAsIntArray(String key){
-		return getAsIntArray(key, "/");
+	public boolean getAsBoolean(String key, String defaultKey) {
+		String val = properties.get(key);
+		if (val != null) return !val.isEmpty() ? Boolean.parseBoolean(val) : getAsBoolean(defaultKey);
+		return getAsBoolean(defaultKey);
+	}
+	
+	public int[] getAsIntArray(String key) {
+		String val = properties.get(key);
+		if (val != null) return !val.isEmpty() ? getAsIntArray(key, Consts.DELIMITER) 
+											   : Defaults.getAsIntArray(key, Consts.DELIMITER);
+		return Defaults.getAsIntArray(key, Consts.DELIMITER);
 	}
 	
 	public int[] getAsIntArray(String key, String delim){
@@ -201,11 +213,6 @@ public class EntityProperties implements Serializable {
 		for(int i = 0; i < vals.length; i++)
 			{ result[i] = Integer.parseInt(vals[i]); }
 		return result;
-	}
-
-	public int[] getAsIntArray(String key, int[] def){
-		String val = properties.get(key);
-		return (val != null && !val.isEmpty()) ? getAsIntArray(key) : def;
 	}
 
 	public void put(String key, String value) {

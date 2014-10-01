@@ -97,21 +97,21 @@ public class ZIPAgent extends WindowAgent {
 			FundamentalValue fundamental, SIP sip, Market market, Random rand,
 			EntityProperties props) {
 		this(scheduler, arrivalTime, fundamental, sip, market, rand,
-				props.getAsDouble(Keys.REENTRY_RATE, 0.005), 
-				props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),
-				props.getAsInt(Keys.TICK_SIZE, 1),
-				props.getAsInt(Keys.MAX_QUANTITY, 10),
-				props.getAsInt(Keys.BID_RANGE_MIN, 0),
-				props.getAsInt(Keys.BID_RANGE_MAX, 5000), 
-				props.getAsInt(Keys.WINDOW_LENGTH, 5000),
-				props.getAsDouble(Keys.MARGIN_MIN, 0.05),
-				props.getAsDouble(Keys.MARGIN_MAX, 0.35),
-				props.getAsDouble(Keys.GAMMA_MIN, 0),
-				props.getAsDouble(Keys.GAMMA_MAX, 0.1),
-				props.getAsDouble(Keys.BETA_MIN, 0.1),
-				props.getAsDouble(Keys.BETA_MAX, 0.5),
-				props.getAsDouble(Keys.COEFF_A, 0.05), 
-				props.getAsDouble(Keys.COEFF_R, 0.05));
+				props.getAsDouble(Keys.BACKGROUND_REENTRY_RATE, Keys.REENTRY_RATE), 
+				props.getAsDouble(Keys.PRIVATE_VALUE_VAR),
+				props.getAsInt(Keys.AGENT_TICK_SIZE, Keys.TICK_SIZE),
+				props.getAsInt(Keys.MAX_QUANTITY),
+				props.getAsInt(Keys.BID_RANGE_MIN),
+				props.getAsInt(Keys.BID_RANGE_MAX), 
+				props.getAsInt(Keys.WINDOW_LENGTH),
+				props.getAsDouble(Keys.MARGIN_MIN),
+				props.getAsDouble(Keys.MARGIN_MAX),
+				props.getAsDouble(Keys.GAMMA_MIN),
+				props.getAsDouble(Keys.GAMMA_MAX),
+				props.getAsDouble(Keys.BETA_MIN),
+				props.getAsDouble(Keys.BETA_MAX),
+				props.getAsDouble(Keys.COEFF_A), 
+				props.getAsDouble(Keys.COEFF_R));
 	}
 	
 	@Override
