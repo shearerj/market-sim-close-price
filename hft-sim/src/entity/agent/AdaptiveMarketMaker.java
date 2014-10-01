@@ -89,7 +89,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 				props.getAsInt(Keys.INITIAL_LADDER_MEAN, 0),
 				props.getAsInt(Keys.INITIAL_LADDER_RANGE, 0),
 				props.getAsInt(Keys.NUM_HISTORICAL, 8), 	// set default to 8 to maintain compatibility with previous version
-				props.getAsIntArray(Keys.SPREADS, new int[]{200,400,800,1600,3200}),
+				props.getAsIntArray(Keys.SPREADS, new int[]{500,1000,2000,5000}),
 				props.getAsBoolean(Keys.USE_MEDIAN_SPREAD, true),
 				//To approximate volatility bound, use the fact that 
 				//		next = prev + kappa(mean-prev) + nextGaussian(0,1)*sqrt(shock)
