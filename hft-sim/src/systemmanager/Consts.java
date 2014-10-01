@@ -50,7 +50,7 @@ public interface Consts {
 	public final static String OBS_FILE_PREFIX = "observation";
 	public final static String OBJS_FILE_PREFIX = "objects";
 	
-	public final static String DELIMITER = "/";
+	public final static String DELIMITER = "-";	// for int array in parameters
 
 	// Constants in simulation_spec file
 	public final static String SETUP_SUFFIX = "_setup";

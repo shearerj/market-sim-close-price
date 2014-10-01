@@ -58,7 +58,6 @@ public class Defaults implements Serializable {
 	
 	private static void addHFTAgentDefaults() {
 		add(Keys.LA_LATENCY, 			-1);
-		add(Keys.TICK_SIZE, 			1);
 		add(Keys.ALPHA, 				0.001);
 	}
 	
@@ -123,11 +122,13 @@ public class Defaults implements Serializable {
 		
 		// AdaptiveMM
 		add(Keys.SPREADS, 				new int[]{500,1000,2500,5000});
-		add(Keys.USE_MEDIAN_SPREAD, 	false); // get rid of this altogether?
+		add(Keys.USE_MEDIAN_SPREAD, 	false); // XXX get rid of this altogether?
 		add(Keys.MOVING_AVERAGE_PRICE, 	true);
 		add(Keys.FAST_LEARNING, 		true);
 		add(Keys.USE_LAST_PRICE, 		true);
 	}
+	
+	
 	
 	public static boolean hasKey(String key) {
 		return defaults.containsKey(key);

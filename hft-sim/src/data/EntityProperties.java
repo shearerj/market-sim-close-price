@@ -80,7 +80,7 @@ public class EntityProperties implements Serializable {
 	
 	/**
 	 * Same as fromPairs, but with a default entity properties that the initial
-	 * configuration is coppied from. If a key appears in both from and
+	 * configuration is copied from. If a key appears in both from and
 	 * keysAndValues, the value in keysAndValues will be used.
 	 * 
 	 * @param from
@@ -188,15 +188,22 @@ public class EntityProperties implements Serializable {
 		return getAsLong(defaultKey);
 	}
 	
+	private static boolean parseBoolean(String val) {
+		if (val.toLowerCase().equals("t")) return true;
+		else if (val.toLowerCase().equals("f")) return false;
+		return false;
+	}
+	
 	public boolean getAsBoolean(String key) {
 		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? Boolean.parseBoolean(val) : Defaults.getAsBoolean(key);
+		if (val != null) if (!val.isEmpty()) return Boolean.parseBoolean(val) || EntityProperties.parseBoolean(val);
 		return Defaults.getAsBoolean(key);
 	}
 
 	public boolean getAsBoolean(String key, String defaultKey) {
 		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? Boolean.parseBoolean(val) : getAsBoolean(defaultKey);
+		if (val != null) return !val.isEmpty() ? Boolean.parseBoolean(val) || EntityProperties.parseBoolean(val) 
+											   : getAsBoolean(defaultKey);
 		return getAsBoolean(defaultKey);
 	}
 	
