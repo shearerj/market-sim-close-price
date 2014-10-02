@@ -556,38 +556,5 @@ public class BackgroundAgentTest {
 		assertNotEquals(50000 - 100000, agent1.getPayoff(), 0.001);
 	}
 	
-	// Test that returns empty if exceed max position
-	@Test
-	public void testZIRPStrat() {
-		TimeStamp time = TimeStamp.ZERO;
-		List<Price> values = Arrays.asList(new Price(100), new Price(10));
-		PrivateValue pv = new DummyPrivateValue(1, values);
-		FundamentalValue fundamental = new MockFundamental(100000);
-
-		BackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market, pv, 0, 1000);
-
-		final int simulationLength = 60000;
-		final double fundamentalKappa = 0.05;
-		final double fundamentalMean = 100000;
-		final double acceptableProfitFraction = 0.8;
-		
-		agent.executeZIRPStrategy(
-			BUY, 5, time, simulationLength, fundamentalKappa, fundamentalMean, acceptableProfitFraction
-		);
-		assertTrue(agent.activeOrders.isEmpty());
-		assertTrue(agent.transactions.isEmpty());
-		agent.executeZIRPStrategy(
-			SELL, 5, time, simulationLength, fundamentalKappa, fundamentalMean, acceptableProfitFraction
-		);
-		assertTrue(agent.activeOrders.isEmpty());
-		assertTrue(agent.transactions.isEmpty());
-
-		// Test ZIRP strategy
-		agent.executeZIRPStrategy(
-			BUY, 1, time, simulationLength, fundamentalKappa, fundamentalMean, acceptableProfitFraction
-		);
-		assertEquals(1, agent.activeOrders.size());
-	}
-	
-	// TODO: check getEstimatedValuation
+	// TODO: check getEstimatedValuation/Fundamental
 }
