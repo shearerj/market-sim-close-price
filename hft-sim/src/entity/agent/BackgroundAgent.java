@@ -114,6 +114,30 @@ public abstract class BackgroundAgent extends ReentryAgent {
 						rand, bidRangeMin, bidRangeMax
 					))).nonnegative().quantize(tickSize);
 			
+			final int stepsLeft = (int) (simulationLength - currentTime.getInTicks());
+			final double kappaCompToPower = Math.pow(1 - fundamentalKappa, stepsLeft);
+			final double rHat = 
+				fundamental.getValueAt(currentTime).intValue() * kappaCompToPower 
+				+ fundamentalMean * (1 - kappaCompToPower);
+			
+			final int myPrivateValue = 
+				privateValue.getValueFromQuantity(positionBalance, quantity, type).intValue();
+			
+			log.log(
+				INFO, 
+				"%s executing ZIRP strategy position=%d, " 
+					+ "for q=%d, fund=%s value=%s + %s=%s stepsLeft=%s pv=%s",
+				this, 
+				positionBalance, 
+				quantity, 
+				fundamental.getValueAt(currentTime).intValue(),
+				rHat,
+				privateValue.getValue(positionBalance, type), 
+				val,
+				stepsLeft,
+				myPrivateValue
+			);
+			
 			Quote quote = marketQuoteProcessor.getQuote();
 			if (
 				quote != null 
@@ -133,6 +157,26 @@ public abstract class BackgroundAgent extends ReentryAgent {
 							type, quantity, currentTime, simulationLength, 
 							fundamentalKappa, fundamentalMean
 						);
+						
+						log.log(
+							INFO,
+				"%s executing ZIRP strategy GREEDY SELL, markup=%s, bid=%s, bidMarkup=%s, price=%s",
+							this,
+							markup,
+							bidPrice,
+							bidMarkup,
+							price.intValue()
+						);
+					} else {
+						log.log(
+							INFO, 
+				"%s no g.s. opportunity, markup=%s, bidMarkup=%s, desiredFrac=%s, threshold=%s",
+							this,
+							markup,
+							bidMarkup,
+							acceptableProfitFraction,
+							(markup * acceptableProfitFraction)
+						); 
 					}
 				} else {
 					// how much you'd profit from buying at the above price
@@ -147,21 +191,28 @@ public abstract class BackgroundAgent extends ReentryAgent {
 							type, quantity, currentTime, simulationLength, 
 							fundamentalKappa, fundamentalMean
 						);
+						
+						log.log(
+								INFO,
+					"%s executing ZIRP strategy GREEDY BUY, markup=%s, ask=%s, askMarkup=%s, price=%s",
+								this,
+								markup,
+								askPrice,
+								askMarkup,
+								price.intValue()
+							);
+					} else {
+						log.log(INFO, 
+				"%s no g.b. opportunity, markup=%s, askMarkup=%s, desiredFrac=%s, threshold=%s",
+							this,
+							markup,
+							askMarkup,
+							acceptableProfitFraction,
+							markup * acceptableProfitFraction
+						); 
 					}
 				}
 			}
-			
-			log.log(
-				INFO, 
-				"%s executing ZIRP strategy position=%d, " 
-					+ "for q=%d, value=%s + %s=%s",
-				this, 
-				positionBalance, 
-				quantity, 
-				fundamental.getValueAt(currentTime),
-				privateValue.getValue(positionBalance, type), 
-				val
-			);
 			
 			scheduler.executeActivity(
 				new SubmitNMSOrder(
@@ -284,12 +335,12 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		final double fundamentalKappa,
 		final double fundamentalMean
 	) {
-		final int stepsLeft = (int) (simulationLength - currentTime.getInSeconds());
-		final double kappaToPower = Math.pow(fundamentalKappa, stepsLeft);
+		final int stepsLeft = (int) (simulationLength - currentTime.getInTicks());
+		final double kappaCompToPower = Math.pow(1 - fundamentalKappa, stepsLeft);
 		final double rHat = 
-			fundamental.getValueAt(currentTime).intValue() * kappaToPower 
-			+ fundamentalMean * (1 - kappaToPower);
-		return new Price(rHat * quantity
+			fundamental.getValueAt(currentTime).intValue() * kappaCompToPower 
+			+ fundamentalMean * (1 - kappaCompToPower);
+		return new Price(((int) rHat) * quantity
 				+ privateValue.getValueFromQuantity(positionBalance, quantity, type).intValue()
 				).nonnegative();
 	}

@@ -13,7 +13,8 @@ How to run:
 
 To run a simulation type 
 
-    python experiments_variable.py [experiment name] [num samples] [test var] [set iteration range (yes or no)] [email address]
+    python experiments_variable.py [experiment name] [num samples] [test var] \
+     [set iteration range (yes or no)] [email address]
 
 Example:
 
