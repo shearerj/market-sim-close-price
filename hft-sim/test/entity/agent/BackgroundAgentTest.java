@@ -65,6 +65,48 @@ public class BackgroundAgentTest {
 		val = agent.getValuation(SELL, time);
 		assertEquals(randFundamental.getValueAt(time), val);
 	}
+	
+	@Test
+	public void getEstimatedValuationBasic() {
+		TimeStamp time = TimeStamp.ZERO;
+		final double kappa = 0.2;
+		final int meanValue = 100000;
+		final int simulationLength = 60000;
+		FundamentalValue randFundamental = FundamentalValue.create(kappa, meanValue, 10000, new Random());
+
+		BackgroundAgent agent = new MockBackgroundAgent(exec, randFundamental, sip, market);
+
+		// Verify valuation (where PV = 0)
+		Price val = agent.getEstimatedValuation(BUY, time, simulationLength, kappa, meanValue);
+		final double kappaToPower = Math.pow(kappa, simulationLength);
+		final double rHat = 
+			randFundamental.getValueAt(time).intValue() * kappaToPower 
+			+ meanValue * (1 - kappaToPower);
+		final double epsilon = 0.05;
+		assertEquals(rHat, val.intValue(), epsilon);
+		val = agent.getEstimatedValuation(SELL, time, simulationLength, kappa, meanValue);
+		assertEquals(rHat, val.intValue(), epsilon);
+
+		final int iterations = 1000;
+		for (int i = 0; i < iterations; i++) {
+			final TimeStamp timeIter = TimeStamp.create(i);
+			final double value = randFundamental.getValueAt(timeIter).doubleValue();
+			final double rHatIter = agent.getEstimatedValuation(
+					SELL, timeIter, simulationLength, kappa, meanValue
+				).doubleValue();
+			if (value > meanValue) {
+				// rHat should be between current fundamental and mean,
+				// but closer to the mean this early in the run.
+				assertTrue(rHatIter < value);
+				assertTrue(rHatIter >= meanValue);
+				assertTrue(Math.abs(rHatIter - meanValue) < Math.abs(rHatIter - value));
+			} else if (value < meanValue) {
+				assertTrue(rHatIter > value);
+				assertTrue(rHatIter <= meanValue);
+				assertTrue(Math.abs(rHatIter - meanValue) < Math.abs(rHatIter - value));
+			}
+		}
+	}
 
 	@Test
 	public void getValuationConstPV() {
@@ -82,7 +124,29 @@ public class BackgroundAgentTest {
 		val = agent.getValuation(SELL, time);
 		assertEquals(fund.intValue() + 100, val.intValue());
 	}
+	
+	@Test
+	public void getEstimatedValuationConstPV() {
+		TimeStamp time = TimeStamp.ZERO;
+		List<Price> values = Arrays.asList(new Price(100), new Price(10));
+		PrivateValue pv = new DummyPrivateValue(1, values);
+		final double kappa = 0.2;
+		final int meanValue = 100000;
+		final int simulationLength = 60000;
+		FundamentalValue fundamental = FundamentalValue.create(kappa, meanValue, 10000, new Random());
+		BackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market, pv, 0, 1000);
 
+		// Verify valuation (current position of 0)
+		Price val = agent.getEstimatedValuation(BUY, time, simulationLength, kappa, meanValue);
+		final double kappaToPower = Math.pow(kappa, simulationLength);
+		final double rHat = 
+			fundamental.getValueAt(time).intValue() * kappaToPower 
+			+ meanValue * (1 - kappaToPower);
+		final double epsilon = 0.05;
+		assertEquals(rHat + 10, val.intValue(), epsilon);
+		val = agent.getEstimatedValuation(SELL, time, simulationLength, kappa, meanValue);
+		assertEquals(rHat + 100, val.intValue(), epsilon);
+	}
 
 	@Test
 	public void getValuationRand() {
@@ -491,4 +555,39 @@ public class BackgroundAgentTest {
 		assertEquals(50000 - endTimeFundamental.intValue(), agent1.getPayoff(), 0.001);
 		assertNotEquals(50000 - 100000, agent1.getPayoff(), 0.001);
 	}
+	
+	// Test that returns empty if exceed max position
+	@Test
+	public void testZIRPStrat() {
+		TimeStamp time = TimeStamp.ZERO;
+		List<Price> values = Arrays.asList(new Price(100), new Price(10));
+		PrivateValue pv = new DummyPrivateValue(1, values);
+		FundamentalValue fundamental = new MockFundamental(100000);
+
+		BackgroundAgent agent = new MockBackgroundAgent(exec, fundamental, sip, market, pv, 0, 1000);
+
+		final int simulationLength = 60000;
+		final double fundamentalKappa = 0.05;
+		final double fundamentalMean = 100000;
+		final double acceptableProfitFraction = 0.8;
+		
+		agent.executeZIRPStrategy(
+			BUY, 5, time, simulationLength, fundamentalKappa, fundamentalMean, acceptableProfitFraction
+		);
+		assertTrue(agent.activeOrders.isEmpty());
+		assertTrue(agent.transactions.isEmpty());
+		agent.executeZIRPStrategy(
+			SELL, 5, time, simulationLength, fundamentalKappa, fundamentalMean, acceptableProfitFraction
+		);
+		assertTrue(agent.activeOrders.isEmpty());
+		assertTrue(agent.transactions.isEmpty());
+
+		// Test ZIRP strategy
+		agent.executeZIRPStrategy(
+			BUY, 1, time, simulationLength, fundamentalKappa, fundamentalMean, acceptableProfitFraction
+		);
+		assertEquals(1, agent.activeOrders.size());
+	}
+	
+	// TODO: check getEstimatedValuation
 }
