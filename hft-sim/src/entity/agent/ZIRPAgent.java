@@ -96,6 +96,13 @@ public final class ZIRPAgent extends BackgroundAgent {
 				interarrivals, new PrivateValue(maxAbsPosition, pvVar, rand),
 				tickSize, bidRangeMin, bidRangeMax);
 		
+		if (aAcceptableProfitFraction < 0 || aAcceptableProfitFraction > 1) {
+			throw new IllegalArgumentException(
+				"Acceptable profit fraction must be in [0, 1]. " 
+					+ aAcceptableProfitFraction
+			);
+		}
+		
 		simulationLength = aSimulationLength;
 		fundamentalKappa = aFundamentalKappa;
 		fundamentalMean = aFundamentalMean;
