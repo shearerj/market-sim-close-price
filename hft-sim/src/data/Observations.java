@@ -163,6 +163,8 @@ public class Observations {
 	public Map<String, Double> getFeatures() {
 		ImmutableMap.Builder<String, Double> features = ImmutableMap.builder();
 		
+		features.put("fund_end_price", fundamental.getValueAt(TimeStamp.create(simLength-1)).doubleValue());
+		
 		features.put("exectime_mean", executionTimes.mean());
 		features.put("trans_mean_price", prices.mean());
 		features.put("trans_stddev_price", prices.stddev());
