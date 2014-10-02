@@ -1,0 +1,24 @@
+{
+    "assignment": {
+    },
+    "configuration": {
+        "randomSeed": "0",
+        "numSims": "1",
+        "modelName": "example",
+        "presets": "CENTRALCDA",
+        "simLength": "60000",
+        "tickSize": "1",
+        "nbboLatency": "100",
+        "mktLatency": "-1",
+        "arrivalRate": "0.075",
+        "reentryRate": "0.0005",
+        "meanValue": "100000",
+        "kappa": "0.05",
+        "shockVar": "1E8",
+        "privateValueVar": "1E8",
+        "CDA": "num_1",
+        "BASICMM": "num_0_numRungs_10_rungSize_1000",
+	    "ZIR":"num_61_maxqty_10",
+        "ZIRP":"num_61_maxqty_10_acceptableProfFrac_0.8"
+    }
+}
