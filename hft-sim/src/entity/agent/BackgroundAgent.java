@@ -22,6 +22,7 @@ import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
+import entity.market.Quote;
 import entity.market.Transaction;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
@@ -97,6 +98,95 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			return false;
 		}
 		return true;
+	}
+	
+	public final void executeZIRPStrategy(
+		final OrderType type, 
+		final int quantity, 
+		final TimeStamp currentTime,
+		final int simulationLength,
+		final double fundamentalKappa,
+		final double fundamentalMean,
+		final double acceptableProfitFraction
+	) {		
+		int newPosition = quantity + positionBalance;
+		if (type.equals(SELL)) newPosition *= -1;
+		
+		if (newPosition <= privateValue.getMaxAbsPosition() 
+			&& newPosition >= -privateValue.getMaxAbsPosition()) {
+			
+			Price val = getEstimatedValuation(type, currentTime, 
+				simulationLength, fundamentalKappa, fundamentalMean);
+			Price price = new Price((val.doubleValue() + (type.equals(SELL) ? 1 : -1) 
+					* Rands.nextUniform(rand, bidRangeMin, bidRangeMax
+					))).nonnegative().quantize(tickSize);
+
+			final Price rHat = this.getEstimatedFundamental(type, currentTime, 
+					simulationLength, fundamentalKappa, fundamentalMean);  
+			
+			log.log(INFO, "%s executing ZIRP strategy position=%d, for q=%d, fund=%s value=%s + %s=%s stepsLeft=%s pv=%s",
+				this, positionBalance, quantity, fundamental.getValueAt(currentTime).intValue(),
+				rHat, privateValue.getValue(positionBalance, type),	val, 
+				simulationLength - currentTime.getInTicks(), 
+				privateValue.getValueFromQuantity(positionBalance, quantity, type));
+			
+			Quote quote = marketQuoteProcessor.getQuote();
+			if (
+				quote != null 
+				&& quote.getBidPrice() != null 
+				&& quote.getAskPrice() != null
+			) {
+				if (type.equals(SELL)) {
+					// estimated surplus from selling at the above price
+					final int shading = price.intValue() - val.intValue();
+					final int bidPrice = quote.getBidPrice().intValue();
+					
+					// estimated surplus from selling all units at the bid price
+					final int bidMarkup = bidPrice * quantity - val.intValue();
+					
+					// if you would make at least acceptableProfitFraction of your
+					// markup at the bid, submit order at estimated fundamental
+					if (shading * acceptableProfitFraction <= bidMarkup) {
+						price = new Price(val.doubleValue() / quantity).quantize(tickSize).nonnegative();
+						
+						log.log(INFO, "%s executing ZIRP strategy GREEDY SELL, markup=%s, bid=%s, bidMarkup=%s, price=%s",
+							this, shading, bidPrice, bidMarkup, price.intValue());
+					} else {
+						log.log(INFO, "%s no g.s. opportunity, markup=%s, bidMarkup=%s, desiredFrac=%s, threshold=%s",
+							this, shading, bidMarkup, acceptableProfitFraction, 
+							(shading * acceptableProfitFraction)
+						); 
+					}
+				} else {
+					// estimated surplus from buying at the above price
+					final int shading = val.intValue() - price.intValue();
+					final int askPrice = quote.getAskPrice().intValue();
+					
+					// estimated surplus from buying all units at the ask price
+					final int askMarkup = val.intValue() - askPrice * quantity;
+					
+					// if you would make at least acceptableProfitFraction of your 
+					// markup at the ask, submit order at estimated fundamental
+					if (shading * acceptableProfitFraction <= askMarkup) {
+						price = new Price(val.doubleValue() / quantity).quantize(tickSize).nonnegative();
+						
+						log.log(INFO, "%s executing ZIRP strategy GREEDY BUY, markup=%s, ask=%s, askMarkup=%s, price=%s",
+								this, shading, askPrice,	askMarkup, price.intValue());
+					} else {
+						log.log(INFO, "%s no g.b. opportunity, markup=%s, askMarkup=%s, desiredFrac=%s, threshold=%s",
+							this, shading, askMarkup, acceptableProfitFraction,
+							shading * acceptableProfitFraction); 
+					}
+				}
+			}
+			
+			scheduler.executeActivity(new SubmitNMSOrder( this,	primaryMarket,type, 
+					price, quantity));
+		} else {
+			// if exceed max position, then don't submit a new bid
+			log.log(INFO, "%s executing ZIRP strategy new order would exceed max position %d ; no submission",
+					this, privateValue.getMaxAbsPosition());
+		}
 	}
 	
 	@Override
@@ -181,6 +271,42 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		return getValuation(type, 1, currentTime);
 	}
 	
+	protected Price getEstimatedValuation(
+		final OrderType type, 
+		final TimeStamp currentTime,
+		final int simulationLength,
+		final double fundamentalKappa,
+		final double fundamentalMean
+	) {
+		return getEstimatedValuation(type, 1, currentTime, 
+			simulationLength, fundamentalKappa, fundamentalMean);
+	}
+	
+	protected Price getEstimatedValuation(
+		OrderType type, 
+		int quantity, 
+		TimeStamp currentTime,
+		final int simLength,
+		final double fundamentalKappa,
+		final double fundamentalMean
+	) {
+		final Price rHat = this.getEstimatedFundamental(type, currentTime, simLength, 
+				fundamentalKappa, fundamentalMean); 
+			
+		return new Price(rHat.intValue() * quantity
+				+ privateValue.getValueFromQuantity(positionBalance, quantity, type).intValue()
+				).nonnegative();
+	}
+	
+	protected Price getEstimatedFundamental(OrderType type, TimeStamp time, 
+			int simLength, double kappa, double fundamentalMean) {
+		
+		final int stepsLeft = (int) (simLength - time.getInTicks());
+		final double kappaCompToPower = Math.pow(1 - kappa, stepsLeft);
+		return new Price(fundamental.getValueAt(time).intValue() * kappaCompToPower 
+			+ fundamentalMean * (1 - kappaCompToPower));
+	}
+	
 	/**
 	 * Returns valuation = fundamental + private value (value of cumulative
 	 * gain if over quantity > 1).
@@ -227,6 +353,38 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			TimeStamp currentTime) {
 		return getTransactionValuation(type, 1, currentTime);
 	}
+	
+//	protected Price getEstimatedLimitPrice(
+//		final OrderType type, 
+//		final TimeStamp currentTime,
+//		final int simulationLength,
+//		final double fundamentalKappa,
+//		final double fundamentalMean
+//	) {
+//		return getEstimatedLimitPrice(
+//			type, 1, currentTime, simulationLength, fundamentalKappa, fundamentalMean
+//		);
+//	}
+//	
+//	protected Price getEstimatedLimitPrice(
+//		final OrderType type, 
+//		final int quantity, 
+//		final TimeStamp currentTime,
+//		final int simulationLength,
+//		final double fundamentalKappa,
+//		final double fundamentalMean
+//	) {
+//		return new Price(
+//			getEstimatedValuation(
+//				type, 
+//				quantity, 
+//				currentTime, 
+//				simulationLength, 
+//				fundamentalKappa, 
+//				fundamentalMean
+//			).doubleValue() / quantity
+//		).nonnegative();
+//	}
 	
 	/**
 	 * Returns the limit price for a new order of quantity 1.

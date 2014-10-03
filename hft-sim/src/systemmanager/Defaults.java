@@ -72,6 +72,8 @@ public class Defaults implements Serializable {
 		
 		add(Keys.WITHDRAW_ORDERS, 		true);	// for ZIRs
 		
+		add(Keys.ACCEPTABLE_PROFIT_FRACTION, 0.8);	// for ZIRPs
+		
 		addAAAgentDefaults();
 		addZIPAgentDefaults();
 	}

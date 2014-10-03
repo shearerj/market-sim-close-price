@@ -35,8 +35,8 @@ import event.TimeStamp;
  * both) in lieu of the missing quote component. Notice that if
  * lastBid/Ask crosses the current ASK/BID, truncation will handle this.
  * 
- * XXX MM will lose time priority if use last bid & ask, but may not be
- * able to get around this
+ * MM will lose time priority if use last bid & ask, so use tick improvement
+ * and quote inside the spread.
  * 
  * @author ewah
  */
