@@ -1,17 +1,19 @@
 package entity.market;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 
-import data.MarketProperties;
-import entity.infoproc.SIP;
-import event.TimeStamp;
 import systemmanager.Consts.MarketType;
 import systemmanager.Keys;
 import systemmanager.Scheduler;
+import data.MarketProperties;
+import entity.infoproc.SIP;
+import event.TimeStamp;
 
 public class MarketFactoryTest {
 	

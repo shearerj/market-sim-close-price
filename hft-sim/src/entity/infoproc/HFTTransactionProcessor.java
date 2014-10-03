@@ -3,7 +3,6 @@ package entity.infoproc;
 import java.util.List;
 
 import systemmanager.Scheduler;
-
 import entity.agent.HFTAgent;
 import entity.market.Market;
 import entity.market.Order;

@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.List;
 
 import systemmanager.Scheduler;
-
 import activity.Activity;
 import activity.ProcessTransactions;
 

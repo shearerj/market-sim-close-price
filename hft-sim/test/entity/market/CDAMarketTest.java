@@ -1,10 +1,12 @@
 package entity.market;
 
 import static event.TimeStamp.ZERO;
-import static org.junit.Assert.*;
-import static fourheap.Order.OrderType.*;
-import static logger.Log.Level.*;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
 import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,13 +26,10 @@ import activity.WithdrawOrder;
 
 import com.google.common.collect.Iterables;
 
-import data.MockFundamental;
 import data.FundamentalValue;
+import data.MockFundamental;
 import entity.agent.MockBackgroundAgent;
 import entity.infoproc.SIP;
-import entity.market.CDAMarket;
-import entity.market.Price;
-import entity.market.Transaction;
 import event.TimeStamp;
 
 public class CDAMarketTest {

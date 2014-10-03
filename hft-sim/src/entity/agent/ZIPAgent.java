@@ -3,6 +3,8 @@ package entity.agent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
 import iterators.ExpInterarrivals;
 
 import java.util.List;
@@ -10,8 +12,6 @@ import java.util.Random;
 
 import systemmanager.Keys;
 import systemmanager.Scheduler;
-import static logger.Log.log;
-import static logger.Log.Level.INFO;
 import utils.MathUtils;
 import utils.Rands;
 import activity.SubmitNMSOrder;

@@ -1,8 +1,9 @@
 package systemmanager;
 
-import static org.junit.Assert.*;
-import static logger.Log.Level.*;
 import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,15 +11,14 @@ import java.util.Random;
 
 import logger.Log;
 
-
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import activity.MockActivity;
 import activity.MockAgentActivity;
-import data.MockFundamental;
 import data.FundamentalValue;
+import data.MockFundamental;
 import entity.agent.MockBackgroundAgent;
 import entity.infoproc.SIP;
 import entity.market.MockMarket;

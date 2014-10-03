@@ -8,7 +8,6 @@ import systemmanager.Scheduler;
 import com.google.common.base.Joiner;
 
 import data.FundamentalValue;
-
 import entity.infoproc.SIP;
 import entity.market.Market;
 import event.TimeStamp;

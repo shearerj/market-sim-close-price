@@ -2,9 +2,10 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static org.junit.Assert.*;
-import static logger.Log.Level.*;
 import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,12 +19,11 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import activity.SubmitOrder;
 import systemmanager.Consts;
-import systemmanager.Defaults;
 import systemmanager.Executor;
-import data.MockFundamental;
+import activity.SubmitOrder;
 import data.FundamentalValue;
+import data.MockFundamental;
 import entity.infoproc.SIP;
 import entity.market.CDAMarket;
 import entity.market.Market;
@@ -45,7 +45,7 @@ public class WindowAgentTest {
 	
 	@BeforeClass
 	public static void setUpClass() throws IOException{
-		Defaults.initialize();
+		
 		// Setting up the log file
 		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "WindowAgentTest.log"));
 	}

@@ -2,7 +2,6 @@ package activity;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-
 import entity.market.Order;
 import event.TimeStamp;
 

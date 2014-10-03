@@ -1,11 +1,11 @@
 package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static data.Observations.BUS;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static logger.Log.log;
 import static logger.Log.Level.INFO;
-import static data.Observations.BUS;
 import iterators.ExpInterarrivals;
 
 import java.util.Iterator;
@@ -16,12 +16,12 @@ import utils.MathUtils;
 import utils.Rands;
 import activity.SubmitOrder;
 import data.FundamentalValue;
+import data.Observations.MarketMakerStatistic;
 import entity.infoproc.BestBidAsk;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
 import event.TimeStamp;
-import data.Observations.MarketMakerStatistic;
 
 /**
  * Abstract class for MarketMakers.

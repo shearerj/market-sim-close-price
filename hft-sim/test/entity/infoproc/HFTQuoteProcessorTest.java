@@ -1,11 +1,11 @@
 package entity.infoproc;
 
 import static event.TimeStamp.ZERO;
+import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static logger.Log.Level.*;
-import static logger.Log.log;
 
 import java.io.File;
 import java.io.IOException;

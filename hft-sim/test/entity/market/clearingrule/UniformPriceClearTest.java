@@ -1,7 +1,8 @@
 package entity.market.clearingrule;
 
-import static org.junit.Assert.*;
-import static fourheap.Order.OrderType.*;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Map;

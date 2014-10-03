@@ -1,7 +1,6 @@
 package activity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
 import entity.infoproc.QuoteProcessor;
 import entity.market.Market;
 import entity.market.Quote;

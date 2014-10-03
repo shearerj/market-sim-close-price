@@ -2,10 +2,10 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
+import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static logger.Log.Level.*;
-import static logger.Log.log;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +17,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.Defaults;
 import systemmanager.Executor;
 import systemmanager.Keys;
 import activity.Clear;
@@ -43,7 +42,7 @@ public class MarketMakerTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		Defaults.initialize();
+		
 		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "MarketMakerTest.log"));
 	}
 

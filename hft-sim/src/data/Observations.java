@@ -2,7 +2,6 @@ package data;
 
 import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.base.Predicates.not;
-
 import static logger.Log.log;
 
 import java.util.Collection;

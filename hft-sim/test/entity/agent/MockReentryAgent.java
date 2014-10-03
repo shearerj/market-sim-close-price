@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.Random;
 
 import systemmanager.Scheduler;
-
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;

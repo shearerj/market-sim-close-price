@@ -1,7 +1,8 @@
 package entity.market.clearingrule;
 
-import static org.junit.Assert.*;
-import static fourheap.Order.OrderType.*;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -11,10 +12,10 @@ import org.junit.Test;
 
 import com.google.common.collect.Lists;
 
+import entity.market.DummyMarketTime;
 import entity.market.MarketTime;
 import entity.market.Order;
 import entity.market.Price;
-import entity.market.DummyMarketTime;
 import event.TimeStamp;
 import fourheap.MatchedOrders;
 

@@ -20,7 +20,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.Defaults;
 import systemmanager.Executor;
 import activity.Clear;
 import activity.SubmitOrder;
@@ -51,7 +50,7 @@ public class AgentTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		Defaults.initialize();
+		
 		Log.log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "AgentTest.log"));
 	}
 

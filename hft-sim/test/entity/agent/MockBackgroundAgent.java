@@ -3,11 +3,11 @@ package entity.agent;
 import java.util.Collection;
 import java.util.Random;
 
-import com.google.common.collect.Iterators;
-
+import systemmanager.Scheduler;
 import activity.MockActivity;
 
-import systemmanager.Scheduler;
+import com.google.common.collect.Iterators;
+
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;

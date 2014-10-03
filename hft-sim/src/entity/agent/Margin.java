@@ -8,9 +8,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import utils.Rands;
+
 import com.google.common.collect.Lists;
 
-import utils.Rands;
 import fourheap.Order.OrderType;
 
 /**

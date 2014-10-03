@@ -1,7 +1,7 @@
 package event;
 
-import activity.Activity;
 import utils.Pair;
+import activity.Activity;
 
 /**
  * Assigns an execution time to an activity

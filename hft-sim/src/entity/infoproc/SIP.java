@@ -1,9 +1,9 @@
 package entity.infoproc;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static data.Observations.BUS;
 import static logger.Log.log;
 import static logger.Log.Level.INFO;
-import static data.Observations.BUS;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -11,14 +11,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import systemmanager.Scheduler;
+import activity.Activity;
+import activity.ProcessQuote;
+import activity.ProcessTransactions;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import data.Observations.NBBOStatistic;
-import activity.Activity;
-import activity.ProcessQuote;
-import activity.ProcessTransactions;
 import entity.Entity;
 import entity.market.Market;
 import entity.market.Price;

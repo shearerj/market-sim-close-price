@@ -1,7 +1,6 @@
 package activity;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
 import entity.agent.Agent;
 import entity.market.Price;
 import event.TimeStamp;

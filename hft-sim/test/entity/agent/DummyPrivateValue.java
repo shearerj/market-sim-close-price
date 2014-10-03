@@ -1,9 +1,10 @@
 package entity.agent;
 
+import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
+
 import java.util.Arrays;
 import java.util.Collection;
-import static logger.Log.log;
-import static logger.Log.Level.*;
 
 import entity.market.Price;
 

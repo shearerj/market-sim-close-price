@@ -3,7 +3,6 @@ package entity.agent;
 import java.util.Random;
 
 import systemmanager.Scheduler;
-
 import data.FundamentalValue;
 import entity.infoproc.MarketQuoteProcessor;
 import entity.infoproc.MarketTransactionProcessor;

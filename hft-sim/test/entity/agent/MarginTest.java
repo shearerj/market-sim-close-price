@@ -1,14 +1,16 @@
 package entity.agent;
 
-import static org.junit.Assert.*;
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
 
-import static fourheap.Order.OrderType.SELL;
-import static fourheap.Order.OrderType.BUY;
-import fourheap.Order.OrderType;
-
 import org.junit.Test;
+
+import fourheap.Order.OrderType;
 
 public class MarginTest {
 

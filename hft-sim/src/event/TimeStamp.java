@@ -8,10 +8,10 @@ package event;
 
 import java.io.Serializable;
 
+import utils.MathUtils;
+
 import com.google.common.base.Objects;
 import com.google.common.primitives.Longs;
-
-import utils.MathUtils;
 
 /**
  * The TimeStamp class is just a wrapper around java.lang.Long. This *must*

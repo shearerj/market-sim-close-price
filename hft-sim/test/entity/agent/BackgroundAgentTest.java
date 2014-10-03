@@ -4,7 +4,9 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static logger.Log.log;
 import static logger.Log.Level.DEBUG;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,14 +20,14 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableList;
-
+import systemmanager.Consts;
+import systemmanager.Executor;
 import activity.Clear;
 import activity.LiquidateAtFundamental;
 import activity.SubmitOrder;
-import systemmanager.Consts;
-import systemmanager.Defaults;
-import systemmanager.Executor;
+
+import com.google.common.collect.ImmutableList;
+
 import data.FundamentalValue;
 import data.MockFundamental;
 import entity.infoproc.SIP;
@@ -43,7 +45,7 @@ public class BackgroundAgentTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		Defaults.initialize();
+		
 		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "BackgroundAgentTest.log"));
 	}
 

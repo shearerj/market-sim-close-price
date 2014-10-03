@@ -1,26 +1,20 @@
 package data;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import systemmanager.Defaults;
 import systemmanager.Keys;
 
 public class EntityPropertiesTest {
 
 	@Rule
 	public ExpectedException exception = ExpectedException.none();
-	
-	@BeforeClass
-	public static void setupClass() throws IOException {
-		Defaults.initialize();
-	}
 	
 	@Test
 	public void emptyProps() {
@@ -52,7 +46,7 @@ public class EntityPropertiesTest {
 		for (int i = 0; i < 2; i++)
 			assertEquals(spreads[i], propSpreads[i]);
 		
-		exception.expect(IllegalArgumentException.class);
+		exception.expect(IllegalStateException.class);
 		props.getAsDouble("nonexistentKey");
 	}
 	
@@ -127,7 +121,7 @@ public class EntityPropertiesTest {
 		assertNotEquals(1, props.getAsInt("nonExistentKey", Keys.THETA_MAX));
 		assertEquals(10, props.getAsInt("nonExistentKey", Keys.THETA_MAX));
 		
-		exception.expect(IllegalArgumentException.class);
+		exception.expect(IllegalStateException.class);
 		props.getAsInt("nonexistentKey", "nonExistentKey");
 	}
 	
@@ -143,7 +137,7 @@ public class EntityPropertiesTest {
 		assertNotEquals(1.0, props.getAsDouble("nonExistentKey", Keys.THETA_MAX), 1E-6);
 		assertEquals(10.0, props.getAsDouble("nonExistentKey", Keys.THETA_MAX), 1E-6);
 		
-		exception.expect(IllegalArgumentException.class);
+		exception.expect(IllegalStateException.class);
 		props.getAsDouble("nonexistentKey", "nonExistentKey");
 	}
 	
@@ -159,7 +153,7 @@ public class EntityPropertiesTest {
 		assertNotEquals(1, props.getAsLong("nonExistentKey", Keys.THETA_MAX));
 		assertEquals(10, props.getAsLong("nonExistentKey", Keys.THETA_MAX));
 		
-		exception.expect(IllegalArgumentException.class);
+		exception.expect(IllegalStateException.class);
 		props.getAsLong("nonexistentKey", "nonExistentKey");
 	}
 	
@@ -175,7 +169,7 @@ public class EntityPropertiesTest {
 		assertNotEquals(1.0, props.getAsFloat("nonExistentKey", Keys.THETA_MAX), 1E-6);
 		assertEquals(10.0, props.getAsFloat("nonExistentKey", Keys.THETA_MAX), 1E-6);
 		
-		exception.expect(IllegalArgumentException.class);
+		exception.expect(IllegalStateException.class);
 		props.getAsFloat("nonexistentKey", "nonExistentKey");
 	}
 	
@@ -191,7 +185,7 @@ public class EntityPropertiesTest {
 		assertFalse(props.getAsBoolean("nonExistentKey", Keys.THETA_MAX));
 		assertFalse(props.getAsBoolean("nonExistentKey", Keys.THETA_MAX));
 		
-		exception.expect(IllegalArgumentException.class);
+		exception.expect(IllegalStateException.class);
 		props.getAsBoolean("nonexistentKey", "nonExistentKey");
 	}
 }

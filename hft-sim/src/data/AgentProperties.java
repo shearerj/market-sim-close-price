@@ -4,10 +4,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Map;
 
+import systemmanager.Consts.AgentType;
+
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
-
-import systemmanager.Consts.AgentType;
 
 /**
  * Entity properties that is bundled with an AgentType.

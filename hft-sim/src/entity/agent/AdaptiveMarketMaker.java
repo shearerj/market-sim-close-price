@@ -1,26 +1,26 @@
 package entity.agent;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static logger.Log.log;
+import static logger.Log.Level.INFO;
+
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Random;
 
 import systemmanager.Keys;
 import systemmanager.Scheduler;
+
+import com.google.common.collect.EvictingQueue;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+
 import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
 import event.TimeStamp;
-
-import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkArgument;
-import static logger.Log.log;
-import static logger.Log.Level.INFO;
-
-import com.google.common.collect.EvictingQueue;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
 /**
  * ADAPTIVEMARKETMAKER
@@ -86,7 +86,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 				props.getAsBoolean(Keys.TRUNCATE_LADDER),
 				props.getAsBoolean(Keys.TICK_IMPROVEMENT),
 				props.getAsBoolean(Keys.TICK_OUTSIDE),
-				props.getAsInt(Keys.INITIAL_LADDER_MEAN),
+				props.getAsInt(Keys.INITIAL_LADDER_MEAN, Keys.FUNDAMENTAL_MEAN),
 				props.getAsInt(Keys.INITIAL_LADDER_RANGE),
 				props.getAsInt(Keys.NUM_HISTORICAL), 	// set default to 8 to maintain compatibility with previous version
 				props.getAsIntArray(Keys.SPREADS),

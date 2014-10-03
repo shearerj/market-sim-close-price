@@ -1,8 +1,9 @@
 package entity.agent;
 
-import static org.junit.Assert.*;
-import static logger.Log.Level.*;
 import static logger.Log.log;
+import static logger.Log.Level.DEBUG;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +16,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import systemmanager.Consts;
+import systemmanager.Executor;
 import activity.AgentStrategy;
 import data.FundamentalValue;
 import data.MockFundamental;
@@ -23,9 +26,6 @@ import entity.market.Market;
 import entity.market.MockMarket;
 import event.TimeStamp;
 import event.TimedActivity;
-import systemmanager.Consts;
-import systemmanager.Defaults;
-import systemmanager.Executor;
 
 public class ReentryAgentTest {
 
@@ -35,7 +35,7 @@ public class ReentryAgentTest {
 	
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		Defaults.initialize();
+		
 		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "ReentryAgentTest.log"));
 	}
 	

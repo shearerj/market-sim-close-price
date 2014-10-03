@@ -1,8 +1,7 @@
 package systemmanager;
 
-import static logger.Log.Level.INFO;
 import static logger.Log.log;
-
+import static logger.Log.Level.INFO;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,8 +12,8 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.Random;
 
-import logger.Log.Prefix;
 import logger.Log;
+import logger.Log.Prefix;
 
 import com.google.common.base.Objects;
 
@@ -79,8 +78,6 @@ public class SystemManager {
 	 * Constructor reads everything in and sets appropriate variables
 	 */
 	public SystemManager(File simFolder, int obsNum) throws IOException {
-		Defaults.initialize();
-		
 		this.simulationFolder = simFolder;
 		this.observationNumber = obsNum;
 		this.specification = new SimulationSpec(new File(simFolder, Consts.SIM_SPEC_FILE));

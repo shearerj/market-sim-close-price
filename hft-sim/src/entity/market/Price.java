@@ -1,14 +1,15 @@
 package entity.market;
 
-import java.io.Serializable;
 import static java.math.RoundingMode.HALF_EVEN;
+
+import java.io.Serializable;
+
+import utils.MathUtils;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.Ordering;
 import com.google.common.math.DoubleMath;
 import com.google.common.primitives.Ints;
-
-import utils.MathUtils;
 
 /**
  * Price class is wrapper for long; one unit represents one thousandth of a

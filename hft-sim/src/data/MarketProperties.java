@@ -4,10 +4,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Map;
 
+import systemmanager.Consts.MarketType;
+
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
-
-import systemmanager.Consts.MarketType;
 
 /**
  * Entity properties bundled with MarketType

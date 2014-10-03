@@ -3,8 +3,8 @@ package entity.market.clearingrule;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.Iterables;
 
 import entity.market.MarketTime;
 import entity.market.Order;

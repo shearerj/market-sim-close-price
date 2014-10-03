@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Random;
 
 import systemmanager.Scheduler;
-
 import entity.agent.Agent;
 import entity.infoproc.SIP;
 import entity.market.clearingrule.MockClearingRule;

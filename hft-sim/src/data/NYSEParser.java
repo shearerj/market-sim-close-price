@@ -4,10 +4,8 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 
 import java.io.IOException;
-//import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
-//import java.util.Scanner;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
@@ -16,6 +14,8 @@ import com.google.common.collect.PeekingIterator;
 import entity.market.Price;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
+//import java.nio.file.Paths;
+//import java.util.Scanner;
 
 public class NYSEParser extends MarketDataParser {
 

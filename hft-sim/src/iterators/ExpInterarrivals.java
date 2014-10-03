@@ -6,10 +6,11 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Random;
 
+import utils.Rands;
+
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterators;
 
-import utils.Rands;
 import event.TimeStamp;
 
 public final class ExpInterarrivals extends AbstractIterator<TimeStamp> implements Serializable {

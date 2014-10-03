@@ -42,7 +42,7 @@ public class MockMarketMaker extends MarketMaker {
 				props.getAsBoolean(Keys.TRUNCATE_LADDER), 
 				props.getAsBoolean(Keys.TICK_IMPROVEMENT),
 				props.getAsBoolean(Keys.TICK_OUTSIDE),
-				props.getAsInt(Keys.INITIAL_LADDER_MEAN),
+				props.getAsInt(Keys.INITIAL_LADDER_MEAN, Keys.FUNDAMENTAL_MEAN),
 				props.getAsInt(Keys.INITIAL_LADDER_RANGE));	
 	}
 }

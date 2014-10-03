@@ -1,13 +1,15 @@
 package entity.agent;
 
+import static fourheap.Order.OrderType.BUY;
+import static fourheap.Order.OrderType.SELL;
+
 import java.util.Random;
-
-import com.google.common.collect.Iterators;
-
-import static fourheap.Order.OrderType.*;
 
 import systemmanager.Keys;
 import systemmanager.Scheduler;
+
+import com.google.common.collect.Iterators;
+
 import data.EntityProperties;
 import data.FundamentalValue;
 import entity.infoproc.SIP;

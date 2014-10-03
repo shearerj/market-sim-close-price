@@ -1,16 +1,17 @@
 package data;
 
-import static logger.Log.Level.ERROR;
 import static logger.Log.log;
+import static logger.Log.Level.ERROR;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Random;
 
+import utils.Rands;
+
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
-import utils.Rands;
 import entity.market.Price;
 import event.TimeStamp;
 

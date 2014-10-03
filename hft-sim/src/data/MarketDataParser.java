@@ -1,12 +1,12 @@
 package data;
 
-import java.io.IOException;
 import java.io.File;
-//import java.nio.file.Paths;
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Scanner;
 
 import com.google.common.collect.PeekingIterator;
+//import java.nio.file.Paths;
 
 public abstract class MarketDataParser {
 	protected Scanner scanner; 

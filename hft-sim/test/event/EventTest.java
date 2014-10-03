@@ -1,6 +1,7 @@
 package event;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
 import java.util.List;
@@ -8,14 +9,14 @@ import java.util.Random;
 
 import org.junit.Test;
 
+import activity.Activity;
+import activity.MockActivity;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
-
-import activity.Activity;
-import activity.MockActivity;
 
 public class EventTest {
 

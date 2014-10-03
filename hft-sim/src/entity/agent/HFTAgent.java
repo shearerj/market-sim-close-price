@@ -1,13 +1,13 @@
 package entity.agent;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
 import systemmanager.Scheduler;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

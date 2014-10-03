@@ -1,12 +1,14 @@
 package systemmanager;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static systemmanager.Consts.Presets.CENTRALCALL;
+import static systemmanager.Consts.Presets.CENTRALCDA;
+import static systemmanager.Consts.Presets.TWOMARKET;
+import static systemmanager.Consts.Presets.TWOMARKETLA;
 
 import java.io.StringReader;
 
 import org.junit.Test;
-
-import static systemmanager.Consts.Presets.*;
 
 import com.google.gson.JsonObject;
 

@@ -2,7 +2,7 @@ package systemmanager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static logger.Log.log;
-import static logger.Log.Level.*;
+import static logger.Log.Level.DEBUG;
 
 import java.util.Random;
 

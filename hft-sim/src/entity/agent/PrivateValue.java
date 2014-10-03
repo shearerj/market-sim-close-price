@@ -4,14 +4,14 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static entity.market.Price.ZERO;
 import static fourheap.Order.OrderType.BUY;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+
+import org.apache.commons.lang3.ArrayUtils;
 
 import sumstats.SumStats;
 import utils.Rands;

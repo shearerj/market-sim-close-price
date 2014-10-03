@@ -8,14 +8,18 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import systemmanager.Consts;
 import systemmanager.Defaults;
+import utils.Maps2;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Joiner.MapJoiner;
+import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.primitives.Ints;
 
 /**
  * Class that represents the properties of an entity. These are generally loaded
@@ -31,7 +35,10 @@ import com.google.common.collect.Maps;
 public class EntityProperties implements Serializable {
 	
 	private static final long serialVersionUID = -7220533203495890410L;
+	
+	private static final Set<String> trueStrings = ImmutableSet.of("t", "true");
 	private final static Splitter configSplitter = Splitter.on('_');
+	private static final Splitter arraySplitter = Splitter.on('-');
 	private final static MapJoiner configJoiner = Joiner.on('_').withKeyValueSeparator("_");
 
 	/**
@@ -136,90 +143,64 @@ public class EntityProperties implements Serializable {
 	}
 
 	public String getAsString(String key) {
-		String val = properties.get(key);
-		return val != null ? val : Defaults.getAsString(key);
+		return Optional.fromNullable(properties.get(key))
+				.or(Optional.fromNullable(Defaults.get(key)))
+				.get(); // Will throw an error if nothing was found
+	}
+	
+	public String getAsString(String key, String defaultKey) {
+		return Optional.fromNullable(properties.get(key))
+				.or(Optional.fromNullable(properties.get(defaultKey)))
+				.or(Optional.fromNullable(Defaults.get(defaultKey)))
+				.get(); // Will throw an error if nothing was found
 	}
 
 	public int getAsInt(String key) {
-		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? Integer.parseInt(val) : Defaults.getAsInt(key);
-		return Defaults.getAsInt(key);
+		return Integer.parseInt(getAsString(key));
 	}
 
 	public int getAsInt(String key, String defaultKey) {
-		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? Integer.parseInt(val) : getAsInt(defaultKey);
-		return getAsInt(defaultKey);
+		return Integer.parseInt(getAsString(key, defaultKey));
 	}
 
 	public double getAsDouble(String key) {
-		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? Double.parseDouble(val) : Defaults.getAsDouble(key);
-		return Defaults.getAsDouble(key);
+		return Double.parseDouble(getAsString(key));
 	}
 
 	public double getAsDouble(String key, String defaultKey) {
-		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? Double.parseDouble(val) : getAsDouble(defaultKey);
-		return getAsDouble(defaultKey);
+		return Double.parseDouble(getAsString(key, defaultKey));
 	}
 
 	public float getAsFloat(String key) {
-		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? Float.parseFloat(val) : Defaults.getAsFloat(key);
-		return Defaults.getAsFloat(key);
+		return Float.parseFloat(getAsString(key));
 	}
 	
 	public float getAsFloat(String key, String defaultKey) {
-		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? Float.parseFloat(val) : getAsFloat(defaultKey);
-		return getAsFloat(defaultKey);
+		return Float.parseFloat(getAsString(key, defaultKey));
 	}
 
 	public long getAsLong(String key) {
-		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? Long.parseLong(val) : Defaults.getAsLong(key);
-		return Defaults.getAsLong(key);
+		return Long.parseLong(getAsString(key));
 	}
 
 	public long getAsLong(String key, String defaultKey) {
-		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? Long.parseLong(val) : getAsLong(defaultKey);
-		return getAsLong(defaultKey);
-	}
-	
-	private static boolean parseBoolean(String val) {
-		if (val.toLowerCase().equals("t")) return true;
-		else if (val.toLowerCase().equals("f")) return false;
-		return false;
-	}
-	
-	public boolean getAsBoolean(String key) {
-		String val = properties.get(key);
-		if (val != null) if (!val.isEmpty()) return Boolean.parseBoolean(val) || EntityProperties.parseBoolean(val);
-		return Defaults.getAsBoolean(key);
+		return Long.parseLong(getAsString(key, defaultKey));
 	}
 
+	public boolean getAsBoolean(String key) {
+		return parseBoolean(getAsString(key));
+	}
+	
 	public boolean getAsBoolean(String key, String defaultKey) {
-		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? Boolean.parseBoolean(val) || EntityProperties.parseBoolean(val) 
-											   : getAsBoolean(defaultKey);
-		return getAsBoolean(defaultKey);
+		return parseBoolean(getAsString(key, defaultKey));
 	}
 	
 	public int[] getAsIntArray(String key) {
-		String val = properties.get(key);
-		if (val != null) return !val.isEmpty() ? getAsIntArray(key, Consts.DELIMITER) 
-											   : Defaults.getAsIntArray(key, Consts.DELIMITER);
-		return Defaults.getAsIntArray(key, Consts.DELIMITER);
+		return parseIntArr(getAsString(key));
 	}
 	
-	public int[] getAsIntArray(String key, String delim){
-		String[] vals = properties.get(key).split(delim);
-		int[] result = new int[vals.length];
-		for(int i = 0; i < vals.length; i++)
-			{ result[i] = Integer.parseInt(vals[i]); }
-		return result;
+	public int[] getAsIntArray(String key, String defaultKey){
+		return parseIntArr(getAsString(key, defaultKey));
 	}
 
 	public void put(String key, String value) {
@@ -235,9 +216,7 @@ public class EntityProperties implements Serializable {
 	}
 	
 	public void putPairs(Object... keysAndValues) {
-		checkArgument(keysAndValues.length % 2 == 0);
-		for (int i = 0; i < keysAndValues.length; i+=2)
-			put((String) keysAndValues[i], keysAndValues[i+1].toString());
+		properties.putAll(Maps2.fromPairs(keysAndValues));
 	}
 	
 	public String getConfigString() {
@@ -265,5 +244,13 @@ public class EntityProperties implements Serializable {
 	public String toString() {
 		return properties.toString();
 	}
-
+	
+	protected static boolean parseBoolean(String string) {
+		return string != null && trueStrings.contains(string.toLowerCase());
+	}
+	
+	// TODO Make this apply to general arrays instead of just int
+	protected static int[] parseIntArr(String string) {
+		return Ints.toArray(Collections2.transform(arraySplitter.splitToList(string), Ints.stringConverter()));
+	}
 }
