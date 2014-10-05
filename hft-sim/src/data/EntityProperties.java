@@ -192,7 +192,7 @@ public class EntityProperties implements Serializable {
 	}
 
 	public int[] getAsIntArray(String key){
-		return getAsIntArray(key, "/");
+		return getAsIntArray(key, "-");
 	}
 	
 	public int[] getAsIntArray(String key, String delim){
