@@ -121,8 +121,8 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					* Rands.nextUniform(rand, bidRangeMin, bidRangeMax
 					))).nonnegative().quantize(tickSize);
 
-			final Price rHat = this.getEstimatedFundamental(type, currentTime, 
-					simulationLength, fundamentalKappa, fundamentalMean);  
+			final Price rHat = this.getEstimatedFundamental(currentTime, simulationLength, 
+					fundamentalKappa, fundamentalMean);  
 			
 			log.log(INFO, "%s executing ZIRP strategy position=%d, for q=%d, fund=%s value=%s + %s=%s stepsLeft=%s pv=%s",
 				this, positionBalance, quantity, fundamental.getValueAt(currentTime).intValue(),
@@ -290,21 +290,12 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		final double fundamentalKappa,
 		final double fundamentalMean
 	) {
-		final Price rHat = this.getEstimatedFundamental(type, currentTime, simLength, 
+		final Price rHat = this.getEstimatedFundamental(currentTime, simLength, 
 				fundamentalKappa, fundamentalMean); 
 			
 		return new Price(rHat.intValue() * quantity
 				+ privateValue.getValueFromQuantity(positionBalance, quantity, type).intValue()
 				).nonnegative();
-	}
-	
-	protected Price getEstimatedFundamental(OrderType type, TimeStamp time, 
-			int simLength, double kappa, double fundamentalMean) {
-		
-		final int stepsLeft = (int) (simLength - time.getInTicks());
-		final double kappaCompToPower = Math.pow(1 - kappa, stepsLeft);
-		return new Price(fundamental.getValueAt(time).intValue() * kappaCompToPower 
-			+ fundamentalMean * (1 - kappaCompToPower));
 	}
 	
 	/**

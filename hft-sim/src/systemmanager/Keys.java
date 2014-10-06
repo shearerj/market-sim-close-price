@@ -105,5 +105,5 @@ public interface Keys {
 	public final static String MOVING_AVERAGE_PRICE = "movingAveragePrice";	// TODO remove in next iteration; only keeping for backwards compatibility
 	public final static String FAST_LEARNING = "fastLearning";		// TODO remove in next iteration; only keeping for backwards compatibility
 	public final static String USE_LAST_PRICE = "useLastPrice";	// TODO remove in next iteration; only keeping for backwards compatibility
-	public final static String END_FUNDAMENTAL_ESTIMATE = "fundEstimate";
+	public final static String FUNDAMENTAL_ESTIMATE = "fundEstimate";
 }

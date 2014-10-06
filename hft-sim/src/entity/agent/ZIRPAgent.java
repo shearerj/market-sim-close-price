@@ -63,7 +63,7 @@ public final class ZIRPAgent extends BackgroundAgent {
 			props.getAsBoolean(Keys.WITHDRAW_ORDERS, true),
 			props.getAsInt(Keys.SIMULATION_LENGTH),
 			props.getAsDouble(Keys.FUNDAMENTAL_KAPPA),
-			props.getAsDouble(Keys.FUNDAMENTAL_MEAN),
+			props.getAsInt(Keys.FUNDAMENTAL_MEAN),
 			props.getAsDouble(
 				Keys.ACCEPTABLE_PROFIT_FRACTION, 
 				DEFAULT_ACCEPTABLE_PROFIT_FRACTION

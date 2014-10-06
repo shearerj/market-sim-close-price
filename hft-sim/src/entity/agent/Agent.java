@@ -104,6 +104,24 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
+	 * Estimate fundamental r_hat.
+	 * @param time
+	 * @param simLength
+	 * @param kappa
+	 * @param fundamentalMean
+	 * 
+	 * @return
+	 */
+	protected Price getEstimatedFundamental(TimeStamp time, int simLength, 
+			double kappa, double fundamentalMean) {
+		
+		final int stepsLeft = (int) (simLength - time.getInTicks());
+		final double kappaCompToPower = Math.pow(1 - kappa, stepsLeft);
+		return new Price(fundamental.getValueAt(time).intValue() * kappaCompToPower 
+			+ fundamentalMean * (1 - kappaCompToPower));
+	}
+	
+	/**
 	 * Adds an agent's order to its memory so it knows about it, and can cancel it
 	 * @param order
 	 */
