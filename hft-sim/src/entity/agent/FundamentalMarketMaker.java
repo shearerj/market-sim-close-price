@@ -111,7 +111,9 @@ public class FundamentalMarketMaker extends MarketMaker {
 					log.log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", 
 							this, primaryMarket, oldBid, oldAsk, bid, ask);
 				}
-				int offset = (ask.intValue() - bid.intValue()) / 2;
+				int offset = this.initLadderRange / 2;
+				if (bid != null && ask != null) 
+				    offset = (ask.intValue() - bid.intValue()) / 2;
 				
 				if (fundamentalEstimate == null) {
 					fundamentalEstimate = this.getEstimatedFundamental(currentTime, simulationLength, 

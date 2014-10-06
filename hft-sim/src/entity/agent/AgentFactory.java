@@ -104,6 +104,11 @@ public class AgentFactory {
 			return new AdaptiveMarketMaker(scheduler, fundamental, sip,
 					marketAssignment.next(), new Random(rand.nextLong()),
 					props);
+		case FUNDAMENTALMM:
+			arrivalProcess.next();
+			return new FundamentalMarketMaker(scheduler, fundamental, sip,
+					marketAssignment.next(), new Random(rand.nextLong()),
+					props);
 		case LA:
 			arrivalProcess.next();
 			marketAssignment.next();
