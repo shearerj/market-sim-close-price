@@ -65,7 +65,9 @@ public class FundamentalMarketMakerTest {
 			Keys.INITIAL_LADDER_RANGE, 0,
 			Keys.SIMULATION_LENGTH, 1000,
 			Keys.FUNDAMENTAL_KAPPA, 0.05,
-			Keys.FUNDAMENTAL_MEAN, 100000
+			Keys.FUNDAMENTAL_MEAN, 100000,
+			Keys.SPREAD, -1,
+			Keys.FUNDAMENTAL_ESTIMATE, -1
 			);
 
 	@BeforeClass
@@ -129,6 +131,54 @@ public class FundamentalMarketMakerTest {
 		} else {
 			assertEquals(new Price(est - 1000), p1);
 			assertEquals(new Price(est + 1000), p2);
+		}
+	}
+	
+	@Test
+	public void constantSpreadTest() {
+		TimeStamp time = TimeStamp.ZERO;
+
+		FundamentalMarketMaker mm = createFundMM(
+				Keys.NUM_RUNGS, 1,
+				Keys.RUNG_SIZE, 10,
+				Keys.TRUNCATE_LADDER, false,
+				Keys.TICK_IMPROVEMENT, false,
+				Keys.TICK_OUTSIDE, false,
+				Keys.TICK_SIZE, 1,
+				Keys.FUNDAMENTAL_ESTIMATE, -1,
+				Keys.SPREAD, 1000);
+
+		// Creating dummy agents
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
+
+		// Creating and adding bids
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(103000), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(105000), 1));
+		exec.executeActivity(new Clear(market));
+
+		// Check market quote
+		Quote quote = market.getQuoteProcessor().getQuote();
+		assertEquals(new Price(105000), quote.getAskPrice());
+		assertEquals(new Price(103000), quote.getBidPrice());
+
+		// Check activities inserted (2 submit orders plus agent reentry)
+		mm.agentStrategy(time);
+		
+		assertTrue(mm.fundamentalEstimate.intValue() > 0);
+		int est = mm.fundamentalEstimate.intValue();
+		
+		assertEquals(2, mm.activeOrders.size());
+		Price p1 = Iterables.get(mm.activeOrders, 0, null).getPrice();
+		Price p2 = Iterables.getLast(mm.activeOrders).getPrice();
+		assertEquals(1000, Math.abs(p1.intValue() - p2.intValue()));
+		// check the rest of its submitted ladder
+		if (p1.intValue() > p2.intValue()) {
+			assertEquals(new Price(est - 500), p2);
+			assertEquals(new Price(est + 500), p1);
+		} else {
+			assertEquals(new Price(est - 500), p1);
+			assertEquals(new Price(est + 500), p2);
 		}
 	}
 	

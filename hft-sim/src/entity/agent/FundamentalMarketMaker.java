@@ -36,13 +36,14 @@ public class FundamentalMarketMaker extends MarketMaker {
 	protected int simulationLength;
 	protected double fundamentalKappa;
 	protected double fundamentalMean;
+	protected Price constSpread;
 
 	public FundamentalMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
 			SIP sip, Market market, Random rand, double reentryRate,
 			int tickSize, int numRungs, int rungSize, boolean truncateLadder,
 			boolean tickImprovement, boolean tickOutside, int initLadderMean, 
 			int initLadderRange, int simLength, double kappa, double fundamentalMean,
-			int fundamentalEstimate) {
+			int fundamentalEstimate, int constSpread) {
 
 		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
 				numRungs, rungSize, truncateLadder, tickImprovement, tickOutside,
@@ -52,6 +53,8 @@ public class FundamentalMarketMaker extends MarketMaker {
 		simulationLength = simLength;
 		fundamentalKappa = kappa;
 		this.fundamentalMean = fundamentalMean;
+		this.constSpread = null;
+		if (constSpread > 0) this.constSpread = new Price(constSpread);
 	}
 
 	public FundamentalMarketMaker(Scheduler scheduler, FundamentalValue fundamental,
@@ -70,7 +73,8 @@ public class FundamentalMarketMaker extends MarketMaker {
 				props.getAsInt(Keys.SIMULATION_LENGTH),	// no default needed, already going to be in the EntityProperties file
 				props.getAsDouble(Keys.FUNDAMENTAL_KAPPA),
 				props.getAsInt(Keys.FUNDAMENTAL_MEAN),
-				props.getAsInt(Keys.FUNDAMENTAL_ESTIMATE, -1));
+				props.getAsInt(Keys.FUNDAMENTAL_ESTIMATE, -1), 
+				props.getAsInt(Keys.SPREAD, -1)); // for backwards compatibility
 	}
 
 	@Override
@@ -112,13 +116,20 @@ public class FundamentalMarketMaker extends MarketMaker {
 							this, primaryMarket, oldBid, oldAsk, bid, ask);
 				}
 				int offset = this.initLadderRange / 2;
-				if (bid != null && ask != null) 
+				if (bid != null && ask != null) { 
 				    offset = (ask.intValue() - bid.intValue()) / 2;
-				
+				}
+				if (this.constSpread != null) {
+					offset = this.constSpread.intValue() / 2;
+				}
 				if (fundamentalEstimate == null) {
 					fundamentalEstimate = this.getEstimatedFundamental(currentTime, simulationLength, 
 							fundamentalKappa, fundamentalMean);
 				}
+				log.log(INFO, "%s in %s: Spread of %s around estimated fundamental %s, ladderBid=%s, ladderAsk=%s", 
+						this, primaryMarket, new Price(offset), fundamentalEstimate,
+						new Price(fundamentalEstimate.intValue() - offset),
+						new Price(fundamentalEstimate.intValue() + offset));
 				this.createOrderLadder(new Price(fundamentalEstimate.intValue() - offset),
 										new Price(fundamentalEstimate.intValue() + offset));
 			}
