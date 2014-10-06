@@ -60,16 +60,17 @@ public class ZIPAgent extends WindowAgent {
 	public ZIPAgent(Scheduler scheduler, TimeStamp arrivalTime,
 			FundamentalValue fundamental, SIP sip, Market market, Random rand,
 			double reentryRate, double pvVar, int tickSize, int maxAbsPosition,
-			int bidRangeMin, int bidRangeMax,
-			int windowLength, double marginMin, double marginMax,
-			double gammaMin, double gammaMax, double betaMin, double betaMax,
-			double rangeCoeffA, double rangeCoeffR) {
+			int bidRangeMin, int bidRangeMax, boolean withdrawOrders, 
+			int windowLength, double marginMin,	double marginMax, double gammaMin, double gammaMax, double betaMin,
+			double betaMax, double rangeCoeffA, double rangeCoeffR) {
 
 		super(scheduler, arrivalTime, fundamental, sip, market, rand,
 				ExpInterarrivals.create(reentryRate, rand), new PrivateValue(
 						maxAbsPosition, pvVar, rand), tickSize, bidRangeMin,
 				bidRangeMax, windowLength);
 
+		this.withdrawOrders = withdrawOrders;
+		
 		checkArgument(rangeCoeffA > 0, "Coefficient A's range must be positive");
 		checkArgument(rangeCoeffR > 0, "Coefficient A's range must be positive");
 		checkArgument(betaMin >= 0, "Min beta must be positive");
@@ -103,15 +104,15 @@ public class ZIPAgent extends WindowAgent {
 				props.getAsInt(Keys.MAX_QUANTITY, 10),
 				props.getAsInt(Keys.BID_RANGE_MIN, 0),
 				props.getAsInt(Keys.BID_RANGE_MAX, 5000), 
+				props.getAsBoolean(Keys.WITHDRAW_ORDERS, false), // XXX for backwards compatibility
 				props.getAsInt(Keys.WINDOW_LENGTH, 5000),
 				props.getAsDouble(Keys.MARGIN_MIN, 0.05),
 				props.getAsDouble(Keys.MARGIN_MAX, 0.35),
 				props.getAsDouble(Keys.GAMMA_MIN, 0),
 				props.getAsDouble(Keys.GAMMA_MAX, 0.1),
 				props.getAsDouble(Keys.BETA_MIN, 0.1),
-				props.getAsDouble(Keys.BETA_MAX, 0.5),
-				props.getAsDouble(Keys.COEFF_A, 0.05), 
-				props.getAsDouble(Keys.COEFF_R, 0.05));
+				props.getAsDouble(Keys.BETA_MAX, 0.5), 
+				props.getAsDouble(Keys.COEFF_A, 0.05), props.getAsDouble(Keys.COEFF_R, 0.05));
 	}
 	
 	@Override

@@ -29,6 +29,7 @@ import activity.ProcessQuote;
 import activity.SubmitOrder;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 
 import data.EntityProperties;
 import data.FundamentalValue;
@@ -43,11 +44,6 @@ import event.TimeStamp;
 import fourheap.Order.OrderType;
 
 /**
- * 
- * TODO need to test endFundamentalEstimate (hard-coded)
- * 
- * and submitting ladder around estimate
- * 
  * @author ewah
  *
  */
@@ -94,7 +90,7 @@ public class FundamentalMarketMakerTest {
 		TimeStamp time = TimeStamp.ZERO;
 
 		FundamentalMarketMaker mm = createFundMM(
-				Keys.NUM_RUNGS, 2,
+				Keys.NUM_RUNGS, 1,
 				Keys.RUNG_SIZE, 10,
 				Keys.TRUNCATE_LADDER, false,
 				Keys.TICK_IMPROVEMENT, false,
@@ -116,17 +112,24 @@ public class FundamentalMarketMakerTest {
 		assertEquals(new Price(105000), quote.getAskPrice());
 		assertEquals(new Price(103000), quote.getBidPrice());
 
-		// Check activities inserted (4 submit orders plus agent reentry)
+		// Check activities inserted (2 submit orders plus agent reentry)
 		mm.agentStrategy(time);
 		
-		mm.agentStrategy(time);
 		assertTrue(mm.fundamentalEstimate.intValue() > 0);
 		int est = mm.fundamentalEstimate.intValue();
 		
-		
+		assertEquals(2, mm.activeOrders.size());
+		Price p1 = Iterables.get(mm.activeOrders, 0, null).getPrice();
+		Price p2 = Iterables.getLast(mm.activeOrders).getPrice();
+		assertEquals(2000, Math.abs(p1.intValue() - p2.intValue()));
 		// check the rest of its submitted ladder
-		assertEquals(new Price(est - 1000), mm.lastBid);
-		assertEquals(new Price(est + 1000), mm.lastAsk);
+		if (p1.intValue() > p2.intValue()) {
+			assertEquals(new Price(est - 1000), p2);
+			assertEquals(new Price(est + 1000), p1);
+		} else {
+			assertEquals(new Price(est - 1000), p1);
+			assertEquals(new Price(est + 1000), p2);
+		}
 	}
 	
 	@Test
