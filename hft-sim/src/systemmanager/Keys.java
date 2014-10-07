@@ -97,6 +97,7 @@ public interface Keys {
 	public final static String TICK_OUTSIDE = "tickOutside";
 	public final static String INITIAL_LADDER_MEAN = "initLadderMean";
 	public final static String INITIAL_LADDER_RANGE = "initLadderRange";
+	public final static String FIX = "fix";
 
 	public final static String WEIGHT_FACTOR = "weightFactor";
 	public final static String SPREADS = "spreads";

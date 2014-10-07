@@ -124,11 +124,12 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			final Price rHat = this.getEstimatedFundamental(currentTime, simulationLength, 
 					fundamentalKappa, fundamentalMean);  
 			
-			log.log(INFO, "%s executing ZIRP strategy position=%d, for q=%d, fund=%s value=%s + %s=%s stepsLeft=%s pv=%s",
-				this, positionBalance, quantity, fundamental.getValueAt(currentTime).intValue(),
-				rHat, privateValue.getValue(positionBalance, type),	val, 
-				simulationLength - currentTime.getInTicks(), 
-				privateValue.getValueFromQuantity(positionBalance, quantity, type));
+			log.log(INFO, "%s at position=%d, for %s %d units, r_t=%s & %s steps left, value=rHat+pv=%s+%s= %s",
+					this, positionBalance, type, quantity,
+					fundamental.getValueAt(currentTime).intValue(),
+					simulationLength - currentTime.getInTicks(),
+					rHat, privateValue.getValue(positionBalance, type), 
+					val);
 			
 			Quote quote = marketQuoteProcessor.getQuote();
 			if (
@@ -149,13 +150,12 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					if (shading * acceptableProfitFraction <= bidMarkup) {
 						price = new Price(val.doubleValue() / quantity).quantize(tickSize).nonnegative();
 						
-						log.log(INFO, "%s executing ZIRP strategy GREEDY SELL, markup=%s, bid=%s, bidMarkup=%s, price=%s",
-							this, shading, bidPrice, bidMarkup, price.intValue());
+						log.log(INFO, "%s executing ZIRP strategy GREEDY SELL @ %s, shading %s * desiredFrac %s <= bidMarkup=%s at BID=%s",
+							this, price, shading, acceptableProfitFraction, bidMarkup, bidPrice);
 					} else {
-						log.log(INFO, "%s no g.s. opportunity, markup=%s, bidMarkup=%s, desiredFrac=%s, threshold=%s",
-							this, shading, bidMarkup, acceptableProfitFraction, 
-							(shading * acceptableProfitFraction)
-						); 
+						log.log(INFO, "%s executing ZIRP strategy no greedy sell, shading %s * desiredFrac %s = %s > bidMarkup of %s",
+							this, shading, acceptableProfitFraction, 
+							(shading * acceptableProfitFraction), bidMarkup); 
 					}
 				} else {
 					// estimated surplus from buying at the above price
@@ -170,12 +170,12 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					if (shading * acceptableProfitFraction <= askMarkup) {
 						price = new Price(val.doubleValue() / quantity).quantize(tickSize).nonnegative();
 						
-						log.log(INFO, "%s executing ZIRP strategy GREEDY BUY, markup=%s, ask=%s, askMarkup=%s, price=%s",
-								this, shading, askPrice,	askMarkup, price.intValue());
+						log.log(INFO, "%s executing ZIRP strategy GREEDY BUY @ %s, shading %s * desiredFrac %s <= askMarkup=%s at ASK=%s",
+								this, price, shading, acceptableProfitFraction, askMarkup, askPrice);
 					} else {
-						log.log(INFO, "%s no g.b. opportunity, markup=%s, askMarkup=%s, desiredFrac=%s, threshold=%s",
-							this, shading, askMarkup, acceptableProfitFraction,
-							shading * acceptableProfitFraction); 
+						log.log(INFO, "%s executing ZIRP strategy no greedy sell, shading %s * desiredFrac %s = %s > askMarkup of %s",
+							this, shading, acceptableProfitFraction, 
+							(shading * acceptableProfitFraction), askMarkup); 
 					}
 				}
 			}

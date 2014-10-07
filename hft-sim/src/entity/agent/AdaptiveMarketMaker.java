@@ -54,7 +54,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 
 		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
 				numRungs, rungSize, truncateLadder, tickImprovement, tickOutside,
-				initLadderMean, initLadderRange);
+				initLadderMean, initLadderRange, false);
 
 		checkArgument(numHistorical > 0, "Number of historical prices must be positive!");
 		this.useMedianSpread = useMedianSpread;

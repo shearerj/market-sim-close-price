@@ -91,6 +91,7 @@ public class Observations {
 	protected final SumStats marketmakerSpreads;
 	protected final SumStats marketmakerLadderCenter;
 	protected final SumStats marketmakerExecutionTimes;
+	protected final SumStats marketmakerTruncRungs;
 	
 	// Static information needed for observations
 	protected final Collection<? extends Player> players;
@@ -143,6 +144,7 @@ public class Observations {
 		this.marketmakerExecutionTimes = SumStats.create();
 		this.marketmakerLadderCenter = SumStats.create();
 		this.marketmakerSpreads = SumStats.create();
+		this.marketmakerTruncRungs = SumStats.create();
 	}
 	
 	/**
@@ -201,6 +203,7 @@ public class Observations {
 		features.put("mm_ladder_mean", marketmakerLadderCenter.mean());
 		features.put("mm_spreads_stddev", marketmakerSpreads.stddev());
 		features.put("mm_exectime_mean", marketmakerExecutionTimes.mean());
+		features.put("mm_rungs_trunc_mean", marketmakerTruncRungs.mean());
 		
 		// Profit and Surplus (and Private Value)
 		SumStats 
@@ -220,6 +223,7 @@ public class Observations {
 				hftProfit.add(profit);
 			} else if (agent instanceof MarketMaker) {
 				marketMakerProfit.add(profit);
+				features.put("profit_liquidation_marketmaker", (double) agent.getLiquidationProfit());
 			}
 		}
 
@@ -320,6 +324,10 @@ public class Observations {
 		marketmakerSpreads.add(statistic.ask.doubleValue() - statistic.bid.doubleValue());
 	}
 	
+	@Subscribe public void processLadder(LadderStatistic statistic) {
+		marketmakerTruncRungs.add(statistic.num);
+	}
+	
 	@Subscribe public void processSpread(SpreadStatistic statistic) {
 		TimeSeries series = spreads.get(statistic.owner);
 		series.add(statistic.time.getInTicks(), statistic.val);
@@ -381,6 +389,16 @@ public class Observations {
 			this.mm = mm;
 			this.bid = ladderBid;
 			this.ask = ladderAsk;
+		}
+	}
+	
+	public static class LadderStatistic {
+		protected final MarketMaker mm;
+		protected final int num;
+		
+		public LadderStatistic(MarketMaker mm, int rungsTruncated) {
+			this.mm = mm;
+			this.num = rungsTruncated;
 		}
 	}
 	

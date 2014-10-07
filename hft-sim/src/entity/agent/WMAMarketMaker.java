@@ -63,7 +63,7 @@ public class WMAMarketMaker extends MarketMaker {
 		
 		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
 				numRungs, rungSize, truncateLadder, tickImprovement, tickOutside,
-				initLadderMean, initLadderRange);
+				initLadderMean, initLadderRange, false);
 
 		checkArgument(weightFactor >= 0 && weightFactor < 1, 
 				"Weight factor must be in range (0,1)!");

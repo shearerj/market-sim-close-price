@@ -52,7 +52,7 @@ public class BasicMarketMaker extends MarketMaker {
 
 		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
 				numRungs, rungSize, truncateLadder, tickImprovement, tickOutside,
-				initLadderMean, initLadderRange);
+				initLadderMean, initLadderRange, false);
 	}
 
 	public BasicMarketMaker(Scheduler scheduler, FundamentalValue fundamental,

@@ -83,7 +83,11 @@ public class Transaction implements Serializable {
 
 	@Override
 	public String toString() {
-		return buyer + " bought " + quantity + " from " + seller + " @ " + price + " in " + market;
+		// XXX this is only an approximation, doesn't handle case when both 
+		// are at the same TimeStamp...
+		if (buyOrder.getSubmitTime().before(sellOrder.getSubmitTime())) {
+			return buyer + " bought " + quantity + " from " + seller + " @ " + price + " in " + market;
 		}
-
+		return seller + " sold " + quantity + " to " + buyer + " @ " + price + " in " + market;
+	}
 }

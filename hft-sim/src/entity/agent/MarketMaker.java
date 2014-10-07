@@ -22,6 +22,8 @@ import entity.market.Market;
 import entity.market.Price;
 import event.TimeStamp;
 import data.Observations.MarketMakerStatistic;
+import data.Observations.MidQuoteStatistic;
+import data.Observations.LadderStatistic;
 
 /**
  * Abstract class for MarketMakers.
@@ -63,11 +65,13 @@ public abstract class MarketMaker extends ReentryAgent {
 	protected int initLadderMean;		// for initializing ladder center
 	protected int initLadderRange;		// for initializing ladder center
 	
+	protected boolean fix;				// for order in which the ladder rungs are submitted /// XXX
+	
 	public MarketMaker(Scheduler scheduler, FundamentalValue fundamental,
 			SIP sip, Market market, Random rand, Iterator<TimeStamp> reentry,
 			int tickSize, int numRungs, int rungSize, boolean truncateLadder,
 			boolean tickImprovement, boolean tickOutside, int initLadderMean, 
-			int initLadderRange) {
+			int initLadderRange, boolean fix) {
 		
 		super(scheduler, TimeStamp.ZERO, fundamental, sip, market, rand,
 				reentry, tickSize);
@@ -88,19 +92,22 @@ public abstract class MarketMaker extends ReentryAgent {
 			// initialize using mean fundamental value if ladder range defined
 			 this.initLadderMean = fundamental.getMeanValue();
 		}
+		
+		this.fix = fix;
 	}
 
 	/**
 	 * Shortcut constructor for exponential interarrivals (e.g. Poisson reentries)
+	 * @param fix TODO
 	 */
 	public MarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
 			Market market, Random rand, double reentryRate, int tickSize, 
 			int numRungs, int rungSize, boolean truncateLadder, boolean tickImprovement,
-			boolean tickInside, int initLadderMean, int initLadderRange) {
+			boolean tickInside, int initLadderMean, int initLadderRange, boolean fix) {
 
 		this(scheduler, fundamental, sip, market, rand, ExpInterarrivals.create(reentryRate, rand),
 				tickSize, numRungs, rungSize, truncateLadder, tickImprovement, 
-				tickInside, initLadderMean, initLadderRange);
+				tickInside, initLadderMean, initLadderRange, fix);
 	}
 
 	/**
@@ -119,16 +126,39 @@ public abstract class MarketMaker extends ReentryAgent {
 	public void submitOrderLadder(Price buyMinPrice, Price buyMaxPrice, 
 			Price sellMinPrice, Price sellMaxPrice) {
 
-		// build ascending list of buy orders
-		for (int p = buyMinPrice.intValue(); p <= buyMaxPrice.intValue(); p += stepSize) {
-			scheduler.executeActivity(new SubmitOrder(this, primaryMarket, BUY, new Price(p), 1));
+		if (!fix) {
+			// build ascending list of buy orders
+			for (int p = buyMinPrice.intValue(); p <= buyMaxPrice.intValue(); p += stepSize) {
+				scheduler.executeActivity(new SubmitOrder(this, primaryMarket, BUY, new Price(p), 1));
+			}
+			// build descending list of sell orders
+			for (int p = sellMaxPrice.intValue(); p >= sellMinPrice.intValue(); p -= stepSize) {
+				scheduler.executeActivity(new SubmitOrder(this, primaryMarket, SELL, new Price(p), 1));
+			}
+			log.log(INFO, "%s in %s: Submit ladder with #rungs %d, step size %d: buys [%s to %s] & sells [%s to %s]",
+					this, primaryMarket, numRungs, stepSize, buyMinPrice, buyMaxPrice, sellMinPrice, sellMaxPrice);
+		} else {
+			
+			// These are to ensure that the ladder is truncated at the original
+			// rung prices, not set the center ladder price at the BID/ASK
+			int ladderBuyMax = buyMinPrice.intValue();
+			while (ladderBuyMax + stepSize <= buyMaxPrice.intValue())
+				ladderBuyMax += stepSize;
+			int ladderSellMin = sellMaxPrice.intValue();
+			while (ladderSellMin - stepSize >= sellMinPrice.intValue())
+				ladderSellMin -= stepSize;
+			
+			// build descending list of buy orders
+			for (int p = ladderBuyMax; p >= buyMinPrice.intValue(); p -= stepSize) {
+				scheduler.executeActivity(new SubmitOrder(this, primaryMarket, BUY, new Price(p), 1));
+			}
+			// build ascending list of sell orders
+			for (int p = ladderSellMin; p <= sellMaxPrice.intValue(); p += stepSize) {
+				scheduler.executeActivity(new SubmitOrder(this, primaryMarket, SELL, new Price(p), 1));
+			}
+			log.log(INFO, "%s in %s: Submit ladder with #rungs %d, step size %d: buys [%s to %s] & sells [%s to %s]",
+					this, primaryMarket, numRungs, stepSize, buyMinPrice, buyMaxPrice, sellMinPrice, sellMaxPrice);
 		}
-		// build descending list of sell orders
-		for (int p = sellMaxPrice.intValue(); p >= sellMinPrice.intValue(); p -= stepSize) {
-			scheduler.executeActivity(new SubmitOrder(this, primaryMarket, SELL, new Price(p), 1));
-		}
-		log.log(INFO, "%s in %s: Submit ladder with #rungs %d, step size %d: buys [%s to %s] & sells [%s to %s]",
-				this, primaryMarket, numRungs, stepSize, buyMinPrice, buyMaxPrice, sellMinPrice, sellMaxPrice);
 		
 		BUS.post(new MarketMakerStatistic(this, buyMaxPrice, sellMinPrice));
 		// XXX for evaluating strategies
@@ -218,13 +248,18 @@ public abstract class MarketMaker extends ReentryAgent {
 			BestBidAsk lastNBBOQuote = this.getNBBO();
 			Price oldBuyMaxPrice = buyMaxPrice, oldSellMinPrice = sellMinPrice;
 			// buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N]
-			if (lastNBBOQuote.getBestAsk() != null)
+			if (lastNBBOQuote.getBestAsk() != null) {
 				buyMaxPrice = pcomp.min(ladderBid, lastNBBOQuote.getBestAsk());
+				// BUS.post(new LadderStatistic(this, )); TODO
+			}
 			// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
-			if (lastNBBOQuote.getBestBid() != null)
+			if (lastNBBOQuote.getBestBid() != null) {
 				sellMinPrice = pcomp.max(ladderAsk, lastNBBOQuote.getBestBid());
-			log.log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)", 
-					this, primaryMarket, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
+				// BUS.post(new LadderStatistic(this, )); TODO
+			}
+			if (!oldBuyMaxPrice.equals(buyMaxPrice) || !oldSellMinPrice.equals(sellMinPrice))
+				log.log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)", 
+						this, primaryMarket, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
 		}
 
 		this.submitOrderLadder(buyMinPrice, buyMaxPrice, sellMinPrice,

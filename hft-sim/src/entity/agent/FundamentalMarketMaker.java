@@ -42,12 +42,12 @@ public class FundamentalMarketMaker extends MarketMaker {
 			SIP sip, Market market, Random rand, double reentryRate,
 			int tickSize, int numRungs, int rungSize, boolean truncateLadder,
 			boolean tickImprovement, boolean tickOutside, int initLadderMean, 
-			int initLadderRange, int simLength, double kappa, double fundamentalMean,
-			int fundamentalEstimate, int constSpread) {
+			int initLadderRange, boolean fix, int simLength, double kappa,
+			double fundamentalMean, int fundamentalEstimate, int constSpread) {
 
 		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
 				numRungs, rungSize, truncateLadder, tickImprovement, tickOutside,
-				initLadderMean, initLadderRange);
+				initLadderMean, initLadderRange, fix);
 		
 		this.fundamentalEstimate = (fundamentalEstimate > 0) ? new Price(fundamentalEstimate) : null;
 		simulationLength = simLength;
@@ -70,11 +70,11 @@ public class FundamentalMarketMaker extends MarketMaker {
 				props.getAsBoolean(Keys.TICK_OUTSIDE, false),	// always submit inside the quote unless otherwise specified
 				props.getAsInt(Keys.INITIAL_LADDER_MEAN, props.getAsInt(Keys.FUNDAMENTAL_MEAN)),
 				props.getAsInt(Keys.INITIAL_LADDER_RANGE, 5000),
-				props.getAsInt(Keys.SIMULATION_LENGTH),	// no default needed, already going to be in the EntityProperties file
+				props.getAsBoolean(Keys.FIX, false),	
+				props.getAsInt(Keys.SIMULATION_LENGTH), // no default needed, already going to be in the EntityProperties file
 				props.getAsDouble(Keys.FUNDAMENTAL_KAPPA),
-				props.getAsInt(Keys.FUNDAMENTAL_MEAN),
-				props.getAsInt(Keys.FUNDAMENTAL_ESTIMATE, -1), 
-				props.getAsInt(Keys.SPREAD, -1)); // for backwards compatibility
+				props.getAsInt(Keys.FUNDAMENTAL_MEAN), 
+				props.getAsInt(Keys.FUNDAMENTAL_ESTIMATE, -1), props.getAsInt(Keys.SPREAD, -1)); // for backwards compatibility
 	}
 
 	@Override
@@ -83,62 +83,97 @@ public class FundamentalMarketMaker extends MarketMaker {
 
 		Price bid = this.getQuote().getBidPrice();
 		Price ask = this.getQuote().getAskPrice();
-
-		if (bid == null && lastBid == null && ask == null && lastAsk == null) {
-			log.log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
-			this.createOrderLadder(bid, ask);	
+		
+		if (fix) {
+			log.log(INFO, "%s in %s: Withdraw all orders.", this, primaryMarket);
+			withdrawAllOrders();
 			
-		} else if ((bid == null && lastBid != null)
-				|| (bid != null && !bid.equals(lastBid))
-				|| (bid != null && lastBid == null)
-				|| (ask == null && lastAsk != null)
-				|| (ask != null && !ask.equals(lastAsk))
-				|| (ask != null && lastAsk == null)) {
-
+			bid = this.getQuote().getBidPrice();
+			ask = this.getQuote().getAskPrice();
+			
+			// Use last known bid/ask if undefined post-withdrawal
 			if (!this.getQuote().isDefined()) {
+				Price oldBid = bid, oldAsk = ask;
+				if (bid == null && lastBid != null) bid = lastBid;
+				if (ask == null && lastAsk != null) ask = lastAsk;
+				log.log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", 
+						this, primaryMarket, oldBid, oldAsk, bid, ask);
+			}
+			int offset = this.initLadderRange / 2;
+			if (bid != null && ask != null) { 
+			    offset = (ask.intValue() - bid.intValue()) / 2;
+			}
+			if (this.constSpread != null) {
+				offset = this.constSpread.intValue() / 2;
+			}
+			if (fundamentalEstimate == null) {
+				fundamentalEstimate = this.getEstimatedFundamental(currentTime, simulationLength, 
+						fundamentalKappa, fundamentalMean);
+			}
+			log.log(INFO, "%s in %s: Spread of %s around estimated fundamental %s, ladderBid=%s, ladderAsk=%s", 
+					this, primaryMarket, new Price(offset), fundamentalEstimate,
+					new Price(fundamentalEstimate.intValue() - offset),
+					new Price(fundamentalEstimate.intValue() + offset));
+			this.createOrderLadder(new Price(fundamentalEstimate.intValue() - offset),
+									new Price(fundamentalEstimate.intValue() + offset));
+			
+			
+		} else {
+			if (bid == null && lastBid == null && ask == null && lastAsk == null) {
 				log.log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
 				this.createOrderLadder(bid, ask);
 				
-			} else {
-				// Quote changed, still valid, withdraw all orders
-				log.log(INFO, "%s in %s: Withdraw all orders.", this, primaryMarket);
-				withdrawAllOrders();
-				
-				bid = this.getQuote().getBidPrice();
-				ask = this.getQuote().getAskPrice();
-				
-				// Use last known bid/ask if undefined post-withdrawal
+			} else if ((bid == null && lastBid != null)
+					|| (bid != null && !bid.equals(lastBid))
+					|| (bid != null && lastBid == null)
+					|| (ask == null && lastAsk != null)
+					|| (ask != null && !ask.equals(lastAsk))
+					|| (ask != null && lastAsk == null)) {
+	
 				if (!this.getQuote().isDefined()) {
-					Price oldBid = bid, oldAsk = ask;
-					if (bid == null && lastBid != null) bid = lastBid;
-					if (ask == null && lastAsk != null) ask = lastAsk;
-					log.log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", 
-							this, primaryMarket, oldBid, oldAsk, bid, ask);
+					log.log(INFO, "%s in %s: Undefined quote in %s", this, primaryMarket, primaryMarket);
+					this.createOrderLadder(bid, ask);
+					
+				} else {
+					// Quote changed, still valid, withdraw all orders
+					log.log(INFO, "%s in %s: Withdraw all orders.", this, primaryMarket);
+					withdrawAllOrders();
+					
+					bid = this.getQuote().getBidPrice();
+					ask = this.getQuote().getAskPrice();
+					
+					// Use last known bid/ask if undefined post-withdrawal
+					if (!this.getQuote().isDefined()) {
+						Price oldBid = bid, oldAsk = ask;
+						if (bid == null && lastBid != null) bid = lastBid;
+						if (ask == null && lastAsk != null) ask = lastAsk;
+						log.log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", 
+								this, primaryMarket, oldBid, oldAsk, bid, ask);
+					}
+					int offset = this.initLadderRange / 2;
+					if (bid != null && ask != null) { 
+					    offset = (ask.intValue() - bid.intValue()) / 2;
+					}
+					if (this.constSpread != null) {
+						offset = this.constSpread.intValue() / 2;
+					}
+					if (fundamentalEstimate == null) {
+						fundamentalEstimate = this.getEstimatedFundamental(currentTime, simulationLength, 
+								fundamentalKappa, fundamentalMean);
+					}
+					log.log(INFO, "%s in %s: Spread of %s around estimated fundamental %s, ladderBid=%s, ladderAsk=%s", 
+							this, primaryMarket, new Price(offset), fundamentalEstimate,
+							new Price(fundamentalEstimate.intValue() - offset),
+							new Price(fundamentalEstimate.intValue() + offset));
+					this.createOrderLadder(new Price(fundamentalEstimate.intValue() - offset),
+											new Price(fundamentalEstimate.intValue() + offset));
 				}
-				int offset = this.initLadderRange / 2;
-				if (bid != null && ask != null) { 
-				    offset = (ask.intValue() - bid.intValue()) / 2;
-				}
-				if (this.constSpread != null) {
-					offset = this.constSpread.intValue() / 2;
-				}
-				if (fundamentalEstimate == null) {
-					fundamentalEstimate = this.getEstimatedFundamental(currentTime, simulationLength, 
-							fundamentalKappa, fundamentalMean);
-				}
-				log.log(INFO, "%s in %s: Spread of %s around estimated fundamental %s, ladderBid=%s, ladderAsk=%s", 
-						this, primaryMarket, new Price(offset), fundamentalEstimate,
-						new Price(fundamentalEstimate.intValue() - offset),
-						new Price(fundamentalEstimate.intValue() + offset));
-				this.createOrderLadder(new Price(fundamentalEstimate.intValue() - offset),
-										new Price(fundamentalEstimate.intValue() + offset));
+				
+			} else {
+				log.log(INFO, "%s in %s: No change in submitted ladder", this, primaryMarket);
 			}
-			
-		} else {
-			log.log(INFO, "%s in %s: No change in submitted ladder", this, primaryMarket);
+			// update latest bid/ask prices
+			lastAsk = ask; lastBid = bid;
 		}
-		// update latest bid/ask prices
-		lastAsk = ask; lastBid = bid;
 	}
-
 }

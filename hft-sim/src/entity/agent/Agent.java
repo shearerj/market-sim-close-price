@@ -188,7 +188,7 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public void withdrawAllOrders() {
-		// activeOrders is copied, because these calls are happening instaniosuly and
+		// activeOrders is copied, because these calls are happening instantaneously and
 		// hence modifying active orders
 		for (Order order : ImmutableList.copyOf(activeOrders))
 			scheduler.executeActivity(new WithdrawOrder(order));
@@ -216,7 +216,8 @@ public abstract class Agent extends Entity {
 			profit += trans.getQuantity() * trans.getPrice().intValue();
 		}
 
-		log.log(INFO, "%s transacted to position %d", this, positionBalance);
+		log.log(INFO, "%s transacted to position %d, new profit=%d", 
+				this, positionBalance, profit);
 	}
 
 	public final TimeStamp getArrivalTime() {
