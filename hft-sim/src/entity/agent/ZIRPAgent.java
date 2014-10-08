@@ -44,17 +44,9 @@ public final class ZIRPAgent extends BackgroundAgent {
 		final Random rand,
 		final EntityProperties props
 	) {
-		this(
-			scheduler, 
-			arrivalTime, 
-			fundamental, 
-			sip, 
-			market, 
-			rand,
-			ExpInterarrivals.create(
-				props.getAsDouble(Keys.REENTRY_RATE, DEFAULT_REENTRY_RATE), 
-				rand
-			),
+		this(scheduler, arrivalTime, fundamental, sip, market, rand,
+			ExpInterarrivals.create(props.getAsDouble(Keys.REENTRY_RATE, DEFAULT_REENTRY_RATE), 
+				rand),
 			props.getAsDouble(Keys.PRIVATE_VALUE_VAR, DEFAULT_PRIVATE_VALUE),
 			props.getAsInt(Keys.TICK_SIZE, 1),
 			props.getAsInt(Keys.MAX_QUANTITY, DEFAULT_MAX_QUANTITY),
@@ -64,12 +56,8 @@ public final class ZIRPAgent extends BackgroundAgent {
 			props.getAsInt(Keys.SIMULATION_LENGTH),
 			props.getAsDouble(Keys.FUNDAMENTAL_KAPPA),
 			props.getAsInt(Keys.FUNDAMENTAL_MEAN),
-			props.getAsDouble(
-				Keys.ACCEPTABLE_PROFIT_FRACTION, 
-				DEFAULT_ACCEPTABLE_PROFIT_FRACTION
-			)
+			props.getAsDouble(Keys.ACCEPTABLE_PROFIT_FRACTION, DEFAULT_ACCEPTABLE_PROFIT_FRACTION)
 		);
-		
 	}
 
 	private ZIRPAgent(

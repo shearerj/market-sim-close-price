@@ -87,6 +87,12 @@ public class FundamentalMarketMakerTest {
 				new Random(), EntityProperties.copyFromPairs(agentProperties, parameters));
 	}
 
+	// TODO test const spread < 0, = 0
+	
+	// TODO test computation of spread with no const spread and null bid / ask
+	
+	// TODO test behavior with fix=true
+	
 	@Test
 	public void estimatedFundamentalTest() {
 		TimeStamp time = TimeStamp.ZERO;

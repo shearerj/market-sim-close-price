@@ -36,13 +36,13 @@ public class MockMarketMaker extends MarketMaker {
 
 	public MockMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
 			EntityProperties props) {
-		this(scheduler, fundamental, sip, market, 
+		this(scheduler, fundamental, sip, market,
 				props.getAsInt(Keys.NUM_RUNGS, 10),
 				props.getAsInt(Keys.RUNG_SIZE, 1000),
 				props.getAsBoolean(Keys.TRUNCATE_LADDER, true), 
 				props.getAsBoolean(Keys.TICK_IMPROVEMENT, false),
 				props.getAsBoolean(Keys.TICK_OUTSIDE, true),
 				props.getAsInt(Keys.INITIAL_LADDER_MEAN, 0),
-				props.getAsInt(Keys.INITIAL_LADDER_RANGE, 0));	
+				props.getAsInt(Keys.INITIAL_LADDER_RANGE, 0));
 	}
 }

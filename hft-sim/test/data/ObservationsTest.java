@@ -69,6 +69,8 @@ public class ObservationsTest {
 			Observations.BUS.unregister(obs);
 	}
 
+	// TODO test ZIRP statistic logging
+	
 	/*
 	 * TODO Still have some hard things to test, that should for the most part
 	 * be correct. Most of these are basically fully tested elsewhere, but just

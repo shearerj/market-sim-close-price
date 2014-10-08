@@ -2,7 +2,6 @@ package data;
 
 import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.base.Predicates.not;
-
 import static logger.Log.log;
 
 import java.util.Collection;
@@ -92,6 +91,9 @@ public class Observations {
 	protected final SumStats marketmakerLadderCenter;
 	protected final SumStats marketmakerExecutionTimes;
 	protected final SumStats marketmakerTruncRungs;
+	
+	protected double zirpGreedyOrders;
+	protected double zirpNonGreedyOrders;
 	
 	// Static information needed for observations
 	protected final Collection<? extends Player> players;
@@ -204,6 +206,10 @@ public class Observations {
 		features.put("mm_spreads_stddev", marketmakerSpreads.stddev());
 		features.put("mm_exectime_mean", marketmakerExecutionTimes.mean());
 		features.put("mm_rungs_trunc_mean", marketmakerTruncRungs.mean());
+		
+		// ZIRP
+		features.put("zirp_greedy", zirpGreedyOrders);
+		features.put("zirp_nongreedy", zirpNonGreedyOrders);
 		
 		// Profit and Surplus (and Private Value)
 		SumStats 
@@ -319,6 +325,11 @@ public class Observations {
 	// --------------------------------------
 	// Everything with an @Subscribe is a listener for objects that contain statistics.
 	
+	@Subscribe public void processZIRP(ZIRPStatistic statistic) {
+		if (statistic.greedy) zirpGreedyOrders++;
+		else zirpNonGreedyOrders++;
+	}
+	
 	@Subscribe public void processMarketMaker(MarketMakerStatistic statistic) {
 		marketmakerLadderCenter.add((statistic.ask.doubleValue() + statistic.bid.doubleValue())/2);
 		marketmakerSpreads.add(statistic.ask.doubleValue() - statistic.bid.doubleValue());
@@ -379,6 +390,16 @@ public class Observations {
 	
 	// --------------------------------------
 	// These are all statistics classes that are listened for
+	
+	public static class ZIRPStatistic {
+		protected final Agent ag;
+		protected final boolean greedy;
+		
+		public ZIRPStatistic(Agent ag, boolean greedy) {
+			this.ag = ag;
+			this.greedy = greedy;
+		}
+	}
 	
 	public static class MarketMakerStatistic {
 		protected final MarketMaker mm;

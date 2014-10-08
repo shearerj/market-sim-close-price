@@ -1,6 +1,7 @@
 package entity.agent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static data.Observations.BUS;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static logger.Log.log;
@@ -19,6 +20,7 @@ import activity.SubmitNMSOrder;
 import com.google.common.collect.ImmutableMap;
 
 import data.FundamentalValue;
+import data.Observations.ZIRPStatistic;
 import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
@@ -152,10 +154,12 @@ public abstract class BackgroundAgent extends ReentryAgent {
 						
 						log.log(INFO, "%s executing ZIRP strategy GREEDY SELL @ %s, shading %s * desiredFrac %s <= bidMarkup=%s at BID=%s",
 							this, price, shading, acceptableProfitFraction, bidMarkup, bidPrice);
+						BUS.post(new ZIRPStatistic(this, true));
 					} else {
 						log.log(INFO, "%s executing ZIRP strategy no greedy sell, shading %s * desiredFrac %s = %s > bidMarkup of %s",
 							this, shading, acceptableProfitFraction, 
-							(shading * acceptableProfitFraction), bidMarkup); 
+							(shading * acceptableProfitFraction), bidMarkup);
+						BUS.post(new ZIRPStatistic(this, false));
 					}
 				} else {
 					// estimated surplus from buying at the above price
@@ -172,10 +176,12 @@ public abstract class BackgroundAgent extends ReentryAgent {
 						
 						log.log(INFO, "%s executing ZIRP strategy GREEDY BUY @ %s, shading %s * desiredFrac %s <= askMarkup=%s at ASK=%s",
 								this, price, shading, acceptableProfitFraction, askMarkup, askPrice);
+						BUS.post(new ZIRPStatistic(this, true));
 					} else {
 						log.log(INFO, "%s executing ZIRP strategy no greedy sell, shading %s * desiredFrac %s = %s > askMarkup of %s",
 							this, shading, acceptableProfitFraction, 
 							(shading * acceptableProfitFraction), askMarkup); 
+						BUS.post(new ZIRPStatistic(this, false));
 					}
 				}
 			}

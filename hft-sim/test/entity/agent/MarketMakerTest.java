@@ -52,6 +52,9 @@ public class MarketMakerTest {
 		market = new MockMarket(exec, sip);
 	}
 
+	// TODO should MMs be able to submit rung size=0 ladders? For now, do not permit
+
+	
 	@Test
 	public void nullBidAsk() {
 		// testing when no bid/ask, does not submit any orders
@@ -153,14 +156,15 @@ public class MarketMakerTest {
 	}
 
 	@Test
-	public void truncateLadderTickImprovement() {
+	public void truncateLadder() {
 		TimeStamp time = TimeStamp.ZERO;
 		SIP sip = new SIP(exec, TimeStamp.create(10));
 		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_IMPROVEMENT, true));
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_OUTSIDE, true));
 		assertEquals(5, mm.stepSize);
 
 		// Creating dummy agents
@@ -171,10 +175,10 @@ public class MarketMakerTest {
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
 		exec.executeActivity(new Clear(market));
-
+		
 		// Updating NBBO quote (this will update immed, although SIP is delayed)
 		MockMarket market2 = new MockMarket(exec, sip);
-		Quote q = new Quote(market2, new Price(30), 1, new Price(38), 1, time);
+		Quote q = new Quote(market2, new Price(30), 1, new Price(38), 1, new DummyMarketTime(time, 1));
 		exec.executeActivity(new ProcessQuote(sip, market2, q));
 
 		mm.createOrderLadder(new Price(40), new Price(50));
@@ -184,12 +188,84 @@ public class MarketMakerTest {
 			if (o.getOrderType() == SELL) 
 				assertTrue(price == 51 || price == 56);
 			else
-				assertEquals(34, price);
+				assertEquals(35, price);
 		}
 	}
 	
 	@Test
-	public void tickOutside() {
+	public void truncateLadderOnBuyRung() {
+		TimeStamp time = TimeStamp.ZERO;
+
+		SIP sip = new SIP(exec, TimeStamp.create(10));
+		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_OUTSIDE, false));
+		assertEquals(5, mm.stepSize);
+
+		// Creating dummy agents
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
+
+		// Creating and adding bids
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
+
+		// Updating NBBO quote (this will update immed, although SIP is delayed)
+		MockMarket market2 = new MockMarket(exec, sip);
+		Quote q = new Quote(market2, new Price(30), 1, new Price(35), 1, new DummyMarketTime(time, 1));
+		exec.executeActivity(new ProcessQuote(sip, market2, q));
+
+		mm.createOrderLadder(new Price(40), new Price(50));
+
+		assertEquals("Incorrect number of orders", 2, mm.activeOrders.size());
+		for (Order o : mm.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == SELL) 
+				assertTrue(price == 49 || price == 54);
+		}
+	}
+	
+	@Test
+	public void truncateLadderOnRung2() {
+		TimeStamp time = TimeStamp.ZERO;
+
+		SIP sip = new SIP(exec, TimeStamp.create(10));
+		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
+				Keys.NUM_RUNGS, 2,
+				Keys.RUNG_SIZE, 5,
+				Keys.TRUNCATE_LADDER, true,
+				Keys.TICK_IMPROVEMENT, true,
+				Keys.TICK_OUTSIDE, false));
+		assertEquals(5, mm.stepSize);
+
+		// Creating dummy agents
+		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
+		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
+
+		// Creating and adding bids
+		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
+		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
+
+		// Updating NBBO quote (this will update immed, although SIP is delayed)
+		MockMarket market2 = new MockMarket(exec, sip);
+		Quote q = new Quote(market2, new Price(55), 1, new Price(60), 1, new DummyMarketTime(time, 1));
+		exec.executeActivity(new ProcessQuote(sip, market2, q));
+
+		mm.createOrderLadder(new Price(40), new Price(50));
+
+		assertEquals("Incorrect number of orders", 2, mm.activeOrders.size());
+		for (Order o : mm.activeOrders) {
+			int price = o.getPrice().intValue();
+			if (o.getOrderType() == SELL) 
+				assertTrue(price == 60 || price == 65);
+		}
+	}
+	
+	@Test
+	public void tickInside() {
 		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 5,
@@ -218,43 +294,6 @@ public class MarketMakerTest {
 		}
 	}
 	
-	@Test
-	public void truncateLadderTickImprovementOutside() {
-		TimeStamp time = TimeStamp.ZERO;
-
-		SIP sip = new SIP(exec, TimeStamp.create(10));
-		MarketMaker mm = new MockMarketMaker(exec, fundamental, sip, market, EntityProperties.fromPairs(
-				Keys.NUM_RUNGS, 2,
-				Keys.RUNG_SIZE, 5,
-				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_OUTSIDE, false));
-		assertEquals(5, mm.stepSize);
-
-		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
-		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
-
-		// Creating and adding bids
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
-
-		// Updating NBBO quote (this will update immed, although SIP is delayed)
-		MockMarket market2 = new MockMarket(exec, sip);
-		Quote q = new Quote(market2, new Price(30), 1, new Price(38), 1, new DummyMarketTime(time, 1));
-		exec.executeActivity(new ProcessQuote(sip, market2, q));
-
-		mm.createOrderLadder(new Price(40), new Price(50));
-
-		assertEquals("Incorrect number of orders", 3, mm.activeOrders.size());
-		for (Order o : mm.activeOrders) {
-			int price = o.getPrice().intValue();
-			if (o.getOrderType() == SELL) 
-				assertTrue(price == 49 || price == 54);
-			else
-				assertEquals(36, price);
-		}
-	}
 	
 	/**
 	 * Creating ladder without bid/ask quote
@@ -408,4 +447,15 @@ public class MarketMakerTest {
 			oneSidedLadderSell();
 		}
 	}
+	 
+	/**
+	 * Must submit rungs in order such that inside rungs will transact first
+	 * (setting truncate = false to test)
+	 */
+	@Test
+	public void rungOrderTest() {
+		// TODO
+	}
+	
+	// TODO test truncation when quote latency (or using NBBO?)
 }
