@@ -49,7 +49,7 @@ public final class ZIRPAgent extends BackgroundAgent {
 				rand),
 			props.getAsDouble(Keys.PRIVATE_VALUE_VAR, DEFAULT_PRIVATE_VALUE),
 			props.getAsInt(Keys.TICK_SIZE, 1),
-			props.getAsInt(Keys.MAX_QUANTITY, DEFAULT_MAX_QUANTITY),
+			props.getAsInt(Keys.MAX_POSITION, DEFAULT_MAX_QUANTITY),
 			props.getAsInt(Keys.BID_RANGE_MIN, 0),
 			props.getAsInt(Keys.BID_RANGE_MAX, DEFAULT_BID_RANGE_MAX),
 			props.getAsBoolean(Keys.WITHDRAW_ORDERS, true),

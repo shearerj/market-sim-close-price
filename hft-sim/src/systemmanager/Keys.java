@@ -21,7 +21,7 @@ public interface Keys {
 	public final static String WINDOW_LENGTH = "windowLength";
 	public final static String BID_RANGE_MAX = "bidRangeMax";
 	public final static String BID_RANGE_MIN = "bidRangeMin";
-	public final static String MAX_QUANTITY = "maxQty";
+	public final static String MAX_POSITION = "maxPosition";
 	public final static String ALPHA = "alpha";
 
 	public final static String TICK_SIZE = "tickSize";

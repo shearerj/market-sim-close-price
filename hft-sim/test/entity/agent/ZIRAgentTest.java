@@ -53,7 +53,7 @@ public class ZIRAgentTest {
 	private static Random rand;
 	private static EntityProperties agentProperties = EntityProperties.fromPairs(
 			Keys.REENTRY_RATE, 0,
-			Keys.MAX_QUANTITY, 2,
+			Keys.MAX_POSITION, 2,
 			Keys.PRIVATE_VALUE_VAR, 0);
 
 	@BeforeClass
@@ -89,7 +89,7 @@ public class ZIRAgentTest {
 		ZIRAgent agent = createAgent(
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.TICK_SIZE, 1,
-				Keys.MAX_QUANTITY, 2,
+				Keys.MAX_POSITION, 2,
 				Keys.BID_RANGE_MIN, 0,
 				Keys.BID_RANGE_MAX, 5000,
 				Keys.WITHDRAW_ORDERS, true);
@@ -138,7 +138,7 @@ public class ZIRAgentTest {
 		ZIRAgent agent1 = createAgent(fundamental2, nasdaq, new Random(4), // rand seed selected to insert BUY
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.TICK_SIZE, 1,
-				Keys.MAX_QUANTITY, 1,
+				Keys.MAX_POSITION, 1,
 				Keys.BID_RANGE_MIN, 1000,
 				Keys.BID_RANGE_MAX, 1000,
 				Keys.WITHDRAW_ORDERS, true);
@@ -209,7 +209,7 @@ public class ZIRAgentTest {
 		ZIRAgent agent1 = createAgent(fundamental2, nasdaq, new Random(4), // Submits buy
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.TICK_SIZE, 1,
-				Keys.MAX_QUANTITY, 1,
+				Keys.MAX_POSITION, 1,
 				Keys.BID_RANGE_MIN, 1000,
 				Keys.BID_RANGE_MAX, 1000,
 				Keys.WITHDRAW_ORDERS, false);

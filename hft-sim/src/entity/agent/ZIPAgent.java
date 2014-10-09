@@ -101,7 +101,7 @@ public class ZIPAgent extends WindowAgent {
 				props.getAsDouble(Keys.REENTRY_RATE, 0.005), 
 				props.getAsDouble(Keys.PRIVATE_VALUE_VAR, 100000000),
 				props.getAsInt(Keys.TICK_SIZE, 1),
-				props.getAsInt(Keys.MAX_QUANTITY, 10),
+				props.getAsInt(Keys.MAX_POSITION, 10),
 				props.getAsInt(Keys.BID_RANGE_MIN, 0),
 				props.getAsInt(Keys.BID_RANGE_MAX, 5000), 
 				props.getAsBoolean(Keys.WITHDRAW_ORDERS, false), // XXX for backwards compatibility

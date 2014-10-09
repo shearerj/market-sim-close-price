@@ -136,14 +136,14 @@ public abstract class MarketMaker extends ReentryAgent {
 			}
 			log.log(INFO, "%s in %s: Submit ladder with #rungs %d, step size %d: buys [%s to %s] & sells [%s to %s]",
 					this, primaryMarket, numRungs, stepSize, buyMinPrice, buyMaxPrice, sellMinPrice, sellMaxPrice);
-		} else {
-
+		} else {		
+			
 			// build descending list of buy orders
-			for (int p = buyMinPrice.intValue(); p >= buyMinPrice.intValue(); p -= stepSize) {
+			for (int p = buyMaxPrice.intValue(); p >= buyMinPrice.intValue(); p -= stepSize) {
 				scheduler.executeActivity(new SubmitOrder(this, primaryMarket, BUY, new Price(p), 1));
 			}
 			// build ascending list of sell orders
-			for (int p = sellMaxPrice.intValue(); p <= sellMaxPrice.intValue(); p += stepSize) {
+			for (int p = sellMinPrice.intValue(); p <= sellMaxPrice.intValue(); p += stepSize) {
 				scheduler.executeActivity(new SubmitOrder(this, primaryMarket, SELL, new Price(p), 1));
 			}
 			log.log(INFO, "%s in %s: Submit ladder with #rungs %d, step size %d: buys [%s to %s] & sells [%s to %s]",
@@ -251,8 +251,8 @@ public abstract class MarketMaker extends ReentryAgent {
 			}
 			
 			if (!oldBuyMaxPrice.equals(buyMaxPrice) || !oldSellMinPrice.equals(sellMinPrice)) {
-				log.log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)", 
-						this, primaryMarket, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
+				log.log(INFO, "%s in %s: Truncating ladder with rung size %s from (%s, %s)-->(%s, %s)", 
+						this, primaryMarket, stepSize, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
 				numRungsTruncated += !oldBuyMaxPrice.equals(buyMaxPrice) ? 
 						Math.ceil(ladderBid.intValue() - ask.intValue()) : 0;
 				numRungsTruncated += !oldSellMinPrice.equals(sellMinPrice) ? 

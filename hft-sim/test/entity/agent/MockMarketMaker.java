@@ -15,23 +15,23 @@ public class MockMarketMaker extends MarketMaker {
 
 	public MockMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
 			int numRungs, int rungSize) {
-		this(scheduler, fundamental, sip, market, numRungs, rungSize, false, false, true);
+		this(scheduler, fundamental, sip, market, numRungs, rungSize, false, false, true, false);
 	}
 	
 	public MockMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
 			Market market, int numRungs, int rungSize, boolean truncateLadder, 
-			boolean tickImprovement, boolean tickInside) {
+			boolean tickImprovement, boolean tickInside, boolean fix) {
 		super(scheduler, fundamental, sip, market, new Random(), 0, 1, numRungs, 
-				rungSize, truncateLadder, tickImprovement, tickInside, 0, 0, false);
+				rungSize, truncateLadder, tickImprovement, tickInside, 0, 0, fix);
 	}
 	
 	public MockMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip,
 			Market market, int numRungs, int rungSize, boolean truncateLadder, 
 			boolean tickImprovement, boolean tickInside, int initLadderMean,
-			int initLadderRange) {
+			int initLadderRange, boolean fix) {
 		super(scheduler, fundamental, sip, market, new Random(), 0, 1, numRungs, 
 				rungSize, truncateLadder, tickImprovement, tickInside, initLadderMean,
-				initLadderRange, false);
+				initLadderRange, fix);
 	}
 
 	public MockMarketMaker(Scheduler scheduler, FundamentalValue fundamental, SIP sip, Market market,
@@ -43,6 +43,7 @@ public class MockMarketMaker extends MarketMaker {
 				props.getAsBoolean(Keys.TICK_IMPROVEMENT, false),
 				props.getAsBoolean(Keys.TICK_OUTSIDE, true),
 				props.getAsInt(Keys.INITIAL_LADDER_MEAN, 0),
-				props.getAsInt(Keys.INITIAL_LADDER_RANGE, 0));
+				props.getAsInt(Keys.INITIAL_LADDER_RANGE, 0),
+				props.getAsBoolean(Keys.FIX, false));
 	}
 }
