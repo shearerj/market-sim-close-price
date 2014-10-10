@@ -52,7 +52,7 @@ public abstract class Agent extends Entity {
 	// Agent parameters
 	protected final TimeStamp arrivalTime;
 	protected final int tickSize;
-
+	
 	// Tracking position and profit
 	protected int positionBalance;
 	protected long profit;

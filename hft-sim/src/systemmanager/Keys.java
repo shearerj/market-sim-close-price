@@ -88,6 +88,7 @@ public interface Keys {
 
 	// ZIRPAgent
 	public final static String ACCEPTABLE_PROFIT_FRACTION = "acceptableProfFrac";
+	public final static String MAX_EFFICIENCY = "maxAE";	// special setting for measuring max alloc efficiency
 
 	// Market Maker
 	public final static String NUM_RUNGS = "numRungs";

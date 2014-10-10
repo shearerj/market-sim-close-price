@@ -17,7 +17,6 @@ import static systemmanager.Keys.RAND_SEED;
 import static systemmanager.Keys.REENTRY_RATE;
 import static systemmanager.Keys.SIMULATION_LENGTH;
 import static systemmanager.Keys.TICK_SIZE;
-import static systemmanager.Keys.ACCEPTABLE_PROFIT_FRACTION;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -69,7 +68,7 @@ public class SimulationSpec implements Serializable {
 	protected static final String[] marketKeys = { MARKET_LATENCY, TICK_SIZE };
 	protected static final String[] agentKeys = { TICK_SIZE, ARRIVAL_RATE,
 			REENTRY_RATE, PRIVATE_VALUE_VAR, SIMULATION_LENGTH, FUNDAMENTAL_KAPPA, 
-			FUNDAMENTAL_MEAN, ACCEPTABLE_PROFIT_FRACTION };
+			FUNDAMENTAL_MEAN };
 
 	protected transient final JsonObject rawSpec;
 	protected final EntityProperties simulationProperties;
