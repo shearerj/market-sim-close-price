@@ -77,4 +77,8 @@ public class MaxEfficiencyAgent extends BackgroundAgent {
 			throw new IllegalArgumentException("Primary market " + primaryMarket + " must be a call market!"); 
 		}
 	}
+	
+	public int getPosition() {
+		return this.positionBalance;
+	}
 }

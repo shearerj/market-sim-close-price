@@ -36,6 +36,7 @@ import entity.agent.Agent;
 import entity.agent.BackgroundAgent;
 import entity.agent.HFTAgent;
 import entity.agent.MarketMaker;
+import entity.agent.MaxEfficiencyAgent;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Transaction;
@@ -219,6 +220,8 @@ public class Observations {
 			hftProfit = SumStats.create(),
 			marketMakerProfit = SumStats.create();
 		
+		int[] positions = new int[21];	// store distribution of positions
+		
 		for (Agent agent : agents) {
 			long profit = agent.getPostLiquidationProfit();
 			modelProfit.add(profit);
@@ -231,6 +234,13 @@ public class Observations {
 				marketMakerProfit.add(profit);
 				features.put("profit_liquidation_marketmaker", (double) agent.getLiquidationProfit());
 			}
+			
+			if (agent instanceof MaxEfficiencyAgent) {
+				positions[((MaxEfficiencyAgent) agent).getPosition() + 10]++;
+			}
+		}
+		for (int i = 0; i < positions.length; i++) {
+			features.put("position_" + (i-10) + "_num", (double) positions[i]);
 		}
 
 		features.put("profit_sum_total", modelProfit.sum());
