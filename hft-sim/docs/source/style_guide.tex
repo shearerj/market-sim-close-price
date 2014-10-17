@@ -1,0 +1,34 @@
+\documentclass{article}
+
+\usepackage{hyperref}
+
+\newcommand{\email}[1]{\texttt{\href{mailto:#1}{#1}}}
+
+\begin{document}
+\title{Style Guide}
+\author{Erik Brinkman \\ \email{erik.brinkman@umich.edu}}
+\maketitle
+
+\section{Outline}
+
+\textbf{Eclipse Format File?}
+
+\begin{enumerate}
+\item Test class interface, not implementation
+\item Keep class tests in appropriate class, don't duplicate classes
+\item Don't repeat code, if code is used frequently abstract it to a function,
+  tests or otherwise
+\item If statements always on a new line
+\item Use Guava over not using guava (Optional, Ordering, Collections,
+  ImmutableCollections)
+\item Don't break interface specifications, e.g. assuming an order to a
+  collection. Even if there is one, it's not part of the interface, and may
+  change
+\item Create a setup method than can be tweaked to properly set up any
+  environment in testing
+\item Eclipse format file?
+\item Factory methods and protected constructors
+\item make proper member variables final
+\end{enumerate}
+
+\end{document}

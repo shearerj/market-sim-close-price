@@ -1,3 +1,4 @@
-# PDFs in source #
-##################
+# Compilation Files #
+#####################
 *.pdf
+/auto
