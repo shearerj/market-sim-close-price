@@ -219,8 +219,8 @@ public class Observations {
 			backgroundLiquidation = SumStats.create(),
 			hftProfit = SumStats.create(),
 			marketMakerProfit = SumStats.create();
-		
-		int[] positions = new int[21];	// store distribution of positions
+		// store distribution of positions
+		int[] positions = new int[2 * spec.getSimulationProps().getAsInt(Keys.MAX_POSITION) + 1];
 		
 		for (Agent agent : agents) {
 			long profit = agent.getPostLiquidationProfit();
@@ -236,11 +236,18 @@ public class Observations {
 			}
 			
 			if (agent instanceof MaxEfficiencyAgent) {
-				positions[((MaxEfficiencyAgent) agent).getPosition() + 10]++;
+				MaxEfficiencyAgent ag = (MaxEfficiencyAgent) agent;
+				positions[ag.getPosition() + spec.getSimulationProps().getAsInt(Keys.MAX_POSITION)]++;
 			}
 		}
-		for (int i = 0; i < positions.length; i++) {
-			features.put("position_" + (i-10) + "_num", (double) positions[i]);
+		// check if its in MAX EFF mode (i.e. there are MaxEfficiencyAgents)
+		for (AgentProperties props : spec.getAgentProps()) {
+			if (props.getAgentType().equals(Consts.AgentType.MAXEFF)) {
+				int maxPosition = spec.getSimulationProps().getAsInt(Keys.MAX_POSITION);
+				for (int i = 0; i < positions.length; i++) {
+					features.put("position_" + (i - maxPosition) + "_num", (double) positions[i]);
+				}
+			}
 		}
 
 		features.put("profit_sum_total", modelProfit.sum());
