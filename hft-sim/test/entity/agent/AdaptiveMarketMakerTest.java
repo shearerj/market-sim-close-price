@@ -217,18 +217,14 @@ public class AdaptiveMarketMakerTest {
 
 		// Creating and adding bids
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
 		exec.executeActivity(new Clear(market));
-
 
 		// Initial MM strategy
 		exec.executeActivity(new AgentStrategy(marketmaker));
 
-
 		// Quote change
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(42), 1));
-
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(48), 1));
 		exec.executeActivity(new Clear(market));
 
@@ -238,6 +234,7 @@ public class AdaptiveMarketMakerTest {
 		assertEquals(new Price(44), quote.getBidPrice());
 
 		exec.executeUntil(TimeStamp.create(10));
+		
 		// Next MM strategy execution
 		exec.executeActivity(new AgentStrategy(marketmaker));
 
@@ -252,19 +249,20 @@ public class AdaptiveMarketMakerTest {
 
 		Order order = orders.get(10);
 		assertEquals(marketmaker, order.getAgent());
+		assertEquals(new Price(46), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 		order = orders.get(11);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(46), order.getPrice());
+		assertEquals(new Price(56), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 
 		order = orders.get(8);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(34), order.getPrice());
+		assertEquals(new Price(44), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 		order = orders.get(9);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(44), order.getPrice());
+		assertEquals(new Price(34), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 
 	}
@@ -287,7 +285,6 @@ public class AdaptiveMarketMakerTest {
 
 		// Creating and adding bids
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
 		exec.executeActivity(new Clear(market));
 		// Initial MM strategy
@@ -301,7 +298,7 @@ public class AdaptiveMarketMakerTest {
 		// Rung size was 12 quantized by tick size 5
 		Order order = orders.get(2);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(20), order.getPrice());
+		assertEquals(new Price(40), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 		order = orders.get(3);
 		assertEquals(marketmaker, order.getAgent());
@@ -309,12 +306,12 @@ public class AdaptiveMarketMakerTest {
 		assertEquals(OrderType.BUY, order.getOrderType());
 		order = orders.get(4);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(40), order.getPrice());
+		assertEquals(new Price(20), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 
 		order = orders.get(5);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(70), order.getPrice());
+		assertEquals(new Price(50), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 		order = orders.get(6);
 		assertEquals(marketmaker, order.getAgent());
@@ -322,7 +319,7 @@ public class AdaptiveMarketMakerTest {
 		assertEquals(OrderType.SELL, order.getOrderType());
 		order = orders.get(7);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(50), order.getPrice());
+		assertEquals(new Price(70), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 	}
 

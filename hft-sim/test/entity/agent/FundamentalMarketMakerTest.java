@@ -189,7 +189,7 @@ public class FundamentalMarketMakerTest {
 	
 	@Test
 	public void nullBidAsk() {
-		// testing when no bid/ask, does not submit any orders
+		// testing when no bid/ask, still submits orders
 		TimeStamp time = TimeStamp.ZERO;
 
 		MarketMaker mm = createFundMM(
@@ -200,52 +200,8 @@ public class FundamentalMarketMakerTest {
 
 		// Check activities inserted (none, other than reentry)
 		mm.agentStrategy(time);
-		assertEquals(0, mm.activeOrders.size());
+		assertEquals(4, mm.activeOrders.size());
 	}
-
-	/**
-	 * When the quote is undefined (either bid or ask is null) but prior quote
-	 * was defined, then the market maker should not do anything.
-	 */
-	@Test
-	public void quoteUndefined() {
-		TimeStamp time = TimeStamp.ZERO;
-
-		MarketMaker mm = createFundMM(
-				Keys.NUM_RUNGS, 2,
-				Keys.RUNG_SIZE, 10,
-				Keys.TRUNCATE_LADDER, false,
-				Keys.TICK_SIZE, 1);
-		mm.lastAsk = new Price(55);
-		mm.lastBid = new Price(45);
-
-		// Check market quote
-		Quote quote = market.getQuoteProcessor().getQuote();
-		assertEquals(null, quote.getAskPrice());
-		assertEquals(null, quote.getBidPrice());
-
-		// Check activities inserted (none, other than reentry)
-		mm.agentStrategy(time);
-		assertTrue(mm.activeOrders.isEmpty());
-
-		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
-
-		// Creating and adding bids
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-
-		// Check market quote
-		quote = market.getQuoteProcessor().getQuote();
-		assertEquals(null, quote.getAskPrice());
-		assertEquals(new Price(40), quote.getBidPrice());
-
-		// Check activities inserted (none, other than reentry)
-		mm.lastAsk = new Price(55);
-		mm.lastBid = new Price(45);
-		mm.agentStrategy(time);
-		assertTrue(mm.activeOrders.isEmpty());
-	}
-
 
 	@Test
 	public void basicLadderTest() {
@@ -289,17 +245,17 @@ public class FundamentalMarketMakerTest {
 		assertEquals("Incorrect number of orders", 4, mm.activeOrders.size());
 
 		assertEquals(mm, orders.get(2).getAgent());
-		assertEquals(new Price(30), orders.get(2).getPrice());
+		assertEquals(new Price(40), orders.get(2).getPrice());
 		assertEquals(OrderType.BUY, orders.get(2).getOrderType());
 		assertEquals(mm, orders.get(3).getAgent());
-		assertEquals(new Price(40), orders.get(3).getPrice());
+		assertEquals(new Price(30), orders.get(3).getPrice());
 		assertEquals(OrderType.BUY, orders.get(3).getOrderType());
 
 		assertEquals(mm, orders.get(4).getAgent());
-		assertEquals(new Price(60), orders.get(4).getPrice());
+		assertEquals(new Price(50), orders.get(4).getPrice());
 		assertEquals(OrderType.SELL, orders.get(4).getOrderType());
 		assertEquals(mm, orders.get(5).getAgent());
-		assertEquals(new Price(50), orders.get(5).getPrice());
+		assertEquals(new Price(60), orders.get(5).getPrice());
 		assertEquals(OrderType.SELL, orders.get(5).getOrderType());
 	}
 
@@ -356,20 +312,20 @@ public class FundamentalMarketMakerTest {
 
 		Order order = orders.get(8);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(33), order.getPrice());
+		assertEquals(new Price(43), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 		order = orders.get(9);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(43), order.getPrice());
+		assertEquals(new Price(33), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 
 		order = orders.get(10);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(57), order.getPrice());
+		assertEquals(new Price(47), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 		order = orders.get(11);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(47), order.getPrice());
+		assertEquals(new Price(57), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 	}
 
@@ -407,7 +363,7 @@ public class FundamentalMarketMakerTest {
 		// Rung size was 12 quantized by tick size 5
 		Order order = orders.get(2);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(20), order.getPrice());
+		assertEquals(new Price(40), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 		order = orders.get(3);
 		assertEquals(marketmaker, order.getAgent());
@@ -415,12 +371,12 @@ public class FundamentalMarketMakerTest {
 		assertEquals(OrderType.BUY, order.getOrderType());
 		order = orders.get(4);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(40), order.getPrice());
+		assertEquals(new Price(20), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 
 		order = orders.get(5);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(70), order.getPrice());
+		assertEquals(new Price(50), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 		order = orders.get(6);
 		assertEquals(marketmaker, order.getAgent());
@@ -428,7 +384,7 @@ public class FundamentalMarketMakerTest {
 		assertEquals(OrderType.SELL, order.getOrderType());
 		order = orders.get(7);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(50), order.getPrice());
+		assertEquals(new Price(70), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 	}
 
@@ -474,16 +430,16 @@ public class FundamentalMarketMakerTest {
 		// Verify that 2 rungs on truncated side
 		Order order = orders.get(2);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(92), order.getPrice());
+		assertEquals(new Price(97), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 		order = orders.get(3);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(97), order.getPrice());
+		assertEquals(new Price(92), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 		// 3 rungs on sell side
 		order = orders.get(4);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(116), order.getPrice());
+		assertEquals(new Price(106), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 		order = orders.get(5);
 		assertEquals(marketmaker, order.getAgent());
@@ -491,7 +447,7 @@ public class FundamentalMarketMakerTest {
 		assertEquals(OrderType.SELL, order.getOrderType());
 		order = orders.get(6);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(106), order.getPrice());
+		assertEquals(new Price(116), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 	}
 
@@ -536,7 +492,7 @@ public class FundamentalMarketMakerTest {
 		// Verify that 3 rungs on buy side
 		Order order = orders.get(2);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(59), order.getPrice());
+		assertEquals(new Price(69), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 		order = orders.get(3);
 		assertEquals(marketmaker, order.getAgent());
@@ -544,16 +500,16 @@ public class FundamentalMarketMakerTest {
 		assertEquals(OrderType.BUY, order.getOrderType());
 		order = orders.get(4);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(69), order.getPrice());
+		assertEquals(new Price(59), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 		// 2 rungs on truncated sell side
 		order = orders.get(5);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(99), order.getPrice());
+		assertEquals(new Price(94), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 		order = orders.get(6);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(94), order.getPrice());
+		assertEquals(new Price(99), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 	}
 
@@ -594,8 +550,6 @@ public class FundamentalMarketMakerTest {
 		// Verify that it withdraws ladder entirely & submits new ladder
 		exec.executeActivity(new AgentStrategy(marketmaker));
 		exec.executeUntil(one);
-		assertNotNull(marketmaker.lastBid);
-		assertNotNull(marketmaker.lastAsk);
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
 		for (Order o : marketmaker.activeOrders) {
 			int price = o.getPrice().intValue();
@@ -645,8 +599,6 @@ public class FundamentalMarketMakerTest {
 		exec.executeUntil(one);
 		exec.executeActivity(new AgentStrategy(marketmaker));
 
-		assertNotNull(marketmaker.lastBid);
-		assertNotNull(marketmaker.lastAsk);
 		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
 		for (Order o : marketmaker.activeOrders) {
 			int price = o.getPrice().intValue();
@@ -691,8 +643,6 @@ public class FundamentalMarketMakerTest {
 		assertTrue(agent1.activeOrders.isEmpty());
 		agent2.withdrawAllOrders();
 		assertEquals(0, agent2.activeOrders.size());
-		assertTrue(marketmaker.lastAsk != null);
-		assertTrue(marketmaker.lastBid != null);
 		
 		// Note that now the quote is undefined, after it withdraws its ladder
 		exec.executeUntil(one);
@@ -727,169 +677,5 @@ public class FundamentalMarketMakerTest {
 		assertEquals(5, buys.getMax() - buys.getMean(), 0.0001);
 		assertEquals(5, sells.getMean() - sells.getMin(), 0.0001);
 		assertEquals(5, buys.getMean() - buys.getMin(), 0.0001);
-	}
-	
-	@Test
-	public void oneBackgroundBuyer() {
-		MarketMaker marketmaker = createFundMM(
-				Keys.NUM_RUNGS, 3,
-				Keys.RUNG_SIZE, 5,
-				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_SIZE, 1,
-				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_OUTSIDE, false,
-				Keys.INITIAL_LADDER_MEAN, 50,
-				Keys.INITIAL_LADDER_RANGE, 10);
-		
-		// Creating dummy agent
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
-
-		// Creating and adding bids
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-		exec.executeActivity(new Clear(market));
-
-		// Initial MM strategy
-		exec.executeActivity(new AgentStrategy(marketmaker));
-
-		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
-		
-		// Storing buy/sell orders
-		SummaryStatistics buys = new SummaryStatistics();
-		SummaryStatistics sells = new SummaryStatistics();
-		for (Order o : marketmaker.activeOrders) {
-			int price = o.getPrice().intValue();
-			if (o.getOrderType() == BUY)
-				buys.addValue(price);
-			else
-				sells.addValue(price);
-		}
-		
-		// Checking one-sided ladder
-		int ladderCenter = ((int) (buys.getMax() + sells.getMin()) / 2);
-		assertTrue("ladder center outside range", ladderCenter >= 40 && ladderCenter <= 60);
-		assertTrue("ladder sell outside range", sells.getMin() <= 60 && sells.getMin() >= 50);
-		assertEquals(ladderCenter + 5, (int) sells.getMin());
-		assertEquals(50, (int) sells.getMin());	// no need for tick improvement
-		assertEquals(40 + 1, (int) buys.getMax()); // tick improvement outside
-		assertEquals(5, sells.getMax() - sells.getMean(), 0.0001);
-		assertEquals(5, buys.getMax() - buys.getMean(), 0.0001);
-		assertEquals(5, sells.getMax() - sells.getMean(), 0.0001);
-		assertEquals(5, buys.getMax() - buys.getMean(), 0.0001);
-		assertEquals(5, sells.getMean() - sells.getMin(), 0.0001);
-		assertEquals(5, buys.getMean() - buys.getMin(), 0.0001);
-		assertEquals(0, market.getTransactions().size());
-		
-		// Verify that single background trader will transact with the MM
-		market.submitOrder(agent1, BUY, new Price(80), 1, TimeStamp.create(10));
-		market.clear(TimeStamp.create(10));
-		assertEquals(1, market.getTransactions().size());
-		// because MockMarket, cannot test price of transaction
-	}
-	
-	@Test
-	public void oneBackgroundSeller() {
-		MarketMaker marketmaker = createFundMM(
-				Keys.NUM_RUNGS, 3,
-				Keys.RUNG_SIZE, 5,
-				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_SIZE, 1,
-				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_OUTSIDE, false,
-				Keys.INITIAL_LADDER_MEAN, 50,
-				Keys.INITIAL_LADDER_RANGE, 10);
-		
-		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
-
-		// Creating and adding bids
-		exec.executeActivity(new SubmitOrder(agent1, market, SELL, new Price(60), 1));
-		exec.executeActivity(new Clear(market));
-
-		// Initial MM strategy
-		exec.executeActivity(new AgentStrategy(marketmaker));
-
-		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
-		
-		// Storing buy/sell orders
-		SummaryStatistics buys = new SummaryStatistics();
-		SummaryStatistics sells = new SummaryStatistics();
-		for (Order o : marketmaker.activeOrders) {
-			int price = o.getPrice().intValue();
-			if (o.getOrderType() == BUY)
-				buys.addValue(price);
-			else
-				sells.addValue(price);
-		}
-		
-		// Checking one-sided ladder
-		int ladderCenter = ((int) (buys.getMax() + sells.getMin()) / 2);
-		assertTrue("ladder center outside range", ladderCenter <= 60 && ladderCenter >= 40);
-		assertTrue("ladder buy outside range", buys.getMin() <= 50 && buys.getMin() >= 40);
-		assertEquals(60 - 1, (int) sells.getMin());
-		assertEquals(50, (int) buys.getMax()); // tick improvement outside
-		assertEquals(5, sells.getMax() - sells.getMean(), 0.0001);
-		assertEquals(5, buys.getMax() - buys.getMean(), 0.0001);
-		assertEquals(5, sells.getMax() - sells.getMean(), 0.0001);
-		assertEquals(5, buys.getMax() - buys.getMean(), 0.0001);
-		assertEquals(5, sells.getMean() - sells.getMin(), 0.0001);
-		assertEquals(5, buys.getMean() - buys.getMin(), 0.0001);
-	}
-	
-	@Test
-	public void oneBackgroundTraderLadderRange() {
-		// testing where 2*rungSize (step size) is larger than initial range
-		
-		MarketMaker marketmaker = createFundMM(
-				Keys.NUM_RUNGS, 3,
-				Keys.RUNG_SIZE, 10,
-				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_SIZE, 1,
-				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_OUTSIDE, false,
-				Keys.INITIAL_LADDER_MEAN, 50,
-				Keys.INITIAL_LADDER_RANGE, 7);
-		
-		// Creating dummy agents
-		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
-
-		// Creating and adding bids
-		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-		exec.executeActivity(new Clear(market));
-
-		// Initial MM strategy
-		exec.executeActivity(new AgentStrategy(marketmaker));
-
-		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
-		
-		// Storing buy/sell orders
-		SummaryStatistics buys = new SummaryStatistics();
-		SummaryStatistics sells = new SummaryStatistics();
-		for (Order o : marketmaker.activeOrders) {
-			int price = o.getPrice().intValue();
-			if (o.getOrderType() == BUY)
-				buys.addValue(price);
-			else
-				sells.addValue(price);
-		}
-		
-		// Checking one-sided ladder
-		int ladderCenter = ((int) (buys.getMax() + sells.getMin()) / 2);
-		assertTrue("ladder center outside range", ladderCenter <= 60 && ladderCenter >= 40);
-		assertTrue("ladder sell outside range", sells.getMin() <= 60 && sells.getMin() >= 47);
-	}
-
-
-	@Test
-	public void extraTest() {
-		for (int i = 0; i < 100; i++) {
-			setup();
-			nullBidAskLadder();
-			setup();
-			oneBackgroundBuyer();
-			setup();
-			oneBackgroundSeller();
-			setup();
-			oneBackgroundTraderLadderRange();
-		}
 	}
 }

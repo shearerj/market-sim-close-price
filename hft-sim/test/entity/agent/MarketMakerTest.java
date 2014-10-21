@@ -45,7 +45,6 @@ public class MarketMakerTest {
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
-		
 		log = Log.create(DEBUG, new File(Consts.TEST_OUTPUT_DIR + "MarketMakerTest.log"));
 	}
 
@@ -56,7 +55,7 @@ public class MarketMakerTest {
 		market = new MockMarket(exec, sip);
 	}
 
-	// TODO should MMs be able to submit rung size=0 ladders? For now, do not permit
+	// FIXME should MMs be able to submit rung size=0 ladders? For now, do not permit
 	
 	@Test
 	public void nullBidAsk() {

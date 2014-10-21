@@ -152,7 +152,6 @@ public class BasicMarketMakerTest {
 
 		// Creating and adding bids
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(40), 1));
-
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
 		exec.executeActivity(new Clear(market));
 
@@ -174,19 +173,18 @@ public class BasicMarketMakerTest {
 		assertEquals(new Price(50), orders.get(1).getPrice());
 
 		assertEquals("Incorrect number of orders", 4, mm.activeOrders.size());
-
 		assertEquals(mm, orders.get(2).getAgent());
-		assertEquals(new Price(30), orders.get(2).getPrice());
+		assertEquals(new Price(40), orders.get(2).getPrice());
 		assertEquals(OrderType.BUY, orders.get(2).getOrderType());
 		assertEquals(mm, orders.get(3).getAgent());
-		assertEquals(new Price(40), orders.get(3).getPrice());
+		assertEquals(new Price(30), orders.get(3).getPrice());
 		assertEquals(OrderType.BUY, orders.get(3).getOrderType());
 
 		assertEquals(mm, orders.get(4).getAgent());
-		assertEquals(new Price(60), orders.get(4).getPrice());
+		assertEquals(new Price(50), orders.get(4).getPrice());
 		assertEquals(OrderType.SELL, orders.get(4).getOrderType());
 		assertEquals(mm, orders.get(5).getAgent());
-		assertEquals(new Price(50), orders.get(5).getPrice());
+		assertEquals(new Price(60), orders.get(5).getPrice());
 		assertEquals(OrderType.SELL, orders.get(5).getOrderType());
 	}
 
@@ -211,14 +209,11 @@ public class BasicMarketMakerTest {
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
 		exec.executeActivity(new Clear(market));
 
-
 		// Initial MM strategy
 		exec.executeActivity(new AgentStrategy(marketmaker));
 
-
 		// Quote change
 		exec.executeActivity(new SubmitOrder(agent1, market, BUY, new Price(42), 1));
-
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(48), 1));
 		exec.executeActivity(new Clear(market));
 
@@ -242,20 +237,20 @@ public class BasicMarketMakerTest {
 
 		Order order = orders.get(8);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(32), order.getPrice());
+		assertEquals(new Price(42), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 		order = orders.get(9);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(42), order.getPrice());
+		assertEquals(new Price(32), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 
 		order = orders.get(10);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(58), order.getPrice());
+		assertEquals(new Price(48), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 		order = orders.get(11);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(48), order.getPrice());
+		assertEquals(new Price(58), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 	}
 
@@ -280,10 +275,8 @@ public class BasicMarketMakerTest {
 		exec.executeActivity(new SubmitOrder(agent2, market, SELL, new Price(50), 1));
 		exec.executeActivity(new Clear(market));
 
-
 		// Initial MM strategy
 		exec.executeActivity(new AgentStrategy(marketmaker));
-
 
 		// Check ladder of orders
 		// market's orders contains all orders ever submitted
@@ -293,7 +286,7 @@ public class BasicMarketMakerTest {
 		// Rung size was 12 quantized by tick size 5
 		Order order = orders.get(2);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(20), order.getPrice());
+		assertEquals(new Price(40), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 		order = orders.get(3);
 		assertEquals(marketmaker, order.getAgent());
@@ -301,12 +294,12 @@ public class BasicMarketMakerTest {
 		assertEquals(OrderType.BUY, order.getOrderType());
 		order = orders.get(4);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(40), order.getPrice());
+		assertEquals(new Price(20), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 
 		order = orders.get(5);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(70), order.getPrice());
+		assertEquals(new Price(50), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 		order = orders.get(6);
 		assertEquals(marketmaker, order.getAgent());
@@ -314,7 +307,7 @@ public class BasicMarketMakerTest {
 		assertEquals(OrderType.SELL, order.getOrderType());
 		order = orders.get(7);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(50), order.getPrice());
+		assertEquals(new Price(70), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 	}
 
@@ -359,16 +352,16 @@ public class BasicMarketMakerTest {
 		// Verify that 2 rungs on truncated side
 		Order order = orders.get(2);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(92), order.getPrice());
+		assertEquals(new Price(97), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 		order = orders.get(3);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(97), order.getPrice());
+		assertEquals(new Price(92), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 		// 3 rungs on sell side
 		order = orders.get(4);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(115), order.getPrice());
+		assertEquals(new Price(105), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 		order = orders.get(5);
 		assertEquals(marketmaker, order.getAgent());
@@ -376,7 +369,7 @@ public class BasicMarketMakerTest {
 		assertEquals(OrderType.SELL, order.getOrderType());
 		order = orders.get(6);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(105), order.getPrice());
+		assertEquals(new Price(115), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 	}
 
@@ -421,7 +414,7 @@ public class BasicMarketMakerTest {
 		// Verify that 3 rungs on buy side
 		Order order = orders.get(2);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(60), order.getPrice());
+		assertEquals(new Price(70), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 		order = orders.get(3);
 		assertEquals(marketmaker, order.getAgent());
@@ -429,16 +422,16 @@ public class BasicMarketMakerTest {
 		assertEquals(OrderType.BUY, order.getOrderType());
 		order = orders.get(4);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(70), order.getPrice());
+		assertEquals(new Price(60), order.getPrice());
 		assertEquals(OrderType.BUY, order.getOrderType());
 		// 2 rungs on truncated sell side
 		order = orders.get(5);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(99), order.getPrice());
+		assertEquals(new Price(94), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 		order = orders.get(6);
 		assertEquals(marketmaker, order.getAgent());
-		assertEquals(new Price(94), order.getPrice());
+		assertEquals(new Price(99), order.getPrice());
 		assertEquals(OrderType.SELL, order.getOrderType());
 	}
 
