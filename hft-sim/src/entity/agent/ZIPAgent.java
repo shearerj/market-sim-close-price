@@ -60,16 +60,17 @@ public class ZIPAgent extends WindowAgent {
 	public ZIPAgent(Scheduler scheduler, TimeStamp arrivalTime,
 			FundamentalValue fundamental, SIP sip, Market market, Random rand,
 			double reentryRate, double pvVar, int tickSize, int maxAbsPosition,
-			int bidRangeMin, int bidRangeMax,
-			int windowLength, double marginMin, double marginMax,
-			double gammaMin, double gammaMax, double betaMin, double betaMax,
-			double rangeCoeffA, double rangeCoeffR) {
+			int bidRangeMin, int bidRangeMax, boolean withdrawOrders, 
+			int windowLength, double marginMin,	double marginMax, double gammaMin, double gammaMax, double betaMin,
+			double betaMax, double rangeCoeffA, double rangeCoeffR) {
 
 		super(scheduler, arrivalTime, fundamental, sip, market, rand,
 				ExpInterarrivals.create(reentryRate, rand), new PrivateValue(
 						maxAbsPosition, pvVar, rand), tickSize, bidRangeMin,
 				bidRangeMax, windowLength);
 
+		this.withdrawOrders = withdrawOrders;
+		
 		checkArgument(rangeCoeffA > 0, "Coefficient A's range must be positive");
 		checkArgument(rangeCoeffR > 0, "Coefficient A's range must be positive");
 		checkArgument(betaMin >= 0, "Min beta must be positive");
@@ -100,9 +101,10 @@ public class ZIPAgent extends WindowAgent {
 				props.getAsDouble(Keys.BACKGROUND_REENTRY_RATE, Keys.REENTRY_RATE), 
 				props.getAsDouble(Keys.PRIVATE_VALUE_VAR),
 				props.getAsInt(Keys.AGENT_TICK_SIZE, Keys.TICK_SIZE),
-				props.getAsInt(Keys.MAX_QUANTITY),
+				props.getAsInt(Keys.MAX_POSITION),
 				props.getAsInt(Keys.BID_RANGE_MIN),
 				props.getAsInt(Keys.BID_RANGE_MAX), 
+				props.getAsBoolean(Keys.WITHDRAW_ORDERS),
 				props.getAsInt(Keys.WINDOW_LENGTH),
 				props.getAsDouble(Keys.MARGIN_MIN),
 				props.getAsDouble(Keys.MARGIN_MAX),

@@ -155,8 +155,10 @@ public class Simulation {
 		Observations.BUS.register(observations);
 		scheduler.executeUntil(simulationLength.minus(TimeStamp.create(1)));
 		for (Agent agent : agents) {
-			scheduler.executeActivity(new LiquidateAtFundamental(agent));
+			scheduler.scheduleActivity( simulationLength.minus(TimeStamp.create(1)), 
+					new LiquidateAtFundamental(agent));
 		}
+		scheduler.executeUntil(simulationLength.minus(TimeStamp.create(1)));
 		log.log(INFO, "[[[ Simulation Over ]]]");
 		Observations.BUS.unregister(observations);
 	}

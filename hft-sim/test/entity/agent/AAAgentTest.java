@@ -61,7 +61,7 @@ public class AAAgentTest {
 		// Setting up default agentProperties
 		agentProperties = EntityProperties.fromPairs(
 				Keys.REENTRY_RATE, 0,
-				Keys.MAX_QUANTITY, 10,
+				Keys.MAX_POSITION, 10,
 				Keys.ETA, 3,
 				Keys.WITHDRAW_ORDERS, false,
 				Keys.WINDOW_LENGTH, 5000,

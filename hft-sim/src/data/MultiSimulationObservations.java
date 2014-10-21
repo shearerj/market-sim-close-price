@@ -76,9 +76,9 @@ public class MultiSimulationObservations {
 				PlayerObservation playerObs = it.next();
 				mpo.payoff.add(playerObs.payoff);
 				// player-specific PV control variables
-				mpo.features.get(Keys.PV_BUY1).add(playerObs.features.get(Keys.PV_BUY1).doubleValue());
-				mpo.features.get(Keys.PV_SELL1).add(playerObs.features.get(Keys.PV_SELL1).doubleValue());
-				mpo.features.get(Keys.PV_POSITION1_MAX_ABS).add(playerObs.features.get(Keys.PV_POSITION1_MAX_ABS).doubleValue());
+//				mpo.features.get(Keys.PV_BUY1).add(playerObs.features.get(Keys.PV_BUY1).doubleValue());
+//				mpo.features.get(Keys.PV_SELL1).add(playerObs.features.get(Keys.PV_SELL1).doubleValue());
+//				mpo.features.get(Keys.PV_POSITION1_MAX_ABS).add(playerObs.features.get(Keys.PV_POSITION1_MAX_ABS).doubleValue());
 			}
 			for (Entry<String, Double> e : obs.getFeatures().entrySet())
 				features.get(e.getKey()).add(e.getValue());

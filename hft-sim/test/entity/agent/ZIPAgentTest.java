@@ -49,7 +49,7 @@ public class ZIPAgentTest {
 	private static Random rand;
 	private static EntityProperties agentProperties = EntityProperties.fromPairs(
 			Keys.REENTRY_RATE, 0.05,
-			Keys.MAX_QUANTITY, 10,
+			Keys.MAX_POSITION, 10,
 			Keys.MARGIN_MIN, 0.05,
 			Keys.MARGIN_MAX, 0.35,
 			Keys.GAMMA_MIN, 0,
@@ -164,7 +164,7 @@ public class ZIPAgentTest {
 	@Test
 	public void agentStrategyTest() {
 		TimeStamp time = TimeStamp.ZERO;
-		ZIPAgent agent = createAgent(Keys.MAX_QUANTITY, 1,
+		ZIPAgent agent = createAgent(Keys.MAX_POSITION, 1,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
 				Keys.BETA_MIN, 0.5,
@@ -201,7 +201,7 @@ public class ZIPAgentTest {
 	@Test
 	public void getCurrentMarginTest() {
 		ZIPAgent agent = createAgent(
-				Keys.MAX_QUANTITY, 1,
+				Keys.MAX_POSITION, 1,
 				Keys.MARGIN_MAX, 1.5,
 				Keys.MARGIN_MIN, 1.2);
 
@@ -220,7 +220,7 @@ public class ZIPAgentTest {
 		TimeStamp time = TimeStamp.ZERO;
 		// testing when limit price is 0
 		ZIPAgent agent = createAgent(
-				Keys.MAX_QUANTITY, 5,
+				Keys.MAX_POSITION, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
 				Keys.BETA_MIN, 0.5,
@@ -252,7 +252,7 @@ public class ZIPAgentTest {
 	public void checkIncreaseMarginBuyer() {
 		TimeStamp time = TimeStamp.ZERO;
 		ZIPAgent agent = createAgent(
-				Keys.MAX_QUANTITY, 5,
+				Keys.MAX_POSITION, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
 				Keys.BETA_MIN, 0.5,
@@ -294,7 +294,7 @@ public class ZIPAgentTest {
 	public void checkIncreaseMarginSeller() {
 		TimeStamp time = TimeStamp.ZERO;
 		ZIPAgent agent = createAgent(
-				Keys.MAX_QUANTITY, 5,
+				Keys.MAX_POSITION, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
 				Keys.BETA_MIN, 0.5,
@@ -337,7 +337,7 @@ public class ZIPAgentTest {
 		TimeStamp time = TimeStamp.ZERO;
 
 		ZIPAgent agent = createAgent(
-				Keys.MAX_QUANTITY, 5,
+				Keys.MAX_POSITION, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
 				Keys.BETA_MIN, 0.5,
@@ -383,7 +383,7 @@ public class ZIPAgentTest {
 		TimeStamp time = TimeStamp.ZERO;
 
 		ZIPAgent agent = createAgent(
-				Keys.MAX_QUANTITY, 5,
+				Keys.MAX_POSITION, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
 				Keys.BETA_MIN, 0.5,
@@ -429,7 +429,7 @@ public class ZIPAgentTest {
 		TimeStamp time = TimeStamp.ZERO;
 
 		ZIPAgent agent = createAgent(
-				Keys.MAX_QUANTITY, 5,
+				Keys.MAX_POSITION, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.MARGIN_MAX, 0.35,
 				Keys.MARGIN_MIN, 0.25);
@@ -459,7 +459,7 @@ public class ZIPAgentTest {
 		TimeStamp time = TimeStamp.ZERO;
 		
 		ZIPAgent agent = createAgent(
-				Keys.MAX_QUANTITY, 5,
+				Keys.MAX_POSITION, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
 				Keys.BETA_MIN, 0.5,
@@ -502,7 +502,7 @@ public class ZIPAgentTest {
 		// gamma fixed at 1, update entirely to delta
 		TimeStamp time = TimeStamp.ZERO;
 		
-		ZIPAgent agent = createAgent(Keys.MAX_QUANTITY, 5,
+		ZIPAgent agent = createAgent(Keys.MAX_POSITION, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
 				Keys.BETA_MIN, 0.5,
@@ -547,7 +547,7 @@ public class ZIPAgentTest {
 		TimeStamp time = TimeStamp.ZERO;
 		
 		ZIPAgent agent = createAgent(
-				Keys.MAX_QUANTITY, 5,
+				Keys.MAX_POSITION, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.BETA_MAX, 0.5,
 				Keys.BETA_MIN, 0.5);
@@ -591,7 +591,7 @@ public class ZIPAgentTest {
 		TimeStamp time = TimeStamp.ZERO;
 		
 		ZIPAgent agent = createAgent(
-				Keys.MAX_QUANTITY, 5,
+				Keys.MAX_POSITION, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.MARGIN_MAX, 0.35,
 				Keys.MARGIN_MIN, 0.25);
@@ -628,7 +628,7 @@ public class ZIPAgentTest {
 		TimeStamp time = TimeStamp.ZERO;
 		
 		ZIPAgent agent = createAgent(
-				Keys.MAX_QUANTITY, 5,
+				Keys.MAX_POSITION, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.MARGIN_MAX, 0.35,
 				Keys.MARGIN_MIN, 0.25);
@@ -668,7 +668,7 @@ public class ZIPAgentTest {
 		TimeStamp time = TimeStamp.ZERO;
 		
 		ZIPAgent agent = createAgent(
-				Keys.MAX_QUANTITY, 5,
+				Keys.MAX_POSITION, 5,
 				Keys.PRIVATE_VALUE_VAR, 0,
 				Keys.MARGIN_MAX, 0.35,
 				Keys.MARGIN_MIN, 0.25);

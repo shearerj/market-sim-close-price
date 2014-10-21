@@ -36,6 +36,7 @@ import entity.agent.Agent;
 import entity.agent.BackgroundAgent;
 import entity.agent.HFTAgent;
 import entity.agent.MarketMaker;
+import entity.agent.MaxEfficiencyAgent;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Transaction;
@@ -90,6 +91,10 @@ public class Observations {
 	protected final SumStats marketmakerSpreads;
 	protected final SumStats marketmakerLadderCenter;
 	protected final SumStats marketmakerExecutionTimes;
+	protected final SumStats marketmakerTruncRungs;
+	
+	protected double zirpGreedyOrders;
+	protected double zirpNonGreedyOrders;
 	
 	// Static information needed for observations
 	protected final Collection<? extends Player> players;
@@ -142,6 +147,7 @@ public class Observations {
 		this.marketmakerExecutionTimes = SumStats.create();
 		this.marketmakerLadderCenter = SumStats.create();
 		this.marketmakerSpreads = SumStats.create();
+		this.marketmakerTruncRungs = SumStats.create();
 	}
 	
 	/**
@@ -200,6 +206,11 @@ public class Observations {
 		features.put("mm_ladder_mean", marketmakerLadderCenter.mean());
 		features.put("mm_spreads_stddev", marketmakerSpreads.stddev());
 		features.put("mm_exectime_mean", marketmakerExecutionTimes.mean());
+		features.put("mm_rungs_trunc_mean", marketmakerTruncRungs.mean());
+		
+		// ZIRP
+		features.put("zirp_greedy", zirpGreedyOrders);
+		features.put("zirp_nongreedy", zirpNonGreedyOrders);
 		
 		// Profit and Surplus (and Private Value)
 		SumStats 
@@ -208,6 +219,8 @@ public class Observations {
 			backgroundLiquidation = SumStats.create(),
 			hftProfit = SumStats.create(),
 			marketMakerProfit = SumStats.create();
+		// store distribution of positions
+		int[] positions = new int[2 * spec.getSimulationProps().getAsInt(Keys.MAX_POSITION) + 1];
 		
 		for (Agent agent : agents) {
 			long profit = agent.getPostLiquidationProfit();
@@ -219,6 +232,21 @@ public class Observations {
 				hftProfit.add(profit);
 			} else if (agent instanceof MarketMaker) {
 				marketMakerProfit.add(profit);
+				features.put("profit_liquidation_marketmaker", (double) agent.getLiquidationProfit());
+			}
+			
+			if (agent instanceof MaxEfficiencyAgent) {
+				MaxEfficiencyAgent ag = (MaxEfficiencyAgent) agent;
+				positions[ag.getPosition() + spec.getSimulationProps().getAsInt(Keys.MAX_POSITION)]++;
+			}
+		}
+		// check if its in MAX EFF mode (i.e. there are MaxEfficiencyAgents)
+		for (AgentProperties props : spec.getAgentProps()) {
+			if (props.getAgentType().equals(Consts.AgentType.MAXEFF)) {
+				int maxPosition = spec.getSimulationProps().getAsInt(Keys.MAX_POSITION);
+				for (int i = 0; i < positions.length; i++) {
+					features.put("position_" + (i - maxPosition) + "_num", (double) positions[i]);
+				}
 			}
 		}
 
@@ -314,9 +342,18 @@ public class Observations {
 	// --------------------------------------
 	// Everything with an @Subscribe is a listener for objects that contain statistics.
 	
+	@Subscribe public void processZIRP(ZIRPStatistic statistic) {
+		if (statistic.greedy) zirpGreedyOrders++;
+		else zirpNonGreedyOrders++;
+	}
+	
 	@Subscribe public void processMarketMaker(MarketMakerStatistic statistic) {
 		marketmakerLadderCenter.add((statistic.ask.doubleValue() + statistic.bid.doubleValue())/2);
 		marketmakerSpreads.add(statistic.ask.doubleValue() - statistic.bid.doubleValue());
+	}
+	
+	@Subscribe public void processLadder(LadderStatistic statistic) {
+		marketmakerTruncRungs.add(statistic.num);
 	}
 	
 	@Subscribe public void processSpread(SpreadStatistic statistic) {
@@ -371,6 +408,16 @@ public class Observations {
 	// --------------------------------------
 	// These are all statistics classes that are listened for
 	
+	public static class ZIRPStatistic {
+		protected final Agent ag;
+		protected final boolean greedy;
+		
+		public ZIRPStatistic(Agent ag, boolean greedy) {
+			this.ag = ag;
+			this.greedy = greedy;
+		}
+	}
+	
 	public static class MarketMakerStatistic {
 		protected final MarketMaker mm;
 		protected final Price bid;
@@ -380,6 +427,16 @@ public class Observations {
 			this.mm = mm;
 			this.bid = ladderBid;
 			this.ask = ladderAsk;
+		}
+	}
+	
+	public static class LadderStatistic {
+		protected final MarketMaker mm;
+		protected final int num;
+		
+		public LadderStatistic(MarketMaker mm, int rungsTruncated) {
+			this.mm = mm;
+			this.num = rungsTruncated;
 		}
 	}
 	

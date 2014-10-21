@@ -12,6 +12,7 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Random;
 
 import logger.Log;
 
@@ -408,6 +409,23 @@ public class AgentTest {
 		for (int i = 0; i < 100; i++) {
 			setup();
 			basicOrdersTest();
+			estimatedFundamental();
 		}
+	}
+	
+	@Test
+	public void estimatedFundamental() {
+		double kappa = 0.05;
+		int meanVal = 100000;
+		double var = 1E6;
+		FundamentalValue fund = FundamentalValue.create(kappa, meanVal, var, new Random());
+		TimeStamp time = TimeStamp.create(25);
+		
+		Agent agent = new MockAgent(exec, fund, sip, market);
+		
+		// high margin of error here because of rounding issues
+		assertEquals(0.005920529*fund.getValueAt(time).intValue() + 99407.9, 
+				agent.getEstimatedFundamental(time, 125, kappa, meanVal).doubleValue(), 0.75);
+		
 	}
 }

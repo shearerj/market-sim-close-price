@@ -52,7 +52,7 @@ public abstract class Agent extends Entity {
 	// Agent parameters
 	protected final TimeStamp arrivalTime;
 	protected final int tickSize;
-
+	
 	// Tracking position and profit
 	protected int positionBalance;
 	protected long profit;
@@ -103,6 +103,24 @@ public abstract class Agent extends Entity {
 				this, liquidationProfit, profit, price);
 	}
 
+	/**
+	 * Estimate fundamental r_hat.
+	 * @param time
+	 * @param simLength
+	 * @param kappa
+	 * @param fundamentalMean
+	 * 
+	 * @return
+	 */
+	protected Price getEstimatedFundamental(TimeStamp time, int simLength, 
+			double kappa, double fundamentalMean) {
+		
+		final int stepsLeft = (int) (simLength - time.getInTicks());
+		final double kappaCompToPower = Math.pow(1 - kappa, stepsLeft);
+		return new Price(fundamental.getValueAt(time).intValue() * kappaCompToPower 
+			+ fundamentalMean * (1 - kappaCompToPower));
+	}
+	
 	/**
 	 * Adds an agent's order to its memory so it knows about it, and can cancel it
 	 * @param order
@@ -170,7 +188,7 @@ public abstract class Agent extends Entity {
 	 * @return
 	 */
 	public void withdrawAllOrders() {
-		// activeOrders is copied, because these calls are happening instaniosuly and
+		// activeOrders is copied, because these calls are happening instantaneously and
 		// hence modifying active orders
 		for (Order order : ImmutableList.copyOf(activeOrders))
 			scheduler.executeActivity(new WithdrawOrder(order));
@@ -198,7 +216,8 @@ public abstract class Agent extends Entity {
 			profit += trans.getQuantity() * trans.getPrice().intValue();
 		}
 
-		log.log(INFO, "%s transacted to position %d", this, positionBalance);
+		log.log(INFO, "%s transacted to position %d, new profit=%d", 
+				this, positionBalance, profit);
 	}
 
 	public final TimeStamp getArrivalTime() {

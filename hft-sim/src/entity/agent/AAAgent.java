@@ -147,7 +147,7 @@ public class AAAgent extends WindowAgent {
 				props.getAsDouble(Keys.BACKGROUND_REENTRY_RATE, Keys.REENTRY_RATE), 
 				props.getAsDouble(Keys.PRIVATE_VALUE_VAR),
 				props.getAsInt(Keys.AGENT_TICK_SIZE, Keys.TICK_SIZE),
-				props.getAsInt(Keys.MAX_QUANTITY),
+				props.getAsInt(Keys.MAX_POSITION),
 				props.getAsInt(Keys.BID_RANGE_MIN),
 				props.getAsInt(Keys.BID_RANGE_MAX),
 				props.getAsBoolean(Keys.WITHDRAW_ORDERS),

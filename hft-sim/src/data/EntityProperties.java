@@ -190,7 +190,7 @@ public class EntityProperties implements Serializable {
 	public boolean getAsBoolean(String key) {
 		return parseBoolean(getAsString(key));
 	}
-	
+
 	public boolean getAsBoolean(String key, String defaultKey) {
 		return parseBoolean(getAsString(key, defaultKey));
 	}

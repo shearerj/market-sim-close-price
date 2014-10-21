@@ -51,7 +51,7 @@ public class ZIRPAgentTest {
 	private static EntityProperties agentProperties = 
 			EntityProperties.fromPairs(
 					Keys.REENTRY_RATE, 0,
-					Keys.MAX_QUANTITY, 2,
+					Keys.MAX_POSITION, 2,
 					Keys.PRIVATE_VALUE_VAR, 0,
 					Keys.BID_RANGE_MIN, 0,
 					Keys.BID_RANGE_MAX, 5000,
@@ -111,7 +111,7 @@ public class ZIRPAgentTest {
 	public void withdrawTest() {
 		// verify that orders are correctly withdrawn at each re-entry
 		ZIRPAgent agent = createAgent(
-				Keys.MAX_QUANTITY, 2,
+				Keys.MAX_POSITION, 2,
 				Keys.WITHDRAW_ORDERS, true);
 
 		// execute strategy once; then before reenter, change the position balance
@@ -129,7 +129,7 @@ public class ZIRPAgentTest {
 	public void basicBuyerTest() {
 		ZIRPAgent agent = createAgent(
 				Keys.PRIVATE_VALUE_VAR, 100,
-				Keys.MAX_QUANTITY, 2,
+				Keys.MAX_POSITION, 2,
 				Keys.BID_RANGE_MIN, 10000,
 				Keys.BID_RANGE_MAX, 10000,
 				Keys.WITHDRAW_ORDERS, true,
@@ -164,7 +164,7 @@ public class ZIRPAgentTest {
 		Market market2 = new CDAMarket(exec, sip, rand, TimeStamp.IMMEDIATE, 1);
 		ZIRPAgent agent = createAgent(fundamental, market2, rand,
 				Keys.PRIVATE_VALUE_VAR, 100,
-				Keys.MAX_QUANTITY, 2,
+				Keys.MAX_POSITION, 2,
 				Keys.BID_RANGE_MIN, 10000,
 				Keys.BID_RANGE_MAX, 10000,
 				Keys.WITHDRAW_ORDERS, true,
@@ -201,7 +201,7 @@ public class ZIRPAgentTest {
 		// to test what the price of the agent's submitted order is
 		ZIRPAgent zirp = createAgent(
 				Keys.PRIVATE_VALUE_VAR, 100,
-				Keys.MAX_QUANTITY, 2,
+				Keys.MAX_POSITION, 2,
 				Keys.BID_RANGE_MIN, 10000,
 				Keys.BID_RANGE_MAX, 10000,
 				Keys.WITHDRAW_ORDERS, true,
@@ -233,7 +233,7 @@ public class ZIRPAgentTest {
 	public void basicSellerTest() {
 		ZIRPAgent agent = createAgent(
 				Keys.PRIVATE_VALUE_VAR, 100,
-				Keys.MAX_QUANTITY, 2,
+				Keys.MAX_POSITION, 2,
 				Keys.BID_RANGE_MIN, 10000,
 				Keys.BID_RANGE_MAX, 10000,
 				Keys.WITHDRAW_ORDERS, true,
@@ -271,7 +271,7 @@ public class ZIRPAgentTest {
 		Market market2 = new CDAMarket(exec, sip, rand, TimeStamp.IMMEDIATE, 1);
 		ZIRPAgent agent = createAgent(fundamental, market2, rand,
 				Keys.PRIVATE_VALUE_VAR, 100,
-				Keys.MAX_QUANTITY, 2,
+				Keys.MAX_POSITION, 2,
 				Keys.BID_RANGE_MIN, 10000,
 				Keys.BID_RANGE_MAX, 10000,
 				Keys.WITHDRAW_ORDERS, true,
@@ -308,7 +308,7 @@ public class ZIRPAgentTest {
 		// to test what the price of the agent's submitted order is
 		ZIRPAgent zirp = createAgent(
 				Keys.PRIVATE_VALUE_VAR, 100,
-				Keys.MAX_QUANTITY, 2,
+				Keys.MAX_POSITION, 2,
 				Keys.BID_RANGE_MIN, 10000,
 				Keys.BID_RANGE_MAX, 10000,
 				Keys.WITHDRAW_ORDERS, true,

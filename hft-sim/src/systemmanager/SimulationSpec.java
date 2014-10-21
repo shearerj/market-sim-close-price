@@ -3,21 +3,7 @@ package systemmanager;
 import static systemmanager.Consts.AgentType.LA;
 import static systemmanager.Consts.MarketType.CALL;
 import static systemmanager.Consts.MarketType.CDA;
-import static systemmanager.Keys.ARRIVAL_RATE;
-import static systemmanager.Keys.CLEAR_FREQ;
-import static systemmanager.Keys.FUNDAMENTAL_KAPPA;
-import static systemmanager.Keys.FUNDAMENTAL_MEAN;
-import static systemmanager.Keys.FUNDAMENTAL_SHOCK_VAR;
-import static systemmanager.Keys.MARKET_LATENCY;
-import static systemmanager.Keys.NBBO_LATENCY;
-import static systemmanager.Keys.NUM;
-import static systemmanager.Keys.NUM_SIMULATIONS;
-import static systemmanager.Keys.PRIVATE_VALUE_VAR;
-import static systemmanager.Keys.RAND_SEED;
-import static systemmanager.Keys.REENTRY_RATE;
-import static systemmanager.Keys.SIMULATION_LENGTH;
-import static systemmanager.Keys.TICK_SIZE;
-import static systemmanager.Keys.ACCEPTABLE_PROFIT_FRACTION;
+import static systemmanager.Keys.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -65,11 +51,11 @@ public class SimulationSpec implements Serializable {
 	
 	protected static final String[] simulationKeys = { SIMULATION_LENGTH,
 			FUNDAMENTAL_MEAN, FUNDAMENTAL_KAPPA, FUNDAMENTAL_SHOCK_VAR,
-			RAND_SEED, NBBO_LATENCY, NUM_SIMULATIONS };
+			RAND_SEED, NBBO_LATENCY, NUM_SIMULATIONS, MAX_POSITION};
 	protected static final String[] marketKeys = { MARKET_LATENCY, TICK_SIZE };
 	protected static final String[] agentKeys = { TICK_SIZE, ARRIVAL_RATE,
 			REENTRY_RATE, PRIVATE_VALUE_VAR, SIMULATION_LENGTH, FUNDAMENTAL_KAPPA, 
-			FUNDAMENTAL_MEAN, ACCEPTABLE_PROFIT_FRACTION };
+			FUNDAMENTAL_MEAN, MAX_POSITION };
 
 	protected transient final JsonObject rawSpec;
 	protected final EntityProperties simulationProperties;

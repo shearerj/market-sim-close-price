@@ -59,7 +59,7 @@ public class AgentFactory {
 				Iterators.cycle(markets), rand);
 	}
 
-	// All Agents should advance rand, marketAssignment, and arrivlProcess
+	// All Agents should advance rand, marketAssignment, and arrivalProcess
 	public Agent createAgent(AgentProperties props) {
 		switch (props.getAgentType()) {
 		case AA:
@@ -82,6 +82,10 @@ public class AgentFactory {
 			return new ZIAgent(scheduler, arrivalProcess.next(), fundamental,
 					sip, marketAssignment.next(), new Random(rand.nextLong()),
 					props);
+		case MAXEFF:
+			return new MaxEfficiencyAgent(scheduler, fundamental, sip, 
+					marketAssignment.next(), new Random(rand.nextLong()),
+					props);
 		case MARKETDATA:
 			return new MarketDataAgent(scheduler, fundamental, sip,
 					marketAssignment.next(), new Random(rand.nextLong()), props);
@@ -102,6 +106,11 @@ public class AgentFactory {
 		case ADAPTIVEMM:
 			arrivalProcess.next();
 			return new AdaptiveMarketMaker(scheduler, fundamental, sip,
+					marketAssignment.next(), new Random(rand.nextLong()),
+					props);
+		case FUNDAMENTALMM:
+			arrivalProcess.next();
+			return new FundamentalMarketMaker(scheduler, fundamental, sip,
 					marketAssignment.next(), new Random(rand.nextLong()),
 					props);
 		case LA:

@@ -60,7 +60,7 @@ public class Defaults implements Serializable {
 
 		// Background Agents		
 		Keys.PRIVATE_VALUE_VAR,		1000000,
-		Keys.MAX_QUANTITY, 			10,
+		Keys.MAX_POSITION, 			10,
 		Keys.BID_RANGE_MIN, 		0,
 		Keys.BID_RANGE_MAX, 		5000, 
 		Keys.WINDOW_LENGTH, 		5000,
@@ -112,5 +112,10 @@ public class Defaults implements Serializable {
 		Keys.USE_MEDIAN_SPREAD, 	false, // XXX get rid of this altogether?
 		Keys.MOVING_AVERAGE_PRICE, 	true,
 		Keys.FAST_LEARNING, 		true,
-		Keys.USE_LAST_PRICE, 		true);
+		Keys.USE_LAST_PRICE, 		true,
+		
+		// Fundamental MM
+		Keys.FUNDAMENTAL_ESTIMATE,	-1,
+		Keys.SPREAD, 				-1		// for backwards compatibility
+	);
 }
