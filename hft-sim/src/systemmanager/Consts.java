@@ -31,11 +31,11 @@ public interface Consts {
 	// Agent, market, and model types
 	// XXX UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL
 	// TODO Use the class name instead of this strange enum? This could be a Collection<Class<? extends Agent>>
-	public static enum AgentType { NOOP, AA, ZI, ZIP, ZIR, ZIRP, MAXEFF,
+	public static enum AgentType { NOOP, AA, ZI, ZIP, ZIR, ZIRP, MAXEFFICIENCY,
 				    FUNDAMENTALMM, ADAPTIVEMM, BASICMM, CONSTMM, MAMM, WMAMM, LA, ODA, MARKETDATA };
 	public static enum MarketType { CDA, CALL };
 	
-	public static enum Presets { NONE, TWOMARKET, TWOMARKETLA, CENTRALCDA, CENTRALCALL };
+	public static enum Presets { NONE, TWOMARKET, TWOMARKETLA, CENTRALCDA, CENTRALCALL, MAXEFF };
 	
 	// **********************************************************
 	// FILENAMES

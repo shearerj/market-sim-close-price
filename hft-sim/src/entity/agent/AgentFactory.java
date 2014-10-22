@@ -82,7 +82,7 @@ public class AgentFactory {
 			return new ZIAgent(scheduler, arrivalProcess.next(), fundamental,
 					sip, marketAssignment.next(), new Random(rand.nextLong()),
 					props);
-		case MAXEFF:
+		case MAXEFFICIENCY:
 			return new MaxEfficiencyAgent(scheduler, fundamental, sip, 
 					marketAssignment.next(), new Random(rand.nextLong()),
 					props);

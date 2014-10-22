@@ -131,8 +131,7 @@ public abstract class MarketMaker extends ReentryAgent {
 		}
 		log.log(INFO, "%s in %s: Submit ladder with #rungs %d, step size %d: buys [%s to %s] & sells [%s to %s]",
 				this, primaryMarket, numRungs, stepSize, buyMinPrice, buyMaxPrice, sellMinPrice, sellMaxPrice);
-
-
+		
 		BUS.post(new MarketMakerStatistic(this, buyMaxPrice, sellMinPrice));
 		// XXX for evaluating strategies
 		// System.out.println((buyMaxPrice.doubleValue() + sellMinPrice.doubleValue())/2 + "," + 

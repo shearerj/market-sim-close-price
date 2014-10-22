@@ -1,6 +1,7 @@
 package systemmanager;
 
 import static systemmanager.Consts.AgentType.LA;
+import static systemmanager.Consts.AgentType.MAXEFFICIENCY;
 import static systemmanager.Consts.MarketType.CALL;
 import static systemmanager.Consts.MarketType.CDA;
 import static systemmanager.Keys.*;
@@ -180,6 +181,13 @@ public class SimulationSpec implements Serializable {
 			config.addProperty(CDA.toString(), NUM + "_0");
 			config.addProperty(CALL.toString(), NUM + "_1_" + CLEAR_FREQ + "_" + nbboLatency);
 			config.addProperty(LA.toString(), NUM + "_0");
+			break;
+		case MAXEFF:
+			int maxPosition = config.getAsJsonPrimitive(MAX_POSITION).getAsInt();
+			config.addProperty(SIMULATION_LENGTH, "12");
+			config.addProperty(CDA.toString(), NUM + "_0");
+			config.addProperty(CALL.toString(), NUM + "_1_" + CLEAR_FREQ + "_10");
+			config.addProperty(MAXEFFICIENCY.toString(), NUM + "_66_" + Keys.MAX_POSITION + "_" + maxPosition);
 			break;
 		default:
 			// Should be impossible to reach here

@@ -216,7 +216,6 @@ public class Observations {
 		SumStats 
 			modelProfit = SumStats.create(),
 			backgroundAgentProfit = SumStats.create(),
-			backgroundLiquidation = SumStats.create(),
 			hftProfit = SumStats.create(),
 			marketMakerProfit = SumStats.create();
 		// store distribution of positions
@@ -227,7 +226,7 @@ public class Observations {
 			modelProfit.add(profit);
 			if (agent instanceof BackgroundAgent) {
 				backgroundAgentProfit.add(profit);
-				backgroundLiquidation.add(agent.getLiquidationProfit());
+				// backgroundLiquidation.add(agent.getLiquidationProfit());
 			} else if (agent instanceof HFTAgent) {
 				hftProfit.add(profit);
 			} else if (agent instanceof MarketMaker) {
@@ -242,7 +241,7 @@ public class Observations {
 		}
 		// check if its in MAX EFF mode (i.e. there are MaxEfficiencyAgents)
 		for (AgentProperties props : spec.getAgentProps()) {
-			if (props.getAgentType().equals(Consts.AgentType.MAXEFF)) {
+			if (props.getAgentType().equals(Consts.AgentType.MAXEFFICIENCY)) {
 				int maxPosition = spec.getSimulationProps().getAsInt(Keys.MAX_POSITION);
 				for (int i = 0; i < positions.length; i++) {
 					features.put("position_" + (i - maxPosition) + "_num", (double) positions[i]);
@@ -252,7 +251,7 @@ public class Observations {
 
 		features.put("profit_sum_total", modelProfit.sum());
 		features.put("profit_sum_background", backgroundAgentProfit.sum());
-		features.put("profit_sum_liquidation", backgroundLiquidation.sum());
+		// features.put("profit_sum_liquidation", backgroundLiquidation.sum());
 		features.put("profit_sum_marketmaker", marketMakerProfit.sum());
 		features.put("profit_sum_hft", hftProfit.sum());
 		
@@ -264,7 +263,8 @@ public class Observations {
 				if (agent instanceof BackgroundAgent) {
 					controlPrivateValue.add(((BackgroundAgent) agent).getPrivateValueMean().doubleValue());
 					
-					surplus.add(((BackgroundAgent) agent).getDiscountedSurplus(discount));
+					surplus.add(((BackgroundAgent) agent).getDiscountedSurplus(discount)); // only includes surplus from PV
+					surplus.add(agent.getLiquidationProfit()); 	// also add proceeds from liquidation
 					if (!agentSurplus.containsKey(agent.getClass()))
 						agentSurplus.put(agent.getClass(), SumStats.create());
 
