@@ -50,13 +50,27 @@ public class SimulationSpec implements Serializable {
 	protected static final Splitter split = Splitter.on(';');
 	protected static final Gson gson = new Gson();
 	
-	protected static final String[] simulationKeys = { SIMULATION_LENGTH,
-			FUNDAMENTAL_MEAN, FUNDAMENTAL_KAPPA, FUNDAMENTAL_SHOCK_VAR,
-			RAND_SEED, NBBO_LATENCY, NUM_SIMULATIONS, MAX_POSITION};
+	protected static final String[] simulationKeys = { 
+			SIMULATION_LENGTH,
+			FUNDAMENTAL_MEAN, 
+			FUNDAMENTAL_KAPPA, 
+			FUNDAMENTAL_SHOCK_VAR,
+			RAND_SEED, 
+			NBBO_LATENCY, 
+			NUM_SIMULATIONS, 
+			MAX_POSITION
+		};
 	protected static final String[] marketKeys = { MARKET_LATENCY, TICK_SIZE };
-	protected static final String[] agentKeys = { TICK_SIZE, ARRIVAL_RATE,
-			REENTRY_RATE, PRIVATE_VALUE_VAR, SIMULATION_LENGTH, FUNDAMENTAL_KAPPA, 
-			FUNDAMENTAL_MEAN, MAX_POSITION };
+	protected static final String[] agentKeys = { 
+			TICK_SIZE, 
+			ARRIVAL_RATE,
+			REENTRY_RATE, 
+			PRIVATE_VALUE_VAR, 
+			SIMULATION_LENGTH, 
+			FUNDAMENTAL_KAPPA, 
+			FUNDAMENTAL_MEAN, 
+			MAX_POSITION
+		};
 
 	protected transient final JsonObject rawSpec;
 	protected final EntityProperties simulationProperties;

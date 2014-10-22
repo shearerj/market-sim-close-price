@@ -42,7 +42,7 @@ public class SimulationTest {
 	
 	/*
 	 * This is the result of a major bug that caused default spec properties to
-	 * not propogate to players.
+	 * not propagate to players.
 	 */
 	@Test
 	public void defaultPropertiesTest() {
