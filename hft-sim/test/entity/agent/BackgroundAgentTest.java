@@ -12,6 +12,7 @@ import static utils.Tests.checkSingleTransaction;
 import static utils.Tests.j;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Random;
 
 import logger.Log;
@@ -23,6 +24,7 @@ import systemmanager.Consts;
 import systemmanager.Consts.MarketType;
 import systemmanager.Keys;
 import systemmanager.MockSim;
+import utils.Rands;
 import utils.SummStats;
 
 import com.google.common.collect.ImmutableList;
@@ -32,6 +34,7 @@ import com.google.common.collect.ObjectArrays;
 import data.FundamentalValue.FundamentalValueView;
 import data.Props;
 import data.Stats;
+import entity.agent.position.ListPrivateValue;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
@@ -41,7 +44,7 @@ import fourheap.Order.OrderType;
 public class BackgroundAgentTest {
 	
 	private static final Random rand = new Random();
-	private static final PrivateValue simple = new PrivateValue(1, ImmutableList.of(Price.of(100), Price.of(10)));
+	private static final List<Price> simple = ImmutableList.of(Price.of(100), Price.of(10));
 	private static final double eps = 0.05;
 	private static final double kappa = 0.2;
 	private static final int meanValue = 100000;
@@ -89,8 +92,7 @@ public class BackgroundAgentTest {
 
 	@Test
 	public void getValuationBasic() {
-		BackgroundAgent agent = backgroundAgentwithPrivateValue(
-				new PrivateValue(1, ImmutableList.of(Price.of(0), Price.of(0))));
+		BackgroundAgent agent = backgroundAgentwithPrivateValue(ImmutableList.of(Price.of(0), Price.of(0)));
 		FundamentalValueView fund = sim.getFundamentalView(TimeStamp.ZERO);
 
 		for (int time = 0; time < 100; ++time) {
@@ -159,20 +161,24 @@ public class BackgroundAgentTest {
 	@Test
 	public void getValuationRand() {
 		// Testing with randomized values
-		BackgroundAgent agent = backgroundAgent();
-		PrivateValue pv = agent.privateValue;
+		ImmutableList.Builder<Price> builder = ImmutableList.builder();
+		for (int i = 0; i < 10; ++i)
+			builder.add(Price.of(Rands.nextGaussian(rand, 0, 1e8)));
+		List<Price> pv = builder.build();
+		
+		BackgroundAgent agent = backgroundAgentwithPrivateValue(pv);
 
 		// Get valuation for various positionBalances
-		int pv0 = pv.values.get(0).intValue();
-		int pv1 = pv.values.get(1).intValue();
-		int pv2 = pv.values.get(2).intValue();
-		int pv3 = pv.values.get(3).intValue();
-		int pv4 = pv.values.get(4).intValue();
-		int pv5 = pv.values.get(5).intValue();
-		int pv6 = pv.values.get(6).intValue();
-		int pv7 = pv.values.get(7).intValue();
-		int pv8 = pv.values.get(8).intValue();
-		int pv9 = pv.values.get(9).intValue();
+		int pv0 = pv.get(0).intValue();
+		int pv1 = pv.get(1).intValue();
+		int pv2 = pv.get(2).intValue();
+		int pv3 = pv.get(3).intValue();
+		int pv4 = pv.get(4).intValue();
+		int pv5 = pv.get(5).intValue();
+		int pv6 = pv.get(6).intValue();
+		int pv7 = pv.get(7).intValue();
+		int pv8 = pv.get(8).intValue();
+		int pv9 = pv.get(9).intValue();
 
 		agent.positionBalance = 3;
 		Price fund = fundamental.getValue();
@@ -201,25 +207,27 @@ public class BackgroundAgentTest {
 	@Test
 	public void getLimitPriceRand() {
 		// Testing with randomized values
-
-		BackgroundAgent agent = backgroundAgent(
+		ImmutableList.Builder<Price> builder = ImmutableList.builder();
+		for (int i = 0; i < 10; ++i)
+			builder.add(Price.of(Rands.nextGaussian(rand, 0, 1000000)));
+		List<Price> pv = builder.build();
+		
+		BackgroundAgent agent = backgroundAgentwithPrivateValue(pv,
 				Keys.BID_RANGE_MIN, 0,
 				Keys.BID_RANGE_MAX, 1000,
-				Keys.MAX_QUANTITY, 5,
-				Keys.PRIVATE_VALUE_VAR, 1000000);
-		PrivateValue pv = agent.privateValue;
+				Keys.MAX_QUANTITY, 5);
 
 		// Get valuation for various positionBalances
-		int pv0 = pv.values.get(0).intValue();
-		int pv1 = pv.values.get(1).intValue();
-		int pv2 = pv.values.get(2).intValue();
-		int pv3 = pv.values.get(3).intValue();
-		int pv4 = pv.values.get(4).intValue();
-		int pv5 = pv.values.get(5).intValue();
-		int pv6 = pv.values.get(6).intValue();
-		int pv7 = pv.values.get(7).intValue();
-		int pv8 = pv.values.get(8).intValue();
-		int pv9 = pv.values.get(9).intValue();
+		int pv0 = pv.get(0).intValue();
+		int pv1 = pv.get(1).intValue();
+		int pv2 = pv.get(2).intValue();
+		int pv3 = pv.get(3).intValue();
+		int pv4 = pv.get(4).intValue();
+		int pv5 = pv.get(5).intValue();
+		int pv6 = pv.get(6).intValue();
+		int pv7 = pv.get(7).intValue();
+		int pv8 = pv.get(8).intValue();
+		int pv9 = pv.get(9).intValue();
 
 		agent.positionBalance = 3;
 		Price fund = fundamental.getValue();
@@ -317,25 +325,28 @@ public class BackgroundAgentTest {
 	// TODO Test is implementation dependent and should be changed
 	@Test
 	public void getTransactionValuationRand() {
-		BackgroundAgent agent = backgroundAgent(
+		ImmutableList.Builder<Price> builder = ImmutableList.builder();
+		for (int i = 0; i < 10; ++i)
+			builder.add(Price.of(Rands.nextGaussian(rand, 0, 1000000)));
+		List<Price> pv = builder.build();
+		
+		BackgroundAgent agent = backgroundAgentwithPrivateValue(pv,
 				Keys.BID_RANGE_MIN, 0,
 				Keys.BID_RANGE_MAX, 1000,
-				Keys.MAX_QUANTITY, 5,
-				Keys.PRIVATE_VALUE_VAR, 1000000);
-		PrivateValue pv = agent.privateValue;
+				Keys.MAX_QUANTITY, 5);
 		Agent mockAgent = backgroundAgent();
 
 		// Get valuation for various positionBalances
-		int pv0 = pv.values.get(0).intValue();
-		int pv1 = pv.values.get(1).intValue();
-		int pv2 = pv.values.get(2).intValue();
-		int pv3 = pv.values.get(3).intValue();
-		int pv4 = pv.values.get(4).intValue();
-		int pv5 = pv.values.get(5).intValue(); // +1
-		int pv6 = pv.values.get(6).intValue(); // +2
-		int pv7 = pv.values.get(7).intValue(); // +3
-		int pv8 = pv.values.get(8).intValue(); // +4
-		int pv9 = pv.values.get(9).intValue(); // +5
+		int pv0 = pv.get(0).intValue();
+		int pv1 = pv.get(1).intValue();
+		int pv2 = pv.get(2).intValue();
+		int pv3 = pv.get(3).intValue();
+		int pv4 = pv.get(4).intValue();
+		int pv5 = pv.get(5).intValue(); // +1
+		int pv6 = pv.get(6).intValue(); // +2
+		int pv7 = pv.get(7).intValue(); // +3
+		int pv8 = pv.get(8).intValue(); // +4
+		int pv9 = pv.get(9).intValue(); // +5
 
 		// Creating and adding bids
 		submitOrder(agent, BUY, Price.of(110000), 1);
@@ -495,7 +506,7 @@ public class BackgroundAgentTest {
 		
 		sim.log(DEBUG, "Testing ZI 100 DummyPrivateValue arguments are correct");
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(
-				new PrivateValue(1, ImmutableList.of(Price.of(10000), Price.of(-10000))));
+				ImmutableList.of(Price.of(10000), Price.of(-10000)));
 
 		sim.executeUntil(TimeStamp.of(100));
 		agent.executeZIStrategy(BUY, 1);
@@ -513,7 +524,7 @@ public class BackgroundAgentTest {
 		
 		sim.log(DEBUG, "Testing ZI 100 DummyPrivateValue arguments are correct");
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(
-				new PrivateValue(1, ImmutableList.of(Price.of(10000), Price.of(-10000))));
+				ImmutableList.of(Price.of(10000), Price.of(-10000)));
 
 		sim.executeUntil(TimeStamp.of(100));
 		agent.executeZIStrategy(SELL, 1);
@@ -576,8 +587,7 @@ public class BackgroundAgentTest {
 				Keys.FUNDAMENTAL_MEAN, meanValue,
 				Keys.FUNDAMENTAL_SHOCK_VAR, 0,
 				Keys.SIMULATION_LENGTH, simulationLength);
-		BackgroundAgent agent = backgroundAgentwithPrivateValue(
-				new PrivateValue(1, ImmutableList.of(Price.of(1000), Price.of(-2000))),
+		BackgroundAgent agent = backgroundAgentwithPrivateValue(ImmutableList.of(Price.of(1000), Price.of(-2000)),
 				Keys.BID_RANGE_MIN, 0,
 				Keys.BID_RANGE_MAX, 1000);
 		Agent mockAgent = mockAgent();
@@ -617,8 +627,7 @@ public class BackgroundAgentTest {
 				Keys.FUNDAMENTAL_SHOCK_VAR, 0,
 				Keys.SIMULATION_LENGTH, simulationLength);
 		
-		BackgroundAgent agent = backgroundAgentwithPrivateValue(
-				new PrivateValue(1, ImmutableList.of(Price.of(1000), Price.of(-1000))),
+		BackgroundAgent agent = backgroundAgentwithPrivateValue(ImmutableList.of(Price.of(1000), Price.of(-1000)),
 				Keys.BID_RANGE_MIN, 0,
 				Keys.BID_RANGE_MAX, 1000);
 		Agent mockAgent = backgroundAgent();
@@ -646,8 +655,7 @@ public class BackgroundAgentTest {
 				Keys.FUNDAMENTAL_SHOCK_VAR, 10000000,
 				Keys.SIMULATION_LENGTH, simulationLength);
 
-		BackgroundAgent agent = backgroundAgentwithPrivateValue(
-				new PrivateValue(1, ImmutableList.of(Price.of(1000), Price.of(-1000))),
+		BackgroundAgent agent = backgroundAgentwithPrivateValue(ImmutableList.of(Price.of(1000), Price.of(-1000)),
 				Keys.BID_RANGE_MIN, 0,
 				Keys.BID_RANGE_MAX, 1000);
 		Agent mockAgent = mockAgent();
@@ -820,8 +828,8 @@ public class BackgroundAgentTest {
 	
 	@Test
 	public void controlPrivateValueTest() {
-		backgroundAgentwithPrivateValue(new PrivateValue(1, ImmutableList.of(Price.of(0), Price.of(0))));
-		backgroundAgentwithPrivateValue(new PrivateValue(1, ImmutableList.of(Price.of(10), Price.of(10))));
+		backgroundAgentwithPrivateValue(ImmutableList.of(Price.of(0), Price.of(0)));
+		backgroundAgentwithPrivateValue(ImmutableList.of(Price.of(10), Price.of(10)));
 		
 		assertEquals(5, sim.getStats().getSummaryStats().get(Stats.CONTROL_PRIVATE_VALUE).mean(), eps);
 	}
@@ -875,8 +883,10 @@ public class BackgroundAgentTest {
 		return order;
 	}
 
-	private BackgroundAgent backgroundAgentwithPrivateValue(PrivateValue privateValue, Object... pairs) {
-		return new BackgroundAgent(sim, TimeStamp.ZERO, market, privateValue, rand, Props.withDefaults(defaults, pairs)) {
+	private BackgroundAgent backgroundAgentwithPrivateValue(List<Price> privateValue, Object... pairs) {
+		return new BackgroundAgent(sim, TimeStamp.ZERO, market,
+				new ListPrivateValue(privateValue) { private static final long serialVersionUID = 1L; },
+				rand, Props.withDefaults(defaults, pairs)) {
 			private static final long serialVersionUID = 1L;
 			@Override public String toString() { return "TestAgent " + id; }
 		};

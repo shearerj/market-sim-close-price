@@ -18,6 +18,8 @@ import com.google.common.collect.Range;
 
 import data.Props;
 import data.Stats;
+import entity.agent.position.ListPrivateValue;
+import entity.agent.position.PrivateValue;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Quote;
@@ -78,7 +80,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 */
 	protected BackgroundAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
 		this(sim, arrivalTime, market,
-				new PrivateValue(props.getAsInt(Keys.MAX_QUANTITY), props.getAsDouble(Keys.PRIVATE_VALUE_VAR), rand),
+				ListPrivateValue.createRandomly(props.getAsInt(Keys.MAX_QUANTITY), props.getAsDouble(Keys.PRIVATE_VALUE_VAR), rand),
 				rand, props);
 	}
 	

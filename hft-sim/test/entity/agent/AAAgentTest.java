@@ -26,7 +26,6 @@ import utils.Rands;
 import com.google.common.collect.Iterables;
 
 import data.Props;
-import entity.agent.AAAgent.Aggression;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
@@ -341,32 +340,6 @@ public class AAAgentTest {
 		sim.executeUntil(TimeStamp.of(50));
 		agent.updateTheta(equil, agent.getWindowTransactions());
 		assertTrue(agent.theta > -5);	// increases because lower price vol
-	}
-	
-	@Test
-	public void testAggressionDataStructure() {
-		Aggression agg = new Aggression();
-		assertEquals(0, agg.getMaxAbsPosition());
-		assertEquals(0, agg.values.size());
-		
-		agg = new Aggression(1, 0.5);
-		assertEquals(2, agg.values.size());
-		assertEquals(1, agg.getMaxAbsPosition());
-		assertEquals(0.5, agg.values.get(0), 0.001);
-		assertEquals(0.5, agg.values.get(1), 0.001);
-		
-		agg = new Aggression(2, 0.75);
-		assertEquals(0.75, agg.getValue(0, BUY), 0.001);
-		assertEquals(0.75, agg.getValue(-1, SELL), 0.001);
-		assertEquals(new Double(0), agg.getValue(-2, SELL));
-		assertEquals(new Double(0), agg.getValue(2, BUY));
-		
-		agg.setValue(0, BUY, 0.5);
-		assertEquals(0.5, agg.getValue(0, BUY), 0.001);
-		
-		agg.setValue(-2, SELL, -0.5);
-		// still 0 since outside max position
-		assertEquals(0, agg.getValue(-2, SELL), 0.001);
 	}
 	
 	@Test

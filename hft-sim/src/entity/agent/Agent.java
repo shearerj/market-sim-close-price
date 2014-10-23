@@ -86,6 +86,7 @@ public abstract class Agent extends Entity {
 		sim.postStat(Stats.TOTAL_PROFIT, profit);
 	}
 	
+	// TODO Check for possible position violation?
 	/** Shortcut for creating orders */
 	protected OrderRecord submitOrder(MarketView market, OrderType type, Price price, int quantity) {
 		OrderRecord order = new OrderRecord(market, currentTime(), type, price, quantity);

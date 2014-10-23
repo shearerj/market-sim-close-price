@@ -27,6 +27,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Range;
 
 import data.Props;
+import entity.agent.position.Margin;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
@@ -74,10 +75,10 @@ public class ZIPAgentTest {
 		// if no transactions, margin should be initialized to properties setting
 		Margin margin = agent.margin;
 		assertEquals(10, margin.getMaxAbsPosition());
-		for (double value : margin.values.subList(0, 10))
-			assertEquals(0.35, value, eps);
-		for (double value : margin.values.subList(10, margin.values.size()))
-			assertEquals(-0.35, value, eps);
+		for (int position = 0; position > -10; position--)
+			assertEquals(0.35, margin.getValue(position, SELL), eps);
+		for (int position = 0; position < 10; position++)
+			assertEquals(-0.35, margin.getValue(position, BUY), eps);
 	}
 	
 	@Test
@@ -88,10 +89,10 @@ public class ZIPAgentTest {
 		Margin margin = agent.margin;
 		assertEquals(10, margin.getMaxAbsPosition());
 		Range<Double> range = Range.closed(0.25, 0.35);
-		for (double value : margin.values.subList(0, 10))
-			assertTrue(range.contains(value));
-		for (double value : margin.values.subList(10, margin.values.size()))
-			assertTrue(range.contains(-value));
+		for (int position = 0; position > -10; position--)
+			assertTrue(range.contains(margin.getValue(position, SELL)));
+		for (int position = 0; position < 10; position++)
+			assertTrue(range.contains(-margin.getValue(position, BUY)));
 	}
 	
 	@Test

@@ -13,6 +13,7 @@ import systemmanager.Simulation;
 import utils.Maths;
 import utils.Rands;
 import data.Props;
+import entity.agent.position.Margin;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Transaction;
@@ -81,7 +82,7 @@ public class ZIPAgent extends WindowAgent {
 		this.limitPrice = null;
 		this.beta = Rands.nextUniform(rand, betaMin, betaMax);
 		this.gamma = Rands.nextUniform(rand, gammaMin, gammaMax);
-		this.margin = new Margin(maxAbsPosition, rand, marginMin, marginMax);
+		this.margin = Margin.createRandomly(maxAbsPosition, rand, marginMin, marginMax);
 	}
 
 	public static ZIPAgent create(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {

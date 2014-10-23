@@ -1,4 +1,4 @@
-package utils;
+package entity.agent.position;
 
 import java.io.Serializable;
 
@@ -12,12 +12,9 @@ import fourheap.Order.OrderType;
  *
  * @param <T>
  */
-public interface QuantityIndexedArray<T extends Number> extends Serializable {
+public interface QuantityIndexedArray<T> extends Serializable {
 
-	
-	/**
-	 * @return offset
-	 */
+	/** Returns the maximum absolute position this is valid for */
 	public int getMaxAbsPosition();
 	
 	/**
@@ -32,4 +29,6 @@ public interface QuantityIndexedArray<T extends Number> extends Serializable {
 	public T getValue(int currentPosition, OrderType type);
 
 	public T getValueFromQuantity(int currentPosition, int quantity, OrderType type);
+	
+	public void setValue(int currentPosition, OrderType type, T value);
 }
