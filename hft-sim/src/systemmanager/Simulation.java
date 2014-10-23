@@ -96,7 +96,7 @@ public class Simulation {
 		Random ran = new Random(rand.nextLong());
 		for (MarketProperties mktProps : marketProps) {
 			MarketFactory factory = new MarketFactory(scheduler, sip, ran);
-			for (int i = 0; i < mktProps.getAsInt(Keys.NUM_MARKETS, Keys.NUM); i++)
+			for (int i = 0; i < mktProps.getAsInt(Keys.NUM); i++)
 				markets.add(factory.createMarket(mktProps));
 		}
 		return markets.build();
@@ -109,7 +109,7 @@ public class Simulation {
 		// Not immutable because players also add agents
 		Collection<Agent> agents = Lists.newArrayList();
 		for (AgentProperties agProps : agentProps) {
-			int number = agProps.getAsInt(Keys.NUM_AGENTS, Keys.NUM);
+			int number = agProps.getAsInt(Keys.NUM);
 			double arrivalRate = agProps.getAsDouble(Keys.ARRIVAL_RATE);
 			
 			AgentFactory factory = new AgentFactory(scheduler, fundamental, sip, markets,

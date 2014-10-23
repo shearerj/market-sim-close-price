@@ -11,7 +11,10 @@ import java.io.StringReader;
 
 import org.junit.Test;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 import data.AgentProperties;
 import data.MarketProperties;
@@ -170,4 +173,64 @@ public class SimulationSpecTest {
 		}
 	}
 	
+	
+	/**
+	 * Tests different reentry rates for background & MM, also tests creation of
+	 * players via simulation spec. Can only test via if the read in spec file
+	 * is correct...
+	 */
+	@Test
+	public void reentryTest() {
+		JsonObject json = new JsonObject();
+		JsonObject config = new JsonObject();
+		JsonObject players = new JsonObject();
+		json.add(Keys.CONFIG, config);
+		config.addProperty(Keys.BACKGROUND_REENTRY_RATE, "0.0005");
+		config.addProperty(Keys.MARKETMAKER_REENTRY_RATE, "0.05");
+		
+		JsonArray agents = new JsonArray();
+		JsonElement agent1 = new JsonPrimitive("ZIR:" + Keys.BID_RANGE_MAX + "_100");
+		JsonElement agent2 = new JsonPrimitive("ZIRP:" + Keys.BID_RANGE_MIN + "_10");
+		agents.add(agent1);
+		agents.add(agent2);
+		JsonArray marketmaker = new JsonArray();
+		JsonElement mm = new JsonPrimitive("FUNDAMENTALMM:" + Keys.SPREAD + "_256");
+		marketmaker.add(mm);
+		players.add("BACKGROUND", agents);
+		players.add("MARKETMAKER", marketmaker);
+		
+		json.add(Keys.ASSIGN, players);
+		SimulationSpec spec = new SimulationSpec(new StringReader(json.toString()));
+		
+		for (String role : spec.getPlayerProps().keySet()) {
+			if (role.equals("BACKGROUND")) {
+				for (AgentProperties ap : spec.getPlayerProps().get(role).elementSet()) {
+					switch (ap.getAgentType()) {
+					case ZIR:
+						assertEquals(100, ap.getAsInt(Keys.BID_RANGE_MAX));
+						assertEquals(0.0005, ap.getAsDouble(Keys.BACKGROUND_REENTRY_RATE), 1E-6);
+						assertEquals(0.0005, ap.getAsDouble(Keys.BACKGROUND_REENTRY_RATE, Keys.REENTRY_RATE), 1E-6);
+						break;
+					case ZIRP:
+						assertEquals(10, ap.getAsInt(Keys.BID_RANGE_MIN));
+						assertEquals(0.0005, ap.getAsDouble(Keys.BACKGROUND_REENTRY_RATE), 1E-6);
+						assertEquals(0.0005, ap.getAsDouble(Keys.BACKGROUND_REENTRY_RATE, Keys.REENTRY_RATE), 1E-6);
+						break;
+					default:
+					}
+				}
+			} else if (role.equals("MARKETMAKER")) {
+				for (AgentProperties ap : spec.getPlayerProps().get(role).elementSet()) {
+					switch (ap.getAgentType()) {
+					case FUNDAMENTALMM:
+						assertEquals(256, ap.getAsInt(Keys.SPREAD));
+						assertEquals(0.05, ap.getAsDouble(Keys.MARKETMAKER_REENTRY_RATE), 1E-6);
+						assertEquals(0.05, ap.getAsDouble(Keys.MARKETMAKER_REENTRY_RATE, Keys.REENTRY_RATE), 1E-6);
+						break;
+					default:
+					}
+				}
+			}
+		}
+	}
 }

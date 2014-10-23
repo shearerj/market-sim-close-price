@@ -27,12 +27,8 @@ public class Defaults implements Serializable {
 	public final static ImmutableMap<String, String> defaults = Maps2.fromPairs(
 		// General
 		Keys.NUM,					0,
-		Keys.NUM_AGENTS,			0,
-		Keys.NUM_MARKETS, 			1,
 		
 		Keys.TICK_SIZE,				1,
-		Keys.MARKET_TICK_SIZE,		1,
-		Keys.AGENT_TICK_SIZE,		1,
 		
 		// Simulation spec (general)
 		Keys.SIMULATION_LENGTH, 	60000,

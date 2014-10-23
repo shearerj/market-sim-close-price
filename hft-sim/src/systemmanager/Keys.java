@@ -1,7 +1,7 @@
 package systemmanager;
 
 /**
- * All of the keys for use in the simulation spec. Parameters be camelCase.
+ * All of the keys for use in the simulation spec. Parameters must be camelCase.
  * OK for observation file descriptors to not be camel case.
  * 
  * @author erik
@@ -14,10 +14,7 @@ public interface Keys {
 	public final static String RAND_SEED = 			"randomSeed";
 	public final static String NUM_SIMULATIONS = 	"numSims";
 	
-	public final static String FILENAME = 			"fileName";
-	
 	public final static String ARRIVAL_RATE = 		"arrivalRate";
-	
 	public final static String REENTRY_RATE = 		"reentryRate";
 	public final static String BACKGROUND_REENTRY_RATE = "backgroundReentryRate";
 	public final static String MARKETMAKER_REENTRY_RATE = "marketmakerReentryRate";
@@ -37,16 +34,12 @@ public interface Keys {
 	public final static String FUNDAMENTAL_MEAN = 	"meanValue";
 	public final static String FUNDAMENTAL_KAPPA = 	"kappa";
 	public final static String FUNDAMENTAL_SHOCK_VAR = "shockVar";
-	public final static String PRIMARY_MODEL = 		"primaryModel";
 	
 	public final static String NUM = 				"num";
-	public final static String NUM_AGENTS =			"numAgents";
-	public final static String NUM_MARKETS = 		"numMarkets";
 	
 	// SimulationSpec Keys
 	public final static String ASSIGN = 			"assignment";
 	public final static String CONFIG = 			"configuration";
-	public final static String NO_OP = 				"noOp";
 
 	// Observation Keys
 	public final static String PV_BUY1 = 			"pv_buy1";
@@ -66,7 +59,7 @@ public interface Keys {
 	public final static String PRICING_POLICY = 	"pricingPolicy";
 
 	// Agents
-	public final static String WITHDRAW_ORDERS = 	"withdrawOrders"; 
+	public final static String WITHDRAW_ORDERS = 	"withdrawOrders";
 	public final static String NUM_HISTORICAL = 	"numHistorical";
 	
 	// AAAgent
@@ -96,6 +89,9 @@ public interface Keys {
 	// ZIRPAgent
 	public final static String ACCEPTABLE_PROFIT_FRACTION = "acceptableProfFrac";
 
+	// Market Data Agent
+	public final static String FILENAME = 			"fileName";
+	
 	// Market Makers
 	public final static String NUM_RUNGS = 			"numRungs";
 	public final static String RUNG_SIZE = 			"rungSize";

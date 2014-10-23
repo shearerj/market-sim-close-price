@@ -60,11 +60,17 @@ public class SimulationSpec implements Serializable {
 			NUM_SIMULATIONS, 
 			MAX_POSITION
 		};
-	protected static final String[] marketKeys = { MARKET_LATENCY, TICK_SIZE };
-	protected static final String[] agentKeys = { 
+	protected static final String[] marketKeys = { 
+			MARKET_LATENCY,
+			MARKET_TICK_SIZE,
+			TICK_SIZE };
+	protected static final String[] agentKeys = {
+			AGENT_TICK_SIZE,
 			TICK_SIZE, 
 			ARRIVAL_RATE,
-			REENTRY_RATE, 
+			REENTRY_RATE,
+			BACKGROUND_REENTRY_RATE,
+			MARKETMAKER_REENTRY_RATE,
 			PRIVATE_VALUE_VAR, 
 			SIMULATION_LENGTH, 
 			FUNDAMENTAL_KAPPA, 
@@ -142,15 +148,15 @@ public class SimulationSpec implements Serializable {
 
 	protected Collection<AgentProperties> agents(JsonObject config,
 			EntityProperties def) {
-		Builder<AgentProperties> backgroundAgents = ImmutableList.builder();
+		Builder<AgentProperties> environmentAgents = ImmutableList.builder();
 
 		for (AgentType agentType : Consts.AgentType.values()) {
 			JsonPrimitive configJson = config.getAsJsonPrimitive(agentType.toString());
 			if (configJson == null) continue;
 			for (String agentConfig : split.split(configJson.getAsString()))
-				backgroundAgents.add(AgentProperties.create(agentType, def, agentConfig));
+				environmentAgents.add(AgentProperties.create(agentType, def, agentConfig));
 		}
-		return backgroundAgents.build();
+		return environmentAgents.build();
 	}
 	
 	protected Map<String, Multiset<AgentProperties>> players(JsonObject config, EntityProperties defaults) {

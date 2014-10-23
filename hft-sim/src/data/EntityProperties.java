@@ -29,6 +29,13 @@ import com.google.common.primitives.Ints;
  * If a default value isn't used, and the key doesn't exist, you'll get a null
  * object, or a null pointer.
  * 
+ * All the getAs<Type> methods with two input arguments will check for the
+ * EntityProperties object having a parameter matching the first key; if that
+ * key doesn't exist, it will then check for the second key. The second key
+ * is also the default key; that is, if nothing is found, then the 
+ * EntityProperties object will return the default value hard-coded for the 
+ * second key.
+ * 
  * @author erik
  * 
  */
@@ -143,16 +150,20 @@ public class EntityProperties implements Serializable {
 	}
 
 	public String getAsString(String key) {
-		return Optional.fromNullable(properties.get(key))
-				.or(Optional.fromNullable(Defaults.get(key)))
-				.get(); // Will throw an error if nothing was found
+		Optional<String> opt = Optional.fromNullable(properties.get(key))
+				.or(Optional.fromNullable(Defaults.get(key)));
+		if (!opt.isPresent())
+			throw new IllegalStateException("Default value of " + key + " is not defined");
+		return opt.get();
 	}
 	
 	public String getAsString(String key, String defaultKey) {
-		return Optional.fromNullable(properties.get(key))
+		Optional<String> opt = Optional.fromNullable(properties.get(key))
 				.or(Optional.fromNullable(properties.get(defaultKey)))
-				.or(Optional.fromNullable(Defaults.get(defaultKey)))
-				.get(); // Will throw an error if nothing was found
+				.or(Optional.fromNullable(Defaults.get(defaultKey)));
+		if (!opt.isPresent())
+			throw new IllegalStateException("Default value of " + defaultKey + " is not defined");
+		return opt.get();
 	}
 
 	public int getAsInt(String key) {
