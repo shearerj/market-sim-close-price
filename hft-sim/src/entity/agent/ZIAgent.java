@@ -2,7 +2,8 @@ package entity.agent;
 
 import java.util.Random;
 
-import systemmanager.Keys;
+import systemmanager.Keys.BackgroundReentryRate;
+import systemmanager.Keys.MaxQty;
 import systemmanager.Simulation;
 import data.Props;
 import entity.market.Market;
@@ -32,7 +33,7 @@ public class ZIAgent extends ZIRAgent {
 	private static final long serialVersionUID = 1148707664467962927L;
 
 	protected ZIAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
-		super(sim, arrivalTime, market, rand, Props.withDefaults(props, Keys.MAX_QUANTITY, 1, Keys.BACKGROUND_REENTRY_RATE, 0));
+		super(sim, arrivalTime, market, rand, Props.withDefaults(props, MaxQty.class, 1, BackgroundReentryRate.class, 0d));
 	}
 	
 	public static ZIAgent create(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {

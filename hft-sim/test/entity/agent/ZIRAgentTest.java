@@ -8,7 +8,6 @@ import static org.junit.Assert.assertTrue;
 import static utils.Tests.checkNBBO;
 import static utils.Tests.checkOrder;
 import static utils.Tests.checkSingleTransaction;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -19,8 +18,15 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.BidRangeMax;
+import systemmanager.Keys.BidRangeMin;
+import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.FundamentalShockVar;
+import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.NbboLatency;
+import systemmanager.Keys.PrivateValueVar;
+import systemmanager.Keys.ReentryRate;
+import systemmanager.Keys.WithdrawOrders;
 import systemmanager.MockSim;
 
 import com.google.common.collect.ImmutableSet;
@@ -43,11 +49,11 @@ public class ZIRAgentTest {
 
 	private static final Random rand = new Random();
 	private static final Props defaults = Props.fromPairs(
-			Keys.REENTRY_RATE, 0,
-			Keys.MAX_QUANTITY, 1,
-			Keys.PRIVATE_VALUE_VAR, 0,
-			Keys.BID_RANGE_MIN, 1000,
-			Keys.BID_RANGE_MAX, 1000);
+			ReentryRate.class, 0d,
+			MaxQty.class, 1,
+			PrivateValueVar.class, 0d,
+			BidRangeMin.class, 1000,
+			BidRangeMax.class, 1000);
 	
 	private MockSim sim;
 	private Market market, other;
@@ -55,11 +61,8 @@ public class ZIRAgentTest {
 
 	@Before
 	public void setup() throws IOException{
-		sim = MockSim.create(getClass(),
-				Log.Level.NO_LOGGING, Keys.FUNDAMENTAL_MEAN,
-				110000, Keys.FUNDAMENTAL_SHOCK_VAR,
-				0, Keys.NBBO_LATENCY,
-				50, MarketType.CDA, j.join(Keys.NUM_MARKETS, 2));
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 2,
+				Props.fromPairs(FundamentalMean.class, 110000, FundamentalShockVar.class, 0d, NbboLatency.class, TimeStamp.of(50)));
 		Iterator<Market> markets = sim.getMarkets().iterator();
 		market = markets.next();
 		view = market.getPrimaryView();
@@ -109,7 +112,7 @@ public class ZIRAgentTest {
 	 */
 	@Test
 	public void withdrawQuoteUpdateTest() throws IOException {
-		ZIRAgent agent = zirAgent(Keys.WITHDRAW_ORDERS, true);
+		ZIRAgent agent = zirAgent(Props.fromPairs(WithdrawOrders.class, true));
 		OrderRecord order = withdrawRoutingScenario(agent);
 		
 		// Check that the order got routed
@@ -130,7 +133,7 @@ public class ZIRAgentTest {
 	 */
 	@Test
 	public void noWithdrawQuoteUpdateTest() throws IOException {
-		ZIRAgent agent = zirAgent(Keys.WITHDRAW_ORDERS, false);
+		ZIRAgent agent = zirAgent(Props.fromPairs(WithdrawOrders.class, false));
 		OrderRecord order = withdrawRoutingScenario(agent);
 		
 		// Check that the order got routed
@@ -145,8 +148,8 @@ public class ZIRAgentTest {
 		checkNBBO(sim.getSIP().getNBBO(), Price.of(104000), market, Price.of(108000), market);
 	}
 
-	public ZIRAgent zirAgent(Object... parameters) {
-		return ZIRAgent.create(sim, TimeStamp.ZERO, market, rand, Props.withDefaults(defaults, parameters));
+	public ZIRAgent zirAgent(Props parameters) {
+		return ZIRAgent.create(sim, TimeStamp.ZERO, market, rand, Props.merge(defaults, parameters));
 	}
 	
 	private Agent mockAgent() {

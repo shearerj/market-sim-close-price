@@ -11,7 +11,8 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Keys;
+import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.MockSim;
 import utils.SummStats;
 
@@ -28,10 +29,10 @@ public class FundamentalValueTest {
 	
 	@Before
 	public void defaultSetup() throws IOException {
-		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING);
+		setup(Props.fromPairs());
 	}
 	
-	public void setup(Object... parameters) throws IOException {
+	public void setup(Props parameters) throws IOException {
 		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING, parameters);
 	}
 	
@@ -46,9 +47,7 @@ public class FundamentalValueTest {
 	@Test
 	public void zeroJumpTest() throws IOException {
 		int mean = rand.nextInt(100000);
-		setup(
-				Keys.FUNDAMENTAL_MEAN, mean,
-				Keys.FUNDAMENTAL_SHOCK_VAR, 0);
+		setup(Props.fromPairs(FundamentalMean.class, mean, FundamentalShockVar.class, 0d));
 		
 		Price meanPrice = Price.of(mean);
 		for (int time = 0; time < 100; time++)
@@ -69,9 +68,8 @@ public class FundamentalValueTest {
 	@Test
 	public void postStaticFundamentalStatTest() throws IOException {
 		int mean = rand.nextInt(100000);
-		setup(
-				Keys.FUNDAMENTAL_MEAN, mean,
-				Keys.FUNDAMENTAL_SHOCK_VAR, 0);
+		setup(Props.fromPairs(FundamentalMean.class, mean, FundamentalShockVar.class, 0d));
+		
 		FundamentalValue fund = sim.getFundamental();
 		fund.computeFundamentalTo(100);
 
@@ -86,9 +84,9 @@ public class FundamentalValueTest {
 	@Test
 	public void extraTest() throws IOException {
 		for (int i = 0; i < 100; i++) {
-			setup();
+			defaultSetup();
 			zeroJumpTest();
-			setup();
+			defaultSetup();
 			postRandFundamentalStatTest();
 		}
 	}

@@ -6,7 +6,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.checkQuote;
 import static utils.Tests.checkSingleOrder;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.util.Random;
@@ -16,12 +15,10 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.MarketLatency;
 import systemmanager.MockSim;
 
 import com.google.common.collect.Iterables;
-import com.google.common.collect.ObjectArrays;
 
 import data.Props;
 import data.Stats;
@@ -38,15 +35,16 @@ public class AgentTest {
 	private Market trueMarket;
 	private MarketView market, fast;
 	private Agent agent;
+	
+	// FIXME Test that NMS ORders update OrderRecord when the route or don't
 
 	@Before
 	public void defaultSetup() throws IOException {
-		setup(Keys.MARKET_LATENCY, -1);
+		setup(Props.fromPairs());
 	}
 	
-	public void setup(Object... parameters) throws IOException {
-		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING, ObjectArrays.concat(parameters,
-				new Object[] { MarketType.CDA, j.join(Keys.NUM_MARKETS, 1) }, Object.class));
+	public void setup(Props parameters) throws IOException {
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1, parameters);
 		trueMarket = Iterables.getOnlyElement(sim.getMarkets());
 		market = trueMarket.getPrimaryView();
 		fast = trueMarket.getView(TimeStamp.IMMEDIATE);
@@ -99,7 +97,7 @@ public class AgentTest {
 	
 	@Test
 	public void withdrawOrderDelayed() throws IOException {
-		setup(Keys.MARKET_LATENCY, 10);
+		setup(Props.fromPairs(MarketLatency.class, TimeStamp.of(10)));
 		
 		OrderRecord order = submitOrder(BUY, Price.of(100), 1);
 		

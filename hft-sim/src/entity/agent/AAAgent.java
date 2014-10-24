@@ -9,7 +9,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import systemmanager.Keys;
+import systemmanager.Keys.BetaR;
+import systemmanager.Keys.BetaT;
+import systemmanager.Keys.BuyerStatus;
+import systemmanager.Keys.Debug;
+import systemmanager.Keys.Eta;
+import systemmanager.Keys.Gamma;
+import systemmanager.Keys.InitAggression;
+import systemmanager.Keys.LambdaA;
+import systemmanager.Keys.LambdaR;
+import systemmanager.Keys.NumHistorical;
+import systemmanager.Keys.Theta;
+import systemmanager.Keys.ThetaMax;
+import systemmanager.Keys.ThetaMin;
 import systemmanager.Simulation;
 
 import com.google.common.base.Optional;
@@ -69,32 +81,32 @@ public class AAAgent extends WindowAgent {
 	protected AAAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
 		super(sim, arrivalTime, market, rand, props);
 
-		this.type = props.getAsBoolean(Keys.BUYER_STATUS) ? BUY : SELL;	// for debugging
+		this.type = props.get(BuyerStatus.class);
 		this.lastTransactionPrice = null;
 		this.equilibriumPrice = null;
 		this.targetPrice = null;
 
 		//Initializing parameters
-		this.aggression = props.getAsDouble(Keys.AGGRESSION);
-		this.theta = props.getAsDouble(Keys.THETA);
-		this.thetaMin = props.getAsDouble(Keys.THETA_MIN);
-		this.thetaMax = props.getAsDouble(Keys.THETA_MAX);
+		this.aggression = props.get(InitAggression.class);
+		this.theta = props.get(Theta.class);
+		this.thetaMin = props.get(ThetaMin.class);
+		this.thetaMax = props.get(ThetaMax.class);
 		this.alphaMin = Price.INF.intValue();
 		this.alphaMax = -1;
 		this.aggressions = Aggression.create(privateValue.getMaxAbsPosition(), aggression);
 		this.rho = 0.9; 		// from paper, to emphasize converging pattern
 		
 		//Initializing strategy variables
-		this.numHistorical = props.getAsInt(Keys.NUM_HISTORICAL);
-		this.lambdaA = props.getAsDouble(Keys.LAMBDA_A);
-		this.lambdaR = props.getAsDouble(Keys.LAMBDA_R);
-		this.gamma = props.getAsDouble(Keys.GAMMA);
-		this.eta = props.getAsInt(Keys.ETA);
-		this.betaR = props.getAsDouble(Keys.BETA_R);		// paper randomizes to U[0.2, 0.6]
-		this.betaT = props.getAsDouble(Keys.BETA_T);		// paper randomizes to U[0.2, 0.6]
+		this.numHistorical = props.get(NumHistorical.class);
+		this.lambdaA = props.get(LambdaA.class);
+		this.lambdaR = props.get(LambdaR.class);
+		this.gamma = props.get(Gamma.class);
+		this.eta = props.get(Eta.class);
+		this.betaR = props.get(BetaR.class);		// paper randomizes to U[0.2, 0.6]
+		this.betaT = props.get(BetaT.class);		// paper randomizes to U[0.2, 0.6]
 		
 		// Debugging
-		this.debug = props.getAsBoolean(Keys.DEBUG);
+		this.debug = props.get(Debug.class);
 		
 		// Check arguments
 		checkArgument(betaR > 0 && betaR < 1, "Beta for r must be in (0,1)");

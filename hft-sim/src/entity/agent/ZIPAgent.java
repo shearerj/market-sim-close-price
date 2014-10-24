@@ -8,7 +8,15 @@ import static logger.Log.Level.INFO;
 import java.util.List;
 import java.util.Random;
 
-import systemmanager.Keys;
+import systemmanager.Keys.BetaMax;
+import systemmanager.Keys.BetaMin;
+import systemmanager.Keys.GammaMax;
+import systemmanager.Keys.GammaMin;
+import systemmanager.Keys.MarginMax;
+import systemmanager.Keys.MarginMin;
+import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.RangeA;
+import systemmanager.Keys.RangeR;
 import systemmanager.Simulation;
 import utils.Maths;
 import utils.Rands;
@@ -54,16 +62,16 @@ public class ZIPAgent extends WindowAgent {
 	protected ZIPAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
 		super(sim, arrivalTime, market, rand, props);
 
-		int maxAbsPosition = props.getAsInt(Keys.MAX_QUANTITY);
+		int maxAbsPosition = props.get(MaxQty.class);
 		
-		this.rangeCoeffA = props.getAsDouble(Keys.COEFF_A);
-		this.rangeCoeffR = props.getAsDouble(Keys.COEFF_R);
-		double marginMin = props.getAsDouble(Keys.MARGIN_MIN),
-			marginMax = props.getAsDouble(Keys.MARGIN_MAX),
-			gammaMin = props.getAsDouble(Keys.GAMMA_MIN),
-			gammaMax = props.getAsDouble(Keys.GAMMA_MAX),
-			betaMin = props.getAsDouble(Keys.BETA_MIN),
-			betaMax = props.getAsDouble(Keys.BETA_MAX);
+		this.rangeCoeffA = props.get(RangeA.class);
+		this.rangeCoeffR = props.get(RangeR.class);
+		double marginMin = props.get(MarginMin.class),
+			marginMax = props.get(MarginMax.class),
+			gammaMin = props.get(GammaMin.class),
+			gammaMax = props.get(GammaMax.class),
+			betaMin = props.get(BetaMin.class),
+			betaMax = props.get(BetaMax.class);
 		
 		checkArgument(rangeCoeffA > 0, "Coefficient A's range must be positive");
 		checkArgument(rangeCoeffR > 0, "Coefficient A's range must be positive");

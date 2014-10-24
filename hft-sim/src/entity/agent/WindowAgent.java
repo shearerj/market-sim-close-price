@@ -3,7 +3,7 @@ package entity.agent;
 import java.util.List;
 import java.util.Random;
 
-import systemmanager.Keys;
+import systemmanager.Keys.WindowLength;
 import systemmanager.Simulation;
 import data.Props;
 import entity.market.Market;
@@ -37,7 +37,7 @@ public abstract class WindowAgent extends BackgroundAgent {
 	protected WindowAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
 		super(sim, arrivalTime, market, rand, props);
 		
-		this.windowLength = TimeStamp.of(props.getAsLong(Keys.WINDOW_LENGTH));
+		this.windowLength = props.get(WindowLength.class);
 	}
 
 	/**

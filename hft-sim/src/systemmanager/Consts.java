@@ -35,9 +35,7 @@ public interface Consts {
 	public static enum AgentType { NOOP, AA, ZI, ZIP, ZIR, ZIRP, 
 							ADAPTIVEMM, BASICMM, CONSTMM, MAMM, WMAMM, LA, ODA, MARKETDATA };
 	public static enum MarketType { CDA, CALL };
-	
-	public static enum Presets { NONE, TWOMARKET, TWOMARKETLA, CENTRALCDA, CENTRALCALL };
-	
+		
 	// **********************************************************
 	// FILENAMES
 	

@@ -4,7 +4,6 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static utils.Tests.checkSingleOrder;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.util.Random;
@@ -14,8 +13,17 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.AcceptableProfitFrac;
+import systemmanager.Keys.BidRangeMax;
+import systemmanager.Keys.BidRangeMin;
+import systemmanager.Keys.FundamentalKappa;
+import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.FundamentalShockVar;
+import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.PrivateValueVar;
+import systemmanager.Keys.ReentryRate;
+import systemmanager.Keys.SimLength;
+import systemmanager.Keys.WithdrawOrders;
 import systemmanager.MockSim;
 
 import com.google.common.collect.Iterables;
@@ -29,18 +37,19 @@ import fourheap.Order.OrderType;
 
 public class ZIRPAgentTest {
 	private static Random rand = new Random();
-	private static Props defaults = Props.fromPairs(
-		Keys.REENTRY_RATE, 0,
-		Keys.MAX_QUANTITY, 2,
-		Keys.PRIVATE_VALUE_VAR, 100,
-		Keys.BID_RANGE_MIN, 10000,
-		Keys.BID_RANGE_MAX, 10000,
-		Keys.SIMULATION_LENGTH, 60000,
-		Keys.FUNDAMENTAL_KAPPA, 0.05,
-		Keys.FUNDAMENTAL_MEAN, 100000,
-		Keys.FUNDAMENTAL_SHOCK_VAR, 0,
-		Keys.WITHDRAW_ORDERS, true,
-		Keys.ACCEPTABLE_PROFIT_FRACTION, 0.75);
+	private static Props defaults = Props.builder()
+			.put(ReentryRate.class, 0d)
+			.put(MaxQty.class, 2)
+			.put(PrivateValueVar.class, 100d)
+			.put(BidRangeMin.class, 10000)
+			.put(BidRangeMax.class, 10000)
+			.put(SimLength.class, 60000)
+			.put(FundamentalKappa.class, 0.05)
+			.put(FundamentalMean.class, 100000)
+			.put(FundamentalShockVar.class, 0d)
+			.put(WithdrawOrders.class, true)
+			.put(AcceptableProfitFrac.class, 0.75)
+			.build();
 	
 	private MockSim sim;
 	private Market market;
@@ -49,7 +58,7 @@ public class ZIRPAgentTest {
 	
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING, MarketType.CDA, j.join(Keys.NUM_MARKETS, 1));
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1);
 		market = Iterables.getOnlyElement(sim.getMarkets());
 		view = market.getPrimaryView();
 		mockAgent = mockAgent();
@@ -84,8 +93,8 @@ public class ZIRPAgentTest {
 		return order;
 	}
 
-	public ZIRPAgent zirpAgent(Object... parameters) {
-		return ZIRPAgent.create(sim, TimeStamp.ZERO, market, rand, Props.withDefaults(defaults, parameters));
+	public ZIRPAgent zirpAgent() {
+		return ZIRPAgent.create(sim, TimeStamp.ZERO, market, rand, defaults);
 	}
 	
 	private Agent mockAgent() {

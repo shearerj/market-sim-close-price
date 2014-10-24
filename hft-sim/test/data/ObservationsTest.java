@@ -4,7 +4,6 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -16,15 +15,14 @@ import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Consts.AgentType;
-import systemmanager.Consts.MarketType;
 import systemmanager.Keys;
+import systemmanager.Keys.FundamentalMean;
 import systemmanager.MockSim;
 import systemmanager.SimulationSpec.PlayerSpec;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.ObjectArrays;
 import com.google.common.util.concurrent.AtomicDouble;
 
 import data.Observations.PlayerObservation;
@@ -41,12 +39,11 @@ public class ObservationsTest {
 	
 	@Before
 	public void defaultSetup() throws IOException {
-		setup();
+		setup(Props.fromPairs());
 	}
 	
-	public void setup(Object... parameters) throws IOException {
-		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING, ObjectArrays.concat(parameters,
-				new Object[] { MarketType.CDA, j.join(Keys.NUM_MARKETS, 2) }, Object.class));
+	public void setup(Props parameters) throws IOException {
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 2, parameters);
 		Iterator<Market> markets = sim.getMarkets().iterator();
 		one = markets.next();
 		two = markets.next();
@@ -141,9 +138,7 @@ public class ObservationsTest {
 	 */
 	@Test
 	public void transPricesTest() throws IOException {
-		setup(
-				Keys.FUNDAMENTAL_MEAN, 100,
-				Keys.FUNDAMENTAL_SHOCK_VAR, 0);
+		setup(Props.fromPairs(FundamentalMean.class, 100, Keys.FundamentalShockVar.class, 0d));
 		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create());
 		
 		sim.postTimedStat(TimeStamp.ZERO, Stats.TRANSACTION_PRICE, 102);
@@ -207,9 +202,9 @@ public class ObservationsTest {
 		
 		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(spec.descriptor));
 		
-		assertEquals(pv1.get(), pobs.features.get(Keys.PV_BUY1).mean(), eps);
-		assertEquals(pv_1.get(), pobs.features.get(Keys.PV_SELL1).mean(), eps);
-		assertEquals(maxAbsPos, pobs.features.get(Keys.PV_POSITION1_MAX_ABS).mean(), eps);
+		assertEquals(pv1.get(), pobs.features.get(Observations.PV_BUY1).mean(), eps);
+		assertEquals(pv_1.get(), pobs.features.get(Observations.PV_SELL1).mean(), eps);
+		assertEquals(maxAbsPos, pobs.features.get(Observations.PV_POSITION1_MAX_ABS).mean(), eps);
 	}
 	
 	// FIXME Change from BackgroundAgent to Agent once private value is moved
@@ -259,9 +254,9 @@ public class ObservationsTest {
 		// Test
 		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(spec.descriptor));
 		
-		assertEquals((a_pv1.get() + b_pv1.get()) / 2, pobs.features.get(Keys.PV_BUY1).mean(), eps);
-		assertEquals((a_pv_1.get() + b_pv_1.get()) / 2, pobs.features.get(Keys.PV_SELL1).mean(), eps);
-		assertEquals((a_maxAbsPos + b_maxAbsPos) / 2, pobs.features.get(Keys.PV_POSITION1_MAX_ABS).mean(), eps);
+		assertEquals((a_pv1.get() + b_pv1.get()) / 2, pobs.features.get(Observations.PV_BUY1).mean(), eps);
+		assertEquals((a_pv_1.get() + b_pv_1.get()) / 2, pobs.features.get(Observations.PV_SELL1).mean(), eps);
+		assertEquals((a_maxAbsPos + b_maxAbsPos) / 2, pobs.features.get(Observations.PV_POSITION1_MAX_ABS).mean(), eps);
 	}
 
 }

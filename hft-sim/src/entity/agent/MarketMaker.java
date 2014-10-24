@@ -7,7 +7,16 @@ import static logger.Log.Level.INFO;
 
 import java.util.Random;
 
-import systemmanager.Keys;
+import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.InitLadderMean;
+import systemmanager.Keys.InitLadderRange;
+import systemmanager.Keys.MarketMakerReentryRate;
+import systemmanager.Keys.NumRungs;
+import systemmanager.Keys.ReentryRate;
+import systemmanager.Keys.RungSize;
+import systemmanager.Keys.TickImprovement;
+import systemmanager.Keys.TickOutside;
+import systemmanager.Keys.TruncateLadder;
 import systemmanager.Simulation;
 import utils.Maths;
 import utils.Rands;
@@ -62,16 +71,16 @@ public abstract class MarketMaker extends ReentryAgent {
 	
 	protected MarketMaker(Simulation sim, Market market, Random rand, Props props) {		
 		super(sim, TimeStamp.ZERO, market, rand,
-				AgentFactory.exponentials(props.getAsDouble(Keys.MARKETMAKER_REENTRY_RATE, Keys.REENTRY_RATE), rand),
+				AgentFactory.exponentials(props.get(MarketMakerReentryRate.class, ReentryRate.class), rand),
 				props);
 		
-		this.numRungs = props.getAsInt(Keys.NUM_RUNGS);
-		this.stepSize = Maths.quantize(props.getAsInt(Keys.RUNG_SIZE), tickSize);
-		this.truncateLadder = props.getAsBoolean(Keys.TRUNCATE_LADDER);
-		this.tickImprovement = props.getAsBoolean(Keys.TICK_IMPROVEMENT);
-		this.tickOutside = props.getAsBoolean(Keys.TICK_OUTSIDE);
-		this.initLadderRange = props.getAsInt(Keys.INITIAL_LADDER_RANGE, Keys.FUNDAMENTAL_MEAN);
-		int tempLadderMean = props.getAsInt(Keys.INITIAL_LADDER_MEAN, Keys.FUNDAMENTAL_MEAN);
+		this.numRungs = props.get(NumRungs.class);
+		this.stepSize = Maths.quantize(props.get(RungSize.class), tickSize);
+		this.truncateLadder = props.get(TruncateLadder.class);
+		this.tickImprovement = props.get(TickImprovement.class);
+		this.tickOutside = props.get(TickOutside.class);
+		this.initLadderRange = props.get(InitLadderRange.class, FundamentalMean.class);
+		int tempLadderMean = props.get(InitLadderMean.class, FundamentalMean.class);
 		
 		checkArgument(numRungs > 0, "Number of rungs must be positive!");
 		checkArgument(tempLadderMean >= 0, "Ladder initialization mean must be positive!");
@@ -79,7 +88,7 @@ public abstract class MarketMaker extends ReentryAgent {
 		
 		// initialize using mean fundamental value if ladder range defined
 		// XXX Cheating? Also, this could probably be done better?
-		this.initLadderMean = initLadderRange > 0 && tempLadderMean == 0 ? props.getAsInt(Keys.FUNDAMENTAL_MEAN) : tempLadderMean;
+		this.initLadderMean = initLadderRange > 0 && tempLadderMean == 0 ? props.get(FundamentalMean.class) : tempLadderMean;
 	}
 
 	/**

@@ -9,13 +9,24 @@ import java.util.Map;
 import java.util.Random;
 
 import systemmanager.Consts.DiscountFactor;
-import systemmanager.Keys;
+import systemmanager.Keys.AcceptableProfitFrac;
+import systemmanager.Keys.BackgroundReentryRate;
+import systemmanager.Keys.BidRangeMax;
+import systemmanager.Keys.BidRangeMin;
+import systemmanager.Keys.FundamentalKappa;
+import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.PrivateValueVar;
+import systemmanager.Keys.ReentryRate;
+import systemmanager.Keys.SimLength;
+import systemmanager.Keys.WithdrawOrders;
 import systemmanager.Simulation;
 import utils.Rands;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Range;
 
+import data.Observations;
 import data.Props;
 import data.Stats;
 import entity.agent.position.ListPrivateValue;
@@ -57,17 +68,17 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 */
 	protected BackgroundAgent(Simulation sim, TimeStamp arrivalTime, Market market, PrivateValue privateValue, Random rand, Props props) {
 		super(sim, arrivalTime, market, rand,
-				AgentFactory.exponentials(props.getAsDouble(Keys.BACKGROUND_REENTRY_RATE, Keys.REENTRY_RATE), rand),
+				AgentFactory.exponentials(props.get(BackgroundReentryRate.class, ReentryRate.class), rand),
 				props);
 		this.privateValue = privateValue;
-		this.bidRangeMin = props.getAsInt(Keys.BID_RANGE_MIN);
-		this.bidRangeMax = props.getAsInt(Keys.BID_RANGE_MAX);
-		this.withdrawOrders = props.getAsBoolean(Keys.WITHDRAW_ORDERS);
+		this.bidRangeMin = props.get(BidRangeMin.class);
+		this.bidRangeMax = props.get(BidRangeMax.class);
+		this.withdrawOrders = props.get(WithdrawOrders.class);
 		
-		this.simulationLength = props.getAsInt(Keys.SIMULATION_LENGTH);
-		this.fundamentalKappa = props.getAsDouble(Keys.FUNDAMENTAL_KAPPA);
-		this.fundamentalMean = props.getAsDouble(Keys.FUNDAMENTAL_MEAN);
-		this.acceptableProfitFraction = props.getAsDouble(Keys.ACCEPTABLE_PROFIT_FRACTION);
+		this.simulationLength = props.get(SimLength.class);
+		this.fundamentalKappa = props.get(FundamentalKappa.class);
+		this.fundamentalMean = props.get(FundamentalMean.class);
+		this.acceptableProfitFraction = props.get(AcceptableProfitFrac.class);
 		checkArgument(Range.closed(0d, 1d).contains(acceptableProfitFraction), "Acceptable profit fraction must be in [0, 1]: %f", acceptableProfitFraction);
 		
 		this.surplus = DiscountedValue.create();
@@ -80,7 +91,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 */
 	protected BackgroundAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
 		this(sim, arrivalTime, market,
-				ListPrivateValue.createRandomly(props.getAsInt(Keys.MAX_QUANTITY), props.getAsDouble(Keys.PRIVATE_VALUE_VAR), rand),
+				ListPrivateValue.createRandomly(props.get(MaxQty.class), props.get(PrivateValueVar.class), rand),
 				rand, props);
 	}
 	
@@ -247,10 +258,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		Price buyPV = privateValue.getValue(0, BUY);
 		Price sellPV = privateValue.getValue(0, SELL);
 		
-		features.put(Keys.PV_POSITION1_MAX_ABS, Math.max(Math.abs(buyPV.doubleValue()), 
+		features.put(Observations.PV_POSITION1_MAX_ABS, Math.max(Math.abs(buyPV.doubleValue()), 
 				Math.abs(sellPV.doubleValue())));
-		features.put(Keys.PV_BUY1, buyPV.doubleValue());
-		features.put(Keys.PV_SELL1, sellPV.doubleValue());
+		features.put(Observations.PV_BUY1, buyPV.doubleValue());
+		features.put(Observations.PV_SELL1, sellPV.doubleValue());
 		
 		return features.build();
 	}

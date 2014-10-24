@@ -12,7 +12,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Random;
 
-import systemmanager.Keys;
+import systemmanager.Keys.Alpha;
+import systemmanager.Keys.LaLatency;
 import systemmanager.Simulation;
 
 import com.google.common.base.Functions;
@@ -45,10 +46,10 @@ public class LAAgent extends HFTAgent {
 	
 	protected LAAgent(Simulation sim, Collection<Market> markets, Random rand, Props props) {
 		super(sim, TimeStamp.ZERO,
-				Maps.toMap(markets, Functions.constant(TimeStamp.of(props.getAsLong(Keys.LA_LATENCY)))),
+				Maps.toMap(markets, Functions.constant(props.get(LaLatency.class))),
 				rand, props);
 
-		this.alpha = props.getAsDouble(Keys.ALPHA);
+		this.alpha = props.get(Alpha.class);
 		this.buyStatus = Maps.newHashMapWithExpectedSize(this.markets.size());
 		this.sellStatus = Maps.newHashMapWithExpectedSize(this.markets.size());
 		for (MarketView market : this.markets) {

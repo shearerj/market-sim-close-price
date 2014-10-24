@@ -8,7 +8,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.checkSingleOrder;
 import static utils.Tests.checkSingleOrderRange;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.util.Random;
@@ -18,8 +17,22 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.BetaT;
+import systemmanager.Keys.BuyerStatus;
+import systemmanager.Keys.Debug;
+import systemmanager.Keys.Eta;
+import systemmanager.Keys.FundamentalShockVar;
+import systemmanager.Keys.Gamma;
+import systemmanager.Keys.InitAggression;
+import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.NumHistorical;
+import systemmanager.Keys.PrivateValueVar;
+import systemmanager.Keys.ReentryRate;
+import systemmanager.Keys.Theta;
+import systemmanager.Keys.ThetaMax;
+import systemmanager.Keys.ThetaMin;
+import systemmanager.Keys.WindowLength;
+import systemmanager.Keys.WithdrawOrders;
 import systemmanager.MockSim;
 import utils.Rands;
 
@@ -35,23 +48,18 @@ import fourheap.Order.OrderType;
 public class AAAgentTest {
 
 	private static final Random rand = new Random();
-	private static final Props defaults = Props.fromPairs(
-			Keys.REENTRY_RATE, 0,
-			Keys.MAX_QUANTITY, 10,
-			Keys.ETA, 3,
-			Keys.WITHDRAW_ORDERS, false,
-			Keys.WINDOW_LENGTH, 5000,
-			Keys.AGGRESSION, 0,
-			Keys.THETA, 0,
-			Keys.THETA_MIN, -4,
-			Keys.THETA_MAX, 4,
-			Keys.NUM_HISTORICAL, 5,
-			Keys.LAMBDA_R, 0.05,
-			Keys.LAMBDA_A, 0.02,	// x ticks/$ for Eq 10/11 
-			Keys.GAMMA, 2,
-			Keys.BETA_R, 0.4,
-			Keys.BETA_T, 0.4,
-			Keys.DEBUG, true);
+	private static final Props defaults = Props.builder()
+			.put(ReentryRate.class,		0d)
+			.put(PrivateValueVar.class,	0d)
+			.put(MaxQty.class,			1)
+			.put(WithdrawOrders.class,	false)
+			.put(WindowLength.class,	TimeStamp.of(5000))
+			.put(Theta.class,			0d)
+			.put(ThetaMin.class,		-4d)
+			.put(ThetaMax.class,		4d)
+			.put(NumHistorical.class,	5)
+			.put(Debug.class,			true)
+			.build();
 
 	private MockSim sim;
 	private Market market;
@@ -60,9 +68,8 @@ public class AAAgentTest {
 
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.create(getClass(),
-				Log.Level.NO_LOGGING, Keys.FUNDAMENTAL_SHOCK_VAR,
-				0, MarketType.CDA, j.join(Keys.NUM, 1));
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1, Props.fromPairs(FundamentalShockVar.class, 0d));
+
 		market = Iterables.getOnlyElement(sim.getMarkets());
 		view = market.getPrimaryView();
 		mockAgent = new BackgroundAgent(sim, TimeStamp.ZERO, market, rand, Props.fromPairs()) {
@@ -74,7 +81,7 @@ public class AAAgentTest {
 	@Test
 	public void tauChange() {
 		double r = 0.5;
-		AAAgent agent = aaAgent(BUY);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY));
 		agent.theta = 2;
 		assertEquals(0.268, agent.tauChange(r), 0.001);
 	}
@@ -84,9 +91,10 @@ public class AAAgentTest {
 	 */
 	@Test
 	public void estimateEquilibrium() {
-		AAAgent agent = aaAgent(BUY,
-				Keys.NUM_HISTORICAL, 3,
-				Keys.PRIVATE_VALUE_VAR, 5E7);
+		AAAgent agent = aaAgent(Props.fromPairs(
+				BuyerStatus.class, BUY,
+				NumHistorical.class, 3,
+				PrivateValueVar.class, 5E7));
 		
 		assertNull(agent.estimateEquilibrium(agent.getWindowTransactions()));
 		
@@ -109,13 +117,13 @@ public class AAAgentTest {
 	
 	@Test
 	public void computeRShoutBuyer() {
-		AAAgent buyer = aaAgent(BUY, Keys.THETA, -2);
+		AAAgent buyer = aaAgent(Props.fromPairs(BuyerStatus.class, BUY, Theta.class, -2d));
 		
 		Price limit = Price.of(110000);
 		Price last = Price.of(105000);
 		Price equil = Price.of(105000);
 		
-		// Intramarginal (limit > equil)
+		// Intramarginal (limit > equal)
 		assertEquals(0, buyer.computeRShout(limit, last, equil), 0.001);
 		last = Price.of(100000);	// less aggressive (higher margin)
 		assertEquals(-1, Math.signum(buyer.computeRShout(limit, last, equil)), 0.001);
@@ -131,7 +139,7 @@ public class AAAgentTest {
 	
 	@Test
 	public void computeRShoutSeller() {
-		AAAgent seller = aaAgent(SELL, Keys.THETA, -2);
+		AAAgent seller = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, Theta.class, -2d));
 
 		Price limit = Price.of(105000);
 		Price last = Price.of(110000);
@@ -153,7 +161,7 @@ public class AAAgentTest {
 
 	@Test
 	public void determineTargetPriceBuyer() {
-		AAAgent buyer = aaAgent(BUY, Keys.THETA, 2);
+		AAAgent buyer = aaAgent(Props.fromPairs(BuyerStatus.class, BUY, Theta.class, 2d));
 		
 		Price limit = Price.of(110000);
 		Price equil = Price.of(105000);
@@ -182,7 +190,7 @@ public class AAAgentTest {
 	
 	@Test
 	public void determineTargetPriceSeller() {
-		AAAgent seller = aaAgent(SELL, Keys.THETA, 2);
+		AAAgent seller = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, Theta.class, 2d));
 		
 		Price limit = Price.of(105000);
 		Price equil = Price.of(110000);
@@ -212,8 +220,8 @@ public class AAAgentTest {
 	@Test
 	public void biddingLayerNoTarget() {
 		Price limit = Price.of(145000);
-		AAAgent buyer = aaAgent(BUY);
-		AAAgent seller = aaAgent(SELL);
+		AAAgent buyer = aaAgent(Props.fromPairs(BuyerStatus.class, BUY));
+		AAAgent seller = aaAgent(Props.fromPairs(BuyerStatus.class, SELL));
 		
 		setQuote(Price.of(Rands.nextUniform(rand, 75000, 80000)), Price.of(Rands.nextUniform(rand, 81000, 100000)));
 		
@@ -230,7 +238,7 @@ public class AAAgentTest {
 	public void biddingLayerBuyer() {
 		Price limit = Price.of(145000);
 		Price target = Price.of(175000);
-		AAAgent buyer = aaAgent(BUY);
+		AAAgent buyer = aaAgent(Props.fromPairs(BuyerStatus.class, BUY));
 		
 		buyer.biddingLayer(limit, target, 1);
 		assertEquals(1, buyer.activeOrders.size());
@@ -269,7 +277,7 @@ public class AAAgentTest {
 		Price limit = Price.of(210000);
 		Price target = Price.of(175000);
 		
-		AAAgent seller = aaAgent(SELL);
+		AAAgent seller = aaAgent(Props.fromPairs(BuyerStatus.class, SELL));
 		
 		seller.biddingLayer(limit, target, 1);
 		assertEquals(1, seller.activeOrders.size()); // ZI strat
@@ -305,13 +313,15 @@ public class AAAgentTest {
 	// The name of this test get deleted somehow...
 	@Test
 	public void forgottenTest() {
-		AAAgent agent = aaAgent(SELL,
-				Keys.NUM_HISTORICAL, 5,
-				Keys.THETA_MAX, 8,
-				Keys.THETA_MIN, -8,
-				Keys.BETA_T, 0.25,
-				Keys.GAMMA, 2,
-				Keys.THETA, -4);
+		AAAgent agent = aaAgent(Props.builder()
+				.put(BuyerStatus.class, BUY)
+				.put(NumHistorical.class, 5)
+				.put(ThetaMax.class, 8d)
+				.put(ThetaMin.class, -8d)
+				.put(BetaT.class, 0.25)
+				.put(Gamma.class, 2d)
+				.put(Theta.class, -4d)
+				.build());
 		
 		agent.updateTheta(null, agent.getWindowTransactions());
 		assertEquals(-4, agent.theta, 0.001);
@@ -346,7 +356,7 @@ public class AAAgentTest {
 	public void initialBuyer() {
 		sim.log(DEBUG, "\nTesting buyer on empty market: Result should be price=0");
 		// Creating a buyer
-		AAAgent agent = aaAgent(BUY);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY));
 		assertTrue(agent.type.equals(BUY));
 		// Testing against an empty market
 		sim.executeUntil(TimeStamp.of(100));
@@ -359,7 +369,7 @@ public class AAAgentTest {
 	public void initialSeller() {
 		sim.log(DEBUG, "\nTesting seller on empty market: Result should be price=%s", Price.INF);
 		// Creating a seller
-		AAAgent agent = aaAgent(SELL);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL));
 		assertTrue(agent.type.equals(SELL));
 		// Testing against an empty market
 		sim.executeUntil(TimeStamp.of(100));
@@ -376,7 +386,7 @@ public class AAAgentTest {
 		setQuote(Price.of(50000), Price.of(200000));
 
 		// Testing against a market with initial bids but no transaction history
-		AAAgent agent = aaAgent(BUY, Keys.ETA, 4);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY, Eta.class, 4));
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 		sim.executeImmediate();
@@ -393,7 +403,7 @@ public class AAAgentTest {
 		setQuote(Price.of(50000), Price.of(200000));
 
 		// Testing against a market with initial bids but no transaction history
-		AAAgent agent = aaAgent(SELL, Keys.ETA, 4);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, Eta.class, 4));
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 		sim.executeImmediate();
@@ -409,7 +419,7 @@ public class AAAgentTest {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
 		
-		AAAgent agent = aaAgent(BUY, Keys.AGGRESSION, -1);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY, InitAggression.class, -1d));
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
@@ -423,9 +433,11 @@ public class AAAgentTest {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
 
-		AAAgent agent = aaAgent(BUY,
-				Keys.THETA, -3,
-				Keys.AGGRESSION, -0.5);
+		AAAgent agent = aaAgent(Props.fromPairs(
+				BuyerStatus.class, BUY,
+				Theta.class, -3d,
+				InitAggression.class, -0.5));
+		
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
@@ -443,7 +455,7 @@ public class AAAgentTest {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
 
-		AAAgent agent = aaAgent(BUY, Keys.AGGRESSION, 0);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY, InitAggression.class, 0d));
 		sim.log(DEBUG, "Price ~= 58333");
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
@@ -462,9 +474,9 @@ public class AAAgentTest {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
 
-		AAAgent agent = aaAgent(BUY,
-				Keys.THETA, -3,
-				Keys.AGGRESSION, 0.5);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY,
+				Theta.class, -3d,
+				InitAggression.class, 0.5));
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
@@ -479,7 +491,7 @@ public class AAAgentTest {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
 
-		AAAgent agent = aaAgent(BUY, Keys.AGGRESSION, 1);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY, InitAggression.class, 1d));
 		sim.log(DEBUG, "Price ~= 66667");
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
@@ -496,7 +508,7 @@ public class AAAgentTest {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
 
-		AAAgent agent = aaAgent(SELL, Keys.AGGRESSION, -1);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, InitAggression.class, 11d));
 		sim.log(DEBUG, "Price ~= %d", 150000 + (Price.INF.intValue() - 150000) / 3);
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
@@ -514,7 +526,7 @@ public class AAAgentTest {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
 
-		AAAgent agent = aaAgent(SELL, Keys.AGGRESSION, 0);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, InitAggression.class, 0d));
 		sim.log(DEBUG, "Price ~= 141667");
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
@@ -531,7 +543,7 @@ public class AAAgentTest {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
 
-		AAAgent agent = aaAgent(SELL, Keys.AGGRESSION, 1);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, InitAggression.class, 1d));
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
@@ -546,7 +558,7 @@ public class AAAgentTest {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
 		
-		AAAgent agent = aaAgent(BUY, Keys.AGGRESSION, -1);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY, InitAggression.class, -1d));
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
@@ -560,9 +572,11 @@ public class AAAgentTest {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
 
-		AAAgent agent = aaAgent(BUY,
-				Keys.THETA, -3,
-				Keys.AGGRESSION, -0.5);
+		AAAgent agent = aaAgent(Props.fromPairs(
+				BuyerStatus.class, BUY,
+				Theta.class, -3d,
+				InitAggression.class, -0.5));
+		
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
@@ -576,9 +590,11 @@ public class AAAgentTest {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
 		
-		AAAgent agent = aaAgent(BUY,
-				Keys.THETA, -3,
-				Keys.AGGRESSION, 0);
+		AAAgent agent = aaAgent(Props.fromPairs(
+				BuyerStatus.class, BUY,
+				Theta.class, -3d,
+				InitAggression.class, 0d));
+		
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
@@ -592,9 +608,11 @@ public class AAAgentTest {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
 
-		AAAgent agent = aaAgent(BUY,
-				Keys.THETA, -3,
-				Keys.AGGRESSION, 0.5);
+		AAAgent agent = aaAgent(Props.fromPairs(
+				BuyerStatus.class, BUY,
+				Theta.class, -3d,
+				InitAggression.class, 0.5));
+		
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
@@ -608,7 +626,7 @@ public class AAAgentTest {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
 		
-		AAAgent agent = aaAgent(SELL, Keys.AGGRESSION, -1);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, InitAggression.class, -1d));
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 		sim.executeImmediate();
@@ -626,7 +644,7 @@ public class AAAgentTest {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
 		
-		AAAgent agent = aaAgent(SELL, Keys.AGGRESSION, 0);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, InitAggression.class, 0d));
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 		sim.executeImmediate();
@@ -646,7 +664,7 @@ public class AAAgentTest {
 		addTransaction(Price.of(100000));
 		addTransaction(Price.of(105000));
 
-		AAAgent agent = aaAgent(BUY);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY));
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 		sim.executeImmediate();
@@ -666,7 +684,7 @@ public class AAAgentTest {
 		addTransaction(Price.of(100000));
 		addTransaction(Price.of(95000));
 
-		AAAgent agent = aaAgent(SELL);
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL));
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 		sim.executeImmediate();
@@ -688,9 +706,10 @@ public class AAAgentTest {
 		addTransaction(Price.of(95000));
 
 		double oldAggression = 0.5;
-		AAAgent agent = aaAgent(BUY,
-				Keys.THETA, -3,
-				Keys.AGGRESSION, oldAggression);
+		AAAgent agent = aaAgent(Props.fromPairs(
+				BuyerStatus.class, BUY,
+				Theta.class, -3d,
+				InitAggression.class, oldAggression));
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 		sim.executeImmediate();
@@ -716,9 +735,10 @@ public class AAAgentTest {
 
 		
 		double oldAggression = 0.2;
-		AAAgent agent = aaAgent(SELL,
-				Keys.THETA, 2,
-				Keys.AGGRESSION, oldAggression);
+		AAAgent agent = aaAgent(Props.fromPairs(
+				BuyerStatus.class, SELL,
+				Theta.class, 2d,
+				InitAggression.class, oldAggression));
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
@@ -743,10 +763,11 @@ public class AAAgentTest {
 
 		
 		double oldAggression = 0.5;
-		AAAgent agent = aaAgent(BUY,
-				Keys.THETA, -2,
-				Keys.PRIVATE_VALUE_VAR, 5E7,
-				Keys.AGGRESSION, oldAggression);
+		AAAgent agent = aaAgent(Props.fromPairs(
+				BuyerStatus.class, BUY,
+				Theta.class, -2d,
+				PrivateValueVar.class, 5e7,
+				InitAggression.class, oldAggression));
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 		sim.executeImmediate();
@@ -770,10 +791,11 @@ public class AAAgentTest {
 		addTransaction(Price.of(Rands.nextUniform(rand, 100000, 110000)));
 
 		double oldAggression = 0.2;
-		AAAgent agent = aaAgent(SELL,
-				Keys.THETA, -3,
-				Keys.PRIVATE_VALUE_VAR, 5E7,
-				Keys.AGGRESSION, oldAggression);
+		AAAgent agent = aaAgent(Props.fromPairs(
+				BuyerStatus.class, SELL,
+				Theta.class, -3d,
+				PrivateValueVar.class, 5e7,
+				InitAggression.class, oldAggression));
 		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
@@ -800,12 +822,8 @@ public class AAAgentTest {
 				Double.compare(oldAggression, aggression));
 	}
 
-	private AAAgent aaAgent(OrderType type, Object... parameters) {
-		return new AAAgent(sim, TimeStamp.ZERO, market, rand,
-				Props.withDefaults(Props.withDefaults(defaults,
-						Keys.BUYER_STATUS, type == BUY,
-						Keys.PRIVATE_VALUE_VAR, 0,	// private values all 0
-						Keys.DEBUG, true), parameters));
+	private AAAgent aaAgent(Props parameters) {
+		return new AAAgent(sim, TimeStamp.ZERO, market, rand, Props.merge(defaults, parameters));
 	}
 
 	private void addOrder(OrderType type, Price price) {

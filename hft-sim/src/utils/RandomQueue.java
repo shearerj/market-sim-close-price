@@ -58,7 +58,7 @@ public class RandomQueue<E> extends AbstractQueue<E> {
 
 	@Override
 	public Iterator<E> iterator() {
-		return elements.iterator();
+		return Lists.reverse(elements).iterator();
 	}
 
 	@Override
@@ -100,7 +100,7 @@ public class RandomQueue<E> extends AbstractQueue<E> {
 
 	@Override
 	public String toString() {
-		return elements.toString();
+		return Lists.reverse(elements).toString();
 	}
 
 }

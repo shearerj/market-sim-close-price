@@ -3,20 +3,14 @@ package data;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
+import props.ImmutableProps;
+import props.Value;
 import systemmanager.Defaults;
 
+import com.google.common.base.CaseFormat;
 import com.google.common.base.Optional;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.primitives.Ints;
 
 /**
  * Class that represents the properties of an entity. These are generally loaded
@@ -31,151 +25,176 @@ import com.google.common.primitives.Ints;
  */
 public class Props implements Serializable {
 	
-	private static final long serialVersionUID = -7220533203495890410L;
-	
-	private static final Set<String> trueStrings = ImmutableSet.of("t", "true");
-	private static final Splitter arraySplitter = Splitter.on('-');
+	private final ImmutableProps props;
 
-	/**
-	 * Store everything as strings, and convert out when called
-	 */
-	private final ImmutableMap<String, String> properties;
-
-	protected Props() {
-		this.properties = ImmutableMap.of();
+	protected Props(ImmutableProps props) {
+		this.props = props;
 	}
 	
-	protected Props(Map<?, ?> properties) {
-		Builder<String, String> builder = ImmutableMap.builder();
-		for (Entry<?, ?> e : properties.entrySet())
-			builder.put(e.getKey().toString(), e.getValue().toString());
-		this.properties = builder.build();
+	public static Props fromPairs() {
+		return builder().build();
 	}
 	
-	public static Props fromMap(Map<?, ?> keyValuePairs) {
-		return new Props(keyValuePairs);
+	public static <T> Props fromPairs(Class<? extends Value<T>> key, T value) {
+		return builder().put(key, value).build();
 	}
 	
-	/**
-	 * Make an entity properties from pairs of objects. There must be an even
-	 * number of parameters.
-	 */
-	public static Props fromPairs(Iterable<?> keyValuePairs) {
-		return withDefaults(new Props(), keyValuePairs);
+	public static <T1, T2> Props fromPairs(Class<? extends Value<T1>> key1, T1 value1, Class<? extends Value<T2>> key2, T2 value2) {
+		return builder().put(key1, value1).put(key2, value2).build();
 	}
 	
-	/**
-	 * Make an entity properties from pairs of objects. There must be an even
-	 * number of parameters.
-	 */
-	public static Props fromPairs(Object... keyValuePairs) {
+	public static <T1, T2, T3> Props fromPairs(
+			Class<? extends Value<T1>> key1, T1 value1,
+			Class<? extends Value<T2>> key2, T2 value2,
+			Class<? extends Value<T3>> key3, T3 value3) {
+		return builder().put(key1, value1).put(key2, value2).put(key3, value3).build();
+	}
+	
+	public static <T1, T2, T3, T4> Props fromPairs(
+			Class<? extends Value<T1>> key1, T1 value1,
+			Class<? extends Value<T2>> key2, T2 value2,
+			Class<? extends Value<T3>> key3, T3 value3,
+			Class<? extends Value<T4>> key4, T4 value4) {
+		return builder().put(key1, value1).put(key2, value2).put(key3, value3).put(key4, value4).build();
+	}
+	
+	public static <T1, T2, T3, T4, T5> Props fromPairs(
+			Class<? extends Value<T1>> key1, T1 value1,
+			Class<? extends Value<T2>> key2, T2 value2,
+			Class<? extends Value<T3>> key3, T3 value3,
+			Class<? extends Value<T4>> key4, T4 value4,
+			Class<? extends Value<T5>> key5, T5 value5) {
+		return builder().put(key1, value1).put(key2, value2).put(key3, value3).put(key4, value4).put(key5, value5).build();
+	}
+	
+	public static Props fromPairs(String... keyValuePairs) {
 		return fromPairs(Arrays.asList(keyValuePairs));
 	}
 	
-	/**
-	 * Creates a new entity properties with the given defaults and an iterable
-	 * of key value pairs.
-	 */
-	public static Props withDefaults(Props defaults, Iterable<?> keyValuePairs) {
-		Map<Object, Object> newProperties = Maps.<Object, Object> newHashMap(defaults.properties);
-		for (Iterator<?> it = keyValuePairs.iterator(); it.hasNext();)
-			newProperties.put(it.next(), it.next());
-		return new Props(newProperties);
+	public static Props fromPairs(Iterable<String> keyValuePairs) {
+		return fromPairs(keyValuePairs.iterator());
 	}
 	
-	/**
-	 * Creates a new entity properties with the given defaults and extra key
-	 * value pairs.
-	 */
-	public static Props withDefaults(Props defaults, Object... keysAndValues) {
-		return withDefaults(defaults, Arrays.asList(keysAndValues));
+	public static Props fromPairs(Iterator<String> keyValuePairs) {
+		Builder builder = builder();
+		while (keyValuePairs.hasNext())
+			builder.put(keyValuePairs.next(), keyValuePairs.next());
+		return builder.build();
+	}
+	
+	public static <T> Props withDefaults(Props defaults, Class<? extends Value<T>> key, T value) {
+		return builder().putAll(defaults).put(key, value).build();
+	}
+	
+	public static <T1, T2> Props withDefaults(
+			Props defaults,
+			Class<? extends Value<T1>> key1, T1 value1,
+			Class<? extends Value<T2>> key2, T2 value2) {
+		return builder().putAll(defaults).put(key1, value1).put(key2, value2).build();
+	}
+	
+	public static <T1, T2, T3> Props withDefaults(
+			Props defaults,
+			Class<? extends Value<T1>> key1, T1 value1,
+			Class<? extends Value<T2>> key2, T2 value2,
+			Class<? extends Value<T3>> key3, T3 value3) {
+		return builder().putAll(defaults).put(key1, value1).put(key2, value2).put(key3, value3).build();
+	}
+	
+	public static <T1, T2, T3, T4> Props withDefaults(
+			Props defaults,
+			Class<? extends Value<T1>> key1, T1 value1,
+			Class<? extends Value<T2>> key2, T2 value2,
+			Class<? extends Value<T3>> key3, T3 value3,
+			Class<? extends Value<T4>> key4, T4 value4) {
+		return builder().putAll(defaults).put(key1, value1).put(key2, value2).put(key3, value3).put(key4, value4).build();
+	}
+	
+	public static <T1, T2, T3, T4, T5> Props withDefaults(
+			Props defaults,
+			Class<? extends Value<T1>> key1, T1 value1,
+			Class<? extends Value<T2>> key2, T2 value2,
+			Class<? extends Value<T3>> key3, T3 value3,
+			Class<? extends Value<T4>> key4, T4 value4,
+			Class<? extends Value<T5>> key5, T5 value5) {
+		return builder().putAll(defaults).put(key1, value1).put(key2, value2).put(key3, value3).put(key4, value4).put(key5, value5).build();
+	}
+	
+	public static Props withDefaults(Props defaults, String... keyValuePairs) {
+		return withDefaults(defaults, Arrays.asList(keyValuePairs));
+	}
+	
+	public static Props withDefaults(Props defaults, Iterable<String> keyValuePairs) {
+		return withDefaults(defaults, keyValuePairs.iterator());
+	}
+	
+	public static Props withDefaults(Props defaults, Iterator<String> keyValuePairs) {
+		Builder builder = builder().putAll(defaults);
+		while (keyValuePairs.hasNext())
+			builder.put(keyValuePairs.next(), keyValuePairs.next());
+		return builder.build();
+	}
+	
+	public static Props merge(Props... severalProperties) {
+		Builder builder = builder();
+		for (Props props : severalProperties)
+			builder.putAll(props);
+		return builder.build();
+	}
+	
+	public static Builder builder() {
+		return new Builder();
 	}
 
-	public String getAsString(String key) {
-		return Optional.fromNullable(properties.get(key))
+	public <T> T get(Class<? extends Value<T>> key) {
+		return Optional.fromNullable(props.get(key))
 				.or(Optional.fromNullable(Defaults.get(key)))
 				.get(); // Will throw an error if nothing was found
 	}
 	
-	public String getAsString(String key, String defaultKey) {
-		return Optional.fromNullable(properties.get(key))
-				.or(Optional.fromNullable(properties.get(defaultKey)))
+	public <T> T get(Class<? extends Value<T>> key, Class<? extends Value<T>> defaultKey) {
+		return Optional.fromNullable(props.get(key))
+				.or(Optional.fromNullable(props.get(defaultKey)))
 				.or(Optional.fromNullable(Defaults.get(defaultKey)))
 				.get(); // Will throw an error if nothing was found
 	}
-
-	public int getAsInt(String key) {
-		return Integer.parseInt(getAsString(key));
-	}
-
-	public int getAsInt(String key, String defaultKey) {
-		return Integer.parseInt(getAsString(key, defaultKey));
-	}
-
-	public double getAsDouble(String key) {
-		return Double.parseDouble(getAsString(key));
-	}
-
-	public double getAsDouble(String key, String defaultKey) {
-		return Double.parseDouble(getAsString(key, defaultKey));
-	}
-
-	public float getAsFloat(String key) {
-		return Float.parseFloat(getAsString(key));
+	
+	public Set<Class<? extends Value<?>>> keySet() {
+		return props.keySet();
 	}
 	
-	public float getAsFloat(String key, String defaultKey) {
-		return Float.parseFloat(getAsString(key, defaultKey));
-	}
-
-	public long getAsLong(String key) {
-		return Long.parseLong(getAsString(key));
-	}
-
-	public long getAsLong(String key, String defaultKey) {
-		return Long.parseLong(getAsString(key, defaultKey));
-	}
-
-	public boolean getAsBoolean(String key) {
-		return parseBoolean(getAsString(key));
-	}
-	
-	public boolean getAsBoolean(String key, String defaultKey) {
-		return parseBoolean(getAsString(key, defaultKey));
-	}
-	
-	public int[] getAsIntArray(String key) {
-		return parseIntArr(getAsString(key));
-	}
-	
-	public int[] getAsIntArray(String key, String defaultKey){
-		return parseIntArr(getAsString(key, defaultKey));
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (o == null || !(o instanceof Props))
-			return false;
-		final Props e = (Props) o;
-		return properties.equals(e.properties);
-	}
-
-	@Override
-	public int hashCode() {
-		return properties.hashCode();
+	public static class Builder {
+		private final ImmutableProps.Builder builder;
+		
+		private Builder() {
+			this.builder = ImmutableProps.builder();
+		}
+		
+		public <T> Builder put(Class<? extends Value<T>> key, T value) {
+			builder.put(key, value);
+			return this;
+		}
+		
+		public Builder put(String simpleName, String value) {
+			builder.put("systemmanager.Keys$" + CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, simpleName), value);
+			return this;
+		}
+		
+		public Builder putAll(Props other) {
+			builder.putAll(other.props);
+			return this;
+		}
+		
+		public Props build() {
+			return new Props(builder.build());
+		}
 	}
 
 	@Override
 	public String toString() {
-		return properties.toString();
+		return props.toString();
 	}
 
-	protected static boolean parseBoolean(String string) {
-		return string != null && trueStrings.contains(string.toLowerCase());
-	}
+	private static final long serialVersionUID = -7220533203495890410L;
 	
-	// TODO Make this apply to general arrays instead of just int
-	protected static int[] parseIntArr(String string) {
-		return Ints.toArray(Collections2.transform(arraySplitter.splitToList(string), Ints.stringConverter()));
-	}
 }

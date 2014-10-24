@@ -12,6 +12,15 @@ import logger.Log;
 import logger.Log.Level;
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.MarketType;
+import systemmanager.Keys.ArrivalRate;
+import systemmanager.Keys.FundamentalKappa;
+import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.FundamentalShockVar;
+import systemmanager.Keys.NbboLatency;
+import systemmanager.Keys.Num;
+import systemmanager.Keys.NumAgents;
+import systemmanager.Keys.NumMarkets;
+import systemmanager.Keys.SimLength;
 import systemmanager.SimulationSpec.PlayerSpec;
 import utils.Iterators2;
 
@@ -85,14 +94,14 @@ public class Simulation {
 		// FIXME Change to be static, so it's clear what needs to be initialized...
 		Props simProps = spec.getSimulationProps();
 		
-		this.simLength = simProps.getAsInt(Keys.SIMULATION_LENGTH);
+		this.simLength = simProps.get(SimLength.class);
 		this.finalTime = TimeStamp.of(simLength - 1); // because 0 is a valid timestamp
 		
 		this.fundamental = FundamentalValue.create(
 				this,
-				simProps.getAsDouble(Keys.FUNDAMENTAL_KAPPA),
-				simProps.getAsInt(Keys.FUNDAMENTAL_MEAN),
-				simProps.getAsDouble(Keys.FUNDAMENTAL_SHOCK_VAR),
+				simProps.get(FundamentalKappa.class),
+				simProps.get(FundamentalMean.class),
+				simProps.get(FundamentalShockVar.class),
 				new Random(rand.nextLong()));
 		
 		Builder<Agent> agentBuilder = ImmutableList.builder();
@@ -100,7 +109,7 @@ public class Simulation {
 		this.players = createPlayers(this, markets, agentBuilder, spec.getPlayerProps(), rand);
 		this.agents = createAgents(this, markets, agentBuilder, spec.getAgentProps(), rand);
 		
-		this.sip = SIP.create(this, TimeStamp.of(simProps.getAsInt(Keys.NBBO_LATENCY)), markets);
+		this.sip = SIP.create(this, simProps.get(NbboLatency.class), markets);
 		
 		for (final Agent agent : agents) {
 			scheduleActivityIn(agent.getArrivalTime(), new Activity() {
@@ -117,7 +126,7 @@ public class Simulation {
 		Builder<Market> markets = ImmutableList.builder();
 		for (Entry<MarketType, Props> e : marketProps.entries()) {
 			MarketFactory factory = MarketFactory.create(sim, new Random(rand.nextLong()));
-			for (int i = 0; i < e.getValue().getAsInt(Keys.NUM_MARKETS, Keys.NUM); i++)
+			for (int i = 0; i < e.getValue().get(NumMarkets.class, Num.class); i++)
 				markets.add(factory.createMarket(e.getKey(), e.getValue()));
 		}
 		return markets.build();
@@ -126,8 +135,8 @@ public class Simulation {
 	// Requires that any agents already created in the player stage
 	private static Collection<Agent> createAgents(Simulation sim, Collection<Market> markets, Builder<Agent> agents, Multimap<AgentType, Props> agentProps, Random rand) {
 		for (Entry<AgentType, Props> e : agentProps.entries()) {
-			int number = e.getValue().getAsInt(Keys.NUM_AGENTS, Keys.NUM);
-			double arrivalRate = e.getValue().getAsDouble(Keys.ARRIVAL_RATE);
+			int number = e.getValue().get(NumAgents.class, Num.class);
+			double arrivalRate = e.getValue().get(ArrivalRate.class);
 			AgentFactory factory = AgentFactory.create(sim, markets, arrivalRate, new Random(rand.nextLong()));
 			for (int i = 0; i < number; i++)
 				agents.add(factory.createAgent(e.getKey(), e.getValue()));
@@ -140,7 +149,7 @@ public class Simulation {
 
 		for (Multiset.Entry<PlayerSpec> e : playerConfig.entrySet()) {
 			Props agentProperties = e.getElement().agentProps;
-			AgentFactory factory = AgentFactory.create(sim, markets, agentProperties.getAsDouble(Keys.ARRIVAL_RATE), new Random(rand.nextLong()));
+			AgentFactory factory = AgentFactory.create(sim, markets, agentProperties.get(ArrivalRate.class), new Random(rand.nextLong()));
 			for (int i = 0; i < e.getCount(); i++) {
 				Agent agent = factory.createAgent(e.getElement().type, agentProperties);
 				agentBuilder.add(agent);

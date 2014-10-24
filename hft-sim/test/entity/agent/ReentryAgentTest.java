@@ -2,7 +2,6 @@ package entity.agent;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -13,8 +12,8 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.MockSim;
 
 import com.google.common.collect.Iterables;
@@ -33,10 +32,8 @@ public class ReentryAgentTest {
 	
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.create(getClass(),
-				Log.Level.NO_LOGGING, Keys.FUNDAMENTAL_MEAN,
-				100000, Keys.FUNDAMENTAL_SHOCK_VAR,
-				0, MarketType.CDA, j.join(Keys.NUM_MARKETS, 1));
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1,
+				Props.fromPairs(FundamentalMean.class, 100000, FundamentalShockVar.class, 0d));
 		market = Iterables.getOnlyElement(sim.getMarkets());
 	}
 	
@@ -78,8 +75,8 @@ public class ReentryAgentTest {
 		}
 	}
 	
-	private ReentryAgent reentryAgent(Iterator<TimeStamp> reentry, Object... properties) {
-		return new ReentryAgent(sim, TimeStamp.ZERO, market, rand, reentry, Props.fromPairs(properties)) {
+	private ReentryAgent reentryAgent(Iterator<TimeStamp> reentry) {
+		return new ReentryAgent(sim, TimeStamp.ZERO, market, rand, reentry, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 		};
 	}

@@ -18,8 +18,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.LaLatency;
 import systemmanager.MockSim;
 import data.Props;
 import entity.market.Market;
@@ -31,9 +30,6 @@ import fourheap.Order.OrderType;
 public class LAAgentTest {
 	
 	private static final Random rand = new Random();
-	private static final Props defaults = Props.fromPairs(
-			Keys.ALPHA, 0.001,
-			Keys.LA_LATENCY, -1);
 	
 	private MockSim sim;
 	private Collection<Market> markets;
@@ -42,8 +38,7 @@ public class LAAgentTest {
 
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING,
-				MarketType.CDA, Keys.NUM + "_" + 2);
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 2);
 		
 		markets = sim.getMarkets();
 		Iterator<Market> marketIter = markets.iterator();
@@ -63,6 +58,8 @@ public class LAAgentTest {
 	// FIXME Test that quote of a market accurately reflected when agent notified. Put tests in HFTAgentTest
 	
 	// FIXME Test that orderSubmitted happens at the correct time. E.g. before strategy Also in HFT Agent?
+	
+	// FIXME Assert that tied hfts act in random order
 		
 	/*
 	 * Bug in LA that occurred in very particular circumstances. Imagine market1
@@ -116,7 +113,7 @@ public class LAAgentTest {
 	 * This test verifies that an LA with latency doesn't submit new orders until it's sure it's old orders are reflected in its quote.
 	 */
 	public void laLatencyNoRepeatOrdersTest() {
-		LAAgent la = laAgent(Keys.LA_LATENCY, 10);
+		LAAgent la = laAgent(Props.fromPairs(LaLatency.class, TimeStamp.of(10)));
 		
 		submitOrder(one, BUY, Price.of(5));
 		submitOrder(two, SELL, Price.of(1));
@@ -146,7 +143,7 @@ public class LAAgentTest {
 	
 	@Test
 	public void severalArbitragesNoRepeatOrders() {
-		LAAgent la = laAgent(Keys.LA_LATENCY, 10);
+		LAAgent la = laAgent(Props.fromPairs(LaLatency.class, TimeStamp.of(10)));
 		
 		submitOrder(one, BUY, Price.of(5));
 		submitOrder(two, SELL, Price.of(1));
@@ -170,7 +167,7 @@ public class LAAgentTest {
 	
 	@Test
 	public void severalArbitragesNoRepeatOrdersDifferentOrder() {
-		LAAgent la = laAgent(Keys.LA_LATENCY, 10);
+		LAAgent la = laAgent(Props.fromPairs(LaLatency.class, TimeStamp.of(10)));
 		
 		// Different Order
 		submitOrder(one, BUY, Price.of(3));
@@ -241,8 +238,12 @@ public class LAAgentTest {
 		return order;
 	}
 	
-	private LAAgent laAgent(Object... parameters) {
-		return LAAgent.create(sim, markets, rand, Props.withDefaults(defaults, parameters));
+	private LAAgent laAgent(Props parameters) {
+		return LAAgent.create(sim, markets, rand, parameters);
+	}
+	
+	private LAAgent laAgent() {
+		return laAgent(Props.fromPairs());
 	}
 	
 	private Agent mockAgent() {

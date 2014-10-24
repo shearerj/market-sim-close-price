@@ -4,7 +4,6 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -15,12 +14,10 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.NbboLatency;
 import systemmanager.MockSim;
 
 import com.google.common.base.Optional;
-import com.google.common.collect.ObjectArrays;
 
 import data.Props;
 import entity.agent.Agent;
@@ -47,13 +44,11 @@ public class SIPTest {
 	
 	@Before
 	public void defaultSetup() throws IOException {
-		setup();
+		setup(Props.fromPairs());
 	}
 	
-	public void setup(Object... parameters) throws IOException {
-		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING, ObjectArrays.concat(new Object[] {
-				MarketType.CDA, j.join(Keys.NUM, 2)
-		}, parameters, Object.class));
+	public void setup(Props parameters) throws IOException {
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 2, parameters);
 
 		Iterator<Market> markets = sim.getMarkets().iterator();
 		market1 = markets.next();
@@ -194,7 +189,7 @@ public class SIPTest {
 	@Test
 	public void basicDelay() throws IOException {
 		// Check that process quote activity scheduled correctly
-		setup(Keys.NBBO_LATENCY, 50);
+		setup(Props.fromPairs(NbboLatency.class, TimeStamp.of(50)));
 		setQuote(market1, Price.of(80), Price.of(100));
 		
 		// Verify correct process quote activity added to execute at time 50
@@ -216,7 +211,7 @@ public class SIPTest {
 	@Test
 	public void basicZeroDelay() throws IOException {
 		// SIP with zero not immediate latency
-		setup(Keys.NBBO_LATENCY, 0);
+		setup(Props.fromPairs(NbboLatency.class, TimeStamp.ZERO));
 		// Check that process quote activity scheduled correctly
 		setQuote(market1, Price.of(80), Price.of(100));
 		
@@ -241,7 +236,7 @@ public class SIPTest {
 	
 	@Test
 	public void eventManagerLatencyTest() throws IOException {
-		setup(Keys.NBBO_LATENCY, 50);
+		setup(Props.fromPairs(NbboLatency.class, TimeStamp.of(50)));
 		setQuote(market1, Price.of(80), Price.of(100));
 		setQuote(market2, Price.of(75), 1, Price.of(95), 2);
 		

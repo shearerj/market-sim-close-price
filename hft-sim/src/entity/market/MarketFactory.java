@@ -3,9 +3,10 @@ package entity.market;
 import java.util.Random;
 
 import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.ClearFrequency;
 import systemmanager.Simulation;
 import data.Props;
+import event.TimeStamp;
 
 public class MarketFactory {
 	
@@ -26,10 +27,10 @@ public class MarketFactory {
 		case CDA:
 			return CDAMarket.create(sim, new Random(rand.nextLong()), props);
 		case CALL:
-			if (props.getAsInt(Keys.CLEAR_FREQ) <= 0)
-				return CDAMarket.create(sim, new Random(rand.nextLong()), props);
-			else
+			if (props.get(ClearFrequency.class).after(TimeStamp.ZERO))
 				return CallMarket.create(sim, new Random(rand.nextLong()), props);
+			else
+				return CDAMarket.create(sim, new Random(rand.nextLong()), props);
 		default:
 			throw new IllegalArgumentException("Can't create MarketType: " + type);
 		}

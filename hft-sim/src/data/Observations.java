@@ -61,6 +61,11 @@ import entity.agent.BackgroundAgent;
  */
 public class Observations {
 	
+	public static final String // Observation Keys
+	PV_BUY1 = 					"pv_buy1",
+	PV_SELL1 = 					"pv_sell1",
+	PV_POSITION1_MAX_ABS =		"pv_position_max_abs1";
+	
 	// FIXME Change how multimap is output with a type converter
 	// FIXME Change how summstats is output with a type converter. Allow different kinds (e.g. variance...)
 	protected final Multimap<String, PlayerObservation> players;

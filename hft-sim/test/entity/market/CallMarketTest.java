@@ -15,7 +15,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.ClearFrequency;
+import systemmanager.Keys.PricingPolicy;
 import systemmanager.MockSim;
 
 import com.google.common.collect.Iterables;
@@ -42,10 +43,8 @@ public class CallMarketTest {
 	
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.create(getClass(),
-				Log.Level.NO_LOGGING, MarketType.CALL,
-				Keys.NUM_MARKETS + '_' + 1, Keys.CLEAR_FREQ,
-				100, Keys.PRICING_POLICY, 1);
+		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING, MarketType.CALL, 1,
+				Props.fromPairs(ClearFrequency.class, TimeStamp.of(100), PricingPolicy.class, 1d));
 		market = Iterables.getOnlyElement(sim.getMarkets());
 		info = market.getPrimaryView();
 		sim.executeImmediate(); // First clear

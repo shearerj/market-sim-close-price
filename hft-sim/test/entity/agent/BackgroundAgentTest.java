@@ -9,7 +9,6 @@ import static org.junit.Assert.assertTrue;
 import static utils.Tests.checkSingleOrder;
 import static utils.Tests.checkSingleOrderRange;
 import static utils.Tests.checkSingleTransaction;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,15 +20,23 @@ import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Consts;
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.AcceptableProfitFrac;
+import systemmanager.Keys.BackgroundReentryRate;
+import systemmanager.Keys.BidRangeMax;
+import systemmanager.Keys.BidRangeMin;
+import systemmanager.Keys.FundamentalKappa;
+import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.FundamentalShockVar;
+import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.PrivateValueVar;
+import systemmanager.Keys.SimLength;
+import systemmanager.Keys.WithdrawOrders;
 import systemmanager.MockSim;
 import utils.Rands;
 import utils.SummStats;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.ObjectArrays;
 
 import data.FundamentalValue.FundamentalValueView;
 import data.Props;
@@ -49,22 +56,28 @@ public class BackgroundAgentTest {
 	private static final double kappa = 0.2;
 	private static final int meanValue = 100000;
 	private static final int simulationLength = 60000;
+	private static final Props defaultSim = Props.fromPairs(
+			FundamentalKappa.class, kappa,
+			FundamentalMean.class, meanValue,
+			FundamentalShockVar.class, 10000d,
+			SimLength.class, simulationLength);
 	private static final Props defaults = Props.fromPairs(
-			Keys.PRIVATE_VALUE_VAR, 1e8,
-			Keys.BID_RANGE_MIN, 0,
-			Keys.BID_RANGE_MAX, 1000);
-	private static Object[] zirpProps = new Object[] {
-		Keys.REENTRY_RATE, 0,
-		Keys.MAX_QUANTITY, 2,
-		Keys.PRIVATE_VALUE_VAR, 100,
-		Keys.BID_RANGE_MIN, 10000,
-		Keys.BID_RANGE_MAX, 10000,
-		Keys.SIMULATION_LENGTH, simulationLength,
-		Keys.FUNDAMENTAL_KAPPA, kappa,
-		Keys.FUNDAMENTAL_MEAN, meanValue,
-		Keys.FUNDAMENTAL_SHOCK_VAR, 0,
-		Keys.WITHDRAW_ORDERS, true,
-		Keys.ACCEPTABLE_PROFIT_FRACTION, 0.75};
+			PrivateValueVar.class, 1e8,
+			BidRangeMin.class, 0,
+			BidRangeMax.class, 1000);
+	private static Props zirpProps = Props.builder()
+			.put(BackgroundReentryRate.class, 0d)
+			.put(MaxQty.class, 2)
+			.put(PrivateValueVar.class, 100d)
+			.put(BidRangeMin.class, 10000)
+			.put(BidRangeMax.class, 10000)
+			.put(SimLength.class, simulationLength)
+			.put(FundamentalKappa.class, kappa)
+			.put(FundamentalMean.class, meanValue)
+			.put(FundamentalShockVar.class, 0d)
+			.put(WithdrawOrders.class, true)
+			.put(AcceptableProfitFrac.class, 0.75)
+			.build();
 
 	private MockSim sim;
 	private FundamentalValueView fundamental;
@@ -74,16 +87,11 @@ public class BackgroundAgentTest {
 
 	@Before
 	public void defaultSetup() throws IOException {
-		setup(
-				Keys.FUNDAMENTAL_KAPPA, kappa,
-				Keys.FUNDAMENTAL_MEAN, meanValue,
-				Keys.FUNDAMENTAL_SHOCK_VAR, 10000,
-				Keys.SIMULATION_LENGTH, simulationLength);
+		setup(Props.fromPairs());
 	}
 	
-	public void setup(Object... params) throws IOException {
-		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING, ObjectArrays.concat(ObjectArrays.concat(params,
-				MarketType.CDA), j.join(Keys.NUM_MARKETS, 1)));
+	public void setup(Props params) throws IOException {
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1, Props.merge(defaultSim, params));
 		market = Iterables.getOnlyElement(sim.getMarkets());
 		view = market.getPrimaryView();
 		fundamental = sim.getFundamentalView(TimeStamp.IMMEDIATE);
@@ -212,10 +220,10 @@ public class BackgroundAgentTest {
 			builder.add(Price.of(Rands.nextGaussian(rand, 0, 1000000)));
 		List<Price> pv = builder.build();
 		
-		BackgroundAgent agent = backgroundAgentwithPrivateValue(pv,
-				Keys.BID_RANGE_MIN, 0,
-				Keys.BID_RANGE_MAX, 1000,
-				Keys.MAX_QUANTITY, 5);
+		BackgroundAgent agent = backgroundAgentwithPrivateValue(pv, Props.fromPairs(
+				BidRangeMin.class, 0,
+				BidRangeMax.class, 1000,
+				MaxQty.class, 5));
 
 		// Get valuation for various positionBalances
 		int pv0 = pv.get(0).intValue();
@@ -247,7 +255,7 @@ public class BackgroundAgentTest {
 	/** Verify that orders are correctly withdrawn at each re-entry */
 	@Test
 	public void withdrawTest() {
-		BackgroundAgent agent = backgroundAgent(Keys.WITHDRAW_ORDERS, true);
+		BackgroundAgent agent = backgroundAgent(Props.fromPairs(WithdrawOrders.class, true));
 
 		// execute strategy once; then before reenter, change the position balance
 		// that way, when execute strategy again, it won't submit new orders
@@ -262,11 +270,11 @@ public class BackgroundAgentTest {
 	// TODO Test is implementation dependent and should be changed
 	@Test
 	public void processTransaction() {
-		BackgroundAgent agent = backgroundAgent(
-				Keys.BID_RANGE_MIN, 0,
-				Keys.BID_RANGE_MAX, 1000,
-				Keys.MAX_QUANTITY, 5,
-				Keys.PRIVATE_VALUE_VAR, 1000000);
+		BackgroundAgent agent = backgroundAgent(Props.fromPairs(
+				BidRangeMin.class, 0,
+				BidRangeMax.class, 1000,
+				MaxQty.class, 5,
+				PrivateValueVar.class, 1000000d));
 		Agent mockAgent = backgroundAgent();
 
 		assertEquals(0, agent.positionBalance);
@@ -296,11 +304,11 @@ public class BackgroundAgentTest {
 
 	@Test
 	public void processTransactionMultiQuantity() {
-		BackgroundAgent agent = backgroundAgent(
-				Keys.BID_RANGE_MIN, 0,
-				Keys.BID_RANGE_MAX, 1000,
-				Keys.MAX_QUANTITY, 5,
-				Keys.PRIVATE_VALUE_VAR, 1000000);
+		BackgroundAgent agent = backgroundAgent(Props.fromPairs(
+				BidRangeMin.class, 0,
+				BidRangeMax.class, 1000,
+				MaxQty.class, 5,
+				PrivateValueVar.class, 1000000d));
 		Agent mockAgent = backgroundAgent();
 
 		assertEquals(0, agent.positionBalance);
@@ -330,10 +338,10 @@ public class BackgroundAgentTest {
 			builder.add(Price.of(Rands.nextGaussian(rand, 0, 1000000)));
 		List<Price> pv = builder.build();
 		
-		BackgroundAgent agent = backgroundAgentwithPrivateValue(pv,
-				Keys.BID_RANGE_MIN, 0,
-				Keys.BID_RANGE_MAX, 1000,
-				Keys.MAX_QUANTITY, 5);
+		BackgroundAgent agent = backgroundAgentwithPrivateValue(pv, Props.fromPairs(
+				BidRangeMin.class, 0,
+				BidRangeMax.class, 1000,
+				MaxQty.class, 5));
 		Agent mockAgent = backgroundAgent();
 
 		// Get valuation for various positionBalances
@@ -423,10 +431,10 @@ public class BackgroundAgentTest {
 		int min_shade = rand.nextInt(5000); 		//[$0.00, $5.00];
 		int max_shade = 5000 + rand.nextInt(5000);	//[$5.00, $10.00];
 
-		BackgroundAgent agent = backgroundAgent(
-				Keys.BID_RANGE_MIN, min_shade,
-				Keys.BID_RANGE_MAX, max_shade,
-				Keys.PRIVATE_VALUE_VAR, 1e8);
+		BackgroundAgent agent = backgroundAgent(Props.fromPairs(
+				BidRangeMin.class, min_shade,
+				BidRangeMax.class, max_shade,
+				PrivateValueVar.class, 1e8));
 
 		sim.log(DEBUG, "Agent bid range min: %d, maximum: %d", min_shade, max_shade);
 
@@ -449,10 +457,10 @@ public class BackgroundAgentTest {
 		int min_shade = rand.nextInt(5000); 		//[$0.00, $5.00];
 		int max_shade = 5000 + rand.nextInt(5000);	//[$5.00, $10.00];
 
-		BackgroundAgent agent = backgroundAgent(
-				Keys.BID_RANGE_MIN, min_shade,
-				Keys.BID_RANGE_MAX, max_shade,
-				Keys.PRIVATE_VALUE_VAR, 1e8);
+		BackgroundAgent agent = backgroundAgent(Props.fromPairs(
+				BidRangeMin.class, min_shade,
+				BidRangeMax.class, max_shade,
+				PrivateValueVar.class, 1e8));
 
 		sim.log(DEBUG, "Agent bid range min: %d, maximum: %d", min_shade, max_shade);
 
@@ -498,11 +506,7 @@ public class BackgroundAgentTest {
 	
 	@Test
 	public void ziPrivateValueBuyTest() throws IOException {
-		setup(
-				Keys.FUNDAMENTAL_KAPPA, kappa,
-				Keys.FUNDAMENTAL_MEAN, meanValue,
-				Keys.FUNDAMENTAL_SHOCK_VAR, 0,
-				Keys.SIMULATION_LENGTH, simulationLength);
+		setup(Props.fromPairs(FundamentalShockVar.class, 0d));
 		
 		sim.log(DEBUG, "Testing ZI 100 DummyPrivateValue arguments are correct");
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(
@@ -516,11 +520,7 @@ public class BackgroundAgentTest {
 	
 	@Test
 	public void ziPrivateValueSellTest() throws IOException {
-		setup(
-				Keys.FUNDAMENTAL_KAPPA, kappa,
-				Keys.FUNDAMENTAL_MEAN, meanValue,
-				Keys.FUNDAMENTAL_SHOCK_VAR, 0,
-				Keys.SIMULATION_LENGTH, simulationLength);
+		setup(Props.fromPairs(FundamentalShockVar.class, 0d));
 		
 		sim.log(DEBUG, "Testing ZI 100 DummyPrivateValue arguments are correct");
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(
@@ -582,14 +582,9 @@ public class BackgroundAgentTest {
 
 	@Test
 	public void testPayoff() throws IOException {
-		setup(
-				Keys.FUNDAMENTAL_KAPPA, kappa,
-				Keys.FUNDAMENTAL_MEAN, meanValue,
-				Keys.FUNDAMENTAL_SHOCK_VAR, 0,
-				Keys.SIMULATION_LENGTH, simulationLength);
+		setup(Props.fromPairs(FundamentalShockVar.class, 0d));
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(ImmutableList.of(Price.of(1000), Price.of(-2000)),
-				Keys.BID_RANGE_MIN, 0,
-				Keys.BID_RANGE_MAX, 1000);
+				Props.fromPairs(BidRangeMin.class, 0, BidRangeMax.class, 1000));
 		Agent mockAgent = mockAgent();
 		
 		submitOrder(mockAgent, BUY, Price.of(51000), 1);
@@ -621,15 +616,10 @@ public class BackgroundAgentTest {
 	@Test
 	public void testLiquidation() throws IOException {
 		// Verify that post-liquidation, payoff includes liquidation
-		setup(
-				Keys.FUNDAMENTAL_KAPPA, kappa,
-				Keys.FUNDAMENTAL_MEAN, meanValue,
-				Keys.FUNDAMENTAL_SHOCK_VAR, 0,
-				Keys.SIMULATION_LENGTH, simulationLength);
+		setup(Props.fromPairs(FundamentalShockVar.class, 0d));
 		
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(ImmutableList.of(Price.of(1000), Price.of(-1000)),
-				Keys.BID_RANGE_MIN, 0,
-				Keys.BID_RANGE_MAX, 1000);
+				Props.fromPairs(BidRangeMin.class, 0, BidRangeMax.class, 1000));
 		Agent mockAgent = backgroundAgent();
 		
 		submitOrder(mockAgent, BUY, Price.of(51000), 1);
@@ -649,15 +639,10 @@ public class BackgroundAgentTest {
 	@Test
 	public void testMovingFundamentalLiquidation() throws IOException {
 		// Verify that post-liquidation, payoff includes liquidation
-		setup(
-				Keys.FUNDAMENTAL_KAPPA, kappa,
-				Keys.FUNDAMENTAL_MEAN, meanValue,
-				Keys.FUNDAMENTAL_SHOCK_VAR, 10000000,
-				Keys.SIMULATION_LENGTH, simulationLength);
+		setup(Props.fromPairs(FundamentalShockVar.class, 10000000d));
 
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(ImmutableList.of(Price.of(1000), Price.of(-1000)),
-				Keys.BID_RANGE_MIN, 0,
-				Keys.BID_RANGE_MAX, 1000);
+				Props.fromPairs(BidRangeMin.class, 0, BidRangeMax.class, 1000));
 		Agent mockAgent = mockAgent();
 		
 		submitOrder(mockAgent, BUY, Price.of(51000), 1);
@@ -778,7 +763,7 @@ public class BackgroundAgentTest {
 	/** Test that returns empty if exceed max position */
 	@Test
 	public void testZIRPStrat() {
-		BackgroundAgent zirp = backgroundAgent(Keys.MAX_QUANTITY, 2);
+		BackgroundAgent zirp = backgroundAgent(Props.fromPairs(MaxQty.class, 2));
 
 		zirp.executeZIRPStrategy(BUY, 5);
 		assertTrue(zirp.activeOrders.isEmpty());
@@ -883,20 +868,28 @@ public class BackgroundAgentTest {
 		return order;
 	}
 
-	private BackgroundAgent backgroundAgentwithPrivateValue(List<Price> privateValue, Object... pairs) {
+	private BackgroundAgent backgroundAgentwithPrivateValue(List<Price> privateValue, Props props) {
 		return new BackgroundAgent(sim, TimeStamp.ZERO, market,
 				new ListPrivateValue(privateValue) { private static final long serialVersionUID = 1L; },
-				rand, Props.withDefaults(defaults, pairs)) {
+				rand, Props.merge(defaults, props)) {
 			private static final long serialVersionUID = 1L;
 			@Override public String toString() { return "TestAgent " + id; }
 		};
 	}
+	
+	private BackgroundAgent backgroundAgentwithPrivateValue(List<Price> privateValue) {
+		return backgroundAgentwithPrivateValue(privateValue, Props.fromPairs());
+	}
 
-	private BackgroundAgent backgroundAgent(Object... pairs) {
-		return new BackgroundAgent(sim, TimeStamp.ZERO, market, rand, Props.withDefaults(defaults, pairs)) {
+	private BackgroundAgent backgroundAgent(Props props) {
+		return new BackgroundAgent(sim, TimeStamp.ZERO, market, rand, Props.merge(defaults, props)) {
 			private static final long serialVersionUID = 1L;
 			@Override public String toString() { return "TestAgent " + id; }
 		};
+	}
+	
+	private BackgroundAgent backgroundAgent() {
+		return backgroundAgent(Props.fromPairs());
 	}
 	
 	private Agent mockAgent() {

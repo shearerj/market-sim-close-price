@@ -1,23 +1,26 @@
 package systemmanager;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 
 import logger.Log;
 import logger.Log.Level;
+import systemmanager.Consts.MarketType;
+import systemmanager.Keys.NumMarkets;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 
 import data.FundamentalValue;
+import data.Props;
 import data.Stats;
-
 import entity.market.Market;
 import event.TimeStamp;
 
@@ -41,38 +44,49 @@ public class MockSim extends Simulation {
 		testLogDir.mkdirs();
 	}
 	
-	protected MockSim(Writer writer, Log.Level logLevel, JsonObject spec) {
+	private MockSim(Writer writer, Log.Level logLevel, JsonObject spec) {
 		super(SimulationSpec.fromJson(spec), rand, writer, logLevel);
 	}
 	
-	protected static MockSim create(Writer writer, Log.Level logLevel, Object... globalProps) {
-		checkArgument(globalProps.length %2 == 0, "Must pass an even number of pairs");
+	private static MockSim create(Writer writer, Log.Level logLevel, Props globalProps, Map<MarketType,Props> marketProps) {
 		JsonObject root = new JsonObject();
-		JsonObject config = new JsonObject();
-		for (int i = 0; i < globalProps.length; i += 2)
-			config.addProperty(globalProps[i].toString(), globalProps[i+1].toString());
-		root.add(Keys.CONFIG, config);
+		JsonObject config = SimulationSpec.propsToJson(globalProps);
+		for (Entry<MarketType, Props> e : marketProps.entrySet())
+			config.addProperty(e.getKey().toString(), SimulationSpec.propsToConfig(e.getValue()));
+		root.add(SimulationSpec.CONFIG, config);
 		return new MockSim(writer, logLevel, root);
 	}
 	
-	public static MockSim createWithErrLogging(Log.Level logLevel, Object... globalProps) {
-		return MockSim.create(new PrintWriter(System.err), logLevel, globalProps);
+	public static MockSim createWithErrLogging(Log.Level logLevel, Props globalProps, Map<MarketType,Props> marketProps) {
+		return MockSim.create(new PrintWriter(System.err), logLevel, globalProps, marketProps);
 	}
 	
-	public static MockSim createWithNoLogging(Object... globalProps) {
-		return MockSim.create(new Writer() {
-			@Override public void write(char[] cbuf, int off, int len) throws IOException { }
-			@Override public void flush() throws IOException { }
-			@Override public void close() throws IOException { }
-		}, Log.Level.NO_LOGGING, globalProps);
+	private static MockSim create(String name, Level logLevel, Props globalProps, Map<MarketType,Props> marketProps) throws IOException {
+		return MockSim.create(new FileWriter(new File(testLogDir, name + ".log"), true), logLevel, globalProps, marketProps);
 	}
 	
-	public static MockSim create(String name, Level logLevel, Object... globalProps) throws IOException {
-		return MockSim.create(new FileWriter(new File(testLogDir, name + ".log"), true), logLevel, globalProps);
+	private static MockSim create(Class<?> testClass, Level logLevel, Props globalProps, Map<MarketType,Props> marketProps) throws IOException {
+		return MockSim.create(testClass.getSimpleName(), logLevel, globalProps, marketProps);
 	}
 	
-	public static MockSim create(Class<?> testClass, Level logLevel, Object... globalProps) throws IOException {
-		return MockSim.create(testClass.getSimpleName(), logLevel, globalProps);
+	public static MockSim create(Class<?> testClass, Level logLevel, MarketType type, int numMarkets, Props globalProps) throws IOException {
+		return MockSim.create(testClass, logLevel, globalProps, ImmutableMap.of(type, Props.fromPairs(NumMarkets.class, numMarkets)));
+	}
+	
+	public static MockSim createCDA(Class<?> testClass, Level logLevel, int numMarkets, Props globalProps) throws IOException {
+		return MockSim.create(testClass, logLevel, MarketType.CDA, numMarkets, globalProps);
+	}
+	
+	public static MockSim createCDA(Class<?> testClass, Level logLevel, int numMarkets) throws IOException {
+		return MockSim.createCDA(testClass, logLevel, numMarkets, Props.fromPairs());
+	}
+	
+	public static MockSim create(Class<?> testClass, Level logLevel, Props globalProps) throws IOException {
+		return MockSim.createCDA(testClass, logLevel, 0, globalProps);
+	}
+	
+	public static MockSim create(Class<?> testClass, Level logLevel) throws IOException {
+		return MockSim.create(testClass, logLevel, Props.fromPairs());
 	}
 
 	public Collection<Market> getMarkets() {
@@ -87,7 +101,6 @@ public class MockSim extends Simulation {
 		return fundamental;
 	}
 	
-	// Sets currentTime to time
 	public void executeUntil(TimeStamp time) {
 		eventQueue.executeUntil(time);
 	}

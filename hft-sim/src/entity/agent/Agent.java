@@ -8,7 +8,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Random;
 
-import systemmanager.Keys;
+import systemmanager.Keys.AgentTickSize;
+import systemmanager.Keys.FundamentalLatency;
+import systemmanager.Keys.TickSize;
 import systemmanager.Simulation;
 
 import com.google.common.base.CaseFormat;
@@ -57,8 +59,8 @@ public abstract class Agent extends Entity {
 	protected Agent(Simulation sim, TimeStamp arrivalTime, Random rand, Props props) {
 		super(sim.nextAgentId(), sim);
 		this.arrivalTime = checkNotNull(arrivalTime);
-		this.fundamental = sim.getFundamentalView(TimeStamp.of(props.getAsLong(Keys.FUNDAMENTAL_LATENCY)));
-		this.tickSize = props.getAsInt(Keys.AGENT_TICK_SIZE, Keys.TICK_SIZE);
+		this.fundamental = sim.getFundamentalView(props.get(FundamentalLatency.class));
+		this.tickSize = props.get(AgentTickSize.class, TickSize.class);
 		this.rand = rand;
 
 		this.activeOrders = Sets.newHashSet();

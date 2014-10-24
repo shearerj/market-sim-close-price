@@ -7,7 +7,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.checkOrderLadder;
 import static utils.Tests.checkRandomOrderLadder;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -18,8 +17,17 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.FundamentalShockVar;
+import systemmanager.Keys.InitLadderMean;
+import systemmanager.Keys.InitLadderRange;
+import systemmanager.Keys.NumRungs;
+import systemmanager.Keys.ReentryRate;
+import systemmanager.Keys.RungSize;
+import systemmanager.Keys.TickImprovement;
+import systemmanager.Keys.TickOutside;
+import systemmanager.Keys.TickSize;
+import systemmanager.Keys.TruncateLadder;
 import systemmanager.MockSim;
 
 import com.google.common.base.Optional;
@@ -38,10 +46,10 @@ public class MarketMakerTest {
 	private static final double eps = 1e-6;
 	private static final Random rand = new Random();
 	private static final Props defaults = Props.fromPairs(
-			Keys.NUM_RUNGS, 2,
-			Keys.RUNG_SIZE, 5,
-			Keys.TRUNCATE_LADDER, false,
-			Keys.REENTRY_RATE, 0);
+			NumRungs.class, 2,
+			RungSize.class, 5,
+			TruncateLadder.class, false,
+			ReentryRate.class, 0d);
 	
 	private MockSim sim;
 	private Market actualMarket;
@@ -50,10 +58,8 @@ public class MarketMakerTest {
 
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.create(getClass(),
-				Log.Level.NO_LOGGING, Keys.FUNDAMENTAL_MEAN,
-				100000, Keys.FUNDAMENTAL_SHOCK_VAR,
-				0, MarketType.CDA, j.join(Keys.NUM_MARKETS, 2));
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1,
+				Props.fromPairs(FundamentalMean.class, 100000, FundamentalShockVar.class, 0d));
 		
 		Iterator<Market> markets = sim.getMarkets().iterator();
 		actualMarket = markets.next();
@@ -76,16 +82,16 @@ public class MarketMakerTest {
 	/** If either ladder bid or ask is null, it needs to return */
 	@Test
 	public void createOrderLadderNullTest() {
-		MarketMaker mm = marketMaker(
-				Keys.INITIAL_LADDER_MEAN, 0,
-				Keys.INITIAL_LADDER_RANGE, 0);
+		MarketMaker mm = marketMaker(Props.fromPairs(
+				InitLadderMean.class, 0,
+				InitLadderRange.class, 0));
 		mm.createOrderLadder(Optional.<Price> absent(), Optional.of(Price.of(50)));
 		assertTrue(mm.activeOrders.isEmpty());
 	}
 
 	@Test
 	public void submitOrderLadderTest() {
-		MarketMaker mm = marketMaker(Keys.NUM_RUNGS, 3);
+		MarketMaker mm = marketMaker(Props.fromPairs(NumRungs.class, 3));
 
 		mm.submitOrderLadder(Price.of(30), Price.of(40), Price.of(50), Price.of(60));
 		checkOrderLadder(mm.activeOrders,
@@ -106,9 +112,9 @@ public class MarketMakerTest {
 
 	@Test
 	public void tickImprovement() {
-		MarketMaker mm = marketMaker(
-				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_OUTSIDE, true);
+		MarketMaker mm = marketMaker(Props.fromPairs(
+				TickImprovement.class, true,
+				TickOutside.class, true));
 		assertEquals(5, mm.stepSize);
 
 		setQuote(market, Price.of(40), Price.of(50));
@@ -121,10 +127,10 @@ public class MarketMakerTest {
 
 	@Test
 	public void truncateLadderTickImprovement() throws IOException {
-		MarketMaker mm = marketMaker(
-				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_OUTSIDE, true);
+		MarketMaker mm = marketMaker(Props.fromPairs(
+				TruncateLadder.class, true,
+				TickImprovement.class, true,
+				TickOutside.class, true));
 
 		// Updating NBBO quote (place orders and advance time)
 		setQuote(other, Price.of(30), Price.of(38));
@@ -139,9 +145,9 @@ public class MarketMakerTest {
 	
 	@Test
 	public void tickOutside() {
-		MarketMaker mm = marketMaker(
-				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_OUTSIDE, false);
+		MarketMaker mm = marketMaker(Props.fromPairs(
+				TickImprovement.class, true,
+				TickOutside.class, false));
 
 		setQuote(market, Price.of(40), Price.of(50));
 		
@@ -153,10 +159,10 @@ public class MarketMakerTest {
 	
 	@Test
 	public void truncateLadderTickImprovementOutside() throws IOException {
-		MarketMaker mm = marketMaker(
-				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_OUTSIDE, false);
+		MarketMaker mm = marketMaker(Props.fromPairs(
+				TruncateLadder.class, true,
+				TickImprovement.class, true,
+				TickOutside.class, false));
 		
 		setQuote(other, Price.of(30), Price.of(38)); // Set NBBO
 		setQuote(market, Price.of(40), Price.of(50));
@@ -169,10 +175,10 @@ public class MarketMakerTest {
 	
 	@Test
 	public void truncateBidTest() {
-		MarketMaker marketmaker = marketMaker(
-				Keys.NUM_RUNGS, 3,
-				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_IMPROVEMENT, false);
+		MarketMaker marketmaker = marketMaker(Props.fromPairs(
+				NumRungs.class, 3,
+				TruncateLadder.class, true,
+				TickImprovement.class, false));
 
 		setQuote(other, Price.of(90), Price.of(100));
 		setQuote(market, Price.of(102), Price.of(105));
@@ -185,10 +191,10 @@ public class MarketMakerTest {
 
 	@Test
 	public void truncateAskTest() {
-		MarketMaker marketmaker = marketMaker(
-				Keys.NUM_RUNGS, 3,
-				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_IMPROVEMENT, false);
+		MarketMaker marketmaker = marketMaker(Props.fromPairs(
+				NumRungs.class, 3,
+				TruncateLadder.class, true,
+				TickImprovement.class, false));
 		
 		setQuote(other, Price.of(90), Price.of(100));
 		setQuote(market, Price.of(70), Price.of(89));
@@ -202,10 +208,10 @@ public class MarketMakerTest {
 	/** Verify quantization happening */
 	@Test
 	public void tickSizeTest() {
-		MarketMaker marketmaker = marketMaker(
-				Keys.NUM_RUNGS, 3,
-				Keys.RUNG_SIZE, 12,
-				Keys.TICK_SIZE, 5);
+		MarketMaker marketmaker = marketMaker(Props.fromPairs(
+				NumRungs.class, 3,
+				RungSize.class, 12,
+				TickSize.class, 5));
 	
 		marketmaker.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
 		checkOrderLadder(marketmaker.activeOrders,
@@ -216,12 +222,12 @@ public class MarketMakerTest {
 	/** Creating ladder without bid/ask quote */
 	@Test
 	public void initRandLadder() {
-		MarketMaker mm = marketMaker(
-				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_OUTSIDE, false,
-				Keys.INITIAL_LADDER_MEAN, 100,
-				Keys.INITIAL_LADDER_RANGE, 10);
+		MarketMaker mm = marketMaker(Props.fromPairs(
+				TruncateLadder.class, true,
+				TickImprovement.class, true,
+				TickOutside.class, false,
+				InitLadderMean.class, 100,
+				InitLadderRange.class, 10));
 		
 		Quote quote = market.getQuote();
 		mm.createOrderLadder(quote.getBidPrice(), quote.getAskPrice());
@@ -231,12 +237,12 @@ public class MarketMakerTest {
 	/** One side of ladder is undefined */
 	@Test
 	public void oneSidedLadderBuy() {
-		MarketMaker mm = marketMaker(
-				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_OUTSIDE, false,
-				Keys.INITIAL_LADDER_MEAN, 100,
-				Keys.INITIAL_LADDER_RANGE, 10);
+		MarketMaker mm = marketMaker(Props.fromPairs(
+				TruncateLadder.class, true,
+				TickImprovement.class, true,
+				TickOutside.class, false,
+				InitLadderMean.class, 100,
+				InitLadderRange.class, 10));
 		
 		submitOrder(market, mockAgent, BUY, Price.of(40));
 		
@@ -248,12 +254,12 @@ public class MarketMakerTest {
 	/** One side of ladder is undefined */
 	@Test
 	public void oneSidedLadderSell() {
-		MarketMaker mm = marketMaker(
-				Keys.TRUNCATE_LADDER, true,
-				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_OUTSIDE, false,
-				Keys.INITIAL_LADDER_MEAN, 100,
-				Keys.INITIAL_LADDER_RANGE, 10);
+		MarketMaker mm = marketMaker(Props.fromPairs(
+				TruncateLadder.class, true,
+				TickImprovement.class, true,
+				TickOutside.class, false,
+				InitLadderMean.class, 100,
+				InitLadderRange.class, 10));
 		
 		submitOrder(market, mockAgent, SELL, Price.of(50));
 		
@@ -317,11 +323,15 @@ public class MarketMakerTest {
 		return order;
 	}
 	
-	private MarketMaker marketMaker(Object... parameters) {
-		return new MarketMaker(sim, actualMarket, rand, Props.withDefaults(defaults, parameters)) {
+	private MarketMaker marketMaker(Props parameters) {
+		return new MarketMaker(sim, actualMarket, rand, Props.merge(defaults, parameters)) {
 			private static final long serialVersionUID = 1L;
 			@Override public String toString() { return "TestMM " + id; }
 		};
+	}
+	
+	private MarketMaker marketMaker() {
+		return marketMaker(Props.fromPairs());
 	}
 	
 	private Agent mockAgent() {

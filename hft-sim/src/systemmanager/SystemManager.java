@@ -16,6 +16,8 @@ import java.util.Properties;
 import java.util.Random;
 
 import logger.Log;
+import systemmanager.Keys.NumSims;
+import systemmanager.Keys.RandomSeed;
 import systemmanager.SimulationSpec.SimSpecDeserializer;
 
 import com.google.common.base.Objects;
@@ -111,8 +113,8 @@ public abstract class SystemManager {
 		props.load(propIn);
 
 		Props simProps = specification.getSimulationProps();
-		int totalSimulations = simProps.getAsInt(Keys.NUM_SIMULATIONS);
-		long baseRandomSeed = simProps.getAsLong(Keys.RAND_SEED);
+		int totalSimulations = simProps.get(NumSims.class);
+		long baseRandomSeed = simProps.get(RandomSeed.class);
 		
 		int logLevel = Integer.parseInt(props.getProperty("logLevel", "0"));
 		// FIXME Decide how to handle this

@@ -8,7 +8,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.checkOrderLadder;
 import static utils.Tests.checkRandomOrderLadder;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,8 +20,22 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.FastLearning;
+import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.FundamentalShockVar;
+import systemmanager.Keys.InitLadderMean;
+import systemmanager.Keys.InitLadderRange;
+import systemmanager.Keys.MarketMakerReentryRate;
+import systemmanager.Keys.MovingAveragePrice;
+import systemmanager.Keys.NumHistorical;
+import systemmanager.Keys.NumRungs;
+import systemmanager.Keys.RungSize;
+import systemmanager.Keys.Spreads;
+import systemmanager.Keys.TickImprovement;
+import systemmanager.Keys.TickOutside;
+import systemmanager.Keys.TruncateLadder;
+import systemmanager.Keys.UseLastPrice;
+import systemmanager.Keys.UseMedianSpread;
 import systemmanager.MockSim;
 
 import com.google.common.base.Optional;
@@ -32,6 +45,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Range;
+import com.google.common.primitives.Ints;
 
 import data.Props;
 import entity.agent.AdaptiveMarketMaker.TransactionResult;
@@ -46,15 +60,16 @@ import fourheap.Order.OrderType;
 
 public class AdaptiveMarketMakerTest {
 	private static final Random rand = new Random();
-	private static final Props defaults = Props.fromPairs(
-			Keys.NUM_RUNGS, 2,
-			Keys.RUNG_SIZE, 10,
-			Keys.REENTRY_RATE, 0,
-			Keys.SPREADS, "2-4-6-8",
-			Keys.TRUNCATE_LADDER, false,
-			Keys.TICK_IMPROVEMENT, false,
-			Keys.INITIAL_LADDER_RANGE, 0,
-			Keys.INITIAL_LADDER_MEAN, 0);
+	private static final Props defaults = Props.builder()
+			.put(NumRungs.class, 2)
+			.put(RungSize.class, 10)
+			.put(MarketMakerReentryRate.class, 0d)
+			.put(Spreads.class, Ints.asList(2, 4, 6, 8))
+			.put(TruncateLadder.class, false)
+			.put(TickImprovement.class, false)
+			.put(InitLadderRange.class, 0)
+			.put(InitLadderMean.class, 0)
+			.build();
 	
 	private MockSim sim;
 	private Market actualMarket;
@@ -63,10 +78,8 @@ public class AdaptiveMarketMakerTest {
 
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.create(getClass(),
-				Log.Level.NO_LOGGING, Keys.FUNDAMENTAL_MEAN,
-				100000, Keys.FUNDAMENTAL_SHOCK_VAR,
-				0, MarketType.CDA, j.join(Keys.NUM_MARKETS, 1));
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1,
+				Props.fromPairs(FundamentalMean.class, 100000, FundamentalShockVar.class, 0d));
 		actualMarket = Iterables.getOnlyElement(sim.getMarkets());
 		market = actualMarket.getPrimaryView();
 		mockAgent = mockAgent();
@@ -82,10 +95,10 @@ public class AdaptiveMarketMakerTest {
 	/** Was defined, then the market maker should not do anything. */
 	@Test
 	public void quoteUndefined() {
-		AdaptiveMarketMaker mm = aMarketMaker(
-				Keys.TRUNCATE_LADDER, false,
-				Keys.INITIAL_LADDER_MEAN, 0,
-				Keys.INITIAL_LADDER_RANGE, 0);
+		AdaptiveMarketMaker mm = aMarketMaker(Props.fromPairs(
+				TruncateLadder.class, false,
+				InitLadderMean.class, 0,
+				InitLadderRange.class, 0));
 		mm.lastAsk = Optional.of(Price.of(55));
 		mm.lastBid = Optional.of(Price.of(45));
 
@@ -104,11 +117,11 @@ public class AdaptiveMarketMakerTest {
 
 	@Test
 	public void basicLadderTest() {
-		AdaptiveMarketMaker mm = aMarketMaker(
-				Keys.NUM_RUNGS, 2,
-				Keys.RUNG_SIZE, 10,
-				Keys.TRUNCATE_LADDER, false,
-				Keys.SPREADS, 10);
+		AdaptiveMarketMaker mm = aMarketMaker(Props.fromPairs(
+				NumRungs.class, 2,
+				RungSize.class, 10,
+				TruncateLadder.class, false,
+				Spreads.class, Ints.asList(10)));
 
 		setQuote(Price.of(40), Price.of(50));
 
@@ -123,11 +136,11 @@ public class AdaptiveMarketMakerTest {
 	/** Check when quote changes in between reentries */
 	@Test
 	public void quoteChangeTest() {
-		AdaptiveMarketMaker marketmaker = aMarketMaker(
-				Keys.SPREADS, 2,
-				Keys.NUM_RUNGS, 2,
-				Keys.RUNG_SIZE, 10,
-				Keys.TRUNCATE_LADDER, false);
+		AdaptiveMarketMaker marketmaker = aMarketMaker(Props.fromPairs(
+				Spreads.class, Ints.asList(2),
+				NumRungs.class, 2,
+				RungSize.class, 10,
+				TruncateLadder.class, false));
 
 		setQuote(Price.of(40), Price.of(50));
 
@@ -144,11 +157,11 @@ public class AdaptiveMarketMakerTest {
 	}
 	@Test
 	public void withdrawLadderTest() {
-		AdaptiveMarketMaker marketmaker = aMarketMaker(
-				Keys.NUM_RUNGS, 3,
-				Keys.RUNG_SIZE, 5,
-				Keys.TRUNCATE_LADDER, true,
-				Keys.SPREADS, 2);
+		AdaptiveMarketMaker marketmaker = aMarketMaker(Props.fromPairs(
+				NumRungs.class, 3,
+				RungSize.class, 5,
+				TruncateLadder.class, true,
+				Spreads.class, Ints.asList(2)));
 		
 		setQuote(Price.of(40), Price.of(50));
 
@@ -176,11 +189,11 @@ public class AdaptiveMarketMakerTest {
 	// FIXME This fails because the market maker is not waiting for the quote to update after withdrawing the orders...
 	@Test
 	public void withdrawUndefinedTest() {
-		AdaptiveMarketMaker marketmaker = aMarketMaker(
-				Keys.NUM_RUNGS, 3,
-				Keys.RUNG_SIZE, 5,
-				Keys.TRUNCATE_LADDER, true,
-				Keys.SPREADS, "2");
+		AdaptiveMarketMaker marketmaker = aMarketMaker(Props.fromPairs(
+				NumRungs.class, 3,
+				RungSize.class, 5,
+				TruncateLadder.class, true,
+				Spreads.class, Ints.asList(2)));
 		
 		setQuote(Price.of(40), Price.of(50));
 
@@ -210,15 +223,16 @@ public class AdaptiveMarketMakerTest {
 
 	@Test
 	public void nullBidAskLadder() {
-		AdaptiveMarketMaker marketmaker = aMarketMaker(
-				Keys.NUM_RUNGS, 3,
-				Keys.RUNG_SIZE, 5,
-				Keys.TRUNCATE_LADDER, true,
-				Keys.SPREADS, "2",
-				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_OUTSIDE, true,
-				Keys.INITIAL_LADDER_MEAN, 50,
-				Keys.INITIAL_LADDER_RANGE, 10);
+		AdaptiveMarketMaker marketmaker = aMarketMaker(Props.builder()
+				.put(NumRungs.class, 3)
+				.put(RungSize.class, 5)
+				.put(TruncateLadder.class, true)
+				.put(Spreads.class, Ints.asList(2))
+				.put(TickImprovement.class, true)
+				.put(TickOutside.class, true)
+				.put(InitLadderMean.class, 50)
+				.put(InitLadderRange.class, 10)
+				.build());
 		
 		setQuote(Price.of(40), Price.of(50));
 
@@ -240,12 +254,12 @@ public class AdaptiveMarketMakerTest {
 	
 	@Test
 	public void chooseMedianWeight() {
-		MarketMaker marketmaker = aMarketMaker(
-				Keys.NUM_RUNGS, 3,
-				Keys.RUNG_SIZE, 5,
-				Keys.TRUNCATE_LADDER, true,
-				Keys.SPREADS, "2-4-6",
-				Keys.USE_MEDIAN_SPREAD, true);
+		MarketMaker marketmaker = aMarketMaker(Props.fromPairs(
+				NumRungs.class, 3,
+				RungSize.class, 5,
+				TruncateLadder.class, true,
+				Spreads.class, Ints.asList(2, 4, 5),
+				UseMedianSpread.class, true));
 
 		setQuote(Price.of(40), Price.of(50));
 
@@ -259,16 +273,17 @@ public class AdaptiveMarketMakerTest {
 
 	@Test
 	public void recalculateWeights(){
-		AdaptiveMarketMaker marketmaker = aMarketMaker(
-				Keys.NUM_RUNGS, 3,
-				Keys.RUNG_SIZE, 5,
-				Keys.TRUNCATE_LADDER, true,
-				Keys.SPREADS, "2-40-50",
-				Keys.NUM_HISTORICAL, 1,
-				Keys.MOVING_AVERAGE_PRICE, false,
-				Keys.USE_LAST_PRICE, true,
-				Keys.FAST_LEARNING, true,
-				Keys.USE_MEDIAN_SPREAD, true);
+		AdaptiveMarketMaker marketmaker = aMarketMaker(Props.builder()
+				.put(NumRungs.class, 3)
+				.put(RungSize.class, 5)
+				.put(TruncateLadder.class, true)
+				.put(Spreads.class, Ints.asList(2, 40, 50))
+				.put(NumHistorical.class, 1)
+				.put(MovingAveragePrice.class, false)
+				.put(UseLastPrice.class, true)
+				.put(FastLearning.class, true)
+				.put(UseMedianSpread.class, true)
+				.build());
 
 		setQuote(Price.of(80), Price.of(120));
 
@@ -301,16 +316,17 @@ public class AdaptiveMarketMakerTest {
 
 	@Test
 	public void movingAverage() {
-		AdaptiveMarketMaker marketmaker = aMarketMaker(
-				Keys.NUM_RUNGS, 3,
-				Keys.RUNG_SIZE, 5,
-				Keys.TRUNCATE_LADDER, true,
-				Keys.SPREADS, "2-30-50",
-				Keys.NUM_HISTORICAL, 5,
-				Keys.MOVING_AVERAGE_PRICE, false,
-				Keys.USE_LAST_PRICE, true,
-				Keys.FAST_LEARNING, true,
-				Keys.USE_MEDIAN_SPREAD, true);
+		AdaptiveMarketMaker marketmaker = aMarketMaker(Props.builder()
+				.put(NumRungs.class, 3)
+				.put(RungSize.class, 5)
+				.put(TruncateLadder.class, true)
+				.put(Spreads.class, Ints.asList(2, 30, 50))
+				.put(NumHistorical.class, 5)
+				.put(MovingAveragePrice.class, false)
+				.put(UseLastPrice.class, true)
+				.put(FastLearning.class, true)
+				.put(UseMedianSpread.class, true)
+				.build());
 
 		setQuote(Price.of(80), Price.of(120));
 		
@@ -345,7 +361,7 @@ public class AdaptiveMarketMakerTest {
 				Price.of(98), Price.of(103), Price.of(108),
 				Price.of(110), Price.of(115), Price.of(120));
 
-		checkOrderedWeights(marketmaker.weights, ImmutableList.of(50, 30, 2));
+		checkOrderedWeights(marketmaker.weights, Ints.asList(50, 30, 2));
 
 		// check moving average price stored as last price
 		assertEquals(Optional.of(Price.of(109)), marketmaker.lastPrice);
@@ -378,12 +394,12 @@ public class AdaptiveMarketMakerTest {
 
 	@Test
 	public void lastTransactionResult() {
-		AdaptiveMarketMaker marketmaker = aMarketMaker(
-				Keys.NUM_RUNGS, 3,
-				Keys.RUNG_SIZE, 5,
-				Keys.TRUNCATE_LADDER, true,
-				Keys.SPREADS, "2-40-50",
-				Keys.USE_MEDIAN_SPREAD, true);
+		AdaptiveMarketMaker marketmaker = aMarketMaker(Props.fromPairs(
+				NumRungs.class, 3,
+				RungSize.class, 5,
+				TruncateLadder.class, true,
+				Spreads.class, Ints.asList(2, 40, 50),
+				UseMedianSpread.class, true));
 
 		marketmaker.lastAsk = Optional.of(Price.of(100));
 		marketmaker.lastBid = Optional.of(Price.of(80));
@@ -463,9 +479,12 @@ public class AdaptiveMarketMakerTest {
 		assertEquals(1, total, 0.0001);
 	}
 	
+	private AdaptiveMarketMaker aMarketMaker() {
+		return aMarketMaker(Props.fromPairs());
+	}
 
-	private AdaptiveMarketMaker aMarketMaker(Object... parameters) {
-		return AdaptiveMarketMaker.create(sim, actualMarket, rand, Props.withDefaults(defaults, parameters));
+	private AdaptiveMarketMaker aMarketMaker(Props parameters) {
+		return AdaptiveMarketMaker.create(sim, actualMarket, rand, Props.merge(defaults, parameters));
 	}
 
 	private void setQuote(Price bid, Price ask) {

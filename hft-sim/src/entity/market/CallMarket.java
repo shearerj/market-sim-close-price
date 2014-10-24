@@ -4,7 +4,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Random;
 
-import systemmanager.Keys;
+import systemmanager.Keys.ClearFrequency;
+import systemmanager.Keys.MarketTickSize;
+import systemmanager.Keys.PricingPolicy;
+import systemmanager.Keys.TickSize;
 import systemmanager.Simulation;
 import data.Props;
 import event.Activity;
@@ -27,9 +30,9 @@ public class CallMarket extends Market {
 	private final TimeStamp clearFreq;
 
 	protected CallMarket(Simulation sim, Random rand, Props props) {
-		super(sim, new UniformPriceClear(props.getAsDouble(Keys.PRICING_POLICY), props.getAsInt(Keys.MARKET_TICK_SIZE, Keys.TICK_SIZE)),
+		super(sim, new UniformPriceClear(props.get(PricingPolicy.class), props.get(MarketTickSize.class, TickSize.class)),
 				rand, props);
-		this.clearFreq = TimeStamp.of(props.getAsInt(Keys.CLEAR_FREQ));
+		this.clearFreq = props.get(ClearFrequency.class);
 		checkArgument(clearFreq.after(TimeStamp.ZERO), "Can't clear at frequency zero");
 		sim.scheduleActivityIn(TimeStamp.IMMEDIATE, new Activity() {
 			@Override public void execute() { CallMarket.this.clear(); }

@@ -9,7 +9,7 @@ import java.util.Iterator;
 import java.util.Random;
 
 import systemmanager.Consts;
-import systemmanager.Keys;
+import systemmanager.Keys.FileName;
 import systemmanager.Simulation;
 
 import com.google.common.collect.BiMap;
@@ -38,7 +38,7 @@ public class MarketDataAgent extends SMAgent {
 	
 	public static MarketDataAgent create(Simulation sim, Market market, Random rand, Props props) {
 		Iterator<MarketAction> actions = ImmutableList.<MarketAction> of().iterator();
-		String fileName = props.getAsString(Keys.FILENAME);
+		String fileName = props.get(FileName.class);
 		
 		FileReader reader = null;
 		try {

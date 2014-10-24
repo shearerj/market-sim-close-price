@@ -2,7 +2,6 @@ package entity.agent;
 
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.checkSingleOrder;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -14,8 +13,6 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
 import systemmanager.MockSim;
 
 import com.google.common.collect.Iterables;
@@ -38,7 +35,7 @@ public class MarketDataAgentTest {
 
 	@Before
 	public void setupTest() throws IOException {
-		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING, MarketType.CDA, j.join(Keys.NUM_MARKETS, 1));
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1);
 		market = Iterables.getOnlyElement(sim.getMarkets());
 	}
 

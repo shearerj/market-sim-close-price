@@ -7,7 +7,6 @@ import static org.junit.Assert.assertTrue;
 import static utils.Tests.checkOrderLadder;
 import static utils.Tests.checkRandomOrderLadder;
 import static utils.Tests.checkSingleTransaction;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.util.Random;
@@ -17,8 +16,16 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.FundamentalShockVar;
+import systemmanager.Keys.InitLadderMean;
+import systemmanager.Keys.InitLadderRange;
+import systemmanager.Keys.NumRungs;
+import systemmanager.Keys.ReentryRate;
+import systemmanager.Keys.RungSize;
+import systemmanager.Keys.TickImprovement;
+import systemmanager.Keys.TickOutside;
+import systemmanager.Keys.TruncateLadder;
 import systemmanager.MockSim;
 
 import com.google.common.base.Optional;
@@ -36,11 +43,11 @@ import fourheap.Order.OrderType;
 public class BasicMarketMakerTest {
 	private static final Random rand = new Random();
 	private static final Props defaults = Props.fromPairs(
-			Keys.REENTRY_RATE, 0,
-			Keys.NUM_RUNGS, 3,
-			Keys.RUNG_SIZE, 5,
-			Keys.TRUNCATE_LADDER, true,
-			Keys.TICK_IMPROVEMENT, false);
+			ReentryRate.class, 0d,
+			NumRungs.class, 3,
+			RungSize.class, 5,
+			TruncateLadder.class, true,
+			TickImprovement.class, false);
 	
 	private MockSim sim;
 	private Market actualMarket;
@@ -49,10 +56,8 @@ public class BasicMarketMakerTest {
 
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.create(getClass(),
-				Log.Level.NO_LOGGING, Keys.FUNDAMENTAL_MEAN,
-				100000, Keys.FUNDAMENTAL_SHOCK_VAR,
-				0, MarketType.CDA, j.join(Keys.NUM_MARKETS, 1));
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1,
+				Props.fromPairs(FundamentalMean.class, 100000, FundamentalShockVar.class, 0d));
 		actualMarket = Iterables.getOnlyElement(sim.getMarkets());
 		market = actualMarket.getPrimaryView();
 		mockAgent = mockAgent();
@@ -60,10 +65,10 @@ public class BasicMarketMakerTest {
 
 	@Test
 	public void nullBidAsk() {
-		BasicMarketMaker mm = basicMarketMaker(
-				Keys.TRUNCATE_LADDER, false,
-				Keys.INITIAL_LADDER_MEAN, 0,
-				Keys.INITIAL_LADDER_RANGE, 0);
+		BasicMarketMaker mm = basicMarketMaker(Props.fromPairs(
+				TruncateLadder.class, false,
+				InitLadderMean.class, 0,
+				InitLadderRange.class, 0));
 		mm.agentStrategy();
 		assertTrue(mm.activeOrders.isEmpty());
 	}
@@ -71,10 +76,10 @@ public class BasicMarketMakerTest {
 	/** Was defined, then the market maker should not do anything. */
 	@Test
 	public void quoteUndefined() {
-		BasicMarketMaker mm = basicMarketMaker(
-				Keys.TRUNCATE_LADDER, false,
-				Keys.INITIAL_LADDER_MEAN, 0,
-				Keys.INITIAL_LADDER_RANGE, 0);
+		BasicMarketMaker mm = basicMarketMaker(Props.fromPairs(
+				TruncateLadder.class, false,
+				InitLadderMean.class, 0,
+				InitLadderRange.class, 0));
 		mm.lastAsk = Optional.of(Price.of(55));
 		mm.lastBid = Optional.of(Price.of(45));
 
@@ -94,10 +99,10 @@ public class BasicMarketMakerTest {
 
 	@Test
 	public void basicLadderTest() {
-		BasicMarketMaker mm = basicMarketMaker(
-				Keys.NUM_RUNGS, 2,
-				Keys.RUNG_SIZE, 10,
-				Keys.TRUNCATE_LADDER, false);
+		BasicMarketMaker mm = basicMarketMaker(Props.fromPairs(
+				NumRungs.class, 2,
+				RungSize.class, 10,
+				TruncateLadder.class, false));
 
 		setQuote(Price.of(40), Price.of(50));
 
@@ -112,10 +117,10 @@ public class BasicMarketMakerTest {
 	/** Check when quote changes in between reentries */
 	@Test
 	public void quoteChangeTest() {
-		BasicMarketMaker marketmaker = basicMarketMaker(
-				Keys.NUM_RUNGS, 2,
-				Keys.RUNG_SIZE, 10,
-				Keys.TRUNCATE_LADDER, false);
+		BasicMarketMaker marketmaker = basicMarketMaker(Props.fromPairs(
+				NumRungs.class, 2,
+				RungSize.class, 10,
+				TruncateLadder.class, false));
 
 		setQuote(Price.of(40), Price.of(50));
 
@@ -191,11 +196,11 @@ public class BasicMarketMakerTest {
 
 	@Test
 	public void nullBidAskLadder() {
-		BasicMarketMaker marketmaker = basicMarketMaker(
-				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_OUTSIDE, true,
-				Keys.INITIAL_LADDER_MEAN, 50,
-				Keys.INITIAL_LADDER_RANGE, 10);
+		BasicMarketMaker marketmaker = basicMarketMaker(Props.fromPairs(
+				TickImprovement.class, true,
+				TickOutside.class, true,
+				InitLadderMean.class, 50,
+				InitLadderRange.class, 10));
 		
 		setQuote(Price.of(40), Price.of(50));
 
@@ -217,11 +222,11 @@ public class BasicMarketMakerTest {
 	
 	@Test
 	public void oneBackgroundBuyer() {
-		BasicMarketMaker marketmaker = basicMarketMaker(
-				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_OUTSIDE, false,
-				Keys.INITIAL_LADDER_MEAN, 50,
-				Keys.INITIAL_LADDER_RANGE, 10);
+		BasicMarketMaker marketmaker = basicMarketMaker(Props.fromPairs(
+				TickImprovement.class, true,
+				TickOutside.class, false,
+				InitLadderMean.class, 50,
+				InitLadderRange.class, 10));
 		
 		submitOrder(mockAgent, BUY, Price.of(40));
 
@@ -238,11 +243,11 @@ public class BasicMarketMakerTest {
 	
 	@Test
 	public void oneBackgroundSeller() {
-		BasicMarketMaker marketmaker = basicMarketMaker(
-				Keys.TICK_IMPROVEMENT, true,
-				Keys.TICK_OUTSIDE, false,
-				Keys.INITIAL_LADDER_MEAN, 50,
-				Keys.INITIAL_LADDER_RANGE, 10);
+		BasicMarketMaker marketmaker = basicMarketMaker(Props.fromPairs(
+				TickImprovement.class, true,
+				TickOutside.class, false,
+				InitLadderMean.class, 50,
+				InitLadderRange.class, 10));
 		
 		submitOrder(mockAgent, SELL, Price.of(60));
 
@@ -280,8 +285,12 @@ public class BasicMarketMakerTest {
 		return order;
 	}
 	
-	private BasicMarketMaker basicMarketMaker(Object... parameters) {
-		return BasicMarketMaker.create(sim, actualMarket, rand, Props.withDefaults(defaults, parameters));
+	private BasicMarketMaker basicMarketMaker(Props parameters) {
+		return BasicMarketMaker.create(sim, actualMarket, rand, Props.merge(defaults, parameters));
+	}
+	
+	private BasicMarketMaker basicMarketMaker() {
+		return basicMarketMaker(Props.fromPairs());
 	}
 	
 	private Agent mockAgent() {

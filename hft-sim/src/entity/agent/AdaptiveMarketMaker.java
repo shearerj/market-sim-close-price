@@ -4,15 +4,25 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static logger.Log.Level.INFO;
 
 import java.math.RoundingMode;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import systemmanager.Keys;
+import systemmanager.Keys.FastLearning;
+import systemmanager.Keys.FundamentalKappa;
+import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.FundamentalShockVar;
+import systemmanager.Keys.MovingAveragePrice;
+import systemmanager.Keys.NumHistorical;
+import systemmanager.Keys.Spreads;
+import systemmanager.Keys.UseLastPrice;
+import systemmanager.Keys.UseMedianSpread;
 import systemmanager.Simulation;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.EvictingQueue;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.math.DoubleMath;
@@ -49,14 +59,14 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	protected AdaptiveMarketMaker(Simulation sim, Market market, Random rand, Props props) {
 		super(sim, market, rand, props);
 
-		boolean movingAveragePrice = props.getAsBoolean(Keys.MOVING_AVERAGE_PRICE);
-		int numHistorical = movingAveragePrice ? 8 : props.getAsInt(Keys.NUM_HISTORICAL);
+		boolean movingAveragePrice = props.get(MovingAveragePrice.class);
+		int numHistorical = movingAveragePrice ? 8 : props.get(NumHistorical.class);
 		checkArgument(numHistorical > 0, "Number of historical prices must be positive!");
 		this.priceQueue = EvictingQueue.create(numHistorical);
 		
-		this.fastLearning = props.getAsBoolean(Keys.FAST_LEARNING);
-		this.useLastPrice = props.getAsBoolean(Keys.USE_LAST_PRICE);
-		this.useMedianSpread = props.getAsBoolean(Keys.USE_MEDIAN_SPREAD);
+		this.fastLearning = props.get(FastLearning.class);
+		this.useLastPrice = props.get(UseLastPrice.class);
+		this.useMedianSpread = props.get(UseMedianSpread.class);
 		/*
 		 * To approximate volatility bound, use the fact that next = prev +
 		 * kappa(mean-prev) + nextGaussian(0,1)*sqrt(shock) conservatively
@@ -65,17 +75,17 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		 */
 		this.volatilityBound = DoubleMath.roundToInt(
 				0.25
-				* props.getAsDouble(Keys.FUNDAMENTAL_KAPPA)
-				* props.getAsInt(Keys.FUNDAMENTAL_MEAN) + 2
-				* Math.sqrt(props.getAsInt(Keys.FUNDAMENTAL_SHOCK_VAR)),
+				* props.get(FundamentalKappa.class)
+				* props.get(FundamentalMean.class) + 2
+				* Math.sqrt(props.get(FundamentalShockVar.class)),
 				RoundingMode.HALF_EVEN);
 
 		// FIXME Move to expert class / interface
 		// Initialize weights, initially all equal = 1/N, where N = # windows
 		// spreads = windows in paper, variable b
-		int[] spreads = props.getAsIntArray(Keys.SPREADS);
+		List<Integer> spreads = ImmutableList.copyOf(props.get(Spreads.class));
 		this.weights = Maps.newTreeMap(); // XXX Tree map to support easy median implementation
-		double initial_weight = 1.0 / spreads.length;
+		double initial_weight = 1.0 / spreads.size();
 		for (int i : spreads)
 			weights.put(i, initial_weight);
 		

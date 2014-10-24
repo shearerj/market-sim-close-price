@@ -3,7 +3,6 @@ package entity.agent;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static utils.Tests.checkOrderLadder;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -15,8 +14,15 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.FundamentalShockVar;
+import systemmanager.Keys.NumHistorical;
+import systemmanager.Keys.NumRungs;
+import systemmanager.Keys.ReentryRate;
+import systemmanager.Keys.RungSize;
+import systemmanager.Keys.TickImprovement;
+import systemmanager.Keys.TruncateLadder;
+import systemmanager.Keys.WeightFactor;
 import systemmanager.MockSim;
 
 import com.google.common.collect.ImmutableList;
@@ -33,13 +39,14 @@ import fourheap.Order.OrderType;
 
 public class WMAMarketMakerTest {
 	private static final Random rand = new Random();
-	private static final Props defaults = Props.fromPairs(
-			Keys.REENTRY_RATE, 0,
-			Keys.TICK_IMPROVEMENT, false,
-			Keys.NUM_RUNGS, 1,
-			Keys.RUNG_SIZE, 10,
-			Keys.TRUNCATE_LADDER, false,
-			Keys.NUM_HISTORICAL, 5);
+	private static final Props defaults = Props.builder()
+			.put(ReentryRate.class, 0d)
+			.put(TickImprovement.class, false)
+			.put(NumRungs.class, 1)
+			.put(RungSize.class, 10)
+			.put(TruncateLadder.class, false)
+			.put(NumHistorical.class, 5)
+			.build();
 	
 	private MockSim sim;
 	private Market actualMarket;
@@ -49,10 +56,8 @@ public class WMAMarketMakerTest {
 
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.create(getClass(),
-				Log.Level.NO_LOGGING, Keys.FUNDAMENTAL_MEAN,
-				100000, Keys.FUNDAMENTAL_SHOCK_VAR,
-				0, MarketType.CDA, j.join(Keys.NUM_MARKETS, 1));
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1,
+				Props.fromPairs(FundamentalMean.class, 100000, FundamentalShockVar.class, 0d));
 		actualMarket = Iterables.getOnlyElement(sim.getMarkets());
 		market = actualMarket.getPrimaryView();
 		mockAgent = mockAgent();
@@ -64,7 +69,7 @@ public class WMAMarketMakerTest {
 	 */
 	@Test
 	public void computeLinearWeightedMovingAverage() {
-		mm = wmaMarketMaker(Keys.WEIGHT_FACTOR, 0);
+		mm = wmaMarketMaker(Props.fromPairs(WeightFactor.class, 0d));
 		
 		// Add quotes & execute agent strategy in between
 		List<Price> bids = ImmutableList.of(Price.of(50), Price.of(52), Price.of(54), Price.of(56), Price.of(58));
@@ -81,7 +86,7 @@ public class WMAMarketMakerTest {
 	
 	@Test
 	public void computeExpWeightedMovingAverage() {
-		mm = wmaMarketMaker(Keys.WEIGHT_FACTOR, 0.5);
+		mm = wmaMarketMaker(Props.fromPairs(WeightFactor.class, 0.5));
 		
 		// Add quotes & execute agent strategy in between
 		List<Price> bids = ImmutableList.of(Price.of(50), Price.of(52), Price.of(54), Price.of(56), Price.of(58));
@@ -102,7 +107,7 @@ public class WMAMarketMakerTest {
 	 */
 	@Test
 	public void partialQueueExponentialLadderTest() {
-		mm = wmaMarketMaker(Keys.WEIGHT_FACTOR, 0.9);
+		mm = wmaMarketMaker(Props.fromPairs(WeightFactor.class, 0.9));
 
 		// Add quotes & execute agent strategy in between
 		List<Price> bids = ImmutableList.of(Price.of(50000), Price.of(52000));
@@ -123,7 +128,7 @@ public class WMAMarketMakerTest {
 	 */
 	@Test
 	public void partialQueueLienarLadderTest() {
-		mm = wmaMarketMaker(Keys.WEIGHT_FACTOR, 0);
+		mm = wmaMarketMaker(Props.fromPairs(WeightFactor.class, 0d));
 
 		// Add quotes & execute agent strategy in between
 		List<Price> bids = ImmutableList.of(Price.of(50000), Price.of(52000));
@@ -138,8 +143,8 @@ public class WMAMarketMakerTest {
 		checkOrderLadder(mm.activeOrders, Price.of(51333), Price.of(62667));
 	}
 
-	private WMAMarketMaker wmaMarketMaker(Object... parameters) {
-		return WMAMarketMaker.create(sim, actualMarket, rand, Props.withDefaults(defaults, parameters));
+	private WMAMarketMaker wmaMarketMaker(Props parameters) {
+		return WMAMarketMaker.create(sim, actualMarket, rand, Props.merge(defaults, parameters));
 	}
 	
 	private void setQuote(Price bid, Price ask) {

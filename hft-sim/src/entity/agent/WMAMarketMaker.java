@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Random;
 
-import systemmanager.Keys;
+import systemmanager.Keys.WeightFactor;
 import systemmanager.Simulation;
 
 import com.google.common.collect.ImmutableList;
@@ -51,7 +51,7 @@ public class WMAMarketMaker extends MAMarketMaker {
 	protected WMAMarketMaker(Simulation sim, Market market, Random rand, Props props) {
 		super(sim, market, rand, props);
 
-		this.weightFactor = props.getAsDouble(Keys.WEIGHT_FACTOR);
+		this.weightFactor = props.get(WeightFactor.class);
 		checkArgument(weightFactor >= 0 && weightFactor < 1, "Weight factor must be in range [0,1)!");
 	}
 	

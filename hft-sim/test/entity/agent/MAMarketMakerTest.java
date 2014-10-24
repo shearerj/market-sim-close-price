@@ -6,7 +6,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.checkOrderLadder;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -18,8 +17,16 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.FundamentalShockVar;
+import systemmanager.Keys.InitLadderMean;
+import systemmanager.Keys.InitLadderRange;
+import systemmanager.Keys.NumHistorical;
+import systemmanager.Keys.NumRungs;
+import systemmanager.Keys.ReentryRate;
+import systemmanager.Keys.RungSize;
+import systemmanager.Keys.TickImprovement;
+import systemmanager.Keys.TruncateLadder;
 import systemmanager.MockSim;
 
 import com.google.common.base.Optional;
@@ -37,13 +44,14 @@ import fourheap.Order.OrderType;
 
 public class MAMarketMakerTest {
 	private static final Random rand = new Random();
-	private static final Props defaults = Props.fromPairs(
-			Keys.REENTRY_RATE, 0,
-			Keys.TICK_IMPROVEMENT, false,
-			Keys.NUM_HISTORICAL, 5,
-			Keys.NUM_RUNGS, 1,
-			Keys.RUNG_SIZE, 10,
-			Keys.TRUNCATE_LADDER, false);
+	private static final Props defaults = Props.builder()
+			.put(ReentryRate.class, 0d)
+			.put(TickImprovement.class, false)
+			.put(NumHistorical.class, 5)
+			.put(NumRungs.class, 1)
+			.put(RungSize.class, 10)
+			.put(TruncateLadder.class, false)
+			.build();
 	
 	private MockSim sim;
 	private Market actualMarket;
@@ -53,10 +61,8 @@ public class MAMarketMakerTest {
 
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.create(getClass(),
-				Log.Level.NO_LOGGING, Keys.FUNDAMENTAL_MEAN,
-				100000, Keys.FUNDAMENTAL_SHOCK_VAR,
-				0, MarketType.CDA, j.join(Keys.NUM_MARKETS, 1));
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1,
+				Props.fromPairs(FundamentalMean.class, 100000, FundamentalShockVar.class, 0d));
 		actualMarket = Iterables.getOnlyElement(sim.getMarkets());
 		market = actualMarket.getPrimaryView();
 		mockAgent = mockAgent();
@@ -97,9 +103,9 @@ public class MAMarketMakerTest {
 	 */
 	@Test
 	public void evictingQueueTest() {
-		mm = maMarketMaker(
-				Keys.NUM_RUNGS, 2,
-				Keys.NUM_HISTORICAL, 3);
+		mm = maMarketMaker(Props.fromPairs(
+				NumRungs.class, 2,
+				NumHistorical.class, 3));
 
 		// Add quotes & execute agent strategy in between to add quotes to queue
 		List<Price> bids = ImmutableList.of(Price.of(50), Price.of(52), Price.of(53), Price.of(53), Price.of(56));
@@ -159,9 +165,9 @@ public class MAMarketMakerTest {
 	 */
 	@Test
 	public void nullBidAskInQueue() {
-		mm = maMarketMaker(
-				Keys.INITIAL_LADDER_MEAN, 50,
-				Keys.INITIAL_LADDER_RANGE, 7);
+		mm = maMarketMaker(Props.fromPairs(
+				InitLadderMean.class, 50,
+				InitLadderRange.class, 7));
 
 		// Add quotes & execute agent strategy in between
 		// Verify that if quote undefined, nothing is added to the queues
@@ -220,8 +226,12 @@ public class MAMarketMakerTest {
 		return order;
 	}
 	
-	private MAMarketMaker maMarketMaker(Object... parameters) {
-		return MAMarketMaker.create(sim, actualMarket, rand, Props.withDefaults(defaults, parameters));
+	private MAMarketMaker maMarketMaker(Props parameters) {
+		return MAMarketMaker.create(sim, actualMarket, rand, Props.merge(defaults, parameters));
+	}
+	
+	private MAMarketMaker maMarketMaker() {
+		return maMarketMaker(Props.fromPairs());
 	}
 	
 	private Agent mockAgent() {

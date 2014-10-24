@@ -1,5 +1,18 @@
 package systemmanager;
 
+import com.google.common.base.Converter;
+
+import event.TimeStamp;
+import fourheap.Order.OrderType;
+import props.ParsableValue;
+import props.ParsableValue.BoolValue;
+import props.ParsableValue.DoubleValue;
+import props.ParsableValue.EnumValue;
+import props.ParsableValue.IntValue;
+import props.ParsableValue.IntsValue;
+import props.ParsableValue.LongValue;
+import props.ParsableValue.StringValue;
+
 /**
  * All of the keys for use in the simulation spec. Parameters be camelCase.
  * OK for observation file descriptors to not be camel case.
@@ -9,109 +22,104 @@ package systemmanager;
  */
 public interface Keys {
 
-	public final static String
-	PRESETS = 					"presets",
+	public static class RandomSeed extends LongValue {};
+	public static class NumSims extends IntValue {};
+	
+	public static class FileName extends StringValue {};
+	
+	public static class ArrivalRate extends DoubleValue {};
+	
+	public static class ReentryRate extends DoubleValue {};
+	public static class BackgroundReentryRate extends DoubleValue {};
+	public static class MarketMakerReentryRate extends DoubleValue {};
 
-	RAND_SEED = 				"randomSeed",
-	NUM_SIMULATIONS =	 		"numSims",
-
-	FILENAME = 					"fileName",
-
-	ARRIVAL_RATE = 				"arrivalRate",
-
-	REENTRY_RATE = 				"reentryRate",
-	BACKGROUND_REENTRY_RATE = 	"backgroundReentryRate",
-	MARKETMAKER_REENTRY_RATE = 	"marketmakerReentryRate",
-
-	WINDOW_LENGTH = 			"windowLength",
-	BID_RANGE_MAX = 			"bidRangeMax",
-	BID_RANGE_MIN = 			"bidRangeMin",
-	MAX_QUANTITY = 				"maxQty",
-	ALPHA = 					"alpha",
-
-	TICK_SIZE = 				"tickSize",
-	MARKET_TICK_SIZE = 			"marketTickSize",
-	AGENT_TICK_SIZE = 			"agentTickSize",
-
-	PRIVATE_VALUE_VAR = 		"privateValueVar",
-	SIMULATION_LENGTH = 		"simLength",
-	FUNDAMENTAL_MEAN = 			"meanValue",
-	FUNDAMENTAL_KAPPA = 		"kappa",
-	FUNDAMENTAL_SHOCK_VAR = 	"shockVar",
-	PRIMARY_MODEL = 			"primaryModel",
-
-	NUM = 						"num",
-	NUM_AGENTS =				"numAgents",
-	NUM_MARKETS = 				"numMarkets",
-
-	// SimulationSpec Keys
-	ASSIGN = 					"assignment",
-	CONFIG = 					"configuration",
-	NO_OP = 					"noOp",
-
-	// Observation Keys
-	PV_BUY1 = 					"pv_buy1",
-	PV_SELL1 = 					"pv_sell1",
-	PV_POSITION1_MAX_ABS =		"pv_position_max_abs1",
-
+	public static class WindowLength extends TimeValue {};
+	public static class BidRangeMax extends IntValue {};
+	public static class BidRangeMin extends IntValue {};
+	public static class MaxQty extends IntValue {};
+	public static class Alpha extends DoubleValue {};
+	
+	public static class TickSize extends IntValue {};
+	public static class MarketTickSize extends IntValue {};
+	public static class AgentTickSize extends IntValue {};
+	
+	public static class PrivateValueVar extends DoubleValue {};
+	public static class SimLength extends IntValue {};
+	public static class FundamentalMean extends IntValue {};
+	public static class FundamentalShockVar extends DoubleValue {};
+	public static class FundamentalKappa extends DoubleValue {};
+	
+	public static class Num extends IntValue {};
+	public static class NumAgents extends IntValue {};
+	public static class NumMarkets extends IntValue {};
+	
 	// Latency
-	QUOTE_LATENCY = 			"quoteLatency",
-	TRANSACTION_LATENCY = 		"transactionLatency",
-	NBBO_LATENCY = 				"nbboLatency",
-	MARKET_LATENCY = 			"mktLatency",
-	LA_LATENCY = 				"laLatency",
-	FUNDAMENTAL_LATENCY = 		"fundamentalLatency",
+	public static class NbboLatency extends TimeValue {};
+	public static class MarketLatency extends TimeValue {};
+	public static class LaLatency extends TimeValue {};
+	public static class FundamentalLatency extends TimeValue {};
 
 	// Call Market
-	CLEAR_FREQ =				"clearFreq",
-	PRICING_POLICY = 			"pricingPolicy",
-
+	public static class ClearFrequency extends TimeValue {};
+	public static class PricingPolicy extends DoubleValue {};
+	
 	// Agents
-	WITHDRAW_ORDERS = 			"withdrawOrders", 
-	NUM_HISTORICAL = 			"numHistorical",
+	public static class WithdrawOrders extends BoolValue {};
+	public static class NumHistorical extends IntValue {};
 
 	// Market Maker
-	NUM_RUNGS = 				"numRungs",
-	RUNG_SIZE = 				"rungSize",
-	TRUNCATE_LADDER = 			"truncateLadder",
-	TICK_IMPROVEMENT = 			"tickImprovement",
-	TICK_OUTSIDE = 				"tickOutside",
-	INITIAL_LADDER_MEAN = 		"initLadderMean",
-	INITIAL_LADDER_RANGE = 		"initLadderRange",
+	public static class NumRungs extends IntValue {};
+	public static class RungSize extends IntValue {};
+	public static class TruncateLadder extends BoolValue {};
+	public static class TickImprovement extends BoolValue {};
+	public static class TickOutside extends BoolValue {};
+	public static class InitLadderMean extends IntValue {};
+	public static class InitLadderRange extends IntValue {};
 
 	// AAAgent
-	ETA = 						"eta",
-	LAMBDA_R = 					"lambdaR",
-	LAMBDA_A = 					"lambdaA",
-	GAMMA = 					"gamma",
-	BETA_R = 					"betaR",
-	BETA_T = 					"betaT",
-	AGGRESSION = 				"aggression",
-	THETA = 					"theta",
-	THETA_MAX = 				"thetaMax",
-	THETA_MIN = 				"thetaMin",
-	DEBUG = 					"debug",
-	BUYER_STATUS = 				"buyerStatus",
+	public static class Eta extends IntValue {};
+	public static class LambdaR extends DoubleValue {};
+	public static class LambdaA extends DoubleValue {};
+	public static class Gamma extends DoubleValue {};
+	public static class BetaR extends DoubleValue {};
+	public static class BetaT extends DoubleValue {};
+	public static class InitAggression extends DoubleValue {};
+	public static class Theta extends DoubleValue {};
+	public static class ThetaMax extends DoubleValue {};
+	public static class ThetaMin extends DoubleValue {};
+	public static class Debug extends BoolValue {};
+	public static class BuyerStatus extends EnumValue<OrderType> { public BuyerStatus() { super(OrderType.class); }};
 
 	// ZIPAgent
-	MARGIN_MIN = 				"marginMin",
-	MARGIN_MAX = 				"marginMax",
-	GAMMA_MIN = 				"gammaMin",
-	GAMMA_MAX = 				"gammaMax",
-	BETA_MIN = 					"betaMin",
-	BETA_MAX = 					"betaMax",
-	COEFF_R = 					"rangeR",
-	COEFF_A = 					"rangeA",
+	public static class MarginMin extends DoubleValue {};
+	public static class MarginMax extends DoubleValue {};
+	public static class GammaMin extends DoubleValue {};
+	public static class GammaMax extends DoubleValue {};
+	public static class BetaMin extends DoubleValue {};
+	public static class BetaMax extends DoubleValue {};
+	public static class RangeR extends DoubleValue {};
+	public static class RangeA extends DoubleValue {};
 
 	// Market Makers
-	WEIGHT_FACTOR = 			"weightFactor",
-	SPREADS = 					"spreads",
-	USE_MEDIAN_SPREAD = 		"useMedianSpread",
-	MOVING_AVERAGE_PRICE = 		"movingAveragePrice",	// TODO remove in next iteration, only keeping for backwards compatibility
-	FAST_LEARNING = 			"fastLearning",
-	USE_LAST_PRICE = 			"useLastPrice",
-	END_FUNDAMENTAL_ESTIMATE = 	"fundEstimate",
+	public static class WeightFactor extends DoubleValue {};
+	public static class Spreads extends IntsValue {};
+	public static class UseMedianSpread extends BoolValue {};
+	public static class MovingAveragePrice extends BoolValue {};
+	public static class FastLearning extends BoolValue {};
+	public static class UseLastPrice extends BoolValue {};
+	public static class FundEstimate extends LongValue {};
 
 	// ZIRPAgent
-	ACCEPTABLE_PROFIT_FRACTION = "acceptableProfFrac";
+	public static class AcceptableProfitFrac extends DoubleValue {};
+	
+	// Helper Classes
+	static class TimeValue extends ParsableValue<TimeStamp> {
+		protected TimeValue() {
+			super(new Converter<String, TimeStamp>() {
+				@Override protected String doBackward(TimeStamp time) { return Long.toString(time.getInTicks()); }
+				@Override protected TimeStamp doForward(String string) { return TimeStamp.of(Long.parseLong(string)); }
+			});
+		}
+		
+	}
 }

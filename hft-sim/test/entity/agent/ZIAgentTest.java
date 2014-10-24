@@ -2,7 +2,6 @@ package entity.agent;
 
 import static logger.Log.Level.DEBUG;
 import static utils.Tests.checkSingleOrderRange;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.util.Random;
@@ -12,8 +11,9 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.BidRangeMax;
+import systemmanager.Keys.BidRangeMin;
+import systemmanager.Keys.PrivateValueVar;
 import systemmanager.MockSim;
 
 import com.google.common.collect.Iterables;
@@ -41,9 +41,9 @@ public class ZIAgentTest {
 
 	private static final Random rand = new Random();
 	private static final Props defaults = Props.fromPairs(
-			Keys.PRIVATE_VALUE_VAR, 1e8,
-			Keys.BID_RANGE_MIN, 0,
-			Keys.BID_RANGE_MAX, 1000);
+			PrivateValueVar.class, 1e8,
+			BidRangeMin.class, 0,
+			BidRangeMax.class, 1000);
 
 	private MockSim sim;
 	private Market market;
@@ -54,8 +54,7 @@ public class ZIAgentTest {
 	}
 	
 	public void setup(double shockVar) throws IOException {
-		sim = MockSim.create(getClass(),
-				Log.Level.NO_LOGGING, MarketType.CDA, j.join(Keys.NUM_MARKETS, 1));
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1);
 		market = Iterables.getOnlyElement(sim.getMarkets());
 	}
 	// FIXME Test that agent strategy does what it's supposed to do
@@ -75,8 +74,8 @@ public class ZIAgentTest {
 	}
 	
 	@SuppressWarnings("deprecation")
-	private ZIAgent ziAgent(Object... pairs){
-		return ZIAgent.create(sim, TimeStamp.ZERO, market, rand, Props.withDefaults(defaults, pairs));
+	private ZIAgent ziAgent(){
+		return ZIAgent.create(sim, TimeStamp.ZERO, market, rand, defaults);
 	}
 	
 }

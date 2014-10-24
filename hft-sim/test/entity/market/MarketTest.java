@@ -16,8 +16,7 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.MarketLatency;
 import systemmanager.MockSim;
 
 import com.google.common.collect.Iterables;
@@ -41,15 +40,14 @@ public class MarketTest {
 
 	@Before
 	public void defaultSetup() throws IOException {
-		setup();
+		setup(Props.fromPairs());
 	}
 	
-	public void setup(Object... marketParams) throws IOException {
-		sim = MockSim.create(getClass(),
-				Log.Level.NO_LOGGING, MarketType.CDA, Keys.NUM_MARKETS + '_' + 1);
+	public void setup(Props marketParams) throws IOException {
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1);
 		nbboUpdate = Iterables.getOnlyElement(sim.getMarkets());
 		// MockMarket that executes instantaneous information
-		market = new Market(sim, new UniformPriceClear(0.5, 1), rand, Props.fromPairs(marketParams)) {
+		market = new Market(sim, new UniformPriceClear(0.5, 1), rand, marketParams) {
 			private static final long serialVersionUID = 1L;
 			@Override protected void submitOrder(MarketView view, AgentView agent, OrderRecord orderRecord) {
 				super.submitOrder(view, agent, orderRecord);
@@ -361,7 +359,7 @@ public class MarketTest {
 	/** Information propagates at proper times */
 	@Test
 	public void latencyTest() throws IOException {
-		setup(Keys.MARKET_LATENCY, 100);
+		setup(Props.fromPairs(MarketLatency.class, TimeStamp.of(100)));
 
 		Agent agent = mockAgent();
 		info.submitOrder(agent, OrderRecord.create(info, sim.getCurrentTime(), SELL, Price.of(100), 1));
@@ -419,7 +417,7 @@ public class MarketTest {
 
 	@Test
 	public void updateQuoteLatency() throws IOException {
-		setup(Keys.MARKET_LATENCY, 100);
+		setup(Props.fromPairs(MarketLatency.class, TimeStamp.of(100)));
 
 		// Test that before Time 200 nothing has been updated
 		Agent agent = mockAgent();
@@ -443,7 +441,7 @@ public class MarketTest {
 
 	@Test
 	public void updateTransactionsLatency() throws IOException {
-		setup(Keys.MARKET_LATENCY, 100);
+		setup(Props.fromPairs(MarketLatency.class, TimeStamp.of(100)));
 		Agent agent1 = mockAgent();
 		Agent agent2 = mockAgent();
 		
@@ -478,7 +476,7 @@ public class MarketTest {
 
 	@Test
 	public void basicDelayProcessTransaction() throws IOException {
-		setup(Keys.MARKET_LATENCY, 100);
+		setup(Props.fromPairs(MarketLatency.class, TimeStamp.of(100)));
 
 		assertTrue("Incorrect initial transaction list", info.getTransactions().isEmpty());
 
@@ -494,7 +492,7 @@ public class MarketTest {
 	/** Test handling of stale quotes when better order happened later */
 	@Test
 	public void staleQuotesFirst() throws IOException {
-		setup(Keys.MARKET_LATENCY, 100);
+		setup(Props.fromPairs(MarketLatency.class, TimeStamp.of(100)));
 		Agent agent = mockAgent();
 		submitOrder(agent, BUY, Price.of(50), 1);
 		submitOrder(agent, BUY, Price.of(60), 1);
@@ -512,7 +510,7 @@ public class MarketTest {
 	/** Test handling of stale quotes when better order happened earlier */
 	@Test
 	public void staleQuotesLast() throws IOException {
-		setup(Keys.MARKET_LATENCY, 100);
+		setup(Props.fromPairs(MarketLatency.class, TimeStamp.of(100)));
 		Agent agent = mockAgent();
 		
 		submitOrder(agent, BUY, Price.of(60), 1);
@@ -612,15 +610,15 @@ public class MarketTest {
 	@Test
 	public void randomTest() throws IOException {
 		for(int i=0; i < 100; i++) {
-			setup();
+			defaultSetup();
 			multiBidSingleClear();
-			setup();
+			defaultSetup();
 			multiOverlapClear();
-			setup();
+			defaultSetup();
 			partialOverlapClear();
-			setup();
+			defaultSetup();
 			staleQuotesFirst();
-			setup();
+			defaultSetup();
 			staleQuotesLast();
 		}
 	}

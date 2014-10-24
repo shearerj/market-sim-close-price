@@ -11,9 +11,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.ClearFrequency;
 import systemmanager.MockSim;
 import data.Props;
+import event.TimeStamp;
 
 public class MarketFactoryTest {
 
@@ -31,9 +32,9 @@ public class MarketFactoryTest {
 	public void createMarkets() {
 		Market mkt;
 
-		mkt = factory.createMarket(MarketType.CALL, Props.fromPairs(Keys.CLEAR_FREQ, 100));
+		mkt = factory.createMarket(MarketType.CALL, Props.fromPairs(ClearFrequency.class, TimeStamp.of(100)));
 		assertTrue(mkt instanceof CallMarket);
-		mkt = factory.createMarket(MarketType.CALL, Props.fromPairs(Keys.CLEAR_FREQ, 0));
+		mkt = factory.createMarket(MarketType.CALL, Props.fromPairs(ClearFrequency.class, TimeStamp.ZERO));
 		assertTrue(mkt instanceof CDAMarket);
 		mkt = factory.createMarket(MarketType.CDA, Props.fromPairs());
 		assertTrue(mkt instanceof CDAMarket);

@@ -1,10 +1,16 @@
 package systemmanager;
 
+import static systemmanager.SimulationSpec.*;
 import static org.junit.Assert.assertEquals;
 import static systemmanager.Consts.AgentType.ZIR;
 
 import org.junit.Test;
 
+import systemmanager.Keys.ArrivalRate;
+import systemmanager.Keys.FundamentalShockVar;
+import systemmanager.Keys.NumAgents;
+import systemmanager.Keys.PrivateValueVar;
+import systemmanager.Keys.TickSize;
 import systemmanager.SimulationSpec.PlayerSpec;
 
 import com.google.common.collect.ImmutableList;
@@ -26,17 +32,16 @@ public class SimulationTest {
 	// FIXME Add test for final fundamental price
 	
 	private static final Gson gson = new Gson();
+	// This is a little hacky...
 	private static final JsonObject baseSpec = gson.toJsonTree(ImmutableMap.of(
-			"assignment", ImmutableMap.of(
-					"role", ImmutableList.of()
-					),
-					"configuration", ImmutableMap.of(
-							Keys.ARRIVAL_RATE, 0.075,
-							Keys.PRIVATE_VALUE_VAR, 5e6,
-							Keys.FUNDAMENTAL_SHOCK_VAR, 1e6,
-							Consts.AgentType.ZI.toString(), Keys.NUM + "_" + 0,
-							Keys.TICK_SIZE, 1
-							)
+			ASSIGNMENT, ImmutableMap.of("role", ImmutableList.of()),
+			CONFIG, ImmutableMap.of(
+					keyToString(ArrivalRate.class), 0.075,
+					keyToString(PrivateValueVar.class), 5e6,
+					keyToString(FundamentalShockVar.class), 1e6,
+					Consts.AgentType.ZI.toString(), propsToConfig(Props.fromPairs(NumAgents.class, 1)),
+					keyToString(TickSize.class), 1
+					)
 			)).getAsJsonObject();
 
 	static JsonObject getBaseSpec() {
@@ -51,31 +56,32 @@ public class SimulationTest {
 	@Test
 	public void defaultPropertiesTest() {
 		JsonObject rawSpec = getBaseSpec();
-		rawSpec.get("assignment").getAsJsonObject().get("role").getAsJsonArray().add(new JsonPrimitive(ZIR.toString()));
+		rawSpec.get(ASSIGNMENT).getAsJsonObject().get("role").getAsJsonArray().add(new JsonPrimitive(ZIR.toString()));
 		SimulationSpec spec = new SimulationSpec(rawSpec);
 		// Test correct spec, since it'd be too hard to test the actual created
 		// agents, since knowledge is sealed away... Could use reflection...
 		PlayerSpec player = Iterables.getOnlyElement(spec.getPlayerProps());
 		Props props = player.agentProps;
 		assertEquals(ZIR, player.type);
-		assertEquals(0.075, props.getAsDouble(Keys.ARRIVAL_RATE), 0);
-		assertEquals(5e6, props.getAsDouble(Keys.PRIVATE_VALUE_VAR), 0);
-		assertEquals(1, props.getAsInt(Keys.TICK_SIZE));
+		assertEquals(0.075, props.get(ArrivalRate.class), 0);
+		assertEquals(5e6, props.get(PrivateValueVar.class), 0);
+		assertEquals(1, (int) props.get(TickSize.class));
 	}
 	
 	@Test
 	public void defaultPropertiesModificationsTest() {
 		JsonObject rawSpec = getBaseSpec();
-		rawSpec.get("configuration").getAsJsonObject().add(Keys.PRIVATE_VALUE_VAR, new JsonPrimitive(7e8));
-		rawSpec.get("assignment").getAsJsonObject().get("role").getAsJsonArray().add(new JsonPrimitive(ZIR + ":" + Keys.ARRIVAL_RATE + '_' + 0.05));
+		rawSpec.get("configuration").getAsJsonObject().add(keyToString(PrivateValueVar.class), new JsonPrimitive(7e8));
+		rawSpec.get("assignment").getAsJsonObject().get("role").getAsJsonArray().add(
+				new JsonPrimitive(ZIR + ":" + propsToConfig(Props.fromPairs(ArrivalRate.class, 0.05))));
 		SimulationSpec spec = new SimulationSpec(rawSpec);
 
 		PlayerSpec player = Iterables.getOnlyElement(spec.getPlayerProps());
 		Props props = player.agentProps;
 		assertEquals(ZIR, player.type);
-		assertEquals(0.05, props.getAsDouble(Keys.ARRIVAL_RATE), 0);
-		assertEquals(7e8, props.getAsDouble(Keys.PRIVATE_VALUE_VAR), 0);
-		assertEquals(1, props.getAsInt(Keys.TICK_SIZE));
+		assertEquals(0.05, props.get(ArrivalRate.class), 0);
+		assertEquals(7e8, props.get(PrivateValueVar.class), 0);
+		assertEquals(1, (int) props.get(TickSize.class));
 	}
 	
 }

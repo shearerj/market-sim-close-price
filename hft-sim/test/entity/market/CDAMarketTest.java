@@ -13,8 +13,6 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
 import systemmanager.MockSim;
 
 import com.google.common.collect.Iterables;
@@ -35,8 +33,7 @@ public class CDAMarketTest {
 
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.create(getClass(),
-				Log.Level.NO_LOGGING, MarketType.CDA, Keys.NUM_MARKETS + '_' + 1);
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1);
 		market = Iterables.getOnlyElement(sim.getMarkets());
 		info = market.getPrimaryView();
 	}

@@ -2,7 +2,6 @@ package entity.agent;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.util.Random;
@@ -12,8 +11,6 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
 import systemmanager.MockSim;
 
 import com.google.common.collect.Iterables;
@@ -29,7 +26,7 @@ public class NoOpAgentTest {
 
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING, MarketType.CDA, j.join(Keys.NUM_MARKETS, 1));
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1);
 		market = Iterables.getOnlyElement(sim.getMarkets());
 	}
 	

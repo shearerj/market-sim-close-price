@@ -9,7 +9,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.checkSingleTransaction;
 import static utils.Tests.checkTransaction;
-import static utils.Tests.j;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -22,8 +21,10 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
-import systemmanager.Keys;
+import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.FundamentalShockVar;
+import systemmanager.Keys.MarketLatency;
+import systemmanager.Keys.WindowLength;
 import systemmanager.MockSim;
 
 import com.google.common.collect.Iterables;
@@ -51,14 +52,12 @@ public class WindowAgentTest {
 
 	@Before
 	public void defaultSetup() throws IOException {
-		setup(-1);
+		setup(Props.fromPairs());
 	}
 	
-	public void setup(int latency) throws IOException{
-		sim = MockSim.create(getClass(),
-				Log.Level.NO_LOGGING, Keys.FUNDAMENTAL_MEAN,
-				100000, Keys.FUNDAMENTAL_SHOCK_VAR,
-				0, MarketType.CDA, j.join(Keys.NUM, 1, Keys.MARKET_LATENCY, latency));
+	public void setup(Props parameters) throws IOException{
+		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1,
+				Props.merge(Props.fromPairs(FundamentalMean.class, 100000, FundamentalShockVar.class, 0d), parameters));
 		market = Iterables.getOnlyElement(sim.getMarkets());
 		fast = market.getView(TimeStamp.IMMEDIATE);
 		buyer = mockAgent();
@@ -86,7 +85,7 @@ public class WindowAgentTest {
 	
 	@Test
 	public void delayedTransactionProcessorTest() throws IOException {
-		setup(5);
+		setup(Props.fromPairs(MarketLatency.class, TimeStamp.of(5)));
 		WindowAgent agent = windowAgent();
 		
 		// populate market with a transaction
@@ -153,8 +152,8 @@ public class WindowAgentTest {
 	
 	@Test
 	public void multipleTransactionWindowLatency() throws IOException{
-		setup(100);
-		WindowAgent agent = windowAgent(Keys.WINDOW_LENGTH, 160);
+		setup(Props.fromPairs(MarketLatency.class, TimeStamp.of(100)));
+		WindowAgent agent = windowAgent(Props.fromPairs(WindowLength.class, TimeStamp.of(160)));
 
 		addTransaction(Price.of(40), 1, TimeStamp.of(50));
 		// Agent can't see the transaction due to latency
@@ -188,7 +187,7 @@ public class WindowAgentTest {
 		int numberOfTransactions = 10;
 		TimeStamp windowLength = TimeStamp.of(rand.nextInt(100));
 		TimeStamp reentryTime = TimeStamp.of(windowLength.getInTicks() + rand.nextInt(100));
-		WindowAgent myAgent = windowAgent(Keys.WINDOW_LENGTH, windowLength.getInTicks());
+		WindowAgent myAgent = windowAgent(Props.fromPairs(WindowLength.class, windowLength));
 		
 		//Keep track of how many transactions should be in the window
 		int numWindow = 0;
@@ -222,12 +221,17 @@ public class WindowAgentTest {
 		sim.executeImmediate();
 	}
 	
-	private WindowAgent windowAgent(Object... parameters) {
+	private WindowAgent windowAgent(Props parameters) {
 		return new WindowAgent(sim, TimeStamp.ZERO, market, rand,
-				Props.withDefaults(Props.fromPairs(Keys.WINDOW_LENGTH, 10), parameters)) {
+				Props.merge(Props.fromPairs(WindowLength.class, TimeStamp.of(10)), parameters)) {
 			private static final long serialVersionUID = 1L;
 		};
 	}
+	
+	private WindowAgent windowAgent() {
+		return windowAgent(Props.fromPairs());
+	}
+	
 	private Agent mockAgent() {
 		return new Agent(sim, TimeStamp.ZERO, rand, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;

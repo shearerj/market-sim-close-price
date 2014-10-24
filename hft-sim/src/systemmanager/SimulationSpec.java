@@ -1,27 +1,26 @@
 package systemmanager;
 
-import static systemmanager.Consts.AgentType.LA;
-import static systemmanager.Consts.MarketType.CALL;
-import static systemmanager.Consts.MarketType.CDA;
-import static systemmanager.Keys.CLEAR_FREQ;
-import static systemmanager.Keys.NBBO_LATENCY;
-import static systemmanager.Keys.NUM;
-
 import java.io.Serializable;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Set;
 
+import props.Value;
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.MarketType;
-import systemmanager.Consts.Presets;
 
+import com.google.common.base.CaseFormat;
+import com.google.common.base.Functions;
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableMultiset;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 import com.google.gson.JsonDeserializationContext;
@@ -29,10 +28,10 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
+import data.Preset;
 import data.Props;
 
 /**
@@ -45,12 +44,20 @@ import data.Props;
  */
 public class SimulationSpec implements Serializable {
 
-	private static final long serialVersionUID = 5646083286397841102L;
+	public static final String CONFIG = "configuration";
+	public static final String ASSIGNMENT = "assignment";
 	
 	private static final Splitter propSplit = Splitter.on(';');
 	private static final Splitter paramSplit = Splitter.on('_');
+	private static final Joiner paramJoiner = Joiner.on('_');
 	private static final Splitter typeSplit = Splitter.on(':');
-
+	
+	// These are simulation specification keys, but not valid class keys
+	private static final Set<String> entityKeys = ImmutableSet.<String> builder()
+			.addAll(Iterables.transform(Arrays.asList(MarketType.values()), Functions.toStringFunction()))
+			.addAll(Iterables.transform(Arrays.asList(AgentType.values()), Functions.toStringFunction()))
+			.build();
+	
 	private transient final JsonObject rawSpec;
 	
 	private final Props simulationProperties;
@@ -68,10 +75,8 @@ public class SimulationSpec implements Serializable {
 	
 	protected SimulationSpec(JsonObject rawSpec) {
 		this.rawSpec = rawSpec;
-		JsonObject config = Optional.fromNullable(rawSpec.getAsJsonObject(Keys.CONFIG)).or(new JsonObject());
-		JsonObject players = Optional.fromNullable(rawSpec.getAsJsonObject(Keys.ASSIGN)).or(new JsonObject());
-
-		parsePresets(config);
+		JsonObject config = Preset.parsePresets(Optional.fromNullable(rawSpec.getAsJsonObject(CONFIG)).or(new JsonObject()));
+		JsonObject players = Optional.fromNullable(rawSpec.getAsJsonObject(ASSIGNMENT)).or(new JsonObject());
 		
 		this.simulationProperties = readProperties(config);
 		this.marketProps = markets(config, simulationProperties);
@@ -88,10 +93,11 @@ public class SimulationSpec implements Serializable {
 	}
 
 	protected static Props readProperties(JsonObject config) {
-		ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+		Props.Builder builder = Props.builder();
 		for (Entry<String, JsonElement> e : config.entrySet())
-			builder.put(e.getKey(), e.getValue().getAsString());
-		return Props.fromMap(builder.build());
+			if (!entityKeys.contains(e.getKey()))
+				builder.put(e.getKey(), e.getValue().getAsString());
+		return builder.build();
 	}
 
 	protected static Multimap<MarketType, Props> markets(JsonObject config, Props defaultProps) {
@@ -124,52 +130,10 @@ public class SimulationSpec implements Serializable {
 				String strat = stratString.getAsString();
 				Iterator<String> split = typeSplit.split(strat).iterator();
 				players.add(new PlayerSpec(e.getKey(), strat, AgentType.valueOf(split.next()), Props.withDefaults(defaults,
-						split.hasNext() ? paramSplit.split(split.next()) : ImmutableList.of())));
+						split.hasNext() ? paramSplit.split(split.next()) : ImmutableList.<String> of())));
 			}
 		}
 		return players.build();
-	}
-	
-	/**
-	 * Set preset for standard simulations
-	 */
-	// Just add a new case to add your own!
-	protected static void parsePresets(JsonObject config) {
-		JsonPrimitive preset = config.getAsJsonPrimitive(Keys.PRESETS);
-		if (preset == null || preset.getAsString().isEmpty())
-			return;
-		switch(Presets.valueOf(preset.getAsString())) {
-		case NONE:
-			break;
-		case TWOMARKET:
-			config.addProperty(CDA.toString(), NUM + "_2");
-			config.addProperty(CALL.toString(), NUM + "_0");
-			config.addProperty(LA.toString(), NUM + "_0");
-			break;
-			
-		case TWOMARKETLA:
-			config.addProperty(CDA.toString(), NUM + "_2");
-			config.addProperty(CALL.toString(), NUM + "_0");
-			config.addProperty(LA.toString(), NUM + "_1");
-			break;
-			
-		case CENTRALCDA:
-			config.addProperty(CDA.toString(), NUM + "_1");
-			config.addProperty(CALL.toString(), NUM + "_0");
-			config.addProperty(LA.toString(), NUM + "_0");
-			break;
-			
-		case CENTRALCALL:
-			int nbboLatency = config.getAsJsonPrimitive(NBBO_LATENCY).getAsInt();
-			config.addProperty(CDA.toString(), NUM + "_0");
-			config.addProperty(CALL.toString(), NUM + "_1_" + CLEAR_FREQ + "_" + nbboLatency);
-			config.addProperty(LA.toString(), NUM + "_0");
-			break;
-			
-		default:
-			throw new IllegalArgumentException("Unknown Preset");
-		}
-		
 	}
 
 	public Props getSimulationProps() {
@@ -204,10 +168,31 @@ public class SimulationSpec implements Serializable {
 		public final Props agentProps;
 		
 		public PlayerSpec(String role, String strategy, AgentType type, Props agentProps) {
-			this.descriptor = role + '_' + strategy;
+			this.descriptor = role + ' ' + strategy;
 			this.type = type;
 			this.agentProps = agentProps;
 		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static String propsToConfig(Props props) {
+		ImmutableList.Builder<String> strings = ImmutableList.builder();
+		for (Class<? extends Value<?>> key : props.keySet())
+			strings.add(keyToString(key))
+			.add(props.get((Class<Value<Object>>) key).toString());
+		return paramJoiner.join(strings.build());
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static JsonObject propsToJson(Props props) {
+		JsonObject root = new JsonObject();
+		for (Class<? extends Value<?>> key : props.keySet())
+			root.addProperty(keyToString(key), props.get((Class<Value<Object>>) key).toString());
+		return root;
+	}
+	
+	public static String keyToString(Class<?> key) {
+		return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, key.getSimpleName());
 	}
 
 	public static class SimSpecSerializer implements JsonSerializer<SimulationSpec> {
@@ -223,5 +208,7 @@ public class SimulationSpec implements Serializable {
 			return new SimulationSpec(json.getAsJsonObject());
 		}
 	}
+
+	private static final long serialVersionUID = 5646083286397841102L;
 
 }

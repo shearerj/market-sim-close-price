@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import systemmanager.Keys;
+import systemmanager.Keys.MarketLatency;
 import systemmanager.Simulation;
 import utils.Iterables2;
 
@@ -84,7 +84,7 @@ public abstract class Market extends Entity {
 		
 		this.notified = Maps.newHashMap();
 		this.views = Lists.newArrayList();
-		this.primaryView = getView(TimeStamp.of(props.getAsLong(Keys.MARKET_LATENCY)));
+		this.primaryView = getView(props.get(MarketLatency.class));
 		
 		this.orderMapping = Maps.newHashMap();
 		this.routedOrders = Maps.newHashMap();
