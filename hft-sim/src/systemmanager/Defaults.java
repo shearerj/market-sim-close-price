@@ -39,11 +39,11 @@ public class Defaults implements Serializable {
 		Keys.NUM_SIMULATIONS,		1,
 		Keys.NBBO_LATENCY,			-1,
 		Keys.MARKET_LATENCY,		-1,
-		Keys.QUOTE_LATENCY,			-1,
-		Keys.TRANSACTION_LATENCY,	-1,		
-
+		
+		// Market
 		Keys.PRICING_POLICY,		0.5,
-		Keys.CLEAR_FREQ,			1000,
+		Keys.CLEAR_INTERVAL,		1000,
+		
 		
 		// Agent-level defaults
 		Keys.ARRIVAL_RATE,			0.075,
@@ -61,7 +61,7 @@ public class Defaults implements Serializable {
 		Keys.BID_RANGE_MAX, 		5000, 
 		Keys.WINDOW_LENGTH, 		5000,
 		
-		Keys.ACCEPTABLE_PROFIT_FRACTION, 0.8, // For ZIRPs
+		Keys.ACCEPTABLE_PROFIT_THRESHOLD, 0.8, // For ZIRPs
 		Keys.WITHDRAW_ORDERS, 		true,	// for ZIRs
 	
 		// AA Agent
@@ -90,7 +90,7 @@ public class Defaults implements Serializable {
 	
 		// Market Maker
 		Keys.NUM_RUNGS, 			100,
-		Keys.RUNG_SIZE, 			1000,
+		Keys.RUNG_SIZE, 			100,
 		Keys.TRUNCATE_LADDER, 		true,
 		Keys.TICK_IMPROVEMENT, 		true,
 		Keys.TICK_OUTSIDE, 			false,
@@ -104,9 +104,8 @@ public class Defaults implements Serializable {
 		Keys.WEIGHT_FACTOR, 		0,
 		
 		// AdaptiveMM
-		Keys.SPREADS, 				new int[] {500,1000,2500,5000},
-		Keys.USE_MEDIAN_SPREAD, 	false, // XXX get rid of this altogether?
-		Keys.MOVING_AVERAGE_PRICE, 	true,
+		Keys.STRATS, 				new int[] {500,1000,2500,5000},
+		Keys.USE_MEDIAN_SPREAD, 	false,
 		Keys.FAST_LEARNING, 		true,
 		Keys.USE_LAST_PRICE, 		true,
 		

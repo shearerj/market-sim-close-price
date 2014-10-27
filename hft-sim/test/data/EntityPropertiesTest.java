@@ -33,7 +33,7 @@ public class EntityPropertiesTest {
 				Keys.WITHDRAW_ORDERS, false,
 				Keys.ASSIGN, "assign",
 				Keys.BETA_R, Float.MAX_VALUE,
-				Keys.SPREADS, "1-2-5");
+				Keys.STRATS, "1-2-5");
 		
 		assertEquals(0.005, props.getAsDouble(Keys.GAMMA), 1E-6);
 		assertEquals(10, props.getAsInt(Keys.ETA));
@@ -42,7 +42,7 @@ public class EntityPropertiesTest {
 		assertEquals(false, props.getAsBoolean(Keys.WITHDRAW_ORDERS));
 		assertEquals(Float.MAX_VALUE, props.getAsFloat(Keys.BETA_R), 1E-6);
 		int[] spreads = new int[]{1,2,5};
-		int[] propSpreads = props.getAsIntArray(Keys.SPREADS);
+		int[] propSpreads = props.getAsIntArray(Keys.STRATS);
 		for (int i = 0; i < 2; i++)
 			assertEquals(spreads[i], propSpreads[i]);
 		

@@ -18,12 +18,8 @@ public interface Keys {
 	public final static String REENTRY_RATE = 		"reentryRate";
 	public final static String BACKGROUND_REENTRY_RATE = "backgroundReentryRate";
 	public final static String MARKETMAKER_REENTRY_RATE = "marketmakerReentryRate";
-
-	public final static String WINDOW_LENGTH = 		"windowLength";
-	public final static String BID_RANGE_MAX = 		"bidRangeMax";
-	public final static String BID_RANGE_MIN = 		"bidRangeMin";
+	
 	public final static String MAX_POSITION = 		"maxPosition";
-	public final static String ALPHA = 				"alpha";
 	
 	public final static String TICK_SIZE = 			"tickSize";
 	public final static String MARKET_TICK_SIZE = 	"marketTickSize";
@@ -41,28 +37,35 @@ public interface Keys {
 	public final static String ASSIGN = 			"assignment";
 	public final static String CONFIG = 			"configuration";
 
-	// Observation Keys
+	// Observation Keys (control variates)
 	public final static String PV_BUY1 = 			"pv_buy1";
 	public final static String PV_SELL1 = 			"pv_sell1";
 	public final static String PV_POSITION1_MAX_ABS = "pv_position_max_abs1";
 
+	
 	// Latency
 	public final static String QUOTE_LATENCY = 		"quoteLatency";
-	public final static String TRANSACTION_LATENCY = "transactionLatency";
+	public final static String TRANSACTION_LATENCY = "transLatency";
 
 	public final static String NBBO_LATENCY = 		"nbboLatency";
 	public final static String MARKET_LATENCY = 	"mktLatency";
 	public final static String LA_LATENCY = 		"laLatency";
 	
 	// Call Market
-	public final static String CLEAR_FREQ =			"clearFreq";
+	public final static String CLEAR_INTERVAL =		"clearInterval";
 	public final static String PRICING_POLICY = 	"pricingPolicy";
 
+	
 	// Agents
-	public final static String WITHDRAW_ORDERS = 	"withdrawOrders";
-	public final static String NUM_HISTORICAL = 	"numHistorical";
+	public final static String WITHDRAW_ORDERS = 	"withdraw";
+	public final static String BID_RANGE_MAX = 		"Rmax";
+	public final static String BID_RANGE_MIN = 		"Rmin";
+	public final static String WINDOW_LENGTH = 		"window";
+	
+	public final static String ALPHA = 				"alpha";
 	
 	// AAAgent
+	// FIXME change AA agent params to all be set under a preset
 	public final static String ETA = 				"eta";
 	public final static String LAMBDA_R = 			"lambdaR";
 	public final static String LAMBDA_A = 			"lambdaA";
@@ -74,7 +77,7 @@ public interface Keys {
 	public final static String THETA_MAX = 			"thetaMax";
 	public final static String THETA_MIN = 			"thetaMin";
 	public final static String DEBUG = 				"debug";
-	public final static String BUYER_STATUS = 		"buyerStatus";
+	public final static String BUYER_STATUS = 		"buyer";
 	
 	// ZIPAgent
 	public final static String MARGIN_MIN = 		"marginMin";
@@ -87,26 +90,28 @@ public interface Keys {
 	public final static String COEFF_A = 			"rangeA";
 	
 	// ZIRPAgent
-	public final static String ACCEPTABLE_PROFIT_FRACTION = "acceptableProfFrac";
+	public final static String ACCEPTABLE_PROFIT_THRESHOLD = "thresh";
 
 	// Market Data Agent
 	public final static String FILENAME = 			"fileName";
 	
 	// Market Makers
-	public final static String NUM_RUNGS = 			"numRungs";
-	public final static String RUNG_SIZE = 			"rungSize";
-	public final static String TRUNCATE_LADDER = 	"truncateLadder";
-	public final static String TICK_IMPROVEMENT = 	"tickImprovement";
+	public final static String NUM_HISTORICAL = 	"N";
+	
+	public final static String NUM_RUNGS = 			"K";
+	public final static String RUNG_SIZE = 			"size";
+	public final static String TRUNCATE_LADDER = 	"trunc";
+	public final static String TICK_IMPROVEMENT = 	"tickImprove";
 	public final static String TICK_OUTSIDE = 		"tickOutside";
 	public final static String INITIAL_LADDER_MEAN = "initLadderMean";
 	public final static String INITIAL_LADDER_RANGE = "initLadderRange";
 	
-	public final static String WEIGHT_FACTOR = 		"weightFactor";
-	public final static String SPREADS = 			"spreads";
-	public final static String USE_MEDIAN_SPREAD = 	"useMedianSpread";
-	public final static String MOVING_AVERAGE_PRICE = "movingAveragePrice";	// TODO remove in next iteration; only keeping for backwards compatibility
-	public final static String FAST_LEARNING = 		"fastLearning";
-	public final static String USE_LAST_PRICE = 	"useLastPrice";
+	public final static String WEIGHT_FACTOR = 		"w";
+	public final static String STRATS = 			"strats";
+	public final static String USE_MEDIAN_SPREAD = 	"median";
+	public final static String FAST_LEARNING = 		"fastLearn";
+	public final static String USE_LAST_PRICE = 	"lastPrice";
+	
 	public final static String FUNDAMENTAL_ESTIMATE = "fundEstimate";
 	public final static String SPREAD = 			"spread";
 

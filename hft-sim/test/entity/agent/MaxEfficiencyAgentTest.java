@@ -54,7 +54,7 @@ public class MaxEfficiencyAgentTest {
 		sip = new SIP(exec, TimeStamp.IMMEDIATE);
 		// Creating the MockMarket
 		market = new CallMarket(exec, sip, rand, EntityProperties.fromPairs(
-				Keys.CLEAR_FREQ, 10));
+				Keys.CLEAR_INTERVAL, 10));
 	}
 	
 	@Test

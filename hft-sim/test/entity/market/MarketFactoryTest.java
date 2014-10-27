@@ -30,16 +30,16 @@ public class MarketFactoryTest {
 	@Test
 	public void createCallMarket() {
 		MarketProperties props = MarketProperties.empty(MarketType.CALL);
-		props.put(Keys.CLEAR_FREQ, 100);
+		props.put(Keys.CLEAR_INTERVAL, 100);
 		Market mkt = factory.createMarket(props);
 		assertTrue(mkt instanceof CallMarket);
-		assertEquals(TimeStamp.create(100), ((CallMarket) mkt).clearFreq);
+		assertEquals(TimeStamp.create(100), ((CallMarket) mkt).clearInterval);
 	}
 	
 	@Test
 	public void createZeroLatencyCallMarket() {
 		MarketProperties props = MarketProperties.empty(MarketType.CALL);
-		props.put(Keys.CLEAR_FREQ, 0);
+		props.put(Keys.CLEAR_INTERVAL, 0);
 		Market mkt = factory.createMarket(props);
 		assertTrue(mkt instanceof CDAMarket);
 	}

@@ -66,7 +66,7 @@ public class SimulationSpecTest {
 				break;
 			case CALL:
 				assertEquals(1, mp.getAsInt(Keys.NUM));
-				assertEquals(1337, mp.getAsInt(Keys.CLEAR_FREQ));
+				assertEquals(1337, mp.getAsInt(Keys.CLEAR_INTERVAL));
 				break;
 			default:
 			}
@@ -157,7 +157,7 @@ public class SimulationSpecTest {
 				break;
 			case CALL:
 				assertEquals(1, mp.getAsInt(Keys.NUM));
-				assertEquals(10, mp.getAsInt(Keys.CLEAR_FREQ));
+				assertEquals(10, mp.getAsInt(Keys.CLEAR_INTERVAL));
 				break;
 			default:
 			}

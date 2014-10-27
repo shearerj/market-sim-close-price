@@ -58,7 +58,7 @@ public class ZIRPAgentTest {
 					Keys.SIMULATION_LENGTH, 60000,
 					Keys.FUNDAMENTAL_KAPPA, 0.05,
 					Keys.FUNDAMENTAL_MEAN, 100000,
-					Keys.ACCEPTABLE_PROFIT_FRACTION, 0.8
+					Keys.ACCEPTABLE_PROFIT_THRESHOLD, 0.8
 					);
 
 	public ZIRPAgent createAgent(Object... parameters) {
@@ -133,7 +133,7 @@ public class ZIRPAgentTest {
 				Keys.BID_RANGE_MIN, 10000,
 				Keys.BID_RANGE_MAX, 10000,
 				Keys.WITHDRAW_ORDERS, true,
-				Keys.ACCEPTABLE_PROFIT_FRACTION, 0.75);
+				Keys.ACCEPTABLE_PROFIT_THRESHOLD, 0.75);
 
 		TimeStamp time = TimeStamp.ZERO;
 		final int simLength = 60000;
@@ -168,7 +168,7 @@ public class ZIRPAgentTest {
 				Keys.BID_RANGE_MIN, 10000,
 				Keys.BID_RANGE_MAX, 10000,
 				Keys.WITHDRAW_ORDERS, true,
-				Keys.ACCEPTABLE_PROFIT_FRACTION, 0.75);
+				Keys.ACCEPTABLE_PROFIT_THRESHOLD, 0.75);
 
 		TimeStamp time = TimeStamp.ZERO;
 		final int simLength = 60000;
@@ -205,7 +205,7 @@ public class ZIRPAgentTest {
 				Keys.BID_RANGE_MIN, 10000,
 				Keys.BID_RANGE_MAX, 10000,
 				Keys.WITHDRAW_ORDERS, true,
-				Keys.ACCEPTABLE_PROFIT_FRACTION, 0.75);
+				Keys.ACCEPTABLE_PROFIT_THRESHOLD, 0.75);
 		
 		TimeStamp time = TimeStamp.ZERO;
 		final int simLength = 60000;
@@ -237,7 +237,7 @@ public class ZIRPAgentTest {
 				Keys.BID_RANGE_MIN, 10000,
 				Keys.BID_RANGE_MAX, 10000,
 				Keys.WITHDRAW_ORDERS, true,
-				Keys.ACCEPTABLE_PROFIT_FRACTION, 0.75);
+				Keys.ACCEPTABLE_PROFIT_THRESHOLD, 0.75);
 
 		TimeStamp time = TimeStamp.ZERO;
 		final int simLength = 60000;
@@ -275,7 +275,7 @@ public class ZIRPAgentTest {
 				Keys.BID_RANGE_MIN, 10000,
 				Keys.BID_RANGE_MAX, 10000,
 				Keys.WITHDRAW_ORDERS, true,
-				Keys.ACCEPTABLE_PROFIT_FRACTION, 0.75);
+				Keys.ACCEPTABLE_PROFIT_THRESHOLD, 0.75);
 
 		TimeStamp time = TimeStamp.ZERO;
 		final int simLength = 60000;
@@ -312,7 +312,7 @@ public class ZIRPAgentTest {
 				Keys.BID_RANGE_MIN, 10000,
 				Keys.BID_RANGE_MAX, 10000,
 				Keys.WITHDRAW_ORDERS, true,
-				Keys.ACCEPTABLE_PROFIT_FRACTION, 0.75);
+				Keys.ACCEPTABLE_PROFIT_THRESHOLD, 0.75);
 
 		TimeStamp time = TimeStamp.ZERO;
 		final int simLength = 60000;

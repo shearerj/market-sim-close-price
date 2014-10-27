@@ -26,27 +26,27 @@ public class CallMarket extends Market {
 	
 	private static final long serialVersionUID = -1736458709580878467L;
 	
-	protected final TimeStamp clearFreq;
+	protected final TimeStamp clearInterval;
 	protected TimeStamp nextClearTime;
 
 	public CallMarket(Scheduler scheduler, SIP sip, Random rand,
 			TimeStamp latency, int tickSize, double pricingPolicy,
-			TimeStamp clearFreq) {
+			TimeStamp clearInterval) {
 		
 		this(scheduler, sip, rand, latency, latency, tickSize, pricingPolicy,
-				clearFreq);
+				clearInterval);
 	}
 
 	public CallMarket(Scheduler scheduler, SIP sip, Random rand,
 			TimeStamp quoteLatency, TimeStamp transactionLatency, int tickSize,
-			double pricingPolicy, TimeStamp clearFreq) {
+			double pricingPolicy, TimeStamp clearInterval) {
 		
 		super(scheduler, sip, quoteLatency, transactionLatency,
 				new UniformPriceClear(pricingPolicy, tickSize), rand);
-		checkArgument(clearFreq.after(TimeStamp.ZERO),
-				"Can't create a call market with clear frequency 0. Create a CDA instead.");
+		checkArgument(clearInterval.after(TimeStamp.ZERO),
+				"Can't create a call market with clearing interval 0. Create a CDA instead.");
 
-		this.clearFreq = clearFreq;
+		this.clearInterval = clearInterval;
 		this.nextClearTime = TimeStamp.ZERO;
 	}
 
@@ -58,12 +58,12 @@ public class CallMarket extends Market {
 				TimeStamp.create(props.getAsInt(Keys.TRANSACTION_LATENCY, Keys.MARKET_LATENCY)),
 				props.getAsInt(Keys.MARKET_TICK_SIZE, Keys.TICK_SIZE),
 				props.getAsDouble(Keys.PRICING_POLICY),
-				TimeStamp.create(props.getAsInt(Keys.CLEAR_FREQ)));
+				TimeStamp.create(props.getAsInt(Keys.CLEAR_INTERVAL)));
 	}
 
 	@Override
 	public void clear(TimeStamp currentTime) {
-		nextClearTime = currentTime.plus(clearFreq);
+		nextClearTime = currentTime.plus(clearInterval);
 		super.clear(currentTime);
 		scheduler.scheduleActivity(nextClearTime, new Clear(this));
 	}

@@ -49,8 +49,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 			int tickSize, int numRungs, int rungSize, boolean truncateLadder,
 			boolean tickImprovement, boolean tickOutside, int initLadderMean,
 			int initLadderRange, int numHistorical, int[] spreads, boolean useMedianSpread,
-			int volatilityBound, boolean movingAveragePrice, boolean fastLearning, 
-			boolean useLastPrice) {
+			int volatilityBound, boolean fastLearning, boolean useLastPrice) {
 
 		super(scheduler, fundamental, sip, market, rand, reentryRate, tickSize,
 				numRungs, rungSize, truncateLadder, tickImprovement, tickOutside,
@@ -63,7 +62,6 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		// XXX to maintain compatibility with previous version
 		this.fastLearning = fastLearning;
 		this.useLastPrice = useLastPrice;
-		if (movingAveragePrice) numHistorical = 8;
 		priceQueue = EvictingQueue.create(numHistorical);
 
 		// Initialize weights, initially all equal = 1/N, where N = # windows
@@ -89,7 +87,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 				props.getAsInt(Keys.INITIAL_LADDER_MEAN, Keys.FUNDAMENTAL_MEAN),
 				props.getAsInt(Keys.INITIAL_LADDER_RANGE),
 				props.getAsInt(Keys.NUM_HISTORICAL), 	// set default to 8 to maintain compatibility with previous version
-				props.getAsIntArray(Keys.SPREADS),
+				props.getAsIntArray(Keys.STRATS),
 				props.getAsBoolean(Keys.USE_MEDIAN_SPREAD),
 				//To approximate volatility bound, use the fact that 
 				//		next = prev + kappa(mean-prev) + nextGaussian(0,1)*sqrt(shock)
@@ -98,8 +96,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 				(int) Math.round(0.25 * props.getAsDouble(Keys.FUNDAMENTAL_KAPPA) 
 						* props.getAsInt(Keys.FUNDAMENTAL_MEAN) 
 						+ 2 * Math.sqrt(props.getAsInt(Keys.FUNDAMENTAL_SHOCK_VAR))),
-				props.getAsBoolean(Keys.MOVING_AVERAGE_PRICE), // XXX set default to false to maintain compatibility with previous version
-				props.getAsBoolean(Keys.FAST_LEARNING), // XXX set default to true to maintain compatibility with previous version
+				props.getAsBoolean(Keys.FAST_LEARNING), // XXX set default to false to maintain compatibility with previous version
 				props.getAsBoolean(Keys.USE_LAST_PRICE) // XXX set default to false to maintain compatibility with previous version
 			);
 	}
@@ -198,9 +195,6 @@ public class AdaptiveMarketMaker extends MarketMaker {
 			double newWeight = Math.exp(eta * valueDeltas.get(spread));
 			weights.put(spread, weights.get(spread) * newWeight);
 		}
-		//		for(Map.Entry<Integer,Double> e : weights.entrySet()){
-		//			e.setValue(e.getValue() * Math.exp(eta * valueDeltas.get(e.getKey())));
-		//		}
 		normalizeWeights();
 	}
 

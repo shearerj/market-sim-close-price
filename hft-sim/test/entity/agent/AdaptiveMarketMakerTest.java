@@ -53,11 +53,13 @@ public class AdaptiveMarketMakerTest {
 	private SIP sip;
 	private static final FundamentalValue fundamental = new MockFundamental(100000);
 	private static final EntityProperties agentProperties = EntityProperties.fromPairs(
-			Keys.REENTRY_RATE, 0,
 			Keys.TICK_IMPROVEMENT, false,
 			Keys.FUNDAMENTAL_KAPPA, 0.05,
+			Keys.NUM_HISTORICAL, 1,
 			Keys.FUNDAMENTAL_MEAN, 50,
-			Keys.FUNDAMENTAL_SHOCK_VAR, 10);
+			Keys.FUNDAMENTAL_SHOCK_VAR, 10,
+			Keys.REENTRY_RATE, 0.005,
+			Keys.TICK_SIZE, 1);
 
 	@BeforeClass
 	public static void setupClass() throws IOException {
@@ -87,7 +89,7 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 10,
 				Keys.TRUNCATE_LADDER, false,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2-4-6-8",
+				Keys.STRATS, "2-4-6-8",
 				Keys.INITIAL_LADDER_MEAN, 0,
 				Keys.INITIAL_LADDER_RANGE, 0);
 
@@ -109,7 +111,7 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 10,
 				Keys.TRUNCATE_LADDER, false,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2-4-6-8",
+				Keys.STRATS, "2-4-6-8",
 				Keys.INITIAL_LADDER_MEAN, 0,
 				Keys.INITIAL_LADDER_RANGE, 0);
 		mm.lastAsk = new Price(55);
@@ -152,7 +154,7 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 10,
 				Keys.TRUNCATE_LADDER, false,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2-4-6-8");
+				Keys.STRATS, "2-4-6-8");
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -205,11 +207,12 @@ public class AdaptiveMarketMakerTest {
 	@Test
 	public void quoteChangeTest() {
 		AdaptiveMarketMaker marketmaker = createAMM(
+				Keys.REENTRY_RATE, 0,
 				Keys.NUM_RUNGS, 2,
 				Keys.RUNG_SIZE, 10,
 				Keys.TRUNCATE_LADDER, false,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2");
+				Keys.STRATS, "2");
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -277,7 +280,7 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 12,
 				Keys.TRUNCATE_LADDER, false,
 				Keys.TICK_SIZE, 5,
-				Keys.SPREADS, "10");
+				Keys.STRATS, "10");
 
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -331,7 +334,7 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2");
+				Keys.STRATS, "2");
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -381,7 +384,7 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2");
+				Keys.STRATS, "2");
 		// Creating dummy agents
 		MockBackgroundAgent agent1 = new MockBackgroundAgent(exec, fundamental, sip, market);
 		MockBackgroundAgent agent2 = new MockBackgroundAgent(exec, fundamental, sip, market);
@@ -426,7 +429,7 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2",
+				Keys.STRATS, "2",
 				Keys.TICK_IMPROVEMENT, true,
 				Keys.TICK_OUTSIDE, true,
 				Keys.INITIAL_LADDER_MEAN, 50,
@@ -498,7 +501,7 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2-4-6",
+				Keys.STRATS, "2-4-6",
 				Keys.USE_MEDIAN_SPREAD, true);
 
 		// Creating dummy agents
@@ -538,9 +541,8 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2-40-50",
+				Keys.STRATS, "2-40-50",
 				Keys.NUM_HISTORICAL, 1,
-				Keys.MOVING_AVERAGE_PRICE, false,
 				Keys.USE_LAST_PRICE, true,
 				Keys.FAST_LEARNING, true,
 				Keys.USE_MEDIAN_SPREAD, true);
@@ -610,9 +612,8 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2-30-50",
+				Keys.STRATS, "2-30-50",
 				Keys.NUM_HISTORICAL, 5,
-				Keys.MOVING_AVERAGE_PRICE, false,
 				Keys.USE_LAST_PRICE, true,
 				Keys.FAST_LEARNING, true,
 				Keys.USE_MEDIAN_SPREAD, true);
@@ -720,7 +721,7 @@ public class AdaptiveMarketMakerTest {
 				Keys.RUNG_SIZE, 5,
 				Keys.TRUNCATE_LADDER, true,
 				Keys.TICK_SIZE, 1,
-				Keys.SPREADS, "2-40-50",
+				Keys.STRATS, "2-40-50",
 				Keys.USE_MEDIAN_SPREAD, true);
 
 		marketmaker.lastAsk = new Price(100);
