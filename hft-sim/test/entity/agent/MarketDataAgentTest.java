@@ -116,7 +116,7 @@ public class MarketDataAgentTest {
 		TimeStamp arrivalTime = peekable.hasNext() ? peekable.peek().getScheduledTime() : TimeStamp.ZERO;
 		final MarketDataAgent agent = new MarketDataAgent(sim, arrivalTime, market, rand, peekable,
 				Props.fromPairs());
-		sim.scheduleActivityIn(agent.getArrivalTime(), new Activity() {
+		sim.scheduleActivityIn(arrivalTime, new Activity() {
 			@Override public void execute() { agent.agentStrategy(); }
 		});
 		return agent;

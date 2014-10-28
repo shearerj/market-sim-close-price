@@ -7,7 +7,6 @@ import systemmanager.Keys.MaxQty;
 import systemmanager.Simulation;
 import data.Props;
 import entity.market.Market;
-import event.TimeStamp;
 
 /**
  * ZIAGENT
@@ -32,12 +31,12 @@ public class ZIAgent extends ZIRAgent {
 
 	private static final long serialVersionUID = 1148707664467962927L;
 
-	protected ZIAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
-		super(sim, arrivalTime, market, rand, Props.withDefaults(props, MaxQty.class, 1, BackgroundReentryRate.class, 0d));
+	protected ZIAgent(Simulation sim, Market market, Random rand, Props props) {
+		super(sim, market, rand, Props.withDefaults(props, MaxQty.class, 1, BackgroundReentryRate.class, 0d));
 	}
 	
-	public static ZIAgent create(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
-		return new ZIAgent(sim, arrivalTime, market, rand, props);
+	public static ZIAgent create(Simulation sim, Market market, Random rand, Props props) {
+		return new ZIAgent(sim, market, rand, props);
 	}
 	
 }

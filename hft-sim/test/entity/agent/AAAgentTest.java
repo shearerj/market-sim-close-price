@@ -72,7 +72,7 @@ public class AAAgentTest {
 
 		market = Iterables.getOnlyElement(sim.getMarkets());
 		view = market.getPrimaryView();
-		mockAgent = new BackgroundAgent(sim, TimeStamp.ZERO, market, rand, Props.fromPairs()) {
+		mockAgent = new BackgroundAgent(sim, market, rand, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override public String toString() { return "TestAgent"; }
 		};
@@ -823,7 +823,7 @@ public class AAAgentTest {
 	}
 
 	private AAAgent aaAgent(Props parameters) {
-		return new AAAgent(sim, TimeStamp.ZERO, market, rand, Props.merge(defaults, parameters));
+		return new AAAgent(sim, market, rand, Props.merge(defaults, parameters));
 	}
 
 	private void addOrder(OrderType type, Price price) {

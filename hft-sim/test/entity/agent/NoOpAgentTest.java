@@ -33,7 +33,7 @@ public class NoOpAgentTest {
 	@Test
 	public void strategyTest() {
 		Agent noop = NoOpAgent.create(sim, rand, Props.fromPairs());
-		Agent zir  = ZIRAgent.create(sim, TimeStamp.ZERO, market, rand, Props.fromPairs());
+		Agent zir  = ZIRAgent.create(sim, market, rand, Props.fromPairs());
 		
 		zir.agentStrategy();
 		noop.agentStrategy();

@@ -64,7 +64,7 @@ public class LAAgent extends HFTAgent {
 
 	@Override
 	// TODO Need strategy for orders that don't execute
-	public void agentStrategy() {
+	protected void agentStrategy() {
 		Optional<Price> bestBid = Optional.absent(), bestAsk = Optional.absent();
 		MarketView bestBidMarket = null, bestAskMarket = null;
 		int bestBidQuantity = 0, bestAskQuantity = 0;

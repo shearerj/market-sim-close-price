@@ -8,8 +8,6 @@ import static logger.Log.Level.INFO;
 import java.util.List;
 import java.util.Random;
 
-import com.google.common.collect.Ordering;
-
 import systemmanager.Keys.BetaMax;
 import systemmanager.Keys.BetaMin;
 import systemmanager.Keys.GammaMax;
@@ -22,12 +20,14 @@ import systemmanager.Keys.RangeR;
 import systemmanager.Simulation;
 import utils.Maths;
 import utils.Rands;
+
+import com.google.common.collect.Ordering;
+
 import data.Props;
 import entity.agent.position.Margin;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Transaction;
-import event.TimeStamp;
 import fourheap.Order.OrderType;
 
 /**
@@ -61,8 +61,8 @@ public class ZIPAgent extends WindowAgent {
 	protected final double rangeCoeffA;	// range for A, coefficient of absolute perturbation
 	protected final double rangeCoeffR;	// range for R, coefficient of relative perturbation
 
-	protected ZIPAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
-		super(sim, arrivalTime, market, rand, props);
+	protected ZIPAgent(Simulation sim, Market market, Random rand, Props props) {
+		super(sim, market, rand, props);
 
 		int maxAbsPosition = props.get(MaxQty.class);
 		
@@ -95,12 +95,12 @@ public class ZIPAgent extends WindowAgent {
 		this.margin = Margin.createRandomly(maxAbsPosition, rand, marginMin, marginMax);
 	}
 
-	public static ZIPAgent create(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
-		return new ZIPAgent(sim, arrivalTime, market, rand, props);
+	public static ZIPAgent create(Simulation sim, Market market, Random rand, Props props) {
+		return new ZIPAgent(sim, market, rand, props);
 	}
 	
 	@Override
-	public void agentStrategy() {
+	protected void agentStrategy() {
 		super.agentStrategy();
 		
 		// can buy and sell
@@ -174,7 +174,7 @@ public class ZIPAgent extends WindowAgent {
 	 * 
 	 * @return order price p_i
 	 */
-	public Price computeOrderPrice(double currentMargin) {
+	protected Price computeOrderPrice(double currentMargin) {
 		Price orderPrice = Price.of(limitPrice.intValue() * (1 + currentMargin));
 		log(INFO, "%s::computeOrderPrice: limitPrice=%s * (1+mu)=%.4f, returns %s",
 				this, limitPrice, 1 + currentMargin, orderPrice);
@@ -187,7 +187,7 @@ public class ZIPAgent extends WindowAgent {
 	 * @param lastTrans
 	 * @param currentTime
 	 */
-	public void updateMargin(Transaction lastTrans) {
+	protected void updateMargin(Transaction lastTrans) {
 		log(INFO, "%s::updateMargin: lastTransPrice=%s", this, lastTrans.getPrice());
 		updateMomentumChange(lastTrans);
 		if (limitPrice.intValue() > 0) {
@@ -209,7 +209,7 @@ public class ZIPAgent extends WindowAgent {
 	 * @param lastTrans
 	 * @param currentTime
 	 */
-	public void updateMomentumChange(Transaction lastTrans) {
+	protected void updateMomentumChange(Transaction lastTrans) {
 		double originalChange = momentumChange;
 		double delta = computeDelta(lastTrans);
 		log(INFO, "%s::updateMomentumChange: original change=%.4f, delta=%.4f", 
@@ -225,14 +225,8 @@ public class ZIPAgent extends WindowAgent {
 		}
 	}
 
-	/**
-	 * Compute Delta. Eq (13) in Cliff1997
-	 * 
-	 * @param lastTrans
-	 * @param currentTime
-	 * @return
-	 */
-	public double computeDelta(Transaction lastTrans){
+	/** Compute Delta. Eq (13) in Cliff1997 */
+	protected double computeDelta(Transaction lastTrans){
 		Price tau = computeTargetPrice(lastTrans);
 		return beta * (tau.intValue() - lastOrderPrice.intValue());
 	}
@@ -246,12 +240,8 @@ public class ZIPAgent extends WindowAgent {
 	 * 
 	 * If wish to decrease margin, then buyers will increase their target price
 	 * while sellers will decrease.
-	 * 
-	 * @param lastTrans
-	 * @param currentTime
-	 * @return
 	 */
-	public Price computeTargetPrice(Transaction lastTrans){
+	protected Price computeTargetPrice(Transaction lastTrans){
 		Price lastTransPrice = lastTrans.getPrice();
 		log(INFO, "%s::computeTargetPrice: lastPrice=%s, lastTransPrice=%s", this, lastOrderPrice, lastTransPrice);
 
@@ -304,13 +294,8 @@ public class ZIPAgent extends WindowAgent {
 		return false;
 	}
 
-	/**
-	 * Compute new coefficient of Relative Perturbation.
-	 * 
-	 * @param increaseTargetPrice
-	 * @return
-	 */
-	public double computeRCoefficient(boolean increaseTargetPrice){
+	/** Compute new coefficient of Relative Perturbation. */
+	protected double computeRCoefficient(boolean increaseTargetPrice){
 		if (increaseTargetPrice){
 			return Rands.nextUniform(rand, 1, 1+rangeCoeffR);
 		} 
@@ -318,13 +303,8 @@ public class ZIPAgent extends WindowAgent {
 		return Rands.nextUniform(rand, 1-rangeCoeffR, 1);
 	}
 
-	/**
-	 * Compute new coefficient of Absolute Perturbation
-	 * 
-	 * @param increaseTargetPrice
-	 * @return
-	 */
-	public double computeACoefficient(boolean increaseTargetPrice){
+	/** Compute new coefficient of Absolute Perturbation */
+	protected double computeACoefficient(boolean increaseTargetPrice){
 		if (increaseTargetPrice){
 			return Rands.nextUniform(rand, 0, rangeCoeffA);
 		} 

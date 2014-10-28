@@ -9,7 +9,6 @@ import java.util.Random;
 import systemmanager.Simulation;
 import data.Props;
 import entity.market.Market;
-import event.TimeStamp;
 import fourheap.Order.OrderType;
 
 /**
@@ -40,16 +39,16 @@ public class ZIRAgent extends BackgroundAgent {
 
 	private static final long serialVersionUID = -1155740218390579581L;
 
-	protected ZIRAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
-		super(sim, arrivalTime, market, rand, props);
+	protected ZIRAgent(Simulation sim, Market market, Random rand, Props props) {
+		super(sim, market, rand, props);
 	}
 
-	public static ZIRAgent create(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
-		return new ZIRAgent(sim, arrivalTime, market, rand, props);
+	public static ZIRAgent create(Simulation sim, Market market, Random rand, Props props) {
+		return new ZIRAgent(sim, market, rand, props);
 	}
 
 	@Override
-	public void agentStrategy() {
+	protected void agentStrategy() {
 		super.agentStrategy();
 
 		// 0.50% chance of being either long or short

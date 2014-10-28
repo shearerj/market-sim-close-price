@@ -95,7 +95,7 @@ public class ZIRPAgentTest {
 	}
 
 	public ZIRPAgent zirpAgent() {
-		return ZIRPAgent.create(sim, TimeStamp.ZERO, market, rand, defaults);
+		return ZIRPAgent.create(sim, market, rand, defaults);
 	}
 	
 	private Agent mockAgent() {

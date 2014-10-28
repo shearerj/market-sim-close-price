@@ -21,7 +21,6 @@ import com.google.common.collect.Iterables;
 import data.Props;
 import entity.market.Market;
 import entity.market.Price;
-import event.TimeStamp;
 
 /**
  * ZIAgent Test
@@ -75,7 +74,7 @@ public class ZIAgentTest {
 	
 	@SuppressWarnings("deprecation")
 	private ZIAgent ziAgent(){
-		return ZIAgent.create(sim, TimeStamp.ZERO, market, rand, defaults);
+		return ZIAgent.create(sim, market, rand, defaults);
 	}
 	
 }

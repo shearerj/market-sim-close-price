@@ -150,7 +150,7 @@ public class ZIRAgentTest {
 	}
 
 	public ZIRAgent zirAgent(Props parameters) {
-		return ZIRAgent.create(sim, TimeStamp.ZERO, market, rand, Props.merge(defaults, parameters));
+		return ZIRAgent.create(sim, market, rand, Props.merge(defaults, parameters));
 	}
 	
 	private Agent mockAgent() {

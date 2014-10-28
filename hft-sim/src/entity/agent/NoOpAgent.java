@@ -19,6 +19,6 @@ public class NoOpAgent extends Agent {
 		return new NoOpAgent(sim, rand, props);
 	}
 
-	@Override public void agentStrategy() { }
+	@Override protected void agentStrategy() { }
 	
 }

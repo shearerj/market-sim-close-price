@@ -66,7 +66,8 @@ public class MarketDataAgent extends SMAgent {
 		return new MarketDataAgent(sim, arrivalTime, market, rand, peekable, props);
 	}
 	
-	public void agentStrategy() {
+	@Override
+	protected void agentStrategy() {
 		if (!orderDatumIterator.hasNext())
 			return;
 		

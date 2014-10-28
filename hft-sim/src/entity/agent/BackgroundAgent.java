@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 import systemmanager.Keys.AcceptableProfitFrac;
+import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.BackgroundReentryRate;
 import systemmanager.Keys.BidRangeMax;
 import systemmanager.Keys.BidRangeMin;
@@ -64,8 +65,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	/**
 	 * Constructor for custom private valuation 
 	 */
-	protected BackgroundAgent(Simulation sim, PrivateValue privateValue, TimeStamp arrivalTime, Market market, Random rand, Props props) {
-		super(sim, privateValue, arrivalTime, market, rand,
+	protected BackgroundAgent(Simulation sim, PrivateValue privateValue, Market market, Random rand, Props props) {
+		super(sim, privateValue,
+				TimeStamp.of((long) Rands.nextExponential(rand, props.get(ArrivalRate.class))),
+				market, rand,
 				AgentFactory.exponentials(props.get(BackgroundReentryRate.class, ReentryRate.class), rand),
 				props);
 		this.bidRangeMin = props.get(BidRangeMin.class);
@@ -93,14 +96,14 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	/**
 	 * Default constructor with standard valuation model
 	 */
-	protected BackgroundAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
-		this(sim, ListPrivateValue.createRandomly(props.get(MaxQty.class), props.get(PrivateValueVar.class), rand), arrivalTime,
+	protected BackgroundAgent(Simulation sim, Market market, Random rand, Props props) {
+		this(sim, ListPrivateValue.createRandomly(props.get(MaxQty.class), props.get(PrivateValueVar.class), rand),
 				market,
 				rand, props);
 	}
 	
 	@Override
-	public void agentStrategy() {
+	protected void agentStrategy() {
 		if (withdrawOrders) {
 			log(INFO, "%s Withdraw all orders.", this);
 			withdrawAllOrders();

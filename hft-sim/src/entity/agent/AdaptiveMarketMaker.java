@@ -201,7 +201,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	}
 
 	@Override
-	public void agentStrategy() {
+	protected void agentStrategy() {
 		super.agentStrategy();
 		numReentries++;
 

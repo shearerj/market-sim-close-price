@@ -243,7 +243,7 @@ public class AgentTest {
 	
 	@Test
 	public void classPostTransactionTest() {
-		ZIRAgent zir = ZIRAgent.create(sim, TimeStamp.ZERO, trueMarket, rand, Props.fromPairs());
+		ZIRAgent zir = ZIRAgent.create(sim, trueMarket, rand, Props.fromPairs());
 		NoOpAgent noop1 = NoOpAgent.create(sim, rand, Props.fromPairs());
 		NoOpAgent noop2 = NoOpAgent.create(sim, rand, Props.fromPairs());
 		

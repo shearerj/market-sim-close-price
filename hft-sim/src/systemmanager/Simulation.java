@@ -12,7 +12,6 @@ import logger.Log;
 import logger.Log.Level;
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.MarketType;
-import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
@@ -30,10 +29,10 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 
 import data.FundamentalValue;
+import data.FundamentalValue.FundamentalValueView;
 import data.Player;
 import data.Props;
 import data.Stats;
-import data.FundamentalValue.FundamentalValueView;
 import entity.agent.Agent;
 import entity.agent.AgentFactory;
 import entity.infoproc.SIP;
@@ -110,12 +109,6 @@ public class Simulation {
 		this.agents = createAgents(this, markets, agentBuilder, spec.getAgentProps(), rand);
 		
 		this.sip = SIP.create(this, simProps.get(NbboLatency.class), markets);
-		
-		for (final Agent agent : agents) {
-			scheduleActivityIn(agent.getArrivalTime(), new Activity() {
-				@Override public void execute() { agent.agentStrategy(); }
-			});
-		}
 	}
 	
 	public static Simulation create(SimulationSpec spec, Random rand, Writer logWriter, Level logLevel) {
@@ -132,12 +125,11 @@ public class Simulation {
 		return markets.build();
 	}
 	
-	// Requires that any agents already created in the player stage
+	// Requires that any other agents already created in the player stage
 	private static Collection<Agent> createAgents(Simulation sim, Collection<Market> markets, Builder<Agent> agents, Multimap<AgentType, Props> agentProps, Random rand) {
 		for (Entry<AgentType, Props> e : agentProps.entries()) {
 			int number = e.getValue().get(NumAgents.class, Num.class);
-			double arrivalRate = e.getValue().get(ArrivalRate.class);
-			AgentFactory factory = AgentFactory.create(sim, markets, arrivalRate, new Random(rand.nextLong()));
+			AgentFactory factory = AgentFactory.create(sim, markets, new Random(rand.nextLong()));
 			for (int i = 0; i < number; i++)
 				agents.add(factory.createAgent(e.getKey(), e.getValue()));
 		}
@@ -149,7 +141,7 @@ public class Simulation {
 
 		for (Multiset.Entry<PlayerSpec> e : playerConfig.entrySet()) {
 			Props agentProperties = e.getElement().agentProps;
-			AgentFactory factory = AgentFactory.create(sim, markets, agentProperties.get(ArrivalRate.class), new Random(rand.nextLong()));
+			AgentFactory factory = AgentFactory.create(sim, markets, new Random(rand.nextLong()));
 			for (int i = 0; i < e.getCount(); i++) {
 				Agent agent = factory.createAgent(e.getElement().type, agentProperties);
 				agentBuilder.add(agent);

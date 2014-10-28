@@ -101,14 +101,8 @@ public abstract class MarketMaker extends ReentryAgent {
 	 * XXX Note that these are regular orders, not NMS orders.
 	 * 
 	 * buyMin < buyMax < sellMin < sellMax
-	 * 
-	 * @param buyMinPrice
-	 * @param buyMaxPrice
-	 * @param sellMinPrice
-	 * @param sellMaxPrice
-	 * @return
 	 */
-	public void submitOrderLadder(Price buyMinPrice, Price buyMaxPrice, 
+	protected void submitOrderLadder(Price buyMinPrice, Price buyMaxPrice, 
 			Price sellMinPrice, Price sellMaxPrice) {
 
 		// build ascending list of buy orders
@@ -136,12 +130,8 @@ public abstract class MarketMaker extends ReentryAgent {
 	 * 
 	 * XXX MM will lose time priority if use last bid & ask, but may not be
 	 * able to get around this since it doesn't know what's in the order book.
-	 * 
-	 * @param initLadderBid
-	 * @param initLadderAsk
-	 * @return
 	 */
-	public void createOrderLadder(Optional<Price> initLadderBid, Optional<Price> initLadderAsk) {
+	protected void createOrderLadder(Optional<Price> initLadderBid, Optional<Price> initLadderAsk) {
 		if ((!initLadderAsk.isPresent() || !initLadderBid.isPresent()) && initLadderMean == 0)
 			return;
 		Price ladderBid, ladderAsk;

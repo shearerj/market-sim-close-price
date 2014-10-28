@@ -117,7 +117,7 @@ public class WindowAgentTest {
 	@Test
 	public void singleTransactionWindow() {
 		WindowAgent agent = windowAgent();
-		assertEquals("WindowAgent Window Length is incorrect", TimeStamp.of(10), agent.windowLength);
+		assertEquals("WindowAgent Window Length is incorrect", TimeStamp.of(10), agent.getWindowLength());
 		
 		addTransaction(Price.of(20), 1, TimeStamp.of(10));
 		sim.executeUntil(TimeStamp.of(15));
@@ -223,7 +223,7 @@ public class WindowAgentTest {
 	}
 	
 	private WindowAgent windowAgent(Props parameters) {
-		return new WindowAgent(sim, TimeStamp.ZERO, market, rand,
+		return new WindowAgent(sim, market, rand,
 				Props.merge(Props.fromPairs(WindowLength.class, TimeStamp.of(10)), parameters)) {
 			private static final long serialVersionUID = 1L;
 		};

@@ -661,7 +661,7 @@ public class ZIPAgentTest {
 	}
 
 	private ZIPAgent zipAgent(Props parameters) {
-		return ZIPAgent.create(sim, TimeStamp.ZERO, market, new Random(rand.nextLong()),
+		return ZIPAgent.create(sim, market, new Random(rand.nextLong()),
 				Props.merge(defaults, parameters));
 	}
 	

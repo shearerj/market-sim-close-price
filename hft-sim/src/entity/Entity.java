@@ -23,7 +23,7 @@ public abstract class Entity implements Serializable {
 	protected final Simulation sim;
 	protected final int id;
 	
-	public Entity(int agentID, Simulation sim) {
+	protected Entity(int agentID, Simulation sim) {
 		this.id = agentID;
 		this.sim = checkNotNull(sim);
 	}
@@ -52,7 +52,7 @@ public abstract class Entity implements Serializable {
 		sim.postTimedStat(name, value);
 	}
 	
-	public final int getID() {
+	protected final int getID() {
 		return this.id;
 	}
 

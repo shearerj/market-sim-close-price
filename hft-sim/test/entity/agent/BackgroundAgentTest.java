@@ -875,7 +875,7 @@ public class BackgroundAgentTest {
 	}
 
 	private BackgroundAgent backgroundAgentwithPrivateValue(List<Price> privateValue, Props props) {
-		return new BackgroundAgent(sim, new ListPrivateValue(privateValue) { private static final long serialVersionUID = 1L; }, TimeStamp.ZERO,
+		return new BackgroundAgent(sim, new ListPrivateValue(privateValue) { private static final long serialVersionUID = 1L; },
 				market,
 				rand, Props.merge(defaults, props)) {
 			private static final long serialVersionUID = 1L;
@@ -888,7 +888,7 @@ public class BackgroundAgentTest {
 	}
 
 	private BackgroundAgent backgroundAgent(Props props) {
-		return new BackgroundAgent(sim, TimeStamp.ZERO, market, rand, Props.merge(defaults, props)) {
+		return new BackgroundAgent(sim, market, rand, Props.merge(defaults, props)) {
 			private static final long serialVersionUID = 1L;
 			@Override public String toString() { return "TestAgent " + id; }
 		};

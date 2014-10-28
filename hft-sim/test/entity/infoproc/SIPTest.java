@@ -298,6 +298,7 @@ public class SIPTest {
 		assertEquals("Incorrect BID market", Optional.of(market1), sip.getNBBO().bestBidMarket);
 	}
 	
+	// FIXME
 //	@Test
 //	public void transactionsInSIP() {
 //		//Creating dummy agents
@@ -603,7 +604,7 @@ public class SIPTest {
 	}
 	
 	private Agent mockAgent(Market market) {
-		return new BackgroundAgent(sim, TimeStamp.ZERO, market, rand, Props.fromPairs()) {
+		return new BackgroundAgent(sim, market, rand, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 		};
 	}

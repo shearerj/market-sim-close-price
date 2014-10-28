@@ -57,7 +57,7 @@ public class BasicMarketMaker extends MarketMaker {
 	}
 
 	@Override
-	public void agentStrategy() {
+	protected void agentStrategy() {
 		super.agentStrategy();
 
 		Quote quote = getQuote();

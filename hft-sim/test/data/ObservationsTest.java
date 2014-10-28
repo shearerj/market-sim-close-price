@@ -165,11 +165,12 @@ public class ObservationsTest {
 		final MarketView market = CDAMarket.create(sim, rand, Props.fromPairs()).getPrimaryView();
 		Agent buyer = new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {			
 			private static final long serialVersionUID = 1L;
-			@Override public void agentStrategy() {
+			@Override protected void agentStrategy() { }
+			public Agent submitOrder() {
 				submitOrder(market, BUY, Price.of(100000), 1);
+				return this;
 			}
-		};
-		buyer.agentStrategy();
+		}.submitOrder();
 		new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {			
 			private static final long serialVersionUID = 1L;
 			@Override public void agentStrategy() {
@@ -197,7 +198,7 @@ public class ObservationsTest {
 		final AtomicDouble pv1 = new AtomicDouble();
 		final AtomicDouble pv_1 = new AtomicDouble();
 		
-		Agent agent = new BackgroundAgent(sim, TimeStamp.ZERO, one, rand, Props.fromPairs()) {
+		Agent agent = new BackgroundAgent(sim, one, rand, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override public String toString() { return "TestAgent " + id; }
 			private Agent setup() {
@@ -229,7 +230,7 @@ public class ObservationsTest {
 		final AtomicDouble a_pv1 = new AtomicDouble();
 		final AtomicDouble a_pv_1 = new AtomicDouble();
 		
-		Agent agent = new BackgroundAgent(sim, TimeStamp.ZERO, one, rand, Props.fromPairs()) {
+		Agent agent = new BackgroundAgent(sim, one, rand, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override public String toString() { return "TestAgent " + id; }
 			private Agent setup() {
@@ -248,7 +249,7 @@ public class ObservationsTest {
 		final AtomicDouble b_pv1 = new AtomicDouble();
 		final AtomicDouble b_pv_1 = new AtomicDouble();
 		
-		agent = new BackgroundAgent(sim, TimeStamp.ZERO, one, rand, Props.fromPairs()) {
+		agent = new BackgroundAgent(sim, one, rand, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override public String toString() { return "TestAgent " + id; }
 			private Agent setup() {

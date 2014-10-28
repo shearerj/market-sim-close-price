@@ -17,17 +17,21 @@ public abstract class ReentryAgent extends SMAgent {
 	private static final long serialVersionUID = 4722377972197300345L;
 
 	protected Iterator<TimeStamp> reentry; // wait times between reentry
+	protected boolean arrived;
 
 	public ReentryAgent(Simulation sim, PrivateValue privateValue, TimeStamp arrivalTime, Market market, Random rand, 
 			Iterator<TimeStamp> reentry, Props props) {
 		super(sim, privateValue, arrivalTime, rand, market, props);
 		this.reentry = checkNotNull(reentry);
+		this.arrived = false;
 	}
 	
 	@Override
-	public void agentStrategy() {
-		if (!currentTime().equals(arrivalTime))
+	protected void agentStrategy() {
+		if (arrived)
 			log(INFO, "%s wake up.", this);
+		else
+			arrived = true;
 		
 		if (!reentry.hasNext()) // Empty iterator
 			return;

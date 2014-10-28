@@ -32,10 +32,10 @@ public abstract class WindowAgent extends BackgroundAgent {
 	
 	private static final long serialVersionUID = -8112884516819617629L;
 
-	protected TimeStamp windowLength;
+	private TimeStamp windowLength;
 
-	protected WindowAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
-		super(sim, arrivalTime, market, rand, props);
+	protected WindowAgent(Simulation sim, Market market, Random rand, Props props) {
+		super(sim, market, rand, props);
 		
 		this.windowLength = props.get(WindowLength.class);
 	}
@@ -51,7 +51,7 @@ public abstract class WindowAgent extends BackgroundAgent {
 	// FIXME Assert that the ording and searching are correct
 	// FIXME Should this take into account latency? Latency is effectively limitng size of window...
 	// Maybe get window from latest transaction time backwards?
-	public List<Transaction> getWindowTransactions() {
+	protected List<Transaction> getWindowTransactions() {
 		TimeStamp firstTimeInWindow = currentTime().minus(windowLength);
 
 		List<Transaction> allTransactions = primaryMarket.getTransactions();
@@ -66,7 +66,7 @@ public abstract class WindowAgent extends BackgroundAgent {
 		return allTransactions.subList(0, limit);
 	}
 	
-	public TimeStamp getWindowLength() {
+	protected TimeStamp getWindowLength() {
 		return windowLength;
 	}
 }

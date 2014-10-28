@@ -33,7 +33,6 @@ import entity.agent.position.Aggression;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Transaction;
-import event.TimeStamp;
 import fourheap.Order.OrderType;
 
 /**
@@ -79,8 +78,8 @@ public class AAAgent extends WindowAgent {
 	private double alphaMax; // max experienced value for alpha (for theta, not PV)
 	private double alphaMin; // min experienced value for alpha
 
-	protected AAAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
-		super(sim, arrivalTime, market, rand, props);
+	protected AAAgent(Simulation sim, Market market, Random rand, Props props) {
+		super(sim, market, rand, props);
 
 		this.type = props.get(BuyerStatus.class);
 		this.lastTransactionPrice = null;
@@ -118,12 +117,12 @@ public class AAAgent extends WindowAgent {
 		checkArgument(lambdaR >= 0, "lambdaR must be positive");
 	}
 
-	public static AAAgent create(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, Props props) {
-		return new AAAgent(sim, arrivalTime, market, rand, props);
+	public static AAAgent create(Simulation sim, Market market, Random rand, Props props) {
+		return new AAAgent(sim, market, rand, props);
 	}
 
 	@Override
-	public void agentStrategy() {
+	protected void agentStrategy() {
 		super.agentStrategy();
 
 		// re-initialize variables

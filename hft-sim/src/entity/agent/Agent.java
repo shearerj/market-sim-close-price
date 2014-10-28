@@ -49,7 +49,6 @@ public abstract class Agent extends Entity {
 	protected final Collection<OrderRecord> activeOrders;
 
 	// Agent parameters
-	protected final TimeStamp arrivalTime;
 	protected final int tickSize;
 
 	// Tracking position and profit
@@ -60,7 +59,6 @@ public abstract class Agent extends Entity {
 
 	protected Agent(Simulation sim, PrivateValue privateValue, TimeStamp arrivalTime, Random rand, Props props) {
 		super(sim.nextAgentId(), sim);
-		this.arrivalTime = checkNotNull(arrivalTime);
 		this.fundamental = sim.getFundamentalView(props.get(FundamentalLatency.class));
 		this.tickSize = props.get(AgentTickSize.class, TickSize.class);
 		this.rand = rand;
@@ -71,9 +69,12 @@ public abstract class Agent extends Entity {
 		this.profit = 0;
 		this.privateValue = checkNotNull(privateValue);
 		this.privateValueSurplus = DiscountedValue.create(props.get(DiscountFactors.class));
+		
+		// Schedule first entry
+		reenterIn(checkNotNull(arrivalTime));
 	}
 
-	public abstract void agentStrategy();
+	protected abstract void agentStrategy();
 
 	/** Liquidates an agent's position at the specified price. */
 	public void liquidateAtPrice(Price price) {
@@ -198,12 +199,8 @@ public abstract class Agent extends Entity {
 	protected void reenterIn(TimeStamp delay) {
 		sim.scheduleActivityIn(delay, new Activity() {
 			@Override public void execute() { agentStrategy(); }
-			@Override public String toString() { return "Reentry"; }
+			@Override public String toString() { return "Strategy"; }
 		});
-	}
-
-	public final TimeStamp getArrivalTime() {
-		return arrivalTime;
 	}
 	
 	protected BestBidAsk getNBBO() {
