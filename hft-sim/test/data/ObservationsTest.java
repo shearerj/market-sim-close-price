@@ -23,6 +23,7 @@ import systemmanager.SimulationSpec.PlayerSpec;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.AtomicDouble;
 
 import data.Observations.PlayerObservation;
@@ -68,7 +69,7 @@ public class ObservationsTest {
 	
 	@Test
 	public void meanSpreadTest() {
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create());
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), 3, Ints.asList());
 		
 		sim.postTimedStat(TimeStamp.ZERO, Stats.SPREAD + one, 1);
 		sim.postTimedStat(TimeStamp.of(1), Stats.SPREAD + one, 3);
@@ -79,7 +80,7 @@ public class ObservationsTest {
 		// To verify NBBO spread doesn't affect mean spread
 		sim.postTimedStat(TimeStamp.ZERO, Stats.NBBO_SPREAD, 100);
 		
-		obs.add(sim.getStats(), ImmutableList.<Agent> of(), ImmutableList.<Player> of(), 3);
+		obs.add(sim.getStats(), ImmutableList.<Player> of());
 		
 		assertEquals(3, obs.features.get(Stats.SPREAD + one + "_median").mean(), eps);
 		assertEquals(5, obs.features.get(Stats.SPREAD + two + "_median").mean(), eps);
@@ -90,7 +91,7 @@ public class ObservationsTest {
 	// TODO There are a lot of conditionals for "bad" data that also need to be tested
 	@Test
 	public void volitilityTest() {
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create());
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), 3000, Ints.asList(1, 250));
 
 		sim.postTimedStat(TimeStamp.ZERO, Stats.MIDQUOTE + one, 103);
 		sim.postTimedStat(TimeStamp.of(1000), Stats.MIDQUOTE + one, 106.5);
@@ -100,7 +101,7 @@ public class ObservationsTest {
 		sim.postTimedStat(TimeStamp.of(1000), Stats.MIDQUOTE + two, 100);
 		sim.postTimedStat(TimeStamp.of(2000), Stats.MIDQUOTE + two, 20);
 		
-		obs.add(sim.getStats(), ImmutableList.<Agent> of(), ImmutableList.<Player> of(), 3000);
+		obs.add(sim.getStats(), ImmutableList.<Player> of());
 		
 		assertEquals(1.4722055324274199, obs.features.get("vol_freq_1_" + Stats.MIDQUOTE + one + "_stddev").mean(), eps);
 		assertEquals(1.5374122295716148, obs.features.get("vol_freq_250_" + Stats.MIDQUOTE + one + "_stddev").mean(), eps);
@@ -124,13 +125,13 @@ public class ObservationsTest {
 	
 	@Test
 	public void nbboSpreadsTest() {
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create());
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), 3, Ints.asList());
 
 		sim.postTimedStat(TimeStamp.ZERO, Stats.NBBO_SPREAD, 1);
 		sim.postTimedStat(TimeStamp.of(1), Stats.NBBO_SPREAD, 3);
 		sim.postTimedStat(TimeStamp.of(2), Stats.NBBO_SPREAD, 6);
 
-		obs.add(sim.getStats(), ImmutableList.<Agent> of(), ImmutableList.<Player> of(), 3);
+		obs.add(sim.getStats(), ImmutableList.<Player> of());
 
 		assertEquals(3, obs.features.get(Stats.NBBO_SPREAD + "_median").mean(), eps);
 	}
@@ -143,14 +144,14 @@ public class ObservationsTest {
 	@Test
 	public void transPricesTest() throws IOException {
 		setup(Props.fromPairs(FundamentalMean.class, 100, Keys.FundamentalShockVar.class, 0d));
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create());
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), 3000, Ints.asList(1, 250));
 		
 		sim.postTimedStat(TimeStamp.ZERO, Stats.TRANSACTION_PRICE, 102);
 		sim.postTimedStat(TimeStamp.ZERO, Stats.TRANSACTION_PRICE, 104);
 		sim.postTimedStat(TimeStamp.of(1000), Stats.TRANSACTION_PRICE, 106);
 		sim.postTimedStat(TimeStamp.of(2000), Stats.TRANSACTION_PRICE, 108);
 		
-		obs.add(sim.getStats(), ImmutableList.<Agent> of(), ImmutableList.<Player> of(), 3000);
+		obs.add(sim.getStats(), ImmutableList.<Player> of());
 		
 		assertEquals(6.2182527020592095, obs.features.get("trans_freq_1_rmsd").mean(), eps);
 		assertEquals(6.2182527020592095, obs.features.get("trans_freq_250_rmsd").mean(), eps);
@@ -160,7 +161,7 @@ public class ObservationsTest {
 	@Test
 	public void playerTest() {
 		PlayerSpec spec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(ImmutableList.of(spec)));
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(ImmutableList.of(spec)), 1, Ints.asList());
 		
 		final MarketView market = CDAMarket.create(sim, rand, Props.fromPairs()).getPrimaryView();
 		Agent buyer = new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {			
@@ -182,9 +183,9 @@ public class ObservationsTest {
 		// Buyer bought good, so profit = -100000;
 		Player player = new Player(spec.descriptor, buyer);
 		
-		obs.add(sim.getStats(), ImmutableList.of(buyer), ImmutableList.of(player), 1);
+		obs.add(sim.getStats(), ImmutableList.of(player));
 		
-		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(spec.descriptor));
+		PlayerObservation pobs = Iterables.getOnlyElement(obs.playerObservations.get(spec.descriptor));
 		
 		assertEquals(-100000, pobs.payoff.mean(), eps);
 	}
@@ -193,7 +194,7 @@ public class ObservationsTest {
 	@Test
 	public void privateValueFeatureTest() {
 		PlayerSpec spec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(ImmutableList.of(spec)));
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(ImmutableList.of(spec)), 1, Ints.asList());
 		
 		final AtomicDouble pv1 = new AtomicDouble();
 		final AtomicDouble pv_1 = new AtomicDouble();
@@ -211,9 +212,9 @@ public class ObservationsTest {
 		
 		double maxAbsPos = Math.max(Math.abs(pv1.get()), Math.abs(pv_1.get()));
 		
-		obs.add(sim.getStats(), ImmutableList.of(agent), ImmutableList.of(player), 1);
+		obs.add(sim.getStats(), ImmutableList.of(player));
 		
-		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(spec.descriptor));
+		PlayerObservation pobs = Iterables.getOnlyElement(obs.playerObservations.get(spec.descriptor));
 		
 		assertEquals(pv1.get(), pobs.features.get(Observations.PV_BUY1).mean(), eps);
 		assertEquals(pv_1.get(), pobs.features.get(Observations.PV_SELL1).mean(), eps);
@@ -224,7 +225,7 @@ public class ObservationsTest {
 	@Test
 	public void playerFeatureMeanTest() {
 		PlayerSpec spec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(ImmutableList.of(spec)));
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(ImmutableList.of(spec)), 1, Ints.asList());
 		
 		// Set up the first agent (a) and record their private values
 		final AtomicDouble a_pv1 = new AtomicDouble();
@@ -243,7 +244,7 @@ public class ObservationsTest {
 		
 		double a_maxAbsPos = Math.max(Math.abs(a_pv1.get()), Math.abs(a_pv_1.get()));
 		
-		obs.add(sim.getStats(), ImmutableList.of(agent), ImmutableList.of(player), 1);
+		obs.add(sim.getStats(), ImmutableList.of(player));
 		
 		// Set up the second agent (b) and record their private values
 		final AtomicDouble b_pv1 = new AtomicDouble();
@@ -262,10 +263,10 @@ public class ObservationsTest {
 		
 		double b_maxAbsPos = Math.max(Math.abs(b_pv1.get()), Math.abs(b_pv_1.get()));
 		
-		obs.add(sim.getStats(), ImmutableList.of(agent), ImmutableList.of(player), 1);
+		obs.add(sim.getStats(), ImmutableList.of(player));
 		
 		// Test
-		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(spec.descriptor));
+		PlayerObservation pobs = Iterables.getOnlyElement(obs.playerObservations.get(spec.descriptor));
 		
 		assertEquals((a_pv1.get() + b_pv1.get()) / 2, pobs.features.get(Observations.PV_BUY1).mean(), eps);
 		assertEquals((a_pv_1.get() + b_pv_1.get()) / 2, pobs.features.get(Observations.PV_SELL1).mean(), eps);

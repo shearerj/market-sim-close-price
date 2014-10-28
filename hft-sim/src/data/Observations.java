@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import systemmanager.Consts;
 import systemmanager.SimulationSpec.PlayerSpec;
 import utils.Iterables2;
 import utils.Maps2;
@@ -23,7 +22,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 
-import entity.agent.Agent;
 
 /**
  * This class represents the summary of statistics after a run of the
@@ -64,11 +62,14 @@ public class Observations {
 	
 	// FIXME Change how multimap is output with a type converter
 	// FIXME Change how summstats is output with a type converter. Allow different kinds (e.g. variance...)
-	protected final Multimap<String, PlayerObservation> players;
+	protected final Multimap<String, PlayerObservation> playerObservations;
 	protected final Map<String, SummStats> features;
+	
+	private final int simLength;
+	private final Iterable<Integer> periods;
 
 	// FIXME Add white list to dictate how to handle standard stats
-	protected Observations(Multiset<PlayerSpec> playerProperties) {
+	protected Observations(Multiset<PlayerSpec> playerProperties, int simLength, Iterable<Integer> periods) {
 		features = Maps2.addDefault(Maps.<String, SummStats> newHashMap(), new Supplier<SummStats>() {
 			@Override public SummStats get() { return SummStats.on(); }
 		});
@@ -77,20 +78,23 @@ public class Observations {
 		for (Multiset.Entry<PlayerSpec> spec : playerProperties.entrySet())
 			for (int i = 0; i < spec.getCount(); ++i)
 				builder.put(spec.getElement().descriptor, PlayerObservation.create());
-		players = builder.build();
+		playerObservations = builder.build();
+		
+		this.simLength = simLength;
+		this.periods = periods;
 	}
 	
-	public static Observations create(Multiset<PlayerSpec> playerProperties) {
-		return new Observations(playerProperties);
+	public static Observations create(Multiset<PlayerSpec> playerProperties, int simLength, Iterable<Integer> periods) {
+		return new Observations(playerProperties, simLength, periods);
 	}
 	
-	public void add(Stats stats, Collection<Agent> agents, Collection<Player> playerAgents, int simLength) {
+	public void add(Stats stats, Collection<Player> players) {
 		// Handle Players
 		ImmutableMap.Builder<String, Iterator<PlayerObservation>> builder = ImmutableMap.builder();
-		for (Entry<String, Collection<PlayerObservation>> e : players.asMap().entrySet())
+		for (Entry<String, Collection<PlayerObservation>> e : playerObservations.asMap().entrySet())
 			builder.put(e.getKey(), e.getValue().iterator());
 		Map<String, Iterator<PlayerObservation>> playerObs = builder.build();
-		for (Player player : playerAgents)
+		for (Player player : players)
 			playerObs.get(player.getDescriptor()).next().observe(player);
 		// Check that all players were added
 		for (Iterator<PlayerObservation> iter : playerObs.values())
@@ -116,7 +120,7 @@ public class Observations {
 		// FIXME Make periods a simspec parameter
 		// RMSD
 		TimeSeries fundamental = stats.getTimeStats().get(Stats.FUNDAMENTAL);
-		for (int period : Consts.PERIODS) {
+		for (int period : periods) {
 			TimeSeries transPrices = stats.getTimeStats().get(Stats.TRANSACTION_PRICE);
 			double rmsd = Double.NaN;
 			if (transPrices != null) { // Will be null if there are no transactions
@@ -128,7 +132,7 @@ public class Observations {
 		}
 		
 		// Volatility
-		for (int period : Consts.PERIODS) {
+		for (int period : periods) {
 			String prefix = "vol_freq_" + period + '_';
 
 			SummStats stddev = SummStats.on();

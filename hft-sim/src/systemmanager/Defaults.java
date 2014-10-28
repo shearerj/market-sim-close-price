@@ -45,6 +45,7 @@ import systemmanager.Keys.NumHistorical;
 import systemmanager.Keys.NumMarkets;
 import systemmanager.Keys.NumRungs;
 import systemmanager.Keys.NumSims;
+import systemmanager.Keys.Periods;
 import systemmanager.Keys.PricingPolicy;
 import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.RandomSeed;
@@ -101,6 +102,7 @@ public class Defaults implements Serializable {
 			.put(AgentTickSize.class,	1)
 			
 			.put(DiscountFactors.class, Doubles.asList(0, 0.0006))
+			.put(Periods.class, Ints.asList(1, 250))
 			
 			// Simulation spec (general)
 			.put(SimLength.class,		60000)

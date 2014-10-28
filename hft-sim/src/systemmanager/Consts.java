@@ -7,9 +7,6 @@ package systemmanager;
  */
 public interface Consts {
 	
-	// FIXME Move these to the spec
-	public final static int[] PERIODS = { 1, 250 };
-	
 	// **********************************************************
 	// Agent, market, and model types
 	// XXX UPDATE WHEN ADD NEW AGENT, MARKET, OR MODEL
@@ -24,13 +21,7 @@ public interface Consts {
 	// Directories
 	public final static String TEST_OUTPUT_DIR = "simulations/unit_testing/";
 	
-	// Config/spec file names
-	public final static String OBJS_FILE_PREFIX = "objects";
-
-	// Constants in simulation_spec file
-	public final static String SETUP_SUFFIX = "_setup";
-	
-	// Exchanges
+	// Exchanges for market data agent
 	public final static String NYSE = "nyse";
 	public final static String NASDAQ = "nasdaq";
 
