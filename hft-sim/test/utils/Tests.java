@@ -26,6 +26,7 @@ import entity.market.Price;
 import entity.market.Quote;
 import entity.market.Transaction;
 import event.TimeStamp;
+import fourheap.Order.OrderType;
 
 public abstract class Tests {
 	
@@ -59,12 +60,22 @@ public abstract class Tests {
 		checkOrder(Iterables.getOnlyElement(singleOrder), price, quantity, createdTime, submittedTime);
 	}
 	
-	/** Absent submitted time null for convenience */
+	public static void checkSingleOrder(Collection<OrderRecord> singleOrder, OrderType type, Price price, int quantity, TimeStamp createdTime, TimeStamp submittedTime) {
+		assertEquals("Collection didn't have a single order record", 1, singleOrder.size());
+		checkOrder(Iterables.getOnlyElement(singleOrder), type, price, quantity, createdTime, submittedTime);
+	}
+	
+	/** Absent submitted time is null for convenience */
 	public static void checkOrder(OrderRecord order, Price price, int quantity, TimeStamp createdTime, TimeStamp submittedTime) {
 		assertEquals("Incorrect Price", price, order.getPrice());
 		assertEquals("Incorrect Quantity", quantity, order.getQuantity());
 		assertEquals("Incorrect Created Time", createdTime, order.getCreatedTime());
 		assertEquals("Incorrect Submitted Time", Optional.fromNullable(submittedTime), order.getSubmitTime());
+	}
+	
+	public static void checkOrder(OrderRecord order, OrderType type, Price price, int quantity, TimeStamp createdTime, TimeStamp submittedTime) {
+		assertEquals("Incorrect Order Type", type, order.getOrderType());
+		checkOrder(order, price, quantity, createdTime, submittedTime);
 	}
 	
 	public static void checkSingleOrderRange(Collection<OrderRecord> singleOrder, Price low, Price high, int quantity) {
