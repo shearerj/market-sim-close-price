@@ -28,7 +28,6 @@ import event.TimeStamp;
  */
 public class FundamentalValue extends Entity implements Iterable<Double>, Serializable {
 
-	private static final long serialVersionUID = 6764216196138108452L;
 	protected static final Ordering<TimeStamp> ord = Ordering.natural();
 	
 	protected final ArrayList<Double> meanRevertProcess;
@@ -58,12 +57,6 @@ public class FundamentalValue extends Entity implements Iterable<Double>, Serial
 	
 	/**
 	 * Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps
-	 * 
-	 * @param kap
-	 * @param meanVal
-	 * @param var
-	 * @param rand
-	 * @return
 	 */
 	public static FundamentalValue create(Simulation sim, double kap, int meanVal, double var, Random rand) {
 		return new FundamentalValue(sim, kap, meanVal, var, rand);
@@ -71,8 +64,6 @@ public class FundamentalValue extends Entity implements Iterable<Double>, Serial
 
 	/**
 	 * Helper method to ensure that maxQuery exists in the data structure.
-	 * 
-	 * @param maxQuery
 	 */
 	protected void computeFundamentalTo(int maxQuery) {
 		for (int i = meanRevertProcess.size(); i <= maxQuery; i++) {
@@ -102,17 +93,19 @@ public class FundamentalValue extends Entity implements Iterable<Double>, Serial
 		return Iterators.unmodifiableIterator(meanRevertProcess.iterator());
 	}
 	
-	// XXX These aren't rounded the way the price will be
+	// XXX These aren't rounded the way the prices will be
 	protected void postStat(int index, double value) {
 		sim.postTimedStat(TimeStamp.of(index), Stats.FUNDAMENTAL, value);
 		sim.postStat(Stats.CONTROL_FUNDAMENTAL, value);
 	}
 
+	/** Get a possibly delayed view of the fundamental process */
 	public FundamentalValueView getView(final TimeStamp latency) {
 		// TODO memeoize?
 		return new FundamentalValueView(ord.max(latency, TimeStamp.ZERO));
 	}
 	
+	/** A view of this process from some entity with limited information */
 	public class FundamentalValueView implements View {
 		private TimeStamp latency;
 		
@@ -120,6 +113,7 @@ public class FundamentalValue extends Entity implements Iterable<Double>, Serial
 			this.latency = latency;
 		}
 		
+		/** Gets most recent known value of the fundamental for an entity in the simulation */
 		public Price getValue() {
 			return FundamentalValue.this.getValueAt(ord.max(FundamentalValue.this.currentTime().minus(latency), TimeStamp.ZERO));
 		}
@@ -129,4 +123,6 @@ public class FundamentalValue extends Entity implements Iterable<Double>, Serial
 			return latency;
 		}
 	}
+
+	private static final long serialVersionUID = 6764216196138108452L;
 }

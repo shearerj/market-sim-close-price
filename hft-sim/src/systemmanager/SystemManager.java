@@ -17,9 +17,7 @@ import java.util.Random;
 
 import logger.Log;
 import systemmanager.Keys.NumSims;
-import systemmanager.Keys.Periods;
 import systemmanager.Keys.RandomSeed;
-import systemmanager.Keys.SimLength;
 import systemmanager.SimulationSpec.SimSpecDeserializer;
 
 import com.google.common.base.Objects;
@@ -122,10 +120,7 @@ public abstract class SystemManager {
 		// FIXME Decide how to handle this
 //		boolean outputConfig = Boolean.parseBoolean(props.getProperty("outputConfig", "false"));
 		
-		Observations observations = Observations.create(
-				specification.getPlayerProps(),
-				specification.getSimulationProps().get(SimLength.class),
-				specification.getSimulationProps().get(Periods.class));
+		Observations observations = Observations.create(specification.getPlayerProps(), specification.getSimulationProps());
 		Random rand = new Random();
 		
 		for (int i = 0; i < totalSimulations; i++) {

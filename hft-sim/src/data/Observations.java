@@ -7,6 +7,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import systemmanager.Keys.MeanPrefixes;
+import systemmanager.Keys.Periods;
+import systemmanager.Keys.SimLength;
+import systemmanager.Keys.StddevPrefixes;
+import systemmanager.Keys.SumPrefixes;
 import systemmanager.SimulationSpec.PlayerSpec;
 import utils.Iterables2;
 import utils.Maps2;
@@ -24,34 +29,10 @@ import com.google.common.collect.Multiset;
 
 
 /**
- * This class represents the summary of statistics after a run of the
- * simulation. The majority of the statistics that it collects are processed via
- * the EventBus, which is a message passing interface that can handle any style
- * of object. The rest, which mainly includes agent and player payoffs, is
- * processed when the call to getFeatures or getPlayerObservations is made.
- * 
- * Because this uses message passing, if you want the observation data structure
- * to get data, you must make sure to "register" it with the EventBus by calling
- * BUS.register(observations).
- * 
- * A single observation doesn't have that ability to save its results. Instead
- * you need to add it to a MultiSimulationObservation and use that class to
- * actually do the output.
- * 
- * To add statistics to the Observation:
- * <ol>
- * <li>Add the appropriate data structures to the object to record the
- * information you're interested in.</li>
- * <li>Create a listener method (located at the bottom, to tell what objects to
- * handle, and what to do with them.</li>
- * <li>Modify get features to take the aggregate data you stored, and turn it
- * into a String, double pair.</li>
- * <li>Wherever the relevant data is added simply add a line like
- * "Observations.BUS.post(dataObj);" with your appropriate data</li>
- * </ol>
+ * This class represents all of the final data about the simulation. Every piece
+ * of information it gets must be stored in a Stats object during the simulation
  * 
  * @author erik
- * 
  */
 public class Observations {
 	
@@ -67,9 +48,17 @@ public class Observations {
 	
 	private final int simLength;
 	private final Iterable<Integer> periods;
+	
+	/*
+	 * Each of these iterables lists prefixes for statistics to saved.
+	 * sumPrefixes contains prefixes of every statistic that should have its
+	 * summation saved. meanPrefixes for mean, etc.
+	 */
+	private final Iterable<String> sumPrefixes;
+	private final Iterable<String> meanPrefixes;
+	private final Iterable<String> stddevPrefixes;
 
-	// FIXME Add white list to dictate how to handle standard stats
-	protected Observations(Multiset<PlayerSpec> playerProperties, int simLength, Iterable<Integer> periods) {
+	protected Observations(Multiset<PlayerSpec> playerProperties, Props simulationProps) {
 		features = Maps2.addDefault(Maps.<String, SummStats> newHashMap(), new Supplier<SummStats>() {
 			@Override public SummStats get() { return SummStats.on(); }
 		});
@@ -80,12 +69,16 @@ public class Observations {
 				builder.put(spec.getElement().descriptor, PlayerObservation.create());
 		playerObservations = builder.build();
 		
-		this.simLength = simLength;
-		this.periods = periods;
+		this.simLength = simulationProps.get(SimLength.class);
+		this.periods = simulationProps.get(Periods.class);
+		
+		this.sumPrefixes = simulationProps.get(SumPrefixes.class);
+		this.meanPrefixes = simulationProps.get(MeanPrefixes.class);
+		this.stddevPrefixes = simulationProps.get(StddevPrefixes.class);
 	}
 	
-	public static Observations create(Multiset<PlayerSpec> playerProperties, int simLength, Iterable<Integer> periods) {
-		return new Observations(playerProperties, simLength, periods);
+	public static Observations create(Multiset<PlayerSpec> playerProperties, Props simulationProps) {
+		return new Observations(playerProperties, simulationProps);
 	}
 	
 	public void add(Stats stats, Collection<Player> players) {
@@ -101,7 +94,30 @@ public class Observations {
 			checkState(!iter.hasNext());
 		
 		// General Statistics
-		for (Entry<String, SummStats> e : stats.getSummaryStats().entrySet()) {
+		Map<String, SummStats> unseen = Maps.newHashMap(stats.getSummaryStats());
+		// Sum
+		for (String prefix : sumPrefixes) {
+			for (Entry<String, SummStats> e : Maps2.prefix(prefix, stats.getSummaryStats()).entrySet()) {
+				unseen.remove(e.getKey());
+				features.get(e.getKey() + "_sum").add(e.getValue().sum());
+			}
+		}
+		// Mean
+		for (String prefix : meanPrefixes) {
+			for (Entry<String, SummStats> e : Maps2.prefix(prefix, stats.getSummaryStats()).entrySet()) {
+				unseen.remove(e.getKey());
+				features.get(e.getKey() + "_mean").add(e.getValue().sum());
+			}
+		}
+		// Standard Deviation
+		for (String prefix : stddevPrefixes) {
+			for (Entry<String, SummStats> e : Maps2.prefix(prefix, stats.getSummaryStats()).entrySet()) {
+				unseen.remove(e.getKey());
+				features.get(e.getKey() + "_stddev").add(e.getValue().sum());
+			}
+		}
+		// Any unseen keys
+		for (Entry<String, SummStats> e : unseen.entrySet()) {
 			features.get(e.getKey() + "_sum").add(e.getValue().sum());
 			features.get(e.getKey() + "_mean").add(e.getValue().mean());
 			features.get(e.getKey() + "_stddev").add(e.getValue().stddev());

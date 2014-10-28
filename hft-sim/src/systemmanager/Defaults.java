@@ -1,6 +1,7 @@
 package systemmanager;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 import props.ImmutableProps;
 import props.Value;
@@ -37,6 +38,7 @@ import systemmanager.Keys.MarginMin;
 import systemmanager.Keys.MarketLatency;
 import systemmanager.Keys.MarketTickSize;
 import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.MeanPrefixes;
 import systemmanager.Keys.MovingAveragePrice;
 import systemmanager.Keys.NbboLatency;
 import systemmanager.Keys.Num;
@@ -55,6 +57,8 @@ import systemmanager.Keys.ReentryRate;
 import systemmanager.Keys.RungSize;
 import systemmanager.Keys.SimLength;
 import systemmanager.Keys.Spreads;
+import systemmanager.Keys.StddevPrefixes;
+import systemmanager.Keys.SumPrefixes;
 import systemmanager.Keys.Theta;
 import systemmanager.Keys.ThetaMax;
 import systemmanager.Keys.ThetaMin;
@@ -101,8 +105,12 @@ public class Defaults implements Serializable {
 			.put(MarketTickSize.class,	1)
 			.put(AgentTickSize.class,	1)
 			
-			.put(DiscountFactors.class, Doubles.asList(0, 0.0006))
-			.put(Periods.class, Ints.asList(1, 250))
+			.put(DiscountFactors.class,	Doubles.asList(0, 0.0006))
+			.put(Periods.class,			Ints.asList(1, 250))
+			
+			.put(SumPrefixes.class,		Arrays.<String> asList())
+			.put(MeanPrefixes.class,	Arrays.<String> asList())
+			.put(StddevPrefixes.class,	Arrays.<String> asList())
 			
 			// Simulation spec (general)
 			.put(SimLength.class,		60000)
