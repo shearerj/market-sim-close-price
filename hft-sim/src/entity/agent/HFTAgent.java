@@ -12,6 +12,7 @@ import com.google.common.collect.ImmutableList.Builder;
 
 import data.Props;
 import data.Stats;
+import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
@@ -30,7 +31,7 @@ public abstract class HFTAgent extends MMAgent {
 
 	protected HFTAgent(final Simulation sim, TimeStamp arrivalTime, Map<Market, TimeStamp> marketLatencies,
 			Random rand, Props props) {
-		super(sim, arrivalTime, toViews(marketLatencies), rand, props);
+		super(sim, PrivateValues.zero(), arrivalTime, toViews(marketLatencies), rand, props);
 		for (MarketView market : markets)
 			market.notify(this);
 	}
@@ -70,7 +71,7 @@ public abstract class HFTAgent extends MMAgent {
 	@Override
 	public void liquidateAtPrice(Price price) {
 		super.liquidateAtPrice(price);
-		sim.postStat(Stats.CLASS_PROFIT + "hft", profit);
+		sim.postStat(Stats.CLASS_PROFIT + "hft", getProfit());
 	}
 	
 }

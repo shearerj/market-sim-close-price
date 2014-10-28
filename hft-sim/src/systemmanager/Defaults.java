@@ -17,6 +17,7 @@ import systemmanager.Keys.BidRangeMin;
 import systemmanager.Keys.BuyerStatus;
 import systemmanager.Keys.ClearFrequency;
 import systemmanager.Keys.Debug;
+import systemmanager.Keys.DiscountFactors;
 import systemmanager.Keys.Eta;
 import systemmanager.Keys.FastLearning;
 import systemmanager.Keys.FundamentalKappa;
@@ -66,6 +67,7 @@ import systemmanager.Keys.WeightFactor;
 import systemmanager.Keys.WindowLength;
 import systemmanager.Keys.WithdrawOrders;
 
+import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Ints;
 
 import event.TimeStamp;
@@ -97,6 +99,8 @@ public class Defaults implements Serializable {
 			.put(TickSize.class,		1)
 			.put(MarketTickSize.class,	1)
 			.put(AgentTickSize.class,	1)
+			
+			.put(DiscountFactors.class, Doubles.asList(0, 0.0006))
 			
 			// Simulation spec (general)
 			.put(SimLength.class,		60000)

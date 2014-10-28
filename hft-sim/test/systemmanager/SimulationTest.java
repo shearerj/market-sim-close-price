@@ -1,6 +1,7 @@
 package systemmanager;
 
 import static systemmanager.SimulationSpec.*;
+import static data.Props.*;
 import static org.junit.Assert.assertEquals;
 import static systemmanager.Consts.AgentType.ZIR;
 
@@ -39,7 +40,7 @@ public class SimulationTest {
 					keyToString(ArrivalRate.class), 0.075,
 					keyToString(PrivateValueVar.class), 5e6,
 					keyToString(FundamentalShockVar.class), 1e6,
-					Consts.AgentType.ZI.toString(), propsToConfig(Props.fromPairs(NumAgents.class, 1)),
+					Consts.AgentType.ZI.toString(), Props.fromPairs(NumAgents.class, 1).toConfigString(),
 					keyToString(TickSize.class), 1
 					)
 			)).getAsJsonObject();
@@ -73,7 +74,7 @@ public class SimulationTest {
 		JsonObject rawSpec = getBaseSpec();
 		rawSpec.get("configuration").getAsJsonObject().add(keyToString(PrivateValueVar.class), new JsonPrimitive(7e8));
 		rawSpec.get("assignment").getAsJsonObject().get("role").getAsJsonArray().add(
-				new JsonPrimitive(ZIR + ":" + propsToConfig(Props.fromPairs(ArrivalRate.class, 0.05))));
+				new JsonPrimitive(ZIR + ":" + Props.fromPairs(ArrivalRate.class, 0.05).toConfigString()));
 		SimulationSpec spec = new SimulationSpec(rawSpec);
 
 		PlayerSpec player = Iterables.getOnlyElement(spec.getPlayerProps());

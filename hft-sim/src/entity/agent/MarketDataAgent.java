@@ -20,6 +20,7 @@ import com.google.common.collect.PeekingIterator;
 
 import data.Props;
 import entity.agent.MarketDataParser.MarketAction;
+import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import entity.market.Price;
 import event.TimeStamp;
@@ -31,7 +32,7 @@ public class MarketDataAgent extends SMAgent {
 
 	protected MarketDataAgent(Simulation sim, TimeStamp arrivalTime, Market market, 
 			Random rand, Iterator<MarketAction> orderDatumIterator, Props props) {
-		super(sim, arrivalTime, rand, market, props);
+		super(sim, PrivateValues.zero(), arrivalTime, rand, market, props);
 		this.orderDatumIterator = Iterators.peekingIterator(checkNotNull(orderDatumIterator));
 		refNumbers = HashBiMap.create();
 	}

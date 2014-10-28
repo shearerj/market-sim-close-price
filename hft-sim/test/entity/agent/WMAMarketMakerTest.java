@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
 import data.Props;
+import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
@@ -163,7 +164,7 @@ public class WMAMarketMakerTest {
 	}
 	
 	private Agent mockAgent() {
-		return new Agent(sim, TimeStamp.ZERO, rand, Props.fromPairs()) {
+		return new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override public void agentStrategy() { }
 			@Override public String toString() { return "TestAgent " + id; }

@@ -8,6 +8,8 @@ import static logger.Log.Level.INFO;
 import java.util.List;
 import java.util.Random;
 
+import com.google.common.collect.Ordering;
+
 import systemmanager.Keys.BetaMax;
 import systemmanager.Keys.BetaMin;
 import systemmanager.Keys.GammaMax;
@@ -44,9 +46,9 @@ import fourheap.Order.OrderType;
  * @author ewah
  */
 public class ZIPAgent extends WindowAgent {
-
-	private static final long serialVersionUID = 8138883791556301413L;
 	
+	protected static final Ordering<Price> pcomp = Ordering.natural();
+
 	protected OrderType type;				// buy or sell
 	protected Margin margin;				// one for each position, mu in Cliff1997
 	protected Price limitPrice;				// lambda in Cliff1997 TODO Change to Optional<Price>
@@ -105,7 +107,7 @@ public class ZIPAgent extends WindowAgent {
 		lastOrderPrice = null;
 		type = rand.nextBoolean() ? BUY : SELL;
 		
-		double currentMargin = getCurrentMargin(positionBalance, type);
+		double currentMargin = getCurrentMargin(type);
 		log(INFO, "%s::agentStrategy: initial mu=%.4f", this, currentMargin);
 
 		// Check if there are any transactions in the market model yet
@@ -118,7 +120,7 @@ public class ZIPAgent extends WindowAgent {
 			for (Transaction trans : pastTransactions) {
 				// Update margin
 				updateMargin(trans);
-				currentMargin = getCurrentMargin(positionBalance, type);
+				currentMargin = getCurrentMargin(type);
 				log(INFO, "%s::agentStrategy: mu=%.4f", this, currentMargin);
 			}
 
@@ -143,9 +145,9 @@ public class ZIPAgent extends WindowAgent {
 	 * @param currentTime
 	 * @return
 	 */
-	protected double getCurrentMargin(int aPositionBalance, OrderType aType) {
+	protected double getCurrentMargin(OrderType aType) {
 		
-		double currentMargin = margin.getValue(aPositionBalance, aType);
+		double currentMargin = margin.getValue(getPosition(), aType);
 
 		// Ensures margin is within the correct range for buyer or seller
 		double newMargin = currentMargin; 
@@ -161,7 +163,7 @@ public class ZIPAgent extends WindowAgent {
 		}
 		log(INFO, "%s::agentStrategy: updated mu=%.4f-->mu=%.4f", this, currentMargin, newMargin);
 		// set margin
-		margin.setValue(aPositionBalance, aType, newMargin);
+		margin.setValue(getPosition(), aType, newMargin);
 		return newMargin;
 	}
 	
@@ -194,7 +196,7 @@ public class ZIPAgent extends WindowAgent {
 			log(INFO, "%s::updateMargin: (lastOrderPrice + change)/limit - 1 = (%s + %f) / %s - 1 = new margin %.4f",
 					this, lastOrderPrice, momentumChange, limitPrice, newMargin);
 			
-			margin.setValue(positionBalance, type, newMargin);
+			margin.setValue(getPosition(), type, newMargin);
 		} else {
 			log(INFO, "%s::updateMargin: No update to margin as limit price is 0", this);
 		}
@@ -291,7 +293,7 @@ public class ZIPAgent extends WindowAgent {
 		
 		// If no order price yet, compute based on current margin
 		if (lastOrderPrice == null)
-			lastOrderPrice = computeOrderPrice(margin.getValue(positionBalance, type));
+			lastOrderPrice = computeOrderPrice(margin.getValue(getPosition(), type));
 		
 		switch (type) {
 			case BUY:
@@ -329,4 +331,6 @@ public class ZIPAgent extends WindowAgent {
 
 		return Rands.nextUniform(rand, -rangeCoeffA, 0);
 	}
+
+	private static final long serialVersionUID = 8138883791556301413L;
 }

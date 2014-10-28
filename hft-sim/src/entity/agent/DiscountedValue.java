@@ -1,8 +1,14 @@
 package entity.agent;
 
-import java.util.EnumMap;
+import static com.google.common.base.Preconditions.checkArgument;
 
-import systemmanager.Consts.DiscountFactor;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 
 /**
  * This class represents any value that needs to be stored at all discount
@@ -14,32 +20,26 @@ import systemmanager.Consts.DiscountFactor;
  */
 class DiscountedValue {
 
-	private EnumMap<DiscountFactor, Double> values;
+	private Map<Double, Double> values;
 	
-	public DiscountedValue() {
-		values = new EnumMap<DiscountFactor, Double>(DiscountFactor.class);
-		for (DiscountFactor discount : DiscountFactor.values())
+	private DiscountedValue(Iterable<Double> discountFactors) {
+		checkArgument(!Iterables.isEmpty(discountFactors));
+		values = Maps.newLinkedHashMap();
+		for (double discount : discountFactors)
 			values.put(discount, 0d);
 	}
 	
-	public static DiscountedValue create() {
-		return new DiscountedValue();
+	public static DiscountedValue create(Iterable<Double> discountFactors) {
+		return new DiscountedValue(discountFactors);
 	}
 	
-	public void addValue(double value, double discountTime) {
-		for (DiscountFactor discount : DiscountFactor.values())
-			values.put(discount, values.get(discount) + Math.exp(-discount.discount * discountTime) * value);
+	public void addValue(Number value, double discountTime) {
+		for (Entry<Double, Double> e : values.entrySet())
+			e.setValue(e.getValue() + Math.exp(-e.getKey() * discountTime) * value.doubleValue());
 	}
 	
-	/**
-	 * This method is very inefficient. Much better to use the array of iterate
-	 * if you know which one.
-	 * 
-	 * @param discount
-	 * @return
-	 */
-	public double getValueAtDiscount(DiscountFactor discount) {
-		return values.get(discount);
+	public Set<Entry<Double, Double>> getValues() {
+		return Collections.unmodifiableMap(values).entrySet();
 	}
 	
 }

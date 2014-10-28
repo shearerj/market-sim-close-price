@@ -3,8 +3,7 @@ package data;
 import static systemmanager.Consts.AgentType.LA;
 import static systemmanager.Consts.MarketType.CALL;
 import static systemmanager.Consts.MarketType.CDA;
-import static systemmanager.SimulationSpec.keyToString;
-import static systemmanager.SimulationSpec.propsToConfig;
+import static data.Props.keyToString;
 import systemmanager.Keys.ClearFrequency;
 import systemmanager.Keys.NbboLatency;
 import systemmanager.Keys.NumAgents;
@@ -29,28 +28,28 @@ public class Preset {
 			return config;
 			
 		case TWOMARKET:
-			config.addProperty(CDA.toString(), propsToConfig(Props.fromPairs(NumMarkets.class, 2)));
-			config.addProperty(CALL.toString(), propsToConfig(Props.fromPairs(NumMarkets.class, 0)));
-			config.addProperty(LA.toString(), propsToConfig(Props.fromPairs(NumAgents.class, 0)));
+			config.addProperty(CDA.toString(), Props.fromPairs(NumMarkets.class, 2).toConfigString());
+			config.addProperty(CALL.toString(), Props.fromPairs(NumMarkets.class, 0).toConfigString());
+			config.addProperty(LA.toString(), Props.fromPairs(NumAgents.class, 0).toConfigString());
 			return config;
 
 		case TWOMARKETLA:
-			config.addProperty(CDA.toString(), propsToConfig(Props.fromPairs(NumMarkets.class, 2)));
-			config.addProperty(CALL.toString(), propsToConfig(Props.fromPairs(NumMarkets.class, 0)));
-			config.addProperty(LA.toString(), propsToConfig(Props.fromPairs(NumAgents.class, 1)));
+			config.addProperty(CDA.toString(), Props.fromPairs(NumMarkets.class, 2).toConfigString());
+			config.addProperty(CALL.toString(), Props.fromPairs(NumMarkets.class, 0).toConfigString());
+			config.addProperty(LA.toString(), Props.fromPairs(NumAgents.class, 1).toConfigString());
 			return config;
 
 		case CENTRALCDA:
-			config.addProperty(CDA.toString(), propsToConfig(Props.fromPairs(NumMarkets.class, 1)));
-			config.addProperty(CALL.toString(), propsToConfig(Props.fromPairs(NumMarkets.class, 0)));
-			config.addProperty(LA.toString(), propsToConfig(Props.fromPairs(NumAgents.class, 0)));
+			config.addProperty(CDA.toString(), Props.fromPairs(NumMarkets.class, 1).toConfigString());
+			config.addProperty(CALL.toString(), Props.fromPairs(NumMarkets.class, 0).toConfigString());
+			config.addProperty(LA.toString(), Props.fromPairs(NumAgents.class, 0).toConfigString());
 			return config;
 
 		case CENTRALCALL:
 			TimeStamp nbboLatency = TimeStamp.of(config.getAsJsonPrimitive(keyToString(NbboLatency.class)).getAsInt());
-			config.addProperty(CDA.toString(), propsToConfig(Props.fromPairs(NumMarkets.class, 0)));
-			config.addProperty(CALL.toString(), propsToConfig(Props.fromPairs(NumMarkets.class, 1, ClearFrequency.class, nbboLatency)));
-			config.addProperty(LA.toString(), propsToConfig(Props.fromPairs(NumAgents.class, 0)));
+			config.addProperty(CDA.toString(), Props.fromPairs(NumMarkets.class, 0).toConfigString());
+			config.addProperty(CALL.toString(), Props.fromPairs(NumMarkets.class, 1, ClearFrequency.class, nbboLatency).toConfigString());
+			config.addProperty(LA.toString(), Props.fromPairs(NumAgents.class, 0).toConfigString());
 			return config;
 
 		default:

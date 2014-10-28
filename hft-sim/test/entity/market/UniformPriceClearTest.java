@@ -18,6 +18,7 @@ import systemmanager.MockSim;
 import data.Props;
 import entity.agent.Agent;
 import entity.agent.Agent.AgentView;
+import entity.agent.position.PrivateValues;
 import entity.agent.OrderRecord;
 import entity.market.Market.MarketView;
 import event.TimeStamp;
@@ -37,7 +38,7 @@ public class UniformPriceClearTest {
 			private static final long serialVersionUID = 1L;
 		};
 		market = mark.getPrimaryView();
-		agent = new Agent(sim, TimeStamp.ZERO, rand, Props.fromPairs()) {
+		agent = new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override public void agentStrategy() { }
 		}.getView(TimeStamp.IMMEDIATE);

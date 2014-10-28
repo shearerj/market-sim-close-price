@@ -50,9 +50,9 @@ public class MockSim extends Simulation {
 	
 	private static MockSim create(Writer writer, Log.Level logLevel, Props globalProps, Map<MarketType,Props> marketProps) {
 		JsonObject root = new JsonObject();
-		JsonObject config = SimulationSpec.propsToJson(globalProps);
+		JsonObject config = globalProps.toJson();
 		for (Entry<MarketType, Props> e : marketProps.entrySet())
-			config.addProperty(e.getKey().toString(), SimulationSpec.propsToConfig(e.getValue()));
+			config.addProperty(e.getKey().toString(), e.getValue().toConfigString());
 		root.add(SimulationSpec.CONFIG, config);
 		return new MockSim(writer, logLevel, root);
 	}

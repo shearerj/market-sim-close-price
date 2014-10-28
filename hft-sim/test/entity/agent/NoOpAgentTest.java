@@ -43,7 +43,7 @@ public class NoOpAgentTest {
 			sim.executeUntil(TimeStamp.of(i));
 			assertEquals(0, noop.getPayoff(), 0);		// No profit
 			assertTrue(noop.activeOrders.isEmpty());	// No orders
-			assertEquals(0, noop.positionBalance);		// No transactions
+			assertEquals(0, noop.getPosition());		// No transactions
 			assertTrue(noop.activeOrders.isEmpty());	// No orders
 		}
 		

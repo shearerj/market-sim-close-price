@@ -84,7 +84,7 @@ public class ListPrivateValue extends AbstractQuantityIndexedArray<Price> implem
 	
 	/** Checks that the quantities are within the range to add; otherwise ignores */
 	@Override
-	public Price getValueFromQuantity(int currentPosition, int quantity, OrderType type) {
+	public Price getValue(int currentPosition, int quantity, OrderType type) {
 		checkArgument(quantity > 0, "Quantity must be positive");
 		int step = type.equals(BUY) ? 1 : -1;
 		int nextPosition = currentPosition + quantity * step;

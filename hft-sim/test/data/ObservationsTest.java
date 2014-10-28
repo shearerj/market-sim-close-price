@@ -28,7 +28,11 @@ import com.google.common.util.concurrent.AtomicDouble;
 import data.Observations.PlayerObservation;
 import entity.agent.Agent;
 import entity.agent.BackgroundAgent;
+import entity.agent.position.PrivateValues;
+import entity.market.CDAMarket;
 import entity.market.Market;
+import entity.market.Price;
+import entity.market.Market.MarketView;
 import event.TimeStamp;
 
 public class ObservationsTest {
@@ -158,18 +162,26 @@ public class ObservationsTest {
 		PlayerSpec spec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
 		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(ImmutableList.of(spec)));
 		
-		Agent agent = new Agent(sim, TimeStamp.ZERO, rand, Props.fromPairs()) {			
+		final MarketView market = CDAMarket.create(sim, rand, Props.fromPairs()).getPrimaryView();
+		Agent buyer = new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {			
 			private static final long serialVersionUID = 1L;
-			@Override public void agentStrategy() { }
-			@Override public String toString() { return "TestAgent " + id; }
-			private Agent setProfit() {
-				profit = -100000;
-				return this;
+			@Override public void agentStrategy() {
+				submitOrder(market, BUY, Price.of(100000), 1);
 			}
-		}.setProfit();
-		Player player = new Player(spec.descriptor, agent);
+		};
+		buyer.agentStrategy();
+		new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {			
+			private static final long serialVersionUID = 1L;
+			@Override public void agentStrategy() {
+				submitOrder(market, SELL, Price.of(100000), 1);
+			}
+		}.agentStrategy();
+		sim.executeImmediate();
 		
-		obs.add(sim.getStats(), ImmutableList.of(agent), ImmutableList.of(player), 1);
+		// Buyer bought good, so profit = -100000;
+		Player player = new Player(spec.descriptor, buyer);
+		
+		obs.add(sim.getStats(), ImmutableList.of(buyer), ImmutableList.of(player), 1);
 		
 		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(spec.descriptor));
 		
@@ -189,8 +201,8 @@ public class ObservationsTest {
 			private static final long serialVersionUID = 1L;
 			@Override public String toString() { return "TestAgent " + id; }
 			private Agent setup() {
-				pv1.set(this.privateValue.getValue(0, BUY).doubleValue());
-				pv_1.set(this.privateValue.getValue(0, SELL).doubleValue());
+				pv1.set(getValuation(BUY).doubleValue());
+				pv_1.set(getValuation(SELL).doubleValue());
 				return this;
 			}
 		}.setup();
@@ -221,8 +233,8 @@ public class ObservationsTest {
 			private static final long serialVersionUID = 1L;
 			@Override public String toString() { return "TestAgent " + id; }
 			private Agent setup() {
-				a_pv1.set(this.privateValue.getValue(0, BUY).doubleValue());
-				a_pv_1.set(this.privateValue.getValue(0, SELL).doubleValue());
+				a_pv1.set(getValuation(BUY).doubleValue());
+				a_pv_1.set(getValuation(SELL).doubleValue());
 				return this;
 			}
 		}.setup();
@@ -240,8 +252,8 @@ public class ObservationsTest {
 			private static final long serialVersionUID = 1L;
 			@Override public String toString() { return "TestAgent " + id; }
 			private Agent setup() {
-				b_pv1.set(this.privateValue.getValue(0, BUY).doubleValue());
-				b_pv_1.set(this.privateValue.getValue(0, SELL).doubleValue());
+				b_pv1.set(getValuation(BUY).doubleValue());
+				b_pv_1.set(getValuation(SELL).doubleValue());
 				return this;
 			}
 		}.setup();

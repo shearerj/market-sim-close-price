@@ -5,6 +5,7 @@ import java.util.Random;
 
 import systemmanager.Simulation;
 import data.Props;
+import entity.agent.position.PrivateValue;
 import entity.market.Market.MarketView;
 import event.TimeStamp;
 
@@ -27,9 +28,9 @@ public abstract class MMAgent extends Agent {
 	
 	protected final Collection<MarketView> markets; 
 	
-	protected MMAgent(Simulation sim, TimeStamp arrivalTime, Collection<MarketView> markets,
+	protected MMAgent(Simulation sim, PrivateValue privateValue, TimeStamp arrivalTime, Collection<MarketView> markets,
 			Random rand, Props props) {
-		super(sim, arrivalTime, rand, props);
+		super(sim, privateValue, arrivalTime, rand, props);
 		this.markets = markets;
 	}
 

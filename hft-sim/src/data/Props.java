@@ -3,14 +3,17 @@ package data;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.Map.Entry;
 
 import props.ImmutableProps;
 import props.Value;
 import systemmanager.Defaults;
 
 import com.google.common.base.CaseFormat;
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
+import com.google.gson.JsonObject;
 
 /**
  * Class that represents the properties of an entity. These are generally loaded
@@ -24,6 +27,9 @@ import com.google.common.base.Optional;
  * 
  */
 public class Props implements Serializable {
+	
+	private static final Joiner paramJoiner = Joiner.on('_');
+	private static final String classPath = "systemmanager.Keys$";
 	
 	private final ImmutableProps props;
 
@@ -159,10 +165,6 @@ public class Props implements Serializable {
 				.get(); // Will throw an error if nothing was found
 	}
 	
-	public Set<Class<? extends Value<?>>> keySet() {
-		return props.keySet();
-	}
-	
 	public static class Builder {
 		private final ImmutableProps.Builder builder;
 		
@@ -176,7 +178,7 @@ public class Props implements Serializable {
 		}
 		
 		public Builder put(String simpleName, String value) {
-			builder.put("systemmanager.Keys$" + CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, simpleName), value);
+			builder.put(classPath + CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, simpleName), value);
 			return this;
 		}
 		
@@ -193,6 +195,25 @@ public class Props implements Serializable {
 	@Override
 	public String toString() {
 		return props.toString();
+	}
+	
+	public String toConfigString() {
+		ImmutableList.Builder<String> strings = ImmutableList.builder();
+		for (Entry<Class<? extends Value<?>>, Value<?>> e : props.entrySet())
+			strings.add(keyToString(e.getKey()))
+			.add(e.getValue().toString());
+		return paramJoiner.join(strings.build());
+	}
+	
+	public JsonObject toJson() {
+		JsonObject root = new JsonObject();
+		for (Entry<Class<? extends Value<?>>, Value<?>> e : props.entrySet())
+			root.addProperty(keyToString(e.getKey()), e.getValue().toString());
+		return root;
+	}
+	
+	public static String keyToString(Class<?> key) {
+		return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, key.getSimpleName());
 	}
 
 	private static final long serialVersionUID = -7220533203495890410L;

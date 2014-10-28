@@ -76,8 +76,8 @@ public class ImmutableProps {
 		return val == null ? null : val.get();
 	}
 	
-	public Set<Class<? extends Value<?>>> keySet() {
-		return map.keySet();
+	public Set<Entry<Class<? extends Value<?>>, Value<?>>> entrySet() {
+		return map.entrySet();
 	}
 	
 	public static Builder builder() {

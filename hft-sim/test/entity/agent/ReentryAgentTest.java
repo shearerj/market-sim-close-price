@@ -21,6 +21,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 
 import data.Props;
+import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import event.TimeStamp;
 
@@ -76,7 +77,7 @@ public class ReentryAgentTest {
 	}
 	
 	private ReentryAgent reentryAgent(Iterator<TimeStamp> reentry) {
-		return new ReentryAgent(sim, TimeStamp.ZERO, market, rand, reentry, Props.fromPairs()) {
+		return new ReentryAgent(sim, PrivateValues.zero(), TimeStamp.ZERO, market, rand, reentry, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 		};
 	}

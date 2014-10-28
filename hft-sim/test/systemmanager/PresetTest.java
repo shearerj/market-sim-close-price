@@ -57,7 +57,7 @@ public class PresetTest {
 		JsonObject config = new JsonObject();
 		json.add(SimulationSpec.CONFIG, config);
 		config.addProperty(Preset.KEY, CENTRALCALL.toString());
-		config.addProperty(SimulationSpec.keyToString(NbboLatency.class), 1337);
+		config.addProperty(Props.keyToString(NbboLatency.class), 1337);
 		
 		SimulationSpec spec = new SimulationSpec(json);
 		for (Entry<MarketType, Props> mp : spec.getMarketProps().entries()) {

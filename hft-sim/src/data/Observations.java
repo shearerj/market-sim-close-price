@@ -6,10 +6,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import systemmanager.Consts;
-import systemmanager.Consts.DiscountFactor;
 import systemmanager.SimulationSpec.PlayerSpec;
 import utils.Iterables2;
 import utils.Maps2;
@@ -20,14 +18,12 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 
 import entity.agent.Agent;
-import entity.agent.BackgroundAgent;
 
 /**
  * This class represents the summary of statistics after a run of the
@@ -100,12 +96,6 @@ public class Observations {
 		for (Iterator<PlayerObservation> iter : playerObs.values())
 			checkState(!iter.hasNext());
 		
-		// Get All Agent types in simulation
-		ImmutableSet.Builder<Class<? extends Agent>> agentTypesBuilder = ImmutableSet.builder();
-		for (Agent agent : agents)
-			agentTypesBuilder.add(agent.getClass());
-		Set<Class<? extends Agent>> agentTypes = agentTypesBuilder.build();
-		
 		// General Statistics
 		for (Entry<String, SummStats> e : stats.getSummaryStats().entrySet()) {
 			features.get(e.getKey() + "_sum").add(e.getValue().sum());
@@ -172,34 +162,6 @@ public class Observations {
 			features.get(prefix + "mean_stddev_price").add(stddev.mean());
 			features.get(prefix + "mean_log_price").add(logPriceVol.mean());
 			features.get(prefix + "mean_log_return").add(logRetVol.mean());
-		}
-		
-		// Surplus
-		// FIXME Move this to liquidate and then log it
-		Map<Class<? extends Agent>, SummStats> agentSurplus = Maps.newHashMap();
-		for (DiscountFactor discount : DiscountFactor.values()) {
-			SummStats surplus = SummStats.on();
-			
-			// go through all agents & update for each agent type
-			for (Agent agent : agents) {
-				if (agent instanceof BackgroundAgent) {
-					BackgroundAgent bgAgent = (BackgroundAgent) agent;
-					double discSurplus = bgAgent.getDiscountedSurplus(discount);
-					surplus.add(discSurplus);
-					SummStats surp = agentSurplus.get(bgAgent.getClass());
-					if (surp == null) {
-						surp = SummStats.on();
-						agentSurplus.put(bgAgent.getClass(), surp);
-					}
-					surp.add(discSurplus);
-				}
-			}
-
-			features.get("surplus_sum_" + discount).add(surplus.sum());
-			for (Class<? extends Agent> type : agentTypes)
-				if (BackgroundAgent.class.isAssignableFrom(type))
-					features.put("surplus_" + type.getSimpleName().toLowerCase() + "_sum_" + discount,
-							SummStats.on(agentSurplus.get(type).sum()));
 		}
 	}
 	

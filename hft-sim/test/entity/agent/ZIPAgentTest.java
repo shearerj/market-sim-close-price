@@ -37,6 +37,7 @@ import com.google.common.collect.Range;
 
 import data.Props;
 import entity.agent.position.Margin;
+import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
@@ -189,10 +190,10 @@ public class ZIPAgentTest {
 				MarginMin.class, 1.2));
 
 		// FIXME verify buyer margin within [-1, 0]
-		assertEquals(-1.0, agent.getCurrentMargin(0, BUY), eps);
+		assertEquals(-1.0, agent.getCurrentMargin(BUY), eps);
 		
 		// check seller margin
-		assertTrue("Current margin outside range", Range.closed(1.2, 1.5).contains(agent.getCurrentMargin(0, BUY)));
+		assertTrue("Current margin outside range", Range.closed(1.2, 1.5).contains(agent.getCurrentMargin(BUY)));
 	}
 	
 	@Test
@@ -222,7 +223,7 @@ public class ZIPAgentTest {
 		agent.lastOrderPrice = Price.of(99000);
 		
 		double oldMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type), eps);
+		assertEquals(oldMargin, agent.getCurrentMargin(agent.type), eps);
 		
 		agent.updateMargin(firstTrans);
 		double newMargin = agent.margin.getValue(0, agent.type);
@@ -261,10 +262,10 @@ public class ZIPAgentTest {
 		
 		// decrease target price; for buyer, means higher margin
 		double oldMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type), 0.001);
+		assertEquals(oldMargin, agent.getCurrentMargin(agent.type), 0.001);
 		agent.updateMargin(lastTrans);
 		double newMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type), 0.001);
+		assertEquals(newMargin, agent.getCurrentMargin(agent.type), 0.001);
 		checkMarginUpdate(lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
 	
@@ -300,10 +301,10 @@ public class ZIPAgentTest {
 		
 		// increase target price; for seller, means higher margin
 		double oldMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type), 0.001);
+		assertEquals(oldMargin, agent.getCurrentMargin(agent.type), 0.001);
 		agent.updateMargin(lastTrans);
 		double newMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type), 0.001);
+		assertEquals(newMargin, agent.getCurrentMargin(agent.type), 0.001);
 		checkMarginUpdate(lastOrderPrice, lastTransPrice, oldMargin, newMargin);	
 	}
 
@@ -342,10 +343,10 @@ public class ZIPAgentTest {
 		
 		// decrease target price; for buyer, means higher margin
 		double oldMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type), 0.001);
+		assertEquals(oldMargin, agent.getCurrentMargin(agent.type), 0.001);
 		agent.updateMargin(lastTrans);
 		double newMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type), 0.001);
+		assertEquals(newMargin, agent.getCurrentMargin(agent.type), 0.001);
 		checkMarginUpdate(lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
 	
@@ -384,10 +385,10 @@ public class ZIPAgentTest {
 		
 		// decrease target price; for buyer, means higher margin
 		double oldMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(oldMargin, agent.getCurrentMargin(0, agent.type), 0.001);
+		assertEquals(oldMargin, agent.getCurrentMargin(agent.type), 0.001);
 		agent.updateMargin(lastTrans);
 		double newMargin = agent.margin.getValue(0, agent.type);
-		assertEquals(newMargin, agent.getCurrentMargin(0, agent.type), 0.001);
+		assertEquals(newMargin, agent.getCurrentMargin(agent.type), 0.001);
 		checkMarginUpdate(lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
 
@@ -665,7 +666,7 @@ public class ZIPAgentTest {
 	}
 	
 	private Agent mockAgent() {
-		return new Agent(sim, TimeStamp.ZERO, rand, Props.fromPairs()) {
+		return new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override public void agentStrategy() { }
 			@Override public String toString() { return "TestAgent " + id; }

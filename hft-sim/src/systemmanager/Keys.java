@@ -7,6 +7,7 @@ import fourheap.Order.OrderType;
 import props.ParsableValue;
 import props.ParsableValue.BoolValue;
 import props.ParsableValue.DoubleValue;
+import props.ParsableValue.DoublesValue;
 import props.ParsableValue.EnumValue;
 import props.ParsableValue.IntValue;
 import props.ParsableValue.IntsValue;
@@ -24,6 +25,7 @@ public interface Keys {
 
 	public static class RandomSeed extends LongValue {};
 	public static class NumSims extends IntValue {};
+	public static class DiscountFactors extends DoublesValue {};
 	
 	public static class FileName extends StringValue {};
 	

@@ -2,7 +2,6 @@ package data;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,7 +29,6 @@ public class PropsTest {
 	public void emptyTest() {
 		Props props = Props.fromPairs();
 		assertEquals("{}", props.toString());
-		assertTrue(props.keySet().isEmpty());
 	}
 	
 	@Test

@@ -8,6 +8,7 @@ import java.util.Random;
 
 import systemmanager.Simulation;
 import data.Props;
+import entity.agent.position.PrivateValue;
 import entity.market.Market;
 import event.TimeStamp;
 
@@ -17,9 +18,9 @@ public abstract class ReentryAgent extends SMAgent {
 
 	protected Iterator<TimeStamp> reentry; // wait times between reentry
 
-	public ReentryAgent(Simulation sim, TimeStamp arrivalTime, Market market, Random rand, 
+	public ReentryAgent(Simulation sim, PrivateValue privateValue, TimeStamp arrivalTime, Market market, Random rand, 
 			Iterator<TimeStamp> reentry, Props props) {
-		super(sim, arrivalTime, rand, market, props);
+		super(sim, privateValue, arrivalTime, rand, market, props);
 		this.reentry = checkNotNull(reentry);
 	}
 	

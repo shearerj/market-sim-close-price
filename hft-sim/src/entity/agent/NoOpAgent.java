@@ -4,6 +4,7 @@ import java.util.Random;
 
 import systemmanager.Simulation;
 import data.Props;
+import entity.agent.position.PrivateValues;
 import event.TimeStamp;
 
 public class NoOpAgent extends Agent {
@@ -11,7 +12,7 @@ public class NoOpAgent extends Agent {
 	private static final long serialVersionUID = -7232513254416667984L;
 
 	protected NoOpAgent(Simulation sim, Random rand, Props props) {
-		super(sim, TimeStamp.ZERO, rand, props);
+		super(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, props);
 	}
 
 	public static NoOpAgent create(Simulation sim, Random rand, Props props) {

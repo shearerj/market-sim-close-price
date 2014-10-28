@@ -51,6 +51,10 @@ public abstract class ParsableValue<T> extends Value<T> {
 		public IntsValue() { super(new IterableConverter<Integer>(Ints.stringConverter())); }
 	}
 	
+	public static class DoublesValue extends ParsableValue<Iterable<Double>> {
+		public DoublesValue() { super(new IterableConverter<Double>(Doubles.stringConverter())); }
+	}
+	
 	public static class EnumValue<T extends Enum<T>> extends ParsableValue<T> {
 		protected EnumValue(Class<T> clazz) { super(new EnumConverter<T>(clazz)); }
 	}

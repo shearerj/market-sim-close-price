@@ -7,13 +7,10 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import props.Value;
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.MarketType;
 
-import com.google.common.base.CaseFormat;
 import com.google.common.base.Functions;
-import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -49,7 +46,6 @@ public class SimulationSpec implements Serializable {
 	
 	private static final Splitter propSplit = Splitter.on(';');
 	private static final Splitter paramSplit = Splitter.on('_');
-	private static final Joiner paramJoiner = Joiner.on('_');
 	private static final Splitter typeSplit = Splitter.on(':');
 	
 	// These are simulation specification keys, but not valid class keys
@@ -172,27 +168,6 @@ public class SimulationSpec implements Serializable {
 			this.type = type;
 			this.agentProps = agentProps;
 		}
-	}
-	
-	@SuppressWarnings("unchecked")
-	public static String propsToConfig(Props props) {
-		ImmutableList.Builder<String> strings = ImmutableList.builder();
-		for (Class<? extends Value<?>> key : props.keySet())
-			strings.add(keyToString(key))
-			.add(props.get((Class<Value<Object>>) key).toString());
-		return paramJoiner.join(strings.build());
-	}
-	
-	@SuppressWarnings("unchecked")
-	public static JsonObject propsToJson(Props props) {
-		JsonObject root = new JsonObject();
-		for (Class<? extends Value<?>> key : props.keySet())
-			root.addProperty(keyToString(key), props.get((Class<Value<Object>>) key).toString());
-		return root;
-	}
-	
-	public static String keyToString(Class<?> key) {
-		return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, key.getSimpleName());
 	}
 
 	public static class SimSpecSerializer implements JsonSerializer<SimulationSpec> {

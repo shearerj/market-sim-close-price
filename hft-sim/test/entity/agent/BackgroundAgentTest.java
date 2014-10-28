@@ -19,7 +19,6 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts;
 import systemmanager.Keys.AcceptableProfitFrac;
 import systemmanager.Keys.BackgroundReentryRate;
 import systemmanager.Keys.BidRangeMax;
@@ -42,6 +41,7 @@ import data.FundamentalValue.FundamentalValueView;
 import data.Props;
 import data.Stats;
 import entity.agent.position.ListPrivateValue;
+import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
@@ -188,7 +188,7 @@ public class BackgroundAgentTest {
 		int pv8 = pv.get(8).intValue();
 		int pv9 = pv.get(9).intValue();
 
-		agent.positionBalance = 3;
+		setPosition(agent, 3);
 		Price fund = fundamental.getValue();
 		Price val = agent.getValuation(BUY);
 		assertEquals(fund.intValue() + pv8, val.intValue());
@@ -199,7 +199,7 @@ public class BackgroundAgentTest {
 		assertEquals(fund.intValue()*2 + pv7 + pv6, 
 				agent.getValuation(SELL, 2).intValue());
 
-		agent.positionBalance = -2;
+		setPosition(agent, -2);
 		fund = fundamental.getValue();
 		val = agent.getValuation(BUY);
 		assertEquals(fund.intValue() + pv3, val.intValue());
@@ -237,14 +237,14 @@ public class BackgroundAgentTest {
 		int pv8 = pv.get(8).intValue();
 		int pv9 = pv.get(9).intValue();
 
-		agent.positionBalance = 3;
+		setPosition(agent, 3);
 		Price fund = fundamental.getValue();
 		assertEquals(Price.of(((double) fund.intValue()*2 + pv9 + pv8) / 2),
 				agent.getLimitPrice(BUY, 2));
 		assertEquals(Price.of(((double) fund.intValue()*2 + pv7 + pv6) / 2),
 				agent.getLimitPrice(SELL, 2));
 
-		agent.positionBalance = -2;
+		setPosition(agent, -2);
 		fund = fundamental.getValue();
 		assertEquals(Price.of(((double) fund.intValue()*3 + pv3 + pv4 + pv5) / 3),
 				agent.getLimitPrice(BUY, 3));
@@ -277,28 +277,27 @@ public class BackgroundAgentTest {
 				PrivateValueVar.class, 1000000d));
 		Agent mockAgent = backgroundAgent();
 
-		assertEquals(0, agent.positionBalance);
-		assertEquals(0, mockAgent.positionBalance);
+		assertEquals(0, agent.getPosition());
+		assertEquals(0, mockAgent.getPosition());
 
 		// Creating and adding bids
 		submitOrder(agent, BUY, Price.of(110000), 1);
 		submitOrder(mockAgent, SELL, Price.of(100000), 1);
 		
 		assertEquals(1, view.getTransactions().size());
-		assertEquals(1, agent.positionBalance);
-		assertEquals(-110000, agent.profit);
-		assertEquals(-1, mockAgent.positionBalance);
-		assertEquals(110000, mockAgent.profit);
+		assertEquals(1, agent.getPosition());
+		assertEquals(-110000, agent.getProfit());
+		assertEquals(-1, mockAgent.getPosition());
+		assertEquals(110000, mockAgent.getProfit());
 
 		// Check surplus
-		int val = agent.getTransactionValuation(BUY, sim.getCurrentTime()).intValue();
-		assertEquals(val - 110000, agent.surplus.getValueAtDiscount(Consts.DiscountFactor.NO_DISC), 0.001);
+		int val = agent.getValuation(BUY).intValue();
 		assertEquals(val - 110000, agent.getPayoff(), 0.001);
 
 		// Check payoff
 		agent.liquidateAtPrice(fundamental.getValue());
 		Price endTimeFundamental = fundamental.getValue();
-		assertEquals(endTimeFundamental.intValue(), agent.getLiquidationProfit());
+		assertEquals(endTimeFundamental.intValue(), agent.getProfit());
 		assertEquals(val - 110000 + endTimeFundamental.intValue(), agent.getPayoff(), 0.001);
 	}
 
@@ -311,8 +310,8 @@ public class BackgroundAgentTest {
 				PrivateValueVar.class, 1000000d));
 		Agent mockAgent = backgroundAgent();
 
-		assertEquals(0, agent.positionBalance);
-		assertEquals(0, mockAgent.positionBalance);
+		assertEquals(0, agent.getPosition());
+		assertEquals(0, mockAgent.getPosition());
 
 		// Creating and adding bids
 		submitOrder(agent, BUY, Price.of(110000), 3);
@@ -320,14 +319,14 @@ public class BackgroundAgentTest {
 
 		// Testing the market for the correct transactions
 		assertEquals(1, view.getTransactions().size());
-		assertEquals(2, agent.positionBalance);
-		assertEquals(-220000, agent.profit);
-		assertEquals(-2, mockAgent.positionBalance);
-		assertEquals(220000, mockAgent.profit);
+		assertEquals(2, agent.getPosition());
+		assertEquals(-220000, agent.getProfit());
+		assertEquals(-2, mockAgent.getPosition());
+		assertEquals(220000, mockAgent.getProfit());
 
 		// Check surplus
-		int val = agent.getTransactionValuation(BUY, 2, sim.getCurrentTime()).intValue();
-		assertEquals(val - 220000, agent.surplus.getValueAtDiscount(Consts.DiscountFactor.NO_DISC), 0.001);
+		int val = agent.getValuation(agent.getPosition(), BUY).intValue();
+		assertEquals(val - 220000, agent.getPayoff(), 0.001);
 	}
 
 	// TODO Test is implementation dependent and should be changed
@@ -362,38 +361,32 @@ public class BackgroundAgentTest {
 		submitOrder(mockAgent, SELL, Price.of(100000), 1);
 
 		// Post-trans balance is 4 or 5 but before the buy transacted it was 3
-		agent.positionBalance = 4;
-		Price val = agent.getTransactionValuation(BUY, sim.getCurrentTime());
-		Price val2 = agent.getTransactionValuation(BUY, sim.getCurrentTime());
+		setPosition(agent, 4);
+		Price val = agent.getValuation(BUY);
 		assertEquals(pv8, val.intValue());
-		assertEquals(pv8, val2.intValue());
-		assertEquals(4, agent.positionBalance);
-		agent.positionBalance = 5;
-		assertEquals(pv9 + pv8, 
-				agent.getTransactionValuation(BUY, 2, sim.getCurrentTime()).intValue());
-		assertEquals(5, agent.positionBalance);
+		assertEquals(4, agent.getPosition());
+		setPosition(agent, 5);
+		assertEquals(pv9 + pv8, agent.getValuation(2, BUY).intValue());
+		assertEquals(5, agent.getPosition());
 		// Post-trans balance is 2 or 1 but before the sell transacted it was 3
-		agent.positionBalance = 2;
-		val = agent.getTransactionValuation(SELL, sim.getCurrentTime());
+		setPosition(agent, 2);
+		val = agent.getValuation(SELL);
 		assertEquals(pv7, val.intValue());
-		agent.positionBalance = 1;
-		assertEquals(pv7 + pv6, 
-				agent.getTransactionValuation(SELL, 2, sim.getCurrentTime()).intValue());
+		setPosition(agent, 1);
+		assertEquals(pv7 + pv6, agent.getValuation(2, SELL).intValue());
 
 		// Post-trans balance is -1 or 1 but before the buy transacted it was -2
-		agent.positionBalance = -1;
-		val = agent.getTransactionValuation(BUY, sim.getCurrentTime());
+		setPosition(agent, -1);
+		val = agent.getValuation(BUY);
 		assertEquals(pv3, val.intValue());
-		agent.positionBalance = 1;
-		assertEquals(pv3 + pv4 + pv5, 
-				agent.getTransactionValuation(BUY, 3, sim.getCurrentTime()).intValue());
+		setPosition(agent, 1);
+		assertEquals(pv3 + pv4 + pv5, agent.getValuation(3, BUY).intValue());
 		// Post-trans balance is -3 or -5 but before the sell transacted it was -2
-		agent.positionBalance = -3;
-		val = agent.getTransactionValuation(SELL, sim.getCurrentTime());
+		setPosition(agent, -3);
+		val = agent.getValuation(SELL);
 		assertEquals(pv2, val.intValue());
-		agent.positionBalance = -5;
-		assertEquals(pv2 + pv1 + pv0, 
-				agent.getTransactionValuation(SELL, 3, sim.getCurrentTime()).intValue());
+		setPosition(agent, -5);
+		assertEquals(pv2 + pv1 + pv0, agent.getValuation(3, SELL).intValue());
 	}
 
 	/**
@@ -408,18 +401,21 @@ public class BackgroundAgentTest {
 
 		agent.executeZIStrategy(BUY, 5);
 		assertTrue(agent.activeOrders.isEmpty());
-		assertEquals(0, agent.positionBalance);
+		assertEquals(0, agent.getPosition());
 		
 		agent.executeZIStrategy(SELL, 5);
 		assertTrue(agent.activeOrders.isEmpty());
-		assertEquals(0, agent.positionBalance);
+		assertEquals(0, agent.getPosition());
 
 		// Test ZI strategy
 		agent.executeZIStrategy(BUY, 1);
 		assertEquals(1, agent.activeOrders.size());
 
 		// Verify that no other buy orders submitted, because would exceed max position
-		agent.positionBalance = 1;
+		agent.withdrawAllOrders();
+		sim.executeImmediate();
+		
+		setPosition(agent, 1);
 		agent.executeZIStrategy(BUY, 1);
 		assertEquals(1, agent.activeOrders.size());
 		agent.executeZIStrategy(SELL, 1);
@@ -444,7 +440,7 @@ public class BackgroundAgentTest {
 
 		// Calculate Price Range
 		Price fund = fundamental.getValue();
-		Price pv = agent.privateValue.getValue(0, BUY);
+		Price pv = agent.getValuation(BUY);
 		
 		checkSingleOrderRange(agent.activeOrders,
 				Price.of(fund.intValue() + pv.intValue() - max_shade),
@@ -470,7 +466,7 @@ public class BackgroundAgentTest {
 
 		// Calculate Price Range
 		Price fund = fundamental.getValue();
-		Price pv = agent.privateValue.getValue(0, SELL);
+		Price pv = agent.getValuation(SELL);
 		
 		checkSingleOrderRange(agent.activeOrders,
 				Price.of(fund.intValue() + pv.intValue() + min_shade),
@@ -543,17 +539,17 @@ public class BackgroundAgentTest {
 		submitOrder(mockAgent, SELL, Price.of(40), 1);
 
 		assertEquals(0, agent.activeOrders.size());
-		assertEquals(1, agent.positionBalance);
+		assertEquals(1, agent.getPosition());
 
 		// Verify that a new buy order can't be submitted
 		submitOrder(agent, BUY, Price.of(50), 1);
 		assertEquals(0, agent.activeOrders.size());
-		assertEquals(1, agent.positionBalance);
+		assertEquals(1, agent.getPosition());
 
 		// Verify that a new sell order CAN be submitted
 		submitOrder(agent, SELL, Price.of(45), 1);
 		assertEquals(1, agent.activeOrders.size());
-		assertEquals(1, agent.positionBalance);
+		assertEquals(1, agent.getPosition());
 	}
 
 	@Test
@@ -567,17 +563,17 @@ public class BackgroundAgentTest {
 		submitOrder(agent, SELL, Price.of(40), 1);
 
 		assertEquals(0, agent.activeOrders.size());
-		assertEquals(-1, agent.positionBalance);
+		assertEquals(-1, agent.getPosition());
 
 		// Verify that a new sell order can't be submitted
 		submitOrder(agent, SELL, Price.of(50), 1);
 		assertEquals(0, agent.activeOrders.size());
-		assertEquals(-1, agent.positionBalance);
+		assertEquals(-1, agent.getPosition());
 
 		// Verify that a new buy order CAN be submitted
 		submitOrder(agent, BUY, Price.of(45), 1);
 		assertEquals(1, agent.activeOrders.size());
-		assertEquals(-1, agent.positionBalance);
+		assertEquals(-1, agent.getPosition());
 	}
 
 	@Test
@@ -591,7 +587,7 @@ public class BackgroundAgentTest {
 		submitOrder(agent, SELL, Price.of(41000), 1);
 
 		assertEquals(0, agent.activeOrders.size());
-		assertEquals(-1, agent.positionBalance);
+		assertEquals(-1, agent.getPosition());
 		// background agent sells at 51, surplus from PV is 51-1
 		assertEquals(50000, agent.getPayoff(), 0.001);
 		// mock agent payoff is just profit
@@ -602,7 +598,7 @@ public class BackgroundAgentTest {
 		submitOrder(mockAgent, SELL, Price.of(41000), 1);
 
 		assertEquals(0, agent.activeOrders.size());
-		assertEquals(0, agent.positionBalance);
+		assertEquals(0, agent.getPosition());
 		// background agent buys at 95, surplus is 1-95 + (50 from previous)
 		assertEquals(50000 + (1000 - 95000), agent.getPayoff(), 0.001);
 		// mock agent payoff is just profit
@@ -626,13 +622,13 @@ public class BackgroundAgentTest {
 		submitOrder(agent, SELL, Price.of(41000), 1);
 
 		// background agent sells 1 @ 51 (only private value portion counted)
-		assertEquals(-1, agent.positionBalance);
-		assertEquals(51000, agent.profit);
+		assertEquals(-1, agent.getPosition());
+		assertEquals(51000, agent.getProfit());
 		assertEquals(51000-1000, agent.getPayoff(), 0.001);
 
 		agent.liquidateAtPrice(fundamental.getValue());
 		// background agent liquidates to account for short position of 1
-		assertEquals(-100000, agent.getLiquidationProfit());
+		assertEquals(-100000, agent.getProfit());
 		assertEquals(50000 - 100000, agent.getPayoff(), 0.001);
 	}
 
@@ -649,15 +645,15 @@ public class BackgroundAgentTest {
 		submitOrder(agent, SELL, Price.of(41000), 1);
 
 		// background agent sells 1 @ 51 (only private value portion counted)
-		assertEquals(-1, agent.positionBalance);
-		assertEquals(51000, agent.profit);
+		assertEquals(-1, agent.getPosition());
+		assertEquals(51000, agent.getProfit());
 		assertEquals(51000-1000, agent.getPayoff(), 0.001);
 
 		sim.executeUntil(TimeStamp.of(simulationLength));
 		Price endTimeFundamental = fundamental.getValue();
 		agent.liquidateAtPrice(endTimeFundamental);
 		// background agent liquidates to account for short position of 1
-		assertEquals(endTimeFundamental.intValue() * agent.positionBalance, agent.getLiquidationProfit());
+		assertEquals(endTimeFundamental.intValue() * agent.getPosition(), agent.getProfit());
 		assertEquals(50000 - endTimeFundamental.intValue(), agent.getPayoff(), 0.001);
 		assertNotEquals(50000 - 100000, agent.getPayoff(), 0.001);
 	}
@@ -691,7 +687,7 @@ public class BackgroundAgentTest {
 		 * When markup is not sufficient, then don't shade since 10000 * 0.75 <=
 		 * val - 85000 Verify that agent's order will trade immediately
 		 */
-		assertEquals(1, zirp.positionBalance);
+		assertEquals(1, zirp.getPosition());
 		checkSingleTransaction(view.getTransactions(), Price.of(85000), TimeStamp.of(1), 1);
 	}
 
@@ -722,7 +718,7 @@ public class BackgroundAgentTest {
 		
 		// Verify that agent doesn't shade since 10000 * 0.75 > 80000 - val
 		checkSingleOrder(zirp.activeOrders, Price.of(val.intValue() + 10000), 1, TimeStamp.ZERO, TimeStamp.ZERO);
-		assertEquals(0, zirp.positionBalance);
+		assertEquals(0, zirp.getPosition());
 	}
 
 	@Test
@@ -767,10 +763,10 @@ public class BackgroundAgentTest {
 
 		zirp.executeZIRPStrategy(BUY, 5);
 		assertTrue(zirp.activeOrders.isEmpty());
-		assertEquals(0, zirp.positionBalance);
+		assertEquals(0, zirp.getPosition());
 		zirp.executeZIRPStrategy(SELL, 5);
 		assertTrue(zirp.activeOrders.isEmpty());
-		assertEquals(0, zirp.positionBalance);
+		assertEquals(0, zirp.getPosition());
 
 		// Test ZIRP strategy
 		zirp.executeZIRPStrategy(BUY, 1);
@@ -807,7 +803,7 @@ public class BackgroundAgentTest {
 		int n = 10;
 		SummStats pvMean = SummStats.on();
 		for (int i = 0; i < n; ++i)
-			pvMean.add(backgroundAgent().privateValue.getMean().doubleValue());
+			pvMean.add(backgroundAgent().getPrivateValueMean().doubleValue());
 		assertEquals(pvMean.mean(), sim.getStats().getSummaryStats().get(Stats.CONTROL_PRIVATE_VALUE).mean(), eps);
 	}
 	
@@ -867,10 +863,20 @@ public class BackgroundAgentTest {
 		sim.executeImmediate();
 		return order;
 	}
+	
+	private void setPosition(Agent agent, int position) {
+		int quantity = position - agent.getPosition();
+		if (quantity == 0)
+			return;
+		OrderType type = quantity > 0 ? BUY : SELL;
+		submitOrder(agent, type, Price.ZERO, Math.abs(quantity));
+		submitOrder(mockAgent, type == BUY ? SELL : BUY, Price.ZERO, quantity);
+		assertEquals(position, agent.getPosition());
+	}
 
 	private BackgroundAgent backgroundAgentwithPrivateValue(List<Price> privateValue, Props props) {
-		return new BackgroundAgent(sim, TimeStamp.ZERO, market,
-				new ListPrivateValue(privateValue) { private static final long serialVersionUID = 1L; },
+		return new BackgroundAgent(sim, new ListPrivateValue(privateValue) { private static final long serialVersionUID = 1L; }, TimeStamp.ZERO,
+				market,
 				rand, Props.merge(defaults, props)) {
 			private static final long serialVersionUID = 1L;
 			@Override public String toString() { return "TestAgent " + id; }
@@ -893,7 +899,7 @@ public class BackgroundAgentTest {
 	}
 	
 	private Agent mockAgent() {
-		return new Agent(sim, TimeStamp.ZERO, rand, Props.fromPairs()) {
+		return new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override public void agentStrategy() { }
 			@Override public String toString() { return "TestAgent " + id; }

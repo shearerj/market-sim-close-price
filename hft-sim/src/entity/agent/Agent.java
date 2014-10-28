@@ -6,17 +6,21 @@ import static logger.Log.Level.INFO;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 
 import systemmanager.Keys.AgentTickSize;
+import systemmanager.Keys.DiscountFactors;
 import systemmanager.Keys.FundamentalLatency;
 import systemmanager.Keys.TickSize;
 import systemmanager.Simulation;
 
 import com.google.common.base.CaseFormat;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Ordering;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import data.FundamentalValue.FundamentalValueView;
@@ -24,6 +28,7 @@ import data.Props;
 import data.Stats;
 import entity.Entity;
 import entity.View;
+import entity.agent.position.PrivateValue;
 import entity.infoproc.BestBidAsk;
 import entity.market.Market.MarketView;
 import entity.market.Price;
@@ -38,13 +43,9 @@ import fourheap.Order.OrderType;
  * @author ewah
  */
 public abstract class Agent extends Entity {
-
-	protected static final Ordering<Price> pcomp = Ordering.natural();
 	
 	protected final Random rand;
 	protected final FundamentalValueView fundamental;
-	// List of all transactions for this agent. Implicitly time ordered due to 
-	// transactions being created and assigned in time order.
 	protected final Collection<OrderRecord> activeOrders;
 
 	// Agent parameters
@@ -52,11 +53,12 @@ public abstract class Agent extends Entity {
 	protected final int tickSize;
 
 	// Tracking position and profit
-	protected int positionBalance;
-	protected long profit;
-	protected long liquidationProfit;
+	private int positionBalance;
+	private long profit;
+	private final PrivateValue privateValue;
+	private final DiscountedValue privateValueSurplus;
 
-	protected Agent(Simulation sim, TimeStamp arrivalTime, Random rand, Props props) {
+	protected Agent(Simulation sim, PrivateValue privateValue, TimeStamp arrivalTime, Random rand, Props props) {
 		super(sim.nextAgentId(), sim);
 		this.arrivalTime = checkNotNull(arrivalTime);
 		this.fundamental = sim.getFundamentalView(props.get(FundamentalLatency.class));
@@ -64,21 +66,21 @@ public abstract class Agent extends Entity {
 		this.rand = rand;
 
 		this.activeOrders = Sets.newHashSet();
+		
 		this.positionBalance = 0;
 		this.profit = 0;
-		this.liquidationProfit = 0;
+		this.privateValue = checkNotNull(privateValue);
+		this.privateValueSurplus = DiscountedValue.create(props.get(DiscountFactors.class));
 	}
 
 	public abstract void agentStrategy();
 
-	/**
-	 * Liquidates an agent's position at the specified price.
-	 */
+	/** Liquidates an agent's position at the specified price. */
 	public void liquidateAtPrice(Price price) {
 
 		log(INFO, "%s pre-liquidation: position=%d", this, positionBalance);
 
-		liquidationProfit = positionBalance * price.intValue();
+		int liquidationProfit = positionBalance * price.intValue();
 		profit += liquidationProfit;
 		positionBalance = 0;
 
@@ -86,8 +88,20 @@ public abstract class Agent extends Entity {
 				this, liquidationProfit, profit, price);
 		
 		sim.postStat(Stats.TOTAL_PROFIT, profit);
+		for (Entry<Double, Double> e : getDiscountedSurplus()) {
+			postStat(Stats.SURPLUS + e.getKey(), e.getValue());
+			postStat(Stats.SURPLUS + e.getKey() + '_' + CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, getClass().getSimpleName()), e.getValue());
+		}
 	}
 	
+	protected Iterable<Entry<Double, Double>> getDiscountedSurplus() {
+		return Iterables.transform(privateValueSurplus.getValues(), new Function<Entry<Double, Double>, Entry<Double, Double>>() {
+			public Entry<Double, Double> apply(Entry<Double, Double> e) {
+				return Maps.immutableEntry(e.getKey(), e.getValue() + Agent.this.getProfit());
+			}
+		});
+	}
+
 	// TODO Check for possible position violation?
 	/** Shortcut for creating orders */
 	protected OrderRecord submitOrder(MarketView market, OrderType type, Price price, int quantity) {
@@ -97,6 +111,7 @@ public abstract class Agent extends Entity {
 		return order;
 	}
 
+	// TODO Check for possible position violation?
 	/** Shortcut for creating NMS orders */
 	protected OrderRecord submitNMSOrder(MarketView market, OrderType type, Price price, int quantity) {
 		OrderRecord order = new OrderRecord(market, currentTime(), type, price, quantity);
@@ -155,18 +170,21 @@ public abstract class Agent extends Entity {
 	
 	/** Called when an AgetnView sees a transaction */
 	protected void processTransaction(TimeStamp submitTime, OrderType type, Transaction trans) {
+		privateValueSurplus.addValue(privateValue.getValue(positionBalance, trans.getQuantity(), type),
+				trans.getExecTime().getInTicks());
+		
 		int effQuantity = type == BUY ? trans.getQuantity() : -trans.getQuantity();
 		positionBalance += effQuantity;
 		profit -= effQuantity * trans.getPrice().intValue();
+		
 		postStat(Stats.NUM_TRANS + CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, this.getClass().getSimpleName()), 1);
 		postStat(Stats.NUM_TRANS_TOTAL, 1);
-		
 		log(INFO, "%s transacted to position %d", this, positionBalance);
 	}
 	
 	/** Called by AgentView when its order transacted */
-	protected void orderTransacted(OrderRecord order, int removedQuantity) {
-		order.removeQuantity(removedQuantity);
+	protected void orderTransacted(OrderRecord order, int transactedQuantity) {
+		order.removeQuantity(transactedQuantity);
 		if (order.getQuantity() == 0)
 			activeOrders.remove(order);
 	}
@@ -192,9 +210,33 @@ public abstract class Agent extends Entity {
 		return sim.getSIP().getNBBO();
 	}
 	
+	protected int getPosition() {
+		return positionBalance;
+	}
+	
+	protected int getMaxAbsPosition() {
+		return privateValue.getMaxAbsPosition();
+	}
+	
+	protected Price getValuation(OrderType type) {
+		return privateValue.getValue(getPosition(), type);
+	}
+	
+	protected Price getValuation(int quantity, OrderType type) {
+		return privateValue.getValue(getPosition(), quantity, type);
+	}
+	
+	protected Price getPrivateValueMean() {
+		return privateValue.getMean();
+	}
+	
+	protected long getProfit() {
+		return profit;
+	}
+	
 	/** Get payoff for player observation */
 	public double getPayoff() {
-		return profit;
+		return getProfit();
 	}
 	
 	/**
@@ -202,14 +244,6 @@ public abstract class Agent extends Entity {
 	 */
 	public Map<String, Double> getFeatures() {
 		return ImmutableMap.of();
-	}
-	
-	public long getLiquidationProfit() {
-		return liquidationProfit;
-	}
-	
-	public long getPostLiquidationProfit() {
-		return profit;
 	}
 	
 	@Override

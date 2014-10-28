@@ -21,6 +21,7 @@ import org.junit.Test;
 import systemmanager.Keys.LaLatency;
 import systemmanager.MockSim;
 import data.Props;
+import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
@@ -80,8 +81,8 @@ public class LAAgentTest {
 		submitOrder(one, BUY, Price.of(7));
 		submitOrder(two, SELL, Price.of(1));
 
-		assertEquals(0, la.positionBalance);
-		assertTrue(la.profit > 0);
+		assertEquals(0, la.getPosition());
+		assertTrue(la.getProfit() > 0);
 	}
 	
 	@Test
@@ -91,8 +92,8 @@ public class LAAgentTest {
 		submitOrder(two, SELL, Price.of(1));
 		// LA Strategy gets called implicitly 
 		
-		assertEquals(0, la.positionBalance);
-		assertEquals(4, la.profit);
+		assertEquals(0, la.getPosition());
+		assertEquals(4, la.getProfit(), 1e-6);
 		assertTrue(la.activeOrders.isEmpty());
 	}
 	
@@ -103,8 +104,8 @@ public class LAAgentTest {
 		submitOrder(two, SELL, Price.of(1), 2);
 		// LA Strategy gets called implicitly 
 		
-		assertEquals(0, la.positionBalance);
-		assertEquals(8, la.profit);
+		assertEquals(0, la.getPosition());
+		assertEquals(8, la.getProfit(), 1e-6);
 		assertTrue(la.activeOrders.isEmpty());
 	}
 	
@@ -121,14 +122,14 @@ public class LAAgentTest {
 		submitOrder(one, BUY, Price.of(3)); // Used to cause LA to submit extra orders
 		sim.executeUntil(TimeStamp.of(10)); // LA has submitted orders
 		
-		assertEquals(0, la.positionBalance);
-		assertEquals(0, la.profit);
+		assertEquals(0, la.getPosition());
+		assertEquals(0, la.getProfit(), 1e-6);
 		assertEquals(2, la.activeOrders.size());
 		
 		sim.executeUntil(TimeStamp.of(15)); // LA acts on second "arbitrage"
 		
-		assertEquals(0, la.positionBalance);
-		assertEquals(0, la.profit);
+		assertEquals(0, la.getPosition());
+		assertEquals(0, la.getProfit(), 1e-6);
 		assertEquals(2, la.activeOrders.size());
 		
 		sim.executeUntil(TimeStamp.of(20)); // Orders reach market
@@ -136,8 +137,8 @@ public class LAAgentTest {
 		checkSingleTransaction(two.getTransactions(), Price.of(1), TimeStamp.of(20), 1);
 		
 		sim.executeUntil(TimeStamp.of(30)); // Takes this long for the LA to find out about it
-		assertEquals(0, la.positionBalance);
-		assertEquals(4, la.profit);
+		assertEquals(0, la.getPosition());
+		assertEquals(4, la.getProfit(), 1e-6);
 		assertTrue(la.activeOrders.isEmpty());
 	}
 	
@@ -151,8 +152,8 @@ public class LAAgentTest {
 		
 		sim.executeUntil(TimeStamp.of(10)); // LA has submitted orders
 		
-		assertEquals(0, la.positionBalance);
-		assertEquals(0, la.profit);
+		assertEquals(0, la.getPosition());
+		assertEquals(0, la.getProfit(), 1e-6);
 		assertEquals(2, la.activeOrders.size());
 		
 		sim.executeUntil(TimeStamp.of(20)); // Orders reach market
@@ -160,8 +161,8 @@ public class LAAgentTest {
 		checkSingleTransaction(two.getTransactions(), Price.of(1), TimeStamp.of(20), 1);
 		
 		sim.executeUntil(TimeStamp.of(30)); // Takes this long for the LA to find out about it
-		assertEquals(0, la.positionBalance);
-		assertEquals(4, la.profit);
+		assertEquals(0, la.getPosition());
+		assertEquals(4, la.getProfit(), 1e-6);
 		assertTrue(la.activeOrders.isEmpty());
 	}
 	
@@ -176,8 +177,8 @@ public class LAAgentTest {
 		
 		sim.executeUntil(TimeStamp.of(10)); // LA has submitted orders
 		
-		assertEquals(0, la.positionBalance);
-		assertEquals(0, la.profit);
+		assertEquals(0, la.getPosition());
+		assertEquals(0, la.getProfit(), 1e-6);
 		assertEquals(2, la.activeOrders.size());
 		
 		sim.executeUntil(TimeStamp.of(20)); // Orders reach market
@@ -185,8 +186,8 @@ public class LAAgentTest {
 		checkSingleTransaction(two.getTransactions(), Price.of(1), TimeStamp.of(20), 1);
 		
 		sim.executeUntil(TimeStamp.of(30)); // Takes this long for the LA to find out about it
-		assertEquals(0, la.positionBalance);
-		assertEquals(4, la.profit);
+		assertEquals(0, la.getPosition());
+		assertEquals(4, la.getProfit(), 1e-6);
 		assertTrue(la.activeOrders.isEmpty());
 	}
 	
@@ -201,16 +202,16 @@ public class LAAgentTest {
 		submitOrder(two, SELL, Price.of(1));
 		// LA Strategy gets called implicitly
 		
-		assertEquals(0, la.positionBalance);
-		assertEquals(4, la.profit);
+		assertEquals(0, la.getPosition());
+		assertEquals(4, la.getProfit(), 1e-6);
 		assertTrue(la.activeOrders.isEmpty());
 		
 		submitOrder(one, BUY, Price.of(10));
 		submitOrder(two, SELL, Price.of(6));
 		// LA Strategy gets called implicitly 
 
-		assertEquals(0, la.positionBalance);
-		assertEquals(8, la.profit);
+		assertEquals(0, la.getPosition());
+		assertEquals(8, la.getProfit(), 1e-6);
 		assertTrue(la.activeOrders.isEmpty());
 	}
 	
@@ -247,7 +248,7 @@ public class LAAgentTest {
 	}
 	
 	private Agent mockAgent() {
-		return new Agent(sim, TimeStamp.ZERO, rand, Props.fromPairs()) {
+		return new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override public void agentStrategy() { }
 			@Override public String toString() { return "TestAgent " + id; }

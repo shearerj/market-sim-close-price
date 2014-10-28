@@ -22,9 +22,11 @@ import utils.Maths;
 import utils.Rands;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Ordering;
 
 import data.Props;
 import data.Stats;
+import entity.agent.position.PrivateValues;
 import entity.infoproc.BestBidAsk;
 import entity.market.Market;
 import entity.market.Price;
@@ -60,6 +62,8 @@ import fourheap.Order.OrderType;
  * @author ewah
  */
 public abstract class MarketMaker extends ReentryAgent {
+	
+	private static final Ordering<Price> pcomp = Ordering.natural();
 
 	protected final int stepSize;				// rung size is distance between adjacent rungs in ladder
 	protected final int numRungs;				// # of ladder rungs on one side (e.g., number of buy orders)
@@ -70,7 +74,7 @@ public abstract class MarketMaker extends ReentryAgent {
 	protected final boolean tickOutside;		// true if improve tick outside the quote (default inside, bid<p<ask)
 	
 	protected MarketMaker(Simulation sim, Market market, Random rand, Props props) {		
-		super(sim, TimeStamp.ZERO, market, rand,
+		super(sim, PrivateValues.zero(), TimeStamp.ZERO, market, rand,
 				AgentFactory.exponentials(props.get(MarketMakerReentryRate.class, ReentryRate.class), rand),
 				props);
 		
@@ -229,7 +233,7 @@ public abstract class MarketMaker extends ReentryAgent {
 	@Override
 	public void liquidateAtPrice(Price price) {
 		super.liquidateAtPrice(price);
-		sim.postStat(Stats.CLASS_PROFIT + "market_maker", profit);
+		sim.postStat(Stats.CLASS_PROFIT + "market_maker", getProfit());
 	}
 
 	@Override

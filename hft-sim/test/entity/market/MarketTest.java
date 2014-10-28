@@ -26,6 +26,7 @@ import data.Stats;
 import data.TimeSeries;
 import entity.agent.Agent;
 import entity.agent.Agent.AgentView;
+import entity.agent.position.PrivateValues;
 import entity.agent.OrderRecord;
 import entity.market.Market.MarketView;
 import event.TimeStamp;
@@ -624,7 +625,7 @@ public class MarketTest {
 	}
 
 	private Agent mockAgent() {
-		return new Agent(sim, TimeStamp.ZERO, rand, Props.fromPairs()) {
+		return new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override public void agentStrategy() { }
 			@Override public String toString() { return "TestAgent " + id; }

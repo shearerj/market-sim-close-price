@@ -76,7 +76,7 @@ public class Margin extends AbstractQuantityIndexedArray<Double> {
 	}
 
 	@Override
-	public Double getValueFromQuantity(int currentPosition, int quantity,
+	public Double getValue(int currentPosition, int quantity,
 			OrderType type) {
 		checkArgument(quantity > 0, "Quantity must be positive");
 		

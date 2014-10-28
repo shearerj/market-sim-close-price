@@ -248,12 +248,12 @@ public class AAAgentTest {
 		
 		setQuote(Price.of(150000), Price.of(200000));
 		
-		buyer.positionBalance = buyer.privateValue.getMaxAbsPosition() + 1;
+		setPosition(buyer, buyer.getMaxAbsPosition() + 1);
 		sim.executeUntil(TimeStamp.of(20));
 		buyer.biddingLayer(limit, target, 1);
 		assertTrue(buyer.activeOrders.isEmpty()); // would exceed max position
 		
-		buyer.positionBalance = 0;
+		buyer.liquidateAtPrice(Price.ZERO); // Resets Position
 		buyer.biddingLayer(limit, target, 1);
 		assertTrue(buyer.activeOrders.isEmpty()); // limit price < bid
 		
@@ -288,11 +288,11 @@ public class AAAgentTest {
 		setQuote(Price.of(150000), Price.of(200000));
 		
 		sim.executeUntil(TimeStamp.of(20));
-		seller.positionBalance = seller.privateValue.getMaxAbsPosition() + 1;
+		setPosition(seller, seller.getMaxAbsPosition() + 1);
 		seller.biddingLayer(limit, target, 1);
 		assertTrue(seller.activeOrders.isEmpty()); // would exceed max position
 		
-		seller.positionBalance = 0;
+		seller.liquidateAtPrice(Price.ZERO); // Resets Position
 		seller.biddingLayer(limit, target, 1);
 		assertTrue(seller.activeOrders.isEmpty()); // limit price > ask
 		
@@ -839,6 +839,19 @@ public class AAAgentTest {
 	private void setQuote(Price bid, Price ask) {
 		addOrder(BUY, bid);
 		addOrder(SELL, ask);
+	}
+	
+	private void setPosition(Agent agent, int position) {
+		int quantity = position - agent.getPosition();
+		if (quantity == 0)
+			return;
+		OrderType type = quantity > 0 ? BUY : SELL;
+		agent.submitOrder(view, type, Price.ZERO, Math.abs(quantity));
+		
+		OrderType other = type == BUY ? SELL : BUY;
+		aaAgent(Props.fromPairs()).submitOrder(view, other, Price.ZERO, Math.abs(quantity));
+		sim.executeImmediate();
+		assertEquals(position, agent.getPosition());
 	}
 	
 }

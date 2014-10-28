@@ -49,6 +49,7 @@ import com.google.common.primitives.Ints;
 
 import data.Props;
 import entity.agent.AdaptiveMarketMaker.TransactionResult;
+import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
@@ -303,7 +304,7 @@ public class AdaptiveMarketMakerTest {
 
 		//Make a trade that yields profit for one of the spreads(2) and is useless for the other two(40,50)
 		submitOrder(mockAgent, BUY, Price.of(118));
-		assertEquals(0, mockAgent.positionBalance);
+		assertEquals(0, mockAgent.getPosition());
 		
 		Quote quote = market.getQuote();
 		assertEquals(Optional.of(Price.of(120)), quote.getAskPrice());
@@ -347,7 +348,7 @@ public class AdaptiveMarketMakerTest {
 		sim.executeImmediate();
 		submitOrder(mockAgent, BUY, Price.of(116), 2);
 		
-		assertEquals(1, mockAgent.positionBalance);
+		assertEquals(1, mockAgent.getPosition());
 		Quote quote = market.getQuote();
 		// $115 traded with agent1 buying at $116, so ASK now 120
 		assertEquals(Optional.of(Price.of(120)), quote.getAskPrice());
@@ -503,7 +504,7 @@ public class AdaptiveMarketMakerTest {
 	}
 	
 	private Agent mockAgent() {
-		return new Agent(sim, TimeStamp.ZERO, rand, Props.fromPairs()) {
+		return new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override public void agentStrategy() { }
 			@Override public String toString() { return "TestAgent " + id; }

@@ -4,6 +4,7 @@ import java.util.Random;
 
 import systemmanager.Simulation;
 import data.Props;
+import entity.agent.position.PrivateValue;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
@@ -39,8 +40,8 @@ public abstract class SMAgent extends Agent {
 	
 	protected final MarketView primaryMarket;
 
-	protected SMAgent(Simulation sim, TimeStamp arrivalTime, Random rand, Market market, Props props) {
-		super(sim, arrivalTime, rand, props);
+	protected SMAgent(Simulation sim, PrivateValue privateValue, TimeStamp arrivalTime, Random rand, Market market, Props props) {
+		super(sim, privateValue, arrivalTime, rand, props);
 		this.primaryMarket = market.getPrimaryView();
 	}
 	

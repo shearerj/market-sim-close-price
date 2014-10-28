@@ -8,24 +8,6 @@ package systemmanager;
 public interface Consts {
 	
 	// FIXME Move these to the spec
-	public enum DiscountFactor {
-		NO_DISC(0), MEDIUM(0.0006);
-		// SMALL(0.0003), LARGE(0.0009)
-
-		public final double discount;
-
-	    DiscountFactor(double discount) {
-	        this.discount = discount;
-	    }
-	    
-	    @Override
-	    public String toString() {
-	    	if (discount == 0)
-	    		return "no_disc";
-	    	return "disc_" + discount;
-	    }
-	}
-	
 	public final static int[] PERIODS = { 1, 250 };
 	
 	// **********************************************************

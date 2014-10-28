@@ -22,6 +22,7 @@ import com.google.common.collect.Iterables;
 
 import data.Props;
 import data.Stats;
+import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
@@ -215,10 +216,10 @@ public class AgentTest {
 		submitOrder(other, SELL, Price.of(100), 1);
 		
 		assertEquals(1, market.getTransactions().size());
-		assertEquals(1, agent.positionBalance);
-		assertEquals(-110, agent.profit);
-		assertEquals(-1, other.positionBalance);
-		assertEquals(110, other.profit);
+		assertEquals(1, agent.getPosition());
+		assertEquals(-110, agent.getProfit(), eps);
+		assertEquals(-1, other.getPosition());
+		assertEquals(110, other.getProfit(), eps);
 	}
 	
 	@Test
@@ -234,10 +235,10 @@ public class AgentTest {
 		
 		// Testing the market for the correct transactions
 		assertEquals(1, market.getTransactions().size());
-		assertEquals(2, agent.positionBalance);
-		assertEquals(-220, agent.profit);
-		assertEquals(-2, agent2.positionBalance);
-		assertEquals(220, agent2.profit);
+		assertEquals(2, agent.getPosition());
+		assertEquals(-220, agent.getProfit(), eps);
+		assertEquals(-2, agent2.getPosition());
+		assertEquals(220, agent2.getProfit(), eps);
 	}
 	
 	@Test
@@ -259,24 +260,27 @@ public class AgentTest {
 	
 	@Test
 	public void liquidation() {
-		agent.profit = 5000;
+		Agent other = mockAgent();
 		
 		// Check that no change if position 0
-		agent.positionBalance = 0;
 		agent.liquidateAtPrice(Price.of(100000));
-		assertEquals(5000, agent.getPostLiquidationProfit());
+		assertEquals(0, agent.getProfit());
 		
 		// Check liquidation when position > 0 (sell 1 unit)
-		agent.profit = 5000;
-		agent.positionBalance = 1;
+		submitOrder(agent, BUY, Price.ZERO, 1);
+		submitOrder(other, SELL, Price.ZERO, 1);
+		
+		assertEquals(1, agent.getPosition());
 		agent.liquidateAtPrice(Price.of(100000));
-		assertEquals(105000, agent.getPostLiquidationProfit());
+		assertEquals(100000, agent.getProfit());
 		
 		// Check liquidation when position < 0 (buy 2 units)
-		agent.profit = 5000;
-		agent.positionBalance = -2;
+		submitOrder(agent, SELL, Price.ZERO, 2);
+		submitOrder(other, BUY, Price.ZERO, 2);
+		
+		assertEquals(-2, agent.getPosition());
 		agent.liquidateAtPrice(Price.of(100000));
-		assertEquals(-195000, agent.getPostLiquidationProfit());
+		assertEquals(-100000, agent.getProfit());
 	}
 	
 	@Test
@@ -319,7 +323,7 @@ public class AgentTest {
 	}
 	
 	private Agent mockAgent() {
-		return new Agent(sim, TimeStamp.ZERO, rand, Props.fromPairs()) {
+		return new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override public void agentStrategy() { }
 			@Override public String toString() { return "TestAgent " + id; }

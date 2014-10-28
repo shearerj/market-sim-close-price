@@ -26,6 +26,7 @@ import systemmanager.Simulation;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Ordering;
+import com.google.common.collect.Range;
 
 import data.Props;
 import entity.agent.position.Aggression;
@@ -93,7 +94,7 @@ public class AAAgent extends WindowAgent {
 		this.thetaMax = props.get(ThetaMax.class);
 		this.alphaMin = Price.INF.intValue();
 		this.alphaMax = -1;
-		this.aggressions = Aggression.create(privateValue.getMaxAbsPosition(), aggression);
+		this.aggressions = Aggression.create(getMaxAbsPosition(), aggression);
 		this.rho = 0.9; 		// from paper, to emphasize converging pattern
 		
 		//Initializing strategy variables
@@ -132,7 +133,7 @@ public class AAAgent extends WindowAgent {
 		if (!debug) type = rand.nextBoolean() ? BUY : SELL;
 
 		// Update aggression
-		aggression = aggressions.getValue(positionBalance, type);
+		aggression = aggressions.getValue(getPosition(), type);
 
 		// Updating Price Limit (valuation of security)
 		Price limitPrice = getLimitPrice(type);
@@ -285,11 +286,12 @@ public class AAAgent extends WindowAgent {
 
 		// Can only submit offer if the offer would not cause position
 		// balance to exceed the agent's maximum position
-		int newPosBal = positionBalance + quantity;
-		if (newPosBal < -privateValue.getMaxAbsPosition() 
-				|| newPosBal > privateValue.getMaxAbsPosition() ) {
+		int newPosBal = getPosition() + quantity;
+		
+		
+		if (!Range.closed(-getMaxAbsPosition(), getMaxAbsPosition()).contains(newPosBal)) {
 			log(INFO, "%s::biddingLayer: New order would exceed max position: %d; no submission", 
-					this, privateValue.getMaxAbsPosition());
+					this, getMaxAbsPosition());
 			return;
 		}
 
@@ -398,7 +400,7 @@ public class AAAgent extends WindowAgent {
 		// lambda_r and lambda_a are the relative & absolute inc/dec in r_shout
 		double delta = (1 + sign * lambdaR) * rShout + sign * lambdaA;	
 		aggression = aggression + betaR * (delta - aggression);
-		aggressions.setValue(positionBalance, type, aggression);
+		aggressions.setValue(getPosition(), type, aggression);
 	}
 
 	/**

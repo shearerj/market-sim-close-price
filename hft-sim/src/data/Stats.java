@@ -96,5 +96,6 @@ public class Stats {
 	NUM_TRANS = "num_trans_",
 	NUM_TRANS_TOTAL = NUM_TRANS + "total",
 	CLASS_PROFIT = "profit_",
-	TOTAL_PROFIT = CLASS_PROFIT + "sum_total";
+	TOTAL_PROFIT = CLASS_PROFIT + "sum_total",
+	SURPLUS = "surplus_";
 }

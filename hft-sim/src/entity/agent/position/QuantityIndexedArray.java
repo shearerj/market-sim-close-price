@@ -28,7 +28,7 @@ public interface QuantityIndexedArray<T> extends Serializable {
 	 */
 	public T getValue(int currentPosition, OrderType type);
 
-	public T getValueFromQuantity(int currentPosition, int quantity, OrderType type);
+	public T getValue(int currentPosition, int quantity, OrderType type);
 	
 	public void setValue(int currentPosition, OrderType type, T value);
 }
