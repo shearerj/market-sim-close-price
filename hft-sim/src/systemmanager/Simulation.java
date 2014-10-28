@@ -158,6 +158,7 @@ public class Simulation {
 	protected void executeEvents() {
 		eventQueue.executeUntil(finalTime);
 		Price finalFundamental = fundamental.getValueAt(getCurrentTime());
+		eventQueue.propogateInformation();
 		for (Agent agent : agents)
 			agent.liquidateAtPrice(finalFundamental);
 		postStat(Stats.FUNDAMENTAL_END_PRICE, finalFundamental.doubleValue());

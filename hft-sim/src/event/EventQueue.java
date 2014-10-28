@@ -62,6 +62,12 @@ public class EventQueue implements LogClock{
 	}
 	
 	private void executeNext() {
+		Activity act = pop();
+		sim.log(DEBUG, "Executing {%s} the immediately {%s} then {%s}", act, immediateActivities, scheduledActivities);
+		act.execute();
+	}
+	
+	private Activity pop() {
 		scheduledActivities.addAll(pendingScheduledActivities);
 		immediateActivities.addAll(Lists.reverse(pendingImmediateActivities));
 		pendingScheduledActivities.clear();
@@ -76,8 +82,16 @@ public class EventQueue implements LogClock{
 				currentTime = scheduledAct.getKey();
 			act = scheduledAct.getValue();
 		}
-		sim.log(DEBUG, "Executing {%s} the immediately {%s} then {%s}", act, immediateActivities, scheduledActivities);
-		act.execute();
+		return act;
+	}
+	
+	public void propogateInformation() {
+		while (!immediateActivities.isEmpty() || !pendingImmediateActivities.isEmpty() ||
+				!scheduledActivities.isEmpty() || !pendingScheduledActivities.isEmpty()) {
+			Activity act = pop();
+			if (act instanceof InformationActivity)
+				act.execute();
+		}
 	}
 
 	/**
@@ -86,9 +100,6 @@ public class EventQueue implements LogClock{
 	 * non deterministic ordering. To ensure a specific ordering for activities
 	 * scheduled at the same time in the future, use the method
 	 * <code>scheduleActivities</code>
-	 * 
-	 * @param scheduledTime can't be before the current time
-	 * @param act
 	 */
 	public void scheduleActivity(TimeStamp scheduledTime, Activity act) {
 		if (scheduledTime.before(currentTime))

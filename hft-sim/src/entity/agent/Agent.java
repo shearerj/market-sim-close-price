@@ -34,6 +34,7 @@ import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.market.Transaction;
 import event.Activity;
+import event.InformationActivity;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -297,7 +298,7 @@ public abstract class Agent extends Entity {
 		}
 		
 		public void processTransaction(final TimeStamp submitTime, final OrderType type, final Transaction transaction) {
-			sim.scheduleActivityIn(latency, new Activity() {
+			sim.scheduleActivityIn(latency, new InformationActivity() {
 				@Override public void execute() {
 					Agent.this.processTransaction(submitTime, type, transaction);
 				}
