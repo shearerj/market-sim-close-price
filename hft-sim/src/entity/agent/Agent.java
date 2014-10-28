@@ -87,7 +87,7 @@ public abstract class Agent extends Entity {
 		log(INFO, "%s post-liquidation: liquidation profit=%d, profit=%d, price=%s", 
 				this, liquidationProfit, profit, price);
 		
-		sim.postStat(Stats.TOTAL_PROFIT, profit);
+		postStat(Stats.TOTAL_PROFIT, profit);
 		for (Entry<Double, Double> e : getDiscountedSurplus()) {
 			postStat(Stats.SURPLUS + e.getKey(), e.getValue());
 			postStat(Stats.SURPLUS + e.getKey() + '_' + CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, getClass().getSimpleName()), e.getValue());

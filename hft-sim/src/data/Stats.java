@@ -63,10 +63,20 @@ public class Stats {
 	
 	public void post(String name, double value) {
 		SummStats summ = summaryStats.get(name);
-		if (summ == null)
-			summaryStats.put(name, SummStats.on(value));
-		else
-			summ.add(value);
+		if (summ == null) {
+			summ = SummStats.on();
+			summaryStats.put(name, summ);
+		}
+		summ.add(value);
+	}
+	
+	public void post(String name, double value, long times) {
+		SummStats summ = summaryStats.get(name);
+		if (summ == null) {
+			summ = SummStats.on();
+			summaryStats.put(name, summ);
+		}
+		summ.addNTimes(value, times);
 	}
 	
 	// TODO Switch to default map?

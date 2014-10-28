@@ -44,6 +44,10 @@ public abstract class Entity implements Serializable {
 		sim.postStat(name, value);
 	}
 	
+	protected void postStat(String name, double value, long times) {
+		sim.postStat(name, value, times);
+	}
+	
 	protected void postTimedStat(String name, double value) {
 		sim.postTimedStat(name, value);
 	}

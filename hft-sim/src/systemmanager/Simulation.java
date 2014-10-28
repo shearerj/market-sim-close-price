@@ -192,6 +192,10 @@ public class Simulation {
 		statistics.post(name, value);
 	}
 	
+	public void postStat(String name, double value, long times) {
+		statistics.post(name, value, times);
+	}
+	
 	public void postTimedStat(String name, double value) {
 		statistics.postTimed(eventQueue.getCurrentTime(), name, value);
 	}

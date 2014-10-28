@@ -1,5 +1,7 @@
 package utils;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.common.primitives.Doubles;
 
 /**
@@ -56,12 +58,15 @@ public class SummStats {
 		n += 1;
 		mean += delta / n;
 		squaredError += delta * (value - mean);
-		if (Double.isNaN(min) || value < min) min = value;
-		if (Double.isNaN(max) || value > max) max = value;
+		if (Double.isNaN(min) || value < min)
+			min = value;
+		if (Double.isNaN(max) || value > max)
+			max = value;
 		return this;
 	}
 	
 	public SummStats addNTimes(double value, long times) {
+		checkArgument(times > 0);
 		merge(new SummStats(times, value, 0, value, value));
 		return this;
 	}
@@ -127,9 +132,9 @@ public class SummStats {
 		n += other.n;
 		mean += delta * other.n / n; // XXX not certain of proper order of operations ton minimize precision loss
 		squaredError += other.squaredError + delta * (other.mean - mean) * other.n;
-		if (other.min < min)
+		if (Double.isNaN(min) || other.min < min)
 			min = other.min;
-		if (other.max > max)
+		if (Double.isNaN(max) || other.max > max)
 			max = other.max;
 		return this;
 	}

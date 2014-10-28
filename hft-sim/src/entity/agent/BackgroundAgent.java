@@ -216,8 +216,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		super.processTransaction(submitTime, type, trans);
 		
 		TimeStamp timeToExecution = trans.getExecTime().minus(submitTime);
-		for (int i = 0; i < trans.getQuantity(); ++i)
-			postStat(Stats.EXECUTION_TIME, timeToExecution.getInTicks());
+		postStat(Stats.EXECUTION_TIME, timeToExecution.getInTicks(), trans.getQuantity());
 	}
 
 	/**
