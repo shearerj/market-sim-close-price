@@ -6,14 +6,14 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Random;
 
-import logger.Log;
-
 import org.junit.Before;
 import org.junit.Test;
 
+import systemmanager.Defaults;
+import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
-import systemmanager.MockSim;
+import utils.Mock;
 import utils.SummStats;
 
 import com.google.common.collect.ImmutableList;
@@ -25,21 +25,17 @@ import event.TimeStamp;
 public class FundamentalValueTest {
 	private static final double eps = 1e-6;
 	private static final Random rand = new Random();
-	private MockSim sim;
 	
 	@Before
-	public void defaultSetup() throws IOException {
-		setup(Props.fromPairs());
-	}
-	
-	public void setup(Props parameters) throws IOException {
-		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING, parameters);
+	public void defaultSetup() {
+		
 	}
 	
 	@Test(expected=UnsupportedOperationException.class)
 	public void immutableTest() {
-		sim.getFundamental().computeFundamentalTo(1000);
-		Iterator<Double> it = sim.getFundamental().iterator();
+		FundamentalValue fund = Mock.fundamental;
+		fund.computeFundamentalTo(1000);
+		Iterator<Double> it = fund.iterator();
 		it.next();
 		it.remove();
 	}
@@ -47,36 +43,38 @@ public class FundamentalValueTest {
 	@Test
 	public void zeroJumpTest() throws IOException {
 		int mean = rand.nextInt(100000);
-		setup(Props.fromPairs(FundamentalMean.class, mean, FundamentalShockVar.class, 0d));
+		FundamentalValue fund = FundamentalValue.create(Stats.create(), Mock.timeline, 0, mean, 0, rand);
 		
 		Price meanPrice = Price.of(mean);
 		for (int time = 0; time < 100; time++)
-			assertEquals(meanPrice, sim.getFundamental().getValueAt(TimeStamp.of(time)));
+			assertEquals(meanPrice, fund.getValueAt(TimeStamp.of(time)));
 	}
 	
 	@Test
 	public void postRandFundamentalStatTest() {
-		FundamentalValue fund = sim.getFundamental();
+		Stats stats = Stats.create();
+		FundamentalValue fund = FundamentalValue.create(stats, Mock.timeline,
+				Defaults.get(FundamentalKappa.class), Defaults.get(FundamentalMean.class), Defaults.get(FundamentalShockVar.class), rand);
 		fund.computeFundamentalTo(100);
 
 		assertEquals(ImmutableList.copyOf(fund),
-				ImmutableList.copyOf(Iterables.limit(sim.getStats().getTimeStats().get(Stats.FUNDAMENTAL), 101)));
-		assertEquals(SummStats.on(fund).mean(), sim.getStats().getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).mean(), eps);
-		assertEquals(SummStats.on(fund).stddev(), sim.getStats().getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).stddev(), eps);
+				ImmutableList.copyOf(Iterables.limit(stats.getTimeStats().get(Stats.FUNDAMENTAL), 101)));
+		assertEquals(SummStats.on(fund).mean(), stats.getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).mean(), eps);
+		assertEquals(SummStats.on(fund).stddev(), stats.getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).stddev(), eps);
 	}
 	
 	@Test
 	public void postStaticFundamentalStatTest() throws IOException {
 		int mean = rand.nextInt(100000);
-		setup(Props.fromPairs(FundamentalMean.class, mean, FundamentalShockVar.class, 0d));
+		Stats stats = Stats.create();
+		FundamentalValue fund = FundamentalValue.create(stats, Mock.timeline, 0, mean, 0, rand);
 		
-		FundamentalValue fund = sim.getFundamental();
 		fund.computeFundamentalTo(100);
 
 		assertEquals(ImmutableList.copyOf(fund),
-				ImmutableList.copyOf(Iterables.limit(sim.getStats().getTimeStats().get(Stats.FUNDAMENTAL), 101)));
-		assertEquals(mean, sim.getStats().getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).mean(), eps);
-		assertEquals(0, sim.getStats().getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).stddev(), eps);
+				ImmutableList.copyOf(Iterables.limit(stats.getTimeStats().get(Stats.FUNDAMENTAL), 101)));
+		assertEquals(mean, stats.getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).mean(), eps);
+		assertEquals(0, stats.getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).stddev(), eps);
 	}
 	
 	// FIXME Assert that fundamental is never referenced past final simulation time...

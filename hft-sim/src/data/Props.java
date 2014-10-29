@@ -30,6 +30,7 @@ public class Props implements Serializable {
 	
 	private static final Joiner paramJoiner = Joiner.on('_');
 	private static final String classPath = "systemmanager.Keys$";
+	private static final Props empty = builder().build();
 	
 	private final ImmutableProps props;
 
@@ -38,7 +39,7 @@ public class Props implements Serializable {
 	}
 	
 	public static Props fromPairs() {
-		return builder().build();
+		return empty;
 	}
 	
 	public static <T> Props fromPairs(Class<? extends Value<T>> key, T value) {

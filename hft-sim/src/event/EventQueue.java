@@ -7,8 +7,7 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Random;
 
-import logger.Log.LogClock;
-import systemmanager.Simulation;
+import logger.Log;
 import utils.Collections3;
 import utils.RandomKeyedQueue;
 
@@ -16,9 +15,9 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 
-public class EventQueue implements LogClock{
+public class EventQueue implements TimeLine {
 	
-	private final Simulation sim;
+	private final Log log;
 	private TimeStamp currentTime;
 	
 	private final RandomKeyedQueue<TimeStamp, Activity> scheduledActivities;
@@ -27,8 +26,8 @@ public class EventQueue implements LogClock{
 	private final ListMultimap<TimeStamp, Activity> pendingScheduledActivities; 
 	private final List<Activity> pendingImmediateActivities;
 	
-	protected EventQueue(Simulation sim, Random rand) {
-		this.sim = sim;
+	protected EventQueue(Log log, Random rand) {
+		this.log = log;
 		this.scheduledActivities = RandomKeyedQueue.create(rand);
 		this.immediateActivities = Collections3.asLifoQueue(Lists.<Activity> newArrayList());
 		this.pendingScheduledActivities = ArrayListMultimap.create();
@@ -36,8 +35,8 @@ public class EventQueue implements LogClock{
 		this.currentTime = TimeStamp.ZERO;
 	}
 	
-	public static EventQueue create(Simulation sim, Random rand) {
-		return new EventQueue(sim, rand);
+	public static EventQueue create(Log log, Random rand) {
+		return new EventQueue(log, rand);
 	}
 	
 	private boolean moreImmediateActivities() {
@@ -63,7 +62,7 @@ public class EventQueue implements LogClock{
 	
 	private void executeNext() {
 		Activity act = pop();
-		sim.log(DEBUG, "Executing {%s} the immediately {%s} then {%s}", act, immediateActivities, scheduledActivities);
+		log.log(DEBUG, "Executing {%s} the immediately {%s} then {%s}", act, immediateActivities, scheduledActivities);
 		act.execute();
 	}
 	
@@ -101,25 +100,17 @@ public class EventQueue implements LogClock{
 	 * scheduled at the same time in the future, use the method
 	 * <code>scheduleActivities</code>
 	 */
-	public void scheduleActivity(TimeStamp scheduledTime, Activity act) {
-		if (scheduledTime.before(currentTime))
+	@Override
+	public void scheduleActivityIn(TimeStamp delay, Activity act) {
+		if (delay.before(TimeStamp.ZERO))
 			pendingImmediateActivities.add(act);
 		else
-			pendingScheduledActivities.put(scheduledTime, act);
+			pendingScheduledActivities.put(currentTime.plus(delay), act);
 	}
 	
+	@Override
 	public TimeStamp getCurrentTime() {
 		return currentTime;
 	}
-
-	@Override
-	public long getLogTime() {
-		return currentTime.getInTicks();
-	}
-
-	@Override
-	public int getLogTimePadding() {
-		return 6;
-	};
 	
 }

@@ -3,14 +3,11 @@ package entity.agent;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static utils.Tests.checkNBBO;
-import static utils.Tests.checkOrder;
-import static utils.Tests.checkSingleTransaction;
+import static utils.Tests.assertNBBO;
+import static utils.Tests.assertOrder;
+import static utils.Tests.assertSingleTransaction;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Random;
 
 import logger.Log;
@@ -18,26 +15,26 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
+import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.BidRangeMax;
 import systemmanager.Keys.BidRangeMin;
-import systemmanager.Keys.FundamentalMean;
-import systemmanager.Keys.FundamentalShockVar;
-import systemmanager.Keys.MaxQty;
-import systemmanager.Keys.NbboLatency;
 import systemmanager.Keys.PrivateValueVar;
-import systemmanager.Keys.ReentryRate;
 import systemmanager.Keys.WithdrawOrders;
-import systemmanager.MockSim;
+import utils.Mock;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
+import data.FundamentalValue;
 import data.Props;
-import entity.agent.position.PrivateValues;
+import entity.market.CDAMarket;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
+import entity.sip.MarketInfo;
+import entity.sip.SIP;
+import event.EventQueue;
 import event.TimeStamp;
 
 /**
@@ -49,28 +46,31 @@ import event.TimeStamp;
 public class ZIRAgentTest {
 
 	private static final Random rand = new Random();
+	private static final Agent mockAgent = Mock.agent();
 	private static final Props defaults = Props.fromPairs(
-			ReentryRate.class, 0d,
-			MaxQty.class, 1,
+			ArrivalRate.class, 0d,
 			PrivateValueVar.class, 0d,
 			BidRangeMin.class, 1000,
 			BidRangeMax.class, 1000);
 	
-	private MockSim sim;
-	private Market market, other;
-	private MarketView view, otherView;
+	private EventQueue timeline;
+	private FundamentalValue fundamental;
+	private MarketInfo sip;
+	private Market nyse, nasdaq;
+	private MarketView nyseView, nasdaqView;
 
 	@Before
 	public void setup() throws IOException{
-		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 2,
-				Props.fromPairs(FundamentalMean.class, 110000, FundamentalShockVar.class, 0d, NbboLatency.class, TimeStamp.of(50)));
-		Iterator<Market> markets = sim.getMarkets().iterator();
-		market = markets.next();
-		view = market.getPrimaryView();
-		other = markets.next();
-		otherView = other.getPrimaryView();
-		assertFalse(markets.hasNext());
+		timeline = EventQueue.create(Log.nullLogger(), rand);
+		fundamental = Mock.fundamental(110000);
+		sip = SIP.create(Mock.stats, timeline, Log.nullLogger(), rand, TimeStamp.of(50));
+		nyse = CDAMarket.create(0, Mock.stats, timeline, Log.nullLogger(), rand, sip, Props.fromPairs());
+		nyseView = nyse.getPrimaryView();
+		nasdaq = CDAMarket.create(1, Mock.stats, timeline, Log.nullLogger(), rand, sip, Props.fromPairs());
+		nasdaqView = nasdaq.getPrimaryView();
 	}
+	
+	// FIXME These tests to backgroudn agent
 	
 	/**
 	 * Scenario where ZIR withdrawing orders causes NBBO to grow stale and get
@@ -79,31 +79,29 @@ public class ZIRAgentTest {
 	 * FIXME Elaine please check that this is correct
 	 */
 	private OrderRecord withdrawRoutingScenario(ZIRAgent agent) {
-		Agent seller = mockAgent();
-		Agent buyer = mockAgent();
+		mockAgent.submitOrder(nasdaqView, SELL, Price.of(111000), 1);
+		mockAgent.submitOrder(nyseView, SELL, Price.of(108000), 1);
+		mockAgent.submitOrder(nasdaqView, BUY, Price.of(102000), 1);
+		mockAgent.submitOrder(nyseView, BUY, Price.of(104000), 1);
 		
-		seller.submitOrder(otherView, SELL, Price.of(111000), 1);
-		seller.submitOrder(view, SELL, Price.of(108000), 1);
-		buyer.submitOrder(otherView, BUY, Price.of(102000), 1);
-		buyer.submitOrder(view, BUY, Price.of(104000), 1);
+		timeline.executeUntil(TimeStamp.of(50));
+		assertNBBO(sip.getNBBO(), Price.of(104000), nyse, Price.of(108000), nyse);
 		
-		sim.executeUntil(TimeStamp.of(50));
-		checkNBBO(sim.getSIP().getNBBO(), Price.of(104000), market, Price.of(108000), market);
+		OrderRecord first = agent.submitOrder(nasdaqView, SELL, Price.of(105000), 1);
+		timeline.executeUntil(TimeStamp.of(100));
+		assertNBBO(sip.getNBBO(), Price.of(104000), nyse, Price.of(105000), nasdaq);
 		
-		OrderRecord first = agent.submitOrder(otherView, SELL, Price.of(105000), 1);
-		sim.executeUntil(TimeStamp.of(100));
-		checkNBBO(sim.getSIP().getNBBO(), Price.of(104000), market, Price.of(105000), other);
-		
-		agent.rand.setSeed(4); // Selected so next order is a BUY
 		agent.agentStrategy();
 		
 		// Activity to actually submit order hasn't happened yet. Need to remove the first order in case it's not withdrawn
 		OrderRecord order = Iterables.getOnlyElement(Sets.difference(
-				Sets.newHashSet(agent.activeOrders), ImmutableSet.of(first)));
-		checkOrder(order, Price.of(109000), 1, TimeStamp.of(100), null);
+				Sets.newHashSet(agent.getActiveOrders()), ImmutableSet.of(first)));
+		if (order.getOrderType() == SELL)
+			return null; // Only valid if agent submits a buy order
+		assertOrder(order, Price.of(109000), 1, TimeStamp.of(100), null);
 		
 		// Actually submit the order
-		sim.executeImmediate();
+		timeline.executeUntil(TimeStamp.of(100));
 		return order;
 	}
 
@@ -113,19 +111,23 @@ public class ZIRAgentTest {
 	 */
 	@Test
 	public void withdrawQuoteUpdateTest() throws IOException {
-		ZIRAgent agent = zirAgent(Props.fromPairs(WithdrawOrders.class, true));
-		OrderRecord order = withdrawRoutingScenario(agent);
+		OrderRecord order = null;
+		while (order == null) {
+			setup();
+			ZIRAgent agent = zirAgent(Props.fromPairs(WithdrawOrders.class, true));
+			order = withdrawRoutingScenario(agent);
+		}
 		
 		// Check that the order got routed
-		assertEquals(otherView, order.getCurrentMarket());
+		assertEquals(nasdaqView, order.getCurrentMarket());
 
 		/*
 		 * Notice that the BID/ASK cross; if the SIP had been immediate, then
 		 * the BUY order at 109 would have been routed to Nasdaq and it would
 		 * have transacted immediately
 		 */
-		sim.executeUntil(TimeStamp.of(150));
-		checkNBBO(sim.getSIP().getNBBO(), Price.of(109000), other, Price.of(108000), market);
+		timeline.executeUntil(TimeStamp.of(150));
+		assertNBBO(sip.getNBBO(), Price.of(109000), nasdaq, Price.of(108000), nyse);
 	}
 	
 	/**
@@ -134,30 +136,26 @@ public class ZIRAgentTest {
 	 */
 	@Test
 	public void noWithdrawQuoteUpdateTest() throws IOException {
-		ZIRAgent agent = zirAgent(Props.fromPairs(WithdrawOrders.class, false));
-		OrderRecord order = withdrawRoutingScenario(agent);
+		OrderRecord order = null;
+		while (order == null) {
+			setup();
+			ZIRAgent agent = zirAgent(Props.fromPairs(WithdrawOrders.class, false));
+			order = withdrawRoutingScenario(agent);
+		}
 		
 		// Check that the order got routed
-		assertEquals(otherView, order.getCurrentMarket());
+		assertEquals(nasdaqView, order.getCurrentMarket());
 		
 		// Check that orders transacted
-		assertTrue(agent.activeOrders.isEmpty());
 		assertEquals(0, order.getQuantity());
-		checkSingleTransaction(otherView.getTransactions(), Price.of(105000), TimeStamp.of(100), 1);
+		assertSingleTransaction(nasdaqView.getTransactions(), Price.of(105000), TimeStamp.of(100), 1);
 
-		sim.executeUntil(TimeStamp.of(150));
-		checkNBBO(sim.getSIP().getNBBO(), Price.of(104000), market, Price.of(108000), market);
+		timeline.executeUntil(TimeStamp.of(150));
+		assertNBBO(sip.getNBBO(), Price.of(104000), nyse, Price.of(108000), nyse);
 	}
 
 	public ZIRAgent zirAgent(Props parameters) {
-		return ZIRAgent.create(sim, market, rand, Props.merge(defaults, parameters));
+		return ZIRAgent.create(0, Mock.stats, timeline, Log.nullLogger(), rand, sip, fundamental, nyse, Props.merge(defaults, parameters));
 	}
 	
-	private Agent mockAgent() {
-		return new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
-			private static final long serialVersionUID = 1L;
-			@Override public void agentStrategy() { }
-			@Override public String toString() { return "TestAgent " + id; }
-		};
-	}
 }

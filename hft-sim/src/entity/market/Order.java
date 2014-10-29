@@ -12,7 +12,7 @@ import entity.agent.OrderRecord;
  * 
  * @author ewah
  */
-class Order extends fourheap.Order<Price, MarketTime> implements Serializable {
+public class Order extends fourheap.Order<Price, MarketTime> implements Serializable {
 
 	private static final long serialVersionUID = 4020465194816241014L;
 	

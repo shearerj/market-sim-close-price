@@ -8,9 +8,9 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Random;
 
+import logger.Log;
 import systemmanager.Consts;
 import systemmanager.Keys.FileName;
-import systemmanager.Simulation;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -18,11 +18,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 
+import data.FundamentalValue;
 import data.Props;
+import data.Stats;
 import entity.agent.MarketDataParser.MarketAction;
 import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import entity.market.Price;
+import entity.sip.MarketInfo;
+import event.TimeLine;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -30,14 +34,15 @@ public class MarketDataAgent extends SMAgent {
 	protected final PeekingIterator<MarketAction> orderDatumIterator;
 	protected final BiMap<Long, OrderRecord> refNumbers;
 
-	protected MarketDataAgent(Simulation sim, TimeStamp arrivalTime, Market market, 
-			Random rand, Iterator<MarketAction> orderDatumIterator, Props props) {
-		super(sim, PrivateValues.zero(), arrivalTime, rand, market, props);
+	protected MarketDataAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			TimeStamp arrivalTime, Market market, Iterator<MarketAction> orderDatumIterator, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(), arrivalTime, market, props);
 		this.orderDatumIterator = Iterators.peekingIterator(checkNotNull(orderDatumIterator));
 		refNumbers = HashBiMap.create();
 	}
 	
-	public static MarketDataAgent create(Simulation sim, Market market, Random rand, Props props) {
+	public static MarketDataAgent create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
 		Iterator<MarketAction> actions = ImmutableList.<MarketAction> of().iterator();
 		String fileName = props.get(FileName.class);
 		
@@ -63,7 +68,7 @@ public class MarketDataAgent extends SMAgent {
 		
 		PeekingIterator<MarketAction> peekable = Iterators.peekingIterator(actions);
 		TimeStamp arrivalTime = peekable.hasNext() ? peekable.peek().getScheduledTime() : TimeStamp.ZERO;
-		return new MarketDataAgent(sim, arrivalTime, market, rand, peekable, props);
+		return new MarketDataAgent(id, stats, timeline, log, rand, sip, fundamental, arrivalTime, market, peekable, props);
 	}
 	
 	@Override
@@ -74,7 +79,7 @@ public class MarketDataAgent extends SMAgent {
 		orderDatumIterator.next().executeFor(this);
 		
 		if (orderDatumIterator.hasNext())
-			reenterIn(orderDatumIterator.peek().getScheduledTime().minus(currentTime()));
+			reenterIn(orderDatumIterator.peek().getScheduledTime().minus(getCurrentTime()));
 	}
 	
 	protected OrderRecord submitRefOrder(OrderType type, Price price, int quantity, long refNum) {

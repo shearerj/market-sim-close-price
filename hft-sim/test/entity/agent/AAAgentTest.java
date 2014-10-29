@@ -2,12 +2,11 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static logger.Log.Level.DEBUG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static utils.Tests.assertSingleOrderRange;
 import static utils.Tests.checkSingleOrder;
-import static utils.Tests.checkSingleOrderRange;
 
 import java.io.IOException;
 import java.util.Random;
@@ -17,11 +16,11 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
+import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.BetaT;
 import systemmanager.Keys.BuyerStatus;
 import systemmanager.Keys.Debug;
 import systemmanager.Keys.Eta;
-import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.Gamma;
 import systemmanager.Keys.InitAggression;
 import systemmanager.Keys.MaxQty;
@@ -33,11 +32,9 @@ import systemmanager.Keys.ThetaMax;
 import systemmanager.Keys.ThetaMin;
 import systemmanager.Keys.WindowLength;
 import systemmanager.Keys.WithdrawOrders;
-import systemmanager.MockSim;
+import utils.Mock;
 import utils.Rands;
-
-import com.google.common.collect.Iterables;
-
+import data.FundamentalValue;
 import data.Props;
 import entity.market.Market;
 import entity.market.Market.MarketView;
@@ -48,7 +45,10 @@ import fourheap.Order.OrderType;
 public class AAAgentTest {
 
 	private static final Random rand = new Random();
+	private static final Agent mockAgent = Mock.agent();
+	private static final FundamentalValue fundamental = Mock.fundamental(100000);
 	private static final Props defaults = Props.builder()
+			.put(ArrivalRate.class,		0d)
 			.put(ReentryRate.class,		0d)
 			.put(PrivateValueVar.class,	0d)
 			.put(MaxQty.class,			1)
@@ -61,21 +61,14 @@ public class AAAgentTest {
 			.put(Debug.class,			true)
 			.build();
 
-	private MockSim sim;
+	
 	private Market market;
 	private MarketView view;
-	private Agent mockAgent;
 
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1, Props.fromPairs(FundamentalShockVar.class, 0d));
-
-		market = Iterables.getOnlyElement(sim.getMarkets());
+		market = Mock.market();
 		view = market.getPrimaryView();
-		mockAgent = new BackgroundAgent(sim, market, rand, Props.fromPairs()) {
-			private static final long serialVersionUID = 1L;
-			@Override public String toString() { return "TestAgent"; }
-		};
 	}
 
 	@Test
@@ -226,12 +219,10 @@ public class AAAgentTest {
 		setQuote(Price.of(Rands.nextUniform(rand, 75000, 80000)), Price.of(Rands.nextUniform(rand, 81000, 100000)));
 		
 		buyer.biddingLayer(limit, null, 1);
-		sim.executeImmediate();
-		checkSingleOrderRange(buyer.activeOrders, Price.of(75000), Price.of(100000), 1);
+		assertSingleOrderRange(buyer.getActiveOrders(), Price.of(75000), Price.of(100000), 1);
 		
 		seller.biddingLayer(limit, null, 1);
-		sim.executeImmediate();
-		checkSingleOrderRange(seller.activeOrders, Price.of(75000), Price.of(100000), 1);
+		assertSingleOrderRange(seller.getActiveOrders(), Price.of(75000), Price.of(100000), 1);
 	}
 	
 	@Test
@@ -241,34 +232,29 @@ public class AAAgentTest {
 		AAAgent buyer = aaAgent(Props.fromPairs(BuyerStatus.class, BUY));
 		
 		buyer.biddingLayer(limit, target, 1);
-		assertEquals(1, buyer.activeOrders.size());
-		sim.executeImmediate();
+		assertEquals(1, buyer.getActiveOrders().size());
 		buyer.withdrawAllOrders();
-		sim.executeImmediate();
-		
-		setQuote(Price.of(150000), Price.of(200000));
 		
 		setPosition(buyer, buyer.getMaxAbsPosition() + 1);
-		sim.executeUntil(TimeStamp.of(20));
+		setQuote(Price.of(150000), Price.of(200000));
+		
+//		sim.executeUntil(TimeStamp.of(20));
 		buyer.biddingLayer(limit, target, 1);
-		assertTrue(buyer.activeOrders.isEmpty()); // would exceed max position
+		assertTrue(buyer.getActiveOrders().isEmpty()); // would exceed max position
 		
 		buyer.liquidateAtPrice(Price.ZERO); // Resets Position
 		buyer.biddingLayer(limit, target, 1);
-		assertTrue(buyer.activeOrders.isEmpty()); // limit price < bid
+		assertTrue(buyer.getActiveOrders().isEmpty()); // limit price < bid
 		
 		limit = Price.of(211000);
 		buyer.biddingLayer(limit, null, 1);
-		sim.executeUntil(TimeStamp.of(20));
-		checkSingleOrder(buyer.activeOrders, Price.of(170007), 1, TimeStamp.of(20), TimeStamp.of(20));
+		checkSingleOrder(buyer.getActiveOrders(), Price.of(170007), 1, TimeStamp.of(20), TimeStamp.of(20));
 		
 		limit = Price.of(210000);
 		target = Price.of(180000);
 		buyer.withdrawAllOrders();
-		sim.executeImmediate();
 		buyer.biddingLayer(limit, target, 1);
-		sim.executeUntil(TimeStamp.of(20));
-		checkSingleOrder(buyer.activeOrders, Price.of(160000), 1, TimeStamp.of(20), TimeStamp.of(20));
+		checkSingleOrder(buyer.getActiveOrders(), Price.of(160000), 1, TimeStamp.of(20), TimeStamp.of(20));
 	}
 	
 	@Test
@@ -280,34 +266,29 @@ public class AAAgentTest {
 		AAAgent seller = aaAgent(Props.fromPairs(BuyerStatus.class, SELL));
 		
 		seller.biddingLayer(limit, target, 1);
-		assertEquals(1, seller.activeOrders.size()); // ZI strat
-		sim.executeImmediate();
+		assertEquals(1, seller.getActiveOrders().size()); // ZI strat
 		seller.withdrawAllOrders();
-		sim.executeImmediate();
 		
+		setPosition(seller, seller.getMaxAbsPosition() + 1);
 		setQuote(Price.of(150000), Price.of(200000));
 		
-		sim.executeUntil(TimeStamp.of(20));
-		setPosition(seller, seller.getMaxAbsPosition() + 1);
+//		sim.executeUntil(TimeStamp.of(20));
 		seller.biddingLayer(limit, target, 1);
-		assertTrue(seller.activeOrders.isEmpty()); // would exceed max position
+		assertTrue(seller.getActiveOrders().isEmpty()); // would exceed max position
 		
 		seller.liquidateAtPrice(Price.ZERO); // Resets Position
 		seller.biddingLayer(limit, target, 1);
-		assertTrue(seller.activeOrders.isEmpty()); // limit price > ask
+		assertTrue(seller.getActiveOrders().isEmpty()); // limit price > ask
 		
 		limit = Price.of(170000);
 		seller.biddingLayer(limit, null, 1);
-		sim.executeUntil(TimeStamp.of(20));
-		checkSingleOrder(seller.activeOrders, Price.of(190000), 1, TimeStamp.of(20), TimeStamp.of(20));
+		checkSingleOrder(seller.getActiveOrders(), Price.of(190000), 1, TimeStamp.of(20), TimeStamp.of(20));
 		
 		limit = Price.of(165000);
 		target = Price.of(170000);
 		seller.withdrawAllOrders();
-		sim.executeImmediate();
 		seller.biddingLayer(limit, target, 1);
-		sim.executeUntil(TimeStamp.of(20));
-		checkSingleOrder(seller.activeOrders, Price.of(190000), 1, TimeStamp.of(20), TimeStamp.of(20));
+		checkSingleOrder(seller.getActiveOrders(), Price.of(190000), 1, TimeStamp.of(20), TimeStamp.of(20));
 	}
 	
 	// The name of this test get deleted somehow...
@@ -331,14 +312,12 @@ public class AAAgentTest {
 		addTransaction(Price.of(100000));
 		
 		Price equil = Price.of(100000);
-		sim.executeUntil(TimeStamp.of(20));
 		// haven't used 5 transactions yet, so keep theta fixed
 		agent.updateTheta(equil, agent.getWindowTransactions());
 		assertEquals(-4, agent.theta, 0.001);
 		
 		addTransaction(Price.of(110000));
 		addTransaction(Price.of(111000));
-		sim.executeUntil(TimeStamp.of(40));
 		agent.updateTheta(equil, agent.getWindowTransactions());
 		assertTrue(agent.theta < -4);	// decreases because high price vol
 		assertEquals(-5, agent.theta, 0.001); 
@@ -347,89 +326,78 @@ public class AAAgentTest {
 		addTransaction(Price.of(107000));
 		addTransaction(Price.of(108000));
 		equil = Price.of(108000);
-		sim.executeUntil(TimeStamp.of(50));
 		agent.updateTheta(equil, agent.getWindowTransactions());
 		assertTrue(agent.theta > -5);	// increases because lower price vol
 	}
 	
+	/** Testing buyer on empty market: Result should be price=0 */
 	@Test
 	public void initialBuyer() {
-		sim.log(DEBUG, "\nTesting buyer on empty market: Result should be price=0");
 		// Creating a buyer
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY));
 		assertTrue(agent.type.equals(BUY));
 		// Testing against an empty market
-		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 		
-		assertEquals(1, agent.activeOrders.size());
+		assertEquals(1, agent.getActiveOrders().size());
 	}
 
+	/** Testing seller on empty market: Result should be price=Inf */
 	@Test
 	public void initialSeller() {
-		sim.log(DEBUG, "\nTesting seller on empty market: Result should be price=%s", Price.INF);
 		// Creating a seller
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL));
 		assertTrue(agent.type.equals(SELL));
 		// Testing against an empty market
-		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
-		assertEquals(1, agent.activeOrders.size());
+		assertEquals(1, agent.getActiveOrders().size());
 	}
 
+	/** Testing buyer on market with bids/asks but no transactions 50000 < Bid price < 100000 */
 	@Test
 	public void noTransactionsBuyer() {
-		sim.log(DEBUG, "\nTesting buyer on market with bids/asks but no transactions");
-		sim.log(DEBUG, "50000 < Bid price < 100000");
-
 		setQuote(Price.of(50000), Price.of(200000));
 
 		// Testing against a market with initial bids but no transaction history
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY, Eta.class, 4));
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
-		sim.executeImmediate();
 
 		// Asserting the bid is correct (based on EQ 10/11)
-		checkSingleOrder(agent.activeOrders, Price.of(62500), 1, TimeStamp.of(100), TimeStamp.of(100));
+		checkSingleOrder(agent.getActiveOrders(), Price.of(62500), 1, TimeStamp.of(100), TimeStamp.of(100));
 	}
 
+	/** Testing seller on market with bids/asks but no transactions 100000 < Ask price < 200000 */
 	@Test
 	public void noTransactionsSeller() {
-		sim.log(DEBUG, "\nTesting seller on market with bids/asks but no transactions");
-		sim.log(DEBUG, "100000 < Ask price < 200000");
-
+		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, Eta.class, 4));
 		setQuote(Price.of(50000), Price.of(200000));
 
 		// Testing against a market with initial bids but no transaction history
-		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, Eta.class, 4));
-		sim.executeUntil(TimeStamp.of(100));
+//		timeline.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
-		sim.executeImmediate();
 
 		// Asserting the bid is correct (based on EQ 10/11)
-		checkSingleOrder(agent.activeOrders, Price.of(175000), 1, TimeStamp.of(100), TimeStamp.of(100));
+		checkSingleOrder(agent.getActiveOrders(), Price.of(175000), 1, TimeStamp.of(100), TimeStamp.of(100));
 	}
 
+	/** Testing passive buyer on market with transactions */
 	@Test
 	public void IntraBuyerPassive() {
-		sim.log(DEBUG, "\nTesting passive buyer on market with transactions");
-
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
 		
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY, InitAggression.class, -1d));
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
-		checkSingleOrderRange(agent.activeOrders, Price.of(30000), Price.of(35000), 1);
+		assertSingleOrderRange(agent.getActiveOrders(), Price.of(30000), Price.of(35000), 1);
 	}
 
+	/** Testing r = -0.5 buyer on market with transactions */
 	@Test
 	public void IntraBuyerNegative() {
-		sim.log(DEBUG, "\nTesting r = -0.5 buyer on market with transactions");
-
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
 
@@ -438,137 +406,127 @@ public class AAAgentTest {
 				Theta.class, -3d,
 				InitAggression.class, -0.5));
 		
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
-		checkSingleOrderRange(agent.activeOrders, Price.of(36000), Price.of(41000), 1);
+		assertSingleOrderRange(agent.getActiveOrders(), Price.of(36000), Price.of(41000), 1);
 	}
 
 	/**
+	 * Testing active buyer on market with transactions Price ~= 58333
+	 * 
 	 * Currently fails due to incorrect market behavior,
 	 * but AAAgent acts correctly based on the information it receives
 	 */
 	@Test
 	public void IntraBuyerActive() {
-		sim.log(DEBUG, "\nTesting active buyer on market with transactions");
-
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
 
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY, InitAggression.class, 0d));
-		sim.log(DEBUG, "Price ~= 58333");
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
-		checkSingleOrderRange(agent.activeOrders, Price.of(57000), Price.of(59000), 1);
+		assertSingleOrderRange(agent.getActiveOrders(), Price.of(57000), Price.of(59000), 1);
 	}
 
 	/**
+	 * Testing r = -0.5 buyer on market with transactions
+	 * 
 	 * Currently fails due to incorrect market behavior,
 	 * but AAAgent acts correctly based on the information it receives
 	 */
 	@Test
 	public void IntraBuyerPositive() {
-		sim.log(DEBUG, "\nTesting r = -0.5 buyer on market with transactions");
-
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
 
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY,
 				Theta.class, -3d,
 				InitAggression.class, 0.5));
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
-		checkSingleOrderRange(agent.activeOrders, Price.of(64000), Price.of(66000), 1);
+		assertSingleOrderRange(agent.getActiveOrders(), Price.of(64000), Price.of(66000), 1);
 	}
 
+	/** Testing aggressive buyer on market with transactions Price ~= 66667 */
 	@Test
 	public void IntraBuyerAggressive() {
-		sim.log(DEBUG, "");
-		sim.log(DEBUG, "Testing aggressive buyer on market with transactions");
-
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
 
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY, InitAggression.class, 1d));
-		sim.log(DEBUG, "Price ~= 66667");
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
-		sim.executeImmediate();
 
-		checkSingleOrderRange(agent.activeOrders, Price.of(65000), Price.of(68000), 1);
+		assertSingleOrderRange(agent.getActiveOrders(), Price.of(65000), Price.of(68000), 1);
 	}
 
+	/**
+	 * Testing passive seller on market with transactions
+	 * 
+	 * Price ~= 150000 + (Price.INF.intValue() - 150000) / 3
+	 */
 	@Test
 	public void IntraSellerPassive() { // Check Aggression
-		sim.log(DEBUG, "");
-		sim.log(DEBUG, "Testing passive seller on market with transactions");
-
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
 
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, InitAggression.class, 11d));
-		sim.log(DEBUG, "Price ~= %d", 150000 + (Price.INF.intValue() - 150000) / 3);
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
 		// Asserting the bid is correct
 		Price low = Price.of(150000 + (Price.INF.intValue() - 150000) / 3 - 1000);
 		Price high = Price.of(150000 + (Price.INF.intValue() - 150000) / 3 + 1000);
-		checkSingleOrderRange(agent.activeOrders, low, high, 1);
+		assertSingleOrderRange(agent.getActiveOrders(), low, high, 1);
 	}
 
+	/** Testing active seller on market with transactions Price ~= 141667 */
 	@Test
 	public void IntraSellerActive() {
-		sim.log(DEBUG, "\nTesting active seller on market with transactions");
-
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
 
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, InitAggression.class, 0d));
-		sim.log(DEBUG, "Price ~= 141667");
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
-		checkSingleOrderRange(agent.activeOrders, Price.of(138000), Price.of(144000), 1);
+		assertSingleOrderRange(agent.getActiveOrders(), Price.of(138000), Price.of(144000), 1);
 	}
 
+	/** Testing aggressive seller on market with transactions */
 	@Test
 	public void IntraSellerAggressive() { // Check Aggression
-		sim.log(DEBUG, "");
-		sim.log(DEBUG, "Testing aggressive seller on market with transactions");
-
 		// Adding Transactions and Bids
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
 
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, InitAggression.class, 1d));
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
-		checkSingleOrderRange(agent.activeOrders, Price.of(130000), Price.of(135000), 1);
+		assertSingleOrderRange(agent.getActiveOrders(), Price.of(130000), Price.of(135000), 1);
 	}
 
-
+	/** Testing passive buyer on market with transactions */
 	@Test
 	public void ExtraBuyerPassive() {
-		sim.log(DEBUG, "\nTesting passive buyer on market with transactions");
 
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
 		
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY, InitAggression.class, -1d));
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
-		checkSingleOrderRange(agent.activeOrders, Price.of(30000), Price.of(35000), 1);
+		assertSingleOrderRange(agent.getActiveOrders(), Price.of(30000), Price.of(35000), 1);
 	}
 
+	/** Testing r = -0.5 buyer on market with transactions */
 	@Test
 	public void ExtraBuyerNegative() {
-		sim.log(DEBUG, "\nTesting r = -0.5 buyer on market with transactions");
-
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
 
@@ -577,16 +535,15 @@ public class AAAgentTest {
 				Theta.class, -3d,
 				InitAggression.class, -0.5));
 		
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
-		checkSingleOrderRange(agent.activeOrders, Price.of(38000), Price.of(41000), 1);
+		assertSingleOrderRange(agent.getActiveOrders(), Price.of(38000), Price.of(41000), 1);
 	}
 
+	/** Testing r = 0 buyer on market with transactions */
 	@Test
 	public void ExtraBuyerActive() {
-		sim.log(DEBUG, "\nTesting r = 0 buyer on market with transactions");
-
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
 		
@@ -595,16 +552,15 @@ public class AAAgentTest {
 				Theta.class, -3d,
 				InitAggression.class, 0d));
 		
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
-		checkSingleOrderRange(agent.activeOrders, Price.of(65000), Price.of(70000), 1);
+		assertSingleOrderRange(agent.getActiveOrders(), Price.of(65000), Price.of(70000), 1);
 	}
 
+	/** Testing r = 0 buyer on market with transactions */
 	@Test
 	public void ExtraBuyerPositive() {
-		sim.log(DEBUG, "\nTesting r = 0 buyer on market with transactions");
-
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
 
@@ -613,50 +569,45 @@ public class AAAgentTest {
 				Theta.class, -3d,
 				InitAggression.class, 0.5));
 		
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
-		checkSingleOrderRange(agent.activeOrders, Price.of(65000), Price.of(70000), 1);
+		assertSingleOrderRange(agent.getActiveOrders(), Price.of(65000), Price.of(70000), 1);
 	}
 
+	/** Testing passive buyer on market with transactions */
 	@Test
 	public void ExtraSellerPassive() {
-		sim.log(DEBUG, "\nTesting passive buyer on market with transactions");
-
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
 		
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, InitAggression.class, -1d));
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
-		sim.executeImmediate();
 
 		// Asserting the bid is correct
 		Price low = Price.of(95000 + (int) (Price.INF.doubleValue() / 3));
 		Price high = Price.of(105000 + (int) (Price.INF.doubleValue() / 3));
-		checkSingleOrderRange(agent.activeOrders, low, high, 1);
+		assertSingleOrderRange(agent.getActiveOrders(), low, high, 1);
 	}
 
+	/** Testing passive buyer on market with transactions */
 	@Test
 	public void ExtraSellerActive() {
-		sim.log(DEBUG, "\nTesting passive buyer on market with transactions");
-
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
 		
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, InitAggression.class, 0d));
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
-		sim.executeImmediate();
 
 		// Asserting the bid is correct
-		checkSingleOrderRange(agent.activeOrders, Price.of(132000), Price.of(135000), 1);
+		assertSingleOrderRange(agent.getActiveOrders(), Price.of(132000), Price.of(135000), 1);
 	}
 
+	/** Testing aggression learning */
 	@Test
 	public void BuyerAggressionIncrease() {
-		sim.log(DEBUG, "\nTesting aggression learning");
-
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(95000));
 		addTransaction(Price.of(100000));
@@ -665,18 +616,16 @@ public class AAAgentTest {
 		addTransaction(Price.of(105000));
 
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY));
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
-		sim.executeImmediate();
 		assertTrue(agent.aggression > 0);
 		
-		checkSingleOrderRange(agent.activeOrders, Price.of(50000), Price.of(100000), 1);
+		assertSingleOrderRange(agent.getActiveOrders(), Price.of(50000), Price.of(100000), 1);
 	}
 
+	/** Testing aggression learning */
 	@Test
 	public void SellerAggressionIncrease() {
-		sim.log(DEBUG, "\nTesting aggression learning");
-
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(105000));
 		addTransaction(Price.of(100000));
@@ -685,21 +634,16 @@ public class AAAgentTest {
 		addTransaction(Price.of(95000));
 
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL));
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
-		sim.executeImmediate();
 		assertTrue(agent.aggression > 0);
 		
-		checkSingleOrderRange(agent.activeOrders, Price.of(100000), Price.of(150000), 1);
+		assertSingleOrderRange(agent.getActiveOrders(), Price.of(100000), Price.of(150000), 1);
 	}
 
-	/**
-	 * Test short-term learning (EQ 7)
-	 */
+	/** Test short-term learning (EQ 7) : Testing aggression update (buyer) */
 	@Test
 	public void updateAggressionBuyer() {
-		sim.log(DEBUG, "\nTesting aggression update (buyer)");
-
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(105000));
 		addTransaction(Price.of(100000));
@@ -710,36 +654,34 @@ public class AAAgentTest {
 				BuyerStatus.class, BUY,
 				Theta.class, -3d,
 				InitAggression.class, oldAggression));
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
-		sim.executeImmediate();
 
 		checkAggressionUpdate(BUY, agent.lastTransactionPrice, agent.targetPrice, oldAggression, agent.aggression);
 	}
 
 	/**
+	 * Testing aggression update (seller)
+	 * 
 	 * Test short-term learning (EQ 7)
 	 * Note that the value of theta affects whether or not this test will pass
 	 * (e.g. -3 causes a NaN in computeRShout)
 	 */
 	@Test
 	public void updateAggressionSeller() {
-		sim.log(DEBUG, "\nTesting aggression update (seller)");
-
+		double oldAggression = 0.2;
+		AAAgent agent = aaAgent(Props.fromPairs(
+				BuyerStatus.class, SELL,
+				Theta.class, 2d,
+				InitAggression.class, oldAggression));
+		
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(105000));
 		addTransaction(Price.of(100000));
 		addTransaction(Price.of(110000));
 		addTransaction(Price.of(100000));
 		addTransaction(Price.of(95000));
-
 		
-		double oldAggression = 0.2;
-		AAAgent agent = aaAgent(Props.fromPairs(
-				BuyerStatus.class, SELL,
-				Theta.class, 2d,
-				InitAggression.class, oldAggression));
-		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
 		checkAggressionUpdate(SELL, agent.lastTransactionPrice, agent.targetPrice,
@@ -747,13 +689,13 @@ public class AAAgentTest {
 	}
 
 	/**
+	 * Testing aggression update (buyer)
+	 * 
 	 * Note that for extramarginal buyer, must have last transaction price less
 	 * than the limit otherwise rShout gets set to 0.
 	 */
 	@Test
 	public void randomizedUpdateAggressionBuyer() {
-		sim.log(DEBUG, "\nTesting aggression update (buyer)");
-
 		setQuote(Price.of(Rands.nextUniform(rand, 25000, 75000)), Price.of(Rands.nextUniform(rand, 125000, 175000)));
 		addTransaction(Price.of(Rands.nextUniform(rand, 100000, 110000)));
 		addTransaction(Price.of(Rands.nextUniform(rand, 50000, 150000)));
@@ -768,21 +710,27 @@ public class AAAgentTest {
 				Theta.class, -2d,
 				PrivateValueVar.class, 5e7,
 				InitAggression.class, oldAggression));
-		sim.executeUntil(TimeStamp.of(100));
+//		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
-		sim.executeImmediate();
 
 		checkAggressionUpdate(BUY, agent.lastTransactionPrice, agent.targetPrice, oldAggression, agent.aggression);
 	}
 
 	/**
+	 * Testing aggression update (seller)
+	 * 
 	 * For intramarginal seller, want limit price less than equilibrium,
 	 * otherwise rShout clipped at 0.
 	 */
 	@Test
 	public void randomizedUpdateAggressionSeller() {
-		sim.log(DEBUG, "\nTesting aggression update (seller)");
-
+		double oldAggression = 0.2;
+		AAAgent agent = aaAgent(Props.fromPairs(
+				BuyerStatus.class, SELL,
+				Theta.class, -3d,
+				PrivateValueVar.class, 5e7,
+				InitAggression.class, oldAggression));
+		
 		setQuote(Price.of(Rands.nextUniform(rand, 25000, 75000)), Price.of(Rands.nextUniform(rand, 125000, 175000)));
 		addTransaction(Price.of(Rands.nextUniform(rand, 100000, 110000)));
 		addTransaction(Price.of(Rands.nextUniform(rand, 500000, 150000)));
@@ -790,13 +738,6 @@ public class AAAgentTest {
 		addTransaction(Price.of(Rands.nextUniform(rand, 100000, 150000)));
 		addTransaction(Price.of(Rands.nextUniform(rand, 100000, 110000)));
 
-		double oldAggression = 0.2;
-		AAAgent agent = aaAgent(Props.fromPairs(
-				BuyerStatus.class, SELL,
-				Theta.class, -3d,
-				PrivateValueVar.class, 5e7,
-				InitAggression.class, oldAggression));
-		sim.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 
 		checkAggressionUpdate(SELL, agent.lastTransactionPrice, agent.targetPrice, oldAggression, agent.aggression);
@@ -823,12 +764,12 @@ public class AAAgentTest {
 	}
 
 	private AAAgent aaAgent(Props parameters) {
-		return new AAAgent(sim, market, rand, Props.merge(defaults, parameters));
+		return AAAgent.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, fundamental, market,
+				Props.merge(defaults, parameters));
 	}
 
 	private void addOrder(OrderType type, Price price) {
 		mockAgent.submitOrder(view, type, price, 1);
-		sim.executeImmediate();
 	}
 
 	private void addTransaction(Price price) {
@@ -846,11 +787,9 @@ public class AAAgentTest {
 		if (quantity == 0)
 			return;
 		OrderType type = quantity > 0 ? BUY : SELL;
-		agent.submitOrder(view, type, Price.ZERO, Math.abs(quantity));
-		
-		OrderType other = type == BUY ? SELL : BUY;
-		aaAgent(Props.fromPairs()).submitOrder(view, other, Price.ZERO, Math.abs(quantity));
-		sim.executeImmediate();
+		quantity = Math.abs(quantity);
+		agent.submitOrder(view, type, Price.ZERO, quantity);
+		mockAgent.submitOrder(view, type == BUY ? SELL : BUY, Price.ZERO, quantity);
 		assertEquals(position, agent.getPosition());
 	}
 	

@@ -5,7 +5,7 @@ import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static utils.Tests.checkOrderLadder;
+import static utils.Tests.assertOrderLadder;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -17,8 +17,6 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Keys.FundamentalMean;
-import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.InitLadderMean;
 import systemmanager.Keys.InitLadderRange;
 import systemmanager.Keys.NumHistorical;
@@ -27,24 +25,24 @@ import systemmanager.Keys.ReentryRate;
 import systemmanager.Keys.RungSize;
 import systemmanager.Keys.TickImprovement;
 import systemmanager.Keys.TruncateLadder;
-import systemmanager.MockSim;
+import utils.Mock;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
+import data.FundamentalValue;
 import data.Props;
-import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
-import event.TimeStamp;
 import fourheap.Order.OrderType;
 
 // FIXME MM orders are withdrawn manually due to lack of "proper" instantaneous withdraw orders implementation
 
 public class MAMarketMakerTest {
 	private static final Random rand = new Random();
+	private static final FundamentalValue fundamental = Mock.fundamental(100000);
 	private static final Props defaults = Props.builder()
 			.put(ReentryRate.class, 0d)
 			.put(TickImprovement.class, false)
@@ -54,19 +52,16 @@ public class MAMarketMakerTest {
 			.put(TruncateLadder.class, false)
 			.build();
 	
-	private MockSim sim;
-	private Market actualMarket;
-	private MarketView market;
 	private MAMarketMaker mm;
+	private Market market;
+	private MarketView view;
 	private Agent mockAgent;
 
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1,
-				Props.fromPairs(FundamentalMean.class, 100000, FundamentalShockVar.class, 0d));
-		actualMarket = Iterables.getOnlyElement(sim.getMarkets());
-		market = actualMarket.getPrimaryView();
-		mockAgent = mockAgent();
+		market = Mock.market();
+		view = market.getPrimaryView();
+		mockAgent = Mock.agent();
 	}
 	
 	/**
@@ -84,7 +79,6 @@ public class MAMarketMakerTest {
 		for (Iterator<Price> buys = bids.iterator(), sells = asks.iterator(); buys.hasNext() && sells.hasNext();) {
 			setQuote(buys.next(), sells.next());
 			mm.agentStrategy();
-			sim.executeImmediate();
 		}
 
 		assertEquals(Optional.of(Iterables.getLast(bids)), mm.lastBid);
@@ -96,7 +90,7 @@ public class MAMarketMakerTest {
 		assertEquals(asks, ImmutableList.copyOf(mm.askQueue));
 
 		// check submitted orders
-		checkOrderLadder(mm.activeOrders, Price.of(54), Price.of(68));
+		assertOrderLadder(mm.getActiveOrders(), Price.of(54), Price.of(68));
 	}
 
 	/**
@@ -116,7 +110,6 @@ public class MAMarketMakerTest {
 		for (Iterator<Price> buys = bids.iterator(), sells = asks.iterator(); buys.hasNext() && sells.hasNext();) {
 			setQuote(buys.next(), sells.next());
 			mm.agentStrategy();
-			sim.executeImmediate();
 			
 			// check queues
 			// FIXME Very implementation dependent
@@ -145,7 +138,6 @@ public class MAMarketMakerTest {
 		for (Iterator<Price> buys = bids.iterator(), sells = asks.iterator(); buys.hasNext() && sells.hasNext();) {
 			setQuote(buys.next(), sells.next());
 			mm.agentStrategy();
-			sim.executeImmediate();
 		}
 
 		assertEquals(Optional.of(Price.of(54)), mm.lastBid);
@@ -158,7 +150,7 @@ public class MAMarketMakerTest {
 		assertEquals(asks, ImmutableList.copyOf(mm.askQueue));
 
 		// check submitted orders
-		checkOrderLadder(mm.activeOrders, Price.of(52), Price.of(64));
+		assertOrderLadder(mm.getActiveOrders(), Price.of(52), Price.of(64));
 	}
 	
 	/**
@@ -172,18 +164,16 @@ public class MAMarketMakerTest {
 
 		// Add quotes & execute agent strategy in between
 		// Verify that if quote undefined, nothing is added to the queues
-		submitOrder(mockAgent, BUY, Price.of(50));
+		mockAgent.submitOrder(view, BUY, Price.of(50), 1);
 		mm.agentStrategy();
 		assertFalse(mm.lastAsk.isPresent());
 		assertEquals(Optional.of(Price.of(50)), mm.lastBid);
 		assertTrue(mm.bidQueue.isEmpty());
 		assertTrue(mm.askQueue.isEmpty());
-		assertEquals("Incorrect number of orders", 2, mm.activeOrders.size());
-		sim.executeImmediate();
+		assertEquals("Incorrect number of orders", 2, mm.getActiveOrders().size());
 		
 		// Remove old quote and set new one
 		mm.withdrawAllOrders();
-		sim.executeImmediate();
 		submitOrder(mockAgent, SELL, Price.of(50));
 		submitOrder(mockAgent, SELL, Price.of(60));
 		mm.agentStrategy();
@@ -191,17 +181,14 @@ public class MAMarketMakerTest {
 		assertEquals(Optional.of(Price.of(60)), mm.lastAsk);
 		assertTrue(mm.bidQueue.isEmpty());
 		assertTrue(mm.askQueue.isEmpty());
-		sim.executeImmediate();
 		
 		// Adding a new quote
 		setQuote(Price.of(52), Price.of(64));
 		mm.agentStrategy();
 		assertEquals(Optional.of(Price.of(52)), mm.lastBid);
 		assertEquals(Optional.of(Price.of(64)), mm.lastAsk);
-		sim.executeImmediate();
 		setQuote(Price.of(54), Price.of(68));
 		mm.agentStrategy();
-		sim.executeImmediate();
 		
 		// check queues
 		assertEquals(Price.of(52), mm.bidQueue.peek());
@@ -210,37 +197,28 @@ public class MAMarketMakerTest {
 		assertEquals(ImmutableList.of(Price.of(64), Price.of(68)), ImmutableList.copyOf(mm.askQueue));
 		
 		// check submitted orders
-		checkOrderLadder(mm.activeOrders, Price.of(53), Price.of(66));
+		assertOrderLadder(mm.getActiveOrders(), Price.of(53), Price.of(66));
 	}
 	
 	private void setQuote(Price bid, Price ask) {
 		mockAgent.withdrawAllOrders();
 		mm.withdrawAllOrders();
-		sim.executeImmediate();
 		submitOrder(mockAgent, BUY, bid);
 		submitOrder(mockAgent, SELL, ask);
 	}
 
 	private OrderRecord submitOrder(Agent agent, OrderType buyOrSell, Price price) {
-		OrderRecord order = agent.submitOrder(market, buyOrSell, price, 1);
-		sim.executeImmediate();
-		return order;
+		return agent.submitOrder(view, buyOrSell, price, 1);
 	}
 	
 	private MAMarketMaker maMarketMaker(Props parameters) {
-		return MAMarketMaker.create(sim, actualMarket, rand, Props.merge(defaults, parameters));
+		Mock.timeline.ignoreNext();
+		return MAMarketMaker.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, fundamental, market,
+				Props.merge(defaults, parameters));
 	}
 	
 	private MAMarketMaker maMarketMaker() {
 		return maMarketMaker(Props.fromPairs());
-	}
-	
-	private Agent mockAgent() {
-		return new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
-			private static final long serialVersionUID = 1L;
-			@Override public void agentStrategy() { }
-			@Override public String toString() { return "TestAgent " + id; }
-		};
 	}
 
 }

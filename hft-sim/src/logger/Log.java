@@ -21,14 +21,14 @@ public final class Log implements Closeable, Flushable {
 
 	public static enum Level { NO_LOGGING, ERROR, INFO, DEBUG };
 	
-	private static final LogClock secondClock = new LogClock() {
+	private static final Clock secondClock = new Clock() {
 		@Override
-		public long getLogTime() { return System.nanoTime() / 1000 % 1000000; }
+		public long getTime() { return System.nanoTime() / 1000 % 1000000; }
 		@Override
-		public int getLogTimePadding() { return 6; }
+		public int getTimePadding() { return 6; }
 	};
 	
-	public static LogClock milliClock() {
+	public static Clock milliClock() {
 		return secondClock;
 	}
 	
@@ -39,31 +39,31 @@ public final class Log implements Closeable, Flushable {
 		public void flush() throws IOException { }
 		@Override
 		public void write(char[] cbuf, int off, int len) throws IOException { }
-	}, new LogClock() {
+	}, new Clock() {
 		@Override
-		public long getLogTime() { return 0; }
+		public long getTime() { return 0; }
 		@Override
-		public int getLogTimePadding() { return 0; }
+		public int getTimePadding() { return 0; }
 	});
 
 	private PrintWriter printwriter;
-	private LogClock clock;
+	private Clock clock;
 	private Level level;
 	
-	protected Log(Level level, Writer out, LogClock clock) {
+	protected Log(Level level, Writer out, Clock clock) {
 		this.level = level;
 		this.printwriter = new PrintWriter(out);
 		this.clock = clock;
 	}
 	
-	public static Log create(Level level, Writer writer, LogClock clock) {
+	public static Log create(Level level, Writer writer, Clock clock) {
 		if (level == NO_LOGGING)
 			return nullLogger;
 		else
 			return new Log(level, writer, clock);
 	}
 	
-	public static Log create(Level level, File logFile, LogClock clock) throws IOException {
+	public static Log create(Level level, File logFile, Clock clock) throws IOException {
 		if (level == NO_LOGGING)
 			return nullLogger;
 		logFile.getParentFile().mkdirs();
@@ -90,7 +90,7 @@ public final class Log implements Closeable, Flushable {
 	 * 
 	 * Potentially useful for tests
 	 */
-	public static Log createStderrLogger(Level level, LogClock clock) {
+	public static Log createStderrLogger(Level level, Clock clock) {
 		return Log.create(level, new PrintWriter(System.err), clock);
 	}
 	
@@ -125,18 +125,16 @@ public final class Log implements Closeable, Flushable {
 	public void log(Level level, String format, Object... parameters) {
 		if (level.ordinal() > this.level.ordinal())
 			return;
-		printwriter.format("%" + clock.getLogTimePadding() + "d", clock.getLogTime()).append("| ");
+		printwriter.format("%" + clock.getTimePadding() + "d", clock.getTime()).append("| ");
 		printwriter.append(Integer.toString(level.ordinal())).append("| ");
 		printwriter.format(format, parameters);
 		printwriter.append('\n');
 	}
 	
-	/**
-	 * An interface to allow arbitrary nulltimes for the logged entries
-	 */
-	public static interface LogClock {
-		public long getLogTime();
-		public int getLogTimePadding();
+	/** An interface to allow arbitrary times for the logged entries */
+	public static interface Clock {
+		public long getTime();
+		public int getTimePadding();
 	}
 
 }

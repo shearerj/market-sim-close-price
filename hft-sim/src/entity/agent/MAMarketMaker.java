@@ -4,16 +4,20 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Random;
 
+import logger.Log;
 import systemmanager.Keys.NumHistorical;
-import systemmanager.Simulation;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.EvictingQueue;
 import com.google.common.math.DoubleMath;
 
+import data.FundamentalValue;
 import data.Props;
+import data.Stats;
 import entity.market.Market;
 import entity.market.Price;
+import entity.sip.MarketInfo;
+import event.TimeLine;
 
 /**
  * MAMARKETMAKER
@@ -37,16 +41,18 @@ public class MAMarketMaker extends BasicMarketMaker {
 
 	protected final EvictingQueue<Price> bidQueue, askQueue;
 
-	protected MAMarketMaker(Simulation sim, Market market, Random rand, Props props) {
-		super(sim, market, rand, props);
+	protected MAMarketMaker(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 		int numHistorical = props.get(NumHistorical.class);
 		checkArgument(numHistorical > 0, "Number of historical prices must be positive!");
 		bidQueue = EvictingQueue.create(numHistorical);
 		askQueue = EvictingQueue.create(numHistorical);
 	}
 
-	public static MAMarketMaker create(Simulation sim, Market market, Random rand, Props props) {
-		return new MAMarketMaker(sim, market, rand, props);
+	public static MAMarketMaker create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
+		return new MAMarketMaker(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}
 
 	@Override

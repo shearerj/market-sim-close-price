@@ -3,13 +3,11 @@ package entity.agent;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static utils.Tests.checkOrderLadder;
-import static utils.Tests.checkRandomOrderLadder;
+import static utils.Tests.assertOrderLadder;
+import static utils.Tests.assertQuote;
+import static utils.Tests.assertRandomOrderLadder;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Random;
 
 import logger.Log;
@@ -17,67 +15,64 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Keys.FundamentalMean;
-import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.InitLadderMean;
 import systemmanager.Keys.InitLadderRange;
+import systemmanager.Keys.MarketMakerReentryRate;
 import systemmanager.Keys.NumRungs;
-import systemmanager.Keys.ReentryRate;
 import systemmanager.Keys.RungSize;
 import systemmanager.Keys.TickImprovement;
 import systemmanager.Keys.TickOutside;
 import systemmanager.Keys.TickSize;
 import systemmanager.Keys.TruncateLadder;
-import systemmanager.MockSim;
+import utils.Mock;
+import utils.Mock.MockTimeLine;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Range;
 
+import data.FundamentalValue;
 import data.Props;
 import data.Stats;
-import entity.agent.position.PrivateValues;
+import entity.market.CDAMarket;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.market.Quote;
+import entity.sip.MarketInfo;
+import entity.sip.SIP;
+import event.EventQueue;
+import event.TimeLine;
 import event.TimeStamp;
-import fourheap.Order.OrderType;
 
 public class MarketMakerTest {
 	private static final double eps = 1e-6;
 	private static final Random rand = new Random();
+	private static final Agent mockAgent = Mock.agent();
+	private static final FundamentalValue fundamental = Mock.fundamental(100000);
 	private static final Props defaults = Props.fromPairs(
-			NumRungs.class, 2,
-			RungSize.class, 5,
-			TruncateLadder.class, false,
-			ReentryRate.class, 0d);
+			NumRungs.class,			2,
+			RungSize.class,			5,
+			TruncateLadder.class,	false,
+			MarketMakerReentryRate.class, 0d);
 	
-	private MockSim sim;
-	private Market actualMarket;
-	private MarketView market, other;
-	private Agent mockAgent;
+	private MarketInfo sip;
+	private Market market;
+	private MarketView view, other;
 
 	@Before
-	public void setup() throws IOException {
-		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1,
-				Props.fromPairs(FundamentalMean.class, 100000, FundamentalShockVar.class, 0d));
-		
-		Iterator<Market> markets = sim.getMarkets().iterator();
-		actualMarket = markets.next();
-		market = actualMarket.getPrimaryView();
-		other = markets.next().getPrimaryView();
-		assertFalse(markets.hasNext());
-		
-		mockAgent = mockAgent();
+	public void setup() {
+		sip = SIP.create(Mock.stats, Mock.timeline, Log.nullLogger(), rand, TimeStamp.ZERO);
+		market = CDAMarket.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, sip, Props.fromPairs());
+		view = market.getPrimaryView();
+		other = CDAMarket.create(1, Mock.stats, Mock.timeline, Log.nullLogger(), rand, sip, Props.fromPairs()).getPrimaryView();
 	}
 
 	/** Testing when no bid/ask, does not submit any orders */
 	@Test
 	public void nullBidAsk() {
 		MarketMaker mm = marketMaker();
-
 		mm.agentStrategy();
-		assertTrue(mm.activeOrders.isEmpty());
+		assertQuote(view.getQuote(), null, 0, null, 0);
 	}
 
 	/** If either ladder bid or ask is null, it needs to return */
@@ -87,7 +82,7 @@ public class MarketMakerTest {
 				InitLadderMean.class, 0,
 				InitLadderRange.class, 0));
 		mm.createOrderLadder(Optional.<Price> absent(), Optional.of(Price.of(50)));
-		assertTrue(mm.activeOrders.isEmpty());
+		assertQuote(view.getQuote(), null, 0, null, 0);
 	}
 
 	@Test
@@ -95,7 +90,7 @@ public class MarketMakerTest {
 		MarketMaker mm = marketMaker(Props.fromPairs(NumRungs.class, 3));
 
 		mm.submitOrderLadder(Price.of(30), Price.of(40), Price.of(50), Price.of(60));
-		checkOrderLadder(mm.activeOrders,
+		assertOrderLadder(mm.getActiveOrders(),
 				Price.of(30), Price.of(35), Price.of(40),
 				Price.of(50), Price.of(55), Price.of(60));
 	}
@@ -105,7 +100,7 @@ public class MarketMakerTest {
 		MarketMaker mm = marketMaker();
 
 		mm.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
-		checkOrderLadder(mm.activeOrders,
+		assertOrderLadder(mm.getActiveOrders(),
 				Price.of(35), Price.of(40),
 				Price.of(50), Price.of(55));
 	}
@@ -118,10 +113,10 @@ public class MarketMakerTest {
 				TickOutside.class, true));
 		assertEquals(5, mm.stepSize);
 
-		setQuote(market, Price.of(40), Price.of(50));
+		setQuote(view, Price.of(40), Price.of(50));
 
 		mm.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
-		checkOrderLadder(mm.activeOrders,
+		assertOrderLadder(mm.getActiveOrders(),
 				Price.of(39), Price.of(34),
 				Price.of(51), Price.of(56));
 	}
@@ -135,11 +130,10 @@ public class MarketMakerTest {
 
 		// Updating NBBO quote (place orders and advance time)
 		setQuote(other, Price.of(30), Price.of(38));
-		setQuote(market, Price.of(40), Price.of(50));
+		setQuote(view, Price.of(40), Price.of(50));
 
 		mm.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
-		mm.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
-		checkOrderLadder(mm.activeOrders, 1,
+		assertOrderLadder(mm.getActiveOrders(), 1,
 				Price.of(34),
 				Price.of(51), Price.of(56));
 	}
@@ -150,10 +144,10 @@ public class MarketMakerTest {
 				TickImprovement.class, true,
 				TickOutside.class, false));
 
-		setQuote(market, Price.of(40), Price.of(50));
+		setQuote(view, Price.of(40), Price.of(50));
 		
 		mm.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
-		checkOrderLadder(mm.activeOrders,
+		assertOrderLadder(mm.getActiveOrders(),
 				Price.of(36), Price.of(41),
 				Price.of(49), Price.of(54));
 	}
@@ -166,10 +160,10 @@ public class MarketMakerTest {
 				TickOutside.class, false));
 		
 		setQuote(other, Price.of(30), Price.of(38)); // Set NBBO
-		setQuote(market, Price.of(40), Price.of(50));
+		setQuote(view, Price.of(40), Price.of(50));
 
 		mm.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
-		checkOrderLadder(mm.activeOrders, 1,
+		assertOrderLadder(mm.getActiveOrders(), 1,
 				Price.of(36),
 				Price.of(49), Price.of(54));
 	}
@@ -182,10 +176,10 @@ public class MarketMakerTest {
 				TickImprovement.class, false));
 
 		setQuote(other, Price.of(90), Price.of(100));
-		setQuote(market, Price.of(102), Price.of(105));
+		setQuote(view, Price.of(102), Price.of(105));
 
 		marketmaker.createOrderLadder(Optional.of(Price.of(102)), Optional.of(Price.of(105)));
-		checkOrderLadder(marketmaker.activeOrders, 2,
+		assertOrderLadder(marketmaker.getActiveOrders(), 2,
 				Price.of(92), Price.of(97),
 				Price.of(105), Price.of(110), Price.of(115));
 	}
@@ -198,10 +192,10 @@ public class MarketMakerTest {
 				TickImprovement.class, false));
 		
 		setQuote(other, Price.of(90), Price.of(100));
-		setQuote(market, Price.of(70), Price.of(89));
+		setQuote(view, Price.of(70), Price.of(89));
 
 		marketmaker.createOrderLadder(Optional.of(Price.of(70)), Optional.of(Price.of(89)));
-		checkOrderLadder(marketmaker.activeOrders, 3,
+		assertOrderLadder(marketmaker.getActiveOrders(), 3,
 				Price.of(60), Price.of(65), Price.of(70),
 				Price.of(94), Price.of(99));
 	}
@@ -215,7 +209,7 @@ public class MarketMakerTest {
 				TickSize.class, 5));
 	
 		marketmaker.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
-		checkOrderLadder(marketmaker.activeOrders,
+		assertOrderLadder(marketmaker.getActiveOrders(),
 				Price.of(20), Price.of(30), Price.of(40),
 				Price.of(50), Price.of(60), Price.of(70));
 	}
@@ -230,9 +224,9 @@ public class MarketMakerTest {
 				InitLadderMean.class, 100,
 				InitLadderRange.class, 10));
 		
-		Quote quote = market.getQuote();
+		Quote quote = view.getQuote();
 		mm.createOrderLadder(quote.getBidPrice(), quote.getAskPrice());
-		checkRandomOrderLadder(mm.activeOrders, 4, Range.closed(Price.of(90), Price.of(100)), 5);
+		assertRandomOrderLadder(mm.getActiveOrders(), 4, Range.closed(Price.of(90), Price.of(100)), 5);
 	}
 
 	/** One side of ladder is undefined */
@@ -245,11 +239,11 @@ public class MarketMakerTest {
 				InitLadderMean.class, 100,
 				InitLadderRange.class, 10));
 		
-		submitOrder(market, mockAgent, BUY, Price.of(40));
+		mockAgent.submitOrder(view, BUY, Price.of(40), 1);
 		
-		Quote quote = market.getQuote();
+		Quote quote = view.getQuote();
 		mm.createOrderLadder(quote.getBidPrice(), quote.getAskPrice());
-		checkRandomOrderLadder(mm.activeOrders, 4, Range.singleton(Price.of(41)), Range.closed(Price.of(45), Price.of(50)), 5);
+		assertRandomOrderLadder(mm.getActiveOrders(), 4, Range.singleton(Price.of(41)), Range.closed(Price.of(45), Price.of(50)), 5);
 	}
 	
 	/** One side of ladder is undefined */
@@ -262,39 +256,46 @@ public class MarketMakerTest {
 				InitLadderMean.class, 100,
 				InitLadderRange.class, 10));
 		
-		submitOrder(market, mockAgent, SELL, Price.of(50));
+		mockAgent.submitOrder(view, SELL, Price.of(50), 1);
 		
-		Quote quote = market.getQuote();
+		Quote quote = view.getQuote();
 		mm.createOrderLadder(quote.getBidPrice(), quote.getAskPrice());
-		checkRandomOrderLadder(mm.activeOrders, 4, Range.closed(Price.of(40), Price.of(45)), Range.singleton(Price.of(49)), 5);
+		assertRandomOrderLadder(mm.getActiveOrders(), 4, Range.closed(Price.of(40), Price.of(45)), Range.singleton(Price.of(49)), 5);
 	}
 	
 	@Test
 	public void marketMakerExecutionTimePostTest() {
-		MarketMaker mm = marketMaker();
+		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
+		Stats stats = Stats.create();
+		market = CDAMarket.create(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Props.fromPairs());
+		view = market.getPrimaryView();
+		MarketMaker mm = marketMaker(stats, timeline, Props.fromPairs());
 		
-		submitOrder(market, mm, BUY, Price.of(50));
-		sim.executeUntil(TimeStamp.of(2));
-		submitOrder(market, mockAgent, SELL, Price.of(50)); // 2 execution time
+		mm.submitOrder(view, BUY, Price.of(50), 1);
+		timeline.executeUntil(TimeStamp.of(2));
+		mockAgent.submitOrder(view, SELL, Price.of(50), 1); // 2 execution time
+		timeline.executeUntil(TimeStamp.of(2));
 		
-		submitOrder(market, mockAgent, BUY, Price.of(100), 2);
-		submitOrder(market, mm, SELL, Price.of(100), 2); // 0 execution time
+		mockAgent.submitOrder(view, BUY, Price.of(100), 2);
+		mm.submitOrder(view, SELL, Price.of(100), 2); // 0 execution time
+		timeline.executeUntil(TimeStamp.of(2));
 		
 		// XXX Not this does not account for quantity unlike background agent execution times
-		assertEquals(1, sim.getStats().getSummaryStats().get(Stats.MARKET_MAKER_EXECTUION_TIME + mm).mean(), eps);
+		assertEquals(1, stats.getSummaryStats().get(Stats.MARKET_MAKER_EXECTUION_TIME + mm).mean(), eps);
 	}
 	
 	@Test
 	public void marketMakerSpreadLadderPostTest() {
-		MarketMaker mm = marketMaker();
+		Stats stats = Stats.create();
+		MarketMaker mm = marketMaker(stats, Mock.timeline, Props.fromPairs());
 		mm.createOrderLadder(Optional.of(Price.of(50)), Optional.of(Price.of(70)));
 		mm.createOrderLadder(Optional.of(Price.of(60)), Optional.of(Price.of(100)));
 		
-		assertEquals(30, sim.getStats().getSummaryStats().get(Stats.MARKET_MAKER_SPREAD + mm).mean(), eps);
-		assertEquals(2, sim.getStats().getSummaryStats().get(Stats.MARKET_MAKER_SPREAD + mm).n());
+		assertEquals(30, stats.getSummaryStats().get(Stats.MARKET_MAKER_SPREAD + mm).mean(), eps);
+		assertEquals(2, stats.getSummaryStats().get(Stats.MARKET_MAKER_SPREAD + mm).n());
 		
-		assertEquals(70, sim.getStats().getSummaryStats().get(Stats.MARKET_MAKER_LADDER + mm).mean(), eps);
-		assertEquals(2, sim.getStats().getSummaryStats().get(Stats.MARKET_MAKER_LADDER + mm).n());
+		assertEquals(70, stats.getSummaryStats().get(Stats.MARKET_MAKER_LADDER + mm).mean(), eps);
+		assertEquals(2, stats.getSummaryStats().get(Stats.MARKET_MAKER_LADDER + mm).n());
 	}
 	
 	@Test
@@ -310,36 +311,23 @@ public class MarketMakerTest {
 	}
 	
 	private void setQuote(MarketView view, Price bid, Price ask) {
-		submitOrder(view, mockAgent, BUY, bid);
-		submitOrder(view, mockAgent, SELL, ask);
+		mockAgent.submitOrder(view, BUY, bid, 1);
+		mockAgent.submitOrder(view, SELL, ask, 1);
 	}
 	
-	private OrderRecord submitOrder(MarketView view, Agent agent, OrderType buyOrSell, Price price) {
-		return submitOrder(view, agent, buyOrSell, price, 1);
-	}
-
-	private OrderRecord submitOrder(MarketView view, Agent agent, OrderType buyOrSell, Price price, int quantity) {
-		OrderRecord order = agent.submitOrder(view, buyOrSell, price, quantity);
-		sim.executeImmediate();
-		return order;
+	private MarketMaker marketMaker(Stats stats, TimeLine timeline, Props parameters) {
+		if (timeline instanceof MockTimeLine) // If initialized with a mocktimeline, things get executed out of order and so some fields aren't initialized
+			((MockTimeLine) timeline).ignoreNext();
+		return new MarketMaker(0, stats, timeline, Log.nullLogger(), rand, sip, fundamental, market, Props.merge(defaults, parameters)) {
+			private static final long serialVersionUID = 1L;
+		};
 	}
 	
 	private MarketMaker marketMaker(Props parameters) {
-		return new MarketMaker(sim, actualMarket, rand, Props.merge(defaults, parameters)) {
-			private static final long serialVersionUID = 1L;
-			@Override public String toString() { return "TestMM " + id; }
-		};
+		return marketMaker(Mock.stats, Mock.timeline, parameters);
 	}
 	
 	private MarketMaker marketMaker() {
 		return marketMaker(Props.fromPairs());
-	}
-	
-	private Agent mockAgent() {
-		return new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
-			private static final long serialVersionUID = 1L;
-			@Override public void agentStrategy() { }
-			@Override public String toString() { return "TestAgent " + id; }
-		};
 	}
 }

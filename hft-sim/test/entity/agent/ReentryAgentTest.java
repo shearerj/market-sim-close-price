@@ -12,30 +12,23 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Keys.FundamentalMean;
-import systemmanager.Keys.FundamentalShockVar;
-import systemmanager.MockSim;
+import utils.Mock;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 
 import data.Props;
 import entity.agent.position.PrivateValues;
-import entity.market.Market;
+import event.EventQueue;
 import event.TimeStamp;
 
 public class ReentryAgentTest {
-
 	private static final Random rand = new Random();
-	private MockSim sim;
-	private Market market;
+	private EventQueue timeline;
 	
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1,
-				Props.fromPairs(FundamentalMean.class, 100000, FundamentalShockVar.class, 0d));
-		market = Iterables.getOnlyElement(sim.getMarkets());
+		timeline = EventQueue.create(Log.nullLogger(), rand);
 	}
 	
 	@Test
@@ -49,7 +42,7 @@ public class ReentryAgentTest {
 		assertTrue(next.getInTicks() >= 0);
 		
 		// Test agent strategy
-		sim.executeUntil(TimeStamp.of(100));
+		timeline.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 		assertTrue(reentries.hasNext());
 	}
@@ -63,7 +56,7 @@ public class ReentryAgentTest {
 		assertFalse(reentries.hasNext());
 
 		// Now test for agent, which should not arrive at time 0
-		sim.executeUntil(TimeStamp.of(100));
+		timeline.executeUntil(TimeStamp.of(100));
 		agent.agentStrategy();
 		assertFalse(reentries.hasNext());
 	}
@@ -77,7 +70,8 @@ public class ReentryAgentTest {
 	}
 	
 	private ReentryAgent reentryAgent(Iterator<TimeStamp> reentry) {
-		return new ReentryAgent(sim, PrivateValues.zero(), TimeStamp.ZERO, market, rand, reentry, Props.fromPairs()) {
+		return new ReentryAgent(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, PrivateValues.zero(),
+				TimeStamp.ZERO, Mock.market(), reentry, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 		};
 	}

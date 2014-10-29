@@ -6,8 +6,8 @@ import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static utils.Tests.checkOrderLadder;
-import static utils.Tests.checkRandomOrderLadder;
+import static utils.Tests.assertOrderLadder;
+import static utils.Tests.assertRandomOrderLadder;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,8 +21,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Keys.FastLearning;
-import systemmanager.Keys.FundamentalMean;
-import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.InitLadderMean;
 import systemmanager.Keys.InitLadderRange;
 import systemmanager.Keys.MarketMakerReentryRate;
@@ -36,7 +34,7 @@ import systemmanager.Keys.TickOutside;
 import systemmanager.Keys.TruncateLadder;
 import systemmanager.Keys.UseLastPrice;
 import systemmanager.Keys.UseMedianSpread;
-import systemmanager.MockSim;
+import utils.Mock;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Predicates;
@@ -47,20 +45,21 @@ import com.google.common.collect.Ordering;
 import com.google.common.collect.Range;
 import com.google.common.primitives.Ints;
 
+import data.FundamentalValue;
 import data.Props;
 import entity.agent.AdaptiveMarketMaker.TransactionResult;
-import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.market.Quote;
-import event.TimeStamp;
 import fourheap.Order.OrderType;
 
 // TODO Weights should be moved out to an expert object and tested separately.
 
 public class AdaptiveMarketMakerTest {
 	private static final Random rand = new Random();
+	private static final Agent mockAgent = Mock.agent();
+	private static final FundamentalValue fundamental = Mock.fundamental(100000);
 	private static final Props defaults = Props.builder()
 			.put(NumRungs.class, 2)
 			.put(RungSize.class, 10)
@@ -72,25 +71,20 @@ public class AdaptiveMarketMakerTest {
 			.put(InitLadderMean.class, 0)
 			.build();
 	
-	private MockSim sim;
-	private Market actualMarket;
-	private MarketView market;
-	private Agent mockAgent;
+	private Market market;
+	private MarketView view;
 
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1,
-				Props.fromPairs(FundamentalMean.class, 100000, FundamentalShockVar.class, 0d));
-		actualMarket = Iterables.getOnlyElement(sim.getMarkets());
-		market = actualMarket.getPrimaryView();
-		mockAgent = mockAgent();
+		market = Mock.market();
+		view = market.getPrimaryView();
 	}
 
 	@Test
 	public void nullBidAsk() {
 		AdaptiveMarketMaker mm = aMarketMaker();
 		mm.agentStrategy();
-		assertTrue(mm.activeOrders.isEmpty());
+		assertTrue(mm.getActiveOrders().isEmpty());
 	}
 
 	/** Was defined, then the market maker should not do anything. */
@@ -105,7 +99,7 @@ public class AdaptiveMarketMakerTest {
 
 		// Both sides undefined
 		mm.agentStrategy();
-		assertTrue(mm.activeOrders.isEmpty());
+		assertTrue(mm.getActiveOrders().isEmpty());
 
 		// One side undefined
 		submitOrder(mockAgent, BUY, Price.of(40));
@@ -113,7 +107,7 @@ public class AdaptiveMarketMakerTest {
 		mm.lastAsk = Optional.of(Price.of(55));
 		mm.lastBid = Optional.of(Price.of(45));
 		mm.agentStrategy();
-		assertTrue(mm.activeOrders.isEmpty());
+		assertTrue(mm.getActiveOrders().isEmpty());
 	}
 
 	@Test
@@ -127,9 +121,8 @@ public class AdaptiveMarketMakerTest {
 		setQuote(Price.of(40), Price.of(50));
 
 		mm.agentStrategy();
-		sim.executeImmediate();
-		assertTrue(market.getTransactions().isEmpty());
-		checkOrderLadder(mm.activeOrders,
+		assertTrue(view.getTransactions().isEmpty());
+		assertOrderLadder(mm.getActiveOrders(),
 				Price.of(30), Price.of(40),
 				Price.of(50), Price.of(60));
 	}
@@ -152,7 +145,7 @@ public class AdaptiveMarketMakerTest {
 		setQuote(Price.of(42), Price.of(48));
 
 		marketmaker.agentStrategy();
-		checkOrderLadder(marketmaker.activeOrders,
+		assertOrderLadder(marketmaker.getActiveOrders(),
 				Price.of(34), Price.of(44),
 				Price.of(46), Price.of(56));
 	}
@@ -168,8 +161,7 @@ public class AdaptiveMarketMakerTest {
 
 		// Initial MM strategy; submits ladder with numRungs=3
 		marketmaker.agentStrategy();
-		sim.executeImmediate();
-		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
+		assertEquals("Incorrect number of orders", 6, marketmaker.getActiveOrders().size());
 
 		setQuote(Price.of(42), Price.of(49));
 
@@ -178,7 +170,7 @@ public class AdaptiveMarketMakerTest {
 		assertTrue(marketmaker.lastBid.isPresent());
 		assertTrue(marketmaker.lastAsk.isPresent());
 		
-		checkOrderLadder(marketmaker.activeOrders,
+		assertOrderLadder(marketmaker.getActiveOrders(),
 				Price.of(34), Price.of(39), Price.of(44),
 				Price.of(46), Price.of(51), Price.of(56));
 	}
@@ -200,13 +192,11 @@ public class AdaptiveMarketMakerTest {
 
 		// Submits ladder with numRungs=3
 		marketmaker.agentStrategy();
-		sim.executeImmediate();
-		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
+		assertEquals("Incorrect number of orders", 6, marketmaker.getActiveOrders().size());
 
-		for (OrderRecord order : ImmutableList.copyOf(mockAgent.activeOrders))
+		for (OrderRecord order : ImmutableList.copyOf(mockAgent.getActiveOrders()))
 			if (order.getOrderType() == BUY)
 				mockAgent.withdrawOrder(order);
-		sim.executeImmediate();
 		
 		marketmaker.lastBid = Optional.of(Price.of(42)); // FIXME necessary? to make sure MM will withdraw its orders
 
@@ -217,7 +207,7 @@ public class AdaptiveMarketMakerTest {
 
 		assertTrue(marketmaker.lastBid.isPresent());
 		assertTrue(marketmaker.lastAsk.isPresent());
-		checkOrderLadder(marketmaker.activeOrders,
+		assertOrderLadder(marketmaker.getActiveOrders(),
 				Price.of(34), Price.of(39), Price.of(44),
 				Price.of(46), Price.of(51), Price.of(56));
 	}
@@ -239,18 +229,17 @@ public class AdaptiveMarketMakerTest {
 
 		marketmaker.agentStrategy();
 
-		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
+		assertEquals("Incorrect number of orders", 6, marketmaker.getActiveOrders().size());
 		
 		// Quote change
 		// Withdraw other orders
 		// Note that now the quote is undefined, after it withdraws its ladder
 		mockAgent.withdrawAllOrders();
-		sim.executeImmediate();
 		assertTrue(marketmaker.lastAsk.isPresent());
 		assertTrue(marketmaker.lastBid.isPresent());
 		
 		marketmaker.agentStrategy();
-		checkRandomOrderLadder(marketmaker.activeOrders, 6, Range.closed(Price.of(40), Price.of(60)), 5);
+		assertRandomOrderLadder(marketmaker.getActiveOrders(), 6, Range.closed(Price.of(40), Price.of(60)), 5);
 	}
 	
 	@Test
@@ -267,7 +256,7 @@ public class AdaptiveMarketMakerTest {
 		marketmaker.agentStrategy();
 
 		//Check orders submitted using median spread of 4
-		checkOrderLadder(marketmaker.activeOrders,
+		assertOrderLadder(marketmaker.getActiveOrders(),
 				Price.of(33), Price.of(38), Price.of(43),
 				Price.of(47), Price.of(52), Price.of(57));
 	}
@@ -298,7 +287,7 @@ public class AdaptiveMarketMakerTest {
 
 		//Check orders submitted using median spread of 40
 		assertEquals(40, marketmaker.getSpread());
-		checkOrderLadder(marketmaker.activeOrders,
+		assertOrderLadder(marketmaker.getActiveOrders(),
 				Price.of(70), Price.of(75), Price.of(80),
 				Price.of(120), Price.of(125), Price.of(130));
 
@@ -306,7 +295,7 @@ public class AdaptiveMarketMakerTest {
 		submitOrder(mockAgent, BUY, Price.of(118));
 		assertEquals(0, mockAgent.getPosition());
 		
-		Quote quote = market.getQuote();
+		Quote quote = view.getQuote();
 		assertEquals(Optional.of(Price.of(120)), quote.getAskPrice());
 		assertEquals(Optional.of(Price.of(118)), quote.getBidPrice());
 
@@ -338,18 +327,16 @@ public class AdaptiveMarketMakerTest {
 
 		//Check orders submitted using median spread of 30
 		assertEquals(30, marketmaker.getSpread());
-		checkOrderLadder(marketmaker.activeOrders,
+		assertOrderLadder(marketmaker.getActiveOrders(),
 				Price.of(75), Price.of(80), Price.of(85),
 				Price.of(115), Price.of(120), Price.of(125));
 
 		//Make a trade that yields profit for one of the spreads(2) and is useless for the other two(30,40)
-		sim.executeImmediate();
 		mockAgent.withdrawAllOrders();
-		sim.executeImmediate();
 		submitOrder(mockAgent, BUY, Price.of(116), 2);
 		
 		assertEquals(1, mockAgent.getPosition());
-		Quote quote = market.getQuote();
+		Quote quote = view.getQuote();
 		// $115 traded with agent1 buying at $116, so ASK now 120
 		assertEquals(Optional.of(Price.of(120)), quote.getAskPrice());
 		assertEquals(Optional.of(Price.of(116)), quote.getBidPrice());
@@ -358,7 +345,7 @@ public class AdaptiveMarketMakerTest {
 		// check that spread = 30 also now has more weight
 		marketmaker.agentStrategy();
 		assertEquals(2, marketmaker.getSpread());
-		checkOrderLadder(marketmaker.activeOrders,
+		assertOrderLadder(marketmaker.getActiveOrders(),
 				Price.of(98), Price.of(103), Price.of(108),
 				Price.of(110), Price.of(115), Price.of(120));
 
@@ -373,10 +360,9 @@ public class AdaptiveMarketMakerTest {
 
 		// Third test: only spread = 2 should get more weight
 		// $116 from agent1 executes with $110 MM
-		sim.executeImmediate();
 		submitOrder(mockAgent, BUY, Price.of(118), 2);
 		
-		quote = market.getQuote();
+		quote = view.getQuote();
 		assertEquals(Optional.of(Price.of(120)), quote.getAskPrice());
 		assertEquals(Optional.of(Price.of(118)), quote.getBidPrice()); 
 
@@ -485,7 +471,9 @@ public class AdaptiveMarketMakerTest {
 	}
 
 	private AdaptiveMarketMaker aMarketMaker(Props parameters) {
-		return AdaptiveMarketMaker.create(sim, actualMarket, rand, Props.merge(defaults, parameters));
+		Mock.timeline.ignoreNext();
+		return AdaptiveMarketMaker.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, fundamental, market,
+				Props.merge(defaults, parameters));
 	}
 
 	private void setQuote(Price bid, Price ask) {
@@ -498,17 +486,7 @@ public class AdaptiveMarketMakerTest {
 	}
 
 	private OrderRecord submitOrder(Agent agent, OrderType buyOrSell, Price price, int quantity) {
-		OrderRecord order = agent.submitOrder(market, buyOrSell, price, quantity);
-		sim.executeImmediate();
-		return order;
-	}
-	
-	private Agent mockAgent() {
-		return new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
-			private static final long serialVersionUID = 1L;
-			@Override public void agentStrategy() { }
-			@Override public String toString() { return "TestAgent " + id; }
-		};
+		return agent.submitOrder(view, buyOrSell, price, quantity);
 	}
 
 }

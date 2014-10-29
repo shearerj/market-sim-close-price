@@ -1,13 +1,12 @@
 package data;
 
-import static logger.Log.Level.ERROR;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
 
-import systemmanager.Simulation;
 import utils.Rands;
 
 import com.google.common.collect.Iterables;
@@ -15,9 +14,9 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
-import entity.Entity;
 import entity.View;
 import entity.market.Price;
+import event.TimeLine;
 import event.TimeStamp;
 
 /**
@@ -26,9 +25,12 @@ import event.TimeStamp;
  * 
  * @author ewah
  */
-public class FundamentalValue extends Entity implements Iterable<Double>, Serializable {
+public class FundamentalValue implements Iterable<Double>, Serializable {
 
 	protected static final Ordering<TimeStamp> ord = Ordering.natural();
+	
+	private final TimeLine timeline;
+	private final Stats stats;
 	
 	protected final ArrayList<Double> meanRevertProcess;
 	protected final double kappa;
@@ -42,8 +44,9 @@ public class FundamentalValue extends Entity implements Iterable<Double>, Serial
 	 * @param var Gaussian Process variance
 	 * @param rand Random generator
 	 */
-	protected FundamentalValue(Simulation sim, double kap, int meanVal, double var, Random rand) {
-		super(0, sim);
+	protected FundamentalValue(Stats stats, TimeLine timeline, double kap, int meanVal, double var, Random rand) {
+		this.stats = stats;
+		this.timeline = timeline;
 		this.rand = rand;
 		this.kappa = kap;
 		this.meanValue = meanVal;
@@ -58,8 +61,8 @@ public class FundamentalValue extends Entity implements Iterable<Double>, Serial
 	/**
 	 * Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps
 	 */
-	public static FundamentalValue create(Simulation sim, double kap, int meanVal, double var, Random rand) {
-		return new FundamentalValue(sim, kap, meanVal, var, rand);
+	public static FundamentalValue create(Stats stats, TimeLine timeline, double kap, int meanVal, double var, Random rand) {
+		return new FundamentalValue(stats, timeline, kap, meanVal, var, rand);
 	}
 
 	/**
@@ -78,14 +81,10 @@ public class FundamentalValue extends Entity implements Iterable<Double>, Serial
 	 * Returns the global fundamental value at time ts. If undefined, return 0.
 	 */
 	public Price getValueAt(TimeStamp t) {
+		checkArgument(!t.before(TimeStamp.ZERO), "Can't query before time zero");
 		int index = (int) t.getInTicks();
-		if (index < 0) { // In case of overflow
-			sim.log(ERROR, "Tried to access out of bounds TimeStamp: %s (%d)", t, index);
-			return Price.ZERO;
-		} else {
-			computeFundamentalTo(index);
-			return Price.of(meanRevertProcess.get(index)).nonnegative();
-		}
+		computeFundamentalTo(index);
+		return Price.of(meanRevertProcess.get(index)).nonnegative();
 	}
 
 	@Override
@@ -95,8 +94,8 @@ public class FundamentalValue extends Entity implements Iterable<Double>, Serial
 	
 	// XXX These aren't rounded the way the prices will be
 	protected void postStat(int index, double value) {
-		sim.postTimedStat(TimeStamp.of(index), Stats.FUNDAMENTAL, value);
-		sim.postStat(Stats.CONTROL_FUNDAMENTAL, value);
+		stats.postTimed(TimeStamp.of(index), Stats.FUNDAMENTAL, value);
+		stats.post(Stats.CONTROL_FUNDAMENTAL, value);
 	}
 
 	/** Get a possibly delayed view of the fundamental process */
@@ -115,7 +114,7 @@ public class FundamentalValue extends Entity implements Iterable<Double>, Serial
 		
 		/** Gets most recent known value of the fundamental for an entity in the simulation */
 		public Price getValue() {
-			return FundamentalValue.this.getValueAt(ord.max(FundamentalValue.this.currentTime().minus(latency), TimeStamp.ZERO));
+			return FundamentalValue.this.getValueAt(ord.max(timeline.getCurrentTime().minus(latency), TimeStamp.ZERO));
 		}
 		
 		@Override

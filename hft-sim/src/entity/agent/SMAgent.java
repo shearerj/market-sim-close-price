@@ -2,13 +2,17 @@ package entity.agent;
 
 import java.util.Random;
 
-import systemmanager.Simulation;
+import logger.Log;
+import data.FundamentalValue;
 import data.Props;
+import data.Stats;
 import entity.agent.position.PrivateValue;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.market.Quote;
+import entity.sip.MarketInfo;
+import event.TimeLine;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -40,8 +44,9 @@ public abstract class SMAgent extends Agent {
 	
 	protected final MarketView primaryMarket;
 
-	protected SMAgent(Simulation sim, PrivateValue privateValue, TimeStamp arrivalTime, Random rand, Market market, Props props) {
-		super(sim, privateValue, arrivalTime, rand, props);
+	protected SMAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			PrivateValue privateValue, TimeStamp arrivalTime, Market market, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, privateValue, arrivalTime, props);
 		this.primaryMarket = market.getPrimaryView();
 	}
 	

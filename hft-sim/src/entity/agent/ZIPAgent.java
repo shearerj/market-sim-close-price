@@ -8,6 +8,7 @@ import static logger.Log.Level.INFO;
 import java.util.List;
 import java.util.Random;
 
+import logger.Log;
 import systemmanager.Keys.BetaMax;
 import systemmanager.Keys.BetaMin;
 import systemmanager.Keys.GammaMax;
@@ -17,17 +18,20 @@ import systemmanager.Keys.MarginMin;
 import systemmanager.Keys.MaxQty;
 import systemmanager.Keys.RangeA;
 import systemmanager.Keys.RangeR;
-import systemmanager.Simulation;
 import utils.Maths;
 import utils.Rands;
 
 import com.google.common.collect.Ordering;
 
+import data.FundamentalValue;
 import data.Props;
+import data.Stats;
 import entity.agent.position.Margin;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Transaction;
+import entity.sip.MarketInfo;
+import event.TimeLine;
 import fourheap.Order.OrderType;
 
 /**
@@ -61,8 +65,9 @@ public class ZIPAgent extends WindowAgent {
 	protected final double rangeCoeffA;	// range for A, coefficient of absolute perturbation
 	protected final double rangeCoeffR;	// range for R, coefficient of relative perturbation
 
-	protected ZIPAgent(Simulation sim, Market market, Random rand, Props props) {
-		super(sim, market, rand, props);
+	protected ZIPAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
 		int maxAbsPosition = props.get(MaxQty.class);
 		
@@ -95,8 +100,9 @@ public class ZIPAgent extends WindowAgent {
 		this.margin = Margin.createRandomly(maxAbsPosition, rand, marginMin, marginMax);
 	}
 
-	public static ZIPAgent create(Simulation sim, Market market, Random rand, Props props) {
-		return new ZIPAgent(sim, market, rand, props);
+	public static ZIPAgent create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
+		return new ZIPAgent(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}
 	
 	@Override

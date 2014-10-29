@@ -47,7 +47,6 @@ public class PropsTest {
 		assertEquals(props.get(Gamma.class), copy.get(Gamma.class), 1E-6);
 		assertNotEquals(props.get(Eta.class), copy.get(Eta.class));
 		assertEquals(20, (int) copy.get(Eta.class));
-		assertEquals(-1, (int) copy.get(Eta.class));
 	}
 	
 	@Test
@@ -68,7 +67,7 @@ public class PropsTest {
 		
 		assertEquals(1, props.get(Theta.class, ThetaMax.class), eps);
 		assertEquals(1, props.get(Theta.class, FakeDouble.class), eps);
-		assertNotEquals(1, props.get(FakeDouble.class, Theta.class), eps);
+		assertEquals(1, props.get(FakeDouble.class, Theta.class), eps);
 		assertEquals(10, props.get(FakeDouble.class, ThetaMax.class), eps);
 	}
 	

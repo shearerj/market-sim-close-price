@@ -1,52 +1,32 @@
-package entity.market;
+package entity.market.clearingrule;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
-import logger.Log;
-
-import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.MockSim;
+import utils.Mock;
 
 import com.google.common.collect.Lists;
 
-import data.Props;
-import entity.agent.Agent;
 import entity.agent.Agent.AgentView;
-import entity.agent.position.PrivateValues;
 import entity.agent.OrderRecord;
 import entity.market.Market.MarketView;
+import entity.market.MarketTime;
+import entity.market.Order;
+import entity.market.Price;
 import event.TimeStamp;
 import fourheap.MatchedOrders;
+import fourheap.Order.OrderType;
 
 public class EarliestPriceClearTest {
-	// TODO Need these for filler... but we shouldn't. Maybe parameterize clearing rule
-	private static final Random rand = new Random();
-	private MockSim sim;
-	private MarketView market;
-	private AgentView agent;
-	
-	@Before
-	public void setup() throws IOException {
-		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING);
-		Market mark = new Market(sim, new UniformPriceClear(0.5, 1), null /*FIXME*/, Props.fromPairs()) {
-			private static final long serialVersionUID = 1L;
-		};
-		market = mark.getPrimaryView();
-		agent = new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
-			private static final long serialVersionUID = 1L;
-			@Override public void agentStrategy() { }
-		}.getView(TimeStamp.IMMEDIATE);
-	}
+	private static final MarketView market = Mock.market().getPrimaryView();
+	private static final AgentView agent = Mock.agent().getView(TimeStamp.ZERO);
 
 	@Test
 	public void basicTest() {
@@ -65,18 +45,34 @@ public class EarliestPriceClearTest {
 	}
 	
 	@Test
-	public void timeMatch(){
+	public void timeMatchBuy(){
 		ArrayList<MatchedOrders<Price, MarketTime, Order>> list = Lists.newArrayList();
 		list.add(createOrderPair(Price.of(110), 1, TimeStamp.of(100), 
-								 Price.of(100), 1, TimeStamp.of(100)));
+								 Price.of(100), 1, TimeStamp.of(100), BUY));
 		
 		ClearingRule cr = new EarliestPriceClear(1);
 		Map<MatchedOrders<Price, MarketTime, Order>, Price> result = cr.pricing(list);
 		
 		Set<MatchedOrders<Price, MarketTime, Order>> keySet = result.keySet();
 		for(MatchedOrders<Price, MarketTime, Order> key : keySet) {
-			// Verify for tie at time, it clears at the earlier price (because of MarketTime)
+			// Verify for tie at time, it clears at the earlier (buy) price (because of MarketTime)
 			assertEquals(Price.of(110), result.get(key));
+		}
+	}
+	
+	@Test
+	public void timeMatchSell(){
+		ArrayList<MatchedOrders<Price, MarketTime, Order>> list = Lists.newArrayList();
+		list.add(createOrderPair(Price.of(110), 1, TimeStamp.of(100), 
+								 Price.of(100), 1, TimeStamp.of(100), SELL));
+		
+		ClearingRule cr = new EarliestPriceClear(1);
+		Map<MatchedOrders<Price, MarketTime, Order>, Price> result = cr.pricing(list);
+		
+		Set<MatchedOrders<Price, MarketTime, Order>> keySet = result.keySet();
+		for(MatchedOrders<Price, MarketTime, Order> key : keySet) {
+			// Verify for tie at time, it clears at the earlier (sell) price (because of MarketTime)
+			assertEquals(Price.of(100), result.get(key));
 		}
 	}
 	
@@ -102,14 +98,18 @@ public class EarliestPriceClearTest {
 		assertEquals(Price.of(100), result.get(match2));
 	}
 	
-	public MatchedOrders<Price, MarketTime, Order> createOrderPair(
-			Price p1, int q1, TimeStamp t1, Price p2, int q2, TimeStamp t2){
+	private static MatchedOrders<Price, MarketTime, Order> createOrderPair(
+			Price p1, int q1, TimeStamp t1, Price p2, int q2, TimeStamp t2) {
+		return createOrderPair(p1, q1, t1, p2, q2, t2, BUY);
+	}
+	
+	private static MatchedOrders<Price, MarketTime, Order> createOrderPair(
+			Price p1, int q1, TimeStamp t1, Price p2, int q2, TimeStamp t2, OrderType first) {
 		// NOTE: the same MarketTime will never be created for two orders
-		MarketTime mt1 = MarketTime.from(t1, 1);
-		MarketTime mt2 = MarketTime.from(t2, 2);
+		MarketTime mt1 = MarketTime.from(t1, first == BUY ? 0 : 1);
+		MarketTime mt2 = MarketTime.from(t2, first == BUY ? 1 : 0);
 		Order a = Order.create(agent, OrderRecord.create(market, t1, BUY, p1, q1), mt1);
 		Order b = Order.create(agent, OrderRecord.create(market, t2, SELL, p2, q2), mt2);
-		// Generic for compartability with 1.6 compiler / non eclipse
 		return MatchedOrders.<Price, MarketTime, Order> create(a, b, Math.min(q1, q2));
 	}
 }

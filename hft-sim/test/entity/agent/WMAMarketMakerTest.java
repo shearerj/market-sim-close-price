@@ -2,7 +2,7 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
-import static utils.Tests.checkOrderLadder;
+import static utils.Tests.assertOrderLadder;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -14,8 +14,6 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Keys.FundamentalMean;
-import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.NumHistorical;
 import systemmanager.Keys.NumRungs;
 import systemmanager.Keys.ReentryRate;
@@ -23,23 +21,23 @@ import systemmanager.Keys.RungSize;
 import systemmanager.Keys.TickImprovement;
 import systemmanager.Keys.TruncateLadder;
 import systemmanager.Keys.WeightFactor;
-import systemmanager.MockSim;
+import utils.Mock;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 
+import data.FundamentalValue;
 import data.Props;
-import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
-import event.TimeStamp;
 import fourheap.Order.OrderType;
 
 //FIXME MM orders are withdrawn manually due to lack of "proper" instantaneous withdraw orders implementation
 
 public class WMAMarketMakerTest {
 	private static final Random rand = new Random();
+	private static final Agent mockAgent = Mock.agent();
+	private static final FundamentalValue fundamental = Mock.fundamental(100000);
 	private static final Props defaults = Props.builder()
 			.put(ReentryRate.class, 0d)
 			.put(TickImprovement.class, false)
@@ -49,19 +47,14 @@ public class WMAMarketMakerTest {
 			.put(NumHistorical.class, 5)
 			.build();
 	
-	private MockSim sim;
-	private Market actualMarket;
-	private MarketView market;
+	private Market market;
+	private MarketView view;
 	private WMAMarketMaker mm;
-	private Agent mockAgent;
 
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1,
-				Props.fromPairs(FundamentalMean.class, 100000, FundamentalShockVar.class, 0d));
-		actualMarket = Iterables.getOnlyElement(sim.getMarkets());
-		market = actualMarket.getPrimaryView();
-		mockAgent = mockAgent();
+		market = Mock.market();
+		view = market.getPrimaryView();
 	}
 
 	/**
@@ -79,10 +72,9 @@ public class WMAMarketMakerTest {
 		for (Iterator<Price> buys = bids.iterator(), sells = asks.iterator(); buys.hasNext() && sells.hasNext();) {
 			setQuote(buys.next(), sells.next());
 			mm.agentStrategy();
-			sim.executeImmediate();
 		}
 
-		checkOrderLadder(mm.activeOrders, Price.of(55), Price.of(71));
+		assertOrderLadder(mm.getActiveOrders(), Price.of(55), Price.of(71));
 	}
 	
 	@Test
@@ -96,10 +88,9 @@ public class WMAMarketMakerTest {
 		for (Iterator<Price> buys = bids.iterator(), sells = asks.iterator(); buys.hasNext() && sells.hasNext();) {
 			setQuote(buys.next(), sells.next());
 			mm.agentStrategy();
-			sim.executeImmediate();
 		}
 		
-		checkOrderLadder(mm.activeOrders, Price.of(56), Price.of(73));
+		assertOrderLadder(mm.getActiveOrders(), Price.of(56), Price.of(73));
 	}
 
 	/**
@@ -117,10 +108,9 @@ public class WMAMarketMakerTest {
 		for (Iterator<Price> buys = bids.iterator(), sells = asks.iterator(); buys.hasNext() && sells.hasNext();) {
 			setQuote(buys.next(), sells.next());
 			mm.agentStrategy();
-			sim.executeImmediate();
 		}
 		
-		checkOrderLadder(mm.activeOrders, Price.of(51818), Price.of(63636));
+		assertOrderLadder(mm.getActiveOrders(), Price.of(51818), Price.of(63636));
 	}
 	
 	/**
@@ -138,37 +128,26 @@ public class WMAMarketMakerTest {
 		for (Iterator<Price> buys = bids.iterator(), sells = asks.iterator(); buys.hasNext() && sells.hasNext();) {
 			setQuote(buys.next(), sells.next());
 			mm.agentStrategy();
-			sim.executeImmediate();
 		}
 		
-		checkOrderLadder(mm.activeOrders, Price.of(51333), Price.of(62667));
+		assertOrderLadder(mm.getActiveOrders(), Price.of(51333), Price.of(62667));
 	}
 
 	private WMAMarketMaker wmaMarketMaker(Props parameters) {
-		return WMAMarketMaker.create(sim, actualMarket, rand, Props.merge(defaults, parameters));
+		Mock.timeline.ignoreNext();
+		return WMAMarketMaker.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, fundamental, market,
+				Props.merge(defaults, parameters));
 	}
 	
 	private void setQuote(Price bid, Price ask) {
 		mockAgent.withdrawAllOrders();
-		sim.executeImmediate();
 		mm.withdrawAllOrders();
-		sim.executeImmediate();
 		submitOrder(mockAgent, BUY, bid);
 		submitOrder(mockAgent, SELL, ask);
 	}
 
 	private OrderRecord submitOrder(Agent agent, OrderType buyOrSell, Price price) {
-		OrderRecord order = agent.submitOrder(market, buyOrSell, price, 1);
-		sim.executeImmediate();
-		return order;
-	}
-	
-	private Agent mockAgent() {
-		return new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
-			private static final long serialVersionUID = 1L;
-			@Override public void agentStrategy() { }
-			@Override public String toString() { return "TestAgent " + id; }
-		};
+		return agent.submitOrder(view, buyOrSell, price, 1);
 	}
 	
 }

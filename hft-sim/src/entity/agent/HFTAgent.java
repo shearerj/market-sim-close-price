@@ -5,18 +5,21 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import systemmanager.Simulation;
+import logger.Log;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
+import data.FundamentalValue;
 import data.Props;
 import data.Stats;
 import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
+import entity.sip.MarketInfo;
 import event.Activity;
+import event.TimeLine;
 import event.TimeStamp;
 
 /**
@@ -29,9 +32,9 @@ public abstract class HFTAgent extends MMAgent {
 
 	private static final long serialVersionUID = -1483633963238206201L;
 
-	protected HFTAgent(final Simulation sim, TimeStamp arrivalTime, Map<Market, TimeStamp> marketLatencies,
-			Random rand, Props props) {
-		super(sim, PrivateValues.zero(), arrivalTime, toViews(marketLatencies), rand, props);
+	protected HFTAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			TimeStamp arrivalTime, Map<Market, TimeStamp> marketLatencies, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(), arrivalTime, toViews(marketLatencies), props);
 		for (MarketView market : markets)
 			market.notify(this);
 	}
@@ -51,7 +54,7 @@ public abstract class HFTAgent extends MMAgent {
 		}
 		
 		public void quoteUpdate(final MarketView market) {
-			sim.scheduleActivityIn(getLatency(), new Activity() {
+			scheduleActivityIn(getLatency(), new Activity() {
 				@Override public void execute() {
 					HFTAgent.this.quoteUpdate(market);
 				}

@@ -1,36 +1,49 @@
 package entity.market;
 
+import java.util.Iterator;
 import java.util.Random;
 
+import logger.Log;
 import systemmanager.Consts.MarketType;
 import systemmanager.Keys.ClearFrequency;
-import systemmanager.Simulation;
+import utils.Iterators2;
 import data.Props;
+import data.Stats;
+import entity.sip.MarketInfo;
+import event.TimeLine;
 import event.TimeStamp;
 
 public class MarketFactory {
 	
-	private final Simulation sim;
+	private final Iterator<Integer> ids;
+	private final Stats stats;
+	private final TimeLine timeline;
+	private final Log log;
+	private final MarketInfo sip;
 	private final Random rand;
 
-	protected MarketFactory(Simulation sim, Random rand) {
-		this.sim = sim;
+	protected MarketFactory(Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip) {
+		this.stats = stats;
+		this.timeline = timeline;
+		this.log = log;
+		this.sip = sip;
 		this.rand = rand;
+		this.ids = Iterators2.counter();
 	}
 	
-	public static MarketFactory create(Simulation sim, Random rand) {
-		return new MarketFactory(sim, rand);
+	public static MarketFactory create(Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip) {
+		return new MarketFactory(stats, timeline, log, rand, sip);
 	}
 
 	public Market createMarket(MarketType type, Props props) {
 		switch (type) {
 		case CDA:
-			return CDAMarket.create(sim, new Random(rand.nextLong()), props);
+			return CDAMarket.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, props);
 		case CALL:
-			if (props.get(ClearFrequency.class).after(TimeStamp.ZERO))
-				return CallMarket.create(sim, new Random(rand.nextLong()), props);
+			if (props.get(ClearFrequency.class).equals(TimeStamp.ZERO))
+				return CDAMarket.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, props);
 			else
-				return CDAMarket.create(sim, new Random(rand.nextLong()), props);
+				return CallMarket.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, props);
 		default:
 			throw new IllegalArgumentException("Can't create MarketType: " + type);
 		}

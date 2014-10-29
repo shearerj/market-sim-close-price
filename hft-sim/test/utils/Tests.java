@@ -20,11 +20,11 @@ import com.google.common.collect.Range;
 import com.google.common.collect.Sets;
 
 import entity.agent.OrderRecord;
-import entity.infoproc.BestBidAsk;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Quote;
 import entity.market.Transaction;
+import entity.sip.BestBidAsk;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -32,8 +32,10 @@ public abstract class Tests {
 	
 	public static Joiner j = Joiner.on('_');
 
+	// FIXME Remove unused methods / methods that start with check
+	
 	/** Prices are null for absent prices (for convenience) */
-	public static void checkQuote(Quote quote, Price bid, int bidQuantity, Price ask, int askQuantity) {
+	public static void assertQuote(Quote quote, Price bid, int bidQuantity, Price ask, int askQuantity) {
 		if (ask == null)
 			assertEquals(0, askQuantity);
 		if (bid == null)
@@ -44,7 +46,7 @@ public abstract class Tests {
 		assertEquals("Incorrect BID quantity",  bidQuantity,  quote.getBidQuantity());
 	}
 	
-	public static void checkSingleTransaction(Collection<Transaction> singleTransaction, Price price, TimeStamp time, int quantity) {
+	public static void assertSingleTransaction(Collection<Transaction> singleTransaction, Price price, TimeStamp time, int quantity) {
 		assertEquals("Collection didn't have a single transaction", 1, singleTransaction.size());
 		checkTransaction(Iterables.getOnlyElement(singleTransaction), price, time, quantity);
 	}
@@ -57,7 +59,7 @@ public abstract class Tests {
 	
 	public static void checkSingleOrder(Collection<OrderRecord> singleOrder, Price price, int quantity, TimeStamp createdTime, TimeStamp submittedTime) {
 		assertEquals("Collection didn't have a single order record", 1, singleOrder.size());
-		checkOrder(Iterables.getOnlyElement(singleOrder), price, quantity, createdTime, submittedTime);
+		assertOrder(Iterables.getOnlyElement(singleOrder), price, quantity, createdTime, submittedTime);
 	}
 	
 	public static void checkSingleOrder(Collection<OrderRecord> singleOrder, OrderType type, Price price, int quantity, TimeStamp createdTime, TimeStamp submittedTime) {
@@ -66,7 +68,7 @@ public abstract class Tests {
 	}
 	
 	/** Absent submitted time is null for convenience */
-	public static void checkOrder(OrderRecord order, Price price, int quantity, TimeStamp createdTime, TimeStamp submittedTime) {
+	public static void assertOrder(OrderRecord order, Price price, int quantity, TimeStamp createdTime, TimeStamp submittedTime) {
 		assertEquals("Incorrect Price", price, order.getPrice());
 		assertEquals("Incorrect Quantity", quantity, order.getQuantity());
 		assertEquals("Incorrect Created Time", createdTime, order.getCreatedTime());
@@ -75,34 +77,40 @@ public abstract class Tests {
 	
 	public static void checkOrder(OrderRecord order, OrderType type, Price price, int quantity, TimeStamp createdTime, TimeStamp submittedTime) {
 		assertEquals("Incorrect Order Type", type, order.getOrderType());
-		checkOrder(order, price, quantity, createdTime, submittedTime);
+		assertOrder(order, price, quantity, createdTime, submittedTime);
 	}
 	
-	public static void checkSingleOrderRange(Collection<OrderRecord> singleOrder, Price low, Price high, int quantity) {
+	public static void assertSingleOrderRange(Collection<OrderRecord> singleOrder, Price low, Price high, int quantity) {
 		assertEquals("Collection didn't have a single order record", 1, singleOrder.size());
 		checkOrderRange(Iterables.getOnlyElement(singleOrder), low, high, quantity);
 	}
 	
 	public static void checkOrderRange(OrderRecord order, Price low, Price high, int quantity) {
 		Range<Price> bounds = Range.closed(low, high);
-		assertTrue(bounds.contains(order.getPrice()),
-				"Order price (%s) out of bounds %s", order, bounds);
+		assertTrue(bounds.contains(order.getPrice()), "Order price (%s) out of bounds %s", order.getPrice(), bounds);
 		assertEquals(quantity, order.getQuantity());
 	}
 	
-	public static void checkNBBO(BestBidAsk nbbo, Price bid, Market bidMarket, Price ask, Market askMarket) {
+	public static void assertNBBO(BestBidAsk nbbo, Price bid, Market bidMarket, int bidQuantity,
+			Price ask, Market askMarket, int askQuantity) {
+		assertNBBO(nbbo, bid, bidMarket, ask, askMarket);
+		assertEquals("Inccorect ASK quantity", askQuantity, nbbo.getBestAskQuantity());
+		assertEquals("Inccorect BID quantity", bidQuantity, nbbo.getBestBidQuantity());
+	}
+	
+	public static void assertNBBO(BestBidAsk nbbo, Price bid, Market bidMarket, Price ask, Market askMarket) {
 		assertEquals("Incorrect ASK", Optional.fromNullable(ask), nbbo.getBestAsk());
 		assertEquals("Incorrect BID", Optional.fromNullable(bid), nbbo.getBestBid());
 		assertEquals("Incorrect ASK market", Optional.fromNullable(askMarket), nbbo.getBestAskMarket());
 		assertEquals("Incorrect BID market", Optional.fromNullable(bidMarket), nbbo.getBestBidMarket());
 	}
 	
-	public static void checkOrderLadder(Collection<OrderRecord> orders, Price... prices) {
-		checkOrderLadder(orders, prices.length / 2, prices);
+	public static void assertOrderLadder(Collection<OrderRecord> orders, Price... prices) {
+		assertOrderLadder(orders, prices.length / 2, prices);
 	}
 	
 	/** First half are buy prices, second half are sell prices */
-	public static void checkOrderLadder(Collection<OrderRecord> orders, int numBuys, Price... prices) {
+	public static void assertOrderLadder(Collection<OrderRecord> orders, int numBuys, Price... prices) {
 		assertEquals("Incorrect number of orders", prices.length, orders.size());
 		
 		Set<Price> buys = Sets.newHashSet(Arrays.asList(prices).subList(0, numBuys));
@@ -119,7 +127,7 @@ public abstract class Tests {
 	}
 	
 	// FIXME, this test isn't quite right, as it it doesn't also enforce that ask - bid = 2 * rungSize
-	public static void checkRandomOrderLadder(Collection<OrderRecord> orders, int size,
+	public static void assertRandomOrderLadder(Collection<OrderRecord> orders, int size,
 			Range<Price> ladderCenterRange, int rungSize) {
 		Range<Price> bidRange = Range.closed(
 				Price.of(ladderCenterRange.lowerEndpoint().intValue() - 5),
@@ -127,10 +135,10 @@ public abstract class Tests {
 		Range<Price> askRange = Range.closed(
 				Price.of(ladderCenterRange.lowerEndpoint().intValue() + 5),
 				Price.of(ladderCenterRange.upperEndpoint().intValue() + 5));
-		checkRandomOrderLadder(orders, size, bidRange, askRange, rungSize);
+		assertRandomOrderLadder(orders, size, bidRange, askRange, rungSize);
 	}
 	
-	public static void checkRandomOrderLadder(Collection<OrderRecord> orders, int size,
+	public static void assertRandomOrderLadder(Collection<OrderRecord> orders, int size,
 			Range<Price> bidRange, Range<Price> askRange, int rungSize) {
 		assertEquals("Incorrect number of orders", size, orders.size());
 		List<Price> buys = Lists.newArrayList();
@@ -154,6 +162,20 @@ public abstract class Tests {
 	public static void assertTrue(boolean check, String format, Object... parameters) {
 		if (!check)
 			throw new AssertionFailedError(String.format(format, parameters));
+	}
+	
+	public static void assertRegex(String regex, String actual) {
+		assertTrue(actual.matches(regex), "String \"%s\" didn't match regex \"%s\"", actual, regex);
+	}
+	
+	public static <T extends Comparable<T>> void assertRange(T value, T lower, T upper) {
+		Range<T> range = Range.closed(lower, upper);
+		assertTrue(range.contains(value), "Value %s is out of bounds %s", value, range); 
+	}
+	
+	public static <T extends Comparable<T>> void assertOptionalRange(Optional<T> value, T lower, T upper) {
+		assertTrue(value.isPresent(), "Value is not present");
+		assertRange(value.get(), lower, upper); 
 	}
 	
 }

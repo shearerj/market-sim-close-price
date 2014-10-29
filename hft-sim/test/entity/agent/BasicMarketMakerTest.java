@@ -4,9 +4,9 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static utils.Tests.checkOrderLadder;
-import static utils.Tests.checkRandomOrderLadder;
-import static utils.Tests.checkSingleTransaction;
+import static utils.Tests.assertOrderLadder;
+import static utils.Tests.assertRandomOrderLadder;
+import static utils.Tests.assertSingleTransaction;
 
 import java.io.IOException;
 import java.util.Random;
@@ -16,52 +16,46 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Keys.FundamentalMean;
-import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.InitLadderMean;
 import systemmanager.Keys.InitLadderRange;
+import systemmanager.Keys.MarketMakerReentryRate;
 import systemmanager.Keys.NumRungs;
-import systemmanager.Keys.ReentryRate;
 import systemmanager.Keys.RungSize;
 import systemmanager.Keys.TickImprovement;
 import systemmanager.Keys.TickOutside;
 import systemmanager.Keys.TruncateLadder;
-import systemmanager.MockSim;
+import utils.Mock;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Range;
 
+import data.FundamentalValue;
 import data.Props;
-import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
 import event.TimeStamp;
-import fourheap.Order.OrderType;
 
 public class BasicMarketMakerTest {
 	private static final Random rand = new Random();
+	private static final FundamentalValue fundamental = Mock.fundamental(100000);
 	private static final Props defaults = Props.fromPairs(
-			ReentryRate.class, 0d,
+			MarketMakerReentryRate.class, 0d,
 			NumRungs.class, 3,
 			RungSize.class, 5,
 			TruncateLadder.class, true,
 			TickImprovement.class, false);
 	
-	private MockSim sim;
-	private Market actualMarket;
-	private MarketView market;
+	private Market market;
+	private MarketView view;
 	private Agent mockAgent;
 
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 1,
-				Props.fromPairs(FundamentalMean.class, 100000, FundamentalShockVar.class, 0d));
-		actualMarket = Iterables.getOnlyElement(sim.getMarkets());
-		market = actualMarket.getPrimaryView();
-		mockAgent = mockAgent();
+		market = Mock.market();
+		view = market.getPrimaryView();
+		mockAgent = Mock.agent();
 	}
 
 	@Test
@@ -71,7 +65,7 @@ public class BasicMarketMakerTest {
 				InitLadderMean.class, 0,
 				InitLadderRange.class, 0));
 		mm.agentStrategy();
-		assertTrue(mm.activeOrders.isEmpty());
+		assertTrue(mm.getActiveOrders().isEmpty());
 	}
 
 	/** Was defined, then the market maker should not do anything. */
@@ -86,15 +80,15 @@ public class BasicMarketMakerTest {
 
 		// Both sides undefined
 		mm.agentStrategy();
-		assertTrue(mm.activeOrders.isEmpty());
+		assertTrue(mm.getActiveOrders().isEmpty());
 
 		// One side undefined
-		submitOrder(mockAgent, BUY, Price.of(40));
+		mockAgent.submitOrder(view, BUY, Price.of(40), 1);
 
 		mm.lastAsk = Optional.of(Price.of(55));
 		mm.lastBid = Optional.of(Price.of(45));
 		mm.agentStrategy();
-		assertTrue(mm.activeOrders.isEmpty());
+		assertTrue(mm.getActiveOrders().isEmpty());
 	}
 
 
@@ -108,9 +102,8 @@ public class BasicMarketMakerTest {
 		setQuote(Price.of(40), Price.of(50));
 
 		mm.agentStrategy();
-		sim.executeImmediate();
-		assertTrue(market.getTransactions().isEmpty());
-		checkOrderLadder(mm.activeOrders,
+		assertTrue(view.getTransactions().isEmpty());
+		assertOrderLadder(mm.getActiveOrders(),
 				Price.of(30), Price.of(40),
 				Price.of(50), Price.of(60));
 	}
@@ -132,7 +125,7 @@ public class BasicMarketMakerTest {
 		setQuote(Price.of(42), Price.of(48));
 
 		marketmaker.agentStrategy();
-		checkOrderLadder(marketmaker.activeOrders,
+		assertOrderLadder(marketmaker.getActiveOrders(),
 				Price.of(32), Price.of(42),
 				Price.of(48), Price.of(58));
 	}
@@ -145,8 +138,7 @@ public class BasicMarketMakerTest {
 
 		// Initial MM strategy; submits ladder with numRungs=3
 		marketmaker.agentStrategy();
-		sim.executeImmediate();
-		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
+		assertEquals("Incorrect number of orders", 6, marketmaker.getActiveOrders().size());
 
 		setQuote(Price.of(42), Price.of(49));
 
@@ -155,7 +147,7 @@ public class BasicMarketMakerTest {
 		assertTrue(marketmaker.lastBid.isPresent());
 		assertTrue(marketmaker.lastAsk.isPresent());
 		
-		checkOrderLadder(marketmaker.activeOrders,
+		assertOrderLadder(marketmaker.getActiveOrders(),
 				Price.of(32), Price.of(37), Price.of(42),
 				Price.of(49), Price.of(54), Price.of(59));
 	}
@@ -173,13 +165,11 @@ public class BasicMarketMakerTest {
 
 		// Submits ladder with numRungs=3
 		marketmaker.agentStrategy();
-		sim.executeImmediate();
-		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
+		assertEquals("Incorrect number of orders", 6, marketmaker.getActiveOrders().size());
 
-		for (OrderRecord order : ImmutableList.copyOf(mockAgent.activeOrders))
+		for (OrderRecord order : ImmutableList.copyOf(mockAgent.getActiveOrders()))
 			if (order.getOrderType() == BUY)
 				mockAgent.withdrawOrder(order);
-		sim.executeImmediate();
 		
 		marketmaker.lastBid = Optional.of(Price.of(42)); // FIXME necessary? to make sure MM will withdraw its orders
 
@@ -190,7 +180,7 @@ public class BasicMarketMakerTest {
 
 		assertTrue(marketmaker.lastBid.isPresent());
 		assertTrue(marketmaker.lastAsk.isPresent());
-		checkOrderLadder(marketmaker.activeOrders,
+		assertOrderLadder(marketmaker.getActiveOrders(),
 				Price.of(32), Price.of(37), Price.of(42),
 				Price.of(50), Price.of(55), Price.of(60));
 	}
@@ -207,18 +197,17 @@ public class BasicMarketMakerTest {
 
 		marketmaker.agentStrategy();
 
-		assertEquals("Incorrect number of orders", 6, marketmaker.activeOrders.size());
+		assertEquals("Incorrect number of orders", 6, marketmaker.getActiveOrders().size());
 		
 		// Quote change
 		// Withdraw other orders
 		// Note that now the quote is undefined, after it withdraws its ladder
 		mockAgent.withdrawAllOrders();
-		sim.executeImmediate();
 		assertTrue(marketmaker.lastAsk.isPresent());
 		assertTrue(marketmaker.lastBid.isPresent());
 		
 		marketmaker.agentStrategy();
-		checkRandomOrderLadder(marketmaker.activeOrders, 6, Range.closed(Price.of(40), Price.of(60)), 5);
+		assertRandomOrderLadder(marketmaker.getActiveOrders(), 6, Range.closed(Price.of(40), Price.of(60)), 5);
 	}
 	
 	@Test
@@ -229,17 +218,16 @@ public class BasicMarketMakerTest {
 				InitLadderMean.class, 50,
 				InitLadderRange.class, 10));
 		
-		submitOrder(mockAgent, BUY, Price.of(40));
+		mockAgent.submitOrder(view, BUY, Price.of(40), 1);
 
 		marketmaker.agentStrategy();
-		sim.executeImmediate();
-		checkRandomOrderLadder(marketmaker.activeOrders, 6,
+		assertRandomOrderLadder(marketmaker.getActiveOrders(), 6,
 				Range.singleton(Price.of(41)), Range.singleton(Price.of(50)), 5);
-		assertTrue(market.getTransactions().isEmpty());
+		assertTrue(view.getTransactions().isEmpty());
 		
 		// Verify that single background trader will transact with the MM
-		submitOrder(mockAgent, BUY, Price.of(80));
-		checkSingleTransaction(market.getTransactions(), Price.of(50), TimeStamp.ZERO, 1);
+		mockAgent.submitOrder(view, BUY, Price.of(80), 1);
+		assertSingleTransaction(view.getTransactions(), Price.of(50), TimeStamp.ZERO, 1);
 	}
 	
 	@Test
@@ -250,17 +238,16 @@ public class BasicMarketMakerTest {
 				InitLadderMean.class, 50,
 				InitLadderRange.class, 10));
 		
-		submitOrder(mockAgent, SELL, Price.of(60));
+		mockAgent.submitOrder(view, SELL, Price.of(60), 1);
 
 		marketmaker.agentStrategy();
-		sim.executeImmediate();
-		checkRandomOrderLadder(marketmaker.activeOrders, 6,
+		assertRandomOrderLadder(marketmaker.getActiveOrders(), 6,
 				Range.singleton(Price.of(50)), Range.singleton(Price.of(59)), 5);
-		assertTrue(market.getTransactions().isEmpty());
+		assertTrue(view.getTransactions().isEmpty());
 
 		// Verify that single background trader will transact with the MM
-		submitOrder(mockAgent, SELL, Price.of(30));
-		checkSingleTransaction(market.getTransactions(), Price.of(50), TimeStamp.ZERO, 1);
+		mockAgent.submitOrder(view, SELL, Price.of(30), 1);
+		assertSingleTransaction(view.getTransactions(), Price.of(50), TimeStamp.ZERO, 1);
 	}
 
 	@Test
@@ -276,30 +263,18 @@ public class BasicMarketMakerTest {
 	}
 
 	private void setQuote(Price bid, Price ask) {
-		submitOrder(mockAgent, BUY, bid);
-		submitOrder(mockAgent, SELL, ask);
-	}
-
-	private OrderRecord submitOrder(Agent agent, OrderType buyOrSell, Price price) {
-		OrderRecord order = agent.submitOrder(market, buyOrSell, price, 1);
-		sim.executeImmediate();
-		return order;
+		mockAgent.submitOrder(view, BUY, bid, 1);
+		mockAgent.submitOrder(view, SELL, ask, 1);
 	}
 	
 	private BasicMarketMaker basicMarketMaker(Props parameters) {
-		return BasicMarketMaker.create(sim, actualMarket, rand, Props.merge(defaults, parameters));
+		Mock.timeline.ignoreNext();
+		return BasicMarketMaker.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, fundamental, market,
+				Props.merge(defaults, parameters));
 	}
 	
 	private BasicMarketMaker basicMarketMaker() {
 		return basicMarketMaker(Props.fromPairs());
-	}
-	
-	private Agent mockAgent() {
-		return new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
-			private static final long serialVersionUID = 1L;
-			@Override public void agentStrategy() { }
-			@Override public String toString() { return "TestAgent " + id; }
-		};
 	}
 	
 }

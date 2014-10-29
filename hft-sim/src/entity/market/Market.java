@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import logger.Log;
 import systemmanager.Keys.MarketLatency;
-import systemmanager.Simulation;
 import utils.Iterables2;
 
 import com.google.common.base.Optional;
@@ -31,8 +31,11 @@ import entity.agent.Agent.AgentView;
 import entity.agent.HFTAgent;
 import entity.agent.HFTAgent.HFTAgentView;
 import entity.agent.OrderRecord;
-import entity.infoproc.BestBidAsk;
+import entity.market.clearingrule.ClearingRule;
+import entity.sip.BestBidAsk;
+import entity.sip.MarketInfo;
 import event.Activity;
+import event.TimeLine;
 import event.TimeStamp;
 import fourheap.FourHeap;
 import fourheap.MatchedOrders;
@@ -56,9 +59,8 @@ import fourheap.MatchedOrders;
  * @author ebrink
  */
 public abstract class Market extends Entity {
-
-	private final Random rand;
 	
+	private final MarketInfo sip;
 	private final FourHeap<Price, MarketTime, Order> orderbook;
 	private final ClearingRule clearingRule;
 	private long marketTime; // keeps track of internal market actions
@@ -74,9 +76,8 @@ public abstract class Market extends Entity {
 	private final Map<OrderRecord, Order> orderMapping; // Maps active records to their order object
 	private final Multiset<Price> askPriceQuantity, bidPriceQuantity; // How many orders are at a specific price
 	
-	protected Market(Simulation sim, ClearingRule clearingRule, Random rand, Props props) {
-		super(sim.nextMarketId(), sim);
-		this.rand = rand;
+	protected Market(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, ClearingRule clearingRule, Props props) {
+		super(id, stats, timeline, log, rand);
 		this.orderbook = FourHeap.<Price, MarketTime, Order> create();
 		this.clearingRule = clearingRule;
 		this.marketTime = 0;
@@ -90,13 +91,16 @@ public abstract class Market extends Entity {
 		this.routedOrders = Maps.newHashMap();
 		this.askPriceQuantity = HashMultiset.create();
 		this.bidPriceQuantity = HashMultiset.create();
+		
+		this.sip = sip;
+		sip.processMarket(this);
 	}
 	
 	// This is only intended to be called by a market view
 	protected void submitOrder(MarketView thisView, AgentView agent, OrderRecord orderRecord) {
 		marketTime++;
 		
-		final Order order = Order.create(agent, orderRecord, new MarketTime(currentTime(), marketTime));
+		final Order order = Order.create(agent, orderRecord, new MarketTime(getCurrentTime(), marketTime));
 		log(INFO, "%s", order);
 	
 		Multiset<Price> priceQuant = order.getOrderType() == BUY ? bidPriceQuantity : askPriceQuantity;
@@ -104,7 +108,7 @@ public abstract class Market extends Entity {
 		
 		orderbook.add(order);
 		orderMapping.put(orderRecord, order);
-		agent.orderSubmitted(orderRecord, thisView, sim.getCurrentTime());
+		agent.orderSubmitted(orderRecord, thisView, getCurrentTime());
 	}
 
 	/**
@@ -121,7 +125,7 @@ public abstract class Market extends Entity {
 	protected void submitNMSOrder(MarketView thisView, Agent agent, AgentView view, OrderRecord order) {
 		marketTime++;
 		
-		BestBidAsk nbbo = sim.getSIP().getNBBO();
+		BestBidAsk nbbo = sip.getNBBO();
 		Market bestMarket = this;
 	
 		if (order.getOrderType() == BUY) {
@@ -175,7 +179,7 @@ public abstract class Market extends Entity {
 
 	protected void clear() {
 		marketTime++;
-		MarketTime transactionTime = new MarketTime(currentTime(), marketTime);
+		MarketTime transactionTime = new MarketTime(getCurrentTime(), marketTime);
 		
 		Collection<MatchedOrders<Price, MarketTime, Order>> matchedOrders = orderbook.marketClear();
 		for (Entry<MatchedOrders<Price, MarketTime, Order>, Price> e : clearingRule.pricing(matchedOrders).entrySet()) {
@@ -224,7 +228,7 @@ public abstract class Market extends Entity {
 		 * this will only happen when there are matched orders when a quote is
 		 * generated, which is currently never possible
 		 */
-		MarketTime quoteTime = new MarketTime(currentTime(), marketTime);
+		MarketTime quoteTime = new MarketTime(getCurrentTime(), marketTime);
 		quote = new Quote(this, bid, quantityBid, ask, quantityAsk, quoteTime);
 
 		log(INFO, "%s %s", this, quote);
@@ -251,7 +255,7 @@ public abstract class Market extends Entity {
 	 */
 	@Override
 	public String toString() {
-		return name() + "[" + id + "]";
+		return name() + "[" + getID() + "]";
 	}
 
 	public MarketView getView(TimeStamp latency) {
@@ -278,7 +282,7 @@ public abstract class Market extends Entity {
 		}
 		
 		protected void addTransaction(final Transaction transaction) {
-			Market.this.sim.scheduleActivityIn(latency, new Activity() {
+			scheduleActivityIn(latency, new Activity() {
 				@Override public void execute() {
 					MarketView.this.transactions.add(transaction);
 				}
@@ -287,7 +291,7 @@ public abstract class Market extends Entity {
 		}
 		
 		protected void updateQuote(final Quote quote) {
-			Market.this.sim.scheduleActivityIn(latency, new Activity() {
+			scheduleActivityIn(latency, new Activity() {
 				@Override public void execute() {
 					if (MarketView.this.quote.getQuoteTime().compareTo(quote.getQuoteTime()) <= 0)
 						MarketView.this.quote = quote;
@@ -306,7 +310,7 @@ public abstract class Market extends Entity {
 
 		public OrderRecord submitNMSOrder(final Agent agent, final OrderRecord order) {
 			final AgentView view = agent.getView(latency);
-			Market.this.sim.scheduleActivityIn(latency, new Activity() {
+			scheduleActivityIn(latency, new Activity() {
 				@Override public void execute() { Market.this.submitNMSOrder(MarketView.this, agent, view, order); }
 				@Override public String toString() { return "Submit NMS Order"; }
 			});
@@ -315,14 +319,14 @@ public abstract class Market extends Entity {
 
 		public void submitOrder(final Agent agent, final OrderRecord order) {
 			final AgentView view = agent.getView(latency);
-			Market.this.sim.scheduleActivityIn(latency, new Activity() {
+			scheduleActivityIn(latency, new Activity() {
 				@Override public void execute() { Market.this.submitOrder(MarketView.this, view, order); }
 				@Override public String toString() { return "Submit Order"; }
 			});
 		}
 		
 		public void withdrawOrder(final OrderRecord order, final int quantity) {
-			Market.this.sim.scheduleActivityIn(latency, new Activity() {
+			scheduleActivityIn(latency, new Activity() {
 				@Override public void execute() { Market.this.withdrawOrder(order, quantity); }
 				@Override public String toString() { return "Withdraw Order"; }
 			});

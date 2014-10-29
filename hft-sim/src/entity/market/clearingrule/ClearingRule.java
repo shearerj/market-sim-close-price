@@ -1,8 +1,11 @@
-package entity.market;
+package entity.market.clearingrule;
 
 import java.io.Serializable;
 import java.util.Map;
 
+import entity.market.MarketTime;
+import entity.market.Order;
+import entity.market.Price;
 import fourheap.MatchedOrders;
 
 public interface ClearingRule extends Serializable {

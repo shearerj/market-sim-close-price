@@ -40,7 +40,7 @@ public class SimulationTest {
 					keyToString(ArrivalRate.class), 0.075,
 					keyToString(PrivateValueVar.class), 5e6,
 					keyToString(FundamentalShockVar.class), 1e6,
-					Consts.AgentType.ZI.toString(), Props.fromPairs(NumAgents.class, 1).toConfigString(),
+					Consts.AgentType.ZIR.toString(), Props.fromPairs(NumAgents.class, 1).toConfigString(),
 					keyToString(TickSize.class), 1
 					)
 			)).getAsJsonObject();

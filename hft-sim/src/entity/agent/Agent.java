@@ -5,15 +5,16 @@ import static fourheap.Order.OrderType.BUY;
 import static logger.Log.Level.INFO;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import logger.Log;
 import systemmanager.Keys.AgentTickSize;
 import systemmanager.Keys.DiscountFactors;
 import systemmanager.Keys.FundamentalLatency;
 import systemmanager.Keys.TickSize;
-import systemmanager.Simulation;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Function;
@@ -23,18 +24,21 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import data.FundamentalValue;
 import data.FundamentalValue.FundamentalValueView;
 import data.Props;
 import data.Stats;
 import entity.Entity;
 import entity.View;
 import entity.agent.position.PrivateValue;
-import entity.infoproc.BestBidAsk;
 import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.market.Transaction;
+import entity.sip.BestBidAsk;
+import entity.sip.MarketInfo;
 import event.Activity;
 import event.InformationActivity;
+import event.TimeLine;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -45,12 +49,12 @@ import fourheap.Order.OrderType;
  */
 public abstract class Agent extends Entity {
 	
-	protected final Random rand;
-	protected final FundamentalValueView fundamental;
-	protected final Collection<OrderRecord> activeOrders;
+	private final MarketInfo sip;
+	private final FundamentalValueView fundamental;
+	private final Collection<OrderRecord> activeOrders;
 
 	// Agent parameters
-	protected final int tickSize;
+	private final int tickSize;
 
 	// Tracking position and profit
 	private int positionBalance;
@@ -58,11 +62,12 @@ public abstract class Agent extends Entity {
 	private final PrivateValue privateValue;
 	private final DiscountedValue privateValueSurplus;
 
-	protected Agent(Simulation sim, PrivateValue privateValue, TimeStamp arrivalTime, Random rand, Props props) {
-		super(sim.nextAgentId(), sim);
-		this.fundamental = sim.getFundamentalView(props.get(FundamentalLatency.class));
+	protected Agent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			PrivateValue privateValue, TimeStamp arrivalTime, Props props) {
+		super(id, stats, timeline, log, rand);
+		this.fundamental = fundamental.getView(props.get(FundamentalLatency.class));
 		this.tickSize = props.get(AgentTickSize.class, TickSize.class);
-		this.rand = rand;
+		this.sip = sip;
 
 		this.activeOrders = Sets.newHashSet();
 		
@@ -107,16 +112,16 @@ public abstract class Agent extends Entity {
 	// TODO Check for possible position violation?
 	/** Shortcut for creating orders */
 	protected OrderRecord submitOrder(MarketView market, OrderType type, Price price, int quantity) {
-		OrderRecord order = new OrderRecord(market, currentTime(), type, price, quantity);
-		market.submitOrder(this, order);
+		OrderRecord order = new OrderRecord(market, getCurrentTime(), type, price.nonnegative().quantize(tickSize), quantity);
 		activeOrders.add(order);
+		market.submitOrder(this, order);
 		return order;
 	}
 
 	// TODO Check for possible position violation?
 	/** Shortcut for creating NMS orders */
 	protected OrderRecord submitNMSOrder(MarketView market, OrderType type, Price price, int quantity) {
-		OrderRecord order = new OrderRecord(market, currentTime(), type, price, quantity);
+		OrderRecord order = new OrderRecord(market, getCurrentTime(), type, price.nonnegative().quantize(tickSize), quantity);
 		market.submitNMSOrder(this, order);
 		activeOrders.add(order);
 		return order;
@@ -198,37 +203,49 @@ public abstract class Agent extends Entity {
 	}
 	
 	protected void reenterIn(TimeStamp delay) {
-		sim.scheduleActivityIn(delay, new Activity() {
+		scheduleActivityIn(delay, new Activity() {
 			@Override public void execute() { agentStrategy(); }
 			@Override public String toString() { return "Strategy"; }
 		});
 	}
 	
-	protected BestBidAsk getNBBO() {
-		return sim.getSIP().getNBBO();
+	protected final Collection<OrderRecord> getActiveOrders() {
+		return Collections.unmodifiableCollection(activeOrders);
 	}
 	
-	protected int getPosition() {
+	protected final int getTickSize() {
+		return tickSize;
+	}
+	
+	protected final BestBidAsk getNBBO() {
+		return sip.getNBBO();
+	}
+	
+	protected final Price getFundamental() {
+		return fundamental.getValue();
+	}
+	
+	protected final int getPosition() {
 		return positionBalance;
 	}
 	
-	protected int getMaxAbsPosition() {
+	protected final int getMaxAbsPosition() {
 		return privateValue.getMaxAbsPosition();
 	}
 	
-	protected Price getValuation(OrderType type) {
+	protected final Price getPrivateValue(OrderType type) {
 		return privateValue.getValue(getPosition(), type);
 	}
 	
-	protected Price getValuation(int quantity, OrderType type) {
+	protected final Price getPrivateValue(int quantity, OrderType type) {
 		return privateValue.getValue(getPosition(), quantity, type);
 	}
 	
-	protected Price getPrivateValueMean() {
+	protected final Price getPrivateValueMean() {
 		return privateValue.getMean();
 	}
 	
-	protected long getProfit() {
+	protected final long getProfit() {
 		return profit;
 	}
 	
@@ -244,20 +261,20 @@ public abstract class Agent extends Entity {
 		return ImmutableMap.of();
 	}
 	
-	@Override
 	// Agents are defined by their existence, not their parameters
+	@Override
 	public final int hashCode() {
 		return super.hashCode();
 	}
 
-	@Override
 	// Agents are defined by their existence, not their parameters
+	@Override
 	public final boolean equals(Object obj) {
 		return super.equals(obj);
 	}
 	
-	@Override
 	// Removes agent from the end of the name
+	@Override
 	protected String name() {
 		String oldName = super.name();
 		return oldName.endsWith("Agent") ? oldName.substring(0, oldName.length() - 5) : oldName;
@@ -265,7 +282,7 @@ public abstract class Agent extends Entity {
 
 	@Override
 	public String toString() {
-		return name() + "(" + id + ')';
+		return name() + "(" + getID() + ')';
 	}
 	
 	public AgentView getView(TimeStamp latency) {
@@ -280,7 +297,7 @@ public abstract class Agent extends Entity {
 		}
 		
 		public void orderSubmitted(final OrderRecord order, final MarketView market, final TimeStamp submittedTime) {
-			sim.scheduleActivityIn(latency, new Activity() {
+			scheduleActivityIn(latency, new Activity() {
 				@Override public void execute() {
 					Agent.this.orderSubmitted(order, market, submittedTime);
 				}
@@ -289,7 +306,7 @@ public abstract class Agent extends Entity {
 		}
 		
 		public void orderTransacted(final OrderRecord order, final int removedQuantity) {
-			sim.scheduleActivityIn(latency, new Activity() {
+			scheduleActivityIn(latency, new Activity() {
 				@Override public void execute() {
 					Agent.this.orderTransacted(order, removedQuantity);
 				}
@@ -298,7 +315,7 @@ public abstract class Agent extends Entity {
 		}
 		
 		public void processTransaction(final TimeStamp submitTime, final OrderType type, final Transaction transaction) {
-			sim.scheduleActivityIn(latency, new InformationActivity() {
+			scheduleActivityIn(latency, new InformationActivity() {
 				@Override public void execute() {
 					Agent.this.processTransaction(submitTime, type, transaction);
 				}

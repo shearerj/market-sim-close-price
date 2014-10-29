@@ -12,19 +12,23 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Random;
 
+import logger.Log;
 import systemmanager.Keys.Alpha;
 import systemmanager.Keys.LaLatency;
-import systemmanager.Simulation;
 
 import com.google.common.base.Functions;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 
+import data.FundamentalValue;
 import data.Props;
+import data.Stats;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.market.Quote;
+import entity.sip.MarketInfo;
+import event.TimeLine;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -44,10 +48,11 @@ public class LAAgent extends HFTAgent {
 	// To "lock" certain markets until agent knows it's current quote information reflects placed bids
 	protected final Map<MarketView, Status> buyStatus, sellStatus;
 	
-	protected LAAgent(Simulation sim, Collection<Market> markets, Random rand, Props props) {
-		super(sim, TimeStamp.ZERO,
+	protected LAAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Collection<Market> markets, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, TimeStamp.ZERO,
 				Maps.toMap(markets, Functions.constant(props.get(LaLatency.class))),
-				rand, props);
+				props);
 
 		this.alpha = props.get(Alpha.class);
 		this.buyStatus = Maps.newHashMapWithExpectedSize(this.markets.size());
@@ -58,8 +63,9 @@ public class LAAgent extends HFTAgent {
 		}
 	}
 
-	public static LAAgent create(Simulation sim, Collection<Market> markets, Random rand, Props props) {
-		return new LAAgent(sim, markets, rand, props);
+	public static LAAgent create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental
+			, Collection<Market> markets, Props props) {
+		return new LAAgent(id, stats, timeline, log, rand, sip, fundamental, markets, props);
 	}
 
 	@Override
@@ -90,7 +96,7 @@ public class LAAgent extends HFTAgent {
 		log(INFO, "%s detected arbitrage between %s %s and %s %s", this, 
 				bestBidMarket, bestBidMarket.getQuote(),
 				bestAskMarket, bestAskMarket.getQuote());
-		Price midPoint = Price.of((bestBid.get().doubleValue() + bestAsk.get().doubleValue()) * .5).quantize(tickSize);
+		Price midPoint = Price.of((bestBid.get().doubleValue() + bestAsk.get().doubleValue()) * .5);
 		int quantity = Math.min(bestBidQuantity, bestAskQuantity);
 		
 		submitOrder(bestBidMarket, SELL, midPoint, quantity);

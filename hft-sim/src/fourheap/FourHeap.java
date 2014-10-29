@@ -45,12 +45,12 @@ import com.google.common.collect.Ordering;
 public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? super T>, O extends Order<? extends P, ? extends T>> extends AbstractCollection<O> implements Serializable {
 
 	private static final long serialVersionUID = -7322375558427133915L;
-	protected final Ordering<P> pord = Ordering.natural();
+	private final Ordering<P> pord = Ordering.natural();
 		
 	protected final PriorityQueue<O> sellUnmatched, sellMatched, buyUnmatched, buyMatched;
-	protected int numUnits;
+	private int numUnits;
 
-	protected FourHeap() {
+	private FourHeap() {
 		Ordering<O> priceComp = new PriceOrdering(), timeComp = new TimeOrdering();
 		
 		// Sout: unmatched sells, min first

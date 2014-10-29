@@ -1,10 +1,13 @@
-package entity.market;
+package entity.market.clearingrule;
 
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
+import entity.market.MarketTime;
+import entity.market.Order;
+import entity.market.Price;
 import fourheap.MatchedOrders;
 
 public class EarliestPriceClear implements ClearingRule {

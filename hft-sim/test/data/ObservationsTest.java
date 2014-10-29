@@ -3,10 +3,7 @@ package data;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
-import java.io.IOException;
-import java.util.Iterator;
 import java.util.Random;
 
 import logger.Log;
@@ -15,11 +12,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Consts.AgentType;
-import systemmanager.Keys;
-import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.SimLength;
-import systemmanager.MockSim;
 import systemmanager.SimulationSpec.PlayerSpec;
+import utils.Mock;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
@@ -30,29 +25,21 @@ import data.Observations.PlayerObservation;
 import entity.agent.Agent;
 import entity.agent.BackgroundAgent;
 import entity.agent.position.PrivateValues;
-import entity.market.CDAMarket;
 import entity.market.Market;
-import entity.market.Market.MarketView;
 import entity.market.Price;
 import event.TimeStamp;
 
 public class ObservationsTest {
 	private static final double eps = 1e-6;
 	private static final Random rand = new Random();
-	private MockSim sim;
+	private Stats stats;
 	private Market one, two;
 	
 	@Before
-	public void defaultSetup() throws IOException {
-		setup(Props.fromPairs());
-	}
-	
-	public void setup(Props parameters) throws IOException {
-		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 2, parameters);
-		Iterator<Market> markets = sim.getMarkets().iterator();
-		one = markets.next();
-		two = markets.next();
-		assertFalse(markets.hasNext());
+	public void defaultSetup() {
+		stats = Stats.create();
+		one = Mock.market();
+		two = Mock.market();
 	}
 	
 	// FIXME General test for summary stats + whitelist
@@ -71,16 +58,16 @@ public class ObservationsTest {
 	public void meanSpreadTest() {
 		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(SimLength.class, 3));
 		
-		sim.postTimedStat(TimeStamp.ZERO, Stats.SPREAD + one, 1);
-		sim.postTimedStat(TimeStamp.of(1), Stats.SPREAD + one, 3);
-		sim.postTimedStat(TimeStamp.of(2), Stats.SPREAD + one, 6);
+		stats.postTimed(TimeStamp.ZERO, Stats.SPREAD + one, 1);
+		stats.postTimed(TimeStamp.of(1), Stats.SPREAD + one, 3);
+		stats.postTimed(TimeStamp.of(2), Stats.SPREAD + one, 6);
 		
-		sim.postTimedStat(TimeStamp.ZERO, Stats.SPREAD + two, 5);
+		stats.postTimed(TimeStamp.ZERO, Stats.SPREAD + two, 5);
 		
 		// To verify NBBO spread doesn't affect mean spread
-		sim.postTimedStat(TimeStamp.ZERO, Stats.NBBO_SPREAD, 100);
+		stats.postTimed(TimeStamp.ZERO, Stats.NBBO_SPREAD, 100);
 		
-		obs.add(sim.getStats(), ImmutableList.<Player> of());
+		obs.add(stats, ImmutableList.<Player> of());
 		
 		assertEquals(3, obs.features.get(Stats.SPREAD + one + "_median").mean(), eps);
 		assertEquals(5, obs.features.get(Stats.SPREAD + two + "_median").mean(), eps);
@@ -93,15 +80,15 @@ public class ObservationsTest {
 	public void volitilityTest() {
 		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(SimLength.class, 3000));
 
-		sim.postTimedStat(TimeStamp.ZERO, Stats.MIDQUOTE + one, 103);
-		sim.postTimedStat(TimeStamp.of(1000), Stats.MIDQUOTE + one, 106.5);
-		sim.postTimedStat(TimeStamp.of(2000), Stats.MIDQUOTE + one, 104);
+		stats.postTimed(TimeStamp.ZERO, Stats.MIDQUOTE + one, 103);
+		stats.postTimed(TimeStamp.of(1000), Stats.MIDQUOTE + one, 106.5);
+		stats.postTimed(TimeStamp.of(2000), Stats.MIDQUOTE + one, 104);
 		
-		sim.postTimedStat(TimeStamp.ZERO, Stats.MIDQUOTE + two, 50);
-		sim.postTimedStat(TimeStamp.of(1000), Stats.MIDQUOTE + two, 100);
-		sim.postTimedStat(TimeStamp.of(2000), Stats.MIDQUOTE + two, 20);
+		stats.postTimed(TimeStamp.ZERO, Stats.MIDQUOTE + two, 50);
+		stats.postTimed(TimeStamp.of(1000), Stats.MIDQUOTE + two, 100);
+		stats.postTimed(TimeStamp.of(2000), Stats.MIDQUOTE + two, 20);
 		
-		obs.add(sim.getStats(), ImmutableList.<Player> of());
+		obs.add(stats, ImmutableList.<Player> of());
 		
 		assertEquals(1.4722055324274199, obs.features.get("vol_freq_1_" + Stats.MIDQUOTE + one + "_stddev").mean(), eps);
 		assertEquals(1.5374122295716148, obs.features.get("vol_freq_250_" + Stats.MIDQUOTE + one + "_stddev").mean(), eps);
@@ -127,11 +114,11 @@ public class ObservationsTest {
 	public void nbboSpreadsTest() {
 		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(SimLength.class, 3));
 
-		sim.postTimedStat(TimeStamp.ZERO, Stats.NBBO_SPREAD, 1);
-		sim.postTimedStat(TimeStamp.of(1), Stats.NBBO_SPREAD, 3);
-		sim.postTimedStat(TimeStamp.of(2), Stats.NBBO_SPREAD, 6);
+		stats.postTimed(TimeStamp.ZERO, Stats.NBBO_SPREAD, 1);
+		stats.postTimed(TimeStamp.of(1), Stats.NBBO_SPREAD, 3);
+		stats.postTimed(TimeStamp.of(2), Stats.NBBO_SPREAD, 6);
 
-		obs.add(sim.getStats(), ImmutableList.<Player> of());
+		obs.add(stats, ImmutableList.<Player> of());
 
 		assertEquals(3, obs.features.get(Stats.NBBO_SPREAD + "_median").mean(), eps);
 	}
@@ -142,16 +129,16 @@ public class ObservationsTest {
 	 * ultimately depends on how the fourheap matches orders
 	 */
 	@Test
-	public void transPricesTest() throws IOException {
-		setup(Props.fromPairs(FundamentalMean.class, 100, Keys.FundamentalShockVar.class, 0d));
+	public void transPricesTest() {
+		FundamentalValue.create(stats, Mock.timeline, 0, 100, 0, rand);
 		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(SimLength.class, 3000));
 		
-		sim.postTimedStat(TimeStamp.ZERO, Stats.TRANSACTION_PRICE, 102);
-		sim.postTimedStat(TimeStamp.ZERO, Stats.TRANSACTION_PRICE, 104);
-		sim.postTimedStat(TimeStamp.of(1000), Stats.TRANSACTION_PRICE, 106);
-		sim.postTimedStat(TimeStamp.of(2000), Stats.TRANSACTION_PRICE, 108);
+		stats.postTimed(TimeStamp.ZERO, Stats.TRANSACTION_PRICE, 102);
+		stats.postTimed(TimeStamp.ZERO, Stats.TRANSACTION_PRICE, 104);
+		stats.postTimed(TimeStamp.of(1000), Stats.TRANSACTION_PRICE, 106);
+		stats.postTimed(TimeStamp.of(2000), Stats.TRANSACTION_PRICE, 108);
 		
-		obs.add(sim.getStats(), ImmutableList.<Player> of());
+		obs.add(stats, ImmutableList.<Player> of());
 		
 		assertEquals(6.2182527020592095, obs.features.get("trans_freq_1_rmsd").mean(), eps);
 		assertEquals(6.2182527020592095, obs.features.get("trans_freq_250_rmsd").mean(), eps);
@@ -163,27 +150,27 @@ public class ObservationsTest {
 		PlayerSpec spec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
 		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(ImmutableList.of(spec)), Props.fromPairs(SimLength.class, 1));
 		
-		final MarketView market = CDAMarket.create(sim, rand, Props.fromPairs()).getPrimaryView();
-		Agent buyer = new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {			
+		Agent buyer = new Agent(0, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, PrivateValues.zero(),
+				TimeStamp.ZERO, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
-			@Override protected void agentStrategy() { }
-			public Agent submitOrder() {
-				submitOrder(market, BUY, Price.of(100000), 1);
-				return this;
+			@Override
+			protected void agentStrategy() {
+				submitOrder(one.getPrimaryView(), BUY, Price.of(100000), 1);
 			}
-		}.submitOrder();
-		new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {			
+		};
+		new Agent(0, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, PrivateValues.zero(),
+				TimeStamp.ZERO, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
-			@Override public void agentStrategy() {
-				submitOrder(market, SELL, Price.of(100000), 1);
+			@Override
+			protected void agentStrategy() {
+				submitOrder(one.getPrimaryView(), SELL, Price.of(100000), 1);
 			}
-		}.agentStrategy();
-		sim.executeImmediate();
+		};
 		
 		// Buyer bought good, so profit = -100000;
 		Player player = new Player(spec.descriptor, buyer);
 		
-		obs.add(sim.getStats(), ImmutableList.of(player));
+		obs.add(stats, ImmutableList.of(player));
 		
 		PlayerObservation pobs = Iterables.getOnlyElement(obs.playerObservations.get(spec.descriptor));
 		
@@ -199,20 +186,21 @@ public class ObservationsTest {
 		final AtomicDouble pv1 = new AtomicDouble();
 		final AtomicDouble pv_1 = new AtomicDouble();
 		
-		Agent agent = new BackgroundAgent(sim, one, rand, Props.fromPairs()) {
+		Agent agent = new BackgroundAgent(0, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, one,
+				Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
-			@Override public String toString() { return "TestAgent " + id; }
 			private Agent setup() {
 				pv1.set(getValuation(BUY).doubleValue());
 				pv_1.set(getValuation(SELL).doubleValue());
 				return this;
 			}
+			@Override protected void agentStrategy() { }
 		}.setup();
 		Player player = new Player(spec.descriptor, agent);
 		
 		double maxAbsPos = Math.max(Math.abs(pv1.get()), Math.abs(pv_1.get()));
 		
-		obs.add(sim.getStats(), ImmutableList.of(player));
+		obs.add(stats, ImmutableList.of(player));
 		
 		PlayerObservation pobs = Iterables.getOnlyElement(obs.playerObservations.get(spec.descriptor));
 		
@@ -231,9 +219,9 @@ public class ObservationsTest {
 		final AtomicDouble a_pv1 = new AtomicDouble();
 		final AtomicDouble a_pv_1 = new AtomicDouble();
 		
-		Agent agent = new BackgroundAgent(sim, one, rand, Props.fromPairs()) {
+		Agent agent = new BackgroundAgent(0, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, one,
+				Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
-			@Override public String toString() { return "TestAgent " + id; }
 			private Agent setup() {
 				a_pv1.set(getValuation(BUY).doubleValue());
 				a_pv_1.set(getValuation(SELL).doubleValue());
@@ -244,15 +232,15 @@ public class ObservationsTest {
 		
 		double a_maxAbsPos = Math.max(Math.abs(a_pv1.get()), Math.abs(a_pv_1.get()));
 		
-		obs.add(sim.getStats(), ImmutableList.of(player));
+		obs.add(stats, ImmutableList.of(player));
 		
 		// Set up the second agent (b) and record their private values
 		final AtomicDouble b_pv1 = new AtomicDouble();
 		final AtomicDouble b_pv_1 = new AtomicDouble();
 		
-		agent = new BackgroundAgent(sim, one, rand, Props.fromPairs()) {
+		agent = new BackgroundAgent(0, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, one,
+				Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
-			@Override public String toString() { return "TestAgent " + id; }
 			private Agent setup() {
 				b_pv1.set(getValuation(BUY).doubleValue());
 				b_pv_1.set(getValuation(SELL).doubleValue());
@@ -263,7 +251,7 @@ public class ObservationsTest {
 		
 		double b_maxAbsPos = Math.max(Math.abs(b_pv1.get()), Math.abs(b_pv_1.get()));
 		
-		obs.add(sim.getStats(), ImmutableList.of(player));
+		obs.add(stats, ImmutableList.of(player));
 		
 		// Test
 		PlayerObservation pobs = Iterables.getOnlyElement(obs.playerObservations.get(spec.descriptor));

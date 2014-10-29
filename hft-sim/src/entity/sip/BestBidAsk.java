@@ -1,4 +1,4 @@
-package entity.infoproc;
+package entity.sip;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import logger.Log;
 import systemmanager.Keys.FastLearning;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
@@ -18,7 +19,6 @@ import systemmanager.Keys.NumHistorical;
 import systemmanager.Keys.Spreads;
 import systemmanager.Keys.UseLastPrice;
 import systemmanager.Keys.UseMedianSpread;
-import systemmanager.Simulation;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.EvictingQueue;
@@ -27,10 +27,14 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.math.DoubleMath;
 
+import data.FundamentalValue;
 import data.Props;
+import data.Stats;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Quote;
+import entity.sip.MarketInfo;
+import event.TimeLine;
 
 /**
  * ADAPTIVEMARKETMAKER
@@ -56,8 +60,9 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	
 	protected Optional<Price> lastAsk, lastBid; // stores the ask/bid at last entry
 
-	protected AdaptiveMarketMaker(Simulation sim, Market market, Random rand, Props props) {
-		super(sim, market, rand, props);
+	protected AdaptiveMarketMaker(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
 		boolean movingAveragePrice = props.get(MovingAveragePrice.class);
 		int numHistorical = movingAveragePrice ? 8 : props.get(NumHistorical.class);
@@ -94,8 +99,9 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		this.lastBid = Optional.absent();
 	}
 	
-	public static AdaptiveMarketMaker create(Simulation sim, Market market, Random rand, Props props) {
-		return new AdaptiveMarketMaker(sim, market, rand, props);
+	public static AdaptiveMarketMaker create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
+		return new AdaptiveMarketMaker(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}
 
 	/**

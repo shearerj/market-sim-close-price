@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import logger.Log;
 import systemmanager.Keys.AcceptableProfitFrac;
 import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.BackgroundReentryRate;
@@ -21,13 +22,13 @@ import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.ReentryRate;
 import systemmanager.Keys.SimLength;
 import systemmanager.Keys.WithdrawOrders;
-import systemmanager.Simulation;
 import utils.Rands;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Range;
 
+import data.FundamentalValue;
 import data.Observations;
 import data.Props;
 import data.Stats;
@@ -37,6 +38,8 @@ import entity.market.Market;
 import entity.market.Price;
 import entity.market.Quote;
 import entity.market.Transaction;
+import entity.sip.MarketInfo;
+import event.TimeLine;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -65,10 +68,11 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	/**
 	 * Constructor for custom private valuation 
 	 */
-	protected BackgroundAgent(Simulation sim, PrivateValue privateValue, Market market, Random rand, Props props) {
-		super(sim, privateValue,
+	protected BackgroundAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			PrivateValue privateValue, Market market, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, privateValue,
 				TimeStamp.of((long) Rands.nextExponential(rand, props.get(ArrivalRate.class))),
-				market, rand,
+				market,
 				AgentFactory.exponentials(props.get(BackgroundReentryRate.class, ReentryRate.class), rand),
 				props);
 		this.bidRangeMin = props.get(BidRangeMin.class);
@@ -96,10 +100,11 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	/**
 	 * Default constructor with standard valuation model
 	 */
-	protected BackgroundAgent(Simulation sim, Market market, Random rand, Props props) {
-		this(sim, ListPrivateValue.createRandomly(props.get(MaxQty.class), props.get(PrivateValueVar.class), rand),
-				market,
-				rand, props);
+	protected BackgroundAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
+		this(id, stats, timeline, log, rand, sip, fundamental,
+				ListPrivateValue.createRandomly(props.get(MaxQty.class), props.get(PrivateValueVar.class), rand),
+				market, props);
 	}
 	
 	@Override
@@ -117,10 +122,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			
 			Price val = getValuation(type);
 			Price price = Price.of((val.doubleValue() + (type.equals(SELL) ? 1 : -1) * 
-					Rands.nextUniform(rand, bidRangeMin, bidRangeMax))).nonnegative().quantize(tickSize);
+					Rands.nextUniform(rand, bidRangeMin, bidRangeMax)));
 			
 			log(INFO, "%s executing ZI strategy position=%d, for q=%d, value=%s + %s=%s",
-					this, getPosition(), quantity, fundamental.getValue(),
+					this, getPosition(), quantity, getFundamental(),
 					getValuation(type), val);
 			
 			submitNMSOrder(type, price, quantity);
@@ -150,15 +155,15 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			Price val = getEstimatedValuation(type);
 			Price price = Price.of((val.doubleValue() + (type.equals(SELL) ? 1 : -1) 
 					* Rands.nextUniform(rand, bidRangeMin, bidRangeMax
-					))).nonnegative().quantize(tickSize);
+					)));
 
 			final Price rHat = this.getEstimatedFundamental(type);  
 			
 			log(INFO, "%s executing ZIRP strategy position=%d, for q=%d, fund=%s value=%s + %s=%s stepsLeft=%s pv=%s",
-				this, getPosition(), quantity, fundamental.getValue().intValue(),
+				this, getPosition(), quantity, getFundamental(),
 				rHat, getValuation(type),	val, 
-				simulationLength - currentTime().getInTicks(), 
-				getValuation(quantity, type));
+				simulationLength - getCurrentTime().getInTicks(), 
+				getPrivateValue(quantity, type));
 			
 			Quote quote = getQuote();
 			if (quote.isDefined()) {
@@ -173,7 +178,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					// if you would make at least acceptableProfitFraction of your
 					// markup at the bid, submit order at estimated fundamental
 					if (shading * acceptableProfitFraction <= bidMarkup) {
-						price = Price.of(val.doubleValue() / quantity).quantize(tickSize).nonnegative();
+						price = Price.of(val.doubleValue() / quantity);
 						
 						log(INFO, "%s executing ZIRP strategy GREEDY SELL, markup=%s, bid=%s, bidMarkup=%s, price=%s",
 							this, shading, bidPrice, bidMarkup, price.intValue());
@@ -194,7 +199,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					// if you would make at least acceptableProfitFraction of your 
 					// markup at the ask, submit order at estimated fundamental
 					if (shading * acceptableProfitFraction <= askMarkup) {
-						price = Price.of(val.doubleValue() / quantity).quantize(tickSize).nonnegative();
+						price = Price.of(val.doubleValue() / quantity);
 						
 						log(INFO, "%s executing ZIRP strategy GREEDY BUY, markup=%s, ask=%s, askMarkup=%s, price=%s",
 								this, shading, askPrice,	askMarkup, price.intValue());
@@ -246,39 +251,39 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * 
 	 * valuation = fundamental + private_value
 	 */
-	protected Price getValuation(OrderType type) {
+	protected final Price getValuation(OrderType type) {
 		return getValuation(type, 1);
-	}
-	
-	protected Price getEstimatedValuation(OrderType type) {
-		return getEstimatedValuation(type, 1);
-	}
-	
-	protected Price getEstimatedValuation(OrderType type, int quantity) {
-		
-		Price rHat = this.getEstimatedFundamental(type); 
-			
-		return Price.of(rHat.intValue() * quantity
-				+ getValuation(quantity, type).intValue()
-				).nonnegative();
-	}
-	
-	protected Price getEstimatedFundamental(OrderType type) {
-		// FIXME If delayed fundamental, this will be innacurate. Should account for latency...
-		final int stepsLeft = (int) (simulationLength - currentTime().getInTicks());
-		final double kappaCompToPower = Math.pow(1 - fundamentalKappa, stepsLeft);
-		return Price.of(fundamental.getValue().intValue() * kappaCompToPower 
-			+ fundamentalMean * (1 - kappaCompToPower));
 	}
 	
 	/**
 	 * Returns valuation = fundamental + private value (value of cumulative
 	 * gain if over quantity > 1).
 	 */
-	protected Price getValuation(OrderType type, int quantity) {
-		return Price.of(fundamental.getValue().intValue() * quantity
-				+ getValuation(quantity, type).intValue()
+	protected final Price getValuation(OrderType type, int quantity) {
+		return Price.of(getFundamental().intValue() * quantity
+				+ getPrivateValue(quantity, type).intValue()
 				).nonnegative();
+	}
+
+	protected final Price getEstimatedValuation(OrderType type) {
+		return getEstimatedValuation(type, 1);
+	}
+	
+	protected final Price getEstimatedValuation(OrderType type, int quantity) {
+		
+		Price rHat = this.getEstimatedFundamental(type); 
+			
+		return Price.of(rHat.intValue() * quantity
+				+ getPrivateValue(quantity, type).intValue()
+				).nonnegative();
+	}
+	
+	protected Price getEstimatedFundamental(OrderType type) {
+		// FIXME If delayed fundamental, this will be innacurate. Should account for latency...
+		final int stepsLeft = (int) (simulationLength - getCurrentTime().getInTicks());
+		final double kappaCompToPower = Math.pow(1 - fundamentalKappa, stepsLeft);
+		return Price.of(getFundamental().intValue() * kappaCompToPower 
+			+ fundamentalMean * (1 - kappaCompToPower));
 	}
 	
 	/** Returns the limit price for a new order of quantity 1. */

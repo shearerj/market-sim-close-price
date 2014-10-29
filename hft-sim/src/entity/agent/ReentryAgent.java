@@ -6,22 +6,26 @@ import static logger.Log.Level.INFO;
 import java.util.Iterator;
 import java.util.Random;
 
-import systemmanager.Simulation;
+import logger.Log;
+import data.FundamentalValue;
 import data.Props;
+import data.Stats;
 import entity.agent.position.PrivateValue;
 import entity.market.Market;
+import entity.sip.MarketInfo;
+import event.TimeLine;
 import event.TimeStamp;
 
 public abstract class ReentryAgent extends SMAgent {
 
 	private static final long serialVersionUID = 4722377972197300345L;
 
-	protected Iterator<TimeStamp> reentry; // wait times between reentry
+	protected final Iterator<TimeStamp> reentry; // wait times between reentry
 	protected boolean arrived;
 
-	public ReentryAgent(Simulation sim, PrivateValue privateValue, TimeStamp arrivalTime, Market market, Random rand, 
-			Iterator<TimeStamp> reentry, Props props) {
-		super(sim, privateValue, arrivalTime, rand, market, props);
+	public ReentryAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			PrivateValue privateValue, TimeStamp arrivalTime, Market market, Iterator<TimeStamp> reentry, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, privateValue, arrivalTime, market, props);
 		this.reentry = checkNotNull(reentry);
 		this.arrived = false;
 	}

@@ -18,7 +18,7 @@ public class MarketTime extends TimeStamp implements Serializable {
 		this.marketTime = marketTime;
 	}
 	
-	protected static MarketTime from(TimeStamp time, long marketTime) {
+	public static MarketTime from(TimeStamp time, long marketTime) {
 		return new MarketTime(time, marketTime);
 	}
 	

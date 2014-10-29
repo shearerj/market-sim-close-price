@@ -3,8 +3,8 @@ package entity.market;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
-import static utils.Tests.checkQuote;
-import static utils.Tests.checkSingleTransaction;
+import static utils.Tests.assertQuote;
+import static utils.Tests.assertSingleTransaction;
 
 import java.io.IOException;
 import java.util.Random;
@@ -14,18 +14,14 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Consts.MarketType;
 import systemmanager.Keys.ClearFrequency;
 import systemmanager.Keys.PricingPolicy;
-import systemmanager.MockSim;
-
-import com.google.common.collect.Iterables;
-
+import utils.Mock;
 import data.Props;
 import entity.agent.Agent;
 import entity.agent.OrderRecord;
-import entity.agent.position.PrivateValues;
 import entity.market.Market.MarketView;
+import event.EventQueue;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -36,89 +32,72 @@ import fourheap.Order.OrderType;
  * @author ewah
  */
 public class CallMarketTest {
-
 	private static final Random rand = new Random();
-	private MockSim sim;
+	private static final Agent agent = Mock.agent();
+	
+	private EventQueue timeline;
 	private Market market;
-	private MarketView info;
+	private MarketView view;
 	
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING, MarketType.CALL, 1,
-				Props.fromPairs(ClearFrequency.class, TimeStamp.of(100), PricingPolicy.class, 1d));
-		market = Iterables.getOnlyElement(sim.getMarkets());
-		info = market.getPrimaryView();
-		sim.executeImmediate(); // First clear
+		timeline = EventQueue.create(Log.nullLogger(), rand);
+		market = CallMarket.create(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Props.fromPairs(
+				ClearFrequency.class,	TimeStamp.of(100),
+				PricingPolicy.class,	1d));
+		view = market.getPrimaryView();
+		timeline.executeUntil(TimeStamp.ZERO); // First clear
 	}
 
 	/** Test modified pricing policy */
 	@Test
 	public void pricingPolicyTest() {
-		Agent agent1 = mockAgent();
-		Agent agent2 = mockAgent();
-		
-		// Creating and adding bids
-		submitOrder(agent1, BUY, Price.of(200), 1);
-		submitOrder(agent2, SELL, Price.of(100), 1);
+		submitOrder(BUY, Price.of(200), 1);
+		submitOrder(SELL, Price.of(100), 1);
 		
 		// Testing market for the correct transaction
-		clear();
+		market.clear();
+		timeline.executeUntil(TimeStamp.ZERO);
 		
-		checkSingleTransaction(info.getTransactions(), Price.of(200), TimeStamp.ZERO, 1);
-		checkQuote(info.getQuote(), null, 0, null, 0);
+		assertSingleTransaction(view.getTransactions(), Price.of(200), TimeStamp.ZERO, 1);
+		assertQuote(view.getQuote(), null, 0, null, 0);
 	}
 	
 	/** Test that market clears at intervals */
 	@Test
 	public void clearActivityInsertion() {
-		Agent agent1 = mockAgent();
-		Agent agent2 = mockAgent();
-			
 		// Test that before time 100 quotes do not change
-		checkQuote(info.getQuote(), null, 0, null, 0);
+		assertQuote(view.getQuote(), null, 0, null, 0);
 		
 		// Quote still undefined before clear
-		submitOrder(agent1, BUY, Price.of(100),  1);
-		OrderRecord sell = submitOrder(agent1, SELL, Price.of(110), 1);
-		sim.executeUntil(TimeStamp.of(99));
-		checkQuote(info.getQuote(), null, 0, null, 0);
+		submitOrder(BUY, Price.of(100),  1);
+		OrderRecord sell = submitOrder(SELL, Price.of(110), 1);
+		timeline.executeUntil(TimeStamp.of(99));
+		assertQuote(view.getQuote(), null, 0, null, 0);
 		
 		// Now quote should be updated
-		sim.executeUntil(TimeStamp.of(100));
-		checkQuote(info.getQuote(), Price.of(100), 1, Price.of(110), 1);
+		timeline.executeUntil(TimeStamp.of(100));
+		assertQuote(view.getQuote(), Price.of(100), 1, Price.of(110), 1);
 		
 		// Now check that transactions are correct as well as quotes
-		submitOrder(agent2, SELL, Price.of(150), 1);
-		OrderRecord buy = submitOrder(agent2, BUY, Price.of(120), 1);
+		submitOrder(SELL, Price.of(150), 1);
+		OrderRecord buy = submitOrder(BUY, Price.of(120), 1);
 		// Before second clear interval ends, quote remains the same
-		sim.executeUntil(TimeStamp.of(199));
-		checkQuote(info.getQuote(), Price.of(100), 1, Price.of(110), 1);
+		timeline.executeUntil(TimeStamp.of(199));
+		assertQuote(view.getQuote(), Price.of(100), 1, Price.of(110), 1);
 		
 		// Once clear interval ends, orders match and clear, and the quote updates
-		sim.executeUntil(TimeStamp.of(200));
+		timeline.executeUntil(TimeStamp.of(200));
 		
-		checkQuote(info.getQuote(), Price.of(100), 1, Price.of(150), 1);
-		checkSingleTransaction(info.getTransactions(), Price.of(120), TimeStamp.of(200), 1);
+		assertQuote(view.getQuote(), Price.of(100), 1, Price.of(150), 1);
+		assertSingleTransaction(view.getTransactions(), Price.of(120), TimeStamp.of(200), 1);
 		assertEquals(0, buy.getQuantity());
 		assertEquals(0, sell.getQuantity());
 	}
 	
-	private void clear() {
-		market.clear();
-		sim.executeImmediate();
-	}
-	
-	private Agent mockAgent() {
-		return new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
-			private static final long serialVersionUID = 1L;
-			@Override public void agentStrategy() { }
-			@Override public String toString() { return "TestAgent " + id; }
-		};
-	}
-	
-	private OrderRecord submitOrder(Agent agent, OrderType buyOrSell, Price price, int quantity) {
-		OrderRecord order = OrderRecord.create(info, sim.getCurrentTime(), buyOrSell, price, quantity);
-		market.submitOrder(info, agent.getView(info.getLatency()), order);
+	private OrderRecord submitOrder(OrderType buyOrSell, Price price, int quantity) {
+		OrderRecord order = OrderRecord.create(market.getPrimaryView(), timeline.getCurrentTime(), buyOrSell, price, quantity);
+		market.submitOrder(market.getPrimaryView(), agent.getView(market.getPrimaryView().getLatency()), order);
 		return order;
 	}
 	

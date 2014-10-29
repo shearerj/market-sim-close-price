@@ -4,13 +4,17 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Random;
 
+import logger.Log;
 import systemmanager.Keys.ClearFrequency;
 import systemmanager.Keys.MarketTickSize;
 import systemmanager.Keys.PricingPolicy;
 import systemmanager.Keys.TickSize;
-import systemmanager.Simulation;
 import data.Props;
+import data.Stats;
+import entity.market.clearingrule.UniformPriceClear;
+import entity.sip.MarketInfo;
 import event.Activity;
+import event.TimeLine;
 import event.TimeStamp;
 
 /**
@@ -29,25 +33,26 @@ public class CallMarket extends Market {
 
 	private final TimeStamp clearFreq;
 
-	protected CallMarket(Simulation sim, Random rand, Props props) {
-		super(sim, new UniformPriceClear(props.get(PricingPolicy.class), props.get(MarketTickSize.class, TickSize.class)),
-				rand, props);
+	protected CallMarket(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, Props props) {
+		super(id, stats, timeline, log, rand, sip,
+				new UniformPriceClear(props.get(PricingPolicy.class), props.get(MarketTickSize.class, TickSize.class)),
+				props);
 		this.clearFreq = props.get(ClearFrequency.class);
 		checkArgument(clearFreq.after(TimeStamp.ZERO), "Can't clear at frequency zero");
-		sim.scheduleActivityIn(TimeStamp.IMMEDIATE, new Activity() {
+		scheduleActivityIn(TimeStamp.IMMEDIATE, new Activity() {
 			@Override public void execute() { CallMarket.this.clear(); }
 			@Override public String toString() { return "First Clear"; }
 		});
 	}
 
-	public static CallMarket create(Simulation sim, Random rand, Props props) {
-		return new CallMarket(sim, rand, props);
+	public static CallMarket create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, Props props) {
+		return new CallMarket(id, stats, timeline, log, rand, sip, props);
 	}
 
 	@Override
 	protected void clear() {
 		super.clear();
-		sim.scheduleActivityIn(clearFreq, new Activity() {
+		scheduleActivityIn(clearFreq, new Activity() {
 			@Override public void execute() { CallMarket.this.clear(); }
 			@Override public String toString() { return "Clear"; }
 		});

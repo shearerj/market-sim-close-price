@@ -6,21 +6,27 @@ import static logger.Log.Level.INFO;
 
 import java.util.Random;
 
-import systemmanager.Simulation;
+import logger.Log;
+import data.FundamentalValue;
 import data.Props;
+import data.Stats;
 import entity.market.Market;
+import entity.sip.MarketInfo;
+import event.TimeLine;
 import fourheap.Order.OrderType;
 
 public final class ZIRPAgent extends BackgroundAgent {
 	
 	private static final long serialVersionUID = -8805640643365079141L;
 	
-	protected ZIRPAgent(Simulation sim, Market market, Random rand, Props props) {
-		super(sim, market, rand, props);
+	protected ZIRPAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}
 	
-	public static ZIRPAgent create(Simulation sim, Market market, Random rand, Props props) {
-		return new ZIRPAgent(sim, market, rand, props);
+	public static ZIRPAgent create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
+		return new ZIRPAgent(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}
 
 	@Override

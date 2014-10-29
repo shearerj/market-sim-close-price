@@ -39,9 +39,8 @@ import data.Props;
 public abstract class SystemManager {
 	
 	protected static final DateFormat LOG_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
-	// XXX This will allow serializing NaNs for testing, but will cause errors for EGTA which doesn't like NaNs...
 	protected static final Gson gson = new GsonBuilder()
-	.serializeSpecialFloatingPointValues()
+	.serializeSpecialFloatingPointValues() // XXX This will allow serializing NaNs for testing, but will cause errors for EGTA which doesn't like NaNs...
 	.registerTypeAdapter(SimulationSpec.class, new SimSpecDeserializer())
 	.create();
 
@@ -132,7 +131,7 @@ public abstract class SystemManager {
 			sim.log(INFO, "Configuration: %s", specification);
 			
 			sim.executeEvents();
-			observations.add(sim.statistics, sim.players);
+			observations.add(sim.getStatistics(), sim.getPlayers());
 		}
 		
 		gson.toJson(observations, obsOut);

@@ -1,49 +1,30 @@
-package entity.market;
+package entity.market.clearingrule;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Random;
 
-import logger.Log;
-
-import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.MockSim;
-import data.Props;
-import entity.agent.Agent;
+import utils.Mock;
 import entity.agent.Agent.AgentView;
-import entity.agent.position.PrivateValues;
 import entity.agent.OrderRecord;
 import entity.market.Market.MarketView;
+import entity.market.MarketTime;
+import entity.market.Order;
+import entity.market.Price;
 import event.TimeStamp;
 import fourheap.MatchedOrders;
 
 public class UniformPriceClearTest {
-	// TODO Need these for filler..., but shouldn't have these dependencies
 	private static final Random rand = new Random();
-	private MockSim sim;
-	private MarketView market;
-	private AgentView agent;
+	private static final MarketView market = Mock.market().getPrimaryView();
+	private static final AgentView agent = Mock.agent().getView(TimeStamp.ZERO);
 	
-	@Before
-	public void setup() throws IOException {
-		sim = MockSim.create(getClass(), Log.Level.NO_LOGGING);
-		Market mark = new Market(sim, new UniformPriceClear(0.5, 1), null /*FIXME*/, Props.fromPairs()) {
-			private static final long serialVersionUID = 1L;
-		};
-		market = mark.getPrimaryView();
-		agent = new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
-			private static final long serialVersionUID = 1L;
-			@Override public void agentStrategy() { }
-		}.getView(TimeStamp.IMMEDIATE);
-	}
-
 	@Test
 	public void UniformPriceBasic() {
 		ArrayList<MatchedOrders<Price, MarketTime, Order>> list = new ArrayList<MatchedOrders<Price, MarketTime, Order>>();
@@ -116,11 +97,12 @@ public class UniformPriceClearTest {
 		assertEquals(Price.of(106), result.get(match2));
 	}
 	
-	public MatchedOrders<Price, MarketTime, Order> createOrderPair(
+	private static MatchedOrders<Price, MarketTime, Order> createOrderPair(
 			Price p1, int q1, TimeStamp t1, Price p2, int q2, TimeStamp t2){
 		// NOTE: the same MarketTime will never be created for two orders
-		MarketTime mt1 = MarketTime.from(t1, 1);
-		MarketTime mt2 = MarketTime.from(t2, 2);
+		boolean buyFirst = rand.nextBoolean();
+		MarketTime mt1 = MarketTime.from(t1, buyFirst ? 0 : 1);
+		MarketTime mt2 = MarketTime.from(t2, buyFirst ? 1 : 0);
 		Order a = Order.create(agent, OrderRecord.create(market, t1, BUY, p1, q1), mt1);
 		Order b = Order.create(agent, OrderRecord.create(market, t2, SELL, p2, q2), mt2);
 		// Generic for compartability with 1.6 compiler / non eclipse

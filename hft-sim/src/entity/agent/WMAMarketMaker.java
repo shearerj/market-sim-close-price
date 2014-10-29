@@ -4,14 +4,18 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.Random;
 
+import logger.Log;
 import systemmanager.Keys.WeightFactor;
-import systemmanager.Simulation;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
+import data.FundamentalValue;
 import data.Props;
+import data.Stats;
 import entity.market.Market;
+import entity.sip.MarketInfo;
+import event.TimeLine;
 
 /**
  * WMAMARKETMAKER
@@ -48,15 +52,17 @@ public class WMAMarketMaker extends MAMarketMaker {
 
 	protected double weightFactor;
 
-	protected WMAMarketMaker(Simulation sim, Market market, Random rand, Props props) {
-		super(sim, market, rand, props);
+	protected WMAMarketMaker(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
 		this.weightFactor = props.get(WeightFactor.class);
 		checkArgument(weightFactor >= 0 && weightFactor < 1, "Weight factor must be in range [0,1)!");
 	}
 	
-	public static WMAMarketMaker create(Simulation sim, Market market, Random rand, Props props) {
-		return new WMAMarketMaker(sim, market, rand, props);
+	public static WMAMarketMaker create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
+		return new WMAMarketMaker(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}
 	
 	protected double average(Iterable<? extends Number> numbers) {

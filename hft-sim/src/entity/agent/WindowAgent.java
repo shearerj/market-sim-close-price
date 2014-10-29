@@ -3,11 +3,15 @@ package entity.agent;
 import java.util.List;
 import java.util.Random;
 
+import logger.Log;
 import systemmanager.Keys.WindowLength;
-import systemmanager.Simulation;
+import data.FundamentalValue;
 import data.Props;
+import data.Stats;
 import entity.market.Market;
 import entity.market.Transaction;
+import entity.sip.MarketInfo;
+import event.TimeLine;
 import event.TimeStamp;
 
 /**
@@ -34,8 +38,9 @@ public abstract class WindowAgent extends BackgroundAgent {
 
 	private TimeStamp windowLength;
 
-	protected WindowAgent(Simulation sim, Market market, Random rand, Props props) {
-		super(sim, market, rand, props);
+	protected WindowAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 		
 		this.windowLength = props.get(WindowLength.class);
 	}
@@ -52,7 +57,7 @@ public abstract class WindowAgent extends BackgroundAgent {
 	// FIXME Should this take into account latency? Latency is effectively limitng size of window...
 	// Maybe get window from latest transaction time backwards?
 	protected List<Transaction> getWindowTransactions() {
-		TimeStamp firstTimeInWindow = currentTime().minus(windowLength);
+		TimeStamp firstTimeInWindow = getCurrentTime().minus(windowLength);
 
 		List<Transaction> allTransactions = primaryMarket.getTransactions();
 		

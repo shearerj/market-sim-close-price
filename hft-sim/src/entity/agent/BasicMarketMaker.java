@@ -4,14 +4,18 @@ import static logger.Log.Level.INFO;
 
 import java.util.Random;
 
-import systemmanager.Simulation;
+import logger.Log;
 
 import com.google.common.base.Optional;
 
+import data.FundamentalValue;
 import data.Props;
+import data.Stats;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Quote;
+import entity.sip.MarketInfo;
+import event.TimeLine;
 
 /**
  * BASICMARKETMAKER
@@ -45,15 +49,17 @@ public class BasicMarketMaker extends MarketMaker {
 	
 	protected Optional<Price> lastAsk, lastBid; // stores the ask/bid at last entry
 
-	protected BasicMarketMaker(Simulation sim, Market market, Random rand, Props props) {
-		super(sim, market, rand, props);
+	protected BasicMarketMaker(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
 		this.lastAsk = Optional.absent();
 		this.lastBid = Optional.absent();
 	}
 
-	public static BasicMarketMaker create(Simulation sim, Market market, Random rand, Props props) {
-		return new BasicMarketMaker(sim, market, rand, props);
+	public static BasicMarketMaker create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
+		return new BasicMarketMaker(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}
 
 	@Override
@@ -88,7 +94,7 @@ public class BasicMarketMaker extends MarketMaker {
 				if (!getQuote().isDefined()) {
 					Optional<Price> oldBid = bid, oldAsk = ask;
 					bid = bid.or(lastBid);
-					ask = bid.or(lastAsk);
+					ask = ask.or(lastAsk);
 					log(INFO, "%s in %s: Ladder MID (%s, %s)-->(%s, %s)", 
 							this, primaryMarket, oldBid, oldAsk, bid, ask);
 				}

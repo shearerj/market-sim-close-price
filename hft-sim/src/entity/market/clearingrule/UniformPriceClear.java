@@ -1,4 +1,4 @@
-package entity.market;
+package entity.market.clearingrule;
 
 import java.util.Map;
 
@@ -7,6 +7,9 @@ import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 
+import entity.market.MarketTime;
+import entity.market.Order;
+import entity.market.Price;
 import fourheap.MatchedOrders;
 
 public class UniformPriceClear implements ClearingRule {

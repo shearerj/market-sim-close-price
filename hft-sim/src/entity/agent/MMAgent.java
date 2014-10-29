@@ -3,10 +3,14 @@ package entity.agent;
 import java.util.Collection;
 import java.util.Random;
 
-import systemmanager.Simulation;
+import logger.Log;
+import data.FundamentalValue;
 import data.Props;
+import data.Stats;
 import entity.agent.position.PrivateValue;
 import entity.market.Market.MarketView;
+import entity.sip.MarketInfo;
+import event.TimeLine;
 import event.TimeStamp;
 
 /**
@@ -28,9 +32,9 @@ public abstract class MMAgent extends Agent {
 	
 	protected final Collection<MarketView> markets; 
 	
-	protected MMAgent(Simulation sim, PrivateValue privateValue, TimeStamp arrivalTime, Collection<MarketView> markets,
-			Random rand, Props props) {
-		super(sim, privateValue, arrivalTime, rand, props);
+	protected MMAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			PrivateValue privateValue, TimeStamp arrivalTime, Collection<MarketView> markets, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, privateValue, arrivalTime, props);
 		this.markets = markets;
 	}
 

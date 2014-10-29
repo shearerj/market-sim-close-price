@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import logger.Log;
 import systemmanager.Keys.BetaR;
 import systemmanager.Keys.BetaT;
 import systemmanager.Keys.BuyerStatus;
@@ -22,17 +23,21 @@ import systemmanager.Keys.NumHistorical;
 import systemmanager.Keys.Theta;
 import systemmanager.Keys.ThetaMax;
 import systemmanager.Keys.ThetaMin;
-import systemmanager.Simulation;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Range;
 
+import data.FundamentalValue;
 import data.Props;
+import data.Stats;
 import entity.agent.position.Aggression;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Transaction;
+import entity.sip.MarketInfo;
+import event.TimeLine;
 import fourheap.Order.OrderType;
 
 /**
@@ -49,7 +54,7 @@ public class AAAgent extends WindowAgent {
 	private static final long serialVersionUID = 2418819222375372886L;
 	private static final Ordering<Price> pcomp = Ordering.natural();
 
-	// TODO Make the variables that don't change final
+	// TODO Make the variables that don't change private final
 	
 	// Agent variables
 	protected OrderType type; // randomly assigned at initialization
@@ -78,8 +83,9 @@ public class AAAgent extends WindowAgent {
 	private double alphaMax; // max experienced value for alpha (for theta, not PV)
 	private double alphaMin; // min experienced value for alpha
 
-	protected AAAgent(Simulation sim, Market market, Random rand, Props props) {
-		super(sim, market, rand, props);
+	protected AAAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
 		this.type = props.get(BuyerStatus.class);
 		this.lastTransactionPrice = null;
@@ -117,8 +123,9 @@ public class AAAgent extends WindowAgent {
 		checkArgument(lambdaR >= 0, "lambdaR must be positive");
 	}
 
-	public static AAAgent create(Simulation sim, Market market, Random rand, Props props) {
-		return new AAAgent(sim, market, rand, props);
+	public static AAAgent create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {
+		return new AAAgent(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}
 
 	@Override
@@ -546,15 +553,18 @@ public class AAAgent extends WindowAgent {
 	 * Computes weighted moving average. Truncates if fewer than required 
 	 * number of transactions available.
 	 * 
-	 * Section 4.1, Eq. (2) in Vytelingum et al
+	 * FIXME this seems to give more weight to older transactions, which seems wrong.
+	 * FIXME there should probably just be a weighted moving average function.
 	 * 
-	 * @param transactions
-	 * @return
+	 * Section 4.1, Eq. (2) in Vytelingum et al
 	 */
 	protected Price estimateEquilibrium(List<Transaction> transactions) {
-		if (transactions == null) return null;
+		if (transactions == null) return null; // TODO This shouldn't be necessary
 		if (transactions.size() == 0) return null; //error checking
 
+		// FIXME This is almost certainly wrong, but is required to keep behavior consistent
+		transactions = Lists.reverse(transactions);
+		
 		// Computing the weights for the moving average
 		// normalize by dividing by sumWeights
 		int numTrans = Math.min(numHistorical, transactions.size());

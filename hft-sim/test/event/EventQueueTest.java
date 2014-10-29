@@ -16,9 +16,6 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.MockSim;
-import systemmanager.Simulation;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Sets;
@@ -30,8 +27,7 @@ public class EventQueueTest {
 
 	@Before
 	public void setup() throws IOException {
-		Simulation sim = MockSim.create(getClass(), Log.Level.NO_LOGGING);
-		queue = EventQueue.create(sim, rand);
+		queue = EventQueue.create(Log.nullLogger(), rand);
 	}
 
 	@Test
@@ -44,10 +40,10 @@ public class EventQueueTest {
 		final AtomicBoolean first = new AtomicBoolean(false);
 		final AtomicBoolean second = new AtomicBoolean(false);
 
-		queue.scheduleActivity(TimeStamp.of(10), new Activity() {
+		queue.scheduleActivityIn(TimeStamp.of(10), new Activity() {
 			@Override public void execute() { first.set(true); }
 		});
-		queue.scheduleActivity(TimeStamp.of(20), new Activity() {
+		queue.scheduleActivityIn(TimeStamp.of(20), new Activity() {
 			@Override public void execute() { second.set(true); }
 		});
 
@@ -68,10 +64,10 @@ public class EventQueueTest {
 		final AtomicBoolean first = new AtomicBoolean(false);
 		final AtomicBoolean second = new AtomicBoolean(false);
 
-		queue.scheduleActivity(TimeStamp.of(10), new Activity() {
+		queue.scheduleActivityIn(TimeStamp.of(10), new Activity() {
 			@Override public void execute() {
 				first.set(true);
-				queue.scheduleActivity(TimeStamp.of(20), new Activity() {
+				queue.scheduleActivityIn(TimeStamp.of(10), new Activity() {
 					@Override public void execute() {
 						second.set(true);
 					}
@@ -95,11 +91,11 @@ public class EventQueueTest {
 	public void instaniousTest() {
 		final AtomicBoolean slow = new AtomicBoolean(false);
 		
-		queue.scheduleActivity(TimeStamp.ZERO, new Activity() {
+		queue.scheduleActivityIn(TimeStamp.ZERO, new Activity() {
 			@Override public void execute() { slow.set(true); }
 		});
 		
-		queue.scheduleActivity(TimeStamp.IMMEDIATE, new Activity() {
+		queue.scheduleActivityIn(TimeStamp.IMMEDIATE, new Activity() {
 			@Override public void execute() {
 				if (slow.get())
 					fail("Instantanious happened second");
@@ -115,7 +111,7 @@ public class EventQueueTest {
 			final AtomicInteger sequence = new AtomicInteger(0);
 			for (int j = 0; j < n; ++j) {
 				final int k = j;
-				queue.scheduleActivity(TimeStamp.ZERO, new Activity() {
+				queue.scheduleActivityIn(TimeStamp.ZERO, new Activity() {
 					@Override public void execute() {
 						if (k != sequence.get())
 							fail("Out of order");
@@ -142,9 +138,9 @@ public class EventQueueTest {
 			final Builder<Integer> builder = ImmutableList.builder();
 			for (int j = 0; j < n; ++j) {
 				final int k = j;
-				queue.scheduleActivity(TimeStamp.IMMEDIATE, new Activity() {
+				queue.scheduleActivityIn(TimeStamp.IMMEDIATE, new Activity() {
 					@Override public void execute() {
-						queue.scheduleActivity(TimeStamp.ZERO, new Activity() {
+						queue.scheduleActivityIn(TimeStamp.ZERO, new Activity() {
 							@Override public void execute() { builder.add(k); }
 						});
 					}
@@ -171,11 +167,11 @@ public class EventQueueTest {
 			final AtomicInteger sequence = new AtomicInteger(0);
 			for (int j = 0; j < n; ++j) {
 				final int k = j;
-				queue.scheduleActivity(TimeStamp.IMMEDIATE, new Activity() {
+				queue.scheduleActivityIn(TimeStamp.IMMEDIATE, new Activity() {
 					@Override public void execute() {
 						for (int l = 0; l < m; ++l) {
 							final int p = l;
-							queue.scheduleActivity(TimeStamp.IMMEDIATE, new Activity() {
+							queue.scheduleActivityIn(TimeStamp.IMMEDIATE, new Activity() {
 								@Override public void execute() {
 									int q = k * m + p;
 									if (q != sequence.get())

@@ -3,28 +3,28 @@ package entity.agent;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static utils.Tests.checkSingleTransaction;
+import static utils.Tests.assertSingleTransaction;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.Random;
 
 import logger.Log;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Keys.LaLatency;
-import systemmanager.MockSim;
+import utils.Mock;
+
+import com.google.common.collect.ImmutableList;
+
 import data.Props;
-import entity.agent.position.PrivateValues;
+import entity.market.CDAMarket;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
+import event.EventQueue;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -32,28 +32,19 @@ public class LAAgentTest {
 	
 	private static final Random rand = new Random();
 	
-	private MockSim sim;
-	private Collection<Market> markets;
-	private MarketView one, two;
+	private EventQueue timeline;
+	private Market nyse, nasdaq;
+	private MarketView nyseView, nasdaqView;
 	private Agent mockAgent;
 
 	@Before
 	public void setup() throws IOException {
-		sim = MockSim.createCDA(getClass(), Log.Level.NO_LOGGING, 2);
-		
-		markets = sim.getMarkets();
-		Iterator<Market> marketIter = markets.iterator();
-		Market actualMarket = marketIter.next();
-		one = actualMarket.getPrimaryView();
-		two = marketIter.next().getPrimaryView();
-		assertFalse(marketIter.hasNext());
-		
-		mockAgent = mockAgent();
-	}
-	
-	@After
-	public void cleanup() {
-		sim.flushLog();
+		timeline = EventQueue.create(Log.nullLogger(), rand);
+		nyse = CDAMarket.create(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Props.fromPairs());
+		nyseView = nyse.getPrimaryView();		
+		nasdaq = CDAMarket.create(1, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Props.fromPairs());
+		nasdaqView = nasdaq.getPrimaryView();
+		mockAgent = Mock.agent();
 	}
 	
 	// FIXME Test that quote of a market accurately reflected when agent notified. Put tests in HFTAgentTest
@@ -77,9 +68,10 @@ public class LAAgentTest {
 	@Test
 	public void oneSidedArbitrageTest() {
 		LAAgent la = laAgent();
-		submitOrder(one, BUY, Price.of(5));
-		submitOrder(one, BUY, Price.of(7));
-		submitOrder(two, SELL, Price.of(1));
+		submitOrder(nyseView, BUY, Price.of(5));
+		submitOrder(nyseView, BUY, Price.of(7));
+		submitOrder(nasdaqView, SELL, Price.of(1));
+		timeline.executeUntil(TimeStamp.ZERO);
 
 		assertEquals(0, la.getPosition());
 		assertTrue(la.getProfit() > 0);
@@ -88,25 +80,27 @@ public class LAAgentTest {
 	@Test
 	public void laProfitTest() {
 		LAAgent la = laAgent();
-		submitOrder(one, BUY, Price.of(5));
-		submitOrder(two, SELL, Price.of(1));
+		submitOrder(nyseView, BUY, Price.of(5));
+		submitOrder(nasdaqView, SELL, Price.of(1));
+		timeline.executeUntil(TimeStamp.ZERO);
 		// LA Strategy gets called implicitly 
 		
 		assertEquals(0, la.getPosition());
 		assertEquals(4, la.getProfit(), 1e-6);
-		assertTrue(la.activeOrders.isEmpty());
+		assertTrue(la.getActiveOrders().isEmpty());
 	}
 	
 	@Test
 	public void multiQuantityLaProfitTest() {
 		LAAgent la = laAgent();
-		submitOrder(one, BUY, Price.of(5), 3);
-		submitOrder(two, SELL, Price.of(1), 2);
+		submitOrder(nyseView, BUY, Price.of(5), 3);
+		submitOrder(nasdaqView, SELL, Price.of(1), 2);
+		timeline.executeUntil(TimeStamp.ZERO);
 		// LA Strategy gets called implicitly 
 		
 		assertEquals(0, la.getPosition());
 		assertEquals(8, la.getProfit(), 1e-6);
-		assertTrue(la.activeOrders.isEmpty());
+		assertTrue(la.getActiveOrders().isEmpty());
 	}
 	
 	@Test
@@ -116,54 +110,54 @@ public class LAAgentTest {
 	public void laLatencyNoRepeatOrdersTest() {
 		LAAgent la = laAgent(Props.fromPairs(LaLatency.class, TimeStamp.of(10)));
 		
-		submitOrder(one, BUY, Price.of(5));
-		submitOrder(two, SELL, Price.of(1));
-		sim.executeUntil(TimeStamp.of(5));
-		submitOrder(one, BUY, Price.of(3)); // Used to cause LA to submit extra orders
-		sim.executeUntil(TimeStamp.of(10)); // LA has submitted orders
+		submitOrder(nyseView, BUY, Price.of(5));
+		submitOrder(nasdaqView, SELL, Price.of(1));
+		timeline.executeUntil(TimeStamp.of(5));
+		submitOrder(nyseView, BUY, Price.of(3)); // Used to cause LA to submit extra orders
+		timeline.executeUntil(TimeStamp.of(10)); // LA has submitted orders
 		
 		assertEquals(0, la.getPosition());
 		assertEquals(0, la.getProfit(), 1e-6);
-		assertEquals(2, la.activeOrders.size());
+		assertEquals(2, la.getActiveOrders().size());
 		
-		sim.executeUntil(TimeStamp.of(15)); // LA acts on second "arbitrage"
+		timeline.executeUntil(TimeStamp.of(15)); // LA acts on second "arbitrage"
 		
 		assertEquals(0, la.getPosition());
 		assertEquals(0, la.getProfit(), 1e-6);
-		assertEquals(2, la.activeOrders.size());
+		assertEquals(2, la.getActiveOrders().size());
 		
-		sim.executeUntil(TimeStamp.of(20)); // Orders reach market
-		checkSingleTransaction(one.getTransactions(), Price.of(5), TimeStamp.of(20), 1);
-		checkSingleTransaction(two.getTransactions(), Price.of(1), TimeStamp.of(20), 1);
+		timeline.executeUntil(TimeStamp.of(20)); // Orders reach market
+		assertSingleTransaction(nyseView.getTransactions(), Price.of(5), TimeStamp.of(20), 1);
+		assertSingleTransaction(nasdaqView.getTransactions(), Price.of(1), TimeStamp.of(20), 1);
 		
-		sim.executeUntil(TimeStamp.of(30)); // Takes this long for the LA to find out about it
+		timeline.executeUntil(TimeStamp.of(30)); // Takes this long for the LA to find out about it
 		assertEquals(0, la.getPosition());
 		assertEquals(4, la.getProfit(), 1e-6);
-		assertTrue(la.activeOrders.isEmpty());
+		assertTrue(la.getActiveOrders().isEmpty());
 	}
 	
 	@Test
 	public void severalArbitragesNoRepeatOrders() {
 		LAAgent la = laAgent(Props.fromPairs(LaLatency.class, TimeStamp.of(10)));
 		
-		submitOrder(one, BUY, Price.of(5));
-		submitOrder(two, SELL, Price.of(1));
-		submitOrder(one, BUY, Price.of(3));
+		submitOrder(nyseView, BUY, Price.of(5));
+		submitOrder(nasdaqView, SELL, Price.of(1));
+		submitOrder(nyseView, BUY, Price.of(3));
 		
-		sim.executeUntil(TimeStamp.of(10)); // LA has submitted orders
+		timeline.executeUntil(TimeStamp.of(10)); // LA has submitted orders
 		
 		assertEquals(0, la.getPosition());
 		assertEquals(0, la.getProfit(), 1e-6);
-		assertEquals(2, la.activeOrders.size());
+		assertEquals(2, la.getActiveOrders().size());
 		
-		sim.executeUntil(TimeStamp.of(20)); // Orders reach market
-		checkSingleTransaction(one.getTransactions(), Price.of(5), TimeStamp.of(20), 1);
-		checkSingleTransaction(two.getTransactions(), Price.of(1), TimeStamp.of(20), 1);
+		timeline.executeUntil(TimeStamp.of(20)); // Orders reach market
+		assertSingleTransaction(nyseView.getTransactions(), Price.of(5), TimeStamp.of(20), 1);
+		assertSingleTransaction(nasdaqView.getTransactions(), Price.of(1), TimeStamp.of(20), 1);
 		
-		sim.executeUntil(TimeStamp.of(30)); // Takes this long for the LA to find out about it
+		timeline.executeUntil(TimeStamp.of(30)); // Takes this long for the LA to find out about it
 		assertEquals(0, la.getPosition());
 		assertEquals(4, la.getProfit(), 1e-6);
-		assertTrue(la.activeOrders.isEmpty());
+		assertTrue(la.getActiveOrders().isEmpty());
 	}
 	
 	@Test
@@ -171,24 +165,24 @@ public class LAAgentTest {
 		LAAgent la = laAgent(Props.fromPairs(LaLatency.class, TimeStamp.of(10)));
 		
 		// Different Order
-		submitOrder(one, BUY, Price.of(3));
-		submitOrder(two, SELL, Price.of(1));
-		submitOrder(one, BUY, Price.of(5));
+		submitOrder(nyseView, BUY, Price.of(3));
+		submitOrder(nasdaqView, SELL, Price.of(1));
+		submitOrder(nyseView, BUY, Price.of(5));
 		
-		sim.executeUntil(TimeStamp.of(10)); // LA has submitted orders
+		timeline.executeUntil(TimeStamp.of(10)); // LA has submitted orders
 		
 		assertEquals(0, la.getPosition());
 		assertEquals(0, la.getProfit(), 1e-6);
-		assertEquals(2, la.activeOrders.size());
+		assertEquals(2, la.getActiveOrders().size());
 		
-		sim.executeUntil(TimeStamp.of(20)); // Orders reach market
-		checkSingleTransaction(one.getTransactions(), Price.of(5), TimeStamp.of(20), 1);
-		checkSingleTransaction(two.getTransactions(), Price.of(1), TimeStamp.of(20), 1);
+		timeline.executeUntil(TimeStamp.of(20)); // Orders reach market
+		assertSingleTransaction(nyseView.getTransactions(), Price.of(5), TimeStamp.of(20), 1);
+		assertSingleTransaction(nasdaqView.getTransactions(), Price.of(1), TimeStamp.of(20), 1);
 		
-		sim.executeUntil(TimeStamp.of(30)); // Takes this long for the LA to find out about it
+		timeline.executeUntil(TimeStamp.of(30)); // Takes this long for the LA to find out about it
 		assertEquals(0, la.getPosition());
 		assertEquals(4, la.getProfit(), 1e-6);
-		assertTrue(la.activeOrders.isEmpty());
+		assertTrue(la.getActiveOrders().isEmpty());
 	}
 	
 	@Test
@@ -198,21 +192,23 @@ public class LAAgentTest {
 	public void laNoLatencySeveralOrders() {
 		LAAgent la = laAgent();
 		
-		submitOrder(one, BUY, Price.of(5));
-		submitOrder(two, SELL, Price.of(1));
+		submitOrder(nyseView, BUY, Price.of(5));
+		submitOrder(nasdaqView, SELL, Price.of(1));
+		timeline.executeUntil(TimeStamp.ZERO);
 		// LA Strategy gets called implicitly
 		
 		assertEquals(0, la.getPosition());
 		assertEquals(4, la.getProfit(), 1e-6);
-		assertTrue(la.activeOrders.isEmpty());
+		assertTrue(la.getActiveOrders().isEmpty());
 		
-		submitOrder(one, BUY, Price.of(10));
-		submitOrder(two, SELL, Price.of(6));
+		submitOrder(nyseView, BUY, Price.of(10));
+		submitOrder(nasdaqView, SELL, Price.of(6));
+		timeline.executeUntil(TimeStamp.ZERO);
 		// LA Strategy gets called implicitly 
 
 		assertEquals(0, la.getPosition());
 		assertEquals(8, la.getProfit(), 1e-6);
-		assertTrue(la.activeOrders.isEmpty());
+		assertTrue(la.getActiveOrders().isEmpty());
 	}
 	
 	@Test
@@ -234,25 +230,16 @@ public class LAAgentTest {
 	}
 
 	private OrderRecord submitOrder(MarketView view, OrderType buyOrSell, Price price, int quantity) {
-		OrderRecord order = mockAgent.submitOrder(view, buyOrSell, price, quantity);
-		sim.executeImmediate();
-		return order;
+		return mockAgent.submitOrder(view, buyOrSell, price, quantity);
 	}
 	
 	private LAAgent laAgent(Props parameters) {
-		return LAAgent.create(sim, markets, rand, parameters);
+		return LAAgent.create(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental,
+				ImmutableList.of(nyse, nasdaq), parameters);
 	}
 	
 	private LAAgent laAgent() {
 		return laAgent(Props.fromPairs());
-	}
-	
-	private Agent mockAgent() {
-		return new Agent(sim, PrivateValues.zero(), TimeStamp.ZERO, rand, Props.fromPairs()) {
-			private static final long serialVersionUID = 1L;
-			@Override public void agentStrategy() { }
-			@Override public String toString() { return "TestAgent " + id; }
-		};
 	}
 
 }

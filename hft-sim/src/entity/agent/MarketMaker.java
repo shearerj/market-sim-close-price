@@ -7,6 +7,7 @@ import static logger.Log.Level.INFO;
 
 import java.util.Random;
 
+import logger.Log;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.InitLadderMean;
 import systemmanager.Keys.InitLadderRange;
@@ -17,20 +18,22 @@ import systemmanager.Keys.RungSize;
 import systemmanager.Keys.TickImprovement;
 import systemmanager.Keys.TickOutside;
 import systemmanager.Keys.TruncateLadder;
-import systemmanager.Simulation;
 import utils.Maths;
 import utils.Rands;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Ordering;
 
+import data.FundamentalValue;
 import data.Props;
 import data.Stats;
 import entity.agent.position.PrivateValues;
-import entity.infoproc.BestBidAsk;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Transaction;
+import entity.sip.BestBidAsk;
+import entity.sip.MarketInfo;
+import event.TimeLine;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -73,13 +76,14 @@ public abstract class MarketMaker extends ReentryAgent {
 	protected final boolean tickImprovement;	// true if improves by a tick when mid-prices == bid/ask
 	protected final boolean tickOutside;		// true if improve tick outside the quote (default inside, bid<p<ask)
 	
-	protected MarketMaker(Simulation sim, Market market, Random rand, Props props) {		
-		super(sim, PrivateValues.zero(), TimeStamp.ZERO, market, rand,
+	protected MarketMaker(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+			Market market, Props props) {		
+		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(), TimeStamp.ZERO, market,
 				AgentFactory.exponentials(props.get(MarketMakerReentryRate.class, ReentryRate.class), rand),
 				props);
 		
 		this.numRungs = props.get(NumRungs.class);
-		this.stepSize = Maths.quantize(props.get(RungSize.class), tickSize);
+		this.stepSize = Maths.quantize(props.get(RungSize.class), getTickSize());
 		this.truncateLadder = props.get(TruncateLadder.class);
 		this.tickImprovement = props.get(TickImprovement.class);
 		this.tickOutside = props.get(TickOutside.class);
@@ -176,13 +180,13 @@ public abstract class MarketMaker extends ReentryAgent {
 			Price bid = getQuote().getBidPrice().get();
 			ladderBid = Price.of(ladderBid.intValue() + 
 					(bid.equals(ladderBid) && tickImprovement ? 
-							(tickOutside ? -1 : 1) * tickSize : 0));
+							(tickOutside ? -getTickSize() : getTickSize()) : 0));
 		}
 		if (this.getQuote().getAskPrice().isPresent()) {
 			Price ask = getQuote().getAskPrice().get();
 			ladderAsk = Price.of(ladderAsk.intValue() +  
 					(ask.equals(ladderAsk) && tickImprovement ? 
-							(tickOutside ? 1 : -1) * tickSize: 0));
+							(tickOutside ? getTickSize() : -getTickSize()) : 0));
 		}
 
 		int ct = (numRungs-1) * stepSize;
@@ -199,7 +203,7 @@ public abstract class MarketMaker extends ReentryAgent {
 
 		// check if the bid or ask crosses the NBBO, if truncating ladder
 		if (truncateLadder) {
-			BestBidAsk lastNBBOQuote = this.getNBBO();
+			BestBidAsk lastNBBOQuote = getNBBO();
 			Price oldBuyMaxPrice = buyMaxPrice, oldSellMinPrice = sellMinPrice;
 			// buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N]
 			if (lastNBBOQuote.getBestAsk().isPresent())
@@ -229,7 +233,7 @@ public abstract class MarketMaker extends ReentryAgent {
 	@Override
 	protected String name() {
 		String oldName = super.name();
-		return oldName.substring(0, oldName.length() - 6) + "MM";
+		return oldName.endsWith("MarketMaker") ? oldName.substring(0, oldName.length() - 11) + "MM" : oldName;
 	}
 
 	private static final long serialVersionUID = -782740037969385370L;
