@@ -33,7 +33,7 @@ def to_csv(out, filenames):
     for filename in filenames:
         with open(filename, 'r') as f:
             obs = json.load(f)
-	out.write(re.search('\d+', filename).group())
+	out.write(re.search('observation\d+', filename).group().strip('observation'))
 	out.write(',')
         feats = obs['features']
 	if 'config' in obs['features'].keys():
