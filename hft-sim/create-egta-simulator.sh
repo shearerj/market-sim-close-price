@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+if [[ $# -lt 1 || "$1" == "-h" || "$1" == "--help" ]]; then
     echo "usage: $0 [-h] simulator-name"
     echo
     echo "Creates an EGTA simulator zip named simulator-name using environment configuration defaults specified in <simulator-name>.json. If no <simulator-name>.json is specified, simulator creation will fail. The configuration file must be in the /config directory and must have the same name as your simulator. Note that it will be renamed to defaults.json in the simulator zip." | fold -s
