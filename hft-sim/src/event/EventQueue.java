@@ -15,7 +15,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 
-public class EventQueue implements TimeLine {
+public class EventQueue implements Timeline {
 	
 	private final Log log;
 	private TimeStamp currentTime;

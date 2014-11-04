@@ -23,7 +23,7 @@ import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.sip.SIP;
 import event.EventQueue;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -39,7 +39,7 @@ public class SIPTest {
 	private static final Random rand = new Random();
 	private static final Agent agent = Mock.agent();
 	
-	private TimeLine timeline;
+	private Timeline timeline;
 	private SIP sip;
 	private Market nyse;
 	private Market nasdaq;

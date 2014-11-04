@@ -12,7 +12,7 @@ import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.market.Quote;
 import entity.sip.MarketInfo;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -44,7 +44,7 @@ public abstract class SMAgent extends Agent {
 	
 	protected final MarketView primaryMarket;
 
-	protected SMAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected SMAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			PrivateValue privateValue, TimeStamp arrivalTime, Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, privateValue, arrivalTime, props);
 		this.primaryMarket = market.getPrimaryView();

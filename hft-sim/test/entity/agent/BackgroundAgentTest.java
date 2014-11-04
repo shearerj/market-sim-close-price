@@ -48,7 +48,7 @@ import entity.market.Price;
 import entity.market.Quote;
 import event.Activity;
 import event.EventQueue;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -81,7 +81,7 @@ public class BackgroundAgentTest {
 			.put(AcceptableProfitFrac.class, 0.75)
 			.build();
 
-	private TimeLine timeline;
+	private Timeline timeline;
 	private FundamentalValue fundamental;
 	private FundamentalValueView fund;
 	private Market market;
@@ -778,7 +778,7 @@ public class BackgroundAgentTest {
 	
 	private AtomicInteger fundamentalSetup() {
 		final AtomicInteger time = new AtomicInteger();
-		timeline = new TimeLine() {
+		timeline = new Timeline() {
 			@Override public void scheduleActivityIn(TimeStamp delay, Activity act) { }
 			@Override public TimeStamp getCurrentTime() { return TimeStamp.of(time.get()); }
 		};

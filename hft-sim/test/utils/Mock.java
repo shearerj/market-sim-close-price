@@ -18,7 +18,7 @@ import entity.market.Price;
 import entity.sip.BestBidAsk;
 import entity.sip.MarketInfo;
 import event.Activity;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 
 public class Mock {
@@ -32,7 +32,7 @@ public class Mock {
 		return agent(timeline);
 	}
 	
-	public static Agent agent(TimeLine timeline) {
+	public static Agent agent(Timeline timeline) {
 		return new Agent(ids.next(), stats, timeline, Log.nullLogger(), rand, sip, fundamental,
 				PrivateValues.zero(), TimeStamp.ZERO, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
@@ -44,7 +44,7 @@ public class Mock {
 		return market(timeline);
 	}
 	
-	public static Market market(TimeLine timeline) {
+	public static Market market(Timeline timeline) {
 		return CDAMarket.create(ids.next(), stats, timeline, Log.nullLogger(), rand, sip, Props.fromPairs());
 	}
 	
@@ -81,7 +81,7 @@ public class Mock {
 	
 	public static final FundamentalValue fundamental = fundamental(0);
 	
-	public static interface MockTimeLine extends TimeLine {
+	public static interface MockTimeLine extends Timeline {
 		public void ignoreNext();
 	}
 	

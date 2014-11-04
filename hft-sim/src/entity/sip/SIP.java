@@ -18,7 +18,7 @@ import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.market.Quote;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 
 /**
@@ -39,13 +39,13 @@ public class SIP extends Entity implements MarketInfo {
 	private final TimeStamp latency;
 	private final Collection<MarketView> views;
 
-	protected SIP(Stats stats, TimeLine timeline, Log log, Random rand, TimeStamp latency) {
+	protected SIP(Stats stats, Timeline timeline, Log log, Random rand, TimeStamp latency) {
 		super(0, stats, timeline, log, rand);
 		this.latency = checkNotNull(latency);
 		this.views = Lists.newArrayListWithExpectedSize(1);
 	}
 	
-	public static SIP create(Stats stats, TimeLine timeline, Log log, Random rand, TimeStamp latency) {
+	public static SIP create(Stats stats, Timeline timeline, Log log, Random rand, TimeStamp latency) {
 		return new SIP(stats, timeline, log, rand, latency);
 	}
 

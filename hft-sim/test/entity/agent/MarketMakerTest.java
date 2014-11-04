@@ -41,7 +41,7 @@ import entity.market.Quote;
 import entity.sip.MarketInfo;
 import entity.sip.SIP;
 import event.EventQueue;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 
 public class MarketMakerTest {
@@ -315,7 +315,7 @@ public class MarketMakerTest {
 		mockAgent.submitOrder(view, SELL, ask, 1);
 	}
 	
-	private MarketMaker marketMaker(Stats stats, TimeLine timeline, Props parameters) {
+	private MarketMaker marketMaker(Stats stats, Timeline timeline, Props parameters) {
 		if (timeline instanceof MockTimeLine) // If initialized with a mocktimeline, things get executed out of order and so some fields aren't initialized
 			((MockTimeLine) timeline).ignoreNext();
 		return new MarketMaker(0, stats, timeline, Log.nullLogger(), rand, sip, fundamental, market, Props.merge(defaults, parameters)) {

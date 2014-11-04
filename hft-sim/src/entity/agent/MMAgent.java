@@ -10,7 +10,7 @@ import data.Stats;
 import entity.agent.position.PrivateValue;
 import entity.market.Market.MarketView;
 import entity.sip.MarketInfo;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 
 /**
@@ -32,7 +32,7 @@ public abstract class MMAgent extends Agent {
 	
 	protected final Collection<MarketView> markets; 
 	
-	protected MMAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected MMAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			PrivateValue privateValue, TimeStamp arrivalTime, Collection<MarketView> markets, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, privateValue, arrivalTime, props);
 		this.markets = markets;

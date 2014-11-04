@@ -11,7 +11,7 @@ import entity.agent.Agent.AgentView;
 import entity.agent.OrderRecord;
 import entity.market.clearingrule.EarliestPriceClear;
 import entity.sip.MarketInfo;
-import event.TimeLine;
+import event.Timeline;
 
 /**
  * Class for a continuous double auction market.
@@ -22,11 +22,11 @@ public class CDAMarket extends Market {
 
 	private static final long serialVersionUID = -6780130359417129449L;
 
-	protected CDAMarket(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, Props props) {
+	protected CDAMarket(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, Props props) {
 		super(id, stats, timeline, log, rand, sip, new EarliestPriceClear(props.get(MarketTickSize.class, TickSize.class)), props);
 	}
 
-	public static CDAMarket create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, Props props) {
+	public static CDAMarket create(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, Props props) {
 		return new CDAMarket(id, stats, timeline, log, rand, sip, props);
 	}
 

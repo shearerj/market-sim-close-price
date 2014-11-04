@@ -19,7 +19,7 @@ import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.sip.MarketInfo;
 import event.Activity;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 
 /**
@@ -32,7 +32,7 @@ public abstract class HFTAgent extends MMAgent {
 
 	private static final long serialVersionUID = -1483633963238206201L;
 
-	protected HFTAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected HFTAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			TimeStamp arrivalTime, Map<Market, TimeStamp> marketLatencies, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(), arrivalTime, toViews(marketLatencies), props);
 		for (MarketView market : markets)

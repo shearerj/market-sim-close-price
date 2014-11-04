@@ -38,7 +38,7 @@ import entity.sip.BestBidAsk;
 import entity.sip.MarketInfo;
 import event.Activity;
 import event.InformationActivity;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -62,7 +62,7 @@ public abstract class Agent extends Entity {
 	private final PrivateValue privateValue;
 	private final DiscountedValue privateValueSurplus;
 
-	protected Agent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected Agent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			PrivateValue privateValue, TimeStamp arrivalTime, Props props) {
 		super(id, stats, timeline, log, rand);
 		this.fundamental = fundamental.getView(props.get(FundamentalLatency.class));

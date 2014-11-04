@@ -11,7 +11,7 @@ import data.Stats;
 import entity.market.Market;
 import entity.market.Transaction;
 import entity.sip.MarketInfo;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 
 /**
@@ -38,7 +38,7 @@ public abstract class WindowAgent extends BackgroundAgent {
 
 	private TimeStamp windowLength;
 
-	protected WindowAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected WindowAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 		

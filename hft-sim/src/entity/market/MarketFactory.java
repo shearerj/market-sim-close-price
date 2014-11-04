@@ -10,19 +10,19 @@ import utils.Iterators2;
 import data.Props;
 import data.Stats;
 import entity.sip.MarketInfo;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 
 public class MarketFactory {
 	
 	private final Iterator<Integer> ids;
 	private final Stats stats;
-	private final TimeLine timeline;
+	private final Timeline timeline;
 	private final Log log;
 	private final MarketInfo sip;
 	private final Random rand;
 
-	protected MarketFactory(Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip) {
+	protected MarketFactory(Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip) {
 		this.stats = stats;
 		this.timeline = timeline;
 		this.log = log;
@@ -31,7 +31,7 @@ public class MarketFactory {
 		this.ids = Iterators2.counter();
 	}
 	
-	public static MarketFactory create(Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip) {
+	public static MarketFactory create(Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip) {
 		return new MarketFactory(stats, timeline, log, rand, sip);
 	}
 

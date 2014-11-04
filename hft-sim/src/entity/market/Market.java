@@ -35,7 +35,7 @@ import entity.market.clearingrule.ClearingRule;
 import entity.sip.BestBidAsk;
 import entity.sip.MarketInfo;
 import event.Activity;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 import fourheap.FourHeap;
 import fourheap.MatchedOrders;
@@ -76,7 +76,7 @@ public abstract class Market extends Entity {
 	private final Map<OrderRecord, Order> orderMapping; // Maps active records to their order object
 	private final Multiset<Price> askPriceQuantity, bidPriceQuantity; // How many orders are at a specific price
 	
-	protected Market(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, ClearingRule clearingRule, Props props) {
+	protected Market(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, ClearingRule clearingRule, Props props) {
 		super(id, stats, timeline, log, rand);
 		this.orderbook = FourHeap.<Price, MarketTime, Order> create();
 		this.clearingRule = clearingRule;

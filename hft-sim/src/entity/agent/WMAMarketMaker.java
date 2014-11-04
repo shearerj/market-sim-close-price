@@ -15,7 +15,7 @@ import data.Props;
 import data.Stats;
 import entity.market.Market;
 import entity.sip.MarketInfo;
-import event.TimeLine;
+import event.Timeline;
 
 /**
  * WMAMARKETMAKER
@@ -52,7 +52,7 @@ public class WMAMarketMaker extends MAMarketMaker {
 
 	protected double weightFactor;
 
-	protected WMAMarketMaker(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected WMAMarketMaker(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
@@ -60,7 +60,7 @@ public class WMAMarketMaker extends MAMarketMaker {
 		checkArgument(weightFactor >= 0 && weightFactor < 1, "Weight factor must be in range [0,1)!");
 	}
 	
-	public static WMAMarketMaker create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	public static WMAMarketMaker create(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		return new WMAMarketMaker(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}

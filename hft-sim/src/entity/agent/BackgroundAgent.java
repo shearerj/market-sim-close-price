@@ -39,7 +39,7 @@ import entity.market.Price;
 import entity.market.Quote;
 import entity.market.Transaction;
 import entity.sip.MarketInfo;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -68,7 +68,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	/**
 	 * Constructor for custom private valuation 
 	 */
-	protected BackgroundAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected BackgroundAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			PrivateValue privateValue, Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, privateValue,
 				TimeStamp.of((long) Rands.nextExponential(rand, props.get(ArrivalRate.class))),
@@ -100,7 +100,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	/**
 	 * Default constructor with standard valuation model
 	 */
-	protected BackgroundAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected BackgroundAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		this(id, stats, timeline, log, rand, sip, fundamental,
 				ListPrivateValue.createRandomly(props.get(MaxQty.class), props.get(PrivateValueVar.class), rand),

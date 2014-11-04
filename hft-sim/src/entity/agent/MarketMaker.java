@@ -33,7 +33,7 @@ import entity.market.Price;
 import entity.market.Transaction;
 import entity.sip.BestBidAsk;
 import entity.sip.MarketInfo;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -76,7 +76,7 @@ public abstract class MarketMaker extends ReentryAgent {
 	protected final boolean tickImprovement;	// true if improves by a tick when mid-prices == bid/ask
 	protected final boolean tickOutside;		// true if improve tick outside the quote (default inside, bid<p<ask)
 	
-	protected MarketMaker(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected MarketMaker(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {		
 		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(), TimeStamp.ZERO, market,
 				AgentFactory.exponentials(props.get(MarketMakerReentryRate.class, ReentryRate.class), rand),

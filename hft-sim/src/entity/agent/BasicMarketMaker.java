@@ -15,7 +15,7 @@ import entity.market.Market;
 import entity.market.Price;
 import entity.market.Quote;
 import entity.sip.MarketInfo;
-import event.TimeLine;
+import event.Timeline;
 
 /**
  * BASICMARKETMAKER
@@ -49,7 +49,7 @@ public class BasicMarketMaker extends MarketMaker {
 	
 	protected Optional<Price> lastAsk, lastBid; // stores the ask/bid at last entry
 
-	protected BasicMarketMaker(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected BasicMarketMaker(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
@@ -57,7 +57,7 @@ public class BasicMarketMaker extends MarketMaker {
 		this.lastBid = Optional.absent();
 	}
 
-	public static BasicMarketMaker create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	public static BasicMarketMaker create(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		return new BasicMarketMaker(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}

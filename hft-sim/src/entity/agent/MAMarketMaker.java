@@ -17,7 +17,7 @@ import data.Stats;
 import entity.market.Market;
 import entity.market.Price;
 import entity.sip.MarketInfo;
-import event.TimeLine;
+import event.Timeline;
 
 /**
  * MAMARKETMAKER
@@ -41,7 +41,7 @@ public class MAMarketMaker extends BasicMarketMaker {
 
 	protected final EvictingQueue<Price> bidQueue, askQueue;
 
-	protected MAMarketMaker(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected MAMarketMaker(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 		int numHistorical = props.get(NumHistorical.class);
@@ -50,7 +50,7 @@ public class MAMarketMaker extends BasicMarketMaker {
 		askQueue = EvictingQueue.create(numHistorical);
 	}
 
-	public static MAMarketMaker create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	public static MAMarketMaker create(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		return new MAMarketMaker(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}

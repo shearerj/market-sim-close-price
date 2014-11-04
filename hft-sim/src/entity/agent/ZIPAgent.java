@@ -31,7 +31,7 @@ import entity.market.Market;
 import entity.market.Price;
 import entity.market.Transaction;
 import entity.sip.MarketInfo;
-import event.TimeLine;
+import event.Timeline;
 import fourheap.Order.OrderType;
 
 /**
@@ -65,7 +65,7 @@ public class ZIPAgent extends WindowAgent {
 	protected final double rangeCoeffA;	// range for A, coefficient of absolute perturbation
 	protected final double rangeCoeffR;	// range for R, coefficient of relative perturbation
 
-	protected ZIPAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected ZIPAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
@@ -100,7 +100,7 @@ public class ZIPAgent extends WindowAgent {
 		this.margin = Margin.createRandomly(maxAbsPosition, rand, marginMin, marginMax);
 	}
 
-	public static ZIPAgent create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	public static ZIPAgent create(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		return new ZIPAgent(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}

@@ -18,14 +18,14 @@ import data.Props;
 import entity.agent.Agent;
 import entity.agent.OrderRecord;
 import entity.market.Market.MarketView;
-import event.TimeLine;
+import event.Timeline;
 import fourheap.Order.OrderType;
 
 public class CDAMarketTest {
 	private static final Random rand = new Random();
 	private static final Agent agent = Mock.agent();
 	
-	private TimeLine timeline;
+	private Timeline timeline;
 	private Market market;
 	private MarketView view;
 	

@@ -16,7 +16,7 @@ import com.google.common.collect.Ordering;
 
 import entity.View;
 import entity.market.Price;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 
 /**
@@ -29,7 +29,7 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 
 	protected static final Ordering<TimeStamp> ord = Ordering.natural();
 	
-	private final TimeLine timeline;
+	private final Timeline timeline;
 	private final Stats stats;
 	
 	protected final ArrayList<Double> meanRevertProcess;
@@ -44,7 +44,7 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 	 * @param var Gaussian Process variance
 	 * @param rand Random generator
 	 */
-	protected FundamentalValue(Stats stats, TimeLine timeline, double kap, int meanVal, double var, Random rand) {
+	protected FundamentalValue(Stats stats, Timeline timeline, double kap, int meanVal, double var, Random rand) {
 		this.stats = stats;
 		this.timeline = timeline;
 		this.rand = rand;
@@ -61,7 +61,7 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 	/**
 	 * Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps
 	 */
-	public static FundamentalValue create(Stats stats, TimeLine timeline, double kap, int meanVal, double var, Random rand) {
+	public static FundamentalValue create(Stats stats, Timeline timeline, double kap, int meanVal, double var, Random rand) {
 		return new FundamentalValue(stats, timeline, kap, meanVal, var, rand);
 	}
 

@@ -9,7 +9,7 @@ import logger.Log;
 import logger.Log.Level;
 import data.Stats;
 import event.Activity;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 
 /**
@@ -24,11 +24,11 @@ public abstract class Entity implements Serializable {
 
 	private final int id;
 	private final Stats stats;
-	private final TimeLine timeline;
+	private final Timeline timeline;
 	private final Log log;
 	protected final Random rand;
 	
-	protected Entity(int id, Stats stats, TimeLine timeline, Log log, Random rand) {
+	protected Entity(int id, Stats stats, Timeline timeline, Log log, Random rand) {
 		this.id = id;
 		this.stats = checkNotNull(stats);
 		this.timeline = checkNotNull(timeline);

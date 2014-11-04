@@ -26,7 +26,7 @@ import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import entity.market.Price;
 import entity.sip.MarketInfo;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -34,14 +34,14 @@ public class MarketDataAgent extends SMAgent {
 	protected final PeekingIterator<MarketAction> orderDatumIterator;
 	protected final BiMap<Long, OrderRecord> refNumbers;
 
-	protected MarketDataAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected MarketDataAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			TimeStamp arrivalTime, Market market, Iterator<MarketAction> orderDatumIterator, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(), arrivalTime, market, props);
 		this.orderDatumIterator = Iterators.peekingIterator(checkNotNull(orderDatumIterator));
 		refNumbers = HashBiMap.create();
 	}
 	
-	public static MarketDataAgent create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	public static MarketDataAgent create(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		Iterator<MarketAction> actions = ImmutableList.<MarketAction> of().iterator();
 		String fileName = props.get(FileName.class);

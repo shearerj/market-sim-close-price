@@ -1,6 +1,6 @@
 package event;
 
-public interface TimeLine {
+public interface Timeline {
 
 	public void scheduleActivityIn(TimeStamp delay, Activity act);
 	

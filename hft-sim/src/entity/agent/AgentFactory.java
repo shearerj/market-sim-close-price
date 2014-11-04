@@ -16,14 +16,14 @@ import data.Props;
 import data.Stats;
 import entity.market.Market;
 import entity.sip.MarketInfo;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 
 public class AgentFactory {
 
 	private final Iterator<Integer> ids;
 	private final Stats stats;
-	private final TimeLine timeline;
+	private final Timeline timeline;
 	private final Log log;
 	private final Random rand;
 	private final FundamentalValue fundamental;
@@ -31,7 +31,7 @@ public class AgentFactory {
 	private final Collection<Market> markets;
 	private final Iterator<Market> marketAssignment;
 
-	private AgentFactory(Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	private AgentFactory(Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Collection<Market> markets, Iterator<Market> marketProcess) {
 		this.stats = stats;
 		this.timeline = timeline;
@@ -45,7 +45,7 @@ public class AgentFactory {
 	}
 	
 	/** Factory with round robin scheduling */
-	public static AgentFactory create(Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	public static AgentFactory create(Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Collection<Market> markets) {
 		return new AgentFactory(stats, timeline, log, rand, sip, fundamental, markets, Iterators.cycle(markets));
 	}

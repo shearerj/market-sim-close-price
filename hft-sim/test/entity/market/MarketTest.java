@@ -31,7 +31,7 @@ import entity.market.clearingrule.UniformPriceClear;
 import entity.sip.MarketInfo;
 import entity.sip.SIP;
 import event.EventQueue;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -40,7 +40,7 @@ public class MarketTest {
 	private static final Random rand = new Random();
 	private static final Agent agent = Mock.agent();
 	
-	private TimeLine timeline;
+	private Timeline timeline;
 	private Market market;
 	private MarketView view, fast;
 	
@@ -538,7 +538,7 @@ public class MarketTest {
 		}
 	}
 	
-	private Market mockMarket(Stats stats, TimeLine timeline, MarketInfo sip, Props props) {
+	private Market mockMarket(Stats stats, Timeline timeline, MarketInfo sip, Props props) {
 		return new Market(rand.nextInt(), stats, timeline, Log.nullLogger(), rand, sip, new UniformPriceClear(0.5, 1), props) {
 			private static final long serialVersionUID = 1L;
 			@Override protected void submitOrder(MarketView thisView, AgentView agent, OrderRecord orderRecord) {

@@ -34,7 +34,7 @@ import entity.market.Market;
 import entity.market.Price;
 import entity.market.Quote;
 import entity.sip.MarketInfo;
-import event.TimeLine;
+import event.Timeline;
 
 /**
  * ADAPTIVEMARKETMAKER
@@ -60,7 +60,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	
 	protected Optional<Price> lastAsk, lastBid; // stores the ask/bid at last entry
 
-	protected AdaptiveMarketMaker(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected AdaptiveMarketMaker(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
@@ -99,7 +99,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		this.lastBid = Optional.absent();
 	}
 	
-	public static AdaptiveMarketMaker create(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	public static AdaptiveMarketMaker create(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		return new AdaptiveMarketMaker(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}

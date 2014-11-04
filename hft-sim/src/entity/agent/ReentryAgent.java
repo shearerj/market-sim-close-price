@@ -13,7 +13,7 @@ import data.Stats;
 import entity.agent.position.PrivateValue;
 import entity.market.Market;
 import entity.sip.MarketInfo;
-import event.TimeLine;
+import event.Timeline;
 import event.TimeStamp;
 
 public abstract class ReentryAgent extends SMAgent {
@@ -23,7 +23,7 @@ public abstract class ReentryAgent extends SMAgent {
 	protected final Iterator<TimeStamp> reentry; // wait times between reentry
 	protected boolean arrived;
 
-	public ReentryAgent(int id, Stats stats, TimeLine timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	public ReentryAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			PrivateValue privateValue, TimeStamp arrivalTime, Market market, Iterator<TimeStamp> reentry, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, privateValue, arrivalTime, market, props);
 		this.reentry = checkNotNull(reentry);
