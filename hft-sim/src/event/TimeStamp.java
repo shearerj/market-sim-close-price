@@ -21,8 +21,7 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	
 	private static final long serialVersionUID = -2109498445060507654L;
 	
-	public static final TimeStamp IMMEDIATE = new TimeStamp(-1);
-	public static final TimeStamp ZERO = TimeStamp.of(0);
+	public static final TimeStamp ZERO = new TimeStamp(0);
 	public static final int TICKS_PER_SECOND = 1000000;
 	
 	protected final long ticks;
@@ -32,7 +31,7 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	}
 	
 	public static TimeStamp of(long ticks) {
-		if (ticks < 0) return TimeStamp.IMMEDIATE;
+		if (ticks <= 0) return TimeStamp.ZERO;
 		return new TimeStamp(ticks);
 	}
 
@@ -73,10 +72,6 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	public boolean after(TimeStamp other) {
 		return other == null || this.compareTo(other) > 0;
 	}
-	
-	public boolean isImmediate() {
-		return this == TimeStamp.IMMEDIATE;
-	}
 
 	@Override
 	public int compareTo(TimeStamp other) {
@@ -97,14 +92,11 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	
 	@Override
 	public String toString() {
-		if (equals(TimeStamp.IMMEDIATE)) return "immediate";
 		return ticks + "ms";
 	}
 	
 	// Fancy formatting
 	public String toSecondsString() {
-		if (equals(TimeStamp.IMMEDIATE)) return "immediate";
-		
 		long seconds = Long.signum(ticks) * Math.abs(ticks / TICKS_PER_SECOND);
 		int digits = IntMath.log10(TICKS_PER_SECOND, RoundingMode.HALF_EVEN);
 		long microseconds = Math.abs(ticks % TICKS_PER_SECOND);

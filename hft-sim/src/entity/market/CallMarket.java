@@ -39,7 +39,7 @@ public class CallMarket extends Market {
 				props);
 		this.clearFreq = props.get(ClearFrequency.class);
 		checkArgument(clearFreq.after(TimeStamp.ZERO), "Can't clear at frequency zero");
-		scheduleActivityIn(TimeStamp.IMMEDIATE, new Activity() {
+		scheduleActivityIn(TimeStamp.ZERO, new Activity() {
 			@Override public void execute() { CallMarket.this.clear(); }
 			@Override public String toString() { return "First Clear"; }
 		});

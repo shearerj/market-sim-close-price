@@ -52,7 +52,7 @@ public class Mock {
 		private boolean ignoreNext = false;
 		
 		@Override public void scheduleActivityIn(TimeStamp delay, Activity act) {
-			if (delay.equals(TimeStamp.ZERO) || delay.equals(TimeStamp.IMMEDIATE))
+			if (delay.equals(TimeStamp.ZERO))
 				if (ignoreNext)
 					ignoreNext = false;
 				else

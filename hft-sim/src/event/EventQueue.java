@@ -102,10 +102,10 @@ public class EventQueue implements Timeline {
 	 */
 	@Override
 	public void scheduleActivityIn(TimeStamp delay, Activity act) {
-		if (delay.before(TimeStamp.ZERO))
-			pendingImmediateActivities.add(act);
-		else
+		if (delay.after(TimeStamp.ZERO))
 			pendingScheduledActivities.put(currentTime.plus(delay), act);
+		else
+			pendingImmediateActivities.add(act);
 	}
 	
 	@Override

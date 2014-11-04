@@ -86,23 +86,6 @@ public class EventQueueTest {
 		assertTrue(second.get());
 	}
 	
-	/** Test instanious happen first */
-	@Test
-	public void instaniousTest() {
-		final AtomicBoolean slow = new AtomicBoolean(false);
-		
-		queue.scheduleActivityIn(TimeStamp.ZERO, new Activity() {
-			@Override public void execute() { slow.set(true); }
-		});
-		
-		queue.scheduleActivityIn(TimeStamp.IMMEDIATE, new Activity() {
-			@Override public void execute() {
-				if (slow.get())
-					fail("Instantanious happened second");
-			}
-		});
-	}
-	
 	/** Test that events scheduled at the same time get scheduled in order */
 	@Test
 	public void scheduledInOrder() {
@@ -135,18 +118,19 @@ public class EventQueueTest {
 		Set<Integer> listHashes = Sets.newHashSet();
 		
 		for (int i = 0; i < 1000; ++i) {
+			final EventQueue queue = EventQueue.create(Log.nullLogger(), rand);
 			final Builder<Integer> builder = ImmutableList.builder();
 			for (int j = 0; j < n; ++j) {
 				final int k = j;
-				queue.scheduleActivityIn(TimeStamp.IMMEDIATE, new Activity() {
+				queue.scheduleActivityIn(TimeStamp.ZERO, new Activity() {
 					@Override public void execute() {
-						queue.scheduleActivityIn(TimeStamp.ZERO, new Activity() {
+						queue.scheduleActivityIn(TimeStamp.of(1), new Activity() {
 							@Override public void execute() { builder.add(k); }
 						});
 					}
 				});
 			}
-			queue.executeUntil(TimeStamp.ZERO);
+			queue.executeUntil(TimeStamp.of(1));
 			listHashes.add(builder.build().hashCode());
 		}
 		
@@ -167,11 +151,11 @@ public class EventQueueTest {
 			final AtomicInteger sequence = new AtomicInteger(0);
 			for (int j = 0; j < n; ++j) {
 				final int k = j;
-				queue.scheduleActivityIn(TimeStamp.IMMEDIATE, new Activity() {
+				queue.scheduleActivityIn(TimeStamp.ZERO, new Activity() {
 					@Override public void execute() {
 						for (int l = 0; l < m; ++l) {
 							final int p = l;
-							queue.scheduleActivityIn(TimeStamp.IMMEDIATE, new Activity() {
+							queue.scheduleActivityIn(TimeStamp.ZERO, new Activity() {
 								@Override public void execute() {
 									int q = k * m + p;
 									if (q != sequence.get())
@@ -183,7 +167,7 @@ public class EventQueueTest {
 					}
 				});
 			}
-			queue.executeUntil(TimeStamp.IMMEDIATE);
+			queue.executeUntil(TimeStamp.ZERO);
 		}
 	}
 	

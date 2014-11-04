@@ -119,9 +119,9 @@ public class Defaults implements Serializable {
 			.put(FundamentalShockVar.class, 1000000d)
 			.put(RandomSeed.class,		System.currentTimeMillis())
 			.put(NumSims.class,			1)
-			.put(NbboLatency.class,		TimeStamp.IMMEDIATE)
-			.put(MarketLatency.class,	TimeStamp.IMMEDIATE)
-			.put(FundamentalLatency.class, TimeStamp.IMMEDIATE)
+			.put(NbboLatency.class,		TimeStamp.ZERO)
+			.put(MarketLatency.class,	TimeStamp.ZERO)
+			.put(FundamentalLatency.class, TimeStamp.ZERO)
 
 			.put(PricingPolicy.class,	0.5)
 			.put(ClearFrequency.class,	TimeStamp.of(1000))
@@ -132,7 +132,7 @@ public class Defaults implements Serializable {
 			
 			// Agent Types by Role
 			// HFT Agents
-			.put(LaLatency.class,		TimeStamp.IMMEDIATE)
+			.put(LaLatency.class,		TimeStamp.ZERO)
 			.put(Alpha.class,			0.001)
 
 			// Background Agents
