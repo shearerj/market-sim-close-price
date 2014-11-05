@@ -49,13 +49,11 @@ public class Mock {
 	
 	public static final MockTimeLine timeline = new MockTimeLine() {
 		private boolean ignoreNext = false;
-		
 		@Override public void scheduleActivityIn(TimeStamp delay, Activity act) {
-			if (delay.equals(TimeStamp.ZERO))
-				if (ignoreNext)
-					ignoreNext = false;
-				else
-					act.execute();
+			if (ignoreNext)
+				ignoreNext = false;
+			else if (delay.equals(TimeStamp.ZERO))
+				act.execute();
 		}
 		@Override public TimeStamp getCurrentTime() { return TimeStamp.ZERO; }
 		@Override public void ignoreNext() { ignoreNext = true; }

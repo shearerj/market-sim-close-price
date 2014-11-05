@@ -39,6 +39,7 @@ public class AgentTest {
 	// FIXME Other agent tests
 	// FIXME Private value when it's move to agent
 	// FIXME Transaction delay properly removes orders (with withdraw newest afterwards) also check quantity
+	// FIXME Try withdrawing an order while it's being routed in a slow two makret system
 
 	@Before
 	public void setup()  {
@@ -166,18 +167,22 @@ public class AgentTest {
 		// Withdraw order
 		agent.withdrawOrder(order);
 		
-		// Check order removed
-		assertEquals(0, order.getQuantity());
+		// Check that agent still knows order is submitted
+		assertEquals(1, order.getQuantity());
 		
 		// Verify that quote is now stale
 		timeline.executeUntil(TimeStamp.of(30));
 		assertQuote(view.getQuote(), null, 0, null, 0);
 		assertQuote(slow.getQuote(), Price.of(100), 1, null, 0);
+		// Agent still thinks order might be around, even through it's now gone from the market
+		assertEquals(1, order.getQuantity());
 		
 		// After quotes have updated
 		timeline.executeUntil(TimeStamp.of(40));
 		assertQuote(view.getQuote(), null, 0, null, 0);
 		assertQuote(slow.getQuote(), null, 0, null, 0);
+		// Check order removed
+		assertEquals(0, order.getQuantity());
 	}
 
 	@Test
@@ -242,6 +247,7 @@ public class AgentTest {
 		assertEquals(0, agent.getProfit());
 		
 		// Check liquidation when position > 0 (sell 1 unit)
+		agent = Mock.agent();
 		agent.submitOrder(view, BUY, Price.ZERO, 1);
 		other.submitOrder(view, SELL, Price.ZERO, 1);
 		
@@ -250,12 +256,13 @@ public class AgentTest {
 		assertEquals(100000, agent.getProfit());
 		
 		// Check liquidation when position < 0 (buy 2 units)
+		agent = Mock.agent();
 		agent.submitOrder(view, SELL, Price.ZERO, 2);
 		other.submitOrder(view, BUY, Price.ZERO, 2);
 		
 		assertEquals(-2, agent.getPosition());
 		agent.liquidateAtPrice(Price.of(100000));
-		assertEquals(-100000, agent.getProfit());
+		assertEquals(-200000, agent.getProfit());
 	}
 	
 	@Test

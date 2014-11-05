@@ -87,7 +87,7 @@ public abstract class Agent extends Entity {
 
 	/** Liquidates an agent's position at the specified price. */
 	public void liquidateAtPrice(Price price) {
-		checkState(!liquidated);
+		checkState(!liquidated, "Can't liquidate if agent has already liquidated");
 		liquidated = true;
 
 		log(INFO, "%s pre-liquidation: position=%d", this, positionBalance);

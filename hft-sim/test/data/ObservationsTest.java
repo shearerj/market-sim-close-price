@@ -217,6 +217,7 @@ public class ObservationsTest {
 		final AtomicDouble a_pv1 = new AtomicDouble();
 		final AtomicDouble a_pv_1 = new AtomicDouble();
 		
+		Mock.timeline.ignoreNext();
 		Agent agent = new BackgroundAgent(0, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, one,
 				Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
