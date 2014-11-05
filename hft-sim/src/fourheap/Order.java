@@ -21,7 +21,11 @@ public class Order<P extends Comparable<? super P>, T extends Comparable<? super
 
 	private static final long serialVersionUID = -3460176014871040729L;
 	
-	public enum OrderType { BUY, SELL };
+	public enum OrderType { BUY(1), SELL(-1);
+		private int sign;
+		private OrderType(int sign) { this.sign = sign; }
+		public int sign() { return sign; }
+	};
 	
 	protected final OrderType type;
 	protected final P price;

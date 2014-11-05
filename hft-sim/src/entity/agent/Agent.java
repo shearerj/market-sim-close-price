@@ -2,7 +2,6 @@ package entity.agent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static fourheap.Order.OrderType.BUY;
 import static logger.Log.Level.INFO;
 
 import java.util.Collection;
@@ -182,11 +181,10 @@ public abstract class Agent extends Entity {
 	
 	/** Called when an AgetnView sees a transaction */
 	protected void processTransaction(TimeStamp submitTime, OrderType type, Transaction trans) {
-		int buySell = type == BUY ? 1 : -1;
-		privateValueSurplus.addValue(buySell * privateValue.getValue(positionBalance, trans.getQuantity(), type).doubleValue(),
+		privateValueSurplus.addValue(type.sign() * privateValue.getValue(positionBalance, trans.getQuantity(), type).doubleValue(),
 				trans.getExecTime().getInTicks());
 		
-		int effQuantity = type == BUY ? trans.getQuantity() : -trans.getQuantity();
+		int effQuantity = type.sign() * trans.getQuantity();
 		positionBalance += effQuantity;
 		profit -= effQuantity * trans.getPrice().intValue();
 		
