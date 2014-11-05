@@ -9,7 +9,6 @@ import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertSingleTransaction;
 import static utils.Tests.assertTransaction;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -50,7 +49,7 @@ public class WindowAgentTest {
 	// FIXME should a window account for latency?
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() {
 		timeline = EventQueue.create(Log.nullLogger(), rand);
 		market = CDAMarket.create(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Props.fromPairs());
 		fast = market.getView(TimeStamp.ZERO);
@@ -76,7 +75,7 @@ public class WindowAgentTest {
 	}
 	
 	@Test
-	public void delayedTransactionProcessorTest() throws IOException {
+	public void delayedTransactionProcessorTest() {
 		latencySetup(TimeStamp.of(5));
 		WindowAgent agent = windowAgent();
 		
@@ -98,7 +97,7 @@ public class WindowAgentTest {
 	}
 	
 	@Test
-	public void extraTest() throws IOException {
+	public void extraTest() {
 		for (int i = 0; i < 100; i++) {
 			setup();
 			randMultipleTransactionWindow();
@@ -143,7 +142,7 @@ public class WindowAgentTest {
 	}
 	
 	@Test
-	public void multipleTransactionWindowLatency() throws IOException{
+	public void multipleTransactionWindowLatency() {
 		latencySetup(TimeStamp.of(100));
 		WindowAgent agent = windowAgent(Props.fromPairs(WindowLength.class, TimeStamp.of(160)));
 

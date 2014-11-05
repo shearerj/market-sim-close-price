@@ -9,7 +9,6 @@ import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertOrderLadder;
 import static utils.Tests.assertRandomOrderLadder;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -75,7 +74,7 @@ public class AdaptiveMarketMakerTest {
 	private MarketView view;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() {
 		market = Mock.market();
 		view = market.getPrimaryView();
 	}

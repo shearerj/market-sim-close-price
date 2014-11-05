@@ -7,9 +7,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
-
 import logger.Log;
 
 import org.junit.Before;
@@ -123,7 +120,7 @@ public class ZIPAgentTest {
 	}
 	
 	@Test
-	public void agentStrategyTest() throws IOException {
+	public void agentStrategyTest() {
 		ZIPAgent agent = zipAgent(Props.builder()
 				.put(MaxQty.class, 1)
 				.put(BetaMax.class, 0.5)

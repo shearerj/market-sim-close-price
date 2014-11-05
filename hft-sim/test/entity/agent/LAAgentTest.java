@@ -5,9 +5,6 @@ import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertSingleTransaction;
-
-import java.io.IOException;
-
 import logger.Log;
 
 import org.junit.Before;
@@ -38,7 +35,7 @@ public class LAAgentTest {
 	private Agent mockAgent;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() {
 		timeline = EventQueue.create(Log.nullLogger(), rand);
 		nyse = CDAMarket.create(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Props.fromPairs());
 		nyseView = nyse.getPrimaryView();		
@@ -212,7 +209,7 @@ public class LAAgentTest {
 	}
 	
 	@Test
-	public void randomTests() throws IOException {
+	public void randomTests() {
 		for (int i = 0; i < 100; ++i) {
 			setup();
 			oneSidedArbitrageTest();

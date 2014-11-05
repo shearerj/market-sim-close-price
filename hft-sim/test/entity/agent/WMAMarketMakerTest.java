@@ -4,7 +4,6 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static utils.Tests.assertOrderLadder;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -52,7 +51,7 @@ public class WMAMarketMakerTest {
 	private WMAMarketMaker mm;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() {
 		market = Mock.market();
 		view = market.getPrimaryView();
 	}

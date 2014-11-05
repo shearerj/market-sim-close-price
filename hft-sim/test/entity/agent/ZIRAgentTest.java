@@ -6,9 +6,6 @@ import static org.junit.Assert.assertEquals;
 import static utils.Tests.assertNBBO;
 import static utils.Tests.assertOrder;
 import static utils.Tests.assertSingleTransaction;
-
-import java.io.IOException;
-
 import logger.Log;
 
 import org.junit.Before;
@@ -60,7 +57,7 @@ public class ZIRAgentTest {
 	private MarketView nyseView, nasdaqView;
 
 	@Before
-	public void setup() throws IOException{
+	public void setup() {
 		timeline = EventQueue.create(Log.nullLogger(), rand);
 		fundamental = Mock.fundamental(110000);
 		sip = SIP.create(Mock.stats, timeline, Log.nullLogger(), rand, TimeStamp.of(50));
@@ -110,7 +107,7 @@ public class ZIRAgentTest {
 	 * it causes an nbbo crossing.
 	 */
 	@Test
-	public void withdrawQuoteUpdateTest() throws IOException {
+	public void withdrawQuoteUpdateTest() {
 		OrderRecord order = null;
 		while (order == null) {
 			setup();
@@ -135,7 +132,7 @@ public class ZIRAgentTest {
 	 * be routed and will transact immediately with the existing order.
 	 */
 	@Test
-	public void noWithdrawQuoteUpdateTest() throws IOException {
+	public void noWithdrawQuoteUpdateTest() {
 		OrderRecord order = null;
 		while (order == null) {
 			setup();

@@ -1,7 +1,7 @@
 package systemmanager;
 
+import static data.Preset.Presets.CENTRALCDA;
 import static org.junit.Assert.assertEquals;
-import static data.Preset.Presets.*;
 
 import java.util.Map.Entry;
 

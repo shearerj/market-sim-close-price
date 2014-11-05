@@ -1,9 +1,10 @@
 package systemmanager;
 
-import static systemmanager.SimulationSpec.*;
-import static data.Props.*;
+import static data.Props.keyToString;
 import static org.junit.Assert.assertEquals;
 import static systemmanager.Consts.AgentType.ZIR;
+import static systemmanager.SimulationSpec.ASSIGNMENT;
+import static systemmanager.SimulationSpec.CONFIG;
 
 import org.junit.Test;
 

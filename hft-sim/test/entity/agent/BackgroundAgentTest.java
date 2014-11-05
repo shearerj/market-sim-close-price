@@ -9,7 +9,6 @@ import static utils.Tests.assertOptionalRange;
 import static utils.Tests.assertQuote;
 import static utils.Tests.assertSingleTransaction;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import logger.Log;
@@ -87,7 +86,7 @@ public class BackgroundAgentTest {
 	private Agent mockAgent;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() {
 		timeline = Mock.timeline;
 		fundamental = FundamentalValue.create(Mock.stats, timeline, kappa, meanValue, variance, rand);
 		fund = fundamental.getView(TimeStamp.ZERO);
@@ -408,7 +407,7 @@ public class BackgroundAgentTest {
 	}
 	
 	@Test
-	public void ziPrivateValueBuyTest() throws IOException {
+	public void ziPrivateValueBuyTest() {
 		fundamental = Mock.fundamental(100000);
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(ListPrivateValue.create(
 				ImmutableList.of(Price.of(10000), Price.of(-10000))), Props.fromPairs(
@@ -423,7 +422,7 @@ public class BackgroundAgentTest {
 	}
 	
 	@Test
-	public void ziPrivateValueSellTest() throws IOException {
+	public void ziPrivateValueSellTest() {
 		fundamental = Mock.fundamental(100000);
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(ListPrivateValue.create(
 				ImmutableList.of(Price.of(10000), Price.of(-10000))), Props.fromPairs(
@@ -471,7 +470,7 @@ public class BackgroundAgentTest {
 	// FIXME Private value is not properly negating sell orders. This should be fixed when the bounding functionality is changed.
 	// FIXME Test this for BUY Orders as well
 	@Test
-	public void testPayoff() throws IOException {
+	public void testPayoff() {
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(
 				ListPrivateValue.create(ImmutableList.of(Price.of(1000), Price.of(-2000))),
 				Props.fromPairs(BidRangeMin.class, 0, BidRangeMax.class, 1000));
@@ -502,7 +501,7 @@ public class BackgroundAgentTest {
 	}
 
 	@Test
-	public void testLiquidation() throws IOException {
+	public void testLiquidation() {
 		// Verify that post-liquidation, payoff includes liquidation
 		fundamental = Mock.fundamental;
 		fund = fundamental.getView(TimeStamp.ZERO);
@@ -526,7 +525,7 @@ public class BackgroundAgentTest {
 	}
 
 	@Test
-	public void testMovingFundamentalLiquidation() throws IOException {
+	public void testMovingFundamentalLiquidation() {
 		// Verify that post-liquidation, payoff includes liquidation
 		
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(
@@ -551,7 +550,7 @@ public class BackgroundAgentTest {
 
 	@SuppressWarnings("unused")
 	@Test
-	public void zirpBasicBuyerTest() throws IOException {
+	public void zirpBasicBuyerTest() {
 		fundamental = Mock.fundamental;
 		fund = fundamental.getView(TimeStamp.ZERO);
 		
@@ -562,11 +561,12 @@ public class BackgroundAgentTest {
 		zirp.executeZIRPStrategy(BUY, 1);
 
 		// Verify that agent does shade since 10000 * 0.75 > val - 130000
+		// FIXME
 		assertEquals(1, zirp.getPosition());
 	}
 
 	@Test
-	public void zirpBasicBuyerTest2() throws IOException {
+	public void zirpBasicBuyerTest2() {
 		fundamental = Mock.fundamental;
 		fund = fundamental.getView(TimeStamp.ZERO);
 		
@@ -585,7 +585,7 @@ public class BackgroundAgentTest {
 
 	/** to test what the price of the agent's submitted order is */
 	@Test
-	public void zirpBasicBuyerTest3() throws IOException {
+	public void zirpBasicBuyerTest3() {
 		fundamental = Mock.fundamental;
 		fund = fundamental.getView(TimeStamp.ZERO);
 		
@@ -599,7 +599,7 @@ public class BackgroundAgentTest {
 	}
 	
 	@Test
-	public void zirpBasicSellerTest() throws IOException {
+	public void zirpBasicSellerTest() {
 		fundamental = Mock.fundamental;
 		fund = fundamental.getView(TimeStamp.ZERO);
 		
@@ -616,7 +616,7 @@ public class BackgroundAgentTest {
 	}
 
 	@Test
-	public void zirpBasicSellerTest2() throws IOException {
+	public void zirpBasicSellerTest2() {
 		fundamental = Mock.fundamental(100000);
 		fund = fundamental.getView(TimeStamp.ZERO);
 		
@@ -633,10 +633,9 @@ public class BackgroundAgentTest {
 		assertSingleTransaction(view.getTransactions(), Price.of(120000), TimeStamp.ZERO, 1);
 	}
 
-	/** to test what the price of the agent's submitted order is 
-	 * @throws IOException */
+	/** to test what the price of the agent's submitted order is */
 	@Test
-	public void zirpBasicSellerTest3() throws IOException {
+	public void zirpBasicSellerTest3() {
 		fundamental = Mock.fundamental;
 		fund = fundamental.getView(TimeStamp.ZERO);
 		
@@ -714,7 +713,7 @@ public class BackgroundAgentTest {
 	}
 	
 	@Test
-	public void extraTest() throws IOException {
+	public void extraTest() {
 		for (int i = 0; i < 100; ++i) {
 			setup();
 			getValuationRand();

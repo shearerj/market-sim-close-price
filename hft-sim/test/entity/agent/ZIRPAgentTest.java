@@ -3,9 +3,6 @@ package entity.agent;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static utils.Tests.assertOrder;
-
-import java.io.IOException;
-
 import logger.Log;
 
 import org.junit.Before;
@@ -56,14 +53,14 @@ public class ZIRPAgentTest {
 	
 	
 	@Before
-	public void setup() throws IOException {
+	public void setup() {
 		market = Mock.market();
 		view = market.getPrimaryView();
 	}
 	
 	/** Verify that agentStrategy actually follows ZIRP strategy */
 	@Test
-	public void zirpBasicBuyerTest() throws IOException {
+	public void zirpBasicBuyerTest() {
 		OrderType type = SELL;
 		OrderRecord order = null;
 		Price val = null;

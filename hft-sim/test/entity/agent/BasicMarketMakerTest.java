@@ -7,9 +7,6 @@ import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertOrderLadder;
 import static utils.Tests.assertRandomOrderLadder;
 import static utils.Tests.assertSingleTransaction;
-
-import java.io.IOException;
-
 import logger.Log;
 
 import org.junit.Before;
@@ -52,7 +49,7 @@ public class BasicMarketMakerTest {
 	private Agent mockAgent;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() {
 		market = Mock.market();
 		view = market.getPrimaryView();
 		mockAgent = Mock.agent();
@@ -251,7 +248,7 @@ public class BasicMarketMakerTest {
 	}
 
 	@Test
-	public void extraTest() throws IOException {
+	public void extraTest() {
 		for (int i = 0; i < 100; i++) {
 			setup();
 			nullBidAskLadder();

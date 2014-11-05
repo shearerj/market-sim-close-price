@@ -6,9 +6,6 @@ import static org.junit.Assert.assertEquals;
 import static utils.Tests.assertOrderLadder;
 import static utils.Tests.assertQuote;
 import static utils.Tests.assertRandomOrderLadder;
-
-import java.io.IOException;
-
 import logger.Log;
 
 import org.junit.Before;
@@ -122,7 +119,7 @@ public class MarketMakerTest {
 	}
 
 	@Test
-	public void truncateLadderTickImprovement() throws IOException {
+	public void truncateLadderTickImprovement() {
 		MarketMaker mm = marketMaker(Props.fromPairs(
 				TruncateLadder.class, true,
 				TickImprovement.class, true,
@@ -153,7 +150,7 @@ public class MarketMakerTest {
 	}
 	
 	@Test
-	public void truncateLadderTickImprovementOutside() throws IOException {
+	public void truncateLadderTickImprovementOutside() {
 		MarketMaker mm = marketMaker(Props.fromPairs(
 				TruncateLadder.class, true,
 				TickImprovement.class, true,
@@ -299,7 +296,7 @@ public class MarketMakerTest {
 	}
 	
 	@Test
-	public void extraTest() throws IOException {
+	public void extraTest() {
 		for (int i = 0; i < 100; i++) {
 			setup();
 			initRandLadder();

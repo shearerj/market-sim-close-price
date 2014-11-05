@@ -4,9 +4,6 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static utils.Tests.assertQuote;
-
-import java.io.IOException;
-
 import logger.Log;
 
 import org.junit.Before;
@@ -30,7 +27,7 @@ public class CDAMarketTest {
 	private MarketView view;
 	
 	@Before
-	public void setup() throws IOException {
+	public void setup() {
 		timeline = Mock.timeline;
 		market = CDAMarket.create(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Props.fromPairs());
 		view = market.getPrimaryView();

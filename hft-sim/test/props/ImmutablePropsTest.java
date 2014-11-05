@@ -1,11 +1,9 @@
 package props;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.primitives.Ints;
 
 import props.ParsableValue.BoolValue;
 import props.ParsableValue.DoubleValue;
@@ -13,6 +11,9 @@ import props.ParsableValue.EnumValue;
 import props.ParsableValue.IntValue;
 import props.ParsableValue.IntsValue;
 import props.ParsableValue.LongValue;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.Ints;
 
 public class ImmutablePropsTest {
 	

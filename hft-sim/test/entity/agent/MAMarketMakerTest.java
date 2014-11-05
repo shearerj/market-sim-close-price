@@ -7,7 +7,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertOrderLadder;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -58,7 +57,7 @@ public class MAMarketMakerTest {
 	private Agent mockAgent;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() {
 		market = Mock.market();
 		view = market.getPrimaryView();
 		mockAgent = Mock.agent();

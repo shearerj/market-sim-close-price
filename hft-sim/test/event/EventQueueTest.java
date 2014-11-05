@@ -5,7 +5,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,7 +25,7 @@ public class EventQueueTest {
 	private EventQueue queue;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() {
 		queue = EventQueue.create(Log.nullLogger(), rand);
 	}
 

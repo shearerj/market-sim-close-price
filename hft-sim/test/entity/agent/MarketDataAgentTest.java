@@ -3,7 +3,6 @@ package entity.agent;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertQuote;
 
-import java.io.IOException;
 import java.io.StringReader;
 import java.util.Iterator;
 
@@ -37,7 +36,7 @@ public class MarketDataAgentTest {
 	private MarketView view;
 
 	@Before
-	public void setupTest() throws IOException {
+	public void setupTest() {
 		timeline = EventQueue.create(Log.nullLogger(), rand);
 		market = CDAMarket.create(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Props.fromPairs());
 		view = market.getPrimaryView();

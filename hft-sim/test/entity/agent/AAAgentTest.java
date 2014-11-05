@@ -5,11 +5,8 @@ import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static utils.Tests.assertSingleOrderRange;
 import static utils.Tests.assertSingleOrder;
-
-import java.io.IOException;
-
+import static utils.Tests.assertSingleOrderRange;
 import logger.Log;
 
 import org.junit.Before;
@@ -65,7 +62,7 @@ public class AAAgentTest {
 	private MarketView view;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() {
 		market = Mock.market();
 		view = market.getPrimaryView();
 	}
@@ -743,7 +740,7 @@ public class AAAgentTest {
 	}
 
 	@Test
-	public void extraTest() throws IOException {
+	public void extraTest() {
 		for (int i = 0; i < 100; i++) {
 			setup();
 			randomizedUpdateAggressionBuyer();

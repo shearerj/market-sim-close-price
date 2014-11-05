@@ -3,7 +3,6 @@ package entity.agent;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
 import java.util.Iterator;
 
 import logger.Log;
@@ -27,7 +26,7 @@ public class ReentryAgentTest {
 	private EventQueue timeline;
 	
 	@Before
-	public void setup() throws IOException {
+	public void setup() {
 		timeline = EventQueue.create(Log.nullLogger(), rand);
 	}
 	
@@ -62,7 +61,7 @@ public class ReentryAgentTest {
 	}
 	
 	@Test
-	public void extraTest() throws IOException {
+	public void extraTest() {
 		for (int i = 0; i <= 1000; i++) {
 			setup();
 			reentryTest();

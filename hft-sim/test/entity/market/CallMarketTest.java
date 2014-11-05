@@ -5,9 +5,6 @@ import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static utils.Tests.assertQuote;
 import static utils.Tests.assertSingleTransaction;
-
-import java.io.IOException;
-
 import logger.Log;
 
 import org.junit.Before;
@@ -40,7 +37,7 @@ public class CallMarketTest {
 	private MarketView view;
 	
 	@Before
-	public void setup() throws IOException {
+	public void setup() {
 		timeline = EventQueue.create(Log.nullLogger(), rand);
 		market = CallMarket.create(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Props.fromPairs(
 				ClearFrequency.class,	TimeStamp.of(100),

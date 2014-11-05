@@ -2,7 +2,6 @@ package data;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.IOException;
 import java.util.Iterator;
 
 import org.junit.Before;
@@ -41,7 +40,7 @@ public class FundamentalValueTest {
 	}
 	
 	@Test
-	public void zeroJumpTest() throws IOException {
+	public void zeroJumpTest() {
 		int mean = rand.nextInt(100000);
 		FundamentalValue fund = FundamentalValue.create(Stats.create(), Mock.timeline, 0, mean, 0, rand);
 		
@@ -64,7 +63,7 @@ public class FundamentalValueTest {
 	}
 	
 	@Test
-	public void postStaticFundamentalStatTest() throws IOException {
+	public void postStaticFundamentalStatTest() {
 		int mean = rand.nextInt(100000);
 		Stats stats = Stats.create();
 		FundamentalValue fund = FundamentalValue.create(stats, Mock.timeline, 0, mean, 0, rand);
@@ -80,7 +79,7 @@ public class FundamentalValueTest {
 	// FIXME Assert that fundamental is never referenced past final simulation time...
 	
 	@Test
-	public void extraTest() throws IOException {
+	public void extraTest() {
 		for (int i = 0; i < 100; i++) {
 			defaultSetup();
 			zeroJumpTest();
