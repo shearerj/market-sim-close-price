@@ -617,7 +617,7 @@ public class BackgroundAgentTest {
 
 	@Test
 	public void zirpBasicSellerTest2() throws IOException {
-		fundamental = Mock.fundamental;
+		fundamental = Mock.fundamental(100000);
 		fund = fundamental.getView(TimeStamp.ZERO);
 		
 		BackgroundAgent zirp = backgroundAgent(zirpProps);
