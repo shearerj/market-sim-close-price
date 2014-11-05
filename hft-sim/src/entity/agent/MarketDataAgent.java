@@ -95,8 +95,8 @@ public class MarketDataAgent extends SMAgent {
 	}
 
 	@Override
-	protected void orderTransacted(OrderRecord order, int removedQuantity) {
-		super.orderTransacted(order, removedQuantity);
+	protected void orderRemoved(OrderRecord order, int removedQuantity) {
+		super.orderRemoved(order, removedQuantity);
 		if (order.getQuantity() == 0)
 			refNumbers.inverse().remove(order);
 	}

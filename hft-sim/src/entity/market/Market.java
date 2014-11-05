@@ -162,18 +162,21 @@ public abstract class Market extends Entity {
 		
 		// Find the appropriate order object
 		Order order = orderMapping.get(orderRecord);
-		if (order == null)
+		if (order == null) // Not here
 			return;
 		
 		checkArgument(quantity > 0, "Quantity must be positive");
 		quantity = Math.min(quantity, order.getQuantity());
 
+		// Remove from internal bookkeeping
 		Multiset<Price> priceQuant = order.getOrderType() == SELL ? askPriceQuantity : bidPriceQuantity;
 		priceQuant.remove(order.getPrice(), quantity);
-
 		orderbook.remove(order, quantity);
 		if (order.getQuantity() == 0)
 			orderMapping.remove(orderRecord);
+		
+		// Remove from agent's bookkepping
+		order.getAgent().orderRemoved(orderRecord, quantity);
 	}
 
 	protected void clear() {
@@ -195,9 +198,9 @@ public abstract class Market extends Entity {
 			// Views
 			for (MarketView view : views)
 				view.addTransaction(transaction);
-			buy.getAgent().orderTransacted(buy.getOrderRecord(), transaction.getQuantity());
+			buy.getAgent().orderRemoved(buy.getOrderRecord(), transaction.getQuantity());
 			buy.getAgent().processTransaction(buy.getSubmitTime(), BUY, transaction);
-			sell.getAgent().orderTransacted(sell.getOrderRecord(), transaction.getQuantity());
+			sell.getAgent().orderRemoved(sell.getOrderRecord(), transaction.getQuantity());
 			sell.getAgent().processTransaction(sell.getSubmitTime(), SELL, transaction);
 			
 			// Statistics

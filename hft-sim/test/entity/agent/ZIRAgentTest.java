@@ -153,6 +153,17 @@ public class ZIRAgentTest {
 		timeline.executeUntil(TimeStamp.of(150));
 		assertNBBO(sip.getNBBO(), Price.of(104000), nyse, Price.of(108000), nyse);
 	}
+	
+	/** Tests a bug where an order would get withdrawn before it entered the market and would result in an error being thrown */
+	@Test
+	public void randomTest() {
+		for (int i = 0; i < 100; ++i) {
+			EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
+			Market market = Mock.market(timeline);			
+			ZIRAgent.create(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs());
+			timeline.executeUntil(TimeStamp.of(6000));
+		}
+	}
 
 	public ZIRAgent zirAgent(Props parameters) {
 		return ZIRAgent.create(0, Mock.stats, timeline, Log.nullLogger(), rand, sip, fundamental, nyse, Props.merge(defaults, parameters));

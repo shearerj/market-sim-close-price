@@ -130,8 +130,6 @@ public abstract class Agent extends Entity {
 	/** Wrapper for withdrawing orders. Necessary to keep bookkeeping consistent */
 	protected void withdrawOrder(OrderRecord order) {
 		order.getCurrentMarket().withdrawOrder(order);
-		order.removeQuantity(order.getQuantity());
-		activeOrders.remove(order);
 	}
 	
 	/** Withdraw most recent order */
@@ -190,7 +188,7 @@ public abstract class Agent extends Entity {
 	}
 	
 	/** Called by AgentView when its order transacted */
-	protected void orderTransacted(OrderRecord order, int transactedQuantity) {
+	protected void orderRemoved(OrderRecord order, int transactedQuantity) {
 		order.removeQuantity(transactedQuantity);
 		if (order.getQuantity() == 0)
 			activeOrders.remove(order);
@@ -305,12 +303,12 @@ public abstract class Agent extends Entity {
 			});
 		}
 		
-		public void orderTransacted(final OrderRecord order, final int removedQuantity) {
+		public void orderRemoved(final OrderRecord order, final int removedQuantity) {
 			scheduleActivityIn(latency, new Activity() {
 				@Override public void execute() {
-					Agent.this.orderTransacted(order, removedQuantity);
+					Agent.this.orderRemoved(order, removedQuantity);
 				}
-				@Override public String toString() { return "Order Transacted"; }
+				@Override public String toString() { return "Order Removed"; }
 			});
 		}
 		
