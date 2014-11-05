@@ -99,7 +99,6 @@ public abstract class Market extends Entity {
 	// This is only intended to be called by a market view
 	protected void submitOrder(MarketView thisView, AgentView agent, OrderRecord orderRecord) {
 		marketTime++;
-		
 		final Order order = Order.create(agent, orderRecord, new MarketTime(getCurrentTime(), marketTime));
 		log(INFO, "%s", order);
 	

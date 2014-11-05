@@ -7,7 +7,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertSingleTransaction;
-import static utils.Tests.checkTransaction;
+import static utils.Tests.assertTransaction;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -131,13 +131,13 @@ public class WindowAgentTest {
 		Iterator<Transaction> windowTransactions = agent.getWindowTransactions().iterator(); // Window is from (5,15]
 
 		assertTrue("Incorrect Window Size", windowTransactions.hasNext());
-		checkTransaction(windowTransactions.next(), Price.of(50), TimeStamp.of(14), 1);
+		assertTransaction(windowTransactions.next(), Price.of(50), TimeStamp.of(14), 1);
 		
 		assertTrue("Incorrect Window Size", windowTransactions.hasNext());
-		checkTransaction(windowTransactions.next(), Price.of(20), TimeStamp.of(11), 1);
+		assertTransaction(windowTransactions.next(), Price.of(20), TimeStamp.of(11), 1);
 		
 		assertTrue("Incorrect Window Size", windowTransactions.hasNext());
-		checkTransaction(windowTransactions.next(), Price.of(10), TimeStamp.of(10), 1);
+		assertTransaction(windowTransactions.next(), Price.of(10), TimeStamp.of(10), 1);
 		
 		assertFalse("Incorrect Window Size", windowTransactions.hasNext());
 	}

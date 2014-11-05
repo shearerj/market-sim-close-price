@@ -31,8 +31,6 @@ import fourheap.Order.OrderType;
 public abstract class Tests {
 	
 	public static Joiner j = Joiner.on('_');
-
-	// FIXME Remove unused methods / methods that start with check
 	
 	/** Prices are null for absent prices (for convenience) */
 	public static void assertQuote(Quote quote, Price bid, int bidQuantity, Price ask, int askQuantity) {
@@ -48,23 +46,18 @@ public abstract class Tests {
 	
 	public static void assertSingleTransaction(Collection<Transaction> singleTransaction, Price price, TimeStamp time, int quantity) {
 		assertEquals("Collection didn't have a single transaction", 1, singleTransaction.size());
-		checkTransaction(Iterables.getOnlyElement(singleTransaction), price, time, quantity);
+		assertTransaction(Iterables.getOnlyElement(singleTransaction), price, time, quantity);
 	}
 	
-	public static void checkTransaction(Transaction transaction, Price price, TimeStamp time, int quantity) {
+	public static void assertTransaction(Transaction transaction, Price price, TimeStamp time, int quantity) {
 		assertEquals("Incorrect Price", price, transaction.getPrice());
 		assertEquals("Incorrect Time", time, transaction.getExecTime());
 		assertEquals("Incorrect Quantity", quantity, transaction.getQuantity());
 	}
 	
-	public static void checkSingleOrder(Collection<OrderRecord> singleOrder, Price price, int quantity, TimeStamp createdTime, TimeStamp submittedTime) {
+	public static void assertSingleOrder(Collection<OrderRecord> singleOrder, Price price, int quantity, TimeStamp createdTime, TimeStamp submittedTime) {
 		assertEquals("Collection didn't have a single order record", 1, singleOrder.size());
 		assertOrder(Iterables.getOnlyElement(singleOrder), price, quantity, createdTime, submittedTime);
-	}
-	
-	public static void checkSingleOrder(Collection<OrderRecord> singleOrder, OrderType type, Price price, int quantity, TimeStamp createdTime, TimeStamp submittedTime) {
-		assertEquals("Collection didn't have a single order record", 1, singleOrder.size());
-		checkOrder(Iterables.getOnlyElement(singleOrder), type, price, quantity, createdTime, submittedTime);
 	}
 	
 	/** Absent submitted time is null for convenience */
@@ -75,17 +68,17 @@ public abstract class Tests {
 		assertEquals("Incorrect Submitted Time", Optional.fromNullable(submittedTime), order.getSubmitTime());
 	}
 	
-	public static void checkOrder(OrderRecord order, OrderType type, Price price, int quantity, TimeStamp createdTime, TimeStamp submittedTime) {
+	public static void assertOrder(OrderRecord order, OrderType type, Price price, int quantity, TimeStamp createdTime, TimeStamp submittedTime) {
 		assertEquals("Incorrect Order Type", type, order.getOrderType());
 		assertOrder(order, price, quantity, createdTime, submittedTime);
 	}
 	
 	public static void assertSingleOrderRange(Collection<OrderRecord> singleOrder, Price low, Price high, int quantity) {
 		assertEquals("Collection didn't have a single order record", 1, singleOrder.size());
-		checkOrderRange(Iterables.getOnlyElement(singleOrder), low, high, quantity);
+		assertOrderRange(Iterables.getOnlyElement(singleOrder), low, high, quantity);
 	}
 	
-	public static void checkOrderRange(OrderRecord order, Price low, Price high, int quantity) {
+	public static void assertOrderRange(OrderRecord order, Price low, Price high, int quantity) {
 		Range<Price> bounds = Range.closed(low, high);
 		assertTrue(bounds.contains(order.getPrice()), "Order price (%s) out of bounds %s", order.getPrice(), bounds);
 		assertEquals(quantity, order.getQuantity());

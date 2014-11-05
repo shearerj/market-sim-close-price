@@ -6,7 +6,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertQuote;
 import static utils.Tests.assertSingleTransaction;
-import static utils.Tests.checkTransaction;
+import static utils.Tests.assertTransaction;
 import logger.Log;
 
 import org.junit.Before;
@@ -118,7 +118,7 @@ public class MarketTest {
 		
 		assertEquals(2, view.getTransactions().size());
 		for (Transaction transaction : view.getTransactions())
-			checkTransaction(transaction, Price.of(140), TimeStamp.ZERO, 1);
+			assertTransaction(transaction, Price.of(140), TimeStamp.ZERO, 1);
 		assertEquals(0, buy1.getQuantity());
 		assertEquals(0, sell1.getQuantity());
 		assertEquals(0, buy2.getQuantity());
@@ -171,7 +171,7 @@ public class MarketTest {
 		
 		// Check that the first submitted order2 S1@100 transacts
 		assertEquals(2, view.getTransactions().size());
-		checkTransaction(view.getTransactions().get(0), Price.of(115), TimeStamp.ZERO, 1);
+		assertTransaction(view.getTransactions().get(0), Price.of(115), TimeStamp.ZERO, 1);
 		assertEquals(0, order2.getQuantity());
 		assertEquals(0, order5.getQuantity());
 		
@@ -192,7 +192,7 @@ public class MarketTest {
 		market.clear();
 		
 		assertEquals(3, view.getTransactions().size());
-		checkTransaction(view.getTransactions().get(0), Price.of(110), TimeStamp.ZERO, 1);
+		assertTransaction(view.getTransactions().get(0), Price.of(110), TimeStamp.ZERO, 1);
 		assertEquals(0, order2.getQuantity());
 		assertEquals(0, order5.getQuantity());
 		
@@ -202,7 +202,7 @@ public class MarketTest {
 		
 		assertEquals(7, view.getTransactions().size());
 		for (Transaction trans : view.getTransactions().subList(0, 4))
-			checkTransaction(trans, Price.of(105), TimeStamp.ZERO, 1);
+			assertTransaction(trans, Price.of(105), TimeStamp.ZERO, 1);
 	}
 
 	@Test
@@ -375,7 +375,7 @@ public class MarketTest {
 		assertSingleTransaction(view.getTransactions(), Price.of(150), TimeStamp.ZERO, 2);
 		
 		addTransaction(Price.of(170), 1);
-		checkTransaction(Iterables.getFirst(view.getTransactions(), null), Price.of(170), TimeStamp.ZERO, 1);
+		assertTransaction(Iterables.getFirst(view.getTransactions(), null), Price.of(170), TimeStamp.ZERO, 1);
 	}
 
 	@Test

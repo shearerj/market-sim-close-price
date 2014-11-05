@@ -31,7 +31,6 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	}
 	
 	public static TimeStamp of(long ticks) {
-		if (ticks <= 0) return TimeStamp.ZERO;
 		return new TimeStamp(ticks);
 	}
 

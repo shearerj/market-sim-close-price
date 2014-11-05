@@ -6,7 +6,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertSingleOrderRange;
-import static utils.Tests.checkSingleOrder;
+import static utils.Tests.assertSingleOrder;
 
 import java.io.IOException;
 
@@ -247,13 +247,13 @@ public class AAAgentTest {
 		
 		limit = Price.of(211000);
 		buyer.biddingLayer(limit, null, 1);
-		checkSingleOrder(buyer.getActiveOrders(), Price.of(170007), 1, TimeStamp.of(20), TimeStamp.of(20));
+		assertSingleOrder(buyer.getActiveOrders(), Price.of(170007), 1, TimeStamp.of(20), TimeStamp.of(20));
 		
 		limit = Price.of(210000);
 		target = Price.of(180000);
 		buyer.withdrawAllOrders();
 		buyer.biddingLayer(limit, target, 1);
-		checkSingleOrder(buyer.getActiveOrders(), Price.of(160000), 1, TimeStamp.of(20), TimeStamp.of(20));
+		assertSingleOrder(buyer.getActiveOrders(), Price.of(160000), 1, TimeStamp.of(20), TimeStamp.of(20));
 	}
 	
 	@Test
@@ -281,13 +281,13 @@ public class AAAgentTest {
 		
 		limit = Price.of(170000);
 		seller.biddingLayer(limit, null, 1);
-		checkSingleOrder(seller.getActiveOrders(), Price.of(190000), 1, TimeStamp.of(20), TimeStamp.of(20));
+		assertSingleOrder(seller.getActiveOrders(), Price.of(190000), 1, TimeStamp.of(20), TimeStamp.of(20));
 		
 		limit = Price.of(165000);
 		target = Price.of(170000);
 		seller.withdrawAllOrders();
 		seller.biddingLayer(limit, target, 1);
-		checkSingleOrder(seller.getActiveOrders(), Price.of(190000), 1, TimeStamp.of(20), TimeStamp.of(20));
+		assertSingleOrder(seller.getActiveOrders(), Price.of(190000), 1, TimeStamp.of(20), TimeStamp.of(20));
 	}
 	
 	// The name of this test get deleted somehow...
@@ -364,7 +364,7 @@ public class AAAgentTest {
 		agent.agentStrategy();
 
 		// Asserting the bid is correct (based on EQ 10/11)
-		checkSingleOrder(agent.getActiveOrders(), Price.of(62500), 1, TimeStamp.of(100), TimeStamp.of(100));
+		assertSingleOrder(agent.getActiveOrders(), Price.of(62500), 1, TimeStamp.of(100), TimeStamp.of(100));
 	}
 
 	/** Testing seller on market with bids/asks but no transactions 100000 < Ask price < 200000 */
@@ -378,7 +378,7 @@ public class AAAgentTest {
 		agent.agentStrategy();
 
 		// Asserting the bid is correct (based on EQ 10/11)
-		checkSingleOrder(agent.getActiveOrders(), Price.of(175000), 1, TimeStamp.of(100), TimeStamp.of(100));
+		assertSingleOrder(agent.getActiveOrders(), Price.of(175000), 1, TimeStamp.of(100), TimeStamp.of(100));
 	}
 
 	/** Testing passive buyer on market with transactions */

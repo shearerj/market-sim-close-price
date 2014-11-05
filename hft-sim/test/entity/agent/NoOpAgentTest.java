@@ -25,11 +25,8 @@ public class NoOpAgentTest {
 		
 		Market market = Mock.market(timeline);
 		
-		ZIRAgent zir = ZIRAgent.create(0, stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs());
+		ZIRAgent.create(0, stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs());
 		NoOpAgent noop = NoOpAgent.create(1, stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, Props.fromPairs());
-		
-		zir.agentStrategy();
-		noop.agentStrategy();
 		// NoOp agent doesn't know about the market, and should never have agent strategy called again...
 		
 		for (int i = 0; i < 6000; ++i) {
@@ -38,6 +35,21 @@ public class NoOpAgentTest {
 			assertEquals(0, noop.getPosition());		// No transactions
 		}
 		
+	}
+
+	/*
+	 * FIXME Somehow the ZIR agent is withdrawing an order before it gets to the
+	 * market, and as a result the market tries to process an order with zero
+	 * quantity. This is partially a problem with the way withdrawls happen.
+	 * Potentially, quantity should only get removed from orders by the agent
+	 * view. Otherwise withdrawing an order does it effectively instantaniously
+	 * if it hasn't reached the market yet.
+	 */
+	@Test
+	public void randomTest() {
+		for (int i = 0; i < 100; ++i) {
+			strategyTest();
+		}
 	}
 	
 }
