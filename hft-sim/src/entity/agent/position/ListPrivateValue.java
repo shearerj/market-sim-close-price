@@ -10,6 +10,7 @@ import utils.Rand;
 import utils.SummStats;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 
@@ -73,12 +74,12 @@ public class ListPrivateValue extends AbstractQuantityIndexedArray<Price> implem
 	
 	@Override
 	public Price lowerBound() {
-		return Price.INF;
+		return Iterables.getFirst(getList(), Price.ZERO);
 	}
 
 	@Override
 	public Price upperBound() {
-		return Price.NEG_INF;
+		return Iterables.getLast(getList(), Price.ZERO);
 	}
 	
 	/** Checks that the quantities are within the range to add; otherwise ignores */
@@ -86,16 +87,15 @@ public class ListPrivateValue extends AbstractQuantityIndexedArray<Price> implem
 	public Price getValue(int currentPosition, int quantity, OrderType type) {
 		checkArgument(quantity > 0, "Quantity must be positive");
 		int step = type.equals(BUY) ? 1 : -1;
-		int nextPosition = currentPosition + quantity * step;
-		if (nextPosition > getMaxAbsPosition())
-			return upperBound();
-		if (nextPosition < -getMaxAbsPosition())
-			return lowerBound();
-
 		double privateValue = 0;
 		for (int i = 0; i < quantity; ++i)
 			privateValue += getValue(currentPosition + i * step, type).doubleValue();
 		return Price.of(privateValue);
+	}
+
+	@Override
+	public void setValue(int currentPosition, OrderType type, Price value) {
+		throw new UnsupportedOperationException("Can't set private value values");
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package entity.agent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static fourheap.Order.OrderType.BUY;
 import static logger.Log.Level.INFO;
 
@@ -61,6 +62,7 @@ public abstract class Agent extends Entity {
 	private long profit;
 	private final PrivateValue privateValue;
 	private final DiscountedValue privateValueSurplus;
+	private boolean liquidated;
 
 	protected Agent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			PrivateValue privateValue, TimeStamp arrivalTime, Props props) {
@@ -75,6 +77,7 @@ public abstract class Agent extends Entity {
 		this.profit = 0;
 		this.privateValue = checkNotNull(privateValue);
 		this.privateValueSurplus = DiscountedValue.create(props.get(DiscountFactors.class));
+		this.liquidated = false;
 		
 		// Schedule first entry
 		reenterIn(checkNotNull(arrivalTime));
@@ -84,6 +87,8 @@ public abstract class Agent extends Entity {
 
 	/** Liquidates an agent's position at the specified price. */
 	public void liquidateAtPrice(Price price) {
+		checkState(!liquidated);
+		liquidated = true;
 
 		log(INFO, "%s pre-liquidation: position=%d", this, positionBalance);
 
@@ -108,6 +113,8 @@ public abstract class Agent extends Entity {
 			}
 		});
 	}
+	
+	
 
 	// TODO Check for possible position violation?
 	/** Shortcut for creating orders */
@@ -122,8 +129,8 @@ public abstract class Agent extends Entity {
 	/** Shortcut for creating NMS orders */
 	protected OrderRecord submitNMSOrder(MarketView market, OrderType type, Price price, int quantity) {
 		OrderRecord order = new OrderRecord(market, getCurrentTime(), type, price.nonnegative().quantize(tickSize), quantity);
-		market.submitNMSOrder(this, order);
 		activeOrders.add(order);
+		market.submitNMSOrder(this, order);
 		return order;
 	}
 	
@@ -175,7 +182,8 @@ public abstract class Agent extends Entity {
 	
 	/** Called when an AgetnView sees a transaction */
 	protected void processTransaction(TimeStamp submitTime, OrderType type, Transaction trans) {
-		privateValueSurplus.addValue(privateValue.getValue(positionBalance, trans.getQuantity(), type),
+		int buySell = type == BUY ? 1 : -1;
+		privateValueSurplus.addValue(buySell * privateValue.getValue(positionBalance, trans.getQuantity(), type).doubleValue(),
 				trans.getExecTime().getInTicks());
 		
 		int effQuantity = type == BUY ? trans.getQuantity() : -trans.getQuantity();
@@ -225,10 +233,6 @@ public abstract class Agent extends Entity {
 	
 	protected final int getPosition() {
 		return positionBalance;
-	}
-	
-	protected final int getMaxAbsPosition() {
-		return privateValue.getMaxAbsPosition();
 	}
 	
 	protected final Price getPrivateValue(OrderType type) {

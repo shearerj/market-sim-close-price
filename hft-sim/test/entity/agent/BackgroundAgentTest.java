@@ -40,8 +40,6 @@ import data.FundamentalValue.FundamentalValueView;
 import data.Props;
 import data.Stats;
 import entity.agent.position.ListPrivateValue;
-import entity.agent.position.PrivateValue;
-import entity.agent.position.PrivateValues;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
@@ -55,7 +53,7 @@ import fourheap.Order.OrderType;
 public class BackgroundAgentTest {
 	
 	private static final Rand rand = Rand.create();
-	private static final PrivateValue simple = ListPrivateValue.create(ImmutableList.of(Price.of(100), Price.of(10)));
+	private static final ListPrivateValue simple = ListPrivateValue.create(ImmutableList.of(Price.of(100), Price.of(10)));
 	private static final double eps = 1e-6;
 	private static final double kappa = 0.2315;
 	private static final int meanValue = 383000;
@@ -102,7 +100,7 @@ public class BackgroundAgentTest {
 	@Test
 	public void getValuationBasic() {
 		AtomicInteger time = fundamentalSetup();
-		BackgroundAgent agent = backgroundAgentwithPrivateValue(PrivateValues.zero());
+		BackgroundAgent agent = backgroundAgentwithPrivateValue(ListPrivateValue.create(ImmutableList.<Price> of()));
 
 		for (int t = 0; t < simulationLength; ++t) {
 			time.set(t);
@@ -114,7 +112,7 @@ public class BackgroundAgentTest {
 	@Test
 	public void getEstimatedValuationBasic() {
 		AtomicInteger time = fundamentalSetup();
-		BackgroundAgent agent = backgroundAgentwithPrivateValue(PrivateValues.zero());
+		BackgroundAgent agent = backgroundAgentwithPrivateValue(ListPrivateValue.create(ImmutableList.<Price> of()));
 
 		double kappaToPower = Math.pow(kappa, simulationLength);
 		double rHat = fund.getValue().doubleValue() * kappaToPower + meanValue * (1 - kappaToPower);
@@ -126,17 +124,8 @@ public class BackgroundAgentTest {
 		for (int t = 0; t < simulationLength; t++) {
 			time.set(t);
 			double value = fund.getValue().doubleValue();
-			double rHatIter = agent.getEstimatedValuation(SELL).doubleValue();
-			if (value > meanValue) {
-				// rHat should be between current fundamental and mean,
-				// but closer to the mean this early in the run.
-				assertTrue(rHatIter < value);
-				assertTrue(rHatIter >= meanValue);
-			} else if (value < meanValue) {
-				assertTrue(rHatIter > value);
-				assertTrue(rHatIter <= meanValue);
-			}
-			assertTrue(Math.abs(rHatIter - meanValue) <= Math.abs(rHatIter - value));
+			rHat = agent.getEstimatedValuation(SELL).doubleValue();
+			assertTrue(Math.abs(rHat - meanValue) <= Math.abs(value - meanValue));
 		}
 	}
 
@@ -239,7 +228,7 @@ public class BackgroundAgentTest {
 		assertEquals(0, agent.getPosition());
 		assertEquals(0, mockAgent.getPosition());
 		
-		Price val= agent.getPrivateValue(BUY);
+		Price val = agent.getPrivateValue(BUY);
 
 		// Creating and adding bids
 		agent.submitOrder(BUY, Price.of(110000), 1);
@@ -795,15 +784,15 @@ public class BackgroundAgentTest {
 		return timeline;
 	}
 
-	private BackgroundAgent backgroundAgentwithPrivateValue(PrivateValue privateValue) {
+	private BackgroundAgent backgroundAgentwithPrivateValue(ListPrivateValue privateValue) {
 		return backgroundAgentwithPrivateValue(privateValue, Props.fromPairs());
 	}
 	
-	private BackgroundAgent backgroundAgentwithPrivateValue(PrivateValue privateValue, Props props) {
+	private BackgroundAgent backgroundAgentwithPrivateValue(ListPrivateValue privateValue, Props props) {
 		return backgroundAgentwithPrivateValue(privateValue, Mock.stats, props);
 	}
 	
-	private BackgroundAgent backgroundAgentwithPrivateValue(PrivateValue privateValue, Stats stats, Props props) {
+	private BackgroundAgent backgroundAgentwithPrivateValue(ListPrivateValue privateValue, Stats stats, Props props) {
 		return new BackgroundAgent(0, stats, timeline, Log.nullLogger(), rand, Mock.sip, fundamental, privateValue, market,
 				Props.merge(defaults, props)) {
 			private static final long serialVersionUID = 1L;

@@ -32,7 +32,6 @@ import data.Observations;
 import data.Props;
 import data.Stats;
 import entity.agent.position.ListPrivateValue;
-import entity.agent.position.PrivateValue;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Quote;
@@ -51,6 +50,7 @@ import fourheap.Order.OrderType;
  */
 public abstract class BackgroundAgent extends ReentryAgent {
 	
+	private final int maxAbsolutePosition;
 	protected final int bidRangeMax; 		// range for limit order
 	protected final int bidRangeMin;
 	
@@ -68,12 +68,13 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * Constructor for custom private valuation 
 	 */
 	protected BackgroundAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
-			PrivateValue privateValue, Market market, Props props) {
+			ListPrivateValue privateValue, Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, privateValue,
 				TimeStamp.of((long) rand.nextExponential(props.get(ArrivalRate.class))),
 				market,
 				AgentFactory.exponentials(props.get(BackgroundReentryRate.class, ReentryRate.class), rand),
 				props);
+		this.maxAbsolutePosition = privateValue.getMaxAbsPosition();
 		this.bidRangeMin = props.get(BidRangeMin.class);
 		this.bidRangeMax = props.get(BidRangeMax.class);
 		this.withdrawOrders = props.get(WithdrawOrders.class);
@@ -259,9 +260,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * gain if over quantity > 1).
 	 */
 	protected final Price getValuation(OrderType type, int quantity) {
-		return Price.of(getFundamental().intValue() * quantity
-				+ getPrivateValue(quantity, type).intValue()
-				).nonnegative();
+		return Price.of(getFundamental().intValue() * quantity + getPrivateValue(quantity, type).intValue()).nonnegative();
 	}
 
 	protected final Price getEstimatedValuation(OrderType type) {
@@ -269,12 +268,8 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	}
 	
 	protected final Price getEstimatedValuation(OrderType type, int quantity) {
-		
-		Price rHat = this.getEstimatedFundamental(type); 
-			
-		return Price.of(rHat.intValue() * quantity
-				+ getPrivateValue(quantity, type).intValue()
-				).nonnegative();
+		Price rHat = getEstimatedFundamental(type);
+		return Price.of(rHat.intValue() * quantity + getPrivateValue(quantity, type).intValue()).nonnegative();
 	}
 	
 	protected Price getEstimatedFundamental(OrderType type) {
@@ -297,6 +292,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	protected Price getLimitPrice(OrderType type, int quantity) {
 		return Price.of(getValuation(type, quantity).doubleValue() 
 				/ quantity).nonnegative();
+	}
+	
+	protected final int getMaxAbsPosition() {
+		return maxAbsolutePosition;
 	}
 
 	@Override

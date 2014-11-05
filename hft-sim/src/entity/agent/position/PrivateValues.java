@@ -1,5 +1,7 @@
 package entity.agent.position;
 
+import java.io.Serializable;
+
 import entity.market.Price;
 import fourheap.Order.OrderType;
 
@@ -9,7 +11,7 @@ public final class PrivateValues {
 		return new ZeroPrivateValue();
 	}
 
-	private static class ZeroPrivateValue implements PrivateValue {
+	private static class ZeroPrivateValue implements PrivateValue, Serializable {
 		@Override
 		public int getMaxAbsPosition() {
 			return Integer.MAX_VALUE;
@@ -24,11 +26,6 @@ public final class PrivateValues {
 		public Price getValue(int currentPosition, int quantity,
 				OrderType type) {
 			return Price.ZERO;
-		}
-
-		@Override
-		public void setValue(int currentPosition, OrderType type, Price value) {
-			throw new UnsupportedOperationException();
 		}
 
 		@Override

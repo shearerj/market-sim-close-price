@@ -1,6 +1,7 @@
 package entity.market;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.math.RoundingMode.HALF_EVEN;
 
 import java.io.Serializable;
@@ -111,26 +112,22 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 	public Price nonnegative() {
 		return ord.max(this, ZERO);
 	}
-
-	/**
-	 * Any price is greater than null
-	 */
+	
 	@Override
-	public int compareTo(Price o) {
-		if (o == null) {
-			return 1;
-		} else if (this == INF) {
-			if (o == INF)
+	public int compareTo(Price price) {
+		checkNotNull(price);
+		if (this == INF) {
+			if (price == INF)
 				return 0;
 			else
 				return 1;
 		} else if (this == NEG_INF) {
-			if (o == NEG_INF)
+			if (price == NEG_INF)
 				return 0;
 			else
 				return -1;
 		} else {
-			return Ints.compare(ticks, o.ticks);
+			return Ints.compare(ticks, price.ticks);
 		}
 	}
 
