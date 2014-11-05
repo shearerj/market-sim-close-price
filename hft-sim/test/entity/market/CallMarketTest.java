@@ -7,7 +7,6 @@ import static utils.Tests.assertQuote;
 import static utils.Tests.assertSingleTransaction;
 
 import java.io.IOException;
-import java.util.Random;
 
 import logger.Log;
 
@@ -17,6 +16,7 @@ import org.junit.Test;
 import systemmanager.Keys.ClearFrequency;
 import systemmanager.Keys.PricingPolicy;
 import utils.Mock;
+import utils.Rand;
 import data.Props;
 import entity.agent.Agent;
 import entity.agent.OrderRecord;
@@ -32,7 +32,7 @@ import fourheap.Order.OrderType;
  * @author ewah
  */
 public class CallMarketTest {
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	private static final Agent agent = Mock.agent();
 	
 	private EventQueue timeline;

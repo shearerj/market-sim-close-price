@@ -6,20 +6,19 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Random;
-
 import org.junit.Test;
+
+import utils.Rand;
 
 import com.google.common.collect.Ordering;
 
-import entity.agent.position.ListPrivateValue;
 import entity.market.Price;
 
 public class PrivateValueTest {
 	
 	@Test
 	public void randomGenerationTest() {
-		ListPrivateValue pv = ListPrivateValue.createRandomly(10, 1000, new Random());
+		ListPrivateValue pv = ListPrivateValue.createRandomly(10, 1000, Rand.create());
 		
 		// Verify correct number of elements
 		assertEquals(10, pv.getMaxAbsPosition());
@@ -31,7 +30,7 @@ public class PrivateValueTest {
 	
 	@Test
 	public void buySellSingle() {
-		ListPrivateValue pv = ListPrivateValue.createRandomly(1, 1000, new Random());
+		ListPrivateValue pv = ListPrivateValue.createRandomly(1, 1000, Rand.create());
 		// indices 0 1
 		
 		assertEquals(pv.getList().get(1), pv.getValue(0, BUY));
@@ -57,7 +56,7 @@ public class PrivateValueTest {
 	
 	@Test
 	public void buySellMulti() {
-		ListPrivateValue pv = ListPrivateValue.createRandomly(2, 1000, new Random());
+		ListPrivateValue pv = ListPrivateValue.createRandomly(2, 1000, Rand.create());
 		// indices 0 1 2 3
 		int pv0 = pv.getList().get(0).intValue();
 		int pv1 = pv.getList().get(1).intValue();
@@ -93,7 +92,7 @@ public class PrivateValueTest {
 	
 	@Test
 	public void getValueFromQuantity() {
-		ListPrivateValue pv = ListPrivateValue.createRandomly(5, 1000, new Random());
+		ListPrivateValue pv = ListPrivateValue.createRandomly(5, 1000, Rand.create());
 		
 		assertEquals(pv.getList().get(5), pv.getValue(0, BUY));
 		assertEquals(pv.getList().get(4), pv.getValue(0, SELL));
@@ -117,7 +116,7 @@ public class PrivateValueTest {
 	
 	@Test
 	public void getValueFromMultiQuantity() {
-		ListPrivateValue pv = ListPrivateValue.createRandomly(5, 1000, new Random());
+		ListPrivateValue pv = ListPrivateValue.createRandomly(5, 1000, Rand.create());
 		// indices 0 1 2 3 4 . 5 6 7 8 9
 		int pv0 = pv.getList().get(0).intValue();
 		int pv1 = pv.getList().get(1).intValue();
@@ -167,7 +166,7 @@ public class PrivateValueTest {
 	
 	@Test
 	public void testBounds() {
-		ListPrivateValue pv = ListPrivateValue.createRandomly(5, 1000, new Random());
+		ListPrivateValue pv = ListPrivateValue.createRandomly(5, 1000, Rand.create());
 		Price pv0 = Price.of(pv.getList().get(0).intValue());
 		Price pv9 = Price.of(pv.getList().get(9).intValue());
 		
@@ -208,7 +207,7 @@ public class PrivateValueTest {
 	
 	@Test
 	public void testMultiQuantityBounds() {
-		ListPrivateValue pv = ListPrivateValue.createRandomly(5, 1000, new Random());
+		ListPrivateValue pv = ListPrivateValue.createRandomly(5, 1000, Rand.create());
 		
 		assertEquals(Price.NEG_INF, pv.getValue(4, 2, BUY));
 		assertEquals(Price.INF, pv.getValue(-4, 2, SELL));

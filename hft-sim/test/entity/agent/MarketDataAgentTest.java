@@ -6,7 +6,6 @@ import static utils.Tests.assertQuote;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Iterator;
-import java.util.Random;
 
 import logger.Log;
 
@@ -14,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import utils.Mock;
+import utils.Rand;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
@@ -30,7 +30,7 @@ import event.TimeStamp;
 // TODO More complicated tests
 
 public class MarketDataAgentTest {
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 
 	private EventQueue timeline;
 	private Market market;

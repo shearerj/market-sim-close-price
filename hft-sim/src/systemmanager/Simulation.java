@@ -21,6 +21,7 @@ import systemmanager.Keys.NumAgents;
 import systemmanager.Keys.NumMarkets;
 import systemmanager.Keys.SimLength;
 import systemmanager.SimulationSpec.PlayerSpec;
+import utils.Rand;
 
 import com.google.common.collect.ImmutableCollection.Builder;
 import com.google.common.collect.ImmutableList;
@@ -47,8 +48,6 @@ import event.TimeStamp;
  * <li>executeEvents</li>
  * <li>getObservations</li>
  * </ol>
- * 
- * XXX partial Singleton pattern
  * 
  * @author erik
  * 
@@ -77,7 +76,7 @@ public class Simulation {
 			@Override public int getTimePadding() { return 6; }
 			@Override public long getTime() { return eventQueue.getCurrentTime().getInTicks(); }
 		});
-		this.eventQueue = EventQueue.create(log, new Random(rand.nextLong()));
+		this.eventQueue = EventQueue.create(log, Rand.from(rand));
 		
 		this.stats = Stats.create();
 
@@ -88,15 +87,15 @@ public class Simulation {
 				simProps.get(FundamentalKappa.class),
 				simProps.get(FundamentalMean.class),
 				simProps.get(FundamentalShockVar.class),
-				new Random(rand.nextLong()));
+				Rand.from(rand));
 		
-		SIP sip = SIP.create(stats, eventQueue, log, new Random(rand.nextLong()), simProps.get(NbboLatency.class));
+		SIP sip = SIP.create(stats, eventQueue, log, Rand.from(rand), simProps.get(NbboLatency.class));
 		
-		MarketFactory marketFactory = MarketFactory.create(stats, eventQueue, log, new Random(rand.nextLong()), sip);
+		MarketFactory marketFactory = MarketFactory.create(stats, eventQueue, log, Rand.from(rand), sip);
 		Collection<Market> markets = createMarkets(marketFactory, spec.getMarketProps(), rand);
 		
 		Builder<Agent> agentBuilder = ImmutableList.builder();
-		AgentFactory agentFactory = AgentFactory.create(stats, eventQueue, log, new Random(rand.nextLong()), sip, fundamental, markets);
+		AgentFactory agentFactory = AgentFactory.create(stats, eventQueue, log, Rand.from(rand), sip, fundamental, markets);
 		this.players = createPlayers(agentFactory, agentBuilder, spec.getPlayerProps(), rand);
 		this.agents = createAgents(agentFactory, agentBuilder, spec.getAgentProps(), rand);
 	}

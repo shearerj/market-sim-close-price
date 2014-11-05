@@ -10,11 +10,11 @@ import static logger.Log.Level.INFO;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Random;
 
 import logger.Log;
 import systemmanager.Keys.Alpha;
 import systemmanager.Keys.LaLatency;
+import utils.Rand;
 
 import com.google.common.base.Functions;
 import com.google.common.base.Optional;
@@ -28,8 +28,8 @@ import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.market.Quote;
 import entity.sip.MarketInfo;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 import fourheap.Order.OrderType;
 
 /**
@@ -48,7 +48,7 @@ public class LAAgent extends HFTAgent {
 	// To "lock" certain markets until agent knows it's current quote information reflects placed bids
 	protected final Map<MarketView, Status> buyStatus, sellStatus;
 	
-	protected LAAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected LAAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Collection<Market> markets, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, TimeStamp.ZERO,
 				Maps.toMap(markets, Functions.constant(props.get(LaLatency.class))),
@@ -63,7 +63,7 @@ public class LAAgent extends HFTAgent {
 		}
 	}
 
-	public static LAAgent create(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental
+	public static LAAgent create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental
 			, Collection<Market> markets, Props props) {
 		return new LAAgent(id, stats, timeline, log, rand, sip, fundamental, markets, props);
 	}

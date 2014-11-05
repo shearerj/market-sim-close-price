@@ -5,9 +5,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Random;
 
-import utils.Rands;
+import utils.Rand;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
@@ -16,8 +15,8 @@ import com.google.common.collect.Ordering;
 
 import entity.View;
 import entity.market.Price;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 
 /**
  * Class to store and compute a stochastic process used as a base to determine
@@ -36,7 +35,7 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 	protected final double kappa;
 	protected final int meanValue;
 	protected final double shockVar;
-	protected final Random rand;
+	protected final Rand rand;
 
 	/**
 	 * @param kap rate which the process reverts to the mean value
@@ -44,7 +43,7 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 	 * @param var Gaussian Process variance
 	 * @param rand Random generator
 	 */
-	protected FundamentalValue(Stats stats, Timeline timeline, double kap, int meanVal, double var, Random rand) {
+	protected FundamentalValue(Stats stats, Timeline timeline, double kap, int meanVal, double var, Rand rand) {
 		this.stats = stats;
 		this.timeline = timeline;
 		this.rand = rand;
@@ -54,14 +53,14 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 
 		// stochastic initial conditions for random process
 		meanRevertProcess = Lists.newArrayList();
-		meanRevertProcess.add(Rands.nextGaussian(rand, meanValue, shockVar));
+		meanRevertProcess.add(rand.nextGaussian(meanValue, shockVar));
 		postStat(0, Iterables.getOnlyElement(meanRevertProcess));
 	}
 	
 	/**
 	 * Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps
 	 */
-	public static FundamentalValue create(Stats stats, Timeline timeline, double kap, int meanVal, double var, Random rand) {
+	public static FundamentalValue create(Stats stats, Timeline timeline, double kap, int meanVal, double var, Rand rand) {
 		return new FundamentalValue(stats, timeline, kap, meanVal, var, rand);
 	}
 
@@ -71,7 +70,7 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 	protected void computeFundamentalTo(int maxQuery) {
 		for (int i = meanRevertProcess.size(); i <= maxQuery; i++) {
 			double prevValue = Iterables.getLast(meanRevertProcess);
-			double nextValue = Rands.nextGaussian(rand, meanValue * kappa + (1 - kappa) * prevValue, shockVar);
+			double nextValue = rand.nextGaussian(meanValue * kappa + (1 - kappa) * prevValue, shockVar);
 			meanRevertProcess.add(nextValue);
 			postStat(i, nextValue);
 		}

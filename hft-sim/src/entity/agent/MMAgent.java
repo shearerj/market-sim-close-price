@@ -1,17 +1,17 @@
 package entity.agent;
 
 import java.util.Collection;
-import java.util.Random;
 
 import logger.Log;
+import utils.Rand;
 import data.FundamentalValue;
 import data.Props;
 import data.Stats;
 import entity.agent.position.PrivateValue;
 import entity.market.Market.MarketView;
 import entity.sip.MarketInfo;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 
 /**
  * MMAGENT
@@ -32,7 +32,7 @@ public abstract class MMAgent extends Agent {
 	
 	protected final Collection<MarketView> markets; 
 	
-	protected MMAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected MMAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			PrivateValue privateValue, TimeStamp arrivalTime, Collection<MarketView> markets, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, privateValue, arrivalTime, props);
 		this.markets = markets;

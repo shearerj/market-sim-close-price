@@ -5,15 +5,13 @@ import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertNBBO;
 import static utils.Tests.assertSingleTransaction;
-
-import java.util.Random;
-
 import logger.Log;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import utils.Mock;
+import utils.Rand;
 import data.Props;
 import entity.agent.Agent;
 import entity.agent.OrderRecord;
@@ -23,8 +21,8 @@ import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.sip.SIP;
 import event.EventQueue;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 import fourheap.Order.OrderType;
 
 public class SIPTest {
@@ -36,7 +34,7 @@ public class SIPTest {
 	 * in proper order, but if several markets had a transaction at the same
 	 * time, the order will be undefined
 	 */
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	private static final Agent agent = Mock.agent();
 	
 	private Timeline timeline;

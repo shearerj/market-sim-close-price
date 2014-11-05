@@ -8,7 +8,6 @@ import static utils.Tests.assertQuote;
 import static utils.Tests.assertRandomOrderLadder;
 
 import java.io.IOException;
-import java.util.Random;
 
 import logger.Log;
 
@@ -26,6 +25,7 @@ import systemmanager.Keys.TickSize;
 import systemmanager.Keys.TruncateLadder;
 import utils.Mock;
 import utils.Mock.MockTimeLine;
+import utils.Rand;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Range;
@@ -41,12 +41,12 @@ import entity.market.Quote;
 import entity.sip.MarketInfo;
 import entity.sip.SIP;
 import event.EventQueue;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 
 public class MarketMakerTest {
 	private static final double eps = 1e-6;
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	private static final Agent mockAgent = Mock.agent();
 	private static final FundamentalValue fundamental = Mock.fundamental(100000);
 	private static final Props defaults = Props.fromPairs(

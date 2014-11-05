@@ -9,7 +9,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.util.Random;
 
 import logger.Log;
 
@@ -28,6 +27,7 @@ import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.RangeA;
 import systemmanager.Keys.RangeR;
 import utils.Mock;
+import utils.Rand;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Range;
@@ -44,7 +44,7 @@ import fourheap.Order.OrderType;
 
 public class ZIPAgentTest {
 
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	private static final double eps = 1e-6;
 	private static final Agent mockAgent = Mock.agent();
 	private static final Props defaults = Props.fromPairs(

@@ -2,24 +2,22 @@ package utils;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Random;
-
 import org.junit.Test;
 
 
-public class RandsTest {
+public class RandTest {
 	
 	@Test
 	public void gaussianTest() {
 		double delta = 0.1;
 		
 		SummStats ds = SummStats.on();
-		Random rand = new Random();
+		Rand rand = Rand.create();
 		double mean = 100;
 		double variance = 10;
 		
 		for (int i = 0; i < 100000; i++) {
-			ds.add(Rands.nextGaussian(rand, mean, variance));
+			ds.add(rand.nextGaussian(mean, variance));
 		}
 		
 		assertEquals(mean, ds.mean(), delta);
@@ -31,13 +29,13 @@ public class RandsTest {
 		double delta = 10;
 		
 		SummStats ds = SummStats.on();
-		Random rand = new Random();
+		Rand rand = Rand.create();
 		double rate = 0.001;
 		
-		assertEquals(Double.POSITIVE_INFINITY, Rands.nextExponential(rand, 0), 0);
+		assertEquals(Double.POSITIVE_INFINITY, rand.nextExponential(0), 0);
 		
 		for (int i = 0; i < 1000000; i++) {
-			ds.add(Rands.nextExponential(rand, rate));
+			ds.add(rand.nextExponential(rate));
 		}
 		
 		assertEquals(1 / rate, ds.mean(), delta);
@@ -49,12 +47,12 @@ public class RandsTest {
 		double delta = 0.5;
 		
 		SummStats ds = SummStats.on();
-		Random rand = new Random();
+		Rand rand = Rand.create();
 		double a = 0;
 		double b = 100;
 		
 		for (int i = 0; i < 100000; i++) {
-			ds.add(Rands.nextUniform(rand, a, b));
+			ds.add(rand.nextUniform(a, b));
 		}
 		
 		assertEquals((a + b)/2, ds.mean(), delta);

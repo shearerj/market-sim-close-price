@@ -6,7 +6,6 @@ import static fourheap.Order.OrderType.SELL;
 import static logger.Log.Level.INFO;
 
 import java.util.List;
-import java.util.Random;
 
 import logger.Log;
 import systemmanager.Keys.BetaMax;
@@ -19,7 +18,7 @@ import systemmanager.Keys.MaxQty;
 import systemmanager.Keys.RangeA;
 import systemmanager.Keys.RangeR;
 import utils.Maths;
-import utils.Rands;
+import utils.Rand;
 
 import com.google.common.collect.Ordering;
 
@@ -65,7 +64,7 @@ public class ZIPAgent extends WindowAgent {
 	protected final double rangeCoeffA;	// range for A, coefficient of absolute perturbation
 	protected final double rangeCoeffR;	// range for R, coefficient of relative perturbation
 
-	protected ZIPAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected ZIPAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
@@ -95,12 +94,12 @@ public class ZIPAgent extends WindowAgent {
 		this.momentumChange = 0;	// initialized to 0
 		this.lastOrderPrice = null;
 		this.limitPrice = null;
-		this.beta = Rands.nextUniform(rand, betaMin, betaMax);
-		this.gamma = Rands.nextUniform(rand, gammaMin, gammaMax);
+		this.beta = rand.nextUniform(betaMin, betaMax);
+		this.gamma = rand.nextUniform(gammaMin, gammaMax);
 		this.margin = Margin.createRandomly(maxAbsPosition, rand, marginMin, marginMax);
 	}
 
-	public static ZIPAgent create(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	public static ZIPAgent create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		return new ZIPAgent(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}
@@ -303,19 +302,19 @@ public class ZIPAgent extends WindowAgent {
 	/** Compute new coefficient of Relative Perturbation. */
 	protected double computeRCoefficient(boolean increaseTargetPrice){
 		if (increaseTargetPrice){
-			return Rands.nextUniform(rand, 1, 1+rangeCoeffR);
+			return rand.nextUniform(1, 1+rangeCoeffR);
 		} 
 		
-		return Rands.nextUniform(rand, 1-rangeCoeffR, 1);
+		return rand.nextUniform(1-rangeCoeffR, 1);
 	}
 
 	/** Compute new coefficient of Absolute Perturbation */
 	protected double computeACoefficient(boolean increaseTargetPrice){
 		if (increaseTargetPrice){
-			return Rands.nextUniform(rand, 0, rangeCoeffA);
+			return rand.nextUniform(0, rangeCoeffA);
 		} 
 
-		return Rands.nextUniform(rand, -rangeCoeffA, 0);
+		return rand.nextUniform(-rangeCoeffA, 0);
 	}
 
 	private static final long serialVersionUID = 8138883791556301413L;

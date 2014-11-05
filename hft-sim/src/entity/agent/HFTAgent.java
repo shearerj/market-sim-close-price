@@ -3,9 +3,9 @@ package entity.agent;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 
 import logger.Log;
+import utils.Rand;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
@@ -19,8 +19,8 @@ import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.sip.MarketInfo;
 import event.Activity;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 
 /**
  * Abstract class for high-frequency traders. Creates the necessary information
@@ -32,7 +32,7 @@ public abstract class HFTAgent extends MMAgent {
 
 	private static final long serialVersionUID = -1483633963238206201L;
 
-	protected HFTAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected HFTAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			TimeStamp arrivalTime, Map<Market, TimeStamp> marketLatencies, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(), arrivalTime, toViews(marketLatencies), props);
 		for (MarketView market : markets)

@@ -1,10 +1,8 @@
 package entity.agent;
 
 import static logger.Log.Level.INFO;
-
-import java.util.Random;
-
 import logger.Log;
+import utils.Rand;
 
 import com.google.common.base.Optional;
 
@@ -49,7 +47,7 @@ public class BasicMarketMaker extends MarketMaker {
 	
 	protected Optional<Price> lastAsk, lastBid; // stores the ask/bid at last entry
 
-	protected BasicMarketMaker(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected BasicMarketMaker(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
@@ -57,7 +55,7 @@ public class BasicMarketMaker extends MarketMaker {
 		this.lastBid = Optional.absent();
 	}
 
-	public static BasicMarketMaker create(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	public static BasicMarketMaker create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		return new BasicMarketMaker(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}

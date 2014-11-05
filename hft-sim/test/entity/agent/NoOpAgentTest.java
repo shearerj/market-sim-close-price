@@ -1,14 +1,12 @@
 package entity.agent;
 
 import static org.junit.Assert.assertEquals;
-
-import java.util.Random;
-
 import logger.Log;
 
 import org.junit.Test;
 
 import utils.Mock;
+import utils.Rand;
 import data.Props;
 import data.Stats;
 import entity.market.Market;
@@ -16,7 +14,7 @@ import event.EventQueue;
 import event.TimeStamp;
 
 public class NoOpAgentTest {
-	private static Random rand = new Random();
+	private static Rand rand = Rand.create();
 
 	// FIXME Check that it still liquidates and posts appropriate stats
 	
@@ -27,8 +25,8 @@ public class NoOpAgentTest {
 		
 		Market market = Mock.market(timeline);
 		
-		ZIRAgent zir = ZIRAgent.create(0, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs());
-		NoOpAgent noop = NoOpAgent.create(1, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, Props.fromPairs());
+		ZIRAgent zir = ZIRAgent.create(0, stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs());
+		NoOpAgent noop = NoOpAgent.create(1, stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, Props.fromPairs());
 		
 		zir.agentStrategy();
 		noop.agentStrategy();

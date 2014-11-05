@@ -24,7 +24,7 @@ import com.google.common.math.IntMath;
 
 public class Iterators2 {
 	
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 
 	public static <E> SparseIterator<E> fromSparse(final Iterator<SparseElement<E>> iter) {
 		return new SparseIterator<E>() {
@@ -130,12 +130,12 @@ public class Iterators2 {
 		};
 	}
 
-	public static Iterator<Double> exponentials(final double rate, final Random rand) {
+	public static Iterator<Double> exponentials(final double rate, final Rand rand) {
 		if (rate == 0)
 			return ImmutableList.<Double> of().iterator();
 		return new AbstractIterator<Double>() {
 			@Override protected Double computeNext() {
-				return Rands.nextExponential(rand, rate);
+				return rand.nextExponential(rate);
 			}
 		};
 	}

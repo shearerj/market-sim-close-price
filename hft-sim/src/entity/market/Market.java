@@ -10,11 +10,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 
 import logger.Log;
 import systemmanager.Keys.MarketLatency;
 import utils.Iterables2;
+import utils.Rand;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.HashMultiset;
@@ -35,8 +35,8 @@ import entity.market.clearingrule.ClearingRule;
 import entity.sip.BestBidAsk;
 import entity.sip.MarketInfo;
 import event.Activity;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 import fourheap.FourHeap;
 import fourheap.MatchedOrders;
 
@@ -76,7 +76,7 @@ public abstract class Market extends Entity {
 	private final Map<OrderRecord, Order> orderMapping; // Maps active records to their order object
 	private final Multiset<Price> askPriceQuantity, bidPriceQuantity; // How many orders are at a specific price
 	
-	protected Market(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, ClearingRule clearingRule, Props props) {
+	protected Market(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, ClearingRule clearingRule, Props props) {
 		super(id, stats, timeline, log, rand);
 		this.orderbook = FourHeap.<Price, MarketTime, Order> create();
 		this.clearingRule = clearingRule;

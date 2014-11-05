@@ -4,17 +4,17 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static logger.Log.Level.INFO;
 
 import java.util.Iterator;
-import java.util.Random;
 
 import logger.Log;
+import utils.Rand;
 import data.FundamentalValue;
 import data.Props;
 import data.Stats;
 import entity.agent.position.PrivateValue;
 import entity.market.Market;
 import entity.sip.MarketInfo;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 
 public abstract class ReentryAgent extends SMAgent {
 
@@ -23,7 +23,7 @@ public abstract class ReentryAgent extends SMAgent {
 	protected final Iterator<TimeStamp> reentry; // wait times between reentry
 	protected boolean arrived;
 
-	public ReentryAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	public ReentryAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			PrivateValue privateValue, TimeStamp arrivalTime, Market market, Iterator<TimeStamp> reentry, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, privateValue, arrivalTime, market, props);
 		this.reentry = checkNotNull(reentry);

@@ -6,7 +6,6 @@ import static org.junit.Assert.assertEquals;
 import static utils.Tests.assertQuote;
 
 import java.io.IOException;
-import java.util.Random;
 
 import logger.Log;
 
@@ -14,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import utils.Mock;
+import utils.Rand;
 import data.Props;
 import entity.agent.Agent;
 import entity.agent.OrderRecord;
@@ -22,7 +22,7 @@ import event.Timeline;
 import fourheap.Order.OrderType;
 
 public class CDAMarketTest {
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	private static final Agent agent = Mock.agent();
 	
 	private Timeline timeline;

@@ -7,9 +7,6 @@ import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertQuote;
 import static utils.Tests.assertSingleTransaction;
 import static utils.Tests.checkTransaction;
-
-import java.util.Random;
-
 import logger.Log;
 
 import org.junit.Before;
@@ -17,6 +14,7 @@ import org.junit.Test;
 
 import systemmanager.Keys.MarketLatency;
 import utils.Mock;
+import utils.Rand;
 
 import com.google.common.collect.Iterables;
 
@@ -31,13 +29,13 @@ import entity.market.clearingrule.UniformPriceClear;
 import entity.sip.MarketInfo;
 import entity.sip.SIP;
 import event.EventQueue;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 import fourheap.Order.OrderType;
 
 public class MarketTest {
 	private static final double eps = 1e-6;
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	private static final Agent agent = Mock.agent();
 	
 	private Timeline timeline;

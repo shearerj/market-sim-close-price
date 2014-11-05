@@ -7,11 +7,12 @@ import logger.Log;
 import systemmanager.Consts.MarketType;
 import systemmanager.Keys.ClearFrequency;
 import utils.Iterators2;
+import utils.Rand;
 import data.Props;
 import data.Stats;
 import entity.sip.MarketInfo;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 
 public class MarketFactory {
 	
@@ -38,12 +39,12 @@ public class MarketFactory {
 	public Market createMarket(MarketType type, Props props) {
 		switch (type) {
 		case CDA:
-			return CDAMarket.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, props);
+			return CDAMarket.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, props);
 		case CALL:
 			if (props.get(ClearFrequency.class).equals(TimeStamp.ZERO))
-				return CDAMarket.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, props);
+				return CDAMarket.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, props);
 			else
-				return CallMarket.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, props);
+				return CallMarket.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, props);
 		default:
 			throw new IllegalArgumentException("Can't create MarketType: " + type);
 		}

@@ -7,7 +7,6 @@ import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertSingleTransaction;
 
 import java.io.IOException;
-import java.util.Random;
 
 import logger.Log;
 
@@ -16,6 +15,7 @@ import org.junit.Test;
 
 import systemmanager.Keys.LaLatency;
 import utils.Mock;
+import utils.Rand;
 
 import com.google.common.collect.ImmutableList;
 
@@ -30,7 +30,7 @@ import fourheap.Order.OrderType;
 
 public class LAAgentTest {
 	
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	
 	private EventQueue timeline;
 	private Market nyse, nasdaq;

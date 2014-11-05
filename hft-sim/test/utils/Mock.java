@@ -1,7 +1,6 @@
 package utils;
 
 import java.util.Iterator;
-import java.util.Random;
 
 import logger.Log;
 
@@ -18,13 +17,13 @@ import entity.market.Price;
 import entity.sip.BestBidAsk;
 import entity.sip.MarketInfo;
 import event.Activity;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 
 public class Mock {
 	
 	private static final Iterator<Integer> ids = Iterators2.counter();
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	private static final Optional<Market> absentMarket = Optional.absent();
 	private static final Optional<Price> absentPrice = Optional.absent();
 

@@ -1,9 +1,6 @@
 package entity.market;
 
 import static org.junit.Assert.assertTrue;
-
-import java.util.Random;
-
 import logger.Log;
 
 import org.junit.Test;
@@ -11,6 +8,7 @@ import org.junit.Test;
 import systemmanager.Consts.MarketType;
 import systemmanager.Keys.ClearFrequency;
 import utils.Mock;
+import utils.Rand;
 import data.Props;
 import event.TimeStamp;
 
@@ -18,7 +16,7 @@ public class MarketFactoryTest {
 
 	@Test
 	public void createMarkets() {
-		Random rand = new Random();
+		Rand rand = Rand.create();
 		MarketFactory factory = MarketFactory.create(Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip);
 		Market market;
 

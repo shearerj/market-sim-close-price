@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 
 import logger.Log;
 
@@ -23,6 +22,7 @@ import org.junit.Test;
 import systemmanager.Keys.MarketLatency;
 import systemmanager.Keys.WindowLength;
 import utils.Mock;
+import utils.Rand;
 
 import com.google.common.collect.Lists;
 
@@ -40,7 +40,7 @@ import event.TimeStamp;
  *
  */
 public class WindowAgentTest {
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	private static final Agent mockAgent = Mock.agent();
 	
 	private EventQueue timeline;

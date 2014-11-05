@@ -3,9 +3,6 @@ package data;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
-
-import java.util.Random;
-
 import logger.Log;
 
 import org.junit.Before;
@@ -15,6 +12,7 @@ import systemmanager.Consts.AgentType;
 import systemmanager.Keys.SimLength;
 import systemmanager.SimulationSpec.PlayerSpec;
 import utils.Mock;
+import utils.Rand;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
@@ -31,7 +29,7 @@ import event.TimeStamp;
 
 public class ObservationsTest {
 	private static final double eps = 1e-6;
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	private Stats stats;
 	private Market one, two;
 	

@@ -3,14 +3,14 @@ package entity;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.Serializable;
-import java.util.Random;
 
 import logger.Log;
 import logger.Log.Level;
+import utils.Rand;
 import data.Stats;
 import event.Activity;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 
 /**
  * This class is the base for all things that may perform an action/activity 
@@ -26,9 +26,9 @@ public abstract class Entity implements Serializable {
 	private final Stats stats;
 	private final Timeline timeline;
 	private final Log log;
-	protected final Random rand;
+	protected final Rand rand;
 	
-	protected Entity(int id, Stats stats, Timeline timeline, Log log, Random rand) {
+	protected Entity(int id, Stats stats, Timeline timeline, Log log, Rand rand) {
 		this.id = id;
 		this.stats = checkNotNull(stats);
 		this.timeline = checkNotNull(timeline);

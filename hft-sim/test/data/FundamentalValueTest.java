@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.Random;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -14,6 +13,7 @@ import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
 import utils.Mock;
+import utils.Rand;
 import utils.SummStats;
 
 import com.google.common.collect.ImmutableList;
@@ -24,7 +24,7 @@ import event.TimeStamp;
 
 public class FundamentalValueTest {
 	private static final double eps = 1e-6;
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	
 	@Before
 	public void defaultSetup() {

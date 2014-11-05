@@ -1,11 +1,9 @@
 package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
-
-import java.util.Random;
-
 import logger.Log;
 import systemmanager.Keys.WeightFactor;
+import utils.Rand;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -52,7 +50,7 @@ public class WMAMarketMaker extends MAMarketMaker {
 
 	protected double weightFactor;
 
-	protected WMAMarketMaker(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected WMAMarketMaker(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
@@ -60,7 +58,7 @@ public class WMAMarketMaker extends MAMarketMaker {
 		checkArgument(weightFactor >= 0 && weightFactor < 1, "Weight factor must be in range [0,1)!");
 	}
 	
-	public static WMAMarketMaker create(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	public static WMAMarketMaker create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		return new WMAMarketMaker(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}

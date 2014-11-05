@@ -4,10 +4,10 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.*;
-import static utils.Tests.*;
+import static org.junit.Assert.assertTrue;
+import static utils.Tests.assertQuote;
+import static utils.Tests.assertRegex;
 
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import logger.Log;
@@ -16,6 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import utils.Mock;
+import utils.Rand;
 import data.Props;
 import data.Stats;
 import entity.agent.position.PrivateValues;
@@ -27,7 +28,7 @@ import event.TimeStamp;
 
 public class AgentTest {
 	private static final double eps = 1e-6;
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	private Market market;
 	private MarketView view;
 	private Agent agent;

@@ -8,7 +8,6 @@ import static utils.Tests.assertOrder;
 import static utils.Tests.assertSingleTransaction;
 
 import java.io.IOException;
-import java.util.Random;
 
 import logger.Log;
 
@@ -21,6 +20,7 @@ import systemmanager.Keys.BidRangeMin;
 import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.WithdrawOrders;
 import utils.Mock;
+import utils.Rand;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -45,7 +45,7 @@ import event.TimeStamp;
  */
 public class ZIRAgentTest {
 
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	private static final Agent mockAgent = Mock.agent();
 	private static final Props defaults = Props.fromPairs(
 			ArrivalRate.class, 0d,

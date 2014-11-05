@@ -6,21 +6,20 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Random;
-
 import org.junit.Test;
+
+import utils.Rand;
 
 import com.google.common.collect.Range;
 import com.google.common.primitives.Doubles;
 
-import entity.agent.position.Margin;
 import fourheap.Order.OrderType;
 
 public class MarginTest {
 	
 	@Test
 	public void basicMargin() {
-		Margin margin = Margin.createRandomly(1, new Random(), 1, 1);
+		Margin margin = Margin.createRandomly(1, Rand.create(), 1, 1);
 		assertEquals(2, margin.getList().size());
 		assertEquals(1, margin.getMaxAbsPosition());
 		// check that positive margin for selling, negative for buying
@@ -30,7 +29,7 @@ public class MarginTest {
 	
 	@Test
 	public void multiUnitMargin() {
-		Margin margin = Margin.createRandomly(2, new Random(), 0, 1);
+		Margin margin = Margin.createRandomly(2, Rand.create(), 0, 1);
 		assertEquals(4, margin.getList().size());
 		for (double value : margin.getList().subList(0, 2))
 			assertTrue("Margins outside range", Range.closed(0d, 1d).contains(value));
@@ -40,7 +39,7 @@ public class MarginTest {
 	
 	@Test
 	public void getValueTest() {
-		Margin margin = Margin.createRandomly(2, new Random(), 0, 1);
+		Margin margin = Margin.createRandomly(2, Rand.create(), 0, 1);
 		double m0 = margin.getList().get(0);
 		double m1 = margin.getList().get(1);
 		double m2 = margin.getList().get(2);
@@ -57,7 +56,7 @@ public class MarginTest {
 	
 	@Test
 	public void setValueTest() {
-		Margin margin = Margin.createRandomly(2, new Random(), 0, 1);
+		Margin margin = Margin.createRandomly(2, Rand.create(), 0, 1);
 		double m2 = margin.getList().get(2);
 		
 		// basic set
@@ -73,7 +72,7 @@ public class MarginTest {
 	
 	@Test
 	public void setMultipleValueTest() {
-		Margin margin = Margin.createRandomly(2, new Random(), 0, 1);
+		Margin margin = Margin.createRandomly(2, Rand.create(), 0, 1);
 		
 		// set
 		margin.setValue(0, BUY, 1d);

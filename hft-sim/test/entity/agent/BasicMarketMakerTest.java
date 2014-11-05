@@ -9,7 +9,6 @@ import static utils.Tests.assertRandomOrderLadder;
 import static utils.Tests.assertSingleTransaction;
 
 import java.io.IOException;
-import java.util.Random;
 
 import logger.Log;
 
@@ -25,6 +24,7 @@ import systemmanager.Keys.TickImprovement;
 import systemmanager.Keys.TickOutside;
 import systemmanager.Keys.TruncateLadder;
 import utils.Mock;
+import utils.Rand;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
@@ -38,7 +38,7 @@ import entity.market.Price;
 import event.TimeStamp;
 
 public class BasicMarketMakerTest {
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	private static final FundamentalValue fundamental = Mock.fundamental(100000);
 	private static final Props defaults = Props.fromPairs(
 			MarketMakerReentryRate.class, 0d,

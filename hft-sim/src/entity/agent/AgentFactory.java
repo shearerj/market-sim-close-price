@@ -7,6 +7,7 @@ import java.util.Random;
 import logger.Log;
 import systemmanager.Consts.AgentType;
 import utils.Iterators2;
+import utils.Rand;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
@@ -16,8 +17,8 @@ import data.Props;
 import data.Stats;
 import entity.market.Market;
 import entity.sip.MarketInfo;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 
 public class AgentFactory {
 
@@ -53,28 +54,28 @@ public class AgentFactory {
 	public Agent createAgent(AgentType type, Props props) {
 		switch (type) {
 		case AA:
-			return AAAgent.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, fundamental, marketAssignment.next(), props);
+			return AAAgent.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, marketAssignment.next(), props);
 		case ZIP:
-			return ZIPAgent.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, fundamental, marketAssignment.next(), props);
+			return ZIPAgent.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, marketAssignment.next(), props);
 		case ZIRP:
-			return ZIRPAgent.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, fundamental, marketAssignment.next(), props);
+			return ZIRPAgent.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, marketAssignment.next(), props);
 		case ZIR:
-			return ZIRAgent.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, fundamental, marketAssignment.next(), props);
+			return ZIRAgent.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, marketAssignment.next(), props);
 		case MARKETDATA:
-			return MarketDataAgent.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, fundamental, marketAssignment.next(), props);
+			return MarketDataAgent.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, marketAssignment.next(), props);
 		case BASICMM:
-			return BasicMarketMaker.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, fundamental, marketAssignment.next(), props);
+			return BasicMarketMaker.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, marketAssignment.next(), props);
 		case MAMM:
-			return MAMarketMaker.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, fundamental, marketAssignment.next(), props);
+			return MAMarketMaker.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, marketAssignment.next(), props);
 		case WMAMM:
-			return WMAMarketMaker.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, fundamental, marketAssignment.next(), props);
+			return WMAMarketMaker.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, marketAssignment.next(), props);
 		case ADAPTIVEMM:
-			return AdaptiveMarketMaker.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, fundamental, marketAssignment.next(), props);
+			return AdaptiveMarketMaker.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, marketAssignment.next(), props);
 		case LA:
-			return LAAgent.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, fundamental, markets, props);
+			return LAAgent.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, markets, props);
 		case NOOP:
 			marketAssignment.next();
-			return NoOpAgent.create(ids.next(), stats, timeline, log, new Random(rand.nextLong()), sip, fundamental, props);
+			return NoOpAgent.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, props);
 
 		default:
 			throw new IllegalArgumentException("Can't create AgentType: " + type);
@@ -82,7 +83,7 @@ public class AgentFactory {
 	}
 
 	// FIXME Move this to background agent? reentry agent?
-	public static Iterator<TimeStamp> exponentials(double rate, Random rand) {
+	public static Iterator<TimeStamp> exponentials(double rate, Rand rand) {
 		return Iterators.transform(Iterators2.exponentials(rate, rand), new Function<Double, TimeStamp>(){
 			@Override public TimeStamp apply(Double dub) { return TimeStamp.of((long) (double) dub); }
 		});

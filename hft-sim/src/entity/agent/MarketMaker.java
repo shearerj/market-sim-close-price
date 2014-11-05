@@ -4,9 +4,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static logger.Log.Level.INFO;
-
-import java.util.Random;
-
 import logger.Log;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.InitLadderMean;
@@ -19,7 +16,7 @@ import systemmanager.Keys.TickImprovement;
 import systemmanager.Keys.TickOutside;
 import systemmanager.Keys.TruncateLadder;
 import utils.Maths;
-import utils.Rands;
+import utils.Rand;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Ordering;
@@ -33,8 +30,8 @@ import entity.market.Price;
 import entity.market.Transaction;
 import entity.sip.BestBidAsk;
 import entity.sip.MarketInfo;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 import fourheap.Order.OrderType;
 
 /**
@@ -76,7 +73,7 @@ public abstract class MarketMaker extends ReentryAgent {
 	protected final boolean tickImprovement;	// true if improves by a tick when mid-prices == bid/ask
 	protected final boolean tickOutside;		// true if improve tick outside the quote (default inside, bid<p<ask)
 	
-	protected MarketMaker(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected MarketMaker(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {		
 		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(), TimeStamp.ZERO, market,
 				AgentFactory.exponentials(props.get(MarketMakerReentryRate.class, ReentryRate.class), rand),
@@ -145,10 +142,10 @@ public abstract class MarketMaker extends ReentryAgent {
 				ladderAsk = initLadderAsk.get();
 			} else {
 				if (initLadderRange > 2 * stepSize) {
-					ladderAsk = Price.of(Rands.nextUniform(rand, initLadderBid.get().intValue() + 2 * stepSize, 
+					ladderAsk = Price.of(rand.nextUniform(initLadderBid.get().intValue() + 2 * stepSize, 
 							initLadderBid.get().intValue() + initLadderRange));
 				} else {
-					ladderAsk = Price.of(Rands.nextUniform(rand, initLadderBid.get().intValue() + initLadderRange, 
+					ladderAsk = Price.of(rand.nextUniform(initLadderBid.get().intValue() + initLadderRange, 
 							initLadderBid.get().intValue() + 2 * stepSize));
 				}
 				log(INFO, "%s in %s: Randomized Ladder MID (%s, %s)", 
@@ -158,16 +155,16 @@ public abstract class MarketMaker extends ReentryAgent {
 			if (initLadderAsk.isPresent()) {
 				ladderAsk = initLadderAsk.get();
 				if (initLadderRange > 2 * stepSize) {
-					ladderBid = Price.of(Rands.nextUniform(rand, initLadderAsk.get().intValue() - 2 * stepSize, 
+					ladderBid = Price.of(rand.nextUniform(initLadderAsk.get().intValue() - 2 * stepSize, 
 							initLadderAsk.get().intValue() - initLadderRange));
 				} else {
-					ladderBid = Price.of(Rands.nextUniform(rand, initLadderAsk.get().intValue() - initLadderRange, 
+					ladderBid = Price.of(rand.nextUniform(initLadderAsk.get().intValue() - initLadderRange, 
 							initLadderAsk.get().intValue() - 2 * stepSize));
 				}
 			} else {
 				double ladderMeanMin = initLadderMean - initLadderRange;
 				double ladderMeanMax = initLadderMean + initLadderRange;
-				int ladderCenter = (int) Rands.nextUniform(rand, ladderMeanMin, ladderMeanMax);
+				int ladderCenter = (int) rand.nextUniform(ladderMeanMin, ladderMeanMax); // Round instead of floor?
 				ladderBid = Price.of(ladderCenter - stepSize);
 				ladderAsk = Price.of(ladderCenter + stepSize);
 			}

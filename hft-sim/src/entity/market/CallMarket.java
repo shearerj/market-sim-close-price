@@ -1,21 +1,19 @@
 package entity.market;
 
 import static com.google.common.base.Preconditions.checkArgument;
-
-import java.util.Random;
-
 import logger.Log;
 import systemmanager.Keys.ClearFrequency;
 import systemmanager.Keys.MarketTickSize;
 import systemmanager.Keys.PricingPolicy;
 import systemmanager.Keys.TickSize;
+import utils.Rand;
 import data.Props;
 import data.Stats;
 import entity.market.clearingrule.UniformPriceClear;
 import entity.sip.MarketInfo;
 import event.Activity;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 
 /**
  * Class for a call market. The order book is closed, therefore agents will only
@@ -33,7 +31,7 @@ public class CallMarket extends Market {
 
 	private final TimeStamp clearFreq;
 
-	protected CallMarket(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, Props props) {
+	protected CallMarket(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, Props props) {
 		super(id, stats, timeline, log, rand, sip,
 				new UniformPriceClear(props.get(PricingPolicy.class), props.get(MarketTickSize.class, TickSize.class)),
 				props);
@@ -45,7 +43,7 @@ public class CallMarket extends Market {
 		});
 	}
 
-	public static CallMarket create(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, Props props) {
+	public static CallMarket create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, Props props) {
 		return new CallMarket(id, stats, timeline, log, rand, sip, props);
 	}
 

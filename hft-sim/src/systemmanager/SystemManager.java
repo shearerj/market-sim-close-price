@@ -19,6 +19,7 @@ import logger.Log;
 import systemmanager.Keys.NumSims;
 import systemmanager.Keys.RandomSeed;
 import systemmanager.SimulationSpec.SimSpecDeserializer;
+import utils.Rand;
 
 import com.google.common.base.Objects;
 import com.google.gson.Gson;
@@ -120,7 +121,7 @@ public abstract class SystemManager {
 //		boolean outputConfig = Boolean.parseBoolean(props.getProperty("outputConfig", "false"));
 		
 		Observations observations = Observations.create(specification.getPlayerProps(), specification.getSimulationProps());
-		Random rand = new Random();
+		Random rand = Rand.create(); // FIXME Load seed from spec
 		
 		for (int i = 0; i < totalSimulations; i++) {
 			// This formula means that you'll get the same simulations regardless of the number of observations or simulations

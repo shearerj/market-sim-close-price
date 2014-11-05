@@ -3,9 +3,8 @@ package entity.agent.position;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.List;
-import java.util.Random;
 
-import utils.Rands;
+import utils.Rand;
 
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Doubles;
@@ -44,15 +43,15 @@ public class Margin extends AbstractQuantityIndexedArray<Double> {
 		super(values);
 	}
 	
-	public static Margin createRandomly(int maxPosition, Random rand, double a, double b) {
+	public static Margin createRandomly(int maxPosition, Rand rand, double a, double b) {
 		checkArgument(maxPosition > 0, "Max Position must be positive");
 		
 		List<Double> values = Lists.newArrayListWithCapacity(maxPosition * 2);
 		for (int i = 0; i < maxPosition; i++)
-			values.add(Rands.nextUniform(rand, a, b));
+			values.add(rand.nextUniform(a, b));
 		// margins for buy orders are negative
 		for (int i = 0; i < maxPosition; i++)
-			values.add(-Rands.nextUniform(rand, a, b));
+			values.add(-rand.nextUniform(a, b));
 		
 		return new Margin(values);
 	}

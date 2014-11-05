@@ -10,7 +10,6 @@ import static utils.Tests.assertQuote;
 import static utils.Tests.assertSingleTransaction;
 
 import java.io.IOException;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import logger.Log;
@@ -31,6 +30,7 @@ import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.SimLength;
 import systemmanager.Keys.WithdrawOrders;
 import utils.Mock;
+import utils.Rand;
 import utils.SummStats;
 
 import com.google.common.collect.ImmutableList;
@@ -48,13 +48,13 @@ import entity.market.Price;
 import entity.market.Quote;
 import event.Activity;
 import event.EventQueue;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 import fourheap.Order.OrderType;
 
 public class BackgroundAgentTest {
 	
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	private static final PrivateValue simple = ListPrivateValue.create(ImmutableList.of(Price.of(100), Price.of(10)));
 	private static final double eps = 1e-6;
 	private static final double kappa = 0.2315;

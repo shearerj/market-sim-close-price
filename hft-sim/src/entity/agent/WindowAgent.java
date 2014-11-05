@@ -1,18 +1,18 @@
 package entity.agent;
 
 import java.util.List;
-import java.util.Random;
 
 import logger.Log;
 import systemmanager.Keys.WindowLength;
+import utils.Rand;
 import data.FundamentalValue;
 import data.Props;
 import data.Stats;
 import entity.market.Market;
 import entity.market.Transaction;
 import entity.sip.MarketInfo;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 
 /**
  * This agent looks at the past window period at each reentry to execute its 
@@ -38,7 +38,7 @@ public abstract class WindowAgent extends BackgroundAgent {
 
 	private TimeStamp windowLength;
 
-	protected WindowAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected WindowAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 		

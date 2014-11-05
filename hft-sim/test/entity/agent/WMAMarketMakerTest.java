@@ -7,7 +7,6 @@ import static utils.Tests.assertOrderLadder;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 
 import logger.Log;
 
@@ -22,6 +21,7 @@ import systemmanager.Keys.TickImprovement;
 import systemmanager.Keys.TruncateLadder;
 import systemmanager.Keys.WeightFactor;
 import utils.Mock;
+import utils.Rand;
 
 import com.google.common.collect.ImmutableList;
 
@@ -35,7 +35,7 @@ import fourheap.Order.OrderType;
 //FIXME MM orders are withdrawn manually due to lack of "proper" instantaneous withdraw orders implementation
 
 public class WMAMarketMakerTest {
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	private static final Agent mockAgent = Mock.agent();
 	private static final FundamentalValue fundamental = Mock.fundamental(100000);
 	private static final Props defaults = Props.builder()

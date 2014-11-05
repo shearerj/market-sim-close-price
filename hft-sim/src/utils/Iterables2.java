@@ -57,7 +57,7 @@ public class Iterables2 {
 		};
 	}
 	
-	public static Iterable<Double> exponentials(final double rate, final Random rand) {
+	public static Iterable<Double> exponentials(final double rate, final Rand rand) {
 		return new Iterable<Double>() {
 			@Override public Iterator<Double> iterator() {
 				return Iterators2.exponentials(rate, rand);

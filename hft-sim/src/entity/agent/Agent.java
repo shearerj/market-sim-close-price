@@ -8,13 +8,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 
 import logger.Log;
 import systemmanager.Keys.AgentTickSize;
 import systemmanager.Keys.DiscountFactors;
 import systemmanager.Keys.FundamentalLatency;
 import systemmanager.Keys.TickSize;
+import utils.Rand;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Function;
@@ -38,8 +38,8 @@ import entity.sip.BestBidAsk;
 import entity.sip.MarketInfo;
 import event.Activity;
 import event.InformationActivity;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 import fourheap.Order.OrderType;
 
 /**
@@ -62,7 +62,7 @@ public abstract class Agent extends Entity {
 	private final PrivateValue privateValue;
 	private final DiscountedValue privateValueSurplus;
 
-	protected Agent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected Agent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			PrivateValue privateValue, TimeStamp arrivalTime, Props props) {
 		super(id, stats, timeline, log, rand);
 		this.fundamental = fundamental.getView(props.get(FundamentalLatency.class));

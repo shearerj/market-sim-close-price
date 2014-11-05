@@ -7,7 +7,6 @@ import static logger.Log.Level.INFO;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import logger.Log;
 import systemmanager.Keys.BetaR;
@@ -23,6 +22,7 @@ import systemmanager.Keys.NumHistorical;
 import systemmanager.Keys.Theta;
 import systemmanager.Keys.ThetaMax;
 import systemmanager.Keys.ThetaMin;
+import utils.Rand;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
@@ -83,7 +83,7 @@ public class AAAgent extends WindowAgent {
 	private double alphaMax; // max experienced value for alpha (for theta, not PV)
 	private double alphaMin; // min experienced value for alpha
 
-	protected AAAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected AAAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
@@ -123,7 +123,7 @@ public class AAAgent extends WindowAgent {
 		checkArgument(lambdaR >= 0, "lambdaR must be positive");
 	}
 
-	public static AAAgent create(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	public static AAAgent create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		return new AAAgent(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}

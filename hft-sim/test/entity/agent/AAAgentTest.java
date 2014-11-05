@@ -9,7 +9,6 @@ import static utils.Tests.assertSingleOrderRange;
 import static utils.Tests.checkSingleOrder;
 
 import java.io.IOException;
-import java.util.Random;
 
 import logger.Log;
 
@@ -33,7 +32,7 @@ import systemmanager.Keys.ThetaMin;
 import systemmanager.Keys.WindowLength;
 import systemmanager.Keys.WithdrawOrders;
 import utils.Mock;
-import utils.Rands;
+import utils.Rand;
 import data.FundamentalValue;
 import data.Props;
 import entity.market.Market;
@@ -44,7 +43,7 @@ import fourheap.Order.OrderType;
 
 public class AAAgentTest {
 
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	private static final Agent mockAgent = Mock.agent();
 	private static final FundamentalValue fundamental = Mock.fundamental(100000);
 	private static final Props defaults = Props.builder()
@@ -216,7 +215,7 @@ public class AAAgentTest {
 		AAAgent buyer = aaAgent(Props.fromPairs(BuyerStatus.class, BUY));
 		AAAgent seller = aaAgent(Props.fromPairs(BuyerStatus.class, SELL));
 		
-		setQuote(Price.of(Rands.nextUniform(rand, 75000, 80000)), Price.of(Rands.nextUniform(rand, 81000, 100000)));
+		setQuote(Price.of(rand.nextUniform(75000, 80000)), Price.of(rand.nextUniform(81000, 100000)));
 		
 		buyer.biddingLayer(limit, null, 1);
 		assertSingleOrderRange(buyer.getActiveOrders(), Price.of(75000), Price.of(100000), 1);
@@ -696,12 +695,12 @@ public class AAAgentTest {
 	 */
 	@Test
 	public void randomizedUpdateAggressionBuyer() {
-		setQuote(Price.of(Rands.nextUniform(rand, 25000, 75000)), Price.of(Rands.nextUniform(rand, 125000, 175000)));
-		addTransaction(Price.of(Rands.nextUniform(rand, 100000, 110000)));
-		addTransaction(Price.of(Rands.nextUniform(rand, 50000, 150000)));
-		addTransaction(Price.of(Rands.nextUniform(rand, 100000, 120000)));
-		addTransaction(Price.of(Rands.nextUniform(rand, 750000, 150000)));
-		addTransaction(Price.of(Rands.nextUniform(rand, 80000, 100000)));
+		setQuote(Price.of(rand.nextUniform(25000, 75000)), Price.of(rand.nextUniform(125000, 175000)));
+		addTransaction(Price.of(rand.nextUniform(100000, 110000)));
+		addTransaction(Price.of(rand.nextUniform(50000, 150000)));
+		addTransaction(Price.of(rand.nextUniform(100000, 120000)));
+		addTransaction(Price.of(rand.nextUniform(750000, 150000)));
+		addTransaction(Price.of(rand.nextUniform(80000, 100000)));
 
 		
 		double oldAggression = 0.5;
@@ -731,12 +730,12 @@ public class AAAgentTest {
 				PrivateValueVar.class, 5e7,
 				InitAggression.class, oldAggression));
 		
-		setQuote(Price.of(Rands.nextUniform(rand, 25000, 75000)), Price.of(Rands.nextUniform(rand, 125000, 175000)));
-		addTransaction(Price.of(Rands.nextUniform(rand, 100000, 110000)));
-		addTransaction(Price.of(Rands.nextUniform(rand, 500000, 150000)));
-		addTransaction(Price.of(Rands.nextUniform(rand, 500000, 120000)));
-		addTransaction(Price.of(Rands.nextUniform(rand, 100000, 150000)));
-		addTransaction(Price.of(Rands.nextUniform(rand, 100000, 110000)));
+		setQuote(Price.of(rand.nextUniform(25000, 75000)), Price.of(rand.nextUniform(125000, 175000)));
+		addTransaction(Price.of(rand.nextUniform(100000, 110000)));
+		addTransaction(Price.of(rand.nextUniform(500000, 150000)));
+		addTransaction(Price.of(rand.nextUniform(500000, 120000)));
+		addTransaction(Price.of(rand.nextUniform(100000, 150000)));
+		addTransaction(Price.of(rand.nextUniform(100000, 110000)));
 
 		agent.agentStrategy();
 

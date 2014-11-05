@@ -5,7 +5,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.Random;
 
 import logger.Log;
 
@@ -13,6 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import utils.Mock;
+import utils.Rand;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
@@ -23,7 +23,7 @@ import event.EventQueue;
 import event.TimeStamp;
 
 public class ReentryAgentTest {
-	private static final Random rand = new Random();
+	private static final Rand rand = Rand.create();
 	private EventQueue timeline;
 	
 	@Before

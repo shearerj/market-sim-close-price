@@ -5,9 +5,8 @@ import static fourheap.Order.OrderType.BUY;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
-import utils.Rands;
+import utils.Rand;
 import utils.SummStats;
 
 import com.google.common.collect.ImmutableList;
@@ -61,12 +60,12 @@ public class ListPrivateValue extends AbstractQuantityIndexedArray<Price> implem
 	 * 
 	 * Values are generated from iid gaussian draws and then sorted.
 	 */
-	public static ListPrivateValue createRandomly(int maxPosition, double var, Random rand) {
+	public static ListPrivateValue createRandomly(int maxPosition, double var, Rand rand) {
 		checkArgument(maxPosition > 0, "Max Position must be positive");
 
 		List<Price> randValues = Lists.newArrayListWithCapacity(maxPosition * 2);
 		for (int i = 0; i < maxPosition * 2; i++)
-			randValues.add(Price.of(Rands.nextGaussian(rand, 0, var)));
+			randValues.add(Price.of(rand.nextGaussian(0, var)));
 		Collections.sort(randValues, Ordering.natural().reverse());
 		
 		return new ListPrivateValue(randValues); 

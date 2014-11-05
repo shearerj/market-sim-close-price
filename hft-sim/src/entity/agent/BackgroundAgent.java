@@ -7,7 +7,6 @@ import static logger.Log.Level.INFO;
 
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 
 import logger.Log;
 import systemmanager.Keys.AcceptableProfitFrac;
@@ -22,7 +21,7 @@ import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.ReentryRate;
 import systemmanager.Keys.SimLength;
 import systemmanager.Keys.WithdrawOrders;
-import utils.Rands;
+import utils.Rand;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -39,8 +38,8 @@ import entity.market.Price;
 import entity.market.Quote;
 import entity.market.Transaction;
 import entity.sip.MarketInfo;
-import event.Timeline;
 import event.TimeStamp;
+import event.Timeline;
 import fourheap.Order.OrderType;
 
 /**
@@ -68,10 +67,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	/**
 	 * Constructor for custom private valuation 
 	 */
-	protected BackgroundAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected BackgroundAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			PrivateValue privateValue, Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, privateValue,
-				TimeStamp.of((long) Rands.nextExponential(rand, props.get(ArrivalRate.class))),
+				TimeStamp.of((long) rand.nextExponential(props.get(ArrivalRate.class))),
 				market,
 				AgentFactory.exponentials(props.get(BackgroundReentryRate.class, ReentryRate.class), rand),
 				props);
@@ -100,7 +99,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	/**
 	 * Default constructor with standard valuation model
 	 */
-	protected BackgroundAgent(int id, Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
+	protected BackgroundAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		this(id, stats, timeline, log, rand, sip, fundamental,
 				ListPrivateValue.createRandomly(props.get(MaxQty.class), props.get(PrivateValueVar.class), rand),
@@ -122,7 +121,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 			
 			Price val = getValuation(type);
 			Price price = Price.of((val.doubleValue() + (type.equals(SELL) ? 1 : -1) * 
-					Rands.nextUniform(rand, bidRangeMin, bidRangeMax)));
+					rand.nextUniform(bidRangeMin, bidRangeMax)));
 			
 			log(INFO, "%s executing ZI strategy position=%d, for q=%d, value=%s + %s=%s",
 					this, getPosition(), quantity, getFundamental(),
@@ -154,7 +153,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		if (Range.closed(-getMaxAbsPosition(), getMaxAbsPosition()).contains(newPosition)) {
 			Price val = getEstimatedValuation(type);
 			Price price = Price.of((val.doubleValue() + (type.equals(SELL) ? 1 : -1) 
-					* Rands.nextUniform(rand, bidRangeMin, bidRangeMax
+					* rand.nextUniform(bidRangeMin, bidRangeMax
 					)));
 
 			final Price rHat = this.getEstimatedFundamental(type);  
