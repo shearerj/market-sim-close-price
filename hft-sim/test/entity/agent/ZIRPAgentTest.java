@@ -2,6 +2,7 @@ package entity.agent;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
+import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertOrder;
 import logger.Log;
 
@@ -35,16 +36,16 @@ public class ZIRPAgentTest {
 	private static final Rand rand = Rand.create();
 	private static final Agent mockAgent = Mock.agent();
 	private static final Props defaults = Props.builder()
-			.put(ArrivalRate.class,		0d)
-			.put(MaxQty.class,			2)
-			.put(PrivateValueVar.class,	100d)
-			.put(BidRangeMin.class,		10000)
-			.put(BidRangeMax.class,		10000)
-			.put(SimLength.class,		60000)
-			.put(FundamentalKappa.class, 0.05)
-			.put(FundamentalMean.class,	100000)
-			.put(FundamentalShockVar.class, 0d)
-			.put(WithdrawOrders.class,	true)
+			.put(ArrivalRate.class,			0d)
+			.put(MaxQty.class,				2)
+			.put(PrivateValueVar.class,		100d)
+			.put(BidRangeMin.class,			10000)
+			.put(BidRangeMax.class,			10000)
+			.put(SimLength.class,			60000)
+			.put(FundamentalKappa.class,	0.05)
+			.put(FundamentalMean.class,		100000)
+			.put(FundamentalShockVar.class,	0d)
+			.put(WithdrawOrders.class,		true)
 			.put(AcceptableProfitFrac.class, 0.75)
 			.build();
 	
@@ -65,19 +66,33 @@ public class ZIRPAgentTest {
 		OrderRecord order = null;
 		Price val = null;
 		BackgroundAgent zirp;
-		while (type == SELL) { // Must submit buy order
+		// Loop runs until agent submits a buy order
+		while (type == SELL) {
 			setup();
 			zirp = zirpAgent();
 			setQuote(Price.of(120000), Price.of(130000));
-
+			
 			val = zirp.getEstimatedValuation(BUY);
 			zirp.agentStrategy();
-			order = Iterables.getOnlyElement(zirp.getActiveOrders());
+			
+			// Sometimes an order will transact, so we need a default in that case
+			order = Iterables.getOnlyElement(zirp.getActiveOrders(), OrderRecord.create(view, TimeStamp.ZERO, SELL, Price.ZERO, 1));
+			// If an order transacted, we need to verify that it wasn't a buy order
+			assertTrue("Submitted a BUY order that transacted", view.getQuote().getAskPrice().isPresent());
+			
 			type = order.getOrderType();
 		}
 
 		 // Verify that agent does shade since 10000 * 0.75 > val - 130000
 		assertOrder(order, Price.of(val.intValue() - 10000), 1, TimeStamp.ZERO, TimeStamp.ZERO);
+	}
+	
+	@Test
+	public void randomTest() {
+		for (int i = 0; i < 100; ++i) {
+			setup();
+			zirpBasicBuyerTest();
+		}
 	}
 	
 	private void setQuote(Price bid, Price ask) {
@@ -86,6 +101,7 @@ public class ZIRPAgentTest {
 	}
 
 	public ZIRPAgent zirpAgent() {
+		Mock.timeline.ignoreNext();
 		return ZIRPAgent.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, defaults);
 	}
 	
