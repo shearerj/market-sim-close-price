@@ -20,12 +20,16 @@ import systemmanager.Keys.NumSims;
 import systemmanager.Keys.RandomSeed;
 import systemmanager.SimulationSpec.SimSpecDeserializer;
 import utils.Rand;
+import utils.SummStats;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import data.Observations;
+import data.Observations.PlayerObservationSerializer;
+import data.Observations.SummStatsSerializer;
 import data.Props;
 
 /**
@@ -41,8 +45,12 @@ public abstract class SystemManager {
 	
 	protected static final DateFormat LOG_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
 	protected static final Gson gson = new GsonBuilder()
+	.registerTypeAdapter(SummStats.class, new SummStatsSerializer())
+//	.registerTypeAdapter(Map.class, new StddevFeaturesSerializer())
+	.registerTypeAdapter(Multimap.class, new PlayerObservationSerializer())
 	.serializeSpecialFloatingPointValues() // XXX This will allow serializing NaNs for testing, but will cause errors for EGTA which doesn't like NaNs...
 	.registerTypeAdapter(SimulationSpec.class, new SimSpecDeserializer())
+	.setPrettyPrinting() // FIXME remove
 	.create();
 
 	/**
@@ -136,6 +144,7 @@ public abstract class SystemManager {
 		}
 		
 		gson.toJson(observations, obsOut);
+		obsOut.flush();
 	}
 	
 }

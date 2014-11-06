@@ -170,7 +170,7 @@ public class ObservationsTest {
 		
 		obs.add(stats, ImmutableList.of(player));
 		
-		PlayerObservation pobs = Iterables.getOnlyElement(obs.playerObservations.get(spec.descriptor));
+		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(spec.descriptor));
 		
 		assertEquals(-100000, pobs.payoff.mean(), eps);
 	}
@@ -200,7 +200,7 @@ public class ObservationsTest {
 		
 		obs.add(stats, ImmutableList.of(player));
 		
-		PlayerObservation pobs = Iterables.getOnlyElement(obs.playerObservations.get(spec.descriptor));
+		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(spec.descriptor));
 		
 		assertEquals(pv1.get(), pobs.features.get(Observations.PV_BUY1).mean(), eps);
 		assertEquals(pv_1.get(), pobs.features.get(Observations.PV_SELL1).mean(), eps);
@@ -253,7 +253,7 @@ public class ObservationsTest {
 		obs.add(stats, ImmutableList.of(player));
 		
 		// Test
-		PlayerObservation pobs = Iterables.getOnlyElement(obs.playerObservations.get(spec.descriptor));
+		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(spec.descriptor));
 		
 		assertEquals((a_pv1.get() + b_pv1.get()) / 2, pobs.features.get(Observations.PV_BUY1).mean(), eps);
 		assertEquals((a_pv_1.get() + b_pv_1.get()) / 2, pobs.features.get(Observations.PV_SELL1).mean(), eps);

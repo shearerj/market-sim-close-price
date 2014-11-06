@@ -105,7 +105,7 @@ public class Stats {
 	PRICE = "price",
 	NUM_TRANS = "num_trans_",
 	NUM_TRANS_TOTAL = NUM_TRANS + "total",
-	CLASS_PROFIT = "profit_",
-	TOTAL_PROFIT = CLASS_PROFIT + "sum_total",
+	PROFIT = "profit_",
+	TOTAL_PROFIT = PROFIT + "sum_total",
 	SURPLUS = "surplus_";
 }

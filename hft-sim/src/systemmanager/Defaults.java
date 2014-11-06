@@ -75,6 +75,8 @@ import systemmanager.Keys.WithdrawOrders;
 import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Ints;
 
+import data.Stats;
+
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -108,8 +110,8 @@ public class Defaults implements Serializable {
 			.put(DiscountFactors.class,	Doubles.asList(0, 0.0006))
 			.put(Periods.class,			Ints.asList(1, 250))
 			
-			.put(SumPrefixes.class,		Arrays.<String> asList())
-			.put(MeanPrefixes.class,	Arrays.<String> asList())
+			.put(SumPrefixes.class,		Arrays.<String> asList(Stats.SURPLUS, Stats.PROFIT))
+			.put(MeanPrefixes.class,	Arrays.<String> asList(Stats.FUNDAMENTAL_END_PRICE))
 			.put(StddevPrefixes.class,	Arrays.<String> asList())
 			
 			// Simulation spec (general)

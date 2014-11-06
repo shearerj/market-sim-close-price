@@ -224,7 +224,7 @@ public abstract class MarketMaker extends ReentryAgent {
 	@Override
 	public void liquidateAtPrice(Price price) {
 		super.liquidateAtPrice(price);
-		postStat(Stats.CLASS_PROFIT + "market_maker", getProfit());
+		postStat(Stats.PROFIT + "market_maker", getProfit());
 	}
 
 	@Override

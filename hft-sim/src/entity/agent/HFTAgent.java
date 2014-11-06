@@ -74,7 +74,7 @@ public abstract class HFTAgent extends MMAgent {
 	@Override
 	public void liquidateAtPrice(Price price) {
 		super.liquidateAtPrice(price);
-		postStat(Stats.CLASS_PROFIT + "hft", getProfit());
+		postStat(Stats.PROFIT + "hft", getProfit());
 	}
 	
 }

@@ -158,7 +158,7 @@ public class SimulationSpec implements Serializable {
 	}
 	
 	// I don't love this class, but it works...
-	public static class PlayerSpec {
+	public static final class PlayerSpec {
 		public final String descriptor;
 		public final AgentType type;
 		public final Props agentProps;
@@ -167,6 +167,11 @@ public class SimulationSpec implements Serializable {
 			this.descriptor = role + ' ' + strategy;
 			this.type = type;
 			this.agentProps = agentProps;
+		}
+		
+		@Override
+		public String toString() {
+			return descriptor + " " + type + " " + agentProps;
 		}
 	}
 

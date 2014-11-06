@@ -99,9 +99,9 @@ public abstract class Agent extends Entity {
 				this, liquidationProfit, profit, price);
 		
 		postStat(Stats.TOTAL_PROFIT, profit);
-		for (Entry<Double, Double> e : getDiscountedSurplus()) {
-			postStat(Stats.SURPLUS + e.getKey(), e.getValue());
-			postStat(Stats.SURPLUS + e.getKey() + '_' + CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, getClass().getSimpleName()), e.getValue());
+		for (Entry<Double, Double> e : getDiscountedSurplus()) {			
+			postStat(String.format("%s%.4f", Stats.SURPLUS, e.getKey()), e.getValue());
+			postStat(String.format("%s%.4f_%s", Stats.SURPLUS, e.getKey(), CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, getClass().getSimpleName())), e.getValue());
 		}
 	}
 	

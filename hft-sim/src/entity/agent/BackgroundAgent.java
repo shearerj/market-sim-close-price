@@ -320,10 +320,10 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	public void liquidateAtPrice(Price price) {
 		super.liquidateAtPrice(price);
 		
-		postStat(Stats.CLASS_PROFIT + "background", getProfit());
+		postStat(Stats.PROFIT + "background", getProfit());
 		
 		for (Entry<Double, Double> e : getDiscountedSurplus())
-			postStat(Stats.SURPLUS + e.getKey() + "_background", e.getValue());
+			postStat(String.format("%s%.4f_background", Stats.SURPLUS, e.getKey()), e.getValue());
 	}
 
 	private static final long serialVersionUID = 7742389103679854398L;

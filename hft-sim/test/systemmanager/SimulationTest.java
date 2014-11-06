@@ -32,6 +32,7 @@ public class SimulationTest {
 	 */
 
 	// FIXME Add test for final fundamental price
+	// FIXME Allow generating simspec from defautl variables instead of just from gson serialization
 	
 	private static final Gson gson = new Gson();
 	// This is a little hacky...
