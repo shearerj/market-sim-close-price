@@ -121,7 +121,7 @@ public abstract class SystemManager {
 //		boolean outputConfig = Boolean.parseBoolean(props.getProperty("outputConfig", "false"));
 		
 		Observations observations = Observations.create(specification.getPlayerProps(), specification.getSimulationProps());
-		Random rand = Rand.create(); // FIXME Load seed from spec
+		Random rand = Rand.create();
 		
 		for (int i = 0; i < totalSimulations; i++) {
 			// This formula means that you'll get the same simulations regardless of the number of observations or simulations
