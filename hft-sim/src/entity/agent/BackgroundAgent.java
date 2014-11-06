@@ -116,6 +116,24 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		super.agentStrategy();
 	}
 	
+	/** Enforces Background agent invariants. They can not exceed their max position. */
+	@Override
+	protected boolean submitOrder(OrderRecord order, boolean nmsRoutable) {
+		checkArgument(order.getCurrentMarket() == primaryMarket, "Must submit to primary market");
+		if (mightExceedMaxPosition(order))
+			return false;
+		return super.submitOrder(order, nmsRoutable);
+	}
+	
+	/** Returns if submitting an order might result in a sequence of events that would make the agent exceed its max position */
+	private boolean mightExceedMaxPosition(OrderRecord order) {
+		int absolutePosition = getPosition() * order.getOrderType().sign() + order.getQuantity();
+		for (OrderRecord o : getActiveOrders())
+			if (o.getOrderType() == order.getOrderType())
+				absolutePosition += o.getQuantity();
+		return absolutePosition > getMaxAbsPosition();
+	}
+
 	/** Submits a NMS-routed Zero-Intelligence limit order. */
 	protected void executeZIStrategy(OrderType type, int quantity) {
 		if (this.withinMaxPosition(type, quantity)) {

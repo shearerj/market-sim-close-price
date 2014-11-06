@@ -3,7 +3,6 @@ package entity.agent;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertOptionalRange;
 import static utils.Tests.assertQuote;
@@ -455,7 +454,7 @@ public class BackgroundAgentTest {
 	public void testSubmitSellOrder() {
 		// Verify that when submit order, if would exceed position limits, then
 		// do not submit the order
-		BackgroundAgent agent = backgroundAgent();
+		BackgroundAgent agent = backgroundAgent(Props.fromPairs(MaxQty.class, 1));
 		setPosition(agent, -1);
 
 		// Verify that a new sell order can't be submitted
@@ -503,7 +502,7 @@ public class BackgroundAgentTest {
 	@Test
 	public void testLiquidation() {
 		// Verify that post-liquidation, payoff includes liquidation
-		fundamental = Mock.fundamental;
+		fundamental = Mock.fundamental(100000);
 		fund = fundamental.getView(TimeStamp.ZERO);
 		
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(
@@ -520,7 +519,7 @@ public class BackgroundAgentTest {
 
 		agent.liquidateAtPrice(fund.getValue());
 		// background agent liquidates to account for short position of 1
-		assertEquals(-100000, agent.getProfit());
+		assertEquals(51000 - 100000, agent.getProfit());
 		assertEquals(50000 - 100000, agent.getPayoff(), 0.001);
 	}
 
@@ -543,9 +542,8 @@ public class BackgroundAgentTest {
 		Price endTimeFundamental = fund.getValue();
 		agent.liquidateAtPrice(endTimeFundamental);
 		// background agent liquidates to account for short position of 1
-		assertEquals(endTimeFundamental.intValue() * agent.getPosition(), agent.getProfit());
+		assertEquals(51000 - endTimeFundamental.intValue(), agent.getProfit());
 		assertEquals(50000 - endTimeFundamental.intValue(), agent.getPayoff(), 0.001);
-		assertNotEquals(50000 - 100000, agent.getPayoff(), 0.001);
 	}
 
 	@SuppressWarnings("unused")

@@ -112,25 +112,34 @@ public abstract class Agent extends Entity {
 			}
 		});
 	}
-	
-	
 
-	// TODO Check for possible position violation?
-	/** Shortcut for creating orders */
+	/**
+	 * Ultimate method that all agents order should go through. Can be used to
+	 * enforce certain things about how an agent submits orders. A return of
+	 * false indicates that the order was not actually submitted and will not
+	 * appear in active orders.
+	 */
+	protected boolean submitOrder(OrderRecord order, boolean nmsRoutable) {
+		activeOrders.add(order);
+		if (nmsRoutable)
+			order.getCurrentMarket().submitNMSOrder(this, order);
+		else
+			order.getCurrentMarket().submitOrder(this, order);
+		return true;
+	}
+	
+	/** Shortcut for creating orders. If the order wasn's submitted then null is returned */
 	protected OrderRecord submitOrder(MarketView market, OrderType type, Price price, int quantity) {
 		OrderRecord order = new OrderRecord(market, getCurrentTime(), type, price.nonnegative().quantize(tickSize), quantity);
-		activeOrders.add(order);
-		market.submitOrder(this, order);
-		return order;
+		boolean submitted = submitOrder(order, false);
+		return submitted ? order : null;
 	}
 
-	// TODO Check for possible position violation?
-	/** Shortcut for creating NMS orders */
+	/** Shortcut for creating NMS orders. If the order wasn's submitted then null is returned */
 	protected OrderRecord submitNMSOrder(MarketView market, OrderType type, Price price, int quantity) {
 		OrderRecord order = new OrderRecord(market, getCurrentTime(), type, price.nonnegative().quantize(tickSize), quantity);
-		activeOrders.add(order);
-		market.submitNMSOrder(this, order);
-		return order;
+		boolean submitted = submitOrder(order, true);
+		return submitted ? order : null;
 	}
 	
 	/** Wrapper for withdrawing orders. Necessary to keep bookkeeping consistent */
