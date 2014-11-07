@@ -81,12 +81,16 @@ public class ZIRAgentTest {
 		mockAgent.submitOrder(nasdaqView, BUY, Price.of(102000), 1);
 		mockAgent.submitOrder(nyseView, BUY, Price.of(104000), 1);
 		
-		timeline.executeUntil(TimeStamp.of(50));
-		assertNBBO(sip.getNBBO(), Price.of(104000), nyse, Price.of(108000), nyse);
+		OrderRecord bait = mockAgent.submitOrder(nasdaqView, BUY, Price.of(105000), 1); // Will coax routing of agent's order nasdaq
 		
-		OrderRecord first = agent.submitOrder(nasdaqView, SELL, Price.of(105000), 1);
+		timeline.executeUntil(TimeStamp.of(50));
+		assertNBBO(sip.getNBBO(), Price.of(105000), nasdaq, Price.of(108000), nyse);
+		
+		nasdaqView.withdrawOrder(bait);
+		OrderRecord first = agent.submitNMSOrder(SELL, Price.of(105000), 1);
 		timeline.executeUntil(TimeStamp.of(100));
 		assertNBBO(sip.getNBBO(), Price.of(104000), nyse, Price.of(105000), nasdaq);
+		assertEquals(nasdaqView, first.getCurrentMarket());
 		
 		agent.agentStrategy();
 		
