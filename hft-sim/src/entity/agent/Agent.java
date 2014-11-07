@@ -197,7 +197,7 @@ public abstract class Agent extends Entity {
 		positionBalance += effQuantity;
 		profit -= effQuantity * trans.getPrice().intValue();
 		
-		postStat(Stats.NUM_TRANS + CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, this.getClass().getSimpleName()), 1);
+		postStat(Stats.NUM_TRANS + getClass().getSimpleName().toLowerCase(), 1);
 		postStat(Stats.NUM_TRANS_TOTAL, 1);
 		log(INFO, "%s transacted to position %d", this, positionBalance);
 	}

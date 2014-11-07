@@ -50,7 +50,6 @@ public abstract class SystemManager {
 	.registerTypeAdapter(Multimap.class, new PlayerObservationSerializer())
 	.serializeSpecialFloatingPointValues() // XXX This will allow serializing NaNs for testing, but will cause errors for EGTA which doesn't like NaNs...
 	.registerTypeAdapter(SimulationSpec.class, new SimSpecDeserializer())
-	.setPrettyPrinting() // FIXME remove
 	.create();
 
 	/**

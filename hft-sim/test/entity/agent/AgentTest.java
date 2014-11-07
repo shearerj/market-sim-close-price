@@ -232,8 +232,8 @@ public class AgentTest {
 		noop2.submitOrder(view, BUY, Price.of(50), 1);
 		
 		// XXX Number of transactions is independent of quantity
-		assertEquals(1, stats.getSummaryStats().get(Stats.NUM_TRANS + "z_i_r_agent").sum(), eps);
-		assertEquals(3, stats.getSummaryStats().get(Stats.NUM_TRANS + "no_op_agent").sum(), eps);
+		assertEquals(1, stats.getSummaryStats().get(Stats.NUM_TRANS + "ziragent").sum(), eps);
+		assertEquals(3, stats.getSummaryStats().get(Stats.NUM_TRANS + "noopagent").sum(), eps);
 		// XXX Total transactions is double the number of times actually transacted
 		assertEquals(4, stats.getSummaryStats().get(Stats.NUM_TRANS_TOTAL).sum(), eps);
 	}

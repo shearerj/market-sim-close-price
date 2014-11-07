@@ -69,8 +69,6 @@ public class SystemManagerTest {
 		StringWriter observations = new StringWriter();
 		StringWriter logs = new StringWriter();
 		SystemManager.execute(simSpec, properties, observations, logs, 0);
-		
-		System.out.println(observations.toString());
 	}
 	
 	@Test
@@ -101,23 +99,13 @@ public class SystemManagerTest {
 		assertFalse(logs.toString().isEmpty());
 	}
 	
+	// TODO This should probably have players
 	@Test
 	public void fullTest() throws IOException {
 		// Copy Simspec File
 		File testDir = new File(Consts.TEST_OUTPUT_DIR, "full_test");
 		testDir.mkdirs();
-		File simSpecFile = new File(testDir, "simulation_spec.json");
-		Writer simSpecWriter = new FileWriter(simSpecFile);
-		Reader exampleReader = new FileReader(new File("docs", "simulation_spec.json"));
-		char[] buf = new char[8192];
-		while (true) {
-			int length = exampleReader.read(buf);
-			if (length < 0)
-				break;
-			simSpecWriter.write(buf, 0, length);
-		}
-		simSpecWriter.close();
-		exampleReader.close();
+		copyFile(new File(testDir, "simulation_spec.json"), new File("docs", "simulation_spec.json"));
 		
 		// Bookkeeping
 		File logDir = new File(testDir, "logs");
@@ -133,6 +121,20 @@ public class SystemManagerTest {
 		assertTrue(observations.length() > 0);
 		
 		assertTrue(logDir.listFiles().length > numLogs);
+	}
+	
+	private static void copyFile(File from, File to) throws IOException {
+		Writer simSpecWriter = new FileWriter(to);
+		Reader exampleReader = new FileReader(from);
+		char[] buf = new char[8192];
+		while (true) {
+			int length = exampleReader.read(buf);
+			if (length < 0)
+				break;
+			simSpecWriter.write(buf, 0, length);
+		}
+		simSpecWriter.close();
+		exampleReader.close();
 	}
 
 }
