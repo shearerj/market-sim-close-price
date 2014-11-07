@@ -178,7 +178,6 @@ public class AdaptiveMarketMakerTest {
 	 * Case where withdrawing the ladder causes the quote to become undefined
 	 * (as well as the last NBBO quote)
 	 */
-	// FIXME This fails because the market maker is not waiting for the quote to update after withdrawing the orders...
 	@Test
 	public void withdrawUndefinedTest() {
 		AdaptiveMarketMaker marketmaker = aMarketMaker(Props.fromPairs(
@@ -197,7 +196,7 @@ public class AdaptiveMarketMakerTest {
 			if (order.getOrderType() == BUY)
 				mockAgent.withdrawOrder(order);
 		
-		marketmaker.lastBid = Optional.of(Price.of(42)); // FIXME necessary? to make sure MM will withdraw its orders
+		marketmaker.lastBid = Optional.of(Price.of(42));
 
 		// Verify that it withdraws ladder entirely
 		// Note that now the quote is undefined, after it withdraws its ladder
@@ -281,7 +280,7 @@ public class AdaptiveMarketMakerTest {
 		marketmaker.agentStrategy();
 		assertEquals(Optional.of(Price.of(100)), marketmaker.lastPrice);
 
-		// Check weights initially equal FIXME Implementation dependent
+		// Check weights initially equal TODO Implementation dependent
 		checkEqualWeights(marketmaker.weights);
 
 		//Check orders submitted using median spread of 40

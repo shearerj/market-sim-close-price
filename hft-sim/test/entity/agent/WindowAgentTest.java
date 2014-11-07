@@ -46,8 +46,6 @@ public class WindowAgentTest {
 	private Market market;
 	private MarketView fast;
 	
-	// FIXME should a window account for latency?
-
 	@Before
 	public void setup() {
 		timeline = EventQueue.create(Log.nullLogger(), rand);

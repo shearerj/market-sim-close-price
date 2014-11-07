@@ -16,9 +16,7 @@ import org.junit.Test;
 
 public class SystemManagerTest {
 
-	/*
-	 * TODO Change these tests to verify output
-	 */
+	// FIXME Change these tests to verify output
 
 	@Test
 	public void minimalTest() throws IOException {
@@ -40,7 +38,6 @@ public class SystemManagerTest {
 		StringWriter logs = new StringWriter();
 		SystemManager.execute(simSpec, properties, observations, logs, 0);
 		
-		// FIXME Controlled variates is not NaN or 0, but I don't know why...
 //		assertEquals("{\"players\":[],\"features\":{\"control_var_fund\":2.083368056134269E-6,\"spreads_mean_markets\":\"NaN\",\"trans_rmsd\":\"NaN\",\"vol_freq_250_mean_log_return\":\"NaN\",\"spreads_median_nbbo\":\"NaN\",\"vol_mean_log_return\":\"NaN\",\"trans_num\":0.0,\"control_mean_fund\":105657.7877653704,\"vol_freq_250_mean_log_price\":\"NaN\",\"profit_sum_total\":0.0,\"trans_freq_250_rmsd\":\"NaN\",\"surplus_sum_no_disc\":0.0,\"profit_sum_hft\":0.0,\"vol_mean_stddev_price\":\"NaN\",\"exectime_mean\":\"NaN\",\"trans_stddev_price\":\"NaN\",\"control_mean_private\":\"NaN\",\"profit_sum_marketmaker\":0.0,\"trans_mean_price\":\"NaN\",\"surplus_sum_disc_6.0E-4\":0.0,\"profit_sum_background\":0.0,\"vol_mean_log_price\":\"NaN\",\"vol_freq_250_mean_stddev_price\":\"NaN\",\"numSims\":1}}",
 //				observations.toString().isEmpty());
 		assertTrue(logs.toString().isEmpty());

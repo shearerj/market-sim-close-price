@@ -143,7 +143,7 @@ public class Simulation {
 	 */
 	protected void executeEvents() {
 		eventQueue.executeUntil(finalTime);
-		Price finalFundamental = fundamental.getValueAt(getCurrentTime());
+		Price finalFundamental = fundamental.getValueAt(finalTime);
 		eventQueue.propogateInformation();
 		for (Agent agent : agents)
 			agent.liquidateAtPrice(finalFundamental);
@@ -152,16 +152,8 @@ public class Simulation {
 		log.flush();
 	}
 	
-	public TimeStamp getCurrentTime() {
-		return eventQueue.getCurrentTime();
-	}
-	
-	public void log(Level level, String format, Object... parameters) {
+	void log(Level level, String format, Object... parameters) {
 		log.log(level, format, parameters);
-	}
-	
-	public void flushLog() {
-		log.flush();
 	}
 	
 	Stats getStatistics() {

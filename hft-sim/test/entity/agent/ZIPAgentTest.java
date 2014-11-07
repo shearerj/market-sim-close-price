@@ -167,10 +167,7 @@ public class ZIPAgentTest {
 				MarginMax.class, 1.5,
 				MarginMin.class, 1.2));
 
-		// FIXME verify buyer margin within [-1, 0]
 		assertEquals(-1.0, agent.getCurrentMargin(BUY), eps);
-		
-		// check seller margin
 		assertTrue("Current margin outside range", Range.closed(1.2, 1.5).contains(agent.getCurrentMargin(SELL)));
 	}
 	
@@ -220,7 +217,7 @@ public class ZIPAgentTest {
 				.put(MarginMax.class, 0.05)
 				.put(MarginMin.class, 0.05)
 				.build());
-//		agent.rand.setSeed(1); // FIXME Seed set for some reason
+		// FIXME Agent seed set to 1 for unknown reason
 		
 		// add dummy transaction
 		Transaction firstTrans = addTransaction(Price.of(99000), 1);
@@ -259,7 +256,7 @@ public class ZIPAgentTest {
 				.put(MarginMax.class, 0.05)
 				.put(MarginMin.class, 0.05)
 				.build());
-//		agent.rand.setSeed(1); // FIXME
+		// FIXME Agent seed set to 1 for unknown reason
 
 		// add dummy transaction
 		Transaction firstTrans = addTransaction(Price.of(105000), 1);
@@ -282,7 +279,7 @@ public class ZIPAgentTest {
 		agent.updateMargin(lastTrans);
 		double newMargin = agent.margin.getValue(0, agent.type);
 		assertEquals(newMargin, agent.getCurrentMargin(agent.type), 0.001);
-		checkMarginUpdate(lastOrderPrice, lastTransPrice, oldMargin, newMargin);	
+		checkMarginUpdate(lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
 
 	@Test
@@ -298,7 +295,7 @@ public class ZIPAgentTest {
 				.put(MarginMax.class, 0.05)
 				.put(MarginMin.class, 0.05)
 				.build());
-//		agent.rand.setSeed(1); // FIXME
+		// FIXME Agent seed set to 1 for unknown reason
 		
 		assertEquals(0.5, agent.beta, 0);
 		assertEquals(agent.momentumChange, 0, 0);
@@ -340,7 +337,7 @@ public class ZIPAgentTest {
 				.put(MarginMax.class, 0.05)
 				.put(MarginMin.class, 0.05)
 				.build());
-//		agent.rand.setSeed(1); // FIXME
+		// FIXME Agent seed set to 1 for unknown reason
 		
 		assertEquals(0.5, agent.beta, 0);
 		assertEquals(0, agent.momentumChange, 0);
@@ -621,7 +618,7 @@ public class ZIPAgentTest {
 	
 	@Test
 	public void randomTest() {
-		for (int i = 0; i < 100; ++i) {
+		for (int i = 0; i < 1000; ++i) {
 			setup();
 			initialMarginTest();
 			setup();

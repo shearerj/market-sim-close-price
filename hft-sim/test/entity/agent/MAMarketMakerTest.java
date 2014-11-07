@@ -84,7 +84,7 @@ public class MAMarketMakerTest {
 		assertEquals(Optional.of(Iterables.getLast(asks)), mm.lastAsk);
 
 		// check queues
-		// FIXME These two very implementation dependent. This test should just test results.
+		// TODO These two very implementation dependent. This test should just test results.
 		assertEquals(bids, ImmutableList.copyOf(mm.bidQueue));
 		assertEquals(asks, ImmutableList.copyOf(mm.askQueue));
 
@@ -111,7 +111,7 @@ public class MAMarketMakerTest {
 			mm.agentStrategy();
 			
 			// check queues
-			// FIXME Very implementation dependent
+			// TODO Very implementation dependent
 			int back = Math.max(0, i-2);
 			assertEquals(bids.get(back), mm.bidQueue.peek());
 			assertEquals(asks.get(back), mm.askQueue.peek());
@@ -142,7 +142,7 @@ public class MAMarketMakerTest {
 		assertEquals(Optional.of(Price.of(54)), mm.lastBid);
 		assertEquals(Optional.of(Price.of(68)), mm.lastAsk);
 
-		// check queues FIXME Implementation dependent
+		// check queues TODO Implementation dependent
 		assertEquals(Price.of(50), mm.bidQueue.peek());
 		assertEquals(Price.of(60), mm.askQueue.peek());
 		assertEquals(bids, ImmutableList.copyOf(mm.bidQueue));

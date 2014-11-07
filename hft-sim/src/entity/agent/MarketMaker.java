@@ -76,7 +76,7 @@ public abstract class MarketMaker extends ReentryAgent {
 	protected MarketMaker(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {		
 		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(), TimeStamp.ZERO, market,
-				AgentFactory.exponentials(props.get(MarketMakerReentryRate.class, ReentryRate.class), rand),
+				ReentryAgent.exponentials(props.get(MarketMakerReentryRate.class, ReentryRate.class), rand),
 				props);
 		
 		this.numRungs = props.get(NumRungs.class);

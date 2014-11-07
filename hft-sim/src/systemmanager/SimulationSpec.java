@@ -62,30 +62,37 @@ public class SimulationSpec implements Serializable {
 	private final Multiset<PlayerSpec> playerProps; 
 	
 	protected SimulationSpec() {
-		this.rawSpec = new JsonObject();
-		this.simulationProperties = Props.fromPairs();
-		this.marketProps = ImmutableMultimap.of();
-		this.agentProps = ImmutableMultimap.of();
-		this.playerProps = ImmutableMultiset.of();
+		this(new JsonObject(), Props.fromPairs(), ImmutableMultimap.<MarketType, Props> of(), ImmutableMultimap.<AgentType, Props> of(),
+				ImmutableMultiset.<PlayerSpec> of());
 	}
 	
-	protected SimulationSpec(JsonObject rawSpec) {
+	protected SimulationSpec(JsonObject rawSpec, Props simulationProperties, Multimap<MarketType, Props> marketProps,
+			Multimap<AgentType, Props> agentProps, Multiset<PlayerSpec> playerProps) {
 		this.rawSpec = rawSpec;
-		JsonObject config = Preset.parsePresets(Optional.fromNullable(rawSpec.getAsJsonObject(CONFIG)).or(new JsonObject()));
-		JsonObject players = Optional.fromNullable(rawSpec.getAsJsonObject(ASSIGNMENT)).or(new JsonObject());
+		this.simulationProperties = simulationProperties;
+		this.marketProps = marketProps;
+		this.agentProps = agentProps;
+		this.playerProps = playerProps;
+	}
+	
+	public static SimulationSpec fromJson(JsonObject spec) {
+		JsonObject config = Preset.parsePresets(Optional.fromNullable(spec.getAsJsonObject(CONFIG)).or(new JsonObject()));
+		JsonObject players = Optional.fromNullable(spec.getAsJsonObject(ASSIGNMENT)).or(new JsonObject());
 		
-		this.simulationProperties = readProperties(config);
-		this.marketProps = markets(config, simulationProperties);
-		this.agentProps = agents(config, simulationProperties);
-		this.playerProps = players(players, simulationProperties);
+		Props simulationProperties = readProperties(config);
+		Multimap<MarketType, Props> marketProps = markets(config, simulationProperties);
+		Multimap<AgentType, Props> agentProps = agents(config, simulationProperties);
+		Multiset<PlayerSpec> playerProps = players(players, simulationProperties);
+		return new SimulationSpec(spec, simulationProperties, marketProps, agentProps, playerProps);
+	}
+	
+	public static SimulationSpec create(Props simulationProperties, Multimap<MarketType, Props> marketProps,
+			Multimap<AgentType, Props> agentProps, Multiset<PlayerSpec> playerProps) {
+		return new SimulationSpec(new JsonObject(), simulationProperties, marketProps, agentProps, playerProps);
 	}
 	
 	public static SimulationSpec empty() {
 		return new SimulationSpec();
-	}
-	
-	public static SimulationSpec fromJson(JsonObject json) {
-		return new SimulationSpec(json);
 	}
 
 	protected static Props readProperties(JsonObject config) {
@@ -185,7 +192,7 @@ public class SimulationSpec implements Serializable {
 	public static class SimSpecDeserializer implements JsonDeserializer<SimulationSpec> {
 		@Override
 		public SimulationSpec deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-			return new SimulationSpec(json.getAsJsonObject());
+			return fromJson(json.getAsJsonObject());
 		}
 	}
 

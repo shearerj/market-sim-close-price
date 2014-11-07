@@ -4,9 +4,10 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static utils.Tests.assertOptionalRange;
 import static utils.Tests.assertQuote;
-import static utils.Tests.assertSingleTransaction;
+import static utils.Tests.*;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -54,7 +55,7 @@ public class BackgroundAgentTest {
 	private static final ListPrivateValue simple = ListPrivateValue.create(ImmutableList.of(Price.of(100), Price.of(10)));
 	private static final double eps = 1e-6;
 	private static final double kappa = 0.2315;
-	private static final int meanValue = 383000;
+	private static final int meanValue = 98765;
 	private static final double variance = 12345;
 	private static final int simulationLength = 58972;
 	private static final Props defaults = Props.fromPairs(
@@ -466,7 +467,6 @@ public class BackgroundAgentTest {
 		assertQuote(view.getQuote(), Price.of(50), 1, null, 0);
 	}
 
-	// FIXME Private value is not properly negating sell orders. This should be fixed when the bounding functionality is changed.
 	// FIXME Test this for BUY Orders as well
 	@Test
 	public void testPayoff() {
@@ -546,20 +546,17 @@ public class BackgroundAgentTest {
 		assertEquals(50000 - endTimeFundamental.intValue(), agent.getPayoff(), 0.001);
 	}
 
-	@SuppressWarnings("unused")
 	@Test
 	public void zirpBasicBuyerTest() {
-		fundamental = Mock.fundamental;
+		fundamental = Mock.fundamental(100000);
 		fund = fundamental.getView(TimeStamp.ZERO);
 		
 		BackgroundAgent zirp = backgroundAgent(zirpProps);
 		setQuote(Price.of(120000), Price.of(130000));
 		
-		Price val = zirp.getEstimatedValuation(BUY);
 		zirp.executeZIRPStrategy(BUY, 1);
 
-		// Verify that agent does shade since 10000 * 0.75 > val - 130000
-		// FIXME
+		// Verify that agent does shade since 10000 * 0.75 > valuation - 130000
 		assertEquals(1, zirp.getPosition());
 	}
 
@@ -594,6 +591,7 @@ public class BackgroundAgentTest {
 
 		// When markup is not sufficient, then don't shade since 10000 * 0.75 <= val - 85000
 		// FIXME test that order has price zirp.getEstimatedValuation(BUY) (before actually submitting)
+		fail();
 	}
 	
 	@Test
@@ -640,10 +638,12 @@ public class BackgroundAgentTest {
 		BackgroundAgent zirp = backgroundAgent(zirpProps);
 		setQuote(Price.of(120000), Price.of(130000));
 		
+		Price val = zirp.getEstimatedValuation(SELL);
 		zirp.executeZIRPStrategy(SELL, 1);
 		
 		// when markup is not sufficient, then don't shade since 10000 * 0.75 <= 120000 - val
-		// FIXME Assert Price is zirp.getEstimatedValuation(SELL)
+		// FIXME This assert may be incorrect
+		assertSingleOrder(zirp.getActiveOrders(), val, 1, TimeStamp.ZERO, TimeStamp.ZERO);
 	}
 	
 	/** Test that returns empty if exceed max position */

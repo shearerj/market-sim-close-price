@@ -53,15 +53,13 @@ public abstract class WindowAgent extends BackgroundAgent {
 	 * @param currentTime
 	 * @return
 	 */
-	// FIXME Assert that the ording and searching are correct
-	// FIXME Should this take into account latency? Latency is effectively limitng size of window...
-	// Maybe get window from latest transaction time backwards?
+	// TODO Should this take into account latency? Latency is effectively limiting size of window...
+	// TODO This could use binary search
 	protected List<Transaction> getWindowTransactions() {
 		TimeStamp firstTimeInWindow = getCurrentTime().minus(windowLength);
 
 		List<Transaction> allTransactions = primaryMarket.getTransactions();
 		
-		// TODO Binary Search?
 		int limit = 0;
 		for (Transaction trans : allTransactions) {
 			if (!trans.getExecTime().after(firstTimeInWindow))

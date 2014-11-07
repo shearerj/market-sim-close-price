@@ -50,12 +50,6 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 
 	protected final int ticks; // in ticks
 
-	/**
-	 * Constructor taking in a int.
-	 * 
-	 * @param ticks
-	 */
-	// FIXME change to protected
 	private Price(int ticks) {
 		this.ticks = ticks;
 	}

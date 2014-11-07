@@ -43,8 +43,10 @@ import event.Timeline;
  * @author zzy, ewah
  * 
  */
-// FIXME Instead of 0 being a special value, 0 should be zero (e.g. normal mean)
-// and a linear weighting should be a separate class or something.
+/*
+ * TODO Instead of 0 being a special value, 0 should be zero (e.g. normal mean)
+ * and a linear weighting should be a separate class or something.
+ */
 public class WMAMarketMaker extends MAMarketMaker {
 	private static final long serialVersionUID = -8566264088391504213L;
 

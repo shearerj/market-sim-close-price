@@ -67,13 +67,11 @@ public class ZIRAgentTest {
 		nasdaqView = nasdaq.getPrimaryView();
 	}
 	
-	// FIXME These tests to backgroudn agent
-	
 	/**
 	 * Scenario where ZIR withdrawing orders causes NBBO to grow stale and get
 	 * out of sync.
 	 * 
-	 * FIXME Elaine please check that this is correct
+	 * FIXME Elaine please check that this is the correct scenario
 	 */
 	private OrderRecord withdrawRoutingScenario(ZIRAgent agent) {
 		mockAgent.submitOrder(nasdaqView, SELL, Price.of(111000), 1);

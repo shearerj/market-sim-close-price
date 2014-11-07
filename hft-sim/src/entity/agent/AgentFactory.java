@@ -1,5 +1,7 @@
 package entity.agent;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Random;
@@ -9,7 +11,6 @@ import systemmanager.Consts.AgentType;
 import utils.Iterators2;
 import utils.Rand;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 
 import data.FundamentalValue;
@@ -17,7 +18,6 @@ import data.Props;
 import data.Stats;
 import entity.market.Market;
 import entity.sip.MarketInfo;
-import event.TimeStamp;
 import event.Timeline;
 
 public class AgentFactory {
@@ -34,6 +34,7 @@ public class AgentFactory {
 
 	private AgentFactory(Stats stats, Timeline timeline, Log log, Random rand, MarketInfo sip, FundamentalValue fundamental,
 			Collection<Market> markets, Iterator<Market> marketProcess) {
+		checkArgument(!markets.isEmpty(), "Must have at least one market");
 		this.stats = stats;
 		this.timeline = timeline;
 		this.log = log;
@@ -80,13 +81,6 @@ public class AgentFactory {
 		default:
 			throw new IllegalArgumentException("Can't create AgentType: " + type);
 		}
-	}
-
-	// FIXME Move this to background agent? reentry agent?
-	public static Iterator<TimeStamp> exponentials(double rate, Rand rand) {
-		return Iterators.transform(Iterators2.exponentials(rate, rand), new Function<Double, TimeStamp>(){
-			@Override public TimeStamp apply(Double dub) { return TimeStamp.of((long) (double) dub); }
-		});
 	}
 	
 }

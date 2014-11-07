@@ -76,8 +76,6 @@ public class FundamentalValueTest {
 		assertEquals(0, stats.getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).stddev(), eps);
 	}
 	
-	// FIXME Assert that fundamental is never referenced past final simulation time...
-	
 	@Test
 	public void extraTest() {
 		for (int i = 0; i < 100; i++) {

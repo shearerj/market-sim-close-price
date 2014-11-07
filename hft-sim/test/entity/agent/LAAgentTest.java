@@ -45,9 +45,7 @@ public class LAAgentTest {
 	}
 	
 	// FIXME Test that quote of a market accurately reflected when agent notified. Put tests in HFTAgentTest
-	
 	// FIXME Test that orderSubmitted happens at the correct time. E.g. before strategy Also in HFT Agent?
-	
 	// FIXME Assert that tied hfts act in random order
 		
 	/*

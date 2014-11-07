@@ -32,7 +32,7 @@ public class PresetTest {
 		json.add(SimulationSpec.CONFIG, config);
 		config.addProperty(Preset.KEY, CENTRALCDA.toString());
 
-		SimulationSpec spec = new SimulationSpec(json);
+		SimulationSpec spec = SimulationSpec.fromJson(json);
 		for (Entry<MarketType, Props> mp : spec.getMarketProps().entries()) {
 			switch (mp.getKey()) {
 			case CDA:
@@ -62,7 +62,7 @@ public class PresetTest {
 		config.addProperty(Preset.KEY, CENTRALCALL.toString());
 		config.addProperty(Props.keyToString(NbboLatency.class), 1337);
 		
-		SimulationSpec spec = new SimulationSpec(json);
+		SimulationSpec spec = SimulationSpec.fromJson(json);
 		for (Entry<MarketType, Props> mp : spec.getMarketProps().entries()) {
 			switch (mp.getKey()) {
 			case CDA:
@@ -92,7 +92,7 @@ public class PresetTest {
 		json.add(SimulationSpec.CONFIG, config);
 		config.addProperty(Preset.KEY, TWOMARKET.toString());
 		
-		SimulationSpec spec = new SimulationSpec(json);
+		SimulationSpec spec = SimulationSpec.fromJson(json);
 		for (Entry<MarketType, Props> mp : spec.getMarketProps().entries()) {
 			switch (mp.getKey()) {
 			case CDA:
@@ -121,7 +121,7 @@ public class PresetTest {
 		json.add(SimulationSpec.CONFIG, config);
 		config.addProperty(Preset.KEY, TWOMARKETLA.toString());
 		
-		SimulationSpec spec = new SimulationSpec(json);
+		SimulationSpec spec = SimulationSpec.fromJson(json);
 		for (Entry<MarketType, Props> mp : spec.getMarketProps().entries()) {
 			switch (mp.getKey()) {
 			case CDA:

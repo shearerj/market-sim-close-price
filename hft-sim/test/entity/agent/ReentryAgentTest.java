@@ -32,7 +32,7 @@ public class ReentryAgentTest {
 	
 	@Test
 	public void reentryTest() {
-		PeekingIterator<TimeStamp> reentries = Iterators.peekingIterator(AgentFactory.exponentials(0.1, rand));
+		PeekingIterator<TimeStamp> reentries = Iterators.peekingIterator(ReentryAgent.exponentials(0.1, rand));
 		ReentryAgent agent = reentryAgent(reentries);
 		
 		// Test reentries
@@ -50,7 +50,7 @@ public class ReentryAgentTest {
 	public void reentryRateZeroTest() {
 		// Test reentries - note should never iterate past INFINITE b/c it 
 		// will never execute
-		ReentryAgent agent = reentryAgent(AgentFactory.exponentials(0, rand));
+		ReentryAgent agent = reentryAgent(ReentryAgent.exponentials(0, rand));
 		Iterator<TimeStamp> reentries = agent.reentry;
 		assertFalse(reentries.hasNext());
 

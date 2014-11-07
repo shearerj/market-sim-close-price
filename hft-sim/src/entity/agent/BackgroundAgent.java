@@ -72,7 +72,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		super(id, stats, timeline, log, rand, sip, fundamental, privateValue,
 				TimeStamp.of((long) rand.nextExponential(props.get(ArrivalRate.class))),
 				market,
-				AgentFactory.exponentials(props.get(BackgroundReentryRate.class, ReentryRate.class), rand),
+				ReentryAgent.exponentials(props.get(BackgroundReentryRate.class, ReentryRate.class), rand),
 				props);
 		this.maxAbsolutePosition = privateValue.getMaxAbsPosition();
 		this.bidRangeMin = props.get(BidRangeMin.class);

@@ -5,7 +5,11 @@ import static logger.Log.Level.INFO;
 
 import java.util.Iterator;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
+
 import logger.Log;
+import utils.Iterators2;
 import utils.Rand;
 import data.FundamentalValue;
 import data.Props;
@@ -40,5 +44,11 @@ public abstract class ReentryAgent extends SMAgent {
 		if (!reentry.hasNext()) // Empty iterator
 			return;
 		reenterIn(reentry.next());
+	}
+
+	public static Iterator<TimeStamp> exponentials(double rate, Rand rand) {
+		return Iterators.transform(Iterators2.exponentials(rate, rand), new Function<Double, TimeStamp>(){
+			@Override public TimeStamp apply(Double dub) { return TimeStamp.of((long) (double) dub); }
+		});
 	}
 }

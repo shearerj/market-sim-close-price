@@ -48,8 +48,6 @@ public class Observations {
 	PV_SELL1 = 					"pv_sell1",
 	PV_POSITION1_MAX_ABS =		"pv_position_max_abs1";
 	
-	// FIXME Change how multimap is output with a type converter
-	// FIXME Change how summstats is output with a type converter. Allow different kinds (e.g. variance...)
 	protected final Multimap<String, PlayerObservation> players;
 	protected final Map<String, SummStats> features;
 	
@@ -140,7 +138,6 @@ public class Observations {
 		}
 		features.get("spreads_mean").add(spreadMedians.mean());
 		
-		// FIXME Make periods a simspec parameter
 		// RMSD
 		TimeSeries fundamental = stats.getTimeStats().get(Stats.FUNDAMENTAL);
 		for (int period : periods) {

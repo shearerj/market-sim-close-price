@@ -175,7 +175,6 @@ public class ObservationsTest {
 		assertEquals(-100000, pobs.payoff.mean(), eps);
 	}
 
-	// FIXME Change from BackgroundAgent to Agent once private value is moved
 	@Test
 	public void privateValueFeatureTest() {
 		PlayerSpec spec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
@@ -207,7 +206,6 @@ public class ObservationsTest {
 		assertEquals(maxAbsPos, pobs.features.get(Observations.PV_POSITION1_MAX_ABS).mean(), eps);
 	}
 	
-	// FIXME Change from BackgroundAgent to Agent once private value is moved
 	@Test
 	public void playerFeatureMeanTest() {
 		PlayerSpec spec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
