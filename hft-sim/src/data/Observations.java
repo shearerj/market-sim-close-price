@@ -92,6 +92,7 @@ public class Observations {
 	protected final SumStats marketmakerLadderCenter;
 	protected final SumStats marketmakerExecutionTimes;
 	protected final SumStats marketmakerTruncRungs;
+	protected final SumStats marketmakerExecRungs;
 	
 	protected double zirpGreedyOrders;
 	protected double zirpNonGreedyOrders;
@@ -148,6 +149,7 @@ public class Observations {
 		this.marketmakerLadderCenter = SumStats.create();
 		this.marketmakerSpreads = SumStats.create();
 		this.marketmakerTruncRungs = SumStats.create();
+		this.marketmakerExecRungs = SumStats.create();
 	}
 	
 	/**
@@ -207,6 +209,7 @@ public class Observations {
 		features.put("mm_spreads_stddev", marketmakerSpreads.stddev());
 		features.put("mm_exectime_mean", marketmakerExecutionTimes.mean());
 		features.put("mm_rungs_trunc_mean", marketmakerTruncRungs.mean());
+		features.put("mm_rungs_exec_mean", marketmakerExecRungs.mean());
 		
 		// ZIRP
 		features.put("zirp_greedy", zirpGreedyOrders);
@@ -352,8 +355,12 @@ public class Observations {
 		marketmakerSpreads.add(statistic.ask.doubleValue() - statistic.bid.doubleValue());
 	}
 	
-	@Subscribe public void processLadder(LadderStatistic statistic) {
+	@Subscribe public void processLadder(LadderTruncationStatistic statistic) {
 		marketmakerTruncRungs.add(statistic.num);
+	}
+	
+	@Subscribe public void processRungs(LadderExecutionStatistic statistic) {
+		marketmakerExecRungs.add(statistic.num);
 	}
 	
 	@Subscribe public void processSpread(SpreadStatistic statistic) {
@@ -430,13 +437,23 @@ public class Observations {
 		}
 	}
 	
-	public static class LadderStatistic {
+	public static class LadderTruncationStatistic {
 		protected final MarketMaker mm;
 		protected final int num;
 		
-		public LadderStatistic(MarketMaker mm, int rungsTruncated) {
+		public LadderTruncationStatistic(MarketMaker mm, int rungsTruncated) {
 			this.mm = mm;
 			this.num = rungsTruncated;
+		}
+	}
+	
+	public static class LadderExecutionStatistic {
+		protected final MarketMaker mm;
+		protected final int num;
+		
+		public LadderExecutionStatistic(MarketMaker mm, int rungsExecuted) {
+			this.mm = mm;
+			this.num = rungsExecuted;
 		}
 	}
 	

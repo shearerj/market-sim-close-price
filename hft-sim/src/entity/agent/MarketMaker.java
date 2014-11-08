@@ -22,7 +22,8 @@ import entity.infoproc.SIP;
 import entity.market.Market;
 import entity.market.Price;
 import event.TimeStamp;
-import data.Observations.LadderStatistic;
+import data.Observations.LadderTruncationStatistic;
+import data.Observations.LadderExecutionStatistic;
 
 /**
  * Abstract class for MarketMakers.
@@ -91,6 +92,14 @@ public abstract class MarketMaker extends ReentryAgent {
 		}
 	}
 
+	@Override
+	public void agentStrategy(TimeStamp currentTime) {
+		super.agentStrategy(currentTime);
+		if (activeOrders.size() != 0) {
+			BUS.post(new LadderExecutionStatistic(this, numRungs*2 - activeOrders.size()));
+		}
+	}
+	
 	/**
 	 * Shortcut constructor for exponential interarrivals (e.g. Poisson reentries)
 	 * @param fix TODO
@@ -241,7 +250,7 @@ public abstract class MarketMaker extends ReentryAgent {
 						Math.ceil(bid.intValue() - ladderBid.intValue()) : 0;
 			}
 		}
-		BUS.post(new LadderStatistic(this, numRungsTruncated));
+		BUS.post(new LadderTruncationStatistic(this, numRungsTruncated));
 
 		// Tick improvement
 		if (getQuote().getBidPrice() != null) {
