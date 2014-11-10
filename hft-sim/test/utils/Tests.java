@@ -6,7 +6,6 @@ import static org.junit.Assert.assertEquals;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -123,24 +122,24 @@ public abstract class Tests {
 	public static void assertRandomOrderLadder(Collection<OrderRecord> orders, int size,
 			Range<Price> ladderCenterRange, int rungSize) {
 		// Check that highest bid and lowest ask are 2*size apart
-		Iterator<OrderRecord> iter = orders.iterator();
-		List<Price> bids = Lists.newArrayListWithCapacity(orders.size() / 2);
-		for (int i = 0; i < orders.size() / 2; ++i)
-			bids.add(iter.next().getPrice());
-		List<Price> asks = Lists.newArrayListWithCapacity(orders.size() / 2);
-		for (int i = 0; i < orders.size() / 2; ++i)
-			asks.add(iter.next().getPrice());
+		List<Price> bids = Lists.newArrayList();
+		List<Price> asks = Lists.newArrayList();
+		for (OrderRecord order : orders)
+			if (order.getOrderType() == BUY)
+				bids.add(order.getPrice());
+			else
+				asks.add(order.getPrice());
 		
-		assertEquals("Bid ans ask not separated by 2*rung size",
-				2 * size, Ordering.natural().min(asks).intValue() - Ordering.natural().max(bids).intValue());
+		assertEquals("Bid and ask not separated by double rung size",
+				2 * rungSize, Ordering.natural().min(asks).intValue() - Ordering.natural().max(bids).intValue());
 		
 		// Compute bid and ask ranges and pass into more generic test
 		Range<Price> bidRange = Range.closed(
-				Price.of(ladderCenterRange.lowerEndpoint().intValue() - size),
-				Price.of(ladderCenterRange.upperEndpoint().intValue() - size));
+				Price.of(ladderCenterRange.lowerEndpoint().intValue() - rungSize),
+				Price.of(ladderCenterRange.upperEndpoint().intValue() - rungSize));
 		Range<Price> askRange = Range.closed(
-				Price.of(ladderCenterRange.lowerEndpoint().intValue() + size),
-				Price.of(ladderCenterRange.upperEndpoint().intValue() + size));
+				Price.of(ladderCenterRange.lowerEndpoint().intValue() + rungSize),
+				Price.of(ladderCenterRange.upperEndpoint().intValue() + rungSize));
 		assertRandomOrderLadder(orders, size, bidRange, askRange, rungSize);
 	}
 	

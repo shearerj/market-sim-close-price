@@ -72,6 +72,7 @@ public abstract class Market extends Entity {
 	private Quote quote; // Current quote
 
 	// Book keeping
+	private final List<Transaction> transactions; // All transactions from earliest to latest
 	private final Map<OrderRecord, MarketView> routedOrders; // Maps all routed orders to the appropriate market
 	private final Map<OrderRecord, Order> orderMapping; // Maps active records to their order object
 	private final Multiset<Price> askPriceQuantity, bidPriceQuantity; // How many orders are at a specific price
@@ -87,6 +88,7 @@ public abstract class Market extends Entity {
 		this.views = Lists.newArrayList();
 		this.primaryView = getView(props.get(MarketLatency.class));
 		
+		this.transactions = Lists.newArrayList();
 		this.orderMapping = Maps.newHashMap();
 		this.routedOrders = Maps.newHashMap();
 		this.askPriceQuantity = HashMultiset.create();
@@ -196,8 +198,7 @@ public abstract class Market extends Entity {
 			bidPriceQuantity.remove(buy.getPrice(), transaction.getQuantity());
 			
 			// Views
-			for (MarketView view : views)
-				view.addTransaction(transaction);
+			transactions.add(transaction);
 			buy.getAgent().orderRemoved(buy.getOrderRecord(), transaction.getQuantity());
 			buy.getAgent().processTransaction(buy.getSubmitTime(), BUY, transaction);
 			sell.getAgent().orderRemoved(sell.getOrderRecord(), transaction.getQuantity());
@@ -270,26 +271,16 @@ public abstract class Market extends Entity {
 		return primaryView;
 	}
 
-	// FIXME Have market keep transactions, and just return sublist...
 	public class MarketView implements View {
 		protected final TimeStamp latency;
 		
-		protected final List<Transaction> transactions;
+		protected int transactionOffset;
 		protected Quote quote;
 		
 		protected MarketView(TimeStamp latency) {
 			this.latency = latency;
 			this.quote = Quote.create(Market.this, Optional.<Price> absent(), 0, Optional.<Price> absent(), 0, TimeStamp.ZERO);
-			this.transactions = Lists.newArrayList();
-		}
-		
-		protected void addTransaction(final Transaction transaction) {
-			scheduleActivityIn(latency, new Activity() {
-				@Override public void execute() {
-					MarketView.this.transactions.add(transaction);
-				}
-				@Override public String toString() { return "Add Transaction"; }
-			});
+			this.transactionOffset = 0;
 		}
 		
 		protected void updateQuote(final Quote quote) {
@@ -303,7 +294,11 @@ public abstract class Market extends Entity {
 		}
 		
 		public List<Transaction> getTransactions() {
-			return Collections.unmodifiableList(Lists.reverse(transactions));
+			// This over binary search, so that the cost of a repeated call is constant instead of log
+			while (transactionOffset < transactions.size() &&
+					!transactions.get(transactionOffset).getExecTime().after(getCurrentTime().minus(latency)))
+				transactionOffset++;
+			return Collections.unmodifiableList(Lists.reverse(transactions.subList(0, transactionOffset)));
 		}
 		
 		public Quote getQuote() {

@@ -85,7 +85,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 				* Math.sqrt(props.get(FundamentalShockVar.class)),
 				RoundingMode.HALF_EVEN);
 
-		// FIXME Move to expert class / interface
+		// TODO Move to expert class / interface
 		// Initialize weights, initially all equal = 1/N, where N = # windows
 		// spreads = windows in paper, variable b
 		List<Integer> spreads = ImmutableList.copyOf(props.get(Spreads.class));
