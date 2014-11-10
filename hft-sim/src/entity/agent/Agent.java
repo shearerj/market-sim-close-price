@@ -16,7 +16,6 @@ import systemmanager.Keys.FundamentalLatency;
 import systemmanager.Keys.TickSize;
 import utils.Rand;
 
-import com.google.common.base.CaseFormat;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -101,7 +100,7 @@ public abstract class Agent extends Entity {
 		postStat(Stats.TOTAL_PROFIT, profit);
 		for (Entry<Double, Double> e : getDiscountedSurplus()) {			
 			postStat(String.format("%s%.4f", Stats.SURPLUS, e.getKey()), e.getValue());
-			postStat(String.format("%s%.4f_%s", Stats.SURPLUS, e.getKey(), CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, getClass().getSimpleName())), e.getValue());
+			postStat(String.format("%s%.4f_%s", Stats.SURPLUS, e.getKey(), getClass().getSimpleName().toLowerCase()), e.getValue());
 		}
 	}
 	

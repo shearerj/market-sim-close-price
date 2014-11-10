@@ -29,6 +29,8 @@ import data.Stats;
 
 public class SimulationTest {
 	
+	// FIXME Test that NOOP liquidates
+	
 	private static final Gson gson = new Gson();
 	private static final JsonObject json = gson.toJsonTree(ImmutableMap.of(
 			ASSIGNMENT, ImmutableMap.of("role", ImmutableList.of()),
