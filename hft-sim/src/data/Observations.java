@@ -111,14 +111,14 @@ public class Observations {
 		for (String prefix : meanPrefixes) {
 			for (Entry<String, SummStats> e : Maps2.prefix(prefix, stats.getSummaryStats()).entrySet()) {
 				unseen.remove(e.getKey());
-				features.get(e.getKey() + "_mean").add(e.getValue().sum());
+				features.get(e.getKey() + "_mean").add(e.getValue().mean());
 			}
 		}
 		// Standard Deviation
 		for (String prefix : stddevPrefixes) {
 			for (Entry<String, SummStats> e : Maps2.prefix(prefix, stats.getSummaryStats()).entrySet()) {
 				unseen.remove(e.getKey());
-				features.get(e.getKey() + "_stddev").add(e.getValue().sum());
+				features.get(e.getKey() + "_stddev").add(e.getValue().stddev());
 			}
 		}
 		// Any unseen keys
@@ -174,7 +174,7 @@ public class Observations {
 				// compute log-return volatility for this market
 				// XXX Note change in log-return vol from before. Before if the ratio was
 				// NaN it go thrown out. Now the previous value is used. Not sure if
-				// this is correct
+				// this is desired
 				double logStddev = Maths.stddev(Iterables.filter(Maths.logRatio(filtered),
 						Predicates.not(Predicates.equalTo(Double.NaN))));
 

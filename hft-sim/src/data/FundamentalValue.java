@@ -12,6 +12,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
+import com.google.common.collect.Range;
 
 import entity.View;
 import entity.market.Price;
@@ -44,6 +45,7 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 	 * @param rand Random generator
 	 */
 	protected FundamentalValue(Stats stats, Timeline timeline, double kap, int meanVal, double var, Rand rand) {
+		checkArgument(Range.closed(0d, 1d).contains(kap), "Kappa (%.4f) not in [0, 1]", kap);
 		this.stats = stats;
 		this.timeline = timeline;
 		this.rand = rand;

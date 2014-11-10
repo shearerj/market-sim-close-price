@@ -43,11 +43,6 @@ public abstract class Maps2 {
 				return value;
 			}
 			
-			@Override
-			public boolean containsKey(Object key) {
-				return true;
-			}
-			
 		};
 	}
 

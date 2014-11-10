@@ -3,13 +3,21 @@ package data;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
+import java.util.List;
+
 import logger.Log;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Consts.AgentType;
+import systemmanager.Keys.MeanPrefixes;
+import systemmanager.Keys.Periods;
 import systemmanager.Keys.SimLength;
+import systemmanager.Keys.StddevPrefixes;
+import systemmanager.Keys.SumPrefixes;
 import systemmanager.SimulationSpec.PlayerSpec;
 import utils.Mock;
 import utils.Rand;
@@ -34,23 +42,91 @@ public class ObservationsTest {
 	private Market one, two;
 	
 	@Before
-	public void defaultSetup() {
+	public void setup() {
 		stats = Stats.create();
 		one = Mock.market();
 		two = Mock.market();
 	}
+		
+	/** Test basic summary statistic funcationality */
+	@Test
+	public void summaryStatsTest() {
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs());
+		
+		stats.post("test", 5);
+		stats.post("test", 15);
+		
+		obs.add(stats, ImmutableList.<Player> of());
+		
+		assertEquals(20, obs.features.get("test_sum").mean(), eps);
+		assertEquals(10, obs.features.get("test_mean").mean(), eps);
+		assertEquals(7.0710678, obs.features.get("test_stddev").mean(), eps);
+	}
 	
-	// FIXME General test for summary stats + whitelist
-	// FIXME Fundamental test
-	// FIXME Players Test
-	// FIXME Test that sampling actually happens at the end of the interval, for all period tests
-
-	/*
-	 * TODO Still have some hard things to test, that should for the most part
-	 * be correct. Most of these are basically fully tested elsewhere, but just
-	 * need to verify that they get written correctly. These tests seem tedious
-	 * and hard to write, so I'm not writing them for now.
-	 */
+	/** Test that sum white list works appropriately */
+	@Test
+	public void sumWhitelistTest() {
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(SumPrefixes.class, ImmutableList.of("test")));
+		
+		stats.post("test", 5);
+		stats.post("test", 15);
+		
+		obs.add(stats, ImmutableList.<Player> of());
+		
+		assertEquals(20, obs.features.get("test_sum").mean(), eps);
+		assertFalse(obs.features.containsKey("test_mean"));
+		assertFalse(obs.features.containsKey("test_stddev"));
+	}
+	
+	/** Test that mean white list works appropriately */
+	@Test
+	public void meanWhitelistTest() {
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(MeanPrefixes.class, ImmutableList.of("test")));
+		
+		stats.post("test", 5);
+		stats.post("test", 15);
+		
+		obs.add(stats, ImmutableList.<Player> of());
+		
+		assertEquals(10, obs.features.get("test_mean").mean(), eps);
+		assertFalse(obs.features.containsKey("test_sum"));
+		assertFalse(obs.features.containsKey("test_stddev"));
+	}
+	
+	/** Test that standard deviation white list works appropriately */
+	@Test
+	public void stddevWhitelistTest() {
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(StddevPrefixes.class, ImmutableList.of("test")));
+		
+		stats.post("test", 5);
+		stats.post("test", 15);
+		
+		obs.add(stats, ImmutableList.<Player> of());
+		
+		assertEquals(7.0710678, obs.features.get("test_stddev").mean(), eps);
+		assertFalse(obs.features.containsKey("test_sum"));
+		assertFalse(obs.features.containsKey("test_mean"));
+	}
+	
+	@Test
+	public void fundamentalStatisticsTest() {
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(
+				Periods.class, ImmutableList.of(1, 3),
+				SimLength.class, 6));
+		
+		List<Integer> fakeFund = ImmutableList.of(20, 50, 14, 67, 34, 90, 20);
+		List<Integer> transPrices = ImmutableList.of(45, 90, 20, 1, 100, 3, 5);
+		
+		for (int i = 0; i < fakeFund.size(); ++i) {
+			stats.postTimed(TimeStamp.of(i), Stats.FUNDAMENTAL, fakeFund.get(i));
+			stats.postTimed(TimeStamp.of(i), Stats.TRANSACTION_PRICE, transPrices.get(i));
+		}
+		
+		obs.add(stats, ImmutableList.<Player> of());
+		
+		assertEquals(55.59076661940662, obs.features.get("trans_freq_1_rmsd").mean(), eps);
+		assertEquals(61.6644143732834, obs.features.get("trans_freq_3_rmsd").mean(), eps);
+	}
 	
 	@Test
 	public void meanSpreadTest() {
@@ -72,11 +148,11 @@ public class ObservationsTest {
 		assertEquals(4, obs.features.get("spreads_mean").mean(), eps);
 	}
 
-	// TODO This could probably test better numbers for volatility
-	// TODO There are a lot of conditionals for "bad" data that also need to be tested
 	@Test
 	public void volitilityTest() {
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(SimLength.class, 3000));
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(
+				SimLength.class, 3000,
+				Periods.class, ImmutableList.of(1, 250)));
 
 		stats.postTimed(TimeStamp.ZERO, Stats.MIDQUOTE + one, 103);
 		stats.postTimed(TimeStamp.of(1000), Stats.MIDQUOTE + one, 106.5);
@@ -84,19 +160,19 @@ public class ObservationsTest {
 		
 		stats.postTimed(TimeStamp.ZERO, Stats.MIDQUOTE + two, 50);
 		stats.postTimed(TimeStamp.of(1000), Stats.MIDQUOTE + two, 100);
-		stats.postTimed(TimeStamp.of(2000), Stats.MIDQUOTE + two, 20);
+		stats.postTimed(TimeStamp.of(2249), Stats.MIDQUOTE + two, 20);
 		
 		obs.add(stats, ImmutableList.<Player> of());
 		
 		assertEquals(1.4722055324274199, obs.features.get("vol_freq_1_" + Stats.MIDQUOTE + one + "_stddev").mean(), eps);
 		assertEquals(1.5374122295716148, obs.features.get("vol_freq_250_" + Stats.MIDQUOTE + one + "_stddev").mean(), eps);
-		assertEquals(33.003817550093338, obs.features.get("vol_freq_1_" + Stats.MIDQUOTE + two + "_stddev").mean(), eps);
+		assertEquals(33.00650085344368, obs.features.get("vol_freq_1_" + Stats.MIDQUOTE + two + "_stddev").mean(), eps);
 		assertEquals(34.465617474213168, obs.features.get("vol_freq_250_" + Stats.MIDQUOTE + two + "_stddev").mean(), eps);
 		
-		assertEquals(17.238011541260377, obs.features.get("vol_freq_1_mean_stddev_price").mean(), eps);
+		assertEquals(17.23935319293555, obs.features.get("vol_freq_1_mean_stddev_price").mean(), eps);
 		assertEquals(18.001514851892392, obs.features.get("vol_freq_250_mean_stddev_price").mean(), eps);
 		
-		assertEquals(1.9416924383396004, obs.features.get("vol_freq_1_mean_log_price").mean(), eps);
+		assertEquals(1.9417330880958312, obs.features.get("vol_freq_1_mean_log_price").mean(), eps);
 		assertEquals(1.9850314323837965, obs.features.get("vol_freq_250_mean_log_price").mean(), eps);
 		
 		assertEquals(0.00074877135839063094, obs.features.get("vol_freq_1_log_return_" + Stats.MIDQUOTE + one + "_stddev").mean(), eps);
@@ -235,6 +311,7 @@ public class ObservationsTest {
 		final AtomicDouble b_pv1 = new AtomicDouble();
 		final AtomicDouble b_pv_1 = new AtomicDouble();
 		
+		Mock.timeline.ignoreNext();
 		agent = new BackgroundAgent(0, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, one,
 				Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
