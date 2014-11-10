@@ -44,10 +44,6 @@ public class LAAgentTest {
 		mockAgent = Mock.agent();
 	}
 	
-	// FIXME Test that quote of a market accurately reflected when agent notified. Put tests in HFTAgentTest
-	// FIXME Test that orderSubmitted happens at the correct time. E.g. before strategy Also in HFT Agent?
-	// FIXME Assert that tied hfts act in random order
-		
 	/*
 	 * Bug in LA that occurred in very particular circumstances. Imagine market1
 	 * has BUY @ 30 and BUY @ 50. A SELL @ 10 arrives in market2. The LA submits
@@ -204,6 +200,40 @@ public class LAAgentTest {
 		assertEquals(0, la.getPosition());
 		assertEquals(8, la.getProfit(), 1e-6);
 		assertTrue(la.getActiveOrders().isEmpty());
+	}
+	
+	/** Verify that LAs are randomly ordered when they tie for latency */
+	@Test
+	public void laTieTest() {
+		boolean la1Arbs = false,
+				la1Buys = false,
+				la2Arbs = false,
+				la2Buys = false;
+		
+		for (int i = 0; i < 100; ++i) {
+			setup();
+			LAAgent la1 = laAgent(Props.fromPairs(LaLatency.class, TimeStamp.of(5)));
+			LAAgent la2 = laAgent(Props.fromPairs(LaLatency.class, TimeStamp.of(5)));
+
+			// Arbitrage!
+			submitOrder(nyseView, BUY, Price.of(5));
+			submitOrder(nasdaqView, SELL, Price.of(1));
+
+			// 5 to find out about the arbitrage, 5 to submit the orders, and 5 to find out what happened to submitted orders
+			timeline.executeUntil(TimeStamp.of(15));
+
+			// Test for different possible outcomes of arbitrage
+			if (la1.getPosition() == 1)
+				la1Buys = true;
+			else if (la2.getPosition() == 1)
+				la2Buys = true;
+			else if (la1.getProfit() > 0)
+				la1Arbs = true;
+			else
+				la2Arbs = true;
+		}
+		
+		assertTrue("Not all outcomes happened", la1Arbs && la1Buys && la2Arbs && la2Buys);
 	}
 	
 	@Test
