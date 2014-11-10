@@ -142,7 +142,7 @@ public class ZIPAgentTest {
 		agent.lastOrderPrice = Price.of(105000);
 		agent.lastOrderPrice = Price.of(95000);
 
-		// FIXME (to Elaine) Don't know how to properly test what this tried to test
+		// FIXME (for Elaine) Don't know how to properly test what this tried to test
 //		/* 
 //		 * This current test is based off the random seed. Currently this means that
 //		 * Type: BUY
@@ -217,8 +217,12 @@ public class ZIPAgentTest {
 				.put(MarginMax.class, 0.05)
 				.put(MarginMin.class, 0.05)
 				.build());
-		// FIXME Agent seed set to 1 for unknown reason
-		
+		/*
+		 * FIXME(for Elaine) Agent seed set to 1 for unknown reason, but it seems required
+		 * to get test to work. Seed is rightly no longer accessible, so what is
+		 * the proper way to test this?
+		 */
+
 		// add dummy transaction
 		Transaction firstTrans = addTransaction(Price.of(99000), 1);
 		Transaction lastTrans = addTransaction(Price.of(80000), 1);

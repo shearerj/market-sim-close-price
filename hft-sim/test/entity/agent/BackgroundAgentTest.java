@@ -589,7 +589,7 @@ public class BackgroundAgentTest {
 		zirp.executeZIRPStrategy(BUY, 1);
 
 		// When markup is not sufficient, then don't shade since 10000 * 0.75 <= val - 85000
-		// FIXME test that order has price zirp.getEstimatedValuation(BUY) (before actually submitting)
+		// FIXME(for Elaine) test that order has price zirp.getEstimatedValuation(BUY) (before actually submitting)
 		fail();
 	}
 	
@@ -641,7 +641,7 @@ public class BackgroundAgentTest {
 		zirp.executeZIRPStrategy(SELL, 1);
 		
 		// when markup is not sufficient, then don't shade since 10000 * 0.75 <= 120000 - val
-		// FIXME This assert may be incorrect
+		// FIXME(for Elaine) This assert may be incorrect
 		assertSingleOrder(zirp.getActiveOrders(), val, 1, TimeStamp.ZERO, TimeStamp.ZERO);
 	}
 	
