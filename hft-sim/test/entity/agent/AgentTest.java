@@ -4,6 +4,7 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertQuote;
 import static utils.Tests.assertRegex;
@@ -15,16 +16,24 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
+import systemmanager.Keys.MarketLatency;
 import utils.Mock;
 import utils.Rand;
+
+import com.google.common.collect.Iterables;
+
 import data.Props;
 import data.Stats;
 import entity.agent.position.PrivateValues;
+import entity.market.CDAMarket;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
+import entity.sip.MarketInfo;
+import entity.sip.SIP;
 import event.EventQueue;
 import event.TimeStamp;
+import event.Timeline;
 
 public class AgentTest {
 	private static final double eps = 1e-6;
@@ -33,14 +42,6 @@ public class AgentTest {
 	private MarketView view;
 	private Agent agent;
 	
-	// FIXME Test that NMS Orders update OrderRecord when the route or don't
-	// FIXME Premature withdraw test
-	// FIXME Slow update of order record
-	// FIXME Other agent tests
-	// FIXME Private value when it's move to agent
-	// FIXME Transaction delay properly removes orders (with withdraw newest afterwards) also check quantity
-	// FIXME Try withdrawing an order while it's being routed in a slow two makret system
-
 	@Before
 	public void setup()  {
 		market = Mock.market();
@@ -184,6 +185,152 @@ public class AgentTest {
 		// Check order removed
 		assertEquals(0, order.getQuantity());
 	}
+	
+	/** Test that routed nms orders update */
+	@Test
+	public void orderQuickNMSMarketUpdateBuy() {
+		nbboSetup(Mock.timeline, Price.of(80), Price.of(100));
+		
+		OrderRecord order = agent.submitNMSOrder(view, BUY, Price.of(100), 1);
+		assertNotEquals(view, order.getCurrentMarket());
+	}
+	
+	/** Test that nonrouted nms orders update */
+	@Test
+	public void orderQuickNMSMarketNoUpdateBuy() {
+		nbboSetup(Mock.timeline, Price.of(80), Price.of(100));
+		
+		OrderRecord order = agent.submitNMSOrder(view, BUY, Price.of(90), 1);
+		assertEquals(view, order.getCurrentMarket());
+	}
+	
+	/** Assert that the market view updates even for slow transactions */
+	@Test
+	public void orderSlowNMSMarketUpdateBuy() {
+		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
+		nbboSetup(timeline, Price.of(80), Price.of(100));
+		view = market.getView(TimeStamp.of(5));
+		
+		OrderRecord order = agent.submitNMSOrder(view, BUY, Price.of(100), 1);
+		
+		/*
+		 * Normally this would trigger at 9 and 10, but by default routed orders
+		 * use the primary view of the routed market, and so the routing happens
+		 * instantly once it reaches the primary market at 5.
+		 */
+		timeline.executeUntil(TimeStamp.of(4));
+		assertEquals(view, order.getCurrentMarket());
+		
+		timeline.executeUntil(TimeStamp.of(5));
+		assertNotEquals(view, order.getCurrentMarket());
+	}
+	
+	/** Assert that the market view updates even for slow transactions */
+	@Test
+	public void orderSlowNMSMarketNoUpdateBuy() {
+		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
+		nbboSetup(timeline, Price.of(80), Price.of(100));
+		view = market.getView(TimeStamp.of(5));
+		
+		OrderRecord order = agent.submitNMSOrder(view, BUY, Price.of(90), 1);
+		
+		/*
+		 * Normally this would trigger at 9 and 10, but by default routed orders
+		 * use the primary view of the routed market, and so the routing happens
+		 * instantly once it reaches the primary market at 5.
+		 */
+		timeline.executeUntil(TimeStamp.of(4));
+		assertEquals(view, order.getCurrentMarket());
+		
+		timeline.executeUntil(TimeStamp.of(5));
+		assertEquals(view, order.getCurrentMarket());
+	}
+	
+	/** Test that routed nms orders update */
+	@Test
+	public void orderQuickNMSMarketUpdateSell() {
+		nbboSetup(Mock.timeline, Price.of(80), Price.of(100));
+		
+		OrderRecord order = agent.submitNMSOrder(view, SELL, Price.of(80), 1);
+		assertNotEquals(view, order.getCurrentMarket());
+	}
+	
+	/** Test that nonrouted nms orders update */
+	@Test
+	public void orderQuickNMSMarketNoUpdateSell() {
+		nbboSetup(Mock.timeline, Price.of(80), Price.of(100));
+		
+		OrderRecord order = agent.submitNMSOrder(view, SELL, Price.of(90), 1);
+		assertEquals(view, order.getCurrentMarket());
+	}
+	
+	/** Assert that the market view updates even for slow transactions */
+	@Test
+	public void orderSlowNMSMarketUpdateSELL() {
+		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
+		nbboSetup(timeline, Price.of(80), Price.of(100));
+		view = market.getView(TimeStamp.of(5));
+		
+		OrderRecord order = agent.submitNMSOrder(view, SELL, Price.of(80), 1);
+		
+		/*
+		 * Normally this would trigger at 9 and 10, but by default routed orders
+		 * use the primary view of the routed market, and so the routing happens
+		 * instantly once it reaches the primary market at 5.
+		 */
+		timeline.executeUntil(TimeStamp.of(4));
+		assertEquals(view, order.getCurrentMarket());
+		
+		timeline.executeUntil(TimeStamp.of(5));
+		assertNotEquals(view, order.getCurrentMarket());
+	}
+	
+	/** Assert that the market view updates even for slow transactions */
+	@Test
+	public void orderSlowNMSMarketNoUpdateSell() {
+		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
+		nbboSetup(timeline, Price.of(80), Price.of(100));
+		view = market.getView(TimeStamp.of(5));
+		
+		OrderRecord order = agent.submitNMSOrder(view, SELL, Price.of(90), 1);
+		
+		/*
+		 * Normally this would trigger at 9 and 10, but by default routed orders
+		 * use the primary view of the routed market, and so the routing happens
+		 * instantly once it reaches the primary market at 5.
+		 */
+		timeline.executeUntil(TimeStamp.of(4));
+		assertEquals(view, order.getCurrentMarket());
+		
+		timeline.executeUntil(TimeStamp.of(5));
+		assertEquals(view, order.getCurrentMarket());
+	}
+	
+	/** Test that withdraw still works if order is withdrawn while routing */
+	@Test
+	public void withdrawWhileRouting() {
+		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
+		nbboSetup(timeline, Price.of(80), Price.of(100));
+		view = market.getView(TimeStamp.of(5));
+		
+		OrderRecord order = agent.submitNMSOrder(view, SELL, Price.of(80), 1);
+		
+		/*
+		 * Normally this would trigger at 9 and 10, but by default routed orders
+		 * use the primary view of the routed market, and so the routing happens
+		 * instantly once it reaches the primary market at 5.
+		 */
+		timeline.executeUntil(TimeStamp.of(4));
+		assertEquals(view, order.getCurrentMarket());
+		
+		agent.withdrawOrder(order);
+		assertEquals(1, order.getQuantity());
+		
+		timeline.executeUntil(TimeStamp.of(5));
+		assertNotEquals(view, order.getCurrentMarket());
+		assertTrue(agent.getActiveOrders().isEmpty());
+		assertEquals(0, order.getQuantity());
+	}
 
 	@Test
 	public void processTransaction() {
@@ -198,8 +345,39 @@ public class AgentTest {
 		assertEquals(1, view.getTransactions().size());
 		assertEquals(1, agent.getPosition());
 		assertEquals(-110, agent.getProfit(), eps);
+		assertTrue(agent.getActiveOrders().isEmpty());
 		assertEquals(-1, other.getPosition());
 		assertEquals(110, other.getProfit(), eps);
+		assertTrue(other.getActiveOrders().isEmpty());
+	}
+	
+	@Test
+	public void processTransactionSlow() {
+		// Note, it is critical that the agent's also use the event queue as their timeline
+		EventQueue timeline = latencySetup(TimeStamp.of(5));
+		Agent other = mockAgent(timeline);
+		
+		assertTrue(view.getTransactions().isEmpty());
+		
+		// Creating and adding bids
+		OrderRecord remaining = agent.submitOrder(view, BUY, Price.of(110), 2);
+		timeline.executeUntil(TimeStamp.of(1));
+		
+		other.submitOrder(view, SELL, Price.of(100), 1);
+		
+		timeline.executeUntil(TimeStamp.of(10));
+		assertTrue(view.getTransactions().isEmpty());
+		
+		timeline.executeUntil(TimeStamp.of(11)); // 5 more to reach market and transact, and then 5 to come back to agents
+		
+		assertEquals(1, view.getTransactions().size());
+		assertEquals(1, agent.getPosition());
+		assertEquals(-110, agent.getProfit(), eps);
+		assertEquals(remaining, Iterables.getOnlyElement(agent.getActiveOrders()));
+		assertEquals(1, remaining.getQuantity());
+		assertEquals(-1, other.getPosition());
+		assertEquals(110, other.getProfit(), eps);
+		assertTrue(other.getActiveOrders().isEmpty());
 	}
 	
 	@Test
@@ -223,6 +401,7 @@ public class AgentTest {
 	@Test
 	public void classPostTransactionTest() {
 		Stats stats = Stats.create();
+		Mock.timeline.ignoreNext();
 		ZIRAgent zir = ZIRAgent.create(0, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs());
 		NoOpAgent noop1 = NoOpAgent.create(1, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, Props.fromPairs());
 		NoOpAgent noop2 = NoOpAgent.create(2, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, Props.fromPairs());
@@ -298,4 +477,31 @@ public class AgentTest {
 			basicWithdrawSell();
 		}
 	}
+	
+	private MarketInfo nbboSetup(Timeline timeline, Price bid, Price ask) {
+		SIP sip = SIP.create(Mock.stats, timeline, Log.nullLogger(), rand, TimeStamp.ZERO);
+		market = CDAMarket.create(0, Mock.stats, timeline, Log.nullLogger(), rand, sip, Props.fromPairs());
+		MarketView other = CDAMarket.create(1, Mock.stats, timeline, Log.nullLogger(), rand, sip, Props.fromPairs()).getPrimaryView();
+		view = market.getPrimaryView();
+		other.submitOrder(agent, OrderRecord.create(other, TimeStamp.ZERO, BUY, bid, 1));
+		other.submitOrder(agent, OrderRecord.create(other, TimeStamp.ZERO, SELL, ask, 1));
+		return sip;
+	}
+	
+	private EventQueue latencySetup(TimeStamp marketLatency) {
+		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
+		market = CDAMarket.create(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Props.fromPairs(MarketLatency.class, marketLatency));
+		view = market.getPrimaryView();
+		agent = mockAgent(timeline);
+		return timeline;
+	}
+	
+	private Agent mockAgent(Timeline timeline) {
+		return new Agent(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, PrivateValues.zero(),
+				TimeStamp.ZERO, Props.fromPairs()) {
+			private static final long serialVersionUID = 1L;
+			@Override protected void agentStrategy() { }
+		};
+	}
+	
 }

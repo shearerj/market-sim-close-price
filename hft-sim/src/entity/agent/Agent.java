@@ -136,7 +136,7 @@ public abstract class Agent extends Entity {
 
 	/** Shortcut for creating NMS orders. If the order wasn's submitted then null is returned */
 	protected OrderRecord submitNMSOrder(MarketView market, OrderType type, Price price, int quantity) {
-		OrderRecord order = new OrderRecord(market, getCurrentTime(), type, price.nonnegative().quantize(tickSize), quantity);
+		OrderRecord order = OrderRecord.create(market, getCurrentTime(), type, price.nonnegative().quantize(tickSize), quantity);
 		boolean submitted = submitOrder(order, true);
 		return submitted ? order : null;
 	}
