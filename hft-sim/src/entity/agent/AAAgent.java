@@ -535,7 +535,7 @@ public class AAAgent extends WindowAgent {
 		alphaMax = Math.max(alpha, alphaMax);
 		double alphaBar = (alpha - alphaMin) / (alphaMax - alphaMin);
 		if (alphaMin == alphaMax) alphaBar = alpha - alphaMin;
-		// FIXME Is this the best way to handle when alphaMax = alphaMin? Will primarily only happen for the first update
+		// TODO (from Erik) Is this the best way to handle when alphaMax = alphaMin? Will primarily only happen for the first update
 
 		// Determining thetaStar, Eq (9)
 		double thetaStar = (thetaMax - thetaMin)

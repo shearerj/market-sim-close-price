@@ -6,6 +6,7 @@ import static org.junit.Assert.assertEquals;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -119,15 +120,27 @@ public abstract class Tests {
 		assertTrue(sells.isEmpty(), "Didn't place %s sells", sells);
 	}
 	
-	// FIXME, this test isn't quite right, as it it doesn't also enforce that ask - bid = 2 * rungSize
 	public static void assertRandomOrderLadder(Collection<OrderRecord> orders, int size,
 			Range<Price> ladderCenterRange, int rungSize) {
+		// Check that highest bid and lowest ask are 2*size apart
+		Iterator<OrderRecord> iter = orders.iterator();
+		List<Price> bids = Lists.newArrayListWithCapacity(orders.size() / 2);
+		for (int i = 0; i < orders.size() / 2; ++i)
+			bids.add(iter.next().getPrice());
+		List<Price> asks = Lists.newArrayListWithCapacity(orders.size() / 2);
+		for (int i = 0; i < orders.size() / 2; ++i)
+			asks.add(iter.next().getPrice());
+		
+		assertEquals("Bid ans ask not separated by 2*rung size",
+				2 * size, Ordering.natural().min(asks).intValue() - Ordering.natural().max(bids).intValue());
+		
+		// Compute bid and ask ranges and pass into more generic test
 		Range<Price> bidRange = Range.closed(
-				Price.of(ladderCenterRange.lowerEndpoint().intValue() - 5),
-				Price.of(ladderCenterRange.upperEndpoint().intValue() - 5));
+				Price.of(ladderCenterRange.lowerEndpoint().intValue() - size),
+				Price.of(ladderCenterRange.upperEndpoint().intValue() - size));
 		Range<Price> askRange = Range.closed(
-				Price.of(ladderCenterRange.lowerEndpoint().intValue() + 5),
-				Price.of(ladderCenterRange.upperEndpoint().intValue() + 5));
+				Price.of(ladderCenterRange.lowerEndpoint().intValue() + size),
+				Price.of(ladderCenterRange.upperEndpoint().intValue() + size));
 		assertRandomOrderLadder(orders, size, bidRange, askRange, rungSize);
 	}
 	
