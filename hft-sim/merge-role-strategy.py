@@ -50,7 +50,7 @@ def mergeObs(filelikes):
     ret = {}
     for role, rest in payoffs.iteritems():
         for strat, res in rest.iteritems():
-            ret.setdefault(role, {}).setdefault(strat, (res[0].mean, res[1].mean))
+            ret.setdefault(role, {}).setdefault(strat, (res[0].mean, (res[1].mean * res[1].n) / len(filelikes)))
 
     return ret
 
