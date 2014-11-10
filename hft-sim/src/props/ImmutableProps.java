@@ -134,7 +134,9 @@ public class ImmutableProps {
 		} catch (InstantiationException e) {
 			throw new IllegalArgumentException("Can't initiate empty constructor of key class " + clazz);
 		} catch (IllegalAccessException e) {
-			throw new IllegalArgumentException("Can't access key class " + clazz + " or its empty constructor");
+			throw new IllegalArgumentException("Either " + clazz + " or its empty constructor is inaccessable");
+		} catch (ClassCastException e) {
+			throw new IllegalArgumentException(clazz + " does not extend Value, and so is not a valid key");
 		}
 		return instance;
 	}

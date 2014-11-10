@@ -467,7 +467,6 @@ public class BackgroundAgentTest {
 		assertQuote(view.getQuote(), Price.of(50), 1, null, 0);
 	}
 
-	// FIXME Test this for BUY Orders as well
 	@Test
 	public void testPayoff() {
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(

@@ -120,7 +120,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 			if (sum >= r)
 				return e.getKey();
 		}
-		// Rounding errors caused it to get here... FIXME Should just verify this can't happen
+		// Rounding errors caused it to get here... TODO Should just verify this can't happen
 		throw new IllegalStateException("Sum of weights was less than one");
 	}
 

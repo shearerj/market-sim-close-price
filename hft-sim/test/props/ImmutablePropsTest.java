@@ -27,8 +27,13 @@ public class ImmutablePropsTest {
 	public static final class IntsKey extends IntsValue {};
 	public static final class EnumKey extends EnumValue<Enumerated> { protected EnumKey() { super(Enumerated.class); } };
 	
-	// FIXME Tests where improper keys are put and class cast exceptions happen
-	
+	public static final class PrivateKey extends Value<Object> { private PrivateKey() {}; };
+	public static final class BadConstructorKey extends Value<Object> { public BadConstructorKey(int a) {}; };
+	public static final class NotAValue {};
+	public static final class Wrapper {
+		@SuppressWarnings("unused") private static final class HiddenKey extends Value<Object> {};
+	}
+		
 	@Test
 	public void emptyTest() {
 		ImmutableProps props = ImmutableProps.of();
@@ -102,6 +107,31 @@ public class ImmutablePropsTest {
 		assertEquals(7.2, props.get(OtherDoubleKey.class), 0);
 		assertEquals(false, (boolean) props.get(BoolKey.class));
 		assertEquals(ImmutableList.of(3, 4, 5), props.get(IntsKey.class));
+	}
+		
+	@Test(expected=IllegalArgumentException.class)
+	public void privateConstructorTest() {
+		ImmutableProps.of(PrivateKey.class, 5);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void badConstructorTest() {
+		ImmutableProps.of(BadConstructorKey.class, 5);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void invalidClassTest() {
+		ImmutableProps.builder().put("props.ImmutablePropsTest$NotAValue", "5").build();
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void hiddenClassTest() {
+		ImmutableProps.builder().put("props.ImmutablePropsTest$Wrapper$HiddenKey", "5").build();
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void nonexistentClassTest() {
+		ImmutableProps.builder().put("props.ImmutablePropsTest$Blah", "5").build();
 	}
 
 }
