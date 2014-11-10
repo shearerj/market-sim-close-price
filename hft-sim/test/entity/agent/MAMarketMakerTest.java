@@ -37,7 +37,11 @@ import entity.market.Market.MarketView;
 import entity.market.Price;
 import fourheap.Order.OrderType;
 
-// FIXME MM orders are withdrawn manually due to lack of "proper" instantaneous withdraw orders implementation
+/*
+ * FIXME MM orders are withdrawn manually due to lack of "proper" instantaneous withdraw orders implementation.
+ * This should be fixed after there's a default market maker that uses different strategy objects and the actual withdrawal and
+ * quote update only needs to be implemented once.
+ */
 
 public class MAMarketMakerTest {
 	private static final Rand rand = Rand.create();

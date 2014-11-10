@@ -42,7 +42,7 @@ public class SIP extends Entity implements MarketInfo {
 	protected SIP(Stats stats, Timeline timeline, Log log, Rand rand, TimeStamp latency) {
 		super(0, stats, timeline, log, rand);
 		this.latency = checkNotNull(latency);
-		this.views = Lists.newArrayListWithExpectedSize(1);
+		this.views = Lists.newArrayList();
 	}
 	
 	public static SIP create(Stats stats, Timeline timeline, Log log, Rand rand, TimeStamp latency) {

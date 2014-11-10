@@ -42,8 +42,6 @@ public class MarketTest {
 	private Market market;
 	private MarketView view, fast;
 	
-	// FIXME More tests for proper nms order routing
-	
 	@Before
 	public void setup() {
 		timeline = Mock.timeline;
@@ -431,6 +429,7 @@ public class MarketTest {
 		assertQuote(view.getQuote(), Price.of(60), 1, Price.of(100), 1);
 	}
 	
+	/** Test that routes if transacts in other market */
 	@Test
 	public void nbboRoutingBuy() {
 		nbboSetup(Price.of(80), Price.of(100));
@@ -440,12 +439,84 @@ public class MarketTest {
 		assertQuote(view.getQuote(), null, 0, null, 0);
 	}
 	
+	/** Test that routes when other is better even if it would transact locally */
+	@Test
+	public void nbboBetterRoutingBuy() {
+		nbboSetup(Price.of(80), Price.of(100));
+		submitOrder(SELL, Price.of(120), 1);
+		
+		submitNMSOrder(BUY, Price.of(120), 1);
+		
+		// Verify it got routed due to better price
+		assertQuote(view.getQuote(), null, 0, Price.of(120), 1);
+	}
+	
+	/** Test that doesn't route when it won't transact in other market */
+	@Test
+	public void nbboNoRoutingBuy() {
+		nbboSetup(Price.of(80), Price.of(100));
+		
+		submitNMSOrder(BUY, Price.of(90), 1);
+		
+		// Verify it did route because it wouldn't transact
+		assertQuote(view.getQuote(), Price.of(90), 1, null, 0);
+	}
+	
+	/** Test that doesn't route when the price locally is better */
+	@Test
+	public void nbboNoRoutingBetterBuy() {
+		nbboSetup(Price.of(80), Price.of(100));
+		submitOrder(SELL, Price.of(90), 1);
+		
+		submitNMSOrder(BUY, Price.of(100), 1);
+		market.clear(); // Orders would transact but market doesn't automatically clear
+		
+		// Verify it didn't route because price is better locally
+		assertQuote(view.getQuote(), null, 0, null, 0);
+	}
+	
 	@Test
 	public void nbboRoutingSell() {
 		nbboSetup(Price.of(80), Price.of(100));
 		submitNMSOrder(SELL, Price.of(80), 1);
 		
 		// Verify it got routed due to empty quote
+		assertQuote(view.getQuote(), null, 0, null, 0);
+	}
+	
+	/** Test that routes when other is better even if it would transact locally */
+	@Test
+	public void nbboBetterRoutingSell() {
+		nbboSetup(Price.of(80), Price.of(100));
+		submitOrder(BUY, Price.of(60), 1);
+		
+		submitNMSOrder(SELL, Price.of(80), 1);
+		
+		// Verify it got routed due to better price
+		assertQuote(view.getQuote(), Price.of(60), 1, null, 0);
+	}
+	
+	/** Test that doesn't route when it won't transact in other market */
+	@Test
+	public void nbboNoRoutingSell() {
+		nbboSetup(Price.of(80), Price.of(100));
+		
+		submitNMSOrder(SELL, Price.of(90), 1);
+		
+		// Verify it did route because it wouldn't transact
+		assertQuote(view.getQuote(), null, 0, Price.of(90), 1);
+	}
+	
+	/** Test that doesn't route when the price locally is better */
+	@Test
+	public void nbboNoRoutingBetterSell() {
+		nbboSetup(Price.of(80), Price.of(100));
+		submitOrder(BUY, Price.of(90), 1);
+		
+		submitNMSOrder(SELL, Price.of(80), 1);
+		market.clear(); // Orders would transact but market doesn't automatically clear
+		
+		// Verify it didn't route because price is better locally
 		assertQuote(view.getQuote(), null, 0, null, 0);
 	}
 	
