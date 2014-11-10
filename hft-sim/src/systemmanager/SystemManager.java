@@ -26,6 +26,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 
 import data.Observations;
 import data.Observations.PlayerObservationSerializer;
@@ -124,8 +125,6 @@ public abstract class SystemManager {
 		long baseRandomSeed = simProps.get(RandomSeed.class);
 		
 		int logLevel = Integer.parseInt(props.getProperty("logLevel", "0"));
-		// FIXME Decide how to handle this
-//		boolean outputConfig = Boolean.parseBoolean(props.getProperty("outputConfig", "false"));
 		
 		Observations observations = Observations.create(specification.getPlayerProps(), specification.getSimulationProps());
 		Random rand = Rand.create();
@@ -142,7 +141,12 @@ public abstract class SystemManager {
 			observations.add(sim.getStatistics(), sim.getPlayers());
 		}
 		
-		gson.toJson(observations, obsOut);
+		// Add specification if flag is set
+		JsonObject obs = gson.toJsonTree(observations).getAsJsonObject();
+		if (Boolean.parseBoolean(props.getProperty("outputConfig", "false")))
+			obs.get("features").getAsJsonObject().add("config", specification.getRawSpec());
+		
+		gson.toJson(obs, obsOut);
 		obsOut.flush();
 	}
 	

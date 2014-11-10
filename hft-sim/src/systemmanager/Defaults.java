@@ -76,7 +76,6 @@ import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Ints;
 
 import data.Stats;
-
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 

@@ -1,5 +1,6 @@
 package systemmanager;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -14,7 +15,12 @@ import java.io.Writer;
 
 import org.junit.Test;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
 public class SystemManagerTest {
+	
+	private static final Gson gson = new Gson();
 
 	// FIXME Change these tests to verify output
 
@@ -31,7 +37,8 @@ public class SystemManagerTest {
 				"fundamentalMean: 100000," +
 				"fundamentalKappa: 0.05," +
 				"fundamentalShockVar: 1E8," +
-				"privateValueVar: 1E8" +
+				"privateValueVar: 1E8," +
+				"CDA: \"num_1\"" +
 				"}}");
 		StringReader properties = new StringReader("logLevel = 0\noutputConfig = false\n");
 		StringWriter observations = new StringWriter();
@@ -96,7 +103,7 @@ public class SystemManagerTest {
 		assertFalse(logs.toString().isEmpty());
 	}
 	
-	// TODO This should probably have players
+	// TODO This should have players
 	@Test
 	public void fullTest() throws IOException {
 		// Copy Simspec File
@@ -118,6 +125,36 @@ public class SystemManagerTest {
 		assertTrue(observations.length() > 0);
 		
 		assertTrue(logDir.listFiles().length > numLogs);
+	}
+	
+	/** Test that spec is written out correctly when outputConfig is set to true */
+	@Test
+	public void outputConfigTest() throws IOException {
+		String spec = "{configuration: {" +
+				"numSims: 1," +
+				"simLength: 60000," +
+				"tickSize: 1," +
+				"nbboLatency: 100," +
+				"marketLatency: 0," +
+				"arrivalRate: 0.075," +
+				"reentryRate: 0.0005," +
+				"fundamentalMean: 100000," +
+				"fundamentalKappa: 0.05," +
+				"fundamentalShockVar: 1E8," +
+				"privateValueVar: 1E8," +
+				"CDA: \"num_1\"" +
+				"}}";
+		
+		StringReader simSpec = new StringReader(spec);
+		StringReader properties = new StringReader("logLevel = 0\noutputConfig = true\n");
+		StringWriter observations = new StringWriter();
+		StringWriter logs = new StringWriter();
+		SystemManager.execute(simSpec, properties, observations, logs, 0);
+
+		assertEquals(
+				gson.fromJson(spec, JsonObject.class), // Spec
+				gson.fromJson(observations.toString(), JsonObject.class).get("features").getAsJsonObject().get("config") // Spec in obseration
+				);
 	}
 	
 	private static void copyFile(File from, File to) throws IOException {
