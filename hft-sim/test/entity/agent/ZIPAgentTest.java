@@ -142,7 +142,7 @@ public class ZIPAgentTest {
 		agent.lastOrderPrice = Price.of(105000);
 		agent.lastOrderPrice = Price.of(95000);
 
-		// FIXME Don't know how to properly test what this tried to test
+		// FIXME (to Elaine) Don't know how to properly test what this tried to test
 //		/* 
 //		 * This current test is based off the random seed. Currently this means that
 //		 * Type: BUY
