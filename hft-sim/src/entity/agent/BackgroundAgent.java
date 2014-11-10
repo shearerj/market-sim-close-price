@@ -15,6 +15,7 @@ import systemmanager.Keys.BackgroundReentryRate;
 import systemmanager.Keys.BidRangeMax;
 import systemmanager.Keys.BidRangeMin;
 import systemmanager.Keys.FundamentalKappa;
+import systemmanager.Keys.FundamentalLatency;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.MaxQty;
 import systemmanager.Keys.PrivateValueVar;
@@ -60,6 +61,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	
 	// For ZIRP Strategy
 	protected final int simulationLength;
+	protected final long fundamentalLatency;
 	protected final double fundamentalKappa;
 	protected final double fundamentalMean;
 	protected final double acceptableProfitFraction;
@@ -80,6 +82,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 		this.withdrawOrders = props.get(WithdrawOrders.class);
 		
 		this.simulationLength = props.get(SimLength.class);
+		this.fundamentalLatency = props.get(FundamentalLatency.class).getInTicks();
 		this.fundamentalKappa = props.get(FundamentalKappa.class);
 		this.fundamentalMean = props.get(FundamentalMean.class);
 		
@@ -291,8 +294,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	}
 	
 	protected Price getEstimatedFundamental(OrderType type) {
-		// FIXME If delayed fundamental, this will be innacurate. Should account for latency...
-		final int stepsLeft = (int) (simulationLength - getCurrentTime().getInTicks());
+		final int stepsLeft = (int) (simulationLength - getCurrentTime().getInTicks() + fundamentalLatency);
 		final double kappaCompToPower = Math.pow(1 - fundamentalKappa, stepsLeft);
 		return Price.of(getFundamental().intValue() * kappaCompToPower 
 			+ fundamentalMean * (1 - kappaCompToPower));
