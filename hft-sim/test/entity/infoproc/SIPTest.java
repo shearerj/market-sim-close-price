@@ -30,12 +30,10 @@ import fourheap.Order.OrderType;
 
 public class SIPTest {
 	
-	// FIXME Make sure SIP is logging spread, SIP only queries spread, so it may not work in the way we want...
-
 	/*
-	 * TODO Undefined order between markets? Transactions for a market should be
+	 * XXX Undefined order between markets? Transactions for a market should be
 	 * in proper order, but if several markets had a transaction at the same
-	 * time, the order will be undefined
+	 * time, the order will be undefined. Transactions are no longer available from SIP
 	 */
 	private static final Rand rand = Rand.create();
 	private static final Agent agent = Mock.agent();
@@ -274,7 +272,7 @@ public class SIPTest {
 		submitOrder(nasdaq, SELL, Price.of(105), 1);
 		submitOrder(nyse, BUY, Price.of(109), 1);
 		timeline.executeUntil(TimeStamp.of(100));
-		expected.add(100, Double.POSITIVE_INFINITY); // NBBO Crossed, so spread is positive infinity
+		expected.add(100, Double.POSITIVE_INFINITY); // XXX NBBO Crossed, so spread is positive infinity
 		
 		assertEquals(expected, stats.getTimeStats().get(Stats.NBBO_SPREAD));
 	}

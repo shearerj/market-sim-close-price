@@ -520,8 +520,6 @@ public class MarketTest {
 		assertQuote(view.getQuote(), null, 0, null, 0);
 	}
 	
-	// FIXME Test that markets post proper spread at time 0
-	
 	@Test
 	public void spreadsPostTest() {
 		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
@@ -529,10 +527,12 @@ public class MarketTest {
 		market = mockMarket(stats, timeline, Mock.sip, Props.fromPairs());
 		view = market.getPrimaryView();
 		TimeSeries expected = TimeSeries.create();
+		expected.add(0, Double.POSITIVE_INFINITY);
 		
+		timeline.executeUntil(TimeStamp.of(2));
 		submitOrder(SELL, Price.of(100), 1);
 		submitOrder(BUY, Price.of(50), 1);
-		expected.add(0, 50);
+		expected.add(2, 50);
 		
 		timeline.executeUntil(TimeStamp.of(100));
 		submitOrder(SELL, Price.of(80), 1);
@@ -548,19 +548,20 @@ public class MarketTest {
 		Stats stats = Stats.create();
 		market = mockMarket(stats, timeline, Mock.sip, Props.fromPairs());
 		view = market.getPrimaryView();
+		TimeSeries expected = TimeSeries.create();
+		expected.add(0, Double.NaN);
 		
+		timeline.executeUntil(TimeStamp.of(2));
 		submitOrder(SELL, Price.of(100), 1);
 		submitOrder(BUY, Price.of(50), 1);
+		expected.add(2, 75);
 		
 		timeline.executeUntil(TimeStamp.of(100));
 		submitOrder(SELL, Price.of(80), 1);
 		submitOrder(BUY, Price.of(60), 1);
+		expected.add(100, 70);
 		
-		TimeSeries truth = TimeSeries.create();
-		truth.add(0, 75);
-		truth.add(100, 70);
-		
-		assertEquals(truth, stats.getTimeStats().get(Stats.MIDQUOTE + market));
+		assertEquals(expected, stats.getTimeStats().get(Stats.MIDQUOTE + market));
 	}
 	
 	@Test

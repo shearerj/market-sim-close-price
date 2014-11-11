@@ -95,6 +95,9 @@ public abstract class Market extends Entity {
 		this.bidPriceQuantity = HashMultiset.create();
 		
 		this.sip = sip;
+		
+		postTimedStat(Stats.MIDQUOTE + this, quote.getMidquote());
+		postTimedStat(Stats.SPREAD + this, quote.getSpread());
 	}
 	
 	// This is only intended to be called by a market view
