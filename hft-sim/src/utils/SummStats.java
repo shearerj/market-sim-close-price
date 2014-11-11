@@ -138,4 +138,9 @@ public class SummStats {
 			max = other.max;
 		return this;
 	}
+	
+	@Override
+	public String toString() {
+		return "<n: " + n + ", mean: " + mean + ">";
+	}
 }
