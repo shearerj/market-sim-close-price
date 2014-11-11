@@ -520,25 +520,26 @@ public class MarketTest {
 		assertQuote(view.getQuote(), null, 0, null, 0);
 	}
 	
+	// FIXME Test that markets post proper spread at time 0
+	
 	@Test
 	public void spreadsPostTest() {
 		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
 		Stats stats = Stats.create();
 		market = mockMarket(stats, timeline, Mock.sip, Props.fromPairs());
 		view = market.getPrimaryView();
+		TimeSeries expected = TimeSeries.create();
 		
 		submitOrder(SELL, Price.of(100), 1);
 		submitOrder(BUY, Price.of(50), 1);
+		expected.add(0, 50);
 		
 		timeline.executeUntil(TimeStamp.of(100));
 		submitOrder(SELL, Price.of(80), 1);
 		submitOrder(BUY, Price.of(60), 1);
+		expected.add(100, 20);
 		
-		TimeSeries truth = TimeSeries.create();
-		truth.add(0, 50);
-		truth.add(100, 20);
-		
-		assertEquals(truth, stats.getTimeStats().get(Stats.SPREAD + market));
+		assertEquals(expected, stats.getTimeStats().get(Stats.SPREAD + market));
 	}
 	
 	@Test

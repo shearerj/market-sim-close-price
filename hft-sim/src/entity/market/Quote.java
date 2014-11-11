@@ -17,16 +17,15 @@ import event.TimeStamp;
  */
 public class Quote implements Serializable {
 
-	private static final long serialVersionUID = 3842989596948215994L;
+	private static final Quote empty = new Quote(Optional.<Price> absent(), 0, Optional.<Price> absent(), 0, TimeStamp.ZERO);
 	
 	private final Optional<Price> ask, bid;
 	private final int askQuantity, bidQuantity;
-	private final Market market;
 	private final TimeStamp quoteTime;
 
-	protected Quote(Market market, Optional<Price> bid, int bidQuantity,
-			Optional<Price> ask, int askQuantity, TimeStamp currentTime) {
-		this.market = checkNotNull(market);
+	protected Quote(Optional<Price> bid, int bidQuantity, Optional<Price> ask,
+			int askQuantity, TimeStamp currentTime) {
+		checkArgument(!ask.isPresent() || !bid.isPresent() || ask.get().greaterThanEqual(bid.get()), "Invalid quote bid > ask");
 		this.ask = checkNotNull(ask);
 		this.askQuantity = askQuantity;
 		this.bid = checkNotNull(bid);
@@ -34,9 +33,13 @@ public class Quote implements Serializable {
 		this.quoteTime = checkNotNull(currentTime);
 	}
 	
-	public static Quote create(Market market, Optional<Price> bid, int bidQuantity,
-			Optional<Price> ask, int askQuantity, TimeStamp currentTime) {
-		return new Quote(market, bid, bidQuantity, ask, askQuantity, currentTime);
+	public static Quote create(Optional<Price> bid, int bidQuantity, Optional<Price> ask,
+			int askQuantity, TimeStamp currentTime) {
+		return new Quote(bid, bidQuantity, ask, askQuantity, currentTime);
+	}
+	
+	public static Quote empty() {
+		return empty;
 	}
 
 	public Optional<Price> getAskPrice() {
@@ -53,10 +56,6 @@ public class Quote implements Serializable {
 	
 	public int getAskQuantity() {
 		return askQuantity;
-	}
-
-	public Market getMarket() {
-		return market;
 	}
 	
 	public TimeStamp getQuoteTime() {
@@ -77,7 +76,6 @@ public class Quote implements Serializable {
 		// XXX Are these the best way to handle these cases?
 		if (!ask.isPresent() || !bid.isPresent())
 			return Double.POSITIVE_INFINITY;
-		checkArgument(ask.get().greaterThanEqual(bid.get()), "%s::quote: ERROR bid > ask", market);
 		return ask.get().doubleValue() - bid.get().doubleValue();
 	}
 	
@@ -85,13 +83,12 @@ public class Quote implements Serializable {
 		// XXX Are these the best way to handle these cases?
 		if (!ask.isPresent() || !bid.isPresent())
 			return Double.NaN;
-		checkArgument(ask.get().greaterThanEqual(bid.get()), "%s::quote: ERROR bid > ask", market);
 		return (ask.get().doubleValue() + bid.get().doubleValue())/ 2;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hashCode(market, ask, askQuantity, bid, bidQuantity, quoteTime);
+		return Objects.hashCode(ask, askQuantity, bid, bidQuantity, quoteTime);
 	}
 
 	@Override
@@ -99,8 +96,7 @@ public class Quote implements Serializable {
 		if (obj == null || !(obj instanceof Quote))
 			return false;
 		Quote that = (Quote) obj;
-		return Objects.equal(market, that.market)
-				&& Objects.equal(ask, that.ask)
+		return Objects.equal(ask, that.ask)
 				&& Objects.equal(bid, that.bid)
 				&& Objects.equal(quoteTime, that.quoteTime)
 				&& askQuantity == that.askQuantity
@@ -112,5 +108,7 @@ public class Quote implements Serializable {
 		return "(Bid: " + (bid.isPresent() ? bidQuantity + " @ " + bid.get() : "- ") +
 				", Ask: " + (ask.isPresent() ? askQuantity + " @ " + ask.get() : "- ") + ')';
 	}
+
+	private static final long serialVersionUID = 3842989596948215994L;
 
 }

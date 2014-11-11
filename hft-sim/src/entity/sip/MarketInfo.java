@@ -1,11 +1,13 @@
 package entity.sip;
 
+import entity.View;
 import entity.market.Market;
+import entity.market.Quote;
 
-public interface MarketInfo {
+public interface MarketInfo extends View {
 
 	public BestBidAsk getNBBO();
 	
-	public void processMarket(Market market);
+	public void quoteSubmit(Market market, Quote quote);
 	
 }

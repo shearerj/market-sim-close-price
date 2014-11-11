@@ -2,22 +2,23 @@ package entity.sip;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Collection;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import logger.Log;
-import utils.Orderings;
+import utils.Maps2;
 import utils.Rand;
 
 import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Ordering;
+import com.google.common.base.Suppliers;
+import com.google.common.collect.Maps;
 
 import data.Stats;
 import entity.Entity;
 import entity.market.Market;
-import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.market.Quote;
+import event.Activity;
 import event.TimeStamp;
 import event.Timeline;
 
@@ -31,18 +32,16 @@ import event.Timeline;
  */
 public class SIP extends Entity implements MarketInfo {
 	
-	// FIXME Log spread, and figure out how... LA style?
-
-	private static final Ordering<Optional<Price>> bidOrder = Orderings.optionalOrdering(Ordering.<Price> natural());
-	private static final Ordering<Optional<Price>> askOrder = Orderings.optionalOrdering(Ordering.<Price> natural().reverse());
-	
 	private final TimeStamp latency;
-	private final Collection<MarketView> views;
+	private final Map<Market, Quote> quotes;
+	private BestBidAsk nbbo;
 
-	protected SIP(Stats stats, Timeline timeline, Log log, Rand rand, TimeStamp latency) {
+	private SIP(Stats stats, Timeline timeline, Log log, Rand rand, TimeStamp latency) {
 		super(0, stats, timeline, log, rand);
 		this.latency = checkNotNull(latency);
-		this.views = Lists.newArrayList();
+		this.quotes = Maps2.addDefault(Maps.<Market, Quote> newHashMap(), Suppliers.ofInstance(Quote.empty()));
+		this.nbbo = BestBidAsk.empty();
+		postTimedStat(Stats.NBBO_SPREAD, nbbo.getSpread());
 	}
 	
 	public static SIP create(Stats stats, Timeline timeline, Log log, Rand rand, TimeStamp latency) {
@@ -51,28 +50,62 @@ public class SIP extends Entity implements MarketInfo {
 
 	@Override
 	public BestBidAsk getNBBO() {
-		Optional<Market> bestBidMarket = Optional.absent(), bestAskMarket = Optional.absent();
-		Optional<Price> bestBidPrice = Optional.absent(), bestAskPrice = Optional.absent();
-		int bestAskQuantity = 0, bestBidQuantity = 0;
-		for (MarketView market : views) {
-			Quote quote = market.getQuote();
-			if (bidOrder.compare(quote.getBidPrice(), bestBidPrice) > 0) {
-				bestBidPrice = quote.getBidPrice();
-				bestBidMarket = Optional.of(quote.getMarket());
-				bestBidQuantity = quote.getBidQuantity();
+		return nbbo;
+	}
+	
+	/** Actually update NBBO with delayed information */
+	private void quoteSubmitted(Market market, Quote quote) {
+		if (quote.getQuoteTime().before(quotes.get(market).getQuoteTime()))
+			return; // Out of date;
+		quotes.put(market, quote);
+		
+		Optional<Market> bidMarket = nbbo.getBestBidMarket(), askMarket = nbbo.getBestAskMarket();
+		Optional<Price> bid = nbbo.getBestBid(), ask = nbbo.getBestAsk();
+		int bidQuantity = nbbo.getBestBidQuantity(), askQuantity = nbbo.getBestAskQuantity();
+		
+		if (quote.getAskPrice().isPresent() && quote.getAskPrice().get().lessThanEqual(nbbo.getBestAsk().or(Price.INF))) {
+			// Price improved, so can do quick update
+			ask = quote.getAskPrice();
+			askMarket = Optional.of(market);
+			askQuantity = quote.getAskQuantity();
+		} else if (nbbo.getBestAskMarket().asSet().contains(market)) {
+			// Quote got worse, need to do full scan of markets
+			ask = Optional.absent();
+			for (Entry<Market, Quote> e : quotes.entrySet()) {
+				if (e.getValue().getAskPrice().or(Price.INF).lessThan(ask.or(Price.INF))) {
+					ask = e.getValue().getAskPrice();
+					askMarket = Optional.of(e.getKey());
+					askQuantity = e.getValue().getAskQuantity();
+				}
 			}
-			if (askOrder.compare(quote.getAskPrice(), bestAskPrice) > 0) {
-				bestAskPrice = quote.getAskPrice();
-				bestAskMarket = Optional.of(quote.getMarket());
-				bestAskQuantity = quote.getAskQuantity();
+		} // A worse market got worse, and so nothing changes
+		
+		if (quote.getBidPrice().isPresent() && quote.getBidPrice().get().greaterThanEqual(nbbo.getBestBid().or(Price.NEG_INF))) {
+			// Price improved, so can do quick update
+			bid = quote.getBidPrice();
+			bidMarket = Optional.of(market);
+			bidQuantity = quote.getBidQuantity();
+		} else if (nbbo.getBestBidMarket().asSet().contains(market)) {
+			// Quote got worse, need to do full scan of markets
+			bid = Optional.absent();
+			for (Entry<Market, Quote> e : quotes.entrySet()) {
+				if (e.getValue().getBidPrice().or(Price.NEG_INF).greaterThan(bid.or(Price.NEG_INF))) {
+					bid = e.getValue().getBidPrice();
+					bidMarket = Optional.of(e.getKey());
+					bidQuantity = e.getValue().getBidQuantity();
+				}
 			}
-		}
-		return BestBidAsk.create(bestBidMarket, bestBidPrice, bestBidQuantity, bestAskMarket, bestAskPrice, bestAskQuantity);
+		} // A worse market got worse, and so nothing changes
+		
+		nbbo = BestBidAsk.create(bidMarket, bid, bidQuantity, askMarket, ask, askQuantity);
+		postTimedStat(Stats.NBBO_SPREAD, nbbo.getSpread());
 	}
 	
 	@Override
-	public void processMarket(Market market) {
-		views.add(market.getView(latency));
+	public void quoteSubmit(final Market market, final Quote quote) {
+		scheduleActivityIn(latency, new Activity() {
+			@Override public void execute() { quoteSubmitted(market, quote); }
+		});
 	}
 
 	@Override
@@ -80,6 +113,11 @@ public class SIP extends Entity implements MarketInfo {
 		return "SIP";
 	}
 	
+	@Override
+	public TimeStamp getLatency() {
+		return latency;
+	}
+
 	private static final long serialVersionUID = -4600049787044894823L;
 
 }

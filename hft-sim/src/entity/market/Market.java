@@ -82,7 +82,7 @@ public abstract class Market extends Entity {
 		this.orderbook = FourHeap.<Price, MarketTime, Order> create();
 		this.clearingRule = clearingRule;
 		this.marketTime = 0;
-		this.quote = new Quote(this, Optional.<Price> absent(), 0, Optional.<Price> absent(), 0, TimeStamp.ZERO);
+		this.quote = Quote.empty();
 		
 		this.notified = Maps.newHashMap();
 		this.views = Lists.newArrayList();
@@ -95,7 +95,6 @@ public abstract class Market extends Entity {
 		this.bidPriceQuantity = HashMultiset.create();
 		
 		this.sip = sip;
-		sip.processMarket(this);
 	}
 	
 	// This is only intended to be called by a market view
@@ -232,14 +231,16 @@ public abstract class Market extends Entity {
 		 * generated, which is currently never possible
 		 */
 		MarketTime quoteTime = new MarketTime(getCurrentTime(), marketTime);
-		quote = new Quote(this, bid, quantityBid, ask, quantityAsk, quoteTime);
+		quote = new Quote(bid, quantityBid, ask, quantityAsk, quoteTime);
 
 		log(INFO, "%s %s", this, quote);
 
 		postTimedStat(Stats.MIDQUOTE + this, quote.getMidquote());
 		postTimedStat(Stats.SPREAD + this, quote.getSpread());
-
-		// Update quite happens first so hfts will have access to fully updated quote
+		
+		// Update NBBO happens first
+		sip.quoteSubmit(this, quote);
+		// Update quote happens second so hfts will have access to fully updated quote
 		for (MarketView view : views)
 			view.updateQuote(quote);
 		for (Entry<HFTAgentView, MarketView> hft : Iterables2.shuffle(notified.entrySet(), rand))
@@ -279,7 +280,7 @@ public abstract class Market extends Entity {
 		
 		protected MarketView(TimeStamp latency) {
 			this.latency = latency;
-			this.quote = Quote.create(Market.this, Optional.<Price> absent(), 0, Optional.<Price> absent(), 0, TimeStamp.ZERO);
+			this.quote = Quote.create(Optional.<Price> absent(), 0, Optional.<Price> absent(), 0, TimeStamp.ZERO);
 			this.transactionOffset = 0;
 		}
 		

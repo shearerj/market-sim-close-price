@@ -3,9 +3,6 @@ package utils;
 import java.util.Iterator;
 
 import logger.Log;
-
-import com.google.common.base.Optional;
-
 import data.FundamentalValue;
 import data.Props;
 import data.Stats;
@@ -13,7 +10,7 @@ import entity.agent.Agent;
 import entity.agent.position.PrivateValues;
 import entity.market.CDAMarket;
 import entity.market.Market;
-import entity.market.Price;
+import entity.market.Quote;
 import entity.sip.BestBidAsk;
 import entity.sip.MarketInfo;
 import event.Activity;
@@ -24,8 +21,6 @@ public class Mock {
 	
 	private static final Iterator<Integer> ids = Iterators2.counter();
 	private static final Rand rand = Rand.create();
-	private static final Optional<Market> absentMarket = Optional.absent();
-	private static final Optional<Price> absentPrice = Optional.absent();
 
 	public static Agent agent() {
 		return agent(timeline);
@@ -60,10 +55,9 @@ public class Mock {
 	};
 	
 	public static final MarketInfo sip = new MarketInfo() {
-		@Override public void processMarket(Market market) { }
-		@Override public BestBidAsk getNBBO() {
-			return BestBidAsk.create(absentMarket, absentPrice, 0, absentMarket, absentPrice, 0);
-		}
+		@Override public BestBidAsk getNBBO() { return BestBidAsk.empty(); }
+		@Override public TimeStamp getLatency() { return TimeStamp.ZERO; }
+		@Override public void quoteSubmit(Market market, Quote quote) { }
 	};
 	
 	public static Stats stats = new Stats() {

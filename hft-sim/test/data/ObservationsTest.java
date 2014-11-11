@@ -129,6 +129,22 @@ public class ObservationsTest {
 	}
 	
 	@Test
+	public void nbboSpreadTest() {
+		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(SimLength.class, 100));
+		stats.postTimed(TimeStamp.ZERO, Stats.NBBO_SPREAD, Double.POSITIVE_INFINITY);
+		stats.postTimed(TimeStamp.of(20), Stats.NBBO_SPREAD, 10);
+		stats.postTimed(TimeStamp.of(30), Stats.NBBO_SPREAD, 40);
+		stats.postTimed(TimeStamp.of(50), Stats.NBBO_SPREAD, Double.POSITIVE_INFINITY);
+		stats.postTimed(TimeStamp.of(57), Stats.NBBO_SPREAD, 2);
+		stats.postTimed(TimeStamp.of(60), Stats.NBBO_SPREAD, 35);
+		stats.postTimed(TimeStamp.of(95), Stats.NBBO_SPREAD, 100);
+		stats.postTimed(TimeStamp.of(100), Stats.NBBO_SPREAD, Double.POSITIVE_INFINITY); // Not included
+		
+		obs.add(stats, ImmutableList.<Player> of());
+		assertEquals(40, obs.features.get(Stats.NBBO_SPREAD + "_median").mean(), eps);
+	}
+	
+	@Test
 	public void meanSpreadTest() {
 		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(SimLength.class, 3));
 		

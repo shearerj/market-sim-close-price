@@ -18,8 +18,10 @@ import entity.market.Price;
  */
 public class BestBidAsk implements Serializable {
 	
-	private static final long serialVersionUID = -7312167969610706296L;
-
+	private static final BestBidAsk empty = new BestBidAsk(
+			Optional.<Market> absent(), Optional.<Price> absent(), 0,
+			Optional.<Market> absent(), Optional.<Price> absent(), 0);
+	
 	protected final Optional<Market> bestBidMarket, bestAskMarket;
 	protected final Optional<Price> bestBid, bestAsk;
 	protected final int bestBidQuantity, bestAskQuantity;
@@ -37,6 +39,10 @@ public class BestBidAsk implements Serializable {
 	public static BestBidAsk create(Optional<Market> bestBidMarket, Optional<Price> bestBid, int bestBidQuantity,
 			Optional<Market> bestAskMarket, Optional<Price> bestAsk, int bestAskQuantity) {
 		return new BestBidAsk(bestBidMarket, bestBid, bestBidQuantity, bestAskMarket, bestAsk, bestAskQuantity);
+	}
+	
+	public static BestBidAsk empty() {
+		return empty;
 	}
 
 	/**
@@ -114,5 +120,7 @@ public class BestBidAsk implements Serializable {
 		
 		return sb.append(')').toString();
 	}
+
+	private static final long serialVersionUID = -7312167969610706296L;
 
 }

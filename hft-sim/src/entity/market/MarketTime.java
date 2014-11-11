@@ -25,7 +25,7 @@ public class MarketTime extends TimeStamp implements Serializable {
 	@Override
 	public int compareTo(TimeStamp other) {
 		if (!(other instanceof MarketTime))
-			return super.compareTo(other);
+			return super.compareTo(other); // FIXME Return market time as greater if times tie. Maybe remove this, and make a comparator that takes market time into account so that this mistake can't be made?
 		MarketTime obj = (MarketTime) other;
 		return super.compareTo(obj) == 0 ? Longs.compare(marketTime, obj.marketTime) : super.compareTo(obj);
 	}

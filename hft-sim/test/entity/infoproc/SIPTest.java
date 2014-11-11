@@ -2,6 +2,7 @@ package entity.infoproc;
 
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertNBBO;
 import static utils.Tests.assertSingleTransaction;
@@ -13,6 +14,8 @@ import org.junit.Test;
 import utils.Mock;
 import utils.Rand;
 import data.Props;
+import data.Stats;
+import data.TimeSeries;
 import entity.agent.Agent;
 import entity.agent.OrderRecord;
 import entity.market.CDAMarket;
@@ -197,7 +200,7 @@ public class SIPTest {
 		submitNMSOrder(nyse, BUY, Price.of(109), 1);
 		timeline.executeUntil(TimeStamp.of(100));
 		
-		// Verify that order is routed to nyse and transacts immediately w/ agent1's order
+		// Verify that order is routed to nasdaq and transacts immediately w/ agent1's order
 		assertTrue(nyse.getPrimaryView().getTransactions().isEmpty());
 		assertSingleTransaction(nasdaq.getPrimaryView().getTransactions(), Price.of(105), TimeStamp.of(100), 1);
 	}
@@ -229,13 +232,64 @@ public class SIPTest {
 		assertNBBO(sip.getNBBO(), Price.of(109), nyse, 1, Price.of(105), nasdaq, 1);
 	}
 	
+	@Test
+	public void postSpreadsTest() {
+		Stats stats = Stats.create();
+		EventQueue timeline = latencySetup(stats, TimeStamp.of(50));
+		
+		TimeSeries expected = TimeSeries.create();
+		expected.add(0, Double.POSITIVE_INFINITY); // empty initially
+		
+		setQuote(nyse, Price.of(104), Price.of(110));
+		setQuote(nasdaq, Price.of(102), Price.of(111));
+		timeline.executeUntil(TimeStamp.of(50));
+		expected.add(50, 6); // 110 - 104
+
+		submitOrder(nasdaq, SELL, Price.of(105), 1);
+		timeline.executeUntil(TimeStamp.of(100));
+		expected.add(100, 1); // 105 - 104
+				
+		// Another agent submits a buy order
+		submitOrder(nasdaq, BUY, Price.of(109), 1);
+		timeline.executeUntil(TimeStamp.of(150)); // Order transacts with SELL @ 105
+		expected.add(150, 6); // 110 - 104
+		
+		assertEquals(expected, stats.getTimeStats().get(Stats.NBBO_SPREAD));
+	}
+	
+	@Test
+	public void postSpreadCrossTest() {
+		Stats stats = Stats.create();
+		EventQueue timeline = latencySetup(stats, TimeStamp.of(50));
+		
+		TimeSeries expected = TimeSeries.create();
+		expected.add(0, Double.POSITIVE_INFINITY); // empty initially
+		
+		// Initial Quote
+		setQuote(nyse, Price.of(104), Price.of(110));
+		setQuote(nasdaq, Price.of(102), Price.of(111));
+		timeline.executeUntil(TimeStamp.of(50));
+		expected.add(50, 6); // 110 - 104
+
+		submitOrder(nasdaq, SELL, Price.of(105), 1);
+		submitOrder(nyse, BUY, Price.of(109), 1);
+		timeline.executeUntil(TimeStamp.of(100));
+		expected.add(100, Double.POSITIVE_INFINITY); // NBBO Crossed, so spread is positive infinity
+		
+		assertEquals(expected, stats.getTimeStats().get(Stats.NBBO_SPREAD));
+	}
+	
 	private EventQueue latencySetup(TimeStamp latency) {
+		return latencySetup(Mock.stats, latency);
+	}
+	
+	private EventQueue latencySetup(Stats stats, TimeStamp latency) {
 		EventQueue queue = EventQueue.create(Log.nullLogger(), rand);
 		timeline = queue;
 		
-		sip = SIP.create(Mock.stats, timeline, Log.nullLogger(), rand, latency);
-		nyse = CDAMarket.create(1, Mock.stats, timeline, Log.nullLogger(), rand, sip, Props.fromPairs());
-		nasdaq = CDAMarket.create(2, Mock.stats, timeline, Log.nullLogger(), rand, sip, Props.fromPairs());
+		sip = SIP.create(stats, timeline, Log.nullLogger(), rand, latency);
+		nyse = CDAMarket.create(1, stats, timeline, Log.nullLogger(), rand, sip, Props.fromPairs());
+		nasdaq = CDAMarket.create(2, stats, timeline, Log.nullLogger(), rand, sip, Props.fromPairs());
 		
 		return queue;
 	}
