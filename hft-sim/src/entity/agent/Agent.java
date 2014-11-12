@@ -264,15 +264,19 @@ public abstract class Agent extends Entity {
 		return fundamental.getValue();
 	}
 	
+	protected final FundamentalValueView getFundamentalValueView() {
+		return fundamental;
+	}
+	
 	protected final int getPosition() {
 		return positionBalance;
 	}
 	
-	protected final Price getPrivateValue(OrderType type) {
+	public final Price getPrivateValue(OrderType type) {
 		return getPrivateValue(1, type);
 	}
 	
-	protected final Price getPrivateValue(int quantity, OrderType type) {
+	public final Price getPrivateValue(int quantity, OrderType type) {
 		return privateValue.getValue(getPosition(), quantity, type);
 	}
 	

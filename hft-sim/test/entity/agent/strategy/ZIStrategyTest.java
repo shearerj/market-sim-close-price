@@ -18,6 +18,7 @@ import entity.agent.OrderRecord;
 import entity.agent.position.ListPrivateValue;
 import entity.market.Market;
 import entity.market.Price;
+import event.TimeStamp;
 
 public class ZIStrategyTest {
 
@@ -39,7 +40,9 @@ public class ZIStrategyTest {
 		
 		ListPrivateValue value = ListPrivateValue.createRandomly(1, 1e6, rand);
 		BackgroundAgent agent = backgroundAgent(value);
-		BackgroundStrategy zi = ZIStrategy.create(Mock.timeline, market.getPrimaryView(), agent, min_shade, max_shade, rand);
+		BackgroundStrategy zi = ZIStrategy.create(Mock.timeline, market.getPrimaryView(),
+				NaiveLimitPriceEstimator.create(agent, fundamental.getView(TimeStamp.ZERO)),
+				min_shade, max_shade, rand);
 
 		//Execute strategy
 		OrderRecord order = zi.getOrder(BUY, 1);
@@ -60,8 +63,9 @@ public class ZIStrategyTest {
 
 		ListPrivateValue value = ListPrivateValue.createRandomly(1, 1e6, rand);
 		BackgroundAgent agent = backgroundAgent(value);
-		BackgroundStrategy zi = ZIStrategy.create(Mock.timeline, market.getPrimaryView(), agent, min_shade, max_shade, rand);
-
+		BackgroundStrategy zi = ZIStrategy.create(Mock.timeline, market.getPrimaryView(),
+				NaiveLimitPriceEstimator.create(agent, fundamental.getView(TimeStamp.ZERO)),
+				min_shade, max_shade, rand);
 		//Execute strategy
 		OrderRecord order = zi.getOrder(SELL, 1);
 
@@ -79,7 +83,9 @@ public class ZIStrategyTest {
 	public void initialPriceZIBuyTest() {
 		fundamental = FundamentalValue.create(Mock.stats, Mock.timeline, 0, 100000, 1e8, rand);
 		BackgroundAgent agent = backgroundAgent(ListPrivateValue.createRandomly(1, 0, rand));
-		BackgroundStrategy zi = ZIStrategy.create(Mock.timeline, market.getPrimaryView(), agent, 0, 1000, rand);
+		BackgroundStrategy zi = ZIStrategy.create(Mock.timeline, market.getPrimaryView(),
+				NaiveLimitPriceEstimator.create(agent, fundamental.getView(TimeStamp.ZERO)),
+				0, 1000, rand);
 		
 		OrderRecord order = zi.getOrder(BUY, 1);
 		/*
@@ -95,7 +101,9 @@ public class ZIStrategyTest {
 	public void initialPriceZISellTest() {
 		fundamental = FundamentalValue.create(Mock.stats, Mock.timeline, 0, 100000, 1e8, rand);
 		BackgroundAgent agent = backgroundAgent(ListPrivateValue.createRandomly(1, 0, rand));
-		BackgroundStrategy zi = ZIStrategy.create(Mock.timeline, market.getPrimaryView(), agent, 0, 1000, rand);
+		BackgroundStrategy zi = ZIStrategy.create(Mock.timeline, market.getPrimaryView(),
+				NaiveLimitPriceEstimator.create(agent, fundamental.getView(TimeStamp.ZERO)),
+				0, 1000, rand);
 		
 		OrderRecord order = zi.getOrder(SELL, 1);
 		/*
@@ -111,8 +119,10 @@ public class ZIStrategyTest {
 	public void ziPrivateValueBuyTest() {
 		fundamental = Mock.fundamental(100000);
 		BackgroundAgent agent = backgroundAgent(ListPrivateValue.create(Price.of(10000), Price.of(-10000)));
-		BackgroundStrategy zi = ZIStrategy.create(Mock.timeline, market.getPrimaryView(), agent, 0, 1000, rand);
-
+		BackgroundStrategy zi = ZIStrategy.create(Mock.timeline, market.getPrimaryView(),
+				NaiveLimitPriceEstimator.create(agent, fundamental.getView(TimeStamp.ZERO)),
+				0, 1000, rand);
+		
 		OrderRecord order = zi.getOrder(BUY, 1);
 		
 		// Buyers always buy at price lower than valuation ($100 + buy PV = $90)
@@ -124,7 +134,9 @@ public class ZIStrategyTest {
 	public void ziPrivateValueSellTest() {
 		fundamental = Mock.fundamental(100000);
 		BackgroundAgent agent = backgroundAgent(ListPrivateValue.create(Price.of(10000), Price.of(-10000)));
-		BackgroundStrategy zi = ZIStrategy.create(Mock.timeline, market.getPrimaryView(), agent, 0, 1000, rand);
+		BackgroundStrategy zi = ZIStrategy.create(Mock.timeline, market.getPrimaryView(),
+				NaiveLimitPriceEstimator.create(agent, fundamental.getView(TimeStamp.ZERO)),
+				0, 1000, rand);
 
 		OrderRecord order = zi.getOrder(SELL, 1);
 

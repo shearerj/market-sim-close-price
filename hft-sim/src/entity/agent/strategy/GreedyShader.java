@@ -7,7 +7,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.Range;
 
-import entity.agent.BackgroundAgent;
 import entity.agent.OrderRecord;
 import entity.market.Price;
 import entity.market.Quote;
@@ -27,16 +26,16 @@ import entity.market.Quote;
 public class GreedyShader implements Function<OrderRecord, OrderRecord> {
 
 	private final Range<Double> shadeRange;
-	private final BackgroundAgent agent;
+	private final LimitPriceEstimator estimator;
 	
-	private GreedyShader(BackgroundAgent agent, double acceptableProfitThreshold) {
+	private GreedyShader(LimitPriceEstimator estimator, double acceptableProfitThreshold) {
 		checkArgument(Range.closed(0d, 1d).contains(acceptableProfitThreshold));
-		this.agent = agent;
+		this.estimator = estimator;
 		this.shadeRange = Range.closed(acceptableProfitThreshold, 1d);
 	}
 	
-	public static GreedyShader create(BackgroundAgent agent, double acceptableProfitThreshold) {
-		return new GreedyShader(agent, acceptableProfitThreshold);
+	public static GreedyShader create(LimitPriceEstimator estimator, double acceptableProfitThreshold) {
+		return new GreedyShader(estimator, acceptableProfitThreshold);
 	}
 	
 	@Override
@@ -48,7 +47,7 @@ public class GreedyShader implements Function<OrderRecord, OrderRecord> {
 		if (tradingQuantity < order.getQuantity() || !tradingAgainst.isPresent()) // The second check should be redundant, but just to be safe
 			return order; // Nothing or not enough to transact against
 		
-		Price limit = agent.getLimitPrice(order.getOrderType(), order.getQuantity());
+		Price limit = estimator.getLimitPrice(order.getOrderType(), order.getQuantity());
 		checkArgument((limit.doubleValue() - order.getPrice().doubleValue()) * order.getOrderType().sign() >= 0, "Can't submit an order that would incur a loss");
 				
 		double profitFraction = (limit.doubleValue() - order.getPrice().doubleValue()) / (limit.doubleValue() - tradingAgainst.get().doubleValue());

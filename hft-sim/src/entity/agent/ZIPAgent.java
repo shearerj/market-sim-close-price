@@ -29,6 +29,7 @@ import data.Props;
 import data.Stats;
 import entity.agent.position.Margin;
 import entity.agent.strategy.BackgroundStrategy;
+import entity.agent.strategy.NaiveLimitPriceEstimator;
 import entity.agent.strategy.ZIStrategy;
 import entity.market.Market;
 import entity.market.Price;
@@ -104,7 +105,8 @@ public class ZIPAgent extends WindowAgent {
 		this.gamma = rand.nextUniform(gammaMin, gammaMax);
 		this.margin = Margin.createRandomly(maxAbsPosition, rand, marginMin, marginMax);
 		
-		this.fallback = ZIStrategy.create(timeline, primaryMarket, this, props.get(RMin.class), props.get(RMax.class), rand);
+		this.fallback = ZIStrategy.create(timeline, primaryMarket, NaiveLimitPriceEstimator.create(this, getFundamentalValueView()),
+				props.get(RMin.class), props.get(RMax.class), rand);
 	}
 
 	public static ZIPAgent create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,

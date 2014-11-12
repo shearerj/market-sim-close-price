@@ -9,6 +9,7 @@ import data.FundamentalValue;
 import data.Props;
 import data.Stats;
 import entity.agent.strategy.BackgroundStrategy;
+import entity.agent.strategy.NaiveLimitPriceEstimator;
 import entity.agent.strategy.ZIStrategy;
 import entity.market.Market;
 import entity.sip.MarketInfo;
@@ -46,7 +47,8 @@ public class ZIRAgent extends BackgroundAgent {
 	protected ZIRAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
-		this.strategy = ZIStrategy.create(timeline, primaryMarket, this, props.get(RMin.class), props.get(RMax.class), rand);
+		this.strategy = ZIStrategy.create(timeline, primaryMarket, NaiveLimitPriceEstimator.create(this, getFundamentalValueView()),
+				props.get(RMin.class), props.get(RMax.class), rand);
 	}
 
 	public static ZIRAgent create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,

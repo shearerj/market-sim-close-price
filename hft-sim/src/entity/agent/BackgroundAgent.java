@@ -290,7 +290,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	}
 	
 	/** Returns the limit price for a new order of quantity 1. */
-	public final Price getLimitPrice(OrderType type) {
+	protected final Price getLimitPrice(OrderType type) {
 		return getLimitPrice(type, 1);
 	}
 	
@@ -298,7 +298,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * Returns the limit price for the agent given potential quantity for which
 	 * the agent plans to submit an order.
 	 */
-	public final Price getLimitPrice(OrderType type, int quantity) {
+	protected final Price getLimitPrice(OrderType type, int quantity) {
 		return Price.of(getValuation(type, quantity).doubleValue() 
 				/ quantity);
 	}

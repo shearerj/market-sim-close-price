@@ -36,6 +36,7 @@ import data.Props;
 import data.Stats;
 import entity.agent.position.Aggression;
 import entity.agent.strategy.BackgroundStrategy;
+import entity.agent.strategy.NaiveLimitPriceEstimator;
 import entity.agent.strategy.ZIStrategy;
 import entity.market.Market;
 import entity.market.Price;
@@ -109,7 +110,8 @@ public class AAAgent extends WindowAgent {
 		this.rho = 0.9; 		// from paper, to emphasize converging pattern
 		
 		//Initializing strategy variables
-		this.fallback = ZIStrategy.create(timeline, primaryMarket, this, props.get(RMin.class), props.get(RMax.class), rand);
+		this.fallback = ZIStrategy.create(timeline, primaryMarket, NaiveLimitPriceEstimator.create(this, getFundamentalValueView()),
+				props.get(RMin.class), props.get(RMax.class), rand);
 		
 		this.numHistorical = props.get(N.class);
 		this.lambdaA = props.get(LambdaA.class);
