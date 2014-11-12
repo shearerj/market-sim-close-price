@@ -98,9 +98,9 @@ public class FundamentalMarketMaker extends MarketMaker {
 		Price fundamental = fundamentalEstimate.equals(Price.ZERO) ? getEstimatedFundamental(simulationLength, fundamentalKappa, fundamentalMean)
 				: fundamentalEstimate;
 		log(INFO, "%s in %s: Spread of %s around estimated fundamental %s, ladderBid=%s, ladderAsk=%s", 
-				this, primaryMarket, Price.of(offset), fundamentalEstimate,
-				Price.of(fundamentalEstimate.intValue() - offset),
-				Price.of(fundamentalEstimate.intValue() + offset));
+				this, primaryMarket, Price.of(offset), fundamental,
+				Price.of(fundamental.intValue() - offset),
+				Price.of(fundamental.intValue() + offset));
 		createOrderLadder(Optional.of(Price.of(fundamental.intValue() - offset)),
 				Optional.of(Price.of(fundamental.intValue() + offset)));
 		

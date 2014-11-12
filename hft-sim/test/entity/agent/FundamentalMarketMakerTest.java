@@ -36,6 +36,8 @@ import fourheap.Order.OrderType;
  *
  */
 public class FundamentalMarketMakerTest {
+	
+	// FIXME Test that when constant fundamental estimate is not made, that fundamental that agent uses updates
 
 	private static final Rand rand = Rand.create();
 	private static final FundamentalValue fundamental = Mock.fundamental(100000);
@@ -74,7 +76,7 @@ public class FundamentalMarketMakerTest {
 				TickImprovement.class, false,
 				TickOutside.class, false));
 
-		setQuote(Price.of(103000), Price.of(105000));
+		setQuote(Price.of(99000), Price.of(101000));
 		
 		mm.agentStrategy();
 		
