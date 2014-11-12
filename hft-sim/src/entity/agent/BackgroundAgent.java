@@ -123,8 +123,11 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	@Override
 	protected boolean submitOrder(OrderRecord order, boolean nmsRoutable) {
 		checkArgument(order.getCurrentMarket() == primaryMarket, "Must submit to primary market");
-		if (mightExceedMaxPosition(order))
+		if (mightExceedMaxPosition(order)) {
+			log(INFO, "%s submitting new order (%s) might exceed max position %d ; no submission",
+					this, order, getMaxAbsPosition());
 			return false;
+		}
 		return super.submitOrder(order, nmsRoutable);
 	}
 	

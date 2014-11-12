@@ -84,6 +84,12 @@ public class BackgroundAgentTest {
 	private MarketView view;
 	private Agent mockAgent;
 
+	/*
+	 * FIXME Likely bug in ZIRP strategy. It won't shade for the acceptable
+	 * profit threshold if the quote is undefined, even if there does exist an
+	 * order for the side it's submitting against.
+	 */
+
 	@Before
 	public void setup() {
 		timeline = Mock.timeline;
