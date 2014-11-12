@@ -22,6 +22,7 @@ import utils.Rand;
 
 import com.google.common.collect.Iterables;
 
+import data.FundamentalValue;
 import data.Props;
 import data.Stats;
 import entity.agent.position.PrivateValues;
@@ -461,11 +462,30 @@ public class AgentTest {
 	@Test
 	public void toStringTest() {
 		Agent agent = Mock.agent();
+		Mock.timeline.ignoreNext();
 		ZIRAgent zir = ZIRAgent.create(12345, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs());
 		NoOpAgent noop = NoOpAgent.create(8459, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, Props.fromPairs());
 		assertRegex("\\(\\d+\\)", agent.toString());
 		assertEquals("ZIR(12345)", zir.toString());
 		assertEquals("NoOp(8459)", noop.toString());
+	}
+	
+	@Test
+	public void estimatedFundamental() {
+		// FIXME (for Elaine) I'm not sure what this was supposed to be checking
+		double kappa = 0.05;
+		int meanVal = 100000;
+		double var = 1E6;
+		Timeline timeline = EventQueue.create(Log.nullLogger(), rand);
+		FundamentalValue fund = FundamentalValue.create(Mock.stats, timeline, kappa, meanVal, var, Rand.create());
+		TimeStamp time = TimeStamp.of(125);
+		
+		Agent agent = mockAgent(timeline);
+		
+		// high margin of error here because of rounding issues
+		assertEquals(0.005920529*fund.getValueAt(time).intValue() + 99407.9, 
+				agent.getEstimatedFundamental(125, kappa, meanVal).doubleValue(), 0.75);
+		
 	}
 	
 	@Test
@@ -503,5 +523,5 @@ public class AgentTest {
 			@Override protected void agentStrategy() { }
 		};
 	}
-	
+
 }

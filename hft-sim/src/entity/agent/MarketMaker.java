@@ -9,17 +9,16 @@ import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.InitLadderMean;
 import systemmanager.Keys.InitLadderRange;
 import systemmanager.Keys.MarketMakerReentryRate;
-import systemmanager.Keys.NumRungs;
+import systemmanager.Keys.K;
 import systemmanager.Keys.ReentryRate;
-import systemmanager.Keys.RungSize;
+import systemmanager.Keys.Size;
 import systemmanager.Keys.TickImprovement;
 import systemmanager.Keys.TickOutside;
-import systemmanager.Keys.TruncateLadder;
+import systemmanager.Keys.Trunc;
 import utils.Maths;
 import utils.Rand;
 
 import com.google.common.base.Optional;
-import com.google.common.collect.Ordering;
 
 import data.FundamentalValue;
 import data.Props;
@@ -63,8 +62,7 @@ import fourheap.Order.OrderType;
  */
 public abstract class MarketMaker extends ReentryAgent {
 	
-	private static final Ordering<Price> pcomp = Ordering.natural();
-
+	// FIXME Make these private
 	protected final int stepSize;				// rung size is distance between adjacent rungs in ladder
 	protected final int numRungs;				// # of ladder rungs on one side (e.g., number of buy orders)
 	protected final int initLadderMean;			// for initializing ladder center
@@ -79,9 +77,9 @@ public abstract class MarketMaker extends ReentryAgent {
 				ReentryAgent.exponentials(props.get(MarketMakerReentryRate.class, ReentryRate.class), rand),
 				props);
 		
-		this.numRungs = props.get(NumRungs.class);
-		this.stepSize = Maths.quantize(props.get(RungSize.class), getTickSize());
-		this.truncateLadder = props.get(TruncateLadder.class);
+		this.numRungs = props.get(K.class);
+		this.stepSize = Maths.quantize(props.get(Size.class), getTickSize());
+		this.truncateLadder = props.get(Trunc.class);
 		this.tickImprovement = props.get(TickImprovement.class);
 		this.tickOutside = props.get(TickOutside.class);
 		this.initLadderRange = props.get(InitLadderRange.class, FundamentalMean.class);
@@ -95,6 +93,13 @@ public abstract class MarketMaker extends ReentryAgent {
 		// XXX Cheating? Also, this could probably be done better?
 		this.initLadderMean = initLadderRange > 0 && tempLadderMean == 0 ? props.get(FundamentalMean.class) : tempLadderMean;
 	}
+	
+	@Override
+	protected void agentStrategy() {
+		super.agentStrategy();
+		if (getActiveOrders().isEmpty())
+			postStat(Stats.MARKET_MAKER_EXEC, numRungs*2 - getActiveOrders().size());
+	}
 
 	/**
 	 * Method to create activities for submitting a ladder of orders.
@@ -105,14 +110,12 @@ public abstract class MarketMaker extends ReentryAgent {
 	 */
 	protected void submitOrderLadder(Price buyMinPrice, Price buyMaxPrice, 
 			Price sellMinPrice, Price sellMaxPrice) {
-
-		// build ascending list of buy orders
-		for (int p = buyMinPrice.intValue(); p <= buyMaxPrice.intValue(); p += stepSize)
+		// build descending list of buy orders
+		for (int p = buyMaxPrice.intValue(); p >= buyMinPrice.intValue(); p -= stepSize)
 			submitOrder(BUY, Price.of(p), 1);
-		// build descending list of sell orders
-		for (int p = sellMaxPrice.intValue(); p >= sellMinPrice.intValue(); p -= stepSize)
+		// build ascending list of sell orders
+		for (int p = sellMinPrice.intValue(); p <= sellMaxPrice.intValue(); p += stepSize)
 			submitOrder(SELL, Price.of(p), 1);
-
 		log(INFO, "%s in %s: Submit ladder with #rungs %d, step size %d: buys [%s to %s] & sells [%s to %s]",
 				this, primaryMarket, numRungs, stepSize, buyMinPrice, buyMaxPrice, sellMinPrice, sellMaxPrice);
 		
@@ -131,6 +134,8 @@ public abstract class MarketMaker extends ReentryAgent {
 	 * 
 	 * XXX MM will lose time priority if use last bid & ask, but may not be
 	 * able to get around this since it doesn't know what's in the order book.
+	 * 
+	 * FIXME (for Elaine) Verify this is correct post merge
 	 */
 	protected void createOrderLadder(Optional<Price> initLadderBid, Optional<Price> initLadderAsk) {
 		if ((!initLadderAsk.isPresent() || !initLadderBid.isPresent()) && initLadderMean == 0)
@@ -172,20 +177,6 @@ public abstract class MarketMaker extends ReentryAgent {
 					this, primaryMarket, initLadderBid, initLadderAsk);
 		}
 
-		// Tick improvement
-		if (this.getQuote().getBidPrice().isPresent()) {
-			Price bid = getQuote().getBidPrice().get();
-			ladderBid = Price.of(ladderBid.intValue() + 
-					(bid.equals(ladderBid) && tickImprovement ? 
-							(tickOutside ? -getTickSize() : getTickSize()) : 0));
-		}
-		if (this.getQuote().getAskPrice().isPresent()) {
-			Price ask = getQuote().getAskPrice().get();
-			ladderAsk = Price.of(ladderAsk.intValue() +  
-					(ask.equals(ladderAsk) && tickImprovement ? 
-							(tickOutside ? getTickSize() : -getTickSize()) : 0));
-		}
-
 		int ct = (numRungs-1) * stepSize;
 
 		// min price for buy order in the ladder
@@ -198,18 +189,63 @@ public abstract class MarketMaker extends ReentryAgent {
 		// max price for sell order in the ladder
 		Price sellMaxPrice = Price.of(ladderAsk.intValue() + ct);
 
-		// check if the bid or ask crosses the NBBO, if truncating ladder
+		// XXX Consider other way of handling when quote updates with some 
+		// latency, as tick improvement is only based on current market.
+		// With no latency in NBBO quote, it doesn't matter, but later on this
+		// may cause some issues.
+		// Check if the bid or ask crosses the NBBO, if truncating ladder
+
+		
+		int numRungsTruncated = 0;
 		if (truncateLadder) {
-			BestBidAsk lastNBBOQuote = getNBBO();
+			BestBidAsk nbbo = getNBBO();
+			Optional<Price> ask = nbbo.getBestAsk();
+			Optional<Price> bid = nbbo.getBestBid();
+
 			Price oldBuyMaxPrice = buyMaxPrice, oldSellMinPrice = sellMinPrice;
+			
+			// These are to ensure that the ladder is truncated at the original
+			// rung prices, not set the center ladder price at the BID/ASK
+			
 			// buy orders:  If ASK_N < Y_t, then [Y_t - C_t, ..., ASK_N]
-			if (lastNBBOQuote.getBestAsk().isPresent())
-				buyMaxPrice = pcomp.min(ladderBid, lastNBBOQuote.getBestAsk().get());
+			if (ask.isPresent()) {
+				int ladderBuyMax = buyMaxPrice.intValue();
+				while (ladderBuyMax >= ask.get().intValue())
+					ladderBuyMax -= stepSize;
+				buyMaxPrice = Price.of(ladderBuyMax);
+			}
 			// sell orders: If BID_N > X_t, then [BID_N, ..., X_t + C_t]
-			if (lastNBBOQuote.getBestBid().isPresent())
-				sellMinPrice = pcomp.max(ladderAsk, lastNBBOQuote.getBestBid().get());
-			log(INFO, "%s in %s: Truncating ladder(%s, %s)-->(%s, %s)", 
-					this, primaryMarket, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
+			if (bid.isPresent()) {
+				int ladderSellMin = sellMinPrice.intValue();
+				while (ladderSellMin <= bid.get().intValue())
+					ladderSellMin += stepSize;
+				sellMinPrice = Price.of(ladderSellMin);
+			}
+			
+			if (!oldBuyMaxPrice.equals(buyMaxPrice) || !oldSellMinPrice.equals(sellMinPrice)) {
+				log(INFO, "%s in %s: Truncating ladder with rung size %s from (%s, %s)-->(%s, %s)", 
+						this, primaryMarket, stepSize, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
+				numRungsTruncated += !oldBuyMaxPrice.equals(buyMaxPrice) ? 
+						Math.ceil(ladderBid.intValue() - ask.get().intValue()) : 0;
+				numRungsTruncated += !oldSellMinPrice.equals(sellMinPrice) ? 
+						Math.ceil(bid.get().intValue() - ladderBid.intValue()) : 0;
+			}
+		}
+		// FIXME Test this statistic, because in one market maker test it produced incorrect results
+		postStat(Stats.MARKET_MAKER_TRUNC, numRungsTruncated);
+		
+		// Tick improvement
+		if (getQuote().getBidPrice().isPresent()) {
+			int offset = getQuote().getBidPrice().get().equals(buyMaxPrice) && tickImprovement ? 
+					(tickOutside ? -1 : 1) * getTickSize() : 0;
+			buyMaxPrice = Price.of(buyMaxPrice.intValue() + offset);
+			buyMinPrice = Price.of(buyMinPrice.intValue() + offset);
+		}
+		if (getQuote().getAskPrice().isPresent()) {
+			int offset = (getQuote().getAskPrice().get().equals(sellMinPrice) && tickImprovement ? 
+					(tickOutside ? 1 : -1) * getTickSize(): 0);
+			sellMinPrice = Price.of(sellMinPrice.intValue() + offset);
+			sellMaxPrice = Price.of(sellMaxPrice.intValue() + offset);
 		}
 
 		submitOrderLadder(buyMinPrice, buyMaxPrice, sellMinPrice, sellMaxPrice);

@@ -14,8 +14,8 @@ import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.MovingAveragePrice;
-import systemmanager.Keys.NumHistorical;
-import systemmanager.Keys.Spreads;
+import systemmanager.Keys.N;
+import systemmanager.Keys.Strats;
 import systemmanager.Keys.UseLastPrice;
 import systemmanager.Keys.UseMedianSpread;
 import utils.Rand;
@@ -65,7 +65,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
 		boolean movingAveragePrice = props.get(MovingAveragePrice.class);
-		int numHistorical = movingAveragePrice ? 8 : props.get(NumHistorical.class);
+		int numHistorical = movingAveragePrice ? 8 : props.get(N.class);
 		checkArgument(numHistorical > 0, "Number of historical prices must be positive!");
 		this.priceQueue = EvictingQueue.create(numHistorical);
 		
@@ -88,7 +88,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		// TODO Move to expert class / interface
 		// Initialize weights, initially all equal = 1/N, where N = # windows
 		// spreads = windows in paper, variable b
-		List<Integer> spreads = ImmutableList.copyOf(props.get(Spreads.class));
+		List<Integer> spreads = ImmutableList.copyOf(props.get(Strats.class));
 		this.weights = Maps.newTreeMap(); // XXX Tree map to support easy median implementation
 		double initial_weight = 1.0 / spreads.size();
 		for (int i : spreads)
@@ -191,7 +191,6 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		
 		for(Map.Entry<Integer,Double> e : weights.entrySet())
 			e.setValue(e.getValue() * Math.exp(eta * valueDeltas.get(e.getKey())));
-		
 		normalizeWeights();
 	}
 

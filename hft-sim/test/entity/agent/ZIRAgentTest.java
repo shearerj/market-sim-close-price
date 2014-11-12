@@ -12,10 +12,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Keys.ArrivalRate;
-import systemmanager.Keys.BidRangeMax;
-import systemmanager.Keys.BidRangeMin;
+import systemmanager.Keys.RMax;
+import systemmanager.Keys.RMin;
 import systemmanager.Keys.PrivateValueVar;
-import systemmanager.Keys.WithdrawOrders;
+import systemmanager.Keys.Withdraw;
 import utils.Mock;
 import utils.Rand;
 
@@ -47,8 +47,8 @@ public class ZIRAgentTest {
 	private static final Props defaults = Props.fromPairs(
 			ArrivalRate.class, 0d,
 			PrivateValueVar.class, 0d,
-			BidRangeMin.class, 1000,
-			BidRangeMax.class, 1000);
+			RMin.class, 1000,
+			RMax.class, 1000);
 	
 	private EventQueue timeline;
 	private FundamentalValue fundamental;
@@ -113,7 +113,7 @@ public class ZIRAgentTest {
 		OrderRecord order = null;
 		while (order == null) {
 			setup();
-			ZIRAgent agent = zirAgent(Props.fromPairs(WithdrawOrders.class, true));
+			ZIRAgent agent = zirAgent(Props.fromPairs(Withdraw.class, true));
 			order = withdrawRoutingScenario(agent);
 		}
 		
@@ -138,7 +138,7 @@ public class ZIRAgentTest {
 		OrderRecord order = null;
 		while (order == null) {
 			setup();
-			ZIRAgent agent = zirAgent(Props.fromPairs(WithdrawOrders.class, false));
+			ZIRAgent agent = zirAgent(Props.fromPairs(Withdraw.class, false));
 			order = withdrawRoutingScenario(agent);
 		}
 		

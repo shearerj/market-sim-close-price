@@ -10,7 +10,7 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Keys.ClearFrequency;
+import systemmanager.Keys.ClearInterval;
 import systemmanager.Keys.PricingPolicy;
 import utils.Mock;
 import utils.Rand;
@@ -40,7 +40,7 @@ public class CallMarketTest {
 	public void setup() {
 		timeline = EventQueue.create(Log.nullLogger(), rand);
 		market = CallMarket.create(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Props.fromPairs(
-				ClearFrequency.class,	TimeStamp.of(100),
+				ClearInterval.class,	TimeStamp.of(100),
 				PricingPolicy.class,	1d));
 		view = market.getPrimaryView();
 		timeline.executeUntil(TimeStamp.ZERO); // First clear

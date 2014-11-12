@@ -3,7 +3,7 @@ package entity.agent;
 import java.util.List;
 
 import logger.Log;
-import systemmanager.Keys.WindowLength;
+import systemmanager.Keys.Window;
 import utils.Rand;
 import data.FundamentalValue;
 import data.Props;
@@ -42,7 +42,7 @@ public abstract class WindowAgent extends BackgroundAgent {
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 		
-		this.windowLength = props.get(WindowLength.class);
+		this.windowLength = props.get(Window.class);
 	}
 
 	/**

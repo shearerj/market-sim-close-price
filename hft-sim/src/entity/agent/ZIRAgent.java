@@ -50,7 +50,7 @@ public class ZIRAgent extends BackgroundAgent {
 			Market market, Props props) {
 		return new ZIRAgent(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}
-
+	
 	@Override
 	protected void agentStrategy() {
 		super.agentStrategy();

@@ -15,11 +15,11 @@ import org.junit.Test;
 import systemmanager.Keys.InitLadderMean;
 import systemmanager.Keys.InitLadderRange;
 import systemmanager.Keys.MarketMakerReentryRate;
-import systemmanager.Keys.NumRungs;
-import systemmanager.Keys.RungSize;
+import systemmanager.Keys.K;
+import systemmanager.Keys.Size;
 import systemmanager.Keys.TickImprovement;
 import systemmanager.Keys.TickOutside;
-import systemmanager.Keys.TruncateLadder;
+import systemmanager.Keys.Trunc;
 import utils.Mock;
 import utils.Rand;
 
@@ -39,9 +39,9 @@ public class BasicMarketMakerTest {
 	private static final FundamentalValue fundamental = Mock.fundamental(100000);
 	private static final Props defaults = Props.fromPairs(
 			MarketMakerReentryRate.class, 0d,
-			NumRungs.class, 3,
-			RungSize.class, 5,
-			TruncateLadder.class, true,
+			K.class, 3,
+			Size.class, 5,
+			Trunc.class, true,
 			TickImprovement.class, false);
 	
 	private Market market;
@@ -58,7 +58,7 @@ public class BasicMarketMakerTest {
 	@Test
 	public void nullBidAsk() {
 		BasicMarketMaker mm = basicMarketMaker(Props.fromPairs(
-				TruncateLadder.class, false,
+				Trunc.class, false,
 				InitLadderMean.class, 0,
 				InitLadderRange.class, 0));
 		mm.agentStrategy();
@@ -69,7 +69,7 @@ public class BasicMarketMakerTest {
 	@Test
 	public void quoteUndefined() {
 		BasicMarketMaker mm = basicMarketMaker(Props.fromPairs(
-				TruncateLadder.class, false,
+				Trunc.class, false,
 				InitLadderMean.class, 0,
 				InitLadderRange.class, 0));
 		mm.lastAsk = Optional.of(Price.of(55));
@@ -92,9 +92,9 @@ public class BasicMarketMakerTest {
 	@Test
 	public void basicLadderTest() {
 		BasicMarketMaker mm = basicMarketMaker(Props.fromPairs(
-				NumRungs.class, 2,
-				RungSize.class, 10,
-				TruncateLadder.class, false));
+				K.class, 2,
+				Size.class, 10,
+				Trunc.class, false));
 
 		setQuote(Price.of(40), Price.of(50));
 
@@ -109,10 +109,9 @@ public class BasicMarketMakerTest {
 	@Test
 	public void quoteChangeTest() {
 		BasicMarketMaker marketmaker = basicMarketMaker(Props.fromPairs(
-				NumRungs.class, 2,
-				RungSize.class, 10,
-				TruncateLadder.class, false));
-
+				K.class, 2,
+				Size.class, 10,
+				Trunc.class, false));
 		setQuote(Price.of(40), Price.of(50));
 
 		// Initial MM strategy

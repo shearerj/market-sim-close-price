@@ -9,17 +9,17 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Keys.AcceptableProfitFrac;
+import systemmanager.Keys.AcceptableProfitThreshold;
 import systemmanager.Keys.ArrivalRate;
-import systemmanager.Keys.BidRangeMax;
-import systemmanager.Keys.BidRangeMin;
+import systemmanager.Keys.RMax;
+import systemmanager.Keys.RMin;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.MaxQty;
 import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.SimLength;
-import systemmanager.Keys.WithdrawOrders;
+import systemmanager.Keys.Withdraw;
 import utils.Mock;
 import utils.Rand;
 
@@ -39,14 +39,14 @@ public class ZIRPAgentTest {
 			.put(ArrivalRate.class,			0d)
 			.put(MaxQty.class,				2)
 			.put(PrivateValueVar.class,		100d)
-			.put(BidRangeMin.class,			10000)
-			.put(BidRangeMax.class,			10000)
+			.put(RMin.class,			10000)
+			.put(RMax.class,			10000)
 			.put(SimLength.class,			60000)
 			.put(FundamentalKappa.class,	0.05)
 			.put(FundamentalMean.class,		100000)
 			.put(FundamentalShockVar.class,	0d)
-			.put(WithdrawOrders.class,		true)
-			.put(AcceptableProfitFrac.class, 0.75)
+			.put(Withdraw.class,		true)
+			.put(AcceptableProfitThreshold.class, 0.75)
 			.build();
 	
 	private Market market;
@@ -83,7 +83,7 @@ public class ZIRPAgentTest {
 			type = order.getOrderType();
 		}
 
-		 // Verify that agent does shade since 10000 * 0.75 > val - 130000
+		// Verify that agent does shade since 10000 * 0.75 > val - 130000
 		assertOrder(order, Price.of(val.intValue() - 10000), 1, TimeStamp.ZERO, TimeStamp.ZERO);
 	}
 	

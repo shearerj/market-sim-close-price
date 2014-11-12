@@ -19,7 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Keys.MarketLatency;
-import systemmanager.Keys.WindowLength;
+import systemmanager.Keys.Window;
 import utils.Mock;
 import utils.Rand;
 
@@ -142,7 +142,7 @@ public class WindowAgentTest {
 	@Test
 	public void multipleTransactionWindowLatency() {
 		latencySetup(TimeStamp.of(100));
-		WindowAgent agent = windowAgent(Props.fromPairs(WindowLength.class, TimeStamp.of(160)));
+		WindowAgent agent = windowAgent(Props.fromPairs(Window.class, TimeStamp.of(160)));
 
 		addTransaction(Price.of(40), 1, TimeStamp.of(50));
 		// Agent can't see the transaction due to latency
@@ -176,7 +176,7 @@ public class WindowAgentTest {
 		int numberOfTransactions = 10;
 		TimeStamp windowLength = TimeStamp.of(rand.nextInt(100));
 		TimeStamp reentryTime = TimeStamp.of(windowLength.getInTicks() + rand.nextInt(100));
-		WindowAgent myAgent = windowAgent(Props.fromPairs(WindowLength.class, windowLength));
+		WindowAgent myAgent = windowAgent(Props.fromPairs(Window.class, windowLength));
 		
 		//Keep track of how many transactions should be in the window
 		int numWindow = 0;
@@ -215,7 +215,7 @@ public class WindowAgentTest {
 	
 	private WindowAgent windowAgent(Props parameters) {
 		return new WindowAgent(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market,
-				Props.merge(Props.fromPairs(WindowLength.class, TimeStamp.of(10)), parameters)) {
+				Props.merge(Props.fromPairs(Window.class, TimeStamp.of(10)), parameters)) {
 			private static final long serialVersionUID = 1L;
 		};
 	}

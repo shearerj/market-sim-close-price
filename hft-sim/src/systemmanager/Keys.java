@@ -1,9 +1,5 @@
 package systemmanager;
 
-import com.google.common.base.Converter;
-
-import event.TimeStamp;
-import fourheap.Order.OrderType;
 import props.ParsableValue;
 import props.ParsableValue.BoolValue;
 import props.ParsableValue.DoubleValue;
@@ -15,8 +11,14 @@ import props.ParsableValue.LongValue;
 import props.ParsableValue.StringValue;
 import props.ParsableValue.StringsValue;
 
+import com.google.common.base.Converter;
+
+import entity.market.Price;
+import event.TimeStamp;
+import fourheap.Order.OrderType;
+
 /**
- * All of the keys for use in the simulation spec. Parameters be camelCase.
+ * All of the keys for use in the simulation spec. Parameters must be camelCase.
  * OK for observation file descriptors to not be camel case.
  * 
  * @author erik
@@ -41,9 +43,9 @@ public interface Keys {
 	public static class BackgroundReentryRate extends DoubleValue {};
 	public static class MarketMakerReentryRate extends DoubleValue {};
 
-	public static class WindowLength extends TimeValue {};
-	public static class BidRangeMax extends IntValue {};
-	public static class BidRangeMin extends IntValue {};
+	public static class Window extends TimeValue {};
+	public static class RMax extends IntValue {};
+	public static class RMin extends IntValue {};
 	public static class MaxQty extends IntValue {};
 	public static class Alpha extends DoubleValue {};
 	
@@ -68,17 +70,17 @@ public interface Keys {
 	public static class FundamentalLatency extends TimeValue {};
 
 	// Call Market
-	public static class ClearFrequency extends TimeValue {};
+	public static class ClearInterval extends TimeValue {};
 	public static class PricingPolicy extends DoubleValue {};
 	
 	// Agents
-	public static class WithdrawOrders extends BoolValue {};
-	public static class NumHistorical extends IntValue {};
+	public static class Withdraw extends BoolValue {};
+	public static class N extends IntValue {};
 
 	// Market Maker
-	public static class NumRungs extends IntValue {};
-	public static class RungSize extends IntValue {};
-	public static class TruncateLadder extends BoolValue {};
+	public static class K extends IntValue {};
+	public static class Size extends IntValue {};
+	public static class Trunc extends BoolValue {};
 	public static class TickImprovement extends BoolValue {};
 	public static class TickOutside extends BoolValue {};
 	public static class InitLadderMean extends IntValue {};
@@ -109,16 +111,17 @@ public interface Keys {
 	public static class RangeA extends DoubleValue {};
 
 	// Market Makers
-	public static class WeightFactor extends DoubleValue {};
-	public static class Spreads extends IntsValue {};
+	public static class W extends DoubleValue {};
+	public static class Strats extends IntsValue {};
 	public static class UseMedianSpread extends BoolValue {};
 	public static class MovingAveragePrice extends BoolValue {};
 	public static class FastLearning extends BoolValue {};
 	public static class UseLastPrice extends BoolValue {};
-	public static class FundEstimate extends LongValue {};
+	public static class FundEstimate extends PriceValue {};
+	public static class Spread extends PriceValue {};
 
 	// ZIRPAgent
-	public static class AcceptableProfitFrac extends DoubleValue {};
+	public static class AcceptableProfitThreshold extends DoubleValue {};
 	
 	// Helper Classes
 	static class TimeValue extends ParsableValue<TimeStamp> {
@@ -128,6 +131,14 @@ public interface Keys {
 				@Override protected TimeStamp doForward(String string) { return TimeStamp.of(Long.parseLong(string)); }
 			});
 		}
-		
+	}
+	
+	static class PriceValue extends ParsableValue<Price> {
+		protected PriceValue() {
+			super(new Converter<String, Price>() {
+				@Override protected String doBackward(Price price) { return Long.toString(price.longValue()); }
+				@Override protected Price doForward(String string) { return Price.of(Long.parseLong(string)); }
+			});
+		}
 	}
 }

@@ -1,13 +1,15 @@
 package data;
 
+import static data.Props.keyToString;
 import static systemmanager.Consts.AgentType.LA;
+import static systemmanager.Consts.AgentType.MAXEFFICIENCY;
 import static systemmanager.Consts.MarketType.CALL;
 import static systemmanager.Consts.MarketType.CDA;
-import static data.Props.keyToString;
-import systemmanager.Keys.ClearFrequency;
+import systemmanager.Keys.ClearInterval;
 import systemmanager.Keys.NbboLatency;
 import systemmanager.Keys.NumAgents;
 import systemmanager.Keys.NumMarkets;
+import systemmanager.Keys.SimLength;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -15,8 +17,8 @@ import com.google.gson.JsonObject;
 import event.TimeStamp;
 
 public class Preset {
-	
-	public static enum Presets { NONE, TWOMARKET, TWOMARKETLA, CENTRALCDA, CENTRALCALL };
+
+	public static enum Presets { NONE, TWOMARKET, TWOMARKETLA, CENTRALCDA, CENTRALCALL, MAXEFF };
 	public static final String KEY = "presets";
 
 	public static JsonObject parsePresets(JsonObject config) {
@@ -48,10 +50,18 @@ public class Preset {
 		case CENTRALCALL:
 			TimeStamp nbboLatency = TimeStamp.of(config.getAsJsonPrimitive(keyToString(NbboLatency.class)).getAsInt());
 			config.addProperty(CDA.toString(), Props.fromPairs(NumMarkets.class, 0).toConfigString());
-			config.addProperty(CALL.toString(), Props.fromPairs(NumMarkets.class, 1, ClearFrequency.class, nbboLatency).toConfigString());
+			config.addProperty(CALL.toString(), Props.fromPairs(NumMarkets.class, 1, ClearInterval.class, nbboLatency).toConfigString());
 			config.addProperty(LA.toString(), Props.fromPairs(NumAgents.class, 0).toConfigString());
 			return config;
 
+		case MAXEFF:
+			// FIXME use numAgents instead of hard coded 66
+			config.addProperty(keyToString(SimLength.class), 12);
+			config.addProperty(CDA.toString(), Props.fromPairs(NumMarkets.class, 0).toConfigString());
+			config.addProperty(CALL.toString(), Props.fromPairs(NumMarkets.class, 1, ClearInterval.class, TimeStamp.of(10)).toConfigString());
+			config.addProperty(MAXEFFICIENCY.toString(), Props.fromPairs(NumAgents.class, 66).toConfigString());
+			return config;
+			
 		default:
 			throw new IllegalArgumentException("A preset was added, but a parser was never made for it");
 		}

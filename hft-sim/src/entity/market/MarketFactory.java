@@ -5,7 +5,7 @@ import java.util.Random;
 
 import logger.Log;
 import systemmanager.Consts.MarketType;
-import systemmanager.Keys.ClearFrequency;
+import systemmanager.Keys.ClearInterval;
 import utils.Iterators2;
 import utils.Rand;
 import data.Props;
@@ -41,7 +41,7 @@ public class MarketFactory {
 		case CDA:
 			return CDAMarket.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, props);
 		case CALL:
-			if (props.get(ClearFrequency.class).equals(TimeStamp.ZERO))
+			if (props.get(ClearInterval.class).equals(TimeStamp.ZERO))
 				return CDAMarket.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, props);
 			else
 				return CallMarket.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, props);

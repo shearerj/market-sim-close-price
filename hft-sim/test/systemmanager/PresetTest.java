@@ -2,6 +2,7 @@ package systemmanager;
 
 import static data.Preset.Presets.CENTRALCALL;
 import static data.Preset.Presets.CENTRALCDA;
+import static data.Preset.Presets.MAXEFF;
 import static data.Preset.Presets.TWOMARKET;
 import static data.Preset.Presets.TWOMARKETLA;
 import static org.junit.Assert.assertEquals;
@@ -12,10 +13,12 @@ import org.junit.Test;
 
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.MarketType;
-import systemmanager.Keys.ClearFrequency;
+import systemmanager.Keys.ClearInterval;
+import systemmanager.Keys.MaxQty;
 import systemmanager.Keys.NbboLatency;
 import systemmanager.Keys.NumAgents;
 import systemmanager.Keys.NumMarkets;
+import systemmanager.Keys.SimLength;
 
 import com.google.gson.JsonObject;
 
@@ -70,7 +73,7 @@ public class PresetTest {
 				break;
 			case CALL:
 				assertEquals(1, (int) mp.getValue().get(NumMarkets.class));
-				assertEquals(TimeStamp.of(1337), mp.getValue().get(ClearFrequency.class));
+				assertEquals(TimeStamp.of(1337), mp.getValue().get(ClearInterval.class));
 				break;
 			default:
 			}
@@ -137,6 +140,39 @@ public class PresetTest {
 			switch (mp.getKey()) {
 			case LA:
 				assertEquals(1, (int) mp.getValue().get(NumAgents.class));
+				break;
+			default:
+			}
+		}
+	}
+	
+	@Test
+	public void maxEffPresetTest() {
+		JsonObject json = new JsonObject();
+		JsonObject config = new JsonObject();
+		json.add(SimulationSpec.CONFIG, config);
+		config.addProperty(Preset.KEY, MAXEFF.toString());
+		
+		SimulationSpec spec = SimulationSpec.fromJson(json);
+		assertEquals(12, (int) spec.getSimulationProps().get(SimLength.class));
+		
+		for (Entry<MarketType, Props> mp : spec.getMarketProps().entries()) {
+			switch (mp.getKey()) {
+			case CDA:
+				assertEquals(0, (int) mp.getValue().get(NumMarkets.class));
+				break;
+			case CALL:
+				assertEquals(1, (int) mp.getValue().get(NumMarkets.class));
+				assertEquals(TimeStamp.of(10), mp.getValue().get(ClearInterval.class));
+				break;
+			default:
+			}
+		}
+		for (Entry<AgentType, Props> mp : spec.getAgentProps().entries()) {
+			switch (mp.getKey()) {
+			case MAXEFFICIENCY:
+				assertEquals(66, (int) mp.getValue().get(NumAgents.class));
+				assertEquals(Defaults.get(MaxQty.class), mp.getValue().get(MaxQty.class));
 				break;
 			default:
 			}

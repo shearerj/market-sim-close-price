@@ -102,7 +102,7 @@ public abstract class Tests {
 		assertOrderLadder(orders, prices.length / 2, prices);
 	}
 	
-	/** First half are buy prices, second half are sell prices */
+	/** First numBuys are buy prices, rest are sell prices */
 	public static void assertOrderLadder(Collection<OrderRecord> orders, int numBuys, Price... prices) {
 		assertEquals("Incorrect number of orders", prices.length, orders.size());
 		
@@ -121,19 +121,6 @@ public abstract class Tests {
 	
 	public static void assertRandomOrderLadder(Collection<OrderRecord> orders, int size,
 			Range<Price> ladderCenterRange, int rungSize) {
-		// Check that highest bid and lowest ask are 2*size apart
-		List<Price> bids = Lists.newArrayList();
-		List<Price> asks = Lists.newArrayList();
-		for (OrderRecord order : orders)
-			if (order.getOrderType() == BUY)
-				bids.add(order.getPrice());
-			else
-				asks.add(order.getPrice());
-		
-		assertEquals("Bid and ask not separated by double rung size",
-				2 * rungSize, Ordering.natural().min(asks).intValue() - Ordering.natural().max(bids).intValue());
-		
-		// Compute bid and ask ranges and pass into more generic test
 		Range<Price> bidRange = Range.closed(
 				Price.of(ladderCenterRange.lowerEndpoint().intValue() - rungSize),
 				Price.of(ladderCenterRange.upperEndpoint().intValue() - rungSize));

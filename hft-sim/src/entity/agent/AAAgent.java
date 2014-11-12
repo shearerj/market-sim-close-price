@@ -18,7 +18,7 @@ import systemmanager.Keys.Gamma;
 import systemmanager.Keys.InitAggression;
 import systemmanager.Keys.LambdaA;
 import systemmanager.Keys.LambdaR;
-import systemmanager.Keys.NumHistorical;
+import systemmanager.Keys.N;
 import systemmanager.Keys.Theta;
 import systemmanager.Keys.ThetaMax;
 import systemmanager.Keys.ThetaMin;
@@ -103,7 +103,7 @@ public class AAAgent extends WindowAgent {
 		this.rho = 0.9; 		// from paper, to emphasize converging pattern
 		
 		//Initializing strategy variables
-		this.numHistorical = props.get(NumHistorical.class);
+		this.numHistorical = props.get(N.class);
 		this.lambdaA = props.get(LambdaA.class);
 		this.lambdaR = props.get(LambdaR.class);
 		this.gamma = props.get(Gamma.class);

@@ -2,7 +2,7 @@ package entity.market;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import logger.Log;
-import systemmanager.Keys.ClearFrequency;
+import systemmanager.Keys.ClearInterval;
 import systemmanager.Keys.MarketTickSize;
 import systemmanager.Keys.PricingPolicy;
 import systemmanager.Keys.TickSize;
@@ -35,7 +35,7 @@ public class CallMarket extends Market {
 		super(id, stats, timeline, log, rand, sip,
 				new UniformPriceClear(props.get(PricingPolicy.class), props.get(MarketTickSize.class, TickSize.class)),
 				props);
-		this.clearFreq = props.get(ClearFrequency.class);
+		this.clearFreq = props.get(ClearInterval.class);
 		checkArgument(clearFreq.after(TimeStamp.ZERO), "Can't clear at frequency zero");
 		scheduleActivityIn(TimeStamp.ZERO, new Activity() {
 			@Override public void execute() { CallMarket.this.clear(); }

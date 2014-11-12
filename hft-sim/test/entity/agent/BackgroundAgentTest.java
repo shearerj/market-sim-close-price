@@ -16,18 +16,18 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Keys.AcceptableProfitFrac;
+import systemmanager.Keys.AcceptableProfitThreshold;
 import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.BackgroundReentryRate;
-import systemmanager.Keys.BidRangeMax;
-import systemmanager.Keys.BidRangeMin;
+import systemmanager.Keys.RMax;
+import systemmanager.Keys.RMin;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.MaxQty;
 import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.SimLength;
-import systemmanager.Keys.WithdrawOrders;
+import systemmanager.Keys.Withdraw;
 import utils.Mock;
 import utils.Rand;
 import utils.SummStats;
@@ -68,14 +68,14 @@ public class BackgroundAgentTest {
 			.put(BackgroundReentryRate.class, 0d)
 			.put(MaxQty.class, 2)
 			.put(PrivateValueVar.class, 100d)
-			.put(BidRangeMin.class, 10000)
-			.put(BidRangeMax.class, 10000)
+			.put(RMin.class, 10000)
+			.put(RMax.class, 10000)
 			.put(SimLength.class, simulationLength)
 			.put(FundamentalKappa.class, kappa)
 			.put(FundamentalMean.class, meanValue)
 			.put(FundamentalShockVar.class, 0d)
-			.put(WithdrawOrders.class, true)
-			.put(AcceptableProfitFrac.class, 0.75)
+			.put(Withdraw.class, true)
+			.put(AcceptableProfitThreshold.class, 0.75)
 			.build();
 
 	private Timeline timeline;
@@ -211,7 +211,7 @@ public class BackgroundAgentTest {
 	/** Verify that orders are correctly withdrawn at each re-entry */
 	@Test
 	public void withdrawTest() {
-		BackgroundAgent agent = backgroundAgent(Props.fromPairs(WithdrawOrders.class, true));
+		BackgroundAgent agent = backgroundAgent(Props.fromPairs(Withdraw.class, true));
 
 		agent.submitOrder(BUY, Price.of(1), 1);
 		assertQuote(view.getQuote(), Price.of(1), 1, null, 0);
@@ -336,8 +336,8 @@ public class BackgroundAgentTest {
 		int max_shade = 5000 + rand.nextInt(5000);	//[$5.00, $10.00];
 
 		BackgroundAgent agent = backgroundAgent(Props.fromPairs(
-				BidRangeMin.class, min_shade,
-				BidRangeMax.class, max_shade));
+				RMin.class, min_shade,
+				RMax.class, max_shade));
 
 		//Execute strategy
 		agent.executeZIStrategy(BUY, 1);
@@ -359,8 +359,8 @@ public class BackgroundAgentTest {
 		int max_shade = 5000 + rand.nextInt(5000);	//[$5.00, $10.00];
 
 		BackgroundAgent agent = backgroundAgent(Props.fromPairs(
-				BidRangeMin.class, min_shade,
-				BidRangeMax.class, max_shade));
+				RMin.class, min_shade,
+				RMax.class, max_shade));
 
 		agent.executeZIStrategy(SELL, 1);
 
@@ -379,7 +379,7 @@ public class BackgroundAgentTest {
 	@Test
 	public void initialPriceZIBuyTest() {
 		fundamental = FundamentalValue.create(Mock.stats, timeline, 0, 100000, 1e8, rand);
-		BackgroundAgent agent = backgroundAgent(Props.fromPairs(BidRangeMin.class, 0, BidRangeMax.class, 1000));
+		BackgroundAgent agent = backgroundAgent(Props.fromPairs(RMin.class, 0, RMax.class, 1000));
 		agent.executeZIStrategy(BUY, 1);
 		/*
 		 * Fundamental = 100000 ($100.00), Stdev = sqrt(100000000) = 10000
@@ -394,7 +394,7 @@ public class BackgroundAgentTest {
 	@Test
 	public void initialPriceZISellTest() {
 		fundamental = FundamentalValue.create(Mock.stats, timeline, 0, 100000, 1e8, rand);
-		BackgroundAgent agent = backgroundAgent(Props.fromPairs(BidRangeMin.class, 0, BidRangeMax.class, 1000));
+		BackgroundAgent agent = backgroundAgent(Props.fromPairs(RMin.class, 0, RMax.class, 1000));
 		agent.executeZIStrategy(SELL, 1);
 		/*
 		 * Fundamental = 100000 ($100.00), Stdev = sqrt(100000000) = 10000
@@ -411,8 +411,8 @@ public class BackgroundAgentTest {
 		fundamental = Mock.fundamental(100000);
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(ListPrivateValue.create(
 				ImmutableList.of(Price.of(10000), Price.of(-10000))), Props.fromPairs(
-						BidRangeMin.class, 0,
-						BidRangeMax.class, 1000));
+						RMin.class, 0,
+						RMax.class, 1000));
 
 		agent.executeZIStrategy(BUY, 1);
 		// Buyers always buy at price lower than valuation ($100 + buy PV = $90)
@@ -426,8 +426,8 @@ public class BackgroundAgentTest {
 		fundamental = Mock.fundamental(100000);
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(ListPrivateValue.create(
 				ImmutableList.of(Price.of(10000), Price.of(-10000))), Props.fromPairs(
-						BidRangeMin.class, 0,
-						BidRangeMax.class, 1000));
+						RMin.class, 0,
+						RMax.class, 1000));
 
 		agent.executeZIStrategy(SELL, 1);
 		// Sellers always sell at price higher than valuation ($100 + sell PV = $110)
@@ -471,7 +471,7 @@ public class BackgroundAgentTest {
 	public void testPayoff() {
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(
 				ListPrivateValue.create(ImmutableList.of(Price.of(1000), Price.of(-2000))),
-				Props.fromPairs(BidRangeMin.class, 0, BidRangeMax.class, 1000));
+				Props.fromPairs(RMin.class, 0, RMax.class, 1000));
 		
 		mockAgent.submitOrder(view, BUY, Price.of(51000), 1);
 		agent.submitOrder(SELL, Price.of(51000), 1);
@@ -506,7 +506,7 @@ public class BackgroundAgentTest {
 		
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(
 				ListPrivateValue.create(ImmutableList.of(Price.of(1000), Price.of(-1000))),
-				Props.fromPairs(BidRangeMin.class, 0, BidRangeMax.class, 1000));
+				Props.fromPairs(RMin.class, 0, RMax.class, 1000));
 		
 		mockAgent.submitOrder(view, BUY, Price.of(51000), 1);
 		agent.submitOrder(SELL, Price.of(51000), 1);
@@ -528,7 +528,7 @@ public class BackgroundAgentTest {
 		
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(
 				ListPrivateValue.create(ImmutableList.of(Price.of(1000), Price.of(-1000))),
-				Props.fromPairs(BidRangeMin.class, 0, BidRangeMax.class, 1000));
+				Props.fromPairs(RMin.class, 0, RMax.class, 1000));
 		
 		mockAgent.submitOrder(view, BUY, Price.of(51000), 1);
 		agent.submitOrder(SELL, Price.of(51000), 1);

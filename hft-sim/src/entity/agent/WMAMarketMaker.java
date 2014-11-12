@@ -2,7 +2,7 @@ package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import logger.Log;
-import systemmanager.Keys.WeightFactor;
+import systemmanager.Keys.W;
 import utils.Rand;
 
 import com.google.common.collect.ImmutableList;
@@ -56,7 +56,7 @@ public class WMAMarketMaker extends MAMarketMaker {
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
-		this.weightFactor = props.get(WeightFactor.class);
+		this.weightFactor = props.get(W.class);
 		checkArgument(weightFactor >= 0 && weightFactor < 1, "Weight factor must be in range [0,1)!");
 	}
 	

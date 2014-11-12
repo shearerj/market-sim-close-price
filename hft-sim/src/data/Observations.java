@@ -34,7 +34,6 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
-
 /**
  * This class represents all of the final data about the simulation. Every piece
  * of information it gets must be stored in a Stats object during the simulation
@@ -67,16 +66,16 @@ public class Observations {
 		features = Maps2.addDefault(Maps.<String, SummStats> newHashMap(), new Supplier<SummStats>() {
 			@Override public SummStats get() { return SummStats.on(); }
 		});
-		
+
 		ImmutableListMultimap.Builder<String, PlayerObservation> builder = ImmutableListMultimap.builder();
 		for (Multiset.Entry<PlayerSpec> spec : playerProperties.entrySet())
 			for (int i = 0; i < spec.getCount(); ++i)
 				builder.put(spec.getElement().descriptor, PlayerObservation.create());
 		players = builder.build();
-		
+
 		this.simLength = simulationProps.get(SimLength.class);
 		this.periods = simulationProps.get(Periods.class);
-		
+
 		this.sumPrefixes = simulationProps.get(SumPrefixes.class);
 		this.meanPrefixes = simulationProps.get(MeanPrefixes.class);
 		this.stddevPrefixes = simulationProps.get(StddevPrefixes.class);
@@ -127,7 +126,7 @@ public class Observations {
 			features.get(e.getKey() + "_mean").add(e.getValue().mean());
 			features.get(e.getKey() + "_stddev").add(e.getValue().stddev());
 		}
-		
+
 		// Spreads
 		SummStats spreadMedians = SummStats.on();
 		for (Entry<String, TimeSeries> e : Maps2.prefix(Stats.SPREAD, stats.getTimeStats()).entrySet()) {

@@ -2,7 +2,7 @@ package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import logger.Log;
-import systemmanager.Keys.NumHistorical;
+import systemmanager.Keys.N;
 import utils.Rand;
 
 import com.google.common.base.Optional;
@@ -42,7 +42,7 @@ public class MAMarketMaker extends BasicMarketMaker {
 	protected MAMarketMaker(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
-		int numHistorical = props.get(NumHistorical.class);
+		int numHistorical = props.get(N.class);
 		checkArgument(numHistorical > 0, "Number of historical prices must be positive!");
 		bidQueue = EvictingQueue.create(numHistorical);
 		askQueue = EvictingQueue.create(numHistorical);

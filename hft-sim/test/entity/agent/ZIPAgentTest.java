@@ -132,7 +132,6 @@ public class ZIPAgentTest {
 				.put(MarginMax.class, 0.05)
 				.put(MarginMin.class, 0.05)
 				.build());
-
 		// now with a dummy transaction and dummy order prices
 		addTransaction(Price.of(95000), 1);
 		addTransaction(Price.of(90000), 1);
@@ -222,7 +221,6 @@ public class ZIPAgentTest {
 		 * to get test to work. Seed is rightly no longer accessible, so what is
 		 * the proper way to test this?
 		 */
-
 		// add dummy transaction
 		Transaction firstTrans = addTransaction(Price.of(99000), 1);
 		Transaction lastTrans = addTransaction(Price.of(80000), 1);

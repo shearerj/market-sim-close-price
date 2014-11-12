@@ -17,12 +17,12 @@ import org.junit.Test;
 
 import systemmanager.Keys.InitLadderMean;
 import systemmanager.Keys.InitLadderRange;
-import systemmanager.Keys.NumHistorical;
-import systemmanager.Keys.NumRungs;
+import systemmanager.Keys.N;
+import systemmanager.Keys.K;
 import systemmanager.Keys.ReentryRate;
-import systemmanager.Keys.RungSize;
+import systemmanager.Keys.Size;
 import systemmanager.Keys.TickImprovement;
-import systemmanager.Keys.TruncateLadder;
+import systemmanager.Keys.Trunc;
 import utils.Mock;
 import utils.Rand;
 
@@ -49,10 +49,10 @@ public class MAMarketMakerTest {
 	private static final Props defaults = Props.builder()
 			.put(ReentryRate.class, 0d)
 			.put(TickImprovement.class, false)
-			.put(NumHistorical.class, 5)
-			.put(NumRungs.class, 1)
-			.put(RungSize.class, 10)
-			.put(TruncateLadder.class, false)
+			.put(N.class, 5)
+			.put(K.class, 1)
+			.put(Size.class, 10)
+			.put(Trunc.class, false)
 			.build();
 	
 	private MAMarketMaker mm;
@@ -102,8 +102,8 @@ public class MAMarketMakerTest {
 	@Test
 	public void evictingQueueTest() {
 		mm = maMarketMaker(Props.fromPairs(
-				NumRungs.class, 2,
-				NumHistorical.class, 3));
+				K.class, 2,
+				N.class, 3));
 
 		// Add quotes & execute agent strategy in between to add quotes to queue
 		List<Price> bids = ImmutableList.of(Price.of(50), Price.of(52), Price.of(53), Price.of(53), Price.of(56));
@@ -223,5 +223,7 @@ public class MAMarketMakerTest {
 	private MAMarketMaker maMarketMaker() {
 		return maMarketMaker(Props.fromPairs());
 	}
-
+	
+	// TODO add test to check adding to EvictingQ when bid/ask is null
+	// TODO add test to check that won't compute MA when bid/ask Qs are empty
 }

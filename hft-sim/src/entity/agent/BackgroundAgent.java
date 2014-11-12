@@ -9,11 +9,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import logger.Log;
-import systemmanager.Keys.AcceptableProfitFrac;
+import systemmanager.Keys.AcceptableProfitThreshold;
 import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.BackgroundReentryRate;
-import systemmanager.Keys.BidRangeMax;
-import systemmanager.Keys.BidRangeMin;
+import systemmanager.Keys.RMax;
+import systemmanager.Keys.RMin;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalLatency;
 import systemmanager.Keys.FundamentalMean;
@@ -21,7 +21,7 @@ import systemmanager.Keys.MaxQty;
 import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.ReentryRate;
 import systemmanager.Keys.SimLength;
-import systemmanager.Keys.WithdrawOrders;
+import systemmanager.Keys.Withdraw;
 import utils.Rand;
 
 import com.google.common.collect.ImmutableMap;
@@ -77,16 +77,16 @@ public abstract class BackgroundAgent extends ReentryAgent {
 				ReentryAgent.exponentials(props.get(BackgroundReentryRate.class, ReentryRate.class), rand),
 				props);
 		this.maxAbsolutePosition = privateValue.getMaxAbsPosition();
-		this.bidRangeMin = props.get(BidRangeMin.class);
-		this.bidRangeMax = props.get(BidRangeMax.class);
-		this.withdrawOrders = props.get(WithdrawOrders.class);
+		this.bidRangeMin = props.get(RMin.class);
+		this.bidRangeMax = props.get(RMax.class);
+		this.withdrawOrders = props.get(Withdraw.class);
 		
 		this.simulationLength = props.get(SimLength.class);
 		this.fundamentalLatency = props.get(FundamentalLatency.class).getInTicks();
 		this.fundamentalKappa = props.get(FundamentalKappa.class);
 		this.fundamentalMean = props.get(FundamentalMean.class);
 		
-		this.acceptableProfitFraction = props.get(AcceptableProfitFrac.class);
+		this.acceptableProfitFraction = props.get(AcceptableProfitThreshold.class);
 		checkArgument(Range.closed(0d, 1d).contains(acceptableProfitFraction), "Acceptable profit fraction must be in [0, 1]: %f", acceptableProfitFraction);
 		
 		// For controlled variates
@@ -178,13 +178,13 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					* rand.nextUniform(bidRangeMin, bidRangeMax
 					)));
 
-			final Price rHat = this.getEstimatedFundamental(type);  
+			Price rHat = getEstimatedFundamental();  
 			
-			log(INFO, "%s executing ZIRP strategy position=%d, for q=%d, fund=%s value=%s + %s=%s stepsLeft=%s pv=%s",
-				this, getPosition(), quantity, getFundamental(),
-				rHat, getValuation(type),	val, 
-				simulationLength - getCurrentTime().getInTicks(), 
-				getPrivateValue(quantity, type));
+			log(INFO, "%s at position=%d, for %s %d units, r_t=%s & %s steps left, value=rHat+pv=%s+%s= %s",
+					this, getPosition(), type, quantity, getFundamental().intValue(),
+					simulationLength - getCurrentTime().getInTicks(),
+					rHat, getPrivateValue(type), 
+					val);
 			
 			Quote quote = getQuote();
 			if (quote.isDefined()) {
@@ -201,13 +201,14 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					if (shading * acceptableProfitFraction <= bidMarkup) {
 						price = Price.of(val.doubleValue() / quantity);
 						
-						log(INFO, "%s executing ZIRP strategy GREEDY SELL, markup=%s, bid=%s, bidMarkup=%s, price=%s",
-							this, shading, bidPrice, bidMarkup, price.intValue());
+						log(INFO, "%s executing ZIRP strategy GREEDY SELL @ %s, shading %s * desiredFrac %s <= bidMarkup=%s at BID=%s",
+							this, price, shading, acceptableProfitFraction, bidMarkup, bidPrice);
+						postStat(Stats.ZIRP_GREEDY, 1);
 					} else {
-						log(INFO, "%s no g.s. opportunity, markup=%s, bidMarkup=%s, desiredFrac=%s, threshold=%s",
-							this, shading, bidMarkup, acceptableProfitFraction, 
-							(shading * acceptableProfitFraction)
-						); 
+						log(INFO, "%s executing ZIRP strategy no greedy sell, shading %s * desiredFrac %s = %s > bidMarkup of %s",
+							this, shading, acceptableProfitFraction, 
+							(shading * acceptableProfitFraction), bidMarkup);
+						postStat(Stats.ZIRP_GREEDY, 0);
 					}
 				} else {
 					// estimated surplus from buying at the above price
@@ -221,13 +222,14 @@ public abstract class BackgroundAgent extends ReentryAgent {
 					// markup at the ask, submit order at estimated fundamental
 					if (shading * acceptableProfitFraction <= askMarkup) {
 						price = Price.of(val.doubleValue() / quantity);
-						
-						log(INFO, "%s executing ZIRP strategy GREEDY BUY, markup=%s, ask=%s, askMarkup=%s, price=%s",
-								this, shading, askPrice,	askMarkup, price.intValue());
+						log(INFO, "%s executing ZIRP strategy GREEDY BUY @ %s, shading %s * desiredFrac %s <= askMarkup=%s at ASK=%s",
+								this, price, shading, acceptableProfitFraction, askMarkup, askPrice);
+						postStat(Stats.ZIRP_GREEDY, 1);
 					} else {
-						log(INFO, "%s no g.b. opportunity, markup=%s, askMarkup=%s, desiredFrac=%s, threshold=%s",
-							this, shading, askMarkup, acceptableProfitFraction,
-							shading * acceptableProfitFraction); 
+						log(INFO, "%s executing ZIRP strategy no greedy sell, shading %s * desiredFrac %s = %s > askMarkup of %s",
+							this, shading, acceptableProfitFraction, 
+							(shading * acceptableProfitFraction), askMarkup); 
+						postStat(Stats.ZIRP_GREEDY, 0);
 					}
 				}
 			}
@@ -289,11 +291,11 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	}
 	
 	protected final Price getEstimatedValuation(OrderType type, int quantity) {
-		Price rHat = getEstimatedFundamental(type);
+		Price rHat = getEstimatedFundamental();
 		return Price.of(rHat.intValue() * quantity + getPrivateValue(quantity, type).intValue()).nonnegative();
 	}
 	
-	protected Price getEstimatedFundamental(OrderType type) {
+	protected Price getEstimatedFundamental() {
 		final int stepsLeft = (int) (simulationLength - getCurrentTime().getInTicks() + fundamentalLatency);
 		final double kappaCompToPower = Math.pow(1 - fundamentalKappa, stepsLeft);
 		return Price.of(getFundamental().intValue() * kappaCompToPower 

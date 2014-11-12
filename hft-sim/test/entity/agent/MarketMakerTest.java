@@ -14,12 +14,12 @@ import org.junit.Test;
 import systemmanager.Keys.InitLadderMean;
 import systemmanager.Keys.InitLadderRange;
 import systemmanager.Keys.MarketMakerReentryRate;
-import systemmanager.Keys.NumRungs;
-import systemmanager.Keys.RungSize;
+import systemmanager.Keys.K;
+import systemmanager.Keys.Size;
 import systemmanager.Keys.TickImprovement;
 import systemmanager.Keys.TickOutside;
 import systemmanager.Keys.TickSize;
-import systemmanager.Keys.TruncateLadder;
+import systemmanager.Keys.Trunc;
 import utils.Mock;
 import utils.Mock.MockTimeLine;
 import utils.Rand;
@@ -47,15 +47,17 @@ public class MarketMakerTest {
 	private static final Agent mockAgent = Mock.agent();
 	private static final FundamentalValue fundamental = Mock.fundamental(100000);
 	private static final Props defaults = Props.fromPairs(
-			NumRungs.class,			2,
-			RungSize.class,			5,
-			TruncateLadder.class,	false,
+			K.class,			2,
+			Size.class,			5,
+			Trunc.class,	false,
 			MarketMakerReentryRate.class, 0d);
 	
 	private MarketInfo sip;
 	private Market market;
 	private MarketView view, other;
 
+	// FIXME I think a lot of these tests set unnecessary quote before calling a market maker method. Should be cleaned up
+	
 	@Before
 	public void setup() {
 		sip = SIP.create(Mock.stats, Mock.timeline, Log.nullLogger(), rand, TimeStamp.ZERO);
@@ -65,6 +67,7 @@ public class MarketMakerTest {
 	}
 
 	/** Testing when no bid/ask, does not submit any orders */
+	// FIXME should MMs be able to submit rung size=0 ladders? For now, do not permit
 	@Test
 	public void nullBidAsk() {
 		MarketMaker mm = marketMaker();
@@ -84,7 +87,7 @@ public class MarketMakerTest {
 
 	@Test
 	public void submitOrderLadderTest() {
-		MarketMaker mm = marketMaker(Props.fromPairs(NumRungs.class, 3));
+		MarketMaker mm = marketMaker(Props.fromPairs(K.class, 3));
 
 		mm.submitOrderLadder(Price.of(30), Price.of(40), Price.of(50), Price.of(60));
 		assertOrderLadder(mm.getActiveOrders(),
@@ -108,7 +111,6 @@ public class MarketMakerTest {
 		MarketMaker mm = marketMaker(Props.fromPairs(
 				TickImprovement.class, true,
 				TickOutside.class, true));
-		assertEquals(5, mm.stepSize);
 
 		setQuote(view, Price.of(40), Price.of(50));
 
@@ -121,14 +123,15 @@ public class MarketMakerTest {
 	@Test
 	public void truncateLadderTickImprovement() {
 		MarketMaker mm = marketMaker(Props.fromPairs(
-				TruncateLadder.class, true,
+				Trunc.class, true,
 				TickImprovement.class, true,
 				TickOutside.class, true));
 
-		// Updating NBBO quote (place orders and advance time)
+		// Updating NBBO quote
 		setQuote(other, Price.of(30), Price.of(38));
 		setQuote(view, Price.of(40), Price.of(50));
 
+		// FIXME (for Elaine) This fails, because the truncated bid is no longer equal to the quote, and so tick improvement is not activated
 		mm.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
 		assertOrderLadder(mm.getActiveOrders(), 1,
 				Price.of(34),
@@ -141,7 +144,7 @@ public class MarketMakerTest {
 				TickImprovement.class, true,
 				TickOutside.class, false));
 
-		setQuote(view, Price.of(40), Price.of(50));
+		setQuote(view, Price.of(40), Price.of(50)); // FIXME Unnecessary?
 		
 		mm.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
 		assertOrderLadder(mm.getActiveOrders(),
@@ -149,10 +152,11 @@ public class MarketMakerTest {
 				Price.of(49), Price.of(54));
 	}
 	
+	// FIXME (for Elaine) This doesn't seem to test what it's name implies. It's failing for the same reason as "truncateLadderTickImprovement"
 	@Test
 	public void truncateLadderTickImprovementOutside() {
 		MarketMaker mm = marketMaker(Props.fromPairs(
-				TruncateLadder.class, true,
+				Trunc.class, true,
 				TickImprovement.class, true,
 				TickOutside.class, false));
 		
@@ -168,8 +172,8 @@ public class MarketMakerTest {
 	@Test
 	public void truncateBidTest() {
 		MarketMaker marketmaker = marketMaker(Props.fromPairs(
-				NumRungs.class, 3,
-				TruncateLadder.class, true,
+				K.class, 3,
+				Trunc.class, true,
 				TickImprovement.class, false));
 
 		setQuote(other, Price.of(90), Price.of(100));
@@ -181,16 +185,60 @@ public class MarketMakerTest {
 				Price.of(105), Price.of(110), Price.of(115));
 	}
 
+	public void truncateLadder() {
+		MarketMaker mm = marketMaker(Props.fromPairs(
+				Trunc.class, true,
+				TickImprovement.class, true,
+				TickOutside.class, true));
+
+		setQuote(view, Price.of(40), Price.of(50));
+		setQuote(other, Price.of(30), Price.of(38));
+
+		mm.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
+		assertOrderLadder(mm.getActiveOrders(), 1,
+				Price.of(35),
+				Price.of(51), Price.of(56));
+	}
+	
+	@Test
+	public void truncateLadderOnBuyRungFix() {
+		MarketMaker mm = marketMaker(Props.fromPairs(
+				Trunc.class, true,
+				TickImprovement.class, true,
+				TickOutside.class, false));
+
+		setQuote(view, Price.of(40), Price.of(50));
+		setQuote(other, Price.of(30), Price.of(35));
+
+		mm.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
+		assertOrderLadder(mm.getActiveOrders(), 0,
+				Price.of(49), Price.of(54));
+	}
+	
+	@Test
+	public void truncateLadderOnSellRungFix() {
+		MarketMaker mm = marketMaker(Props.fromPairs(
+				Trunc.class, true,
+				TickImprovement.class, true,
+				TickOutside.class, false));
+
+		setQuote(view, Price.of(40), Price.of(50));
+		setQuote(other, Price.of(55), Price.of(60));
+		
+		mm.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
+		assertOrderLadder(mm.getActiveOrders(), 2,
+				Price.of(36), Price.of(41));
+	}
+
 	@Test
 	public void truncateAskTest() {
 		MarketMaker marketmaker = marketMaker(Props.fromPairs(
-				NumRungs.class, 3,
-				TruncateLadder.class, true,
+				K.class, 3,
+				Trunc.class, true,
 				TickImprovement.class, false));
 		
 		setQuote(other, Price.of(90), Price.of(100));
 		setQuote(view, Price.of(70), Price.of(89));
-
 		marketmaker.createOrderLadder(Optional.of(Price.of(70)), Optional.of(Price.of(89)));
 		assertOrderLadder(marketmaker.getActiveOrders(), 3,
 				Price.of(60), Price.of(65), Price.of(70),
@@ -201,8 +249,8 @@ public class MarketMakerTest {
 	@Test
 	public void tickSizeTest() {
 		MarketMaker marketmaker = marketMaker(Props.fromPairs(
-				NumRungs.class, 3,
-				RungSize.class, 12,
+				K.class, 3,
+				Size.class, 12,
 				TickSize.class, 5));
 	
 		marketmaker.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
@@ -210,12 +258,30 @@ public class MarketMakerTest {
 				Price.of(20), Price.of(30), Price.of(40),
 				Price.of(50), Price.of(60), Price.of(70));
 	}
-
-	/** Creating ladder without bid/ask quote */
+	
+	@Test
+	public void tickInside() {
+		MarketMaker mm = marketMaker(Props.fromPairs(
+				TickImprovement.class, true,
+				TickOutside.class, false));
+		
+		setQuote(view, Price.of(40), Price.of(50));
+		
+		mm.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
+		assertOrderLadder(mm.getActiveOrders(),
+				Price.of(36), Price.of(41),
+				Price.of(49), Price.of(54));
+	}
+	
+	
+	/**
+	 * Creating ladder without bid/ask quote
+	 */
+	// FIXME (for Elaine) This fails randomly, I'm not sure if it's an error in the program, or an error in the test
 	@Test
 	public void initRandLadder() {
 		MarketMaker mm = marketMaker(Props.fromPairs(
-				TruncateLadder.class, true,
+				Trunc.class, true,
 				TickImprovement.class, true,
 				TickOutside.class, false,
 				InitLadderMean.class, 100,
@@ -230,7 +296,7 @@ public class MarketMakerTest {
 	@Test
 	public void oneSidedLadderBuy() {
 		MarketMaker mm = marketMaker(Props.fromPairs(
-				TruncateLadder.class, true,
+				Trunc.class, true,
 				TickImprovement.class, true,
 				TickOutside.class, false,
 				InitLadderMean.class, 100,
@@ -247,7 +313,7 @@ public class MarketMakerTest {
 	@Test
 	public void oneSidedLadderSell() {
 		MarketMaker mm = marketMaker(Props.fromPairs(
-				TruncateLadder.class, true,
+				Trunc.class, true,
 				TickImprovement.class, true,
 				TickOutside.class, false,
 				InitLadderMean.class, 100,
@@ -295,6 +361,19 @@ public class MarketMakerTest {
 		assertEquals(2, stats.getSummaryStats().get(Stats.MARKET_MAKER_LADDER + mm).n());
 	}
 	
+	/**
+	 * Must submit rungs in order such that inside rungs will transact first
+	 * (setting truncate = false to test)
+	 * 
+	 * XXX (for Elaine) is this really necessary? Inside rungs are always at a better price, so they will regardless of order
+	 */
+	@Test
+	public void rungOrderTest() {
+		// TODO
+	}
+	
+	// TODO test truncation when quote latency (or using NBBO?)
+	
 	@Test
 	public void extraTest() {
 		for (int i = 0; i < 100; i++) {
@@ -327,4 +406,5 @@ public class MarketMakerTest {
 	private MarketMaker marketMaker() {
 		return marketMaker(Props.fromPairs());
 	}
+	
 }

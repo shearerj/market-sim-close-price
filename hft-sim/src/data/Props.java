@@ -1,5 +1,7 @@
 package data;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -154,16 +156,16 @@ public class Props implements Serializable {
 	}
 
 	public <T> T get(Class<? extends Value<T>> key) {
-		return Optional.fromNullable(props.get(key))
+		return checkNotNull(Optional.fromNullable(props.get(key))
 				.or(Optional.fromNullable(Defaults.get(key)))
-				.get(); // Will throw an error if nothing was found
+				.orNull(), "Default value of %s is not defined", key);
 	}
 	
 	public <T> T get(Class<? extends Value<T>> key, Class<? extends Value<T>> defaultKey) {
-		return Optional.fromNullable(props.get(key))
+		return checkNotNull(Optional.fromNullable(props.get(key))
 				.or(Optional.fromNullable(props.get(defaultKey)))
 				.or(Optional.fromNullable(Defaults.get(defaultKey)))
-				.get(); // Will throw an error if nothing was found
+				.orNull(), "Default value of %s is not defined", key);
 	}
 	
 	public static class Builder {

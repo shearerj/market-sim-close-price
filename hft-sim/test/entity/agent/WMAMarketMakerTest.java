@@ -12,13 +12,13 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Keys.NumHistorical;
-import systemmanager.Keys.NumRungs;
+import systemmanager.Keys.N;
+import systemmanager.Keys.K;
 import systemmanager.Keys.ReentryRate;
-import systemmanager.Keys.RungSize;
+import systemmanager.Keys.Size;
 import systemmanager.Keys.TickImprovement;
-import systemmanager.Keys.TruncateLadder;
-import systemmanager.Keys.WeightFactor;
+import systemmanager.Keys.Trunc;
+import systemmanager.Keys.W;
 import utils.Mock;
 import utils.Rand;
 
@@ -40,10 +40,10 @@ public class WMAMarketMakerTest {
 	private static final Props defaults = Props.builder()
 			.put(ReentryRate.class, 0d)
 			.put(TickImprovement.class, false)
-			.put(NumRungs.class, 1)
-			.put(RungSize.class, 10)
-			.put(TruncateLadder.class, false)
-			.put(NumHistorical.class, 5)
+			.put(K.class, 1)
+			.put(Size.class, 10)
+			.put(Trunc.class, false)
+			.put(N.class, 5)
 			.build();
 	
 	private Market market;
@@ -62,7 +62,7 @@ public class WMAMarketMakerTest {
 	 */
 	@Test
 	public void computeLinearWeightedMovingAverage() {
-		mm = wmaMarketMaker(Props.fromPairs(WeightFactor.class, 0d));
+		mm = wmaMarketMaker(Props.fromPairs(W.class, 0d));
 		
 		// Add quotes & execute agent strategy in between
 		List<Price> bids = ImmutableList.of(Price.of(50), Price.of(52), Price.of(54), Price.of(56), Price.of(58));
@@ -78,7 +78,7 @@ public class WMAMarketMakerTest {
 	
 	@Test
 	public void computeExpWeightedMovingAverage() {
-		mm = wmaMarketMaker(Props.fromPairs(WeightFactor.class, 0.5));
+		mm = wmaMarketMaker(Props.fromPairs(W.class, 0.5));
 		
 		// Add quotes & execute agent strategy in between
 		List<Price> bids = ImmutableList.of(Price.of(50), Price.of(52), Price.of(54), Price.of(56), Price.of(58));
@@ -98,7 +98,7 @@ public class WMAMarketMakerTest {
 	 */
 	@Test
 	public void partialQueueExponentialLadderTest() {
-		mm = wmaMarketMaker(Props.fromPairs(WeightFactor.class, 0.9));
+		mm = wmaMarketMaker(Props.fromPairs(W.class, 0.9));
 
 		// Add quotes & execute agent strategy in between
 		List<Price> bids = ImmutableList.of(Price.of(50000), Price.of(52000));
@@ -118,8 +118,7 @@ public class WMAMarketMakerTest {
 	 */
 	@Test
 	public void partialQueueLienarLadderTest() {
-		mm = wmaMarketMaker(Props.fromPairs(WeightFactor.class, 0d));
-
+		mm = wmaMarketMaker(Props.fromPairs(W.class, 0d));
 		// Add quotes & execute agent strategy in between
 		List<Price> bids = ImmutableList.of(Price.of(50000), Price.of(52000));
 		List<Price> asks = ImmutableList.of(Price.of(60000), Price.of(64000));
@@ -149,4 +148,6 @@ public class WMAMarketMakerTest {
 		return agent.submitOrder(view, buyOrSell, price, 1);
 	}
 	
+	// TODO add test to check adding to EvictingQ when bid/ask is null
+	// TODO add test to check that won't compute MA when bid/ask Qs are empty
 }

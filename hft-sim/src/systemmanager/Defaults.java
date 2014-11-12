@@ -1,11 +1,10 @@
 package systemmanager;
 
 import java.io.Serializable;
-import java.util.Arrays;
 
 import props.ImmutableProps;
 import props.Value;
-import systemmanager.Keys.AcceptableProfitFrac;
+import systemmanager.Keys.AcceptableProfitThreshold;
 import systemmanager.Keys.AgentTickSize;
 import systemmanager.Keys.Alpha;
 import systemmanager.Keys.ArrivalRate;
@@ -13,14 +12,15 @@ import systemmanager.Keys.BetaMax;
 import systemmanager.Keys.BetaMin;
 import systemmanager.Keys.BetaR;
 import systemmanager.Keys.BetaT;
-import systemmanager.Keys.BidRangeMax;
-import systemmanager.Keys.BidRangeMin;
+import systemmanager.Keys.RMax;
+import systemmanager.Keys.RMin;
 import systemmanager.Keys.BuyerStatus;
-import systemmanager.Keys.ClearFrequency;
+import systemmanager.Keys.ClearInterval;
 import systemmanager.Keys.Debug;
 import systemmanager.Keys.DiscountFactors;
 import systemmanager.Keys.Eta;
 import systemmanager.Keys.FastLearning;
+import systemmanager.Keys.FundEstimate;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalLatency;
 import systemmanager.Keys.FundamentalMean;
@@ -42,10 +42,8 @@ import systemmanager.Keys.MeanPrefixes;
 import systemmanager.Keys.MovingAveragePrice;
 import systemmanager.Keys.NbboLatency;
 import systemmanager.Keys.Num;
-import systemmanager.Keys.NumAgents;
-import systemmanager.Keys.NumHistorical;
-import systemmanager.Keys.NumMarkets;
-import systemmanager.Keys.NumRungs;
+import systemmanager.Keys.N;
+import systemmanager.Keys.K;
 import systemmanager.Keys.NumSims;
 import systemmanager.Keys.Periods;
 import systemmanager.Keys.PricingPolicy;
@@ -54,9 +52,10 @@ import systemmanager.Keys.RandomSeed;
 import systemmanager.Keys.RangeA;
 import systemmanager.Keys.RangeR;
 import systemmanager.Keys.ReentryRate;
-import systemmanager.Keys.RungSize;
+import systemmanager.Keys.Size;
 import systemmanager.Keys.SimLength;
-import systemmanager.Keys.Spreads;
+import systemmanager.Keys.Spread;
+import systemmanager.Keys.Strats;
 import systemmanager.Keys.StddevPrefixes;
 import systemmanager.Keys.SumPrefixes;
 import systemmanager.Keys.Theta;
@@ -65,17 +64,19 @@ import systemmanager.Keys.ThetaMin;
 import systemmanager.Keys.TickImprovement;
 import systemmanager.Keys.TickOutside;
 import systemmanager.Keys.TickSize;
-import systemmanager.Keys.TruncateLadder;
+import systemmanager.Keys.Trunc;
 import systemmanager.Keys.UseLastPrice;
 import systemmanager.Keys.UseMedianSpread;
-import systemmanager.Keys.WeightFactor;
-import systemmanager.Keys.WindowLength;
-import systemmanager.Keys.WithdrawOrders;
+import systemmanager.Keys.W;
+import systemmanager.Keys.Window;
+import systemmanager.Keys.Withdraw;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Ints;
 
 import data.Stats;
+import entity.market.Price;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
@@ -99,8 +100,6 @@ public class Defaults implements Serializable {
 	private final static ImmutableProps defaults = ImmutableProps.builder()
 			// General
 			.put(Num.class,				0)
-			.put(NumAgents.class,		0)
-			.put(NumMarkets.class,		1)
 
 			.put(TickSize.class,		1)
 			.put(MarketTickSize.class,	1)
@@ -109,9 +108,9 @@ public class Defaults implements Serializable {
 			.put(DiscountFactors.class,	Doubles.asList(0, 0.0006))
 			.put(Periods.class,			Ints.asList(1, 250))
 			
-			.put(SumPrefixes.class,		Arrays.<String> asList(Stats.SURPLUS, Stats.PROFIT))
-			.put(MeanPrefixes.class,	Arrays.<String> asList(Stats.FUNDAMENTAL_END_PRICE))
-			.put(StddevPrefixes.class,	Arrays.<String> asList())
+			.put(SumPrefixes.class,		ImmutableList.of(Stats.SURPLUS, Stats.PROFIT, Stats.ZIRP_GREEDY, Stats.MAX_EFF_POSITION))
+			.put(MeanPrefixes.class,	ImmutableList.of(Stats.FUNDAMENTAL_END_PRICE, Stats.MARKET_MAKER_SPREAD))
+			.put(StddevPrefixes.class,	ImmutableList.of(Stats.MARKET_MAKER_SPREAD))
 			
 			// Simulation spec (general)
 			.put(SimLength.class,		60000)
@@ -125,8 +124,8 @@ public class Defaults implements Serializable {
 			.put(FundamentalLatency.class, TimeStamp.ZERO)
 
 			.put(PricingPolicy.class,	0.5)
-			.put(ClearFrequency.class,	TimeStamp.of(1000))
-		
+			.put(ClearInterval.class,	TimeStamp.of(1000))
+			
 			// Agent-level defaults
 			.put(ArrivalRate.class,		0.075)
 			.put(ReentryRate.class,		0.005)
@@ -135,16 +134,16 @@ public class Defaults implements Serializable {
 			// HFT Agents
 			.put(LaLatency.class,		TimeStamp.ZERO)
 			.put(Alpha.class,			0.001)
-
+			
 			// Background Agents
 			.put(PrivateValueVar.class, 1000000d)
-			.put(MaxQty.class,			10)
-			.put(BidRangeMin.class,		0)
-			.put(BidRangeMax.class,		5000)
-			.put(WindowLength.class,	TimeStamp.of(5000))
+			.put(MaxQty.class,			10) // FIXME Change to MaxPosition
+			.put(RMin.class,		0)
+			.put(RMax.class,		5000)
+			.put(Window.class,	TimeStamp.of(5000))
 			
-			.put(AcceptableProfitFrac.class, 0.8) // For ZIRPs
-			.put(WithdrawOrders.class, true) // for ZIRs
+			.put(AcceptableProfitThreshold.class, 0.8) // For ZIRPs
+			.put(Withdraw.class, true) // for ZIRs
 		
 			// AA Agent
 			.put(InitAggression.class,	0d)
@@ -159,7 +158,7 @@ public class Defaults implements Serializable {
 			.put(BetaT.class,			0.4) // or U[0.2, 0.6]
 			.put(BuyerStatus.class,		OrderType.BUY)
 			.put(Debug.class,			false)
-	
+			
 			// ZIP Agent
 			.put(MarginMin.class,		0.05)
 			.put(MarginMax.class,		0.35)
@@ -169,30 +168,33 @@ public class Defaults implements Serializable {
 			.put(BetaMax.class,			0.5)
 			.put(RangeA.class,			0.05)
 			.put(RangeR.class,			0.05)
-	
+
 			// Market Maker
-			.put(NumRungs.class,		100)
-			.put(RungSize.class,		1000)
-			.put(TruncateLadder.class,	true)
+			.put(K.class,		100)
+			.put(Size.class,		1000)
+			.put(Trunc.class,	true)
 			.put(TickImprovement.class,	true)
 			.put(TickOutside.class,		false)
 			.put(InitLadderRange.class,	1000)
 			// Keys.INITIAL_LADDER_MEAN should be set to fundamental mean in agent strategies that use it
-		
+			
 			// MAMM
-			.put(NumHistorical.class,	5)
+			.put(N.class,	5)
 		
 			// WMAMM
-			.put(WeightFactor.class,	0d)
+			.put(W.class,	0d)
 		
 			// AdaptiveMM
-			.put(Spreads.class,			Ints.asList(500, 1000, 2500, 5000))
+			.put(Strats.class,			Ints.asList(500, 1000, 2500, 5000))
 			.put(UseMedianSpread.class,	false)
 			.put(MovingAveragePrice.class, true)
 			.put(FastLearning.class,	true)
 			.put(UseLastPrice.class,	true)
 			
+			// Fundamental MM
+			.put(FundEstimate.class,	Price.ZERO)
+			.put(Spread.class,			Price.ZERO)
+			
 			// Build, put new defaults above this
 			.build();
-	
 }

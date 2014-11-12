@@ -20,14 +20,14 @@ import systemmanager.Keys.Eta;
 import systemmanager.Keys.Gamma;
 import systemmanager.Keys.InitAggression;
 import systemmanager.Keys.MaxQty;
-import systemmanager.Keys.NumHistorical;
+import systemmanager.Keys.N;
 import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.ReentryRate;
 import systemmanager.Keys.Theta;
 import systemmanager.Keys.ThetaMax;
 import systemmanager.Keys.ThetaMin;
-import systemmanager.Keys.WindowLength;
-import systemmanager.Keys.WithdrawOrders;
+import systemmanager.Keys.Window;
+import systemmanager.Keys.Withdraw;
 import utils.Mock;
 import utils.Rand;
 import data.FundamentalValue;
@@ -48,12 +48,12 @@ public class AAAgentTest {
 			.put(ReentryRate.class,		0d)
 			.put(PrivateValueVar.class,	0d)
 			.put(MaxQty.class,			1)
-			.put(WithdrawOrders.class,	false)
-			.put(WindowLength.class,	TimeStamp.of(5000))
+			.put(Withdraw.class,	false)
+			.put(Window.class,	TimeStamp.of(5000))
 			.put(Theta.class,			0d)
 			.put(ThetaMin.class,		-4d)
 			.put(ThetaMax.class,		4d)
-			.put(NumHistorical.class,	5)
+			.put(N.class,	5)
 			.put(Debug.class,			true)
 			.build();
 
@@ -82,7 +82,7 @@ public class AAAgentTest {
 	public void estimateEquilibrium() {
 		AAAgent agent = aaAgent(Props.fromPairs(
 				BuyerStatus.class, BUY,
-				NumHistorical.class, 3,
+				N.class, 3,
 				PrivateValueVar.class, 5E7));
 		
 		assertNull(agent.estimateEquilibrium(agent.getWindowTransactions()));
@@ -292,7 +292,7 @@ public class AAAgentTest {
 	public void forgottenTest() {
 		AAAgent agent = aaAgent(Props.builder()
 				.put(BuyerStatus.class, BUY)
-				.put(NumHistorical.class, 5)
+				.put(N.class, 5)
 				.put(ThetaMax.class, 8d)
 				.put(ThetaMin.class, -8d)
 				.put(BetaT.class, 0.25)

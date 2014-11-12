@@ -23,13 +23,13 @@ import systemmanager.Keys.InitLadderMean;
 import systemmanager.Keys.InitLadderRange;
 import systemmanager.Keys.MarketMakerReentryRate;
 import systemmanager.Keys.MovingAveragePrice;
-import systemmanager.Keys.NumHistorical;
-import systemmanager.Keys.NumRungs;
-import systemmanager.Keys.RungSize;
-import systemmanager.Keys.Spreads;
+import systemmanager.Keys.N;
+import systemmanager.Keys.K;
+import systemmanager.Keys.Size;
+import systemmanager.Keys.Strats;
 import systemmanager.Keys.TickImprovement;
 import systemmanager.Keys.TickOutside;
-import systemmanager.Keys.TruncateLadder;
+import systemmanager.Keys.Trunc;
 import systemmanager.Keys.UseLastPrice;
 import systemmanager.Keys.UseMedianSpread;
 import utils.Mock;
@@ -60,11 +60,11 @@ public class AdaptiveMarketMakerTest {
 	private static final Agent mockAgent = Mock.agent();
 	private static final FundamentalValue fundamental = Mock.fundamental(100000);
 	private static final Props defaults = Props.builder()
-			.put(NumRungs.class, 2)
-			.put(RungSize.class, 10)
+			.put(K.class, 2)
+			.put(Size.class, 10)
 			.put(MarketMakerReentryRate.class, 0d)
-			.put(Spreads.class, Ints.asList(2, 4, 6, 8))
-			.put(TruncateLadder.class, false)
+			.put(Strats.class, Ints.asList(2, 4, 6, 8))
+			.put(Trunc.class, false)
 			.put(TickImprovement.class, false)
 			.put(InitLadderRange.class, 0)
 			.put(InitLadderMean.class, 0)
@@ -90,7 +90,7 @@ public class AdaptiveMarketMakerTest {
 	@Test
 	public void quoteUndefined() {
 		AdaptiveMarketMaker mm = aMarketMaker(Props.fromPairs(
-				TruncateLadder.class, false,
+				Trunc.class, false,
 				InitLadderMean.class, 0,
 				InitLadderRange.class, 0));
 		mm.lastAsk = Optional.of(Price.of(55));
@@ -112,10 +112,10 @@ public class AdaptiveMarketMakerTest {
 	@Test
 	public void basicLadderTest() {
 		AdaptiveMarketMaker mm = aMarketMaker(Props.fromPairs(
-				NumRungs.class, 2,
-				RungSize.class, 10,
-				TruncateLadder.class, false,
-				Spreads.class, Ints.asList(10)));
+				K.class, 2,
+				Size.class, 10,
+				Trunc.class, false,
+				Strats.class, Ints.asList(10)));
 
 		setQuote(Price.of(40), Price.of(50));
 
@@ -130,10 +130,10 @@ public class AdaptiveMarketMakerTest {
 	@Test
 	public void quoteChangeTest() {
 		AdaptiveMarketMaker marketmaker = aMarketMaker(Props.fromPairs(
-				Spreads.class, Ints.asList(2),
-				NumRungs.class, 2,
-				RungSize.class, 10,
-				TruncateLadder.class, false));
+				Strats.class, Ints.asList(2),
+				K.class, 2,
+				Size.class, 10,
+				Trunc.class, false));
 
 		setQuote(Price.of(40), Price.of(50));
 
@@ -151,13 +151,13 @@ public class AdaptiveMarketMakerTest {
 	@Test
 	public void withdrawLadderTest() {
 		AdaptiveMarketMaker marketmaker = aMarketMaker(Props.fromPairs(
-				NumRungs.class, 3,
-				RungSize.class, 5,
-				TruncateLadder.class, true,
-				Spreads.class, Ints.asList(2)));
+				K.class, 3,
+				Size.class, 5,
+				Trunc.class, true,
+				Strats.class, Ints.asList(2)));
 		
 		setQuote(Price.of(40), Price.of(50));
-
+		
 		// Initial MM strategy; submits ladder with numRungs=3
 		marketmaker.agentStrategy();
 		assertEquals("Incorrect number of orders", 6, marketmaker.getActiveOrders().size());
@@ -181,10 +181,10 @@ public class AdaptiveMarketMakerTest {
 	@Test
 	public void withdrawUndefinedTest() {
 		AdaptiveMarketMaker marketmaker = aMarketMaker(Props.fromPairs(
-				NumRungs.class, 3,
-				RungSize.class, 5,
-				TruncateLadder.class, true,
-				Spreads.class, Ints.asList(2)));
+				K.class, 3,
+				Size.class, 5,
+				Trunc.class, true,
+				Strats.class, Ints.asList(2)));
 		
 		setQuote(Price.of(40), Price.of(50));
 
@@ -213,10 +213,10 @@ public class AdaptiveMarketMakerTest {
 	@Test
 	public void nullBidAskLadder() {
 		AdaptiveMarketMaker marketmaker = aMarketMaker(Props.builder()
-				.put(NumRungs.class, 3)
-				.put(RungSize.class, 5)
-				.put(TruncateLadder.class, true)
-				.put(Spreads.class, Ints.asList(2))
+				.put(K.class, 3)
+				.put(Size.class, 5)
+				.put(Trunc.class, true)
+				.put(Strats.class, Ints.asList(2))
 				.put(TickImprovement.class, true)
 				.put(TickOutside.class, true)
 				.put(InitLadderMean.class, 50)
@@ -243,10 +243,10 @@ public class AdaptiveMarketMakerTest {
 	@Test
 	public void chooseMedianWeight() {
 		MarketMaker marketmaker = aMarketMaker(Props.fromPairs(
-				NumRungs.class, 3,
-				RungSize.class, 5,
-				TruncateLadder.class, true,
-				Spreads.class, Ints.asList(2, 4, 5),
+				K.class, 3,
+				Size.class, 5,
+				Trunc.class, true,
+				Strats.class, Ints.asList(2, 4, 5),
 				UseMedianSpread.class, true));
 
 		setQuote(Price.of(40), Price.of(50));
@@ -262,11 +262,11 @@ public class AdaptiveMarketMakerTest {
 	@Test
 	public void recalculateWeights(){
 		AdaptiveMarketMaker marketmaker = aMarketMaker(Props.builder()
-				.put(NumRungs.class, 3)
-				.put(RungSize.class, 5)
-				.put(TruncateLadder.class, true)
-				.put(Spreads.class, Ints.asList(2, 40, 50))
-				.put(NumHistorical.class, 1)
+				.put(K.class, 3)
+				.put(Size.class, 5)
+				.put(Trunc.class, true)
+				.put(Strats.class, Ints.asList(2, 40, 50))
+				.put(N.class, 1)
 				.put(MovingAveragePrice.class, false)
 				.put(UseLastPrice.class, true)
 				.put(FastLearning.class, true)
@@ -305,11 +305,11 @@ public class AdaptiveMarketMakerTest {
 	@Test
 	public void movingAverage() {
 		AdaptiveMarketMaker marketmaker = aMarketMaker(Props.builder()
-				.put(NumRungs.class, 3)
-				.put(RungSize.class, 5)
-				.put(TruncateLadder.class, true)
-				.put(Spreads.class, Ints.asList(2, 30, 50))
-				.put(NumHistorical.class, 5)
+				.put(K.class, 3)
+				.put(Size.class, 5)
+				.put(Trunc.class, true)
+				.put(Strats.class, Ints.asList(2, 30, 50))
+				.put(N.class, 5)
 				.put(MovingAveragePrice.class, false)
 				.put(UseLastPrice.class, true)
 				.put(FastLearning.class, true)
@@ -317,7 +317,7 @@ public class AdaptiveMarketMakerTest {
 				.build());
 
 		setQuote(Price.of(80), Price.of(120));
-		
+
 		//Run agent strategy;
 		marketmaker.agentStrategy();
 		assertEquals(Optional.of(Price.of(100)), marketmaker.lastPrice);
@@ -380,10 +380,10 @@ public class AdaptiveMarketMakerTest {
 	@Test
 	public void lastTransactionResult() {
 		AdaptiveMarketMaker marketmaker = aMarketMaker(Props.fromPairs(
-				NumRungs.class, 3,
-				RungSize.class, 5,
-				TruncateLadder.class, true,
-				Spreads.class, Ints.asList(2, 40, 50),
+				K.class, 3,
+				Size.class, 5,
+				Trunc.class, true,
+				Strats.class, Ints.asList(2, 40, 50),
 				UseMedianSpread.class, true));
 
 		marketmaker.lastAsk = Optional.of(Price.of(100));
@@ -391,6 +391,7 @@ public class AdaptiveMarketMakerTest {
 		marketmaker.lastPrice = Optional.of(Price.of(90));
 
 		TransactionResult test = marketmaker.lastTransactionResult(10, Price.of(81), Price.of(91));
+
 		// rungs generated should be SELL(95,100,105), BUY(85,80,75)
 		// nothing should trade in this scenario
 		assertEquals(0, (int) test.getCashChange());
@@ -436,11 +437,11 @@ public class AdaptiveMarketMakerTest {
 	}
 	
 	/** Check that higher is higher than the other weights, and other weights are equal */
-	private static <K> void checkHigherWeight(Map<K, Double> weights, K higher) {
+	private static <T> void checkHigherWeight(Map<T, Double> weights, T higher) {
 		double higherWeight = weights.get(higher);
 		double otherWeight = Iterables.getFirst(Iterables.filter(weights.values(), Predicates.not(Predicates.equalTo(higherWeight))), null);
 		double total = 0;
-		for (Entry<K, Double> e : weights.entrySet()) {
+		for (Entry<T, Double> e : weights.entrySet()) {
 			if (!e.getKey().equals(higher)) {
 				assertEquals(otherWeight, e.getValue(), 0.0001);
 				assertTrue(higherWeight > e.getValue());
@@ -451,11 +452,11 @@ public class AdaptiveMarketMakerTest {
 	}
 	
 	/** Checks that all of the weights are ordered by the keys */
-	private static <K> void checkOrderedWeights(Map<K, Double> weights, List<K> order) {
+	private static <T> void checkOrderedWeights(Map<T, Double> weights, List<T> order) {
 		checkArgument(weights.size() == order.size(), "Order must be the same size as weights");
 		List<Double> orderedWeights = Lists.newArrayListWithCapacity(order.size());
 		double total = 0;
-		for (K key : order) {
+		for (T key : order) {
 			double w = weights.get(key);
 			orderedWeights.add(w);
 			total += w;

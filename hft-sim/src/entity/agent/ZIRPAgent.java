@@ -14,9 +14,7 @@ import event.Timeline;
 import fourheap.Order.OrderType;
 
 public final class ZIRPAgent extends BackgroundAgent {
-	
-	private static final long serialVersionUID = -8805640643365079141L;
-	
+
 	protected ZIRPAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
@@ -36,4 +34,6 @@ public final class ZIRPAgent extends BackgroundAgent {
 		log(INFO, "%s Submit %s order", this, orderType);
 		executeZIRPStrategy(orderType, 1);
 	}
+
+	private static final long serialVersionUID = -8805640643365079141L;
 }

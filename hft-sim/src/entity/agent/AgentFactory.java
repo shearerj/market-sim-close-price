@@ -62,6 +62,8 @@ public class AgentFactory {
 			return ZIRPAgent.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, marketAssignment.next(), props);
 		case ZIR:
 			return ZIRAgent.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, marketAssignment.next(), props);
+		case MAXEFFICIENCY:
+			return MaxEfficiencyAgent.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, marketAssignment.next(), props);
 		case MARKETDATA:
 			return MarketDataAgent.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, marketAssignment.next(), props);
 		case BASICMM:
@@ -72,6 +74,8 @@ public class AgentFactory {
 			return WMAMarketMaker.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, marketAssignment.next(), props);
 		case ADAPTIVEMM:
 			return AdaptiveMarketMaker.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, marketAssignment.next(), props);
+		case FUNDAMENTALMM:
+			return FundamentalMarketMaker.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, marketAssignment.next(), props);
 		case LA:
 			return LAAgent.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, fundamental, markets, props);
 		case NOOP:

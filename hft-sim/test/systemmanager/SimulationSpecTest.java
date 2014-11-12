@@ -1,23 +1,25 @@
 package systemmanager;
 
-import static data.Preset.Presets.CENTRALCDA;
 import static data.Props.keyToString;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static systemmanager.Consts.AgentType.FUNDAMENTALMM;
 import static systemmanager.Consts.AgentType.ZIR;
+import static systemmanager.Consts.AgentType.ZIRP;
 import static systemmanager.SimulationSpec.ASSIGNMENT;
 import static systemmanager.SimulationSpec.CONFIG;
 
-import java.util.Map.Entry;
-
 import org.junit.Test;
 
-import systemmanager.Consts.AgentType;
-import systemmanager.Consts.MarketType;
 import systemmanager.Keys.ArrivalRate;
+import systemmanager.Keys.BackgroundReentryRate;
+import systemmanager.Keys.RMax;
+import systemmanager.Keys.RMin;
 import systemmanager.Keys.FundamentalShockVar;
+import systemmanager.Keys.MarketMakerReentryRate;
 import systemmanager.Keys.NumAgents;
-import systemmanager.Keys.NumMarkets;
 import systemmanager.Keys.PrivateValueVar;
+import systemmanager.Keys.Spread;
 import systemmanager.Keys.TickSize;
 import systemmanager.SimulationSpec.PlayerSpec;
 
@@ -28,12 +30,13 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-import data.Preset;
 import data.Props;
+import entity.market.Price;
 
 public class SimulationSpecTest {
 	
 	private static final Gson gson = new Gson();
+	private static final double eps = 1e-6;
 	private static final JsonObject baseSpec = gson.toJsonTree(ImmutableMap.of(
 			ASSIGNMENT, ImmutableMap.of("role", ImmutableList.of()),
 			CONFIG, ImmutableMap.of(
@@ -44,41 +47,8 @@ public class SimulationSpecTest {
 					keyToString(TickSize.class), 1
 					)
 			)).getAsJsonObject();
-
-	/** Tests to see if presets overwrite object accordingly */
-	@Test
-	public void copyPresetTest() {
-		JsonObject json = new JsonObject();
-		JsonObject config = new JsonObject();
-		json.add(SimulationSpec.CONFIG, config);
-		config.addProperty(Preset.KEY, CENTRALCDA.toString());
-
-		SimulationSpec spec = SimulationSpec.fromJson(json);
-		for (Entry<MarketType, Props> mp : spec.getMarketProps().entries()) {
-			switch (mp.getKey()) {
-			case CDA:
-				assertEquals(1, (int) mp.getValue().get(NumMarkets.class));
-				break;
-			case CALL:
-				assertEquals(0, (int) mp.getValue().get(NumMarkets.class));
-				break;
-			default:
-			}
-		}
-		for (Entry<AgentType, Props> mp : spec.getAgentProps().entries()) {
-			switch (mp.getKey()) {
-			case LA:
-				assertEquals(0, (int) mp.getValue().get(NumAgents.class));
-				break;
-			default:
-			}
-		}
-	}
 	
-	/*
-	 * This is the result of a major bug that caused default spec properties to
-	 * not propogate to players.
-	 */
+	/** This is the result of a major bug that caused default spec properties to not propogate to players. */
 	@Test
 	public void defaultPropertiesTest() {
 		JsonObject rawSpec = getBaseSpec();
@@ -114,5 +84,47 @@ public class SimulationSpecTest {
 	static JsonObject getBaseSpec() {
 		return gson.fromJson(gson.toJson(baseSpec), JsonObject.class);
 	}
+	
+	/**
+	 * Tests different reentry rates for background & MM, also tests creation of
+	 * players via simulation spec. Can only test via if the read in spec file
+	 * is correct...
+	 */
+	@Test
+	public void reentryTest() {
+		JsonObject json = gson.toJsonTree(ImmutableMap.of(
+				ASSIGNMENT, ImmutableMap.of("BACKGROUND", ImmutableList.of(
+						ZIR + ":" + Props.fromPairs(RMax.class, 100).toConfigString(),
+						ZIRP + ":" + Props.fromPairs(RMin.class, 10).toConfigString()),
+						"MARKETMAKER", ImmutableList.of(
+								FUNDAMENTALMM + ":" + Props.fromPairs(Spread.class, Price.of(256)).toConfigString())),
+				CONFIG, ImmutableMap.of(
+						keyToString(BackgroundReentryRate.class), 0.0005,
+						keyToString(MarketMakerReentryRate.class), 0.05)
+				)).getAsJsonObject();
+		
+		SimulationSpec spec = SimulationSpec.fromJson(json);
+		
+		for (PlayerSpec pspec : spec.getPlayerProps()) {
+			switch(pspec.type) {
+			case ZIR:
+				assertEquals(100, (int) pspec.agentProps.get(RMax.class));
+				assertEquals(0.0005, pspec.agentProps.get(BackgroundReentryRate.class), eps);
+				break;
+			case ZIRP:
+				assertEquals(10, (int) pspec.agentProps.get(RMin.class));
+				assertEquals(0.0005, pspec.agentProps.get(BackgroundReentryRate.class), eps);
+				break;
+			case FUNDAMENTALMM:
+				assertEquals(Price.of(256), pspec.agentProps.get(Spread.class));
+				assertEquals(0.05, pspec.agentProps.get(MarketMakerReentryRate.class), eps);
+				break;
+			default:
+				fail("Shouldn't get here");
+			}
+		}
+	}
+	
+	// FIXME Test that you can pass an empty calue string for agent setup in the spec config, and that agentnumber / num will be inhereted from the spec
 	
 }
