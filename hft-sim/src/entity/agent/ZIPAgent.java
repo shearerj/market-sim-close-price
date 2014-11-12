@@ -15,6 +15,8 @@ import systemmanager.Keys.GammaMin;
 import systemmanager.Keys.MarginMax;
 import systemmanager.Keys.MarginMin;
 import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.RMax;
+import systemmanager.Keys.RMin;
 import systemmanager.Keys.RangeA;
 import systemmanager.Keys.RangeR;
 import utils.Maths;
@@ -26,6 +28,8 @@ import data.FundamentalValue;
 import data.Props;
 import data.Stats;
 import entity.agent.position.Margin;
+import entity.agent.strategy.BackgroundStrategy;
+import entity.agent.strategy.ZIStrategy;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Transaction;
@@ -51,6 +55,8 @@ import fourheap.Order.OrderType;
 public class ZIPAgent extends WindowAgent {
 	
 	protected static final Ordering<Price> pcomp = Ordering.natural();
+	
+	private final BackgroundStrategy fallback;
 
 	protected OrderType type;				// buy or sell
 	protected Margin margin;				// one for each position, mu in Cliff1997
@@ -97,6 +103,8 @@ public class ZIPAgent extends WindowAgent {
 		this.beta = rand.nextUniform(betaMin, betaMax);
 		this.gamma = rand.nextUniform(gammaMin, gammaMax);
 		this.margin = Margin.createRandomly(maxAbsPosition, rand, marginMin, marginMax);
+		
+		this.fallback = ZIStrategy.create(timeline, primaryMarket, this, props.get(RMin.class), props.get(RMax.class), rand);
 	}
 
 	public static ZIPAgent create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
@@ -138,7 +146,7 @@ public class ZIPAgent extends WindowAgent {
 		} else {
 			// zero transactions
 			log(INFO, "%s::agentStrategy: No transactions!", this);
-			executeZIStrategy(type, 1);
+			submitNMSOrder(fallback.getOrder(type, 1));
 		}
 
 	}

@@ -19,6 +19,8 @@ import systemmanager.Keys.InitAggression;
 import systemmanager.Keys.LambdaA;
 import systemmanager.Keys.LambdaR;
 import systemmanager.Keys.N;
+import systemmanager.Keys.RMax;
+import systemmanager.Keys.RMin;
 import systemmanager.Keys.Theta;
 import systemmanager.Keys.ThetaMax;
 import systemmanager.Keys.ThetaMin;
@@ -33,6 +35,8 @@ import data.FundamentalValue;
 import data.Props;
 import data.Stats;
 import entity.agent.position.Aggression;
+import entity.agent.strategy.BackgroundStrategy;
+import entity.agent.strategy.ZIStrategy;
 import entity.market.Market;
 import entity.market.Price;
 import entity.market.Transaction;
@@ -64,6 +68,8 @@ public class AAAgent extends WindowAgent {
 	private boolean debug;
 
 	// Agent strategy variables
+	private final BackgroundStrategy fallback;
+	
 	// Based on Vytelingum's sensitivity analysis, eta and N are most important
 	private double lambdaR; // coefficient of relative perturbation of delta, (0,1)?
 	private double lambdaA; // coefficient of absolute perturbation of delta, positive
@@ -103,6 +109,8 @@ public class AAAgent extends WindowAgent {
 		this.rho = 0.9; 		// from paper, to emphasize converging pattern
 		
 		//Initializing strategy variables
+		this.fallback = ZIStrategy.create(timeline, primaryMarket, this, props.get(RMin.class), props.get(RMax.class), rand);
+		
 		this.numHistorical = props.get(N.class);
 		this.lambdaA = props.get(LambdaA.class);
 		this.lambdaR = props.get(LambdaR.class);
@@ -276,7 +284,7 @@ public class AAAgent extends WindowAgent {
 		// if no bid or no ask, submit ZI strategy bid & exit bidding layer
 		if (!obid.isPresent() || !oask.isPresent()) {
 			log(INFO, "%s::biddingLayer: Bid/Ask undefined.", this);
-			executeZIStrategy(type, quantity);
+			submitNMSOrder(fallback.getOrder(type, quantity));
 			return;
 		}
 		Price bid = obid.get(),

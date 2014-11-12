@@ -56,6 +56,10 @@ public class ListPrivateValue extends AbstractQuantityIndexedArray<Price> implem
 		return new ListPrivateValue(ImmutableList.<Price> copyOf(values));
 	}
 	
+	public static ListPrivateValue create(Price... values) {
+		return new ListPrivateValue(ImmutableList.<Price> copyOf(values));
+	}
+	
 	/**
 	 * Randomly generate private values for positional changes
 	 * 

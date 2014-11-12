@@ -1,13 +1,15 @@
 package entity.agent;
 
-import static fourheap.Order.OrderType.BUY;
-import static fourheap.Order.OrderType.SELL;
 import static logger.Log.Level.INFO;
 import logger.Log;
+import systemmanager.Keys.RMax;
+import systemmanager.Keys.RMin;
 import utils.Rand;
 import data.FundamentalValue;
 import data.Props;
 import data.Stats;
+import entity.agent.strategy.BackgroundStrategy;
+import entity.agent.strategy.ZIStrategy;
 import entity.market.Market;
 import entity.sip.MarketInfo;
 import event.Timeline;
@@ -39,11 +41,12 @@ import fourheap.Order.OrderType;
  */
 public class ZIRAgent extends BackgroundAgent {
 
-	private static final long serialVersionUID = -1155740218390579581L;
-
+	private BackgroundStrategy strategy;
+	
 	protected ZIRAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
+		this.strategy = ZIStrategy.create(timeline, primaryMarket, this, props.get(RMin.class), props.get(RMax.class), rand);
 	}
 
 	public static ZIRAgent create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
@@ -54,11 +57,16 @@ public class ZIRAgent extends BackgroundAgent {
 	@Override
 	protected void agentStrategy() {
 		super.agentStrategy();
-
-		// 0.50% chance of being either long or short
-		OrderType type = rand.nextBoolean() ? BUY : SELL;
-		log(INFO, "%s Submit %s order", this, type);
-		executeZIStrategy(type, 1);
+		OrderType buyOrSell = rand.nextElement(OrderType.values());
+		int quantity = 1;
+		
+		OrderRecord order = strategy.getOrder(buyOrSell, quantity);
+		log(INFO, "%s executing ZI strategy position=%d, for q=%d, value=%s + %s=%s",
+				this, getPosition(), quantity, getFundamental(), getPrivateValue(quantity, buyOrSell), getValuation(buyOrSell, quantity));
+		log(INFO, "%s Submit %s order", this, buyOrSell);
+		submitNMSOrder(order);
 	}
+
+	private static final long serialVersionUID = -1155740218390579581L;
 	
 }

@@ -1,5 +1,7 @@
 package utils;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -42,6 +44,14 @@ public final class Rand extends Random {
 
 	public double nextUniform(double a, double b) {
 		return nextDouble()*(b-a) + a;
+	}
+	
+	public <T> T nextElement(T... elements) {
+		return nextElement(Arrays.asList(elements));
+	}
+	
+	public <T> T nextElement(List<T> elements) {
+		return elements.get(nextInt(elements.size()));
 	}
 
 	private static final long serialVersionUID = -2509122458513641197L;

@@ -5,9 +5,9 @@ import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static utils.Tests.assertOptionalRange;
 import static utils.Tests.assertQuote;
-import static utils.Tests.*;
+import static utils.Tests.assertSingleOrder;
+import static utils.Tests.assertSingleTransaction;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -19,13 +19,13 @@ import org.junit.Test;
 import systemmanager.Keys.AcceptableProfitThreshold;
 import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.BackgroundReentryRate;
-import systemmanager.Keys.RMax;
-import systemmanager.Keys.RMin;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.MaxQty;
 import systemmanager.Keys.PrivateValueVar;
+import systemmanager.Keys.RMax;
+import systemmanager.Keys.RMin;
 import systemmanager.Keys.SimLength;
 import systemmanager.Keys.Withdraw;
 import utils.Mock;
@@ -42,7 +42,6 @@ import entity.agent.position.ListPrivateValue;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
-import entity.market.Quote;
 import event.Activity;
 import event.EventQueue;
 import event.TimeStamp;
@@ -52,7 +51,7 @@ import fourheap.Order.OrderType;
 public class BackgroundAgentTest {
 	
 	private static final Rand rand = Rand.create();
-	private static final ListPrivateValue simple = ListPrivateValue.create(ImmutableList.of(Price.of(100), Price.of(10)));
+	private static final ListPrivateValue simple = ListPrivateValue.create(Price.of(100), Price.of(10));
 	private static final double eps = 1e-6;
 	private static final double kappa = 0.2315;
 	private static final int meanValue = 98765;
@@ -276,164 +275,56 @@ public class BackgroundAgentTest {
 
 	/** Verify do not submit order if exceed max position allowed. */
 	@Test
-	public void testZIStrat() {
+	public void testPositionBounds() {
 		BackgroundAgent agent = backgroundAgent(Props.fromPairs(MaxQty.class, 5));
 		
-		// Test ZI strategy
-		agent.executeZIStrategy(BUY, 1);
+		// Can submit buy for 1 at 0
+		agent.submitNMSOrder(BUY, Price.ZERO, 1);
 		assertTrue(view.getQuote().getBidPrice().isPresent());
-		
-		// Reset
 		agent.withdrawAllOrders();
 		assertQuote(view.getQuote(), null, 0, null, 0);
 		
-		// Test ZI strategy
-		agent.executeZIStrategy(SELL, 1);
+		// Can submit sell for 1 at 0
+		agent.submitNMSOrder(SELL, Price.ZERO, 1);
 		assertTrue(view.getQuote().getAskPrice().isPresent());
-		
-		// Reset
 		agent.withdrawAllOrders();
 		assertQuote(view.getQuote(), null, 0, null, 0);
 
-		// Test that large quantities don't submit 
-		agent.executeZIStrategy(BUY, 6);
+		// Can't submit buy for 6 at 0
+		agent.submitNMSOrder(BUY, Price.ZERO, 6);
 		assertQuote(view.getQuote(), null, 0, null, 0);
 		assertEquals(0, agent.getPosition());
+		agent.withdrawAllOrders();
 		
-		agent.executeZIStrategy(SELL, 6);
+		// Can't submit sell for 6 at 0
+		agent.submitNMSOrder(SELL, Price.ZERO, 6);
 		assertQuote(view.getQuote(), null, 0, null, 0);
 		assertEquals(0, agent.getPosition());
+		agent.withdrawAllOrders();
 
-		// Test that small quantities when a position is held don't submit
+		// Can't submit buy for 1 at 5
 		setPosition(agent, 5);
-		agent.executeZIStrategy(BUY, 1);
+		agent.submitNMSOrder(BUY, Price.ZERO, 1);
 		assertQuote(view.getQuote(), null, 0, null, 0);
+		agent.withdrawAllOrders();
 		
-		// But still submits sells
-		agent.executeZIStrategy(SELL, 1);
+		// Can submit sell for 1 at 5
+		agent.submitNMSOrder(SELL, Price.ZERO, 1);
 		assertTrue(view.getQuote().getAskPrice().isPresent());
-		
-		// Reset
 		agent.withdrawAllOrders();
 		assertQuote(view.getQuote(), null, 0, null, 0);
 		
+		// Can't submit sell for 1 at -5
 		setPosition(agent, -5);
-		agent.executeZIStrategy(SELL, 1);
+		agent.submitNMSOrder(SELL, Price.ZERO, 1);
 		assertQuote(view.getQuote(), null, 0, null, 0);
+		agent.withdrawAllOrders();
 		
-		// But still submits buys
-		agent.executeZIStrategy(BUY, 1);
+		// Can submit buy for 1 at -5
+		agent.submitNMSOrder(BUY, Price.ZERO, 1);
 		assertTrue(view.getQuote().getBidPrice().isPresent());
-		
-		// Reset
 		agent.withdrawAllOrders();
 		assertQuote(view.getQuote(), null, 0, null, 0);
-	}
-	
-	@Test
-	public void randZIBuyTest() {
-		int min_shade = rand.nextInt(5000); 		//[$0.00, $5.00];
-		int max_shade = 5000 + rand.nextInt(5000);	//[$5.00, $10.00];
-
-		BackgroundAgent agent = backgroundAgent(Props.fromPairs(
-				RMin.class, min_shade,
-				RMax.class, max_shade));
-
-		//Execute strategy
-		agent.executeZIStrategy(BUY, 1);
-
-		// Calculate Price Range
-		Price fundPrice = fund.getValue();
-		Price pv = agent.getPrivateValue(BUY);
-		
-		Quote quote = view.getQuote();
-		assertOptionalRange(quote.getBidPrice(),
-				Price.of(fundPrice.intValue() + pv.intValue() - max_shade),
-				Price.of(fundPrice.intValue() + pv.intValue() - min_shade));
-		assertEquals(1, quote.getBidQuantity());
-	}
-	
-	@Test
-	public void randZISellTest() {
-		int min_shade = rand.nextInt(5000); 		//[$0.00, $5.00];
-		int max_shade = 5000 + rand.nextInt(5000);	//[$5.00, $10.00];
-
-		BackgroundAgent agent = backgroundAgent(Props.fromPairs(
-				RMin.class, min_shade,
-				RMax.class, max_shade));
-
-		agent.executeZIStrategy(SELL, 1);
-
-		// Calculate Price Range
-		Price fundPrice = fund.getValue();
-		Price pv = agent.getPrivateValue(SELL);
-		
-		Quote quote = view.getQuote();
-		assertOptionalRange(quote.getAskPrice(),
-				Price.of(fundPrice.intValue() + pv.intValue() + min_shade),
-				Price.of(fundPrice.intValue() + pv.intValue() + max_shade));
-		assertEquals(1, quote.getAskQuantity());
-
-	}
-	
-	@Test
-	public void initialPriceZIBuyTest() {
-		fundamental = FundamentalValue.create(Mock.stats, timeline, 0, 100000, 1e8, rand);
-		BackgroundAgent agent = backgroundAgent(Props.fromPairs(RMin.class, 0, RMax.class, 1000));
-		agent.executeZIStrategy(BUY, 1);
-		/*
-		 * Fundamental = 100000 ($100.00), Stdev = sqrt(100000000) = 10000
-		 * ($10.000) Bid Range = 0, 1000 ($0.00, $1.00) 99.7% of bids should
-		 * fall between 100000 +/- (3*10000 + 1000) = 70000, 13000
-		 */
-		Quote quote = view.getQuote();
-		assertOptionalRange(quote.getBidPrice(), Price.of(70000), Price.of(130000));
-		assertEquals(1, quote.getBidQuantity());
-	}
-	
-	@Test
-	public void initialPriceZISellTest() {
-		fundamental = FundamentalValue.create(Mock.stats, timeline, 0, 100000, 1e8, rand);
-		BackgroundAgent agent = backgroundAgent(Props.fromPairs(RMin.class, 0, RMax.class, 1000));
-		agent.executeZIStrategy(SELL, 1);
-		/*
-		 * Fundamental = 100000 ($100.00), Stdev = sqrt(100000000) = 10000
-		 * ($10.000) Bid Range = 0, 1000 ($0.00, $1.00) 99.7% of bids should
-		 * fall between 100000 +/- (3*10000 + 1000) = 70000, 13000
-		 */
-		Quote quote = view.getQuote();
-		assertOptionalRange(quote.getAskPrice(), Price.of(70000), Price.of(130000));
-		assertEquals(1, quote.getAskQuantity());
-	}
-	
-	@Test
-	public void ziPrivateValueBuyTest() {
-		fundamental = Mock.fundamental(100000);
-		BackgroundAgent agent = backgroundAgentwithPrivateValue(ListPrivateValue.create(
-				ImmutableList.of(Price.of(10000), Price.of(-10000))), Props.fromPairs(
-						RMin.class, 0,
-						RMax.class, 1000));
-
-		agent.executeZIStrategy(BUY, 1);
-		// Buyers always buy at price lower than valuation ($100 + buy PV = $90)
-		Quote quote = view.getQuote();
-		assertOptionalRange(quote.getBidPrice(), Price.of(89000), Price.of(90000));
-		assertEquals(1, quote.getBidQuantity());
-	}
-	
-	@Test
-	public void ziPrivateValueSellTest() {
-		fundamental = Mock.fundamental(100000);
-		BackgroundAgent agent = backgroundAgentwithPrivateValue(ListPrivateValue.create(
-				ImmutableList.of(Price.of(10000), Price.of(-10000))), Props.fromPairs(
-						RMin.class, 0,
-						RMax.class, 1000));
-
-		agent.executeZIStrategy(SELL, 1);
-		// Sellers always sell at price higher than valuation ($100 + sell PV = $110)
-		Quote quote = view.getQuote();
-		assertOptionalRange(quote.getAskPrice(), Price.of(110000), Price.of(111000));
-		assertEquals(1, quote.getAskQuantity());
 	}
 
 	@Test
@@ -716,18 +607,6 @@ public class BackgroundAgentTest {
 			getValuationRand();
 			setup();
 			getLimitPriceRand();
-			setup();
-			randZIBuyTest();
-			setup();
-			randZISellTest();
-			setup();
-			initialPriceZIBuyTest();
-			setup();
-			initialPriceZISellTest();
-			setup();
-			ziPrivateValueBuyTest();
-			setup();
-			ziPrivateValueSellTest();
 			setup();
 			zirpBasicBuyerTest();
 			setup();

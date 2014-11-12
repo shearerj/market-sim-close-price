@@ -30,7 +30,6 @@ import entity.market.Quote;
 import entity.sip.MarketInfo;
 import event.TimeStamp;
 import event.Timeline;
-import fourheap.Order.OrderType;
 
 /**
  * LAAGENT
@@ -102,14 +101,15 @@ public class LAAgent extends HFTAgent {
 		submitOrder(bestBidMarket, SELL, midPoint, quantity);
 		submitOrder(bestAskMarket, BUY, midPoint, quantity);
 	}
-
+	
+	// Record markets that have orders int them
 	@Override
-	protected OrderRecord submitOrder(MarketView market, OrderType type, Price price, int quantity) {
-		checkState((type == BUY ? buyStatus : sellStatus).put(market, SUBMITTED) == READY,
+	protected boolean submitOrder(OrderRecord order, boolean nmsRoutable) {
+		checkState((order.getOrderType() == BUY ? buyStatus : sellStatus).put(order.getCurrentMarket(), SUBMITTED) == READY,
 				"Submitted an order when the market wasn't ready");
-		return super.submitOrder(market, type, price, quantity);
+		return super.submitOrder(order, nmsRoutable);
 	}
-
+	
 	// After the order is submitted, we wait for a quote update from the market
 	@Override
 	protected void orderSubmitted(OrderRecord order, MarketView market, TimeStamp submittedTime) {

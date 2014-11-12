@@ -131,10 +131,11 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * Ultimate method that all agents order should go through. Can be used to
-	 * enforce certain things about how an agent submits orders. A return of
-	 * false indicates that the order was not actually submitted and will not
-	 * appear in active orders.
+	 * Ultimate method that all agents order should go through. This should be
+	 * overridden to enforce that certain things happen when an agent submits an
+	 * order. Can be used to enforce certain things about how an agent submits
+	 * orders. A return of false indicates that the order was not actually
+	 * submitted and will not appear in active orders.
 	 */
 	protected boolean submitOrder(OrderRecord order, boolean nmsRoutable) {
 		activeOrders.add(order);
@@ -145,15 +146,23 @@ public abstract class Agent extends Entity {
 		return true;
 	}
 	
+	protected final boolean submitOrder(OrderRecord order) {
+		return submitOrder(order, false);
+	}
+	
+	protected final boolean submitNMSOrder(OrderRecord order) {
+		return submitOrder(order, true);
+	}
+	
 	/** Shortcut for creating orders. If the order wasn's submitted then null is returned */
-	protected OrderRecord submitOrder(MarketView market, OrderType type, Price price, int quantity) {
+	protected final OrderRecord submitOrder(MarketView market, OrderType type, Price price, int quantity) {
 		OrderRecord order = new OrderRecord(market, getCurrentTime(), type, price.nonnegative().quantize(tickSize), quantity);
 		boolean submitted = submitOrder(order, false);
 		return submitted ? order : null;
 	}
 
 	/** Shortcut for creating NMS orders. If the order wasn's submitted then null is returned */
-	protected OrderRecord submitNMSOrder(MarketView market, OrderType type, Price price, int quantity) {
+	protected final OrderRecord submitNMSOrder(MarketView market, OrderType type, Price price, int quantity) {
 		OrderRecord order = OrderRecord.create(market, getCurrentTime(), type, price.nonnegative().quantize(tickSize), quantity);
 		boolean submitted = submitOrder(order, true);
 		return submitted ? order : null;

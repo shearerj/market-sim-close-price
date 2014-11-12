@@ -136,22 +136,6 @@ public abstract class BackgroundAgent extends ReentryAgent {
 				absolutePosition += o.getQuantity();
 		return absolutePosition > getMaxAbsPosition();
 	}
-
-	/** Submits a NMS-routed Zero-Intelligence limit order. */
-	protected void executeZIStrategy(OrderType type, int quantity) {
-		if (this.withinMaxPosition(type, quantity)) {
-			
-			Price val = getValuation(type);
-			Price price = Price.of((val.doubleValue() + (type.equals(SELL) ? 1 : -1) * 
-					rand.nextUniform(bidRangeMin, bidRangeMax)));
-			
-			log(INFO, "%s executing ZI strategy position=%d, for q=%d, value=%s + %s=%s",
-					this, getPosition(), quantity, getFundamental(),
-					getValuation(type), val);
-			
-			submitNMSOrder(type, price, quantity);
-		}
-	}
 	
 	/**
 	 * Checks if new order, if submitted, would be within max position; returns
@@ -303,7 +287,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	}
 	
 	/** Returns the limit price for a new order of quantity 1. */
-	protected Price getLimitPrice(OrderType type) {
+	public final Price getLimitPrice(OrderType type) {
 		return getLimitPrice(type, 1);
 	}
 	
@@ -311,9 +295,9 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * Returns the limit price for the agent given potential quantity for which
 	 * the agent plans to submit an order.
 	 */
-	protected Price getLimitPrice(OrderType type, int quantity) {
+	public final Price getLimitPrice(OrderType type, int quantity) {
 		return Price.of(getValuation(type, quantity).doubleValue() 
-				/ quantity).nonnegative();
+				/ quantity);
 	}
 	
 	protected final int getMaxAbsPosition() {
