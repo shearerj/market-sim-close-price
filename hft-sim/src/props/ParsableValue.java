@@ -75,7 +75,7 @@ public abstract class ParsableValue<T> extends Value<T> {
 	}
 	
 	private static final class IterableConverter<T> extends Converter<String, Iterable<T>> {
-		private static final Splitter itemSplitter = Splitter.on('-');
+		private static final Splitter itemSplitter = Splitter.on('-').omitEmptyStrings();
 		private static final Joiner itemJointer = Joiner.on('-');
 		private final Converter<String, T> itemConverter;
 		protected IterableConverter(Converter<String, T> itemConverter) {

@@ -17,6 +17,8 @@ import com.google.common.collect.ImmutableList;
 public class ParsableValueTest {
 	
 	private static enum Enumerated { A, B, CEEEE };
+	
+	// FIXME Test empty string conditions
 
 	@Test
 	public void doubleTest() {
