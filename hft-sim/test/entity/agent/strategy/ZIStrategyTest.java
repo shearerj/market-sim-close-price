@@ -85,15 +85,15 @@ public class ZIStrategyTest {
 		BackgroundAgent agent = backgroundAgent(ListPrivateValue.createRandomly(1, 0, rand));
 		BackgroundStrategy zi = ZIStrategy.create(Mock.timeline, market.getPrimaryView(),
 				NaiveLimitPriceEstimator.create(agent, fundamental.getView(TimeStamp.ZERO)),
-				0, 1000, rand);
+				0, 0, rand);
 		
 		OrderRecord order = zi.getOrder(BUY, 1);
 		/*
 		 * Fundamental = 100000 ($100.00), Stdev = sqrt(100000000) = 10000
-		 * ($10.000) Bid Range = 0, 1000 ($0.00, $1.00) 99.7% of bids should
-		 * fall between 100000 +/- (3*10000 + 1000) = 70000, 13000
+		 * ($10.000) Bid Range = 0, 0 ($0.00, $1.00) 99.993% of bids should
+		 * fall between 100000 +/- (4*10000) = 60000, 140000
 		 */
-		assertRange(order.getPrice(), Price.of(70000), Price.of(130000));
+		assertRange(order.getPrice(), Price.of(60000), Price.of(140000));
 		assertEquals(1, order.getQuantity());
 	}
 	
@@ -103,15 +103,15 @@ public class ZIStrategyTest {
 		BackgroundAgent agent = backgroundAgent(ListPrivateValue.createRandomly(1, 0, rand));
 		BackgroundStrategy zi = ZIStrategy.create(Mock.timeline, market.getPrimaryView(),
 				NaiveLimitPriceEstimator.create(agent, fundamental.getView(TimeStamp.ZERO)),
-				0, 1000, rand);
+				0, 0, rand);
 		
 		OrderRecord order = zi.getOrder(SELL, 1);
 		/*
 		 * Fundamental = 100000 ($100.00), Stdev = sqrt(100000000) = 10000
-		 * ($10.000) Bid Range = 0, 1000 ($0.00, $1.00) 99.7% of bids should
-		 * fall between 100000 +/- (3*10000 + 1000) = 70000, 13000
+		 * ($10.000) Bid Range = 0, 0 ($0.00, $1.00) 99.993% of bids should
+		 * fall between 100000 +/- (4*10000) = 60000, 140000
 		 */
-		assertRange(order.getPrice(), Price.of(70000), Price.of(130000));
+		assertRange(order.getPrice(), Price.of(60000), Price.of(140000));
 		assertEquals(1, order.getQuantity());
 	}
 	
