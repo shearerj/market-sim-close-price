@@ -13,8 +13,6 @@ import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.BackgroundReentryRate;
 import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.PrivateValueVar;
-import systemmanager.Keys.RMax;
-import systemmanager.Keys.RMin;
 import systemmanager.Keys.ReentryRate;
 import systemmanager.Keys.Withdraw;
 import utils.Rand;
@@ -45,11 +43,7 @@ import fourheap.Order.OrderType;
 public abstract class BackgroundAgent extends ReentryAgent {
 	
 	private final int maxAbsolutePosition;
-	protected final int bidRangeMax; 		// range for limit order
-	protected final int bidRangeMin;
-	
-	protected final boolean withdrawOrders;	// Withdraw orders each reentry
-	
+	private final boolean withdrawOrders;	// Withdraw orders each reentry
 	private final Map<String, Double> features;
 	
 	/**
@@ -63,8 +57,6 @@ public abstract class BackgroundAgent extends ReentryAgent {
 				ReentryAgent.exponentials(props.get(BackgroundReentryRate.class, ReentryRate.class), rand),
 				props);
 		this.maxAbsolutePosition = privateValue.getMaxAbsPosition();
-		this.bidRangeMin = props.get(RMin.class);
-		this.bidRangeMax = props.get(RMax.class);
 		this.withdrawOrders = props.get(Withdraw.class);
 				
 		// For controlled variates
