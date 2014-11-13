@@ -35,8 +35,9 @@ public class FinalFundamentalEstimator {
 		return create(fundamental, timeline, props.get(SimLength.class), props.get(FundamentalKappa.class), props.get(FundamentalMean.class));
 	}
 
+	// XXX -1 because the final time is "simulationLength - 1"
 	public Price getFundamentalEstimate() {
-		double stepsLeft = simulationLength - timeline.getCurrentTime().getInTicks() + fundamental.getLatency().getInTicks();
+		double stepsLeft = simulationLength - 1 - timeline.getCurrentTime().getInTicks() + fundamental.getLatency().getInTicks();
 		double kappaCompToPower = Math.pow(1 - kappa, stepsLeft);
 		return Price.of(fundamental.getValue().doubleValue() * kappaCompToPower 
 			+ fundamentalMean * (1 - kappaCompToPower));
