@@ -45,7 +45,7 @@ public class MarketTest {
 	@Before
 	public void setup() {
 		timeline = Mock.timeline;
-		market = mockMarket(Mock.stats, timeline, Mock.sip, Props.fromPairs());
+		market = mockMarket(0, Mock.stats, timeline, Mock.sip, Props.fromPairs());
 		view = market.getPrimaryView();
 		fast = market.getView(TimeStamp.ZERO);
 	}
@@ -524,7 +524,7 @@ public class MarketTest {
 	public void spreadsPostTest() {
 		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
 		Stats stats = Stats.create();
-		market = mockMarket(stats, timeline, Mock.sip, Props.fromPairs());
+		market = mockMarket(0, stats, timeline, Mock.sip, Props.fromPairs());
 		view = market.getPrimaryView();
 		TimeSeries expected = TimeSeries.create();
 		expected.add(0, Double.POSITIVE_INFINITY);
@@ -539,14 +539,14 @@ public class MarketTest {
 		submitOrder(BUY, Price.of(60), 1);
 		expected.add(100, 20);
 		
-		assertEquals(expected, stats.getTimeStats().get(Stats.SPREAD + market));
+		assertEquals(expected, stats.getTimeStats().get(Stats.SPREAD + 0));
 	}
 	
 	@Test
 	public void midpointPostTest() {
 		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
 		Stats stats = Stats.create();
-		market = mockMarket(stats, timeline, Mock.sip, Props.fromPairs());
+		market = mockMarket(0, stats, timeline, Mock.sip, Props.fromPairs());
 		view = market.getPrimaryView();
 		TimeSeries expected = TimeSeries.create();
 		expected.add(0, Double.NaN);
@@ -561,16 +561,16 @@ public class MarketTest {
 		submitOrder(BUY, Price.of(60), 1);
 		expected.add(100, 70);
 		
-		assertEquals(expected, stats.getTimeStats().get(Stats.MIDQUOTE + market));
+		assertEquals(expected, stats.getTimeStats().get(Stats.MIDQUOTE + 0));
 	}
 	
 	@Test
 	public void transactionPricePostTest() {
 		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
 		Stats stats = Stats.create();
-		market = mockMarket(stats, timeline, Mock.sip, Props.fromPairs());
+		market = mockMarket(0, stats, timeline, Mock.sip, Props.fromPairs());
 		view = market.getPrimaryView();
-		Market other = mockMarket(stats, timeline, Mock.sip, Props.fromPairs());
+		Market other = mockMarket(1, stats, timeline, Mock.sip, Props.fromPairs());
 		
 		addTransaction(Price.of(100), 1);
 		
@@ -609,8 +609,8 @@ public class MarketTest {
 		}
 	}
 	
-	private Market mockMarket(Stats stats, Timeline timeline, MarketInfo sip, Props props) {
-		return new Market(rand.nextInt(), stats, timeline, Log.nullLogger(), rand, sip, new UniformPriceClear(0.5), props) {
+	private Market mockMarket(int id, Stats stats, Timeline timeline, MarketInfo sip, Props props) {
+		return new Market(id, stats, timeline, Log.nullLogger(), rand, sip, new UniformPriceClear(0.5), props) {
 			private static final long serialVersionUID = 1L;
 			@Override protected void submitOrder(MarketView thisView, AgentView agent, OrderRecord orderRecord) {
 				super.submitOrder(thisView, agent, orderRecord);
@@ -626,7 +626,7 @@ public class MarketTest {
 	private EventQueue latencySetup(TimeStamp latency) {
 		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
 		this.timeline = timeline;
-		market = mockMarket(Mock.stats, timeline, Mock.sip, Props.fromPairs(MarketLatency.class, latency));
+		market = mockMarket(0, Mock.stats, timeline, Mock.sip, Props.fromPairs(MarketLatency.class, latency));
 		view = market.getPrimaryView();
 		fast = market.getView(TimeStamp.ZERO);
 		return timeline;
@@ -634,8 +634,8 @@ public class MarketTest {
 	
 	private MarketInfo nbboSetup(Price bid, Price ask) {
 		SIP sip = SIP.create(Mock.stats, Mock.timeline, Log.nullLogger(), rand, TimeStamp.ZERO);
-		market = mockMarket(Mock.stats, Mock.timeline, sip, Props.fromPairs());
-		MarketView other = mockMarket(Mock.stats, Mock.timeline, sip, Props.fromPairs()).getPrimaryView();
+		market = mockMarket(0, Mock.stats, Mock.timeline, sip, Props.fromPairs());
+		MarketView other = mockMarket(1, Mock.stats, Mock.timeline, sip, Props.fromPairs()).getPrimaryView();
 		view = market.getPrimaryView();
 		fast = market.getView(TimeStamp.ZERO);
 		other.submitOrder(agent, OrderRecord.create(other, TimeStamp.ZERO, BUY, bid, 1));

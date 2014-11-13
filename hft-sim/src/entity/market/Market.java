@@ -96,8 +96,8 @@ public abstract class Market extends Entity {
 		
 		this.sip = sip;
 		
-		postTimedStat(Stats.MIDQUOTE + this, quote.getMidquote());
-		postTimedStat(Stats.SPREAD + this, quote.getSpread());
+		postTimedStat(Stats.MIDQUOTE + getID(), quote.getMidquote());
+		postTimedStat(Stats.SPREAD + getID(), quote.getSpread());
 	}
 	
 	// This is only intended to be called by a market view
@@ -238,8 +238,8 @@ public abstract class Market extends Entity {
 
 		log(INFO, "%s %s", this, quote);
 
-		postTimedStat(Stats.MIDQUOTE + this, quote.getMidquote());
-		postTimedStat(Stats.SPREAD + this, quote.getSpread());
+		postTimedStat(Stats.MIDQUOTE + getID(), quote.getMidquote());
+		postTimedStat(Stats.SPREAD + getID(), quote.getSpread());
 		
 		// Update NBBO happens first
 		sip.quoteSubmit(this, quote);
