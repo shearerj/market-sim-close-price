@@ -193,7 +193,7 @@ public abstract class Market extends Entity {
 			Order buy = e.getKey().getBuy();
 			Order sell = e.getKey().getSell();
 
-			Transaction transaction = new Transaction(e.getKey().getQuantity(), e.getValue(), transactionTime);
+			Transaction transaction = new Transaction(e.getKey().getQuantity(), e.getValue(), transactionTime.getTime());
 			log(INFO, "%s", transaction);
 			
 			askPriceQuantity.remove(sell.getPrice(), transaction.getQuantity());
@@ -202,9 +202,9 @@ public abstract class Market extends Entity {
 			// Views
 			transactions.add(transaction);
 			buy.getAgent().orderRemoved(buy.getOrderRecord(), transaction.getQuantity());
-			buy.getAgent().processTransaction(buy.getSubmitTime(), BUY, transaction);
+			buy.getAgent().processTransaction(buy.getSubmitTime().getTime(), BUY, transaction);
 			sell.getAgent().orderRemoved(sell.getOrderRecord(), transaction.getQuantity());
-			sell.getAgent().processTransaction(sell.getSubmitTime(), SELL, transaction);
+			sell.getAgent().processTransaction(sell.getSubmitTime().getTime(), SELL, transaction);
 			
 			// Statistics
 			postStat(Stats.PRICE, e.getValue().doubleValue()); // XXX Not robust to quantity?
@@ -234,7 +234,7 @@ public abstract class Market extends Entity {
 		 * generated, which is currently never possible
 		 */
 		MarketTime quoteTime = new MarketTime(getCurrentTime(), marketTime);
-		quote = new Quote(bid, quantityBid, ask, quantityAsk, quoteTime);
+		quote = Quote.create(bid, quantityBid, ask, quantityAsk, quoteTime);
 
 		log(INFO, "%s %s", this, quote);
 
@@ -283,7 +283,7 @@ public abstract class Market extends Entity {
 		
 		protected MarketView(TimeStamp latency) {
 			this.latency = latency;
-			this.quote = Quote.create(Optional.<Price> absent(), 0, Optional.<Price> absent(), 0, TimeStamp.ZERO);
+			this.quote = Quote.empty();
 			this.transactionOffset = 0;
 		}
 		

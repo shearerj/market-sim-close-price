@@ -55,7 +55,7 @@ public class SIP extends Entity implements MarketInfo {
 	
 	/** Actually update NBBO with delayed information */
 	private void quoteSubmitted(Market market, Quote quote) {
-		if (quote.getQuoteTime().before(quotes.get(market).getQuoteTime()))
+		if (quote.getQuoteTime().compareTo(quotes.get(market).getQuoteTime()) < 0)
 			return; // Out of date;
 		quotes.put(market, quote);
 		

@@ -1,20 +1,23 @@
 package entity.market;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.Serializable;
 
 import com.google.common.base.Objects;
-import com.google.common.primitives.Longs;
+import com.google.common.collect.ComparisonChain;
 
 import event.TimeStamp;
 
-public class MarketTime extends TimeStamp implements Serializable {
+public class MarketTime implements Comparable<MarketTime>, Serializable {
 
-	private static final long serialVersionUID = 2228639267105816484L;
+	public static final MarketTime ZERO = MarketTime.from(TimeStamp.ZERO, 0);
 	
+	private final TimeStamp time;
 	private final long marketTime;
 
 	protected MarketTime(TimeStamp time, long marketTime) {
-		super(time.getInTicks());
+		this.time = checkNotNull(time);
 		this.marketTime = marketTime;
 	}
 	
@@ -22,25 +25,28 @@ public class MarketTime extends TimeStamp implements Serializable {
 		return new MarketTime(time, marketTime);
 	}
 	
+	public TimeStamp getTime() {
+		return time;
+	}
+	
 	@Override
-	public int compareTo(TimeStamp other) {
-		if (!(other instanceof MarketTime))
-			return super.compareTo(other); // FIXME Return market time as greater if times tie. Maybe remove this, and make a comparator that takes market time into account so that this mistake can't be made? (e.g. if it's called on a timestamp instead)
-		MarketTime obj = (MarketTime) other;
-		return super.compareTo(obj) == 0 ? Longs.compare(marketTime, obj.marketTime) : super.compareTo(obj);
+	public int compareTo(MarketTime that) {
+		return ComparisonChain.start().compare(this.time, that.time).compare(this.marketTime, that.marketTime).result();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof TimeStamp)) return false;
-		if (obj instanceof MarketTime)
-			return super.equals(obj) && marketTime == ((MarketTime) obj).marketTime;
-		return super.equals(obj);
+		if (obj == null || !(obj instanceof MarketTime))
+			return false;
+		MarketTime that = (MarketTime) obj;
+		return Objects.equal(this.time, that.time) && this.marketTime == that.marketTime;
 	}
 
 	@Override
 	public int hashCode() {
 		return Objects.hashCode(super.hashCode(), marketTime);
 	}
+
+	private static final long serialVersionUID = 2228639267105816484L;
 
 }

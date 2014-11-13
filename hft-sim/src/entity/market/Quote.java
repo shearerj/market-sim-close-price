@@ -8,8 +8,6 @@ import java.io.Serializable;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 
-import event.TimeStamp;
-
 /**
  * Container for Quote data.
  * 
@@ -17,14 +15,13 @@ import event.TimeStamp;
  */
 public class Quote implements Serializable {
 
-	private static final Quote empty = new Quote(Optional.<Price> absent(), 0, Optional.<Price> absent(), 0, TimeStamp.ZERO);
+	private static final Quote empty = new Quote(Optional.<Price> absent(), 0, Optional.<Price> absent(), 0, MarketTime.ZERO);
 	
 	private final Optional<Price> ask, bid;
 	private final int askQuantity, bidQuantity;
-	private final TimeStamp quoteTime;
+	private final MarketTime quoteTime;
 
-	protected Quote(Optional<Price> bid, int bidQuantity, Optional<Price> ask,
-			int askQuantity, TimeStamp currentTime) {
+	private Quote(Optional<Price> bid, int bidQuantity, Optional<Price> ask, int askQuantity, MarketTime currentTime) {
 		checkArgument(!ask.isPresent() || !bid.isPresent() || ask.get().greaterThanEqual(bid.get()), "Invalid quote bid > ask");
 		this.ask = checkNotNull(ask);
 		this.askQuantity = askQuantity;
@@ -33,8 +30,7 @@ public class Quote implements Serializable {
 		this.quoteTime = checkNotNull(currentTime);
 	}
 	
-	public static Quote create(Optional<Price> bid, int bidQuantity, Optional<Price> ask,
-			int askQuantity, TimeStamp currentTime) {
+	public static Quote create(Optional<Price> bid, int bidQuantity, Optional<Price> ask, int askQuantity, MarketTime currentTime) {
 		return new Quote(bid, bidQuantity, ask, askQuantity, currentTime);
 	}
 	
@@ -58,7 +54,7 @@ public class Quote implements Serializable {
 		return askQuantity;
 	}
 	
-	public TimeStamp getQuoteTime() {
+	public MarketTime getQuoteTime() {
 		return quoteTime;
 	}
 	

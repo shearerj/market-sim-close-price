@@ -36,7 +36,6 @@ import fourheap.Order.OrderType;
 
 public class ZIRPAgentTest {
 	private static final Rand rand = Rand.create();
-	private static final Agent mockAgent = Mock.agent();
 	private static final FundamentalValue fundamental = Mock.fundamental(63152);
 	private static final Props defaults = Props.builder()
 			.put(ArrivalRate.class,			0d)
@@ -54,12 +53,13 @@ public class ZIRPAgentTest {
 	
 	private Market market;
 	private MarketView view;
-	
+	private Agent mockAgent;
 	
 	@Before
 	public void setup() {
 		market = Mock.market();
 		view = market.getPrimaryView();
+		mockAgent = Mock.agent();
 	}
 	
 	/** Verify that agentStrategy actually follows ZIRP strategy */

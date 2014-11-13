@@ -16,6 +16,8 @@ public class FinalFundamentalEstimatorTest {
 
 	private static final Rand rand = Rand.create();
 	
+	// FIXME In general test that this is estimating the liquidation fundamental. (Check that it equals at the end of the simulation?
+	
 	@Test
 	public void estimatedFundamental() {
 		// FIXME (for Elaine) I'm not sure what this was supposed to be checking
