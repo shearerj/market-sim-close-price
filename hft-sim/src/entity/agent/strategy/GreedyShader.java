@@ -20,6 +20,8 @@ import entity.market.Quote;
  * XXX on multi-quantity orders, if the quote is not for the total quantity
  * requested, then this will not opportunistically shade.
  * 
+ * XXX It may be preferable to have a version that will shade and lower the quantity to transact immediately?
+ * 
  * @author erik
  * 
  */
@@ -50,11 +52,10 @@ public class GreedyShader implements Function<OrderRecord, OrderRecord> {
 		Price limit = estimator.getLimitPrice(order.getOrderType(), order.getQuantity());
 		checkArgument((limit.doubleValue() - order.getPrice().doubleValue()) * order.getOrderType().sign() >= 0, "Can't submit an order that would incur a loss");
 				
-		double profitFraction = (limit.doubleValue() - order.getPrice().doubleValue()) / (limit.doubleValue() - tradingAgainst.get().doubleValue());
+		double profitFraction = (limit.doubleValue() - tradingAgainst.get().doubleValue()) / (limit.doubleValue() - order.getPrice().doubleValue());
 		if (shadeRange.contains(profitFraction))
 			return OrderRecord.create(order.getCurrentMarket(), order.getCreatedTime(), order.getOrderType(), tradingAgainst.get(), order.getQuantity());
 		else return order;
-		// FIXME postStat(Stats.ZIRP_GREEDY, 0 or 1);
 	}
 
 }

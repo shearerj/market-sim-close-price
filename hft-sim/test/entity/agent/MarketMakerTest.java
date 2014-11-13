@@ -55,8 +55,6 @@ public class MarketMakerTest {
 	private MarketInfo sip;
 	private Market market;
 	private MarketView view, other;
-
-	// FIXME I think a lot of these tests set unnecessary quote before calling a market maker method. Should be cleaned up
 	
 	@Before
 	public void setup() {
@@ -144,7 +142,7 @@ public class MarketMakerTest {
 				TickImprovement.class, true,
 				TickOutside.class, false));
 
-		setQuote(view, Price.of(40), Price.of(50)); // FIXME Unnecessary?
+		setQuote(view, Price.of(40), Price.of(50));
 		
 		mm.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
 		assertOrderLadder(mm.getActiveOrders(),

@@ -19,8 +19,6 @@ import systemmanager.Keys.InitAggression;
 import systemmanager.Keys.LambdaA;
 import systemmanager.Keys.LambdaR;
 import systemmanager.Keys.N;
-import systemmanager.Keys.RMax;
-import systemmanager.Keys.RMin;
 import systemmanager.Keys.Theta;
 import systemmanager.Keys.ThetaMax;
 import systemmanager.Keys.ThetaMin;
@@ -36,6 +34,7 @@ import data.Props;
 import data.Stats;
 import entity.agent.position.Aggression;
 import entity.agent.strategy.BackgroundStrategy;
+import entity.agent.strategy.LimitPriceEstimator;
 import entity.agent.strategy.NaiveLimitPriceEstimator;
 import entity.agent.strategy.ZIStrategy;
 import entity.market.Market;
@@ -69,6 +68,7 @@ public class AAAgent extends WindowAgent {
 	private boolean debug;
 
 	// Agent strategy variables
+	private final LimitPriceEstimator estimator;
 	private final BackgroundStrategy fallback;
 	
 	// Based on Vytelingum's sensitivity analysis, eta and N are most important
@@ -110,8 +110,8 @@ public class AAAgent extends WindowAgent {
 		this.rho = 0.9; 		// from paper, to emphasize converging pattern
 		
 		//Initializing strategy variables
-		this.fallback = ZIStrategy.create(timeline, primaryMarket, NaiveLimitPriceEstimator.create(this, getFundamentalValueView()),
-				props.get(RMin.class), props.get(RMax.class), rand);
+		this.estimator = NaiveLimitPriceEstimator.create(this, getFundamentalValueView());
+		this.fallback = ZIStrategy.create(timeline, primaryMarket, estimator, props, rand);
 		
 		this.numHistorical = props.get(N.class);
 		this.lambdaA = props.get(LambdaA.class);
@@ -152,7 +152,7 @@ public class AAAgent extends WindowAgent {
 		aggression = aggressions.getValue(getPosition(), type);
 
 		// Updating Price Limit (valuation of security)
-		Price limitPrice = getLimitPrice(type);
+		Price limitPrice = estimator.getLimitPrice(type, 1);
 
 		List<Transaction> transactions = getWindowTransactions();
 		if (!transactions.isEmpty())
@@ -562,7 +562,7 @@ public class AAAgent extends WindowAgent {
 	 * Computes weighted moving average. Truncates if fewer than required 
 	 * number of transactions available.
 	 * 
-	 * FIXME(for Elaine) this seems to give more weight to older transactions, which seems wrong.
+	 * FIXME (for Elaine) this seems to give more weight to older transactions, which seems wrong.
 	 * TODO there should probably just be a weighted moving average function. We need it / have it for the market makers anyways
 	 * 
 	 * Section 4.1, Eq. (2) in Vytelingum et al
@@ -571,7 +571,7 @@ public class AAAgent extends WindowAgent {
 		if (transactions == null) return null; // TODO This shouldn't be necessary
 		if (transactions.size() == 0) return null; //error checking
 
-		// FIXME(for Elaine) This is almost certainly wrong, but is required to keep behavior consistent (see above)
+		// FIXME (for Elaine) This is almost certainly wrong, but is required to keep behavior consistent (see above)
 		transactions = Lists.reverse(transactions);
 		
 		// Computing the weights for the moving average

@@ -113,24 +113,6 @@ public abstract class Agent extends Entity {
 	}
 
 	/**
-	 * Estimate fundamental r_hat.
-	 * @param time
-	 * @param simLength
-	 * @param kappa
-	 * @param fundamentalMean
-	 * 
-	 * @return
-	 */
-	// FIXME Move parameters all the way up into agent or give access to the method in agent strategies
-	protected Price getEstimatedFundamental(int simLength, double kappa, double fundamentalMean) {
-		// FIXME Must account for fundamental latency
-		final int stepsLeft = (int) (simLength - getCurrentTime().getInTicks());
-		final double kappaCompToPower = Math.pow(1 - kappa, stepsLeft);
-		return Price.of(fundamental.getValue().intValue() * kappaCompToPower 
-			+ fundamentalMean * (1 - kappaCompToPower));
-	}
-
-	/**
 	 * Ultimate method that all agents order should go through. This should be
 	 * overridden to enforce that certain things happen when an agent submits an
 	 * order. Can be used to enforce certain things about how an agent submits

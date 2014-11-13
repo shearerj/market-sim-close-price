@@ -267,6 +267,7 @@ public class ObservationsTest {
 		assertEquals(-100000, pobs.payoff.mean(), eps);
 	}
 
+	// FIXME (for Elaine) Is this verifying against the correct value?
 	@Test
 	public void privateValueFeatureTest() {
 		PlayerSpec spec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
@@ -279,8 +280,8 @@ public class ObservationsTest {
 				Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			private Agent setup() {
-				pv1.set(getValuation(BUY).doubleValue());
-				pv_1.set(getValuation(SELL).doubleValue());
+				pv1.set(getPrivateValue(BUY).doubleValue());
+				pv_1.set(getPrivateValue(SELL).doubleValue());
 				return this;
 			}
 			@Override protected void agentStrategy() { }
@@ -312,8 +313,8 @@ public class ObservationsTest {
 				Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			private Agent setup() {
-				a_pv1.set(getValuation(BUY).doubleValue());
-				a_pv_1.set(getValuation(SELL).doubleValue());
+				a_pv1.set(getPrivateValue(BUY).doubleValue());
+				a_pv_1.set(getPrivateValue(SELL).doubleValue());
 				return this;
 			}
 		}.setup();
@@ -332,8 +333,8 @@ public class ObservationsTest {
 				Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			private Agent setup() {
-				b_pv1.set(getValuation(BUY).doubleValue());
-				b_pv_1.set(getValuation(SELL).doubleValue());
+				b_pv1.set(getPrivateValue(BUY).doubleValue());
+				b_pv_1.set(getPrivateValue(SELL).doubleValue());
 				return this;
 			}
 		}.setup();

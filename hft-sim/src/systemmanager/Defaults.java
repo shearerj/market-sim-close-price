@@ -138,8 +138,8 @@ public class Defaults implements Serializable {
 			// Background Agents
 			.put(PrivateValueVar.class, 1000000d)
 			.put(MaxQty.class,			10) // FIXME Change to MaxPosition
-			.put(RMin.class,		0)
-			.put(RMax.class,		5000)
+			.put(RMin.class,			0)
+			.put(RMax.class,			5000)
 			.put(Window.class,	TimeStamp.of(5000))
 			
 			.put(AcceptableProfitThreshold.class, 0.8) // For ZIRPs

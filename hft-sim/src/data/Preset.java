@@ -55,7 +55,7 @@ public class Preset {
 			return config;
 
 		case MAXEFF:
-			// FIXME use numAgents instead of hard coded 66
+			// FIXME use numAgents instead of hard coded 66, dependent on config allowing an empty string
 			config.addProperty(keyToString(SimLength.class), 12);
 			config.addProperty(CDA.toString(), Props.fromPairs(NumMarkets.class, 0).toConfigString());
 			config.addProperty(CALL.toString(), Props.fromPairs(NumMarkets.class, 1, ClearInterval.class, TimeStamp.of(10)).toConfigString());

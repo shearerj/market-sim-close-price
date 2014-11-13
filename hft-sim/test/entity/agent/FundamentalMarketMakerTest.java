@@ -10,14 +10,14 @@ import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Keys.FundEstimate;
-import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.InitLadderMean;
 import systemmanager.Keys.InitLadderRange;
 import systemmanager.Keys.K;
 import systemmanager.Keys.ReentryRate;
-import systemmanager.Keys.Size;
 import systemmanager.Keys.SimLength;
+import systemmanager.Keys.Size;
 import systemmanager.Keys.Spread;
 import systemmanager.Keys.TickImprovement;
 import systemmanager.Keys.TickOutside;
@@ -40,7 +40,6 @@ public class FundamentalMarketMakerTest {
 	// FIXME Test that when constant fundamental estimate is not made, that fundamental that agent uses updates
 
 	private static final Rand rand = Rand.create();
-	private static final FundamentalValue fundamental = Mock.fundamental(100000);
 	private static final Props defaults = Props.builder()
 			.put(ReentryRate.class, 0d)
 			.put(Trunc.class, true)
@@ -49,9 +48,12 @@ public class FundamentalMarketMakerTest {
 			.put(InitLadderMean.class, 0)
 			.put(InitLadderRange.class, 0)
 			.put(SimLength.class, 1000)
+			.put(FundamentalMean.class, 146724)
+			.put(FundamentalShockVar.class, 0d)
 			.put(K.class, 3)
 			.put(Size.class, 5)
 			.build();
+	private static final FundamentalValue fundamental = Mock.fundamental(defaults.get(FundamentalMean.class));
 	
 	private Market market;
 	private MarketView view;
@@ -64,6 +66,7 @@ public class FundamentalMarketMakerTest {
 		mockAgent = Mock.agent();
 	}
 	
+	// FIXME Test math of fundamental estimate
 	// TODO test const spread < 0, = 0 (same)
 	// TODO test computation of spread with no const spread and null bid / ask
 
@@ -76,14 +79,11 @@ public class FundamentalMarketMakerTest {
 				TickImprovement.class, false,
 				TickOutside.class, false));
 
-		setQuote(Price.of(99000), Price.of(101000));
+		setQuote(Price.of(146724 - 1000), Price.of(146724 + 1000));
 		
 		mm.agentStrategy();
-		
-		// TODO This is basically testing if f(x) == f(x). May want to make this more manual
-		int estimate = mm.getEstimatedFundamental(defaults.get(SimLength.class), defaults.get(FundamentalKappa.class),
-				defaults.get(FundamentalMean.class)).intValue();
-		assertOrderLadder(mm.getActiveOrders(), Price.of(estimate - 1000), Price.of(estimate + 1000));
+
+		assertOrderLadder(mm.getActiveOrders(), Price.of(146724 - 1000), Price.of(146724 + 1000));
 	}
 	
 	@Test
@@ -95,14 +95,11 @@ public class FundamentalMarketMakerTest {
 				TickOutside.class, false,
 				Spread.class, Price.of(1000)));
 
-		setQuote(Price.of(99000), Price.of(101000));
+		setQuote(Price.of(146724 - 1000), Price.of(146724 + 1000));
 
 		mm.agentStrategy();
 		
-		// TODO This is basically testing if f(x) == f(x). May want to make this more manual
-		int estimate = mm.getEstimatedFundamental(defaults.get(SimLength.class), defaults.get(FundamentalKappa.class),
-				defaults.get(FundamentalMean.class)).intValue();
-		assertOrderLadder(mm.getActiveOrders(), Price.of(estimate - 500), Price.of(estimate + 500));
+		assertOrderLadder(mm.getActiveOrders(), Price.of(146724 - 500), Price.of(146724 + 500));
 	}
 	
 	/** testing when no bid/ask, still submits orders */

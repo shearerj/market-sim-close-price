@@ -15,8 +15,6 @@ import systemmanager.Keys.GammaMin;
 import systemmanager.Keys.MarginMax;
 import systemmanager.Keys.MarginMin;
 import systemmanager.Keys.MaxQty;
-import systemmanager.Keys.RMax;
-import systemmanager.Keys.RMin;
 import systemmanager.Keys.RangeA;
 import systemmanager.Keys.RangeR;
 import utils.Maths;
@@ -29,6 +27,7 @@ import data.Props;
 import data.Stats;
 import entity.agent.position.Margin;
 import entity.agent.strategy.BackgroundStrategy;
+import entity.agent.strategy.LimitPriceEstimator;
 import entity.agent.strategy.NaiveLimitPriceEstimator;
 import entity.agent.strategy.ZIStrategy;
 import entity.market.Market;
@@ -57,6 +56,7 @@ public class ZIPAgent extends WindowAgent {
 	
 	protected static final Ordering<Price> pcomp = Ordering.natural();
 	
+	private final LimitPriceEstimator estimator;
 	private final BackgroundStrategy fallback;
 
 	protected OrderType type;				// buy or sell
@@ -105,8 +105,8 @@ public class ZIPAgent extends WindowAgent {
 		this.gamma = rand.nextUniform(gammaMin, gammaMax);
 		this.margin = Margin.createRandomly(maxAbsPosition, rand, marginMin, marginMax);
 		
-		this.fallback = ZIStrategy.create(timeline, primaryMarket, NaiveLimitPriceEstimator.create(this, getFundamentalValueView()),
-				props.get(RMin.class), props.get(RMax.class), rand);
+		this.estimator = NaiveLimitPriceEstimator.create(this, getFundamentalValueView());
+		this.fallback = ZIStrategy.create(timeline, primaryMarket, estimator, props, rand);
 	}
 
 	public static ZIPAgent create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
@@ -129,7 +129,7 @@ public class ZIPAgent extends WindowAgent {
 		List<Transaction> pastTransactions = getWindowTransactions();
 		if (!pastTransactions.isEmpty()) {
 			// Determine limit price or lambda
-			limitPrice = getLimitPrice(type);
+			limitPrice = estimator.getLimitPrice(type, 1);
 
 			log(INFO, "%s::agentStrategy: #new transactions=", this, pastTransactions.size());
 			for (Transaction trans : pastTransactions) {

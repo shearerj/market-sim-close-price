@@ -27,7 +27,6 @@ import event.Timeline;
  */
 public class MaxEfficiencyAgent extends BackgroundAgent {
 
-	// FIXME (for Elaine) if any price gets clipped at zero, then this doesn't actually find the efficient outcome
 	protected MaxEfficiencyAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, Props.withDefaults(props,
@@ -41,14 +40,19 @@ public class MaxEfficiencyAgent extends BackgroundAgent {
 		return new MaxEfficiencyAgent(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}
 
+	/*
+	 * FIXME For this to work, this has to allow negative money, but agent stops
+	 * this. We schedule the activities manually, as the market doesn't really
+	 * care if price is negative.
+	 */
 	@Override
 	protected void agentStrategy() {
 		// submit 1-unit limit orders for all values in its private vector
 
 		for (int qty = -getMaxAbsPosition() + 1; qty <= 0; qty++)
-			submitNMSOrder(SELL, Price.of(fundamentalMean + getHypotheticalPrivateValue(qty, 1, SELL).intValue()), 1);
+			submitOrder(SELL, getHypotheticalPrivateValue(qty, 1, SELL), 1);
 		for (int qty = 0; qty < getMaxAbsPosition(); qty++)
-			submitNMSOrder(BUY, Price.of(fundamentalMean + getHypotheticalPrivateValue(qty, 1, BUY).intValue()), 1);
+			submitOrder(BUY, getHypotheticalPrivateValue(qty, 1, BUY), 1);
 	}
 
 	@Override

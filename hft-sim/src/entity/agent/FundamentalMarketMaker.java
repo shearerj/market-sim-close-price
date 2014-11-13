@@ -3,9 +3,6 @@ package entity.agent;
 import static logger.Log.Level.INFO;
 import logger.Log;
 import systemmanager.Keys.FundEstimate;
-import systemmanager.Keys.FundamentalKappa;
-import systemmanager.Keys.FundamentalMean;
-import systemmanager.Keys.SimLength;
 import systemmanager.Keys.Spread;
 import utils.Rand;
 
@@ -14,6 +11,7 @@ import com.google.common.base.Optional;
 import data.FundamentalValue;
 import data.Props;
 import data.Stats;
+import entity.agent.strategy.FinalFundamentalEstimator;
 import entity.market.Market;
 import entity.market.Price;
 import entity.sip.MarketInfo;
@@ -37,13 +35,9 @@ public class FundamentalMarketMaker extends MarketMaker {
 
 	private static final long serialVersionUID = 9057600979711100221L;
 	
-	// FIXME Move to Agent / Strategy
-	private final int simulationLength;
-	private final double fundamentalKappa;
-	private final double fundamentalMean;
-	
 	private final Price fundamentalEstimate;
 	private final Price constSpread;
+	private final FinalFundamentalEstimator fundamental;
 	
 	private Optional<Price> lastBid, lastAsk;
 
@@ -51,12 +45,9 @@ public class FundamentalMarketMaker extends MarketMaker {
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 		
+		this.fundamental = FinalFundamentalEstimator.create(getFundamentalValueView(), timeline, props);
 		this.fundamentalEstimate = props.get(FundEstimate.class);
 		this.constSpread = props.get(Spread.class);
-		
-		this.simulationLength = props.get(SimLength.class);
-		this.fundamentalKappa = props.get(FundamentalKappa.class);
-		this.fundamentalMean = props.get(FundamentalMean.class);
 		
 		this.lastBid = Optional.absent();
 		this.lastAsk = Optional.absent();
@@ -95,14 +86,13 @@ public class FundamentalMarketMaker extends MarketMaker {
 		if (!constSpread.equals(Price.ZERO)) {
 			offset = this.constSpread.intValue() / 2;
 		}
-		Price fundamental = fundamentalEstimate.equals(Price.ZERO) ? getEstimatedFundamental(simulationLength, fundamentalKappa, fundamentalMean)
-				: fundamentalEstimate;
+		Price fundamentalPrice = fundamentalEstimate.equals(Price.ZERO) ? fundamental.getFundamentalEstimate() : fundamentalEstimate;
 		log(INFO, "%s in %s: Spread of %s around estimated fundamental %s, ladderBid=%s, ladderAsk=%s", 
-				this, primaryMarket, Price.of(offset), fundamental,
-				Price.of(fundamental.intValue() - offset),
-				Price.of(fundamental.intValue() + offset));
-		createOrderLadder(Optional.of(Price.of(fundamental.intValue() - offset)),
-				Optional.of(Price.of(fundamental.intValue() + offset)));
+				this, primaryMarket, Price.of(offset), fundamentalPrice,
+				Price.of(fundamentalPrice.intValue() - offset),
+				Price.of(fundamentalPrice.intValue() + offset));
+		createOrderLadder(Optional.of(Price.of(fundamentalPrice.intValue() - offset)),
+				Optional.of(Price.of(fundamentalPrice.intValue() + offset)));
 		
 		// FIXME is this the right thing to do
 		lastBid = bid;

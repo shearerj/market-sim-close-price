@@ -11,13 +11,13 @@ import org.junit.Test;
 
 import systemmanager.Keys.AcceptableProfitThreshold;
 import systemmanager.Keys.ArrivalRate;
-import systemmanager.Keys.RMax;
-import systemmanager.Keys.RMin;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.MaxQty;
 import systemmanager.Keys.PrivateValueVar;
+import systemmanager.Keys.RMax;
+import systemmanager.Keys.RMin;
 import systemmanager.Keys.SimLength;
 import systemmanager.Keys.Withdraw;
 import utils.Mock;
@@ -25,7 +25,9 @@ import utils.Rand;
 
 import com.google.common.collect.Iterables;
 
+import data.FundamentalValue;
 import data.Props;
+import entity.agent.strategy.OptimalLimitPriceEstimator;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
@@ -35,17 +37,18 @@ import fourheap.Order.OrderType;
 public class ZIRPAgentTest {
 	private static final Rand rand = Rand.create();
 	private static final Agent mockAgent = Mock.agent();
+	private static final FundamentalValue fundamental = Mock.fundamental(63152);
 	private static final Props defaults = Props.builder()
 			.put(ArrivalRate.class,			0d)
 			.put(MaxQty.class,				2)
 			.put(PrivateValueVar.class,		100d)
-			.put(RMin.class,			10000)
-			.put(RMax.class,			10000)
+			.put(RMin.class,				10000)
+			.put(RMax.class,				10000)
 			.put(SimLength.class,			60000)
 			.put(FundamentalKappa.class,	0.05)
 			.put(FundamentalMean.class,		100000)
 			.put(FundamentalShockVar.class,	0d)
-			.put(Withdraw.class,		true)
+			.put(Withdraw.class,			true)
 			.put(AcceptableProfitThreshold.class, 0.75)
 			.build();
 	
@@ -72,7 +75,7 @@ public class ZIRPAgentTest {
 			zirp = zirpAgent();
 			setQuote(Price.of(120000), Price.of(130000));
 			
-			val = zirp.getEstimatedValuation(BUY);
+			val = OptimalLimitPriceEstimator.create(zirp, fundamental.getView(TimeStamp.ZERO), Mock.timeline, defaults).getLimitPrice(BUY, 1);
 			zirp.agentStrategy();
 			
 			// Sometimes an order will transact, so we need a default in that case
@@ -102,7 +105,7 @@ public class ZIRPAgentTest {
 
 	public ZIRPAgent zirpAgent() {
 		Mock.timeline.ignoreNext();
-		return ZIRPAgent.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, defaults);
+		return ZIRPAgent.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, fundamental, market, defaults);
 	}
 	
 }

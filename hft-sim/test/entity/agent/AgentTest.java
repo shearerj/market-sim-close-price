@@ -25,7 +25,11 @@ import com.google.common.collect.Iterables;
 import data.FundamentalValue;
 import data.Props;
 import data.Stats;
+import entity.agent.position.ListPrivateValue;
+import entity.agent.position.PrivateValue;
 import entity.agent.position.PrivateValues;
+import entity.agent.strategy.LimitPriceEstimator;
+import entity.agent.strategy.NaiveLimitPriceEstimator;
 import entity.market.CDAMarket;
 import entity.market.Market;
 import entity.market.Market.MarketView;
@@ -35,6 +39,7 @@ import entity.sip.SIP;
 import event.EventQueue;
 import event.TimeStamp;
 import event.Timeline;
+import fourheap.Order.OrderType;
 
 public class AgentTest {
 	private static final double eps = 1e-6;
@@ -471,21 +476,25 @@ public class AgentTest {
 	}
 	
 	@Test
-	public void estimatedFundamental() {
-		// FIXME (for Elaine) I'm not sure what this was supposed to be checking
-		double kappa = 0.05;
-		int meanVal = 100000;
-		double var = 1E6;
-		Timeline timeline = EventQueue.create(Log.nullLogger(), rand);
-		FundamentalValue fund = FundamentalValue.create(Mock.stats, timeline, kappa, meanVal, var, Rand.create());
-		TimeStamp time = TimeStamp.of(125);
+	public void getLimitPriceRand() {
+		ListPrivateValue privateValue = ListPrivateValue.createRandomly(5, 1e8, rand);
+		FundamentalValue fundamental = Mock.fundamental(12345);
+		Agent agent = mockAgent(privateValue, fundamental);
+		LimitPriceEstimator estimator = NaiveLimitPriceEstimator.create(agent, fundamental.getView(TimeStamp.ZERO));
 		
-		Agent agent = mockAgent(timeline);
+		Price fundPrice = fundamental.getValueAt(TimeStamp.ZERO);
 		
-		// high margin of error here because of rounding issues
-		assertEquals(0.005920529*fund.getValueAt(time).intValue() + 99407.9, 
-				agent.getEstimatedFundamental(125, kappa, meanVal).doubleValue(), 0.75);
+		setPosition(agent, 3);
+		assertEquals(Price.of(fundPrice.doubleValue() + privateValue.getValue(3, 2, BUY).doubleValue()/2), estimator.getLimitPrice(BUY, 2));
+		assertEquals(Price.of(fundPrice.doubleValue() + privateValue.getValue(3, 2, SELL).doubleValue()/2), estimator.getLimitPrice(SELL, 2));
 		
+		setPosition(agent, -2);
+		assertEquals(Price.of(fundPrice.doubleValue() + privateValue.getValue(-2, 2, BUY).doubleValue()/2), estimator.getLimitPrice(BUY, 2));
+		assertEquals(Price.of(fundPrice.doubleValue() + privateValue.getValue(-2, 2, SELL).doubleValue()/2), estimator.getLimitPrice(SELL, 2));
+
+		setPosition(agent, -2);
+		assertEquals(Price.of(fundPrice.doubleValue() + privateValue.getValue(-2, 3, BUY).doubleValue()/3), estimator.getLimitPrice(BUY, 3));
+		assertEquals(Price.of(fundPrice.doubleValue() + privateValue.getValue(-2, 3, SELL).doubleValue()/3), estimator.getLimitPrice(SELL, 3));
 	}
 	
 	@Test
@@ -516,8 +525,27 @@ public class AgentTest {
 		return timeline;
 	}
 	
+	private void setPosition(Agent agent, int position) {
+		int quantity = position - agent.getPosition();
+		if (quantity == 0)
+			return;
+		OrderType type = quantity > 0 ? BUY : SELL;
+		quantity = Math.abs(quantity);
+		agent.submitOrder(view, type, Price.ZERO, quantity);
+		this.agent.submitOrder(view, type == BUY ? SELL : BUY, Price.ZERO, quantity);
+		assertEquals(position, agent.getPosition());
+	}
+	
 	private Agent mockAgent(Timeline timeline) {
 		return new Agent(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, PrivateValues.zero(),
+				TimeStamp.ZERO, Props.fromPairs()) {
+			private static final long serialVersionUID = 1L;
+			@Override protected void agentStrategy() { }
+		};
+	}
+	
+	private Agent mockAgent(PrivateValue privateValue, FundamentalValue fundamental) {
+		return new Agent(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, fundamental, privateValue,
 				TimeStamp.ZERO, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override protected void agentStrategy() { }

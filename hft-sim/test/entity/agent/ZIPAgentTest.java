@@ -32,11 +32,13 @@ import com.google.common.collect.Range;
 import data.FundamentalValue;
 import data.Props;
 import entity.agent.position.Margin;
+import entity.agent.strategy.NaiveLimitPriceEstimator;
 import entity.market.CDAMarket;
 import entity.market.Market;
 import entity.market.Market.MarketView;
 import entity.market.Price;
 import entity.market.Transaction;
+import event.TimeStamp;
 import fourheap.Order.OrderType;
 
 public class ZIPAgentTest {
@@ -135,7 +137,7 @@ public class ZIPAgentTest {
 		// now with a dummy transaction and dummy order prices
 		addTransaction(Price.of(95000), 1);
 		addTransaction(Price.of(90000), 1);
-		agent.limitPrice = agent.getLimitPrice(BUY, 1);
+		agent.limitPrice = getLimitPrice(agent, BUY, 1);
 		// set the margins
 		agent.type = SELL;
 		agent.lastOrderPrice = Price.of(105000);
@@ -217,7 +219,7 @@ public class ZIPAgentTest {
 				.put(MarginMin.class, 0.05)
 				.build());
 		/*
-		 * FIXME(for Elaine) Agent seed set to 1 for unknown reason, but it seems required
+		 * FIXME (for Elaine) Agent seed set to 1 for unknown reason, but it seems required
 		 * to get test to work. Seed is rightly no longer accessible, so what is
 		 * the proper way to test this?
 		 */
@@ -226,7 +228,7 @@ public class ZIPAgentTest {
 		Transaction lastTrans = addTransaction(Price.of(80000), 1);
 		Price lastTransPrice = lastTrans.getPrice();
 		
-		agent.limitPrice = agent.getLimitPrice(BUY, 1);
+		agent.limitPrice = getLimitPrice(agent, BUY, 1);
 		// verify limit price is constant 100000
 		assertEquals(Price.of(100000), agent.limitPrice);
 		
@@ -265,7 +267,7 @@ public class ZIPAgentTest {
 		Transaction lastTrans = addTransaction(Price.of(110000), 1);
 		Price lastTransPrice = lastTrans.getPrice();
 		
-		agent.limitPrice = agent.getLimitPrice(BUY, 1);
+		agent.limitPrice = getLimitPrice(agent, BUY, 1);
 		// verify limit price is constant 100000
 		assertEquals(Price.of(100000), agent.limitPrice);
 		
@@ -307,7 +309,7 @@ public class ZIPAgentTest {
 		Transaction lastTrans = addTransaction(Price.of(105000), 1);
 		Price lastTransPrice = lastTrans.getPrice();
 		
-		agent.limitPrice = agent.getLimitPrice(BUY, 1);
+		agent.limitPrice = getLimitPrice(agent, BUY, 1);
 		// verify limit price is constant 100000
 		assertEquals(Price.of(100000), agent.limitPrice);
 		
@@ -349,7 +351,7 @@ public class ZIPAgentTest {
 		Transaction lastTrans = addTransaction(Price.of(110000), 1);
 		Price lastTransPrice = lastTrans.getPrice();
 		
-		agent.limitPrice = agent.getLimitPrice(BUY, 1);
+		agent.limitPrice = getLimitPrice(agent, BUY, 1);
 		// verify limit price is constant 100000
 		assertEquals(Price.of(100000), agent.limitPrice);
 		
@@ -377,16 +379,16 @@ public class ZIPAgentTest {
 		
 		// test for buy
 		agent.type = BUY;
-		agent.limitPrice = agent.getLimitPrice(BUY, 1);
+		agent.limitPrice = getLimitPrice(agent, BUY, 1);
 		// verify limit price is constant 100000
 		assertEquals(Price.of(100000), agent.limitPrice);
 		double currentMargin = agent.margin.getValue(0, agent.type);
 		assertEquals(Price.of(100000 * (1+currentMargin)), 
 				agent.computeOrderPrice(currentMargin));
 		
-		// test for sell
+		// test for sell FIXME Should be sell?
 		agent.type = BUY;
-		agent.limitPrice = agent.getLimitPrice(BUY, 1);
+		agent.limitPrice = getLimitPrice(agent, BUY, 1);
 		// verify limit price is constant 100000
 		assertEquals(Price.of(100000), agent.limitPrice);
 		currentMargin = agent.margin.getValue(0, agent.type);
@@ -563,7 +565,7 @@ public class ZIPAgentTest {
 		Transaction transaction = addTransaction(Price.of(100000), 1);
 
 		agent.type = BUY;
-		agent.limitPrice = agent.getLimitPrice(BUY, 1);
+		agent.limitPrice = getLimitPrice(agent, BUY, 1);
 		// verify limit price is constant 100000
 		assertEquals(Price.of(100000), agent.limitPrice);
 		double currentMargin = agent.margin.getValue(0, agent.type);
@@ -664,6 +666,10 @@ public class ZIPAgentTest {
 		addOrder(BUY, price, quantity);
 		addOrder(SELL, price, quantity);
 		return checkNotNull(Iterables.getFirst(view.getTransactions(), null));
+	}
+	
+	private Price getLimitPrice(Agent agent, OrderType buyOrSell, int quantity) {
+		return NaiveLimitPriceEstimator.create(agent, fundamental.getView(TimeStamp.ZERO)).getLimitPrice(buyOrSell, quantity);
 	}
 
 	private ZIPAgent zipAgent(Props parameters) {

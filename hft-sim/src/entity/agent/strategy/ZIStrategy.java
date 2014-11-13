@@ -1,6 +1,9 @@
 package entity.agent.strategy;
 
+import systemmanager.Keys.RMax;
+import systemmanager.Keys.RMin;
 import utils.Rand;
+import data.Props;
 import entity.agent.OrderRecord;
 import entity.market.Market.MarketView;
 import entity.market.Price;
@@ -31,6 +34,10 @@ public class ZIStrategy implements BackgroundStrategy {
 	
 	public static ZIStrategy create(Timeline timeline, MarketView market, LimitPriceEstimator estimator, int bidRangeMin, int bidRangeMax, Rand rand) {
 		return new ZIStrategy(timeline, market, estimator, bidRangeMin, bidRangeMax, rand);
+	}
+	
+	public static ZIStrategy create(Timeline timeline, MarketView market, LimitPriceEstimator estimator, Props props, Rand rand) {
+		return create(timeline, market, estimator, props.get(RMin.class), props.get(RMax.class), rand);
 	}
 
 	@Override

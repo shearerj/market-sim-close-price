@@ -2,8 +2,6 @@ package entity.agent;
 
 import static logger.Log.Level.INFO;
 import logger.Log;
-import systemmanager.Keys.RMax;
-import systemmanager.Keys.RMin;
 import utils.Rand;
 import data.FundamentalValue;
 import data.Props;
@@ -42,13 +40,13 @@ import fourheap.Order.OrderType;
  */
 public class ZIRAgent extends BackgroundAgent {
 
-	private BackgroundStrategy strategy;
+	private final BackgroundStrategy strategy;
 	
 	protected ZIRAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
-		this.strategy = ZIStrategy.create(timeline, primaryMarket, NaiveLimitPriceEstimator.create(this, getFundamentalValueView()),
-				props.get(RMin.class), props.get(RMax.class), rand);
+		this.strategy = ZIStrategy.create(timeline, primaryMarket, NaiveLimitPriceEstimator.create(this, getFundamentalValueView()), 
+				props, rand);
 	}
 
 	public static ZIRAgent create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
@@ -63,8 +61,8 @@ public class ZIRAgent extends BackgroundAgent {
 		int quantity = 1;
 		
 		OrderRecord order = strategy.getOrder(buyOrSell, quantity);
-		log(INFO, "%s executing ZI strategy position=%d, for q=%d, value=%s + %s=%s",
-				this, getPosition(), quantity, getFundamental(), getPrivateValue(quantity, buyOrSell), getValuation(buyOrSell, quantity));
+		log(INFO, "%s executing ZI strategy position=%d, for q=%d, value=%s + %s",
+				this, getPosition(), quantity, getFundamental(), getPrivateValue(quantity, buyOrSell));
 		log(INFO, "%s Submit %s order", this, buyOrSell);
 		submitNMSOrder(order);
 	}
