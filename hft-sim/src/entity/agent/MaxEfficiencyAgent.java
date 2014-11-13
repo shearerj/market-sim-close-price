@@ -40,11 +40,6 @@ public class MaxEfficiencyAgent extends BackgroundAgent {
 		return new MaxEfficiencyAgent(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}
 
-	/*
-	 * FIXME For this to work, this has to allow negative money, but agent stops
-	 * this. We schedule the activities manually, as the market doesn't really
-	 * care if price is negative.
-	 */
 	@Override
 	protected void agentStrategy() {
 		// submit 1-unit limit orders for all values in its private vector

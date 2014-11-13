@@ -1,5 +1,6 @@
 package entity.agent;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static logger.Log.Level.INFO;
@@ -120,6 +121,7 @@ public abstract class Agent extends Entity {
 	 * submitted and will not appear in active orders.
 	 */
 	protected boolean submitOrder(OrderRecord order, boolean nmsRoutable) {
+		checkArgument(order.getPrice().intValue() % tickSize == 0, "Price not in a valid tick size for this agent");
 		activeOrders.add(order);
 		if (nmsRoutable)
 			order.getCurrentMarket().submitNMSOrder(this, order);

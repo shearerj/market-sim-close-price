@@ -88,6 +88,10 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 		return ticks;
 	}
 
+	/*
+	 * FIXME This quantizes by rounding, but for buy or sell orders you may
+	 * want to quantize directionally, not to the nearest one.
+	 */
 	public Price quantize(int quanta) {
 		return new Price(Maths.quantize(ticks, quanta));
 	}

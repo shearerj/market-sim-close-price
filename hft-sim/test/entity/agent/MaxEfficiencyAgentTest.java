@@ -14,7 +14,6 @@ import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.PrivateValueVar;
 import utils.Mock;
 import utils.Rand;
-import data.FundamentalValue;
 import data.Props;
 import entity.market.CDAMarket;
 import entity.market.CallMarket;
@@ -26,8 +25,9 @@ public class MaxEfficiencyAgentTest {
 	
 	private static Rand rand = Rand.create();
 	
-	private FundamentalValue fundamental = Mock.fundamental(100000);
 	private Market market;
+	
+	// FIXME Test that orders and negative and we get the efficient outcome
 	
 	@Before
 	public void setup(){
@@ -43,7 +43,7 @@ public class MaxEfficiencyAgentTest {
 	
 	@Test
 	public void numOrdersTest() {
-		Agent agent = MaxEfficiencyAgent.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, fundamental, market, Props.fromPairs( 
+		Agent agent = MaxEfficiencyAgent.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs( 
 				MaxPosition.class, 10,
 				PrivateValueVar.class, 1000d));
 		
@@ -59,7 +59,7 @@ public class MaxEfficiencyAgentTest {
 	
 	@Test
 	public void basicTest() {
-		Agent agent = MaxEfficiencyAgent.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, fundamental, market, Props.fromPairs( 
+		Agent agent = MaxEfficiencyAgent.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs( 
 				MaxPosition.class, 1,
 				PrivateValueVar.class, 1e7));
 		
