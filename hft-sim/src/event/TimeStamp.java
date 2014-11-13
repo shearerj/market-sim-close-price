@@ -61,7 +61,11 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	 * @return true if other is before or null
 	 */
 	public boolean before(TimeStamp other) {
-		return other == null || this.compareTo(other) < 0;
+		return this.compareTo(other) < 0;
+	}
+	
+	public boolean beforeOrOn(TimeStamp other) {
+		return this.compareTo(other) <= 0;
 	}
 
 	/**
@@ -69,7 +73,11 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 	 * @return true if other is after or null
 	 */
 	public boolean after(TimeStamp other) {
-		return other == null || this.compareTo(other) > 0;
+		return this.compareTo(other) > 0;
+	}
+	
+	public boolean afterOrOn(TimeStamp other) {
+		return this.compareTo(other) >= 0;
 	}
 
 	@Override
