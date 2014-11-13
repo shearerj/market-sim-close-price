@@ -52,4 +52,5 @@ logs/*
 /defaults.json
 # For simulators on root directory
 /*.zip
+/*.tar.gz
 /bin
