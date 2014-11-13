@@ -37,7 +37,7 @@ import systemmanager.Keys.MarginMax;
 import systemmanager.Keys.MarginMin;
 import systemmanager.Keys.MarketLatency;
 import systemmanager.Keys.MarketTickSize;
-import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.MeanPrefixes;
 import systemmanager.Keys.MovingAveragePrice;
 import systemmanager.Keys.NbboLatency;
@@ -137,7 +137,7 @@ public class Defaults implements Serializable {
 			
 			// Background Agents
 			.put(PrivateValueVar.class, 1000000d)
-			.put(MaxQty.class,			10) // FIXME Change to MaxPosition
+			.put(MaxPosition.class,		10)
 			.put(RMin.class,			0)
 			.put(RMax.class,			5000)
 			.put(Window.class,	TimeStamp.of(5000))

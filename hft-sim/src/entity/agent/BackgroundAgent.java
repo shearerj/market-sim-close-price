@@ -11,7 +11,7 @@ import java.util.Map.Entry;
 import logger.Log;
 import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.BackgroundReentryRate;
-import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.RMax;
 import systemmanager.Keys.RMin;
@@ -84,7 +84,7 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	protected BackgroundAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		this(id, stats, timeline, log, rand, sip, fundamental,
-				ListPrivateValue.createRandomly(props.get(MaxQty.class), props.get(PrivateValueVar.class), rand),
+				ListPrivateValue.createRandomly(props.get(MaxPosition.class), props.get(PrivateValueVar.class), rand),
 				market, props);
 	}
 	

@@ -46,7 +46,7 @@ public interface Keys {
 	public static class Window extends TimeValue {};
 	public static class RMax extends IntValue {};
 	public static class RMin extends IntValue {};
-	public static class MaxQty extends IntValue {};
+	public static class MaxPosition extends IntValue {};
 	public static class Alpha extends DoubleValue {};
 	
 	public static class TickSize extends IntValue {};

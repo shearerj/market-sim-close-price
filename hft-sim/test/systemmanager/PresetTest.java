@@ -14,7 +14,7 @@ import org.junit.Test;
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.MarketType;
 import systemmanager.Keys.ClearInterval;
-import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.NbboLatency;
 import systemmanager.Keys.NumAgents;
 import systemmanager.Keys.NumMarkets;
@@ -172,7 +172,7 @@ public class PresetTest {
 			switch (mp.getKey()) {
 			case MAXEFFICIENCY:
 				assertEquals(66, (int) mp.getValue().get(NumAgents.class));
-				assertEquals(Defaults.get(MaxQty.class), mp.getValue().get(MaxQty.class));
+				assertEquals(Defaults.get(MaxPosition.class), mp.getValue().get(MaxPosition.class));
 				break;
 			default:
 			}

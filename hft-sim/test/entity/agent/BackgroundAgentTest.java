@@ -14,7 +14,7 @@ import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
-import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.RMax;
 import systemmanager.Keys.RMin;
 import systemmanager.Keys.SimLength;
@@ -139,7 +139,7 @@ public class BackgroundAgentTest {
 	/** Verify do not submit order if exceed max position allowed. */
 	@Test
 	public void testPositionBounds() {
-		BackgroundAgent agent = backgroundAgent(Props.fromPairs(MaxQty.class, 5));
+		BackgroundAgent agent = backgroundAgent(Props.fromPairs(MaxPosition.class, 5));
 		
 		// Can submit buy for 1 at 0
 		agent.submitNMSOrder(BUY, Price.ZERO, 1);
@@ -193,7 +193,7 @@ public class BackgroundAgentTest {
 	@Test
 	public void testSubmitBuyOrder() {
 		// Verify that when submit order, if would exceed position limits, then do not submit the order
-		BackgroundAgent agent = backgroundAgent(Props.fromPairs(MaxQty.class, 1));
+		BackgroundAgent agent = backgroundAgent(Props.fromPairs(MaxPosition.class, 1));
 		setPosition(agent, 1);
 
 		// Verify that a new buy order can't be submitted
@@ -209,7 +209,7 @@ public class BackgroundAgentTest {
 	public void testSubmitSellOrder() {
 		// Verify that when submit order, if would exceed position limits, then
 		// do not submit the order
-		BackgroundAgent agent = backgroundAgent(Props.fromPairs(MaxQty.class, 1));
+		BackgroundAgent agent = backgroundAgent(Props.fromPairs(MaxPosition.class, 1));
 		setPosition(agent, -1);
 
 		// Verify that a new sell order can't be submitted

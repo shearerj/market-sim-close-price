@@ -14,7 +14,7 @@ import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
-import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.RMax;
 import systemmanager.Keys.RMin;
@@ -40,7 +40,7 @@ public class ZIRPAgentTest {
 	private static final FundamentalValue fundamental = Mock.fundamental(63152);
 	private static final Props defaults = Props.builder()
 			.put(ArrivalRate.class,			0d)
-			.put(MaxQty.class,				2)
+			.put(MaxPosition.class,				2)
 			.put(PrivateValueVar.class,		100d)
 			.put(RMin.class,				10000)
 			.put(RMax.class,				10000)

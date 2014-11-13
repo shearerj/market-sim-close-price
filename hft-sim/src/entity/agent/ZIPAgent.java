@@ -14,7 +14,7 @@ import systemmanager.Keys.GammaMax;
 import systemmanager.Keys.GammaMin;
 import systemmanager.Keys.MarginMax;
 import systemmanager.Keys.MarginMin;
-import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.RangeA;
 import systemmanager.Keys.RangeR;
 import utils.Maths;
@@ -75,7 +75,7 @@ public class ZIPAgent extends WindowAgent {
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
-		int maxAbsPosition = props.get(MaxQty.class);
+		int maxAbsPosition = props.get(MaxPosition.class);
 		
 		this.rangeCoeffA = props.get(RangeA.class);
 		this.rangeCoeffR = props.get(RangeR.class);

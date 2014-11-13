@@ -10,7 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Keys.ClearInterval;
-import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.PrivateValueVar;
 import utils.Mock;
 import utils.Rand;
@@ -44,7 +44,7 @@ public class MaxEfficiencyAgentTest {
 	@Test
 	public void numOrdersTest() {
 		Agent agent = MaxEfficiencyAgent.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, fundamental, market, Props.fromPairs( 
-				MaxQty.class, 10,
+				MaxPosition.class, 10,
 				PrivateValueVar.class, 1000d));
 		
 		agent.agentStrategy();
@@ -60,7 +60,7 @@ public class MaxEfficiencyAgentTest {
 	@Test
 	public void basicTest() {
 		Agent agent = MaxEfficiencyAgent.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, fundamental, market, Props.fromPairs( 
-				MaxQty.class, 1,
+				MaxPosition.class, 1,
 				PrivateValueVar.class, 1e7));
 		
 		agent.agentStrategy();

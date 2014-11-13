@@ -19,7 +19,7 @@ import systemmanager.Keys.Debug;
 import systemmanager.Keys.Eta;
 import systemmanager.Keys.Gamma;
 import systemmanager.Keys.InitAggression;
-import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.N;
 import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.ReentryRate;
@@ -47,7 +47,7 @@ public class AAAgentTest {
 			.put(ArrivalRate.class,		0d)
 			.put(ReentryRate.class,		0d)
 			.put(PrivateValueVar.class,	0d)
-			.put(MaxQty.class,			1)
+			.put(MaxPosition.class,			1)
 			.put(Withdraw.class,	false)
 			.put(Window.class,	TimeStamp.of(5000))
 			.put(Theta.class,			0d)

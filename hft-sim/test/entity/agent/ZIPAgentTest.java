@@ -19,7 +19,7 @@ import systemmanager.Keys.GammaMax;
 import systemmanager.Keys.GammaMin;
 import systemmanager.Keys.MarginMax;
 import systemmanager.Keys.MarginMin;
-import systemmanager.Keys.MaxQty;
+import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.RangeA;
 import systemmanager.Keys.RangeR;
@@ -124,7 +124,7 @@ public class ZIPAgentTest {
 	@Test
 	public void agentStrategyTest() {
 		ZIPAgent agent = zipAgent(Props.builder()
-				.put(MaxQty.class, 1)
+				.put(MaxPosition.class, 1)
 				.put(BetaMax.class, 0.5)
 				.put(BetaMin.class, 0.5)
 				.put(GammaMax.class, 0.5)
@@ -164,7 +164,7 @@ public class ZIPAgentTest {
 	@Test
 	public void getCurrentMarginTest() {
 		ZIPAgent agent = zipAgent(Props.fromPairs(
-				MaxQty.class, 1,
+				MaxPosition.class, 1,
 				MarginMax.class, 1.5,
 				MarginMin.class, 1.2));
 
@@ -176,7 +176,7 @@ public class ZIPAgentTest {
 	public void updateMarginZeroLimit() {
 		// testing when limit price is 0
 		ZIPAgent agent = zipAgent(Props.builder()
-				.put(MaxQty.class, 5)
+				.put(MaxPosition.class, 5)
 				.put(BetaMax.class, 0.5)
 				.put(BetaMin.class, 0.5)
 				.put(GammaMax.class, 0.5)
@@ -208,7 +208,7 @@ public class ZIPAgentTest {
 	@Test
 	public void checkIncreaseMarginBuyer() {
 		ZIPAgent agent = zipAgent(Props.builder()
-				.put(MaxQty.class, 5)
+				.put(MaxPosition.class, 5)
 				.put(BetaMax.class, 0.5)
 				.put(BetaMin.class, 0.5)
 				.put(GammaMax.class, 0.5)
@@ -250,7 +250,7 @@ public class ZIPAgentTest {
 	@Test
 	public void checkIncreaseMarginSeller() {
 		ZIPAgent agent = zipAgent(Props.builder()
-				.put(MaxQty.class, 5)
+				.put(MaxPosition.class, 5)
 				.put(BetaMax.class, 0.5)
 				.put(BetaMin.class, 0.5)
 				.put(GammaMax.class, 0.5)
@@ -289,7 +289,7 @@ public class ZIPAgentTest {
 	@Test
 	public void checkDecreaseMarginBuyer() {
 		ZIPAgent agent = zipAgent(Props.builder()
-				.put(MaxQty.class, 5)
+				.put(MaxPosition.class, 5)
 				.put(BetaMax.class, 0.5)
 				.put(BetaMin.class, 0.5)
 				.put(GammaMax.class, 0.5)
@@ -331,7 +331,7 @@ public class ZIPAgentTest {
 	@Test
 	public void checkDecreaseMarginSeller() {
 		ZIPAgent agent = zipAgent(Props.builder()
-				.put(MaxQty.class, 5)
+				.put(MaxPosition.class, 5)
 				.put(BetaMax.class, 0.5)
 				.put(BetaMin.class, 0.5)
 				.put(GammaMax.class, 0.5)
@@ -373,7 +373,7 @@ public class ZIPAgentTest {
 	@Test
 	public void computeOrderPrice() {
 		ZIPAgent agent = zipAgent(Props.fromPairs(
-				MaxQty.class, 5,
+				MaxPosition.class, 5,
 				MarginMax.class, 0.35,
 				MarginMin.class, 0.25));
 		
@@ -400,7 +400,7 @@ public class ZIPAgentTest {
 	public void updateMomentumBasicTest() {
 		// gamma fixed at 1
 		ZIPAgent agent = zipAgent(Props.fromPairs(
-				MaxQty.class, 5,
+				MaxPosition.class, 5,
 				BetaMax.class, 0.5,
 				BetaMin.class, 0.5,
 				GammaMax.class, 1d,
@@ -440,7 +440,7 @@ public class ZIPAgentTest {
 	public void updateMomentumAdvancedTest() {
 		// gamma fixed at 1, update entirely to delta
 		ZIPAgent agent = zipAgent(Props.fromPairs(
-				MaxQty.class, 5,
+				MaxPosition.class, 5,
 				BetaMax.class, 0.5,
 				BetaMin.class, 0.5,
 				GammaMax.class, 0d,
@@ -481,7 +481,7 @@ public class ZIPAgentTest {
 	@Test
 	public void computeDeltaTest() {
 		ZIPAgent agent = zipAgent(Props.fromPairs(
-				MaxQty.class, 5,
+				MaxPosition.class, 5,
 				BetaMax.class, 0.5,
 				BetaMin.class, 0.5));
 		
@@ -521,7 +521,7 @@ public class ZIPAgentTest {
 	@Test
 	public void computeTargetPriceTest() {
 		ZIPAgent agent = zipAgent(Props.fromPairs(
-				MaxQty.class, 5,
+				MaxPosition.class, 5,
 				MarginMax.class, 0.35,
 				MarginMin.class, 0.25));
 
@@ -554,7 +554,7 @@ public class ZIPAgentTest {
 	@Test
 	public void checkIncreaseMarginInitialTest() {
 		ZIPAgent agent = zipAgent(Props.fromPairs(
-				MaxQty.class, 5,
+				MaxPosition.class, 5,
 				MarginMax.class, 0.35,
 				MarginMin.class, 0.25));
 		
@@ -591,7 +591,7 @@ public class ZIPAgentTest {
 	public void advancedIncreaseMarginTest() {
 		// test with other order prices already set
 		ZIPAgent agent = zipAgent(Props.fromPairs(
-				MaxQty.class, 5,
+				MaxPosition.class, 5,
 				MarginMax.class, 0.35,
 				MarginMin.class, 0.25));
 		
