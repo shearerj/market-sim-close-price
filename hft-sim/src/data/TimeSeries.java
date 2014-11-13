@@ -65,6 +65,7 @@ public class TimeSeries implements Serializable, SparseIterable<Double> {
 
 	/**
 	 * Add a data point (int, double) to container
+	 * TODO time should be timestamp?
 	 */
 	public void add(long time, double value) {
 		long lastTime = Iterables.getLast(points).index;

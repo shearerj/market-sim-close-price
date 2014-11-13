@@ -7,6 +7,7 @@ import java.util.SortedMap;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.ForwardingMap;
+import com.google.common.collect.ForwardingSortedMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
@@ -29,6 +30,28 @@ public abstract class Maps2 {
 			
 			@Override
 			protected Map<K, V> delegate() {
+				return map;
+			}
+			
+			@SuppressWarnings("unchecked")
+			@Override
+			public V get(Object key) {
+				V value = delegate().get(key);
+				if (value == null) {
+					value = supplier.get();
+					delegate().put((K) key, value);
+				}
+				return value;
+			}
+			
+		};
+	}
+	
+	public static <K, V> SortedMap<K, V> addDefault(final SortedMap<K, V> map, final Supplier<V> supplier) {
+		return new ForwardingSortedMap<K, V>() {
+			
+			@Override
+			protected SortedMap<K, V> delegate() {
 				return map;
 			}
 			

@@ -1,9 +1,12 @@
 package data;
 
-import java.util.NavigableMap;
+import java.util.Collections;
+import java.util.SortedMap;
 
+import utils.Maps2;
 import utils.SummStats;
 
+import com.google.common.base.Supplier;
 import com.google.common.collect.Maps;
 
 import event.TimeStamp;
@@ -41,52 +44,40 @@ import event.TimeStamp;
 public class Stats {
 	
 	// Different types of statistics
-	private final NavigableMap<String, SummStats> summaryStats;
-	private final NavigableMap<String, TimeSeries> timeStats;
+	private final SortedMap<String, SummStats> summaryStats;
+	private final SortedMap<String, TimeSeries> timeStats;
 	
 	protected Stats() {
-		summaryStats = Maps.newTreeMap();
-		timeStats = Maps.newTreeMap();
+		summaryStats = Maps2.addDefault(Maps.<String, SummStats> newTreeMap(), new Supplier<SummStats>() {
+			@Override public SummStats get() { return SummStats.on(); }
+		});
+		timeStats = Maps2.addDefault(Maps.<String, TimeSeries> newTreeMap(), new Supplier<TimeSeries>() {
+			@Override public TimeSeries get() { return TimeSeries.create(); }
+		});
 	}
 	
 	public static Stats create() {
 		return new Stats();
 	}
 	
-	public NavigableMap<String, SummStats> getSummaryStats() {
-		return Maps.unmodifiableNavigableMap(summaryStats);
+	public SortedMap<String, SummStats> getSummaryStats() {
+		return Collections.unmodifiableSortedMap(summaryStats);
 	}
 	
-	public NavigableMap<String, TimeSeries> getTimeStats() {
-		return Maps.unmodifiableNavigableMap(timeStats);
+	public SortedMap<String, TimeSeries> getTimeStats() {
+		return Collections.unmodifiableSortedMap(timeStats);
 	}
 	
 	public void post(String name, double value) {
-		SummStats summ = summaryStats.get(name);
-		if (summ == null) {
-			summ = SummStats.on();
-			summaryStats.put(name, summ);
-		}
-		summ.add(value);
+		summaryStats.get(name).add(value);
 	}
 	
 	public void post(String name, double value, long times) {
-		SummStats summ = summaryStats.get(name);
-		if (summ == null) {
-			summ = SummStats.on();
-			summaryStats.put(name, summ);
-		}
-		summ.addNTimes(value, times);
+		summaryStats.get(name).addNTimes(value, times);
 	}
 	
-	// TODO Switch to default map?
 	public void postTimed(TimeStamp time, String name, double value) {
-		TimeSeries times = timeStats.get(name);
-		if (times == null) {
-			times = TimeSeries.create();
-			timeStats.put(name, times);
-		}
-		times.add(time.getInTicks(), value);
+		timeStats.get(name).add(time.getInTicks(), value);
 	}
 	
 	public static final String

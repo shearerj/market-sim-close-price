@@ -104,9 +104,11 @@ public class Defaults implements Serializable {
 			.put(DiscountFactors.class,	Doubles.asList(0, 0.0006))
 			.put(Periods.class,			Ints.asList(1, 250))
 			
-			.put(SumPrefixes.class,		ImmutableList.of(Stats.SURPLUS, Stats.PROFIT, Stats.ZIRP_GREEDY, Stats.MAX_EFF_POSITION))
-			.put(MeanPrefixes.class,	ImmutableList.of(Stats.FUNDAMENTAL_END_PRICE, Stats.MARKET_MAKER_SPREAD))
-			.put(StddevPrefixes.class,	ImmutableList.of(Stats.MARKET_MAKER_SPREAD))
+			.put(SumPrefixes.class,		ImmutableList.of(Stats.SURPLUS, Stats.PROFIT, Stats.ZIRP_GREEDY, Stats.MAX_EFF_POSITION,
+					Stats.NUM_TRANS))
+			.put(MeanPrefixes.class,	ImmutableList.of(Stats.FUNDAMENTAL_END_PRICE, Stats.MARKET_MAKER_SPREAD, Stats.CONTROL_FUNDAMENTAL,
+					Stats.CONTROL_PRIVATE_VALUE))
+			.put(StddevPrefixes.class,	ImmutableList.of(Stats.MARKET_MAKER_SPREAD, Stats.PRICE))
 			
 			// Simulation spec (general)
 			.put(SimLength.class,		60000)

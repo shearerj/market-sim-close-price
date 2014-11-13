@@ -141,12 +141,9 @@ public class Observations {
 		TimeSeries fundamental = stats.getTimeStats().get(Stats.FUNDAMENTAL);
 		for (int period : periods) {
 			TimeSeries transPrices = stats.getTimeStats().get(Stats.TRANSACTION_PRICE);
-			double rmsd = Double.NaN;
-			if (transPrices != null) { // Will be null if there are no transactions
-				Iterable<Double> pr = Iterables.limit(Iterables2.sample(transPrices, period, -1), simLength / period);
-				Iterable<Double> fundStat = Iterables.limit(Iterables2.sample(fundamental, period, -1), simLength / period);
-				rmsd = Maths.rmsd(pr, fundStat);
-			}
+			Iterable<Double> pr = Iterables.limit(Iterables2.sample(transPrices, period, -1), simLength / period);
+			Iterable<Double> fundStat = Iterables.limit(Iterables2.sample(fundamental, period, -1), simLength / period);
+			double rmsd = Maths.rmsd(pr, fundStat);
 			features.get("trans_freq_" + period + "_rmsd").add(rmsd);
 		}
 		
