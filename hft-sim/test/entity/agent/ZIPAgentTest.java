@@ -10,7 +10,6 @@ import static org.junit.Assert.assertTrue;
 import logger.Log;
 
 import org.junit.Before;
-import org.junit.Test;
 
 import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.BetaMax;
@@ -60,7 +59,6 @@ public class ZIPAgentTest {
 		view = market.getPrimaryView();
 	}
 
-	@Test
 	public void initialMarginTest() {
 		ZIPAgent agent = zipAgent(Props.fromPairs(MarginMin.class, 0.35));
 
@@ -73,7 +71,6 @@ public class ZIPAgentTest {
 			assertEquals(-0.35, margin.getValue(position, BUY), eps);
 	}
 	
-	@Test
 	public void marginRangeTest() {
 		ZIPAgent agent = zipAgent(Props.fromPairs(MarginMin.class, 0.25));
 
@@ -87,7 +84,6 @@ public class ZIPAgentTest {
 			assertTrue(range.contains(-margin.getValue(position, BUY)));
 	}
 	
-	@Test
 	public void initialZIP() {
 		ZIPAgent agent = zipAgent(Props.fromPairs(BetaMax.class, 0.5, BetaMin.class, 0.4));
 
@@ -97,7 +93,6 @@ public class ZIPAgentTest {
 		assertNull(agent.limitPrice);
 	}
 	
-	@Test
 	public void computeRTest() {
 		ZIPAgent agent = zipAgent(Props.fromPairs(RangeR.class, 0.1));
 
@@ -109,7 +104,6 @@ public class ZIPAgentTest {
 				testR >= 0.9 && testR <= 1);
 	}
 	
-	@Test
 	public void computeATest() {
 		ZIPAgent agent = zipAgent(Props.fromPairs(RangeA.class, 0.1));
 
@@ -121,7 +115,6 @@ public class ZIPAgentTest {
 				testA >= -0.1 && testA <= 0);
 	}
 	
-	@Test
 	public void agentStrategyTest() {
 		ZIPAgent agent = zipAgent(Props.builder()
 				.put(MaxPosition.class, 1)
@@ -161,7 +154,6 @@ public class ZIPAgentTest {
 //		assertEquals(Price.of(88953), Iterables.getOnlyElement(agent.getActiveOrders()).getPrice());
 	}
 	
-	@Test
 	public void getCurrentMarginTest() {
 		ZIPAgent agent = zipAgent(Props.fromPairs(
 				MaxPosition.class, 1,
@@ -172,7 +164,6 @@ public class ZIPAgentTest {
 		assertTrue("Current margin outside range", Range.closed(1.2, 1.5).contains(agent.getCurrentMargin(SELL)));
 	}
 	
-	@Test
 	public void updateMarginZeroLimit() {
 		// testing when limit price is 0
 		ZIPAgent agent = zipAgent(Props.builder()
@@ -205,7 +196,6 @@ public class ZIPAgentTest {
 		assertEquals(newMargin, oldMargin, eps);
 	}
 	
-	@Test
 	public void checkIncreaseMarginBuyer() {
 		ZIPAgent agent = zipAgent(Props.builder()
 				.put(MaxPosition.class, 5)
@@ -247,7 +237,6 @@ public class ZIPAgentTest {
 		checkMarginUpdate(lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
 	
-	@Test
 	public void checkIncreaseMarginSeller() {
 		ZIPAgent agent = zipAgent(Props.builder()
 				.put(MaxPosition.class, 5)
@@ -286,7 +275,6 @@ public class ZIPAgentTest {
 		checkMarginUpdate(lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
 
-	@Test
 	public void checkDecreaseMarginBuyer() {
 		ZIPAgent agent = zipAgent(Props.builder()
 				.put(MaxPosition.class, 5)
@@ -328,7 +316,6 @@ public class ZIPAgentTest {
 		checkMarginUpdate(lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
 	
-	@Test
 	public void checkDecreaseMarginSeller() {
 		ZIPAgent agent = zipAgent(Props.builder()
 				.put(MaxPosition.class, 5)
@@ -370,7 +357,6 @@ public class ZIPAgentTest {
 		checkMarginUpdate(lastOrderPrice, lastTransPrice, oldMargin, newMargin);
 	}
 
-	@Test
 	public void computeOrderPrice() {
 		ZIPAgent agent = zipAgent(Props.fromPairs(
 				MaxPosition.class, 5,
@@ -396,7 +382,6 @@ public class ZIPAgentTest {
 				agent.computeOrderPrice(currentMargin));
 	}
 
-	@Test
 	public void updateMomentumBasicTest() {
 		// gamma fixed at 1
 		ZIPAgent agent = zipAgent(Props.fromPairs(
@@ -436,7 +421,6 @@ public class ZIPAgentTest {
 		assertTrue(10 == agent.momentumChange);
 	}
 
-	@Test
 	public void updateMomentumAdvancedTest() {
 		// gamma fixed at 1, update entirely to delta
 		ZIPAgent agent = zipAgent(Props.fromPairs(
@@ -478,7 +462,6 @@ public class ZIPAgentTest {
 	}
 
 	
-	@Test
 	public void computeDeltaTest() {
 		ZIPAgent agent = zipAgent(Props.fromPairs(
 				MaxPosition.class, 5,
@@ -517,8 +500,6 @@ public class ZIPAgentTest {
 		assertTrue(Math.abs(delta) < 0.5 * 110000);
 	}
 
-	
-	@Test
 	public void computeTargetPriceTest() {
 		ZIPAgent agent = zipAgent(Props.fromPairs(
 				MaxPosition.class, 5,
@@ -551,7 +532,6 @@ public class ZIPAgentTest {
 		assertTrue(agent.computeTargetPrice(transaction).lessThan(transactionPrice));		
 	}
 	
-	@Test
 	public void checkIncreaseMarginInitialTest() {
 		ZIPAgent agent = zipAgent(Props.fromPairs(
 				MaxPosition.class, 5,
@@ -587,7 +567,6 @@ public class ZIPAgentTest {
 		assertFalse(agent.checkIncreaseMargin(transaction));
 	}
 	
-	@Test
 	public void advancedIncreaseMarginTest() {
 		// test with other order prices already set
 		ZIPAgent agent = zipAgent(Props.fromPairs(
@@ -620,7 +599,6 @@ public class ZIPAgentTest {
 		assertFalse(agent.checkIncreaseMargin(transaction));
 	}
 	
-	@Test
 	public void randomTest() {
 		for (int i = 0; i < 1000; ++i) {
 			setup();

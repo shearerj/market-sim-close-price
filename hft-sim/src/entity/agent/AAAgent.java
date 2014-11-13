@@ -1,6 +1,7 @@
 package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static logger.Log.Level.INFO;
@@ -93,6 +94,7 @@ public class AAAgent extends WindowAgent {
 	protected AAAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
+		checkState(false, "AA Agent should never be created as it's untested");
 
 		this.type = props.get(BuyerStatus.class);
 		this.lastTransactionPrice = null;
