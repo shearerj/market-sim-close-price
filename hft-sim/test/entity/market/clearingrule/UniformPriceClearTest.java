@@ -28,7 +28,7 @@ public class UniformPriceClearTest {
 	@Test
 	public void UniformPriceBasic() {
 		ArrayList<MatchedOrders<Price, MarketTime, Order>> list = new ArrayList<MatchedOrders<Price, MarketTime, Order>>();
-		ClearingRule cr = new UniformPriceClear(0.5, 1);
+		ClearingRule cr = new UniformPriceClear(0.5);
 		
 		MatchedOrders<Price, MarketTime, Order> match1 = createOrderPair(
 				Price.of(110), 1, TimeStamp.of(100), 
@@ -44,7 +44,7 @@ public class UniformPriceClearTest {
 	@Test
 	public void UniformPriceRatio() {
 		ArrayList<MatchedOrders<Price, MarketTime, Order>> list = new ArrayList<MatchedOrders<Price, MarketTime, Order>>();
-		ClearingRule cr = new UniformPriceClear(1, 1);
+		ClearingRule cr = new UniformPriceClear(1);
 		
 		MatchedOrders<Price, MarketTime, Order> match1 = createOrderPair(
 				Price.of(110), 1, TimeStamp.of(100), 
@@ -55,7 +55,7 @@ public class UniformPriceClearTest {
 		// Verify clearing at the higher price of the two orders (policy=1)
 		assertEquals(Price.of(110), result.get(match1));
 		
-		cr = new UniformPriceClear(0, 1);
+		cr = new UniformPriceClear(0);
 		result = cr.pricing(list);
 		// Verify clearing at the lower price of the two orders (policy=0)
 		assertEquals(Price.of(100), result.get(match1));
@@ -63,7 +63,7 @@ public class UniformPriceClearTest {
 	
 	@Test
 	public void UniformPriceMulti() {
-		ClearingRule cr = new UniformPriceClear(0.5, 1);
+		ClearingRule cr = new UniformPriceClear(0.5);
 
 		ArrayList<MatchedOrders<Price, MarketTime, Order>> list = new ArrayList<MatchedOrders<Price, MarketTime, Order>>();
 		

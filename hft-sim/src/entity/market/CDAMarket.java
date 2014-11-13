@@ -1,8 +1,6 @@
 package entity.market;
 
 import logger.Log;
-import systemmanager.Keys.MarketTickSize;
-import systemmanager.Keys.TickSize;
 import utils.Rand;
 import data.Props;
 import data.Stats;
@@ -22,7 +20,7 @@ public class CDAMarket extends Market {
 	private static final long serialVersionUID = -6780130359417129449L;
 
 	protected CDAMarket(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, Props props) {
-		super(id, stats, timeline, log, rand, sip, new EarliestPriceClear(props.get(MarketTickSize.class, TickSize.class)), props);
+		super(id, stats, timeline, log, rand, sip, new EarliestPriceClear(), props);
 	}
 
 	public static CDAMarket create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, Props props) {

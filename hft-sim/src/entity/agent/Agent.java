@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import logger.Log;
-import systemmanager.Keys.AgentTickSize;
 import systemmanager.Keys.DiscountFactors;
 import systemmanager.Keys.FundamentalLatency;
 import systemmanager.Keys.TickSize;
@@ -67,7 +66,7 @@ public abstract class Agent extends Entity {
 			PrivateValue privateValue, TimeStamp arrivalTime, Props props) {
 		super(id, stats, timeline, log, rand);
 		this.fundamental = fundamental.getView(props.get(FundamentalLatency.class));
-		this.tickSize = props.get(AgentTickSize.class, TickSize.class);
+		this.tickSize = props.get(TickSize.class);
 		this.sip = sip;
 
 		this.activeOrders = Sets.newHashSet();

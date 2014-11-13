@@ -5,15 +5,12 @@ import java.io.Serializable;
 import props.ImmutableProps;
 import props.Value;
 import systemmanager.Keys.AcceptableProfitThreshold;
-import systemmanager.Keys.AgentTickSize;
 import systemmanager.Keys.Alpha;
 import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.BetaMax;
 import systemmanager.Keys.BetaMin;
 import systemmanager.Keys.BetaR;
 import systemmanager.Keys.BetaT;
-import systemmanager.Keys.RMax;
-import systemmanager.Keys.RMin;
 import systemmanager.Keys.BuyerStatus;
 import systemmanager.Keys.ClearInterval;
 import systemmanager.Keys.Debug;
@@ -30,33 +27,34 @@ import systemmanager.Keys.GammaMax;
 import systemmanager.Keys.GammaMin;
 import systemmanager.Keys.InitAggression;
 import systemmanager.Keys.InitLadderRange;
+import systemmanager.Keys.K;
 import systemmanager.Keys.LaLatency;
 import systemmanager.Keys.LambdaA;
 import systemmanager.Keys.LambdaR;
 import systemmanager.Keys.MarginMax;
 import systemmanager.Keys.MarginMin;
 import systemmanager.Keys.MarketLatency;
-import systemmanager.Keys.MarketTickSize;
 import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.MeanPrefixes;
 import systemmanager.Keys.MovingAveragePrice;
+import systemmanager.Keys.N;
 import systemmanager.Keys.NbboLatency;
 import systemmanager.Keys.Num;
-import systemmanager.Keys.N;
-import systemmanager.Keys.K;
 import systemmanager.Keys.NumSims;
 import systemmanager.Keys.Periods;
 import systemmanager.Keys.PricingPolicy;
 import systemmanager.Keys.PrivateValueVar;
+import systemmanager.Keys.RMax;
+import systemmanager.Keys.RMin;
 import systemmanager.Keys.RandomSeed;
 import systemmanager.Keys.RangeA;
 import systemmanager.Keys.RangeR;
 import systemmanager.Keys.ReentryRate;
-import systemmanager.Keys.Size;
 import systemmanager.Keys.SimLength;
+import systemmanager.Keys.Size;
 import systemmanager.Keys.Spread;
-import systemmanager.Keys.Strats;
 import systemmanager.Keys.StddevPrefixes;
+import systemmanager.Keys.Strats;
 import systemmanager.Keys.SumPrefixes;
 import systemmanager.Keys.Theta;
 import systemmanager.Keys.ThetaMax;
@@ -102,8 +100,6 @@ public class Defaults implements Serializable {
 			.put(Num.class,				0)
 
 			.put(TickSize.class,		1)
-			.put(MarketTickSize.class,	1)
-			.put(AgentTickSize.class,	1)
 			
 			.put(DiscountFactors.class,	Doubles.asList(0, 0.0006))
 			.put(Periods.class,			Ints.asList(1, 250))

@@ -18,11 +18,9 @@ public class UniformPriceClear implements ClearingRule {
 	protected static final Ordering<Price> ord = Ordering.natural();
 	
 	protected final double ratio;
-	protected final int tickSize;
 	
-	public UniformPriceClear(double ratio, int tickSize) {
+	public UniformPriceClear(double ratio) {
 		this.ratio = ratio;
-		this.tickSize = tickSize;
 	}
 
 	@Override
@@ -39,7 +37,7 @@ public class UniformPriceClear implements ClearingRule {
 		}
 
 		Price clearPrice = Price.of(minBuy.doubleValue() * ratio
-				+ maxSell.doubleValue() * (1 - ratio)).quantize(tickSize);
+				+ maxSell.doubleValue() * (1 - ratio));
 
 		Builder<MatchedOrders<Price, MarketTime, Order>, Price> prices = ImmutableMap.builder();
 		for (MatchedOrders<Price, MarketTime, Order> trans : transactions)

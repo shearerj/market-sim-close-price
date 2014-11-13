@@ -34,7 +34,7 @@ public class EarliestPriceClearTest {
 		list.add(createOrderPair(Price.of(110), 1, TimeStamp.of(100), 
 								 Price.of(100), 1, TimeStamp.of(105)));
 		
-		ClearingRule cr = new EarliestPriceClear(1);
+		ClearingRule cr = new EarliestPriceClear();
 		Map<MatchedOrders<Price,MarketTime, Order>,Price> result = cr.pricing(list);
 		
 		Set<MatchedOrders<Price,MarketTime, Order>> keySet = result.keySet();
@@ -50,7 +50,7 @@ public class EarliestPriceClearTest {
 		list.add(createOrderPair(Price.of(110), 1, TimeStamp.of(100), 
 								 Price.of(100), 1, TimeStamp.of(100), BUY));
 		
-		ClearingRule cr = new EarliestPriceClear(1);
+		ClearingRule cr = new EarliestPriceClear();
 		Map<MatchedOrders<Price, MarketTime, Order>, Price> result = cr.pricing(list);
 		
 		Set<MatchedOrders<Price, MarketTime, Order>> keySet = result.keySet();
@@ -66,7 +66,7 @@ public class EarliestPriceClearTest {
 		list.add(createOrderPair(Price.of(110), 1, TimeStamp.of(100), 
 								 Price.of(100), 1, TimeStamp.of(100), SELL));
 		
-		ClearingRule cr = new EarliestPriceClear(1);
+		ClearingRule cr = new EarliestPriceClear();
 		Map<MatchedOrders<Price, MarketTime, Order>, Price> result = cr.pricing(list);
 		
 		Set<MatchedOrders<Price, MarketTime, Order>> keySet = result.keySet();
@@ -90,7 +90,7 @@ public class EarliestPriceClearTest {
 				Price.of(100), 1, TimeStamp.of(100));
 		list.add(match2);
 				
-		ClearingRule cr = new EarliestPriceClear(1);
+		ClearingRule cr = new EarliestPriceClear();
 		Map<MatchedOrders<Price, MarketTime, Order>, Price> result = cr.pricing(list);
 
 		// Verify always clears at the earlier price (no time ties here)

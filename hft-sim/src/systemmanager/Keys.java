@@ -50,8 +50,6 @@ public interface Keys {
 	public static class Alpha extends DoubleValue {};
 	
 	public static class TickSize extends IntValue {};
-	public static class MarketTickSize extends IntValue {};
-	public static class AgentTickSize extends IntValue {};
 	
 	public static class PrivateValueVar extends DoubleValue {};
 	public static class SimLength extends IntValue {};

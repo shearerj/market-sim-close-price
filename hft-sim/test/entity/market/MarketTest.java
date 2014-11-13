@@ -610,7 +610,7 @@ public class MarketTest {
 	}
 	
 	private Market mockMarket(Stats stats, Timeline timeline, MarketInfo sip, Props props) {
-		return new Market(rand.nextInt(), stats, timeline, Log.nullLogger(), rand, sip, new UniformPriceClear(0.5, 1), props) {
+		return new Market(rand.nextInt(), stats, timeline, Log.nullLogger(), rand, sip, new UniformPriceClear(0.5), props) {
 			private static final long serialVersionUID = 1L;
 			@Override protected void submitOrder(MarketView thisView, AgentView agent, OrderRecord orderRecord) {
 				super.submitOrder(thisView, agent, orderRecord);

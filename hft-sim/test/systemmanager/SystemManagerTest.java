@@ -92,7 +92,7 @@ public class SystemManagerTest {
 				"privateValueVar: 1E8," +
 				"CDA: \"num_2\"," +
 				"LA: \"num_1\"," +
-				"ZIR: \"num_61_maxQty_10\"" +
+				"ZIR: \"num_61_maxPosition_10\"" +
 				"}}");
 		StringReader properties = new StringReader("logLevel = 2\noutputConfig = true\n");
 		StringWriter observations = new StringWriter();
@@ -109,7 +109,7 @@ public class SystemManagerTest {
 		// Copy Simspec File
 		File testDir = new File(Consts.TEST_OUTPUT_DIR, "full_test");
 		testDir.mkdirs();
-		copyFile(new File(testDir, "simulation_spec.json"), new File("docs", "simulation_spec.json"));
+		copyFile(new File("docs", "simulation_spec.json"), new File(testDir, "simulation_spec.json"));
 		
 		// Bookkeeping
 		File logDir = new File(testDir, "logs");
