@@ -23,6 +23,7 @@ public class SystemManagerTest {
 	private static final Gson gson = new Gson();
 
 	// FIXME Change these tests to verify output
+	// FIXME Multiple simulation test. Use fixed random seed. Generate first n independently and then generate one with n simulations and comapre
 
 	@Test
 	public void minimalTest() throws IOException {
