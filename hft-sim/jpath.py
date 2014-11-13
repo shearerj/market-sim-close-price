@@ -23,5 +23,5 @@ if __name__ == '__main__':
         if field.isdigit():
             field = int(field)
         j = j[field]
-    json.dump(j, sys.stdout, indent=4)
+    json.dump(j, sys.stdout, indent=4, sort_keys=True)
     sys.stdout.write('\n')
