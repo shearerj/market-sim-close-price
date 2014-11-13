@@ -122,7 +122,8 @@ public class ImmutableProps {
 		}
 		
 		public ImmutableProps build() {
-			return new ImmutableProps(ImmutableClassToInstanceMap.copyOf(builder));
+			// Generics allow ant compilation
+			return new ImmutableProps(ImmutableClassToInstanceMap.<Value<?>, Value<?>> copyOf(builder));
 		}
 		
 	}
