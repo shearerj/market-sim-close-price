@@ -15,12 +15,14 @@ public abstract class Maths {
 	
 	private static final Median median = new Median();
 
+	// XXX This ignores points that have a NaN rmsd. This may not be desired.
 	public static double rmsd(Iterator<? extends Number> iter_a, Iterator<? extends Number> iter_b) {
 		SummStats mean = SummStats.on();
 		while (iter_a.hasNext() && iter_b.hasNext()) {
 			double a = iter_a.next().doubleValue();
 			double b = iter_b.next().doubleValue();
-			mean.add((a - b) * (a - b));
+			if (!Double.isNaN(a) && !Double.isNaN(b))
+				mean.add((a - b) * (a - b));
 		}
 		return Math.sqrt(mean.mean());
 	}

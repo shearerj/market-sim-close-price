@@ -80,10 +80,8 @@ public class SystemManagerTest {
 	public void stagedTest() throws IOException {
 		StringReader simSpec = new StringReader("{configuration: {" +
 				"randomSeed: 271828," +
-				"numSims: 1," +
 				"simLength: 60000," +
-				"tickSize: 1," +
-				"nbboLatency: 100," +
+				"nbboLatency: 1000," +
 				"marketLatency: 0," +
 				"arrivalRate: 0.075," +
 				"reentryRate: 0.0005," +
