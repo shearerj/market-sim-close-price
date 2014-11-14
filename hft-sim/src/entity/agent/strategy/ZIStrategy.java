@@ -43,7 +43,7 @@ public class ZIStrategy implements BackgroundStrategy {
 	@Override
 	public OrderRecord getOrder(OrderType buyOrSell, int quantity) {
 		Price limit = estimator.getLimitPrice(buyOrSell, quantity);
-		Price price = Price.of((limit.doubleValue() - buyOrSell.sign() * rand.nextUniform(bidRangeMin, bidRangeMax)));
+		Price price = Price.of((limit.doubleValue() - buyOrSell.sign() * rand.nextUniform(bidRangeMin, bidRangeMax))).nonnegative();
 		return OrderRecord.create(market, timeline.getCurrentTime(), buyOrSell, price, quantity);
 	}
 
