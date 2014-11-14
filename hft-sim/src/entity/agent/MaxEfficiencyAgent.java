@@ -33,6 +33,8 @@ public class MaxEfficiencyAgent extends BackgroundAgent {
 				ReentryRate.class, 0d,
 				ArrivalRate.class, Double.POSITIVE_INFINITY));
 		checkArgument(market instanceof CallMarket, "MaxEfficiency Agent can only enter call markets");
+		for (int i = -getMaxAbsPosition(); i <= getMaxAbsPosition(); ++i)
+			postStat(Stats.MAX_EFF_POSITION + i, 0);
 	}
 	
 	public static MaxEfficiencyAgent create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,

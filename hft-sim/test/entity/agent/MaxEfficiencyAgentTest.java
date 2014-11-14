@@ -28,6 +28,7 @@ public class MaxEfficiencyAgentTest {
 	private Market market;
 	
 	// FIXME Test that orders and negative and we get the efficient outcome
+	// FIXME Bug when doing multiple simulations that observations aren't accounted for for missing observations
 	
 	@Before
 	public void setup(){
