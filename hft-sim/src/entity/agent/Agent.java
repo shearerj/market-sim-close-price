@@ -121,6 +121,7 @@ public abstract class Agent extends Entity {
 	 */
 	protected boolean submitOrder(OrderRecord order, boolean nmsRoutable) {
 		checkArgument(order.getPrice().intValue() % tickSize == 0, "Price not in a valid tick size for this agent");
+		checkArgument(order.getPrice().intValue() >= 0, "Price of an order can't be negative");
 		activeOrders.add(order);
 		if (nmsRoutable)
 			order.getCurrentMarket().submitNMSOrder(this, order);

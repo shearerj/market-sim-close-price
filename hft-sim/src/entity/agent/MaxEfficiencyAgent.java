@@ -15,6 +15,7 @@ import entity.market.Market;
 import entity.market.Price;
 import entity.sip.MarketInfo;
 import event.Timeline;
+import fourheap.Order.OrderType;
 
 /**
  * Created solely for purpose of measuring maximum allocative efficiency in 
@@ -47,15 +48,19 @@ public class MaxEfficiencyAgent extends BackgroundAgent {
 		// submit 1-unit limit orders for all values in its private vector
 
 		for (int qty = -getMaxAbsPosition() + 1; qty <= 0; qty++)
-			submitOrder(SELL, getHypotheticalPrivateValue(qty, 1, SELL), 1);
+			bypassSubmit(SELL, getHypotheticalPrivateValue(qty, 1, SELL), 1);
 		for (int qty = 0; qty < getMaxAbsPosition(); qty++)
-			submitOrder(BUY, getHypotheticalPrivateValue(qty, 1, BUY), 1);
+			bypassSubmit(BUY, getHypotheticalPrivateValue(qty, 1, BUY), 1);
 	}
 
 	@Override
 	public void liquidateAtPrice(Price price) {
 		postStat(Stats.MAX_EFF_POSITION + getPosition(), 1);
 		super.liquidateAtPrice(price);
+	}
+	
+	private void bypassSubmit(OrderType buyOrSell, Price price, int quantity) {
+		primaryMarket.submitOrder(this, OrderRecord.create(primaryMarket, getCurrentTime(), buyOrSell, price, quantity));
 	}
 
 	private static final long serialVersionUID = -8915874536659571239L;

@@ -29,6 +29,8 @@ public class MaxEfficiencyAgentTest {
 	
 	// FIXME Test that orders and negative and we get the efficient outcome
 	// FIXME Bug when doing multiple simulations that observations aren't accounted for for missing observations
+	// FIXME There seems to be a bug in this, in that agents rarely get to -10 position. This may be a result of background agents preventing bids
+	// FIXME Tests are likely all broken because agent's have to bypass standard order submission
 	
 	@Before
 	public void setup(){
