@@ -42,6 +42,8 @@ public class MarketTest {
 	private Market market;
 	private MarketView view, fast;
 	
+	// FIXME Test bug where transactions didn't remove orders from orderMapping, so it would try to remove orders that had transacted away.
+	
 	@Before
 	public void setup() {
 		timeline = Mock.timeline;
