@@ -140,8 +140,8 @@ public class Defaults implements Serializable {
 			.put(RMax.class,			5000)
 			.put(Window.class,	TimeStamp.of(5000))
 			
-			.put(AcceptableProfitThreshold.class, 0.8) // For ZIRPs
-			.put(Withdraw.class, true) // for ZIRs
+			.put(AcceptableProfitThreshold.class, 1d) // For ZIRPs
+			.put(Withdraw.class, true)
 		
 			// AA Agent
 			.put(InitAggression.class,	0d)

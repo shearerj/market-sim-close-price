@@ -17,6 +17,8 @@ import event.TimeStamp;
 import fourheap.Order.OrderType;
 
 public class GreedyShaderTest {
+	
+	// FIXME Check that order isn't replaced if it's the exact same as previous order
 
 	private Market market;
 	private MarketView view;
