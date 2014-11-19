@@ -156,6 +156,8 @@ public class SystemManagerTest {
 				);
 	}
 	
+	/* FIXME Test that ZIRP Agents never submit buy order when limit price is 0. */
+	
 	private static void copyFile(File from, File to) throws IOException {
 		Writer simSpecWriter = new FileWriter(to);
 		Reader exampleReader = new FileReader(from);

@@ -1,8 +1,5 @@
 package entity.agent;
 
-import static fourheap.Order.OrderType.BUY;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import logger.Log;
 
@@ -18,14 +15,17 @@ import data.Props;
 import entity.market.CDAMarket;
 import entity.market.CallMarket;
 import entity.market.Market;
-import entity.market.Price;
+import entity.market.Market.MarketView;
+import event.EventQueue;
 import event.TimeStamp;
 
 public class MaxEfficiencyAgentTest {
 	
 	private static Rand rand = Rand.create();
 	
+	private EventQueue timeline;
 	private Market market;
+	private MarketView view;
 	
 	// FIXME Test that orders and negative and we get the efficient outcome
 	// FIXME Bug when doing multiple simulations that observations aren't accounted for for missing observations
@@ -34,8 +34,10 @@ public class MaxEfficiencyAgentTest {
 	
 	@Before
 	public void setup(){
-		market = CallMarket.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Props.fromPairs(
-				ClearInterval.class, TimeStamp.of(10)));
+		timeline = EventQueue.create(Log.nullLogger(), rand);
+		market = CallMarket.create(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Props.fromPairs(
+				ClearInterval.class, TimeStamp.of(1)));
+		view = market.getPrimaryView();
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
@@ -51,13 +53,11 @@ public class MaxEfficiencyAgentTest {
 				PrivateValueVar.class, 1000d));
 		
 		agent.agentStrategy();
+		timeline.executeUntil(TimeStamp.of(1));
 		
-		assertEquals(20, agent.getActiveOrders().size());
-		int offset = 0;
-		for (OrderRecord order : agent.getActiveOrders())
-			offset += order.getOrderType().sign();
-		assertEquals(0, offset); // equal number of buys and sells
-		
+		// FIXME Somehow test that there are 20 orders, and that the number of buys and sells is equals
+		assertTrue(view.getQuote().getAskPrice().isPresent());
+		assertTrue(view.getQuote().getBidPrice().isPresent());
 	}
 	
 	@Test
@@ -67,18 +67,11 @@ public class MaxEfficiencyAgentTest {
 				PrivateValueVar.class, 1e7));
 		
 		agent.agentStrategy();
+		timeline.executeUntil(TimeStamp.of(1));
 		
-		assertEquals(2, agent.getActiveOrders().size());
-		Price buyPrice = null, sellPrice = null;
-		for (OrderRecord order : agent.getActiveOrders())
-			if (order.getOrderType() == BUY)
-				buyPrice = order.getPrice();
-			else
-				sellPrice = order.getPrice();
-		
-		assertNotNull(buyPrice);
-		assertNotNull(sellPrice);
-		assertTrue(buyPrice.lessThanEqual(sellPrice));	
+		// XXX Can't test number of active orders, because the bypass order of max eff agent doesn't add orders to active orders.
+		assertTrue(view.getQuote().getAskPrice().isPresent());
+		assertTrue(view.getQuote().getBidPrice().isPresent());
 	}
 	
 	// FIXME Test that position at end of simulation is correctly stored in stats
