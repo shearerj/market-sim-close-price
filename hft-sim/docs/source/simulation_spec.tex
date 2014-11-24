@@ -54,17 +54,17 @@ There are currently three agent roles:
 
 Each role used in the simulation is followed by a list of agent-strategy pairs, which take the format \texttt{<agentType>:<key>\_<value1>\_<key>\_<value2>...}. Each agent present in the simulation is specified on its own line.
 %
-For example, the section below specifies two background traders, one with range $[0, 5000]$ and one with range $[0, 1000]$, and a single market maker employing the \textsc{BasicMM} strategy:
+For example, the section below specifies two background traders, one with range $[0, 5000]$ and one with range $[0, 1000]$, and a single market maker employing the \textsc{BasicMM} strategy with $100$ rungs:
 %
 \begin{verbatim}
 {
     "assignment": {
         "BACKGROUND": [
-            "ZIR:bidRangeMin_0_bidRangeMax_1000",
-            "ZIR:bidRangeMin_0_bidRangeMax_5000"
+            "ZIR:Rmin_0_Rmax_1000",
+            "ZIR:Rmin_0_Rmax_5000"
         ],
         "MARKETMAKER": [
-            "BASICMM:numRungs_100"
+            "BASICMM:K_100"
         ]
     }
     ...
@@ -88,7 +88,7 @@ For example, the section below specifies two background traders, one with range 
 \verb|simLength| 	& 60000 & Length of simulation in time ticks (usually interpreted as milliseconds). \\ 
 
 \verb|nbboLatency| 	& -1 & Latency to update both the NBBO quote through the SIP in time steps (usually interpreted in milliseconds).\\
-\verb|mktLatency| 	& -1 & Quote \& transaction update latency for all markets. \\
+\verb|marketLatency| 	& -1 & Quote \& transaction update latency for all markets. \\
 \verb|laLatency| 	& -1 & Latency of the latency arbitrageur \\
 
 \verb|arrivalRate| 	& 0.075 & Rate for the Poisson process of agent arrival times (background traders only; market makers and HFTs arrive at time 0). \\
@@ -102,9 +102,9 @@ For example, the section below specifies two background traders, one with range 
 
 \verb|maxPosition| 	& 10 & Max position (long or short) for background agents. \\
 \verb|privateValueVar| & 1E6 & Variance of normally distributed i.i.d. elements of private value array; only applicable to background agents. \\
-\verb|meanValue| 	& 100000 & Mean for the public global fundamental value.\\
-\verb|kappa| 		& 0.05 & Mean-reversion parameter for the fundamental; higher kappa indicates greater degree of mean-reversion.\\
-\verb|shockVar| 		& 1E6 & Variance of shock to global fundamental (which is normally distributed around mean 0).\\
+\verb|fundamentalMean| 	& 100000 & Mean for the public global fundamental value.\\
+\verb|fundamentalKappa| 		& 0.05 & Mean-reversion parameter for the fundamental; higher kappa indicates greater degree of mean-reversion.\\
+\verb|fundamentalShockVar| 		& 1E6 & Variance of shock to global fundamental (which is normally distributed around mean 0).\\
 
 
 
