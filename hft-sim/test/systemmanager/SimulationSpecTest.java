@@ -35,6 +35,8 @@ import entity.market.Price;
 
 public class SimulationSpecTest {
 	
+	// FIXME test empty strings in config
+	
 	private static final Gson gson = new Gson();
 	private static final double eps = 1e-6;
 	private static final JsonObject baseSpec = gson.toJsonTree(ImmutableMap.of(

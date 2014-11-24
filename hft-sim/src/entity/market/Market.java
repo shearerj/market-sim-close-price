@@ -172,6 +172,8 @@ public abstract class Market extends Entity {
 		checkArgument(quantity > 0, "Quantity must be positive");
 		quantity = Math.min(quantity, order.getQuantity());
 
+		// FIXME Somehow quantity here becomes zero because the order has zero quantity. I think this has to do with routing due to nms. Need to analyze
+		
 		// Remove from internal bookkeeping
 		Multiset<Price> priceQuant = order.getOrderType() == SELL ? askPriceQuantity : bidPriceQuantity;
 		priceQuant.remove(order.getPrice(), quantity);
@@ -179,7 +181,7 @@ public abstract class Market extends Entity {
 		if (order.getQuantity() == 0)
 			orderMapping.remove(orderRecord);
 		
-		// Remove from agent's bookkepping
+		// Remove from agent's bookkeeping
 		order.getAgent().orderRemoved(orderRecord, quantity);
 	}
 
@@ -198,6 +200,10 @@ public abstract class Market extends Entity {
 			
 			askPriceQuantity.remove(sell.getPrice(), transaction.getQuantity());
 			bidPriceQuantity.remove(buy.getPrice(), transaction.getQuantity());
+			if (buy.getQuantity() == 0)
+				orderMapping.remove(buy.getOrderRecord());
+			if (sell.getQuantity() == 0)
+				orderMapping.remove(sell.getOrderRecord());
 			
 			// Views
 			transactions.add(transaction);

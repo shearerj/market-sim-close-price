@@ -1,5 +1,6 @@
 package systemmanager;
 
+import static data.Props.keyToString;
 import static data.Preset.Presets.CENTRALCALL;
 import static data.Preset.Presets.CENTRALCDA;
 import static data.Preset.Presets.MAXEFF;
@@ -19,6 +20,7 @@ import systemmanager.Keys.NbboLatency;
 import systemmanager.Keys.NumAgents;
 import systemmanager.Keys.NumMarkets;
 import systemmanager.Keys.SimLength;
+import utils.Rand;
 
 import com.google.gson.JsonObject;
 
@@ -27,6 +29,8 @@ import data.Props;
 import event.TimeStamp;
 
 public class PresetTest {
+	
+	private static final Rand rand = Rand.create();
 
 	@Test
 	public void centralCDAPresetTest() {
@@ -152,9 +156,11 @@ public class PresetTest {
 		JsonObject config = new JsonObject();
 		json.add(SimulationSpec.CONFIG, config);
 		config.addProperty(Preset.KEY, MAXEFF.toString());
+		int numAgents = rand.nextInt(100) + 1;
+		config.addProperty(keyToString(NumAgents.class), numAgents);
 		
 		SimulationSpec spec = SimulationSpec.fromJson(json);
-		assertEquals(12, (int) spec.getSimulationProps().get(SimLength.class));
+		assertEquals(2, (int) spec.getSimulationProps().get(SimLength.class));
 		
 		for (Entry<MarketType, Props> mp : spec.getMarketProps().entries()) {
 			switch (mp.getKey()) {
@@ -163,7 +169,7 @@ public class PresetTest {
 				break;
 			case CALL:
 				assertEquals(1, (int) mp.getValue().get(NumMarkets.class));
-				assertEquals(TimeStamp.of(10), mp.getValue().get(ClearInterval.class));
+				assertEquals(TimeStamp.of(1), mp.getValue().get(ClearInterval.class));
 				break;
 			default:
 			}
@@ -171,7 +177,7 @@ public class PresetTest {
 		for (Entry<AgentType, Props> mp : spec.getAgentProps().entries()) {
 			switch (mp.getKey()) {
 			case MAXEFFICIENCY:
-				assertEquals(66, (int) mp.getValue().get(NumAgents.class));
+				assertEquals(numAgents, (int) mp.getValue().get(NumAgents.class));
 				assertEquals(Defaults.get(MaxPosition.class), mp.getValue().get(MaxPosition.class));
 				break;
 			default:

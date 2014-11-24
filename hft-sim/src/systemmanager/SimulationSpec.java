@@ -45,7 +45,7 @@ public class SimulationSpec implements Serializable {
 	public static final String ASSIGNMENT = "assignment";
 	
 	private static final Splitter propSplit = Splitter.on(';');
-	private static final Splitter paramSplit = Splitter.on('_');
+	private static final Splitter paramSplit = Splitter.on('_').omitEmptyStrings();
 	private static final Splitter typeSplit = Splitter.on(':');
 	
 	// These are simulation specification keys, but not valid class keys

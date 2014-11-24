@@ -44,6 +44,9 @@ public final class ZIRPAgent extends BackgroundAgent {
 		log(INFO, "%s Submit %s order", this, orderType);
 		
 		OrderRecord original = strategy.getOrder(orderType, 1);
+		if (original == null)
+			return; // No order
+		
 		OrderRecord shaded = shader.apply(original);
 		postStat(Stats.ZIRP_GREEDY, shaded.equals(original) ? 0 : 1); // Determine if shader changed order
 		

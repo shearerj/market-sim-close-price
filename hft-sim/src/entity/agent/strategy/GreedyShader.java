@@ -33,7 +33,7 @@ public class GreedyShader implements Function<OrderRecord, OrderRecord> {
 	private GreedyShader(LimitPriceEstimator estimator, double acceptableProfitThreshold) {
 		checkArgument(Range.closed(0d, 1d).contains(acceptableProfitThreshold));
 		this.estimator = estimator;
-		this.shadeRange = Range.closed(acceptableProfitThreshold, 1d);
+		this.shadeRange = Range.closedOpen(acceptableProfitThreshold, 1d);
 	}
 	
 	public static GreedyShader create(LimitPriceEstimator estimator, double acceptableProfitThreshold) {

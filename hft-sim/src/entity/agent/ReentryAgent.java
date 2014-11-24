@@ -46,9 +46,10 @@ public abstract class ReentryAgent extends SMAgent {
 		reenterIn(reentry.next());
 	}
 
+	/** Exponential arrival times where the minimum wait time is 1 time tick */
 	public static Iterator<TimeStamp> exponentials(double rate, Rand rand) {
 		return Iterators.transform(Iterators2.exponentials(rate, rand), new Function<Double, TimeStamp>(){
-			@Override public TimeStamp apply(Double dub) { return TimeStamp.of((long) (double) dub); }
+			@Override public TimeStamp apply(Double dub) { return TimeStamp.of(1 + (long) (double) dub); }
 		});
 	}
 }

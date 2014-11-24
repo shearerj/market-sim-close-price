@@ -118,9 +118,13 @@ public abstract class Agent extends Entity {
 	 * order. Can be used to enforce certain things about how an agent submits
 	 * orders. A return of false indicates that the order was not actually
 	 * submitted and will not appear in active orders.
+	 * 
+	 * FIXME Decide if this can take null orders (where they just aren't
+	 * submitted, or requires that this is only called on actual orders
 	 */
 	protected boolean submitOrder(OrderRecord order, boolean nmsRoutable) {
 		checkArgument(order.getPrice().intValue() % tickSize == 0, "Price not in a valid tick size for this agent");
+		checkArgument(order.getPrice().intValue() >= 0, "Price of an order can't be negative");
 		activeOrders.add(order);
 		if (nmsRoutable)
 			order.getCurrentMarket().submitNMSOrder(this, order);

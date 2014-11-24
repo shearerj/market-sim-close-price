@@ -1,6 +1,7 @@
 package entity.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static logger.Log.Level.INFO;
@@ -74,7 +75,8 @@ public class ZIPAgent extends WindowAgent {
 	protected ZIPAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
-
+		checkState(false, "ZIP Agent should never be created as it's untested");
+		
 		int maxAbsPosition = props.get(MaxPosition.class);
 		
 		this.rangeCoeffA = props.get(RangeA.class);

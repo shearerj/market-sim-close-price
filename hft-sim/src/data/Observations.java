@@ -42,6 +42,13 @@ import com.google.gson.JsonSerializer;
  */
 public class Observations {
 	
+	/*
+	 * FIXME There's no guarantee that all of the summstats in features have the
+	 * same n. The missing n's should probably be made up with nan's so the
+	 * error is made known instead of hiding it by padding with zeros or
+	 * something.
+	 */
+
 	public static final String // Observation Keys
 	PV_BUY1 = 					"pv_buy1",
 	PV_SELL1 = 					"pv_sell1",

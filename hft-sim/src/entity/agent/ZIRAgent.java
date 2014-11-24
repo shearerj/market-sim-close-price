@@ -61,6 +61,9 @@ public class ZIRAgent extends BackgroundAgent {
 		int quantity = 1;
 		
 		OrderRecord order = strategy.getOrder(buyOrSell, quantity);
+		if (order == null)
+			return; // No order to submit
+		
 		log(INFO, "%s executing ZI strategy position=%d, for q=%d, value=%s + %s",
 				this, getPosition(), quantity, getFundamental(), getPrivateValue(quantity, buyOrSell));
 		log(INFO, "%s Submit %s order", this, buyOrSell);

@@ -106,8 +106,8 @@ public class Defaults implements Serializable {
 			
 			.put(SumPrefixes.class,		ImmutableList.of(Stats.SURPLUS, Stats.PROFIT, Stats.ZIRP_GREEDY, Stats.MAX_EFF_POSITION,
 					Stats.NUM_TRANS))
-			.put(MeanPrefixes.class,	ImmutableList.of(Stats.FUNDAMENTAL_END_PRICE, Stats.MARKET_MAKER_SPREAD, Stats.CONTROL_FUNDAMENTAL,
-					Stats.CONTROL_PRIVATE_VALUE))
+			.put(MeanPrefixes.class,	ImmutableList.of(Stats.FUNDAMENTAL_END_PRICE, Stats.MARKET_MAKER_SPREAD,
+					Stats.CONTROL_FUNDAMENTAL, Stats.CONTROL_PRIVATE_VALUE, Stats.ZIRP_GREEDY))
 			.put(StddevPrefixes.class,	ImmutableList.of(Stats.MARKET_MAKER_SPREAD, Stats.PRICE))
 			
 			// Simulation spec (general)
@@ -140,8 +140,8 @@ public class Defaults implements Serializable {
 			.put(RMax.class,			5000)
 			.put(Window.class,	TimeStamp.of(5000))
 			
-			.put(AcceptableProfitThreshold.class, 0.8) // For ZIRPs
-			.put(Withdraw.class, true) // for ZIRs
+			.put(AcceptableProfitThreshold.class, 1d) // For ZIRPs
+			.put(Withdraw.class, true)
 		
 			// AA Agent
 			.put(InitAggression.class,	0d)

@@ -38,6 +38,13 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 	protected final double shockVar;
 	protected final Rand rand;
 
+	/*
+	 * FIXME This records the "true" value, but the observed value is capped at
+	 * zero. Potentially should enforce edge effects, so that the time series
+	 * accurately reflects the observed values. This should maybe be a series of
+	 * Prices.
+	 */
+
 	/**
 	 * @param kap rate which the process reverts to the mean value
 	 * @param meanVal mean process
