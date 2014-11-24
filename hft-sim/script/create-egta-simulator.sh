@@ -7,11 +7,12 @@ if [[ $# -lt 1 || "$1" == "-h" || "$1" == "--help" ]]; then
     exit 1
 fi
 
-SKELETON="egta"
-LIBS="lib"
-JAR="dist/hft.jar"
+ROOT="$(readlink -m "$(dirname "$0")/..")"
+SKELETON="$ROOT/egta"
+LIBS="$ROOT/lib"
+JAR="$ROOT/dist/hft.jar"
 NAME="${1%.zip}"
-DEFAULTS="config/$NAME.json"
+DEFAULTS="$ROOT/config/$NAME.json"
 
 if [[ -e "$NAME" ]]; then
     echo "Error: Can't create a simulator with the same name as an existing directory"

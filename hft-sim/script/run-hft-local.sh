@@ -1,6 +1,7 @@
 #!/bin/bash
 # Run a simulation a given number of times
 
+# Don't know why I set this
 IFS='
 '
 
@@ -12,31 +13,25 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     echo " simulation-folder"
     echo "              Folder that contains simulation_spec.json"
     echo " num-of-obs   Num of observations to gather (default: 1)"
-    echo " num-proc     Number of processes to use (default: 2)"
+    echo " num-proc     Number of processes to use (default: 1)"
     exit 0
-elif [ $# -lt 1 ]; then
+elif [ $# -lt 2 ]; then
     echo "usage: $0 [-h] jar simulation-folder [num-of-obs] [num-proc]"
     exit 1
 fi
 
 # Parse Arguments
-LOC=$(dirname "$0")
-CLASSPATH=$(ls lib/*.jar | tr '\n' :)$(readlink -m "$1")
-FOLDER=$(readlink -m "$2") # Convert to absolute path
-NUM="$3"
-NUM_PROC="$4"
-if [[ -z "$NUM" ]]; then
-    NUM=1
-fi
-if [[ -z "$NUM_PROC" ]]; then
-    NUM_PROC=2
-fi
+ROOT="$(readlink -m "$(dirname "$0")/..")"
+CLASSPATH="$(ls "$ROOT/lib/"*.jar | tr '\n' :)$(readlink -m "$1")"
+FOLDER="$(readlink -m "$2")" # Convert to absolute path
+NUM="${3:-1}"
+NUM_PROC="${4:-1}"
 
 # Observations per process
 PER_PROC=$(( $NUM / $NUM_PROC ))
 
 # Change to $LOC to run java, necessary for environment properties loading
-cd "$LOC"
+cd "$ROOT"
 
 # Run parllely
 parfor () { # OUTPUT_FILE FOLDER START END+1
@@ -73,8 +68,9 @@ cd - > /dev/null
 # Exit if we got killed
 [[ "$NUM" -ne "${#OBSERVATIONS[@]}" ]] && exit 1
 
-if [[ $NUM -gt 1 ]]; then
-    echo -n ">> Merging observations..." >&2
-    "$LOC/merge-obs-egta.py" "${OBSERVATIONS[@]}" > "$FOLDER/merged_observation${NUM}.json"
-    echo " done" >&2
-fi
+# Merging disabled
+# if [[ $NUM -gt 1 ]]; then
+#     echo -n ">> Merging observations..." >&2
+#     "$LOC/merge-obs-egta.py" "${OBSERVATIONS[@]}" > "$FOLDER/merged_observation${NUM}.json"
+#     echo " done" >&2
+# fi

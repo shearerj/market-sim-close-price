@@ -1,9 +1,6 @@
 #!/bin/bash
 # Run a simulation a given number of times
 
-IFS='
-'
-
 if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     echo "usage: $0 [-h] simulation-folder [num-of-obs] [num-proc]"
     echo
@@ -19,5 +16,5 @@ elif [ $# -lt 1 ]; then
 fi
 
 # Parse Arguments
-LOC=$(dirname "$0")
-"$LOC/par-run-local-hft.sh" "$LOC/dist/hft.jar" "$@"
+LOC="$(dirname "$0")"
+"$LOC/run-hft-local.sh" "$LOC/../dist/hft.jar" "$@"

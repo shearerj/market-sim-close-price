@@ -17,13 +17,12 @@ parser.add_argument('-o', '--output', '-f', '--file', metavar='csv-file', type=a
 
 def to_csv(out, filenames):
     with open(filenames[0], 'r') as first:
-        obs = json.load(first)
-    obs.pop('config', None)
-    keys = sorted(obs['features'].keys(), key=lambda s: s[::-1])
+        feats = json.load(first)['features']
+    keys = sorted(feats.keys(), key=lambda s: s[::-1])
     out.write('obs,')
     if 'config' in keys:
 	keys.remove('config')
-        config = sorted(obs['features']['config'].keys())
+        config = sorted(feats['config'].keys())
         out.write(','.join(config))
 	out.write(',')
 
@@ -32,12 +31,11 @@ def to_csv(out, filenames):
 
     for filename in filenames:
         with open(filename, 'r') as f:
-            obs = json.load(f)
+            feats = json.load(f)['features']
 	out.write(re.search('observation\d+', filename).group().strip('observation'))
 	out.write(',')
-        feats = obs['features']
-	if 'config' in obs['features'].keys():
-	    configs = obs['features']['config']
+	if 'config' in feats.keys():
+	    configs = feats['config']
 	    out.write(','.join(str(configs[c]) for c in config))
 	    out.write(',')
         out.write(','.join(str(feats[k]) for k in keys))

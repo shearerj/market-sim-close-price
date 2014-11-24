@@ -12,48 +12,53 @@ parser.add_argument('-o', '--output', '-f', '--file', metavar='merged-log-file',
                     help='The log file to write to, defaults to stdout')
 
 # Regex for time of a line
-retime = re.compile(r'\d+\|\s*(\d+)')
+retime = re.compile(r'\s*(\d+)')
 
 class LogReader:
     def __init__(self, f):
-        self.file = f
+        self.f = f
         self.line = f.readline()
-        self.time = -1
+        self.time = 0
+        self.sim = 0
 
     def nextline(self):
         line = self.line
-        self.line = self.file.readline()
+        self.line = self.f.readline()
         match = retime.match(self.line)
         if match:
-            self.time = int(match.group(1))
-        elif self.time >= 0:
+            time = int(match.group(1))
+            if time < self.time:
+                self.sim += 1
+            self.time = time
+        else:
             self.time = sys.maxint
         return line
 
     def __lt__(self, other):
-        return self.time < other.time
+        return (self.sim, self.time) < (other.sim, other.time)
 
     def __eq__(self, other):
-        return self.time == other.time
+        return (self.sim, self.time) == (other.sim, other.time)
 
 def merge(logs, output):
     """ Merges log files off of time. Takes a generator of file descriptors """
     queue = PriorityQueue()
 
-    names = [path.dirname(path.abspath(f.name)) for f in logs]
-    prefixLength = len(path.dirname(path.commonprefix(names))) + 1
+    paths = [path.dirname(path.abspath(f.name)) for f in logs]
+    prefixLength = len(path.dirname(path.commonprefix(paths))) + 1
+    names = [p[prefixLength:-5] for p in paths]
+    length = max(len(n) for n in names)
 
     for i, (log, name) in enumerate(zip(logs, names)):
-        output.writelines((str(i), '| ', name[prefixLength:-5], '\n'))
-        queue.put((LogReader(log), i))
+        queue.put((LogReader(log), name))
 
     while not queue.empty():
-        reader, i = queue.get()
+        reader, name = queue.get()
         line = reader.nextline()
         if not line:
             continue
-        output.writelines((str(i), '|', line))
-        queue.put((reader, i))
+        output.writelines((name.rjust(length), '|', line))
+        queue.put((reader, name))
 
 if __name__ == "__main__":
     args = parser.parse_args()

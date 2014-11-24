@@ -20,7 +20,7 @@ elif [[ $# -lt 4 || ! "$2" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-LOC=$(dirname "$0")
+LOC="$(dirname "$0")"
 OUTPUT="$1"
 NUM_OBS="$2"
 INPUTS=( "${@:3}" )
@@ -30,7 +30,7 @@ mkdir -vp "$OUTPUT"
 echo -n ">> Merging similar run observations..."
 
 for (( OBS=0; OBS < $NUM_OBS; ++OBS )); do
-    "$LOC/merge-obs-presets.py" "${INPUTS[@]/%//observation$OBS.json}" > "$OUTPUT/observation$OBS.json"
+    "$LOC/merge-obs-across.py" "${INPUTS[@]/%//observation$OBS.json}" > "$OUTPUT/observation$OBS.json"
 done
 
 # Removed because merge-obs-egta.py doesn't properly handle the renaming of players and config
