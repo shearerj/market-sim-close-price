@@ -144,7 +144,7 @@ public abstract class SystemManager {
 		// Add specification if flag is set
 		JsonObject obs = gson.toJsonTree(observations).getAsJsonObject();
 		if (Boolean.parseBoolean(props.getProperty("outputConfig", "false")))
-			obs.get("features").getAsJsonObject().add("config", specification.getRawSpec());
+			obs.get("features").getAsJsonObject().add("config", specification.getRawSpec().get("configuration"));
 		
 		gson.toJson(obs, obsOut);
 		obsOut.flush();
