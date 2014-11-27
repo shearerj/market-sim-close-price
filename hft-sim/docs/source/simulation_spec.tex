@@ -183,13 +183,13 @@ Refer to Table \ref{tab:mkt} for details on market-specific settings.
 
 \\
 \uppercase{ZI parameter}   & \uppercase{Default} & \uppercase{Description} \\ \hline
-\texttt{rMin}			& 0	& Bid range minimum \\
-\texttt{rMax}			& 5000	& Bid range maximum \\
+\texttt{Rmin}			& 0	& Bid range minimum \\
+\texttt{Rmax}			& 5000	& Bid range maximum \\
 \texttt{thresh}		& 0.001 & Profit threshold of \texttt{ZIRP} \\
 
 \\
 \uppercase{MM parameter}   & \uppercase{Default} & \uppercase{Description} \\ \hline
-\texttt{k}			& 100	& Number of rungs on each side of the ladder \\
+\texttt{K}			& 100	& Number of rungs on each side of the ladder \\
 \texttt{size}			& 100	& Rung size \\
 \texttt{trunc}		& \texttt{true} & If true, will truncate the ladder to avoid crossing current quote \\
 \texttt{tickOutside}	& \texttt{false} & If true, given ladder center prices that match the \textit{BID} and \textit{ASK}, will modify to be \emph{outside} the quote by 1 tick (that is, lower than the  \textit{BID}, higher than the  \textit{ASK}) \\
@@ -198,8 +198,8 @@ Refer to Table \ref{tab:mkt} for details on market-specific settings.
 \texttt{initLadderRange} & 1000 & Ladder spread initialization \\
 
 \texttt{spread} & -1 &	 Constant spread for \textsc{FundMM} ladder. If this is nonpositive, MM uses the spread of the most recent price quote for the spread of its ladder. \\
-\texttt{n} 	& 5 & Number of historical prices (quotes) to use \\
-\texttt{w} 	& 0 & Weight factor $\in [0,1)$ for \textsc{WMAMM}; if 0, linearly weighted, otherwise exponentially weighted. \\
+\texttt{N} 	& 5 & Number of historical prices (quotes) to use \\
+\texttt{W} 	& 0 & Weight factor $\in [0,1)$ for \textsc{WMAMM}; if 0, linearly weighted, otherwise exponentially weighted. \\
 
 \texttt{median} 	& \texttt{false}	& If true, \texttt{AdaptiveMM} will use median spread-based strategy \\
 \texttt{fastLearn}	 & \texttt{true} & If true, \texttt{AdaptiveMM} will use modification to learn more quickly (for updating G) \\

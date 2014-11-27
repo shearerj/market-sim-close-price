@@ -16,8 +16,8 @@ import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.PrivateValueVar;
-import systemmanager.Keys.RMax;
-import systemmanager.Keys.RMin;
+import systemmanager.Keys.Rmax;
+import systemmanager.Keys.Rmin;
 import systemmanager.Keys.SimLength;
 import systemmanager.Keys.Withdraw;
 import utils.Mock;
@@ -41,8 +41,8 @@ public class ZIRPAgentTest {
 			.put(ArrivalRate.class,			0d)
 			.put(MaxPosition.class,				2)
 			.put(PrivateValueVar.class,		100d)
-			.put(RMin.class,				10000)
-			.put(RMax.class,				10000)
+			.put(Rmin.class,				10000)
+			.put(Rmax.class,				10000)
 			.put(SimLength.class,			60000)
 			.put(FundamentalKappa.class,	0.05)
 			.put(FundamentalMean.class,		100000)

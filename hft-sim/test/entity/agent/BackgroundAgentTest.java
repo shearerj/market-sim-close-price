@@ -15,8 +15,8 @@ import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.MaxPosition;
-import systemmanager.Keys.RMax;
-import systemmanager.Keys.RMin;
+import systemmanager.Keys.Rmax;
+import systemmanager.Keys.Rmin;
 import systemmanager.Keys.SimLength;
 import systemmanager.Keys.Withdraw;
 import utils.Mock;
@@ -225,7 +225,7 @@ public class BackgroundAgentTest {
 	public void testPayoff() {
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(
 				ListPrivateValue.create(ImmutableList.of(Price.of(1000), Price.of(-2000))),
-				Props.fromPairs(RMin.class, 0, RMax.class, 1000));
+				Props.fromPairs(Rmin.class, 0, Rmax.class, 1000));
 		
 		mockAgent.submitOrder(view, BUY, Price.of(51000), 1);
 		agent.submitOrder(SELL, Price.of(51000), 1);
@@ -260,7 +260,7 @@ public class BackgroundAgentTest {
 		
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(
 				ListPrivateValue.create(ImmutableList.of(Price.of(1000), Price.of(-1000))),
-				Props.fromPairs(RMin.class, 0, RMax.class, 1000));
+				Props.fromPairs(Rmin.class, 0, Rmax.class, 1000));
 		
 		mockAgent.submitOrder(view, BUY, Price.of(51000), 1);
 		agent.submitOrder(SELL, Price.of(51000), 1);
@@ -282,7 +282,7 @@ public class BackgroundAgentTest {
 		
 		BackgroundAgent agent = backgroundAgentwithPrivateValue(
 				ListPrivateValue.create(ImmutableList.of(Price.of(1000), Price.of(-1000))),
-				Props.fromPairs(RMin.class, 0, RMax.class, 1000));
+				Props.fromPairs(Rmin.class, 0, Rmax.class, 1000));
 		
 		mockAgent.submitOrder(view, BUY, Price.of(51000), 1);
 		agent.submitOrder(SELL, Price.of(51000), 1);

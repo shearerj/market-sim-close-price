@@ -12,8 +12,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Keys.ArrivalRate;
-import systemmanager.Keys.RMax;
-import systemmanager.Keys.RMin;
+import systemmanager.Keys.Rmax;
+import systemmanager.Keys.Rmin;
 import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.Withdraw;
 import utils.Mock;
@@ -47,8 +47,8 @@ public class ZIRAgentTest {
 	private static final Props defaults = Props.fromPairs(
 			ArrivalRate.class, 0d,
 			PrivateValueVar.class, 0d,
-			RMin.class, 1000,
-			RMax.class, 1000);
+			Rmin.class, 1000,
+			Rmax.class, 1000);
 	
 	private EventQueue timeline;
 	private FundamentalValue fundamental;

@@ -44,8 +44,8 @@ import systemmanager.Keys.NumSims;
 import systemmanager.Keys.Periods;
 import systemmanager.Keys.PricingPolicy;
 import systemmanager.Keys.PrivateValueVar;
-import systemmanager.Keys.RMax;
-import systemmanager.Keys.RMin;
+import systemmanager.Keys.Rmax;
+import systemmanager.Keys.Rmin;
 import systemmanager.Keys.RandomSeed;
 import systemmanager.Keys.RangeA;
 import systemmanager.Keys.RangeR;
@@ -136,8 +136,8 @@ public class Defaults implements Serializable {
 			// Background Agents
 			.put(PrivateValueVar.class, 1000000d)
 			.put(MaxPosition.class,		10)
-			.put(RMin.class,			0)
-			.put(RMax.class,			5000)
+			.put(Rmin.class,			0)
+			.put(Rmax.class,			5000)
 			.put(Window.class,	TimeStamp.of(5000))
 			
 			.put(AcceptableProfitThreshold.class, 1d) // For ZIRPs

@@ -13,8 +13,8 @@ import org.junit.Test;
 
 import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.BackgroundReentryRate;
-import systemmanager.Keys.RMax;
-import systemmanager.Keys.RMin;
+import systemmanager.Keys.Rmax;
+import systemmanager.Keys.Rmin;
 import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.MarketMakerReentryRate;
 import systemmanager.Keys.NumAgents;
@@ -96,8 +96,8 @@ public class SimulationSpecTest {
 	public void reentryTest() {
 		JsonObject json = gson.toJsonTree(ImmutableMap.of(
 				ASSIGNMENT, ImmutableMap.of("BACKGROUND", ImmutableList.of(
-						ZIR + ":" + Props.fromPairs(RMax.class, 100).toConfigString(),
-						ZIRP + ":" + Props.fromPairs(RMin.class, 10).toConfigString()),
+						ZIR + ":" + Props.fromPairs(Rmax.class, 100).toConfigString(),
+						ZIRP + ":" + Props.fromPairs(Rmin.class, 10).toConfigString()),
 						"MARKETMAKER", ImmutableList.of(
 								FUNDAMENTALMM + ":" + Props.fromPairs(Spread.class, Price.of(256)).toConfigString())),
 				CONFIG, ImmutableMap.of(
@@ -110,11 +110,11 @@ public class SimulationSpecTest {
 		for (PlayerSpec pspec : spec.getPlayerProps()) {
 			switch(pspec.type) {
 			case ZIR:
-				assertEquals(100, (int) pspec.agentProps.get(RMax.class));
+				assertEquals(100, (int) pspec.agentProps.get(Rmax.class));
 				assertEquals(0.0005, pspec.agentProps.get(BackgroundReentryRate.class), eps);
 				break;
 			case ZIRP:
-				assertEquals(10, (int) pspec.agentProps.get(RMin.class));
+				assertEquals(10, (int) pspec.agentProps.get(Rmin.class));
 				assertEquals(0.0005, pspec.agentProps.get(BackgroundReentryRate.class), eps);
 				break;
 			case FUNDAMENTALMM:

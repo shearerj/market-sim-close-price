@@ -44,8 +44,8 @@ public interface Keys {
 	public static class MarketMakerReentryRate extends DoubleValue {};
 
 	public static class Window extends TimeValue {};
-	public static class RMax extends IntValue {};
-	public static class RMin extends IntValue {};
+	public static class Rmax extends IntValue {};
+	public static class Rmin extends IntValue {};
 	public static class MaxPosition extends IntValue {};
 	public static class Alpha extends DoubleValue {};
 	
