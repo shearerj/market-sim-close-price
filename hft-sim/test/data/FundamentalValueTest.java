@@ -34,7 +34,7 @@ public class FundamentalValueTest {
 	public void immutableTest() {
 		FundamentalValue fund = Mock.fundamental;
 		fund.computeFundamentalTo(1000);
-		Iterator<Double> it = fund.iterator();
+		Iterator<Price> it = fund.iterator();
 		it.next();
 		it.remove();
 	}
@@ -55,9 +55,12 @@ public class FundamentalValueTest {
 		FundamentalValue fund = FundamentalValue.create(stats, Mock.timeline,
 				Defaults.get(FundamentalKappa.class), Defaults.get(FundamentalMean.class), Defaults.get(FundamentalShockVar.class), rand);
 		fund.computeFundamentalTo(100);
+		
+		ImmutableList.Builder<Double> vals = ImmutableList.builder();
+		for (Price p : fund)
+			vals.add(p.doubleValue());
 
-		assertEquals(ImmutableList.copyOf(fund),
-				ImmutableList.copyOf(Iterables.limit(stats.getTimeStats().get(Stats.FUNDAMENTAL), 101)));
+		assertEquals(vals.build(), ImmutableList.copyOf(Iterables.limit(stats.getTimeStats().get(Stats.FUNDAMENTAL), 101)));
 		assertEquals(SummStats.on(fund).mean(), stats.getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).mean(), eps);
 		assertEquals(SummStats.on(fund).stddev(), stats.getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).stddev(), eps);
 	}
@@ -67,11 +70,13 @@ public class FundamentalValueTest {
 		int mean = rand.nextInt(100000);
 		Stats stats = Stats.create();
 		FundamentalValue fund = FundamentalValue.create(stats, Mock.timeline, 0, mean, 0, rand);
-		
 		fund.computeFundamentalTo(100);
+		
+		ImmutableList.Builder<Double> vals = ImmutableList.builder();
+		for (Price p : fund)
+			vals.add(p.doubleValue());
 
-		assertEquals(ImmutableList.copyOf(fund),
-				ImmutableList.copyOf(Iterables.limit(stats.getTimeStats().get(Stats.FUNDAMENTAL), 101)));
+		assertEquals(vals.build(), ImmutableList.copyOf(Iterables.limit(stats.getTimeStats().get(Stats.FUNDAMENTAL), 101)));
 		assertEquals(mean, stats.getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).mean(), eps);
 		assertEquals(0, stats.getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).stddev(), eps);
 	}

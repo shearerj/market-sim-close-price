@@ -25,25 +25,18 @@ import event.Timeline;
  * 
  * @author ewah
  */
-public class FundamentalValue implements Iterable<Double>, Serializable {
+public class FundamentalValue implements Iterable<Price>, Serializable {
 
 	protected static final Ordering<TimeStamp> ord = Ordering.natural();
 	
 	private final Timeline timeline;
 	private final Stats stats;
 	
-	protected final ArrayList<Double> meanRevertProcess;
+	protected final ArrayList<Price> meanRevertProcess;
 	protected final double kappa;
 	protected final int meanValue;
 	protected final double shockVar;
 	protected final Rand rand;
-
-	/*
-	 * FIXME This records the "true" value, but the observed value is capped at
-	 * zero. Potentially should enforce edge effects, so that the time series
-	 * accurately reflects the observed values. This should maybe be a series of
-	 * Prices.
-	 */
 
 	/**
 	 * @param kap rate which the process reverts to the mean value
@@ -62,45 +55,38 @@ public class FundamentalValue implements Iterable<Double>, Serializable {
 
 		// stochastic initial conditions for random process
 		meanRevertProcess = Lists.newArrayList();
-		meanRevertProcess.add(rand.nextGaussian(meanValue, shockVar));
-		postStat(0, Iterables.getOnlyElement(meanRevertProcess));
+		meanRevertProcess.add(Price.of(rand.nextGaussian(meanValue, shockVar)).nonnegative());
+		postStat(0, Iterables.getOnlyElement(meanRevertProcess).doubleValue());
 	}
 	
-	/**
-	 * Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps
-	 */
+	/** Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps */
 	public static FundamentalValue create(Stats stats, Timeline timeline, double kap, int meanVal, double var, Rand rand) {
 		return new FundamentalValue(stats, timeline, kap, meanVal, var, rand);
 	}
 
-	/**
-	 * Helper method to ensure that maxQuery exists in the data structure.
-	 */
+	/** Helper method to ensure that maxQuery exists in the data structure. */
 	protected void computeFundamentalTo(int maxQuery) {
 		for (int i = meanRevertProcess.size(); i <= maxQuery; i++) {
-			double prevValue = Iterables.getLast(meanRevertProcess);
-			double nextValue = rand.nextGaussian(meanValue * kappa + (1 - kappa) * prevValue, shockVar);
+			Price prevValue = Iterables.getLast(meanRevertProcess);
+			Price nextValue = Price.of(rand.nextGaussian(meanValue * kappa + (1 - kappa) * prevValue.doubleValue(), shockVar)).nonnegative();
 			meanRevertProcess.add(nextValue);
-			postStat(i, nextValue);
+			postStat(i, nextValue.doubleValue());
 		}
 	}
 
-	/**
-	 * Returns the global fundamental value at time ts. If undefined, return 0.
-	 */
+	/** Returns the global fundamental value at time ts. */
 	public Price getValueAt(TimeStamp t) {
 		checkArgument(!t.before(TimeStamp.ZERO), "Can't query before time zero");
 		int index = (int) t.getInTicks();
 		computeFundamentalTo(index);
-		return Price.of(meanRevertProcess.get(index)).nonnegative();
+		return meanRevertProcess.get(index);
 	}
 
 	@Override
-	public Iterator<Double> iterator() {
+	public Iterator<Price> iterator() {
 		return Iterators.unmodifiableIterator(meanRevertProcess.iterator());
 	}
 	
-	// XXX These aren't rounded the way the prices will be
 	protected void postStat(int index, double value) {
 		stats.postTimed(TimeStamp.of(index), Stats.FUNDAMENTAL, value);
 		stats.post(Stats.CONTROL_FUNDAMENTAL, value);
