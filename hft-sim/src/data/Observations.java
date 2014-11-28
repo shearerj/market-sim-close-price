@@ -35,8 +35,21 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 /**
- * This class represents all of the final data about the simulation. Every piece
- * of information it gets must be stored in a Stats object during the simulation
+ * This class represents all of the output data about the entire set of
+ * simulations. It logs player information, and derived information from
+ * simulation statistics.
+ * 
+ * The two main types of statistics are handled differently.
+ * 
+ * Timed Statistics must have the "add" method modified to properly store any
+ * relevant statistics.
+ * 
+ * Summary statistics automatically have their mean, sum and standard deviation
+ * stored. There are three white lists called sumPrefixes, meanPrefixes, and
+ * stddevPrefixes that will cause the statistic to only have the corresponding
+ * summary stored. IF a statistic occurs on several white lists, then it will
+ * have all of the relevant statistics stored. By default, the stored summaries
+ * are the ones usually required.
  * 
  * @author erik
  */
@@ -54,8 +67,8 @@ public class Observations {
 	PV_SELL1 = 					"pv_sell1",
 	PV_POSITION1_MAX_ABS =		"pv_position_max_abs1";
 	
-	protected final Multimap<String, PlayerObservation> players;
-	protected final Map<String, SummStats> features;
+	protected final Multimap<String, PlayerObservation> players; // Player information
+	protected final Map<String, SummStats> features; // Other features
 	
 	private transient final int simLength;
 	private transient final Iterable<Integer> periods;
@@ -92,6 +105,8 @@ public class Observations {
 		return new Observations(playerProperties, simulationProps);
 	}
 	
+	// Modify this to add custom time series statistics
+	/** Adds the statistics and player information gathered from the simulation to the cumulative observation */
 	public void add(Stats stats, Collection<Player> playerAgents) {
 		// Handle Players
 		ImmutableMap.Builder<String, Iterator<PlayerObservation>> builder = ImmutableMap.builder();
@@ -192,6 +207,7 @@ public class Observations {
 		}
 	}
 	
+	/** Represents all the necessary information on a player */
 	protected static class PlayerObservation {
 		public final SummStats payoff;
 		public final Map<String, SummStats> features;
@@ -214,6 +230,7 @@ public class Observations {
 		}
 	}
 	
+	// Serializers for conversion to JSON
 	public static final class SummStatsSerializer implements JsonSerializer<SummStats> {
 		@Override
 		public JsonElement serialize(SummStats stats, Type typeOfStats, JsonSerializationContext context) {

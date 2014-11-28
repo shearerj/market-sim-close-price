@@ -21,9 +21,8 @@ import com.google.gson.JsonObject;
  * Class that represents the properties of an entity. These are generally loaded
  * from a simulation spec file.
  * 
- * Contains methods to get values as any type, potentially with a default value.
- * If a default value isn't used, and the key doesn't exist, you'll get a null
- * object, or a null pointer.
+ * This class contains two main accessor methods. get(key) and get(key,
+ * backup-key). See the methods for full documentation.
  * 
  * @author erik
  * 
@@ -31,10 +30,10 @@ import com.google.gson.JsonObject;
 public class Props implements Serializable {
 	
 	private static final Joiner paramJoiner = Joiner.on('_');
-	private static final String classPath = "systemmanager.Keys$";
+	private static final String classPath = "systemmanager.Keys$"; // Allows reading of strings into classes
 	private static final Props empty = builder().build();
 	
-	private final ImmutableProps props;
+	private final ImmutableProps props; // Underlying type safe properties data structure
 
 	protected Props(ImmutableProps props) {
 		this.props = props;
@@ -137,6 +136,7 @@ public class Props implements Serializable {
 		return withDefaults(defaults, keyValuePairs.iterator());
 	}
 	
+	// Note, this will fail slow if iterator has an odd number of elements
 	public static Props withDefaults(Props defaults, Iterator<String> keyValuePairs) {
 		Builder builder = builder().putAll(defaults);
 		while (keyValuePairs.hasNext())
@@ -155,12 +155,17 @@ public class Props implements Serializable {
 		return new Builder();
 	}
 
+	/** Gets the value associated with the passed in key */
 	public <T> T get(Class<? extends Value<T>> key) {
 		return checkNotNull(Optional.fromNullable(props.get(key))
 				.or(Optional.fromNullable(Defaults.get(key)))
 				.orNull(), "Default value of %s is not defined", key);
 	}
 	
+	/**
+	 * Gets the value associated with the passed in key. If a value isn't
+	 * present, then it gets the value associated with the defaultKey
+	 */
 	public <T> T get(Class<? extends Value<T>> key, Class<? extends Value<T>> defaultKey) {
 		return checkNotNull(Optional.fromNullable(props.get(key))
 				.or(Optional.fromNullable(props.get(defaultKey)))

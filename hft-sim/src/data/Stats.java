@@ -12,31 +12,12 @@ import com.google.common.collect.Maps;
 import event.TimeStamp;
 
 /**
- * This class represents the summary of statistics after a run of the
- * simulation. The majority of the statistics that it collects are processed via
- * the EventBus, which is a message passing interface that can handle any style
- * of object. The rest, which mainly includes agent and player payoffs, is
- * processed when the call to getFeatures or getPlayerObservations is made.
+ * This class represents all of the relevant statistics after a run of the
+ * simulation.
  * 
- * Because this uses message passing, if you want the observation data structure
- * to get data, you must make sure to "register" it with the EventBus by calling
- * BUS.register(observations).
- * 
- * A single observation doesn't have that ability to save its results. Instead
- * you need to add it to a MultiSimulationObservation and use that class to
- * actually do the output.
- * 
- * To add statistics to the Observation:
- * <ol>
- * <li>Add the appropriate data structures to the object to record the
- * information you're interested in.</li>
- * <li>Create a listener method (located at the bottom, to tell what objects to
- * handle, and what to do with them.</li>
- * <li>Modify get features to take the aggregate data you stored, and turn it
- * into a String, double pair.</li>
- * <li>Wherever the relevant data is added simply add a line like
- * "Observations.BUS.post(dataObj);" with your appropriate data</li>
- * </ol>
+ * There are two main types. Timed, which are stored in a time series, and
+ * summary which are aggregated in a SummStats object. Both types are handeled
+ * differently when ultimately incorporated into an observation.
  * 
  * @author erik
  * 

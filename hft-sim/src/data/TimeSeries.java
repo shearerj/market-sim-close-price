@@ -28,12 +28,13 @@ import com.google.common.collect.Lists;
  * When filling in values, a new element is added to series if the time for the
  * new data point is different from the most recent time recorded.
  * 
- * TODO Would like to have the methods just return views instead of copying the
- * data :( This shouldn't be too hard. Methods should just return Iterables
- * instead of Lists
- * 
  * @author ewah
  * 
+ */
+/*
+ * FIXME Currently interpolation is hard coded, and results in NaN values at the
+ * beginning. It would be better to have an interpolation class that can
+ * arbitrarily fill in the blanks.
  */
 public class TimeSeries implements Serializable, SparseIterable<Double> {
 	

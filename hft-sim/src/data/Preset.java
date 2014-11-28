@@ -16,6 +16,14 @@ import com.google.gson.JsonObject;
 
 import event.TimeStamp;
 
+/**
+ * This class handles all of the simulation specification shortcuts that yield
+ * actual operating parameters. Currently they are only simulation shortcuts,
+ * but they could be adapted to have shortcuts for certain strategy strings.
+ * 
+ * @author erik
+ * 
+ */
 public class Preset {
 
 	public static enum Presets { NONE, TWOMARKET, TWOMARKETLA, CENTRALCDA, CENTRALCALL, MAXEFF };
@@ -55,7 +63,6 @@ public class Preset {
 			return config;
 
 		case MAXEFF:
-			// FIXME use numAgents instead of hard coded 66, dependent on config allowing an empty string
 			config.addProperty(keyToString(SimLength.class), 2);
 			config.addProperty(CDA.toString(), Props.fromPairs(NumMarkets.class, 0).toConfigString());
 			config.addProperty(CALL.toString(), Props.fromPairs(NumMarkets.class, 1, ClearInterval.class, TimeStamp.of(1)).toConfigString());

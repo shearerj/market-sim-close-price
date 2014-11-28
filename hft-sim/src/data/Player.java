@@ -6,11 +6,12 @@ import java.util.Map;
 import entity.agent.Agent;
 
 /**
- * A class that represents a player. It contains a role, strategy, and a
- * reference to the player.
+ * A class that represents a player. It contains a descriptor string (a
+ * concatenation of role and strategy with a space in the middle. Roles cannot
+ * have spaces, so separating on the first space yields role and strategy
  * 
  * It is accessed by getting a player observation. This calls the
- * player.getPayoff function which can be overridden to return the correct thing
+ * player.getPayoff function which can be overridden to return the correct payoff
  * for different agent types.
  * 
  * @author erik
