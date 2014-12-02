@@ -21,24 +21,21 @@ elif [ $# -lt 2 ]; then
 fi
 
 # Parse Arguments
-ROOT="$(readlink -m "$(dirname "$0")/..")"
-CLASSPATH="$(ls "$ROOT/lib/"*.jar | tr '\n' :)$(readlink -m "$1")"
-FOLDER="$(readlink -m "$2")" # Convert to absolute path
+SCRIPT="$(dirname "$0")"
+JAR="$1"
+DIR="$2"
 NUM="${3:-1}"
 NUM_PROC="${4:-1}"
 
 # Observations per process
 PER_PROC=$(( $NUM / $NUM_PROC ))
 
-# Change to $LOC to run java, necessary for environment properties loading
-cd "$ROOT"
-
 # Run parllely
-parfor () { # OUTPUT_FILE FOLDER START END+1
-    for (( OBS = $3; OBS < $4; ++OBS )); do
-	echo ">> Running simulation $OBS..." >&2
-	java -cp "${CLASSPATH}" systemmanager.SystemManager "$2" "$OBS"
-	echo "$FOLDER/observation$OBS.json" >> "$1"
+parfor () { # OUTPUT_FILE START END+1
+    for (( OBS = $2; OBS < $3; ++OBS )); do
+	echo ">> Running ${DIR%/}: simulation $OBS" >&2
+	"$SCRIPT/run-hft-single.sh" "$JAR" "$DIR" "$OBS"
+	echo "$DIR/observation$OBS.json" >> "$1"
     done
 }
 
@@ -46,11 +43,11 @@ FILES=()
 # Don't do the last one to account for rounding
 for (( I=1; I<$NUM_PROC; ++I )); do
     FILE=$(mktemp)
-    parfor "$FILE" "$FOLDER" $(( $I * $PER_PROC - $PER_PROC )) $(( $I * $PER_PROC )) &
+    parfor "$FILE" $(( $I * $PER_PROC - $PER_PROC )) $(( $I * $PER_PROC )) &
     FILES+=( "$FILE" )
 done
 FILE=$(mktemp)
-parfor "$FILE" "$FOLDER" $(( $NUM_PROC * $PER_PROC - $PER_PROC )) $NUM &
+parfor "$FILE" $(( $NUM_PROC * $PER_PROC - $PER_PROC )) $NUM &
 FILES+=( "$FILE" )
 
 trap "kill 0" SIGINT SIGTERM #EXIT # Pass signals to children
@@ -61,9 +58,6 @@ for FILE in "${FILES[@]}"; do
     OBSERVATIONS+=( $(cat "$FILE") )
     rm "$FILE"
 done
-
-# Change back after finished running
-cd - > /dev/null
 
 # Exit if we got killed
 [[ "$NUM" -ne "${#OBSERVATIONS[@]}" ]] && exit 1

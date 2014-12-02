@@ -15,25 +15,31 @@ parser.add_argument('-i', '--input', '-f', '--file', metavar='filename', type=ar
 parser.add_argument('-v', '--value', metavar='value', 
                     help='A value to set the field to')
 
-def read_field(field):
+def __read_field__(field):
     return int(field) if field.isdigit() else field
+
+
+def get(full, jpath, value=None):
+    j = full
+
+    for field in jpath[:-1]:
+        j = j[__read_field__(field)]
+
+    if value is not None:
+        assert jpath, "Fields must be none empty, otherwise you'd just be rewriting the file"
+        j[__read_field__(jpath[-1])] = json.loads(value)
+    elif jpath:
+        j = j[__read_field__(jpath[-1])]
+        full = j
+        
+    return full
+
 
 if __name__ == '__main__':
     args = parser.parse_args()
 
     full = json.load(args.input)
-    args.input.close()
-    j = full
+    full = get(full, args.fields, args.value)
 
-    for field in args.fields[:-1]:
-        j = j[read_field(field)]
-
-    if args.value is not None:
-        assert args.fields, "Fields must be none empty, otherwise you'd just be rewriting the file"
-        j[read_field(args.fields[-1])] = json.loads(args.value)
-        j = full
-    elif args.fields:
-        j = j[read_field(args.fields[-1])]
-
-    json.dump(j, sys.stdout, indent=4, sort_keys=True)
+    json.dump(full, sys.stdout, indent=4, sort_keys=True)
     sys.stdout.write('\n')

@@ -2,19 +2,21 @@
 # Allows running arbitrary simulations try running with --help
 
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    echo "usage: $0 [-h] directory num-obs num-procs jpath values [jpath values ...]"
+    echo "usage: $0 [-h] directory jpath values [jpath values ...]"
     echo
     echo "Run an experiment with modifications of the simulation_spec"
     echo
     echo "\"directory\" must have a valid simulation_spec.json in it. Each jpath specified reprsents a dimension of the simulation spec to modify, and the space separated values represents all of the grid points to sample. By specifying multiple jpath values pairs, one can do a multidimensional grid search over specification parameters." | fold -s
     echo
     echo "example usage:"
-    echo "  $0 sim_dir 100 presets \"CENTRALCDA TWOMARKET\" nbboLatency \"5 10 20 50 100 200\""
-    echo "  # This will simulate various nbbo latencies for both a central cda and"
-    echo "  # a two market model"
+    echo "  $0 sim_dir presets \"CENTRALCDA TWOMARKET\" nbboLatency \"5 10 20 50 100 200\""
+    echo "  # This will create directories to simulate various nbbo latencies for"
+    echo "  # both a central cda and a two market model"
+    echo "  ls -d sim_dir/*/ | xargs -I{} ./script/run-hft.sh {} num-obs num-proc"
+    echo "  # This will run all of the newly created simulations"
     exit 0
-elif [[ "$#" -lt 5 || "$(( $# % 2 ))" -ne 1 ]]; then
-    echo "usage: $0 [-h] directory num-obs jpath values [jpath values ...]"
+elif [[ "$#" -lt 3 || "$(( $# % 2 ))" -ne 1 ]]; then
+    echo "usage: $0 [-h] directory jpath values [jpath values ...]"
     exit 1
 fi
 
@@ -25,12 +27,10 @@ DEFAULT_JPATH="configuration"
 # Get first couple of variables
 LOC="$(dirname "$0")"
 DIR="$1"
-NUM_OBS="$2"
-NUM_PROCS="$3"
 SPEC="$(< "$DIR/$SPEC_FILE")" # simulation_spec in a bash variable
 
 # Set up for doing the grid search over parameters
-ARGS=( "${@:4}" ) # All of the grid search arguments
+ARGS=( "${@:2}" ) # All of the grid search arguments
 NARGS=$(( ${#ARGS[@]} / 2 )) # Number of pairs
 INDEX=( $( yes 0 | head -n "$NARGS" ) ) # The current index for the grid for each pair
 LENGTH=( $( yes 0 | head -n "$NARGS" ) ) # The total number of values in each pair
@@ -55,14 +55,10 @@ while [[ ${INDEX[0]} -lt ${LENGTH[0]} ]]; do
 
     # Create the experiment name directory (remove the preciding underscore from NAME)
     EXP_DIR="$DIR/${NAME#_}"
-    # Status message
-    echo ">>> Creating Experiment \"$EXP_DIR\""
     # Create directory
     mkdir -pv "$EXP_DIR"
     # Save spec in directory
     echo "$SPEC" > "$EXP_DIR/$SPEC_FILE"
-    # Run simulation
-    "$LOC/run-hft.sh" "$EXP_DIR" "$NUM_OBS" "$NUM_PROCS"
 
     # Incriment the index for the last value pair
     INDEX[$(( $NARGS - 1 ))]=$(( ${INDEX[$(( $NARGS - 1 ))]} + 1 ))
