@@ -21,50 +21,16 @@ elif [ $# -lt 2 ]; then
 fi
 
 # Parse Arguments
-SCRIPT="$(dirname "$0")"
-JAR="$1"
-DIR="$2"
+export SCRIPT="$(dirname "$0")"
+export JAR="$1"
+export DIR="$2"
 NUM="${3:-1}"
 NUM_PROC="${4:-1}"
 
-# Observations per process
-PER_PROC=$(( $NUM / $NUM_PROC ))
-
-# Run parllely
-parfor () { # OUTPUT_FILE START END+1
-    for (( OBS = $2; OBS < $3; ++OBS )); do
-	echo ">> Running ${DIR%/}: simulation $OBS" >&2
-	"$SCRIPT/run-hft-single.sh" "$JAR" "$DIR" "$OBS"
-	echo "$DIR/observation$OBS.json" >> "$1"
-    done
+function status { # (OBS-NUM)
+    echo ">> Running ${DIR%/} $1" >&2
+    "$SCRIPT/run-hft-single.sh" "$JAR" "$DIR" "$1"
 }
 
-FILES=()
-# Don't do the last one to account for rounding
-for (( I=1; I<$NUM_PROC; ++I )); do
-    FILE=$(mktemp)
-    parfor "$FILE" $(( $I * $PER_PROC - $PER_PROC )) $(( $I * $PER_PROC )) &
-    FILES+=( "$FILE" )
-done
-FILE=$(mktemp)
-parfor "$FILE" $(( $NUM_PROC * $PER_PROC - $PER_PROC )) $NUM &
-FILES+=( "$FILE" )
-
-trap "kill 0" SIGINT SIGTERM #EXIT # Pass signals to children
-wait
-
-OBSERVATIONS=()
-for FILE in "${FILES[@]}"; do
-    OBSERVATIONS+=( $(cat "$FILE") )
-    rm "$FILE"
-done
-
-# Exit if we got killed
-[[ "$NUM" -ne "${#OBSERVATIONS[@]}" ]] && exit 1
-
-# Merging disabled
-# if [[ $NUM -gt 1 ]]; then
-#     echo -n ">> Merging observations..." >&2
-#     "$LOC/merge-obs-egta.py" "${OBSERVATIONS[@]}" > "$FOLDER/merged_observation${NUM}.json"
-#     echo " done" >&2
-# fi
+export -f status
+seq "$NUM" | xargs -I{} -P"$NUM_PROC" bash -c 'status {}'
