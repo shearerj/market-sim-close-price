@@ -121,8 +121,8 @@ In the \emph{Market Model} use case, the ``player'' section will be empty (as th
 
 
 \verb|trans_mean_price| & average transaction price \\
-\verb|trans_rmsd|   & root mean square deviation (RMSD) between transaction prices and the value of the fundamental at the time of execution \\
-\verb|trans_freq_X_rmsd|  & RMSD based on prices sampled every X timesteps \\
+\verb|trans_rmsd|   & root mean square deviation (RMSD) between transaction prices and the value of the fundamental at time of execution (ignores NaNs) \\
+\verb|trans_freq_X_rmsd|  & RMSD based on prices sampled every X timesteps (ignores NaNs) \\
 \verb|trans_stddev_price| & standard deviation of transaction prices \\
 \verb|trans_num| & total number of transactions \\
 \verb|trans_<agent>_num| & number of transactions by agents of specified type (e.g., ZI, ZIR, LA)\\
