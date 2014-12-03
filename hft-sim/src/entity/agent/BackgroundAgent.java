@@ -14,11 +14,13 @@ import systemmanager.Keys.BackgroundReentryRate;
 import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.ReentryRate;
+import systemmanager.Keys.ReentryType;
 import systemmanager.Keys.Withdraw;
 import utils.Rand;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 
 import data.FundamentalValue;
 import data.Observations;
@@ -41,6 +43,8 @@ import fourheap.Order.OrderType;
  * @author ewah
  */
 public abstract class BackgroundAgent extends SMAgent {
+	
+	public static enum Reentries { EXPONENTIAL, SINGLE };
 	
 	private final int maxAbsolutePosition;
 	private final boolean withdrawOrders;	// Withdraw orders each reentry
@@ -71,8 +75,7 @@ public abstract class BackgroundAgent extends SMAgent {
 	 */
 	protected BackgroundAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
-		this(id, stats, timeline, log, rand, sip, fundamental,
-				Agent.exponentials(props.get(BackgroundReentryRate.class, ReentryRate.class), rand),
+		this(id, stats, timeline, log, rand, sip, fundamental, parseReentry(props, rand),
 				ListPrivateValue.createRandomly(props.get(MaxPosition.class), props.get(PrivateValueVar.class), rand),
 				market, props);
 	}
@@ -146,6 +149,17 @@ public abstract class BackgroundAgent extends SMAgent {
 		
 		for (Entry<Double, Double> e : getDiscountedSurplus())
 			postStat(String.format("%s%.4f_background", Stats.SURPLUS, e.getKey()), e.getValue());
+	}
+	
+	private static Iterator<TimeStamp> parseReentry(Props props, Rand rand) {
+		switch (props.get(ReentryType.class)) {
+		case SINGLE:
+			return Iterators.limit(Agent.exponentials(props.get(BackgroundReentryRate.class, ReentryRate.class), rand), 1);
+		case EXPONENTIAL:
+			return Agent.exponentials(props.get(BackgroundReentryRate.class, ReentryRate.class), rand);
+		default:
+			throw new IllegalArgumentException("Got unknown reentry type " + props.get(ReentryType.class));
+		}
 	}
 
 	private static final long serialVersionUID = 7742389103679854398L;

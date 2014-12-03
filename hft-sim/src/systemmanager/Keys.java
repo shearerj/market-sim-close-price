@@ -13,6 +13,7 @@ import props.ParsableValue.StringsValue;
 
 import com.google.common.base.Converter;
 
+import entity.agent.BackgroundAgent.Reentries;
 import entity.market.Price;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
@@ -72,6 +73,8 @@ public interface Keys {
 	// Agents
 	public static class Withdraw extends BoolValue {};
 	public static class N extends IntValue {};
+	
+	public static class ReentryType extends EnumValue<Reentries> { public ReentryType() { super(Reentries.class); }};
 
 	// Market Maker
 	public static class K extends IntValue {};

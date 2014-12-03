@@ -5,6 +5,9 @@ import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertQuote;
+
+import java.util.concurrent.atomic.AtomicInteger;
+
 import logger.Log;
 
 import org.junit.Before;
@@ -14,6 +17,7 @@ import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.MaxPosition;
+import systemmanager.Keys.ReentryType;
 import systemmanager.Keys.Rmax;
 import systemmanager.Keys.Rmin;
 import systemmanager.Keys.SimLength;
@@ -28,6 +32,7 @@ import data.FundamentalValue;
 import data.FundamentalValue.FundamentalValueView;
 import data.Props;
 import data.Stats;
+import entity.agent.BackgroundAgent.Reentries;
 import entity.agent.position.ListPrivateValue;
 import entity.market.Market;
 import entity.market.Market.MarketView;
@@ -342,11 +347,30 @@ public class BackgroundAgentTest {
 		assertEquals(5, stats.getSummaryStats().get(Stats.CONTROL_PRIVATE_VALUE).mean(), eps);
 	}
 	
+	/** Test that agent only enters once, (but can refuse to enter if first entry is really long) */
+	@Test
+	public void singleReentryType() {
+		EventQueue queue = queueSetup();
+		final AtomicInteger entries = new AtomicInteger(0);
+		new BackgroundAgent(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, fundamental, market,
+				Props.withDefaults(defaults, ReentryType.class, Reentries.SINGLE)) {
+			private static final long serialVersionUID = 1L;
+			@Override protected void agentStrategy() {
+				super.agentStrategy();
+				entries.set(entries.get() + 1);
+			}
+		};
+		queue.executeUntil(TimeStamp.of(10000));
+		assertTrue(entries.get() == 0 || entries.get() == 1);
+	}
+	
 	@Test
 	public void extraTest() {
 		for (int i = 0; i < 100; ++i) {
 			setup();
 			controlRandPrivateValueTest();
+			setup();
+			singleReentryType();
 		}
 	}
 	

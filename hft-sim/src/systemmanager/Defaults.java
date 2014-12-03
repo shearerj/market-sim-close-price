@@ -47,6 +47,7 @@ import systemmanager.Keys.RandomSeed;
 import systemmanager.Keys.RangeA;
 import systemmanager.Keys.RangeR;
 import systemmanager.Keys.ReentryRate;
+import systemmanager.Keys.ReentryType;
 import systemmanager.Keys.Rmax;
 import systemmanager.Keys.Rmin;
 import systemmanager.Keys.SimLength;
@@ -73,6 +74,7 @@ import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Ints;
 
 import data.Stats;
+import entity.agent.BackgroundAgent.Reentries;
 import entity.market.Price;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
@@ -124,6 +126,7 @@ public class Defaults implements Serializable {
 			.put(ClearInterval.class,	TimeStamp.of(1000))
 			
 			// Agent-level defaults
+			.put(ReentryType.class,		Reentries.EXPONENTIAL)
 			.put(ReentryRate.class,		0.005)
 			
 			// Agent Types by Role
