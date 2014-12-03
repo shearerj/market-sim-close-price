@@ -15,7 +15,6 @@ import entity.market.Market;
 import entity.market.Price;
 import entity.sip.MarketInfo;
 import event.Timeline;
-import fourheap.Order.OrderType;
 
 /**
  * Created solely for purpose of measuring maximum allocative efficiency in 
@@ -46,21 +45,17 @@ public class MaxEfficiencyAgent extends BackgroundAgent {
 	@Override
 	protected void agentStrategy() {
 		// submit 1-unit limit orders for all values in its private vector
-
+		// FIXME All orders are offset by maxint / 2, but they could still be truncated at either end. There is no guard for this...
 		for (int qty = -getMaxAbsPosition() + 1; qty <= 0; qty++)
-			bypassSubmit(SELL, getHypotheticalPrivateValue(qty, 1, SELL), 1);
+			submitOrder(primaryMarket, SELL, Price.of(getHypotheticalPrivateValue(qty, 1, SELL).intValue() + Integer.MAX_VALUE / 2), 1);
 		for (int qty = 0; qty < getMaxAbsPosition(); qty++)
-			bypassSubmit(BUY, getHypotheticalPrivateValue(qty, 1, BUY), 1);
+			submitOrder(primaryMarket, BUY, Price.of(getHypotheticalPrivateValue(qty, 1, BUY).intValue() + Integer.MAX_VALUE / 2), 1);
 	}
 
 	@Override
 	public void liquidateAtPrice(Price price) {
 		postStat(Stats.MAX_EFF_POSITION + getPosition(), 1);
 		super.liquidateAtPrice(price);
-	}
-	
-	private void bypassSubmit(OrderType buyOrSell, Price price, int quantity) {
-		primaryMarket.submitOrder(this, OrderRecord.create(primaryMarket, getCurrentTime(), buyOrSell, price, quantity));
 	}
 
 	private static final long serialVersionUID = -8915874536659571239L;
