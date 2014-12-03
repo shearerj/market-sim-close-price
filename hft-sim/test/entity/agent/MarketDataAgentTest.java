@@ -13,10 +13,6 @@ import org.junit.Test;
 
 import utils.Mock;
 import utils.Rand;
-
-import com.google.common.collect.Iterators;
-import com.google.common.collect.PeekingIterator;
-
 import data.Props;
 import entity.agent.MarketDataParser.MarketAction;
 import entity.market.CDAMarket;
@@ -112,11 +108,9 @@ public class MarketDataAgentTest {
 	}
 	
 	private MarketDataAgent marketDataAgent(Iterator<MarketAction> actions) {
-		PeekingIterator<MarketAction> peekable = Iterators.peekingIterator(actions);
 		assertTrue("For this purpose, the iterator must have a market action", actions.hasNext());
-		TimeStamp arrivalTime = peekable.peek().getScheduledTime();
-		return new MarketDataAgent(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, arrivalTime, market,
-				peekable, Props.fromPairs());
+		return new MarketDataAgent(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market,
+				actions, Props.fromPairs());
 	}
 }
 

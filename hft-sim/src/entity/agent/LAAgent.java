@@ -49,7 +49,7 @@ public class LAAgent extends HFTAgent {
 	
 	protected LAAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Collection<Market> markets, Props props) {
-		super(id, stats, timeline, log, rand, sip, fundamental, TimeStamp.ZERO,
+		super(id, stats, timeline, log, rand, sip, fundamental,
 				Maps.toMap(markets, Functions.constant(props.get(LaLatency.class))),
 				props);
 
@@ -70,6 +70,8 @@ public class LAAgent extends HFTAgent {
 	@Override
 	// TODO Need strategy for orders that don't execute
 	protected void agentStrategy() {
+		super.agentStrategy();
+		
 		Optional<Price> bestBid = Optional.absent(), bestAsk = Optional.absent();
 		MarketView bestBidMarket = null, bestAskMarket = null;
 		int bestBidQuantity = 0, bestAskQuantity = 0;

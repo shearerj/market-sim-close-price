@@ -33,8 +33,9 @@ public abstract class HFTAgent extends MMAgent {
 	private static final long serialVersionUID = -1483633963238206201L;
 
 	protected HFTAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
-			TimeStamp arrivalTime, Map<Market, TimeStamp> marketLatencies, Props props) {
-		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(), arrivalTime, toViews(marketLatencies), props);
+			Map<Market, TimeStamp> marketLatencies, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(), ImmutableList.<TimeStamp> of().iterator(),
+				toViews(marketLatencies), props);
 		for (MarketView market : markets)
 			market.notify(this);
 	}

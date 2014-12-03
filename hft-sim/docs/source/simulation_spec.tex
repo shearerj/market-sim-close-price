@@ -91,8 +91,9 @@ all markets. \\
 \texttt{laLatency} 	& 0 & Latency of the latency arbitrageur \\
 
 
-\texttt{arrivalRate} 	& 0.075 & Rate for the Poisson process of agent arrival times (background traders only; market makers and HFTs arrive at time 0). \\
-\texttt{reentryRate} 	& 0.005 & Rate of reentry for all agents. Can also be set for an agent individually, if part of its strategy.\\
+\texttt{reentryRate} 	& 0.005 & Rate of entry / reentry for all
+agents. MarketMakers also enter time 0. HFT agents never enter via normal
+reentry. Can also be set for an agent individually, if part of its strategy.\\
 \texttt{backgroundReentryRate} & \texttt{reentryRate} & Used by background agent if in agent constructor \\
 \texttt{marketmakerReentryRate} & \texttt{reentryRate} & Used by market maker if in agent constructor \\
 

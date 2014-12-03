@@ -8,6 +8,8 @@ import logger.Log;
 
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableList;
+
 import utils.Mock;
 import utils.Rand;
 import data.FundamentalValue;
@@ -33,9 +35,8 @@ public class OptimalLimitPriceEstimatorTest {
 		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
 		FundamentalValue fundamental = FundamentalValue.create(Mock.stats, timeline, kappa, mean, 1e8, rand);
 		Agent agent = new Agent(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, fundamental, PrivateValues.zero(),
-				TimeStamp.ZERO, Props.fromPairs()) {
+				ImmutableList.<TimeStamp> of().iterator(), Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
-			@Override protected void agentStrategy() { }
 		};
 		
 		LimitPriceEstimator estimator = OptimalLimitPriceEstimator.create(agent, fundamental.getView(TimeStamp.ZERO), timeline,

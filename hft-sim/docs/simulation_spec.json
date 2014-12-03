@@ -8,7 +8,6 @@
         "tickSize": "1",
         "nbboLatency": "100",
         "marketLatency": "0",
-        "arrivalRate": "0.075",
         "reentryRate": "0.0005",
         "fundamentalMean": "100000",
         "fundamentalKappa": "0.05",

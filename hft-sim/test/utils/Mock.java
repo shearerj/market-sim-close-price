@@ -2,6 +2,8 @@ package utils;
 
 import java.util.Iterator;
 
+import com.google.common.collect.ImmutableList;
+
 import logger.Log;
 import data.FundamentalValue;
 import data.Props;
@@ -28,9 +30,8 @@ public class Mock {
 	
 	public static Agent agent(Timeline timeline) {
 		return new Agent(ids.next(), stats, timeline, Log.nullLogger(), rand, sip, fundamental,
-				PrivateValues.zero(), TimeStamp.ZERO, Props.fromPairs()) {
+				PrivateValues.zero(), ImmutableList.<TimeStamp> of().iterator(), Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
-			@Override protected void agentStrategy() { }
 		};
 	}
 	

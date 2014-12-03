@@ -9,6 +9,8 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableList;
+
 import utils.Mock;
 import utils.Rand;
 import data.FundamentalValue;
@@ -164,9 +166,8 @@ public class ZIStrategyTest {
 	}
 	
 	private BackgroundAgent backgroundAgent(ListPrivateValue privateValue) {
-		Mock.timeline.ignoreNext();
-		return new BackgroundAgent(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, fundamental, privateValue, market,
-				Props.fromPairs()) {
+		return new BackgroundAgent(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, fundamental,
+				ImmutableList.<TimeStamp> of().iterator(), privateValue, market, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 		};
 	}

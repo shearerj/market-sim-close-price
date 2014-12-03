@@ -1,5 +1,7 @@
 package entity.agent;
 
+import com.google.common.collect.ImmutableList;
+
 import logger.Log;
 import utils.Rand;
 import data.FundamentalValue;
@@ -14,7 +16,7 @@ public class NoOpAgent extends Agent {
 	
 	protected NoOpAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Props props) {
-		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(), TimeStamp.ZERO, props);
+		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(), ImmutableList.<TimeStamp> of().iterator(), props);
 		postStat(Stats.NUM_TRANS + getClass().getSimpleName().toLowerCase(), 0);
 		postStat(Stats.NUM_TRANS_TOTAL, 0);
 	}
@@ -24,7 +26,9 @@ public class NoOpAgent extends Agent {
 		return new NoOpAgent(id, stats, timeline, log, rand, sip, fundamental, props);
 	}
 
-	@Override protected void agentStrategy() { }
+	@Override protected void agentStrategy() {
+		throw new IllegalStateException("NoOp Agent should never enter");
+	}
 
 	private static final long serialVersionUID = -7232513254416667984L;
 	

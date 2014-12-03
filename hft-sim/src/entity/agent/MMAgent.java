@@ -1,6 +1,7 @@
 package entity.agent;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 import logger.Log;
 import utils.Rand;
@@ -33,8 +34,8 @@ public abstract class MMAgent extends Agent {
 	protected final Collection<MarketView> markets; 
 	
 	protected MMAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
-			PrivateValue privateValue, TimeStamp arrivalTime, Collection<MarketView> markets, Props props) {
-		super(id, stats, timeline, log, rand, sip, fundamental, privateValue, arrivalTime, props);
+			PrivateValue privateValue, Iterator<TimeStamp> arrivalIntervals, Collection<MarketView> markets, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, privateValue, arrivalIntervals, props);
 		this.markets = markets;
 	}
 

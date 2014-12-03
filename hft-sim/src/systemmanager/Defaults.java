@@ -6,7 +6,6 @@ import props.ImmutableProps;
 import props.Value;
 import systemmanager.Keys.AcceptableProfitThreshold;
 import systemmanager.Keys.Alpha;
-import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.BetaMax;
 import systemmanager.Keys.BetaMin;
 import systemmanager.Keys.BetaR;
@@ -44,12 +43,12 @@ import systemmanager.Keys.NumSims;
 import systemmanager.Keys.Periods;
 import systemmanager.Keys.PricingPolicy;
 import systemmanager.Keys.PrivateValueVar;
-import systemmanager.Keys.Rmax;
-import systemmanager.Keys.Rmin;
 import systemmanager.Keys.RandomSeed;
 import systemmanager.Keys.RangeA;
 import systemmanager.Keys.RangeR;
 import systemmanager.Keys.ReentryRate;
+import systemmanager.Keys.Rmax;
+import systemmanager.Keys.Rmin;
 import systemmanager.Keys.SimLength;
 import systemmanager.Keys.Size;
 import systemmanager.Keys.Spread;
@@ -125,7 +124,6 @@ public class Defaults implements Serializable {
 			.put(ClearInterval.class,	TimeStamp.of(1000))
 			
 			// Agent-level defaults
-			.put(ArrivalRate.class,		0.075)
 			.put(ReentryRate.class,		0.005)
 			
 			// Agent Types by Role

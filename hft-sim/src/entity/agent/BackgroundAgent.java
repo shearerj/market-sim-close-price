@@ -5,11 +5,11 @@ import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static logger.Log.Level.INFO;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import logger.Log;
-import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.BackgroundReentryRate;
 import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.PrivateValueVar;
@@ -40,7 +40,7 @@ import fourheap.Order.OrderType;
  * 
  * @author ewah
  */
-public abstract class BackgroundAgent extends ReentryAgent {
+public abstract class BackgroundAgent extends SMAgent {
 	
 	private final int maxAbsolutePosition;
 	private final boolean withdrawOrders;	// Withdraw orders each reentry
@@ -50,12 +50,8 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	 * Constructor for custom private valuation 
 	 */
 	protected BackgroundAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
-			ListPrivateValue privateValue, Market market, Props props) {
-		super(id, stats, timeline, log, rand, sip, fundamental, privateValue,
-				TimeStamp.of((long) rand.nextExponential(props.get(ArrivalRate.class))),
-				market,
-				ReentryAgent.exponentials(props.get(BackgroundReentryRate.class, ReentryRate.class), rand),
-				props);
+			Iterator<TimeStamp> arrivalIntervals, ListPrivateValue privateValue, Market market, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, privateValue, arrivalIntervals, market, props);
 		this.maxAbsolutePosition = privateValue.getMaxAbsPosition();
 		this.withdrawOrders = props.get(Withdraw.class);
 				
@@ -76,17 +72,18 @@ public abstract class BackgroundAgent extends ReentryAgent {
 	protected BackgroundAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
 		this(id, stats, timeline, log, rand, sip, fundamental,
+				Agent.exponentials(props.get(BackgroundReentryRate.class, ReentryRate.class), rand),
 				ListPrivateValue.createRandomly(props.get(MaxPosition.class), props.get(PrivateValueVar.class), rand),
 				market, props);
 	}
 	
 	@Override
 	protected void agentStrategy() {
+		super.agentStrategy();
 		if (withdrawOrders) {
 			log(INFO, "%s Withdraw all orders.", this);
 			withdrawAllOrders();
 		}
-		super.agentStrategy();
 	}
 	
 	/** Enforces Background agent invariants. They can not exceed their max position. */

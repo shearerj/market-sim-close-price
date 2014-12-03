@@ -11,7 +11,7 @@ import logger.Log;
 
 import org.junit.Before;
 
-import systemmanager.Keys.ArrivalRate;
+import systemmanager.Keys.BackgroundReentryRate;
 import systemmanager.Keys.BetaMax;
 import systemmanager.Keys.BetaMin;
 import systemmanager.Keys.GammaMax;
@@ -46,8 +46,8 @@ public class ZIPAgentTest {
 	private static final double eps = 1e-6;
 	private static final Agent mockAgent = Mock.agent();
 	private static final Props defaults = Props.fromPairs(
-			ArrivalRate.class,		0d,
-			PrivateValueVar.class,	0d);
+			BackgroundReentryRate.class,	0d,
+			PrivateValueVar.class,			0d);
 	
 	private FundamentalValue fundamental = Mock.fundamental(100000);
 	private Market market;

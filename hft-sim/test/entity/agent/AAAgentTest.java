@@ -11,7 +11,6 @@ import logger.Log;
 
 import org.junit.Before;
 
-import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.BetaT;
 import systemmanager.Keys.BuyerStatus;
 import systemmanager.Keys.Debug;
@@ -43,7 +42,6 @@ public class AAAgentTest {
 	private static final Agent mockAgent = Mock.agent();
 	private static final FundamentalValue fundamental = Mock.fundamental(100000);
 	private static final Props defaults = Props.builder()
-			.put(ArrivalRate.class,		0d)
 			.put(ReentryRate.class,		0d)
 			.put(PrivateValueVar.class,	0d)
 			.put(MaxPosition.class,			1)

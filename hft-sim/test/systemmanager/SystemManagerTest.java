@@ -16,11 +16,12 @@ import java.io.Writer;
 import org.junit.Test;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 
 public class SystemManagerTest {
 	
-	private static final Gson gson = new Gson();
+	private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
 	// FIXME Change these tests to verify output
 	// FIXME Multiple simulation test. Use fixed random seed. Generate first n independently and then generate one with n simulations and comapre
@@ -33,7 +34,6 @@ public class SystemManagerTest {
 				"tickSize: 1," +
 				"nbboLatency: 100," +
 				"marketLatency: 0," +
-				"arrivalRate: 0.075," +
 				"reentryRate: 0.0005," +
 				"fundamentalMean: 100000," +
 				"fundamentalKappa: 0.05," +
@@ -62,7 +62,6 @@ public class SystemManagerTest {
 				"tickSize: 1," +
 				"nbboLatency: 100," +
 				"marketLatency: 0," +
-				"arrivalRate: 0.075," +
 				"reentryRate: 0.0005," +
 				"fundamentalMean: 100000," +
 				"fundamentalKappa: 0.05," +
@@ -83,7 +82,6 @@ public class SystemManagerTest {
 				"simLength: 60000," +
 				"nbboLatency: 1000," +
 				"marketLatency: 0," +
-				"arrivalRate: 0.075," +
 				"reentryRate: 0.0005," +
 				"fundamentalMean: 100000," +
 				"fundamentalKappa: 0.05," +
@@ -135,7 +133,6 @@ public class SystemManagerTest {
 				"tickSize: 1," +
 				"nbboLatency: 100," +
 				"marketLatency: 0," +
-				"arrivalRate: 0.075," +
 				"reentryRate: 0.0005," +
 				"fundamentalMean: 100000," +
 				"fundamentalKappa: 0.05," +
@@ -149,11 +146,10 @@ public class SystemManagerTest {
 		StringWriter observations = new StringWriter();
 		StringWriter logs = new StringWriter();
 		SystemManager.execute(simSpec, properties, observations, logs, 0);
-
+		
 		assertEquals(
-				gson.fromJson(spec, JsonObject.class), // Spec
-				gson.fromJson(observations.toString(), JsonObject.class).get("features").getAsJsonObject().get("config") // Spec in obseration
-				);
+				gson.fromJson(spec, JsonObject.class).get("configuration"), // Spec
+				gson.fromJson(observations.toString(), JsonObject.class).get("features").getAsJsonObject().get("config")); // Spec in obseration
 	}
 	
 	/* FIXME Test that ZIRP Agents never submit buy order when limit price is 0. */

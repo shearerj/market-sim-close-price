@@ -19,6 +19,7 @@ import utils.Maths;
 import utils.Rand;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Iterators;
 
 import data.FundamentalValue;
 import data.Props;
@@ -60,7 +61,7 @@ import fourheap.Order.OrderType;
  * 
  * @author ewah
  */
-public abstract class MarketMaker extends ReentryAgent {
+public abstract class MarketMaker extends SMAgent {
 	
 	// FIXME Make these private
 	protected final int stepSize;				// rung size is distance between adjacent rungs in ladder
@@ -73,9 +74,11 @@ public abstract class MarketMaker extends ReentryAgent {
 	
 	protected MarketMaker(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {		
-		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(), TimeStamp.ZERO, market,
-				ReentryAgent.exponentials(props.get(MarketMakerReentryRate.class, ReentryRate.class), rand),
-				props);
+		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(),
+				Iterators.concat(
+						Iterators.singletonIterator(TimeStamp.ZERO), // Market makers enter immediately to set an initial ladder
+						Agent.exponentials(props.get(MarketMakerReentryRate.class, ReentryRate.class), rand)),
+				market, props);
 		
 		this.numRungs = props.get(K.class);
 		this.stepSize = Maths.quantize(props.get(Size.class), getTickSize());

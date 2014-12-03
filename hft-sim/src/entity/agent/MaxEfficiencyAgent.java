@@ -4,16 +4,21 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import logger.Log;
-import systemmanager.Keys.ArrivalRate;
-import systemmanager.Keys.ReentryRate;
+import systemmanager.Keys.MaxPosition;
+import systemmanager.Keys.PrivateValueVar;
 import utils.Rand;
+
+import com.google.common.collect.Iterators;
+
 import data.FundamentalValue;
 import data.Props;
 import data.Stats;
+import entity.agent.position.ListPrivateValue;
 import entity.market.CallMarket;
 import entity.market.Market;
 import entity.market.Price;
 import entity.sip.MarketInfo;
+import event.TimeStamp;
 import event.Timeline;
 
 /**
@@ -29,9 +34,10 @@ public class MaxEfficiencyAgent extends BackgroundAgent {
 
 	protected MaxEfficiencyAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
 			Market market, Props props) {
-		super(id, stats, timeline, log, rand, sip, fundamental, market, Props.withDefaults(props,
-				ReentryRate.class, 0d,
-				ArrivalRate.class, Double.POSITIVE_INFINITY));
+		super(id, stats, timeline, log, rand, sip, fundamental,
+				Iterators.singletonIterator(TimeStamp.ZERO), // Arrive once at time zero
+				ListPrivateValue.createRandomly(props.get(MaxPosition.class), props.get(PrivateValueVar.class), rand),
+				market, props);
 		checkArgument(market instanceof CallMarket, "MaxEfficiency Agent can only enter call markets");
 		for (int i = -getMaxAbsPosition(); i <= getMaxAbsPosition(); ++i)
 			postStat(Stats.MAX_EFF_POSITION + i, 0);

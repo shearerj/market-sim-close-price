@@ -1,5 +1,7 @@
 package entity.agent;
 
+import java.util.Iterator;
+
 import logger.Log;
 import utils.Rand;
 import data.FundamentalValue;
@@ -44,8 +46,8 @@ public abstract class SMAgent extends Agent {
 	protected final MarketView primaryMarket;
 
 	protected SMAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
-			PrivateValue privateValue, TimeStamp arrivalTime, Market market, Props props) {
-		super(id, stats, timeline, log, rand, sip, fundamental, privateValue, arrivalTime, props);
+			PrivateValue privateValue, Iterator<TimeStamp> arrivalIntervals, Market market, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, privateValue, arrivalIntervals, props);
 		this.primaryMarket = market.getPrimaryView();
 	}
 	

@@ -11,10 +11,10 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Keys.ArrivalRate;
+import systemmanager.Keys.BackgroundReentryRate;
+import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.Rmax;
 import systemmanager.Keys.Rmin;
-import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.Withdraw;
 import utils.Mock;
 import utils.Rand;
@@ -45,7 +45,7 @@ public class ZIRAgentTest {
 	private static final Rand rand = Rand.create();
 	private static final Agent mockAgent = Mock.agent();
 	private static final Props defaults = Props.fromPairs(
-			ArrivalRate.class, 0d,
+			BackgroundReentryRate.class, 0d,
 			PrivateValueVar.class, 0d,
 			Rmin.class, 1000,
 			Rmax.class, 1000);

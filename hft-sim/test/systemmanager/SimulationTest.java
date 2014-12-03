@@ -12,11 +12,11 @@ import logger.Log.Level;
 
 import org.junit.Test;
 
-import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.NumAgents;
 import systemmanager.Keys.NumMarkets;
 import systemmanager.Keys.PrivateValueVar;
+import systemmanager.Keys.ReentryRate;
 import utils.Rand;
 
 import com.google.common.collect.ImmutableList;
@@ -35,7 +35,7 @@ public class SimulationTest {
 	private static final JsonObject json = gson.toJsonTree(ImmutableMap.of(
 			ASSIGNMENT, ImmutableMap.of("role", ImmutableList.of()),
 			CONFIG, ImmutableMap.of(
-					keyToString(ArrivalRate.class), 0.075,
+					keyToString(ReentryRate.class), 0.075,
 					keyToString(PrivateValueVar.class), 5e6,
 					keyToString(FundamentalShockVar.class), 1e6,
 					Consts.AgentType.ZIR.toString(), Props.fromPairs(NumAgents.class, 1).toConfigString(),

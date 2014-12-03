@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Consts.AgentType;
+import systemmanager.Keys.BackgroundReentryRate;
 import systemmanager.Keys.MeanPrefixes;
 import systemmanager.Keys.Periods;
 import systemmanager.Keys.SimLength;
@@ -25,6 +26,7 @@ import utils.Rand;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.util.concurrent.AtomicDouble;
 
 import data.Observations.PlayerObservation;
@@ -241,7 +243,7 @@ public class ObservationsTest {
 		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(ImmutableList.of(spec)), Props.fromPairs(SimLength.class, 1));
 		
 		Agent buyer = new Agent(0, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, PrivateValues.zero(),
-				TimeStamp.ZERO, Props.fromPairs()) {
+				Iterators.singletonIterator(TimeStamp.ZERO), Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override
 			protected void agentStrategy() {
@@ -249,7 +251,7 @@ public class ObservationsTest {
 			}
 		};
 		new Agent(0, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, PrivateValues.zero(),
-				TimeStamp.ZERO, Props.fromPairs()) {
+				Iterators.singletonIterator(TimeStamp.ZERO), Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override
 			protected void agentStrategy() {
@@ -308,9 +310,8 @@ public class ObservationsTest {
 		final AtomicDouble a_pv1 = new AtomicDouble();
 		final AtomicDouble a_pv_1 = new AtomicDouble();
 		
-		Mock.timeline.ignoreNext();
 		Agent agent = new BackgroundAgent(0, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, one,
-				Props.fromPairs()) {
+				Props.fromPairs(BackgroundReentryRate.class, 0d)) {
 			private static final long serialVersionUID = 1L;
 			private Agent setup() {
 				a_pv1.set(getPrivateValue(BUY).doubleValue());
@@ -328,9 +329,8 @@ public class ObservationsTest {
 		final AtomicDouble b_pv1 = new AtomicDouble();
 		final AtomicDouble b_pv_1 = new AtomicDouble();
 		
-		Mock.timeline.ignoreNext();
 		agent = new BackgroundAgent(0, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, one,
-				Props.fromPairs()) {
+				Props.fromPairs(BackgroundReentryRate.class, 0d)) {
 			private static final long serialVersionUID = 1L;
 			private Agent setup() {
 				b_pv1.set(getPrivateValue(BUY).doubleValue());

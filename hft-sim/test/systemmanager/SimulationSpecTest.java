@@ -11,14 +11,14 @@ import static systemmanager.SimulationSpec.CONFIG;
 
 import org.junit.Test;
 
-import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.BackgroundReentryRate;
-import systemmanager.Keys.Rmax;
-import systemmanager.Keys.Rmin;
 import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.MarketMakerReentryRate;
 import systemmanager.Keys.NumAgents;
 import systemmanager.Keys.PrivateValueVar;
+import systemmanager.Keys.ReentryRate;
+import systemmanager.Keys.Rmax;
+import systemmanager.Keys.Rmin;
 import systemmanager.Keys.Spread;
 import systemmanager.Keys.TickSize;
 import systemmanager.SimulationSpec.PlayerSpec;
@@ -42,7 +42,7 @@ public class SimulationSpecTest {
 	private static final JsonObject baseSpec = gson.toJsonTree(ImmutableMap.of(
 			ASSIGNMENT, ImmutableMap.of("role", ImmutableList.of()),
 			CONFIG, ImmutableMap.of(
-					keyToString(ArrivalRate.class), 0.075,
+					keyToString(ReentryRate.class), 0.075,
 					keyToString(PrivateValueVar.class), 5e6,
 					keyToString(FundamentalShockVar.class), 1e6,
 					Consts.AgentType.ZIR.toString(), Props.fromPairs(NumAgents.class, 1).toConfigString(),
@@ -61,7 +61,7 @@ public class SimulationSpecTest {
 		PlayerSpec player = Iterables.getOnlyElement(spec.getPlayerProps());
 		Props props = player.agentProps;
 		assertEquals(ZIR, player.type);
-		assertEquals(0.075, props.get(ArrivalRate.class), 0);
+		assertEquals(0.075, props.get(ReentryRate.class), 0);
 		assertEquals(5e6, props.get(PrivateValueVar.class), 0);
 		assertEquals(1, (int) props.get(TickSize.class));
 	}
@@ -71,13 +71,13 @@ public class SimulationSpecTest {
 		JsonObject rawSpec = getBaseSpec();
 		rawSpec.get("configuration").getAsJsonObject().add(keyToString(PrivateValueVar.class), new JsonPrimitive(7e8));
 		rawSpec.get("assignment").getAsJsonObject().get("role").getAsJsonArray().add(
-				new JsonPrimitive(ZIR + ":" + Props.fromPairs(ArrivalRate.class, 0.05).toConfigString()));
+				new JsonPrimitive(ZIR + ":" + Props.fromPairs(ReentryRate.class, 0.05).toConfigString()));
 		SimulationSpec spec = SimulationSpec.fromJson(rawSpec);
 
 		PlayerSpec player = Iterables.getOnlyElement(spec.getPlayerProps());
 		Props props = player.agentProps;
 		assertEquals(ZIR, player.type);
-		assertEquals(0.05, props.get(ArrivalRate.class), 0);
+		assertEquals(0.05, props.get(ReentryRate.class), 0);
 		assertEquals(7e8, props.get(PrivateValueVar.class), 0);
 		assertEquals(1, (int) props.get(TickSize.class));
 	}

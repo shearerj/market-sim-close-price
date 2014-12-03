@@ -10,7 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Keys.AcceptableProfitThreshold;
-import systemmanager.Keys.ArrivalRate;
+import systemmanager.Keys.BackgroundReentryRate;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
@@ -38,8 +38,8 @@ public class ZIRPAgentTest {
 	private static final Rand rand = Rand.create();
 	private static final FundamentalValue fundamental = Mock.fundamental(63152);
 	private static final Props defaults = Props.builder()
-			.put(ArrivalRate.class,			0d)
-			.put(MaxPosition.class,				2)
+			.put(BackgroundReentryRate.class, 0d)
+			.put(MaxPosition.class,			2)
 			.put(PrivateValueVar.class,		100d)
 			.put(Rmin.class,				10000)
 			.put(Rmax.class,				10000)
@@ -104,7 +104,6 @@ public class ZIRPAgentTest {
 	}
 
 	public ZIRPAgent zirpAgent() {
-		Mock.timeline.ignoreNext();
 		return ZIRPAgent.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, fundamental, market, defaults);
 	}
 	

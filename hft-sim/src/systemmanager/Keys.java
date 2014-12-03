@@ -37,8 +37,6 @@ public interface Keys {
 	
 	public static class FileName extends StringValue {};
 	
-	public static class ArrivalRate extends DoubleValue {};
-	
 	public static class ReentryRate extends DoubleValue {};
 	public static class BackgroundReentryRate extends DoubleValue {};
 	public static class MarketMakerReentryRate extends DoubleValue {};

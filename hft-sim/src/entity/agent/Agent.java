@@ -7,6 +7,7 @@ import static logger.Log.Level.INFO;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -14,12 +15,14 @@ import logger.Log;
 import systemmanager.Keys.DiscountFactors;
 import systemmanager.Keys.FundamentalLatency;
 import systemmanager.Keys.TickSize;
+import utils.Iterators2;
 import utils.Rand;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -51,6 +54,7 @@ public abstract class Agent extends Entity {
 	private final MarketInfo sip;
 	private final FundamentalValueView fundamental;
 	private final Collection<OrderRecord> activeOrders;
+	private final Iterator<TimeStamp> arrivalIntervals;
 
 	// Agent parameters
 	private final int tickSize;
@@ -63,13 +67,14 @@ public abstract class Agent extends Entity {
 	private boolean liquidated;
 
 	protected Agent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
-			PrivateValue privateValue, TimeStamp arrivalTime, Props props) {
+			PrivateValue privateValue, Iterator<TimeStamp> arrivalIntervals, Props props) {
 		super(id, stats, timeline, log, rand);
 		this.fundamental = fundamental.getView(props.get(FundamentalLatency.class));
 		this.tickSize = props.get(TickSize.class);
 		this.sip = sip;
 
 		this.activeOrders = Sets.newHashSet();
+		this.arrivalIntervals = checkNotNull(arrivalIntervals);
 		
 		this.positionBalance = 0;
 		this.profit = 0;
@@ -78,10 +83,14 @@ public abstract class Agent extends Entity {
 		this.liquidated = false;
 		
 		// Schedule first entry
-		reenterIn(checkNotNull(arrivalTime));
+		if (arrivalIntervals.hasNext())
+			reenterIn(arrivalIntervals.next());
 	}
 
-	protected abstract void agentStrategy();
+	protected void agentStrategy() {
+		if (arrivalIntervals.hasNext())
+			reenterIn(arrivalIntervals.next());
+	}
 
 	/** Liquidates an agent's position at the specified price. */
 	public void liquidateAtPrice(Price price) {
@@ -363,6 +372,14 @@ public abstract class Agent extends Entity {
 			return Agent.this.toString() + '*';
 		}
 		
+	}
+	
+	// TODO Better place for this?
+	/** Exponential arrival times where the minimum wait time is 1 time tick */
+	public static Iterator<TimeStamp> exponentials(double rate, Rand rand) {
+		return Iterators.transform(Iterators2.exponentials(rate, rand), new Function<Double, TimeStamp>(){
+			@Override public TimeStamp apply(Double dub) { return TimeStamp.of(1 + (long) (double) dub); }
+		});
 	}
 
 	private static final long serialVersionUID = 5363438238024144057L;

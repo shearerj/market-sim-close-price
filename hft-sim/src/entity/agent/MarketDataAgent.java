@@ -35,10 +35,13 @@ public class MarketDataAgent extends SMAgent {
 	protected final BiMap<Long, OrderRecord> refNumbers;
 
 	protected MarketDataAgent(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
-			TimeStamp arrivalTime, Market market, Iterator<MarketAction> orderDatumIterator, Props props) {
-		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(), arrivalTime, market, props);
+			Market market, Iterator<MarketAction> orderDatumIterator, Props props) {
+		super(id, stats, timeline, log, rand, sip, fundamental, PrivateValues.zero(), ImmutableList.<TimeStamp> of().iterator(),
+				market, props);
 		this.orderDatumIterator = Iterators.peekingIterator(checkNotNull(orderDatumIterator));
 		refNumbers = HashBiMap.create();
+		if (this.orderDatumIterator.hasNext())
+			reenterIn(this.orderDatumIterator.peek().getScheduledTime());
 	}
 	
 	public static MarketDataAgent create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
@@ -66,13 +69,13 @@ public class MarketDataAgent extends SMAgent {
 			}
 		}
 		
-		PeekingIterator<MarketAction> peekable = Iterators.peekingIterator(actions);
-		TimeStamp arrivalTime = peekable.hasNext() ? peekable.peek().getScheduledTime() : TimeStamp.ZERO;
-		return new MarketDataAgent(id, stats, timeline, log, rand, sip, fundamental, arrivalTime, market, peekable, props);
+		return new MarketDataAgent(id, stats, timeline, log, rand, sip, fundamental, market, actions, props);
 	}
 	
 	@Override
 	protected void agentStrategy() {
+		super.agentStrategy();
+		
 		if (!orderDatumIterator.hasNext())
 			return;
 		

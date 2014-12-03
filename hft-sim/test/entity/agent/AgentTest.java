@@ -9,6 +9,7 @@ import static org.junit.Assert.assertTrue;
 import static utils.Tests.assertQuote;
 import static utils.Tests.assertRegex;
 
+import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import logger.Log;
@@ -16,11 +17,15 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
+import systemmanager.Keys.BackgroundReentryRate;
 import systemmanager.Keys.MarketLatency;
 import utils.Mock;
 import utils.Rand;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.PeekingIterator;
 
 import data.FundamentalValue;
 import data.Props;
@@ -142,10 +147,9 @@ public class AgentTest {
 		MarketView slow = real.getView(TimeStamp.of(10));
 		
 		final AtomicBoolean orderSubmitted = new AtomicBoolean(false);
-		agent = new Agent(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, PrivateValues.zero(), TimeStamp.ZERO,
-				Props.fromPairs()) {
+		agent = new Agent(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, PrivateValues.zero(),
+				ImmutableList.<TimeStamp> of().iterator(), Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
-			@Override protected void agentStrategy() { }
 			@Override protected void orderSubmitted(OrderRecord order, MarketView market, TimeStamp submittedTime) {
 				super.orderSubmitted(order, market, submittedTime);
 				orderSubmitted.set(true);
@@ -407,8 +411,7 @@ public class AgentTest {
 	@Test
 	public void classPostTransactionTest() {
 		Stats stats = Stats.create();
-		Mock.timeline.ignoreNext();
-		ZIRAgent zir = ZIRAgent.create(0, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs());
+		ZIRAgent zir = ZIRAgent.create(0, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs(BackgroundReentryRate.class, 0d));
 		NoOpAgent noop1 = NoOpAgent.create(1, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, Props.fromPairs());
 		NoOpAgent noop2 = NoOpAgent.create(2, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, Props.fromPairs());
 		
@@ -467,8 +470,7 @@ public class AgentTest {
 	@Test
 	public void toStringTest() {
 		Agent agent = Mock.agent();
-		Mock.timeline.ignoreNext();
-		ZIRAgent zir = ZIRAgent.create(12345, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs());
+		ZIRAgent zir = ZIRAgent.create(12345, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs(BackgroundReentryRate.class, 0d));
 		NoOpAgent noop = NoOpAgent.create(8459, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, Props.fromPairs());
 		assertRegex("\\(\\d+\\)", agent.toString());
 		assertEquals("ZIR(12345)", zir.toString());
@@ -498,12 +500,57 @@ public class AgentTest {
 	}
 	
 	@Test
+	public void reentryTest() {
+		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
+		PeekingIterator<TimeStamp> reentries = Iterators.peekingIterator(Agent.exponentials(0.1, rand));
+		Agent agent = mockAgent(timeline, reentries);
+		
+		// Test reentries
+		assertTrue(reentries.hasNext());
+		TimeStamp next = reentries.peek();
+		assertTrue(next.getInTicks() >= 0);
+		
+		// Test agent strategy
+		timeline.executeUntil(TimeStamp.of(100));
+		agent.agentStrategy();
+		assertTrue(reentries.hasNext());
+	}
+	
+	@Test
+	public void reentryRateZeroTest() {
+		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
+		// Test reentries - note should never iterate past INFINITE b/c it 
+		// will never execute
+		PeekingIterator<TimeStamp> reentries = Iterators.peekingIterator(Agent.exponentials(0, rand));
+		assertFalse(reentries.hasNext());
+		
+		final AtomicBoolean executed = new AtomicBoolean(false);
+		new Agent(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, PrivateValues.zero(),
+				reentries, Props.fromPairs()) {
+			private static final long serialVersionUID = 1L;
+			@Override protected void agentStrategy() {
+				super.agentStrategy();
+				executed.set(true);
+			}
+		};
+		
+		assertFalse(reentries.hasNext());
+
+		// Now test for agent, which should not arrive at time 0
+		timeline.executeUntil(TimeStamp.of(100));
+		assertFalse(reentries.hasNext());
+		assertFalse(executed.get());
+	}
+	
+	@Test
 	public void extraTest()  {
 		for (int i = 0; i < 100; i++) {
 			setup();
 			basicWithdrawBuy();
 			setup();
 			basicWithdrawSell();
+			setup();
+			reentryTest();
 		}
 	}
 	
@@ -536,19 +583,21 @@ public class AgentTest {
 		assertEquals(position, agent.getPosition());
 	}
 	
-	private Agent mockAgent(Timeline timeline) {
+	private Agent mockAgent(Timeline timeline, Iterator<TimeStamp> arrivalIntervals) {
 		return new Agent(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, PrivateValues.zero(),
-				TimeStamp.ZERO, Props.fromPairs()) {
+				arrivalIntervals, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
-			@Override protected void agentStrategy() { }
 		};
+	}
+	
+	private Agent mockAgent(Timeline timeline) {
+		return mockAgent(timeline, ImmutableList.<TimeStamp> of().iterator());
 	}
 	
 	private Agent mockAgent(PrivateValue privateValue, FundamentalValue fundamental) {
 		return new Agent(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, fundamental, privateValue,
-				TimeStamp.ZERO, Props.fromPairs()) {
+				ImmutableList.<TimeStamp> of().iterator(), Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
-			@Override protected void agentStrategy() { }
 		};
 	}
 

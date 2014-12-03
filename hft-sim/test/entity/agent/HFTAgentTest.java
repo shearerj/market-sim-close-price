@@ -50,7 +50,7 @@ public class HFTAgentTest {
 	@Test
 	public void testQuoteBuyNoLatencyUpdate() {
 		final AtomicReference<Quote> quote = new AtomicReference<Quote>();
-		new HFTAgent(0, Stats.create(), timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, TimeStamp.ZERO,
+		new HFTAgent(0, Stats.create(), timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental,
 				ImmutableMap.of(market, TimeStamp.ZERO), Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override protected void agentStrategy() {
@@ -68,7 +68,7 @@ public class HFTAgentTest {
 	@Test
 	public void testQuoteSellNoLatencyUpdate() {
 		final AtomicReference<Quote> quote = new AtomicReference<Quote>();
-		new HFTAgent(0, Stats.create(), timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, TimeStamp.ZERO,
+		new HFTAgent(0, Stats.create(), timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental,
 				ImmutableMap.of(market, TimeStamp.ZERO), Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override protected void agentStrategy() {
@@ -86,7 +86,7 @@ public class HFTAgentTest {
 	@Test
 	public void testQuoteBuyLatencyUpdate() {
 		final AtomicReference<Quote> quote = new AtomicReference<Quote>();
-		new HFTAgent(0, Stats.create(), timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, TimeStamp.ZERO,
+		new HFTAgent(0, Stats.create(), timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental,
 				ImmutableMap.of(market, TimeStamp.of(5)), Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override protected void agentStrategy() {
@@ -104,7 +104,7 @@ public class HFTAgentTest {
 	@Test
 	public void testQuoteSellLatencyUpdate() {
 		final AtomicReference<Quote> quote = new AtomicReference<Quote>();
-		new HFTAgent(0, Stats.create(), timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, TimeStamp.ZERO,
+		new HFTAgent(0, Stats.create(), timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental,
 				ImmutableMap.of(market, TimeStamp.of(5)), Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override protected void agentStrategy() {
@@ -126,7 +126,7 @@ public class HFTAgentTest {
 		final AtomicBoolean strategyExecuted = new AtomicBoolean(false);
 		
 		// Agent that logs its actions
-		Agent hft = new HFTAgent(0, Stats.create(), timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, TimeStamp.of(1000),
+		Agent hft = new HFTAgent(0, Stats.create(), timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental,
 				ImmutableMap.of(market, TimeStamp.ZERO), Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override protected void agentStrategy() {
@@ -157,7 +157,7 @@ public class HFTAgentTest {
 		final AtomicBoolean strategyExecuted = new AtomicBoolean(false);
 		
 		// Agent that logs its actions
-		Agent hft = new HFTAgent(0, Stats.create(), timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, TimeStamp.of(1000),
+		Agent hft = new HFTAgent(0, Stats.create(), timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental,
 				ImmutableMap.of(market, TimeStamp.of(5)), Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 			@Override protected void agentStrategy() {

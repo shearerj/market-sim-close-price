@@ -10,7 +10,6 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Keys.ArrivalRate;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
@@ -50,8 +49,7 @@ public class BackgroundAgentTest {
 			FundamentalKappa.class, kappa,
 			FundamentalMean.class, meanValue,
 			FundamentalShockVar.class, variance,
-			SimLength.class, simulationLength,
-			ArrivalRate.class, 0d);
+			SimLength.class, simulationLength);
 
 	private Timeline timeline;
 	private FundamentalValue fundamental;
@@ -376,8 +374,8 @@ public class BackgroundAgentTest {
 	}
 	
 	private BackgroundAgent backgroundAgentwithPrivateValue(ListPrivateValue privateValue, Stats stats, Props props) {
-		return new BackgroundAgent(0, stats, timeline, Log.nullLogger(), rand, Mock.sip, fundamental, privateValue, market,
-				Props.merge(defaults, props)) {
+		return new BackgroundAgent(0, stats, timeline, Log.nullLogger(), rand, Mock.sip, fundamental,
+				ImmutableList.<TimeStamp> of().iterator(), privateValue, market, Props.merge(defaults, props)) {
 			private static final long serialVersionUID = 1L;
 		};
 	}
