@@ -6,10 +6,10 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo
     echo "Run an experiment with modifications of the simulation_spec"
     echo
-    echo "\"directory\" must have a valid simulation_spec.json in it. Each jpath specified reprsents a dimension of the simulation spec to modify, and the space separated values represents all of the grid points to sample. By specifying multiple jpath values pairs, one can do a multidimensional grid search over specification parameters." | fold -s
+    echo "\"directory\" must have a valid simulation_spec.json in it. Each jpath specified reprsents a parameter of the simulation spec to modify in parallel, and the space separated values represents all of the values to set the parameter to. By specifying multiple jpath values pairs, one can vary several parameters together." | fold -s
     echo
     echo "example usage:"
-    echo "  $0 sim_dir presets \"CENTRALCDA TWOMARKET\" nbboLatency \"5 10 20 50 100 200\""
+    echo "  $0 sim_dir nbboLatency \"5 10 20 50 100 200\""
     echo "  # This will create directories to simulate various nbbo latencies for"
     echo "  # both a central cda and a two market model"
     echo "  ls -d sim_dir/*/ | xargs -I{} ./script/run-hft.sh {} num-obs num-proc"
@@ -32,15 +32,11 @@ SPEC="$(< "$DIR/$SPEC_FILE")" # simulation_spec in a bash variable
 # Set up for doing the grid search over parameters
 ARGS=( "${@:2}" ) # All of the grid search arguments
 NARGS=$(( ${#ARGS[@]} / 2 )) # Number of pairs
-INDEX=( $( yes 0 | head -n "$NARGS" ) ) # The current index for the grid for each pair
-LENGTH=( $( yes 0 | head -n "$NARGS" ) ) # The total number of values in each pair
-for (( I=0; I < $NARGS; ++I )); do
-    VALS=( ${ARGS[$(( 2 * $I + 1 ))]} )
-    LENGTH[$I]=${#VALS[@]}
-done
+N=( ${ARGS[1]} )
+N=${#N[@]}
 
 # Run the grid search. Terminate when the index of the first element is out of bounds
-while [[ ${INDEX[0]} -lt ${LENGTH[0]} ]]; do
+for (( J=0; J < $N; ++J )); do
     # Set the file name
     NAME=""
     # For the current set of indices append the settings to the directory name
@@ -48,7 +44,7 @@ while [[ ${INDEX[0]} -lt ${LENGTH[0]} ]]; do
     for (( I=0; I < $NARGS; ++I )); do
         JPATH="${ARGS[$(( 2 * $I ))]}"
         VALS=( ${ARGS[$(( 2 * $I + 1 ))]} )
-        VAL=${VALS[${INDEX[$I]}]}
+        VAL=${VALS[$J]}
         NAME="${NAME}_${JPATH// /-}_$VAL"
         SPEC="$( "$LOC/jpath.py" $DEFAULT_JPATH $JPATH -v $VAL <<< "$SPEC" )"
     done
@@ -59,17 +55,4 @@ while [[ ${INDEX[0]} -lt ${LENGTH[0]} ]]; do
     mkdir -pv "$EXP_DIR"
     # Save spec in directory
     echo "$SPEC" > "$EXP_DIR/$SPEC_FILE"
-
-    # Incriment the index for the last value pair
-    INDEX[$(( $NARGS - 1 ))]=$(( ${INDEX[$(( $NARGS - 1 ))]} + 1 ))
-    # Iterate backwards fro mthe last pair, resetting every wrapped pair, and
-    # then incriment its preceeding index
-    for (( I=$(( $NARGS - 1 )); I > 0; I-- )); do
-        if [[ ${INDEX[$I]} -eq ${LENGTH[$I]} ]]; then
-            INDEX[$I]=0
-            INDEX[$(( $I - 1 ))]=$(( ${INDEX[$(( $I - 1 ))]} + 1 ))
-        else
-            break # Invariante that no earlier index could have exceeded length
-        fi
-    done
 done
