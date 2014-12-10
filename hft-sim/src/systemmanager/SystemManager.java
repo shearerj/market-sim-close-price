@@ -5,7 +5,6 @@ import static logger.Log.Level.INFO;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
@@ -19,6 +18,7 @@ import logger.Log;
 import systemmanager.Keys.NumSims;
 import systemmanager.Keys.RandomSeed;
 import systemmanager.SimulationSpec.SimSpecDeserializer;
+import utils.LazyFileWriter;
 import utils.Rand;
 import utils.SummStats;
 
@@ -97,7 +97,7 @@ public abstract class SystemManager {
 		// Observation File
 		File obsFile = new File(simFolder, "observation" + obsNum + ".json");
 		checkArgument(simSpecFile.canWrite(), "Observations file must be writable");
-		Writer obsWriter = new FileWriter(obsFile);
+		Writer obsWriter = LazyFileWriter.create(obsFile);
 		// Log File
 		StringBuilder logFileName = new StringBuilder(
 				new File(".").toURI().relativize(simFolder.toURI()).getPath().replace('/', '_'));
@@ -105,7 +105,7 @@ public abstract class SystemManager {
 		logFileName.append(LOG_DATE_FORMAT.format(new Date())).append(".txt");
 		File logDir = new File(simFolder, "logs");
 		logDir.mkdirs();
-		Writer logWriter = new FileWriter(new File(logDir, logFileName.toString()));
+		Writer logWriter = LazyFileWriter.create(new File(logDir, logFileName.toString()));
 		// Execute
 		execute(specReader, propsReader, obsWriter, logWriter, obsNum);
 		// Close and flush
