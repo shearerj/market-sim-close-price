@@ -18,6 +18,21 @@ import event.Timeline;
  * Class to store and compute a stochastic process used as a base to determine
  * the private valuations of background agents.
  * 
+ * if F(t) is the fundamental at time t
+ * s^2 is the shock variance
+ * m is the fundamental mean and
+ * kc is 1 - kappa then
+ * 
+ * F(t+1) ~ N(m*(1-kc) + F(t)*kc, s^2)
+ * 
+ * which implies that
+ * 
+ * F(t+d) ~ N(m*(1-kc^d) + F(t)*kc^d, s^2 * (1 - kc^(2d)) / (1 - kc^2)) if kc in [0, 1)
+ * 
+ * or 
+ * 
+ * F(t+d) ~ N(F(t), d * s^2) if kc = 1
+ * 
  * @author ewah
  */
 public class FundamentalValue implements Serializable {
