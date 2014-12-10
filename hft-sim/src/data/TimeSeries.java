@@ -3,20 +3,17 @@ package data;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.List;
 
-import utils.Iterables2;
-import utils.Iterators2;
-import utils.SparseIterable;
-import utils.SparseIterator;
-import utils.SparseIterator.SparseElement;
+import utils.Sparse.SparseElement;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
+
+import event.TimeStamp;
 
 /**
  * Storage for time series objects.
@@ -31,12 +28,7 @@ import com.google.common.collect.Lists;
  * @author ewah
  * 
  */
-/*
- * FIXME Currently interpolation is hard coded, and results in NaN values at the
- * beginning. It would be better to have an interpolation class that can
- * arbitrarily fill in the blanks.
- */
-public class TimeSeries implements Serializable, SparseIterable<Double> {
+public class TimeSeries implements Serializable, Iterable<SparseElement<Double>> {
 	
 	private static final long serialVersionUID = 7835744389750549565L;
 	private static final Joiner joiner = Joiner.on(", ");
@@ -45,16 +37,34 @@ public class TimeSeries implements Serializable, SparseIterable<Double> {
 
 	protected TimeSeries() {
 		this.points = Lists.newArrayList();
-		points.add(SparseElement.create(0, Double.NaN));
 	}
 
 	public static TimeSeries create() {
 		return new TimeSeries();
 	}
 	
+	/**
+	 * Add a data point (int, double) to container
+	 * TODO time should be timestamp?
+	 */
+	public void add(TimeStamp time, double value) {
+		long ticks = time.getInTicks();
+		checkArgument((points.isEmpty() && ticks >= 0) || (!points.isEmpty() && ticks >= Iterables.getLast(points).getIndex()),
+				"Can't insert values before 0 or previous time");
+		if (!points.isEmpty() && Iterables.getLast(points).getIndex() == ticks)
+			points.remove(points.size() - 1);
+		if (points.isEmpty() || Iterables.getLast(points).getValue() != value) // Interpolate forward, so redundant
+			points.add(SparseElement.create(ticks, value));
+	}
+	
+	@Override
+	public Iterator<SparseElement<Double>> iterator() {
+		return Iterators.unmodifiableIterator(points.iterator());
+	}
+
 	@Override
 	public boolean equals(Object o) {
-		if (o == null || !(o instanceof TimeSeries))
+		if (o == null || !(getClass().equals(o.getClass())))
 			return false;
 		return this.points.equals(((TimeSeries) o).points);
 	}
@@ -63,47 +73,5 @@ public class TimeSeries implements Serializable, SparseIterable<Double> {
 	public String toString() {
 		return "[" + joiner.join(points) + "]";
 	}
-
-	/**
-	 * Add a data point (int, double) to container
-	 * TODO time should be timestamp?
-	 */
-	public void add(long time, double value) {
-		long lastTime = Iterables.getLast(points).index;
-		checkArgument(time >= lastTime, "Can't add time before last time");
-		if (time == lastTime)
-			Iterables.getLast(points).element = value;
-		else
-			points.add(SparseElement.create(time, value));
-	}
 	
-	/**
-	 * Returns an iterable view backed by the underlying data, but without any
-	 * nans.
-	 * 
-	 * Note, this can cause issues, as the default value is nan, and so can
-	 * result in null elements as you sample with no data.
-	 */
-	public Iterable<Double> removeNans() {
-		return filter(Predicates.not(Predicates.equalTo(Double.NaN)));
-	}
-	
-	/**
-	 * Same as removeNans, but with an arbitrary predicate.
-	 */
-	public Iterable<Double> filter(final Predicate<Double> predicate) {
-		return Iterables2.toSparse(Iterables.unmodifiableIterable(
-				Iterables.filter(points, new Predicate<SparseElement<Double>>() {
-					@Override
-					public boolean apply(SparseElement<Double> input) {
-						return predicate.apply(input.element);
-					}
-				})));
-	}
-
-	@Override
-	public SparseIterator<Double> iterator() {
-		return Iterators2.fromSparse(Iterators.unmodifiableIterator(points.iterator()));
-	}
-
 }

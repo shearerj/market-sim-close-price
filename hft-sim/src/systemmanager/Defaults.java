@@ -112,7 +112,7 @@ public class Defaults implements Serializable {
 			.put(StddevPrefixes.class,	ImmutableList.of(Stats.MARKET_MAKER_SPREAD, Stats.PRICE))
 			
 			// Simulation spec (general)
-			.put(SimLength.class,		60000)
+			.put(SimLength.class,		60000l)
 			.put(FundamentalMean.class,	100000)
 			.put(FundamentalKappa.class, 0.05)
 			.put(FundamentalShockVar.class, 1000000d)

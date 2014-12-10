@@ -43,7 +43,7 @@ public class ZIRPAgentTest {
 			.put(PrivateValueVar.class,		100d)
 			.put(Rmin.class,				10000)
 			.put(Rmax.class,				10000)
-			.put(SimLength.class,			60000)
+			.put(SimLength.class,			60000l)
 			.put(FundamentalKappa.class,	0.05)
 			.put(FundamentalMean.class,		100000)
 			.put(FundamentalShockVar.class,	0d)

@@ -12,12 +12,12 @@ public class FinalFundamentalEstimator {
 
 	private final FundamentalValueView fundamental;
 	private final Timeline timeline;
-	private final int simulationLength;
+	private final long simulationLength;
 	private final double kappa;
-	private final int fundamentalMean;
+	private final double fundamentalMean;
 	
 	private FinalFundamentalEstimator(FundamentalValueView fundamental, Timeline timeline,
-			int simulationLength, double kappa, int fundamentalMean) {
+			long simulationLength, double kappa, double fundamentalMean) {
 		this.fundamental = fundamental;
 		this.timeline = timeline;
 		this.simulationLength = simulationLength;
@@ -26,12 +26,11 @@ public class FinalFundamentalEstimator {
 	}
 	
 	public static FinalFundamentalEstimator create(FundamentalValueView fundamental, Timeline timeline,
-			int simulationLength, double kappa, int fundamentalMean) {
+			long simulationLength, double kappa, double fundamentalMean) {
 		return new FinalFundamentalEstimator(fundamental, timeline, simulationLength, kappa, fundamentalMean);
 	}
 	
-	public static FinalFundamentalEstimator create(FundamentalValueView fundamental, Timeline timeline,
-			Props props) {
+	public static FinalFundamentalEstimator create(FundamentalValueView fundamental, Timeline timeline, Props props) {
 		return create(fundamental, timeline, props.get(SimLength.class), props.get(FundamentalKappa.class), props.get(FundamentalMean.class));
 	}
 
@@ -39,8 +38,7 @@ public class FinalFundamentalEstimator {
 	public Price getFundamentalEstimate() {
 		double stepsLeft = simulationLength - 1 - timeline.getCurrentTime().getInTicks() + fundamental.getLatency().getInTicks();
 		double kappaCompToPower = Math.pow(1 - kappa, stepsLeft);
-		return Price.of(fundamental.getValue().doubleValue() * kappaCompToPower 
-			+ fundamentalMean * (1 - kappaCompToPower));
+		return Price.of(fundamental.getValue().doubleValue() * kappaCompToPower + fundamentalMean * (1 - kappaCompToPower));
 	}
 	
 }

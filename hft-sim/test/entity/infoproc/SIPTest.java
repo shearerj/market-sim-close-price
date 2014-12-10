@@ -236,21 +236,21 @@ public class SIPTest {
 		EventQueue timeline = latencySetup(stats, TimeStamp.of(50));
 		
 		TimeSeries expected = TimeSeries.create();
-		expected.add(0, Double.POSITIVE_INFINITY); // empty initially
+		expected.add(TimeStamp.of(0), Double.POSITIVE_INFINITY); // empty initially
 		
 		setQuote(nyse, Price.of(104), Price.of(110));
 		setQuote(nasdaq, Price.of(102), Price.of(111));
 		timeline.executeUntil(TimeStamp.of(50));
-		expected.add(50, 6); // 110 - 104
+		expected.add(TimeStamp.of(50), 6); // 110 - 104
 
 		submitOrder(nasdaq, SELL, Price.of(105), 1);
 		timeline.executeUntil(TimeStamp.of(100));
-		expected.add(100, 1); // 105 - 104
+		expected.add(TimeStamp.of(100), 1); // 105 - 104
 				
 		// Another agent submits a buy order
 		submitOrder(nasdaq, BUY, Price.of(109), 1);
 		timeline.executeUntil(TimeStamp.of(150)); // Order transacts with SELL @ 105
-		expected.add(150, 6); // 110 - 104
+		expected.add(TimeStamp.of(150), 6); // 110 - 104
 		
 		assertEquals(expected, stats.getTimeStats().get(Stats.NBBO_SPREAD));
 	}
@@ -261,18 +261,18 @@ public class SIPTest {
 		EventQueue timeline = latencySetup(stats, TimeStamp.of(50));
 		
 		TimeSeries expected = TimeSeries.create();
-		expected.add(0, Double.POSITIVE_INFINITY); // empty initially
+		expected.add(TimeStamp.of(0), Double.POSITIVE_INFINITY); // empty initially
 		
 		// Initial Quote
 		setQuote(nyse, Price.of(104), Price.of(110));
 		setQuote(nasdaq, Price.of(102), Price.of(111));
 		timeline.executeUntil(TimeStamp.of(50));
-		expected.add(50, 6); // 110 - 104
+		expected.add(TimeStamp.of(50), 6); // 110 - 104
 
 		submitOrder(nasdaq, SELL, Price.of(105), 1);
 		submitOrder(nyse, BUY, Price.of(109), 1);
 		timeline.executeUntil(TimeStamp.of(100));
-		expected.add(100, Double.POSITIVE_INFINITY); // XXX NBBO Crossed, so spread is positive infinity
+		expected.add(TimeStamp.of(100), Double.POSITIVE_INFINITY); // XXX NBBO Crossed, so spread is positive infinity
 		
 		assertEquals(expected, stats.getTimeStats().get(Stats.NBBO_SPREAD));
 	}

@@ -3,14 +3,9 @@ package data;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
 
 import utils.Rand;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Range;
 
@@ -25,77 +20,74 @@ import event.Timeline;
  * 
  * @author ewah
  */
-public class FundamentalValue implements Iterable<Price>, Serializable {
+public class FundamentalValue implements Serializable {
 
-	protected static final Ordering<TimeStamp> ord = Ordering.natural();
+	private static final Ordering<TimeStamp> tord = Ordering.natural();
 	
 	private final Timeline timeline;
 	private final Stats stats;
+	private final Rand rand;
 	
-	protected final ArrayList<Price> meanRevertProcess;
-	protected final double kappa;
-	protected final int meanValue;
-	protected final double shockVar;
-	protected final Rand rand;
+	private final double kappac; // kappa compliment (1 - kappa)
+	private final double mean;
+	private final double shockVar;
+	
+	private TimeStamp lastTime;
+	private Price lastPrice;
+	
 
 	/**
-	 * @param kap rate which the process reverts to the mean value
-	 * @param meanVal mean process
-	 * @param var Gaussian Process variance
-	 * @param rand Random generator
+	 * @param kappa rate which the process reverts to the mean value
+	 * @param mean mean
+	 * @param var gaussian variance
 	 */
-	protected FundamentalValue(Stats stats, Timeline timeline, double kap, int meanVal, double var, Rand rand) {
-		checkArgument(Range.closed(0d, 1d).contains(kap), "Kappa (%.4f) not in [0, 1]", kap);
+	private FundamentalValue(Stats stats, Timeline timeline, double kappa, double mean, double var, Rand rand) {
+		checkArgument(Range.closed(0d, 1d).contains(kappa), "Kappa (%.4f) not in [0, 1]", kappa);
 		this.stats = stats;
 		this.timeline = timeline;
 		this.rand = rand;
-		this.kappa = kap;
-		this.meanValue = meanVal;
+		this.kappac = 1 - kappa;
+		this.mean = mean;
 		this.shockVar = var;
 
 		// stochastic initial conditions for random process
-		meanRevertProcess = Lists.newArrayList();
-		meanRevertProcess.add(Price.of(rand.nextGaussian(meanValue, shockVar)).nonnegative());
-		postStat(0, Iterables.getOnlyElement(meanRevertProcess).doubleValue());
+		lastPrice = Price.of(rand.nextGaussian(mean, shockVar)).nonnegative();
+		lastTime = TimeStamp.ZERO;
+
+		// Post statistics
+		stats.postTimed(lastTime, Stats.FUNDAMENTAL, lastPrice.doubleValue());
+		stats.post(Stats.CONTROL_FUNDAMENTAL, lastPrice.doubleValue());
 	}
 	
 	/** Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps */
-	public static FundamentalValue create(Stats stats, Timeline timeline, double kap, int meanVal, double var, Rand rand) {
+	public static FundamentalValue create(Stats stats, Timeline timeline, double kap, double meanVal, double var, Rand rand) {
 		return new FundamentalValue(stats, timeline, kap, meanVal, var, rand);
 	}
 
-	/** Helper method to ensure that maxQuery exists in the data structure. */
-	protected void computeFundamentalTo(int maxQuery) {
-		for (int i = meanRevertProcess.size(); i <= maxQuery; i++) {
-			Price prevValue = Iterables.getLast(meanRevertProcess);
-			Price nextValue = Price.of(rand.nextGaussian(meanValue * kappa + (1 - kappa) * prevValue.doubleValue(), shockVar)).nonnegative();
-			meanRevertProcess.add(nextValue);
-			postStat(i, nextValue.doubleValue());
-		}
-	}
-
 	/** Returns the global fundamental value at time ts. */
-	public Price getValueAt(TimeStamp t) {
-		checkArgument(!t.before(TimeStamp.ZERO), "Can't query before time zero");
-		int index = (int) t.getInTicks();
-		computeFundamentalTo(index);
-		return meanRevertProcess.get(index);
+	public Price getValueAt(TimeStamp time) {
+		checkArgument(time.afterOrOn(lastTime), "Must query sequential times");
+		if (time.after(lastTime)) {
+			long deltat = time.getInTicks() - lastTime.getInTicks();
+			double kappae = Math.pow(kappac, deltat); // Effective kappa
+			double varScale = kappac == 1 ? deltat : (1 - kappae * kappae) / (1 - kappac * kappac);
+			
+			stats.post(Stats.CONTROL_FUNDAMENTAL, lastPrice.doubleValue(), deltat - 1); // Post "assuming" fundamental was previous value
+			
+			lastPrice = Price.of(rand.nextGaussian((1 - kappae) * mean + kappae * lastPrice.doubleValue(), shockVar * varScale))
+					.nonnegative();
+			lastTime = time;
+			
+			stats.postTimed(lastTime, Stats.FUNDAMENTAL, lastPrice.doubleValue());
+			stats.post(Stats.CONTROL_FUNDAMENTAL, lastPrice.doubleValue());
+		}
+		return lastPrice;
 	}
 
-	@Override
-	public Iterator<Price> iterator() {
-		return Iterators.unmodifiableIterator(meanRevertProcess.iterator());
-	}
-	
-	protected void postStat(int index, double value) {
-		stats.postTimed(TimeStamp.of(index), Stats.FUNDAMENTAL, value);
-		stats.post(Stats.CONTROL_FUNDAMENTAL, value);
-	}
-
+	// TODO memeoize? Lots of views with the same latency. Extra objects
 	/** Get a possibly delayed view of the fundamental process */
 	public FundamentalValueView getView(final TimeStamp latency) {
-		// TODO memeoize?
-		return new FundamentalValueView(ord.max(latency, TimeStamp.ZERO));
+		return new FundamentalValueView(latency);
 	}
 	
 	/** A view of this process from some entity with limited information */
@@ -108,7 +100,7 @@ public class FundamentalValue implements Iterable<Price>, Serializable {
 		
 		/** Gets most recent known value of the fundamental for an entity in the simulation */
 		public Price getValue() {
-			return FundamentalValue.this.getValueAt(ord.max(timeline.getCurrentTime().minus(latency), TimeStamp.ZERO));
+			return FundamentalValue.this.getValueAt(tord.max(timeline.getCurrentTime().minus(latency), TimeStamp.ZERO));
 		}
 		
 		@Override

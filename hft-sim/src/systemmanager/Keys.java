@@ -51,7 +51,7 @@ public interface Keys {
 	public static class TickSize extends IntValue {};
 	
 	public static class PrivateValueVar extends DoubleValue {};
-	public static class SimLength extends IntValue {};
+	public static class SimLength extends LongValue {};
 	public static class FundamentalMean extends IntValue {};
 	public static class FundamentalShockVar extends DoubleValue {};
 	public static class FundamentalKappa extends DoubleValue {};

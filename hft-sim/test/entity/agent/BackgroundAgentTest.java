@@ -49,7 +49,7 @@ public class BackgroundAgentTest {
 	private static final double kappa = 0.2315;
 	private static final int meanValue = 98765;
 	private static final double variance = 12345;
-	private static final int simulationLength = 58972;
+	private static final long simulationLength = 58972;
 	private static final Props defaults = Props.fromPairs(
 			FundamentalKappa.class, kappa,
 			FundamentalMean.class, meanValue,

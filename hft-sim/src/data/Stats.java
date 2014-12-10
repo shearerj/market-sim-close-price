@@ -54,11 +54,11 @@ public class Stats {
 	}
 	
 	public void post(String name, double value, long times) {
-		summaryStats.get(name).addNTimes(value, times);
+		summaryStats.get(name).addN(value, times);
 	}
 	
 	public void postTimed(TimeStamp time, String name, double value) {
-		timeStats.get(name).add(time.getInTicks(), value);
+		timeStats.get(name).add(time, value);
 	}
 	
 	public static final String

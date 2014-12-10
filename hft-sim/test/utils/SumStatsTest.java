@@ -60,6 +60,28 @@ public class SumStatsTest {
 	}
 	
 	@Test
+	public void emptyTest() {
+		SummStats test = SummStats.on();
+		assertEquals(Double.NaN, test.sum(), 1e-8);
+		assertEquals(Double.NaN, test.mean(), 1e-8);
+		assertEquals(Double.NaN, test.variance(), 1e-8);
+		assertEquals(Double.NaN, test.stddev(), 1e-8);
+		assertEquals(Double.NaN, test.min(), 1e-8);
+		assertEquals(Double.NaN, test.max(), 1e-8);
+	}
+	
+	@Test
+	public void singleTest() {
+		SummStats test = SummStats.on(5);
+		assertEquals(5, test.sum(), 1e-8);
+		assertEquals(5, test.mean(), 1e-8);
+		assertEquals(0, test.variance(), 1e-8);
+		assertEquals(0, test.stddev(), 1e-8);
+		assertEquals(5, test.min(), 1e-8);
+		assertEquals(5, test.max(), 1e-8);
+	}
+	
+	@Test
 	public void singletonMergeTest() {
 		SummStats test = SummStats.on();
 		BigStat truth = new BigStat();

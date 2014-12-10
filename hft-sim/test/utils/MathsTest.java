@@ -3,13 +3,22 @@ package utils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Random;
 
 import org.junit.Test;
 
+import utils.Maths.Median;
+
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.common.primitives.Doubles;
 
 public class MathsTest {
+	
+	private static final Random rand = new Random();
 
 	@Test
 	public void testingQuantizeInt() { 	
@@ -118,6 +127,48 @@ public class MathsTest {
 		List<Double> logRatio = ImmutableList.copyOf(Maths.logRatio(1, Math.E, 1/Math.E));
 		assertEquals(1, logRatio.get(0), 0.001);
 		assertEquals(-2, logRatio.get(1), 0.001);
+	}
+	
+	@Test
+	public void singleMedianTest() {
+		org.apache.commons.math3.stat.descriptive.rank.Median median = new org.apache.commons.math3.stat.descriptive.rank.Median();
+		Collection<Double> record = Lists.newArrayList();
+		Median med = Median.of();
+		for (int i = 0; i < 1000; ++i) {
+			double val = rand.nextDouble();
+			med.add(val);
+			record.add(val);
+		}
+		median.setData(Doubles.toArray(record));
+		assertEquals(median.evaluate(), med.get(), 1e-6);
+	}
+	
+	@Test
+	public void bulkMedianTest() {
+		org.apache.commons.math3.stat.descriptive.rank.Median median = new org.apache.commons.math3.stat.descriptive.rank.Median();
+		Collection<Double> record = Lists.newArrayList();
+		Median med = Median.of();
+		for (int i = 0; i < 100; ++i) {
+			int count = rand.nextInt(10) + 1;
+			double val = rand.nextDouble();
+			med.add(val, count);
+			Iterators.addAll(record, Iterators.limit(Iterators.cycle(val), count));
+		}
+		median.setData(Doubles.toArray(record));
+		assertEquals(median.evaluate(), med.get(), 1e-6);
+	}
+	
+	@Test
+	public void emptyMedianTest() {
+		assertEquals(Double.NaN, Median.of().get(), 0);
+	}
+	
+	@Test
+	public void randomTests() {
+		for (int i = 0; i < 100; ++i) {
+			singleMedianTest();
+			bulkMedianTest();
+		}
 	}
 	
 }

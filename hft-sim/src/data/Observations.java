@@ -14,16 +14,13 @@ import systemmanager.Keys.SimLength;
 import systemmanager.Keys.StddevPrefixes;
 import systemmanager.Keys.SumPrefixes;
 import systemmanager.SimulationSpec.PlayerSpec;
-import utils.Iterables2;
 import utils.Maps2;
-import utils.Maths;
+import utils.Sparse;
 import utils.SummStats;
 
-import com.google.common.base.Predicates;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
@@ -70,7 +67,7 @@ public class Observations {
 	protected final Multimap<String, PlayerObservation> players; // Player information
 	protected final Map<String, SummStats> features; // Other features
 	
-	private transient final int simLength;
+	private transient final long simLength;
 	private transient final Iterable<Integer> periods;
 	
 	/*
@@ -119,40 +116,23 @@ public class Observations {
 		for (Iterator<PlayerObservation> iter : playerObs.values())
 			checkState(!iter.hasNext());
 		
-		// General Statistics
-		Map<String, SummStats> unseen = Maps.newHashMap(stats.getSummaryStats());
-		// Sum
-		for (String prefix : sumPrefixes) {
-			for (Entry<String, SummStats> e : Maps2.prefix(prefix, stats.getSummaryStats()).entrySet()) {
-				unseen.remove(e.getKey());
+		// General Statistics		// Sum
+		for (String prefix : sumPrefixes)
+			for (Entry<String, SummStats> e : Maps2.prefix(prefix, stats.getSummaryStats()).entrySet())
 				features.get(e.getKey() + "_sum").add(e.getValue().sum());
-			}
-		}
 		// Mean
-		for (String prefix : meanPrefixes) {
-			for (Entry<String, SummStats> e : Maps2.prefix(prefix, stats.getSummaryStats()).entrySet()) {
-				unseen.remove(e.getKey());
+		for (String prefix : meanPrefixes)
+			for (Entry<String, SummStats> e : Maps2.prefix(prefix, stats.getSummaryStats()).entrySet())
 				features.get(e.getKey() + "_mean").add(e.getValue().mean());
-			}
-		}
 		// Standard Deviation
-		for (String prefix : stddevPrefixes) {
-			for (Entry<String, SummStats> e : Maps2.prefix(prefix, stats.getSummaryStats()).entrySet()) {
-				unseen.remove(e.getKey());
+		for (String prefix : stddevPrefixes)
+			for (Entry<String, SummStats> e : Maps2.prefix(prefix, stats.getSummaryStats()).entrySet())
 				features.get(e.getKey() + "_stddev").add(e.getValue().stddev());
-			}
-		}
-		// Any unseen keys
-		for (Entry<String, SummStats> e : unseen.entrySet()) {
-			features.get(e.getKey() + "_sum").add(e.getValue().sum());
-			features.get(e.getKey() + "_mean").add(e.getValue().mean());
-			features.get(e.getKey() + "_stddev").add(e.getValue().stddev());
-		}
 
 		// Spreads
 		SummStats spreadMedians = SummStats.on();
 		for (Entry<String, TimeSeries> e : Maps2.prefix(Stats.SPREAD, stats.getTimeStats()).entrySet()) {
-			double median = Maths.median(Iterables.limit(e.getValue(), simLength));
+			double median = Sparse.median(e.getValue(), simLength);
 			if (!e.getKey().equals(Stats.NBBO_SPREAD))
 				spreadMedians.add(median);
 			features.get(e.getKey() + "_median").add(median);
@@ -163,9 +143,7 @@ public class Observations {
 		TimeSeries fundamental = stats.getTimeStats().get(Stats.FUNDAMENTAL);
 		for (int period : periods) {
 			TimeSeries transPrices = stats.getTimeStats().get(Stats.TRANSACTION_PRICE);
-			Iterable<Double> pr = Iterables.limit(Iterables2.sample(transPrices, period, -1), simLength / period);
-			Iterable<Double> fundStat = Iterables.limit(Iterables2.sample(fundamental, period, -1), simLength / period);
-			double rmsd = Maths.rmsd(pr, fundStat);
+			double rmsd = Sparse.rmsd(transPrices, fundamental, period, simLength);
 			features.get("trans_freq_" + period + "_rmsd").add(rmsd);
 		}
 		
@@ -180,8 +158,7 @@ public class Observations {
 			for (Entry<String, TimeSeries> entry : Maps2.prefix(Stats.MIDQUOTE, stats.getTimeStats()).entrySet()) {
 				TimeSeries midquote = entry.getValue();
 				// compute log price volatility for this market
-				Iterable<Double> filtered = Iterables.filter(Iterables.limit(Iterables2.sample(midquote.removeNans(), period, -1), simLength / period), Predicates.notNull());
-				double stdev = Maths.stddev(filtered);
+				double stdev = Sparse.stddev(midquote, period, simLength);
 
 				features.get(prefix + entry.getKey() + "_stddev").add(stdev);
 
@@ -190,12 +167,7 @@ public class Observations {
 					logPriceVol.add(Math.log(stdev));
 
 				// compute log-return volatility for this market
-				// XXX Note change in log-return vol from before. Before if the ratio was
-				// NaN it go thrown out. Now the previous value is used. Not sure if
-				// this is desired
-				double logStddev = Maths.stddev(Iterables.filter(Maths.logRatio(filtered),
-						Predicates.not(Predicates.equalTo(Double.NaN))));
-
+				double logStddev = Sparse.logRatioStddev(midquote, period, simLength);
 				features.get(prefix + "log_return_" + entry.getKey() + "_stddev").add(logStddev);
 				logRetVol.add(logStddev);
 			}

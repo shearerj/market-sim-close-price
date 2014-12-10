@@ -529,17 +529,17 @@ public class MarketTest {
 		market = mockMarket(0, stats, timeline, Mock.sip, Props.fromPairs());
 		view = market.getPrimaryView();
 		TimeSeries expected = TimeSeries.create();
-		expected.add(0, Double.POSITIVE_INFINITY);
+		expected.add(TimeStamp.of(0), Double.POSITIVE_INFINITY);
 		
 		timeline.executeUntil(TimeStamp.of(2));
 		submitOrder(SELL, Price.of(100), 1);
 		submitOrder(BUY, Price.of(50), 1);
-		expected.add(2, 50);
+		expected.add(TimeStamp.of(2), 50);
 		
 		timeline.executeUntil(TimeStamp.of(100));
 		submitOrder(SELL, Price.of(80), 1);
 		submitOrder(BUY, Price.of(60), 1);
-		expected.add(100, 20);
+		expected.add(TimeStamp.of(100), 20);
 		
 		assertEquals(expected, stats.getTimeStats().get(Stats.SPREAD + 0));
 	}
@@ -551,17 +551,17 @@ public class MarketTest {
 		market = mockMarket(0, stats, timeline, Mock.sip, Props.fromPairs());
 		view = market.getPrimaryView();
 		TimeSeries expected = TimeSeries.create();
-		expected.add(0, Double.NaN);
+		expected.add(TimeStamp.of(0), Double.NaN);
 		
 		timeline.executeUntil(TimeStamp.of(2));
 		submitOrder(SELL, Price.of(100), 1);
 		submitOrder(BUY, Price.of(50), 1);
-		expected.add(2, 75);
+		expected.add(TimeStamp.of(2), 75);
 		
 		timeline.executeUntil(TimeStamp.of(100));
 		submitOrder(SELL, Price.of(80), 1);
 		submitOrder(BUY, Price.of(60), 1);
-		expected.add(100, 70);
+		expected.add(TimeStamp.of(100), 70);
 		
 		assertEquals(expected, stats.getTimeStats().get(Stats.MIDQUOTE + 0));
 	}
@@ -584,9 +584,9 @@ public class MarketTest {
 		addTransaction(Price.of(150), 1);
 		
 		TimeSeries truth = TimeSeries.create();
-		truth.add(0, 100);
-		truth.add(50, 50);
-		truth.add(100, 150);
+		truth.add(TimeStamp.of(0), 100);
+		truth.add(TimeStamp.of(50), 50);
+		truth.add(TimeStamp.of(100), 150);
 		
 		assertEquals(truth, stats.getTimeStats().get(Stats.TRANSACTION_PRICE));
 		

@@ -47,7 +47,7 @@ public class FundamentalMarketMakerTest {
 			.put(TickOutside.class, true)
 			.put(InitLadderMean.class, 0)
 			.put(InitLadderRange.class, 0)
-			.put(SimLength.class, 1000)
+			.put(SimLength.class, 1000l)
 			.put(FundamentalMean.class, 146724)
 			.put(FundamentalShockVar.class, 0d)
 			.put(K.class, 3)

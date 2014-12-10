@@ -160,7 +160,7 @@ public class PresetTest {
 		config.addProperty(keyToString(NumAgents.class), numAgents);
 		
 		SimulationSpec spec = SimulationSpec.fromJson(json);
-		assertEquals(2, (int) spec.getSimulationProps().get(SimLength.class));
+		assertEquals(2, (long) spec.getSimulationProps().get(SimLength.class));
 		
 		for (Entry<MarketType, Props> mp : spec.getMarketProps().entries()) {
 			switch (mp.getKey()) {

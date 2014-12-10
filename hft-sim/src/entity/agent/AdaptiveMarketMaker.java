@@ -275,13 +275,21 @@ public class AdaptiveMarketMaker extends MarketMaker {
 	 * 
 	 * TODO get rid of this class?
 	 */
-	protected static class TransactionResult extends utils.Pair<Integer, Integer> {
+	protected static class TransactionResult {
+		private final int holdingsChange, cashChange;
+
 		protected TransactionResult(int holdingsChange, int cashChange) {
-			super(holdingsChange, cashChange);
+			this.holdingsChange = holdingsChange;
+			this.cashChange = cashChange;
 		}
 
-		public int getHoldingsChange() { return left; }
-		public int getCashChange() { return right; }
+		public int getHoldingsChange() {
+			return holdingsChange;
+		}
+
+		public int getCashChange() {
+			return cashChange;
+		}
 	}
 
 }

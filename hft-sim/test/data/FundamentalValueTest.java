@@ -2,21 +2,22 @@ package data;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Iterator;
+import java.util.List;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Defaults;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
+import utils.Maths;
 import utils.Mock;
 import utils.Rand;
-import utils.SummStats;
+import utils.Sparse;
+import utils.Sparse.SparseElement;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
+import com.google.common.math.DoubleMath;
 
 import entity.market.Price;
 import event.TimeStamp;
@@ -24,20 +25,6 @@ import event.TimeStamp;
 public class FundamentalValueTest {
 	private static final double eps = 1e-6;
 	private static final Rand rand = Rand.create();
-	
-	@Before
-	public void defaultSetup() {
-		
-	}
-	
-	@Test(expected=UnsupportedOperationException.class)
-	public void immutableTest() {
-		FundamentalValue fund = Mock.fundamental;
-		fund.computeFundamentalTo(1000);
-		Iterator<Price> it = fund.iterator();
-		it.next();
-		it.remove();
-	}
 	
 	@Test
 	public void zeroJumpTest() {
@@ -50,19 +37,40 @@ public class FundamentalValueTest {
 	}
 	
 	@Test
+	public void postSimpleRandFundamentalStatTest() {
+		Stats stats = Stats.create();
+		FundamentalValue fund = FundamentalValue.create(stats, Mock.timeline,
+				Defaults.get(FundamentalKappa.class), Defaults.get(FundamentalMean.class), Defaults.get(FundamentalShockVar.class), rand);
+		ImmutableList.Builder<Double> vals = ImmutableList.builder();
+		TimeSeries ts = TimeSeries.create();
+		for (int time = 0; time < 100; ++time) {
+			double price = fund.getValueAt(TimeStamp.of(time)).doubleValue();
+			vals.add(price);
+			ts.add(TimeStamp.of(time), price);
+		}
+		List<Double> v = vals.build();
+		
+		assertEquals(ImmutableList.copyOf(ts), ImmutableList.copyOf(stats.getTimeStats().get(Stats.FUNDAMENTAL)));
+		assertEquals(DoubleMath.mean(v), stats.getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).mean(), eps);
+		assertEquals(Maths.stddev(v), stats.getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).stddev(), eps);
+	}
+	
+	@Test
 	public void postRandFundamentalStatTest() {
 		Stats stats = Stats.create();
 		FundamentalValue fund = FundamentalValue.create(stats, Mock.timeline,
 				Defaults.get(FundamentalKappa.class), Defaults.get(FundamentalMean.class), Defaults.get(FundamentalShockVar.class), rand);
-		fund.computeFundamentalTo(100);
+		TimeSeries ts = TimeSeries.create();
+		long time = 0;
+		ts.add(TimeStamp.ZERO, fund.getValueAt(TimeStamp.ZERO).doubleValue());
+		for (int i = 0; i < 5; ++i) {
+			time += rand.nextInt(10) + 1;
+			double price = fund.getValueAt(TimeStamp.of(time)).doubleValue();
+			ts.add(TimeStamp.of(time), price);
+		}
 		
-		ImmutableList.Builder<Double> vals = ImmutableList.builder();
-		for (Price p : fund)
-			vals.add(p.doubleValue());
-
-		assertEquals(vals.build(), ImmutableList.copyOf(Iterables.limit(stats.getTimeStats().get(Stats.FUNDAMENTAL), 101)));
-		assertEquals(SummStats.on(fund).mean(), stats.getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).mean(), eps);
-		assertEquals(SummStats.on(fund).stddev(), stats.getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).stddev(), eps);
+		assertEquals(ImmutableList.copyOf(ts), ImmutableList.copyOf(stats.getTimeStats().get(Stats.FUNDAMENTAL)));
+		assertEquals(Sparse.stddev(ts, 1, time + 1), stats.getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).stddev(), eps);
 	}
 	
 	@Test
@@ -70,13 +78,11 @@ public class FundamentalValueTest {
 		int mean = rand.nextInt(100000);
 		Stats stats = Stats.create();
 		FundamentalValue fund = FundamentalValue.create(stats, Mock.timeline, 0, mean, 0, rand);
-		fund.computeFundamentalTo(100);
-		
-		ImmutableList.Builder<Double> vals = ImmutableList.builder();
-		for (Price p : fund)
-			vals.add(p.doubleValue());
+		fund.getValueAt(TimeStamp.of(100));
 
-		assertEquals(vals.build(), ImmutableList.copyOf(Iterables.limit(stats.getTimeStats().get(Stats.FUNDAMENTAL), 101)));
+		assertEquals(
+				ImmutableList.of(SparseElement.create(0, (double) mean)),
+				ImmutableList.copyOf(stats.getTimeStats().get(Stats.FUNDAMENTAL)));
 		assertEquals(mean, stats.getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).mean(), eps);
 		assertEquals(0, stats.getSummaryStats().get(Stats.CONTROL_FUNDAMENTAL).stddev(), eps);
 	}
@@ -84,9 +90,8 @@ public class FundamentalValueTest {
 	@Test
 	public void extraTest() {
 		for (int i = 0; i < 100; i++) {
-			defaultSetup();
 			zeroJumpTest();
-			defaultSetup();
+			postSimpleRandFundamentalStatTest();
 			postRandFundamentalStatTest();
 		}
 	}

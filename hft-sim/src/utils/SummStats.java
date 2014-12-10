@@ -42,7 +42,7 @@ public class SummStats {
 	 * Create a SumStats object with initial data
 	 */
 	public static SummStats on(Iterable<? extends Number> values) {
-		return new SummStats(0, 0, 0, Double.NaN, Double.NaN).add(values);
+		return new SummStats(0, 0, 0, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY).add(values);
 	}
 	
 	/**
@@ -58,15 +58,15 @@ public class SummStats {
 		n += 1;
 		mean += delta / n;
 		squaredError += delta * (value - mean);
-		if (Double.isNaN(min) || value < min)
-			min = value;
-		if (Double.isNaN(max) || value > max)
-			max = value;
+		min = Math.min(min, value);
+		max = Math.max(max, value);
 		return this;
 	}
 	
-	public SummStats addNTimes(double value, long times) {
-		checkArgument(times > 0);
+	public SummStats addN(double value, long times) {
+		checkArgument(times >= 0);
+		if (times == 0)
+			return this;
 		merge(new SummStats(times, value, 0, value, value));
 		return this;
 	}
@@ -91,7 +91,7 @@ public class SummStats {
 	 * Return the mean of all data added so far
 	 */
 	public double mean() {
-		return mean;
+		return n == 0 ? Double.NaN : mean;
 	}
 	
 	/**
@@ -99,7 +99,7 @@ public class SummStats {
 	 * @return
 	 */
 	public double variance() {
-		return squaredError / (n - 1);
+		return n == 0 ? Double.NaN : n == 1 ? 0 : squaredError / (n - 1);
 	}
 	
 	/**
@@ -110,15 +110,15 @@ public class SummStats {
 	}
 	
 	public double sum() {
-		return mean * n;
+		return mean() * n;
 	}
 	
 	public double min() {
-		return min;
+		return n == 0 ? Double.NaN : min;
 	}
 	
 	public double max() {
-		return max;
+		return n == 0 ? Double.NaN : max;
 	}
 	
 	/** Return the number of data points */
@@ -132,10 +132,8 @@ public class SummStats {
 		n += other.n;
 		mean += delta * other.n / n; // XXX not certain of proper order of operations ton minimize precision loss
 		squaredError += other.squaredError + delta * (other.mean - mean) * other.n;
-		if (Double.isNaN(min) || other.min < min)
-			min = other.min;
-		if (Double.isNaN(max) || other.max > max)
-			max = other.max;
+		min = Math.min(min, other.min);
+		max = Math.max(max, other.max);
 		return this;
 	}
 	

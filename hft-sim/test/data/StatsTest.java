@@ -5,10 +5,11 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 
+import utils.Sparse.SparseElement;
 import utils.SummStats;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
+import com.google.common.collect.ImmutableList.Builder;
 
 import event.TimeStamp;
 
@@ -36,12 +37,15 @@ public class StatsTest {
 	
 	@Test
 	public void postTimedTest() {
+		Builder<SparseElement<Double>> truth = ImmutableList.builder();
 		stats.postTimed(TimeStamp.of(0), key, 0);
+		truth.add(SparseElement.create(0, 0d));
 		stats.postTimed(TimeStamp.of(1), key, -1);
+		truth.add(SparseElement.create(1, -1d));
 		stats.postTimed(TimeStamp.of(2), key, 1);
+		truth.add(SparseElement.create(2, 1d));
 		
-		TimeSeries time = stats.getTimeStats().get(key);
-		assertEquals(ImmutableList.of(0d, -1d, 1d), ImmutableList.copyOf(Iterators.limit(time.iterator(), 3)));
+		assertEquals(truth.build(), ImmutableList.copyOf(stats.getTimeStats().get(key)));
 	}
 	
 	@Test(expected=IllegalArgumentException.class)

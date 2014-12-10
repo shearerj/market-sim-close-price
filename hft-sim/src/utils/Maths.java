@@ -2,18 +2,19 @@ package utils;
 
 import static java.math.RoundingMode.HALF_EVEN;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
-import org.apache.commons.math3.stat.descriptive.rank.Median;
-
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Multiset.Entry;
+import com.google.common.collect.Ordering;
+import com.google.common.collect.SortedMultiset;
+import com.google.common.collect.TreeMultiset;
 import com.google.common.collect.UnmodifiableIterator;
 import com.google.common.math.DoubleMath;
 import com.google.common.primitives.Doubles;
 
 public abstract class Maths {
-	
-	private static final Median median = new Median();
 
 	// XXX This ignores points that have a NaN rmsd. This may not be desired.
 	public static double rmsd(Iterator<? extends Number> iter_a, Iterator<? extends Number> iter_b) {
@@ -92,11 +93,84 @@ public abstract class Maths {
 		return Math.max(Math.min(num, upper), lower);
 	}
 	
+	public static <T extends Number & Comparable<? super T>> T min(T... elements) {
+		return Ordering.<T> natural().min(Arrays.asList(elements));
+	}
+	
+	public static <T extends Number & Comparable<? super T>> T max(T... elements) {
+		return Ordering.<T> natural().max(Arrays.asList(elements));
+	}
+	
 	public static double median(double... values) {
-		return median.evaluate(values);
+		return Median.of(values).get();
 	}
 	
 	public static double median(Iterable<? extends Number> values) {
-		return median(Doubles.toArray(ImmutableList.copyOf(values)));
+		return Median.of(values).get();
 	}
+	
+	public static class Median {
+		/*
+		 * These are technically balanced trees instead of heap, but the guava
+		 * built-in functionality makes this too convenient. Asymptotic running
+		 * time should be the same or better.
+		 */
+		private final SortedMultiset<Double> minHeap, maxHeap;
+		
+		private Median() {
+			minHeap = TreeMultiset.<Double> create().descendingMultiset();
+			maxHeap = TreeMultiset.create();
+		}
+		
+		public static Median of(Iterator<? extends Number> vals) {
+			Median med = new Median();
+			while (vals.hasNext())
+				med.add(vals.next().doubleValue());
+			return med;
+		}
+		
+		public static Median of(Iterable<? extends Number> vals) {
+			return of(vals.iterator());
+		}
+		
+		public static Median of(double... vals) {
+			return of(Doubles.asList(vals));
+		}
+		
+		public Median add(double val) {
+			return add(val, 1);
+		}
+		
+		public Median add(double val, int count) {
+			// Looks messy, but adds to appropriate heap, checking for emptiness
+			(((!minHeap.isEmpty() && minHeap.firstEntry().getElement() >= val) ||
+					(!maxHeap.isEmpty() && maxHeap.firstEntry().getElement() > val))
+					? minHeap : maxHeap).add(val, count);
+			balance();
+			return this;
+		}
+		
+		public double get() {
+			if (minHeap.isEmpty() && maxHeap.isEmpty())
+				return Double.NaN;
+			else if (minHeap.size() == maxHeap.size())
+				return (minHeap.firstEntry().getElement() + maxHeap.firstEntry().getElement()) / 2;
+			else
+				return (minHeap.size() > maxHeap.size() ? minHeap : maxHeap).firstEntry().getElement();
+		}
+		
+		private void balance() {
+			SortedMultiset<Double> from = minHeap.size() > maxHeap.size() ? minHeap : maxHeap;
+			SortedMultiset<Double> to = minHeap.size() > maxHeap.size() ? maxHeap : minHeap;			
+			while (from.size() > to.size() + 1) {
+				Entry<Double> e = from.pollFirstEntry();
+				int swap = Math.min(from.size() - to.size(), e.getCount());
+				swap += (e.getCount() - swap) / 2;
+				to.add(e.getElement(), swap);
+				from.add(e.getElement(), e.getCount() - swap);
+			}
+		}
+		
+	}
+	
 }
