@@ -103,9 +103,7 @@ public abstract class SystemManager {
 				new File(".").toURI().relativize(simFolder.toURI()).getPath().replace('/', '_'));
 		logFileName.append(obsNum).append('_');
 		logFileName.append(LOG_DATE_FORMAT.format(new Date())).append(".txt");
-		File logDir = new File(simFolder, "logs");
-		logDir.mkdirs();
-		Writer logWriter = LazyFileWriter.create(new File(logDir, logFileName.toString()));
+		Writer logWriter = LazyFileWriter.create(new File(new File(simFolder, "logs"), logFileName.toString()));
 		// Execute
 		execute(specReader, propsReader, obsWriter, logWriter, obsNum);
 		// Close and flush

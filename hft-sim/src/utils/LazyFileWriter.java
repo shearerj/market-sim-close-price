@@ -49,8 +49,10 @@ public class LazyFileWriter extends Writer {
 
 	@Override
 	public void write(char[] cbuf, int off, int len) throws IOException {
-		if (writer == null)
+		if (writer == null) {
+			file.getParentFile().mkdirs();
 			writer = new FileWriter(file, append);
+		}
 		writer.write(cbuf, off, len);
 	}
 
