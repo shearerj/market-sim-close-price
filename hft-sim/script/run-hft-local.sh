@@ -32,5 +32,7 @@ function status { # (OBS-NUM)
     "$SCRIPT/run-hft-single.sh" "$JAR" "$DIR" "$1"
 }
 
+# It's important that the indexes are 0 based. This ensures that results are
+# repeatable between multiple numSims = 1 with N observations and sumSims = N
 export -f status
-seq "$NUM" | xargs -I{} -P"$NUM_PROC" bash -c 'status {}'
+seq 0 "$(( $NUM - 1 ))" | xargs -I{} -P"$NUM_PROC" bash -c 'status {}'
