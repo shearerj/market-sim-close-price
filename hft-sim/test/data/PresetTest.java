@@ -1,11 +1,11 @@
-package systemmanager;
+package data;
 
-import static data.Props.keyToString;
 import static data.Preset.Presets.CENTRALCALL;
 import static data.Preset.Presets.CENTRALCDA;
 import static data.Preset.Presets.MAXEFF;
 import static data.Preset.Presets.TWOMARKET;
 import static data.Preset.Presets.TWOMARKETLA;
+import static data.Props.keyToString;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Map.Entry;
@@ -14,18 +14,19 @@ import org.junit.Test;
 
 import systemmanager.Consts.AgentType;
 import systemmanager.Consts.MarketType;
+import systemmanager.Defaults;
 import systemmanager.Keys.ClearInterval;
 import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.NbboLatency;
+import systemmanager.Keys.Num;
 import systemmanager.Keys.NumAgents;
 import systemmanager.Keys.NumMarkets;
 import systemmanager.Keys.SimLength;
+import systemmanager.SimulationSpec;
 import utils.Rand;
 
 import com.google.gson.JsonObject;
 
-import data.Preset;
-import data.Props;
 import event.TimeStamp;
 
 public class PresetTest {
@@ -156,6 +157,7 @@ public class PresetTest {
 		JsonObject config = new JsonObject();
 		json.add(SimulationSpec.CONFIG, config);
 		config.addProperty(Preset.KEY, MAXEFF.toString());
+		config.addProperty(AgentType.ZIR.toString(), "");
 		int numAgents = rand.nextInt(100) + 1;
 		config.addProperty(keyToString(NumAgents.class), numAgents);
 		
@@ -181,6 +183,8 @@ public class PresetTest {
 				assertEquals(Defaults.get(MaxPosition.class), mp.getValue().get(MaxPosition.class));
 				break;
 			default:
+				// Assert that there are no other agents
+				assertEquals(0, (int) mp.getValue().get(NumAgents.class, Num.class));
 			}
 		}
 	}

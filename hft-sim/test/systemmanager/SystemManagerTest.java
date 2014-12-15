@@ -107,11 +107,7 @@ public class SystemManagerTest {
 		File testDir = new File(Consts.TEST_OUTPUT_DIR, "full_test");
 		testDir.mkdirs();
 		copyFile(new File("docs", "simulation_spec.json"), new File(testDir, "simulation_spec.json"));
-		
-		// Bookkeeping
-		File logDir = new File(testDir, "logs");
-		int numLogs = logDir.exists() ? logDir.listFiles().length : 0;
-		
+				
 		// Run test
 		SystemManager.execute(testDir, 0);
 		
@@ -120,8 +116,6 @@ public class SystemManagerTest {
 		assertTrue(observations.exists());
 		assertTrue(observations.canWrite());
 		assertTrue(observations.length() > 0);
-		
-		assertTrue(logDir.listFiles().length > numLogs);
 	}
 	
 	/** Test that spec is written out correctly when outputConfig is set to true */

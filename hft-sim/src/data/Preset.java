@@ -5,6 +5,7 @@ import static systemmanager.Consts.AgentType.LA;
 import static systemmanager.Consts.AgentType.MAXEFFICIENCY;
 import static systemmanager.Consts.MarketType.CALL;
 import static systemmanager.Consts.MarketType.CDA;
+import systemmanager.Consts.AgentType;
 import systemmanager.Keys.ClearInterval;
 import systemmanager.Keys.NbboLatency;
 import systemmanager.Keys.NumAgents;
@@ -66,6 +67,9 @@ public class Preset {
 			config.addProperty(keyToString(SimLength.class), 2);
 			config.addProperty(CDA.toString(), Props.fromPairs(NumMarkets.class, 0).toConfigString());
 			config.addProperty(CALL.toString(), Props.fromPairs(NumMarkets.class, 1, ClearInterval.class, TimeStamp.of(1)).toConfigString());
+			for (AgentType type : AgentType.values()) // Zero out all other agents
+				if (type != MAXEFFICIENCY)
+					config.addProperty(type.toString(), Props.fromPairs(NumAgents.class, 0).toConfigString());
 			config.addProperty(MAXEFFICIENCY.toString(), "");
 			return config;
 			
