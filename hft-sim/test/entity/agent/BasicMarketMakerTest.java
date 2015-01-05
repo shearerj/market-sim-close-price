@@ -215,6 +215,7 @@ public class BasicMarketMakerTest {
 		
 		mockAgent.submitOrder(view, BUY, Price.of(40), 1);
 
+		// Verify that MM uses current BID=40 and initLadderRange to define ladder center
 		marketmaker.agentStrategy();
 		assertRandomOrderLadder(marketmaker.getActiveOrders(), 6,
 				Range.singleton(Price.of(41)), Range.singleton(Price.of(50)), 5);
@@ -235,6 +236,7 @@ public class BasicMarketMakerTest {
 		
 		mockAgent.submitOrder(view, SELL, Price.of(60), 1);
 
+		// Verify that MM uses current ASK=60 and initLadderRange to define ladder center
 		marketmaker.agentStrategy();
 		assertRandomOrderLadder(marketmaker.getActiveOrders(), 6,
 				Range.singleton(Price.of(50)), Range.singleton(Price.of(59)), 5);

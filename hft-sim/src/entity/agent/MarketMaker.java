@@ -131,14 +131,15 @@ public abstract class MarketMaker extends SMAgent {
 	 * Given the prices (bid & ask) for the center of the ladder, compute the 
 	 * ladders' prices and submit the order ladder.
 	 * 
-	 * If either ladderBid or ladder Ask is null, then use either lastBid or 
+	 * If either ladderBid or ladderAsk is null, center ladder around initLadderMean
+	 * and use initLadderRange as spread (use available ladderBid/Ask if possible).
+	 * 
+	 * If either current bid or current ask is null, then use either lastBid or 
 	 * lastAsk (or both) in lieu of the missing quote component. This will be 
 	 * dealt with by truncation if lastBid/Ask will cross the current ASK/BID.
 	 * 
 	 * XXX MM will lose time priority if use last bid & ask, but may not be
 	 * able to get around this since it doesn't know what's in the order book.
-	 * 
-	 * FIXME (for Elaine) Verify this is correct post merge
 	 */
 	protected void createOrderLadder(Optional<Price> initLadderBid, Optional<Price> initLadderAsk) {
 		if ((!initLadderAsk.isPresent() || !initLadderBid.isPresent()) && initLadderMean == 0)
@@ -146,38 +147,21 @@ public abstract class MarketMaker extends SMAgent {
 		Price ladderBid, ladderAsk;
 		if (initLadderBid.isPresent()) {
 			ladderBid = initLadderBid.get();
-			if (initLadderAsk.isPresent()) {
-				ladderAsk = initLadderAsk.get();
-			} else {
-				if (initLadderRange > 2 * stepSize) {
-					ladderAsk = Price.of(rand.nextUniform(initLadderBid.get().intValue() + 2 * stepSize, 
-							initLadderBid.get().intValue() + initLadderRange));
-				} else {
-					ladderAsk = Price.of(rand.nextUniform(initLadderBid.get().intValue() + initLadderRange, 
-							initLadderBid.get().intValue() + 2 * stepSize));
-				}
-				log(INFO, "%s in %s: Randomized Ladder MID (%s, %s)", 
-						this, primaryMarket, initLadderBid, initLadderAsk);
-			}
 		} else {
 			if (initLadderAsk.isPresent()) {
-				ladderAsk = initLadderAsk.get();
-				if (initLadderRange > 2 * stepSize) {
-					ladderBid = Price.of(rand.nextUniform(initLadderAsk.get().intValue() - 2 * stepSize, 
-							initLadderAsk.get().intValue() - initLadderRange));
-				} else {
-					ladderBid = Price.of(rand.nextUniform(initLadderAsk.get().intValue() - initLadderRange, 
-							initLadderAsk.get().intValue() - 2 * stepSize));
-				}
+				ladderBid = Price.of(initLadderAsk.get().intValue() - initLadderRange);
 			} else {
-				double ladderMeanMin = initLadderMean - initLadderRange;
-				double ladderMeanMax = initLadderMean + initLadderRange;
-				int ladderCenter = (int) rand.nextUniform(ladderMeanMin, ladderMeanMax); // Round instead of floor?
-				ladderBid = Price.of(ladderCenter - stepSize);
-				ladderAsk = Price.of(ladderCenter + stepSize);
+				ladderBid = Price.of(initLadderMean - initLadderRange / 2);
 			}
-			log(INFO, "%s in %s: Randomized Ladder MID (%s, %s)", 
-					this, primaryMarket, initLadderBid, initLadderAsk);
+		}
+		if (initLadderAsk.isPresent()) {
+			ladderAsk = initLadderAsk.get();
+		} else {
+			if (initLadderBid.isPresent()) {
+				ladderAsk = Price.of(initLadderBid.get().intValue() + initLadderRange);
+			} else {
+				ladderAsk = Price.of(initLadderMean + initLadderRange / 2);
+			}
 		}
 
 		int ct = (numRungs-1) * stepSize;
@@ -197,7 +181,6 @@ public abstract class MarketMaker extends SMAgent {
 		// With no latency in NBBO quote, it doesn't matter, but later on this
 		// may cause some issues.
 		// Check if the bid or ask crosses the NBBO, if truncating ladder
-
 		
 		int numRungsTruncated = 0;
 		if (truncateLadder) {

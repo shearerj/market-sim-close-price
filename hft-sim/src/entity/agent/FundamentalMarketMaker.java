@@ -41,8 +41,8 @@ public class FundamentalMarketMaker extends MarketMaker {
 	
 	private Optional<Price> lastBid, lastAsk;
 
-	public FundamentalMarketMaker(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
-			Market market, Props props) {
+	public FundamentalMarketMaker(int id, Stats stats, Timeline timeline, Log log, Rand rand, 
+			MarketInfo sip, FundamentalValue fundamental, Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 		
 		this.fundamental = FinalFundamentalEstimator.create(getFundamentalValueView(), timeline, props);
@@ -53,8 +53,8 @@ public class FundamentalMarketMaker extends MarketMaker {
 		this.lastAsk = Optional.absent();
 	}
 
-	public static FundamentalMarketMaker create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
-			Market market, Props props) {
+	public static FundamentalMarketMaker create(int id, Stats stats, Timeline timeline, Log log, 
+			Rand rand, MarketInfo sip, FundamentalValue fundamental, Market market, Props props) {
 		return new FundamentalMarketMaker(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}
 

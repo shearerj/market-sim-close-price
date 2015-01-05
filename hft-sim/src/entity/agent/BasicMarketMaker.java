@@ -47,16 +47,16 @@ public class BasicMarketMaker extends MarketMaker {
 	
 	protected Optional<Price> lastAsk, lastBid; // stores the ask/bid at last entry
 
-	protected BasicMarketMaker(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
-			Market market, Props props) {
+	protected BasicMarketMaker(int id, Stats stats, Timeline timeline, Log log, Rand rand, 
+			MarketInfo sip, FundamentalValue fundamental, Market market, Props props) {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 
 		this.lastAsk = Optional.absent();
 		this.lastBid = Optional.absent();
 	}
 
-	public static BasicMarketMaker create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,
-			Market market, Props props) {
+	public static BasicMarketMaker create(int id, Stats stats, Timeline timeline, Log log, Rand rand, 
+			MarketInfo sip, FundamentalValue fundamental, Market market, Props props) {
 		return new BasicMarketMaker(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}
 
@@ -104,7 +104,7 @@ public class BasicMarketMaker extends MarketMaker {
 		lastAsk = ask;
 	}
 	
-	/** method to calculate spread when quote is definied */
+	/** method to calculate spread when quote is defined */
 	protected void submitCalculatedSpread(Optional<Price> bid, Optional<Price> ask) {
 		createOrderLadder(bid, ask);
 	}

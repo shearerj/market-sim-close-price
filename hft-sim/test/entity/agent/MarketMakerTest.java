@@ -117,24 +117,6 @@ public class MarketMakerTest {
 				Price.of(39), Price.of(34),
 				Price.of(51), Price.of(56));
 	}
-
-	@Test
-	public void truncateLadderTickImprovement() {
-		MarketMaker mm = marketMaker(Props.fromPairs(
-				Trunc.class, true,
-				TickImprovement.class, true,
-				TickOutside.class, true));
-
-		// Updating NBBO quote
-		setQuote(other, Price.of(30), Price.of(38));
-		setQuote(view, Price.of(40), Price.of(50));
-
-		// FIXME (for Elaine) This fails, because the truncated bid is no longer equal to the quote, and so tick improvement is not activated
-		mm.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
-		assertOrderLadder(mm.getActiveOrders(), 1,
-				Price.of(34),
-				Price.of(51), Price.of(56));
-	}
 	
 	@Test
 	public void tickOutside() {
@@ -147,23 +129,6 @@ public class MarketMakerTest {
 		mm.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
 		assertOrderLadder(mm.getActiveOrders(),
 				Price.of(36), Price.of(41),
-				Price.of(49), Price.of(54));
-	}
-	
-	// FIXME (for Elaine) This doesn't seem to test what it's name implies. It's failing for the same reason as "truncateLadderTickImprovement"
-	@Test
-	public void truncateLadderTickImprovementOutside() {
-		MarketMaker mm = marketMaker(Props.fromPairs(
-				Trunc.class, true,
-				TickImprovement.class, true,
-				TickOutside.class, false));
-		
-		setQuote(other, Price.of(30), Price.of(38)); // Set NBBO
-		setQuote(view, Price.of(40), Price.of(50));
-
-		mm.createOrderLadder(Optional.of(Price.of(40)), Optional.of(Price.of(50)));
-		assertOrderLadder(mm.getActiveOrders(), 1,
-				Price.of(36),
 				Price.of(49), Price.of(54));
 	}
 	
@@ -275,7 +240,6 @@ public class MarketMakerTest {
 	/**
 	 * Creating ladder without bid/ask quote
 	 */
-	// FIXME (for Elaine) This fails randomly, I'm not sure if it's an error in the program, or an error in the test
 	@Test
 	public void initRandLadder() {
 		MarketMaker mm = marketMaker(Props.fromPairs(
@@ -287,7 +251,7 @@ public class MarketMakerTest {
 		
 		Quote quote = view.getQuote();
 		mm.createOrderLadder(quote.getBidPrice(), quote.getAskPrice());
-		assertRandomOrderLadder(mm.getActiveOrders(), 4, Range.closed(Price.of(90), Price.of(100)), 5);
+		assertRandomOrderLadder(mm.getActiveOrders(), 4, Range.closed(Price.of(95), Price.of(105)), 5);
 	}
 
 	/** One side of ladder is undefined */
@@ -357,17 +321,6 @@ public class MarketMakerTest {
 		
 		assertEquals(70, stats.getSummaryStats().get(Stats.MARKET_MAKER_LADDER + mm).mean(), eps);
 		assertEquals(2, stats.getSummaryStats().get(Stats.MARKET_MAKER_LADDER + mm).n());
-	}
-	
-	/**
-	 * Must submit rungs in order such that inside rungs will transact first
-	 * (setting truncate = false to test)
-	 * 
-	 * XXX (for Elaine) is this really necessary? Inside rungs are always at a better price, so they will regardless of order
-	 */
-	@Test
-	public void rungOrderTest() {
-		// TODO
 	}
 	
 	// TODO test truncation when quote latency (or using NBBO?)

@@ -130,6 +130,16 @@ public abstract class Tests {
 		assertRandomOrderLadder(orders, size, bidRange, askRange, rungSize);
 	}
 	
+	/**
+	 * Asserts whether number of orders matches size, whether ladder bid (ask) is within the ranges
+	 * specified, and whether the orders in the collection are correct given specified rung size.
+	 * 
+	 * @param orders
+	 * @param size
+	 * @param bidRange
+	 * @param askRange
+	 * @param rungSize
+	 */
 	public static void assertRandomOrderLadder(Collection<OrderRecord> orders, int size,
 			Range<Price> bidRange, Range<Price> askRange, int rungSize) {
 		assertEquals("Incorrect number of orders", size, orders.size());

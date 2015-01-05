@@ -90,8 +90,6 @@ public class Defaults implements Serializable {
 
 	private static final long serialVersionUID = -2159139939831086051L;
 	
-	// TODO reduce size of strategy strings (they're all way too long, provide some better guidelines on usage
-	
 	public static <T> T get(Class<? extends Value<T>> key) {
 		return defaults.get(key);
 	}
