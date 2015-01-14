@@ -16,9 +16,10 @@ elif [ $# -lt 3 ]; then
     exit 1
 fi
 
-ROOT="$(readlink -m "$(dirname "$0")/..")"
-JAR="$(realpath "$1" --relative-to "$ROOT")"
-DIR="$(realpath "$2" --relative-to "$ROOT")"
+# Canonicalize paths
+ROOT="$(readlink -e "$(dirname "$0")/..")"
+JAR="$(readlink -e "$1")"
+DIR="$(readlink -e "$2")"
 
 cd "$ROOT" # Move to root for java to read settings appropriately
 
