@@ -272,7 +272,9 @@ public class ObservationsTest {
 		assertEquals(-100000, pobs.payoff.mean(), eps);
 	}
 
-	// FIXME (for Elaine) Is this verifying against the correct value?
+	/**
+	 * Tests player-level features (statistics on private values)
+	 */
 	@Test
 	public void privateValueFeatureTest() {
 		PlayerSpec spec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());

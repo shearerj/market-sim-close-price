@@ -70,8 +70,6 @@ public class ZIRAgentTest {
 	/**
 	 * Scenario where ZIR withdrawing orders causes NBBO to grow stale and get
 	 * out of sync.
-	 * 
-	 * FIXME (for Elaine) please check that this is the correct scenario
 	 */
 	private OrderRecord withdrawRoutingScenario(ZIRAgent agent) {
 		mockAgent.submitOrder(nasdaqView, SELL, Price.of(111000), 1);
@@ -86,6 +84,10 @@ public class ZIRAgentTest {
 		
 		nasdaqView.withdrawOrder(bait);
 		OrderRecord first = agent.submitNMSOrder(SELL, Price.of(105000), 1);
+		// NBBO will be out of date
+		timeline.executeUntil(TimeStamp.of(99));
+		assertNBBO(sip.getNBBO(), Price.of(105000), nasdaq, Price.of(108000), nyse);
+		// NBBO updated after SIP updates
 		timeline.executeUntil(TimeStamp.of(100));
 		assertNBBO(sip.getNBBO(), Price.of(104000), nyse, Price.of(105000), nasdaq);
 		assertEquals(nasdaqView, first.getCurrentMarket());
