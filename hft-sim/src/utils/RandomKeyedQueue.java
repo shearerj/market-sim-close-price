@@ -169,6 +169,12 @@ public class RandomKeyedQueue<T, A> extends AbstractQueue<Entry<T, A>> {
 
 		public Event(Random seed) {
 			size = 0;
+			/*
+			 * FIXME This doesn't produce a uniform ordering over feasible
+			 * orders. My guess is it can be made uniform by weighting the move
+			 * probability as a portion of size, instead of uniform over the
+			 * constraints.
+			 */
 			backedQueue = RandomQueue.create(seed);
 		}
 

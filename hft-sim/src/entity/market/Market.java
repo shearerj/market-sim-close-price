@@ -185,7 +185,7 @@ public abstract class Market extends Entity {
 		order.getAgent().orderRemoved(orderRecord, quantity);
 	}
 
-	protected void clear() {
+	public void clear() {
 		marketTime++;
 		MarketTime transactionTime = new MarketTime(getCurrentTime(), marketTime);
 		

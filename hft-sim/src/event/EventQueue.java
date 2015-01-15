@@ -14,7 +14,25 @@ import utils.RandomKeyedQueue;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
+/**
+ * 
+ * EventQueue hold the ordering of activities. There are immediate and scheduled
+ * activities, and they are bundled between successive pops. Immediate
+ * activities always happen before scheduled activities. Between pops, immediate
+ * activities are scheduled in the order they are queued, but between pops, they
+ * are in the reverse of that order. If the sequence of immediate activities
+ * queued "pop A pop B C pop", they would happen in order "B C A". Scheduled
+ * activities that occur at the same time are randomly ordered, with the
+ * constraint that activities scheduled at the future time, and between pops
+ * happen in the same order they were scheduled in. If the sequence of scheduled
+ * activities were queued "pop A pop B C pop" then they could happen in order
+ * "A B C", "B A C", or "B C A".
+ * 
+ * @author erik
+ * 
+ */
 public class EventQueue implements Timeline {
 	
 	private final Log log;
@@ -54,40 +72,35 @@ public class EventQueue implements Timeline {
 	}
 	
 	public void executeUntil(TimeStamp time) {
-		while (moreImmediateActivities() || moreScheduledActivities(time))
-			executeNext();
+		while (moreImmediateActivities() || moreScheduledActivities(time)) {
+			Entry<TimeStamp, Activity> act = pop();
+			currentTime = act.getKey();
+			log.log(DEBUG, "Executing {%s} then immediately {%s} then {%s}", act.getValue(), immediateActivities, scheduledActivities);
+			act.getValue().execute();
+		}
 		if (time.after(currentTime))
 			currentTime = time;
 	}
 	
-	private void executeNext() {
-		Activity act = pop();
-		log.log(DEBUG, "Executing {%s} the immediately {%s} then {%s}", act, immediateActivities, scheduledActivities);
-		act.execute();
-	}
-	
-	private Activity pop() {
+	private Entry<TimeStamp, Activity> pop() {
 		scheduledActivities.addAll(pendingScheduledActivities);
 		immediateActivities.addAll(Lists.reverse(pendingImmediateActivities));
 		pendingScheduledActivities.clear();
 		pendingImmediateActivities.clear();
 		
-		Activity act;
 		if (!immediateActivities.isEmpty()) {
-			act = immediateActivities.remove();
+			return Maps.immutableEntry(currentTime, immediateActivities.remove());
 		} else {
 			Entry<TimeStamp, Activity> scheduledAct = scheduledActivities.remove();
-			if (scheduledAct.getKey().after(currentTime))
-				currentTime = scheduledAct.getKey();
-			act = scheduledAct.getValue();
+			assert scheduledAct.getKey().afterOrOn(currentTime) : "Activities aren't in proper order";
+			return scheduledAct;
 		}
-		return act;
 	}
 	
 	public void propogateInformation() {
 		while (!immediateActivities.isEmpty() || !pendingImmediateActivities.isEmpty() ||
 				!scheduledActivities.isEmpty() || !pendingScheduledActivities.isEmpty()) {
-			Activity act = pop();
+			Activity act = pop().getValue(); // Don't update time
 			if (act instanceof InformationActivity)
 				act.execute();
 		}

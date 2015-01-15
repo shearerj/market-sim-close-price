@@ -64,6 +64,8 @@
   <target name="test" depends="compile-test"
 	  description="runs junit tests">
     <junit haltonerror="false" haltonfailure="false" fork="true">
+      <!-- Ensure that assertions are turned on during testing -->
+      <jvmarg value="-ea"/>
       <!-- Add compiled test, source files, and libs to classpath -->
       <classpath>
 	<pathelement path="${build}"/>

@@ -64,9 +64,9 @@ public class Preset {
 			return config;
 
 		case MAXEFF:
-			config.addProperty(keyToString(SimLength.class), 2);
+			config.addProperty(keyToString(SimLength.class), 1);
 			config.addProperty(CDA.toString(), Props.fromPairs(NumMarkets.class, 0).toConfigString());
-			config.addProperty(CALL.toString(), Props.fromPairs(NumMarkets.class, 1, ClearInterval.class, TimeStamp.of(1)).toConfigString());
+			config.addProperty(CALL.toString(), Props.fromPairs(NumMarkets.class, 1, ClearInterval.class, TimeStamp.of(2)).toConfigString());
 			for (AgentType type : AgentType.values()) // Zero out all other agents
 				if (type != MAXEFFICIENCY)
 					config.addProperty(type.toString(), Props.fromPairs(NumAgents.class, 0).toConfigString());

@@ -16,6 +16,7 @@ import java.util.Map.Entry;
 import logger.Log;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import systemmanager.Keys.FastLearning;
@@ -55,6 +56,7 @@ import fourheap.Order.OrderType;
 
 // TODO Weights should be moved out to an expert object and tested separately.
 
+@Ignore // TODO This agent is not actively maintained. Remove this flag to include tests 
 public class AdaptiveMarketMakerTest {
 	private static final Rand rand = Rand.create();
 	private static final Agent mockAgent = Mock.agent();

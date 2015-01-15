@@ -10,6 +10,8 @@ import static utils.Tests.assertSingleOrderRange;
 import logger.Log;
 
 import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import systemmanager.Keys.BetaT;
 import systemmanager.Keys.BuyerStatus;
@@ -36,6 +38,7 @@ import entity.market.Price;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
+@Ignore // TODO This agent is not actively maintained. Remove this flag to include tests 
 public class AAAgentTest {
 
 	private static final Rand rand = Rand.create();
@@ -64,6 +67,7 @@ public class AAAgentTest {
 		view = market.getPrimaryView();
 	}
 
+	@Test
 	public void tauChange() {
 		double r = 0.5;
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY));
@@ -74,6 +78,7 @@ public class AAAgentTest {
 	/**
 	 * Computation of moving average for estimating the equilibrium price.
 	 */
+	@Test
 	public void estimateEquilibrium() {
 		AAAgent agent = aaAgent(Props.fromPairs(
 				BuyerStatus.class, BUY,
@@ -99,6 +104,7 @@ public class AAAgentTest {
 				agent.estimateEquilibrium(agent.getWindowTransactions()).intValue());
 	}
 	
+	@Test
 	public void computeRShoutBuyer() {
 		AAAgent buyer = aaAgent(Props.fromPairs(BuyerStatus.class, BUY, Theta.class, -2d));
 		
@@ -119,7 +125,8 @@ public class AAAgentTest {
 		last = limit;
 		assertEquals(0, buyer.computeRShout(limit, last, equil), 0.001);
 	}
-	
+
+	@Test
 	public void computeRShoutSeller() {
 		AAAgent seller = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, Theta.class, -2d));
 
@@ -141,6 +148,7 @@ public class AAAgentTest {
 		assertEquals(0, seller.computeRShout(limit, last, equil), 0.001);
 	}
 
+	@Test
 	public void determineTargetPriceBuyer() {
 		AAAgent buyer = aaAgent(Props.fromPairs(BuyerStatus.class, BUY, Theta.class, 2d));
 		
@@ -168,7 +176,8 @@ public class AAAgentTest {
 		buyer.aggression = 0.5;		// aggressiveness capped at 0
 		assertEquals(limit, buyer.determineTargetPrice(limit, equil));
 	}
-	
+
+	@Test
 	public void determineTargetPriceSeller() {
 		AAAgent seller = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, Theta.class, 2d));
 		
@@ -196,7 +205,8 @@ public class AAAgentTest {
 		seller.aggression = 0.5;	// aggressiveness capped at 0
 		assertEquals(limit, seller.determineTargetPrice(limit, equil));
 	}
-	
+
+	@Test
 	public void biddingLayerNoTarget() {
 		Price limit = Price.of(145000);
 		AAAgent buyer = aaAgent(Props.fromPairs(BuyerStatus.class, BUY));
@@ -210,7 +220,8 @@ public class AAAgentTest {
 		seller.biddingLayer(limit, null, 1);
 		assertSingleOrderRange(seller.getActiveOrders(), Price.of(75000), Price.of(100000), 1);
 	}
-	
+
+	@Test
 	public void biddingLayerBuyer() {
 		Price limit = Price.of(145000);
 		Price target = Price.of(175000);
@@ -240,7 +251,8 @@ public class AAAgentTest {
 		buyer.biddingLayer(limit, target, 1);
 		assertSingleOrder(buyer.getActiveOrders(), Price.of(160000), 1, TimeStamp.of(20), TimeStamp.of(20));
 	}
-	
+
+	@Test
 	public void biddingLayerSeller() {
 		
 		Price limit = Price.of(210000);
@@ -274,6 +286,7 @@ public class AAAgentTest {
 	}
 	
 	// The name of this test get deleted somehow...
+	@Test
 	public void forgottenTest() {
 		AAAgent agent = aaAgent(Props.builder()
 				.put(BuyerStatus.class, BUY)
@@ -312,6 +325,7 @@ public class AAAgentTest {
 	}
 	
 	/** Testing buyer on empty market: Result should be price=0 */
+	@Test
 	public void initialBuyer() {
 		// Creating a buyer
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, BUY));
@@ -323,6 +337,7 @@ public class AAAgentTest {
 	}
 
 	/** Testing seller on empty market: Result should be price=Inf */
+	@Test
 	public void initialSeller() {
 		// Creating a seller
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL));
@@ -334,6 +349,7 @@ public class AAAgentTest {
 	}
 
 	/** Testing buyer on market with bids/asks but no transactions 50000 < Bid price < 100000 */
+	@Test
 	public void noTransactionsBuyer() {
 		setQuote(Price.of(50000), Price.of(200000));
 
@@ -346,6 +362,7 @@ public class AAAgentTest {
 	}
 
 	/** Testing seller on market with bids/asks but no transactions 100000 < Ask price < 200000 */
+	@Test
 	public void noTransactionsSeller() {
 		AAAgent agent = aaAgent(Props.fromPairs(BuyerStatus.class, SELL, Eta.class, 4));
 		setQuote(Price.of(50000), Price.of(200000));
@@ -358,6 +375,7 @@ public class AAAgentTest {
 	}
 
 	/** Testing passive buyer on market with transactions */
+	@Test
 	public void IntraBuyerPassive() {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
@@ -369,6 +387,7 @@ public class AAAgentTest {
 	}
 
 	/** Testing r = -0.5 buyer on market with transactions */
+	@Test
 	public void IntraBuyerNegative() {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
@@ -389,6 +408,7 @@ public class AAAgentTest {
 	 * Currently fails due to incorrect market behavior,
 	 * but AAAgent acts correctly based on the information it receives
 	 */
+	@Test
 	public void IntraBuyerActive() {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
@@ -405,6 +425,7 @@ public class AAAgentTest {
 	 * Currently fails due to incorrect market behavior,
 	 * but AAAgent acts correctly based on the information it receives
 	 */
+	@Test
 	public void IntraBuyerPositive() {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
@@ -418,6 +439,7 @@ public class AAAgentTest {
 	}
 
 	/** Testing aggressive buyer on market with transactions Price ~= 66667 */
+	@Test
 	public void IntraBuyerAggressive() {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
@@ -433,6 +455,7 @@ public class AAAgentTest {
 	 * 
 	 * Price ~= 150000 + (Price.INF.intValue() - 150000) / 3
 	 */
+	@Test
 	public void IntraSellerPassive() { // Check Aggression
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
@@ -447,6 +470,7 @@ public class AAAgentTest {
 	}
 
 	/** Testing active seller on market with transactions Price ~= 141667 */
+	@Test
 	public void IntraSellerActive() {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
@@ -458,6 +482,7 @@ public class AAAgentTest {
 	}
 
 	/** Testing aggressive seller on market with transactions */
+	@Test
 	public void IntraSellerAggressive() { // Check Aggression
 		// Adding Transactions and Bids
 		setQuote(Price.of(50000), Price.of(150000));
@@ -470,6 +495,7 @@ public class AAAgentTest {
 	}
 
 	/** Testing passive buyer on market with transactions */
+	@Test
 	public void ExtraBuyerPassive() {
 
 		setQuote(Price.of(50000), Price.of(150000));
@@ -482,6 +508,7 @@ public class AAAgentTest {
 	}
 
 	/** Testing r = -0.5 buyer on market with transactions */
+	@Test
 	public void ExtraBuyerNegative() {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
@@ -497,6 +524,7 @@ public class AAAgentTest {
 	}
 
 	/** Testing r = 0 buyer on market with transactions */
+	@Test
 	public void ExtraBuyerActive() {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
@@ -512,6 +540,7 @@ public class AAAgentTest {
 	}
 
 	/** Testing r = 0 buyer on market with transactions */
+	@Test
 	public void ExtraBuyerPositive() {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(125000));
@@ -527,6 +556,7 @@ public class AAAgentTest {
 	}
 
 	/** Testing passive buyer on market with transactions */
+	@Test
 	public void ExtraSellerPassive() {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
@@ -541,6 +571,7 @@ public class AAAgentTest {
 	}
 
 	/** Testing passive buyer on market with transactions */
+	@Test
 	public void ExtraSellerActive() {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(75000));
@@ -553,6 +584,7 @@ public class AAAgentTest {
 	}
 
 	/** Testing aggression learning */
+	@Test
 	public void BuyerAggressionIncrease() {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(95000));
@@ -569,6 +601,7 @@ public class AAAgentTest {
 	}
 
 	/** Testing aggression learning */
+	@Test
 	public void SellerAggressionIncrease() {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(105000));
@@ -585,6 +618,7 @@ public class AAAgentTest {
 	}
 
 	/** Test short-term learning (EQ 7) : Testing aggression update (buyer) */
+	@Test
 	public void updateAggressionBuyer() {
 		setQuote(Price.of(50000), Price.of(150000));
 		addTransaction(Price.of(105000));
@@ -608,6 +642,7 @@ public class AAAgentTest {
 	 * Note that the value of theta affects whether or not this test will pass
 	 * (e.g. -3 causes a NaN in computeRShout)
 	 */
+	@Test
 	public void updateAggressionSeller() {
 		double oldAggression = 0.2;
 		AAAgent agent = aaAgent(Props.fromPairs(
@@ -634,6 +669,7 @@ public class AAAgentTest {
 	 * Note that for extramarginal buyer, must have last transaction price less
 	 * than the limit otherwise rShout gets set to 0.
 	 */
+	@Test
 	public void randomizedUpdateAggressionBuyer() {
 		setQuote(Price.of(rand.nextUniform(25000, 75000)), Price.of(rand.nextUniform(125000, 175000)));
 		addTransaction(Price.of(rand.nextUniform(100000, 110000)));
@@ -660,6 +696,7 @@ public class AAAgentTest {
 	 * For intramarginal seller, want limit price less than equilibrium,
 	 * otherwise rShout clipped at 0.
 	 */
+	@Test
 	public void randomizedUpdateAggressionSeller() {
 		double oldAggression = 0.2;
 		AAAgent agent = aaAgent(Props.fromPairs(
@@ -680,6 +717,7 @@ public class AAAgentTest {
 		checkAggressionUpdate(SELL, agent.lastTransactionPrice, agent.targetPrice, oldAggression, agent.aggression);
 	}
 
+	@Test
 	public void extraTest() {
 		for (int i = 0; i < 100; i++) {
 			setup();

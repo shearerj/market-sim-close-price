@@ -46,7 +46,7 @@ public class CallMarket extends Market {
 	}
 
 	@Override
-	protected void clear() {
+	public void clear() {
 		super.clear();
 		scheduleActivityIn(clearFreq, new Activity() {
 			@Override public void execute() { CallMarket.this.clear(); }

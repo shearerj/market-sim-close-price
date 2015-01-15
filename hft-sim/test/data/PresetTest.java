@@ -162,7 +162,7 @@ public class PresetTest {
 		config.addProperty(keyToString(NumAgents.class), numAgents);
 		
 		SimulationSpec spec = SimulationSpec.fromJson(json);
-		assertEquals(2, (long) spec.getSimulationProps().get(SimLength.class));
+		assertEquals(1, (long) spec.getSimulationProps().get(SimLength.class));
 		
 		for (Entry<MarketType, Props> mp : spec.getMarketProps().entries()) {
 			switch (mp.getKey()) {
@@ -171,7 +171,7 @@ public class PresetTest {
 				break;
 			case CALL:
 				assertEquals(1, (int) mp.getValue().get(NumMarkets.class));
-				assertEquals(TimeStamp.of(1), mp.getValue().get(ClearInterval.class));
+				assertEquals(TimeStamp.of(2), mp.getValue().get(ClearInterval.class));
 				break;
 			default:
 			}

@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.Ignore;
+
 import junit.framework.AssertionFailedError;
 
 import com.google.common.base.Joiner;
@@ -28,6 +30,7 @@ import entity.sip.BestBidAsk;
 import event.TimeStamp;
 import fourheap.Order.OrderType;
 
+@Ignore // Utility Class: Ignore for testing
 public abstract class Tests {
 	
 	public static Joiner j = Joiner.on('_');
