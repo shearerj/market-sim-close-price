@@ -147,7 +147,7 @@ public class Simulation {
 		for (Market market : markets) // Clear every market at end of time
 			market.clear();
 		Price finalFundamental = fundamental.getValueAt(finalTime); // Record liquidation price
-		eventQueue.propogateInformation(); // Make sure that an in transit information reaches entities
+		eventQueue.propagateInformation(); // Make sure that an in transit information reaches entities
 		assert eventQueue.getCurrentTime().equals(finalTime) : "Time advanced during information propogation";
 		for (Agent agent : agents)
 			agent.liquidateAtPrice(finalFundamental);

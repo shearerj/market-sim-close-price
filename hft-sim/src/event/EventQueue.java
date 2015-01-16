@@ -97,7 +97,7 @@ public class EventQueue implements Timeline {
 		}
 	}
 	
-	public void propogateInformation() {
+	public void propagateInformation() {
 		while (!immediateActivities.isEmpty() || !pendingImmediateActivities.isEmpty() ||
 				!scheduledActivities.isEmpty() || !pendingScheduledActivities.isEmpty()) {
 			Activity act = pop().getValue(); // Don't update time
