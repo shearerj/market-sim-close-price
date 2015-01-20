@@ -129,10 +129,11 @@ public abstract class SystemManager {
 		
 		for (int i = 0; i < totalSimulations; i++) {
 			// This formula means that you'll get the same simulations regardless of the number of observations or simulations
-			rand.setSeed(Objects.hashCode(baseRandomSeed, observationNumber * totalSimulations + i));
+			long seed = Objects.hashCode(baseRandomSeed, observationNumber * totalSimulations + i);
+			rand.setSeed(seed);
 			Simulation sim = Simulation.create(specification, rand, logOut, Log.Level.values()[logLevel]);
 			
-			sim.log(INFO, "Random Seed: %d", baseRandomSeed);
+			sim.log(INFO, "Simulation Random Seed: %d", seed);
 			sim.log(INFO, "Configuration: %s", specification);
 			
 			sim.executeEvents();
