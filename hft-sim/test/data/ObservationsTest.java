@@ -170,7 +170,7 @@ public class ObservationsTest {
 	}
 
 	@Test
-	public void volitilityTest() {
+	public void volatilityTest() {
 		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(
 				SimLength.class, 3000l,
 				Periods.class, ImmutableList.of(1, 250)));
