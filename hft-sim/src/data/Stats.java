@@ -71,7 +71,7 @@ public class Stats {
 	MIDQUOTE =				"midquote_",
 	NBBO_SPREAD =			SPREAD + "nbbo",
 	EXECUTION_TIME =		"execution_time",
-	MARKET_MAKER_EXECTUION_TIME = "mm_exectime_",
+	MARKET_MAKER_EXECUTION_TIME = "mm_exectime_",
 	MARKET_MAKER_SPREAD =	"mm_spreads_",
 	MARKET_MAKER_LADDER =	"mm_ladder_",
 	MARKET_MAKER_EXEC =		"mm_rungs_exec",

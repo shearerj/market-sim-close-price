@@ -306,7 +306,7 @@ public class MarketMakerTest {
 		timeline.executeUntil(TimeStamp.of(2));
 		
 		// XXX Not this does not account for quantity unlike background agent execution times
-		assertEquals(1, stats.getSummaryStats().get(Stats.MARKET_MAKER_EXECTUION_TIME + mm).mean(), eps);
+		assertEquals(1, stats.getSummaryStats().get(Stats.MARKET_MAKER_EXECUTION_TIME + mm).mean(), eps);
 	}
 	
 	@Test

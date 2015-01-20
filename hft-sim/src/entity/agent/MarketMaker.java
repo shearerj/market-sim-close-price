@@ -240,7 +240,7 @@ public abstract class MarketMaker extends SMAgent {
 	@Override
 	protected void processTransaction(TimeStamp submitTime, OrderType type, Transaction trans) {
 		super.processTransaction(submitTime, type, trans);
-		postStat(Stats.MARKET_MAKER_EXECTUION_TIME + this, trans.getExecTime().getInTicks() - submitTime.getInTicks());
+		postStat(Stats.MARKET_MAKER_EXECUTION_TIME + this, trans.getExecTime().getInTicks() - submitTime.getInTicks());
 	}
 	
 	@Override
