@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Queue;
 import java.util.Random;
+import java.util.TreeMap;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -49,7 +50,7 @@ public class RandomKeyedQueue<T, A> extends AbstractQueue<Entry<T, A>> {
 	private Random rand;
 
 	protected RandomKeyedQueue(Random seed, Comparator<? super T> comp) {
-		this.queue = Maps.newTreeMap(comp);
+		this.queue = new TreeMap<T, Queue<A>>(comp); // Guava doesn't work here for unknown generics reason
 		this.size = 0;
 		this.rand = seed;
 	}
