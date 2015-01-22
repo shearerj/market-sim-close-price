@@ -30,8 +30,8 @@ fi
 ant
 cp -rv "$SKELETON" "$NAME"
 cp -v "$DEFAULTS" "$NAME/defaults.json"
-mkdir "$NAME/$LIBS"
-cp -v "$LIBS/"* "$NAME/$LIBS"
+mkdir "$NAME/$(basename $LIBS)"
+cp -v "$LIBS/"* "$NAME/$(basename $LIBS)"
 cp -v "$JAR" "$NAME"
 zip -v -r "$NAME" "$NAME"
 rm -rf "$NAME"
