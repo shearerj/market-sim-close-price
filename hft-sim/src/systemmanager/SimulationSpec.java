@@ -1,5 +1,6 @@
 package systemmanager;
 
+import java.io.Reader;
 import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.Arrays;
@@ -20,6 +21,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -40,6 +43,10 @@ import data.Props;
  * @author ewah
  */
 public class SimulationSpec implements Serializable {
+	
+	private static final Gson gsonReader = new GsonBuilder()
+		.registerTypeAdapter(SimulationSpec.class, new SimSpecDeserializer())
+		.create();
 
 	public static final String CONFIG = "configuration";
 	public static final String ASSIGNMENT = "assignment";
@@ -89,6 +96,15 @@ public class SimulationSpec implements Serializable {
 	public static SimulationSpec create(Props simulationProperties, Multimap<MarketType, Props> marketProps,
 			Multimap<AgentType, Props> agentProps, Multiset<PlayerSpec> playerProps) {
 		return new SimulationSpec(new JsonObject(), simulationProperties, marketProps, agentProps, playerProps);
+	}
+	
+	public static SimulationSpec create(JsonObject rawSpec, Props simulationProperties, Multimap<MarketType, Props> marketProps,
+			Multimap<AgentType, Props> agentProps, Multiset<PlayerSpec> playerProps) {
+		return new SimulationSpec(rawSpec, simulationProperties, marketProps, agentProps, playerProps);
+	}
+	
+	public static SimulationSpec read(Reader reader) {
+		return gsonReader.fromJson(reader, SimulationSpec.class);
 	}
 	
 	public static SimulationSpec empty() {

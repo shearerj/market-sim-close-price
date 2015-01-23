@@ -17,20 +17,13 @@ import java.util.Random;
 import logger.Log;
 import systemmanager.Keys.NumSims;
 import systemmanager.Keys.RandomSeed;
-import systemmanager.SimulationSpec.SimSpecDeserializer;
 import utils.LazyFileWriter;
 import utils.Rand;
-import utils.SummStats;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.Multimap;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 
 import data.Observations;
-import data.Observations.PlayerObservationSerializer;
-import data.Observations.SummStatsSerializer;
+import data.Observations.OutputType;
 import data.Props;
 
 /**
@@ -45,13 +38,6 @@ import data.Props;
 public abstract class SystemManager {
 	
 	protected static final DateFormat LOG_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
-	protected static final Gson gson = new GsonBuilder()
-	.registerTypeAdapter(SummStats.class, new SummStatsSerializer())
-//	.registerTypeAdapter(Map.class, new StddevFeaturesSerializer())
-	.registerTypeAdapter(Multimap.class, new PlayerObservationSerializer())
-	.serializeSpecialFloatingPointValues() // XXX This will allow serializing NaNs for testing, but will cause errors for EGTA which doesn't like NaNs...
-	.registerTypeAdapter(SimulationSpec.class, new SimSpecDeserializer())
-	.create();
 
 	/**
 	 * Two input arguments: first is simulation folder, second is sample number
@@ -114,24 +100,31 @@ public abstract class SystemManager {
 	}
 	
 	public static void execute(Reader simSpecIn, Reader propIn, Writer obsOut, Writer logOut, int observationNumber) throws IOException {
-		SimulationSpec specification = gson.fromJson(simSpecIn, SimulationSpec.class);
+		SimulationSpec specification = SimulationSpec.read(simSpecIn);
+		
 		Properties props = new Properties();
 		props.load(propIn);
-
+		
+		Log.Level logLevel = Log.Level.values()[Integer.parseInt(props.getProperty("logLevel", "0"))];
+		boolean egta = Boolean.parseBoolean(props.getProperty("egta", "true"));
+		
+		execute(specification, obsOut, logOut, observationNumber, logLevel, egta);
+	}
+	
+	public static void execute(SimulationSpec specification, Writer obsOut, Writer logOut,
+			int observationNumber, Log.Level logLevel, boolean egta) throws IOException {
 		Props simProps = specification.getSimulationProps();
 		int totalSimulations = simProps.get(NumSims.class);
 		long baseRandomSeed = simProps.get(RandomSeed.class);
 		
-		int logLevel = Integer.parseInt(props.getProperty("logLevel", "0"));
-		
-		Observations observations = Observations.create(specification.getPlayerProps(), specification.getSimulationProps());
+		Observations observations = Observations.create(specification);
 		Random rand = Rand.create();
 		
 		for (int i = 0; i < totalSimulations; i++) {
 			// This formula means that you'll get the same simulations regardless of the number of observations or simulations
 			long seed = Objects.hashCode(baseRandomSeed, observationNumber * totalSimulations + i);
 			rand.setSeed(seed);
-			Simulation sim = Simulation.create(specification, rand, logOut, Log.Level.values()[logLevel]);
+			Simulation sim = Simulation.create(specification, rand, logOut, logLevel);
 			
 			sim.log(INFO, "Simulation Random Seed: %d", seed);
 			sim.log(INFO, "Configuration: %s", specification);
@@ -141,11 +134,7 @@ public abstract class SystemManager {
 		}
 		
 		// Add specification if flag is set
-		JsonObject obs = gson.toJsonTree(observations).getAsJsonObject();
-		if (Boolean.parseBoolean(props.getProperty("outputConfig", "false")))
-			obs.get("features").getAsJsonObject().add("config", specification.getRawSpec().get("configuration"));
-		
-		gson.toJson(obs, obsOut);
+		observations.write(obsOut, egta ? OutputType.EGTA : OutputType.DEFAULT);
 		obsOut.flush();
 	}
 	

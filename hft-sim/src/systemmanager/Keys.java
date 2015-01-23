@@ -32,9 +32,7 @@ public interface Keys {
 	public static class DiscountFactors extends DoublesValue {};
 	public static class Periods extends IntsValue {};
 	
-	public static class SumPrefixes extends StringsValue {};
-	public static class MeanPrefixes extends StringsValue {};
-	public static class StddevPrefixes extends StringsValue {};
+	public static class FeatureWhitelist extends StringsValue {};
 	
 	public static class FileName extends StringValue {};
 	

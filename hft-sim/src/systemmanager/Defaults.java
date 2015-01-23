@@ -16,6 +16,7 @@ import systemmanager.Keys.Debug;
 import systemmanager.Keys.DiscountFactors;
 import systemmanager.Keys.Eta;
 import systemmanager.Keys.FastLearning;
+import systemmanager.Keys.FeatureWhitelist;
 import systemmanager.Keys.FundEstimate;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalLatency;
@@ -34,7 +35,6 @@ import systemmanager.Keys.MarginMax;
 import systemmanager.Keys.MarginMin;
 import systemmanager.Keys.MarketLatency;
 import systemmanager.Keys.MaxPosition;
-import systemmanager.Keys.MeanPrefixes;
 import systemmanager.Keys.MovingAveragePrice;
 import systemmanager.Keys.N;
 import systemmanager.Keys.NbboLatency;
@@ -53,9 +53,7 @@ import systemmanager.Keys.Rmin;
 import systemmanager.Keys.SimLength;
 import systemmanager.Keys.Size;
 import systemmanager.Keys.Spread;
-import systemmanager.Keys.StddevPrefixes;
 import systemmanager.Keys.Strats;
-import systemmanager.Keys.SumPrefixes;
 import systemmanager.Keys.Theta;
 import systemmanager.Keys.ThetaMax;
 import systemmanager.Keys.ThetaMin;
@@ -103,11 +101,11 @@ public class Defaults implements Serializable {
 			.put(DiscountFactors.class,	Doubles.asList(0, 0.0006))
 			.put(Periods.class,			Ints.asList(1, 250))
 			
-			.put(SumPrefixes.class,		ImmutableList.of(Stats.SURPLUS, Stats.PROFIT, Stats.ZIRP_GREEDY, Stats.MAX_EFF_POSITION,
-					Stats.NUM_TRANS))
-			.put(MeanPrefixes.class,	ImmutableList.of(Stats.FUNDAMENTAL_END_PRICE, Stats.MARKET_MAKER_SPREAD,
-					Stats.CONTROL_FUNDAMENTAL, Stats.CONTROL_PRIVATE_VALUE, Stats.ZIRP_GREEDY))
-			.put(StddevPrefixes.class,	ImmutableList.of(Stats.MARKET_MAKER_SPREAD, Stats.PRICE))
+			.put(FeatureWhitelist.class, ImmutableList.of(Stats.SURPLUS + ".*_sum", Stats.PROFIT + ".*_sum",
+					Stats.ZIRP_GREEDY + ".*_sum", Stats.MAX_EFF_POSITION + ".*_sum", Stats.NUM_TRANS + ".*_sum",
+					Stats.FUNDAMENTAL_END_PRICE + ".*_mean", Stats.MARKET_MAKER_SPREAD + ".*_mean",
+					Stats.CONTROL_FUNDAMENTAL + ".*_mean", Stats.CONTROL_PRIVATE_VALUE + ".*_mean", Stats.ZIRP_GREEDY + ".*_mean",
+					Stats.MARKET_MAKER_SPREAD + ".*_stddev", Stats.PRICE + ".*_stddev"))
 			
 			// Simulation spec (general)
 			.put(SimLength.class,		60000l)

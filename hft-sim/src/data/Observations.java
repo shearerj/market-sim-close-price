@@ -2,34 +2,38 @@ package data;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import java.io.Writer;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import systemmanager.Keys.MeanPrefixes;
+import systemmanager.Keys.FeatureWhitelist;
 import systemmanager.Keys.Periods;
 import systemmanager.Keys.SimLength;
-import systemmanager.Keys.StddevPrefixes;
-import systemmanager.Keys.SumPrefixes;
+import systemmanager.SimulationSpec;
 import systemmanager.SimulationSpec.PlayerSpec;
+import systemmanager.SimulationSpec.SimSpecSerializer;
 import utils.Maps2;
 import utils.Sparse;
 import utils.SummStats;
 
 import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * This class represents all of the output data about the entire set of
@@ -59,50 +63,46 @@ public class Observations {
 	 * something.
 	 */
 
+	// TODO This should probably go somewhere else
 	public static final String // Observation Keys
 	PV_BUY1 = 					"pv_buy1",
 	PV_SELL1 = 					"pv_sell1",
 	PV_POSITION1_MAX_ABS =		"pv_position_max_abs1";
 	
+	public static enum OutputType { DEFAULT, EGTA, STDDEV };
+	
 	protected final Multimap<String, PlayerObservation> players; // Player information
 	protected final Map<String, SummStats> features; // Other features
+	protected final SimulationSpec config;
 	
 	private transient final long simLength;
 	private transient final Iterable<Integer> periods;
-	
-	/*
-	 * Each of these iterables lists prefixes for statistics to saved.
-	 * sumPrefixes contains prefixes of every statistic that should have its
-	 * summation saved. meanPrefixes for mean, etc.
-	 */
-	private transient final Iterable<String> sumPrefixes;
-	private transient final Iterable<String> meanPrefixes;
-	private transient final Iterable<String> stddevPrefixes;
+	private transient final Iterable<String> whitelist;
 
-	protected Observations(Multiset<PlayerSpec> playerProperties, Props simulationProps) {
-		features = Maps2.addDefault(Maps.<String, SummStats> newHashMap(), new Supplier<SummStats>() {
+	private Observations(SimulationSpec simspec) {
+		this.config = simspec;
+		
+		this.features = Maps2.addDefault(Maps.<String, SummStats> newHashMap(), new Supplier<SummStats>() {
 			@Override public SummStats get() { return SummStats.on(); }
 		});
 
 		ImmutableListMultimap.Builder<String, PlayerObservation> builder = ImmutableListMultimap.builder();
-		for (Multiset.Entry<PlayerSpec> spec : playerProperties.entrySet())
+		for (Multiset.Entry<PlayerSpec> spec : simspec.getPlayerProps().entrySet())
 			for (int i = 0; i < spec.getCount(); ++i)
 				builder.put(spec.getElement().descriptor, PlayerObservation.create());
-		players = builder.build();
+		this.players = builder.build();
 
-		this.simLength = simulationProps.get(SimLength.class);
-		this.periods = simulationProps.get(Periods.class);
-
-		this.sumPrefixes = simulationProps.get(SumPrefixes.class);
-		this.meanPrefixes = simulationProps.get(MeanPrefixes.class);
-		this.stddevPrefixes = simulationProps.get(StddevPrefixes.class);
+		this.simLength = simspec.getSimulationProps().get(SimLength.class);
+		this.periods = simspec.getSimulationProps().get(Periods.class);
+		this.whitelist = simspec.getSimulationProps().get(FeatureWhitelist.class);
 	}
 	
-	public static Observations create(Multiset<PlayerSpec> playerProperties, Props simulationProps) {
-		return new Observations(playerProperties, simulationProps);
+	public static Observations create(SimulationSpec simspec) {
+		return new Observations(simspec);
 	}
 	
 	// Modify this to add custom time series statistics
+	// TODO move pieces into individual methods
 	/** Adds the statistics and player information gathered from the simulation to the cumulative observation */
 	public void add(Stats stats, Collection<Player> playerAgents) {
 		// Handle Players
@@ -116,18 +116,12 @@ public class Observations {
 		for (Iterator<PlayerObservation> iter : playerObs.values())
 			checkState(!iter.hasNext());
 		
-		// General Statistics		// Sum
-		for (String prefix : sumPrefixes)
-			for (Entry<String, SummStats> e : Maps2.prefix(prefix, stats.getSummaryStats()).entrySet())
-				features.get(e.getKey() + "_sum").add(e.getValue().sum());
-		// Mean
-		for (String prefix : meanPrefixes)
-			for (Entry<String, SummStats> e : Maps2.prefix(prefix, stats.getSummaryStats()).entrySet())
-				features.get(e.getKey() + "_mean").add(e.getValue().mean());
-		// Standard Deviation
-		for (String prefix : stddevPrefixes)
-			for (Entry<String, SummStats> e : Maps2.prefix(prefix, stats.getSummaryStats()).entrySet())
-				features.get(e.getKey() + "_stddev").add(e.getValue().stddev());
+		// General Statistics
+		for (Entry<String, SummStats> e : stats.getSummaryStats().entrySet()) {
+			features.get(e.getKey() + "_sum").add(e.getValue().sum());
+			features.get(e.getKey() + "_mean").add(e.getValue().mean());
+			features.get(e.getKey() + "_stddev").add(e.getValue().stddev());
+		}
 
 		// Spreads
 		SummStats spreadMedians = SummStats.on();
@@ -178,6 +172,36 @@ public class Observations {
 			features.get(prefix + "mean_log_return").add(logRetVol.mean());
 		}
 	}
+
+	public void write(Writer writer, OutputType output) {
+		GsonBuilder gson = new GsonBuilder()
+				.registerTypeAdapter(new TypeToken<Map<String, SummStats>>() {}.getType(),
+						new FilteredFeatureSerializer(whitelist)) // Add standard deviations
+				.registerTypeAdapter(new TypeToken<Multimap<String, PlayerObservation>>() {}.getType(),
+						new PlayerObservationSerializer()) // Players
+				.registerTypeAdapter(SimulationSpec.class, new SimSpecSerializer()); // Simulation Spec
+		
+		switch (output) {
+		case EGTA:
+			gson = gson
+			.registerTypeAdapter(new TypeToken<Map<String, SummStats>>() {}.getType(),
+					new NullSerializer()) // remove features
+			.registerTypeAdapter(SimulationSpec.class, new NullSerializer()); // No specification
+			break;
+		case STDDEV:
+			gson = gson.registerTypeAdapter(new TypeToken<Map<String, SummStats>>() {}.getType(),
+					new StddevFeatureSerializer(whitelist)); // Add standard deviations
+			// No break, because stddev implies default
+		case DEFAULT:
+			gson = gson
+				.setPrettyPrinting() // Whitespace
+				.serializeSpecialFloatingPointValues(); // NaNs
+			break;
+		default:
+			throw new AssertionError("Unknown output type: " + output);
+		}
+		gson.create().toJson(this, writer);
+	}
 	
 	/** Represents all the necessary information on a player */
 	protected static class PlayerObservation {
@@ -202,48 +226,74 @@ public class Observations {
 		}
 	}
 	
-	// Serializers for conversion to JSON
-	public static final class SummStatsSerializer implements JsonSerializer<SummStats> {
+	// Serializers for conversion to JSON	
+	private static final class PlayerObservationSerializer implements JsonSerializer<Multimap<String, PlayerObservation>> {
 		@Override
-		public JsonElement serialize(SummStats stats, Type typeOfStats, JsonSerializationContext context) {
-			return new JsonPrimitive(stats.mean());
-		}
-	}
-	
-	public static final class StddevFeaturesSerializer implements JsonSerializer<Map<String, SummStats>> {
-		@Override
-		public JsonElement serialize(Map<String, SummStats> stats, Type typeOfStats, JsonSerializationContext context) {
-			JsonObject map = new JsonObject();
-			for (Entry<String, SummStats> e : stats.entrySet()) {
-				map.addProperty(e.getKey(), e.getValue().mean());
-				map.addProperty(e.getKey() + "_stddev", e.getValue().stddev());
-			}
-			return map;
-		}
-	}
-	
-	public static final class PlayerObservationSerializer implements JsonSerializer<Multimap<String, PlayerObservation>> {
-		@Override
-		public JsonElement serialize(Multimap<String, PlayerObservation> players, Type typeOfPlayers, JsonSerializationContext context) {
+		public JsonElement serialize(Multimap<String, PlayerObservation> players, Type playersType, JsonSerializationContext context) {
 			JsonArray array = new JsonArray();
-			for (Entry<String, PlayerObservation> e : players.entries()) {
+			for (Entry<String, PlayerObservation> player : players.entries()) {
 				JsonObject obs = new JsonObject();
-				String[] roleStrat = e.getKey().split(" ", 2);
+				String[] roleStrat = player.getKey().split(" ", 2);
 				obs.addProperty("role", roleStrat[0]);
 				obs.addProperty("strategy", roleStrat[1]);
-				obs.addProperty("payoff", e.getValue().payoff.mean());
-				
-				if (!e.getValue().features.isEmpty()) {
-					JsonObject features = new JsonObject();
-					for (Entry<String, SummStats> f : e.getValue().features.entrySet())
-						features.addProperty(f.getKey(), f.getValue().mean());
-					obs.add("features", features);
-				}
-				
+				obs.addProperty("payoff", player.getValue().payoff.mean());
+				if (!player.getValue().features.isEmpty())
+					obs.add("features", context.serialize(player.getValue().features,
+							new TypeToken<Map<String, SummStats>>() {}.getType()));
 				array.add(obs);
 			}
 			return array;
 		}
 	}
 	
+	private static class FilteredFeatureSerializer implements JsonSerializer<Map<String, SummStats>> {
+		private final Iterable<String> regexes;
+	
+		private FilteredFeatureSerializer(Iterable<String> regexes) {
+			this.regexes = regexes;
+		}
+		
+		/** Test if string matches any of a set of regexes */
+		private static boolean matchesAnyRegex(String string, Iterable<String> regexes) {
+			for (String regex : regexes)
+				if (string.matches(regex))
+					return true;
+			return false;
+		}
+		
+		protected Iterable<Entry<String, Double>> process(String key, SummStats stats) {
+			return ImmutableList.of(Maps.immutableEntry(key, stats.mean()));
+		}
+		
+		@Override
+		public JsonElement serialize(Map<String, SummStats> stats, Type typeOfStats, JsonSerializationContext context) {
+			JsonObject map = new JsonObject();
+			for (Entry<String, SummStats> e : stats.entrySet())
+				if (matchesAnyRegex(e.getKey(), regexes))
+					for (Entry<String, Double> add : process(e.getKey(), e.getValue()))
+						map.addProperty(add.getKey(), add.getValue());
+			return map;
+		}
+	}
+	
+	private static final class StddevFeatureSerializer extends FilteredFeatureSerializer {
+		private StddevFeatureSerializer(Iterable<String> regexes) {
+			super(regexes);
+		}
+
+		@Override
+		protected Iterable<Entry<String, Double>> process(String key, SummStats stats) {
+			return ImmutableList.<Entry<String, Double>> builder()
+					.addAll(super.process(key, stats))
+					.add(Maps.immutableEntry(key + "_stddev", stats.stddev()))
+					.build();
+		}
+	}
+	
+	private static final class NullSerializer implements JsonSerializer<Object> {
+		@Override
+		public JsonElement serialize(Object obj, Type type, JsonSerializationContext context) {
+			return JsonNull.INSTANCE;
+		}
+	}
 }

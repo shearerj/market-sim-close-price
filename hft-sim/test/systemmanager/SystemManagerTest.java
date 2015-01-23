@@ -136,14 +136,14 @@ public class SystemManagerTest {
 				"}}";
 		
 		StringReader simSpec = new StringReader(spec);
-		StringReader properties = new StringReader("logLevel = 0\noutputConfig = true\n");
+		StringReader properties = new StringReader("logLevel = 0\negta = false\n");
 		StringWriter observations = new StringWriter();
 		StringWriter logs = new StringWriter();
 		SystemManager.execute(simSpec, properties, observations, logs, 0);
 		
 		assertEquals(
-				gson.fromJson(spec, JsonObject.class).get("configuration"), // Spec
-				gson.fromJson(observations.toString(), JsonObject.class).get("features").getAsJsonObject().get("config")); // Spec in obseration
+				gson.fromJson(spec, JsonObject.class), // Spec
+				gson.fromJson(observations.toString(), JsonObject.class).get("config")); // Spec in obseration
 	}
 	
 	/* FIXME Test that ZIRP Agents never submit buy order when limit price is 0. */

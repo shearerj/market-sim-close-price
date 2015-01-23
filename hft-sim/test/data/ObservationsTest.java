@@ -3,9 +3,10 @@ package data;
 import static fourheap.Order.OrderType.BUY;
 import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
+import java.io.StringWriter;
 import java.util.List;
+import java.util.Map;
 
 import logger.Log;
 
@@ -13,22 +14,25 @@ import org.junit.Before;
 import org.junit.Test;
 
 import systemmanager.Consts.AgentType;
+import systemmanager.Consts.MarketType;
 import systemmanager.Keys.BackgroundReentryRate;
-import systemmanager.Keys.MeanPrefixes;
+import systemmanager.Keys.FeatureWhitelist;
 import systemmanager.Keys.Periods;
 import systemmanager.Keys.SimLength;
-import systemmanager.Keys.StddevPrefixes;
-import systemmanager.Keys.SumPrefixes;
+import systemmanager.SimulationSpec;
 import systemmanager.SimulationSpec.PlayerSpec;
 import utils.Mock;
 import utils.Rand;
 
-import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.util.concurrent.AtomicDouble;
 
+import data.Observations.OutputType;
 import data.Observations.PlayerObservation;
 import entity.agent.Agent;
 import entity.agent.BackgroundAgent;
@@ -42,21 +46,119 @@ public class ObservationsTest {
 	private static final Rand rand = Rand.create();
 	private Stats stats;
 	private Market one, two;
-	
+		
 	@Before
 	public void setup() {
 		stats = Stats.create();
 		one = Mock.market();
 		two = Mock.market();
 	}
+	
+	/**
+	 * Test that output reflects what's expected. Makes sure to include two
+	 * roles, two strategies, and two agent types per strategy.
+	 * 
+	 * Also tests that features, whitespace, and config are not output. This
+	 * test is fragile, but probably shouldn't change much.
+	 */
+	@Test
+	public void egtaTest() {
+		PlayerSpec pspec1 = new PlayerSpec("role1", "strat1", AgentType.NOOP, Props.fromPairs());
+		PlayerSpec pspec2 = new PlayerSpec("role1", "strat2", AgentType.NOOP, Props.fromPairs());
+		PlayerSpec pspec3 = new PlayerSpec("role2", "strat1", AgentType.NOOP, Props.fromPairs());
 		
+		SimulationSpec spec = SimulationSpec.create(Props.fromPairs(FeatureWhitelist.class, ImmutableList.of(".*")),
+				ImmutableMultimap.<MarketType, Props> of(),
+				ImmutableMultimap.<AgentType, Props> of(),
+				ImmutableMultiset.of(pspec1, pspec1, pspec2, pspec3));
+		Observations obs = Observations.create(spec);
+		
+		stats.post("test", 5);
+		
+		obs.add(stats, ImmutableList.of(
+				mockPlayer("role1", "strat1", stats, 1, ImmutableMap.of("test", 1d)),
+				mockPlayer("role1", "strat1", stats, 2, ImmutableMap.<String, Double> of()),
+				mockPlayer("role1", "strat2", stats, 3, ImmutableMap.<String, Double> of()),
+				mockPlayer("role2", "strat1", stats, 4, ImmutableMap.<String, Double> of())));
+		
+		StringWriter obsString = new StringWriter();
+		
+		obs.write(obsString, OutputType.EGTA);
+		assertEquals("{\"players\":[{\"role\":\"role1\",\"strategy\":\"strat1\",\"payoff\":1.0},{\"role\":\"role1\",\"strategy\":\"strat1\",\"payoff\":2.0},{\"role\":\"role1\",\"strategy\":\"strat2\",\"payoff\":3.0},{\"role\":\"role2\",\"strategy\":\"strat1\",\"payoff\":4.0}]}",
+				obsString.toString());
+	}
+	
+	/** Test that default output includes everything it should. */
+	@Test
+	public void defaultTest() {
+		PlayerSpec pspec1 = new PlayerSpec("role1", "strat1", AgentType.NOOP, Props.fromPairs());
+		
+		SimulationSpec spec = SimulationSpec.create(Props.fromPairs(FeatureWhitelist.class, ImmutableList.of("test.*")),
+				ImmutableMultimap.<MarketType, Props> of(),
+				ImmutableMultimap.<AgentType, Props> of(),
+				ImmutableMultiset.of(pspec1));
+		Observations obs = Observations.create(spec);
+		
+		stats.post("test", 5);
+		
+		obs.add(stats, ImmutableList.of(mockPlayer("role1", "strat1", stats, 1, ImmutableMap.of("test", 1d))));
+		
+		StringWriter obsString = new StringWriter();
+		
+		obs.write(obsString, OutputType.DEFAULT);
+		assertEquals("{\n" +
+				"  \"players\": [\n" +
+				"    {\n" +
+				"      \"role\": \"role1\",\n" +
+				"      \"strategy\": \"strat1\",\n" +
+				"      \"payoff\": 1.0,\n" +
+				"      \"features\": {\n" +
+				"        \"test\": 1.0\n" +
+				"      }\n" +
+				"    }\n" +
+				"  ],\n" +
+				"  \"features\": {\n" +
+				"    \"test_stddev\": 0.0,\n" +
+				"    \"test_mean\": 5.0,\n" +
+				"    \"test_sum\": 5.0\n" +
+				"  },\n" +
+				"  \"config\": {}\n" +
+				"}",
+				obsString.toString());
+	}
+	
+	/** Test that whitelist excludes fields properly */
+	@Test
+	public void whitelistTest() {		
+		SimulationSpec spec = SimulationSpec.create(Props.fromPairs(FeatureWhitelist.class, ImmutableList.<String> of()),
+				ImmutableMultimap.<MarketType, Props> of(),
+				ImmutableMultimap.<AgentType, Props> of(),
+				ImmutableMultiset.<PlayerSpec> of());
+		Observations obs = Observations.create(spec);
+		
+		stats.post("test", 5);
+		
+		obs.add(stats, ImmutableList.<Player> of());
+		
+		StringWriter obsString = new StringWriter();
+
+		obs.write(obsString, OutputType.DEFAULT);
+		assertEquals("{\n" +
+				"  \"players\": [],\n" +
+				"  \"features\": {},\n" +
+				"  \"config\": {}\n" +
+				"}",
+				obsString.toString());
+	}
+	
 	/** Test basic summary statistic funcationality */
 	@Test
 	public void summaryStatsTest() {
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(
-				SumPrefixes.class, ImmutableList.of("test"),
-				MeanPrefixes.class, ImmutableList.of("test"),
-				StddevPrefixes.class, ImmutableList.of("test")));
+		SimulationSpec spec = SimulationSpec.create(Props.fromPairs(),
+				ImmutableMultimap.<MarketType, Props> of(),
+				ImmutableMultimap.<AgentType, Props> of(),
+				ImmutableMultiset.<PlayerSpec> of());
+		Observations obs = Observations.create(spec);
 		
 		stats.post("test", 5);
 		stats.post("test", 15);
@@ -66,58 +168,17 @@ public class ObservationsTest {
 		assertEquals(20, obs.features.get("test_sum").mean(), eps);
 		assertEquals(10, obs.features.get("test_mean").mean(), eps);
 		assertEquals(7.0710678, obs.features.get("test_stddev").mean(), eps);
-	}
-	
-	/** Test that sum white list works appropriately */
-	@Test
-	public void sumWhitelistTest() {
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(SumPrefixes.class, ImmutableList.of("test")));
-		
-		stats.post("test", 5);
-		stats.post("test", 15);
-		
-		obs.add(stats, ImmutableList.<Player> of());
-		
-		assertEquals(20, obs.features.get("test_sum").mean(), eps);
-		assertFalse(obs.features.containsKey("test_mean"));
-		assertFalse(obs.features.containsKey("test_stddev"));
-	}
-	
-	/** Test that mean white list works appropriately */
-	@Test
-	public void meanWhitelistTest() {
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(MeanPrefixes.class, ImmutableList.of("test")));
-		
-		stats.post("test", 5);
-		stats.post("test", 15);
-		
-		obs.add(stats, ImmutableList.<Player> of());
-		
-		assertEquals(10, obs.features.get("test_mean").mean(), eps);
-		assertFalse(obs.features.containsKey("test_sum"));
-		assertFalse(obs.features.containsKey("test_stddev"));
-	}
-	
-	/** Test that standard deviation white list works appropriately */
-	@Test
-	public void stddevWhitelistTest() {
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(StddevPrefixes.class, ImmutableList.of("test")));
-		
-		stats.post("test", 5);
-		stats.post("test", 15);
-		
-		obs.add(stats, ImmutableList.<Player> of());
-		
-		assertEquals(7.0710678, obs.features.get("test_stddev").mean(), eps);
-		assertFalse(obs.features.containsKey("test_sum"));
-		assertFalse(obs.features.containsKey("test_mean"));
 	}
 	
 	@Test
 	public void fundamentalStatisticsTest() {
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(
+		SimulationSpec spec = SimulationSpec.create(Props.fromPairs(
 				Periods.class, ImmutableList.of(1, 3),
-				SimLength.class, 6l));
+				SimLength.class, 6l),
+				ImmutableMultimap.<MarketType, Props> of(),
+				ImmutableMultimap.<AgentType, Props> of(),
+				ImmutableMultiset.<PlayerSpec> of());
+		Observations obs = Observations.create(spec);
 		
 		List<Integer> fakeFund = ImmutableList.of(20, 50, 14, 67, 34, 90, 20);
 		List<Integer> transPrices = ImmutableList.of(45, 90, 20, 1, 100, 3, 5);
@@ -135,7 +196,12 @@ public class ObservationsTest {
 	
 	@Test
 	public void nbboSpreadTest() {
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(SimLength.class, 100l));
+		SimulationSpec spec = SimulationSpec.create(Props.fromPairs(SimLength.class, 100l),
+				ImmutableMultimap.<MarketType, Props> of(),
+				ImmutableMultimap.<AgentType, Props> of(),
+				ImmutableMultiset.<PlayerSpec> of());
+		Observations obs = Observations.create(spec);
+		
 		stats.postTimed(TimeStamp.ZERO, Stats.NBBO_SPREAD, Double.POSITIVE_INFINITY);
 		stats.postTimed(TimeStamp.of(20), Stats.NBBO_SPREAD, 10);
 		stats.postTimed(TimeStamp.of(30), Stats.NBBO_SPREAD, 40);
@@ -151,7 +217,11 @@ public class ObservationsTest {
 	
 	@Test
 	public void meanSpreadTest() {
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(SimLength.class, 3l));
+		SimulationSpec spec = SimulationSpec.create(Props.fromPairs(SimLength.class, 3l),
+				ImmutableMultimap.<MarketType, Props> of(),
+				ImmutableMultimap.<AgentType, Props> of(),
+				ImmutableMultiset.<PlayerSpec> of());
+		Observations obs = Observations.create(spec);
 		
 		stats.postTimed(TimeStamp.ZERO, Stats.SPREAD + one, 1);
 		stats.postTimed(TimeStamp.of(1), Stats.SPREAD + one, 3);
@@ -171,9 +241,13 @@ public class ObservationsTest {
 
 	@Test
 	public void volatilityTest() {
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(
+		SimulationSpec spec = SimulationSpec.create(Props.fromPairs(
 				SimLength.class, 3000l,
-				Periods.class, ImmutableList.of(1, 250)));
+				Periods.class, ImmutableList.of(1, 250)),
+				ImmutableMultimap.<MarketType, Props> of(),
+				ImmutableMultimap.<AgentType, Props> of(),
+				ImmutableMultiset.<PlayerSpec> of());
+		Observations obs = Observations.create(spec);
 
 		stats.postTimed(TimeStamp.ZERO, Stats.MIDQUOTE + one, 103);
 		stats.postTimed(TimeStamp.of(1000), Stats.MIDQUOTE + one, 106.5);
@@ -207,7 +281,11 @@ public class ObservationsTest {
 	
 	@Test
 	public void nbboSpreadsTest() {
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(SimLength.class, 3l));
+		SimulationSpec spec = SimulationSpec.create(Props.fromPairs(SimLength.class, 3l),
+				ImmutableMultimap.<MarketType, Props> of(),
+				ImmutableMultimap.<AgentType, Props> of(),
+				ImmutableMultiset.<PlayerSpec> of());
+		Observations obs = Observations.create(spec);
 
 		stats.postTimed(TimeStamp.ZERO, Stats.NBBO_SPREAD, 1);
 		stats.postTimed(TimeStamp.of(1), Stats.NBBO_SPREAD, 3);
@@ -226,7 +304,11 @@ public class ObservationsTest {
 	@Test
 	public void transPricesTest() {
 		FundamentalValue.create(stats, Mock.timeline, 0, 100, 0, rand);
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(), Props.fromPairs(SimLength.class, 3000l));
+		SimulationSpec spec = SimulationSpec.create(Props.fromPairs(SimLength.class, 3000l),
+				ImmutableMultimap.<MarketType, Props> of(),
+				ImmutableMultimap.<AgentType, Props> of(),
+				ImmutableMultiset.<PlayerSpec> of());
+		Observations obs = Observations.create(spec);
 		
 		stats.postTimed(TimeStamp.ZERO, Stats.TRANSACTION_PRICE, 102);
 		stats.postTimed(TimeStamp.ZERO, Stats.TRANSACTION_PRICE, 104);
@@ -242,9 +324,14 @@ public class ObservationsTest {
 	
 	@Test
 	public void playerTest() {
-		PlayerSpec spec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(ImmutableList.of(spec)), Props.fromPairs(SimLength.class, 1l));
+		PlayerSpec pspec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
 		
+		SimulationSpec spec = SimulationSpec.create(Props.fromPairs(SimLength.class, 1l),
+				ImmutableMultimap.<MarketType, Props> of(),
+				ImmutableMultimap.<AgentType, Props> of(),
+				ImmutableMultiset.<PlayerSpec> of(pspec));
+		Observations obs = Observations.create(spec);
+				
 		Agent buyer = new Agent(0, stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, PrivateValues.zero(),
 				Iterators.singletonIterator(TimeStamp.ZERO), Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
@@ -263,11 +350,11 @@ public class ObservationsTest {
 		};
 		
 		// Buyer bought good, so profit = -100000;
-		Player player = new Player(spec.descriptor, buyer);
+		Player player = new Player(pspec.descriptor, buyer);
 		
 		obs.add(stats, ImmutableList.of(player));
 		
-		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(spec.descriptor));
+		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(pspec.descriptor));
 		
 		assertEquals(-100000, pobs.payoff.mean(), eps);
 	}
@@ -277,8 +364,13 @@ public class ObservationsTest {
 	 */
 	@Test
 	public void privateValueFeatureTest() {
-		PlayerSpec spec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(ImmutableList.of(spec)), Props.fromPairs(SimLength.class, 1l));
+		PlayerSpec pspec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
+		
+		SimulationSpec spec = SimulationSpec.create(Props.fromPairs(SimLength.class, 1l),
+				ImmutableMultimap.<MarketType, Props> of(),
+				ImmutableMultimap.<AgentType, Props> of(),
+				ImmutableMultiset.<PlayerSpec> of(pspec));
+		Observations obs = Observations.create(spec);
 		
 		final AtomicDouble pv1 = new AtomicDouble();
 		final AtomicDouble pv_1 = new AtomicDouble();
@@ -293,13 +385,13 @@ public class ObservationsTest {
 			}
 			@Override protected void agentStrategy() { }
 		}.setup();
-		Player player = new Player(spec.descriptor, agent);
+		Player player = new Player(pspec.descriptor, agent);
 		
 		double maxAbsPos = Math.max(Math.abs(pv1.get()), Math.abs(pv_1.get()));
 		
 		obs.add(stats, ImmutableList.of(player));
 		
-		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(spec.descriptor));
+		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(pspec.descriptor));
 		
 		assertEquals(pv1.get(), pobs.features.get(Observations.PV_BUY1).mean(), eps);
 		assertEquals(pv_1.get(), pobs.features.get(Observations.PV_SELL1).mean(), eps);
@@ -308,8 +400,13 @@ public class ObservationsTest {
 	
 	@Test
 	public void playerFeatureMeanTest() {
-		PlayerSpec spec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
-		Observations obs = Observations.create(HashMultiset.<PlayerSpec> create(ImmutableList.of(spec)), Props.fromPairs(SimLength.class, 1l));
+		PlayerSpec pspec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());
+		
+		SimulationSpec spec = SimulationSpec.create(Props.fromPairs(SimLength.class, 1l),
+				ImmutableMultimap.<MarketType, Props> of(),
+				ImmutableMultimap.<AgentType, Props> of(),
+				ImmutableMultiset.<PlayerSpec> of(pspec));
+		Observations obs = Observations.create(spec);
 		
 		// Set up the first agent (a) and record their private values
 		final AtomicDouble a_pv1 = new AtomicDouble();
@@ -324,7 +421,7 @@ public class ObservationsTest {
 				return this;
 			}
 		}.setup();
-		Player player = new Player(spec.descriptor, agent);
+		Player player = new Player(pspec.descriptor, agent);
 		
 		double a_maxAbsPos = Math.max(Math.abs(a_pv1.get()), Math.abs(a_pv_1.get()));
 		
@@ -343,18 +440,27 @@ public class ObservationsTest {
 				return this;
 			}
 		}.setup();
-		player = new Player(spec.descriptor, agent);
+		player = new Player(pspec.descriptor, agent);
 		
 		double b_maxAbsPos = Math.max(Math.abs(b_pv1.get()), Math.abs(b_pv_1.get()));
 		
 		obs.add(stats, ImmutableList.of(player));
 		
 		// Test
-		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(spec.descriptor));
+		PlayerObservation pobs = Iterables.getOnlyElement(obs.players.get(pspec.descriptor));
 		
 		assertEquals((a_pv1.get() + b_pv1.get()) / 2, pobs.features.get(Observations.PV_BUY1).mean(), eps);
 		assertEquals((a_pv_1.get() + b_pv_1.get()) / 2, pobs.features.get(Observations.PV_SELL1).mean(), eps);
 		assertEquals((a_maxAbsPos + b_maxAbsPos) / 2, pobs.features.get(Observations.PV_POSITION1_MAX_ABS).mean(), eps);
+	}
+	
+	private static Player mockPlayer(String role, String strategy, Stats stats, final double payoff, final Map<String, Double> features) {
+		return new Player(role + ' ' + strategy, new Agent(0, stats, Mock.timeline, Log.nullLogger(), Rand.create(), Mock.sip,
+				Mock.fundamental, PrivateValues.zero(), ImmutableList.<TimeStamp> of().iterator(), Props.fromPairs()) {
+			private static final long serialVersionUID = 1L;
+			@Override public double getPayoff() { return payoff; }
+			@Override public Map<String, Double> getFeatures() { return features; }
+		});
 	}
 
 }
