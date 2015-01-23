@@ -16,7 +16,6 @@ import systemmanager.Keys.Debug;
 import systemmanager.Keys.DiscountFactors;
 import systemmanager.Keys.Eta;
 import systemmanager.Keys.FastLearning;
-import systemmanager.Keys.FeatureWhitelist;
 import systemmanager.Keys.FundEstimate;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalLatency;
@@ -40,7 +39,6 @@ import systemmanager.Keys.N;
 import systemmanager.Keys.NbboLatency;
 import systemmanager.Keys.Num;
 import systemmanager.Keys.NumSims;
-import systemmanager.Keys.Periods;
 import systemmanager.Keys.PricingPolicy;
 import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.RandomSeed;
@@ -67,11 +65,9 @@ import systemmanager.Keys.W;
 import systemmanager.Keys.Window;
 import systemmanager.Keys.Withdraw;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Ints;
 
-import data.Stats;
 import entity.agent.BackgroundAgent.Reentries;
 import entity.market.Price;
 import event.TimeStamp;
@@ -98,14 +94,7 @@ public class Defaults implements Serializable {
 
 			.put(TickSize.class,		1)
 			
-			.put(DiscountFactors.class,	Doubles.asList(0, 0.0006))
-			.put(Periods.class,			Ints.asList(1, 250))
-			
-			.put(FeatureWhitelist.class, ImmutableList.of(Stats.SURPLUS + ".*_sum", Stats.PROFIT + ".*_sum",
-					Stats.ZIRP_GREEDY + ".*_sum", Stats.MAX_EFF_POSITION + ".*_sum", Stats.NUM_TRANS + ".*_sum",
-					Stats.FUNDAMENTAL_END_PRICE + ".*_mean", Stats.MARKET_MAKER_SPREAD + ".*_mean",
-					Stats.CONTROL_FUNDAMENTAL + ".*_mean", Stats.CONTROL_PRIVATE_VALUE + ".*_mean", Stats.ZIRP_GREEDY + ".*_mean",
-					Stats.MARKET_MAKER_SPREAD + ".*_stddev", Stats.PRICE + ".*_stddev"))
+			.put(DiscountFactors.class,	Doubles.asList(0))
 			
 			// Simulation spec (general)
 			.put(SimLength.class,		60000l)

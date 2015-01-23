@@ -9,7 +9,6 @@ import props.ParsableValue.IntValue;
 import props.ParsableValue.IntsValue;
 import props.ParsableValue.LongValue;
 import props.ParsableValue.StringValue;
-import props.ParsableValue.StringsValue;
 
 import com.google.common.base.Converter;
 
@@ -29,10 +28,8 @@ public interface Keys {
 
 	public static class RandomSeed extends LongValue {};
 	public static class NumSims extends IntValue {};
-	public static class DiscountFactors extends DoublesValue {};
-	public static class Periods extends IntsValue {};
 	
-	public static class FeatureWhitelist extends StringsValue {};
+	public static class DiscountFactors extends DoublesValue {};
 	
 	public static class FileName extends StringValue {};
 	

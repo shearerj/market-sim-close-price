@@ -9,8 +9,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import systemmanager.Keys.FeatureWhitelist;
-import systemmanager.Keys.Periods;
 import systemmanager.Keys.SimLength;
 import systemmanager.SimulationSpec;
 import systemmanager.SimulationSpec.PlayerSpec;
@@ -80,13 +78,13 @@ public class Observations {
 	private transient final Iterable<Integer> periods;
 	private transient final Iterable<String> whitelist;
 
-	private Observations(SimulationSpec simspec) {
-		this.config = simspec;
-		
+	private Observations(SimulationSpec simspec, Iterable<String> whitelist, Iterable<Integer> periods) {
 		this.features = Maps2.addDefault(Maps.<String, SummStats> newHashMap(), new Supplier<SummStats>() {
 			@Override public SummStats get() { return SummStats.on(); }
 		});
 
+		this.config = simspec;
+		
 		ImmutableListMultimap.Builder<String, PlayerObservation> builder = ImmutableListMultimap.builder();
 		for (Multiset.Entry<PlayerSpec> spec : simspec.getPlayerProps().entrySet())
 			for (int i = 0; i < spec.getCount(); ++i)
@@ -94,12 +92,12 @@ public class Observations {
 		this.players = builder.build();
 
 		this.simLength = simspec.getSimulationProps().get(SimLength.class);
-		this.periods = simspec.getSimulationProps().get(Periods.class);
-		this.whitelist = simspec.getSimulationProps().get(FeatureWhitelist.class);
+		this.periods = periods;
+		this.whitelist = whitelist;
 	}
 	
-	public static Observations create(SimulationSpec simspec) {
-		return new Observations(simspec);
+	public static Observations create(SimulationSpec simspec, Iterable<String> whitelist, Iterable<Integer> periods) {
+		return new Observations(simspec, whitelist, periods);
 	}
 	
 	// Modify this to add custom time series statistics

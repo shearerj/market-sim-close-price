@@ -21,6 +21,10 @@ import utils.LazyFileWriter;
 import utils.Rand;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.primitives.Ints;
 
 import data.Observations;
 import data.Observations.OutputType;
@@ -37,7 +41,8 @@ import data.Props;
  */
 public abstract class SystemManager {
 	
-	protected static final DateFormat LOG_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+	private static final DateFormat LOG_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+	private static final Splitter propListSplitter = Splitter.on(';').omitEmptyStrings();
 
 	/**
 	 * Two input arguments: first is simulation folder, second is sample number
@@ -102,22 +107,26 @@ public abstract class SystemManager {
 	public static void execute(Reader simSpecIn, Reader propIn, Writer obsOut, Writer logOut, int observationNumber) throws IOException {
 		SimulationSpec specification = SimulationSpec.read(simSpecIn);
 		
+		// Load and parse properties
 		Properties props = new Properties();
 		props.load(propIn);
 		
 		Log.Level logLevel = Log.Level.values()[Integer.parseInt(props.getProperty("logLevel", "0"))];
 		boolean egta = Boolean.parseBoolean(props.getProperty("egta", "true"));
+		Iterable<String> whitelist = propListSplitter.splitToList(props.getProperty("whitelist", ""));
+		Iterable<Integer> periods = ImmutableList.copyOf(Iterables.transform(
+				propListSplitter.split(props.getProperty("periods", "")), Ints.stringConverter()));
 		
-		execute(specification, obsOut, logOut, observationNumber, logLevel, egta);
+		execute(specification, obsOut, logOut, observationNumber, logLevel, egta, whitelist, periods);
 	}
 	
-	public static void execute(SimulationSpec specification, Writer obsOut, Writer logOut,
-			int observationNumber, Log.Level logLevel, boolean egta) throws IOException {
+	public static void execute(SimulationSpec specification, Writer obsOut, Writer logOut, int observationNumber,
+			Log.Level logLevel, boolean egta, Iterable<String> whitelist, Iterable<Integer> periods) throws IOException {
 		Props simProps = specification.getSimulationProps();
 		int totalSimulations = simProps.get(NumSims.class);
 		long baseRandomSeed = simProps.get(RandomSeed.class);
 		
-		Observations observations = Observations.create(specification);
+		Observations observations = Observations.create(specification, whitelist, periods);
 		Random rand = Rand.create();
 		
 		for (int i = 0; i < totalSimulations; i++) {
