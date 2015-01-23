@@ -66,7 +66,7 @@ public class SimulationSpec implements Serializable {
 	private final Props simulationProperties;
 	private final Multimap<MarketType, Props> marketProps;
 	private final Multimap<AgentType, Props> agentProps;
-	private final Multiset<PlayerSpec> playerProps; 
+	private final Multiset<PlayerSpec> playerProps;
 	
 	protected SimulationSpec() {
 		this(new JsonObject(), Props.fromPairs(), ImmutableMultimap.<MarketType, Props> of(), ImmutableMultimap.<AgentType, Props> of(),

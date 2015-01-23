@@ -31,6 +31,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.gson.reflect.TypeToken;
@@ -296,4 +297,20 @@ public class Observations {
 			return JsonNull.INSTANCE;
 		}
 	}
+	
+	/**
+	 * Adding this serializer should allow nan serialzation as strings so that
+	 * egta will parse them, but it's use is not recommended.
+	 */
+	@SuppressWarnings("unused")
+	private static final class StringNanSerializer implements JsonSerializer<Double> {
+        @Override
+        public JsonElement serialize(final Double src, final Type typeOfSrc, final JsonSerializationContext context) {
+            if (src.isNaN())
+            	return new JsonPrimitive("NaN");
+            else
+            	return new JsonPrimitive(src);
+        }
+    }
+	
 }
