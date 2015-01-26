@@ -8,6 +8,8 @@
 \usepackage{listings}
 \usepackage{paralist}
 
+\newcommand{\email}[1]{\href{mailto:#1}{\texttt{#1}}}
+
 \lstset{
   basicstyle=\ttfamily,
   breaklines=true
@@ -18,10 +20,10 @@
 \title{How To}
 \author{
   Erik Brinkman \\
-  \href{mailto:erik.brinkman@umich.edu}{erik.brinkman@umich.edu}
+  \email{erik.brinkman@umich.edu}
   \and
   Elaine Wah \\
-  \href{mailto:ewah@umich.edu}{ewah@umich.edu}
+  \email{ewah@umich.edu}
 }
 \date{Updated: \today}
 \maketitle
@@ -74,3 +76,4 @@ file in. % TODO Reference the file
 \section{Add a New Statistic}
 
 \end{document}
+

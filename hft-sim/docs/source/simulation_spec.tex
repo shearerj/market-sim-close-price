@@ -1,5 +1,5 @@
 \documentclass[11pt]{article}
-\usepackage[margin=1.2in]{geometry}
+\usepackage[margin=1in]{geometry}
 \usepackage{color,soul,hyperref,url}
 \usepackage{graphicx,amstext}
 \usepackage{subfigure}
@@ -8,6 +8,10 @@
 \usepackage{listings}
 \usepackage{paralist}
 \usepackage{array}
+\usepackage{booktabs}
+\usepackage{tabulary}
+
+\newcommand{\email}[1]{\href{mailto:#1}{\texttt{#1}}}
 
 \lstset{
   basicstyle=\ttfamily,
@@ -20,10 +24,10 @@
 \title{Simulation Spec File}
 \author{
   Erik Brinkman \\
-  \href{mailto:erik.brinkman@umich.edu}{erik.brinkman@umich.edu}
+  \email{erik.brinkman@umich.edu}
   \and
   Elaine Wah \\
-  \href{mailto:ewah@umich.edu}{ewah@umich.edu}
+  \email{ewah@umich.edu}
 }
 \date{Updated: \today}
 \maketitle
@@ -76,8 +80,8 @@ For example, the section below specifies two background traders, one with range 
 
 \begin{table}
 \centering
-\begin{tabular}[f]{p{0.3\textwidth} c p{0.55\textwidth}}
-\uppercase{Name}   & \uppercase{Default} & \uppercase{Description} \\ \hline
+\begin{tabulary}{\textwidth}{lcL}\toprule
+\textbf{Name}   & \textbf{Default} & \textbf{Description} \\ \midrule
 
 \texttt{numSims} 		& 1 & Number of simulations to pre-aggregate; e.g., setting this parameter to 5 will generate observation files containing mean values from 5 simulation runs. \\
 \texttt{randomSeed} 	& system time & Seed for the pseudorandom number generator. Random number generation is linked to the observation number, therefore a sequence of observations 0 to N will have different random numbers even when run with the same simulation spec file (and the same seed). Entering the same random seed for different models allows comparison with simulations run with common random numbers. \\
@@ -104,9 +108,11 @@ reentry. Can also be set for an agent individually, if part of its strategy.\\
 \texttt{fundamentalMean} 	& 100000 & Mean for the public global fundamental value.\\
 \texttt{fundamentalKappa} 		& 0.05 & Mean-reversion parameter for the fundamental; higher kappa indicates greater degree of mean-reversion.\\
 \texttt{fundamentalShockVar} 		& 1E6 & Variance of shock to global fundamental (which is normally distributed around mean 0).\\
-
-
-\end{tabular}
+\texttt{discountFactors} & [0] & A list of the discount factors agents should use when
+calculating utility. The first discount factor is also what is used to
+calculate payoff when an agent is a player. \\
+\bottomrule
+\end{tabulary}
 \caption{List of environment configuration parameters.}
 \label{tab:configs}
 \end{table}
@@ -142,15 +148,13 @@ Refer to Table \ref{tab:mkt} for details on market-specific settings.
 
 \begin{table}
 \centering
-\begin{tabular}[f]{p{0.3\textwidth} c p{0.55\textwidth}}
-\uppercase{Market parameter}   & \uppercase{Default} & \uppercase{Description} \\ \hline
-
-\texttt{num}			& 0	& Number of markets with a specific market configuration \\
-
-\texttt{clearInterval} 		& 1000 & Length of clearing interval of \texttt{CALL} market \\
-\texttt{pricingPolicy}			& 0.5 & \texttt{CALL} market pricing policy
-
-\end{tabular}
+\begin{tabulary}{\textwidth}{lcL} \toprule
+\textbf{Market parameter}   & \textbf{Default} & \textbf{Description} \\ \midrule
+\texttt{num} & 0 & Number of markets with a specific market configuration \\
+\texttt{clearInterval} & 1000 & Length of clearing interval of \texttt{CALL} market \\
+\texttt{pricingPolicy} & 0.5 & \texttt{CALL} market pricing policy \\
+\bottomrule
+\end{tabulary}
 \caption{List of market configuration parameters.}
 \label{tab:mkt}
 \end{table}
@@ -169,27 +173,26 @@ Refer to Table \ref{tab:mkt} for details on market-specific settings.
 
 \begin{table}
 \centering
-\begin{tabular}{p{0.26\textwidth} >{\centering\arraybackslash}p{0.15\textwidth} p{0.54\textwidth}}
-\uppercase{Agent parameter}   & \uppercase{Default} & \uppercase{Description} \\ \hline
-
+\begin{tabulary}{\textwidth}{lcL}\toprule
+\textbf{Agent parameter} & \textbf{Default} & \textbf{Description} \\ \midrule
 \texttt{num}			& 0	& Number of a specific agent configuration \\
 \texttt{withdraw}		& \texttt{true}	& If true, withdraws orders upon each reentry \\
 \texttt{window}		& 5000	& Length of window to process, for \texttt{WindowAgents} \\
 
 
-\\
-\uppercase{LA parameter}   & \uppercase{Default} & \uppercase{Description} \\ \hline
+\\ \toprule
+\textbf{LA parameter}   & \textbf{Default} & \textbf{Description} \\ \midrule
 \texttt{alpha}			& 0.001 & Profit threshold of LA \\
 \texttt{laLatency}		& 0  & Latency of LA \\
 
-\\
-\uppercase{ZI parameter}   & \uppercase{Default} & \uppercase{Description} \\ \hline
+\\ \toprule
+\textbf{ZI parameter}   & \textbf{Default} & \textbf{Description} \\ \midrule
 \texttt{Rmin}			& 0	& Bid range minimum \\
 \texttt{Rmax}			& 5000	& Bid range maximum \\
 \texttt{thresh}		& 0.001 & Profit threshold of \texttt{ZIRP} \\
 
-\\
-\uppercase{MM parameter}   & \uppercase{Default} & \uppercase{Description} \\ \hline
+\\ \toprule
+\textbf{MM parameter}   & \textbf{Default} & \textbf{Description} \\ \midrule
 \texttt{K}			& 100	& Number of rungs on each side of the ladder \\
 \texttt{size}			& 100	& Rung size \\
 \texttt{trunc}		& \texttt{true} & If true, will truncate the ladder to avoid crossing current quote \\
@@ -206,8 +209,8 @@ Refer to Table \ref{tab:mkt} for details on market-specific settings.
 \texttt{fastLearn}	 & \texttt{true} & If true, \texttt{AdaptiveMM} will use modification to learn more quickly (for updating G) \\
 \texttt{lastPrice} & \texttt{true} & If true, \texttt{AdaptiveMM} will use the last price, rather than the current price, to evaluate each spread-based strategy's performance \\
 \texttt{strats} 	& 500, 1000, 2500, 5000 & Initial spreads for strategies used by \texttt{AdaptiveMM}. Delimited in strategy string by hyphen ``\texttt{-}'' \\
-
-\end{tabular}
+\bottomrule
+\end{tabulary}
 \caption{Incomplete list of agent configuration parameters. AAAgent and ZIPAgent parameters will eventually be converted into groups, and thus are not included here. Note that all boolean parameters can be specified by ``T/t'' and ``F/f'' in addition to ``true'' and ``false.''}
 \label{tab:ag}
 \end{table}
