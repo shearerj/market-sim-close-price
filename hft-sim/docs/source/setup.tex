@@ -33,9 +33,9 @@ them contact me.
 \begin{description}
 \item[Open SSH:] To connect to the remote repository. You can verify you have it
   if \texttt{which ssh} returns something
-\item[Git:] To get a copy of the source code. \verb|which git|
-\item[Java 6:] We are using Java 6 for a number of reasons. If \verb|vava -version| says \verb|1.6| somewhere then you have Java 1.6 installed, but you may
-  have it even if that says \verb|1.7| or \verb|1.8.|
+\item[Git:] To get a copy of the source code. \texttt{which git}
+\item[Java 6:] We are using Java 6 for a number of reasons. If \texttt{vava -version} says \texttt{1.6} somewhere then you have Java 1.6 installed, but you may
+  have it even if that says \texttt{1.7} or \texttt{1.8.}
 \item[Ant:] To compile Java. If you have Java you probably have Apache Ant already.
 \end{description}
 
@@ -78,28 +78,44 @@ It will be easiest to debug any new code added to the simulation system using an
 \item Set Eclipse to auto-refresh the workspace
   \begin{enumerate}
   \item Select Window from the top bar and go down to Preferences
-  \item Expand \verb|General| and then click on \verb|Workspace|
-  \item Check \verb|Refresh using native hooks or polling| and \verb|Refresh on access|
+  \item Expand \texttt{General} and then click on \texttt{Workspace}
+  \item Check \texttt{Refresh using native hooks or polling} and \texttt{Refresh on access}
   \item Click OK
   \end{enumerate}
   
 \item From the File menu, select New >> Project...
-\item Select \verb|Java Project from Existing Ant Buildfile|.
+\item Select \texttt{Java Project from Existing Ant Buildfile}.
 \item Browse for the Ant buildfile; select the \path{build.xml} file located in \path{hft-sim}, the simulation system directory
   (\path{~/hft_project/hft/hft-sim/build.xml}). Leave the project name unchanged and
   click Finish.
 \item At this point, the project will be imported automatically.
 \item Fix the project build path:
   \begin{enumerate}
-  \item Right click on the \verb|hft-sim| project and select Properties.
+  \item Right click on the \texttt{hft-sim} project and select Properties.
   \item Click Java Build Path in the left panel, then select Libraries (at the
     top). Remove the JRE\_LIB Library.
-  \item Click \verb|Add Library| and add a JRE System Library (make sure you add a Java 6 library!).
+  \item Click \texttt{Add Library} and add a JRE System Library (make sure you add a Java 6 library!).
   \item Select Source at the top (next to libraries).
-  \item Click Add Folder and select \verb|test|.
-  \item Select \verb|Output folder| under hft-sim/src and then click edit.
-  \item Select \verb|Project's default output folder| and then OK to close the window.
+  \item Click Add Folder and select \texttt{test}.
+  \item Select \texttt{Output folder} under hft-sim/src and then click edit.
+  \item Select \texttt{Project's default output folder} and then OK to close the window.
   \item Click OK and close the window.
+  \end{enumerate}
+
+\item Setup JUnit
+  \begin{enumerate}
+  \item Click on \texttt{Window >> Preferences}.
+  \item On the left hand side, expand \texttt{Java} and click on \texttt{JUnit}.
+  \item Check ``add `-ea' to VM arguemnts when creating a new JUnit launch
+    configuration''.
+  \end{enumerate}
+
+\item Verify that the tests are configured correctly
+  \begin{enumerate}
+  \item Right click on the \path{test} folder in the left hand nav bar, and
+    then select \texttt{Run As >> JUnit Test}.
+  \item A panel should come up indicating that the tests are running. If
+    everything is setup correctly, there should be no errors.
   \end{enumerate}
 
 \item Before getting setup to run the simulator, you need to create a directory in which to run your simulations.  To keep the repository organized, run all of your simulations within the \path{~/hft_project/hft/hft-sim/simulations} directory.
@@ -112,10 +128,10 @@ It will be easiest to debug any new code added to the simulation system using an
 \item In the Properties window set up Run/Debug configurations:
   \begin{enumerate}
   \item Right click on the project again and select Properties.
-  \item Select \verb|Run/Debug Settings| in the left panel. Add a new launch configuration (Java Application).
-  \item At the top, change the name to \verb|Run Simulator.| To select the
-    correct main class, click \verb|Search...| and select \verb|SystemManager|.
-  \item Select the Arguments tab and enter something like the following into the \verb|Program Arguments| window:
+  \item Select \texttt{Run/Debug Settings} in the left panel. Add a new launch configuration (Java Application).
+  \item At the top, change the name to \texttt{Run Simulator.} To select the
+    correct main class, click \texttt{Search...} and select \texttt{SystemManager}.
+  \item Select the Arguments tab and enter something like the following into the \texttt{Program Arguments} window:
 
 \begin{verbatim}
 simulations/test 1
@@ -132,8 +148,8 @@ The second argument represents what observation number to use. In this case we'r
 \item Test that everything worked:
   \begin{enumerate}
   \item Click the down arrow next to the green arrow Run icon and select
-    \verb|Run Configurations...|
-  \item Select \verb|Run Simulator| from the left hand column and click Run.
+    \texttt{Run Configurations...}
+  \item Select \texttt{Run Simulator} from the left hand column and click Run.
   \item Check that there's an observation file called
     \path{simulations/test/observation1.json}, and a log file in
     \path{simulations/test/logs}.
@@ -144,57 +160,57 @@ The second argument represents what observation number to use. In this case we'r
 \section{Setting up EclEmma Code Coverage Tool in Eclipse}
 
 To install EclEmma, you first need to have the Eclipse Marketplace Client
-installed. If you see \verb|Eclipse Marketplace...| under the \verb|Help| menu,
+installed. If you see \texttt{Eclipse Marketplace...} under the \texttt{Help} menu,
 then the Eclipse Marketplace Client is installed, and you can skip to section
 \ref{ssec:eclemma}.
 
 \subsection{Installing the Eclipse Marketplace Client}
 
 \begin{enumerate}
-\item Go to \verb|Help > Install New Software...|
-\item Click the drop down arrow next to \verb|Work with:| and select
-  \verb|--All Available Sites--|
-\item In the search box that says \verb|type filter text| enter
-  \verb|marketplace|. This may lag a lot, eclipse is just poorly threaded
-\item You should see a listing called \verb|Marketplace Client|. Select the
-  checkbox next to it, and then click \verb|Next >| at the bottom
+\item Go to \texttt{Help >> Install New Software...}
+\item Click the drop down arrow next to \texttt{Work with:} and select
+  \texttt{--All Available Sites--}
+\item In the search box that says \texttt{type filter text} enter
+  \texttt{marketplace}. This may lag a lot, eclipse is just poorly threaded
+\item You should see a listing called \texttt{Marketplace Client}. Select the
+  checkbox next to it, and then click \texttt{Next >} at the bottom
 \item The next page should that you are installing the Marketplace
-  Client. Click \verb|Next >| again
-\item Read and accept the license agreement. Then click \verb|Finish|. Eclipse
+  Client. Click \texttt{Next >} again
+\item Read and accept the license agreement. Then click \texttt{Finish}. Eclipse
   should begin downloading the marketplace
 \item After the Marketplace client is installed, Eclipse should prompt you to
-  restart Eclipse. When you're ready, click \verb|Yes|
+  restart Eclipse. When you're ready, click \texttt{Yes}
 \end{enumerate}
 
 \subsection{Installing EclEmma}\label{ssec:eclemma}
 
 \begin{enumerate}
-\item Go to \verb|Help > Eclipse Marketplace...|
-\item Type \verb|eclemma| in the searchbox next to \verb|Find:| and hit
-  \verb|Return|
-\item You should see a single entry called \verb|EclEmma Java Code Coverage|.
+\item Go to \texttt{Help >> Eclipse Marketplace...}
+\item Type \texttt{eclemma} in the searchbox next to \texttt{Find:} and hit
+  \texttt{Return}
+\item You should see a single entry called \texttt{EclEmma Java Code Coverage}.
   Click the install button next to it
-\item You should be prompted with a confirm dialogue. Click \verb|Next >|
-\item Read and accept the license agreement. Then click \verb|Finish|
+\item You should be prompted with a confirm dialogue. Click \texttt{Next >}
+\item Read and accept the license agreement. Then click \texttt{Finish}
 \item After installation, you should be prompted to restart Eclipse. When
-  you're ready, click \verb|Yes|
+  you're ready, click \texttt{Yes}
 \end{enumerate}
 
 \subsection{Using EclEmma}
 
 Traditionally with Eclipse, you can right click on a JUnit test, or a package
-with JUnit tests in it, and select \verb|Run As > JUnit Test|. Once EclEmma is
+with JUnit tests in it, and select \texttt{Run As >> JUnit Test}. Once EclEmma is
 installed, if you right click on a JUnit test, or a package containing JUnit
-tests, you can go to \verb|Coverage As > JUnit Test|. This will run all of the
+tests, you can go to \texttt{Coverage As >> JUnit Test}. This will run all of the
 JUnit tests and show code coverage.
 
 After running coverage, there are two main sources of coverage information. You
-should see a View called \verb|Coverage| which lists the coverage of every
+should see a View called \texttt{Coverage} which lists the coverage of every
 folder in the project. In addition, each line in Eclipse will be highlighted
 Green, Yellow, or Red indicating Covered, Partially Covered, or Not Covered
 respectively.
 
 To remove the line highlighting from your source and test files, simple click
-the black \verb|X| icon in the coverage View called \verb|Remove Active Session|.
+the black \texttt{X} icon in the coverage View called \texttt{Remove Active Session}.
 
 \end{document}
