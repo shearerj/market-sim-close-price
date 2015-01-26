@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static logger.Log.Level.INFO;
 
+import java.text.DecimalFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -50,6 +51,9 @@ import fourheap.Order.OrderType;
  * @author ewah
  */
 public abstract class Agent extends Entity {
+	
+	private static final DecimalFormat df = new DecimalFormat();
+	static { df.setMaximumFractionDigits(8); }
 	
 	private final MarketInfo sip;
 	private final FundamentalValueView fundamental;
@@ -108,8 +112,8 @@ public abstract class Agent extends Entity {
 		
 		postStat(Stats.TOTAL_PROFIT, profit);
 		for (Entry<Double, Double> e : getDiscountedSurplus()) {			
-			postStat(String.format("%s%.4f", Stats.SURPLUS, e.getKey()), e.getValue());
-			postStat(String.format("%s%.4f_%s", Stats.SURPLUS, e.getKey(), getClass().getSimpleName().toLowerCase()), e.getValue());
+			postStat(Stats.SURPLUS + df.format(e.getKey()), e.getValue());
+			postStat(Stats.SURPLUS + df.format(e.getKey()) + '_' + getClass().getSimpleName().toLowerCase(), e.getValue());
 		}
 	}
 	

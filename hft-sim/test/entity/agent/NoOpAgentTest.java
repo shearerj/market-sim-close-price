@@ -5,8 +5,6 @@ import logger.Log;
 
 import org.junit.Test;
 
-import systemmanager.Defaults;
-import systemmanager.Keys.DiscountFactors;
 import utils.Mock;
 import utils.Rand;
 import data.Props;
@@ -45,10 +43,8 @@ public class NoOpAgentTest {
 		assertEquals(0, stats.getSummaryStats().get(Stats.NUM_TRANS_TOTAL).sum(), eps);
 		assertEquals(0, stats.getSummaryStats().get(Stats.NUM_TRANS + noopstr).sum(), eps);
 		
-		for (Double disc : Defaults.get(DiscountFactors.class)) {		
-			assertEquals(0, stats.getSummaryStats().get(String.format("%s%.4f", Stats.SURPLUS, disc)).sum(), eps);
-			assertEquals(0, stats.getSummaryStats().get(String.format("%s%.4f_%s", Stats.SURPLUS, disc, noopstr)).sum(), eps);
-		}
+		assertEquals(0, stats.getSummaryStats().get(Stats.SURPLUS + "0").sum(), eps);
+		assertEquals(0, stats.getSummaryStats().get(Stats.SURPLUS + "0_" + noopstr).sum(), eps);
 	}
 	
 }
