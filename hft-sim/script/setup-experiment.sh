@@ -6,7 +6,7 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo
     echo "Run an experiment with modifications of the simulation_spec"
     echo
-    echo "\"directory\" must have a valid simulation_spec.json in it. Each jpath specified reprsents a parameter of the simulation spec to modify in parallel, and the space separated values represents all of the values to set the parameter to. By specifying multiple jpath values pairs, one can vary several parameters together." | fold -s
+    echo "\"directory\" must have a valid simulation_spec.json in it. Each jpath specified represents a parameter of the simulation spec to modify in parallel, and the space separated values represents all of the values to set the parameter to. By specifying multiple jpath values pairs, one can vary several parameters together." | fold -s
     echo
     echo "example usage:"
     echo "  $0 sim_dir nbboLatency \"5 10 20 50 100 200\""
@@ -48,6 +48,8 @@ for (( J=0; J < $N; ++J )); do
         NAME="${NAME}_${JPATH// /-}_$VAL"
         SPEC="$( "$LOC/jpath.py" $DEFAULT_JPATH $JPATH -v $VAL <<< "$SPEC" )"
     done
+    # Strip non word characters
+    NAME="$(tr -dc '[:alnum:][_]' <<< "$NAME")"
 
     # Create the experiment name directory (remove the preciding underscore from NAME)
     EXP_DIR="$DIR/${NAME#_}"
