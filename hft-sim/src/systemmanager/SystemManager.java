@@ -82,12 +82,12 @@ public abstract class SystemManager {
 		Reader specReader = new FileReader(simSpecFile);
 		// Check Properties File
 		File propsFile = new File("config", "env.properties");
-		checkArgument(simSpecFile.exists(), "Properties file must exist in config/env.properties");
-		checkArgument(simSpecFile.canRead(), "Properties file must be readable");
+		checkArgument(propsFile.exists(), "Properties file must exist in config/env.properties");
+		checkArgument(propsFile.canRead(), "Properties file must be readable");
 		Reader propsReader = new FileReader(propsFile);
 		// Observation File
 		File obsFile = new File(simFolder, "observation" + obsNum + ".json");
-		checkArgument(simSpecFile.canWrite(), "Observations file must be writable");
+		checkArgument(obsFile.canWrite(), "Observations file must be writable");
 		Writer obsWriter = LazyFileWriter.create(obsFile);
 		// Log File
 		StringBuilder logFileName = new StringBuilder(
