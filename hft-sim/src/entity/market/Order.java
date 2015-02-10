@@ -16,6 +16,7 @@ public class Order extends fourheap.Order<Price, MarketTime> implements Serializ
 
 	private static final long serialVersionUID = 4020465194816241014L;
 	
+	// FIXME should AgentView and OrderRecord be Serializable?
 	private final AgentView agent;
 	private final OrderRecord orderRecord;
 

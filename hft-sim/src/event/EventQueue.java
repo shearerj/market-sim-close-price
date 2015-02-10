@@ -90,11 +90,11 @@ public class EventQueue implements Timeline {
 		
 		if (!immediateActivities.isEmpty()) {
 			return Maps.immutableEntry(currentTime, immediateActivities.remove());
-		} else {
-			Entry<TimeStamp, Activity> scheduledAct = scheduledActivities.remove();
-			assert scheduledAct.getKey().afterOrOn(currentTime) : "Activities aren't in proper order";
-			return scheduledAct;
 		}
+		
+		Entry<TimeStamp, Activity> scheduledAct = scheduledActivities.remove();
+		assert scheduledAct.getKey().afterOrOn(currentTime) : "Activities aren't in proper order";
+		return scheduledAct;
 	}
 	
 	public void propagateInformation() {

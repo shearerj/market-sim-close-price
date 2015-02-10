@@ -59,8 +59,8 @@ public final class Log implements Closeable, Flushable {
 	public static Log create(Level level, Writer writer, Clock clock) {
 		if (level == NO_LOGGING)
 			return nullLogger;
-		else
-			return new Log(level, writer, clock);
+		
+		return new Log(level, writer, clock);
 	}
 	
 	public static Log create(Level level, File logFile, Clock clock) throws IOException {

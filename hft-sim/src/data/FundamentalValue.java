@@ -40,6 +40,7 @@ public class FundamentalValue implements Serializable {
 	private static final Ordering<TimeStamp> tord = Ordering.natural();
 	
 	private final Timeline timeline;
+	// FIXME should Stats be Serializable?
 	private final Stats stats;
 	private final Rand rand;
 	
@@ -99,7 +100,7 @@ public class FundamentalValue implements Serializable {
 		return lastPrice;
 	}
 
-	// TODO memeoize? Lots of views with the same latency. Extra objects
+	// TODO memoize? Lots of views with the same latency. Extra objects
 	/** Get a possibly delayed view of the fundamental process */
 	public FundamentalValueView getView(final TimeStamp latency) {
 		return new FundamentalValueView(latency);

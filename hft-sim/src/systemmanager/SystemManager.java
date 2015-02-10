@@ -41,7 +41,6 @@ import data.Props;
  */
 public abstract class SystemManager {
 	
-	private static final DateFormat LOG_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
 	private static final Splitter propListSplitter = Splitter.on(';').omitEmptyStrings();
 
 	/**
@@ -93,7 +92,10 @@ public abstract class SystemManager {
 		StringBuilder logFileName = new StringBuilder(
 				new File(".").toURI().relativize(simFolder.toURI()).getPath().replace('/', '_'));
 		logFileName.append(obsNum).append('_');
-		logFileName.append(LOG_DATE_FORMAT.format(new Date())).append(".txt");
+		
+		// date format is not thread-safe, so should be created locally for use in public static method
+		final DateFormat logDateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+		logFileName.append(logDateFormat.format(new Date())).append(".txt");
 		Writer logWriter = LazyFileWriter.create(new File(new File(simFolder, "logs"), logFileName.toString()));
 		// Execute
 		execute(specReader, propsReader, obsWriter, logWriter, obsNum);

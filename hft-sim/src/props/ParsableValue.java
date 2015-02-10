@@ -23,7 +23,8 @@ public abstract class ParsableValue<T> extends Value<T> {
 		set(converter.convert(string));
 	}
 	
-	public String toString() {
+	@Override
+    public String toString() {
 		return converter.reverse().convert(get());
 	}
 	

@@ -212,9 +212,9 @@ public abstract class MarketMaker extends SMAgent {
 				log(INFO, "%s in %s: Truncating ladder with rung size %s from (%s, %s)-->(%s, %s)", 
 						this, primaryMarket, stepSize, oldBuyMaxPrice, oldSellMinPrice, buyMaxPrice, sellMinPrice);
 				numRungsTruncated += !oldBuyMaxPrice.equals(buyMaxPrice) ? 
-						Math.ceil(ladderBid.intValue() - ask.get().intValue()) : 0;
+						ladderBid.intValue() - ask.get().intValue() : 0;
 				numRungsTruncated += !oldSellMinPrice.equals(sellMinPrice) ? 
-						Math.ceil(bid.get().intValue() - ladderBid.intValue()) : 0;
+						bid.get().intValue() - ladderBid.intValue() : 0;
 			}
 		}
 		// FIXME Test this statistic, because in one market maker test it produced incorrect results

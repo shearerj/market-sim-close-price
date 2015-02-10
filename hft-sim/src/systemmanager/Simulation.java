@@ -93,19 +93,19 @@ public class Simulation {
 		SIP sip = SIP.create(stats, eventQueue, log, Rand.from(rand), simProps.get(NbboLatency.class));
 		
 		MarketFactory marketFactory = MarketFactory.create(stats, eventQueue, log, Rand.from(rand), sip);
-		markets = createMarkets(marketFactory, spec.getMarketProps(), rand);
+		markets = createMarkets(marketFactory, spec.getMarketProps());
 		
 		Builder<Agent> agentBuilder = ImmutableList.builder();
 		AgentFactory agentFactory = AgentFactory.create(stats, eventQueue, log, Rand.from(rand), sip, fundamental, markets);
-		this.players = createPlayers(agentFactory, agentBuilder, spec.getPlayerProps(), rand);
-		this.agents = createAgents(agentFactory, agentBuilder, spec.getAgentProps(), rand);
+		this.players = createPlayers(agentFactory, agentBuilder, spec.getPlayerProps());
+		this.agents = createAgents(agentFactory, agentBuilder, spec.getAgentProps());
 	}
 	
 	public static Simulation create(SimulationSpec spec, Random rand, Writer logWriter, Level logLevel) {
 		return new Simulation(spec, rand, logWriter, logLevel);
 	}
 	
-	private static Collection<Market> createMarkets(MarketFactory factory, Multimap<MarketType, Props> marketProps, Random rand) {
+	private static Collection<Market> createMarkets(MarketFactory factory, Multimap<MarketType, Props> marketProps) {
 		Builder<Market> markets = ImmutableList.builder();
 		for (Entry<MarketType, Props> e : marketProps.entries()) {
 			for (int i = 0; i < e.getValue().get(NumMarkets.class, Num.class); i++)
@@ -115,7 +115,7 @@ public class Simulation {
 	}
 	
 	// Requires that any other agents already created in the player stage
-	private static Collection<Agent> createAgents(AgentFactory factory, Builder<Agent> agents, Multimap<AgentType, Props> agentProps, Random rand) {
+	private static Collection<Agent> createAgents(AgentFactory factory, Builder<Agent> agents, Multimap<AgentType, Props> agentProps) {
 		for (Entry<AgentType, Props> e : agentProps.entries()) {
 			int number = e.getValue().get(NumAgents.class, Num.class);
 			for (int i = 0; i < number; i++)
@@ -124,7 +124,7 @@ public class Simulation {
 		return agents.build();
 	}
 	
-	private static Collection<Player> createPlayers(AgentFactory factory, Builder<Agent> agentBuilder, Multiset<PlayerSpec> playerConfig, Random rand) {
+	private static Collection<Player> createPlayers(AgentFactory factory, Builder<Agent> agentBuilder, Multiset<PlayerSpec> playerConfig) {
 		Builder<Player> players = ImmutableList.builder();
 
 		for (Multiset.Entry<PlayerSpec> e : playerConfig.entrySet()) {

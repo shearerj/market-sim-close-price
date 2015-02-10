@@ -192,6 +192,8 @@ public final class Sparse {
 			SparseElement<?> that = (SparseElement<?>) other;
 			return this.index == that.index && Objects.equal(this.value, that.value);
 		}
+		
+		// FIXME: override hashCode
 
 		@Override
 		public String toString() {

@@ -29,7 +29,7 @@ import com.google.common.collect.Queues;
  * event occur instantaneously give it a time of TimeStamp.IMMEDIATE;
  * 
  * Note that because of the dequeuing mechanism, if Activity A is supposed to
- * happen after Activity B, Activity A should queue up Activity B. Anything else
+ * happen before Activity B, Activity A should queue up Activity B. Anything else
  * may not guarantee that A always happens before B.
  * 
  * @author ebrink

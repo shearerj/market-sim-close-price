@@ -33,6 +33,7 @@ public class TimeSeries implements Serializable, Iterable<SparseElement<Double>>
 	private static final long serialVersionUID = 7835744389750549565L;
 	private static final Joiner joiner = Joiner.on(", ");
 	
+	// FIXME should Sparse.SpareElement be Serializable?
 	protected final List<SparseElement<Double>> points;
 
 	protected TimeSeries() {
@@ -68,6 +69,8 @@ public class TimeSeries implements Serializable, Iterable<SparseElement<Double>>
 			return false;
 		return this.points.equals(((TimeSeries) o).points);
 	}
+	
+	// FIXME should this override hashcode?
 
 	@Override
 	public String toString() {
