@@ -20,6 +20,7 @@ import systemmanager.Keys.FundEstimate;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalLatency;
 import systemmanager.Keys.FundamentalMean;
+import systemmanager.Keys.FundamentalShockProb;
 import systemmanager.Keys.FundamentalShockVar;
 import systemmanager.Keys.Gamma;
 import systemmanager.Keys.GammaMax;
@@ -101,6 +102,7 @@ public class Defaults implements Serializable {
 			.put(FundamentalMean.class,	100000)
 			.put(FundamentalKappa.class, 0.05)
 			.put(FundamentalShockVar.class, 1000000d)
+			.put(FundamentalShockProb.class, 1.0)
 			.put(RandomSeed.class,		System.currentTimeMillis())
 			.put(NumSims.class,			1)
 			.put(NbboLatency.class,		TimeStamp.ZERO)

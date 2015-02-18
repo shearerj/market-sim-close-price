@@ -67,7 +67,7 @@ public class Observations {
 	PV_BUY1 = 					"pv_buy1",
 	PV_SELL1 = 					"pv_sell1",
 	PV_POSITION1_MAX_ABS =		"pv_position_max_abs1";
-	
+		
 	public static enum OutputType { DEFAULT, EGTA, STDDEV };
 	
 	protected final Multimap<String, PlayerObservation> players; // Player information

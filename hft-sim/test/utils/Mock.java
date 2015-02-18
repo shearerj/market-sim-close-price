@@ -68,7 +68,7 @@ public class Mock {
 	};
 	
 	public static FundamentalValue fundamental(int mean) {
-		return FundamentalValue.create(stats, timeline, 0, mean, 0, rand);
+		return FundamentalValue.create(stats, timeline, 0, mean, 0, 1.0, rand);
 	}
 	
 	public static final FundamentalValue fundamental = fundamental(0);

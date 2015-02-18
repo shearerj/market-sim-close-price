@@ -83,7 +83,7 @@ public class ZIStrategyTest {
 	
 	@Test
 	public void initialPriceZIBuyTest() {
-		fundamental = FundamentalValue.create(Mock.stats, Mock.timeline, 0, 100000, 1e8, rand);
+		fundamental = FundamentalValue.create(Mock.stats, Mock.timeline, 0, 100000, 1e8, 1.0, rand);
 		BackgroundAgent agent = backgroundAgent(ListPrivateValue.createRandomly(1, 0, rand));
 		BackgroundStrategy zi = ZIStrategy.create(Mock.timeline, market.getPrimaryView(),
 				NaiveLimitPriceEstimator.create(agent, fundamental.getView(TimeStamp.ZERO)),
@@ -101,7 +101,7 @@ public class ZIStrategyTest {
 	
 	@Test
 	public void initialPriceZISellTest() {
-		fundamental = FundamentalValue.create(Mock.stats, Mock.timeline, 0, 100000, 1e8, rand);
+		fundamental = FundamentalValue.create(Mock.stats, Mock.timeline, 0, 100000, 1e8, 1.0, rand);
 		BackgroundAgent agent = backgroundAgent(ListPrivateValue.createRandomly(1, 0, rand));
 		BackgroundStrategy zi = ZIStrategy.create(Mock.timeline, market.getPrimaryView(),
 				NaiveLimitPriceEstimator.create(agent, fundamental.getView(TimeStamp.ZERO)),

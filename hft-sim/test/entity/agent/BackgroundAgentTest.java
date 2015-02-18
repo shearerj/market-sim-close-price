@@ -66,7 +66,7 @@ public class BackgroundAgentTest {
 	@Before
 	public void setup() {
 		timeline = Mock.timeline;
-		fundamental = FundamentalValue.create(Mock.stats, timeline, kappa, meanValue, variance, rand);
+		fundamental = FundamentalValue.create(Mock.stats, timeline, kappa, meanValue, variance, 1.0, rand);
 		fund = fundamental.getView(TimeStamp.ZERO);
 		market = Mock.market();
 		view = market.getPrimaryView();

@@ -33,7 +33,7 @@ public class OptimalLimitPriceEstimatorTest {
 		double kappa = 0.005;
 		
 		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
-		FundamentalValue fundamental = FundamentalValue.create(Mock.stats, timeline, kappa, mean, 1e8, rand);
+		FundamentalValue fundamental = FundamentalValue.create(Mock.stats, timeline, kappa, mean, 1e8, 1.0, rand);
 		Agent agent = new Agent(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, fundamental, PrivateValues.zero(),
 				ImmutableList.<TimeStamp> of().iterator(), Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;

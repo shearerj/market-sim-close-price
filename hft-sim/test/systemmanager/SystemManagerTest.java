@@ -1,5 +1,6 @@
 package systemmanager;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -103,8 +104,8 @@ public class SystemManagerTest {
 	// TODO This should have players
 	@Test
 	public void fullTest() throws IOException {
-		// Copy Simspec File
-		File testDir = new File(Consts.TEST_OUTPUT_DIR, "full_test");
+		// Copy simulation_spec File
+		final File testDir = new File(Consts.TEST_OUTPUT_DIR, "full_test");
 		testDir.mkdirs();
 		copyFile(new File("docs", "simulation_spec.json"), new File(testDir, "simulation_spec.json"));
 				

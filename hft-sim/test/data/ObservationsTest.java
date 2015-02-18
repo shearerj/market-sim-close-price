@@ -299,7 +299,7 @@ public class ObservationsTest {
 	 */
 	@Test
 	public void transPricesTest() {
-		FundamentalValue.create(stats, Mock.timeline, 0, 100, 0, rand);
+		FundamentalValue.create(stats, Mock.timeline, 0, 100, 0, 1.0, rand);
 		SimulationSpec spec = SimulationSpec.create(Props.fromPairs(SimLength.class, 3000l),
 				ImmutableMultimap.<MarketType, Props> of(),
 				ImmutableMultimap.<AgentType, Props> of(),

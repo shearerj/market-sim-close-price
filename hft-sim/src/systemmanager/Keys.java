@@ -50,6 +50,7 @@ public interface Keys {
 	public static class FundamentalMean extends IntValue {};
 	public static class FundamentalShockVar extends DoubleValue {};
 	public static class FundamentalKappa extends DoubleValue {};
+	public static class FundamentalShockProb extends DoubleValue {}; // used for jump process; 1.0 if not a jump process
 	
 	public static class Num extends IntValue {};
 	public static class NumAgents extends IntValue {};

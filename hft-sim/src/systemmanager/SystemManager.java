@@ -8,11 +8,17 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Properties;
 import java.util.Random;
+import java.util.Set;
+
+import java.nio.file.attribute.PosixFilePermission;
 
 import logger.Log;
 import systemmanager.Keys.NumSims;
@@ -69,7 +75,7 @@ public abstract class SystemManager {
 		}
 	}
 
-	public static void execute(File simFolder, int obsNum) throws IOException {
+	public static void execute(final File simFolder, int obsNum) throws IOException {
 		// Check Directory
 		checkArgument(simFolder.exists(), "Simulation folder must exist");
 		checkArgument(simFolder.isDirectory(), "Simulation folder must be a directory");
@@ -86,6 +92,7 @@ public abstract class SystemManager {
 		Reader propsReader = new FileReader(propsFile);
 		// Observation File
 		File obsFile = new File(simFolder, "observation" + obsNum + ".json");
+		obsFile.createNewFile();
 		checkArgument(obsFile.canWrite(), "Observations file must be writable");
 		Writer obsWriter = LazyFileWriter.create(obsFile);
 		// Log File

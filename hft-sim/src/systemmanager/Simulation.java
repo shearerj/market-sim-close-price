@@ -15,6 +15,7 @@ import systemmanager.Consts.MarketType;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
 import systemmanager.Keys.FundamentalShockVar;
+import systemmanager.Keys.FundamentalShockProb;
 import systemmanager.Keys.NbboLatency;
 import systemmanager.Keys.Num;
 import systemmanager.Keys.NumAgents;
@@ -88,6 +89,7 @@ public class Simulation {
 				simProps.get(FundamentalKappa.class),
 				simProps.get(FundamentalMean.class),
 				simProps.get(FundamentalShockVar.class),
+				simProps.get(FundamentalShockProb.class),
 				Rand.from(rand));
 		
 		SIP sip = SIP.create(stats, eventQueue, log, Rand.from(rand), simProps.get(NbboLatency.class));

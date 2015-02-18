@@ -32,7 +32,7 @@ public class NaiveLimitPriceEstimatorTest {
 	@Before
 	public void setup() {
 		timeline = EventQueue.create(Log.nullLogger(), rand);
-		fundamental = FundamentalValue.create(Mock.stats, timeline, 0.005, 100000, 1e8, rand);
+		fundamental = FundamentalValue.create(Mock.stats, timeline, 0.005, 100000, 1e8, 1.0, rand);
 	}
 
 	// FIXME Test that this handles latency appropriately
