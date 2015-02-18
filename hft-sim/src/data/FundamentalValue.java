@@ -26,6 +26,8 @@ import event.Timeline;
  * kc is 1 - kappa then
  *
  * F(t+1) ~ N(m*(1-kc) + F(t)*kc, s^2)
+ * 
+ * In other words, F(t+1) = kappa m + (1 - kappa) F(t) + N(0, s^2).
  *
  * which implies that
  *
@@ -34,7 +36,23 @@ import event.Timeline;
  *
  * or
  *
- * F(t+d) ~ N(F(t), d * s^2) if kc = 1
+ * F(t+d) ~ N(F(t), d * s^2) if kc = 1.
+ * 
+ * In other words, if kappa > 0, so (1 - kappa) < 1,
+ * F(t+d) has expected value (1 - kappa)^d F(t) + (1 - (1 - kappa)^d) m.
+ * It is distributed as a Gaussian, with variance:
+ * s^2 * (1 - kc^(2d)) / (1 - kc^2).
+ * 
+ * If kappa == 0, so (1 - kappa) == 1,
+ * F(t+d) has expected value F(t), is still a Gaussian,
+ * and has variance d s^2 (Bienayme formula, variance of sum of uncorrelated variables
+ * is sum of the variances).
+ * 
+ * If shockProb < 1, then mean reversion occurs in exactly those time steps in which
+ * a jump occurs. This means that if we advance 5 time steps and have jumps in 2 and 4,
+ * the pdf of future fundamental value is the same as when advancing 2 time steps and
+ * jumping in both. That is, we simply replace "d" with "numJumps" in the pdfs above,
+ * where "numJumps" is a binomial random variable, with n := d and p := shockVar.
  *
  * @author ewah
  */
@@ -92,11 +110,17 @@ public final class FundamentalValue implements Serializable {
 		return new FundamentalValue(stats, timeline, kap, meanVal, var, prob, rand);
 	}
 
-	/** Returns the global fundamental value at time ts. */
+	// mean reversion only occurs in time steps in which a jump occurs.
+	// so if we advance 5 time steps, and there is a jump in steps 2 and 4,
+	// we can sample the same pdf as when advancing 2 time steps and jumping in both.
+	// the degree of mean reversion is based only on the number of time steps that have a jump.
+	/** Returns the global fundamental value at TimeStamp time. */
 	public Price getValueAt(TimeStamp time) {
 		checkArgument(time.afterOrOn(lastTime), "Must query sequential times");
 		if (time.after(lastTime)) {
-			long deltat = time.getInTicks() - lastTime.getInTicks();
+		    // deltat stores the number of ticks that elapsed, not necessarily the
+		    // number of jumps
+			final long deltat = time.getInTicks() - lastTime.getInTicks();
 
 			// sample binomial distribution over n = deltat ticks, with jump probability p = shockProb,
 			// to get the number of jumps that will occur, based on shockProb probability of a jump
@@ -107,7 +131,7 @@ public final class FundamentalValue implements Serializable {
 			final BinomialDistribution binomial = new BinomialDistribution((int) deltat, shockProb);
 			final int numberOfJumps = binomial.sample();
 
-			// Effective value of mean reversion factor
+			// Effective value of mean reversion factor, based on actual number of jumps occurring
 			// this will be 1 if shockProb == 0.0
 			double kappaToPower = Math.pow(kappac, numberOfJumps);
 			

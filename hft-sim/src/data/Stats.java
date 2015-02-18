@@ -16,7 +16,7 @@ import event.TimeStamp;
  * simulation.
  * 
  * There are two main types. Timed, which are stored in a time series, and
- * summary which are aggregated in a SummStats object. Both types are handeled
+ * summary which are aggregated in a SummStats object. Both types are handled
  * differently when ultimately incorporated into an observation.
  * 
  * @author erik
