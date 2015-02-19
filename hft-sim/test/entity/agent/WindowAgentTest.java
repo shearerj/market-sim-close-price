@@ -96,7 +96,7 @@ public class WindowAgentTest {
 	
 	@Test
 	public void extraTest() {
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 1000; i++) {
 			setup();
 			randMultipleTransactionWindow();
 		}
@@ -174,7 +174,7 @@ public class WindowAgentTest {
 	@Test
 	public void randMultipleTransactionWindow(){
 		int numberOfTransactions = 10;
-		TimeStamp windowLength = TimeStamp.of(rand.nextInt(100));
+		TimeStamp windowLength = TimeStamp.of(rand.nextInt(100) + 1);
 		TimeStamp reentryTime = TimeStamp.of(windowLength.getInTicks() + rand.nextInt(100));
 		WindowAgent myAgent = windowAgent(Props.fromPairs(Window.class, windowLength));
 		
