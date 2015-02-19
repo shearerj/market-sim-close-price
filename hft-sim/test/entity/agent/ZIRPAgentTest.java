@@ -9,7 +9,7 @@ import logger.Log;
 import org.junit.Before;
 import org.junit.Test;
 
-import systemmanager.Keys.AcceptableProfitThreshold;
+import systemmanager.Keys.Thresh;
 import systemmanager.Keys.BackgroundReentryRate;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
@@ -48,7 +48,7 @@ public class ZIRPAgentTest {
 			.put(FundamentalMean.class,		100000)
 			.put(FundamentalShockVar.class,	0d)
 			.put(Withdraw.class,			true)
-			.put(AcceptableProfitThreshold.class, 0.75)
+			.put(Thresh.class, 0.75)
 			.build();
 	
 	private Market market;

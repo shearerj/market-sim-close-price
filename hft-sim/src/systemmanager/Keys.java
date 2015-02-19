@@ -116,7 +116,7 @@ public interface Keys {
 	public static class Spread extends PriceValue {};
 
 	// ZIRPAgent
-	public static class AcceptableProfitThreshold extends DoubleValue {};
+	public static class Thresh extends DoubleValue {};
 	
 	// Helper Classes
 	static class TimeValue extends ParsableValue<TimeStamp> {

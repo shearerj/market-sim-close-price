@@ -2,7 +2,7 @@ package entity.agent;
 
 import static logger.Log.Level.INFO;
 import logger.Log;
-import systemmanager.Keys.AcceptableProfitThreshold;
+import systemmanager.Keys.Thresh;
 import utils.Rand;
 import data.FundamentalValue;
 import data.Props;
@@ -27,7 +27,7 @@ public final class ZIRPAgent extends BackgroundAgent {
 		super(id, stats, timeline, log, rand, sip, fundamental, market, props);
 		LimitPriceEstimator estimator = OptimalLimitPriceEstimator.create(this, getFundamentalValueView(), timeline, props);
 		strategy = ZIStrategy.create(timeline, primaryMarket, estimator, props, rand);
-		shader = GreedyShader.create(estimator, props.get(AcceptableProfitThreshold.class));
+		shader = GreedyShader.create(estimator, props.get(Thresh.class));
 	}
 	
 	public static ZIRPAgent create(int id, Stats stats, Timeline timeline, Log log, Rand rand, MarketInfo sip, FundamentalValue fundamental,

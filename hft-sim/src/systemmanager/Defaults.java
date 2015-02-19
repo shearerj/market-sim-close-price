@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import props.ImmutableProps;
 import props.Value;
-import systemmanager.Keys.AcceptableProfitThreshold;
+import systemmanager.Keys.Thresh;
 import systemmanager.Keys.Alpha;
 import systemmanager.Keys.BetaMax;
 import systemmanager.Keys.BetaMin;
@@ -128,7 +128,7 @@ public class Defaults implements Serializable {
 			.put(Rmax.class,			5000)
 			.put(Window.class,	TimeStamp.of(5000))
 			
-			.put(AcceptableProfitThreshold.class, 1d) // For ZIRPs
+			.put(Thresh.class, 1d) // For ZIRPs
 			.put(Withdraw.class, true)
 		
 			// AA Agent
