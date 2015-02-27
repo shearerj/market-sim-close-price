@@ -8,17 +8,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Properties;
 import java.util.Random;
-import java.util.Set;
-
-import java.nio.file.attribute.PosixFilePermission;
 
 import logger.Log;
 import systemmanager.Keys.NumSims;
