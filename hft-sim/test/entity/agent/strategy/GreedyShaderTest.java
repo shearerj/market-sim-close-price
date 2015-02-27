@@ -17,8 +17,6 @@ import event.TimeStamp;
 import fourheap.Order.OrderType;
 
 public class GreedyShaderTest {
-	
-	// FIXME Check that order isn't replaced if it's the exact same as previous order
 
 	private Market market;
 	private MarketView view;
@@ -59,6 +57,22 @@ public class GreedyShaderTest {
 		
 		shaded = shader.apply(order(BUY, Price.of(61)));
 		assertEquals(Price.of(61), shaded.getPrice());
+	}
+	
+	/** Check the order is returned identically if shading is not necessary */
+	@Test
+	public void identicalOrderTest() {
+		LimitPriceEstimator estimator = new LimitPriceEstimator() {
+			@Override public Price getLimitPrice(OrderType buyOrSell, int quantity) { return Price.of(25); }
+		};
+		GreedyShader shader = GreedyShader.create(estimator, 0.75);
+		
+		setQuote(null, Price.of(10));
+		OrderRecord original = order(BUY, Price.of(10));
+		OrderRecord shaded = shader.apply(original);
+		assertEquals(original, shaded);
+		
+		// XXX This scratches the surface, but there are many more branches to tests
 	}
 	
 	private void setQuote(Price bid, Price ask) {

@@ -33,7 +33,6 @@ public class Props implements Serializable {
 	private static final String classPath = "systemmanager.Keys$"; // Allows reading of strings into classes
 	private static final Props empty = builder().build();
 	
-	// FIXME should ImmutableProps be Serializable?
 	private final ImmutableProps props; // Underlying type safe properties data structure
 
 	protected Props(ImmutableProps props) {

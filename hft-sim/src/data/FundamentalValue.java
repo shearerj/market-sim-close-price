@@ -62,7 +62,6 @@ public final class FundamentalValue implements Serializable {
 
 	private final Timeline timeline;
 
-	// FIXME should Stats be Serializable?
 	private final Stats stats;
 	private final Rand rand;
 

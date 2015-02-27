@@ -67,7 +67,6 @@ public class SimulationSpec implements Serializable {
 	private final Multimap<MarketType, Props> marketProps;
 	private final Multimap<AgentType, Props> agentProps;
 	
-	// FIXME: should PlayerSpec be Serializable?
 	private final Multiset<PlayerSpec> playerProps;
 	
 	protected SimulationSpec() {

@@ -564,7 +564,7 @@ public class AAAgent extends WindowAgent {
 	 * Computes weighted moving average. Truncates if fewer than required 
 	 * number of transactions available.
 	 * 
-	 * FIXME (for Elaine) this seems to give more weight to older transactions, which seems wrong.
+	 * XXX this seems to give more weight to older transactions, which seems wrong.
 	 * TODO there should probably just be a weighted moving average function. We need it / have it for the market makers anyways
 	 * 
 	 * Section 4.1, Eq. (2) in Vytelingum et al
@@ -573,7 +573,7 @@ public class AAAgent extends WindowAgent {
 		if (transactions == null) return null; // TODO This shouldn't be necessary
 		if (transactions.size() == 0) return null; //error checking
 
-		// FIXME (for Elaine) This is almost certainly wrong, but is required to keep behavior consistent (see above)
+		// XXX This is almost certainly wrong, but is required to keep behavior consistent (see above)
 		transactions = Lists.reverse(transactions);
 		
 		// Computing the weights for the moving average
