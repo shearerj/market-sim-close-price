@@ -10,11 +10,14 @@ import static utils.Tests.assertTransaction;
 import logger.Log;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import systemmanager.Keys.MarketLatency;
 import utils.Mock;
 import utils.Rand;
+import utils.Repeat;
+import utils.RepeatRule;
 
 import com.google.common.collect.Iterables;
 
@@ -43,6 +46,9 @@ public class MarketTest {
 	private MarketView view, fast;
 	
 	// FIXME Test bug where transactions didn't remove orders from orderMapping, so it would try to remove orders that had transacted away.
+	
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
 	
 	@Before
 	public void setup() {
@@ -91,6 +97,7 @@ public class MarketTest {
 
 	/** Several bids with one clear have proper transaction */
 	@Test
+	@Repeat(100)
 	public void multiBidSingleClear() {
 		OrderRecord buyTrans = submitOrder(BUY, Price.of(150), 1);
 		OrderRecord buy = submitOrder(BUY, Price.of(100), 1);
@@ -109,6 +116,7 @@ public class MarketTest {
 
 	/** Two sets of bids overlap before clear */
 	@Test
+	@Repeat(100)
 	public void multiOverlapClear() {
 		OrderRecord buy1 = submitOrder(BUY, Price.of(150), 1);
 		OrderRecord sell1 = submitOrder(SELL, Price.of(100), 1);
@@ -128,6 +136,7 @@ public class MarketTest {
 
 	/** Scenario with two possible matches, but only one pair transacts at the match. */
 	@Test
+	@Repeat(100)
 	public void partialOverlapClear() {
 		OrderRecord buyTrans = submitOrder(BUY, Price.of(200), 1);
 		OrderRecord buy = submitOrder(SELL, Price.of(130), 1);
@@ -397,6 +406,7 @@ public class MarketTest {
 
 	/** Test handling of stale quotes when better order happened later */
 	@Test
+	@Repeat(100)
 	public void staleQuotesFirst() {
 		EventQueue timeline = latencySetup(TimeStamp.of(100));
 
@@ -415,6 +425,7 @@ public class MarketTest {
 	
 	/** Test handling of stale quotes when better order happened earlier */
 	@Test
+	@Repeat(100)
 	public void staleQuotesLast() {
 		EventQueue timeline = latencySetup(TimeStamp.of(100));
 		
@@ -593,22 +604,6 @@ public class MarketTest {
 		// XXX Doesn't account for order quantity
 		assertEquals(125, stats.getSummaryStats().get(Stats.PRICE).mean(), eps);
 		assertEquals(4, stats.getSummaryStats().get(Stats.PRICE).n());
-	}
-	
-	@Test
-	public void randomTest() {
-		for(int i=0; i < 100; i++) {
-			setup();
-			multiBidSingleClear();
-			setup();
-			multiOverlapClear();
-			setup();
-			partialOverlapClear();
-			setup();
-			staleQuotesFirst();
-			setup();
-			staleQuotesLast();
-		}
 	}
 	
 	private Market mockMarket(int id, Stats stats, Timeline timeline, MarketInfo sip, Props props) {

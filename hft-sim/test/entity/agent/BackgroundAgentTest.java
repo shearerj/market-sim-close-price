@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import logger.Log;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import systemmanager.Keys.FundamentalKappa;
@@ -24,6 +25,8 @@ import systemmanager.Keys.SimLength;
 import systemmanager.Keys.Withdraw;
 import utils.Mock;
 import utils.Rand;
+import utils.Repeat;
+import utils.RepeatRule;
 import utils.SummStats;
 
 import com.google.common.collect.ImmutableList;
@@ -43,6 +46,9 @@ import event.Timeline;
 import fourheap.Order.OrderType;
 
 public class BackgroundAgentTest {
+	
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
 	
 	private static final Rand rand = Rand.create();
 	private static final double eps = 1e-6;
@@ -329,6 +335,7 @@ public class BackgroundAgentTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void controlRandPrivateValueTest() {
 		int n = 10;
 		Stats stats = Stats.create();
@@ -349,6 +356,7 @@ public class BackgroundAgentTest {
 	
 	/** Test that agent only enters once, (but can refuse to enter if first entry is really long) */
 	@Test
+	@Repeat(100)
 	public void singleReentryType() {
 		EventQueue queue = queueSetup();
 		final AtomicInteger entries = new AtomicInteger(0);
@@ -362,16 +370,6 @@ public class BackgroundAgentTest {
 		};
 		queue.executeUntil(TimeStamp.of(10000));
 		assertTrue(entries.get() == 0 || entries.get() == 1);
-	}
-	
-	@Test
-	public void extraTest() {
-		for (int i = 0; i < 100; ++i) {
-			setup();
-			controlRandPrivateValueTest();
-			setup();
-			singleReentryType();
-		}
 	}
 	
 	private void setPosition(Agent agent, int position) {

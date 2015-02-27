@@ -12,6 +12,7 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.SortedMap;
 
+import org.junit.Rule;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableList;
@@ -23,10 +24,14 @@ public class Collections3Test {
 
 	private static final Random rand = new Random();
 	
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
+	
 	/**
 	 * Test that polling random elements returns them in the reverse order with a backed array list
 	 */
 	@Test
+	@Repeat(100)
 	public void pollTest() {
 		List<Integer> random = Lists.newArrayList();
 		int n = rand.nextInt(1000) + 1000;
@@ -42,6 +47,7 @@ public class Collections3Test {
 	 * Test that polling random elements returns them in the reverse order with a backed linked list
 	 */
 	@Test
+	@Repeat(100)
 	public void pollListTest() {
 		List<Integer> random = Lists.newArrayList();
 		int n = rand.nextInt(1000) + 1000;
@@ -57,6 +63,7 @@ public class Collections3Test {
 	 * Test that removing random elements returns them in the reverse order with a backed array list
 	 */
 	@Test
+	@Repeat(100)
 	public void removeTest() {
 		List<Integer> random = Lists.newArrayList();
 		int n = rand.nextInt(1000) + 1000;
@@ -72,6 +79,7 @@ public class Collections3Test {
 	 * Tests that andding and removing random elements with the queue not empty still return elements in proper reverse order
 	 */
 	@Test
+	@Repeat(100)
 	public void existingElementsTest() {
 		Queue<Integer> q = Collections3.asLifoQueue(Lists.<Integer> newArrayList());
 		int n = rand.nextInt(1000) + 1000;
@@ -96,6 +104,7 @@ public class Collections3Test {
 	 * Test that modifications to the underlying array still effect the queue
 	 */
 	@Test
+	@Repeat(100)
 	public void backedArrayTest() {
 		List<Integer> random = Lists.newArrayList();
 		int n = rand.nextInt(1000) + 1000;
@@ -116,6 +125,7 @@ public class Collections3Test {
 	 * Test that all methods on an empty array work
 	 */
 	@Test
+	@Repeat(100)
 	public void emptyTest() {
 		Queue<Integer> q = Collections3.newArrayStack();
 		checkEmpty(q);
@@ -154,18 +164,6 @@ public class Collections3Test {
 			q.remove();
 		} catch (NoSuchElementException e) {
 			exception = true;
-		}
-	}
-	
-	@Test
-	public void randomTests() {
-		for (int i = 0; i < 100; ++i) {
-			pollTest();
-			pollListTest();
-			removeTest();
-			existingElementsTest();
-			backedArrayTest();
-			emptyTest();
 		}
 	}
 	

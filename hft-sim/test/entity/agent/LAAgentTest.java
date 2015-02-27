@@ -8,11 +8,14 @@ import static utils.Tests.assertSingleTransaction;
 import logger.Log;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import systemmanager.Keys.LaLatency;
 import utils.Mock;
 import utils.Rand;
+import utils.Repeat;
+import utils.RepeatRule;
 
 import com.google.common.collect.ImmutableList;
 
@@ -33,6 +36,9 @@ public class LAAgentTest {
 	private Market nyse, nasdaq;
 	private MarketView nyseView, nasdaqView;
 	private Agent mockAgent;
+	
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
 
 	@Before
 	public void setup() {
@@ -57,6 +63,7 @@ public class LAAgentTest {
 	 * order sits while the LA holds a position.
 	 */
 	@Test
+	@Repeat(100)
 	public void oneSidedArbitrageTest() {
 		LAAgent la = laAgent();
 		submitOrder(nyseView, BUY, Price.of(5));
@@ -94,10 +101,12 @@ public class LAAgentTest {
 		assertTrue(la.getActiveOrders().isEmpty());
 	}
 	
-	@Test
 	/**
-	 * This test verifies that an LA with latency doesn't submit new orders until it's sure it's old orders are reflected in its quote.
+	 * This test verifies that an LA with latency doesn't submit new orders
+	 * until it's sure it's old orders are reflected in its quote.
 	 */
+	@Test
+	@Repeat(100)
 	public void laLatencyNoRepeatOrdersTest() {
 		LAAgent la = laAgent(Props.fromPairs(LaLatency.class, TimeStamp.of(10)));
 		
@@ -128,6 +137,7 @@ public class LAAgentTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void severalArbitragesNoRepeatOrders() {
 		LAAgent la = laAgent(Props.fromPairs(LaLatency.class, TimeStamp.of(10)));
 		
@@ -152,6 +162,7 @@ public class LAAgentTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void severalArbitragesNoRepeatOrdersDifferentOrder() {
 		LAAgent la = laAgent(Props.fromPairs(LaLatency.class, TimeStamp.of(10)));
 		
@@ -234,20 +245,6 @@ public class LAAgentTest {
 		}
 		
 		assertTrue("Not all outcomes happened", la1Arbs && la1Buys && la2Arbs && la2Buys);
-	}
-	
-	@Test
-	public void randomTests() {
-		for (int i = 0; i < 100; ++i) {
-			setup();
-			oneSidedArbitrageTest();
-			setup();
-			laLatencyNoRepeatOrdersTest();
-			setup();
-			severalArbitragesNoRepeatOrders();
-			setup();
-			severalArbitragesNoRepeatOrdersDifferentOrder();
-		}
 	}
 	
 	private OrderRecord submitOrder(MarketView view, OrderType buyOrSell, Price price) {

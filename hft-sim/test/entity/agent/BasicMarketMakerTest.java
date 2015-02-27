@@ -10,18 +10,21 @@ import static utils.Tests.assertSingleTransaction;
 import logger.Log;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import systemmanager.Keys.InitLadderMean;
 import systemmanager.Keys.InitLadderRange;
-import systemmanager.Keys.MarketMakerReentryRate;
 import systemmanager.Keys.K;
+import systemmanager.Keys.MarketMakerReentryRate;
 import systemmanager.Keys.Size;
 import systemmanager.Keys.TickImprovement;
 import systemmanager.Keys.TickOutside;
 import systemmanager.Keys.Trunc;
 import utils.Mock;
 import utils.Rand;
+import utils.Repeat;
+import utils.RepeatRule;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
@@ -35,6 +38,7 @@ import entity.market.Price;
 import event.TimeStamp;
 
 public class BasicMarketMakerTest {
+	
 	private static final Rand rand = Rand.create();
 	private static final FundamentalValue fundamental = Mock.fundamental(100000);
 	private static final Props defaults = Props.fromPairs(
@@ -48,6 +52,9 @@ public class BasicMarketMakerTest {
 	private MarketView view;
 	private Agent mockAgent;
 
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
+	
 	@Before
 	public void setup() {
 		market = Mock.market();
@@ -56,6 +63,7 @@ public class BasicMarketMakerTest {
 	}
 
 	@Test
+	@Repeat(100)
 	public void nullBidAsk() {
 		BasicMarketMaker mm = basicMarketMaker(Props.fromPairs(
 				Trunc.class, false,
@@ -206,6 +214,7 @@ public class BasicMarketMakerTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void oneBackgroundBuyer() {
 		BasicMarketMaker marketmaker = basicMarketMaker(Props.fromPairs(
 				TickImprovement.class, true,
@@ -227,6 +236,7 @@ public class BasicMarketMakerTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void oneBackgroundSeller() {
 		BasicMarketMaker marketmaker = basicMarketMaker(Props.fromPairs(
 				TickImprovement.class, true,
@@ -245,18 +255,6 @@ public class BasicMarketMakerTest {
 		// Verify that single background trader will transact with the MM
 		mockAgent.submitOrder(view, SELL, Price.of(30), 1);
 		assertSingleTransaction(view.getTransactions(), Price.of(50), TimeStamp.ZERO, 1);
-	}
-
-	@Test
-	public void extraTest() {
-		for (int i = 0; i < 100; i++) {
-			setup();
-			nullBidAskLadder();
-			setup();
-			oneBackgroundBuyer();
-			setup();
-			oneBackgroundSeller();
-		}
 	}
 
 	private void setQuote(Price bid, Price ask) {

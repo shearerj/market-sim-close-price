@@ -11,6 +11,7 @@ import logger.Log;
 
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 
 import systemmanager.Keys.BetaT;
@@ -30,6 +31,8 @@ import systemmanager.Keys.Window;
 import systemmanager.Keys.Withdraw;
 import utils.Mock;
 import utils.Rand;
+import utils.Repeat;
+import utils.RepeatRule;
 import data.FundamentalValue;
 import data.Props;
 import entity.market.Market;
@@ -40,6 +43,9 @@ import fourheap.Order.OrderType;
 
 @Ignore // TODO This agent is not actively maintained. Remove this flag to include tests 
 public class AAAgentTest {
+	
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
 
 	private static final Rand rand = Rand.create();
 	private static final Agent mockAgent = Mock.agent();
@@ -207,6 +213,7 @@ public class AAAgentTest {
 	}
 
 	@Test
+	@Repeat(100)
 	public void biddingLayerNoTarget() {
 		Price limit = Price.of(145000);
 		AAAgent buyer = aaAgent(Props.fromPairs(BuyerStatus.class, BUY));
@@ -670,6 +677,7 @@ public class AAAgentTest {
 	 * than the limit otherwise rShout gets set to 0.
 	 */
 	@Test
+	@Repeat(100)
 	public void randomizedUpdateAggressionBuyer() {
 		setQuote(Price.of(rand.nextUniform(25000, 75000)), Price.of(rand.nextUniform(125000, 175000)));
 		addTransaction(Price.of(rand.nextUniform(100000, 110000)));
@@ -697,6 +705,7 @@ public class AAAgentTest {
 	 * otherwise rShout clipped at 0.
 	 */
 	@Test
+	@Repeat(100)
 	public void randomizedUpdateAggressionSeller() {
 		double oldAggression = 0.2;
 		AAAgent agent = aaAgent(Props.fromPairs(
@@ -715,18 +724,6 @@ public class AAAgentTest {
 		agent.agentStrategy();
 
 		checkAggressionUpdate(SELL, agent.lastTransactionPrice, agent.targetPrice, oldAggression, agent.aggression);
-	}
-
-	@Test
-	public void extraTest() {
-		for (int i = 0; i < 100; i++) {
-			setup();
-			randomizedUpdateAggressionBuyer();
-			setup();
-			randomizedUpdateAggressionSeller();
-			setup();
-			biddingLayerNoTarget();
-		}
 	}
 
 	/** Check aggression updating */

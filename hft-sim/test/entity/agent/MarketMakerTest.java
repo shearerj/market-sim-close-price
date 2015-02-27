@@ -9,12 +9,13 @@ import static utils.Tests.assertRandomOrderLadder;
 import logger.Log;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import systemmanager.Keys.InitLadderMean;
 import systemmanager.Keys.InitLadderRange;
-import systemmanager.Keys.MarketMakerReentryRate;
 import systemmanager.Keys.K;
+import systemmanager.Keys.MarketMakerReentryRate;
 import systemmanager.Keys.Size;
 import systemmanager.Keys.TickImprovement;
 import systemmanager.Keys.TickOutside;
@@ -23,6 +24,8 @@ import systemmanager.Keys.Trunc;
 import utils.Mock;
 import utils.Mock.MockTimeLine;
 import utils.Rand;
+import utils.Repeat;
+import utils.RepeatRule;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Range;
@@ -55,6 +58,9 @@ public class MarketMakerTest {
 	private MarketInfo sip;
 	private Market market;
 	private MarketView view, other;
+	
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
 	
 	@Before
 	public void setup() {
@@ -241,6 +247,7 @@ public class MarketMakerTest {
 	 * Creating ladder without bid/ask quote
 	 */
 	@Test
+	@Repeat(100)
 	public void initRandLadder() {
 		MarketMaker mm = marketMaker(Props.fromPairs(
 				Trunc.class, true,
@@ -256,6 +263,7 @@ public class MarketMakerTest {
 
 	/** One side of ladder is undefined */
 	@Test
+	@Repeat(100)
 	public void oneSidedLadderBuy() {
 		MarketMaker mm = marketMaker(Props.fromPairs(
 				Trunc.class, true,
@@ -273,6 +281,7 @@ public class MarketMakerTest {
 	
 	/** One side of ladder is undefined */
 	@Test
+	@Repeat(100)
 	public void oneSidedLadderSell() {
 		MarketMaker mm = marketMaker(Props.fromPairs(
 				Trunc.class, true,
@@ -324,18 +333,6 @@ public class MarketMakerTest {
 	}
 	
 	// TODO test truncation when quote latency (or using NBBO?)
-	
-	@Test
-	public void extraTest() {
-		for (int i = 0; i < 100; i++) {
-			setup();
-			initRandLadder();
-			setup();
-			oneSidedLadderBuy();
-			setup();
-			oneSidedLadderSell();
-		}
-	}
 	
 	private void setQuote(MarketView view, Price bid, Price ask) {
 		mockAgent.submitOrder(view, BUY, bid, 1);

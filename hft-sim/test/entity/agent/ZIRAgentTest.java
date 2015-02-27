@@ -9,6 +9,7 @@ import static utils.Tests.assertSingleTransaction;
 import logger.Log;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import systemmanager.Keys.BackgroundReentryRate;
@@ -18,6 +19,8 @@ import systemmanager.Keys.Rmin;
 import systemmanager.Keys.Withdraw;
 import utils.Mock;
 import utils.Rand;
+import utils.Repeat;
+import utils.RepeatRule;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -56,6 +59,9 @@ public class ZIRAgentTest {
 	private Market nyse, nasdaq;
 	private MarketView nyseView, nasdaqView;
 
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
+	
 	@Before
 	public void setup() {
 		timeline = EventQueue.create(Log.nullLogger(), rand);
@@ -157,13 +163,11 @@ public class ZIRAgentTest {
 	
 	/** Tests a bug where an order would get withdrawn before it entered the market and would result in an error being thrown */
 	@Test
+	@Repeat(100)
 	public void randomTest() {
-		for (int i = 0; i < 100; ++i) {
-			EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
-			Market market = Mock.market(timeline);			
-			ZIRAgent.create(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs());
-			timeline.executeUntil(TimeStamp.of(6000));
-		}
+		Market market = Mock.market(timeline);			
+		ZIRAgent.create(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs());
+		timeline.executeUntil(TimeStamp.of(6000));
 	}
 
 	public ZIRAgent zirAgent(Props parameters) {

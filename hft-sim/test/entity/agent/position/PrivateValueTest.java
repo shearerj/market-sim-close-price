@@ -5,15 +5,21 @@ import static fourheap.Order.OrderType.SELL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Rule;
 import org.junit.Test;
 
 import utils.Rand;
+import utils.Repeat;
+import utils.RepeatRule;
 
 import com.google.common.collect.Ordering;
 
 import entity.market.Price;
 
 public class PrivateValueTest {
+	
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
 	
 	@Test
 	public void randomGenerationTest() {
@@ -28,6 +34,7 @@ public class PrivateValueTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void buySellSingle() {
 		ListPrivateValue pv = ListPrivateValue.createRandomly(1, 1000, Rand.create());
 		// indices 0 1
@@ -57,6 +64,7 @@ public class PrivateValueTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void buySellMulti() {
 		ListPrivateValue pv = ListPrivateValue.createRandomly(2, 1000, Rand.create());
 		// indices 0 1 2 3
@@ -93,6 +101,7 @@ public class PrivateValueTest {
 	}
 
 	@Test
+	@Repeat(100)
 	public void getValueFromMultiQuantity() {
 		ListPrivateValue pv = ListPrivateValue.createRandomly(5, 1000, Rand.create());
 		// indices 0 1 2 3 4 . 5 6 7 8 9
@@ -129,15 +138,6 @@ public class PrivateValueTest {
 		// Checking buying and selling from current position = 6 & -6 (out of bounds)
 		assertEquals(Price.of(pv9 + pv9), pv.getValue(6, 2, SELL));
 		assertEquals(Price.of(pv0 + pv0), pv.getValue(-6, 2, BUY));
-	}
-	
-	@Test
-	public void extraTest() {
-		for (int i = 0; i < 100; i++) {
-			buySellSingle();
-			buySellMulti();
-			getValueFromMultiQuantity();
-		}
 	}
 	
 	@Test

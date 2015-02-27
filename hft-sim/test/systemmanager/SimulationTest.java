@@ -10,6 +10,7 @@ import java.io.Writer;
 
 import logger.Log.Level;
 
+import org.junit.Rule;
 import org.junit.Test;
 
 import systemmanager.Keys.FundamentalShockVar;
@@ -18,6 +19,8 @@ import systemmanager.Keys.NumMarkets;
 import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.ReentryRate;
 import utils.Rand;
+import utils.Repeat;
+import utils.RepeatRule;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -43,7 +46,11 @@ public class SimulationTest {
 					)
 			)).getAsJsonObject();
 	
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
+	
 	@Test
+	@Repeat(20)
 	public void postFinalFundamental() {
 		SimulationSpec spec = SimulationSpec.fromJson(json);
 		Simulation sim = Simulation.create(spec, Rand.create(), new Writer() {
@@ -55,13 +62,6 @@ public class SimulationTest {
 		
 		// Fundamental isn't exposed, but it seems hard to screw up, so at least this checks existence
 		assertEquals(1, sim.getStatistics().getSummaryStats().get(Stats.FUNDAMENTAL_END_PRICE).n());
-	}
-	
-	@Test
-	public void randomTest() {
-		for (int i = 0; i < 20; ++i) {
-			postFinalFundamental();
-		}
 	}
 	
 }

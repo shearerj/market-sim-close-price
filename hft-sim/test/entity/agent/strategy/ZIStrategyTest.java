@@ -7,12 +7,16 @@ import static utils.Tests.assertRange;
 import logger.Log;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-
-import com.google.common.collect.ImmutableList;
 
 import utils.Mock;
 import utils.Rand;
+import utils.Repeat;
+import utils.RepeatRule;
+
+import com.google.common.collect.ImmutableList;
+
 import data.FundamentalValue;
 import data.Props;
 import entity.agent.BackgroundAgent;
@@ -29,6 +33,9 @@ public class ZIStrategyTest {
 	private Market market;
 	private FundamentalValue fundamental;
 	
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
+	
 	@Before
 	public void setup() {
 		market = Mock.market();
@@ -36,6 +43,7 @@ public class ZIStrategyTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void randZIBuyTest() {
 		int min_shade = rand.nextInt(5000); 		//[$0.00, $5.00];
 		int max_shade = 5000 + rand.nextInt(5000);	//[$5.00, $10.00];
@@ -59,6 +67,7 @@ public class ZIStrategyTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void randZISellTest() {
 		int min_shade = rand.nextInt(5000); 		//[$0.00, $5.00];
 		int max_shade = 5000 + rand.nextInt(5000);	//[$5.00, $10.00];
@@ -82,6 +91,7 @@ public class ZIStrategyTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void initialPriceZIBuyTest() {
 		fundamental = FundamentalValue.create(Mock.stats, Mock.timeline, 0, 100000, 1e8, 1.0, rand);
 		BackgroundAgent agent = backgroundAgent(ListPrivateValue.createRandomly(1, 0, rand));
@@ -100,6 +110,7 @@ public class ZIStrategyTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void initialPriceZISellTest() {
 		fundamental = FundamentalValue.create(Mock.stats, Mock.timeline, 0, 100000, 1e8, 1.0, rand);
 		BackgroundAgent agent = backgroundAgent(ListPrivateValue.createRandomly(1, 0, rand));
@@ -118,6 +129,7 @@ public class ZIStrategyTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void ziPrivateValueBuyTest() {
 		fundamental = Mock.fundamental(100000);
 		BackgroundAgent agent = backgroundAgent(ListPrivateValue.create(Price.of(10000), Price.of(-10000)));
@@ -133,6 +145,7 @@ public class ZIStrategyTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void ziPrivateValueSellTest() {
 		fundamental = Mock.fundamental(100000);
 		BackgroundAgent agent = backgroundAgent(ListPrivateValue.create(Price.of(10000), Price.of(-10000)));
@@ -145,24 +158,6 @@ public class ZIStrategyTest {
 		// Sellers always sell at price higher than valuation ($100 + sell PV = $110)
 		assertRange(order.getPrice(), Price.of(110000), Price.of(111000));
 		assertEquals(1, order.getQuantity());
-	}
-	
-	@Test
-	public void randomTest() {
-		for (int i = 0; i < 100; ++i) {
-			setup();
-			randZIBuyTest();
-			setup();
-			randZISellTest();
-			setup();
-			initialPriceZIBuyTest();
-			setup();
-			initialPriceZISellTest();
-			setup();
-			ziPrivateValueBuyTest();
-			setup();
-			ziPrivateValueSellTest();
-		}
 	}
 	
 	private BackgroundAgent backgroundAgent(ListPrivateValue privateValue) {

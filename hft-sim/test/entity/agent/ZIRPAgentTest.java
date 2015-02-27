@@ -7,9 +7,9 @@ import static utils.Tests.assertOrder;
 import logger.Log;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
-import systemmanager.Keys.Thresh;
 import systemmanager.Keys.BackgroundReentryRate;
 import systemmanager.Keys.FundamentalKappa;
 import systemmanager.Keys.FundamentalMean;
@@ -19,9 +19,12 @@ import systemmanager.Keys.PrivateValueVar;
 import systemmanager.Keys.Rmax;
 import systemmanager.Keys.Rmin;
 import systemmanager.Keys.SimLength;
+import systemmanager.Keys.Thresh;
 import systemmanager.Keys.Withdraw;
 import utils.Mock;
 import utils.Rand;
+import utils.Repeat;
+import utils.RepeatRule;
 
 import com.google.common.collect.Iterables;
 
@@ -55,6 +58,9 @@ public class ZIRPAgentTest {
 	private MarketView view;
 	private Agent mockAgent;
 	
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
+	
 	@Before
 	public void setup() {
 		market = Mock.market();
@@ -64,6 +70,7 @@ public class ZIRPAgentTest {
 	
 	/** Verify that agentStrategy actually follows ZIRP strategy */
 	@Test
+	@Repeat(100)
 	public void zirpBasicBuyerTest() {
 		OrderType type = SELL;
 		OrderRecord order = null;
@@ -88,14 +95,6 @@ public class ZIRPAgentTest {
 
 		// Verify that agent does shade since 10000 * 0.75 > val - 130000
 		assertOrder(order, Price.of(val.intValue() - 10000), 1, TimeStamp.ZERO, TimeStamp.ZERO);
-	}
-	
-	@Test
-	public void randomTest() {
-		for (int i = 0; i < 100; ++i) {
-			setup();
-			zirpBasicBuyerTest();
-		}
 	}
 	
 	private void setQuote(Price bid, Price ask) {

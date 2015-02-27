@@ -5,13 +5,18 @@ import static org.junit.Assert.assertEquals;
 import java.math.BigDecimal;
 import java.util.Random;
 
+import org.junit.Rule;
 import org.junit.Test;
 
 public class SumStatsTest {
 	
 	private static final Random rand = new Random();
 
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
+	
 	@Test
+	@Repeat(100)
 	public void positiveTest() {
 		SummStats test = SummStats.on();
 		BigStat truth = new BigStat();
@@ -44,6 +49,7 @@ public class SumStatsTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void mixedTest() {
 		SummStats test = SummStats.on();
 		BigStat truth = new BigStat();
@@ -82,6 +88,7 @@ public class SumStatsTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void singletonMergeTest() {
 		SummStats test = SummStats.on();
 		BigStat truth = new BigStat();
@@ -98,6 +105,7 @@ public class SumStatsTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void multipleMergeTest() {
 		SummStats test = SummStats.on();
 		BigStat truth = new BigStat();
@@ -116,17 +124,6 @@ public class SumStatsTest {
 		assertEquals(truth.mean(), test.mean(), 1e-8);
 		assertEquals(truth.variance(), test.variance(), 1e-8);
 		assertEquals(truth.stddev(), test.stddev(), 1e-8);
-	}
-	
-	@Test
-	public void extraRandomTests() {
-		for (int i = 0; i < 100; ++i) {
-			positiveTest();
-			negativeTest();
-			mixedTest();
-			singletonMergeTest();
-			multipleMergeTest();
-		}
 	}
 	
 	public static class BigStat {

@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
+import org.junit.Rule;
 import org.junit.Test;
 
 import utils.Maths.Median;
@@ -20,6 +21,9 @@ public class MathsTest {
 	
 	private static final Random rand = new Random();
 
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
+	
 	@Test
 	public void testingQuantizeInt() { 	
 		//standard input
@@ -130,6 +134,7 @@ public class MathsTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void singleMedianTest() {
 		org.apache.commons.math3.stat.descriptive.rank.Median median = new org.apache.commons.math3.stat.descriptive.rank.Median();
 		Collection<Double> record = Lists.newArrayList();
@@ -144,6 +149,7 @@ public class MathsTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void bulkMedianTest() {
 		org.apache.commons.math3.stat.descriptive.rank.Median median = new org.apache.commons.math3.stat.descriptive.rank.Median();
 		Collection<Double> record = Lists.newArrayList();
@@ -161,14 +167,6 @@ public class MathsTest {
 	@Test
 	public void emptyMedianTest() {
 		assertEquals(Double.NaN, Median.of().get(), 0);
-	}
-	
-	@Test
-	public void randomTests() {
-		for (int i = 0; i < 100; ++i) {
-			singleMedianTest();
-			bulkMedianTest();
-		}
 	}
 	
 }

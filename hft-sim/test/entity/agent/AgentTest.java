@@ -15,12 +15,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import logger.Log;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import systemmanager.Keys.BackgroundReentryRate;
 import systemmanager.Keys.MarketLatency;
 import utils.Mock;
 import utils.Rand;
+import utils.Repeat;
+import utils.RepeatRule;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -53,6 +56,9 @@ public class AgentTest {
 	private MarketView view;
 	private Agent agent;
 	
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
+	
 	@Before
 	public void setup()  {
 		market = Mock.market();
@@ -61,6 +67,7 @@ public class AgentTest {
 	}
 
 	@Test
+	@Repeat(100)
 	public void basicWithdrawBuy() {
 		OrderRecord buy = agent.submitOrder(view, BUY, Price.of(50), 1);
 		agent.submitOrder(view, SELL, Price.of(100), 2);
@@ -71,6 +78,7 @@ public class AgentTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void basicWithdrawSell() {
 		agent.submitOrder(view, BUY, Price.of(50), 1);
 		OrderRecord sell = agent.submitOrder(view, SELL, Price.of(100), 2);
@@ -500,6 +508,7 @@ public class AgentTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void reentryTest() {
 		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
 		PeekingIterator<TimeStamp> reentries = Iterators.peekingIterator(Agent.exponentials(0.1, rand));
@@ -540,18 +549,6 @@ public class AgentTest {
 		timeline.executeUntil(TimeStamp.of(100));
 		assertFalse(reentries.hasNext());
 		assertFalse(executed.get());
-	}
-	
-	@Test
-	public void extraTest()  {
-		for (int i = 0; i < 100; i++) {
-			setup();
-			basicWithdrawBuy();
-			setup();
-			basicWithdrawSell();
-			setup();
-			reentryTest();
-		}
 	}
 	
 	private MarketInfo nbboSetup(Timeline timeline, Price bid, Price ask) {

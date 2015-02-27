@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 import logger.Log;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import systemmanager.Keys.ClearInterval;
@@ -11,6 +12,8 @@ import systemmanager.Keys.MaxPosition;
 import systemmanager.Keys.PrivateValueVar;
 import utils.Mock;
 import utils.Rand;
+import utils.Repeat;
+import utils.RepeatRule;
 import data.Props;
 import entity.market.CDAMarket;
 import entity.market.CallMarket;
@@ -32,6 +35,9 @@ public class MaxEfficiencyAgentTest {
 	// FIXME There seems to be a bug in this, in that agents rarely get to -10 position. This may be a result of background agents preventing bids
 	// FIXME Tests are likely all broken because agent's have to bypass standard order submission
 	
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
+	
 	@Before
 	public void setup(){
 		timeline = EventQueue.create(Log.nullLogger(), rand);
@@ -47,6 +53,7 @@ public class MaxEfficiencyAgentTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void numOrdersTest() {
 		Agent agent = MaxEfficiencyAgent.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs( 
 				MaxPosition.class, 10,
@@ -61,6 +68,7 @@ public class MaxEfficiencyAgentTest {
 	}
 	
 	@Test
+	@Repeat(100)
 	public void basicTest() {
 		Agent agent = MaxEfficiencyAgent.create(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, market, Props.fromPairs( 
 				MaxPosition.class, 1,
@@ -75,15 +83,5 @@ public class MaxEfficiencyAgentTest {
 	}
 	
 	// FIXME Test that position at end of simulation is correctly stored in stats
-	
-	@Test
-	public void extraTest() {
-		for (int i = 0; i < 100; i++) {
-			setup();
-			basicTest();
-			setup();
-			numOrdersTest();
-		}
-	}
 	
 }

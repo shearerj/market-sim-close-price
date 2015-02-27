@@ -16,12 +16,15 @@ import java.util.List;
 import logger.Log;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import systemmanager.Keys.MarketLatency;
 import systemmanager.Keys.Window;
 import utils.Mock;
 import utils.Rand;
+import utils.Repeat;
+import utils.RepeatRule;
 
 import com.google.common.collect.Lists;
 
@@ -45,6 +48,9 @@ public class WindowAgentTest {
 	private EventQueue timeline;
 	private Market market;
 	private MarketView fast;
+	
+	@Rule
+	public RepeatRule repeatRule = new RepeatRule();
 	
 	@Before
 	public void setup() {
@@ -92,14 +98,6 @@ public class WindowAgentTest {
 		// check outside window (at time 11)
 		timeline.executeUntil(TimeStamp.of(11));
 		assertTrue("Incorrect # transactions", agent.getWindowTransactions().isEmpty());
-	}
-	
-	@Test
-	public void extraTest() {
-		for (int i = 0; i < 1000; i++) {
-			setup();
-			randMultipleTransactionWindow();
-		}
 	}
 	
 	@Test
@@ -172,6 +170,7 @@ public class WindowAgentTest {
 	
 	
 	@Test
+	@Repeat(1000)
 	public void randMultipleTransactionWindow(){
 		int numberOfTransactions = 10;
 		TimeStamp windowLength = TimeStamp.of(rand.nextInt(100) + 1);
