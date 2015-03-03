@@ -334,7 +334,7 @@ public class MarketMakerTest {
 	
 	// TODO test truncation when quote latency (or using NBBO?)
 	
-	private void setQuote(MarketView view, Price bid, Price ask) {
+	private static void setQuote(MarketView view, Price bid, Price ask) {
 		mockAgent.submitOrder(view, BUY, bid, 1);
 		mockAgent.submitOrder(view, SELL, ask, 1);
 	}

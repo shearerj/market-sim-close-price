@@ -82,8 +82,8 @@ public final class FundamentalValue implements Serializable {
 	 * @param var gaussian variance
 	 */
 	private FundamentalValue(Stats stats, Timeline timeline, double kappa, 
-        double mean, double var, double prob, Rand rand
-    ) {
+		double mean, double var, double prob, Rand rand
+	) {
 		checkArgument(Range.closed(0d, 1d).contains(kappa), "Kappa (%.4f) not in [0, 1]", kappa);
 		this.stats = stats;
 		this.timeline = timeline;
@@ -104,8 +104,8 @@ public final class FundamentalValue implements Serializable {
 
 	/** Creates a mean reverting Gaussian Process that supports random access to small (int) TimeStamps. */
 	public static FundamentalValue create(Stats stats, Timeline timeline, double kap,
-        double meanVal, double var, double prob, Rand rand
-    ) {
+		double meanVal, double var, double prob, Rand rand
+	) {
 		return new FundamentalValue(stats, timeline, kap, meanVal, var, prob, rand);
 	}
 
@@ -117,15 +117,15 @@ public final class FundamentalValue implements Serializable {
 	public Price getValueAt(TimeStamp time) {
 		checkArgument(time.afterOrOn(lastTime), "Must query sequential times");
 		if (time.after(lastTime)) {
-		    // deltat stores the number of ticks that elapsed, not necessarily the
-		    // number of jumps
+			// deltat stores the number of ticks that elapsed, not necessarily the
+			// number of jumps
 			final long deltat = time.getInTicks() - lastTime.getInTicks();
 
 			// sample binomial distribution over n = deltat ticks, with jump probability p = shockProb,
 			// to get the number of jumps that will occur, based on shockProb probability of a jump
 			// in a given time step (that is, tick).
 			if (deltat > Integer.MAX_VALUE) {
-			    throw new IllegalStateException("Integer overflow to BinomialDistribution.");
+				throw new IllegalStateException("Integer overflow to BinomialDistribution.");
 			}
 			final BinomialDistribution binomial = new BinomialDistribution((int) deltat, shockProb);
 			final int numberOfJumps = binomial.sample();
@@ -137,21 +137,21 @@ public final class FundamentalValue implements Serializable {
 			// if kappac == 1, this means there is no mean reversion.
 			double varianceFactor = numberOfJumps;
 			if (kappac != 1) {
-			    // varianceFactor will be 0 if shockProb == 0.0
-			    varianceFactor = (1 - kappaToPower * kappaToPower) / (1 - kappac * kappac);
+				// varianceFactor will be 0 if shockProb == 0.0
+				varianceFactor = (1 - kappaToPower * kappaToPower) / (1 - kappac * kappac);
 			}
 
 			// Post "assuming" fundamental was previous value
 			stats.post(Stats.CONTROL_FUNDAMENTAL, lastPrice.doubleValue(), deltat - 1);
 
 			lastPrice =
-		        Price.of(
-	                rand.nextGaussian(
-                        (1 - kappaToPower) * mean
-                            + kappaToPower * lastPrice.doubleValue(),
-                        shockVar * varianceFactor
-                    )
-                ).nonnegative();
+				Price.of(
+					rand.nextGaussian(
+						(1 - kappaToPower) * mean
+							+ kappaToPower * lastPrice.doubleValue(),
+						shockVar * varianceFactor
+					)
+				).nonnegative();
 			lastTime = time;
 
 			stats.postTimed(lastTime, Stats.FUNDAMENTAL, lastPrice.doubleValue());
@@ -177,8 +177,8 @@ public final class FundamentalValue implements Serializable {
 		/** Gets most recent known value of the fundamental for an entity in the simulation */
 		public Price getValue() {
 			return FundamentalValue.this.getValueAt(
-		        tord.max(timeline.getCurrentTime().minus(latency), TimeStamp.ZERO)
-	        );
+				tord.max(timeline.getCurrentTime().minus(latency), TimeStamp.ZERO)
+			);
 		}
 
 		@Override

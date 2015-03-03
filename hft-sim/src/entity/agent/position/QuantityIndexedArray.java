@@ -21,7 +21,7 @@ public interface QuantityIndexedArray<T> extends Serializable {
 	 * If new position (current position +/- 1) exceeds max position, return 0.
 	 * 
 	 * @param currentPosition
-	 *            Agent's current position
+	 *			Agent's current position
 	 * @param type
 	 * 			  Buy or Sell
 	 * @return The new value if buying or selling 1 unit

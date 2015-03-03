@@ -525,6 +525,7 @@ public class AgentTest {
 		assertTrue(reentries.hasNext());
 	}
 	
+	@SuppressWarnings("unused")
 	@Test
 	public void reentryRateZeroTest() {
 		EventQueue timeline = EventQueue.create(Log.nullLogger(), rand);
@@ -580,18 +581,18 @@ public class AgentTest {
 		assertEquals(position, agent.getPosition());
 	}
 	
-	private Agent mockAgent(Timeline timeline, Iterator<TimeStamp> arrivalIntervals) {
+	private static Agent mockAgent(Timeline timeline, Iterator<TimeStamp> arrivalIntervals) {
 		return new Agent(0, Mock.stats, timeline, Log.nullLogger(), rand, Mock.sip, Mock.fundamental, PrivateValues.zero(),
 				arrivalIntervals, Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;
 		};
 	}
 	
-	private Agent mockAgent(Timeline timeline) {
+	private static Agent mockAgent(Timeline timeline) {
 		return mockAgent(timeline, ImmutableList.<TimeStamp> of().iterator());
 	}
 	
-	private Agent mockAgent(PrivateValue privateValue, FundamentalValue fundamental) {
+	private static Agent mockAgent(PrivateValue privateValue, FundamentalValue fundamental) {
 		return new Agent(0, Mock.stats, Mock.timeline, Log.nullLogger(), rand, Mock.sip, fundamental, privateValue,
 				ImmutableList.<TimeStamp> of().iterator(), Props.fromPairs()) {
 			private static final long serialVersionUID = 1L;

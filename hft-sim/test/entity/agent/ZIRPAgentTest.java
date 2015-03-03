@@ -93,6 +93,10 @@ public class ZIRPAgentTest {
 			type = order.getOrderType();
 		}
 
+		if (val == null) {
+			throw new IllegalStateException();
+		}
+		
 		// Verify that agent does shade since 10000 * 0.75 > val - 130000
 		assertOrder(order, Price.of(val.intValue() - 10000), 1, TimeStamp.ZERO, TimeStamp.ZERO);
 	}

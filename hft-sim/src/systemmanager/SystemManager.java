@@ -53,8 +53,10 @@ public abstract class SystemManager {
 		switch (args.length) {
 		default:
 			observationNumber = Integer.parseInt(args[1]);
+			//$FALL-THROUGH$
 		case 1:
 			simulationFolder = new File(args[0]);
+			//$FALL-THROUGH$
 		case 0:
 		}
 

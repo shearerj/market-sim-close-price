@@ -119,6 +119,7 @@ public abstract class Agent extends Entity {
 	
 	protected Iterable<Entry<Double, Double>> getDiscountedSurplus() {
 		return Iterables.transform(privateValueSurplus.getValues(), new Function<Entry<Double, Double>, Entry<Double, Double>>() {
+			@Override
 			public Entry<Double, Double> apply(Entry<Double, Double> e) {
 				return Maps.immutableEntry(e.getKey(), e.getValue() + Agent.this.getProfit());
 			}
@@ -214,7 +215,8 @@ public abstract class Agent extends Entity {
 			withdrawOrder(order);
 	}
 	
-	/** Called when an AgetnView sees a transaction */
+	/** Called when an AgentView sees a transaction 
+	 * @param submitTime unused */
 	protected void processTransaction(TimeStamp submitTime, OrderType type, Transaction trans) {
 		privateValueSurplus.addValue(type.sign() * privateValue.getValue(positionBalance, trans.getQuantity(), type).doubleValue(),
 				trans.getExecTime().getInTicks());

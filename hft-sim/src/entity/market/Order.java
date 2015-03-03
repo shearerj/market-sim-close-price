@@ -1,6 +1,5 @@
 package entity.market;
 
-import java.io.Serializable;
 
 import entity.agent.Agent.AgentView;
 import entity.agent.OrderRecord;
@@ -12,7 +11,7 @@ import entity.agent.OrderRecord;
  * 
  * @author ewah
  */
-public class Order extends fourheap.Order<Price, MarketTime> implements Serializable {
+public class Order extends fourheap.Order<Price, MarketTime> {
 
 	private static final long serialVersionUID = 4020465194816241014L;
 	

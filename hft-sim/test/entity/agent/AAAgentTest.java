@@ -727,7 +727,7 @@ public class AAAgentTest {
 	}
 
 	/** Check aggression updating */
-	private void checkAggressionUpdate(OrderType type, Price lastTransactionPrice,
+	private static void checkAggressionUpdate(OrderType type, Price lastTransactionPrice,
 			Price targetPrice, double oldAggression, double aggression) {
 		assertEquals("Agression update incorrect",
 				(type == BUY ? 1 : -1) * targetPrice.compareTo(lastTransactionPrice),

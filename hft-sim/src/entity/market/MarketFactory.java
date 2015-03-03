@@ -41,10 +41,11 @@ public class MarketFactory {
 		case CDA:
 			return CDAMarket.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, props);
 		case CALL:
-			if (props.get(ClearInterval.class).equals(TimeStamp.ZERO))
+			if (props.get(ClearInterval.class).equals(TimeStamp.ZERO)) {
 				return CDAMarket.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, props);
-			else
-				return CallMarket.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, props);
+			}
+
+			return CallMarket.create(ids.next(), stats, timeline, log, Rand.from(rand), sip, props);
 		default:
 			throw new IllegalArgumentException("Can't create MarketType: " + type);
 		}

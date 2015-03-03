@@ -97,25 +97,25 @@ public class FundamentalValueTest {
 	/*
    @Test
    public void someNotAllJumpTimeSeriesTest() {
-       int mean = RAND.nextInt(100000);
-       FundamentalValue fund =
-           FundamentalValue.create(Stats.create(), 
-           Mock.timeline, 
-           Defaults.get(FundamentalKappa.class), // kappa
-           mean,
-           Defaults.get(FundamentalShockVar.class), // jump variance
-           0.5, // jump probability is 0.5
-           RAND
-       );
+	   int mean = RAND.nextInt(100000);
+	   FundamentalValue fund =
+		   FundamentalValue.create(Stats.create(), 
+		   Mock.timeline, 
+		   Defaults.get(FundamentalKappa.class), // kappa
+		   mean,
+		   Defaults.get(FundamentalShockVar.class), // jump variance
+		   0.5, // jump probability is 0.5
+		   RAND
+	   );
 
-       final List<Integer> priceSeries = new ArrayList<Integer>();
-       for (int time = 0; time < 100; time++) {
-           priceSeries.add(fund.getValueAt(TimeStamp.of(time)).intValue());
-       }
+	   final List<Integer> priceSeries = new ArrayList<Integer>();
+	   for (int time = 0; time < 100; time++) {
+		   priceSeries.add(fund.getValueAt(TimeStamp.of(time)).intValue());
+	   }
 
-       for (Integer price: priceSeries) {
-           System.out.print(price + ",");
-       }
+	   for (Integer price: priceSeries) {
+		   System.out.print(price + ",");
+	   }
    }
 	 */
 

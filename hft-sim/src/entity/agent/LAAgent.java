@@ -94,6 +94,10 @@ public class LAAgent extends HFTAgent {
 		if (!bestBid.isPresent() || !bestAsk.isPresent() || bestAsk.get().doubleValue() * (1 + alpha) > bestBid.get().doubleValue())
 			return;
 		
+		if (bestBidMarket == null || bestAskMarket == null) {
+			throw new IllegalStateException();
+		}
+		
 		log(INFO, "%s detected arbitrage between %s %s and %s %s", this, 
 				bestBidMarket, bestBidMarket.getQuote(),
 				bestAskMarket, bestAskMarket.getQuote());

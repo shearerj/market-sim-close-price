@@ -168,6 +168,7 @@ public class SparseTest {
 	}
 	
 	// This exists solely to claim 100% coverage on a class that only contains methods
+	@SuppressWarnings("unused")
 	@Test
 	public void coverageTest() {
 		new Sparse();

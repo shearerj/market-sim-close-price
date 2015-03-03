@@ -10,10 +10,11 @@ public class Orderings {
 		return new Ordering<Optional<T>>() {
 			@Override
 			public int compare(Optional<T> arg0, Optional<T> arg1) {
-				if (arg0.isPresent() && arg1.isPresent())
+				if (arg0.isPresent() && arg1.isPresent()) {
 					return ordering.compare(arg0.get(), arg1.get());
-				else
-					return Booleans.compare(arg0.isPresent(), arg1.isPresent());
+				}
+
+				return Booleans.compare(arg0.isPresent(), arg1.isPresent());
 			}
 		};
 	}

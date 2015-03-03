@@ -65,6 +65,7 @@ public class WMAMarketMaker extends MAMarketMaker {
 		return new WMAMarketMaker(id, stats, timeline, log, rand, sip, fundamental, market, props);
 	}
 	
+	@Override
 	protected double average(Iterable<? extends Number> numbers) {
 		return weightFactor == 0 ? linearWeight(numbers) : exponentialWeight(numbers, 1 - weightFactor);
 	}

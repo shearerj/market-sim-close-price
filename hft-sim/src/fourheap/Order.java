@@ -13,9 +13,9 @@ import java.io.Serializable;
  * @param <BS>
  * 			  OrderType
  * @param <P>
- *            Price
+ *			Price
  * @param <T>
- *            Time
+ *			Time
  */
 public class Order<P extends Comparable<? super P>, T extends Comparable<? super T>> implements Serializable {
 

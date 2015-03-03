@@ -191,6 +191,7 @@ public class Observations {
 			gson = gson.registerTypeAdapter(new TypeToken<Map<String, SummStats>>() {}.getType(),
 					new StddevFeatureSerializer(whitelist)); // Add standard deviations
 			// No break, because stddev implies default
+			//$FALL-THROUGH$
 		case DEFAULT:
 			gson = gson
 				.setPrettyPrinting() // Whitespace
@@ -302,13 +303,14 @@ public class Observations {
 	 */
 	@SuppressWarnings("unused")
 	private static final class StringNanSerializer implements JsonSerializer<Double> {
-        @Override
-        public JsonElement serialize(final Double src, final Type typeOfSrc, final JsonSerializationContext context) {
-            if (src.isNaN())
-            	return new JsonPrimitive("NaN");
-            else
-            	return new JsonPrimitive(src);
-        }
-    }
+		@Override
+		public JsonElement serialize(final Double src, final Type typeOfSrc, final JsonSerializationContext context) {
+			if (src.isNaN()) {
+				return new JsonPrimitive("NaN");
+			}
+			
+			return new JsonPrimitive(src);
+		}
+	}
 	
 }

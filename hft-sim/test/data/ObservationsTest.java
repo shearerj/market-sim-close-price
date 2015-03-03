@@ -318,6 +318,7 @@ public class ObservationsTest {
 		
 	}
 	
+	@SuppressWarnings("unused")
 	@Test
 	public void playerTest() {
 		PlayerSpec pspec = new PlayerSpec("role", "strategy", AgentType.NOOP, Props.fromPairs());

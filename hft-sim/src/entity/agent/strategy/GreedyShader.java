@@ -53,9 +53,11 @@ public class GreedyShader implements Function<OrderRecord, OrderRecord> {
 		checkArgument((limit.doubleValue() - order.getPrice().doubleValue()) * order.getOrderType().sign() >= 0, "Can't submit an order that would incur a loss");
 				
 		double profitFraction = (limit.doubleValue() - tradingAgainst.get().doubleValue()) / (limit.doubleValue() - order.getPrice().doubleValue());
-		if (shadeRange.contains(profitFraction))
+		if (shadeRange.contains(profitFraction)) {
 			return OrderRecord.create(order.getCurrentMarket(), order.getCreatedTime(), order.getOrderType(), tradingAgainst.get(), order.getQuantity());
-		else return order;
+		}
+		
+		return order;
 	}
 
 }

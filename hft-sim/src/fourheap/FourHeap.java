@@ -29,9 +29,9 @@ import com.google.common.collect.Ordering;
  * @author ebrink
  * 
  * @param <P>
- *            Price class
+ *			Price class
  * @param <T>
- *            Time class
+ *			Time class
  */
 /*
  * XXX Remove is slow, and changing to SortedSets will provide faster remove
@@ -56,11 +56,11 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 		// Sout: unmatched sells, min first
 		this.sellUnmatched = new PriorityQueue<O>(1, priceComp.compound(timeComp));
 		// Sin: matched sells, max first
-		this.sellMatched   = new PriorityQueue<O>(1, priceComp.reverse().compound(timeComp));
+		this.sellMatched = new PriorityQueue<O>(1, priceComp.reverse().compound(timeComp));
 		// Bout: unmatched buys, max first
-		this.buyUnmatched  = new PriorityQueue<O>(1, priceComp.reverse().compound(timeComp));
+		this.buyUnmatched = new PriorityQueue<O>(1, priceComp.reverse().compound(timeComp));
 		// Bin: matched buys, min first
-		this.buyMatched    = new PriorityQueue<O>(1, priceComp.compound(timeComp));
+		this.buyMatched = new PriorityQueue<O>(1, priceComp.compound(timeComp));
 		this.numUnits = 0;
 	}
 	
@@ -80,6 +80,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * @param order
 	 * @return 
 	 */
+	@Override
 	public boolean add(O order) {
 		checkArgument(order.unmatchedQuantity > 0, "Orders must have positive quantity");
 
@@ -148,7 +149,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * Complexity: O(n)
 	 * 
 	 * @param order
-	 *            The order to withdraw
+	 *			The order to withdraw
 	 */
 	public void remove(O order) {
 		remove(order, order.getQuantity());
@@ -161,10 +162,10 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	 * Complexity: O(n)
 	 * 
 	 * @param order
-	 *            The order to withdraw
+	 *			The order to withdraw
 	 * @param quantity
-	 *            The quantity to withdraw from order. Must be positive, even
-	 *            for sell orders.
+	 *			The quantity to withdraw from order. Must be positive, even
+	 *			for sell orders.
 	 */
 	public void remove(O order, int quantity) {
 		checkArgument(quantity > 0, "Quantity must be positive");
@@ -348,6 +349,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	protected class PriceOrdering extends Ordering<O> implements Serializable {
 		private static final long serialVersionUID = -6083048512440275282L;
 
+		@Override
 		public int compare(O first, O second) {
 			return first.price.compareTo(second.price);
 		}
@@ -362,6 +364,7 @@ public class FourHeap <P extends Comparable<? super P>, T extends Comparable<? s
 	protected class TimeOrdering extends Ordering<O> implements Serializable {
 		private static final long serialVersionUID = -5355682963794695579L;
 		
+		@Override
 		public int compare(O first, O second) {
 			return first.submitTime.compareTo(second.submitTime);
 		}

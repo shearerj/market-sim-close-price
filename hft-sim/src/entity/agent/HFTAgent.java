@@ -45,7 +45,7 @@ public abstract class HFTAgent extends MMAgent {
 		return new HFTAgentView(latency);
 	}
 	
-	protected void quoteUpdate(MarketView market) {
+	protected void quoteUpdate(@SuppressWarnings("unused") MarketView market) {
 		agentStrategy();
 	}
 

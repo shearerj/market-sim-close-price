@@ -76,9 +76,9 @@ public abstract class Maps2 {
 				break;
 		if (index < 0) {
 			return map.tailMap(prefix);
-		} else {
-			return map.subMap(prefix, prefix.substring(0, index) + (char) (1 + prefix.charAt(index)));
 		}
+		
+		return map.subMap(prefix, prefix.substring(0, index) + (char) (1 + prefix.charAt(index)));
 	}
 	
 }

@@ -355,6 +355,7 @@ public class BackgroundAgentTest {
 	}
 	
 	/** Test that agent only enters once, (but can refuse to enter if first entry is really long) */
+	@SuppressWarnings("unused")
 	@Test
 	@Repeat(100)
 	public void singleReentryType() {

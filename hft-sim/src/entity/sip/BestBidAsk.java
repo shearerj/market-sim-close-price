@@ -49,10 +49,11 @@ public class BestBidAsk implements Serializable {
 	 * @return bid-ask spread of the quote (double)
 	 */
 	public double getSpread() {
-		if (bestAsk.isPresent() && bestBid.isPresent() && bestAsk.get().greaterThanEqual(bestBid.get()))
+		if (bestAsk.isPresent() && bestBid.isPresent() && bestAsk.get().greaterThanEqual(bestBid.get())) {
 			return bestAsk.get().doubleValue() - bestBid.get().doubleValue();
-		else
-			return Double.POSITIVE_INFINITY;
+		}
+
+		return Double.POSITIVE_INFINITY;
 	}
 
 	public Optional<Market> getBestBidMarket() {
@@ -99,6 +100,7 @@ public class BestBidAsk implements Serializable {
 				&& Objects.equal(bestAskQuantity, that.bestAskQuantity);
 	}
 
+	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("(BestBid: ");
 		

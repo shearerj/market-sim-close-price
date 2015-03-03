@@ -396,34 +396,34 @@ public class AdaptiveMarketMakerTest {
 
 		// rungs generated should be SELL(95,100,105), BUY(85,80,75)
 		// nothing should trade in this scenario
-		assertEquals(0, (int) test.getCashChange());
-		assertEquals(0, (int) test.getHoldingsChange());
+		assertEquals(0, test.getCashChange());
+		assertEquals(0, test.getHoldingsChange());
 
 		test = marketmaker.lastTransactionResult(2, Price.of(81), Price.of(83));
 		// rungs generated should be SELL(91,96,101), BUY(89,84,81)
 		// two orders should trade, a buy rung at price 89 & one at 84 
-		assertEquals(2, (int) test.getHoldingsChange());
-		assertEquals(-(90-1)-(90-6), (int) test.getCashChange());
+		assertEquals(2, test.getHoldingsChange());
+		assertEquals(-(90-1)-(90-6), test.getCashChange());
 
 		test = marketmaker.lastTransactionResult(2, Price.of(97), Price.of(99));
 		// rungs generated should be SELL(91,96,101), BUY(89,84,81)
 		// two orders should trade, a sell rung at price 91 & one at 96 
-		assertEquals(-2, (int) test.getHoldingsChange());
-		assertEquals((90+1)+(90+6), (int) test.getCashChange());
+		assertEquals(-2, test.getHoldingsChange());
+		assertEquals((90+1)+(90+6), test.getCashChange());
 
 		marketmaker.lastPrice = Optional.of(Price.of(83));
 		test = marketmaker.lastTransactionResult(2, Price.of(81), Price.of(83));
 		// rungs generated should be SELL(91,96,101), BUY(89,84,81)
 		// two orders should trade, a buy rung at price 89 & one at 84 
-		assertEquals(0, (int) test.getHoldingsChange());
-		assertEquals(0, (int) test.getCashChange());
+		assertEquals(0, test.getHoldingsChange());
+		assertEquals(0, test.getCashChange());
 
 		marketmaker.lastPrice = Optional.of(Price.of(95));
 		test = marketmaker.lastTransactionResult(2, Price.of(97), Price.of(99));
 		// rungs generated should be SELL(91,96,101), BUY(89,84,81)
 		// two orders should trade, a sell rung at price 91 & one at 96 
-		assertEquals(-1, (int) test.getHoldingsChange());
-		assertEquals((95+1), (int) test.getCashChange());
+		assertEquals(-1, test.getHoldingsChange());
+		assertEquals((95+1), test.getCashChange());
 	}
 	
 	/** Check that all weights are the same and ad to 1 */

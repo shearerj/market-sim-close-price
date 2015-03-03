@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.math.RoundingMode.HALF_EVEN;
 
-import java.io.Serializable;
 import java.math.RoundingMode;
 
 import utils.Maths;
@@ -21,7 +20,7 @@ import com.google.common.primitives.Ints;
  * 
  * @author ewah
  */
-public class Price extends Number implements Comparable<Price>, Serializable {
+public class Price extends Number implements Comparable<Price> {
 
 	private static final long serialVersionUID = 772101228717034473L;
 	protected static final Ordering<Price> ord = Ordering.natural();
@@ -100,7 +99,7 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 	 * @return price in dollars
 	 */
 	public double getInDollars() {
-		return doubleValue() / (double) TICKS_PER_DOLLAR;
+		return doubleValue() / TICKS_PER_DOLLAR;
 	}
 
 	/**
@@ -115,15 +114,17 @@ public class Price extends Number implements Comparable<Price>, Serializable {
 	public int compareTo(Price price) {
 		checkNotNull(price);
 		if (this == INF) {
-			if (price == INF)
+			if (price == INF) {
 				return 0;
-			else
-				return 1;
+			}
+
+			return 1;
 		} else if (this == NEG_INF) {
-			if (price == NEG_INF)
+			if (price == NEG_INF) {
 				return 0;
-			else
-				return -1;
+			}
+
+			return -1;
 		} else {
 			return Ints.compare(ticks, price.ticks);
 		}

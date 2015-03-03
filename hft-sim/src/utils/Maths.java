@@ -33,24 +33,25 @@ public abstract class Maths {
 	}
 	
 	public static Iterator<Double> logRatio(final Iterator<? extends Number> values) {
-		if (!values.hasNext())
+		if (!values.hasNext()) {
 			return ImmutableList.<Double> of().iterator();
-		else
-			return new UnmodifiableIterator<Double>() {
-				double previous = Math.log(values.next().doubleValue());
-			
-				@Override
-				public boolean hasNext() {
-					return values.hasNext();
-				}
+		}
 
-				@Override
-				public Double next() {
-					double next = Math.log(values.next().doubleValue());
-					double logr = next - previous;
-					previous = next;
-					return logr;
-				}			
+		return new UnmodifiableIterator<Double>() {
+			double previous = Math.log(values.next().doubleValue());
+		
+			@Override
+			public boolean hasNext() {
+				return values.hasNext();
+			}
+
+			@Override
+			public Double next() {
+				double next = Math.log(values.next().doubleValue());
+				double logr = next - previous;
+				previous = next;
+				return logr;
+			}			
 		};
 	}
 	

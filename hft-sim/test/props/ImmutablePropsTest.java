@@ -28,7 +28,7 @@ public class ImmutablePropsTest {
 	public static final class EnumKey extends EnumValue<Enumerated> { protected EnumKey() { super(Enumerated.class); } };
 	
 	public static final class PrivateKey extends Value<Object> { private PrivateKey() {}; };
-	public static final class BadConstructorKey extends Value<Object> { public BadConstructorKey(int a) {}; };
+	public static final class BadConstructorKey extends Value<Object> { public BadConstructorKey(@SuppressWarnings("unused") int a) {}; };
 	public static final class NotAValue {};
 	public static final class Wrapper {
 		@SuppressWarnings("unused") private static final class HiddenKey extends Value<Object> {};

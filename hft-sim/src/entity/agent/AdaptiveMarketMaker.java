@@ -184,7 +184,7 @@ public class AdaptiveMarketMaker extends MarketMaker {
 		
 		double G = 2 * maxSpread * volatilityBound + volatilityBound^2; 	
 		if (fastLearning) {	// XXX just to make this backwards compatible
-			G = (int) (volatilityBound / 5);
+			G = (volatilityBound / 5);
 		}
 		
 		double eta = Math.min( Math.sqrt( Math.log(weights.size()) / numReentries ), 1.0) / (2 * G);

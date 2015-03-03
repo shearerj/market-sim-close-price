@@ -47,6 +47,7 @@ public class HFTAgentTest {
 	}
 	
 	/** Test if quote is updated in quote view by the time hft strategy is called */
+	@SuppressWarnings("unused")
 	@Test
 	public void testQuoteBuyNoLatencyUpdate() {
 		final AtomicReference<Quote> quote = new AtomicReference<Quote>();
@@ -65,6 +66,7 @@ public class HFTAgentTest {
 	}
 	
 	/** Test if quote is updated in quote view by the time hft strategy is called */
+	@SuppressWarnings("unused")
 	@Test
 	public void testQuoteSellNoLatencyUpdate() {
 		final AtomicReference<Quote> quote = new AtomicReference<Quote>();
@@ -83,6 +85,7 @@ public class HFTAgentTest {
 	}
 	
 	/** Test if quote is updated in quote view by the time hft strategy is called */
+	@SuppressWarnings("unused")
 	@Test
 	public void testQuoteBuyLatencyUpdate() {
 		final AtomicReference<Quote> quote = new AtomicReference<Quote>();
@@ -101,6 +104,7 @@ public class HFTAgentTest {
 	}
 	
 	/** Test if quote is updated in quote view by the time hft strategy is called */
+	@SuppressWarnings("unused")
 	@Test
 	public void testQuoteSellLatencyUpdate() {
 		final AtomicReference<Quote> quote = new AtomicReference<Quote>();
