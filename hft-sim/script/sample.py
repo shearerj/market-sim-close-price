@@ -5,7 +5,6 @@ mixed profile and role counts
 '''
 import argparse
 import json
-import sys
 import os
 from os import path
 import itertools
@@ -20,8 +19,12 @@ PARSER.add_argument('-s', '--simspec', type=argparse.FileType('r'),
                     including the number of players per role in a root item
                     called "role_counts". role_counts contains a mapping from
                     roles to the number of players for that role.''')
+PARSER.add_argument('-r', '--role-counts', type=argparse.FileType('r'),
+                    required=True,
+                    help='''A json file where role names map to the number of
+                    agents in that role''')
 PARSER.add_argument('-f', '--profile', type=argparse.FileType('r'),
-                    default=sys.stdin, required=True,
+                    required=True,
                     help='''A mixed strategy profile indicating the sample
                     probability for each strategy.''')
 PARSER.add_argument('-n', '--num-samples', type=int, default=1,
@@ -49,7 +52,7 @@ def main():
     args = PARSER.parse_args()
 
     simspec = json.load(args.simspec)
-    role_counts = simspec['role_counts']
+    role_counts = json.load(args.role_counts)
     profile = json.load(args.profile)
 
     # Create directory structure
