@@ -1,0 +1,3 @@
+: foreach *.md |> pandoc %f -o %o |> %B.pdf
+
+# vim: set syntax=tup:

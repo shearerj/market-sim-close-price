@@ -1,0 +1,22 @@
+package edu.umich.srg.marketsim.strategy;
+
+import edu.umich.srg.marketsim.Price;
+import edu.umich.srg.marketsim.TimeStamp;
+
+public class GaussianFundamentalEstimator {
+	
+	private final long simLength;
+	private final double mean, kappac; 
+	
+	public GaussianFundamentalEstimator(long simLength, double mean, double meanReversion) {
+		this.simLength = simLength;
+		this.mean = mean;
+		this.kappac = 1 - meanReversion;
+	}
+	
+	public double estimate(TimeStamp currentTime, Price currentFundamental) {
+		double kappacToPower = Math.pow(kappac, simLength - currentTime.get());
+		return (1 - kappacToPower) * mean + kappacToPower * currentFundamental.doubleValue();
+	}
+
+}

@@ -1,0 +1,12 @@
+{
+    "assignment": {
+	"test": [
+		"a",
+		"b"
+	]
+    },
+    "configuration": {
+        "randomSeed": "271828",
+	"discountFactors": "3-4-5"
+    }
+}
