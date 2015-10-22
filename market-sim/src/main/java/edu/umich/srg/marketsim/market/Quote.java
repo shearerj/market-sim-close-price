@@ -13,13 +13,17 @@ import edu.umich.srg.marketsim.Price;
  */
 public class Quote implements Serializable {
 
-	static final Quote empty = new Quote(null, null);
+	private static final Quote empty = new Quote(null, null);
 	
 	private final Optional<Price> ask, bid;
 
 	Quote(Price bid, Price ask) {
 		this.ask = Optional.ofNullable(ask);
 		this.bid = Optional.ofNullable(bid);
+	}
+	
+	static Quote empty() {
+		return empty;
 	}
 
 	public Optional<Price> getAskPrice() {

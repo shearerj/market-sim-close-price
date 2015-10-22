@@ -103,5 +103,8 @@ public class NoiseAgent implements Agent {
 
 	@Override
 	public void notifyQuoteUpdated(MarketView market) { }
+	
+	@Override
+	public void notifyTransaction(MarketView market, Price price, int quantity) { }
 
 }

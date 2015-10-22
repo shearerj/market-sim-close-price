@@ -8,10 +8,14 @@ public class GaussianFundamentalEstimator {
 	private final long simLength;
 	private final double mean, kappac; 
 	
-	public GaussianFundamentalEstimator(long simLength, double mean, double meanReversion) {
+	private GaussianFundamentalEstimator(long simLength, double mean, double meanReversion) {
 		this.simLength = simLength;
 		this.mean = mean;
 		this.kappac = 1 - meanReversion;
+	}
+	
+	public static GaussianFundamentalEstimator create(long simLength, double mean, double meanReversion) {
+		return new GaussianFundamentalEstimator(simLength, mean, meanReversion);
 	}
 	
 	public double estimate(TimeStamp currentTime, Price currentFundamental) {

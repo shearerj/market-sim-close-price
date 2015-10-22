@@ -82,11 +82,18 @@ abstract class AbstractMarket implements Market, Serializable {
 			MatchedOrders<Price> matched = pricedTrade.getKey();
 			Price price = pricedTrade.getValue();
 			
+			// Notify buyer
 			Order<Price> buy = matched.getBuy();
 			orderOwners.get(buy).transacted(buy, price, matched.getQuantity());
 			
+			
+			// Notify seller
 			Order<Price> sell = matched.getSell();
 			orderOwners.get(sell).transacted(sell, price, matched.getQuantity());
+			
+			// Notify all agents of transaction
+			for (AbstractMarketView view : views)
+				view.transaction(price, matched.getQuantity());
 			
 			sim.debug("%s: %s =(%d @ %s)=> %s", this, orderOwners.get(sell).getAgent(),
 					matched.getQuantity(), price, orderOwners.get(buy).getAgent());
@@ -125,6 +132,8 @@ abstract class AbstractMarket implements Market, Serializable {
 		
 		abstract void transacted(Order<Price> order, Price price, int quantity);
 		
+		abstract void transaction(Price price, int quantity);
+		
 		abstract Agent getAgent();
 		
 		abstract double getTrueProfit();
@@ -146,7 +155,7 @@ abstract class AbstractMarket implements Market, Serializable {
 		
 		AbstractLatentMarketView(Agent agent, TimeStamp latency) {
 			this.latency = latency;
-			this.quote = Quote.empty;
+			this.quote = Quote.empty();
 			this.agent = agent;
 			this.profit = 0;
 			this.observedProfit = 0;
@@ -156,11 +165,17 @@ abstract class AbstractMarket implements Market, Serializable {
 			this.recordMap = HashBiMap.create();
 		}
 		
+		@Override
 		void setQuote(Quote quote) {
 			AbstractMarket.this.sim.scheduleIn(latency, () -> {
 				this.quote = quote;
 				agent.notifyQuoteUpdated(this);
 			});
+		}
+		
+		@Override
+		void transaction(Price price, int quantity) {
+			AbstractMarket.this.sim.scheduleIn(latency, () -> agent.notifyTransaction(this, price, quantity));
 		}
 
 		@Override
@@ -287,7 +302,7 @@ abstract class AbstractMarket implements Market, Serializable {
 		private OrderRecord submittedOrder;
 		
 		AbstractImmediateMarketView(Agent agent) {
-			this.quote = Quote.empty;
+			this.quote = Quote.empty();
 			this.agent = agent;
 			this.holdings = 0;
 			this.profit = 0;
@@ -295,10 +310,15 @@ abstract class AbstractMarket implements Market, Serializable {
 			this.submittedOrder =  null;
 		}
 		
-		public void setQuote(Quote quote) {
+		@Override
+		void setQuote(Quote quote) {
 			this.quote = quote;
-			
 			agent.notifyQuoteUpdated(this);
+		}
+
+		@Override
+		void transaction(Price price, int quantity) {
+			this.agent.notifyTransaction(this, price, quantity);
 		}
 
 		@Override

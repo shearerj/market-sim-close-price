@@ -24,4 +24,6 @@ public interface Agent {
 	
 	void notifyQuoteUpdated(MarketView market);
 	
+	void notifyTransaction(MarketView market, Price price, int quantity);
+	
 }

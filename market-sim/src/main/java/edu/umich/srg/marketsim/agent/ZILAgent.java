@@ -21,7 +21,10 @@ import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
 import edu.umich.srg.marketsim.Keys.FundamentalMean;
 import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
+import edu.umich.srg.marketsim.Keys.FundamentalObservationVariance;
+import edu.umich.srg.marketsim.Keys.FundamentalShockVar;
 import edu.umich.srg.marketsim.Keys.MaxPosition;
+import edu.umich.srg.marketsim.Keys.PriceVarianceMultiple;
 import edu.umich.srg.marketsim.Keys.PrivateValueVar;
 import edu.umich.srg.marketsim.Keys.Rmax;
 import edu.umich.srg.marketsim.Keys.Rmin;
@@ -37,29 +40,33 @@ import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.market.OrderRecord;
 import edu.umich.srg.marketsim.privatevalue.GaussianPrivateValue;
 import edu.umich.srg.marketsim.privatevalue.PrivateValue;
-import edu.umich.srg.marketsim.strategy.GaussianFundamentalEstimator;
+import edu.umich.srg.marketsim.strategy.GaussianHMMFundamentalEstimator;
 
-public class ZIRAgent implements Agent {
+public class ZILAgent implements Agent {
 	
 	private static final Distribution<OrderType> orderTypeDistribution = Uniform.over(OrderType.values());
 	
 	private final Sim sim;
 	private final MarketView market;
 	private final FundamentalView fundamental;
-	private final GaussianFundamentalEstimator estimator;
+	private final GaussianHMMFundamentalEstimator estimator;
 	private final int maxPosition;
 	private final PrivateValue privateValue;
 	private final Random rand;
 	private final Geometric arrivalDistribution;
 	private final IntUniform shadingDistribution;
 	
-	public ZIRAgent(Sim sim, Market market, Fundamental fundamental, Spec spec, Random rand) {
+	public ZILAgent(Sim sim, Market market, Fundamental fundamental, Spec spec, Random rand) {
 		checkArgument(fundamental instanceof GaussianMeanReverting);
 		
 		this.sim = sim;
 		this.market = market.getView(this, TimeStamp.ZERO);
-		this.fundamental = FundamentalView.create(sim, fundamental);
-		this.estimator = GaussianFundamentalEstimator.create(spec.get(SimLength.class), spec.get(FundamentalMean.class), spec.get(FundamentalMeanReversion.class));
+		this.fundamental = FundamentalView.create(sim, fundamental, TimeStamp.ZERO,
+				spec.get(FundamentalObservationVariance.class), rand);
+		this.estimator = GaussianHMMFundamentalEstimator.create(spec.get(SimLength.class),
+				spec.get(FundamentalMean.class), spec.get(FundamentalMeanReversion.class),
+				spec.get(FundamentalShockVar.class), spec.get(FundamentalObservationVariance.class),
+				spec.get(PriceVarianceMultiple.class) * spec.get(FundamentalObservationVariance.class));
 		this.maxPosition = spec.get(MaxPosition.class);
 		this.privateValue = GaussianPrivateValue.generate(rand, spec.get(MaxPosition.class), spec.get(PrivateValueVar.class));
 		this.arrivalDistribution = Geometric.withSuccessProbability(spec.get(ArrivalRate.class));
@@ -67,8 +74,9 @@ public class ZIRAgent implements Agent {
 		this.rand = rand;
 	}
 	
-	public static ZIRAgent createFromSpec(Sim sim, Fundamental fundamental, Collection<Market> markets, Market market, Spec spec, Random rand) {
-		return new ZIRAgent(sim, market, fundamental, spec, rand);
+	public static ZILAgent createFromSpec(Sim sim, Fundamental fundamental, Collection<Market> markets, Market market,
+			Spec spec, Random rand) {
+		return new ZILAgent(sim, market, fundamental, spec, rand);
 	}
 	
 	private void scheduleNextArrival() {
@@ -79,8 +87,10 @@ public class ZIRAgent implements Agent {
 		for (OrderRecord order : ImmutableList.copyOf(market.getActiveOrders()))
 			market.withdrawOrder(order);
 
+		estimator.addFundamentalObservation(sim.getCurrentTime(), fundamental.getFundamental());
+		
 		OrderType type = orderTypeDistribution.sample(rand);
-		double finalEstimate = estimator.estimate(sim.getCurrentTime(), fundamental.getFundamental()),
+		double finalEstimate = estimator.estimate(),
 				privateBenefit = type.sign() * privateValue.valueForExchange(market.getHoldings(), type),
 				shade = type.sign() * shadingDistribution.sample(rand);
 		// Round beneficially
@@ -125,6 +135,8 @@ public class ZIRAgent implements Agent {
 	public void notifyQuoteUpdated(MarketView market) { }
 	
 	@Override
-	public void notifyTransaction(MarketView market, Price price, int quantity) { }
+	public void notifyTransaction(MarketView market, Price price, int quantity) {
+		estimator.addTransactionObservation(sim.getCurrentTime(), price, quantity);
+	}
 	
 }

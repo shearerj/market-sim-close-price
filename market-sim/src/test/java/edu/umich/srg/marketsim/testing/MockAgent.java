@@ -32,14 +32,10 @@ public class MockAgent implements Agent {
 	}
 	
 	@Override
-	public void notifyOrderSubmitted(OrderRecord order) {
-		
-	}
+	public void notifyOrderSubmitted(OrderRecord order) { }
 
 	@Override
-	public void notifyOrderWithrawn(OrderRecord order, int quantity) {
-		
-	}
+	public void notifyOrderWithrawn(OrderRecord order, int quantity) { }
 
 	@Override
 	public void notifyOrderTransacted(OrderRecord order, Price price, int quantity) {
@@ -49,8 +45,9 @@ public class MockAgent implements Agent {
 	}
 
 	@Override
-	public void notifyQuoteUpdated(MarketView market) {
-		
-	}
-
+	public void notifyQuoteUpdated(MarketView market) { }
+	
+	@Override
+	public void notifyTransaction(MarketView market, Price price, int quantity) { }
+	
 }

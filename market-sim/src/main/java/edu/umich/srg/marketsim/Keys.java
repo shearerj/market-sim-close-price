@@ -25,11 +25,14 @@ public interface Keys {
 
 	// Agents
 	public static class ArrivalRate extends DoubleValue {};
+	public static class FundamentalObservationVariance extends DoubleValue {};
 	
 	public static class MaxPosition extends IntValue {};
 	public static class PrivateValueVar extends DoubleValue {};
 	public static class Rmax extends IntValue {};
 	public static class Rmin extends IntValue {};
+	
+	public static class PriceVarianceMultiple extends DoubleValue {};
 	
 //	public static class DiscountFactors extends DoublesValue {};
 //	
@@ -134,6 +137,8 @@ public interface Keys {
 			.put(FundamentalMeanReversion.class, 1e-5)  // FIXE Set appropriately
 			.put(FundamentalShockVar.class, 1e6)  // FIXME Set appropriately
 			.put(FundamentalShockProb.class, 1d)
+			
+			.put(FundamentalObservationVariance.class, 0d)
 			
 			.build();
 	

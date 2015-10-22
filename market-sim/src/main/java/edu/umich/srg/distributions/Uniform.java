@@ -2,7 +2,6 @@ package edu.umich.srg.distributions;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -15,29 +14,53 @@ import com.google.common.math.LongMath;
  * An interface with a lot on convenience methods for creating different uniform
  * distributions
  */
-public final class Uniform<T> implements Distribution<T> {
-	
-	private final List<T> options;
-	
-	private Uniform(Iterator<? extends T> options) {
-		this.options = ImmutableList.copyOf(options);
-	}
-	
-	@Override
-	public T sample(Random rand) {
-		return options.get(rand.nextInt(options.size()));
-	}
+public abstract class Uniform<T> implements Distribution<T> {
 	
 	public static <T> Uniform<T> over(Iterator<? extends T> options) {
-		return new Uniform<T>(options);
+		return over(ImmutableList.copyOf(options));
 	}
 	
 	public static <T> Uniform<T> over(Iterable<? extends T> options) {
-		return new Uniform<T>(options.iterator());
+		ImmutableList<? extends T> listOptions = ImmutableList.copyOf(options);
+		checkArgument(listOptions.size() > 0);
+		if (listOptions.size() == 1)
+			return new ConstantUniform<>(listOptions.get(0));
+		else
+			return new ListUniform<>(listOptions);
 	}
 	
 	public static <T> Uniform<T> over(@SuppressWarnings("unchecked") T... options) {
-		return new Uniform<T>(Arrays.asList(options).iterator());
+		return over(ImmutableList.copyOf(options));
+	}
+	
+	private static class ListUniform<T> extends Uniform<T> {
+		
+		private final List<? extends T> options;
+		
+		private ListUniform(ImmutableList<? extends T> options) {
+			this.options = options;
+		}
+		
+		@Override
+		public T sample(Random rand) {
+			return options.get(rand.nextInt(options.size()));
+		}
+		
+	}
+	
+private static class ConstantUniform<T> extends Uniform<T> {
+		
+		private final T option;
+		
+		private ConstantUniform(T option) {
+			this.option = option;
+		}
+		
+		@Override
+		public T sample(Random rand) {
+			return option;
+		}
+		
 	}
 	
 	// Int
