@@ -48,7 +48,7 @@ public abstract class Uniform<T> implements Distribution<T> {
 		
 	}
 	
-private static class ConstantUniform<T> extends Uniform<T> {
+	private static class ConstantUniform<T> extends Uniform<T> {
 		
 		private final T option;
 		

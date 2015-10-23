@@ -19,6 +19,8 @@ import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.util.TestDoubles;
 import edu.umich.srg.util.TestLongs;
 
+// FIXME There is an error with this that needs to be fixed
+
 @RunWith(Theories.class)
 public class GaussianMeanRevertingTest {
 	

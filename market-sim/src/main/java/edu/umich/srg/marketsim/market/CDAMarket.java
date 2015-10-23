@@ -7,6 +7,7 @@ import java.util.function.Function;
 
 import com.google.common.collect.Maps;
 
+import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.MatchedOrders;
 import edu.umich.srg.fourheap.Order;
 import edu.umich.srg.fourheap.Order.OrderType;
@@ -40,6 +41,10 @@ public class CDAMarket extends AbstractMarket {
 	}
 	
 	public static CDAMarket create(Sim sim) {
+		return new CDAMarket(sim);
+	}
+	
+	public static CDAMarket createFromSpec(Sim sim, Spec spec) {
 		return new CDAMarket(sim);
 	}
 

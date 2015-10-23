@@ -1,7 +1,6 @@
 package edu.umich.srg.egtaonline.spec;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
@@ -35,10 +34,10 @@ public class SpecTest {
 		@SuppressWarnings("unused") private static final class HiddenKey extends Value<Object> {};
 	}
 		
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void emptyTest() {
 		Spec props = Spec.empty();
-		assertNull(props.get(LongKey.class));
+		props.get(LongKey.class);
 	}
 	
 	@Test

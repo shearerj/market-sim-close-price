@@ -1,7 +1,6 @@
 package edu.umich.srg.marketsim;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -22,17 +21,18 @@ import edu.umich.srg.egtaonline.Runner;
 import edu.umich.srg.egtaonline.SimSpec;
 import edu.umich.srg.egtaonline.SimSpec.RoleStrat;
 import edu.umich.srg.egtaonline.spec.Spec;
-import edu.umich.srg.marketsim.AgentBuilder.AgentCreator;
+import edu.umich.srg.marketsim.EntityBuilder.AgentCreator;
+import edu.umich.srg.marketsim.EntityBuilder.MarketCreator;
 import edu.umich.srg.marketsim.Keys.FundamentalMean;
 import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
 import edu.umich.srg.marketsim.Keys.FundamentalShockProb;
 import edu.umich.srg.marketsim.Keys.FundamentalShockVar;
+import edu.umich.srg.marketsim.Keys.Markets;
 import edu.umich.srg.marketsim.Keys.RandomSeed;
 import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.fundamental.GaussianMeanReverting;
-import edu.umich.srg.marketsim.market.CDAMarket;
 import edu.umich.srg.marketsim.market.Market;
 
 public class CommandLineInterface {
@@ -54,13 +54,8 @@ public class CommandLineInterface {
 				configuration.get(FundamentalShockVar.class), configuration.get(FundamentalShockProb.class));
 		MarketSimulator sim = MarketSimulator.create(fundamental, log, new Random(rand.nextLong()));
 		log.setPrefix(l -> String.format("%6d | ", sim.getCurrentTime().get()));
-		
-		// FIXME Add markets appropriately
-		List<Market> markets = new ArrayList<>();
-		Market market = CDAMarket.create(sim);
-		sim.addMarket(market);
-		markets.add(market);
-		
+
+		List<Market> markets = addMarkets(sim, spec.configuration.get(Markets.class));
 		List<PlayerInfo> playerInfo = addPlayers(sim, fundamental, spec.assignment, markets, new Random(rand.nextLong()));
 		
 		sim.initialize();
@@ -88,6 +83,19 @@ public class CommandLineInterface {
 		};
 	}
 	
+	private static List<Market> addMarkets(MarketSimulator sim, Iterable<String> marketSpecs) {
+		ImmutableList.Builder<Market> marketBuilder = ImmutableList.builder();
+		for (String stringSpec : marketSpecs) {
+			MarketCreator creator = EntityBuilder.marketNameMap.get(getType(stringSpec));
+			Spec marketSpec = getSpec(stringSpec).withDefault(Keys.DEFAULT_KEYS);
+
+			Market market = creator.createMarket(sim, marketSpec);
+			sim.addMarket(market);
+			marketBuilder.add(market);
+		}
+		return marketBuilder.build();
+	}
+	
 	private static List<PlayerInfo> addPlayers(MarketSimulator sim, Fundamental fundamental, Multiset<RoleStrat> assignment,
 			Collection<Market> markets, Random rand) {
 		Random marketRand = new Random(rand.nextLong());
@@ -96,7 +104,7 @@ public class CommandLineInterface {
 		ImmutableList.Builder<PlayerInfo> playerInfoBuilder = ImmutableList.builder();
 		for (Entry<RoleStrat> roleStratCounts : assignment.entrySet()) {
 			String strategy = roleStratCounts.getElement().getStrategy();
-			AgentCreator creator = AgentBuilder.nameMap.get(getType(strategy));
+			AgentCreator creator = EntityBuilder.agentNameMap.get(getType(strategy));
 			Spec agentSpec = getSpec(strategy).withDefault(Keys.DEFAULT_KEYS);
 			for (int i = 0; i < roleStratCounts.getCount(); ++i) {
 				Agent agent = creator.createAgent(sim, fundamental, markets, marketSelection.sample(marketRand), agentSpec, rand);

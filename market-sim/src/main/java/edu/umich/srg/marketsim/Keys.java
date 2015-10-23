@@ -1,9 +1,12 @@
 package edu.umich.srg.marketsim;
 
 import edu.umich.srg.egtaonline.spec.ParsableValue.DoubleValue;
+import edu.umich.srg.egtaonline.spec.ParsableValue.EnumValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.IntValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.LongValue;
+import edu.umich.srg.egtaonline.spec.ParsableValue.StringsValue;
 import edu.umich.srg.egtaonline.spec.Spec;
+import edu.umich.srg.fourheap.Order.OrderType;
 
 /**
  * All of the keys for use in the simulation spec. Parameters must be camelCase.
@@ -17,6 +20,7 @@ public interface Keys {
 	// Simulation
 	public static class RandomSeed extends LongValue {};
 	public static class SimLength extends LongValue {};
+	public static class Markets extends StringsValue {};
 
 	public static class FundamentalMean extends DoubleValue {};
 	public static class FundamentalShockVar extends DoubleValue {};
@@ -27,12 +31,15 @@ public interface Keys {
 	public static class ArrivalRate extends DoubleValue {};
 	public static class FundamentalObservationVariance extends DoubleValue {};
 	
+	public static class Type extends EnumValue<OrderType> { public Type() { super(OrderType.class); }};
 	public static class MaxPosition extends IntValue {};
 	public static class PrivateValueVar extends DoubleValue {};
 	public static class Rmax extends IntValue {};
 	public static class Rmin extends IntValue {};
 	
-	public static class PriceVarianceMultiple extends DoubleValue {};
+	public static class PriceVarianceEstimate extends DoubleValue {};
+	
+	public static class NumShockOrders extends IntValue {};
 	
 //	public static class DiscountFactors extends DoublesValue {};
 //	
@@ -134,12 +141,10 @@ public interface Keys {
 			.put(SimLength.class, 10000l)
 			
 			.put(FundamentalMean.class, 1e8)
-			.put(FundamentalMeanReversion.class, 1e-5)  // FIXE Set appropriately
+			.put(FundamentalMeanReversion.class, 1e-5)  // FIXME Set appropriately
 			.put(FundamentalShockVar.class, 1e6)  // FIXME Set appropriately
 			.put(FundamentalShockProb.class, 1d)
-			
-			.put(FundamentalObservationVariance.class, 0d)
-			
+						
 			.build();
 	
 }

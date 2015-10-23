@@ -53,20 +53,24 @@ public abstract class ParsableValue<T> extends Value<T> {
 		public StringValue() { super(Converter.<String> identity()); }
 	}
 	
-	public static class IntsValue extends ParsableValue<Iterable<Integer>> {
-		public IntsValue() { super(new IterableConverter<Integer>(Ints.stringConverter())); }
+	public static abstract class IterableValue<T> extends ParsableValue<Iterable<T>> {
+		public IterableValue(Converter<String, T> elementConverter) { super(new IterableConverter<T>(elementConverter)); }
 	}
 	
-	public static class DoublesValue extends ParsableValue<Iterable<Double>> {
-		public DoublesValue() { super(new IterableConverter<Double>(Doubles.stringConverter())); }
+	public static class IntsValue extends IterableValue<Integer> {
+		public IntsValue() { super(Ints.stringConverter()); }
 	}
 	
-	public static class StringsValue extends ParsableValue<Iterable<String>> {
-		public StringsValue() { super(new IterableConverter<String>(Converter.<String> identity())); }
+	public static class DoublesValue extends IterableValue<Double> {
+		public DoublesValue() { super(Doubles.stringConverter()); }
 	}
 	
-	public static class EnumValue<T extends Enum<T>> extends ParsableValue<T> {
-		protected EnumValue(Class<T> clazz) { super(new EnumConverter<T>(clazz)); }
+	public static class StringsValue extends IterableValue<String> {
+		public StringsValue() { super(Converter.<String> identity()); }
+	}
+	
+	public static abstract class EnumValue<T extends Enum<T>> extends ParsableValue<T> {
+		public EnumValue(Class<T> clazz) { super(new EnumConverter<T>(clazz)); }
 	}
 	
 	public static class SpecValue extends ParsableValue<Spec> {
@@ -88,8 +92,8 @@ public abstract class ParsableValue<T> extends Value<T> {
 	}
 	
 	private static final class IterableConverter<T> extends Converter<String, Iterable<T>> {
-		private static final Splitter itemSplitter = Splitter.on('-').omitEmptyStrings();
-		private static final Joiner itemJointer = Joiner.on('-');
+		private static final Splitter itemSplitter = Splitter.on('/').omitEmptyStrings();
+		private static final Joiner itemJointer = Joiner.on('/');
 		private final Converter<String, T> itemConverter;
 		
 		protected IterableConverter(Converter<String, T> itemConverter) {

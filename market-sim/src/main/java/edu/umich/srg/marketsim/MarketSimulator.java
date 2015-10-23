@@ -2,7 +2,6 @@ package edu.umich.srg.marketsim;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -55,20 +54,8 @@ public class MarketSimulator implements Sim {
 		return market;
 	}
 	
-	public Collection<Market> getMarkets() {
-		return Collections.unmodifiableCollection(markets);
-	}
-	
 	public void addAgent(Agent agent) {
 		agents.add(agent);
-	}
-	
-	public Collection<Agent> getAgents() {
-		return Collections.unmodifiableCollection(agents);
-	}
-	
-	public Fundamental getFundamental() {
-		return fundamental;
 	}
 	
 	public JsonObject computeFeatures() {

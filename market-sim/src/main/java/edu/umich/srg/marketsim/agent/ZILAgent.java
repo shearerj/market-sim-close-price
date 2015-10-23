@@ -24,7 +24,7 @@ import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
 import edu.umich.srg.marketsim.Keys.FundamentalObservationVariance;
 import edu.umich.srg.marketsim.Keys.FundamentalShockVar;
 import edu.umich.srg.marketsim.Keys.MaxPosition;
-import edu.umich.srg.marketsim.Keys.PriceVarianceMultiple;
+import edu.umich.srg.marketsim.Keys.PriceVarianceEstimate;
 import edu.umich.srg.marketsim.Keys.PrivateValueVar;
 import edu.umich.srg.marketsim.Keys.Rmax;
 import edu.umich.srg.marketsim.Keys.Rmin;
@@ -40,7 +40,7 @@ import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.market.OrderRecord;
 import edu.umich.srg.marketsim.privatevalue.GaussianPrivateValue;
 import edu.umich.srg.marketsim.privatevalue.PrivateValue;
-import edu.umich.srg.marketsim.strategy.GaussianHMMFundamentalEstimator;
+import edu.umich.srg.marketsim.strategy.NoisyFundamentalEstimator;
 
 public class ZILAgent implements Agent {
 	
@@ -49,7 +49,7 @@ public class ZILAgent implements Agent {
 	private final Sim sim;
 	private final MarketView market;
 	private final FundamentalView fundamental;
-	private final GaussianHMMFundamentalEstimator estimator;
+	private final NoisyFundamentalEstimator estimator;
 	private final int maxPosition;
 	private final PrivateValue privateValue;
 	private final Random rand;
@@ -63,10 +63,10 @@ public class ZILAgent implements Agent {
 		this.market = market.getView(this, TimeStamp.ZERO);
 		this.fundamental = FundamentalView.create(sim, fundamental, TimeStamp.ZERO,
 				spec.get(FundamentalObservationVariance.class), rand);
-		this.estimator = GaussianHMMFundamentalEstimator.create(spec.get(SimLength.class),
+		this.estimator = NoisyFundamentalEstimator.create(spec.get(SimLength.class),
 				spec.get(FundamentalMean.class), spec.get(FundamentalMeanReversion.class),
 				spec.get(FundamentalShockVar.class), spec.get(FundamentalObservationVariance.class),
-				spec.get(PriceVarianceMultiple.class) * spec.get(FundamentalObservationVariance.class));
+				spec.get(PriceVarianceEstimate.class) * spec.get(FundamentalObservationVariance.class));
 		this.maxPosition = spec.get(MaxPosition.class);
 		this.privateValue = GaussianPrivateValue.generate(rand, spec.get(MaxPosition.class), spec.get(PrivateValueVar.class));
 		this.arrivalDistribution = Geometric.withSuccessProbability(spec.get(ArrivalRate.class));

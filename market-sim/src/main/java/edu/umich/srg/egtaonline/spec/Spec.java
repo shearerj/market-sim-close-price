@@ -10,6 +10,7 @@ import java.util.Set;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
 import com.google.common.base.Joiner.MapJoiner;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableClassToInstanceMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.MutableClassToInstanceMap;
@@ -89,9 +90,18 @@ public class Spec {
 		return builder.build();
 	}
 
+	/*
+	 * We may at some point want to also have a method similar to the map
+	 * (java8) getWithDefault, however this may encourage putting defaults in
+	 * specific class implementations which can make it confusing as to what is
+	 * actually being run, and won't throw errors for misconfigured
+	 * specifications
+	 */
+	
 	public <T> T get(Class<? extends Value<T>> key) {
 		Value<T> val = map.getInstance(key);
-		return val == null ? null : val.get();
+		checkArgument(val != null, "Key \"%s\" does not exist in spec", key.getSimpleName());
+		return val.get();
 	}
 	
 	public Set<Entry<Class<? extends Value<?>>, Value<?>>> entrySet() {

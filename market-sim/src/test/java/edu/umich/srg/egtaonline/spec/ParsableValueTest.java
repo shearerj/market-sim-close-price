@@ -74,7 +74,7 @@ public class ParsableValueTest {
 		IntsValue l = new IntsValue() {};
 		l.parse("8");
 		assertEquals(ImmutableList.of(8), ImmutableList.copyOf(l.get()));
-		l.parse("8-7-6-100");
+		l.parse("8/7/6/100");
 		assertEquals(ImmutableList.of(8, 7, 6, 100), ImmutableList.copyOf(l.get()));
 	}
 	

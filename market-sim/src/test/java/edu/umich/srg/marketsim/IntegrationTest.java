@@ -16,6 +16,7 @@ import org.junit.Test;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
@@ -35,6 +36,7 @@ import edu.umich.srg.egtaonline.SimSpec.RoleStrat;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.egtaonline.spec.Value;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
+import edu.umich.srg.marketsim.Keys.Markets;
 import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.agent.NoiseAgent;
@@ -79,7 +81,7 @@ public class IntegrationTest {
 		StringWriter logData = new StringWriter();
 		Log log = Log.create(Level.DEBUG, logData, l -> l + ") ");
 		Spec agentSpec = Spec.fromPairs(ArrivalRate.class, 0.5);
-		Spec configuration = Spec.fromPairs(SimLength.class, 10l);
+		Spec configuration = Spec.fromPairs(SimLength.class, 10l, Markets.class, ImmutableList.of("cda"));
 
 		Multiset<RoleStrat> assignment = HashMultiset.create(1);
 		assignment.add(RoleStrat.of("role", toStratString("noise", agentSpec)), numAgents);
@@ -101,7 +103,7 @@ public class IntegrationTest {
 		StringWriter logData = new StringWriter(), obsData = new StringWriter();
 		
 		Spec agentSpec = Spec.fromPairs(ArrivalRate.class, 0.5);
-		Spec configuration = Spec.fromPairs(SimLength.class, 10l);
+		Spec configuration = Spec.fromPairs(SimLength.class, 10l, Markets.class, ImmutableList.of("cda"));
 
 		Multiset<RoleStrat> assignment = HashMultiset.create(1);
 		assignment.add(RoleStrat.of("role", toStratString("noise", agentSpec)), numAgents);
@@ -131,7 +133,8 @@ public class IntegrationTest {
 		
 		Multiset<RoleStrat> assignment = HashMultiset.create(1);
 		assignment.add(RoleStrat.of("role", "noop"), numAgents);
-		SimSpec spec = SimSpec.create(assignment, Spec.empty());
+		Spec configuration = Spec.fromPairs(Markets.class, ImmutableList.of("cda"));
+		SimSpec spec = SimSpec.create(assignment, configuration);
 		Reader specReader = toReader(spec);
 		
 		
@@ -156,7 +159,7 @@ public class IntegrationTest {
 		StringWriter logData = new StringWriter(), obsData = new StringWriter();
 		
 		Spec agentSpec = Spec.fromPairs(ArrivalRate.class, 0.5);
-		Spec configuration = Spec.fromPairs(SimLength.class, 10l);
+		Spec configuration = Spec.fromPairs(SimLength.class, 10l, Markets.class, ImmutableList.of("cda"));
 
 		Multiset<RoleStrat> assignment = HashMultiset.create(1);
 		assignment.add(RoleStrat.of("role", toStratString("noise", agentSpec)), numAgents);
