@@ -30,6 +30,8 @@ import edu.umich.srg.egtaonline.SimSpec.RoleStrat;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.egtaonline.spec.Value;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
+import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
+import edu.umich.srg.marketsim.Keys.FundamentalShockVar;
 import edu.umich.srg.marketsim.Keys.Markets;
 import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.agent.Agent;
@@ -82,8 +84,8 @@ public class IntegrationTest {
     StringWriter logData = new StringWriter();
     Log log = Log.create(Level.DEBUG, logData, l -> l + ") ");
     Spec agentSpec = Spec.fromPairs(ArrivalRate.class, 0.5);
-    Spec configuration =
-        Spec.fromPairs(SimLength.class, 10l, Markets.class, ImmutableList.of("cda"));
+    Spec configuration = Spec.fromPairs(SimLength.class, 10l, Markets.class,
+        ImmutableList.of("cda"), FundamentalMeanReversion.class, 0d, FundamentalShockVar.class, 0d);
 
     Multiset<RoleStrat> assignment = HashMultiset.create(1);
     assignment.add(RoleStrat.of("role", toStratString("noise", agentSpec)), numAgents);
@@ -107,8 +109,8 @@ public class IntegrationTest {
     StringWriter logData = new StringWriter(), obsData = new StringWriter();
 
     Spec agentSpec = Spec.fromPairs(ArrivalRate.class, 0.5);
-    Spec configuration =
-        Spec.fromPairs(SimLength.class, 10l, Markets.class, ImmutableList.of("cda"));
+    Spec configuration = Spec.fromPairs(SimLength.class, 10l, Markets.class,
+        ImmutableList.of("cda"), FundamentalMeanReversion.class, 0d, FundamentalShockVar.class, 0d);
 
     Multiset<RoleStrat> assignment = HashMultiset.create(1);
     assignment.add(RoleStrat.of("role", toStratString("noise", agentSpec)), numAgents);
@@ -171,8 +173,8 @@ public class IntegrationTest {
     StringWriter logData = new StringWriter(), obsData = new StringWriter();
 
     Spec agentSpec = Spec.fromPairs(ArrivalRate.class, 0.5);
-    Spec configuration =
-        Spec.fromPairs(SimLength.class, 10l, Markets.class, ImmutableList.of("cda"));
+    Spec configuration = Spec.fromPairs(SimLength.class, 10l, Markets.class,
+        ImmutableList.of("cda"), FundamentalMeanReversion.class, 0d, FundamentalShockVar.class, 0d);
 
     Multiset<RoleStrat> assignment = HashMultiset.create(1);
     assignment.add(RoleStrat.of("role", toStratString("noise", agentSpec)), numAgents);
@@ -199,6 +201,8 @@ public class IntegrationTest {
   }
 
   // TODO Test that verifies agents inherit specifications from configuration
+
+  // TODO Test that invalid agent names throw exception
 
   private static String toStratString(String name, Spec spec) {
     StringBuilder strat = new StringBuilder(name).append(':');

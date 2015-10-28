@@ -15,7 +15,7 @@ report:
 	@mvn site | $(COLOR)
 	sensible-browser target/site/project-reports.html 
 
-docs: FORCE
+docs: force
 	$(MAKE) -C docs
 
-FORCE:
+force:

@@ -53,7 +53,7 @@ public class SpecTest {
     };
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void emptyTest() {
     Spec props = Spec.empty();
     props.get(LongKey.class);
