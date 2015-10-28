@@ -9,33 +9,33 @@ import edu.umich.srg.marketsim.market.Market.MarketView;
 
 public class OrderRecord {
 
-	final MarketView submittedMarket;
-	final OrderType buyOrSell;
-	final Price price;
-	int quantity;
-	
-	OrderRecord(MarketView submittedMarket, OrderType buyOrSell, Price price, int quantity) {
-		this.submittedMarket = submittedMarket;
-		this.buyOrSell = buyOrSell;
-		this.price = price;
-		this.quantity = quantity;
-	}
+  final MarketView submittedMarket;
+  final OrderType buyOrSell;
+  final Price price;
+  int quantity;
 
-	public OrderType getOrderType() {
-		return buyOrSell;
-	}
+  OrderRecord(MarketView submittedMarket, OrderType buyOrSell, Price price, int quantity) {
+    this.submittedMarket = submittedMarket;
+    this.buyOrSell = buyOrSell;
+    this.price = price;
+    this.quantity = quantity;
+  }
 
-	public Price getPrice() {
-		return price;
-	}
+  public OrderType getOrderType() {
+    return buyOrSell;
+  }
 
-	public int getQuantity() {
-		return quantity;
-	}
+  public Price getPrice() {
+    return price;
+  }
 
-	@Override
-	public String toString() {
-		return (buyOrSell == BUY ? "Buy" : "Sell") + ' ' + quantity + " @ " + price;
-	}
-	
+  public int getQuantity() {
+    return quantity;
+  }
+
+  @Override
+  public String toString() {
+    return (buyOrSell == BUY ? "Buy" : "Sell") + ' ' + quantity + " @ " + price;
+  }
+
 }

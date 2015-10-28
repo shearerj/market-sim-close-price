@@ -4,8 +4,8 @@ import java.util.Collection;
 import java.util.Queue;
 
 /**
- * FIXME Info, basically adds an "addAllOrdered" that guarantees that the
- * elements come out in the specified order
+ * FIXME Info, basically adds an "addAllOrdered" that guarantees that the elements come out in the
+ * specified order
  * 
  * @author erik
  *
@@ -13,6 +13,6 @@ import java.util.Queue;
  */
 public interface OrderedQueue<E> extends Queue<E> {
 
-	boolean addAllOrdered(Collection<? extends E> elements);
-	
+  boolean addAllOrdered(Collection<? extends E> elements);
+
 }

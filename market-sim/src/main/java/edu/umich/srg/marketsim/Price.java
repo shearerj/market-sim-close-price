@@ -4,128 +4,160 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.math.RoundingMode.HALF_EVEN;
 
-import java.io.Serializable;
-
 import com.google.common.base.Objects;
 import com.google.common.collect.Ordering;
 import com.google.common.math.DoubleMath;
 import com.google.common.primitives.Ints;
 
+import java.io.Serializable;
+
 /**
- * Price class is wrapper for long; one unit represents one thousandth of a
- * dollar.
+ * Price class is wrapper for long; one unit represents one thousandth of a dollar.
  * 
  * @author ewah
  */
 public class Price extends Number implements Comparable<Price>, Serializable {
 
-	protected static final Ordering<Price> ord = Ordering.natural();
+  protected static final Ordering<Price> ord = Ordering.natural();
 
-	public static final Price INF = new Price(Integer.MAX_VALUE) {
-		private static final long serialVersionUID = 1849387089333514388L;
-		@Override public float floatValue() { return Float.POSITIVE_INFINITY; }
-		@Override public double doubleValue() { return Double.POSITIVE_INFINITY; }
-		@Override public int hashCode() { return System.identityHashCode(this); }
-		@Override public String toString() { return "$" + doubleValue(); }
-	};
-	public static final Price NEG_INF = new Price(Integer.MIN_VALUE) {
-		private static final long serialVersionUID = -2568290536011656239L;
-		@Override public float floatValue() { return Float.NEGATIVE_INFINITY; }
-		@Override public double doubleValue() { return Double.NEGATIVE_INFINITY; }
-		@Override public int hashCode() { return System.identityHashCode(this); }
-		@Override public String toString() { return "$" + doubleValue(); }
-	};
-	public static final Price ZERO = new Price(0);
+  public static final Price INF = new Price(Integer.MAX_VALUE) {
+    private static final long serialVersionUID = 1849387089333514388L;
 
-	protected final long ticks;
+    @Override
+    public float floatValue() {
+      return Float.POSITIVE_INFINITY;
+    }
 
-	private Price(long ticks) {
-		this.ticks = ticks;
-	}
-	
-	public static Price of(long ticks) {
-		return new Price(ticks);
-	}
-	
-	public static Price of(double ticks) {
-		checkArgument(!Double.isNaN(ticks));
-		if (ticks > Long.MAX_VALUE) 
-			return INF;
-		else if (ticks < Long.MIN_VALUE)
-			return NEG_INF;
-		else 
-			return new Price(DoubleMath.roundToLong(ticks, HALF_EVEN));
-	}
-	
-	@Override
-	public int intValue() {
-		return Ints.saturatedCast(ticks);
-	}
+    @Override
+    public double doubleValue() {
+      return Double.POSITIVE_INFINITY;
+    }
 
-	@Override
-	public long longValue() {
-		return ticks;
-	}
+    @Override
+    public int hashCode() {
+      return System.identityHashCode(this);
+    }
 
-	@Override
-	public float floatValue() {
-		return ticks;
-	}
+    @Override
+    public String toString() {
+      return "$" + doubleValue();
+    }
+  };
+  public static final Price NEG_INF = new Price(Integer.MIN_VALUE) {
+    private static final long serialVersionUID = -2568290536011656239L;
 
-	@Override
-	public double doubleValue() {
-		return ticks;
-	}
+    @Override
+    public float floatValue() {
+      return Float.NEGATIVE_INFINITY;
+    }
 
-	/**
-	 * Return 0 if price is negative
-	 * @return Non-negative version of the price.
-	 */
-	public Price nonnegative() {
-		return ord.max(this, ZERO);
-	}
-	
-	@Override
-	public int compareTo(Price price) {
-		checkNotNull(price);
-		if (this == INF) {
-			if (price == INF)
-				return 0;
-			else
-				return 1;
-		} else if (this == NEG_INF) {
-			if (price == NEG_INF) 
-				return 0;
-			else
-				return -1;
-		} else {
-			return Long.compare(ticks, price.ticks);
-		}
-	}
+    @Override
+    public double doubleValue() {
+      return Double.NEGATIVE_INFINITY;
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hashCode(ticks);
-	}
+    @Override
+    public int hashCode() {
+      return System.identityHashCode(this);
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof Price))
-			return false;
-		Price other = (Price) obj;
-		if (this == INF)
-			return other == INF;
-		else if (this == NEG_INF)
-			return other == NEG_INF;
-		else
-			return ticks == other.ticks;
-	}
-	
-	@Override
-	public String toString() {
-		return "$" + ticks;
-	}
+    @Override
+    public String toString() {
+      return "$" + doubleValue();
+    }
+  };
+  public static final Price ZERO = new Price(0);
 
-	private static final long serialVersionUID = 772101228717034473L;
+  protected final long ticks;
+
+  private Price(long ticks) {
+    this.ticks = ticks;
+  }
+
+  public static Price of(long ticks) {
+    return new Price(ticks);
+  }
+
+  public static Price of(double ticks) {
+    checkArgument(!Double.isNaN(ticks));
+    if (ticks > Long.MAX_VALUE)
+      return INF;
+    else if (ticks < Long.MIN_VALUE)
+      return NEG_INF;
+    else
+      return new Price(DoubleMath.roundToLong(ticks, HALF_EVEN));
+  }
+
+  @Override
+  public int intValue() {
+    return Ints.saturatedCast(ticks);
+  }
+
+  @Override
+  public long longValue() {
+    return ticks;
+  }
+
+  @Override
+  public float floatValue() {
+    return ticks;
+  }
+
+  @Override
+  public double doubleValue() {
+    return ticks;
+  }
+
+  /**
+   * Return 0 if price is negative
+   * 
+   * @return Non-negative version of the price.
+   */
+  public Price nonnegative() {
+    return ord.max(this, ZERO);
+  }
+
+  @Override
+  public int compareTo(Price price) {
+    checkNotNull(price);
+    if (this == INF) {
+      if (price == INF)
+        return 0;
+      else
+        return 1;
+    } else if (this == NEG_INF) {
+      if (price == NEG_INF)
+        return 0;
+      else
+        return -1;
+    } else {
+      return Long.compare(ticks, price.ticks);
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(ticks);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null || !(obj instanceof Price))
+      return false;
+    Price other = (Price) obj;
+    if (this == INF)
+      return other == INF;
+    else if (this == NEG_INF)
+      return other == NEG_INF;
+    else
+      return ticks == other.ticks;
+  }
+
+  @Override
+  public String toString() {
+    return "$" + ticks;
+  }
+
+  private static final long serialVersionUID = 772101228717034473L;
 
 }

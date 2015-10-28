@@ -16,61 +16,61 @@ import edu.umich.srg.marketsim.testing.MockAgent;
 import edu.umich.srg.marketsim.testing.MockSim;
 
 public class CDAMarketTest {
-	private MockSim sim;
-	private CDAMarket market;
-	private MockAgent agent;
-	private MarketView view;
-	
-	@Before
-	public void setup() {
-		sim = new MockSim();
-		market = CDAMarket.create(sim);
-		agent = new MockAgent();
-		view = market.getView(agent, TimeStamp.ZERO);
-	}
-	
-	@Test
-	public void addBid() {
-		view.submitOrder(BUY, Price.of(1), 1);
-		assertQuote(view.getQuote(), Price.of(1), null);
-	}
-	
-	@Test
-	public void addAsk() {
-		view.submitOrder(SELL, Price.of(1), 1);
-		assertQuote(view.getQuote(), null, Price.of(1));
-	}
-	
-	@Test
-	public void withdrawTest() {
-		OrderRecord order = view.submitOrder(SELL, Price.of(100), 1);
-		assertQuote(view.getQuote(), null, Price.of(100));
+  private MockSim sim;
+  private CDAMarket market;
+  private MockAgent agent;
+  private MarketView view;
 
-		view.withdrawOrder(order, order.quantity);
-		assertQuote(view.getQuote(), null, null);
-	}
-	
-	@Test
-	public void bidFirst() {
-		OrderRecord buy = view.submitOrder(BUY, Price.of(100), 1);
-		OrderRecord sell = view.submitOrder(SELL, Price.of(50), 1);
-		
-		assertQuote(view.getQuote(), null, null);
-		assertEquals(Price.of(100), agent.lastTransactionPrice);
-		assertTrue(view.getActiveOrders().isEmpty());
-		assertEquals(0, buy.getQuantity());
-		assertEquals(0, sell.getQuantity());
-	}
-	
-	@Test
-	public void askFirst() {
-		OrderRecord sell = view.submitOrder(SELL, Price.of(50), 1);
-		OrderRecord buy = view.submitOrder(BUY, Price.of(100), 1);
-		
-		assertQuote(view.getQuote(), null, null);
-		assertEquals(Price.of(50), agent.lastTransactionPrice);
-		assertTrue(view.getActiveOrders().isEmpty());
-		assertEquals(0, buy.getQuantity());
-		assertEquals(0, sell.getQuantity());
-	}
+  @Before
+  public void setup() {
+    sim = new MockSim();
+    market = CDAMarket.create(sim);
+    agent = new MockAgent();
+    view = market.getView(agent, TimeStamp.ZERO);
+  }
+
+  @Test
+  public void addBid() {
+    view.submitOrder(BUY, Price.of(1), 1);
+    assertQuote(view.getQuote(), Price.of(1), null);
+  }
+
+  @Test
+  public void addAsk() {
+    view.submitOrder(SELL, Price.of(1), 1);
+    assertQuote(view.getQuote(), null, Price.of(1));
+  }
+
+  @Test
+  public void withdrawTest() {
+    OrderRecord order = view.submitOrder(SELL, Price.of(100), 1);
+    assertQuote(view.getQuote(), null, Price.of(100));
+
+    view.withdrawOrder(order, order.quantity);
+    assertQuote(view.getQuote(), null, null);
+  }
+
+  @Test
+  public void bidFirst() {
+    OrderRecord buy = view.submitOrder(BUY, Price.of(100), 1);
+    OrderRecord sell = view.submitOrder(SELL, Price.of(50), 1);
+
+    assertQuote(view.getQuote(), null, null);
+    assertEquals(Price.of(100), agent.lastTransactionPrice);
+    assertTrue(view.getActiveOrders().isEmpty());
+    assertEquals(0, buy.getQuantity());
+    assertEquals(0, sell.getQuantity());
+  }
+
+  @Test
+  public void askFirst() {
+    OrderRecord sell = view.submitOrder(SELL, Price.of(50), 1);
+    OrderRecord buy = view.submitOrder(BUY, Price.of(100), 1);
+
+    assertQuote(view.getQuote(), null, null);
+    assertEquals(Price.of(50), agent.lastTransactionPrice);
+    assertTrue(view.getActiveOrders().isEmpty());
+    assertEquals(0, buy.getQuantity());
+    assertEquals(0, sell.getQuantity());
+  }
 }

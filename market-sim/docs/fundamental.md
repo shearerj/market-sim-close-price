@@ -1,5 +1,4 @@
-Fundamental Information
-=======================
+% Fundamental Value Information
 
 The market simulator uses a "fundamental" to give a common value to traded
 securities. In general, this fundamental could be a realization of any
@@ -8,7 +7,7 @@ Gaussian jumps. In the following sections are some equations that describe
 useful properties of the fundamental process.
 
 Mean Revering Gaussian Fundamental
-----------------------------------
+==================================
 
 The mean reverting Gaussian fundamental is a combination of two stochastic
 processes. The first decides when a "jump" happens. This is an independent
@@ -61,7 +60,7 @@ f_j &\sim \mathcal N (\mu_j, \sigma_j^2)
 \end{aligned} $$
 
 Appendix
---------
+========
 
 The Hypergeometric distribution is a somewhat expensive distribution to sample
 from. For repeated sampling from the same distribution, the standard inverse

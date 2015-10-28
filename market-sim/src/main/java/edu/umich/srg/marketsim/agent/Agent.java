@@ -8,22 +8,22 @@ import edu.umich.srg.marketsim.market.OrderRecord;
 
 public interface Agent {
 
-	void initilaize();
-	
-	double payoffForPosition(int position);
-	
-	JsonObject getFeatures();
-	
-	// Notifications
-	
-	void notifyOrderSubmitted(OrderRecord order);
+  void initilaize();
 
-	void notifyOrderWithrawn(OrderRecord order, int quantity);
-	
-	void notifyOrderTransacted(OrderRecord order, Price price, int quantity);
-	
-	void notifyQuoteUpdated(MarketView market);
-	
-	void notifyTransaction(MarketView market, Price price, int quantity);
-	
+  double payoffForPosition(int position);
+
+  JsonObject getFeatures();
+
+  // Notifications
+
+  void notifyOrderSubmitted(OrderRecord order);
+
+  void notifyOrderWithrawn(OrderRecord order, int quantity);
+
+  void notifyOrderTransacted(OrderRecord order, Price price, int quantity);
+
+  void notifyQuoteUpdated(MarketView market);
+
+  void notifyTransaction(MarketView market, Price price, int quantity);
+
 }

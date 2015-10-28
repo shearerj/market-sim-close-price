@@ -4,44 +4,43 @@ import java.io.Serializable;
 
 public class MatchedOrders<P extends Comparable<? super P>> implements Serializable {
 
-	private static final long serialVersionUID = -6073835626927361670L;
-	
-	protected final Order<P> buy;
-	protected final Order<P> sell;
-	protected final int quantity;
-	
-	protected MatchedOrders(Order<P> buy, Order<P> sell, int quantity) {
-		this.buy = buy;
-		this.sell = sell;
-		this.quantity = quantity;
-	}
+  private static final long serialVersionUID = -6073835626927361670L;
 
-	public Order<P> getBuy() {
-		return buy;
-	}
+  protected final Order<P> buy;
+  protected final Order<P> sell;
+  protected final int quantity;
 
-	public Order<P> getSell() {
-		return sell;
-	}
+  protected MatchedOrders(Order<P> buy, Order<P> sell, int quantity) {
+    this.buy = buy;
+    this.sell = sell;
+    this.quantity = quantity;
+  }
 
-	public int getQuantity() {
-		return quantity;
-	}
+  public Order<P> getBuy() {
+    return buy;
+  }
 
-	@Override
-	public final int hashCode() {
-		return super.hashCode();
-	}
+  public Order<P> getSell() {
+    return sell;
+  }
 
-	@Override
-	public final boolean equals(Object obj) {
-		return super.equals(obj);
-	}
-	
-	@Override
-	public String toString() {
-		return "<buy=" + buy + ", sell=" + sell + ", quantity="
-				+ quantity + ">";
-	}
+  public int getQuantity() {
+    return quantity;
+  }
+
+  @Override
+  public final int hashCode() {
+    return super.hashCode();
+  }
+
+  @Override
+  public final boolean equals(Object obj) {
+    return super.equals(obj);
+  }
+
+  @Override
+  public String toString() {
+    return "<buy=" + buy + ", sell=" + sell + ", quantity=" + quantity + ">";
+  }
 
 }

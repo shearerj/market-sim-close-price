@@ -1,11 +1,5 @@
 package edu.umich.srg.marketsim;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -35,138 +29,150 @@ import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.fundamental.GaussianMeanReverting;
 import edu.umich.srg.marketsim.market.Market;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
 public class CommandLineInterface {
-	
-	private static final String keyPrefix = "edu.umich.srg.marketsim.Keys$";
-	private static final CaseFormat keyCaseFormat = CaseFormat.LOWER_CAMEL;
-	private static final Splitter specSplitter = Splitter.on('_').omitEmptyStrings(); 
-	
-	public static void main(String[] args) throws IOException {
-		Runner.run(CommandLineInterface::simulate, args, keyPrefix, keyCaseFormat);
-	}
-	
-	public static Observation simulate(SimSpec spec, Log log, long obsNum) {
-		Spec configuration = spec.configuration.withDefault(Keys.DEFAULT_KEYS);
-		Random rand = new Random(configuration.get(RandomSeed.class) + obsNum);
 
-		Fundamental fundamental = GaussianMeanReverting.create(new Random(rand.nextLong()),
-				configuration.get(FundamentalMean.class), configuration.get(FundamentalMeanReversion.class),
-				configuration.get(FundamentalShockVar.class), configuration.get(FundamentalShockProb.class));
-		MarketSimulator sim = MarketSimulator.create(fundamental, log, new Random(rand.nextLong()));
-		log.setPrefix(l -> String.format("%6d | ", sim.getCurrentTime().get()));
+  private static final String keyPrefix = "edu.umich.srg.marketsim.Keys$";
+  private static final CaseFormat keyCaseFormat = CaseFormat.LOWER_CAMEL;
+  private static final Splitter specSplitter = Splitter.on('_').omitEmptyStrings();
 
-		List<Market> markets = addMarkets(sim, spec.configuration.get(Markets.class));
-		List<PlayerInfo> playerInfo = addPlayers(sim, fundamental, spec.assignment, markets, new Random(rand.nextLong()));
-		
-		sim.initialize();
-		sim.executeUntil(TimeStamp.of(configuration.get(SimLength.class)));
+  public static void main(String[] args) throws IOException {
+    Runner.run(CommandLineInterface::simulate, args, keyPrefix, keyCaseFormat);
+  }
 
-		// Update player observations
-		Map<Agent, Double> payoffs = sim.getAgentPayoffs();
-		for (PlayerInfo info : playerInfo) {
-			info.payoff = payoffs.get(info.agent);
-			info.features = info.agent.getFeatures();
-		}
-		
-		return new Observation() {
+  public static Observation simulate(SimSpec spec, Log log, long obsNum) {
+    Spec configuration = spec.configuration.withDefault(Keys.DEFAULT_KEYS);
+    Random rand = new Random(configuration.get(RandomSeed.class) + obsNum);
 
-			@Override
-			public Iterable<? extends Player> getPlayers() {
-				return playerInfo;
-			}
+    Fundamental fundamental = GaussianMeanReverting.create(new Random(rand.nextLong()),
+        configuration.get(FundamentalMean.class), configuration.get(FundamentalMeanReversion.class),
+        configuration.get(FundamentalShockVar.class),
+        configuration.get(FundamentalShockProb.class));
+    MarketSimulator sim = MarketSimulator.create(fundamental, log, new Random(rand.nextLong()));
+    log.setPrefix(l -> String.format("%6d | ", sim.getCurrentTime().get()));
 
-			@Override
-			public JsonObject getFeatures() {
-				return sim.computeFeatures();
-			}
-			
-		};
-	}
-	
-	private static List<Market> addMarkets(MarketSimulator sim, Iterable<String> marketSpecs) {
-		ImmutableList.Builder<Market> marketBuilder = ImmutableList.builder();
-		for (String stringSpec : marketSpecs) {
-			MarketCreator creator = EntityBuilder.marketNameMap.get(getType(stringSpec));
-			Spec marketSpec = getSpec(stringSpec).withDefault(Keys.DEFAULT_KEYS);
+    List<Market> markets = addMarkets(sim, spec.configuration.get(Markets.class), configuration);
+    List<PlayerInfo> playerInfo = addPlayers(sim, fundamental, spec.assignment, markets,
+        configuration, new Random(rand.nextLong()));
 
-			Market market = creator.createMarket(sim, marketSpec);
-			sim.addMarket(market);
-			marketBuilder.add(market);
-		}
-		return marketBuilder.build();
-	}
-	
-	private static List<PlayerInfo> addPlayers(MarketSimulator sim, Fundamental fundamental, Multiset<RoleStrat> assignment,
-			Collection<Market> markets, Random rand) {
-		Random marketRand = new Random(rand.nextLong());
-		Uniform<Market> marketSelection = Uniform.over(markets);
-		
-		ImmutableList.Builder<PlayerInfo> playerInfoBuilder = ImmutableList.builder();
-		for (Entry<RoleStrat> roleStratCounts : assignment.entrySet()) {
-			String strategy = roleStratCounts.getElement().getStrategy();
-			AgentCreator creator = EntityBuilder.agentNameMap.get(getType(strategy));
-			Spec agentSpec = getSpec(strategy).withDefault(Keys.DEFAULT_KEYS);
-			for (int i = 0; i < roleStratCounts.getCount(); ++i) {
-				Agent agent = creator.createAgent(sim, fundamental, markets, marketSelection.sample(marketRand), agentSpec, rand);
-				sim.addAgent(agent);
-				playerInfoBuilder.add(new PlayerInfo(roleStratCounts.getElement(), agent));
-			}
-		}
-		return playerInfoBuilder.build();
-	}
-	
-	private static String getType(String strategy) {
-		int index = strategy.indexOf(':');
-		return (index < 0 ? strategy : strategy.substring(0, index)).toLowerCase();
-	}
-	
-	private static Spec getSpec(String strategy) {
-		int index = strategy.indexOf(':');
-		if (index < 0)
-			return Spec.empty();
-		return Spec.fromPairs(keyPrefix, keyCaseFormat, specSplitter.split(strategy.substring(index + 1)));
-	}
-	
-	private static class PlayerInfo implements Player {
-		
-		private final String role, strategy;
-		private final Agent agent;
-		private double payoff;
-		private JsonObject features;
-		
-		private PlayerInfo(RoleStrat roleAndStrategy, Agent agent) {
-			this.role = roleAndStrategy.getRole();
-			this.strategy = roleAndStrategy.getStrategy();
-			this.agent = agent;
-			this.payoff = 0;
-			this.features = null;
-		}
+    sim.initialize();
+    sim.executeUntil(TimeStamp.of(configuration.get(SimLength.class)));
 
-		@Override
-		public String getRole() {
-			return role;
-		}
+    // Update player observations
+    Map<Agent, Double> payoffs = sim.getAgentPayoffs();
+    for (PlayerInfo info : playerInfo) {
+      info.payoff = payoffs.get(info.agent);
+      info.features = info.agent.getFeatures();
+    }
 
-		@Override
-		public String getStrategy() {
-			return strategy;
-		}
+    return new Observation() {
 
-		@Override
-		public double getPayoff() {
-			return payoff;
-		}
+      @Override
+      public Iterable<? extends Player> getPlayers() {
+        return playerInfo;
+      }
 
-		@Override
-		public JsonObject getFeatures() {
-			return features;
-		}
-		
-		@Override
-		public String toString() {
-			return role + ": " + strategy + " (" + payoff + ") " + features;
-		}
-		
-	}
-	
+      @Override
+      public JsonObject getFeatures() {
+        return sim.computeFeatures();
+      }
+
+    };
+  }
+
+  private static List<Market> addMarkets(MarketSimulator sim, Iterable<String> marketSpecs,
+      Spec configuration) {
+    ImmutableList.Builder<Market> marketBuilder = ImmutableList.builder();
+    for (String stringSpec : marketSpecs) {
+      MarketCreator creator = EntityBuilder.getMarketCreator(getType(stringSpec));
+      Spec marketSpec = getSpec(stringSpec).withDefault(configuration);
+
+      Market market = creator.createMarket(sim, marketSpec);
+      sim.addMarket(market);
+      marketBuilder.add(market);
+    }
+    return marketBuilder.build();
+  }
+
+  private static List<PlayerInfo> addPlayers(MarketSimulator sim, Fundamental fundamental,
+      Multiset<RoleStrat> assignment, Collection<Market> markets, Spec configuration, Random rand) {
+    Random marketRand = new Random(rand.nextLong());
+    Uniform<Market> marketSelection = Uniform.over(markets);
+
+    ImmutableList.Builder<PlayerInfo> playerInfoBuilder = ImmutableList.builder();
+    for (Entry<RoleStrat> roleStratCounts : assignment.entrySet()) {
+      String strategy = roleStratCounts.getElement().getStrategy();
+      AgentCreator creator = EntityBuilder.getAgentCreator(getType(strategy));
+      Spec agentSpec = getSpec(strategy).withDefault(configuration);
+
+      for (int i = 0; i < roleStratCounts.getCount(); ++i) {
+        Agent agent = creator.createAgent(sim, fundamental, markets,
+            marketSelection.sample(marketRand), agentSpec, rand);
+        sim.addAgent(agent);
+        playerInfoBuilder.add(new PlayerInfo(roleStratCounts.getElement(), agent));
+      }
+    }
+    return playerInfoBuilder.build();
+  }
+
+  private static String getType(String strategy) {
+    int index = strategy.indexOf(':');
+    return (index < 0 ? strategy : strategy.substring(0, index)).toLowerCase();
+  }
+
+  private static Spec getSpec(String strategy) {
+    int index = strategy.indexOf(':');
+    if (index < 0)
+      return Spec.empty();
+    return Spec.fromPairs(keyPrefix, keyCaseFormat,
+        specSplitter.split(strategy.substring(index + 1)));
+  }
+
+  private static class PlayerInfo implements Player {
+
+    private final String role, strategy;
+    private final Agent agent;
+    private double payoff;
+    private JsonObject features;
+
+    private PlayerInfo(RoleStrat roleAndStrategy, Agent agent) {
+      this.role = roleAndStrategy.getRole();
+      this.strategy = roleAndStrategy.getStrategy();
+      this.agent = agent;
+      this.payoff = 0;
+      this.features = null;
+    }
+
+    @Override
+    public String getRole() {
+      return role;
+    }
+
+    @Override
+    public String getStrategy() {
+      return strategy;
+    }
+
+    @Override
+    public double getPayoff() {
+      return payoff;
+    }
+
+    @Override
+    public JsonObject getFeatures() {
+      return features;
+    }
+
+    @Override
+    public String toString() {
+      return role + ": " + strategy + " (" + payoff + ") " + features;
+    }
+
+  }
+
 }
