@@ -54,3 +54,7 @@ logs/*
 /*.zip
 /*.tar.gz
 /bin
+
+# Misc #
+########
+/.recommenders

@@ -1,12 +1,14 @@
 package edu.umich.srg.marketsim;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableMap;
 
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.agent.NoOpAgent;
 import edu.umich.srg.marketsim.agent.NoiseAgent;
+import edu.umich.srg.marketsim.agent.ShockAgent;
 import edu.umich.srg.marketsim.agent.ZILAgent;
 import edu.umich.srg.marketsim.agent.ZIRAgent;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
@@ -35,6 +37,7 @@ class EntityBuilder {
           .put("noop", NoOpAgent::createFromSpec) // No op agents that do nothing
           .put("zir", ZIRAgent::createFromSpec) // Standard ZI agents with re-entry
           .put("zil", ZILAgent::createFromSpec) // ZI agents that learn from noisy observations
+          .put("shock", ShockAgent::createFromSpec) // Shock agent that buys a lot at a random time
           .build();
 
   private static final Map<String, MarketCreator> marketNameMap =
