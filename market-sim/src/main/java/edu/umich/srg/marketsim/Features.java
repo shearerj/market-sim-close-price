@@ -1,9 +1,12 @@
 package edu.umich.srg.marketsim;
 
-import com.google.gson.JsonElement;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
+import edu.umich.srg.collect.SparseList;
 import edu.umich.srg.marketsim.market.Market;
+import edu.umich.srg.util.Sparse;
 import edu.umich.srg.util.SummStats;
 
 import java.util.HashMap;
@@ -29,29 +32,42 @@ class Features {
 
   JsonObject computeFeatures(MarketSimulator simulator) {
     JsonObject features = new JsonObject();
-    
+
     // Summary features
     for (Entry<String, SummStats> entry : summaryFeatures.entrySet()) {
       String key = entry.getKey().toLowerCase().replace(' ', '_');
       features.addProperty(key + "_c", entry.getValue().getCount());
       features.addProperty(key + "_a", entry.getValue().getAverage());
     }
-    
+
+    // Fundamental features
+    Iterable<? extends SparseList.Entry<? extends Number>> fundamental =
+        simulator.getFundamental().getInfo().getFundamentalValues();
+    addSparseData(features, fundamental, "fundamental");
+
     // Market features
     for (Market market : simulator.getMarkets()) {
-      merge(market.getFeatures(), features, (market + "_").toLowerCase().replace(' ', '_'));
+      String marketTag = market.toString().toLowerCase().replace(' ', '_');
+      Iterable<? extends SparseList.Entry<? extends Number>> prices =
+          market.getMarketInfo().getPrices();
+      addSparseData(features, prices, marketTag);
+      features.addProperty(marketTag + "_rmsd", Sparse.rmsd(fundamental, prices));
     }
-    
-    // Fundamental features
-    merge(simulator.getFundamental().getFeatures(), features, "");
 
     return features;
   }
-  
-  private static void merge(JsonObject copied, JsonObject modified, String prefix) {
-    for (Entry<String, JsonElement> e : copied.entrySet()) {
-      modified.add(prefix + e.getKey(), e.getValue());
+
+  private static void addSparseData(JsonObject root,
+      Iterable<? extends SparseList.Entry<? extends Number>> data, String prefix) {
+    JsonArray prices = new JsonArray();
+    JsonArray indices = new JsonArray();
+    for (SparseList.Entry<? extends Number> obs : data) {
+      prices.add(new JsonPrimitive(obs.getElement().doubleValue()));
+      indices.add(new JsonPrimitive(obs.getIndex()));
     }
+
+    root.add(prefix + "_prices", prices);
+    root.add(prefix + "_indices", indices);
   }
 
 }

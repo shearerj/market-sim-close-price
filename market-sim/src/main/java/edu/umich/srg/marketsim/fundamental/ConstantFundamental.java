@@ -1,11 +1,12 @@
 package edu.umich.srg.marketsim.fundamental;
 
-import com.google.gson.JsonObject;
-
+import edu.umich.srg.collect.SparseList;
+import edu.umich.srg.collect.SparseList.Entry;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 
 import java.io.Serializable;
+import java.util.Collections;
 
 public class ConstantFundamental implements Fundamental, Serializable {
 
@@ -28,11 +29,18 @@ public class ConstantFundamental implements Fundamental, Serializable {
     return constant;
   }
 
-  private static final long serialVersionUID = 1;
-
   @Override
-  public JsonObject getFeatures() {
-    return new JsonObject();
+  public FundamentalInfo getInfo() {
+    return new FundamentalInfo() {
+
+      @Override
+      public Iterable<? extends Entry<? extends Number>> getFundamentalValues() {
+        return Collections.singleton(SparseList.immutableEntry(0, constant));
+      }
+
+    };
   }
+
+  private static final long serialVersionUID = 1;
 
 }

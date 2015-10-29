@@ -18,7 +18,7 @@ public interface SparseList<E> extends Iterable<Entry<E>> {
 
   }
 
-  static <E> Entry<E> immutableEntry(long index, E element) {
+  public static <E> Entry<E> immutableEntry(long index, E element) {
     return new Entry<E>() {
 
       @Override

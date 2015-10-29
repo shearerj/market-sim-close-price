@@ -4,7 +4,6 @@ import static edu.umich.srg.fourheap.Order.OrderType.BUY;
 
 import com.google.gson.JsonObject;
 
-import edu.umich.srg.distributions.Uniform;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.Keys.NumShockOrders;
@@ -33,6 +32,7 @@ public class ShockAgent implements Agent {
   private final Price orderPrice;
   private final TimeStamp arrivalTime;
   private final Predicate<Quote> submitFunction;
+
   private int ordersToSubmit;
   private boolean waitingToSubmit;
 
@@ -40,11 +40,11 @@ public class ShockAgent implements Agent {
     this.sim = sim;
     this.market = market.getView(this, TimeStamp.ZERO);
     this.arrivalTime =
-        TimeStamp.of(Uniform.openClosed(0, spec.get(SimLength.class)).sample(rand));
+        TimeStamp.of(spec.get(SimLength.class) / 2);
     this.type = spec.get(Type.class);
     this.orderPrice = type == BUY ? Price.INF : Price.ZERO;
     this.submitFunction =
-        type == BUY ? q -> q.getAskPrice().isPresent() : q -> q.getBidPrice().isPresent();
+        type == BUY ? (q -> q.getAskPrice().isPresent()) : (q -> q.getBidPrice().isPresent());
     this.ordersToSubmit = spec.get(NumShockOrders.class);
     this.waitingToSubmit = false;
   }
@@ -55,13 +55,11 @@ public class ShockAgent implements Agent {
   }
 
   private void strategy() {
-    if (ordersToSubmit == 0) {
-      // Do nothing
-    } else if (submitFunction.test(market.getQuote())) {
+    if (ordersToSubmit > 0 && submitFunction.test(market.getQuote())) {
       market.submitOrder(type, orderPrice, 1);
       --ordersToSubmit;
       waitingToSubmit = false;
-    } else {
+    } else if (ordersToSubmit > 0) {
       waitingToSubmit = true;
     }
   }
@@ -89,7 +87,7 @@ public class ShockAgent implements Agent {
 
   @Override
   public void notifyOrderTransacted(OrderRecord order, Price price, int quantity) {
-    strategy();
+    waitingToSubmit = true;
   }
 
   @Override

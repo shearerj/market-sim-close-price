@@ -4,9 +4,6 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 
 import edu.umich.srg.collect.SparseArrayList;
 import edu.umich.srg.collect.SparseList;
@@ -129,19 +126,15 @@ abstract class AbstractMarket implements Market, Serializable {
   }
 
   @Override
-  public JsonObject getFeatures() {
-    JsonObject features = new JsonObject();
+  public MarketInfo getMarketInfo() {
+    return new MarketInfo() {
 
-    JsonArray marketPrices = new JsonArray();
-    JsonArray indices = new JsonArray();
-    for (SparseList.Entry<Number> entry : prices) {
-      marketPrices.add(new JsonPrimitive(entry.getElement().doubleValue()));
-      indices.add(new JsonPrimitive(entry.getIndex()));
-    }
+      @Override
+      public Iterable<? extends SparseList.Entry<? extends Number>> getPrices() {
+        return prices;
+      }
 
-    features.add("prices", marketPrices);
-    features.add("indices", indices);
-    return features;
+    };
   }
 
   @Override

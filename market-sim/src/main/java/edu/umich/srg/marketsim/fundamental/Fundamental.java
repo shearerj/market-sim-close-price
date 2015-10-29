@@ -1,7 +1,6 @@
 package edu.umich.srg.marketsim.fundamental;
 
-import com.google.gson.JsonObject;
-
+import edu.umich.srg.collect.SparseList;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 
@@ -13,6 +12,12 @@ public interface Fundamental {
 
   Price getValueAt(TimeStamp time);
 
-  JsonObject getFeatures();
-
+  FundamentalInfo getInfo();
+  
+  public interface FundamentalInfo {
+    
+    Iterable<? extends SparseList.Entry<? extends Number>> getFundamentalValues();
+    
+  }
+  
 }

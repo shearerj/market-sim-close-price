@@ -18,4 +18,8 @@ report:
 docs: force
 	$(MAKE) -C docs
 
+clean:
+	@echo mvn clean
+	@mvn clean | $(COLOR)
+
 force:

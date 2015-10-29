@@ -1,7 +1,6 @@
 package edu.umich.srg.marketsim.market;
 
-import com.google.gson.JsonObject;
-
+import edu.umich.srg.collect.SparseList;
 import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
@@ -16,8 +15,8 @@ public interface Market {
   MarketView getView(Agent agent, TimeStamp latency);
 
   Iterable<Entry<Agent, AgentInfo>> getAgentInfo();
-
-  JsonObject getFeatures();
+  
+  MarketInfo getMarketInfo();
 
   public interface MarketView {
 
@@ -47,6 +46,12 @@ public interface Market {
       withdrawOrder(record, record.getQuantity());
     }
 
+  }
+  
+  static interface MarketInfo {
+    
+    Iterable<? extends SparseList.Entry<? extends Number>> getPrices();
+    
   }
 
   static interface AgentInfo {

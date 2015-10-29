@@ -1,10 +1,9 @@
 package edu.umich.srg.marketsim.fundamental;
 
 import com.google.common.primitives.Ints;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 
+import edu.umich.srg.collect.SparseList;
+import edu.umich.srg.collect.SparseList.Entry;
 import edu.umich.srg.distributions.Binomial;
 import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.distributions.Hypergeometric;
@@ -88,17 +87,15 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     }
 
     @Override
-    public JsonObject getFeatures() {
-      JsonObject features = new JsonObject();
+    public FundamentalInfo getInfo() {
+      return new FundamentalInfo() {
 
-      JsonArray prices = new JsonArray();
-      JsonArray indices = new JsonArray();
-      prices.add(new JsonPrimitive(constant));
-      indices.add(new JsonPrimitive(0));
+        @Override
+        public Iterable<? extends Entry<? extends Number>> getFundamentalValues() {
+          return Collections.singleton(SparseList.immutableEntry(0, constant));
+        }
 
-      features.add("fundamental_prices", prices);
-      features.add("fundamental_indices", indices);
-      return features;
+      };
     }
 
     private static final long serialVersionUID = 1;
@@ -144,19 +141,15 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     }
 
     @Override
-    public JsonObject getFeatures() {
-      JsonObject features = new JsonObject();
-
-      JsonArray prices = new JsonArray();
-      JsonArray indices = new JsonArray();
-      for (F obs : fundamental) {
-        prices.add(new JsonPrimitive(obs.price));
-        indices.add(new JsonPrimitive(obs.time));
-      }
-
-      features.add("fundamental_prices", prices);
-      features.add("fundamental_indices", indices);
-      return features;
+    public FundamentalInfo getInfo() {
+      return new FundamentalInfo() {
+        
+        @Override
+        public Iterable<? extends Entry<? extends Number>> getFundamentalValues() {
+          return Collections.unmodifiableCollection(fundamental);
+        }
+        
+      };
     }
 
     protected abstract F observeFuture(F last, long time);
@@ -344,7 +337,7 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
   }
 
   private static class FundamentalObservation
-      implements Comparable<FundamentalObservation>, Serializable {
+      implements Comparable<FundamentalObservation>, SparseList.Entry<Double>, Serializable {
 
     final long time;
     final double price;
@@ -359,7 +352,17 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
       return Long.compare(time, other.time);
     }
 
-    private static final long serialVersionUID = 4806534532016024491L;
+    @Override
+    public long getIndex() {
+      return time;
+    }
+
+    @Override
+    public Double getElement() {
+      return price;
+    }
+
+    private static final long serialVersionUID = 1;
 
   }
 
