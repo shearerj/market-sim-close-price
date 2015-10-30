@@ -119,7 +119,40 @@ public class IntegrationTest {
 
 
     Runner.run(CommandLineInterface::simulate, specReader, obsData, logData, 1,
-        Level.DEBUG.ordinal(), true, keyPrefix, keyCaseFormat);
+        Level.DEBUG.ordinal(), 1, true, keyPrefix, keyCaseFormat);
+
+    assertFalse(logData.toString().isEmpty());
+    assertFalse(obsData.toString().isEmpty());
+
+    JsonObject observation = gson.fromJson(obsData.toString(), JsonObject.class);
+    assertFalse(observation.has("features"));
+    assertTrue(observation.has("players"));
+    assertEquals(10, observation.getAsJsonArray("players").size());
+    assertEquals(0,
+        StreamSupport.stream(observation.getAsJsonArray("players").spliterator(), false)
+            .mapToDouble(p -> p.getAsJsonObject().getAsJsonPrimitive("payoff").getAsDouble()).sum(),
+        eps);
+    for (JsonElement player : observation.getAsJsonArray("players"))
+      assertFalse(player.getAsJsonObject().has("features"));
+  }
+  
+  @Test
+  public void multiThreadEgtaTest() {
+    int numAgents = 10;
+    StringWriter logData = new StringWriter(), obsData = new StringWriter();
+
+    Spec agentSpec = Spec.fromPairs(ArrivalRate.class, 0.5);
+    Spec configuration = Spec.fromPairs(SimLength.class, 10l, Markets.class,
+        ImmutableList.of("cda"), FundamentalMeanReversion.class, 0d, FundamentalShockVar.class, 0d);
+
+    Multiset<RoleStrat> assignment = HashMultiset.create(1);
+    assignment.add(RoleStrat.of("role", toStratString("noise", agentSpec)), numAgents);
+    SimSpec spec = SimSpec.create(assignment, configuration);
+    Reader specReader = toReader(spec);
+
+
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, logData, 1,
+        Level.DEBUG.ordinal(), 2, true, keyPrefix, keyCaseFormat);
 
     assertFalse(logData.toString().isEmpty());
     assertFalse(obsData.toString().isEmpty());
@@ -150,7 +183,7 @@ public class IntegrationTest {
 
 
     Runner.run(CommandLineInterface::simulate, specReader, obsData, logData, 1,
-        Level.DEBUG.ordinal(), false, keyPrefix, keyCaseFormat);
+        Level.DEBUG.ordinal(), 1, false, keyPrefix, keyCaseFormat);
 
     assertTrue(logData.toString().isEmpty());
     assertFalse(obsData.toString().isEmpty());
@@ -183,7 +216,7 @@ public class IntegrationTest {
 
 
     Runner.run(CommandLineInterface::simulate, specReader, obsData, logData, 1,
-        Level.DEBUG.ordinal(), false, keyPrefix, keyCaseFormat);
+        Level.DEBUG.ordinal(), 1, false, keyPrefix, keyCaseFormat);
 
     assertFalse(logData.toString().isEmpty());
     assertFalse(obsData.toString().isEmpty());

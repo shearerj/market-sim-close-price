@@ -45,7 +45,7 @@ public class CommandLineInterface {
     Runner.run(CommandLineInterface::simulate, args, keyPrefix, keyCaseFormat);
   }
 
-  public static Observation simulate(SimSpec spec, Log log, long obsNum) {
+  public static Observation simulate(SimSpec spec, Log log, int obsNum) {
     Spec configuration = spec.configuration.withDefault(Keys.DEFAULT_KEYS);
     Random rand = new Random(configuration.get(RandomSeed.class) + obsNum);
 

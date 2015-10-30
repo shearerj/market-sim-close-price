@@ -3,11 +3,17 @@ package edu.umich.srg.distributions;
 import static edu.umich.srg.util.StatisticalAssertions.assertKnownChiSquared;
 import static org.junit.Assert.assertEquals;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Random;
 
+/*
+ * These tests will all fail with some probability so they aren't run by default. It is believed
+ * that this code is accurate. If the hypergeometric code is changed, these should be rerun.
+ */
+@Ignore
 public class HypergeometricTest {
 
   private static final Random rand = new Random();

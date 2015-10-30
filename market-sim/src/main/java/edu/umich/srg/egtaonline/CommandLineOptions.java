@@ -25,7 +25,10 @@ public class CommandLineOptions {
 
   @Option(name = {"-v"}, description = "Verbosity of logging. (default: 0)")
   public int verbosity = 0;
-
+  
+  @Option(name = {"-j"}, description = "Number of threads to use for processing. 0 implies number of cores. (default: 0)")
+  public int jobs = 0; 
+  
   @Option(name = {"--egta"},
       description = "Flag that this is running on egta. Disables logging among other things. (default: false)")
   public boolean egta = false;
