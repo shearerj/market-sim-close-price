@@ -143,6 +143,7 @@ public class Runner {
 
     if (options.help.help) {
       options.help.showHelp();
+      // FIXME Not properly exiting after help
     } else {
       try (Reader in = openin(options.simspec);
           Writer out = openout(options.observations);
