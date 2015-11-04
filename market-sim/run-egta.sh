@@ -16,8 +16,9 @@ set -euf -o pipefail
 DIR="$(dirname "$0")"
 
 # Check if on flux. If so add java 8 to path
-if [[ "$(hostname)" == *arc-ts* ]]; then
-    export PATH="/nfs/wellman_ls/java/:$PATH"
+if [[ "$(hostname)" == *'arc-ts.umich.edu' ]]; then
+    export PATH="/nfs/wellman_ls/bin/:$PATH"
+    module load coreutils
 fi
 
 # Execution
