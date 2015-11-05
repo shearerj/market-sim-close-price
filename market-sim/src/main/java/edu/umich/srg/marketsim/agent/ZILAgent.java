@@ -64,10 +64,10 @@ public class ZILAgent implements Agent {
     this.market = market.getView(this, TimeStamp.ZERO);
     this.fundamental = FundamentalView.create(sim, fundamental, TimeStamp.ZERO,
         spec.get(FundamentalObservationVariance.class), rand);
-    this.estimator = NoisyFundamentalEstimator.create(spec.get(SimLength.class),
-        spec.get(FundamentalMean.class), spec.get(FundamentalMeanReversion.class),
-        spec.get(FundamentalShockVar.class), spec.get(FundamentalObservationVariance.class),
-        spec.get(PriceVarianceEstimate.class) * spec.get(FundamentalObservationVariance.class));
+    this.estimator =
+        NoisyFundamentalEstimator.create(spec.get(SimLength.class), spec.get(FundamentalMean.class),
+            spec.get(FundamentalMeanReversion.class), spec.get(FundamentalShockVar.class),
+            spec.get(FundamentalObservationVariance.class), spec.get(PriceVarianceEstimate.class));
     this.maxPosition = spec.get(MaxPosition.class);
     this.privateValue = GaussianPrivateValue.generate(rand, spec.get(MaxPosition.class),
         spec.get(PrivateValueVar.class));
