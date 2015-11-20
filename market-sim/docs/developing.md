@@ -72,7 +72,12 @@ clean
   : Remove all java byproducts. This probably won't be necessary, but it exists
   just in case.
 
+To remove the syntax highlighting add `COLOR=cat` to any command invocation.
+
 Style
 =====
 
-We currently use the [Google Style Guide](http://google.github.io/styleguide/javaguide.html).
+We currently use the [Google Style
+Guide](http://google.github.io/styleguide/javaguide.html). In the `resouces`
+folder there are two files (`eclipse-java-google-style.xml` and
+`google-style.importorder`) to help enforce this style in Eclipse.
