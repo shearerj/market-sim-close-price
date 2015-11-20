@@ -2,7 +2,7 @@
 # usage: see `make help`
 
 # Color the output of maven with long but simple sed script
-COLOR = sed -E -e "/^\\[ERROR\\]/{s/^/`tput setaf 1`/;s/\$$/`tput sgr0`/}" -e "/^\\[WARNING\\]/{s/^/`tput setaf 3`/;s/\$$/`tput sgr0`/}" -e "/BUILD FAILURE$$/{s/^/`tput setaf 1`/;s/\$$/`tput sgr0`/}" -e "/BUILD SUCCESS$$/{s/^/`tput setaf 2`/;s/\$$/`tput sgr0`/}" -e "/^Tests run: ([0-9]+), Failures: 0, Errors: 0, Skipped: \1/{s/^/`tput dim`/;s/\$$/`tput sgr0`/}" -e "/^Tests run: [0-9]+, Failures: 0, Errors: 0/{s/^/`tput setaf 2`/;s/\$$/`tput sgr0`/}" -e "/^Tests run: [0-9]+/{/Failures: 0, Errors: 0/!{s/^/`tput setaf 1`/;s/\$$/`tput sgr0`/};}"
+COLOR = sed -Ef resources/mvn_color.sed
 
 # Current directory
 PWD := $(shell pwd)
