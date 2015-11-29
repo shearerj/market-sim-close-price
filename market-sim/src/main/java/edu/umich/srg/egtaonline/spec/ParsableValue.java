@@ -133,21 +133,23 @@ public abstract class ParsableValue<T> extends Value<T> {
     }
   }
 
+  // Not that for conversion to enums, underscores in enum names are replaced with '.'s
   private static final class EnumConverter<T extends Enum<T>> extends Converter<String, T> {
     private Class<T> clazz;
+    private static final char underscore_replacement = '.';
 
     private EnumConverter(Class<T> clazz) {
       this.clazz = clazz;
     }
-
+    
     @Override
     protected String doBackward(T enumerated) {
-      return enumerated.toString();
+      return enumerated.toString().replace('_', underscore_replacement);
     }
 
     @Override
     protected T doForward(String string) {
-      return Enum.valueOf(clazz, string);
+      return Enum.valueOf(clazz, string.replace(underscore_replacement , '_'));
     }
   }
 
