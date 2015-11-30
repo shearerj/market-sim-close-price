@@ -106,7 +106,8 @@ abstract class AbstractMarket implements Market, Serializable {
   }
 
   void updateQuote() {
-    Quote quote = new Quote(orderbook.bidQuote(), orderbook.askQuote());
+    Quote quote = new Quote(orderbook.bidQuote(), orderbook.getBidDepth(), orderbook.askQuote(),
+        orderbook.getAskDepth());
     for (AbstractMarketView view : views)
       view.setQuote(quote);
   }

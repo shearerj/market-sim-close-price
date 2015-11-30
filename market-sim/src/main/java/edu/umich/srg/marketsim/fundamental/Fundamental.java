@@ -13,11 +13,11 @@ public interface Fundamental {
   Price getValueAt(TimeStamp time);
 
   FundamentalInfo getInfo();
-  
+
   public interface FundamentalInfo {
-    
+
     Iterable<? extends SparseList.Entry<? extends Number>> getFundamentalValues();
-    
+
   }
-  
+
 }

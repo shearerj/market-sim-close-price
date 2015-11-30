@@ -143,12 +143,12 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     @Override
     public FundamentalInfo getInfo() {
       return new FundamentalInfo() {
-        
+
         @Override
         public Iterable<? extends Entry<? extends Number>> getFundamentalValues() {
           return Collections.unmodifiableCollection(fundamental);
         }
-        
+
       };
     }
 

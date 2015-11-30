@@ -94,7 +94,8 @@ public class Spec {
    */
 
   public <T> T get(Class<? extends Value<T>> key) {
-    Value<T> val = checkNotNull(map.getInstance(key), "Key \"%s\" does not exist in spec", key.getSimpleName());
+    Value<T> val = checkNotNull(map.getInstance(key), "Key \"%s\" does not exist in spec",
+        key.getSimpleName());
     return val.get();
   }
 

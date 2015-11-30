@@ -77,7 +77,9 @@ public class FourHeapTest {
     assertTrue(fh.sellUnmatched.isEmpty());
     assertEquals((Integer) 5, fh.bidQuote());
     assertEquals(null, fh.askQuote());
-    assertEquals(3, fh.numberOfUnits());
+    assertEquals(3, fh.getNumberOfUnits());
+    assertEquals(3, fh.getBidDepth());
+    assertEquals(0, fh.getAskDepth());
     assertInvariants(fh);
   }
 
@@ -91,7 +93,9 @@ public class FourHeapTest {
     assertFalse(fh.sellUnmatched.isEmpty());
     assertEquals(null, fh.bidQuote());
     assertEquals((Integer) 5, fh.askQuote());
-    assertEquals(3, fh.numberOfUnits());
+    assertEquals(3, fh.getNumberOfUnits());
+    assertEquals(0, fh.getBidDepth());
+    assertEquals(3, fh.getAskDepth());
     assertInvariants(fh);
   }
 
@@ -106,7 +110,9 @@ public class FourHeapTest {
     assertTrue(fh.sellUnmatched.isEmpty());
     assertEquals((Integer) 5, fh.bidQuote());
     assertEquals((Integer) 7, fh.askQuote());
-    assertEquals(6, fh.numberOfUnits());
+    assertEquals(6, fh.getNumberOfUnits());
+    assertEquals(3, fh.getBidDepth());
+    assertEquals(3, fh.getAskDepth());
     assertInvariants(fh);
   }
 
@@ -121,7 +127,9 @@ public class FourHeapTest {
     assertFalse(fh.sellUnmatched.isEmpty());
     assertEquals((Integer) 5, fh.bidQuote());
     assertEquals((Integer) 5, fh.askQuote());
-    assertEquals(8, fh.numberOfUnits());
+    assertEquals(8, fh.getNumberOfUnits());
+    assertEquals(3, fh.getBidDepth());
+    assertEquals(5, fh.getAskDepth());
     assertInvariants(fh);
   }
 
@@ -136,7 +144,9 @@ public class FourHeapTest {
     assertTrue(fh.sellUnmatched.isEmpty());
     assertEquals((Integer) 7, fh.bidQuote());
     assertEquals((Integer) 7, fh.askQuote());
-    assertEquals(8, fh.numberOfUnits());
+    assertEquals(8, fh.getNumberOfUnits());
+    assertEquals(5, fh.getBidDepth());
+    assertEquals(3, fh.getAskDepth());
     assertInvariants(fh);
   }
 
@@ -147,7 +157,9 @@ public class FourHeapTest {
     fh.submit(BUY, 4, 1);
     assertEquals((Integer) 5, fh.bidQuote());
     assertEquals((Integer) 7, fh.askQuote());
-    assertEquals(7, fh.numberOfUnits());
+    assertEquals(7, fh.getNumberOfUnits());
+    assertEquals(4, fh.getBidDepth());
+    assertEquals(3, fh.getAskDepth());
     assertInvariants(fh);
   }
 
@@ -158,7 +170,9 @@ public class FourHeapTest {
     fh.submit(BUY, 6, 1);
     assertEquals((Integer) 6, fh.bidQuote());
     assertEquals((Integer) 7, fh.askQuote());
-    assertEquals(7, fh.numberOfUnits());
+    assertEquals(7, fh.getNumberOfUnits());
+    assertEquals(4, fh.getBidDepth());
+    assertEquals(3, fh.getAskDepth());
     assertInvariants(fh);
   }
 
@@ -169,7 +183,9 @@ public class FourHeapTest {
     fh.submit(BUY, 8, 1);
     assertEquals((Integer) 7, fh.bidQuote());
     assertEquals((Integer) 7, fh.askQuote());
-    assertEquals(7, fh.numberOfUnits());
+    assertEquals(7, fh.getNumberOfUnits());
+    assertEquals(4, fh.getBidDepth());
+    assertEquals(3, fh.getAskDepth());
     assertInvariants(fh);
   }
 
@@ -185,7 +201,9 @@ public class FourHeapTest {
     assertTrue(fh.sellUnmatched.isEmpty());
     assertEquals((Integer) 5, fh.bidQuote());
     assertEquals(null, fh.askQuote());
-    assertEquals(1, fh.numberOfUnits());
+    assertEquals(1, fh.getNumberOfUnits());
+    assertEquals(1, fh.getBidDepth());
+    assertEquals(0, fh.getAskDepth());
     assertInvariants(fh);
 
     fh.withdraw(o);
@@ -197,7 +215,9 @@ public class FourHeapTest {
     assertTrue(fh.sellUnmatched.isEmpty());
     assertEquals(null, fh.bidQuote());
     assertEquals(null, fh.askQuote());
-    assertEquals(0, fh.numberOfUnits());
+    assertEquals(0, fh.getNumberOfUnits());
+    assertEquals(0, fh.getBidDepth());
+    assertEquals(0, fh.getAskDepth());
     assertInvariants(fh);
   }
 
@@ -213,7 +233,9 @@ public class FourHeapTest {
     assertFalse(fh.sellUnmatched.isEmpty());
     assertEquals(null, fh.bidQuote());
     assertEquals((Integer) 5, fh.askQuote());
-    assertEquals(1, fh.numberOfUnits());
+    assertEquals(1, fh.getNumberOfUnits());
+    assertEquals(0, fh.getBidDepth());
+    assertEquals(1, fh.getAskDepth());
     assertInvariants(fh);
 
     fh.withdraw(o);
@@ -225,7 +247,9 @@ public class FourHeapTest {
     assertTrue(fh.sellUnmatched.isEmpty());
     assertEquals(null, fh.bidQuote());
     assertEquals(null, fh.askQuote());
-    assertEquals(0, fh.numberOfUnits());
+    assertEquals(0, fh.getNumberOfUnits());
+    assertEquals(0, fh.getBidDepth());
+    assertEquals(0, fh.getAskDepth());
     assertInvariants(fh);
   }
 
@@ -241,7 +265,9 @@ public class FourHeapTest {
     assertFalse(fh.sellUnmatched.isEmpty());
     assertEquals((Integer) 5, fh.bidQuote());
     assertEquals((Integer) 5, fh.askQuote());
-    assertEquals(4, fh.numberOfUnits());
+    assertEquals(4, fh.getNumberOfUnits());
+    assertEquals(1, fh.getBidDepth());
+    assertEquals(3, fh.getAskDepth());
     assertInvariants(fh);
 
     fh.withdraw(os);
@@ -252,7 +278,9 @@ public class FourHeapTest {
     assertTrue(fh.sellUnmatched.isEmpty());
     assertEquals((Integer) 7, fh.bidQuote());
     assertEquals(null, fh.askQuote());
-    assertEquals(1, fh.numberOfUnits());
+    assertEquals(1, fh.getNumberOfUnits());
+    assertEquals(1, fh.getBidDepth());
+    assertEquals(0, fh.getAskDepth());
     assertInvariants(fh);
   }
 
@@ -268,7 +296,9 @@ public class FourHeapTest {
     assertTrue(fh.sellUnmatched.isEmpty());
     assertEquals((Integer) 7, fh.bidQuote());
     assertEquals((Integer) 7, fh.askQuote());
-    assertEquals(5, fh.numberOfUnits());
+    assertEquals(5, fh.getNumberOfUnits());
+    assertEquals(3, fh.getBidDepth());
+    assertEquals(2, fh.getAskDepth());
     assertInvariants(fh);
 
     fh.withdraw(ob);
@@ -279,7 +309,9 @@ public class FourHeapTest {
     assertFalse(fh.sellUnmatched.isEmpty());
     assertEquals(null, fh.bidQuote());
     assertEquals((Integer) 5, fh.askQuote());
-    assertEquals(2, fh.numberOfUnits());
+    assertEquals(2, fh.getNumberOfUnits());
+    assertEquals(0, fh.getBidDepth());
+    assertEquals(2, fh.getAskDepth());
     assertInvariants(fh);
   }
 
@@ -295,7 +327,9 @@ public class FourHeapTest {
     assertFalse(fh.sellUnmatched.isEmpty());
     assertEquals((Integer) 5, fh.bidQuote());
     assertEquals((Integer) 5, fh.askQuote());
-    assertEquals(4, fh.numberOfUnits());
+    assertEquals(4, fh.getNumberOfUnits());
+    assertEquals(1, fh.getBidDepth());
+    assertEquals(3, fh.getAskDepth());
     assertInvariants(fh);
   }
 
@@ -376,7 +410,9 @@ public class FourHeapTest {
     assertEquals(ob, trans.getBuy());
     assertEquals(2, trans.getQuantity());
     assertEquals(1, ob.unmatchedQuantity);
-    assertEquals(1, fh.numberOfUnits());
+    assertEquals(1, fh.getNumberOfUnits());
+    assertEquals(1, fh.getBidDepth());
+    assertEquals(0, fh.getAskDepth());
     assertFalse(fh.contains(os));
     assertTrue(fh.contains(ob));
     assertInvariants(fh);
@@ -391,7 +427,9 @@ public class FourHeapTest {
 
     assertEquals(2, transactions.size());
     assertInvariants(fh);
-    assertEquals(1, fh.numberOfUnits());
+    assertEquals(1, fh.getNumberOfUnits());
+    assertEquals(0, fh.getBidDepth());
+    assertEquals(1, fh.getAskDepth());
     assertFalse(fh.contains(os));
     assertFalse(fh.contains(ob));
 
@@ -562,6 +600,7 @@ public class FourHeapTest {
     assertTrue(bi == null || si == null || bi.price >= si.price);
     assertTrue(bid == null || ask == null || bid <= ask);
     assertEquals(matchedSize(fh.sellMatched), matchedSize(fh.buyMatched));
+    assertEquals(fh.getNumberOfUnits(), fh.getBidDepth() + fh.getAskDepth());
   }
 
 }

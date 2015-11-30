@@ -220,16 +220,16 @@ public class NoisyFundamentalEstimatorTest {
         NoisyFundamentalEstimator.create(simLength, mean, meanReversion, shockVariance, 0, 0);
     GaussianFundamentalEstimator groundTruth =
         GaussianFundamentalEstimator.create(simLength, mean, meanReversion);
-    
+
     IntUniform nextTime = Uniform.closed(1, 3);
     int time = 0;
     while (time < simLength) {
       TimeStamp t = TimeStamp.of(time);
-      
+
       Price obs = fund.getValueAt(t);
       estimator.addFundamentalObservation(t, obs);
       assertEquals(groundTruth.estimate(t, obs), estimator.estimate(), eps);
-      
+
       time += nextTime.sample(rand);
     }
   }

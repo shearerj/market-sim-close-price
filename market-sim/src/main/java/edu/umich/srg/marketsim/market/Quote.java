@@ -13,13 +13,16 @@ import java.util.Optional;
  */
 public class Quote implements Serializable {
 
-  private static final Quote empty = new Quote(null, null);
+  private static final Quote empty = new Quote(null, 0, null, 0);
 
   private final Optional<Price> ask, bid;
+  private final int bidDepth, askDepth;
 
-  Quote(Price bid, Price ask) {
+  Quote(Price bid, int bidDepth, Price ask, int askDepth) {
     this.ask = Optional.ofNullable(ask);
     this.bid = Optional.ofNullable(bid);
+    this.bidDepth = bidDepth;
+    this.askDepth = askDepth;
   }
 
   static Quote empty() {
@@ -32,6 +35,14 @@ public class Quote implements Serializable {
 
   public Optional<Price> getBidPrice() {
     return bid;
+  }
+
+  public int getBidDepth() {
+    return bidDepth;
+  }
+
+  public int getAskDepth() {
+    return askDepth;
   }
 
   /**

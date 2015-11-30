@@ -135,7 +135,7 @@ public class IntegrationTest {
     for (JsonElement player : observation.getAsJsonArray("players"))
       assertFalse(player.getAsJsonObject().has("features"));
   }
-  
+
   @Test
   public void multiThreadEgtaTest() {
     int numAgents = 10;

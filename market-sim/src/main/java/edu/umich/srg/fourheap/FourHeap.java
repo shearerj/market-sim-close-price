@@ -1,6 +1,7 @@
 package edu.umich.srg.fourheap;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static edu.umich.srg.fourheap.Order.OrderType.BUY;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
@@ -46,7 +47,7 @@ public class FourHeap<P extends Comparable<? super P>> implements Serializable, 
   protected final Queue<Order<P>> sellUnmatched, sellMatched, buyUnmatched, buyMatched;
   protected final Ordering<Order<P>> sellUnmatchedOrdering, sellMatchedOrdering, buyMatchedOrdering,
       buyUnmatchedOrdering;
-  private int numUnits;
+  private int bidDepth, askDepth;
   private long time;
 
   public FourHeap() {
@@ -65,7 +66,8 @@ public class FourHeap<P extends Comparable<? super P>> implements Serializable, 
     this.sellMatched = new TreeQueue<>(sellMatchedOrdering); // Sin: matched sells, max first
     this.buyUnmatched = new TreeQueue<>(buyUnmatchedOrdering); // Bout: unmatched buys, max first
     this.buyMatched = new TreeQueue<>(buyMatchedOrdering); // Bin: matched buys, min first
-    this.numUnits = 0;
+    this.bidDepth = 0;
+    this.askDepth = 0;
     this.time = 0;
   }
 
@@ -77,7 +79,11 @@ public class FourHeap<P extends Comparable<? super P>> implements Serializable, 
 
     Order<P> order = new Order<>(orderType, price, quantity, time++);
 
-    numUnits += order.unmatchedQuantity;
+    if (orderType == BUY) {
+      bidDepth += order.unmatchedQuantity;
+    } else {
+      askDepth += order.unmatchedQuantity;
+    }
     Queue<Order<P>> matchUnmatchedHeap, matchMatchedHeap, orderUnmatchedHeap, orderMatchedHeap;
     Ordering<Order<P>> orderMatchedOrdering;
     if (order.type == Order.OrderType.BUY) { // buy order
@@ -162,7 +168,12 @@ public class FourHeap<P extends Comparable<? super P>> implements Serializable, 
     checkArgument(quantity > 0, "Quantity must be positive");
     checkArgument(quantity <= order.getQuantity(), "Can't withdraw more than in order");
 
-    numUnits -= quantity;
+    if (order.getOrderType() == BUY) {
+      bidDepth -= quantity;
+    } else {
+      askDepth -= quantity;
+    }
+
     Queue<Order<P>> matchUnmatchedHeap, matchMatchedHeap, orderUnmatchedHeap, orderMatchedHeap;
     if (order.type == Order.OrderType.BUY) { // buy order
       orderUnmatchedHeap = buyUnmatched;
@@ -259,7 +270,8 @@ public class FourHeap<P extends Comparable<? super P>> implements Serializable, 
       buy.matchedQuantity -= quantity;
       sell.matchedQuantity -= quantity;
       transactions.add(new MatchedOrders<P>(buy, sell, quantity));
-      numUnits -= 2 * quantity;
+      bidDepth -= quantity;
+      askDepth -= quantity;
     }
     return transactions.build();
   }
@@ -304,8 +316,16 @@ public class FourHeap<P extends Comparable<? super P>> implements Serializable, 
   }
 
   /** The number of orders weighted by quantity in the fourheap */
-  public int numberOfUnits() {
-    return numUnits;
+  public int getNumberOfUnits() {
+    return bidDepth + askDepth;
+  }
+
+  public int getBidDepth() {
+    return bidDepth;
+  }
+
+  public int getAskDepth() {
+    return askDepth;
   }
 
   public Iterator<Order<P>> iterator() {

@@ -84,7 +84,7 @@ public class Runner {
             StringWriter logWriter = new StringWriter();
             Log log = Log.create(logLevel, logWriter, l -> "");
             Observation obs = sim.apply(spec, log, finalObsNum);
-            
+
             synchronized (obsOut) {
               try {
                 gson.toJson(obs, Observation.class, obsOut);
@@ -102,7 +102,7 @@ public class Runner {
         ++obsNum;
       }
     }
-    
+
     // Wait for all workers to finish
     exec.shutdown();
     try {

@@ -15,7 +15,7 @@ public interface Market {
   MarketView getView(Agent agent, TimeStamp latency);
 
   Iterable<Entry<Agent, AgentInfo>> getAgentInfo();
-  
+
   MarketInfo getMarketInfo();
 
   public interface MarketView {
@@ -47,11 +47,11 @@ public interface Market {
     }
 
   }
-  
+
   static interface MarketInfo {
-    
+
     Iterable<? extends SparseList.Entry<? extends Number>> getPrices();
-    
+
   }
 
   static interface AgentInfo {

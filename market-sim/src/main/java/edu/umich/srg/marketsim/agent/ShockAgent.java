@@ -39,8 +39,7 @@ public class ShockAgent implements Agent {
   public ShockAgent(Sim sim, Market market, Spec spec, Random rand) {
     this.sim = sim;
     this.market = market.getView(this, TimeStamp.ZERO);
-    this.arrivalTime =
-        TimeStamp.of(spec.get(SimLength.class) / 2);
+    this.arrivalTime = TimeStamp.of(spec.get(SimLength.class) / 2);
     this.type = spec.get(Type.class);
     this.orderPrice = type == BUY ? Price.INF : Price.ZERO;
     this.submitFunction =

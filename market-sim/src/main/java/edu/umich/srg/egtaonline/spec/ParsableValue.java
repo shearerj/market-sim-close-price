@@ -141,7 +141,7 @@ public abstract class ParsableValue<T> extends Value<T> {
     private EnumConverter(Class<T> clazz) {
       this.clazz = clazz;
     }
-    
+
     @Override
     protected String doBackward(T enumerated) {
       return enumerated.toString().replace('_', underscore_replacement);
@@ -149,7 +149,7 @@ public abstract class ParsableValue<T> extends Value<T> {
 
     @Override
     protected T doForward(String string) {
-      return Enum.valueOf(clazz, string.replace(underscore_replacement , '_'));
+      return Enum.valueOf(clazz, string.replace(underscore_replacement, '_'));
     }
   }
 
