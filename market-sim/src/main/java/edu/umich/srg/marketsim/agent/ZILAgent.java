@@ -17,7 +17,7 @@ import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
 import edu.umich.srg.marketsim.Keys.FundamentalObservationVariance;
 import edu.umich.srg.marketsim.Keys.FundamentalShockVar;
 import edu.umich.srg.marketsim.Keys.MaxPosition;
-import edu.umich.srg.marketsim.Keys.PriceVarianceEstimate;
+import edu.umich.srg.marketsim.Keys.PriceVarEst;
 import edu.umich.srg.marketsim.Keys.PrivateValueVar;
 import edu.umich.srg.marketsim.Keys.Rmax;
 import edu.umich.srg.marketsim.Keys.Rmin;
@@ -66,7 +66,7 @@ public class ZILAgent implements Agent {
     this.estimator =
         NoisyFundamentalEstimator.create(spec.get(SimLength.class), spec.get(FundamentalMean.class),
             spec.get(FundamentalMeanReversion.class), spec.get(FundamentalShockVar.class),
-            spec.get(FundamentalObservationVariance.class), spec.get(PriceVarianceEstimate.class));
+            spec.get(FundamentalObservationVariance.class), spec.get(PriceVarEst.class));
     this.maxPosition = spec.get(MaxPosition.class);
     this.threshold = SurplusThreshold.create(spec.get(Thresh.class));
     this.privateValue = GaussianPrivateValue.generate(rand, spec.get(MaxPosition.class),

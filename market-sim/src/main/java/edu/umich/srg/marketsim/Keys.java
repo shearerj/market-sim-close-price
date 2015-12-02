@@ -65,7 +65,7 @@ public interface Keys {
   };
 
   // Specific agent parameters
-  public class PriceVarianceEstimate extends DoubleValue {
+  public class PriceVarEst extends DoubleValue {
   };
 
   public class NumShockOrders extends IntValue {
