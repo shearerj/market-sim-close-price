@@ -22,4 +22,4 @@ if [[ "$(hostname)" == *'arc-ts.umich.edu' ]]; then
 fi
 
 # Execution
-java -jar "$DIR/target/marketsim-4.0.0-jar-with-dependencies.jar" --egta -s "$1/simulation_spec.json" "$2" | split -a4 --additional-suffix=.json -l 1 - "$1/observation_"
+java -Xms1G -Xmx4G -jar "$DIR/target/marketsim-4.0.0-jar-with-dependencies.jar" --egta -s "$1/simulation_spec.json" "$2" | split -a4 --additional-suffix=.json -l 1 - "$1/observation_"
