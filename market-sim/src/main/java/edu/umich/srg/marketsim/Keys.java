@@ -64,10 +64,14 @@ public interface Keys {
   public class Rmin extends IntValue {
   };
 
+  // Specific agent parameters
   public class PriceVarianceEstimate extends DoubleValue {
   };
 
   public class NumShockOrders extends IntValue {
+  };
+
+  public static class Thresh extends DoubleValue {
   };
 
   // public static class DiscountFactors extends DoublesValue {};
@@ -146,7 +150,6 @@ public interface Keys {
   // public static class Spread extends PriceValue {};
 
   // ZIRPAgent
-  // public static class Thresh extends DoubleValue {};
 
   // Helper Classes
   // static class TimeValue extends ParsableValue<TimeStamp> {
@@ -170,9 +173,11 @@ public interface Keys {
 
   public final Spec DEFAULT_KEYS = Spec.builder() //
       .put(RandomSeed.class, System.nanoTime()) // Set seed from clock
-      .put(SimLength.class, 10000l) // A find default
-      .put(FundamentalMean.class, 1e9) // Half of Integer.MAX_VALUE
+      .put(SimLength.class, 10000l) // A fine default
+      .put(FundamentalMean.class, 1e9) // Approximately half of Integer.MAX_VALUE
       .put(FundamentalShockProb.class, 1d) // Shocks disabled
+
+      .put(Thresh.class, 1d) // No threshold
       .build();
 
 }

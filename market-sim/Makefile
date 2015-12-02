@@ -31,7 +31,7 @@ jar:
 	@echo mvn compile assembly:single
 	@mvn compile assembly:single | $(COLOR)
 
-egta:
+egta: jar
 	$(ERROR)
 	$(eval $@_TMP := $(shell mktemp -d))
 	$(eval $@_NAME := $(notdir $(basename $(def))))

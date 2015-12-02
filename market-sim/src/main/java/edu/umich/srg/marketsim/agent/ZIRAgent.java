@@ -1,12 +1,8 @@
 package edu.umich.srg.marketsim.agent;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static edu.umich.srg.fourheap.Order.OrderType.BUY;
-import static java.math.RoundingMode.CEILING;
-import static java.math.RoundingMode.FLOOR;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.math.DoubleMath;
 import com.google.gson.JsonObject;
 
 import edu.umich.srg.distributions.Distribution;
@@ -23,6 +19,7 @@ import edu.umich.srg.marketsim.Keys.PrivateValueVar;
 import edu.umich.srg.marketsim.Keys.Rmax;
 import edu.umich.srg.marketsim.Keys.Rmin;
 import edu.umich.srg.marketsim.Keys.SimLength;
+import edu.umich.srg.marketsim.Keys.Thresh;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
@@ -35,6 +32,7 @@ import edu.umich.srg.marketsim.market.OrderRecord;
 import edu.umich.srg.marketsim.privatevalue.GaussianPrivateValue;
 import edu.umich.srg.marketsim.privatevalue.PrivateValue;
 import edu.umich.srg.marketsim.strategy.GaussianFundamentalEstimator;
+import edu.umich.srg.marketsim.strategy.SurplusThreshold;
 
 import java.util.Collection;
 import java.util.Random;
@@ -49,6 +47,7 @@ public class ZIRAgent implements Agent {
   private final FundamentalView fundamental;
   private final GaussianFundamentalEstimator estimator;
   private final int maxPosition;
+  private final SurplusThreshold threshold;
   private final PrivateValue privateValue;
   private final Random rand;
   private final Geometric arrivalDistribution;
@@ -63,6 +62,7 @@ public class ZIRAgent implements Agent {
     this.estimator = GaussianFundamentalEstimator.create(spec.get(SimLength.class),
         spec.get(FundamentalMean.class), spec.get(FundamentalMeanReversion.class));
     this.maxPosition = spec.get(MaxPosition.class);
+    this.threshold = SurplusThreshold.create(spec.get(Thresh.class));
     this.privateValue = GaussianPrivateValue.generate(rand, spec.get(MaxPosition.class),
         spec.get(PrivateValueVar.class));
     this.arrivalDistribution = Geometric.withSuccessProbability(spec.get(ArrivalRate.class));
@@ -84,14 +84,20 @@ public class ZIRAgent implements Agent {
       market.withdrawOrder(order);
 
     OrderType type = orderTypeDistribution.sample(rand);
-    double finalEstimate = estimator.estimate(sim.getCurrentTime(), fundamental.getFundamental()),
-        privateBenefit = type.sign() * privateValue.valueForExchange(market.getHoldings(), type),
-        shade = type.sign() * shadingDistribution.sample(rand);
-    // Round beneficially
-    long roundedPrice = DoubleMath.roundToLong(finalEstimate + privateBenefit - shade,
-        type == BUY ? FLOOR : CEILING);
-    if (roundedPrice > 0 && Math.abs(market.getHoldings() + type.sign()) <= maxPosition)
-      market.submitOrder(type, Price.of(roundedPrice), 1);
+    if (Math.abs(market.getHoldings() + type.sign()) <= maxPosition) {
+
+      double finalEstimate = estimator.estimate(sim.getCurrentTime(), fundamental.getFundamental()),
+          privateBenefit = type.sign() * privateValue.valueForExchange(market.getHoldings(), type),
+          demandedSurplus = shadingDistribution.sample(rand);
+
+      Price toSubmit = threshold.shadePrice(type, market.getQuote(), finalEstimate + privateBenefit,
+          demandedSurplus);
+
+      if (toSubmit.longValue() > 0) {
+        market.submitOrder(type, toSubmit, 1);
+      }
+    }
+
     scheduleNextArrival();
   }
 
