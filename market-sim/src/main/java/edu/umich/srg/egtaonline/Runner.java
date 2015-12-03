@@ -69,46 +69,50 @@ public class Runner {
   private static void multiThreadRun(TriFunction<SimSpec, Log, Integer, Observation> sim,
       Reader specs, Writer obsOut, Writer logOut, int numObs, int jobs, Level logLevel, Gson gson,
       String classPrefix, CaseFormat keyCaseFormat) {
+    try {
+      /*
+       * For unknown reasons (likely having to do with threads suppressing stderr, exceptions seem
+       * to be hidden. Therefore almost everything is wrapped in a try{ } catch (Exception ex) {
+       * e.printStackTrace(); System.exit(1); } to guarantee that the appropriate thing happens.
+       */
 
-    ExecutorService exec = Executors.newFixedThreadPool(jobs);
+      ExecutorService exec = Executors.newFixedThreadPool(jobs);
 
-    JsonStreamParser parser = new JsonStreamParser(specs);
-    int obsNum = 0;
-    while (parser.hasNext()) {
-      SimSpec spec = SimSpec.read(parser.next().getAsJsonObject(), classPrefix, keyCaseFormat);
-      for (int i = 0; i < numObs; ++i) {
-        int finalObsNum = obsNum; // final
-        exec.submit(() -> {
-          // What's executed for every desired observation
-          try {
-            StringWriter logWriter = new StringWriter();
-            Log log = Log.create(logLevel, logWriter, l -> "");
-            Observation obs = sim.apply(spec, log, finalObsNum);
+      JsonStreamParser parser = new JsonStreamParser(specs);
+      int obsNum = 0;
+      while (parser.hasNext()) {
+        SimSpec spec = SimSpec.read(parser.next().getAsJsonObject(), classPrefix, keyCaseFormat);
+        for (int i = 0; i < numObs; ++i) {
+          int finalObsNum = obsNum; // final
+          exec.submit(() -> {
+            // What's executed for every desired observation
+            try {
+              StringWriter logWriter = new StringWriter();
+              Log log = Log.create(logLevel, logWriter, l -> "");
+              Observation obs = sim.apply(spec, log, finalObsNum);
 
-            synchronized (obsOut) {
-              try {
+              synchronized (obsOut) {
                 gson.toJson(obs, Observation.class, obsOut);
                 obsOut.write('\n');
                 logOut.write(logWriter.toString());
-              } catch (IOException e) {
-                e.printStackTrace();
               }
+            } catch (Exception ex) {
+              ex.printStackTrace();
+              System.exit(1);
             }
-          } catch (Exception ex) {
-            ex.printStackTrace();
-          }
-        });
+          });
 
-        ++obsNum;
+          ++obsNum;
+        }
       }
-    }
 
-    // Wait for all workers to finish
-    exec.shutdown();
-    try {
+      // Wait for all workers to finish
+      exec.shutdown();
+
       exec.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-    } catch (InterruptedException ex) {
+    } catch (Exception ex) {
       ex.printStackTrace();
+      System.exit(1);
     }
   }
 

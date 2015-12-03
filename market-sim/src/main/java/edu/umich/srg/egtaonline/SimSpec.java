@@ -22,7 +22,6 @@ public class SimSpec {
   }
 
   public static SimSpec read(JsonObject obj, String classPrefix, CaseFormat keyCaseFormat) {
-    // FIXME Parsing players in compact format caused silent exception instead of error
     ImmutableMultiset.Builder<RoleStrat> assignment = ImmutableMultiset.builder();
     for (Entry<String, JsonElement> role : obj.get("assignment").getAsJsonObject().entrySet())
       for (JsonElement player : role.getValue().getAsJsonArray())
