@@ -4,6 +4,7 @@ import static edu.umich.srg.fourheap.Order.OrderType.BUY;
 import static java.math.RoundingMode.CEILING;
 import static java.math.RoundingMode.FLOOR;
 
+import com.google.common.base.Optional;
 import com.google.common.math.DoubleMath;
 
 import edu.umich.srg.fourheap.Order.OrderType;
@@ -12,7 +13,6 @@ import edu.umich.srg.marketsim.market.Quote;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 public class SurplusThreshold {
 

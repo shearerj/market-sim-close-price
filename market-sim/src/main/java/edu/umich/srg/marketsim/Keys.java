@@ -1,5 +1,6 @@
 package edu.umich.srg.marketsim;
 
+import edu.umich.srg.egtaonline.spec.ParsableValue.BoolValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.DoubleValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.EnumValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.IntValue;
@@ -20,60 +21,57 @@ public interface Keys {
   // Simulation
   public class RandomSeed extends LongValue {
   };
-
   public class SimLength extends LongValue {
   };
-
   public class Markets extends StringsValue {
   };
-
   public class FundamentalMean extends DoubleValue {
   };
-
   public class FundamentalShockVar extends DoubleValue {
   };
-
   public class FundamentalMeanReversion extends DoubleValue {
   };
-
   public class FundamentalShockProb extends DoubleValue {
   };
 
   // Agents
   public class ArrivalRate extends DoubleValue {
   };
-
   public class FundamentalObservationVariance extends DoubleValue {
   };
-
   public class Type extends EnumValue<OrderType> {
     public Type() {
       super(OrderType.class);
     }
   };
-
   public class MaxPosition extends IntValue {
   };
-
   public class PrivateValueVar extends DoubleValue {
   };
-
   public class Rmax extends IntValue {
   };
-
   public class Rmin extends IntValue {
+  };
+
+  // Market Maker
+  public static class RungSep extends IntValue {
+  };
+  public static class NumRungs extends IntValue {
+  };
+  public static class TickImprovement extends BoolValue {
+  };
+  public static class TickOutside extends BoolValue {
+  };
+  public static class RungThickness extends IntValue {
   };
 
   // Specific agent parameters
   public class PriceVarEst extends DoubleValue {
   };
-
   public class NumShockOrders extends IntValue {
   };
-
   public static class Thresh extends DoubleValue {
   };
-
   public static class TimeToLiquidate extends LongValue {
   };
 
@@ -84,7 +82,6 @@ public interface Keys {
   // public static class Window extends TimeValue {};
   // public static class Alpha extends DoubleValue {};
   //
-  // public static class TickSize extends IntValue {};
   //
   //
   // public static class Num extends IntValue {};
@@ -112,8 +109,6 @@ public interface Keys {
   // public static class K extends IntValue {};
   // public static class Size extends IntValue {};
   // public static class Trunc extends BoolValue {};
-  // public static class TickImprovement extends BoolValue {};
-  // public static class TickOutside extends BoolValue {};
   // public static class InitLadderMean extends IntValue {};
   // public static class InitLadderRange extends IntValue {};
 

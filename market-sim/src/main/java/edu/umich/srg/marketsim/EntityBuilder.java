@@ -9,6 +9,7 @@ import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.agent.NoOpAgent;
 import edu.umich.srg.marketsim.agent.NoiseAgent;
 import edu.umich.srg.marketsim.agent.ShockAgent;
+import edu.umich.srg.marketsim.agent.SimpleMarketMaker;
 import edu.umich.srg.marketsim.agent.ZILAgent;
 import edu.umich.srg.marketsim.agent.ZIRAgent;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
@@ -37,6 +38,7 @@ class EntityBuilder {
           .put("noop", NoOpAgent::createFromSpec) // No op agents that do nothing
           .put("zir", ZIRAgent::createFromSpec) // Standard ZI agents with re-entry
           .put("zil", ZILAgent::createFromSpec) // ZI agents that learn from noisy observations
+          .put("smm", SimpleMarketMaker::createFromSpec) // Simple Market Maker
           .put("shock", ShockAgent::createFromSpec) // Shock agent that buys a lot at a random time
           .build();
 

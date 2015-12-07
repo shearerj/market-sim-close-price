@@ -2,7 +2,7 @@ package edu.umich.srg.marketsim.market;
 
 import static edu.umich.srg.fourheap.Order.OrderType.BUY;
 import static edu.umich.srg.fourheap.Order.OrderType.SELL;
-import static edu.umich.srg.marketsim.testing.Assert.assertQuote;
+import static edu.umich.srg.marketsim.testing.Asserts.assertQuote;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
