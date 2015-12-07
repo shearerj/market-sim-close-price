@@ -74,6 +74,9 @@ public interface Keys {
   public static class Thresh extends DoubleValue {
   };
 
+  public static class TimeToLiquidate extends LongValue {
+  };
+
   // public static class DiscountFactors extends DoublesValue {};
   //
   // public static class FileName extends StringValue {};
