@@ -8,6 +8,8 @@ import com.google.common.primitives.Doubles;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 
 /**
@@ -32,7 +34,17 @@ public final class Multinomial<T> implements Distribution<T> {
     return elements.get(multinomial.sample(rand));
   }
 
-  public static IntMultinomial withWeights(Collection<Double> weights) {
+  public static <T> Multinomial<T> fromMap(Map<T, ? extends Number> map) {
+    ImmutableList.Builder<T> elements = ImmutableList.builder();
+    ImmutableList.Builder<Double> weights = ImmutableList.builder();
+    for (Entry<T, ? extends Number> e : map.entrySet()) {
+      elements.add(e.getKey());
+      weights.add(e.getValue().doubleValue());
+    }
+    return withWeights(weights.build()).over(elements.build());
+  }
+
+  public static IntMultinomial withWeights(Collection<? extends Number> weights) {
     return new IntMultinomial(weights);
   }
 
@@ -43,7 +55,7 @@ public final class Multinomial<T> implements Distribution<T> {
   public static class IntMultinomial implements IntDistribution {
     private final double[] weights;
 
-    private IntMultinomial(Collection<Double> weights) {
+    private IntMultinomial(Collection<? extends Number> weights) {
       this.weights = Doubles.toArray(weights);
 
       for (int i = 1; i < this.weights.length; ++i)
@@ -58,7 +70,7 @@ public final class Multinomial<T> implements Distribution<T> {
       return index < 0 ? -index - 1 : index;
     }
 
-    public <T> Distribution<T> over(Collection<T> items) {
+    public <T> Multinomial<T> over(Collection<T> items) {
       return new Multinomial<>(this, items);
     }
 

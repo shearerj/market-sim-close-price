@@ -26,7 +26,7 @@ public class MarketSimulator implements Sim {
   private final Features features;
   private final EventQueue eventQueue;
 
-  // FIXME Still need fundamental and SIP and way to calculate payoff and global statistics
+  // FIXME Still need SIP
 
   private MarketSimulator(Fundamental fundamental, Log log, Random rand) {
     this.fundamental = fundamental;
