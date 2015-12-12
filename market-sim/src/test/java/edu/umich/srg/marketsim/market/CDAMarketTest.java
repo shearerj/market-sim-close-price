@@ -2,7 +2,6 @@ package edu.umich.srg.marketsim.market;
 
 import static edu.umich.srg.fourheap.Order.OrderType.BUY;
 import static edu.umich.srg.fourheap.Order.OrderType.SELL;
-import static edu.umich.srg.marketsim.testing.Asserts.assertQuote;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -12,6 +11,7 @@ import org.junit.Test;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.market.Market.MarketView;
+import edu.umich.srg.marketsim.testing.MarketAsserts;
 import edu.umich.srg.marketsim.testing.MockAgent;
 import edu.umich.srg.marketsim.testing.MockSim;
 
@@ -32,22 +32,22 @@ public class CDAMarketTest {
   @Test
   public void addBid() {
     view.submitOrder(BUY, Price.of(1), 1);
-    assertQuote(view.getQuote(), Price.of(1), null);
+    MarketAsserts.assertQuote(view.getQuote(), Price.of(1), null);
   }
 
   @Test
   public void addAsk() {
     view.submitOrder(SELL, Price.of(1), 1);
-    assertQuote(view.getQuote(), null, Price.of(1));
+    MarketAsserts.assertQuote(view.getQuote(), null, Price.of(1));
   }
 
   @Test
   public void withdrawTest() {
     OrderRecord order = view.submitOrder(SELL, Price.of(100), 1);
-    assertQuote(view.getQuote(), null, Price.of(100));
+    MarketAsserts.assertQuote(view.getQuote(), null, Price.of(100));
 
     view.withdrawOrder(order, order.quantity);
-    assertQuote(view.getQuote(), null, null);
+    MarketAsserts.assertQuote(view.getQuote(), null, null);
   }
 
   @Test
@@ -55,7 +55,7 @@ public class CDAMarketTest {
     OrderRecord buy = view.submitOrder(BUY, Price.of(100), 1);
     OrderRecord sell = view.submitOrder(SELL, Price.of(50), 1);
 
-    assertQuote(view.getQuote(), null, null);
+    MarketAsserts.assertQuote(view.getQuote(), null, null);
     assertEquals(Price.of(100), agent.lastTransactionPrice);
     assertTrue(view.getActiveOrders().isEmpty());
     assertEquals(0, buy.getQuantity());
@@ -67,7 +67,7 @@ public class CDAMarketTest {
     OrderRecord sell = view.submitOrder(SELL, Price.of(50), 1);
     OrderRecord buy = view.submitOrder(BUY, Price.of(100), 1);
 
-    assertQuote(view.getQuote(), null, null);
+    MarketAsserts.assertQuote(view.getQuote(), null, null);
     assertEquals(Price.of(50), agent.lastTransactionPrice);
     assertTrue(view.getActiveOrders().isEmpty());
     assertEquals(0, buy.getQuantity());

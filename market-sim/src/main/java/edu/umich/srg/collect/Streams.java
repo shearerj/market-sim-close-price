@@ -1,71 +1,51 @@
 package edu.umich.srg.collect;
 
-import com.google.common.collect.ImmutableList;
-
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.function.Consumer;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class Streams {
 
-  /**
-   * Turn an iterator into a stream that is optionally parallel.
-   * 
-   * @param iterator The iterator to turn into a stream.
-   * @param parallel Whether to make the stream parallel. Note, unlike most streams changing whether
-   *        or not the stream is parallel after construction will not have the desired efficiency
-   *        benefits.
-   * @return A stream that is backed by the iterator and optionally supports parallel computation.
-   */
-  public static <T> Stream<T> stream(Iterator<T> iterator, boolean parallel) {
-    if (parallel)
-      return StreamSupport.stream(new ParallelIteratorSpliterator<>(iterator), true);
-    else
-      return stream(iterator);
-  }
-
+  /** Convert an iterator into a stream */
   public static <T> Stream<T> stream(Iterator<T> iterator) {
-    return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED),
+    return StreamSupport.stream(
+        Spliterators.spliteratorUnknownSize(Objects.requireNonNull(iterator), Spliterator.ORDERED),
         false);
   }
 
-  private static final class ParallelIteratorSpliterator<T> implements Spliterator<T> {
+  /** Zip two streams together with a zip function */
+  public static <A, B, C> Stream<C> zip(Stream<? extends A> a, Stream<? extends B> b,
+      BiFunction<? super A, ? super B, ? extends C> zipper) {
+    Objects.requireNonNull(zipper);
+    Spliterator<? extends A> aSpliterator = Objects.requireNonNull(a).spliterator();
+    Spliterator<? extends B> bSpliterator = Objects.requireNonNull(b).spliterator();
 
-    private final Iterator<T> iterator;
+    // Zipping looses DISTINCT and SORTED characteristics
+    int characteristics = aSpliterator.characteristics() & bSpliterator.characteristics()
+        & ~(Spliterator.DISTINCT | Spliterator.SORTED);
+    long zipSize = ((characteristics & Spliterator.SIZED) != 0)
+        ? Math.min(aSpliterator.getExactSizeIfKnown(), bSpliterator.getExactSizeIfKnown()) : -1;
 
-    private ParallelIteratorSpliterator(Iterator<T> iterator) {
-      this.iterator = iterator;
-    }
+    Iterator<? extends A> aIterator = Spliterators.iterator(aSpliterator);
+    Iterator<? extends B> bIterator = Spliterators.iterator(bSpliterator);
+    Iterator<C> cIterator = new Iterator<C>() {
+      @Override
+      public boolean hasNext() {
+        return aIterator.hasNext() && bIterator.hasNext();
+      }
 
-    @Override
-    public int characteristics() {
-      return Spliterator.IMMUTABLE & Spliterator.SUBSIZED & Spliterator.ORDERED;
-    }
+      @Override
+      public C next() {
+        return zipper.apply(aIterator.next(), bIterator.next());
+      }
+    };
 
-    @Override
-    public long estimateSize() {
-      return Long.MAX_VALUE;
-    }
-
-    @Override
-    public boolean tryAdvance(Consumer<? super T> action) {
-      if (!iterator.hasNext())
-        return false;
-      action.accept(iterator.next());
-      return true;
-    }
-
-    @Override
-    public Spliterator<T> trySplit() {
-      if (iterator.hasNext())
-        return ImmutableList.of(iterator.next()).spliterator();
-      else
-        return null;
-    }
-
+    Spliterator<C> split = Spliterators.spliterator(cIterator, zipSize, characteristics);
+    return StreamSupport.stream(split, a.isParallel() && b.isParallel());
   }
 
 }

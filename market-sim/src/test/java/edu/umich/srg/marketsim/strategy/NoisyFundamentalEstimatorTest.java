@@ -16,11 +16,11 @@ import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.fundamental.GaussianMeanReverting;
-import edu.umich.srg.util.Repeat;
-import edu.umich.srg.util.RepeatRule;
+import edu.umich.srg.testing.Repeat;
+import edu.umich.srg.testing.RepeatRule;
+import edu.umich.srg.testing.TestDoubles;
+import edu.umich.srg.testing.TestInts;
 import edu.umich.srg.util.SummStats;
-import edu.umich.srg.util.TestDoubles;
-import edu.umich.srg.util.TestInts;
 
 import java.util.Random;
 

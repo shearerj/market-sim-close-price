@@ -1,4 +1,4 @@
-package edu.umich.srg.util;
+package edu.umich.srg.testing;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;

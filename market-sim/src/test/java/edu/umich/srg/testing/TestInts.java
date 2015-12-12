@@ -1,12 +1,12 @@
-package edu.umich.srg.util;
+package edu.umich.srg.testing;
 
 import org.junit.experimental.theories.ParametersSuppliedBy;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-@ParametersSuppliedBy(TestDoublesSupplier.class)
+@ParametersSuppliedBy(TestIntsSupplier.class)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface TestDoubles {
-  double[] value();
+public @interface TestInts {
+  int[] value();
 }

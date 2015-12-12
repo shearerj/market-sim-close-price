@@ -11,9 +11,9 @@ import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
 
 import edu.umich.srg.marketsim.TimeStamp;
+import edu.umich.srg.testing.TestDoubles;
+import edu.umich.srg.testing.TestLongs;
 import edu.umich.srg.util.SummStats;
-import edu.umich.srg.util.TestDoubles;
-import edu.umich.srg.util.TestLongs;
 
 import java.util.Random;
 import java.util.Set;

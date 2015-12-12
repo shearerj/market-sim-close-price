@@ -1,6 +1,6 @@
 package edu.umich.srg.distributions;
 
-import static edu.umich.srg.util.StatisticalAssertions.assertKnownChiSquared;
+import static edu.umich.srg.testing.Asserts.assertChiSquared;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Ignore;
@@ -30,7 +30,7 @@ public class HypergeometricTest {
     int[] observed = new int[4];
     for (int i = 0; i < n; ++i)
       observed[dist.sample(rand)] += 1;
-    assertKnownChiSquared(observed, expected);
+    assertChiSquared(expected, observed);
   }
 
   @Test
@@ -43,7 +43,7 @@ public class HypergeometricTest {
     int[] observed = new int[6];
     for (int i = 0; i < n; ++i)
       observed[dist.sample(rand)] += 1;
-    assertKnownChiSquared(observed, expected);
+    assertChiSquared(expected, observed);
   }
 
   @Test
@@ -56,7 +56,7 @@ public class HypergeometricTest {
     int[] observed = new int[6];
     for (int i = 0; i < n; ++i)
       observed[dist.sample(rand)] += 1;
-    assertKnownChiSquared(observed, expected);
+    assertChiSquared(expected, observed);
   }
 
   @Test
@@ -69,7 +69,7 @@ public class HypergeometricTest {
     int[] observed = new int[9];
     for (int i = 0; i < n; ++i)
       observed[dist.sample(rand)] += 1;
-    assertKnownChiSquared(observed, expected);
+    assertChiSquared(expected, observed);
   }
 
   @Test
@@ -82,7 +82,7 @@ public class HypergeometricTest {
     int[] observed = new int[6];
     for (int i = 0; i < n; ++i)
       observed[dist.sample(rand)] += 1;
-    assertKnownChiSquared(observed, expected);
+    assertChiSquared(expected, observed);
   }
 
   @Test
@@ -95,7 +95,7 @@ public class HypergeometricTest {
     int[] observed = new int[9];
     for (int i = 0; i < n; ++i)
       observed[dist.sample(rand)] += 1;
-    assertKnownChiSquared(observed, expected);
+    assertChiSquared(expected, observed);
   }
 
 }

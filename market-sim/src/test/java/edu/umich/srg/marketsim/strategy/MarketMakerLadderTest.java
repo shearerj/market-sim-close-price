@@ -2,7 +2,7 @@ package edu.umich.srg.marketsim.strategy;
 
 import static edu.umich.srg.fourheap.Order.OrderType.BUY;
 import static edu.umich.srg.fourheap.Order.OrderType.SELL;
-import static edu.umich.srg.marketsim.testing.Asserts.assertSetEquals;
+import static edu.umich.srg.testing.Asserts.assertSetEquals;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableSet;

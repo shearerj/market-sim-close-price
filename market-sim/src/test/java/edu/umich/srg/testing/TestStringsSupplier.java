@@ -1,4 +1,4 @@
-package edu.umich.srg.util;
+package edu.umich.srg.testing;
 
 import org.junit.experimental.theories.ParameterSignature;
 import org.junit.experimental.theories.ParameterSupplier;
@@ -8,14 +8,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class TestLongsSupplier extends ParameterSupplier {
+public class TestStringsSupplier extends ParameterSupplier {
   @Override
   public List<PotentialAssignment> getValueSources(ParameterSignature sig) {
-    TestLongs testLongs = sig.getAnnotation(TestLongs.class);
-    long[] longs = testLongs.value();
-    String name = Arrays.toString(longs);
-    List<PotentialAssignment> list = new ArrayList<>(longs.length);
-    for (long i : longs)
+    TestStrings testStrings = sig.getAnnotation(TestStrings.class);
+    String[] strings = testStrings.value();
+    String name = Arrays.toString(strings);
+    List<PotentialAssignment> list = new ArrayList<>(strings.length);
+    for (String i : strings)
       list.add(PotentialAssignment.forValue(name, i));
     return list;
   }

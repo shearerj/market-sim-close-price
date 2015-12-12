@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
-import com.google.common.primitives.Doubles;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -43,19 +42,6 @@ public class SummStats implements DoubleConsumer, Consumer<Entry<? extends Numbe
     return new SummStats(0, 0, 0, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY);
   }
 
-  public static SummStats on(double... values) {
-    return on(Doubles.asList(values));
-  }
-
-  /**
-   * Create a SumStats object with initial data
-   */
-  public static SummStats on(Iterable<? extends Number> values) {
-    SummStats result = SummStats.empty();
-    result.accept(values);
-    return result;
-  }
-
   public static SummStats over(DoubleStream stream) {
     return stream.collect(SummStats::empty, SummStats::accept, SummStats::combine);
   }
@@ -67,8 +53,8 @@ public class SummStats implements DoubleConsumer, Consumer<Entry<? extends Numbe
 
   @Override
   public void accept(double value) {
-    double delta = value - average;
     count += 1;
+    double delta = value - average;
     average += delta / count;
     squaredError += delta * (value - average);
     min = Math.min(min, value);
@@ -136,14 +122,15 @@ public class SummStats implements DoubleConsumer, Consumer<Entry<? extends Numbe
   }
 
   /** Merge other values into this */
-  public void combine(SummStats other) {
-    double delta = other.average - average;
+  public SummStats combine(SummStats other) {
     count += other.count;
-    average += delta * other.count / count; // XXX not certain of proper order of operations ton
-                                            // minimize precision loss
+    double delta = other.average - average;
+    // XXX not certain of proper order of operations to minimize precision loss
+    average += delta * other.count / count;
     squaredError += other.squaredError + delta * (other.average - average) * other.count;
     min = Math.min(min, other.min);
     max = Math.max(max, other.max);
+    return this;
   }
 
   @Override

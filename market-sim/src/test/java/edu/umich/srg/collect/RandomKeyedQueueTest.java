@@ -18,8 +18,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import edu.umich.srg.util.Repeat;
-import edu.umich.srg.util.RepeatRule;
+import edu.umich.srg.testing.Repeat;
+import edu.umich.srg.testing.RepeatRule;
 
 import java.util.Collections;
 import java.util.HashSet;

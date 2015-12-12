@@ -5,9 +5,13 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Rule;
 import org.junit.Test;
 
+import edu.umich.srg.testing.Repeat;
+import edu.umich.srg.testing.RepeatRule;
+
 import java.math.BigDecimal;
 import java.util.Random;
 import java.util.function.DoubleConsumer;
+import java.util.stream.DoubleStream;
 
 public class SumStatsTest {
 
@@ -80,7 +84,7 @@ public class SumStatsTest {
 
   @Test
   public void singleTest() {
-    SummStats test = SummStats.on(5);
+    SummStats test = SummStats.over(DoubleStream.of(5));
     assertEquals(5, test.getSum(), eps);
     assertEquals(5, test.getAverage(), eps);
     assertEquals(0, test.getVariance(), eps);
@@ -97,7 +101,7 @@ public class SumStatsTest {
     int n = rand.nextInt(1000) + 1000;
     for (int i = 0; i < n; ++i) {
       double d = rand.nextDouble() - .5;
-      test.combine(SummStats.on(d));
+      test.combine(SummStats.over(DoubleStream.of(d)));
       truth.accept(d);
     }
     assertEquals(truth.getSum(), test.getSum(), eps);

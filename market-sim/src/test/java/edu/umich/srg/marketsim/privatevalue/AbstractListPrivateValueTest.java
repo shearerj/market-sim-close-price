@@ -12,8 +12,8 @@ import org.junit.runner.RunWith;
 import edu.umich.srg.distributions.Distribution.DoubleDistribution;
 import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.distributions.Uniform;
-import edu.umich.srg.util.RepeatRule;
-import edu.umich.srg.util.TestInts;
+import edu.umich.srg.testing.RepeatRule;
+import edu.umich.srg.testing.TestInts;
 
 import java.util.Random;
 
