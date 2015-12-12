@@ -3,20 +3,18 @@ package edu.umich.srg.learning;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.Ints;
+import com.google.common.math.DoubleMath;
 
 import edu.umich.srg.distributions.Distribution;
 import edu.umich.srg.distributions.Multinomial;
 
 import java.util.AbstractMap;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 public class ExponentialWeights<T> implements Distribution<T> {
 
@@ -60,7 +58,7 @@ public class ExponentialWeights<T> implements Distribution<T> {
 
   private void normalizeWeights(double total) {
     for (Entry<T, Double> e : weights.entrySet()) {
-      e.setValue(1d / total);
+      e.setValue(e.getValue() / total);
     }
   }
 
@@ -74,6 +72,7 @@ public class ExponentialWeights<T> implements Distribution<T> {
       total += newWeight;
     }
     normalizeWeights(total);
+    assert DoubleMath.fuzzyEquals(1, weights.values().stream().mapToDouble(d -> d).sum(), 1e-3);
     time++;
     distribution = null;
   }
@@ -188,23 +187,6 @@ public class ExponentialWeights<T> implements Distribution<T> {
       return weights.entrySet().stream().mapToDouble(e -> e.getKey().doubleValue() * e.getValue())
           .sum();
     }
-  }
-
-  public static void main(String[] args) {
-    Random rand = new Random();
-    ExponentialWeights<Integer> x = new ExponentialWeights<>(1, Ints.asList(0, 1, 2).iterator());
-    x.weights.put(0, 0.2);
-    x.weights.put(1, 0.3);
-    x.weights.put(2, 0.5);
-    int[] counts = new int[3];
-    int n = 10000, m = 6;
-    for (int i = 0; i < n; ++i) {
-      for (Entry<Integer, Integer> e : x.getCounts(m, rand).entrySet()) {
-        counts[e.getKey()] += e.getValue();
-      }
-    }
-    System.out.println(Arrays.stream(counts).mapToDouble(c -> c / (double) (m * n)).boxed()
-        .collect(Collectors.toList()));
   }
 
 }
