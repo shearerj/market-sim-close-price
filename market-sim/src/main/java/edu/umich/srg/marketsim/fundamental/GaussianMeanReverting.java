@@ -12,6 +12,7 @@ import edu.umich.srg.util.PositionalSeed;
 
 import java.io.Serializable;
 import java.util.AbstractMap;
+import java.util.Collections;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Random;
@@ -150,8 +151,9 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
       return new FundamentalInfo() {
 
         @Override
-        public Iterable<? extends SparseList.Entry<? extends Number>> getFundamentalValues() {
-          return SparseList.sparseView(fundamental.entrySet());
+        public Iterable<SparseList.Entry<Number>> getFundamentalValues() {
+          return SparseList.sparseView(Collections
+              .<Entry<Long, ? extends Number>>unmodifiableCollection(fundamental.entrySet()));
         }
 
       };

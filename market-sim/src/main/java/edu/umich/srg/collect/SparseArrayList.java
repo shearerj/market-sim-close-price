@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 public class SparseArrayList<E> implements SparseList<E>, Serializable {
 
@@ -48,6 +49,11 @@ public class SparseArrayList<E> implements SparseList<E>, Serializable {
   @Override
   public Iterator<Entry<E>> iterator() {
     return Collections.<Entry<E>>unmodifiableList(elements).iterator();
+  }
+
+  @Override
+  public Stream<? extends Entry<? extends E>> stream() {
+    return elements.stream();
   }
 
   @Override

@@ -12,6 +12,7 @@ import edu.umich.srg.util.SummStats;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.StreamSupport;
 
 class Features {
 
@@ -41,8 +42,12 @@ class Features {
     }
 
     // Fundamental features
-    Iterable<? extends SparseList.Entry<? extends Number>> fundamental =
-        simulator.getFundamental().getInfo().getFundamentalValues();
+    long finalTime = simulator.getCurrentTime().get();
+    // This filters out fundamental values above last time;
+    Iterable<SparseList.Entry<Number>> fundamental = () -> StreamSupport
+        .stream(simulator.getFundamental().getInfo().getFundamentalValues().spliterator(), false)
+        .filter(e -> e.getIndex() <= finalTime).iterator();
+
     addSparseData(features, fundamental, "fundamental");
 
     // Market features

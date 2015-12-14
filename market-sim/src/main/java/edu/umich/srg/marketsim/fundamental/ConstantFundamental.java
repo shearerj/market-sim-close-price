@@ -33,7 +33,7 @@ public class ConstantFundamental extends GaussianMeanReverting {
     return new FundamentalInfo() {
 
       @Override
-      public Iterable<? extends Entry<? extends Number>> getFundamentalValues() {
+      public Iterable<Entry<Number>> getFundamentalValues() {
         return Collections.singleton(SparseList.immutableEntry(0, constant));
       }
 

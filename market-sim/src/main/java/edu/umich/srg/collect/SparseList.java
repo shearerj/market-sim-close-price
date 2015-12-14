@@ -4,12 +4,15 @@ import edu.umich.srg.collect.SparseList.Entry;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public interface SparseList<E> extends Iterable<Entry<E>> {
 
   void add(long index, E element);
 
   void add(Entry<E> entry);
+
+  Stream<? extends Entry<? extends E>> stream();
 
   int size();
 
@@ -22,7 +25,7 @@ public interface SparseList<E> extends Iterable<Entry<E>> {
   }
 
   public static <E> Iterator<Entry<E>> sparseView(
-      Iterator<? extends Map.Entry<? extends Number, E>> base) {
+      Iterator<? extends Map.Entry<? extends Number, ? extends E>> base) {
     return new Iterator<Entry<E>>() {
 
 
@@ -33,7 +36,7 @@ public interface SparseList<E> extends Iterable<Entry<E>> {
 
       @Override
       public Entry<E> next() {
-        Map.Entry<? extends Number, E> next = base.next();
+        Map.Entry<? extends Number, ? extends E> next = base.next();
         return immutableEntry(next.getKey().longValue(), next.getValue());
       }
 
@@ -41,7 +44,7 @@ public interface SparseList<E> extends Iterable<Entry<E>> {
   }
 
   public static <E> Iterable<Entry<E>> sparseView(
-      Iterable<? extends Map.Entry<? extends Number, E>> base) {
+      Iterable<? extends Map.Entry<? extends Number, ? extends E>> base) {
     return () -> sparseView(base.iterator());
   }
 

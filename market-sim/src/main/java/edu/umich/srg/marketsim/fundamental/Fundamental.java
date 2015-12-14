@@ -16,7 +16,7 @@ public interface Fundamental {
 
   public interface FundamentalInfo {
 
-    Iterable<? extends SparseList.Entry<? extends Number>> getFundamentalValues();
+    Iterable<SparseList.Entry<Number>> getFundamentalValues();
 
   }
 
