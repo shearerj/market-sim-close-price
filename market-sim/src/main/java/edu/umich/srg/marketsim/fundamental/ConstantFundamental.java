@@ -5,10 +5,9 @@ import edu.umich.srg.collect.SparseList.Entry;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 
-import java.io.Serializable;
 import java.util.Collections;
 
-public class ConstantFundamental implements Fundamental, Serializable {
+public class ConstantFundamental extends GaussianMeanReverting {
 
   private final Price constant;
 

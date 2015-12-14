@@ -8,6 +8,7 @@ import com.google.common.base.CaseFormat;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
@@ -33,6 +34,7 @@ import edu.umich.srg.marketsim.Keys.ArrivalRate;
 import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
 import edu.umich.srg.marketsim.Keys.FundamentalShockVar;
 import edu.umich.srg.marketsim.Keys.Markets;
+import edu.umich.srg.marketsim.Keys.RandomSeed;
 import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.agent.NoiseAgent;
@@ -40,9 +42,11 @@ import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.market.CDAMarket;
 import edu.umich.srg.marketsim.market.Market;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Map;
 import java.util.Random;
 import java.util.stream.StreamSupport;
@@ -233,6 +237,57 @@ public class IntegrationTest {
       assertTrue(player.getAsJsonObject().has("features"));
   }
 
+  /**
+   * Tests to see if identical simulations with the same random seed produce the same result.
+   * 
+   * FIXME Test fails
+   */
+  @Ignore
+  @Test
+  public void identicalRandomTest() {
+    int numAgentAs = 10, numAgentBs = 5;
+    long seed = rand.nextLong();
+
+    StringWriter obsData = new StringWriter();
+
+    Spec aAgentSpec = Spec.fromPairs(ArrivalRate.class, 0.5);
+    Spec bAgentSpec = Spec.fromPairs(ArrivalRate.class, 0.8);
+    Spec configuration = Spec.builder().put(SimLength.class, 10l)
+        .put(Markets.class, ImmutableList.of("cda")).put(FundamentalMeanReversion.class, 0d)
+        .put(FundamentalShockVar.class, 0d).put(RandomSeed.class, seed).build();
+
+    Multiset<RoleStrat> assignment = ImmutableMultiset.<RoleStrat>builder()
+        .addCopies(RoleStrat.of("role", toStratString("noise", aAgentSpec)), numAgentAs)
+        .addCopies(RoleStrat.of("role", toStratString("noise", bAgentSpec)), numAgentBs).build();
+    SimSpec spec = SimSpec.create(assignment, configuration);
+    Reader specReader = toReader(spec);
+
+    // Run the simulation once
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, nullWriter, 1,
+        Level.DEBUG.ordinal(), 1, false, keyPrefix, keyCaseFormat);
+
+    // Save the results
+    JsonObject obs1 = gson.fromJson(obsData.toString(), JsonObject.class);
+
+    // Reset and switch the order of the agents
+    obsData = new StringWriter();
+    assignment = ImmutableMultiset.<RoleStrat>builder()
+        .addCopies(RoleStrat.of("role", toStratString("noise", bAgentSpec)), numAgentBs)
+        .addCopies(RoleStrat.of("role", toStratString("noise", aAgentSpec)), numAgentAs).build();
+    spec = SimSpec.create(assignment, configuration);
+    specReader = toReader(spec);
+
+    // Run the simulation again
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, nullWriter, 1,
+        Level.DEBUG.ordinal(), 1, false, keyPrefix, keyCaseFormat);
+
+    // Save the results
+    JsonObject obs2 = gson.fromJson(obsData.toString(), JsonObject.class);
+
+    // Verify identical output
+    assertEquals(obs1.get("features"), obs2.get("features"));
+  }
+
   // TODO Test that verifies agents inherit specifications from configuration
 
   // TODO Test that invalid agent names throw exception
@@ -274,5 +329,18 @@ public class IntegrationTest {
 
     return new StringReader(json.toString());
   }
+
+  private static final Writer nullWriter = new Writer() {
+
+    @Override
+    public void close() throws IOException {}
+
+    @Override
+    public void flush() throws IOException {}
+
+    @Override
+    public void write(char[] cbuf, int off, int len) throws IOException {}
+
+  };
 
 }

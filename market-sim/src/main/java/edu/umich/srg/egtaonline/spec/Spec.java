@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 public class Spec {
@@ -186,6 +187,20 @@ public class Spec {
           clazz + " does not extend Value, and so is not a valid key");
     }
     return instance;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (other == null || !(other instanceof Spec)) {
+      return false;
+    }
+    Spec that = (Spec) other;
+    return Objects.equals(this.map, that.map);
+  }
+
+  @Override
+  public int hashCode() {
+    return map.hashCode();
   }
 
   @Override

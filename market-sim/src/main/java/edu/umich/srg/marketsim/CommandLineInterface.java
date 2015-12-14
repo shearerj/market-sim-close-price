@@ -28,9 +28,11 @@ import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.fundamental.GaussianMeanReverting;
 import edu.umich.srg.marketsim.market.Market;
+import edu.umich.srg.util.PositionalSeed;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -47,7 +49,8 @@ public class CommandLineInterface {
 
   public static Observation simulate(SimSpec spec, Log log, int obsNum) {
     Spec configuration = spec.configuration.withDefault(Keys.DEFAULT_KEYS);
-    Random rand = new Random(configuration.get(RandomSeed.class) + obsNum);
+    long seed = PositionalSeed.with(configuration.get(RandomSeed.class)).getSeed(obsNum);
+    Random rand = new Random(seed);
 
     Fundamental fundamental = GaussianMeanReverting.create(new Random(rand.nextLong()),
         configuration.get(FundamentalMean.class), configuration.get(FundamentalMeanReversion.class),
@@ -57,8 +60,8 @@ public class CommandLineInterface {
     log.setPrefix(l -> String.format("%6d | ", sim.getCurrentTime().get()));
 
     List<Market> markets = addMarkets(sim, spec.configuration.get(Markets.class), configuration);
-    List<PlayerInfo> playerInfo = addPlayers(sim, fundamental, spec.assignment, markets,
-        configuration, new Random(rand.nextLong()));
+    List<PlayerInfo> playerInfo =
+        addPlayers(sim, fundamental, spec.assignment, markets, configuration, rand.nextLong());
 
     sim.initialize();
     sim.executeUntil(TimeStamp.of(configuration.get(SimLength.class)));
@@ -99,9 +102,15 @@ public class CommandLineInterface {
     return marketBuilder.build();
   }
 
+  /**
+   * In order for agent seeds to be identical independent of the order the agents were added in or
+   * exactly how they were specified, the random seeds that are passed to the agents are generated
+   * with a hash of the agent's final spec and reused for all agents that share the same spec.
+   */
   private static List<PlayerInfo> addPlayers(MarketSimulator sim, Fundamental fundamental,
-      Multiset<RoleStrat> assignment, Collection<Market> markets, Spec configuration, Random rand) {
-    Random marketRand = new Random(rand.nextLong());
+      Multiset<RoleStrat> assignment, Collection<Market> markets, Spec configuration, long seed) {
+    Map<Spec, Random> randoms = new HashMap<>();
+    PositionalSeed computeSeed = PositionalSeed.with(seed);
     Uniform<Market> marketSelection = Uniform.over(markets);
 
     ImmutableList.Builder<PlayerInfo> playerInfoBuilder = ImmutableList.builder();
@@ -109,10 +118,12 @@ public class CommandLineInterface {
       String strategy = roleStratCounts.getElement().getStrategy();
       AgentCreator creator = EntityBuilder.getAgentCreator(getType(strategy));
       Spec agentSpec = getSpec(strategy).withDefault(configuration);
+      Random rand =
+          randoms.computeIfAbsent(agentSpec, s -> new Random(computeSeed.getSeed(s.hashCode())));
 
       for (int i = 0; i < roleStratCounts.getCount(); ++i) {
-        Agent agent = creator.createAgent(sim, fundamental, markets,
-            marketSelection.sample(marketRand), agentSpec, rand);
+        Agent agent = creator.createAgent(sim, fundamental, markets, marketSelection.sample(rand),
+            agentSpec, new Random(rand.nextLong()));
         sim.addAgent(agent);
         playerInfoBuilder.add(new PlayerInfo(roleStratCounts.getElement(), agent));
       }

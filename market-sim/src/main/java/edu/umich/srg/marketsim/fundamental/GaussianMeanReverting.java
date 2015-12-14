@@ -3,21 +3,25 @@ package edu.umich.srg.marketsim.fundamental;
 import com.google.common.primitives.Ints;
 
 import edu.umich.srg.collect.SparseList;
-import edu.umich.srg.collect.SparseList.Entry;
 import edu.umich.srg.distributions.Binomial;
 import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.distributions.Hypergeometric;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
+import edu.umich.srg.util.PositionalSeed;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.AbstractMap;
+import java.util.Map.Entry;
+import java.util.NavigableMap;
 import java.util.Random;
+import java.util.TreeMap;
 
 /**
- * FIXME
+ * This class models a Guassian mean reverting process that doesn't necessarily make a jump at every
+ * time step. It is implemented such that independent of the TimeStamp query order, values are
+ * generated lazily on demand, but two processes given the random seed will produce the exact same
+ * values. The process is defined more precisly below.
  *
  * if F(t) is the fundamental at time t s^2 is the shock variance m is the fundamental mean and kc
  * is 1 - kappa then
@@ -45,99 +49,100 @@ import java.util.Random;
  * fundamental value is the same as when advancing 2 time steps and jumping in both. That is, we
  * simply replace "d" with "numJumps" in the pdfs above, where "numJumps" is a binomial random
  * variable, with n := d and p := shockVar.
- *
- * @author ewah
+ * 
+ * Due to the decision to make the fundamental consistent, the general growth and query time is log
+ * instead of constant.
  */
 
-// FIXME have IID Gaussians only track if there was a jump. not how many to make sampling more
-// efficient
+/*
+ * FIXME have IID Gaussians only track "if there was a jump", not "how many jumps" to make sampling
+ * more efficient
+ */
+
+/*
+ * There are two major design decisions that will help understand how this works. The first is that
+ * to avoid constantly checking for special cases, these are broken into subclasses, and since the
+ * cases are two dimensional (one for how to process the jumps, and one for when they occur) there
+ * is a class nesting. This is where the Sampler interface comes in.
+ * 
+ * The second is that to keep the draws consistent independent of order, we do some extra sampling.
+ * The extra sampling comes in the form of binary search. With existing points, if the time 15 is
+ * queried, this will first sample points at 1, 2, 4, 8, 16, 12, 14, 15. This may seems like a lot,
+ * but it's generally log in the distance. The second piece necessary is to condition the sameple on
+ * the time when the occur. That way, the random generator at time t is always the same, and always
+ * conditioned on the same draws, thus given consistent draws independent of order. To facilitate
+ * the final part, the positional seed class is used which generates more uniform seeds for
+ * sequential values, making sure that this is close uniform pseudo random.
+ */
 
 public abstract class GaussianMeanReverting implements Fundamental, Serializable {
 
   public static GaussianMeanReverting create(Random rand, double mean, double meanReversion,
       double shockVar, double shockProb) {
     if (shockProb == 0)
-      return new ConstantFundamental(Price.of(mean));
+      return ConstantFundamental.create(Price.of(mean));
     else if (shockProb == 1 && meanReversion == 0)
-      return new JumpEvery(mean, new RandomWalk(rand, shockVar));
+      return new JumpEvery(mean, new RandomWalk(rand.nextLong(), shockVar));
     else if (shockProb == 1 && meanReversion == 1)
-      return new JumpEvery(mean, new IIDGaussian(rand, mean, shockVar));
+      return new JumpEvery(mean, new IIDGaussian(rand.nextLong(), mean, shockVar));
     else if (shockProb == 1)
-      return new JumpEvery(mean, new MeanReverting(rand, mean, shockVar, meanReversion));
+      return new JumpEvery(mean, new MeanReverting(rand.nextLong(), mean, shockVar, meanReversion));
     else if (meanReversion == 0)
-      return new JumpRandomlyCount(mean, new RandomWalk(rand, shockVar), shockProb, rand);
+      return new JumpRandomlyCount(mean, new RandomWalk(rand.nextLong(), shockVar), shockProb,
+          rand.nextLong());
     else if (meanReversion == 1)
-      return new JumpRandomlyCount(mean, new IIDGaussian(rand, mean, shockVar), shockProb, rand);
+      return new JumpRandomlyCount(mean, new IIDGaussian(rand.nextLong(), mean, shockVar),
+          shockProb, rand.nextLong());
     else
-      return new JumpRandomlyCount(mean, new MeanReverting(rand, mean, shockVar, meanReversion),
-          shockProb, rand);
-  }
-
-  private static class ConstantFundamental extends GaussianMeanReverting {
-
-    private final Price constant;
-
-    private ConstantFundamental(Price constant) {
-      this.constant = constant;
-    }
-
-    @Override
-    public Price getValueAt(TimeStamp time) {
-      return constant;
-    }
-
-    @Override
-    public FundamentalInfo getInfo() {
-      return new FundamentalInfo() {
-
-        @Override
-        public Iterable<? extends Entry<? extends Number>> getFundamentalValues() {
-          return Collections.singleton(SparseList.immutableEntry(0, constant));
-        }
-
-      };
-    }
-
-    private static final long serialVersionUID = 1;
-
+      return new JumpRandomlyCount(mean,
+          new MeanReverting(rand.nextLong(), mean, shockVar, meanReversion), shockProb,
+          rand.nextLong());
   }
 
   private static abstract class AbstractGaussianMeanReverting<F extends FundamentalObservation>
       extends GaussianMeanReverting {
 
-    private final List<F> fundamental;
+    private final NavigableMap<Long, F> fundamental;
 
     private AbstractGaussianMeanReverting(F initial) {
-      this.fundamental = new ArrayList<>(Collections.singleton(initial));
+      // Put in zero and one, so doubling works
+      this.fundamental = new TreeMap<>();
+      fundamental.put(0l, initial);
     }
 
     @Override
     public Price getValueAt(TimeStamp timeStamp) {
       long time = timeStamp.get();
-      F last = fundamental.get(fundamental.size() - 1);
-      double newPrice;
-      if (time == last.time) { // Get the last update
-        newPrice = last.price;
 
-      } else if (time > last.time) { // Get a future value
-        F observation = observeFuture(last, time);
-        newPrice = observation.price;
-        fundamental.add(observation);
+      // First make sure that time is in the map by binary searching up
+      Entry<Long, F> last = fundamental.lastEntry();
+      while (time > last.getKey()) {
+        long nextTime = last.getKey() == 0 ? 1 : last.getKey() * 2;
+        F observation = observeFuture(last, nextTime);
+        fundamental.put(nextTime, observation);
+        last = new AbstractMap.SimpleImmutableEntry<>(nextTime, observation);
+      }
 
-      } else { // Get a value before the most current value
-        int index = Collections.binarySearch(fundamental, new FundamentalObservation(time, 0));
-        if (index >= 0) { // We've already calculated the value at time t
-          newPrice = fundamental.get(index).price;
+      Entry<Long, F> before = fundamental.floorEntry(time);
+      Entry<Long, F> after = fundamental.ceilingEntry(time);
 
-        } else { // Compute a new intermediate value
-          index = -index - 1; // Insertion point
-          F before = fundamental.get(index - 1), after = fundamental.get(index);
-          F observation = observeIntermediate(before, after, time);
-          newPrice = observation.price;
-          fundamental.add(index, observation);
+      while (before.getKey() != time && after.getKey() != time) {
+        long midTime = (before.getKey() + after.getKey()) / 2;
+        F observation = observeIntermediate(before, after, midTime);
+        fundamental.put(midTime, observation);
+        Entry<Long, F> entry = new AbstractMap.SimpleImmutableEntry<>(midTime, observation);
+        if (midTime > time) {
+          after = entry;
+        } else {
+          before = entry;
         }
       }
-      return Price.of(newPrice).nonnegative();
+
+      if (before.getKey() == time) {
+        return Price.of(before.getValue().price).nonnegative();
+      } else {
+        return Price.of(after.getValue().price).nonnegative();
+      }
     }
 
     @Override
@@ -145,16 +150,17 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
       return new FundamentalInfo() {
 
         @Override
-        public Iterable<? extends Entry<? extends Number>> getFundamentalValues() {
-          return Collections.unmodifiableCollection(fundamental);
+        public Iterable<? extends SparseList.Entry<? extends Number>> getFundamentalValues() {
+          return SparseList.sparseView(fundamental.entrySet());
         }
 
       };
     }
 
-    protected abstract F observeFuture(F last, long time);
+    protected abstract F observeFuture(Entry<Long, F> last, long time);
 
-    protected abstract F observeIntermediate(F before, F after, long time);
+    protected abstract F observeIntermediate(Entry<Long, F> before, Entry<Long, F> after,
+        long time);
 
     private static final long serialVersionUID = 1;
 
@@ -165,22 +171,23 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     private final Sampler sampler;
 
     private JumpEvery(double mean, Sampler sampler) {
-      super(new FundamentalObservation(0, mean));
+      super(new FundamentalObservation(mean));
       this.sampler = sampler;
     }
 
     @Override
-    protected FundamentalObservation observeFuture(FundamentalObservation last, long time) {
-      double price = sampler.getFutureValue(last.price, time - last.time);
-      return new FundamentalObservation(time, price);
+    protected FundamentalObservation observeFuture(Entry<Long, FundamentalObservation> last,
+        long time) {
+      double price = sampler.getFutureValue(time, last.getValue().price, time - last.getKey());
+      return new FundamentalObservation(price);
     }
 
     @Override
-    protected FundamentalObservation observeIntermediate(FundamentalObservation before,
-        FundamentalObservation after, long time) {
-      double newPrice = sampler.getIntermediateValue(before.price, time - before.time, after.price,
-          after.time - time);
-      return new FundamentalObservation(time, newPrice);
+    protected FundamentalObservation observeIntermediate(Entry<Long, FundamentalObservation> before,
+        Entry<Long, FundamentalObservation> after, long time) {
+      double newPrice = sampler.getIntermediateValue(time, before.getValue().price,
+          time - before.getKey(), after.getValue().price, after.getKey() - time);
+      return new FundamentalObservation(newPrice);
     }
 
     private static final long serialVersionUID = 1;
@@ -190,41 +197,49 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
   private static class JumpRandomlyCount
       extends AbstractGaussianMeanReverting<JumpFundamentalObservation> {
 
+    private final PositionalSeed seed;
     private final Random rand;
     private final Sampler sampler;
     private final double shockProb;
 
-    private JumpRandomlyCount(double mean, Sampler sampler, double shockProb, Random rand) {
-      super(new JumpFundamentalObservation(0, mean, 0));
+    private JumpRandomlyCount(double mean, Sampler sampler, double shockProb, long seed) {
+      super(new JumpFundamentalObservation(mean, 0));
       this.shockProb = shockProb;
       this.sampler = sampler;
-      this.rand = rand;
+      this.seed = PositionalSeed.with(seed);
+      this.rand = new Random(0);
     }
 
     @Override
-    protected JumpFundamentalObservation observeFuture(JumpFundamentalObservation last, long time) {
-      long jumps = Binomial.with(time - last.time, shockProb).sample(rand);
-      double price = jumps == 0 ? last.price : sampler.getFutureValue(last.price, jumps);
-      return new JumpFundamentalObservation(time, price, jumps);
+    protected JumpFundamentalObservation observeFuture(Entry<Long, JumpFundamentalObservation> last,
+        long time) {
+      rand.setSeed(seed.getSeed(time));
+      long jumps = Binomial.with(time - last.getKey(), shockProb).sample(rand);
+      double price = jumps == 0 ? last.getValue().price
+          : sampler.getFutureValue(time, last.getValue().price, jumps);
+      return new JumpFundamentalObservation(price, jumps);
     }
 
     @Override
-    protected JumpFundamentalObservation observeIntermediate(JumpFundamentalObservation before,
-        JumpFundamentalObservation after, long time) {
-      int jumpsBefore = Hypergeometric.with(Ints.checkedCast(after.time - before.time),
-          Ints.checkedCast(after.jumps), Ints.checkedCast(time - before.time)).sample(rand);
-      after.jumps -= jumpsBefore;
+    protected JumpFundamentalObservation observeIntermediate(
+        Entry<Long, JumpFundamentalObservation> before,
+        Entry<Long, JumpFundamentalObservation> after, long time) {
+      rand.setSeed(seed.getSeed(time));
+      int jumpsBefore = Hypergeometric.with(Ints.checkedCast(after.getKey() - before.getKey()),
+          Ints.checkedCast(after.getValue().jumpsBefore), Ints.checkedCast(time - before.getKey()))
+          .sample(rand);
+      after.getValue().jumpsBefore -= jumpsBefore;
 
       double newPrice;
       if (jumpsBefore == 0)
-        newPrice = before.price;
-      else if (after.jumps == 0)
-        newPrice = after.price;
+        newPrice = before.getValue().price;
+      else if (after.getValue().jumpsBefore == 0)
+        newPrice = after.getValue().price;
       else
-        newPrice =
-            sampler.getIntermediateValue(before.price, jumpsBefore, after.price, after.jumps);
+        newPrice = sampler.getIntermediateValue(time, before.getValue().price, jumpsBefore,
+            after.getValue().price, after.getValue().jumpsBefore);
 
-      return new JumpFundamentalObservation(time, newPrice, jumpsBefore);
+      return new JumpFundamentalObservation(newPrice, jumpsBefore);
     }
 
     private static final long serialVersionUID = 1;
@@ -233,31 +248,35 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
 
   private interface Sampler {
 
-    double getFutureValue(double lastPrice, long jumps);
+    double getFutureValue(long time, double lastPrice, long jumps);
 
-    double getIntermediateValue(double priceBefore, long jumpsBefore, double priceAfter,
+    double getIntermediateValue(long time, double priceBefore, long jumpsBefore, double priceAfter,
         long jumpsAfter);
 
   }
 
   private static class RandomWalk implements Sampler, Serializable {
 
+    private final PositionalSeed seed;
     private final Random rand;
     private final double shockVar;
 
-    private RandomWalk(Random rand, double shockVar) {
-      this.rand = rand;
+    private RandomWalk(long seed, double shockVar) {
+      this.seed = PositionalSeed.with(seed);
       this.shockVar = shockVar;
+      this.rand = new Random(0);
     }
 
     @Override
-    public double getFutureValue(double lastPrice, long jumps) {
+    public double getFutureValue(long time, double lastPrice, long jumps) {
+      rand.setSeed(seed.getSeed(time));
       return Gaussian.withMeanVariance(lastPrice, shockVar * jumps).sample(rand);
     }
 
     @Override
-    public double getIntermediateValue(double priceBefore, long jumpsBefore, double priceAfter,
-        long jumpsAfter) {
+    public double getIntermediateValue(long time, double priceBefore, long jumpsBefore,
+        double priceAfter, long jumpsAfter) {
+      rand.setSeed(seed.getSeed(time));
       return Gaussian
           .withMeanVariance(
               (priceBefore * jumpsAfter + priceAfter * jumpsBefore) / (jumpsBefore + jumpsAfter),
@@ -271,22 +290,26 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
 
   private static class IIDGaussian implements Sampler, Serializable {
 
+    private final PositionalSeed seed;
     private final Random rand;
     private final Gaussian dist;
 
-    private IIDGaussian(Random rand, double mean, double shockVar) {
+    private IIDGaussian(long seed, double mean, double shockVar) {
+      this.seed = PositionalSeed.with(seed);
       this.dist = Gaussian.withMeanVariance(mean, shockVar);
-      this.rand = rand;
+      this.rand = new Random(0);
     }
 
     @Override
-    public double getFutureValue(double lastPrice, long jumps) {
+    public double getFutureValue(long time, double lastPrice, long jumps) {
+      rand.setSeed(seed.getSeed(time));
       return dist.sample(rand);
     }
 
     @Override
-    public double getIntermediateValue(double priceBefore, long jumpsBefore, double priceAfter,
-        long jumpsAfter) {
+    public double getIntermediateValue(long time, double priceBefore, long jumpsBefore,
+        double priceAfter, long jumpsAfter) {
+      rand.setSeed(seed.getSeed(time));
       return dist.sample(rand);
     }
 
@@ -296,18 +319,21 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
 
   private static class MeanReverting implements Sampler, Serializable {
 
+    private final PositionalSeed seed;
     private final Random rand;
     private final double shockVar, mean, kappac;
 
-    private MeanReverting(Random rand, double mean, double shockVar, double meanReversion) {
+    private MeanReverting(long seed, double mean, double shockVar, double meanReversion) {
+      this.seed = PositionalSeed.with(seed);
       this.mean = mean;
       this.shockVar = shockVar;
       this.kappac = 1 - meanReversion;
-      this.rand = rand;
+      this.rand = new Random(0);
     }
 
     @Override
-    public double getFutureValue(double lastPrice, long jumps) {
+    public double getFutureValue(long time, double lastPrice, long jumps) {
+      rand.setSeed(seed.getSeed(time));
       double kappacToPower = Math.pow(kappac, jumps),
           stepMean = (1 - kappacToPower) * mean + kappacToPower * lastPrice,
           stepVar = (1 - kappacToPower * kappacToPower) / (1 - kappac * kappac);
@@ -315,8 +341,9 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     }
 
     @Override
-    public double getIntermediateValue(double priceBefore, long jumpsBefore, double priceAfter,
-        long jumpsAfter) {
+    public double getIntermediateValue(long time, double priceBefore, long jumpsBefore,
+        double priceAfter, long jumpsAfter) {
+      rand.setSeed(seed.getSeed(time));
       double kappacPowerBefore = Math.pow(kappac, jumpsBefore),
           kappacPowerAfter = Math.pow(kappac, jumpsAfter),
           stepMean = ((kappacPowerBefore - 1) * (kappacPowerAfter - 1)
@@ -336,43 +363,56 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
 
   }
 
-  private static class FundamentalObservation
-      implements Comparable<FundamentalObservation>, SparseList.Entry<Double>, Serializable {
+  private static class FundamentalObservation extends Number implements Serializable {
 
-    final long time;
     final double price;
 
-    private FundamentalObservation(long time, double price) {
-      this.time = time;
+    private FundamentalObservation(double price) {
       this.price = price;
     }
 
     @Override
-    public int compareTo(FundamentalObservation other) {
-      return Long.compare(time, other.time);
-    }
-
-    @Override
-    public long getIndex() {
-      return time;
-    }
-
-    @Override
-    public Double getElement() {
+    public double doubleValue() {
       return price;
     }
 
+    @Override
+    public float floatValue() {
+      return (float) price;
+    }
+
+    @Override
+    public int intValue() {
+      return (int) price;
+    }
+
+    @Override
+    public long longValue() {
+      return (long) price;
+    }
+
+    @Override
+    public String toString() {
+      return Double.toString(price);
+    }
+
     private static final long serialVersionUID = 1;
+
 
   }
 
   private static class JumpFundamentalObservation extends FundamentalObservation {
 
-    long jumps;
+    long jumpsBefore;
 
-    private JumpFundamentalObservation(long time, double price, long jumps) {
-      super(time, price);
-      this.jumps = jumps;
+    private JumpFundamentalObservation(double price, long jumps) {
+      super(price);
+      this.jumpsBefore = jumps;
+    }
+
+    @Override
+    public String toString() {
+      return "(" + price + ", " + jumpsBefore + ")";
     }
 
     private static final long serialVersionUID = 1;
