@@ -39,6 +39,19 @@ public final class Iters {
     };
   }
 
+  public static <T> int hashCode(Iterator<T> iter) {
+    int hashCode = 1;
+    while (iter.hasNext()) {
+      T next = iter.next();
+      hashCode = 31 * hashCode + (next == null ? 0 : next.hashCode());
+    }
+    return hashCode;
+  }
+
+  public static <T> int hashCode(Iterable<T> iter) {
+    return hashCode(iter.iterator());
+  }
+
   public static <T> Iterator<T> consumeQueue(Queue<T> queue) {
     return new Iterator<T>() {
 

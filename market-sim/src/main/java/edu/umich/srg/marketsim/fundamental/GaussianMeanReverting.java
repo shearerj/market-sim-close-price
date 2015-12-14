@@ -83,21 +83,18 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     if (shockProb == 0)
       return ConstantFundamental.create(Price.of(mean));
     else if (shockProb == 1 && meanReversion == 0)
-      return new JumpEvery(mean, new RandomWalk(rand.nextLong(), shockVar));
+      return new JumpEvery(mean, new RandomWalk(rand, shockVar));
     else if (shockProb == 1 && meanReversion == 1)
-      return new JumpEvery(mean, new IIDGaussian(rand.nextLong(), mean, shockVar));
+      return new JumpEvery(mean, new IIDGaussian(rand, mean, shockVar));
     else if (shockProb == 1)
-      return new JumpEvery(mean, new MeanReverting(rand.nextLong(), mean, shockVar, meanReversion));
+      return new JumpEvery(mean, new MeanReverting(rand, mean, shockVar, meanReversion));
     else if (meanReversion == 0)
-      return new JumpRandomlyCount(mean, new RandomWalk(rand.nextLong(), shockVar), shockProb,
-          rand.nextLong());
+      return new JumpRandomlyCount(mean, new RandomWalk(rand, shockVar), shockProb, rand);
     else if (meanReversion == 1)
-      return new JumpRandomlyCount(mean, new IIDGaussian(rand.nextLong(), mean, shockVar),
-          shockProb, rand.nextLong());
+      return new JumpRandomlyCount(mean, new IIDGaussian(rand, mean, shockVar), shockProb, rand);
     else
-      return new JumpRandomlyCount(mean,
-          new MeanReverting(rand.nextLong(), mean, shockVar, meanReversion), shockProb,
-          rand.nextLong());
+      return new JumpRandomlyCount(mean, new MeanReverting(rand, mean, shockVar, meanReversion),
+          shockProb, rand);
   }
 
   private static abstract class AbstractGaussianMeanReverting<F extends FundamentalObservation>
@@ -204,12 +201,12 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     private final Sampler sampler;
     private final double shockProb;
 
-    private JumpRandomlyCount(double mean, Sampler sampler, double shockProb, long seed) {
+    private JumpRandomlyCount(double mean, Sampler sampler, double shockProb, Random rand) {
       super(new JumpFundamentalObservation(mean, 0));
       this.shockProb = shockProb;
       this.sampler = sampler;
-      this.seed = PositionalSeed.with(seed);
-      this.rand = new Random(0);
+      this.seed = PositionalSeed.with(rand.nextLong());
+      this.rand = rand;
     }
 
     @Override
@@ -263,10 +260,10 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     private final Random rand;
     private final double shockVar;
 
-    private RandomWalk(long seed, double shockVar) {
-      this.seed = PositionalSeed.with(seed);
+    private RandomWalk(Random rand, double shockVar) {
+      this.seed = PositionalSeed.with(rand.nextLong());
       this.shockVar = shockVar;
-      this.rand = new Random(0);
+      this.rand = rand;
     }
 
     @Override
@@ -296,10 +293,10 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     private final Random rand;
     private final Gaussian dist;
 
-    private IIDGaussian(long seed, double mean, double shockVar) {
-      this.seed = PositionalSeed.with(seed);
+    private IIDGaussian(Random rand, double mean, double shockVar) {
+      this.seed = PositionalSeed.with(rand.nextLong());
       this.dist = Gaussian.withMeanVariance(mean, shockVar);
-      this.rand = new Random(0);
+      this.rand = rand;
     }
 
     @Override
@@ -325,12 +322,12 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     private final Random rand;
     private final double shockVar, mean, kappac;
 
-    private MeanReverting(long seed, double mean, double shockVar, double meanReversion) {
-      this.seed = PositionalSeed.with(seed);
+    private MeanReverting(Random rand, double mean, double shockVar, double meanReversion) {
+      this.seed = PositionalSeed.with(rand.nextLong());
       this.mean = mean;
       this.shockVar = shockVar;
       this.kappac = 1 - meanReversion;
-      this.rand = new Random(0);
+      this.rand = rand;
     }
 
     @Override

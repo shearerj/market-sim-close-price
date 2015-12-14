@@ -13,8 +13,11 @@ import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 
+import edu.umich.srg.collect.Iters;
+
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 public abstract class ParsableValue<T> extends Value<T> {
@@ -26,6 +29,20 @@ public abstract class ParsableValue<T> extends Value<T> {
 
   public void parse(String string) {
     set(converter.convert(string));
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (other == null || !(other instanceof ParsableValue)) {
+      return false;
+    }
+    ParsableValue<?> that = (ParsableValue<?>) other;
+    return Objects.equals(this.get(), that.get());
+  }
+
+  @Override
+  public int hashCode() {
+    return get().hashCode();
   }
 
   @Override
@@ -66,6 +83,11 @@ public abstract class ParsableValue<T> extends Value<T> {
   public static abstract class IterableValue<T> extends ParsableValue<Iterable<T>> {
     public IterableValue(Converter<String, T> elementConverter) {
       super(new IterableConverter<T>(elementConverter));
+    }
+
+    @Override
+    public int hashCode() {
+      return Iters.hashCode(get());
     }
   }
 

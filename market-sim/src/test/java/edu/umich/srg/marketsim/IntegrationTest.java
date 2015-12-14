@@ -47,8 +47,10 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class IntegrationTest {
@@ -238,11 +240,10 @@ public class IntegrationTest {
   }
 
   /**
-   * Tests to see if identical simulations with the same random seed produce the same result.
-   * 
-   * FIXME Test fails
+   * Tests to see if identical simulations with the same random seed produce the same result. We
+   * can't arbitrarily order the agents, because different entry orders in the event queue will
+   * produce different scheduling, and hence, slightly different results.
    */
-  @Ignore
   @Test
   public void identicalRandomTest() {
     int numAgentAs = 10, numAgentBs = 5;
@@ -269,13 +270,10 @@ public class IntegrationTest {
     // Save the results
     JsonObject obs1 = gson.fromJson(obsData.toString(), JsonObject.class);
 
-    // Reset and switch the order of the agents
+    // Reset
     obsData = new StringWriter();
-    assignment = ImmutableMultiset.<RoleStrat>builder()
-        .addCopies(RoleStrat.of("role", toStratString("noise", bAgentSpec)), numAgentBs)
-        .addCopies(RoleStrat.of("role", toStratString("noise", aAgentSpec)), numAgentAs).build();
-    spec = SimSpec.create(assignment, configuration);
     specReader = toReader(spec);
+
 
     // Run the simulation again
     Runner.run(CommandLineInterface::simulate, specReader, obsData, nullWriter, 1,
@@ -284,13 +282,35 @@ public class IntegrationTest {
     // Save the results
     JsonObject obs2 = gson.fromJson(obsData.toString(), JsonObject.class);
 
-    // Verify identical output
-    assertEquals(obs1.get("features"), obs2.get("features"));
+    // Verify identical output for players
+    // If this fails, that does't mean they weren't identical, but more care will need to be taken
+    // for the comparison
+    assertEquals(obs1.get("players"), obs2.get("players"));
+
+    JsonObject obs1Features = obs1.get("features").getAsJsonObject();
+    JsonObject obs2Features = obs2.get("features").getAsJsonObject();
+    JsonObject obs1Market = splitFeatures(obs1Features);
+    JsonObject obs2Market = splitFeatures(obs2Features);
+
+    assertEquals(obs1Features, obs2Features);
+    assertEquals(obs1Market, obs2Market);
   }
 
   // TODO Test that verifies agents inherit specifications from configuration
 
   // TODO Test that invalid agent names throw exception
+
+  private static JsonObject splitFeatures(JsonObject features) {
+    JsonObject marketFeatures = new JsonObject();
+    // Copy to avoid concurrent modification
+    List<String> marketFeatureNames = features.entrySet().stream().map(Map.Entry::getKey)
+        .filter(k -> k.startsWith("cda_")).collect(Collectors.toList());
+    for (String marketFeatureName : marketFeatureNames) {
+      JsonElement marketFeature = features.remove(marketFeatureName);
+      marketFeatures.add(marketFeatureName.split("_", 3)[2], marketFeature);
+    }
+    return marketFeatures;
+  }
 
   private static String toStratString(String name, Spec spec) {
     StringBuilder strat = new StringBuilder(name).append(':');

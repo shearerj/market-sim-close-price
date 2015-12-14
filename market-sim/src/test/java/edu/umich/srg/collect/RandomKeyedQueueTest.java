@@ -26,11 +26,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Random;
 import java.util.Set;
 import java.util.SortedSet;
 
 public class RandomKeyedQueueTest {
 
+  private static final Random rand = new Random();
   private RandomKeyedQueue<Integer, Integer> queue;
 
   @Rule
@@ -38,7 +40,7 @@ public class RandomKeyedQueueTest {
 
   @Before
   public void setup() {
-    queue = RandomKeyedQueue.create();
+    queue = RandomKeyedQueue.create(rand);
   }
 
   @Test
@@ -73,7 +75,7 @@ public class RandomKeyedQueueTest {
     Set<Integer> listHashes = Sets.newHashSet();
 
     for (int i = 0; i < 1000; ++i) {
-      RandomKeyedQueue<Integer, Integer> queue = RandomKeyedQueue.create();
+      RandomKeyedQueue<Integer, Integer> queue = RandomKeyedQueue.create(rand);
       for (int j = 0; j < n; ++j)
         queue.add(0, j);
       Builder<Integer> builder = ImmutableList.builder();
@@ -91,7 +93,7 @@ public class RandomKeyedQueueTest {
   public void addAllTest() {
     SortedSet<Integer> list =
         ContiguousSet.create(Range.closedOpen(0, 10), DiscreteDomain.integers());
-    RandomKeyedQueue<Integer, Integer> queue = RandomKeyedQueue.create();
+    RandomKeyedQueue<Integer, Integer> queue = RandomKeyedQueue.create(rand);
     queue.addAllOrdered(0, list);
     assertTrue(Iterators.elementsEqual(list.iterator(),
         Streams.stream(Iters.consumeQueue(queue)).map(x -> x.getValue()).iterator()));
@@ -103,7 +105,7 @@ public class RandomKeyedQueueTest {
     Set<ImmutableList<Entry<Integer, Integer>>> listHashes = new HashSet<>();
 
     for (int i = 0; i < 1000; ++i) {
-      RandomKeyedQueue<Integer, Integer> queue = RandomKeyedQueue.create();
+      RandomKeyedQueue<Integer, Integer> queue = RandomKeyedQueue.create(rand);
       queue.add(0, 0);
       queue.addAllOrdered(0, ImmutableList.of(1, 2));
       listHashes.add(ImmutableList.copyOf(Iters.consumeQueue(queue)));

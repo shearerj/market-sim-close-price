@@ -23,6 +23,9 @@ import edu.umich.srg.marketsim.market.OrderRecord;
 import java.util.Collection;
 import java.util.Random;
 
+/**
+ * This agent is mainly for testing as it submits entirely random orders.
+ */
 public class NoiseAgent implements Agent {
 
   private static final Distribution<OrderType> orderTypeDistribution =

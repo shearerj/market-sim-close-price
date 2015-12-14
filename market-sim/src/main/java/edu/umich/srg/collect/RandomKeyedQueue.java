@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Maps;
 
+import edu.umich.srg.util.PositionalSeed;
+
 import java.util.AbstractQueue;
 import java.util.Collection;
 import java.util.Comparator;
@@ -37,28 +39,20 @@ public class RandomKeyedQueue<K, V> extends AbstractQueue<Entry<K, V>> {
 
   private NavigableMap<K, OrderedQueue<V>> queue;
   private int size;
-  private Random rand;
+  private PositionalSeed seed;
 
-  protected RandomKeyedQueue(Random seed, Comparator<? super K> comp) {
+  protected RandomKeyedQueue(Random rand, Comparator<? super K> comp) {
     this.queue = new TreeMap<>(comp);
     this.size = 0;
-    this.rand = seed;
+    this.seed = PositionalSeed.with(rand.nextLong());
   }
 
   public static <K, V> RandomKeyedQueue<K, V> create(Random seed, Comparator<? super K> comp) {
     return new RandomKeyedQueue<>(seed, comp);
   }
 
-  public static <K, V> RandomKeyedQueue<K, V> create(Comparator<? super K> comp) {
-    return new RandomKeyedQueue<>(new Random(), comp);
-  }
-
   public static <K extends Comparable<? super K>, V> RandomKeyedQueue<K, V> create(Random seed) {
     return new RandomKeyedQueue<>(seed, Comparator.naturalOrder());
-  }
-
-  public static <K extends Comparable<? super K>, V> RandomKeyedQueue<K, V> create() {
-    return new RandomKeyedQueue<>(new Random(), Comparator.naturalOrder());
   }
 
   @Override
@@ -102,36 +96,31 @@ public class RandomKeyedQueue<K, V> extends AbstractQueue<Entry<K, V>> {
     return Maps.immutableEntry(first.getKey(), first.getValue().peek());
   }
 
-  protected OrderedQueue<V> getOrCreate(K time) {
-    OrderedQueue<V> q = queue.get(time);
-    if (q == null) {
-      /*
-       * FIXME Do we want a constrained random queue, or a uniform random queue over deques. The
-       * constrianed random queue is nice because all orderings are uniform, but it also means
-       * scheduling more activities at the end makes your first activities more likely. A random
-       * queue would give equal weight to ever group of actions at the same time. I think we want
-       * the constrained one.
-       * 
-       * This can be thought of in the continuous time domain. The constrained random queue is like
-       * generating a random time for all of your activities and then sorting it and assigning the
-       * times of your activities that way. The random queue is like picking the time of your first
-       * activity, then rejection sampling your second activity until it's after the first, then the
-       * third until it's after the second and so on. Neither seems great...
-       */
-      q = new UPOrderedRandomQueue<>(rand);
-      queue.put(time, q);
-    }
-    return q;
+  protected OrderedQueue<V> createQueue(K time) {
+    /*
+     * FIXME Do we want a constrained random queue, or a uniform random queue over deques. The
+     * constrianed random queue is nice because all orderings are uniform, but it also means
+     * scheduling more activities at the end makes your first activities more likely. A random queue
+     * would give equal weight to ever group of actions at the same time. I think we want the
+     * constrained one.
+     * 
+     * This can be thought of in the continuous time domain. The constrained random queue is like
+     * generating a random time for all of your activities and then sorting it and assigning the
+     * times of your activities that way. The random queue is like picking the time of your first
+     * activity, then rejection sampling your second activity until it's after the first, then the
+     * third until it's after the second and so on. Neither seems great...
+     */
+    return new UPOrderedRandomQueue<>(new Random(seed.getSeed(time.hashCode())));
   }
 
   public boolean add(K time, V activity) {
     size++;
-    return getOrCreate(time).add(activity);
+    return queue.computeIfAbsent(time, this::createQueue).add(activity);
   }
 
   public boolean addAllOrdered(K time, Collection<? extends V> activities) {
     size += activities.size();
-    return getOrCreate(time).addAllOrdered(activities);
+    return queue.computeIfAbsent(time, this::createQueue).addAllOrdered(activities);
   }
 
   public boolean addAll(ListMultimap<? extends K, ? extends V> activities) {

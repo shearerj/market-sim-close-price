@@ -128,6 +128,7 @@ public class CommandLineInterface {
         playerInfoBuilder.add(new PlayerInfo(roleStratCounts.getElement(), agent));
       }
     }
+
     return playerInfoBuilder.build();
   }
 
