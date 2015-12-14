@@ -105,12 +105,21 @@ public class CommandLineInterface {
   /**
    * In order for agent seeds to be identical independent of the order the agents were added in or
    * exactly how they were specified, the random seeds that are passed to the agents are generated
-   * with a hash of the agent's final spec and reused for all agents that share the same spec.
+   * with a hash of the agent's specified strategy and reused for all agents that share the same
+   * strategy.
+   * 
+   * TODO Ideally the hash will be off of the agent type and the relevant aspect of the total spec
+   * that it receives. However if we use the whole spec, then adding a different agent with
+   * parameters in the spec will change the agents hash, and hence the random seeds. However,
+   * hashing the strategy has the downside that agents that actually share the same relevant
+   * specification may get different random seeds due to order or specifying information in the
+   * global spec.
    */
   private static List<PlayerInfo> addPlayers(MarketSimulator sim, Fundamental fundamental,
-      Multiset<RoleStrat> assignment, Collection<Market> markets, Spec configuration, long seed) {
-    Map<Spec, Random> randoms = new HashMap<>();
-    PositionalSeed computeSeed = PositionalSeed.with(seed);
+      Multiset<RoleStrat> assignment, Collection<Market> markets, Spec configuration,
+      long baseSeed) {
+    Map<String, Random> randoms = new HashMap<>();
+    PositionalSeed seed = PositionalSeed.with(baseSeed);
     Uniform<Market> marketSelection = Uniform.over(markets);
 
     ImmutableList.Builder<PlayerInfo> playerInfoBuilder = ImmutableList.builder();
@@ -118,8 +127,7 @@ public class CommandLineInterface {
       String strategy = roleStratCounts.getElement().getStrategy();
       AgentCreator creator = EntityBuilder.getAgentCreator(getType(strategy));
       Spec agentSpec = getSpec(strategy).withDefault(configuration);
-      Random rand =
-          randoms.computeIfAbsent(agentSpec, s -> new Random(computeSeed.getSeed(s.hashCode())));
+      Random rand = randoms.computeIfAbsent(strategy, s -> new Random(seed.getSeed(s.hashCode())));
 
       for (int i = 0; i < roleStratCounts.getCount(); ++i) {
         Agent agent = creator.createAgent(sim, fundamental, markets, marketSelection.sample(rand),
