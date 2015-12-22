@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # usage: ./run-egta.sh <directory> <num-obs>
 #
 # Script to run simulator in the same way the egta will run it. <directory> is
@@ -22,18 +22,15 @@ if [[ "$(hostname)" == *'arc-ts.umich.edu' ]]; then
 fi
 
 # This is the number of observations to condense into one observation
-NUMSIMS=1000
+NUMSIMS="$(jq '.configuration.numSims // 1000' "$1/simulation_spec.json")"
 
 # Execution
-java -Xms1G -Xmx4G -jar "$DIR/target/marketsim-4.0.0-jar-with-dependencies.jar" --egta -s "$1/simulation_spec.json" "$(($NUMSIMS * $2))" \
+java -Xms1G -Xmx4G -jar "$DIR/target/marketsim-4.0.0-jar-with-dependencies.jar" --egta -s <(jq 'del(.configuration.numSims)' "$1/simulation_spec.json") "$(($NUMSIMS * $2))" \
     | sed -e "1~${NUMSIMS}s#^#[#" -e "0~${NUMSIMS}"'s#$#]#' -e "0~${NUMSIMS}!"'s#$#,#' \
     | jq -c -f "$DIR/jq/merge_payoffs.jq" \
     | split -a4 --additional-suffix=.json -l 1 - "$1/observation_"
 
-# `paste` and `jq` are what do the numsims aggregation. `paste` is used to
-# concat NUMSIMS observations on a single line separated by the record
-# delimiter. This is then passed into jq which then splits each line into an
-# array of json files. This allows the aggregation to be done in parallel.
-# Finally, merge_payoffs takes every array and merges it into a single array,
-# thus completing the split. The final jq has thw `-c` option putting one
-# result on a line before it's split into one line per file with `split`
+# `sed` and `jq` are what do the numsims aggregation. `sed` is used to turn
+# each set of NUMSIMS lines into one json list. This is then passed into jq
+# which does the aggregation, and then split, which creates the files. This
+# allows the aggregation to be done in parallel.
