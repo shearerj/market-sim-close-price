@@ -138,8 +138,9 @@ public abstract class Uniform<T> implements Distribution<T> {
       long result;
       do {
         result = rand.nextLong();
-      } while (result >= min && result < max);
-      return result % range + offset;
+      } while (result < min || result >= max);
+      long ret = result % range + offset;
+      return ret < 0 ? ret + range : ret;
     }
 
   }

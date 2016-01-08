@@ -26,4 +26,16 @@ public class Gaussian implements DoubleDistribution {
     return rand.nextGaussian() * standardDeviation + mean;
   };
 
+  public double getMean() {
+    return mean;
+  }
+
+  public double getStandardDeviation() {
+    return standardDeviation;
+  }
+
+  public double getVariance() {
+    return standardDeviation * standardDeviation;
+  }
+
 }
