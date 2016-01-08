@@ -2,30 +2,13 @@ package edu.umich.srg.util;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.google.common.collect.ImmutableSet;
-
-import edu.umich.srg.collect.Streams;
-
 import java.util.Objects;
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collector;
+import java.util.PrimitiveIterator.OfDouble;
 import java.util.stream.DoubleStream;
 
 /**
- * Compact Summary Statistics Class meant to only calculate sum and standard deviation. This
- * generally has more accuracy than the Apache Commons Math SummaryStatistics class.
- * 
- * Internally it is backed by the KahanSum class to do efficient sums of floating point values.
- * There are potentially more robust ways to do this, and this method is somewhat unproven, but it
- * seems to be more accurate than the method proposed by Knuth that is implemented many places
- * including Apache Commons Math.
- * 
- * @author erik
- * 
+ * Class for efficient accurate covariance calculation. Uses the covarance version of the knuth
+ * method.
  */
 public class CovarStats {
 
@@ -56,8 +39,12 @@ public class CovarStats {
   }
 
   public static CovarStats over(DoubleStream x, DoubleStream y) {
-    return Streams.zip(x.boxed(), y.boxed(), (a, b) -> new double[] {a, b})
-        .collect(new CovarStatsCollector());
+    OfDouble xi = x.iterator(), yi = y.iterator();
+    CovarStats stats = CovarStats.empty();
+    while (xi.hasNext() && yi.hasNext()) {
+      stats.accept(xi.next(), yi.next());
+    }
+    return stats;
   }
 
   public void accept(double x, double y) {
@@ -198,37 +185,6 @@ public class CovarStats {
   @Override
   public String toString() {
     return "<n: " + count + ", x mean: " + xAverage + ", y mean: " + yAverage + ">";
-  }
-
-  private static class CovarStatsCollector implements Collector<double[], CovarStats, CovarStats> {
-
-    @Override
-    public BiConsumer<CovarStats, double[]> accumulator() {
-      return (cs, v) -> {
-        cs.accept(v[0], v[1]);
-      };
-    }
-
-    @Override
-    public Set<Characteristics> characteristics() {
-      return ImmutableSet.of(Characteristics.UNORDERED, Characteristics.IDENTITY_FINISH);
-    }
-
-    @Override
-    public BinaryOperator<CovarStats> combiner() {
-      return CovarStats::combine;
-    }
-
-    @Override
-    public Function<CovarStats, CovarStats> finisher() {
-      return Function.identity();
-    }
-
-    @Override
-    public Supplier<CovarStats> supplier() {
-      return CovarStats::empty;
-    }
-
   }
 
 }

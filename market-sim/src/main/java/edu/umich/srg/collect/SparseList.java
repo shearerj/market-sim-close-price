@@ -24,11 +24,28 @@ public interface SparseList<E> extends Iterable<Entry<E>> {
 
   }
 
+  public static <E> Entry<E> asSparseEntry(Map.Entry<? extends Number, ? extends E> mapEntry) {
+    return new Entry<E>() {
+      @Override
+      public long getIndex() {
+        return mapEntry.getKey().longValue();
+      }
+
+      @Override
+      public E getElement() {
+        return mapEntry.getValue();
+      }
+
+      @Override
+      public String toString() {
+        return mapEntry.toString();
+      }
+    };
+  }
+
   public static <E> Iterator<Entry<E>> sparseView(
       Iterator<? extends Map.Entry<? extends Number, ? extends E>> base) {
     return new Iterator<Entry<E>>() {
-
-
       @Override
       public boolean hasNext() {
         return base.hasNext();
@@ -36,10 +53,8 @@ public interface SparseList<E> extends Iterable<Entry<E>> {
 
       @Override
       public Entry<E> next() {
-        Map.Entry<? extends Number, ? extends E> next = base.next();
-        return immutableEntry(next.getKey().longValue(), next.getValue());
+        return asSparseEntry(base.next());
       }
-
     };
   }
 
@@ -59,6 +74,11 @@ public interface SparseList<E> extends Iterable<Entry<E>> {
       @Override
       public E getElement() {
         return element;
+      }
+
+      @Override
+      public String toString() {
+        return index + "=" + element;
       }
 
     };
