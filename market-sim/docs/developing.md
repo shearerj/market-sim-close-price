@@ -3,11 +3,11 @@
 Overview
 ========
 
-Quick Start
-===========
+Quick Start (Ubuntu)
+====================
 
 This is a quick start guide to checkout and run the repository. These commands
-should be vaguely understood before executing them.
+should be vaguely understood before executing them. If you're using mac, most of the `sudo apt-get` commands can be replaced by `brew` using [homebrew](http://brew.sh).
 
 ```
 sudo apt-get install openjdk-8-jdk make maven jq git
