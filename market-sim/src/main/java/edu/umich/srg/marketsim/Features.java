@@ -5,14 +5,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 import edu.umich.srg.collect.SparseList;
+import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.Market;
-import edu.umich.srg.util.Sparse;
 import edu.umich.srg.util.SummStats;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.StreamSupport;
 
 class Features {
 
@@ -44,11 +43,12 @@ class Features {
     // Fundamental features
     long finalTime = simulator.getCurrentTime().get();
     // This filters out fundamental values above last time;
-    Iterable<SparseList.Entry<Number>> fundamental = () -> StreamSupport
-        .stream(simulator.getFundamental().getInfo().getFundamentalValues().spliterator(), false)
-        .filter(e -> e.getIndex() <= finalTime).iterator();
+    Fundamental fundamental = simulator.getFundamental();
+    // Iterable<SparseList.Entry<Number>> fundamental = () -> StreamSupport
+    // .stream(simulator.getFundamental().getInfo().getFundamentalValues().spliterator(), false)
+    // .filter(e -> e.getIndex() <= finalTime).iterator();
 
-    addSparseData(features, fundamental, "fundamental");
+    addSparseData(features, fundamental.getFundamentalValues(finalTime), "fundamental");
 
     // Market features
     for (Market market : simulator.getMarkets()) {
@@ -56,7 +56,7 @@ class Features {
       Iterable<? extends SparseList.Entry<? extends Number>> prices =
           market.getMarketInfo().getPrices();
       addSparseData(features, prices, marketTag);
-      features.addProperty(marketTag + "_rmsd", Sparse.rmsd(fundamental, prices));
+      features.addProperty(marketTag + "_rmsd", fundamental.rmsd(prices.iterator(), finalTime));
     }
 
     return features;
