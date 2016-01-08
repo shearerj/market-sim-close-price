@@ -30,6 +30,7 @@ public class SurplusThreshold {
     return memoized.computeIfAbsent(threshold, SurplusThreshold::new);
   }
 
+  /** Get the price to submit conditioned on the demanded surplus and the market state. */
   public Price shadePrice(OrderType type, Quote quote, double estimatedValue,
       double demandedSurplus) {
     Optional<Price> marketPrice = type == BUY ? quote.getAskPrice() : quote.getBidPrice();

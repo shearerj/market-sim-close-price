@@ -17,14 +17,14 @@ import edu.umich.srg.marketsim.testing.MockSim;
 
 public class CDAMarketTest {
   private MockSim sim;
-  private CDAMarket market;
+  private CdaMarket market;
   private MockAgent agent;
   private MarketView view;
 
   @Before
   public void setup() {
     sim = new MockSim();
-    market = CDAMarket.create(sim);
+    market = CdaMarket.create(sim);
     agent = new MockAgent();
     view = market.getView(agent, TimeStamp.ZERO);
   }

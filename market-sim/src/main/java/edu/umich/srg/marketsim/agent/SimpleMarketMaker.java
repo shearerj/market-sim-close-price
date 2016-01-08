@@ -28,7 +28,8 @@ import java.util.Random;
 
 public class SimpleMarketMaker implements Agent {
 
-  private Optional<Price> lastBid, lastAsk;
+  private Optional<Price> lastBid;
+  private Optional<Price> lastAsk;
 
   private final Random rand;
   private final Sim sim;
@@ -37,6 +38,7 @@ public class SimpleMarketMaker implements Agent {
   private final int rungThickness;
   private final MarketMakerLadder strategy;
 
+  /** Basic constructor for a simple market maker. */
   public SimpleMarketMaker(Sim sim, Market market, Spec spec, Random rand) {
     this.sim = sim;
     this.market = market.getView(this, TimeStamp.ZERO);

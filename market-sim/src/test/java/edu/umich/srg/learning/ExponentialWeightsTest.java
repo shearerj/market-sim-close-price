@@ -64,8 +64,9 @@ public class ExponentialWeightsTest {
         averageReward.get(t).accept(reward);
       }
     }
-    double rSquared = Linear.rSquared(IntStream.range(0, maxTime).asDoubleStream(),
-        averageReward.stream().mapToDouble(d -> d.getAverage() * d.getAverage()));
+    double rSquared =
+        Linear.pearsonCoefficient(IntStream.range(0, maxTime).asDoubleStream().iterator(),
+            averageReward.stream().mapToDouble(d -> d.getAverage() * d.getAverage()).iterator());
     assertTrue(rSquared > 0.9, "Regret wasn't close to square root t (r2 only %f)", rSquared);
   }
 
@@ -85,8 +86,9 @@ public class ExponentialWeightsTest {
         averageReward.get(t).accept(reward);
       }
     }
-    double rSquared = Linear.rSquared(IntStream.range(0, maxTime).asDoubleStream(),
-        averageReward.stream().mapToDouble(d -> d.getAverage() * d.getAverage()));
+    double rSquared =
+        Linear.pearsonCoefficient(IntStream.range(0, maxTime).asDoubleStream().iterator(),
+            averageReward.stream().mapToDouble(d -> d.getAverage() * d.getAverage()).iterator());
     assertTrue(rSquared > 0.90, "Regret wasn't close to square root t (r2 only %f)", rSquared);
   }
 

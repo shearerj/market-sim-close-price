@@ -1,20 +1,24 @@
 package edu.umich.srg.util;
 
+import java.util.PrimitiveIterator.OfDouble;
 import java.util.function.DoubleUnaryOperator;
-import java.util.stream.DoubleStream;
 
-public interface Linear {
+public final class Linear {
 
-  public static DoubleUnaryOperator linearFit(DoubleStream x, DoubleStream y) {
-    CovarStats cs = CovarStats.over(x, y);
-    double slope = cs.getCovariance() / cs.getXVariance(),
-        intercept = cs.getYAverage() - slope * cs.getXAverage();
+  /** Perform a linear fir on parallel data. */
+  public static DoubleUnaryOperator linearFit(OfDouble independent, OfDouble dependent) {
+    CovarStats cs = CovarStats.over(independent, dependent);
+    double slope = cs.getCovariance() / cs.getXVariance();
+    double intercept = cs.getYAverage() - slope * cs.getXAverage();
     return d -> d * slope + intercept;
   }
 
-  public static double rSquared(DoubleStream x, DoubleStream y) {
-    CovarStats cs = CovarStats.over(x, y);
+  /** Find the rsquared on linear data. */
+  public static double pearsonCoefficient(OfDouble independent, OfDouble dependent) {
+    CovarStats cs = CovarStats.over(independent, dependent);
     return cs.getCovariance() * cs.getCovariance() / (cs.getXVariance() * cs.getYVariance());
   }
+
+  private Linear() {} // Unconstructable
 
 }

@@ -19,61 +19,80 @@ import edu.umich.srg.fourheap.Order.OrderType;
 public interface Keys {
 
   // Simulation
-  public class RandomSeed extends LongValue {
-  };
-  public class SimLength extends LongValue {
-  };
-  public class Markets extends StringsValue {
-  };
-  public class FundamentalMean extends DoubleValue {
-  };
-  public class FundamentalShockVar extends DoubleValue {
-  };
-  public class FundamentalMeanReversion extends DoubleValue {
-  };
-  public class FundamentalShockProb extends DoubleValue {
-  };
+  class RandomSeed extends LongValue {
+  }
+
+  class SimLength extends LongValue {
+  }
+
+  class Markets extends StringsValue {
+  }
+
+  class FundamentalMean extends DoubleValue {
+  }
+
+  class FundamentalShockVar extends DoubleValue {
+  }
+
+  class FundamentalMeanReversion extends DoubleValue {
+  }
+
+  class FundamentalShockProb extends DoubleValue {
+  }
 
   // Agents
-  public class ArrivalRate extends DoubleValue {
-  };
-  public class FundamentalObservationVariance extends DoubleValue {
-  };
-  public class Type extends EnumValue<OrderType> {
+  class ArrivalRate extends DoubleValue {
+  }
+
+  class FundamentalObservationVariance extends DoubleValue {
+  }
+
+  class Type extends EnumValue<OrderType> {
     public Type() {
       super(OrderType.class);
     }
-  };
-  public class MaxPosition extends IntValue {
-  };
-  public class PrivateValueVar extends DoubleValue {
-  };
-  public class Rmax extends IntValue {
-  };
-  public class Rmin extends IntValue {
-  };
+  }
+
+  class MaxPosition extends IntValue {
+  }
+
+  class PrivateValueVar extends DoubleValue {
+  }
+
+  class Rmax extends IntValue {
+  }
+
+  class Rmin extends IntValue {
+  }
 
   // Market Maker
-  public static class RungSep extends IntValue {
-  };
-  public static class NumRungs extends IntValue {
-  };
-  public static class TickImprovement extends BoolValue {
-  };
-  public static class TickOutside extends BoolValue {
-  };
-  public static class RungThickness extends IntValue {
-  };
+  class RungSep extends IntValue {
+  }
+
+  class NumRungs extends IntValue {
+  }
+
+  class TickImprovement extends BoolValue {
+  }
+
+  class TickOutside extends BoolValue {
+  }
+
+  class RungThickness extends IntValue {
+  }
 
   // Specific agent parameters
-  public class PriceVarEst extends DoubleValue {
-  };
-  public class NumShockOrders extends IntValue {
-  };
-  public static class Thresh extends DoubleValue {
-  };
-  public static class TimeToLiquidate extends LongValue {
-  };
+  class PriceVarEst extends DoubleValue {
+  }
+
+  class NumShockOrders extends IntValue {
+  }
+
+  class Thresh extends DoubleValue {
+  }
+
+  class TimeToLiquidate extends LongValue {
+  }
 
   // public static class DiscountFactors extends DoublesValue {};
   //
@@ -169,9 +188,9 @@ public interface Keys {
   // }
   // }
 
-  public final Spec DEFAULT_KEYS = Spec.builder() //
+  Spec DEFAULT_KEYS = Spec.builder() //
       .put(RandomSeed.class, System.nanoTime()) // Set seed from clock
-      .put(SimLength.class, 10000l) // A fine default
+      .put(SimLength.class, 10000L) // A fine default
       .put(FundamentalMean.class, 1e9) // Approximately half of Integer.MAX_VALUE
       .put(FundamentalShockProb.class, 1d) // Shocks disabled
 

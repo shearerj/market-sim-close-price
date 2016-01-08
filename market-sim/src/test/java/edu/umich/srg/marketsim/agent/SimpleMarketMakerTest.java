@@ -16,7 +16,7 @@ import edu.umich.srg.marketsim.MarketSimulator;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
-import edu.umich.srg.marketsim.market.CDAMarket;
+import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 
@@ -32,7 +32,7 @@ public class SimpleMarketMakerTest {
     Log log = Log.nullLogger();
 
     MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(500), log, rand);
-    Market cda = sim.addMarket(CDAMarket.create(sim));
+    Market cda = sim.addMarket(CdaMarket.create(sim));
 
     // Background Agents
     for (int i = 0; i < 20; ++i)

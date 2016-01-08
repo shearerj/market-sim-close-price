@@ -10,41 +10,84 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-/**
- * An interface with a lot on convenience methods for creating different uniform distributions
- */
+/** A class for constructing uniform distributions. */
 public abstract class Uniform<T> implements Distribution<T> {
 
+  /** Create a uniform distribution over several options. */
   public static <T> Uniform<T> over(Iterator<? extends T> options) {
     return over(ImmutableList.copyOf(options));
   }
 
+  /** Create a uniform distribution over several options. */
   public static <T> Uniform<T> over(Iterable<? extends T> options) {
     ImmutableList<? extends T> listOptions = ImmutableList.copyOf(options);
     checkArgument(listOptions.size() > 0);
-    if (listOptions.size() == 1)
+    if (listOptions.size() == 1) {
       return new ConstantUniform<>(listOptions.get(0));
-    else
+    } else {
       return new ListUniform<>(listOptions);
+    }
   }
 
+  /** Create a uniform distribution over several options. */
   public static <T> Uniform<T> over(@SuppressWarnings("unchecked") T... options) {
     return over(ImmutableList.copyOf(options));
   }
 
-  private static class ListUniform<T> extends Uniform<T> {
 
-    private final List<? extends T> options;
 
-    private ListUniform(ImmutableList<? extends T> options) {
-      this.options = options;
-    }
+  // Int
 
-    @Override
-    public T sample(Random rand) {
-      return options.get(rand.nextInt(options.size()));
-    }
+  public static IntUniform closed(int minInclusive, int maxInclusive) {
+    return new IntUniform(minInclusive, BoundType.CLOSED, maxInclusive, BoundType.CLOSED);
+  }
 
+  // Long
+
+  public static LongUniform closed(long minInclusive, long maxInclusive) {
+    return new LongUniform(minInclusive, BoundType.CLOSED, maxInclusive, BoundType.CLOSED);
+  }
+
+  public static IntUniform closedOpen(int minInclusive, int maxExclusive) {
+    return new IntUniform(minInclusive, BoundType.CLOSED, maxExclusive, BoundType.OPEN);
+  }
+
+  // Long
+
+  public static LongUniform closedOpen(long minInclusive, long maxExclusive) {
+    return new LongUniform(minInclusive, BoundType.CLOSED, maxExclusive, BoundType.OPEN);
+  }
+
+  // Double
+
+  public static ContinuousUniform closedOpen(double minInclusive, double maxExclusive) {
+    return new ContinuousUniform(minInclusive, maxExclusive);
+  }
+
+  public static IntUniform openClosed(int minExclusive, int maxInclusive) {
+    return new IntUniform(minExclusive, BoundType.OPEN, maxInclusive, BoundType.CLOSED);
+  }
+
+  // Long
+
+  public static LongUniform openClosed(long minExclusive, long maxInclusive) {
+    return new LongUniform(minExclusive, BoundType.OPEN, maxInclusive, BoundType.CLOSED);
+  }
+
+  public static IntUniform open(int minExclusive, int maxExclusive) {
+    return new IntUniform(minExclusive, BoundType.OPEN, maxExclusive, BoundType.OPEN);
+  }
+
+  // Long
+
+  public static LongUniform open(long minExclusive, long maxExclusive) {
+    return new LongUniform(minExclusive, BoundType.OPEN, maxExclusive, BoundType.OPEN);
+  }
+
+  // Double
+
+  public static ContinuousUniform continuous() {
+    return new ContinuousUniform(0, 1);
   }
 
   private static class ConstantUniform<T> extends Uniform<T> {
@@ -62,27 +105,25 @@ public abstract class Uniform<T> implements Distribution<T> {
 
   }
 
-  // Int
+  private static class ListUniform<T> extends Uniform<T> {
 
-  public static IntUniform closed(int minInclusive, int maxInclusive) {
-    return new IntUniform(minInclusive, BoundType.CLOSED, maxInclusive, BoundType.CLOSED);
-  }
+    private final List<? extends T> options;
 
-  public static IntUniform closedOpen(int minInclusive, int maxExclusive) {
-    return new IntUniform(minInclusive, BoundType.CLOSED, maxExclusive, BoundType.OPEN);
-  }
+    private ListUniform(ImmutableList<? extends T> options) {
+      this.options = options;
+    }
 
-  public static IntUniform openClosed(int minExclusive, int maxInclusive) {
-    return new IntUniform(minExclusive, BoundType.OPEN, maxInclusive, BoundType.CLOSED);
-  }
+    @Override
+    public T sample(Random rand) {
+      return options.get(rand.nextInt(options.size()));
+    }
 
-  public static IntUniform open(int minExclusive, int maxExclusive) {
-    return new IntUniform(minExclusive, BoundType.OPEN, maxExclusive, BoundType.OPEN);
   }
 
   public static class IntUniform implements IntDistribution {
     // FIXME this will fail if the range is larger than Integer.MAX_VALUE;
-    private final int range, offset;
+    private final int range;
+    private final int offset;
 
     private IntUniform(int min, BoundType minBound, int max, BoundType maxBound) {
       this.range =
@@ -100,25 +141,12 @@ public abstract class Uniform<T> implements Distribution<T> {
 
   // Long
 
-  public static LongUniform closed(long minInclusive, long maxInclusive) {
-    return new LongUniform(minInclusive, BoundType.CLOSED, maxInclusive, BoundType.CLOSED);
-  }
-
-  public static LongUniform closedOpen(long minInclusive, long maxExclusive) {
-    return new LongUniform(minInclusive, BoundType.CLOSED, maxExclusive, BoundType.OPEN);
-  }
-
-  public static LongUniform openClosed(long minExclusive, long maxInclusive) {
-    return new LongUniform(minExclusive, BoundType.OPEN, maxInclusive, BoundType.CLOSED);
-  }
-
-  public static LongUniform open(long minExclusive, long maxExclusive) {
-    return new LongUniform(minExclusive, BoundType.OPEN, maxExclusive, BoundType.OPEN);
-  }
-
   public static class LongUniform implements LongDistribution {
 
-    private final long min, max, range, offset;
+    private final long min;
+    private final long max;
+    private final long range;
+    private final long offset;
 
     private LongUniform(long min, BoundType minBound, long max, BoundType maxBound) {
       // TODO Might be able to use unsigned math for this...
@@ -147,17 +175,10 @@ public abstract class Uniform<T> implements Distribution<T> {
 
   // Double
 
-  public static ContinuousUniform closedOpen(double minInclusive, double maxExclusive) {
-    return new ContinuousUniform(minInclusive, maxExclusive);
-  }
-
-  public static ContinuousUniform continuous() {
-    return new ContinuousUniform(0, 1);
-  }
-
   public static class ContinuousUniform implements DoubleDistribution {
 
-    private final double range, offset;
+    private final double range;
+    private final double offset;
 
     private ContinuousUniform(double minInclusive, double maxExclusive) {
       this.range = maxExclusive - minInclusive;

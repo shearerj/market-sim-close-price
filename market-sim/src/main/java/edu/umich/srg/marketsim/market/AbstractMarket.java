@@ -5,8 +5,8 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
+import edu.umich.srg.collect.Sparse;
 import edu.umich.srg.collect.SparseArrayList;
-import edu.umich.srg.collect.SparseList;
 import edu.umich.srg.fourheap.FourHeap;
 import edu.umich.srg.fourheap.MatchedOrders;
 import edu.umich.srg.fourheap.Order;
@@ -29,32 +29,22 @@ import java.util.function.Function;
 
 /**
  * Base class for all markets. This class provides almost all market functionality that one should
- * need for creating a market.
- * 
- * A market needs two things to function appropriately. First is a latency. This represents how long
- * it takes background agents (with only one primary market) to talk to the market. A latency of
- * TimeStamp.IMMEDIATE makes this immediate in terms of scheduling. The second thing they need is a
- * ClearingRule. A ClearingRule is a class that takes a set of MatchedOrders and assigns a price to
- * them. This facilitates the difference in pricing between a call market and a CDA.
- * 
- * By default the only methods that schedules more activities is a Clear and a quoteUpdate.
- * 
- * @author ewah
- * @author ebrink
+ * need for creating a market. The only thing an abstract market needs is a pricing rule. That is,
+ * given a set of matched orders, what price is assigned to each transaction. By default the only
+ * methods that schedules more activities is a clear and a quoteUpdate.
  */
 abstract class AbstractMarket implements Market, Serializable {
 
   final Sim sim;
   private final FourHeap<Price> orderbook;
-  private final Function<Collection<MatchedOrders<Price>>, Iterable<Entry<MatchedOrders<Price>, Price>>> pricing;
+  private final PricingRule pricing;
 
   // Bookkeeping
   private final Collection<AbstractMarketView> views;
   private final Map<Order<Price>, AbstractMarketView> orderOwners;
-  private final SparseList<Number> prices;
+  private final Sparse<Number> prices;
 
-  AbstractMarket(Sim sim,
-      Function<Collection<MatchedOrders<Price>>, Iterable<Entry<MatchedOrders<Price>, Price>>> pricing) {
+  AbstractMarket(Sim sim, PricingRule pricing) {
     this.sim = sim;
     this.orderbook = new FourHeap<>();
     this.pricing = pricing;
@@ -73,9 +63,9 @@ abstract class AbstractMarket implements Market, Serializable {
 
   void withdrawOrder(Order<Price> order, int quantity) {
     orderbook.withdraw(order, quantity);
-
-    if (order.getQuantity() == 0)
+    if (order.getQuantity() == 0) {
       orderOwners.remove(order);
+    }
   }
 
   void clear() {
@@ -95,8 +85,9 @@ abstract class AbstractMarket implements Market, Serializable {
       orderOwners.get(sell).transacted(sell, price, matched.getQuantity());
 
       // Notify all agents of transaction
-      for (AbstractMarketView view : views)
+      for (AbstractMarketView view : views) {
         view.transaction(price, matched.getQuantity());
+      }
 
       sim.debug("%s: %s =(%d @ %s)=> %s", this, orderOwners.get(sell).getAgent(),
           matched.getQuantity(), price, orderOwners.get(buy).getAgent());
@@ -108,8 +99,9 @@ abstract class AbstractMarket implements Market, Serializable {
   void updateQuote() {
     Quote quote = new Quote(orderbook.bidQuote(), orderbook.getBidDepth(), orderbook.askQuote(),
         orderbook.getAskDepth());
-    for (AbstractMarketView view : views)
+    for (AbstractMarketView view : views) {
       view.setQuote(quote);
+    }
   }
 
   @Override
@@ -131,7 +123,7 @@ abstract class AbstractMarket implements Market, Serializable {
     return new MarketInfo() {
 
       @Override
-      public Iterable<? extends SparseList.Entry<? extends Number>> getPrices() {
+      public Iterable<? extends Sparse.Entry<? extends Number>> getPrices() {
         return prices;
       }
 
@@ -165,8 +157,10 @@ abstract class AbstractMarket implements Market, Serializable {
     private final TimeStamp latency;
     private Quote quote;
     private final Agent agent;
-    private double profit, observedProfit;
-    private int holdings, observedHoldings;
+    private double profit;
+    private double observedProfit;
+    private int holdings;
+    private int observedHoldings;
     private Set<OrderRecord> observedOrders;
     private final BiMap<OrderRecord, Order<Price>> recordMap;
 
@@ -223,23 +217,26 @@ abstract class AbstractMarket implements Market, Serializable {
 
       AbstractMarket.this.sim.scheduleIn(latency, () -> {
         Order<Price> order = recordMap.get(record);
-        if (order == null)
+        if (order == null) {
           // This will happen if the order transacted, but hasn't reached the agent yet
           return;
+        }
 
         // Min because some of the order may have transacted already, in which case we want to
         // withdraw the rest
         AbstractMarket.this.withdrawOrder(order, Math.min(quantity, order.getQuantity()));
 
-        if (order.getQuantity() == 0)
+        if (order.getQuantity() == 0) {
           recordMap.remove(record);
+        }
 
         AbstractMarket.this.sim.scheduleIn(latency,
             () -> agent.notifyOrderWithrawn(record, quantity));
       });
 
-      if (record.quantity == 0)
+      if (record.quantity == 0) {
         observedOrders.remove(record);
+      }
 
     }
 
@@ -287,14 +284,16 @@ abstract class AbstractMarket implements Market, Serializable {
         observedProfit += profitChange;
         observedHoldings += holdingsChange;
 
-        if (record.quantity == 0)
+        if (record.quantity == 0) {
           observedOrders.remove(record);
+        }
 
         agent.notifyOrderTransacted(record, price, quantity);
       });
 
-      if (order.getQuantity() == 0)
+      if (order.getQuantity() == 0) {
         recordMap.remove(record);
+      }
     }
 
     @Override
@@ -311,7 +310,7 @@ abstract class AbstractMarket implements Market, Serializable {
 
   }
 
-  /** A market view when there is no latency between market access */
+  /** A market view when there is no latency between market access. */
   class AbstractImmediateMarketView extends AbstractMarketView {
     private Quote quote;
     private final Agent agent;
@@ -355,8 +354,9 @@ abstract class AbstractMarket implements Market, Serializable {
       Order<Price> order = AbstractMarket.this.submitOrder(this, buyOrSell, price, quantity);
       submittedOrder = null;
 
-      if (order.getQuantity() != 0)
+      if (order.getQuantity() != 0) {
         recordMap.put(record, order);
+      }
 
       agent.notifyOrderSubmitted(record);
 
@@ -369,8 +369,9 @@ abstract class AbstractMarket implements Market, Serializable {
       AbstractMarket.this.withdrawOrder(order, quantity);
       record.quantity = order.getQuantity();
 
-      if (record.quantity == 0)
+      if (record.quantity == 0) {
         recordMap.remove(record);
+      }
 
       agent.notifyOrderWithrawn(record, quantity);
     }
@@ -412,8 +413,9 @@ abstract class AbstractMarket implements Market, Serializable {
       profit -= order.getOrderType().sign() * price.doubleValue() * quantity;
       holdings += order.getOrderType().sign() * quantity;
 
-      if (record.quantity == 0)
+      if (record.quantity == 0) {
         recordMap.remove(record);
+      }
 
       agent.notifyOrderTransacted(record, price, quantity);
     }
@@ -430,6 +432,10 @@ abstract class AbstractMarket implements Market, Serializable {
 
     private static final long serialVersionUID = -1206172976823244457L;
 
+  }
+
+  public interface PricingRule extends
+      Function<Collection<MatchedOrders<Price>>, Iterable<Entry<MatchedOrders<Price>, Price>>> {
   }
 
   private static final long serialVersionUID = 8806298743451593261L;

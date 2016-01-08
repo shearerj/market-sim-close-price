@@ -28,9 +28,9 @@ public class Collectors {
 
     @Override
     public BiConsumer<DoubleSummaryStatistics[], double[]> accumulator() {
-      return (a, e) -> {
+      return (summStats, element) -> {
         for (int i = 0; i < length; i++) {
-          a[i].accept(e[i]);
+          summStats[i].accept(element[i]);
         }
       };
     }
@@ -42,11 +42,11 @@ public class Collectors {
 
     @Override
     public BinaryOperator<DoubleSummaryStatistics[]> combiner() {
-      return (a1, a2) -> {
+      return (summStats1, summStats2) -> {
         for (int i = 0; i < length; i++) {
-          a1[i].combine(a2[i]);
+          summStats1[i].combine(summStats2[i]);
         }
-        return a1;
+        return summStats1;
       };
     }
 

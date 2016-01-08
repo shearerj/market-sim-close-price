@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 
-import edu.umich.srg.collect.RandomKeyedQueue;
+import edu.umich.srg.collect.RandomPriorityQueue;
 import edu.umich.srg.marketsim.TimeStamp;
 
 import java.util.Map.Entry;
@@ -19,30 +19,42 @@ import java.util.Random;
  */
 public class EventQueue {
 
-  // FIXME Decide how time table for simulation is going to work. Is it closed
-  // open, closed closed, or open closed; (open closed?)
+  /*
+   * FIXME Decide how time table for simulation is going to work. Is it closed open, closed closed,
+   * or open closed; (open closed?)
+   */
 
   private TimeStamp currentTime;
 
-  private final RandomKeyedQueue<TimeStamp, Runnable> scheduledActivities;
+  private final RandomPriorityQueue<TimeStamp, Runnable> scheduledActivities;
   private final ListMultimap<TimeStamp, Runnable> pendingScheduledActivities;
 
+  /** Construct an empty event queue. */
   public EventQueue(Random rand) {
-    this.scheduledActivities = RandomKeyedQueue.create(rand);
+    this.scheduledActivities = RandomPriorityQueue.create(rand);
     this.pendingScheduledActivities = ArrayListMultimap.create();
     this.currentTime = TimeStamp.ZERO;
   }
 
   // TODO Make this more efficient by using a sorted Multimap
   private boolean moreScheduledActivities(TimeStamp time) {
-    if (!scheduledActivities.isEmpty() && scheduledActivities.peek().getKey().compareTo(time) <= 0)
+    if (!scheduledActivities.isEmpty()
+        && scheduledActivities.peek().getKey().compareTo(time) <= 0) {
       return true;
-    for (TimeStamp scheduledTime : pendingScheduledActivities.keySet())
-      if (scheduledTime.compareTo(time) <= 0)
-        return true;
-    return false;
+    } else {
+      for (TimeStamp scheduledTime : pendingScheduledActivities.keySet()) {
+        if (scheduledTime.compareTo(time) <= 0) {
+          return true;
+        }
+      }
+      return false;
+    }
   }
 
+  /**
+   * Execute all activities until the executing the next activity would push the currentTime greater
+   * than time. Usually time is the final time of the simulation.
+   */
   public void executeUntil(TimeStamp time) {
     while (moreScheduledActivities(time)) {
       Entry<TimeStamp, Runnable> act = pop();
@@ -51,12 +63,13 @@ public class EventQueue {
       // log.debug("Executing {%s} then {%s}", act.getValue(), scheduledActivities);
       act.getValue().run();
     }
-    if (time.compareTo(currentTime) > 0)
+    if (time.compareTo(currentTime) > 0) {
       currentTime = time;
+    }
   }
 
   private Entry<TimeStamp, Runnable> pop() {
-    scheduledActivities.addAll(pendingScheduledActivities);
+    scheduledActivities.addAllOrdered(pendingScheduledActivities);
     pendingScheduledActivities.clear();
 
     Entry<TimeStamp, Runnable> scheduledAct = scheduledActivities.remove();

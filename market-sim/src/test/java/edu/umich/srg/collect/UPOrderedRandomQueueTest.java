@@ -37,14 +37,14 @@ public class UPOrderedRandomQueueTest {
 
   @Test
   public void emptyConstructorTest() {
-    UPOrderedRandomQueue<Integer> a = UPOrderedRandomQueue.create(rand);
+    PermOrderedRandomQueue<Integer> a = PermOrderedRandomQueue.create(rand);
     assertTrue(a.isEmpty());
   }
 
   @Test
   public void collectionConstructorTest() {
     Collection<Integer> numbers = randomNumbers(10);
-    UPOrderedRandomQueue<Integer> a = UPOrderedRandomQueue.create(rand);
+    PermOrderedRandomQueue<Integer> a = PermOrderedRandomQueue.create(rand);
     a.addAll(numbers);
     for (int i : numbers)
       assertTrue(a.contains(i));
@@ -54,9 +54,9 @@ public class UPOrderedRandomQueueTest {
   public void randomSeedTest() {
     long seed = rand.nextLong();
     Collection<Integer> numbers = randomNumbers(10);
-    UPOrderedRandomQueue<Integer> a = UPOrderedRandomQueue.create(new Random(seed));
+    PermOrderedRandomQueue<Integer> a = PermOrderedRandomQueue.create(new Random(seed));
     a.addAll(numbers);
-    UPOrderedRandomQueue<Integer> b = UPOrderedRandomQueue.create(new Random(seed));
+    PermOrderedRandomQueue<Integer> b = PermOrderedRandomQueue.create(new Random(seed));
     b.addAll(numbers);
 
     Iterator<Integer> ita = a.iterator();
@@ -64,7 +64,7 @@ public class UPOrderedRandomQueueTest {
     while (ita.hasNext())
       assertTrue(ita.next().equals(itb.next()));
 
-    UPOrderedRandomQueue<Integer> c = UPOrderedRandomQueue.create(new Random(seed));
+    PermOrderedRandomQueue<Integer> c = PermOrderedRandomQueue.create(new Random(seed));
     c.addAll(numbers);
 
     itb = b.iterator();
@@ -75,7 +75,7 @@ public class UPOrderedRandomQueueTest {
 
   @Test
   public void clearTest() {
-    UPOrderedRandomQueue<Integer> a = UPOrderedRandomQueue.create(rand);
+    PermOrderedRandomQueue<Integer> a = PermOrderedRandomQueue.create(rand);
     a.addAll(randomNumbers(10));
     assertFalse(a.isEmpty());
     a.clear();
@@ -84,7 +84,7 @@ public class UPOrderedRandomQueueTest {
 
   @Test
   public void removeTest() {
-    UPOrderedRandomQueue<Integer> a = UPOrderedRandomQueue.create(rand);
+    PermOrderedRandomQueue<Integer> a = PermOrderedRandomQueue.create(rand);
     a.addAll(Ints.asList(1, 2, 3, 4, 5));
     assertTrue(a.contains(4));
     a.remove(4);
@@ -97,7 +97,7 @@ public class UPOrderedRandomQueueTest {
   public void pollPermutationTest() {
     // Note, this test could fail due to inconceivably small random chance ~1/1000!
     Collection<Integer> numbers = randomNumbers(1000);
-    UPOrderedRandomQueue<Integer> a = UPOrderedRandomQueue.create(rand);
+    PermOrderedRandomQueue<Integer> a = PermOrderedRandomQueue.create(rand);
     a.addAll(numbers);
 
     Iterator<Integer> ita = numbers.iterator();
@@ -114,7 +114,7 @@ public class UPOrderedRandomQueueTest {
     // 1/1000^1000
     int allResponses = 0; // This is a bit set
     for (int i = 0; i < 10000; i++) {
-      UPOrderedRandomQueue<Integer> a = UPOrderedRandomQueue.create(rand);
+      PermOrderedRandomQueue<Integer> a = PermOrderedRandomQueue.create(rand);
       a.add(1);
       a.add(2);
       allResponses |= a.peek();
@@ -127,7 +127,7 @@ public class UPOrderedRandomQueueTest {
   /** Tests that addAll doesn't get permuted */
   public void addAllOrderedTest() {
     Collection<Integer> numbers = randomNumbers(1000);
-    UPOrderedRandomQueue<Integer> a = UPOrderedRandomQueue.create(rand);
+    PermOrderedRandomQueue<Integer> a = PermOrderedRandomQueue.create(rand);
     a.addAllOrdered(numbers);
 
     Iterator<Integer> ita = numbers.iterator();
@@ -142,7 +142,7 @@ public class UPOrderedRandomQueueTest {
     // This can fail with probability (2/3)^1000
     Set<List<Integer>> allPermutations = new HashSet<>();
     for (int i = 0; i < 1000; ++i) {
-      UPOrderedRandomQueue<Integer> a = UPOrderedRandomQueue.create(rand);
+      PermOrderedRandomQueue<Integer> a = PermOrderedRandomQueue.create(rand);
       a.add(1);
       a.addAllOrdered(Ints.asList(2, 3));
 

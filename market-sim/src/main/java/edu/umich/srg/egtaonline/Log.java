@@ -20,7 +20,7 @@ public class Log implements Closeable, Flushable {
 
   public static enum Level {
     NO_LOGGING, ERROR, INFO, DEBUG
-  };
+  }
 
   private static Log nullLogger = new Log(Level.NO_LOGGING, new Writer() {
     @Override
@@ -31,7 +31,7 @@ public class Log implements Closeable, Flushable {
 
     @Override
     public void write(char[] cbuf, int off, int len) throws IOException {}
-  }, (l) -> "");
+  }, (level) -> "");
 
   private final PrintWriter printwriter;
   private Function<Level, String> prefix;
@@ -43,24 +43,30 @@ public class Log implements Closeable, Flushable {
     this.prefix = prefix;
   }
 
+  /** Create a logger. */
   public static Log create(Level level, Writer writer, Function<Level, String> prefix) {
-    if (level == Level.NO_LOGGING)
+    if (level == Level.NO_LOGGING) {
       return nullLogger;
-
-    return new Log(level, writer, prefix);
+    } else {
+      return new Log(level, writer, prefix);
+    }
   }
 
+  /** Create a logger to a file. */
   public static Log create(Level level, File logFile, Function<Level, String> prefix)
       throws IOException {
-    if (level == Level.NO_LOGGING)
+    if (level == Level.NO_LOGGING) {
       return nullLogger;
-    logFile.getParentFile().mkdirs();
-    return create(level, new FileWriter(logFile), prefix);
+    } else {
+      logFile.getParentFile().mkdirs();
+      return create(level, new FileWriter(logFile), prefix);
+    }
   }
 
+  /** Create a logger with no level logging. */
   public static Log create(Level level, File logFile) throws IOException {
     logFile.getParentFile().mkdirs();
-    return create(level, logFile, (l) -> "");
+    return create(level, logFile, (lev) -> "");
   }
 
   @Override
@@ -73,25 +79,17 @@ public class Log implements Closeable, Flushable {
     printwriter.flush();
   }
 
-  /**
-   * Creates a logger that prints everything to System.err.
-   * 
-   * Potentially useful for tests
-   */
+  /** Creates a logger that prints everything to System.err. Potentially useful for tests. */
   public static Log createStderrLogger(Level level, Function<Level, String> prefix) {
     return Log.create(level, new PrintWriter(System.err), prefix);
   }
 
-  /**
-   * Creates a logger that ignores all logging
-   * 
-   * @return
-   */
+  /** Creates a logger that ignores all logging. */
   public static Log nullLogger() {
     return nullLogger;
   }
 
-  /** Sets the prefix */
+  /** Sets the prefix. */
   public void setPrefix(Function<Level, String> prefix) {
     this.prefix = prefix;
   }
@@ -100,26 +98,18 @@ public class Log implements Closeable, Flushable {
    * Method to log a message. This should be used in a very strict way, that is format should be a
    * static string (not one that you build), and all of the paramaterised options should be stuck in
    * parameters. An example call is
-   * 
-   * <code>log(INFO, "Object %s, Int %d, Float %.4f", new Object(), 5, 6.7)</code>
-   * 
-   * By calling log like this you can avoid expensive logging operations when you're not actually
-   * logging, and use the fact that the strings are written directly to the file without having to
-   * build a large string in memory first.
-   * 
-   * For more information on how to properly format strings you can look at the String.format
-   * method, or the PrintWriter.format method.
-   * 
-   * @param level
-   * @param format
-   * @param parameters
+   * <code>log(INFO, "Object %s, Int %d, Float %.4f", new Object(), 5, 6.7)</code> By calling log
+   * like this you can avoid expensive logging operations when you're not actually logging, and use
+   * the fact that the strings are written directly to the file without having to build a large
+   * string in memory first. For more information on how to properly format strings you can look at
+   * the String.format method, or the PrintWriter.format method.
    */
   public void log(Level level, String format, Object... parameters) {
-    if (level.ordinal() > this.level.ordinal())
-      return;
-    printwriter.append(prefix.apply(level));
-    printwriter.format(format, parameters);
-    printwriter.append('\n');
+    if (level.ordinal() <= this.level.ordinal()) {
+      printwriter.append(prefix.apply(level));
+      printwriter.format(format, parameters);
+      printwriter.append('\n');
+    }
   }
 
   public void error(String format, Object... parameters) {

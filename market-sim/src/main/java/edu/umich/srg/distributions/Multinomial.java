@@ -13,10 +13,9 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 /**
- * Methods for creating multinomial distributions.
- * 
- * Multinomial distributions over things other than integers are created by first creating an
- * IntMultinomial, and then converting that into a distribtuin
+ * Methods for creating multinomial distributions. Multinomial distributions over things other than
+ * integers are created by first creating an IntMultinomial, and then converting that into a
+ * distribution.
  */
 public final class Multinomial<T> implements Distribution<T> {
 
@@ -34,6 +33,7 @@ public final class Multinomial<T> implements Distribution<T> {
     return elements.get(multinomial.sample(rand));
   }
 
+  /** Create a multinomial from a map to doubles. */
   public static <T> Multinomial<T> fromMap(Map<T, ? extends Number> map) {
     ImmutableList.Builder<T> elements = ImmutableList.builder();
     ImmutableList.Builder<Double> weights = ImmutableList.builder();
@@ -58,10 +58,12 @@ public final class Multinomial<T> implements Distribution<T> {
     private IntMultinomial(Collection<? extends Number> weights) {
       this.weights = Doubles.toArray(weights);
 
-      for (int i = 1; i < this.weights.length; ++i)
+      for (int i = 1; i < this.weights.length; ++i) {
         this.weights[i] += this.weights[i - 1];
-      for (int i = 0; i < this.weights.length; ++i)
+      }
+      for (int i = 0; i < this.weights.length; ++i) {
         this.weights[i] /= this.weights[this.weights.length - 1];
+      }
     }
 
     @Override

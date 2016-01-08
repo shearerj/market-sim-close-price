@@ -5,20 +5,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.Serializable;
 
-/**
- * An order meant for use in a fourheap
- * 
- * @author ebrink
- * 
- * @param <BS> OrderType
- * @param
- *        <P>
- *        Price
- * @param <T> Time
- */
+/** An order meant for use in a fourheap. */
 public class Order<P extends Comparable<? super P>> implements Serializable {
-
-  private static final long serialVersionUID = -3460176014871040729L;
 
   public enum OrderType {
     BUY(1), SELL(-1);
@@ -31,11 +19,12 @@ public class Order<P extends Comparable<? super P>> implements Serializable {
     public int sign() {
       return sign;
     }
-  };
+  }
 
   protected final OrderType type;
   protected final P price;
-  protected int unmatchedQuantity, matchedQuantity; // Always positive
+  protected int unmatchedQuantity; // Always positive
+  protected int matchedQuantity; // Always positive
   protected final long submitTime;
 
   protected Order(OrderType type, P price, int initialQuantity, long submitTime) {
@@ -51,11 +40,7 @@ public class Order<P extends Comparable<? super P>> implements Serializable {
     return type;
   }
 
-  /**
-   * Get the Price
-   * 
-   * @return The price
-   */
+  /** Get the Price. */
   public P getPrice() {
     return price;
   }
@@ -65,7 +50,7 @@ public class Order<P extends Comparable<? super P>> implements Serializable {
     return unmatchedQuantity + matchedQuantity;
   }
 
-  /** Returns the time this order was submitted to the fourheap, in fourheap time */
+  /** Returns the time this order was submitted to the fourheap, in fourheap time. */
   public long getSubmitTime() {
     return submitTime;
   }
@@ -76,9 +61,7 @@ public class Order<P extends Comparable<? super P>> implements Serializable {
   }
 
   @Override
-  /**
-   * All Orders are unique
-   */
+  /** All Orders are unique. */
   public final boolean equals(Object obj) {
     return super.equals(obj);
   }
@@ -87,5 +70,7 @@ public class Order<P extends Comparable<? super P>> implements Serializable {
   public String toString() {
     return "<" + type + " " + getQuantity() + " @ " + price + ">";
   }
+
+  private static final long serialVersionUID = 1;
 
 }

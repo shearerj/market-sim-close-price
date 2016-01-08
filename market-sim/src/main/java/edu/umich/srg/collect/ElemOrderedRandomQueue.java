@@ -4,10 +4,10 @@ import java.util.AbstractQueue;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class UEOrderedRandomQueue<E> extends AbstractQueue<E> implements OrderedQueue<E> {
+public class ElemOrderedRandomQueue<E> extends AbstractQueue<E> implements OrderedQueue<E> {
 
   @Override
-  public boolean offer(E e) {
+  public boolean offer(E element) {
     // TODO Auto-generated method stub
     return false;
   }

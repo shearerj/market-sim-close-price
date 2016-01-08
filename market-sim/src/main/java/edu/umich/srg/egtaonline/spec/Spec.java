@@ -67,10 +67,12 @@ public class Spec {
     return fromPairs(keyValuePairs.iterator());
   }
 
+  /** Build a spec from string pairs. */
   public static Spec fromPairs(Iterator<String> keyValuePairs) {
     Builder builder = builder();
-    while (keyValuePairs.hasNext())
+    while (keyValuePairs.hasNext()) {
       builder.put(keyValuePairs.next(), keyValuePairs.next());
+    }
     return builder.build();
   }
 
@@ -79,11 +81,13 @@ public class Spec {
     return fromPairs(keyClassPrefix, keyCaseFormat, keyValuePairs.iterator());
   }
 
+  /** Build a spec from string pairs with specified prefix and case format. */
   public static Spec fromPairs(String keyClassPrefix, CaseFormat keyCaseFormat,
       Iterator<String> keyValuePairs) {
     Builder builder = builder(keyClassPrefix, keyCaseFormat);
-    while (keyValuePairs.hasNext())
+    while (keyValuePairs.hasNext()) {
       builder.put(keyValuePairs.next(), keyValuePairs.next());
+    }
     return builder.build();
   }
 
@@ -94,6 +98,7 @@ public class Spec {
    * specifications
    */
 
+  /** Get a value from the spec. */
   public <T> T get(Class<? extends Value<T>> key) {
     Value<T> val = checkNotNull(map.getInstance(key), "Key \"%s\" does not exist in spec",
         key.getSimpleName());
@@ -136,6 +141,7 @@ public class Spec {
       this.caseFormat = caseFormat;
     }
 
+    /** Put a value in the builder. */
     @SuppressWarnings("unchecked")
     public <T> Builder put(Class<? extends Value<T>> key, T value) {
       Value<T> instance = getInstance(key);
@@ -144,6 +150,7 @@ public class Spec {
       return this;
     }
 
+    /** Put a value interpreted from a string in the builder. */
     @SuppressWarnings("unchecked")
     public <T> Builder put(String className, String value) {
       className = classPrefix + caseFormat.to(CaseFormat.UPPER_CAMEL, className);
@@ -159,10 +166,15 @@ public class Spec {
       return this;
     }
 
+    /**
+     * Put all values from a previous spec in the builder. This will override any previous settings
+     * of a key.
+     */
     @SuppressWarnings("unchecked")
     public Builder putAll(Spec other) {
-      for (Entry<Class<? extends Value<?>>, Value<?>> e : other.map.entrySet())
+      for (Entry<Class<? extends Value<?>>, Value<?>> e : other.map.entrySet()) {
         builder.putInstance((Class<Value<?>>) e.getKey(), e.getValue());
+      }
       return this;
     }
 

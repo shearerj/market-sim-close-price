@@ -1,9 +1,3 @@
-/**
- * $Id: TimeStamp.java,v 1.6 2003/11/06 20:00:35 omalley Exp $ Copyright (c) 2002 University of
- * Michigan. All rights reserved.
- * 
- * Edited 2012/05/28 by ewah
- */
 package edu.umich.srg.marketsim;
 
 import com.google.common.base.Objects;
@@ -13,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * The TimeStamp class is just a wrapper around java.lang.Long. This *must* remain an immutable
- * object
+ * object.
  */
 public class TimeStamp implements Comparable<TimeStamp>, Serializable {
 
@@ -39,11 +33,13 @@ public class TimeStamp implements Comparable<TimeStamp>, Serializable {
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (obj == null || !(obj instanceof TimeStamp))
+  public boolean equals(Object other) {
+    if (other == null || !(other instanceof TimeStamp)) {
       return false;
-    final TimeStamp other = (TimeStamp) obj;
-    return ticks == other.ticks;
+    } else {
+      TimeStamp that = (TimeStamp) other;
+      return this.ticks == that.ticks;
+    }
   }
 
   @Override

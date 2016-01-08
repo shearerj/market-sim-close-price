@@ -21,15 +21,19 @@ public class SimSpec {
     this.configuration = configuration;
   }
 
+  /** Read a symspec object from a reader. */
   public static SimSpec read(JsonObject obj, String classPrefix, CaseFormat keyCaseFormat) {
     ImmutableMultiset.Builder<RoleStrat> assignment = ImmutableMultiset.builder();
-    for (Entry<String, JsonElement> role : obj.get("assignment").getAsJsonObject().entrySet())
-      for (JsonElement player : role.getValue().getAsJsonArray())
+    for (Entry<String, JsonElement> role : obj.get("assignment").getAsJsonObject().entrySet()) {
+      for (JsonElement player : role.getValue().getAsJsonArray()) {
         assignment.add(new RoleStrat(role.getKey(), player.getAsString()));
+      }
+    }
 
     Spec.Builder configuration = Spec.builder(classPrefix, keyCaseFormat);
-    for (Entry<String, JsonElement> e : obj.get("configuration").getAsJsonObject().entrySet())
+    for (Entry<String, JsonElement> e : obj.get("configuration").getAsJsonObject().entrySet()) {
       configuration.put(e.getKey(), e.getValue().getAsString());
+    }
 
     return new SimSpec(assignment.build(), configuration.build());
   }
@@ -45,7 +49,8 @@ public class SimSpec {
 
   public static class RoleStrat {
 
-    private final String role, strategy;
+    private final String role;
+    private final String strategy;
 
     private RoleStrat(String role, String strategy) {
       this.role = role;
@@ -66,10 +71,12 @@ public class SimSpec {
 
     @Override
     public boolean equals(Object other) {
-      if (other == null || !(other instanceof RoleStrat))
+      if (other == null || !(other instanceof RoleStrat)) {
         return false;
-      RoleStrat that = (RoleStrat) other;
-      return Objects.equals(this.role, that.role) && Objects.equals(this.strategy, that.strategy);
+      } else {
+        RoleStrat that = (RoleStrat) other;
+        return Objects.equals(this.role, that.role) && Objects.equals(this.strategy, that.strategy);
+      }
     }
 
     @Override

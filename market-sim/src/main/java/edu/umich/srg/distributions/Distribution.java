@@ -11,18 +11,18 @@ public interface Distribution<T> {
 
   T sample(Random rand);
 
-  /** A distribution that returns integers */
-  public interface IntDistribution {
+  /** A distribution that returns integers. */
+  interface IntDistribution {
     int sample(Random rand);
   }
 
-  /** A distribution that returns longs */
-  public interface LongDistribution {
+  /** A distribution that returns longs. */
+  interface LongDistribution {
     long sample(Random rand);
   }
 
-  /** A distribution that returns doubles */
-  public interface DoubleDistribution {
+  /** A distribution that returns doubles. */
+  interface DoubleDistribution {
     double sample(Random rand);
   }
 

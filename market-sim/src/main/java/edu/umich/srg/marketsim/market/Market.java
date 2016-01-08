@@ -1,6 +1,6 @@
 package edu.umich.srg.marketsim.market;
 
-import edu.umich.srg.collect.SparseList;
+import edu.umich.srg.collect.Sparse;
 import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
@@ -18,7 +18,7 @@ public interface Market {
 
   MarketInfo getMarketInfo();
 
-  public interface MarketView {
+  interface MarketView {
 
     TimeStamp getLatency();
 
@@ -40,7 +40,7 @@ public interface Market {
 
   }
 
-  abstract static class SimpleMarketView implements MarketView {
+  abstract class SimpleMarketView implements MarketView {
 
     public void withdrawOrder(OrderRecord record) {
       withdrawOrder(record, record.getQuantity());
@@ -48,13 +48,13 @@ public interface Market {
 
   }
 
-  static interface MarketInfo {
+  interface MarketInfo {
 
-    Iterable<? extends SparseList.Entry<? extends Number>> getPrices();
+    Iterable<? extends Sparse.Entry<? extends Number>> getPrices();
 
   }
 
-  static interface AgentInfo {
+  interface AgentInfo {
 
     double getProfit();
 
@@ -62,7 +62,7 @@ public interface Market {
 
   }
 
-  static class ImmutableAgentInfo implements AgentInfo, Serializable {
+  class ImmutableAgentInfo implements AgentInfo, Serializable {
 
     private static final ImmutableAgentInfo empty = new ImmutableAgentInfo(0, 0);
 

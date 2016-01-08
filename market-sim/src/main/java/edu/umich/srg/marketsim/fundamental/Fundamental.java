@@ -1,6 +1,6 @@
 package edu.umich.srg.marketsim.fundamental;
 
-import edu.umich.srg.collect.SparseList.Entry;
+import edu.umich.srg.collect.Sparse.Entry;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 

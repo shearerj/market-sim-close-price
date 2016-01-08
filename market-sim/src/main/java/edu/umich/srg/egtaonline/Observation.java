@@ -8,7 +8,7 @@ public interface Observation {
 
   JsonObject getFeatures();
 
-  public static interface Player {
+  interface Player {
 
     String getRole();
 

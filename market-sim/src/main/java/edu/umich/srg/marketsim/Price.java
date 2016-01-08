@@ -78,14 +78,19 @@ public class Price extends Number implements Comparable<Price>, Serializable {
     return new Price(ticks);
   }
 
+  /**
+   * Constructor for a Price object. Price is rounded to the nearest long using the HALF_EVEN
+   * method. This may return INF or NEG_INF if the input was too high.
+   */
   public static Price of(double ticks) {
     checkArgument(!Double.isNaN(ticks));
-    if (ticks > Long.MAX_VALUE)
+    if (ticks > Long.MAX_VALUE) {
       return INF;
-    else if (ticks < Long.MIN_VALUE)
+    } else if (ticks < Long.MIN_VALUE) {
       return NEG_INF;
-    else
+    } else {
       return new Price(DoubleMath.roundToLong(ticks, HALF_EVEN));
+    }
   }
 
   @Override
@@ -121,15 +126,9 @@ public class Price extends Number implements Comparable<Price>, Serializable {
   public int compareTo(Price price) {
     checkNotNull(price);
     if (this == INF) {
-      if (price == INF)
-        return 0;
-      else
-        return 1;
+      return price == INF ? 0 : 1;
     } else if (this == NEG_INF) {
-      if (price == NEG_INF)
-        return 0;
-      else
-        return -1;
+      return price == NEG_INF ? 0 : 1;
     } else {
       return Long.compare(ticks, price.ticks);
     }
@@ -141,16 +140,19 @@ public class Price extends Number implements Comparable<Price>, Serializable {
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (obj == null || !(obj instanceof Price))
+  public boolean equals(Object other) {
+    if (other == null || !(other instanceof Price)) {
       return false;
-    Price other = (Price) obj;
-    if (this == INF)
-      return other == INF;
-    else if (this == NEG_INF)
-      return other == NEG_INF;
-    else
-      return ticks == other.ticks;
+    } else {
+      Price that = (Price) other;
+      if (this == INF) {
+        return that == INF;
+      } else if (this == NEG_INF) {
+        return that == NEG_INF;
+      } else {
+        return this.ticks == that.ticks;
+      }
+    }
   }
 
   @Override

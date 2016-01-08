@@ -41,9 +41,14 @@ public class MarketSimulator implements Sim {
     return new MarketSimulator(fundamental, log, rand);
   }
 
+  /**
+   * Call to initialize all events before starting the simulation. Usually initialization is setting
+   * their first arrival.
+   */
   public void initialize() {
-    for (Agent agent : agents)
+    for (Agent agent : agents) {
       agent.initilaize();
+    }
   }
 
   public void executeUntil(TimeStamp finalTime) {
@@ -75,6 +80,7 @@ public class MarketSimulator implements Sim {
     return fundamental;
   }
 
+  /** Get the payoffs of every agent in the simuation. */
   public Map<Agent, Double> getAgentPayoffs() {
     // Get total agent holdings and profit according to all markets
     Map<Agent, TempAgentInfo> payoffs = Maps.toMap(agents, a -> new TempAgentInfo());

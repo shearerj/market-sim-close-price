@@ -47,6 +47,13 @@ public class CommandLineInterface {
     Runner.run(CommandLineInterface::simulate, args, keyPrefix, keyCaseFormat);
   }
 
+  /**
+   * Run the market-sim simulation with a given simspec, log, and observation number. This is the
+   * main entry point for executing the simulator from java.
+   * 
+   * @param obsNum This is the unique observation number for one simulation, not the number of
+   *        observations to produce. This method returns a single observation.
+   */
   public static Observation simulate(SimSpec spec, Log log, int obsNum) {
     Spec configuration = spec.configuration.withDefault(Keys.DEFAULT_KEYS);
     long seed = PositionalSeed.with(configuration.get(RandomSeed.class)).getSeed(obsNum);
@@ -107,7 +114,8 @@ public class CommandLineInterface {
    * exactly how they were specified, the random seeds that are passed to the agents are generated
    * with a hash of the agent's specified strategy and reused for all agents that share the same
    * strategy.
-   * 
+   */
+  /*
    * TODO Ideally the hash will be off of the agent type and the relevant aspect of the total spec
    * that it receives. However if we use the whole spec, then adding a different agent with
    * parameters in the spec will change the agents hash, and hence the random seeds. However,
@@ -147,15 +155,18 @@ public class CommandLineInterface {
 
   private static Spec getSpec(String strategy) {
     int index = strategy.indexOf(':');
-    if (index < 0)
+    if (index < 0) {
       return Spec.empty();
-    return Spec.fromPairs(keyPrefix, keyCaseFormat,
-        specSplitter.split(strategy.substring(index + 1)));
+    } else {
+      return Spec.fromPairs(keyPrefix, keyCaseFormat,
+          specSplitter.split(strategy.substring(index + 1)));
+    }
   }
 
   private static class PlayerInfo implements Player {
 
-    private final String role, strategy;
+    private final String role;
+    private final String strategy;
     private final Agent agent;
     private double payoff;
     private JsonObject features;

@@ -7,7 +7,7 @@ import java.security.NoSuchAlgorithmException;
 
 /**
  * This class allows getting sufficiently different positional seeds to ensure good random
- * performance for sequential integers
+ * performance for sequential integers.
  */
 public class PositionalSeed {
 
@@ -30,11 +30,12 @@ public class PositionalSeed {
     return new PositionalSeed(seed, "MD5");
   }
 
+  /** Get the seed for a given position. */
   public long getSeed(long position) {
     buffer.putLong(offset, position);
     LongBuffer digest = ByteBuffer.wrap(hash.digest(buffer.array())).asLongBuffer();
 
-    long seed = 1125899906842597l;
+    long seed = 1125899906842597L;
     while (digest.hasRemaining()) {
       seed = 31 * seed + digest.get();
     }

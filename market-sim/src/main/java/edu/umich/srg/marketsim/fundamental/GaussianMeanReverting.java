@@ -4,7 +4,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 import com.google.common.primitives.Ints;
 
-import edu.umich.srg.collect.SparseList;
+import edu.umich.srg.collect.Sparse;
 import edu.umich.srg.distributions.Binomial;
 import edu.umich.srg.distributions.Gaussian;
 import edu.umich.srg.distributions.Hypergeometric;
@@ -23,39 +23,13 @@ import java.util.TreeMap;
 
 /**
  * This class models a Guassian mean reverting process that doesn't necessarily make a jump at every
- * time step. It is implemented such that independent of the TimeStamp query order, values are
- * generated lazily on demand, but two processes given the random seed will produce the exact same
- * values. The process is defined more precisly below.
- *
- * if F(t) is the fundamental at time t s^2 is the shock variance m is the fundamental mean and kc
- * is 1 - kappa then
- *
- * F(t+1) ~ N(m*(1-kc) + F(t)*kc, s^2)
- *
- * which implies that
- *
- * F(t+d) ~ N(m*(1-kc^d) + F(t)*kc^d, s^2 * (1 - kc^(2d)) / (1 - kc^2)) if kc in [0, 1)
- *
- * or
- *
- * F(t+d) ~ N(F(t), d * s^2) if kc = 1.
- * 
- * In other words, if kappa > 0, so (1 - kappa) < 1, F(t+d) has expected value (1 - kappa)^d F(t) +
- * (1 - (1 - kappa)^d) m. It is distributed as a Gaussian, with variance: s^2 * (1 - kc^(2d)) / (1 -
- * kc^2).
- * 
- * If kappa == 0, so (1 - kappa) == 1, F(t+d) has expected value F(t), is still a Gaussian, and has
- * variance d s^2 (Bienayme formula, variance of sum of uncorrelated variables is sum of the
- * variances).
- * 
- * If shockProb < 1, then mean reversion occurs in exactly those time steps in which a jump occurs.
- * This means that if we advance 5 time steps and have jumps in 2 and 4, the pdf of future
- * fundamental value is the same as when advancing 2 time steps and jumping in both. That is, we
- * simply replace "d" with "numJumps" in the pdfs above, where "numJumps" is a binomial random
- * variable, with n := d and p := shockVar.
- * 
- * Due to the decision to make the fundamental consistent, the general growth and query time is log
- * instead of constant.
+ * time step. It has two important implementation features. First, fundamental values are computed
+ * lazily and on demand, so that even if you ask for the fundamental value at time 10000000, it
+ * should return reasonable fast, without having to generate all 1000000 values. It is also randomly
+ * stable, that is, two fundamentals with the same random generator will produce the same value at
+ * every point independent of query order. This costs a logarithmic factor to do, but the stability
+ * is generally worth it, and the log factor is tiny in terms of actual time costs. More detail on
+ * the math for sampling from the fundamental is in the docs folder.
  */
 
 /*
@@ -81,26 +55,29 @@ import java.util.TreeMap;
 
 public abstract class GaussianMeanReverting implements Fundamental, Serializable {
 
+  /** Create a standard gaussian mean reverting fundamental stochastic process. */
   public static GaussianMeanReverting create(Random rand, double mean, double meanReversion,
       double shockVar, double shockProb) {
-    if (shockProb == 0)
+    if (shockProb == 0) {
       return ConstantFundamental.create(Price.of(mean));
-    else if (shockProb == 1 && meanReversion == 0)
-      return new JumpEvery(mean, new RandomWalk(rand, shockVar));
-    else if (shockProb == 1 && meanReversion == 1)
-      return new JumpEvery(mean, new IIDGaussian(rand, mean, shockVar));
-    else if (shockProb == 1)
-      return new JumpEvery(mean, new MeanReverting(rand, mean, shockVar, meanReversion));
-    else if (meanReversion == 0)
-      return new JumpRandomlyCount(mean, new RandomWalk(rand, shockVar), shockProb, rand);
-    else if (meanReversion == 1)
-      return new JumpRandomlyCount(mean, new IIDGaussian(rand, mean, shockVar), shockProb, rand);
-    else
-      return new JumpRandomlyCount(mean, new MeanReverting(rand, mean, shockVar, meanReversion),
-          shockProb, rand);
+    } else {
+      Sampler sampler;
+      if (meanReversion == 0) {
+        sampler = new RandomWalk(rand, shockVar);
+      } else if (meanReversion == 1) {
+        sampler = new IidGaussian(rand, mean, shockVar);
+      } else {
+        sampler = new MeanReverting(rand, mean, shockVar, meanReversion);
+      }
+      if (shockProb == 1) {
+        return new JumpEvery(mean, sampler);
+      } else {
+        return new JumpRandomlyCount(mean, sampler, shockProb, rand);
+      }
+    }
   }
 
-  private static abstract class AbstractGaussianMeanReverting<F extends FundamentalObservation>
+  private abstract static class AbstractGaussianMeanReverting<F extends FundamentalObservation>
       extends GaussianMeanReverting {
 
     private final NavigableMap<Long, F> fundamental;
@@ -108,7 +85,7 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     private AbstractGaussianMeanReverting(F initial) {
       // Put in zero and one, so doubling works
       this.fundamental = new TreeMap<>();
-      fundamental.put(0l, initial);
+      fundamental.put(0L, initial);
     }
 
     @Override
@@ -147,10 +124,10 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     }
 
     @Override
-    public Iterable<SparseList.Entry<Number>> getFundamentalValues(long finalTime) {
+    public Iterable<Sparse.Entry<Number>> getFundamentalValues(long finalTime) {
       // TODO Replace filter with takeWhile
       return () -> fundamental.entrySet().stream().filter(e -> e.getKey() <= finalTime)
-          .map(SparseList::<Number>asSparseEntry).iterator();
+          .map(Sparse::<Number>asSparseEntry).iterator();
     }
 
     protected Iterable<Entry<Long, F>> getEntriesIterable() {
@@ -191,21 +168,19 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     }
 
     @Override
-    public double rmsd(Iterator<? extends SparseList.Entry<? extends Number>> prices,
-        long finalTime) {
-      if (!prices.hasNext())
+    public double rmsd(Iterator<? extends Sparse.Entry<? extends Number>> prices, long finalTime) {
+      if (!prices.hasNext()) {
         return Double.NaN;
-
+      }
       getValueAt(TimeStamp.of(finalTime)); // Make sure there's a final time node
 
       PeekingIterator<Entry<Long, ? extends Number>> pfundamental =
           Iterators.peekingIterator(getEntriesIterable().iterator());
-      PeekingIterator<SparseList.Entry<? extends Number>> pprices =
-          Iterators.peekingIterator(prices);
+      PeekingIterator<Sparse.Entry<? extends Number>> pprices = Iterators.peekingIterator(prices);
 
       SummStats rmsd = SummStats.empty();
       Entry<Long, ? extends Number> lastFundamental = pfundamental.next();
-      SparseList.Entry<? extends Number> lastPrice = pprices.next();
+      Sparse.Entry<? extends Number> lastPrice = pprices.next();
       long lastIndex = Math.max(lastFundamental.getKey(), lastPrice.getIndex());
 
       // Guaranteed to have fundamentals up to this point, don't care about prices
@@ -228,10 +203,12 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
         }
 
         lastIndex = nextIndex;
-        if (pfundamental.peek().getKey() == nextIndex)
+        if (pfundamental.peek().getKey() == nextIndex) {
           lastFundamental = pfundamental.next();
-        if (pprices.hasNext() && pprices.peek().getIndex() == nextIndex)
+        }
+        if (pprices.hasNext() && pprices.peek().getIndex() == nextIndex) {
           lastPrice = pprices.next();
+        }
       }
       double diff = lastFundamental.getValue().doubleValue() - lastPrice.getElement().doubleValue();
       rmsd.accept(diff * diff);
@@ -280,20 +257,21 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
       after.getValue().jumpsBefore -= jumpsBefore;
 
       double newPrice;
-      if (jumpsBefore == 0)
+      if (jumpsBefore == 0) {
         newPrice = before.getValue().price;
-      else if (after.getValue().jumpsBefore == 0)
+      } else if (after.getValue().jumpsBefore == 0) {
         newPrice = after.getValue().price;
-      else
+      } else {
         newPrice = sampler.getIntermediateValue(time, before.getValue().price, jumpsBefore,
             after.getValue().price, after.getValue().jumpsBefore);
+      }
 
       return new JumpFundamentalObservation(newPrice, jumpsBefore);
     }
 
     @Override
     public double rmsd(
-        Iterator<? extends edu.umich.srg.collect.SparseList.Entry<? extends Number>> prices,
+        Iterator<? extends edu.umich.srg.collect.Sparse.Entry<? extends Number>> prices,
         long finalTime) {
       // FIXME This is unimplemented, and doesn't seem super trivial to accomplish
       return Double.NaN;
@@ -352,8 +330,8 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     @Override
     public double expectedAverageIntermediateRmsd(double fundamentalA, double fundamentalB,
         double price, long jumpsBetween, long deltat) {
-      return ((-1 + deltat) * ((-1 + 2 * deltat) * Math.pow(fundamentalA, 2)
-          + (-1 + 2 * deltat) * Math.pow(fundamentalB, 2) - 6 * deltat * fundamentalB * price
+      return ((deltat - 1) * ((2 * deltat - 1) * Math.pow(fundamentalA, 2)
+          + (2 * deltat - 1) * Math.pow(fundamentalB, 2) - 6 * deltat * fundamentalB * price
           + 2 * fundamentalA * (fundamentalB + deltat * fundamentalB - 3 * deltat * price)
           + deltat * (6 * Math.pow(price, 2) + shockVar + deltat * shockVar)))
           / (6 * deltat * (deltat - 1));
@@ -363,13 +341,13 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
 
   }
 
-  private static class IIDGaussian implements Sampler, Serializable {
+  private static class IidGaussian implements Sampler, Serializable {
 
     private final PositionalSeed seed;
     private final Random rand;
     private final Gaussian dist;
 
-    private IIDGaussian(Random rand, double mean, double shockVar) {
+    private IidGaussian(Random rand, double mean, double shockVar) {
       this.seed = PositionalSeed.with(rand.nextLong());
       this.dist = Gaussian.withMeanVariance(mean, shockVar);
       this.rand = rand;
@@ -403,7 +381,9 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
 
     private final PositionalSeed seed;
     private final Random rand;
-    private final double shockVar, mean, kappac;
+    private final double shockVar;
+    private final double mean;
+    private final double kappac;
 
     private MeanReverting(Random rand, double mean, double shockVar, double meanReversion) {
       this.seed = PositionalSeed.with(rand.nextLong());
@@ -416,9 +396,9 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     @Override
     public double getFutureValue(long time, double lastPrice, long jumps) {
       rand.setSeed(seed.getSeed(time));
-      double kappacToPower = Math.pow(kappac, jumps),
-          stepMean = (1 - kappacToPower) * mean + kappacToPower * lastPrice,
-          stepVar = (1 - kappacToPower * kappacToPower) / (1 - kappac * kappac);
+      double kappacToPower = Math.pow(kappac, jumps);
+      double stepMean = (1 - kappacToPower) * mean + kappacToPower * lastPrice;
+      double stepVar = (1 - kappacToPower * kappacToPower) / (1 - kappac * kappac);
       return Gaussian.withMeanVariance(stepMean, shockVar * stepVar).sample(rand);
     }
 
@@ -426,18 +406,16 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     public double getIntermediateValue(long time, double priceBefore, long jumpsBefore,
         double priceAfter, long jumpsAfter) {
       rand.setSeed(seed.getSeed(time));
-      double kappacPowerBefore = Math.pow(kappac, jumpsBefore),
-          kappacPowerAfter = Math.pow(kappac, jumpsAfter),
-          stepMean = ((kappacPowerBefore - 1) * (kappacPowerAfter - 1)
-              * (kappacPowerBefore * kappacPowerAfter - 1) * mean
-              + kappacPowerBefore * (kappacPowerAfter * kappacPowerAfter - 1) * priceBefore
-              + kappacPowerAfter * (kappacPowerBefore * kappacPowerBefore - 1) * priceAfter)
-              / (kappacPowerBefore * kappacPowerBefore * kappacPowerAfter * kappacPowerAfter - 1),
-          stepVariance = (kappacPowerBefore * kappacPowerBefore - 1)
-              * (kappacPowerAfter * kappacPowerAfter - 1)
-              / ((kappac * kappac - 1)
-                  * (kappacPowerBefore * kappacPowerBefore * kappacPowerAfter * kappacPowerAfter
-                      - 1));
+      double kappacPowerBefore = Math.pow(kappac, jumpsBefore);
+      double kappacPowerAfter = Math.pow(kappac, jumpsAfter);
+      double stepMean = ((kappacPowerBefore - 1) * (kappacPowerAfter - 1)
+          * (kappacPowerBefore * kappacPowerAfter - 1) * mean
+          + kappacPowerBefore * (kappacPowerAfter * kappacPowerAfter - 1) * priceBefore
+          + kappacPowerAfter * (kappacPowerBefore * kappacPowerBefore - 1) * priceAfter)
+          / (kappacPowerBefore * kappacPowerBefore * kappacPowerAfter * kappacPowerAfter - 1);
+      double stepVariance = (kappacPowerBefore * kappacPowerBefore - 1)
+          * (kappacPowerAfter * kappacPowerAfter - 1) / ((kappac * kappac - 1)
+              * (kappacPowerBefore * kappacPowerBefore * kappacPowerAfter * kappacPowerAfter - 1));
       return Gaussian.withMeanVariance(stepMean, stepVariance * shockVar).sample(rand);
     }
 
@@ -445,12 +423,17 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     @Override
     public double expectedAverageIntermediateRmsd(double fundamentalA, double fundamentalB,
         double price, long jumpsBetween, long deltat) {
-      double temp1 = 2 * deltat, temp2 = Math.pow(kappac, temp1), temp3 = -1 + temp2,
-          temp4 = Math.pow(kappac, 2), temp5 = -1 + temp4, temp6 = Math.pow(kappac, deltat),
-          temp7 = Math.pow(kappac, 4 * deltat) - temp4 - (-1 + temp1) * temp2 * temp5,
-          temp8 = Math.pow(-1 + temp6, 2),
-          temp9 = -kappac + Math.pow(kappac, 1 + temp1) - deltat * temp5 * temp6,
-          temp10 = -(temp3 * (1 + temp4)) + deltat * (1 + temp2) * temp5, temp11 = -1 + deltat;
+      double temp1 = 2 * deltat;
+      double temp2 = Math.pow(kappac, temp1);
+      double temp3 = temp2 - 1;
+      double temp4 = Math.pow(kappac, 2);
+      double temp5 = temp4 - 1;
+      double temp6 = Math.pow(kappac, deltat);
+      double temp7 = Math.pow(kappac, 4 * deltat) - temp4 - (temp1 - 1) * temp2 * temp5;
+      double temp8 = Math.pow(temp6 - 1, 2);
+      double temp9 = -kappac + Math.pow(kappac, 1 + temp1) - deltat * temp5 * temp6;
+      double temp10 = -(temp3 * (1 + temp4)) + deltat * (1 + temp2) * temp5;
+      double temp11 = deltat - 1;
       return (shockVar * temp3 * temp10
           + temp5 * (Math.pow(fundamentalA, 2) * temp7 + Math.pow(fundamentalB, 2) * temp7
               + Math.pow(mean, 2) * (-((1 + kappac * (4 + kappac)) * temp3)
@@ -465,7 +448,7 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
               * (mean - deltat * mean - (fundamentalA + fundamentalB) * kappac
                   + (1 + deltat) * mean * kappac
                   + temp6 * (fundamentalA + fundamentalB + mean * (-1 - deltat + kappac * temp11))))
-          / (Math.pow(temp3, 2) * Math.pow(temp5, 2) * (deltat - 1));
+          / (Math.pow(temp3, 2) * Math.pow(temp5, 2) * temp11);
     }
 
     private static final long serialVersionUID = 1;

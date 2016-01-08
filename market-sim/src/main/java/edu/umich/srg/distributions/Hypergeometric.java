@@ -9,12 +9,14 @@ import java.util.Random;
 
 public abstract class Hypergeometric implements IntDistribution, Serializable {
 
+  /** Create a hypergeometric distribution for sampling. */
   public static Hypergeometric with(int populationSize, int numSuccesses, int draws) {
     checkArgument(0 <= populationSize);
     checkArgument(0 <= numSuccesses && numSuccesses <= populationSize);
     checkArgument(0 <= draws && draws <= populationSize);
 
-    int offset = 0, sign = 1;
+    int offset = 0;
+    int sign = 1;
     if (2 * draws > populationSize) {
       draws = populationSize - draws;
       offset += sign * numSuccesses;
@@ -31,32 +33,42 @@ public abstract class Hypergeometric implements IntDistribution, Serializable {
 
   private static Hypergeometric hypergeometricSwitch(int populationSize, int numSuccesses,
       int draws) {
-    if (numSuccesses == 0 || draws == 0)
+    if (numSuccesses == 0 || draws == 0) {
       return new ConstantHypergeometric(0);
-    else if (draws == populationSize)
+    } else if (draws == populationSize) {
       return new ConstantHypergeometric(numSuccesses);
-    else if (numSuccesses == populationSize)
+    } else if (numSuccesses == populationSize) {
       return new ConstantHypergeometric(draws);
-    else if (populationSize > 15)
-      return new InverseCMFHypergeometric(populationSize, numSuccesses, draws);
-    else
+    } else if (populationSize > 15) {
+      return new InverseCmfHypergeometric(populationSize, numSuccesses, draws);
+    } else {
       return new BruteHypergeometric(populationSize, numSuccesses, draws);
+    }
   }
 
-  private static class InverseCMFHypergeometric extends Hypergeometric {
+  private static class InverseCmfHypergeometric extends Hypergeometric {
 
-    private final InverseCMF invCmf;
+    private final InverseCmf invCmf;
 
     /**
-     * @param bn N population size
-     * @param bk K number of successes in population
-     * @param n n number of draws
+     * Sample from the hypergeometric using an inverse cmf.
+     * 
+     * @param populationSize N population size
+     * @param populationSuccesses K number of successes in population
+     * @param sampleSize n number of draws
      */
-    private InverseCMFHypergeometric(int bn, int bk, int n) {
-      double nn = bn - n, nk = bn - bk, nkn = bn - bk - n, p0 = Math.exp((nk + 0.5) * Math.log(nk)
-          + (nn + 0.5) * Math.log(nn) - (nkn + 0.5) * Math.log(nkn) - (bn + 0.5) * Math.log(bn));
-      this.invCmf = new InverseCMF(p0, (InverseCMF.PmfFunction & Serializable) (pk, k) -> pk
-          * (bk - k + 1) * (n - k + 1) / (k * (nkn + k)));
+    private InverseCmfHypergeometric(int populationSize, int populationSuccesses, int sampleSize) {
+      double populationNotSampled = populationSize - sampleSize;
+      double populationFailures = populationSize - populationSuccesses;
+      double nkn = populationSize - populationSuccesses - sampleSize;
+      double proability0 = Math.exp((populationFailures + 0.5) * Math.log(populationFailures)
+          + (populationNotSampled + 0.5) * Math.log(populationNotSampled)
+          - (nkn + 0.5) * Math.log(nkn) - (populationSize + 0.5) * Math.log(populationSize));
+      this.invCmf = new InverseCmf(proability0,
+          (InverseCmf.PmfFunction & Serializable) (probabilityPreviousSuccesses,
+              drawnSuccesses) -> probabilityPreviousSuccesses
+                  * (populationSuccesses - drawnSuccesses + 1) * (sampleSize - drawnSuccesses + 1)
+                  / (drawnSuccesses * (nkn + drawnSuccesses)));
     }
 
     @Override
@@ -68,9 +80,12 @@ public abstract class Hypergeometric implements IntDistribution, Serializable {
 
   }
 
+  /** Brute force sample the hypergeometric. */
   private static class BruteHypergeometric extends Hypergeometric {
 
-    private final int populationSize, numSuccesses, draws;
+    private final int populationSize;
+    private final int numSuccesses;
+    private final int draws;
 
     private BruteHypergeometric(int populationSize, int numSuccesses, int draws) {
       this.populationSize = populationSize;
@@ -80,7 +95,10 @@ public abstract class Hypergeometric implements IntDistribution, Serializable {
 
     @Override
     public int sample(Random rand) {
-      int result = 0, populationLeft = populationSize, successesLeft = numSuccesses;
+      int result = 0;
+      int populationLeft = populationSize;
+      int successesLeft = numSuccesses;
+
       for (int i = 0; i < draws; ++i) {
         if (rand.nextInt(populationLeft) < successesLeft) {
           ++result;
@@ -95,6 +113,7 @@ public abstract class Hypergeometric implements IntDistribution, Serializable {
 
   }
 
+  /** A constant hypergeometric. */
   private static class ConstantHypergeometric extends Hypergeometric {
 
     private final int constant;
@@ -112,9 +131,11 @@ public abstract class Hypergeometric implements IntDistribution, Serializable {
 
   }
 
+  /** A hypergeometric that can be framed as an easier hypergeometric to sample from. */
   private static class OffsetHypergeometric extends Hypergeometric {
     private final Hypergeometric other;
-    private final int offset, sign;
+    private final int offset;
+    private final int sign;
 
     private OffsetHypergeometric(Hypergeometric other, int offset, int sign) {
       this.other = other;

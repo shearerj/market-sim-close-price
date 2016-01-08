@@ -3,15 +3,17 @@ package edu.umich.srg.marketsim.fundamental;
 import static org.junit.Assert.assertEquals;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 
 import org.junit.Ignore;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
 
 import edu.umich.srg.collect.Collectors;
-import edu.umich.srg.collect.SparseList;
+import edu.umich.srg.collect.Sparse;
 import edu.umich.srg.distributions.Distribution.LongDistribution;
 import edu.umich.srg.distributions.Uniform;
 import edu.umich.srg.marketsim.Price;
@@ -62,6 +64,18 @@ public class GaussianMeanRevertingTest {
   }
 
   /**
+   * Tests that it can generate a large fundamental value reasonble quickly. This only really works
+   * if there are always jumps, as hypergeometrics are hard to sample from.
+   */
+  @Test
+  public void longFundamentalTest() {
+    long finalTime = 1000000000000L;
+    Fundamental fundamental = GaussianMeanReverting.create(rand, mean, 0.5, 100, 1);
+    fundamental.getValueAt(TimeStamp.of(finalTime));
+    System.out.println(Iterables.size(fundamental.getFundamentalValues(finalTime)));
+  }
+
+  /**
    * This test uses FundamentalRmsd to calcualte the sparse expected Rmsd of a funamental without
    * requesting new values. This rmsd is compared to the true rmsd after sampling the rest of the
    * fundamental. The actual test conditions are poorly constructed, and a true statistical test
@@ -84,7 +98,7 @@ public class GaussianMeanRevertingTest {
       }
 
       double expected =
-          fund.rmsd(ImmutableList.of(SparseList.immutableEntry(0, price)).iterator(), finalTime);
+          fund.rmsd(ImmutableList.of(Sparse.immutableEntry(0, price)).iterator(), finalTime);
 
       SummStats observedMean = SummStats.empty();
       for (long t = 0; t <= finalTime; t++) {

@@ -11,11 +11,10 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
- * A priority queue that's based by a sorted set instead of Binary Heap. The constants associated
+ * A priority queue that's based on a sorted set instead of Binary Heap. The constants associated
  * with most operations on this object are likely slower than the corresponding java Binary Heap
- * Priority Queue, but remove is O(log n) instead of O(n) making cancellations much faster.
- * 
- * Like the java.util PriorityQueue, the minimum element has the highest priority.
+ * Priority Queue, but remove is O(log n) instead of O(n) making cancellations much faster. Like the
+ * java.util PriorityQueue, the minimum element has the highest priority.
  */
 public class TreeQueue<E> extends ForwardingCollection<E> implements Queue<E>, Serializable {
 
@@ -43,16 +42,18 @@ public class TreeQueue<E> extends ForwardingCollection<E> implements Queue<E>, S
   }
 
   @Override
-  public boolean offer(E e) {
-    set.add(e);
+  public boolean offer(E element) {
+    set.add(element);
     return true;
   }
 
   @Override
   public E peek() {
-    if (set.isEmpty())
+    if (set.isEmpty()) {
       return null;
-    return set.first();
+    } else {
+      return set.first();
+    }
   }
 
   @Override
@@ -62,9 +63,11 @@ public class TreeQueue<E> extends ForwardingCollection<E> implements Queue<E>, S
 
   @Override
   public E remove() {
-    if (set.isEmpty())
+    if (set.isEmpty()) {
       throw new NoSuchElementException();
-    return set.pollFirst();
+    } else {
+      return set.pollFirst();
+    }
   }
 
   @Override

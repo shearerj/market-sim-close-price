@@ -8,6 +8,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Joiner.MapJoiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Ints;
@@ -80,7 +81,7 @@ public abstract class ParsableValue<T> extends Value<T> {
     }
   }
 
-  public static abstract class IterableValue<T> extends ParsableValue<Iterable<T>> {
+  public abstract static class IterableValue<T> extends ParsableValue<Iterable<T>> {
     public IterableValue(Converter<String, T> elementConverter) {
       super(new IterableConverter<T>(elementConverter));
     }
@@ -88,6 +89,15 @@ public abstract class ParsableValue<T> extends Value<T> {
     @Override
     public int hashCode() {
       return Iters.hashCode(get());
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      if (other == null || !(other instanceof IterableValue)) {
+        return false;
+      }
+      IterableValue<?> that = (IterableValue<?>) other;
+      return Iterables.elementsEqual(this.get(), that.get());
     }
   }
 
@@ -109,7 +119,7 @@ public abstract class ParsableValue<T> extends Value<T> {
     }
   }
 
-  public static abstract class EnumValue<T extends Enum<T>> extends ParsableValue<T> {
+  public abstract static class EnumValue<T extends Enum<T>> extends ParsableValue<T> {
     public EnumValue(Class<T> clazz) {
       super(new EnumConverter<T>(clazz));
     }
@@ -199,10 +209,10 @@ public abstract class ParsableValue<T> extends Value<T> {
 
         @Override
         public Entry<String, String> next() {
-          Entry<Class<? extends Value<?>>, Value<?>> e = specIter.next();
+          Entry<Class<? extends Value<?>>, Value<?>> entry = specIter.next();
           return Maps.immutableEntry(
-              CaseFormat.UPPER_CAMEL.to(keyCaseFormat, e.getKey().getSimpleName()),
-              e.getValue().toString());
+              CaseFormat.UPPER_CAMEL.to(keyCaseFormat, entry.getKey().getSimpleName()),
+              entry.getValue().toString());
         }
       });
     }

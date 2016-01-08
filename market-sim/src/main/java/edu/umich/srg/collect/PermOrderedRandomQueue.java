@@ -15,33 +15,29 @@ import java.util.Queue;
 import java.util.Random;
 
 /**
- * UP stands for Uniform Permutations
- * 
  * A random queue (i.e. a queue where inputs come out in a random order) where groups of items added
  * together (with addAllOrdered) maintain their order relationships when coming out, hence
- * constrained.
- * 
- * The randomness is such that if you were to drain the queue, the distribution over the order in
- * which things came out would uniform over all feasible orderings. For example if one added [1] and
- * then added [2, 3] ordered, the possible outputs from draining would be [1, 2, 3], [2, 1, 3], and
- * [2, 3, 1]. Each would occur with roughly equal probability. This also means that if you're just
- * removing one element, 2 is twice as likely as 1.
+ * constrained. The randomness is such that if you were to drain the queue, the distribution over
+ * the order in which things came out would uniform over all feasible orderings. For example if one
+ * added [1] and then added [2, 3] ordered, the possible outputs from draining would be [1, 2, 3],
+ * [2, 1, 3], and [2, 3, 1]. Each would occur with roughly equal probability. This also means that
+ * if you're just removing one element, 2 is twice as likely as 1.
  */
-public class UPOrderedRandomQueue<V> extends AbstractQueue<V> implements OrderedQueue<V> {
+public class PermOrderedRandomQueue<V> extends AbstractQueue<V> implements OrderedQueue<V> {
   protected Random rand;
   protected final List<Queue<V>> queue;
   protected int size;
   private boolean picked;
 
-  protected UPOrderedRandomQueue(Random rand) {
+  protected PermOrderedRandomQueue(Random rand) {
     this.rand = rand;
     this.queue = new ArrayList<>();
     this.size = 0;
     this.picked = false;
   }
 
-  public static <T> UPOrderedRandomQueue<T> create(Random rand) {
-    return new UPOrderedRandomQueue<>(rand);
+  public static <T> PermOrderedRandomQueue<T> create(Random rand) {
+    return new PermOrderedRandomQueue<>(rand);
   }
 
   @Override
@@ -61,35 +57,40 @@ public class UPOrderedRandomQueue<V> extends AbstractQueue<V> implements Ordered
     int swap = rand.nextInt(size);
     int sum = 0;
     int index = -1;
-    while (sum <= swap)
+    while (sum <= swap) {
       sum += queue.get(++index).size();
-
+    }
     Collections.swap(queue, queue.size() - 1, index);
   }
 
   @Override
   public V poll() {
-    if (queue.isEmpty())
+    if (queue.isEmpty()) {
       return null;
-    if (!picked)
+    }
+    if (!picked) {
       pick();
+    }
     picked = false;
 
     Queue<V> seq = queue.remove(queue.size() - 1);
     size--;
     V ret = seq.poll();
 
-    if (!seq.isEmpty())
+    if (!seq.isEmpty()) {
       queue.add(seq);
+    }
     return ret;
   }
 
   @Override
   public V peek() {
-    if (queue.isEmpty())
+    if (queue.isEmpty()) {
       return null;
-    if (!picked)
+    }
+    if (!picked) {
       pick();
+    }
     picked = true;
     return queue.get(queue.size() - 1).peek();
   }

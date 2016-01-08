@@ -41,8 +41,8 @@ public class RandomQueueTest {
   public void randomSeedTest() {
     long seed = rand.nextLong();
     Collection<Integer> numbers = randomNumbers(10);
-    RandomQueue<Integer> a = RandomQueue.create(numbers, new Random(seed));
-    RandomQueue<Integer> b = RandomQueue.create(numbers, new Random(seed));
+    RandomQueue<Integer> a = RandomQueue.withElementsAndSeed(numbers, new Random(seed));
+    RandomQueue<Integer> b = RandomQueue.withElementsAndSeed(numbers, new Random(seed));
 
     Iterator<Integer> ita = a.iterator();
     Iterator<Integer> itb = b.iterator();

@@ -16,14 +16,29 @@ public interface Agent {
 
   // Notifications
 
+  /**
+   * Called when an order submitted by MarketView::submitOrder actually reaches a market. Unless
+   * there is latency in order information, this is fairly unnecessary.
+   */
   void notifyOrderSubmitted(OrderRecord order);
 
+  /**
+   * Similar to notifyOrderSubmitted, this is called when an order is actually withdrawn. If there
+   * is no latency, this will be called as soon as MarketView::withdrawOrder is. If there is, it
+   * might never be called, if the order transacts before it can be withdrawn.
+   */
   void notifyOrderWithrawn(OrderRecord order, int quantity);
 
+  /** Called when one of an agent's existing orders transacts. */
   void notifyOrderTransacted(OrderRecord order, Price price, int quantity);
 
+  /** Called when the markets quote updates, it may still be the same as before. */
   void notifyQuoteUpdated(MarketView market);
 
+  /**
+   * Called when a market processes a transaction. This is usually called at the same time as
+   * quoteUpdated, but won't be called if an order setting the spread is cancelled.
+   */
   void notifyTransaction(MarketView market, Price price, int quantity);
 
 }

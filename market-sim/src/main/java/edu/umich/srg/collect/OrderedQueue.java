@@ -4,12 +4,8 @@ import java.util.Collection;
 import java.util.Queue;
 
 /**
- * FIXME Info, basically adds an "addAllOrdered" that guarantees that the elements come out in the
- * specified order
- * 
- * @author erik
- *
- * @param <E>
+ * A special form of queue that allows adding a collection of elements that are guaranteed to remain
+ * in the specified order in the queue.
  */
 public interface OrderedQueue<E> extends Queue<E> {
 

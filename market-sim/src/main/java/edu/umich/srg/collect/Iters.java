@@ -4,17 +4,10 @@ import com.google.common.collect.PeekingIterator;
 
 import java.util.Iterator;
 import java.util.Queue;
-import java.util.function.Function;
 
 public final class Iters {
 
-  /**
-   * Repeats every element in an iterable a given number of times.
-   * 
-   * @param iterator The iterator to repeat every element of.
-   * @param num The number of times to repeat elements
-   * @return
-   */
+  /** Repeats every element in an iterable a given number of times. */
   public static <T> Iterator<T> repeat(Iterator<T> iterator, long num) {
     PeekingIterator<T> peekable = com.google.common.collect.Iterators.peekingIterator(iterator);
     return new Iterator<T>() {
@@ -39,6 +32,7 @@ public final class Iters {
     };
   }
 
+  /** Standard list hashcode for an iterator. */
   public static <T> int hashCode(Iterator<T> iter) {
     int hashCode = 1;
     while (iter.hasNext()) {
@@ -48,10 +42,12 @@ public final class Iters {
     return hashCode;
   }
 
+  /** Standard hashcode for an iterable. */
   public static <T> int hashCode(Iterable<T> iter) {
     return hashCode(iter.iterator());
   }
 
+  /** Returns an iterator that consumes the supplied queue in pop order. */
   public static <T> Iterator<T> consumeQueue(Queue<T> queue) {
     return new Iterator<T>() {
 
@@ -68,56 +64,12 @@ public final class Iters {
     };
   }
 
-  // FIXME Remove in favor of converting to a stream
-  public static <I, R> Iterator<R> map(Iterator<I> iterator, Function<I, R> mappingFunction) {
-    return new Iterator<R>() {
-
-      @Override
-      public boolean hasNext() {
-        return iterator.hasNext();
-      }
-
-      @Override
-      public R next() {
-        return mappingFunction.apply(iterator.next());
-      }
-
-    };
-  }
-
-  public static final <T> Iterator<Enumerated<T>> enumerate(Iterator<T> iterator) {
-    return new Iterator<Enumerated<T>>() {
-      private long index = 0;
-
-      @Override
-      public boolean hasNext() {
-        return iterator.hasNext();
-      }
-
-      @Override
-      public Enumerated<T> next() {
-        return new Enumerated<T>(index++, iterator.next());
-      }
-
-    };
-  }
-
-  public static final class Enumerated<T> {
-    public final long index;
-    public final T obj;
-
-    private Enumerated(long index, T obj) {
-      this.index = index;
-      this.obj = obj;
-    }
-  }
-
   // TODO There has to be a better way
   /**
    * This is a wrapper iterator that will print any exception stack traces that may be gobbled up by
-   * a thread pool
+   * a thread pool.
    */
-  public static final <T> Iterator<T> printExceptions(Iterator<T> iterator) {
+  public static <T> Iterator<T> printExceptions(Iterator<T> iterator) {
     return new Iterator<T>() {
       @Override
       public boolean hasNext() {
@@ -136,6 +88,6 @@ public final class Iters {
     };
   }
 
-  private Iters() {};
+  private Iters() {} // Unconstructable
 
 }

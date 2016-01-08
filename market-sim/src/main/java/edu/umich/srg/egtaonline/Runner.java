@@ -35,12 +35,14 @@ public class Runner {
 
   private static final Gson egtaWriter =
       new GsonBuilder().registerTypeAdapter(Player.class, new EgtaPlayerSerializer())
-          .registerTypeAdapter(Observation.class, new EgtaObservationSerializer()).create(),
-      fullWriter = new GsonBuilder().registerTypeAdapter(Player.class, new FullPlayerSerializer())
+          .registerTypeAdapter(Observation.class, new EgtaObservationSerializer()).create();
+  private static final Gson fullWriter =
+      new GsonBuilder().registerTypeAdapter(Player.class, new FullPlayerSerializer())
           .registerTypeAdapter(Observation.class, new FullObservationSerializer())
           .serializeSpecialFloatingPointValues().create();
   private static final Charset charset = Charset.forName("UTF-8");
 
+  /** Run an egta script. */
   public static void run(TriFunction<SimSpec, Log, Integer, Observation> sim, Reader specs,
       Writer obsOut, Writer logOut, int numObs, int intLogLevel, int jobs, boolean egta,
       String classPrefix, CaseFormat keyCaseFormat) {
@@ -66,6 +68,26 @@ public class Runner {
     }
   }
 
+  /** Run an egta script with command line arguments. */
+  public static void run(TriFunction<SimSpec, Log, Integer, Observation> sim, String[] args,
+      String classPrefix, CaseFormat keyCaseFormat) throws IOException {
+    SingleCommand<CommandLineOptions> parser =
+        SingleCommand.singleCommand(CommandLineOptions.class);
+    CommandLineOptions options = parser.parse(args);
+
+    if (options.help.help) {
+      options.help.showHelp();
+      // FIXME Not properly exiting after help
+    } else {
+      try (Reader in = openin(options.simspec);
+          Writer out = openout(options.observations);
+          Writer log = openerr(options.logs)) {
+        run(sim, in, out, log, options.numObs, options.verbosity, options.jobs, options.egta,
+            classPrefix, keyCaseFormat);
+      }
+    }
+  }
+
   private static void multiThreadRun(TriFunction<SimSpec, Log, Integer, Observation> sim,
       Reader specs, Writer obsOut, Writer logOut, int numObs, int jobs, Level logLevel, Gson gson,
       String classPrefix, CaseFormat keyCaseFormat) {
@@ -75,7 +97,6 @@ public class Runner {
        * to be hidden. Therefore almost everything is wrapped in a try{ } catch (Exception ex) {
        * e.printStackTrace(); System.exit(1); } to guarantee that the appropriate thing happens.
        */
-
       ExecutorService exec = Executors.newFixedThreadPool(jobs);
 
       JsonStreamParser parser = new JsonStreamParser(specs);
@@ -139,25 +160,6 @@ public class Runner {
     }
   }
 
-  public static void run(TriFunction<SimSpec, Log, Integer, Observation> sim, String[] args,
-      String classPrefix, CaseFormat keyCaseFormat) throws IOException {
-    SingleCommand<CommandLineOptions> parser =
-        SingleCommand.singleCommand(CommandLineOptions.class);
-    CommandLineOptions options = parser.parse(args);
-
-    if (options.help.help) {
-      options.help.showHelp();
-      // FIXME Not properly exiting after help
-    } else {
-      try (Reader in = openin(options.simspec);
-          Writer out = openout(options.observations);
-          Writer log = openerr(options.logs)) {
-        run(sim, in, out, log, options.numObs, options.verbosity, options.jobs, options.egta,
-            classPrefix, keyCaseFormat);
-      }
-    }
-  }
-
   private static Reader openin(String path) throws IOException {
     if (path == "-") {
       return new BufferedReader(new InputStreamReader(System.in, charset));
@@ -203,8 +205,9 @@ public class Runner {
     public JsonObject serialize(Player player, Type type, JsonSerializationContext gson) {
       JsonObject serializedPlayer = super.serialize(player, type, gson);
       JsonObject features = player.getFeatures();
-      if (!features.entrySet().isEmpty())
+      if (!features.entrySet().isEmpty()) {
         serializedPlayer.add("features", features);
+      }
       return serializedPlayer;
     }
 
@@ -217,8 +220,9 @@ public class Runner {
       JsonObject serializedObservation = new JsonObject();
       JsonArray players = new JsonArray();
       serializedObservation.add("players", players);
-      for (Player player : observation.getPlayers())
+      for (Player player : observation.getPlayers()) {
         players.add(gson.serialize(player, Player.class));
+      }
       return serializedObservation;
     }
 
@@ -230,8 +234,9 @@ public class Runner {
     public JsonObject serialize(Observation observation, Type type, JsonSerializationContext gson) {
       JsonObject serializedObservation = super.serialize(observation, type, gson);
       JsonObject features = observation.getFeatures();
-      if (!features.entrySet().isEmpty())
+      if (!features.entrySet().isEmpty()) {
         serializedObservation.add("features", features);
+      }
       return serializedObservation;
     }
 

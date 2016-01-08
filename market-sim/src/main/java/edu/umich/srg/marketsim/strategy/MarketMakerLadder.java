@@ -6,14 +6,16 @@ import static edu.umich.srg.fourheap.Order.OrderType.SELL;
 
 import edu.umich.srg.marketsim.Price;
 
-import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 public class MarketMakerLadder {
 
-  private final int stepSize, numRungs, offset;
+  private final int stepSize;
+  private final int numRungs;
+  private final int offset;
 
+  /** Constructor of a market maker ladder. */
   public MarketMakerLadder(int rungSeperation, int numRungs, boolean tickImprovement,
       boolean tickOutside) {
     checkArgument(rungSeperation > 0);
@@ -23,6 +25,7 @@ public class MarketMakerLadder {
     this.offset = tickImprovement ? (tickOutside ? 1 : -1) : 0;
   }
 
+  /** Creates an order ladder as a stream of order descriptions. */
   public Stream<OrderDesc> createLadder(Price highestSell, Price lowestBuy) {
     Stream<OrderDesc> buys = toStream(lowestBuy.longValue(), -highestSell.longValue())
         .mapToObj(p -> OrderDesc.of(BUY, Price.of(p)));
@@ -31,8 +34,9 @@ public class MarketMakerLadder {
     return Stream.concat(buys, sells);
   }
 
+  /** Creates a stream of order prices. */
   private LongStream toStream(long init, long cross) {
-    return IntStream.range(0, numRungs).mapToLong(s -> init + offset + this.stepSize * s)
+    return LongStream.range(0, numRungs).map(s -> init + offset + this.stepSize * s)
         .filter(p -> p > -(cross + offset));
   }
 

@@ -5,6 +5,7 @@ import edu.umich.srg.marketsim.Price;
 
 import java.util.Objects;
 
+/** The description of an order that an agent should submit. */
 public class OrderDesc {
 
   private final OrderType type;
@@ -28,11 +29,13 @@ public class OrderDesc {
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (obj == null || !(obj instanceof OrderDesc))
+  public boolean equals(Object other) {
+    if (other == null || !(other instanceof OrderDesc)) {
       return false;
-    OrderDesc that = (OrderDesc) obj;
-    return Objects.equals(this.price, that.price) && Objects.equals(this.price, that.price);
+    } else {
+      OrderDesc that = (OrderDesc) other;
+      return Objects.equals(this.price, that.price) && Objects.equals(this.price, that.price);
+    }
   }
 
   @Override

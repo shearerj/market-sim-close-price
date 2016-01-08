@@ -8,20 +8,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-class InverseCMF implements Serializable {
+class InverseCmf implements Serializable {
 
   private double lastPmf;
   private final List<Double> cmf;
   private final PmfFunction nextPmf;
 
-  InverseCMF(double zeroPmf, PmfFunction nextPmf) {
+  InverseCmf(double zeroPmf, PmfFunction nextPmf) {
     this.lastPmf = zeroPmf;
     this.cmf = new ArrayList<>(Collections.singleton(zeroPmf));
     this.nextPmf = nextPmf;
   }
 
   public int sample(Random rand) {
-    double invCmf = rand.nextDouble(), largestCmf = Iterables.getLast(cmf);
+    double invCmf = rand.nextDouble();
+    double largestCmf = Iterables.getLast(cmf);
     if (invCmf < largestCmf) {
       int index = Collections.binarySearch(cmf, invCmf);
       return Math.abs(index + 1);

@@ -5,7 +5,7 @@ public interface Functions {
   @FunctionalInterface
   interface TriFunction<A, B, C, R> {
 
-    R apply(A a, B b, C c);
+    R apply(A input1, B input2, C input3);
 
   }
 

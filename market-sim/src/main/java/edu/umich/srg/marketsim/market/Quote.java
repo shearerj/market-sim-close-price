@@ -7,17 +7,15 @@ import edu.umich.srg.marketsim.Price;
 import java.io.Serializable;
 import java.util.Objects;
 
-/**
- * Container for Quote data.
- * 
- * @author ewah
- */
+/** Container for Quote data. */
 public class Quote implements Serializable {
 
   private static final Quote empty = new Quote(null, 0, null, 0);
 
-  private final Optional<Price> ask, bid;
-  private final int bidDepth, askDepth;
+  private final Optional<Price> ask;
+  private final Optional<Price> bid;
+  private final int bidDepth;
+  private final int askDepth;
 
   Quote(Price bid, int bidDepth, Price ask, int askDepth) {
     this.ask = Optional.fromNullable(ask);
@@ -46,28 +44,29 @@ public class Quote implements Serializable {
     return askDepth;
   }
 
-  /**
-   * @return true if the quote is defined (has an ask and a bid price)
-   */
+  /** True if the quote is defined (has an ask and a bid price). */
   public boolean isDefined() {
     return ask.isPresent() && bid.isPresent();
   }
 
-  /**
-   * @return bid-ask spread of the quote
-   */
+  /** bid-ask spread of the quote. */
   public double getSpread() {
     // FIXME Are these the best way to handle these cases?
-    if (!ask.isPresent() || !bid.isPresent())
+    if (!ask.isPresent() || !bid.isPresent()) {
       return Double.POSITIVE_INFINITY;
-    return ask.get().doubleValue() - bid.get().doubleValue();
+    } else {
+      return ask.get().doubleValue() - bid.get().doubleValue();
+    }
   }
 
+  /** Return the midquote. */
   public double getMidquote() {
     // FIXME Are these the best way to handle these cases?
-    if (!ask.isPresent() || !bid.isPresent())
+    if (!ask.isPresent() || !bid.isPresent()) {
       return Double.NaN;
-    return (ask.get().doubleValue() + bid.get().doubleValue()) / 2;
+    } else {
+      return (ask.get().doubleValue() + bid.get().doubleValue()) / 2;
+    }
   }
 
   @Override
@@ -76,11 +75,13 @@ public class Quote implements Serializable {
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (obj == null || !(obj instanceof Quote))
+  public boolean equals(Object other) {
+    if (other == null || !(other instanceof Quote)) {
       return false;
-    Quote that = (Quote) obj;
-    return Objects.equals(ask, that.ask) && Objects.equals(bid, that.bid);
+    } else {
+      Quote that = (Quote) other;
+      return Objects.equals(ask, that.ask) && Objects.equals(bid, that.bid);
+    }
   }
 
   @Override
@@ -89,6 +90,6 @@ public class Quote implements Serializable {
         + (ask.isPresent() ? ask.get() : "- ") + ')';
   }
 
-  private static final long serialVersionUID = 3842989596948215994L;
+  private static final long serialVersionUID = 1;
 
 }

@@ -24,6 +24,9 @@ import java.util.Collection;
 import java.util.Random;
 import java.util.function.IntSupplier;
 
+/**
+ * ShockAgent is an agent that liquidates a large quantity to buy or sell in a short period of time.
+ */
 public class ShockAgent implements Agent {
 
   private final Sim sim;
@@ -32,12 +35,15 @@ public class ShockAgent implements Agent {
   private final Price orderPrice;
   private final IntSupplier getDepth;
 
-  private final long arrivalTime, timeToLiquidate, totalOrdersToSubmit;
+  private final long arrivalTime;
+  private final long timeToLiquidate;
+  private final long totalOrdersToSubmit;
 
   private int ordersToSubmit;
   private boolean waitingToSubmit;
 
-  public ShockAgent(Sim sim, Market market, Spec spec, Random rand) {
+  /** Standard constructor. */
+  public ShockAgent(Sim sim, Market market, Spec spec) {
     this.sim = sim;
     this.market = market.getView(this, TimeStamp.ZERO);
     this.arrivalTime = spec.get(SimLength.class) / 2;
@@ -53,7 +59,7 @@ public class ShockAgent implements Agent {
 
   public static ShockAgent createFromSpec(Sim sim, Fundamental fundamental,
       Collection<Market> markets, Market market, Spec spec, Random rand) {
-    return new ShockAgent(sim, market, spec, rand);
+    return new ShockAgent(sim, market, spec);
   }
 
   private void strategy() {
@@ -105,8 +111,9 @@ public class ShockAgent implements Agent {
 
   @Override
   public void notifyQuoteUpdated(MarketView market) {
-    if (waitingToSubmit)
+    if (waitingToSubmit) {
       strategy();
+    }
   }
 
   @Override

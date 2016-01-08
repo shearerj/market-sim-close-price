@@ -4,15 +4,15 @@ import edu.umich.srg.distributions.Distribution.DoubleDistribution;
 
 import java.util.Random;
 
+/** Allows sampling from a standard beta distribution. */
 public abstract class Beta implements DoubleDistribution {
 
-  private Beta() {}
-
+  /** Create a beta distribution. */
   public static Beta with(double alpha, double beta) {
     if (alpha == 1 && beta == 1) {
       return new Uniform();
     } else if (alpha == beta && alpha > 1.5) {
-      return new AhrensDieterBS(alpha);
+      return new AhrensDieterBs(alpha);
     } else {
       throw new IllegalArgumentException(
           "Alpha = " + alpha + " and Beta = " + beta + " not implemented yet");
@@ -29,37 +29,44 @@ public abstract class Beta implements DoubleDistribution {
   }
 
   /**
-   * Rejection Sampling method from:
-   * 
-   * s
-   * 
-   * This method is an approximation that is better at larger values of alpha
+   * Rejection sampling approximation of symmetric beta. This method is an approximation that is
+   * better at larger values of alpha.
    */
-  private static class AhrensDieterBS extends Beta {
+  private static class AhrensDieterBs extends Beta {
 
-    private final double a, A, t;
+    private final double alpha;
+    private final double alphac;
+    private final double sqrtAlpha;
 
-    private AhrensDieterBS(double alpha) {
-      this.a = alpha;
-      this.A = alpha - 1;
-      this.t = Math.sqrt(a);
+    private AhrensDieterBs(double alpha) {
+      this.alpha = alpha;
+      this.alphac = alpha - 1;
+      this.sqrtAlpha = Math.sqrt(alpha);
     }
 
     @Override
     public double sample(Random rand) {
-      double x, s, s4, u;
+      double correctedGaussian;
+      double normal;
+      double normal4;
+      double uniform;
+
       do {
         do {
-          s = rand.nextGaussian();
-          x = 0.5 * (1 + s / t);
-        } while (x < 0 || x > 1);
-        u = rand.nextDouble();
-        s4 = s * s * s * s;
-      } while (u > 1 - s4 / (8 * a - 12)
-          && (u >= 1 - s4 / (8 * a - 8) + 0.5 * (s4 / (8 * a - 8)) * (s4 / (8 * a - 8))
-              || Math.log1p(u - 1) > A * Math.log1p(4 * x * (1 - x) - 1) + s * s / 2));
-      return x;
+          normal = rand.nextGaussian();
+          correctedGaussian = 0.5 * (1 + normal / sqrtAlpha);
+        } while (correctedGaussian < 0 || correctedGaussian > 1);
+        uniform = rand.nextDouble();
+        normal4 = normal * normal * normal * normal;
+      } while (uniform > 1 - normal4 / (8 * alpha - 12) && (uniform >= 1 - normal4 / (8 * alpha - 8)
+          + 0.5 * (normal4 / (8 * alpha - 8)) * (normal4 / (8 * alpha - 8))
+          || Math.log1p(uniform - 1) > alphac
+              * Math.log1p(4 * correctedGaussian * (1 - correctedGaussian) - 1)
+              + normal * normal / 2));
+      return correctedGaussian;
     }
   }
+
+  private Beta() {} // Unconstructable
 
 }

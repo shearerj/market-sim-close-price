@@ -9,7 +9,8 @@ import java.util.function.Function;
 
 public final class Distributions {
 
-  public static Distribution<Integer> asDistribution(IntDistribution dist) {
+  /** Box an int distribution. */
+  public static Distribution<Integer> box(IntDistribution dist) {
     return new Distribution<Integer>() {
       @Override
       public Integer sample(Random rand) {
@@ -18,7 +19,8 @@ public final class Distributions {
     };
   }
 
-  public static Distribution<Long> asDistribution(LongDistribution dist) {
+  /** Box a long distribution. */
+  public static Distribution<Long> box(LongDistribution dist) {
     return new Distribution<Long>() {
       @Override
       public Long sample(Random rand) {
@@ -27,7 +29,8 @@ public final class Distributions {
     };
   }
 
-  public static Distribution<Double> asDistribution(DoubleDistribution dist) {
+  /** Box a double distribution. */
+  public static Distribution<Double> box(DoubleDistribution dist) {
     return new Distribution<Double>() {
       @Override
       public Double sample(Random rand) {
@@ -36,6 +39,7 @@ public final class Distributions {
     };
   }
 
+  /** map over distribution outputs. */
   public static <T, R> Distribution<R> map(Distribution<T> initial, Function<T, R> func) {
     return new Distribution<R>() {
       @Override
@@ -45,7 +49,6 @@ public final class Distributions {
     };
   }
 
-  // Remove constructor
-  private Distributions() {};
+  private Distributions() {} // Unconstructable
 
 }

@@ -5,15 +5,23 @@ import edu.umich.srg.marketsim.TimeStamp;
 
 public abstract class NoisyFundamentalEstimator {
 
+  /**
+   * Create a noisy markov fundamental estimator.
+   *
+   * @param observationVariance The actual observation variance of the fundamental.
+   * @param transactionVariance The assumed variance of price distribution from around the
+   *        fundamental.
+   */
   public static NoisyFundamentalEstimator create(long simLength, double mean, double meanReversion,
       double shockVariance, double observationVariance, double transactionVariance) {
-    if (shockVariance == 0)
+    if (shockVariance == 0) {
       return new ConstantEstimator(mean);
-    else if (meanReversion == 0)
+    } else if (meanReversion == 0) {
       return new RandomWalk(mean, shockVariance, observationVariance, transactionVariance);
-    else
+    } else {
       return new MeanReverting(simLength, mean, meanReversion, shockVariance, observationVariance,
           transactionVariance);
+    }
   }
 
   public abstract double estimate();
@@ -44,8 +52,10 @@ public abstract class NoisyFundamentalEstimator {
   private abstract static class VarianceEstimator extends NoisyFundamentalEstimator {
 
     long lastUpdate;
-    private final double observationVariance, transactionVariance;
-    double posteriorMean, posteriorVariance;
+    private final double observationVariance;
+    private final double transactionVariance;
+    double posteriorMean;
+    double posteriorVariance;
 
     private VarianceEstimator(double initialMean, double observationVariance,
         double transactionVariance) {
@@ -116,7 +126,9 @@ public abstract class NoisyFundamentalEstimator {
   private static class MeanReverting extends VarianceEstimator {
 
     private final long simLength;
-    private final double fundamentalMean, kappac, shockVariance;
+    private final double fundamentalMean;
+    private final double kappac;
+    private final double shockVariance;
 
     private MeanReverting(long simLength, double mean, double meanReversion, double shockVariance,
         double observationVariance, double transactionVariance) {

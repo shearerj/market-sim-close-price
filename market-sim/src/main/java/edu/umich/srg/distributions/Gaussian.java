@@ -4,9 +4,11 @@ import edu.umich.srg.distributions.Distribution.DoubleDistribution;
 
 import java.util.Random;
 
+/** Sample from a gaussian distribution. */
 public class Gaussian implements DoubleDistribution {
 
-  private final double mean, standardDeviation;
+  private final double mean;
+  private final double standardDeviation;
 
   private Gaussian(double mean, double standardDeviation) {
     this.mean = mean;
@@ -24,7 +26,7 @@ public class Gaussian implements DoubleDistribution {
   @Override
   public double sample(Random rand) {
     return rand.nextGaussian() * standardDeviation + mean;
-  };
+  }
 
   public double getMean() {
     return mean;

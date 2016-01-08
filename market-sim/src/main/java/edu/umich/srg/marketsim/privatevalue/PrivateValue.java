@@ -4,8 +4,8 @@ import edu.umich.srg.fourheap.Order.OrderType;
 
 public interface PrivateValue {
 
-  public double valueForExchange(int position, OrderType type);
+  double valueForExchange(int position, OrderType type);
 
-  public double valueAtPosition(int position);
+  double valueAtPosition(int position);
 
 }

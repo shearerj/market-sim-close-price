@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
-public class SparseArrayList<E> implements SparseList<E>, Serializable {
+public class SparseArrayList<E> implements Sparse<E>, Serializable {
 
   private final ArrayList<MutableEntry> elements;
 
@@ -32,8 +32,8 @@ public class SparseArrayList<E> implements SparseList<E>, Serializable {
       elements.add(new MutableEntry(index, element));
       return;
     }
-    int location = Collections.binarySearch(elements, SparseList.immutableEntry(index, null),
-        (a, b) -> Long.compare(a.getIndex(), b.getIndex()));
+    int location = Collections.binarySearch(elements, Sparse.immutableEntry(index, null),
+        (first, second) -> Long.compare(first.getIndex(), second.getIndex()));
     if (location >= 0) {
       elements.get(location).element = element;
     } else {

@@ -6,21 +6,21 @@ import com.google.common.collect.ImmutableMap;
 
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.agent.Agent;
+import edu.umich.srg.marketsim.agent.MarkovAgent;
 import edu.umich.srg.marketsim.agent.NoOpAgent;
 import edu.umich.srg.marketsim.agent.NoiseAgent;
 import edu.umich.srg.marketsim.agent.ShockAgent;
 import edu.umich.srg.marketsim.agent.SimpleMarketMaker;
-import edu.umich.srg.marketsim.agent.ZILAgent;
-import edu.umich.srg.marketsim.agent.ZIRAgent;
+import edu.umich.srg.marketsim.agent.ZirAgent;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
-import edu.umich.srg.marketsim.market.CDAMarket;
+import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Random;
 
-class EntityBuilder {
+final class EntityBuilder {
 
   static AgentCreator getAgentCreator(String name) {
     return checkNotNull(agentNameMap.get(name),
@@ -36,25 +36,25 @@ class EntityBuilder {
       ImmutableMap.<String, AgentCreator>builder() //
           .put("noise", NoiseAgent::createFromSpec) // Noise agentas for testings
           .put("noop", NoOpAgent::createFromSpec) // No op agents that do nothing
-          .put("zir", ZIRAgent::createFromSpec) // Standard ZI agents with re-entry
-          .put("zil", ZILAgent::createFromSpec) // ZI agents that learn from noisy observations
+          .put("zir", ZirAgent::createFromSpec) // Standard ZI agents with re-entry
+          .put("markov", MarkovAgent::createFromSpec) // ZI agents with markov learning
           .put("smm", SimpleMarketMaker::createFromSpec) // Simple Market Maker
           .put("shock", ShockAgent::createFromSpec) // Shock agent that buys a lot at a random time
           .build();
 
   private static final Map<String, MarketCreator> marketNameMap =
       ImmutableMap.<String, MarketCreator>builder() //
-          .put("cda", CDAMarket::createFromSpec) // CDA Market
+          .put("cda", CdaMarket::createFromSpec) // CDA Market
           .build();
 
-  static interface AgentCreator {
+  interface AgentCreator {
 
     Agent createAgent(Sim sim, Fundamental fundamental, Collection<Market> markets, Market market,
         Spec spec, Random rand);
 
   }
 
-  static interface MarketCreator {
+  interface MarketCreator {
 
     Market createMarket(Sim sim, Spec spec);
 

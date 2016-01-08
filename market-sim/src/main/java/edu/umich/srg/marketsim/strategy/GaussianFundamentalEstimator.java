@@ -6,7 +6,8 @@ import edu.umich.srg.marketsim.TimeStamp;
 public class GaussianFundamentalEstimator {
 
   private final long simLength;
-  private final double mean, kappac;
+  private final double mean;
+  private final double kappac;
 
   private GaussianFundamentalEstimator(long simLength, double mean, double meanReversion) {
     this.simLength = simLength;

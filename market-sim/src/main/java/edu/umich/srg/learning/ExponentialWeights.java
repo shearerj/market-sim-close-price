@@ -77,7 +77,7 @@ public class ExponentialWeights<T> implements Distribution<T> {
     distribution = null;
   }
 
-  /** Update the exponential weights algorithm with gains in insertion order */
+  /** Update the exponential weights algorithm with gains in insertion order. */
   public void update(Iterator<? extends Number> gains) {
     Iterator<Entry<T, Double>> experts = weights.entrySet().iterator();
     internalUpdate(new Iterator<Entry<Entry<T, Double>, ? extends Number>>() {
@@ -100,12 +100,12 @@ public class ExponentialWeights<T> implements Distribution<T> {
     });
   }
 
-  /** Update the exponential weights algorithm with gains in insertion order */
+  /** Update the exponential weights algorithm with gains in insertion order. */
   public void update(Iterable<? extends Number> gains) {
     update(gains.iterator());
   }
 
-  /** Update the exponential weights algorithm with gains with a mapping */
+  /** Update the exponential weights algorithm with gains with a mapping. */
   public void update(Map<T, ? extends Number> mappedGains) {
     Iterator<? extends Entry<T, ? extends Number>> gains = mappedGains.entrySet().iterator();
     internalUpdate(new Iterator<Entry<Entry<T, Double>, ? extends Number>>() {
@@ -126,49 +126,49 @@ public class ExponentialWeights<T> implements Distribution<T> {
     });
   }
 
-  /** Return a probability / weight for each expert */
+  /** Return a probability / weight for each expert. */
   public Map<T, Double> getProbabilities() {
     return Collections.unmodifiableMap(weights);
   }
 
-  /** Get counts for strategies that sum to total according to weights */
+  /** Get counts for strategies that sum to total according to weights. */
   public Map<T, Integer> getCounts(int total, Random rand) {
     double[] newWeights = new double[weights.size()];
     int[] counts = new int[weights.size()];
 
     // Multiply weights but total counts and remove any integer parts
     int countLeft = total;
-    int i = 0;
+    int ind = 0;
     for (double weight : weights.values()) {
       weight *= total;
       int count = (int) Math.floor(weight);
       countLeft -= count;
-      counts[i] = count;
-      newWeights[i] = weight - count;
-      i++;
+      counts[ind] = count;
+      newWeights[ind] = weight - count;
+      ind++;
     }
 
     // Normalize by number of times we'll sample
-    for (i = 0; i < newWeights.length; ++i) {
-      newWeights[i] /= countLeft;
+    for (ind = 0; ind < newWeights.length; ++ind) {
+      newWeights[ind] /= countLeft;
     }
 
     // Sample remaining ints
     IntDistribution extras = Multinomial.withWeights(newWeights);
-    for (i = 0; i < countLeft; ++i) {
+    for (ind = 0; ind < countLeft; ++ind) {
       counts[extras.sample(rand)]++;
     }
 
     // Build map of results
     ImmutableMap.Builder<T, Integer> mappedCounts = ImmutableMap.builder();
     Iterator<T> elements = weights.keySet().iterator();
-    for (i = 0; i < counts.length; ++i) {
-      mappedCounts.put(elements.next(), counts[i]);
+    for (ind = 0; ind < counts.length; ++ind) {
+      mappedCounts.put(elements.next(), counts[ind]);
     }
     return mappedCounts.build();
   }
 
-  /** Return an expert with probability proportional to it's weight */
+  /** Return an expert with probability proportional to it's weight. */
   @Override
   public T sample(Random rand) {
     if (distribution == null) {
@@ -182,7 +182,7 @@ public class ExponentialWeights<T> implements Distribution<T> {
       super(learningRate, experts);
     }
 
-    /** Returns the expected expert value */
+    /** Returns the expected expert value. */
     public double expectedValue() {
       return weights.entrySet().stream().mapToDouble(e -> e.getKey().doubleValue() * e.getValue())
           .sum();

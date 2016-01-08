@@ -1,7 +1,7 @@
 package edu.umich.srg.marketsim.fundamental;
 
-import edu.umich.srg.collect.SparseList;
-import edu.umich.srg.collect.SparseList.Entry;
+import edu.umich.srg.collect.Sparse;
+import edu.umich.srg.collect.Sparse.Entry;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.util.SummStats;
@@ -32,7 +32,7 @@ public class ConstantFundamental extends GaussianMeanReverting {
 
   @Override
   public Iterable<Entry<Number>> getFundamentalValues(long finalTime) {
-    return Collections.singleton(SparseList.immutableEntry(0, constant));
+    return Collections.singleton(Sparse.immutableEntry(0, constant));
   }
 
   @Override
@@ -41,7 +41,8 @@ public class ConstantFundamental extends GaussianMeanReverting {
       return Double.NaN;
     }
     SummStats rmsd = SummStats.empty();
-    Entry<? extends Number> nextPrice, lastPrice = prices.next();
+    Entry<? extends Number> nextPrice;
+    Entry<? extends Number> lastPrice = prices.next();
     while (prices.hasNext() && (nextPrice = prices.next()).getIndex() <= finalTime) {
       double diff = lastPrice.getElement().doubleValue() - constant.doubleValue();
       rmsd.acceptNTimes(diff, nextPrice.getIndex() - lastPrice.getIndex());

@@ -1,7 +1,5 @@
 package edu.umich.srg.marketsim.agent;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonObject;
 
@@ -12,40 +10,30 @@ import edu.umich.srg.distributions.Uniform.IntUniform;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
-import edu.umich.srg.marketsim.Keys.FundamentalMean;
-import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
 import edu.umich.srg.marketsim.Keys.MaxPosition;
 import edu.umich.srg.marketsim.Keys.PrivateValueVar;
 import edu.umich.srg.marketsim.Keys.Rmax;
 import edu.umich.srg.marketsim.Keys.Rmin;
-import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.Keys.Thresh;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
-import edu.umich.srg.marketsim.fundamental.Fundamental;
-import edu.umich.srg.marketsim.fundamental.FundamentalView;
-import edu.umich.srg.marketsim.fundamental.GaussianMeanReverting;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.market.OrderRecord;
 import edu.umich.srg.marketsim.privatevalue.GaussianPrivateValue;
 import edu.umich.srg.marketsim.privatevalue.PrivateValue;
-import edu.umich.srg.marketsim.strategy.GaussianFundamentalEstimator;
 import edu.umich.srg.marketsim.strategy.SurplusThreshold;
 
-import java.util.Collection;
 import java.util.Random;
 
-public class ZIRAgent implements Agent {
+abstract class StandardMarketAgent implements Agent {
 
   private static final Distribution<OrderType> orderTypeDistribution =
       Uniform.over(OrderType.values());
 
-  private final Sim sim;
+  protected final Sim sim;
   private final MarketView market;
-  private final FundamentalView fundamental;
-  private final GaussianFundamentalEstimator estimator;
   private final int maxPosition;
   private final SurplusThreshold threshold;
   private final PrivateValue privateValue;
@@ -53,14 +41,10 @@ public class ZIRAgent implements Agent {
   private final Geometric arrivalDistribution;
   private final IntUniform shadingDistribution;
 
-  public ZIRAgent(Sim sim, Market market, Fundamental fundamental, Spec spec, Random rand) {
-    checkArgument(fundamental instanceof GaussianMeanReverting);
-
+  /** Standard constructor for ZIR agent. */
+  public StandardMarketAgent(Sim sim, Market market, Spec spec, Random rand) {
     this.sim = sim;
     this.market = market.getView(this, TimeStamp.ZERO);
-    this.fundamental = FundamentalView.create(sim, fundamental);
-    this.estimator = GaussianFundamentalEstimator.create(spec.get(SimLength.class),
-        spec.get(FundamentalMean.class), spec.get(FundamentalMeanReversion.class));
     this.maxPosition = spec.get(MaxPosition.class);
     this.threshold = SurplusThreshold.create(spec.get(Thresh.class));
     this.privateValue = GaussianPrivateValue.generate(rand, spec.get(MaxPosition.class),
@@ -70,25 +54,26 @@ public class ZIRAgent implements Agent {
     this.rand = rand;
   }
 
-  public static ZIRAgent createFromSpec(Sim sim, Fundamental fundamental,
-      Collection<Market> markets, Market market, Spec spec, Random rand) {
-    return new ZIRAgent(sim, market, fundamental, spec, rand);
-  }
+  protected abstract double getFinalFundamentalEstiamte();
+
+  protected abstract String name();
 
   private void scheduleNextArrival() {
     sim.scheduleIn(TimeStamp.of(1 + arrivalDistribution.sample(rand)), this::strategy);
   }
 
-  private void strategy() {
-    for (OrderRecord order : ImmutableList.copyOf(market.getActiveOrders()))
+  protected void strategy() {
+    for (OrderRecord order : ImmutableList.copyOf(market.getActiveOrders())) {
       market.withdrawOrder(order);
+    }
 
     OrderType type = orderTypeDistribution.sample(rand);
     if (Math.abs(market.getHoldings() + type.sign()) <= maxPosition) {
 
-      double finalEstimate = estimator.estimate(sim.getCurrentTime(), fundamental.getFundamental()),
-          privateBenefit = type.sign() * privateValue.valueForExchange(market.getHoldings(), type),
-          demandedSurplus = shadingDistribution.sample(rand);
+      double finalEstimate = getFinalFundamentalEstiamte();
+      double privateBenefit =
+          type.sign() * privateValue.valueForExchange(market.getHoldings(), type);
+      double demandedSurplus = shadingDistribution.sample(rand);
 
       Price toSubmit = threshold.shadePrice(type, market.getQuote(), finalEstimate + privateBenefit,
           demandedSurplus);
@@ -118,7 +103,7 @@ public class ZIRAgent implements Agent {
 
   @Override
   public String toString() {
-    return "ZIR " + Integer.toString(System.identityHashCode(this), 36).toUpperCase();
+    return name() + " " + Integer.toString(System.identityHashCode(this), 36).toUpperCase();
   }
 
   // Notifications

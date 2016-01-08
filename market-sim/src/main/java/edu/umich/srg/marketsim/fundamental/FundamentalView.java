@@ -16,24 +16,28 @@ public interface FundamentalView {
     return new CurrentFundamental(sim, fundamental);
   }
 
+  /** Create a new fundamental view. */
   static FundamentalView create(Sim sim, Fundamental fundamental, TimeStamp latency) {
-    if (latency.equals(TimeStamp.ZERO))
+    if (latency.equals(TimeStamp.ZERO)) {
       return new CurrentFundamental(sim, fundamental);
-    else
+    } else {
       return new DelayedFundamental(sim, fundamental, latency);
+    }
   }
 
+  /** Create a noisy fundamental view. */
   static FundamentalView create(Sim sim, Fundamental fundamental, TimeStamp latency,
       double noiseVariance, Random rand) {
-    if (latency.equals(TimeStamp.ZERO) && noiseVariance == 0)
+    if (latency.equals(TimeStamp.ZERO) && noiseVariance == 0) {
       return new CurrentFundamental(sim, fundamental);
-    else if (noiseVariance == 0)
+    } else if (noiseVariance == 0) {
       return new DelayedFundamental(sim, fundamental, latency);
-    else
+    } else {
       return new NoisyDelayedFundamental(sim, fundamental, latency, noiseVariance, rand);
+    }
   }
 
-  static class NoisyDelayedFundamental implements FundamentalView, Serializable {
+  class NoisyDelayedFundamental implements FundamentalView, Serializable {
 
     private final Sim sim;
     private final Fundamental fundamental;
@@ -61,7 +65,7 @@ public interface FundamentalView {
 
   }
 
-  static class DelayedFundamental implements FundamentalView, Serializable {
+  class DelayedFundamental implements FundamentalView, Serializable {
 
     private final Sim sim;
     private final Fundamental fundamental;
@@ -82,7 +86,7 @@ public interface FundamentalView {
 
   }
 
-  static class CurrentFundamental implements FundamentalView, Serializable {
+  class CurrentFundamental implements FundamentalView, Serializable {
 
     private final Sim sim;
     private final Fundamental fundamental;

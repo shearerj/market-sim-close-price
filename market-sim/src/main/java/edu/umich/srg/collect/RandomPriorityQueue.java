@@ -14,21 +14,17 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 /**
- * A RandomKeyedQueue is a
- * 
- * Move to supplier
- * 
- * Note that because of the dequeuing mechanism, if Activity A is supposed to happen before Activity
- * B, Activity A should queue up Activity B. Anything else may not guarantee that A always happens
- * before B.
- * 
- * @author ebrink
+ * A RandomPriorityQueue is a Priority Queue where elements with the same priority are removed in a
+ * random order. In addition this class has an addAllOrdered method, that will add all of the items
+ * with the same priority, but will ensure that they come out in the same order they were collected
+ * in. In this way one can enforce an ordering ignoring the randomness. Note that the type of random
+ * queue that underlies this collection affects the exact probabilities that things come out
+ * randomly. This is a smallest first priority queue.
  */
-public class RandomKeyedQueue<K, V> extends AbstractQueue<Entry<K, V>> {
-  // FIXME, switch to UE Random queue / make this just take a supplier since those are easy now
-
+public class RandomPriorityQueue<K, V> extends AbstractQueue<Entry<K, V>> {
   /*
    * Invariant that no event is ever empty at the end of execution.
    * 
@@ -36,23 +32,25 @@ public class RandomKeyedQueue<K, V> extends AbstractQueue<Entry<K, V>> {
    * be scheduled by the activity that always proceeds it. Activities scheduled at the same time
    * (even infinitely fast) may occur in any order.
    */
-
-  private NavigableMap<K, OrderedQueue<V>> queue;
+  private final NavigableMap<K, OrderedQueue<V>> queue;
   private int size;
-  private PositionalSeed seed;
+  private final PositionalSeed seed;
+  private final Function<Random, OrderedQueue<V>> queueCreator;
 
-  protected RandomKeyedQueue(Random rand, Comparator<? super K> comp) {
+  protected RandomPriorityQueue(Random rand, Comparator<? super K> comp,
+      Function<Random, OrderedQueue<V>> queueCreator) {
     this.queue = new TreeMap<>(comp);
     this.size = 0;
     this.seed = PositionalSeed.with(rand.nextLong());
+    this.queueCreator = queueCreator;
   }
 
-  public static <K, V> RandomKeyedQueue<K, V> create(Random seed, Comparator<? super K> comp) {
-    return new RandomKeyedQueue<>(seed, comp);
+  public static <K, V> RandomPriorityQueue<K, V> create(Random seed, Comparator<? super K> comp) {
+    return new RandomPriorityQueue<>(seed, comp, PermOrderedRandomQueue::new);
   }
 
-  public static <K extends Comparable<? super K>, V> RandomKeyedQueue<K, V> create(Random seed) {
-    return new RandomKeyedQueue<>(seed, Comparator.naturalOrder());
+  public static <K extends Comparable<? super K>, V> RandomPriorityQueue<K, V> create(Random seed) {
+    return new RandomPriorityQueue<>(seed, Comparator.naturalOrder(), PermOrderedRandomQueue::new);
   }
 
   @Override
@@ -78,24 +76,28 @@ public class RandomKeyedQueue<K, V> extends AbstractQueue<Entry<K, V>> {
 
   @Override
   public Entry<K, V> poll() {
-    if (isEmpty())
+    if (isEmpty()) {
       return null;
+    }
     Entry<K, OrderedQueue<V>> first = queue.firstEntry();
     V ret = first.getValue().poll();
     size--;
-    if (first.getValue().isEmpty())
+    if (first.getValue().isEmpty()) {
       queue.pollFirstEntry();
+    }
     return Maps.immutableEntry(first.getKey(), ret);
   }
 
   @Override
   public Entry<K, V> peek() {
-    if (isEmpty())
+    if (isEmpty()) {
       return null;
+    }
     Entry<K, OrderedQueue<V>> first = queue.firstEntry();
     return Maps.immutableEntry(first.getKey(), first.getValue().peek());
   }
 
+  /** Creates a queue with the given supplier. */
   protected OrderedQueue<V> createQueue(K time) {
     /*
      * FIXME Do we want a constrained random queue, or a uniform random queue over deques. The
@@ -110,7 +112,7 @@ public class RandomKeyedQueue<K, V> extends AbstractQueue<Entry<K, V>> {
      * activity, then rejection sampling your second activity until it's after the first, then the
      * third until it's after the second and so on. Neither seems great...
      */
-    return new UPOrderedRandomQueue<>(new Random(seed.getSeed(time.hashCode())));
+    return queueCreator.apply(new Random(seed.getSeed(time.hashCode())));
   }
 
   public boolean add(K time, V activity) {
@@ -123,9 +125,11 @@ public class RandomKeyedQueue<K, V> extends AbstractQueue<Entry<K, V>> {
     return queue.computeIfAbsent(time, this::createQueue).addAllOrdered(activities);
   }
 
-  public boolean addAll(ListMultimap<? extends K, ? extends V> activities) {
-    for (Entry<? extends K, ? extends Collection<? extends V>> e : activities.asMap().entrySet())
+  /** Adds all ordered for several keys in a list multimap. */
+  public boolean addAllOrdered(ListMultimap<? extends K, ? extends V> activities) {
+    for (Entry<? extends K, ? extends Collection<? extends V>> e : activities.asMap().entrySet()) {
       addAllOrdered(e.getKey(), e.getValue());
+    }
     return true;
   }
 

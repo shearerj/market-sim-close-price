@@ -27,15 +27,19 @@ public class CommandLineOptions {
   public int verbosity = 0;
 
   @Option(name = {"-j"},
-      description = "Number of threads to use for processing. 0 implies number of cores. (default: 0)")
+      description = "Number of threads to use for processing. 0 implies number of cores."
+          + " (default: 0)")
   public int jobs = 0;
 
   @Option(name = {"--egta"},
-      description = "Flag that this is running on egta. Disables logging among other things. (default: false)")
+      description = "Flag that this is running on egta. Disables logging among other things."
+          + " (default: false)")
   public boolean egta = false;
 
   @Arguments(title = {"numobs"}, arity = 1,
-      description = "The number of observations to gather from the simulation spec. If multiple simulation specs are passed in, this many observations will be sampled for each. (default: 1)")
+      description = "The number of observations to gather from the simulation spec."
+          + " If multiple simulation specs are passed in, this many observations"
+          + " will be sampled for each. (default: 1)")
   public int numObs = 1;
 
 }

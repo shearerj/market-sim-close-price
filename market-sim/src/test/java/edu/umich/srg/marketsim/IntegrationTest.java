@@ -39,7 +39,7 @@ import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.agent.NoiseAgent;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
-import edu.umich.srg.marketsim.market.CDAMarket;
+import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
 
 import java.io.IOException;
@@ -69,7 +69,7 @@ public class IntegrationTest {
     Log log = Log.create(Level.DEBUG, logData, l -> l + ") ");
 
     MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), log, rand);
-    Market cda = sim.addMarket(CDAMarket.create(sim));
+    Market cda = sim.addMarket(CdaMarket.create(sim));
     for (int i = 0; i < numAgents; ++i)
       sim.addAgent(new NoiseAgent(sim, cda, Spec.fromPairs(ArrivalRate.class, 0.5), rand));
     sim.initialize();

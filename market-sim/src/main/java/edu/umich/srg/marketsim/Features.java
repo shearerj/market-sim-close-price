@@ -4,7 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-import edu.umich.srg.collect.SparseList;
+import edu.umich.srg.collect.Sparse;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.util.SummStats;
@@ -53,7 +53,7 @@ class Features {
     // Market features
     for (Market market : simulator.getMarkets()) {
       String marketTag = market.toString().toLowerCase().replace(' ', '_');
-      Iterable<? extends SparseList.Entry<? extends Number>> prices =
+      Iterable<? extends Sparse.Entry<? extends Number>> prices =
           market.getMarketInfo().getPrices();
       addSparseData(features, prices, marketTag);
       features.addProperty(marketTag + "_rmsd", fundamental.rmsd(prices.iterator(), finalTime));
@@ -63,10 +63,10 @@ class Features {
   }
 
   private static void addSparseData(JsonObject root,
-      Iterable<? extends SparseList.Entry<? extends Number>> data, String prefix) {
+      Iterable<? extends Sparse.Entry<? extends Number>> data, String prefix) {
     JsonArray prices = new JsonArray();
     JsonArray indices = new JsonArray();
-    for (SparseList.Entry<? extends Number> obs : data) {
+    for (Sparse.Entry<? extends Number> obs : data) {
       prices.add(new JsonPrimitive(obs.getElement().doubleValue()));
       indices.add(new JsonPrimitive(obs.getIndex()));
     }
