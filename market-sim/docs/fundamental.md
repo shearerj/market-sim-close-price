@@ -24,7 +24,7 @@ whenever it is requested.
 If we want to sample forward in time, the number of jumps that happen between
 $t$ and $t+\delta$ is distributed by a Binomial with parameters $\delta$ and
 $\phi$ (the jump probability).
-$$ \text{Jumps after $\delta$} \sim \operatorname{Binomial}(\delta, \phi) $$
+$$ \text{Jumps after }\delta \sim \operatorname{Binomial}(\delta, \phi) $$
 
 If we want to sample the fundamental at time $t$ between time $t-\delta$ and
 $t-\gamma$, where $m$ jumps occurred in the $\delta + \gamma$ time frame,  the
@@ -36,12 +36,12 @@ $$ \text{Jumps before $t$ between points} \sim \operatorname{Hypergeometric}(\de
 
 We can formally write the mean reverting jump distribution of the fundamental
 in terms of $f_j$, where $f_j$ represents the fundamental after $j$ steps.
-$$ f_{j+1} \sim \mathcal N (\kappa \mu + (1-\kappa) f_j, \sigma^2) $$
+$$ f_{j+1} \sim \mathcal N \left(\kappa \mu + \left(1-\kappa\right) f_j, \sigma^2\right) $$
 For brevity, it is simpler to use the compliment of the mean reversion instead
 of $\kappa$. We define $\lambda \equiv 1 - \kappa$. If we want to sample the
-fundamental forward in time after $\delta$ jumps this formula can be applied
+fundamental forward in time after $\gamma$ jumps this formula can be applied
 recursively to yield
-$$ f_{j+\gamma} \sim \mathcal N \left((1-\lambda^\gamma) \mu + \lambda^\gamma f_j, \frac{1 - \lambda^{2\gamma}}{1 - \lambda^2} \sigma^2\right) $$
+$$ f_{j+\gamma} \sim \mathcal N \left(\left(1-\lambda^\gamma\right) \mu + \lambda^\gamma f_j, \frac{1 - \lambda^{2\gamma}}{1 - \lambda^2} \sigma^2\right) $$
 
 Things get more complicated if we want to sample the fundamental between to
 times. First, we'll calculate the likelihood of observing the fundamental in
@@ -51,13 +51,33 @@ $$ f_{j-\delta} \sim \mathcal N \left((1-\lambda^{-\delta}) \mu + \lambda^{-\del
 Next we find the joint distribution over $f_j$ conditioned on $f_{j-\delta}$
 and $f_{j+\gamma}$. We can use the fact that the product of two Gaussian PDFs
 (not random variables) is a new Gaussian with the following parameters
-$$ \mathcal N (\mu_1, \sigma_1^2) \mathcal N (\mu_2. \sigma_2^2) = \mathcal N \left( \frac{\mu_1 \sigma_2^2 + \mu_2 \sigma_1^2}{\sigma_1^2 + \sigma_2^2}, \frac{\sigma_1^2 \sigma_2^2}{\sigma_1^2 + \sigma_2^2} \right) $$
+$$ \mathcal N \left( \mu_1, \sigma_1^2 \right) \mathcal N \left(\mu_2. \sigma_2^2 \right) = \mathcal N \left( \frac{\mu_1 \sigma_2^2 + \mu_2 \sigma_1^2}{\sigma_1^2 + \sigma_2^2}, \frac{\sigma_1^2 \sigma_2^2}{\sigma_1^2 + \sigma_2^2} \right) $$
 Using the previous three equations, we can combine them all into the posterior of the fundamental given that $\delta$ jumps happened before it, and $\gamma$ jumps happened after it
 $$ \begin{aligned}
 \mu_j &= \frac{(\lambda^\delta - 1)(\lambda^\gamma - 1)(\lambda^{\delta + \gamma} - 1)}{\lambda^{2\delta + 2\gamma} - 1} \mu + \frac{\lambda^\delta (\lambda^{2 \gamma} - 1)}{\lambda^{2\delta + 2\gamma} - 1} f_{j-\delta} + \frac{\lambda^\gamma (\lambda^{2 \delta} - 1)}{\lambda^{2\delta + 2\gamma} - 1} f_{j+\gamma} \\
 \sigma_j^2 &= \frac{(\lambda^{2\delta} - 1)(\lambda^{2 \gamma} - 1)}{(\lambda^2 - 1)(\lambda^{2 \delta + 2 \gamma} - 1)} \sigma^2 \\
 f_j &\sim \mathcal N (\mu_j, \sigma_j^2)
 \end{aligned} $$
+
+Random Jump Fundamental
+=======================
+
+If there is no mean reversion most of the formulas when there is mean reversion
+don't function. However, a lot of the equations become much simpler because
+it's not just the sum of IID Gaussians. The non mean reverting case is the same
+when $\kappa = 0$. For completeness it is
+$$ f_{j+1} \sim \mathcal N \left(f_j, \sigma^2\right) $$
+
+Applying this formula recursively is simple because the sum of IID Gaussians
+has a nice closed form representation. If we sample the fundamental forward in
+time after $\gamma$ jumps yields
+$$ f_{j+\gamma} \sim \mathcal N \left( f_j, \gamma \sigma^2 \right) $$
+
+Because there's no mean reversion, the formula for the reverse is identical
+$$ f_{j-\delta} \sim \mathcal N \left( f_j, \delta \sigma^2 \right) $$
+
+Which makes the middle solution fairly easy as
+$$ f_j \sim \mathcal N \left(\frac{\delta f_{j+\gamma} + \gamma f_{j-\delta}}{\gamma + \delta}, \frac{\gamma \delta}{\gamma + \delta} \sigma^2 \right) $$
 
 Appendix
 ========
