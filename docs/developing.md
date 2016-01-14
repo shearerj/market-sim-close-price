@@ -20,30 +20,39 @@ Compiling & Common Tasks
 There is a Makefile at the root of market-sim that provides targets for mos operations you would want to accomplish.
 Typing `make help` will display information about all of them.
 
-jar
-  : Compile java into an executable jar that can be called with `market-sim.sh`, or `run-egta.sh` This essentially updates the current executable simulator with the current version in source.
+<dl>
+  <dt>jar</dt>
+  <dd>Compile java into an executable jar that can be called with `market-sim.sh`, or `run-egta.sh` This essentially updates the current executable simulator with the current version in source.</dd>
 
-test
-  : Run all java unit tests.
+  <dt>test</dt>
+  <dd>
+    Run all java unit tests.
     Make sure that this passes before merging code into a larger branch.
+  </dd>
 
-egta def=\<defaults.json\>
-  : Compile the current jar into an egta compatible zip file.
+  <dt>egta def=\<defaults.json\></dt>
+  <dd>
+    Compile the current jar into an egta compatible zip file.
     This requires that `def` be specified.
     `def` is the path to the egta `defaults.json` you wish to use for this jar.
     It will also be used for the name of the resulting zip file, so make sure that the name of the `defaults.json` you're using coincides with the desored simulator name.
+  </dd>
 
-report
-  : Generate and display a number of reports about the java source code.
+  <dt>report</dt>
+  <dd>
+    Generate and display a number of reports about the java source code.
     In general this should be free of most of the errors is points out.
     This should be run before a large code change.
+  </dd>
 
-docs
-  : Compile the documentation markdown files into pdfs for easier viewing.
+  <dt>docs</dt>
+  <dd>Compile the documentation markdown files into pdfs for easier viewing.</dd>
 
-clean
-  : Remove all java byproducts.
+  <dt>clean</dt>
+  <dd>
+    Remove all java byproducts.
     This probably won't be necessary, but it exists just in case.
+  </dd>
 
 To remove the syntax highlighting add `COLOR=cat` to any command invocation.
 
