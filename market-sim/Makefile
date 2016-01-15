@@ -1,5 +1,6 @@
 # Make file for building and doing most things of use with the market simulator
 # usage: see `make help`
+SHELL=/usr/bin/env bash -euf -o pipefail
 
 # Color the output of maven with long but simple sed script
 COLOR = sed -Ef resources/mvn_color.sed
@@ -48,9 +49,11 @@ test:
 	@echo mvn test
 	@mvn test | $(COLOR)
 
-report:
+create-report:
 	@echo mvn site
 	@mvn site | $(COLOR)
+
+report: create-report
 	sensible-browser target/site/project-reports.html 
 
 docs:
