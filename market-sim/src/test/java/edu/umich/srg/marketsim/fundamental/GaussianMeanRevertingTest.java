@@ -72,7 +72,7 @@ public class GaussianMeanRevertingTest {
     long finalTime = 1000000000000L;
     Fundamental fundamental = GaussianMeanReverting.create(rand, mean, 0.5, 100, 1);
     fundamental.getValueAt(TimeStamp.of(finalTime));
-    System.out.println(Iterables.size(fundamental.getFundamentalValues(finalTime)));
+    assertEquals(53, Iterables.size(fundamental.getFundamentalValues(finalTime)));
   }
 
   /**
