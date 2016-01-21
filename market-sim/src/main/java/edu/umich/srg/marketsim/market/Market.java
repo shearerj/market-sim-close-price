@@ -1,10 +1,12 @@
 package edu.umich.srg.marketsim.market;
 
-import edu.umich.srg.collect.Sparse;
+import com.google.gson.JsonObject;
+
 import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.agent.Agent;
+import edu.umich.srg.marketsim.fundamental.Fundamental;
 
 import java.io.Serializable;
 import java.util.Map.Entry;
@@ -16,7 +18,7 @@ public interface Market {
 
   Iterable<Entry<Agent, AgentInfo>> getAgentInfo();
 
-  MarketInfo getMarketInfo();
+  JsonObject getFeatures(Fundamental fundamental);
 
   interface MarketView {
 
@@ -45,12 +47,6 @@ public interface Market {
     public void withdrawOrder(OrderRecord record) {
       withdrawOrder(record, record.getQuantity());
     }
-
-  }
-
-  interface MarketInfo {
-
-    Iterable<? extends Sparse.Entry<? extends Number>> getPrices();
 
   }
 

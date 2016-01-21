@@ -4,6 +4,9 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 import edu.umich.srg.collect.Sparse;
 import edu.umich.srg.collect.SparseArrayList;
@@ -15,6 +18,7 @@ import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.agent.Agent;
+import edu.umich.srg.marketsim.fundamental.Fundamental;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -119,15 +123,24 @@ abstract class AbstractMarket implements Market, Serializable {
   }
 
   @Override
-  public MarketInfo getMarketInfo() {
-    return new MarketInfo() {
+  public JsonObject getFeatures(Fundamental fundamental) {
+    JsonObject features = new JsonObject();
 
-      @Override
-      public Iterable<? extends Sparse.Entry<? extends Number>> getPrices() {
-        return prices;
-      }
+    features.add("prices", convertSparseData(prices));
+    features.addProperty("rmsd", fundamental.rmsd(prices, sim.getCurrentTime()));
 
-    };
+    return features;
+  }
+
+  private static JsonArray convertSparseData(
+      Iterable<? extends Sparse.Entry<? extends Number>> data) {
+    JsonArray json = new JsonArray();
+    for (Sparse.Entry<? extends Number> obs : data) {
+      JsonArray point = new JsonArray();
+      point.add(new JsonPrimitive(obs.getIndex()));
+      point.add(new JsonPrimitive(obs.getElement().doubleValue()));
+    }
+    return json;
   }
 
   @Override

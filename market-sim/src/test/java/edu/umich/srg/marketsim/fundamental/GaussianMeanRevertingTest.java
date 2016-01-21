@@ -69,21 +69,21 @@ public class GaussianMeanRevertingTest {
    */
   @Test
   public void longFundamentalTest() {
-    long finalTime = 1000000000000L;
+    TimeStamp finalTime = TimeStamp.of(1000000000000L);
     Fundamental fundamental = GaussianMeanReverting.create(rand, mean, 0.5, 100, 1);
-    fundamental.getValueAt(TimeStamp.of(finalTime));
+    fundamental.getValueAt(finalTime);
     assertEquals(53, Iterables.size(fundamental.getFundamentalValues(finalTime)));
   }
 
   /**
-   * This test uses FundamentalRmsd to calcualte the sparse expected Rmsd of a funamental without
+   * This test uses FundamentalRmsd to calculate the sparse expected rmsd of a fundamental without
    * requesting new values. This rmsd is compared to the true rmsd after sampling the rest of the
    * fundamental. The actual test conditions are poorly constructed, and a true statistical test
    * should actually be made. As it stands the test is random and so might fail so it's ignored by
    * default. Also, this calculation has a slight positive bias, which should probably be corrected
    * for at some point.
    */
-  @Ignore
+  @Ignore("Random test, may not always succeed")
   @Theory
   public void rmsdTest(@TestDoubles({10000}) double mean, @TestDoubles({10000, 0}) double price,
       @TestDoubles({1, 0.01, 0}) double meanReversion, @TestDoubles({100}) double variance,
@@ -97,8 +97,8 @@ public class GaussianMeanRevertingTest {
         fund.getValueAt(TimeStamp.of(sampling.sample(rand)));
       }
 
-      double expected =
-          fund.rmsd(ImmutableList.of(Sparse.immutableEntry(0, price)).iterator(), finalTime);
+      double expected = fund.rmsd(ImmutableList.of(Sparse.immutableEntry(0, price)).iterator(),
+          TimeStamp.of(finalTime));
 
       SummStats observedMean = SummStats.empty();
       for (long t = 0; t <= finalTime; t++) {

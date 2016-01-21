@@ -31,25 +31,26 @@ public class ConstantFundamental extends GaussianMeanReverting {
   }
 
   @Override
-  public Iterable<Entry<Number>> getFundamentalValues(long finalTime) {
+  public Iterable<Entry<Number>> getFundamentalValues(TimeStamp finalTime) {
     return Collections.singleton(Sparse.immutableEntry(0, constant));
   }
 
   @Override
-  public double rmsd(Iterator<? extends Entry<? extends Number>> prices, long finalTime) {
+  public double rmsd(Iterator<? extends Entry<? extends Number>> prices, TimeStamp finalTime) {
     if (!prices.hasNext()) {
       return Double.NaN;
     }
+    long longTime = finalTime.get();
     SummStats rmsd = SummStats.empty();
     Entry<? extends Number> nextPrice;
     Entry<? extends Number> lastPrice = prices.next();
-    while (prices.hasNext() && (nextPrice = prices.next()).getIndex() <= finalTime) {
+    while (prices.hasNext() && (nextPrice = prices.next()).getIndex() <= longTime) {
       double diff = lastPrice.getElement().doubleValue() - constant.doubleValue();
       rmsd.acceptNTimes(diff, nextPrice.getIndex() - lastPrice.getIndex());
       lastPrice = nextPrice;
     }
     double diff = lastPrice.getElement().doubleValue() - constant.doubleValue();
-    rmsd.acceptNTimes(diff, finalTime - lastPrice.getIndex() + 1);
+    rmsd.acceptNTimes(diff, longTime - lastPrice.getIndex() + 1);
     return Math.sqrt(rmsd.getAverage());
   }
 

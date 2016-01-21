@@ -47,10 +47,8 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class IntegrationTest {
@@ -289,8 +287,8 @@ public class IntegrationTest {
 
     JsonObject obs1Features = obs1.get("features").getAsJsonObject();
     JsonObject obs2Features = obs2.get("features").getAsJsonObject();
-    JsonObject obs1Market = splitFeatures(obs1Features);
-    JsonObject obs2Market = splitFeatures(obs2Features);
+    JsonObject obs1Market = removeMarketFeatures(obs1Features);
+    JsonObject obs2Market = removeMarketFeatures(obs2Features);
 
     assertEquals(obs1Features, obs2Features);
     assertEquals(obs1Market, obs2Market);
@@ -300,16 +298,10 @@ public class IntegrationTest {
 
   // TODO Test that invalid agent names throw exception
 
-  private static JsonObject splitFeatures(JsonObject features) {
-    JsonObject marketFeatures = new JsonObject();
-    // Copy to avoid concurrent modification
-    List<String> marketFeatureNames = features.entrySet().stream().map(Map.Entry::getKey)
-        .filter(k -> k.startsWith("cda_")).collect(Collectors.toList());
-    for (String marketFeatureName : marketFeatureNames) {
-      JsonElement marketFeature = features.remove(marketFeatureName);
-      marketFeatures.add(marketFeatureName.split("_", 3)[2], marketFeature);
-    }
-    return marketFeatures;
+  private static JsonObject removeMarketFeatures(JsonObject features) {
+    String marketName = features.entrySet().stream().map(Map.Entry::getKey)
+        .filter(k -> k.startsWith("cda_")).findAny().get();
+    return features.remove(marketName).getAsJsonObject();
   }
 
   private static String toStratString(String name, Spec spec) {

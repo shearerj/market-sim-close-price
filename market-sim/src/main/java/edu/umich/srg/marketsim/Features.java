@@ -41,38 +41,28 @@ class Features {
     }
 
     // Fundamental features
-    long finalTime = simulator.getCurrentTime().get();
-    // This filters out fundamental values above last time;
     Fundamental fundamental = simulator.getFundamental();
-    // Iterable<SparseList.Entry<Number>> fundamental = () -> StreamSupport
-    // .stream(simulator.getFundamental().getInfo().getFundamentalValues().spliterator(), false)
-    // .filter(e -> e.getIndex() <= finalTime).iterator();
-
-    addSparseData(features, fundamental.getFundamentalValues(finalTime), "fundamental");
+    features.add("fundamental",
+        convertSparseData(fundamental.getFundamentalValues(simulator.getCurrentTime())));
 
     // Market features
     for (Market market : simulator.getMarkets()) {
-      String marketTag = market.toString().toLowerCase().replace(' ', '_');
-      Iterable<? extends Sparse.Entry<? extends Number>> prices =
-          market.getMarketInfo().getPrices();
-      addSparseData(features, prices, marketTag);
-      features.addProperty(marketTag + "_rmsd", fundamental.rmsd(prices.iterator(), finalTime));
+      features.add(market.toString().toLowerCase().replace(' ', '_'),
+          market.getFeatures(fundamental));
     }
 
     return features;
   }
 
-  private static void addSparseData(JsonObject root,
-      Iterable<? extends Sparse.Entry<? extends Number>> data, String prefix) {
-    JsonArray prices = new JsonArray();
-    JsonArray indices = new JsonArray();
+  private static JsonArray convertSparseData(
+      Iterable<? extends Sparse.Entry<? extends Number>> data) {
+    JsonArray json = new JsonArray();
     for (Sparse.Entry<? extends Number> obs : data) {
-      prices.add(new JsonPrimitive(obs.getElement().doubleValue()));
-      indices.add(new JsonPrimitive(obs.getIndex()));
+      JsonArray point = new JsonArray();
+      point.add(new JsonPrimitive(obs.getIndex()));
+      point.add(new JsonPrimitive(obs.getElement().doubleValue()));
     }
-
-    root.add(prefix + "_prices", prices);
-    root.add(prefix + "_indices", indices);
+    return json;
   }
 
 }

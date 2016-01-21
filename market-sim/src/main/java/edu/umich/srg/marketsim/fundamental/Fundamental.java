@@ -14,8 +14,12 @@ public interface Fundamental {
 
   Price getValueAt(TimeStamp time);
 
-  double rmsd(Iterator<? extends Entry<? extends Number>> prices, long finalTime);
+  double rmsd(Iterator<? extends Entry<? extends Number>> prices, TimeStamp finalTime);
 
-  Iterable<Entry<Number>> getFundamentalValues(long finalTime);
+  default double rmsd(Iterable<? extends Entry<? extends Number>> prices, TimeStamp finalTime) {
+    return rmsd(prices.iterator(), finalTime);
+  }
+
+  Iterable<Entry<Number>> getFundamentalValues(TimeStamp finalTime);
 
 }
