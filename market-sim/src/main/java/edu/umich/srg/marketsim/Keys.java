@@ -190,7 +190,6 @@ public interface Keys {
 
   Spec DEFAULT_KEYS = Spec.builder() //
       .put(RandomSeed.class, System.nanoTime()) // Set seed from clock
-      .put(SimLength.class, 10000L) // A fine default
       .put(FundamentalMean.class, 1e9) // Approximately half of Integer.MAX_VALUE
       .put(FundamentalShockProb.class, 1d) // Shocks disabled
 
