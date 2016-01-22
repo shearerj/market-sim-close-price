@@ -10,58 +10,79 @@ import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.Order.OrderType;
 
 /**
- * All of the keys for use in the simulation spec. Parameters must be camelCase. OK for observation
- * file descriptors to not be camel case.
- * 
- * @author erik
- * 
+ * This file contains all of the type safe keys used in Spec object for initializing agents and
+ * markets appropriately. These are initially read from strings in a simulation spec file, snd
+ * therefore all of the keys must be in this file with public classes with public constructors so
+ * that these classes can be properly instantiated. At the bottom of this file is a default spec
+ * object. This is used to assign defaults for any parameters. In general this should be as sparse
+ * as possible, but some keys have obvious defaults.
  */
 public interface Keys {
 
+  // ----------
   // Simulation
+  // ----------
+
+  /** The seed used to initialize all observations. If left out, it is initialized with the time. */
   class RandomSeed extends LongValue {
   }
 
+  /** The number of time steps in the simulator. */
   class SimLength extends LongValue {
   }
 
+  /** The markets that are constructed in the simulator. */
   class Markets extends StringsValue {
   }
 
+  /** The mean of the gaussain fundamental. */
   class FundamentalMean extends DoubleValue {
   }
 
+  /** The variance of the shocks in the fundamental. */
   class FundamentalShockVar extends DoubleValue {
   }
 
+  /** The rate at which the fundamental reverts towards the mean. */
   class FundamentalMeanReversion extends DoubleValue {
   }
 
+  /** The probability of a jump. */
   class FundamentalShockProb extends DoubleValue {
   }
 
+  // ------
   // Agents
+  // ------
+
+  /** The probability that an agent arrives at any time step. */
   class ArrivalRate extends DoubleValue {
   }
 
+  /** Variance of added noise to any fundamental observation. */
   class FundamentalObservationVariance extends DoubleValue {
   }
 
+  /** Whether an agent should buy or sell. */
   class Type extends EnumValue<OrderType> {
     public Type() {
       super(OrderType.class);
     }
   }
 
+  /** The maximum absolute position an agent can hold. */
   class MaxPosition extends IntValue {
   }
 
+  /** Variance used in generating an agents private value. */
   class PrivateValueVar extends DoubleValue {
   }
 
+  /** The maximum surplus an agent will demand. */
   class Rmax extends IntValue {
   }
 
+  /** The minimum surplus an agent will demand. */
   class Rmin extends IntValue {
   }
 
@@ -81,18 +102,27 @@ public interface Keys {
   class RungThickness extends IntValue {
   }
 
+  // -------------------------
   // Specific agent parameters
+  // -------------------------
+
+  /** Markov agent's estimate variance for price relative to the fundamental. */
   class PriceVarEst extends DoubleValue {
   }
 
+  /** Number of order the shock agent will submit. */
   class NumShockOrders extends IntValue {
   }
 
+  /** The fraction of demanded surplus necessary for an agent to submit an order at bid or ask. */
   class Thresh extends DoubleValue {
   }
 
+  /** Amount of time the shock agent has to liquidate. */
   class TimeToLiquidate extends LongValue {
   }
+
+  /* Old leftover keys. */
 
   // public static class DiscountFactors extends DoublesValue {};
   //
@@ -188,6 +218,10 @@ public interface Keys {
   // }
   // }
 
+  /**
+   * The simulation will use these as the defaults for any unspecified keys. This should be as
+   * sparse as possible, and only used when one shouldn't be forced to manually specify something.
+   */
   Spec DEFAULT_KEYS = Spec.builder() //
       .put(RandomSeed.class, System.nanoTime()) // Set seed from clock
       .put(FundamentalMean.class, 1e9) // Approximately half of Integer.MAX_VALUE
@@ -197,3 +231,4 @@ public interface Keys {
       .build();
 
 }
+
