@@ -54,6 +54,7 @@ logs/*
 /*.zip
 /*.tar.gz
 /bin
+/node_modules
 
 # Misc #
 ########

@@ -14,6 +14,8 @@ ifndef def
 		`make egta def=<default.json>`. See `make help`)
 endif
 
+KEYS=$(wildcard target/site/apidocs/edu/umich/srg/marketsim/Keys.*.html)
+
 ## Targets
 help:
 	@echo "usage: make <target>"
@@ -25,7 +27,7 @@ help:
 	@echo "           is the location of the desired defaults.json file, and the name"
 	@echo "           of the file is the simulator name"
 	@echo "  report : Generate and display a number of reports about the java code"
-	@echo "  docs   : Compile docmentation"
+	@echo "  docs   : Compile docmentation any"
 	@echo "  clean  : Remove all java byproducts"
 
 jar:
@@ -56,8 +58,11 @@ create-report:
 report: create-report
 	sensible-browser target/site/project-reports.html 
 
-docs:
-	$(MAKE) -C docs
+docs: ../docs/keys.md
+
+../docs/keys.md: $(KEYS)
+	mvn javadoc:javadoc | $(COLOR) || true
+	node scripts/keys_docs.js $^ > $@
 
 clean:
 	@echo mvn clean
