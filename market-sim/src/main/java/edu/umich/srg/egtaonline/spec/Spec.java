@@ -91,6 +91,36 @@ public class Spec {
     return builder.build();
   }
 
+  public static <T> Spec fromDefaultPairs(Spec defaults, Class<? extends Value<T>> key, T value) {
+    return builder().putAll(defaults).put(key, value).build();
+  }
+
+  public static <T1, T2> Spec fromDefaultPairs(Spec defaults, Class<? extends Value<T1>> key1,
+      T1 value1, Class<? extends Value<T2>> key2, T2 value2) {
+    return builder().putAll(defaults).put(key1, value1).put(key2, value2).build();
+  }
+
+  public static <T1, T2, T3> Spec fromDefaultPairs(Spec defaults, Class<? extends Value<T1>> key1,
+      T1 value1, Class<? extends Value<T2>> key2, T2 value2, Class<? extends Value<T3>> key3,
+      T3 value3) {
+    return builder().putAll(defaults).put(key1, value1).put(key2, value2).put(key3, value3).build();
+  }
+
+  public static <T1, T2, T3, T4> Spec fromDefaultPairs(Spec defaults,
+      Class<? extends Value<T1>> key1, T1 value1, Class<? extends Value<T2>> key2, T2 value2,
+      Class<? extends Value<T3>> key3, T3 value3, Class<? extends Value<T4>> key4, T4 value4) {
+    return builder().putAll(defaults).put(key1, value1).put(key2, value2).put(key3, value3)
+        .put(key4, value4).build();
+  }
+
+  public static <T1, T2, T3, T4, T5> Spec fromDefaultPairs(Spec defaults,
+      Class<? extends Value<T1>> key1, T1 value1, Class<? extends Value<T2>> key2, T2 value2,
+      Class<? extends Value<T3>> key3, T3 value3, Class<? extends Value<T4>> key4, T4 value4,
+      Class<? extends Value<T5>> key5, T5 value5) {
+    return builder().putAll(defaults).put(key1, value1).put(key2, value2).put(key3, value3)
+        .put(key4, value4).put(key5, value5).build();
+  }
+
   /*
    * We may at some point want to also have a method similar to the map (java8) getWithDefault,
    * however this may encourage putting defaults in specific class implementations which can make it
