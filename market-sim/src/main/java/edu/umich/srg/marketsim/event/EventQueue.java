@@ -84,7 +84,7 @@ public class EventQueue {
    * <code>scheduleActivities</code>
    */
   public void scheduleActivityIn(TimeStamp delay, Runnable act) {
-    checkArgument(delay.compareTo(TimeStamp.ZERO) > 0);
+    checkArgument(delay.compareTo(TimeStamp.ZERO) >= 0);
     pendingScheduledActivities.put(TimeStamp.of(currentTime.get() + delay.get()), act);
   }
 
