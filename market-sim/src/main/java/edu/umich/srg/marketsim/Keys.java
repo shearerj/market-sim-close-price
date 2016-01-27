@@ -1,5 +1,8 @@
 package edu.umich.srg.marketsim;
 
+import com.google.common.base.Converter;
+
+import edu.umich.srg.egtaonline.spec.ParsableValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.BoolValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.DoubleValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.EnumValue;
@@ -122,6 +125,22 @@ public interface Keys {
   class TimeToLiquidate extends LongValue {
   }
 
+  // -------------------
+  // Trend Following HFT
+  // -------------------
+
+  /** The minimum length of a monotonic trend to act. */
+  class TrendLength extends IntValue {
+  }
+
+  /** The maximum profit demanded from a trend front run. */
+  class ProfitDemanded extends IntValue {
+  }
+
+  /** The max amount of time to leave an order in the market. */
+  class Expiration extends TimeValue {
+  }
+
   /* Old leftover keys. */
 
   // public static class DiscountFactors extends DoublesValue {};
@@ -198,16 +217,27 @@ public interface Keys {
 
   // ZIRPAgent
 
+
+  // --------------
   // Helper Classes
-  // static class TimeValue extends ParsableValue<TimeStamp> {
-  // protected TimeValue() {
-  // super(new Converter<String, TimeStamp>() {
-  // @Override protected String doBackward(TimeStamp time) { return Long.toString(time.get()); }
-  // @Override protected TimeStamp doForward(String string) { return
-  // TimeStamp.of(Long.parseLong(string)); }
-  // });
-  // }
-  // }
+  // --------------
+
+  /** Spec parameter that's a TimeStamp. */
+  class TimeValue extends ParsableValue<TimeStamp> {
+    protected TimeValue() {
+      super(new Converter<String, TimeStamp>() {
+        @Override
+        protected String doBackward(TimeStamp time) {
+          return Long.toString(time.get());
+        }
+
+        @Override
+        protected TimeStamp doForward(String string) {
+          return TimeStamp.of(Long.parseLong(string));
+        }
+      });
+    }
+  }
 
   // static class PriceValue extends ParsableValue<Price> {
   // protected PriceValue() {

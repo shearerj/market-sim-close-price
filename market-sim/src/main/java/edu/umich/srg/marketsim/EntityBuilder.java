@@ -11,6 +11,7 @@ import edu.umich.srg.marketsim.agent.NoOpAgent;
 import edu.umich.srg.marketsim.agent.NoiseAgent;
 import edu.umich.srg.marketsim.agent.ShockAgent;
 import edu.umich.srg.marketsim.agent.SimpleMarketMaker;
+import edu.umich.srg.marketsim.agent.SimpleTrendFollower;
 import edu.umich.srg.marketsim.agent.ZirAgent;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.CdaMarket;
@@ -40,6 +41,7 @@ final class EntityBuilder {
           .put("markov", MarkovAgent::createFromSpec) // ZI agents with markov learning
           .put("smm", SimpleMarketMaker::createFromSpec) // Simple Market Maker
           .put("shock", ShockAgent::createFromSpec) // Shock agent that buys a lot at a random time
+          .put("trend", SimpleTrendFollower::createFromSpec) // Simple trend follower
           .build();
 
   private static final Map<String, MarketCreator> marketNameMap =
