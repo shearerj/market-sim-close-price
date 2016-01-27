@@ -37,6 +37,14 @@ public class Order<P extends Comparable<? super P>> implements Serializable {
     return unmatchedQuantity + matchedQuantity;
   }
 
+  /**
+   * Get the quantity, where negative quantities indicate a sell order. Note, if an order is fully
+   * transacted, this will return 0, which has no sign.
+   */
+  public int getTypeQuantity() {
+    return type.sign() * getQuantity();
+  }
+
   /** Returns the time this order was submitted to the fourheap, in fourheap time. */
   public long getSubmitTime() {
     return submitTime;

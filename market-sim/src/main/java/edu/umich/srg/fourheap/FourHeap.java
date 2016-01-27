@@ -2,6 +2,7 @@ package edu.umich.srg.fourheap;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static edu.umich.srg.fourheap.Order.OrderType.BUY;
+import static edu.umich.srg.fourheap.Order.OrderType.SELL;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
@@ -155,6 +156,11 @@ public class FourHeap<P extends Comparable<? super P>> implements Serializable, 
       orderMatchedHeap.offer(order);
     }
     return order;
+  }
+
+  /** Submit an order using negative quantity to indicate sell. */
+  public Order<P> submit(P price, int quantity) {
+    return submit(quantity < 0 ? SELL : BUY, price, Math.abs(quantity));
   }
 
   /** Withdraws a specific order. It must be in the fourheap. Complexity: O(n). */
