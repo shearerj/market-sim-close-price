@@ -61,6 +61,7 @@ class Features {
       JsonArray point = new JsonArray();
       point.add(new JsonPrimitive(obs.getIndex()));
       point.add(new JsonPrimitive(obs.getElement().doubleValue()));
+      json.add(point);
     }
     return json;
   }

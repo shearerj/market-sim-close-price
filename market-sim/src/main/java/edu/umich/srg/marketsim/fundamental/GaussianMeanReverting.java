@@ -130,7 +130,8 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
       // TODO Replace filter with takeWhile
       long longTime = finalTime.get();
       return () -> fundamental.entrySet().stream().filter(e -> e.getKey() <= longTime)
-          .map(Sparse::<Number>asSparseEntry).iterator();
+          .map(e -> Sparse.<Number>immutableEntry(e.getKey(), Price.of(e.getValue().doubleValue())))
+          .iterator();
     }
 
     protected Iterable<Entry<Long, F>> getEntriesIterable() {
