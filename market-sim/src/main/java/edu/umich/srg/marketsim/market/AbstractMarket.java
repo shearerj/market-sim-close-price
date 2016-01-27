@@ -364,14 +364,13 @@ abstract class AbstractMarket implements Market, Serializable {
       OrderRecord record = new OrderRecord(this, buyOrSell, price, quantity);
 
       submittedOrder = record; // In case we transact before we get the order
+      agent.notifyOrderSubmitted(record);
       Order<Price> order = AbstractMarket.this.submitOrder(this, buyOrSell, price, quantity);
       submittedOrder = null;
 
       if (order.getQuantity() != 0) {
         recordMap.put(record, order);
       }
-
-      agent.notifyOrderSubmitted(record);
 
       return record;
     }
