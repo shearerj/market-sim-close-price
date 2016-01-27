@@ -8,19 +8,6 @@ import java.io.Serializable;
 /** An order meant for use in a fourheap. */
 public class Order<P extends Comparable<? super P>> implements Serializable {
 
-  public enum OrderType {
-    BUY(1), SELL(-1);
-    private int sign;
-
-    private OrderType(int sign) {
-      this.sign = sign;
-    }
-
-    public int sign() {
-      return sign;
-    }
-  }
-
   protected final OrderType type;
   protected final P price;
   protected int unmatchedQuantity; // Always positive
@@ -69,6 +56,39 @@ public class Order<P extends Comparable<? super P>> implements Serializable {
   @Override
   public String toString() {
     return "<" + type + " " + getQuantity() + " @ " + price + ">";
+  }
+
+  public enum OrderType {
+    BUY {
+
+      @Override
+      public int sign() {
+        return 1;
+      }
+
+      @Override
+      public OrderType opposite() {
+        return OrderType.SELL;
+      }
+
+    },
+    SELL {
+
+      @Override
+      public int sign() {
+        return -1;
+      }
+
+      @Override
+      public OrderType opposite() {
+        return OrderType.BUY;
+      }
+
+    };
+
+    public abstract int sign();
+
+    public abstract OrderType opposite();
   }
 
   private static final long serialVersionUID = 1;
