@@ -231,8 +231,7 @@ abstract class AbstractMarket implements Market, Serializable {
       AbstractMarket.this.sim.scheduleIn(latency, () -> {
         Order<Price> order = recordMap.get(record);
         if (order == null) {
-          // This will happen if the order transacted, but hasn't reached the agent yet
-          return;
+          return; // This will happen if the order transacted, but hasn't reached the agent yet
         }
 
         // Min because some of the order may have transacted already, in which case we want to
@@ -378,6 +377,10 @@ abstract class AbstractMarket implements Market, Serializable {
     @Override
     public void withdrawOrder(OrderRecord record, int quantity) {
       Order<Price> order = recordMap.get(record);
+      if (order == null) {
+        return; // order already removed
+      }
+
       AbstractMarket.this.withdrawOrder(order, quantity);
       record.quantity = order.getQuantity();
 
