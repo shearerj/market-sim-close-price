@@ -63,9 +63,7 @@ abstract class StandardMarketAgent implements Agent {
   }
 
   protected void strategy() {
-    for (OrderRecord order : ImmutableList.copyOf(market.getActiveOrders())) {
-      market.withdrawOrder(order);
-    }
+    ImmutableList.copyOf(market.getActiveOrders()).forEach(market::withdrawOrder);
 
     OrderType type = orderTypeDistribution.sample(rand);
     if (Math.abs(market.getHoldings() + type.sign()) <= maxPosition) {
