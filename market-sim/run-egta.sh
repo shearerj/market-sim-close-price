@@ -22,7 +22,7 @@ if [[ "$(hostname)" == *'arc-ts.umich.edu' ]]; then
 fi
 
 # This is the number of observations to condense into one observation
-NUMSIMS="$(jq '.configuration.numSims // 1000' "$1/simulation_spec.json")"
+NUMSIMS="$(jq '.configuration.numSims // 1000 | tonumber' "$1/simulation_spec.json")"
 
 # Execution
 java -Xms1G -Xmx4G -jar "$DIR/target/marketsim-4.0.0-jar-with-dependencies.jar" --egta -s <(jq 'del(.configuration.numSims)' "$1/simulation_spec.json") "$(($NUMSIMS * $2))" \
