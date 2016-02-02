@@ -61,3 +61,23 @@ Style
 
 We currently use the [Google Style Guide](http://google.github.io/styleguide/javaguide.html).
 In the `resouces` folder there are two files (`eclipse-java-google-style.xml` and `google-style.importorder`) to help enforce this style in Eclipse.
+
+### Import the Code Formatter
+
+1. Right click on the market-sim project and go to `properties`.
+2. Here go to `Java Code Style` > `Formatter`.
+3. If you haven't already done so check `Enable project specific settings`.
+4. Click `Import...` and find the `eclipse-java-google-style.xml` file, which should be in `market-sim/resources`.
+5. The formatter should be automatically selected, simply hit `Apply`.
+
+You should now be able to right click on any resource and go to `Source` > `Format` which will auto format your code to meet the style standards.
+
+### Import the Import Order
+
+1. Right click on the market-sim project and go to `properties`.
+2. Here go to `Java Code Style` > `Organize Imports`.
+3. If you haven't already done so check `Enable project specific settings`.
+4. Click `Import...` and find the `google-style.importorder` file, which should be in `market-sim/resources`.
+5. The settings should be automatically updated, simply hit `Apply`.
+
+You should now be able to right click on any resource and go to `Source` > `Organize Imports` which will auto format  organize your import statements to meet the style standards.
