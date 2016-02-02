@@ -9,24 +9,28 @@ Key | Type | Description
 ----|------|------------
 `Thresh` | `Double` | The fraction of demanded surplus necessary for an agent to submit an order at bid or ask.
 `SimLength` | `Long` | The number of time steps in the simulator.
-`FundamentalObservationVariance` | `Double` | Variance of added noise to any fundamental observation.
-`FundamentalMeanReversion` | `Double` | The rate at which the fundamental reverts towards the mean.
 `TickImprovement` | `Bool` | [No Info Provided]
+`FundamentalObservationVariance` | `Double` | Variance of added noise to any fundamental observation.
 `Type` | `Enum` | Whether an agent should buy or sell.
+`FundamentalMeanReversion` | `Double` | The rate at which the fundamental reverts towards the mean.
+`Expiration` | `Time` | The max amount of time to leave an order in the market.
+`TrendLength` | `Int` | The minimum length of a monotonic trend to act.
 `ArrivalRate` | `Double` | The probability that an agent arrives at any time step.
 `FundamentalMean` | `Double` | The mean of the gaussain fundamental.
-`RungThickness` | `Int` | [No Info Provided]
 `Rmin` | `Int` | The minimum surplus an agent will demand.
+`RungThickness` | `Int` | [No Info Provided]
 `TimeToLiquidate` | `Long` | Amount of time the shock agent has to liquidate.
-`PrivateValueVar` | `Double` | Variance used in generating an agents private value.
 `NumShockOrders` | `Int` | Number of order the shock agent will submit.
-`FundamentalShockVar` | `Double` | The variance of the shocks in the fundamental.
+`PrivateValueVar` | `Double` | Variance used in generating an agents private value.
 `PriceVarEst` | `Double` | Markov agent's estimate variance for price relative to the fundamental.
+`FundamentalShockVar` | `Double` | The variance of the shocks in the fundamental.
 `Rmax` | `Int` | The maximum surplus an agent will demand.
 `FundamentalShockProb` | `Double` | The probability of a jump.
+`TimeValue` | `Parsable` | Spec parameter that's a TimeStamp.
 `Markets` | `Strings` | The markets that are constructed in the simulator.
 `TickOutside` | `Bool` | [No Info Provided]
 `MaxPosition` | `Int` | The maximum absolute position an agent can hold.
+`ProfitDemanded` | `Int` | The maximum profit demanded from a trend front run.
 `RungSep` | `Int` | [No Info Provided]
 `RandomSeed` | `Long` | The seed used to initialize all observations. If left out, it is initialized with the time.
 `NumRungs` | `Int` | [No Info Provided]

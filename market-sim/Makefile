@@ -61,7 +61,7 @@ report: create-report
 docs: ../docs/keys.md
 
 ../docs/keys.md: $(KEYS)
-	mvn javadoc:javadoc | $(COLOR) || true
+	mvn javadoc:javadoc | $(COLOR)
 	node scripts/keys_docs.js $^ > $@
 
 clean:
