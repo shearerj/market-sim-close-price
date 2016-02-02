@@ -1,20 +1,37 @@
 # Make file for building and doing most things of use with the market simulator
 # usage: see `make help`
-SHELL=/usr/bin/env bash -euf -o pipefail
+SHELL := /usr/bin/env bash -euf -o pipefail
+
+# Detect os for certain commands
+UNAME := $(shell uname -s)
+ifeq ($(UNAME),Linux)
+	BROWSER := sensible-browser
+else
+ifeq ($(UNAME),Darwin)
+	PREFIX = g
+	BROWSER := open
+else
+	# The error variable is never used, it just enforces that the error gets
+	# thrown immediately
+	ERROR := $(error Not using Mac or Linux)
+endif
+endif
+
 
 # Color the output of maven with long but simple sed script
-COLOR = sed -Ef resources/mvn_color.sed
+COLOR = $(PREFIX)sed -Ef resources/mvn_color.sed
 
 # Current directory
 PWD := $(shell pwd)
 
 # Set error for egta target of `def` is not defined
 ifndef def
-	ERROR = $(error `def` is undefined. Make sure you build egta like \
+	DEFERROR = $(error `def` is undefined. Make sure you build egta like \
 		`make egta def=<default.json>`. See `make help`)
 endif
 
-KEYS=$(wildcard target/site/apidocs/edu/umich/srg/marketsim/Keys.*.html)
+# Key Class files for auto-generating docs
+KEYS := $(wildcard target/site/apidocs/edu/umich/srg/marketsim/Keys.*.html)
 
 ## Targets
 help:
@@ -35,7 +52,7 @@ jar:
 	@mvn compile assembly:single | $(COLOR)
 
 egta: jar
-	$(ERROR)
+	$(DEFERROR)
 	$(eval $@_TMP := $(shell mktemp -d))
 	$(eval $@_NAME := $(notdir $(basename $(def))))
 	mkdir -p "$($@_TMP)/$($@_NAME)/script/target"
@@ -56,7 +73,7 @@ create-report:
 	@mvn site | $(COLOR)
 
 report: create-report
-	sensible-browser target/site/project-reports.html 
+	$(BROWSER) target/site/project-reports.html 
 
 docs: ../docs/keys.md
 
