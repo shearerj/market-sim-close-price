@@ -15,7 +15,20 @@ Key | Type | Description
 
 var keyReg = /(\w+)\.html$/;
 var typeReg = /(\w+)Value$/;
+
+var numKeys = process.argv.length - 2;
 var keys = [];
+
+function print() {
+    if (keys.length < numKeys) {
+        return;
+    }
+    keys.sort();
+    keys.forEach(entry => {
+        process.stdout.write(`\`${entry[0]}\` | \`${entry[1]}\` | ${entry[2]}\n`);
+    });
+}
+
 process.argv.slice(2).forEach(filename => {
     var key = filename.match(keyReg)[1];
     fs.readFile(filename, "utf8", (err, html) => {
@@ -24,7 +37,8 @@ process.argv.slice(2).forEach(filename => {
             var helpTextElement = desc.querySelector("div");
             var helpText = helpTextElement ? helpTextElement.textContent : "[No Info Provided]";
             var type = desc.querySelector("pre a").textContent.match(typeReg)[1];
-            process.stdout.write(`\`${key}\` | \`${type}\` | ${helpText}\n`);
+            keys.push([key, type, helpText]);
+            print();
         });
     });
 });

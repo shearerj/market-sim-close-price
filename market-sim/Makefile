@@ -60,9 +60,9 @@ report: create-report
 
 docs: ../docs/keys.md
 
-../docs/keys.md: $(KEYS)
+../docs/keys.md: scripts/keys_docs.js $(KEYS)
 	mvn javadoc:javadoc | $(COLOR)
-	node scripts/keys_docs.js $^ > $@
+	node $^ > $@
 
 clean:
 	@echo mvn clean
