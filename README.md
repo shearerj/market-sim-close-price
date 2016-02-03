@@ -25,9 +25,14 @@ Now checkout the git repository:
 git clone git@strategicreasoning.eecs.umich.edu:ebrink/market-sim.git
 ```
 
-Enter the simulator directory and compile the project:
+Enter the simulator directory and verify all of the tests pass:
 ```
 cd market-sim/market-sim
+make test
+```
+
+From the same directory, compile the project:
+```
 make jar
 ```
 
