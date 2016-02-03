@@ -49,3 +49,4 @@ Documentation Contents
 - [Running](docs/running.md) - A guide on how to run the simulator a number of ways.
 - [Jq](docs/jq.md) - A guide about using `jq`---a very useful command line tool for parsing and editing json.
 - [Fundamental](docs/fundamental.md) - General mathematical information about the Gaussian mean-reverting fundamental process we use in the simulator.
+- [Keys](docs/keys.md) - Auto-generated documentation on all of the keys available to the simulator.
