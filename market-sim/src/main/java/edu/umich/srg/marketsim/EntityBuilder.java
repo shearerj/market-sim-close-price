@@ -42,8 +42,6 @@ final class EntityBuilder {
           .put("smm", SimpleMarketMaker::createFromSpec) // Simple Market Maker
           .put("shock", ShockAgent::createFromSpec) // Shock agent that buys a lot at a random time
           .put("trend", SimpleTrendFollower::createFromSpec) // Simple trend follower
-
-          .put("zil", MarkovAgent::createFromSpec) // TODO Remove : for backwards compatibility
           .build();
 
   private static final Map<String, MarketCreator> marketNameMap =
