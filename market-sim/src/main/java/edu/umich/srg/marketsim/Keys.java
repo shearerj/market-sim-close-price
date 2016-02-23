@@ -89,22 +89,6 @@ public interface Keys {
   class Rmin extends IntValue {
   }
 
-  // Market Maker
-  class RungSep extends IntValue {
-  }
-
-  class NumRungs extends IntValue {
-  }
-
-  class TickImprovement extends BoolValue {
-  }
-
-  class TickOutside extends BoolValue {
-  }
-
-  class RungThickness extends IntValue {
-  }
-
   // -------------------------
   // Specific agent parameters
   // -------------------------
@@ -123,6 +107,33 @@ public interface Keys {
 
   /** Amount of time the shock agent has to liquidate. */
   class TimeToLiquidate extends LongValue {
+  }
+
+  // ------------
+  // Market Maker
+  // ------------
+  /** Separation between successive rungs. */
+  class RungSep extends IntValue {
+  }
+
+  /** Number of rungs to submit. */
+  class NumRungs extends IntValue {
+  }
+
+  /** Whether to tweak rung by a tick. */
+  class TickImprovement extends BoolValue {
+  }
+
+  /** Place tick improvement outside spread, instead of default inside. */
+  class TickOutside extends BoolValue {
+  }
+
+  /** Number of orders per rung. */
+  class RungThickness extends IntValue {
+  }
+
+  /** Spread between best bid and best ask. */
+  class Spread extends DoubleValue {
   }
 
   // -------------------
