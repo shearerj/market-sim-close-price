@@ -121,23 +121,11 @@ public class NoiseAgent implements Agent {
    * called.
    */
 
-  @Override
-  public void notifyOrderSubmitted(OrderRecord order) {}
-
-  @Override
-  public void notifyOrderWithrawn(OrderRecord order, int quantity) {}
-
   /** Want to record how many transactions we have, so we record it here. */
   @Override
   public void notifyOrderTransacted(OrderRecord order, Price price, int quantity) {
     this.numTransactions += 1;
   }
-
-  @Override
-  public void notifyQuoteUpdated(MarketView market) {}
-
-  @Override
-  public void notifyTransaction(MarketView market, Price price, int quantity) {}
 
 }
 

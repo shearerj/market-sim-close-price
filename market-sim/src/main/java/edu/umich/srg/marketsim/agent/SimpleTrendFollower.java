@@ -4,7 +4,6 @@ import static edu.umich.srg.fourheap.Order.OrderType.BUY;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
-import com.google.gson.JsonObject;
 
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.Order.OrderType;
@@ -106,28 +105,9 @@ public class SimpleTrendFollower implements Agent {
   }
 
   @Override
-  public JsonObject getFeatures() {
-    return new JsonObject();
-  }
-
-  @Override
   public String toString() {
     return "STF " + Integer.toString(System.identityHashCode(this), 36).toUpperCase();
   }
-
-  // Notifications
-
-  @Override
-  public void notifyOrderSubmitted(OrderRecord order) {}
-
-  @Override
-  public void notifyOrderWithrawn(OrderRecord order, int quantity) {}
-
-  @Override
-  public void notifyOrderTransacted(OrderRecord order, Price price, int quantity) {}
-
-  @Override
-  public void notifyQuoteUpdated(MarketView market) {}
 
   @Override
   public void notifyTransaction(MarketView market, Price price, int quantity) {

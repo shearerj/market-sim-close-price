@@ -1,7 +1,6 @@
 package edu.umich.srg.marketsim.agent;
 
 import com.google.common.collect.ImmutableList;
-import com.google.gson.JsonObject;
 
 import edu.umich.srg.distributions.Distribution;
 import edu.umich.srg.distributions.Geometric;
@@ -20,7 +19,6 @@ import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
-import edu.umich.srg.marketsim.market.OrderRecord;
 import edu.umich.srg.marketsim.privatevalue.GaussianPrivateValue;
 import edu.umich.srg.marketsim.privatevalue.PrivateValue;
 import edu.umich.srg.marketsim.strategy.SurplusThreshold;
@@ -95,30 +93,8 @@ abstract class StandardMarketAgent implements Agent {
   }
 
   @Override
-  public JsonObject getFeatures() {
-    return new JsonObject();
-  }
-
-  @Override
   public String toString() {
     return name() + " " + Integer.toString(System.identityHashCode(this), 36).toUpperCase();
   }
-
-  // Notifications
-
-  @Override
-  public void notifyOrderSubmitted(OrderRecord order) {}
-
-  @Override
-  public void notifyOrderWithrawn(OrderRecord order, int quantity) {}
-
-  @Override
-  public void notifyOrderTransacted(OrderRecord order, Price price, int quantity) {}
-
-  @Override
-  public void notifyQuoteUpdated(MarketView market) {}
-
-  @Override
-  public void notifyTransaction(MarketView market, Price price, int quantity) {}
 
 }

@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableMap;
 
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.agent.Agent;
+import edu.umich.srg.marketsim.agent.FundamentalMarketMaker;
 import edu.umich.srg.marketsim.agent.MarkovAgent;
 import edu.umich.srg.marketsim.agent.NoOpAgent;
 import edu.umich.srg.marketsim.agent.NoiseAgent;
@@ -40,6 +41,7 @@ final class EntityBuilder {
           .put("zir", ZirAgent::createFromSpec) // Standard ZI agents with re-entry
           .put("markov", MarkovAgent::createFromSpec) // ZI agents with markov learning
           .put("smm", SimpleMarketMaker::createFromSpec) // Simple Market Maker
+          .put("fmm", FundamentalMarketMaker::createFromSpec) // Fundamental Market Maker
           .put("shock", ShockAgent::createFromSpec) // Shock agent that buys a lot at a random time
           .put("trend", SimpleTrendFollower::createFromSpec) // Simple trend follower
           .build();

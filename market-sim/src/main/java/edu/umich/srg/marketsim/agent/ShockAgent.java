@@ -3,7 +3,6 @@ package edu.umich.srg.marketsim.agent;
 import static edu.umich.srg.fourheap.Order.OrderType.BUY;
 
 import com.google.common.math.DoubleMath;
-import com.google.gson.JsonObject;
 
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.Order.OrderType;
@@ -94,17 +93,6 @@ public class ShockAgent implements Agent {
   }
 
   @Override
-  public JsonObject getFeatures() {
-    return new JsonObject();
-  }
-
-  @Override
-  public void notifyOrderSubmitted(OrderRecord order) {}
-
-  @Override
-  public void notifyOrderWithrawn(OrderRecord order, int quantity) {}
-
-  @Override
   public void notifyOrderTransacted(OrderRecord order, Price price, int quantity) {
     waitingToSubmit = true;
   }
@@ -115,8 +103,5 @@ public class ShockAgent implements Agent {
       strategy();
     }
   }
-
-  @Override
-  public void notifyTransaction(MarketView market, Price price, int quantity) {}
 
 }
