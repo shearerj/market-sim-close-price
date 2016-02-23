@@ -26,17 +26,18 @@ public class MarketMakerLadder {
   }
 
   /** Creates an order ladder as a stream of order descriptions. */
-  public Stream<OrderDesc> createLadder(Price highestSell, Price lowestBuy) {
-    Stream<OrderDesc> buys = toStream(lowestBuy.longValue(), -highestSell.longValue())
+  public Stream<OrderDesc> createLadder(Price highestBuy, Price lowestSell) {
+    Stream<OrderDesc> buys = toStream(-highestBuy.longValue(), lowestSell.longValue()).map(p -> -p)
         .mapToObj(p -> OrderDesc.of(BUY, Price.of(p)));
-    Stream<OrderDesc> sells = toStream(-highestSell.longValue(), lowestBuy.longValue()).map(p -> -p)
+    Stream<OrderDesc> sells = toStream(lowestSell.longValue(), -highestBuy.longValue())
         .mapToObj(p -> OrderDesc.of(SELL, Price.of(p)));
-    return Stream.concat(buys, sells);
+    return Stream.concat(sells, buys);
   }
 
   /** Creates a stream of order prices. */
   private LongStream toStream(long init, long cross) {
-    return LongStream.range(0, numRungs).map(s -> init + offset + this.stepSize * s)
+    // XXX change filter to takeWhile when it exists
+    return LongStream.range(0, numRungs).map(s -> init + offset + stepSize * s)
         .filter(p -> p > -(cross + offset));
   }
 

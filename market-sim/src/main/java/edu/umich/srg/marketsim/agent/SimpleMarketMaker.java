@@ -66,7 +66,7 @@ public class SimpleMarketMaker implements Agent {
     updateQuote();
 
     if (lastBid.isPresent() && lastAsk.isPresent()) {
-      strategy.createLadder(lastAsk.get(), lastBid.get()).forEach(order -> {
+      strategy.createLadder(lastBid.get(), lastAsk.get()).forEach(order -> {
         market.submitOrder(order.getType(), order.getPrice(), rungThickness);
       });
     }

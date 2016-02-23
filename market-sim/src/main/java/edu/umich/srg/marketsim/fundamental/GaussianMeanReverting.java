@@ -280,8 +280,7 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
     }
 
     @Override
-    public double rmsd(
-        Iterator<? extends Sparse.Entry<? extends Number>> prices,
+    public double rmsd(Iterator<? extends Sparse.Entry<? extends Number>> prices,
         TimeStamp finalTime) {
       // FIXME This is unimplemented, and doesn't seem super trivial to accomplish
       return Double.NaN;

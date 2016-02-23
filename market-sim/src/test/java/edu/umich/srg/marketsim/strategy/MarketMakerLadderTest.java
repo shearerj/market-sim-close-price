@@ -87,14 +87,14 @@ public class MarketMakerLadderTest {
     }
   }
 
-  /** Creates an order ladder to assert against, first `numBuys` or `prices` are buys */
-  private static Set<OrderDesc> createLadder(int numBuys, long... prices) {
+  /** Creates an order ladder to assert against, first `numSells` or `prices` are sells */
+  private static Set<OrderDesc> createLadder(int numSells, long... prices) {
     ImmutableSet.Builder<OrderDesc> ladder = ImmutableSet.builder();
-    for (int i = 0; i < numBuys; ++i) {
-      ladder.add(OrderDesc.of(BUY, Price.of(prices[i])));
-    }
-    for (int i = numBuys; i < prices.length; ++i) {
+    for (int i = 0; i < numSells; ++i) {
       ladder.add(OrderDesc.of(SELL, Price.of(prices[i])));
+    }
+    for (int i = numSells; i < prices.length; ++i) {
+      ladder.add(OrderDesc.of(BUY, Price.of(prices[i])));
     }
     return ladder.build();
   }
