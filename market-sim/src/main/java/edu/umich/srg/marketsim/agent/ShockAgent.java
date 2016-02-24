@@ -64,8 +64,8 @@ public class ShockAgent implements Agent {
   private void strategy() {
     int depth = this.getDepth.getAsInt();
     if (ordersToSubmit > 0 && depth > 0) {
-      int idealSubmitted =
-          DoubleMath.roundToInt((arrivalTime + timeToLiquidate - sim.getCurrentTime().get())
+      int idealSubmitted = ordersToSubmit
+          - DoubleMath.roundToInt((arrivalTime + timeToLiquidate - sim.getCurrentTime().get())
               / (double) timeToLiquidate * totalOrdersToSubmit, RoundingMode.HALF_EVEN);
       int quantity = Math.min(idealSubmitted, depth);
 
