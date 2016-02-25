@@ -16,7 +16,6 @@ import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
-import edu.umich.srg.marketsim.market.OrderRecord;
 
 import java.math.RoundingMode;
 import java.util.Collection;
@@ -64,10 +63,10 @@ public class ShockAgent implements Agent {
   private void strategy() {
     int depth = this.getDepth.getAsInt();
     if (ordersToSubmit > 0 && depth > 0) {
-      int idealSubmitted = ordersToSubmit
+      int submitNow = ordersToSubmit
           - DoubleMath.roundToInt((arrivalTime + timeToLiquidate - sim.getCurrentTime().get())
               / (double) timeToLiquidate * totalOrdersToSubmit, RoundingMode.HALF_EVEN);
-      int quantity = Math.min(idealSubmitted, depth);
+      int quantity = Math.min(ordersToSubmit, Math.min(submitNow, depth));
 
       if (quantity > 0) {
         market.submitOrder(type, orderPrice, quantity);
@@ -93,14 +92,9 @@ public class ShockAgent implements Agent {
   }
 
   @Override
-  public void notifyOrderTransacted(OrderRecord order, Price price, int quantity) {
-    waitingToSubmit = true;
-  }
-
-  @Override
   public void notifyQuoteUpdated(MarketView market) {
     if (waitingToSubmit) {
-      strategy();
+      sim.scheduleIn(TimeStamp.ZERO, this::strategy);
     }
   }
 
