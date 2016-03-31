@@ -27,9 +27,11 @@ import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.PriorityQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Runner {
 
@@ -101,6 +103,11 @@ public class Runner {
 
       JsonStreamParser parser = new JsonStreamParser(specs);
       int obsNum = 0;
+      // We keep an ordered queue of finished observations that need to be written so that they come
+      // out in order
+      AtomicInteger nextObsToWrite = new AtomicInteger(0);
+      PriorityQueue<Result> pending = new PriorityQueue<>();
+
       while (parser.hasNext()) {
         SimSpec spec = SimSpec.read(parser.next().getAsJsonObject(), classPrefix, keyCaseFormat);
         for (int i = 0; i < numObs; ++i) {
@@ -111,11 +118,19 @@ public class Runner {
               StringWriter logWriter = new StringWriter();
               Log log = Log.create(logLevel, logWriter, l -> "");
               Observation obs = sim.apply(spec, log, finalObsNum);
+              Result res = new Result(finalObsNum, obs, logWriter.toString());
 
-              synchronized (obsOut) {
-                gson.toJson(obs, Observation.class, obsOut);
-                obsOut.write('\n');
-                logOut.write(logWriter.toString());
+              // Try to output everything from the queue
+              synchronized (pending) {
+                pending.add(res);
+                while (!pending.isEmpty() && pending.peek().obsNum == nextObsToWrite.get()) {
+                  Result toWrite = pending.poll();
+
+                  gson.toJson(toWrite.obs, Observation.class, obsOut);
+                  obsOut.write('\n');
+                  logOut.write(toWrite.log);
+                  nextObsToWrite.incrementAndGet();
+                }
               }
             } catch (Exception ex) {
               ex.printStackTrace();
@@ -129,7 +144,6 @@ public class Runner {
 
       // Wait for all workers to finish
       exec.shutdown();
-
       exec.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
     } catch (Exception ex) {
       ex.printStackTrace();
@@ -182,6 +196,26 @@ public class Runner {
     } else {
       return Files.newBufferedWriter(Paths.get(path), charset);
     }
+  }
+
+  // Run result, necessary for synchronization
+
+  private static class Result implements Comparable<Result> {
+    private final int obsNum;
+    private final Observation obs;
+    private final String log;
+
+    private Result(int obsNum, Observation obs, String log) {
+      this.obsNum = obsNum;
+      this.obs = obs;
+      this.log = log;
+    }
+
+    @Override
+    public int compareTo(Result that) {
+      return Integer.compare(this.obsNum, that.obsNum);
+    }
+
   }
 
   // Serializers
