@@ -19,8 +19,8 @@ import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.MarketView;
-import edu.umich.srg.marketsim.privatevalue.GaussianPrivateValue;
 import edu.umich.srg.marketsim.privatevalue.PrivateValue;
+import edu.umich.srg.marketsim.privatevalue.PrivateValues;
 import edu.umich.srg.marketsim.strategy.SurplusThreshold;
 
 import java.util.Random;
@@ -45,7 +45,7 @@ abstract class StandardMarketAgent implements Agent {
     this.market = market.getView(this, TimeStamp.ZERO);
     this.maxPosition = spec.get(MaxPosition.class);
     this.threshold = SurplusThreshold.create(spec.get(Thresh.class));
-    this.privateValue = GaussianPrivateValue.generate(rand, spec.get(MaxPosition.class),
+    this.privateValue = PrivateValues.gaussianPrivateValue(rand, spec.get(MaxPosition.class),
         spec.get(PrivateValueVar.class));
     this.arrivalDistribution = Geometric.withSuccessProbability(spec.get(ArrivalRate.class));
     this.shadingDistribution = Uniform.closed(spec.get(Rmin.class), spec.get(Rmax.class));
