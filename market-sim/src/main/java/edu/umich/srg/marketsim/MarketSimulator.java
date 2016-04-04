@@ -26,6 +26,8 @@ public class MarketSimulator implements Sim {
   private final Features features;
   private final EventQueue eventQueue;
 
+  private Map<Agent, AgentResult> agentPayoffs;
+
   // FIXME Still need SIP
 
   private MarketSimulator(Fundamental fundamental, Log log, Random rand) {
@@ -35,6 +37,8 @@ public class MarketSimulator implements Sim {
     this.markets = new ArrayList<>();
     this.agents = new ArrayList<>();
     this.eventQueue = new EventQueue(rand);
+
+    this.agentPayoffs = null;
   }
 
   public static MarketSimulator create(Fundamental fundamental, Log log, Random rand) {
@@ -81,23 +85,28 @@ public class MarketSimulator implements Sim {
   }
 
   /** Get the payoffs of every agent in the simuation. */
-  public Map<Agent, Double> getAgentPayoffs() {
-    // Get total agent holdings and profit according to all markets
-    Map<Agent, TempAgentInfo> payoffs = Maps.toMap(agents, a -> new TempAgentInfo());
-    for (Market market : markets) {
-      for (Entry<Agent, AgentInfo> e : market.getAgentInfo()) {
-        TempAgentInfo info = payoffs.get(e.getKey());
-        info.holdings += e.getValue().getHoldings();
-        info.profit += e.getValue().getProfit();
+  public Map<Agent, AgentResult> getAgentPayoffs() {
+    if (agentPayoffs == null) {
+      // Get total agent holdings and profit according to all markets
+      Map<Agent, TempAgentInfo> payoffs = Maps.toMap(agents, a -> new TempAgentInfo());
+      for (Market market : markets) {
+        for (Entry<Agent, AgentInfo> e : market.getAgentInfo()) {
+          TempAgentInfo info = payoffs.get(e.getKey());
+          info.holdings += e.getValue().getHoldings();
+          info.profit += e.getValue().getProfit();
+        }
       }
+
+      // Get current fundamental price
+      double fundamentalValue = fundamental.getValueAt(getCurrentTime()).doubleValue();
+
+      // Add everything up
+      agentPayoffs = Maps.transformEntries(payoffs, (agent, info) -> new AgentResult(
+          info.profit + info.holdings * fundamentalValue + agent.payoffForPosition(info.holdings),
+          info.holdings));
     }
+    return agentPayoffs;
 
-    // Get current fundamental price
-    double fundamentalValue = fundamental.getValueAt(getCurrentTime()).doubleValue();
-
-    // Add everything up
-    return Maps.transformEntries(payoffs, (agent, info) -> info.profit
-        + info.holdings * fundamentalValue + agent.payoffForPosition(info.holdings));
   }
 
   @Override
@@ -135,6 +144,24 @@ public class MarketSimulator implements Sim {
     private double profit = 0;
     private int holdings = 0;
 
+  }
+
+  public static class AgentResult {
+    private final double payoff;
+    private final int holdings;
+
+    private AgentResult(double payoff, int holdings) {
+      this.payoff = payoff;
+      this.holdings = holdings;
+    }
+
+    public double getPayoff() {
+      return payoff;
+    }
+
+    public int getHoldings() {
+      return holdings;
+    }
   }
 
 }

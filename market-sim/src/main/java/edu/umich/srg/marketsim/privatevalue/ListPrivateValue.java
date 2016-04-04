@@ -11,16 +11,15 @@ import java.util.Random;
 import java.util.stream.DoubleStream;
 
 /**
- * This class allows storage of an agent's private value.
- *
- * In general it is constructed by passing it a descending array of doubles. Each element is the
- * marginal benefit of buying one more unit. The element at `offset` (which defaults to length / 2)
- * is defined as the marginal benefit to buying at position 0. The benefit of buying one unit at
- * position 1 is in index `offset + 1` etc. Selling is inferred as the opposite of buying. Selling
- * at position 1 has the opposite value as buying as position 0. Beyond the extents of the array,
- * the marginal value is inferred as the last marginal value, with the exception that the marginal
- * value must plateau. So if the last element in the array is positive, the marginal value for
- * buying beyond that will be 0 instead of the positive value.
+ * This class allows storage of an agent's private value. In general it is constructed by passing it
+ * a descending array of doubles. Each element is the marginal benefit of buying one more unit. The
+ * element at `offset` (which defaults to length / 2) is defined as the marginal benefit to buying
+ * at position 0. The benefit of buying one unit at position 1 is in index `offset + 1` etc. Selling
+ * is inferred as the opposite of buying. Selling at position 1 has the opposite value as buying as
+ * position 0. Beyond the extents of the array, the marginal value is inferred as the last marginal
+ * value, with the exception that the marginal value must plateau. So if the last element in the
+ * array is positive, the marginal value for buying beyond that will be 0 instead of the positive
+ * value.
  */
 class ListPrivateValue implements PrivateValue {
 
@@ -80,7 +79,7 @@ class ListPrivateValue implements PrivateValue {
     return value;
   }
 
-  /** Verifies an array of doubles is decreasing */
+  /** Verifies an array of doubles is decreasing. */
   private static boolean isDecreasing(double[] values) {
     double last = Double.POSITIVE_INFINITY;
     for (double d : values) {

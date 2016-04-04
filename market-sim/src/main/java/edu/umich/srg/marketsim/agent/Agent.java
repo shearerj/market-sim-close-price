@@ -12,6 +12,7 @@ public interface Agent {
 
   double payoffForPosition(int position);
 
+  /** A json object of any miscellaneous features an agent wishes to compute. */
   default JsonObject getFeatures() {
     return new JsonObject();
   }

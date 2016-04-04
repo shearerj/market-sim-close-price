@@ -24,6 +24,7 @@ import edu.umich.srg.marketsim.Keys.FundamentalShockVar;
 import edu.umich.srg.marketsim.Keys.Markets;
 import edu.umich.srg.marketsim.Keys.RandomSeed;
 import edu.umich.srg.marketsim.Keys.SimLength;
+import edu.umich.srg.marketsim.MarketSimulator.AgentResult;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.fundamental.GaussianMeanReverting;
@@ -74,9 +75,9 @@ public class CommandLineInterface {
     sim.executeUntil(TimeStamp.of(configuration.get(SimLength.class)));
 
     // Update player observations
-    Map<Agent, Double> payoffs = sim.getAgentPayoffs();
+    Map<Agent, AgentResult> payoffs = sim.getAgentPayoffs();
     for (PlayerInfo info : playerInfo) {
-      info.payoff = payoffs.get(info.agent);
+      info.payoff = payoffs.get(info.agent).getPayoff();
       info.features = info.agent.getFeatures();
     }
 

@@ -6,16 +6,32 @@ import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.market.OrderRecord;
+import edu.umich.srg.marketsim.privatevalue.PrivateValue;
+import edu.umich.srg.marketsim.privatevalue.PrivateValues;
 
 public class MockAgent implements Agent {
 
+  public final PrivateValue privateValue;
   public int transactions;
   public int transactedUnits;
   public Price lastTransactionPrice;
 
-  public MockAgent() {
+  private MockAgent(PrivateValue privateValue) {
+    this.privateValue = privateValue;
     this.transactions = 0;
     this.lastTransactionPrice = null;
+  }
+
+  public MockAgent() {
+    this(PrivateValues.noPrivateValue());
+  }
+
+  public static MockAgent create() {
+    return builder().build();
+  }
+
+  public static MockAgentBuilder builder() {
+    return new MockAgentBuilder();
   }
 
   @Override
@@ -28,7 +44,7 @@ public class MockAgent implements Agent {
 
   @Override
   public double payoffForPosition(int position) {
-    return 0;
+    return privateValue.valueAtPosition(position);
   }
 
   @Override
@@ -49,5 +65,24 @@ public class MockAgent implements Agent {
 
   @Override
   public void notifyTransaction(MarketView market, Price price, int quantity) {}
+
+  public static class MockAgentBuilder {
+
+    private PrivateValue privateValue;
+
+    private MockAgentBuilder() {
+      privateValue = PrivateValues.noPrivateValue();
+    }
+
+    public MockAgentBuilder privateValue(PrivateValue privateValue) {
+      this.privateValue = privateValue;
+      return this;
+    }
+
+    public MockAgent build() {
+      return new MockAgent(privateValue);
+    }
+
+  }
 
 }

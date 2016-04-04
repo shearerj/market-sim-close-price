@@ -9,6 +9,12 @@ import com.google.common.collect.Sets.SetView;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
 
 public abstract class Asserts {
@@ -70,6 +76,22 @@ public abstract class Asserts {
   public static void assertTrue(boolean assertion, String formatString, Object... objects) {
     if (!assertion) {
       throw new AssertionError(String.format(formatString, objects));
+    }
+  }
+
+  public static void assertCompletesIn(Runnable task, long timeout, TimeUnit unit)
+      throws ExecutionException, InterruptedException {
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    Future<?> running = executor.submit(task);
+    try {
+      running.get(timeout, unit);
+    } catch (TimeoutException e) {
+      throw new AssertionError(
+          "Task did not complete in " + timeout + " " + unit.toString().toLowerCase());
+    } catch (ExecutionException e) {
+      throw e;
+    } finally {
+      executor.shutdownNow();
     }
   }
 

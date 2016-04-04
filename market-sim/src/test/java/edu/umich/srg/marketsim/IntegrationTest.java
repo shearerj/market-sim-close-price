@@ -36,17 +36,19 @@ import edu.umich.srg.marketsim.Keys.FundamentalShockVar;
 import edu.umich.srg.marketsim.Keys.Markets;
 import edu.umich.srg.marketsim.Keys.RandomSeed;
 import edu.umich.srg.marketsim.Keys.SimLength;
+import edu.umich.srg.marketsim.MarketSimulator.AgentResult;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.agent.NoiseAgent;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
+import edu.umich.srg.marketsim.testing.NullWriter;
 
-import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.Writer;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 import java.util.stream.StreamSupport;
@@ -77,9 +79,9 @@ public class IntegrationTest {
 
     assertFalse(logData.toString().isEmpty());
 
-    Map<Agent, Double> payoffs = sim.getAgentPayoffs();
+    Map<Agent, AgentResult> payoffs = sim.getAgentPayoffs();
     assertEquals(numAgents, payoffs.size());
-    assertEquals(0, payoffs.values().stream().mapToDouble(Double::doubleValue).sum(), eps);
+    assertEquals(0, payoffs.values().stream().mapToDouble(AgentResult::getPayoff).sum(), eps);
   }
 
   @Test
@@ -241,6 +243,8 @@ public class IntegrationTest {
    * Tests to see if identical simulations with the same random seed produce the same result. We
    * can't arbitrarily order the agents, because different entry orders in the event queue will
    * produce different scheduling, and hence, slightly different results.
+   * 
+   * This test is also run 10 times with two threads so that it will detect race conditions.
    */
   @Test
   public void identicalRandomTest() {
@@ -262,11 +266,13 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
     // Run the simulation once
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, nullWriter, 1,
-        Level.DEBUG.ordinal(), 1, false, keyPrefix, keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, NullWriter.get(), 10,
+        Level.DEBUG.ordinal(), 2, false, keyPrefix, keyCaseFormat);
 
     // Save the results
-    JsonObject obs1 = gson.fromJson(obsData.toString(), JsonObject.class);
+    // Trim because gson complains about trailing newline
+    Iterator<JsonObject> obs1s = Arrays.stream(obsData.toString().split("\n"))
+        .map(line -> gson.fromJson(line, JsonObject.class)).iterator();
 
     // Reset
     obsData = new StringWriter();
@@ -274,24 +280,34 @@ public class IntegrationTest {
 
 
     // Run the simulation again
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, nullWriter, 1,
-        Level.DEBUG.ordinal(), 1, false, keyPrefix, keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, NullWriter.get(), 10,
+        Level.DEBUG.ordinal(), 3, false, keyPrefix, keyCaseFormat);
 
     // Save the results
-    JsonObject obs2 = gson.fromJson(obsData.toString(), JsonObject.class);
+    // Trim because gson complains about trailing newline
+    Iterator<JsonObject> obs2s = Arrays.stream(obsData.toString().split("\n"))
+        .map(line -> gson.fromJson(line, JsonObject.class)).iterator();
 
     // Verify identical output for players
     // If this fails, that does't mean they weren't identical, but more care will need to be taken
     // for the comparison
-    assertEquals(obs1.get("players"), obs2.get("players"));
+    while (obs1s.hasNext() && obs2s.hasNext()) {
+      JsonObject obs1 = obs1s.next();
+      JsonObject obs2 = obs2s.next();
 
-    JsonObject obs1Features = obs1.get("features").getAsJsonObject();
-    JsonObject obs2Features = obs2.get("features").getAsJsonObject();
-    JsonObject obs1Market = removeMarketFeatures(obs1Features);
-    JsonObject obs2Market = removeMarketFeatures(obs2Features);
+      assertEquals(obs1.get("players"), obs2.get("players"));
 
-    assertEquals(obs1Features, obs2Features);
-    assertEquals(obs1Market, obs2Market);
+      JsonObject obs1Features = obs1.get("features").getAsJsonObject();
+      JsonObject obs2Features = obs2.get("features").getAsJsonObject();
+      JsonObject obs1Market = removeMarketFeatures(obs1Features);
+      JsonObject obs2Market = removeMarketFeatures(obs2Features);
+
+      assertEquals(obs1Features, obs2Features);
+      assertEquals(obs1Market, obs2Market);
+    }
+
+    assertFalse("Simulation 1 had more observations", obs1s.hasNext());
+    assertFalse("Simulation 2 had more observations", obs2s.hasNext());
   }
 
   // TODO Test that verifies agents inherit specifications from configuration
@@ -341,18 +357,5 @@ public class IntegrationTest {
 
     return new StringReader(json.toString());
   }
-
-  private static final Writer nullWriter = new Writer() {
-
-    @Override
-    public void close() throws IOException {}
-
-    @Override
-    public void flush() throws IOException {}
-
-    @Override
-    public void write(char[] cbuf, int off, int len) throws IOException {}
-
-  };
 
 }

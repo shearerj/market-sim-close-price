@@ -10,6 +10,14 @@ public final class PrivateValues {
     return new ListPrivateValue(Gaussian.withMeanVariance(0, variance), maxPosition, rand);
   }
 
+  public static PrivateValue fromMarginalBuys(double[] marginalBuys) {
+    return new ListPrivateValue(marginalBuys);
+  }
+
+  public static PrivateValue noPrivateValue() {
+    return new ListPrivateValue(new double[0]);
+  }
+
   // Unconstructable
   private PrivateValues() {}
 
