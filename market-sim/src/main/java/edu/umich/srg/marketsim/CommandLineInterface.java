@@ -8,7 +8,6 @@ import com.google.common.collect.Multiset.Entry;
 import com.google.gson.JsonObject;
 
 import edu.umich.srg.distributions.Uniform;
-import edu.umich.srg.egtaonline.Log;
 import edu.umich.srg.egtaonline.Observation;
 import edu.umich.srg.egtaonline.Observation.Player;
 import edu.umich.srg.egtaonline.Runner;
@@ -55,7 +54,7 @@ public class CommandLineInterface {
    * @param obsNum This is the unique observation number for one simulation, not the number of
    *        observations to produce. This method returns a single observation.
    */
-  public static Observation simulate(SimSpec spec, Log log, int obsNum) {
+  public static Observation simulate(SimSpec spec, int obsNum) {
     Spec configuration = spec.configuration.withDefault(Keys.DEFAULT_KEYS);
     long seed = PositionalSeed.with(configuration.get(RandomSeed.class)).getSeed(obsNum);
     Random rand = new Random(seed);
@@ -64,8 +63,7 @@ public class CommandLineInterface {
         configuration.get(FundamentalMean.class), configuration.get(FundamentalMeanReversion.class),
         configuration.get(FundamentalShockVar.class),
         configuration.get(FundamentalShockProb.class));
-    MarketSimulator sim = MarketSimulator.create(fundamental, log, new Random(rand.nextLong()));
-    log.setPrefix(l -> String.format("%6d | ", sim.getCurrentTime().get()));
+    MarketSimulator sim = MarketSimulator.create(fundamental, new Random(rand.nextLong()));
 
     List<Market> markets = addMarkets(sim, spec.configuration.get(Markets.class), configuration);
     List<PlayerInfo> playerInfo =

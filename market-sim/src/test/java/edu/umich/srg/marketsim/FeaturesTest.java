@@ -5,7 +5,6 @@ import static edu.umich.srg.fourheap.Order.OrderType.SELL;
 import static edu.umich.srg.testing.Asserts.assertCompletesIn;
 import static edu.umich.srg.testing.Asserts.assertTrue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableSet;
@@ -17,8 +16,6 @@ import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
 
-import edu.umich.srg.egtaonline.Log;
-import edu.umich.srg.egtaonline.Log.Level;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
 import edu.umich.srg.marketsim.Keys.FundamentalMean;
@@ -44,13 +41,11 @@ import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.privatevalue.PrivateValue;
 import edu.umich.srg.marketsim.privatevalue.PrivateValues;
 import edu.umich.srg.marketsim.testing.MockAgent;
-import edu.umich.srg.marketsim.testing.NullWriter;
 import edu.umich.srg.testing.Repeat;
 import edu.umich.srg.testing.RepeatRule;
 import edu.umich.srg.testing.TestBools;
 import edu.umich.srg.testing.TestInts;
 
-import java.io.StringWriter;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -63,7 +58,6 @@ public class FeaturesTest {
 
   private static final Random rand = new Random();
   private static final double tol = 1e-6;
-  private static final Log log = Log.create(Level.DEBUG, NullWriter.get(), l -> "");
   private static final Spec spec = Spec.builder().putAll(Keys.DEFAULT_KEYS) //
       .put(ArrivalRate.class, 0.5) //
       .put(MaxPosition.class, 10) //
@@ -87,7 +81,7 @@ public class FeaturesTest {
     Fundamental fundamental = GaussianMeanReverting.create(rand, spec.get(FundamentalMean.class),
         spec.get(FundamentalMeanReversion.class), spec.get(FundamentalShockVar.class),
         spec.get(FundamentalShockProb.class));
-    MarketSimulator sim = MarketSimulator.create(fundamental, log, rand);
+    MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim));
     for (int i = 0; i < numAgents; ++i) {
       sim.addAgent(new ZirAgent(sim, cda, fundamental, spec, rand));
@@ -130,7 +124,7 @@ public class FeaturesTest {
     PrivateValue pv = PrivateValues.fromMarginalBuys(new double[] {10, 3});
 
     // First create simulation with only "background" agents
-    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), log, rand);
+    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
     for (int i = 0; i < numAgents; ++i) {
       sim.addAgent(MockAgent.builder().privateValue(pv).build());
     }
@@ -141,7 +135,7 @@ public class FeaturesTest {
     assertEquals(0, maxSurplus, tol);
 
     // Now add an intermediary (no private value)
-    sim = MarketSimulator.create(ConstantFundamental.create(0), log, rand);
+    sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
     for (int i = 0; i < numAgents; ++i) {
       sim.addAgent(MockAgent.builder().privateValue(pv).build());
     }
@@ -160,7 +154,7 @@ public class FeaturesTest {
   @Test
   public void infiniteTradeTest() throws ExecutionException, InterruptedException {
     assertCompletesIn(() -> {
-      MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), log, rand);
+      MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
       // Buyer
       sim.addAgent(MockAgent.builder()
           .privateValue(PrivateValues.fromMarginalBuys(new double[] {1, 1})).build());
@@ -178,10 +172,7 @@ public class FeaturesTest {
   /** Test that submissions is accurately counted. */
   @Test
   public void submissionsTest() {
-    StringWriter logData = new StringWriter();
-    Log log = Log.create(Level.DEBUG, logData, l -> l + ") ");
-
-    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), log, rand);
+    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
     Market cda = sim.addMarket(CdaMarket.create(sim));
 
     // Buy 2 @ 200
@@ -211,10 +202,6 @@ public class FeaturesTest {
     sim.initialize();
     sim.executeUntil(TimeStamp.of(2));
 
-    log.flush();
-
-    assertFalse(logData.toString().isEmpty());
-
     Map<Agent, ? extends AgentInfo> payoffs = sim.getAgentPayoffs();
     assertEquals(2, payoffs.size());
     assertEquals(0, payoffs.values().stream().mapToDouble(AgentInfo::getProfit).sum(), tol);
@@ -228,10 +215,7 @@ public class FeaturesTest {
 
   @Test
   public void noTradeTest() {
-    StringWriter logData = new StringWriter();
-    Log log = Log.create(Level.DEBUG, logData, l -> l + ") ");
-
-    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), log, rand);
+    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
     Market cda = sim.addMarket(CdaMarket.create(sim));
 
     // Buyer willing to buy at 5
@@ -273,7 +257,6 @@ public class FeaturesTest {
     sim.initialize();
     sim.executeUntil(TimeStamp.of(2));
 
-    log.flush();
     JsonObject features = sim.computeFeatures();
     double surplus = features.get("total_surplus").getAsDouble();
     double maxSurplus = features.get("max_surplus").getAsDouble();

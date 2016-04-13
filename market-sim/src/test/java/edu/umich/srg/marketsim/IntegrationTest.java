@@ -22,8 +22,6 @@ import com.google.gson.JsonPrimitive;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import edu.umich.srg.egtaonline.Log;
-import edu.umich.srg.egtaonline.Log.Level;
 import edu.umich.srg.egtaonline.Observation;
 import edu.umich.srg.egtaonline.Observation.Player;
 import edu.umich.srg.egtaonline.Runner;
@@ -43,7 +41,6 @@ import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.AgentInfo;
-import edu.umich.srg.marketsim.testing.NullWriter;
 
 import java.io.Reader;
 import java.io.StringReader;
@@ -66,19 +63,13 @@ public class IntegrationTest {
   @Test
   public void simpleMinimalTest() {
     int numAgents = 10;
-    StringWriter logData = new StringWriter();
-    Log log = Log.create(Level.DEBUG, logData, l -> l + ") ");
 
-    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), log, rand);
+    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
     Market cda = sim.addMarket(CdaMarket.create(sim));
     for (int i = 0; i < numAgents; ++i)
       sim.addAgent(new NoiseAgent(sim, cda, Spec.fromPairs(ArrivalRate.class, 0.5), rand));
     sim.initialize();
     sim.executeUntil(TimeStamp.of(10));
-
-    log.flush();
-
-    assertFalse(logData.toString().isEmpty());
 
     Map<Agent, ? extends AgentInfo> payoffs = sim.getAgentPayoffs();
     assertEquals(numAgents, payoffs.size());
@@ -89,8 +80,6 @@ public class IntegrationTest {
   @Test
   public void simpleSpecTest() {
     int numAgents = 10;
-    StringWriter logData = new StringWriter();
-    Log log = Log.create(Level.DEBUG, logData, l -> l + ") ");
     Spec agentSpec = Spec.fromPairs(ArrivalRate.class, 0.5);
     Spec configuration = Spec.fromPairs(SimLength.class, 10l, Markets.class,
         ImmutableList.of("cda"), FundamentalMeanReversion.class, 0d, FundamentalShockVar.class, 0d);
@@ -99,10 +88,7 @@ public class IntegrationTest {
     assignment.add(RoleStrat.of("role", toStratString("noise", agentSpec)), numAgents);
     SimSpec spec = SimSpec.create(assignment, configuration);
 
-    Observation obs = CommandLineInterface.simulate(spec, log, 0);
-    log.flush();
-
-    assertFalse(logData.toString().isEmpty());
+    Observation obs = CommandLineInterface.simulate(spec, 0);
 
     Iterable<? extends Player> players = obs.getPlayers();
     assertEquals(numAgents, Iterables.size(players));
@@ -114,7 +100,7 @@ public class IntegrationTest {
   @Test
   public void simpleEgtaTest() {
     int numAgents = 10;
-    StringWriter logData = new StringWriter(), obsData = new StringWriter();
+    StringWriter obsData = new StringWriter();
 
     Spec agentSpec = Spec.fromPairs(ArrivalRate.class, 0.5);
     Spec configuration = Spec.fromPairs(SimLength.class, 10l, Markets.class,
@@ -126,10 +112,9 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
 
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, logData, 1,
-        Level.DEBUG.ordinal(), 1, true, keyPrefix, keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, true, keyPrefix,
+        keyCaseFormat);
 
-    assertFalse(logData.toString().isEmpty());
     assertFalse(obsData.toString().isEmpty());
 
     JsonObject observation = gson.fromJson(obsData.toString(), JsonObject.class);
@@ -147,7 +132,7 @@ public class IntegrationTest {
   @Test
   public void multiThreadEgtaTest() {
     int numAgents = 10;
-    StringWriter logData = new StringWriter(), obsData = new StringWriter();
+    StringWriter obsData = new StringWriter();
 
     Spec agentSpec = Spec.fromPairs(ArrivalRate.class, 0.5);
     Spec configuration = Spec.fromPairs(SimLength.class, 10l, Markets.class,
@@ -159,10 +144,9 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
 
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, logData, 1,
-        Level.DEBUG.ordinal(), 2, true, keyPrefix, keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 2, true, keyPrefix,
+        keyCaseFormat);
 
-    assertFalse(logData.toString().isEmpty());
     assertFalse(obsData.toString().isEmpty());
 
     JsonObject observation = gson.fromJson(obsData.toString(), JsonObject.class);
@@ -190,8 +174,8 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
 
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, logData, 1,
-        Level.DEBUG.ordinal(), 1, false, keyPrefix, keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, false, keyPrefix,
+        keyCaseFormat);
 
     assertTrue(logData.toString().isEmpty());
     assertFalse(obsData.toString().isEmpty());
@@ -211,7 +195,7 @@ public class IntegrationTest {
   @Test
   public void simpleFullTest() {
     int numAgents = 10;
-    StringWriter logData = new StringWriter(), obsData = new StringWriter();
+    StringWriter obsData = new StringWriter();
 
     Spec agentSpec = Spec.fromPairs(ArrivalRate.class, 0.5);
     Spec configuration = Spec.fromPairs(SimLength.class, 10l, Markets.class,
@@ -223,10 +207,9 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
 
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, logData, 1,
-        Level.DEBUG.ordinal(), 1, false, keyPrefix, keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, false, keyPrefix,
+        keyCaseFormat);
 
-    assertFalse(logData.toString().isEmpty());
     assertFalse(obsData.toString().isEmpty());
 
     JsonObject observation = gson.fromJson(obsData.toString(), JsonObject.class);
@@ -268,8 +251,8 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
     // Run the simulation once
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, NullWriter.get(), 10,
-        Level.DEBUG.ordinal(), 2, false, keyPrefix, keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 2, false, keyPrefix,
+        keyCaseFormat);
 
     // Save the results
     // Trim because gson complains about trailing newline
@@ -282,8 +265,8 @@ public class IntegrationTest {
 
 
     // Run the simulation again
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, NullWriter.get(), 10,
-        Level.DEBUG.ordinal(), 3, false, keyPrefix, keyCaseFormat);
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 3, false, keyPrefix,
+        keyCaseFormat);
 
     // Save the results
     // Trim because gson complains about trailing newline

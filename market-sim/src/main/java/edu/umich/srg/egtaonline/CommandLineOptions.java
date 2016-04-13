@@ -20,19 +20,13 @@ public class CommandLineOptions {
       description = "Path to observaton file location. (default: stdout)")
   public String observations = "-";
 
-  @Option(name = {"-l", "--log"}, description = "Path to log file location. (default: stderr)")
-  public String logs = "-";
-
-  @Option(name = {"-v"}, description = "Verbosity of logging. (default: 0)")
-  public int verbosity = 0;
-
   @Option(name = {"-j"},
       description = "Number of threads to use for processing. 0 implies number of cores."
           + " (default: 0)")
   public int jobs = 0;
 
   @Option(name = {"--egta"},
-      description = "Flag that this is running on egta. Disables logging among other things."
+      description = "Flag that this is running on egta. Disables features."
           + " (default: false)")
   public boolean egta = false;
 

@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import edu.umich.srg.egtaonline.Log;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Keys;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
@@ -35,7 +34,7 @@ public class ZirTest {
     long simLength = 10;
 
     Fundamental fundamental = ConstantFundamental.create(1e9);
-    MarketSimulator sim = MarketSimulator.create(fundamental, Log.nullLogger(), rand);
+    MarketSimulator sim = MarketSimulator.create(fundamental, rand);
     Market cda = sim.addMarket(CdaMarket.create(sim));
     Spec spec =
         Spec.builder().putAll(Keys.DEFAULT_KEYS).put(ArrivalRate.class, 0.5).put(Rmin.class, 100)

@@ -8,7 +8,6 @@ import static edu.umich.srg.marketsim.testing.MarketAsserts.assertQuote;
 import org.junit.Before;
 import org.junit.Test;
 
-import edu.umich.srg.egtaonline.Log;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.Keys;
@@ -40,7 +39,7 @@ public class SimpleTrendFollowerTest {
   @Before
   public void setup() {
     Fundamental fundamental = ConstantFundamental.create(1e9);
-    sim = MarketSimulator.create(fundamental, Log.nullLogger(), rand);
+    sim = MarketSimulator.create(fundamental, rand);
     market = sim.addMarket(CdaMarket.create(sim));
     Agent mockAgent = new MockAgent();
     view = market.getView(mockAgent, TimeStamp.ZERO);

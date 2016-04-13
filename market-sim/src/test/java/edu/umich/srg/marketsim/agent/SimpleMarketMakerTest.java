@@ -4,7 +4,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import edu.umich.srg.egtaonline.Log;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
 import edu.umich.srg.marketsim.Keys.NumRungs;
@@ -29,9 +28,7 @@ public class SimpleMarketMakerTest {
 
   @Test
   public void basicIntegrationTransactionTest() {
-    Log log = Log.nullLogger();
-
-    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(500), log, rand);
+    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(500), rand);
     Market cda = sim.addMarket(CdaMarket.create(sim));
 
     // Background Agents

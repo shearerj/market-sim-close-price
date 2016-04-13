@@ -8,10 +8,4 @@ public interface Sim {
 
   void addFeature(String name, double value);
 
-  void error(String format, Object... parameters);
-
-  void info(String format, Object... parameters);
-
-  void debug(String format, Object... parameters);
-
 }

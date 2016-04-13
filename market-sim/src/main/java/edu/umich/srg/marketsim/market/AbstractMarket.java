@@ -93,9 +93,6 @@ abstract class AbstractMarket implements Market, Serializable {
         view.transaction(price, matched.getQuantity());
       }
 
-      sim.debug("%s: %s =(%d @ %s)=> %s", this, orderOwners.get(sell).getAgent(),
-          matched.getQuantity(), price, orderOwners.get(buy).getAgent());
-
       prices.add(sim.getCurrentTime().get(), price);
     }
   }
@@ -213,7 +210,6 @@ abstract class AbstractMarket implements Market, Serializable {
 
     @Override
     public OrderRecord submitOrder(OrderType buyOrSell, Price price, int quantity) {
-      sim.debug("%s: %s %d @ %s to %s", agent, buyOrSell, quantity, price, AbstractMarket.this);
       OrderRecord record = new OrderRecord(this, buyOrSell, price, quantity);
       observedOrders.add(record);
 
@@ -370,7 +366,6 @@ abstract class AbstractMarket implements Market, Serializable {
 
     @Override
     public OrderRecord submitOrder(OrderType buyOrSell, Price price, int quantity) {
-      sim.debug("%s: %s %d @ %s to %s", agent, buyOrSell, quantity, price, AbstractMarket.this);
       OrderRecord record = new OrderRecord(this, buyOrSell, price, quantity);
 
       submittedOrder = record; // In case we transact before we get the order

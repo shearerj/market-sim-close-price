@@ -3,7 +3,6 @@ package edu.umich.srg.marketsim;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
 
-import edu.umich.srg.egtaonline.Log;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.event.EventQueue;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
@@ -19,7 +18,6 @@ import java.util.Random;
 
 public class MarketSimulator implements Sim {
 
-  private final Log log;
   private final Collection<Market> markets;
   private final Collection<Agent> agents;
   private final Fundamental fundamental;
@@ -30,10 +28,9 @@ public class MarketSimulator implements Sim {
 
   // FIXME Still need SIP
 
-  private MarketSimulator(Fundamental fundamental, Log log, Random rand) {
+  private MarketSimulator(Fundamental fundamental, Random rand) {
     this.fundamental = fundamental;
     this.features = new Features();
-    this.log = log;
     this.markets = new ArrayList<>();
     this.agents = new ArrayList<>();
     this.eventQueue = new EventQueue(rand);
@@ -41,8 +38,8 @@ public class MarketSimulator implements Sim {
     this.agentPayoffs = null;
   }
 
-  public static MarketSimulator create(Fundamental fundamental, Log log, Random rand) {
-    return new MarketSimulator(fundamental, log, rand);
+  public static MarketSimulator create(Fundamental fundamental, Random rand) {
+    return new MarketSimulator(fundamental, rand);
   }
 
   /**
@@ -119,21 +116,6 @@ public class MarketSimulator implements Sim {
   @Override
   public TimeStamp getCurrentTime() {
     return eventQueue.getCurrentTime();
-  }
-
-  @Override
-  public void error(String format, Object... parameters) {
-    log.error(format, parameters);
-  }
-
-  @Override
-  public void info(String format, Object... parameters) {
-    log.info(format, parameters);
-  }
-
-  @Override
-  public void debug(String format, Object... parameters) {
-    log.debug(format, parameters);
   }
 
   @Override
