@@ -15,12 +15,12 @@ import edu.umich.srg.marketsim.Keys.Rmax;
 import edu.umich.srg.marketsim.Keys.Rmin;
 import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.MarketSimulator;
-import edu.umich.srg.marketsim.MarketSimulator.AgentResult;
 import edu.umich.srg.marketsim.TimeStamp;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
+import edu.umich.srg.marketsim.market.Market.AgentInfo;
 
 import java.util.Map;
 import java.util.Random;
@@ -47,7 +47,7 @@ public class ZirTest {
     sim.initialize();
     sim.executeUntil(TimeStamp.of(simLength));
 
-    Map<Agent, AgentResult> payoffs = sim.getAgentPayoffs();
+    Map<Agent, ? extends AgentInfo> payoffs = sim.getAgentPayoffs();
     assertEquals(numAgents, payoffs.size());
   }
 

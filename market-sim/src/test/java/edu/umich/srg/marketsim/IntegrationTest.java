@@ -1,5 +1,6 @@
 package edu.umich.srg.marketsim;
 
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -36,12 +37,12 @@ import edu.umich.srg.marketsim.Keys.FundamentalShockVar;
 import edu.umich.srg.marketsim.Keys.Markets;
 import edu.umich.srg.marketsim.Keys.RandomSeed;
 import edu.umich.srg.marketsim.Keys.SimLength;
-import edu.umich.srg.marketsim.MarketSimulator.AgentResult;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.agent.NoiseAgent;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
+import edu.umich.srg.marketsim.market.Market.AgentInfo;
 import edu.umich.srg.marketsim.testing.NullWriter;
 
 import java.io.Reader;
@@ -60,7 +61,7 @@ public class IntegrationTest {
   private static final Joiner stratJoiner = Joiner.on('_');
   private static final String keyPrefix = "edu.umich.srg.marketsim.Keys$";
   private static final CaseFormat keyCaseFormat = CaseFormat.LOWER_CAMEL;
-  private static final double eps = 1e-8;
+  private static final double tol = 1e-8;
 
   @Test
   public void simpleMinimalTest() {
@@ -79,9 +80,10 @@ public class IntegrationTest {
 
     assertFalse(logData.toString().isEmpty());
 
-    Map<Agent, AgentResult> payoffs = sim.getAgentPayoffs();
+    Map<Agent, ? extends AgentInfo> payoffs = sim.getAgentPayoffs();
     assertEquals(numAgents, payoffs.size());
-    assertEquals(0, payoffs.values().stream().mapToDouble(AgentResult::getPayoff).sum(), eps);
+    assertEquals(0, payoffs.values().stream().mapToDouble(AgentInfo::getProfit).sum(), tol);
+    assertTrue(payoffs.values().stream().mapToInt(AgentInfo::getSubmissions).allMatch(s -> s >= 0));
   }
 
   @Test
@@ -106,7 +108,7 @@ public class IntegrationTest {
     assertEquals(numAgents, Iterables.size(players));
     assertEquals(0,
         StreamSupport.stream(players.spliterator(), false).mapToDouble(p -> p.getPayoff()).sum(),
-        eps);
+        tol);
   }
 
   @Test
@@ -137,7 +139,7 @@ public class IntegrationTest {
     assertEquals(0,
         StreamSupport.stream(observation.getAsJsonArray("players").spliterator(), false)
             .mapToDouble(p -> p.getAsJsonObject().getAsJsonPrimitive("payoff").getAsDouble()).sum(),
-        eps);
+        tol);
     for (JsonElement player : observation.getAsJsonArray("players"))
       assertFalse(player.getAsJsonObject().has("features"));
   }
@@ -170,7 +172,7 @@ public class IntegrationTest {
     assertEquals(0,
         StreamSupport.stream(observation.getAsJsonArray("players").spliterator(), false)
             .mapToDouble(p -> p.getAsJsonObject().getAsJsonPrimitive("payoff").getAsDouble()).sum(),
-        eps);
+        tol);
     for (JsonElement player : observation.getAsJsonArray("players"))
       assertFalse(player.getAsJsonObject().has("features"));
   }
@@ -201,7 +203,7 @@ public class IntegrationTest {
     assertEquals(0,
         StreamSupport.stream(observation.getAsJsonArray("players").spliterator(), false)
             .mapToDouble(p -> p.getAsJsonObject().getAsJsonPrimitive("payoff").getAsDouble()).sum(),
-        eps);
+        tol);
     for (JsonElement player : observation.getAsJsonArray("players"))
       assertFalse(player.getAsJsonObject().has("features"));
   }
@@ -234,7 +236,7 @@ public class IntegrationTest {
     assertEquals(0,
         StreamSupport.stream(observation.getAsJsonArray("players").spliterator(), false)
             .mapToDouble(p -> p.getAsJsonObject().getAsJsonPrimitive("payoff").getAsDouble()).sum(),
-        eps);
+        tol);
     for (JsonElement player : observation.getAsJsonArray("players"))
       assertTrue(player.getAsJsonObject().has("features"));
   }

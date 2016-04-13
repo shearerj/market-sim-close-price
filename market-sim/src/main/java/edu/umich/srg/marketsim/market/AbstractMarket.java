@@ -111,7 +111,7 @@ abstract class AbstractMarket implements Market, Serializable {
   @Override
   public Iterable<Entry<Agent, AgentInfo>> getAgentInfo() {
     return Iterables.transform(views, v -> Maps.<Agent, AgentInfo>immutableEntry(v.getAgent(),
-        ImmutableAgentInfo.of(v.getProfit(), v.getHoldings())));
+        ImmutableAgentInfo.of(v.getProfit(), v.getHoldings(), v.getSubmissions())));
   }
 
   @Override
@@ -149,7 +149,7 @@ abstract class AbstractMarket implements Market, Serializable {
     return "CDA " + Integer.toString(System.identityHashCode(this), 36).toUpperCase();
   }
 
-  abstract class AbstractMarketView extends SimpleMarketView implements Serializable {
+  abstract class AbstractMarketView implements MarketView, Serializable {
 
     abstract void setQuote(Quote quote);
 
@@ -174,6 +174,7 @@ abstract class AbstractMarket implements Market, Serializable {
     private double profit;
     private double observedProfit;
     private int holdings;
+    private int submissions;
     private int observedHoldings;
     private Set<OrderRecord> observedOrders;
     private final BiMap<OrderRecord, Order<Price>> recordMap;
@@ -185,6 +186,7 @@ abstract class AbstractMarket implements Market, Serializable {
       this.profit = 0;
       this.observedProfit = 0;
       this.holdings = 0;
+      this.submissions = 0;
       this.observedHoldings = 0;
       this.observedOrders = new HashSet<>();
       this.recordMap = HashBiMap.create();
@@ -217,6 +219,7 @@ abstract class AbstractMarket implements Market, Serializable {
 
       AbstractMarket.this.sim.scheduleIn(latency, () -> {
         Order<Price> order = AbstractMarket.this.submitOrder(this, buyOrSell, price, quantity);
+        submissions += quantity;
         recordMap.put(record, order);
 
         AbstractMarket.this.sim.scheduleIn(latency, () -> agent.notifyOrderSubmitted(record));
@@ -279,6 +282,11 @@ abstract class AbstractMarket implements Market, Serializable {
     }
 
     @Override
+    public int getSubmissions() {
+      return submissions;
+    }
+
+    @Override
     public Set<OrderRecord> getActiveOrders() {
       return Collections.unmodifiableSet(observedOrders);
     }
@@ -328,6 +336,7 @@ abstract class AbstractMarket implements Market, Serializable {
     private Quote quote;
     private final Agent agent;
     private int holdings;
+    private int submissions;
     private double profit;
     private final BiMap<OrderRecord, Order<Price>> recordMap;
 
@@ -337,6 +346,7 @@ abstract class AbstractMarket implements Market, Serializable {
       this.quote = Quote.empty();
       this.agent = agent;
       this.holdings = 0;
+      this.submissions = 0;
       this.profit = 0;
       this.recordMap = HashBiMap.create();
       this.submittedOrder = null;
@@ -368,6 +378,7 @@ abstract class AbstractMarket implements Market, Serializable {
       Order<Price> order = AbstractMarket.this.submitOrder(this, buyOrSell, price, quantity);
       submittedOrder = null;
 
+      submissions += quantity;
       if (order.getQuantity() != 0) {
         recordMap.put(record, order);
       }
@@ -415,6 +426,11 @@ abstract class AbstractMarket implements Market, Serializable {
     @Override
     int getTrueHoldings() {
       return holdings;
+    }
+
+    @Override
+    public int getSubmissions() {
+      return submissions;
     }
 
     @Override

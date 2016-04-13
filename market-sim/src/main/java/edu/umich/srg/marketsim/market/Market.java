@@ -28,7 +28,9 @@ public interface Market {
 
     void withdrawOrder(OrderRecord record, int quantity);
 
-    void withdrawOrder(OrderRecord record);
+    default void withdrawOrder(OrderRecord record) {
+      withdrawOrder(record, record.getQuantity());
+    }
 
     Quote getQuote();
 
@@ -38,15 +40,9 @@ public interface Market {
 
     int getHoldings();
 
+    int getSubmissions();
+
     // TODO Add last transaction price, maybe notification
-
-  }
-
-  abstract class SimpleMarketView implements MarketView {
-
-    public void withdrawOrder(OrderRecord record) {
-      withdrawOrder(record, record.getQuantity());
-    }
 
   }
 
@@ -56,26 +52,30 @@ public interface Market {
 
     int getHoldings();
 
+    int getSubmissions();
+
   }
 
   class ImmutableAgentInfo implements AgentInfo, Serializable {
 
-    private static final ImmutableAgentInfo empty = new ImmutableAgentInfo(0, 0);
+    private static final ImmutableAgentInfo empty = new ImmutableAgentInfo(0, 0, 0);
 
     private final double profit;
     private final int holdings;
+    private final int submissions;
 
-    private ImmutableAgentInfo(double profit, int holdings) {
+    private ImmutableAgentInfo(double profit, int holdings, int submissions) {
       this.profit = profit;
       this.holdings = holdings;
+      this.submissions = submissions;
     }
 
     public static ImmutableAgentInfo empty() {
       return empty;
     }
 
-    public static ImmutableAgentInfo of(double profit, int holdings) {
-      return new ImmutableAgentInfo(profit, holdings);
+    public static ImmutableAgentInfo of(double profit, int holdings, int submissions) {
+      return new ImmutableAgentInfo(profit, holdings, submissions);
     }
 
     @Override
@@ -86,6 +86,11 @@ public interface Market {
     @Override
     public int getHoldings() {
       return holdings;
+    }
+
+    @Override
+    public int getSubmissions() {
+      return submissions;
     }
 
     private static final long serialVersionUID = 1;

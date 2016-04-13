@@ -1,7 +1,14 @@
 package edu.umich.srg.marketsim;
 
+import static edu.umich.srg.fourheap.Order.OrderType.BUY;
+import static edu.umich.srg.fourheap.Order.OrderType.SELL;
+import static edu.umich.srg.testing.Asserts.assertCompletesIn;
+import static edu.umich.srg.testing.Asserts.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonObject;
 
 import org.junit.Rule;
@@ -24,6 +31,7 @@ import edu.umich.srg.marketsim.Keys.Rmax;
 import edu.umich.srg.marketsim.Keys.Rmin;
 import edu.umich.srg.marketsim.Keys.SimLength;
 import edu.umich.srg.marketsim.Keys.Thresh;
+import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.agent.NoiseAgent;
 import edu.umich.srg.marketsim.agent.ZirAgent;
 import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
@@ -31,19 +39,24 @@ import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.fundamental.GaussianMeanReverting;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
+import edu.umich.srg.marketsim.market.Market.AgentInfo;
+import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.privatevalue.PrivateValue;
 import edu.umich.srg.marketsim.privatevalue.PrivateValues;
 import edu.umich.srg.marketsim.testing.MockAgent;
 import edu.umich.srg.marketsim.testing.NullWriter;
-import edu.umich.srg.testing.Asserts;
 import edu.umich.srg.testing.Repeat;
 import edu.umich.srg.testing.RepeatRule;
 import edu.umich.srg.testing.TestBools;
 import edu.umich.srg.testing.TestInts;
 
+import java.io.StringWriter;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @RunWith(Theories.class)
 public class FeaturesTest {
@@ -67,7 +80,7 @@ public class FeaturesTest {
   @Rule
   public final RepeatRule repeatRule = new RepeatRule();
 
-  @Repeat(2)
+  @Repeat(10)
   @Theory
   public void simpleRandomTest(@TestInts({10}) int numAgents,
       @TestBools({false, true}) boolean intermediate) {
@@ -86,11 +99,28 @@ public class FeaturesTest {
     sim.executeUntil(TimeStamp.of(spec.get(SimLength.class)));
     JsonObject features = sim.computeFeatures();
 
+    double surplus = features.get("total_surplus").getAsDouble();
     double maxSurplus = features.get("max_surplus").getAsDouble();
-    double totalSurplus =
-        features.get("total_surplus").getAsDouble() + features.get("im_surplus_loss").getAsDouble()
-            + features.get("em_surplus_loss").getAsDouble();
-    assertEquals(maxSurplus, totalSurplus, tol);
+    double imSurplusLoss = features.get("im_surplus_loss").getAsDouble();
+    double emSurplusLoss = features.get("em_surplus_loss").getAsDouble();
+    double maxSurplusSubLim = features.get("max_surplus_sublim").getAsDouble();
+    double imSurplusLossSubLim = features.get("im_surplus_loss_sublim").getAsDouble();
+    double emSurplusLossSubLim = features.get("em_surplus_loss_sublim").getAsDouble();
+
+    // All of these should already be tested by asserts, but are included for completeness / in case
+    // someone doesn't turn on asserts
+    // Assert that surplus is nonnegative
+    assertTrue(maxSurplus >= 0, "max surplus negative %f", maxSurplus);
+    assertTrue(maxSurplusSubLim >= 0, "submission constrained max surplus negative %f",
+        maxSurplusSubLim);
+    // Assert that max surpluses are greater than realized surplus
+    assertTrue(surplus <= maxSurplus);
+    assertTrue(surplus <= maxSurplusSubLim);
+    // Assert that max surplus - losses = surplus
+    assertEquals(surplus, maxSurplus - imSurplusLoss - emSurplusLoss, tol);
+    assertEquals(surplus, maxSurplusSubLim - imSurplusLossSubLim - emSurplusLossSubLim, tol);
+    // Assert that restricting by submissions only lowers surplus
+    assertTrue(maxSurplusSubLim <= maxSurplus);
   }
 
   /** Test that intermediary improves surplus. */
@@ -129,7 +159,7 @@ public class FeaturesTest {
    */
   @Test
   public void infiniteTradeTest() throws ExecutionException, InterruptedException {
-    Asserts.assertCompletesIn(() -> {
+    assertCompletesIn(() -> {
       MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), log, rand);
       // Buyer
       sim.addAgent(MockAgent.builder()
@@ -143,6 +173,116 @@ public class FeaturesTest {
       double maxSurplus = sim.computeFeatures().get("max_surplus").getAsDouble();
       assertEquals(2, maxSurplus, tol);
     } , 5, TimeUnit.SECONDS);
+  }
+
+  /** Test that submissions is accurately counted. */
+  @Test
+  public void submissionsTest() {
+    StringWriter logData = new StringWriter();
+    Log log = Log.create(Level.DEBUG, logData, l -> l + ") ");
+
+    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), log, rand);
+    Market cda = sim.addMarket(CdaMarket.create(sim));
+
+    // Buy 2 @ 200
+    sim.addAgent(new MockAgent() {
+      final MarketView view = cda.getView(this, TimeStamp.ZERO);
+
+      @Override
+      public void initilaize() {
+        sim.scheduleIn(TimeStamp.of(1), () -> {
+          view.submitOrder(BUY, Price.of(200), 2);
+        });
+      }
+    });
+
+    // Sell 1 @ 100
+    sim.addAgent(new MockAgent() {
+      final MarketView view = cda.getView(this, TimeStamp.ZERO);
+
+      @Override
+      public void initilaize() {
+        sim.scheduleIn(TimeStamp.of(1), () -> {
+          view.submitOrder(SELL, Price.of(100), 1);
+        });
+      }
+    });
+
+    sim.initialize();
+    sim.executeUntil(TimeStamp.of(2));
+
+    log.flush();
+
+    assertFalse(logData.toString().isEmpty());
+
+    Map<Agent, ? extends AgentInfo> payoffs = sim.getAgentPayoffs();
+    assertEquals(2, payoffs.size());
+    assertEquals(0, payoffs.values().stream().mapToDouble(AgentInfo::getProfit).sum(), tol);
+    Set<Integer> holdings = payoffs.values().stream().mapToInt(AgentInfo::getHoldings).boxed()
+        .collect(Collectors.toSet());
+    assertEquals(ImmutableSet.of(-1, 1), holdings);
+    Set<Integer> submissions = payoffs.values().stream().mapToInt(AgentInfo::getSubmissions).boxed()
+        .collect(Collectors.toSet());
+    assertEquals(ImmutableSet.of(1, 2), submissions);
+  }
+
+  @Test
+  public void noTradeTest() {
+    StringWriter logData = new StringWriter();
+    Log log = Log.create(Level.DEBUG, logData, l -> l + ") ");
+
+    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), log, rand);
+    Market cda = sim.addMarket(CdaMarket.create(sim));
+
+    // Buyer willing to buy at 5
+    sim.addAgent(new MockAgent() {
+      final MarketView view = cda.getView(this, TimeStamp.ZERO);
+      final PrivateValue pv = PrivateValues.fromMarginalBuys(new double[] {100, 5});
+
+      @Override
+      public void initilaize() {
+        sim.scheduleIn(TimeStamp.of(1), () -> {
+          view.submitOrder(BUY, Price.of(200), 2);
+        });
+      }
+
+      @Override
+      public double payoffForPosition(int position) {
+        return pv.valueAtPosition(position);
+      }
+    });
+
+    // Seller willing to sell at 10
+    sim.addAgent(new MockAgent() {
+      final MarketView view = cda.getView(this, TimeStamp.ZERO);
+      final PrivateValue pv = PrivateValues.fromMarginalBuys(new double[] {10, -100});
+
+      @Override
+      public void initilaize() {
+        sim.scheduleIn(TimeStamp.of(1), () -> {
+          view.submitOrder(SELL, Price.of(100), 1);
+        });
+      }
+
+      @Override
+      public double payoffForPosition(int position) {
+        return pv.valueAtPosition(position);
+      }
+    });
+
+    sim.initialize();
+    sim.executeUntil(TimeStamp.of(2));
+
+    log.flush();
+    JsonObject features = sim.computeFeatures();
+    double surplus = features.get("total_surplus").getAsDouble();
+    double maxSurplus = features.get("max_surplus").getAsDouble();
+    double imSurplusLoss = features.get("im_surplus_loss").getAsDouble();
+    double emSurplusLoss = features.get("em_surplus_loss").getAsDouble();
+
+    // Verify that max surplus is 0
+    assertEquals(0, maxSurplus, tol);
+    assertEquals(surplus, maxSurplus - imSurplusLoss - emSurplusLoss, tol);
   }
 
 }

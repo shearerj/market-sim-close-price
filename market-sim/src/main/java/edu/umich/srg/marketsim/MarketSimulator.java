@@ -26,7 +26,7 @@ public class MarketSimulator implements Sim {
   private final Features features;
   private final EventQueue eventQueue;
 
-  private Map<Agent, AgentResult> agentPayoffs;
+  private Map<Agent, ? extends AgentInfo> agentPayoffs;
 
   // FIXME Still need SIP
 
@@ -85,25 +85,27 @@ public class MarketSimulator implements Sim {
   }
 
   /** Get the payoffs of every agent in the simuation. */
-  public Map<Agent, AgentResult> getAgentPayoffs() {
+  public Map<Agent, ? extends AgentInfo> getAgentPayoffs() {
     if (agentPayoffs == null) {
       // Get total agent holdings and profit according to all markets
-      Map<Agent, TempAgentInfo> payoffs = Maps.toMap(agents, a -> new TempAgentInfo());
+      Map<Agent, SimAgentInfo> payoffs = Maps.toMap(agents, a -> new SimAgentInfo());
+      agentPayoffs = payoffs;
+
       for (Market market : markets) {
         for (Entry<Agent, AgentInfo> e : market.getAgentInfo()) {
-          TempAgentInfo info = payoffs.get(e.getKey());
+          SimAgentInfo info = payoffs.get(e.getKey());
           info.holdings += e.getValue().getHoldings();
           info.profit += e.getValue().getProfit();
+          info.submissions += e.getValue().getSubmissions();
         }
       }
 
       // Get current fundamental price
       double fundamentalValue = fundamental.getValueAt(getCurrentTime()).doubleValue();
-
-      // Add everything up
-      agentPayoffs = Maps.transformEntries(payoffs, (agent, info) -> new AgentResult(
-          info.profit + info.holdings * fundamentalValue + agent.payoffForPosition(info.holdings),
-          info.holdings));
+      for (Entry<Agent, SimAgentInfo> e : payoffs.entrySet()) {
+        e.getValue().profit += e.getValue().holdings * fundamentalValue
+            + e.getKey().payoffForPosition(e.getValue().holdings);
+      }
     }
     return agentPayoffs;
 
@@ -139,29 +141,32 @@ public class MarketSimulator implements Sim {
     features.accept(name, value);
   }
 
-  private static class TempAgentInfo {
+  private static class SimAgentInfo implements AgentInfo {
+    private double profit;
+    private int holdings;
+    private int submissions;
 
-    private double profit = 0;
-    private int holdings = 0;
-
-  }
-
-  public static class AgentResult {
-    private final double payoff;
-    private final int holdings;
-
-    private AgentResult(double payoff, int holdings) {
-      this.payoff = payoff;
-      this.holdings = holdings;
+    private SimAgentInfo() {
+      this.profit = 0;
+      this.holdings = 0;
+      this.submissions = 0;
     }
 
-    public double getPayoff() {
-      return payoff;
+    @Override
+    public double getProfit() {
+      return profit;
     }
 
+    @Override
     public int getHoldings() {
       return holdings;
     }
+
+    @Override
+    public int getSubmissions() {
+      return submissions;
+    }
+
   }
 
 }
