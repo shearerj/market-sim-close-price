@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.collect.Multiset.Entry;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.PrimitiveIterator.OfDouble;
@@ -44,6 +45,10 @@ public class SummStats implements DoubleConsumer, Consumer<Entry<? extends Numbe
 
   public static SummStats over(Collection<? extends Entry<? extends Number>> data) {
     return data.stream().collect(SummStats::empty, SummStats::accept, SummStats::combine);
+  }
+
+  public static SummStats over(double... data) {
+    return over(Arrays.stream(data));
   }
 
   @Override

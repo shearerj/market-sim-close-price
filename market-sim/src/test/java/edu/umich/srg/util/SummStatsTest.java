@@ -13,7 +13,7 @@ import java.util.Random;
 import java.util.function.DoubleConsumer;
 import java.util.stream.DoubleStream;
 
-public class SumStatsTest {
+public class SummStatsTest {
 
   private static final Random rand = new Random();
   private static final double eps = 1e-8;

@@ -11,4 +11,4 @@ set -euf -o pipefail
 DIR="$(dirname "$0")"
 
 # Execution
-jq -f "$DIR/jq/expand_strats.jq" | java -Xms1G -Xmx4G -jar "$DIR/target/marketsim-4.0.0-jar-with-dependencies.jar" $@
+java -Xms1G -Xmx4G -jar "$DIR/target/marketsim-4.0.0-jar-with-dependencies.jar" $@

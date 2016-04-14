@@ -22,15 +22,9 @@ if [[ "$(hostname)" == *'arc-ts.umich.edu' ]]; then
 fi
 
 # This is the number of observations to condense into one observation
-NUMSIMS="$(jq '.configuration.numSims // 1000 | tonumber' "$1/simulation_spec.json")"
+SIMS_PER_OBS="$(jq '.configuration.numSims // 1000 | tonumber' "$1/simulation_spec.json")"
 
 # Execution
-java -Xms1G -Xmx4G -jar "$DIR/target/marketsim-4.0.0-jar-with-dependencies.jar" --egta -s <(jq 'del(.configuration.numSims)' "$1/simulation_spec.json") "$(($NUMSIMS * $2))" \
-    | sed -e "1~${NUMSIMS}s#^#[#" -e "0~${NUMSIMS}"'s#$#]#' -e "0~${NUMSIMS}!"'s#$#,#' \
-    | jq -c -f "$DIR/jq/merge_payoffs.jq" \
+java -Xms1G -Xmx4G -jar "$DIR/target/marketsim-4.0.0-jar-with-dependencies.jar" --no-features --jobs 1 --sims-per-obs "$SIMS_PER_OBS" --spec <(< "$1/simulation_spec.json" jq 'del(.configuration.numSims)' | jq -f "$DIR/jq/reduce_strats.jq") "$2" \
+    | jq -c . \
     | split -a4 --additional-suffix=.json -l 1 - "$1/observation_"
-
-# `sed` and `jq` are what do the numsims aggregation. `sed` is used to turn
-# each set of NUMSIMS lines into one json list. This is then passed into jq
-# which does the aggregation, and then split, which creates the files. This
-# allows the aggregation to be done in parallel.

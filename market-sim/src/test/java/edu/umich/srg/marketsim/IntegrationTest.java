@@ -14,12 +14,9 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.umich.srg.egtaonline.Observation;
@@ -41,11 +38,13 @@ import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.AgentInfo;
+import edu.umich.srg.util.SummStats;
 
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
@@ -112,7 +111,7 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
 
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, true, keyPrefix,
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, true, keyPrefix,
         keyCaseFormat);
 
     assertFalse(obsData.toString().isEmpty());
@@ -129,6 +128,10 @@ public class IntegrationTest {
       assertFalse(player.getAsJsonObject().has("features"));
   }
 
+  /**
+   * Test that the the multi job pipeline does the correct thing. This is only run with one
+   * observation, so the multiple threads don't actually do anything.
+   */
   @Test
   public void multiThreadEgtaTest() {
     int numAgents = 10;
@@ -144,40 +147,9 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
 
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 2, true, keyPrefix,
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 2, true, keyPrefix,
         keyCaseFormat);
 
-    assertFalse(obsData.toString().isEmpty());
-
-    JsonObject observation = gson.fromJson(obsData.toString(), JsonObject.class);
-    assertFalse(observation.has("features"));
-    assertTrue(observation.has("players"));
-    assertEquals(10, observation.getAsJsonArray("players").size());
-    assertEquals(0,
-        StreamSupport.stream(observation.getAsJsonArray("players").spliterator(), false)
-            .mapToDouble(p -> p.getAsJsonObject().getAsJsonPrimitive("payoff").getAsDouble()).sum(),
-        tol);
-    for (JsonElement player : observation.getAsJsonArray("players"))
-      assertFalse(player.getAsJsonObject().has("features"));
-  }
-
-  @Ignore // TODO No good way to test lack of features
-  @Test
-  public void sparseFeatureTest() {
-    int numAgents = 10;
-    StringWriter logData = new StringWriter(), obsData = new StringWriter();
-
-    Multiset<RoleStrat> assignment = HashMultiset.create(1);
-    assignment.add(RoleStrat.of("role", "noop"), numAgents);
-    Spec configuration = Spec.fromPairs(Markets.class, ImmutableList.of("cda"));
-    SimSpec spec = SimSpec.create(assignment, configuration);
-    Reader specReader = toReader(spec);
-
-
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, false, keyPrefix,
-        keyCaseFormat);
-
-    assertTrue(logData.toString().isEmpty());
     assertFalse(obsData.toString().isEmpty());
 
     JsonObject observation = gson.fromJson(obsData.toString(), JsonObject.class);
@@ -207,7 +179,7 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
 
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, false, keyPrefix,
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 1, 1, false, keyPrefix,
         keyCaseFormat);
 
     assertFalse(obsData.toString().isEmpty());
@@ -228,8 +200,6 @@ public class IntegrationTest {
    * Tests to see if identical simulations with the same random seed produce the same result. We
    * can't arbitrarily order the agents, because different entry orders in the event queue will
    * produce different scheduling, and hence, slightly different results.
-   * 
-   * This test is also run 10 times with two threads so that it will detect race conditions.
    */
   @Test
   public void identicalRandomTest() {
@@ -251,11 +221,10 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
     // Run the simulation once
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 2, false, keyPrefix,
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false, keyPrefix,
         keyCaseFormat);
 
     // Save the results
-    // Trim because gson complains about trailing newline
     Iterator<JsonObject> obs1s = Arrays.stream(obsData.toString().split("\n"))
         .map(line -> gson.fromJson(line, JsonObject.class)).iterator();
 
@@ -265,11 +234,10 @@ public class IntegrationTest {
 
 
     // Run the simulation again
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 3, false, keyPrefix,
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false, keyPrefix,
         keyCaseFormat);
 
     // Save the results
-    // Trim because gson complains about trailing newline
     Iterator<JsonObject> obs2s = Arrays.stream(obsData.toString().split("\n"))
         .map(line -> gson.fromJson(line, JsonObject.class)).iterator();
 
@@ -295,7 +263,134 @@ public class IntegrationTest {
     assertFalse("Simulation 2 had more observations", obs2s.hasNext());
   }
 
-  // TODO Test that verifies agents inherit specifications from configuration
+  /** Tests that num jobs doesn't change order of observations. */
+  @Test
+  public void raceConditionTest() {
+    int numAgentAs = 10, numAgentBs = 5;
+    long seed = rand.nextLong();
+
+    StringWriter obsData = new StringWriter();
+
+    Spec aAgentSpec = Spec.fromPairs(ArrivalRate.class, 0.5);
+    Spec bAgentSpec = Spec.fromPairs(ArrivalRate.class, 0.8);
+    Spec configuration = Spec.builder().put(SimLength.class, 10l)
+        .put(Markets.class, ImmutableList.of("cda")).put(FundamentalMeanReversion.class, 0d)
+        .put(FundamentalShockVar.class, 0d).put(RandomSeed.class, seed).build();
+
+    Multiset<RoleStrat> assignment = ImmutableMultiset.<RoleStrat>builder()
+        .addCopies(RoleStrat.of("role", toStratString("noise", aAgentSpec)), numAgentAs)
+        .addCopies(RoleStrat.of("role", toStratString("noise", bAgentSpec)), numAgentBs).build();
+    SimSpec spec = SimSpec.create(assignment, configuration);
+    Reader specReader = toReader(spec);
+
+    // Run the simulation once with one job
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, false, keyPrefix,
+        keyCaseFormat);
+
+    // Save the results
+    Iterator<JsonObject> obs1s = Arrays.stream(obsData.toString().split("\n"))
+        .map(line -> gson.fromJson(line, JsonObject.class)).iterator();
+
+    // Reset
+    obsData = new StringWriter();
+    specReader = toReader(spec);
+
+
+    // Run the simulation again with two jobs
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 2, false, keyPrefix,
+        keyCaseFormat);
+
+    // Save the results
+    Iterator<JsonObject> obs2s = Arrays.stream(obsData.toString().split("\n"))
+        .map(line -> gson.fromJson(line, JsonObject.class)).iterator();
+
+    // Verify identical output for players
+    // If this fails, that does't mean they weren't identical, but more care will need to be taken
+    // for the comparison
+    while (obs1s.hasNext() && obs2s.hasNext()) {
+      JsonObject obs1 = obs1s.next();
+      JsonObject obs2 = obs2s.next();
+
+      assertEquals(obs1.get("players"), obs2.get("players"));
+
+      JsonObject obs1Features = obs1.get("features").getAsJsonObject();
+      JsonObject obs2Features = obs2.get("features").getAsJsonObject();
+      JsonObject obs1Market = removeMarketFeatures(obs1Features);
+      JsonObject obs2Market = removeMarketFeatures(obs2Features);
+
+      assertEquals(obs1Features, obs2Features);
+      assertEquals(obs1Market, obs2Market);
+    }
+
+    assertFalse("Simulation 1 had more observations", obs1s.hasNext());
+    assertFalse("Simulation 2 had more observations", obs2s.hasNext());
+  }
+
+  /** Tests that simsPerObs appropriately aggregates information. */
+  @Test
+  public void simsPerObsTest() {
+    int numAgentAs = 10, numAgentBs = 5;
+    long seed = rand.nextLong();
+
+    StringWriter obsData = new StringWriter();
+
+    Spec aAgentSpec = Spec.fromPairs(ArrivalRate.class, 0.5);
+    Spec bAgentSpec = Spec.fromPairs(ArrivalRate.class, 0.8);
+    Spec configuration = Spec.builder().put(SimLength.class, 10l)
+        .put(Markets.class, ImmutableList.of("cda")).put(FundamentalMeanReversion.class, 0d)
+        .put(FundamentalShockVar.class, 0d).put(RandomSeed.class, seed).build();
+
+    Multiset<RoleStrat> assignment = ImmutableMultiset.<RoleStrat>builder()
+        .addCopies(RoleStrat.of("role", toStratString("noise", aAgentSpec)), numAgentAs)
+        .addCopies(RoleStrat.of("role", toStratString("noise", bAgentSpec)), numAgentBs).build();
+    SimSpec spec = SimSpec.create(assignment, configuration);
+    Reader specReader = toReader(spec);
+
+    // Run the simulation ten times
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, true, keyPrefix,
+        keyCaseFormat);
+
+    // Save the average payoff per role strategy, the only thing that can be guaranteed
+    Map<RoleStrat, SummStats> payoffs1 = new HashMap<>();
+    Arrays.stream(obsData.toString().split("\n")).map(line -> gson.fromJson(line, JsonObject.class))
+        .forEach(obs -> {
+          for (JsonElement p : obs.get("players").getAsJsonArray()) {
+            JsonObject player = p.getAsJsonObject();
+            payoffs1
+                .computeIfAbsent(RoleStrat.of(player.get("role").getAsString(),
+                    player.get("strategy").getAsString()), rs -> SummStats.empty())
+                .accept(player.get("payoff").getAsDouble());
+          }
+        });
+
+    // Reset
+    obsData = new StringWriter();
+    specReader = toReader(spec);
+
+
+    // Run the simulation again but only return one aggregate observation
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 10, 1, true, keyPrefix,
+        keyCaseFormat);
+
+    // Save the average payoff per role strategy, the only thing that can be guaranteed
+    Map<RoleStrat, SummStats> payoffs2 = new HashMap<>();
+    for (JsonElement p : gson.fromJson(obsData.toString(), JsonObject.class).get("players")
+        .getAsJsonArray()) {
+      JsonObject player = p.getAsJsonObject();
+      payoffs2.computeIfAbsent(
+          RoleStrat.of(player.get("role").getAsString(), player.get("strategy").getAsString()),
+          rs -> SummStats.empty()).accept(player.get("payoff").getAsDouble());
+    }
+
+    // Verify identical mean payoffs for role and strategy
+    for (Map.Entry<RoleStrat, SummStats> entry : payoffs1.entrySet()) {
+      assertEquals(entry.getValue().getAverage(), payoffs2.get(entry.getKey()).getAverage(),
+          tol * 1e9);
+      assertEquals(entry.getValue().getCount(), payoffs2.get(entry.getKey()).getCount() * 10);
+    }
+  }
+
+  // TODO Test that agents inherit specifications from configuration
 
   // TODO Test that invalid agent names throw exception
 
@@ -320,15 +415,13 @@ public class IntegrationTest {
 
     JsonObject assignment = new JsonObject();
     for (Entry<RoleStrat> entry : spec.assignment.entrySet()) {
-      JsonArray strategies;
-      if (assignment.has(entry.getElement().getRole())) {
-        strategies = assignment.getAsJsonArray(entry.getElement().getRole());
-      } else {
-        strategies = new JsonArray();
-        assignment.add(entry.getElement().getRole(), strategies);
+      String role = entry.getElement().getRole();
+      JsonElement strategies = assignment.get(role);
+      if (strategies == null) {
+        strategies = new JsonObject();
+        assignment.add(role, strategies);
       }
-      for (int i = 0; i < entry.getCount(); ++i)
-        strategies.add(new JsonPrimitive(entry.getElement().getStrategy()));
+      strategies.getAsJsonObject().addProperty(entry.getElement().getStrategy(), entry.getCount());
     }
     json.add("assignment", assignment);
 

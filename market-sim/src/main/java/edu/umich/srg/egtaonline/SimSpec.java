@@ -21,12 +21,13 @@ public class SimSpec {
     this.configuration = configuration;
   }
 
-  /** Read a symspec object from a reader. */
+  /** Read a SimSpec object from a reader. */
   public static SimSpec read(JsonObject obj, String classPrefix, CaseFormat keyCaseFormat) {
     ImmutableMultiset.Builder<RoleStrat> assignment = ImmutableMultiset.builder();
     for (Entry<String, JsonElement> role : obj.get("assignment").getAsJsonObject().entrySet()) {
-      for (JsonElement player : role.getValue().getAsJsonArray()) {
-        assignment.add(new RoleStrat(role.getKey(), player.getAsString()));
+      for (Entry<String, JsonElement> strategy : role.getValue().getAsJsonObject().entrySet()) {
+        assignment.addCopies(new RoleStrat(role.getKey(), strategy.getKey()),
+            strategy.getValue().getAsInt());
       }
     }
 

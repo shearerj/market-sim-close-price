@@ -2,9 +2,11 @@ package edu.umich.srg.egtaonline;
 
 import com.google.gson.JsonObject;
 
+import java.util.Collection;
+
 public interface Observation {
 
-  Iterable<? extends Player> getPlayers();
+  Collection<? extends Player> getPlayers();
 
   JsonObject getFeatures();
 

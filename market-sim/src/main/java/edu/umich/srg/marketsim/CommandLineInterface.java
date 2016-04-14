@@ -51,12 +51,12 @@ public class CommandLineInterface {
    * Run the market-sim simulation with a given simspec, log, and observation number. This is the
    * main entry point for executing the simulator from java.
    * 
-   * @param obsNum This is the unique observation number for one simulation, not the number of
+   * @param simNum This is the unique observation number for one simulation, not the number of
    *        observations to produce. This method returns a single observation.
    */
-  public static Observation simulate(SimSpec spec, int obsNum) {
+  public static Observation simulate(SimSpec spec, int simNum) {
     Spec configuration = spec.configuration.withDefault(Keys.DEFAULT_KEYS);
-    long seed = PositionalSeed.with(configuration.get(RandomSeed.class)).getSeed(obsNum);
+    long seed = PositionalSeed.with(configuration.get(RandomSeed.class)).getSeed(simNum);
     Random rand = new Random(seed);
 
     Fundamental fundamental = GaussianMeanReverting.create(new Random(rand.nextLong()),
@@ -82,7 +82,7 @@ public class CommandLineInterface {
     return new Observation() {
 
       @Override
-      public Iterable<? extends Player> getPlayers() {
+      public Collection<? extends Player> getPlayers() {
         return playerInfo;
       }
 
