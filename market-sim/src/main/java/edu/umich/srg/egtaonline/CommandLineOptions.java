@@ -1,9 +1,10 @@
 package edu.umich.srg.egtaonline;
 
-import com.github.rvesse.airline.Arguments;
-import com.github.rvesse.airline.Command;
 import com.github.rvesse.airline.HelpOption;
-import com.github.rvesse.airline.Option;
+import com.github.rvesse.airline.annotations.Arguments;
+import com.github.rvesse.airline.annotations.Command;
+import com.github.rvesse.airline.annotations.Option;
+import com.github.rvesse.airline.annotations.restrictions.Once;
 
 import javax.inject.Inject;
 
@@ -11,7 +12,7 @@ import javax.inject.Inject;
 public class CommandLineOptions {
 
   @Inject
-  public HelpOption help;
+  public HelpOption<?>help;
 
   @Option(name = {"-s", "--spec"}, title = "simulation-spec",
       description = "Path to simulation spec. (default: stdin)")
@@ -34,7 +35,8 @@ public class CommandLineOptions {
   @Option(name = "--no-features", description = "Don't compute features.")
   public boolean noFeatures = false;
 
-  @Arguments(title = "num-observations", arity = 1,
+  @Once
+  @Arguments(title = "num-observations",
       description = "The number of observations to gather from the simulation spec."
           + " If multiple simulation specs are passed in, this many observations"
           + " will be sampled for each. (default: 1)")
