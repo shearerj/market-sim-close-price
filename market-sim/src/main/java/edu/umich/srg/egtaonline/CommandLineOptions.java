@@ -12,7 +12,7 @@ import javax.inject.Inject;
 public class CommandLineOptions {
 
   @Inject
-  public HelpOption<?>help;
+  public HelpOption<?> help;
 
   @Option(name = {"-s", "--spec"}, title = "simulation-spec",
       description = "Path to simulation spec. (default: stdin)")

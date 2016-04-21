@@ -11,6 +11,7 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
 import com.google.gson.Gson;
@@ -38,16 +39,17 @@ import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.AgentInfo;
-import edu.umich.srg.util.SummStats;
 
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.DoubleSummaryStatistics;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class IntegrationTest {
@@ -347,47 +349,42 @@ public class IntegrationTest {
     Reader specReader = toReader(spec);
 
     // Run the simulation ten times
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 10, 1, 1, true, keyPrefix,
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 20, 1, 1, true, keyPrefix,
         keyCaseFormat);
 
     // Save the average payoff per role strategy, the only thing that can be guaranteed
-    Map<RoleStrat, SummStats> payoffs1 = new HashMap<>();
-    Arrays.stream(obsData.toString().split("\n")).map(line -> gson.fromJson(line, JsonObject.class))
-        .forEach(obs -> {
-          for (JsonElement p : obs.get("players").getAsJsonArray()) {
-            JsonObject player = p.getAsJsonObject();
-            payoffs1
-                .computeIfAbsent(RoleStrat.of(player.get("role").getAsString(),
-                    player.get("strategy").getAsString()), rs -> SummStats.empty())
-                .accept(player.get("payoff").getAsDouble());
-          }
-        });
+    List<Map<RoleStrat, DoubleSummaryStatistics>> payoffsNormal =
+        aggregateStringObservations(obsData.toString(), 10);
 
     // Reset
     obsData = new StringWriter();
     specReader = toReader(spec);
 
-
     // Run the simulation again but only return one aggregate observation
-    Runner.run(CommandLineInterface::simulate, specReader, obsData, 1, 10, 1, true, keyPrefix,
+    Runner.run(CommandLineInterface::simulate, specReader, obsData, 2, 10, 1, true, keyPrefix,
         keyCaseFormat);
 
-    // Save the average payoff per role strategy, the only thing that can be guaranteed
-    Map<RoleStrat, SummStats> payoffs2 = new HashMap<>();
-    for (JsonElement p : gson.fromJson(obsData.toString(), JsonObject.class).get("players")
-        .getAsJsonArray()) {
-      JsonObject player = p.getAsJsonObject();
-      payoffs2.computeIfAbsent(
-          RoleStrat.of(player.get("role").getAsString(), player.get("strategy").getAsString()),
-          rs -> SummStats.empty()).accept(player.get("payoff").getAsDouble());
-    }
+    List<Map<RoleStrat, DoubleSummaryStatistics>> payoffsObsPerSim =
+        aggregateStringObservations(obsData.toString(), 1);
 
     // Verify identical mean payoffs for role and strategy
-    for (Map.Entry<RoleStrat, SummStats> entry : payoffs1.entrySet()) {
-      assertEquals(entry.getValue().getAverage(), payoffs2.get(entry.getKey()).getAverage(),
-          tol * 1e9);
-      assertEquals(entry.getValue().getCount(), payoffs2.get(entry.getKey()).getCount() * 10);
+    Iterator<Map<RoleStrat, DoubleSummaryStatistics>> it1 = payoffsNormal.iterator();
+    Iterator<Map<RoleStrat, DoubleSummaryStatistics>> it2 = payoffsObsPerSim.iterator();
+    while (it1.hasNext() && it2.hasNext()) {
+      Map<RoleStrat, DoubleSummaryStatistics> m1 = it1.next();
+      Map<RoleStrat, DoubleSummaryStatistics> m2 = it2.next();
+
+      assertEquals("Both maps don't have the same keys", m1.keySet(), m2.keySet());
+      for (Map.Entry<RoleStrat, DoubleSummaryStatistics> entry : m1.entrySet()) {
+        assertEquals(entry.getValue().getAverage(), m2.get(entry.getKey()).getAverage(),
+            Math.max(Math.abs(tol * entry.getValue().getAverage()), tol));
+        assertEquals(entry.getValue().getCount(), m2.get(entry.getKey()).getCount() * 10);
+      }
     }
+
+    // Check that iterators are the same length
+    assertFalse(it1.hasNext());
+    assertFalse(it2.hasNext());
   }
 
   // TODO Test that agents inherit specifications from configuration
@@ -434,6 +431,26 @@ public class IntegrationTest {
     json.add("configuration", configuration);
 
     return new StringReader(json.toString());
+  }
+
+  private static List<Map<RoleStrat, DoubleSummaryStatistics>> aggregateStringObservations(
+      String observations, int perGroup) {
+    // Save the average payoff per role strategy, the only thing that can be guaranteed
+    return Lists
+        // Group by 10
+        .partition(Arrays.asList(observations.split("\n")), perGroup).stream()
+        // Aggregate each group of 10
+        .map(
+            // Turn all observations into a stream of player JsonObjects
+            obsStrings -> obsStrings.stream().map(line -> gson.fromJson(line, JsonObject.class))
+                .flatMap(obs -> StreamSupport
+                    .stream(obs.get("players").getAsJsonArray().spliterator(), false))
+                .map(JsonElement::getAsJsonObject)
+                // Collect into map to a double summary stats object
+                .collect(Collectors.groupingBy(
+                    p -> RoleStrat.of(p.get("role").getAsString(), p.get("strategy").getAsString()),
+                    Collectors.summarizingDouble(p -> p.get("payoff").getAsDouble()))))
+        .collect(Collectors.toList());
   }
 
 }
