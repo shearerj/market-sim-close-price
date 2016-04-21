@@ -11,6 +11,7 @@ import edu.umich.srg.egtaonline.spec.ParsableValue.LongValue;
 import edu.umich.srg.egtaonline.spec.ParsableValue.StringsValue;
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.Order.OrderType;
+import edu.umich.srg.marketsim.agent.StandardMarketAgent.OrderStyle;
 
 /**
  * This file contains all of the type safe keys used in Spec object for initializing agents and
@@ -87,6 +88,17 @@ public interface Keys {
 
   /** The minimum surplus an agent will demand. */
   class Rmin extends IntValue {
+  }
+
+  /** How agents should decide what side to pick. */
+  class Sides extends EnumValue<OrderStyle> {
+    public Sides() {
+      super(OrderStyle.class);
+    }
+  }
+  
+  /** How many orders per side an agent should submit. */
+  class SubmitDepth extends IntValue {
   }
 
   // -------------------------
@@ -268,6 +280,8 @@ public interface Keys {
       .put(FundamentalMean.class, 1e9) // Approximately half of Integer.MAX_VALUE
       .put(FundamentalShockProb.class, 1d) // Shocks disabled
 
+      .put(Sides.class, OrderStyle.RANDOM) // Submit orders randomly (legacy)
+      .put(SubmitDepth.class, 1) // Submit one order per arrival (legacy)
       .put(Thresh.class, 1d) // No threshold
       .build();
 

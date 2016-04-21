@@ -16,6 +16,11 @@ public interface Market {
 
   MarketView getView(Agent agent, TimeStamp latency);
 
+  /** Get zero latency view. */
+  default MarketView getView(Agent agent) {
+    return getView(agent, TimeStamp.ZERO);
+  }
+
   Iterable<Entry<Agent, AgentInfo>> getAgentInfo();
 
   JsonObject getFeatures(Fundamental fundamental);

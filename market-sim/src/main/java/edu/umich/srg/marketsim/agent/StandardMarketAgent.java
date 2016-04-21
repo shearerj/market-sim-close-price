@@ -1,5 +1,6 @@
 package edu.umich.srg.marketsim.agent;
 
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 
 import edu.umich.srg.distributions.Distribution;
@@ -13,6 +14,8 @@ import edu.umich.srg.marketsim.Keys.MaxPosition;
 import edu.umich.srg.marketsim.Keys.PrivateValueVar;
 import edu.umich.srg.marketsim.Keys.Rmax;
 import edu.umich.srg.marketsim.Keys.Rmin;
+import edu.umich.srg.marketsim.Keys.Sides;
+import edu.umich.srg.marketsim.Keys.SubmitDepth;
 import edu.umich.srg.marketsim.Keys.Thresh;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
@@ -23,12 +26,19 @@ import edu.umich.srg.marketsim.privatevalue.PrivateValue;
 import edu.umich.srg.marketsim.privatevalue.PrivateValues;
 import edu.umich.srg.marketsim.strategy.SurplusThreshold;
 
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Random;
+import java.util.Set;
 
-abstract class StandardMarketAgent implements Agent {
+public abstract class StandardMarketAgent implements Agent {
 
-  private static final Distribution<OrderType> orderTypeDistribution =
-      Uniform.over(OrderType.values());
+  public static enum OrderStyle {
+    RANDOM, BOTH
+  }
+
+  private static final Distribution<OrderType> randomOrder = Uniform.over(OrderType.values());
+  private static final Set<OrderType> allOrders = EnumSet.allOf(OrderType.class);
 
   protected final Sim sim;
   private final MarketView market;
@@ -38,6 +48,8 @@ abstract class StandardMarketAgent implements Agent {
   private final Random rand;
   private final Geometric arrivalDistribution;
   private final IntUniform shadingDistribution;
+  private final Supplier<Set<OrderType>> side;
+  private final int ordersPerSide;
 
   /** Standard constructor for ZIR agent. */
   public StandardMarketAgent(Sim sim, Market market, Spec spec, Random rand) {
@@ -49,6 +61,17 @@ abstract class StandardMarketAgent implements Agent {
         spec.get(PrivateValueVar.class));
     this.arrivalDistribution = Geometric.withSuccessProbability(spec.get(ArrivalRate.class));
     this.shadingDistribution = Uniform.closed(spec.get(Rmin.class), spec.get(Rmax.class));
+    switch (spec.get(Sides.class)) {
+      case RANDOM:
+        this.side = () -> Collections.singleton(randomOrder.sample(rand));
+        break;
+      case BOTH:
+        this.side = () -> allOrders;
+        break;
+      default:
+        throw new IllegalArgumentException("Sides was null");
+    }
+    this.ordersPerSide = spec.get(SubmitDepth.class);
     this.rand = rand;
   }
 
@@ -63,19 +86,24 @@ abstract class StandardMarketAgent implements Agent {
   protected void strategy() {
     ImmutableList.copyOf(market.getActiveOrders()).forEach(market::withdrawOrder);
 
-    OrderType type = orderTypeDistribution.sample(rand);
-    if (Math.abs(market.getHoldings() + type.sign()) <= maxPosition) {
+    Set<OrderType> sides = side.get();
+    double finalEstimate = getFinalFundamentalEstiamte();
+    double demandedSurplus = shadingDistribution.sample(rand);
 
-      double finalEstimate = getFinalFundamentalEstiamte();
-      double privateBenefit =
-          type.sign() * privateValue.valueForExchange(market.getHoldings(), type);
-      double demandedSurplus = shadingDistribution.sample(rand);
+    for (OrderType type : sides) {
+      for (int num = 0; num < ordersPerSide; num++) {
+        if (Math.abs(market.getHoldings() + (num + 1) * type.sign()) <= maxPosition) {
 
-      Price toSubmit = threshold.shadePrice(type, market.getQuote(), finalEstimate + privateBenefit,
-          demandedSurplus);
+          double privateBenefit = type.sign()
+              * privateValue.valueForExchange(market.getHoldings() + num * type.sign(), type);
 
-      if (toSubmit.longValue() > 0) {
-        market.submitOrder(type, toSubmit, 1);
+          Price toSubmit = threshold.shadePrice(type, market.getQuote(),
+              finalEstimate + privateBenefit, demandedSurplus);
+
+          if (toSubmit.longValue() > 0) {
+            market.submitOrder(type, toSubmit, 1);
+          }
+        }
       }
     }
 
