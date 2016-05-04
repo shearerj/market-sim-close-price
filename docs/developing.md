@@ -56,6 +56,17 @@ Typing `make help` will display information about all of them.
 
 To remove the syntax highlighting add `COLOR=cat` to any command invocation.
 
+
+Importing Into Eclipse
+----------------------
+
+1. Set your eclipse workspace to the root `market-sim` directory, i.e. if this file's path is `.../market-sim/docs/developing.md`, then then your eclipse workspace should be `.../market-sim`.
+2. Go to `File` > `Import...` > `Maven` > `Existing Maven Projects`.
+3. Click browse and select the nested market-sim directory, e.g. `.../market-sim/marketsim`.
+4. Click Finish, and the project should begin importing and be all setup.
+5. The unit tests can be run inside eclipse by right clicking `src/test/java` and then `Run As` > `JUnit Test`.
+
+
 Style
 -----
 
