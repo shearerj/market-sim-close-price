@@ -166,7 +166,7 @@ public class FeaturesTest {
       sim.initialize();
       double maxSurplus = sim.computeFeatures().get("max_surplus").getAsDouble();
       assertEquals(2, maxSurplus, tol);
-    } , 5, TimeUnit.SECONDS);
+    }, 5, TimeUnit.SECONDS);
   }
 
   /** Test that submissions is accurately counted. */

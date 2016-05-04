@@ -96,7 +96,7 @@ public interface Keys {
       super(OrderStyle.class);
     }
   }
-  
+
   /** How many orders per side an agent should submit. */
   class SubmitDepth extends IntValue {
   }

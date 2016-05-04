@@ -486,28 +486,23 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
               - 2 * temp4 * Math.pow(kappac, 2 * (timeA + timeB + end)) * temp2
               + temp20 * (temp14 - temp16))
           - 2 * temp8
-              * Math
-                  .pow(kappac,
-                      1 + temp3
-                          + 3 * timeB)
-              * temp10 * temp7 * temp30 * temp12
-          - 2 * temp8
               * Math.pow(kappac,
-                  temp3 + timeB
-                      + end)
-              * temp10 * temp7 * temp31 * temp12
+                  1 + temp3
+                      + 3 * timeB)
+              * temp10 * temp7 * temp30 * temp12
+          - 2 * temp8 * Math.pow(kappac, temp3 + timeB + end) * temp10 * temp7 * temp31 * temp12
           + 2 * fundamentalZero * temp2
               * (Math.pow(kappac, temp22 + end)
                   * (1 + timeB - temp1 - timeB * temp1 + temp19 + temp16 + timeA * temp2) * temp18
                   + temp37 * (temp19 + temp29 * (temp1 + temp4 * temp14 * temp2)) * temp18
                   + temp20 * (temp21 - temp23)
                       * (-(temp21 * mean) + temp24 * (-(kappac * mean) + temp21 * temp9 * temp12))
-              + Math.pow(kappac, temp22) * (-temp21 + temp23)
-                  * ((-1 - kappac + temp21 + temp23) * mean + price + kappac * price)
-              + Math.pow(kappac, timeA + timeB + temp5) * temp9
-                  * (Math.pow(kappac, 1 + timeA + temp15) * temp12 + temp21 * temp25
-                      + temp24 * (2 * temp4 * temp8 * temp21 * mean + kappac * temp12
-                          + temp14 * temp25)))
+                  + Math.pow(kappac, temp22) * (-temp21 + temp23)
+                      * ((-1 - kappac + temp21 + temp23) * mean + price + kappac * price)
+                  + Math.pow(kappac, timeA + timeB + temp5) * temp9
+                      * (Math.pow(kappac, 1 + timeA + temp15) * temp12 + temp21 * temp25
+                          + temp24 * (2 * temp4 * temp8 * temp21 * mean + kappac * temp12
+                              + temp14 * temp25)))
           + Math.pow(kappac, 2 * (timeA + end)) * temp35
           + temp27 * (temp36 + temp28 - temp1 * temp28 + temp33
               + temp6
@@ -524,13 +519,13 @@ public abstract class GaussianMeanReverting implements Fundamental, Serializable
                               * timeA)
                       * (2 * temp11 * temp2 * temp18 * mean + temp2 * temp28
                           + temp6 * (temp2 * temp32 + temp33) + shockVar)
-              - Math.pow(kappac, 2 + temp5) * temp35
-              + temp4 * temp14 * temp2
-                  * (temp36 - 2 * temp37 * temp2 * temp18 * mean + temp38
-                      - 2 * temp6 * temp2
-                          * (temp34 - 2 * fundamentalEnd * mean + 3 * temp28 - 2 * mean * price
-                              + Math.pow(price, 2))
-                      + temp33 + temp20 * (temp38 + shockVar))))
+                  - Math.pow(kappac, 2 + temp5) * temp35
+                  + temp4 * temp14 * temp2
+                      * (temp36 - 2 * temp37 * temp2 * temp18 * mean + temp38
+                          - 2 * temp6 * temp2
+                              * (temp34 - 2 * fundamentalEnd * mean + 3 * temp28 - 2 * mean * price
+                                  + Math.pow(price, 2))
+                          + temp33 + temp20 * (temp38 + shockVar))))
           / (temp4 * Math.pow(kappac, 2 * temp13) * Math.pow(temp2, 2) * Math.pow(temp7, 2));
     }
 

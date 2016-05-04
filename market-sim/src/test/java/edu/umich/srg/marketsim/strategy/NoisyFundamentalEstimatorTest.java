@@ -166,8 +166,9 @@ public class NoisyFundamentalEstimatorTest {
 
     for (int i = 0; i < times; ++i) {
       Fundamental fund = GaussianMeanReverting.create(rand, mean, meanReversion, shockVariance, 1);
-      NoisyFundamentalEstimator estimator = NoisyFundamentalEstimator.create(finalTime, mean,
-          meanReversion, shockVariance, observationVariance, 1),
+      NoisyFundamentalEstimator estimator =
+          NoisyFundamentalEstimator.create(finalTime, mean, meanReversion, shockVariance,
+              observationVariance, 1),
           baseline = NoisyFundamentalEstimator.create(finalTime, mean, meanReversion, shockVariance,
               observationVariance, 1);
 
