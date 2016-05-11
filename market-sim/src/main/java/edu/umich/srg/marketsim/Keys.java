@@ -55,6 +55,18 @@ public interface Keys {
   class FundamentalShockProb extends DoubleValue {
   }
 
+  // -------
+  // Markets
+  // -------
+
+  /** Whether the call market biases towards buyer or seller, 0 -> buyer price 1 -> seller price. */
+  class Pricing extends DoubleValue {
+  }
+
+  /** The clearing interval for a call market. */
+  class ClearInterval extends LongValue {
+  }
+
   // ------
   // Agents
   // ------
@@ -279,6 +291,8 @@ public interface Keys {
       .put(RandomSeed.class, System.nanoTime()) // Set seed from clock
       .put(FundamentalMean.class, 1e9) // Approximately half of Integer.MAX_VALUE
       .put(FundamentalShockProb.class, 1d) // Shocks disabled
+
+      .put(Pricing.class, 0.5) // Even call market
 
       .put(Sides.class, OrderStyle.RANDOM) // Submit orders randomly (legacy)
       .put(SubmitDepth.class, 1) // Submit one order per arrival (legacy)

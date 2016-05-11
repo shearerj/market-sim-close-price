@@ -15,6 +15,7 @@ import edu.umich.srg.marketsim.agent.SimpleMarketMaker;
 import edu.umich.srg.marketsim.agent.SimpleTrendFollower;
 import edu.umich.srg.marketsim.agent.ZirAgent;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
+import edu.umich.srg.marketsim.market.CallMarket;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
 
@@ -49,6 +50,7 @@ final class EntityBuilder {
   private static final Map<String, MarketCreator> marketNameMap =
       ImmutableMap.<String, MarketCreator>builder() //
           .put("cda", CdaMarket::createFromSpec) // CDA Market
+          .put("call", CallMarket::createFromSpec) // Call Market
           .build();
 
   interface AgentCreator {
