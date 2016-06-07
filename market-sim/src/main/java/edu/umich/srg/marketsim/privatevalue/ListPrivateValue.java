@@ -47,7 +47,7 @@ class ListPrivateValue implements PrivateValue {
   }
 
   ListPrivateValue(DoubleDistribution dist, int maxPosition, Random rand) {
-    this(DoubleStream.generate(() -> dist.sample(rand)).limit(2 * maxPosition).sorted().map(x -> -x)
+    this(DoubleStream.generate(() -> -dist.sample(rand)).limit(2 * maxPosition).sorted().map(x -> -x)
         .toArray(), maxPosition);
   }
 
