@@ -59,7 +59,7 @@ egta: jar
 	mkdir -p "$($@_TMP)/$($@_NAME)/script/jq"
 	ln -s "$(PWD)/$(def)" "$($@_TMP)/$($@_NAME)/defaults.json"
 	ln -s "$(PWD)/target/marketsim-4.0.0-jar-with-dependencies.jar" "$($@_TMP)/$($@_NAME)/script/target/"
-	ln -s "$(PWD)/jq/merge_payoffs.jq" "$($@_TMP)/$($@_NAME)/script/jq"
+	ln -s "$(PWD)/jq/reduce_strats.jq" "$($@_TMP)/$($@_NAME)/script/jq"
 	ln -s "$(PWD)/run-egta.sh" "$($@_TMP)/$($@_NAME)/script/batch"
 	cd $($@_TMP) && zip -r "$(PWD)/$($@_NAME).zip" "$($@_NAME)"
 	rm -rf "$($@_TMP)"
