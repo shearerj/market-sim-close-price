@@ -15,6 +15,11 @@ set -euf -o pipefail
 # Current directory
 DIR="$(dirname "$0")"
 
+# Check if on flux. If so add java 8 to path
+if [[ "$(hostname)" == *'arc-ts.umich.edu' ]]; then
+    export PATH="/nfs/wellman_ls/bin/:$PATH"
+fi
+
 # This is the number of observations to condense into one observation
 SIMS_PER_OBS="$(jq '.configuration.numSims // 1000 | tonumber' "$1/simulation_spec.json")"
 
