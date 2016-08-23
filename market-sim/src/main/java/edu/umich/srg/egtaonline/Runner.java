@@ -8,11 +8,9 @@ import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
 import com.google.gson.JsonStreamParser;
-import com.google.gson.reflect.TypeToken;
 
 import com.github.rvesse.airline.SingleCommand;
 
@@ -27,10 +25,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
-import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -48,8 +46,8 @@ public class Runner {
   private static final Charset charset = Charset.forName("UTF-8");
 
   /** Run an egta script with readers and writers. */
-  public static void run(BiFunction<SimSpec, Integer, Observation> sim, Iterable<SimSpec> specs,
-      Consumer<Observation> output, int numSims, int jobs) {
+  private static void run(BiFunction<SimSpec, Integer, Observation> sim, Iterable<JSpec> specs,
+      Consumer<JObs> output, int numSims, int jobs) {
     checkArgument(numSims > 0, "total number of simulations must be greater than 0 (%d)", numSims);
     checkArgument(jobs >= 0, "number of jobs must be nonegative (%d)", jobs);
 
@@ -72,7 +70,7 @@ public class Runner {
 
     boolean outputFeatures = simsPerObs == 1 && !noFeatures;
     SpecReader input = new SpecReader(specs, classPrefix, keyCaseFormat);
-    Consumer<Observation> output = createObsWriter(writer, simsPerObs, outputFeatures);
+    Consumer<JObs> output = createObsWriter(writer, simsPerObs, outputFeatures);
 
     run(sim, () -> input, output, numObs * simsPerObs, jobs);
 
@@ -102,7 +100,7 @@ public class Runner {
   }
 
   private static void multiThreadRun(BiFunction<SimSpec, Integer, Observation> sim,
-      Iterable<SimSpec> specs, Consumer<Observation> output, int numSims, int jobs) {
+      Iterable<JSpec> specs, Consumer<JObs> output, int numSims, int jobs) {
     try {
       /*
        * For unknown reasons (likely having to do with threads suppressing stderr, exceptions seem
@@ -117,14 +115,14 @@ public class Runner {
       AtomicInteger nextObsToWrite = new AtomicInteger(0);
       PriorityQueue<Result> pending = new PriorityQueue<>();
 
-      for (SimSpec spec : specs) {
+      for (JSpec spec : specs) {
         for (int i = 0; i < numSims; ++i) {
           final int simNum = obsNum;
           exec.submit(() -> {
             // What's executed for every desired observation
             try {
-              Observation obs = sim.apply(spec, simNum);
-              Result res = new Result(simNum, obs);
+              Observation obs = sim.apply(spec.spec, simNum);
+              Result res = new Result(simNum, obs, spec.raw);
 
               // Try to output everything from the queue
               synchronized (pending) {
@@ -154,12 +152,12 @@ public class Runner {
   }
 
   private static void singleThreadRun(BiFunction<SimSpec, Integer, Observation> sim,
-      Iterable<SimSpec> specs, Consumer<Observation> output, int numSims) {
+      Iterable<JSpec> specs, Consumer<JObs> output, int numSims) {
 
     int obsNum = 0;
-    for (SimSpec spec : specs) {
+    for (JSpec spec : specs) {
       for (int i = 0; i < numSims; ++i) {
-        output.accept(sim.apply(spec, obsNum));
+        output.accept(new JObs(spec.raw, sim.apply(spec.spec, obsNum)));
         ++obsNum;
       }
     }
@@ -185,11 +183,11 @@ public class Runner {
 
   private static class Result implements Comparable<Result> {
     private final int obsNum;
-    private final Observation obs;
+    private final JObs obs;
 
-    private Result(int obsNum, Observation obs) {
+    private Result(int obsNum, Observation obs, JsonObject raw) {
       this.obsNum = obsNum;
-      this.obs = obs;
+      this.obs = new JObs(raw, obs);
     }
 
     @Override
@@ -199,7 +197,27 @@ public class Runner {
 
   }
 
-  private static final class SpecReader implements Iterator<SimSpec> {
+  private static final class JSpec {
+    private final JsonObject raw;
+    private final SimSpec spec;
+
+    private JSpec(JsonObject raw, SimSpec spec) {
+      this.raw = raw;
+      this.spec = spec;
+    }
+  }
+
+  private static final class JObs {
+    private final JsonObject raw;
+    private final Observation obs;
+
+    private JObs(JsonObject raw, Observation obs) {
+      this.raw = raw;
+      this.obs = obs;
+    }
+  }
+
+  private static final class SpecReader implements Iterator<JSpec> {
     private final JsonStreamParser parser;
     private final String classPrefix;
     private final CaseFormat keyCaseFormat;
@@ -216,21 +234,22 @@ public class Runner {
     }
 
     @Override
-    public SimSpec next() {
-      return SimSpec.read(parser.next().getAsJsonObject(), classPrefix, keyCaseFormat);
+    public JSpec next() {
+      JsonObject raw = parser.next().getAsJsonObject();
+      return new JSpec(raw, SimSpec.read(raw, classPrefix, keyCaseFormat));
     }
   }
 
-  private static Consumer<Observation> createObsWriter(Writer output, int simsPerObs,
+  private static Consumer<JObs> createObsWriter(Writer output, int simsPerObs,
       boolean outputFeatures) {
-    GsonBuilder builder = new GsonBuilder().serializeSpecialFloatingPointValues();
-    if (simsPerObs == 1) {
-      Gson gson = builder
-          .registerTypeAdapter(Observation.class, new EgtaObservationSerializer(outputFeatures))
-          .registerTypeAdapter(Player.class, new EgtaPlayerSerializer(outputFeatures)).create();
-
+    if (simsPerObs == 1 && outputFeatures) {
+      // Output features one at a time
+      Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
       return obs -> {
-        gson.toJson(obs, Observation.class, output);
+        JsonObject base = obs.raw;
+        base.add("features", obs.obs.getFeatures());
+        base.add("players", serializePlayers(obs.obs.getPlayers(), true));
+        gson.toJson(base, output);
         try {
           output.append('\n');
         } catch (IOException e) {
@@ -238,21 +257,19 @@ public class Runner {
           System.exit(1);
         }
       };
-
     } else {
-      Type obsType = new TypeToken<Multimap<RoleStrat, SummStats>>() {}.getType();
-      Gson gson =
-          builder.registerTypeAdapter(obsType, new AggregateObservationSerializer()).create();
+      // Aggregate observation and don't output anything but payoffs
+      Gson gson = new Gson();
 
-      return new Consumer<Observation>() {
+      return new Consumer<JObs>() {
         Multimap<RoleStrat, SummStats> aggregates = null;
         int numProcessed = 0;
 
         @Override
-        public void accept(Observation obs) {
+        public void accept(JObs obs) {
           if (aggregates == null) {
             aggregates = ArrayListMultimap.create();
-            for (Player player : obs.getPlayers()) {
+            for (Player player : obs.obs.getPlayers()) {
               aggregates.put(RoleStrat.of(player.getRole(), player.getStrategy()),
                   SummStats.over(player.getPayoff()));
             }
@@ -260,7 +277,7 @@ public class Runner {
             // Iterator for each role strategy pair
             Map<RoleStrat, Iterator<SummStats>> next = aggregates.asMap().entrySet().stream()
                 .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().iterator()));
-            for (Player player : obs.getPlayers()) {
+            for (Player player : obs.obs.getPlayers()) {
               next.get(RoleStrat.of(player.getRole(), player.getStrategy())).next()
                   .accept(player.getPayoff());
             }
@@ -268,7 +285,9 @@ public class Runner {
           numProcessed++;
 
           if (numProcessed >= simsPerObs) {
-            gson.toJson(aggregates, obsType, output);
+            JsonObject base = new JsonObject();
+            base.add("players", serializeAggregatePlayers(aggregates));
+            gson.toJson(base, output);
             try {
               output.append('\n');
             } catch (IOException e) {
@@ -285,15 +304,10 @@ public class Runner {
 
   // Serializers
 
-  private static class EgtaPlayerSerializer implements JsonSerializer<Player> {
-    private final boolean serializeFeatures;
-
-    private EgtaPlayerSerializer(boolean serializeFeatures) {
-      this.serializeFeatures = serializeFeatures;
-    }
-
-    @Override
-    public JsonObject serialize(Player player, Type type, JsonSerializationContext gson) {
+  private static JsonElement serializePlayers(Collection<? extends Player> players,
+      boolean serializeFeatures) {
+    JsonArray serializedPlayers = new JsonArray();
+    for (Player player : players) {
       JsonObject serializedPlayer = new JsonObject();
       serializedPlayer.addProperty("role", player.getRole());
       serializedPlayer.addProperty("strategy", player.getStrategy());
@@ -302,54 +316,21 @@ public class Runner {
       if (serializeFeatures && !(features = player.getFeatures()).entrySet().isEmpty()) {
         serializedPlayer.add("features", features);
       }
-      return serializedPlayer;
+      serializedPlayers.add(serializedPlayer);
     }
-
+    return serializedPlayers;
   }
 
-  private static class EgtaObservationSerializer implements JsonSerializer<Observation> {
-    private final boolean serializeFeatures;
-
-    private EgtaObservationSerializer(boolean serializeFeatures) {
-      this.serializeFeatures = serializeFeatures;
+  private static JsonElement serializeAggregatePlayers(Multimap<RoleStrat, SummStats> players) {
+    JsonArray serializedPlayers = new JsonArray();
+    for (Entry<RoleStrat, SummStats> player : players.entries()) {
+      JsonObject serializedPlayer = new JsonObject();
+      serializedPlayer.addProperty("role", player.getKey().getRole());
+      serializedPlayer.addProperty("strategy", player.getKey().getStrategy());
+      serializedPlayer.addProperty("payoff", player.getValue().getAverage());
+      serializedPlayers.add(serializedPlayer);
     }
-
-    @Override
-    public JsonObject serialize(Observation observation, Type type, JsonSerializationContext gson) {
-      JsonObject serializedObservation = new JsonObject();
-      JsonArray players = new JsonArray();
-      serializedObservation.add("players", players);
-      for (Player player : observation.getPlayers()) {
-        players.add(gson.serialize(player, Player.class));
-      }
-      JsonObject features;
-      if (serializeFeatures && !(features = observation.getFeatures()).entrySet().isEmpty()) {
-        serializedObservation.add("features", features);
-      }
-      return serializedObservation;
-    }
-
-  }
-
-  private static class AggregateObservationSerializer
-      implements JsonSerializer<Multimap<RoleStrat, SummStats>> {
-
-    @Override
-    public JsonObject serialize(Multimap<RoleStrat, SummStats> observation, Type type,
-        JsonSerializationContext gson) {
-      JsonObject serializedObservation = new JsonObject();
-      JsonArray players = new JsonArray();
-      serializedObservation.add("players", players);
-      for (Entry<RoleStrat, SummStats> player : observation.entries()) {
-        JsonObject serializedPlayer = new JsonObject();
-        serializedPlayer.addProperty("role", player.getKey().getRole());
-        serializedPlayer.addProperty("strategy", player.getKey().getStrategy());
-        serializedPlayer.addProperty("payoff", player.getValue().getAverage());
-        players.add(serializedPlayer);
-      }
-      return serializedObservation;
-    }
-
+    return serializedPlayers;
   }
 
 }
