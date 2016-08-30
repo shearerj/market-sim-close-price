@@ -28,7 +28,9 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -46,8 +48,9 @@ public class Runner {
   private static final Charset charset = Charset.forName("UTF-8");
 
   /** Run an egta script with readers and writers. */
-  private static void run(BiFunction<SimSpec, Integer, Observation> sim, Iterable<JSpec> specs,
-      Consumer<JObs> output, int numSims, int jobs) {
+  private static void run(BiFunction<SimSpec, Integer, Observation> sim,
+      Iterable<Entry<JsonObject, SimSpec>> specs, Consumer<Entry<JsonObject, Observation>> output,
+      int numSims, int jobs) {
     checkArgument(numSims > 0, "total number of simulations must be greater than 0 (%d)", numSims);
     checkArgument(jobs >= 0, "number of jobs must be nonegative (%d)", jobs);
 
@@ -70,7 +73,8 @@ public class Runner {
 
     boolean outputFeatures = simsPerObs == 1 && !noFeatures;
     SpecReader input = new SpecReader(specs, classPrefix, keyCaseFormat);
-    Consumer<JObs> output = createObsWriter(writer, simsPerObs, outputFeatures);
+    Consumer<Entry<JsonObject, Observation>> output =
+        createObsWriter(writer, simsPerObs, outputFeatures);
 
     run(sim, () -> input, output, numObs * simsPerObs, jobs);
 
@@ -100,7 +104,8 @@ public class Runner {
   }
 
   private static void multiThreadRun(BiFunction<SimSpec, Integer, Observation> sim,
-      Iterable<JSpec> specs, Consumer<JObs> output, int numSims, int jobs) {
+      Iterable<Entry<JsonObject, SimSpec>> specs, Consumer<Entry<JsonObject, Observation>> output,
+      int numSims, int jobs) {
     try {
       /*
        * For unknown reasons (likely having to do with threads suppressing stderr, exceptions seem
@@ -113,22 +118,25 @@ public class Runner {
       // We keep an ordered queue of finished observations that need to be written so that they come
       // out in order
       AtomicInteger nextObsToWrite = new AtomicInteger(0);
-      PriorityQueue<Result> pending = new PriorityQueue<>();
+      PriorityQueue<Entry<Integer, Entry<JsonObject, Observation>>> pending =
+          new PriorityQueue<>(Comparator.comparingInt(Entry::getKey));
 
-      for (JSpec spec : specs) {
+      for (Entry<JsonObject, SimSpec> spec : specs) {
         for (int i = 0; i < numSims; ++i) {
           final int simNum = obsNum;
           exec.submit(() -> {
             // What's executed for every desired observation
             try {
-              Observation obs = sim.apply(spec.spec, simNum);
-              Result res = new Result(simNum, obs, spec.raw);
+              Observation obs = sim.apply(spec.getValue(), simNum);
+              Entry<Integer, Entry<JsonObject, Observation>> res =
+                  new AbstractMap.SimpleImmutableEntry<>(simNum,
+                      new AbstractMap.SimpleImmutableEntry<>(spec.getKey(), obs));
 
               // Try to output everything from the queue
               synchronized (pending) {
                 pending.add(res);
-                while (!pending.isEmpty() && pending.peek().obsNum == nextObsToWrite.get()) {
-                  output.accept(pending.poll().obs);
+                while (!pending.isEmpty() && pending.peek().getKey() == nextObsToWrite.get()) {
+                  output.accept(pending.poll().getValue());
                   nextObsToWrite.incrementAndGet();
                 }
               }
@@ -152,12 +160,14 @@ public class Runner {
   }
 
   private static void singleThreadRun(BiFunction<SimSpec, Integer, Observation> sim,
-      Iterable<JSpec> specs, Consumer<JObs> output, int numSims) {
+      Iterable<Entry<JsonObject, SimSpec>> specs, Consumer<Entry<JsonObject, Observation>> output,
+      int numSims) {
 
     int obsNum = 0;
-    for (JSpec spec : specs) {
+    for (Entry<JsonObject, SimSpec> spec : specs) {
       for (int i = 0; i < numSims; ++i) {
-        output.accept(new JObs(spec.raw, sim.apply(spec.spec, obsNum)));
+        output.accept(new AbstractMap.SimpleImmutableEntry<>(spec.getKey(),
+            sim.apply(spec.getValue(), obsNum)));
         ++obsNum;
       }
     }
@@ -180,44 +190,7 @@ public class Runner {
   }
 
   // Run result, necessary for synchronization
-
-  private static class Result implements Comparable<Result> {
-    private final int obsNum;
-    private final JObs obs;
-
-    private Result(int obsNum, Observation obs, JsonObject raw) {
-      this.obsNum = obsNum;
-      this.obs = new JObs(raw, obs);
-    }
-
-    @Override
-    public int compareTo(Result that) {
-      return Integer.compare(this.obsNum, that.obsNum);
-    }
-
-  }
-
-  private static final class JSpec {
-    private final JsonObject raw;
-    private final SimSpec spec;
-
-    private JSpec(JsonObject raw, SimSpec spec) {
-      this.raw = raw;
-      this.spec = spec;
-    }
-  }
-
-  private static final class JObs {
-    private final JsonObject raw;
-    private final Observation obs;
-
-    private JObs(JsonObject raw, Observation obs) {
-      this.raw = raw;
-      this.obs = obs;
-    }
-  }
-
-  private static final class SpecReader implements Iterator<JSpec> {
+  private static final class SpecReader implements Iterator<Entry<JsonObject, SimSpec>> {
     private final JsonStreamParser parser;
     private final String classPrefix;
     private final CaseFormat keyCaseFormat;
@@ -234,21 +207,22 @@ public class Runner {
     }
 
     @Override
-    public JSpec next() {
+    public Entry<JsonObject, SimSpec> next() {
       JsonObject raw = parser.next().getAsJsonObject();
-      return new JSpec(raw, SimSpec.read(raw, classPrefix, keyCaseFormat));
+      return new AbstractMap.SimpleImmutableEntry<>(raw,
+          SimSpec.read(raw, classPrefix, keyCaseFormat));
     }
   }
 
-  private static Consumer<JObs> createObsWriter(Writer output, int simsPerObs,
-      boolean outputFeatures) {
+  private static Consumer<Entry<JsonObject, Observation>> createObsWriter(Writer output,
+      int simsPerObs, boolean outputFeatures) {
     if (simsPerObs == 1 && outputFeatures) {
       // Output features one at a time
       Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
       return obs -> {
-        JsonObject base = obs.raw;
-        base.add("features", obs.obs.getFeatures());
-        base.add("players", serializePlayers(obs.obs.getPlayers(), true));
+        JsonObject base = obs.getKey();
+        base.add("features", obs.getValue().getFeatures());
+        base.add("players", serializePlayers(obs.getValue().getPlayers(), true));
         gson.toJson(base, output);
         try {
           output.append('\n');
@@ -261,15 +235,15 @@ public class Runner {
       // Aggregate observation and don't output anything but payoffs
       Gson gson = new Gson();
 
-      return new Consumer<JObs>() {
+      return new Consumer<Entry<JsonObject, Observation>>() {
         Multimap<RoleStrat, SummStats> aggregates = null;
         int numProcessed = 0;
 
         @Override
-        public void accept(JObs obs) {
+        public void accept(Entry<JsonObject, Observation> obs) {
           if (aggregates == null) {
             aggregates = ArrayListMultimap.create();
-            for (Player player : obs.obs.getPlayers()) {
+            for (Player player : obs.getValue().getPlayers()) {
               aggregates.put(RoleStrat.of(player.getRole(), player.getStrategy()),
                   SummStats.over(player.getPayoff()));
             }
@@ -277,7 +251,7 @@ public class Runner {
             // Iterator for each role strategy pair
             Map<RoleStrat, Iterator<SummStats>> next = aggregates.asMap().entrySet().stream()
                 .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().iterator()));
-            for (Player player : obs.obs.getPlayers()) {
+            for (Player player : obs.getValue().getPlayers()) {
               next.get(RoleStrat.of(player.getRole(), player.getStrategy())).next()
                   .accept(player.getPayoff());
             }
