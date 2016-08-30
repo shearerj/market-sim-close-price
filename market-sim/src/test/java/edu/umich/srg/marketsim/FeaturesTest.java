@@ -2,7 +2,6 @@ package edu.umich.srg.marketsim;
 
 import static edu.umich.srg.fourheap.Order.OrderType.BUY;
 import static edu.umich.srg.fourheap.Order.OrderType.SELL;
-import static edu.umich.srg.testing.Asserts.assertCompletesIn;
 import static edu.umich.srg.testing.Asserts.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -51,7 +50,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @RunWith(Theories.class)
@@ -98,24 +96,16 @@ public class FeaturesTest {
     double maxSurplus = features.get("max_surplus").getAsDouble();
     double imSurplusLoss = features.get("im_surplus_loss").getAsDouble();
     double emSurplusLoss = features.get("em_surplus_loss").getAsDouble();
-    double maxSurplusSubLim = features.get("max_surplus_sublim").getAsDouble();
-    double imSurplusLossSubLim = features.get("im_surplus_loss_sublim").getAsDouble();
-    double emSurplusLossSubLim = features.get("em_surplus_loss_sublim").getAsDouble();
 
     // All of these should already be tested by asserts, but are included for completeness / in case
     // someone doesn't turn on asserts
     // Assert that surplus is nonnegative
     assertTrue(maxSurplus >= 0, "max surplus negative %f", maxSurplus);
-    assertTrue(maxSurplusSubLim >= 0, "submission constrained max surplus negative %f",
-        maxSurplusSubLim);
+
     // Assert that max surpluses are greater than realized surplus
     assertTrue(surplus <= maxSurplus);
-    assertTrue(surplus <= maxSurplusSubLim);
     // Assert that max surplus - losses = surplus
     assertEquals(surplus, maxSurplus - imSurplusLoss - emSurplusLoss, tol);
-    assertEquals(surplus, maxSurplusSubLim - imSurplusLossSubLim - emSurplusLossSubLim, tol);
-    // Assert that restricting by submissions only lowers surplus
-    assertTrue(maxSurplusSubLim <= maxSurplus);
   }
 
   /** Test that intermediary improves surplus. */
@@ -126,8 +116,12 @@ public class FeaturesTest {
 
     // First create simulation with only "background" agents
     MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
+    CdaMarket market = CdaMarket.create(sim);
+    sim.addMarket(market);
     for (int i = 0; i < numAgents; ++i) {
-      sim.addAgent(MockAgent.builder().privateValue(pv).build());
+      Agent agent = MockAgent.builder().privateValue(pv).build();
+      sim.addAgent(agent);
+      market.getView(agent).submitOrder(BUY, Price.of(0), 2);
     }
 
     // Verify that surplus is 0 because they won't trade
@@ -137,10 +131,16 @@ public class FeaturesTest {
 
     // Now add an intermediary (no private value)
     sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
+    market = CdaMarket.create(sim);
+    sim.addMarket(market);
     for (int i = 0; i < numAgents; ++i) {
-      sim.addAgent(MockAgent.builder().privateValue(pv).build());
+      Agent agent = MockAgent.builder().privateValue(pv).build();
+      sim.addAgent(agent);
+      market.getView(agent).submitOrder(BUY, Price.of(0), 2);
     }
-    sim.addAgent(MockAgent.create());
+    Agent intermediary = MockAgent.create();
+    sim.addAgent(intermediary);
+    market.getView(intermediary).submitOrder(BUY, Price.of(0), 2 * numAgents);
 
     // Assert that each agent trades with intermediary for 3 surplus
     sim.initialize();
@@ -150,24 +150,29 @@ public class FeaturesTest {
 
   /**
    * Test that in situation where agents could infinitely trade, max surplus still terminates due to
-   * diminishing returns in private values.
+   * diminishing returns in private values. Because surplus is calcualtes relative to the number of
+   * submissions, they need to submit at least two orders to verify that only one counts.
    */
   @Test
-  public void infiniteTradeTest() throws ExecutionException, InterruptedException {
-    assertCompletesIn(() -> {
-      MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
-      // Buyer
-      sim.addAgent(MockAgent.builder()
-          .privateValue(PrivateValues.fromMarginalBuys(new double[] {1, 1})).build());
-      // Seller
-      sim.addAgent(MockAgent.builder()
-          .privateValue(PrivateValues.fromMarginalBuys(new double[] {-1, -1})).build());
+  public void multipleTradeTest() throws ExecutionException, InterruptedException {
+    MarketSimulator sim = MarketSimulator.create(ConstantFundamental.create(0), rand);
+    CdaMarket market = CdaMarket.create(sim);
+    sim.addMarket(market);
+    // Buyer
+    Agent buyer = MockAgent.builder()
+        .privateValue(PrivateValues.fromMarginalBuys(new double[] {1, 1})).build();
+    sim.addAgent(buyer);
+    market.getView(buyer).submitOrder(BUY, Price.of(0), 2);
+    // Seller
+    Agent seller = MockAgent.builder()
+        .privateValue(PrivateValues.fromMarginalBuys(new double[] {-1, -1})).build();
+    sim.addAgent(seller);
+    market.getView(seller).submitOrder(BUY, Price.of(0), 2);
 
-      // Verify correct surplus is calculated
-      sim.initialize();
-      double maxSurplus = sim.computeFeatures().get("max_surplus").getAsDouble();
-      assertEquals(2, maxSurplus, tol);
-    }, 5, TimeUnit.SECONDS);
+    // Verify correct surplus is calculated
+    sim.initialize();
+    double maxSurplus = sim.computeFeatures().get("max_surplus").getAsDouble();
+    assertEquals(2, maxSurplus, tol);
   }
 
   /** Test that submissions is accurately counted. */
