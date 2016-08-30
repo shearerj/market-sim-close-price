@@ -17,6 +17,7 @@ import org.junit.experimental.theories.Theory;
 import org.junit.runner.RunWith;
 
 import edu.umich.srg.egtaonline.spec.Spec;
+import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
 import edu.umich.srg.marketsim.Keys.FundamentalMean;
 import edu.umich.srg.marketsim.Keys.FundamentalMeanReversion;
@@ -231,8 +232,8 @@ public class FeaturesTest {
       }
 
       @Override
-      public double payoffForPosition(int position) {
-        return pv.valueAtPosition(position);
+      public double payoffForExchange(int position, OrderType type) {
+        return pv.valueForExchange(position, type);
       }
     });
 
@@ -249,8 +250,8 @@ public class FeaturesTest {
       }
 
       @Override
-      public double payoffForPosition(int position) {
-        return pv.valueAtPosition(position);
+      public double payoffForExchange(int position, OrderType type) {
+        return pv.valueForExchange(position, type);
       }
     });
 

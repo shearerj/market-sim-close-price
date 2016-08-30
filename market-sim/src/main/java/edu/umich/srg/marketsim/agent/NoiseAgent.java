@@ -91,7 +91,7 @@ public class NoiseAgent implements Agent {
    * This is where your agent can tell the simulator about any private values. This agent has none.
    */
   @Override
-  public double payoffForPosition(int position) {
+  public double payoffForExchange(int position, OrderType type) {
     return 0;
   }
 

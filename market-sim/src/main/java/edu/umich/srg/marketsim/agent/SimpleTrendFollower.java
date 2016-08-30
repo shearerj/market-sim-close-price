@@ -100,7 +100,7 @@ public class SimpleTrendFollower implements Agent {
   public void initilaize() {}
 
   @Override
-  public double payoffForPosition(int position) {
+  public double payoffForExchange(int position, OrderType type) {
     return 0;
   }
 

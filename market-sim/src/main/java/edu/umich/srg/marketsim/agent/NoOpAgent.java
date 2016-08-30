@@ -1,6 +1,7 @@
 package edu.umich.srg.marketsim.agent;
 
 import edu.umich.srg.egtaonline.spec.Spec;
+import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
 import edu.umich.srg.marketsim.market.Market;
@@ -19,7 +20,7 @@ public class NoOpAgent implements Agent {
   public void initilaize() {}
 
   @Override
-  public double payoffForPosition(int position) {
+  public double payoffForExchange(int position, OrderType type) {
     return 0;
   }
 

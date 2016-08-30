@@ -2,6 +2,7 @@ package edu.umich.srg.marketsim.testing;
 
 import com.google.gson.JsonObject;
 
+import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.market.Market.MarketView;
@@ -43,8 +44,8 @@ public class MockAgent implements Agent {
   }
 
   @Override
-  public double payoffForPosition(int position) {
-    return privateValue.valueAtPosition(position);
+  public double payoffForExchange(int position, OrderType type) {
+    return privateValue.valueForExchange(position, type);
   }
 
   @Override

@@ -114,12 +114,6 @@ class Features {
     features.addProperty("em_surplus_loss_sublim", compEqSub.emSurplusLoss);
   }
 
-  private static double calcDesiredBenefit(OrderType type, Agent agent,
-      Map<Agent, Integer> positionMap) {
-    int position = positionMap.get(agent);
-    return agent.payoffForPosition(position + type.sign()) - agent.payoffForPosition(position);
-  }
-
   // This will utterly fail if private valuations aren't diminishing marginal
   // This uses payoffForPosition which scales linearly. The linear number should be small
   // enough that it doesn't really matter, but it is a source of inefficiency / slowness.
@@ -140,10 +134,8 @@ class Features {
       Agent agent = entry.getKey();
       // Only include agents that can trade
       if (getMaxPosition.applyAsInt(agent) > 0) {
-        buyers.add(new AbstractMap.SimpleEntry<>(agent,
-            agent.payoffForPosition(1) - agent.payoffForPosition(0)));
-        sellers.add(new AbstractMap.SimpleEntry<>(agent,
-            agent.payoffForPosition(-1) - agent.payoffForPosition(0)));
+        buyers.add(new AbstractMap.SimpleEntry<>(agent, agent.payoffForExchange(0, BUY)));
+        sellers.add(new AbstractMap.SimpleEntry<>(agent, agent.payoffForExchange(0, SELL)));
       }
     }
 
@@ -161,6 +153,8 @@ class Features {
       Agent seller = sellerEnt.getKey();
       double sellerVal = sellerEnt.getValue();
 
+      assert buyer != seller;
+
       // Update values
       cePrice = (buyerVal - sellerVal) / 2;
       maxSurplus += buyerVal + sellerVal;
@@ -171,27 +165,25 @@ class Features {
 
       // Put back in priority queue with updated values if they can still trade
       if (buyerPos < getMaxPosition.applyAsInt(buyer)) {
-        buyerEnt
-            .setValue(buyer.payoffForPosition(buyerPos + 1) - buyer.payoffForPosition(buyerPos));
+        buyerEnt.setValue(buyer.payoffForExchange(buyerPos, BUY));
         buyers.add(buyerEnt);
       }
       if (-sellerPos < getMaxPosition.applyAsInt(seller)) {
-        sellerEnt.setValue(
-            seller.payoffForPosition(sellerPos - 1) - seller.payoffForPosition(sellerPos));
+        sellerEnt.setValue(seller.payoffForExchange(sellerPos, SELL));
         sellers.add(sellerEnt);
       }
 
       // Make sure queues are up to date
       double desiredBenefit;
-      while ((desiredBenefit =
-          calcDesiredBenefit(BUY, buyers.peek().getKey(), cePositions)) != buyers.peek()
+      while (!buyers.isEmpty() && (desiredBenefit = buyers.peek().getKey()
+          .payoffForExchange(cePositions.get(buyers.peek().getKey()), BUY)) != buyers.peek()
               .getValue()) {
         buyerEnt = buyers.poll();
         buyerEnt.setValue(desiredBenefit);
         buyers.add(buyerEnt);
       }
-      while ((desiredBenefit =
-          calcDesiredBenefit(SELL, sellers.peek().getKey(), cePositions)) != sellers.peek()
+      while (!sellers.isEmpty() && (desiredBenefit = sellers.peek().getKey()
+          .payoffForExchange(cePositions.get(sellers.peek().getKey()), SELL)) != sellers.peek()
               .getValue()) {
         sellerEnt = sellers.poll();
         sellerEnt.setValue(desiredBenefit);
@@ -212,8 +204,7 @@ class Features {
       }
 
       int posDiff = actualPosition - cePosition;
-      double surplusLoss = agent.payoffForPosition(cePosition)
-          - agent.payoffForPosition(actualPosition) + posDiff * cePrice;
+      double surplusLoss = surplusDifference(agent, actualPosition, cePosition) + posDiff * cePrice;
       if (cePosition * posDiff >= 0) { // EM Trader
         emSurplusLoss += surplusLoss;
       } else { // IM Trader
@@ -222,6 +213,15 @@ class Features {
     }
 
     return new CompEqResults(cePrice, maxSurplus, imSurplusLoss, emSurplusLoss);
+  }
+
+  private static double surplusDifference(Agent agent, int start, int end) {
+    double surplus = 0;
+    OrderType direction = end > start ? BUY : SELL;
+    for (int pos = start; pos != end; pos += direction.sign()) {
+      surplus += agent.payoffForExchange(pos, direction);
+    }
+    return surplus;
   }
 
   private static final class CompEqResults {

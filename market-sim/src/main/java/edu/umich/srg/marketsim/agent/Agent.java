@@ -2,6 +2,7 @@ package edu.umich.srg.marketsim.agent;
 
 import com.google.gson.JsonObject;
 
+import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.market.Market.MarketView;
 import edu.umich.srg.marketsim.market.OrderRecord;
@@ -10,7 +11,7 @@ public interface Agent {
 
   void initilaize();
 
-  double payoffForPosition(int position);
+  double payoffForExchange(int position, OrderType type);
 
   /** A json object of any miscellaneous features an agent wishes to compute. */
   default JsonObject getFeatures() {

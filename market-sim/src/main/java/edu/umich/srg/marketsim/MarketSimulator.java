@@ -1,8 +1,12 @@
 package edu.umich.srg.marketsim;
 
+import static edu.umich.srg.fourheap.Order.OrderType.BUY;
+import static edu.umich.srg.fourheap.Order.OrderType.SELL;
+
 import com.google.common.collect.Maps;
 import com.google.gson.JsonObject;
 
+import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.agent.Agent;
 import edu.umich.srg.marketsim.event.EventQueue;
 import edu.umich.srg.marketsim.fundamental.Fundamental;
@@ -100,8 +104,13 @@ public class MarketSimulator implements Sim {
       // Get current fundamental price
       double fundamentalValue = fundamental.getValueAt(getCurrentTime()).doubleValue();
       for (Entry<Agent, SimAgentInfo> e : payoffs.entrySet()) {
-        e.getValue().profit += e.getValue().holdings * fundamentalValue
-            + e.getKey().payoffForPosition(e.getValue().holdings);
+        Agent agent = e.getKey();
+        SimAgentInfo info = e.getValue();
+        info.profit += info.holdings * fundamentalValue;
+        OrderType direction = info.holdings > 0 ? BUY : SELL;
+        for (int pos = 0; pos != info.holdings; pos += direction.sign()) {
+          info.profit += agent.payoffForExchange(pos, direction);
+        }
       }
     }
     return agentPayoffs;

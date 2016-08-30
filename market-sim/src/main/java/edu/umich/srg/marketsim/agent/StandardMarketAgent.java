@@ -116,8 +116,8 @@ public abstract class StandardMarketAgent implements Agent {
   }
 
   @Override
-  public double payoffForPosition(int position) {
-    return privateValue.valueAtPosition(position);
+  public double payoffForExchange(int position, OrderType type) {
+    return privateValue.valueForExchange(position, type);
   }
 
   @Override

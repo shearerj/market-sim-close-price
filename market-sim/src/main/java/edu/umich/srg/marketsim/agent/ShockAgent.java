@@ -87,7 +87,7 @@ public class ShockAgent implements Agent {
   }
 
   @Override
-  public double payoffForPosition(int position) {
+  public double payoffForExchange(int position, OrderType type) {
     return 0;
   }
 

@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableList;
 import edu.umich.srg.distributions.Distribution.LongDistribution;
 import edu.umich.srg.distributions.Geometric;
 import edu.umich.srg.egtaonline.spec.Spec;
+import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.Keys.ArrivalRate;
 import edu.umich.srg.marketsim.Keys.NumRungs;
 import edu.umich.srg.marketsim.Keys.RungSep;
@@ -86,7 +87,7 @@ public class SimpleMarketMaker implements Agent {
   }
 
   @Override
-  public double payoffForPosition(int position) {
+  public double payoffForExchange(int position, OrderType type) {
     // No Private Value
     return 0;
   }
