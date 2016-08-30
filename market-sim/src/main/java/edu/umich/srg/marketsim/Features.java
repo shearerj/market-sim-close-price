@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.PriorityQueue;
-import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
 class Features {
@@ -83,22 +82,12 @@ class Features {
   private static void surplusFeatures(Map<Agent, ? extends AgentInfo> results,
       JsonObject features) {
     double surplus = results.values().stream().mapToDouble(AgentInfo::getProfit).sum();
-    // By default, competitive equilibrium is assuming infinite opportunities to trade.
-    CompEqResults compEq = calcCompetitiveEquilibrium(results, a -> Integer.MAX_VALUE);
     // For completeness, we also compute it with submission limits
-    CompEqResults compEqSub =
-        calcCompetitiveEquilibrium(results, a -> results.get(a).getSubmissions());
+    CompEqResults compEq = calcCompetitiveEquilibrium(results);
 
     // Assert results are consistent
     assert Math.abs(compEq.maxSurplus - compEq.imSurplusLoss - compEq.emSurplusLoss
         - surplus) < 1e-6 : "surplus losses didn't sum properly";
-    assert Math.abs(compEqSub.maxSurplus - compEqSub.imSurplusLoss - compEqSub.emSurplusLoss
-        - surplus) < 1e-6 : "submission constrained surplus losses didn't sum properly";
-
-    assert surplus <= compEqSub.maxSurplus
-        + 1e6 : "surplus was greater than constrained max surplus";
-    assert compEqSub.maxSurplus <= compEq.maxSurplus
-        + 1e6 : "submission constrained max surplus wasn't less than unconstrained max surplus";
 
     // Record features
     features.addProperty("total_surplus", surplus);
@@ -107,18 +96,12 @@ class Features {
     features.addProperty("ce_price", compEq.cePrice);
     features.addProperty("im_surplus_loss", compEq.imSurplusLoss);
     features.addProperty("em_surplus_loss", compEq.emSurplusLoss);
-
-    features.addProperty("max_surplus_sublim", compEqSub.maxSurplus);
-    features.addProperty("ce_price_sublim", compEqSub.cePrice);
-    features.addProperty("im_surplus_loss_sublim", compEqSub.imSurplusLoss);
-    features.addProperty("em_surplus_loss_sublim", compEqSub.emSurplusLoss);
   }
 
   // This will utterly fail if private valuations aren't diminishing marginal
   // This uses payoffForPosition which scales linearly. The linear number should be small
   // enough that it doesn't really matter, but it is a source of inefficiency / slowness.
-  private static CompEqResults calcCompetitiveEquilibrium(Map<Agent, ? extends AgentInfo> results,
-      ToIntFunction<Agent> getMaxPosition) {
+  private static CompEqResults calcCompetitiveEquilibrium(Map<Agent, ? extends AgentInfo> results) {
     // Editable Map holding positions in ce
     Map<Agent, Integer> cePositions =
         results.keySet().stream().collect(Collectors.toMap(e -> e, e -> 0));
@@ -133,7 +116,7 @@ class Features {
     for (Entry<Agent, Integer> entry : cePositions.entrySet()) {
       Agent agent = entry.getKey();
       // Only include agents that can trade
-      if (getMaxPosition.applyAsInt(agent) > 0) {
+      if (results.get(agent).getSubmissions() > 0) {
         buyers.add(new AbstractMap.SimpleEntry<>(agent, agent.payoffForExchange(0, BUY)));
         sellers.add(new AbstractMap.SimpleEntry<>(agent, agent.payoffForExchange(0, SELL)));
       }
@@ -164,11 +147,11 @@ class Features {
       int sellerPos = cePositions.compute(seller, (key, val) -> val - 1);
 
       // Put back in priority queue with updated values if they can still trade
-      if (buyerPos < getMaxPosition.applyAsInt(buyer)) {
+      if (buyerPos < results.get(buyer).getSubmissions()) {
         buyerEnt.setValue(buyer.payoffForExchange(buyerPos, BUY));
         buyers.add(buyerEnt);
       }
-      if (-sellerPos < getMaxPosition.applyAsInt(seller)) {
+      if (-sellerPos < results.get(seller).getSubmissions()) {
         sellerEnt.setValue(seller.payoffForExchange(sellerPos, SELL));
         sellers.add(sellerEnt);
       }
