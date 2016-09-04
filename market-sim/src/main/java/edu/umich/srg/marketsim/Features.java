@@ -125,6 +125,7 @@ class Features {
     double cePrice = 0; // Any price is valid if no one trades
     double maxSurplus = 0;
     while (!buyers.isEmpty() && !sellers.isEmpty()
+        && !buyers.peek().getKey().equals(sellers.peek().getKey())
         && buyers.peek().getValue() + sellers.peek().getValue() > 0) {
 
       // Extract agents
