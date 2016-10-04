@@ -18,8 +18,14 @@ endif
 endif
 
 
-# Color the output of maven with long but simple sed script
-COLOR = $(PREFIX)sed -Ef resources/mvn_color.sed
+SED := $(shell which $(PREFIX)sed)
+ifeq ($(SED),)
+	# Don't color output
+	COLOR := cat
+else
+	# Color the output of maven with long but simple sed script
+	COLOR = $(PREFIX)sed -Ef resources/mvn_color.sed
+endif
 
 # Current directory
 PWD := $(shell pwd)
