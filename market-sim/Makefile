@@ -59,7 +59,7 @@ jar:
 
 egta: jar
 	$(DEFERROR)
-	$(eval $@_TMP := $(shell mktemp -d))
+	$(eval $@_TMP := $(shell mktemp -dt XXXXXX))
 	$(eval $@_NAME := $(notdir $(basename $(def))))
 	mkdir -p "$($@_TMP)/$($@_NAME)/script/target"
 	mkdir -p "$($@_TMP)/$($@_NAME)/script/jq"
