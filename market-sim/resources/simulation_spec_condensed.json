@@ -1,5 +1,5 @@
 {
-    "players": {
+    "assignment": {
         "role": {
             "noise": 20
         }
@@ -8,6 +8,7 @@
         "markets": "cda",
         "fundamentalMeanReversion": 0,
         "fundamentalShockVar": 1e3,
-        "arrivalRate": 2e-3
+        "arrivalRate": 0.5,
+        "simLength": 10
     }
 }
