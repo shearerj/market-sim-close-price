@@ -1,6 +1,7 @@
 package edu.umich.srg.egtaonline;
 
 import com.google.common.base.CaseFormat;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.Multiset;
 import com.google.gson.JsonElement;
@@ -48,8 +49,7 @@ public class SimSpec {
     return String.format("{assignment=%s, configuration=%s}", assignment, configuration);
   }
 
-  public static class RoleStrat {
-
+  public static class RoleStrat implements Comparable<RoleStrat> {
     private final String role;
     private final String strategy;
 
@@ -83,6 +83,12 @@ public class SimSpec {
     @Override
     public int hashCode() {
       return Objects.hash(role, strategy);
+    }
+
+    @Override
+    public int compareTo(RoleStrat that) {
+      return ComparisonChain.start().compare(this.role, that.role)
+          .compare(this.strategy, that.strategy).result();
     }
 
     @Override

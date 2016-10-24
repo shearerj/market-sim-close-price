@@ -2,6 +2,7 @@ package edu.umich.srg.marketsim;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
@@ -31,8 +32,9 @@ import edu.umich.srg.marketsim.market.Market.AgentInfo;
 import edu.umich.srg.util.PositionalSeed;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -109,42 +111,73 @@ public class CommandLineInterface {
   }
 
   /**
-   * In order for agent seeds to be identical independent of the order the agents were added in or
-   * exactly how they were specified, the random seeds that are passed to the agents are generated
-   * with a hash of the agent's specified strategy and reused for all agents that share the same
-   * strategy.
-   */
-  /*
-   * TODO Ideally the hash will be off of the agent type and the relevant aspect of the total spec
-   * that it receives. However if we use the whole spec, then adding a different agent with
-   * parameters in the spec will change the agents hash, and hence the random seeds. However,
-   * hashing the strategy has the downside that agents that actually share the same relevant
-   * specification may get different random seeds due to order or specifying information in the
-   * global spec.
+   * In order for agent seeds to be identical independent of the order the agents were added in,
+   * each pair of role and strategy get's it's own random seed that's based off of the hash of the
+   * role and strategy. Then, to make sure that agent's get added to the simulation in a
+   * deterministic order, we put every player into a list and sort by a random double (with role,
+   * strategy, and number as tie breakers). That way the order of players is random, but entirely
+   * determined by the random seed. Importantly, by generating the order this way, it keeps the
+   * order roughly the same between similar runs, e.g. if you add a new agent, it will go somewhere
+   * in the ordering, but the relative orderings of everything else will remain the same. This is
+   * critical, because ties in arrivals are critically dependent on the order in which the agents
+   * arrived, and slightly different arrivals produce drastically different results. Since the
+   * initial order is the order they're defined in here, the initial order is important, and can't
+   * be dependent on the simulation spec. This has a side effect of making player output also
+   * deterministic based off of random seed, meaning the output of identical specs should be closer
+   * to identical.
    */
   private static List<PlayerInfo> addPlayers(MarketSimulator sim, Fundamental fundamental,
       Multiset<RoleStrat> assignment, Collection<Market> markets, Spec configuration,
       long baseSeed) {
-    Map<String, Random> randoms = new HashMap<>();
     PositionalSeed seed = PositionalSeed.with(baseSeed);
     Uniform<Market> marketSelection = Uniform.over(markets);
 
-    ImmutableList.Builder<PlayerInfo> playerInfoBuilder = ImmutableList.builder();
+    ArrayList<PlayerOrder> players = new ArrayList<>();
     for (Entry<RoleStrat> roleStratCounts : assignment.entrySet()) {
-      String strategy = roleStratCounts.getElement().getStrategy();
+      RoleStrat roleStrat = roleStratCounts.getElement();
+      String strategy = roleStrat.getStrategy();
       AgentCreator creator = EntityBuilder.getAgentCreator(getType(strategy));
       Spec agentSpec = getSpec(strategy).withDefault(configuration);
-      Random rand = randoms.computeIfAbsent(strategy, s -> new Random(seed.getSeed(s.hashCode())));
+      Random rand = new Random(seed.getSeed(roleStratCounts.getElement().hashCode()));
 
       for (int i = 0; i < roleStratCounts.getCount(); ++i) {
         Agent agent = creator.createAgent(sim, fundamental, markets, marketSelection.sample(rand),
             agentSpec, new Random(rand.nextLong()));
-        sim.addAgent(agent);
-        playerInfoBuilder.add(new PlayerInfo(roleStratCounts.getElement(), agent));
+        players.add(
+            new PlayerOrder(rand.nextDouble(), roleStrat, i, new PlayerInfo(roleStrat, agent)));
       }
     }
+    Collections.sort(players);
 
+    ImmutableList.Builder<PlayerInfo> playerInfoBuilder = ImmutableList.builder();
+    for (PlayerOrder player : players) {
+      playerInfoBuilder.add(player.player);
+      sim.addAgent(player.player.agent);
+    }
     return playerInfoBuilder.build();
+  }
+
+  private static class PlayerOrder implements Comparable<PlayerOrder> {
+
+    private final double order;
+    private final RoleStrat group;
+    private final int num;
+
+    private final PlayerInfo player;
+
+    private PlayerOrder(double order, RoleStrat group, int num, PlayerInfo player) {
+      this.order = order;
+      this.group = group;
+      this.num = num;
+      this.player = player;
+    }
+
+    @Override
+    public int compareTo(PlayerOrder that) {
+      return ComparisonChain.start().compare(this.order, that.order).compare(this.group, that.group)
+          .compare(this.num, that.num).result();
+    }
+
   }
 
   private static String getType(String strategy) {

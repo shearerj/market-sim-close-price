@@ -19,11 +19,6 @@ import java.util.Random;
  */
 public class EventQueue {
 
-  /*
-   * FIXME Decide how time table for simulation is going to work. Is it closed open, closed closed,
-   * or open closed; (open closed?)
-   */
-
   private TimeStamp currentTime;
 
   private final RandomPriorityQueue<TimeStamp, Runnable> scheduledActivities;
@@ -59,8 +54,6 @@ public class EventQueue {
     while (moreScheduledActivities(time)) {
       Entry<TimeStamp, Runnable> act = pop();
       currentTime = act.getKey();
-      // FIXME These don't have nice representations...
-      // log.debug("Executing {%s} then {%s}", act.getValue(), scheduledActivities);
       act.getValue().run();
     }
     if (time.compareTo(currentTime) > 0) {

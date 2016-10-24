@@ -52,7 +52,7 @@ public class NoiseAgent implements Agent {
     this.numTransactions = 0;
   }
 
-  /** The standard form construction method for creating an agent from a spimulation spec. */
+  /** The standard form construction method for creating an agent from a simulation spec. */
   public static NoiseAgent createFromSpec(Sim sim, Fundamental fundamental,
       Collection<Market> markets, Market market, Spec spec, Random rand) {
     return new NoiseAgent(sim, market, spec, rand);
