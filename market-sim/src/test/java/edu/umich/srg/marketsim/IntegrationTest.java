@@ -387,6 +387,67 @@ public class IntegrationTest {
     assertFalse(it2.hasNext());
   }
 
+  /** Tests that differently order spec files produce identical results. */
+  @Test
+  public void specOrderingTest() {
+    String spec1 = "{\"assignment\":{\"role\":{" // Base assignment
+        + "\"noise:arrivalRate_0.2\":8," // Agent type one
+        + "\"noise:arrivalRate_0.5\":5," // Agent type two
+        + "\"noise:arrivalRate_0.8\":2" // Agent type three
+        + "}},\"configuration\":{\"randomSeed\":1234,\"markets\":\"cda\","
+        + "\"simLength\":10,\"fundamentalMean\":1500,\"fundamentalMeanReversion\":0,"
+        + "\"fundamentalShockVar\":0}}";
+    Reader specReader1 = new StringReader(spec1);
+    StringWriter obsData1 = new StringWriter();
+    Runner.run(CommandLineInterface::simulate, specReader1, obsData1, 10, 1, 1, true, keyPrefix,
+        keyCaseFormat);
+    List<List<Double>> payoffs1 =
+        // Split into each observation
+        Arrays.stream(obsData1.toString().split("\n"))
+            // Convert to players json
+            .map(line -> StreamSupport
+                .stream(gson.fromJson(line, JsonObject.class).get("players").getAsJsonArray()
+                    .spliterator(), false)
+                // Get payoffs list from players
+                .map(p -> p.getAsJsonObject().get("payoff").getAsDouble())
+                .collect(Collectors.toList()))
+            .collect(Collectors.toList());
+    List<List<Double>> sortedPayoffs1 =
+        payoffs1.stream().map(pays -> pays.stream().sorted().collect(Collectors.toList()))
+            .collect(Collectors.toList());
+
+    String spec2 = "{\"assignment\":{\"role\":{" // Base assignment
+        + "\"noise:arrivalRate_0.5\":5," // Agent type two
+        + "\"noise:arrivalRate_0.8\":2," // Agent type three
+        + "\"noise:arrivalRate_0.2\":8" // Agent type one
+        + "}},\"configuration\":{\"randomSeed\":1234,\"markets\":\"cda\","
+        + "\"simLength\":10,\"fundamentalMean\":1500,\"fundamentalMeanReversion\":0,"
+        + "\"fundamentalShockVar\":0}}";
+    Reader specReader2 = new StringReader(spec2);
+    StringWriter obsData2 = new StringWriter();
+    Runner.run(CommandLineInterface::simulate, specReader2, obsData2, 10, 1, 1, true, keyPrefix,
+        keyCaseFormat);
+    List<List<Double>> payoffs2 =
+        // Split into each observation
+        Arrays.stream(obsData2.toString().split("\n"))
+            // Convert to players json
+            .map(line -> StreamSupport
+                .stream(gson.fromJson(line, JsonObject.class).get("players").getAsJsonArray()
+                    .spliterator(), false)
+                // Get payoffs list from players
+                .map(p -> p.getAsJsonObject().get("payoff").getAsDouble())
+                .collect(Collectors.toList()))
+            .collect(Collectors.toList());
+    List<List<Double>> sortedPayoffs2 =
+        payoffs2.stream().map(pays -> pays.stream().sorted().collect(Collectors.toList()))
+            .collect(Collectors.toList());
+
+    assertEquals("Unique payoffs produced by identical seeds were not identical", sortedPayoffs1,
+        sortedPayoffs2);
+    assertEquals("Unique payoffs were identical, but not produced in the same order", payoffs1,
+        payoffs2);
+  }
+
   // TODO Test that agents inherit specifications from configuration
 
   // TODO Test that invalid agent names throw exception
