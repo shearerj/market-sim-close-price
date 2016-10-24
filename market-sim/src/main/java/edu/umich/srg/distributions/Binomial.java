@@ -9,9 +9,9 @@ import java.util.Random;
 import java.util.stream.DoubleStream;
 
 /**
- * Generate samples from a Binomail. Method is taken from:
- * "Computer Methods for Sampling from Gamma, Beta, Poisson and Binomial Distributions" - J. H.
- * Ahrens and U. Dieter (1973). It relies on the approximate beta sampling, so is not perfect.
+ * Generate samples from a Binomail. Method is taken from: "Computer Methods for Sampling from
+ * Gamma, Beta, Poisson and Binomial Distributions" - J. H. Ahrens and U. Dieter (1973). It relies
+ * on the approximate beta sampling, so is not perfect.
  */
 public abstract class Binomial implements LongDistribution, Serializable {
 
