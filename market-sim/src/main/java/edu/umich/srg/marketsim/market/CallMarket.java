@@ -2,6 +2,9 @@ package edu.umich.srg.marketsim.market;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.MatchedOrders;
 import edu.umich.srg.fourheap.Order;
@@ -11,6 +14,7 @@ import edu.umich.srg.marketsim.Keys.Pricing;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
 import edu.umich.srg.marketsim.TimeStamp;
+import edu.umich.srg.marketsim.fundamental.Fundamental;
 
 import java.util.AbstractMap;
 import java.util.Collection;
@@ -80,6 +84,18 @@ public class CallMarket extends AbstractMarket {
     this.nextClearScheduled = false;
     super.clear();
     updateQuote();
+  }
+
+  @Override
+  public JsonObject getFeatures(Fundamental fundamental) {
+    JsonObject features = super.getFeatures(fundamental);
+    features.add("type", new JsonPrimitive("call"));
+    return features;
+  }
+
+  @Override
+  public String toString() {
+    return "CALL " + super.toString();
   }
 
   private static class CallPricing implements PricingRule {

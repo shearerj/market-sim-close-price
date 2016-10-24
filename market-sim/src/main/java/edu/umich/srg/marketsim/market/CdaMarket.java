@@ -1,6 +1,8 @@
 package edu.umich.srg.marketsim.market;
 
 import com.google.common.collect.Maps;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 import edu.umich.srg.egtaonline.spec.Spec;
 import edu.umich.srg.fourheap.MatchedOrders;
@@ -8,6 +10,7 @@ import edu.umich.srg.fourheap.Order;
 import edu.umich.srg.fourheap.Order.OrderType;
 import edu.umich.srg.marketsim.Price;
 import edu.umich.srg.marketsim.Sim;
+import edu.umich.srg.marketsim.fundamental.Fundamental;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -67,6 +70,19 @@ public class CdaMarket extends AbstractMarket {
     updateQuote();
   }
 
-  private static final long serialVersionUID = 2207946707270663436L;
+  @Override
+  public JsonObject getFeatures(Fundamental fundamental) {
+    JsonObject features = super.getFeatures(fundamental);
+    features.add("type", new JsonPrimitive("cda"));
+    return features;
+  }
+
+  @Override
+  public String toString() {
+    return "CDA " + super.toString();
+  }
+
+
+  private static final long serialVersionUID = 1L;
 
 }

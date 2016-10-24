@@ -19,6 +19,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import org.junit.Test;
+import org.junit.experimental.theories.Theories;
+import org.junit.experimental.theories.Theory;
+import org.junit.runner.RunWith;
 
 import edu.umich.srg.egtaonline.Observation;
 import edu.umich.srg.egtaonline.Observation.Player;
@@ -39,6 +42,7 @@ import edu.umich.srg.marketsim.fundamental.ConstantFundamental;
 import edu.umich.srg.marketsim.market.CdaMarket;
 import edu.umich.srg.marketsim.market.Market;
 import edu.umich.srg.marketsim.market.Market.AgentInfo;
+import edu.umich.srg.testing.TestInts;
 
 import java.io.Reader;
 import java.io.StringReader;
@@ -52,6 +56,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+@RunWith(Theories.class)
 public class IntegrationTest {
 
   private static final Random rand = new Random();
@@ -227,8 +232,8 @@ public class IntegrationTest {
         keyCaseFormat);
 
     // Save the results
-    Iterator<JsonObject> obs1s = Arrays.stream(obsData.toString().split("\n"))
-        .map(line -> gson.fromJson(line, JsonObject.class)).iterator();
+    List<JsonObject> obs1s = Arrays.stream(obsData.toString().split("\n"))
+        .map(line -> gson.fromJson(line, JsonObject.class)).collect(Collectors.toList());
 
     // Reset
     obsData = new StringWriter();
@@ -240,29 +245,13 @@ public class IntegrationTest {
         keyCaseFormat);
 
     // Save the results
-    Iterator<JsonObject> obs2s = Arrays.stream(obsData.toString().split("\n"))
-        .map(line -> gson.fromJson(line, JsonObject.class)).iterator();
+    List<JsonObject> obs2s = Arrays.stream(obsData.toString().split("\n"))
+        .map(line -> gson.fromJson(line, JsonObject.class)).collect(Collectors.toList());
 
-    // Verify identical output for players
+    // Verify identical output
     // If this fails, that does't mean they weren't identical, but more care will need to be taken
-    // for the comparison
-    while (obs1s.hasNext() && obs2s.hasNext()) {
-      JsonObject obs1 = obs1s.next();
-      JsonObject obs2 = obs2s.next();
-
-      assertEquals(obs1.get("players"), obs2.get("players"));
-
-      JsonObject obs1Features = obs1.get("features").getAsJsonObject();
-      JsonObject obs2Features = obs2.get("features").getAsJsonObject();
-      JsonObject obs1Market = removeMarketFeatures(obs1Features);
-      JsonObject obs2Market = removeMarketFeatures(obs2Features);
-
-      assertEquals(obs1Features, obs2Features);
-      assertEquals(obs1Market, obs2Market);
-    }
-
-    assertFalse("Simulation 1 had more observations", obs1s.hasNext());
-    assertFalse("Simulation 2 had more observations", obs2s.hasNext());
+    // for the comparison, e.g. lfoating point things.
+    assertEquals(obs1s, obs2s);
   }
 
   /** Tests that num jobs doesn't change order of observations. */
@@ -290,8 +279,8 @@ public class IntegrationTest {
         keyCaseFormat);
 
     // Save the results
-    Iterator<JsonObject> obs1s = Arrays.stream(obsData.toString().split("\n"))
-        .map(line -> gson.fromJson(line, JsonObject.class)).iterator();
+    List<JsonObject> obs1s = Arrays.stream(obsData.toString().split("\n"))
+        .map(line -> gson.fromJson(line, JsonObject.class)).collect(Collectors.toList());
 
     // Reset
     obsData = new StringWriter();
@@ -303,29 +292,13 @@ public class IntegrationTest {
         keyCaseFormat);
 
     // Save the results
-    Iterator<JsonObject> obs2s = Arrays.stream(obsData.toString().split("\n"))
-        .map(line -> gson.fromJson(line, JsonObject.class)).iterator();
+    List<JsonObject> obs2s = Arrays.stream(obsData.toString().split("\n"))
+        .map(line -> gson.fromJson(line, JsonObject.class)).collect(Collectors.toList());
 
-    // Verify identical output for players
+    // Verify identical output
     // If this fails, that does't mean they weren't identical, but more care will need to be taken
-    // for the comparison
-    while (obs1s.hasNext() && obs2s.hasNext()) {
-      JsonObject obs1 = obs1s.next();
-      JsonObject obs2 = obs2s.next();
-
-      assertEquals(obs1.get("players"), obs2.get("players"));
-
-      JsonObject obs1Features = obs1.get("features").getAsJsonObject();
-      JsonObject obs2Features = obs2.get("features").getAsJsonObject();
-      JsonObject obs1Market = removeMarketFeatures(obs1Features);
-      JsonObject obs2Market = removeMarketFeatures(obs2Features);
-
-      assertEquals(obs1Features, obs2Features);
-      assertEquals(obs1Market, obs2Market);
-    }
-
-    assertFalse("Simulation 1 had more observations", obs1s.hasNext());
-    assertFalse("Simulation 2 had more observations", obs2s.hasNext());
+    // for the comparison, e.g. floating point stuff
+    assertEquals(obs1s, obs2s);
   }
 
   /** Tests that simsPerObs appropriately aggregates information. */
@@ -388,8 +361,9 @@ public class IntegrationTest {
   }
 
   /** Tests that differently order spec files produce identical results. */
-  @Test
-  public void specOrderingTest() {
+  @Theory
+  public void specOrderingTest(@TestInts({1, 10}) int numObs, @TestInts({1, 10}) int simsPerObs) {
+
     String spec1 = "{\"assignment\":{\"role\":{" // Base assignment
         + "\"noise:arrivalRate_0.2\":8," // Agent type one
         + "\"noise:arrivalRate_0.5\":5," // Agent type two
@@ -399,19 +373,17 @@ public class IntegrationTest {
         + "\"fundamentalShockVar\":0}}";
     Reader specReader1 = new StringReader(spec1);
     StringWriter obsData1 = new StringWriter();
-    Runner.run(CommandLineInterface::simulate, specReader1, obsData1, 10, 1, 1, true, keyPrefix,
-        keyCaseFormat);
-    List<List<Double>> payoffs1 =
-        // Split into each observation
-        Arrays.stream(obsData1.toString().split("\n"))
-            // Convert to players json
-            .map(line -> StreamSupport
-                .stream(gson.fromJson(line, JsonObject.class).get("players").getAsJsonArray()
-                    .spliterator(), false)
-                // Get payoffs list from players
-                .map(p -> p.getAsJsonObject().get("payoff").getAsDouble())
-                .collect(Collectors.toList()))
-            .collect(Collectors.toList());
+    Runner.run(CommandLineInterface::simulate, specReader1, obsData1, numObs, simsPerObs, 1, false,
+        keyPrefix, keyCaseFormat);
+    // All results
+    List<JsonObject> results1 = Arrays.stream(obsData1.toString().split("\n"))
+        .map(line -> gson.fromJson(line, JsonObject.class)).collect(Collectors.toList());
+    // Just player payoffs
+    List<List<Double>> payoffs1 = results1.stream()
+        .map(j -> StreamSupport.stream(j.get("players").getAsJsonArray().spliterator(), false)
+            .map(p -> p.getAsJsonObject().get("payoff").getAsDouble()).collect(Collectors.toList()))
+        .collect(Collectors.toList());
+    // Sorted payoffs, immune to player ordering in results
     List<List<Double>> sortedPayoffs1 =
         payoffs1.stream().map(pays -> pays.stream().sorted().collect(Collectors.toList()))
             .collect(Collectors.toList());
@@ -425,19 +397,17 @@ public class IntegrationTest {
         + "\"fundamentalShockVar\":0}}";
     Reader specReader2 = new StringReader(spec2);
     StringWriter obsData2 = new StringWriter();
-    Runner.run(CommandLineInterface::simulate, specReader2, obsData2, 10, 1, 1, true, keyPrefix,
-        keyCaseFormat);
-    List<List<Double>> payoffs2 =
-        // Split into each observation
-        Arrays.stream(obsData2.toString().split("\n"))
-            // Convert to players json
-            .map(line -> StreamSupport
-                .stream(gson.fromJson(line, JsonObject.class).get("players").getAsJsonArray()
-                    .spliterator(), false)
-                // Get payoffs list from players
-                .map(p -> p.getAsJsonObject().get("payoff").getAsDouble())
-                .collect(Collectors.toList()))
-            .collect(Collectors.toList());
+    Runner.run(CommandLineInterface::simulate, specReader2, obsData2, numObs, simsPerObs, 1, false,
+        keyPrefix, keyCaseFormat);
+    // All results
+    List<JsonObject> results2 = Arrays.stream(obsData2.toString().split("\n"))
+        .map(line -> gson.fromJson(line, JsonObject.class)).collect(Collectors.toList());
+    // Just player payoffs
+    List<List<Double>> payoffs2 = results2.stream()
+        .map(j -> StreamSupport.stream(j.get("players").getAsJsonArray().spliterator(), false)
+            .map(p -> p.getAsJsonObject().get("payoff").getAsDouble()).collect(Collectors.toList()))
+        .collect(Collectors.toList());
+    // Sorted payoffs, immune to player ordering in results
     List<List<Double>> sortedPayoffs2 =
         payoffs2.stream().map(pays -> pays.stream().sorted().collect(Collectors.toList()))
             .collect(Collectors.toList());
@@ -446,17 +416,12 @@ public class IntegrationTest {
         sortedPayoffs2);
     assertEquals("Unique payoffs were identical, but not produced in the same order", payoffs1,
         payoffs2);
+    assertEquals("Payoffs were identical, but the rest of the spec was not", results1, results2);
   }
 
   // TODO Test that agents inherit specifications from configuration
 
   // TODO Test that invalid agent names throw exception
-
-  private static JsonObject removeMarketFeatures(JsonObject features) {
-    String marketName = features.entrySet().stream().map(Map.Entry::getKey)
-        .filter(k -> k.startsWith("cda_")).findAny().get();
-    return features.remove(marketName).getAsJsonObject();
-  }
 
   private static String toStratString(String name, Spec spec) {
     StringBuilder strat = new StringBuilder(name).append(':');

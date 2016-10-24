@@ -143,7 +143,7 @@ abstract class AbstractMarket implements Market, Serializable {
 
   @Override
   public String toString() {
-    return "CDA " + Integer.toString(System.identityHashCode(this), 36).toUpperCase();
+    return Integer.toString(System.identityHashCode(this), 36).toUpperCase();
   }
 
   abstract class AbstractMarketView implements MarketView, Serializable {

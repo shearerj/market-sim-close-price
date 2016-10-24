@@ -260,7 +260,7 @@ public class Runner {
 
           if (numProcessed >= simsPerObs) {
             JsonObject base = new JsonObject();
-            base.add("players", serializeAggregatePlayers(aggregates));
+            base.add("players", serializeAggregatePlayers(aggregates, obs.getValue().getPlayers()));
             gson.toJson(base, output);
             try {
               output.append('\n');
@@ -295,15 +295,22 @@ public class Runner {
     return serializedPlayers;
   }
 
-  private static JsonElement serializeAggregatePlayers(Multimap<RoleStrat, SummStats> players) {
+  /** Serialize players, but keep the order of the last set of players. */
+  private static JsonElement serializeAggregatePlayers(Multimap<RoleStrat, SummStats> players,
+      Collection<? extends Player> order) {
     JsonArray serializedPlayers = new JsonArray();
-    for (Entry<RoleStrat, SummStats> player : players.entries()) {
+    Map<RoleStrat, Iterator<SummStats>> next = players.asMap().entrySet().stream()
+        .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().iterator()));
+
+    for (Player player : order) {
       JsonObject serializedPlayer = new JsonObject();
-      serializedPlayer.addProperty("role", player.getKey().getRole());
-      serializedPlayer.addProperty("strategy", player.getKey().getStrategy());
-      serializedPlayer.addProperty("payoff", player.getValue().getAverage());
+      serializedPlayer.addProperty("role", player.getRole());
+      serializedPlayer.addProperty("strategy", player.getStrategy());
+      serializedPlayer.addProperty("payoff",
+          next.get(RoleStrat.of(player.getRole(), player.getStrategy())).next().getAverage());
       serializedPlayers.add(serializedPlayer);
     }
+
     return serializedPlayers;
   }
 

@@ -56,10 +56,11 @@ class Features {
         convertSparseData(fundamental.getFundamentalValues(simulator.getCurrentTime())));
 
     // Market features
+    JsonArray marketFeatures = new JsonArray();
     for (Market market : simulator.getMarkets()) {
-      features.add(market.toString().toLowerCase().replace(' ', '_'),
-          market.getFeatures(fundamental));
+      marketFeatures.add(market.getFeatures(fundamental));
     }
+    features.add("markets", marketFeatures);
 
     // Surplus Features
     surplusFeatures(simulator.getAgentPayoffs(), features);
