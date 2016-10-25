@@ -35,10 +35,16 @@ From the same directory, compile the project:
 ```
 make jar
 ```
+this step is necessary to use the command line script `market-sim`, which makes running the project significantly easier.
 
 Run a simple simulation and look at the output:
 ```
-< resources/simulation_spec_condensed.json ./market-sim.sh 1 | jq .
+< resources/simulation_spec_condensed.json ./market-sim | jq .
+```
+
+View a list of all possible configuration keys with:
+```
+./market-sim --print-keys
 ```
 
 Compile a zip file (called `defaults.zip`) for use with egtaonline:
@@ -55,3 +61,4 @@ Documentation Contents
 - [Jq](docs/jq.md) - A guide about using `jq`---a very useful command line tool for parsing and editing json.
 - [Fundamental](docs/fundamental.md) - General mathematical information about the Gaussian mean-reverting fundamental process we use in the simulator.
 - [Keys](docs/keys.md) - Auto-generated documentation on all of the keys available to the simulator.
+  Not quite perfect, instead we recommend getting better type information from `./market-sim -k`.
